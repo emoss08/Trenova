@@ -370,7 +370,7 @@ export type AiRetrievalUnavailableReason =
   | 'ProviderFailed'
   /** The provider did not embed a query within its time budget. */
   | 'QueryTimeout'
-  /** pgvector is installed but the retrieval tables are not; run trenova db enable-vector. */
+  /** pgvector is installed but the retrieval tables are not; run trenova-db enable-vector. */
   | 'SchemaMissing'
   /** pgvector is older than 0.8. */
   | 'TooOld';

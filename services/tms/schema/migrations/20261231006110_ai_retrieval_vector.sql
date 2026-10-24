@@ -1,6 +1,6 @@
 -- The vector half of semantic retrieval storage. Everything here needs pgvector
 -- 0.8 or newer, so it is created only when that is installed and skipped
--- otherwise; keyword search does not need it. `trenova db enable-vector` runs
+-- otherwise; keyword search does not need it. `trenova-db enable-vector` runs
 -- this same file after installing the extension, so it must stay idempotent
 -- and must not be split.
 DO $vector$

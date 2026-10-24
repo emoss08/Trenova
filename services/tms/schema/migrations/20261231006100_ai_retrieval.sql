@@ -1,7 +1,7 @@
 -- Semantic retrieval storage. The extension is optional: a server without
 -- pgvector keeps every table below and runs keyword search only. The vector
 -- tables themselves are created by 20261231006110_ai_retrieval_vector, which
--- is also what `trenova db enable-vector` runs once pgvector is installed.
+-- is also what `trenova-db enable-vector` runs once pgvector is installed.
 DO $$
 BEGIN
     CREATE EXTENSION IF NOT EXISTS vector;

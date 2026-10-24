@@ -422,11 +422,11 @@ func ReindexRefusal(
 	case airetrieval.UnavailableReasonExtensionMissing,
 		airetrieval.UnavailableReasonTooOld:
 		return errortypes.NewBusinessError(
-			"The database has no usable pgvector, so nothing can be indexed. Install pgvector 0.8 or newer, then run trenova db enable-vector.",
+			"The database has no usable pgvector, so nothing can be indexed. Install pgvector 0.8 or newer, then run trenova-db enable-vector.",
 		)
 	case airetrieval.UnavailableReasonSchemaMissing:
 		return errortypes.NewBusinessError(
-			"The retrieval tables are missing, so nothing can be indexed. Run trenova db enable-vector.",
+			"The retrieval tables are missing, so nothing can be indexed. Run trenova-db enable-vector.",
 		)
 	case airetrieval.UnavailableReasonNoProvider:
 		return errortypes.NewBusinessError(

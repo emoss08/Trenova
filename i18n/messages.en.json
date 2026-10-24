@@ -264519,7 +264519,7 @@
       "routes/agent-control"
     ]
   },
-  "The database has no usable pgvector, so nothing can be indexed. Install pgvector 0.8 or newer, then run trenova db enable-vector.": {
+  "The database has no usable pgvector, so nothing can be indexed. Install pgvector 0.8 or newer, then run trenova-db enable-vector.": {
     "sites": 1,
     "scope": [
       "go"
@@ -274172,7 +274172,7 @@
       "routes/agent-control"
     ]
   },
-  "The retrieval tables are missing, so nothing can be indexed. Run trenova db enable-vector.": {
+  "The retrieval tables are missing, so nothing can be indexed. Run trenova-db enable-vector.": {
     "sites": 1,
     "scope": [
       "go"

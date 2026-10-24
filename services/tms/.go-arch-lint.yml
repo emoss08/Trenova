@@ -451,6 +451,10 @@ components:
   pkg:
     in:
       - pkg/**
+  schema:
+    in:
+      - schema
+      - schema/**
 deps:
   kernel-domain:
     mayDependOn:
@@ -3577,6 +3581,7 @@ deps:
       - agent-contracts
       - infrastructure
       - pkg
+      - schema
       - agent-app # TODO(build-arch): infrastructure imports module code beyond domain, ports and contracts (4 imports)
       - bootstrap # TODO(build-arch): infrastructure imports module code beyond domain, ports and contracts (1 imports)
       - documents-app # TODO(build-arch): infrastructure imports module code beyond domain, ports and contracts (1 imports)
@@ -3612,3 +3617,6 @@ deps:
       - reference-domain # TODO(build-arch): pkg imports a module (rule 7); move the shared type into pkg or invert (2 imports)
       - settlement-domain # TODO(build-arch): pkg imports a module (rule 7); move the shared type into pkg or invert (4 imports)
       - workspace-domain # TODO(build-arch): pkg imports a module (rule 7); move the shared type into pkg or invert (2 imports)
+  schema:
+    mayDependOn:
+      - schema

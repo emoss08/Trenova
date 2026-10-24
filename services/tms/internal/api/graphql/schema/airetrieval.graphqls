@@ -23,7 +23,7 @@ enum AIRetrievalIndexStatus {
 enum AIRetrievalUnavailableReason {
   "The database has no pgvector extension."
   ExtensionMissing
-  "pgvector is installed but the retrieval tables are not; run trenova db enable-vector."
+  "pgvector is installed but the retrieval tables are not; run trenova-db enable-vector."
   SchemaMissing
   "pgvector is older than 0.8."
   TooOld

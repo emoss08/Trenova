@@ -4,6 +4,7 @@ import (
 	"github.com/emoss08/trenova/internal/bootstrap/edition"
 	"github.com/emoss08/trenova/internal/bootstrap/modules/api"
 	modulesinfra "github.com/emoss08/trenova/internal/bootstrap/modules/infrastructure"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/schemaversion"
 	"github.com/emoss08/trenova/internal/modules/accounting"
 	"github.com/emoss08/trenova/internal/modules/agent"
 	"github.com/emoss08/trenova/internal/modules/billing"
@@ -59,5 +60,5 @@ func OptionsFor(e *edition.Edition) fx.Option {
 }
 
 func Run(base fx.Option) {
-	fx.New(base, Options()).Run()
+	fx.New(schemaversion.Module, base, Options()).Run()
 }

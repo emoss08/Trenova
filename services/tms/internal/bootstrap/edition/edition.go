@@ -3,26 +3,29 @@ package edition
 import (
 	"errors"
 	"fmt"
-	"io/fs"
 	"slices"
 	"strings"
 	"sync"
 
+	"github.com/emoss08/keel/migrate"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/spf13/cobra"
 	"go.uber.org/fx"
 )
 
-const CommunityName = "community"
+const (
+	CommunityName       = "community"
+	coreMigrationSource = "core"
+)
 
 type Edition struct {
-	Name               string
-	Options            []fx.Option
-	APIOptions         []fx.Option
-	WorkerOptions      []fx.Option
-	Commands           []*cobra.Command
-	PostgresMigrations []fs.FS
-	ConfigSections     []config.Section
+	Name           string
+	Options        []fx.Option
+	APIOptions     []fx.Option
+	WorkerOptions  []fx.Option
+	Commands       []*cobra.Command
+	Migrations     []migrate.Source
+	ConfigSections []config.Section
 }
 
 var (
@@ -94,13 +97,13 @@ func (e *Edition) LoaderOptions() []config.LoaderOption {
 
 func (e *Edition) clone() *Edition {
 	return &Edition{
-		Name:               e.Name,
-		Options:            slices.Clone(e.Options),
-		APIOptions:         slices.Clone(e.APIOptions),
-		WorkerOptions:      slices.Clone(e.WorkerOptions),
-		Commands:           slices.Clone(e.Commands),
-		PostgresMigrations: slices.Clone(e.PostgresMigrations),
-		ConfigSections:     slices.Clone(e.ConfigSections),
+		Name:           e.Name,
+		Options:        slices.Clone(e.Options),
+		APIOptions:     slices.Clone(e.APIOptions),
+		WorkerOptions:  slices.Clone(e.WorkerOptions),
+		Commands:       slices.Clone(e.Commands),
+		Migrations:     slices.Clone(e.Migrations),
+		ConfigSections: slices.Clone(e.ConfigSections),
 	}
 }
 
@@ -132,9 +135,17 @@ func validate(e *Edition) error {
 		seen[use] = struct{}{}
 	}
 
-	for idx, fsys := range e.PostgresMigrations {
-		if fsys == nil {
-			return fmt.Errorf("edition: %q has a nil migration set at %d", name, idx)
+	for idx, source := range e.Migrations {
+		if source.FS == nil && len(source.Funcs) == 0 {
+			return fmt.Errorf("edition: %q has an empty migration source at %d", name, idx)
+		}
+		if strings.TrimSpace(source.Name) == "" || source.Name == coreMigrationSource {
+			return fmt.Errorf(
+				"edition: %q must name its migration source at %d, and not %q",
+				name,
+				idx,
+				coreMigrationSource,
+			)
 		}
 	}
 

@@ -1,10 +1,10 @@
 package edition
 
 import (
-	iofs "io/fs"
 	"testing"
 	"testing/fstest"
 
+	"github.com/emoss08/keel/migrate"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -51,25 +51,31 @@ func TestCurrentWithoutARegistrationIsTheCommunityEdition(t *testing.T) {
 	assert.Empty(t, current.APIOptions)
 	assert.Empty(t, current.WorkerOptions)
 	assert.Empty(t, current.Commands)
-	assert.Empty(t, current.PostgresMigrations)
+	assert.Empty(t, current.Migrations)
 	assert.Empty(t, current.ConfigSections)
 
-	require.NoError(t, fx.ValidateApp(current.Option(), current.APIOption(), current.WorkerOption()))
+	require.NoError(
+		t,
+		fx.ValidateApp(current.Option(), current.APIOption(), current.WorkerOption()),
+	)
 }
 
 func TestRegisterMakesTheEditionCurrent(t *testing.T) {
 	resetRegistry(t)
 
 	command := &cobra.Command{Use: "operator"}
-	migrations := fstest.MapFS{"20990101000000_example.up.sql": {Data: []byte("SELECT 1;")}}
+	migrations := migrate.Source{
+		Name: "cloud",
+		FS:   fstest.MapFS{"20990101000000_example.sql": {Data: []byte("SELECT 1;")}},
+	}
 	Register(Edition{
-		Name:               "cloud",
-		Options:            []fx.Option{fx.Supply(&marker{from: "all"})},
-		APIOptions:         []fx.Option{fx.Supply("api")},
-		WorkerOptions:      []fx.Option{fx.Supply(42)},
-		Commands:           []*cobra.Command{command},
-		PostgresMigrations: []iofs.FS{migrations},
-		ConfigSections:     []config.Section{stubSection{}},
+		Name:           "cloud",
+		Options:        []fx.Option{fx.Supply(&marker{from: "all"})},
+		APIOptions:     []fx.Option{fx.Supply("api")},
+		WorkerOptions:  []fx.Option{fx.Supply(42)},
+		Commands:       []*cobra.Command{command},
+		Migrations:     []migrate.Source{migrations},
+		ConfigSections: []config.Section{stubSection{}},
 	})
 
 	current := Current()
@@ -77,7 +83,7 @@ func TestRegisterMakesTheEditionCurrent(t *testing.T) {
 	assert.Equal(t, "cloud", current.Name)
 	assert.False(t, current.IsCommunity())
 	assert.Equal(t, []*cobra.Command{command}, current.Commands)
-	require.Len(t, current.PostgresMigrations, 1)
+	require.Len(t, current.Migrations, 1)
 	require.Len(t, current.ConfigSections, 1)
 	assert.Len(t, current.LoaderOptions(), 1)
 
@@ -146,7 +152,22 @@ func TestRegisterRefusesAnInvalidEdition(t *testing.T) {
 				{Use: "operator [flags]"},
 			}},
 		},
-		{name: "nil migrations", edition: Edition{Name: "cloud", PostgresMigrations: []iofs.FS{nil}}},
+		{
+			name:    "empty migration source",
+			edition: Edition{Name: "cloud", Migrations: []migrate.Source{{Name: "cloud"}}},
+		},
+		{
+			name: "unnamed migration source",
+			edition: Edition{Name: "cloud", Migrations: []migrate.Source{
+				{FS: fstest.MapFS{}},
+			}},
+		},
+		{
+			name: "migration source named like the core",
+			edition: Edition{Name: "cloud", Migrations: []migrate.Source{
+				{Name: "core", FS: fstest.MapFS{}},
+			}},
+		},
 		{
 			name:    "nil section",
 			edition: Edition{Name: "cloud", ConfigSections: []config.Section{nil}},

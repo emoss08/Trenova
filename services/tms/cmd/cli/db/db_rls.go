@@ -38,7 +38,7 @@ var dbRLSGenerateKeyCmd = &cobra.Command{
 	Use:   "generate-key",
 	Short: "Generate a scope signing key for database.rls",
 	Long: `Print a new random key id and key for database.rls.scopeKeyId and
-database.rls.scopeKey. Store the key as a secret; the next "trenova db migrate"
+database.rls.scopeKey. Store the key as a secret; the next "trenova db reconcile"
 installs it.`,
 	RunE: runRLSGenerateKey,
 }
@@ -84,7 +84,10 @@ func runRLSGenerateKey(_ *cobra.Command, _ []string) error {
 
 func runRLSProvisionRoles(_ *cobra.Command, _ []string) error {
 	if !cfg.Database.Migrator.Configured() ||
-		strings.EqualFold(strings.TrimSpace(cfg.Database.Migrator.User), strings.TrimSpace(cfg.Database.User)) {
+		strings.EqualFold(
+			strings.TrimSpace(cfg.Database.Migrator.User),
+			strings.TrimSpace(cfg.Database.User),
+		) {
 		return errRLSMigratorRole
 	}
 
