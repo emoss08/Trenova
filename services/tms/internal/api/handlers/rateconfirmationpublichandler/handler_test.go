@@ -9,12 +9,12 @@ import (
 
 	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/api/middleware"
-	"github.com/emoss08/trenova/internal/modules/rating/domain/rateconfirmation"
-	"github.com/emoss08/trenova/internal/modules/rating/app/rateconfirmationservice"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/infrastructure/ratelimit"
-	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/internal/modules/rating/app/rateconfirmationservice"
+	"github.com/emoss08/trenova/internal/modules/rating/domain/rateconfirmation"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/rateconfirmationports"
+	"github.com/emoss08/trenova/internal/testutil/dbtest"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
@@ -22,24 +22,8 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"github.com/uptrace/bun"
 	"go.uber.org/zap"
 )
-
-type testDB struct{}
-
-func (testDB) DB() *bun.DB                          { return nil }
-func (testDB) DBForContext(context.Context) bun.IDB { return nil }
-func (testDB) HealthCheck(context.Context) error    { return nil }
-func (testDB) IsHealthy(context.Context) bool       { return true }
-func (testDB) Close() error                         { return nil }
-func (testDB) WithTx(
-	ctx context.Context,
-	_ kernelports.TxOptions,
-	fn func(context.Context, bun.Tx) error,
-) error {
-	return fn(ctx, bun.Tx{})
-}
 
 type tokenRepo struct {
 	rateconfirmationports.RateConfirmationRepository
@@ -78,7 +62,7 @@ func (f *tokenRepo) MarkTokenUsed(
 func newTestHandler(repo *tokenRepo) *Handler {
 	service := rateconfirmationservice.New(rateconfirmationservice.Params{
 		Logger: zap.NewNop(),
-		DB:     testDB{},
+		DB:     dbtest.NopConnection{},
 		Repo:   repo,
 	})
 	cfg := &config.Config{

@@ -2,16 +2,18 @@ package deskbench
 
 import (
 	"context"
-	"database/sql"
 	"errors"
 	"fmt"
 	"strings"
 
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/assistantartifact"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/rating/domain/formulalibrary/formulalibrarydb"
+	"github.com/emoss08/trenova/internal/modules/rating/domain/formulatemplate/formulatemplatedb"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/pagedraft"
 	"github.com/emoss08/trenova/shared/jsonutils"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -90,19 +92,49 @@ func (s *Session) OpenFormula(
 }
 
 type sourceQuery struct {
-	query    string
+	load     func(ctx context.Context, db *keel.DB, name string) (*formulaState, error)
 	notFound error
 }
 
 var (
 	templateSource = sourceQuery{
-		query: `SELECT id, name, COALESCE(description, ''), source
-			FROM formula_templates WHERE name ILIKE ? ORDER BY updated_at DESC LIMIT 1`,
+		load: func(ctx context.Context, db *keel.DB, name string) (*formulaState, error) {
+			ft := formulatemplatedb.FormulaTemplates
+			row, err := ft.Pick(ft.ID, ft.Name, ft.Description, ft.Source).
+				Where(ft.Name.ILike(name)).
+				Order(ft.UpdatedAt.Desc()).
+				First(ctx, db)
+			if err != nil {
+				return nil, err
+			}
+
+			return &formulaState{
+				id:     row.ID.String(),
+				name:   row.Name,
+				about:  row.Description,
+				source: row.Source,
+			}, nil
+		},
 		notFound: errTemplateNotFound,
 	}
 	librarySource = sourceQuery{
-		query: `SELECT id, name, COALESCE(description, ''), source
-			FROM formula_libraries WHERE lower(name) = lower(?) LIMIT 1`,
+		load: func(ctx context.Context, db *keel.DB, name string) (*formulaState, error) {
+			fl := formulalibrarydb.FormulaLibraries
+			row, err := fl.Pick(fl.ID, fl.Name, fl.Description, fl.Source).
+				Where(fl.Name.Lower().Eq(strings.ToLower(name))).
+				Order(fl.ID.Asc()).
+				First(ctx, db)
+			if err != nil {
+				return nil, err
+			}
+
+			return &formulaState{
+				id:     row.ID.String(),
+				name:   row.Name,
+				about:  row.Description,
+				source: row.Source,
+			}, nil
+		},
 		notFound: errLibraryNotFound,
 	}
 )
@@ -115,14 +147,16 @@ func (s *Session) loadSource(
 ) (pulid.ID, error) {
 	name = strings.TrimPrefix(strings.TrimSpace(name), "org.")
 	found, err := dbtx.Read(ctx, s.bench.DB, func(ctx context.Context) (*formulaState, error) {
-		row := &formulaState{library: state.library}
-		scanErr := s.bench.DB.DBForContext(ctx).QueryRowContext(ctx, from.query, name).
-			Scan(&row.id, &row.name, &row.about, &row.source)
-		if errors.Is(scanErr, sql.ErrNoRows) {
+		row, loadErr := from.load(ctx, s.bench.DB.Keel(ctx), name)
+		if errors.Is(loadErr, keel.ErrNotFound) {
 			return nil, from.notFound
 		}
+		if loadErr != nil {
+			return nil, loadErr
+		}
+		row.library = state.library
 
-		return row, scanErr
+		return row, nil
 	})
 	if err != nil {
 		return pulid.Nil, err

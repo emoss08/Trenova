@@ -6,20 +6,21 @@ import (
 	"context"
 	"testing"
 
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/testutil/seedtest"
 	"github.com/emoss08/trenova/schema/migrations"
+	"github.com/jackc/pgx/v5"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"github.com/uptrace/bun"
 )
 
 const ediCatalogConflictTargetUp = "20261231009540_edi_document_type_catalog_conflict_target"
 
 type catalogRow struct {
-	ID        string `bun:"id"`
-	Code      string `bun:"code"`
-	Direction string `bun:"direction"`
-	UpdatedAt int64  `bun:"updated_at"`
+	ID        string `db:"id"`
+	Code      string `db:"code"`
+	Direction string `db:"direction"`
+	UpdatedAt int64  `db:"updated_at"`
 }
 
 func catalogConflictTargetUp(t *testing.T) string {
@@ -31,13 +32,13 @@ func catalogConflictTargetUp(t *testing.T) string {
 	return body
 }
 
-func catalogRows(ctx context.Context, t *testing.T, db *bun.DB) map[string]catalogRow {
+func catalogRows(ctx context.Context, t *testing.T, db *keel.DB) map[string]catalogRow {
 	t.Helper()
 
-	var rows []catalogRow
-	require.NoError(t, db.NewRaw(
+	rows, err := keel.QueryAll(ctx, db, pgx.RowToStructByName[catalogRow],
 		`SELECT "id", "code", "direction", "updated_at" FROM "edi_document_types"`,
-	).Scan(ctx, &rows))
+	)
+	require.NoError(t, err)
 
 	byID := make(map[string]catalogRow, len(rows))
 	for _, row := range rows {
@@ -54,7 +55,7 @@ func TestEDIDocumentTypeCatalogConflictTarget_LeavesACompleteCatalogAlone(t *tes
 	up := catalogConflictTargetUp(t)
 	before := catalogRows(ctx, t, db)
 
-	_, err := db.ExecContext(ctx, up)
+	_, err := keel.Exec(ctx, db, up)
 	require.NoError(t, err)
 
 	assert.Equal(t, before, catalogRows(ctx, t, db))
@@ -65,11 +66,11 @@ func TestEDIDocumentTypeCatalogConflictTarget_RestoresAMissingCatalogRow(t *test
 	defer cleanup()
 
 	up := catalogConflictTargetUp(t)
-	_, err := db.ExecContext(ctx,
+	_, err := keel.Exec(ctx, db,
 		`DELETE FROM "edi_document_types" WHERE "id" = 'edidt_x12_214_outbound'`)
 	require.NoError(t, err)
 
-	_, err = db.ExecContext(ctx, up)
+	_, err = keel.Exec(ctx, db, up)
 	require.NoError(t, err)
 
 	row, ok := catalogRows(ctx, t, db)["edidt_x12_214_outbound"]
@@ -85,15 +86,15 @@ func TestEDIDocumentTypeCatalogConflictTarget_RefusesARowHoldingTheSameCodeUnder
 	defer cleanup()
 
 	up := catalogConflictTargetUp(t)
-	_, err := db.ExecContext(ctx,
+	_, err := keel.Exec(ctx, db,
 		`DELETE FROM "edi_document_types" WHERE "id" = 'edidt_x12_204_inbound'`)
 	require.NoError(t, err)
-	_, err = db.ExecContext(ctx, `INSERT INTO "edi_document_types"
+	_, err = keel.Exec(ctx, db, `INSERT INTO "edi_document_types"
 		("id", "code", "name", "standard", "transaction_set", "transaction_set_id", "direction")
 		VALUES ('edidt_local_204_in', 'X12-204-IN', 'Local 204', 'X12', '204', 'edits_x12_204', 'Inbound')`)
 	require.NoError(t, err)
 
-	_, err = db.ExecContext(ctx, up)
+	_, err = keel.Exec(ctx, db, up)
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), "uq_edi_document_types_code")
 

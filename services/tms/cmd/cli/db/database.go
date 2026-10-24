@@ -3,10 +3,10 @@ package db
 import (
 	"context"
 
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/spf13/cobra"
-	"github.com/uptrace/bun"
 )
 
 var (
@@ -20,7 +20,7 @@ func SetConfig(c *config.Config) {
 	cfg = c
 }
 
-func openDB(ctx context.Context) (*bun.DB, error) {
+func openDB(ctx context.Context) (*keel.DB, error) {
 	return postgres.OpenMaintenanceDB(ctx, cfg)
 }
 

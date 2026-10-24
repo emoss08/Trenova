@@ -5,15 +5,13 @@ import (
 	"fmt"
 	"slices"
 
-	"github.com/emoss08/trenova/pkg/buncolgen/aiauditcol"
-
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/api/graphql/projection"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiaudit"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aiaudit/aiauditdb"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
-	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -22,16 +20,16 @@ import (
 // aiAuditEventComputedColumns are the columns each computed field of an
 // event is worked out from: the arguments a reader sees are the recorded
 // arguments cut to their sensitivity, and the rest are read by an id.
-var aiAuditEventComputedColumns = map[string][]buncolgen.Column{
-	"onBehalfOf": {aiauditcol.AIAuditEventColumns.OnBehalfOfUserID},
-	"decidedBy":  {aiauditcol.AIAuditEventColumns.DecidedByUserID},
-	"agent":      {aiauditcol.AIAuditEventColumns.AgentDefinitionID},
-	"traceUrl":   {aiauditcol.AIAuditEventColumns.TraceID},
-	"arguments": {
-		aiauditcol.AIAuditEventColumns.Arguments,
-		aiauditcol.AIAuditEventColumns.ArgumentSensitivity,
-	},
-	"auditEntries": {aiauditcol.AIAuditEventColumns.ID},
+var aiAuditEventComputedColumns = map[string][]string{
+	"onBehalfOf": projection.ColumnNames(aiauditdb.AIAuditEvents.OnBehalfOfUserID.Col),
+	"decidedBy":  projection.ColumnNames(aiauditdb.AIAuditEvents.DecidedByUserID.Col),
+	"agent":      projection.ColumnNames(aiauditdb.AIAuditEvents.AgentDefinitionID.Col),
+	"traceUrl":   projection.ColumnNames(aiauditdb.AIAuditEvents.TraceID.Col),
+	"arguments": projection.ColumnNames(
+		aiauditdb.AIAuditEvents.Arguments.Col,
+		aiauditdb.AIAuditEvents.ArgumentSensitivity.Col,
+	),
+	"auditEntries": projection.ColumnNames(aiauditdb.AIAuditEvents.ID.Col),
 }
 
 // aiAuditEventColumns are the columns a trail page selects for the fields
@@ -52,8 +50,8 @@ func aiAuditEventColumns(ctx context.Context, nodePathPrefix string) []string {
 			continue
 		}
 		for _, column := range needed {
-			if !slices.Contains(columns, column.String()) {
-				columns = append(columns, column.String())
+			if !slices.Contains(columns, column) {
+				columns = append(columns, column)
 			}
 		}
 	}

@@ -10,8 +10,8 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/projection"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agent/agentdb"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
-	"github.com/emoss08/trenova/pkg/buncolgen/agentcol"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -124,11 +124,13 @@ func agentMemoryColumns(ctx context.Context, nodePathPrefix string) []string {
 		return selection.Columns
 	}
 
-	cols := agentcol.MemoryColumns
-	columns := sliceutils.AppendIfMissing(selection.Columns, cols.Tainted.Bare())
-	columns = sliceutils.AppendIfMissing(columns, cols.ReviewedByUserID.Bare())
+	m := agentdb.Memories
+	columns := selection.Columns
+	for _, column := range projection.ColumnNames(m.Tainted.Col, m.ReviewedByUserID.Col, m.ReviewedAt.Col) {
+		columns = sliceutils.AppendIfMissing(columns, column)
+	}
 
-	return sliceutils.AppendIfMissing(columns, cols.ReviewedAt.Bare())
+	return columns
 }
 
 func agentMemoryConnectionToModel(

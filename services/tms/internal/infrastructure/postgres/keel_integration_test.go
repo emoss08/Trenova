@@ -21,7 +21,6 @@ import (
 	"github.com/jackc/pgx/v5"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"github.com/uptrace/bun"
 )
 
 var errRollBack = errors.New("roll back")
@@ -29,11 +28,11 @@ var errRollBack = errors.New("roll back")
 func (f *rlsFixture) codes(t *testing.T, tenant dbscope.Tenant) []string {
 	t.Helper()
 
-	var codes []string
-	require.NoError(t, f.admin.NewRaw(
-		"SELECT code FROM fleet_codes WHERE organization_id = ? ORDER BY code",
-		tenant.OrganizationID,
-	).Scan(t.Context(), &codes))
+	codes, err := queryStrings(t.Context(), f.admin,
+		"SELECT code FROM fleet_codes WHERE organization_id = $1 ORDER BY code",
+		tenant.OrganizationID.String(),
+	)
+	require.NoError(t, err)
 
 	return codes
 }
@@ -42,11 +41,14 @@ func keelCodes(ctx context.Context, db *keel.DB) ([]string, error) {
 	return keel.QueryAll(ctx, db, pgx.RowTo[string], "SELECT code FROM fleet_codes ORDER BY code")
 }
 
-func bunInsertFleetCode(ctx context.Context, conn *Connection, tenant dbscope.Tenant, code string) error {
-	_, err := conn.DBForContext(ctx).NewRaw(
-		"INSERT INTO fleet_codes (id, code, organization_id, business_unit_id, manager_id) VALUES (?, ?, ?, ?, ?)",
-		pulid.MustNew("fc_"), code, tenant.OrganizationID, tenant.BusinessUnitID, tenant.UserID,
-	).Exec(ctx)
+const insertFleetCodeSQL = "INSERT INTO fleet_codes (id, code, organization_id, business_unit_id, manager_id) " +
+	"VALUES ($1, $2, $3, $4, $5)"
+
+func rawInsertFleetCode(ctx context.Context, conn *Connection, tenant dbscope.Tenant, code string) error {
+	_, err := keel.Exec(ctx, conn.Keel(ctx), insertFleetCodeSQL,
+		pulid.MustNew("fc_").String(), code, tenant.OrganizationID.String(),
+		tenant.BusinessUnitID.String(), tenant.UserID.String(),
+	)
 
 	return err
 }
@@ -55,13 +57,13 @@ func keelFleetCode(tenant dbscope.Tenant, code string) *keeltest.FleetCode {
 	return &keeltest.FleetCode{ManagerID: tenant.UserID.String(), Code: code, Status: "Active"}
 }
 
-func TestKeel_BunAndKeelWritesInOneDbtxWriteCommitTogether(t *testing.T) {
+func TestKeel_RawAndTypedWritesInOneDbtxWriteCommitTogether(t *testing.T) {
 	f := newRLSFixture(t, config.RLSModeEnforce)
 	conn := f.connect(t)
 	ctx := dbscope.WithTenant(t.Context(), f.tenantA)
 
 	created, err := dbtx.Write(ctx, conn, func(ctx context.Context) (*keeltest.FleetCode, error) {
-		if err := bunInsertFleetCode(ctx, conn, f.tenantA, "BUN"); err != nil {
+		if err := rawInsertFleetCode(ctx, conn, f.tenantA, "RAW"); err != nil {
 			return nil, err
 		}
 
@@ -74,13 +76,13 @@ func TestKeel_BunAndKeelWritesInOneDbtxWriteCommitTogether(t *testing.T) {
 		if err != nil {
 			return nil, err
 		}
-		assert.Equal(t, []string{"BUN", "FCA", "KEEL"}, seen, "keel reads the Bun write of its transaction")
+		assert.Equal(t, []string{"FCA", "KEEL", "RAW"}, seen, "a typed read sees the raw write of its transaction")
 
 		return row, nil
 	})
 	require.NoError(t, err)
 
-	assert.Equal(t, []string{"BUN", "FCA", "KEEL"}, f.codes(t, f.tenantA))
+	assert.Equal(t, []string{"FCA", "KEEL", "RAW"}, f.codes(t, f.tenantA))
 	assert.Regexp(t, `^fc_[0-9A-Z]{26}$`, created.ID)
 	assert.Equal(t, f.tenantA.OrganizationID.String(), created.OrganizationID)
 	assert.Equal(t, f.tenantA.BusinessUnitID.String(), created.BusinessUnitID)
@@ -88,7 +90,7 @@ func TestKeel_BunAndKeelWritesInOneDbtxWriteCommitTogether(t *testing.T) {
 	assert.Equal(t, created.CreatedAt, created.UpdatedAt)
 }
 
-func TestKeel_BunAndKeelWritesInOneDbtxWriteRollBackTogether(t *testing.T) {
+func TestKeel_RawAndTypedWritesInOneDbtxWriteRollBackTogether(t *testing.T) {
 	f := newRLSFixture(t, config.RLSModeEnforce)
 	conn := f.connect(t)
 	ctx := dbscope.WithTenant(t.Context(), f.tenantA)
@@ -101,7 +103,7 @@ func TestKeel_BunAndKeelWritesInOneDbtxWriteRollBackTogether(t *testing.T) {
 		if err := keeltestdb.FleetCodes.Create(ctx, conn.Keel(ctx), keelFleetCode(f.tenantA, "KEEL")); err != nil {
 			return struct{}{}, err
 		}
-		if err := bunInsertFleetCode(ctx, conn, f.tenantA, "BUN"); err != nil {
+		if err := rawInsertFleetCode(ctx, conn, f.tenantA, "RAW"); err != nil {
 			return struct{}{}, err
 		}
 
@@ -144,14 +146,12 @@ func TestKeel_NestedDbtxCallsShareTheOuterTransaction(t *testing.T) {
 
 		inner, err := dbtx.Read(ctx, conn, func(ctx context.Context) ([]string, error) {
 			assert.True(t, keel.InTx(ctx, conn.Keel(ctx)))
-			var codes []string
-			err := conn.DBForContext(ctx).NewRaw("SELECT code FROM fleet_codes ORDER BY code").Scan(ctx, &codes)
-			return codes, err
+			return keelCodes(ctx, conn.Keel(ctx))
 		})
 		if err != nil {
 			return err
 		}
-		assert.Equal(t, []string{"FCA", "KEEL"}, inner, "Bun inside a nested dbtx.Read sees the keel write")
+		assert.Equal(t, []string{"FCA", "KEEL"}, inner, "a nested dbtx.Read sees the outer write")
 
 		return errRollBack
 	})
@@ -177,10 +177,10 @@ func TestKeel_SavepointKeepsTheSharedTransactionUsable(t *testing.T) {
 		})
 		require.True(t, keel.IsUnique(err, "pk_fleet_codes"), "%v", err)
 
-		return bunInsertFleetCode(ctx, conn, f.tenantA, "BUN")
+		return rawInsertFleetCode(ctx, conn, f.tenantA, "RAW")
 	})
 	require.NoError(t, err)
-	assert.Equal(t, []string{"BUN", "FCA", "ONE"}, f.codes(t, f.tenantA))
+	assert.Equal(t, []string{"FCA", "ONE", "RAW"}, f.codes(t, f.tenantA))
 }
 
 func TestKeel_InsideDbtxIsRowLevelSecurityScoped(t *testing.T) {
@@ -338,7 +338,7 @@ func TestKeel_ObserveModeAllowsButPostgresRefusesUnscopedAccess(t *testing.T) {
 	assert.Contains(t, err.Error(), "no tenant scope")
 }
 
-func TestKeel_ErrorsMapLikeBunErrors(t *testing.T) {
+func TestKeel_ErrorsMapThroughTheEntityMapping(t *testing.T) {
 	f := newRLSFixture(t, config.RLSModeEnforce)
 	conn := f.connect(t)
 	ctx := dbscope.WithTenant(t.Context(), f.tenantA)
@@ -360,14 +360,6 @@ func TestKeel_ErrorsMapLikeBunErrors(t *testing.T) {
 	})
 	assertNotFound(t, mapping.Map(err, ""), "Fleet code not found within your organization")
 
-	var bunErr error
-	_, bunErr = dbtx.Read(ctx, conn, func(ctx context.Context) (struct{}, error) {
-		return struct{}{}, conn.DBForContext(ctx).NewRaw(
-			"SELECT id FROM fleet_codes WHERE id = ?", pulid.MustNew("fc_"),
-		).Scan(ctx, new(string))
-	})
-	assert.Equal(t, mapping.Map(err, "").Error(), dberror.HandleNotFoundError(bunErr, "Fleet code").Error())
-
 	row := keelFleetCode(f.tenantA, "KEEL")
 	require.NoError(t, dbtx.WriteErr(ctx, conn, func(ctx context.Context) error {
 		return s.Create(ctx, db, row)
@@ -380,14 +372,14 @@ func TestKeel_ErrorsMapLikeBunErrors(t *testing.T) {
 	})
 	assertValidation(t, mapping.Map(err, ""), "id", errortypes.ErrDuplicate)
 
-	bunErr = dbtx.WriteErr(ctx, conn, func(ctx context.Context) error {
-		_, err := conn.DBForContext(ctx).NewRaw(
-			"INSERT INTO fleet_codes (id, code, organization_id, business_unit_id, manager_id) VALUES (?, 'BUN', ?, ?, ?)",
-			row.ID, f.tenantA.OrganizationID, f.tenantA.BusinessUnitID, f.tenantA.UserID,
-		).Exec(ctx)
+	rawErr := dbtx.WriteErr(ctx, conn, func(ctx context.Context) error {
+		_, err := keel.Exec(ctx, conn.Keel(ctx), insertFleetCodeSQL,
+			row.ID, "RAW", f.tenantA.OrganizationID.String(),
+			f.tenantA.BusinessUnitID.String(), f.tenantA.UserID.String(),
+		)
 		return err
 	})
-	assertValidation(t, mapping.Map(bunErr, ""), "id", errortypes.ErrDuplicate)
+	assertValidation(t, mapping.Map(rawErr, ""), "id", errortypes.ErrDuplicate)
 
 	orphan := keelFleetCode(f.tenantA, "ORPHAN")
 	orphan.ManagerID = pulid.MustNew("usr_").String()
@@ -419,29 +411,6 @@ func TestKeel_ErrorsMapLikeBunErrors(t *testing.T) {
 		return s.Create(ctx, db, other)
 	})
 	assert.True(t, dberror.IsTenantBoundaryViolation(err), "%v", err)
-}
-
-func TestKeel_BunTransactionHelpersStillWorkOnTheSharedConnection(t *testing.T) {
-	f := newRLSFixture(t, config.RLSModeEnforce)
-	conn := f.connect(t)
-	ctx := dbscope.WithTenant(t.Context(), f.tenantA)
-
-	err := conn.WithTx(ctx, kernelports.TxOptions{}, func(ctx context.Context, tx bun.Tx) error {
-		if err := keeltestdb.FleetCodes.Create(ctx, conn.Keel(ctx), keelFleetCode(f.tenantA, "KEEL")); err != nil {
-			return err
-		}
-
-		return tx.RunInTx(ctx, nil, func(inner context.Context, sp bun.Tx) error {
-			var codes []string
-			if err := sp.NewRaw("SELECT code FROM fleet_codes ORDER BY code").Scan(inner, &codes); err != nil {
-				return err
-			}
-			assert.Equal(t, []string{"FCA", "KEEL"}, codes)
-			assert.True(t, keel.InTx(inner, conn.Keel(inner)), "a Bun savepoint callback still carries the keel transaction")
-			return nil
-		})
-	})
-	require.NoError(t, err)
 }
 
 func assertNotFound(t *testing.T, err error, message string) {

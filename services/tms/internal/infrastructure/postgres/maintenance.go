@@ -3,18 +3,29 @@ package postgres
 import (
 	"context"
 	"fmt"
+	"os"
 	"time"
 
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/infrastructure/observability"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbpool"
-	"github.com/emoss08/trenova/pkg/domainregistry"
-	"github.com/uptrace/bun"
-	"github.com/uptrace/bun/extra/bundebug"
+	"go.uber.org/zap"
 )
 
-const maintenanceStatementBackstop = 30 * time.Minute
+const (
+	maintenanceStatementBackstop = 30 * time.Minute
+	maintenanceDebugEnv          = "BUNDEBUG"
+	maintenanceDebugOff          = "0"
+	maintenanceDebugVerbose      = "2"
+)
 
-func OpenMaintenanceDB(ctx context.Context, cfg *config.Config) (*bun.DB, error) {
+func OpenMaintenanceDB(ctx context.Context, cfg *config.Config) (*keel.DB, error) {
+	observers, err := maintenanceObservers(cfg)
+	if err != nil {
+		return nil, err
+	}
+
 	pool, err := dbpool.Open(ctx, &dbpool.Options{
 		DSN: cfg.GetMigrationDSN(),
 		RuntimeParams: map[string]string{
@@ -24,17 +35,28 @@ func OpenMaintenanceDB(ctx context.Context, cfg *config.Config) (*bun.DB, error)
 				max(cfg.Database.GetLockTimeout().Milliseconds(), 1),
 			),
 		},
+		Observers: observers,
 	})
 	if err != nil {
 		return nil, fmt.Errorf("open the maintenance connection: %w", err)
 	}
 
-	db := pool.Bun
-	if cfg.App.Debug {
-		db = db.WithQueryHook(bundebug.NewQueryHook(bundebug.FromEnv("BUNDEBUG")))
-	}
-	db.RegisterModel(domainregistry.RegisterManyToManyEntities()...)
-	db.RegisterModel(domainregistry.RegisterEntities()...)
+	return pool.Keel, nil
+}
 
-	return db, nil
+func maintenanceObservers(cfg *config.Config) ([]keel.Observer, error) {
+	mode := os.Getenv(maintenanceDebugEnv)
+	if !cfg.App.Debug || mode == maintenanceDebugOff {
+		return nil, nil
+	}
+
+	logger, err := zap.NewDevelopment()
+	if err != nil {
+		return nil, fmt.Errorf("build the maintenance query logger: %w", err)
+	}
+
+	return []keel.Observer{&debugObserver{
+		logger:  observability.NewContextLogger(logger).Named("keel"),
+		verbose: cfg.Database.Verbose || mode == maintenanceDebugVerbose,
+	}}, nil
 }

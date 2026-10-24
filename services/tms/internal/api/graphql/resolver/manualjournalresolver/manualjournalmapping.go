@@ -9,6 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/projection"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/manualjournal"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/manualjournal/manualjournaldb"
 	"github.com/emoss08/trenova/pkg/pagination"
 )
 
@@ -25,8 +26,9 @@ func manualJournalColumns(ctx context.Context, nodePathPrefix string) []string {
 	}
 
 	columns := selection.Columns
-	for _, key := range []string{"totalDebit", "totalCredit"} {
-		if column := projection.ManualJournalSpec.FieldMap[key]; !slices.Contains(columns, column) {
+	r := manualjournaldb.Requests
+	for _, column := range projection.ColumnNames(r.TotalDebit.Col, r.TotalCredit.Col) {
+		if !slices.Contains(columns, column) {
 			columns = append(columns, column)
 		}
 	}

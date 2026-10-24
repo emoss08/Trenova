@@ -10,9 +10,10 @@ import (
 	"sort"
 	"testing"
 
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/testutil/seedtest"
+	"github.com/jackc/pgx/v5"
 	"github.com/stretchr/testify/require"
-	"github.com/uptrace/bun"
 )
 
 // domainDirs are resolved from this file rather than the working directory:
@@ -112,22 +113,22 @@ func joinLines(lines []string) string {
 	return out
 }
 
+type booleanColumn struct {
+	Table  string `db:"table_name"`
+	Column string `db:"column_name"`
+}
+
 // columnsDefaultingTrue returns the "table.column" of every boolean column in
 // the migrated schema whose column default is TRUE.
-func columnsDefaultingTrue(t *testing.T, ctx context.Context, db *bun.DB) map[string]struct{} {
+func columnsDefaultingTrue(t *testing.T, ctx context.Context, db *keel.DB) map[string]struct{} {
 	t.Helper()
 
-	var rows []struct {
-		Table  string `bun:"table_name"`
-		Column string `bun:"column_name"`
-	}
-	require.NoError(t, db.NewSelect().
-		TableExpr("information_schema.columns").
-		Column("table_name", "column_name").
-		Where("table_schema = ?", "public").
-		Where("data_type = ?", "boolean").
-		Where("lower(column_default) LIKE ?", "true%").
-		Scan(ctx, &rows))
+	rows, err := keel.QueryAll(ctx, db, pgx.RowToStructByName[booleanColumn], `
+		SELECT table_name, column_name
+		FROM information_schema.columns
+		WHERE table_schema = $1 AND data_type = $2 AND lower(column_default) LIKE $3`,
+		"public", "boolean", "true%")
+	require.NoError(t, err)
 
 	out := make(map[string]struct{}, len(rows))
 	for _, row := range rows {

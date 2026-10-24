@@ -4,8 +4,8 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/emoss08/keel"
 	"github.com/jackc/pgx/v5"
-	"github.com/uptrace/bun"
 )
 
 type VectorState string
@@ -33,10 +33,7 @@ const vectorProbeTemplate = `SELECT
 FROM (SELECT 1) AS probe
 LEFT JOIN pg_extension AS ext ON ext.extname = %[2]s`
 
-var (
-	vectorProbeQuery    = fmt.Sprintf(vectorProbeTemplate, "?", "?")
-	vectorProbeQueryPgx = fmt.Sprintf(vectorProbeTemplate, "$1", "$2")
-)
+var vectorProbeQuery = fmt.Sprintf(vectorProbeTemplate, "$1", "$2")
 
 type RowQuerier interface {
 	QueryRow(ctx context.Context, sql string, args ...any) pgx.Row
@@ -54,15 +51,20 @@ func (v VectorSupport) ExtensionInstalled() bool {
 }
 
 type vectorProbeRow struct {
-	ExtensionVersion *string `bun:"extension_version"`
-	VersionSupported bool    `bun:"version_supported"`
-	SchemaPresent    bool    `bun:"schema_present"`
+	ExtensionVersion *string
+	VersionSupported bool
+	SchemaPresent    bool
 }
 
-func ProbeVector(ctx context.Context, db bun.IDB) (VectorSupport, error) {
+func (r *vectorProbeRow) scan(row pgx.Row) error {
+	return row.Scan(&r.ExtensionVersion, &r.VersionSupported, &r.SchemaPresent)
+}
+
+func ProbeVector(ctx context.Context, db *keel.DB) (VectorSupport, error) {
 	var row vectorProbeRow
-	if err := db.NewRaw(vectorProbeQuery, VectorSchemaTable, VectorExtensionName).
-		Scan(ctx, &row); err != nil {
+	if err := keel.QueryRows(ctx, db, func(r pgx.CollectableRow) error {
+		return row.scan(r)
+	}, vectorProbeQuery, VectorSchemaTable, VectorExtensionName); err != nil {
 		return VectorSupport{}, fmt.Errorf("probe pgvector: %w", err)
 	}
 
@@ -71,8 +73,7 @@ func ProbeVector(ctx context.Context, db bun.IDB) (VectorSupport, error) {
 
 func ProbeVectorPgx(ctx context.Context, q RowQuerier) (VectorSupport, error) {
 	var row vectorProbeRow
-	if err := q.QueryRow(ctx, vectorProbeQueryPgx, VectorSchemaTable, VectorExtensionName).
-		Scan(&row.ExtensionVersion, &row.VersionSupported, &row.SchemaPresent); err != nil {
+	if err := row.scan(q.QueryRow(ctx, vectorProbeQuery, VectorSchemaTable, VectorExtensionName)); err != nil {
 		return VectorSupport{}, fmt.Errorf("probe pgvector: %w", err)
 	}
 

@@ -12,6 +12,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/bootstrap"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/modules/agent/app/assistantturnservice"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
@@ -46,7 +47,7 @@ type deps struct {
 
 	Config           *config.Config
 	Logger           *zap.Logger
-	DB               kernelports.DBConnection
+	DB               *postgres.Connection
 	Assistant        agentports.AssistantService
 	Pages            agentports.PageAssistant
 	AgentDefinitions agentdefinitionports.AgentDefinitionService
@@ -81,7 +82,10 @@ type Bench struct {
 	locks       sync.Map
 	held        *namespaceLock
 	tidied      sync.Once
+	facts       factSource
 }
+
+type factSource func(ctx context.Context, session *Session, statement string) ([]string, error)
 
 func (b *Bench) exclusive(key string) func() {
 	value, _ := b.locks.LoadOrStore(key, &sync.Mutex{})

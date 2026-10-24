@@ -52,7 +52,6 @@ func OptionsFor(e *edition.Edition) fx.Option {
 		infrastructure.DatabaseModule,
 		modules.ValidatorModule,
 		modules.PostgresRepositoryModule,
-		modules.QueryCacheModule,
 		fuelcard.Module,
 		carrierintelinfra.Module,
 		accountinginfra.Module,

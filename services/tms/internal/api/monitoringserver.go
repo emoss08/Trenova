@@ -11,8 +11,8 @@ import (
 
 	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/metrics"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
-	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
@@ -24,7 +24,7 @@ type MonitoringServerParams struct {
 	Logger         *zap.Logger
 	LC             fx.Lifecycle
 	Metrics        *metrics.Registry
-	Database       kernelports.DBConnection
+	Database       *postgres.Connection
 	EDIMessageRepo ediports.EDIMessageRepository
 	EDIInboundRepo ediports.EDIInboundFileRepository
 	EDIProfileRepo ediports.EDICommunicationProfileRepository
@@ -35,10 +35,14 @@ type MonitoringServer struct {
 	cfg            *config.Config
 	logger         *zap.Logger
 	metrics        *metrics.Registry
-	database       kernelports.DBConnection
+	database       databaseHealth
 	ediMessageRepo ediports.EDIMessageRepository
 	ediInboundRepo ediports.EDIInboundFileRepository
 	ediProfileRepo ediports.EDICommunicationProfileRepository
+}
+
+type databaseHealth interface {
+	HealthCheck(ctx context.Context) error
 }
 
 type monitoringCheck struct {

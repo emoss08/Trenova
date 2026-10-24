@@ -1,15 +1,16 @@
 package agentreadtest
 
 import (
+	"context"
 	"strings"
 	"testing"
 
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/testutil/seedtest"
 	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/require"
-	"github.com/uptrace/bun"
 )
 
 // Tenant is an organization written for an integration test, and the person
@@ -34,11 +35,16 @@ func (t *Tenant) Scope() dbscope.Tenant {
 	}
 }
 
+// Ctx is ctx scoped to the tenant, for rows a test writes in it.
+func (t *Tenant) Ctx(ctx context.Context) context.Context {
+	return dbscope.WithTenant(ctx, t.Scope())
+}
+
 // SeedTenant writes a business unit, an organization and the person who
 // reads in it straight through the
 // admin connection, which row-level security does not hold. The label keeps
 // two tenants' unique columns apart.
-func SeedTenant(t *testing.T, admin *bun.DB, label string) *Tenant {
+func SeedTenant(t *testing.T, admin *keel.DB, label string) *Tenant {
 	t.Helper()
 
 	ctx := t.Context()
@@ -46,32 +52,30 @@ func SeedTenant(t *testing.T, admin *bun.DB, label string) *Tenant {
 	state := "us_" + strings.ToLower(label) + org.String()[4:12]
 	exec := func(query string, args ...any) {
 		t.Helper()
-		_, err := admin.ExecContext(ctx, query, args...)
+		_, err := keel.Exec(ctx, admin, query, args...)
 		require.NoError(t, err)
 	}
-	exec("INSERT INTO us_states (id, name, abbreviation) VALUES (?, ?, ?)",
+	exec("INSERT INTO us_states (id, name, abbreviation) VALUES ($1, $2, $3)",
 		state, "State "+label, label+"X")
-	var jurisdiction pulid.ID
-	require.NoError(t, admin.QueryRowContext(ctx, `INSERT INTO ifta_jurisdictions
+	jurisdiction, err := keel.QueryValue[string](ctx, admin, `INSERT INTO ifta_jurisdictions
 		(id, country_code, code, name, is_ifta_member, has_surcharge)
-		VALUES (?, 'US', ?, ?, true, false)
+		VALUES ($1, 'US', $2, $3, true, false)
 		ON CONFLICT (country_code, code) DO UPDATE SET name = EXCLUDED.name
 		RETURNING id`,
-		pulid.MustNew("ifj_"), label+"X", "Jurisdiction "+label).Scan(&jurisdiction))
-	exec("INSERT INTO business_units (id, name, code) VALUES (?, ?, ?)",
-		bu, "BU "+label, "BU"+label+bu.String()[3:9])
+		pulid.MustNew("ifj_").String(), label+"X", "Jurisdiction "+label)
+	require.NoError(t, err)
+	exec("INSERT INTO business_units (id, name, code) VALUES ($1, $2, $3)",
+		bu.String(), "BU "+label, "BU"+label+bu.String()[3:9])
 	exec(`INSERT INTO organizations (id, state_id, business_unit_id, name, scac_code, dot_number,
 		bucket_name, address_line1, city, postal_code)
-		VALUES (?, ?, ?, ?, ?, ?, ?, 'Line 1', 'City', '75001')`,
-		org, state, bu, "Org "+label, "SC"+label+"X", "10"+label, "bucket-"+strings.ToLower(label))
+		VALUES ($1, $2, $3, $4, $5, $6, $7, 'Line 1', 'City', '75001')`,
+		org.String(), state, bu.String(), "Org "+label, "SC"+label+"X", "10"+label,
+		"bucket-"+strings.ToLower(label))
 
-	tx, err := admin.BeginTx(ctx, nil)
-	require.NoError(t, err)
 	person := seedtest.NewUser(org, bu).
 		WithUsername("reader_"+strings.ToLower(label)+org.String()[4:12]).
 		WithEmail("reader_"+strings.ToLower(label)+org.String()[4:12]+"@example.com").
-		Build(t, ctx, tx)
-	require.NoError(t, tx.Commit())
+		Build(t, ctx, admin)
 	user := person.ID
 
 	return &Tenant{
@@ -83,6 +87,6 @@ func SeedTenant(t *testing.T, admin *bun.DB, label string) *Tenant {
 			BusinessUnitID: bu,
 		},
 		StateID:        pulid.ID(state),
-		JurisdictionID: jurisdiction,
+		JurisdictionID: pulid.ID(jurisdiction),
 	}
 }

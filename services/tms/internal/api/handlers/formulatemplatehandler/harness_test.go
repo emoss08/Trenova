@@ -10,13 +10,13 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
-	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/modules/rating/app/formulatemplateservice"
 	"github.com/emoss08/trenova/internal/modules/rating/app/tariff"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/formulalibrary"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/formulatemplate"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/rateagreementports"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/tariffports"
+	"github.com/emoss08/trenova/internal/testutil/dbtest"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/internal/testutil/mocks/formulalibraryportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/formulatemplateportsmock"
@@ -24,7 +24,6 @@ import (
 	"github.com/emoss08/trenova/pkg/rules"
 	"github.com/emoss08/trenova/shared/testutil"
 	"github.com/stretchr/testify/mock"
-	"github.com/uptrace/bun"
 	"go.uber.org/zap"
 )
 
@@ -48,21 +47,6 @@ const brokenSource = `tariff "Per Mile"
 
 charge "Per Mile" (quantity: shipment.distance, rate: ratee)
 `
-
-type testDBConnection struct{}
-
-func (testDBConnection) DB() *bun.DB                          { return nil }
-func (testDBConnection) DBForContext(context.Context) bun.IDB { return nil }
-func (testDBConnection) HealthCheck(context.Context) error    { return nil }
-func (testDBConnection) IsHealthy(context.Context) bool       { return true }
-func (testDBConnection) Close() error                         { return nil }
-func (testDBConnection) WithTx(
-	ctx context.Context,
-	_ kernelports.TxOptions,
-	fn func(context.Context, bun.Tx) error,
-) error {
-	return fn(ctx, bun.Tx{})
-}
 
 type grantedEngine struct {
 	permissionports.PermissionEngine
@@ -190,7 +174,7 @@ func newFixture(t *testing.T, opts fixtureOptions) *fixture {
 	})
 	service := formulatemplateservice.New(formulatemplateservice.Params{
 		Logger:          logger,
-		DB:              testDBConnection{},
+		DB:              dbtest.NopConnection{},
 		Repo:            f.repo,
 		VersionRepo:     f.versions,
 		ReviewRepo:      formulatemplateportsmock.NewMockFormulaTemplateReviewRepository(t),
