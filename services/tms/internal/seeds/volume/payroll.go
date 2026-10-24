@@ -1,13 +1,17 @@
-package volumeseed
+package volume
 
 import (
 	"context"
-	"database/sql"
 	"errors"
 	"fmt"
 	"sort"
 	"strings"
 	"time"
+
+	"github.com/emoss08/keel"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant/tenantdb"
+	"github.com/emoss08/trenova/internal/modules/settlement/domain/driverpay/driverpaydb"
+	"github.com/emoss08/trenova/internal/modules/settlement/domain/driversettlement/driversettlementdb"
 
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
@@ -18,7 +22,6 @@ import (
 	"github.com/emoss08/trenova/shared/money"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
-	"github.com/uptrace/bun"
 )
 
 const (
@@ -165,7 +168,7 @@ func (g *generator) seedPayroll(ctx context.Context) error {
 		return err
 	}
 
-	if err = g.inTx(ctx, func(ctx context.Context, tx bun.Tx) error {
+	if err = g.inTx(ctx, func(ctx context.Context, tx *keel.DB) error {
 		return g.payWrite(ctx, tx, rows, journals)
 	}); err != nil {
 		return err
@@ -198,43 +201,33 @@ func (g *generator) payLoadSetup(ctx context.Context) (*paySetup, error) {
 		allowDisputes: true,
 	}
 
-	control := new(tenant.SettlementControl)
-	err := g.db.NewSelect().Model(control).
-		Where("stlc.organization_id = ?", g.refs.orgID).
-		Where("stlc.business_unit_id = ?", g.refs.buID).
-		Limit(1).
-		Scan(ctx)
+	control, err := firstOrNil(ctx, g.db, tenantdb.SettlementControls.Query())
 	switch {
-	case err == nil:
-	case errors.Is(err, sql.ErrNoRows):
-		control = &tenant.SettlementControl{
-			PayPeriodFrequency:    tenant.PayPeriodFrequencyWeekly,
-			PeriodEndDayOfWeek:    6,
-			PayDelayDays:          5,
-			VarianceThresholdPct:  decimal.NewFromInt(25),
-			VarianceLookbackWeeks: 8,
-		}
-	default:
+	case err != nil:
 		return nil, fmt.Errorf("load settlement control: %w", err)
+	case control == nil:
+		control = &tenant.SettlementControl{
+			PayPeriodFrequency:            tenant.PayPeriodFrequencyWeekly,
+			PeriodEndDayOfWeek:            6,
+			PayDelayDays:                  5,
+			VarianceThresholdPct:          decimal.NewFromInt(25),
+			VarianceLookbackWeeks:         8,
+			PayTrigger:                    tenant.PayTriggerShipmentDelivered,
+			EscrowInterestFrequencyMonths: 3,
+		}
 	}
 	setup.control = control
 
-	dash := new(tenant.DashControl)
-	err = g.db.NewSelect().Model(dash).
-		Where("dashc.organization_id = ?", g.refs.orgID).
-		Where("dashc.business_unit_id = ?", g.refs.buID).
-		Limit(1).
-		Scan(ctx)
-	switch {
-	case err == nil:
-		setup.allowDisputes = dash.AllowSettlementDisputes
-		setup.requireReceipt = dash.RequireExpenseReceipt
-	case errors.Is(err, sql.ErrNoRows):
-	default:
+	dash, err := firstOrNil(ctx, g.db, tenantdb.DashControls.Query())
+	if err != nil {
 		return nil, fmt.Errorf("load dash control: %w", err)
 	}
+	if dash != nil {
+		setup.allowDisputes = dash.AllowSettlementDisputes
+		setup.requireReceipt = dash.RequireExpenseReceipt
+	}
 
-	if err = g.inTx(ctx, func(ctx context.Context, tx bun.Tx) error {
+	if err = g.inTx(ctx, func(ctx context.Context, tx *keel.DB) error {
 		if txErr := g.payEnsureCodes(ctx, tx, setup); txErr != nil {
 			return txErr
 		}
@@ -247,16 +240,11 @@ func (g *generator) payLoadSetup(ctx context.Context) (*paySetup, error) {
 		return nil, err
 	}
 
-	accounting := make([]*tenant.AccountingControl, 0, 1)
-	if err = g.db.NewSelect().Model(&accounting).
-		Where("ac.organization_id = ?", g.refs.orgID).
-		Where("ac.business_unit_id = ?", g.refs.buID).
-		Limit(1).
-		Scan(ctx); err != nil {
-		return nil, fmt.Errorf("load accounting control: %w", err)
+	ac, err := g.accountingControl(ctx)
+	if err != nil {
+		return nil, err
 	}
-	if len(accounting) > 0 {
-		ac := accounting[0]
+	if ac != nil {
 		setup.accounts = payAccounts{
 			companyExpense: ac.DefaultDriverPayExpenseAccountID,
 			ownerExpense:   ac.DefaultPurchasedTransportationAccountID,
@@ -288,7 +276,7 @@ var payCustomCodes = []struct {
 	{"WASHOUT", "Trailer Washout Reimbursement"},
 }
 
-func (g *generator) payEnsureCodes(ctx context.Context, tx bun.Tx, setup *paySetup) error {
+func (g *generator) payEnsureCodes(ctx context.Context, tx *keel.DB, setup *paySetup) error {
 	at := unix(g.start) - 400*payDay
 	rows := make([]*driverpay.PayCode, 0, len(driverpay.SystemPayCodes())+len(payCustomCodes))
 	for _, def := range driverpay.SystemPayCodes() {
@@ -317,21 +305,17 @@ func (g *generator) payEnsureCodes(ctx context.Context, tx bun.Tx, setup *paySet
 			Description:    "Non-taxable reimbursement of a driver-paid trip expense",
 		})
 	}
-	res, err := tx.NewInsert().Model(&rows).
-		On("CONFLICT (organization_id, business_unit_id, direction, code) DO NOTHING").
-		Exec(ctx)
+	pc := driverpaydb.PayCodes
+	inserted, err := pc.CreateOrSkip(ctx, tx, rows, pc.OrganizationID, pc.BusinessUnitID, pc.Direction, pc.Code)
 	if err != nil {
 		return fmt.Errorf("insert pay codes: %w", err)
 	}
-	if inserted, countErr := res.RowsAffected(); countErr == nil && inserted > 0 {
+	if inserted > 0 {
 		g.report.add("Pay codes", int(inserted))
 	}
 
-	var codes []*driverpay.PayCode
-	if err := tx.NewSelect().Model(&codes).
-		Where("payc.organization_id = ?", g.refs.orgID).
-		Where("payc.business_unit_id = ?", g.refs.buID).
-		Scan(ctx); err != nil {
+	codes, err := pc.Query().All(ctx, tx)
+	if err != nil {
 		return fmt.Errorf("load pay codes: %w", err)
 	}
 	for _, code := range codes {
@@ -345,7 +329,7 @@ func (g *generator) payEnsureCodes(ctx context.Context, tx bun.Tx, setup *paySet
 	for i, r := range rows {
 		stamps[i] = stamp{id: r.ID, created: at, updated: at}
 	}
-	return backdate(ctx, tx, "pay_codes", g.refs.orgID, stamps)
+	return backdate(ctx, tx, driverpaydb.PayCodes.Handle, stamps)
 }
 
 func payComponent(
@@ -399,6 +383,10 @@ func payProfileDefs() []*driverpay.PayProfile {
 				payComponent(driverpay.ComponentKindHazmat, driverpay.CalcMethodPerEvent,
 					"Hazmat load premium", 50, 3),
 			},
+
+			Status: domaintypes.StatusActive,
+
+			CurrencyCode: "USD",
 		},
 		{
 			Name:           payProfileOwnerRevenue,
@@ -409,6 +397,10 @@ func payProfileDefs() []*driverpay.PayProfile {
 				payComponent(driverpay.ComponentKindStopPay, driverpay.CalcMethodPerStop,
 					"Extra stops beyond pickup and delivery", 30, 1),
 			},
+
+			Status: domaintypes.StatusActive,
+
+			CurrencyCode: "USD",
 		},
 		{
 			Name:                         payProfileRegional,
@@ -423,6 +415,10 @@ func payProfileDefs() []*driverpay.PayProfile {
 				payComponent(driverpay.ComponentKindLayover, driverpay.CalcMethodPerDay,
 					"Layover per 24 hours away from home terminal", 75, 2),
 			},
+
+			Status: domaintypes.StatusActive,
+
+			CurrencyCode: "USD",
 		},
 		{
 			Name:           payProfileLocal,
@@ -435,6 +431,10 @@ func payProfileDefs() []*driverpay.PayProfile {
 					"Extra stops beyond pickup and delivery", 30, 1),
 				detention(20, 90, 2),
 			},
+
+			Status: domaintypes.StatusActive,
+
+			CurrencyCode: "USD",
 		},
 		{
 			Name:           payProfileTeam,
@@ -449,6 +449,10 @@ func payProfileDefs() []*driverpay.PayProfile {
 				payComponent(driverpay.ComponentKindHazmat, driverpay.CalcMethodPerEvent,
 					"Hazmat load premium", 60, 3),
 			},
+
+			Status: domaintypes.StatusActive,
+
+			CurrencyCode: "USD",
 		},
 		{
 			Name:           payProfileOwnerLinehaul,
@@ -461,17 +465,18 @@ func payProfileDefs() []*driverpay.PayProfile {
 				payComponent(driverpay.ComponentKindHazmat, driverpay.CalcMethodPerEvent,
 					"Hazmat load premium", 75, 2),
 			},
+
+			Status: domaintypes.StatusActive,
+
+			CurrencyCode: "USD",
 		},
 	}
 }
 
-func (g *generator) payEnsureProfiles(ctx context.Context, tx bun.Tx, setup *paySetup) error {
-	var existing []*driverpay.PayProfile
-	if err := tx.NewSelect().Model(&existing).
-		Relation("Components").
-		Where("dpp.organization_id = ?", g.refs.orgID).
-		Where("dpp.business_unit_id = ?", g.refs.buID).
-		Scan(ctx); err != nil {
+func (g *generator) payEnsureProfiles(ctx context.Context, tx *keel.DB, setup *paySetup) error {
+	pp := driverpaydb.PayProfiles
+	existing, err := pp.Load(pp.Components()).All(ctx, tx)
+	if err != nil {
 		return fmt.Errorf("load pay profiles: %w", err)
 	}
 	byName := make(map[string]*driverpay.PayProfile, len(existing))
@@ -516,16 +521,16 @@ func (g *generator) payEnsureProfiles(ctx context.Context, tx bun.Tx, setup *pay
 		clone.Components = nil
 		inserting[i] = &clone
 	}
-	if err := insertBatches(ctx, tx, inserting, g.opts.BatchSize); err != nil {
+	if err := insertRows(ctx, tx, driverpaydb.PayProfiles.Handle, inserting); err != nil {
 		return fmt.Errorf("insert pay profiles: %w", err)
 	}
-	if err := insertBatches(ctx, tx, components, g.opts.BatchSize); err != nil {
+	if err := insertRows(ctx, tx, driverpaydb.PayProfileComponents.Handle, components); err != nil {
 		return fmt.Errorf("insert pay profile components: %w", err)
 	}
-	if err := backdate(ctx, tx, "driver_pay_profiles", g.refs.orgID, stamps); err != nil {
+	if err := backdate(ctx, tx, driverpaydb.PayProfiles.Handle, stamps); err != nil {
 		return err
 	}
-	if err := backdate(ctx, tx, "driver_pay_profile_components", g.refs.orgID, compStamps); err != nil {
+	if err := backdate(ctx, tx, driverpaydb.PayProfileComponents.Handle, compStamps); err != nil {
 		return err
 	}
 	g.report.add("Pay profiles", len(profiles))
@@ -2304,24 +2309,23 @@ func payPostingLegs(e *driversettlement.Settlement, setup *paySetup) []bilLeg {
 
 // -- Write --
 
-func (g *generator) payWrite(ctx context.Context, tx bun.Tx, rows *payRows, journals *bilRows) error {
-	size := g.opts.BatchSize
+func (g *generator) payWrite(ctx context.Context, tx *keel.DB, rows *payRows, journals *bilRows) error {
 	steps := []struct {
 		table string
 		run   func() error
 	}{
-		{"worker_pay_assignments", func() error { return insertBatches(ctx, tx, rows.assignments, size) }},
-		{"escrow_accounts", func() error { return insertBatches(ctx, tx, rows.escrows, size) }},
-		{"recurring_deductions", func() error { return insertBatches(ctx, tx, rows.deductions, size) }},
-		{"recurring_earnings", func() error { return insertBatches(ctx, tx, rows.earnings, size) }},
-		{"pay_advances", func() error { return insertBatches(ctx, tx, rows.advances, size) }},
-		{"driver_settlement_batches", func() error { return insertBatches(ctx, tx, rows.batches, size) }},
-		{"driver_settlements", func() error { return insertBatches(ctx, tx, rows.settlements, size) }},
-		{"driver_settlement_lines", func() error { return insertBatches(ctx, tx, rows.lines, size) }},
-		{"driver_pay_events", func() error { return insertBatches(ctx, tx, rows.events, size) }},
-		{"escrow_transactions", func() error { return insertBatches(ctx, tx, rows.escrowTxs, size) }},
-		{"driver_expenses", func() error { return insertBatches(ctx, tx, rows.expenses, size) }},
-		{"settlement_disputes", func() error { return insertBatches(ctx, tx, rows.disputes, size) }},
+		{"worker_pay_assignments", func() error { return insertRows(ctx, tx, driverpaydb.WorkerPayAssignments.Handle, rows.assignments) }},
+		{"escrow_accounts", func() error { return insertRows(ctx, tx, driverpaydb.EscrowAccounts.Handle, rows.escrows) }},
+		{"recurring_deductions", func() error { return insertRows(ctx, tx, driverpaydb.RecurringDeductions.Handle, rows.deductions) }},
+		{"recurring_earnings", func() error { return insertRows(ctx, tx, driverpaydb.RecurringEarnings.Handle, rows.earnings) }},
+		{"pay_advances", func() error { return insertRows(ctx, tx, driverpaydb.PayAdvances.Handle, rows.advances) }},
+		{"driver_settlement_batches", func() error { return insertRows(ctx, tx, driversettlementdb.SettlementBatches.Handle, rows.batches) }},
+		{"driver_settlements", func() error { return insertRows(ctx, tx, driversettlementdb.Settlements.Handle, rows.settlements) }},
+		{"driver_settlement_lines", func() error { return insertRows(ctx, tx, driversettlementdb.SettlementLines.Handle, rows.lines) }},
+		{"driver_pay_events", func() error { return insertRows(ctx, tx, driversettlementdb.PayEvents.Handle, rows.events) }},
+		{"escrow_transactions", func() error { return insertRows(ctx, tx, driverpaydb.EscrowTransactions.Handle, rows.escrowTxs) }},
+		{"driver_expenses", func() error { return insertRows(ctx, tx, driverpaydb.Expenses.Handle, rows.expenses) }},
+		{"settlement_disputes", func() error { return insertRows(ctx, tx, driversettlementdb.Disputes.Handle, rows.disputes) }},
 	}
 	for _, step := range steps {
 		if err := step.run(); err != nil {
@@ -2335,7 +2339,7 @@ func (g *generator) payWrite(ctx context.Context, tx bun.Tx, rows *payRows, jour
 	}
 	sort.Strings(tables)
 	for _, table := range tables {
-		if err := backdate(ctx, tx, table, g.refs.orgID, rows.stamps[table]); err != nil {
+		if err := backdateTable(ctx, tx, table, rows.stamps[table]); err != nil {
 			return err
 		}
 	}
@@ -2343,7 +2347,7 @@ func (g *generator) payWrite(ctx context.Context, tx bun.Tx, rows *payRows, jour
 	for i, t := range rows.escrowTxs {
 		txStamps[i] = stamp{id: t.ID, created: t.CreatedAt}
 	}
-	if err := bilBackdateCreated(ctx, tx, "escrow_transactions", g.refs.orgID, txStamps); err != nil {
+	if err := backdateTableCreated(ctx, tx, "escrow_transactions", txStamps); err != nil {
 		return err
 	}
 

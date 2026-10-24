@@ -1,14 +1,36 @@
-package volumeseed
+package volume
 
 import (
 	"context"
-	"database/sql"
 	"errors"
 	"fmt"
 	"slices"
 	"sort"
 	"strings"
 	"time"
+
+	"github.com/emoss08/keel"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/glaccount/glaccountdb"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/journalentry"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/journalentry/journalentrydb"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/journalreversal/journalreversaldb"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/journalsource/journalsourcedb"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/manualjournal/manualjournaldb"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/bankreceipt/bankreceiptdb"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/bankreceiptbatch/bankreceiptbatchdb"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/bankreceiptworkitem/bankreceiptworkitemdb"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/collection/collectiondb"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/customerledger/customerledgerdb"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/customerpayment/customerpaymentdb"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/customerstatement/customerstatementdb"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/factoring"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/factoring/factoringdb"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice/invoicedb"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/latecharge/latechargedb"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/paymentreminder/paymentreminderdb"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant/tenantdb"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/customer/customerdb"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/factoringcompany/factoringcompanydb"
 
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/journalreversal"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/manualjournal"
@@ -24,13 +46,10 @@ import (
 	"github.com/emoss08/trenova/internal/modules/billing/domain/paymentreminder"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/customer"
-	"github.com/emoss08/trenova/pkg/dbhelper"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/shared/money"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
-	"github.com/uptrace/bun"
-	"github.com/uptrace/bun/dialect/pgdialect"
 )
 
 const (
@@ -96,46 +115,52 @@ func (c *cashInvoice) paidOffAt() int64 {
 }
 
 type cashInvoiceRow struct {
-	ID            pulid.ID `bun:"id"`
-	Number        string   `bun:"number"`
-	CustomerID    pulid.ID `bun:"customer_id"`
-	BillType      string   `bun:"bill_type"`
-	MemoKind      string   `bun:"memo_kind"`
-	TotalMinor    int64    `bun:"total_amount_minor"`
-	AppliedMinor  int64    `bun:"applied_amount_minor"`
-	InvoiceDate   int64    `bun:"invoice_date"`
-	DueDate       *int64   `bun:"due_date"`
-	UpdatedAt     int64    `bun:"updated_at"`
-	DisputeStatus string   `bun:"dispute_status"`
-	Factored      bool     `bun:"factored"`
-	NonRecourse   bool     `bun:"non_recourse"`
+	ID                   pulid.ID
+	Number               string
+	CustomerID           pulid.ID
+	BillType             string
+	MemoKind             string
+	TotalMinor           int64
+	AppliedMinor         int64
+	InvoiceDate          int64
+	DueDate              *int64
+	UpdatedAt            int64
+	DisputeStatus        string
+	FactoringCompanyID   *pulid.ID
+	FactoringAgreementID *pulid.ID
 }
 
 type cashApplicationRow struct {
-	InvoiceID    pulid.ID `bun:"invoice_id"`
-	AppliedMinor int64    `bun:"applied_amount_minor"`
-	AppliedAt    int64    `bun:"applied_at"`
+	InvoiceID    pulid.ID
+	AppliedMinor int64
+	AppliedAt    int64
 }
 
 type cashLedgerRow struct {
-	CustomerID      pulid.ID `bun:"customer_id"`
-	TransactionDate int64    `bun:"transaction_date"`
-	AmountMinor     int64    `bun:"amount_minor"`
+	CustomerID      pulid.ID
+	TransactionDate int64
+	AmountMinor     int64
 }
 
 type cashProfile struct {
-	CustomerID           pulid.ID            `bun:"customer_id"`
-	ApplyLateCharges     bool                `bun:"apply_late_charges"`
-	LateChargeRate       decimal.NullDecimal `bun:"late_charge_rate"`
-	GracePeriodDays      int                 `bun:"grace_period_days"`
-	SendPaymentReminders bool                `bun:"send_payment_reminders"`
-	SendStatements       bool                `bun:"send_statements"`
+	CustomerID           pulid.ID
+	ApplyLateCharges     bool
+	LateChargeRate       decimal.NullDecimal
+	GracePeriodDays      int
+	SendPaymentReminders bool
+	SendStatements       bool
 }
 
 type cashReversal struct {
-	ID         pulid.ID `bun:"id"`
-	ReversedAt *int64   `bun:"reversed_at"`
-	Reason     string   `bun:"reversal_reason"`
+	ID         pulid.ID
+	ReversedAt *int64
+	Reason     string
+}
+
+type cashFactoring struct {
+	chargedBack map[pulid.ID]struct{}
+	nonRecourse map[pulid.ID]bool
+	recourse    map[pulid.ID]factoring.Recourse
 }
 
 // cashSending is the organization's own setting for each feature that emails
@@ -209,18 +234,18 @@ func (g *generator) cashRestoreSending(ctx context.Context, st *cashState) error
 	if !sending.lateChanged && !sending.remindersChange && !sending.statementChange {
 		return nil
 	}
-	q := g.db.NewUpdate().Model((*tenant.BillingControl)(nil)).
-		Where("organization_id = ?", g.refs.orgID)
+	bc := tenantdb.BillingControls
+	var sets []keel.Assignment
 	if sending.lateChanged {
-		q = q.Set("late_charge_assessment_mode = ?", sending.lateCharges)
+		sets = append(sets, bc.LateChargeAssessmentMode.To(sending.lateCharges))
 	}
 	if sending.remindersChange {
-		q = q.Set("payment_reminders_enabled = ?", sending.reminders)
+		sets = append(sets, bc.PaymentRemindersEnabled.To(sending.reminders))
 	}
 	if sending.statementChange {
-		q = q.Set("monthly_statements_enabled = ?", sending.statements)
+		sets = append(sets, bc.MonthlyStatementsEnabled.To(sending.statements))
 	}
-	if _, err := q.Exec(ctx); err != nil {
+	if _, err := bc.Where(keel.True()).Update(ctx, g.db, sets...); err != nil {
 		return fmt.Errorf("restore late charge, reminder and statement settings: %w", err)
 	}
 	g.opts.Logf(
@@ -246,59 +271,41 @@ func (g *generator) cashLoad(ctx context.Context) (*cashState, error) {
 		ids = append(ids, c.ID)
 	}
 
-	billing := new(tenant.BillingControl)
-	err := g.db.NewSelect().Model(billing).
-		Where("bc.organization_id = ?", g.refs.orgID).
-		Limit(1).
-		Scan(ctx)
-	switch {
-	case errors.Is(err, sql.ErrNoRows):
-	case err != nil:
+	var err error
+	if st.billing, err = firstOrNil(ctx, g.db, tenantdb.BillingControls.Query()); err != nil {
 		return nil, fmt.Errorf("load billing control: %w", err)
-	default:
-		st.billing = billing
 	}
-
-	accounting := new(tenant.AccountingControl)
-	err = g.db.NewSelect().Model(accounting).
-		Where("ac.organization_id = ?", g.refs.orgID).
-		Where("ac.business_unit_id = ?", g.refs.buID).
-		Limit(1).
-		Scan(ctx)
-	switch {
-	case errors.Is(err, sql.ErrNoRows):
-	case err != nil:
-		return nil, fmt.Errorf("load accounting control: %w", err)
-	default:
-		st.accounting = accounting
+	if st.accounting, err = g.accountingControl(ctx); err != nil {
+		return nil, err
 	}
 
 	if st.setup, err = g.bilLoadSetup(ctx); err != nil {
 		return nil, err
 	}
 
-	var zone string
-	if err = g.db.NewSelect().Model((*tenant.Organization)(nil)).
-		ColumnExpr("org.timezone").
-		Where("org.id = ?", g.refs.orgID).
-		Scan(ctx, &zone); err != nil {
+	o := tenantdb.Organizations
+	org, err := o.Pick(o.Timezone).Where(o.ID.Eq(g.refs.orgID)).One(ctx, g.db)
+	if err != nil {
 		return nil, fmt.Errorf("load organization timezone: %w", err)
 	}
-	if loc, locErr := time.LoadLocation(zone); locErr == nil {
+	if loc, locErr := time.LoadLocation(org.Timezone); locErr == nil {
 		st.loc = loc
 	}
 
-	var profiles []*cashProfile
-	if err = g.db.NewSelect().TableExpr("customer_billing_profiles AS cbp").
-		ColumnExpr("cbp.customer_id, cbp.apply_late_charges, cbp.late_charge_rate").
-		ColumnExpr("cbp.grace_period_days, cbp.send_payment_reminders, cbp.send_statements").
-		Where("cbp.organization_id = ?", g.refs.orgID).
-		Where("cbp.business_unit_id = ?", g.refs.buID).
-		Where("cbp.customer_id IN (?)", bun.List(ids)).
-		Scan(ctx, &profiles); err != nil {
+	cbp := customerdb.CustomerBillingProfiles
+	profiles, err := keel.Into[cashProfile](ctx, g.db, cbp.Where(cbp.CustomerID.In(ids...)).Pick(
+		cbp.CustomerID,
+		cbp.ApplyLateCharges,
+		cbp.LateChargeRate,
+		cbp.GracePeriodDays,
+		cbp.SendPaymentReminders,
+		cbp.SendStatements,
+	))
+	if err != nil {
 		return nil, fmt.Errorf("load billing profiles: %w", err)
 	}
-	for _, p := range profiles {
+	for i := range profiles {
+		p := &profiles[i]
 		st.profiles[p.CustomerID] = p
 	}
 
@@ -306,13 +313,13 @@ func (g *generator) cashLoad(ctx context.Context) (*cashState, error) {
 		return nil, err
 	}
 
-	var ledger []cashLedgerRow
-	if err = g.db.NewSelect().TableExpr("customer_ledger_entries AS cle").
-		ColumnExpr("cle.customer_id, cle.transaction_date, cle.amount_minor").
-		Where("cle.organization_id = ?", g.refs.orgID).
-		Where("cle.business_unit_id = ?", g.refs.buID).
-		Where("cle.customer_id IN (?)", bun.List(ids)).
-		Scan(ctx, &ledger); err != nil {
+	cle := customerledgerdb.CustomerLedgerEntries
+	ledger, err := keel.Into[cashLedgerRow](ctx, g.db, cle.Where(cle.CustomerID.In(ids...)).Pick(
+		cle.CustomerID,
+		cle.TransactionDate,
+		cle.AmountMinor,
+	))
+	if err != nil {
 		return nil, fmt.Errorf("load customer ledger: %w", err)
 	}
 	for _, row := range ledger {
@@ -322,43 +329,95 @@ func (g *generator) cashLoad(ctx context.Context) (*cashState, error) {
 	return st, nil
 }
 
-// cashFactoredExpr and cashNonRecourseExpr mirror the app's reminder and
-// collection queries: the factor collects an assigned invoice until it is
-// charged back, and a non-recourse factor carries its credit risk.
-const (
-	cashFactoredExpr = `(inv.factoring_company_id IS NOT NULL AND NOT EXISTS (
-		SELECT 1 FROM factoring_submission_items AS fsi
-		WHERE fsi.organization_id = inv.organization_id
-			AND fsi.business_unit_id = inv.business_unit_id
-			AND fsi.invoice_id = inv.id
-			AND fsi.status = 'ChargedBack'))`
-	cashNonRecourseExpr = `COALESCE((
-		SELECT COALESCE(agr.recourse = 'NonRecourse', fac.non_recourse)
-		FROM factoring_companies AS fac
-		LEFT JOIN factoring_agreements AS agr
-			ON agr.id = inv.factoring_agreement_id
-			AND agr.organization_id = inv.organization_id
-			AND agr.business_unit_id = inv.business_unit_id
-		WHERE fac.id = inv.factoring_company_id
-			AND fac.organization_id = inv.organization_id
-			AND fac.business_unit_id = inv.business_unit_id), FALSE)`
-)
+func (g *generator) cashLoadFactoring(ctx context.Context) (*cashFactoring, error) {
+	out := &cashFactoring{
+		chargedBack: make(map[pulid.ID]struct{}),
+		nonRecourse: make(map[pulid.ID]bool),
+		recourse:    make(map[pulid.ID]factoring.Recourse),
+	}
+
+	fsi := factoringdb.SubmissionItems
+	charged, err := fsi.Pick(fsi.InvoiceID).
+		Where(fsi.Status.Eq(factoring.SubmissionItemStatusChargedBack)).
+		All(ctx, g.db)
+	if err != nil {
+		return nil, fmt.Errorf("load charged back factoring items: %w", err)
+	}
+	for _, item := range charged {
+		out.chargedBack[item.InvoiceID] = struct{}{}
+	}
+
+	fc := factoringcompanydb.FactoringCompanies
+	companies, err := fc.Pick(fc.ID, fc.NonRecourse).All(ctx, g.db)
+	if err != nil {
+		return nil, fmt.Errorf("load factoring companies: %w", err)
+	}
+	for _, company := range companies {
+		out.nonRecourse[company.ID] = company.NonRecourse
+	}
+
+	fa := factoringdb.Agreements
+	agreements, err := fa.Pick(fa.ID, fa.Recourse).All(ctx, g.db)
+	if err != nil {
+		return nil, fmt.Errorf("load factoring agreements: %w", err)
+	}
+	for _, agreement := range agreements {
+		out.recourse[agreement.ID] = agreement.Recourse
+	}
+
+	return out, nil
+}
+
+func (f *cashFactoring) factored(row *cashInvoiceRow) bool {
+	if row.FactoringCompanyID == nil || row.FactoringCompanyID.IsNil() {
+		return false
+	}
+	_, charged := f.chargedBack[row.ID]
+	return !charged
+}
+
+func (f *cashFactoring) carriesRisk(row *cashInvoiceRow) bool {
+	if row.FactoringCompanyID == nil {
+		return false
+	}
+	nonRecourse, ok := f.nonRecourse[*row.FactoringCompanyID]
+	if !ok {
+		return false
+	}
+	if row.FactoringAgreementID != nil {
+		if recourse, found := f.recourse[*row.FactoringAgreementID]; found {
+			return recourse == factoring.RecourseNone
+		}
+	}
+	return nonRecourse
+}
 
 func (g *generator) cashLoadInvoices(ctx context.Context, st *cashState, ids []pulid.ID) error {
-	var rows []cashInvoiceRow
-	if err := g.db.NewSelect().TableExpr("invoices AS inv").
-		ColumnExpr("inv.id, inv.number, inv.customer_id, inv.bill_type::text AS bill_type").
-		ColumnExpr("COALESCE(inv.memo_kind::text, '') AS memo_kind").
-		ColumnExpr("inv.total_amount_minor, inv.applied_amount_minor, inv.invoice_date").
-		ColumnExpr("inv.due_date, inv.updated_at, inv.dispute_status::text AS dispute_status").
-		ColumnExpr(cashFactoredExpr+" AS factored").
-		ColumnExpr(cashNonRecourseExpr+" AS non_recourse").
-		Where("inv.organization_id = ?", g.refs.orgID).
-		Where("inv.business_unit_id = ?", g.refs.buID).
-		Where("inv.status = ?", invoice.StatusPosted).
-		Where("inv.customer_id IN (?)", bun.List(ids)).
-		Scan(ctx, &rows); err != nil {
+	inv := invoicedb.Invoices
+	rows, err := keel.Into[cashInvoiceRow](ctx, g.db, inv.Where(
+		inv.Status.Eq(invoice.StatusPosted),
+		inv.CustomerID.In(ids...),
+	).Pick(
+		inv.ID,
+		inv.Number,
+		inv.CustomerID,
+		keel.Raw("?::text", inv.BillType),
+		keel.Raw("COALESCE(?::text, '')", inv.MemoKind),
+		inv.TotalAmountMinor,
+		inv.AppliedAmountMinor,
+		inv.InvoiceDate,
+		inv.DueDate,
+		inv.UpdatedAt,
+		keel.Raw("COALESCE(?::text, '')", inv.DisputeStatus),
+		inv.FactoringCompanyID,
+		inv.FactoringAgreementID,
+	))
+	if err != nil {
 		return fmt.Errorf("load posted invoices: %w", err)
+	}
+	factors, err := g.cashLoadFactoring(ctx)
+	if err != nil {
+		return err
 	}
 
 	byID := make(map[pulid.ID]*cashInvoice, len(rows))
@@ -378,8 +437,8 @@ func (g *generator) cashLoadInvoices(ctx context.Context, st *cashState, ids []p
 			applied:     row.AppliedMinor,
 			invoiceDate: row.InvoiceDate,
 			disputed:    row.DisputeStatus == string(invoice.DisputeStatusDisputed),
-			factored:    row.Factored,
-			nonRecourse: row.NonRecourse,
+			factored:    factors.factored(row),
+			nonRecourse: factors.carriesRisk(row),
 		}
 		if row.DueDate != nil {
 			inv.due = *row.DueDate
@@ -388,38 +447,54 @@ func (g *generator) cashLoadInvoices(ctx context.Context, st *cashState, ids []p
 		st.invoices = append(st.invoices, inv)
 	}
 
-	var apps []cashApplicationRow
-	if err := g.db.NewSelect().TableExpr("customer_payment_applications AS cpa").
-		Join("JOIN customer_payments AS cp ON cp.id = cpa.customer_payment_id"+
-			" AND cp.organization_id = cpa.organization_id AND cp.business_unit_id = cpa.business_unit_id").
-		ColumnExpr("cpa.invoice_id, cpa.applied_amount_minor, cp.payment_date AS applied_at").
-		Where("cp.organization_id = ?", g.refs.orgID).
-		Where("cp.business_unit_id = ?", g.refs.buID).
-		Where("cp.customer_id IN (?)", bun.List(ids)).
-		Where("cp.status = ?", customerpayment.StatusPosted).
-		Scan(ctx, &apps); err != nil {
+	cp := customerpaymentdb.Payments
+	posted, err := cp.Pick(cp.ID, cp.PaymentDate).Where(
+		cp.CustomerID.In(ids...),
+		cp.Status.Eq(customerpayment.StatusPosted),
+	).All(ctx, g.db)
+	if err != nil {
+		return fmt.Errorf("load posted payments: %w", err)
+	}
+	paidAt := make(map[pulid.ID]int64, len(posted))
+	paymentIDs := make([]pulid.ID, 0, len(posted))
+	for _, p := range posted {
+		paidAt[p.ID] = p.PaymentDate
+		paymentIDs = append(paymentIDs, p.ID)
+	}
+	cpa := customerpaymentdb.Applications
+	paymentApps, err := cpa.Pick(cpa.CustomerPaymentID, cpa.InvoiceID, cpa.AppliedAmountMinor).
+		Where(cpa.CustomerPaymentID.In(paymentIDs...)).
+		All(ctx, g.db)
+	if err != nil {
 		return fmt.Errorf("load payment applications: %w", err)
 	}
-	var memoApps []cashApplicationRow
-	if err := g.db.NewSelect().TableExpr("credit_memo_applications AS cma").
-		Join("JOIN invoices AS inv ON inv.id = cma.invoice_id"+
-			" AND inv.organization_id = cma.organization_id AND inv.business_unit_id = cma.business_unit_id").
-		ColumnExpr("cma.invoice_id, cma.applied_amount_minor, cma.accounting_date AS applied_at").
-		Where("cma.organization_id = ?", g.refs.orgID).
-		Where("cma.business_unit_id = ?", g.refs.buID).
-		Where("cma.status = ?", customerpayment.CreditApplicationStatusApplied).
-		Where("inv.customer_id IN (?)", bun.List(ids)).
-		Scan(ctx, &memoApps); err != nil {
+	apps := make([]cashApplicationRow, 0, len(paymentApps))
+	for _, app := range paymentApps {
+		apps = append(apps, cashApplicationRow{
+			InvoiceID:    app.InvoiceID,
+			AppliedMinor: app.AppliedAmountMinor,
+			AppliedAt:    paidAt[app.CustomerPaymentID],
+		})
+	}
+
+	invoiceIDs := make([]pulid.ID, 0, len(rows))
+	for i := range rows {
+		invoiceIDs = append(invoiceIDs, rows[i].ID)
+	}
+	cma := customerpaymentdb.CreditMemoApplications
+	memoApps, err := keel.Into[cashApplicationRow](ctx, g.db, cma.Where(
+		cma.Status.Eq(customerpayment.CreditApplicationStatusApplied),
+		cma.InvoiceID.In(invoiceIDs...),
+	).Pick(cma.InvoiceID, cma.AppliedAmountMinor, cma.AccountingDate))
+	if err != nil {
 		return fmt.Errorf("load credit memo applications: %w", err)
 	}
-	var factorApps []cashApplicationRow
-	if err := g.db.NewSelect().TableExpr("factoring_reserve_entries AS fre").
-		ColumnExpr("fre.invoice_id, -fre.ar_minor AS applied_amount_minor, fre.accounting_date AS applied_at").
-		Where("fre.organization_id = ?", g.refs.orgID).
-		Where("fre.business_unit_id = ?", g.refs.buID).
-		Where("fre.customer_id IN (?)", bun.List(ids)).
-		Where("fre.ar_minor <> 0").
-		Scan(ctx, &factorApps); err != nil {
+	fre := factoringdb.ReserveEntries
+	factorApps, err := keel.Into[cashApplicationRow](ctx, g.db, fre.Where(
+		fre.CustomerID.In(ids...),
+		fre.ARMinor.Ne(0),
+	).Pick(fre.InvoiceID, keel.Raw("-?", fre.ARMinor), fre.AccountingDate))
+	if err != nil {
 		return fmt.Errorf("load factoring settlements: %w", err)
 	}
 	for _, app := range slices.Concat(apps, memoApps, factorApps) {
@@ -459,11 +534,9 @@ func (g *generator) cashLoadInvoices(ctx context.Context, st *cashState, ids []p
 // features that email customers are switched back by cashRestoreSending.
 func (g *generator) cashEnableFeatures(ctx context.Context, st *cashState) error {
 	if st.accounting != nil && st.accounting.ReconciliationMode == tenant.ReconciliationModeDisabled {
-		if _, err := g.db.NewUpdate().Model((*tenant.AccountingControl)(nil)).
-			Set("reconciliation_mode = ?", tenant.ReconciliationModeWarnOnly).
-			Where("organization_id = ?", g.refs.orgID).
-			Where("business_unit_id = ?", g.refs.buID).
-			Exec(ctx); err != nil {
+		ac := tenantdb.AccountingControls
+		if _, err := ac.Where(keel.True()).
+			Update(ctx, g.db, ac.ReconciliationMode.To(tenant.ReconciliationModeWarnOnly)); err != nil {
 			return fmt.Errorf("enable bank reconciliation: %w", err)
 		}
 		st.accounting.ReconciliationMode = tenant.ReconciliationModeWarnOnly
@@ -474,17 +547,15 @@ func (g *generator) cashEnableFeatures(ctx context.Context, st *cashState) error
 	}
 
 	b := st.billing
-	q := g.db.NewUpdate().Model((*tenant.BillingControl)(nil)).
-		Where("organization_id = ?", g.refs.orgID)
-	changed := false
+	bc := tenantdb.BillingControls
+	var sets []keel.Assignment
 	if b.LateChargeAssessmentMode == tenant.LateChargeAssessmentModeDisabled || b.LateChargeAssessmentMode == "" {
 		st.sending.lateCharges, st.sending.lateChanged = b.LateChargeAssessmentMode, true
 		if st.sending.lateCharges == "" {
 			st.sending.lateCharges = tenant.LateChargeAssessmentModeDisabled
 		}
 		b.LateChargeAssessmentMode = tenant.LateChargeAssessmentModeAutomatic
-		q = q.Set("late_charge_assessment_mode = ?", b.LateChargeAssessmentMode)
-		changed = true
+		sets = append(sets, bc.LateChargeAssessmentMode.To(b.LateChargeAssessmentMode))
 		g.opts.Logf("  • set late charge assessment to Automatic")
 	}
 	if !b.PaymentRemindersEnabled || len(b.PaymentReminderDays) == 0 {
@@ -493,9 +564,7 @@ func (g *generator) cashEnableFeatures(ctx context.Context, st *cashState) error
 		if len(b.PaymentReminderDays) == 0 {
 			b.PaymentReminderDays = slices.Clone(tenant.DefaultPaymentReminderDays)
 		}
-		q = q.Set("payment_reminders_enabled = ?", true).
-			Set("payment_reminder_days = ?", pgdialect.Array(b.PaymentReminderDays))
-		changed = true
+		sets = append(sets, bc.PaymentRemindersEnabled.To(true), bc.PaymentReminderDays.To(b.PaymentReminderDays))
 		g.opts.Logf("  • enabled payment reminders")
 	}
 	if !b.MonthlyStatementsEnabled || b.MonthlyStatementDay < 1 {
@@ -504,15 +573,13 @@ func (g *generator) cashEnableFeatures(ctx context.Context, st *cashState) error
 		if b.MonthlyStatementDay < 1 {
 			b.MonthlyStatementDay = 1
 		}
-		q = q.Set("monthly_statements_enabled = ?", true).
-			Set("monthly_statement_day = ?", b.MonthlyStatementDay)
-		changed = true
+		sets = append(sets, bc.MonthlyStatementsEnabled.To(true), bc.MonthlyStatementDay.To(b.MonthlyStatementDay))
 		g.opts.Logf("  • enabled monthly statements")
 	}
-	if !changed {
+	if len(sets) == 0 {
 		return nil
 	}
-	if _, err := q.Exec(ctx); err != nil {
+	if _, err := bc.Where(keel.True()).Update(ctx, g.db, sets...); err != nil {
 		return fmt.Errorf("enable receivables features: %w", err)
 	}
 
@@ -563,17 +630,16 @@ func (g *generator) cashReversedPayments(ctx context.Context) (map[pulid.ID]*cas
 	for _, p := range g.payments {
 		ids = append(ids, p.ID)
 	}
-	var rows []*cashReversal
-	if err := g.db.NewSelect().TableExpr("customer_payments AS cp").
-		ColumnExpr("cp.id, cp.reversed_at, COALESCE(cp.reversal_reason, '') AS reversal_reason").
-		Where("cp.organization_id = ?", g.refs.orgID).
-		Where("cp.business_unit_id = ?", g.refs.buID).
-		Where("cp.status = ?", customerpayment.StatusReversed).
-		Where("cp.id IN (?)", bun.List(ids)).
-		Scan(ctx, &rows); err != nil {
+	cp := customerpaymentdb.Payments
+	rows, err := keel.Into[cashReversal](ctx, g.db, cp.Where(
+		cp.Status.Eq(customerpayment.StatusReversed),
+		cp.ID.In(ids...),
+	).Pick(cp.ID, cp.ReversedAt, keel.Raw("COALESCE(?, '')", cp.ReversalReason)))
+	if err != nil {
 		return nil, fmt.Errorf("load reversed payments: %w", err)
 	}
-	for _, r := range rows {
+	for i := range rows {
+		r := &rows[i]
 		out[r.ID] = r
 	}
 	return out, nil
@@ -908,24 +974,23 @@ func (g *generator) cashBankReceipts(ctx context.Context, st *cashState) error {
 	if len(rows.receipts) == 0 {
 		return nil
 	}
-	if err = g.inTx(ctx, func(ctx context.Context, tx bun.Tx) error {
-		org, size := g.refs.orgID, g.opts.BatchSize
-		if txErr := insertBatches(ctx, tx, rows.batches, size); txErr != nil {
+	if err = g.inTx(ctx, func(ctx context.Context, tx *keel.DB) error {
+		if txErr := insertRows(ctx, tx, bankreceiptbatchdb.BankReceiptBatches.Handle, rows.batches); txErr != nil {
 			return fmt.Errorf("insert bank receipt batches: %w", txErr)
 		}
-		if txErr := insertBatches(ctx, tx, rows.receipts, size); txErr != nil {
+		if txErr := insertRows(ctx, tx, bankreceiptdb.BankReceipts.Handle, rows.receipts); txErr != nil {
 			return fmt.Errorf("insert bank receipts: %w", txErr)
 		}
-		if txErr := insertBatches(ctx, tx, rows.items, size); txErr != nil {
+		if txErr := insertRows(ctx, tx, bankreceiptworkitemdb.WorkItems.Handle, rows.items); txErr != nil {
 			return fmt.Errorf("insert bank receipt work items: %w", txErr)
 		}
-		if txErr := backdate(ctx, tx, "bank_receipt_import_batches", org, rows.batchStamps); txErr != nil {
+		if txErr := backdate(ctx, tx, bankreceiptbatchdb.BankReceiptBatches.Handle, rows.batchStamps); txErr != nil {
 			return txErr
 		}
-		if txErr := backdate(ctx, tx, "bank_receipts", org, rows.receiptStamps); txErr != nil {
+		if txErr := backdate(ctx, tx, bankreceiptdb.BankReceipts.Handle, rows.receiptStamps); txErr != nil {
 			return txErr
 		}
-		return backdate(ctx, tx, "bank_receipt_work_items", org, rows.itemStamps)
+		return backdate(ctx, tx, bankreceiptworkitemdb.WorkItems.Handle, rows.itemStamps)
 	}); err != nil {
 		return err
 	}
@@ -1218,14 +1283,14 @@ func (g *generator) cashLateCharges(ctx context.Context, st *cashState) error {
 	if err = g.bilMaterialize(ctx, rows); err != nil {
 		return err
 	}
-	if err = g.inTx(ctx, func(ctx context.Context, tx bun.Tx) error {
+	if err = g.inTx(ctx, func(ctx context.Context, tx *keel.DB) error {
 		if txErr := g.bilWrite(ctx, tx, rows); txErr != nil {
 			return txErr
 		}
-		if txErr := insertBatches(ctx, tx, assessments, g.opts.BatchSize); txErr != nil {
+		if txErr := insertRows(ctx, tx, latechargedb.LateChargeAssessments.Handle, assessments); txErr != nil {
 			return fmt.Errorf("insert late charge assessments: %w", txErr)
 		}
-		return backdate(ctx, tx, "late_charge_assessments", g.refs.orgID, assessmentStamps)
+		return backdate(ctx, tx, latechargedb.LateChargeAssessments.Handle, assessmentStamps)
 	}); err != nil {
 		return err
 	}
@@ -1307,8 +1372,8 @@ func (g *generator) cashReminders(ctx context.Context, st *cashState) error {
 	if len(rows) == 0 {
 		return nil
 	}
-	if err := g.inTx(ctx, func(ctx context.Context, tx bun.Tx) error {
-		if txErr := insertBatches(ctx, tx, rows, g.opts.BatchSize); txErr != nil {
+	if err := g.inTx(ctx, func(ctx context.Context, tx *keel.DB) error {
+		if txErr := insertRows(ctx, tx, paymentreminderdb.Reminders.Handle, rows); txErr != nil {
 			return fmt.Errorf("insert payment reminders: %w", txErr)
 		}
 		return nil
@@ -1384,8 +1449,8 @@ func (g *generator) cashStatements(ctx context.Context, st *cashState) error {
 	if len(rows) == 0 {
 		return nil
 	}
-	if err := g.inTx(ctx, func(ctx context.Context, tx bun.Tx) error {
-		if txErr := insertBatches(ctx, tx, rows, g.opts.BatchSize); txErr != nil {
+	if err := g.inTx(ctx, func(ctx context.Context, tx *keel.DB) error {
+		if txErr := insertRows(ctx, tx, customerstatementdb.Statements.Handle, rows); txErr != nil {
 			return fmt.Errorf("insert customer statements: %w", txErr)
 		}
 		return nil
@@ -1575,14 +1640,14 @@ func (g *generator) cashCollections(ctx context.Context, st *cashState) error {
 		return nil
 	}
 
-	if err := g.inTx(ctx, func(ctx context.Context, tx bun.Tx) error {
-		if txErr := insertBatches(ctx, tx, accounts, g.opts.BatchSize); txErr != nil {
+	if err := g.inTx(ctx, func(ctx context.Context, tx *keel.DB) error {
+		if txErr := insertRows(ctx, tx, collectiondb.Accounts.Handle, accounts); txErr != nil {
 			return fmt.Errorf("insert collection accounts: %w", txErr)
 		}
-		if txErr := insertBatches(ctx, tx, activities, g.opts.BatchSize); txErr != nil {
+		if txErr := insertRows(ctx, tx, collectiondb.Activities.Handle, activities); txErr != nil {
 			return fmt.Errorf("insert collection activities: %w", txErr)
 		}
-		return backdate(ctx, tx, "collection_accounts", g.refs.orgID, accountStamps)
+		return backdate(ctx, tx, collectiondb.Accounts.Handle, accountStamps)
 	}); err != nil {
 		return err
 	}
@@ -1637,23 +1702,18 @@ func (g *generator) cashAccounts(ctx context.Context) (map[string]pulid.ID, erro
 	for _, t := range cashJournalTemplates {
 		codes = append(codes, t.debit, t.credit)
 	}
-	var rows []struct {
-		ID   pulid.ID `bun:"id"`
-		Code string   `bun:"account_code"`
-	}
-	if err := g.db.NewSelect().TableExpr("gl_accounts AS gla").
-		ColumnExpr("gla.id, gla.account_code").
-		Where("gla.organization_id = ?", g.refs.orgID).
-		Where("gla.business_unit_id = ?", g.refs.buID).
-		Where("gla.account_code IN (?)", bun.List(codes)).
-		Where("gla.allow_manual_je = TRUE").
-		Where("gla.status = ?", domaintypes.StatusActive).
-		Scan(ctx, &rows); err != nil {
+	ga := glaccountdb.GLAccounts
+	rows, err := ga.Pick(ga.ID, ga.AccountCode).Where(
+		ga.AccountCode.In(codes...),
+		ga.AllowManualJE.IsTrue(),
+		ga.Status.Eq(domaintypes.StatusActive),
+	).All(ctx, g.db)
+	if err != nil {
 		return nil, fmt.Errorf("load manual journal accounts: %w", err)
 	}
 	out := make(map[string]pulid.ID, len(rows))
 	for _, r := range rows {
-		out[r.Code] = r.ID
+		out[r.AccountCode] = r.ID
 	}
 	return out, nil
 }
@@ -1854,7 +1914,7 @@ func (g *generator) cashManualJournals(ctx context.Context, st *cashState) error
 		}
 	}
 
-	if err = g.inTx(ctx, func(ctx context.Context, tx bun.Tx) error {
+	if err = g.inTx(ctx, func(ctx context.Context, tx *keel.DB) error {
 		if txErr := g.bilWrite(ctx, tx, posted); txErr != nil {
 			return txErr
 		}
@@ -1863,20 +1923,20 @@ func (g *generator) cashManualJournals(ctx context.Context, st *cashState) error
 				return txErr
 			}
 		}
-		if txErr := insertBatches(ctx, tx, requests, g.opts.BatchSize); txErr != nil {
+		if txErr := insertRows(ctx, tx, manualjournaldb.Requests.Handle, requests); txErr != nil {
 			return fmt.Errorf("insert manual journal requests: %w", txErr)
 		}
-		if txErr := insertBatches(ctx, tx, lines, g.opts.BatchSize); txErr != nil {
+		if txErr := insertRows(ctx, tx, manualjournaldb.Lines.Handle, lines); txErr != nil {
 			return fmt.Errorf("insert manual journal lines: %w", txErr)
 		}
-		if txErr := backdate(ctx, tx, "manual_journal_requests", g.refs.orgID, requestStamps); txErr != nil {
+		if txErr := backdate(ctx, tx, manualjournaldb.Requests.Handle, requestStamps); txErr != nil {
 			return txErr
 		}
-		if txErr := backdate(ctx, tx, "manual_journal_request_lines", g.refs.orgID, lineStamps); txErr != nil {
+		if txErr := backdate(ctx, tx, manualjournaldb.Lines.Handle, lineStamps); txErr != nil {
 			return txErr
 		}
 		if len(reversals.entities) > 0 {
-			if txErr := insertBatches(ctx, tx, reversals.entities, g.opts.BatchSize); txErr != nil {
+			if txErr := insertRows(ctx, tx, journalreversaldb.Reversals.Handle, reversals.entities); txErr != nil {
 				return fmt.Errorf("insert journal reversals: %w", txErr)
 			}
 		}
@@ -2062,7 +2122,7 @@ func (g *generator) cashReversals(
 	return set, reversed, nil
 }
 
-func (g *generator) cashMarkReversed(ctx context.Context, tx bun.Tx, reversed []cashReversedEntry) error {
+func (g *generator) cashMarkReversed(ctx context.Context, tx *keel.DB, reversed []cashReversedEntry) error {
 	if len(reversed) == 0 {
 		return nil
 	}
@@ -2076,28 +2136,23 @@ func (g *generator) cashMarkReversed(ctx context.Context, tx bun.Tx, reversed []
 		dates[i] = r.date
 		users[i] = r.by.String()
 	}
-	if _, err := tx.NewRaw(`
-		UPDATE journal_entries AS je
-		SET status = ?, reversed_by_id = d.reversal_id, reversal_date = d.reversal_date,
-			reversal_reason = ?, updated_by_id = d.user_id, version = je.version + 1
-		FROM unnest(?::varchar[], ?::varchar[], ?::bigint[], ?::varchar[])
-			AS d(id, reversal_id, reversal_date, user_id)
-		WHERE je.id = d.id AND je.organization_id = ? AND je.business_unit_id = ?`,
-		cashJournalStatusReversed,
-		reversed[0].reason,
-		pgdialect.Array(originals),
-		pgdialect.Array(reversals),
-		pgdialect.Array(dates),
-		pgdialect.Array(users),
-		g.refs.orgID,
-		g.refs.buID,
-	).Exec(ctx); err != nil {
+	je := journalentrydb.JournalEntries
+	d := keel.Unnest("d", []string{"id", "reversal_id", "reversal_date", "user_id"},
+		originals, reversals, dates, users)
+	if _, err := je.With(d).Join(d, d.Col("id").EqCol(je.ID)).Where(keel.True()).Update(
+		ctx,
+		tx,
+		je.Status.To(journalentry.StatusReversed),
+		je.ReversedByID.ToExpr(d.Col("reversal_id")),
+		je.ReversalDate.ToExpr(d.Col("reversal_date")),
+		je.ReversalReason.To(reversed[0].reason),
+		je.UpdatedByID.ToExpr(d.Col("user_id")),
+		keepUpdated(je.Handle),
+	); err != nil {
 		return fmt.Errorf("mark reversed journal entries: %w", err)
 	}
 	return nil
 }
-
-const cashJournalStatusReversed = "Reversed"
 
 // cashJournalsToPost puts the most recent system journals back in the posting
 // queue when the organization posts journals by hand. Under manual posting the
@@ -2112,31 +2167,28 @@ func (g *generator) cashJournalsToPost(ctx context.Context, st *cashState) error
 	}
 	cutoff := unix(g.now) - cashPendingWindow
 
-	var targets []struct {
-		ID      pulid.ID `bun:"id"`
-		BatchID pulid.ID `bun:"batch_id"`
-	}
-	if err := g.db.NewSelect().TableExpr("journal_entries AS je").
-		ColumnExpr("je.id, COALESCE(je.batch_id, '') AS batch_id").
-		Where("je.organization_id = ?", g.refs.orgID).
-		Where("je.business_unit_id = ?", g.refs.buID).
-		Where("je.status = ?", cashJournalPosted).
-		Where("je.is_auto_generated = TRUE").
-		Where("je.is_reversal = FALSE").
-		Where("je.reversed_by_id IS NULL").
-		Where("je.accounting_date >= ?", cutoff).
-		Scan(ctx, &targets); err != nil {
+	je := journalentrydb.JournalEntries
+	targets, err := je.Pick(je.ID, je.BatchID, je.FiscalYearID, je.FiscalPeriodID).Where(
+		je.Status.Eq(journalentry.Status(cashJournalPosted)),
+		je.IsAutoGenerated.IsTrue(),
+		je.IsReversal.IsFalse(),
+		je.ReversedByID.IsNull(),
+		je.AccountingDate.Gte(cutoff),
+	).All(ctx, g.db)
+	if err != nil {
 		return fmt.Errorf("load recent system journals: %w", err)
 	}
 	if len(targets) == 0 {
 		return nil
 	}
-	entryIDs := make([]string, 0, len(targets))
-	batchIDs := make([]string, 0, len(targets))
+	entryIDs := make([]pulid.ID, 0, len(targets))
+	batchIDs := make([]pulid.ID, 0, len(targets))
+	byEntry := make(map[pulid.ID]*journalentry.JournalEntry, len(targets))
 	for _, t := range targets {
-		entryIDs = append(entryIDs, t.ID.String())
+		entryIDs = append(entryIDs, t.ID)
+		byEntry[t.ID] = t
 		if t.BatchID.IsNotNil() {
-			batchIDs = append(batchIDs, t.BatchID.String())
+			batchIDs = append(batchIDs, t.BatchID)
 		}
 	}
 
@@ -2144,83 +2196,52 @@ func (g *generator) cashJournalsToPost(ctx context.Context, st *cashState) error
 	if st.accounting.RequireManualJEApproval {
 		status = cashJournalPending
 	}
-	org, bu := g.refs.orgID, g.refs.buID
-	entries, batches := pgdialect.Array(entryIDs), pgdialect.Array(batchIDs)
 
-	if err := g.inTx(ctx, func(ctx context.Context, tx bun.Tx) error {
-		if _, err := tx.NewRaw(`
-			UPDATE gl_account_balances_by_period AS gb
-			SET period_debit_minor = gb.period_debit_minor - d.debit,
-				period_credit_minor = gb.period_credit_minor - d.credit,
-				net_change_minor = gb.net_change_minor - d.net,
-				updated_at = `+dbhelper.NowEpoch+`
-			FROM (
-				SELECT jel.gl_account_id, je.fiscal_year_id, je.fiscal_period_id,
-					SUM(jel.debit_amount) AS debit, SUM(jel.credit_amount) AS credit,
-					SUM(jel.net_amount) AS net
-				FROM journal_entry_lines AS jel
-				JOIN journal_entries AS je ON je.id = jel.journal_entry_id
-					AND je.organization_id = jel.organization_id
-					AND je.business_unit_id = jel.business_unit_id
-				WHERE je.organization_id = ? AND je.business_unit_id = ? AND je.id = ANY(?::varchar[])
-				GROUP BY jel.gl_account_id, je.fiscal_year_id, je.fiscal_period_id
-			) AS d
-			WHERE gb.organization_id = ? AND gb.business_unit_id = ?
-				AND gb.gl_account_id = d.gl_account_id
-				AND gb.fiscal_year_id = d.fiscal_year_id
-				AND gb.fiscal_period_id = d.fiscal_period_id`,
-			org, bu, entries, org, bu,
-		).Exec(ctx); err != nil {
-			return fmt.Errorf("roll back period balances: %w", err)
-		}
-		if _, err := tx.NewRaw(`
-			UPDATE gl_accounts AS gla
-			SET current_balance = gla.current_balance - d.net,
-				debit_balance = gla.debit_balance - d.debit,
-				credit_balance = gla.credit_balance - d.credit,
-				updated_at = `+dbhelper.NowEpoch+`
-			FROM (
-				SELECT jel.gl_account_id, SUM(jel.debit_amount) AS debit,
-					SUM(jel.credit_amount) AS credit, SUM(jel.net_amount) AS net
-				FROM journal_entry_lines AS jel
-				WHERE jel.organization_id = ? AND jel.business_unit_id = ?
-					AND jel.journal_entry_id = ANY(?::varchar[])
-				GROUP BY jel.gl_account_id
-			) AS d
-			WHERE gla.id = d.gl_account_id AND gla.organization_id = ? AND gla.business_unit_id = ?`,
-			org, bu, entries, org, bu,
-		).Exec(ctx); err != nil {
-			return fmt.Errorf("roll back account balances: %w", err)
+	jel := journalentrydb.JournalEntryLines
+	lines, err := jel.Pick(jel.JournalEntryID, jel.GLAccountID, jel.DebitAmount, jel.CreditAmount, jel.NetAmount).
+		Where(jel.JournalEntryID.In(entryIDs...)).
+		All(ctx, g.db)
+	if err != nil {
+		return fmt.Errorf("load recent system journal lines: %w", err)
+	}
+
+	if err = g.inTx(ctx, func(ctx context.Context, tx *keel.DB) error {
+		if err := rollBackBalances(ctx, tx, lines, byEntry); err != nil {
+			return err
 		}
 
 		approved := status == cashJournalApproved
-		if _, err := tx.NewRaw(`
-			UPDATE journal_entries
-			SET status = ?, is_posted = FALSE, posted_at = NULL, posted_by_id = NULL,
-				requires_approval = ?, is_approved = ?,
-				approved_at = CASE WHEN ? THEN approved_at ELSE NULL END,
-				approved_by_id = CASE WHEN ? THEN approved_by_id ELSE NULL END
-			WHERE organization_id = ? AND business_unit_id = ? AND id = ANY(?::varchar[])`,
-			status, !approved, approved, approved, approved, org, bu, entries,
-		).Exec(ctx); err != nil {
+		sets := []keel.Assignment{
+			je.Status.To(journalentry.Status(status)),
+			je.IsPosted.To(false),
+			je.PostedAt.ToNull(),
+			je.PostedByID.ToNull(),
+			je.RequiresApproval.To(!approved),
+			je.IsApproved.To(approved),
+			keepUpdated(je.Handle),
+		}
+		if !approved {
+			sets = append(sets, je.ApprovedAt.ToNull(), je.ApprovedByID.ToNull())
+		}
+		if _, err := je.Where(je.ID.In(entryIDs...)).Update(ctx, tx, sets...); err != nil {
 			return fmt.Errorf("queue journal entries: %w", err)
 		}
 		if len(batchIDs) > 0 {
-			if _, err := tx.NewRaw(`
-				UPDATE journal_batches
-				SET status = ?, posted_at = NULL, posted_by_id = NULL
-				WHERE organization_id = ? AND business_unit_id = ? AND id = ANY(?::varchar[])`,
-				status, org, bu, batches,
-			).Exec(ctx); err != nil {
+			jb := journalentrydb.JournalBatches
+			if _, err := jb.Where(jb.ID.In(batchIDs...)).Update(
+				ctx,
+				tx,
+				jb.Status.To(status),
+				jb.PostedAt.ToNull(),
+				jb.PostedByID.ToNull(),
+				keepUpdated(jb.Handle),
+			); err != nil {
 				return fmt.Errorf("queue journal batches: %w", err)
 			}
 		}
-		if _, err := tx.NewRaw(`
-			UPDATE journal_sources
-			SET status = ?
-			WHERE organization_id = ? AND business_unit_id = ? AND journal_entry_id = ANY(?::varchar[])`,
-			status, org, bu, entries,
-		).Exec(ctx); err != nil {
+		js := journalsourcedb.Sources
+		if _, err := js.Where(js.JournalEntryID.In(entryIDs...)).
+			Update(ctx, tx, js.Status.To(status)); err != nil {
 			return fmt.Errorf("queue journal sources: %w", err)
 		}
 		return nil

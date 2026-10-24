@@ -1,15 +1,19 @@
-package volumeseed
+package volume
 
 import (
 	"context"
-	"database/sql"
-	"errors"
 	"fmt"
 	"sort"
 	"strings"
 	"time"
 
-	"github.com/emoss08/trenova/internal/modules/accounting/domain/glaccount"
+	"github.com/emoss08/keel"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/edi/edidb"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant/tenantdb"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/carrier/carrierdb"
+	"github.com/emoss08/trenova/internal/modules/rating/domain/rateconfirmation/rateconfirmationdb"
+	"github.com/emoss08/trenova/internal/modules/settlement/domain/carriersettlement/carriersettlementdb"
+
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
@@ -20,8 +24,6 @@ import (
 	"github.com/emoss08/trenova/shared/money"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
-	"github.com/uptrace/bun"
-	"github.com/uptrace/bun/dialect/pgdialect"
 )
 
 const (
@@ -188,7 +190,7 @@ func (g *generator) seedCarrierSettlements(ctx context.Context) error {
 		return err
 	}
 
-	if err = g.inTx(ctx, func(ctx context.Context, tx bun.Tx) error {
+	if err = g.inTx(ctx, func(ctx context.Context, tx *keel.DB) error {
 		return g.csWrite(ctx, tx, rows)
 	}); err != nil {
 		return err
@@ -222,14 +224,11 @@ func (g *generator) csBrokeredMoves() []*csMove {
 }
 
 func (g *generator) csLoadSetup(ctx context.Context) (*csSetup, error) {
-	control := new(tenant.CarrierSettlementControl)
-	err := g.db.NewSelect().Model(control).
-		Where("carstlc.organization_id = ?", g.refs.orgID).
-		Where("carstlc.business_unit_id = ?", g.refs.buID).
-		Limit(1).
-		Scan(ctx)
+	control, err := firstOrNil(ctx, g.db, tenantdb.CarrierSettlementControls.Query())
 	switch {
-	case errors.Is(err, sql.ErrNoRows):
+	case err != nil:
+		return nil, fmt.Errorf("load carrier settlement control: %w", err)
+	case control == nil:
 		control = &tenant.CarrierSettlementControl{
 			OrganizationID:     g.refs.orgID,
 			BusinessUnitID:     g.refs.buID,
@@ -238,11 +237,9 @@ func (g *generator) csLoadSetup(ctx context.Context) (*csSetup, error) {
 			PeriodEndDayOfWeek: 6,
 			PayDelayDays:       5,
 		}
-		if _, err = g.db.NewInsert().Model(control).Exec(ctx); err != nil {
+		if err = tenantdb.CarrierSettlementControls.Create(ctx, g.db, control); err != nil {
 			return nil, fmt.Errorf("create carrier settlement control: %w", err)
 		}
-	case err != nil:
-		return nil, fmt.Errorf("load carrier settlement control: %w", err)
 	}
 
 	billing, err := g.bilLoadSetup(ctx)
@@ -251,13 +248,12 @@ func (g *generator) csLoadSetup(ctx context.Context) (*csSetup, error) {
 	}
 	setup := &csSetup{control: control, billing: billing}
 
-	accounting := new(tenant.AccountingControl)
-	if err = g.db.NewSelect().Model(accounting).
-		Where("ac.organization_id = ?", g.refs.orgID).
-		Where("ac.business_unit_id = ?", g.refs.buID).
-		Limit(1).
-		Scan(ctx); err != nil && !errors.Is(err, sql.ErrNoRows) {
-		return nil, fmt.Errorf("load accounting control: %w", err)
+	accounting, err := g.accountingControl(ctx)
+	if err != nil {
+		return nil, err
+	}
+	if accounting == nil {
+		accounting = new(tenant.AccountingControl)
 	}
 
 	setup.expense = pulid.ConvertFromPtr(control.DefaultPurchasedTransportationAccountID)
@@ -285,37 +281,25 @@ func (g *generator) csLoadSetup(ctx context.Context) (*csSetup, error) {
 }
 
 func (g *generator) csConfigureAccounts(ctx context.Context, setup *csSetup) error {
-	var accounts []*glaccount.GLAccount
-	if err := g.db.NewSelect().Model(&accounts).
-		Where("gla.organization_id = ?", g.refs.orgID).
-		Where("gla.business_unit_id = ?", g.refs.buID).
-		Where("gla.account_code IN (?)", bun.List([]string{csAccountAP, csAccountExpense})).
-		Scan(ctx); err != nil {
-		return fmt.Errorf("load carrier settlement gl accounts: %w", err)
-	}
-	byCode := make(map[string]pulid.ID, len(accounts))
-	for _, a := range accounts {
-		byCode[a.AccountCode] = a.ID
+	byCode, err := g.glAccountsByCode(ctx, csAccountAP, csAccountExpense)
+	if err != nil {
+		return err
 	}
 
-	update := g.db.NewUpdate().Model((*tenant.CarrierSettlementControl)(nil)).
-		Where("organization_id = ?", g.refs.orgID).
-		Where("business_unit_id = ?", g.refs.buID)
-	changed := false
+	csc := tenantdb.CarrierSettlementControls
+	var sets []keel.Assignment
 	if id, ok := byCode[csAccountExpense]; ok && setup.expense.IsNil() {
-		update = update.Set("default_purchased_transportation_account_id = ?", id)
+		sets = append(sets, csc.DefaultPurchasedTransportationAccountID.To(id))
 		setup.expense = id
-		changed = true
 	}
 	if id, ok := byCode[csAccountAP]; ok && setup.payable.IsNil() {
-		update = update.Set("default_ap_account_id = ?", id)
+		sets = append(sets, csc.DefaultAPAccountID.To(id))
 		setup.payable = id
-		changed = true
 	}
-	if !changed {
+	if len(sets) == 0 {
 		return nil
 	}
-	if _, err := update.Exec(ctx); err != nil {
+	if _, err = csc.Where(keel.True()).Update(ctx, g.db, sets...); err != nil {
 		return fmt.Errorf("configure carrier settlement accounts: %w", err)
 	}
 
@@ -336,11 +320,9 @@ func (g *generator) csLoadCarriers(
 		ids = append(ids, mv.assignment.CarrierID)
 	}
 
-	var rows []*carrier.Carrier
-	if err := g.db.NewSelect().Model(&rows).
-		Where("carr.organization_id = ?", g.refs.orgID).
-		Where("carr.id IN (?)", bun.List(ids)).
-		Scan(ctx); err != nil {
+	cr := carrierdb.Carriers
+	rows, err := cr.Where(cr.ID.In(ids...)).All(ctx, g.db)
+	if err != nil {
 		return nil, fmt.Errorf("load carriers: %w", err)
 	}
 
@@ -364,11 +346,11 @@ func (g *generator) csPartners(
 	rows *csRows,
 	carriers map[pulid.ID]*csCarrier,
 ) error {
-	codes, err := mdTaken(ctx, g.db, (*edi.EDIPartner)(nil), "code", g.refs.orgID)
+	codes, err := mdTaken(ctx, g.db, edidb.EDIPartners.Handle, edidb.EDIPartners.Code)
 	if err != nil {
 		return err
 	}
-	names, err := mdTaken(ctx, g.db, (*edi.EDIPartner)(nil), "name", g.refs.orgID)
+	names, err := mdTaken(ctx, g.db, edidb.EDIPartners.Handle, edidb.EDIPartners.Name)
 	if err != nil {
 		return err
 	}
@@ -506,18 +488,18 @@ func (g *generator) csInvoices(
 	setup *csSetup,
 	moves []*csMove,
 ) error {
-	docType := new(edi.EDIDocumentType)
-	if err := g.db.NewSelect().Model(docType).
-		Where("edt.standard = ?", edi.EDIStandardX12).
-		Where("edt.transaction_set = ?", edi.TransactionSet210).
-		Where("edt.direction = ?", edi.DocumentDirectionInbound).
-		Limit(1).
-		Scan(ctx); err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
-			g.opts.Logf("  ! no inbound X12 210 document type; carrier invoices skipped")
-			return nil
-		}
+	dt := edidb.EDIDocumentTypes
+	docType, err := firstOrNil(ctx, g.db, dt.Where(
+		dt.Standard.Eq(edi.EDIStandardX12),
+		dt.TransactionSet.Eq(edi.TransactionSet210),
+		dt.Direction.Eq(edi.DocumentDirectionInbound),
+	))
+	if err != nil {
 		return fmt.Errorf("load inbound 210 document type: %w", err)
+	}
+	if docType == nil {
+		g.opts.Logf("  ! no inbound X12 210 document type; carrier invoices skipped")
+		return nil
 	}
 
 	now := unix(g.now)
@@ -1021,12 +1003,9 @@ func (g *generator) csTake(
 func (g *generator) csOpenBatches(
 	ctx context.Context,
 ) (map[string]*carriersettlement.CarrierSettlementBatch, error) {
-	var existing []*carriersettlement.CarrierSettlementBatch
-	if err := g.db.NewSelect().Model(&existing).
-		Where("carstlb.organization_id = ?", g.refs.orgID).
-		Where("carstlb.business_unit_id = ?", g.refs.buID).
-		Where("carstlb.status = ?", carriersettlement.BatchStatusOpen).
-		Scan(ctx); err != nil {
+	csb := carriersettlementdb.CarrierSettlementBatches
+	existing, err := csb.Where(csb.Status.Eq(carriersettlement.BatchStatusOpen)).All(ctx, g.db)
+	if err != nil {
 		return nil, fmt.Errorf("load open carrier settlement batches: %w", err)
 	}
 	batches := make(map[string]*carriersettlement.CarrierSettlementBatch, len(existing))
@@ -1416,8 +1395,7 @@ func (g *generator) csLedger(
 }
 
 //nolint:gocognit,funlen // the writes follow the foreign keys between these tables
-func (g *generator) csWrite(ctx context.Context, tx bun.Tx, rows *csRows) error {
-	size := g.opts.BatchSize
+func (g *generator) csWrite(ctx context.Context, tx *keel.DB, rows *csRows) error {
 	settlements := make([]*carriersettlement.CarrierSettlement, len(rows.settlements))
 	for i, s := range rows.settlements {
 		settlements[i] = s.entity
@@ -1432,16 +1410,20 @@ func (g *generator) csWrite(ctx context.Context, tx bun.Tx, rows *csRows) error 
 		table string
 		run   func() error
 	}{
-		{csTablePartners, func() error { return insertBatches(ctx, tx, rows.partners, size) }},
-		{csTableChannels, func() error { return insertBatches(ctx, tx, rows.channels, size) }},
-		{csTableMessages, func() error { return insertBatches(ctx, tx, rows.messages, size) }},
-		{csTableInvoices, func() error { return insertBatches(ctx, tx, rows.invoices, size) }},
-		{csTableRateCons, func() error { return insertBatches(ctx, tx, rows.rateCons, size) }},
-		{csTableBatches, func() error { return insertBatches(ctx, tx, rows.batches, size) }},
-		{csTableSettlements, func() error { return insertBatches(ctx, tx, settlements, size) }},
-		{csTableEvents, func() error { return insertBatches(ctx, tx, events, size) }},
-		{csTableLines, func() error { return insertBatches(ctx, tx, rows.lines, size) }},
-		{csTableMatches, func() error { return insertBatches(ctx, tx, rows.matches, size) }},
+		{csTablePartners, func() error { return insertRows(ctx, tx, edidb.EDIPartners.Handle, rows.partners) }},
+		{csTableChannels, func() error { return insertRows(ctx, tx, carrierdb.CarrierEDIChannels.Handle, rows.channels) }},
+		{csTableMessages, func() error { return insertRows(ctx, tx, edidb.EDIMessages.Handle, rows.messages) }},
+		{csTableInvoices, func() error { return insertRows(ctx, tx, edidb.CarrierInvoices.Handle, rows.invoices) }},
+		{csTableRateCons, func() error { return insertRows(ctx, tx, rateconfirmationdb.RateConfirmations.Handle, rows.rateCons) }},
+		{csTableBatches, func() error {
+			return insertRows(ctx, tx, carriersettlementdb.CarrierSettlementBatches.Handle, rows.batches)
+		}},
+		{csTableSettlements, func() error { return insertRows(ctx, tx, carriersettlementdb.CarrierSettlements.Handle, settlements) }},
+		{csTableEvents, func() error { return insertRows(ctx, tx, carriersettlementdb.CostEvents.Handle, events) }},
+		{csTableLines, func() error {
+			return insertRows(ctx, tx, carriersettlementdb.CarrierSettlementLines.Handle, rows.lines)
+		}},
+		{csTableMatches, func() error { return insertRows(ctx, tx, carriersettlementdb.InvoiceMatches.Handle, rows.matches) }},
 	}
 	for _, step := range steps {
 		if err := step.run(); err != nil {
@@ -1452,7 +1434,7 @@ func (g *generator) csWrite(ctx context.Context, tx bun.Tx, rows *csRows) error 
 	if err := g.bilWrite(ctx, tx, rows.billing); err != nil {
 		return err
 	}
-	if err := insertBatches(ctx, tx, rows.ledger, size); err != nil {
+	if err := insertRows(ctx, tx, carriersettlementdb.LedgerEntries.Handle, rows.ledger); err != nil {
 		return fmt.Errorf("insert %s: %w", csTableLedger, err)
 	}
 
@@ -1460,11 +1442,11 @@ func (g *generator) csWrite(ctx context.Context, tx bun.Tx, rows *csRows) error 
 		csTablePartners, csTableChannels, csTableMessages, csTableInvoices, csTableRateCons,
 		csTableBatches, csTableSettlements, csTableEvents, csTableLines, csTableMatches,
 	} {
-		if err := backdate(ctx, tx, table, g.refs.orgID, rows.stamps[table]); err != nil {
+		if err := backdateTable(ctx, tx, table, rows.stamps[table]); err != nil {
 			return err
 		}
 	}
-	if err := bilBackdateCreated(ctx, tx, csTableLedger, g.refs.orgID, rows.stamps[csTableLedger]); err != nil {
+	if err := backdateTableCreated(ctx, tx, csTableLedger, rows.stamps[csTableLedger]); err != nil {
 		return err
 	}
 
@@ -1473,34 +1455,60 @@ func (g *generator) csWrite(ctx context.Context, tx bun.Tx, rows *csRows) error 
 
 func (g *generator) csBatchAggregates(
 	ctx context.Context,
-	tx bun.Tx,
+	tx *keel.DB,
 	touched map[pulid.ID]struct{},
 ) error {
 	if len(touched) == 0 {
 		return nil
 	}
-	ids := make([]string, 0, len(touched))
+	batchIDs := make([]pulid.ID, 0, len(touched))
 	for id := range touched {
-		ids = append(ids, id.String())
+		batchIDs = append(batchIDs, id)
 	}
-	if _, err := tx.NewRaw(`
-		UPDATE carrier_settlement_batches AS b SET
-			settlement_count = agg.settlement_count,
-			total_gross_minor = agg.total_gross_minor,
-			total_net_minor = agg.total_net_minor
-		FROM (
-			SELECT
-				s.batch_id,
-				COUNT(*) FILTER (WHERE s.status <> 'Voided') AS settlement_count,
-				COALESCE(SUM(s.gross_cost_minor) FILTER (WHERE s.status <> 'Voided'), 0) AS total_gross_minor,
-				COALESCE(SUM(s.net_payable_minor) FILTER (WHERE s.status <> 'Voided'), 0) AS total_net_minor
-			FROM carrier_settlements AS s
-			WHERE s.organization_id = ? AND s.business_unit_id = ? AND s.batch_id = ANY(?::varchar[])
-			GROUP BY s.batch_id
-		) AS agg
-		WHERE b.id = agg.batch_id AND b.organization_id = ? AND b.business_unit_id = ?`,
-		g.refs.orgID, g.refs.buID, pgdialect.Array(ids), g.refs.orgID, g.refs.buID,
-	).Exec(ctx); err != nil {
+
+	type batchTotals struct {
+		BatchID pulid.ID
+		Count   int64
+		Gross   int64
+		Net     int64
+	}
+	cs := carriersettlementdb.CarrierSettlements
+	totals, err := keel.Into[batchTotals](ctx, tx, cs.Where(
+		cs.BatchID.In(batchIDs...),
+		cs.Status.Ne(carriersettlement.StatusVoided),
+	).Group(cs.BatchID).Pick(
+		cs.BatchID,
+		keel.Count(),
+		keel.Raw("COALESCE(SUM(?), 0)::bigint", cs.GrossCostMinor),
+		keel.Raw("COALESCE(SUM(?), 0)::bigint", cs.NetPayableMinor),
+	))
+	if err != nil {
+		return fmt.Errorf("total carrier settlement batches: %w", err)
+	}
+	byBatch := make(map[pulid.ID]batchTotals, len(totals))
+	for _, t := range totals {
+		byBatch[t.BatchID] = t
+	}
+
+	ids := make([]string, len(batchIDs))
+	counts := make([]int64, len(batchIDs))
+	gross := make([]int64, len(batchIDs))
+	net := make([]int64, len(batchIDs))
+	for i, id := range batchIDs {
+		t := byBatch[id]
+		ids[i], counts[i], gross[i], net[i] = id.String(), t.Count, t.Gross, t.Net
+	}
+
+	csb := carriersettlementdb.CarrierSettlementBatches
+	d := keel.Unnest("d", []string{"id", "settlements", "gross", "net"}, ids, counts, gross, net)
+	if _, err = csb.With(d).Join(d, d.Col("id").EqCol(csb.ID)).Where(keel.True()).Update(
+		ctx,
+		tx,
+		csb.SettlementCount.ToExpr(d.Col("settlements")),
+		csb.TotalGrossMinor.ToExpr(d.Col("gross")),
+		csb.TotalNetMinor.ToExpr(d.Col("net")),
+		keepUpdated(csb.Handle),
+	); err != nil {
 		return fmt.Errorf("recalculate carrier settlement batch aggregates: %w", err)
 	}
 

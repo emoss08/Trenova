@@ -1,4 +1,4 @@
-package volumeseed
+package volume
 
 import (
 	"context"
@@ -8,8 +8,13 @@ import (
 	"strings"
 	"time"
 
-	"github.com/emoss08/trenova/internal/modules/equipment/domain/tractor"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/keel"
+	"github.com/emoss08/trenova/internal/modules/equipment/domain/tractor/tractordb"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant/tenantdb"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment/shipmentdb"
+	"github.com/emoss08/trenova/internal/modules/settlement/domain/fuelpurchase/fuelpurchasedb"
+	"github.com/emoss08/trenova/internal/modules/settlement/domain/ifta/iftadb"
+
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/fuelpurchase"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/ifta"
@@ -17,7 +22,6 @@ import (
 	"github.com/emoss08/trenova/shared/money"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
-	"github.com/uptrace/bun"
 )
 
 const (
@@ -193,7 +197,7 @@ func (g *generator) seedFuel(ctx context.Context) error {
 	fs.buildHeldRows()
 	imp := fs.finishRuns()
 
-	if err = g.inTx(ctx, func(ctx context.Context, tx bun.Tx) error {
+	if err = g.inTx(ctx, func(ctx context.Context, tx *keel.DB) error {
 		return fs.writeFuel(ctx, tx, imp)
 	}); err != nil {
 		return err
@@ -235,11 +239,9 @@ func (g *generator) fuelLoad(ctx context.Context) (*fuelSeeder, error) {
 		hasReturn:     make(map[ifta.Period]bool),
 	}
 
-	org := new(tenant.Organization)
-	if err := g.db.NewSelect().Model(org).
-		Column("timezone", "state_id").
-		Where("org.id = ?", g.refs.orgID).
-		Scan(ctx); err != nil {
+	o := tenantdb.Organizations
+	org, err := o.Pick(o.Timezone, o.StateID).Where(o.ID.Eq(g.refs.orgID)).One(ctx, g.db)
+	if err != nil {
 		return nil, fmt.Errorf("load organization timezone: %w", err)
 	}
 	if loc, err := time.LoadLocation(org.Timezone); err == nil {
@@ -247,10 +249,9 @@ func (g *generator) fuelLoad(ctx context.Context) (*fuelSeeder, error) {
 	}
 	fs.baseState = g.refs.stateAbbr[org.StateID]
 
-	var jurisdictions []*ifta.Jurisdiction
-	if err := g.db.NewSelect().Model(&jurisdictions).
-		Where("ifj.status = ?", ifta.JurisdictionStatusActive).
-		Scan(ctx); err != nil {
+	ij := iftadb.Jurisdictions
+	jurisdictions, err := ij.Where(ij.Status.Eq(ifta.JurisdictionStatusActive)).All(ctx, g.db)
+	if err != nil {
 		return nil, fmt.Errorf("load ifta jurisdictions: %w", err)
 	}
 	for _, j := range jurisdictions {
@@ -260,12 +261,9 @@ func (g *generator) fuelLoad(ctx context.Context) (*fuelSeeder, error) {
 		}
 	}
 
-	var tractors []*tractor.Tractor
-	if err := g.db.NewSelect().Model(&tractors).
-		Column("id", "code", "fuel_type", "ifta_qualified").
-		Where("trac.organization_id = ?", g.refs.orgID).
-		Where("trac.business_unit_id = ?", g.refs.buID).
-		Scan(ctx); err != nil {
+	tr := tractordb.Tractors
+	tractors, err := tr.Pick(tr.ID, tr.Code, tr.FuelType, tr.IFTAQualified).All(ctx, g.db)
+	if err != nil {
 		return nil, fmt.Errorf("load tractors: %w", err)
 	}
 	for _, t := range tractors {
@@ -287,16 +285,9 @@ func (g *generator) fuelLoad(ctx context.Context) (*fuelSeeder, error) {
 		fs.tractors[t.ID] = ft
 	}
 
-	type cardKey struct {
-		Provider fuelpurchase.CardProvider `bun:"provider"`
-		LastFour string                    `bun:"last_four"`
-	}
-	var keys []cardKey
-	if err := g.db.NewSelect().TableExpr("fuel_cards").
-		Column("provider", "last_four").
-		Where("organization_id = ?", g.refs.orgID).
-		Where("business_unit_id = ?", g.refs.buID).
-		Scan(ctx, &keys); err != nil {
+	fc := fuelpurchasedb.FuelCards
+	keys, err := fc.Pick(fc.Provider, fc.LastFour).All(ctx, g.db)
+	if err != nil {
 		return nil, fmt.Errorf("load fuel card numbers: %w", err)
 	}
 	for _, p := range fuelProviders {
@@ -316,20 +307,13 @@ func (g *generator) fuelLoad(ctx context.Context) (*fuelSeeder, error) {
 	}
 	fs.firstStart, _ = first.Bounds(fs.loc)
 
-	type periodKey struct {
-		Year    int `bun:"year"`
-		Quarter int `bun:"quarter"`
-	}
-	var existing []periodKey
-	if err := g.db.NewSelect().TableExpr("ifta_returns").
-		Column("year", "quarter").
-		Where("organization_id = ?", g.refs.orgID).
-		Where("business_unit_id = ?", g.refs.buID).
-		Scan(ctx, &existing); err != nil {
+	ir := iftadb.Returns
+	existing, err := ir.Pick(ir.Year, ir.Quarter).All(ctx, g.db)
+	if err != nil {
 		return nil, fmt.Errorf("load ifta returns: %w", err)
 	}
 	for _, e := range existing {
-		fs.hasReturn[ifta.NewPeriod(e.Year, e.Quarter)] = true
+		fs.hasReturn[ifta.NewPeriod(int(e.Year), int(e.Quarter))] = true
 	}
 
 	if err := fs.loadExistingActivity(ctx); err != nil {
@@ -344,21 +328,11 @@ func (g *generator) fuelLoad(ctx context.Context) (*fuelSeeder, error) {
 // produce.
 func (fs *fuelSeeder) loadExistingActivity(ctx context.Context) error {
 	g := fs.g
-	type purchaseRow struct {
-		TractorID      pulid.ID                 `bun:"tractor_id"`
-		JurisdictionID pulid.ID                 `bun:"jurisdiction_id"`
-		FuelType       domaintypes.IFTAFuelType `bun:"fuel_type"`
-		Gallons        decimal.Decimal          `bun:"gallons"`
-		TaxPaid        bool                     `bun:"tax_paid"`
-		PurchasedAt    int64                    `bun:"purchased_at"`
-	}
-	var purchases []purchaseRow
-	if err := g.db.NewSelect().TableExpr("fuel_purchases").
-		Column("tractor_id", "jurisdiction_id", "fuel_type", "gallons", "tax_paid", "purchased_at").
-		Where("organization_id = ?", g.refs.orgID).
-		Where("business_unit_id = ?", g.refs.buID).
-		Where("purchased_at >= ?", fs.firstStart).
-		Scan(ctx, &purchases); err != nil {
+	fp := fuelpurchasedb.FuelPurchases
+	purchases, err := fp.Pick(fp.TractorID, fp.JurisdictionID, fp.FuelType, fp.Gallons, fp.TaxPaid, fp.PurchasedAt).
+		Where(fp.PurchasedAt.Gte(fs.firstStart)).
+		All(ctx, g.db)
+	if err != nil {
 		return fmt.Errorf("load existing fuel purchases: %w", err)
 	}
 	for _, p := range purchases {
@@ -372,21 +346,11 @@ func (fs *fuelSeeder) loadExistingActivity(ctx context.Context) error {
 		})
 	}
 
-	type entryRow struct {
-		TractorID      pulid.ID        `bun:"tractor_id"`
-		JurisdictionID pulid.ID        `bun:"jurisdiction_id"`
-		Miles          decimal.Decimal `bun:"miles"`
-		Loaded         bool            `bun:"loaded"`
-		Year           int             `bun:"year"`
-		Quarter        int             `bun:"quarter"`
-	}
-	var entries []entryRow
-	if err := g.db.NewSelect().TableExpr("ifta_jurisdiction_mileage_entries").
-		Column("tractor_id", "jurisdiction_id", "miles", "loaded", "year", "quarter").
-		Where("organization_id = ?", g.refs.orgID).
-		Where("business_unit_id = ?", g.refs.buID).
-		Where("traveled_at >= ?", fs.firstStart).
-		Scan(ctx, &entries); err != nil {
+	me := iftadb.JurisdictionMileageEntries
+	entries, err := me.Pick(me.TractorID, me.JurisdictionID, me.Miles, me.Loaded, me.Year, me.Quarter).
+		Where(me.TraveledAt.Gte(fs.firstStart)).
+		All(ctx, g.db)
+	if err != nil {
 		return fmt.Errorf("load existing mileage entries: %w", err)
 	}
 	for _, e := range entries {
@@ -395,8 +359,8 @@ func (fs *fuelSeeder) loadExistingActivity(ctx context.Context) error {
 			jurisdictionID: e.JurisdictionID,
 			miles:          e.Miles,
 			loaded:         e.Loaded,
-			year:           e.Year,
-			quarter:        e.Quarter,
+			year:           int(e.Year),
+			quarter:        int(e.Quarter),
 		})
 	}
 
@@ -887,6 +851,7 @@ func (fs *fuelSeeder) purchase(
 		CurrencyCode:   money.DefaultCurrencyCode,
 		TaxPaid:        taxPaid,
 		Version:        1,
+		Source:         fuelpurchase.PurchaseSourceManual,
 	}
 	p.TotalAmountMinor = money.MinorUnits(quantity.Mul(unitPrice).Round(fuelMoneyScale))
 
@@ -963,6 +928,7 @@ func (fs *fuelSeeder) run(provider fuelpurchase.CardProvider, at int64) *fuelFee
 		DefaultFuelType: domaintypes.IFTAFuelTypeDiesel,
 		DefaultCurrency: money.DefaultCurrencyCode,
 		Version:         1,
+		Status:          fuelpurchase.ImportStatusPending,
 	}
 	r := &fuelFeedRun{key: key, provider: provider, runAt: runAt, batch: batch}
 	fs.runs[key] = r
@@ -1210,36 +1176,33 @@ func (fs *fuelSeeder) finishRuns() *fuelImport {
 	return out
 }
 
-func (fs *fuelSeeder) writeFuel(ctx context.Context, tx bun.Tx, imp *fuelImport) error {
-	g := fs.g
-	org := g.refs.orgID
-	size := g.opts.BatchSize
+func (fs *fuelSeeder) writeFuel(ctx context.Context, tx *keel.DB, imp *fuelImport) error {
 
-	if err := insertBatches(ctx, tx, fs.cards, size); err != nil {
+	if err := insertRows(ctx, tx, fuelpurchasedb.FuelCards.Handle, fs.cards); err != nil {
 		return fmt.Errorf("insert fuel cards: %w", err)
 	}
-	if err := backdate(ctx, tx, "fuel_cards", org, fs.cardStamps); err != nil {
+	if err := backdate(ctx, tx, fuelpurchasedb.FuelCards.Handle, fs.cardStamps); err != nil {
 		return err
 	}
 
-	if err := insertBatches(ctx, tx, imp.batches, size); err != nil {
+	if err := insertRows(ctx, tx, fuelpurchasedb.ImportBatches.Handle, imp.batches); err != nil {
 		return fmt.Errorf("insert fuel feed runs: %w", err)
 	}
-	if err := backdate(ctx, tx, "fuel_purchase_import_batches", org, imp.batchStamps); err != nil {
+	if err := backdate(ctx, tx, fuelpurchasedb.ImportBatches.Handle, imp.batchStamps); err != nil {
 		return err
 	}
 
-	if err := insertBatches(ctx, tx, fs.purchases, size); err != nil {
+	if err := insertRows(ctx, tx, fuelpurchasedb.FuelPurchases.Handle, fs.purchases); err != nil {
 		return fmt.Errorf("insert fuel purchases: %w", err)
 	}
-	if err := backdate(ctx, tx, "fuel_purchases", org, fs.purchaseStamps); err != nil {
+	if err := backdate(ctx, tx, fuelpurchasedb.FuelPurchases.Handle, fs.purchaseStamps); err != nil {
 		return err
 	}
 
-	if err := insertBatches(ctx, tx, imp.rows, size); err != nil {
+	if err := insertRows(ctx, tx, fuelpurchasedb.ImportRows.Handle, imp.rows); err != nil {
 		return fmt.Errorf("insert fuel import rows: %w", err)
 	}
-	if err := bilBackdateCreated(ctx, tx, "fuel_purchase_import_rows", org, imp.rowStamps); err != nil {
+	if err := backdateTableCreated(ctx, tx, "fuel_purchase_import_rows", imp.rowStamps); err != nil {
 		return err
 	}
 
@@ -1248,7 +1211,7 @@ func (fs *fuelSeeder) writeFuel(ctx context.Context, tx bun.Tx, imp *fuelImport)
 
 func (fs *fuelSeeder) writeFeedStates(
 	ctx context.Context,
-	tx bun.Tx,
+	tx *keel.DB,
 	batches []*fuelpurchase.ImportBatch,
 ) error {
 	g := fs.g
@@ -1283,27 +1246,26 @@ func (fs *fuelSeeder) writeFeedStates(
 	if len(states) == 0 {
 		return nil
 	}
-	if _, err := tx.NewInsert().Model(&states).
-		On("CONFLICT (organization_id, business_unit_id, provider, feed_type) DO NOTHING").
-		Exec(ctx); err != nil {
+	cfs := fuelpurchasedb.CardFeedStates
+	if _, err := cfs.CreateOrSkip(ctx, tx, states,
+		cfs.OrganizationID, cfs.BusinessUnitID, cfs.Provider, cfs.FeedType,
+	); err != nil {
 		return fmt.Errorf("insert fuel feed states: %w", err)
 	}
 	return nil
 }
 
-func (fs *fuelSeeder) writeMiles(ctx context.Context, tx bun.Tx) error {
-	g := fs.g
-	org := g.refs.orgID
-	if err := insertBatches(ctx, tx, fs.routeMiles, g.opts.BatchSize); err != nil {
+func (fs *fuelSeeder) writeMiles(ctx context.Context, tx *keel.DB) error {
+	if err := insertRows(ctx, tx, shipmentdb.ShipmentMoveJurisdictionMiles.Handle, fs.routeMiles); err != nil {
 		return fmt.Errorf("insert move jurisdiction miles: %w", err)
 	}
-	if err := backdate(ctx, tx, "shipment_move_jurisdiction_miles", org, fs.routeStamps); err != nil {
+	if err := backdate(ctx, tx, shipmentdb.ShipmentMoveJurisdictionMiles.Handle, fs.routeStamps); err != nil {
 		return err
 	}
-	if err := insertBatches(ctx, tx, fs.entries, g.opts.BatchSize); err != nil {
+	if err := insertRows(ctx, tx, iftadb.JurisdictionMileageEntries.Handle, fs.entries); err != nil {
 		return fmt.Errorf("insert jurisdiction mileage entries: %w", err)
 	}
-	return backdate(ctx, tx, "ifta_jurisdiction_mileage_entries", org, fs.entryStamps)
+	return backdate(ctx, tx, iftadb.JurisdictionMileageEntries.Handle, fs.entryStamps)
 }
 
 func (fs *fuelSeeder) rateFor(j *ifta.Jurisdiction, fuelType domaintypes.IFTAFuelType) (rate, surcharge float64) {
@@ -1342,10 +1304,10 @@ func (fs *fuelSeeder) seedRates(ctx context.Context) (map[ifta.Period]map[ifta.R
 	sort.Slice(jurisdictions, func(i, j int) bool { return jurisdictions[i].ID < jurisdictions[j].ID })
 
 	rows := make([]*ifta.TaxRate, 0, len(fs.periods)*len(jurisdictions)*len(fuelTypes))
-	years := make([]int, 0, 4)
+	years := make([]int64, 0, 4)
 	for _, p := range fs.periods {
-		if len(years) == 0 || years[len(years)-1] != p.Year {
-			years = append(years, p.Year)
+		if len(years) == 0 || years[len(years)-1] != int64(p.Year) {
+			years = append(years, int64(p.Year))
 		}
 		start, _ := p.Bounds(fs.loc)
 		for _, j := range jurisdictions {
@@ -1370,31 +1332,16 @@ func (fs *fuelSeeder) seedRates(ctx context.Context) (map[ifta.Period]map[ifta.R
 		}
 	}
 
-	inserted := 0
-	if err := g.inTx(ctx, func(ctx context.Context, tx bun.Tx) error {
-		for begin := 0; begin < len(rows); begin += g.opts.BatchSize {
-			chunk := rows[begin:min(begin+g.opts.BatchSize, len(rows))]
-			res, err := tx.NewInsert().Model(&chunk).
-				On("CONFLICT (jurisdiction_id, year, quarter, fuel_type) DO NOTHING").
-				Exec(ctx)
-			if err != nil {
-				return fmt.Errorf("insert ifta tax rates: %w", err)
-			}
-			if n, err := res.RowsAffected(); err == nil {
-				inserted += int(n)
-			}
-		}
-		return nil
-	}); err != nil {
-		return nil, err
+	tr := iftadb.TaxRates
+	inserted, err := tr.CreateOrSkip(ctx, g.db, rows, tr.JurisdictionID, tr.Year, tr.Quarter, tr.FuelType)
+	if err != nil {
+		return nil, fmt.Errorf("insert ifta tax rates: %w", err)
 	}
-	g.report.add("IFTA tax rates", inserted)
+	g.report.add("IFTA tax rates", int(inserted))
 
 	var loaded []*ifta.TaxRate
 	if len(years) > 0 {
-		if err := g.db.NewSelect().Model(&loaded).
-			Where("iftr.year IN (?)", bun.In(years)).
-			Scan(ctx); err != nil {
+		if loaded, err = tr.Where(tr.Year.In(years...)).All(ctx, g.db); err != nil {
 			return nil, fmt.Errorf("load ifta tax rates: %w", err)
 		}
 	}
@@ -1823,18 +1770,17 @@ func (fs *fuelSeeder) seedReturns(ctx context.Context) error {
 		return nil
 	}
 
-	if err = g.inTx(ctx, func(ctx context.Context, tx bun.Tx) error {
-		org := g.refs.orgID
-		if err := insertBatches(ctx, tx, returns, g.opts.BatchSize); err != nil {
+	if err = g.inTx(ctx, func(ctx context.Context, tx *keel.DB) error {
+		if err := insertRows(ctx, tx, iftadb.Returns.Handle, returns); err != nil {
 			return fmt.Errorf("insert ifta returns: %w", err)
 		}
-		if err := insertBatches(ctx, tx, lines, g.opts.BatchSize); err != nil {
+		if err := insertRows(ctx, tx, iftadb.ReturnLines.Handle, lines); err != nil {
 			return fmt.Errorf("insert ifta return lines: %w", err)
 		}
-		if err := backdate(ctx, tx, "ifta_returns", org, returnStamps); err != nil {
+		if err := backdate(ctx, tx, iftadb.Returns.Handle, returnStamps); err != nil {
 			return err
 		}
-		return backdate(ctx, tx, "ifta_return_lines", org, lineStamps)
+		return backdate(ctx, tx, iftadb.ReturnLines.Handle, lineStamps)
 	}); err != nil {
 		return err
 	}

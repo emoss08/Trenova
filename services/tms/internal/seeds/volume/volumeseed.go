@@ -1,13 +1,4 @@
-// Package volumeseed fills one organization with a large, varied, internally
-// consistent data set so the product can be exercised at realistic volume:
-// list performance, pagination, filters, loading states and dashboards.
-//
-// It is never part of the registered seeds. It runs only from
-// `trenova db seed-volume`, refuses production and staging, and adds to
-// whatever the development seeds created, so it can be run more than once to
-// grow the data set. Shipment, order and invoice numbers come from the
-// tenant's real sequence formats, exactly as the application issues them.
-package volumeseed
+package volume
 
 import (
 	"context"
@@ -15,18 +6,16 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/emoss08/trenova/internal/infrastructure/postgres"
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/customerpayment"
-	"github.com/emoss08/trenova/pkg/seqgen"
+	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/uptrace/bun"
-	"go.uber.org/zap"
 )
 
 const (
+	systemReason         = "find the organization a volume data set fills"
 	DefaultShipments     = 10_000
 	DefaultHistoryMonths = 12
-	DefaultBatchSize     = 500
 	MaxShipments         = 250_000
 )
 
@@ -40,7 +29,6 @@ type Options struct {
 	HistoryMonths  int
 	Seed           uint64
 	OrganizationID pulid.ID
-	BatchSize      int
 	Logf           func(format string, args ...any)
 }
 
@@ -56,9 +44,6 @@ func (o *Options) normalize() error {
 	}
 	if o.HistoryMonths < 1 || o.HistoryMonths > 36 {
 		return ErrHistoryMonths
-	}
-	if o.BatchSize <= 0 {
-		o.BatchSize = DefaultBatchSize
 	}
 	if o.Seed == 0 {
 		o.Seed = uint64(time.Now().UnixNano()) //nolint:gosec // any seed is fine
@@ -116,7 +101,7 @@ func (r *Report) add(entity string, rows int) {
 }
 
 type generator struct {
-	db      *bun.DB
+	db      *keel.DB
 	opts    Options
 	scale   scale
 	fake    *faker
@@ -137,40 +122,25 @@ type generator struct {
 	factoring   *facState
 }
 
-func Run(ctx context.Context, db *bun.DB, opts Options) (*Report, error) {
+func Run(ctx context.Context, db *keel.DB, opts Options) (*Report, error) {
 	if err := opts.normalize(); err != nil {
 		return nil, err
 	}
 
-	conn := postgres.WrapDB(db)
-	logger := zap.NewNop()
 	now := time.Now().UTC().Truncate(time.Second)
 	g := &generator{
-		db:     db,
-		opts:   opts,
-		scale:  scaleFor(opts.Shipments),
-		fake:   newFaker(opts.Seed),
-		report: &Report{Seed: opts.Seed},
-		now:    now,
-		start:  now.AddDate(0, -opts.HistoryMonths, 0),
-		numbers: &numberer{
-			generator: seqgen.NewGenerator(seqgen.GeneratorParams{
-				Store: seqgen.NewSequenceStore(
-					seqgen.SequenceStoreParams{DB: conn, Logger: logger},
-				),
-				Provider: seqgen.NewFormatProvider(
-					seqgen.FormatProviderParams{DB: conn, Logger: logger},
-				),
-				Logger: logger,
-			}),
-			formats: seqgen.NewFormatProvider(
-				seqgen.FormatProviderParams{DB: conn, Logger: logger},
-			),
-		},
+		db:      db,
+		opts:    opts,
+		scale:   scaleFor(opts.Shipments),
+		fake:    newFaker(opts.Seed),
+		report:  &Report{Seed: opts.Seed},
+		now:     now,
+		start:   now.AddDate(0, -opts.HistoryMonths, 0),
+		numbers: newNumberer(db),
 	}
 
 	began := time.Now()
-	refs, err := loadTenantRefs(ctx, db, opts.OrganizationID)
+	refs, err := loadTenantRefs(dbscope.WithSystem(ctx, systemReason), db, opts.OrganizationID)
 	if err != nil {
 		return nil, err
 	}
@@ -178,6 +148,13 @@ func Run(ctx context.Context, db *bun.DB, opts Options) (*Report, error) {
 	g.numbers.orgID = refs.orgID
 	g.numbers.buID = refs.buID
 	g.numbers.buCode = refs.buCode
+	ctx = dbscope.WithTenant(ctx, dbscope.Tenant{
+		OrganizationID: refs.orgID,
+		BusinessUnitID: refs.buID,
+	})
+	if err = loadTenantData(ctx, db, refs); err != nil {
+		return nil, err
+	}
 
 	phases := []struct {
 		name string

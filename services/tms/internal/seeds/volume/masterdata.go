@@ -1,4 +1,4 @@
-package volumeseed
+package volume
 
 import (
 	"context"
@@ -6,6 +6,20 @@ import (
 	"math"
 	"slices"
 	"strings"
+
+	"github.com/emoss08/keel"
+	"github.com/emoss08/trenova/internal/modules/equipment/domain/equipmentmanufacturer/equipmentmanufacturerdb"
+	"github.com/emoss08/trenova/internal/modules/equipment/domain/equipmenttype/equipmenttypedb"
+	"github.com/emoss08/trenova/internal/modules/equipment/domain/fleetcode/fleetcodedb"
+	"github.com/emoss08/trenova/internal/modules/equipment/domain/tractor/tractordb"
+	"github.com/emoss08/trenova/internal/modules/equipment/domain/trailer/trailerdb"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/carrier/carrierdb"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/customer/customerdb"
+	"github.com/emoss08/trenova/internal/modules/places/domain/location/locationdb"
+	"github.com/emoss08/trenova/internal/modules/places/domain/locationcategory/locationcategorydb"
+	"github.com/emoss08/trenova/internal/modules/reference/domain/commodity/commoditydb"
+	"github.com/emoss08/trenova/internal/modules/reference/domain/hazardousmaterial/hazardousmaterialdb"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker/workerdb"
 
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
 	"github.com/emoss08/trenova/internal/modules/equipment/domain/equipmentmanufacturer"
@@ -19,13 +33,10 @@ import (
 	"github.com/emoss08/trenova/internal/modules/places/domain/location"
 	"github.com/emoss08/trenova/internal/modules/places/domain/locationcategory"
 	"github.com/emoss08/trenova/internal/modules/reference/domain/commodity"
-	"github.com/emoss08/trenova/internal/modules/reference/domain/hazardousmaterial"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
-	"github.com/uptrace/bun"
-	"github.com/uptrace/bun/dialect/pgdialect"
 )
 
 const mdDay = int64(86_400)
@@ -45,8 +56,8 @@ type mdEquipment struct {
 }
 
 func (g *generator) seedMasterData(ctx context.Context) error {
-	return g.inTx(ctx, func(ctx context.Context, tx bun.Tx) error {
-		steps := []func(context.Context, bun.Tx) error{
+	return g.inTx(ctx, func(ctx context.Context, tx *keel.DB) error {
+		steps := []func(context.Context, *keel.DB) error{
 			g.mdCustomers,
 			g.facMasterData,
 			g.mdLocations,
@@ -86,19 +97,15 @@ func (g *generator) mdStamp(id pulid.ID, created int64) stamp {
 	return stamp{id: id, created: created, updated: g.mdUpdated(created)}
 }
 
-func mdTaken(
+func mdTaken[T any](
 	ctx context.Context,
-	idb bun.IDB,
-	model any,
-	column string,
-	orgID pulid.ID,
+	db *keel.DB,
+	h keel.Handle[T],
+	column keel.Expr,
 ) (map[string]struct{}, error) {
-	var values []string
-	if err := idb.NewSelect().Model(model).
-		ColumnExpr("COALESCE(lower(?), '')", bun.Ident(column)).
-		Where("organization_id = ?", orgID).
-		Scan(ctx, &values); err != nil {
-		return nil, fmt.Errorf("load existing %s values: %w", column, err)
+	values, err := keel.Into[string](ctx, db, h.Pick(keel.Raw("COALESCE(lower(?), '')", column)))
+	if err != nil {
+		return nil, fmt.Errorf("load existing %s values: %w", h.Ref.Table.Name, err)
 	}
 	taken := make(map[string]struct{}, len(values))
 	for _, v := range values {
@@ -145,8 +152,8 @@ var mdPaymentTerms = []customer.PaymentTerm{
 
 var mdPaymentTermWeights = []int{50, 15, 10, 10, 5, 5, 5}
 
-func (g *generator) mdCustomers(ctx context.Context, tx bun.Tx) error {
-	taken, err := mdTaken(ctx, tx, (*customer.Customer)(nil), "code", g.refs.orgID)
+func (g *generator) mdCustomers(ctx context.Context, tx *keel.DB) error {
+	taken, err := mdTaken(ctx, tx, customerdb.Customers.Handle, customerdb.Customers.Code)
 	if err != nil {
 		return err
 	}
@@ -257,13 +264,13 @@ func (g *generator) mdCustomers(ctx context.Context, tx bun.Tx) error {
 		})
 	}
 
-	if err = insertBatches(ctx, tx, customers, g.opts.BatchSize); err != nil {
+	if err = insertRows(ctx, tx, customerdb.Customers.Handle, customers); err != nil {
 		return fmt.Errorf("insert customers: %w", err)
 	}
-	if err = insertBatches(ctx, tx, profiles, g.opts.BatchSize); err != nil {
+	if err = insertRows(ctx, tx, customerdb.CustomerBillingProfiles.Handle, profiles); err != nil {
 		return fmt.Errorf("insert customer billing profiles: %w", err)
 	}
-	if err = insertBatches(ctx, tx, emails, g.opts.BatchSize); err != nil {
+	if err = insertRows(ctx, tx, customerdb.CustomerEmailProfiles.Handle, emails); err != nil {
 		return fmt.Errorf("insert customer email profiles: %w", err)
 	}
 	for _, b := range []struct {
@@ -274,7 +281,7 @@ func (g *generator) mdCustomers(ctx context.Context, tx bun.Tx) error {
 		{table: "customer_billing_profiles", stamps: profileStamps},
 		{table: "customer_email_profiles", stamps: emailStamps},
 	} {
-		if err = backdate(ctx, tx, b.table, g.refs.orgID, b.stamps); err != nil {
+		if err = backdateTable(ctx, tx, b.table, b.stamps); err != nil {
 			return err
 		}
 	}
@@ -449,12 +456,10 @@ func (g *generator) mdLocationOwner(
 
 func (g *generator) mdLocationCategories(
 	ctx context.Context,
-	tx bun.Tx,
+	tx *keel.DB,
 ) (map[string]pulid.ID, error) {
-	var existing []*locationcategory.LocationCategory
-	if err := tx.NewSelect().Model(&existing).
-		Where("organization_id = ?", g.refs.orgID).
-		Scan(ctx); err != nil {
+	existing, err := locationcategorydb.LocationCategories.Query().All(ctx, tx)
+	if err != nil {
 		return nil, fmt.Errorf("load location categories: %w", err)
 	}
 	byName := make(map[string]pulid.ID, len(existing)+len(mdLocationKinds))
@@ -491,10 +496,10 @@ func (g *generator) mdLocationCategories(
 	if len(created) == 0 {
 		return byName, nil
 	}
-	if err := insertBatches(ctx, tx, created, g.opts.BatchSize); err != nil {
+	if err := insertRows(ctx, tx, locationcategorydb.LocationCategories.Handle, created); err != nil {
 		return nil, fmt.Errorf("insert location categories: %w", err)
 	}
-	if err := backdate(ctx, tx, "location_categories", g.refs.orgID, stamps); err != nil {
+	if err := backdate(ctx, tx, locationcategorydb.LocationCategories.Handle, stamps); err != nil {
 		return nil, err
 	}
 	g.report.add("Location categories", len(created))
@@ -502,12 +507,12 @@ func (g *generator) mdLocationCategories(
 	return byName, nil
 }
 
-func (g *generator) mdLocations(ctx context.Context, tx bun.Tx) error {
+func (g *generator) mdLocations(ctx context.Context, tx *keel.DB) error {
 	categories, err := g.mdLocationCategories(ctx, tx)
 	if err != nil {
 		return err
 	}
-	taken, err := mdTaken(ctx, tx, (*location.Location)(nil), "code", g.refs.orgID)
+	taken, err := mdTaken(ctx, tx, locationdb.Locations.Handle, locationdb.Locations.Code)
 	if err != nil {
 		return err
 	}
@@ -593,22 +598,21 @@ func (g *generator) mdLocations(ctx context.Context, tx bun.Tx) error {
 		}
 	}
 
-	if err = insertBatches(ctx, tx, locations, g.opts.BatchSize); err != nil {
+	if err = insertRows(ctx, tx, locationdb.Locations.Handle, locations); err != nil {
 		return fmt.Errorf("insert locations: %w", err)
 	}
-	if _, err = tx.NewRaw(`
-		UPDATE locations
-		SET geofence_geometry = ST_Buffer(
-			ST_SetSRID(ST_MakePoint(longitude, latitude), 4326)::geography,
-			geofence_radius_meters
-		)::geometry
-		WHERE organization_id = ? AND id = ANY(?::varchar[])`,
-		g.refs.orgID,
-		pgdialect.Array(idStrings),
-	).Exec(ctx); err != nil {
+	l := locationdb.Locations
+	locationIDs := make([]pulid.ID, 0, len(locations))
+	for _, loc := range locations {
+		locationIDs = append(locationIDs, loc.ID)
+	}
+	if _, err = l.Where(l.ID.In(locationIDs...)).Update(ctx, tx, l.GeofenceGeometry.ToExpr(keel.Raw(
+		"ST_Buffer(ST_SetSRID(ST_MakePoint(?, ?), 4326)::geography, ?)::geometry",
+		l.Longitude, l.Latitude, l.GeofenceRadiusMeters,
+	))); err != nil {
 		return fmt.Errorf("build location geofences: %w", err)
 	}
-	if err = backdate(ctx, tx, "locations", g.refs.orgID, stamps); err != nil {
+	if err = backdate(ctx, tx, locationdb.Locations.Handle, stamps); err != nil {
 		return err
 	}
 	g.report.add("Locations", len(locations))
@@ -725,18 +729,19 @@ var mdCommodityCatalog = []mdCommodityDef{
 	},
 }
 
-func (g *generator) mdCommodities(ctx context.Context, tx bun.Tx) error {
-	taken, err := mdTaken(ctx, tx, (*commodity.Commodity)(nil), "name", g.refs.orgID)
+func (g *generator) mdCommodities(ctx context.Context, tx *keel.DB) error {
+	taken, err := mdTaken(ctx, tx, commoditydb.Commodities.Handle, commoditydb.Commodities.Name)
 	if err != nil {
 		return err
 	}
-	var hazmatIDs []pulid.ID
-	if err = tx.NewSelect().Model((*hazardousmaterial.HazardousMaterial)(nil)).
-		Column("hm.id").
-		Where("hm.organization_id = ?", g.refs.orgID).
-		Where("hm.status = ?", domaintypes.StatusActive).
-		Scan(ctx, &hazmatIDs); err != nil {
+	hm := hazardousmaterialdb.HazardousMaterials
+	hazmats, err := hm.Pick(hm.ID).Where(hm.Status.Eq(domaintypes.StatusActive)).Order(hm.ID.Asc()).All(ctx, tx)
+	if err != nil {
 		return fmt.Errorf("load hazardous materials: %w", err)
+	}
+	hazmatIDs := make([]pulid.ID, 0, len(hazmats))
+	for _, h := range hazmats {
+		hazmatIDs = append(hazmatIDs, h.ID)
 	}
 
 	rows := make([]*commodity.Commodity, 0, len(mdCommodityCatalog))
@@ -772,20 +777,18 @@ func (g *generator) mdCommodities(ctx context.Context, tx bun.Tx) error {
 		stamps = append(stamps, g.mdStamp(row.ID, at))
 	}
 	if len(rows) > 0 {
-		if err = insertBatches(ctx, tx, rows, g.opts.BatchSize); err != nil {
+		if err = insertRows(ctx, tx, commoditydb.Commodities.Handle, rows); err != nil {
 			return fmt.Errorf("insert commodities: %w", err)
 		}
-		if err = backdate(ctx, tx, "commodities", g.refs.orgID, stamps); err != nil {
+		if err = backdate(ctx, tx, commoditydb.Commodities.Handle, stamps); err != nil {
 			return err
 		}
 	}
 	g.report.add("Commodities", len(rows))
 
-	var all []*commodity.Commodity
-	if err = tx.NewSelect().Model(&all).
-		Where("com.organization_id = ?", g.refs.orgID).
-		Where("com.status = ?", domaintypes.StatusActive).
-		Scan(ctx); err != nil {
+	cm := commoditydb.Commodities
+	all, err := cm.Where(cm.Status.Eq(domaintypes.StatusActive)).Order(cm.ID.Asc()).All(ctx, tx)
+	if err != nil {
 		return fmt.Errorf("load commodities: %w", err)
 	}
 	g.commodities = make([]*commodityRecord, 0, len(all))
@@ -871,17 +874,15 @@ var mdFleetColors = []string{
 	"#4F46E5", "#059669", "#B91C1C", "#7C3AED", "#C2410C", "#0E7490", "#A16207", "#BE185D",
 }
 
-func (g *generator) mdEquipment(ctx context.Context, tx bun.Tx) (*mdEquipment, error) {
+func (g *generator) mdEquipment(ctx context.Context, tx *keel.DB) (*mdEquipment, error) {
 	equipment := &mdEquipment{
 		manufacturers: make(map[string]pulid.ID),
 		kinds:         make(map[pulid.ID]trailerKind),
 	}
 
-	var types []*equipmenttype.EquipmentType
-	if err := tx.NewSelect().Model(&types).
-		Where("et.organization_id = ?", g.refs.orgID).
-		Where("et.status = ?", domaintypes.StatusActive).
-		Scan(ctx); err != nil {
+	et := equipmenttypedb.EquipmentTypes
+	types, err := et.Where(et.Status.Eq(domaintypes.StatusActive)).Order(et.ID.Asc()).All(ctx, tx)
+	if err != nil {
 		return nil, fmt.Errorf("load equipment types: %w", err)
 	}
 	for _, t := range types {
@@ -910,11 +911,9 @@ func (g *generator) mdEquipment(ctx context.Context, tx bun.Tx) (*mdEquipment, e
 	return equipment, nil
 }
 
-func (g *generator) mdManufacturers(ctx context.Context, tx bun.Tx, equipment *mdEquipment) error {
-	var existing []*equipmentmanufacturer.EquipmentManufacturer
-	if err := tx.NewSelect().Model(&existing).
-		Where("em.organization_id = ?", g.refs.orgID).
-		Scan(ctx); err != nil {
+func (g *generator) mdManufacturers(ctx context.Context, tx *keel.DB, equipment *mdEquipment) error {
+	existing, err := equipmentmanufacturerdb.EquipmentManufacturers.Query().All(ctx, tx)
+	if err != nil {
 		return fmt.Errorf("load equipment manufacturers: %w", err)
 	}
 	for _, m := range existing {
@@ -945,10 +944,10 @@ func (g *generator) mdManufacturers(ctx context.Context, tx bun.Tx, equipment *m
 	if len(rows) == 0 {
 		return nil
 	}
-	if err := insertBatches(ctx, tx, rows, g.opts.BatchSize); err != nil {
+	if err := insertRows(ctx, tx, equipmentmanufacturerdb.EquipmentManufacturers.Handle, rows); err != nil {
 		return fmt.Errorf("insert equipment manufacturers: %w", err)
 	}
-	if err := backdate(ctx, tx, "equipment_manufacturers", g.refs.orgID, stamps); err != nil {
+	if err := backdate(ctx, tx, equipmentmanufacturerdb.EquipmentManufacturers.Handle, stamps); err != nil {
 		return err
 	}
 	g.report.add("Equipment manufacturers", len(rows))
@@ -956,8 +955,8 @@ func (g *generator) mdManufacturers(ctx context.Context, tx bun.Tx, equipment *m
 	return nil
 }
 
-func (g *generator) mdFleetCodes(ctx context.Context, tx bun.Tx) ([]pulid.ID, error) {
-	taken, err := mdTaken(ctx, tx, (*fleetcode.FleetCode)(nil), "code", g.refs.orgID)
+func (g *generator) mdFleetCodes(ctx context.Context, tx *keel.DB) ([]pulid.ID, error) {
+	taken, err := mdTaken(ctx, tx, fleetcodedb.FleetCodes.Handle, fleetcodedb.FleetCodes.Code)
 	if err != nil {
 		return nil, err
 	}
@@ -989,10 +988,10 @@ func (g *generator) mdFleetCodes(ctx context.Context, tx bun.Tx) ([]pulid.ID, er
 		ids = append(ids, row.ID)
 		stamps = append(stamps, g.mdStamp(row.ID, at))
 	}
-	if err = insertBatches(ctx, tx, rows, g.opts.BatchSize); err != nil {
+	if err = insertRows(ctx, tx, fleetcodedb.FleetCodes.Handle, rows); err != nil {
 		return nil, fmt.Errorf("insert fleet codes: %w", err)
 	}
-	if err = backdate(ctx, tx, "fleet_codes", g.refs.orgID, stamps); err != nil {
+	if err = backdate(ctx, tx, fleetcodedb.FleetCodes.Handle, stamps); err != nil {
 		return nil, err
 	}
 	g.report.add("Fleet codes", len(rows))
@@ -1039,7 +1038,7 @@ var (
 
 func (g *generator) mdWorkers(
 	ctx context.Context,
-	tx bun.Tx,
+	tx *keel.DB,
 	fleetCodes []pulid.ID,
 ) ([]*mdDriver, error) {
 	n := g.scale.drivers
@@ -1125,13 +1124,13 @@ func (g *generator) mdWorkers(
 		}
 	}
 
-	if err := insertBatches(ctx, tx, workers, g.opts.BatchSize); err != nil {
+	if err := insertRows(ctx, tx, workerdb.Workers.Handle, workers); err != nil {
 		return nil, fmt.Errorf("insert workers: %w", err)
 	}
-	if err := insertBatches(ctx, tx, profiles, g.opts.BatchSize); err != nil {
+	if err := insertRows(ctx, tx, workerdb.WorkerProfiles.Handle, profiles); err != nil {
 		return nil, fmt.Errorf("insert worker profiles: %w", err)
 	}
-	if err := insertBatches(ctx, tx, ptos, g.opts.BatchSize); err != nil {
+	if err := insertRows(ctx, tx, workerdb.WorkerPTOs.Handle, ptos); err != nil {
 		return nil, fmt.Errorf("insert worker pto: %w", err)
 	}
 	for _, b := range []struct {
@@ -1142,7 +1141,7 @@ func (g *generator) mdWorkers(
 		{table: "worker_profiles", stamps: profileStamps},
 		{table: "worker_pto", stamps: ptoStamps},
 	} {
-		if err := backdate(ctx, tx, b.table, g.refs.orgID, b.stamps); err != nil {
+		if err := backdateTable(ctx, tx, b.table, b.stamps); err != nil {
 			return nil, err
 		}
 	}
@@ -1205,6 +1204,9 @@ func (g *generator) mdProfile(
 		DrugAlcoholStatus:   worker.DrugAlcoholClear,
 		ReturnToDutyStatus:  worker.ReturnToDutyNotRequired,
 		ShortHaulExempt:     entity.DriverType == worker.DriverTypeLocal && g.fake.chance(0.5),
+		ComplianceStatus:    worker.ComplianceStatusPending,
+		SafetyRating:        worker.SafetyRatingExcellent,
+		SafetyScore:         100,
 	}
 	queried := now - g.fake.between64(mdDay, 300*mdDay)
 	profile.LastClearinghouseQueryAt = &queried
@@ -1279,6 +1281,7 @@ func (g *generator) mdPTO(workerID pulid.ID, now int64) *worker.WorkerPTO {
 		EndDate:        end,
 		Days:           worker.ComputePTODays(start, end, nil, true, nil),
 		Reason:         pick(g.fake, mdPTOReasons),
+		Status:         worker.PTOStatusRequested,
 	}
 
 	roll := g.fake.intn(100)
@@ -1325,15 +1328,15 @@ func (g *generator) mdTrailerTypeWeights(types []*equipmenttype.EquipmentType) [
 
 func (g *generator) mdFleet(
 	ctx context.Context,
-	tx bun.Tx,
+	tx *keel.DB,
 	equipment *mdEquipment,
 	drivers []*mdDriver,
 ) error {
-	tractorTaken, err := mdTaken(ctx, tx, (*tractor.Tractor)(nil), "code", g.refs.orgID)
+	tractorTaken, err := mdTaken(ctx, tx, tractordb.Tractors.Handle, tractordb.Tractors.Code)
 	if err != nil {
 		return err
 	}
-	trailerTaken, err := mdTaken(ctx, tx, (*trailer.Trailer)(nil), "code", g.refs.orgID)
+	trailerTaken, err := mdTaken(ctx, tx, trailerdb.Trailers.Handle, trailerdb.Trailers.Code)
 	if err != nil {
 		return err
 	}
@@ -1455,16 +1458,16 @@ func (g *generator) mdFleet(
 		tractorStamps = append(tractorStamps, g.mdStamp(entity.ID, at))
 	}
 
-	if err = insertBatches(ctx, tx, tractors, g.opts.BatchSize); err != nil {
+	if err = insertRows(ctx, tx, tractordb.Tractors.Handle, tractors); err != nil {
 		return fmt.Errorf("insert tractors: %w", err)
 	}
-	if err = insertBatches(ctx, tx, trailers, g.opts.BatchSize); err != nil {
+	if err = insertRows(ctx, tx, trailerdb.Trailers.Handle, trailers); err != nil {
 		return fmt.Errorf("insert trailers: %w", err)
 	}
-	if err = backdate(ctx, tx, "tractors", g.refs.orgID, tractorStamps); err != nil {
+	if err = backdate(ctx, tx, tractordb.Tractors.Handle, tractorStamps); err != nil {
 		return err
 	}
-	if err = backdate(ctx, tx, "trailers", g.refs.orgID, trailerStamps); err != nil {
+	if err = backdate(ctx, tx, trailerdb.Trailers.Handle, trailerStamps); err != nil {
 		return err
 	}
 	g.report.add("Tractors", len(tractors))
@@ -1586,20 +1589,20 @@ func (g *generator) mdUniqueSCAC(name string, taken map[string]struct{}) string 
 	}
 }
 
-func (g *generator) mdCarriers(ctx context.Context, tx bun.Tx) error {
-	codes, err := mdTaken(ctx, tx, (*carrier.Carrier)(nil), "code", g.refs.orgID)
+func (g *generator) mdCarriers(ctx context.Context, tx *keel.DB) error {
+	codes, err := mdTaken(ctx, tx, carrierdb.Carriers.Handle, carrierdb.Carriers.Code)
 	if err != nil {
 		return err
 	}
-	scacs, err := mdTaken(ctx, tx, (*carrier.Carrier)(nil), "scac", g.refs.orgID)
+	scacs, err := mdTaken(ctx, tx, carrierdb.Carriers.Handle, carrierdb.Carriers.SCAC)
 	if err != nil {
 		return err
 	}
-	dots, err := mdTaken(ctx, tx, (*carrier.Carrier)(nil), "dot_number", g.refs.orgID)
+	dots, err := mdTaken(ctx, tx, carrierdb.Carriers.Handle, carrierdb.Carriers.DOTNumber)
 	if err != nil {
 		return err
 	}
-	mcs, err := mdTaken(ctx, tx, (*carrier.Carrier)(nil), "mc_number", g.refs.orgID)
+	mcs, err := mdTaken(ctx, tx, carrierdb.Carriers.Handle, carrierdb.Carriers.MCNumber)
 	if err != nil {
 		return err
 	}
@@ -1738,16 +1741,16 @@ func (g *generator) mdCarriers(ctx context.Context, tx bun.Tx) error {
 		}
 	}
 
-	if err = insertBatches(ctx, tx, rows, g.opts.BatchSize); err != nil {
+	if err = insertRows(ctx, tx, carrierdb.Carriers.Handle, rows); err != nil {
 		return fmt.Errorf("insert carriers: %w", err)
 	}
-	if err = insertBatches(ctx, tx, contacts, g.opts.BatchSize); err != nil {
+	if err = insertRows(ctx, tx, carrierdb.CarrierContacts.Handle, contacts); err != nil {
 		return fmt.Errorf("insert carrier contacts: %w", err)
 	}
-	if err = backdate(ctx, tx, "carriers", g.refs.orgID, stamps); err != nil {
+	if err = backdate(ctx, tx, carrierdb.Carriers.Handle, stamps); err != nil {
 		return err
 	}
-	if err = backdate(ctx, tx, "carrier_contacts", g.refs.orgID, contactStamps); err != nil {
+	if err = backdate(ctx, tx, carrierdb.CarrierContacts.Handle, contactStamps); err != nil {
 		return err
 	}
 	g.report.add("Carriers", len(rows))

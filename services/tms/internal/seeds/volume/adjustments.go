@@ -1,15 +1,21 @@
-package volumeseed
+package volume
 
 import (
 	"context"
-	"database/sql"
-	"errors"
 	"fmt"
 	"sort"
 	"strings"
 
+	"github.com/emoss08/keel"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/journalentry/journalentrydb"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue/billingqueuedb"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice/invoicedb"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/invoiceadjustment/invoiceadjustmentdb"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant/tenantdb"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/order/orderdb"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment/shipmentdb"
+
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/fiscalperiod"
-	"github.com/emoss08/trenova/internal/modules/accounting/domain/glaccount"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/journalentry"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/customerledger"
@@ -26,8 +32,6 @@ import (
 	"github.com/emoss08/trenova/shared/money"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
-	"github.com/uptrace/bun"
-	"github.com/uptrace/bun/dialect/pgdialect"
 )
 
 const (
@@ -232,7 +236,7 @@ func (g *generator) seedAdjustments(ctx context.Context) error {
 	if err = g.bilMaterialize(ctx, rows.bil); err != nil {
 		return err
 	}
-	if err = g.inTx(ctx, func(ctx context.Context, tx bun.Tx) error {
+	if err = g.inTx(ctx, func(ctx context.Context, tx *keel.DB) error {
 		return g.adjWrite(ctx, tx, rows)
 	}); err != nil {
 		return err
@@ -288,15 +292,12 @@ func (p *adjPools) take(pool []*shipmentRecord, accept func(*shipmentRecord) boo
 }
 
 func (g *generator) adjLoadSetup(ctx context.Context) (*adjSetup, error) {
-	control := new(tenant.InvoiceAdjustmentControl)
-	if err := g.db.NewSelect().Model(control).
-		Where("iac.organization_id = ?", g.refs.orgID).
-		Limit(1).
-		Scan(ctx); err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
-			return nil, nil
-		}
+	control, err := firstOrNil(ctx, g.db, tenantdb.InvoiceAdjustmentControls.Query())
+	if err != nil {
 		return nil, fmt.Errorf("load invoice adjustment control: %w", err)
+	}
+	if control == nil {
+		return nil, nil
 	}
 
 	bil, err := g.bilLoadSetup(ctx)
@@ -305,38 +306,26 @@ func (g *generator) adjLoadSetup(ctx context.Context) (*adjSetup, error) {
 	}
 	setup := &adjSetup{bil: bil, control: control}
 
-	var controls []*tenant.AccountingControl
-	if err = g.db.NewSelect().Model(&controls).
-		Where("ac.organization_id = ?", g.refs.orgID).
-		Where("ac.business_unit_id = ?", g.refs.buID).
-		Limit(1).
-		Scan(ctx); err != nil {
-		return nil, fmt.Errorf("load accounting control: %w", err)
+	accounting, err := g.accountingControl(ctx)
+	if err != nil {
+		return nil, err
 	}
-	if len(controls) == 0 {
+	if accounting == nil {
 		return setup, nil
 	}
-	accounting := controls[0]
 	setup.writeOff = accounting.DefaultWriteOffAccountID
 	if setup.writeOff.IsNil() {
-		account := new(glaccount.GLAccount)
-		if scanErr := g.db.NewSelect().Model(account).
-			Where("gla.organization_id = ?", g.refs.orgID).
-			Where("gla.business_unit_id = ?", g.refs.buID).
-			Where("gla.account_code = ?", adjAccountWriteOff).
-			Limit(1).
-			Scan(ctx); scanErr == nil {
-			if _, err = g.db.NewUpdate().Model((*tenant.AccountingControl)(nil)).
-				Set("default_write_off_account_id = ?", account.ID).
-				Where("organization_id = ?", g.refs.orgID).
-				Where("business_unit_id = ?", g.refs.buID).
-				Where("default_write_off_account_id IS NULL").
-				Exec(ctx); err != nil {
+		byCode, codeErr := g.glAccountsByCode(ctx, adjAccountWriteOff)
+		if codeErr != nil {
+			return nil, codeErr
+		}
+		if id, ok := byCode[adjAccountWriteOff]; ok {
+			ac := tenantdb.AccountingControls
+			if _, err = ac.Where(ac.DefaultWriteOffAccountID.IsNull()).
+				Update(ctx, g.db, ac.DefaultWriteOffAccountID.To(id)); err != nil {
 				return nil, fmt.Errorf("set default write-off account: %w", err)
 			}
-			setup.writeOff = account.ID
-		} else if !errors.Is(scanErr, sql.ErrNoRows) {
-			return nil, fmt.Errorf("load write-off account: %w", scanErr)
+			setup.writeOff = id
 		}
 	}
 	journalsAllowed := accounting.JournalPostingMode != tenant.JournalPostingModeManual ||
@@ -1811,9 +1800,7 @@ func adjRunID(g *generator) string {
 }
 
 //nolint:funlen // writes run in foreign-key order
-func (g *generator) adjWrite(ctx context.Context, tx bun.Tx, rows *adjRows) error {
-	org := g.refs.orgID
-	size := g.opts.BatchSize
+func (g *generator) adjWrite(ctx context.Context, tx *keel.DB, rows *adjRows) error {
 
 	// A group's current invoice is often a credit memo or replacement written
 	// below, so the group starts at its root invoice and is re-pointed after.
@@ -1822,7 +1809,7 @@ func (g *generator) adjWrite(ctx context.Context, tx bun.Tx, rows *adjRows) erro
 		current[i] = group.CurrentInvoiceID
 		group.CurrentInvoiceID = group.RootInvoiceID
 	}
-	err := bilInsert(ctx, tx, "invoice_correction_groups", org, size, rows.groupOrder,
+	err := bilInsert(ctx, tx, invoiceadjustmentdb.InvoiceAdjustmentCorrectionGroups.Handle, rows.groupOrder,
 		func(r *invoiceadjustment.InvoiceAdjustmentCorrectionGroup) stamp {
 			return stamp{id: r.ID, created: r.CreatedAt, updated: r.CreatedAt}
 		}, false)
@@ -1838,37 +1825,37 @@ func (g *generator) adjWrite(ctx context.Context, tx bun.Tx, rows *adjRows) erro
 	if err := g.bilWrite(ctx, tx, rows.bil); err != nil {
 		return err
 	}
-	if err := bilInsert(ctx, tx, "invoice_adjustments", org, size, rows.adjustments,
+	if err := bilInsert(ctx, tx, invoiceadjustmentdb.InvoiceAdjustments.Handle, rows.adjustments,
 		func(r *invoiceadjustment.InvoiceAdjustment) stamp {
 			return stamp{id: r.ID, created: r.CreatedAt, updated: r.UpdatedAt}
 		}, false); err != nil {
 		return err
 	}
-	if err := bilInsert(ctx, tx, "invoice_adjustment_lines", org, size, rows.lines,
+	if err := bilInsert(ctx, tx, invoiceadjustmentdb.InvoiceAdjustmentLines.Handle, rows.lines,
 		func(r *invoiceadjustment.InvoiceAdjustmentLine) stamp {
 			return stamp{id: r.ID, created: r.CreatedAt, updated: r.UpdatedAt}
 		}, false); err != nil {
 		return err
 	}
-	if err := bilInsert(ctx, tx, "invoice_adjustment_snapshots", org, size, rows.snapshots,
+	if err := bilInsert(ctx, tx, invoiceadjustmentdb.InvoiceAdjustmentSnapshots.Handle, rows.snapshots,
 		func(r *invoiceadjustment.InvoiceAdjustmentSnapshot) stamp {
 			return stamp{id: r.ID, created: r.CreatedAt}
 		}, true); err != nil {
 		return err
 	}
-	if err := bilInsert(ctx, tx, "invoice_reconciliation_exceptions", org, size, rows.exceptions,
+	if err := bilInsert(ctx, tx, invoiceadjustmentdb.InvoiceAdjustmentReconciliationExceptions.Handle, rows.exceptions,
 		func(r *invoiceadjustment.InvoiceAdjustmentReconciliationException) stamp {
 			return stamp{id: r.ID, created: r.CreatedAt, updated: r.UpdatedAt}
 		}, false); err != nil {
 		return err
 	}
-	if err := bilInsert(ctx, tx, "invoice_adjustment_batches", org, size, rows.batches,
+	if err := bilInsert(ctx, tx, invoiceadjustmentdb.InvoiceAdjustmentBatches.Handle, rows.batches,
 		func(r *invoiceadjustment.InvoiceAdjustmentBatch) stamp {
 			return stamp{id: r.ID, created: r.CreatedAt, updated: r.UpdatedAt}
 		}, false); err != nil {
 		return err
 	}
-	if err := bilInsert(ctx, tx, "invoice_adjustment_batch_items", org, size, rows.batchItems,
+	if err := bilInsert(ctx, tx, invoiceadjustmentdb.InvoiceAdjustmentBatchItems.Handle, rows.batchItems,
 		func(r *invoiceadjustment.InvoiceAdjustmentBatchItem) stamp {
 			return stamp{id: r.ID, created: r.CreatedAt, updated: r.UpdatedAt}
 		}, false); err != nil {
@@ -1887,22 +1874,16 @@ func (g *generator) adjWrite(ctx context.Context, tx bun.Tx, rows *adjRows) erro
 		return err
 	}
 	if len(rows.writeOffs) > 0 {
-		ids := make([]string, len(rows.writeOffs))
-		for i, id := range rows.writeOffs {
-			ids[i] = id.String()
-		}
-		if _, err := tx.NewRaw(`
-			UPDATE journal_entries SET entry_type = ?
-			WHERE organization_id = ? AND id = ANY(?::varchar[])`,
-			journalentry.EntryTypeAdjusting, org, pgdialect.Array(ids),
-		).Exec(ctx); err != nil {
+		je := journalentrydb.JournalEntries
+		if _, err := je.Where(je.ID.In(rows.writeOffs...)).
+			Update(ctx, tx, je.EntryType.To(journalentry.EntryTypeAdjusting), keepUpdated(je.Handle)); err != nil {
 			return fmt.Errorf("mark write-off journals adjusting: %w", err)
 		}
 	}
 	return nil
 }
 
-func (g *generator) adjUpdateGroupLinks(ctx context.Context, tx bun.Tx, rows *adjRows, onInvoices bool) error {
+func (g *generator) adjUpdateGroupLinks(ctx context.Context, tx *keel.DB, rows *adjRows, onInvoices bool) error {
 	if len(rows.groupOrder) == 0 {
 		return nil
 	}
@@ -1917,24 +1898,24 @@ func (g *generator) adjUpdateGroupLinks(ctx context.Context, tx bun.Tx, rows *ad
 			values[i] = group.CurrentInvoiceID.String()
 		}
 	}
-	query := `
-		UPDATE invoice_correction_groups AS t SET current_invoice_id = d.value
-		FROM unnest(?::varchar[], ?::varchar[]) AS d(id, value)
-		WHERE t.id = d.id AND t.organization_id = ?`
+	d := keel.Unnest("d", []string{"id", "value"}, ids, values)
+	var err error
 	if onInvoices {
-		query = `
-		UPDATE invoices AS t SET correction_group_id = d.value
-		FROM unnest(?::varchar[], ?::varchar[]) AS d(id, value)
-		WHERE t.id = d.id AND t.organization_id = ?`
+		inv := invoicedb.Invoices
+		_, err = inv.With(d).Join(d, d.Col("id").EqCol(inv.ID)).Where(keel.True()).
+			Update(ctx, tx, inv.CorrectionGroupID.ToExpr(d.Col("value")), keepUpdated(inv.Handle))
+	} else {
+		cg := invoiceadjustmentdb.InvoiceAdjustmentCorrectionGroups
+		_, err = cg.With(d).Join(d, d.Col("id").EqCol(cg.ID)).Where(keel.True()).
+			Update(ctx, tx, cg.CurrentInvoiceID.ToExpr(d.Col("value")), keepUpdated(cg.Handle))
 	}
-	if _, err := tx.NewRaw(query, pgdialect.Array(ids), pgdialect.Array(values), g.refs.orgID).
-		Exec(ctx); err != nil {
+	if err != nil {
 		return fmt.Errorf("link correction groups: %w", err)
 	}
 	return nil
 }
 
-func (g *generator) adjUpdateSources(ctx context.Context, tx bun.Tx, rows *adjRows) error {
+func (g *generator) adjUpdateSources(ctx context.Context, tx *keel.DB, rows *adjRows) error {
 	n := len(rows.sources)
 	if n == 0 {
 		return nil
@@ -1969,99 +1950,91 @@ func (g *generator) adjUpdateSources(ctx context.Context, tx bun.Tx, rows *adjRo
 		voidedByAdj = append(voidedByAdj, inv.VoidedByAdjustmentID.String())
 		updated = append(updated, inv.UpdatedAt)
 	}
-	if _, err := tx.NewRaw(`
-		UPDATE invoices AS t SET
-			superseded_by_invoice_id = NULLIF(d.superseded, ''),
-			applied_amount = d.applied::numeric,
-			applied_amount_minor = d.applied_minor,
-			settlement_status = d.settlement,
-			status = d.status,
-			voided_at = NULLIF(d.voided_at, 0),
-			voided_by_id = NULLIF(d.voided_by, ''),
-			void_reason = NULLIF(d.void_reason, ''),
-			void_disposition = NULLIF(d.disposition, ''),
-			voided_by_adjustment_id = NULLIF(d.voided_by_adj, ''),
-			updated_at = d.updated,
-			version = t.version + 1
-		FROM unnest(
-			?::varchar[], ?::varchar[], ?::varchar[], ?::bigint[], ?::varchar[], ?::varchar[],
-			?::bigint[], ?::varchar[], ?::varchar[], ?::varchar[], ?::varchar[], ?::bigint[]
-		) AS d(id, superseded, applied, applied_minor, settlement, status,
-			voided_at, voided_by, void_reason, disposition, voided_by_adj, updated)
-		WHERE t.id = d.id AND t.organization_id = ?`,
-		pgdialect.Array(ids), pgdialect.Array(superseded), pgdialect.Array(applied),
-		pgdialect.Array(appliedMinor), pgdialect.Array(settlement), pgdialect.Array(status),
-		pgdialect.Array(voidedAt), pgdialect.Array(voidedBy), pgdialect.Array(voidReason),
-		pgdialect.Array(disposition), pgdialect.Array(voidedByAdj), pgdialect.Array(updated),
-		g.refs.orgID,
-	).Exec(ctx); err != nil {
+	d := keel.Unnest("d", []string{
+		"id", "superseded", "applied", "applied_minor", "settlement", "status",
+		"voided_at", "voided_by", "void_reason", "disposition", "voided_by_adj", "updated",
+	}, ids, superseded, applied, appliedMinor, settlement, status,
+		voidedAt, voidedBy, voidReason, disposition, voidedByAdj, updated)
+	inv := invoicedb.Invoices
+	if _, err := inv.With(d).Join(d, d.Col("id").EqCol(inv.ID)).Where(keel.True()).Update(
+		ctx,
+		tx,
+		inv.SupersededByInvoiceID.ToExpr(nullIfEmpty(d.Col("superseded"))),
+		inv.AppliedAmount.ToExpr(keel.Raw("?::numeric", d.Col("applied"))),
+		inv.AppliedAmountMinor.ToExpr(d.Col("applied_minor")),
+		inv.SettlementStatus.ToExpr(d.Col("settlement")),
+		inv.Status.ToExpr(d.Col("status")),
+		inv.VoidedAt.ToExpr(keel.Raw("NULLIF(?, 0)", d.Col("voided_at"))),
+		inv.VoidedByID.ToExpr(nullIfEmpty(d.Col("voided_by"))),
+		inv.VoidReason.ToExpr(nullIfEmpty(d.Col("void_reason"))),
+		inv.VoidDisposition.ToExpr(nullIfEmpty(d.Col("disposition"))),
+		inv.VoidedByAdjustmentID.ToExpr(nullIfEmpty(d.Col("voided_by_adj"))),
+		inv.UpdatedAt.ToExpr(d.Col("updated")),
+	); err != nil {
 		return fmt.Errorf("update adjusted invoices: %w", err)
 	}
 	return nil
 }
 
-func (g *generator) adjApplyReversals(ctx context.Context, tx bun.Tx, rows *adjRows) error {
+func (g *generator) adjApplyReversals(ctx context.Context, tx *keel.DB, rows *adjRows) error {
 	if len(rows.reversals) == 0 {
 		return nil
 	}
-	items := make([]string, 0, len(rows.reversals))
+	itemIDs := make([]string, 0, len(rows.reversals))
 	actors := make([]string, 0, len(rows.reversals))
 	ats := make([]int64, 0, len(rows.reversals))
 	reasons := make([]string, 0, len(rows.reversals))
 	shipments := make([]string, 0, len(rows.reversals))
 	orders := make([]string, 0, len(rows.reversals))
 	for _, r := range rows.reversals {
-		items = append(items, r.itemID.String())
+		itemIDs = append(itemIDs, r.itemID.String())
 		actors = append(actors, r.actor.String())
 		ats = append(ats, r.at)
 		reasons = append(reasons, r.reason)
 		shipments = append(shipments, r.rec.ID.String())
 		orders = append(orders, r.rec.OrderID.String())
 	}
-	if _, err := tx.NewRaw(`
-		UPDATE billing_queue_items AS t SET
-			status = ?,
-			invoice_id = NULL,
-			canceled_by_id = d.actor,
-			canceled_at = d.at,
-			cancel_reason = d.reason,
-			updated_at = d.at,
-			version = t.version + 1
-		FROM unnest(?::varchar[], ?::varchar[], ?::bigint[], ?::varchar[]) AS d(id, actor, at, reason)
-		WHERE t.id = d.id AND t.organization_id = ?`,
-		billingqueue.StatusCanceled,
-		pgdialect.Array(items), pgdialect.Array(actors), pgdialect.Array(ats), pgdialect.Array(reasons),
-		g.refs.orgID,
-	).Exec(ctx); err != nil {
+	bq := billingqueuedb.BillingQueueItems
+	items := keel.Unnest("d", []string{"id", "actor", "at", "reason"}, itemIDs, actors, ats, reasons)
+	if _, err := bq.With(items).Join(items, items.Col("id").EqCol(bq.ID)).Where(keel.True()).Update(
+		ctx,
+		tx,
+		bq.Status.To(billingqueue.StatusCanceled),
+		bq.InvoiceID.ToNull(),
+		bq.CanceledByID.ToExpr(items.Col("actor")),
+		bq.CanceledAt.ToExpr(items.Col("at")),
+		bq.CancelReason.ToExpr(items.Col("reason")),
+		bq.UpdatedAt.ToExpr(items.Col("at")),
+	); err != nil {
 		return fmt.Errorf("cancel reversed billing queue items: %w", err)
 	}
-	if _, err := tx.NewRaw(`
-		UPDATE shipments AS t SET
-			status = ?,
-			billed_at = NULL,
-			rate_locked = FALSE,
-			billing_transfer_status = ?,
-			updated_at = d.at,
-			version = t.version + 1
-		FROM unnest(?::varchar[], ?::bigint[]) AS d(id, at)
-		WHERE t.id = d.id AND t.organization_id = ?`,
-		shipment.StatusCompleted, string(billingqueue.StatusCanceled),
-		pgdialect.Array(shipments), pgdialect.Array(ats), g.refs.orgID,
-	).Exec(ctx); err != nil {
+	sh := shipmentdb.Shipments
+	restored := keel.Unnest("d", []string{"id", "at"}, shipments, ats)
+	if _, err := sh.With(restored).Join(restored, restored.Col("id").EqCol(sh.ID)).Where(keel.True()).Update(
+		ctx,
+		tx,
+		sh.Status.To(shipment.StatusCompleted),
+		sh.BilledAt.ToNull(),
+		sh.RateLocked.To(false),
+		sh.BillingTransferStatus.To(shipment.BillingTransferStatus(billingqueue.StatusCanceled)),
+		sh.UpdatedAt.ToExpr(restored.Col("at")),
+	); err != nil {
 		return fmt.Errorf("restore reversed shipments: %w", err)
 	}
-	if _, err := tx.NewRaw(`
-		UPDATE orders AS t SET status = ?, updated_at = d.at, version = t.version + 1
-		FROM unnest(?::varchar[], ?::bigint[]) AS d(id, at)
-		WHERE t.id = d.id AND t.organization_id = ?`,
-		order.StatusCompleted, pgdialect.Array(orders), pgdialect.Array(ats), g.refs.orgID,
-	).Exec(ctx); err != nil {
+	o := orderdb.Orders
+	reopened := keel.Unnest("d", []string{"id", "at"}, orders, ats)
+	if _, err := o.With(reopened).Join(reopened, reopened.Col("id").EqCol(o.ID)).Where(keel.True()).Update(
+		ctx,
+		tx,
+		o.Status.To(order.StatusCompleted),
+		o.UpdatedAt.ToExpr(reopened.Col("at")),
+	); err != nil {
 		return fmt.Errorf("restore reversed orders: %w", err)
 	}
 	return nil
 }
 
-func (g *generator) adjSyncRebills(ctx context.Context, tx bun.Tx, rows *adjRows) error {
+func (g *generator) adjSyncRebills(ctx context.Context, tx *keel.DB, rows *adjRows) error {
 	if len(rows.rebills) == 0 {
 		return nil
 	}
@@ -2073,15 +2046,15 @@ func (g *generator) adjSyncRebills(ctx context.Context, tx bun.Tx, rows *adjRows
 		statuses = append(statuses, string(r.status))
 		ats = append(ats, r.at)
 	}
-	if _, err := tx.NewRaw(`
-		UPDATE shipments AS t SET
-			billing_transfer_status = d.status,
-			transferred_to_billing_at = d.at,
-			updated_at = GREATEST(t.updated_at, d.at)
-		FROM unnest(?::varchar[], ?::varchar[], ?::bigint[]) AS d(id, status, at)
-		WHERE t.id = d.id AND t.organization_id = ?`,
-		pgdialect.Array(ids), pgdialect.Array(statuses), pgdialect.Array(ats), g.refs.orgID,
-	).Exec(ctx); err != nil {
+	sh := shipmentdb.Shipments
+	d := keel.Unnest("d", []string{"id", "status", "at"}, ids, statuses, ats)
+	if _, err := sh.With(d).Join(d, d.Col("id").EqCol(sh.ID)).Where(keel.True()).Update(
+		ctx,
+		tx,
+		sh.BillingTransferStatus.ToExpr(d.Col("status")),
+		sh.TransferredToBillingAt.ToExpr(d.Col("at")),
+		sh.UpdatedAt.ToExpr(keel.Raw("GREATEST(?, ?)", sh.UpdatedAt, d.Col("at"))),
+	); err != nil {
 		return fmt.Errorf("sync rebilled shipments: %w", err)
 	}
 	return nil

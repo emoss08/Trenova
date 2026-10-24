@@ -1,4 +1,4 @@
-package volumeseed
+package volume
 
 import (
 	"strings"

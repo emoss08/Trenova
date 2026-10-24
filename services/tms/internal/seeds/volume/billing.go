@@ -1,4 +1,4 @@
-package volumeseed
+package volume
 
 import (
 	"context"
@@ -8,9 +8,23 @@ import (
 	"strings"
 	"time"
 
+	"github.com/emoss08/keel"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/fiscalperiod/fiscalperioddb"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/fiscalyear/fiscalyeardb"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/glbalance"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/journalentry/journalentrydb"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/journalsource"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/journalsource/journalsourcedb"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue/billingqueuedb"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/customerledger/customerledgerdb"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/customerpayment/customerpaymentdb"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice/invoicedb"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant/tenantdb"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment/shipmentdb"
+	"github.com/emoss08/trenova/pkg/keelkinds"
+
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/fiscalperiod"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/fiscalyear"
-	"github.com/emoss08/trenova/internal/modules/accounting/domain/glaccount"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/journalentry"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/customerledger"
@@ -20,12 +34,9 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/customer"
 	"github.com/emoss08/trenova/internal/modules/reference/domain/accessorialcharge"
-	"github.com/emoss08/trenova/pkg/dbhelper"
 	"github.com/emoss08/trenova/shared/money"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
-	"github.com/uptrace/bun"
-	"github.com/uptrace/bun/dialect/pgdialect"
 )
 
 const (
@@ -134,36 +145,6 @@ type bilJournal struct {
 	legs          []bilLeg
 }
 
-type bilJournalSource struct {
-	bun.BaseModel `bun:"table:journal_sources"`
-
-	ID                   pulid.ID `bun:"id,pk"`
-	BusinessUnitID       pulid.ID `bun:"business_unit_id,pk"`
-	OrganizationID       pulid.ID `bun:"organization_id,pk"`
-	SourceObjectType     string   `bun:"source_object_type"`
-	SourceObjectID       string   `bun:"source_object_id"`
-	SourceEventType      string   `bun:"source_event_type"`
-	SourceDocumentNumber string   `bun:"source_document_number"`
-	Status               string   `bun:"status"`
-	IdempotencyKey       string   `bun:"idempotency_key"`
-	JournalBatchID       pulid.ID `bun:"journal_batch_id"`
-	JournalEntryID       pulid.ID `bun:"journal_entry_id"`
-	CreatedAt            int64    `bun:"created_at"`
-}
-
-type bilJournalLink struct {
-	bun.BaseModel `bun:"table:source_journal_links"`
-
-	ID              pulid.ID `bun:"id,pk"`
-	BusinessUnitID  pulid.ID `bun:"business_unit_id,pk"`
-	OrganizationID  pulid.ID `bun:"organization_id,pk"`
-	JournalSourceID pulid.ID `bun:"journal_source_id"`
-	JournalBatchID  pulid.ID `bun:"journal_batch_id"`
-	JournalEntryID  pulid.ID `bun:"journal_entry_id"`
-	LinkRole        string   `bun:"link_role"`
-	CreatedAt       int64    `bun:"created_at"`
-}
-
 type bilBalanceKey struct {
 	account pulid.ID
 	year    pulid.ID
@@ -197,8 +178,8 @@ type bilRows struct {
 	batches   []*journalentry.JournalBatch
 	entries   []*journalentry.JournalEntry
 	jlines    []*journalentry.JournalEntryLine
-	sources   []*bilJournalSource
-	srcLinks  []*bilJournalLink
+	sources   []*journalsource.Source
+	srcLinks  []*journalsource.SourceJournalLink
 	comments  []*shipment.ShipmentComment
 	balances  map[bilBalanceKey]*bilBalance
 	memoCount int
@@ -246,7 +227,7 @@ func (g *generator) seedBilling(ctx context.Context) error {
 		if buildErr != nil {
 			return buildErr
 		}
-		if err = g.inTx(ctx, func(ctx context.Context, tx bun.Tx) error {
+		if err = g.inTx(ctx, func(ctx context.Context, tx *keel.DB) error {
 			return g.bilWrite(ctx, tx, rows)
 		}); err != nil {
 			return err
@@ -261,29 +242,22 @@ func (g *generator) seedBilling(ctx context.Context) error {
 func (g *generator) bilLoadSetup(ctx context.Context) (*bilSetup, error) {
 	setup := &bilSetup{names: make(map[pulid.ID]string, len(g.refs.userIDs))}
 
-	var users []*tenant.User
-	if err := g.db.NewSelect().Model(&users).
-		Where("usr.id IN (?)", bun.In(g.refs.userIDs)).
-		Scan(ctx); err != nil {
-		return nil, fmt.Errorf("load billers: %w", err)
+	users, err := g.usersByID(ctx)
+	if err != nil {
+		return nil, err
 	}
-	for _, u := range users {
-		setup.names[u.ID] = u.Name
+	for id, u := range users {
+		setup.names[id] = u.Name
 	}
 
-	var controls []*tenant.AccountingControl
-	if err := g.db.NewSelect().Model(&controls).
-		Where("ac.organization_id = ?", g.refs.orgID).
-		Where("ac.business_unit_id = ?", g.refs.buID).
-		Limit(1).
-		Scan(ctx); err != nil {
-		return nil, fmt.Errorf("load accounting control: %w", err)
+	control, err := g.accountingControl(ctx)
+	if err != nil {
+		return nil, err
 	}
-	if len(controls) == 0 {
+	if control == nil {
 		g.opts.Logf("  ! no accounting control; invoices post without journals or ledger entries")
 		return setup, nil
 	}
-	control := controls[0]
 
 	if err := g.bilConfigureAccounts(ctx, control); err != nil {
 		return nil, err
@@ -296,13 +270,11 @@ func (g *generator) bilLoadSetup(ctx context.Context) (*bilSetup, error) {
 	if err := g.bilEnsureFiscalYears(ctx); err != nil {
 		return nil, err
 	}
-	if err := g.db.NewSelect().Model(&setup.periods).
-		Where("fp.organization_id = ?", g.refs.orgID).
-		Where("fp.business_unit_id = ?", g.refs.buID).
-		Where("fp.status = ?", fiscalperiod.StatusOpen).
-		Where("fp.is_adjusting IS NOT TRUE").
-		Order("fp.start_date ASC").
-		Scan(ctx); err != nil {
+	fp := fiscalperioddb.FiscalPeriods
+	if setup.periods, err = fp.Where(
+		fp.Status.Eq(fiscalperiod.StatusOpen),
+		keel.Not(fp.IsAdjusting.IsTrue()),
+	).Order(fp.StartDate.Asc()).All(ctx, g.db); err != nil {
 		return nil, fmt.Errorf("load fiscal periods: %w", err)
 	}
 	if len(setup.periods) == 0 {
@@ -326,20 +298,17 @@ func (g *generator) bilLoadSetup(ctx context.Context) (*bilSetup, error) {
 // reaches back into, so old invoices post on their own dates instead of piling
 // onto the first open period.
 func (g *generator) bilEnsureFiscalYears(ctx context.Context) error {
-	var existing []int
-	if err := g.db.NewSelect().Model((*fiscalyear.FiscalYear)(nil)).
-		ColumnExpr("fy.year").
-		Where("fy.organization_id = ?", g.refs.orgID).
-		Where("fy.business_unit_id = ?", g.refs.buID).
-		Scan(ctx, &existing); err != nil {
+	fy := fiscalyeardb.FiscalYears
+	existing, err := fy.Pick(fy.Year).All(ctx, g.db)
+	if err != nil {
 		return fmt.Errorf("load fiscal years: %w", err)
 	}
 	have := make(map[int]struct{}, len(existing))
-	for _, year := range existing {
-		have[year] = struct{}{}
+	for _, row := range existing {
+		have[row.Year] = struct{}{}
 	}
 
-	return g.inTx(ctx, func(ctx context.Context, tx bun.Tx) error {
+	return g.inTx(ctx, func(ctx context.Context, tx *keel.DB) error {
 		for year := g.start.Year(); year <= g.now.Year(); year++ {
 			if _, ok := have[year]; ok {
 				continue
@@ -356,11 +325,10 @@ func (g *generator) bilEnsureFiscalYears(ctx context.Context) error {
 				EndDate:        begin.AddDate(1, 0, 0).Add(-time.Second).Unix(),
 				IsCalendarYear: true,
 			}
-			if _, err := tx.NewInsert().Model(fy).Exec(ctx); err != nil {
+			if err := fiscalyeardb.FiscalYears.Create(ctx, tx, fy); err != nil {
 				return fmt.Errorf("insert fiscal year %d: %w", year, err)
 			}
-			periods := fy.GenerateMonthlyPeriods()
-			if _, err := tx.NewInsert().Model(&periods).Exec(ctx); err != nil {
+			if err := fiscalperioddb.FiscalPeriods.CreateMany(ctx, tx, fy.GenerateMonthlyPeriods()); err != nil {
 				return fmt.Errorf("insert fiscal periods for %d: %w", year, err)
 			}
 			g.report.add("Fiscal years", 1)
@@ -373,31 +341,22 @@ func (g *generator) bilConfigureAccounts(
 	ctx context.Context,
 	control *tenant.AccountingControl,
 ) error {
-	var accounts []*glaccount.GLAccount
-	if err := g.db.NewSelect().Model(&accounts).
-		Where("gla.organization_id = ?", g.refs.orgID).
-		Where("gla.business_unit_id = ?", g.refs.buID).
-		Where("gla.account_code IN (?)", bun.In([]string{
-			bilAccountCash, bilAccountAR, bilAccountRevenue, bilAccountUnapplied,
-		})).
-		Scan(ctx); err != nil {
-		return fmt.Errorf("load gl accounts: %w", err)
-	}
-	byCode := make(map[string]pulid.ID, len(accounts))
-	for _, a := range accounts {
-		byCode[a.AccountCode] = a.ID
+	byCode, err := g.glAccountsByCode(ctx, bilAccountCash, bilAccountAR, bilAccountRevenue, bilAccountUnapplied)
+	if err != nil {
+		return err
 	}
 
+	ac := tenantdb.AccountingControls
 	defaults := []struct {
-		column string
+		column keelkinds.PulidIDCol
 		code   string
 		field  *pulid.ID
 	}{
-		{column: "default_ar_account_id", code: bilAccountAR, field: &control.DefaultARAccountID},
-		{column: "default_revenue_account_id", code: bilAccountRevenue, field: &control.DefaultRevenueAccountID},
-		{column: "default_cash_account_id", code: bilAccountCash, field: &control.DefaultCashAccountID},
+		{column: ac.DefaultARAccountID, code: bilAccountAR, field: &control.DefaultARAccountID},
+		{column: ac.DefaultRevenueAccountID, code: bilAccountRevenue, field: &control.DefaultRevenueAccountID},
+		{column: ac.DefaultCashAccountID, code: bilAccountCash, field: &control.DefaultCashAccountID},
 		{
-			column: "default_unapplied_cash_account_id",
+			column: ac.DefaultUnappliedCashAccountID,
 			code:   bilAccountUnapplied,
 			field:  &control.DefaultUnappliedCashAccountID,
 		},
@@ -407,13 +366,8 @@ func (g *generator) bilConfigureAccounts(
 		if def.field.IsNotNil() || !ok {
 			continue
 		}
-		if _, err := g.db.NewUpdate().Model((*tenant.AccountingControl)(nil)).
-			Set("? = ?", bun.Ident(def.column), id).
-			Where("organization_id = ?", g.refs.orgID).
-			Where("business_unit_id = ?", g.refs.buID).
-			Where("? IS NULL", bun.Ident(def.column)).
-			Exec(ctx); err != nil {
-			return fmt.Errorf("set %s: %w", def.column, err)
+		if _, err = ac.Where(def.column.IsNull()).Update(ctx, g.db, def.column.To(id)); err != nil {
+			return fmt.Errorf("set the default %s account: %w", def.code, err)
 		}
 		*def.field = id
 	}
@@ -1512,7 +1466,7 @@ func (g *generator) bilMaterialize(ctx context.Context, rows *bilRows) error {
 		rows.jlines = append(rows.jlines, lines...)
 
 		sourceID := idAt("jsrc_", date)
-		rows.sources = append(rows.sources, &bilJournalSource{
+		rows.sources = append(rows.sources, &journalsource.Source{
 			ID:                   sourceID,
 			BusinessUnitID:       g.refs.buID,
 			OrganizationID:       g.refs.orgID,
@@ -1526,7 +1480,7 @@ func (g *generator) bilMaterialize(ctx context.Context, rows *bilRows) error {
 			JournalEntryID:       j.entryID,
 			CreatedAt:            date,
 		})
-		rows.srcLinks = append(rows.srcLinks, &bilJournalLink{
+		rows.srcLinks = append(rows.srcLinks, &journalsource.SourceJournalLink{
 			ID:              sourceID,
 			BusinessUnitID:  g.refs.buID,
 			OrganizationID:  g.refs.orgID,
@@ -1571,82 +1525,38 @@ func bilStampOf[T any](rows []T, fn func(T) stamp) []stamp {
 
 func bilInsert[T any](
 	ctx context.Context,
-	tx bun.Tx,
-	table string,
-	orgID pulid.ID,
-	size int,
-	rows []T,
-	fn func(T) stamp,
+	tx *keel.DB,
+	h keel.Handle[T],
+	rows []*T,
+	fn func(*T) stamp,
 	createdOnly bool,
 ) error {
 	if len(rows) == 0 {
 		return nil
 	}
 	stamps := bilStampOf(rows, fn)
-	if err := insertBatches(ctx, tx, rows, size); err != nil {
-		return fmt.Errorf("insert %s: %w", table, err)
-	}
-	if createdOnly {
-		return bilBackdateCreated(ctx, tx, table, orgID, stamps)
-	}
-	return backdate(ctx, tx, table, orgID, stamps)
-}
-
-func bilBackdateCreated(
-	ctx context.Context,
-	idb bun.IDB,
-	table string,
-	orgID pulid.ID,
-	stamps []stamp,
-) error {
-	if len(stamps) == 0 {
-		return nil
-	}
-	if err := analyze(ctx, idb, table); err != nil {
+	if err := insertRows(ctx, tx, h, rows); err != nil {
 		return err
 	}
-	for begin := 0; begin < len(stamps); begin += backdateChunk {
-		chunk := stamps[begin:min(begin+backdateChunk, len(stamps))]
-		ids := make([]string, len(chunk))
-		created := make([]int64, len(chunk))
-		for i, s := range chunk {
-			ids[i] = s.id.String()
-			created[i] = s.created
-		}
-		if _, err := idb.NewRaw(`
-			UPDATE ? AS t
-			SET created_at = d.created_at
-			FROM unnest(?::varchar[], ?::bigint[]) AS d(id, created_at)
-			WHERE t.id = d.id AND t.organization_id = ?`,
-			bun.Ident(table),
-			pgdialect.Array(ids),
-			pgdialect.Array(created),
-			orgID,
-		).Exec(ctx); err != nil {
-			return fmt.Errorf("backdate %s: %w", table, err)
-		}
-	}
 
-	return nil
+	return backdateColumns(ctx, tx, h, stamps, createdOnly)
 }
 
-func (g *generator) bilWrite(ctx context.Context, tx bun.Tx, rows *bilRows) error {
-	org := g.refs.orgID
-	size := g.opts.BatchSize
+func (g *generator) bilWrite(ctx context.Context, tx *keel.DB, rows *bilRows) error {
 
-	if err := bilInsert(ctx, tx, "billing_queue_items", org, size, rows.items,
+	if err := bilInsert(ctx, tx, billingqueuedb.BillingQueueItems.Handle, rows.items,
 		func(r *billingqueue.BillingQueueItem) stamp {
 			return stamp{id: r.ID, created: r.CreatedAt, updated: r.UpdatedAt}
 		}, false); err != nil {
 		return err
 	}
-	if err := bilInsert(ctx, tx, "invoices", org, size, rows.invoices,
+	if err := bilInsert(ctx, tx, invoicedb.Invoices.Handle, rows.invoices,
 		func(r *invoice.Invoice) stamp {
 			return stamp{id: r.ID, created: r.CreatedAt, updated: r.UpdatedAt}
 		}, false); err != nil {
 		return err
 	}
-	if err := bilInsert(ctx, tx, "invoice_lines", org, size, rows.lines,
+	if err := bilInsert(ctx, tx, invoicedb.InvoiceLines.Handle, rows.lines,
 		func(r *invoice.InvoiceLine) stamp {
 			return stamp{id: r.ID, created: r.CreatedAt, updated: r.UpdatedAt}
 		}, false); err != nil {
@@ -1655,61 +1565,61 @@ func (g *generator) bilWrite(ctx context.Context, tx bun.Tx, rows *bilRows) erro
 	if err := g.bilLinkInvoices(ctx, tx, rows.links); err != nil {
 		return err
 	}
-	if err := bilInsert(ctx, tx, "shipment_comments", org, size, rows.comments,
+	if err := bilInsert(ctx, tx, shipmentdb.ShipmentComments.Handle, rows.comments,
 		func(r *shipment.ShipmentComment) stamp {
 			return stamp{id: r.ID, created: r.CreatedAt, updated: r.CreatedAt}
 		}, false); err != nil {
 		return err
 	}
-	if err := bilInsert(ctx, tx, "billing_queue_events", org, size, rows.events,
+	if err := bilInsert(ctx, tx, billingqueuedb.ItemEvents.Handle, rows.events,
 		func(r *billingqueue.ItemEvent) stamp {
 			return stamp{id: r.ID, created: r.At}
 		}, true); err != nil {
 		return err
 	}
-	if err := bilInsert(ctx, tx, "credit_memo_applications", org, size, rows.memoApps,
+	if err := bilInsert(ctx, tx, customerpaymentdb.CreditMemoApplications.Handle, rows.memoApps,
 		func(r *customerpayment.CreditMemoApplication) stamp {
 			return stamp{id: r.ID, created: r.CreatedAt, updated: r.UpdatedAt}
 		}, false); err != nil {
 		return err
 	}
-	if err := bilInsert(ctx, tx, "journal_batches", org, size, rows.batches,
+	if err := bilInsert(ctx, tx, journalentrydb.JournalBatches.Handle, rows.batches,
 		func(r *journalentry.JournalBatch) stamp {
 			return stamp{id: r.ID, created: r.CreatedAt, updated: r.UpdatedAt}
 		}, false); err != nil {
 		return err
 	}
-	if err := bilInsert(ctx, tx, "journal_entries", org, size, rows.entries,
+	if err := bilInsert(ctx, tx, journalentrydb.JournalEntries.Handle, rows.entries,
 		func(r *journalentry.JournalEntry) stamp {
 			return stamp{id: r.ID, created: r.CreatedAt, updated: r.UpdatedAt}
 		}, false); err != nil {
 		return err
 	}
-	if err := bilInsert(ctx, tx, "journal_entry_lines", org, size, rows.jlines,
+	if err := bilInsert(ctx, tx, journalentrydb.JournalEntryLines.Handle, rows.jlines,
 		func(r *journalentry.JournalEntryLine) stamp {
 			return stamp{id: r.ID, created: r.CreatedAt, updated: r.UpdatedAt}
 		}, false); err != nil {
 		return err
 	}
-	if err := insertBatches(ctx, tx, rows.sources, size); err != nil {
+	if err := insertRows(ctx, tx, journalsourcedb.Sources.Handle, rows.sources); err != nil {
 		return fmt.Errorf("insert journal_sources: %w", err)
 	}
-	if err := insertBatches(ctx, tx, rows.srcLinks, size); err != nil {
+	if err := insertRows(ctx, tx, journalsourcedb.SourceJournalLinks.Handle, rows.srcLinks); err != nil {
 		return fmt.Errorf("insert source_journal_links: %w", err)
 	}
-	if err := bilInsert(ctx, tx, "customer_payments", org, size, rows.payments,
+	if err := bilInsert(ctx, tx, customerpaymentdb.Payments.Handle, rows.payments,
 		func(r *customerpayment.Payment) stamp {
 			return stamp{id: r.ID, created: r.CreatedAt, updated: r.UpdatedAt}
 		}, false); err != nil {
 		return err
 	}
-	if err := bilInsert(ctx, tx, "customer_payment_applications", org, size, rows.apps,
+	if err := bilInsert(ctx, tx, customerpaymentdb.Applications.Handle, rows.apps,
 		func(r *customerpayment.Application) stamp {
 			return stamp{id: r.ID, created: r.CreatedAt, updated: r.UpdatedAt}
 		}, false); err != nil {
 		return err
 	}
-	if err := bilInsert(ctx, tx, "customer_ledger_entries", org, size, rows.ledger,
+	if err := bilInsert(ctx, tx, customerledgerdb.CustomerLedgerEntries.Handle, rows.ledger,
 		func(r *customerledger.CustomerLedgerEntry) stamp {
 			return stamp{id: r.ID, created: r.CreatedAt}
 		}, true); err != nil {
@@ -1719,7 +1629,7 @@ func (g *generator) bilWrite(ctx context.Context, tx bun.Tx, rows *bilRows) erro
 	return g.bilApplyBalances(ctx, tx, rows.balances)
 }
 
-func (g *generator) bilLinkInvoices(ctx context.Context, tx bun.Tx, links []bilItemInvoice) error {
+func (g *generator) bilLinkInvoices(ctx context.Context, tx *keel.DB, links []bilItemInvoice) error {
 	for begin := 0; begin < len(links); begin += backdateChunk {
 		chunk := links[begin:min(begin+backdateChunk, len(links))]
 		items := make([]string, len(chunk))
@@ -1728,16 +1638,10 @@ func (g *generator) bilLinkInvoices(ctx context.Context, tx bun.Tx, links []bilI
 			items[i] = link.item.String()
 			invoices[i] = link.invoice.String()
 		}
-		if _, err := tx.NewRaw(`
-			UPDATE billing_queue_items AS t
-			SET invoice_id = d.invoice_id
-			FROM unnest(?::varchar[], ?::varchar[]) AS d(id, invoice_id)
-			WHERE t.id = d.id AND t.organization_id = ? AND t.business_unit_id = ?`,
-			pgdialect.Array(items),
-			pgdialect.Array(invoices),
-			g.refs.orgID,
-			g.refs.buID,
-		).Exec(ctx); err != nil {
+		bq := billingqueuedb.BillingQueueItems
+		d := keel.Unnest("d", []string{"id", "invoice_id"}, items, invoices)
+		if _, err := bq.With(d).Join(d, d.Col("id").EqCol(bq.ID)).Where(keel.True()).
+			Update(ctx, tx, bq.InvoiceID.ToExpr(d.Col("invoice_id")), keepUpdated(bq.Handle)); err != nil {
 			return fmt.Errorf("link billing queue items to invoices: %w", err)
 		}
 	}
@@ -1747,7 +1651,7 @@ func (g *generator) bilLinkInvoices(ctx context.Context, tx bun.Tx, links []bilI
 
 func (g *generator) bilApplyBalances(
 	ctx context.Context,
-	tx bun.Tx,
+	tx *keel.DB,
 	balances map[bilBalanceKey]*bilBalance,
 ) error {
 	keys := make([]bilBalanceKey, 0, len(balances))
@@ -1761,66 +1665,23 @@ func (g *generator) bilApplyBalances(
 		return keys[i].period < keys[j].period
 	})
 
-	accounts := make(map[pulid.ID]*bilBalance)
+	rows := make([]*glbalance.GLAccountPeriodBalance, 0, len(keys))
 	for _, key := range keys {
 		bal := balances[key]
-		if _, err := tx.NewRaw(`
-			INSERT INTO gl_account_balances_by_period AS gb (
-				organization_id,
-				business_unit_id,
-				gl_account_id,
-				fiscal_year_id,
-				fiscal_period_id,
-				period_debit_minor,
-				period_credit_minor,
-				net_change_minor,
-				last_journal_entry_id
-			) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-			ON CONFLICT (organization_id, business_unit_id, gl_account_id, fiscal_year_id, fiscal_period_id)
-			DO UPDATE SET
-				period_debit_minor = gb.period_debit_minor + EXCLUDED.period_debit_minor,
-				period_credit_minor = gb.period_credit_minor + EXCLUDED.period_credit_minor,
-				net_change_minor = gb.net_change_minor + EXCLUDED.net_change_minor,
-				last_journal_entry_id = EXCLUDED.last_journal_entry_id,
-				updated_at = `+dbhelper.NowEpoch+`
-		`,
-			g.refs.orgID, g.refs.buID, key.account, key.year, key.period,
-			bal.debit, bal.credit, bal.net, bal.lastEntry,
-		).Exec(ctx); err != nil {
-			return fmt.Errorf("upsert gl balance by period: %w", err)
-		}
-
-		total, ok := accounts[key.account]
-		if !ok {
-			total = &bilBalance{}
-			accounts[key.account] = total
-		}
-		total.debit += bal.debit
-		total.credit += bal.credit
-		total.net += bal.net
+		rows = append(rows, &glbalance.GLAccountPeriodBalance{
+			OrganizationID:     g.refs.orgID,
+			BusinessUnitID:     g.refs.buID,
+			GLAccountID:        key.account,
+			FiscalYearID:       key.year,
+			FiscalPeriodID:     key.period,
+			PeriodDebitMinor:   bal.debit,
+			PeriodCreditMinor:  bal.credit,
+			NetChangeMinor:     bal.net,
+			LastJournalEntryID: bal.lastEntry,
+		})
 	}
 
-	ids := make([]pulid.ID, 0, len(accounts))
-	for id := range accounts {
-		ids = append(ids, id)
-	}
-	sort.Slice(ids, func(i, j int) bool { return ids[i] < ids[j] })
-	for _, id := range ids {
-		total := accounts[id]
-		if _, err := tx.NewUpdate().Table("gl_accounts").
-			Set("current_balance = current_balance + ?", total.net).
-			Set("debit_balance = debit_balance + ?", total.debit).
-			Set("credit_balance = credit_balance + ?", total.credit).
-			Set("updated_at = "+dbhelper.NowEpoch).
-			Where("id = ?", id).
-			Where("organization_id = ?", g.refs.orgID).
-			Where("business_unit_id = ?", g.refs.buID).
-			Exec(ctx); err != nil {
-			return fmt.Errorf("update gl account running balance: %w", err)
-		}
-	}
-
-	return nil
+	return postBalances(ctx, tx, rows)
 }
 
 func (g *generator) bilCount(rows *bilRows) {

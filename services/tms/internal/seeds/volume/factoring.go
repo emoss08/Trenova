@@ -1,4 +1,4 @@
-package volumeseed
+package volume
 
 import (
 	"context"
@@ -12,6 +12,15 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/emoss08/keel"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accounttype/accounttypedb"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/glaccount/glaccountdb"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/factoring/factoringdb"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice/invoicedb"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/document/documentdb"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/customer/customerdb"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/factoringcompany/factoringcompanydb"
 
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accounttype"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/glaccount"
@@ -27,8 +36,6 @@ import (
 	"github.com/emoss08/trenova/shared/fileutils"
 	"github.com/emoss08/trenova/shared/money"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/uptrace/bun"
-	"github.com/uptrace/bun/dialect/pgdialect"
 )
 
 const (
@@ -165,7 +172,7 @@ var facFailures = []string{
 
 // facMasterData sets up the factors, their agreements, delivery settings and
 // notices of assignment, and puts a minority of customers on factoring.
-func (g *generator) facMasterData(ctx context.Context, tx bun.Tx) error {
+func (g *generator) facMasterData(ctx context.Context, tx *keel.DB) error {
 	accounts, err := g.facAccounts(ctx, tx)
 	if err != nil {
 		return err
@@ -212,29 +219,19 @@ var facAccountDefs = []facAccountDef{
 	},
 }
 
-func (g *generator) facAccounts(ctx context.Context, tx bun.Tx) (map[string]pulid.ID, error) {
+func (g *generator) facAccounts(ctx context.Context, tx *keel.DB) (map[string]pulid.ID, error) {
 	codes := []string{"1100", "2400", "6800"}
 	for _, def := range facAccountDefs {
 		codes = append(codes, def.code)
 	}
-	var existing []*glaccount.GLAccount
-	if err := tx.NewSelect().Model(&existing).
-		Where("gla.organization_id = ?", g.refs.orgID).
-		Where("gla.business_unit_id = ?", g.refs.buID).
-		Where("gla.account_code IN (?)", bun.List(codes)).
-		Scan(ctx); err != nil {
-		return nil, fmt.Errorf("load factoring gl accounts: %w", err)
-	}
-	byCode := make(map[string]pulid.ID, len(codes))
-	for _, a := range existing {
-		byCode[a.AccountCode] = a.ID
+	byCode, err := g.glAccountsByCode(ctx, codes...)
+	if err != nil {
+		return nil, err
 	}
 
-	var types []*accounttype.AccountType
-	if err := tx.NewSelect().Model(&types).
-		Where("at.organization_id = ?", g.refs.orgID).
-		Where("at.business_unit_id = ?", g.refs.buID).
-		Scan(ctx); err != nil {
+	at := accounttypedb.AccountTypes
+	types, err := at.Pick(at.ID, at.Category).Order(at.ID.Asc()).All(ctx, tx)
+	if err != nil {
 		return nil, fmt.Errorf("load account types: %w", err)
 	}
 	typeOf := make(map[accounttype.Category]pulid.ID, len(types))
@@ -269,7 +266,7 @@ func (g *generator) facAccounts(ctx context.Context, tx bun.Tx) (map[string]puli
 		byCode[def.code] = account.ID
 	}
 	if len(created) > 0 {
-		if err := insertBatches(ctx, tx, created, g.opts.BatchSize); err != nil {
+		if err := insertRows(ctx, tx, glaccountdb.GLAccounts.Handle, created); err != nil {
 			return nil, fmt.Errorf("insert factoring gl accounts: %w", err)
 		}
 		g.report.add("GL accounts", len(created))
@@ -290,39 +287,32 @@ func facCity(name, state string) *cityRecord {
 //nolint:funlen // reuse and creation of the factor catalogue read best together
 func (g *generator) facFactors(
 	ctx context.Context,
-	tx bun.Tx,
+	tx *keel.DB,
 	accounts map[string]pulid.ID,
 ) ([]*facFactor, error) {
-	var companies []*factoringcompany.FactoringCompany
-	if err := tx.NewSelect().Model(&companies).
-		Where("organization_id = ?", g.refs.orgID).
-		Where("business_unit_id = ?", g.refs.buID).
-		Scan(ctx); err != nil {
+	companies, err := factoringcompanydb.FactoringCompanies.Query().All(ctx, tx)
+	if err != nil {
 		return nil, fmt.Errorf("load factoring companies: %w", err)
 	}
-	var agreements []*factoring.Agreement
-	if err := tx.NewSelect().Model(&agreements).
-		Relation("FeeTiers").
-		Where("facagr.organization_id = ?", g.refs.orgID).
-		Where("facagr.business_unit_id = ?", g.refs.buID).
-		Where("facagr.status = ?", factoring.AgreementStatusActive).
-		Scan(ctx); err != nil {
+	fa := factoringdb.Agreements
+	agreements, err := fa.Load(fa.FeeTiers()).
+		Where(fa.Status.Eq(factoring.AgreementStatusActive)).
+		All(ctx, tx)
+	if err != nil {
 		return nil, fmt.Errorf("load factoring agreements: %w", err)
 	}
-	var transports []*factoring.Transport
-	if err := tx.NewSelect().Model(&transports).
-		Where("factrn.organization_id = ?", g.refs.orgID).
-		Where("factrn.business_unit_id = ?", g.refs.buID).
-		Scan(ctx); err != nil {
+	transports, err := factoringdb.Transports.Query().All(ctx, tx)
+	if err != nil {
 		return nil, fmt.Errorf("load factoring transports: %w", err)
 	}
-	var profiled []pulid.ID
-	if err := tx.NewSelect().Model((*factoring.RemittanceProfile)(nil)).
-		ColumnExpr("factoring_company_id").
-		Where("organization_id = ?", g.refs.orgID).
-		Where("business_unit_id = ?", g.refs.buID).
-		Scan(ctx, &profiled); err != nil {
+	rp := factoringdb.RemittanceProfiles
+	profiles, err := rp.Pick(rp.FactoringCompanyID).All(ctx, tx)
+	if err != nil {
 		return nil, fmt.Errorf("load remittance profiles: %w", err)
+	}
+	profiled := make([]pulid.ID, 0, len(profiles))
+	for _, p := range profiles {
+		profiled = append(profiled, p.FactoringCompanyID)
 	}
 
 	start, now := unix(g.start), unix(g.now)
@@ -488,16 +478,16 @@ func (g *generator) facFactors(
 		marks []stamp
 	}{
 		{"factoring_companies", len(newCompanies), func() error {
-			return insertBatches(ctx, tx, newCompanies, g.opts.BatchSize)
+			return insertRows(ctx, tx, factoringcompanydb.FactoringCompanies.Handle, newCompanies)
 		}, companyStamps},
 		{"factoring_agreements", len(newAgreements), func() error {
-			return insertBatches(ctx, tx, newAgreements, g.opts.BatchSize)
+			return insertRows(ctx, tx, factoringdb.Agreements.Handle, newAgreements)
 		}, agreementStamps},
 		{"factoring_fee_tiers", len(newTiers), func() error {
-			return insertBatches(ctx, tx, newTiers, g.opts.BatchSize)
+			return insertRows(ctx, tx, factoringdb.FeeTiers.Handle, newTiers)
 		}, nil},
 		{"factoring_transports", len(newTransports), func() error {
-			return insertBatches(ctx, tx, newTransports, g.opts.BatchSize)
+			return insertRows(ctx, tx, factoringdb.Transports.Handle, newTransports)
 		}, transportStamps},
 	}
 	for _, step := range steps {
@@ -508,7 +498,7 @@ func (g *generator) facFactors(
 			return nil, fmt.Errorf("insert %s: %w", step.table, err)
 		}
 		if step.marks != nil {
-			if err := backdate(ctx, tx, step.table, g.refs.orgID, step.marks); err != nil {
+			if err := backdateTable(ctx, tx, step.table, step.marks); err != nil {
 				return nil, err
 			}
 		}
@@ -531,7 +521,7 @@ const (
 )
 
 //nolint:gocognit,funlen // each customer's factoring history is decided in one place
-func (g *generator) facAssign(ctx context.Context, tx bun.Tx, st *facState) error {
+func (g *generator) facAssign(ctx context.Context, tx *keel.DB, st *facState) error {
 	candidates := make([]*customerRecord, 0, len(g.customers))
 	weights := make([]int, 0, len(g.customers))
 	for i, c := range g.customers {
@@ -640,31 +630,27 @@ func (g *generator) facAssign(ctx context.Context, tx bun.Tx, st *facState) erro
 		for _, d := range docs {
 			docStamps = append(docStamps, stamp{id: d.ID, created: d.CreatedAt, updated: d.CreatedAt})
 		}
-		if err := insertBatches(ctx, tx, docs, g.opts.BatchSize); err != nil {
+		if err := insertRows(ctx, tx, documentdb.Documents.Handle, docs); err != nil {
 			return fmt.Errorf("insert signed notice documents: %w", err)
 		}
-		if err := backdate(ctx, tx, "documents", g.refs.orgID, docStamps); err != nil {
+		if err := backdate(ctx, tx, documentdb.Documents.Handle, docStamps); err != nil {
 			return err
 		}
 	}
-	if err := insertBatches(ctx, tx, noas, g.opts.BatchSize); err != nil {
+	if err := insertRows(ctx, tx, factoringdb.Noas.Handle, noas); err != nil {
 		return fmt.Errorf("insert notices of assignment: %w", err)
 	}
-	if err := backdate(ctx, tx, "factoring_noas", g.refs.orgID, noaStamps); err != nil {
+	if err := backdate(ctx, tx, factoringdb.Noas.Handle, noaStamps); err != nil {
 		return err
 	}
-	if _, err := tx.NewRaw(`
-		UPDATE customer_billing_profiles AS t
-		SET factoring_company_id = d.factoring_company_id
-		FROM unnest(?::varchar[], ?::varchar[]) AS d(customer_id, factoring_company_id)
-		WHERE t.customer_id = d.customer_id
-			AND t.organization_id = ?
-			AND t.business_unit_id = ?`,
-		pgdialect.Array(profileCustomers),
-		pgdialect.Array(profileFactors),
-		g.refs.orgID,
-		g.refs.buID,
-	).Exec(ctx); err != nil {
+	cbp := customerdb.CustomerBillingProfiles
+	assigned := keel.Unnest("d", []string{"customer_id", "factoring_company_id"}, profileCustomers, profileFactors)
+	if _, err := cbp.With(assigned).Join(assigned, assigned.Col("customer_id").EqCol(cbp.CustomerID)).
+		Where(keel.True()).
+		Update(ctx, tx,
+			cbp.FactoringCompanyID.ToExpr(assigned.Col("factoring_company_id")),
+			keepUpdated(cbp.Handle),
+		); err != nil {
 		return fmt.Errorf("assign factoring companies to billing profiles: %w", err)
 	}
 
@@ -752,27 +738,31 @@ func (g *generator) facDocument(
 	id := idAt("doc_", at)
 	storagePath := fileutils.GenerateStoragePath(g.refs.orgID.String(), resourceType, fileName)
 	return &document.Document{
-		ID:                id,
-		OrganizationID:    g.refs.orgID,
-		BusinessUnitID:    g.refs.buID,
-		LineageID:         id,
-		VersionNumber:     1,
-		IsCurrentVersion:  true,
-		FileName:          path.Base(storagePath),
-		OriginalName:      fileName,
-		FileSize:          size,
-		FileType:          fileType,
-		StoragePath:       storagePath,
-		Status:            document.StatusActive,
-		ResourceID:        resourceID.String(),
-		ResourceType:      resourceType,
-		ProcessingProfile: profile,
-		UploadedByID:      by,
-		PreviewStatus:     document.PreviewStatusUnsupported,
-		ContentStatus:     document.ContentStatusFailed,
-		ContentError:      facNoFile,
-		CreatedAt:         at,
-		UpdatedAt:         at,
+		ID:                  id,
+		OrganizationID:      g.refs.orgID,
+		BusinessUnitID:      g.refs.buID,
+		LineageID:           id,
+		VersionNumber:       1,
+		IsCurrentVersion:    true,
+		FileName:            path.Base(storagePath),
+		OriginalName:        fileName,
+		FileSize:            size,
+		FileType:            fileType,
+		StoragePath:         storagePath,
+		Status:              document.StatusActive,
+		ResourceID:          resourceID.String(),
+		ResourceType:        resourceType,
+		ProcessingProfile:   profile,
+		UploadedByID:        by,
+		PreviewStatus:       document.PreviewStatusUnsupported,
+		ContentStatus:       document.ContentStatusFailed,
+		ContentError:        facNoFile,
+		CreatedAt:           at,
+		UpdatedAt:           at,
+		CryptoMode:          "blob_v1",
+		CryptoVersion:       2,
+		ShipmentDraftStatus: document.ShipmentDraftStatusUnavailable,
+		SignatureStatus:     document.SignatureStatusUnknown,
 	}
 }
 
@@ -846,37 +836,6 @@ type facEvent struct {
 	cash int64
 }
 
-type facReserveRow struct {
-	bun.BaseModel `bun:"table:factoring_reserve_entries"`
-
-	ID                 pulid.ID                      `bun:"id,pk"`
-	OrganizationID     pulid.ID                      `bun:"organization_id,pk"`
-	BusinessUnitID     pulid.ID                      `bun:"business_unit_id,pk"`
-	FactoringCompanyID pulid.ID                      `bun:"factoring_company_id"`
-	AgreementID        pulid.ID                      `bun:"agreement_id"`
-	SubmissionID       pulid.ID                      `bun:"submission_id"`
-	SubmissionItemID   pulid.ID                      `bun:"submission_item_id"`
-	InvoiceID          pulid.ID                      `bun:"invoice_id"`
-	CustomerID         pulid.ID                      `bun:"customer_id"`
-	Kind               factoring.ReserveEntryKind    `bun:"kind"`
-	Treatment          factoring.AccountingTreatment `bun:"treatment"`
-	CurrencyCode       string                        `bun:"currency_code"`
-	CashMinor          int64                         `bun:"cash_minor"`
-	FeeMinor           int64                         `bun:"fee_minor"`
-	ReserveMinor       int64                         `bun:"reserve_minor"`
-	LiabilityMinor     int64                         `bun:"liability_minor"`
-	ARMinor            int64                         `bun:"ar_minor"`
-	JournalEntryID     pulid.ID                      `bun:"journal_entry_id"`
-	JournalBatchID     pulid.ID                      `bun:"journal_batch_id"`
-	AccountingDate     int64                         `bun:"accounting_date"`
-	OccurredOn         int64                         `bun:"occurred_on"`
-	ReversesEntryID    pulid.ID                      `bun:"reverses_entry_id,nullzero"`
-	RemittanceLineID   pulid.ID                      `bun:"remittance_line_id,nullzero"`
-	Memo               string                        `bun:"memo,nullzero"`
-	CreatedByID        pulid.ID                      `bun:"created_by_id,nullzero"`
-	CreatedAt          int64                         `bun:"created_at"`
-}
-
 type facAppliedLine struct {
 	line    *factoring.RemittanceLine
 	entryID pulid.ID
@@ -889,7 +848,7 @@ type facRun struct {
 	bookable    map[pulid.ID]bool
 	invoices    []*facInvoice
 	subs        []*facSub
-	entries     []*facReserveRow
+	entries     []*factoring.ReserveEntry
 	remittances []*factoring.Remittance
 	lines       []*factoring.RemittanceLine
 	applied     []facAppliedLine
@@ -949,7 +908,7 @@ func (g *generator) seedFactoring(ctx context.Context) error {
 			return err
 		}
 	}
-	if err = g.inTx(ctx, func(ctx context.Context, tx bun.Tx) error {
+	if err = g.inTx(ctx, func(ctx context.Context, tx *keel.DB) error {
 		return g.facWrite(ctx, tx, run)
 	}); err != nil {
 		return err
@@ -1790,7 +1749,7 @@ func (g *generator) facBook(run *facRun, b *facBooking) (pulid.ID, error) {
 	run.rows.journals = append(run.rows.journals, journal)
 
 	entry := factoring.NewReserveEntry(it.item, sub, &b.movement, b.on)
-	row := &facReserveRow{
+	row := &factoring.ReserveEntry{
 		ID:                 idAt("facres_", b.at),
 		OrganizationID:     entry.OrganizationID,
 		BusinessUnitID:     entry.BusinessUnitID,
@@ -2075,18 +2034,17 @@ func (g *generator) facOddRemittances(run *facRun, now int64) {
 }
 
 //nolint:gocognit,funlen // writes follow the foreign keys in one place
-func (g *generator) facWrite(ctx context.Context, tx bun.Tx, run *facRun) error {
-	org, size := g.refs.orgID, g.opts.BatchSize
+func (g *generator) facWrite(ctx context.Context, tx *keel.DB, run *facRun) error {
 
 	if len(run.docs) > 0 {
 		marks := make([]stamp, 0, len(run.docs))
 		for _, d := range run.docs {
 			marks = append(marks, stamp{id: d.ID, created: d.CreatedAt, updated: d.CreatedAt})
 		}
-		if err := insertBatches(ctx, tx, run.docs, size); err != nil {
+		if err := insertRows(ctx, tx, documentdb.Documents.Handle, run.docs); err != nil {
 			return fmt.Errorf("insert remittance documents: %w", err)
 		}
-		if err := backdate(ctx, tx, "documents", org, marks); err != nil {
+		if err := backdate(ctx, tx, documentdb.Documents.Handle, marks); err != nil {
 			return err
 		}
 	}
@@ -2103,10 +2061,10 @@ func (g *generator) facWrite(ctx context.Context, tx bun.Tx, run *facRun) error 
 			itemMarks = append(itemMarks, stamp{id: it.item.ID, created: fs.slot, updated: it.item.UpdatedAt})
 		}
 	}
-	if err := insertBatches(ctx, tx, subs, size); err != nil {
+	if err := insertRows(ctx, tx, factoringdb.Submissions.Handle, subs); err != nil {
 		return fmt.Errorf("insert factoring submissions: %w", err)
 	}
-	if err := insertBatches(ctx, tx, items, size); err != nil {
+	if err := insertRows(ctx, tx, factoringdb.SubmissionItems.Handle, items); err != nil {
 		return fmt.Errorf("insert factoring submission items: %w", err)
 	}
 
@@ -2116,24 +2074,24 @@ func (g *generator) facWrite(ctx context.Context, tx bun.Tx, run *facRun) error 
 		a.line.MatchStatus = factoring.RemittanceLineMatched
 		a.line.ReserveEntryID = pulid.Nil
 	}
-	if err := insertBatches(ctx, tx, run.remittances, size); err != nil {
+	if err := insertRows(ctx, tx, factoringdb.Remittances.Handle, run.remittances); err != nil {
 		return fmt.Errorf("insert factoring remittances: %w", err)
 	}
-	if err := insertBatches(ctx, tx, run.lines, size); err != nil {
+	if err := insertRows(ctx, tx, factoringdb.RemittanceLines.Handle, run.lines); err != nil {
 		return fmt.Errorf("insert factoring remittance lines: %w", err)
 	}
 	profileMarks := make([]stamp, 0, len(run.profiles))
 	for _, p := range run.profiles {
 		profileMarks = append(profileMarks, stamp{id: p.ID, created: p.CreatedAt, updated: p.CreatedAt})
 	}
-	if err := insertBatches(ctx, tx, run.profiles, size); err != nil {
+	if err := insertRows(ctx, tx, factoringdb.RemittanceProfiles.Handle, run.profiles); err != nil {
 		return fmt.Errorf("insert factoring remittance profiles: %w", err)
 	}
 
 	if err := g.bilWrite(ctx, tx, run.rows); err != nil {
 		return err
 	}
-	if err := insertBatches(ctx, tx, run.entries, size); err != nil {
+	if err := insertRows(ctx, tx, factoringdb.ReserveEntries.Handle, run.entries); err != nil {
 		return fmt.Errorf("insert factoring reserve entries: %w", err)
 	}
 
@@ -2144,16 +2102,15 @@ func (g *generator) facWrite(ctx context.Context, tx bun.Tx, run *facRun) error 
 			lineIDs = append(lineIDs, lineID.String())
 			entryIDs = append(entryIDs, entryID.String())
 		}
-		if _, err := tx.NewRaw(`
-			UPDATE factoring_remittance_lines AS t
-			SET match_status = 'Applied', reserve_entry_id = d.reserve_entry_id
-			FROM unnest(?::varchar[], ?::varchar[]) AS d(id, reserve_entry_id)
-			WHERE t.id = d.id AND t.organization_id = ? AND t.business_unit_id = ?`,
-			pgdialect.Array(lineIDs),
-			pgdialect.Array(entryIDs),
-			org,
-			g.refs.buID,
-		).Exec(ctx); err != nil {
+		rl := factoringdb.RemittanceLines
+		d := keel.Unnest("d", []string{"id", "reserve_entry_id"}, lineIDs, entryIDs)
+		if _, err := rl.With(d).Join(d, d.Col("id").EqCol(rl.ID)).Where(keel.True()).Update(
+			ctx,
+			tx,
+			rl.MatchStatus.To(factoring.RemittanceLineApplied),
+			rl.ReserveEntryID.ToExpr(d.Col("reserve_entry_id")),
+			keepUpdated(rl.Handle),
+		); err != nil {
 			return fmt.Errorf("mark remittance lines applied: %w", err)
 		}
 	}
@@ -2161,7 +2118,7 @@ func (g *generator) facWrite(ctx context.Context, tx bun.Tx, run *facRun) error 
 	if err := g.facUpdateInvoices(ctx, tx, run); err != nil {
 		return err
 	}
-	if err := insertBatches(ctx, tx, run.states, size); err != nil {
+	if err := insertRows(ctx, tx, factoringdb.InvoiceStates.Handle, run.states); err != nil {
 		return fmt.Errorf("insert factoring invoice states: %w", err)
 	}
 
@@ -2174,12 +2131,12 @@ func (g *generator) facWrite(ctx context.Context, tx bun.Tx, run *facRun) error 
 		{"factoring_remittances", run.remStamps},
 		{"factoring_remittance_lines", run.lineStamps},
 	} {
-		if err := backdate(ctx, tx, b.table, org, b.marks); err != nil {
+		if err := backdateTable(ctx, tx, b.table, b.marks); err != nil {
 			return err
 		}
 	}
 	if len(profileMarks) > 0 {
-		if err := backdate(ctx, tx, "factoring_remittance_profiles", org, profileMarks); err != nil {
+		if err := backdate(ctx, tx, factoringdb.RemittanceProfiles.Handle, profileMarks); err != nil {
 			return err
 		}
 	}
@@ -2187,7 +2144,7 @@ func (g *generator) facWrite(ctx context.Context, tx bun.Tx, run *facRun) error 
 	return nil
 }
 
-func (g *generator) facUpdateInvoices(ctx context.Context, tx bun.Tx, run *facRun) error {
+func (g *generator) facUpdateInvoices(ctx context.Context, tx *keel.DB, run *facRun) error {
 	var ids, settlements, overrides, reasons, factors, agreements []string
 	var applied []string
 	var appliedMinor, updated []int64
@@ -2216,36 +2173,25 @@ func (g *generator) facUpdateInvoices(ctx context.Context, tx bun.Tx, run *facRu
 	}
 	for begin := 0; begin < len(ids); begin += backdateChunk {
 		end := min(begin+backdateChunk, len(ids))
-		if _, err := tx.NewRaw(`
-			UPDATE invoices AS t
-			SET applied_amount = d.applied_amount,
-				applied_amount_minor = d.applied_amount_minor,
-				settlement_status = d.settlement_status,
-				factoring_override = d.factoring_override,
-				factoring_override_reason = NULLIF(d.factoring_override_reason, ''),
-				factoring_company_id = NULLIF(d.factoring_company_id, ''),
-				factoring_agreement_id = NULLIF(d.factoring_agreement_id, ''),
-				updated_at = d.updated_at
-			FROM unnest(
-				?::varchar[], ?::numeric[], ?::bigint[], ?::varchar[], ?::varchar[],
-				?::varchar[], ?::varchar[], ?::varchar[], ?::bigint[]
-			) AS d(
-				id, applied_amount, applied_amount_minor, settlement_status, factoring_override,
-				factoring_override_reason, factoring_company_id, factoring_agreement_id, updated_at
-			)
-			WHERE t.id = d.id AND t.organization_id = ? AND t.business_unit_id = ?`,
-			pgdialect.Array(ids[begin:end]),
-			pgdialect.Array(applied[begin:end]),
-			pgdialect.Array(appliedMinor[begin:end]),
-			pgdialect.Array(settlements[begin:end]),
-			pgdialect.Array(overrides[begin:end]),
-			pgdialect.Array(reasons[begin:end]),
-			pgdialect.Array(factors[begin:end]),
-			pgdialect.Array(agreements[begin:end]),
-			pgdialect.Array(updated[begin:end]),
-			g.refs.orgID,
-			g.refs.buID,
-		).Exec(ctx); err != nil {
+		d := keel.Unnest("d", []string{
+			"id", "applied_amount", "applied_amount_minor", "settlement_status", "factoring_override",
+			"factoring_override_reason", "factoring_company_id", "factoring_agreement_id", "updated_at",
+		}, ids[begin:end], applied[begin:end], appliedMinor[begin:end], settlements[begin:end],
+			overrides[begin:end], reasons[begin:end], factors[begin:end], agreements[begin:end],
+			updated[begin:end])
+		inv := invoicedb.Invoices
+		if _, err := inv.With(d).Join(d, d.Col("id").EqCol(inv.ID)).Where(keel.True()).Update(
+			ctx,
+			tx,
+			inv.AppliedAmount.ToExpr(keel.Raw("?::numeric", d.Col("applied_amount"))),
+			inv.AppliedAmountMinor.ToExpr(d.Col("applied_amount_minor")),
+			inv.SettlementStatus.ToExpr(d.Col("settlement_status")),
+			inv.FactoringOverride.ToExpr(d.Col("factoring_override")),
+			inv.FactoringOverrideReason.ToExpr(nullIfEmpty(d.Col("factoring_override_reason"))),
+			inv.FactoringCompanyID.ToExpr(nullIfEmpty(d.Col("factoring_company_id"))),
+			inv.FactoringAgreementID.ToExpr(nullIfEmpty(d.Col("factoring_agreement_id"))),
+			inv.UpdatedAt.ToExpr(d.Col("updated_at")),
+		); err != nil {
 			return fmt.Errorf("update factored invoices: %w", err)
 		}
 	}

@@ -1,4 +1,4 @@
-package volumeseed
+package volume
 
 import (
 	"context"
@@ -9,6 +9,15 @@ import (
 	"strings"
 	"time"
 	_ "time/tzdata"
+
+	"github.com/emoss08/keel"
+	"github.com/emoss08/trenova/internal/modules/equipment/domain/equipmenttype/equipmenttypedb"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/checkcall/checkcalldb"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/order/orderdb"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment/shipmentdb"
+	"github.com/emoss08/trenova/internal/modules/reference/domain/holdreason/holdreasondb"
+	"github.com/emoss08/trenova/internal/modules/reference/domain/servicetype/servicetypedb"
+	"github.com/emoss08/trenova/internal/modules/reference/domain/shipmenttype/shipmenttypedb"
 
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
 	"github.com/emoss08/trenova/internal/modules/equipment/domain/equipmenttype"
@@ -23,16 +32,12 @@ import (
 	"github.com/emoss08/trenova/internal/modules/rating/domain/ratequote"
 	"github.com/emoss08/trenova/internal/modules/reference/domain/accessorialcharge"
 	"github.com/emoss08/trenova/internal/modules/reference/domain/holdreason"
-	"github.com/emoss08/trenova/internal/modules/reference/domain/servicetype"
-	"github.com/emoss08/trenova/internal/modules/reference/domain/shipmenttype"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/integration"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/rules"
 	"github.com/emoss08/trenova/pkg/tarifftypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
-	"github.com/uptrace/bun"
-	"github.com/uptrace/bun/dialect/pgdialect"
 )
 
 const (
@@ -194,7 +199,7 @@ func (g *generator) seedShipments(ctx context.Context) error {
 				return fmt.Errorf("build shipment %s: %w", pros[i], err)
 			}
 		}
-		if err = g.inTx(ctx, func(ctx context.Context, tx bun.Tx) error {
+		if err = g.inTx(ctx, func(ctx context.Context, tx *keel.DB) error {
 			return b.write(ctx, tx, batch)
 		}); err != nil {
 			return err
@@ -239,11 +244,9 @@ func (g *generator) shpLoadLookups(ctx context.Context) (*shpLookups, error) {
 		templates:     make(map[string]*formulatemplate.FormulaTemplate),
 	}
 
-	var equipment []*equipmenttype.EquipmentType
-	if err := g.db.NewSelect().Model(&equipment).
-		Where("et.organization_id = ?", g.refs.orgID).
-		Where("et.status = ?", domaintypes.StatusActive).
-		Scan(ctx); err != nil {
+	et := equipmenttypedb.EquipmentTypes
+	equipment, err := et.Where(et.Status.Eq(domaintypes.StatusActive)).Order(et.ID.Asc()).All(ctx, g.db)
+	if err != nil {
 		return nil, fmt.Errorf("load equipment types: %w", err)
 	}
 	for _, et := range equipment {
@@ -263,35 +266,33 @@ func (g *generator) shpLoadLookups(ctx context.Context) (*shpLookups, error) {
 		}
 	}
 
-	var services []*servicetype.ServiceType
-	if err := g.db.NewSelect().Model(&services).
-		Where("st.organization_id = ?", g.refs.orgID).
-		Where("st.status = ?", domaintypes.StatusActive).
-		Scan(ctx); err != nil {
+	st := servicetypedb.ServiceTypes
+	services, err := st.Pick(st.ID, st.Code).Where(st.Status.Eq(domaintypes.StatusActive)).All(ctx, g.db)
+	if err != nil {
 		return nil, fmt.Errorf("load service types: %w", err)
 	}
 	for _, s := range services {
 		look.serviceTypes[strings.ToUpper(s.Code)] = s.ID
 	}
 
-	var types []*shipmenttype.ShipmentType
-	if err := g.db.NewSelect().Model(&types).
-		Where("sht.organization_id = ?", g.refs.orgID).
-		Where("sht.status = ?", domaintypes.StatusActive).
-		Scan(ctx); err != nil {
+	sht := shipmenttypedb.ShipmentTypes
+	types, err := sht.Pick(sht.ID, sht.Code).Where(sht.Status.Eq(domaintypes.StatusActive)).All(ctx, g.db)
+	if err != nil {
 		return nil, fmt.Errorf("load shipment types: %w", err)
 	}
 	for _, t := range types {
 		look.shipmentTypes[strings.ToUpper(t.Code)] = t.ID
 	}
 
-	var users []*tenant.User
-	if err := g.db.NewSelect().Model(&users).
-		Where("usr.id IN (?)", bun.List(g.refs.userIDs)).
-		Scan(ctx); err != nil {
-		return nil, fmt.Errorf("load users: %w", err)
+	users, err := g.usersByID(ctx)
+	if err != nil {
+		return nil, err
 	}
-	for _, u := range users {
+	for _, id := range g.refs.userIDs {
+		u, ok := users[id]
+		if !ok {
+			continue
+		}
 		name := u.Name
 		if name == "" {
 			name = u.Username
@@ -302,11 +303,11 @@ func (g *generator) shpLoadLookups(ctx context.Context) (*shpLookups, error) {
 		look.users = append(look.users, shpUser{ID: g.refs.adminID, Name: "Admin"})
 	}
 
-	if err := g.db.NewSelect().Model(&look.holdReasons).
-		Where("hr.organization_id = ?", g.refs.orgID).
-		Where("hr.active = ?", true).
-		Where("hr.type = ?", holdreason.HoldTypeOperational).
-		Scan(ctx); err != nil {
+	hr := holdreasondb.HoldReasons
+	if look.holdReasons, err = hr.Where(
+		hr.Active.IsTrue(),
+		hr.Type.Eq(holdreason.HoldTypeOperational),
+	).Order(hr.ID.Asc()).All(ctx, g.db); err != nil {
 		return nil, fmt.Errorf("load hold reasons: %w", err)
 	}
 
@@ -919,24 +920,29 @@ func (b *shpBuilder) build(batch *shpBatch, p *shpPlan, pro, orderNumber string)
 	bol := f.digits(10)
 
 	entity := &shipment.Shipment{
-		ID:             shipmentID,
-		BusinessUnitID: buID,
-		OrganizationID: orgID,
-		ServiceTypeID:  pickID(f, b.look.serviceTypes, p.serviceCode, refs.serviceTypes),
-		ShipmentTypeID: pickID(f, b.look.shipmentTypes, b.shipmentTypeCode(p), refs.shipmentTypes),
-		CustomerID:     p.customer.ID,
-		TractorTypeID:  b.look.tractorTypeID,
-		TrailerTypeID:  b.trailerType(b.trailerKind(p)),
-		OwnerID:        owner.ID,
-		EnteredByID:    entered.ID,
-		OrderID:        orderID,
-		EntryMethod:    shipment.EntryMethodManual,
-		ProNumber:      pro,
-		BOL:            bol,
-		Pieces:         ptr(p.pieces),
-		Weight:         ptr(p.weight),
-		FreightTerms:   shipment.FreightTermsPrepaid,
-		Version:        1,
+		ID:                  shipmentID,
+		BusinessUnitID:      buID,
+		OrganizationID:      orgID,
+		ServiceTypeID:       pickID(f, b.look.serviceTypes, p.serviceCode, refs.serviceTypes),
+		ShipmentTypeID:      pickID(f, b.look.shipmentTypes, b.shipmentTypeCode(p), refs.shipmentTypes),
+		CustomerID:          p.customer.ID,
+		TractorTypeID:       b.look.tractorTypeID,
+		TrailerTypeID:       b.trailerType(b.trailerKind(p)),
+		OwnerID:             owner.ID,
+		EnteredByID:         entered.ID,
+		OrderID:             orderID,
+		EntryMethod:         shipment.EntryMethodManual,
+		ProNumber:           pro,
+		BOL:                 bol,
+		Pieces:              ptr(p.pieces),
+		Weight:              ptr(p.weight),
+		FreightTerms:        shipment.FreightTermsPrepaid,
+		Version:             1,
+		Status:              shipment.StatusNew,
+		FreightLines:        []shipment.FreightLine{},
+		OtherChargeAmount:   decimal.NewNullDecimal(decimal.RequireFromString("0")),
+		FreightChargeAmount: decimal.NewNullDecimal(decimal.RequireFromString("0")),
+		TotalChargeAmount:   decimal.NewNullDecimal(decimal.RequireFromString("0")),
 	}
 	if f.chance(0.08) {
 		entity.FreightTerms = shipment.FreightTermsCollect
@@ -1000,6 +1006,7 @@ func (b *shpBuilder) build(batch *shpBatch, p *shpPlan, pro, orderNumber string)
 				ScheduledWindowEnd:   ptr(ts.windowEnd),
 				AddressLine:          shpAddressLine(ts.plan.loc),
 				Version:              1,
+				Status:               shipment.StopStatusNew,
 			}
 			if ts.appointment {
 				stop.ScheduleType = shipment.StopScheduleTypeAppointment
@@ -2191,37 +2198,36 @@ func (b *shpBuilder) holds(batch *shpBatch, entity *shipment.Shipment, rec *ship
 	batch.stamp(shpTableHolds, h.ID, started, started)
 }
 
-func (b *shpBuilder) write(ctx context.Context, tx bun.Tx, batch *shpBatch) error {
-	size := b.g.opts.BatchSize
+func (b *shpBuilder) write(ctx context.Context, tx *keel.DB, batch *shpBatch) error {
 	steps := []struct {
 		table string
 		rows  int
 		run   func() error
 	}{
-		{shpTableOrders, len(batch.orders), func() error { return insertBatches(ctx, tx, batch.orders, size) }},
-		{shpTableShipments, len(batch.shipments), func() error { return insertBatches(ctx, tx, batch.shipments, size) }},
-		{shpTableMoves, len(batch.moves), func() error { return insertBatches(ctx, tx, batch.moves, size) }},
-		{shpTableStops, len(batch.stops), func() error { return insertBatches(ctx, tx, batch.stops, size) }},
+		{shpTableOrders, len(batch.orders), func() error { return insertRows(ctx, tx, orderdb.Orders.Handle, batch.orders) }},
+		{shpTableShipments, len(batch.shipments), func() error { return insertRows(ctx, tx, shipmentdb.Shipments.Handle, batch.shipments) }},
+		{shpTableMoves, len(batch.moves), func() error { return insertRows(ctx, tx, shipmentdb.ShipmentMoves.Handle, batch.moves) }},
+		{shpTableStops, len(batch.stops), func() error { return insertRows(ctx, tx, shipmentdb.Stops.Handle, batch.stops) }},
 		{shpTableAssignments, len(batch.assignments), func() error {
-			return insertBatches(ctx, tx, batch.assignments, size)
+			return insertRows(ctx, tx, shipmentdb.Assignments.Handle, batch.assignments)
 		}},
 		{shpTableCarrierAssignments, len(batch.carrierAssignments), func() error {
-			return insertBatches(ctx, tx, batch.carrierAssignments, size)
+			return insertRows(ctx, tx, shipmentdb.CarrierAssignments.Handle, batch.carrierAssignments)
 		}},
 		{shpTableCommodities, len(batch.commodities), func() error {
-			return insertBatches(ctx, tx, batch.commodities, size)
+			return insertRows(ctx, tx, shipmentdb.ShipmentCommodities.Handle, batch.commodities)
 		}},
-		{shpTableCharges, len(batch.charges), func() error { return insertBatches(ctx, tx, batch.charges, size) }},
-		{shpTableComments, len(batch.comments), func() error { return insertBatches(ctx, tx, batch.comments, size) }},
+		{shpTableCharges, len(batch.charges), func() error { return insertRows(ctx, tx, shipmentdb.AdditionalCharges.Handle, batch.charges) }},
+		{shpTableComments, len(batch.comments), func() error { return insertRows(ctx, tx, shipmentdb.ShipmentComments.Handle, batch.comments) }},
 		{"shipment_comment_mentions", len(batch.mentions), func() error {
-			return insertBatches(ctx, tx, batch.mentions, size)
+			return insertRows(ctx, tx, shipmentdb.ShipmentCommentMentions.Handle, batch.mentions)
 		}},
 		{"shipment_comment_acknowledgments", len(batch.acks), func() error {
-			return insertBatches(ctx, tx, batch.acks, size)
+			return insertRows(ctx, tx, shipmentdb.ShipmentCommentAcknowledgments.Handle, batch.acks)
 		}},
-		{shpTableHolds, len(batch.holds), func() error { return insertBatches(ctx, tx, batch.holds, size) }},
+		{shpTableHolds, len(batch.holds), func() error { return insertRows(ctx, tx, shipmentdb.ShipmentHolds.Handle, batch.holds) }},
 		{"check_calls", len(batch.checkCalls), func() error {
-			return insertBatches(ctx, tx, batch.checkCalls, size)
+			return insertRows(ctx, tx, checkcalldb.CheckCalls.Handle, batch.checkCalls)
 		}},
 	}
 	for _, step := range steps {
@@ -2240,7 +2246,7 @@ func (b *shpBuilder) write(ctx context.Context, tx bun.Tx, batch *shpBatch) erro
 	}
 	slices.Sort(tables)
 	for _, table := range tables {
-		if err := backdate(ctx, tx, table, b.g.refs.orgID, batch.stamps[table]); err != nil {
+		if err := backdateTable(ctx, tx, table, batch.stamps[table]); err != nil {
 			return err
 		}
 	}
@@ -2250,7 +2256,7 @@ func (b *shpBuilder) write(ctx context.Context, tx bun.Tx, batch *shpBatch) erro
 
 // releaseHolds releases holds after they are inserted and back-dated, because
 // protect_shipment_holds rejects any update to a hold once it is released.
-func (b *shpBuilder) releaseHolds(ctx context.Context, tx bun.Tx, releases []shpRelease) error {
+func (b *shpBuilder) releaseHolds(ctx context.Context, tx *keel.DB, releases []shpRelease) error {
 	if len(releases) == 0 {
 		return nil
 	}
@@ -2262,16 +2268,15 @@ func (b *shpBuilder) releaseHolds(ctx context.Context, tx bun.Tx, releases []shp
 		ats[i] = r.at
 		bys[i] = r.by.String()
 	}
-	if _, err := tx.NewRaw(`
-		UPDATE shipment_holds AS t
-		SET released_at = d.released_at, released_by_id = d.released_by_id
-		FROM unnest(?::varchar[], ?::bigint[], ?::varchar[]) AS d(id, released_at, released_by_id)
-		WHERE t.id = d.id AND t.organization_id = ?`,
-		pgdialect.Array(ids),
-		pgdialect.Array(ats),
-		pgdialect.Array(bys),
-		b.g.refs.orgID,
-	).Exec(ctx); err != nil {
+	sh := shipmentdb.ShipmentHolds
+	d := keel.Unnest("d", []string{"id", "released_at", "released_by_id"}, ids, ats, bys)
+	if _, err := sh.With(d).Join(d, d.Col("id").EqCol(sh.ID)).Where(keel.True()).Update(
+		ctx,
+		tx,
+		sh.ReleasedAt.ToExpr(d.Col("released_at")),
+		sh.ReleasedByID.ToExpr(d.Col("released_by_id")),
+		keepUpdated(sh.Handle),
+	); err != nil {
 		return fmt.Errorf("release shipment holds: %w", err)
 	}
 
