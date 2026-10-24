@@ -6996,6 +6996,7 @@ export type SelectOptionResource =
   | 'IFTA_FUEL_TYPE'
   | 'IFTA_JURISDICTION'
   | 'JOB_POSITION'
+  | 'JOURNAL_ENTRY'
   | 'LOCATION'
   | 'LOCATION_CATEGORY'
   | 'ORDER'
