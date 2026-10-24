@@ -24,3 +24,12 @@ ALTER TABLE "invoices"
 
 ALTER TABLE "shipments"
     ALTER COLUMN "stage_rank" SET NOT NULL;
+
+ALTER TABLE "workers"
+    ALTER COLUMN "whole_name" SET NOT NULL;
+
+UPDATE "telematics_form_mappings" SET "version" = 0 WHERE "version" IS NULL;
+
+ALTER TABLE "telematics_form_mappings"
+    ALTER COLUMN "version" SET DEFAULT 0,
+    ALTER COLUMN "version" SET NOT NULL;

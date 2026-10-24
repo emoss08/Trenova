@@ -3,14 +3,18 @@
 package schemalint
 
 import (
+	"slices"
 	"strings"
 	"testing"
 
 	"github.com/emoss08/keel"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/keeltables"
 	"github.com/emoss08/trenova/internal/testutil/seedtest"
 	"github.com/stretchr/testify/require"
 )
+
+var vectorTables = []string{"ai_embeddings", "ai_catalog_embeddings"}
 
 func TestEveryKeelModelMatchesTheMigratedSchema(t *testing.T) {
 	ctx, db, cleanup := seedtest.SetupTestDB(t)
@@ -19,10 +23,14 @@ func TestEveryKeelModelMatchesTheMigratedSchema(t *testing.T) {
 	drifts, err := keel.Verify(ctx, db, keeltables.All())
 	require.NoError(t, err)
 
+	vector := postgres.NewTestCapabilityProbe(postgres.NewTestConnection(db)).VectorReady(ctx)
 	lines := make([]string, 0, len(drifts))
 	for _, d := range drifts {
+		if !vector && d.Kind == keel.DriftMissingTable && slices.Contains(vectorTables, d.Table) {
+			continue
+		}
 		lines = append(lines, d.String())
 	}
-	require.Empty(t, drifts, "models and migrations disagree; fix the model's keel tag or "+
+	require.Empty(t, lines, "models and migrations disagree; fix the model's keel tag or "+
 		"add a migration, then run task keel-gen:\n%s", strings.Join(lines, "\n"))
 }
