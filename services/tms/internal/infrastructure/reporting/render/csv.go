@@ -106,11 +106,9 @@ func (r *CSVRenderer) Render(
 func csvCellGuards(schema []reportports.ReportResultColumn) []func(string) string {
 	guards := make([]func(string) string, len(schema))
 	for i := range schema {
-		switch schema[i].Type {
-		case reportcatalog.FieldInt, reportcatalog.FieldDecimal:
+		guards[i] = csvutils.SafeCell
+		if t := schema[i].Type; t == reportcatalog.FieldInt || t == reportcatalog.FieldDecimal {
 			guards[i] = csvutils.SafeNumberCell
-		default:
-			guards[i] = csvutils.SafeCell
 		}
 	}
 

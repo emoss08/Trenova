@@ -112,8 +112,8 @@ func Build(catalog *reportcatalog.Catalog, view *View) (*Built, error) {
 	built := &Built{Definition: definition}
 	columnIDs := make(map[string]string, len(view.Columns))
 	for _, column := range view.Columns {
-		resolved, ok := resolveRef(catalog, entity, column.Field)
-		if !ok || resolved.toMany {
+		resolved, found := resolveRef(catalog, entity, column.Field)
+		if !found || resolved.toMany {
 			built.Skipped = append(built.Skipped, column.Label)
 			continue
 		}
