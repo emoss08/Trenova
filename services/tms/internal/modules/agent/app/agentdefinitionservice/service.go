@@ -25,7 +25,6 @@ import (
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
 	"github.com/emoss08/trenova/shared/typeutils"
-	"github.com/uptrace/bun"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
@@ -34,7 +33,7 @@ type Params struct {
 	fx.In
 
 	Logger       *zap.Logger
-	DB           kernelports.DBConnection
+	DB           kernelports.Transactor
 	Repo         agentdefinitionports.AgentDefinitionRepository
 	Versions     agentdefinitionports.AgentDefinitionVersionRepository
 	Proposals    agentports.AgentProposalRepository
@@ -57,7 +56,7 @@ type Params struct {
 
 type Service struct {
 	l           *zap.Logger
-	db          kernelports.DBConnection
+	db          kernelports.Transactor
 	repo        agentdefinitionports.AgentDefinitionRepository
 	versions    agentdefinitionports.AgentDefinitionVersionRepository
 	proposals   agentports.AgentProposalRepository
@@ -263,7 +262,7 @@ func (s *Service) Delete(
 		)
 	}
 
-	if err = s.db.WithTx(ctx, kernelports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
+	if err = s.db.Transact(ctx, kernelports.TxOptions{}, func(txCtx context.Context) error {
 		return s.withdrawAndDelete(txCtx, req)
 	}); err != nil {
 		return err

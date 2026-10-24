@@ -11,7 +11,6 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
-	"github.com/uptrace/bun"
 )
 
 // FromBaseline is the simulation a baseline already took in its read-only
@@ -41,7 +40,7 @@ func FromBaseline(
 // database it is Simulate alone.
 func InSnapshot(
 	ctx context.Context,
-	db kernelports.DBConnection,
+	db kernelports.Transactor,
 	tool agentports.AgentTool,
 	params *agentports.ToolExecuteParams,
 ) *agent.ToolSimulation {
@@ -50,10 +49,10 @@ func InSnapshot(
 	}
 
 	var simulation *agent.ToolSimulation
-	err := db.WithTx(ctx, kernelports.TxOptions{
+	err := db.Transact(ctx, kernelports.TxOptions{
 		ReadOnly:  true,
 		Isolation: sql.LevelRepeatableRead,
-	}, func(txCtx context.Context, _ bun.Tx) error {
+	}, func(txCtx context.Context) error {
 		simulation = Simulate(txCtx, tool, params)
 
 		return nil

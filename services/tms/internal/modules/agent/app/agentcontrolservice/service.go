@@ -19,7 +19,6 @@ import (
 	"github.com/emoss08/trenova/shared/jsonutils"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
-	"github.com/uptrace/bun"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
@@ -28,7 +27,7 @@ type Params struct {
 	fx.In
 
 	Logger       *zap.Logger
-	DB           kernelports.DBConnection
+	DB           kernelports.Transactor
 	Repo         tenantports.AgentControlRepository
 	Versions     settingversionports.SettingVersionRepository
 	AuditService auditports.AuditService
@@ -39,7 +38,7 @@ type Params struct {
 
 type Service struct {
 	l        *zap.Logger
-	db       kernelports.DBConnection
+	db       kernelports.Transactor
 	repo     tenantports.AgentControlRepository
 	versions settingversionports.SettingVersionRepository
 	audit    auditports.AuditService
@@ -176,7 +175,7 @@ func (s *Service) save(
 	actor *permissionports.RequestActor,
 ) (*tenant.AgentControl, error) {
 	var updated *tenant.AgentControl
-	err := s.db.WithTx(ctx, kernelports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
+	err := s.db.Transact(ctx, kernelports.TxOptions{}, func(txCtx context.Context) error {
 		var txErr error
 		updated, txErr = s.repo.Update(txCtx, control)
 		if txErr != nil {
