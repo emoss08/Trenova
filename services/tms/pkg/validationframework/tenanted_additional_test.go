@@ -10,7 +10,6 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
-	"github.com/uptrace/bun"
 )
 
 func TestTenantedValidator_CustomReferenceCheck_Exists(t *testing.T) {
@@ -466,93 +465,6 @@ func TestTenantedValidator_NumericRange_CustomMessage_AboveMax(t *testing.T) {
 			break
 		}
 	}
-}
-
-func TestBunUniquenessChecker_NilDB(t *testing.T) {
-	t.Parallel()
-
-	checker := NewBunUniquenessChecker(nil)
-
-	req := &UniquenessRequest{
-		TableName: "test_table",
-		Fields:    []FieldCheck{{Column: "name", Value: "test"}},
-	}
-
-	_, err := checker.CheckUniqueness(t.Context(), req)
-	require.Error(t, err)
-	assert.Contains(t, err.Error(), "database connection is not initialized")
-}
-
-type recordingScopedDB struct {
-	readOnly []bool
-}
-
-func (r *recordingScopedDB) DBForContext(context.Context) bun.IDB { return nil }
-
-func (r *recordingScopedDB) RunScoped(
-	ctx context.Context,
-	readOnly bool,
-	fn func(context.Context) error,
-) error {
-	r.readOnly = append(r.readOnly, readOnly)
-	return fn(ctx)
-}
-
-func TestBunUniquenessCheckerScoped(t *testing.T) {
-	t.Parallel()
-
-	checker := NewBunUniquenessCheckerScoped(&recordingScopedDB{})
-
-	require.NotNil(t, checker)
-	assert.NotNil(t, checker.source.scoped)
-}
-
-func TestBunReferenceChecker_Validations(t *testing.T) {
-	t.Parallel()
-
-	checker := NewBunReferenceChecker(nil)
-
-	t.Run("empty table name", func(t *testing.T) {
-		t.Parallel()
-		req := &ReferenceRequest{
-			TableName: "",
-			ID:        pulid.MustNew("ref_"),
-		}
-		_, err := checker.CheckReference(t.Context(), req)
-		require.Error(t, err)
-		assert.Contains(t, err.Error(), "table name is required")
-	})
-
-	t.Run("nil reference ID", func(t *testing.T) {
-		t.Parallel()
-		req := &ReferenceRequest{
-			TableName: "test_table",
-			ID:        pulid.Nil,
-		}
-		_, err := checker.CheckReference(t.Context(), req)
-		require.Error(t, err)
-		assert.Contains(t, err.Error(), "reference ID is required")
-	})
-
-	t.Run("nil database", func(t *testing.T) {
-		t.Parallel()
-		req := &ReferenceRequest{
-			TableName: "test_table",
-			ID:        pulid.MustNew("ref_"),
-		}
-		_, err := checker.CheckReference(t.Context(), req)
-		require.Error(t, err)
-		assert.Contains(t, err.Error(), "database connection is not initialized")
-	})
-}
-
-func TestBunReferenceCheckerScoped(t *testing.T) {
-	t.Parallel()
-
-	checker := NewBunReferenceCheckerScoped(&recordingScopedDB{})
-
-	require.NotNil(t, checker)
-	assert.NotNil(t, checker.source.scoped)
 }
 
 func TestTenantedValidator_DateAfter_ValidEndAfterStart(t *testing.T) {
@@ -1042,66 +954,3 @@ func TestTenantedValidator_WithCustomEngineConfig(t *testing.T) {
 	assert.Equal(t, cfg, validator.engineConfig)
 }
 
-func TestBunUniquenessChecker_EmptyTableNameValidation(t *testing.T) {
-	t.Parallel()
-
-	checker := NewBunUniquenessChecker(nil)
-
-	req := &UniquenessRequest{
-		TableName: "",
-		Fields:    []FieldCheck{{Column: "name", Value: "test"}},
-	}
-
-	_, err := checker.CheckUniqueness(t.Context(), req)
-	require.Error(t, err)
-	assert.Contains(t, err.Error(), "table name is required")
-}
-
-func TestBunUniquenessChecker_EmptyFieldsValidation(t *testing.T) {
-	t.Parallel()
-
-	checker := NewBunUniquenessChecker(nil)
-
-	req := &UniquenessRequest{
-		TableName: "test_table",
-		Fields:    []FieldCheck{},
-	}
-
-	_, err := checker.CheckUniqueness(t.Context(), req)
-	require.Error(t, err)
-	assert.Contains(t, err.Error(), "at least one field is required")
-}
-
-func TestBunUniquenessCheckerScoped_RunsReadOnlyAndRejectsAMissingDB(t *testing.T) {
-	t.Parallel()
-
-	conn := &recordingScopedDB{}
-	checker := NewBunUniquenessCheckerScoped(conn)
-	defer func() { assert.Equal(t, []bool{true}, conn.readOnly) }()
-
-	req := &UniquenessRequest{
-		TableName: "test_table",
-		Fields:    []FieldCheck{{Column: "name", Value: "test"}},
-	}
-
-	_, err := checker.CheckUniqueness(t.Context(), req)
-	require.Error(t, err)
-	assert.Contains(t, err.Error(), "database connection is not initialized")
-}
-
-func TestBunReferenceCheckerScoped_RunsReadOnlyAndRejectsAMissingDB(t *testing.T) {
-	t.Parallel()
-
-	conn := &recordingScopedDB{}
-	checker := NewBunReferenceCheckerScoped(conn)
-	defer func() { assert.Equal(t, []bool{true}, conn.readOnly) }()
-
-	req := &ReferenceRequest{
-		TableName: "test_table",
-		ID:        pulid.MustNew("ref_"),
-	}
-
-	_, err := checker.CheckReference(t.Context(), req)
-	require.Error(t, err)
-	assert.Contains(t, err.Error(), "database connection is not initialized")
-}

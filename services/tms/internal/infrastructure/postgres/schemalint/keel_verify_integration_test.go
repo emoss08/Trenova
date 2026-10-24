@@ -7,7 +7,6 @@ import (
 	"testing"
 
 	"github.com/emoss08/keel"
-	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbpool"
 	"github.com/emoss08/trenova/internal/keeltables"
 	"github.com/emoss08/trenova/internal/testutil/seedtest"
 	"github.com/stretchr/testify/require"
@@ -17,10 +16,7 @@ func TestEveryKeelModelMatchesTheMigratedSchema(t *testing.T) {
 	ctx, db, cleanup := seedtest.SetupTestDB(t)
 	t.Cleanup(cleanup)
 
-	kdb := dbpool.KeelOf(db.DB)
-	require.NotNil(t, kdb)
-
-	drifts, err := keel.Verify(ctx, kdb, keeltables.All())
+	drifts, err := keel.Verify(ctx, db, keeltables.All())
 	require.NoError(t, err)
 
 	lines := make([]string, 0, len(drifts))

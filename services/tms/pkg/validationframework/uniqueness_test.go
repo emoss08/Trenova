@@ -75,41 +75,6 @@ func TestFieldCheck(t *testing.T) {
 	}
 }
 
-func TestNewBunUniquenessChecker(t *testing.T) {
-	t.Parallel()
-
-	checker := NewBunUniquenessChecker(nil)
-	require.NotNil(t, checker)
-}
-
-func TestBunUniquenessChecker_CheckUniqueness_ValidationErrors(t *testing.T) {
-	t.Parallel()
-
-	checker := NewBunUniquenessChecker(nil)
-
-	t.Run("empty table name", func(t *testing.T) {
-		req := &UniquenessRequest{
-			TableName: "",
-			Fields:    []FieldCheck{{Column: "name", Value: "test"}},
-		}
-
-		_, err := checker.CheckUniqueness(t.Context(), req)
-		require.Error(t, err)
-		assert.Contains(t, err.Error(), "table name is required")
-	})
-
-	t.Run("empty fields", func(t *testing.T) {
-		req := &UniquenessRequest{
-			TableName: "test_table",
-			Fields:    []FieldCheck{},
-		}
-
-		_, err := checker.CheckUniqueness(t.Context(), req)
-		require.Error(t, err)
-		assert.Contains(t, err.Error(), "at least one field is required")
-	})
-}
-
 func TestMockUniquenessChecker(t *testing.T) {
 	t.Parallel()
 

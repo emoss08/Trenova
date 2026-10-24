@@ -28,16 +28,6 @@ func TestReferenceRequest(t *testing.T) {
 	assert.Equal(t, refID, req.ID)
 }
 
-func TestNewBunReferenceChecker(t *testing.T) {
-	t.Parallel()
-
-	checker := NewBunReferenceChecker(nil)
-
-	require.NotNil(t, checker)
-	assert.Nil(t, checker.source.db)
-	assert.Nil(t, checker.source.scoped)
-}
-
 func TestReferenceFieldConfig(t *testing.T) {
 	t.Parallel()
 

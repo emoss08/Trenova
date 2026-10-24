@@ -100,7 +100,7 @@ func chdirToServiceRoot(t *testing.T) {
 }
 
 func openDB(dsn string, maxOpen int) (*keel.DB, error) {
-	pool, err := dbpool.Open(context.Background(), &dbpool.Options{
+	db, err := dbpool.Open(context.Background(), &dbpool.Options{
 		DSN:             dsn,
 		MaxConns:        maxOpen,
 		MaxConnIdleTime: 30 * time.Second,
@@ -110,7 +110,7 @@ func openDB(dsn string, maxOpen int) (*keel.DB, error) {
 		return nil, fmt.Errorf("open test database: %w", err)
 	}
 
-	return pool.Keel, nil
+	return db, nil
 }
 
 // resolveAdminDSN returns a DSN for a Postgres server to run the suite against.

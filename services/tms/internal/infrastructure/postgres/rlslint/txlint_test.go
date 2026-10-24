@@ -14,6 +14,7 @@ const helperFixture = `package fixture
 import (
 	"context"
 
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 )
@@ -45,12 +46,12 @@ func (r *repository) outer(ctx context.Context) (int, error) {
 }
 
 func (r *repository) count(ctx context.Context) (int, error) {
-	return r.db.DBForContext(ctx).NewSelect().Count(ctx)
+	return keel.QueryValue[int](ctx, r.db.Keel(ctx), "SELECT 1")
 }
 
 func (r *repository) scopedCount(ctx context.Context) (int, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (int, error) {
-		return r.db.DBForContext(ctx).NewSelect().Count(ctx)
+		return keel.QueryValue[int](ctx, r.db.Keel(ctx), "SELECT 1")
 	})
 }
 `

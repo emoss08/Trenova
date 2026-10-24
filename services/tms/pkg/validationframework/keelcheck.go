@@ -11,6 +11,8 @@ import (
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
+var errDBNotInitialized = errors.New("database connection is not initialized")
+
 const (
 	idColumn             = "id"
 	organizationIDColumn = "organization_id"
