@@ -30,10 +30,11 @@ func (s *stubRevisions) GetRevision(
 }
 
 type recordingCompiler struct {
-	err        error
-	exports    []*reportports.ReportCompileRequest
-	previews   int
-	validation int
+	err             error
+	exports         []*reportports.ReportCompileRequest
+	previews        int
+	previewRequests []*reportports.ReportCompileRequest
+	validation      int
 }
 
 func (c *recordingCompiler) ValidateAndAuthorize(
@@ -56,10 +57,11 @@ func (c *recordingCompiler) Compile(
 }
 
 func (c *recordingCompiler) CompileForPreview(
-	context.Context,
-	*reportports.ReportCompileRequest,
+	_ context.Context,
+	req *reportports.ReportCompileRequest,
 ) (*reportports.CompiledReportQuery, error) {
 	c.previews++
+	c.previewRequests = append(c.previewRequests, req)
 	if c.err != nil {
 		return nil, c.err
 	}

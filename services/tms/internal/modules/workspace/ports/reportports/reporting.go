@@ -21,6 +21,7 @@ type ReportCompileRequest struct {
 	Params      map[string]any
 	OrgTimezone string
 	NowUnix     int64
+	MaxRows     int64
 }
 
 type ReportResultColumn struct {

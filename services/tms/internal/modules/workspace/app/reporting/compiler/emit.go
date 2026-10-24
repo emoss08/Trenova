@@ -108,6 +108,9 @@ func (c *Compiler) emit(
 	if limit <= 0 || limit > e.c.limits.maxLimit {
 		limit = e.c.limits.maxLimit
 	}
+	if kept := e.req.MaxRows; kept > 0 && kept+1 < int64(limit) {
+		limit = int(kept + 1)
+	}
 	asm.write(" LIMIT ")
 	asm.write(strconv.Itoa(limit))
 

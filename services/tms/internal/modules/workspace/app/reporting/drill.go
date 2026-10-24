@@ -115,9 +115,8 @@ func (s *Service) detailDefinition(
 	}
 
 	limit := req.Limit
-	previewLimit := s.cfg.GetPreviewRowLimit()
-	if limit <= 0 || limit > previewLimit {
-		limit = previewLimit
+	if limit <= 0 || limit >= s.cfg.GetPreviewRowLimit() {
+		limit = 0
 	}
 
 	return &report.Definition{

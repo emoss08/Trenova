@@ -861,3 +861,39 @@ func TestUserLabelsNeverReachSQLText(t *testing.T) {
 	assert.NotContains(t, compiled.SQL, "DROP")
 	assert.Equal(t, hostileLabel, compiled.Columns[0].Label)
 }
+
+func TestCompileForPreviewAsksForOneRowMoreThanItKeeps(t *testing.T) {
+	c := newTestCompiler(allowAllEngine())
+
+	cases := []struct {
+		name  string
+		limit int
+		want  string
+	}{
+		{name: "no limit of its own", limit: 0, want: " LIMIT 101"},
+		{name: "a limit above the preview's", limit: 5000, want: " LIMIT 101"},
+		{name: "a limit at the preview's", limit: 100, want: " LIMIT 100"},
+		{name: "a limit below the preview's", limit: 25, want: " LIMIT 25"},
+	}
+	for _, tc := range cases {
+		req := newRequest(&report.Definition{
+			IRVersion: report.CurrentIRVersion,
+			Entity:    "shipment",
+			Columns:   []report.ColumnSpec{dim("c_pro", "proNumber")},
+			Limit:     tc.limit,
+		})
+		req.MaxRows = 100
+
+		compiled, err := c.CompileForPreview(t.Context(), req)
+		require.NoError(t, err, tc.name)
+		assert.True(t, strings.HasSuffix(compiled.SQL, tc.want), "%s: %s", tc.name, compiled.SQL)
+	}
+
+	unbounded, err := c.Compile(t.Context(), newRequest(&report.Definition{
+		IRVersion: report.CurrentIRVersion,
+		Entity:    "shipment",
+		Columns:   []report.ColumnSpec{dim("c_pro", "proNumber")},
+	}))
+	require.NoError(t, err)
+	assert.True(t, strings.HasSuffix(unbounded.SQL, " LIMIT 100000"), unbounded.SQL)
+}

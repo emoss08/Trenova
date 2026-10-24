@@ -113,12 +113,14 @@ func (s *Service) runPreview(
 		compile = s.compiler.Compile
 	}
 	timezone := s.orgTimezone(ctx, req.TenantInfo)
+	rowLimit := int64(s.cfg.GetPreviewRowLimit())
 	compiled, err := compile(ctx, &reportports.ReportCompileRequest{
 		Definition:  req.Definition,
 		Tenant:      req.TenantInfo,
 		Params:      req.Params,
 		OrgTimezone: timezone,
 		NowUnix:     timeutils.NowUnix(),
+		MaxRows:     rowLimit,
 	})
 	if err != nil {
 		if s.metrics != nil {
@@ -127,7 +129,6 @@ func (s *Service) runPreview(
 		return nil, err
 	}
 
-	rowLimit := int64(s.cfg.GetPreviewRowLimit())
 	reader, err := s.executor.Open(ctx, &reportports.OpenReportDatasetRequest{
 		Compiled: compiled,
 		MaxRows:  rowLimit,
