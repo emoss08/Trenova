@@ -142,7 +142,7 @@ type Message struct {
 	SavedMemories []SavedMemory `json:"savedMemories,omitempty" bun:"saved_memories,type:JSONB,nullzero" keel:"saved_memories,jsonb,nullzero"`
 	Memories      []MemoryNote  `json:"memories,omitempty"      bun:"-"`
 
-	CreatedAt int64 `json:"createdAt" bun:"created_at,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"created_at,autocreate"`
+	CreatedAt int64 `json:"createdAt" bun:"created_at,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"created_at"`
 
 	Thread *Thread `json:"thread,omitempty" bun:"rel:belongs-to,join:thread_id=id" keel:"belongs:thread_id"`
 }

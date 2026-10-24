@@ -7,10 +7,11 @@ import (
 
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation/conversationdb"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversationschedule"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/conversationschedule/conversationscheduledb"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/conversationscheduleports"
 	"github.com/emoss08/trenova/internal/testutil/seedtest"
-	"github.com/emoss08/trenova/pkg/buncolgen/conversationcol"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -30,6 +31,7 @@ func TestList_ReadsAPersonsSchedulesByNextRunWithTheirConversationTitles(t *test
 	t.Cleanup(cleanup)
 
 	data := seedtest.SeedFullTestData(t, ctx, db)
+	ctx = data.Ctx(ctx)
 	repo := New(Params{DB: postgres.NewTestConnection(db), Logger: zap.NewNop()})
 	tenant := pagination.TenantInfo{
 		OrgID:  data.Organization.ID,
@@ -46,8 +48,7 @@ func TestList_ReadsAPersonsSchedulesByNextRunWithTheirConversationTitles(t *test
 			AgentDefinitionID: pulid.MustNew("agd_"),
 			Title:             title,
 		}
-		_, err := db.NewInsert().Model(created).Exec(ctx)
-		require.NoError(t, err)
+		require.NoError(t, conversationdb.Threads.Create(ctx, db, created))
 
 		return created
 	}
@@ -74,8 +75,7 @@ func TestList_ReadsAPersonsSchedulesByNextRunWithTheirConversationTitles(t *test
 			Enabled:        enabled,
 			NextRunAt:      nextRunAt,
 		}
-		_, err := db.NewInsert().Model(created).Exec(ctx)
-		require.NoError(t, err)
+		require.NoError(t, conversationscheduledb.Schedules.Create(ctx, db, created))
 
 		return created
 	}
@@ -136,6 +136,19 @@ func TestList_ReadsAPersonsSchedulesByNextRunWithTheirConversationTitles(t *test
 	for _, item := range inThread.Items {
 		assert.Equal(t, "AR follow-ups", item.ThreadTitle)
 	}
+
+	other := seedtest.SeedAdditionalTenant(t, ctx, db, "ZZ")
+	elsewhere, err := repo.List(
+		other.Ctx(ctx),
+		conversationscheduleports.ListConversationSchedulesRequest{
+			UserID:     owner,
+			TenantInfo: other.Info(),
+			Limit:      50,
+		},
+	)
+	require.NoError(t, err)
+	assert.Zero(t, elsewhere.Total, "another tenant reads none of this tenant's schedules")
+	assert.Empty(t, elsewhere.Items)
 }
 
 func listedIDs(items []*conversationscheduleports.ListedConversationSchedule) []pulid.ID {
@@ -157,6 +170,7 @@ func TestCreate_NamesOnlyAnUnnamedConversation(t *testing.T) {
 	t.Cleanup(cleanup)
 
 	data := seedtest.SeedFullTestData(t, ctx, db)
+	ctx = data.Ctx(ctx)
 	repo := New(Params{DB: postgres.NewTestConnection(db), Logger: zap.NewNop()})
 	tenant := pagination.TenantInfo{
 		OrgID:  data.Organization.ID,
@@ -172,8 +186,7 @@ func TestCreate_NamesOnlyAnUnnamedConversation(t *testing.T) {
 			AgentDefinitionID: pulid.MustNew("agd_"),
 			Title:             title,
 		}
-		_, err := db.NewInsert().Model(created).Exec(ctx)
-		require.NoError(t, err)
+		require.NoError(t, conversationdb.Threads.Create(ctx, db, created))
 
 		return created
 	}
@@ -200,15 +213,10 @@ func TestCreate_NamesOnlyAnUnnamedConversation(t *testing.T) {
 		require.NoError(t, err)
 	}
 	title := func(in *conversation.Thread) string {
-		var stored string
-		err := db.NewSelect().
-			Model((*conversation.Thread)(nil)).
-			ColumnExpr(conversationcol.ThreadColumns.Title.Expr("COALESCE({}, '')")).
-			Where(conversationcol.ThreadColumns.ID.Eq(), in.ID).
-			Scan(ctx, &stored)
+		stored, err := conversationdb.Threads.Get(ctx, db, in.ID)
 		require.NoError(t, err)
 
-		return stored
+		return stored.Title
 	}
 
 	unnamed := thread("")

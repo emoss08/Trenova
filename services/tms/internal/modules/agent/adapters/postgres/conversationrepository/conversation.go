@@ -14,6 +14,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/dbscope"
+	"github.com/emoss08/trenova/pkg/listquery"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/sliceutils"
 	"github.com/emoss08/trenova/shared/timeutils"
@@ -254,7 +255,9 @@ func threadShelfBandExpr(edges []int64) keel.Expr {
 	return keel.Raw(band.String(), args...)
 }
 
-func threadShelfCountQuery(req *agentports.CountThreadShelvesRequest) *keel.Query[conversation.Thread] {
+func threadShelfCountQuery(
+	req *agentports.CountThreadShelvesRequest,
+) *keel.Query[conversation.Thread] {
 	th := conversationdb.Threads
 	band := threadShelfBandExpr(req.Edges)
 
@@ -304,14 +307,6 @@ func keepThreadUpdatedAt() keel.Assignment {
 	return th.UpdatedAt.ToExpr(th.UpdatedAt)
 }
 
-func int64PtrTo(col keel.Int64Col, value *int64) keel.Assignment {
-	if value == nil {
-		return col.ToNull()
-	}
-
-	return col.To(*value)
-}
-
 func (r *repository) UpdateThread(
 	ctx context.Context,
 	thread *conversation.Thread,
@@ -332,7 +327,7 @@ func (r *repository) UpdateThread(
 			th.AutoCompactOff.To(thread.AutoCompactOff),
 			th.SubjectType.To(thread.SubjectType),
 			th.SubjectID.To(thread.SubjectID),
-			int64PtrTo(th.SnoozedUntil, thread.SnoozedUntil),
+			listquery.OptionalInt64(th.SnoozedUntil, thread.SnoozedUntil),
 			th.SnoozeAnchor.To(thread.SnoozeAnchor),
 			th.SnoozeStopID.To(thread.SnoozeStopID),
 		)
@@ -554,7 +549,9 @@ func (r *repository) CarriesAttachment(
 	})
 }
 
-func carriesAttachmentQuery(req *agentports.CarriesAttachmentRequest) *keel.Query[conversation.Message] {
+func carriesAttachmentQuery(
+	req *agentports.CarriesAttachmentRequest,
+) *keel.Query[conversation.Message] {
 	m := conversationdb.Messages
 
 	return m.Where(
@@ -572,7 +569,11 @@ func reverse(messages []conversation.Message) {
 
 func nextSequence(ctx context.Context, db *keel.DB, threadID pulid.ID) (int, error) {
 	m := conversationdb.Messages
-	current, err := keel.IntoOne[*int64](ctx, db, m.Pick(m.Sequence.Max()).Where(m.ThreadID.Eq(threadID)))
+	current, err := keel.IntoOne[*int64](
+		ctx,
+		db,
+		m.Pick(m.Sequence.Max()).Where(m.ThreadID.Eq(threadID)),
+	)
 	if err != nil {
 		return 0, fmt.Errorf("read current sequence: %w", err)
 	}
@@ -624,7 +625,10 @@ func (r *repository) AppendTurn(
 	})
 }
 
-func staleThreadsQuery(req *agentports.DeleteStaleThreadsRequest, limit int) *keel.Query[conversation.Thread] {
+func staleThreadsQuery(
+	req *agentports.DeleteStaleThreadsRequest,
+	limit int,
+) *keel.Query[conversation.Thread] {
 	th := conversationdb.Threads
 
 	return th.AllTenants().

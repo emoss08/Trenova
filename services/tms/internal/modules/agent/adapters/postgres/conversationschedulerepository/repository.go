@@ -4,22 +4,21 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/emoss08/trenova/pkg/buncolgen/conversationcol"
-	"github.com/emoss08/trenova/pkg/buncolgen/conversationschedulecol"
-	"github.com/emoss08/trenova/pkg/dbhelper"
-
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation/conversationdb"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversationschedule"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/conversationschedule/conversationscheduledb"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/conversationscheduleports"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/errortypes"
+	"github.com/emoss08/trenova/pkg/listquery"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
-	"github.com/uptrace/bun"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
@@ -59,61 +58,7 @@ func (r *repository) Create(
 		schedule := req.Schedule
 		message := req.Message
 
-		err := r.db.DBForContext(ctx).
-			RunInTx(ctx, nil, func(txCtx context.Context, tx bun.Tx) error {
-				if _, err := tx.NewInsert().Model(schedule).Returning("*").Exec(txCtx); err != nil {
-					return fmt.Errorf("insert schedule: %w", err)
-				}
-
-				cols := conversationcol.MessageColumns
-				var maxSequence int
-				err := tx.NewSelect().
-					Model((*conversation.Message)(nil)).
-					ColumnExpr("COALESCE(MAX(?), -1)", bun.Ident(cols.Sequence.Bare())).
-					Where(cols.ThreadID.Eq(), schedule.ThreadID).
-					Where(cols.OrganizationID.Eq(), schedule.OrganizationID).
-					Where(cols.BusinessUnitID.Eq(), schedule.BusinessUnitID).
-					Scan(txCtx, &maxSequence)
-				if err != nil {
-					return fmt.Errorf("read current sequence: %w", err)
-				}
-
-				now := timeutils.NowUnix()
-				message.ThreadID = schedule.ThreadID
-				message.OrganizationID = schedule.OrganizationID
-				message.BusinessUnitID = schedule.BusinessUnitID
-				message.ScheduleID = schedule.ID
-				message.Sequence = maxSequence + 1
-				if message.CreatedAt == 0 {
-					message.CreatedAt = now
-				}
-				if _, err = tx.NewInsert().Model(&message).Returning("*").Exec(txCtx); err != nil {
-					return fmt.Errorf("insert schedule message: %w", err)
-				}
-
-				// An unnamed conversation takes the schedule's name in the
-				// same statement, so a name given to it meanwhile is kept.
-				threadCols := conversationcol.ThreadColumns
-				if _, err = tx.NewUpdate().
-					Model((*conversation.Thread)(nil)).
-					Where(threadCols.ID.Eq(), schedule.ThreadID).
-					Where(threadCols.OrganizationID.Eq(), schedule.OrganizationID).
-					Where(threadCols.BusinessUnitID.Eq(), schedule.BusinessUnitID).
-					Set(threadCols.LastMessageAt.Set(), now).
-					Set(threadCols.UpdatedAt.Set(), now).
-					Set(
-						threadCols.Title.SetExpr(
-							"CASE WHEN NULLIF(BTRIM({}), '') IS NULL THEN NULLIF(?, '') ELSE {} END",
-						),
-						req.ThreadTitle,
-					).
-					Exec(txCtx); err != nil {
-					return fmt.Errorf("touch thread: %w", err)
-				}
-
-				return nil
-			})
-		if err != nil {
+		if err := r.create(ctx, schedule, &message, req.ThreadTitle); err != nil {
 			r.l.Error("failed to create conversation schedule", zap.Error(err))
 			return nil, nil, err
 		}
@@ -122,33 +67,85 @@ func (r *repository) Create(
 	})
 }
 
+func (r *repository) create(
+	ctx context.Context,
+	schedule *conversationschedule.Schedule,
+	message *conversation.Message,
+	threadTitle string,
+) error {
+	db := r.db.Keel(ctx)
+	if schedule.Timezone == "" {
+		schedule.Timezone = conversationschedule.DefaultTimezone
+	}
+	if err := conversationscheduledb.Schedules.Create(ctx, db, schedule); err != nil {
+		return fmt.Errorf("insert schedule: %w", err)
+	}
+
+	m := conversationdb.Messages
+	current, err := keel.IntoOne[*int64](
+		ctx,
+		db,
+		m.Pick(m.Sequence.Max()).Where(m.ThreadID.Eq(schedule.ThreadID)),
+	)
+	if err != nil {
+		return fmt.Errorf("read current sequence: %w", err)
+	}
+	sequence := 0
+	if current != nil {
+		sequence = int(*current) + 1
+	}
+
+	now := timeutils.NowUnix()
+	message.ThreadID = schedule.ThreadID
+	message.OrganizationID = schedule.OrganizationID
+	message.BusinessUnitID = schedule.BusinessUnitID
+	message.ScheduleID = schedule.ID
+	message.Sequence = sequence
+	if message.CreatedAt == 0 {
+		message.CreatedAt = now
+	}
+	if err = m.Create(ctx, db, message); err != nil {
+		return fmt.Errorf("insert schedule message: %w", err)
+	}
+
+	th := conversationdb.Threads
+	if _, err = th.Where(th.ID.Eq(schedule.ThreadID)).Update(ctx, db,
+		th.LastMessageAt.To(now),
+		th.Title.ToExpr(keel.Raw(
+			"CASE WHEN NULLIF(BTRIM(?), '') IS NULL THEN NULLIF(?, '') ELSE ? END",
+			th.Title,
+			threadTitle,
+			th.Title,
+		)),
+		th.Version.ToExpr(th.Version),
+	); err != nil {
+		return fmt.Errorf("touch thread: %w", err)
+	}
+
+	return nil
+}
+
 func (r *repository) Get(
 	ctx context.Context,
 	req conversationscheduleports.GetConversationScheduleRequest,
 ) (*conversationschedule.Schedule, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*conversationschedule.Schedule, error) {
-		cols := conversationschedulecol.ScheduleColumns
-		entity := new(conversationschedule.Schedule)
-
-		err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(entity).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				sq = conversationschedulecol.ScheduleScopeTenant(sq, req.TenantInfo).
-					Where(cols.ID.Eq(), req.ID)
-				if req.UserID.IsNotNil() {
-					sq = sq.Where(cols.UserID.Eq(), req.UserID)
-				}
-
-				return sq
-			}).
-			Scan(ctx)
+		s := conversationscheduledb.Schedules
+		entity, err := s.Where(
+			s.ID.Eq(req.ID),
+			keel.When(req.UserID.IsNotNil(), s.UserID.Eq(req.UserID)),
+		).One(ctx, r.db.Keel(ctx))
 		if err != nil {
 			return nil, dberror.HandleNotFoundError(err, "Schedule")
 		}
 
 		return entity, nil
 	})
+}
+
+type threadTitle struct {
+	ThreadID pulid.ID
+	Title    string
 }
 
 func (r *repository) List(
@@ -164,67 +161,66 @@ func (r *repository) List(
 		}
 		limit = min(limit, maxListLimit)
 
-		entities := make([]*conversationscheduleports.ListedConversationSchedule, 0, limit)
-		query := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(&entities).
-			ColumnExpr(conversationschedulecol.ScheduleTable.All()).
-			ColumnExpr(threadTitleColumn()).
-			Join(threadJoin()).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return r.scoped(sq, req.TenantInfo, req.UserID, req.ThreadID)
-			})
-		total, err := ordered(query, req.Order).
-			Limit(int64(limit)).
-			Offset(int64(max(req.Offset, 0))).
-			ScanAndCount(ctx)
+		page := listPageQuery(&req, limit)
+		var (
+			rows   []*conversationschedule.Schedule
+			total  int64
+			titles []threadTitle
+		)
+		err := keel.Batch(ctx, r.db.Keel(ctx),
+			keel.ListInto(page, &rows),
+			keel.CountInto(scoped(req.UserID, req.ThreadID), &total),
+			keel.IntoSlice(threadTitlesQuery(page), &titles),
+		)
 		if err != nil {
 			r.l.Error("failed to list conversation schedules", zap.Error(err))
 			return nil, err
 		}
 
+		titleOf := make(map[pulid.ID]string, len(titles))
+		for _, title := range titles {
+			titleOf[title.ThreadID] = title.Title
+		}
+
+		items := make([]*conversationscheduleports.ListedConversationSchedule, 0, len(rows))
+		for _, row := range rows {
+			items = append(items, &conversationscheduleports.ListedConversationSchedule{
+				Schedule:    *row,
+				ThreadTitle: titleOf[row.ThreadID],
+			})
+		}
+
 		return &pagination.ListResult[*conversationscheduleports.ListedConversationSchedule]{
-			Items: entities,
+			Items: items,
 			Total: int(total),
 		}, nil
 	})
 }
 
-// threadTitleColumn reads a schedule's conversation title beside it, empty
-// for a conversation never named.
-func threadTitleColumn() string {
-	return conversationcol.ThreadColumns.Title.Expr("COALESCE({}, '')") + " AS thread_title"
-}
-
-// threadJoin reads a schedule's conversation with it. The thread is joined on
-// its whole key, tenant included, so a title is only ever read from the
-// schedule's own organization.
-func threadJoin() string {
-	cols := conversationschedulecol.ScheduleColumns
-	threadCols := conversationcol.ThreadColumns
-
-	return "JOIN " + conversationcol.ThreadTable.As(conversationcol.ThreadTable.Alias) +
-		" ON " + threadCols.ID.EqColumn(cols.ThreadID) +
-		" AND " + threadCols.OrganizationID.EqColumn(cols.OrganizationID) +
-		" AND " + threadCols.BusinessUnitID.EqColumn(cols.BusinessUnitID)
-}
-
-// ordered sorts a list of schedules. By next run, the ones that will fire
-// come first, soonest first, and the paused ones follow; a schedule with no
-// next slot sorts last within its group. Each order ends on the id, so a page
-// boundary never splits or repeats a row.
-func ordered(
-	sq *bun.SelectQuery,
-	order conversationscheduleports.ConversationScheduleOrder,
-) *bun.SelectQuery {
-	cols := conversationschedulecol.ScheduleColumns
-	if order == conversationscheduleports.ConversationScheduleOrderNextRun {
-		return sq.Order(cols.Enabled.OrderDesc()).
-			OrderExpr(cols.NextRunAt.Expr("{} ASC NULLS LAST")).
-			Order(cols.CreatedAt.OrderDesc(), cols.ID.OrderDesc())
+func listPageQuery(
+	req *conversationscheduleports.ListConversationSchedulesRequest,
+	limit int,
+) *keel.Query[conversationschedule.Schedule] {
+	s := conversationscheduledb.Schedules
+	order := []keel.Order{s.CreatedAt.Desc(), s.ID.Desc()}
+	if req.Order == conversationscheduleports.ConversationScheduleOrderNextRun {
+		order = append([]keel.Order{s.Enabled.Desc(), s.NextRunAt.Asc().NullsLast()}, order...)
 	}
 
-	return sq.Order(cols.CreatedAt.OrderDesc(), cols.ID.OrderDesc())
+	return scoped(req.UserID, req.ThreadID).
+		Order(order...).
+		Limit(limit).
+		Offset(max(req.Offset, 0))
+}
+
+func threadTitlesQuery(
+	page *keel.Query[conversationschedule.Schedule],
+) *keel.Query[conversation.Thread] {
+	s := conversationscheduledb.Schedules
+	th := conversationdb.Threads
+
+	return th.Pick(th.ID, keel.Raw("COALESCE(?, '')", th.Title)).
+		Where(th.ID.InQuery(page.Clone().Pick(s.ThreadID)))
 }
 
 func (r *repository) Count(
@@ -232,29 +228,22 @@ func (r *repository) Count(
 	req conversationscheduleports.CountConversationSchedulesRequest,
 ) (int, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (int, error) {
-		return dbhelper.Count(ctx, r.db.DBForContext(ctx).
-			NewSelect().
-			Model((*conversationschedule.Schedule)(nil)).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return r.scoped(sq, req.TenantInfo, req.UserID, req.ThreadID)
-			}))
+		n, err := scoped(req.UserID, req.ThreadID).Count(ctx, r.db.Keel(ctx))
+		if err != nil {
+			return 0, err
+		}
+
+		return int(n), nil
 	})
 }
 
-// scoped is one person's schedules, in one conversation when a thread is
-// named. A person is always named: schedules are read as their owner's.
-func (r *repository) scoped(
-	sq *bun.SelectQuery,
-	tenant pagination.TenantInfo,
-	userID, threadID pulid.ID,
-) *bun.SelectQuery {
-	cols := conversationschedulecol.ScheduleColumns
-	sq = conversationschedulecol.ScheduleScopeTenant(sq, tenant).Where(cols.UserID.Eq(), userID)
-	if threadID.IsNotNil() {
-		sq = sq.Where(cols.ThreadID.Eq(), threadID)
-	}
+func scoped(userID, threadID pulid.ID) *keel.Query[conversationschedule.Schedule] {
+	s := conversationscheduledb.Schedules
 
-	return sq
+	return s.Where(
+		s.UserID.Eq(userID),
+		keel.When(threadID.IsNotNil(), s.ThreadID.Eq(threadID)),
+	)
 }
 
 func (r *repository) ListAcrossTenants(
@@ -270,23 +259,18 @@ func (r *repository) ListAcrossTenants(
 		ctx,
 		r.db,
 		func(ctx context.Context) ([]*conversationschedule.Schedule, error) {
-			cols := conversationschedulecol.ScheduleColumns
-
 			limit := req.Limit
 			if limit <= 0 || limit > maxAcrossLimit {
 				limit = maxAcrossLimit
 			}
 
-			entities := make([]*conversationschedule.Schedule, 0, limit)
-			query := r.db.DBForContext(ctx).
-				NewSelect().
-				Model(&entities).
-				Order(cols.ID.OrderAsc()).
-				Limit(int64(limit))
-			if req.AfterID.IsNotNil() {
-				query = query.Where(cols.ID.Gt(), req.AfterID)
-			}
-			if err := query.Scan(ctx); err != nil {
+			s := conversationscheduledb.Schedules
+			entities, err := s.AllTenants().
+				Where(keel.When(req.AfterID.IsNotNil(), s.ID.Gt(req.AfterID))).
+				Order(s.ID.Asc()).
+				Limit(limit).
+				List(ctx, r.db.Keel(ctx))
+			if err != nil {
 				return nil, fmt.Errorf("list conversation schedules: %w", err)
 			}
 
@@ -300,41 +284,28 @@ func (r *repository) UpdateState(
 	schedule *conversationschedule.Schedule,
 ) (*conversationschedule.Schedule, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*conversationschedule.Schedule, error) {
-		cols := conversationschedulecol.ScheduleColumns
-		ov := schedule.Version
-		schedule.Version++
-
-		res, err := r.db.DBForContext(ctx).
-			NewUpdate().
-			Model(schedule).
-			WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-				return conversationschedulecol.ScheduleScopeTenantUpdate(uq, pagination.TenantInfo{
-					OrgID: schedule.OrganizationID,
-					BuID:  schedule.BusinessUnitID,
-				}).
-					Where(cols.ID.Eq(), schedule.ID).
-					Where(cols.UserID.Eq(), schedule.UserID).
-					Where(cols.Version.Eq(), ov)
-			}).
-			Set(cols.Prompt.Set(), schedule.Prompt).
-			Set(cols.Cadence.Set(), schedule.Cadence).
-			Set(cols.CronExpression.Set(), schedule.CronExpression).
-			Set(cols.Enabled.Set(), schedule.Enabled).
-			Set(cols.NextRunAt.Set(), schedule.NextRunAt).
-			Set(cols.Version.Set(), schedule.Version).
-			Set(cols.UpdatedAt.Set(), timeutils.NowUnix()).
-			Returning("*").
-			Exec(ctx)
+		s := conversationscheduledb.Schedules
+		rows, err := s.Where(
+			s.ID.Eq(schedule.ID),
+			s.UserID.Eq(schedule.UserID),
+			s.Version.Eq(schedule.Version),
+		).UpdateReturning(ctx, r.db.Keel(ctx),
+			s.Prompt.To(schedule.Prompt),
+			s.Cadence.To(schedule.Cadence),
+			s.CronExpression.To(schedule.CronExpression),
+			s.Enabled.To(schedule.Enabled),
+			listquery.OptionalInt64(s.NextRunAt, schedule.NextRunAt),
+		)
 		if err != nil {
 			r.l.Error("failed to update conversation schedule", zap.Error(err))
 			return nil, err
 		}
 
-		if err = dberror.CheckRowsAffected(res, "Schedule", schedule.ID.String()); err != nil {
+		if err = dberror.CheckAffected(int64(len(rows)), "Schedule", schedule.ID.String()); err != nil {
 			return nil, err
 		}
 
-		return schedule, nil
+		return rows[0], nil
 	})
 }
 
@@ -343,20 +314,13 @@ func (r *repository) RecordRun(
 	req conversationscheduleports.RecordConversationScheduleRunRequest,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
-		cols := conversationschedulecol.ScheduleColumns
-
-		_, err := r.db.DBForContext(ctx).
-			NewUpdate().
-			Model((*conversationschedule.Schedule)(nil)).
-			WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-				return conversationschedulecol.ScheduleScopeTenantUpdate(uq, req.TenantInfo).
-					Where(cols.ID.Eq(), req.ID)
-			}).
-			Set(cols.LastRunAt.Set(), req.RunAt).
-			Set(cols.NextRunAt.Set(), req.NextRunAt).
-			Set(cols.LastTurnID.Set(), req.TurnID).
-			Set(cols.UpdatedAt.Set(), timeutils.NowUnix()).
-			Exec(ctx)
+		s := conversationscheduledb.Schedules
+		_, err := s.Where(s.ID.Eq(req.ID)).Update(ctx, r.db.Keel(ctx),
+			s.LastRunAt.To(req.RunAt),
+			listquery.OptionalInt64(s.NextRunAt, req.NextRunAt),
+			s.LastTurnID.To(req.TurnID),
+			s.Version.ToExpr(s.Version),
+		)
 		if err != nil {
 			return fmt.Errorf("record schedule run: %w", err)
 		}
@@ -373,21 +337,13 @@ func (r *repository) Delete(
 		if req.UserID.IsNil() {
 			return errortypes.NewBusinessError("A schedule is deleted by its owner")
 		}
-		cols := conversationschedulecol.ScheduleColumns
 
-		res, err := r.db.DBForContext(ctx).
-			NewDelete().
-			Model((*conversationschedule.Schedule)(nil)).
-			WhereGroup(" AND ", func(dq *bun.DeleteQuery) *bun.DeleteQuery {
-				return conversationschedulecol.ScheduleScopeTenantDelete(dq, req.TenantInfo).
-					Where(cols.ID.Eq(), req.ID).
-					Where(cols.UserID.Eq(), req.UserID)
-			}).
-			Exec(ctx)
+		s := conversationscheduledb.Schedules
+		n, err := s.Where(s.ID.Eq(req.ID), s.UserID.Eq(req.UserID)).Delete(ctx, r.db.Keel(ctx))
 		if err != nil {
 			return fmt.Errorf("delete schedule: %w", err)
 		}
 
-		return dberror.CheckRowsAffected(res, "Schedule", req.ID.String())
+		return dberror.CheckAffected(n, "Schedule", req.ID.String())
 	})
 }

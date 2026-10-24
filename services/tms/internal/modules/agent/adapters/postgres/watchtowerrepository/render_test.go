@@ -1,49 +1,212 @@
 package watchtowerrepository
 
 import (
+	"strconv"
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/watchtower"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/watchtower/watchtowerdb"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/watchtowerports"
+	"github.com/emoss08/trenova/internal/testutil/keeltest"
+	"github.com/emoss08/trenova/pkg/dbscope"
+	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
-	"github.com/uptrace/bun"
-	"github.com/uptrace/bun/dialect/pgdialect"
 )
 
-/*
-A source reporting its record again updates the item it already raised.
-
-The version is read from the stored row by its alias: beside EXCLUDED a bare
-column is ambiguous, and Postgres rejects the whole statement, so no item was
-ever raised or refreshed.
-*/
-func TestUpsertBumpsTheStoredRowsVersion(t *testing.T) {
-	t.Parallel()
-
-	sql := buildUpsert(bun.NewDB(nil, pgdialect.New()), &watchtower.Item{}, upsertPlan{}).String()
-
-	assert.Contains(t, sql, "version = wti.version + 1", sql)
-	assert.NotContains(t, sql, "version = version + 1", sql)
-	assert.NotContains(t, sql, "resolved_at = NULL", sql)
-	assert.Contains(t, sql, "severity = EXCLUDED.severity", sql)
+func resolvedItem() *watchtower.Item {
+	at := int64(100)
+	due := int64(400)
+	return &watchtower.Item{
+		ID:              "wt_1",
+		Severity:        watchtower.SeverityCritical,
+		Status:          watchtower.StatusResolved,
+		ResolvedAt:      &at,
+		ResolutionCode:  watchtower.ResolutionCleared,
+		ResolutionNote:  "cleared",
+		SourceClearedAt: &at,
+		AcknowledgedAt:  &at,
+		EscalationLevel: 2,
+		LastEscalatedAt: &at,
+		DueAt:           &due,
+		DueLabel:        "Pickup window",
+		DueSource:       watchtower.DueSourcePerson,
+		Version:         4,
+	}
 }
 
-/*
-A report on an item the source had cleared, or the system had, opens it again
-with a clean slate; a report on an item a person resolved while the source was
-still open leaves the person's resolution alone, and an escalated severity is
-not lowered by the source.
-*/
-func TestUpsertReopensOnlyWhenPlannedAndKeepsAnEscalatedSeverity(t *testing.T) {
+func TestApplyUpsertRefreshesTheDescriptionOnly(t *testing.T) {
 	t.Parallel()
 
-	db := bun.NewDB(nil, pgdialect.New())
-	sql := buildUpsert(db, &watchtower.Item{}, upsertPlan{reopen: true}).String()
-	assert.Contains(t, sql, "resolved_at = NULL", sql)
-	assert.Contains(t, sql, "resolution_code = NULL", sql)
-	assert.Contains(t, sql, "escalation_level = 0", sql)
+	existing := resolvedItem()
+	incoming := &watchtower.Item{
+		Title:       "Late",
+		Summary:     "Now two hours out",
+		Severity:    watchtower.SeverityWarning,
+		RecordLabel: "SHP-1",
+		Facts:       []watchtower.Fact{{Label: "Customer", Value: "Northline"}},
+		OccurredAt:  300,
+	}
 
-	kept := buildUpsert(db, &watchtower.Item{}, upsertPlan{keepSeverity: true}).String()
-	assert.NotContains(t, kept, "severity = EXCLUDED.severity", kept)
+	merged := applyUpsert(existing, incoming, upsertPlan{})
+
+	assert.Equal(t, "Late", merged.Title)
+	assert.Equal(t, "Now two hours out", merged.Summary)
+	assert.Equal(t, "SHP-1", merged.RecordLabel)
+	assert.Equal(t, incoming.Facts, merged.Facts)
+	assert.Equal(t, int64(300), merged.OccurredAt)
+	assert.Equal(t, watchtower.SeverityWarning, merged.Severity)
+	assert.Equal(t, existing.ResolvedAt, merged.ResolvedAt, "the resolution is left alone")
+	assert.Equal(t, existing.DueAt, merged.DueAt, "an unplanned deadline is left alone")
+	assert.Equal(t, int64(4), merged.Version, "Save compares the version the row was read at")
+	assert.Equal(t, watchtower.StatusResolved, existing.Status, "the stored row is not changed")
+}
+
+func TestApplyUpsertReopensWithACleanSlateAndKeepsAnEscalatedSeverity(t *testing.T) {
+	t.Parallel()
+
+	reopened := applyUpsert(resolvedItem(), &watchtower.Item{}, upsertPlan{reopen: true})
+	assert.Nil(t, reopened.ResolvedAt)
+	assert.Equal(t, watchtower.StatusOpen, reopened.Status)
+	assert.Empty(t, reopened.ResolutionCode)
+	assert.Empty(t, reopened.ResolutionNote)
+	assert.True(t, reopened.ResolvedByID.IsNil())
+	assert.Nil(t, reopened.SourceClearedAt)
+	assert.Nil(t, reopened.AcknowledgedAt)
+	assert.Nil(t, reopened.SnoozedUntil)
+	assert.Zero(t, reopened.EscalationLevel)
+	assert.Nil(t, reopened.LastEscalatedAt)
+	assert.Nil(t, reopened.DueAt, "a reopened item without the source's deadline starts with none")
+	assert.Empty(t, reopened.DueSource)
+
+	kept := applyUpsert(
+		resolvedItem(),
+		&watchtower.Item{Severity: watchtower.SeverityWarning},
+		upsertPlan{keepSeverity: true},
+	)
+	assert.Equal(t, watchtower.SeverityCritical, kept.Severity)
+}
+
+func TestApplyUpsertWritesTheDeadlineOnlyWhenPlanned(t *testing.T) {
+	t.Parallel()
+
+	due := int64(900)
+	incoming := &watchtower.Item{
+		DueAt:     &due,
+		DueLabel:  "Delivery window closes",
+		DueSource: watchtower.DueSourceSource,
+	}
+
+	taken := applyUpsert(resolvedItem(), incoming, upsertPlan{takeDeadline: true})
+	assert.Equal(t, &due, taken.DueAt)
+	assert.Equal(t, "Delivery window closes", taken.DueLabel)
+	assert.Equal(t, watchtower.DueSourceSource, taken.DueSource)
+
+	reopenWithDeadline := applyUpsert(
+		resolvedItem(),
+		incoming,
+		upsertPlan{reopen: true, takeDeadline: true},
+	)
+	assert.Equal(t, &due, reopenWithDeadline.DueAt)
+
+	dropped := applyUpsert(resolvedItem(), &watchtower.Item{}, upsertPlan{dropDeadline: true})
+	assert.Nil(t, dropped.DueAt)
+	assert.Empty(t, dropped.DueLabel)
+	assert.Empty(t, dropped.DueSource)
+}
+
+func TestListOrderedByDueContinuesAfterTheCursor(t *testing.T) {
+	t.Parallel()
+
+	sql, args := keeltest.Render(t, listQuery(&watchtowerports.ListWatchtowerItemsQuery{
+		OrderByDue:  true,
+		BeforeID:    pulid.ID("wt_9"),
+		BeforeDueAt: 500,
+		Unassigned:  true,
+		AssigneeIDs: []pulid.ID{"usr_1"},
+		Limit:       1000,
+	}))
+
+	due := `COALESCE(wi."due_at", ` + strconv.FormatInt(watchtower.NoDueSortKey, 10) + `)`
+	assert.Contains(t, sql, "("+due+`, wi."id") > ($`, sql)
+	assert.Contains(t, sql, `ORDER BY `+due+` ASC, wi."id" ASC LIMIT 200`, sql)
+	assert.Contains(t, sql, `(wi."assignee_id" IS NULL OR wi."assignee_id" = ANY(`, sql)
+	assert.Contains(t, args, int64(500))
+	assert.Contains(t, args, "wt_9")
+}
+
+func TestListNewestFirstContinuesBeforeTheCursor(t *testing.T) {
+	t.Parallel()
+
+	sql, _ := keeltest.Render(t, listQuery(&watchtowerports.ListWatchtowerItemsQuery{
+		BeforeID:         pulid.ID("wt_9"),
+		BeforeOccurredAt: 700,
+		UnresolvedOnly:   true,
+	}))
+
+	assert.Contains(t, sql, `(wi."occurred_at", wi."id") < ($`, sql)
+	assert.Contains(t, sql, `wi."resolved_at" IS NULL`, sql)
+	assert.Contains(t, sql, `ORDER BY wi."occurred_at" DESC, wi."id" DESC LIMIT 50`, sql)
+}
+
+func TestOverdueSkipsItemsEscalatedTooRecently(t *testing.T) {
+	t.Parallel()
+
+	wi := watchtowerdb.Items
+	req := &watchtowerports.ListAttentionWatchtowerItemsRequest{
+		Now:                1_000,
+		BelowEscalationCap: 3,
+		EscalateEvery:      100,
+	}
+	sql, args := keeltest.Render(t, wi.Where(overduePred(req)))
+
+	assert.Contains(t, sql, `wi."due_source" IS DISTINCT FROM $`, sql)
+	assert.Contains(t, sql, `wi."last_escalated_at" IS NULL`, sql)
+	assert.Contains(t, sql, `wi."last_escalated_at" <= $`, sql)
+	assert.Contains(t, args, int64(900))
+}
+
+func TestCountsLeaveMineEmptyWithoutAnAssignee(t *testing.T) {
+	t.Parallel()
+
+	sql, _ := keeltest.Render(t, countTotalsQuery(&watchtowerports.CountWatchtowerItemsRequest{
+		ReaderID: pulid.ID("usr_1"),
+		SeenAt:   10,
+		Now:      20,
+	}))
+
+	assert.Contains(t, sql, `count(*) FILTER (WHERE wi."assignee_id" IS NULL)`, sql)
+	assert.Contains(t, sql, `FILTER (WHERE FALSE)`, sql)
+	assert.Contains(t, sql, `NOT EXISTS (SELECT`, sql)
+}
+
+func TestTenantsNeedingAttentionAreReadAcrossTenantsOnce(t *testing.T) {
+	t.Parallel()
+
+	sql, _ := keeltest.RenderIn(
+		t,
+		dbscope.WithSystem(t.Context(), "test"),
+		tenantsNeedingAttentionQuery(1_000),
+	)
+
+	assert.Contains(t, sql, `SELECT wi."organization_id", wi."business_unit_id"`, sql)
+	assert.NotContains(t, sql, `wi."organization_id" = $`, sql)
+	assert.Contains(t, sql, `GROUP BY wi."organization_id", wi."business_unit_id"`, sql)
+}
+
+func TestRetentionDeletesOnlyItemsTheSourceIsDoneWith(t *testing.T) {
+	t.Parallel()
+
+	wi := watchtowerdb.Items
+	sql, args := keeltest.RenderIn(
+		t,
+		dbscope.WithSystem(t.Context(), "test"),
+		wi.AllTenants().Where(resolvedBefore(1_000, 500)),
+	)
+
+	assert.Contains(t, sql, `."id" IN (SELECT stale."id" FROM "watchtower_items" stale`, sql)
+	assert.Contains(t, sql, `(stale."resolved_by_id" IS NULL OR stale."source_cleared_at" IS NOT NULL)`, sql)
+	assert.Contains(t, sql, "LIMIT 500)", sql)
+	assert.Equal(t, []any{int64(1_000)}, args)
 }
 
 func TestPlanUpsert(t *testing.T) {
@@ -108,33 +271,6 @@ func TestPlanUpsert_TheSourcesDeadlineMovesUnlessAPersonSetTheDue(t *testing.T) 
 			&watchtower.Item{},
 		).dropDeadline,
 	)
-}
-
-func TestUpsertWritesTheDeadlineOnlyWhenPlanned(t *testing.T) {
-	t.Parallel()
-
-	db := bun.NewDB(nil, pgdialect.New())
-
-	taken := buildUpsert(db, &watchtower.Item{}, upsertPlan{takeDeadline: true}).String()
-	assert.Contains(t, taken, "due_at = EXCLUDED.due_at", taken)
-	assert.Contains(t, taken, "due_label = EXCLUDED.due_label", taken)
-
-	dropped := buildUpsert(db, &watchtower.Item{}, upsertPlan{dropDeadline: true}).String()
-	assert.Contains(t, dropped, "due_at = NULL", dropped)
-	assert.Contains(t, dropped, "due_source = NULL", dropped)
-
-	plain := buildUpsert(db, &watchtower.Item{}, upsertPlan{}).String()
-	assert.NotContains(t, plain, "due_at =", plain)
-	assert.Contains(t, plain, "facts = EXCLUDED.facts", plain)
-	assert.Contains(t, plain, "record_label = EXCLUDED.record_label", plain)
-
-	reopenWithDeadline := buildUpsert(
-		db,
-		&watchtower.Item{},
-		upsertPlan{reopen: true, takeDeadline: true},
-	).String()
-	assert.Contains(t, reopenWithDeadline, "due_at = EXCLUDED.due_at", reopenWithDeadline)
-	assert.NotContains(t, reopenWithDeadline, "due_at = NULL", reopenWithDeadline)
 }
 
 func TestPlanUpsert_ARefreshThatChangesNothingWritesNothing(t *testing.T) {
