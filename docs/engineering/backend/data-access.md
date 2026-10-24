@@ -108,7 +108,7 @@ the migration that gets there directly, with no dual-write or backfill phase for
   `--keel:lint_ignore rule` at the top of a file skips a rule, with the reason in the PR.
 - **Tests.** `seedtest` copies every test database from a keel template (`migrate.Template`, key
   `seedtest.TemplateKey` joined to the migrations' and the seeds' fingerprints), built once per
-  server: `SetupTestDB` from migrations plus reference seeds, `SetupSeededTestDB` with the
+  server: `SetupTestDB` from migrations plus reference seeds, `seededtest.SetupTestDB` with the
   fixtures too. A test of a migration's content reads it with `migrations.File("<version>_<name>")`
   or the `Set`.
 - **Editions** add migration sources through `edition.Edition.Migrations`, merged into one version

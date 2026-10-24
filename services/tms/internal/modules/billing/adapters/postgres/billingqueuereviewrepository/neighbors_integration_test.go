@@ -6,14 +6,11 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/infrastructure/config"
-	"github.com/emoss08/trenova/internal/infrastructure/database/common"
-	"github.com/emoss08/trenova/internal/infrastructure/database/seeder"
-	"github.com/emoss08/trenova/internal/infrastructure/database/seeds"
+	"github.com/emoss08/trenova/internal/testutil/seededtest"
+
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/billingqueueports"
-	"github.com/emoss08/trenova/internal/testutil/seedtest"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/require"
@@ -30,16 +27,8 @@ type neighborShipment struct {
 // position counts from the top, and a filter that drops posted items drops
 // them from the count and the steps alike.
 func TestGetNeighborsWalksTheQueueInItsOwnOrder(t *testing.T) {
-	ctx, db, cleanup := seedtest.SetupTestDB(t)
+	ctx, db, cleanup := seededtest.SetupTestDB(t)
 	t.Cleanup(cleanup)
-
-	registry := seeder.NewRegistry()
-	seeds.Register(registry)
-	_, err := seeder.NewEngine(
-		db, registry,
-		&config.Config{System: config.SystemConfig{SystemUserPassword: "test-system-password"}},
-	).Execute(ctx, seeder.ExecuteOptions{Environment: common.EnvDevelopment})
-	require.NoError(t, err)
 
 	var org struct {
 		ID             pulid.ID `bun:"id"`
@@ -78,7 +67,7 @@ func TestGetNeighborsWalksTheQueueInItsOwnOrder(t *testing.T) {
 			BillType:         billingqueue.BillTypeInvoice,
 			Number:           fmt.Sprintf("BQ-NB-%d", i),
 		}
-		_, err = db.NewInsert().Model(item).Exec(ctx)
+		_, err := db.NewInsert().Model(item).Exec(ctx)
 		require.NoError(t, err)
 		// Oldest first: item 0 was queued first, item 3 last, and all of
 		// them after anything the seed queued.

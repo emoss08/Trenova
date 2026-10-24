@@ -9,18 +9,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/emoss08/trenova/internal/modules/accounting/domain/accounttype"
-	"github.com/emoss08/trenova/internal/modules/accounting/domain/fiscalperiod"
-	"github.com/emoss08/trenova/internal/modules/accounting/domain/fiscalyear"
-	"github.com/emoss08/trenova/internal/modules/accounting/domain/journalentry"
-	"github.com/emoss08/trenova/internal/modules/accounting/app/fiscalcloseservice"
-	"github.com/emoss08/trenova/internal/infrastructure/config"
-	"github.com/emoss08/trenova/internal/infrastructure/database/common"
-	"github.com/emoss08/trenova/internal/infrastructure/database/seeder"
-	"github.com/emoss08/trenova/internal/infrastructure/database/seeds"
+	"github.com/emoss08/trenova/internal/testutil/seededtest"
+
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
-	"github.com/emoss08/trenova/internal/modules/identity/adapters/postgres/accountingcontrolrepository"
-	"github.com/emoss08/trenova/internal/modules/billing/adapters/postgres/customerledgerrepository"
 	"github.com/emoss08/trenova/internal/modules/accounting/adapters/postgres/fiscalperiodrepository"
 	"github.com/emoss08/trenova/internal/modules/accounting/adapters/postgres/fiscalyearrepository"
 	"github.com/emoss08/trenova/internal/modules/accounting/adapters/postgres/glaccountrepository"
@@ -28,12 +19,18 @@ import (
 	"github.com/emoss08/trenova/internal/modules/accounting/adapters/postgres/journalentryrepository"
 	"github.com/emoss08/trenova/internal/modules/accounting/adapters/postgres/journalpostingrepository"
 	"github.com/emoss08/trenova/internal/modules/accounting/adapters/postgres/journalsourcerepository"
+	"github.com/emoss08/trenova/internal/modules/accounting/app/fiscalcloseservice"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accounttype"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/fiscalperiod"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/fiscalyear"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/journalentry"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/fiscalperiodports"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/fiscalyearports"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/glbalanceports"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/journalentryports"
+	"github.com/emoss08/trenova/internal/modules/billing/adapters/postgres/customerledgerrepository"
+	"github.com/emoss08/trenova/internal/modules/identity/adapters/postgres/accountingcontrolrepository"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
-	"github.com/emoss08/trenova/internal/testutil/seedtest"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/seqgen"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -166,7 +163,7 @@ func (f closeFixture) ytdBalance(
 }
 
 func TestCloseFiscalYearPostsClosingAndOpeningEntries(t *testing.T) {
-	ctx, db, cleanup := seedtest.SetupTestDB(t)
+	ctx, db, cleanup := seededtest.SetupTestDB(t)
 	t.Cleanup(cleanup)
 
 	f := setupCloseFixture(t, ctx, db)
@@ -218,7 +215,7 @@ func TestCloseFiscalYearPostsClosingAndOpeningEntries(t *testing.T) {
 }
 
 func TestCloseFiscalYearIsBlockedWithoutARetainedEarningsAccount(t *testing.T) {
-	ctx, db, cleanup := seedtest.SetupTestDB(t)
+	ctx, db, cleanup := seededtest.SetupTestDB(t)
 	t.Cleanup(cleanup)
 
 	f := setupCloseFixture(t, ctx, db)
@@ -245,7 +242,7 @@ func TestCloseFiscalYearIsBlockedWithoutARetainedEarningsAccount(t *testing.T) {
 }
 
 func TestReopenFiscalYearReversesTheClose(t *testing.T) {
-	ctx, db, cleanup := seedtest.SetupTestDB(t)
+	ctx, db, cleanup := seededtest.SetupTestDB(t)
 	t.Cleanup(cleanup)
 
 	f := setupCloseFixture(t, ctx, db)
@@ -284,7 +281,7 @@ func TestReopenFiscalYearReversesTheClose(t *testing.T) {
 }
 
 func TestActivateRejectsAClosedFiscalYear(t *testing.T) {
-	ctx, db, cleanup := seedtest.SetupTestDB(t)
+	ctx, db, cleanup := seededtest.SetupTestDB(t)
 	t.Cleanup(cleanup)
 
 	f := setupCloseFixture(t, ctx, db)
@@ -306,7 +303,7 @@ func TestActivateRejectsAClosedFiscalYear(t *testing.T) {
 // Inactive Period 13. The close must post into that one and seal it, not create
 // a second adjusting period beside it.
 func TestCloseFiscalYearReusesAnExistingAdjustingPeriod(t *testing.T) {
-	ctx, db, cleanup := seedtest.SetupTestDB(t)
+	ctx, db, cleanup := seededtest.SetupTestDB(t)
 	t.Cleanup(cleanup)
 
 	f := setupCloseFixture(t, ctx, db)
@@ -362,7 +359,7 @@ func TestCloseFiscalYearReusesAnExistingAdjustingPeriod(t *testing.T) {
 // The GL carries one AR total; the customer detail behind it lives in the AR
 // subledger, which has no fiscal year. The close proves the two still agree.
 func TestClosePreviewReconcilesTheARControlAccount(t *testing.T) {
-	ctx, db, cleanup := seedtest.SetupTestDB(t)
+	ctx, db, cleanup := seededtest.SetupTestDB(t)
 	t.Cleanup(cleanup)
 
 	f := setupCloseFixture(t, ctx, db)
@@ -398,7 +395,7 @@ func TestClosePreviewReconcilesTheARControlAccount(t *testing.T) {
 }
 
 func TestClosePreviewReportsAnARDifference(t *testing.T) {
-	ctx, db, cleanup := seedtest.SetupTestDB(t)
+	ctx, db, cleanup := seededtest.SetupTestDB(t)
 	t.Cleanup(cleanup)
 
 	f := setupCloseFixture(t, ctx, db)
@@ -496,20 +493,6 @@ func setupCloseFixture(t *testing.T, ctx context.Context, db *bun.DB) closeFixtu
 	postingRepo := journalpostingrepository.New(
 		journalpostingrepository.Params{DB: conn, Logger: logger},
 	)
-
-	// SetupTestDB only migrates, so the seeds have to be run here: the fixture
-	// below reads the organization that carries the chart of accounts and the
-	// accounting control, and neither exists in an empty schema.
-	registry := seeder.NewRegistry()
-	seeds.Register(registry)
-	engine := seeder.NewEngine(db, registry, &config.Config{
-		System: config.SystemConfig{SystemUserPassword: "integration-system-password"},
-	})
-	_, seedErr := engine.Execute(ctx, seeder.ExecuteOptions{
-		Environment: common.EnvDevelopment,
-		Force:       true,
-	})
-	require.NoError(t, seedErr)
 
 	// The seeded organization is the one that carries a chart of accounts and an
 	// accounting control; a synthetic org would have neither.

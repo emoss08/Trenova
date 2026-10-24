@@ -6,32 +6,20 @@ import (
 	"slices"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/testutil/fiscaltest"
-	"github.com/emoss08/trenova/internal/infrastructure/config"
-	"github.com/emoss08/trenova/internal/infrastructure/database/common"
-	"github.com/emoss08/trenova/internal/infrastructure/database/seeder"
-	"github.com/emoss08/trenova/internal/infrastructure/database/seeds"
+	"github.com/emoss08/trenova/internal/testutil/seededtest"
+
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/modules/accounting/app/journalrepairservice"
-	"github.com/emoss08/trenova/internal/testutil/seedtest"
+	"github.com/emoss08/trenova/internal/testutil/fiscaltest"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
 func TestRepairJournalsWritesTheMissingDriverPaymentJournal(t *testing.T) {
-	ctx, db, cleanup := seedtest.SetupTestDB(t)
+	ctx, db, cleanup := seededtest.SetupTestDB(t)
 	defer cleanup()
 
-	seedRegistry := seeder.NewRegistry()
-	seeds.Register(seedRegistry)
-	engine := seeder.NewEngine(
-		db,
-		seedRegistry,
-		&config.Config{System: config.SystemConfig{SystemUserPassword: "test-system-password"}},
-	)
-	_, err := engine.Execute(ctx, seeder.ExecuteOptions{Environment: common.EnvDevelopment})
-	require.NoError(t, err)
 	conn := postgres.WrapDB(db)
 
 	var settlement struct {
@@ -48,7 +36,7 @@ func TestRepairJournalsWritesTheMissingDriverPaymentJournal(t *testing.T) {
 		Limit(1).
 		Scan(ctx, &settlement))
 
-	_, err = db.NewUpdate().
+	_, err := db.NewUpdate().
 		Table("accounting_controls").
 		Set("default_cash_account_id = NULL").
 		Where("organization_id = ?", settlement.OrganizationID).

@@ -8,6 +8,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/emoss08/trenova/pkg/dbscope"
+
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/tenantbootstrap"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accounttype"
@@ -72,7 +74,8 @@ func TestBootstrapCreatesEverythingATenantNeeds(t *testing.T) {
 	org.StateID = data.State.ID
 
 	var result *tenantports.BootstrapTenantResult
-	err := conn.WithTx(ctx, kernelports.TxOptions{}, func(ctx context.Context, _ bun.Tx) error {
+	sysCtx := dbscope.WithSystem(ctx, "bootstrap a tenant the way instance bootstrap does")
+	err := conn.WithTx(sysCtx, kernelports.TxOptions{}, func(ctx context.Context, _ bun.Tx) error {
 		require.NoError(t, repo.LockProvisioning(ctx))
 		var bootErr error
 		result, bootErr = repo.Bootstrap(ctx, &tenantports.BootstrapTenantRequest{

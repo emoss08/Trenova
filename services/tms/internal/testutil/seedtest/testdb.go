@@ -38,7 +38,6 @@ const (
 	databasePrefix   = "trenova_test_"
 
 	templateBuildTimeout = 10 * time.Minute
-	copyTimeout          = 90 * time.Second
 	dropAttempts         = 3
 )
 
@@ -51,6 +50,26 @@ var (
 type seedEnvironment struct {
 	adminDSN string
 	set      migrate.Set
+	mu       sync.Mutex
+	keys     map[string]string
+}
+
+func (e *seedEnvironment) key(kind Template) (string, error) {
+	e.mu.Lock()
+	defer e.mu.Unlock()
+	if key, ok := e.keys[kind.Name]; ok {
+		return key, nil
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), templateBuildTimeout)
+	defer cancel()
+	key, err := seedKey(ctx, e.adminDSN, kind)
+	if err != nil {
+		return "", err
+	}
+	e.keys[kind.Name] = key
+
+	return key, nil
 }
 
 type TestDB struct {
@@ -209,12 +228,13 @@ func waitForServer(ctx context.Context, dsn string) error {
 	}
 }
 
-func templateOptions(env *seedEnvironment) migrate.TemplateOptions {
+func templateOptions(env *seedEnvironment, kind Template, key string) migrate.TemplateOptions {
 	return migrate.TemplateOptions{
 		Admin:   env.adminDSN,
 		Sources: env.set,
 		Options: migrations.Options(),
-		Key:     TemplateKey,
+		Key:     key,
+		Prepare: applySeeds(kind),
 		Prefix:  databasePrefix,
 	}
 }
@@ -234,18 +254,11 @@ func getSharedSeedEnv() (*seedEnvironment, error) {
 			return
 		}
 
-		env := &seedEnvironment{adminDSN: adminDSN, set: migrations.Set()}
-		dsn, drop, err := migrate.Template(ctx, templateOptions(env))
-		if err != nil {
-			sharedSeedErr = fmt.Errorf("failed to build the migrated template database: %w", err)
-			return
+		sharedSeedEnv = &seedEnvironment{
+			adminDSN: adminDSN,
+			set:      migrations.Set(),
+			keys:     make(map[string]string, 2),
 		}
-		if err = drop(ctx); err != nil {
-			sharedSeedErr = fmt.Errorf("failed to drop the probe database %s: %w", dsn, err)
-			return
-		}
-
-		sharedSeedEnv = env
 	})
 
 	return sharedSeedEnv, sharedSeedErr
@@ -262,13 +275,21 @@ func SetupTestDB(t *testing.T) (context.Context, *bun.DB, func()) {
 func SetupTestDBWithDSN(t *testing.T) (context.Context, *bun.DB, string, func()) {
 	t.Helper()
 
+	return SetupFromTemplate(t, referenceTemplate)
+}
+
+func SetupFromTemplate(t *testing.T, kind Template) (context.Context, *bun.DB, string, func()) {
+	t.Helper()
+
 	chdirToServiceRoot(t)
 
 	env, err := getSharedSeedEnv()
 	require.NoError(t, err, "failed to get shared seed environment")
+	key, err := env.key(kind)
+	require.NoError(t, err, "failed to fingerprint the %s seeds", kind.Name)
 
-	copyCtx, copyCancel := context.WithTimeout(context.Background(), copyTimeout)
-	dsn, drop, err := migrate.Template(copyCtx, templateOptions(env))
+	copyCtx, copyCancel := context.WithTimeout(context.Background(), templateBuildTimeout)
+	dsn, drop, err := migrate.Template(copyCtx, templateOptions(env, kind, key))
 	copyCancel()
 	require.NoError(t, err, "failed to create isolated test database")
 
