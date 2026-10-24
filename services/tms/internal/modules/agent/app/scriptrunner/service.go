@@ -26,6 +26,8 @@ const (
 		"the discrete reads instead."
 	scriptVMUnavailable = "The script interpreter is not available right now. Answer with the " +
 		"discrete reads."
+	scriptVMBusy = "Too many scripts are running right now. Answer with the discrete reads, or " +
+		"run the script again in a moment."
 	warmupTimeout = 2 * time.Minute
 )
 
@@ -56,7 +58,7 @@ func New(p Params) *Service {
 
 func NewRunner(logger *zap.Logger) *Service {
 	logger = logger.Named("service.script-runner")
-	return &Service{vm: scriptvm.New(logger), l: logger}
+	return &Service{vm: scriptvm.New(scriptvm.Options{Logger: logger}), l: logger}
 }
 
 func (s *Service) Warm() {
@@ -116,8 +118,11 @@ func (s *Service) Run(
 
 func (s *Service) failed(limits *codemode.Limits, err error) *scriptports.Outcome {
 	failure := scriptFailure
-	if errors.Is(err, scriptvm.ErrUnavailable) {
+	switch {
+	case errors.Is(err, scriptvm.ErrUnavailable):
 		failure = scriptVMUnavailable
+	case errors.Is(err, scriptvm.ErrBusy):
+		failure = scriptVMBusy
 	}
 	s.l.Warn("a script could not be run", zap.Error(err))
 

@@ -16,11 +16,16 @@ const (
 	DefaultRecursion   = 200
 	DefaultCalls       = 1_000
 	MaxRequestBytes    = 16 << 20
+
+	DefaultMaxConcurrent = 8
+	DefaultQueueWait     = 10 * time.Second
+	ClockResolution      = time.Millisecond
 )
 
 var (
 	ErrUnavailable = errors.New("scriptvm: the script module is unavailable")
 	ErrHost        = errors.New("scriptvm: the host could not answer the script")
+	ErrBusy        = errors.New("scriptvm: every script slot on this worker is in use")
 )
 
 type Function string
@@ -90,18 +95,60 @@ type Outcome struct {
 	Duration        time.Duration
 }
 
-type Runtime struct {
-	load   func() (*compiled, error)
-	logger *zap.Logger
+type Options struct {
+	Logger        *zap.Logger
+	MaxConcurrent int
+	QueueWait     time.Duration
 }
 
-func New(logger *zap.Logger) *Runtime {
+type Runtime struct {
+	load      func() (*compiled, error)
+	logger    *zap.Logger
+	slots     chan struct{}
+	queueWait time.Duration
+}
+
+func New(opts Options) *Runtime {
+	logger := opts.Logger
 	if logger == nil {
 		logger = zap.NewNop()
 	}
-	r := &Runtime{logger: logger.Named("scriptvm")}
+	concurrent := opts.MaxConcurrent
+	if concurrent <= 0 {
+		concurrent = DefaultMaxConcurrent
+	}
+	queueWait := opts.QueueWait
+	if queueWait <= 0 {
+		queueWait = DefaultQueueWait
+	}
+	r := &Runtime{
+		logger:    logger.Named("scriptvm"),
+		slots:     make(chan struct{}, concurrent),
+		queueWait: queueWait,
+	}
 	r.load = sync.OnceValues(r.compile)
 	return r
+}
+
+func (r *Runtime) acquire(ctx context.Context) (func(), error) {
+	release := func() { <-r.slots }
+	select {
+	case r.slots <- struct{}{}:
+		return release, nil
+	default:
+	}
+
+	wait, cancel := context.WithTimeout(ctx, r.queueWait)
+	defer cancel()
+	select {
+	case r.slots <- struct{}{}:
+		return release, nil
+	case <-wait.Done():
+		if ctx.Err() != nil {
+			return nil, ctx.Err()
+		}
+		return nil, ErrBusy
+	}
 }
 
 func (r *Runtime) Warm() error {
@@ -122,6 +169,12 @@ func (r *Runtime) Run(ctx context.Context, program *Program, host Host) (*Outcom
 	if err != nil {
 		return nil, err
 	}
+	release, err := r.acquire(ctx)
+	if err != nil {
+		return nil, err
+	}
+	defer release()
+
 	started := time.Now()
 	in, err := instantiate(ctx, c, program.Limits)
 	if err != nil {

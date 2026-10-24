@@ -238,6 +238,7 @@ jobs:
             services/crates/sandbox/fuzz
             services/imaging/fuzz
             services/crates/rules/fuzz
+            services/crates/scripts/fuzz
       - run: cargo install cargo-fuzz --locked --version 0.13.2
       - name: Sandbox frame protocol
         working-directory: services/crates/sandbox/fuzz
@@ -257,6 +258,12 @@ jobs:
           cargo +nightly fuzz run tariff_format -- -max_total_time=30 -rss_limit_mb=1024
           cargo +nightly fuzz run tariff_check -- -max_total_time=60 -rss_limit_mb=1024
           cargo +nightly fuzz run tariff_evaluate -- -max_total_time=60 -rss_limit_mb=1024
+      - name: Agent scripts
+        working-directory: services/crates/scripts/fuzz
+        run: |
+          mkdir -p corpus/script_session corpus/request
+          cargo +nightly fuzz run script_session corpus/script_session seeds/script_session -- -dict=script_session.dict -max_total_time=90 -rss_limit_mb=1024
+          cargo +nightly fuzz run request corpus/request seeds/request -- -max_total_time=30 -rss_limit_mb=1024
 
   image:
     name: Imaging image

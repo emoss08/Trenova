@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"math"
+	"time"
 
 	"github.com/tetratelabs/wazero"
 	"github.com/tetratelabs/wazero/api"
@@ -22,6 +23,19 @@ const (
 	maxWasmPages   = 16_384
 	maxMemoryBytes = 768 << 20
 )
+
+var clockResolution = sys.ClockResolution(ClockResolution.Nanoseconds())
+
+func coarseNanotime(origin time.Time) sys.Nanotime {
+	return func() int64 {
+		return time.Since(origin).Truncate(ClockResolution).Nanoseconds()
+	}
+}
+
+func coarseWalltime() (int64, int32) {
+	now := time.Now().Truncate(ClockResolution)
+	return now.Unix(), int32(now.Nanosecond())
+}
 
 var (
 	errOutOfBounds   = errors.New("scriptvm: the module named memory outside its linear memory")
@@ -48,8 +62,8 @@ func instantiate(ctx context.Context, c *compiled, limits Limits) (*instance, er
 		wazero.NewModuleConfig().
 			WithName("").
 			WithStartFunctions().
-			WithSysNanotime().
-			WithSysWalltime().
+			WithNanotime(coarseNanotime(time.Now()), clockResolution).
+			WithWalltime(coarseWalltime, clockResolution).
 			WithRandSource(rand.Reader),
 	)
 	if err != nil {
