@@ -117,7 +117,8 @@ it. Write it for a person choosing a dataset.
 Every `belongs:`, `many:` and `pick:` relation of a reportable model is an edge unless it is
 `noreport`. A `many:` edge is to-many: its fields are aggregated, never grouped by. A `pick:` edge
 picks one row of a list: `OriginStop` is
-`keel:"pick:moves.stops,first=moves.sequence|stops.sequence"`. **An edge must lead to a
+`keel:"pick:moves.stops,first=moves.sequence|stops.sequence"`, and `where=` narrows the list
+before the pick (`where=stops.type:Pickup;SplitPickup` on `FirstPickup`). **An edge must lead to a
 reportable model.** A relation to one that is not (a `tenant.User`, a formula template) fails
 `analytics.Build` until the relation carries `noreport` or its target is made reportable.
 
