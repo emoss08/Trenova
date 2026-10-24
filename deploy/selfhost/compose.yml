@@ -423,22 +423,33 @@ services:
     logging: *logging
     networks: [data, egress]
 
-  tms-migrate:
+  # One-shot: applies the migrations (trenova-db up) before anything else
+  # touches the database. A database Bun migrated is adopted on its first run.
+  # The API and worker refuse to serve until the schema reaches their version.
+  trenova-db:
+    image: ghcr.io/emoss08/trenova/tms-db:${TRENOVA_VERSION:?set TRENOVA_VERSION in .env}
+    command: ["up", "-env", "production"]
+    environment: *tms-environment
+    volumes:
+      - ./config/config.yaml:/app/config/config.yaml:ro
+    security_opt:
+      - "no-new-privileges:true"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: on-failure:5
+    logging: *logging
+    networks: [data]
+
+  # One-shot: what migrations cannot do (the row-level security scope key,
+  # new administrator permissions, repeatable seeds), then the base seeds.
+  tms-seed:
     <<: *tms-service
     entrypoint: ["/bin/sh", "-c"]
     command:
       - |
         set -eu
-        attempt=1
-        until trenova db migrate; do
-          if [ "$$attempt" -ge 5 ]; then
-            echo "Migrations failed after $$attempt attempts" >&2
-            exit 1
-          fi
-          echo "Migration attempt $$attempt failed; retrying in 5s" >&2
-          attempt=$$((attempt + 1))
-          sleep 5
-        done
+        trenova db reconcile
         if [ "$${TRENOVA_RUN_SEEDS}" = "true" ]; then
           trenova db seed --ignore-errors
         else
@@ -448,8 +459,8 @@ services:
       <<: *tms-environment
       TRENOVA_RUN_SEEDS: ${TRENOVA_RUN_SEEDS:-true}
     depends_on:
-      postgres:
-        condition: service_healthy
+      trenova-db:
+        condition: service_completed_successfully
     restart: "no"
     networks: [data]
 
@@ -484,7 +495,7 @@ services:
       TRENOVA_BOOTSTRAP_SCAC: ${TRENOVA_BOOTSTRAP_SCAC:-}
       TRENOVA_BOOTSTRAP_DOT_NUMBER: ${TRENOVA_BOOTSTRAP_DOT_NUMBER:-}
     depends_on:
-      tms-migrate:
+      tms-seed:
         condition: service_completed_successfully
       redis:
         condition: service_healthy
@@ -508,7 +519,7 @@ services:
       - ./scripts/db-bootstrap.sh:/scripts/db-bootstrap.sh:ro
       - ../gtc/sinks.yaml:/config/sinks.yaml:ro
     depends_on:
-      tms-migrate:
+      trenova-db:
         condition: service_completed_successfully
     restart: "no"
     logging: *logging
@@ -587,6 +598,8 @@ services:
     <<: *tms-service
     command: ["api", "run"]
     depends_on:
+      trenova-db:
+        condition: service_completed_successfully
       db-bootstrap:
         condition: service_completed_successfully
       tms-bootstrap:
@@ -619,6 +632,8 @@ services:
     <<: *tms-service
     command: ["worker", "run"]
     depends_on:
+      trenova-db:
+        condition: service_completed_successfully
       db-bootstrap:
         condition: service_completed_successfully
       tms-bootstrap:

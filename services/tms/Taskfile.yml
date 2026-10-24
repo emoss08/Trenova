@@ -7,6 +7,9 @@ vars:
   BUILD_DIR: ./build
   CLI_BINARY: "trenova-cli{{exeExt}}"
   CLI_PATH: "{{.BUILD_DIR}}/{{.CLI_BINARY}}"
+  DEVDB_BINARY: "trenova-devdb{{exeExt}}"
+  DEVDB_PATH: "{{.BUILD_DIR}}/{{.DEVDB_BINARY}}"
+  DB_ENV: '{{.env | default "development"}}'
   DOCKER_COMPOSE_LOCAL: "docker compose -f {{.REPO_DIR}}/dev/compose.yml"
   CLIENT_DIR: "{{.REPO_DIR}}/client"
   TEST_DB_CONTAINER: trenova-integration-postgres
@@ -81,6 +84,12 @@ tasks:
     cmds:
       - mkdir -p {{.BUILD_DIR}}
       - go build -buildvcs=false {{.GO_TAG_FLAG}} -o {{.CLI_PATH}} ./cmd/cli
+
+  build-devdb:
+    desc: Build trenova-devdb, the development database tool (migrations, templates, reset)
+    cmds:
+      - mkdir -p {{.BUILD_DIR}}
+      - go build -buildvcs=false {{.GO_TAG_FLAG}} -o {{.DEVDB_PATH}} ./cmd/devdb
 
   run:
     desc: Run the API server via CLI
@@ -451,27 +460,17 @@ tasks:
       - "{{.DOCKER_COMPOSE_LOCAL}} build"
 
   db-migrate:
-    desc: Run database migrations
-    deps: [build-cli]
+    desc: Apply pending migrations (trenova-devdb up), then reconcile what migrations cannot
+    deps: [build-devdb, build-cli]
     cmds:
-      - "{{.CLI_PATH}} db migrate"
-
-  db-rollback:
-    desc: Rollback database migrations
-    deps: [build-cli]
-    cmds:
-      - "{{.CLI_PATH}} db rollback"
+      - "{{.DEVDB_PATH}} up -env {{.DB_ENV}}"
+      - "{{.CLI_PATH}} db reconcile{{if .env}} --env {{.env}}{{end}}"
 
   db-seed:
     desc: Seed the database
     deps: [generate-seeds, build-cli]
     cmds:
-      - |
-        if [ -n "{{.env}}" ]; then
-          {{.CLI_PATH}} db seed --env {{.env}}
-        else
-          {{.CLI_PATH}} db seed
-        fi
+      - "{{.CLI_PATH}} db seed{{if .env}} --env {{.env}}{{end}}"
 
   db-seed-volume:
     desc: "Fill the development organization with volume data (shipments=10000 months=12 seed=0)"
@@ -480,32 +479,52 @@ tasks:
       - "{{.CLI_PATH}} db seed-volume --shipments {{.shipments | default 10000}} --months {{.months | default 12}} --seed {{.seed | default 0}}"
 
   db-reset:
-    desc: Reset database (drop, create, migrate, seed)
-    deps: [generate-seeds, build-cli]
+    desc: Recreate the database from the migrated template, then reconcile and seed it
+    deps: [generate-seeds, build-devdb, build-cli]
     cmds:
-      - |
-        if [ -n "{{.env}}" ]; then
-          {{.CLI_PATH}} db reset --force --seed --env {{.env}}
-        else
-          {{.CLI_PATH}} db reset --force --seed
-        fi
+      - "{{.DEVDB_PATH}} reset -yes"
+      - "{{.CLI_PATH}} db reconcile{{if .env}} --env {{.env}}{{end}}"
+      - "{{.CLI_PATH}} db seed{{if .env}} --env {{.env}}{{end}}"
 
   db-setup:
-    desc: Setup database (migrate + seed)
-    deps: [generate-seeds, build-cli]
+    desc: Set up a new database (migrate, reconcile, seed)
     cmds:
-      - |
-        if [ -n "{{.env}}" ]; then
-          {{.CLI_PATH}} db setup --env {{.env}}
-        else
-          {{.CLI_PATH}} db setup
-        fi
+      - task: db-migrate
+      - task: db-seed
 
   db-status:
     desc: Show migration and seed status
-    deps: [build-cli]
+    deps: [build-devdb, build-cli]
     cmds:
-      - "{{.CLI_PATH}} db status"
+      - "{{.DEVDB_PATH}} migrate status"
+      - "{{.CLI_PATH}} db seed status"
+
+  db-create-migration:
+    desc: "Create a migration in schema/migrations (name=add_holds [kind=tx|notx|repeatable])"
+    deps: [build-devdb]
+    cmds:
+      - |
+        if [ -z "{{.name}}" ]; then
+          echo "Usage: task db-create-migration name=add_holds [kind=tx|notx|repeatable]"
+          exit 1
+        fi
+        {{.DEVDB_PATH}} migrate create {{.name}} -kind {{.kind | default "tx"}}
+
+  db-lint:
+    desc: Lint pending migrations (all=true lints every migration)
+    deps: [build-devdb]
+    cmds:
+      - "{{.DEVDB_PATH}} migrate lint{{if .all}} -all{{end}}"
+
+  db-stamp:
+    desc: Regenerate schema/version_gen.go, the schema version the API and worker require
+    cmds:
+      - go run {{.GO_TAG_FLAG}} ./cmd/devdb migrate stamp
+
+  db-stamp-check:
+    desc: Fail when schema/version_gen.go does not match the migrations
+    cmds:
+      - go run {{.GO_TAG_FLAG}} ./cmd/devdb migrate stamp -check
 
   db-create-seed:
     desc: Create a new seed file

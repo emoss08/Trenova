@@ -1,6 +1,6 @@
 # Trenova runtime configuration for the self-hosted stack (compose.yml).
 #
-# Mounted into tms-migrate, tms-api and tms-worker at /app/config/config.yaml,
+# Mounted into trenova-db, tms-seed, tms-api and tms-worker at /app/config/config.yaml,
 # which they read with APP_ENV=production. Decoding is strict: a key Trenova
 # does not know fails startup, so keep this file to the keys the release you
 # run understands. services/tms/config/config.example.yaml documents every key.

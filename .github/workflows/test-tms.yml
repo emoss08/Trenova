@@ -376,6 +376,38 @@ jobs:
             exit 1
           fi
 
+      - name: Schema version stamp
+        working-directory: ./services/tms
+        run: |
+          set -euo pipefail
+          # The API and worker refuse a database behind schema.Version, so the
+          # stamp must name the newest migration.
+          if ! go run ./cmd/db migrate stamp -check -plain; then
+            echo "::error::services/tms/schema/version_gen.go is stale - run 'task db-stamp' and commit"
+            exit 1
+          fi
+
+      - name: Migrations against the base branch
+        if: github.event_name == 'pull_request'
+        working-directory: ./services/tms
+        env:
+          BASE_REF: ${{ github.base_ref }}
+        run: |
+          set -euo pipefail
+          git fetch --no-tags --depth=1 origin "refs/heads/$BASE_REF:refs/remotes/origin/$BASE_REF"
+          if ! git cat-file -e "origin/$BASE_REF:services/tms/schema/migrations" 2>/dev/null; then
+            echo "::notice::The base branch has no keel migrations yet; nothing to compare"
+            exit 0
+          fi
+          BASE_DIR="$(mktemp -d)"
+          git archive "origin/$BASE_REF" schema/migrations | tar -x -C "$BASE_DIR"
+          # Fails on a migration older than the newest one on the base branch,
+          # and on an edited or deleted migration the base branch already has.
+          if ! go run ./cmd/db migrate check -plain -base-dir "core=$BASE_DIR/schema/migrations"; then
+            echo "::error::Give a new migration a version newer than every migration on $BASE_REF, and fix an applied one with a new migration rather than an edit"
+            exit 1
+          fi
+
       - name: GraphQL projections
         working-directory: ./services/tms
         run: |
