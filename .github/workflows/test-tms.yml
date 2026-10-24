@@ -279,6 +279,21 @@ jobs:
         uses: ./.github/actions/setup-go
         with:
           cache-key: lint
+          save-build-cache: "false"
+
+      # golangci-lint-action keys its analysis cache by go.mod and a 7-day
+      # interval and skips the save on a primary-key hit, so the first run of
+      # an interval fixes the cache for a week: on this repository a 6 KB stub
+      # that held no analysis. The analysis cache lives beside the build cache
+      # here, restored from the newest run and saved by every run, failed or
+      # not, so a run that times out still leaves the next one warm.
+      - name: Restore golangci-lint analysis cache
+        uses: actions/cache/restore@v4
+        with:
+          path: ~/.cache/golangci-lint
+          key: golangci-lint-${{ runner.os }}-${{ github.sha }}
+          restore-keys: |
+            golangci-lint-${{ runner.os }}-
 
       - name: Determine lint base
         id: lint-base
@@ -296,9 +311,27 @@ jobs:
           version: v2.12.2
           working-directory: ./services/tms
           verify: false
+          skip-cache: true
           # Typechecking the whole module is unavoidable even with
-          # --new-from-rev, so the timeout has to cover a cold analysis cache.
-          args: --timeout=20m --new-from-rev=${{ steps.lint-base.outputs.value }}
+          # --new-from-rev. With both caches warm a run takes about 5 minutes
+          # (the analyzers about 1.5 of them); cold, compiling the module alone
+          # takes about 14 minutes on four cores, so 20 minutes left no room
+          # for the analysis. 40 covers a cold run with margin.
+          args: --timeout=40m --new-from-rev=${{ steps.lint-base.outputs.value }}
+
+      - name: Save Go build output
+        if: always()
+        uses: actions/cache/save@v4
+        with:
+          path: ~/.cache/go-build
+          key: gobuild-${{ runner.os }}-1.26-lint-${{ github.sha }}
+
+      - name: Save golangci-lint analysis cache
+        if: always()
+        uses: actions/cache/save@v4
+        with:
+          path: ~/.cache/golangci-lint
+          key: golangci-lint-${{ runner.os }}-${{ github.sha }}
 
       - name: Run go-arch-lint
         working-directory: ./services/tms
