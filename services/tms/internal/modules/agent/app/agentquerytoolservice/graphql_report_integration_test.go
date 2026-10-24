@@ -4,10 +4,11 @@ package agentquerytoolservice_test
 
 import (
 	"context"
-	"github.com/emoss08/keel"
-	"github.com/emoss08/trenova/internal/modules/workspace/domain/report/reportdb"
 	"strings"
 	"testing"
+
+	"github.com/emoss08/keel"
+	"github.com/emoss08/trenova/internal/modules/workspace/domain/report/reportdb"
 
 	"github.com/emoss08/trenova/internal/api/graphql/agentread"
 	"github.com/emoss08/trenova/internal/api/graphql/agentread/agentreadtest"

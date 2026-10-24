@@ -9,7 +9,6 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-
 func TestTractorNormalizesFuelTypeOnWrite(t *testing.T) {
 	t.Parallel()
 

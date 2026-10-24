@@ -88,6 +88,7 @@ var rateQuotesTable = schema.Table{
 	Value:        valueRateQuote,
 	Attach:       attachRateQuote,
 	BeforeCreate: beforeCreateRateQuote,
+	BeforeUpdate: beforeUpdateRateQuote,
 }
 
 var rateQuotesRef = keel.Ref{Table: &rateQuotesTable}
@@ -456,6 +457,10 @@ func attachRateQuote(p unsafe.Pointer, rel int32, child unsafe.Pointer) {
 
 func beforeCreateRateQuote(ctx context.Context, p unsafe.Pointer) error {
 	return (*ratequote.RateQuote)(p).BeforeCreate(ctx)
+}
+
+func beforeUpdateRateQuote(ctx context.Context, p unsafe.Pointer) error {
+	return (*ratequote.RateQuote)(p).BeforeUpdate(ctx)
 }
 
 func init() {

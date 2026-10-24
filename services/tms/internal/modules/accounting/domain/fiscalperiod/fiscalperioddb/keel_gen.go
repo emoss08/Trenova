@@ -57,23 +57,24 @@ var fiscalPeriodsTable = schema.Table{
 		{Name: "LockedBy", Alias: "lb", Kind: schema.BelongsTo, Local: []int32{14}, Remote: []int32{0}, Label: `Locked By`, JSON: `lockedBy`, NoReport: true},
 		{Name: "ReopenedBy", Alias: "rb", Kind: schema.BelongsTo, Local: []int32{18}, Remote: []int32{0}, Label: `Reopened By`, JSON: `reopenedBy`, NoReport: true},
 	},
-	PK:         []int32{0, 1, 2},
-	Tenant:     []int32{1, 2},
-	Select:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22},
-	Insert:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22},
-	Update:     []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 22},
-	Returning:  nil,
-	Version:    20,
-	AutoID:     0,
-	AutoCreate: 21,
-	AutoUpdate: 22,
-	IDPrefix:   "fp_",
-	New:        newFiscalPeriod,
-	NewN:       newNFiscalPeriod,
-	Size:       unsafe.Sizeof(fiscalperiod.FiscalPeriod{}),
-	Ptr:        ptrFiscalPeriod,
-	Value:      valueFiscalPeriod,
-	Attach:     attachFiscalPeriod,
+	PK:           []int32{0, 1, 2},
+	Tenant:       []int32{1, 2},
+	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22},
+	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22},
+	Update:       []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 22},
+	Returning:    nil,
+	Version:      20,
+	AutoID:       0,
+	AutoCreate:   21,
+	AutoUpdate:   22,
+	IDPrefix:     "fp_",
+	New:          newFiscalPeriod,
+	NewN:         newNFiscalPeriod,
+	Size:         unsafe.Sizeof(fiscalperiod.FiscalPeriod{}),
+	Ptr:          ptrFiscalPeriod,
+	Value:        valueFiscalPeriod,
+	Attach:       attachFiscalPeriod,
+	BeforeCreate: beforeCreateFiscalPeriod,
 }
 
 var fiscalPeriodsRef = keel.Ref{Table: &fiscalPeriodsTable}
@@ -352,6 +353,10 @@ func attachFiscalPeriod(p unsafe.Pointer, rel int32, child unsafe.Pointer) {
 	case 2:
 		r.ReopenedBy = (*tenant.User)(child)
 	}
+}
+
+func beforeCreateFiscalPeriod(ctx context.Context, p unsafe.Pointer) error {
+	return (*fiscalperiod.FiscalPeriod)(p).BeforeCreate(ctx)
 }
 
 func init() {

@@ -4,9 +4,10 @@ package customerpaymentservice
 import (
 	"context"
 	"fmt"
+	"strconv"
+
 	"github.com/emoss08/trenova/internal/modules/billing/domain/bankreceipt"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/bankreceiptports"
-	"strconv"
 
 	"github.com/emoss08/trenova/internal/modules/accounting/app/journalposting"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"

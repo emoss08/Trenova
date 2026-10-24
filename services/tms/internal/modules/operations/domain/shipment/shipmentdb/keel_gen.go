@@ -77,24 +77,23 @@ var additionalChargesTable = schema.Table{
 		{Name: "Shipment", Alias: "s", Kind: schema.BelongsTo, Local: []int32{3}, Remote: []int32{0}, Label: `Shipment`, JSON: `shipment`},
 		{Name: "AccessorialCharge", Alias: "ac", Kind: schema.BelongsTo, Local: []int32{4}, Remote: []int32{0}, Label: `Accessorial Charge`, JSON: `accessorialCharge`},
 	},
-	PK:           []int32{0, 1, 2, 3, 4},
-	Tenant:       []int32{1, 2},
-	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21},
-	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21},
-	Update:       []int32{5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 21},
-	Returning:    nil,
-	Version:      19,
-	AutoID:       0,
-	AutoCreate:   20,
-	AutoUpdate:   21,
-	IDPrefix:     "ac_",
-	New:          newAdditionalCharge,
-	NewN:         newNAdditionalCharge,
-	Size:         unsafe.Sizeof(shipment.AdditionalCharge{}),
-	Ptr:          ptrAdditionalCharge,
-	Value:        valueAdditionalCharge,
-	Attach:       attachAdditionalCharge,
-	BeforeCreate: beforeCreateAdditionalCharge,
+	PK:         []int32{0, 1, 2, 3, 4},
+	Tenant:     []int32{1, 2},
+	Select:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21},
+	Insert:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21},
+	Update:     []int32{5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 21},
+	Returning:  nil,
+	Version:    19,
+	AutoID:     0,
+	AutoCreate: 20,
+	AutoUpdate: 21,
+	IDPrefix:   "ac_",
+	New:        newAdditionalCharge,
+	NewN:       newNAdditionalCharge,
+	Size:       unsafe.Sizeof(shipment.AdditionalCharge{}),
+	Ptr:        ptrAdditionalCharge,
+	Value:      valueAdditionalCharge,
+	Attach:     attachAdditionalCharge,
 }
 
 var additionalChargesRef = keel.Ref{Table: &additionalChargesTable}
@@ -339,10 +338,6 @@ func attachAdditionalCharge(p unsafe.Pointer, rel int32, child unsafe.Pointer) {
 	case 1:
 		r.AccessorialCharge = (*accessorialcharge.AccessorialCharge)(child)
 	}
-}
-
-func beforeCreateAdditionalCharge(ctx context.Context, p unsafe.Pointer) error {
-	return (*shipment.AdditionalCharge)(p).BeforeCreate(ctx)
 }
 
 // assignmentsTable is the schema of shipment.Assignment.
@@ -1525,6 +1520,10 @@ var shipmentsTable = schema.Table{
 		{Name: "Comments", Alias: "c", Kind: schema.HasMany, Local: []int32{0}, Remote: []int32{3}, Label: `Comments`, JSON: `comments`, NoReport: true},
 		{Name: "OriginStop", Alias: "os", Kind: schema.Pick, Local: []int32{0}, Remote: nil, Label: `Origin Stop`, JSON: `originStop`, Path: []int32{10, 0}, Order: []schema.PickKey{{Hop: 0, Column: 7}, {Hop: 1, Column: 8}, {Hop: 1, Column: 0}}},
 		{Name: "DestinationStop", Alias: "ds", Kind: schema.Pick, Local: []int32{0}, Remote: nil, Label: `Destination Stop`, JSON: `destinationStop`, Path: []int32{10, 0}, Order: []schema.PickKey{{Hop: 0, Column: 7}, {Hop: 1, Column: 8}, {Hop: 1, Column: 0}}, Last: true},
+		{Name: "FirstPickup", Alias: "fp", Kind: schema.Pick, Local: []int32{0}, Remote: nil, Label: `First Pickup`, JSON: `shipperStop`, NoReport: true, Path: []int32{10, 0}, Order: []schema.PickKey{{Hop: 0, Column: 7}, {Hop: 1, Column: 8}, {Hop: 1, Column: 0}}, Filter: []schema.PickFilter{{Hop: 1, Column: 6, Values: []string{`Pickup`, `SplitPickup`}}}},
+		{Name: "LastDelivery", Alias: "ld", Kind: schema.Pick, Local: []int32{0}, Remote: nil, Label: `Last Delivery`, JSON: `consigneeStop`, NoReport: true, Path: []int32{10, 0}, Order: []schema.PickKey{{Hop: 0, Column: 7}, {Hop: 1, Column: 8}, {Hop: 1, Column: 0}}, Last: true, Filter: []schema.PickFilter{{Hop: 1, Column: 6, Values: []string{`Delivery`, `SplitDelivery`}}}},
+		{Name: "PickupAppointment", Alias: "pa", Kind: schema.Pick, Local: []int32{0}, Remote: nil, Label: `Pickup Appointment`, JSON: `pickupAppointment`, NoReport: true, Path: []int32{10, 0}, Order: []schema.PickKey{{Hop: 0, Column: 7}, {Hop: 1, Column: 8}, {Hop: 1, Column: 0}}, Filter: []schema.PickFilter{{Hop: 1, Column: 6, Values: []string{`Pickup`, `SplitPickup`}}, {Hop: 1, Column: 7, Values: []string{`Appointment`}}}},
+		{Name: "DeliveryAppointment", Alias: "da", Kind: schema.Pick, Local: []int32{0}, Remote: nil, Label: `Delivery Appointment`, JSON: `deliveryAppointment`, NoReport: true, Path: []int32{10, 0}, Order: []schema.PickKey{{Hop: 0, Column: 7}, {Hop: 1, Column: 8}, {Hop: 1, Column: 0}}, Last: true, Filter: []schema.PickFilter{{Hop: 1, Column: 6, Values: []string{`Delivery`, `SplitDelivery`}}, {Hop: 1, Column: 7, Values: []string{`Appointment`}}}},
 	},
 	PK:           []int32{0, 1, 2},
 	Tenant:       []int32{1, 2},
@@ -1838,6 +1837,18 @@ func (t *ShipmentsTable) OriginStop() *StopsTable { return keel.Path(t.Ref, 15, 
 
 // DestinationStop is the pick relation.
 func (t *ShipmentsTable) DestinationStop() *StopsTable { return keel.Path(t.Ref, 16, BuildStops) }
+
+// FirstPickup is the pick relation.
+func (t *ShipmentsTable) FirstPickup() *StopsTable { return keel.Path(t.Ref, 17, BuildStops) }
+
+// LastDelivery is the pick relation.
+func (t *ShipmentsTable) LastDelivery() *StopsTable { return keel.Path(t.Ref, 18, BuildStops) }
+
+// PickupAppointment is the pick relation.
+func (t *ShipmentsTable) PickupAppointment() *StopsTable { return keel.Path(t.Ref, 19, BuildStops) }
+
+// DeliveryAppointment is the pick relation.
+func (t *ShipmentsTable) DeliveryAppointment() *StopsTable { return keel.Path(t.Ref, 20, BuildStops) }
 
 // Get returns the shipments row with the given key, or keel.ErrNotFound.
 func (t *ShipmentsTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*shipment.Shipment, error) {
@@ -2269,6 +2280,14 @@ func attachShipment(p unsafe.Pointer, rel int32, child unsafe.Pointer) {
 		r.OriginStop = (*shipment.Stop)(child)
 	case 16:
 		r.DestinationStop = (*shipment.Stop)(child)
+	case 17:
+		r.FirstPickup = (*shipment.Stop)(child)
+	case 18:
+		r.LastDelivery = (*shipment.Stop)(child)
+	case 19:
+		r.PickupAppointment = (*shipment.Stop)(child)
+	case 20:
+		r.DeliveryAppointment = (*shipment.Stop)(child)
 	}
 }
 
@@ -2675,23 +2694,24 @@ var shipmentCommentAcknowledgmentsTable = schema.Table{
 	Relations: []schema.Relation{
 		{Name: "User", Alias: "u", Kind: schema.BelongsTo, Local: []int32{5}, Remote: []int32{0}, Label: `User`, JSON: `user`},
 	},
-	PK:         []int32{0},
-	Tenant:     []int32{2, 3},
-	Select:     []int32{0, 1, 2, 3, 4, 5, 6},
-	Insert:     []int32{0, 1, 2, 3, 4, 5, 6},
-	Update:     []int32{1, 4, 5, 6},
-	Returning:  nil,
-	Version:    -1,
-	AutoID:     0,
-	AutoCreate: -1,
-	AutoUpdate: -1,
-	IDPrefix:   "sck_",
-	New:        newShipmentCommentAcknowledgment,
-	NewN:       newNShipmentCommentAcknowledgment,
-	Size:       unsafe.Sizeof(shipment.ShipmentCommentAcknowledgment{}),
-	Ptr:        ptrShipmentCommentAcknowledgment,
-	Value:      valueShipmentCommentAcknowledgment,
-	Attach:     attachShipmentCommentAcknowledgment,
+	PK:           []int32{0},
+	Tenant:       []int32{2, 3},
+	Select:       []int32{0, 1, 2, 3, 4, 5, 6},
+	Insert:       []int32{0, 1, 2, 3, 4, 5, 6},
+	Update:       []int32{1, 4, 5, 6},
+	Returning:    nil,
+	Version:      -1,
+	AutoID:       0,
+	AutoCreate:   -1,
+	AutoUpdate:   -1,
+	IDPrefix:     "sck_",
+	New:          newShipmentCommentAcknowledgment,
+	NewN:         newNShipmentCommentAcknowledgment,
+	Size:         unsafe.Sizeof(shipment.ShipmentCommentAcknowledgment{}),
+	Ptr:          ptrShipmentCommentAcknowledgment,
+	Value:        valueShipmentCommentAcknowledgment,
+	Attach:       attachShipmentCommentAcknowledgment,
+	BeforeCreate: beforeCreateShipmentCommentAcknowledgment,
 }
 
 var shipmentCommentAcknowledgmentsRef = keel.Ref{Table: &shipmentCommentAcknowledgmentsTable}
@@ -2812,6 +2832,10 @@ func attachShipmentCommentAcknowledgment(p unsafe.Pointer, rel int32, child unsa
 	}
 }
 
+func beforeCreateShipmentCommentAcknowledgment(ctx context.Context, p unsafe.Pointer) error {
+	return (*shipment.ShipmentCommentAcknowledgment)(p).BeforeCreate(ctx)
+}
+
 // shipmentCommentMentionsTable is the schema of shipment.ShipmentCommentMention.
 var shipmentCommentMentionsTable = schema.Table{
 	Name:   "shipment_comment_mentions",
@@ -2832,24 +2856,23 @@ var shipmentCommentMentionsTable = schema.Table{
 	Relations: []schema.Relation{
 		{Name: "MentionedUser", Alias: "mu", Kind: schema.BelongsTo, Local: []int32{2}, Remote: []int32{0}, Label: `Mentioned User`, JSON: `mentionedUser`},
 	},
-	PK:           []int32{0},
-	Tenant:       []int32{3, 4},
-	Select:       []int32{0, 1, 2, 3, 4, 5, 6},
-	Insert:       []int32{0, 1, 2, 3, 4, 5, 6},
-	Update:       []int32{1, 2, 5},
-	Returning:    nil,
-	Version:      -1,
-	AutoID:       0,
-	AutoCreate:   6,
-	AutoUpdate:   -1,
-	IDPrefix:     "scm_",
-	New:          newShipmentCommentMention,
-	NewN:         newNShipmentCommentMention,
-	Size:         unsafe.Sizeof(shipment.ShipmentCommentMention{}),
-	Ptr:          ptrShipmentCommentMention,
-	Value:        valueShipmentCommentMention,
-	Attach:       attachShipmentCommentMention,
-	BeforeCreate: beforeCreateShipmentCommentMention,
+	PK:         []int32{0},
+	Tenant:     []int32{3, 4},
+	Select:     []int32{0, 1, 2, 3, 4, 5, 6},
+	Insert:     []int32{0, 1, 2, 3, 4, 5, 6},
+	Update:     []int32{1, 2, 5},
+	Returning:  nil,
+	Version:    -1,
+	AutoID:     0,
+	AutoCreate: 6,
+	AutoUpdate: -1,
+	IDPrefix:   "scm_",
+	New:        newShipmentCommentMention,
+	NewN:       newNShipmentCommentMention,
+	Size:       unsafe.Sizeof(shipment.ShipmentCommentMention{}),
+	Ptr:        ptrShipmentCommentMention,
+	Value:      valueShipmentCommentMention,
+	Attach:     attachShipmentCommentMention,
 }
 
 var shipmentCommentMentionsRef = keel.Ref{Table: &shipmentCommentMentionsTable}
@@ -2968,10 +2991,6 @@ func attachShipmentCommentMention(p unsafe.Pointer, rel int32, child unsafe.Poin
 	}
 }
 
-func beforeCreateShipmentCommentMention(ctx context.Context, p unsafe.Pointer) error {
-	return (*shipment.ShipmentCommentMention)(p).BeforeCreate(ctx)
-}
-
 // shipmentCommoditiesTable is the schema of shipment.ShipmentCommodity.
 var shipmentCommoditiesTable = schema.Table{
 	Name:   "shipment_commodities",
@@ -3001,24 +3020,23 @@ var shipmentCommoditiesTable = schema.Table{
 		{Name: "Shipment", Alias: "s", Kind: schema.BelongsTo, Local: []int32{3}, Remote: []int32{0}, Label: `Shipment`, JSON: `shipment`},
 		{Name: "Commodity", Alias: "c", Kind: schema.BelongsTo, Local: []int32{4}, Remote: []int32{0}, Label: `Commodity`, JSON: `commodity`},
 	},
-	PK:           []int32{0, 1, 2, 3, 4},
-	Tenant:       []int32{1, 2},
-	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12},
-	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12},
-	Update:       []int32{5, 6, 7, 8, 9, 12},
-	Returning:    nil,
-	Version:      10,
-	AutoID:       0,
-	AutoCreate:   11,
-	AutoUpdate:   12,
-	IDPrefix:     "sc_",
-	New:          newShipmentCommodity,
-	NewN:         newNShipmentCommodity,
-	Size:         unsafe.Sizeof(shipment.ShipmentCommodity{}),
-	Ptr:          ptrShipmentCommodity,
-	Value:        valueShipmentCommodity,
-	Attach:       attachShipmentCommodity,
-	BeforeCreate: beforeCreateShipmentCommodity,
+	PK:         []int32{0, 1, 2, 3, 4},
+	Tenant:     []int32{1, 2},
+	Select:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12},
+	Insert:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12},
+	Update:     []int32{5, 6, 7, 8, 9, 12},
+	Returning:  nil,
+	Version:    10,
+	AutoID:     0,
+	AutoCreate: 11,
+	AutoUpdate: 12,
+	IDPrefix:   "sc_",
+	New:        newShipmentCommodity,
+	NewN:       newNShipmentCommodity,
+	Size:       unsafe.Sizeof(shipment.ShipmentCommodity{}),
+	Ptr:        ptrShipmentCommodity,
+	Value:      valueShipmentCommodity,
+	Attach:     attachShipmentCommodity,
 }
 
 var shipmentCommoditiesRef = keel.Ref{Table: &shipmentCommoditiesTable}
@@ -3191,10 +3209,6 @@ func attachShipmentCommodity(p unsafe.Pointer, rel int32, child unsafe.Pointer) 
 	case 1:
 		r.Commodity = (*commodity.Commodity)(child)
 	}
-}
-
-func beforeCreateShipmentCommodity(ctx context.Context, p unsafe.Pointer) error {
-	return (*shipment.ShipmentCommodity)(p).BeforeCreate(ctx)
 }
 
 // shipmentHoldsTable is the schema of shipment.ShipmentHold.
@@ -4432,6 +4446,10 @@ func init() {
 	shipmentsTable.Relations[14].Target = ShipmentCommentsSchema()
 	shipmentsTable.Relations[15].Target = StopsSchema()
 	shipmentsTable.Relations[16].Target = StopsSchema()
+	shipmentsTable.Relations[17].Target = StopsSchema()
+	shipmentsTable.Relations[18].Target = StopsSchema()
+	shipmentsTable.Relations[19].Target = StopsSchema()
+	shipmentsTable.Relations[20].Target = StopsSchema()
 	shipmentCommentsTable.Relations[0].Target = tenantdb.UsersSchema()
 	shipmentCommentsTable.Relations[1].Target = tenantdb.UsersSchema()
 	shipmentCommentsTable.Relations[2].Target = tenantdb.UsersSchema()

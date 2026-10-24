@@ -572,7 +572,6 @@ func (r *WorkerTrainingRecord) BeforeCreate(_ context.Context) error {
 	if r.AssignedAt == 0 {
 		r.AssignedAt = now
 	}
-	now := timeutils.NowUnix()
 
 	return nil
 }

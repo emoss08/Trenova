@@ -92,6 +92,7 @@ var customersTable = schema.Table{
 	Value:        valueCustomer,
 	Attach:       attachCustomer,
 	BeforeCreate: beforeCreateCustomer,
+	BeforeUpdate: beforeUpdateCustomer,
 	BeforeSave:   beforeSaveCustomer,
 }
 
@@ -444,6 +445,10 @@ func beforeCreateCustomer(ctx context.Context, p unsafe.Pointer) error {
 	return (*customer.Customer)(p).BeforeCreate(ctx)
 }
 
+func beforeUpdateCustomer(ctx context.Context, p unsafe.Pointer) error {
+	return (*customer.Customer)(p).BeforeUpdate(ctx)
+}
+
 func beforeSaveCustomer(ctx context.Context, p unsafe.Pointer) error {
 	return (*customer.Customer)(p).BeforeSave(ctx)
 }
@@ -544,6 +549,7 @@ var customerBillingProfilesTable = schema.Table{
 	Value:        valueCustomerBillingProfile,
 	Attach:       attachCustomerBillingProfile,
 	BeforeCreate: beforeCreateCustomerBillingProfile,
+	BeforeUpdate: beforeUpdateCustomerBillingProfile,
 	BeforeSave:   beforeSaveCustomerBillingProfile,
 }
 
@@ -1110,6 +1116,10 @@ func attachCustomerBillingProfile(p unsafe.Pointer, rel int32, child unsafe.Poin
 
 func beforeCreateCustomerBillingProfile(ctx context.Context, p unsafe.Pointer) error {
 	return (*customer.CustomerBillingProfile)(p).BeforeCreate(ctx)
+}
+
+func beforeUpdateCustomerBillingProfile(ctx context.Context, p unsafe.Pointer) error {
+	return (*customer.CustomerBillingProfile)(p).BeforeUpdate(ctx)
 }
 
 func beforeSaveCustomerBillingProfile(ctx context.Context, p unsafe.Pointer) error {

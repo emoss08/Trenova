@@ -125,8 +125,8 @@ func (a *WorkerPayAssignment) GetBusinessUnitID() pulid.ID { return a.BusinessUn
 func (a *WorkerPayAssignment) GetTableName() string { return "worker_pay_assignments" }
 
 func (a *WorkerPayAssignment) BeforeCreate(ctx context.Context) error {
-	if a.SplitPercent == 0 {
-		a.SplitPercent = 100
+	if a.SplitPercent.IsZero() {
+		a.SplitPercent = decimal.RequireFromString("100")
 	}
 
 	return nil

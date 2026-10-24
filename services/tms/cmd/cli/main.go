@@ -20,7 +20,6 @@ import (
 	"github.com/emoss08/trenova/cmd/cli/redis"
 	"github.com/emoss08/trenova/cmd/cli/update"
 	"github.com/emoss08/trenova/cmd/cli/worker"
-	"github.com/emoss08/trenova/pkg/dbtype"
 	"github.com/emoss08/trenova/pkg/domainregistry"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 

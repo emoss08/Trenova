@@ -1,7 +1,6 @@
 package fuelpurchaseservice_test
 
 import (
-	"github.com/emoss08/trenova/internal/testutil/pagetest"
 	"bytes"
 	"context"
 	"io"
@@ -9,6 +8,8 @@ import (
 	"strings"
 	"sync"
 	"testing"
+
+	"github.com/emoss08/trenova/internal/testutil/pagetest"
 
 	"github.com/emoss08/trenova/internal/testutil/mocks/auditportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/tractorportsmock"

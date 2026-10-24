@@ -3,7 +3,6 @@
 package glbalancedb
 
 import (
-	"context"
 	"unsafe"
 
 	"github.com/emoss08/keel"
@@ -49,24 +48,23 @@ var gLAccountPeriodBalancesTable = schema.Table{
 		{Name: "FiscalPeriod", Alias: "fp", Kind: schema.BelongsTo, Local: []int32{4}, Remote: []int32{0}, Label: `Fiscal Period`, JSON: `fiscalPeriod`},
 		{Name: "LastJournalEntry", Alias: "lje", Kind: schema.BelongsTo, Local: []int32{8}, Remote: []int32{0}, Label: `Last Journal Entry`, JSON: `lastJournalEntry`},
 	},
-	PK:           []int32{0, 1, 2, 3, 4},
-	Tenant:       []int32{0, 1},
-	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10},
-	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10},
-	Update:       []int32{5, 6, 7, 8, 10},
-	Returning:    nil,
-	Version:      -1,
-	AutoID:       -1,
-	AutoCreate:   9,
-	AutoUpdate:   10,
-	IDPrefix:     "",
-	New:          newGLAccountPeriodBalance,
-	NewN:         newNGLAccountPeriodBalance,
-	Size:         unsafe.Sizeof(glbalance.GLAccountPeriodBalance{}),
-	Ptr:          ptrGLAccountPeriodBalance,
-	Value:        valueGLAccountPeriodBalance,
-	Attach:       attachGLAccountPeriodBalance,
-	BeforeCreate: beforeCreateGLAccountPeriodBalance,
+	PK:         []int32{0, 1, 2, 3, 4},
+	Tenant:     []int32{0, 1},
+	Select:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10},
+	Insert:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10},
+	Update:     []int32{5, 6, 7, 8, 10},
+	Returning:  nil,
+	Version:    -1,
+	AutoID:     -1,
+	AutoCreate: 9,
+	AutoUpdate: 10,
+	IDPrefix:   "",
+	New:        newGLAccountPeriodBalance,
+	NewN:       newNGLAccountPeriodBalance,
+	Size:       unsafe.Sizeof(glbalance.GLAccountPeriodBalance{}),
+	Ptr:        ptrGLAccountPeriodBalance,
+	Value:      valueGLAccountPeriodBalance,
+	Attach:     attachGLAccountPeriodBalance,
 }
 
 var gLAccountPeriodBalancesRef = keel.Ref{Table: &gLAccountPeriodBalancesTable}
@@ -230,10 +228,6 @@ func attachGLAccountPeriodBalance(p unsafe.Pointer, rel int32, child unsafe.Poin
 	case 3:
 		r.LastJournalEntry = (*journalentry.JournalEntry)(child)
 	}
-}
-
-func beforeCreateGLAccountPeriodBalance(ctx context.Context, p unsafe.Pointer) error {
-	return (*glbalance.GLAccountPeriodBalance)(p).BeforeCreate(ctx)
 }
 
 func init() {

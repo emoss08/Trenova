@@ -4,8 +4,9 @@ package agentread_test
 
 import (
 	"fmt"
-	"github.com/emoss08/keel"
 	"testing"
+
+	"github.com/emoss08/keel"
 
 	"github.com/emoss08/trenova/internal/api/graphql/agentread"
 	"github.com/emoss08/trenova/internal/api/graphql/agentread/agentreadtest"

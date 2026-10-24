@@ -36,19 +36,19 @@ var projectionsTable = schema.Table{
 		{Name: "detected_kind", Quoted: `"detected_kind"`, Field: "DetectedKind", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Detected Kind`, JSON: `detectedKind`},
 		{Name: "shipment_draft_status", Quoted: `"shipment_draft_status"`, Field: "ShipmentDraftStatus", Kind: schema.KindString, Flags: 0, Label: `Shipment Draft Status`, JSON: `shipmentDraftStatus`},
 		{Name: "content_text", Quoted: `"content_text"`, Field: "ContentText", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Content Text`, JSON: `contentText`},
-		{Name: "created_at", Quoted: `"created_at"`, Field: "CreatedAt", Kind: schema.KindInt64, Flags: 0, Label: `Created At`, JSON: `createdAt`},
-		{Name: "updated_at", Quoted: `"updated_at"`, Field: "UpdatedAt", Kind: schema.KindInt64, Flags: 0, Label: `Updated At`, JSON: `updatedAt`},
+		{Name: "created_at", Quoted: `"created_at"`, Field: "CreatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoCreate, Label: `Created At`, JSON: `createdAt`},
+		{Name: "updated_at", Quoted: `"updated_at"`, Field: "UpdatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoUpdate, Label: `Updated At`, JSON: `updatedAt`},
 	},
 	PK:           []int32{0, 1, 2},
 	Tenant:       []int32{1, 2},
 	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15},
 	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15},
-	Update:       []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15},
+	Update:       []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 15},
 	Returning:    nil,
 	Version:      -1,
 	AutoID:       -1,
-	AutoCreate:   -1,
-	AutoUpdate:   -1,
+	AutoCreate:   14,
+	AutoUpdate:   15,
 	IDPrefix:     "",
 	New:          newProjection,
 	NewN:         newNProjection,
@@ -56,6 +56,7 @@ var projectionsTable = schema.Table{
 	Ptr:          ptrProjection,
 	Value:        valueProjection,
 	BeforeCreate: beforeCreateProjection,
+	BeforeUpdate: beforeUpdateProjection,
 	BeforeSave:   beforeSaveProjection,
 }
 
@@ -237,6 +238,10 @@ func valueProjection(p unsafe.Pointer, c int32) any {
 
 func beforeCreateProjection(ctx context.Context, p unsafe.Pointer) error {
 	return (*documentsearchprojection.Projection)(p).BeforeCreate(ctx)
+}
+
+func beforeUpdateProjection(ctx context.Context, p unsafe.Pointer) error {
+	return (*documentsearchprojection.Projection)(p).BeforeUpdate(ctx)
 }
 
 func beforeSaveProjection(ctx context.Context, p unsafe.Pointer) error {

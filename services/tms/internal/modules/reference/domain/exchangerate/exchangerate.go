@@ -2,8 +2,9 @@ package exchangerate
 
 import (
 	"context"
-	"github.com/emoss08/trenova/shared/timeutils"
 	"time"
+
+	"github.com/emoss08/trenova/shared/timeutils"
 
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"

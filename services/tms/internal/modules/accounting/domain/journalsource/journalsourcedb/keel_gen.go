@@ -43,24 +43,23 @@ var sourcesTable = schema.Table{
 		{Name: "JournalBatch", Alias: "jb", Kind: schema.BelongsTo, Local: []int32{9}, Remote: []int32{0}, Label: `Journal Batch`, JSON: `journalBatch`},
 		{Name: "JournalEntry", Alias: "je", Kind: schema.BelongsTo, Local: []int32{10}, Remote: []int32{0}, Label: `Journal Entry`, JSON: `journalEntry`},
 	},
-	PK:           []int32{0, 1, 2},
-	Tenant:       []int32{1, 2},
-	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11},
-	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11},
-	Update:       []int32{3, 4, 5, 6, 7, 8, 9, 10},
-	Returning:    nil,
-	Version:      -1,
-	AutoID:       0,
-	AutoCreate:   11,
-	AutoUpdate:   -1,
-	IDPrefix:     "jsrc_",
-	New:          newSource,
-	NewN:         newNSource,
-	Size:         unsafe.Sizeof(journalsource.Source{}),
-	Ptr:          ptrSource,
-	Value:        valueSource,
-	Attach:       attachSource,
-	BeforeCreate: beforeCreateSource,
+	PK:         []int32{0, 1, 2},
+	Tenant:     []int32{1, 2},
+	Select:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11},
+	Insert:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11},
+	Update:     []int32{3, 4, 5, 6, 7, 8, 9, 10},
+	Returning:  nil,
+	Version:    -1,
+	AutoID:     0,
+	AutoCreate: 11,
+	AutoUpdate: -1,
+	IDPrefix:   "jsrc_",
+	New:        newSource,
+	NewN:       newNSource,
+	Size:       unsafe.Sizeof(journalsource.Source{}),
+	Ptr:        ptrSource,
+	Value:      valueSource,
+	Attach:     attachSource,
 }
 
 var sourcesRef = keel.Ref{Table: &sourcesTable}
@@ -221,10 +220,6 @@ func attachSource(p unsafe.Pointer, rel int32, child unsafe.Pointer) {
 	case 1:
 		r.JournalEntry = (*journalentry.JournalEntry)(child)
 	}
-}
-
-func beforeCreateSource(ctx context.Context, p unsafe.Pointer) error {
-	return (*journalsource.Source)(p).BeforeCreate(ctx)
 }
 
 // sourceJournalLinksTable is the schema of journalsource.SourceJournalLink.

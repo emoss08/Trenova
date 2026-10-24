@@ -37,22 +37,23 @@ var feedStatesTable = schema.Table{
 		{Name: "failure_count", Quoted: `"failure_count"`, Field: "FailureCount", Kind: schema.KindInt64, Flags: 0, Label: `Failure Count`, JSON: `failureCount`},
 		{Name: "last_error", Quoted: `"last_error"`, Field: "LastError", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Last Error`, JSON: `lastError`},
 	},
-	PK:         []int32{0, 1, 2, 3},
-	Tenant:     []int32{0, 1},
-	Select:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8},
-	Insert:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8},
-	Update:     []int32{4, 5, 6, 7, 8},
-	Returning:  nil,
-	Version:    -1,
-	AutoID:     -1,
-	AutoCreate: -1,
-	AutoUpdate: -1,
-	IDPrefix:   "",
-	New:        newFeedState,
-	NewN:       newNFeedState,
-	Size:       unsafe.Sizeof(telematics.FeedState{}),
-	Ptr:        ptrFeedState,
-	Value:      valueFeedState,
+	PK:           []int32{0, 1, 2, 3},
+	Tenant:       []int32{0, 1},
+	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8},
+	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8},
+	Update:       []int32{4, 5, 6, 7, 8},
+	Returning:    nil,
+	Version:      -1,
+	AutoID:       -1,
+	AutoCreate:   -1,
+	AutoUpdate:   -1,
+	IDPrefix:     "",
+	New:          newFeedState,
+	NewN:         newNFeedState,
+	Size:         unsafe.Sizeof(telematics.FeedState{}),
+	Ptr:          ptrFeedState,
+	Value:        valueFeedState,
+	BeforeCreate: beforeCreateFeedState,
 }
 
 var feedStatesRef = keel.Ref{Table: &feedStatesTable}
@@ -177,6 +178,10 @@ func valueFeedState(p unsafe.Pointer, c int32) any {
 	return nil
 }
 
+func beforeCreateFeedState(ctx context.Context, p unsafe.Pointer) error {
+	return (*telematics.FeedState)(p).BeforeCreate(ctx)
+}
+
 // formMappingsTable is the schema of telematics.FormMapping.
 var formMappingsTable = schema.Table{
 	Name:   "telematics_form_mappings",
@@ -196,29 +201,30 @@ var formMappingsTable = schema.Table{
 		{Name: "description", Quoted: `"description"`, Field: "Description", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Description`, JSON: `description`},
 		{Name: "enabled", Quoted: `"enabled"`, Field: "Enabled", Kind: schema.KindBool, Flags: 0, Label: `Enabled`, JSON: `enabled`},
 		{Name: "version", Quoted: `"version"`, Field: "Version", Kind: schema.KindInt64, Flags: schema.FlagVersion, Label: `Version`, JSON: `version`},
-		{Name: "created_at", Quoted: `"created_at"`, Field: "CreatedAt", Kind: schema.KindInt64, Flags: 0, Label: `Created At`, JSON: `createdAt`},
+		{Name: "created_at", Quoted: `"created_at"`, Field: "CreatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoCreate, Label: `Created At`, JSON: `createdAt`},
 		{Name: "updated_at", Quoted: `"updated_at"`, Field: "UpdatedAt", Kind: schema.KindInt64, Flags: 0, Label: `Updated At`, JSON: `updatedAt`},
 	},
 	Relations: []schema.Relation{
 		{Name: "Items", Alias: "i", Kind: schema.HasMany, Local: []int32{0}, Remote: []int32{3}, Label: `Items`, JSON: `items`},
 	},
-	PK:         []int32{0, 1, 2},
-	Tenant:     []int32{1, 2},
-	Select:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11},
-	Insert:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11},
-	Update:     []int32{3, 4, 5, 6, 7, 8, 10, 11},
-	Returning:  nil,
-	Version:    9,
-	AutoID:     -1,
-	AutoCreate: -1,
-	AutoUpdate: -1,
-	IDPrefix:   "",
-	New:        newFormMapping,
-	NewN:       newNFormMapping,
-	Size:       unsafe.Sizeof(telematics.FormMapping{}),
-	Ptr:        ptrFormMapping,
-	Value:      valueFormMapping,
-	Attach:     attachFormMapping,
+	PK:           []int32{0, 1, 2},
+	Tenant:       []int32{1, 2},
+	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11},
+	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11},
+	Update:       []int32{3, 4, 5, 6, 7, 8, 11},
+	Returning:    nil,
+	Version:      9,
+	AutoID:       -1,
+	AutoCreate:   10,
+	AutoUpdate:   -1,
+	IDPrefix:     "",
+	New:          newFormMapping,
+	NewN:         newNFormMapping,
+	Size:         unsafe.Sizeof(telematics.FormMapping{}),
+	Ptr:          ptrFormMapping,
+	Value:        valueFormMapping,
+	Attach:       attachFormMapping,
+	BeforeCreate: beforeCreateFormMapping,
 }
 
 var formMappingsRef = keel.Ref{Table: &formMappingsTable}
@@ -376,6 +382,10 @@ func attachFormMapping(p unsafe.Pointer, rel int32, child unsafe.Pointer) {
 	}
 }
 
+func beforeCreateFormMapping(ctx context.Context, p unsafe.Pointer) error {
+	return (*telematics.FormMapping)(p).BeforeCreate(ctx)
+}
+
 // formMappingItemsTable is the schema of telematics.FormMappingItem.
 var formMappingItemsTable = schema.Table{
 	Name:   "telematics_form_mapping_items",
@@ -393,17 +403,17 @@ var formMappingItemsTable = schema.Table{
 		{Name: "target_kind", Quoted: `"target_kind"`, Field: "TargetKind", Kind: schema.KindString, Flags: 0, Label: `Target Kind`, JSON: `targetKind`, Enum: enumFormMappingTargetKind[:]},
 		{Name: "target_field", Quoted: `"target_field"`, Field: "TargetField", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Target Field`, JSON: `targetField`},
 		{Name: "target_custom_field_key", Quoted: `"target_custom_field_key"`, Field: "TargetCustomFieldKey", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Target Custom Field Key`, JSON: `targetCustomFieldKey`},
-		{Name: "created_at", Quoted: `"created_at"`, Field: "CreatedAt", Kind: schema.KindInt64, Flags: 0, Label: `Created At`, JSON: `createdAt`},
+		{Name: "created_at", Quoted: `"created_at"`, Field: "CreatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoCreate, Label: `Created At`, JSON: `createdAt`},
 	},
 	PK:         []int32{0, 1, 2},
 	Tenant:     []int32{1, 2},
 	Select:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8},
 	Insert:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8},
-	Update:     []int32{3, 4, 5, 6, 7, 8},
+	Update:     []int32{3, 4, 5, 6, 7},
 	Returning:  nil,
 	Version:    -1,
 	AutoID:     -1,
-	AutoCreate: -1,
+	AutoCreate: 8,
 	AutoUpdate: -1,
 	IDPrefix:   "",
 	New:        newFormMappingItem,
@@ -561,22 +571,23 @@ var formSubmissionsTable = schema.Table{
 		{Name: "applied_at", Quoted: `"applied_at"`, Field: "AppliedAt", Kind: schema.KindInt64, Flags: schema.FlagNullable, Label: `Applied At`, JSON: `appliedAt`},
 		{Name: "created_at", Quoted: `"created_at"`, Field: "CreatedAt", Kind: schema.KindInt64, Flags: 0, Label: `Created At`, JSON: `createdAt`},
 	},
-	PK:         []int32{0, 1, 2},
-	Tenant:     []int32{1, 2},
-	Select:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16},
-	Insert:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16},
-	Update:     []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16},
-	Returning:  nil,
-	Version:    -1,
-	AutoID:     -1,
-	AutoCreate: -1,
-	AutoUpdate: -1,
-	IDPrefix:   "",
-	New:        newFormSubmission,
-	NewN:       newNFormSubmission,
-	Size:       unsafe.Sizeof(telematics.FormSubmission{}),
-	Ptr:        ptrFormSubmission,
-	Value:      valueFormSubmission,
+	PK:           []int32{0, 1, 2},
+	Tenant:       []int32{1, 2},
+	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16},
+	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16},
+	Update:       []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16},
+	Returning:    nil,
+	Version:      -1,
+	AutoID:       -1,
+	AutoCreate:   -1,
+	AutoUpdate:   -1,
+	IDPrefix:     "",
+	New:          newFormSubmission,
+	NewN:         newNFormSubmission,
+	Size:         unsafe.Sizeof(telematics.FormSubmission{}),
+	Ptr:          ptrFormSubmission,
+	Value:        valueFormSubmission,
+	BeforeCreate: beforeCreateFormSubmission,
 }
 
 var formSubmissionsRef = keel.Ref{Table: &formSubmissionsTable}
@@ -771,6 +782,10 @@ func valueFormSubmission(p unsafe.Pointer, c int32) any {
 	return nil
 }
 
+func beforeCreateFormSubmission(ctx context.Context, p unsafe.Pointer) error {
+	return (*telematics.FormSubmission)(p).BeforeCreate(ctx)
+}
+
 // telematicsEventsTable is the schema of telematics.TelematicsEvent.
 var telematicsEventsTable = schema.Table{
 	Name:   "telematics_events",
@@ -800,22 +815,23 @@ var telematicsEventsTable = schema.Table{
 		{Name: "stop_outcome_reason", Quoted: `"stop_outcome_reason"`, Field: "StopOutcomeReason", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Stop Outcome Reason`, JSON: `stopOutcomeReason`},
 		{Name: "move_shipment_id", Quoted: `"move_shipment_id"`, Field: "MoveShipmentID", Kind: schema.KindString, Flags: schema.FlagNullZero | schema.FlagComputed, Label: `Move Shipment ID`},
 	},
-	PK:         []int32{0, 1, 2},
-	Tenant:     []int32{1, 2},
-	Select:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17},
-	Insert:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17},
-	Update:     []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17},
-	Returning:  nil,
-	Version:    -1,
-	AutoID:     -1,
-	AutoCreate: -1,
-	AutoUpdate: -1,
-	IDPrefix:   "",
-	New:        newTelematicsEvent,
-	NewN:       newNTelematicsEvent,
-	Size:       unsafe.Sizeof(telematics.TelematicsEvent{}),
-	Ptr:        ptrTelematicsEvent,
-	Value:      valueTelematicsEvent,
+	PK:           []int32{0, 1, 2},
+	Tenant:       []int32{1, 2},
+	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17},
+	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17},
+	Update:       []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17},
+	Returning:    nil,
+	Version:      -1,
+	AutoID:       -1,
+	AutoCreate:   -1,
+	AutoUpdate:   -1,
+	IDPrefix:     "",
+	New:          newTelematicsEvent,
+	NewN:         newNTelematicsEvent,
+	Size:         unsafe.Sizeof(telematics.TelematicsEvent{}),
+	Ptr:          ptrTelematicsEvent,
+	Value:        valueTelematicsEvent,
+	BeforeCreate: beforeCreateTelematicsEvent,
 }
 
 var telematicsEventsRef = keel.Ref{Table: &telematicsEventsTable}
@@ -1036,6 +1052,10 @@ func valueTelematicsEvent(p unsafe.Pointer, c int32) any {
 	return nil
 }
 
+func beforeCreateTelematicsEvent(ctx context.Context, p unsafe.Pointer) error {
+	return (*telematics.TelematicsEvent)(p).BeforeCreate(ctx)
+}
+
 // vehicleInspectionsTable is the schema of telematics.VehicleInspection.
 var vehicleInspectionsTable = schema.Table{
 	Name:   "vehicle_inspections",
@@ -1064,22 +1084,23 @@ var vehicleInspectionsTable = schema.Table{
 		{Name: "defects", Quoted: `"defects"`, Field: "Defects", Kind: schema.KindJSON, Flags: schema.FlagJSONB | schema.FlagNullZero, Label: `Defects`, JSON: `defects`},
 		{Name: "created_at", Quoted: `"created_at"`, Field: "CreatedAt", Kind: schema.KindInt64, Flags: 0, Label: `Created At`, JSON: `createdAt`},
 	},
-	PK:         []int32{0, 1, 2},
-	Tenant:     []int32{1, 2},
-	Select:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17},
-	Insert:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17},
-	Update:     []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17},
-	Returning:  nil,
-	Version:    -1,
-	AutoID:     -1,
-	AutoCreate: -1,
-	AutoUpdate: -1,
-	IDPrefix:   "",
-	New:        newVehicleInspection,
-	NewN:       newNVehicleInspection,
-	Size:       unsafe.Sizeof(telematics.VehicleInspection{}),
-	Ptr:        ptrVehicleInspection,
-	Value:      valueVehicleInspection,
+	PK:           []int32{0, 1, 2},
+	Tenant:       []int32{1, 2},
+	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17},
+	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17},
+	Update:       []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17},
+	Returning:    nil,
+	Version:      -1,
+	AutoID:       -1,
+	AutoCreate:   -1,
+	AutoUpdate:   -1,
+	IDPrefix:     "",
+	New:          newVehicleInspection,
+	NewN:         newNVehicleInspection,
+	Size:         unsafe.Sizeof(telematics.VehicleInspection{}),
+	Ptr:          ptrVehicleInspection,
+	Value:        valueVehicleInspection,
+	BeforeCreate: beforeCreateVehicleInspection,
 }
 
 var vehicleInspectionsRef = keel.Ref{Table: &vehicleInspectionsTable}
@@ -1275,6 +1296,10 @@ func valueVehicleInspection(p unsafe.Pointer, c int32) any {
 	return nil
 }
 
+func beforeCreateVehicleInspection(ctx context.Context, p unsafe.Pointer) error {
+	return (*telematics.VehicleInspection)(p).BeforeCreate(ctx)
+}
+
 // vehiclePositionsTable is the schema of telematics.VehiclePosition.
 var vehiclePositionsTable = schema.Table{
 	Name:   "telematics_vehicle_positions",
@@ -1303,23 +1328,24 @@ var vehiclePositionsTable = schema.Table{
 	Relations: []schema.Relation{
 		{Name: "Tractor", Alias: "t", Kind: schema.BelongsTo, Local: []int32{2}, Remote: []int32{0}, Label: `Tractor`, JSON: `tractor`},
 	},
-	PK:         []int32{0, 1, 2},
-	Tenant:     []int32{0, 1},
-	Select:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14},
-	Insert:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14},
-	Update:     []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14},
-	Returning:  nil,
-	Version:    -1,
-	AutoID:     -1,
-	AutoCreate: -1,
-	AutoUpdate: -1,
-	IDPrefix:   "",
-	New:        newVehiclePosition,
-	NewN:       newNVehiclePosition,
-	Size:       unsafe.Sizeof(telematics.VehiclePosition{}),
-	Ptr:        ptrVehiclePosition,
-	Value:      valueVehiclePosition,
-	Attach:     attachVehiclePosition,
+	PK:           []int32{0, 1, 2},
+	Tenant:       []int32{0, 1},
+	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14},
+	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14},
+	Update:       []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14},
+	Returning:    nil,
+	Version:      -1,
+	AutoID:       -1,
+	AutoCreate:   -1,
+	AutoUpdate:   -1,
+	IDPrefix:     "",
+	New:          newVehiclePosition,
+	NewN:         newNVehiclePosition,
+	Size:         unsafe.Sizeof(telematics.VehiclePosition{}),
+	Ptr:          ptrVehiclePosition,
+	Value:        valueVehiclePosition,
+	Attach:       attachVehiclePosition,
+	BeforeCreate: beforeCreateVehiclePosition,
 }
 
 var vehiclePositionsRef = keel.Ref{Table: &vehiclePositionsTable}
@@ -1504,6 +1530,10 @@ func attachVehiclePosition(p unsafe.Pointer, rel int32, child unsafe.Pointer) {
 	}
 }
 
+func beforeCreateVehiclePosition(ctx context.Context, p unsafe.Pointer) error {
+	return (*telematics.VehiclePosition)(p).BeforeCreate(ctx)
+}
+
 // workerHOSLogsTable is the schema of telematics.WorkerHOSLog.
 var workerHOSLogsTable = schema.Table{
 	Name:   "worker_hos_logs",
@@ -1527,23 +1557,24 @@ var workerHOSLogsTable = schema.Table{
 	Relations: []schema.Relation{
 		{Name: "Worker", Alias: "w", Kind: schema.BelongsTo, Local: []int32{2}, Remote: []int32{0}, Label: `Worker`, JSON: `worker`},
 	},
-	PK:         []int32{0, 1, 2, 3},
-	Tenant:     []int32{0, 1},
-	Select:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9},
-	Insert:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9},
-	Update:     []int32{4, 5, 6, 7, 8, 9},
-	Returning:  nil,
-	Version:    -1,
-	AutoID:     -1,
-	AutoCreate: -1,
-	AutoUpdate: -1,
-	IDPrefix:   "",
-	New:        newWorkerHOSLog,
-	NewN:       newNWorkerHOSLog,
-	Size:       unsafe.Sizeof(telematics.WorkerHOSLog{}),
-	Ptr:        ptrWorkerHOSLog,
-	Value:      valueWorkerHOSLog,
-	Attach:     attachWorkerHOSLog,
+	PK:           []int32{0, 1, 2, 3},
+	Tenant:       []int32{0, 1},
+	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9},
+	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9},
+	Update:       []int32{4, 5, 6, 7, 8, 9},
+	Returning:    nil,
+	Version:      -1,
+	AutoID:       -1,
+	AutoCreate:   -1,
+	AutoUpdate:   -1,
+	IDPrefix:     "",
+	New:          newWorkerHOSLog,
+	NewN:         newNWorkerHOSLog,
+	Size:         unsafe.Sizeof(telematics.WorkerHOSLog{}),
+	Ptr:          ptrWorkerHOSLog,
+	Value:        valueWorkerHOSLog,
+	Attach:       attachWorkerHOSLog,
+	BeforeCreate: beforeCreateWorkerHOSLog,
 }
 
 var workerHOSLogsRef = keel.Ref{Table: &workerHOSLogsTable}
@@ -1685,6 +1716,10 @@ func attachWorkerHOSLog(p unsafe.Pointer, rel int32, child unsafe.Pointer) {
 	}
 }
 
+func beforeCreateWorkerHOSLog(ctx context.Context, p unsafe.Pointer) error {
+	return (*telematics.WorkerHOSLog)(p).BeforeCreate(ctx)
+}
+
 // workerHOSStatesTable is the schema of telematics.WorkerHOSState.
 var workerHOSStatesTable = schema.Table{
 	Name:   "worker_hos_states",
@@ -1721,23 +1756,24 @@ var workerHOSStatesTable = schema.Table{
 	Relations: []schema.Relation{
 		{Name: "Worker", Alias: "w", Kind: schema.BelongsTo, Local: []int32{2}, Remote: []int32{0}, Label: `Worker`, JSON: `worker`},
 	},
-	PK:         []int32{0, 1, 2},
-	Tenant:     []int32{0, 1},
-	Select:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22},
-	Insert:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22},
-	Update:     []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22},
-	Returning:  nil,
-	Version:    -1,
-	AutoID:     -1,
-	AutoCreate: -1,
-	AutoUpdate: -1,
-	IDPrefix:   "",
-	New:        newWorkerHOSState,
-	NewN:       newNWorkerHOSState,
-	Size:       unsafe.Sizeof(telematics.WorkerHOSState{}),
-	Ptr:        ptrWorkerHOSState,
-	Value:      valueWorkerHOSState,
-	Attach:     attachWorkerHOSState,
+	PK:           []int32{0, 1, 2},
+	Tenant:       []int32{0, 1},
+	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22},
+	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22},
+	Update:       []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22},
+	Returning:    nil,
+	Version:      -1,
+	AutoID:       -1,
+	AutoCreate:   -1,
+	AutoUpdate:   -1,
+	IDPrefix:     "",
+	New:          newWorkerHOSState,
+	NewN:         newNWorkerHOSState,
+	Size:         unsafe.Sizeof(telematics.WorkerHOSState{}),
+	Ptr:          ptrWorkerHOSState,
+	Value:        valueWorkerHOSState,
+	Attach:       attachWorkerHOSState,
+	BeforeCreate: beforeCreateWorkerHOSState,
 }
 
 var workerHOSStatesRef = keel.Ref{Table: &workerHOSStatesTable}
@@ -1991,6 +2027,10 @@ func attachWorkerHOSState(p unsafe.Pointer, rel int32, child unsafe.Pointer) {
 	case 0:
 		r.Worker = (*worker.Worker)(child)
 	}
+}
+
+func beforeCreateWorkerHOSState(ctx context.Context, p unsafe.Pointer) error {
+	return (*telematics.WorkerHOSState)(p).BeforeCreate(ctx)
 }
 
 // workerHOSViolationsTable is the schema of telematics.WorkerHOSViolation.

@@ -80,4 +80,3 @@ func TestLineValidateAcceptsSingleSidedAmount(t *testing.T) {
 
 	require.False(t, multiErr.HasErrors())
 }
-

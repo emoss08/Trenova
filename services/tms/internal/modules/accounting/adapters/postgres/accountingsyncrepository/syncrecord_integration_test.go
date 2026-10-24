@@ -5,10 +5,11 @@ package accountingsyncrepository
 import (
 	"context"
 	"errors"
-	"github.com/emoss08/keel"
 	"sync"
 	"testing"
 	"time"
+
+	"github.com/emoss08/keel"
 
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"

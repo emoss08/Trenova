@@ -166,8 +166,8 @@ func (sc *SettlementControl) BeforeCreate(ctx context.Context) error {
 	if sc.PayTrigger == "" {
 		sc.PayTrigger = PayTriggerShipmentDelivered
 	}
-	if sc.VarianceThresholdPct == 0 {
-		sc.VarianceThresholdPct = 25
+	if sc.VarianceThresholdPct.IsZero() {
+		sc.VarianceThresholdPct = decimal.RequireFromString("25")
 	}
 	if sc.VarianceLookbackWeeks == 0 {
 		sc.VarianceLookbackWeeks = 8

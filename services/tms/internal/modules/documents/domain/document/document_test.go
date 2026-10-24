@@ -5,7 +5,6 @@ import (
 
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 )
 
 func TestDocument_GetTableName(t *testing.T) {

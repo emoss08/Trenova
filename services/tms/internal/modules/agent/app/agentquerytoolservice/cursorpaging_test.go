@@ -1,9 +1,10 @@
 package agentquerytoolservice
 
 import (
-	"github.com/emoss08/trenova/internal/testutil/pagetest"
 	"maps"
 	"testing"
+
+	"github.com/emoss08/trenova/internal/testutil/pagetest"
 
 	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/pkg/pagination"

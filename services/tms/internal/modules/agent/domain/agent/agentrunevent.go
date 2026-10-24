@@ -17,7 +17,6 @@ import (
 var (
 	_ validationframework.TenantedEntity = (*AgentRunEvent)(nil)
 	_ pagination.CursorEntity            = (*AgentRunEvent)(nil)
-	_ pagination.CursorValueCarrier      = (*AgentRunEvent)(nil)
 )
 
 // AgentRunEvent is one thing that happened, in the order it happened.

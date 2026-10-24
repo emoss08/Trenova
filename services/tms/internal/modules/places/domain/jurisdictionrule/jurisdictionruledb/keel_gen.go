@@ -249,6 +249,7 @@ var jurisdictionRulesTable = schema.Table{
 	Value:        valueJurisdictionRule,
 	Attach:       attachJurisdictionRule,
 	BeforeCreate: beforeCreateJurisdictionRule,
+	BeforeUpdate: beforeUpdateJurisdictionRule,
 }
 
 var jurisdictionRulesRef = keel.Ref{Table: &jurisdictionRulesTable}
@@ -530,6 +531,10 @@ func attachJurisdictionRule(p unsafe.Pointer, rel int32, child unsafe.Pointer) {
 
 func beforeCreateJurisdictionRule(ctx context.Context, p unsafe.Pointer) error {
 	return (*jurisdictionrule.JurisdictionRule)(p).BeforeCreate(ctx)
+}
+
+func beforeUpdateJurisdictionRule(ctx context.Context, p unsafe.Pointer) error {
+	return (*jurisdictionrule.JurisdictionRule)(p).BeforeUpdate(ctx)
 }
 
 // overridesTable is the schema of jurisdictionrule.Override.

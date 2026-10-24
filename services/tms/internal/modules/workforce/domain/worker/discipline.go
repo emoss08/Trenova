@@ -244,7 +244,6 @@ func (a *WorkerDisciplinaryAction) BeforeCreate(_ context.Context) error {
 	if a.IssuedAt == 0 {
 		a.IssuedAt = now
 	}
-	now := timeutils.NowUnix()
 
 	return nil
 }
@@ -382,7 +381,6 @@ func (r *WorkerRecognition) BeforeCreate(_ context.Context) error {
 	if r.OccurredAt == 0 {
 		r.OccurredAt = now
 	}
-	now := timeutils.NowUnix()
 
 	return nil
 }

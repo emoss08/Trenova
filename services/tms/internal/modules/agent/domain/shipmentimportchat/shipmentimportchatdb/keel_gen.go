@@ -36,22 +36,24 @@ var conversationsTable = schema.Table{
 		{Name: "created_at", Quoted: `"created_at"`, Field: "CreatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoCreate, Label: `Created At`, JSON: `createdAt`},
 		{Name: "updated_at", Quoted: `"updated_at"`, Field: "UpdatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoUpdate, Label: `Updated At`, JSON: `updatedAt`},
 	},
-	PK:         []int32{0, 1, 2},
-	Tenant:     []int32{1, 2},
-	Select:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12},
-	Insert:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12},
-	Update:     []int32{3, 4, 5, 6, 7, 8, 9, 12},
-	Returning:  nil,
-	Version:    10,
-	AutoID:     0,
-	AutoCreate: 11,
-	AutoUpdate: 12,
-	IDPrefix:   "sic_",
-	New:        newConversation,
-	NewN:       newNConversation,
-	Size:       unsafe.Sizeof(shipmentimportchat.Conversation{}),
-	Ptr:        ptrConversation,
-	Value:      valueConversation,
+	PK:           []int32{0, 1, 2},
+	Tenant:       []int32{1, 2},
+	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12},
+	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12},
+	Update:       []int32{3, 4, 5, 6, 7, 8, 9, 12},
+	Returning:    nil,
+	Version:      10,
+	AutoID:       0,
+	AutoCreate:   11,
+	AutoUpdate:   12,
+	IDPrefix:     "sic_",
+	New:          newConversation,
+	NewN:         newNConversation,
+	Size:         unsafe.Sizeof(shipmentimportchat.Conversation{}),
+	Ptr:          ptrConversation,
+	Value:        valueConversation,
+	BeforeCreate: beforeCreateConversation,
+	BeforeUpdate: beforeUpdateConversation,
 }
 
 var conversationsRef = keel.Ref{Table: &conversationsTable}
@@ -206,6 +208,14 @@ func valueConversation(p unsafe.Pointer, c int32) any {
 	return nil
 }
 
+func beforeCreateConversation(ctx context.Context, p unsafe.Pointer) error {
+	return (*shipmentimportchat.Conversation)(p).BeforeCreate(ctx)
+}
+
+func beforeUpdateConversation(ctx context.Context, p unsafe.Pointer) error {
+	return (*shipmentimportchat.Conversation)(p).BeforeUpdate(ctx)
+}
+
 // turnsTable is the schema of shipmentimportchat.Turn.
 var turnsTable = schema.Table{
 	Name:   "shipment_import_chat_turns",
@@ -235,22 +245,23 @@ var turnsTable = schema.Table{
 		{Name: "actions_json", Quoted: `"actions_json"`, Field: "ActionsJSON", Kind: schema.KindJSON, Flags: schema.FlagJSONB, Label: `Actions JSON`, JSON: `actionsJson`},
 		{Name: "created_at", Quoted: `"created_at"`, Field: "CreatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoCreate, Label: `Created At`, JSON: `createdAt`},
 	},
-	PK:         []int32{0, 2, 3},
-	Tenant:     []int32{2, 3},
-	Select:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18},
-	Insert:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18},
-	Update:     []int32{1, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17},
-	Returning:  nil,
-	Version:    -1,
-	AutoID:     0,
-	AutoCreate: 18,
-	AutoUpdate: -1,
-	IDPrefix:   "sit_",
-	New:        newTurn,
-	NewN:       newNTurn,
-	Size:       unsafe.Sizeof(shipmentimportchat.Turn{}),
-	Ptr:        ptrTurn,
-	Value:      valueTurn,
+	PK:           []int32{0, 2, 3},
+	Tenant:       []int32{2, 3},
+	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18},
+	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18},
+	Update:       []int32{1, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17},
+	Returning:    nil,
+	Version:      -1,
+	AutoID:       0,
+	AutoCreate:   18,
+	AutoUpdate:   -1,
+	IDPrefix:     "sit_",
+	New:          newTurn,
+	NewN:         newNTurn,
+	Size:         unsafe.Sizeof(shipmentimportchat.Turn{}),
+	Ptr:          ptrTurn,
+	Value:        valueTurn,
+	BeforeCreate: beforeCreateTurn,
 }
 
 var turnsRef = keel.Ref{Table: &turnsTable}
@@ -458,6 +469,10 @@ func valueTurn(p unsafe.Pointer, c int32) any {
 		return r.CreatedAt
 	}
 	return nil
+}
+
+func beforeCreateTurn(ctx context.Context, p unsafe.Pointer) error {
+	return (*shipmentimportchat.Turn)(p).BeforeCreate(ctx)
 }
 
 // intIs64 fails the build where int is not 64 bits: int fields are read through *int64.

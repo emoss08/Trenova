@@ -5,14 +5,15 @@ package agentquerytoolservice_test
 import (
 	"context"
 	"errors"
+	"slices"
+	"strings"
+	"testing"
+
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/capture/capturedb"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/inboundmessage/inboundmessagedb"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/triage/triagedb"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/email/emaildb"
-	"slices"
-	"strings"
-	"testing"
 
 	"github.com/emoss08/trenova/internal/api/graphql/agentread"
 	"github.com/emoss08/trenova/internal/api/graphql/agentread/agentreadtest"

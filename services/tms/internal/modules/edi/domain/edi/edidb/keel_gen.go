@@ -60,24 +60,26 @@ var carrierInvoicesTable = schema.Table{
 	Relations: []schema.Relation{
 		{Name: "Partner", Alias: "p", Kind: schema.BelongsTo, Local: []int32{3}, Remote: []int32{0}, Label: `Partner`, JSON: `partner`},
 	},
-	PK:         []int32{0, 1, 2},
-	Tenant:     []int32{1, 2},
-	Select:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29},
-	Insert:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29},
-	Update:     []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 29},
-	Returning:  nil,
-	Version:    27,
-	AutoID:     0,
-	AutoCreate: 28,
-	AutoUpdate: 29,
-	IDPrefix:   "edici_",
-	New:        newCarrierInvoice,
-	NewN:       newNCarrierInvoice,
-	Size:       unsafe.Sizeof(edi.CarrierInvoice{}),
-	Ptr:        ptrCarrierInvoice,
-	Value:      valueCarrierInvoice,
-	Attach:     attachCarrierInvoice,
-	BeforeSave: beforeSaveCarrierInvoice,
+	PK:           []int32{0, 1, 2},
+	Tenant:       []int32{1, 2},
+	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29},
+	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29},
+	Update:       []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 29},
+	Returning:    nil,
+	Version:      27,
+	AutoID:       0,
+	AutoCreate:   28,
+	AutoUpdate:   29,
+	IDPrefix:     "edici_",
+	New:          newCarrierInvoice,
+	NewN:         newNCarrierInvoice,
+	Size:         unsafe.Sizeof(edi.CarrierInvoice{}),
+	Ptr:          ptrCarrierInvoice,
+	Value:        valueCarrierInvoice,
+	Attach:       attachCarrierInvoice,
+	BeforeCreate: beforeCreateCarrierInvoice,
+	BeforeUpdate: beforeUpdateCarrierInvoice,
+	BeforeSave:   beforeSaveCarrierInvoice,
 }
 
 var carrierInvoicesRef = keel.Ref{Table: &carrierInvoicesTable}
@@ -403,6 +405,14 @@ func attachCarrierInvoice(p unsafe.Pointer, rel int32, child unsafe.Pointer) {
 	}
 }
 
+func beforeCreateCarrierInvoice(ctx context.Context, p unsafe.Pointer) error {
+	return (*edi.CarrierInvoice)(p).BeforeCreate(ctx)
+}
+
+func beforeUpdateCarrierInvoice(ctx context.Context, p unsafe.Pointer) error {
+	return (*edi.CarrierInvoice)(p).BeforeUpdate(ctx)
+}
+
 func beforeSaveCarrierInvoice(ctx context.Context, p unsafe.Pointer) error {
 	return (*edi.CarrierInvoice)(p).BeforeSave(ctx)
 }
@@ -592,24 +602,26 @@ var eDICommunicationProfilesTable = schema.Table{
 		{Name: "Connection", Alias: "c", Kind: schema.BelongsTo, Local: []int32{3}, Remote: []int32{0}, Label: `Connection`, JSON: `connection`},
 		{Name: "Partner", Alias: "p", Kind: schema.BelongsTo, Local: []int32{4}, Remote: []int32{0}, Label: `Partner`, JSON: `partner`},
 	},
-	PK:         []int32{0, 1, 2},
-	Tenant:     []int32{1, 2},
-	Select:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 16, 17, 18},
-	Insert:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 16, 17, 18},
-	Update:     []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 18},
-	Returning:  nil,
-	Version:    16,
-	AutoID:     0,
-	AutoCreate: 17,
-	AutoUpdate: 18,
-	IDPrefix:   "edicp_",
-	New:        newEDICommunicationProfile,
-	NewN:       newNEDICommunicationProfile,
-	Size:       unsafe.Sizeof(edi.EDICommunicationProfile{}),
-	Ptr:        ptrEDICommunicationProfile,
-	Value:      valueEDICommunicationProfile,
-	Attach:     attachEDICommunicationProfile,
-	BeforeSave: beforeSaveEDICommunicationProfile,
+	PK:           []int32{0, 1, 2},
+	Tenant:       []int32{1, 2},
+	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 16, 17, 18},
+	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 16, 17, 18},
+	Update:       []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 18},
+	Returning:    nil,
+	Version:      16,
+	AutoID:       0,
+	AutoCreate:   17,
+	AutoUpdate:   18,
+	IDPrefix:     "edicp_",
+	New:          newEDICommunicationProfile,
+	NewN:         newNEDICommunicationProfile,
+	Size:         unsafe.Sizeof(edi.EDICommunicationProfile{}),
+	Ptr:          ptrEDICommunicationProfile,
+	Value:        valueEDICommunicationProfile,
+	Attach:       attachEDICommunicationProfile,
+	BeforeCreate: beforeCreateEDICommunicationProfile,
+	BeforeUpdate: beforeUpdateEDICommunicationProfile,
+	BeforeSave:   beforeSaveEDICommunicationProfile,
 }
 
 var eDICommunicationProfilesRef = keel.Ref{Table: &eDICommunicationProfilesTable}
@@ -843,6 +855,14 @@ func attachEDICommunicationProfile(p unsafe.Pointer, rel int32, child unsafe.Poi
 	}
 }
 
+func beforeCreateEDICommunicationProfile(ctx context.Context, p unsafe.Pointer) error {
+	return (*edi.EDICommunicationProfile)(p).BeforeCreate(ctx)
+}
+
+func beforeUpdateEDICommunicationProfile(ctx context.Context, p unsafe.Pointer) error {
+	return (*edi.EDICommunicationProfile)(p).BeforeUpdate(ctx)
+}
+
 func beforeSaveEDICommunicationProfile(ctx context.Context, p unsafe.Pointer) error {
 	return (*edi.EDICommunicationProfile)(p).BeforeSave(ctx)
 }
@@ -906,6 +926,7 @@ var eDIConnectionsTable = schema.Table{
 	Value:        valueEDIConnection,
 	Attach:       attachEDIConnection,
 	BeforeCreate: beforeCreateEDIConnection,
+	BeforeUpdate: beforeUpdateEDIConnection,
 	BeforeSave:   beforeSaveEDIConnection,
 }
 
@@ -1210,6 +1231,10 @@ func beforeCreateEDIConnection(ctx context.Context, p unsafe.Pointer) error {
 	return (*edi.EDIConnection)(p).BeforeCreate(ctx)
 }
 
+func beforeUpdateEDIConnection(ctx context.Context, p unsafe.Pointer) error {
+	return (*edi.EDIConnection)(p).BeforeUpdate(ctx)
+}
+
 func beforeSaveEDIConnection(ctx context.Context, p unsafe.Pointer) error {
 	return (*edi.EDIConnection)(p).BeforeSave(ctx)
 }
@@ -1236,23 +1261,25 @@ var eDIControlNumberSequencesTable = schema.Table{
 		{Name: "created_at", Quoted: `"created_at"`, Field: "CreatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoCreate, Label: `Created At`, JSON: `createdAt`},
 		{Name: "updated_at", Quoted: `"updated_at"`, Field: "UpdatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoUpdate, Label: `Updated At`, JSON: `updatedAt`},
 	},
-	PK:         []int32{0, 1, 2},
-	Tenant:     []int32{1, 2},
-	Select:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11},
-	Insert:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11},
-	Update:     []int32{3, 4, 5, 6, 7, 8, 11},
-	Returning:  nil,
-	Version:    9,
-	AutoID:     0,
-	AutoCreate: 10,
-	AutoUpdate: 11,
-	IDPrefix:   "edicn_",
-	New:        newEDIControlNumberSequence,
-	NewN:       newNEDIControlNumberSequence,
-	Size:       unsafe.Sizeof(edi.EDIControlNumberSequence{}),
-	Ptr:        ptrEDIControlNumberSequence,
-	Value:      valueEDIControlNumberSequence,
-	BeforeSave: beforeSaveEDIControlNumberSequence,
+	PK:           []int32{0, 1, 2},
+	Tenant:       []int32{1, 2},
+	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11},
+	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11},
+	Update:       []int32{3, 4, 5, 6, 7, 8, 11},
+	Returning:    nil,
+	Version:      9,
+	AutoID:       0,
+	AutoCreate:   10,
+	AutoUpdate:   11,
+	IDPrefix:     "edicn_",
+	New:          newEDIControlNumberSequence,
+	NewN:         newNEDIControlNumberSequence,
+	Size:         unsafe.Sizeof(edi.EDIControlNumberSequence{}),
+	Ptr:          ptrEDIControlNumberSequence,
+	Value:        valueEDIControlNumberSequence,
+	BeforeCreate: beforeCreateEDIControlNumberSequence,
+	BeforeUpdate: beforeUpdateEDIControlNumberSequence,
+	BeforeSave:   beforeSaveEDIControlNumberSequence,
 }
 
 var eDIControlNumberSequencesRef = keel.Ref{Table: &eDIControlNumberSequencesTable}
@@ -1391,6 +1418,14 @@ func valueEDIControlNumberSequence(p unsafe.Pointer, c int32) any {
 		return r.UpdatedAt
 	}
 	return nil
+}
+
+func beforeCreateEDIControlNumberSequence(ctx context.Context, p unsafe.Pointer) error {
+	return (*edi.EDIControlNumberSequence)(p).BeforeCreate(ctx)
+}
+
+func beforeUpdateEDIControlNumberSequence(ctx context.Context, p unsafe.Pointer) error {
+	return (*edi.EDIControlNumberSequence)(p).BeforeUpdate(ctx)
 }
 
 func beforeSaveEDIControlNumberSequence(ctx context.Context, p unsafe.Pointer) error {
@@ -1622,24 +1657,26 @@ var eDIInboundFilesTable = schema.Table{
 		{Name: "CommunicationProfile", Alias: "cp", Kind: schema.BelongsTo, Local: []int32{3}, Remote: []int32{0}, Label: `Communication Profile`, JSON: `communicationProfile`},
 		{Name: "Messages", Alias: "m", Kind: schema.HasMany, Local: []int32{0}, Remote: []int32{11}, Label: `Messages`, JSON: `messages`},
 	},
-	PK:         []int32{0, 1, 2},
-	Tenant:     []int32{1, 2},
-	Select:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24},
-	Insert:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24},
-	Update:     []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 24},
-	Returning:  nil,
-	Version:    22,
-	AutoID:     0,
-	AutoCreate: 23,
-	AutoUpdate: 24,
-	IDPrefix:   "ediinf_",
-	New:        newEDIInboundFile,
-	NewN:       newNEDIInboundFile,
-	Size:       unsafe.Sizeof(edi.EDIInboundFile{}),
-	Ptr:        ptrEDIInboundFile,
-	Value:      valueEDIInboundFile,
-	Attach:     attachEDIInboundFile,
-	BeforeSave: beforeSaveEDIInboundFile,
+	PK:           []int32{0, 1, 2},
+	Tenant:       []int32{1, 2},
+	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24},
+	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24},
+	Update:       []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 24},
+	Returning:    nil,
+	Version:      22,
+	AutoID:       0,
+	AutoCreate:   23,
+	AutoUpdate:   24,
+	IDPrefix:     "ediinf_",
+	New:          newEDIInboundFile,
+	NewN:         newNEDIInboundFile,
+	Size:         unsafe.Sizeof(edi.EDIInboundFile{}),
+	Ptr:          ptrEDIInboundFile,
+	Value:        valueEDIInboundFile,
+	Attach:       attachEDIInboundFile,
+	BeforeCreate: beforeCreateEDIInboundFile,
+	BeforeUpdate: beforeUpdateEDIInboundFile,
+	BeforeSave:   beforeSaveEDIInboundFile,
 }
 
 var eDIInboundFilesRef = keel.Ref{Table: &eDIInboundFilesTable}
@@ -1921,6 +1958,14 @@ func attachEDIInboundFile(p unsafe.Pointer, rel int32, child unsafe.Pointer) {
 	case 2:
 		r.Messages = append(r.Messages, (*edi.EDIMessage)(child))
 	}
+}
+
+func beforeCreateEDIInboundFile(ctx context.Context, p unsafe.Pointer) error {
+	return (*edi.EDIInboundFile)(p).BeforeCreate(ctx)
+}
+
+func beforeUpdateEDIInboundFile(ctx context.Context, p unsafe.Pointer) error {
+	return (*edi.EDIInboundFile)(p).BeforeUpdate(ctx)
 }
 
 func beforeSaveEDIInboundFile(ctx context.Context, p unsafe.Pointer) error {
@@ -2422,24 +2467,26 @@ var eDIMessagesTable = schema.Table{
 		{Name: "TemplateVersion", Alias: "tv", Kind: schema.BelongsTo, Local: []int32{7}, Remote: []int32{0}, Label: `Template Version`, JSON: `templateVersion`},
 		{Name: "ValidationErrors", Alias: "ve", Kind: schema.HasMany, Local: []int32{0}, Remote: []int32{3}, Label: `Validation Errors`, JSON: `validationErrors`},
 	},
-	PK:         []int32{0, 1, 2},
-	Tenant:     []int32{1, 2},
-	Select:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42},
-	Insert:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42},
-	Update:     []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 42},
-	Returning:  nil,
-	Version:    40,
-	AutoID:     0,
-	AutoCreate: 41,
-	AutoUpdate: 42,
-	IDPrefix:   "edimsg_",
-	New:        newEDIMessage,
-	NewN:       newNEDIMessage,
-	Size:       unsafe.Sizeof(edi.EDIMessage{}),
-	Ptr:        ptrEDIMessage,
-	Value:      valueEDIMessage,
-	Attach:     attachEDIMessage,
-	BeforeSave: beforeSaveEDIMessage,
+	PK:           []int32{0, 1, 2},
+	Tenant:       []int32{1, 2},
+	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42},
+	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42},
+	Update:       []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 42},
+	Returning:    nil,
+	Version:      40,
+	AutoID:       0,
+	AutoCreate:   41,
+	AutoUpdate:   42,
+	IDPrefix:     "edimsg_",
+	New:          newEDIMessage,
+	NewN:         newNEDIMessage,
+	Size:         unsafe.Sizeof(edi.EDIMessage{}),
+	Ptr:          ptrEDIMessage,
+	Value:        valueEDIMessage,
+	Attach:       attachEDIMessage,
+	BeforeCreate: beforeCreateEDIMessage,
+	BeforeUpdate: beforeUpdateEDIMessage,
+	BeforeSave:   beforeSaveEDIMessage,
 }
 
 var eDIMessagesRef = keel.Ref{Table: &eDIMessagesTable}
@@ -2911,6 +2958,14 @@ func attachEDIMessage(p unsafe.Pointer, rel int32, child unsafe.Pointer) {
 	}
 }
 
+func beforeCreateEDIMessage(ctx context.Context, p unsafe.Pointer) error {
+	return (*edi.EDIMessage)(p).BeforeCreate(ctx)
+}
+
+func beforeUpdateEDIMessage(ctx context.Context, p unsafe.Pointer) error {
+	return (*edi.EDIMessage)(p).BeforeUpdate(ctx)
+}
+
 func beforeSaveEDIMessage(ctx context.Context, p unsafe.Pointer) error {
 	return (*edi.EDIMessage)(p).BeforeSave(ctx)
 }
@@ -3146,24 +3201,26 @@ var eDIPartnersTable = schema.Table{
 		{Name: "MappingProfile", Alias: "mp", Kind: schema.HasOne, Local: []int32{0}, Remote: []int32{3}, Label: `Mapping Profile`, JSON: `mappingProfile`},
 		{Name: "MappingEntries", Alias: "me", Kind: schema.HasMany, Local: []int32{0}, Remote: []int32{3}, Label: `Mapping Entries`, JSON: `mappingEntries`},
 	},
-	PK:         []int32{0, 1, 2},
-	Tenant:     []int32{1, 2},
-	Select:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 23, 24, 25},
-	Insert:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 23, 24, 25},
-	Update:     []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 25},
-	Returning:  nil,
-	Version:    23,
-	AutoID:     0,
-	AutoCreate: 24,
-	AutoUpdate: 25,
-	IDPrefix:   "edip_",
-	New:        newEDIPartner,
-	NewN:       newNEDIPartner,
-	Size:       unsafe.Sizeof(edi.EDIPartner{}),
-	Ptr:        ptrEDIPartner,
-	Value:      valueEDIPartner,
-	Attach:     attachEDIPartner,
-	BeforeSave: beforeSaveEDIPartner,
+	PK:           []int32{0, 1, 2},
+	Tenant:       []int32{1, 2},
+	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 23, 24, 25},
+	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 23, 24, 25},
+	Update:       []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 25},
+	Returning:    nil,
+	Version:      23,
+	AutoID:       0,
+	AutoCreate:   24,
+	AutoUpdate:   25,
+	IDPrefix:     "edip_",
+	New:          newEDIPartner,
+	NewN:         newNEDIPartner,
+	Size:         unsafe.Sizeof(edi.EDIPartner{}),
+	Ptr:          ptrEDIPartner,
+	Value:        valueEDIPartner,
+	Attach:       attachEDIPartner,
+	BeforeCreate: beforeCreateEDIPartner,
+	BeforeUpdate: beforeUpdateEDIPartner,
+	BeforeSave:   beforeSaveEDIPartner,
 }
 
 var eDIPartnersRef = keel.Ref{Table: &eDIPartnersTable}
@@ -3481,6 +3538,14 @@ func attachEDIPartner(p unsafe.Pointer, rel int32, child unsafe.Pointer) {
 	}
 }
 
+func beforeCreateEDIPartner(ctx context.Context, p unsafe.Pointer) error {
+	return (*edi.EDIPartner)(p).BeforeCreate(ctx)
+}
+
+func beforeUpdateEDIPartner(ctx context.Context, p unsafe.Pointer) error {
+	return (*edi.EDIPartner)(p).BeforeUpdate(ctx)
+}
+
 func beforeSaveEDIPartner(ctx context.Context, p unsafe.Pointer) error {
 	return (*edi.EDIPartner)(p).BeforeSave(ctx)
 }
@@ -3525,24 +3590,26 @@ var eDIPartnerDocumentProfilesTable = schema.Table{
 		{Name: "Template", Alias: "t", Kind: schema.BelongsTo, Local: []int32{5}, Remote: []int32{0}, Label: `Template`, JSON: `template`},
 		{Name: "TemplateVersion", Alias: "tv", Kind: schema.BelongsTo, Local: []int32{6}, Remote: []int32{0}, Label: `Template Version`, JSON: `templateVersion`},
 	},
-	PK:         []int32{0, 1, 2},
-	Tenant:     []int32{1, 2},
-	Select:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22},
-	Insert:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22},
-	Update:     []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 22},
-	Returning:  nil,
-	Version:    20,
-	AutoID:     0,
-	AutoCreate: 21,
-	AutoUpdate: 22,
-	IDPrefix:   "edidp_",
-	New:        newEDIPartnerDocumentProfile,
-	NewN:       newNEDIPartnerDocumentProfile,
-	Size:       unsafe.Sizeof(edi.EDIPartnerDocumentProfile{}),
-	Ptr:        ptrEDIPartnerDocumentProfile,
-	Value:      valueEDIPartnerDocumentProfile,
-	Attach:     attachEDIPartnerDocumentProfile,
-	BeforeSave: beforeSaveEDIPartnerDocumentProfile,
+	PK:           []int32{0, 1, 2},
+	Tenant:       []int32{1, 2},
+	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22},
+	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22},
+	Update:       []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 22},
+	Returning:    nil,
+	Version:      20,
+	AutoID:       0,
+	AutoCreate:   21,
+	AutoUpdate:   22,
+	IDPrefix:     "edidp_",
+	New:          newEDIPartnerDocumentProfile,
+	NewN:         newNEDIPartnerDocumentProfile,
+	Size:         unsafe.Sizeof(edi.EDIPartnerDocumentProfile{}),
+	Ptr:          ptrEDIPartnerDocumentProfile,
+	Value:        valueEDIPartnerDocumentProfile,
+	Attach:       attachEDIPartnerDocumentProfile,
+	BeforeCreate: beforeCreateEDIPartnerDocumentProfile,
+	BeforeUpdate: beforeUpdateEDIPartnerDocumentProfile,
+	BeforeSave:   beforeSaveEDIPartnerDocumentProfile,
 }
 
 var eDIPartnerDocumentProfilesRef = keel.Ref{Table: &eDIPartnerDocumentProfilesTable}
@@ -3814,6 +3881,14 @@ func attachEDIPartnerDocumentProfile(p unsafe.Pointer, rel int32, child unsafe.P
 	case 4:
 		r.TemplateVersion = (*edi.EDITemplateVersion)(child)
 	}
+}
+
+func beforeCreateEDIPartnerDocumentProfile(ctx context.Context, p unsafe.Pointer) error {
+	return (*edi.EDIPartnerDocumentProfile)(p).BeforeCreate(ctx)
+}
+
+func beforeUpdateEDIPartnerDocumentProfile(ctx context.Context, p unsafe.Pointer) error {
+	return (*edi.EDIPartnerDocumentProfile)(p).BeforeUpdate(ctx)
 }
 
 func beforeSaveEDIPartnerDocumentProfile(ctx context.Context, p unsafe.Pointer) error {
@@ -5202,23 +5277,25 @@ var eDITemplateSegmentsTable = schema.Table{
 		{Name: "created_at", Quoted: `"created_at"`, Field: "CreatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoCreate, Label: `Created At`, JSON: `createdAt`},
 		{Name: "updated_at", Quoted: `"updated_at"`, Field: "UpdatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoUpdate, Label: `Updated At`, JSON: `updatedAt`},
 	},
-	PK:         []int32{0, 1, 2},
-	Tenant:     []int32{1, 2},
-	Select:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15},
-	Insert:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15},
-	Update:     []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 15},
-	Returning:  nil,
-	Version:    -1,
-	AutoID:     0,
-	AutoCreate: 14,
-	AutoUpdate: 15,
-	IDPrefix:   "edisg_",
-	New:        newEDITemplateSegment,
-	NewN:       newNEDITemplateSegment,
-	Size:       unsafe.Sizeof(edi.EDITemplateSegment{}),
-	Ptr:        ptrEDITemplateSegment,
-	Value:      valueEDITemplateSegment,
-	BeforeSave: beforeSaveEDITemplateSegment,
+	PK:           []int32{0, 1, 2},
+	Tenant:       []int32{1, 2},
+	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15},
+	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15},
+	Update:       []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 15},
+	Returning:    nil,
+	Version:      -1,
+	AutoID:       0,
+	AutoCreate:   14,
+	AutoUpdate:   15,
+	IDPrefix:     "edisg_",
+	New:          newEDITemplateSegment,
+	NewN:         newNEDITemplateSegment,
+	Size:         unsafe.Sizeof(edi.EDITemplateSegment{}),
+	Ptr:          ptrEDITemplateSegment,
+	Value:        valueEDITemplateSegment,
+	BeforeCreate: beforeCreateEDITemplateSegment,
+	BeforeUpdate: beforeUpdateEDITemplateSegment,
+	BeforeSave:   beforeSaveEDITemplateSegment,
 }
 
 var eDITemplateSegmentsRef = keel.Ref{Table: &eDITemplateSegmentsTable}
@@ -5398,6 +5475,14 @@ func valueEDITemplateSegment(p unsafe.Pointer, c int32) any {
 		return r.UpdatedAt
 	}
 	return nil
+}
+
+func beforeCreateEDITemplateSegment(ctx context.Context, p unsafe.Pointer) error {
+	return (*edi.EDITemplateSegment)(p).BeforeCreate(ctx)
+}
+
+func beforeUpdateEDITemplateSegment(ctx context.Context, p unsafe.Pointer) error {
+	return (*edi.EDITemplateSegment)(p).BeforeUpdate(ctx)
 }
 
 func beforeSaveEDITemplateSegment(ctx context.Context, p unsafe.Pointer) error {
@@ -6488,22 +6573,23 @@ var eDITransactionSegmentDefinitionsTable = schema.Table{
 		{Name: "created_at", Quoted: `"created_at"`, Field: "CreatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoCreate, Label: `Created At`, JSON: `createdAt`},
 		{Name: "updated_at", Quoted: `"updated_at"`, Field: "UpdatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoUpdate, Label: `Updated At`, JSON: `updatedAt`},
 	},
-	PK:         []int32{0},
-	Tenant:     nil,
-	Select:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13},
-	Insert:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13},
-	Update:     []int32{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 13},
-	Returning:  nil,
-	Version:    -1,
-	AutoID:     0,
-	AutoCreate: 12,
-	AutoUpdate: 13,
-	IDPrefix:   "edisegd_",
-	New:        newEDITransactionSegmentDefinition,
-	NewN:       newNEDITransactionSegmentDefinition,
-	Size:       unsafe.Sizeof(edi.EDITransactionSegmentDefinition{}),
-	Ptr:        ptrEDITransactionSegmentDefinition,
-	Value:      valueEDITransactionSegmentDefinition,
+	PK:           []int32{0},
+	Tenant:       nil,
+	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13},
+	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13},
+	Update:       []int32{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 13},
+	Returning:    nil,
+	Version:      -1,
+	AutoID:       0,
+	AutoCreate:   12,
+	AutoUpdate:   13,
+	IDPrefix:     "edisegd_",
+	New:          newEDITransactionSegmentDefinition,
+	NewN:         newNEDITransactionSegmentDefinition,
+	Size:         unsafe.Sizeof(edi.EDITransactionSegmentDefinition{}),
+	Ptr:          ptrEDITransactionSegmentDefinition,
+	Value:        valueEDITransactionSegmentDefinition,
+	BeforeCreate: beforeCreateEDITransactionSegmentDefinition,
 }
 
 var eDITransactionSegmentDefinitionsRef = keel.Ref{Table: &eDITransactionSegmentDefinitionsTable}
@@ -6667,6 +6753,10 @@ func valueEDITransactionSegmentDefinition(p unsafe.Pointer, c int32) any {
 		return r.UpdatedAt
 	}
 	return nil
+}
+
+func beforeCreateEDITransactionSegmentDefinition(ctx context.Context, p unsafe.Pointer) error {
+	return (*edi.EDITransactionSegmentDefinition)(p).BeforeCreate(ctx)
 }
 
 // eDITransactionSetsTable is the schema of edi.EDITransactionSet.
@@ -6868,24 +6958,26 @@ var eDITransfersTable = schema.Table{
 		{Name: "SourcePartner", Alias: "sp", Kind: schema.BelongsTo, Local: []int32{5}, Remote: []int32{0}, Label: `Source Partner`, JSON: `sourcePartner`},
 		{Name: "TargetPartner", Alias: "tp", Kind: schema.BelongsTo, Local: []int32{6}, Remote: []int32{0}, Label: `Target Partner`, JSON: `targetPartner`},
 	},
-	PK:         []int32{0},
-	Tenant:     nil,
-	Select:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29},
-	Insert:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29},
-	Update:     []int32{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 29},
-	Returning:  nil,
-	Version:    27,
-	AutoID:     0,
-	AutoCreate: 28,
-	AutoUpdate: 29,
-	IDPrefix:   "edilt_",
-	New:        newEDITransfer,
-	NewN:       newNEDITransfer,
-	Size:       unsafe.Sizeof(edi.EDITransfer{}),
-	Ptr:        ptrEDITransfer,
-	Value:      valueEDITransfer,
-	Attach:     attachEDITransfer,
-	BeforeSave: beforeSaveEDITransfer,
+	PK:           []int32{0},
+	Tenant:       nil,
+	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29},
+	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29},
+	Update:       []int32{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 29},
+	Returning:    nil,
+	Version:      27,
+	AutoID:       0,
+	AutoCreate:   28,
+	AutoUpdate:   29,
+	IDPrefix:     "edilt_",
+	New:          newEDITransfer,
+	NewN:         newNEDITransfer,
+	Size:         unsafe.Sizeof(edi.EDITransfer{}),
+	Ptr:          ptrEDITransfer,
+	Value:        valueEDITransfer,
+	Attach:       attachEDITransfer,
+	BeforeCreate: beforeCreateEDITransfer,
+	BeforeUpdate: beforeUpdateEDITransfer,
+	BeforeSave:   beforeSaveEDITransfer,
 }
 
 var eDITransfersRef = keel.Ref{Table: &eDITransfersTable}
@@ -7221,6 +7313,14 @@ func attachEDITransfer(p unsafe.Pointer, rel int32, child unsafe.Pointer) {
 	}
 }
 
+func beforeCreateEDITransfer(ctx context.Context, p unsafe.Pointer) error {
+	return (*edi.EDITransfer)(p).BeforeCreate(ctx)
+}
+
+func beforeUpdateEDITransfer(ctx context.Context, p unsafe.Pointer) error {
+	return (*edi.EDITransfer)(p).BeforeUpdate(ctx)
+}
+
 func beforeSaveEDITransfer(ctx context.Context, p unsafe.Pointer) error {
 	return (*edi.EDITransfer)(p).BeforeSave(ctx)
 }
@@ -7249,23 +7349,25 @@ var shipmentLinksTable = schema.Table{
 		{Name: "created_at", Quoted: `"created_at"`, Field: "CreatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoCreate, Label: `Created At`, JSON: `createdAt`},
 		{Name: "updated_at", Quoted: `"updated_at"`, Field: "UpdatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoUpdate, Label: `Updated At`, JSON: `updatedAt`},
 	},
-	PK:         []int32{0, 1},
-	Tenant:     []int32{1},
-	Select:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13},
-	Insert:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13},
-	Update:     []int32{2, 3, 4, 5, 6, 7, 8, 9, 10, 13},
-	Returning:  nil,
-	Version:    11,
-	AutoID:     0,
-	AutoCreate: 12,
-	AutoUpdate: 13,
-	IDPrefix:   "edislink_",
-	New:        newShipmentLink,
-	NewN:       newNShipmentLink,
-	Size:       unsafe.Sizeof(edi.ShipmentLink{}),
-	Ptr:        ptrShipmentLink,
-	Value:      valueShipmentLink,
-	BeforeSave: beforeSaveShipmentLink,
+	PK:           []int32{0, 1},
+	Tenant:       []int32{1},
+	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13},
+	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13},
+	Update:       []int32{2, 3, 4, 5, 6, 7, 8, 9, 10, 13},
+	Returning:    nil,
+	Version:      11,
+	AutoID:       0,
+	AutoCreate:   12,
+	AutoUpdate:   13,
+	IDPrefix:     "edislink_",
+	New:          newShipmentLink,
+	NewN:         newNShipmentLink,
+	Size:         unsafe.Sizeof(edi.ShipmentLink{}),
+	Ptr:          ptrShipmentLink,
+	Value:        valueShipmentLink,
+	BeforeCreate: beforeCreateShipmentLink,
+	BeforeUpdate: beforeUpdateShipmentLink,
+	BeforeSave:   beforeSaveShipmentLink,
 }
 
 var shipmentLinksRef = keel.Ref{Table: &shipmentLinksTable}
@@ -7424,6 +7526,14 @@ func valueShipmentLink(p unsafe.Pointer, c int32) any {
 	return nil
 }
 
+func beforeCreateShipmentLink(ctx context.Context, p unsafe.Pointer) error {
+	return (*edi.ShipmentLink)(p).BeforeCreate(ctx)
+}
+
+func beforeUpdateShipmentLink(ctx context.Context, p unsafe.Pointer) error {
+	return (*edi.ShipmentLink)(p).BeforeUpdate(ctx)
+}
+
 func beforeSaveShipmentLink(ctx context.Context, p unsafe.Pointer) error {
 	return (*edi.ShipmentLink)(p).BeforeSave(ctx)
 }
@@ -7471,24 +7581,26 @@ var tenderChangesTable = schema.Table{
 	Relations: []schema.Relation{
 		{Name: "Recipient", Alias: "r", Kind: schema.BelongsTo, Local: []int32{5}, Remote: []int32{0}, Label: `Recipient`, JSON: `recipient`},
 	},
-	PK:         []int32{0, 1},
-	Tenant:     []int32{1},
-	Select:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 27, 28, 29},
-	Insert:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 27, 28, 29},
-	Update:     []int32{2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 29},
-	Returning:  nil,
-	Version:    27,
-	AutoID:     0,
-	AutoCreate: 28,
-	AutoUpdate: 29,
-	IDPrefix:   "editcg_",
-	New:        newTenderChange,
-	NewN:       newNTenderChange,
-	Size:       unsafe.Sizeof(edi.TenderChange{}),
-	Ptr:        ptrTenderChange,
-	Value:      valueTenderChange,
-	Attach:     attachTenderChange,
-	BeforeSave: beforeSaveTenderChange,
+	PK:           []int32{0, 1},
+	Tenant:       []int32{1},
+	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 27, 28, 29},
+	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 27, 28, 29},
+	Update:       []int32{2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 29},
+	Returning:    nil,
+	Version:      27,
+	AutoID:       0,
+	AutoCreate:   28,
+	AutoUpdate:   29,
+	IDPrefix:     "editcg_",
+	New:          newTenderChange,
+	NewN:         newNTenderChange,
+	Size:         unsafe.Sizeof(edi.TenderChange{}),
+	Ptr:          ptrTenderChange,
+	Value:        valueTenderChange,
+	Attach:       attachTenderChange,
+	BeforeCreate: beforeCreateTenderChange,
+	BeforeUpdate: beforeUpdateTenderChange,
+	BeforeSave:   beforeSaveTenderChange,
 }
 
 var tenderChangesRef = keel.Ref{Table: &tenderChangesTable}
@@ -7796,6 +7908,14 @@ func attachTenderChange(p unsafe.Pointer, rel int32, child unsafe.Pointer) {
 	}
 }
 
+func beforeCreateTenderChange(ctx context.Context, p unsafe.Pointer) error {
+	return (*edi.TenderChange)(p).BeforeCreate(ctx)
+}
+
+func beforeUpdateTenderChange(ctx context.Context, p unsafe.Pointer) error {
+	return (*edi.TenderChange)(p).BeforeUpdate(ctx)
+}
+
 func beforeSaveTenderChange(ctx context.Context, p unsafe.Pointer) error {
 	return (*edi.TenderChange)(p).BeforeSave(ctx)
 }
@@ -7832,23 +7952,25 @@ var tenderRecipientsTable = schema.Table{
 		{Name: "created_at", Quoted: `"created_at"`, Field: "CreatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoCreate, Label: `Created At`, JSON: `createdAt`},
 		{Name: "updated_at", Quoted: `"updated_at"`, Field: "UpdatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoUpdate, Label: `Updated At`, JSON: `updatedAt`},
 	},
-	PK:         []int32{0, 1},
-	Tenant:     []int32{1},
-	Select:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21},
-	Insert:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21},
-	Update:     []int32{2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 21},
-	Returning:  nil,
-	Version:    19,
-	AutoID:     0,
-	AutoCreate: 20,
-	AutoUpdate: 21,
-	IDPrefix:   "editr_",
-	New:        newTenderRecipient,
-	NewN:       newNTenderRecipient,
-	Size:       unsafe.Sizeof(edi.TenderRecipient{}),
-	Ptr:        ptrTenderRecipient,
-	Value:      valueTenderRecipient,
-	BeforeSave: beforeSaveTenderRecipient,
+	PK:           []int32{0, 1},
+	Tenant:       []int32{1},
+	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21},
+	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21},
+	Update:       []int32{2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 21},
+	Returning:    nil,
+	Version:      19,
+	AutoID:       0,
+	AutoCreate:   20,
+	AutoUpdate:   21,
+	IDPrefix:     "editr_",
+	New:          newTenderRecipient,
+	NewN:         newNTenderRecipient,
+	Size:         unsafe.Sizeof(edi.TenderRecipient{}),
+	Ptr:          ptrTenderRecipient,
+	Value:        valueTenderRecipient,
+	BeforeCreate: beforeCreateTenderRecipient,
+	BeforeUpdate: beforeUpdateTenderRecipient,
+	BeforeSave:   beforeSaveTenderRecipient,
 }
 
 var tenderRecipientsRef = keel.Ref{Table: &tenderRecipientsTable}
@@ -8081,6 +8203,14 @@ func valueTenderRecipient(p unsafe.Pointer, c int32) any {
 	return nil
 }
 
+func beforeCreateTenderRecipient(ctx context.Context, p unsafe.Pointer) error {
+	return (*edi.TenderRecipient)(p).BeforeCreate(ctx)
+}
+
+func beforeUpdateTenderRecipient(ctx context.Context, p unsafe.Pointer) error {
+	return (*edi.TenderRecipient)(p).BeforeUpdate(ctx)
+}
+
 func beforeSaveTenderRecipient(ctx context.Context, p unsafe.Pointer) error {
 	return (*edi.TenderRecipient)(p).BeforeSave(ctx)
 }
@@ -8118,23 +8248,25 @@ var transferChangesTable = schema.Table{
 		{Name: "created_at", Quoted: `"created_at"`, Field: "CreatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoCreate, Label: `Created At`, JSON: `createdAt`},
 		{Name: "updated_at", Quoted: `"updated_at"`, Field: "UpdatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoUpdate, Label: `Updated At`, JSON: `updatedAt`},
 	},
-	PK:         []int32{0, 1},
-	Tenant:     []int32{1},
-	Select:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 20, 21, 22},
-	Insert:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 20, 21, 22},
-	Update:     []int32{2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 22},
-	Returning:  nil,
-	Version:    20,
-	AutoID:     0,
-	AutoCreate: 21,
-	AutoUpdate: 22,
-	IDPrefix:   "editc_",
-	New:        newTransferChange,
-	NewN:       newNTransferChange,
-	Size:       unsafe.Sizeof(edi.TransferChange{}),
-	Ptr:        ptrTransferChange,
-	Value:      valueTransferChange,
-	BeforeSave: beforeSaveTransferChange,
+	PK:           []int32{0, 1},
+	Tenant:       []int32{1},
+	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 20, 21, 22},
+	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 20, 21, 22},
+	Update:       []int32{2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 22},
+	Returning:    nil,
+	Version:      20,
+	AutoID:       0,
+	AutoCreate:   21,
+	AutoUpdate:   22,
+	IDPrefix:     "editc_",
+	New:          newTransferChange,
+	NewN:         newNTransferChange,
+	Size:         unsafe.Sizeof(edi.TransferChange{}),
+	Ptr:          ptrTransferChange,
+	Value:        valueTransferChange,
+	BeforeCreate: beforeCreateTransferChange,
+	BeforeUpdate: beforeUpdateTransferChange,
+	BeforeSave:   beforeSaveTransferChange,
 }
 
 var transferChangesRef = keel.Ref{Table: &transferChangesTable}
@@ -8372,6 +8504,14 @@ func valueTransferChange(p unsafe.Pointer, c int32) any {
 		return r.UpdatedAt
 	}
 	return nil
+}
+
+func beforeCreateTransferChange(ctx context.Context, p unsafe.Pointer) error {
+	return (*edi.TransferChange)(p).BeforeCreate(ctx)
+}
+
+func beforeUpdateTransferChange(ctx context.Context, p unsafe.Pointer) error {
+	return (*edi.TransferChange)(p).BeforeUpdate(ctx)
 }
 
 func beforeSaveTransferChange(ctx context.Context, p unsafe.Pointer) error {

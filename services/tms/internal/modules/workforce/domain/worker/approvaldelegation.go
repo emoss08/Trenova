@@ -155,7 +155,6 @@ func (d *ApprovalDelegation) BeforeCreate(_ context.Context) error {
 	if d.StartsAt <= 0 {
 		d.StartsAt = now
 	}
-	now := timeutils.NowUnix()
 
 	return nil
 }

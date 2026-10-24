@@ -406,7 +406,6 @@ func (d *DOTRandomDraw) BeforeCreate(_ context.Context) error {
 	if d.DrawnAt == 0 {
 		d.DrawnAt = now
 	}
-	now := timeutils.NowUnix()
 
 	return nil
 }

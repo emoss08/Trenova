@@ -45,23 +45,24 @@ var keysTable = schema.Table{
 	Relations: []schema.Relation{
 		{Name: "Permissions", Alias: "p", Kind: schema.HasMany, Local: []int32{0}, Remote: []int32{1}, Label: `Permissions`, JSON: `permissions`},
 	},
-	PK:         []int32{0},
-	Tenant:     []int32{1, 2},
-	Select:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17},
-	Insert:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17},
-	Update:     []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 17},
-	Returning:  nil,
-	Version:    -1,
-	AutoID:     0,
-	AutoCreate: 16,
-	AutoUpdate: 17,
-	IDPrefix:   "ak_",
-	New:        newKey,
-	NewN:       newNKey,
-	Size:       unsafe.Sizeof(apikey.Key{}),
-	Ptr:        ptrKey,
-	Value:      valueKey,
-	Attach:     attachKey,
+	PK:           []int32{0},
+	Tenant:       []int32{1, 2},
+	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17},
+	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17},
+	Update:       []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 17},
+	Returning:    nil,
+	Version:      -1,
+	AutoID:       0,
+	AutoCreate:   16,
+	AutoUpdate:   17,
+	IDPrefix:     "ak_",
+	New:          newKey,
+	NewN:         newNKey,
+	Size:         unsafe.Sizeof(apikey.Key{}),
+	Ptr:          ptrKey,
+	Value:        valueKey,
+	Attach:       attachKey,
+	BeforeCreate: beforeCreateKey,
 }
 
 var keysRef = keel.Ref{Table: &keysTable}
@@ -270,6 +271,10 @@ func attachKey(p unsafe.Pointer, rel int32, child unsafe.Pointer) {
 	}
 }
 
+func beforeCreateKey(ctx context.Context, p unsafe.Pointer) error {
+	return (*apikey.Key)(p).BeforeCreate(ctx)
+}
+
 // permissionsTable is the schema of apikey.Permission.
 var permissionsTable = schema.Table{
 	Name:   "api_key_permissions",
@@ -289,23 +294,25 @@ var permissionsTable = schema.Table{
 		{Name: "created_at", Quoted: `"created_at"`, Field: "CreatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoCreate, Label: `Created At`, JSON: `createdAt`},
 		{Name: "updated_at", Quoted: `"updated_at"`, Field: "UpdatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoUpdate, Label: `Updated At`, JSON: `updatedAt`},
 	},
-	PK:         []int32{0},
-	Tenant:     []int32{2, 3},
-	Select:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8},
-	Insert:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8},
-	Update:     []int32{1, 4, 5, 6, 8},
-	Returning:  nil,
-	Version:    -1,
-	AutoID:     0,
-	AutoCreate: 7,
-	AutoUpdate: 8,
-	IDPrefix:   "akp_",
-	New:        newPermission,
-	NewN:       newNPermission,
-	Size:       unsafe.Sizeof(apikey.Permission{}),
-	Ptr:        ptrPermission,
-	Value:      valuePermission,
-	BeforeSave: beforeSavePermission,
+	PK:           []int32{0},
+	Tenant:       []int32{2, 3},
+	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8},
+	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8},
+	Update:       []int32{1, 4, 5, 6, 8},
+	Returning:    nil,
+	Version:      -1,
+	AutoID:       0,
+	AutoCreate:   7,
+	AutoUpdate:   8,
+	IDPrefix:     "akp_",
+	New:          newPermission,
+	NewN:         newNPermission,
+	Size:         unsafe.Sizeof(apikey.Permission{}),
+	Ptr:          ptrPermission,
+	Value:        valuePermission,
+	BeforeCreate: beforeCreatePermission,
+	BeforeUpdate: beforeUpdatePermission,
+	BeforeSave:   beforeSavePermission,
 }
 
 var permissionsRef = keel.Ref{Table: &permissionsTable}
@@ -424,6 +431,14 @@ func valuePermission(p unsafe.Pointer, c int32) any {
 		return r.UpdatedAt
 	}
 	return nil
+}
+
+func beforeCreatePermission(ctx context.Context, p unsafe.Pointer) error {
+	return (*apikey.Permission)(p).BeforeCreate(ctx)
+}
+
+func beforeUpdatePermission(ctx context.Context, p unsafe.Pointer) error {
+	return (*apikey.Permission)(p).BeforeUpdate(ctx)
 }
 
 func beforeSavePermission(ctx context.Context, p unsafe.Pointer) error {

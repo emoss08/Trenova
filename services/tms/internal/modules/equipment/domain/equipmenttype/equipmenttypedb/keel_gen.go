@@ -49,23 +49,24 @@ var equipmentTypesTable = schema.Table{
 		{Name: "BusinessUnit", Alias: "bu", Kind: schema.BelongsTo, Local: []int32{1}, Remote: []int32{0}, Label: `Business Unit`, JSON: `businessUnit`, NoReport: true},
 		{Name: "Organization", Alias: "o", Kind: schema.BelongsTo, Local: []int32{2}, Remote: []int32{0}, Label: `Organization`, JSON: `organization`, NoReport: true},
 	},
-	PK:         []int32{0, 1, 2},
-	Tenant:     []int32{1, 2},
-	Select:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 15, 16, 17},
-	Insert:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 15, 16, 17},
-	Update:     []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 17},
-	Returning:  nil,
-	Version:    15,
-	AutoID:     0,
-	AutoCreate: 16,
-	AutoUpdate: 17,
-	IDPrefix:   "et_",
-	New:        newEquipmentType,
-	NewN:       newNEquipmentType,
-	Size:       unsafe.Sizeof(equipmenttype.EquipmentType{}),
-	Ptr:        ptrEquipmentType,
-	Value:      valueEquipmentType,
-	Attach:     attachEquipmentType,
+	PK:           []int32{0, 1, 2},
+	Tenant:       []int32{1, 2},
+	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 15, 16, 17},
+	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 15, 16, 17},
+	Update:       []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 17},
+	Returning:    nil,
+	Version:      15,
+	AutoID:       0,
+	AutoCreate:   16,
+	AutoUpdate:   17,
+	IDPrefix:     "et_",
+	New:          newEquipmentType,
+	NewN:         newNEquipmentType,
+	Size:         unsafe.Sizeof(equipmenttype.EquipmentType{}),
+	Ptr:          ptrEquipmentType,
+	Value:        valueEquipmentType,
+	Attach:       attachEquipmentType,
+	BeforeCreate: beforeCreateEquipmentType,
 }
 
 var equipmentTypesRef = keel.Ref{Table: &equipmentTypesTable}
@@ -285,6 +286,10 @@ func attachEquipmentType(p unsafe.Pointer, rel int32, child unsafe.Pointer) {
 	case 1:
 		r.Organization = (*tenant.Organization)(child)
 	}
+}
+
+func beforeCreateEquipmentType(ctx context.Context, p unsafe.Pointer) error {
+	return (*equipmenttype.EquipmentType)(p).BeforeCreate(ctx)
 }
 
 func init() {

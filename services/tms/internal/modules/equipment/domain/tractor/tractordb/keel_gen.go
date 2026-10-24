@@ -81,23 +81,25 @@ var tractorsTable = schema.Table{
 		{Name: "SecondaryWorker", Alias: "sw", Kind: schema.BelongsTo, Local: []int32{8}, Remote: []int32{0}, Label: `Secondary Worker`, JSON: `secondaryWorker`},
 		{Name: "OwnerWorker", Alias: "ow", Kind: schema.BelongsTo, Local: []int32{22}, Remote: []int32{0}, Label: `Owner Worker`, JSON: `ownerWorker`},
 	},
-	PK:         []int32{0, 1, 2},
-	Tenant:     []int32{1, 2},
-	Select:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 30, 31, 32},
-	Insert:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 30, 31, 32},
-	Update:     []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 32},
-	Returning:  nil,
-	Version:    30,
-	AutoID:     0,
-	AutoCreate: 31,
-	AutoUpdate: 32,
-	IDPrefix:   "trac_",
-	New:        newTractor,
-	NewN:       newNTractor,
-	Size:       unsafe.Sizeof(tractor.Tractor{}),
-	Ptr:        ptrTractor,
-	Value:      valueTractor,
-	Attach:     attachTractor,
+	PK:           []int32{0, 1, 2},
+	Tenant:       []int32{1, 2},
+	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 30, 31, 32},
+	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 30, 31, 32},
+	Update:       []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 32},
+	Returning:    nil,
+	Version:      30,
+	AutoID:       0,
+	AutoCreate:   31,
+	AutoUpdate:   32,
+	IDPrefix:     "trac_",
+	New:          newTractor,
+	NewN:         newNTractor,
+	Size:         unsafe.Sizeof(tractor.Tractor{}),
+	Ptr:          ptrTractor,
+	Value:        valueTractor,
+	Attach:       attachTractor,
+	BeforeCreate: beforeCreateTractor,
+	BeforeUpdate: beforeUpdateTractor,
 }
 
 var tractorsRef = keel.Ref{Table: &tractorsTable}
@@ -507,6 +509,14 @@ func attachTractor(p unsafe.Pointer, rel int32, child unsafe.Pointer) {
 	case 8:
 		r.OwnerWorker = (*worker.Worker)(child)
 	}
+}
+
+func beforeCreateTractor(ctx context.Context, p unsafe.Pointer) error {
+	return (*tractor.Tractor)(p).BeforeCreate(ctx)
+}
+
+func beforeUpdateTractor(ctx context.Context, p unsafe.Pointer) error {
+	return (*tractor.Tractor)(p).BeforeUpdate(ctx)
 }
 
 func init() {

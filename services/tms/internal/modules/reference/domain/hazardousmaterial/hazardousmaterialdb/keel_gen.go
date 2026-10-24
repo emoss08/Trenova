@@ -52,22 +52,23 @@ var hazardousMaterialsTable = schema.Table{
 		{Name: "created_at", Quoted: `"created_at"`, Field: "CreatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoCreate, Label: `Created At`, JSON: `createdAt`, Report: &reportDimEpoch},
 		{Name: "updated_at", Quoted: `"updated_at"`, Field: "UpdatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoUpdate, Label: `Updated At`, JSON: `updatedAt`, Report: &reportDimEpoch},
 	},
-	PK:         []int32{0, 1, 2},
-	Tenant:     []int32{1, 2},
-	Select:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 20, 21, 22, 23, 24, 25, 26},
-	Insert:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 20, 21, 22, 23, 24, 25, 26},
-	Update:     []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 20, 21, 22, 23, 26},
-	Returning:  nil,
-	Version:    24,
-	AutoID:     0,
-	AutoCreate: 25,
-	AutoUpdate: 26,
-	IDPrefix:   "hm_",
-	New:        newHazardousMaterial,
-	NewN:       newNHazardousMaterial,
-	Size:       unsafe.Sizeof(hazardousmaterial.HazardousMaterial{}),
-	Ptr:        ptrHazardousMaterial,
-	Value:      valueHazardousMaterial,
+	PK:           []int32{0, 1, 2},
+	Tenant:       []int32{1, 2},
+	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 20, 21, 22, 23, 24, 25, 26},
+	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 20, 21, 22, 23, 24, 25, 26},
+	Update:       []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 20, 21, 22, 23, 26},
+	Returning:    nil,
+	Version:      24,
+	AutoID:       0,
+	AutoCreate:   25,
+	AutoUpdate:   26,
+	IDPrefix:     "hm_",
+	New:          newHazardousMaterial,
+	NewN:         newNHazardousMaterial,
+	Size:         unsafe.Sizeof(hazardousmaterial.HazardousMaterial{}),
+	Ptr:          ptrHazardousMaterial,
+	Value:        valueHazardousMaterial,
+	BeforeCreate: beforeCreateHazardousMaterial,
 }
 
 var hazardousMaterialsRef = keel.Ref{Table: &hazardousMaterialsTable}
@@ -341,6 +342,10 @@ func valueHazardousMaterial(p unsafe.Pointer, c int32) any {
 		return r.UpdatedAt
 	}
 	return nil
+}
+
+func beforeCreateHazardousMaterial(ctx context.Context, p unsafe.Pointer) error {
+	return (*hazardousmaterial.HazardousMaterial)(p).BeforeCreate(ctx)
 }
 
 var enumDomaintypesStatus = [...]schema.EnumValue{

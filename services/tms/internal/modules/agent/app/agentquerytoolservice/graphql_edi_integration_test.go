@@ -5,9 +5,10 @@ package agentquerytoolservice_test
 import (
 	"context"
 	"fmt"
+	"testing"
+
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi/edidb"
-	"testing"
 
 	"github.com/emoss08/trenova/internal/api/graphql/agentread"
 	"github.com/emoss08/trenova/internal/api/graphql/agentread/agentreadtest"

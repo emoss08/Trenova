@@ -37,22 +37,24 @@ var accessPoliciesTable = schema.Table{
 		{Name: "created_at", Quoted: `"created_at"`, Field: "CreatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoCreate, Label: `Created At`, JSON: `createdAt`},
 		{Name: "updated_at", Quoted: `"updated_at"`, Field: "UpdatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoUpdate, Label: `Updated At`, JSON: `updatedAt`},
 	},
-	PK:         []int32{0},
-	Tenant:     []int32{1, 2},
-	Select:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11},
-	Insert:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11},
-	Update:     []int32{3, 4, 5, 6, 7, 8, 9, 11},
-	Returning:  nil,
-	Version:    -1,
-	AutoID:     0,
-	AutoCreate: 10,
-	AutoUpdate: 11,
-	IDPrefix:   "pol_",
-	New:        newAccessPolicy,
-	NewN:       newNAccessPolicy,
-	Size:       unsafe.Sizeof(iam.AccessPolicy{}),
-	Ptr:        ptrAccessPolicy,
-	Value:      valueAccessPolicy,
+	PK:           []int32{0},
+	Tenant:       []int32{1, 2},
+	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11},
+	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11},
+	Update:       []int32{3, 4, 5, 6, 7, 8, 9, 11},
+	Returning:    nil,
+	Version:      -1,
+	AutoID:       0,
+	AutoCreate:   10,
+	AutoUpdate:   11,
+	IDPrefix:     "pol_",
+	New:          newAccessPolicy,
+	NewN:         newNAccessPolicy,
+	Size:         unsafe.Sizeof(iam.AccessPolicy{}),
+	Ptr:          ptrAccessPolicy,
+	Value:        valueAccessPolicy,
+	BeforeCreate: beforeCreateAccessPolicy,
+	BeforeUpdate: beforeUpdateAccessPolicy,
 }
 
 var accessPoliciesRef = keel.Ref{Table: &accessPoliciesTable}
@@ -192,6 +194,14 @@ func valueAccessPolicy(p unsafe.Pointer, c int32) any {
 		return r.UpdatedAt
 	}
 	return nil
+}
+
+func beforeCreateAccessPolicy(ctx context.Context, p unsafe.Pointer) error {
+	return (*iam.AccessPolicy)(p).BeforeCreate(ctx)
+}
+
+func beforeUpdateAccessPolicy(ctx context.Context, p unsafe.Pointer) error {
+	return (*iam.AccessPolicy)(p).BeforeUpdate(ctx)
 }
 
 // accessSettingsesTable is the schema of iam.AccessSettings.
@@ -372,6 +382,7 @@ var authEventsTable = schema.Table{
 	Ptr:          ptrAuthEvent,
 	Value:        valueAuthEvent,
 	BeforeCreate: beforeCreateAuthEvent,
+	BeforeUpdate: beforeUpdateAuthEvent,
 }
 
 var authEventsRef = keel.Ref{Table: &authEventsTable}
@@ -576,6 +587,10 @@ func beforeCreateAuthEvent(ctx context.Context, p unsafe.Pointer) error {
 	return (*iam.AuthEvent)(p).BeforeCreate(ctx)
 }
 
+func beforeUpdateAuthEvent(ctx context.Context, p unsafe.Pointer) error {
+	return (*iam.AuthEvent)(p).BeforeUpdate(ctx)
+}
+
 // externalIdentitiesTable is the schema of iam.ExternalIdentity.
 var externalIdentitiesTable = schema.Table{
 	Name:   "external_identities",
@@ -598,22 +613,24 @@ var externalIdentitiesTable = schema.Table{
 		{Name: "created_at", Quoted: `"created_at"`, Field: "CreatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoCreate, Label: `Created At`, JSON: `createdAt`},
 		{Name: "updated_at", Quoted: `"updated_at"`, Field: "UpdatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoUpdate, Label: `Updated At`, JSON: `updatedAt`},
 	},
-	PK:         []int32{0},
-	Tenant:     []int32{2, 3},
-	Select:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11},
-	Insert:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11},
-	Update:     []int32{1, 4, 5, 6, 7, 8, 9, 11},
-	Returning:  nil,
-	Version:    -1,
-	AutoID:     0,
-	AutoCreate: 10,
-	AutoUpdate: 11,
-	IDPrefix:   "ext_",
-	New:        newExternalIdentity,
-	NewN:       newNExternalIdentity,
-	Size:       unsafe.Sizeof(iam.ExternalIdentity{}),
-	Ptr:        ptrExternalIdentity,
-	Value:      valueExternalIdentity,
+	PK:           []int32{0},
+	Tenant:       []int32{2, 3},
+	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11},
+	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11},
+	Update:       []int32{1, 4, 5, 6, 7, 8, 9, 11},
+	Returning:    nil,
+	Version:      -1,
+	AutoID:       0,
+	AutoCreate:   10,
+	AutoUpdate:   11,
+	IDPrefix:     "ext_",
+	New:          newExternalIdentity,
+	NewN:         newNExternalIdentity,
+	Size:         unsafe.Sizeof(iam.ExternalIdentity{}),
+	Ptr:          ptrExternalIdentity,
+	Value:        valueExternalIdentity,
+	BeforeCreate: beforeCreateExternalIdentity,
+	BeforeUpdate: beforeUpdateExternalIdentity,
 }
 
 var externalIdentitiesRef = keel.Ref{Table: &externalIdentitiesTable}
@@ -764,6 +781,14 @@ func valueExternalIdentity(p unsafe.Pointer, c int32) any {
 	return nil
 }
 
+func beforeCreateExternalIdentity(ctx context.Context, p unsafe.Pointer) error {
+	return (*iam.ExternalIdentity)(p).BeforeCreate(ctx)
+}
+
+func beforeUpdateExternalIdentity(ctx context.Context, p unsafe.Pointer) error {
+	return (*iam.ExternalIdentity)(p).BeforeUpdate(ctx)
+}
+
 // identityProvidersTable is the schema of iam.IdentityProvider.
 var identityProvidersTable = schema.Table{
 	Name:   "identity_providers",
@@ -799,23 +824,25 @@ var identityProvidersTable = schema.Table{
 		{Name: "created_at", Quoted: `"created_at"`, Field: "CreatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoCreate, Label: `Created At`, JSON: `createdAt`},
 		{Name: "updated_at", Quoted: `"updated_at"`, Field: "UpdatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoUpdate, Label: `Updated At`, JSON: `updatedAt`},
 	},
-	PK:         []int32{0},
-	Tenant:     []int32{1, 2},
-	Select:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24},
-	Insert:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24},
-	Update:     []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 24},
-	Returning:  nil,
-	Version:    22,
-	AutoID:     0,
-	AutoCreate: 23,
-	AutoUpdate: 24,
-	IDPrefix:   "idp_",
-	New:        newIdentityProvider,
-	NewN:       newNIdentityProvider,
-	Size:       unsafe.Sizeof(iam.IdentityProvider{}),
-	Ptr:        ptrIdentityProvider,
-	Value:      valueIdentityProvider,
-	BeforeSave: beforeSaveIdentityProvider,
+	PK:           []int32{0},
+	Tenant:       []int32{1, 2},
+	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24},
+	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24},
+	Update:       []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 24},
+	Returning:    nil,
+	Version:      22,
+	AutoID:       0,
+	AutoCreate:   23,
+	AutoUpdate:   24,
+	IDPrefix:     "idp_",
+	New:          newIdentityProvider,
+	NewN:         newNIdentityProvider,
+	Size:         unsafe.Sizeof(iam.IdentityProvider{}),
+	Ptr:          ptrIdentityProvider,
+	Value:        valueIdentityProvider,
+	BeforeCreate: beforeCreateIdentityProvider,
+	BeforeUpdate: beforeUpdateIdentityProvider,
+	BeforeSave:   beforeSaveIdentityProvider,
 }
 
 var identityProvidersRef = keel.Ref{Table: &identityProvidersTable}
@@ -1079,6 +1106,14 @@ func valueIdentityProvider(p unsafe.Pointer, c int32) any {
 		return r.UpdatedAt
 	}
 	return nil
+}
+
+func beforeCreateIdentityProvider(ctx context.Context, p unsafe.Pointer) error {
+	return (*iam.IdentityProvider)(p).BeforeCreate(ctx)
+}
+
+func beforeUpdateIdentityProvider(ctx context.Context, p unsafe.Pointer) error {
+	return (*iam.IdentityProvider)(p).BeforeUpdate(ctx)
 }
 
 func beforeSaveIdentityProvider(ctx context.Context, p unsafe.Pointer) error {
@@ -1609,22 +1644,24 @@ var riskDecisionsTable = schema.Table{
 		{Name: "reason", Quoted: `"reason"`, Field: "Reason", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Reason`, JSON: `reason`},
 		{Name: "created_at", Quoted: `"created_at"`, Field: "CreatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoCreate, Label: `Created At`, JSON: `createdAt`},
 	},
-	PK:         []int32{0},
-	Tenant:     nil,
-	Select:     []int32{0, 1, 2, 3, 4, 5, 6, 7},
-	Insert:     []int32{0, 1, 2, 3, 4, 5, 6, 7},
-	Update:     []int32{1, 2, 3, 4, 5, 6},
-	Returning:  nil,
-	Version:    -1,
-	AutoID:     0,
-	AutoCreate: 7,
-	AutoUpdate: -1,
-	IDPrefix:   "rsk_",
-	New:        newRiskDecision,
-	NewN:       newNRiskDecision,
-	Size:       unsafe.Sizeof(iam.RiskDecision{}),
-	Ptr:        ptrRiskDecision,
-	Value:      valueRiskDecision,
+	PK:           []int32{0},
+	Tenant:       nil,
+	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7},
+	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7},
+	Update:       []int32{1, 2, 3, 4, 5, 6},
+	Returning:    nil,
+	Version:      -1,
+	AutoID:       0,
+	AutoCreate:   7,
+	AutoUpdate:   -1,
+	IDPrefix:     "rsk_",
+	New:          newRiskDecision,
+	NewN:         newNRiskDecision,
+	Size:         unsafe.Sizeof(iam.RiskDecision{}),
+	Ptr:          ptrRiskDecision,
+	Value:        valueRiskDecision,
+	BeforeCreate: beforeCreateRiskDecision,
+	BeforeUpdate: beforeUpdateRiskDecision,
 }
 
 var riskDecisionsRef = keel.Ref{Table: &riskDecisionsTable}
@@ -1748,6 +1785,14 @@ func valueRiskDecision(p unsafe.Pointer, c int32) any {
 		return r.CreatedAt
 	}
 	return nil
+}
+
+func beforeCreateRiskDecision(ctx context.Context, p unsafe.Pointer) error {
+	return (*iam.RiskDecision)(p).BeforeCreate(ctx)
+}
+
+func beforeUpdateRiskDecision(ctx context.Context, p unsafe.Pointer) error {
+	return (*iam.RiskDecision)(p).BeforeUpdate(ctx)
 }
 
 // sCIMDirectoriesTable is the schema of iam.SCIMDirectory.

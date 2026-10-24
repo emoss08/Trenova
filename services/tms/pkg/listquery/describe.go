@@ -1,7 +1,6 @@
 package listquery
 
 import (
-
 	"github.com/emoss08/keel/schema"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 )

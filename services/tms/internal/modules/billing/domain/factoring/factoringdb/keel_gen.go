@@ -515,23 +515,22 @@ var feeTiersTable = schema.Table{
 		{Name: "rate_bp", Quoted: `"rate_bp"`, Field: "RateBP", Kind: schema.KindInt64, Flags: 0, Label: `Rate BP`, JSON: `rateBp`},
 		{Name: "flat_minor", Quoted: `"flat_minor"`, Field: "FlatMinor", Kind: schema.KindInt64, Flags: 0, Label: `Flat Minor`, JSON: `flatMinor`},
 	},
-	PK:           []int32{0, 1, 2},
-	Tenant:       []int32{1, 2},
-	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7},
-	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7},
-	Update:       []int32{3, 4, 5, 6, 7},
-	Returning:    nil,
-	Version:      -1,
-	AutoID:       0,
-	AutoCreate:   -1,
-	AutoUpdate:   -1,
-	IDPrefix:     "facfee_",
-	New:          newFeeTier,
-	NewN:         newNFeeTier,
-	Size:         unsafe.Sizeof(factoring.FeeTier{}),
-	Ptr:          ptrFeeTier,
-	Value:        valueFeeTier,
-	BeforeCreate: beforeCreateFeeTier,
+	PK:         []int32{0, 1, 2},
+	Tenant:     []int32{1, 2},
+	Select:     []int32{0, 1, 2, 3, 4, 5, 6, 7},
+	Insert:     []int32{0, 1, 2, 3, 4, 5, 6, 7},
+	Update:     []int32{3, 4, 5, 6, 7},
+	Returning:  nil,
+	Version:    -1,
+	AutoID:     0,
+	AutoCreate: -1,
+	AutoUpdate: -1,
+	IDPrefix:   "facfee_",
+	New:        newFeeTier,
+	NewN:       newNFeeTier,
+	Size:       unsafe.Sizeof(factoring.FeeTier{}),
+	Ptr:        ptrFeeTier,
+	Value:      valueFeeTier,
 }
 
 var feeTiersRef = keel.Ref{Table: &feeTiersTable}
@@ -643,10 +642,6 @@ func valueFeeTier(p unsafe.Pointer, c int32) any {
 		return r.FlatMinor
 	}
 	return nil
-}
-
-func beforeCreateFeeTier(ctx context.Context, p unsafe.Pointer) error {
-	return (*factoring.FeeTier)(p).BeforeCreate(ctx)
 }
 
 // invoiceStatesTable is the schema of factoring.InvoiceState.
@@ -1627,6 +1622,7 @@ var remittanceLinesTable = schema.Table{
 	Value:        valueRemittanceLine,
 	Attach:       attachRemittanceLine,
 	BeforeCreate: beforeCreateRemittanceLine,
+	BeforeUpdate: beforeUpdateRemittanceLine,
 }
 
 var remittanceLinesRef = keel.Ref{Table: &remittanceLinesTable}
@@ -1960,6 +1956,10 @@ func attachRemittanceLine(p unsafe.Pointer, rel int32, child unsafe.Pointer) {
 
 func beforeCreateRemittanceLine(ctx context.Context, p unsafe.Pointer) error {
 	return (*factoring.RemittanceLine)(p).BeforeCreate(ctx)
+}
+
+func beforeUpdateRemittanceLine(ctx context.Context, p unsafe.Pointer) error {
+	return (*factoring.RemittanceLine)(p).BeforeUpdate(ctx)
 }
 
 // remittanceProfilesTable is the schema of factoring.RemittanceProfile.

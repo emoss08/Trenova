@@ -264,6 +264,7 @@ var rateZoneMembersTable = schema.Table{
 	Value:        valueRateZoneMember,
 	Attach:       attachRateZoneMember,
 	BeforeCreate: beforeCreateRateZoneMember,
+	BeforeUpdate: beforeUpdateRateZoneMember,
 }
 
 var rateZoneMembersRef = keel.Ref{Table: &rateZoneMembersTable}
@@ -407,6 +408,10 @@ func attachRateZoneMember(p unsafe.Pointer, rel int32, child unsafe.Pointer) {
 
 func beforeCreateRateZoneMember(ctx context.Context, p unsafe.Pointer) error {
 	return (*ratezone.RateZoneMember)(p).BeforeCreate(ctx)
+}
+
+func beforeUpdateRateZoneMember(ctx context.Context, p unsafe.Pointer) error {
+	return (*ratezone.RateZoneMember)(p).BeforeUpdate(ctx)
 }
 
 func init() {

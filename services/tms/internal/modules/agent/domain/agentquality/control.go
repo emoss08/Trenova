@@ -72,11 +72,11 @@ func (c *Control) BeforeCreate(_ context.Context) error {
 	if c.MaxCasesPerAgent == 0 {
 		c.MaxCasesPerAgent = 50
 	}
-	if c.NightlyBudgetUSD == 0 {
-		c.NightlyBudgetUSD = 5.00
+	if c.NightlyBudgetUSD.IsZero() {
+		c.NightlyBudgetUSD = decimal.RequireFromString("5.00")
 	}
-	if c.MonthlyBudgetUSD == 0 {
-		c.MonthlyBudgetUSD = 50.00
+	if c.MonthlyBudgetUSD.IsZero() {
+		c.MonthlyBudgetUSD = decimal.RequireFromString("50.00")
 	}
 	if c.JudgeSampleRate == 0 {
 		c.JudgeSampleRate = 0.2

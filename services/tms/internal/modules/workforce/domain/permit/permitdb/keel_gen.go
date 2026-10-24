@@ -44,24 +44,26 @@ var permitsTable = schema.Table{
 	Relations: []schema.Relation{
 		{Name: "State", Alias: "s", Kind: schema.BelongsTo, Local: []int32{4}, Remote: []int32{0}, Label: `State`, JSON: `state`},
 	},
-	PK:         []int32{0, 1, 2},
-	Tenant:     []int32{1, 2},
-	Select:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13},
-	Insert:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13},
-	Update:     []int32{3, 4, 5, 6, 7, 8, 9, 10, 13},
-	Returning:  nil,
-	Version:    11,
-	AutoID:     0,
-	AutoCreate: 12,
-	AutoUpdate: 13,
-	IDPrefix:   "pmt_",
-	New:        newPermit,
-	NewN:       newNPermit,
-	Size:       unsafe.Sizeof(permit.Permit{}),
-	Ptr:        ptrPermit,
-	Value:      valuePermit,
-	Attach:     attachPermit,
-	BeforeSave: beforeSavePermit,
+	PK:           []int32{0, 1, 2},
+	Tenant:       []int32{1, 2},
+	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13},
+	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13},
+	Update:       []int32{3, 4, 5, 6, 7, 8, 9, 10, 13},
+	Returning:    nil,
+	Version:      11,
+	AutoID:       0,
+	AutoCreate:   12,
+	AutoUpdate:   13,
+	IDPrefix:     "pmt_",
+	New:          newPermit,
+	NewN:         newNPermit,
+	Size:         unsafe.Sizeof(permit.Permit{}),
+	Ptr:          ptrPermit,
+	Value:        valuePermit,
+	Attach:       attachPermit,
+	BeforeCreate: beforeCreatePermit,
+	BeforeUpdate: beforeUpdatePermit,
+	BeforeSave:   beforeSavePermit,
 }
 
 var permitsRef = keel.Ref{Table: &permitsTable}
@@ -248,6 +250,14 @@ func attachPermit(p unsafe.Pointer, rel int32, child unsafe.Pointer) {
 	}
 }
 
+func beforeCreatePermit(ctx context.Context, p unsafe.Pointer) error {
+	return (*permit.Permit)(p).BeforeCreate(ctx)
+}
+
+func beforeUpdatePermit(ctx context.Context, p unsafe.Pointer) error {
+	return (*permit.Permit)(p).BeforeUpdate(ctx)
+}
+
 func beforeSavePermit(ctx context.Context, p unsafe.Pointer) error {
 	return (*permit.Permit)(p).BeforeSave(ctx)
 }
@@ -288,24 +298,26 @@ var requirementsTable = schema.Table{
 		{Name: "State", Alias: "s", Kind: schema.BelongsTo, Local: []int32{4}, Remote: []int32{0}, Label: `State`, JSON: `state`},
 		{Name: "SatisfiedByPermit", Alias: "sbp", Kind: schema.BelongsTo, Local: []int32{14}, Remote: []int32{0}, Label: `Satisfied By Permit`, JSON: `satisfiedByPermit`},
 	},
-	PK:         []int32{0, 1, 2},
-	Tenant:     []int32{1, 2},
-	Select:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21},
-	Insert:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21},
-	Update:     []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 21},
-	Returning:  nil,
-	Version:    19,
-	AutoID:     0,
-	AutoCreate: 20,
-	AutoUpdate: 21,
-	IDPrefix:   "pmr_",
-	New:        newRequirement,
-	NewN:       newNRequirement,
-	Size:       unsafe.Sizeof(permit.Requirement{}),
-	Ptr:        ptrRequirement,
-	Value:      valueRequirement,
-	Attach:     attachRequirement,
-	BeforeSave: beforeSaveRequirement,
+	PK:           []int32{0, 1, 2},
+	Tenant:       []int32{1, 2},
+	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21},
+	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21},
+	Update:       []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 21},
+	Returning:    nil,
+	Version:      19,
+	AutoID:       0,
+	AutoCreate:   20,
+	AutoUpdate:   21,
+	IDPrefix:     "pmr_",
+	New:          newRequirement,
+	NewN:         newNRequirement,
+	Size:         unsafe.Sizeof(permit.Requirement{}),
+	Ptr:          ptrRequirement,
+	Value:        valueRequirement,
+	Attach:       attachRequirement,
+	BeforeCreate: beforeCreateRequirement,
+	BeforeUpdate: beforeUpdateRequirement,
+	BeforeSave:   beforeSaveRequirement,
 }
 
 var requirementsRef = keel.Ref{Table: &requirementsTable}
@@ -553,6 +565,14 @@ func attachRequirement(p unsafe.Pointer, rel int32, child unsafe.Pointer) {
 	case 1:
 		r.SatisfiedByPermit = (*permit.Permit)(child)
 	}
+}
+
+func beforeCreateRequirement(ctx context.Context, p unsafe.Pointer) error {
+	return (*permit.Requirement)(p).BeforeCreate(ctx)
+}
+
+func beforeUpdateRequirement(ctx context.Context, p unsafe.Pointer) error {
+	return (*permit.Requirement)(p).BeforeUpdate(ctx)
 }
 
 func beforeSaveRequirement(ctx context.Context, p unsafe.Pointer) error {

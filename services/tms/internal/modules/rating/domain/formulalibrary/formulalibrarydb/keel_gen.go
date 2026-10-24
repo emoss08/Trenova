@@ -65,6 +65,7 @@ var formulaLibrariesTable = schema.Table{
 	Ptr:          ptrFormulaLibrary,
 	Value:        valueFormulaLibrary,
 	BeforeCreate: beforeCreateFormulaLibrary,
+	BeforeUpdate: beforeUpdateFormulaLibrary,
 	BeforeSave:   beforeSaveFormulaLibrary,
 }
 
@@ -303,6 +304,10 @@ func valueFormulaLibrary(p unsafe.Pointer, c int32) any {
 
 func beforeCreateFormulaLibrary(ctx context.Context, p unsafe.Pointer) error {
 	return (*formulalibrary.FormulaLibrary)(p).BeforeCreate(ctx)
+}
+
+func beforeUpdateFormulaLibrary(ctx context.Context, p unsafe.Pointer) error {
+	return (*formulalibrary.FormulaLibrary)(p).BeforeUpdate(ctx)
 }
 
 func beforeSaveFormulaLibrary(ctx context.Context, p unsafe.Pointer) error {

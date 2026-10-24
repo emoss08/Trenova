@@ -1,9 +1,10 @@
 package inboundmessageservice
 
 import (
-	"github.com/emoss08/trenova/internal/testutil/pagetest"
 	"context"
 	"testing"
+
+	"github.com/emoss08/trenova/internal/testutil/pagetest"
 
 	"github.com/emoss08/trenova/internal/modules/documents/domain/inboundmessage"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/inboundmessageports"

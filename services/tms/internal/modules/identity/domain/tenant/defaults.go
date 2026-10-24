@@ -1,7 +1,6 @@
 package tenant
 
 import (
-
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
 )

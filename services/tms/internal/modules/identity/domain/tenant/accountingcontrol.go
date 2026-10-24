@@ -106,9 +106,6 @@ func (ac *AccountingControl) BeforeCreate(_ context.Context) error {
 	if ac.ReconciliationMode == "" {
 		ac.ReconciliationMode = ReconciliationModeDisabled
 	}
-	if ac.ReconciliationToleranceAmount == 0 {
-		ac.ReconciliationToleranceAmount = 0.0000
-	}
 	if ac.CurrencyMode == "" {
 		ac.CurrencyMode = CurrencyModeSingleCurrency
 	}

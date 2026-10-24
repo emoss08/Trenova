@@ -695,10 +695,6 @@ func TestKeysetAfter_RefusesACursorOfAnotherSort(t *testing.T) {
 	assert.Empty(t, none)
 }
 
-
-
-
-
 func TestCatalog_ResolvesJSONNamesThroughTheSchema(t *testing.T) {
 	t.Parallel()
 

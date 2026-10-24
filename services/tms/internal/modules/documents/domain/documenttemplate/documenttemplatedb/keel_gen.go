@@ -931,24 +931,26 @@ var generatedDocumentsTable = schema.Table{
 		{Name: "Template", Alias: "t", Kind: schema.BelongsTo, Local: []int32{4}, Remote: []int32{0}, Label: `Template`, JSON: `template`},
 		{Name: "TemplateVersion", Alias: "tv", Kind: schema.BelongsTo, Local: []int32{5}, Remote: []int32{0}, Label: `Template Version`, JSON: `templateVersion`},
 	},
-	PK:         []int32{0, 1, 2},
-	Tenant:     []int32{1, 2},
-	Select:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25},
-	Insert:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25},
-	Update:     []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 25},
-	Returning:  nil,
-	Version:    23,
-	AutoID:     0,
-	AutoCreate: 24,
-	AutoUpdate: 25,
-	IDPrefix:   "gd_",
-	New:        newGeneratedDocument,
-	NewN:       newNGeneratedDocument,
-	Size:       unsafe.Sizeof(documenttemplate.GeneratedDocument{}),
-	Ptr:        ptrGeneratedDocument,
-	Value:      valueGeneratedDocument,
-	Attach:     attachGeneratedDocument,
-	BeforeSave: beforeSaveGeneratedDocument,
+	PK:           []int32{0, 1, 2},
+	Tenant:       []int32{1, 2},
+	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25},
+	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25},
+	Update:       []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 25},
+	Returning:    nil,
+	Version:      23,
+	AutoID:       0,
+	AutoCreate:   24,
+	AutoUpdate:   25,
+	IDPrefix:     "gd_",
+	New:          newGeneratedDocument,
+	NewN:         newNGeneratedDocument,
+	Size:         unsafe.Sizeof(documenttemplate.GeneratedDocument{}),
+	Ptr:          ptrGeneratedDocument,
+	Value:        valueGeneratedDocument,
+	Attach:       attachGeneratedDocument,
+	BeforeCreate: beforeCreateGeneratedDocument,
+	BeforeUpdate: beforeUpdateGeneratedDocument,
+	BeforeSave:   beforeSaveGeneratedDocument,
 }
 
 var generatedDocumentsRef = keel.Ref{Table: &generatedDocumentsTable}
@@ -1255,6 +1257,14 @@ func attachGeneratedDocument(p unsafe.Pointer, rel int32, child unsafe.Pointer) 
 	case 1:
 		r.TemplateVersion = (*documenttemplate.DocumentTemplateVersion)(child)
 	}
+}
+
+func beforeCreateGeneratedDocument(ctx context.Context, p unsafe.Pointer) error {
+	return (*documenttemplate.GeneratedDocument)(p).BeforeCreate(ctx)
+}
+
+func beforeUpdateGeneratedDocument(ctx context.Context, p unsafe.Pointer) error {
+	return (*documenttemplate.GeneratedDocument)(p).BeforeUpdate(ctx)
 }
 
 func beforeSaveGeneratedDocument(ctx context.Context, p unsafe.Pointer) error {

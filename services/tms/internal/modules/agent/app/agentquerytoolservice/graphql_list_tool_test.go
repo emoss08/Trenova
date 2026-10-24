@@ -1,13 +1,14 @@
 package agentquerytoolservice_test
 
 import (
-	"github.com/emoss08/trenova/internal/testutil/pagetest"
 	"context"
 	"errors"
 	"slices"
 	"strings"
 	"sync"
 	"testing"
+
+	"github.com/emoss08/trenova/internal/testutil/pagetest"
 
 	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/internal/api/graphql/agentread"

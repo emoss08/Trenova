@@ -32,7 +32,7 @@ var invoiceAdjustmentsTable = schema.Table{
 	Doc:    `Credit memos and rebills against an issued invoice`,
 	Report: &schema.TableReport{Category: `Billing`},
 	Columns: []schema.Column{
-		{Name: "id", Quoted: `"id"`, Field: "ID", Kind: schema.KindString, Flags: schema.FlagPK, Label: `ID`, JSON: `id`, Report: &reportDimString},
+		{Name: "id", Quoted: `"id"`, Field: "ID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagAutoID, Label: `ID`, JSON: `id`, Report: &reportDimString},
 		{Name: "organization_id", Quoted: `"organization_id"`, Field: "OrganizationID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Organization ID`, JSON: `organizationId`, Report: &reportDimStringHidden},
 		{Name: "business_unit_id", Quoted: `"business_unit_id"`, Field: "BusinessUnitID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Business Unit ID`, JSON: `businessUnitId`, Report: &reportDimStringHidden},
 		{Name: "correction_group_id", Quoted: `"correction_group_id"`, Field: "CorrectionGroupID", Kind: schema.KindString, Flags: 0, Label: `Correction Group ID`, JSON: `correctionGroupId`, Report: &reportDimString},
@@ -70,7 +70,7 @@ var invoiceAdjustmentsTable = schema.Table{
 		{Name: "execution_error", Quoted: `"execution_error"`, Field: "ExecutionError", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Execution Error`, JSON: `executionError`, Report: &reportDimStringHidden},
 		{Name: "metadata", Quoted: `"metadata"`, Field: "Metadata", Kind: schema.KindJSON, Flags: schema.FlagJSONB, Label: `Metadata`, JSON: `metadata`, Report: &reportDimJsonbHidden},
 		{Name: "version", Quoted: `"version"`, Field: "Version", Kind: schema.KindInt64, Flags: schema.FlagVersion, Label: `Version`, JSON: `version`, Report: &reportMeasureIntegerHidden},
-		{Name: "created_at", Quoted: `"created_at"`, Field: "CreatedAt", Kind: schema.KindInt64, Flags: 0, Label: `Created At`, JSON: `createdAt`, Report: &reportDimEpoch},
+		{Name: "created_at", Quoted: `"created_at"`, Field: "CreatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoCreate, Label: `Created At`, JSON: `createdAt`, Report: &reportDimEpoch},
 		{Name: "updated_at", Quoted: `"updated_at"`, Field: "UpdatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoUpdate, Label: `Updated At`, JSON: `updatedAt`, Report: &reportDimEpoch},
 	},
 	Relations: []schema.Relation{
@@ -90,13 +90,13 @@ var invoiceAdjustmentsTable = schema.Table{
 	Tenant:       []int32{1, 2},
 	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39},
 	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39},
-	Update:       []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 38, 39},
+	Update:       []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 39},
 	Returning:    nil,
 	Version:      37,
-	AutoID:       -1,
-	AutoCreate:   -1,
+	AutoID:       0,
+	AutoCreate:   38,
 	AutoUpdate:   39,
-	IDPrefix:     "",
+	IDPrefix:     "iadj_",
 	New:          newInvoiceAdjustment,
 	NewN:         newNInvoiceAdjustment,
 	Size:         unsafe.Sizeof(invoiceadjustment.InvoiceAdjustment{}),
@@ -584,7 +584,7 @@ var invoiceAdjustmentBatchesTable = schema.Table{
 	Label:  `Invoice Adjustment Batch`,
 	Plural: `Invoice Adjustment Batches`,
 	Columns: []schema.Column{
-		{Name: "id", Quoted: `"id"`, Field: "ID", Kind: schema.KindString, Flags: schema.FlagPK, Label: `ID`, JSON: `id`},
+		{Name: "id", Quoted: `"id"`, Field: "ID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagAutoID, Label: `ID`, JSON: `id`},
 		{Name: "organization_id", Quoted: `"organization_id"`, Field: "OrganizationID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Organization ID`, JSON: `organizationId`},
 		{Name: "business_unit_id", Quoted: `"business_unit_id"`, Field: "BusinessUnitID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Business Unit ID`, JSON: `businessUnitId`},
 		{Name: "idempotency_key", Quoted: `"idempotency_key"`, Field: "IdempotencyKey", Kind: schema.KindString, Flags: 0, Label: `Idempotency Key`, JSON: `idempotencyKey`},
@@ -601,7 +601,7 @@ var invoiceAdjustmentBatchesTable = schema.Table{
 		{Name: "last_failure_count", Quoted: `"last_failure_count"`, Field: "LastFailureCount", Kind: schema.KindInt64, Flags: schema.FlagComputed, Label: `Last Failure Count`, JSON: `lastFailureCount`},
 		{Name: "metadata", Quoted: `"metadata"`, Field: "Metadata", Kind: schema.KindJSON, Flags: schema.FlagJSONB, Label: `Metadata`, JSON: `metadata`},
 		{Name: "version", Quoted: `"version"`, Field: "Version", Kind: schema.KindInt64, Flags: schema.FlagVersion, Label: `Version`, JSON: `version`},
-		{Name: "created_at", Quoted: `"created_at"`, Field: "CreatedAt", Kind: schema.KindInt64, Flags: 0, Label: `Created At`, JSON: `createdAt`},
+		{Name: "created_at", Quoted: `"created_at"`, Field: "CreatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoCreate, Label: `Created At`, JSON: `createdAt`},
 		{Name: "updated_at", Quoted: `"updated_at"`, Field: "UpdatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoUpdate, Label: `Updated At`, JSON: `updatedAt`},
 	},
 	Relations: []schema.Relation{
@@ -612,13 +612,13 @@ var invoiceAdjustmentBatchesTable = schema.Table{
 	Tenant:       []int32{1, 2},
 	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 15, 16, 17, 18},
 	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 15, 16, 17, 18},
-	Update:       []int32{3, 4, 5, 6, 7, 8, 9, 10, 15, 17, 18},
+	Update:       []int32{3, 4, 5, 6, 7, 8, 9, 10, 15, 18},
 	Returning:    nil,
 	Version:      16,
-	AutoID:       -1,
-	AutoCreate:   -1,
+	AutoID:       0,
+	AutoCreate:   17,
 	AutoUpdate:   18,
-	IDPrefix:     "",
+	IDPrefix:     "iadjb_",
 	New:          newInvoiceAdjustmentBatch,
 	NewN:         newNInvoiceAdjustmentBatch,
 	Size:         unsafe.Sizeof(invoiceadjustment.InvoiceAdjustmentBatch{}),
@@ -857,7 +857,7 @@ var invoiceAdjustmentBatchItemsTable = schema.Table{
 	Label:  `Invoice Adjustment Batch Item`,
 	Plural: `Invoice Adjustment Batch Items`,
 	Columns: []schema.Column{
-		{Name: "id", Quoted: `"id"`, Field: "ID", Kind: schema.KindString, Flags: schema.FlagPK, Label: `ID`, JSON: `id`},
+		{Name: "id", Quoted: `"id"`, Field: "ID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagAutoID, Label: `ID`, JSON: `id`},
 		{Name: "organization_id", Quoted: `"organization_id"`, Field: "OrganizationID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Organization ID`, JSON: `organizationId`},
 		{Name: "business_unit_id", Quoted: `"business_unit_id"`, Field: "BusinessUnitID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Business Unit ID`, JSON: `businessUnitId`},
 		{Name: "batch_id", Quoted: `"batch_id"`, Field: "BatchID", Kind: schema.KindString, Flags: 0, Label: `Batch ID`, JSON: `batchId`},
@@ -868,20 +868,20 @@ var invoiceAdjustmentBatchItemsTable = schema.Table{
 		{Name: "error_message", Quoted: `"error_message"`, Field: "ErrorMessage", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Error Message`, JSON: `errorMessage`},
 		{Name: "request_payload", Quoted: `"request_payload"`, Field: "RequestPayload", Kind: schema.KindJSON, Flags: schema.FlagJSONB, Label: `Request Payload`, JSON: `requestPayload`},
 		{Name: "result_payload", Quoted: `"result_payload"`, Field: "ResultPayload", Kind: schema.KindJSON, Flags: schema.FlagJSONB, Label: `Result Payload`, JSON: `resultPayload`},
-		{Name: "created_at", Quoted: `"created_at"`, Field: "CreatedAt", Kind: schema.KindInt64, Flags: 0, Label: `Created At`, JSON: `createdAt`},
+		{Name: "created_at", Quoted: `"created_at"`, Field: "CreatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoCreate, Label: `Created At`, JSON: `createdAt`},
 		{Name: "updated_at", Quoted: `"updated_at"`, Field: "UpdatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoUpdate, Label: `Updated At`, JSON: `updatedAt`},
 	},
 	PK:           []int32{0, 1, 2},
 	Tenant:       []int32{1, 2},
 	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12},
 	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12},
-	Update:       []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12},
+	Update:       []int32{3, 4, 5, 6, 7, 8, 9, 10, 12},
 	Returning:    nil,
 	Version:      -1,
-	AutoID:       -1,
-	AutoCreate:   -1,
+	AutoID:       0,
+	AutoCreate:   11,
 	AutoUpdate:   12,
-	IDPrefix:     "",
+	IDPrefix:     "iadjbi_",
 	New:          newInvoiceAdjustmentBatchItem,
 	NewN:         newNInvoiceAdjustmentBatchItem,
 	Size:         unsafe.Sizeof(invoiceadjustment.InvoiceAdjustmentBatchItem{}),
@@ -1060,32 +1060,31 @@ var invoiceAdjustmentCorrectionGroupsTable = schema.Table{
 	Label:  `Invoice Adjustment Correction Group`,
 	Plural: `Invoice Adjustment Correction Groups`,
 	Columns: []schema.Column{
-		{Name: "id", Quoted: `"id"`, Field: "ID", Kind: schema.KindString, Flags: schema.FlagPK, Label: `ID`, JSON: `id`},
+		{Name: "id", Quoted: `"id"`, Field: "ID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagAutoID, Label: `ID`, JSON: `id`},
 		{Name: "organization_id", Quoted: `"organization_id"`, Field: "OrganizationID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Organization ID`, JSON: `organizationId`},
 		{Name: "business_unit_id", Quoted: `"business_unit_id"`, Field: "BusinessUnitID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Business Unit ID`, JSON: `businessUnitId`},
 		{Name: "root_invoice_id", Quoted: `"root_invoice_id"`, Field: "RootInvoiceID", Kind: schema.KindString, Flags: 0, Label: `Root Invoice ID`, JSON: `rootInvoiceId`},
 		{Name: "current_invoice_id", Quoted: `"current_invoice_id"`, Field: "CurrentInvoiceID", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Current Invoice ID`, JSON: `currentInvoiceId`},
 		{Name: "metadata", Quoted: `"metadata"`, Field: "Metadata", Kind: schema.KindJSON, Flags: schema.FlagJSONB, Label: `Metadata`, JSON: `metadata`},
-		{Name: "created_at", Quoted: `"created_at"`, Field: "CreatedAt", Kind: schema.KindInt64, Flags: 0, Label: `Created At`, JSON: `createdAt`},
+		{Name: "created_at", Quoted: `"created_at"`, Field: "CreatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoCreate, Label: `Created At`, JSON: `createdAt`},
 		{Name: "updated_at", Quoted: `"updated_at"`, Field: "UpdatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoUpdate, Label: `Updated At`, JSON: `updatedAt`},
 	},
-	PK:           []int32{0, 1, 2},
-	Tenant:       []int32{1, 2},
-	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7},
-	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7},
-	Update:       []int32{3, 4, 5, 6, 7},
-	Returning:    nil,
-	Version:      -1,
-	AutoID:       -1,
-	AutoCreate:   -1,
-	AutoUpdate:   7,
-	IDPrefix:     "",
-	New:          newInvoiceAdjustmentCorrectionGroup,
-	NewN:         newNInvoiceAdjustmentCorrectionGroup,
-	Size:         unsafe.Sizeof(invoiceadjustment.InvoiceAdjustmentCorrectionGroup{}),
-	Ptr:          ptrInvoiceAdjustmentCorrectionGroup,
-	Value:        valueInvoiceAdjustmentCorrectionGroup,
-	BeforeCreate: beforeCreateInvoiceAdjustmentCorrectionGroup,
+	PK:         []int32{0, 1, 2},
+	Tenant:     []int32{1, 2},
+	Select:     []int32{0, 1, 2, 3, 4, 5, 6, 7},
+	Insert:     []int32{0, 1, 2, 3, 4, 5, 6, 7},
+	Update:     []int32{3, 4, 5, 7},
+	Returning:  nil,
+	Version:    -1,
+	AutoID:     0,
+	AutoCreate: 6,
+	AutoUpdate: 7,
+	IDPrefix:   "icg_",
+	New:        newInvoiceAdjustmentCorrectionGroup,
+	NewN:       newNInvoiceAdjustmentCorrectionGroup,
+	Size:       unsafe.Sizeof(invoiceadjustment.InvoiceAdjustmentCorrectionGroup{}),
+	Ptr:        ptrInvoiceAdjustmentCorrectionGroup,
+	Value:      valueInvoiceAdjustmentCorrectionGroup,
 }
 
 var invoiceAdjustmentCorrectionGroupsRef = keel.Ref{Table: &invoiceAdjustmentCorrectionGroupsTable}
@@ -1206,10 +1205,6 @@ func valueInvoiceAdjustmentCorrectionGroup(p unsafe.Pointer, c int32) any {
 	return nil
 }
 
-func beforeCreateInvoiceAdjustmentCorrectionGroup(ctx context.Context, p unsafe.Pointer) error {
-	return (*invoiceadjustment.InvoiceAdjustmentCorrectionGroup)(p).BeforeCreate(ctx)
-}
-
 // invoiceAdjustmentDocumentReferencesTable is the schema of invoiceadjustment.InvoiceAdjustmentDocumentReference.
 var invoiceAdjustmentDocumentReferencesTable = schema.Table{
 	Name:   "invoice_adjustment_document_references",
@@ -1219,7 +1214,7 @@ var invoiceAdjustmentDocumentReferencesTable = schema.Table{
 	Label:  `Invoice Adjustment Document Reference`,
 	Plural: `Invoice Adjustment Document References`,
 	Columns: []schema.Column{
-		{Name: "id", Quoted: `"id"`, Field: "ID", Kind: schema.KindString, Flags: schema.FlagPK, Label: `ID`, JSON: `id`},
+		{Name: "id", Quoted: `"id"`, Field: "ID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagAutoID, Label: `ID`, JSON: `id`},
 		{Name: "organization_id", Quoted: `"organization_id"`, Field: "OrganizationID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Organization ID`, JSON: `organizationId`},
 		{Name: "business_unit_id", Quoted: `"business_unit_id"`, Field: "BusinessUnitID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Business Unit ID`, JSON: `businessUnitId`},
 		{Name: "adjustment_id", Quoted: `"adjustment_id"`, Field: "AdjustmentID", Kind: schema.KindString, Flags: 0, Label: `Adjustment ID`, JSON: `adjustmentId`},
@@ -1232,30 +1227,29 @@ var invoiceAdjustmentDocumentReferencesTable = schema.Table{
 		{Name: "snapshot_resource_type", Quoted: `"snapshot_resource_type"`, Field: "SnapshotResourceType", Kind: schema.KindString, Flags: 0, Label: `Snapshot Resource Type`, JSON: `snapshotResourceType`},
 		{Name: "snapshot_resource_id", Quoted: `"snapshot_resource_id"`, Field: "SnapshotResourceID", Kind: schema.KindString, Flags: 0, Label: `Snapshot Resource ID`, JSON: `snapshotResourceId`},
 		{Name: "version", Quoted: `"version"`, Field: "Version", Kind: schema.KindInt64, Flags: schema.FlagVersion, Label: `Version`, JSON: `version`},
-		{Name: "created_at", Quoted: `"created_at"`, Field: "CreatedAt", Kind: schema.KindInt64, Flags: 0, Label: `Created At`, JSON: `createdAt`},
+		{Name: "created_at", Quoted: `"created_at"`, Field: "CreatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoCreate, Label: `Created At`, JSON: `createdAt`},
 		{Name: "updated_at", Quoted: `"updated_at"`, Field: "UpdatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoUpdate, Label: `Updated At`, JSON: `updatedAt`},
 	},
 	Relations: []schema.Relation{
 		{Name: "Document", Alias: "d", Kind: schema.BelongsTo, Local: []int32{4}, Remote: []int32{0}, Label: `Document`, JSON: `document`},
 	},
-	PK:           []int32{0, 1, 2},
-	Tenant:       []int32{1, 2},
-	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14},
-	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14},
-	Update:       []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 13, 14},
-	Returning:    nil,
-	Version:      12,
-	AutoID:       -1,
-	AutoCreate:   -1,
-	AutoUpdate:   14,
-	IDPrefix:     "",
-	New:          newInvoiceAdjustmentDocumentReference,
-	NewN:         newNInvoiceAdjustmentDocumentReference,
-	Size:         unsafe.Sizeof(invoiceadjustment.InvoiceAdjustmentDocumentReference{}),
-	Ptr:          ptrInvoiceAdjustmentDocumentReference,
-	Value:        valueInvoiceAdjustmentDocumentReference,
-	Attach:       attachInvoiceAdjustmentDocumentReference,
-	BeforeCreate: beforeCreateInvoiceAdjustmentDocumentReference,
+	PK:         []int32{0, 1, 2},
+	Tenant:     []int32{1, 2},
+	Select:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14},
+	Insert:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14},
+	Update:     []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 14},
+	Returning:  nil,
+	Version:    12,
+	AutoID:     0,
+	AutoCreate: 13,
+	AutoUpdate: 14,
+	IDPrefix:   "iadjr_",
+	New:        newInvoiceAdjustmentDocumentReference,
+	NewN:       newNInvoiceAdjustmentDocumentReference,
+	Size:       unsafe.Sizeof(invoiceadjustment.InvoiceAdjustmentDocumentReference{}),
+	Ptr:        ptrInvoiceAdjustmentDocumentReference,
+	Value:      valueInvoiceAdjustmentDocumentReference,
+	Attach:     attachInvoiceAdjustmentDocumentReference,
 }
 
 var invoiceAdjustmentDocumentReferencesRef = keel.Ref{Table: &invoiceAdjustmentDocumentReferencesTable}
@@ -1438,10 +1432,6 @@ func attachInvoiceAdjustmentDocumentReference(p unsafe.Pointer, rel int32, child
 	}
 }
 
-func beforeCreateInvoiceAdjustmentDocumentReference(ctx context.Context, p unsafe.Pointer) error {
-	return (*invoiceadjustment.InvoiceAdjustmentDocumentReference)(p).BeforeCreate(ctx)
-}
-
 // invoiceAdjustmentLinesTable is the schema of invoiceadjustment.InvoiceAdjustmentLine.
 var invoiceAdjustmentLinesTable = schema.Table{
 	Name:   "invoice_adjustment_lines",
@@ -1453,7 +1443,7 @@ var invoiceAdjustmentLinesTable = schema.Table{
 	Doc:    `Per-charge credit and rebill detail behind an adjustment`,
 	Report: &schema.TableReport{Category: `Billing`},
 	Columns: []schema.Column{
-		{Name: "id", Quoted: `"id"`, Field: "ID", Kind: schema.KindString, Flags: schema.FlagPK, Label: `ID`, JSON: `id`, Report: &reportDimString},
+		{Name: "id", Quoted: `"id"`, Field: "ID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagAutoID, Label: `ID`, JSON: `id`, Report: &reportDimString},
 		{Name: "organization_id", Quoted: `"organization_id"`, Field: "OrganizationID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Organization ID`, JSON: `organizationId`, Report: &reportDimStringHidden},
 		{Name: "business_unit_id", Quoted: `"business_unit_id"`, Field: "BusinessUnitID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Business Unit ID`, JSON: `businessUnitId`, Report: &reportDimStringHidden},
 		{Name: "adjustment_id", Quoted: `"adjustment_id"`, Field: "AdjustmentID", Kind: schema.KindString, Flags: 0, Label: `Adjustment ID`, JSON: `adjustmentId`, Report: &reportDimString},
@@ -1471,26 +1461,25 @@ var invoiceAdjustmentLinesTable = schema.Table{
 		{Name: "rebill_amount", Quoted: `"rebill_amount"`, Field: "RebillAmount", Kind: schema.KindOther, Flags: 0, Label: `Rebill Amount`, JSON: `rebillAmount`, Report: &reportMeasureDecimalMoney},
 		{Name: "rebill_amount_minor", Quoted: `"rebill_amount_minor"`, Field: "RebillAmountMinor", Kind: schema.KindInt64, Flags: 0, Label: `Rebill Amount (Minor)`, JSON: `rebillAmountMinor`, Report: &reportMeasureInteger},
 		{Name: "replacement_payload", Quoted: `"replacement_payload"`, Field: "ReplacementPayload", Kind: schema.KindJSON, Flags: schema.FlagJSONB, Label: `Replacement Payload`, JSON: `replacementPayload`, Report: &reportDimJsonbHidden},
-		{Name: "created_at", Quoted: `"created_at"`, Field: "CreatedAt", Kind: schema.KindInt64, Flags: 0, Label: `Created At`, JSON: `createdAt`, Report: &reportDimEpoch},
+		{Name: "created_at", Quoted: `"created_at"`, Field: "CreatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoCreate, Label: `Created At`, JSON: `createdAt`, Report: &reportDimEpoch},
 		{Name: "updated_at", Quoted: `"updated_at"`, Field: "UpdatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoUpdate, Label: `Updated At`, JSON: `updatedAt`, Report: &reportDimEpoch},
 	},
-	PK:           []int32{0, 1, 2},
-	Tenant:       []int32{1, 2},
-	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19},
-	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19},
-	Update:       []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19},
-	Returning:    nil,
-	Version:      -1,
-	AutoID:       -1,
-	AutoCreate:   -1,
-	AutoUpdate:   19,
-	IDPrefix:     "",
-	New:          newInvoiceAdjustmentLine,
-	NewN:         newNInvoiceAdjustmentLine,
-	Size:         unsafe.Sizeof(invoiceadjustment.InvoiceAdjustmentLine{}),
-	Ptr:          ptrInvoiceAdjustmentLine,
-	Value:        valueInvoiceAdjustmentLine,
-	BeforeCreate: beforeCreateInvoiceAdjustmentLine,
+	PK:         []int32{0, 1, 2},
+	Tenant:     []int32{1, 2},
+	Select:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19},
+	Insert:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19},
+	Update:     []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 19},
+	Returning:  nil,
+	Version:    -1,
+	AutoID:     0,
+	AutoCreate: 18,
+	AutoUpdate: 19,
+	IDPrefix:   "iadjl_",
+	New:        newInvoiceAdjustmentLine,
+	NewN:       newNInvoiceAdjustmentLine,
+	Size:       unsafe.Sizeof(invoiceadjustment.InvoiceAdjustmentLine{}),
+	Ptr:        ptrInvoiceAdjustmentLine,
+	Value:      valueInvoiceAdjustmentLine,
 }
 
 var invoiceAdjustmentLinesRef = keel.Ref{Table: &invoiceAdjustmentLinesTable}
@@ -1696,10 +1685,6 @@ func valueInvoiceAdjustmentLine(p unsafe.Pointer, c int32) any {
 	return nil
 }
 
-func beforeCreateInvoiceAdjustmentLine(ctx context.Context, p unsafe.Pointer) error {
-	return (*invoiceadjustment.InvoiceAdjustmentLine)(p).BeforeCreate(ctx)
-}
-
 // invoiceAdjustmentReconciliationExceptionsTable is the schema of invoiceadjustment.InvoiceAdjustmentReconciliationException.
 var invoiceAdjustmentReconciliationExceptionsTable = schema.Table{
 	Name:   "invoice_reconciliation_exceptions",
@@ -1709,7 +1694,7 @@ var invoiceAdjustmentReconciliationExceptionsTable = schema.Table{
 	Label:  `Invoice Adjustment Reconciliation Exception`,
 	Plural: `Invoice Adjustment Reconciliation Exceptions`,
 	Columns: []schema.Column{
-		{Name: "id", Quoted: `"id"`, Field: "ID", Kind: schema.KindString, Flags: schema.FlagPK, Label: `ID`, JSON: `id`},
+		{Name: "id", Quoted: `"id"`, Field: "ID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagAutoID, Label: `ID`, JSON: `id`},
 		{Name: "organization_id", Quoted: `"organization_id"`, Field: "OrganizationID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Organization ID`, JSON: `organizationId`},
 		{Name: "business_unit_id", Quoted: `"business_unit_id"`, Field: "BusinessUnitID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Business Unit ID`, JSON: `businessUnitId`},
 		{Name: "adjustment_id", Quoted: `"adjustment_id"`, Field: "AdjustmentID", Kind: schema.KindString, Flags: 0, Label: `Adjustment ID`, JSON: `adjustmentId`},
@@ -1719,7 +1704,7 @@ var invoiceAdjustmentReconciliationExceptionsTable = schema.Table{
 		{Name: "reason", Quoted: `"reason"`, Field: "Reason", Kind: schema.KindString, Flags: 0, Label: `Reason`, JSON: `reason`},
 		{Name: "amount", Quoted: `"amount"`, Field: "Amount", Kind: schema.KindOther, Flags: 0, Label: `Amount`, JSON: `amount`},
 		{Name: "metadata", Quoted: `"metadata"`, Field: "Metadata", Kind: schema.KindJSON, Flags: schema.FlagJSONB, Label: `Metadata`, JSON: `metadata`},
-		{Name: "created_at", Quoted: `"created_at"`, Field: "CreatedAt", Kind: schema.KindInt64, Flags: 0, Label: `Created At`, JSON: `createdAt`},
+		{Name: "created_at", Quoted: `"created_at"`, Field: "CreatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoCreate, Label: `Created At`, JSON: `createdAt`},
 		{Name: "updated_at", Quoted: `"updated_at"`, Field: "UpdatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoUpdate, Label: `Updated At`, JSON: `updatedAt`},
 	},
 	Relations: []schema.Relation{
@@ -1730,13 +1715,13 @@ var invoiceAdjustmentReconciliationExceptionsTable = schema.Table{
 	Tenant:       []int32{1, 2},
 	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11},
 	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11},
-	Update:       []int32{3, 4, 5, 6, 7, 8, 9, 10, 11},
+	Update:       []int32{3, 4, 5, 6, 7, 8, 9, 11},
 	Returning:    nil,
 	Version:      -1,
-	AutoID:       -1,
-	AutoCreate:   -1,
+	AutoID:       0,
+	AutoCreate:   10,
 	AutoUpdate:   11,
-	IDPrefix:     "",
+	IDPrefix:     "irex_",
 	New:          newInvoiceAdjustmentReconciliationException,
 	NewN:         newNInvoiceAdjustmentReconciliationException,
 	Size:         unsafe.Sizeof(invoiceadjustment.InvoiceAdjustmentReconciliationException{}),
@@ -1925,7 +1910,7 @@ var invoiceAdjustmentSnapshotsTable = schema.Table{
 	Label:  `Invoice Adjustment Snapshot`,
 	Plural: `Invoice Adjustment Snapshots`,
 	Columns: []schema.Column{
-		{Name: "id", Quoted: `"id"`, Field: "ID", Kind: schema.KindString, Flags: schema.FlagPK, Label: `ID`, JSON: `id`},
+		{Name: "id", Quoted: `"id"`, Field: "ID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagAutoID, Label: `ID`, JSON: `id`},
 		{Name: "organization_id", Quoted: `"organization_id"`, Field: "OrganizationID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Organization ID`, JSON: `organizationId`},
 		{Name: "business_unit_id", Quoted: `"business_unit_id"`, Field: "BusinessUnitID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Business Unit ID`, JSON: `businessUnitId`},
 		{Name: "adjustment_id", Quoted: `"adjustment_id"`, Field: "AdjustmentID", Kind: schema.KindString, Flags: 0, Label: `Adjustment ID`, JSON: `adjustmentId`},
@@ -1933,25 +1918,24 @@ var invoiceAdjustmentSnapshotsTable = schema.Table{
 		{Name: "kind", Quoted: `"kind"`, Field: "Kind", Kind: schema.KindString, Flags: 0, Label: `Kind`, JSON: `kind`, Enum: enumSnapshotKind[:]},
 		{Name: "payload", Quoted: `"payload"`, Field: "Payload", Kind: schema.KindJSON, Flags: schema.FlagJSONB, Label: `Payload`, JSON: `payload`},
 		{Name: "created_by_id", Quoted: `"created_by_id"`, Field: "CreatedByID", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Created By ID`, JSON: `createdById`},
-		{Name: "created_at", Quoted: `"created_at"`, Field: "CreatedAt", Kind: schema.KindInt64, Flags: 0, Label: `Created At`, JSON: `createdAt`},
+		{Name: "created_at", Quoted: `"created_at"`, Field: "CreatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoCreate, Label: `Created At`, JSON: `createdAt`},
 	},
-	PK:           []int32{0, 1, 2},
-	Tenant:       []int32{1, 2},
-	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8},
-	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8},
-	Update:       []int32{3, 4, 5, 6, 7, 8},
-	Returning:    nil,
-	Version:      -1,
-	AutoID:       -1,
-	AutoCreate:   -1,
-	AutoUpdate:   -1,
-	IDPrefix:     "",
-	New:          newInvoiceAdjustmentSnapshot,
-	NewN:         newNInvoiceAdjustmentSnapshot,
-	Size:         unsafe.Sizeof(invoiceadjustment.InvoiceAdjustmentSnapshot{}),
-	Ptr:          ptrInvoiceAdjustmentSnapshot,
-	Value:        valueInvoiceAdjustmentSnapshot,
-	BeforeCreate: beforeCreateInvoiceAdjustmentSnapshot,
+	PK:         []int32{0, 1, 2},
+	Tenant:     []int32{1, 2},
+	Select:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8},
+	Insert:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8},
+	Update:     []int32{3, 4, 5, 6, 7},
+	Returning:  nil,
+	Version:    -1,
+	AutoID:     0,
+	AutoCreate: 8,
+	AutoUpdate: -1,
+	IDPrefix:   "iadjs_",
+	New:        newInvoiceAdjustmentSnapshot,
+	NewN:       newNInvoiceAdjustmentSnapshot,
+	Size:       unsafe.Sizeof(invoiceadjustment.InvoiceAdjustmentSnapshot{}),
+	Ptr:        ptrInvoiceAdjustmentSnapshot,
+	Value:      valueInvoiceAdjustmentSnapshot,
 }
 
 var invoiceAdjustmentSnapshotsRef = keel.Ref{Table: &invoiceAdjustmentSnapshotsTable}
@@ -2075,10 +2059,6 @@ func valueInvoiceAdjustmentSnapshot(p unsafe.Pointer, c int32) any {
 		return r.CreatedAt
 	}
 	return nil
-}
-
-func beforeCreateInvoiceAdjustmentSnapshot(ctx context.Context, p unsafe.Pointer) error {
-	return (*invoiceadjustment.InvoiceAdjustmentSnapshot)(p).BeforeCreate(ctx)
 }
 
 func init() {

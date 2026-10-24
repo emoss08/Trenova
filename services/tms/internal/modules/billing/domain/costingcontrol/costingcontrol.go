@@ -118,8 +118,8 @@ func (cc *CostingControl) GetBusinessUnitID() pulid.ID {
 }
 
 func (cc *CostingControl) BeforeCreate(ctx context.Context) error {
-	if cc.MilesPerGallon == 0 {
-		cc.MilesPerGallon = 6.5
+	if cc.MilesPerGallon.IsZero() {
+		cc.MilesPerGallon = decimal.RequireFromString("6.5")
 	}
 	if cc.GLRollingMonths == 0 {
 		cc.GLRollingMonths = 3

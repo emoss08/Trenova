@@ -230,7 +230,6 @@ func (q *WorkerClearinghouseQuery) BeforeCreate(_ context.Context) error {
 	if q.RequestedAt == 0 {
 		q.RequestedAt = now
 	}
-	now := timeutils.NowUnix()
 
 	return nil
 }

@@ -41,23 +41,24 @@ var equipmentManufacturersTable = schema.Table{
 		{Name: "BusinessUnit", Alias: "bu", Kind: schema.BelongsTo, Local: []int32{1}, Remote: []int32{0}, Label: `Business Unit`, Doc: `Relationships`, JSON: `businessUnit`, NoReport: true},
 		{Name: "Organization", Alias: "o", Kind: schema.BelongsTo, Local: []int32{2}, Remote: []int32{0}, Label: `Organization`, JSON: `organization`, NoReport: true},
 	},
-	PK:         []int32{0, 1, 2},
-	Tenant:     []int32{1, 2},
-	Select:     []int32{0, 1, 2, 3, 4, 5, 7, 8, 9},
-	Insert:     []int32{0, 1, 2, 3, 4, 5, 7, 8, 9},
-	Update:     []int32{3, 4, 5, 9},
-	Returning:  nil,
-	Version:    7,
-	AutoID:     0,
-	AutoCreate: 8,
-	AutoUpdate: 9,
-	IDPrefix:   "em_",
-	New:        newEquipmentManufacturer,
-	NewN:       newNEquipmentManufacturer,
-	Size:       unsafe.Sizeof(equipmentmanufacturer.EquipmentManufacturer{}),
-	Ptr:        ptrEquipmentManufacturer,
-	Value:      valueEquipmentManufacturer,
-	Attach:     attachEquipmentManufacturer,
+	PK:           []int32{0, 1, 2},
+	Tenant:       []int32{1, 2},
+	Select:       []int32{0, 1, 2, 3, 4, 5, 7, 8, 9},
+	Insert:       []int32{0, 1, 2, 3, 4, 5, 7, 8, 9},
+	Update:       []int32{3, 4, 5, 9},
+	Returning:    nil,
+	Version:      7,
+	AutoID:       0,
+	AutoCreate:   8,
+	AutoUpdate:   9,
+	IDPrefix:     "em_",
+	New:          newEquipmentManufacturer,
+	NewN:         newNEquipmentManufacturer,
+	Size:         unsafe.Sizeof(equipmentmanufacturer.EquipmentManufacturer{}),
+	Ptr:          ptrEquipmentManufacturer,
+	Value:        valueEquipmentManufacturer,
+	Attach:       attachEquipmentManufacturer,
+	BeforeCreate: beforeCreateEquipmentManufacturer,
 }
 
 var equipmentManufacturersRef = keel.Ref{Table: &equipmentManufacturersTable}
@@ -205,6 +206,10 @@ func attachEquipmentManufacturer(p unsafe.Pointer, rel int32, child unsafe.Point
 	case 1:
 		r.Organization = (*tenant.Organization)(child)
 	}
+}
+
+func beforeCreateEquipmentManufacturer(ctx context.Context, p unsafe.Pointer) error {
+	return (*equipmentmanufacturer.EquipmentManufacturer)(p).BeforeCreate(ctx)
 }
 
 func init() {

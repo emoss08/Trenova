@@ -51,23 +51,24 @@ var hazmatSegregationRulesTable = schema.Table{
 		{Name: "HazmatAMaterial", Alias: "ham", Kind: schema.BelongsTo, Local: []int32{19}, Remote: []int32{0}, Label: `Hazmat A Material`, JSON: `hazmatAMaterial`},
 		{Name: "HazmatBMaterial", Alias: "hbm", Kind: schema.BelongsTo, Local: []int32{20}, Remote: []int32{0}, Label: `Hazmat B Material`, JSON: `hazmatBMaterial`},
 	},
-	PK:         []int32{0, 1, 2},
-	Tenant:     []int32{1, 2},
-	Select:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 14, 15, 16, 17, 18, 19, 20, 21},
-	Insert:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 14, 15, 16, 17, 18, 19, 20, 21},
-	Update:     []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 14, 15, 18, 19, 20, 21},
-	Returning:  nil,
-	Version:    16,
-	AutoID:     0,
-	AutoCreate: 17,
-	AutoUpdate: 18,
-	IDPrefix:   "hsr_",
-	New:        newHazmatSegregationRule,
-	NewN:       newNHazmatSegregationRule,
-	Size:       unsafe.Sizeof(hazmatsegregationrule.HazmatSegregationRule{}),
-	Ptr:        ptrHazmatSegregationRule,
-	Value:      valueHazmatSegregationRule,
-	Attach:     attachHazmatSegregationRule,
+	PK:           []int32{0, 1, 2},
+	Tenant:       []int32{1, 2},
+	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 14, 15, 16, 17, 18, 19, 20, 21},
+	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 14, 15, 16, 17, 18, 19, 20, 21},
+	Update:       []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 14, 15, 18, 19, 20, 21},
+	Returning:    nil,
+	Version:      16,
+	AutoID:       0,
+	AutoCreate:   17,
+	AutoUpdate:   18,
+	IDPrefix:     "hsr_",
+	New:          newHazmatSegregationRule,
+	NewN:         newNHazmatSegregationRule,
+	Size:         unsafe.Sizeof(hazmatsegregationrule.HazmatSegregationRule{}),
+	Ptr:          ptrHazmatSegregationRule,
+	Value:        valueHazmatSegregationRule,
+	Attach:       attachHazmatSegregationRule,
+	BeforeCreate: beforeCreateHazmatSegregationRule,
 }
 
 var hazmatSegregationRulesRef = keel.Ref{Table: &hazmatSegregationRulesTable}
@@ -320,6 +321,10 @@ func attachHazmatSegregationRule(p unsafe.Pointer, rel int32, child unsafe.Point
 	case 1:
 		r.HazmatBMaterial = (*hazardousmaterial.HazardousMaterial)(child)
 	}
+}
+
+func beforeCreateHazmatSegregationRule(ctx context.Context, p unsafe.Pointer) error {
+	return (*hazmatsegregationrule.HazmatSegregationRule)(p).BeforeCreate(ctx)
 }
 
 func init() {

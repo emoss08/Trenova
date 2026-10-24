@@ -72,6 +72,7 @@ var formulaTemplatesTable = schema.Table{
 	Value:        valueFormulaTemplate,
 	Attach:       attachFormulaTemplate,
 	BeforeCreate: beforeCreateFormulaTemplate,
+	BeforeUpdate: beforeUpdateFormulaTemplate,
 	BeforeSave:   beforeSaveFormulaTemplate,
 }
 
@@ -360,6 +361,10 @@ func attachFormulaTemplate(p unsafe.Pointer, rel int32, child unsafe.Pointer) {
 
 func beforeCreateFormulaTemplate(ctx context.Context, p unsafe.Pointer) error {
 	return (*formulatemplate.FormulaTemplate)(p).BeforeCreate(ctx)
+}
+
+func beforeUpdateFormulaTemplate(ctx context.Context, p unsafe.Pointer) error {
+	return (*formulatemplate.FormulaTemplate)(p).BeforeUpdate(ctx)
 }
 
 func beforeSaveFormulaTemplate(ctx context.Context, p unsafe.Pointer) error {

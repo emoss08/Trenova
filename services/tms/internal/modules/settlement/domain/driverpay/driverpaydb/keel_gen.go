@@ -554,24 +554,23 @@ var escrowTransactionsTable = schema.Table{
 	Relations: []schema.Relation{
 		{Name: "EscrowAccount", Alias: "ea", Kind: schema.BelongsTo, Local: []int32{3}, Remote: []int32{0}, Label: `Escrow Account`, JSON: `escrowAccount`},
 	},
-	PK:           []int32{0, 1, 2},
-	Tenant:       []int32{1, 2},
-	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11},
-	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11},
-	Update:       []int32{3, 4, 5, 6, 7, 8, 9, 10},
-	Returning:    nil,
-	Version:      -1,
-	AutoID:       0,
-	AutoCreate:   11,
-	AutoUpdate:   -1,
-	IDPrefix:     "esctx_",
-	New:          newEscrowTransaction,
-	NewN:         newNEscrowTransaction,
-	Size:         unsafe.Sizeof(driverpay.EscrowTransaction{}),
-	Ptr:          ptrEscrowTransaction,
-	Value:        valueEscrowTransaction,
-	Attach:       attachEscrowTransaction,
-	BeforeCreate: beforeCreateEscrowTransaction,
+	PK:         []int32{0, 1, 2},
+	Tenant:     []int32{1, 2},
+	Select:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11},
+	Insert:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11},
+	Update:     []int32{3, 4, 5, 6, 7, 8, 9, 10},
+	Returning:  nil,
+	Version:    -1,
+	AutoID:     0,
+	AutoCreate: 11,
+	AutoUpdate: -1,
+	IDPrefix:   "esctx_",
+	New:        newEscrowTransaction,
+	NewN:       newNEscrowTransaction,
+	Size:       unsafe.Sizeof(driverpay.EscrowTransaction{}),
+	Ptr:        ptrEscrowTransaction,
+	Value:      valueEscrowTransaction,
+	Attach:     attachEscrowTransaction,
 }
 
 var escrowTransactionsRef = keel.Ref{Table: &escrowTransactionsTable}
@@ -730,10 +729,6 @@ func attachEscrowTransaction(p unsafe.Pointer, rel int32, child unsafe.Pointer) 
 	case 0:
 		r.EscrowAccount = (*driverpay.EscrowAccount)(child)
 	}
-}
-
-func beforeCreateEscrowTransaction(ctx context.Context, p unsafe.Pointer) error {
-	return (*driverpay.EscrowTransaction)(p).BeforeCreate(ctx)
 }
 
 // expensesTable is the schema of driverpay.Expense.
@@ -1800,23 +1795,22 @@ var payProfileComponentsTable = schema.Table{
 		{Name: "created_at", Quoted: `"created_at"`, Field: "CreatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoCreate, Label: `Created At`, JSON: `createdAt`},
 		{Name: "updated_at", Quoted: `"updated_at"`, Field: "UpdatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoUpdate, Label: `Updated At`, JSON: `updatedAt`},
 	},
-	PK:           []int32{0, 1, 2},
-	Tenant:       []int32{1, 2},
-	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16},
-	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16},
-	Update:       []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 16},
-	Returning:    nil,
-	Version:      -1,
-	AutoID:       0,
-	AutoCreate:   15,
-	AutoUpdate:   16,
-	IDPrefix:     "dppc_",
-	New:          newPayProfileComponent,
-	NewN:         newNPayProfileComponent,
-	Size:         unsafe.Sizeof(driverpay.PayProfileComponent{}),
-	Ptr:          ptrPayProfileComponent,
-	Value:        valuePayProfileComponent,
-	BeforeCreate: beforeCreatePayProfileComponent,
+	PK:         []int32{0, 1, 2},
+	Tenant:     []int32{1, 2},
+	Select:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16},
+	Insert:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16},
+	Update:     []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 16},
+	Returning:  nil,
+	Version:    -1,
+	AutoID:     0,
+	AutoCreate: 15,
+	AutoUpdate: 16,
+	IDPrefix:   "dppc_",
+	New:        newPayProfileComponent,
+	NewN:       newNPayProfileComponent,
+	Size:       unsafe.Sizeof(driverpay.PayProfileComponent{}),
+	Ptr:        ptrPayProfileComponent,
+	Value:      valuePayProfileComponent,
 }
 
 var payProfileComponentsRef = keel.Ref{Table: &payProfileComponentsTable}
@@ -2005,10 +1999,6 @@ func valuePayProfileComponent(p unsafe.Pointer, c int32) any {
 		return r.UpdatedAt
 	}
 	return nil
-}
-
-func beforeCreatePayProfileComponent(ctx context.Context, p unsafe.Pointer) error {
-	return (*driverpay.PayProfileComponent)(p).BeforeCreate(ctx)
 }
 
 // recurringDeductionsTable is the schema of driverpay.RecurringDeduction.

@@ -48,24 +48,23 @@ var lateChargeAssessmentsTable = schema.Table{
 		{Name: "SourceInvoice", Alias: "si", Kind: schema.BelongsTo, Local: []int32{4}, Remote: []int32{0}, Label: `Source Invoice`, JSON: `sourceInvoice`},
 		{Name: "DebitMemo", Alias: "dm", Kind: schema.BelongsTo, Local: []int32{12}, Remote: []int32{0}, Label: `Debit Memo`, JSON: `debitMemo`},
 	},
-	PK:           []int32{0, 1, 2},
-	Tenant:       []int32{1, 2},
-	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17},
-	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17},
-	Update:       []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 17},
-	Returning:    nil,
-	Version:      -1,
-	AutoID:       0,
-	AutoCreate:   16,
-	AutoUpdate:   17,
-	IDPrefix:     "lca_",
-	New:          newLateChargeAssessment,
-	NewN:         newNLateChargeAssessment,
-	Size:         unsafe.Sizeof(latecharge.LateChargeAssessment{}),
-	Ptr:          ptrLateChargeAssessment,
-	Value:        valueLateChargeAssessment,
-	Attach:       attachLateChargeAssessment,
-	BeforeCreate: beforeCreateLateChargeAssessment,
+	PK:         []int32{0, 1, 2},
+	Tenant:     []int32{1, 2},
+	Select:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17},
+	Insert:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17},
+	Update:     []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 17},
+	Returning:  nil,
+	Version:    -1,
+	AutoID:     0,
+	AutoCreate: 16,
+	AutoUpdate: 17,
+	IDPrefix:   "lca_",
+	New:        newLateChargeAssessment,
+	NewN:       newNLateChargeAssessment,
+	Size:       unsafe.Sizeof(latecharge.LateChargeAssessment{}),
+	Ptr:        ptrLateChargeAssessment,
+	Value:      valueLateChargeAssessment,
+	Attach:     attachLateChargeAssessment,
 }
 
 var lateChargeAssessmentsRef = keel.Ref{Table: &lateChargeAssessmentsTable}
@@ -275,10 +274,6 @@ func attachLateChargeAssessment(p unsafe.Pointer, rel int32, child unsafe.Pointe
 	case 1:
 		r.DebitMemo = (*invoice.Invoice)(child)
 	}
-}
-
-func beforeCreateLateChargeAssessment(ctx context.Context, p unsafe.Pointer) error {
-	return (*latecharge.LateChargeAssessment)(p).BeforeCreate(ctx)
 }
 
 func init() {

@@ -96,6 +96,7 @@ var rateAgreementsTable = schema.Table{
 	Value:        valueRateAgreement,
 	Attach:       attachRateAgreement,
 	BeforeCreate: beforeCreateRateAgreement,
+	BeforeUpdate: beforeUpdateRateAgreement,
 	BeforeSave:   beforeSaveRateAgreement,
 }
 
@@ -487,6 +488,10 @@ func beforeCreateRateAgreement(ctx context.Context, p unsafe.Pointer) error {
 	return (*rateagreement.RateAgreement)(p).BeforeCreate(ctx)
 }
 
+func beforeUpdateRateAgreement(ctx context.Context, p unsafe.Pointer) error {
+	return (*rateagreement.RateAgreement)(p).BeforeUpdate(ctx)
+}
+
 func beforeSaveRateAgreement(ctx context.Context, p unsafe.Pointer) error {
 	return (*rateagreement.RateAgreement)(p).BeforeSave(ctx)
 }
@@ -545,6 +550,7 @@ var rateAgreementAccessorialsTable = schema.Table{
 	Value:        valueRateAgreementAccessorial,
 	Attach:       attachRateAgreementAccessorial,
 	BeforeCreate: beforeCreateRateAgreementAccessorial,
+	BeforeUpdate: beforeUpdateRateAgreementAccessorial,
 }
 
 var rateAgreementAccessorialsRef = keel.Ref{Table: &rateAgreementAccessorialsTable}
@@ -784,6 +790,10 @@ func attachRateAgreementAccessorial(p unsafe.Pointer, rel int32, child unsafe.Po
 
 func beforeCreateRateAgreementAccessorial(ctx context.Context, p unsafe.Pointer) error {
 	return (*rateagreement.RateAgreementAccessorial)(p).BeforeCreate(ctx)
+}
+
+func beforeUpdateRateAgreementAccessorial(ctx context.Context, p unsafe.Pointer) error {
+	return (*rateagreement.RateAgreementAccessorial)(p).BeforeUpdate(ctx)
 }
 
 // rateAgreementFuelBindingsTable is the schema of rateagreement.RateAgreementFuelBinding.
@@ -1076,6 +1086,7 @@ var rateAgreementRulesTable = schema.Table{
 	Value:        valueRateAgreementRule,
 	Attach:       attachRateAgreementRule,
 	BeforeCreate: beforeCreateRateAgreementRule,
+	BeforeUpdate: beforeUpdateRateAgreementRule,
 }
 
 var rateAgreementRulesRef = keel.Ref{Table: &rateAgreementRulesTable}
@@ -1604,6 +1615,10 @@ func beforeCreateRateAgreementRule(ctx context.Context, p unsafe.Pointer) error 
 	return (*rateagreement.RateAgreementRule)(p).BeforeCreate(ctx)
 }
 
+func beforeUpdateRateAgreementRule(ctx context.Context, p unsafe.Pointer) error {
+	return (*rateagreement.RateAgreementRule)(p).BeforeUpdate(ctx)
+}
+
 // rateAgreementVersionsTable is the schema of rateagreement.RateAgreementVersion.
 var rateAgreementVersionsTable = schema.Table{
 	Name:   "rate_agreement_versions",
@@ -1671,6 +1686,7 @@ var rateAgreementVersionsTable = schema.Table{
 	Value:        valueRateAgreementVersion,
 	Attach:       attachRateAgreementVersion,
 	BeforeCreate: beforeCreateRateAgreementVersion,
+	BeforeUpdate: beforeUpdateRateAgreementVersion,
 }
 
 var rateAgreementVersionsRef = keel.Ref{Table: &rateAgreementVersionsTable}
@@ -2022,6 +2038,10 @@ func attachRateAgreementVersion(p unsafe.Pointer, rel int32, child unsafe.Pointe
 
 func beforeCreateRateAgreementVersion(ctx context.Context, p unsafe.Pointer) error {
 	return (*rateagreement.RateAgreementVersion)(p).BeforeCreate(ctx)
+}
+
+func beforeUpdateRateAgreementVersion(ctx context.Context, p unsafe.Pointer) error {
+	return (*rateagreement.RateAgreementVersion)(p).BeforeUpdate(ctx)
 }
 
 func init() {

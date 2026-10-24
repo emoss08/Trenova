@@ -8,6 +8,8 @@ import (
 
 	"github.com/emoss08/keel"
 	"github.com/emoss08/keel/schema"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/journalentry"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/journalentry/journalentrydb"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/journalreversal"
 	"github.com/emoss08/trenova/pkg/keelkinds"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -49,6 +51,10 @@ var reversalsTable = schema.Table{
 		{Name: "updated_at", Quoted: `"updated_at"`, Field: "UpdatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoUpdate, Label: `Updated At`, JSON: `updatedAt`},
 		{Name: "version", Quoted: `"version"`, Field: "Version", Kind: schema.KindInt64, Flags: schema.FlagVersion, Label: `Version`, JSON: `version`},
 	},
+	Relations: []schema.Relation{
+		{Name: "OriginalJournalEntry", Alias: "oje", Kind: schema.BelongsTo, Local: []int32{3}, Remote: []int32{0}, Label: `Original Journal Entry`, JSON: `originalJournalEntry`},
+		{Name: "ReversalJournalEntry", Alias: "rje", Kind: schema.BelongsTo, Local: []int32{4}, Remote: []int32{0}, Label: `Reversal Journal Entry`, JSON: `reversalJournalEntry`},
+	},
 	PK:         []int32{0, 1, 2},
 	Tenant:     []int32{1, 2},
 	Select:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25},
@@ -65,6 +71,7 @@ var reversalsTable = schema.Table{
 	Size:       unsafe.Sizeof(journalreversal.Reversal{}),
 	Ptr:        ptrReversal,
 	Value:      valueReversal,
+	Attach:     attachReversal,
 }
 
 var reversalsRef = keel.Ref{Table: &reversalsTable}
@@ -170,6 +177,16 @@ func ReversalsSchema() *schema.Table { return &reversalsTable }
 // As returns a handle that references journal_reversals under its own alias.
 func (t *ReversalsTable) As(alias string) *ReversalsTable {
 	return keel.Alias(t.Ref, alias, BuildReversals)
+}
+
+// OriginalJournalEntry is the belongs relation.
+func (t *ReversalsTable) OriginalJournalEntry() *journalentrydb.JournalEntriesTable {
+	return keel.Path(t.Ref, 0, journalentrydb.BuildJournalEntries)
+}
+
+// ReversalJournalEntry is the belongs relation.
+func (t *ReversalsTable) ReversalJournalEntry() *journalentrydb.JournalEntriesTable {
+	return keel.Path(t.Ref, 1, journalentrydb.BuildJournalEntries)
 }
 
 // Get returns the journal_reversals row with the given key, or keel.ErrNotFound.
@@ -335,6 +352,21 @@ func valueReversal(p unsafe.Pointer, c int32) any {
 		return r.Version
 	}
 	return nil
+}
+
+func attachReversal(p unsafe.Pointer, rel int32, child unsafe.Pointer) {
+	r := (*journalreversal.Reversal)(p)
+	switch rel {
+	case 0:
+		r.OriginalJournalEntry = (*journalentry.JournalEntry)(child)
+	case 1:
+		r.ReversalJournalEntry = (*journalentry.JournalEntry)(child)
+	}
+}
+
+func init() {
+	reversalsTable.Relations[0].Target = journalentrydb.JournalEntriesSchema()
+	reversalsTable.Relations[1].Target = journalentrydb.JournalEntriesSchema()
 }
 
 var enumStatus = [...]schema.EnumValue{

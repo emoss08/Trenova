@@ -333,7 +333,6 @@ func (r *WorkerProfileChangeRequest) BeforeCreate(_ context.Context) error {
 	if r.SubmittedAt <= 0 {
 		r.SubmittedAt = now
 	}
-	now := timeutils.NowUnix()
 
 	return nil
 }

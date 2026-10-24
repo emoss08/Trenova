@@ -1577,24 +1577,23 @@ var settlementLinesTable = schema.Table{
 		{Name: "Shipment", Alias: "s", Kind: schema.BelongsTo, Local: []int32{12}, Remote: []int32{0}, Label: `Shipment`, JSON: `shipment`},
 		{Name: "PayCode", Alias: "pc", Kind: schema.BelongsTo, Local: []int32{17}, Remote: []int32{0}, Label: `Pay Code`, JSON: `payCode`},
 	},
-	PK:           []int32{0, 1, 2},
-	Tenant:       []int32{1, 2},
-	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23},
-	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23},
-	Update:       []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 23},
-	Returning:    nil,
-	Version:      -1,
-	AutoID:       0,
-	AutoCreate:   22,
-	AutoUpdate:   23,
-	IDPrefix:     "dstll_",
-	New:          newSettlementLine,
-	NewN:         newNSettlementLine,
-	Size:         unsafe.Sizeof(driversettlement.SettlementLine{}),
-	Ptr:          ptrSettlementLine,
-	Value:        valueSettlementLine,
-	Attach:       attachSettlementLine,
-	BeforeCreate: beforeCreateSettlementLine,
+	PK:         []int32{0, 1, 2},
+	Tenant:     []int32{1, 2},
+	Select:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23},
+	Insert:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23},
+	Update:     []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 23},
+	Returning:  nil,
+	Version:    -1,
+	AutoID:     0,
+	AutoCreate: 22,
+	AutoUpdate: 23,
+	IDPrefix:   "dstll_",
+	New:        newSettlementLine,
+	NewN:       newNSettlementLine,
+	Size:       unsafe.Sizeof(driversettlement.SettlementLine{}),
+	Ptr:        ptrSettlementLine,
+	Value:      valueSettlementLine,
+	Attach:     attachSettlementLine,
 }
 
 var settlementLinesRef = keel.Ref{Table: &settlementLinesTable}
@@ -1875,10 +1874,6 @@ func attachSettlementLine(p unsafe.Pointer, rel int32, child unsafe.Pointer) {
 	case 2:
 		r.PayCode = (*driverpay.PayCode)(child)
 	}
-}
-
-func beforeCreateSettlementLine(ctx context.Context, p unsafe.Pointer) error {
-	return (*driversettlement.SettlementLine)(p).BeforeCreate(ctx)
 }
 
 func init() {

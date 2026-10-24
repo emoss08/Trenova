@@ -44,23 +44,22 @@ var briefingsTable = schema.Table{
 		{Name: "created_at", Quoted: `"created_at"`, Field: "CreatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoCreate, Label: `Created At`, JSON: `createdAt`},
 		{Name: "updated_at", Quoted: `"updated_at"`, Field: "UpdatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoUpdate, Label: `Updated At`, JSON: `updatedAt`},
 	},
-	PK:           []int32{0, 1, 2},
-	Tenant:       []int32{1, 2},
-	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19},
-	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19},
-	Update:       []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 19},
-	Returning:    nil,
-	Version:      17,
-	AutoID:       0,
-	AutoCreate:   18,
-	AutoUpdate:   19,
-	IDPrefix:     "brf_",
-	New:          newBriefing,
-	NewN:         newNBriefing,
-	Size:         unsafe.Sizeof(briefing.Briefing{}),
-	Ptr:          ptrBriefing,
-	Value:        valueBriefing,
-	BeforeCreate: beforeCreateBriefing,
+	PK:         []int32{0, 1, 2},
+	Tenant:     []int32{1, 2},
+	Select:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19},
+	Insert:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19},
+	Update:     []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 19},
+	Returning:  nil,
+	Version:    17,
+	AutoID:     0,
+	AutoCreate: 18,
+	AutoUpdate: 19,
+	IDPrefix:   "brf_",
+	New:        newBriefing,
+	NewN:       newNBriefing,
+	Size:       unsafe.Sizeof(briefing.Briefing{}),
+	Ptr:        ptrBriefing,
+	Value:      valueBriefing,
 }
 
 var briefingsRef = keel.Ref{Table: &briefingsTable}
@@ -283,10 +282,6 @@ func valueBriefing(p unsafe.Pointer, c int32) any {
 		return r.UpdatedAt
 	}
 	return nil
-}
-
-func beforeCreateBriefing(ctx context.Context, p unsafe.Pointer) error {
-	return (*briefing.Briefing)(p).BeforeCreate(ctx)
 }
 
 var enumRoleKey = [...]schema.EnumValue{

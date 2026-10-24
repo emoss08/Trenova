@@ -1250,23 +1250,22 @@ var portalSitesTable = schema.Table{
 		{Name: "created_at", Quoted: `"created_at"`, Field: "CreatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoCreate, Label: `Created At`, JSON: `createdAt`},
 		{Name: "updated_at", Quoted: `"updated_at"`, Field: "UpdatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoUpdate, Label: `Updated At`, JSON: `updatedAt`},
 	},
-	PK:           []int32{0, 1, 2},
-	Tenant:       []int32{1, 2},
-	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14},
-	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14},
-	Update:       []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 14},
-	Returning:    nil,
-	Version:      12,
-	AutoID:       0,
-	AutoCreate:   13,
-	AutoUpdate:   14,
-	IDPrefix:     "apst_",
-	New:          newPortalSite,
-	NewN:         newNPortalSite,
-	Size:         unsafe.Sizeof(agentextension.PortalSite{}),
-	Ptr:          ptrPortalSite,
-	Value:        valuePortalSite,
-	BeforeCreate: beforeCreatePortalSite,
+	PK:         []int32{0, 1, 2},
+	Tenant:     []int32{1, 2},
+	Select:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14},
+	Insert:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14},
+	Update:     []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 14},
+	Returning:  nil,
+	Version:    12,
+	AutoID:     0,
+	AutoCreate: 13,
+	AutoUpdate: 14,
+	IDPrefix:   "apst_",
+	New:        newPortalSite,
+	NewN:       newNPortalSite,
+	Size:       unsafe.Sizeof(agentextension.PortalSite{}),
+	Ptr:        ptrPortalSite,
+	Value:      valuePortalSite,
 }
 
 var portalSitesRef = keel.Ref{Table: &portalSitesTable}
@@ -1433,10 +1432,6 @@ func valuePortalSite(p unsafe.Pointer, c int32) any {
 		return r.UpdatedAt
 	}
 	return nil
-}
-
-func beforeCreatePortalSite(ctx context.Context, p unsafe.Pointer) error {
-	return (*agentextension.PortalSite)(p).BeforeCreate(ctx)
 }
 
 // webWatchesTable is the schema of agentextension.WebWatch.

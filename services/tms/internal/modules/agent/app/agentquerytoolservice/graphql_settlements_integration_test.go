@@ -3,6 +3,8 @@
 package agentquerytoolservice_test
 
 import (
+	"slices"
+
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment/shipmentdb"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/carrier/carrierdb"
@@ -15,7 +17,6 @@ import (
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/driversettlement/driversettlementdb"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker/workerdb"
 	"github.com/emoss08/trenova/pkg/dbscope"
-	"slices"
 
 	"context"
 	"errors"

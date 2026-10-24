@@ -38,22 +38,24 @@ var exchangeRatesTable = schema.Table{
 		{Name: "fetched_at", Quoted: `"fetched_at"`, Field: "FetchedAt", Kind: schema.KindTime, Flags: 0, Label: `Fetched At`, JSON: `fetchedAt`},
 		{Name: "settlement_eligible", Quoted: `"settlement_eligible"`, Field: "SettlementEligible", Kind: schema.KindBool, Flags: 0, Label: `Settlement Eligible`, JSON: `settlementEligible`},
 	},
-	PK:         []int32{0, 1, 2},
-	Tenant:     []int32{1, 2},
-	Select:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14},
-	Insert:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14},
-	Update:     []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14},
-	Returning:  nil,
-	Version:    -1,
-	AutoID:     0,
-	AutoCreate: -1,
-	AutoUpdate: -1,
-	IDPrefix:   "fxr_",
-	New:        newExchangeRate,
-	NewN:       newNExchangeRate,
-	Size:       unsafe.Sizeof(exchangerate.ExchangeRate{}),
-	Ptr:        ptrExchangeRate,
-	Value:      valueExchangeRate,
+	PK:           []int32{0, 1, 2},
+	Tenant:       []int32{1, 2},
+	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14},
+	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14},
+	Update:       []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14},
+	Returning:    nil,
+	Version:      -1,
+	AutoID:       0,
+	AutoCreate:   -1,
+	AutoUpdate:   -1,
+	IDPrefix:     "fxr_",
+	New:          newExchangeRate,
+	NewN:         newNExchangeRate,
+	Size:         unsafe.Sizeof(exchangerate.ExchangeRate{}),
+	Ptr:          ptrExchangeRate,
+	Value:        valueExchangeRate,
+	BeforeCreate: beforeCreateExchangeRate,
+	BeforeUpdate: beforeUpdateExchangeRate,
 }
 
 var exchangeRatesRef = keel.Ref{Table: &exchangeRatesTable}
@@ -213,6 +215,14 @@ func valueExchangeRate(p unsafe.Pointer, c int32) any {
 	return nil
 }
 
+func beforeCreateExchangeRate(ctx context.Context, p unsafe.Pointer) error {
+	return (*exchangerate.ExchangeRate)(p).BeforeCreate(ctx)
+}
+
+func beforeUpdateExchangeRate(ctx context.Context, p unsafe.Pointer) error {
+	return (*exchangerate.ExchangeRate)(p).BeforeUpdate(ctx)
+}
+
 // settlementQuotesTable is the schema of exchangerate.SettlementQuote.
 var settlementQuotesTable = schema.Table{
 	Name:   "exchange_rate_settlement_quotes",
@@ -236,22 +246,24 @@ var settlementQuotesTable = schema.Table{
 		{Name: "fetched_at", Quoted: `"fetched_at"`, Field: "FetchedAt", Kind: schema.KindTime, Flags: 0, Label: `Fetched At`, JSON: `fetchedAt`},
 		{Name: "expires_at", Quoted: `"expires_at"`, Field: "ExpiresAt", Kind: schema.KindTime, Flags: 0, Label: `Expires At`, JSON: `expiresAt`},
 	},
-	PK:         []int32{0, 1, 2},
-	Tenant:     []int32{1, 2},
-	Select:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12},
-	Insert:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12},
-	Update:     []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12},
-	Returning:  nil,
-	Version:    -1,
-	AutoID:     0,
-	AutoCreate: -1,
-	AutoUpdate: -1,
-	IDPrefix:   "fxq_",
-	New:        newSettlementQuote,
-	NewN:       newNSettlementQuote,
-	Size:       unsafe.Sizeof(exchangerate.SettlementQuote{}),
-	Ptr:        ptrSettlementQuote,
-	Value:      valueSettlementQuote,
+	PK:           []int32{0, 1, 2},
+	Tenant:       []int32{1, 2},
+	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12},
+	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12},
+	Update:       []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12},
+	Returning:    nil,
+	Version:      -1,
+	AutoID:       0,
+	AutoCreate:   -1,
+	AutoUpdate:   -1,
+	IDPrefix:     "fxq_",
+	New:          newSettlementQuote,
+	NewN:         newNSettlementQuote,
+	Size:         unsafe.Sizeof(exchangerate.SettlementQuote{}),
+	Ptr:          ptrSettlementQuote,
+	Value:        valueSettlementQuote,
+	BeforeCreate: beforeCreateSettlementQuote,
+	BeforeUpdate: beforeUpdateSettlementQuote,
 }
 
 var settlementQuotesRef = keel.Ref{Table: &settlementQuotesTable}
@@ -395,6 +407,14 @@ func valueSettlementQuote(p unsafe.Pointer, c int32) any {
 		return r.ExpiresAt
 	}
 	return nil
+}
+
+func beforeCreateSettlementQuote(ctx context.Context, p unsafe.Pointer) error {
+	return (*exchangerate.SettlementQuote)(p).BeforeCreate(ctx)
+}
+
+func beforeUpdateSettlementQuote(ctx context.Context, p unsafe.Pointer) error {
+	return (*exchangerate.SettlementQuote)(p).BeforeUpdate(ctx)
 }
 
 var enumProvider = [...]schema.EnumValue{

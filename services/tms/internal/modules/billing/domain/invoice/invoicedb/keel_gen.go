@@ -2344,24 +2344,23 @@ var invoiceLinesTable = schema.Table{
 	Relations: []schema.Relation{
 		{Name: "Invoice", Alias: "i", Kind: schema.BelongsTo, Local: []int32{3}, Remote: []int32{0}, Label: `Invoice`},
 	},
-	PK:           []int32{0, 1, 2},
-	Tenant:       []int32{1, 2},
-	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27},
-	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27},
-	Update:       []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 27},
-	Returning:    nil,
-	Version:      25,
-	AutoID:       0,
-	AutoCreate:   26,
-	AutoUpdate:   27,
-	IDPrefix:     "invl_",
-	New:          newInvoiceLine,
-	NewN:         newNInvoiceLine,
-	Size:         unsafe.Sizeof(invoice.InvoiceLine{}),
-	Ptr:          ptrInvoiceLine,
-	Value:        valueInvoiceLine,
-	Attach:       attachInvoiceLine,
-	BeforeCreate: beforeCreateInvoiceLine,
+	PK:         []int32{0, 1, 2},
+	Tenant:     []int32{1, 2},
+	Select:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27},
+	Insert:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27},
+	Update:     []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 27},
+	Returning:  nil,
+	Version:    25,
+	AutoID:     0,
+	AutoCreate: 26,
+	AutoUpdate: 27,
+	IDPrefix:   "invl_",
+	New:        newInvoiceLine,
+	NewN:       newNInvoiceLine,
+	Size:       unsafe.Sizeof(invoice.InvoiceLine{}),
+	Ptr:        ptrInvoiceLine,
+	Value:      valueInvoiceLine,
+	Attach:     attachInvoiceLine,
 }
 
 var invoiceLinesRef = keel.Ref{Table: &invoiceLinesTable}
@@ -2654,10 +2653,6 @@ func attachInvoiceLine(p unsafe.Pointer, rel int32, child unsafe.Pointer) {
 	case 0:
 		r.Invoice = (*invoice.Invoice)(child)
 	}
-}
-
-func beforeCreateInvoiceLine(ctx context.Context, p unsafe.Pointer) error {
-	return (*invoice.InvoiceLine)(p).BeforeCreate(ctx)
 }
 
 // invoiceSharesTable is the schema of invoice.InvoiceShare.

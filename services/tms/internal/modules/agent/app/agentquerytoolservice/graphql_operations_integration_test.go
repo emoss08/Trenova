@@ -5,6 +5,10 @@ package agentquerytoolservice_test
 import (
 	"context"
 	"fmt"
+	"slices"
+	"sync"
+	"testing"
+
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/detention/detentiondb"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/order/orderdb"
@@ -13,9 +17,6 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment/shipmentdb"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/tender/tenderdb"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/carrier/carrierdb"
-	"slices"
-	"sync"
-	"testing"
 
 	"github.com/emoss08/trenova/internal/api/graphql/agentread"
 	"github.com/emoss08/trenova/internal/api/graphql/agentread/agentreadtest"

@@ -4,8 +4,9 @@ package accountingsyncrepository
 
 import (
 	"context"
-	"github.com/emoss08/trenova/pkg/dbscope"
 	"testing"
+
+	"github.com/emoss08/trenova/pkg/dbscope"
 
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"

@@ -719,8 +719,8 @@ func (dc *DispatchControl) BeforeCreate(ctx context.Context) error {
 	if dc.AutoAssignmentStrategy == "" {
 		dc.AutoAssignmentStrategy = AutoAssignmentStrategyProximity
 	}
-	if dc.AutoAssignConfidenceThreshold == 0 {
-		dc.AutoAssignConfidenceThreshold = 0.85
+	if dc.AutoAssignConfidenceThreshold.IsZero() {
+		dc.AutoAssignConfidenceThreshold = decimal.RequireFromString("0.85")
 	}
 	if dc.AutoAssignPlanningHorizonHours == 0 {
 		dc.AutoAssignPlanningHorizonHours = 48

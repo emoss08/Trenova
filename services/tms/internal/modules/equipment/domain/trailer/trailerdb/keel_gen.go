@@ -79,23 +79,24 @@ var trailersTable = schema.Table{
 		{Name: "RegistrationState", Alias: "rs", Kind: schema.BelongsTo, Local: []int32{5}, Remote: []int32{0}, Label: `Registration State`, JSON: `registrationState`, NoReport: true},
 		{Name: "OwnerWorker", Alias: "ow", Kind: schema.BelongsTo, Local: []int32{18}, Remote: []int32{0}, Label: `Owner Worker`, JSON: `ownerWorker`},
 	},
-	PK:         []int32{0, 1, 2},
-	Tenant:     []int32{1, 2},
-	Select:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 30, 31, 32},
-	Insert:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 30, 31, 32},
-	Update:     []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 32},
-	Returning:  nil,
-	Version:    30,
-	AutoID:     0,
-	AutoCreate: 31,
-	AutoUpdate: 32,
-	IDPrefix:   "tr_",
-	New:        newTrailer,
-	NewN:       newNTrailer,
-	Size:       unsafe.Sizeof(trailer.Trailer{}),
-	Ptr:        ptrTrailer,
-	Value:      valueTrailer,
-	Attach:     attachTrailer,
+	PK:           []int32{0, 1, 2},
+	Tenant:       []int32{1, 2},
+	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 30, 31, 32},
+	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 30, 31, 32},
+	Update:       []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 32},
+	Returning:    nil,
+	Version:      30,
+	AutoID:       0,
+	AutoCreate:   31,
+	AutoUpdate:   32,
+	IDPrefix:     "tr_",
+	New:          newTrailer,
+	NewN:         newNTrailer,
+	Size:         unsafe.Sizeof(trailer.Trailer{}),
+	Ptr:          ptrTrailer,
+	Value:        valueTrailer,
+	Attach:       attachTrailer,
+	BeforeCreate: beforeCreateTrailer,
 }
 
 var trailersRef = keel.Ref{Table: &trailersTable}
@@ -494,6 +495,10 @@ func attachTrailer(p unsafe.Pointer, rel int32, child unsafe.Pointer) {
 	case 6:
 		r.OwnerWorker = (*worker.Worker)(child)
 	}
+}
+
+func beforeCreateTrailer(ctx context.Context, p unsafe.Pointer) error {
+	return (*trailer.Trailer)(p).BeforeCreate(ctx)
 }
 
 func init() {

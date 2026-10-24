@@ -544,23 +544,24 @@ var accountingConnectionsTable = schema.Table{
 		{Name: "DisconnectedBy", Alias: "db", Kind: schema.BelongsTo, Local: []int32{58}, Remote: []int32{0}, Label: `Disconnected By`, JSON: `disconnectedBy`},
 		{Name: "PausedBy", Alias: "pb", Kind: schema.BelongsTo, Local: []int32{54}, Remote: []int32{0}, Label: `Paused By`, JSON: `pausedBy`},
 	},
-	PK:         []int32{0, 1, 2},
-	Tenant:     []int32{1, 2},
-	Select:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62},
-	Insert:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62},
-	Update:     []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 62},
-	Returning:  nil,
-	Version:    60,
-	AutoID:     0,
-	AutoCreate: 61,
-	AutoUpdate: 62,
-	IDPrefix:   "acctc_",
-	New:        newAccountingConnection,
-	NewN:       newNAccountingConnection,
-	Size:       unsafe.Sizeof(accountingsync.AccountingConnection{}),
-	Ptr:        ptrAccountingConnection,
-	Value:      valueAccountingConnection,
-	Attach:     attachAccountingConnection,
+	PK:           []int32{0, 1, 2},
+	Tenant:       []int32{1, 2},
+	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62},
+	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62},
+	Update:       []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 62},
+	Returning:    nil,
+	Version:      60,
+	AutoID:       0,
+	AutoCreate:   61,
+	AutoUpdate:   62,
+	IDPrefix:     "acctc_",
+	New:          newAccountingConnection,
+	NewN:         newNAccountingConnection,
+	Size:         unsafe.Sizeof(accountingsync.AccountingConnection{}),
+	Ptr:          ptrAccountingConnection,
+	Value:        valueAccountingConnection,
+	Attach:       attachAccountingConnection,
+	BeforeCreate: beforeCreateAccountingConnection,
 }
 
 var accountingConnectionsRef = keel.Ref{Table: &accountingConnectionsTable}
@@ -1223,6 +1224,10 @@ func attachAccountingConnection(p unsafe.Pointer, rel int32, child unsafe.Pointe
 	}
 }
 
+func beforeCreateAccountingConnection(ctx context.Context, p unsafe.Pointer) error {
+	return (*accountingsync.AccountingConnection)(p).BeforeCreate(ctx)
+}
+
 // accountingDriftFindingsTable is the schema of accountingsync.AccountingDriftFinding.
 var accountingDriftFindingsTable = schema.Table{
 	Name:   "accounting_drift_findings",
@@ -1289,6 +1294,7 @@ var accountingDriftFindingsTable = schema.Table{
 	Value:        valueAccountingDriftFinding,
 	Attach:       attachAccountingDriftFinding,
 	BeforeCreate: beforeCreateAccountingDriftFinding,
+	BeforeUpdate: beforeUpdateAccountingDriftFinding,
 	BeforeSave:   beforeSaveAccountingDriftFinding,
 }
 
@@ -1651,6 +1657,10 @@ func beforeCreateAccountingDriftFinding(ctx context.Context, p unsafe.Pointer) e
 	return (*accountingsync.AccountingDriftFinding)(p).BeforeCreate(ctx)
 }
 
+func beforeUpdateAccountingDriftFinding(ctx context.Context, p unsafe.Pointer) error {
+	return (*accountingsync.AccountingDriftFinding)(p).BeforeUpdate(ctx)
+}
+
 func beforeSaveAccountingDriftFinding(ctx context.Context, p unsafe.Pointer) error {
 	return (*accountingsync.AccountingDriftFinding)(p).BeforeSave(ctx)
 }
@@ -1716,6 +1726,7 @@ var accountingInboundChangesTable = schema.Table{
 	Value:        valueAccountingInboundChange,
 	Attach:       attachAccountingInboundChange,
 	BeforeCreate: beforeCreateAccountingInboundChange,
+	BeforeUpdate: beforeUpdateAccountingInboundChange,
 	BeforeSave:   beforeSaveAccountingInboundChange,
 }
 
@@ -2025,6 +2036,10 @@ func beforeCreateAccountingInboundChange(ctx context.Context, p unsafe.Pointer) 
 	return (*accountingsync.AccountingInboundChange)(p).BeforeCreate(ctx)
 }
 
+func beforeUpdateAccountingInboundChange(ctx context.Context, p unsafe.Pointer) error {
+	return (*accountingsync.AccountingInboundChange)(p).BeforeUpdate(ctx)
+}
+
 func beforeSaveAccountingInboundChange(ctx context.Context, p unsafe.Pointer) error {
 	return (*accountingsync.AccountingInboundChange)(p).BeforeSave(ctx)
 }
@@ -2064,24 +2079,26 @@ var accountingMappingsTable = schema.Table{
 	Relations: []schema.Relation{
 		{Name: "ConfirmedBy", Alias: "cb", Kind: schema.BelongsTo, Local: []int32{17}, Remote: []int32{0}, Label: `Confirmed By`, JSON: `confirmedBy`},
 	},
-	PK:         []int32{0, 1, 2},
-	Tenant:     []int32{1, 2},
-	Select:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21},
-	Insert:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21},
-	Update:     []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 21},
-	Returning:  nil,
-	Version:    19,
-	AutoID:     0,
-	AutoCreate: 20,
-	AutoUpdate: 21,
-	IDPrefix:   "acctm_",
-	New:        newAccountingMapping,
-	NewN:       newNAccountingMapping,
-	Size:       unsafe.Sizeof(accountingsync.AccountingMapping{}),
-	Ptr:        ptrAccountingMapping,
-	Value:      valueAccountingMapping,
-	Attach:     attachAccountingMapping,
-	BeforeSave: beforeSaveAccountingMapping,
+	PK:           []int32{0, 1, 2},
+	Tenant:       []int32{1, 2},
+	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21},
+	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21},
+	Update:       []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 21},
+	Returning:    nil,
+	Version:      19,
+	AutoID:       0,
+	AutoCreate:   20,
+	AutoUpdate:   21,
+	IDPrefix:     "acctm_",
+	New:          newAccountingMapping,
+	NewN:         newNAccountingMapping,
+	Size:         unsafe.Sizeof(accountingsync.AccountingMapping{}),
+	Ptr:          ptrAccountingMapping,
+	Value:        valueAccountingMapping,
+	Attach:       attachAccountingMapping,
+	BeforeCreate: beforeCreateAccountingMapping,
+	BeforeUpdate: beforeUpdateAccountingMapping,
+	BeforeSave:   beforeSaveAccountingMapping,
 }
 
 var accountingMappingsRef = keel.Ref{Table: &accountingMappingsTable}
@@ -2332,6 +2349,14 @@ func attachAccountingMapping(p unsafe.Pointer, rel int32, child unsafe.Pointer) 
 	}
 }
 
+func beforeCreateAccountingMapping(ctx context.Context, p unsafe.Pointer) error {
+	return (*accountingsync.AccountingMapping)(p).BeforeCreate(ctx)
+}
+
+func beforeUpdateAccountingMapping(ctx context.Context, p unsafe.Pointer) error {
+	return (*accountingsync.AccountingMapping)(p).BeforeUpdate(ctx)
+}
+
 func beforeSaveAccountingMapping(ctx context.Context, p unsafe.Pointer) error {
 	return (*accountingsync.AccountingMapping)(p).BeforeSave(ctx)
 }
@@ -2568,23 +2593,25 @@ var accountingReferenceObjectsTable = schema.Table{
 		{Name: "created_at", Quoted: `"created_at"`, Field: "CreatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoCreate, Label: `Created At`, JSON: `createdAt`},
 		{Name: "updated_at", Quoted: `"updated_at"`, Field: "UpdatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoUpdate, Label: `Updated At`, JSON: `updatedAt`},
 	},
-	PK:         []int32{0, 1, 2},
-	Tenant:     []int32{1, 2},
-	Select:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34},
-	Insert:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34},
-	Update:     []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 34},
-	Returning:  nil,
-	Version:    -1,
-	AutoID:     0,
-	AutoCreate: 33,
-	AutoUpdate: 34,
-	IDPrefix:   "acctro_",
-	New:        newAccountingReferenceObject,
-	NewN:       newNAccountingReferenceObject,
-	Size:       unsafe.Sizeof(accountingsync.AccountingReferenceObject{}),
-	Ptr:        ptrAccountingReferenceObject,
-	Value:      valueAccountingReferenceObject,
-	BeforeSave: beforeSaveAccountingReferenceObject,
+	PK:           []int32{0, 1, 2},
+	Tenant:       []int32{1, 2},
+	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34},
+	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34},
+	Update:       []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 34},
+	Returning:    nil,
+	Version:      -1,
+	AutoID:       0,
+	AutoCreate:   33,
+	AutoUpdate:   34,
+	IDPrefix:     "acctro_",
+	New:          newAccountingReferenceObject,
+	NewN:         newNAccountingReferenceObject,
+	Size:         unsafe.Sizeof(accountingsync.AccountingReferenceObject{}),
+	Ptr:          ptrAccountingReferenceObject,
+	Value:        valueAccountingReferenceObject,
+	BeforeCreate: beforeCreateAccountingReferenceObject,
+	BeforeUpdate: beforeUpdateAccountingReferenceObject,
+	BeforeSave:   beforeSaveAccountingReferenceObject,
 }
 
 var accountingReferenceObjectsRef = keel.Ref{Table: &accountingReferenceObjectsTable}
@@ -2952,6 +2979,14 @@ func valueAccountingReferenceObject(p unsafe.Pointer, c int32) any {
 	return nil
 }
 
+func beforeCreateAccountingReferenceObject(ctx context.Context, p unsafe.Pointer) error {
+	return (*accountingsync.AccountingReferenceObject)(p).BeforeCreate(ctx)
+}
+
+func beforeUpdateAccountingReferenceObject(ctx context.Context, p unsafe.Pointer) error {
+	return (*accountingsync.AccountingReferenceObject)(p).BeforeUpdate(ctx)
+}
+
 func beforeSaveAccountingReferenceObject(ctx context.Context, p unsafe.Pointer) error {
 	return (*accountingsync.AccountingReferenceObject)(p).BeforeSave(ctx)
 }
@@ -3225,6 +3260,7 @@ var accountingSyncRecordsTable = schema.Table{
 	Value:        valueAccountingSyncRecord,
 	Attach:       attachAccountingSyncRecord,
 	BeforeCreate: beforeCreateAccountingSyncRecord,
+	BeforeUpdate: beforeUpdateAccountingSyncRecord,
 	BeforeSave:   beforeSaveAccountingSyncRecord,
 }
 
@@ -3655,6 +3691,10 @@ func beforeCreateAccountingSyncRecord(ctx context.Context, p unsafe.Pointer) err
 	return (*accountingsync.AccountingSyncRecord)(p).BeforeCreate(ctx)
 }
 
+func beforeUpdateAccountingSyncRecord(ctx context.Context, p unsafe.Pointer) error {
+	return (*accountingsync.AccountingSyncRecord)(p).BeforeUpdate(ctx)
+}
+
 func beforeSaveAccountingSyncRecord(ctx context.Context, p unsafe.Pointer) error {
 	return (*accountingsync.AccountingSyncRecord)(p).BeforeSave(ctx)
 }
@@ -3686,22 +3726,23 @@ var accountingWebhookSubscriptionsTable = schema.Table{
 		{Name: "created_at", Quoted: `"created_at"`, Field: "CreatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoCreate, Label: `Created At`, JSON: `createdAt`},
 		{Name: "updated_at", Quoted: `"updated_at"`, Field: "UpdatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoUpdate, Label: `Updated At`, JSON: `updatedAt`},
 	},
-	PK:         []int32{0, 1, 2},
-	Tenant:     []int32{1, 2},
-	Select:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16},
-	Insert:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16},
-	Update:     []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 16},
-	Returning:  nil,
-	Version:    14,
-	AutoID:     0,
-	AutoCreate: 15,
-	AutoUpdate: 16,
-	IDPrefix:   "acctwhs_",
-	New:        newAccountingWebhookSubscription,
-	NewN:       newNAccountingWebhookSubscription,
-	Size:       unsafe.Sizeof(accountingsync.AccountingWebhookSubscription{}),
-	Ptr:        ptrAccountingWebhookSubscription,
-	Value:      valueAccountingWebhookSubscription,
+	PK:           []int32{0, 1, 2},
+	Tenant:       []int32{1, 2},
+	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16},
+	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16},
+	Update:       []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 16},
+	Returning:    nil,
+	Version:      14,
+	AutoID:       0,
+	AutoCreate:   15,
+	AutoUpdate:   16,
+	IDPrefix:     "acctwhs_",
+	New:          newAccountingWebhookSubscription,
+	NewN:         newNAccountingWebhookSubscription,
+	Size:         unsafe.Sizeof(accountingsync.AccountingWebhookSubscription{}),
+	Ptr:          ptrAccountingWebhookSubscription,
+	Value:        valueAccountingWebhookSubscription,
+	BeforeCreate: beforeCreateAccountingWebhookSubscription,
 }
 
 var accountingWebhookSubscriptionsRef = keel.Ref{Table: &accountingWebhookSubscriptionsTable}
@@ -3898,6 +3939,10 @@ func valueAccountingWebhookSubscription(p unsafe.Pointer, c int32) any {
 		return r.UpdatedAt
 	}
 	return nil
+}
+
+func beforeCreateAccountingWebhookSubscription(ctx context.Context, p unsafe.Pointer) error {
+	return (*accountingsync.AccountingWebhookSubscription)(p).BeforeCreate(ctx)
 }
 
 func init() {

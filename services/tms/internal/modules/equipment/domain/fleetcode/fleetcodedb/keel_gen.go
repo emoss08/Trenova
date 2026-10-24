@@ -48,23 +48,24 @@ var fleetCodesTable = schema.Table{
 		{Name: "Organization", Alias: "o", Kind: schema.BelongsTo, Local: []int32{2}, Remote: []int32{0}, Label: `Organization`, JSON: `organization`, NoReport: true},
 		{Name: "Manager", Alias: "m", Kind: schema.BelongsTo, Local: []int32{3}, Remote: []int32{0}, Label: `Manager`, JSON: `manager`, NoReport: true},
 	},
-	PK:         []int32{0, 1, 2},
-	Tenant:     []int32{1, 2},
-	Select:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 13, 14, 15},
-	Insert:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 13, 14, 15},
-	Update:     []int32{3, 4, 5, 6, 7, 8, 9, 10, 15},
-	Returning:  nil,
-	Version:    13,
-	AutoID:     0,
-	AutoCreate: 14,
-	AutoUpdate: 15,
-	IDPrefix:   "fc_",
-	New:        newFleetCode,
-	NewN:       newNFleetCode,
-	Size:       unsafe.Sizeof(fleetcode.FleetCode{}),
-	Ptr:        ptrFleetCode,
-	Value:      valueFleetCode,
-	Attach:     attachFleetCode,
+	PK:           []int32{0, 1, 2},
+	Tenant:       []int32{1, 2},
+	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 13, 14, 15},
+	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 13, 14, 15},
+	Update:       []int32{3, 4, 5, 6, 7, 8, 9, 10, 15},
+	Returning:    nil,
+	Version:      13,
+	AutoID:       0,
+	AutoCreate:   14,
+	AutoUpdate:   15,
+	IDPrefix:     "fc_",
+	New:          newFleetCode,
+	NewN:         newNFleetCode,
+	Size:         unsafe.Sizeof(fleetcode.FleetCode{}),
+	Ptr:          ptrFleetCode,
+	Value:        valueFleetCode,
+	Attach:       attachFleetCode,
+	BeforeCreate: beforeCreateFleetCode,
 }
 
 var fleetCodesRef = keel.Ref{Table: &fleetCodesTable}
@@ -271,6 +272,10 @@ func attachFleetCode(p unsafe.Pointer, rel int32, child unsafe.Pointer) {
 	case 2:
 		r.Manager = (*tenant.User)(child)
 	}
+}
+
+func beforeCreateFleetCode(ctx context.Context, p unsafe.Pointer) error {
+	return (*fleetcode.FleetCode)(p).BeforeCreate(ctx)
 }
 
 func init() {

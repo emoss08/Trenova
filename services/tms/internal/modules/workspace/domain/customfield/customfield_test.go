@@ -247,7 +247,6 @@ func TestCustomFieldDefinition_BeforeCreate(t *testing.T) {
 	assert.NotNil(t, def.Options)
 }
 
-
 func TestCustomFieldDefinition_GetID(t *testing.T) {
 	t.Parallel()
 

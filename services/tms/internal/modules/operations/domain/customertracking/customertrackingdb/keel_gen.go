@@ -523,22 +523,23 @@ var profilesTable = schema.Table{
 		{Name: "created_at", Quoted: `"created_at"`, Field: "CreatedAt", Kind: schema.KindInt64, Flags: 0, Label: `Created At`, JSON: `createdAt`},
 		{Name: "updated_at", Quoted: `"updated_at"`, Field: "UpdatedAt", Kind: schema.KindInt64, Flags: 0, Label: `Updated At`, JSON: `updatedAt`},
 	},
-	PK:         []int32{0, 1, 2},
-	Tenant:     []int32{1, 2},
-	Select:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16},
-	Insert:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16},
-	Update:     []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 15, 16},
-	Returning:  nil,
-	Version:    14,
-	AutoID:     -1,
-	AutoCreate: -1,
-	AutoUpdate: -1,
-	IDPrefix:   "",
-	New:        newProfile,
-	NewN:       newNProfile,
-	Size:       unsafe.Sizeof(customertracking.Profile{}),
-	Ptr:        ptrProfile,
-	Value:      valueProfile,
+	PK:           []int32{0, 1, 2},
+	Tenant:       []int32{1, 2},
+	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16},
+	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16},
+	Update:       []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 15, 16},
+	Returning:    nil,
+	Version:      14,
+	AutoID:       -1,
+	AutoCreate:   -1,
+	AutoUpdate:   -1,
+	IDPrefix:     "",
+	New:          newProfile,
+	NewN:         newNProfile,
+	Size:         unsafe.Sizeof(customertracking.Profile{}),
+	Ptr:          ptrProfile,
+	Value:        valueProfile,
+	BeforeCreate: beforeCreateProfile,
 }
 
 var profilesRef = keel.Ref{Table: &profilesTable}
@@ -719,6 +720,10 @@ func valueProfile(p unsafe.Pointer, c int32) any {
 		return r.UpdatedAt
 	}
 	return nil
+}
+
+func beforeCreateProfile(ctx context.Context, p unsafe.Pointer) error {
+	return (*customertracking.Profile)(p).BeforeCreate(ctx)
 }
 
 var enumEvent = [...]schema.EnumValue{

@@ -48,7 +48,6 @@ func rulesOf(findings []migrate.Finding) []string {
 	return out
 }
 
-
 func TestLintWarnsAboutAReconcileCallTheRunMakesAnyway(t *testing.T) {
 	t.Parallel()
 

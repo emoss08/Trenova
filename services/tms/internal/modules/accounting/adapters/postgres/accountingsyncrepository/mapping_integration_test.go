@@ -4,8 +4,9 @@ package accountingsyncrepository
 
 import (
 	"context"
-	"github.com/emoss08/keel"
 	"testing"
+
+	"github.com/emoss08/keel"
 
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"

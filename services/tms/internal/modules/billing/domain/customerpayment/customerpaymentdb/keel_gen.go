@@ -43,24 +43,23 @@ var applicationsTable = schema.Table{
 		{Name: "Payment", Alias: "p", Kind: schema.BelongsTo, Local: []int32{3}, Remote: []int32{0}, Label: `Customer Payment`, JSON: `payment`},
 		{Name: "Invoice", Alias: "i", Kind: schema.BelongsTo, Local: []int32{4}, Remote: []int32{0}, Label: `Invoice`, JSON: `invoice`},
 	},
-	PK:           []int32{0, 1, 2},
-	Tenant:       []int32{1, 2},
-	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9},
-	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9},
-	Update:       []int32{3, 4, 5, 6, 7, 9},
-	Returning:    nil,
-	Version:      -1,
-	AutoID:       0,
-	AutoCreate:   8,
-	AutoUpdate:   9,
-	IDPrefix:     "cpapp_",
-	New:          newApplication,
-	NewN:         newNApplication,
-	Size:         unsafe.Sizeof(customerpayment.Application{}),
-	Ptr:          ptrApplication,
-	Value:        valueApplication,
-	Attach:       attachApplication,
-	BeforeCreate: beforeCreateApplication,
+	PK:         []int32{0, 1, 2},
+	Tenant:     []int32{1, 2},
+	Select:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9},
+	Insert:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9},
+	Update:     []int32{3, 4, 5, 6, 7, 9},
+	Returning:  nil,
+	Version:    -1,
+	AutoID:     0,
+	AutoCreate: 8,
+	AutoUpdate: 9,
+	IDPrefix:   "cpapp_",
+	New:        newApplication,
+	NewN:       newNApplication,
+	Size:       unsafe.Sizeof(customerpayment.Application{}),
+	Ptr:        ptrApplication,
+	Value:      valueApplication,
+	Attach:     attachApplication,
 }
 
 var applicationsRef = keel.Ref{Table: &applicationsTable}
@@ -201,10 +200,6 @@ func attachApplication(p unsafe.Pointer, rel int32, child unsafe.Pointer) {
 	case 1:
 		r.Invoice = (*invoice.Invoice)(child)
 	}
-}
-
-func beforeCreateApplication(ctx context.Context, p unsafe.Pointer) error {
-	return (*customerpayment.Application)(p).BeforeCreate(ctx)
 }
 
 // creditMemoApplicationsTable is the schema of customerpayment.CreditMemoApplication.

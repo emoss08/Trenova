@@ -46,22 +46,23 @@ var assistantTurnsTable = schema.Table{
 		{Name: "created_at", Quoted: `"created_at"`, Field: "CreatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoCreate, Label: `Created At`, JSON: `createdAt`},
 		{Name: "updated_at", Quoted: `"updated_at"`, Field: "UpdatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoUpdate, Label: `Updated At`, JSON: `updatedAt`},
 	},
-	PK:         []int32{0, 1, 2},
-	Tenant:     []int32{1, 2},
-	Select:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17},
-	Insert:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17},
-	Update:     []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 17},
-	Returning:  nil,
-	Version:    15,
-	AutoID:     0,
-	AutoCreate: 16,
-	AutoUpdate: 17,
-	IDPrefix:   "atrn_",
-	New:        newAssistantTurn,
-	NewN:       newNAssistantTurn,
-	Size:       unsafe.Sizeof(conversation.AssistantTurn{}),
-	Ptr:        ptrAssistantTurn,
-	Value:      valueAssistantTurn,
+	PK:           []int32{0, 1, 2},
+	Tenant:       []int32{1, 2},
+	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17},
+	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17},
+	Update:       []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 17},
+	Returning:    nil,
+	Version:      15,
+	AutoID:       0,
+	AutoCreate:   16,
+	AutoUpdate:   17,
+	IDPrefix:     "atrn_",
+	New:          newAssistantTurn,
+	NewN:         newNAssistantTurn,
+	Size:         unsafe.Sizeof(conversation.AssistantTurn{}),
+	Ptr:          ptrAssistantTurn,
+	Value:        valueAssistantTurn,
+	BeforeCreate: beforeCreateAssistantTurn,
 }
 
 var assistantTurnsRef = keel.Ref{Table: &assistantTurnsTable}
@@ -264,6 +265,10 @@ func valueAssistantTurn(p unsafe.Pointer, c int32) any {
 		return r.UpdatedAt
 	}
 	return nil
+}
+
+func beforeCreateAssistantTurn(ctx context.Context, p unsafe.Pointer) error {
+	return (*conversation.AssistantTurn)(p).BeforeCreate(ctx)
 }
 
 // messagesTable is the schema of conversation.Message.

@@ -42,22 +42,23 @@ var holdReasonsTable = schema.Table{
 		{Name: "updated_at", Quoted: `"updated_at"`, Field: "UpdatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoUpdate, Label: `Updated At`, JSON: `updatedAt`},
 		{Name: "search_vector", Quoted: `"search_vector"`, Field: "SearchVector", Kind: schema.KindTSVector, Flags: schema.FlagReadOnly | schema.FlagNoSelect, Label: `Search Vector`},
 	},
-	PK:         []int32{0, 2},
-	Tenant:     []int32{1, 2},
-	Select:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17},
-	Insert:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17},
-	Update:     []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 17},
-	Returning:  nil,
-	Version:    15,
-	AutoID:     0,
-	AutoCreate: 16,
-	AutoUpdate: 17,
-	IDPrefix:   "hr_",
-	New:        newHoldReason,
-	NewN:       newNHoldReason,
-	Size:       unsafe.Sizeof(holdreason.HoldReason{}),
-	Ptr:        ptrHoldReason,
-	Value:      valueHoldReason,
+	PK:           []int32{0, 2},
+	Tenant:       []int32{1, 2},
+	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17},
+	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17},
+	Update:       []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 17},
+	Returning:    nil,
+	Version:      15,
+	AutoID:       0,
+	AutoCreate:   16,
+	AutoUpdate:   17,
+	IDPrefix:     "hr_",
+	New:          newHoldReason,
+	NewN:         newNHoldReason,
+	Size:         unsafe.Sizeof(holdreason.HoldReason{}),
+	Ptr:          ptrHoldReason,
+	Value:        valueHoldReason,
+	BeforeCreate: beforeCreateHoldReason,
 }
 
 var holdReasonsRef = keel.Ref{Table: &holdReasonsTable}
@@ -249,6 +250,10 @@ func valueHoldReason(p unsafe.Pointer, c int32) any {
 		return r.SearchVector
 	}
 	return nil
+}
+
+func beforeCreateHoldReason(ctx context.Context, p unsafe.Pointer) error {
+	return (*holdreason.HoldReason)(p).BeforeCreate(ctx)
 }
 
 var enumHoldSeverity = [...]schema.EnumValue{

@@ -2,10 +2,11 @@ package shipmenthandler_test
 
 import (
 	"context"
-	"github.com/emoss08/trenova/internal/modules/operations/ports/customertrackingports"
-	"github.com/emoss08/trenova/internal/testutil/mocks/shipmentportsmock"
 	"net/http"
 	"testing"
+
+	"github.com/emoss08/trenova/internal/modules/operations/ports/customertrackingports"
+	"github.com/emoss08/trenova/internal/testutil/mocks/shipmentportsmock"
 
 	"github.com/emoss08/trenova/internal/api/handlers/shipmenthandler"
 	"github.com/emoss08/trenova/internal/api/helpers"

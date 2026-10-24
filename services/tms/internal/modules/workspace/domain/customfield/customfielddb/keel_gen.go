@@ -43,22 +43,23 @@ var customFieldDefinitionsTable = schema.Table{
 		{Name: "created_at", Quoted: `"created_at"`, Field: "CreatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoCreate, Label: `Created At`, JSON: `createdAt`},
 		{Name: "updated_at", Quoted: `"updated_at"`, Field: "UpdatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoUpdate, Label: `Updated At`, JSON: `updatedAt`},
 	},
-	PK:         []int32{0, 1, 2},
-	Tenant:     []int32{1, 2},
-	Select:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 17, 18, 19},
-	Insert:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 17, 18, 19},
-	Update:     []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 19},
-	Returning:  nil,
-	Version:    17,
-	AutoID:     0,
-	AutoCreate: 18,
-	AutoUpdate: 19,
-	IDPrefix:   "cfd_",
-	New:        newCustomFieldDefinition,
-	NewN:       newNCustomFieldDefinition,
-	Size:       unsafe.Sizeof(customfield.CustomFieldDefinition{}),
-	Ptr:        ptrCustomFieldDefinition,
-	Value:      valueCustomFieldDefinition,
+	PK:           []int32{0, 1, 2},
+	Tenant:       []int32{1, 2},
+	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 17, 18, 19},
+	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 17, 18, 19},
+	Update:       []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 19},
+	Returning:    nil,
+	Version:      17,
+	AutoID:       0,
+	AutoCreate:   18,
+	AutoUpdate:   19,
+	IDPrefix:     "cfd_",
+	New:          newCustomFieldDefinition,
+	NewN:         newNCustomFieldDefinition,
+	Size:         unsafe.Sizeof(customfield.CustomFieldDefinition{}),
+	Ptr:          ptrCustomFieldDefinition,
+	Value:        valueCustomFieldDefinition,
+	BeforeCreate: beforeCreateCustomFieldDefinition,
 }
 
 var customFieldDefinitionsRef = keel.Ref{Table: &customFieldDefinitionsTable}
@@ -268,6 +269,10 @@ func valueCustomFieldDefinition(p unsafe.Pointer, c int32) any {
 		return r.UpdatedAt
 	}
 	return nil
+}
+
+func beforeCreateCustomFieldDefinition(ctx context.Context, p unsafe.Pointer) error {
+	return (*customfield.CustomFieldDefinition)(p).BeforeCreate(ctx)
 }
 
 // customFieldValuesTable is the schema of customfield.CustomFieldValue.

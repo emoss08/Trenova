@@ -178,7 +178,6 @@ func (p *WorkerPolicy) BeforeCreate(_ context.Context) error {
 	if p.EffectiveFrom <= 0 {
 		p.EffectiveFrom = now
 	}
-	now := timeutils.NowUnix()
 
 	return nil
 }
@@ -264,7 +263,6 @@ func (a *WorkerPolicyAcknowledgement) BeforeCreate(_ context.Context) error {
 	if a.AcknowledgedAt <= 0 {
 		a.AcknowledgedAt = now
 	}
-	now := timeutils.NowUnix()
 
 	return nil
 }

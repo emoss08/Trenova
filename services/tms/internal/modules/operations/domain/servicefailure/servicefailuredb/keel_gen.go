@@ -72,6 +72,7 @@ var reasonCodesTable = schema.Table{
 	Value:        valueReasonCode,
 	Attach:       attachReasonCode,
 	BeforeCreate: beforeCreateReasonCode,
+	BeforeUpdate: beforeUpdateReasonCode,
 }
 
 var reasonCodesRef = keel.Ref{Table: &reasonCodesTable}
@@ -341,6 +342,10 @@ func beforeCreateReasonCode(ctx context.Context, p unsafe.Pointer) error {
 	return (*servicefailure.ReasonCode)(p).BeforeCreate(ctx)
 }
 
+func beforeUpdateReasonCode(ctx context.Context, p unsafe.Pointer) error {
+	return (*servicefailure.ReasonCode)(p).BeforeUpdate(ctx)
+}
+
 // serviceFailuresTable is the schema of servicefailure.ServiceFailure.
 var serviceFailuresTable = schema.Table{
 	Name:   "service_failures",
@@ -413,6 +418,7 @@ var serviceFailuresTable = schema.Table{
 	Value:        valueServiceFailure,
 	Attach:       attachServiceFailure,
 	BeforeCreate: beforeCreateServiceFailure,
+	BeforeUpdate: beforeUpdateServiceFailure,
 }
 
 var serviceFailuresRef = keel.Ref{Table: &serviceFailuresTable}
@@ -811,6 +817,10 @@ func attachServiceFailure(p unsafe.Pointer, rel int32, child unsafe.Pointer) {
 
 func beforeCreateServiceFailure(ctx context.Context, p unsafe.Pointer) error {
 	return (*servicefailure.ServiceFailure)(p).BeforeCreate(ctx)
+}
+
+func beforeUpdateServiceFailure(ctx context.Context, p unsafe.Pointer) error {
+	return (*servicefailure.ServiceFailure)(p).BeforeUpdate(ctx)
 }
 
 func init() {

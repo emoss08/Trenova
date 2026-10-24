@@ -41,24 +41,23 @@ var linesTable = schema.Table{
 	Relations: []schema.Relation{
 		{Name: "GLAccount", Alias: "ga", Kind: schema.BelongsTo, Local: []int32{5}, Remote: []int32{0}, Label: `GL Account`, JSON: `glAccount`},
 	},
-	PK:           []int32{0, 1, 2},
-	Tenant:       []int32{1, 2},
-	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12},
-	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12},
-	Update:       []int32{3, 4, 5, 6, 7, 8, 9, 10, 12},
-	Returning:    nil,
-	Version:      -1,
-	AutoID:       0,
-	AutoCreate:   11,
-	AutoUpdate:   12,
-	IDPrefix:     "mjrl_",
-	New:          newLine,
-	NewN:         newNLine,
-	Size:         unsafe.Sizeof(manualjournal.Line{}),
-	Ptr:          ptrLine,
-	Value:        valueLine,
-	Attach:       attachLine,
-	BeforeCreate: beforeCreateLine,
+	PK:         []int32{0, 1, 2},
+	Tenant:     []int32{1, 2},
+	Select:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12},
+	Insert:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12},
+	Update:     []int32{3, 4, 5, 6, 7, 8, 9, 10, 12},
+	Returning:  nil,
+	Version:    -1,
+	AutoID:     0,
+	AutoCreate: 11,
+	AutoUpdate: 12,
+	IDPrefix:   "mjrl_",
+	New:        newLine,
+	NewN:       newNLine,
+	Size:       unsafe.Sizeof(manualjournal.Line{}),
+	Ptr:        ptrLine,
+	Value:      valueLine,
+	Attach:     attachLine,
 }
 
 var linesRef = keel.Ref{Table: &linesTable}
@@ -219,10 +218,6 @@ func attachLine(p unsafe.Pointer, rel int32, child unsafe.Pointer) {
 	case 0:
 		r.GLAccount = (*glaccount.GLAccount)(child)
 	}
-}
-
-func beforeCreateLine(ctx context.Context, p unsafe.Pointer) error {
-	return (*manualjournal.Line)(p).BeforeCreate(ctx)
 }
 
 // requestsTable is the schema of manualjournal.Request.

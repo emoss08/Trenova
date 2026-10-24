@@ -52,23 +52,24 @@ var rateSimulationsTable = schema.Table{
 		{Name: "Agreement", Alias: "a", Kind: schema.BelongsTo, Local: []int32{3}, Remote: []int32{0}, Label: `Agreement`, JSON: `agreement`},
 		{Name: "Results", Alias: "r", Kind: schema.HasMany, Local: []int32{0}, Remote: []int32{3}, Label: `Results`, JSON: `results`},
 	},
-	PK:         []int32{0, 1, 2},
-	Tenant:     []int32{1, 2},
-	Select:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20},
-	Insert:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20},
-	Update:     []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 20},
-	Returning:  nil,
-	Version:    18,
-	AutoID:     0,
-	AutoCreate: 19,
-	AutoUpdate: 20,
-	IDPrefix:   "rsim_",
-	New:        newRateSimulation,
-	NewN:       newNRateSimulation,
-	Size:       unsafe.Sizeof(ratesimulation.RateSimulation{}),
-	Ptr:        ptrRateSimulation,
-	Value:      valueRateSimulation,
-	Attach:     attachRateSimulation,
+	PK:           []int32{0, 1, 2},
+	Tenant:       []int32{1, 2},
+	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20},
+	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20},
+	Update:       []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 20},
+	Returning:    nil,
+	Version:      18,
+	AutoID:       0,
+	AutoCreate:   19,
+	AutoUpdate:   20,
+	IDPrefix:     "rsim_",
+	New:          newRateSimulation,
+	NewN:         newNRateSimulation,
+	Size:         unsafe.Sizeof(ratesimulation.RateSimulation{}),
+	Ptr:          ptrRateSimulation,
+	Value:        valueRateSimulation,
+	Attach:       attachRateSimulation,
+	BeforeCreate: beforeCreateRateSimulation,
 }
 
 var rateSimulationsRef = keel.Ref{Table: &rateSimulationsTable}
@@ -312,6 +313,10 @@ func attachRateSimulation(p unsafe.Pointer, rel int32, child unsafe.Pointer) {
 	case 1:
 		r.Results = append(r.Results, (*ratesimulation.RateSimulationResult)(child))
 	}
+}
+
+func beforeCreateRateSimulation(ctx context.Context, p unsafe.Pointer) error {
+	return (*ratesimulation.RateSimulation)(p).BeforeCreate(ctx)
 }
 
 // rateSimulationResultsTable is the schema of ratesimulation.RateSimulationResult.

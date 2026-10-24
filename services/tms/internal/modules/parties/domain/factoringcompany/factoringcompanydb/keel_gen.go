@@ -69,6 +69,7 @@ var factoringCompaniesTable = schema.Table{
 	Value:        valueFactoringCompany,
 	Attach:       attachFactoringCompany,
 	BeforeCreate: beforeCreateFactoringCompany,
+	BeforeUpdate: beforeUpdateFactoringCompany,
 	BeforeSave:   beforeSaveFactoringCompany,
 }
 
@@ -306,6 +307,10 @@ func attachFactoringCompany(p unsafe.Pointer, rel int32, child unsafe.Pointer) {
 
 func beforeCreateFactoringCompany(ctx context.Context, p unsafe.Pointer) error {
 	return (*factoringcompany.FactoringCompany)(p).BeforeCreate(ctx)
+}
+
+func beforeUpdateFactoringCompany(ctx context.Context, p unsafe.Pointer) error {
+	return (*factoringcompany.FactoringCompany)(p).BeforeUpdate(ctx)
 }
 
 func beforeSaveFactoringCompany(ctx context.Context, p unsafe.Pointer) error {

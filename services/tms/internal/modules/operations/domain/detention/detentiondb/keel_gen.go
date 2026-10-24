@@ -1915,6 +1915,7 @@ var detentionPolicyTiersTable = schema.Table{
 	Ptr:          ptrDetentionPolicyTier,
 	Value:        valueDetentionPolicyTier,
 	BeforeCreate: beforeCreateDetentionPolicyTier,
+	BeforeUpdate: beforeUpdateDetentionPolicyTier,
 }
 
 var detentionPolicyTiersRef = keel.Ref{Table: &detentionPolicyTiersTable}
@@ -2063,6 +2064,10 @@ func valueDetentionPolicyTier(p unsafe.Pointer, c int32) any {
 
 func beforeCreateDetentionPolicyTier(ctx context.Context, p unsafe.Pointer) error {
 	return (*detention.DetentionPolicyTier)(p).BeforeCreate(ctx)
+}
+
+func beforeUpdateDetentionPolicyTier(ctx context.Context, p unsafe.Pointer) error {
+	return (*detention.DetentionPolicyTier)(p).BeforeUpdate(ctx)
 }
 
 func init() {

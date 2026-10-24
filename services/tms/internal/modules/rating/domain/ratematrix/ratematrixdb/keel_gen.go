@@ -70,6 +70,7 @@ var rateMatrixesTable = schema.Table{
 	Value:        valueRateMatrix,
 	Attach:       attachRateMatrix,
 	BeforeCreate: beforeCreateRateMatrix,
+	BeforeUpdate: beforeUpdateRateMatrix,
 	BeforeSave:   beforeSaveRateMatrix,
 }
 
@@ -327,6 +328,10 @@ func beforeCreateRateMatrix(ctx context.Context, p unsafe.Pointer) error {
 	return (*ratematrix.RateMatrix)(p).BeforeCreate(ctx)
 }
 
+func beforeUpdateRateMatrix(ctx context.Context, p unsafe.Pointer) error {
+	return (*ratematrix.RateMatrix)(p).BeforeUpdate(ctx)
+}
+
 func beforeSaveRateMatrix(ctx context.Context, p unsafe.Pointer) error {
 	return (*ratematrix.RateMatrix)(p).BeforeSave(ctx)
 }
@@ -371,24 +376,23 @@ var rateMatrixCellsTable = schema.Table{
 	Relations: []schema.Relation{
 		{Name: "RateMatrix", Alias: "rm", Kind: schema.BelongsTo, Local: []int32{3}, Remote: []int32{0}, Label: `Rate Matrix`},
 	},
-	PK:           []int32{0, 1, 2},
-	Tenant:       []int32{1, 2},
-	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25},
-	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25},
-	Update:       []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 25},
-	Returning:    nil,
-	Version:      -1,
-	AutoID:       0,
-	AutoCreate:   24,
-	AutoUpdate:   25,
-	IDPrefix:     "rmc_",
-	New:          newRateMatrixCell,
-	NewN:         newNRateMatrixCell,
-	Size:         unsafe.Sizeof(ratematrix.RateMatrixCell{}),
-	Ptr:          ptrRateMatrixCell,
-	Value:        valueRateMatrixCell,
-	Attach:       attachRateMatrixCell,
-	BeforeCreate: beforeCreateRateMatrixCell,
+	PK:         []int32{0, 1, 2},
+	Tenant:     []int32{1, 2},
+	Select:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25},
+	Insert:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25},
+	Update:     []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 25},
+	Returning:  nil,
+	Version:    -1,
+	AutoID:     0,
+	AutoCreate: 24,
+	AutoUpdate: 25,
+	IDPrefix:   "rmc_",
+	New:        newRateMatrixCell,
+	NewN:       newNRateMatrixCell,
+	Size:       unsafe.Sizeof(ratematrix.RateMatrixCell{}),
+	Ptr:        ptrRateMatrixCell,
+	Value:      valueRateMatrixCell,
+	Attach:     attachRateMatrixCell,
 }
 
 var rateMatrixCellsRef = keel.Ref{Table: &rateMatrixCellsTable}
@@ -638,10 +642,6 @@ func attachRateMatrixCell(p unsafe.Pointer, rel int32, child unsafe.Pointer) {
 	}
 }
 
-func beforeCreateRateMatrixCell(ctx context.Context, p unsafe.Pointer) error {
-	return (*ratematrix.RateMatrixCell)(p).BeforeCreate(ctx)
-}
-
 // rateMatrixDimensionsTable is the schema of ratematrix.RateMatrixDimension.
 var rateMatrixDimensionsTable = schema.Table{
 	Name:   "rate_matrix_dimensions",
@@ -687,6 +687,7 @@ var rateMatrixDimensionsTable = schema.Table{
 	Value:        valueRateMatrixDimension,
 	Attach:       attachRateMatrixDimension,
 	BeforeCreate: beforeCreateRateMatrixDimension,
+	BeforeUpdate: beforeUpdateRateMatrixDimension,
 }
 
 var rateMatrixDimensionsRef = keel.Ref{Table: &rateMatrixDimensionsTable}
@@ -852,6 +853,10 @@ func attachRateMatrixDimension(p unsafe.Pointer, rel int32, child unsafe.Pointer
 
 func beforeCreateRateMatrixDimension(ctx context.Context, p unsafe.Pointer) error {
 	return (*ratematrix.RateMatrixDimension)(p).BeforeCreate(ctx)
+}
+
+func beforeUpdateRateMatrixDimension(ctx context.Context, p unsafe.Pointer) error {
+	return (*ratematrix.RateMatrixDimension)(p).BeforeUpdate(ctx)
 }
 
 // rateMatrixReviewsTable is the schema of ratematrix.RateMatrixReview.

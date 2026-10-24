@@ -345,7 +345,6 @@ func (c *WorkerLeaveCase) BeforeCreate(_ context.Context) error {
 	if c.RequestedAt == 0 {
 		c.RequestedAt = now
 	}
-	now := timeutils.NowUnix()
 
 	return nil
 }

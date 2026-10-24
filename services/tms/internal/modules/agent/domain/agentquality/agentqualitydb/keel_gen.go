@@ -41,22 +41,23 @@ var controlsTable = schema.Table{
 		{Name: "created_at", Quoted: `"created_at"`, Field: "CreatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoCreate, Label: `Created At`, JSON: `createdAt`},
 		{Name: "updated_at", Quoted: `"updated_at"`, Field: "UpdatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoUpdate, Label: `Updated At`, JSON: `updatedAt`},
 	},
-	PK:         []int32{0, 1, 2},
-	Tenant:     []int32{1, 2},
-	Select:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16},
-	Insert:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16},
-	Update:     []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 16},
-	Returning:  nil,
-	Version:    14,
-	AutoID:     0,
-	AutoCreate: 15,
-	AutoUpdate: 16,
-	IDPrefix:   "aqc_",
-	New:        newControl,
-	NewN:       newNControl,
-	Size:       unsafe.Sizeof(agentquality.Control{}),
-	Ptr:        ptrControl,
-	Value:      valueControl,
+	PK:           []int32{0, 1, 2},
+	Tenant:       []int32{1, 2},
+	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16},
+	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16},
+	Update:       []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 16},
+	Returning:    nil,
+	Version:      14,
+	AutoID:       0,
+	AutoCreate:   15,
+	AutoUpdate:   16,
+	IDPrefix:     "aqc_",
+	New:          newControl,
+	NewN:         newNControl,
+	Size:         unsafe.Sizeof(agentquality.Control{}),
+	Ptr:          ptrControl,
+	Value:        valueControl,
+	BeforeCreate: beforeCreateControl,
 }
 
 var controlsRef = keel.Ref{Table: &controlsTable}
@@ -233,6 +234,10 @@ func valueControl(p unsafe.Pointer, c int32) any {
 	return nil
 }
 
+func beforeCreateControl(ctx context.Context, p unsafe.Pointer) error {
+	return (*agentquality.Control)(p).BeforeCreate(ctx)
+}
+
 // evalCasesTable is the schema of agentquality.EvalCase.
 var evalCasesTable = schema.Table{
 	Name:   "agent_eval_cases",
@@ -275,22 +280,23 @@ var evalCasesTable = schema.Table{
 		{Name: "created_at", Quoted: `"created_at"`, Field: "CreatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoCreate, Label: `Created At`, JSON: `createdAt`},
 		{Name: "updated_at", Quoted: `"updated_at"`, Field: "UpdatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoUpdate, Label: `Updated At`, JSON: `updatedAt`},
 	},
-	PK:         []int32{0, 1, 2},
-	Tenant:     []int32{1, 2},
-	Select:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31},
-	Insert:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31},
-	Update:     []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 31},
-	Returning:  nil,
-	Version:    29,
-	AutoID:     0,
-	AutoCreate: 30,
-	AutoUpdate: 31,
-	IDPrefix:   "aec_",
-	New:        newEvalCase,
-	NewN:       newNEvalCase,
-	Size:       unsafe.Sizeof(agentquality.EvalCase{}),
-	Ptr:        ptrEvalCase,
-	Value:      valueEvalCase,
+	PK:           []int32{0, 1, 2},
+	Tenant:       []int32{1, 2},
+	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31},
+	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31},
+	Update:       []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 31},
+	Returning:    nil,
+	Version:      29,
+	AutoID:       0,
+	AutoCreate:   30,
+	AutoUpdate:   31,
+	IDPrefix:     "aec_",
+	New:          newEvalCase,
+	NewN:         newNEvalCase,
+	Size:         unsafe.Sizeof(agentquality.EvalCase{}),
+	Ptr:          ptrEvalCase,
+	Value:        valueEvalCase,
+	BeforeCreate: beforeCreateEvalCase,
 }
 
 var evalCasesRef = keel.Ref{Table: &evalCasesTable}
@@ -626,6 +632,10 @@ func valueEvalCase(p unsafe.Pointer, c int32) any {
 	return nil
 }
 
+func beforeCreateEvalCase(ctx context.Context, p unsafe.Pointer) error {
+	return (*agentquality.EvalCase)(p).BeforeCreate(ctx)
+}
+
 // suiteRunsTable is the schema of agentquality.SuiteRun.
 var suiteRunsTable = schema.Table{
 	Name:   "agent_suite_runs",
@@ -668,22 +678,23 @@ var suiteRunsTable = schema.Table{
 		{Name: "created_at", Quoted: `"created_at"`, Field: "CreatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoCreate, Label: `Created At`, JSON: `createdAt`},
 		{Name: "updated_at", Quoted: `"updated_at"`, Field: "UpdatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoUpdate, Label: `Updated At`, JSON: `updatedAt`},
 	},
-	PK:         []int32{0, 1, 2},
-	Tenant:     []int32{1, 2},
-	Select:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31},
-	Insert:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31},
-	Update:     []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 31},
-	Returning:  nil,
-	Version:    29,
-	AutoID:     -1,
-	AutoCreate: 30,
-	AutoUpdate: 31,
-	IDPrefix:   "",
-	New:        newSuiteRun,
-	NewN:       newNSuiteRun,
-	Size:       unsafe.Sizeof(agentquality.SuiteRun{}),
-	Ptr:        ptrSuiteRun,
-	Value:      valueSuiteRun,
+	PK:           []int32{0, 1, 2},
+	Tenant:       []int32{1, 2},
+	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31},
+	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31},
+	Update:       []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 31},
+	Returning:    nil,
+	Version:      29,
+	AutoID:       -1,
+	AutoCreate:   30,
+	AutoUpdate:   31,
+	IDPrefix:     "",
+	New:          newSuiteRun,
+	NewN:         newNSuiteRun,
+	Size:         unsafe.Sizeof(agentquality.SuiteRun{}),
+	Ptr:          ptrSuiteRun,
+	Value:        valueSuiteRun,
+	BeforeCreate: beforeCreateSuiteRun,
 }
 
 var suiteRunsRef = keel.Ref{Table: &suiteRunsTable}
@@ -996,6 +1007,10 @@ func valueSuiteRun(p unsafe.Pointer, c int32) any {
 		return r.UpdatedAt
 	}
 	return nil
+}
+
+func beforeCreateSuiteRun(ctx context.Context, p unsafe.Pointer) error {
+	return (*agentquality.SuiteRun)(p).BeforeCreate(ctx)
 }
 
 // intIs64 fails the build where int is not 64 bits: int fields are read through *int64.

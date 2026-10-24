@@ -41,24 +41,26 @@ var capabilityRulesTable = schema.Table{
 	Relations: []schema.Relation{
 		{Name: "Profile", Alias: "p", Kind: schema.BelongsTo, Local: []int32{3}, Remote: []int32{0}, Label: `Profile`},
 	},
-	PK:         []int32{0, 1, 2},
-	Tenant:     []int32{1, 2},
-	Select:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12},
-	Insert:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12},
-	Update:     []int32{3, 4, 5, 6, 7, 8, 9, 12},
-	Returning:  nil,
-	Version:    10,
-	AutoID:     0,
-	AutoCreate: 11,
-	AutoUpdate: 12,
-	IDPrefix:   "mpr_",
-	New:        newCapabilityRule,
-	NewN:       newNCapabilityRule,
-	Size:       unsafe.Sizeof(modeprofile.CapabilityRule{}),
-	Ptr:        ptrCapabilityRule,
-	Value:      valueCapabilityRule,
-	Attach:     attachCapabilityRule,
-	BeforeSave: beforeSaveCapabilityRule,
+	PK:           []int32{0, 1, 2},
+	Tenant:       []int32{1, 2},
+	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12},
+	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12},
+	Update:       []int32{3, 4, 5, 6, 7, 8, 9, 12},
+	Returning:    nil,
+	Version:      10,
+	AutoID:       0,
+	AutoCreate:   11,
+	AutoUpdate:   12,
+	IDPrefix:     "mpr_",
+	New:          newCapabilityRule,
+	NewN:         newNCapabilityRule,
+	Size:         unsafe.Sizeof(modeprofile.CapabilityRule{}),
+	Ptr:          ptrCapabilityRule,
+	Value:        valueCapabilityRule,
+	Attach:       attachCapabilityRule,
+	BeforeCreate: beforeCreateCapabilityRule,
+	BeforeUpdate: beforeUpdateCapabilityRule,
+	BeforeSave:   beforeSaveCapabilityRule,
 }
 
 var capabilityRulesRef = keel.Ref{Table: &capabilityRulesTable}
@@ -221,6 +223,14 @@ func attachCapabilityRule(p unsafe.Pointer, rel int32, child unsafe.Pointer) {
 	}
 }
 
+func beforeCreateCapabilityRule(ctx context.Context, p unsafe.Pointer) error {
+	return (*modeprofile.CapabilityRule)(p).BeforeCreate(ctx)
+}
+
+func beforeUpdateCapabilityRule(ctx context.Context, p unsafe.Pointer) error {
+	return (*modeprofile.CapabilityRule)(p).BeforeUpdate(ctx)
+}
+
 func beforeSaveCapabilityRule(ctx context.Context, p unsafe.Pointer) error {
 	return (*modeprofile.CapabilityRule)(p).BeforeSave(ctx)
 }
@@ -262,24 +272,26 @@ var deviationsTable = schema.Table{
 		{Name: "Profile", Alias: "p", Kind: schema.BelongsTo, Local: []int32{3}, Remote: []int32{0}, Label: `Profile`, JSON: `profile`},
 		{Name: "AcknowledgedBy", Alias: "ab", Kind: schema.BelongsTo, Local: []int32{14}, Remote: []int32{0}, Label: `Acknowledged By`, JSON: `acknowledgedBy`},
 	},
-	PK:         []int32{0, 1, 2},
-	Tenant:     []int32{1, 2},
-	Select:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20},
-	Insert:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20},
-	Update:     []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 20},
-	Returning:  nil,
-	Version:    18,
-	AutoID:     0,
-	AutoCreate: 19,
-	AutoUpdate: 20,
-	IDPrefix:   "mpd_",
-	New:        newDeviation,
-	NewN:       newNDeviation,
-	Size:       unsafe.Sizeof(modeprofile.Deviation{}),
-	Ptr:        ptrDeviation,
-	Value:      valueDeviation,
-	Attach:     attachDeviation,
-	BeforeSave: beforeSaveDeviation,
+	PK:           []int32{0, 1, 2},
+	Tenant:       []int32{1, 2},
+	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20},
+	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20},
+	Update:       []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 20},
+	Returning:    nil,
+	Version:      18,
+	AutoID:       0,
+	AutoCreate:   19,
+	AutoUpdate:   20,
+	IDPrefix:     "mpd_",
+	New:          newDeviation,
+	NewN:         newNDeviation,
+	Size:         unsafe.Sizeof(modeprofile.Deviation{}),
+	Ptr:          ptrDeviation,
+	Value:        valueDeviation,
+	Attach:       attachDeviation,
+	BeforeCreate: beforeCreateDeviation,
+	BeforeUpdate: beforeUpdateDeviation,
+	BeforeSave:   beforeSaveDeviation,
 }
 
 var deviationsRef = keel.Ref{Table: &deviationsTable}
@@ -531,6 +543,14 @@ func attachDeviation(p unsafe.Pointer, rel int32, child unsafe.Pointer) {
 	}
 }
 
+func beforeCreateDeviation(ctx context.Context, p unsafe.Pointer) error {
+	return (*modeprofile.Deviation)(p).BeforeCreate(ctx)
+}
+
+func beforeUpdateDeviation(ctx context.Context, p unsafe.Pointer) error {
+	return (*modeprofile.Deviation)(p).BeforeUpdate(ctx)
+}
+
 func beforeSaveDeviation(ctx context.Context, p unsafe.Pointer) error {
 	return (*modeprofile.Deviation)(p).BeforeSave(ctx)
 }
@@ -573,24 +593,26 @@ var profilesTable = schema.Table{
 	Relations: []schema.Relation{
 		{Name: "Rules", Alias: "r", Kind: schema.HasMany, Local: []int32{0}, Remote: []int32{3}, Label: `Rules`, JSON: `rules`},
 	},
-	PK:         []int32{0, 1, 2},
-	Tenant:     []int32{1, 2},
-	Select:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22},
-	Insert:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22},
-	Update:     []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 22},
-	Returning:  nil,
-	Version:    20,
-	AutoID:     0,
-	AutoCreate: 21,
-	AutoUpdate: 22,
-	IDPrefix:   "mpf_",
-	New:        newProfile,
-	NewN:       newNProfile,
-	Size:       unsafe.Sizeof(modeprofile.Profile{}),
-	Ptr:        ptrProfile,
-	Value:      valueProfile,
-	Attach:     attachProfile,
-	BeforeSave: beforeSaveProfile,
+	PK:           []int32{0, 1, 2},
+	Tenant:       []int32{1, 2},
+	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22},
+	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22},
+	Update:       []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 22},
+	Returning:    nil,
+	Version:      20,
+	AutoID:       0,
+	AutoCreate:   21,
+	AutoUpdate:   22,
+	IDPrefix:     "mpf_",
+	New:          newProfile,
+	NewN:         newNProfile,
+	Size:         unsafe.Sizeof(modeprofile.Profile{}),
+	Ptr:          ptrProfile,
+	Value:        valueProfile,
+	Attach:       attachProfile,
+	BeforeCreate: beforeCreateProfile,
+	BeforeUpdate: beforeUpdateProfile,
+	BeforeSave:   beforeSaveProfile,
 }
 
 var profilesRef = keel.Ref{Table: &profilesTable}
@@ -855,6 +877,14 @@ func attachProfile(p unsafe.Pointer, rel int32, child unsafe.Pointer) {
 	case 0:
 		r.Rules = append(r.Rules, (*modeprofile.CapabilityRule)(child))
 	}
+}
+
+func beforeCreateProfile(ctx context.Context, p unsafe.Pointer) error {
+	return (*modeprofile.Profile)(p).BeforeCreate(ctx)
+}
+
+func beforeUpdateProfile(ctx context.Context, p unsafe.Pointer) error {
+	return (*modeprofile.Profile)(p).BeforeUpdate(ctx)
 }
 
 func beforeSaveProfile(ctx context.Context, p unsafe.Pointer) error {

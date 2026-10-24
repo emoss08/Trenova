@@ -5,7 +5,6 @@ import (
 
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 )
 
 func TestBusinessUnit_Validate(t *testing.T) {

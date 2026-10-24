@@ -328,23 +328,25 @@ var pagesTable = schema.Table{
 		{Name: "created_at", Quoted: `"created_at"`, Field: "CreatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoCreate, Label: `Created At`, JSON: `createdAt`},
 		{Name: "updated_at", Quoted: `"updated_at"`, Field: "UpdatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoUpdate, Label: `Updated At`, JSON: `updatedAt`},
 	},
-	PK:         []int32{0},
-	Tenant:     []int32{3, 4},
-	Select:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16},
-	Insert:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16},
-	Update:     []int32{1, 2, 5, 6, 7, 8, 9, 10, 11, 12, 13, 16},
-	Returning:  nil,
-	Version:    14,
-	AutoID:     0,
-	AutoCreate: 15,
-	AutoUpdate: 16,
-	IDPrefix:   "dcp_",
-	New:        newPage,
-	NewN:       newNPage,
-	Size:       unsafe.Sizeof(documentcontent.Page{}),
-	Ptr:        ptrPage,
-	Value:      valuePage,
-	BeforeSave: beforeSavePage,
+	PK:           []int32{0},
+	Tenant:       []int32{3, 4},
+	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16},
+	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16},
+	Update:       []int32{1, 2, 5, 6, 7, 8, 9, 10, 11, 12, 13, 16},
+	Returning:    nil,
+	Version:      14,
+	AutoID:       0,
+	AutoCreate:   15,
+	AutoUpdate:   16,
+	IDPrefix:     "dcp_",
+	New:          newPage,
+	NewN:         newNPage,
+	Size:         unsafe.Sizeof(documentcontent.Page{}),
+	Ptr:          ptrPage,
+	Value:        valuePage,
+	BeforeCreate: beforeCreatePage,
+	BeforeUpdate: beforeUpdatePage,
+	BeforeSave:   beforeSavePage,
 }
 
 var pagesRef = keel.Ref{Table: &pagesTable}
@@ -523,6 +525,14 @@ func valuePage(p unsafe.Pointer, c int32) any {
 		return r.UpdatedAt
 	}
 	return nil
+}
+
+func beforeCreatePage(ctx context.Context, p unsafe.Pointer) error {
+	return (*documentcontent.Page)(p).BeforeCreate(ctx)
+}
+
+func beforeUpdatePage(ctx context.Context, p unsafe.Pointer) error {
+	return (*documentcontent.Page)(p).BeforeUpdate(ctx)
 }
 
 func beforeSavePage(ctx context.Context, p unsafe.Pointer) error {
