@@ -7,10 +7,6 @@ import (
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 )
 
-type scopedTransactor interface {
-	ScopedTransactions() bool
-}
-
 func Read[T any](
 	ctx context.Context,
 	conn kernelports.DBConnection,
@@ -59,21 +55,12 @@ func Write2[A, B any](
 	return run2(ctx, conn, false, fn)
 }
 
-func Required(conn kernelports.DBConnection) bool {
-	scoped, ok := conn.(scopedTransactor)
-	return ok && scoped.ScopedTransactions()
-}
-
 func run[T any](
 	ctx context.Context,
 	conn kernelports.DBConnection,
 	readOnly bool,
 	fn func(context.Context) (T, error),
 ) (T, error) {
-	if !Required(conn) {
-		return fn(ctx)
-	}
-
 	var out T
 	err := conn.Transact(
 		ctx,
@@ -94,10 +81,6 @@ func run2[A, B any](
 	readOnly bool,
 	fn func(context.Context) (A, B, error),
 ) (first A, second B, err error) {
-	if !Required(conn) {
-		return fn(ctx)
-	}
-
 	err = conn.Transact(
 		ctx,
 		kernelports.TxOptions{ReadOnly: readOnly},
@@ -117,10 +100,6 @@ func runErr(
 	readOnly bool,
 	fn func(context.Context) error,
 ) error {
-	if !Required(conn) {
-		return fn(ctx)
-	}
-
 	return conn.Transact(ctx, kernelports.TxOptions{ReadOnly: readOnly}, fn)
 }
 

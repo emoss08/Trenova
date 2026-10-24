@@ -83,7 +83,7 @@ sends no `OnBegin` statements; one with another scope begins its own. See
 
 | `database.rls.mode` | Scope guard | When |
 |---|---|---|
-| `off` (default) | not installed; `dbtx` helpers call straight through; keel has no `OnBegin` | deployments not yet migrated |
+| `off` (default) | not installed; keel has no `OnBegin`, and `dbtx` still runs each method in one transaction | deployments not yet migrated |
 | `observe` | signs scopes, logs and meters access that `enforce` would refuse | while rolling out |
 | `enforce` | `OnBegin` refuses a transaction with no tenant or system scope | production |
 
@@ -259,7 +259,7 @@ mode, so switch roles and enforcement together.
    system role); logical decoding ignores policies but its snapshot does not.
 
 Rolling back takes both changes in the same deploy: point `database.user` back at
-the owner role and set `mode` to `off` (no scope guard, no per-method transactions) or
+the owner role and set `mode` to `off` (no scope guard) or
 `observe`. Neither is enough alone: the tenant-bound role with `mode: off` is
 refused every unscoped statement by PostgreSQL, and the owner role under
 `enforce` is refused at startup.

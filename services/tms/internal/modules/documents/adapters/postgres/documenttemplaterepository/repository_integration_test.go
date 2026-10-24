@@ -321,7 +321,7 @@ func TestOnlyOneDraftPerTemplateIsAccepted(t *testing.T) {
 		},
 	})
 	require.Error(t, err, "a second draft on one template must be rejected")
-	require.Contains(t, err.Error(), "uq_document_template_versions_one_draft")
+	require.Contains(t, err.Error(), "This template already has a draft")
 }
 
 // A version that produced a document a customer received must stay readable, or

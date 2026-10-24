@@ -71,7 +71,7 @@ func TestRunReads_LeaveAnUnattendedReadAsItWas(t *testing.T) {
 	t.Parallel()
 
 	for _, query := range readEveryWay(t, agentports.UnattendedRunRead()) {
-		assert.NotContains(t, query, "subject_type", query)
+		assert.NotContains(t, query, `ar."subject_type" <> $`, query)
 		assert.NotContains(t, query, "assistant_threads", query)
 	}
 }

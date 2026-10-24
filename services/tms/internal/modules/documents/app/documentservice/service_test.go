@@ -102,6 +102,8 @@ func setupDocumentServiceHarness(t *testing.T) *serviceHarness {
 	cacheRepo := customerportsmock.NewMockDocumentCacheRepository(t)
 
 	sessionRepo := documentuploadportsmock.NewMockDocumentUploadSessionRepository(t)
+	sessionRepo.On("ClearDocumentReference", mock.Anything, mock.Anything, mock.Anything).Return(nil).Maybe()
+	sessionRepo.On("ClearDocumentReferences", mock.Anything, mock.Anything, mock.Anything).Return(nil).Maybe()
 	contentService := documentportsmock.NewMockDocumentContentService(t)
 	searchProjection := documentsearchprojectionportsmock.NewMockDocumentSearchProjectionService(t)
 	// Every scenario in this suite uploads at least one document, and each

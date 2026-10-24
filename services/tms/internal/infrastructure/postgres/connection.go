@@ -244,10 +244,6 @@ func (c *Connection) observers(slow *slowQueryLog) []keel.Observer {
 	)
 }
 
-func (c *Connection) ScopedTransactions() bool {
-	return c != nil && c.rls != nil
-}
-
 func (c *Connection) RunDetached(
 	ctx context.Context,
 	readOnly bool,
@@ -261,10 +257,6 @@ func (c *Connection) RunScoped(
 	readOnly bool,
 	fn func(context.Context) error,
 ) error {
-	if !c.ScopedTransactions() {
-		return fn(ctx)
-	}
-
 	return c.Transact(ctx, kernelports.TxOptions{ReadOnly: readOnly}, fn)
 }
 

@@ -48,6 +48,7 @@ func setupTestCacheRepository(t *testing.T) (*permissionCacheRepository, *redis.
 	repo := &permissionCacheRepository{
 		client: client,
 		l:      logger.Named("test.permission-cache-repository"),
+		prefix: permissionCachePrefix + ":test",
 	}
 
 	cleanup := func() {

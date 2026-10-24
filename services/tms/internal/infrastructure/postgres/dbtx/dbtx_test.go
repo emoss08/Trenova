@@ -14,11 +14,8 @@ import (
 
 type fakeConn struct {
 	kernelports.DBConnection
-	scoped bool
 	opened []kernelports.TxOptions
 }
-
-func (f *fakeConn) ScopedTransactions() bool { return f.scoped }
 
 func (f *fakeConn) Transact(
 	ctx context.Context,
@@ -29,22 +26,10 @@ func (f *fakeConn) Transact(
 	return fn(ctx)
 }
 
-func TestHelpersRunDirectlyWhenScopedTransactionsAreOff(t *testing.T) {
+func TestHelpersRunEveryCallInATransaction(t *testing.T) {
 	t.Parallel()
 
 	conn := &fakeConn{}
-	got, err := Read(t.Context(), conn, func(context.Context) (int, error) { return 7, nil })
-	require.NoError(t, err)
-	assert.Equal(t, 7, got)
-	require.NoError(t, WriteErr(t.Context(), conn, func(context.Context) error { return nil }))
-	assert.Empty(t, conn.opened)
-	assert.False(t, Required(conn))
-}
-
-func TestHelpersOpenATransactionPerCallWhenScoped(t *testing.T) {
-	t.Parallel()
-
-	conn := &fakeConn{scoped: true}
 	failure := errors.New("boom")
 
 	got, err := Read(t.Context(), conn, func(context.Context) (string, error) { return "row", nil })
@@ -72,7 +57,6 @@ func TestHelpersOpenATransactionPerCallWhenScoped(t *testing.T) {
 		{ReadOnly: true},
 		{ReadOnly: false},
 	}, conn.opened)
-	assert.True(t, Required(conn))
 }
 
 func TestSavepointRunsDirectlyOutsideATransaction(t *testing.T) {
@@ -92,3 +76,11 @@ type outsideTx struct {
 }
 
 func (outsideTx) Keel(context.Context) *keel.DB { return nil }
+
+func (outsideTx) Transact(
+	ctx context.Context,
+	_ kernelports.TxOptions,
+	fn func(context.Context) error,
+) error {
+	return fn(ctx)
+}

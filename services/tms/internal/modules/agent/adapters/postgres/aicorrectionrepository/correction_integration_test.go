@@ -205,7 +205,7 @@ func TestTrainableCorrections_CountAndWeeklyTotalsFollowConsent(t *testing.T) {
 	assert.Empty(t, weekly())
 
 	controls := tenantdb.AgentControls
-	updated, err := controls.Query().Update(ctx, db, controls.AITrainingConsent.To(true))
+	updated, err := controls.Where(keel.True()).Update(ctx, db, controls.AITrainingConsent.To(true))
 	require.NoError(t, err)
 	if updated == 0 {
 		require.NoError(t, controls.Create(ctx, db, &tenant.AgentControl{

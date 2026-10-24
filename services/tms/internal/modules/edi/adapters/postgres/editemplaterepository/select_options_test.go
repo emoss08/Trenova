@@ -22,6 +22,11 @@ func TestTemplateOptionsQuery_AppliesTheFiltersAndSearch(t *testing.T) {
 
 	sql, args := keeltest.Render(t, q)
 
-	assert.Equal(t, "", sql)
-	assert.Equal(t, []any{}, args)
+	assert.Contains(t, sql, `FROM "edi_templates" et LEFT JOIN "edi_document_types" dt ON dt."id" = et."document_type_id"`)
+	assert.Contains(t, sql, `et."transaction_set" = $3 AND et."direction" = $4 AND et."status" = $5`)
+	assert.Contains(t, sql, `AND (et."name" ILIKE $6 OR et."description" ILIKE $7) ORDER BY et."name" ASC LIMIT 10`)
+	assert.Contains(t, args, string(edi.TransactionSet204))
+	assert.Contains(t, args, string(edi.DocumentDirectionOutbound))
+	assert.Contains(t, args, string(edi.TemplateStatusActive))
+	assert.Contains(t, args, "%load%")
 }

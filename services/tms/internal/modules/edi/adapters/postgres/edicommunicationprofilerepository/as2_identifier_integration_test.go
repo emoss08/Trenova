@@ -14,6 +14,7 @@ import (
 	"github.com/emoss08/trenova/internal/testutil/seedtest"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/domaintypes"
+	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/zap"
@@ -88,7 +89,7 @@ func TestAS2IdentifierPairsAreUniqueAcrossTenants(t *testing.T) {
 	require.NoError(t, err)
 
 	_, err = repo.GetProfileByID(ctxB, ediports.GetEDICommunicationProfileByIDRequest{ID: owned.ID})
-	require.True(t, dberror.IsNotFoundError(err))
+	require.True(t, errortypes.IsNotFoundError(err))
 }
 
 func TestPollOutcomeKeepsTheProfileVersion(t *testing.T) {

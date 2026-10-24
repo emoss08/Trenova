@@ -564,8 +564,8 @@ github.com/emoss08/go-redis/extra/redisotel/v9 v9.0.0-20261016021426-01e29e5f58f
 github.com/emoss08/go-redis/extra/redisotel/v9 v9.0.0-20261016021426-01e29e5f58fd/go.mod h1:naPrhggd4Eg8F8MD5i9uQZyZFfz7XMN3bl66z6L9RTE=
 github.com/emoss08/go-redis/v9 v9.0.0-20261016021426-01e29e5f58fd h1:czVtU38p6zeQImwwXB37konNd45hFBytdCtYo+UICx8=
 github.com/emoss08/go-redis/v9 v9.0.0-20261016021426-01e29e5f58fd/go.mod h1:P+AahU/A8xicUEwF20voqpQB1GC9z6XeSbxBPtnxMOI=
-github.com/emoss08/keel v0.0.0-20261024182452-42b66ae94c73 h1:ehors34QqSF25I+NTYiiD4pILGaofmnbCFfwKYr3NlU=
-github.com/emoss08/keel v0.0.0-20261024182452-42b66ae94c73/go.mod h1:fid+JkFigYL9Uuak7s/u2ZJeT4d+YwJfJFdGtx0VZtY=
+github.com/emoss08/keel v0.0.0-20261024202500-8cd58e8893e4 h1:50TXAa6/6HdYncSW2lisQqOcol+CapNvVaJNv5RF/qU=
+github.com/emoss08/keel v0.0.0-20261024202500-8cd58e8893e4/go.mod h1:fid+JkFigYL9Uuak7s/u2ZJeT4d+YwJfJFdGtx0VZtY=
 github.com/envoyproxy/go-control-plane v0.9.0/go.mod h1:YTl/9mNaCwkRvm6d1a2C3ymFceY/DCBVvsKhRF0iEA4=
 github.com/envoyproxy/go-control-plane v0.9.1-0.20191026205805-5f8ba28d4473/go.mod h1:YTl/9mNaCwkRvm6d1a2C3ymFceY/DCBVvsKhRF0iEA4=
 github.com/envoyproxy/go-control-plane v0.9.4/go.mod h1:6rpuAdCZL397s3pYoYcLgu1mIlRU8Am5FuJP05cCM98=
