@@ -47,7 +47,6 @@ var instanceBootstrapsTable = schema.Table{
 	Ptr:          ptrInstanceBootstrap,
 	Value:        valueInstanceBootstrap,
 	BeforeCreate: beforeCreateInstanceBootstrap,
-	BeforeUpdate: beforeUpdateInstanceBootstrap,
 }
 
 var instanceBootstrapsRef = keel.Ref{Table: &instanceBootstrapsTable}
@@ -158,8 +157,4 @@ func valueInstanceBootstrap(p unsafe.Pointer, c int32) any {
 
 func beforeCreateInstanceBootstrap(ctx context.Context, p unsafe.Pointer) error {
 	return (*instancebootstrap.InstanceBootstrap)(p).BeforeCreate(ctx)
-}
-
-func beforeUpdateInstanceBootstrap(ctx context.Context, p unsafe.Pointer) error {
-	return (*instancebootstrap.InstanceBootstrap)(p).BeforeUpdate(ctx)
 }

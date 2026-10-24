@@ -10,7 +10,6 @@ import (
 	"github.com/emoss08/trenova/pkg/domainvalidation"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/emoss08/trenova/shared/timeutils"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
 )
 
@@ -51,7 +50,6 @@ type CarrierEquipmentVerification struct {
 }
 
 func (v *CarrierEquipmentVerification) BeforeCreate(_ context.Context) error {
-	now := timeutils.NowUnix()
 	if v.VerifiedAt == 0 {
 		v.VerifiedAt = v.CreatedAt
 	}

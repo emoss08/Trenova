@@ -294,7 +294,6 @@ func (c *AccountingInboundChange) GetPostgresSearchConfig() domaintypes.Postgres
 }
 
 func (c *AccountingInboundChange) BeforeCreate(_ context.Context) error {
-	now := timeutils.NowUnix()
 	c.fillCollections()
 	if c.DetectedAt == 0 {
 		c.DetectedAt = timeutils.NowUnix()

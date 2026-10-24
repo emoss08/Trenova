@@ -263,7 +263,6 @@ var settlementQuotesTable = schema.Table{
 	Ptr:          ptrSettlementQuote,
 	Value:        valueSettlementQuote,
 	BeforeCreate: beforeCreateSettlementQuote,
-	BeforeUpdate: beforeUpdateSettlementQuote,
 }
 
 var settlementQuotesRef = keel.Ref{Table: &settlementQuotesTable}
@@ -411,10 +410,6 @@ func valueSettlementQuote(p unsafe.Pointer, c int32) any {
 
 func beforeCreateSettlementQuote(ctx context.Context, p unsafe.Pointer) error {
 	return (*exchangerate.SettlementQuote)(p).BeforeCreate(ctx)
-}
-
-func beforeUpdateSettlementQuote(ctx context.Context, p unsafe.Pointer) error {
-	return (*exchangerate.SettlementQuote)(p).BeforeUpdate(ctx)
 }
 
 var enumProvider = [...]schema.EnumValue{

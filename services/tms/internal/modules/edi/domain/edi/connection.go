@@ -96,7 +96,6 @@ func (c *EDIConnection) BeforeSave(_ context.Context) error {
 }
 
 func (c *EDIConnection) BeforeCreate(ctx context.Context) error {
-	now := timeutils.NowUnix()
 	if err := c.BeforeSave(ctx); err != nil {
 		return err
 	}

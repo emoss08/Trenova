@@ -5,8 +5,6 @@ import (
 	"errors"
 	"time"
 
-	"github.com/emoss08/trenova/shared/timeutils"
-
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/pkg/errortypes"

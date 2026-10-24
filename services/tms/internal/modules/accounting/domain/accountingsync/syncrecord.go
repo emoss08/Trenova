@@ -212,7 +212,6 @@ func (r *AccountingSyncRecord) GetPostgresSearchConfig() domaintypes.PostgresSea
 }
 
 func (r *AccountingSyncRecord) BeforeCreate(_ context.Context) error {
-	now := timeutils.NowUnix()
 	r.fillCollections()
 	if r.QueuedAt == 0 {
 		r.QueuedAt = timeutils.NowUnix()

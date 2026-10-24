@@ -225,7 +225,6 @@ func (p *Profile) GetPostgresSearchConfig() domaintypes.PostgresSearchConfig {
 }
 
 func (p *Profile) BeforeCreate(_ context.Context) error {
-	now := timeutils.NowUnix()
 	if p.Facts == nil {
 		p.Facts = Facts{}
 	}

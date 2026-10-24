@@ -9,7 +9,6 @@ import (
 	"github.com/emoss08/trenova/pkg/domainvalidation"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/emoss08/trenova/shared/timeutils"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
 )
 
@@ -62,7 +61,6 @@ type ReportRun struct {
 }
 
 func (rr *ReportRun) BeforeCreate(_ context.Context) error {
-	now := timeutils.NowUnix()
 	if rr.Trigger == "" {
 		rr.Trigger = RunTriggerManual
 	}

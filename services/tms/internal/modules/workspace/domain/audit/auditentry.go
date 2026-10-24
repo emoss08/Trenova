@@ -54,7 +54,6 @@ type Entry struct {
 }
 
 func (e *Entry) BeforeCreate(_ context.Context) error {
-	now := timeutils.NowUnix()
 	if e.Category == "" {
 		e.Category = CategorySystem
 	}
