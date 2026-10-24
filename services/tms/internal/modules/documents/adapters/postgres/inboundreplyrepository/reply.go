@@ -249,7 +249,7 @@ func (r *repository) distinctByMessage(
 			Order(
 				rp.MessageID.Asc(),
 				keel.Asc(keel.Raw(
-					"CASE ? WHEN ? THEN ? WHEN ? THEN ? ELSE ? END",
+					"CASE ? WHEN ? THEN ?::int WHEN ? THEN ?::int ELSE ?::int END",
 					rp.Status,
 					string(triage.ReplySent), statusRankSent,
 					string(triage.ReplySending), statusRankSending,
