@@ -16,6 +16,12 @@ type Request[T any] struct {
 	Columns []string
 	Shape   func(*keel.Query[T]) *keel.Query[T]
 	Then    []keel.Order
+	Keyset  *Keyset
+}
+
+type Keyset struct {
+	Orders []keel.Order
+	Shape  []pagination.CursorSortField
 }
 
 func Connection[T any](
@@ -27,7 +33,7 @@ func Connection[T any](
 	p := newPlan(q)
 	q.Where(p.where(req.Filter)...)
 
-	orders, shape, err := p.keysetOrder(sortsOf(req.Filter))
+	orders, shape, err := connectionOrder(p, req)
 	if err != nil {
 		return nil, err
 	}
@@ -58,6 +64,17 @@ func Connection[T any](
 	}
 
 	return connectionResult(&page, &after, shape, totalOf(req.Cursor.IncludeTotalCount, total))
+}
+
+func connectionOrder[T any](
+	p *plan,
+	req *Request[T],
+) ([]keel.Order, []pagination.CursorSortField, error) {
+	if req.Keyset != nil {
+		return req.Keyset.Orders, req.Keyset.Shape, nil
+	}
+
+	return p.keysetOrder(sortsOf(req.Filter))
 }
 
 func List[T any](
@@ -238,4 +255,8 @@ func cursorLimit(filter *pagination.QueryOptions, cursor *pagination.CursorInfo)
 	}
 
 	return pagination.DefaultLimit
+}
+
+func Filter[T any](q *keel.Query[T], filter *pagination.QueryOptions) *keel.Query[T] {
+	return q.Where(newPlan(q).where(filter)...)
 }
