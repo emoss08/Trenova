@@ -54,9 +54,14 @@ base branch already has (fix forward with a new migration instead).
 ## GraphQL projections: the one that fails on correct code
 
 `internal/api/graphql/projection/projection.yml` maps every GraphQL field to the database
-column it reads. The generator walks **every field of every type** and aborts if a field
-resolves to none of: a `buncolgen` column, an inferred relation, or a declared override. A
-field that a resolver computes is not special-cased — it has to be declared.
+column it reads. The generator reads the domain models' `keel` tags (a struct embedding
+`keel.Table` is a table; a tagged field is a column; `belongs:`/`one:`/`many:`/`m2m:`/`pick:`
+are relations, and an untagged struct field is a relation whose column is the field's `…Id`
+column when the model has one). It walks **every field of every type** and aborts if a field
+resolves to none of: a keel column, an inferred relation, or a declared override. A field that a
+resolver computes is not special-cased — it has to be declared. A resolver that needs extra
+columns for a computed field names them with `projection.ColumnNames(xdb.Xs.Col.Col, …)`, never
+as strings.
 
 This bites hardest when a column is **removed** but its GraphQL field is kept (deprecated,
 resolver returning a constant). Removing both together is usually the better change (see
@@ -65,7 +70,7 @@ behind it:
 
 ```
 Error generating GraphQL projections: type "CustomerBillingProfile" field
-"consolidationLookbackDays" is neither a buncolgen column, inferred relation, nor
+"consolidationLookbackDays" is neither a keel column, inferred relation, nor
 configured projection override
 ```
 
