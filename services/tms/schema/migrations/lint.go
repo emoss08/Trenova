@@ -28,14 +28,22 @@ var (
 
 func LintRules() []migrate.LintRule {
 	return []migrate.LintRule{
-		{Name: RuleBunDirective, Check: checkBunDirective},
-		{Name: RuleReconcile, Check: checkReconcile},
-		{Name: RuleNoTxIdempotent, Check: checkNoTxIdempotent},
-		{Name: RuleTenantRLS, Check: checkTenantRLS},
+		{Name: RuleBunDirective, Check: byPointer(checkBunDirective)},
+		{Name: RuleReconcile, Check: byPointer(checkReconcile)},
+		{Name: RuleNoTxIdempotent, Check: byPointer(checkNoTxIdempotent)},
+		{Name: RuleTenantRLS, Check: byPointer(checkTenantRLS)},
 	}
 }
 
-func checkBunDirective(m migrate.Migration) []migrate.Finding {
+func byPointer(
+	check func(*migrate.Migration) []migrate.Finding,
+) func(migrate.Migration) []migrate.Finding {
+	return func(m migrate.Migration) []migrate.Finding {
+		return check(&m)
+	}
+}
+
+func checkBunDirective(m *migrate.Migration) []migrate.Finding {
 	var out []migrate.Finding
 	for i, line := range strings.Split(m.SQL, "\n") {
 		if strings.HasPrefix(strings.TrimSpace(line), "--bun:") {
@@ -51,7 +59,7 @@ func checkBunDirective(m migrate.Migration) []migrate.Finding {
 	return out
 }
 
-func checkReconcile(m migrate.Migration) []migrate.Finding {
+func checkReconcile(m *migrate.Migration) []migrate.Finding {
 	code := codeOnly(m.SQL)
 	var out []migrate.Finding
 	for _, loc := range reconcileCall.FindAllStringIndex(code, -1) {
@@ -66,7 +74,7 @@ func checkReconcile(m migrate.Migration) []migrate.Finding {
 	return out
 }
 
-func checkNoTxIdempotent(m migrate.Migration) []migrate.Finding {
+func checkNoTxIdempotent(m *migrate.Migration) []migrate.Finding {
 	if !m.Directives.NoTx {
 		return nil
 	}
@@ -95,7 +103,7 @@ func checkNoTxIdempotent(m migrate.Migration) []migrate.Finding {
 	return out
 }
 
-func checkTenantRLS(m migrate.Migration) []migrate.Finding {
+func checkTenantRLS(m *migrate.Migration) []migrate.Finding {
 	code := codeOnly(m.SQL)
 	lower := strings.ToLower(code)
 	var out []migrate.Finding
