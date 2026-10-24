@@ -195,7 +195,7 @@ definition's `Scopes`:
 | `shipment`, `order` | own: records whose `owner_id` is the person | database |
 | `invoice` | own: invoices on a shipment or order the person owns (the header's or a line's) | database |
 | `worker` | team: workers the person manages, directly or through a fleet code, or who were delegated to them | database |
-| `capture_batch`, `report` | own | application (`captureservice`, the report compiler) |
+| `capture_batch`, `report` | own | application (`captureservice`, `reportaccess`; see [reporting](reporting.md#access)) |
 | `worker_schedule`, `timesheet`, `profile_change_request`, `worker_leave`, `driver_portal` | team | application (`RequireTeamScope`, `RequireListTeamScope`, `teamscope.Guard`, `teamscope.ListGuard`) |
 
 **Application enforcement.** A team is the workers a person manages directly
@@ -390,7 +390,8 @@ one package, `refview`, which the GraphQL field guard asks for people and agents
 REST response guard (`internal/api/responseguard`) asks for every REST response. Global search,
 shipment analytics and reports ask it through `permissionports.ReferenceViews` (reports through
 `reporting/reportaccess`, which the compiler, the builder's catalog and the agent's dataset tools
-share, so the builder offers exactly what the compiler accepts); an insight names
+share, so the builder offers exactly what the compiler accepts; see
+[reporting.md](reporting.md#access)); an insight names
 records beside figures about them, so its reader needs read on every kind its detector declares. They are
 fixed in the code; an organization decides who sees whole linked records through bundles and job
 templates, and the role's sensitivity ceiling still applies inside a view. Built-in bundles grant

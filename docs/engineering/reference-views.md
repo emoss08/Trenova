@@ -86,7 +86,8 @@ Internal.
   `linkedRecordSchema(kind, schema)` (`@trenova/shared/lib/linked-record`), which makes every field
   outside the view nullable, and a screen draws `WithheldValue` where one it shows is null.
 
-- **Reports and exports.** The report catalog is keel's, built from the models' `keel` tags;
+- **Reports and exports** ([reporting.md](reporting.md#access)). The report catalog is keel's,
+  built from the models' `keel` tags;
   `reporting/reportaccess` is its `analytics.Policy` and maps each catalog entity to its kind
   (`kinds.go`). A field or edge is in the reference view when its resource's view names its API
   key (`APIKey` of the column, or the edge name); entities that are part of another record are
@@ -98,9 +99,10 @@ Internal.
   a protected field (`protected: Personal|Margins`) needs its group either way. Every report
   surface asks it, from one `GetResourcePermissionsBatch` read of the caller's permissions per
   request:
-  - the compiler (`compiler/authorize.go`), which also requires read, and export for a run, on
-    the root and on any entity whose own rows the query reads or whose `kind_read` fields it
-    uses; its refusals (`Resolver.Reason`) name the missing kind read, tier or group;
+  - the engine: keel's compiler asks `Access.Entity` about the report's root (read, and export
+    for a run) and `Access.Field` and `Access.Edge` about every path the definition reads; its
+    refusals (`Access.Refusal`, worded by `Resolver.Reason`) name the missing kind read, tier,
+    group or export;
   - the `reportCatalog` query (`reporting.Service.Catalog`), which returns every kind the caller
     reads plus every kind they can reach only through a join, with `readable`, `exportable`
     and, per field and edge, `access` (`Available`, `NeedsKindRead`, `WithheldByCeiling`,

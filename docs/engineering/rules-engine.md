@@ -967,7 +967,8 @@ stay in Go, since they need the shipment and the database.
 
 ### Report formatting (`report.*`)
 
-Every place a report is shown renders values through the column's display contract
+How reports are built, run and exported is in [reporting.md](reporting.md). Every place a report
+is shown renders values through the column's display contract
 (`format.Resolved` in keel analytics). The browser (the builder preview, the result grid, the
 Desk) formats through this module; the server (CSV, PDF, XLSX, digests) through keel's `format`
 package. `testdata/report.json` pins both: the Rust tests run it here, and

@@ -262,7 +262,8 @@ as the Temporal runtime, `m2msync`, and the storage and search clients.
    `pkg/buncolgen/<domain>col`. Repositories import that package (`shipmentcol.ShipmentColumns`),
    not `pkg/buncolgen` itself, so a column change recompiles only the repositories that use it. If the entity is reportable, tag
    its table `report=<Category>`, run `task keel-gen`, add its kind to
-   `reportaccess/kinds.go` and run `go generate ./internal/infrastructure/reportengine/...`.
+   `reportaccess/kinds.go` and run `go generate ./internal/infrastructure/reportengine/...`
+   ([reporting.md](reporting.md#adding-a-reportable-model-or-field)).
 4. Add its ports, repository and service as below.
 
 ### A port
