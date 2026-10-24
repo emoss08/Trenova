@@ -209,9 +209,10 @@ func TestTrainableCorrections_CountAndWeeklyTotalsFollowConsent(t *testing.T) {
 	require.NoError(t, err)
 	if updated == 0 {
 		require.NoError(t, controls.Create(ctx, db, &tenant.AgentControl{
-			OrganizationID:    tenantInfo.OrgID,
-			BusinessUnitID:    tenantInfo.BuID,
-			AITrainingConsent: true,
+			OrganizationID:     tenantInfo.OrgID,
+			BusinessUnitID:     tenantInfo.BuID,
+			AITrainingConsent:  true,
+			PromotionThreshold: tenant.DefaultPromotionThreshold,
 		}))
 	}
 
