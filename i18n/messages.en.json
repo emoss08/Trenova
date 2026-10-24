@@ -1743,24 +1743,6 @@
       "routes/reconciliation-summary"
     ]
   },
-  "70% of linehaul with stop pay and a hazmat premium for owner-operators": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
-  "75% of total revenue with stop pay for leased owner-operators": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
   "7d": {
     "sites": 1,
     "scope": [
@@ -3163,6 +3145,15 @@
       "go/other"
     ]
   },
+  "A SCIM group role mapping with this display name already exists": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "A TOTP authenticator must record its secret": {
     "sites": 1,
     "scope": [
@@ -4443,8 +4434,26 @@
       "go/other"
     ]
   },
+  "A checklist item names a credential type that does not exist": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "A checklist item names a document type that does not exist": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "A checklist template with this code already exists": {
-    "sites": 3,
+    "sites": 2,
     "scope": [
       "go"
     ],
@@ -4982,6 +4991,15 @@
       "routes/agent-control"
     ]
   },
+  "A cost category of this kind already exists": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "A count of things: another name for `Int`.": {
     "sites": 2,
     "scope": [
@@ -5084,7 +5102,7 @@
     ]
   },
   "A credential type with this code already exists": {
-    "sites": 3,
+    "sites": 2,
     "scope": [
       "go"
     ],
@@ -5770,6 +5788,24 @@
       "go/other"
     ]
   },
+  "A document can be attached to the invoice only once": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "A document can be referenced by the adjustment only once": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "A document cannot be saved empty": {
     "sites": 1,
     "scope": [
@@ -5840,6 +5876,15 @@
     ],
     "areas": [
       "routes/desk"
+    ]
+  },
+  "A document template with this code already exists": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "A document that follows a Trenova cover sheet is filed onto the sheet's record without waiting in Intake. Anything else still waits for a person.": {
@@ -6048,6 +6093,15 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "A factoring company with this code already exists in your organization": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "A failed attempt must record why it failed": {
@@ -6461,6 +6515,24 @@
       "go/other"
     ]
   },
+  "A fuel index with this code already exists in your organization": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "A fuel surcharge program with this code already exists in your organization": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "A fuel surcharge table by price band": {
     "sites": 1,
     "scope": [
@@ -6700,7 +6772,7 @@
     ]
   },
   "A home screen preset with this name already exists": {
-    "sites": 2,
+    "sites": 1,
     "scope": [
       "go"
     ],
@@ -7902,6 +7974,15 @@
       "routes/agent-control"
     ]
   },
+  "A packet rule for this document type already exists for this resource type": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "A page already filed cannot be moved": {
     "sites": 1,
     "scope": [
@@ -7939,6 +8020,15 @@
     ]
   },
   "A parsed import must reference the uploaded file": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "A parsing rule set with this name already exists for this document kind": {
     "sites": 1,
     "scope": [
       "go"
@@ -8348,6 +8438,15 @@
       "go/other"
     ]
   },
+  "A place can appear only once in a rate zone": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "A plan": {
     "sites": 1,
     "scope": [
@@ -8452,7 +8551,7 @@
     ]
   },
   "A pool with this code already exists": {
-    "sites": 3,
+    "sites": 2,
     "scope": [
       "go"
     ],
@@ -9063,6 +9162,24 @@
       "routes/shipment"
     ]
   },
+  "A rate agreement can bind only one fuel surcharge program": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "A rate agreement with this code already exists in your organization": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "A rate confirmation fails to issue": {
     "sites": 1,
     "scope": [
@@ -9137,6 +9254,15 @@
       "go/other"
     ]
   },
+  "A rate matrix with this code already exists in your organization": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "A rate matrix's submitter cannot review it; ask another reviewer": {
     "sites": 1,
     "scope": [
@@ -9197,6 +9323,15 @@
     "areas": [
       "apps/web/rules",
       "rules/tariff"
+    ]
+  },
+  "A rate zone with this code already exists in your organization": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "A rated quote must name the agreement that priced it": {
@@ -10437,6 +10572,15 @@
       "go/other"
     ]
   },
+  "A scheduled invoice run already exists for this cycle and period": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "A scheduled report is delivered": {
     "sites": 1,
     "scope": [
@@ -10536,6 +10680,15 @@
     ],
     "areas": [
       "routes/agent-control"
+    ]
+  },
+  "A segregation rule for these classes and materials already exists in your organization": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "A selected document must record when it was selected": {
@@ -10829,6 +10982,15 @@
     ]
   },
   "A shipment needs a move with its stops in travel order": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "A shipment was already created with this idempotency key": {
     "sites": 1,
     "scope": [
       "go"
@@ -12727,6 +12889,15 @@
     ],
     "areas": [
       "routes/agent-control"
+    ]
+  },
+  "A worker can be selected only once per substance in a draw": {
+    "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "A worker holds a driving position; that title is held by users": {
@@ -14794,6 +14965,15 @@
       "go/other"
     ]
   },
+  "Accessorial charge does not exist in your organization": {
+    "sites": 3,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Accessorial charge is required": {
     "sites": 7,
     "scope": [
@@ -14807,6 +14987,15 @@
     ]
   },
   "Accessorial charge receivables": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Accessorial charge with this code already exists in your organization": {
     "sites": 1,
     "scope": [
       "go"
@@ -15251,7 +15440,25 @@
       "routes/account-type"
     ]
   },
+  "Account type does not exist in your organization": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Account type is required": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Account type with this code already exists in your organization": {
     "sites": 1,
     "scope": [
       "go"
@@ -16203,6 +16410,15 @@
       "apps/web/components"
     ]
   },
+  "Acknowledging user does not exist": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Acknowledgment": {
     "sites": 5,
     "scope": [
@@ -16882,6 +17098,15 @@
     ]
   },
   "Active template versions cannot be archived": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Active version does not exist": {
     "sites": 1,
     "scope": [
       "go"
@@ -19843,6 +20068,15 @@
     ]
   },
   "Additional charge ID must not be provided when creating a shipment": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Additional charge does not exist": {
     "sites": 1,
     "scope": [
       "go"
@@ -24850,6 +25084,24 @@
       "apps/web/lib"
     ]
   },
+  "An EDI template with this name already exists in your organization": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "An EDI test case with this name already exists for the document profile": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "An Error has occurred. Please try again.": {
     "sites": 1,
     "scope": [
@@ -24955,6 +25207,15 @@
       "rules/tariff"
     ]
   },
+  "An accessorial charge can appear only once in an agreement's schedule": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "An accessorial charge code.": {
     "sites": 2,
     "scope": [
@@ -24994,6 +25255,15 @@
     ]
   },
   "An account with this email address already exists. Contact your carrier to resolve this.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "An accounting app is already registered for this integration": {
     "sites": 1,
     "scope": [
       "go"
@@ -25121,6 +25391,15 @@
       "go/other"
     ]
   },
+  "An active work item already exists for this bank receipt": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "An activity needs the message it is on": {
     "sites": 1,
     "scope": [
@@ -25146,6 +25425,24 @@
     ],
     "areas": [
       "routes/admin"
+    ]
+  },
+  "An adjustment batch item with this idempotency key already exists": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "An adjustment batch with this idempotency key already exists": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "An adjustment invoice must belong to a correction chain": {
@@ -25543,7 +25840,7 @@
     ]
   },
   "An allocation already carried on an invoice cannot be removed": {
-    "sites": 2,
+    "sites": 1,
     "scope": [
       "go"
     ],
@@ -26630,6 +26927,15 @@
       "routes/desk"
     ]
   },
+  "An invoice adjustment with this idempotency key already exists": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "An invoice assigned to a factor is remitted to it and carries its notice of assignment. It can be sold once every check passes.": {
     "sites": 1,
     "scope": [
@@ -26739,6 +27045,15 @@
     ]
   },
   "An offset cannot be negative": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "An open carrier settlement batch already exists for this period": {
     "sites": 1,
     "scope": [
       "go"
@@ -27304,6 +27619,15 @@
       "routes/agent-control"
     ]
   },
+  "Another PTO policy is already the default": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Another Trenova organization we trade with directly": {
     "sites": 1,
     "scope": [
@@ -27367,6 +27691,15 @@
       "routes/agent-control"
     ]
   },
+  "Another bank receipt is already matched to this payment": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Another carrier accepted first; this offer no longer stands.": {
     "sites": 1,
     "scope": [
@@ -27385,6 +27718,15 @@
       "go/other"
     ]
   },
+  "Another checklist template is already the default for this trigger": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Another choice is already labelled {0}: each `best` and `worst` needs its own label, so the trace and `chosen(…)` can tell them apart": {
     "sites": 2,
     "scope": [
@@ -27394,6 +27736,24 @@
     "areas": [
       "apps/web/rules",
       "rules/tariff"
+    ]
+  },
+  "Another credential type already feeds this profile field": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Another distance profile is already the default": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Another field": {
@@ -27470,6 +27830,24 @@
       "go/other"
     ]
   },
+  "Another mode profile is already the organization default": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Another pool is already the default": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Another portal site already has this name": {
     "sites": 1,
     "scope": [
@@ -27495,6 +27873,33 @@
     ],
     "areas": [
       "api/helpers"
+    ]
+  },
+  "Another review template is already the default": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Another shipment for this customer already uses this customer reference": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Another template is already the organization default for this kind": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Another template is already the organization default for this kind. Clear that one first.": {
@@ -28752,7 +29157,7 @@
       "routes/service-failure-reason-code"
     ]
   },
-  "Applies Trenova's migrations: the deploy step before the API and worker start.": {
+  "Applies Trenova's migrations and reference data: the deploy step before the API and worker start.": {
     "sites": 1,
     "scope": [
       "go"
@@ -30718,6 +31123,15 @@
     ],
     "areas": [
       "routes/billing-queue"
+    ]
+  },
+  "Approving user does not exist": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Approving user is required": {
@@ -33553,6 +33967,15 @@
     ],
     "areas": [
       "routes/fuel-card"
+    ]
+  },
+  "Assigned user does not exist": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Assigned worker": {
@@ -38408,15 +38831,6 @@
       "routes/fuel-management"
     ]
   },
-  "Banded per-loaded-mile pay with stop pay and detention for company drivers": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
   "Bands start here — usually your peg (base) price.": {
     "sites": 1,
     "scope": [
@@ -38526,6 +38940,15 @@
     ]
   },
   "Bank receipt batch import requires an authenticated user": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Bank receipt does not exist in your organization": {
     "sites": 1,
     "scope": [
       "go"
@@ -39519,6 +39942,15 @@
     "areas": [
       "go/other",
       "packages/shared/lib"
+    ]
+  },
+  "Benefit plan with this code already exists for the plan year": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Benefit plans and who is enrolled on them": {
@@ -44547,15 +44979,6 @@
       "routes/worker"
     ]
   },
-  "Calendar fiscal year opened for volume seed history": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
   "Calendar rules for accessorials: weekends, business hours and time spent within them. Every function reads a date-time on its own clock, in the offset it carries.": {
     "sites": 2,
     "scope": [
@@ -47257,6 +47680,15 @@
       "routes/dispatch-console"
     ]
   },
+  "Carrier already has an EDI channel for this partner": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Carrier assigned": {
     "sites": 3,
     "scope": [
@@ -47347,6 +47779,15 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "Carrier can have only one default EDI channel": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Carrier cancellation failed": {
@@ -47471,6 +47912,15 @@
   },
   "Carrier delay": {
     "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Carrier does not exist in your organization": {
+    "sites": 4,
     "scope": [
       "go"
     ],
@@ -48224,6 +48674,33 @@
     ],
     "areas": [
       "routes/routing-guide"
+    ]
+  },
+  "Carrier with this DOT number already exists in your organization": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Carrier with this SCAC already exists in your organization": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Carrier with this code already exists in your organization": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Carrier {0}": {
@@ -51967,6 +52444,15 @@
     ],
     "areas": [
       "routes/worker-checklist-template"
+    ]
+  },
+  "Checklist template does not exist or belongs to a different organization": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Checklist template was changed by someone else. Reload and try again": {
@@ -58282,6 +58768,15 @@
       "go/other"
     ]
   },
+  "Commodity does not exist in your organization": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Commodity is classified as hazardous material.": {
     "sites": 1,
     "scope": [
@@ -58334,6 +58829,15 @@
     ],
     "areas": [
       "routes/shipment"
+    ]
+  },
+  "Commodity with this name already exists in your organization": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Common": {
@@ -66122,6 +66626,15 @@
       "api/writecoverage"
     ]
   },
+  "Counterparty worker does not exist or belongs to a different organization": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Counting shipments...": {
     "sites": 1,
     "scope": [
@@ -66344,6 +66857,15 @@
     ],
     "areas": [
       "routes/worker"
+    ]
+  },
+  "Course does not exist or belongs to a different organization": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Course failed": {
@@ -67943,6 +68465,15 @@
       "routes/carrier-invoice-matching"
     ]
   },
+  "Created by user does not exist": {
+    "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Created drivers": {
     "sites": 1,
     "scope": [
@@ -68230,6 +68761,15 @@
       "routes/worker",
       "routes/worker-checklist-template",
       "routes/worker-credential-type"
+    ]
+  },
+  "Credential type does not exist or belongs to a different organization": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Credential type is invalid": {
@@ -69614,15 +70154,6 @@
       "routes/worker"
     ]
   },
-  "Cursor does not belong to the approval queue": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
   "Cursor is invalid": {
     "sites": 5,
     "scope": [
@@ -69643,7 +70174,7 @@
     ]
   },
   "Cursor sort does not match request sort": {
-    "sites": 2,
+    "sites": 1,
     "scope": [
       "go"
     ],
@@ -70142,6 +70673,15 @@
       "routes/rate-agreement"
     ]
   },
+  "Customer already has tracking settings": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Customer and carrier rate agreements, their lane rules, accessorial schedules, and versions": {
     "sites": 1,
     "scope": [
@@ -70239,6 +70779,33 @@
     ],
     "areas": [
       "routes/desk"
+    ]
+  },
+  "Customer does not exist": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Customer does not exist in your organization": {
+    "sites": 5,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Customer does not exist or belongs to a different organization": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Customer experience": {
@@ -70659,6 +71226,15 @@
     ]
   },
   "Customer was notified within the contractual window": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Customer with this code already exists in your organization": {
     "sites": 1,
     "scope": [
       "go"
@@ -78299,6 +78875,15 @@
       "go/other"
     ]
   },
+  "Destination location does not exist in your organization": {
+    "sites": 3,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Destination location is required": {
     "sites": 2,
     "scope": [
@@ -78917,6 +79502,15 @@
       "go/other"
     ]
   },
+  "Detention evidence was appended concurrently; retry": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Detention has started — shipment {0} at {1}": {
     "sites": 1,
     "scope": [
@@ -79027,6 +79621,15 @@
       "go/other"
     ]
   },
+  "Detention occurrence does not exist in your organization": {
+    "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Detention occurrence is required": {
     "sites": 5,
     "scope": [
@@ -79064,7 +79667,25 @@
       "routes/detention-policy"
     ]
   },
+  "Detention policy does not exist in your organization": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Detention policy is required": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Detention policy with this code already exists in your organization": {
     "sites": 1,
     "scope": [
       "go"
@@ -81558,7 +82179,7 @@
     ]
   },
   "Distance override with this route already exists": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "go"
     ],
@@ -82479,6 +83100,15 @@
       "go/other"
     ]
   },
+  "Document content does not exist": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Document could not be attached: {0}": {
     "sites": 1,
     "scope": [
@@ -82509,6 +83139,33 @@
   },
   "Document does not belong to this worker": {
     "sites": 6,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Document does not exist": {
+    "sites": 6,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Document does not exist in your organization": {
+    "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Document does not exist or belongs to a different organization": {
+    "sites": 12,
     "scope": [
       "go"
     ],
@@ -82878,6 +83535,15 @@
       "go/other"
     ]
   },
+  "Document share token already exists": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Document sorting": {
     "sites": 1,
     "scope": [
@@ -82894,6 +83560,24 @@
     ],
     "areas": [
       "apps/web/lib"
+    ]
+  },
+  "Document template does not exist": {
+    "sites": 3,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Document template version does not exist in your organization": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Document templates": {
@@ -82975,6 +83659,15 @@
       "go/other"
     ]
   },
+  "Document type does not exist": {
+    "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Document type id is required": {
     "sites": 1,
     "scope": [
@@ -83015,6 +83708,15 @@
     ]
   },
   "Document type not found": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Document type with this code already exists in your organization": {
     "sites": 1,
     "scope": [
       "go"
@@ -87607,6 +88309,15 @@
       "routes/desk"
     ]
   },
+  "EDI partner does not exist in your organization": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "EDI partner does not have an active internal EDI connection": {
     "sites": 1,
     "scope": [
@@ -88196,6 +88907,15 @@
       "routes/desk"
     ]
   },
+  "Each PTO type may appear only once in a policy": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Each PTO type may only have one rule": {
     "sites": 2,
     "scope": [
@@ -88659,6 +89379,15 @@
       "packages/shared/lib"
     ]
   },
+  "Each page number may appear only once in a document's content": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Each payer may appear only once": {
     "sites": 2,
     "scope": [
@@ -88789,6 +89518,15 @@
       "go/other"
     ]
   },
+  "Each routing guide entry must have a distinct rank": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Each row of a factor's remittance, its amounts as printed and the schedule item it was matched to": {
     "sites": 1,
     "scope": [
@@ -88832,6 +89570,15 @@
     ],
     "areas": [
       "routes/rate-agreement"
+    ]
+  },
+  "Each rule may appear only once in a mode profile": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Each schedule is uploaded to a folder named for it inside.": {
@@ -91735,6 +92482,15 @@
       "go/other"
     ]
   },
+  "Employment event does not exist or belongs to a different organization": {
+    "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Employment events": {
     "sites": 1,
     "scope": [
@@ -94099,15 +94855,6 @@
       "go/other"
     ]
   },
-  "Enter the journal entry ID to reverse": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/journal-reversal"
-    ]
-  },
   "Enter the last four digits of the card": {
     "sites": 2,
     "scope": [
@@ -95038,6 +95785,15 @@
       "go/other"
     ]
   },
+  "Equipment manufacturer with this name already exists in your organization": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Equipment manufacturers": {
     "sites": 3,
     "scope": [
@@ -95081,7 +95837,25 @@
       "go/other"
     ]
   },
+  "Equipment type does not exist in your organization": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Equipment type is required": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Equipment type with this code already exists in your organization": {
     "sites": 1,
     "scope": [
       "go"
@@ -98629,6 +99403,24 @@
     ],
     "areas": [
       "routes/detention-desk"
+    ]
+  },
+  "Evidence credential does not exist or belongs to a different organization": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Evidence document does not exist or belongs to a different organization": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Evidence head must be a 64 character digest": {
@@ -109294,6 +110086,15 @@
       "routes/desk"
     ]
   },
+  "Fiscal year does not exist in your organization": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Fiscal year identifier": {
     "sites": 1,
     "scope": [
@@ -109863,15 +110664,6 @@
       "apps/web/lib"
     ]
   },
-  "Flat pay per load with stop pay and short free time for local drivers": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
   "Flat per shipment": {
     "sites": 1,
     "scope": [
@@ -109879,15 +110671,6 @@
     ],
     "areas": [
       "apps/web/lib"
-    ]
-  },
-  "Flat per-total-mile with a $900 guaranteed weekly minimum for regional drivers": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
     ]
   },
   "Flat rate": {
@@ -110019,6 +110802,15 @@
     ]
   },
   "Fleet code definitions": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Fleet code does not exist or belongs to a different organization": {
     "sites": 1,
     "scope": [
       "go"
@@ -111319,6 +112111,15 @@
       "go/other",
       "routes/desk",
       "routes/shipment"
+    ]
+  },
+  "Formula template does not exist in your organization": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Formula template has no approved version that prices shipments on this date": {
@@ -112999,7 +113800,7 @@
     ]
   },
   "Fuel surcharge": {
-    "sites": 13,
+    "sites": 12,
     "scope": [
       "go",
       "ts"
@@ -113921,6 +114722,15 @@
     ],
     "areas": [
       "routes/customer"
+    ]
+  },
+  "GL account with this account code already exists in your organization": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "GL accounts": {
@@ -116585,7 +117395,7 @@
     ]
   },
   "Guaranteed minimum pay top-up": {
-    "sites": 2,
+    "sites": 1,
     "scope": [
       "go"
     ],
@@ -117558,6 +118368,15 @@
       "routes/hazmat-segregation-rule"
     ]
   },
+  "Hazardous material A does not exist or belongs to a different organization": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Hazardous material B": {
     "sites": 1,
     "scope": [
@@ -117567,7 +118386,34 @@
       "routes/hazmat-segregation-rule"
     ]
   },
+  "Hazardous material B does not exist or belongs to a different organization": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Hazardous material definitions": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Hazardous material does not exist or belongs to a different organization": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Hazardous material with this code already exists in your organization": {
     "sites": 1,
     "scope": [
       "go"
@@ -119257,6 +120103,15 @@
       "go/other"
     ]
   },
+  "Hold reason with this code already exists in your organization": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Hold reasons": {
     "sites": 2,
     "scope": [
@@ -119567,7 +120422,7 @@
     ]
   },
   "Home screen preset not found": {
-    "sites": 2,
+    "sites": 1,
     "scope": [
       "go"
     ],
@@ -126059,6 +126914,15 @@
       "routes/admin"
     ]
   },
+  "Installs the configured row-level security scope signing key": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Instant pay": {
     "sites": 3,
     "scope": [
@@ -126702,7 +127566,7 @@
     ]
   },
   "Intermediate stop location does not exist in your organization": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "go"
     ],
@@ -126722,7 +127586,7 @@
     ]
   },
   "Intermediate stop location must be unique within the route": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "go"
     ],
@@ -128797,6 +129661,15 @@
       "go/other"
     ]
   },
+  "Invoice line numbers must be unique within the invoice": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Invoice line quantity must be greater than zero": {
     "sites": 1,
     "scope": [
@@ -129118,6 +129991,15 @@
       "go/other"
     ]
   },
+  "Invoice run with this number already exists in your organization": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Invoice scope": {
     "sites": 1,
     "scope": [
@@ -129303,6 +130185,15 @@
   },
   "Invoice was not found": {
     "sites": 3,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Invoice with this number already exists in your organization": {
+    "sites": 1,
     "scope": [
       "go"
     ],
@@ -131626,6 +132517,15 @@
     ]
   },
   "Job Positions": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Job position does not exist or belongs to a different organization": {
     "sites": 1,
     "scope": [
       "go"
@@ -136252,6 +137152,15 @@
       "go/other"
     ]
   },
+  "Layover accessorial charge does not exist in your organization": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Layover boundary": {
     "sites": 1,
     "scope": [
@@ -136770,6 +137679,15 @@
     "areas": [
       "go/other",
       "packages/shared/types"
+    ]
+  },
+  "Leave case does not exist or belongs to a different organization": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Leave case is required": {
@@ -138226,6 +139144,15 @@
       "routes/worker"
     ]
   },
+  "License state does not exist": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Licensing, compliance, and qualification details for a worker": {
     "sites": 1,
     "scope": [
@@ -138838,7 +139765,7 @@
     ]
   },
   "Linehaul": {
-    "sites": 14,
+    "sites": 13,
     "scope": [
       "go",
       "ts"
@@ -142853,6 +143780,15 @@
       "go/other"
     ]
   },
+  "Location category does not exist in your organization": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Location category is required": {
     "sites": 2,
     "scope": [
@@ -142862,6 +143798,15 @@
     "areas": [
       "go/other",
       "packages/shared/types"
+    ]
+  },
+  "Location category with this name already exists in your organization": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Location code cannot be changed": {
@@ -142880,6 +143825,15 @@
     ],
     "areas": [
       "routes/edi"
+    ]
+  },
+  "Location does not exist in your organization": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Location granularity": {
@@ -142960,7 +143914,7 @@
     ]
   },
   "Location with this code already exists in your organization": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "go"
     ],
@@ -144622,6 +145576,15 @@
       "routes/edi"
     ]
   },
+  "Mailbox does not exist": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Mailbox is required": {
     "sites": 1,
     "scope": [
@@ -145471,6 +146434,24 @@
   },
   "Manager ID": {
     "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Manager does not exist": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Manager does not exist or is not a member of your organization": {
+    "sites": 1,
     "scope": [
       "go"
     ],
@@ -151118,6 +152099,24 @@
       "go/other"
     ]
   },
+  "Mode profile does not exist or belongs to a different organization": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Mode profile with this code already exists in your organization": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Model": {
     "sites": 34,
     "scope": [
@@ -152809,6 +153808,33 @@
       "go/other"
     ]
   },
+  "Move already has a live tender": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Move already has an active assignment": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Move already has an active carrier assignment": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Move back to candidates": {
     "sites": 2,
     "scope": [
@@ -152861,6 +153887,15 @@
     ],
     "areas": [
       "routes/shipment"
+    ]
+  },
+  "Move does not exist in your organization": {
+    "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Move down": {
@@ -155605,7 +156640,7 @@
     ]
   },
   "Negative balance carried forward from prior settlement": {
-    "sites": 2,
+    "sites": 1,
     "scope": [
       "go"
     ],
@@ -163657,6 +164692,15 @@
       "routes/org-structure"
     ]
   },
+  "No posted entries are waiting to be reversed": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/journal-reversal"
+    ]
+  },
   "No pre-employment drug test is on file (49 CFR 382.301(a))": {
     "sites": 2,
     "scope": [
@@ -166873,15 +167917,6 @@
     "areas": [
       "apps/web/lib",
       "routes/factoring-company"
-    ]
-  },
-  "Non-taxable reimbursement of a driver-paid trip expense": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
     ]
   },
   "Non-urgent emails arrive together at 8:00 AM. Urgent ones still come right away.": {
@@ -182406,6 +183441,15 @@
       "routes/order"
     ]
   },
+  "Order does not exist in your organization": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Order fulfillment has been completed.": {
     "sites": 1,
     "scope": [
@@ -182549,6 +183593,15 @@
     ],
     "areas": [
       "routes/desk"
+    ]
+  },
+  "Order with this order number already exists in your organization": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Order {0}": {
@@ -183211,6 +184264,15 @@
       "go/other"
     ]
   },
+  "Origin location does not exist in your organization": {
+    "sites": 4,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Origin location is required": {
     "sites": 2,
     "scope": [
@@ -183368,16 +184430,7 @@
     ]
   },
   "Original journal entry": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/journal-reversal"
-    ]
-  },
-  "Original journal entry ID": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
@@ -185943,7 +186996,25 @@
       "routes/pto-policy"
     ]
   },
+  "PTO policy does not exist or belongs to a different organization": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "PTO policy was changed by someone else. Reload and try again": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "PTO policy with this code already exists in your organization": {
     "sites": 1,
     "scope": [
       "go"
@@ -187108,6 +188179,15 @@
       "go/other"
     ]
   },
+  "Parent account does not exist or still has child accounts": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Parent account must be active": {
     "sites": 1,
     "scope": [
@@ -187243,6 +188323,15 @@
   },
   "Parser mode must be valid": {
     "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Parsing rule set does not exist": {
+    "sites": 2,
     "scope": [
       "go"
     ],
@@ -189145,6 +190234,24 @@
       "routes/settlement-dispute"
     ]
   },
+  "Pay code does not exist in your organization": {
+    "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Pay code does not exist or belongs to a different organization": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Pay code is invalid": {
     "sites": 1,
     "scope": [
@@ -189163,6 +190270,15 @@
     "areas": [
       "go/other",
       "packages/shared/types"
+    ]
+  },
+  "Pay code with this code and direction already exists in your organization": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Pay code {0}": {
@@ -189325,6 +190441,15 @@
     ]
   },
   "Pay event status is invalid": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Pay event with this idempotency key already exists": {
     "sites": 1,
     "scope": [
       "go"
@@ -189509,6 +190634,15 @@
     "areas": [
       "go/other",
       "packages/shared/types"
+    ]
+  },
+  "Pay profile with this name already exists in your organization": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Pay profile: {0}": {
@@ -190330,6 +191464,15 @@
     ],
     "areas": [
       "apps/web/config"
+    ]
+  },
+  "Payroll export does not exist or belongs to a different organization": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Payroll period length": {
@@ -195001,6 +196144,15 @@
       "routes/admin"
     ]
   },
+  "Policy does not exist or belongs to a different organization": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Policy history": {
     "sites": 1,
     "scope": [
@@ -195169,6 +196321,15 @@
       "routes/admin"
     ]
   },
+  "Policy with this code already exists in your organization": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Policy year": {
     "sites": 1,
     "scope": [
@@ -195285,6 +196446,15 @@
     ],
     "areas": [
       "routes/random-testing"
+    ]
+  },
+  "Pool does not exist or belongs to a different organization": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Pool is invalid": {
@@ -198474,6 +199644,15 @@
       "go/other"
     ]
   },
+  "Primary worker is already assigned to another tractor": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Primary worker is required": {
     "sites": 1,
     "scope": [
@@ -201339,6 +202518,15 @@
       "routes/admin"
     ]
   },
+  "Published version does not exist": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Published versions": {
     "sites": 2,
     "scope": [
@@ -203586,6 +204774,15 @@
     ],
     "areas": [
       "apps/web/types",
+      "go/other"
+    ]
+  },
+  "Random selection does not exist or belongs to a different organization": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
       "go/other"
     ]
   },
@@ -207772,6 +208969,15 @@
       "go/other"
     ]
   },
+  "Reason code does not exist in your organization": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Reason code is required": {
     "sites": 5,
     "scope": [
@@ -211411,6 +212617,15 @@
       "go/other"
     ]
   },
+  "Recurring shipment does not exist in your organization": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Recurring shipment is required": {
     "sites": 1,
     "scope": [
@@ -213304,6 +214519,15 @@
     ],
     "areas": [
       "routes/rate-agreement"
+    ]
+  },
+  "Rejecting user does not exist": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Rejecting...": {
@@ -217635,6 +218859,15 @@
       "go/other"
     ]
   },
+  "Requesting worker does not exist or belongs to a different organization": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Requesting {0} credit": {
     "sites": 1,
     "scope": [
@@ -219755,6 +220988,15 @@
       "go/other"
     ]
   },
+  "Resolving user does not exist": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Resource": {
     "sites": 4,
     "scope": [
@@ -221378,6 +222620,15 @@
       "routes/worker"
     ]
   },
+  "Return-to-duty test does not exist or belongs to a different organization": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Return-to-duty test required": {
     "sites": 3,
     "scope": [
@@ -222524,6 +223775,15 @@
       "routes/review-template"
     ]
   },
+  "Review template does not exist or belongs to a different organization": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Review templates": {
     "sites": 2,
     "scope": [
@@ -223511,15 +224771,6 @@
     ],
     "areas": [
       "routes/admin"
-    ]
-  },
-  "Role is already assigned to this user": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
     ]
   },
   "Role is required": {
@@ -226802,6 +228053,15 @@
     "areas": [
       "apps/web/lib",
       "routes/home"
+    ]
+  },
+  "Safety event does not exist or belongs to a different organization": {
+    "sites": 4,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Safety event is invalid": {
@@ -230940,6 +232200,15 @@
       "go/other"
     ]
   },
+  "Script library names must be unique within a template version": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Script presets": {
     "sites": 1,
     "scope": [
@@ -231192,6 +232461,15 @@
     "areas": [
       "apps/web/components",
       "routes/carrier-invoice-matching"
+    ]
+  },
+  "Search by entry number": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/journal-reversal"
     ]
   },
   "Search by meaning": {
@@ -238693,8 +239971,26 @@
       "go/other"
     ]
   },
+  "Service type does not exist in your organization": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Service type is required": {
     "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Service type with this code already exists in your organization": {
+    "sites": 1,
     "scope": [
       "go"
     ],
@@ -239907,6 +241203,15 @@
       "routes/desk"
     ]
   },
+  "Settlement line numbers must be unique within a settlement": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Settlement lines carrying this code post to this account; leave blank to use the accounting control defaults.": {
     "sites": 1,
     "scope": [
@@ -239964,6 +241269,15 @@
   },
   "Settlement status is invalid": {
     "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Settlement with this number already exists in your organization": {
+    "sites": 1,
     "scope": [
       "go"
     ],
@@ -241004,6 +242318,24 @@
       "routes/scheduling"
     ]
   },
+  "Shift template does not exist or belongs to a different organization": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Shift template with this code already exists in your organization": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Shift time remaining cannot be negative": {
     "sites": 1,
     "scope": [
@@ -241809,6 +243141,24 @@
       "go/other"
     ]
   },
+  "Shipment does not exist in your organization": {
+    "sites": 11,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Shipment does not exist or belongs to a different organization": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Shipment draft": {
     "sites": 2,
     "scope": [
@@ -242254,6 +243604,15 @@
       "go/other"
     ]
   },
+  "Shipment move does not exist in your organization": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Shipment move has no active carrier assignment to confirm": {
     "sites": 2,
     "scope": [
@@ -242538,6 +243897,24 @@
     ]
   },
   "Shipment type definitions": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Shipment type does not exist in your organization": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Shipment type with this code already exists in your organization": {
     "sites": 1,
     "scope": [
       "go"
@@ -246508,6 +247885,15 @@
       "go/other"
     ]
   },
+  "Someone else started working this customer at the same time. Reload it and try again.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Someone else updated this account at the same time. Reload it and try again.": {
     "sites": 1,
     "scope": [
@@ -246867,7 +248253,7 @@
     ]
   },
   "Sort field is not supported": {
-    "sites": 2,
+    "sites": 1,
     "scope": [
       "go"
     ],
@@ -247501,6 +248887,15 @@
       "go/other"
     ]
   },
+  "Source shipment does not exist in your organization": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Source shipment is required": {
     "sites": 6,
     "scope": [
@@ -247532,6 +248927,15 @@
     ]
   },
   "Source status cannot be longer than 64 characters": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Source test does not exist or belongs to a different organization": {
     "sites": 1,
     "scope": [
       "go"
@@ -247601,6 +249005,15 @@
     ],
     "areas": [
       "routes/edi"
+    ]
+  },
+  "Source version does not exist": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Source {0}": {
@@ -249965,6 +251378,15 @@
       "go/other"
     ]
   },
+  "State does not exist": {
+    "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "State in Trenova": {
     "sites": 2,
     "scope": [
@@ -251260,6 +252682,15 @@
     ],
     "areas": [
       "routes/agent-control"
+    ]
+  },
+  "Stop already has a detention occurrence": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Stop asking about this": {
@@ -256410,15 +257841,6 @@
       "routes/order"
     ]
   },
-  "Team per-loaded-mile rate split evenly between both drivers": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
   "Team player": {
     "sites": 1,
     "scope": [
@@ -257012,6 +258434,15 @@
       "apps/web/hooks"
     ]
   },
+  "Template version does not exist": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Template version is required": {
     "sites": 4,
     "scope": [
@@ -257471,6 +258902,15 @@
     ]
   },
   "Tender offer is required": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Tender offer token already exists": {
     "sites": 1,
     "scope": [
       "go"
@@ -259597,15 +261037,6 @@
     ],
     "areas": [
       "routes/agent-control"
-    ]
-  },
-  "The ID of the posted journal entry you want to reverse.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/journal-reversal"
     ]
   },
   "The ISO country code.": {
@@ -271308,6 +272739,15 @@
       "go/other"
     ]
   },
+  "The posted journal entry you want to reverse.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/journal-reversal"
+    ]
+  },
   "The preview and runs are refused until they are removed or your access changes.": {
     "sites": 1,
     "scope": [
@@ -276638,7 +278078,7 @@
     ]
   },
   "The tractor, jurisdiction or move referenced by this entry does not exist": {
-    "sites": 2,
+    "sites": 1,
     "scope": [
       "go"
     ],
@@ -281626,6 +283066,15 @@
       "routes/desk"
     ]
   },
+  "This fuel index already has a price for that date": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "This fuel purchase could not be read": {
     "sites": 1,
     "scope": [
@@ -281797,6 +283246,15 @@
     ],
     "areas": [
       "apps/dash/routes"
+    ]
+  },
+  "This invoice already has an open dispute": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "This invoice bills {0, plural, one {# shipment} other {# shipments}}. Their documents stay on each shipment; the Charges tab lists every shipment it covers.": {
@@ -285009,6 +286467,33 @@
       "routes/desk"
     ]
   },
+  "This template already has a draft. Edit it or delete it before starting another.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "This template already has a version with this number": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "This template already has an active version": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "This template does not render yet, so there is nothing to send. {0}": {
     "sites": 1,
     "scope": [
@@ -285037,6 +286522,15 @@
     ]
   },
   "This template names kind \"{0}\", which is not registered, so it cannot render": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "This template produced documents that were sent, so its versions cannot be deleted": {
     "sites": 1,
     "scope": [
       "go"
@@ -285289,6 +286783,15 @@
       "routes/admin"
     ]
   },
+  "This user is already linked to another worker in your organization": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "This user is not an active member of your organization": {
     "sites": 1,
     "scope": [
@@ -285402,6 +286905,15 @@
     ]
   },
   "This version is already archived": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "This version of the rate agreement was already recorded; refresh and try again": {
     "sites": 1,
     "scope": [
       "go"
@@ -286740,6 +288252,15 @@
       "api/graphql"
     ]
   },
+  "Time off request does not exist for this worker": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Time off taken": {
     "sites": 1,
     "scope": [
@@ -286971,6 +288492,15 @@
     "areas": [
       "go/other",
       "routes/time-attendance"
+    ]
+  },
+  "Timesheet does not exist or belongs to a different organization": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Timesheet status": {
@@ -289942,6 +291472,15 @@
       "routes/shipment"
     ]
   },
+  "Tractor type does not exist in your organization": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Tractor types": {
     "sites": 1,
     "scope": [
@@ -289961,6 +291500,24 @@
     ]
   },
   "Tractor was not found in your organization": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Tractor with this code already exists in your organization": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Tractor with this external ID already exists in your organization": {
     "sites": 1,
     "scope": [
       "go"
@@ -290319,6 +291876,15 @@
       "routes/shipment"
     ]
   },
+  "Trailer type does not exist in your organization": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Trailer types": {
     "sites": 1,
     "scope": [
@@ -290338,6 +291904,24 @@
     ]
   },
   "Trailer units": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Trailer with this code already exists in your organization": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Trailer with this external ID already exists in your organization": {
     "sites": 1,
     "scope": [
       "go"
@@ -291821,7 +293405,7 @@
       "routes/desk"
     ]
   },
-  "Trenova's development database: migrations, templates and reset.": {
+  "Trenova's development database: migrations, seeds, templates, volume data and reset.": {
     "sites": 1,
     "scope": [
       "go"
@@ -293106,7 +294690,7 @@
     ]
   },
   "Two dimensions cannot share a position": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "go"
     ],
@@ -296950,6 +298534,15 @@
       "go/other"
     ]
   },
+  "Updated by user does not exist": {
+    "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Updated load tender": {
     "sites": 1,
     "scope": [
@@ -297643,6 +299236,15 @@
     ],
     "areas": [
       "routes/shipment"
+    ]
+  },
+  "Uploading user does not exist": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Uploading {0, plural, one {# file} other {# files}}...": {
@@ -298900,6 +300502,15 @@
     ],
     "areas": [
       "routes/admin"
+    ]
+  },
+  "User does not exist": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "User is not a member of this organization": {
@@ -304946,7 +306557,25 @@
       "routes/shipment"
     ]
   },
+  "Weather alert does not exist in your organization": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Weather alert is required": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Weather alert with this NWS ID already exists in your organization": {
     "sites": 1,
     "scope": [
       "go"
@@ -313930,7 +315559,52 @@
       "go/other"
     ]
   },
+  "Worker already has a pending profile change request": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Worker already has a timesheet for this period": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Worker already has an active escrow account": {
+    "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Worker already has an open PTO policy assignment": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Worker already has an open enrollment in this benefit plan": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Worker already has an open shift assignment": {
     "sites": 1,
     "scope": [
       "go"
@@ -313957,6 +315631,15 @@
       "routes/tractor"
     ]
   },
+  "Worker does not exist or belongs to a different organization": {
+    "sites": 26,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Worker drift repair completed": {
     "sites": 1,
     "scope": [
@@ -313964,6 +315647,15 @@
     ],
     "areas": [
       "routes/admin"
+    ]
+  },
+  "Worker has already acknowledged this version of the policy": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Worker has no accrued pay events for this period": {
@@ -313985,6 +315677,15 @@
     ]
   },
   "Worker is already assigned to this policy": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Worker is already on the clock": {
     "sites": 1,
     "scope": [
       "go"
@@ -318163,6 +319864,24 @@
     ],
     "areas": [
       "routes/desk"
+    ]
+  },
+  "Your organization already has a default detention policy": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Your organization already has an override for this state": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Your organization already has {0} reports generating — wait for one to finish": {
@@ -325708,15 +327427,6 @@
       "apps/web/components"
     ]
   },
-  "keel does not read Bun directives: split a --keel:notx migration with --keel:split and leave a transactional one unsplit": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
   "keep holding": {
     "sites": 1,
     "scope": [
@@ -327347,15 +329057,6 @@
     ],
     "areas": [
       "packages/shared/lib"
-    ]
-  },
-  "organizations must belong to the current business unit": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
     ]
   },
   "origin": {
