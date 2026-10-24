@@ -4,42 +4,38 @@ import (
 	"slices"
 	"strings"
 
+	"github.com/emoss08/keel"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/iam/iamdb"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant/tenantdb"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
-	"github.com/emoss08/trenova/pkg/buncolgen"
-	"github.com/emoss08/trenova/pkg/buncolgen/iamcol"
-	"github.com/emoss08/trenova/pkg/buncolgen/tenantcol"
 )
 
 var knownSSOProviders = []tenant.SSOProvider{tenant.SSOProviderAzureAD, tenant.SSOProviderOkta}
 
 func EnvelopeColumns() []kernelports.EnvelopeColumn {
-	idp := iamcol.IdentityProviderColumns
-	sso := tenantcol.SSOConfigColumns
+	idp := iamdb.IdentityProviders
+	sso := tenantdb.SSOConfigs
+	slug := kernelports.EnvelopeColumnName(idp.Slug)
+	provider := kernelports.EnvelopeColumnName(sso.Provider)
 	return []kernelports.EnvelopeColumn{
 		{
-			Name:           "identity provider client secret",
-			Table:          iamcol.IdentityProviderTable,
-			ID:             idp.ID,
-			OrganizationID: idp.OrganizationID,
-			BusinessUnitID: idp.BusinessUnitID,
-			Value:          idp.OIDCClientSecret,
-			Extra:          []buncolgen.Column{idp.Slug},
+			Name:  "identity provider client secret",
+			Value: idp.OIDCClientSecret,
+			Extra: []keel.Expr{idp.Slug},
 			Scopes: func(row *kernelports.EnvelopeRow, _ string) []kernelports.SecretScope {
-				return ssoSecretScopes(row, identityProviderResourceIDs(row.Extra[idp.Slug.Name]))
+				return ssoSecretScopes(row, identityProviderResourceIDs(row.Extra[slug]))
 			},
 		},
 		{
-			Name:           "SSO configuration client secret",
-			Table:          tenantcol.SSOConfigTable,
-			ID:             sso.ID,
-			OrganizationID: sso.OrganizationID,
-			BusinessUnitID: sso.BusinessUnitID,
-			Value:          sso.OIDCClientSecret,
-			Extra:          []buncolgen.Column{sso.Provider},
+			Name:  "SSO configuration client secret",
+			Value: sso.OIDCClientSecret,
+			Extra: []keel.Expr{sso.Provider},
 			Scopes: func(row *kernelports.EnvelopeRow, _ string) []kernelports.SecretScope {
-				provider := tenant.SSOProvider(row.Extra[sso.Provider.Name])
-				return ssoSecretScopes(row, ssoSecretAADResourceIDs(provider))
+				return ssoSecretScopes(
+					row,
+					ssoSecretAADResourceIDs(tenant.SSOProvider(row.Extra[provider])),
+				)
 			},
 		},
 	}

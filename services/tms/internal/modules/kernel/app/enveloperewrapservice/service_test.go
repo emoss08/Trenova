@@ -10,9 +10,10 @@ import (
 	"testing/iotest"
 
 	"github.com/bytedance/sonic"
+	"github.com/emoss08/keel"
+	"github.com/emoss08/keel/schema"
 	"github.com/emoss08/trenova/internal/modules/kernel/app/encryptionservice"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
-	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -166,15 +167,32 @@ func keyring(t *testing.T, active string, retired ...string) *encryptionservice.
 	return encryptionservice.NewWithKeyManager(manager)
 }
 
+var secretsRef = keel.Ref{Table: &schema.Table{
+	Name: "secrets",
+	Columns: []schema.Column{
+		{Name: "id", Kind: schema.KindString, Flags: schema.FlagPK},
+		{Name: "organization_id", Kind: schema.KindString, Flags: schema.FlagTenant},
+		{Name: "business_unit_id", Kind: schema.KindString, Flags: schema.FlagTenant},
+		{Name: "secret", Kind: schema.KindString},
+		{Name: "storage_version_id", Kind: schema.KindString},
+	},
+	PK:         []int32{0},
+	Tenant:     []int32{1, 2},
+	Version:    -1,
+	AutoID:     -1,
+	AutoCreate: -1,
+	AutoUpdate: -1,
+}}
+
+func secretsColumn(index int32) keel.Col {
+	return keel.Col{Ref: &secretsRef, Index: index}
+}
+
 func secretColumn(name string, scopes kernelports.EnvelopeScopes) kernelports.EnvelopeColumn {
 	return kernelports.EnvelopeColumn{
-		Name:           name,
-		Table:          buncolgen.TableInfo{Name: "secrets", Alias: "sec"},
-		ID:             buncolgen.NewColumn("id", "sec"),
-		OrganizationID: buncolgen.NewColumn("organization_id", "sec"),
-		BusinessUnitID: buncolgen.NewColumn("business_unit_id", "sec"),
-		Value:          buncolgen.NewColumn("secret", "sec"),
-		Scopes:         scopes,
+		Name:   name,
+		Value:  secretsColumn(3),
+		Scopes: scopes,
 	}
 }
 
@@ -423,7 +441,7 @@ func TestRun_ReportsARowChangedUnderneathAsAConflict(t *testing.T) {
 }
 
 func documentObject() kernelports.EnvelopeObject {
-	version := buncolgen.NewColumn("storage_version_id", "doc")
+	version := secretsColumn(4)
 	column := secretColumn("documents", func(row *kernelports.EnvelopeRow, key string) []kernelports.SecretScope {
 		return []kernelports.SecretScope{encryptionservice.AAD{
 			Purpose:        encryptionservice.PurposeDocument,
@@ -432,8 +450,8 @@ func documentObject() kernelports.EnvelopeObject {
 			ResourceID:     key,
 		}.SecretScope()}
 	})
-	column.Extra = []buncolgen.Column{version}
-	return kernelports.EnvelopeObject{Column: column, Version: &version}
+	column.Extra = []keel.Expr{version}
+	return kernelports.EnvelopeObject{Column: column, Version: version}
 }
 
 func TestRun_RewritesDocumentObjectsAndRecordsTheirNewVersion(t *testing.T) {
