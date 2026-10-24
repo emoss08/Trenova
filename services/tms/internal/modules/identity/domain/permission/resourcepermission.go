@@ -51,6 +51,11 @@ func (rp *ResourcePermission) BeforeCreate(ctx context.Context) error {
 	return rp.BeforeAppendModel(ctx, (*bun.InsertQuery)(nil))
 }
 
+func (rp *ResourcePermission) BeforeUpdate(_ context.Context) error {
+	rp.Operations = Normalize(rp.Operations)
+	return nil
+}
+
 func (rp *ResourcePermission) HasOperation(op Operation) bool {
 	return slices.Contains(Implied(rp.Operations), op)
 }

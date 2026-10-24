@@ -3,14 +3,17 @@ package organizationrepository
 import (
 	"context"
 
-	"github.com/emoss08/trenova/pkg/buncolgen/tenantcol"
-
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant/tenantdb"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
-	"github.com/emoss08/trenova/pkg/dberror"
 	"go.uber.org/zap"
 )
+
+var capabilityLocks = map[tenantports.CapabilityLock]keel.LockStrength{
+	tenantports.CapabilityLockShare:  keel.ForShare,
+	tenantports.CapabilityLockUpdate: keel.ForUpdate,
+}
 
 func (r *repository) GetCapabilities(
 	ctx context.Context,
@@ -20,38 +23,30 @@ func (r *repository) GetCapabilities(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*tenantports.OrganizationCapabilities, error) {
-			log := r.l.With(
-				zap.String("operation", "GetCapabilities"),
-				zap.String("orgID", req.TenantInfo.OrgID.String()),
-				zap.String("lock", string(req.Lock)),
+			o := tenantdb.Organizations
+			q := o.Pick(o.BrokerageEnabled, o.AssetOperationsEnabled).Where(
+				o.ID.Eq(req.TenantInfo.OrgID),
+				o.BusinessUnitID.Eq(req.TenantInfo.BuID),
 			)
-
-			org := tenantcol.OrganizationColumns
-			query := r.db.DBForContext(ctx).
-				NewSelect().
-				Model((*tenant.Organization)(nil)).
-				Column(
-					org.BrokerageEnabled.String(),
-					org.AssetOperationsEnabled.String(),
-				).
-				Where(org.ID.Eq(), req.TenantInfo.OrgID).
-				Where(org.BusinessUnitID.Eq(), req.TenantInfo.BuID)
-
-			if req.Lock != tenantports.CapabilityLockNone {
-				query = query.For(string(req.Lock))
+			if strength, ok := capabilityLocks[req.Lock]; ok {
+				q = q.Lock(strength)
 			}
 
-			capabilities := new(tenantports.OrganizationCapabilities)
-			if err := query.Scan(
-				ctx,
-				&capabilities.BrokerageEnabled,
-				&capabilities.AssetOperationsEnabled,
-			); err != nil {
-				log.Error("failed to read organization capabilities", zap.Error(err))
-				return nil, dberror.HandleNotFoundError(err, "Organization")
+			org, err := q.One(ctx, r.db.Keel(ctx))
+			if err != nil {
+				r.l.Error(
+					"failed to read organization capabilities",
+					zap.String("orgID", req.TenantInfo.OrgID.String()),
+					zap.String("lock", string(req.Lock)),
+					zap.Error(err),
+				)
+				return nil, organizationErrors.Map(err, req.TenantInfo.OrgID.String())
 			}
 
-			return capabilities, nil
+			return &tenantports.OrganizationCapabilities{
+				BrokerageEnabled:       org.BrokerageEnabled,
+				AssetOperationsEnabled: org.AssetOperationsEnabled,
+			}, nil
 		},
 	)
 }

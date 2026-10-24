@@ -3,22 +3,43 @@ package iamrepository
 import (
 	"context"
 
-	"github.com/emoss08/trenova/pkg/buncolgen/iamcol"
-
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/iam"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/iam/iamdb"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/iamports"
 	"github.com/emoss08/trenova/pkg/dberror"
-	"github.com/emoss08/trenova/pkg/errortypes"
+	"github.com/emoss08/trenova/pkg/dbscope"
+	"github.com/emoss08/trenova/pkg/listquery"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/uptrace/bun"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
 
 const defaultListLimit = 250
+
+var (
+	identityProviderErrors = dberror.Mapping{Entity: "Identity provider"}
+	scimDirectoryErrors    = dberror.Mapping{Entity: "SCIM directory"}
+	scimTokenErrors        = dberror.Mapping{Entity: "SCIM token"}
+	accessPolicyErrors     = dberror.Mapping{
+		Entity: "Access policy",
+		Unique: []dberror.Constraint{
+			{
+				Name:    "idx_access_policies_name_tenant",
+				Field:   "name",
+				Message: "Access policy with this name already exists",
+			},
+			{
+				Name:    "idx_access_policies_enabled_scope_tenant",
+				Field:   "resource",
+				Message: "An enabled access policy with the same resource, operation, and conditions already exists",
+			},
+		},
+	}
+)
 
 type Params struct {
 	fx.In
@@ -46,38 +67,40 @@ func safeLimit(limit int) int {
 	return limit
 }
 
+func forTenant[T any](
+	ctx context.Context,
+	q *keel.Query[T],
+	preds ...keel.Pred,
+) *keel.Query[T] {
+	if dbscope.IsSystem(ctx) {
+		q = q.AllTenants()
+	}
+
+	return q.Where(preds...)
+}
+
 func (r *repository) ListIdentityProviders(
 	ctx context.Context,
 	req iamports.ListIAMRequest,
 ) ([]*iam.IdentityProvider, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*iam.IdentityProvider, error) {
-		entities := make([]*iam.IdentityProvider, 0)
-		err := r.db.DBForContext(ctx).NewSelect().
-			Model(&entities).
-			Where("idp.organization_id = ?", req.TenantInfo.OrgID).
-			Where("idp.business_unit_id = ?", req.TenantInfo.BuID).
-			Where("idp.protocol = ?", iam.IdentityProviderProtocolOIDC).
-			Order("idp.name ASC").
-			Limit(int64(safeLimit(req.Limit))).
-			Scan(ctx)
-		return entities, err
+		idp := iamdb.IdentityProviders
+		return idp.Where(idp.Protocol.Eq(iam.IdentityProviderProtocolOIDC)).
+			Order(idp.Name.Asc()).
+			Limit(safeLimit(req.Limit)).
+			List(ctx, r.db.Keel(ctx))
 	})
 }
 
 func (r *repository) GetIdentityProvider(
 	ctx context.Context,
-	tenantInfo pagination.TenantInfo,
+	_ pagination.TenantInfo,
 	id pulid.ID,
 ) (*iam.IdentityProvider, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*iam.IdentityProvider, error) {
-		entity := new(iam.IdentityProvider)
-		if err := r.db.DBForContext(ctx).NewSelect().
-			Model(entity).
-			Where("idp.id = ?", id).
-			Where("idp.organization_id = ?", tenantInfo.OrgID).
-			Where("idp.business_unit_id = ?", tenantInfo.BuID).
-			Scan(ctx); err != nil {
-			return nil, dberror.HandleNotFoundError(err, "Identity provider")
+		entity, err := iamdb.IdentityProviders.Get(ctx, r.db.Keel(ctx), id)
+		if err != nil {
+			return nil, identityProviderErrors.Map(err, id.String())
 		}
 		return entity, nil
 	})
@@ -88,8 +111,8 @@ func (r *repository) CreateIdentityProvider(
 	entity *iam.IdentityProvider,
 ) (*iam.IdentityProvider, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*iam.IdentityProvider, error) {
-		if _, err := r.db.DBForContext(ctx).NewInsert().Model(entity).Exec(ctx); err != nil {
-			return nil, err
+		if err := iamdb.IdentityProviders.Create(ctx, r.db.Keel(ctx), entity); err != nil {
+			return nil, identityProviderErrors.Map(err, entity.ID.String())
 		}
 		return entity, nil
 	})
@@ -100,40 +123,28 @@ func (r *repository) UpdateIdentityProvider(
 	entity *iam.IdentityProvider,
 ) (*iam.IdentityProvider, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*iam.IdentityProvider, error) {
-		entity.Version++
-		res, err := r.db.DBForContext(ctx).NewUpdate().
-			Model(entity).
-			Column(
-				"name",
-				"slug",
-				"protocol",
-				"enabled",
-				"enforce_sso",
-				"auto_provision",
-				"allow_federated_mfa",
-				"federated_mfa_acr_values",
-				"allowed_domains",
-				"attribute_map",
-				"oidc_issuer_url",
-				"oidc_client_id",
-				"oidc_client_secret",
-				"oidc_redirect_url",
-				"oidc_scopes",
-				"version",
-			).
-			Where("id = ?", entity.ID).
-			Where("organization_id = ?", entity.OrganizationID).
-			Where("business_unit_id = ?", entity.BusinessUnitID).
-			Exec(ctx)
-		if err != nil {
-			return nil, err
-		}
-		if err = dberror.CheckRowsAffected(
-			res,
-			"Identity provider",
-			entity.ID.String(),
+		idp := iamdb.IdentityProviders
+		if err := idp.Save(
+			ctx,
+			r.db.Keel(ctx),
+			entity,
+			idp.Name,
+			idp.Slug,
+			idp.Protocol,
+			idp.Enabled,
+			idp.EnforceSSO,
+			idp.AutoProvision,
+			idp.AllowFederatedMFA,
+			idp.FederatedMFAACRs,
+			idp.AllowedDomains,
+			idp.AttributeMap,
+			idp.OIDCIssuerURL,
+			idp.OIDCClientID,
+			idp.OIDCClientSecret,
+			idp.OIDCRedirectURL,
+			idp.OIDCScopes,
 		); err != nil {
-			return nil, err
+			return nil, identityProviderErrors.Map(err, entity.ID.String())
 		}
 		return entity, nil
 	})
@@ -141,20 +152,16 @@ func (r *repository) UpdateIdentityProvider(
 
 func (r *repository) DeleteIdentityProvider(
 	ctx context.Context,
-	tenantInfo pagination.TenantInfo,
+	_ pagination.TenantInfo,
 	id pulid.ID,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
-		res, err := r.db.DBForContext(ctx).NewDelete().
-			Model((*iam.IdentityProvider)(nil)).
-			Where("id = ?", id).
-			Where("organization_id = ?", tenantInfo.OrgID).
-			Where("business_unit_id = ?", tenantInfo.BuID).
-			Exec(ctx)
+		idp := iamdb.IdentityProviders
+		deleted, err := idp.Where(idp.ID.Eq(id)).Delete(ctx, r.db.Keel(ctx))
 		if err != nil {
-			return err
+			return identityProviderErrors.Map(err, id.String())
 		}
-		return dberror.CheckRowsAffected(res, "Identity provider", id.String())
+		return dberror.CheckAffected(deleted, identityProviderErrors.Entity, id.String())
 	})
 }
 
@@ -166,23 +173,19 @@ func (r *repository) ListSCIMDirectories(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*pagination.ListResult[*iam.SCIMDirectory], error) {
-			entities := make([]*iam.SCIMDirectory, 0, req.Filter.Pagination.SafeLimit())
-			cols := iamcol.SCIMDirectoryColumns
-
-			total, err := r.db.DBForContext(ctx).NewSelect().
-				Model(&entities).
-				Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-					return iamcol.SCIMDirectoryApplyTenant(req.Filter.TenantInfo)(sq)
-				}).
-				Order(cols.CreatedAt.OrderDesc()).
-				Limit(int64(req.Filter.Pagination.SafeLimit())).
-				Offset(int64(req.Filter.Pagination.SafeOffset())).
-				ScanAndCount(ctx)
-
-			return &pagination.ListResult[*iam.SCIMDirectory]{
-				Items: entities,
-				Total: int(total),
-			}, err
+			sd := iamdb.SCIMDirectories
+			return listquery.List(
+				ctx,
+				r.db.Keel(ctx),
+				sd.Query(),
+				&listquery.Request[iam.SCIMDirectory]{
+					Filter: &pagination.QueryOptions{
+						TenantInfo: req.Filter.TenantInfo,
+						Pagination: req.Filter.Pagination,
+					},
+					Then: []keel.Order{sd.CreatedAt.Desc()},
+				},
+			)
 		},
 	)
 }
@@ -192,17 +195,9 @@ func (r *repository) GetSCIMDirectory(
 	req iamports.GetSCIMDirectoryRequest,
 ) (*iam.SCIMDirectory, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*iam.SCIMDirectory, error) {
-		entity := new(iam.SCIMDirectory)
-		cols := iamcol.SCIMDirectoryColumns
-
-		if err := r.db.DBForContext(ctx).NewSelect().
-			Model(entity).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return iamcol.SCIMDirectoryScopeTenant(sq, req.TenantInfo).
-					Where(cols.ID.Eq(), req.ID)
-			}).
-			Scan(ctx); err != nil {
-			return nil, dberror.HandleNotFoundError(err, "SCIM directory")
+		entity, err := iamdb.SCIMDirectories.Get(ctx, r.db.Keel(ctx), req.ID)
+		if err != nil {
+			return nil, scimDirectoryErrors.Map(err, req.ID.String())
 		}
 		return entity, nil
 	})
@@ -213,8 +208,8 @@ func (r *repository) CreateSCIMDirectory(
 	entity *iam.SCIMDirectory,
 ) (*iam.SCIMDirectory, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*iam.SCIMDirectory, error) {
-		if _, err := r.db.DBForContext(ctx).NewInsert().Model(entity).Exec(ctx); err != nil {
-			return nil, err
+		if err := iamdb.SCIMDirectories.Create(ctx, r.db.Keel(ctx), entity); err != nil {
+			return nil, scimDirectoryErrors.Map(err, entity.ID.String())
 		}
 		return entity, nil
 	})
@@ -225,18 +220,9 @@ func (r *repository) UpdateSCIMDirectory(
 	entity *iam.SCIMDirectory,
 ) (*iam.SCIMDirectory, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*iam.SCIMDirectory, error) {
-		res, err := r.db.DBForContext(ctx).NewUpdate().
-			Model(entity).
-			Column("tenant_slug", "enabled").
-			Where("id = ?", entity.ID).
-			Where("organization_id = ?", entity.OrganizationID).
-			Where("business_unit_id = ?", entity.BusinessUnitID).
-			Exec(ctx)
-		if err != nil {
-			return nil, err
-		}
-		if err = dberror.CheckRowsAffected(res, "SCIM directory", entity.ID.String()); err != nil {
-			return nil, err
+		sd := iamdb.SCIMDirectories
+		if err := sd.Save(ctx, r.db.Keel(ctx), entity, sd.TenantSlug, sd.Enabled); err != nil {
+			return nil, scimDirectoryErrors.Map(err, entity.ID.String())
 		}
 		return entity, nil
 	})
@@ -244,20 +230,16 @@ func (r *repository) UpdateSCIMDirectory(
 
 func (r *repository) DeleteSCIMDirectory(
 	ctx context.Context,
-	tenantInfo pagination.TenantInfo,
+	_ pagination.TenantInfo,
 	id pulid.ID,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
-		res, err := r.db.DBForContext(ctx).NewDelete().
-			Model((*iam.SCIMDirectory)(nil)).
-			Where("id = ?", id).
-			Where("organization_id = ?", tenantInfo.OrgID).
-			Where("business_unit_id = ?", tenantInfo.BuID).
-			Exec(ctx)
+		sd := iamdb.SCIMDirectories
+		deleted, err := sd.Where(sd.ID.Eq(id)).Delete(ctx, r.db.Keel(ctx))
 		if err != nil {
-			return err
+			return scimDirectoryErrors.Map(err, id.String())
 		}
-		return dberror.CheckRowsAffected(res, "SCIM directory", id.String())
+		return dberror.CheckAffected(deleted, scimDirectoryErrors.Entity, id.String())
 	})
 }
 
@@ -266,14 +248,10 @@ func (r *repository) ListSCIMTokens(
 	orgID, directoryID pulid.ID,
 ) ([]*iam.SCIMToken, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*iam.SCIMToken, error) {
-		entities := make([]*iam.SCIMToken, 0)
-		err := r.db.DBForContext(ctx).NewSelect().
-			Model(&entities).
-			Where("st.organization_id = ?", orgID).
-			Where("st.directory_id = ?", directoryID).
-			Order("st.created_at DESC").
-			Scan(ctx)
-		return entities, err
+		st := iamdb.SCIMTokens
+		return st.Where(st.OrganizationID.Eq(orgID), st.DirectoryID.Eq(directoryID)).
+			Order(st.CreatedAt.Desc()).
+			All(ctx, r.db.Keel(ctx))
 	})
 }
 
@@ -282,8 +260,8 @@ func (r *repository) CreateSCIMToken(
 	entity *iam.SCIMToken,
 ) (*iam.SCIMToken, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*iam.SCIMToken, error) {
-		if _, err := r.db.DBForContext(ctx).NewInsert().Model(entity).Exec(ctx); err != nil {
-			return nil, err
+		if err := iamdb.SCIMTokens.Create(ctx, r.db.Keel(ctx), entity); err != nil {
+			return nil, scimTokenErrors.Map(err, entity.ID.String())
 		}
 		return entity, nil
 	})
@@ -294,25 +272,24 @@ func (r *repository) RevokeSCIMToken(
 	orgID, tokenID pulid.ID,
 ) (*iam.SCIMToken, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*iam.SCIMToken, error) {
-		entity := &iam.SCIMToken{
-			ID:             tokenID,
-			OrganizationID: orgID,
-			Status:         iam.SCIMTokenStatusRevoked,
-		}
-		res, err := r.db.DBForContext(ctx).NewUpdate().
-			Model(entity).
-			Column("status").
-			Where("id = ?", tokenID).
-			Where("organization_id = ?", orgID).
-			Returning("*").
-			Exec(ctx)
+		st := iamdb.SCIMTokens
+		rows, err := listquery.UpdateReturning(
+			ctx,
+			r.db.Keel(ctx),
+			st.Where(st.ID.Eq(tokenID), st.OrganizationID.Eq(orgID)),
+			st.Status.To(iam.SCIMTokenStatusRevoked),
+		)
 		if err != nil {
+			return nil, scimTokenErrors.Map(err, tokenID.String())
+		}
+		if err = dberror.CheckAffected(
+			int64(len(rows)),
+			scimTokenErrors.Entity,
+			tokenID.String(),
+		); err != nil {
 			return nil, err
 		}
-		if err = dberror.CheckRowsAffected(res, "SCIM token", tokenID.String()); err != nil {
-			return nil, err
-		}
-		return entity, nil
+		return rows[0], nil
 	})
 }
 
@@ -323,17 +300,14 @@ func (r *repository) ListProvisioningAuditRecords(
 	limit int,
 ) ([]*iam.ProvisioningAuditRecord, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*iam.ProvisioningAuditRecord, error) {
-		entities := make([]*iam.ProvisioningAuditRecord, 0)
-		query := r.db.DBForContext(ctx).NewSelect().
-			Model(&entities).
-			Where("par.organization_id = ?", orgID).
-			Order("par.created_at DESC").
-			Limit(int64(safeLimit(limit)))
-		if directoryID.IsNotNil() {
-			query = query.Where("par.directory_id = ?", directoryID)
-		}
-		err := query.Scan(ctx)
-		return entities, err
+		par := iamdb.ProvisioningAuditRecords
+		return par.Where(
+			par.OrganizationID.Eq(orgID),
+			keel.When(directoryID.IsNotNil(), par.DirectoryID.Eq(directoryID)),
+		).
+			Order(par.CreatedAt.Desc()).
+			Limit(safeLimit(limit)).
+			List(ctx, r.db.Keel(ctx))
 	})
 }
 
@@ -342,15 +316,11 @@ func (r *repository) ListAccessPolicies(
 	req iamports.ListIAMRequest,
 ) ([]*iam.AccessPolicy, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*iam.AccessPolicy, error) {
-		entities := make([]*iam.AccessPolicy, 0)
-		err := r.db.DBForContext(ctx).NewSelect().
-			Model(&entities).
-			Where("ap.organization_id = ?", req.TenantInfo.OrgID).
-			Where("ap.business_unit_id = ?", req.TenantInfo.BuID).
-			Order("ap.priority DESC", "ap.created_at DESC").
-			Limit(int64(safeLimit(req.Limit))).
-			Scan(ctx)
-		return entities, err
+		ap := iamdb.AccessPolicies
+		return ap.Query().
+			Order(ap.Priority.Desc(), ap.CreatedAt.Desc()).
+			Limit(safeLimit(req.Limit)).
+			List(ctx, r.db.Keel(ctx))
 	})
 }
 
@@ -359,17 +329,18 @@ func (r *repository) ListEnabledAccessPolicies(
 	req iamports.IAMPolicyLookupRequest,
 ) ([]*iam.AccessPolicy, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*iam.AccessPolicy, error) {
-		entities := make([]*iam.AccessPolicy, 0)
-		err := r.db.DBForContext(ctx).NewSelect().
-			Model(&entities).
-			Where("ap.organization_id = ?", req.OrganizationID).
-			Where("ap.business_unit_id = ?", req.BusinessUnitID).
-			Where("ap.resource = ?", req.Resource).
-			Where("ap.operation = ?", string(req.Operation)).
-			Where("ap.enabled = TRUE").
-			Order("ap.priority DESC", "ap.effect DESC", "ap.created_at ASC").
-			Scan(ctx)
-		return entities, err
+		ap := iamdb.AccessPolicies
+		return forTenant(
+			ctx,
+			ap.Query(),
+			ap.OrganizationID.Eq(req.OrganizationID),
+			ap.BusinessUnitID.Eq(req.BusinessUnitID),
+			ap.Resource.Eq(req.Resource),
+			ap.Operation.Eq(string(req.Operation)),
+			ap.Enabled.IsTrue(),
+		).
+			Order(ap.Priority.Desc(), ap.Effect.Desc(), ap.CreatedAt.Asc()).
+			All(ctx, r.db.Keel(ctx))
 	})
 }
 
@@ -378,15 +349,16 @@ func (r *repository) ListEnabledTenantAccessPolicies(
 	req iamports.IAMTenantPolicyLookupRequest,
 ) ([]*iam.AccessPolicy, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*iam.AccessPolicy, error) {
-		entities := make([]*iam.AccessPolicy, 0)
-		err := r.db.DBForContext(ctx).NewSelect().
-			Model(&entities).
-			Where("ap.organization_id = ?", req.OrganizationID).
-			Where("ap.business_unit_id = ?", req.BusinessUnitID).
-			Where("ap.enabled = TRUE").
-			Order("ap.priority DESC", "ap.effect DESC", "ap.created_at ASC").
-			Scan(ctx)
-		return entities, err
+		ap := iamdb.AccessPolicies
+		return forTenant(
+			ctx,
+			ap.Query(),
+			ap.OrganizationID.Eq(req.OrganizationID),
+			ap.BusinessUnitID.Eq(req.BusinessUnitID),
+			ap.Enabled.IsTrue(),
+		).
+			Order(ap.Priority.Desc(), ap.Effect.Desc(), ap.CreatedAt.Asc()).
+			All(ctx, r.db.Keel(ctx))
 	})
 }
 
@@ -395,8 +367,8 @@ func (r *repository) CreateAccessPolicy(
 	entity *iam.AccessPolicy,
 ) (*iam.AccessPolicy, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*iam.AccessPolicy, error) {
-		if _, err := r.db.DBForContext(ctx).NewInsert().Model(entity).Exec(ctx); err != nil {
-			return nil, mapAccessPolicyUniqueConstraintError(err)
+		if err := iamdb.AccessPolicies.Create(ctx, r.db.Keel(ctx), entity); err != nil {
+			return nil, accessPolicyErrors.Map(err, entity.ID.String())
 		}
 		return entity, nil
 	})
@@ -407,62 +379,37 @@ func (r *repository) UpdateAccessPolicy(
 	entity *iam.AccessPolicy,
 ) (*iam.AccessPolicy, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*iam.AccessPolicy, error) {
-		res, err := r.db.DBForContext(ctx).NewUpdate().
-			Model(entity).
-			Column("name", "resource", "operation", "effect", "priority", "conditions", "enabled").
-			Where("id = ?", entity.ID).
-			Where("organization_id = ?", entity.OrganizationID).
-			Where("business_unit_id = ?", entity.BusinessUnitID).
-			Exec(ctx)
-		if err != nil {
-			return nil, mapAccessPolicyUniqueConstraintError(err)
-		}
-		if err = dberror.CheckRowsAffected(res, "Access policy", entity.ID.String()); err != nil {
-			return nil, err
+		ap := iamdb.AccessPolicies
+		if err := ap.Save(
+			ctx,
+			r.db.Keel(ctx),
+			entity,
+			ap.Name,
+			ap.Resource,
+			ap.Operation,
+			ap.Effect,
+			ap.Priority,
+			ap.Conditions,
+			ap.Enabled,
+		); err != nil {
+			return nil, accessPolicyErrors.Map(err, entity.ID.String())
 		}
 		return entity, nil
 	})
 }
 
-func mapAccessPolicyUniqueConstraintError(err error) error {
-	if !dberror.IsUniqueConstraintViolation(err) {
-		return err
-	}
-
-	switch dberror.ExtractConstraintName(err) {
-	case "idx_access_policies_name_tenant":
-		return errortypes.NewValidationError(
-			"name",
-			errortypes.ErrDuplicate,
-			"Access policy with this name already exists",
-		)
-	case "idx_access_policies_enabled_scope_tenant":
-		return errortypes.NewValidationError(
-			"resource",
-			errortypes.ErrDuplicate,
-			"An enabled access policy with the same resource, operation, and conditions already exists",
-		)
-	default:
-		return err
-	}
-}
-
 func (r *repository) DeleteAccessPolicy(
 	ctx context.Context,
-	tenantInfo pagination.TenantInfo,
+	_ pagination.TenantInfo,
 	id pulid.ID,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
-		res, err := r.db.DBForContext(ctx).NewDelete().
-			Model((*iam.AccessPolicy)(nil)).
-			Where("id = ?", id).
-			Where("organization_id = ?", tenantInfo.OrgID).
-			Where("business_unit_id = ?", tenantInfo.BuID).
-			Exec(ctx)
+		ap := iamdb.AccessPolicies
+		deleted, err := ap.Where(ap.ID.Eq(id)).Delete(ctx, r.db.Keel(ctx))
 		if err != nil {
-			return err
+			return accessPolicyErrors.Map(err, id.String())
 		}
-		return dberror.CheckRowsAffected(res, "Access policy", id.String())
+		return dberror.CheckAffected(deleted, accessPolicyErrors.Entity, id.String())
 	})
 }
 
@@ -472,14 +419,11 @@ func (r *repository) ListAuthEvents(
 	limit int,
 ) ([]*iam.AuthEvent, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*iam.AuthEvent, error) {
-		entities := make([]*iam.AuthEvent, 0)
-		err := r.db.DBForContext(ctx).NewSelect().
-			Model(&entities).
-			Where("ae.organization_id = ?", orgID).
-			Order("ae.occurred_at DESC").
-			Limit(int64(safeLimit(limit))).
-			Scan(ctx)
-		return entities, err
+		ae := iamdb.AuthEvents
+		return ae.Where(ae.OrganizationID.Eq(orgID)).
+			Order(ae.OccurredAt.Desc()).
+			Limit(safeLimit(limit)).
+			List(ctx, r.db.Keel(ctx))
 	})
 }
 
@@ -489,14 +433,11 @@ func (r *repository) ListRiskDecisions(
 	limit int,
 ) ([]*iam.RiskDecision, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*iam.RiskDecision, error) {
-		entities := make([]*iam.RiskDecision, 0)
-		err := r.db.DBForContext(ctx).NewSelect().
-			Model(&entities).
-			Where("rd.organization_id = ?", orgID).
-			Order("rd.created_at DESC").
-			Limit(int64(safeLimit(limit))).
-			Scan(ctx)
-		return entities, err
+		rd := iamdb.RiskDecisions
+		return rd.Where(rd.OrganizationID.Eq(orgID)).
+			Order(rd.CreatedAt.Desc()).
+			Limit(safeLimit(limit)).
+			List(ctx, r.db.Keel(ctx))
 	})
 }
 
@@ -505,15 +446,11 @@ func (r *repository) ListExternalIdentities(
 	req iamports.ListIAMRequest,
 ) ([]*iam.ExternalIdentity, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*iam.ExternalIdentity, error) {
-		entities := make([]*iam.ExternalIdentity, 0)
-		err := r.db.DBForContext(ctx).NewSelect().
-			Model(&entities).
-			Where("extid.organization_id = ?", req.TenantInfo.OrgID).
-			Where("extid.business_unit_id = ?", req.TenantInfo.BuID).
-			Order("extid.updated_at DESC").
-			Limit(int64(safeLimit(req.Limit))).
-			Scan(ctx)
-		return entities, err
+		ei := iamdb.ExternalIdentities
+		return ei.Query().
+			Order(ei.UpdatedAt.Desc()).
+			Limit(safeLimit(req.Limit)).
+			List(ctx, r.db.Keel(ctx))
 	})
 }
 
@@ -523,15 +460,10 @@ func (r *repository) ListMFAAuthenticators(
 	limit int,
 ) ([]*iam.MFAAuthenticator, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*iam.MFAAuthenticator, error) {
-		entities := make([]*iam.MFAAuthenticator, 0)
-		err := r.db.DBForContext(ctx).NewSelect().
-			Model(&entities).
-			Where("mfa.organization_id = ?", orgID).
-			Order("mfa.updated_at DESC").
-			Limit(int64(safeLimit(limit))).
-			Scan(ctx)
-		return entities, err
+		mfa := iamdb.MFAAuthenticators
+		return mfa.Where(mfa.OrganizationID.Eq(orgID)).
+			Order(mfa.UpdatedAt.Desc()).
+			Limit(safeLimit(limit)).
+			List(ctx, r.db.Keel(ctx))
 	})
 }
-
-var _ bun.IDB

@@ -4,12 +4,13 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
-	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker/workerdb"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
+	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/uptrace/bun"
 	"go.uber.org/zap"
 )
 
@@ -19,94 +20,99 @@ const defaultTeamPageSize = 500
 // a few thousand drivers in Go to answer "how many in each terminal" would be
 // the wrong shape at any size.
 
+type headcountGroup struct {
+	key   keel.Expr
+	label keel.Expr
+	code  keel.Expr
+	color keel.Expr
+	group []keel.Expr
+}
+
 // rosterCount is the shared shape of the three headcount groupings: active and
 // terminated counted together so a terminal that has emptied out still shows,
 // and the driving half broken out because that is the number a safety director
 // asks for.
 func (r *repository) rosterCount(
 	ctx context.Context,
-	tenantInfo pagination.TenantInfo,
-) *bun.SelectQuery {
-	return r.db.DBForContext(ctx).
-		NewSelect().
-		Model((*worker.Worker)(nil)).
-		Join("LEFT JOIN job_positions AS jpos").
-		JoinOn("jpos.id = wrk.position_id").
-		JoinOn("jpos.organization_id = wrk.organization_id").
-		JoinOn("jpos.business_unit_id = wrk.business_unit_id").
-		Where("wrk.organization_id = ?", tenantInfo.OrgID).
-		Where("wrk.business_unit_id = ?", tenantInfo.BuID).
-		ColumnExpr("COUNT(*) FILTER (WHERE wrk.status = 'Active') AS workers").
-		ColumnExpr(
-			"COUNT(*) FILTER (WHERE wrk.status = 'Active' AND COALESCE(jpos.is_driving_position, TRUE)) AS drivers",
+	operation string,
+	g headcountGroup,
+) ([]workerports.HeadcountRow, error) {
+	w := workerdb.Workers
+	jp := w.Position()
+	active := w.Status.Eq(domaintypes.StatusActive)
+	workers := keel.Count().Filter(active)
+
+	rows, err := keel.Into[workerports.HeadcountRow](ctx, r.db.Keel(ctx), w.
+		Group(g.group...).
+		Pick(
+			g.key,
+			g.label,
+			g.code,
+			g.color,
+			workers,
+			keel.Count().Filter(keel.And(
+				active,
+				keel.Raw("COALESCE(?, TRUE)", jp.IsDrivingPosition),
+			)),
+			keel.Count().Filter(w.Status.Ne(domaintypes.StatusActive)),
+			keel.Raw("0"),
 		).
-		ColumnExpr("COUNT(*) FILTER (WHERE wrk.status <> 'Active') AS terminated")
+		Order(workers.Desc(), keel.Asc(g.label)))
+	if err != nil {
+		r.l.Error("failed to count headcount by "+operation, zap.Error(err))
+		return nil, fmt.Errorf("count headcount by %s: %w", operation, err)
+	}
+
+	return rows, nil
 }
 
 func (r *repository) HeadcountByFleet(
 	ctx context.Context,
-	tenantInfo pagination.TenantInfo,
+	_ pagination.TenantInfo,
 ) ([]workerports.HeadcountRow, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]workerports.HeadcountRow, error) {
-		rows := make([]workerports.HeadcountRow, 0, 8)
-		if err := r.rosterCount(ctx, tenantInfo).
-			Join("LEFT JOIN fleet_codes AS fc").
-			JoinOn("fc.id = wrk.fleet_code_id").
-			JoinOn("fc.organization_id = wrk.organization_id").
-			JoinOn("fc.business_unit_id = wrk.business_unit_id").
-			ColumnExpr("COALESCE(wrk.fleet_code_id, '') AS key").
-			ColumnExpr("COALESCE(fc.description, fc.code, 'No terminal') AS label").
-			ColumnExpr("COALESCE(fc.code, '') AS code").
-			ColumnExpr("COALESCE(fc.color, '') AS color").
-			GroupExpr("wrk.fleet_code_id, fc.code, fc.description, fc.color").
-			OrderExpr("workers DESC, label").
-			Scan(ctx, &rows); err != nil {
-			r.l.Error("failed to count headcount by fleet", zap.Error(err))
-			return nil, fmt.Errorf("count headcount by fleet: %w", err)
-		}
-		return rows, nil
+		w := workerdb.Workers
+		fc := w.FleetCode()
+		return r.rosterCount(ctx, "fleet", headcountGroup{
+			key:   keel.Raw(orEmptySQL, w.FleetCodeID),
+			label: keel.Raw("COALESCE(?, ?, 'No terminal')", fc.Description, fc.Code),
+			code:  keel.Raw(orEmptySQL, fc.Code),
+			color: keel.Raw(orEmptySQL, fc.Color),
+			group: []keel.Expr{w.FleetCodeID, fc.Code, fc.Description, fc.Color},
+		})
 	})
 }
 
 func (r *repository) HeadcountByPosition(
 	ctx context.Context,
-	tenantInfo pagination.TenantInfo,
+	_ pagination.TenantInfo,
 ) ([]workerports.HeadcountRow, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]workerports.HeadcountRow, error) {
-		rows := make([]workerports.HeadcountRow, 0, 16)
-		if err := r.rosterCount(ctx, tenantInfo).
-			ColumnExpr("COALESCE(wrk.position_id, '') AS key").
-			ColumnExpr("COALESCE(jpos.title, 'No position') AS label").
-			ColumnExpr("COALESCE(jpos.code, '') AS code").
-			ColumnExpr("'' AS color").
-			GroupExpr("wrk.position_id, jpos.title, jpos.code").
-			OrderExpr("workers DESC, label").
-			Scan(ctx, &rows); err != nil {
-			r.l.Error("failed to count headcount by position", zap.Error(err))
-			return nil, fmt.Errorf("count headcount by position: %w", err)
-		}
-		return rows, nil
+		w := workerdb.Workers
+		jp := w.Position()
+		return r.rosterCount(ctx, "position", headcountGroup{
+			key:   keel.Raw(orEmptySQL, w.PositionID),
+			label: keel.Raw("COALESCE(?, 'No position')", jp.Title),
+			code:  keel.Raw(orEmptySQL, jp.Code),
+			color: keel.Raw("''"),
+			group: []keel.Expr{w.PositionID, jp.Title, jp.Code},
+		})
 	})
 }
 
 func (r *repository) HeadcountByDepartment(
 	ctx context.Context,
-	tenantInfo pagination.TenantInfo,
+	_ pagination.TenantInfo,
 ) ([]workerports.HeadcountRow, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]workerports.HeadcountRow, error) {
-		rows := make([]workerports.HeadcountRow, 0, 9)
-		if err := r.rosterCount(ctx, tenantInfo).
-			ColumnExpr("COALESCE(jpos.department::text, '') AS key").
-			ColumnExpr("COALESCE(jpos.department::text, 'Unassigned') AS label").
-			ColumnExpr("'' AS code").
-			ColumnExpr("'' AS color").
-			GroupExpr("jpos.department").
-			OrderExpr("workers DESC, label").
-			Scan(ctx, &rows); err != nil {
-			r.l.Error("failed to count headcount by department", zap.Error(err))
-			return nil, fmt.Errorf("count headcount by department: %w", err)
-		}
-		return rows, nil
+		jp := workerdb.Workers.Position()
+		return r.rosterCount(ctx, "department", headcountGroup{
+			key:   keel.Raw("COALESCE(?::text, '')", jp.Department),
+			label: keel.Raw("COALESCE(?::text, 'Unassigned')", jp.Department),
+			code:  keel.Raw("''"),
+			color: keel.Raw("''"),
+			group: []keel.Expr{jp.Department},
+		})
 	})
 }
 
@@ -114,12 +120,9 @@ func (r *repository) HeadcountByDepartment(
 // users as their manager, or who sit in a terminal one of them runs. Both
 // paths are needed — a carrier that never fills in a worker's manager still
 // has terminal managers, and one that does still wants the terminal covered.
-func teamScope(managerIDs []pulid.ID) func(*bun.SelectQuery) *bun.SelectQuery {
-	return func(sq *bun.SelectQuery) *bun.SelectQuery {
-		return sq.
-			Where("wrk.manager_id IN (?)", bun.In(managerIDs)).
-			WhereOr("fc.manager_id IN (?)", bun.In(managerIDs))
-	}
+func teamScope(managerIDs []pulid.ID) keel.Pred {
+	w := workerdb.Workers
+	return keel.Or(w.ManagerID.In(managerIDs...), w.FleetCode().ManagerID.In(managerIDs...))
 }
 
 func (r *repository) TeamMembers(
@@ -131,49 +134,39 @@ func (r *repository) TeamMembers(
 			return []workerports.TeamMemberRow{}, nil
 		}
 
-		rows := make([]workerports.TeamMemberRow, 0, 32)
-		q := r.db.DBForContext(ctx).
-			NewSelect().
-			Model((*worker.Worker)(nil)).
-			Join("JOIN worker_profiles AS wrkp").
-			JoinOn("wrkp.worker_id = wrk.id").
-			JoinOn("wrkp.organization_id = wrk.organization_id").
-			JoinOn("wrkp.business_unit_id = wrk.business_unit_id").
-			Join("LEFT JOIN fleet_codes AS fc").
-			JoinOn("fc.id = wrk.fleet_code_id").
-			JoinOn("fc.organization_id = wrk.organization_id").
-			JoinOn("fc.business_unit_id = wrk.business_unit_id").
-			Join("LEFT JOIN job_positions AS jpos").
-			JoinOn("jpos.id = wrk.position_id").
-			JoinOn("jpos.organization_id = wrk.organization_id").
-			JoinOn("jpos.business_unit_id = wrk.business_unit_id").
-			Where("wrk.organization_id = ?", req.TenantInfo.OrgID).
-			Where("wrk.business_unit_id = ?", req.TenantInfo.BuID).
-			WhereGroup(" AND ", teamScope(req.ManagerIDs)).
-			ColumnExpr("wrk.id AS worker_id").
-			ColumnExpr("wrk.first_name AS first_name").
-			ColumnExpr("wrk.last_name AS last_name").
-			ColumnExpr("wrk.status::text AS status").
-			ColumnExpr("COALESCE(wrk.fleet_code_id, '') AS fleet_code_id").
-			ColumnExpr("COALESCE(fc.code, '') AS fleet_code").
-			ColumnExpr("COALESCE(fc.color, '') AS fleet_color").
-			ColumnExpr("COALESCE(wrk.position_id, '') AS position_id").
-			ColumnExpr("COALESCE(jpos.title, '') AS position_title").
-			ColumnExpr("COALESCE(wrk.manager_id, '') AS manager_id").
-			ColumnExpr("(wrk.manager_id IN (?)) AS direct", bun.In(req.ManagerIDs)).
-			ColumnExpr("wrkp.compliance_status::text AS compliance_status").
-			ColumnExpr("wrkp.training_health::text AS training_health").
-			ColumnExpr("wrkp.safety_rating::text AS safety_rating").
-			ColumnExpr("wrkp.hire_date AS hire_date").
-			ColumnExpr("wrkp.termination_date AS termination_date").
-			OrderExpr("direct DESC, wrk.last_name, wrk.first_name").
-			Limit(int64(limitOr(req.Limit, defaultTeamPageSize)))
+		w := workerdb.Workers
+		fc := w.FleetCode()
+		jp := w.Position()
+		p := w.Profile()
+		direct := keel.Raw("(?)", w.ManagerID.In(req.ManagerIDs...))
 
-		if !req.IncludeInactive {
-			q = q.Where("wrk.status = 'Active'")
-		}
-
-		if err := q.Scan(ctx, &rows); err != nil {
+		rows, err := keel.Into[workerports.TeamMemberRow](ctx, r.db.Keel(ctx), w.
+			Where(
+				p.WorkerID.IsNotNull(),
+				teamScope(req.ManagerIDs),
+				keel.When(!req.IncludeInactive, w.Status.Eq(domaintypes.StatusActive)),
+			).
+			Pick(
+				w.ID,
+				w.FirstName,
+				w.LastName,
+				keel.Raw(textSQL, w.Status),
+				keel.Raw(orEmptySQL, w.FleetCodeID),
+				keel.Raw(orEmptySQL, fc.Code),
+				keel.Raw(orEmptySQL, fc.Color),
+				keel.Raw(orEmptySQL, w.PositionID),
+				keel.Raw(orEmptySQL, jp.Title),
+				keel.Raw(orEmptySQL, w.ManagerID),
+				direct,
+				keel.Raw(textSQL, p.ComplianceStatus),
+				keel.Raw(textSQL, p.TrainingHealth),
+				keel.Raw(textSQL, p.SafetyRating),
+				p.HireDate,
+				p.TerminationDate,
+			).
+			Order(keel.Desc(direct), w.LastName.Asc(), w.FirstName.Asc()).
+			Limit(limitOr(req.Limit, defaultTeamPageSize)))
+		if err != nil {
 			r.l.Error("failed to read team members", zap.Error(err))
 			return nil, fmt.Errorf("read team members: %w", err)
 		}
@@ -186,7 +179,7 @@ func (r *repository) TeamMembers(
 // hundred drivers must not pull four hundred rows to approve one day of leave.
 func (r *repository) ManagesWorker(
 	ctx context.Context,
-	tenantInfo pagination.TenantInfo,
+	_ pagination.TenantInfo,
 	managerIDs []pulid.ID,
 	workerID pulid.ID,
 ) (bool, error) {
@@ -195,18 +188,9 @@ func (r *repository) ManagesWorker(
 			return false, nil
 		}
 
-		exists, err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model((*worker.Worker)(nil)).
-			Join("LEFT JOIN fleet_codes AS fc").
-			JoinOn("fc.id = wrk.fleet_code_id").
-			JoinOn("fc.organization_id = wrk.organization_id").
-			JoinOn("fc.business_unit_id = wrk.business_unit_id").
-			Where("wrk.organization_id = ?", tenantInfo.OrgID).
-			Where("wrk.business_unit_id = ?", tenantInfo.BuID).
-			Where("wrk.id = ?", workerID).
-			WhereGroup(" AND ", teamScope(managerIDs)).
-			Exists(ctx)
+		w := workerdb.Workers
+		exists, err := w.Where(w.ID.Eq(workerID), teamScope(managerIDs)).
+			Exists(ctx, r.db.Keel(ctx))
 		if err != nil {
 			r.l.Error("failed to check manager scope", zap.Error(err))
 			return false, fmt.Errorf("check manager scope: %w", err)

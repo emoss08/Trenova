@@ -208,3 +208,11 @@ func (r *InstanceBootstrap) BeforeAppendModel(_ context.Context, q bun.Query) er
 
 	return nil
 }
+
+func (r *InstanceBootstrap) BeforeCreate(_ context.Context) error {
+	if r.CompletedAt == 0 {
+		r.CompletedAt = timeutils.NowUnix()
+	}
+
+	return nil
+}

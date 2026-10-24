@@ -305,6 +305,7 @@ var permissionsTable = schema.Table{
 	Size:       unsafe.Sizeof(apikey.Permission{}),
 	Ptr:        ptrPermission,
 	Value:      valuePermission,
+	BeforeSave: beforeSavePermission,
 }
 
 var permissionsRef = keel.Ref{Table: &permissionsTable}
@@ -423,6 +424,10 @@ func valuePermission(p unsafe.Pointer, c int32) any {
 		return r.UpdatedAt
 	}
 	return nil
+}
+
+func beforeSavePermission(ctx context.Context, p unsafe.Pointer) error {
+	return (*apikey.Permission)(p).BeforeSave(ctx)
 }
 
 // usageDailiesTable is the schema of apikey.UsageDaily.

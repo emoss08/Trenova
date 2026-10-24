@@ -41,6 +41,14 @@ func (g *RoleAgentGrant) BeforeAppendModel(_ context.Context, q bun.Query) error
 	return nil
 }
 
+func (g *RoleAgentGrant) BeforeCreate(_ context.Context) error {
+	if g.GrantedAt == 0 {
+		g.GrantedAt = timeutils.NowUnix()
+	}
+
+	return nil
+}
+
 func (g *RoleAgentGrant) Validate(multiErr *errortypes.MultiError) {
 	multiErr.AddOzzoError(validation.ValidateStruct(g,
 		validation.Field(&g.OrganizationID, validation.Required.Error("Organization is required")),

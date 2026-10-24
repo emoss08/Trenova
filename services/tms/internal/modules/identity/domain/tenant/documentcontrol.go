@@ -186,3 +186,14 @@ func (dc *DocumentControl) BeforeAppendModel(_ context.Context, query bun.Query)
 
 	return nil
 }
+
+func (dc *DocumentControl) BeforeCreate(_ context.Context) error {
+	if len(dc.ShipmentDraftAllowedResources) == 0 {
+		dc.ShipmentDraftAllowedResources = []string{"shipment"}
+	}
+	if dc.CaptureRetentionDays == 0 {
+		dc.CaptureRetentionDays = DefaultCaptureRetentionDays
+	}
+
+	return nil
+}

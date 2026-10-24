@@ -122,6 +122,11 @@ func (p *IdentityProvider) BeforeAppendModel(_ context.Context, q bun.Query) err
 	return nil
 }
 
+func (p *IdentityProvider) BeforeSave(_ context.Context) error {
+	p.setCollectionDefaults()
+	return nil
+}
+
 func (p *IdentityProvider) setCollectionDefaults() {
 	if p.AllowedDomains == nil {
 		p.AllowedDomains = []string{}
@@ -147,7 +152,7 @@ type ExternalIdentity struct {
 
 	pagination.CursorValueSet `bun:",embed" json:"-"`
 
-	ID                 pulid.ID          `json:"id"                 bun:"id,pk,type:VARCHAR(100)" keel:"id,pk"`
+	ID                 pulid.ID          `json:"id"                 bun:"id,pk,type:VARCHAR(100)" keel:"id,pk,autoid:ext_"`
 	UserID             pulid.ID          `json:"userId"             bun:"user_id,type:VARCHAR(100),notnull" keel:"user_id"`
 	OrganizationID     pulid.ID          `json:"organizationId"     bun:"organization_id,type:VARCHAR(100),notnull" keel:"organization_id,tenant"`
 	BusinessUnitID     pulid.ID          `json:"businessUnitId"     bun:"business_unit_id,type:VARCHAR(100),notnull" keel:"business_unit_id,tenant"`
@@ -157,8 +162,8 @@ type ExternalIdentity struct {
 	ExternalEmail      string            `json:"externalEmail"      bun:"external_email,type:VARCHAR(255)" keel:"external_email,nullzero"`
 	RawClaims          map[string]string `json:"rawClaims"          bun:"raw_claims,type:JSONB,notnull" keel:"raw_claims,jsonb"`
 	LastLoginAt        int64             `json:"lastLoginAt"        bun:"last_login_at" keel:"last_login_at,nullzero"`
-	CreatedAt          int64             `json:"createdAt"          bun:"created_at,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"created_at"`
-	UpdatedAt          int64             `json:"updatedAt"          bun:"updated_at,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"updated_at"`
+	CreatedAt          int64             `json:"createdAt"          bun:"created_at,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"created_at,autocreate"`
+	UpdatedAt          int64             `json:"updatedAt"          bun:"updated_at,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"updated_at,autoupdate"`
 }
 
 func (e *ExternalIdentity) BeforeAppendModel(_ context.Context, q bun.Query) error {
@@ -181,7 +186,7 @@ type MFAAuthenticator struct {
 
 	pagination.CursorValueSet `bun:",embed" json:"-"`
 
-	ID             pulid.ID             `json:"id"             bun:"id,pk,type:VARCHAR(100)" keel:"id,pk"`
+	ID             pulid.ID             `json:"id"             bun:"id,pk,type:VARCHAR(100)" keel:"id,pk,autoid:mfa_"`
 	UserID         pulid.ID             `json:"userId"         bun:"user_id,type:VARCHAR(100),notnull" keel:"user_id"`
 	OrganizationID pulid.ID             `json:"organizationId" bun:"organization_id,type:VARCHAR(100),notnull" keel:"organization_id,tenant"`
 	Type           MFAAuthenticatorType `json:"type"           bun:"type,type:iam_mfa_authenticator_type_enum,notnull" keel:"type"`
@@ -192,8 +197,8 @@ type MFAAuthenticator struct {
 	VerifiedAt     int64                `json:"verifiedAt"     bun:"verified_at" keel:"verified_at,nullzero"`
 	LastUsedAt     int64                `json:"lastUsedAt"     bun:"last_used_at" keel:"last_used_at,nullzero"`
 	LastUsedStep   int64                `json:"-"              bun:"last_used_step,notnull,default:0" keel:"last_used_step"`
-	CreatedAt      int64                `json:"createdAt"      bun:"created_at,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"created_at"`
-	UpdatedAt      int64                `json:"updatedAt"      bun:"updated_at,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"updated_at"`
+	CreatedAt      int64                `json:"createdAt"      bun:"created_at,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"created_at,autocreate"`
+	UpdatedAt      int64                `json:"updatedAt"      bun:"updated_at,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"updated_at,autoupdate"`
 }
 
 func (a *MFAAuthenticator) BeforeAppendModel(_ context.Context, q bun.Query) error {
@@ -213,7 +218,7 @@ type AuthEvent struct {
 
 	pagination.CursorValueSet `bun:",embed" json:"-"`
 
-	ID                 pulid.ID         `json:"id"                 bun:"id,pk,type:VARCHAR(100)" keel:"id,pk"`
+	ID                 pulid.ID         `json:"id"                 bun:"id,pk,type:VARCHAR(100)" keel:"id,pk,autoid:aue_"`
 	UserID             pulid.ID         `json:"userId"             bun:"user_id,type:VARCHAR(100)" keel:"user_id,nullzero"`
 	OrganizationID     pulid.ID         `json:"organizationId"     bun:"organization_id,type:VARCHAR(100)" keel:"organization_id,nullzero"`
 	BusinessUnitID     pulid.ID         `json:"businessUnitId"     bun:"business_unit_id,type:VARCHAR(100)" keel:"business_unit_id,nullzero"`
@@ -229,7 +234,7 @@ type AuthEvent struct {
 	RiskSignals        []string         `json:"riskSignals"        bun:"risk_signals,array" keel:"risk_signals"`
 	ErrorCode          string           `json:"errorCode"          bun:"error_code,type:VARCHAR(120)" keel:"error_code,nullzero"`
 	OccurredAt         int64            `json:"occurredAt"         bun:"occurred_at,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"occurred_at"`
-	CreatedAt          int64            `json:"createdAt"          bun:"created_at,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"created_at"`
+	CreatedAt          int64            `json:"createdAt"          bun:"created_at,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"created_at,autocreate"`
 }
 
 func (e *AuthEvent) BeforeAppendModel(_ context.Context, q bun.Query) error {
@@ -248,20 +253,27 @@ func (e *AuthEvent) BeforeAppendModel(_ context.Context, q bun.Query) error {
 	return nil
 }
 
+func (e *AuthEvent) BeforeCreate(_ context.Context) error {
+	if e.OccurredAt == 0 {
+		e.OccurredAt = timeutils.NowUnix()
+	}
+	return nil
+}
+
 type RiskDecision struct {
 	bun.BaseModel `bun:"table:risk_decisions,alias:rd" json:"-"`
 	keel.Table    `keel:"risk_decisions"`
 
 	pagination.CursorValueSet `bun:",embed" json:"-"`
 
-	ID             pulid.ID    `json:"id"             bun:"id,pk,type:VARCHAR(100)" keel:"id,pk"`
+	ID             pulid.ID    `json:"id"             bun:"id,pk,type:VARCHAR(100)" keel:"id,pk,autoid:rsk_"`
 	UserID         pulid.ID    `json:"userId"         bun:"user_id,type:VARCHAR(100)" keel:"user_id,nullzero"`
 	OrganizationID pulid.ID    `json:"organizationId" bun:"organization_id,type:VARCHAR(100)" keel:"organization_id,nullzero"`
 	BusinessUnitID pulid.ID    `json:"businessUnitId" bun:"business_unit_id,type:VARCHAR(100)" keel:"business_unit_id,nullzero"`
 	Outcome        RiskOutcome `json:"outcome"        bun:"outcome,type:iam_risk_outcome_enum,notnull" keel:"outcome"`
 	Signals        []string    `json:"signals"        bun:"signals,array" keel:"signals"`
 	Reason         string      `json:"reason"         bun:"reason,type:TEXT" keel:"reason,nullzero"`
-	CreatedAt      int64       `json:"createdAt"      bun:"created_at,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"created_at"`
+	CreatedAt      int64       `json:"createdAt"      bun:"created_at,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"created_at,autocreate"`
 }
 
 func (d *RiskDecision) BeforeAppendModel(_ context.Context, q bun.Query) error {
@@ -283,13 +295,13 @@ type SCIMDirectory struct {
 
 	pagination.CursorValueSet `bun:",embed" json:"-"`
 
-	ID             pulid.ID `json:"id"             bun:"id,pk,type:VARCHAR(100)" keel:"id,pk"`
+	ID             pulid.ID `json:"id"             bun:"id,pk,type:VARCHAR(100)" keel:"id,pk,autoid:scd_"`
 	OrganizationID pulid.ID `json:"organizationId" bun:"organization_id,type:VARCHAR(100),notnull" keel:"organization_id,tenant"`
 	BusinessUnitID pulid.ID `json:"businessUnitId" bun:"business_unit_id,type:VARCHAR(100),notnull" keel:"business_unit_id,tenant"`
 	TenantSlug     string   `json:"tenantSlug"     bun:"tenant_slug,type:VARCHAR(100),notnull" keel:"tenant_slug"`
 	Enabled        bool     `json:"enabled"        bun:"enabled,notnull" keel:"enabled"`
-	CreatedAt      int64    `json:"createdAt"      bun:"created_at,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"created_at"`
-	UpdatedAt      int64    `json:"updatedAt"      bun:"updated_at,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"updated_at"`
+	CreatedAt      int64    `json:"createdAt"      bun:"created_at,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"created_at,autocreate"`
+	UpdatedAt      int64    `json:"updatedAt"      bun:"updated_at,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"updated_at,autoupdate"`
 }
 
 func (d *SCIMDirectory) BeforeAppendModel(_ context.Context, q bun.Query) error {
@@ -307,7 +319,7 @@ type SCIMToken struct {
 	bun.BaseModel `bun:"table:scim_tokens,alias:st" json:"-"`
 	keel.Table    `keel:"scim_tokens"`
 
-	ID             pulid.ID        `json:"id"             bun:"id,pk,type:VARCHAR(100)" keel:"id,pk"`
+	ID             pulid.ID        `json:"id"             bun:"id,pk,type:VARCHAR(100)" keel:"id,pk,autoid:sct_"`
 	OrganizationID pulid.ID        `json:"organizationId" bun:"organization_id,type:VARCHAR(100),notnull" keel:"organization_id,tenant"`
 	DirectoryID    pulid.ID        `json:"directoryId"    bun:"directory_id,type:VARCHAR(100),notnull" keel:"directory_id"`
 	Name           string          `json:"name"           bun:"name,type:VARCHAR(120),notnull" keel:"name"`
@@ -316,8 +328,8 @@ type SCIMToken struct {
 	Status         SCIMTokenStatus `json:"status"         bun:"status,type:iam_scim_token_status_enum,notnull" keel:"status"`
 	LastUsedAt     int64           `json:"lastUsedAt"     bun:"last_used_at" keel:"last_used_at,nullzero"`
 	ExpiresAt      int64           `json:"expiresAt"      bun:"expires_at" keel:"expires_at,nullzero"`
-	CreatedAt      int64           `json:"createdAt"      bun:"created_at,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"created_at"`
-	UpdatedAt      int64           `json:"updatedAt"      bun:"updated_at,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"updated_at"`
+	CreatedAt      int64           `json:"createdAt"      bun:"created_at,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"created_at,autocreate"`
+	UpdatedAt      int64           `json:"updatedAt"      bun:"updated_at,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"updated_at,autoupdate"`
 }
 
 func (t *SCIMToken) BeforeAppendModel(_ context.Context, q bun.Query) error {
@@ -335,7 +347,7 @@ type ProvisioningAuditRecord struct {
 	bun.BaseModel `bun:"table:provisioning_audit_records,alias:par" json:"-"`
 	keel.Table    `keel:"provisioning_audit_records"`
 
-	ID             pulid.ID           `json:"id"             bun:"id,pk,type:VARCHAR(100)" keel:"id,pk"`
+	ID             pulid.ID           `json:"id"             bun:"id,pk,type:VARCHAR(100)" keel:"id,pk,autoid:par_"`
 	OrganizationID pulid.ID           `json:"organizationId" bun:"organization_id,type:VARCHAR(100),notnull" keel:"organization_id,tenant"`
 	DirectoryID    pulid.ID           `json:"directoryId"    bun:"directory_id,type:VARCHAR(100),notnull" keel:"directory_id"`
 	Action         ProvisioningAction `json:"action"         bun:"action,type:iam_provisioning_action_enum,notnull" keel:"action"`
@@ -344,7 +356,7 @@ type ProvisioningAuditRecord struct {
 	ResourceID     pulid.ID           `json:"resourceId"     bun:"resource_id,type:VARCHAR(100)" keel:"resource_id,nullzero"`
 	Status         string             `json:"status"         bun:"status,type:VARCHAR(80),notnull" keel:"status"`
 	ErrorMessage   string             `json:"errorMessage"   bun:"error_message,type:TEXT" keel:"error_message,nullzero"`
-	CreatedAt      int64              `json:"createdAt"      bun:"created_at,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"created_at"`
+	CreatedAt      int64              `json:"createdAt"      bun:"created_at,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"created_at,autocreate"`
 }
 
 func (r *ProvisioningAuditRecord) BeforeAppendModel(_ context.Context, q bun.Query) error {
@@ -361,7 +373,7 @@ type AccessPolicy struct {
 	bun.BaseModel `bun:"table:access_policies,alias:ap" json:"-"`
 	keel.Table    `keel:"access_policies"`
 
-	ID             pulid.ID          `json:"id"             bun:"id,pk,type:VARCHAR(100)" keel:"id,pk"`
+	ID             pulid.ID          `json:"id"             bun:"id,pk,type:VARCHAR(100)" keel:"id,pk,autoid:pol_"`
 	OrganizationID pulid.ID          `json:"organizationId" bun:"organization_id,type:VARCHAR(100),notnull" keel:"organization_id,tenant"`
 	BusinessUnitID pulid.ID          `json:"businessUnitId" bun:"business_unit_id,type:VARCHAR(100),notnull" keel:"business_unit_id,tenant"`
 	Name           string            `json:"name"           bun:"name,type:VARCHAR(120),notnull" keel:"name"`
@@ -371,8 +383,8 @@ type AccessPolicy struct {
 	Priority       int               `json:"priority"       bun:"priority,notnull" keel:"priority"`
 	Conditions     map[string]string `json:"conditions"     bun:"conditions,type:JSONB,notnull" keel:"conditions,jsonb"`
 	Enabled        bool              `json:"enabled"        bun:"enabled,notnull" keel:"enabled"`
-	CreatedAt      int64             `json:"createdAt"      bun:"created_at,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"created_at"`
-	UpdatedAt      int64             `json:"updatedAt"      bun:"updated_at,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"updated_at"`
+	CreatedAt      int64             `json:"createdAt"      bun:"created_at,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"created_at,autocreate"`
+	UpdatedAt      int64             `json:"updatedAt"      bun:"updated_at,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"updated_at,autoupdate"`
 }
 
 func (p *AccessPolicy) Validate(multiErr *errortypes.MultiError) {

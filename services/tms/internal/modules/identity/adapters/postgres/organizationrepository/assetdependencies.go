@@ -3,16 +3,14 @@ package organizationrepository
 import (
 	"context"
 
-	"github.com/emoss08/trenova/pkg/buncolgen/driversettlementcol"
-	"github.com/emoss08/trenova/pkg/buncolgen/shipmentcol"
-	"github.com/emoss08/trenova/pkg/buncolgen/workercol"
-
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment/shipmentdb"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/driversettlement"
-	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
+	"github.com/emoss08/trenova/internal/modules/settlement/domain/driversettlement/driversettlementdb"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker/workerdb"
 	"github.com/emoss08/trenova/pkg/pagination"
-	"github.com/uptrace/bun"
 )
 
 var activeAssignmentStatuses = []shipment.AssignmentStatus{
@@ -29,50 +27,38 @@ var unpaidDriverSettlementStatuses = []driversettlement.Status{
 
 func (r *repository) CountAssetDependencies(
 	ctx context.Context,
-	tenantInfo pagination.TenantInfo,
+	_ pagination.TenantInfo,
 ) (*tenantports.AssetDependencyCounts, error) {
 	counts := new(tenantports.AssetDependencyCounts)
 
-	if err := r.countDependencies(ctx, assetDependencyCounts(tenantInfo, counts)); err != nil {
+	if err := r.countDependencies(ctx, assetDependencyCounts(counts)); err != nil {
 		return nil, err
 	}
 
 	return counts, nil
 }
 
-func assetDependencyCounts(
-	tenantInfo pagination.TenantInfo,
-	counts *tenantports.AssetDependencyCounts,
-) []dependencyCount {
+func assetDependencyCounts(counts *tenantports.AssetDependencyCounts) []dependencyCount {
 	return []dependencyCount{
 		{
-			label:  "active driver assignments",
-			model:  (*shipment.Assignment)(nil),
 			target: &counts.ActiveDriverAssignments,
-			scope: func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return shipmentcol.AssignmentScopeTenant(sq, tenantInfo).
-					Where(shipmentcol.AssignmentColumns.Status.In(), bun.List(activeAssignmentStatuses))
+			count: func(total *int64) keel.BatchItem {
+				a := shipmentdb.Assignments
+				return keel.CountInto(a.Where(a.Status.In(activeAssignmentStatuses...)), total)
 			},
 		},
 		{
-			label:  "unpaid driver settlements",
-			model:  (*driversettlement.Settlement)(nil),
 			target: &counts.UnpaidDriverSettlements,
-			scope: func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return driversettlementcol.SettlementScopeTenant(sq, tenantInfo).
-					Where(
-						driversettlementcol.SettlementColumns.Status.In(),
-						bun.List(unpaidDriverSettlementStatuses),
-					)
+			count: func(total *int64) keel.BatchItem {
+				s := driversettlementdb.Settlements
+				return keel.CountInto(s.Where(s.Status.In(unpaidDriverSettlementStatuses...)), total)
 			},
 		},
 		{
-			label:  "linked driver portal users",
-			model:  (*worker.Worker)(nil),
 			target: &counts.LinkedPortalUsers,
-			scope: func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return workercol.WorkerScopeTenant(sq, tenantInfo).
-					Where(workercol.WorkerColumns.UserID.IsNotNull())
+			count: func(total *int64) keel.BatchItem {
+				w := workerdb.Workers
+				return keel.CountInto(w.Where(w.UserID.IsNotNull()), total)
 			},
 		},
 	}

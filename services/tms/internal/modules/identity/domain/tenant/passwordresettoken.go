@@ -70,3 +70,11 @@ func (t *PasswordResetToken) BeforeAppendModel(_ context.Context, query bun.Quer
 	}
 	return nil
 }
+
+func (t *PasswordResetToken) BeforeCreate(_ context.Context) error {
+	if t.Purpose == "" {
+		t.Purpose = PasswordResetPurposeReset
+	}
+
+	return nil
+}

@@ -7,8 +7,8 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/iam"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/iam/iamdb"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/iamports"
-	"github.com/emoss08/trenova/pkg/buncolgen/iamcol"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -32,14 +32,7 @@ func (r *accessSettingsRepository) Get(
 	tenant pagination.TenantInfo,
 ) (*iam.AccessSettings, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*iam.AccessSettings, error) {
-		cols := iamcol.AccessSettingsColumns
-		settings := new(iam.AccessSettings)
-		err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(settings).
-			Where(cols.OrganizationID.Eq(), tenant.OrgID).
-			Where(cols.BusinessUnitID.Eq(), tenant.BuID).
-			Scan(ctx)
+		settings, err := iamdb.AccessSettingses.Query().One(ctx, r.db.Keel(ctx))
 		if err != nil {
 			if dberror.IsNotFoundError(err) {
 				return iam.DefaultAccessSettings(tenant.OrgID, tenant.BuID), nil
@@ -57,26 +50,12 @@ func (r *accessSettingsRepository) Save(
 	settings *iam.AccessSettings,
 ) (*iam.AccessSettings, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*iam.AccessSettings, error) {
-		cols := iamcol.AccessSettingsColumns
-		expected := settings.Version
-		settings.Version = expected + 1
-
-		res, err := r.db.DBForContext(ctx).
-			NewInsert().
-			Model(settings).
-			On("CONFLICT (organization_id, business_unit_id) DO UPDATE").
-			Set(cols.RequireRoleActivation.Set(), settings.RequireRoleActivation).
-			Set(cols.UpdatedByID.Set(), settings.UpdatedByID).
-			Set(cols.Version.Set(), settings.Version).
-			Set(cols.UpdatedAt.Set(), settings.UpdatedAt).
-			Where(cols.Version.Qualified()+" = ?", expected).
-			Returning("*").
-			Exec(ctx)
+		saved, err := r.write(ctx, settings)
 		if err != nil {
 			r.l.Error("failed to save access settings", zap.Error(err))
 			return nil, fmt.Errorf("save access settings: %w", err)
 		}
-		if affected, _ := res.RowsAffected(); affected == 0 {
+		if !saved {
 			return nil, errortypes.NewValidationError(
 				"version",
 				errortypes.ErrVersionMismatch,
@@ -86,4 +65,32 @@ func (r *accessSettingsRepository) Save(
 
 		return settings, nil
 	})
+}
+
+func (r *accessSettingsRepository) write(
+	ctx context.Context,
+	settings *iam.AccessSettings,
+) (bool, error) {
+	as := iamdb.AccessSettingses
+	db := r.db.Keel(ctx)
+	if settings.Version > 0 {
+		err := as.Save(ctx, db, settings, as.RequireRoleActivation, as.UpdatedByID)
+		if dberror.IsVersionConflict(err) {
+			return false, nil
+		}
+		return err == nil, err
+	}
+
+	settings.Version = 1
+	inserted, err := as.CreateOrSkip(
+		ctx,
+		db,
+		[]*iam.AccessSettings{settings},
+		as.OrganizationID,
+		as.BusinessUnitID,
+	)
+	if err != nil || inserted == 0 {
+		settings.Version = 0
+	}
+	return inserted == 1, err
 }

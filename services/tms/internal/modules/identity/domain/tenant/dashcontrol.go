@@ -182,3 +182,11 @@ func (dc *DashControl) BeforeAppendModel(_ context.Context, query bun.Query) err
 	}
 	return nil
 }
+
+func (dc *DashControl) BeforeCreate(_ context.Context) error {
+	if dc.DriverDigestCadence == "" {
+		dc.DriverDigestCadence = DigestImmediate
+	}
+
+	return nil
+}

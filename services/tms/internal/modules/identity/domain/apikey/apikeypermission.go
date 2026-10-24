@@ -47,6 +47,11 @@ func (p *Permission) BeforeAppendModel(_ context.Context, query bun.Query) error
 	return nil
 }
 
+func (p *Permission) BeforeSave(_ context.Context) error {
+	p.Operations = permission.Normalize(p.Operations)
+	return nil
+}
+
 func (p *Permission) Validate(multiErr *errortypes.MultiError) {
 	multiErr.AddOzzoError(validation.ValidateStruct(p,
 		validation.Field(&p.OrganizationID,

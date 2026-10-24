@@ -7,6 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant/tenantdb"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/dbscope"
@@ -16,6 +17,8 @@ import (
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
+
+var settlementControlErrors = dberror.Mapping{Entity: "SettlementControl"}
 
 type Params struct {
 	fx.In
@@ -58,43 +61,31 @@ func (r *repository) GetOrCreate(
 	}
 
 	return dbtx.GetOrCreate(ctx, r.db, dbtx.GetOrCreateSpec[*tenant.SettlementControl]{
-		Find: func(ctx context.Context) (*tenant.SettlementControl, error) {
-			return r.selectControl(ctx, tenantInfo)
-		},
+		Find: r.selectControl,
 		Create: func(ctx context.Context) error {
-			if _, insertErr := r.db.DBForContext(ctx).
-				NewInsert().
-				Model(newDefault()).
-				On("CONFLICT (organization_id, business_unit_id) DO NOTHING").
-				Exec(ctx); insertErr != nil {
-				return fmt.Errorf("create default settlement control: %w", insertErr)
+			sc := tenantdb.SettlementControls
+			if _, err := sc.CreateOrSkip(
+				ctx,
+				r.db.Keel(ctx),
+				[]*tenant.SettlementControl{newDefault()},
+				sc.OrganizationID,
+				sc.BusinessUnitID,
+			); err != nil {
+				return fmt.Errorf("create default settlement control: %w", err)
 			}
 
 			return nil
 		},
 		Default: newDefault,
 		MapError: func(err error) error {
-			return dberror.HandleNotFoundError(err, "SettlementControl")
+			return settlementControlErrors.Map(err, tenantInfo.OrgID.String())
 		},
 	})
 }
 
-func (r *repository) selectControl(
-	ctx context.Context,
-	tenantInfo pagination.TenantInfo,
-) (*tenant.SettlementControl, error) {
+func (r *repository) selectControl(ctx context.Context) (*tenant.SettlementControl, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*tenant.SettlementControl, error) {
-		entity := new(tenant.SettlementControl)
-		err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(entity).
-			Where("stlc.organization_id = ?", tenantInfo.OrgID).
-			Where("stlc.business_unit_id = ?", tenantInfo.BuID).
-			Scan(ctx)
-		if err != nil {
-			return nil, err
-		}
-		return entity, nil
+		return tenantdb.SettlementControls.Query().One(ctx, r.db.Keel(ctx))
 	})
 }
 
@@ -103,12 +94,10 @@ func (r *repository) ListAutoGenerate(
 ) ([]*tenant.SettlementControl, error) {
 	ctx = dbscope.WithSystem(ctx, "list organizations that auto-generate settlements")
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*tenant.SettlementControl, error) {
-		items := make([]*tenant.SettlementControl, 0)
-		err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(&items).
-			Where("stlc.auto_generate_batches = TRUE").
-			Scan(ctx)
+		sc := tenantdb.SettlementControls
+		items, err := sc.AllTenants().
+			Where(sc.AutoGenerateBatches.IsTrue()).
+			All(ctx, r.db.Keel(ctx))
 		if err != nil {
 			return nil, fmt.Errorf("list auto-generate settlement controls: %w", err)
 		}
@@ -122,11 +111,7 @@ func (r *repository) ListAll(ctx context.Context) ([]*tenant.SettlementControl, 
 		"list every organization's settlement controls for escrow interest",
 	)
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*tenant.SettlementControl, error) {
-		items := make([]*tenant.SettlementControl, 0)
-		err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(&items).
-			Scan(ctx)
+		items, err := tenantdb.SettlementControls.AllTenants().All(ctx, r.db.Keel(ctx))
 		if err != nil {
 			return nil, fmt.Errorf("list settlement controls: %w", err)
 		}
@@ -139,36 +124,26 @@ func (r *repository) Update(
 	entity *tenant.SettlementControl,
 ) (*tenant.SettlementControl, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*tenant.SettlementControl, error) {
-		res, err := r.db.DBForContext(ctx).
-			NewUpdate().
-			Model(entity).
-			Where("id = ?", entity.ID).
-			Where("organization_id = ?", entity.OrganizationID).
-			Where("business_unit_id = ?", entity.BusinessUnitID).
-			Where("version = ?", entity.Version).
-			Set("pay_period_frequency = ?", entity.PayPeriodFrequency).
-			Set("period_end_day_of_week = ?", entity.PeriodEndDayOfWeek).
-			Set("pay_delay_days = ?", entity.PayDelayDays).
-			Set("pay_trigger = ?", entity.PayTrigger).
-			Set("auto_generate_batches = ?", entity.AutoGenerateBatches).
-			Set("auto_approve_clean = ?", entity.AutoApproveClean).
-			Set("allow_negative_net = ?", entity.AllowNegativeNet).
-			Set("variance_threshold_pct = ?", entity.VarianceThresholdPct).
-			Set("variance_lookback_weeks = ?", entity.VarianceLookbackWeeks).
-			Set("default_escrow_interest_rate = ?", entity.DefaultEscrowInterestRate).
-			Set("escrow_interest_frequency_months = ?", entity.EscrowInterestFrequencyMonths).
-			Set("version = version + 1").
-			Exec(ctx)
-		if err != nil {
-			return nil, fmt.Errorf("update settlement control: %w", err)
-		}
-		if err = dberror.CheckRowsAffected(
-			res,
-			"SettlementControl",
-			entity.ID.String(),
+		sc := tenantdb.SettlementControls
+		if err := sc.Save(
+			ctx,
+			r.db.Keel(ctx),
+			entity,
+			sc.PayPeriodFrequency,
+			sc.PeriodEndDayOfWeek,
+			sc.PayDelayDays,
+			sc.PayTrigger,
+			sc.AutoGenerateBatches,
+			sc.AutoApproveClean,
+			sc.AllowNegativeNet,
+			sc.VarianceThresholdPct,
+			sc.VarianceLookbackWeeks,
+			sc.DefaultEscrowInterestRate,
+			sc.EscrowInterestFrequencyMonths,
 		); err != nil {
-			return nil, err
+			return nil, settlementControlErrors.Map(err, entity.ID.String())
 		}
+
 		return r.GetOrCreate(ctx, pagination.TenantInfo{
 			OrgID: entity.OrganizationID,
 			BuID:  entity.BusinessUnitID,

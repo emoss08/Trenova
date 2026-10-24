@@ -821,6 +821,7 @@ var billingControlsTable = schema.Table{
 	Size:       unsafe.Sizeof(tenant.BillingControl{}),
 	Ptr:        ptrBillingControl,
 	Value:      valueBillingControl,
+	BeforeSave: beforeSaveBillingControl,
 }
 
 var billingControlsRef = keel.Ref{Table: &billingControlsTable}
@@ -1139,6 +1140,10 @@ func valueBillingControl(p unsafe.Pointer, c int32) any {
 		return r.UpdatedAt
 	}
 	return nil
+}
+
+func beforeSaveBillingControl(ctx context.Context, p unsafe.Pointer) error {
+	return (*tenant.BillingControl)(p).BeforeSave(ctx)
 }
 
 // businessUnitsTable is the schema of tenant.BusinessUnit.
@@ -1557,22 +1562,23 @@ var dashControlsTable = schema.Table{
 		{Name: "created_at", Quoted: `"created_at"`, Field: "CreatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoCreate, Label: `Created At`, JSON: `createdAt`},
 		{Name: "updated_at", Quoted: `"updated_at"`, Field: "UpdatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoUpdate, Label: `Updated At`, JSON: `updatedAt`},
 	},
-	PK:         []int32{0, 1, 2},
-	Tenant:     []int32{1, 2},
-	Select:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24},
-	Insert:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24},
-	Update:     []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 24},
-	Returning:  nil,
-	Version:    22,
-	AutoID:     0,
-	AutoCreate: 23,
-	AutoUpdate: 24,
-	IDPrefix:   "dashc_",
-	New:        newDashControl,
-	NewN:       newNDashControl,
-	Size:       unsafe.Sizeof(tenant.DashControl{}),
-	Ptr:        ptrDashControl,
-	Value:      valueDashControl,
+	PK:           []int32{0, 1, 2},
+	Tenant:       []int32{1, 2},
+	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24},
+	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24},
+	Update:       []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 24},
+	Returning:    nil,
+	Version:      22,
+	AutoID:       0,
+	AutoCreate:   23,
+	AutoUpdate:   24,
+	IDPrefix:     "dashc_",
+	New:          newDashControl,
+	NewN:         newNDashControl,
+	Size:         unsafe.Sizeof(tenant.DashControl{}),
+	Ptr:          ptrDashControl,
+	Value:        valueDashControl,
+	BeforeCreate: beforeCreateDashControl,
 }
 
 var dashControlsRef = keel.Ref{Table: &dashControlsTable}
@@ -1802,6 +1808,10 @@ func valueDashControl(p unsafe.Pointer, c int32) any {
 	return nil
 }
 
+func beforeCreateDashControl(ctx context.Context, p unsafe.Pointer) error {
+	return (*tenant.DashControl)(p).BeforeCreate(ctx)
+}
+
 // dataRetentionsTable is the schema of tenant.DataRetention.
 var dataRetentionsTable = schema.Table{
 	Name:   "data_retention",
@@ -2025,22 +2035,23 @@ var documentControlsTable = schema.Table{
 		{Name: "created_at", Quoted: `"created_at"`, Field: "CreatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoCreate, Label: `Created At`, JSON: `createdAt`},
 		{Name: "updated_at", Quoted: `"updated_at"`, Field: "UpdatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoUpdate, Label: `Updated At`, JSON: `updatedAt`},
 	},
-	PK:         []int32{0, 1, 2},
-	Tenant:     []int32{1, 2},
-	Select:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20},
-	Insert:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20},
-	Update:     []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 20},
-	Returning:  nil,
-	Version:    18,
-	AutoID:     0,
-	AutoCreate: 19,
-	AutoUpdate: 20,
-	IDPrefix:   "docc_",
-	New:        newDocumentControl,
-	NewN:       newNDocumentControl,
-	Size:       unsafe.Sizeof(tenant.DocumentControl{}),
-	Ptr:        ptrDocumentControl,
-	Value:      valueDocumentControl,
+	PK:           []int32{0, 1, 2},
+	Tenant:       []int32{1, 2},
+	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20},
+	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20},
+	Update:       []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 20},
+	Returning:    nil,
+	Version:      18,
+	AutoID:       0,
+	AutoCreate:   19,
+	AutoUpdate:   20,
+	IDPrefix:     "docc_",
+	New:          newDocumentControl,
+	NewN:         newNDocumentControl,
+	Size:         unsafe.Sizeof(tenant.DocumentControl{}),
+	Ptr:          ptrDocumentControl,
+	Value:        valueDocumentControl,
+	BeforeCreate: beforeCreateDocumentControl,
 }
 
 var documentControlsRef = keel.Ref{Table: &documentControlsTable}
@@ -2246,6 +2257,10 @@ func valueDocumentControl(p unsafe.Pointer, c int32) any {
 		return r.UpdatedAt
 	}
 	return nil
+}
+
+func beforeCreateDocumentControl(ctx context.Context, p unsafe.Pointer) error {
+	return (*tenant.DocumentControl)(p).BeforeCreate(ctx)
 }
 
 // invoiceAdjustmentControlsTable is the schema of tenant.InvoiceAdjustmentControl.
@@ -3042,23 +3057,24 @@ var passwordResetTokensTable = schema.Table{
 	Relations: []schema.Relation{
 		{Name: "User", Alias: "u", Kind: schema.BelongsTo, Local: []int32{1}, Remote: []int32{0}, Label: `User`, JSON: `user`},
 	},
-	PK:         []int32{0},
-	Tenant:     []int32{2, 3},
-	Select:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9},
-	Insert:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9},
-	Update:     []int32{1, 4, 5, 6, 7, 8},
-	Returning:  nil,
-	Version:    -1,
-	AutoID:     0,
-	AutoCreate: 9,
-	AutoUpdate: -1,
-	IDPrefix:   "prt_",
-	New:        newPasswordResetToken,
-	NewN:       newNPasswordResetToken,
-	Size:       unsafe.Sizeof(tenant.PasswordResetToken{}),
-	Ptr:        ptrPasswordResetToken,
-	Value:      valuePasswordResetToken,
-	Attach:     attachPasswordResetToken,
+	PK:           []int32{0},
+	Tenant:       []int32{2, 3},
+	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9},
+	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9},
+	Update:       []int32{1, 4, 5, 6, 7, 8},
+	Returning:    nil,
+	Version:      -1,
+	AutoID:       0,
+	AutoCreate:   9,
+	AutoUpdate:   -1,
+	IDPrefix:     "prt_",
+	New:          newPasswordResetToken,
+	NewN:         newNPasswordResetToken,
+	Size:         unsafe.Sizeof(tenant.PasswordResetToken{}),
+	Ptr:          ptrPasswordResetToken,
+	Value:        valuePasswordResetToken,
+	Attach:       attachPasswordResetToken,
+	BeforeCreate: beforeCreatePasswordResetToken,
 }
 
 var passwordResetTokensRef = keel.Ref{Table: &passwordResetTokensTable}
@@ -3198,6 +3214,10 @@ func attachPasswordResetToken(p unsafe.Pointer, rel int32, child unsafe.Pointer)
 	case 0:
 		r.User = (*tenant.User)(child)
 	}
+}
+
+func beforeCreatePasswordResetToken(ctx context.Context, p unsafe.Pointer) error {
+	return (*tenant.PasswordResetToken)(p).BeforeCreate(ctx)
 }
 
 // sSOConfigsTable is the schema of tenant.SSOConfig.

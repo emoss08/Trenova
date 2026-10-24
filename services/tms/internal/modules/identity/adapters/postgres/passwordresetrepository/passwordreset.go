@@ -3,18 +3,22 @@ package passwordresetrepository
 import (
 	"context"
 
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant/tenantdb"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
-	"github.com/emoss08/trenova/pkg/buncolgen/tenantcol"
 	"github.com/emoss08/trenova/pkg/dberror"
-	"github.com/emoss08/trenova/pkg/dbhelper"
 	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/shared/pulid"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
+
+const resolveTokenScopeReason = "resolve a password reset token before its tenant is known"
+
+var tokenErrors = dberror.Mapping{Entity: "Password reset token"}
 
 type Params struct {
 	fx.In
@@ -35,10 +39,27 @@ func New(p Params) tenantports.PasswordResetTokenRepository {
 	}
 }
 
+func tokens(ctx context.Context, preds ...keel.Pred) *keel.Query[tenant.PasswordResetToken] {
+	prt := tenantdb.PasswordResetTokens
+	q := prt.Query()
+	if dbscope.IsSystem(ctx) {
+		q = q.AllTenants()
+	}
+
+	return q.Where(preds...)
+}
+
+func outstanding() keel.Pred {
+	prt := tenantdb.PasswordResetTokens
+	return keel.And(prt.UsedAt.IsNull(), prt.InvalidatedAt.IsNull())
+}
+
 func (r *repository) Create(ctx context.Context, token *tenant.PasswordResetToken) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
-		_, err := r.db.DBForContext(ctx).NewInsert().Model(token).Exec(ctx)
-		return err
+		return tokenErrors.Map(
+			tenantdb.PasswordResetTokens.Create(ctx, r.db.Keel(ctx), token),
+			token.ID.String(),
+		)
 	})
 }
 
@@ -47,51 +68,37 @@ func (r *repository) FindRedeemableByHash(
 	tokenHash string,
 	now int64,
 ) (*tenant.PasswordResetToken, error) {
-	ctx = dbscope.WithSystem(ctx, "resolve a password reset token before its tenant is known")
+	ctx = dbscope.WithSystem(ctx, resolveTokenScopeReason)
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*tenant.PasswordResetToken, error) {
-		token := new(tenant.PasswordResetToken)
-		if err := r.db.DBForContext(ctx).NewSelect().
-			Model(token).
-			Relation("User").
-			Where("prt.token_hash = ?", tokenHash).
-			Where("prt.used_at IS NULL").
-			Where("prt.invalidated_at IS NULL").
-			Where("prt.expires_at > ?", now).
-			Scan(ctx); err != nil {
-			return nil, dberror.HandleNotFoundError(err, "Password reset token")
+		prt := tenantdb.PasswordResetTokens
+		token, err := tokens(ctx, prt.TokenHash.Eq(tokenHash), outstanding(), prt.ExpiresAt.Gt(now)).
+			Load(prt.User()).
+			One(ctx, r.db.Keel(ctx))
+		if err != nil {
+			return nil, tokenErrors.Map(err, "")
 		}
 		return token, nil
 	})
 }
 
+// MarkUsed puts the used_at guard in the UPDATE, not in a check before it: two
+// tabs opened from the same email would otherwise both read an unused token and
+// both reset the password. Whichever statement lands first updates a row; the
+// second updates none.
 func (r *repository) MarkUsed(
 	ctx context.Context,
 	tokenID pulid.ID,
 	now int64,
 ) (bool, error) {
-	return dbtx.
-		// The used_at guard is part of the UPDATE, not a check before it: two tabs opened
-		// from the same email would otherwise both read an unused token and both reset the
-		// password. Whichever statement lands first updates a row; the second updates none.
-		Write(ctx, r.db, func(ctx context.Context) (bool, error) {
-
-			result, err := r.db.DBForContext(ctx).NewUpdate().
-				Model((*tenant.PasswordResetToken)(nil)).
-				Set("used_at = ?", now).
-				Where("id = ?", tokenID).
-				Where("used_at IS NULL").
-				Where("invalidated_at IS NULL").
-				Exec(ctx)
-			if err != nil {
-				return false, err
-			}
-
-			affected, err := result.RowsAffected()
-			if err != nil {
-				return false, err
-			}
-			return affected > 0, nil
-		})
+	return dbtx.Write(ctx, r.db, func(ctx context.Context) (bool, error) {
+		prt := tenantdb.PasswordResetTokens
+		affected, err := tokens(ctx, prt.ID.Eq(tokenID), outstanding()).
+			Update(ctx, r.db.Keel(ctx), prt.UsedAt.To(now))
+		if err != nil {
+			return false, err
+		}
+		return affected > 0, nil
+	})
 }
 
 func (r *repository) InvalidateOutstanding(
@@ -100,13 +107,9 @@ func (r *repository) InvalidateOutstanding(
 	now int64,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
-		_, err := r.db.DBForContext(ctx).NewUpdate().
-			Model((*tenant.PasswordResetToken)(nil)).
-			Set("invalidated_at = ?", now).
-			Where("user_id = ?", userID).
-			Where("used_at IS NULL").
-			Where("invalidated_at IS NULL").
-			Exec(ctx)
+		prt := tenantdb.PasswordResetTokens
+		_, err := tokens(ctx, prt.UserID.Eq(userID), outstanding()).
+			Update(ctx, r.db.Keel(ctx), prt.InvalidatedAt.To(now))
 		return err
 	})
 }
@@ -117,11 +120,13 @@ func (r *repository) CountSince(
 	since int64,
 ) (int, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (int, error) {
-		cols := tenantcol.PasswordResetTokenColumns
-		return dbhelper.Count(ctx, r.db.DBForContext(ctx).NewSelect().
-			Model((*tenant.PasswordResetToken)(nil)).
-			Where(cols.UserID.Eq(), userID).
-			Where(cols.Purpose.Eq(), tenant.PasswordResetPurposeReset).
-			Where(cols.CreatedAt.Gte(), since))
+		prt := tenantdb.PasswordResetTokens
+		n, err := tokens(
+			ctx,
+			prt.UserID.Eq(userID),
+			prt.Purpose.Eq(tenant.PasswordResetPurposeReset),
+			prt.CreatedAt.Gte(since),
+		).Count(ctx, r.db.Keel(ctx))
+		return int(n), err
 	})
 }

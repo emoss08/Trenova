@@ -30,22 +30,23 @@ var instanceBootstrapsTable = schema.Table{
 		{Name: "completed_at", Quoted: `"completed_at"`, Field: "CompletedAt", Kind: schema.KindInt64, Flags: 0, Label: `Completed At`, JSON: `completedAt`},
 		{Name: "created_at", Quoted: `"created_at"`, Field: "CreatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoCreate, Label: `Created At`, JSON: `createdAt`},
 	},
-	PK:         []int32{0},
-	Tenant:     []int32{1, 2},
-	Select:     []int32{0, 1, 2, 3, 4, 5, 6},
-	Insert:     []int32{0, 1, 2, 3, 4, 5, 6},
-	Update:     []int32{3, 4, 5},
-	Returning:  nil,
-	Version:    -1,
-	AutoID:     0,
-	AutoCreate: 6,
-	AutoUpdate: -1,
-	IDPrefix:   "ibs_",
-	New:        newInstanceBootstrap,
-	NewN:       newNInstanceBootstrap,
-	Size:       unsafe.Sizeof(instancebootstrap.InstanceBootstrap{}),
-	Ptr:        ptrInstanceBootstrap,
-	Value:      valueInstanceBootstrap,
+	PK:           []int32{0},
+	Tenant:       []int32{1, 2},
+	Select:       []int32{0, 1, 2, 3, 4, 5, 6},
+	Insert:       []int32{0, 1, 2, 3, 4, 5, 6},
+	Update:       []int32{3, 4, 5},
+	Returning:    nil,
+	Version:      -1,
+	AutoID:       0,
+	AutoCreate:   6,
+	AutoUpdate:   -1,
+	IDPrefix:     "ibs_",
+	New:          newInstanceBootstrap,
+	NewN:         newNInstanceBootstrap,
+	Size:         unsafe.Sizeof(instancebootstrap.InstanceBootstrap{}),
+	Ptr:          ptrInstanceBootstrap,
+	Value:        valueInstanceBootstrap,
+	BeforeCreate: beforeCreateInstanceBootstrap,
 }
 
 var instanceBootstrapsRef = keel.Ref{Table: &instanceBootstrapsTable}
@@ -152,4 +153,8 @@ func valueInstanceBootstrap(p unsafe.Pointer, c int32) any {
 		return r.CreatedAt
 	}
 	return nil
+}
+
+func beforeCreateInstanceBootstrap(ctx context.Context, p unsafe.Pointer) error {
+	return (*instancebootstrap.InstanceBootstrap)(p).BeforeCreate(ctx)
 }

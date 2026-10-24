@@ -3,16 +3,19 @@ package roleassignmentrepository
 import (
 	"context"
 
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission/permissiondb"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/pagination"
-	"github.com/uptrace/bun"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
+
+var roleAssignmentErrors = dberror.Mapping{Entity: "RoleAssignment"}
 
 type Params struct {
 	fx.In
@@ -33,18 +36,12 @@ func New(p Params) permissionports.RoleAssignmentRepository {
 	}
 }
 
-func (r *repository) filterQuery(
-	q *bun.SelectQuery,
-	req *permissionports.ListRoleAssignmentsRequest,
-) *bun.SelectQuery {
-	if req.ExpandRoles {
-		q = q.Relation("Role")
+func withRole(q *keel.Query[permission.UserRoleAssignment], expand bool) *keel.Query[permission.UserRoleAssignment] {
+	if !expand {
+		return q
 	}
 
-	q = q.Where("ura.organization_id = ?", req.Filter.TenantInfo.OrgID)
-
-	return q.Limit(int64(req.Filter.Pagination.SafeLimit())).
-		Offset(int64(req.Filter.Pagination.SafeOffset()))
+	return q.Load(permissiondb.UserRoleAssignments.Role())
 }
 
 func (r *repository) List(
@@ -55,25 +52,26 @@ func (r *repository) List(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*pagination.ListResult[*permission.UserRoleAssignment], error) {
-			log := r.l.With(
-				zap.String("operation", "List"),
-				zap.Any("request", req),
-			)
+			ura := permissiondb.UserRoleAssignments
+			page := req.Filter.Pagination
+			rows := withRole(ura.Query(), req.ExpandRoles).
+				Limit(page.SafeLimit()).
+				Offset(page.SafeOffset())
 
-			entities := make([]*permission.UserRoleAssignment, 0, req.Filter.Pagination.SafeLimit())
-			total, err := r.db.DBForContext(ctx).
-				NewSelect().
-				Model(&entities).
-				Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-					return r.filterQuery(sq, req)
-				}).ScanAndCount(ctx)
-			if err != nil {
-				log.Error("failed to scan and count role assignments", zap.Error(err))
+			var items []*permission.UserRoleAssignment
+			var total int64
+			if err := keel.Batch(
+				ctx,
+				r.db.Keel(ctx),
+				keel.ListInto(rows, &items),
+				keel.CountInto(ura.Query(), &total),
+			); err != nil {
+				r.l.Error("failed to list role assignments", zap.Error(err))
 				return nil, err
 			}
 
 			return &pagination.ListResult[*permission.UserRoleAssignment]{
-				Items: entities,
+				Items: items,
 				Total: int(total),
 			}, nil
 		},
@@ -85,21 +83,11 @@ func (r *repository) GetByID(
 	req permissionports.GetRoleAssignmentByIDRequest,
 ) (*permission.UserRoleAssignment, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*permission.UserRoleAssignment, error) {
-		entity := new(permission.UserRoleAssignment)
-		q := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(entity).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return sq.Where("ura.organization_id = ?", req.TenantInfo.OrgID).
-					Where("ura.id = ?", req.RoleAssignmentID)
-			})
-
-		if req.ExpandRoles {
-			q.Relation("Role")
-		}
-
-		if err := q.Scan(ctx); err != nil {
-			return nil, dberror.HandleNotFoundError(err, "RoleAssignment")
+		ura := permissiondb.UserRoleAssignments
+		entity, err := withRole(ura.Where(ura.ID.Eq(req.RoleAssignmentID)), req.ExpandRoles).
+			One(ctx, r.db.Keel(ctx))
+		if err != nil {
+			return nil, roleAssignmentErrors.Map(err, req.RoleAssignmentID.String())
 		}
 
 		return entity, nil

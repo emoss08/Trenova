@@ -186,6 +186,17 @@ func (bc *BillingControl) BeforeAppendModel(_ context.Context, query bun.Query) 
 	return nil
 }
 
+func (bc *BillingControl) BeforeSave(_ context.Context) error {
+	if len(bc.PaymentReminderDays) == 0 {
+		bc.PaymentReminderDays = slices.Clone(DefaultPaymentReminderDays)
+	}
+	if bc.MonthlyStatementDay == 0 {
+		bc.MonthlyStatementDay = 1
+	}
+
+	return nil
+}
+
 func (bc *BillingControl) GetID() pulid.ID {
 	return bc.ID
 }

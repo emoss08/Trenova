@@ -47,6 +47,7 @@ var resourcePermissionsTable = schema.Table{
 	Ptr:          ptrResourcePermission,
 	Value:        valueResourcePermission,
 	BeforeCreate: beforeCreateResourcePermission,
+	BeforeUpdate: beforeUpdateResourcePermission,
 }
 
 var resourcePermissionsRef = keel.Ref{Table: &resourcePermissionsTable}
@@ -157,6 +158,10 @@ func valueResourcePermission(p unsafe.Pointer, c int32) any {
 
 func beforeCreateResourcePermission(ctx context.Context, p unsafe.Pointer) error {
 	return (*permission.ResourcePermission)(p).BeforeCreate(ctx)
+}
+
+func beforeUpdateResourcePermission(ctx context.Context, p unsafe.Pointer) error {
+	return (*permission.ResourcePermission)(p).BeforeUpdate(ctx)
 }
 
 // rolesTable is the schema of permission.Role.
@@ -385,22 +390,23 @@ var roleAgentGrantsTable = schema.Table{
 		{Name: "granted_by", Quoted: `"granted_by"`, Field: "GrantedBy", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Granted By`, JSON: `grantedBy`},
 		{Name: "granted_at", Quoted: `"granted_at"`, Field: "GrantedAt", Kind: schema.KindInt64, Flags: 0, Label: `Granted At`, JSON: `grantedAt`},
 	},
-	PK:         []int32{0},
-	Tenant:     []int32{1, 2},
-	Select:     []int32{0, 1, 2, 3, 4, 5, 6},
-	Insert:     []int32{0, 1, 2, 3, 4, 5, 6},
-	Update:     []int32{3, 4, 5, 6},
-	Returning:  nil,
-	Version:    -1,
-	AutoID:     0,
-	AutoCreate: -1,
-	AutoUpdate: -1,
-	IDPrefix:   "rag_",
-	New:        newRoleAgentGrant,
-	NewN:       newNRoleAgentGrant,
-	Size:       unsafe.Sizeof(permission.RoleAgentGrant{}),
-	Ptr:        ptrRoleAgentGrant,
-	Value:      valueRoleAgentGrant,
+	PK:           []int32{0},
+	Tenant:       []int32{1, 2},
+	Select:       []int32{0, 1, 2, 3, 4, 5, 6},
+	Insert:       []int32{0, 1, 2, 3, 4, 5, 6},
+	Update:       []int32{3, 4, 5, 6},
+	Returning:    nil,
+	Version:      -1,
+	AutoID:       0,
+	AutoCreate:   -1,
+	AutoUpdate:   -1,
+	IDPrefix:     "rag_",
+	New:          newRoleAgentGrant,
+	NewN:         newNRoleAgentGrant,
+	Size:         unsafe.Sizeof(permission.RoleAgentGrant{}),
+	Ptr:          ptrRoleAgentGrant,
+	Value:        valueRoleAgentGrant,
+	BeforeCreate: beforeCreateRoleAgentGrant,
 }
 
 var roleAgentGrantsRef = keel.Ref{Table: &roleAgentGrantsTable}
@@ -505,6 +511,10 @@ func valueRoleAgentGrant(p unsafe.Pointer, c int32) any {
 		return r.GrantedAt
 	}
 	return nil
+}
+
+func beforeCreateRoleAgentGrant(ctx context.Context, p unsafe.Pointer) error {
+	return (*permission.RoleAgentGrant)(p).BeforeCreate(ctx)
 }
 
 // roleConstraintsTable is the schema of permission.RoleConstraint.
