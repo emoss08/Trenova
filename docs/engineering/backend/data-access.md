@@ -39,6 +39,12 @@ Shape: an fx `Params{DB *postgres.Connection; Logger}`, an unexported `repositor
   allow-lists fields; never build a `WHERE` or `ORDER BY` from input. Offset `List`
   (`SafeLimit`/`SafeOffset`) exists for small, bounded sets only; anything a person scrolls is a
   connection.
+- **Filtering through another kind's record** (a table column showing a linked record's number):
+  declare the relationship in `GetPostgresSearchConfig` as `RelationshipTypeCustom` with a
+  `TargetField` and a join on id and both tenant columns (`journalreversal.Reversal`'s
+  `originalJournalEntry`). Every path under it then resolves to that one field. A `BelongsTo`
+  relationship makes every column of the target filterable, which answers questions about fields
+  outside the target's reference view.
 - **Projection**: a connection selects the columns the GraphQL query asked for
   (`req.<Entity>Columns`), not `*`.
 - **Select options** use `dbhelper.SelectOptions`.

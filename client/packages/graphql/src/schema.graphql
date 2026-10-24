@@ -20508,6 +20508,8 @@ type JournalReversal {
   createdAt: Timestamp!
   id: ID!
   organizationId: ID!
+  """The entry this reversal undoes."""
+  originalJournalEntry: JournalEntry!
   originalJournalEntryId: ID!
   postedAt: Timestamp
   postedBatchId: ID
@@ -20521,6 +20523,8 @@ type JournalReversal {
   requestedById: ID!
   resolvedFiscalPeriodId: ID!
   resolvedFiscalYearId: ID!
+  """The entry that posted this reversal; null until it posts."""
+  reversalJournalEntry: JournalEntry
   reversalJournalEntryId: ID
   status: JournalReversalStatus!
   updatedAt: Timestamp!

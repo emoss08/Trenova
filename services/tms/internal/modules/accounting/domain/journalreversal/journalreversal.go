@@ -1,6 +1,8 @@
 package journalreversal
 
 import (
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/journalentry"
+	"github.com/emoss08/trenova/pkg/dbtype"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/domainvalidation"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -51,6 +53,9 @@ type Reversal struct {
 	CreatedAt               int64    `json:"createdAt"               bun:"created_at,type:BIGINT,notnull"`
 	UpdatedAt               int64    `json:"updatedAt"               bun:"updated_at,type:BIGINT,notnull"`
 	Version                 int64    `json:"version"                 bun:"version,type:BIGINT,notnull"`
+
+	OriginalJournalEntry *journalentry.JournalEntry `json:"originalJournalEntry,omitempty" bun:"rel:belongs-to,join:original_journal_entry_id=id,join:organization_id=organization_id,join:business_unit_id=business_unit_id"`
+	ReversalJournalEntry *journalentry.JournalEntry `json:"reversalJournalEntry,omitempty" bun:"rel:belongs-to,join:reversal_journal_entry_id=id,join:organization_id=organization_id,join:business_unit_id=business_unit_id"`
 }
 
 func (r *Reversal) GetID() pulid.ID {
@@ -79,6 +84,25 @@ func (r *Reversal) GetPostgresSearchConfig() domaintypes.PostgresSearchConfig {
 				Name:   "reason_text",
 				Type:   domaintypes.FieldTypeText,
 				Weight: domaintypes.SearchWeightB,
+			},
+		},
+		Relationships: []*domaintypes.RelationshipDefintion{
+			{
+				Field:        "originalJournalEntry",
+				Type:         dbtype.RelationshipTypeCustom,
+				TargetEntity: (*journalentry.JournalEntry)(nil),
+				TargetTable:  "journal_entries",
+				TargetField:  "entry_number",
+				Alias:        "orig_je",
+				Queryable:    true,
+				CustomJoinPath: []domaintypes.JoinStep{
+					{
+						Table:     "journal_entries",
+						Alias:     "orig_je",
+						Condition: "jr.original_journal_entry_id = orig_je.id AND jr.organization_id = orig_je.organization_id AND jr.business_unit_id = orig_je.business_unit_id",
+						JoinType:  dbtype.JoinTypeLeft,
+					},
+				},
 			},
 		},
 	}

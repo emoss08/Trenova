@@ -60,6 +60,20 @@ func (s *Service) GetEntry(
 	)
 }
 
+func (s *Service) GetEntriesByIDs(
+	ctx context.Context,
+	req journalentryports.GetJournalEntriesByIDsRequest,
+) ([]*journalentry.JournalEntry, error) {
+	return s.entryRepo.GetByIDs(ctx, req)
+}
+
+func (s *Service) SelectOptions(
+	ctx context.Context,
+	req *journalentryports.JournalEntrySelectOptionsRequest,
+) (*pagination.ListResult[*journalentry.JournalEntry], error) {
+	return s.entryRepo.SelectOptions(ctx, req)
+}
+
 func (s *Service) ListEntriesBySource(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,

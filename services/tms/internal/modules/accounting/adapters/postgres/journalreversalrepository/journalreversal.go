@@ -74,10 +74,12 @@ func (r *repository) List(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*pagination.ListResult[*journalreversal.Reversal], error) {
-			records := make([]*reversalRecord, 0, req.Filter.Pagination.SafeLimit())
+			items := make([]*journalreversal.Reversal, 0, req.Filter.Pagination.SafeLimit())
 			query := r.db.DBForContext(ctx).
 				NewSelect().
-				Model(&records).
+				Model(&items).
+				Relation(journalreversalcol.ReversalRelations.OriginalJournalEntry).
+				Relation(journalreversalcol.ReversalRelations.ReversalJournalEntry).
 				Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
 					return querybuilder.ApplyFilters(
 						sq,
@@ -94,10 +96,6 @@ func (r *repository) List(
 			total, err := query.ScanAndCount(ctx)
 			if err != nil {
 				return nil, err
-			}
-			items := make([]*journalreversal.Reversal, 0, len(records))
-			for _, rec := range records {
-				items = append(items, mapReversal(rec))
 			}
 			return &pagination.ListResult[*journalreversal.Reversal]{
 				Items: items,
@@ -169,7 +167,11 @@ func (r *repository) ListConnection(
 					Cursor:     req.Cursor,
 					TotalCount: totalCount,
 					Query: func(entities *[]*journalreversal.Reversal) *bun.SelectQuery {
-						return dba.NewSelect().Model(entities)
+						return dba.NewSelect().
+							Model(entities).
+							ColumnExpr(journalreversalcol.ReversalTable.All()).
+							Relation(journalreversalcol.ReversalRelations.OriginalJournalEntry).
+							Relation(journalreversalcol.ReversalRelations.ReversalJournalEntry)
 					},
 					Apply: func(sq *bun.SelectQuery) (*bun.SelectQuery, error) {
 						return r.applyCursorPageFilters(sq, req)
@@ -191,18 +193,19 @@ func (r *repository) GetByID(
 	req journalreversalports.GetJournalReversalByIDRequest,
 ) (*journalreversal.Reversal, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*journalreversal.Reversal, error) {
-		rec := new(reversalRecord)
+		entity := new(journalreversal.Reversal)
 		err := r.db.DBForContext(ctx).
 			NewSelect().
-			Model(rec).
-			Where("jr.id = ?", req.ID).
-			Where("jr.organization_id = ?", req.TenantInfo.OrgID).
-			Where("jr.business_unit_id = ?", req.TenantInfo.BuID).
+			Model(entity).
+			Relation(journalreversalcol.ReversalRelations.OriginalJournalEntry).
+			Relation(journalreversalcol.ReversalRelations.ReversalJournalEntry).
+			Where(journalreversalcol.ReversalColumns.ID.Eq(), req.ID).
+			Apply(journalreversalcol.ReversalApplyTenant(req.TenantInfo)).
 			Scan(ctx)
 		if err != nil {
 			return nil, dberror.HandleNotFoundError(err, "JournalReversal")
 		}
-		return mapReversal(rec), nil
+		return entity, nil
 	})
 }
 
@@ -212,10 +215,12 @@ func (r *repository) ListByJournalEntry(
 ) ([]*journalreversal.Reversal, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*journalreversal.Reversal, error) {
 		cols := journalreversalcol.ReversalColumns
-		records := make([]*reversalRecord, 0)
+		reversals := make([]*journalreversal.Reversal, 0)
 		err := r.db.DBForContext(ctx).
 			NewSelect().
-			Model(&records).
+			Model(&reversals).
+			Relation(journalreversalcol.ReversalRelations.OriginalJournalEntry).
+			Relation(journalreversalcol.ReversalRelations.ReversalJournalEntry).
 			Where(cols.OrganizationID.Eq(), req.TenantInfo.OrgID).
 			Where(cols.BusinessUnitID.Eq(), req.TenantInfo.BuID).
 			WhereGroup(" AND ", func(q *bun.SelectQuery) *bun.SelectQuery {
@@ -226,11 +231,6 @@ func (r *repository) ListByJournalEntry(
 			Scan(ctx)
 		if err != nil {
 			return nil, err
-		}
-
-		reversals := make([]*journalreversal.Reversal, 0, len(records))
-		for _, rec := range records {
-			reversals = append(reversals, mapReversal(rec))
 		}
 		return reversals, nil
 	})
@@ -334,36 +334,5 @@ func toRecord(entity *journalreversal.Reversal) *reversalRecord {
 		PostedByID:              entity.PostedByID,
 		PostedAt:                entity.PostedAt,
 		Version:                 entity.Version,
-	}
-}
-
-func mapReversal(rec *reversalRecord) *journalreversal.Reversal {
-	return &journalreversal.Reversal{
-		ID:                      rec.ID,
-		OrganizationID:          rec.OrganizationID,
-		BusinessUnitID:          rec.BusinessUnitID,
-		OriginalJournalEntryID:  rec.OriginalJournalEntryID,
-		ReversalJournalEntryID:  rec.ReversalJournalEntryID,
-		PostedBatchID:           rec.PostedBatchID,
-		Status:                  journalreversal.Status(rec.Status),
-		RequestedAccountingDate: rec.RequestedAccountingDate,
-		ResolvedFiscalYearID:    rec.ResolvedFiscalYearID,
-		ResolvedFiscalPeriodID:  rec.ResolvedFiscalPeriodID,
-		ReasonCode:              rec.ReasonCode,
-		ReasonText:              rec.ReasonText,
-		RequestedByID:           rec.RequestedByID,
-		ApprovedByID:            rec.ApprovedByID,
-		ApprovedAt:              rec.ApprovedAt,
-		RejectedByID:            rec.RejectedByID,
-		RejectedAt:              rec.RejectedAt,
-		RejectionReason:         rec.RejectionReason,
-		CancelledByID:           rec.CancelledByID,
-		CancelledAt:             rec.CancelledAt,
-		CancelReason:            rec.CancelReason,
-		PostedByID:              rec.PostedByID,
-		PostedAt:                rec.PostedAt,
-		Version:                 rec.Version,
-		CreatedAt:               rec.CreatedAt,
-		UpdatedAt:               rec.UpdatedAt,
 	}
 }

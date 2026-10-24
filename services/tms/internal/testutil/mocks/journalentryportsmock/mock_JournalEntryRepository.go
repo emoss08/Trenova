@@ -108,6 +108,74 @@ func (_c *MockJournalEntryRepository_GetByID_Call) RunAndReturn(run func(ctx con
 	return _c
 }
 
+// GetByIDs provides a mock function for the type MockJournalEntryRepository
+func (_mock *MockJournalEntryRepository) GetByIDs(ctx context.Context, req journalentryports.GetJournalEntriesByIDsRequest) ([]*journalentry.JournalEntry, error) {
+	ret := _mock.Called(ctx, req)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetByIDs")
+	}
+
+	var r0 []*journalentry.JournalEntry
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, journalentryports.GetJournalEntriesByIDsRequest) ([]*journalentry.JournalEntry, error)); ok {
+		return returnFunc(ctx, req)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, journalentryports.GetJournalEntriesByIDsRequest) []*journalentry.JournalEntry); ok {
+		r0 = returnFunc(ctx, req)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]*journalentry.JournalEntry)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, journalentryports.GetJournalEntriesByIDsRequest) error); ok {
+		r1 = returnFunc(ctx, req)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockJournalEntryRepository_GetByIDs_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetByIDs'
+type MockJournalEntryRepository_GetByIDs_Call struct {
+	*mock.Call
+}
+
+// GetByIDs is a helper method to define mock.On call
+//   - ctx context.Context
+//   - req journalentryports.GetJournalEntriesByIDsRequest
+func (_e *MockJournalEntryRepository_Expecter) GetByIDs(ctx any, req any) *MockJournalEntryRepository_GetByIDs_Call {
+	return &MockJournalEntryRepository_GetByIDs_Call{Call: _e.mock.On("GetByIDs", ctx, req)}
+}
+
+func (_c *MockJournalEntryRepository_GetByIDs_Call) Run(run func(ctx context.Context, req journalentryports.GetJournalEntriesByIDsRequest)) *MockJournalEntryRepository_GetByIDs_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 journalentryports.GetJournalEntriesByIDsRequest
+		if args[1] != nil {
+			arg1 = args[1].(journalentryports.GetJournalEntriesByIDsRequest)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockJournalEntryRepository_GetByIDs_Call) Return(journalEntrys []*journalentry.JournalEntry, err error) *MockJournalEntryRepository_GetByIDs_Call {
+	_c.Call.Return(journalEntrys, err)
+	return _c
+}
+
+func (_c *MockJournalEntryRepository_GetByIDs_Call) RunAndReturn(run func(ctx context.Context, req journalentryports.GetJournalEntriesByIDsRequest) ([]*journalentry.JournalEntry, error)) *MockJournalEntryRepository_GetByIDs_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // List provides a mock function for the type MockJournalEntryRepository
 func (_mock *MockJournalEntryRepository) List(ctx context.Context, req *journalentryports.ListJournalEntriesRequest) (*pagination.ListResult[*journalentry.JournalEntry], error) {
 	ret := _mock.Called(ctx, req)
@@ -297,6 +365,74 @@ func (_c *MockJournalEntryRepository_MarkReversed_Call) Return(err error) *MockJ
 }
 
 func (_c *MockJournalEntryRepository_MarkReversed_Call) RunAndReturn(run func(ctx context.Context, req journalentryports.MarkJournalEntryReversedRequest) error) *MockJournalEntryRepository_MarkReversed_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// SelectOptions provides a mock function for the type MockJournalEntryRepository
+func (_mock *MockJournalEntryRepository) SelectOptions(ctx context.Context, req *journalentryports.JournalEntrySelectOptionsRequest) (*pagination.ListResult[*journalentry.JournalEntry], error) {
+	ret := _mock.Called(ctx, req)
+
+	if len(ret) == 0 {
+		panic("no return value specified for SelectOptions")
+	}
+
+	var r0 *pagination.ListResult[*journalentry.JournalEntry]
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *journalentryports.JournalEntrySelectOptionsRequest) (*pagination.ListResult[*journalentry.JournalEntry], error)); ok {
+		return returnFunc(ctx, req)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *journalentryports.JournalEntrySelectOptionsRequest) *pagination.ListResult[*journalentry.JournalEntry]); ok {
+		r0 = returnFunc(ctx, req)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*pagination.ListResult[*journalentry.JournalEntry])
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, *journalentryports.JournalEntrySelectOptionsRequest) error); ok {
+		r1 = returnFunc(ctx, req)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockJournalEntryRepository_SelectOptions_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'SelectOptions'
+type MockJournalEntryRepository_SelectOptions_Call struct {
+	*mock.Call
+}
+
+// SelectOptions is a helper method to define mock.On call
+//   - ctx context.Context
+//   - req *journalentryports.JournalEntrySelectOptionsRequest
+func (_e *MockJournalEntryRepository_Expecter) SelectOptions(ctx any, req any) *MockJournalEntryRepository_SelectOptions_Call {
+	return &MockJournalEntryRepository_SelectOptions_Call{Call: _e.mock.On("SelectOptions", ctx, req)}
+}
+
+func (_c *MockJournalEntryRepository_SelectOptions_Call) Run(run func(ctx context.Context, req *journalentryports.JournalEntrySelectOptionsRequest)) *MockJournalEntryRepository_SelectOptions_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 *journalentryports.JournalEntrySelectOptionsRequest
+		if args[1] != nil {
+			arg1 = args[1].(*journalentryports.JournalEntrySelectOptionsRequest)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockJournalEntryRepository_SelectOptions_Call) Return(listResult *pagination.ListResult[*journalentry.JournalEntry], err error) *MockJournalEntryRepository_SelectOptions_Call {
+	_c.Call.Return(listResult, err)
+	return _c
+}
+
+func (_c *MockJournalEntryRepository_SelectOptions_Call) RunAndReturn(run func(ctx context.Context, req *journalentryports.JournalEntrySelectOptionsRequest) (*pagination.ListResult[*journalentry.JournalEntry], error)) *MockJournalEntryRepository_SelectOptions_Call {
 	_c.Call.Return(run)
 	return _c
 }

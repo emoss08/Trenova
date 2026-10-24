@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/buncolgen/journalentrycol"
 
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
@@ -193,7 +194,71 @@ func (r *repository) GetByID(
 	})
 }
 
-//
+func (r *repository) GetByIDs(
+	ctx context.Context,
+	req journalentryports.GetJournalEntriesByIDsRequest,
+) ([]*journalentry.JournalEntry, error) {
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*journalentry.JournalEntry, error) {
+		cols := journalentrycol.JournalEntryColumns
+		entries := make([]*journalentry.JournalEntry, 0, len(req.IDs))
+		err := r.db.DBForContext(ctx).
+			NewSelect().
+			Model(&entries).
+			Apply(journalentrycol.JournalEntryApplyTenant(req.TenantInfo)).
+			Where(cols.ID.In(), bun.List(req.IDs)).
+			Scan(ctx)
+		if err != nil {
+			return nil, fmt.Errorf("get journal entries by ids: %w", err)
+		}
+
+		return entries, nil
+	})
+}
+
+func (r *repository) SelectOptions(
+	ctx context.Context,
+	req *journalentryports.JournalEntrySelectOptionsRequest,
+) (*pagination.ListResult[*journalentry.JournalEntry], error) {
+	return dbtx.Read(
+		ctx,
+		r.db,
+		func(ctx context.Context) (*pagination.ListResult[*journalentry.JournalEntry], error) {
+			cols := journalentrycol.JournalEntryColumns
+			return dbhelper.SelectOptions[*journalentry.JournalEntry](
+				ctx,
+				r.db.DBForContext(ctx),
+				req.SelectQueryRequest,
+				&dbhelper.SelectOptionsConfig{
+					ColumnRefs: []buncolgen.Column{
+						cols.ID,
+						cols.OrganizationID,
+						cols.BusinessUnitID,
+						cols.FiscalPeriodID,
+						cols.EntryNumber,
+						cols.EntryType,
+						cols.Status,
+						cols.AccountingDate,
+						cols.CreatedAt,
+					},
+					OrgColumnRef:     &cols.OrganizationID,
+					BuColumnRef:      &cols.BusinessUnitID,
+					SearchColumnRefs: []buncolgen.Column{cols.EntryNumber},
+					EntityName:       "JournalEntry",
+					QueryModifier: func(q *bun.SelectQuery) *bun.SelectQuery {
+						if req.ReversibleOnly {
+							q = q.Where(cols.Status.Eq(), journalentry.StatusPosted).
+								Where(cols.IsPosted.IsTrue()).
+								Where(cols.IsReversal.IsFalse()).
+								Where(cols.ReversedByID.IsNull())
+						}
+						return q.Order(cols.AccountingDate.OrderDesc(), cols.ID.OrderDesc())
+					},
+				},
+			)
+		},
+	)
+}
+
 //nolint:gocritic // repository contract uses value request types
 func (r *repository) MarkReversed(
 	ctx context.Context,

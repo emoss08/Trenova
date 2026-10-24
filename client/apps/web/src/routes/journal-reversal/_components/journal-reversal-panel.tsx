@@ -165,14 +165,16 @@ function ReversalDetailPanel({
       open={open}
       onOpenChange={onOpenChange}
       title={t("Journal reversal")}
-      description={t("Reversal for entry {0}", reversal.originalJournalEntryId)}
+      description={t("Reversal for entry {0}", reversal.originalJournalEntry.entryNumber)}
       headerActions={<AccountingStatusBadge status={reversal.status} />}
     >
       <div className="flex flex-col gap-6">
         <dl className="grid grid-cols-2 gap-x-4 gap-y-3 text-sm">
           <div>
             <dt className="text-2xs text-muted-foreground font-medium">{t("Original entry")}</dt>
-            <dd className="mt-0.5 font-mono text-xs">{reversal.originalJournalEntryId}</dd>
+            <dd className="mt-0.5 font-mono text-xs">
+              {reversal.originalJournalEntry.entryNumber}
+            </dd>
           </div>
           <div>
             <dt className="text-2xs text-muted-foreground font-medium">{t("Reason code")}</dt>
@@ -182,10 +184,12 @@ function ReversalDetailPanel({
             <dt className="text-2xs text-muted-foreground font-medium">{t("Reason")}</dt>
             <dd className="mt-0.5 text-xs">{reversal.reasonText}</dd>
           </div>
-          {reversal.reversalJournalEntryId ? (
+          {reversal.reversalJournalEntry ? (
             <div>
               <dt className="text-2xs text-muted-foreground font-medium">{t("Reversal entry")}</dt>
-              <dd className="mt-0.5 font-mono text-xs">{reversal.reversalJournalEntryId}</dd>
+              <dd className="mt-0.5 font-mono text-xs">
+                {reversal.reversalJournalEntry.entryNumber}
+              </dd>
             </div>
           ) : null}
           {reversal.rejectionReason ? (

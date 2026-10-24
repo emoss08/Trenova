@@ -19713,7 +19713,15 @@ func init() {
 				FieldMapKey: "originalJournalEntryId",
 			},
 			{
+				Name:        "originalJournalEntry",
+				FieldMapKey: "originalJournalEntryId",
+			},
+			{
 				Name:        "reversalJournalEntryId",
+				FieldMapKey: "reversalJournalEntryId",
+			},
+			{
+				Name:        "reversalJournalEntry",
 				FieldMapKey: "reversalJournalEntryId",
 			},
 			{
