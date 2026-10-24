@@ -5,20 +5,27 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/emoss08/keel"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agent/agentdb"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation/conversationdb"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/document/documentdb"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/documentcontent/documentcontentdb"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/inboundmessage/inboundmessagedb"
+	"github.com/emoss08/trenova/pkg/dbscope"
+
+	"github.com/emoss08/trenova/internal/modules/agent/app/agentevalgate"
+	"github.com/emoss08/trenova/internal/modules/agent/app/retrievalservice"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/airetrieval"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/document"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/documentcontent"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/inboundmessage"
-	"github.com/emoss08/trenova/internal/modules/agent/app/agentevalgate"
-	"github.com/emoss08/trenova/internal/modules/agent/app/retrievalservice"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/testutil/seedtest"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/require"
-	"github.com/uptrace/bun"
 )
 
 type Corpus struct {
@@ -101,7 +108,7 @@ func DocumentFor(
 	return &agentports.RetrievalDocumentSource{Document: doc, Content: content, Pages: pages}
 }
 
-func SeedDocuments(t *testing.T, ctx context.Context, db bun.IDB, seed DocumentSeed) *Corpus {
+func SeedDocuments(t *testing.T, ctx context.Context, db *keel.DB, seed DocumentSeed) *Corpus {
 	t.Helper()
 
 	corpus := newCorpus(seed.Tenant, len(seed.Items))
@@ -115,14 +122,14 @@ func SeedDocuments(t *testing.T, ctx context.Context, db bun.IDB, seed DocumentS
 			doc.ResourceID = seed.OwnerID.String()
 		}
 		doc.UploadedByID = seed.UploadedByID
-		_, err := db.NewInsert().Model(doc).Exec(ctx)
+		err := documentdb.Documents.Create(tenantContext(ctx, seed.Tenant), db, doc)
 		require.NoError(t, err, item.Key)
 
 		content := source.Content
 		content.DocumentID = doc.ID
 		content.OrganizationID = seed.Tenant.OrgID
 		content.BusinessUnitID = seed.Tenant.BuID
-		_, err = db.NewInsert().Model(content).Exec(ctx)
+		err = documentcontentdb.Contents.Create(tenantContext(ctx, seed.Tenant), db, content)
 		require.NoError(t, err, item.Key)
 
 		for _, page := range source.Pages {
@@ -132,7 +139,7 @@ func SeedDocuments(t *testing.T, ctx context.Context, db bun.IDB, seed DocumentS
 			page.BusinessUnitID = seed.Tenant.BuID
 		}
 		if len(source.Pages) > 0 {
-			_, err = db.NewInsert().Model(&source.Pages).Exec(ctx)
+			err = documentcontentdb.Pages.CreateMany(tenantContext(ctx, seed.Tenant), db, source.Pages)
 			require.NoError(t, err, item.Key)
 		}
 
@@ -145,31 +152,24 @@ func SeedDocuments(t *testing.T, ctx context.Context, db bun.IDB, seed DocumentS
 func SeedColleague(
 	t *testing.T,
 	ctx context.Context,
-	db bun.IDB,
+	db *keel.DB,
 	tenant pagination.TenantInfo,
 ) pulid.ID {
 	t.Helper()
 
 	id := strings.ToLower(pulid.MustNew("usr_").String())
 	marker := "c" + id[len(id)-12:]
-	var colleague pulid.ID
-	require.NoError(t, db.RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
-		colleague = seedtest.NewUser(tenant.OrgID, tenant.BuID).
-			WithName("Colleague").
-			WithUsername(marker).
-			WithEmail(marker+"@example.com").
-			Build(t, ctx, tx).ID
-
-		return nil
-	}))
-
-	return colleague
+	return seedtest.NewUser(tenant.OrgID, tenant.BuID).
+		WithName("Colleague").
+		WithUsername(marker).
+		WithEmail(marker+"@example.com").
+		Build(t, ctx, db).ID
 }
 
 func SeedConversation(
 	t *testing.T,
 	ctx context.Context,
-	db bun.IDB,
+	db *keel.DB,
 	tenant pagination.TenantInfo,
 	userID pulid.ID,
 ) pulid.ID {
@@ -184,7 +184,7 @@ func SeedConversation(
 		Status:            conversation.ThreadStatusActive,
 		Origin:            conversation.ThreadOriginPanel,
 	}
-	_, err := db.NewInsert().Model(thread).Exec(ctx)
+	err := conversationdb.Threads.Create(tenantContext(ctx, tenant), db, thread)
 	require.NoError(t, err)
 
 	return thread.ID
@@ -205,7 +205,7 @@ func structuredFields(fields []string) map[string]any {
 func SeedMailbox(
 	t *testing.T,
 	ctx context.Context,
-	db bun.IDB,
+	db *keel.DB,
 	tenant pagination.TenantInfo,
 ) pulid.ID {
 	t.Helper()
@@ -219,7 +219,7 @@ func SeedMailbox(
 		TokenHash:      pulid.MustNew("tok_").String(),
 		ReviewPolicy:   inboundmessage.ReviewAlways,
 	}
-	_, err := db.NewInsert().Model(mailbox).Exec(ctx)
+	err := inboundmessagedb.Mailboxes.Create(tenantContext(ctx, tenant), db, mailbox)
 	require.NoError(t, err)
 
 	return mailbox.ID
@@ -242,7 +242,7 @@ func MessageFor(item agentevalgate.RetrievalItem) *inboundmessage.InboundMessage
 	}
 }
 
-func SeedMessages(t *testing.T, ctx context.Context, db bun.IDB, seed MessageSeed) *Corpus {
+func SeedMessages(t *testing.T, ctx context.Context, db *keel.DB, seed MessageSeed) *Corpus {
 	t.Helper()
 
 	corpus := newCorpus(seed.Tenant, len(seed.Items))
@@ -252,7 +252,7 @@ func SeedMessages(t *testing.T, ctx context.Context, db bun.IDB, seed MessageSee
 		message.BusinessUnitID = seed.Tenant.BuID
 		message.MailboxID = seed.MailboxID
 		message.ReceivedAt = int64(1_790_000_000 + idx*60)
-		_, err := db.NewInsert().Model(message).Exec(ctx)
+		err := inboundmessagedb.InboundMessages.Create(tenantContext(ctx, seed.Tenant), db, message)
 		require.NoError(t, err, item.Key)
 
 		corpus.add(item.Key, message.ID)
@@ -281,7 +281,7 @@ func MemoryFor(item agentevalgate.RetrievalItem) *agent.Memory {
 	}
 }
 
-func SeedMemories(t *testing.T, ctx context.Context, db bun.IDB, seed MemorySeed) *Corpus {
+func SeedMemories(t *testing.T, ctx context.Context, db *keel.DB, seed MemorySeed) *Corpus {
 	t.Helper()
 
 	corpus := newCorpus(seed.Tenant, len(seed.Items))
@@ -300,7 +300,7 @@ func SeedMemories(t *testing.T, ctx context.Context, db bun.IDB, seed MemorySeed
 			definitionID := seed.AgentDefinitionID
 			memory.AgentDefinitionID = &definitionID
 		}
-		_, err := db.NewInsert().Model(memory).Exec(ctx)
+		err := agentdb.Memories.Create(tenantContext(ctx, seed.Tenant), db, memory)
 		require.NoError(t, err, item.Key)
 
 		corpus.add(item.Key, memory.ID)
@@ -398,4 +398,8 @@ func chunkSources(
 	require.Len(t, chunks, len(ids), "every seeded source reads back")
 
 	return chunks
+}
+
+func tenantContext(ctx context.Context, tenant pagination.TenantInfo) context.Context {
+	return dbscope.WithTenant(ctx, tenant.DBTenant())
 }

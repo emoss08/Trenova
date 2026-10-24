@@ -8,7 +8,6 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/stretchr/testify/require"
-	"github.com/uptrace/bun"
 )
 
 type TxLockHandle struct {
@@ -21,7 +20,7 @@ func HoldTxLock(
 	t *testing.T,
 	conn *postgres.Connection,
 	opts kernelports.TxOptions,
-	fn func(context.Context, bun.Tx) error,
+	fn func(context.Context) error,
 ) *TxLockHandle {
 	t.Helper()
 
@@ -32,8 +31,8 @@ func HoldTxLock(
 	}
 
 	go func() {
-		err := conn.WithTx(context.Background(), opts, func(ctx context.Context, tx bun.Tx) error {
-			if err := fn(ctx, tx); err != nil {
+		err := conn.Transact(context.Background(), opts, func(ctx context.Context) error {
+			if err := fn(ctx); err != nil {
 				return err
 			}
 
