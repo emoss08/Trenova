@@ -6,7 +6,10 @@ follows. This page is what the guide leaves open, decided for Trenova.
 
 ## Code
 
-- **No comments.** Names carry the meaning. A doc in `docs/engineering/` carries the why.
+- **No comments.** Names carry the meaning. A doc in `docs/engineering/` carries the why. The one
+  exception is data: the doc comment of a reportable keel model (its table tag carries
+  `report=`) and of its fields is the report catalog's description of the entity and the field,
+  which keel gen reads and the builder and the assistant show.
 - **JSON is `sonic`.** `encoding/json` is forbidden by lint.
 - **Errors** wrap with `fmt.Errorf("…: %w", err)` or are an `errortypes` error the caller is meant
   to see ([services.md](services.md#errors)). Never discard one; never log and return the same

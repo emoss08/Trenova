@@ -21,7 +21,7 @@ git status --porcelain -- internal/api/graphql/generated internal/api/graphql/gq
 
 go generate ./internal/infrastructure/database/seeder/...          # pkg/seedhelpers/seed_ids_gen.go
 go generate ./internal/api/graphql/projection/...                  # internal/api/graphql/projection/specs_gen.go
-go generate ./internal/infrastructure/database/reportcatalog/...   # pkg/reportcatalog/catalog_gen.go
+go generate ./internal/infrastructure/reportengine/...             # analytics.messages.json, client/packages/shared/src/generated/keel-analytics.ts
 go generate ./internal/modules/agent/app/agenttoolpolicy/safetydoc/...  # ../../docs/engineering/ai-tool-safety.md
 go generate ./internal/api/writecoverage/...                       # ../../docs/engineering/agent-write-coverage.md
 go run ./cmd/db migrate stamp -check                               # schema/version_gen.go (task db-stamp)

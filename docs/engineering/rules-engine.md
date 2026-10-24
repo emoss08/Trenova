@@ -967,9 +967,15 @@ stay in Go, since they need the shipment and the database.
 
 ### Report formatting (`report.*`)
 
-Every place a report is shown (the builder preview, the result grid, CSV, PDF, the XLSX text
-fallback) renders values through the column's display contract (`reportfmt.Resolved`). Pinned
-by `testdata/report.json`.
+Every place a report is shown renders values through the column's display contract
+(`format.Resolved` in keel analytics). The browser (the builder preview, the result grid, the
+Desk) formats through this module; the server (CSV, PDF, XLSX, digests) through keel's `format`
+package. `testdata/report.json` pins both: the Rust tests run it here, and
+`TestServerFormattingMatchesTheBrowsersContract` (`internal/infrastructure/reporting/render`)
+runs its typed cases against keel. Change a case and both hosts move together. The cells where
+keel still disagrees (the sign of a negative that rounds to zero, the space after a currency
+code, `CA$`, a number too large to read exactly) are listed in that test's `knownDivergences`;
+the test fails on any new disagreement and on a listed one that keel has since fixed.
 
 #### `report.format`
 
@@ -1039,7 +1045,7 @@ suffix`, or `nullText` when empty.
 Clock, compact and verbose use whole seconds. A negative duration is signed after the prefix and
 suffix are added.
 
-**Bands** (`reportfmt.Band`). The value of a banded cell is its range's lower bound. A fixed
+**Bands** (`format.Band`). The value of a banded cell is its range's lower bound. A fixed
 `width` gives `[value, value + width)`. Explicit `edges` give the range of the last edge at or
 below the value (a value below the first edge is in the first range), and the top range is
 open: "$5,000.00+". Both ends render through the column's display, with a trailing suffix written
@@ -1052,7 +1058,7 @@ column's values are compared times 100, so a threshold of 12 means 12%.
 #### `report.resolve`
 
 `{"columns": [{"type": "decimal", "hint": "money", "dateStyle"?, "band"?, "spec"?}]}` →
-`{"displays": [<resolved display>]}` (`reportfmt.Resolve`):
+`{"displays": [<resolved display>]}` (`format.Resolve` on the server):
 
 - **Baseline:** text, grouping on, USD, minus, standard notation, `dateTime`, `yesNo`, seconds,
   clock. `epoch` is date, `bool` is bool, `int` is a number with 0 places, `decimal` a number with
@@ -1093,14 +1099,11 @@ decimal.
 | Currency upper-casing | ASCII | Unicode | ASCII (Go) |
 
 **What replaces what.** `formatReportValue` and `reportValueTone` → `report.format`;
-`resolveReportDisplay` and the Go baseline and restyling → `report.resolve` (or `resolve` inside
-`report.format`), which `reportfmt.Resolve` now calls; `Resolved.String`, `ToneFor` and
-`bandLabel` → `report.format`, deleted from Go. They stay native:
+`resolveReportDisplay` → `report.resolve` (or `resolve` inside `report.format`). On the server,
+resolution and formatting are keel's (`format.Resolve`, `format.Formatter`). They stay native in
+the browser:
 
 - dates (Go time layouts; `formatReportDate` with `Intl` in the browser), fed by the `date` cells;
-- `reportfmt.ExcelFormat` (Go only; nothing in the browser writes XLSX number formats);
-- `Spec.Validate` and `Band.Validate`, which are save-time checks with developer messages;
-- `Band.IsWhole`, `IsLowest` and `Bounds`, which the query compiler and drill-through use;
 - `reportNumericValue` (float coercion for charts) and `isNumericDisplay` (a one-line style
   check for alignment).
 
@@ -1463,8 +1466,8 @@ level and every call reports it as `ErrUnavailable`.
 
 ### Go callers
 
-Every Go caller of the allocation, report and lane rules goes through a typed wrapper in
-`pkg/rules` (`allocation.go`, `report.go`, `lane.go`; Go calls no `matrix.*` operation, which
+Every Go caller of the allocation and lane rules goes through a typed wrapper in
+`pkg/rules` (`allocation.go`, `lane.go`; Go calls no `matrix.*` operation, which
 only the browser's matrix editor runs). The wrappers send decimals exactly (`decimal.Decimal` marshals as a JSON
 string), read output decimals back from strings, and check that the module answered for as many
 items as it was asked about. User-facing messages decode into `rules.Message`, whose arguments
@@ -1480,8 +1483,6 @@ down. No Go code computes these rules any more.
 | `rating/domain/rateagreement`: `ApplyLanes` | `lane.keys`, `lane.specificity` | save: every rule of the agreement, the amendment or the imported sheet |
 | `rating/domain/ratezone`: `RateZone.StampMembers`, through `rategeo.ScopeKeys` | `lane.keys` | zone save: every member |
 | `places/domain/rategeo`: `MatchLane` (from `rateengine.RateContext.LaneKeys` and `tariff.RecordSource.LaneZones`) | `lane.keys` | rating request: the bare ends' keys for zone membership, then the candidate lanes once the zones are known |
-| `pkg/reportfmt`: `Resolve` (from `workspace/app/reporting/compiler`) | `report.resolve` | report compile: every output column |
-| `pkg/reportfmt`: `Batch.Format`, `FormatRow` | `report.format` | chunk of up to `reportfmt.BatchRows` (500) rows across all columns |
 
 The allocation callers above them (invoice create, consolidate and reconciliation, the billing
 queue's preview, review, reassign and payer share, invoice adjustments, the charge allocation
@@ -1490,13 +1491,9 @@ service and the GraphQL shipment and charge allocation mappers) take a `context.
 return an error, and make one call per shipment, invoice or request, never one per charge.
 Storage-bound validation (`ValidateAllocations`, `TargetID`, grouping by charge) stays in Go.
 
-**Report rendering.** The CSV, PDF and XLSX renderers stream the dataset into a
-`reportfmt.Batch` and format each chunk of 500 rows in one call (`render.streamFormatted`); the
-totals row is one more call. The dashboard workbook formats each tile's rows and totals together,
-and the delivery email's digest formats its sample rows and totals in one call. A cell the module
-returns as `{date}` is written in Go with the column's date style in the report's zone, and a Go
-`time.Time` value never reaches the module. Each column's catalog type travels as `valueType`.
-A report of 100,000 rows makes 200 calls; the module's own work per call is linear in its cells.
+**Report rendering.** The CSV, PDF and XLSX renderers and the delivery digest format on the
+server with keel's `format` package, column by column over each batch; the module is not called
+from Go for reports.
 
 **Lanes on save.** `rateagreement.ApplyLanes` stamps `LaneKey` and `SpecificityScore` on a batch
 of rules before validation and before any insert: the service's create, update and amend plans,

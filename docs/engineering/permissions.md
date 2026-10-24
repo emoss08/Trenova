@@ -79,7 +79,7 @@ things. The engine lets a grant on the parent satisfy a check on the child
 (`Registry.GetEffectiveResource`, `engine.resolveResourcePermission`), so worker read is
 also read on a worker's credentials and timesheets. And `Registry.PartOf` treats a record
 of the child carried by one of its family as part of it rather than a linked record, so the
-GraphQL field guard, the REST response guard and the report catalog's `withinRecord` show
+GraphQL field guard, the REST response guard and the report policy's `withinRecord` kinds show
 it whole to whoever may read the carrier.
 
 Give a resource a parent only when everyone who may read the parent may read all of it.
@@ -124,7 +124,7 @@ other roles lose what they reached only through the parent until a bundle or a p
 grants it. `TestJobTemplates_KindsGrantedOnTheirOwn` holds every stock template's effective
 operations and scope on each of these kinds; a new template fails it until it has a row.
 
-`GetResourcePermissions`, which the report compiler, the report catalog, the agent dataset
+`GetResourcePermissions`, which the report policy (`reportaccess`, in one batch), the agent dataset
 tools and `GET /me/permissions/:resource` read, reports a kind's own grant together with the
 operations its parent's grant implies, with the scope the engine applies to a read
 (`resourcedetail.go`). `TestGetResourcePermissions_AgreesWithCheckOnEveryKind` holds it to
@@ -498,7 +498,7 @@ its carrier assignment's pay) is not gated: each figure is the working number of
 | Dispatch control | `tenderCounterMarginFloorPercent` | `dispatchcontrol.WithholdFields`/`KeepFields` |
 | Rate quotes and shopping (REST) | a quote's `costAmount`, `marginAmount`, `marginPercent` and trace totals; an option's margin verdict; the shop's `sellTotal`; ranking by `BestMargin` (refused) | `ratequote.RateQuote` and `ShopOption`/`ShopResult.WithholdFields`, `ratequoteports.AuthorizeShopStrategy` |
 | Carrier assignment | the margin floor refusal names no figure | `carrierassignmentservice.enforceMarginFloor` |
-| Reports, exports and dashboards | rate quote `costAmount`, `marginAmount`, `marginPercent`, rate agreement margins | `protected: Margins` in `reportcatalog.yml` |
+| Reports, exports and dashboards | rate quote `costAmount`, `marginAmount`, `marginPercent`, rate agreement margins | `permission.ProtectedPaths`, applied by `reportaccess.Resolver.Protection` |
 | Agent tools | `carrier_shop` margins, sell total and `BestMargin`; `rate_explain` margin | `fieldAccess.groups`, held to the agent's data access |
 | Audit trail | every field above in an entry's previous and current state and its changes | `permission.ProtectedPaths`, `audit.Entry.WithholdFields` at read time |
 

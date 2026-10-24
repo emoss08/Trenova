@@ -260,8 +260,9 @@ as the Temporal runtime, `m2msync`, and the storage and search clients.
 3. Regenerate the column helpers with `task generate-columns`. The generator reads every
    `internal/modules/*/domain/*` package and writes one package per domain package,
    `pkg/buncolgen/<domain>col`. Repositories import that package (`shipmentcol.ShipmentColumns`),
-   not `pkg/buncolgen` itself, so a column change recompiles only the repositories that use it. If the entity is reportable, run
-   `task generate-reportcatalog`; it reads the same directories.
+   not `pkg/buncolgen` itself, so a column change recompiles only the repositories that use it. If the entity is reportable, tag
+   its table `report=<Category>`, run `task keel-gen`, add its kind to
+   `reportaccess/kinds.go` and run `go generate ./internal/infrastructure/reportengine/...`.
 4. Add its ports, repository and service as below.
 
 ### A port
