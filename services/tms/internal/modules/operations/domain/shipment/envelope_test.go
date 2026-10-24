@@ -3,8 +3,8 @@ package shipment_test
 import (
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/reference/domain/commodity"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/reference/domain/commodity"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )

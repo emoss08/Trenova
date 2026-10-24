@@ -1,4 +1,4 @@
-package bunmarshal
+package columnmap
 
 import (
 	"errors"
@@ -10,8 +10,6 @@ import (
 	"github.com/bytedance/sonic"
 )
 
-// UnmarshalMap decodes a snake_case Bun-shaped map into a struct that uses JSON tags.
-//
 //nolint:govet // existing scoped variable reuse is local and behavior-preserving
 func UnmarshalMap(input map[string]any, target any) error {
 	if target == nil {
@@ -75,14 +73,15 @@ func fieldMappings(targetType reflect.Type) map[string]string {
 			continue
 		}
 
-		bunName := parseTagName(field.Tag.Get("bun"))
+		column := parseTagName(field.Tag.Get("keel"))
 		jsonName := parseTagName(field.Tag.Get("json"))
 
-		if bunName == "" || bunName == "-" || jsonName == "" || jsonName == "-" {
+		if column == "" || column == "-" || jsonName == "" || jsonName == "-" ||
+			strings.Contains(column, ":") {
 			continue
 		}
 
-		fields[bunName] = jsonName
+		fields[column] = jsonName
 	}
 
 	return fields

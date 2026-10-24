@@ -152,26 +152,8 @@ func (l *Location) GetPostgresSearchConfig() domaintypes.PostgresSearchConfig {
 			},
 		},
 		Relationships: []*domaintypes.RelationshipDefintion{
-			{
-				Field:        "LocationCategory",
-				Type:         dbtype.RelationshipTypeBelongsTo,
-				TargetEntity: (*locationcategory.LocationCategory)(nil),
-				TargetTable:  "location_categories",
-				ForeignKey:   "location_category_id",
-				ReferenceKey: "id",
-				Alias:        "lc",
-				Queryable:    true,
-			},
-			{
-				Field:        "State",
-				Type:         dbtype.RelationshipTypeBelongsTo,
-				TargetEntity: (*usstate.UsState)(nil),
-				TargetTable:  "us_states",
-				ForeignKey:   "state_id",
-				ReferenceKey: "id",
-				Alias:        "s",
-				Queryable:    true,
-			},
+			{Field: "LocationCategory", Queryable: true},
+			{Field: "State", Queryable: true},
 		},
 	}
 }

@@ -11,7 +11,6 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/kernel/domain/usstate"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/customfield"
-	"github.com/emoss08/trenova/pkg/dbtype"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/domainvalidation"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -197,27 +196,8 @@ func (w *Worker) GetPostgresSearchConfig() domaintypes.PostgresSearchConfig {
 				Weight: domaintypes.SearchWeightB,
 			},
 		},
-		// Declaring the profile queryable is what lets the roster filter and
-		// sort on the HR roll-ups — compliance status, training health, safety
-		// rating, what expires next — through the same generic field/operator
-		// machinery every other list uses. Without it those columns can be
-		// displayed but never filtered, because the field map only ever
-		// carries the root table's own columns.
-		//
-		// The alias is deliberately not the model's own "wrkp": bun already
-		// joins worker_profiles when it eager-loads the relation, and giving
-		// the filter join its own name keeps the two from colliding.
 		Relationships: []*domaintypes.RelationshipDefintion{
-			{
-				Field:        "Profile",
-				Type:         dbtype.RelationshipTypeHasOne,
-				TargetEntity: (*WorkerProfile)(nil),
-				TargetTable:  "worker_profiles",
-				ForeignKey:   "worker_id",
-				ReferenceKey: "id",
-				Alias:        "wprof",
-				Queryable:    true,
-			},
+			{Field: "Profile", Queryable: true},
 		},
 	}
 }
@@ -234,11 +214,7 @@ func (w *Worker) GetResourceID() string {
 	return w.ID.String()
 }
 
-// AfterScanRow backfills WholeName when a query loads workers without the
-// whole_name generated column — bun omits scanonly fields from the column
-// lists it builds, so relation loads (e.g. assignment → primary worker) never
-// fetch it. Mirrors the column's generation expression.
-func (w *Worker) AfterScanRow(_ context.Context) error {
+func (w *Worker) AfterLoad(_ context.Context) error {
 	if w.WholeName == "" && (w.FirstName != "" || w.LastName != "") {
 		w.WholeName = strings.TrimSpace(w.FirstName + " " + w.LastName)
 	}
@@ -257,8 +233,4 @@ func (w *Worker) SamePartyDetails(other *Worker) bool {
 		w.City == other.City &&
 		w.StateID == other.StateID &&
 		w.PostalCode == other.PostalCode
-}
-
-func (w *Worker) AfterLoad(ctx context.Context) error {
-	return w.AfterScanRow(ctx)
 }

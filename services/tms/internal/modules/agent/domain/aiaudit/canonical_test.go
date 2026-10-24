@@ -1,7 +1,7 @@
 package aiaudit
 
 import (
-	"encoding/json" //nolint:depguard // the test decodes as bun does, with json.Number
+	"encoding/json" //nolint:depguard // the test decodes jsonb as keel does, with json.Number
 	"strings"
 	"testing"
 

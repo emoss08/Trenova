@@ -15,7 +15,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/parties/ports/customerports"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
-	"github.com/emoss08/trenova/pkg/bunmarshal"
+	"github.com/emoss08/trenova/pkg/columnmap"
 	"github.com/emoss08/trenova/pkg/readscope"
 	"github.com/emoss08/trenova/pkg/redishelpers"
 	"github.com/redis/go-redis/v9"
@@ -92,7 +92,7 @@ func NewWorkerCacheRepository(p WorkerCacheRepositoryParams) customerports.Worke
 			"worker-cache-repository",
 			permission.ResourceWorker,
 		),
-		usStateRepo:     p.UsStateRepo,
+		usStateRepo: p.UsStateRepo,
 	}
 }
 
@@ -106,7 +106,7 @@ func NewCustomerCacheRepository(
 			"customer-cache-repository",
 			permission.ResourceCustomer,
 		),
-		usStateRepo:     p.UsStateRepo,
+		usStateRepo: p.UsStateRepo,
 	}
 }
 
@@ -319,7 +319,7 @@ func getCachedEntity[T any](
 		}
 
 		entity := new(T)
-		if err := bunmarshal.UnmarshalMap(raw, entity); err != nil {
+		if err := columnmap.UnmarshalMap(raw, entity); err != nil {
 			base.logger.Warn(
 				"failed to decode cached entity",
 				zap.String("key", key),

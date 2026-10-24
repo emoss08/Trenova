@@ -198,62 +198,6 @@ func generateSQL(
 		tableName,
 		tableName,
 	)
-	if len(config.Relationships) > 0 {
-		fmt.Printf("-- 3. Relationship Indexes (only commonly queried relationships)\n")
-		fmt.Printf("-- Note: Only add these if you actually filter/join on these relationships\n")
-		for _, rel := range config.Relationships {
-			if !rel.Queryable {
-				continue
-			}
-
-			switch rel.Type {
-			case dbtype.RelationshipTypeBelongsTo:
-				fmt.Printf(
-					"-- Index for %s (belongs-to) - ADD ONLY if you JOIN or filter on this\n",
-					rel.Field,
-				)
-				fmt.Printf("-- CREATE INDEX IF NOT EXISTS idx_%s_%s ON \"%s\"(\"%s\");\n\n",
-					tableName, rel.ForeignKey, tableName, rel.ForeignKey)
-
-			case dbtype.RelationshipTypeHasOne, dbtype.RelationshipTypeHasMany:
-				fmt.Printf(
-					"-- Index for %s (%s) - UNCOMMENT only if you query from the reverse side\n",
-					rel.Field,
-					rel.Type,
-				)
-				fmt.Printf("-- CREATE INDEX IF NOT EXISTS idx_%s_%s ON \"%s\"(\"%s\");\n\n",
-					rel.TargetTable, rel.ForeignKey, rel.TargetTable, rel.ForeignKey)
-
-			case dbtype.RelationshipTypeManyToMany:
-				fmt.Printf(
-					"-- Indexes for %s (many-to-many) - IMPORTANT for M2M queries\n",
-					rel.Field,
-				)
-
-				fmt.Printf("-- Primary lookup index (from %s to %s)\n", tableName, rel.TargetTable)
-				fmt.Printf("CREATE INDEX IF NOT EXISTS idx_%s_%s ON \"%s\"(\"%s\");\n",
-					rel.JoinTable, rel.JoinTableSourceKey, rel.JoinTable, rel.JoinTableSourceKey)
-
-				fmt.Printf("-- Reverse lookup index (from %s to %s)\n", rel.TargetTable, tableName)
-				fmt.Printf("CREATE INDEX IF NOT EXISTS idx_%s_%s ON \"%s\"(\"%s\");\n",
-					rel.JoinTable, rel.JoinTableTargetKey, rel.JoinTable, rel.JoinTableTargetKey)
-
-				fmt.Printf(
-					"-- Optional: Composite index for covering index scans (uncomment if needed)\n",
-				)
-				fmt.Printf(
-					"-- CREATE INDEX IF NOT EXISTS idx_%s_%s_%s ON \"%s\"(\"%s\", \"%s\");\n\n",
-					rel.JoinTable,
-					rel.JoinTableSourceKey,
-					rel.JoinTableTargetKey,
-					rel.JoinTable,
-					rel.JoinTableSourceKey,
-					rel.JoinTableTargetKey,
-				)
-			}
-		}
-	}
-
 	var searchFields []string
 	for _, field := range config.SearchableFields {
 		if field.Type == domaintypes.FieldTypeText {

@@ -1,19 +1,19 @@
-package bunmarshal_test
+package columnmap_test
 
 import (
 	"testing"
 
-	"github.com/emoss08/trenova/pkg/bunmarshal"
+	"github.com/emoss08/trenova/pkg/columnmap"
 )
 
 func TestUnmarshalMap(t *testing.T) {
 	t.Parallel()
 
 	type testEntity struct {
-		ID             string `json:"id"`
-		BusinessUnitID string `json:"businessUnitId"`
-		OrganizationID string `json:"organizationId"`
-		CreatedAt      int64  `json:"createdAt"`
+		ID             string `json:"id"             keel:"id,pk"`
+		BusinessUnitID string `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
+		OrganizationID string `json:"organizationId" keel:"organization_id,pk,tenant"`
+		CreatedAt      int64  `json:"createdAt"      keel:"created_at,autocreate"`
 	}
 
 	input := map[string]any{
@@ -25,7 +25,7 @@ func TestUnmarshalMap(t *testing.T) {
 	}
 
 	entity := new(testEntity)
-	if err := bunmarshal.UnmarshalMap(input, entity); err != nil {
+	if err := columnmap.UnmarshalMap(input, entity); err != nil {
 		t.Fatalf("unmarshal map: %v", err)
 	}
 

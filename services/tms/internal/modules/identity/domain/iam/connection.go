@@ -1,23 +1,12 @@
 package iam
 
 import (
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
-	"github.com/emoss08/trenova/pkg/dbtype"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
 func activityUserRelationship() *domaintypes.RelationshipDefintion {
-	return &domaintypes.RelationshipDefintion{
-		Field:        "user",
-		Type:         dbtype.RelationshipTypeBelongsTo,
-		TargetEntity: (*tenant.User)(nil),
-		TargetTable:  "users",
-		ForeignKey:   "user_id",
-		ReferenceKey: "id",
-		Alias:        "usr",
-		Queryable:    true,
-	}
+	return &domaintypes.RelationshipDefintion{Field: "user", Queryable: true}
 }
 
 func (e *AuthEvent) GetID() pulid.ID {
@@ -40,7 +29,6 @@ func (e *AuthEvent) GetPostgresSearchConfig() domaintypes.PostgresSearchConfig {
 			{Name: "provider", Type: domaintypes.FieldTypeText, Weight: domaintypes.SearchWeightA},
 			{Name: "error_code", Type: domaintypes.FieldTypeText, Weight: domaintypes.SearchWeightB},
 		},
-		Relationships: []*domaintypes.RelationshipDefintion{activityUserRelationship()},
 	}
 }
 
@@ -63,7 +51,6 @@ func (d *RiskDecision) GetPostgresSearchConfig() domaintypes.PostgresSearchConfi
 		SearchableFields: []domaintypes.SearchableField{
 			{Name: "reason", Type: domaintypes.FieldTypeText, Weight: domaintypes.SearchWeightA},
 		},
-		Relationships: []*domaintypes.RelationshipDefintion{activityUserRelationship()},
 	}
 }
 
@@ -100,7 +87,6 @@ func (e *ExternalIdentity) GetPostgresSearchConfig() domaintypes.PostgresSearchC
 				Weight: domaintypes.SearchWeightC,
 			},
 		},
-		Relationships: []*domaintypes.RelationshipDefintion{activityUserRelationship()},
 	}
 }
 
@@ -123,7 +109,6 @@ func (a *MFAAuthenticator) GetPostgresSearchConfig() domaintypes.PostgresSearchC
 		SearchableFields: []domaintypes.SearchableField{
 			{Name: "name", Type: domaintypes.FieldTypeText, Weight: domaintypes.SearchWeightA},
 		},
-		Relationships: []*domaintypes.RelationshipDefintion{activityUserRelationship()},
 	}
 }
 

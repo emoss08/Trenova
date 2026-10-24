@@ -427,9 +427,8 @@ services:
   # code changed (trenova-db up): states, hazmat and IFTA reference data, each
   # organization's chart of accounts, document types and administrator
   # permissions, and the row-level security scope key. Unchanged seeds are
-  # skipped by fingerprint, so a restart does no seed work. A database Bun
-  # migrated is adopted on its first run. The API and worker refuse to serve
-  # until the schema reaches their version.
+  # skipped by fingerprint, so a restart does no seed work. The API and worker
+  # refuse to serve until the schema reaches their version.
   trenova-db:
     image: ghcr.io/emoss08/trenova/tms-db:${TRENOVA_VERSION:?set TRENOVA_VERSION in .env}
     command: ["up", "-env", "production"]

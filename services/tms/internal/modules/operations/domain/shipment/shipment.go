@@ -8,12 +8,10 @@ import (
 	"github.com/emoss08/trenova/internal/modules/equipment/domain/equipmenttype"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/customer"
-	"github.com/emoss08/trenova/internal/modules/places/domain/location"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/formulatemplate"
 	"github.com/emoss08/trenova/internal/modules/reference/domain/servicetype"
 	"github.com/emoss08/trenova/internal/modules/reference/domain/shipmenttype"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/customfield"
-	"github.com/emoss08/trenova/pkg/dbtype"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/domainvalidation"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -138,25 +136,29 @@ type Shipment struct {
 	CreatedAt    int64  `json:"createdAt" keel:"created_at,autocreate"`
 	UpdatedAt    int64  `json:"updatedAt" keel:"updated_at,autoupdate"`
 
-	BusinessUnit      *tenant.BusinessUnit             `json:"businessUnit,omitempty"`
-	Organization      *tenant.Organization             `json:"organization,omitempty"`
-	ShipmentType      *shipmenttype.ShipmentType       `json:"shipmentType,omitempty" keel:"belongs:shipment_type_id"`
-	ServiceType       *servicetype.ServiceType         `json:"serviceType,omitempty" keel:"belongs:service_type_id"`
-	Customer          *customer.Customer               `json:"customer,omitempty" keel:"belongs:customer_id"`
-	BillToCustomer    *customer.Customer               `json:"billToCustomer,omitempty" keel:"belongs:bill_to_customer_id"`
-	TractorType       *equipmenttype.EquipmentType     `json:"tractorType,omitempty" keel:"belongs:tractor_type_id,label=Tractor Equipment Type"`
-	TrailerType       *equipmenttype.EquipmentType     `json:"trailerType,omitempty" keel:"belongs:trailer_type_id,label=Trailer Equipment Type"`
-	CanceledBy        *tenant.User                     `json:"canceledBy,omitempty" keel:"belongs:canceled_by_id,noreport"`
-	Owner             *tenant.User                     `json:"owner,omitempty" keel:"belongs:owner_id,noreport"`
-	EnteredBy         *tenant.User                     `json:"enteredBy,omitempty" keel:"belongs:entered_by_id,noreport"`
-	FormulaTemplate   *formulatemplate.FormulaTemplate `json:"formulaTemplate,omitempty" keel:"belongs:formula_template_id,noreport"`
-	Moves             []*ShipmentMove                  `json:"moves,omitempty" keel:"many:shipment_id"`
-	Commodities       []*ShipmentCommodity             `json:"commodities,omitempty" keel:"many:shipment_id"`
-	AdditionalCharges []*AdditionalCharge              `json:"additionalCharges,omitempty" keel:"many:shipment_id,noreport"`
-	ChargeAllocations []*ChargeAllocation              `json:"chargeAllocations,omitempty" keel:"many:shipment_id,noreport"`
-	Comments          []*ShipmentComment               `json:"comments,omitempty" keel:"many:shipment_id,noreport"`
-	OriginStop        *Stop                            `json:"originStop,omitempty" keel:"pick:moves.stops,first=moves.sequence|stops.sequence"`
-	DestinationStop   *Stop                            `json:"destinationStop,omitempty" keel:"pick:moves.stops,last=moves.sequence|stops.sequence"`
+	BusinessUnit        *tenant.BusinessUnit             `json:"businessUnit,omitempty"`
+	Organization        *tenant.Organization             `json:"organization,omitempty"`
+	ShipmentType        *shipmenttype.ShipmentType       `json:"shipmentType,omitempty" keel:"belongs:shipment_type_id"`
+	ServiceType         *servicetype.ServiceType         `json:"serviceType,omitempty" keel:"belongs:service_type_id"`
+	Customer            *customer.Customer               `json:"customer,omitempty" keel:"belongs:customer_id"`
+	BillToCustomer      *customer.Customer               `json:"billToCustomer,omitempty" keel:"belongs:bill_to_customer_id"`
+	TractorType         *equipmenttype.EquipmentType     `json:"tractorType,omitempty" keel:"belongs:tractor_type_id,label=Tractor Equipment Type"`
+	TrailerType         *equipmenttype.EquipmentType     `json:"trailerType,omitempty" keel:"belongs:trailer_type_id,label=Trailer Equipment Type"`
+	CanceledBy          *tenant.User                     `json:"canceledBy,omitempty" keel:"belongs:canceled_by_id,noreport"`
+	Owner               *tenant.User                     `json:"owner,omitempty" keel:"belongs:owner_id,noreport"`
+	EnteredBy           *tenant.User                     `json:"enteredBy,omitempty" keel:"belongs:entered_by_id,noreport"`
+	FormulaTemplate     *formulatemplate.FormulaTemplate `json:"formulaTemplate,omitempty" keel:"belongs:formula_template_id,noreport"`
+	Moves               []*ShipmentMove                  `json:"moves,omitempty" keel:"many:shipment_id"`
+	Commodities         []*ShipmentCommodity             `json:"commodities,omitempty" keel:"many:shipment_id"`
+	AdditionalCharges   []*AdditionalCharge              `json:"additionalCharges,omitempty" keel:"many:shipment_id,noreport"`
+	ChargeAllocations   []*ChargeAllocation              `json:"chargeAllocations,omitempty" keel:"many:shipment_id,noreport"`
+	Comments            []*ShipmentComment               `json:"comments,omitempty" keel:"many:shipment_id,noreport"`
+	OriginStop          *Stop                            `json:"originStop,omitempty" keel:"pick:moves.stops,first=moves.sequence|stops.sequence"`
+	DestinationStop     *Stop                            `json:"destinationStop,omitempty" keel:"pick:moves.stops,last=moves.sequence|stops.sequence"`
+	FirstPickup         *Stop                            `json:"shipperStop,omitempty" keel:"pick:moves.stops,first=moves.sequence|stops.sequence,where=stops.type:Pickup;SplitPickup,noreport"`
+	LastDelivery        *Stop                            `json:"consigneeStop,omitempty" keel:"pick:moves.stops,last=moves.sequence|stops.sequence,where=stops.type:Delivery;SplitDelivery,noreport"`
+	PickupAppointment   *Stop                            `json:"pickupAppointment,omitempty" keel:"pick:moves.stops,first=moves.sequence|stops.sequence,where=stops.type:Pickup;SplitPickup|stops.schedule_type:Appointment,noreport"`
+	DeliveryAppointment *Stop                            `json:"deliveryAppointment,omitempty" keel:"pick:moves.stops,last=moves.sequence|stops.sequence,where=stops.type:Delivery;SplitDelivery|stops.schedule_type:Appointment,noreport"`
 }
 
 // PayerID is the customer the shipment's charges default to. An explicit
@@ -508,180 +510,13 @@ func (s *Shipment) GetPostgresSearchConfig() domaintypes.PostgresSearchConfig {
 			{Name: "bol", Type: domaintypes.FieldTypeText, Weight: domaintypes.SearchWeightA},
 		},
 		Relationships: []*domaintypes.RelationshipDefintion{
-			{
-				Field:        "customer",
-				Type:         dbtype.RelationshipTypeBelongsTo,
-				TargetEntity: (*customer.Customer)(nil),
-				TargetTable:  "customers",
-				ForeignKey:   "customer_id",
-				ReferenceKey: "id",
-				Alias:        "cus",
-				Queryable:    true,
-			},
-			{
-				Field:        "billToCustomer",
-				Type:         dbtype.RelationshipTypeBelongsTo,
-				TargetEntity: (*customer.Customer)(nil),
-				TargetTable:  "customers",
-				ForeignKey:   "bill_to_customer_id",
-				ReferenceKey: "id",
-				Alias:        "bill_cus",
-				Queryable:    true,
-			},
-			{
-				Field:        "originLocation",
-				Type:         dbtype.RelationshipTypeCustom,
-				TargetEntity: (*location.Location)(nil),
-				TargetTable:  "locations",
-				Alias:        "orig_loc",
-				Queryable:    true,
-				CustomJoinPath: []domaintypes.JoinStep{
-					{
-						Table:     "shipment_moves",
-						Alias:     "sm_orig",
-						Condition: "sp.id = sm_orig.shipment_id",
-						JoinType:  dbtype.JoinTypeLeft,
-					},
-					{
-						Table:     "stops",
-						Alias:     "stop_orig",
-						Condition: "sm_orig.id = stop_orig.shipment_move_id AND stop_orig.type = 'Pickup' AND stop_orig.sequence = 0",
-						JoinType:  dbtype.JoinTypeLeft,
-					},
-					{
-						Table:     "locations",
-						Alias:     "orig_loc",
-						Condition: "stop_orig.location_id = orig_loc.id",
-						JoinType:  dbtype.JoinTypeLeft,
-					},
-				},
-			},
-			{
-				Field:        "destinationLocation",
-				Type:         dbtype.RelationshipTypeCustom,
-				TargetEntity: (*location.Location)(nil),
-				TargetTable:  "locations",
-				Alias:        "dest_loc",
-				Queryable:    true,
-				CustomJoinPath: []domaintypes.JoinStep{
-					{
-						Table:     "shipment_moves",
-						Alias:     "sm_dest",
-						Condition: "sp.id = sm_dest.shipment_id AND sm_dest.sequence = (SELECT MAX(sm2.sequence) FROM shipment_moves AS sm2 WHERE sm2.shipment_id = sp.id)",
-						JoinType:  dbtype.JoinTypeLeft,
-					},
-					{
-						Table:     "stops",
-						Alias:     "stop_dest",
-						Condition: "sm_dest.id = stop_dest.shipment_move_id AND stop_dest.sequence = (SELECT MAX(stp2.sequence) FROM stops AS stp2 WHERE stp2.shipment_move_id = sm_dest.id)",
-						JoinType:  dbtype.JoinTypeLeft,
-					},
-					{
-						Table:     "locations",
-						Alias:     "dest_loc",
-						Condition: "stop_dest.location_id = dest_loc.id",
-						JoinType:  dbtype.JoinTypeLeft,
-					},
-				},
-			},
-			{
-				Field:        "pickupAppointment",
-				Type:         dbtype.RelationshipTypeCustom,
-				TargetEntity: (*Stop)(nil),
-				TargetTable:  "stops",
-				Alias:        "pickup_appt",
-				Queryable:    true,
-				CustomJoinPath: []domaintypes.JoinStep{
-					{
-						Table: "shipment_moves",
-						Alias: "sm_pickup_appt",
-						Condition: "sp.id = sm_pickup_appt.shipment_id AND sm_pickup_appt.sequence = " +
-							"(SELECT MIN(sm2.sequence) FROM shipment_moves AS sm2 WHERE sm2.shipment_id = sp.id)",
-						JoinType: dbtype.JoinTypeLeft,
-					},
-					{
-						Table: "stops",
-						Alias: "pickup_appt",
-						Condition: "sm_pickup_appt.id = pickup_appt.shipment_move_id " +
-							"AND pickup_appt.type IN ('Pickup', 'SplitPickup') " +
-							"AND pickup_appt.schedule_type = 'Appointment' AND pickup_appt.sequence = " +
-							"(SELECT MIN(stp2.sequence) FROM stops AS stp2 " +
-							"WHERE stp2.shipment_move_id = sm_pickup_appt.id " +
-							"AND stp2.type IN ('Pickup', 'SplitPickup'))",
-						JoinType: dbtype.JoinTypeLeft,
-					},
-				},
-			},
-			{
-				Field:        "deliveryAppointment",
-				Type:         dbtype.RelationshipTypeCustom,
-				TargetEntity: (*Stop)(nil),
-				TargetTable:  "stops",
-				Alias:        "delivery_appt",
-				Queryable:    true,
-				CustomJoinPath: []domaintypes.JoinStep{
-					{
-						Table: "shipment_moves",
-						Alias: "sm_delivery_appt",
-						Condition: "sp.id = sm_delivery_appt.shipment_id AND sm_delivery_appt.sequence = " +
-							"(SELECT MAX(sm2.sequence) FROM shipment_moves AS sm2 WHERE sm2.shipment_id = sp.id)",
-						JoinType: dbtype.JoinTypeLeft,
-					},
-					{
-						Table: "stops",
-						Alias: "delivery_appt",
-						Condition: "sm_delivery_appt.id = delivery_appt.shipment_move_id " +
-							"AND delivery_appt.type IN ('Delivery', 'SplitDelivery') " +
-							"AND delivery_appt.schedule_type = 'Appointment' AND delivery_appt.sequence = " +
-							"(SELECT MAX(stp2.sequence) FROM stops AS stp2 " +
-							"WHERE stp2.shipment_move_id = sm_delivery_appt.id " +
-							"AND stp2.type IN ('Delivery', 'SplitDelivery'))",
-						JoinType: dbtype.JoinTypeLeft,
-					},
-				},
-			},
-			{
-				Field:        ShipperStopRelationship,
-				Type:         dbtype.RelationshipTypeCustom,
-				TargetEntity: (*Stop)(nil),
-				TargetTable:  "stops",
-				Alias:        ShipperStopAlias,
-				Queryable:    true,
-				CustomJoinPath: []domaintypes.JoinStep{
-					{
-						Table:     "stops",
-						Alias:     ShipperStopAlias,
-						Condition: ShipperStopAlias + ".id = " + ShipperStopIDSQL("sp"),
-						JoinType:  dbtype.JoinTypeLeft,
-					},
-				},
-			},
-			{
-				Field:        ConsigneeStopRelationship,
-				Type:         dbtype.RelationshipTypeCustom,
-				TargetEntity: (*Stop)(nil),
-				TargetTable:  "stops",
-				Alias:        ConsigneeStopAlias,
-				Queryable:    true,
-				CustomJoinPath: []domaintypes.JoinStep{
-					{
-						Table:     "stops",
-						Alias:     ConsigneeStopAlias,
-						Condition: ConsigneeStopAlias + ".id = " + ConsigneeStopIDSQL("sp"),
-						JoinType:  dbtype.JoinTypeLeft,
-					},
-				},
-			},
-			{
-				Field:        "owner",
-				Type:         dbtype.RelationshipTypeBelongsTo,
-				TargetEntity: (*tenant.User)(nil),
-				TargetTable:  "users",
-				ForeignKey:   "owner_id",
-				ReferenceKey: "id",
-				Alias:        "own",
-				Queryable:    true,
-			},
+			{Field: "customer", Queryable: true},
+			{Field: "billToCustomer", Queryable: true},
+			{Field: ShipperStopRelationship, Queryable: true},
+			{Field: ConsigneeStopRelationship, Queryable: true},
+			{Field: "pickupAppointment", Queryable: true},
+			{Field: "deliveryAppointment", Queryable: true},
+			{Field: "owner", Queryable: true},
 		},
 	}
 }

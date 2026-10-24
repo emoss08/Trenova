@@ -48,8 +48,8 @@ func (t *testTruck) GetPostgresSearchConfig() domaintypes.PostgresSearchConfig {
 			{Name: "code", Type: domaintypes.FieldTypeText},
 		},
 		Relationships: []*domaintypes.RelationshipDefintion{
-			{Field: "Owner", Type: dbtype.RelationshipTypeBelongsTo, Queryable: true},
-			{Field: "loads", Type: dbtype.RelationshipTypeHasMany, Queryable: true},
+			{Field: "Owner", Queryable: true},
+			{Field: "loads", Queryable: true},
 		},
 	}
 }

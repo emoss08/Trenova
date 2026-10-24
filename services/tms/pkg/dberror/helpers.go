@@ -4,7 +4,6 @@ import (
 	"context"
 	"database/sql"
 	"errors"
-	"fmt"
 	"strings"
 	"sync"
 
@@ -14,8 +13,6 @@ import (
 	"github.com/jackc/pgerrcode"
 	"github.com/jackc/pgx/v5/pgconn"
 )
-
-var ErrCheckRowNil = errors.New("check rows affected: result is nil")
 
 type ConcurrencyEvent struct {
 	Kind   string
@@ -91,33 +88,6 @@ func CreateBulkVersionMismatchError(entityName string, entityIDs []pulid.ID) err
 	)
 }
 
-func CheckRowsAffected(result sql.Result, entityName, entityID string) error {
-	rows, err := rowsAffected(result)
-	if err != nil {
-		return err
-	}
-
-	return CheckAffected(rows, entityName, entityID)
-}
-
-func CheckFound(result sql.Result, entityName string) error {
-	rows, err := rowsAffected(result)
-	if err != nil {
-		return err
-	}
-
-	return CheckFoundCount(rows, entityName)
-}
-
-func CheckBulkRowsAffected(result sql.Result, entityName string, entityIDs []pulid.ID) error {
-	rows, err := rowsAffected(result)
-	if err != nil {
-		return err
-	}
-
-	return CheckBulkAffected(rows, entityName, entityIDs)
-}
-
 func CheckAffected(rows int64, entityName, entityID string) error {
 	if rows == 0 {
 		return CreateVersionMismatchError(entityName, entityID)
@@ -140,19 +110,6 @@ func CheckBulkAffected(rows int64, entityName string, entityIDs []pulid.ID) erro
 	}
 
 	return nil
-}
-
-func rowsAffected(result sql.Result) (int64, error) {
-	if result == nil {
-		return 0, ErrCheckRowNil
-	}
-
-	rows, err := result.RowsAffected()
-	if err != nil {
-		return 0, fmt.Errorf("get rows affected: %w", err)
-	}
-
-	return rows, nil
 }
 
 func IsConstraintViolation(err error) bool {

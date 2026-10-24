@@ -285,9 +285,6 @@ func TestCopyShipmentGraph_HonorsFieldPlan(t *testing.T) {
 var keelRelationKinds = []string{"belongs:", "one:", "many:", "m2m:", "pick:"}
 
 func isRelationField(field reflect.StructField) bool {
-	if strings.HasPrefix(field.Tag.Get("bun"), "rel:") {
-		return true
-	}
 	keelTag := field.Tag.Get("keel")
 	for _, kind := range keelRelationKinds {
 		if strings.HasPrefix(keelTag, kind) {

@@ -85,16 +85,7 @@ func (m *SCIMGroupRoleMapping) GetPostgresSearchConfig() domaintypes.PostgresSea
 			},
 		},
 		Relationships: []*domaintypes.RelationshipDefintion{
-			{
-				Field:        "role",
-				Type:         dbtype.RelationshipTypeBelongsTo,
-				TargetEntity: (*permission.Role)(nil),
-				TargetTable:  "roles",
-				ForeignKey:   "role_id",
-				ReferenceKey: "id",
-				Alias:        "r",
-				Queryable:    true,
-			},
+			{Field: "role", Queryable: true},
 		},
 	}
 }

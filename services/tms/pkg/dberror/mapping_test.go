@@ -1,7 +1,6 @@
 package dberror
 
 import (
-	"database/sql"
 	"errors"
 	"fmt"
 	"testing"
@@ -30,7 +29,7 @@ func pgError(code, constraint string) *pgconn.PgError {
 	return &pgconn.PgError{Code: code, ConstraintName: constraint, Message: "violation"}
 }
 
-func TestMapGivesKeelErrorsTheSameResultAsBunErrors(t *testing.T) {
+func TestMapTurnsKeelAndPostgresErrorsIntoTheCallersErrors(t *testing.T) {
 	t.Parallel()
 
 	unique := pgError(pgerrcode.UniqueViolation, "idx_commodities_name")
@@ -38,13 +37,11 @@ func TestMapGivesKeelErrorsTheSameResultAsBunErrors(t *testing.T) {
 
 	tests := []struct {
 		name string
-		bun  error
 		keel error
 		want error
 	}{
 		{
 			name: "not found carries the entity name",
-			bun:  HandleNotFoundError(sql.ErrNoRows, parityMapping.Entity),
 			keel: fmt.Errorf("commodities: %w", keel.ErrNotFound),
 			want: errortypes.NewNotFoundError(
 				"{0} not found within your organization", "Commodity",
@@ -52,13 +49,11 @@ func TestMapGivesKeelErrorsTheSameResultAsBunErrors(t *testing.T) {
 		},
 		{
 			name: "optimistic lock conflict is a version mismatch on the entity",
-			bun:  CheckAffected(0, parityMapping.Entity, parityID),
 			keel: &keel.ConflictError{Table: "commodities", Version: 3},
 			want: CreateVersionMismatchError(parityMapping.Entity, parityID),
 		},
 		{
 			name: "unique violation names the request field",
-			bun:  fmt.Errorf("insert: %w", unique),
 			keel: unique,
 			want: errortypes.NewValidationError(
 				"name", errortypes.ErrDuplicate, "Commodity with this name already exists",
@@ -66,7 +61,6 @@ func TestMapGivesKeelErrorsTheSameResultAsBunErrors(t *testing.T) {
 		},
 		{
 			name: "foreign key violation names the request field",
-			bun:  fmt.Errorf("insert: %w", foreignKey),
 			keel: foreignKey,
 			want: errortypes.NewValidationError(
 				"hazardousMaterialId", errortypes.ErrInvalidReference, "Hazardous material does not exist",
@@ -78,11 +72,7 @@ func TestMapGivesKeelErrorsTheSameResultAsBunErrors(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
-			fromBun := parityMapping.Map(tt.bun, parityID)
-			fromKeel := parityMapping.Map(tt.keel, parityID)
-
-			assert.Equal(t, tt.want, fromBun)
-			assert.Equal(t, tt.want, fromKeel)
+			assert.Equal(t, tt.want, parityMapping.Map(tt.keel, parityID))
 		})
 	}
 }
@@ -127,19 +117,11 @@ func TestHandleVersionConflict(t *testing.T) {
 	assert.Same(t, other, HandleVersionConflict(other, "Shipment", "shp_1"))
 }
 
-func TestCountCheckersMatchTheResultCheckers(t *testing.T) {
+func TestCountCheckers(t *testing.T) {
 	t.Parallel()
 
-	assert.Equal(
-		t,
-		CheckRowsAffected(&mockResult{rowsAffected: 0}, "Shipment", "shp_1"),
-		CheckAffected(0, "Shipment", "shp_1"),
-	)
-	assert.Equal(
-		t,
-		CheckFound(&mockResult{rowsAffected: 0}, "Shipment"),
-		CheckFoundCount(0, "Shipment"),
-	)
+	assert.Equal(t, CreateVersionMismatchError("Shipment", "shp_1"), CheckAffected(0, "Shipment", "shp_1"))
+	require.Error(t, CheckFoundCount(0, "Shipment"))
 	assert.NoError(t, CheckAffected(1, "Shipment", "shp_1"))
 	assert.NoError(t, CheckFoundCount(1, "Shipment"))
 	assert.NoError(t, CheckBulkAffected(2, "Shipment", nil))

@@ -140,14 +140,6 @@ func (ftv *FormulaTemplateVersion) GetPostgresSearchConfig() domaintypes.Postgre
 			{Name: "description", Type: domaintypes.FieldTypeText},
 			{Name: "status", Type: domaintypes.FieldTypeEnum},
 		},
-		Relationships: []*domaintypes.RelationshipDefintion{
-			{
-				Field:        "Template",
-				Type:         dbtype.RelationshipTypeBelongsTo,
-				TargetEntity: (*FormulaTemplate)(nil),
-				TargetTable:  "formula_templates",
-			},
-		},
 	}
 }
 

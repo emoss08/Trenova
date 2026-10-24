@@ -48,19 +48,6 @@ func rulesOf(findings []migrate.Finding) []string {
 	return out
 }
 
-func TestLintRefusesABunDirective(t *testing.T) {
-	t.Parallel()
-
-	findings := lintOne(
-		t,
-		"ALTER TABLE a ADD COLUMN b text;\n--bun:split\nALTER TABLE a ADD COLUMN c text;\n",
-	)
-
-	require.Len(t, findings, 1)
-	assert.Equal(t, RuleBunDirective, findings[0].Rule)
-	assert.Equal(t, migrate.SeverityError, findings[0].Severity)
-	assert.Equal(t, 2, findings[0].Line)
-}
 
 func TestLintWarnsAboutAReconcileCallTheRunMakesAnyway(t *testing.T) {
 	t.Parallel()

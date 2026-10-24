@@ -113,16 +113,7 @@ func (r *DocumentPacketRule) GetPostgresSearchConfig() domaintypes.PostgresSearc
 			},
 		},
 		Relationships: []*domaintypes.RelationshipDefintion{
-			{
-				Field:        "DocumentType",
-				Type:         dbtype.RelationshipTypeBelongsTo,
-				TargetEntity: (*documenttype.DocumentType)(nil),
-				TargetTable:  "document_types",
-				ForeignKey:   "document_type_id",
-				ReferenceKey: "id",
-				Alias:        "dt",
-				Queryable:    true,
-			},
+			{Field: "DocumentType", Queryable: true},
 		},
 	}
 }

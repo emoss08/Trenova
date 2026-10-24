@@ -303,33 +303,7 @@ func (u *User) GetPostgresSearchConfig() domaintypes.PostgresSearchConfig {
 			{Name: "status", Type: domaintypes.FieldTypeEnum, Weight: domaintypes.SearchWeightA},
 		},
 		Relationships: []*domaintypes.RelationshipDefintion{
-			{
-				Field:              "roles",
-				Type:               dbtype.RelationshipTypeManyToMany,
-				TargetEntity:       (*permission.Role)(nil),
-				TargetTable:        "roles",
-				ReferenceKey:       "id",
-				Alias:              "r",
-				Queryable:          true,
-				JoinTable:          "user_roles",
-				JoinTableAlias:     "ur",
-				JoinTableSourceKey: "user_id",
-				JoinTableTargetKey: "role_id",
-				CustomJoinPath: []domaintypes.JoinStep{
-					{
-						Table:     "user_roles",
-						Alias:     "ur",
-						Condition: "usr.id = ur.user_id",
-						JoinType:  dbtype.JoinTypeLeft,
-					},
-					{
-						Table:     "roles",
-						Alias:     "r",
-						Condition: "ur.role_id = r.id",
-						JoinType:  dbtype.JoinTypeLeft,
-					},
-				},
-			},
+			{Field: "roles", Queryable: true},
 		},
 	}
 }

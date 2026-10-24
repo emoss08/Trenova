@@ -188,9 +188,6 @@ linters:
         - gocognit
     perfsprint:
       strconcat: false
-    rowserrcheck:
-      packages:
-        - github.com/uptrace/bun
   exclusions:
     generated: lax
     presets:

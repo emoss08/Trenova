@@ -9,7 +9,6 @@ import (
 )
 
 const (
-	RuleBunDirective   = "bun-directive"
 	RuleReconcile      = "reconcile-automatic"
 	RuleNoTxIdempotent = "notx-idempotent"
 	RuleTenantRLS      = "tenant-rls"
@@ -28,7 +27,6 @@ var (
 
 func LintRules() []migrate.LintRule {
 	return []migrate.LintRule{
-		{Name: RuleBunDirective, Check: byPointer(checkBunDirective)},
 		{Name: RuleReconcile, Check: byPointer(checkReconcile)},
 		{Name: RuleNoTxIdempotent, Check: byPointer(checkNoTxIdempotent)},
 		{Name: RuleTenantRLS, Check: byPointer(checkTenantRLS)},
@@ -41,22 +39,6 @@ func byPointer(
 	return func(m migrate.Migration) []migrate.Finding {
 		return check(&m)
 	}
-}
-
-func checkBunDirective(m *migrate.Migration) []migrate.Finding {
-	var out []migrate.Finding
-	for i, line := range strings.Split(m.SQL, "\n") {
-		if strings.HasPrefix(strings.TrimSpace(line), "--bun:") {
-			out = append(out, migrate.Finding{
-				Line:     i + 1,
-				Severity: migrate.SeverityError,
-				Message: "keel does not read Bun directives: split a --keel:notx migration " +
-					"with --keel:split and leave a transactional one unsplit",
-			})
-		}
-	}
-
-	return out
 }
 
 func checkReconcile(m *migrate.Migration) []migrate.Finding {

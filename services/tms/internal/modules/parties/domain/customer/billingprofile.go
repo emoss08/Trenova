@@ -324,10 +324,6 @@ func (b *CustomerBillingProfile) AppliesFuelSurcharge() bool {
 		b.FuelSurchargeProgramID != nil && !b.FuelSurchargeProgramID.IsNil()
 }
 
-// NewDefaultBillingProfile is the profile a customer gets when one is not
-// supplied. Every billing automation it turns on is named here rather than left
-// to a column default: the fields below carry no bun default, so what this
-// constructor omits is stored false.
 func NewDefaultBillingProfile(orgID, buID, customerID pulid.ID) *CustomerBillingProfile {
 	return &CustomerBillingProfile{
 		OrganizationID:              orgID,

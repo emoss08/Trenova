@@ -32,7 +32,7 @@ const (
 const (
 	reportCatalogDTO    = "GraphQL report catalog manifest DTO"
 	reportPreviewDTO    = "GraphQL report preview DTO"
-	jsonbValueObject    = "GraphQL value object stored as JSONB without Bun projection metadata"
+	jsonbValueObject    = "GraphQL value object stored as JSONB without column projection metadata"
 	homeWidgetDTO       = "GraphQL home widget catalog DTO"
 	deskMemoryDTO       = "GraphQL Desk memory DTO built by its resolver"
 	shipmentWorkflowDTO = "GraphQL shipment workflow DTO"
@@ -65,7 +65,7 @@ var nonProjectionObjects = map[string]string{
 	"FuelIndexLatestPrice":            "GraphQL fuel dashboard DTO",
 	"FuelProgramCurrentRate":          "GraphQL fuel dashboard DTO",
 	"GeneratedFuelTableRow":           "GraphQL fuel table generator DTO",
-	"GeofenceVertex":                  "GraphQL value object without Bun projection metadata",
+	"GeofenceVertex":                  "GraphQL value object without column projection metadata",
 	"ShipmentFreightLine":             jsonbValueObject,
 	"ShipmentRatingSkip":              jsonbValueObject,
 	"ShipmentRatingReviewApproval":    jsonbValueObject,
@@ -103,30 +103,30 @@ var nonProjectionObjects = map[string]string{
 	"ShipmentLoadingRecommendation":   shipmentWorkflowDTO,
 	"ShipmentStopDivider":             shipmentWorkflowDTO,
 	// Assembled in Go from the documents table rather than stored; the parent
-	// field is bun:"-", so there is no column to project.
-	"ShipmentCommentAttachment": "GraphQL shipment comment DTO without Bun projection metadata",
-	"JournalEntry":              "GraphQL journal DTO without Bun projection metadata",
-	"JournalEntryLine":          "GraphQL journal DTO without Bun projection metadata",
-	"JournalBatch":              "GraphQL journal DTO without Bun projection metadata",
-	"ResolvedCategoryRate":      "GraphQL costing DTO without Bun projection metadata",
-	"FuelCostResolution":        "GraphQL costing DTO without Bun projection metadata",
-	"ResolvedCostProfile":       "GraphQL costing DTO without Bun projection metadata",
-	"CostCategoryGLAccountLink": "GraphQL costing DTO without Bun projection metadata",
-	"TelematicsFormFieldValue":  "GraphQL telematics form DTO without Bun projection metadata",
-	"TelematicsFormSubmission":  "GraphQL telematics form DTO without Bun projection metadata",
-	"TelematicsFormMapping":     "GraphQL telematics form DTO without Bun projection metadata",
-	"TelematicsFormMappingItem": "GraphQL telematics form DTO without Bun projection metadata",
+	// field is keel:"-", so there is no column to project.
+	"ShipmentCommentAttachment": "GraphQL shipment comment DTO without column projection metadata",
+	"JournalEntry":              "GraphQL journal DTO without column projection metadata",
+	"JournalEntryLine":          "GraphQL journal DTO without column projection metadata",
+	"JournalBatch":              "GraphQL journal DTO without column projection metadata",
+	"ResolvedCategoryRate":      "GraphQL costing DTO without column projection metadata",
+	"FuelCostResolution":        "GraphQL costing DTO without column projection metadata",
+	"ResolvedCostProfile":       "GraphQL costing DTO without column projection metadata",
+	"CostCategoryGLAccountLink": "GraphQL costing DTO without column projection metadata",
+	"TelematicsFormFieldValue":  "GraphQL telematics form DTO without column projection metadata",
+	"TelematicsFormSubmission":  "GraphQL telematics form DTO without column projection metadata",
+	"TelematicsFormMapping":     "GraphQL telematics form DTO without column projection metadata",
+	"TelematicsFormMappingItem": "GraphQL telematics form DTO without column projection metadata",
 	// Assembled in Go by unioning the worker and user rosters, so it maps to no
 	// single table and fuzzy matching would otherwise bind it to an unrelated one.
-	"PositionHolder": "GraphQL org structure DTO without Bun projection metadata",
+	"PositionHolder": "GraphQL org structure DTO without column projection metadata",
 	// Fuel and IFTA value objects: stored as JSONB on their parent, assembled in
 	// Go, or served straight from the domain, so none of them own a table.
-	"FuelPurchaseImportParsed":        "GraphQL fuel import DTO without Bun projection metadata",
-	"FuelPurchaseImportSummary":       "GraphQL fuel import DTO stored as JSONB without Bun projection metadata",
+	"FuelPurchaseImportParsed":        "GraphQL fuel import DTO without column projection metadata",
+	"FuelPurchaseImportSummary":       "GraphQL fuel import DTO stored as JSONB without column projection metadata",
 	"FuelImportTemplate":              "GraphQL fuel import template DTO",
-	"IFTAPeriod":                      "GraphQL IFTA period value object without Bun projection metadata",
-	"IFTAFleetMPG":                    "GraphQL IFTA value object stored as JSONB without Bun projection metadata",
-	"IFTAReturnProblem":               "GraphQL IFTA value object stored as JSONB without Bun projection metadata",
+	"IFTAPeriod":                      "GraphQL IFTA period value object without column projection metadata",
+	"IFTAFleetMPG":                    "GraphQL IFTA value object stored as JSONB without column projection metadata",
+	"IFTAReturnProblem":               "GraphQL IFTA value object stored as JSONB without column projection metadata",
 	"JurisdictionMilesBackfillResult": "GraphQL jurisdiction mileage backfill DTO",
 }
 
