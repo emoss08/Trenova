@@ -8,7 +8,6 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/observability/aitrace"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agentextension"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/codemode"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
@@ -122,16 +121,16 @@ func (s *Service) withoutScripts(
 	}
 	kept = slices.DeleteFunc(slices.Clone(held), isScriptRunner)
 	reached = beyond
-	if _, found := beyond[agentextension.ToolRunScript]; found {
+	if _, found := beyond[codemode.ToolRunScript]; found {
 		reached = maps.Clone(beyond)
-		delete(reached, agentextension.ToolRunScript)
+		delete(reached, codemode.ToolRunScript)
 	}
 
 	return kept, reached
 }
 
 func isScriptRunner(name string) bool {
-	return name == agentextension.ToolRunScript
+	return name == codemode.ToolRunScript
 }
 
 func scriptCompleted(data any) bool {

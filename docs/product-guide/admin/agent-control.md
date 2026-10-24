@@ -111,16 +111,14 @@ Keywords: advisor, advisor tool, Claude advisor, stronger model, Opus advisor, s
 
 ### Let a chat provider answer with a script
 Keywords: scripts, code mode, python script, read-only script, fan-out questions, reconciliation, many tool calls, scripts propose writes, batch of changes
-1. In [AI control](/admin/agent-control), select **Extensions**, open Data analysis from E2B and
-   turn on its read-only scripts setting. People whose role holds the code_mode permission can
-   then be answered with scripts.
-2. Open a provider that handles assistant chat in **Providers** and select **Edit connection**.
-3. Under **Scripts**, turn on **Scripts**. The provider's model may then answer fan-out,
+1. Open a provider that handles assistant chat in [AI control](/admin/agent-control),
+   **Providers**, and select **Edit connection**.
+2. Under **Scripts**, check that **Scripts** is on. The provider's model may then answer fan-out,
    reconciliation and report questions with one short read-only Python script instead of many
-   tool calls.
-4. To let those scripts prepare changes, also turn on **Scripts may propose writes**. It can be
+   tool calls. Turn it off to keep that provider's model to tool calls.
+3. To let those scripts prepare changes, also turn on **Scripts may propose writes**. It can be
    turned on only while **Scripts** is on, and turning **Scripts** off turns it off too.
-5. Select **Save changes**. Both are off by default.
+4. Select **Save changes**.
 
 ### Set up an embedding provider
 Keywords: embeddings, embedding model, semantic search, search by meaning, vector search, Voyage, Gemini embeddings, OpenAI embeddings, nomic-embed-text, retrieval
@@ -731,11 +729,12 @@ the refusal is recorded on the provider, the editor shows it under **Advisor** w
 message, the advisor, the model and when it happened, and calls go out without the advisor until
 the advisor, the model or the platform changes.
 
-A script runs in the organization's E2B sandbox with no network access, and the rows it reads
-are sent to E2B, as data analysis does. Every read a script makes goes through the same
-permissions as a normal tool call, and its sandbox time counts against the extension's daily
-limit. A provider's **Scripts** setting is only the provider's half: scripts also need the plan to
-include them, the E2B extension's read-only scripts setting and the code_mode permission. With
+A script runs inside Trenova in a sandboxed Python interpreter with no access to files or the
+network, so nothing it reads leaves Trenova and nothing about it is billed. Every read a script
+makes goes through the same permissions as a normal tool call. **Scripts** is on for every
+provider that handles assistant chat unless it is turned off; a person also needs the Read-only
+scripts permission, which the Desk bundle grants. **Scripts may propose writes** is off by
+default. With
 **Scripts may propose writes**, nothing a script prepares is ever done on its own: the changes are
 proposed as one batch a person approves, each change is checked again against the record when it
 is approved, and a script that read outside text cannot run anything.

@@ -733,7 +733,7 @@ export function ProviderEditor({
       label: t("Scripts"),
       note: t("Whether the model may answer with a short read-only script."),
       help: t(
-        "A script runs in your organization's E2B sandbox with no network access, and the rows it reads are sent to E2B, as data analysis does. It also needs Read-only scripts turned on in the E2B extension and the code_mode permission. Every read goes through the same permissions as a normal tool call, and sandbox time counts against the extension's daily limit.",
+        "A script runs inside Trenova in a sandboxed Python interpreter with no access to files or the network, and nothing it reads leaves Trenova. Every read goes through the same permissions as a normal tool call, and a person needs the Read-only scripts permission, which the Desk bundle grants.",
       ),
       keys: ["scripts", "scriptWrites"],
       content: <ScriptFields chatLabel={chatLabel} />,

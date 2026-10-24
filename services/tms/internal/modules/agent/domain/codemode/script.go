@@ -6,6 +6,20 @@ import (
 	"github.com/bytedance/sonic"
 )
 
+const (
+	ToolRunScript = "agent_run_script"
+	// The run-script tool's parameters a batch reads its origin back from.
+	ParamScriptTitle   = "title"
+	ParamScriptPurpose = "purpose"
+	ParamScriptCode    = "code"
+)
+
+type ScriptError struct {
+	Name      string `json:"name"`
+	Value     string `json:"value"`
+	Traceback string `json:"traceback,omitempty"`
+}
+
 type CallStatus string
 
 const (

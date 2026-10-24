@@ -5,7 +5,6 @@ import (
 	"slices"
 	"strings"
 
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agentextension"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/codemode"
 
 	"github.com/emoss08/trenova/internal/infrastructure/config"
@@ -649,13 +648,13 @@ func (t *Turn) dispatchCall(call *agentports.ToolCall, completionText string) Di
 // scriptPosition is how many calls to the script tool the turn has made up to
 // and including this one, zero for any other tool.
 func (t *Turn) scriptPosition(call *agentports.ToolCall) int {
-	if call.Name != agentextension.ToolRunScript {
+	if call.Name != codemode.ToolRunScript {
 		return 0
 	}
 	position := 0
 	for idx := range t.result.Messages {
 		for _, made := range t.result.Messages[idx].ToolCalls {
-			if made.Name != agentextension.ToolRunScript {
+			if made.Name != codemode.ToolRunScript {
 				continue
 			}
 			position++

@@ -3,7 +3,6 @@ package e2b_test
 import (
 	"context"
 	"encoding/base64"
-	"errors"
 	"io"
 	"net/http"
 	"net/http/httptest"
@@ -329,79 +328,5 @@ func TestRunCodeStopsAtItsTimeout(t *testing.T) {
 	session, err := client.Session(sandbox(), 50*time.Millisecond)
 	require.NoError(t, err)
 	_, err = session.RunCode(t.Context(), "import time; time.sleep(10)")
-	require.ErrorIs(t, err, context.DeadlineExceeded)
-}
-
-func TestRunCodeStreamHandsOutputOverAsItArrives(t *testing.T) {
-	t.Parallel()
-
-	release := make(chan struct{})
-	seen := make(chan string, 4)
-	client := newClient(t, func(w http.ResponseWriter, r *http.Request) {
-		assert.Equal(t, "/execute", r.URL.Path)
-		assert.Equal(t, "envd-token", r.Header.Get("X-Access-Token"))
-		assert.Equal(t, "traffic-token", r.Header.Get("E2B-Traffic-Access-Token"))
-		flusher, ok := w.(http.Flusher)
-		require.True(t, ok)
-		_, _ = w.Write([]byte(`{"type":"stdout","text":"frame-1\n"}` + "\n"))
-		flusher.Flush()
-		select {
-		case <-release:
-		case <-time.After(heldRequestLimit):
-		}
-		_, _ = w.Write([]byte(`{"type":"stdout","text":"kept\n"}` + "\n" +
-			`{"type":"end_of_execution"}` + "\n"))
-	})
-
-	session, err := client.Session(sandbox(), time.Minute)
-	require.NoError(t, err)
-
-	execution, err := session.RunCodeStream(t.Context(), "print(1)",
-		func(stream, text string) (string, error) {
-			seen <- text
-			if strings.HasPrefix(text, "frame-") {
-				close(release)
-				return "", nil
-			}
-			return text, nil
-		})
-	require.NoError(t, err)
-	assert.Equal(t, "frame-1\n", <-seen)
-	assert.Equal(t, "kept\n", <-seen)
-	assert.Equal(t, "kept\n", execution.Stdout)
-}
-
-func TestRunCodeStreamStopsWhenTheFilterRefuses(t *testing.T) {
-	t.Parallel()
-
-	client := newClient(t, func(w http.ResponseWriter, _ *http.Request) {
-		_, _ = w.Write([]byte(`{"type":"stdout","text":"too much"}` + "\n" +
-			`{"type":"end_of_execution"}` + "\n"))
-	})
-	session, err := client.Session(sandbox(), time.Minute)
-	require.NoError(t, err)
-
-	refused := errors.New("refused")
-	_, err = session.RunCodeStream(t.Context(), "print(1)",
-		func(string, string) (string, error) { return "", refused })
-	require.ErrorIs(t, err, refused)
-}
-
-func TestRunCodeStreamReportsTheDeadline(t *testing.T) {
-	t.Parallel()
-
-	done := make(chan struct{})
-	client := newClient(t, func(w http.ResponseWriter, r *http.Request) {
-		select {
-		case <-r.Context().Done():
-		case <-done:
-		case <-time.After(heldRequestLimit):
-		}
-	})
-	t.Cleanup(func() { close(done) })
-	session, err := client.Session(sandbox(), 50*time.Millisecond)
-	require.NoError(t, err)
-
-	_, err = session.RunCodeStream(t.Context(), "while True: pass", nil)
 	require.ErrorIs(t, err, context.DeadlineExceeded)
 }

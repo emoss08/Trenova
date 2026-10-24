@@ -426,8 +426,8 @@ func TestCatalogListsExaTurnedOffUntilSetUp(t *testing.T) {
 	for _, tool := range analysis.Tools {
 		analysisTools = append(analysisTools, tool.Name)
 	}
-	assert.Equal(t, []string{agentextension.ToolAnalyzeData, agentextension.ToolRunScript},
-		analysisTools, "the E2B account also serves read-only scripts, once they are switched on")
+	assert.Equal(t, []string{agentextension.ToolAnalyzeData}, analysisTools,
+		"E2B serves data analysis alone; scripts run in Trenova's own interpreter")
 }
 
 func TestEnablingEncryptsTheKeyAndNeverReturnsIt(t *testing.T) {

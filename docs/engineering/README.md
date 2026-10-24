@@ -57,7 +57,7 @@ in [backend/](backend/README.md). Frontend rules are in the `trenova-frontend` s
 | [agent-portal-automation](agent-portal-automation.md) | `portal_tasks.go`, `portal_sites.go`, `portaljobs`, `portaltools`, `browseruseconnector` |
 | [agent-web-watching](agent-web-watching.md) | `web_watches.go`, `webwatchtools`, `webwatchjobs`, `agentwaitservice/webwatch.go`, `shared/exa/monitors.go` |
 | [agent-data-analysis](agent-data-analysis.md) | `analysis.go`, `analysis_tool.go`, `e2bconnector`, `shared/e2b` |
-| [agent-code-mode](agent-code-mode.md) ([writes](agent-code-mode-writes.md)) | `domain/codemode`, `aiprovider/agentsettings.go`, `scriptbroker.go`, `scripttool.go`, `script_tool.go`, `RunCodeStream` |
+| [agent-code-mode](agent-code-mode.md) ([writes](agent-code-mode-writes.md)) | `domain/codemode`, `aiprovider/agentsettings.go`, `scriptbroker.go`, `scripttool.go`, `script_tool.go`, `app/scriptrunner`, `pkg/scriptvm`, `services/crates/scripts` |
 | [agent-profiles](agent-profiles.md) | `agentprofileservice`, `agentprofilejobs`, the writing prompt, profile sections of the prompt |
 | [agent-waits](agent-waits.md) | `agent_create_wait` and the wait kinds |
 | [agent-delegation](agent-delegation.md) | `delegate_task` and the per-agent allowlist |

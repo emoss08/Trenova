@@ -129,6 +129,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/recordanchorservice"
 	"github.com/emoss08/trenova/internal/modules/agent/app/retrievalquery"
 	"github.com/emoss08/trenova/internal/modules/agent/app/retrievalservice"
+	"github.com/emoss08/trenova/internal/modules/agent/app/scriptrunner"
 	"github.com/emoss08/trenova/internal/modules/agent/app/shipmentbriefingservice"
 	"github.com/emoss08/trenova/internal/modules/agent/app/shipmentimportassistantservice"
 	"github.com/emoss08/trenova/internal/modules/agent/app/tablequeryservice"
@@ -380,6 +381,7 @@ func SharedOptions() fx.Option {
 			aidocumentservice.NewContract,
 		),
 		agentextensionservice.Module,
+		scriptrunner.Module,
 		productguideservice.Module,
 		retrievalquery.Module,
 		agentguard.Module,

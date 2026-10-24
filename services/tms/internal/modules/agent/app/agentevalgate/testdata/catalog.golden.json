@@ -3378,12 +3378,12 @@
     },
     {
       "name": "agent_run_script",
-      "description": "Run a short Python script that calls the reads you hold, for questions that need many reads joined, compared or totalled. Use it for every record of a list, two sources reconciled, or a report over many records; for one or two reads in a row, call the reads themselves. Call a read as trenova.<namespace>.<the rest of its name>(**parameters), as trenova.shipment.list(status=[\"InTransit\"]) for shipment_list; parameters and results are exactly the tool's. trenova.tools() lists what you may call, help(trenova.shipment.list) gives one's parameters, trenova.gather(a.defer(...), b.defer(...)) runs several at once, and a refused call raises trenova.Refused. Only what you print and one trenova.result(value) come back. A script cannot reach the internet and changes nothing: a call to a change trenova.tools() lists prepares it, and what it prepared is proposed as one batch for a person to approve.",
+      "description": "Run a short Python script that calls the reads you hold, for questions that need many reads joined, compared or totalled. Use it for every record of a list, two sources reconciled, or a report over many records; for one or two reads in a row, call the reads themselves. Call a read as trenova.<namespace>.<the rest of its name>(**parameters), as trenova.shipment.list(status=[\"InTransit\"]) for shipment_list; parameters and results are exactly the tool's. trenova.tools() lists what you may call, help(trenova.shipment.list) gives one's parameters, trenova.gather(a.defer(...), b.defer(...)) runs several at once, and a refused call raises trenova.Refused. Only what you print and one trenova.result(value) come back. A script changes nothing: a call to a change trenova.tools() lists prepares it, and what it prepared is proposed as one batch for a person to approve.",
       "parameters": {
         "additionalProperties": false,
         "properties": {
           "code": {
-            "description": "The Python to run. import trenova is done for you; print() what you need to answer and pass one summary to trenova.result().",
+            "description": "The Python to run, in a sandboxed interpreter: trenova is already there; json, datetime, math, re, collections and itertools import as usual; date.today() is the organization's today; classes cannot inherit; there are no files, packages or network. print() what you need to answer and pass one summary to trenova.result().",
             "maxLength": 20000,
             "type": "string"
           },
@@ -3471,7 +3471,7 @@
           "run_record"
         ],
         "carriesTaint": false,
-        "rationale": "Runs a short script in a sandbox that cannot reach the network; every read it makes is one of the agent's own reads, run as the person under the same checks, and the call carries the taint of every read that brought outside text in. It changes nothing itself: a change it prepares is proposed with the rest of its batch for a person to approve."
+        "rationale": "Runs a short script in an interpreter that cannot reach the network or a file; every read it makes is one of the agent's own reads, run as the person under the same checks, and the call carries the taint of every read that brought outside text in. It changes nothing itself: a change it prepares is proposed with the rest of its batch for a person to approve."
       }
     },
     {

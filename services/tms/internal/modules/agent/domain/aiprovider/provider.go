@@ -120,8 +120,8 @@ type Provider struct {
 	// as one batch for a person. Both are off by default, and both still need
 	// the organization's own opt-in: the plan capability, the E2B extension's
 	// "Read-only scripts" setting and the code_mode permission.
-	Scripts      bool `json:"scripts"      bun:"code_mode_scripts,type:BOOLEAN,notnull,default:false"`
-	ScriptWrites bool `json:"scriptWrites" bun:"code_mode_writes,type:BOOLEAN,notnull,default:false"`
+	Scripts      bool `json:"scripts"      bun:"code_mode_scripts,type:BOOLEAN,notnull"`
+	ScriptWrites bool `json:"scriptWrites" bun:"code_mode_writes,type:BOOLEAN,notnull"`
 
 	// ExtraBody is merged into the request an OpenAI-compatible endpoint
 	// receives, for the fields that are the server's own rather than the

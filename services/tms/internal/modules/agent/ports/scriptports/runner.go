@@ -1,4 +1,4 @@
-package agentextensionports
+package scriptports
 
 import (
 	"context"
@@ -6,31 +6,31 @@ import (
 	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/codemode"
 	"github.com/emoss08/trenova/pkg/pagination"
-	"github.com/shopspring/decimal"
 )
 
-type ScriptStatus string
+type Status string
 
 const (
-	ScriptSucceeded = ScriptStatus("Succeeded")
-	ScriptErrored   = ScriptStatus("Errored")
-	ScriptTimedOut  = ScriptStatus("TimedOut")
-	ScriptStopped   = ScriptStatus("Stopped")
-	ScriptFailed    = ScriptStatus("Failed")
+	Succeeded = Status("Succeeded")
+	Errored   = Status("Errored")
+	TimedOut  = Status("TimedOut")
+	Stopped   = Status("Stopped")
+	Failed    = Status("Failed")
 )
 
-type ScriptRequest struct {
+type Request struct {
 	TenantInfo pagination.TenantInfo
 	Title      string
 	Purpose    string
 	Code       string
 	Inputs     map[string]any
+	Timezone   string
 	Broker     codemode.Broker
 	StepKey    string
 }
 
-type ScriptOutcome struct {
-	Status          ScriptStatus
+type Outcome struct {
+	Status          Status
 	Output          string
 	OutputTruncated bool
 	Result          sonic.NoCopyRawMessage
@@ -39,10 +39,8 @@ type ScriptOutcome struct {
 	Failure         string
 	Limits          codemode.Limits
 	DurationMs      int64
-	RoundTripsMs    []int64
-	CostUSD         decimal.Decimal
 }
 
-type ScriptRunner interface {
-	RunScript(ctx context.Context, req *ScriptRequest) (*ScriptOutcome, error)
+type Runner interface {
+	Run(ctx context.Context, req *Request) (*Outcome, error)
 }
