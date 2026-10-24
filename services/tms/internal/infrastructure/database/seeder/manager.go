@@ -9,7 +9,6 @@ import (
 
 	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/infrastructure/database/common"
-	"github.com/emoss08/trenova/internal/infrastructure/database/migrator"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/tenantbootstrap"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
@@ -25,7 +24,6 @@ import (
 
 type Manager struct {
 	db          *bun.DB
-	migrator    DatabaseMigrator
 	seeder      Seeder
 	cfg         *config.Config
 	permissions PermissionCacheInvalidator
@@ -35,22 +33,19 @@ type Manager struct {
 type ManagerParams struct {
 	fx.In
 
-	DB       *bun.DB
-	Migrator DatabaseMigrator
-	Seeder   Seeder
+	DB     *bun.DB
+	Seeder Seeder
 }
 
 func NewManager(p ManagerParams) *Manager {
 	return &Manager{
-		db:       p.DB,
-		migrator: p.Migrator,
-		seeder:   p.Seeder,
+		db:     p.DB,
+		seeder: p.Seeder,
 	}
 }
 
 type ManagerDeps struct {
 	DB          *bun.DB
-	Migrator    DatabaseMigrator
 	Seeder      Seeder
 	Permissions PermissionCacheInvalidator
 }
@@ -58,7 +53,6 @@ type ManagerDeps struct {
 func NewManagerWithDeps(deps ManagerDeps) *Manager {
 	return &Manager{
 		db:          deps.DB,
-		migrator:    deps.Migrator,
 		seeder:      deps.Seeder,
 		permissions: deps.Permissions,
 	}
@@ -75,17 +69,11 @@ func NewManagerFromConfig(cfg ManagerConfig) (*Manager, error) {
 		return nil, fmt.Errorf("failed to create database connection: %w", err)
 	}
 
-	dbConfig := createDBConfig(db, cfg.Config)
-	mig, err := migrator.NewMigrator(dbConfig)
-	if err != nil {
-		return nil, fmt.Errorf("failed to create migrator: %w", err)
-	}
 	engine := NewEngine(db, cfg.Registry, cfg.Config)
 	redisClient, permissions := newPermissionCache(cfg.Config)
 
 	return &Manager{
 		db:          db,
-		migrator:    mig,
 		seeder:      engine,
 		cfg:         cfg.Config,
 		permissions: permissions,
@@ -93,10 +81,10 @@ func NewManagerFromConfig(cfg ManagerConfig) (*Manager, error) {
 	}, nil
 }
 
-// cliStatementBackstop bounds a single statement from migrate, seed and reset
-// only against a connection that has gone silent. Schema drops, index builds
-// and bulk seed batches legitimately run for minutes; a statement blocked on a
-// lock fails fast on lock_timeout instead, as on the API's connection.
+// cliStatementBackstop bounds a single statement from seed and reconcile only
+// against a connection that has gone silent. Bulk seed batches legitimately run
+// for minutes; a statement blocked on a lock fails fast on lock_timeout
+// instead, as on the API's connection.
 const cliStatementBackstop = 30 * time.Minute
 
 func createDB(cfg *config.Config) (*bun.DB, error) {
@@ -127,32 +115,6 @@ func createDB(cfg *config.Config) (*bun.DB, error) {
 	return db, nil
 }
 
-func createDBConfig(db *bun.DB, cfg *config.Config) *common.DatabaseConfig {
-	env := common.EnvDevelopment
-	switch cfg.App.Env {
-	case "production", "prod":
-		env = common.EnvProduction
-	case "staging", "stage":
-		env = common.EnvStaging
-	case "test", "testing":
-		env = common.EnvTest
-	}
-
-	return &common.DatabaseConfig{
-		DB:               db,
-		Environment:      env,
-		MigrationsPath:   "./internal/infrastructure/postgres/migrations",
-		MigrationsTable:  "bun_migrations",
-		SeedsPath:        "./internal/infrastructure/database/seeds",
-		SeedsTable:       "seed_history",
-		FixturesPath:     "./test/fixtures",
-		BackupPath:       "./backups",
-		RequireBackup:    env == common.EnvProduction,
-		AllowDestructive: env != common.EnvProduction,
-		MaxRollback:      5,
-	}
-}
-
 func (m *Manager) GetDB() *bun.DB {
 	return m.db
 }
@@ -168,27 +130,14 @@ func (m *Manager) Close() error {
 	return errors.Join(errs...)
 }
 
-func (m *Manager) Migrate(ctx context.Context, opts common.OperationOptions) error {
-	color.Cyan("🔄 Running database migrations...")
+func (m *Manager) Reconcile(ctx context.Context, opts common.OperationOptions) error {
+	color.Cyan("🔄 Reconciling the database with this build...")
 
-	if err := m.migrator.Initialize(ctx); err != nil {
-		return fmt.Errorf("failed to initialize migrations: %w", err)
-	}
-
-	result, err := m.migrator.Migrate(ctx, opts)
-	if err != nil {
+	if err := m.provisionRLS(ctx, opts); err != nil {
 		return err
 	}
 
-	if !result.Success {
-		return fmt.Errorf("migration failed: %s", result.Message)
-	}
-
-	if err = m.provisionRLS(ctx, opts); err != nil {
-		return err
-	}
-
-	if err = m.reconcileAdminRoles(ctx, opts); err != nil {
+	if err := m.reconcileAdminRoles(ctx, opts); err != nil {
 		return err
 	}
 
@@ -202,7 +151,7 @@ func (m *Manager) reconcileAdminRoles(ctx context.Context, opts common.Operation
 
 	result, err := tenantbootstrap.ReconcileAdminRoles(ctx, m.db, permission.NewRegistry())
 	if err != nil {
-		return fmt.Errorf("grant new permissions to administrator roles after migrating: %w", err)
+		return fmt.Errorf("grant new permissions to administrator roles: %w", err)
 	}
 
 	if result.GrantsAdded > 0 || result.GrantsExtended > 0 {
@@ -231,7 +180,7 @@ func (m *Manager) provisionRLS(ctx context.Context, opts common.OperationOptions
 
 	result, err := postgres.ProvisionRLS(ctx, m.db, m.cfg)
 	if err != nil {
-		return fmt.Errorf("provision row-level security after migrating: %w", err)
+		return fmt.Errorf("provision row-level security: %w", err)
 	}
 
 	if result.PoliciesAdded > 0 {
@@ -254,25 +203,10 @@ func (m *Manager) reconcileSeeds(ctx context.Context, opts common.OperationOptio
 
 	report, err := m.seeder.Reconcile(ctx, opts.Environment)
 	if err != nil {
-		return fmt.Errorf("reconcile seeds after migrating: %w", err)
+		return fmt.Errorf("reconcile seeds: %w", err)
 	}
 	if report != nil && !report.Success() {
-		return fmt.Errorf("reconciling seeds after migrating failed %d times", report.Failed)
-	}
-
-	return nil
-}
-
-func (m *Manager) Rollback(ctx context.Context, opts common.OperationOptions) error {
-	color.Cyan("↩ Rolling back database migrations...")
-
-	result, err := m.migrator.Rollback(ctx, opts)
-	if err != nil {
-		return err
-	}
-
-	if !result.Success {
-		return fmt.Errorf("rollback failed: %s", result.Message)
+		return fmt.Errorf("reconciling seeds failed %d times", report.Failed)
 	}
 
 	return nil
@@ -393,68 +327,6 @@ func (m *Manager) RollbackAllSeeds(ctx context.Context, env common.Environment, 
 	return nil
 }
 
-func (m *Manager) Reset(ctx context.Context, opts common.OperationOptions) error {
-	color.Cyan("🔄 Resetting database...")
-
-	result, err := m.migrator.Reset(ctx, opts)
-	if err != nil {
-		return err
-	}
-
-	if !result.Success {
-		return fmt.Errorf("reset failed: %s", result.Message)
-	}
-
-	return nil
-}
-
-func (m *Manager) Setup(ctx context.Context, opts common.OperationOptions) error {
-	color.Cyan("🚀 Setting up database...")
-
-	if err := m.Migrate(ctx, opts); err != nil {
-		return fmt.Errorf("migration failed: %w", err)
-	}
-
-	if err := m.Seed(ctx, opts); err != nil {
-		return fmt.Errorf("seeding failed: %w", err)
-	}
-
-	color.Green("✅ Database setup completed successfully!")
-	return nil
-}
-
-func (m *Manager) MigrationStatus(ctx context.Context) error {
-	status, err := m.migrator.Status(ctx)
-	if err != nil {
-		return fmt.Errorf("failed to get migration status: %w", err)
-	}
-
-	color.Cyan("📊 Migration Status:")
-	fmt.Println()
-
-	appliedCount := 0
-	pendingCount := 0
-
-	for _, mig := range status {
-		if mig.Applied {
-			appliedCount++
-			color.Green(
-				"  ✓ %s (applied at %s)",
-				mig.Name,
-				mig.MigratedAt.Format("2006-01-02 15:04:05"),
-			)
-		} else {
-			pendingCount++
-			color.Yellow("  ○ %s (pending)", mig.Name)
-		}
-	}
-
-	fmt.Println()
-	color.Cyan("Summary: %d applied, %d pending", appliedCount, pendingCount)
-
-	return nil
-}
-
 func (m *Manager) SeedStatus(ctx context.Context) error {
 	status, err := m.seeder.Status(ctx)
 	if err != nil {
@@ -484,20 +356,6 @@ func (m *Manager) SeedStatus(ctx context.Context) error {
 			seed.Version,
 			seed.Environment,
 			seed.AppliedAt.Format("2006-01-02 15:04:05"))
-	}
-
-	return nil
-}
-
-func (m *Manager) CreateMigration(ctx context.Context, name string, transactional bool) error {
-	files, err := m.migrator.CreateMigration(ctx, name, transactional)
-	if err != nil {
-		return fmt.Errorf("failed to create migration: %w", err)
-	}
-
-	color.Green("✅ Created migration files:")
-	for _, file := range files {
-		fmt.Printf("  - %s\n", file)
 	}
 
 	return nil

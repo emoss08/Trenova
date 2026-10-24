@@ -311,7 +311,7 @@ The gate has two parts.
      the provider that answered with <model>" before the interpreter is started.
 2. **The person may run scripts.** Permission resource `code_mode` (`read`, in the Desk
    category), which the Desk bundle (`platform.assistant`) grants with the rest of the
-   assistant, and administrators receive from `trenova db migrate`. A custom role can leave it
+   assistant, and administrators receive from `trenova db reconcile`. A custom role can leave it
    out.
 
 Both must hold. There is no plan capability, extension or vendor account: scripts cost nothing

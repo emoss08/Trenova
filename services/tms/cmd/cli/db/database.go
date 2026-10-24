@@ -8,7 +8,6 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/database/common"
 	"github.com/emoss08/trenova/internal/infrastructure/database/seeder"
 	"github.com/emoss08/trenova/internal/infrastructure/database/seeds"
-	"github.com/fatih/color"
 	"github.com/spf13/cobra"
 )
 
@@ -17,7 +16,6 @@ var (
 	force        bool
 	verbose      bool
 	interactive  bool
-	target       string
 	envOverride  string
 	ignoreErrors bool
 	cfg          *config.Config
@@ -39,51 +37,9 @@ func createManager() (*seeder.Manager, error) {
 
 var DbCmd = &cobra.Command{
 	Use:   "db",
-	Short: "Database management commands",
-	Long:  `Comprehensive database management for migrations, seeding, and maintenance`,
-}
-
-var dbMigrateCmd = &cobra.Command{
-	Use:   "migrate",
-	Short: "Run pending database migrations",
-	Long: `Apply all pending database migrations to bring the database schema up to date.
-
-Examples:
-  trenova db migrate                    # Run migrations
-  trenova db migrate --dry-run          # Preview migrations without applying
-  trenova db migrate --verbose          # Show detailed output`,
-	RunE: runMigrations,
-}
-
-var dbRollbackCmd = &cobra.Command{
-	Use:   "rollback",
-	Short: "Rollback database migrations",
-	Long: `Rollback database migrations to a previous state.
-
-Examples:
-  trenova db rollback                   # Rollback last migration
-  trenova db rollback --target 3        # Rollback 3 migrations
-  trenova db rollback --dry-run         # Preview rollback without applying`,
-	RunE: runRollback,
-}
-
-var dbStatusCmd = &cobra.Command{
-	Use:   "status",
-	Short: "Show migration and seed status",
-	Long:  `Display the current status of database migrations and applied seeds`,
-	RunE:  showStatus,
-}
-
-var dbCreateCmd = &cobra.Command{
-	Use:   "create [name]",
-	Short: "Create a new migration",
-	Long: `Create a new database migration file.
-
-Examples:
-  trenova db create add_user_table      # Create SQL migration
-  trenova db create add_index --tx      # Create transactional migration`,
-	Args: cobra.ExactArgs(1),
-	RunE: createMigration,
+	Short: "Database seeding and maintenance commands",
+	Long: `Seeding, reconciliation and repairs. Migrations are applied by trenova-db
+(services/tms/cmd/db), or trenova-devdb in development.`,
 }
 
 var dbSeedCmd = &cobra.Command{
@@ -101,33 +57,20 @@ Examples:
 	RunE: runSeeds,
 }
 
-var dbResetCmd = &cobra.Command{
-	Use:   "reset",
-	Short: "Reset the database",
-	Long: `Drop all tables and recreate from migrations (non-production only).
-
-WARNING: This is a destructive operation that will delete all data!
-
-Examples:
-  trenova db reset                      # Reset with confirmation
-  trenova db reset --force              # Skip confirmation`,
-	RunE: resetDatabase,
-}
-
-var dbSetupCmd = &cobra.Command{
-	Use:   "setup",
-	Short: "Setup database (migrate + seed)",
-	Long: `Perform initial database setup by running migrations and applying base seeds.
-
-This is typically used for initial deployment or setting up new environments.
+var dbReconcileCmd = &cobra.Command{
+	Use:   "reconcile",
+	Short: "Reconcile the database with this build after migrating",
+	Long: `Do what migrations cannot, after trenova-db up: install the configured
+row-level security scope key, grant new permissions to administrator roles,
+and re-run the repeatable seeds that are already applied.
 
 Examples:
-  trenova db setup                      # Setup with defaults
-  trenova db setup --verbose            # Show detailed output`,
-	RunE: setupDatabase,
+  trenova db reconcile                  # Reconcile for the configured environment
+  trenova db reconcile --env production # Override the environment`,
+	RunE: runReconcile,
 }
 
-func runMigrations(cmd *cobra.Command, args []string) error {
+func runReconcile(cmd *cobra.Command, args []string) error {
 	ctx := context.Background()
 
 	manager, err := createManager()
@@ -138,79 +81,12 @@ func runMigrations(cmd *cobra.Command, args []string) error {
 
 	opts := common.OperationOptions{
 		DryRun:      dryRun,
-		Force:       force,
 		Verbose:     verbose,
-		Interactive: interactive,
 		Environment: getEnvironment(),
 	}
 
-	if err := manager.Migrate(ctx, opts); err != nil {
-		return fmt.Errorf("migration failed: %w", err)
-	}
-
-	return nil
-}
-
-func runRollback(cmd *cobra.Command, args []string) error {
-	ctx := context.Background()
-
-	manager, err := createManager()
-	if err != nil {
-		return fmt.Errorf("failed to create database manager: %w", err)
-	}
-	defer manager.Close()
-
-	opts := common.OperationOptions{
-		DryRun:      dryRun,
-		Force:       force,
-		Verbose:     verbose,
-		Interactive: interactive,
-		Target:      target,
-		Environment: getEnvironment(),
-	}
-
-	if err := manager.Rollback(ctx, opts); err != nil {
-		return fmt.Errorf("rollback failed: %w", err)
-	}
-
-	return nil
-}
-
-func showStatus(cmd *cobra.Command, args []string) error {
-	ctx := context.Background()
-
-	manager, err := createManager()
-	if err != nil {
-		return fmt.Errorf("failed to create database manager: %w", err)
-	}
-	defer manager.Close()
-
-	if err := manager.MigrationStatus(ctx); err != nil {
-		return fmt.Errorf("failed to get migration status: %w", err)
-	}
-
-	fmt.Println()
-
-	if err := manager.SeedStatus(ctx); err != nil {
-		return fmt.Errorf("failed to get seed status: %w", err)
-	}
-
-	return nil
-}
-
-func createMigration(cmd *cobra.Command, args []string) error {
-	ctx := context.Background()
-
-	manager, err := createManager()
-	if err != nil {
-		return fmt.Errorf("failed to create database manager: %w", err)
-	}
-	defer manager.Close()
-
-	transactional, _ := cmd.Flags().GetBool("tx")
-
-	if err := manager.CreateMigration(ctx, args[0], transactional); err != nil {
-		return fmt.Errorf("failed to create migration: %w", err)
+	if err := manager.Reconcile(ctx, opts); err != nil {
+		return fmt.Errorf("reconcile failed: %w", err)
 	}
 
 	return nil
@@ -243,63 +119,6 @@ func runSeeds(cmd *cobra.Command, args []string) error {
 	return nil
 }
 
-func resetDatabase(cmd *cobra.Command, args []string) error {
-	ctx := context.Background()
-
-	if cfg.App.IsProduction() {
-		return fmt.Errorf("database reset is not allowed in production environment")
-	}
-
-	manager, err := createManager()
-	if err != nil {
-		return fmt.Errorf("failed to create database manager: %w", err)
-	}
-	defer manager.Close()
-
-	opts := common.OperationOptions{
-		Force:       force,
-		Verbose:     verbose,
-		Interactive: !force,
-		Environment: getEnvironment(),
-	}
-
-	if err := manager.Reset(ctx, opts); err != nil {
-		return fmt.Errorf("reset failed: %w", err)
-	}
-
-	if seedAfter, _ := cmd.Flags().GetBool("seed"); seedAfter {
-		color.Cyan("→ Applying seeds after reset...")
-		if err := manager.Seed(ctx, opts); err != nil {
-			return fmt.Errorf("seeding after reset failed: %w", err)
-		}
-	}
-
-	return nil
-}
-
-func setupDatabase(cmd *cobra.Command, args []string) error {
-	ctx := context.Background()
-
-	manager, err := createManager()
-	if err != nil {
-		return fmt.Errorf("failed to create database manager: %w", err)
-	}
-	defer manager.Close()
-
-	opts := common.OperationOptions{
-		Force:       force,
-		Verbose:     verbose,
-		Interactive: interactive,
-		Environment: getEnvironment(),
-	}
-
-	if err := manager.Setup(ctx, opts); err != nil {
-		return fmt.Errorf("setup failed: %w", err)
-	}
-
-	return nil
-}
-
 func getEnvironment() common.Environment {
 	env := cfg.App.Env
 	if envOverride != "" {
@@ -326,13 +145,9 @@ func init() {
 	DbCmd.PersistentFlags().
 		BoolVarP(&interactive, "interactive", "i", false, "Interactive mode with confirmations")
 
-	DbCmd.AddCommand(dbMigrateCmd)
-	DbCmd.AddCommand(dbRollbackCmd)
-	dbRollbackCmd.Flags().StringVar(&target, "target", "", "Number of migrations to rollback")
-
-	DbCmd.AddCommand(dbStatusCmd)
-	DbCmd.AddCommand(dbCreateCmd)
-	dbCreateCmd.Flags().Bool("tx", false, "Create transactional migration")
+	DbCmd.AddCommand(dbReconcileCmd)
+	dbReconcileCmd.Flags().
+		StringVar(&envOverride, "env", "", "Override environment (development, test, staging, production)")
 
 	DbCmd.AddCommand(dbSeedCmd)
 	dbSeedCmd.Flags().
@@ -341,9 +156,5 @@ func init() {
 	dbSeedCmd.Flags().BoolVar(&ignoreErrors, "ignore-errors", false, "Continue on seed failure")
 	dbSeedCmd.AddCommand(dbSeedRollbackCmd)
 
-	DbCmd.AddCommand(dbResetCmd)
-	dbResetCmd.Flags().Bool("seed", false, "Apply seeds after reset")
-
-	DbCmd.AddCommand(dbSetupCmd)
 	DbCmd.AddCommand(createSeedCmd)
 }

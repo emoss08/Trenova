@@ -177,7 +177,7 @@ trenova db seed -i
 trenova db seed --verbose
 
 # View seed status
-trenova db status
+trenova db seed status
 
 # Check for orphaned seeds
 trenova db seed-check
@@ -367,7 +367,7 @@ type UsersSeed struct {
 
 1. Check if it's registered in `seeds/register.go`
 2. Check if the environment matches: `trenova db seed --env development`
-3. Check if it's already applied: `trenova db status`
+3. Check if it's already applied: `trenova db seed status`
 4. Force re-run: `trenova db seed --force --target MySeed`
 
 ### Circular Dependency Error

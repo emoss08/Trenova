@@ -193,13 +193,11 @@ func generateSQL(
 ) {
 	tableName := searchable.GetTableName()
 	fmt.Printf("ALTER TABLE \"%s\" ADD COLUMN IF NOT EXISTS search_vector tsvector;\n\n", tableName)
-	fmt.Println("--bun:split")
 	fmt.Printf(
 		"CREATE INDEX IF NOT EXISTS idx_%s_search_vector ON \"%s\" USING GIN(search_vector);\n\n",
 		tableName,
 		tableName,
 	)
-	fmt.Println("--bun:split")
 	if len(config.Relationships) > 0 {
 		fmt.Printf("-- 3. Relationship Indexes (only commonly queried relationships)\n")
 		fmt.Printf("-- Note: Only add these if you actually filter/join on these relationships\n")
@@ -254,7 +252,6 @@ func generateSQL(
 				)
 			}
 		}
-		fmt.Println("--bun:split")
 	}
 
 	var searchFields []string
@@ -284,7 +281,6 @@ $$ LANGUAGE plpgsql;
 
 `, tableName, strings.Join(searchFields, " || \n        "))
 
-	fmt.Println("--bun:split")
 	fmt.Printf(`DROP TRIGGER IF EXISTS %s_search_update ON "%s";
 CREATE TRIGGER %s_search_update
     BEFORE INSERT OR UPDATE ON "%s"
@@ -294,7 +290,6 @@ CREATE TRIGGER %s_search_update
 `,
 		tableName, tableName, tableName, tableName, tableName)
 
-	fmt.Println("--bun:split")
 	fmt.Printf("UPDATE \"%s\" SET search_vector = %s;\n",
 		tableName, strings.ReplaceAll(strings.Join(searchFields, " || \n    "), "NEW.", ""))
 }

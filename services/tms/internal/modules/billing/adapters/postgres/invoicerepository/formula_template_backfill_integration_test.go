@@ -3,8 +3,6 @@
 package invoicerepository_test
 
 import (
-	"os"
-	"strings"
 	"testing"
 
 	"github.com/emoss08/trenova/internal/infrastructure/config"
@@ -14,14 +12,14 @@ import (
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
 	"github.com/emoss08/trenova/internal/testutil/seedtest"
+	"github.com/emoss08/trenova/schema/migrations"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
-const formulaTemplateBackfill = "internal/infrastructure/postgres/migrations/" +
-	"20261231009470_invoice_line_formula_template.tx.up.sql"
+const formulaTemplateBackfill = "20261231009470_invoice_line_formula_template"
 
 type backfillTenant struct {
 	ID             pulid.ID `bun:"id"`
@@ -140,11 +138,9 @@ func TestFormulaTemplateBackfillNamesTheTemplateEachFreightLineWasRatedWith(t *t
 	_, err = db.NewInsert().Model(&lines).Exec(ctx)
 	require.NoError(t, err)
 
-	up, err := os.ReadFile(formulaTemplateBackfill)
+	up, err := migrations.File(formulaTemplateBackfill)
 	require.NoError(t, err)
-	statements := strings.Split(string(up), "--bun:split")
-	require.Len(t, statements, 2)
-	_, err = db.ExecContext(ctx, statements[1])
+	_, err = db.ExecContext(ctx, up)
 	require.NoError(t, err)
 
 	got := make(map[pulid.ID]pulid.ID, len(lines))

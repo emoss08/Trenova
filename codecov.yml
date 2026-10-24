@@ -10,7 +10,6 @@ coverage:
 
 ignore:
   - "services/tms/cmd/**/*"
-  - "services/tms/internal/infrastructure/postgres/migrations/**/*"
   - "services/tms/internal/infrastructure/database/seeds/**/*"
   - "services/tms/internal/infrastructure/observability/**/*"
   - "services/tms/internal/pkg/domainregistry/**/*"

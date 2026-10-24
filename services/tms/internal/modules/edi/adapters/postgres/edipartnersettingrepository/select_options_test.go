@@ -1,15 +1,15 @@
 package edipartnersettingrepository
 
 import (
-	"os"
 	"strings"
 	"testing"
 
 	"github.com/DATA-DOG/go-sqlmock"
-	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
 	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/schema/migrations"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/require"
 	"github.com/uptrace/bun"
@@ -120,12 +120,9 @@ func TestSelectPartnerSettingFieldOptions_AppliesSchemaSearchAndFieldFilters(t *
 func TestPartnerSettingSeedMigrationUsesPublicPaths(t *testing.T) {
 	t.Parallel()
 
-	content, err := os.ReadFile(
-		"../../../../../infrastructure/postgres/migrations/20260518130000_edi_partner_setting_schemas.tx.up.sql",
-	)
+	sql, err := migrations.File("20260518130000_edi_partner_setting_schemas")
 	require.NoError(t, err)
 
-	sql := string(content)
 	expectedPaths := []string{
 		"carrier.scac",
 		"carrier.name",
