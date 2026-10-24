@@ -88,7 +88,7 @@ func TestSelectOptionMappers(t *testing.T) {
 	assert.Equal(
 		t,
 		manufacturer.CreatedAt,
-		equipmentManufacturerSelectOptionItem(manufacturer).cursor.CreatedAt,
+		equipmentManufacturerSelectOptionItem(manufacturer).cursor.At,
 	)
 
 	assert.Equal(t, "TRL-1", trailerSelectOption(&trailer.Trailer{
@@ -161,7 +161,7 @@ func TestSelectOptionMappers(t *testing.T) {
 	assert.Equal(
 		t,
 		shipmentEntity.CreatedAt,
-		shipmentSelectOptionItem(shipmentEntity).cursor.CreatedAt,
+		shipmentSelectOptionItem(shipmentEntity).cursor.At,
 	)
 
 	tenderSender := pulid.MustNew("org_")
@@ -190,7 +190,7 @@ func TestSelectOptionMappers(t *testing.T) {
 	assert.Equal(
 		t,
 		transferEntity.CreatedAt,
-		ediTransferSelectOptionItemFor(tenderReceiver)(transferEntity).cursor.CreatedAt,
+		ediTransferSelectOptionItemFor(tenderReceiver)(transferEntity).cursor.At,
 	)
 
 	fallbackTransfer := &edi.EDITransfer{
@@ -223,7 +223,7 @@ func TestSelectOptionMappers(t *testing.T) {
 	assert.Equal(
 		t,
 		connectionEntity.CreatedAt,
-		ediConnectionSelectOptionItem(connectionEntity).cursor.CreatedAt,
+		ediConnectionSelectOptionItem(connectionEntity).cursor.At,
 	)
 
 	fallbackConnection := &edi.EDIConnection{
