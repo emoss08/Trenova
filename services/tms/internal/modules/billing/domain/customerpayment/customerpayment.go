@@ -10,7 +10,6 @@ import (
 	"github.com/emoss08/trenova/internal/modules/parties/domain/customer"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/errortypes"
-	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/money"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
@@ -21,9 +20,8 @@ import (
 
 // Cash received from customers and how much of it is applied
 type Payment struct {
-	bun.BaseModel             `bun:"table:customer_payments,alias:cp" json:"-"`
-	keel.Table                `                                                keel:"customer_payments,report=Accounting,label=Customer Payment"`
-	pagination.CursorValueSet `bun:",embed"                           json:"-"`
+	bun.BaseModel `bun:"table:customer_payments,alias:cp" json:"-"`
+	keel.Table    `                                                keel:"customer_payments,report=Accounting,label=Customer Payment"`
 
 	ID                   pulid.ID            `json:"id"                   bun:"id,pk,type:VARCHAR(100),notnull"                                                      keel:"id,pk,autoid:cpay_"`
 	OrganizationID       pulid.ID            `json:"organizationId"       bun:"organization_id,pk,type:VARCHAR(100),notnull"                                         keel:"organization_id,pk,tenant"`

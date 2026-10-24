@@ -3,6 +3,7 @@ package invoiceadjustmentservice
 import (
 	"context"
 	"fmt"
+
 	"github.com/emoss08/trenova/internal/modules/billing/app/billingnumber"
 
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
@@ -283,9 +284,8 @@ func (s *Service) executeApprovedAdjustment( //nolint:cyclop,funlen // legacy wo
 	}
 
 	if computation.preview.RequiresReconciliationException {
-		if _, err = s.db.DBForContext(ctx).
-			NewInsert().
-			Model(&invoiceadjustment.InvoiceAdjustmentReconciliationException{
+		if err = s.repo.CreateAdjustmentArtifacts(ctx, invoiceadjustmentports.CreateAdjustmentArtifactsParams{
+			ReconciliationExceptions: []*invoiceadjustment.InvoiceAdjustmentReconciliationException{{
 				OrganizationID:      adjustment.OrganizationID,
 				BusinessUnitID:      adjustment.BusinessUnitID,
 				AdjustmentID:        adjustment.ID,
@@ -298,8 +298,8 @@ func (s *Service) executeApprovedAdjustment( //nolint:cyclop,funlen // legacy wo
 					"settlementStatus": lockedInvoice.SettlementStatus,
 					"disputeStatus":    lockedInvoice.DisputeStatus,
 				},
-			}).
-			Exec(ctx); err != nil {
+			}},
+		}); err != nil {
 			return nil, fmt.Errorf("create reconciliation exception: %w", err)
 		}
 	}
@@ -312,9 +312,8 @@ func (s *Service) executeApprovedAdjustment( //nolint:cyclop,funlen // legacy wo
 		replacementInvoiceID = typeutils.IDString(replacementInvoice.ID)
 	}
 
-	if _, err = s.db.DBForContext(ctx).
-		NewInsert().
-		Model(&invoiceadjustment.InvoiceAdjustmentSnapshot{
+	if err = s.repo.CreateAdjustmentArtifacts(ctx, invoiceadjustmentports.CreateAdjustmentArtifactsParams{
+		Snapshots: []*invoiceadjustment.InvoiceAdjustmentSnapshot{{
 			OrganizationID: adjustment.OrganizationID,
 			BusinessUnitID: adjustment.BusinessUnitID,
 			AdjustmentID:   adjustment.ID,
@@ -328,8 +327,8 @@ func (s *Service) executeApprovedAdjustment( //nolint:cyclop,funlen // legacy wo
 				"replacementInvoiceId":   replacementInvoiceID,
 				"writeOffJournalEntryId": typeutils.IDString(writeOffJournalEntryID),
 			},
-		}).
-		Exec(ctx); err != nil {
+		}},
+	}); err != nil {
 		return nil, fmt.Errorf("create execution snapshot: %w", err)
 	}
 

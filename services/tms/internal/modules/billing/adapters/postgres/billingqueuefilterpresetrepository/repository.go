@@ -6,12 +6,15 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueuefilterpreset"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueuefilterpreset/billingqueuefilterpresetdb"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/billingqueuefilterpresetports"
 	"github.com/emoss08/trenova/pkg/dberror"
-	"github.com/uptrace/bun"
+	"github.com/emoss08/trenova/pkg/listquery"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
+
+var presetErrors = dberror.Mapping{Entity: "BillingQueueFilterPreset"}
 
 type Params struct {
 	fx.In
@@ -40,25 +43,16 @@ func (r *repository) ListByUserID(
 		ctx,
 		r.db,
 		func(ctx context.Context) ([]*billingqueuefilterpreset.BillingQueueFilterPreset, error) {
-			log := r.l.With(
-				zap.String("operation", "ListByUserID"),
-				zap.String("userID", req.UserID.String()),
-			)
-
-			entities := make([]*billingqueuefilterpreset.BillingQueueFilterPreset, 0)
-			err := r.db.DBForContext(ctx).
-				NewSelect().
-				Model(&entities).
-				WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-					return sq.Where("bqfp.user_id = ?", req.UserID).
-						Where("bqfp.organization_id = ?", req.TenantInfo.OrgID).
-						Where("bqfp.business_unit_id = ?", req.TenantInfo.BuID)
-				}).
-				Order("bqfp.created_at DESC").
-				Scan(ctx)
+			p := billingqueuefilterpresetdb.BillingQueueFilterPresets
+			entities, err := p.Where(p.UserID.Eq(req.UserID)).
+				Order(p.CreatedAt.Desc()).
+				All(ctx, r.db.Keel(ctx))
 			if err != nil {
-				log.Error("failed to list billing queue filter presets", zap.Error(err))
+				r.l.Error("failed to list billing queue filter presets", zap.Error(err))
 				return nil, err
+			}
+			if entities == nil {
+				return []*billingqueuefilterpreset.BillingQueueFilterPreset{}, nil
 			}
 
 			return entities, nil
@@ -74,15 +68,10 @@ func (r *repository) Create(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*billingqueuefilterpreset.BillingQueueFilterPreset, error) {
-			log := r.l.With(
-				zap.String("operation", "Create"),
-				zap.String("name", entity.Name),
-			)
-
-			_, err := r.db.DBForContext(ctx).NewInsert().Model(entity).Exec(ctx)
-			if err != nil {
-				log.Error("failed to create billing queue filter preset", zap.Error(err))
-				return nil, err
+			p := billingqueuefilterpresetdb.BillingQueueFilterPresets
+			if err := p.Create(ctx, r.db.Keel(ctx), entity); err != nil {
+				r.l.Error("failed to create billing queue filter preset", zap.Error(err))
+				return nil, presetErrors.Map(err, entity.ID.String())
 			}
 
 			return entity, nil
@@ -98,31 +87,28 @@ func (r *repository) Update(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*billingqueuefilterpreset.BillingQueueFilterPreset, error) {
-			log := r.l.With(
-				zap.String("operation", "Update"),
-				zap.String("id", entity.ID.String()),
+			p := billingqueuefilterpresetdb.BillingQueueFilterPresets
+			rows, err := listquery.UpdateReturning(
+				ctx,
+				r.db.Keel(ctx),
+				p.Where(p.ID.Eq(entity.ID), p.UserID.Eq(entity.UserID)),
+				p.Name.To(entity.Name),
+				p.Filters.To(entity.Filters),
+				p.IsDefault.To(entity.IsDefault),
 			)
-
-			result, err := r.db.DBForContext(ctx).
-				NewUpdate().
-				Model(entity).
-				WherePK().
-				Where("bqfp.user_id = ?", entity.UserID).
-				Exec(ctx)
 			if err != nil {
-				log.Error("failed to update billing queue filter preset", zap.Error(err))
-				return nil, err
+				r.l.Error("failed to update billing queue filter preset", zap.Error(err))
+				return nil, presetErrors.Map(err, entity.ID.String())
 			}
-
-			if err = dberror.CheckRowsAffected(
-				result,
+			if err = dberror.CheckAffected(
+				int64(len(rows)),
 				"BillingQueueFilterPreset",
 				entity.ID.String(),
 			); err != nil {
 				return nil, err
 			}
 
-			return entity, nil
+			return rows[0], nil
 		},
 	)
 }
@@ -132,26 +118,14 @@ func (r *repository) Delete(
 	req *billingqueuefilterpresetports.DeleteBillingQueueFilterPresetRequest,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
-		log := r.l.With(
-			zap.String("operation", "Delete"),
-			zap.String("id", req.PresetID.String()),
-		)
-
-		result, err := r.db.DBForContext(ctx).
-			NewDelete().
-			Model((*billingqueuefilterpreset.BillingQueueFilterPreset)(nil)).
-			WhereGroup(" AND ", func(dq *bun.DeleteQuery) *bun.DeleteQuery {
-				return dq.Where("bqfp.id = ?", req.PresetID).
-					Where("bqfp.user_id = ?", req.UserID).
-					Where("bqfp.organization_id = ?", req.TenantInfo.OrgID).
-					Where("bqfp.business_unit_id = ?", req.TenantInfo.BuID)
-			}).
-			Exec(ctx)
+		p := billingqueuefilterpresetdb.BillingQueueFilterPresets
+		n, err := p.Where(p.ID.Eq(req.PresetID), p.UserID.Eq(req.UserID)).
+			Delete(ctx, r.db.Keel(ctx))
 		if err != nil {
-			log.Error("failed to delete billing queue filter preset", zap.Error(err))
-			return err
+			r.l.Error("failed to delete billing queue filter preset", zap.Error(err))
+			return presetErrors.Map(err, req.PresetID.String())
 		}
 
-		return dberror.CheckRowsAffected(result, "BillingQueueFilterPreset", req.PresetID.String())
+		return dberror.CheckAffected(n, "BillingQueueFilterPreset", req.PresetID.String())
 	})
 }

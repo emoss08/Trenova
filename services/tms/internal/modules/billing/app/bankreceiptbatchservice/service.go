@@ -18,7 +18,6 @@ import (
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/jsonutils"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/uptrace/bun"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
@@ -26,7 +25,7 @@ import (
 type Params struct {
 	fx.In
 	Logger             *zap.Logger
-	DB                 kernelports.DBConnection
+	DB                 kernelports.Transactor
 	Repo               bankreceiptbatchports.BankReceiptBatchRepository
 	ReceiptRepo        bankreceiptports.BankReceiptRepository
 	BankReceiptService bankreceiptports.BankReceiptService
@@ -34,7 +33,7 @@ type Params struct {
 }
 type Service struct {
 	l                  *zap.Logger
-	db                 kernelports.DBConnection
+	db                 kernelports.Transactor
 	repo               bankreceiptbatchports.BankReceiptBatchRepository
 	receiptRepo        bankreceiptports.BankReceiptRepository
 	bankReceiptService bankreceiptports.BankReceiptService
@@ -166,7 +165,7 @@ func (s *Service) importBatchWithinTx(
 		receipts     []*bankreceipt.BankReceipt
 	)
 
-	err := s.db.WithTx(ctx, kernelports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
+	err := s.db.Transact(ctx, kernelports.TxOptions{}, func(txCtx context.Context) error {
 		createdBatch, txErr := s.repo.Create(txCtx, batch)
 		if txErr != nil {
 			return txErr

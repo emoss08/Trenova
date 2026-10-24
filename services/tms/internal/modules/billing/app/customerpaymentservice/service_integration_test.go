@@ -3,10 +3,15 @@
 package customerpaymentservice
 
 import (
-	"context"
 	"slices"
 	"testing"
 	"time"
+
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/journalentry/journalentrydb"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/journalsource/journalsourcedb"
+	"github.com/emoss08/trenova/internal/modules/billing/billingtest"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue/billingqueuedb"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/customerpayment/customerpaymentdb"
 
 	"github.com/emoss08/trenova/internal/testutil/seededtest"
 
@@ -26,30 +31,18 @@ import (
 	"github.com/emoss08/trenova/internal/testutil"
 	"github.com/emoss08/trenova/internal/testutil/fiscaltest"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
-	"github.com/emoss08/trenova/pkg/dbhelper"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/seqgen"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"github.com/uptrace/bun"
 	"go.uber.org/zap"
 )
 
-type seededPaymentOrg struct {
-	ID             pulid.ID `bun:"id"`
-	BusinessUnitID pulid.ID `bun:"business_unit_id"`
-}
-type seededPaymentUser struct {
-	ID pulid.ID `bun:"id"`
-}
-type seededPaymentShipment struct {
-	ID         pulid.ID `bun:"id"`
-	CustomerID pulid.ID `bun:"customer_id"`
-	ProNumber  string   `bun:"pro_number"`
-	BOL        string   `bun:"bol"`
-}
+type seededPaymentOrg = billingtest.Org
+type seededPaymentUser = billingtest.User
+type seededPaymentShipment = billingtest.Shipment
 
 func TestPostAndApplyCreatesPaymentApplicationJournalAndSettlementUpdate(t *testing.T) {
 	ctx, db, cleanup := seededtest.SetupTestDB(t)
@@ -76,72 +69,16 @@ func TestPostAndApplyCreatesPaymentApplicationJournalAndSettlementUpdate(t *test
 		seqgen.GeneratorParams{Store: store, Provider: provider, Logger: logger},
 	)
 
-	var org seededPaymentOrg
-	require.NoError(
-		t,
-		db.NewSelect().
-			Table("organizations").
-			Column("id", "business_unit_id").
-			Limit(1).
-			Scan(ctx, &org),
-	)
-	var user seededPaymentUser
-	require.NoError(
-		t,
-		db.NewSelect().
-			Table("users").
-			Column("id").
-			Where("current_organization_id = ?", org.ID).
-			Where("business_unit_id = ?", org.BusinessUnitID).
-			Limit(1).
-			Scan(ctx, &user),
-	)
-	var shp seededPaymentShipment
-	require.NoError(
-		t,
-		db.NewSelect().
-			Table("shipments").
-			Column("id", "customer_id", "pro_number", "bol").
-			Where("organization_id = ?", org.ID).
-			Where("business_unit_id = ?", org.BusinessUnitID).
-			Limit(1).
-			Scan(ctx, &shp),
-	)
+	seeded := billingtest.SeededTenant(t, ctx, db)
+	ctx = seeded.Ctx
+	org, user, shp := seeded.Org, seeded.User, seeded.Shipment
 
 	control, err := accountingRepo.GetByOrgID(ctx, org.ID)
 	require.NoError(t, err)
-	control.DefaultCashAccountID = lookupPaymentGLAccount(
-		t,
-		ctx,
-		db,
-		org.ID,
-		org.BusinessUnitID,
-		"1010",
-	)
-	control.DefaultUnappliedCashAccountID = lookupPaymentGLAccount(
-		t,
-		ctx,
-		db,
-		org.ID,
-		org.BusinessUnitID,
-		"2200",
-	)
-	control.DefaultARAccountID = lookupPaymentGLAccount(
-		t,
-		ctx,
-		db,
-		org.ID,
-		org.BusinessUnitID,
-		"1110",
-	)
-	control.DefaultRevenueAccountID = lookupPaymentGLAccount(
-		t,
-		ctx,
-		db,
-		org.ID,
-		org.BusinessUnitID,
-		"4000",
-	)
+	control.DefaultCashAccountID = billingtest.GLAccountID(t, ctx, db, "1010")
+	control.DefaultUnappliedCashAccountID = billingtest.GLAccountID(t, ctx, db, "2200")
+	control.DefaultARAccountID = billingtest.GLAccountID(t, ctx, db, "1110")
+	control.DefaultRevenueAccountID = billingtest.GLAccountID(t, ctx, db, "4000")
 	control.JournalPostingMode = tenant.JournalPostingModeAutomatic
 	control.AccountingBasis = tenant.AccountingBasisAccrual
 	control.RevenueRecognitionPolicy = tenant.RevenueRecognitionOnInvoicePost
@@ -165,7 +102,7 @@ func TestPostAndApplyCreatesPaymentApplicationJournalAndSettlementUpdate(t *test
 		Status:           billingqueue.StatusPosted,
 		BillType:         billingqueue.BillTypeInvoice,
 	}
-	_, err = db.NewInsert().Model(queue).Exec(ctx)
+	err = billingqueuedb.BillingQueueItems.Create(ctx, db, queue)
 	require.NoError(t, err)
 	postedAt := now.Unix()
 	inv, err := invoiceRepo.Create(
@@ -259,37 +196,25 @@ func TestPostAndApplyCreatesPaymentApplicationJournalAndSettlementUpdate(t *test
 	assert.Equal(t, int64(10000), updatedInvoice.AppliedAmountMinor)
 	assert.Equal(t, invoice.SettlementStatusPaid, updatedInvoice.SettlementStatus)
 
-	var applicationCount int
-	applicationCount, err = dbhelper.Count(ctx, db.NewSelect().
-		Table("customer_payment_applications").
-		Where("customer_payment_id = ?", payment.ID))
+	apps := customerpaymentdb.Applications
+	applicationCount, err := apps.Where(apps.CustomerPaymentID.Eq(payment.ID)).Count(ctx, db)
 	require.NoError(t, err)
-	assert.Equal(t, 1, applicationCount)
+	assert.Equal(t, int64(1), applicationCount)
 
-	var entry struct {
-		ReferenceType string `bun:"reference_type"`
-		TotalDebit    int64  `bun:"total_debit"`
-		TotalCredit   int64  `bun:"total_credit"`
-	}
-	require.NoError(
-		t,
-		db.NewSelect().
-			Table("journal_entries").
-			Column("reference_type", "total_debit", "total_credit").
-			Where("reference_id = ?", payment.ID.String()).
-			Limit(1).
-			Scan(ctx, &entry),
-	)
+	je := journalentrydb.JournalEntries
+	entry, err := je.Pick(je.ReferenceType, je.TotalDebit, je.TotalCredit).
+		Where(je.ReferenceID.Eq(payment.ID.String())).
+		Order(je.ID.Asc()).
+		First(ctx, db)
+	require.NoError(t, err)
 	assert.Equal(t, tenant.JournalSourceEventCustomerPaymentPosted.String(), entry.ReferenceType)
 	assert.Equal(t, int64(10000), entry.TotalDebit)
 	assert.Equal(t, int64(10000), entry.TotalCredit)
 
-	var sourceCount int
-	sourceCount, err = dbhelper.Count(ctx, db.NewSelect().
-		Table("journal_sources").
-		Where("source_object_id = ?", payment.ID.String()))
+	js := journalsourcedb.Sources
+	sourceCount, err := js.Where(js.SourceObjectID.Eq(payment.ID.String())).Count(ctx, db)
 	require.NoError(t, err)
-	assert.Equal(t, 1, sourceCount)
+	assert.Equal(t, int64(1), sourceCount)
 }
 
 func TestPostAndApplySupportsUnappliedCash(t *testing.T) {
@@ -317,64 +242,15 @@ func TestPostAndApplySupportsUnappliedCash(t *testing.T) {
 		seqgen.GeneratorParams{Store: store, Provider: provider, Logger: logger},
 	)
 
-	var org seededPaymentOrg
-	require.NoError(
-		t,
-		db.NewSelect().
-			Table("organizations").
-			Column("id", "business_unit_id").
-			Limit(1).
-			Scan(ctx, &org),
-	)
-	var user seededPaymentUser
-	require.NoError(
-		t,
-		db.NewSelect().
-			Table("users").
-			Column("id").
-			Where("current_organization_id = ?", org.ID).
-			Where("business_unit_id = ?", org.BusinessUnitID).
-			Limit(1).
-			Scan(ctx, &user),
-	)
-	var shp seededPaymentShipment
-	require.NoError(
-		t,
-		db.NewSelect().
-			Table("shipments").
-			Column("id", "customer_id", "pro_number", "bol").
-			Where("organization_id = ?", org.ID).
-			Where("business_unit_id = ?", org.BusinessUnitID).
-			Limit(1).
-			Scan(ctx, &shp),
-	)
+	seeded := billingtest.SeededTenant(t, ctx, db)
+	ctx = seeded.Ctx
+	org, user, shp := seeded.Org, seeded.User, seeded.Shipment
 
 	control, err := accountingRepo.GetByOrgID(ctx, org.ID)
 	require.NoError(t, err)
-	control.DefaultCashAccountID = lookupPaymentGLAccount(
-		t,
-		ctx,
-		db,
-		org.ID,
-		org.BusinessUnitID,
-		"1010",
-	)
-	control.DefaultUnappliedCashAccountID = lookupPaymentGLAccount(
-		t,
-		ctx,
-		db,
-		org.ID,
-		org.BusinessUnitID,
-		"2200",
-	)
-	control.DefaultARAccountID = lookupPaymentGLAccount(
-		t,
-		ctx,
-		db,
-		org.ID,
-		org.BusinessUnitID,
-		"1110",
-	)
+	control.DefaultCashAccountID = billingtest.GLAccountID(t, ctx, db, "1010")
+	control.DefaultUnappliedCashAccountID = billingtest.GLAccountID(t, ctx, db, "2200")
+	control.DefaultARAccountID = billingtest.GLAccountID(t, ctx, db, "1110")
 	control.JournalPostingMode = tenant.JournalPostingModeAutomatic
 	control.AccountingBasis = tenant.AccountingBasisAccrual
 	control.RevenueRecognitionPolicy = tenant.RevenueRecognitionOnInvoicePost
@@ -398,7 +274,7 @@ func TestPostAndApplySupportsUnappliedCash(t *testing.T) {
 		Status:           billingqueue.StatusPosted,
 		BillType:         billingqueue.BillTypeInvoice,
 	}
-	_, err = db.NewInsert().Model(queue).Exec(ctx)
+	err = billingqueuedb.BillingQueueItems.Create(ctx, db, queue)
 	require.NoError(t, err)
 	postedAt := now.Unix()
 	inv, err := invoiceRepo.Create(
@@ -491,26 +367,21 @@ func TestPostAndApplySupportsUnappliedCash(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, invoice.SettlementStatusPaid, updatedInvoice.SettlementStatus)
 
-	var lineCount int
-	lineCount, err = dbhelper.Count(ctx, db.NewSelect().
-		Table("journal_entry_lines").
-		Where("journal_entry_id = (SELECT id FROM journal_entries WHERE reference_id = ? LIMIT 1)", payment.ID.String()))
+	je := journalentrydb.JournalEntries
+	jel := journalentrydb.JournalEntryLines
+	lineCount, err := jel.Where(jel.JournalEntryID.InQuery(
+		je.Pick(je.ID).Where(je.ReferenceID.Eq(payment.ID.String())).Limit(1),
+	)).Count(ctx, db)
 	require.NoError(t, err)
-	assert.Equal(t, 3, lineCount)
+	assert.Equal(t, int64(3), lineCount)
 
-	var unappliedBalance struct {
-		PeriodCreditMinor int64 `bun:"period_credit_minor"`
-	}
-	require.NoError(
-		t,
-		db.NewSelect().
-			Table("gl_account_balances_by_period").
-			Column("period_credit_minor").
-			Where("gl_account_id = ?", control.DefaultUnappliedCashAccountID).
-			Where("fiscal_period_id = ?", period.ID).
-			Limit(1).
-			Scan(ctx, &unappliedBalance),
-	)
+	unappliedBalance := fiscaltest.PeriodBalance(t, ctx, fiscaltest.PeriodBalanceParams{
+		DB:             db,
+		OrganizationID: org.ID,
+		BusinessUnitID: org.BusinessUnitID,
+		GLAccountID:    control.DefaultUnappliedCashAccountID,
+		FiscalPeriodID: period.ID,
+	})
 	assert.Equal(t, int64(5000), unappliedBalance.PeriodCreditMinor)
 }
 
@@ -539,64 +410,15 @@ func TestApplyUnappliedLaterCreatesReclassificationEntry(t *testing.T) {
 		seqgen.GeneratorParams{Store: store, Provider: provider, Logger: logger},
 	)
 
-	var org seededPaymentOrg
-	require.NoError(
-		t,
-		db.NewSelect().
-			Table("organizations").
-			Column("id", "business_unit_id").
-			Limit(1).
-			Scan(ctx, &org),
-	)
-	var user seededPaymentUser
-	require.NoError(
-		t,
-		db.NewSelect().
-			Table("users").
-			Column("id").
-			Where("current_organization_id = ?", org.ID).
-			Where("business_unit_id = ?", org.BusinessUnitID).
-			Limit(1).
-			Scan(ctx, &user),
-	)
-	var shp seededPaymentShipment
-	require.NoError(
-		t,
-		db.NewSelect().
-			Table("shipments").
-			Column("id", "customer_id", "pro_number", "bol").
-			Where("organization_id = ?", org.ID).
-			Where("business_unit_id = ?", org.BusinessUnitID).
-			Limit(1).
-			Scan(ctx, &shp),
-	)
+	seeded := billingtest.SeededTenant(t, ctx, db)
+	ctx = seeded.Ctx
+	org, user, shp := seeded.Org, seeded.User, seeded.Shipment
 
 	control, err := accountingRepo.GetByOrgID(ctx, org.ID)
 	require.NoError(t, err)
-	control.DefaultCashAccountID = lookupPaymentGLAccount(
-		t,
-		ctx,
-		db,
-		org.ID,
-		org.BusinessUnitID,
-		"1010",
-	)
-	control.DefaultUnappliedCashAccountID = lookupPaymentGLAccount(
-		t,
-		ctx,
-		db,
-		org.ID,
-		org.BusinessUnitID,
-		"2200",
-	)
-	control.DefaultARAccountID = lookupPaymentGLAccount(
-		t,
-		ctx,
-		db,
-		org.ID,
-		org.BusinessUnitID,
-		"1110",
-	)
+	control.DefaultCashAccountID = billingtest.GLAccountID(t, ctx, db, "1010")
+	control.DefaultUnappliedCashAccountID = billingtest.GLAccountID(t, ctx, db, "2200")
+	control.DefaultARAccountID = billingtest.GLAccountID(t, ctx, db, "1110")
 	control.JournalPostingMode = tenant.JournalPostingModeAutomatic
 	control.AccountingBasis = tenant.AccountingBasisAccrual
 	control.RevenueRecognitionPolicy = tenant.RevenueRecognitionOnInvoicePost
@@ -629,10 +451,8 @@ func TestApplyUnappliedLaterCreatesReclassificationEntry(t *testing.T) {
 		Status:           billingqueue.StatusPosted,
 		BillType:         billingqueue.BillTypeInvoice,
 	}
-	_, err = db.NewInsert().Model(queue1).Exec(ctx)
-	require.NoError(t, err)
-	_, err = db.NewInsert().Model(queue2).Exec(ctx)
-	require.NoError(t, err)
+	require.NoError(t, billingqueuedb.BillingQueueItems.Create(ctx, db, queue1))
+	require.NoError(t, billingqueuedb.BillingQueueItems.Create(ctx, db, queue2))
 	postedAt := now.Unix()
 	inv1, err := invoiceRepo.Create(
 		ctx,
@@ -780,27 +600,21 @@ func TestApplyUnappliedLaterCreatesReclassificationEntry(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, invoice.SettlementStatusPaid, updatedInvoice2.SettlementStatus)
 
-	var appliedEntryCount int
-	appliedEntryCount, err = dbhelper.Count(ctx, db.NewSelect().
-		Table("journal_entries").
-		Where("reference_type = ?", "CustomerPaymentApplied").
-		Where("reference_id = ?", payment.ID.String()))
+	je := journalentrydb.JournalEntries
+	appliedEntryCount, err := je.Where(
+		je.ReferenceType.Eq("CustomerPaymentApplied"),
+		je.ReferenceID.Eq(payment.ID.String()),
+	).Count(ctx, db)
 	require.NoError(t, err)
-	assert.Equal(t, 1, appliedEntryCount)
+	assert.Equal(t, int64(1), appliedEntryCount)
 
-	var unappliedBalance struct {
-		NetChangeMinor int64 `bun:"net_change_minor"`
-	}
-	require.NoError(
-		t,
-		db.NewSelect().
-			Table("gl_account_balances_by_period").
-			Column("net_change_minor").
-			Where("gl_account_id = ?", control.DefaultUnappliedCashAccountID).
-			Where("fiscal_period_id = ?", period.ID).
-			Limit(1).
-			Scan(ctx, &unappliedBalance),
-	)
+	unappliedBalance := fiscaltest.PeriodBalance(t, ctx, fiscaltest.PeriodBalanceParams{
+		DB:             db,
+		OrganizationID: org.ID,
+		BusinessUnitID: org.BusinessUnitID,
+		GLAccountID:    control.DefaultUnappliedCashAccountID,
+		FiscalPeriodID: period.ID,
+	})
 	assert.Equal(t, int64(0), unappliedBalance.NetChangeMinor)
 }
 
@@ -829,64 +643,15 @@ func TestReversePaymentRestoresInvoiceAndBalances(t *testing.T) {
 		seqgen.GeneratorParams{Store: store, Provider: provider, Logger: logger},
 	)
 
-	var org seededPaymentOrg
-	require.NoError(
-		t,
-		db.NewSelect().
-			Table("organizations").
-			Column("id", "business_unit_id").
-			Limit(1).
-			Scan(ctx, &org),
-	)
-	var user seededPaymentUser
-	require.NoError(
-		t,
-		db.NewSelect().
-			Table("users").
-			Column("id").
-			Where("current_organization_id = ?", org.ID).
-			Where("business_unit_id = ?", org.BusinessUnitID).
-			Limit(1).
-			Scan(ctx, &user),
-	)
-	var shp seededPaymentShipment
-	require.NoError(
-		t,
-		db.NewSelect().
-			Table("shipments").
-			Column("id", "customer_id", "pro_number", "bol").
-			Where("organization_id = ?", org.ID).
-			Where("business_unit_id = ?", org.BusinessUnitID).
-			Limit(1).
-			Scan(ctx, &shp),
-	)
+	seeded := billingtest.SeededTenant(t, ctx, db)
+	ctx = seeded.Ctx
+	org, user, shp := seeded.Org, seeded.User, seeded.Shipment
 
 	control, err := accountingRepo.GetByOrgID(ctx, org.ID)
 	require.NoError(t, err)
-	control.DefaultCashAccountID = lookupPaymentGLAccount(
-		t,
-		ctx,
-		db,
-		org.ID,
-		org.BusinessUnitID,
-		"1010",
-	)
-	control.DefaultUnappliedCashAccountID = lookupPaymentGLAccount(
-		t,
-		ctx,
-		db,
-		org.ID,
-		org.BusinessUnitID,
-		"2200",
-	)
-	control.DefaultARAccountID = lookupPaymentGLAccount(
-		t,
-		ctx,
-		db,
-		org.ID,
-		org.BusinessUnitID,
-		"1110",
-	)
+	control.DefaultCashAccountID = billingtest.GLAccountID(t, ctx, db, "1010")
+	control.DefaultUnappliedCashAccountID = billingtest.GLAccountID(t, ctx, db, "2200")
+	control.DefaultARAccountID = billingtest.GLAccountID(t, ctx, db, "1110")
 	control.JournalPostingMode = tenant.JournalPostingModeAutomatic
 	control.AccountingBasis = tenant.AccountingBasisAccrual
 	control.RevenueRecognitionPolicy = tenant.RevenueRecognitionOnInvoicePost
@@ -910,7 +675,7 @@ func TestReversePaymentRestoresInvoiceAndBalances(t *testing.T) {
 		Status:           billingqueue.StatusPosted,
 		BillType:         billingqueue.BillTypeInvoice,
 	}
-	_, err = db.NewInsert().Model(queue).Exec(ctx)
+	err = billingqueuedb.BillingQueueItems.Create(ctx, db, queue)
 	require.NoError(t, err)
 	postedAt := now.Unix()
 	inv, err := invoiceRepo.Create(
@@ -1031,13 +796,13 @@ func TestReversePaymentRestoresInvoiceAndBalances(t *testing.T) {
 	assert.Equal(t, int64(0), updatedInvoice.AppliedAmountMinor)
 	assert.Equal(t, invoice.SettlementStatusUnpaid, updatedInvoice.SettlementStatus)
 
-	var reversalEntryCount int
-	reversalEntryCount, err = dbhelper.Count(ctx, db.NewSelect().
-		Table("journal_entries").
-		Where("reference_type = ?", tenant.JournalSourceEventCustomerPaymentReversed.String()).
-		Where("reference_id = ?", payment.ID.String()))
+	je := journalentrydb.JournalEntries
+	reversalEntryCount, err := je.Where(
+		je.ReferenceType.Eq(tenant.JournalSourceEventCustomerPaymentReversed.String()),
+		je.ReferenceID.Eq(payment.ID.String()),
+	).Count(ctx, db)
 	require.NoError(t, err)
-	assert.Equal(t, 1, reversalEntryCount)
+	assert.Equal(t, int64(1), reversalEntryCount)
 
 	assert.Equal(
 		t,
@@ -1076,72 +841,16 @@ func TestPostAndApplyRecognizesShortPayAndSettlesInvoice(t *testing.T) {
 		seqgen.GeneratorParams{Store: store, Provider: provider, Logger: logger},
 	)
 
-	var org seededPaymentOrg
-	require.NoError(
-		t,
-		db.NewSelect().
-			Table("organizations").
-			Column("id", "business_unit_id").
-			Limit(1).
-			Scan(ctx, &org),
-	)
-	var user seededPaymentUser
-	require.NoError(
-		t,
-		db.NewSelect().
-			Table("users").
-			Column("id").
-			Where("current_organization_id = ?", org.ID).
-			Where("business_unit_id = ?", org.BusinessUnitID).
-			Limit(1).
-			Scan(ctx, &user),
-	)
-	var shp seededPaymentShipment
-	require.NoError(
-		t,
-		db.NewSelect().
-			Table("shipments").
-			Column("id", "customer_id", "pro_number", "bol").
-			Where("organization_id = ?", org.ID).
-			Where("business_unit_id = ?", org.BusinessUnitID).
-			Limit(1).
-			Scan(ctx, &shp),
-	)
+	seeded := billingtest.SeededTenant(t, ctx, db)
+	ctx = seeded.Ctx
+	org, user, shp := seeded.Org, seeded.User, seeded.Shipment
 
 	control, err := accountingRepo.GetByOrgID(ctx, org.ID)
 	require.NoError(t, err)
-	control.DefaultCashAccountID = lookupPaymentGLAccount(
-		t,
-		ctx,
-		db,
-		org.ID,
-		org.BusinessUnitID,
-		"1010",
-	)
-	control.DefaultUnappliedCashAccountID = lookupPaymentGLAccount(
-		t,
-		ctx,
-		db,
-		org.ID,
-		org.BusinessUnitID,
-		"2200",
-	)
-	control.DefaultARAccountID = lookupPaymentGLAccount(
-		t,
-		ctx,
-		db,
-		org.ID,
-		org.BusinessUnitID,
-		"1110",
-	)
-	control.DefaultWriteOffAccountID = lookupPaymentGLAccount(
-		t,
-		ctx,
-		db,
-		org.ID,
-		org.BusinessUnitID,
-		"6940",
-	)
+	control.DefaultCashAccountID = billingtest.GLAccountID(t, ctx, db, "1010")
+	control.DefaultUnappliedCashAccountID = billingtest.GLAccountID(t, ctx, db, "2200")
+	control.DefaultARAccountID = billingtest.GLAccountID(t, ctx, db, "1110")
+	control.DefaultWriteOffAccountID = billingtest.GLAccountID(t, ctx, db, "6940")
 	control.JournalPostingMode = tenant.JournalPostingModeAutomatic
 	control.AccountingBasis = tenant.AccountingBasisAccrual
 	control.RevenueRecognitionPolicy = tenant.RevenueRecognitionOnInvoicePost
@@ -1165,7 +874,7 @@ func TestPostAndApplyRecognizesShortPayAndSettlesInvoice(t *testing.T) {
 		Status:           billingqueue.StatusPosted,
 		BillType:         billingqueue.BillTypeInvoice,
 	}
-	_, err = db.NewInsert().Model(queue).Exec(ctx)
+	err = billingqueuedb.BillingQueueItems.Create(ctx, db, queue)
 	require.NoError(t, err)
 	postedAt := now.Unix()
 	inv, err := invoiceRepo.Create(
@@ -1259,19 +968,13 @@ func TestPostAndApplyRecognizesShortPayAndSettlesInvoice(t *testing.T) {
 	assert.Equal(t, int64(10000), updatedInvoice.AppliedAmountMinor)
 	assert.Equal(t, invoice.SettlementStatusPaid, updatedInvoice.SettlementStatus)
 
-	var writeOffBalance struct {
-		PeriodDebitMinor int64 `bun:"period_debit_minor"`
-	}
-	require.NoError(
-		t,
-		db.NewSelect().
-			Table("gl_account_balances_by_period").
-			Column("period_debit_minor").
-			Where("gl_account_id = ?", control.DefaultWriteOffAccountID).
-			Where("fiscal_period_id = ?", period.ID).
-			Limit(1).
-			Scan(ctx, &writeOffBalance),
-	)
+	writeOffBalance := fiscaltest.PeriodBalance(t, ctx, fiscaltest.PeriodBalanceParams{
+		DB:             db,
+		OrganizationID: org.ID,
+		BusinessUnitID: org.BusinessUnitID,
+		GLAccountID:    control.DefaultWriteOffAccountID,
+		FiscalPeriodID: period.ID,
+	})
 	assert.Equal(t, int64(1000), writeOffBalance.PeriodDebitMinor)
 }
 
@@ -1300,64 +1003,15 @@ func TestListAndGetCustomerPayments(t *testing.T) {
 		seqgen.GeneratorParams{Store: store, Provider: provider, Logger: logger},
 	)
 
-	var org seededPaymentOrg
-	require.NoError(
-		t,
-		db.NewSelect().
-			Table("organizations").
-			Column("id", "business_unit_id").
-			Limit(1).
-			Scan(ctx, &org),
-	)
-	var user seededPaymentUser
-	require.NoError(
-		t,
-		db.NewSelect().
-			Table("users").
-			Column("id").
-			Where("current_organization_id = ?", org.ID).
-			Where("business_unit_id = ?", org.BusinessUnitID).
-			Limit(1).
-			Scan(ctx, &user),
-	)
-	var shp seededPaymentShipment
-	require.NoError(
-		t,
-		db.NewSelect().
-			Table("shipments").
-			Column("id", "customer_id", "pro_number", "bol").
-			Where("organization_id = ?", org.ID).
-			Where("business_unit_id = ?", org.BusinessUnitID).
-			Limit(1).
-			Scan(ctx, &shp),
-	)
+	seeded := billingtest.SeededTenant(t, ctx, db)
+	ctx = seeded.Ctx
+	org, user, shp := seeded.Org, seeded.User, seeded.Shipment
 
 	control, err := accountingRepo.GetByOrgID(ctx, org.ID)
 	require.NoError(t, err)
-	control.DefaultCashAccountID = lookupPaymentGLAccount(
-		t,
-		ctx,
-		db,
-		org.ID,
-		org.BusinessUnitID,
-		"1010",
-	)
-	control.DefaultUnappliedCashAccountID = lookupPaymentGLAccount(
-		t,
-		ctx,
-		db,
-		org.ID,
-		org.BusinessUnitID,
-		"2200",
-	)
-	control.DefaultARAccountID = lookupPaymentGLAccount(
-		t,
-		ctx,
-		db,
-		org.ID,
-		org.BusinessUnitID,
-		"1110",
-	)
+	control.DefaultCashAccountID = billingtest.GLAccountID(t, ctx, db, "1010")
+	control.DefaultUnappliedCashAccountID = billingtest.GLAccountID(t, ctx, db, "2200")
+	control.DefaultARAccountID = billingtest.GLAccountID(t, ctx, db, "1110")
 	control.JournalPostingMode = tenant.JournalPostingModeAutomatic
 	control.AccountingBasis = tenant.AccountingBasisAccrual
 	control.RevenueRecognitionPolicy = tenant.RevenueRecognitionOnInvoicePost
@@ -1381,7 +1035,7 @@ func TestListAndGetCustomerPayments(t *testing.T) {
 		Status:           billingqueue.StatusPosted,
 		BillType:         billingqueue.BillTypeInvoice,
 	}
-	_, err = db.NewInsert().Model(queue).Exec(ctx)
+	err = billingqueuedb.BillingQueueItems.Create(ctx, db, queue)
 	require.NoError(t, err)
 	postedAt := now.Unix()
 	inv, err := invoiceRepo.Create(
@@ -1517,32 +1171,6 @@ func TestListAndGetCustomerPayments(t *testing.T) {
 	)
 	require.NoError(t, err)
 	assert.Equal(t, payment.ID, got.ID)
-}
-
-func lookupPaymentGLAccount(
-	t *testing.T,
-	ctx context.Context,
-	db *bun.DB,
-	orgID, buID pulid.ID,
-	accountCode string,
-) pulid.ID {
-	t.Helper()
-
-	var row struct {
-		ID pulid.ID `bun:"id"`
-	}
-	require.NoError(
-		t,
-		db.NewSelect().
-			Table("gl_accounts").
-			Column("id").
-			Where("organization_id = ?", orgID).
-			Where("business_unit_id = ?", buID).
-			Where("account_code = ?", accountCode).
-			Limit(1).
-			Scan(ctx, &row),
-	)
-	return row.ID
 }
 
 func int64Ptr(v int64) *int64 { return &v }

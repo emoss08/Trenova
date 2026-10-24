@@ -16,7 +16,6 @@ import (
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
-	"github.com/uptrace/bun"
 )
 
 const (
@@ -84,7 +83,7 @@ func (s *Service) voidDraft(
 ) (*invoiceports.VoidInvoiceResult, error) {
 	var result *invoiceports.VoidInvoiceResult
 
-	err := s.db.WithTx(ctx, kernelports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
+	err := s.db.Transact(ctx, kernelports.TxOptions{}, func(txCtx context.Context) error {
 		entity, txErr := s.repo.LockForUpdate(txCtx, invoiceports.GetInvoiceByIDRequest{
 			ID:         req.InvoiceID,
 			TenantInfo: req.TenantInfo,
@@ -120,7 +119,7 @@ func (s *Service) DiscardDraftForReview(
 	req *invoiceports.DiscardDraftForReviewRequest,
 	actor *permissionports.RequestActor,
 ) error {
-	return s.db.WithTx(ctx, kernelports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
+	return s.db.Transact(ctx, kernelports.TxOptions{}, func(txCtx context.Context) error {
 		existing, err := s.repo.GetByBillingQueueItemID(
 			txCtx,
 			invoiceports.GetInvoiceByBillingQueueItemIDRequest{
@@ -234,7 +233,7 @@ func (s *Service) voidPosted(
 		adjustment *invoiceadjustment.InvoiceAdjustment
 		reloaded   *invoice.Invoice
 	)
-	err := s.db.WithTx(ctx, kernelports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
+	err := s.db.Transact(ctx, kernelports.TxOptions{}, func(txCtx context.Context) error {
 		entity.VoidReason = strings.TrimSpace(req.Reason)
 		entity.VoidDisposition = req.Disposition
 		if _, txErr := s.repo.Update(txCtx, entity); txErr != nil {

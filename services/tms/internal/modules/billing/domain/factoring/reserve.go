@@ -8,7 +8,6 @@ import (
 	"github.com/emoss08/trenova/internal/modules/parties/domain/customer"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/factoringcompany"
 	"github.com/emoss08/trenova/pkg/domaintypes"
-	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
 	"github.com/uptrace/bun"
@@ -20,9 +19,8 @@ var _ bun.BeforeAppendModelHook = (*ReserveEntry)(nil)
 
 // Each funding, reserve release, chargeback and reversal booked with a factor, with the cash, fee, reserve and receivables it moved
 type ReserveEntry struct {
-	bun.BaseModel             `bun:"table:factoring_reserve_entries,alias:facres" json:"-"`
-	keel.Table                `                                                            keel:"factoring_reserve_entries,report=Billing,label=Factoring Reserve Entry"`
-	pagination.CursorValueSet `bun:",embed"                                       json:"-"`
+	bun.BaseModel `bun:"table:factoring_reserve_entries,alias:facres" json:"-"`
+	keel.Table    `                                                            keel:"factoring_reserve_entries,report=Billing,label=Factoring Reserve Entry"`
 
 	ID                 pulid.ID            `json:"id"                 bun:"id,pk,type:VARCHAR(100),notnull"                     keel:"id,pk,autoid:facres_"`
 	OrganizationID     pulid.ID            `json:"organizationId"     bun:"organization_id,pk,type:VARCHAR(100),notnull"        keel:"organization_id,pk,tenant"`

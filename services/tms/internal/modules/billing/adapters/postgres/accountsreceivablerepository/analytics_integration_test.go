@@ -6,6 +6,11 @@ import (
 	"testing"
 	"time"
 
+	"github.com/emoss08/trenova/internal/modules/billing/billingtest"
+
+	"github.com/emoss08/keel"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/customer/customerdb"
+
 	"github.com/emoss08/trenova/internal/testutil/seededtest"
 
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
@@ -24,15 +29,8 @@ func TestARAnalyticsRepositoryQueriesExecute(t *testing.T) {
 	conn := postgres.NewTestConnection(db)
 	repo := NewAnalytics(Params{DB: conn, Logger: zap.NewNop()})
 
-	var org seededAROrg
-	require.NoError(
-		t,
-		db.NewSelect().
-			Table("organizations").
-			Column("id", "business_unit_id").
-			Limit(1).
-			Scan(ctx, &org),
-	)
+	seeded := billingtest.SeededTenant(t, ctx, db)
+	ctx, org := seeded.Ctx, seeded.Org
 
 	tenantInfo := pagination.TenantInfo{OrgID: org.ID, BuID: org.BusinessUnitID}
 	asOf := time.Now().UTC().Unix()
@@ -138,25 +136,15 @@ func TestARAnalyticsRepositoryQueriesExecute(t *testing.T) {
 	require.NoError(t, err)
 	assert.LessOrEqual(t, len(worklist), 25)
 
-	var customer struct {
-		ID pulid.ID `bun:"id"`
-	}
-	require.NoError(
-		t,
-		db.NewSelect().
-			Table("customers").
-			Column("id").
-			Where("organization_id = ?", org.ID).
-			Where("business_unit_id = ?", org.BusinessUnitID).
-			Limit(1).
-			Scan(ctx, &customer),
-	)
+	cus := customerdb.Customers
+	customerID, err := keel.IntoOne[pulid.ID](ctx, db, cus.Pick(cus.ID).Order(cus.ID.Asc()).Limit(1))
+	require.NoError(t, err)
 
 	snapshot, err := repo.GetCustomerSnapshot(
 		ctx,
 		customerledgerports.GetARCustomerSnapshotRequest{
 			TenantInfo: tenantInfo,
-			CustomerID: customer.ID,
+			CustomerID: customerID,
 			AsOfDate:   asOf,
 		},
 	)

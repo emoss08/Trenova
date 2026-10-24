@@ -31,7 +31,6 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
-	"github.com/uptrace/bun"
 	"go.uber.org/zap"
 )
 
@@ -350,8 +349,8 @@ func TestReassignCharge_MovingDetentionToPeakKeepsBothItemsAndSyncsTheSplit(t *t
 
 	var synced []*shipment.ChargeAllocation
 	h.allocRepo.EXPECT().
-		SyncForShipment(mock.Anything, mock.Anything, mock.Anything).
-		RunAndReturn(func(_ context.Context, _ bun.IDB, shp *shipment.Shipment) error {
+		SyncForShipment(mock.Anything, mock.Anything).
+		RunAndReturn(func(_ context.Context, shp *shipment.Shipment) error {
 			synced = shp.ChargeAllocations
 			return nil
 		}).
@@ -393,7 +392,7 @@ func TestReassignCharge_GivingPeakFreightBackToAcmeCancelsPeaksItem(t *testing.T
 	h.expectItem(f.peakItem)
 	h.expectActive(f.acmeItem, f.peakItem)
 	h.allocRepo.EXPECT().
-		SyncForShipment(mock.Anything, mock.Anything, mock.Anything).
+		SyncForShipment(mock.Anything, mock.Anything).
 		Return(nil).
 		Once()
 
@@ -442,7 +441,7 @@ func TestReassignCharge_ANewPayerGetsTheirOwnQueueItem(t *testing.T) {
 	h.expectItem(f.acmeItem)
 	h.expectActive(f.acmeItem, f.peakItem)
 	h.allocRepo.EXPECT().
-		SyncForShipment(mock.Anything, mock.Anything, mock.Anything).
+		SyncForShipment(mock.Anything, mock.Anything).
 		Return(nil).
 		Once()
 

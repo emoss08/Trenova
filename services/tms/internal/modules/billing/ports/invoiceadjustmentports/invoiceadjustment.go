@@ -96,8 +96,6 @@ type ListBatchQueueRequest struct {
 }
 
 type InvoiceAdjustmentApprovalQueueItem struct {
-	pagination.CursorValueSet `json:"-" bun:",embed"`
-
 	AdjustmentID                     pulid.ID                         `json:"adjustmentId"`
 	CorrectionGroupID                pulid.ID                         `json:"correctionGroupId"`
 	OriginalInvoiceID                pulid.ID                         `json:"originalInvoiceId"`

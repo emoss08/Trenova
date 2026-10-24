@@ -37,6 +37,7 @@ func TestJournalRepairRestoresAdjustmentCreditMemoJournals(t *testing.T) {
 		&fakeWorkflowStarter{enabled: false},
 		decimal.NewFromInt(100),
 	)
+	ctx = h.ctx
 	h.ensureOpenFiscalPeriod(t)
 	h.ensureAccountingDefaults(t)
 	h.setControls(t, func(control *tenant.InvoiceAdjustmentControl) {
@@ -79,12 +80,11 @@ func TestJournalRepairRestoresAdjustmentCreditMemoJournals(t *testing.T) {
 	assert.Empty(t, h.customerLedgerLines(t, credit.CreditMemoInvoiceID))
 
 	payableID, cashID := h.lookupGLAccount(t, "2010"), h.lookupGLAccount(t, "1010")
-	_, err = db.NewUpdate().
-		Table("driver_settlements").
-		Set("posted_payable_account_id = ?", payableID).
-		Where("id = ?", settlementID).
-		Exec(ctx)
-	require.NoError(t, err)
+	h.execSQL(t,
+		`UPDATE driver_settlements SET posted_payable_account_id = $1
+		WHERE organization_id = $2 AND business_unit_id = $3 AND id = $4`,
+		payableID, h.orgID, h.buID, settlementID,
+	)
 	control, err := h.accountingRepo.GetByOrgID(ctx, h.orgID)
 	require.NoError(t, err)
 	control.DefaultCashAccountID = cashID
@@ -133,12 +133,11 @@ func TestJournalRepairRestoresAdjustmentCreditMemoJournals(t *testing.T) {
 	assert.Equal(t, cashID, payment.Lines[1].GLAccountID)
 	assert.Equal(t, netPay, payment.Lines[1].CreditAmount)
 
-	_, err = db.NewUpdate().
-		Table("driver_settlements").
-		Set("paid_journal_batch_id = NULL").
-		Where("id = ?", settlementID).
-		Exec(ctx)
-	require.NoError(t, err)
+	h.execSQL(t,
+		`UPDATE driver_settlements SET paid_journal_batch_id = NULL
+		WHERE organization_id = $1 AND business_unit_id = $2 AND id = $3`,
+		h.orgID, h.buID, settlementID,
+	)
 
 	again, err := repair.Repair(ctx, request)
 	require.NoError(t, err)
@@ -193,11 +192,17 @@ func (h *integrationHarness) executeAdjustment(
 func (h *integrationHarness) forgetCustomerLedgerLines(t *testing.T, creditMemoID pulid.ID) {
 	t.Helper()
 
-	_, err := h.db.NewDelete().
-		Table("customer_ledger_entries").
-		Where("organization_id = ?", h.orgID).
-		Where("source_object_id = ?", creditMemoID.String()).
-		Exec(h.ctx)
+	h.execSQL(t,
+		`DELETE FROM customer_ledger_entries
+		WHERE organization_id = $1 AND business_unit_id = $2 AND source_object_id = $3`,
+		h.orgID, h.buID, creditMemoID.String(),
+	)
+}
+
+func (h *integrationHarness) execSQL(t *testing.T, sql string, args ...any) {
+	t.Helper()
+
+	_, err := h.db.Pool().Exec(h.ctx, sql, args...)
 	require.NoError(t, err)
 }
 
@@ -205,41 +210,38 @@ func (h *integrationHarness) forgetCreditMemoJournal(t *testing.T, creditMemoID 
 	t.Helper()
 
 	h.forgetCustomerLedgerLines(t, creditMemoID)
-	_, err := h.db.NewDelete().
-		Table("journal_sources").
-		Where("organization_id = ?", h.orgID).
-		Where("source_object_type = ?", "Invoice").
-		Where("source_object_id = ?", creditMemoID.String()).
-		Where("source_event_type = ?", "CreditMemoPosted").
-		Exec(h.ctx)
-	require.NoError(t, err)
+	h.execSQL(t,
+		`DELETE FROM journal_sources
+		WHERE organization_id = $1 AND business_unit_id = $2 AND source_object_type = 'Invoice'
+			AND source_object_id = $3 AND source_event_type = 'CreditMemoPosted'`,
+		h.orgID, h.buID, creditMemoID.String(),
+	)
 }
 
 func (h *integrationHarness) seededPaidSettlement(t *testing.T) (pulid.ID, int64) {
 	t.Helper()
 
-	var row struct {
-		ID          pulid.ID `bun:"id"`
-		NetPayMinor int64    `bun:"net_pay_minor"`
-	}
-	require.NoError(t, h.db.NewSelect().
-		Table("driver_settlements").
-		Column("id", "net_pay_minor").
-		Where("organization_id = ?", h.orgID).
-		Where("status = ?", "Paid").
-		Where("paid_journal_batch_id IS NULL").
-		Scan(h.ctx, &row))
-	require.Positive(t, row.NetPayMinor)
+	var id pulid.ID
+	var netPayMinor int64
+	require.NoError(t, h.db.Pool().QueryRow(h.ctx,
+		`SELECT id, net_pay_minor FROM driver_settlements
+		WHERE organization_id = $1 AND business_unit_id = $2 AND status = 'Paid'
+			AND paid_journal_batch_id IS NULL
+		ORDER BY id LIMIT 1`,
+		h.orgID, h.buID,
+	).Scan(&id, &netPayMinor))
+	require.Positive(t, netPayMinor)
 
-	_, err := h.db.NewUpdate().
-		Table("driver_settlements").
-		Set("posted_payable_account_id = NULL").
-		Set("posted_journal_batch_id = NULL").
-		Where("id = ?", row.ID).
-		Exec(h.ctx)
-	require.NoError(t, err)
+	h.execSQL(
+		t,
+		`UPDATE driver_settlements SET posted_payable_account_id = NULL, posted_journal_batch_id = NULL
+		WHERE organization_id = $1 AND business_unit_id = $2 AND id = $3`,
+		h.orgID,
+		h.buID,
+		id,
+	)
 
-	return row.ID, row.NetPayMinor
+	return id, netPayMinor
 }
 
 func (h *integrationHarness) settlementPaymentJournal(
@@ -248,38 +250,27 @@ func (h *integrationHarness) settlementPaymentJournal(
 ) *creditMemoJournalRow {
 	t.Helper()
 
-	var settlement struct {
-		BatchID *pulid.ID `bun:"paid_journal_batch_id"`
-	}
-	require.NoError(t, h.db.NewSelect().
-		Table("driver_settlements").
-		Column("paid_journal_batch_id").
-		Where("id = ?", settlementID).
-		Scan(h.ctx, &settlement))
-	if settlement.BatchID == nil {
+	var batchID *pulid.ID
+	require.NoError(t, h.db.Pool().QueryRow(h.ctx,
+		`SELECT paid_journal_batch_id FROM driver_settlements
+		WHERE organization_id = $1 AND business_unit_id = $2 AND id = $3`,
+		h.orgID, h.buID, settlementID,
+	).Scan(&batchID))
+	if batchID == nil {
 		return nil
 	}
 
-	var source struct {
-		Status         string   `bun:"status"`
-		JournalEntryID pulid.ID `bun:"journal_entry_id"`
-	}
-	require.NoError(t, h.db.NewSelect().
-		Table("journal_sources").
-		Column("status", "journal_entry_id").
-		Where("journal_batch_id = ?", *settlement.BatchID).
-		Where("source_object_type = ?", "DriverSettlement").
-		Where("source_object_id = ?", settlementID.String()).
-		Where("source_event_type = ?", "DriverSettlementPaid").
-		Scan(h.ctx, &source))
+	row := &creditMemoJournalRow{SourceEventType: "DriverSettlementPaid"}
+	var journalEntryID pulid.ID
+	require.NoError(t, h.db.Pool().QueryRow(h.ctx,
+		`SELECT status, journal_entry_id FROM journal_sources
+		WHERE organization_id = $1 AND business_unit_id = $2 AND journal_batch_id = $3
+			AND source_object_type = 'DriverSettlement' AND source_object_id = $4
+			AND source_event_type = 'DriverSettlementPaid'`,
+		h.orgID, h.buID, *batchID, settlementID.String(),
+	).Scan(&row.Status, &journalEntryID))
 
-	row := &creditMemoJournalRow{SourceEventType: "DriverSettlementPaid", Status: source.Status}
-	require.NoError(t, h.db.NewSelect().
-		Table("journal_entry_lines").
-		Column("gl_account_id", "debit_amount", "credit_amount").
-		Where("journal_entry_id = ?", source.JournalEntryID).
-		OrderExpr("line_number ASC").
-		Scan(h.ctx, &row.Lines))
+	row.Lines = h.journalEntryLines(t, journalEntryID)
 	return row
 }
 
@@ -321,6 +312,7 @@ func TestWriteOffJournalIsStampedWhenItIsWrittenNotOnItsAccountingDate(t *testin
 		&fakeWorkflowStarter{enabled: false},
 		decimal.NewFromInt(100),
 	)
+	ctx = h.ctx
 	h.ensureOpenFiscalPeriod(t)
 	h.ensureAccountingDefaults(t)
 	h.setControls(t, func(control *tenant.InvoiceAdjustmentControl) {
@@ -332,12 +324,11 @@ func TestWriteOffJournalIsStampedWhenItIsWrittenNotOnItsAccountingDate(t *testin
 		makeInvoiceLine(1, invoice.InvoiceLineTypeFreight, "Open balance", 1, 80),
 	}, invoice.SettlementStatusUnpaid, decimal.Zero)
 	accountingDate := timeutils.NowUnix() - 3_600
-	_, err := db.NewUpdate().
-		Table("invoices").
-		Set("invoice_date = ?", accountingDate).
-		Where("id = ?", entity.ID).
-		Exec(ctx)
-	require.NoError(t, err)
+	h.execSQL(t,
+		`UPDATE invoices SET invoice_date = $1
+		WHERE organization_id = $2 AND business_unit_id = $3 AND id = $4`,
+		accountingDate, h.orgID, h.buID, entity.ID,
+	)
 
 	writtenAfter := timeutils.NowUnix()
 	adjustment, err := h.service.Submit(ctx, &invoiceadjustmentports.InvoiceAdjustmentRequest{
@@ -351,17 +342,14 @@ func TestWriteOffJournalIsStampedWhenItIsWrittenNotOnItsAccountingDate(t *testin
 	require.Equal(t, invoiceadjustment.StatusExecuted, adjustment.Status)
 	require.Equal(t, accountingDate, adjustment.AccountingDate)
 
-	var journal struct {
-		AccountingDate int64  `bun:"accounting_date"`
-		PostedAt       *int64 `bun:"posted_at"`
-	}
-	require.NoError(t, db.NewSelect().
-		Table("journal_entries").
-		Column("accounting_date", "posted_at").
-		Where("reference_id = ?", adjustment.ID.String()).
-		Limit(1).
-		Scan(ctx, &journal))
-	assert.Equal(t, accountingDate, journal.AccountingDate)
-	require.NotNil(t, journal.PostedAt)
-	assert.GreaterOrEqual(t, *journal.PostedAt, writtenAfter)
+	var journalAccountingDate int64
+	var postedAt *int64
+	require.NoError(t, h.db.Pool().QueryRow(ctx,
+		`SELECT accounting_date, posted_at FROM journal_entries
+		WHERE organization_id = $1 AND business_unit_id = $2 AND reference_id = $3 LIMIT 1`,
+		h.orgID, h.buID, adjustment.ID.String(),
+	).Scan(&journalAccountingDate, &postedAt))
+	assert.Equal(t, accountingDate, journalAccountingDate)
+	require.NotNil(t, postedAt)
+	assert.GreaterOrEqual(t, *postedAt, writtenAfter)
 }

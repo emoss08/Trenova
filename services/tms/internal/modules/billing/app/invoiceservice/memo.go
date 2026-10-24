@@ -18,7 +18,6 @@ import (
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/timeutils"
 	"github.com/shopspring/decimal"
-	"github.com/uptrace/bun"
 )
 
 const (
@@ -66,7 +65,7 @@ func (s *Service) CreateMemo(
 	}
 
 	var created *invoice.Invoice
-	err = s.db.WithTx(ctx, kernelports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
+	err = s.db.Transact(ctx, kernelports.TxOptions{}, func(txCtx context.Context) error {
 		queued := memoQueueItem(req, cus, number)
 		queued.AdjustmentContext[memoRaisedByKey] = actor.UserID.String()
 		item, txErr := s.billingQueueRepo.Create(txCtx, queued)

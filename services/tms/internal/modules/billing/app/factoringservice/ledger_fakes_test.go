@@ -20,19 +20,16 @@ import (
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/seqgen"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/uptrace/bun"
 )
 
-type fakeTx struct {
-	kernelports.DBConnection
-}
+type fakeTx struct{}
 
-func (fakeTx) WithTx(
+func (fakeTx) Transact(
 	ctx context.Context,
 	_ kernelports.TxOptions,
-	fn func(context.Context, bun.Tx) error,
+	fn func(context.Context) error,
 ) error {
-	return fn(ctx, bun.Tx{})
+	return fn(ctx)
 }
 
 type fakeReserveEntries struct {
@@ -208,7 +205,8 @@ func (f *fakeSubmissions) ClaimChargebackWarning(
 			if item.ID != req.ItemID {
 				continue
 			}
-			if item.ChargebackWarnedAt != nil || item.Status != factoring.SubmissionItemStatusFunded {
+			if item.ChargebackWarnedAt != nil ||
+				item.Status != factoring.SubmissionItemStatusFunded {
 				return false, nil
 			}
 			at := req.At

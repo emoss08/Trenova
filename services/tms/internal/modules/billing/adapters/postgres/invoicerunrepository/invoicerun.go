@@ -2,23 +2,41 @@ package invoicerunrepository
 
 import (
 	"context"
-	"fmt"
 
-	"github.com/emoss08/trenova/pkg/buncolgen/invoiceruncol"
-
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoicerun"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/invoicerun/invoicerundb"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoicerunports"
-	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/customer"
 	"github.com/emoss08/trenova/pkg/dberror"
-	"github.com/emoss08/trenova/pkg/dbhelper"
+	"github.com/emoss08/trenova/pkg/listquery"
 	"github.com/emoss08/trenova/pkg/pagination"
-	"github.com/emoss08/trenova/pkg/querybuilder"
-	"github.com/uptrace/bun"
+	"github.com/emoss08/trenova/shared/pulid"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
+
+var runErrors = dberror.Mapping{
+	Entity: "Invoice run",
+	Unique: []dberror.Constraint{
+		{
+			Name:    "uk_invoice_runs_number",
+			Field:   "number",
+			Message: "Invoice run with this number already exists in your organization",
+		},
+		{
+			Name:    "uq_invoice_runs_scheduled_period",
+			Field:   "periodEnd",
+			Message: "A scheduled invoice run already exists for this cycle and period",
+		},
+	},
+}
+
+var groupErrors = dberror.Mapping{Entity: "Invoice run group"}
+
+var itemErrors = dberror.Mapping{Entity: "Invoice run group item"}
 
 type Params struct {
 	fx.In
@@ -47,30 +65,18 @@ func (r *repository) List(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*pagination.ListResult[*invoicerun.InvoiceRun], error) {
-			entities := make([]*invoicerun.InvoiceRun, 0, req.Filter.Pagination.SafeLimit())
-			total, err := r.db.DBForContext(ctx).
-				NewSelect().
-				Model(&entities).
-				Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-					return querybuilder.ApplyFilters(
-						sq,
-						invoiceruncol.InvoiceRunTable.Alias,
-						req.Filter,
-						(*invoicerun.InvoiceRun)(nil),
-					).
-						Limit(int64(req.Filter.Pagination.SafeLimit())).
-						Offset(int64(req.Filter.Pagination.SafeOffset()))
-				}).
-				ScanAndCount(ctx)
+			result, err := listquery.List(
+				ctx,
+				r.db.Keel(ctx),
+				invoicerundb.InvoiceRuns.Query(),
+				&listquery.Request[invoicerun.InvoiceRun]{Filter: req.Filter},
+			)
 			if err != nil {
 				r.l.Error("failed to list invoice runs", zap.Error(err))
-				return nil, fmt.Errorf("list invoice runs: %w", err)
+				return nil, err
 			}
 
-			return &pagination.ListResult[*invoicerun.InvoiceRun]{
-				Items: entities,
-				Total: int(total),
-			}, nil
+			return result, nil
 		},
 	)
 }
@@ -79,61 +85,46 @@ func (r *repository) ListConnection(
 	ctx context.Context,
 	req *invoicerunports.ListInvoiceRunConnectionRequest,
 ) (*pagination.CursorListResult[*invoicerun.InvoiceRun], error) {
-	return dbtx.Write(ctx, r.db, func(ctx context.
-
-		// Only pay for the COUNT when the caller actually selected totalCount.
-		Context) (*pagination.CursorListResult[*invoicerun.InvoiceRun], error) {
-		dba := r.db.DBForContext(ctx)
-
-		var totalCount *int
-		if req.Cursor.IncludeTotalCount {
-			total, err := dba.
-				NewSelect().
-				Model((*invoicerun.InvoiceRun)(nil)).
-				Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-					return querybuilder.ApplyFilters(
-						sq,
-						invoiceruncol.InvoiceRunTable.Alias,
-						req.Filter,
-						(*invoicerun.InvoiceRun)(nil),
-					)
-				}).
-				Count(ctx)
+	return dbtx.Read(
+		ctx,
+		r.db,
+		func(ctx context.Context) (*pagination.CursorListResult[*invoicerun.InvoiceRun], error) {
+			result, err := listquery.Connection(
+				ctx,
+				r.db.Keel(ctx),
+				invoicerundb.InvoiceRuns.Query(),
+				&listquery.Request[invoicerun.InvoiceRun]{
+					Filter: req.Filter,
+					Cursor: req.Cursor,
+				},
+			)
 			if err != nil {
-				r.l.Error("failed to count invoice runs", zap.Error(err))
-				return nil, fmt.Errorf("count invoice runs: %w", err)
+				r.l.Error("failed to list invoice runs", zap.Error(err))
+				return nil, err
 			}
-			totalCount = new(int(total))
-		}
 
-		result, err := dbhelper.CursorList(
-			ctx,
-			dbhelper.CursorListParams[*invoicerun.InvoiceRun]{
-				Filter:     req.Filter,
-				Cursor:     req.Cursor,
-				TotalCount: totalCount,
-				Query: func(entities *[]*invoicerun.InvoiceRun) *bun.SelectQuery {
-					return dba.
-						NewSelect().
-						Model(entities).
-						ColumnExpr(invoiceruncol.InvoiceRunTable.All())
-				},
-				Apply: func(sq *bun.SelectQuery) (*bun.SelectQuery, error) {
-					return querybuilder.ApplyFilters(
-						sq,
-						invoiceruncol.InvoiceRunTable.Alias,
-						req.Filter,
-						(*invoicerun.InvoiceRun)(nil),
-					), nil
-				},
-			})
-		if err != nil {
-			r.l.Error("failed to scan invoice runs", zap.Error(err))
-			return nil, fmt.Errorf("scan invoice runs: %w", err)
-		}
+			return result, nil
+		},
+	)
+}
 
-		return result, nil
-	})
+func runQuery(includeGroups, includeItems bool) *keel.Query[invoicerun.InvoiceRun] {
+	run := invoicerundb.InvoiceRuns
+	if !includeGroups && !includeItems {
+		return run.Query()
+	}
+
+	groups := run.Groups()
+	items := groups.Items()
+	nested := []keel.Loader{}
+	if includeGroups {
+		nested = append(nested, groups.Customer())
+	}
+	if includeItems {
+		nested = append(nested, items.Order(items.SortKey.Asc()))
+	}
+
+	return run.Load(groups.Order(groups.GroupLabel.Asc()).Load(nested...))
 }
 
 func (r *repository) GetByID(
@@ -141,27 +132,11 @@ func (r *repository) GetByID(
 	req invoicerunports.GetInvoiceRunByIDRequest,
 ) (*invoicerun.InvoiceRun, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*invoicerun.InvoiceRun, error) {
-		run := invoiceruncol.InvoiceRunColumns
-
-		entity := new(invoicerun.InvoiceRun)
-		q := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(entity).
-			Where(run.ID.Eq(), req.ID)
-
-		if req.IncludeGroups {
-			q = q.Relation("Groups", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return sq.Order(invoiceruncol.InvoiceRunGroupColumns.GroupLabel.OrderAsc())
-			}).Relation("Groups.Customer")
-		}
-		if req.IncludeItems {
-			q = q.Relation("Groups.Items", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return sq.Order(invoiceruncol.InvoiceRunGroupItemColumns.SortKey.OrderAsc())
-			})
-		}
-
-		if err := invoiceruncol.InvoiceRunScopeTenant(q, req.TenantInfo).Scan(ctx); err != nil {
-			return nil, dberror.HandleNotFoundError(err, "Invoice run")
+		entity, err := runQuery(req.IncludeGroups, req.IncludeItems).
+			Where(invoicerundb.InvoiceRuns.ID.Eq(req.ID)).
+			One(ctx, r.db.Keel(ctx))
+		if err != nil {
+			return nil, runErrors.Map(err, req.ID.String())
 		}
 
 		return entity, nil
@@ -173,19 +148,15 @@ func (r *repository) GetOpenScheduledRun(
 	req invoicerunports.GetOpenScheduledRunRequest,
 ) (*invoicerun.InvoiceRun, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*invoicerun.InvoiceRun, error) {
-		run := invoiceruncol.InvoiceRunColumns
-
-		entity := new(invoicerun.InvoiceRun)
-		q := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(entity).
-			Where(run.Source.Eq(), invoicerun.SourceScheduled).
-			Where(run.Cycle.Eq(), req.Cycle).
-			Where(run.PeriodEnd.Eq(), req.PeriodEnd).
-			Where(run.Status.Ne(), invoicerun.StatusCanceled)
-
-		if err := invoiceruncol.InvoiceRunScopeTenant(q, req.TenantInfo).Scan(ctx); err != nil {
-			return nil, dberror.HandleNotFoundError(err, "Invoice run")
+		run := invoicerundb.InvoiceRuns
+		entity, err := run.Where(
+			run.Source.Eq(invoicerun.SourceScheduled),
+			run.Cycle.Eq(customer.BillingCycle(req.Cycle)),
+			run.PeriodEnd.Eq(req.PeriodEnd),
+			run.Status.Ne(invoicerun.StatusCanceled),
+		).One(ctx, r.db.Keel(ctx))
+		if err != nil {
+			return nil, runErrors.Map(err, "")
 		}
 
 		return entity, nil
@@ -197,13 +168,9 @@ func (r *repository) Create(
 	entity *invoicerun.InvoiceRun,
 ) (*invoicerun.InvoiceRun, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*invoicerun.InvoiceRun, error) {
-		if _, err := r.db.DBForContext(ctx).
-			NewInsert().
-			Model(entity).
-			Returning("*").
-			Exec(ctx); err != nil {
+		if err := invoicerundb.InvoiceRuns.Create(ctx, r.db.Keel(ctx), entity); err != nil {
 			r.l.Error("failed to create invoice run", zap.Error(err))
-			return nil, fmt.Errorf("create invoice run: %w", err)
+			return nil, runErrors.Map(err, entity.ID.String())
 		}
 
 		return entity, nil
@@ -215,92 +182,57 @@ func (r *repository) Update(
 	entity *invoicerun.InvoiceRun,
 ) (*invoicerun.InvoiceRun, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*invoicerun.InvoiceRun, error) {
-		run := invoiceruncol.InvoiceRunColumns
-		version := entity.Version
-		entity.Version++
-
-		result, err := invoiceruncol.InvoiceRunScopeTenantUpdate(
-			r.db.DBForContext(ctx).
-				NewUpdate().
-				Model(entity).
-				WherePK().
-				Where(run.Version.Eq(), version).
-				OmitZero(),
-			pagination.TenantInfo{
-				OrgID: entity.OrganizationID,
-				BuID:  entity.BusinessUnitID,
-			},
-		).Returning("*").Exec(ctx)
-		if err != nil {
+		if err := invoicerundb.InvoiceRuns.Save(ctx, r.db.Keel(ctx), entity); err != nil {
 			r.l.Error("failed to update invoice run", zap.Error(err))
-			return nil, fmt.Errorf("update invoice run: %w", err)
-		}
-
-		if err = dberror.CheckRowsAffected(result, "Invoice run", entity.ID.String()); err != nil {
-			return nil, err
+			return nil, runErrors.Map(err, entity.ID.String())
 		}
 
 		return entity, nil
 	})
 }
 
-// ReplaceGroups swaps the run's whole proposal. Building is not incremental — a
-// rebuild must not leave a stale group behind — so the old groups are deleted
-// and the new set written in one transaction.
 func (r *repository) ReplaceGroups(
 	ctx context.Context,
 	req *invoicerunports.ReplaceGroupsRequest,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
-		grp := invoiceruncol.InvoiceRunGroupColumns
+		db := r.db.Keel(ctx)
+		grp := invoicerundb.InvoiceRunGroups
+		if _, err := grp.Where(grp.RunID.Eq(req.RunID)).Delete(ctx, db); err != nil {
+			return groupErrors.Map(err, req.RunID.String())
+		}
 
-		return r.db.WithTx(
-			ctx,
-			kernelports.TxOptions{},
-			func(txCtx context.Context, tx bun.Tx) error {
-				// The item rows cascade from the group delete.
-				if _, err := tx.NewDelete().
-					Model((*invoicerun.InvoiceRunGroup)(nil)).
-					Where(grp.RunID.Eq(), req.RunID).
-					Where(grp.OrganizationID.Eq(), req.TenantInfo.OrgID).
-					Where(grp.BusinessUnitID.Eq(), req.TenantInfo.BuID).
-					Exec(txCtx); err != nil {
-					return fmt.Errorf("clear invoice run groups: %w", err)
-				}
+		if len(req.Groups) == 0 {
+			return nil
+		}
 
-				if len(req.Groups) == 0 {
-					return nil
-				}
+		if err := grp.CreateMany(ctx, db, req.Groups); err != nil {
+			r.l.Error("failed to create invoice run groups", zap.Error(err))
+			return groupErrors.Map(err, req.RunID.String())
+		}
 
-				if _, err := tx.NewInsert().Model(&req.Groups).Exec(txCtx); err != nil {
-					return fmt.Errorf("insert invoice run groups: %w", err)
+		items := make([]*invoicerun.InvoiceRunGroupItem, 0, len(req.Groups))
+		for _, group := range req.Groups {
+			for _, item := range group.Items {
+				if item == nil {
+					continue
 				}
+				item.RunID = req.RunID
+				item.GroupID = group.ID
+				item.SyncMinorAmount()
+				items = append(items, item)
+			}
+		}
+		if len(items) == 0 {
+			return nil
+		}
 
-				items := make([]*invoicerun.InvoiceRunGroupItem, 0, len(req.Groups))
-				for _, group := range req.Groups {
-					for _, item := range group.Items {
-						if item == nil {
-							continue
-						}
-						item.RunID = req.RunID
-						item.GroupID = group.ID
-						item.OrganizationID = group.OrganizationID
-						item.BusinessUnitID = group.BusinessUnitID
-						item.SyncMinorAmount()
-						items = append(items, item)
-					}
-				}
-				if len(items) == 0 {
-					return nil
-				}
+		if err := invoicerundb.InvoiceRunGroupItems.CreateMany(ctx, db, items); err != nil {
+			r.l.Error("failed to create invoice run group items", zap.Error(err))
+			return itemErrors.Map(err, req.RunID.String())
+		}
 
-				if _, err := tx.NewInsert().Model(&items).Exec(txCtx); err != nil {
-					return fmt.Errorf("insert invoice run group items: %w", err)
-				}
-
-				return nil
-			},
-		)
+		return nil
 	})
 }
 
@@ -309,42 +241,18 @@ func (r *repository) UpdateGroup(
 	entity *invoicerun.InvoiceRunGroup,
 ) (*invoicerun.InvoiceRunGroup, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*invoicerun.InvoiceRunGroup, error) {
-		grp := invoiceruncol.InvoiceRunGroupColumns
-		version := entity.Version
-		entity.Version++
-
-		result, err := r.db.DBForContext(ctx).
-			NewUpdate().
-			Model(entity).
-			WherePK().
-			Where(grp.Version.Eq(), version).
-			Where(grp.OrganizationID.Eq(), entity.OrganizationID).
-			Where(grp.BusinessUnitID.Eq(), entity.BusinessUnitID).
-			OmitZero().
-			Returning("*").
-			Exec(ctx)
-		if err != nil {
+		if err := invoicerundb.InvoiceRunGroups.Save(ctx, r.db.Keel(ctx), entity); err != nil {
 			r.l.Error("failed to update invoice run group", zap.Error(err))
-			return nil, fmt.Errorf("update invoice run group: %w", err)
-		}
-
-		if err = dberror.CheckRowsAffected(
-			result,
-			"Invoice run group",
-			entity.ID.String(),
-		); err != nil {
-			return nil, err
+			return nil, groupErrors.Map(err, entity.ID.String())
 		}
 
 		return entity, nil
 	})
 }
 
-// UpdateItems writes membership changes for a whole edit in one statement, so an
-// operator's move-and-exclude lands atomically rather than row by row.
 func (r *repository) UpdateItems(
 	ctx context.Context,
-	tenantInfo pagination.TenantInfo,
+	_ pagination.TenantInfo,
 	items []*invoicerun.InvoiceRunGroupItem,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
@@ -352,27 +260,39 @@ func (r *repository) UpdateItems(
 			return nil
 		}
 
-		itm := invoiceruncol.InvoiceRunGroupItemColumns
-		for _, item := range items {
+		ids := make([]pulid.ID, len(items))
+		groups := make([]pulid.ID, len(items))
+		excluded := make([]bool, len(items))
+		reasons := make([]string, len(items))
+		sortKeys := make([]int64, len(items))
+		for i, item := range items {
 			item.SyncMinorAmount()
+			ids[i] = item.ID
+			groups[i] = item.GroupID
+			excluded[i] = item.Excluded
+			reasons[i] = item.ExclusionReason
+			sortKeys[i] = int64(item.SortKey)
 		}
 
-		if _, err := r.db.DBForContext(ctx).
-			NewUpdate().
-			Model(&items).
-			Column(
-				itm.GroupID.Name,
-				itm.Excluded.Name,
-				itm.ExclusionReason.Name,
-				itm.SortKey.Name,
-				itm.UpdatedAt.Name,
-			).
-			Bulk().
-			Where(itm.OrganizationID.Qualified()+" = ?", tenantInfo.OrgID).
-			Where(itm.BusinessUnitID.Qualified()+" = ?", tenantInfo.BuID).
-			Exec(ctx); err != nil {
+		itm := invoicerundb.InvoiceRunGroupItems
+		edits := keel.Unnest(
+			"edits",
+			[]string{"id", "group_id", "excluded", "exclusion_reason", "sort_key"},
+			ids, groups, excluded, reasons, sortKeys,
+		)
+		_, err := itm.With(edits).
+			Join(edits, edits.Col("id").EqCol(itm.ID)).
+			Where(keel.True()).
+			Update(ctx, r.db.Keel(ctx),
+				itm.GroupID.ToExpr(edits.Col("group_id")),
+				itm.Excluded.ToExpr(edits.Col("excluded")),
+				itm.ExclusionReason.ToExpr(keel.Raw("NULLIF(?, '')", edits.Col("exclusion_reason"))),
+				itm.SortKey.ToExpr(edits.Col("sort_key")),
+				itm.Version.ToExpr(itm.Version),
+			)
+		if err != nil {
 			r.l.Error("failed to update invoice run group items", zap.Error(err))
-			return fmt.Errorf("update invoice run group items: %w", err)
+			return itemErrors.Map(err, "")
 		}
 
 		return nil

@@ -26,7 +26,6 @@ import (
 	"github.com/emoss08/trenova/shared/money"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
-	"github.com/uptrace/bun"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
@@ -61,7 +60,7 @@ type members interface {
 type Params struct {
 	fx.In
 
-	DB            kernelports.DBConnection
+	DB            kernelports.Transactor
 	Repo          collectionports.Repository
 	Customers     customerports.CustomerRepository
 	Users         tenantports.UserRepository
@@ -71,7 +70,7 @@ type Params struct {
 }
 
 type Service struct {
-	db        kernelports.DBConnection
+	db        kernelports.Transactor
 	repo      collectionports.Repository
 	customers customerports.CustomerRepository
 	users     members
@@ -212,7 +211,7 @@ func (s *Service) LogActivity(
 		return nil, err
 	}
 
-	err = s.db.WithTx(ctx, kernelports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
+	err = s.db.Transact(ctx, kernelports.TxOptions{}, func(txCtx context.Context) error {
 		account, txErr := s.repo.GetAccountForUpdate(
 			txCtx,
 			accountRequest(req.TenantInfo, req.CustomerID),
@@ -341,7 +340,7 @@ func (s *Service) AssignCollector(
 
 	actorID := actorUserID(actor, req.TenantInfo)
 	changed := false
-	err = s.db.WithTx(ctx, kernelports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
+	err = s.db.Transact(ctx, kernelports.TxOptions{}, func(txCtx context.Context) error {
 		account, txErr := s.repo.GetAccountForUpdate(
 			txCtx,
 			accountRequest(req.TenantInfo, req.CustomerID),
@@ -462,7 +461,7 @@ func (s *Service) ScheduleFollowUp(
 		return nil, err
 	}
 
-	err = s.db.WithTx(ctx, kernelports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
+	err = s.db.Transact(ctx, kernelports.TxOptions{}, func(txCtx context.Context) error {
 		account, txErr := s.repo.GetAccountForUpdate(
 			txCtx,
 			accountRequest(req.TenantInfo, req.CustomerID),

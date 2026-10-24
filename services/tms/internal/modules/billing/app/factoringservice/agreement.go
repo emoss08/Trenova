@@ -21,7 +21,6 @@ import (
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
-	"github.com/uptrace/bun"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
@@ -31,7 +30,7 @@ const maxAgreementDocumentTypes = 20
 type AgreementParams struct {
 	fx.In
 
-	DB        kernelports.DBConnection
+	DB        kernelports.Transactor
 	Repo      factoringports.AgreementRepository
 	Factors   factoringcompanyports.FactoringCompanyRepository
 	Accounts  glaccountports.GLAccountRepository `optional:"true"`
@@ -42,7 +41,7 @@ type AgreementParams struct {
 }
 
 type AgreementService struct {
-	db        kernelports.DBConnection
+	db        kernelports.Transactor
 	repo      factoringports.AgreementRepository
 	factors   factoringcompanyports.FactoringCompanyRepository
 	accounts  glaccountports.GLAccountRepository
@@ -139,7 +138,7 @@ func (s *AgreementService) Update(
 	}
 
 	var previous, updated *factoring.Agreement
-	err := s.db.WithTx(ctx, kernelports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
+	err := s.db.Transact(ctx, kernelports.TxOptions{}, func(txCtx context.Context) error {
 		current, err := s.repo.GetByID(txCtx, factoringports.GetAgreementRequest{
 			ID:         req.ID,
 			TenantInfo: req.TenantInfo,
@@ -266,7 +265,7 @@ func (s *AgreementService) transition(
 	}
 
 	var previous, updated *factoring.Agreement
-	err := s.db.WithTx(ctx, kernelports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
+	err := s.db.Transact(ctx, kernelports.TxOptions{}, func(txCtx context.Context) error {
 		current, err := s.repo.GetByID(txCtx, factoringports.GetAgreementRequest{
 			ID:         req.ID,
 			TenantInfo: req.TenantInfo,

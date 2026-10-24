@@ -7,6 +7,9 @@ import (
 	"testing"
 	"time"
 
+	"github.com/emoss08/keel"
+	"github.com/jackc/pgx/v5"
+
 	"github.com/emoss08/trenova/internal/testutil/seededtest"
 
 	"github.com/emoss08/trenova/internal/testutil/mocks/customerportsmock"
@@ -41,7 +44,6 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
-	"github.com/uptrace/bun"
 	"go.uber.org/zap"
 )
 
@@ -80,25 +82,18 @@ func TestGroupedInvoiceFromOrderEndToEnd(t *testing.T) {
 		seqgen.GeneratorParams{Store: store, Provider: provider, Logger: logger},
 	)
 
-	var org seededInvoiceOrg
-	require.NoError(t, db.NewSelect().
-		Table("organizations").Column("id", "business_unit_id").Limit(1).Scan(ctx, &org))
-	var user seededInvoiceUser
-	require.NoError(t, db.NewSelect().
-		Table("users").Column("id").
-		Where("current_organization_id = ?", org.ID).
-		Where("business_unit_id = ?", org.BusinessUnitID).
-		Limit(1).Scan(ctx, &user))
+	ctx, org, user, _ := seededInvoiceFixture(t, ctx, db)
 
 	// Two seeded shipments become the legs of the grouped order; two more feed the
 	// partial-billing scenario at the end.
-	var legRows []seededInvoiceShipment
-	require.NoError(t, db.NewSelect().
-		Table("shipments").Column("id", "customer_id", "pro_number", "bol").
-		Where("organization_id = ?", org.ID).
-		Where("business_unit_id = ?", org.BusinessUnitID).
-		Order("created_at ASC").
-		Limit(4).Scan(ctx, &legRows))
+	shipmentRows, err := db.Pool().Query(ctx,
+		`SELECT id, customer_id, COALESCE(pro_number, ''), COALESCE(bol, '') FROM shipments
+		WHERE organization_id = $1 AND business_unit_id = $2 ORDER BY created_at ASC LIMIT 4`,
+		org.ID, org.BusinessUnitID,
+	)
+	require.NoError(t, err)
+	legRows, err := pgx.CollectRows(shipmentRows, pgx.RowToStructByPos[seededInvoiceShipment])
+	require.NoError(t, err)
 	require.Len(t, legRows, 4, "need four seeded shipments")
 	customerID := legRows[0].CustomerID
 
@@ -159,17 +154,16 @@ func TestGroupedInvoiceFromOrderEndToEnd(t *testing.T) {
 		legRows[1].ID: decimal.NewFromInt(250),
 	}
 	for _, leg := range legRows[:2] {
-		_, err = db.NewUpdate().
-			Table("shipments").
-			Set("order_id = ?", ord.ID).
-			Set("customer_id = ?", customerID).
-			Set("status = ?", shipment.StatusReadyToInvoice).
-			Set("freight_charge_amount = ?", freights[leg.ID]).
-			Set("total_charge_amount = ?", freights[leg.ID]).
-			Set("other_charge_amount = 0").
-			Where("id = ?", leg.ID).
-			Exec(ctx)
-		require.NoError(t, err)
+		setLeg(
+			t,
+			ctx,
+			db,
+			leg.ID,
+			ord.ID,
+			customerID,
+			shipment.StatusReadyToInvoice,
+			freights[leg.ID],
+		)
 	}
 
 	// The service loads each leg's full detail through the shipment repository; return a
@@ -204,11 +198,9 @@ func TestGroupedInvoiceFromOrderEndToEnd(t *testing.T) {
 		})).
 		RunAndReturn(func(runCtx context.Context, entity *shipment.Shipment) (*shipment.Shipment, error) {
 			invoicedLegs[entity.ID] = true
-			_, dbErr := db.NewUpdate().
-				Table("shipments").
-				Set("status = ?", shipment.StatusInvoiced).
-				Where("id = ?", entity.ID).
-				Exec(runCtx)
+			_, dbErr := keel.Exec(runCtx, db,
+				"UPDATE shipments SET status = $1 WHERE id = $2",
+				string(shipment.StatusInvoiced), entity.ID.String())
 			return entity, dbErr
 		})
 
@@ -291,16 +283,18 @@ func TestGroupedInvoiceFromOrderEndToEnd(t *testing.T) {
 	assert.True(t, foundCharge, "grouped invoice should include the order-level charge line")
 
 	// One approved billing-queue item per leg, all pointing at the order.
-	var queueItems []struct {
-		ShipmentID pulid.ID `bun:"shipment_id"`
-		OrderID    pulid.ID `bun:"order_id"`
-		Status     string   `bun:"status"`
+	type queueRow struct {
+		ShipmentID pulid.ID
+		OrderID    pulid.ID
+		Status     string
 	}
-	require.NoError(t, db.NewSelect().
-		Table("billing_queue_items").
-		Column("shipment_id", "order_id", "status").
-		Where("order_id = ?", ord.ID).
-		Scan(ctx, &queueItems))
+	queueRows, err := db.Pool().Query(ctx,
+		"SELECT shipment_id, order_id, status::text FROM billing_queue_items WHERE order_id = $1",
+		ord.ID,
+	)
+	require.NoError(t, err)
+	queueItems, err := pgx.CollectRows(queueRows, pgx.RowToStructByPos[queueRow])
+	require.NoError(t, err)
 	require.Len(t, queueItems, 2, "one billing queue item per leg")
 	for _, qi := range queueItems {
 		assert.Equal(t, ord.ID, qi.OrderID)
@@ -317,22 +311,18 @@ func TestGroupedInvoiceFromOrderEndToEnd(t *testing.T) {
 
 	// Every leg's billing-queue item settled, not just the anchor.
 	var postedCount int
-	require.NoError(t, db.NewSelect().
-		Table("billing_queue_items").
-		ColumnExpr("count(*)").
-		Where("order_id = ?", ord.ID).
-		Where("status = ?", "Posted").
-		Scan(ctx, &postedCount))
+	require.NoError(t, db.Pool().QueryRow(ctx,
+		"SELECT count(*) FROM billing_queue_items WHERE order_id = $1 AND status = 'Posted'",
+		ord.ID,
+	).Scan(&postedCount))
 	assert.Equal(t, 2, postedCount, "both leg billing-queue items should be Posted")
 
 	// Each leg's shipment shows its billing-queue item as Posted.
 	var postedLegCount int
-	require.NoError(t, db.NewSelect().
-		Table("shipments").
-		ColumnExpr("count(*)").
-		Where("id IN (?)", bun.List([]pulid.ID{legRows[0].ID, legRows[1].ID})).
-		Where("billing_transfer_status = ?", "Posted").
-		Scan(ctx, &postedLegCount))
+	require.NoError(t, db.Pool().QueryRow(ctx,
+		"SELECT count(*) FROM shipments WHERE id = ANY($1) AND billing_transfer_status = 'Posted'",
+		[]string{legRows[0].ID.String(), legRows[1].ID.String()},
+	).Scan(&postedLegCount))
 	assert.Equal(t, 2, postedLegCount, "both leg shipments should show Posted")
 
 	// Every leg was marked Invoiced.
@@ -387,7 +377,7 @@ type partialScenarioParams struct {
 func runPartialOrderScenario(
 	t *testing.T,
 	ctx context.Context,
-	db bun.IDB,
+	db *keel.DB,
 	svc *Service,
 	orderRepo orderports.OrderRepository,
 	p partialScenarioParams,
@@ -422,17 +412,7 @@ func runPartialOrderScenario(
 		p.lateLeg.ID:  decimal.NewFromInt(200),
 	}
 	for legID, status := range legStates {
-		_, err = db.NewUpdate().
-			Table("shipments").
-			Set("order_id = ?", ord.ID).
-			Set("customer_id = ?", p.customerID).
-			Set("status = ?", status).
-			Set("freight_charge_amount = ?", legFreights[legID]).
-			Set("total_charge_amount = ?", legFreights[legID]).
-			Set("other_charge_amount = 0").
-			Where("id = ?", legID).
-			Exec(ctx)
-		require.NoError(t, err)
+		setLeg(t, ctx, db, legID, ord.ID, p.customerID, status, legFreights[legID])
 	}
 	p.mockLeg(p.readyLeg.ID, p.readyLeg.ProNumber, ord.ID, legFreights[p.readyLeg.ID])
 	p.mockLeg(p.lateLeg.ID, p.lateLeg.ProNumber, ord.ID, legFreights[p.lateLeg.ID])
@@ -448,11 +428,9 @@ func runPartialOrderScenario(
 
 	// The charge was stamped to the first invoice inside the same transaction.
 	var stampedInvoiceID pulid.ID
-	require.NoError(t, db.NewSelect().
-		Table("order_charges").
-		Column("invoice_id").
-		Where("order_id = ?", ord.ID).
-		Scan(ctx, &stampedInvoiceID))
+	require.NoError(t, db.Pool().QueryRow(ctx,
+		"SELECT invoice_id FROM order_charges WHERE order_id = $1", ord.ID,
+	).Scan(&stampedInvoiceID))
 	assert.Equal(
 		t,
 		first.ID,
@@ -462,17 +440,11 @@ func runPartialOrderScenario(
 
 	// The late leg delivers; the ready leg was settled by billing (simulated here since
 	// the first invoice is left in Draft).
-	_, err = db.NewUpdate().
-		Table("shipments").
-		Set("status = ?", shipment.StatusInvoiced).
-		Where("id = ?", p.readyLeg.ID).
-		Exec(ctx)
+	_, err = db.Pool().Exec(ctx, "UPDATE shipments SET status = $1 WHERE id = $2",
+		string(shipment.StatusInvoiced), p.readyLeg.ID)
 	require.NoError(t, err)
-	_, err = db.NewUpdate().
-		Table("shipments").
-		Set("status = ?", shipment.StatusReadyToInvoice).
-		Where("id = ?", p.lateLeg.ID).
-		Exec(ctx)
+	_, err = db.Pool().Exec(ctx, "UPDATE shipments SET status = $1 WHERE id = $2",
+		string(shipment.StatusReadyToInvoice), p.lateLeg.ID)
 	require.NoError(t, err)
 
 	// Second pass through the single-shipment entry point: the invoice carries the
@@ -494,4 +466,23 @@ func runPartialOrderScenario(
 		assert.False(t, line.ShipmentID.IsNil(),
 			"second invoice must not carry order-charge lines")
 	}
+}
+
+func setLeg(
+	t *testing.T,
+	ctx context.Context,
+	db *keel.DB,
+	legID, orderID, customerID pulid.ID,
+	status shipment.Status,
+	freight decimal.Decimal,
+) {
+	t.Helper()
+
+	_, err := db.Pool().Exec(ctx,
+		`UPDATE shipments SET order_id = $1, customer_id = $2, status = $3,
+			freight_charge_amount = $4, total_charge_amount = $4, other_charge_amount = 0
+		WHERE id = $5`,
+		orderID, customerID, string(status), freight.String(), legID,
+	)
+	require.NoError(t, err)
 }

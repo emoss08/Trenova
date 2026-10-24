@@ -58,7 +58,6 @@ import (
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
 	"github.com/shopspring/decimal"
-	"github.com/uptrace/bun"
 	"go.temporal.io/sdk/client"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
@@ -68,7 +67,7 @@ type Params struct {
 	fx.In
 
 	Logger               *zap.Logger
-	DB                   kernelports.DBConnection
+	DB                   kernelports.Transactor
 	Repo                 invoiceports.InvoiceRepository
 	BillingQueueRepo     billingqueueports.BillingQueueRepository
 	ShipmentRepo         shipmentports.ShipmentRepository
@@ -119,7 +118,7 @@ type Params struct {
 type Service struct {
 	permissions          permissionports.PermissionEngine
 	l                    *zap.Logger
-	db                   kernelports.DBConnection
+	db                   kernelports.Transactor
 	repo                 invoiceports.InvoiceRepository
 	billingQueueRepo     billingqueueports.BillingQueueRepository
 	shipmentRepo         shipmentports.ShipmentRepository
@@ -536,7 +535,7 @@ func (s *Service) Post( //nolint:funlen // legacy workflow
 
 	var posted *invoice.Invoice
 	newlyPosted := false
-	err := s.db.WithTx(ctx, kernelports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
+	err := s.db.Transact(ctx, kernelports.TxOptions{}, func(txCtx context.Context) error {
 		entity, getErr := s.repo.GetByID(txCtx, invoiceports.GetInvoiceByIDRequest{
 			ID:         req.InvoiceID,
 			TenantInfo: req.TenantInfo,

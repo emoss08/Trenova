@@ -4,6 +4,7 @@ package invoiceadjustmentservice
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"testing"
 
@@ -11,12 +12,14 @@ import (
 
 	"github.com/emoss08/trenova/internal/testutil/mocks/auditportsmock"
 
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
-	"github.com/emoss08/trenova/internal/infrastructure/postgres/m2msync"
 	"github.com/emoss08/trenova/internal/modules/accounting/adapters/postgres/fiscalperiodrepository"
 	"github.com/emoss08/trenova/internal/modules/accounting/adapters/postgres/journalpostingrepository"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/fiscalperiod"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/fiscalperiod/fiscalperioddb"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/fiscalyear"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/fiscalyear/fiscalyeardb"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/billing/adapters/postgres/billingqueuerepository"
 	"github.com/emoss08/trenova/internal/modules/billing/adapters/postgres/chargeallocationrepository"
@@ -33,6 +36,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
 	"github.com/emoss08/trenova/internal/modules/documents/adapters/postgres/documentrepository"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/document"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/document/documentdb"
 	"github.com/emoss08/trenova/internal/modules/identity/adapters/postgres/accountingcontrolrepository"
 	"github.com/emoss08/trenova/internal/modules/identity/adapters/postgres/billingcontrolrepository"
 	"github.com/emoss08/trenova/internal/modules/identity/adapters/postgres/invoiceadjustmentcontrolrepository"
@@ -56,20 +60,21 @@ import (
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/audit"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/emoss08/trenova/internal/testutil"
+	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
+	"github.com/jackc/pgx/v5"
 	"github.com/shopspring/decimal"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"github.com/uptrace/bun"
 	"go.temporal.io/sdk/client"
 	"go.uber.org/zap"
 )
 
 type integrationHarness struct {
 	ctx                context.Context
-	db                 *bun.DB
+	db                 *keel.DB
 	conn               *postgres.Connection
 	service            invoiceadjustmentports.InvoiceAdjustmentService
 	customerRepo       customerports.CustomerRepository
@@ -96,44 +101,40 @@ type integrationHarness struct {
 }
 
 type seededOrg struct {
-	ID             pulid.ID `bun:"id"`
-	BusinessUnitID pulid.ID `bun:"business_unit_id"`
+	ID             pulid.ID
+	BusinessUnitID pulid.ID
 }
 
 type seededUser struct {
-	ID pulid.ID `bun:"id"`
+	ID pulid.ID
 }
 
 type seededCustomer struct {
-	ID           pulid.ID `bun:"id"`
-	Name         string   `bun:"name"`
-	Code         string   `bun:"code"`
-	AddressLine1 string   `bun:"address_line_1"`
-	City         string   `bun:"city"`
-	PostalCode   string   `bun:"postal_code"`
+	ID           pulid.ID
+	Name         string
+	Code         string
+	AddressLine1 string
+	City         string
+	PostalCode   string
 }
 
 type seededShipment struct {
-	ID        pulid.ID `bun:"id"`
-	ProNumber string   `bun:"pro_number"`
-	BOL       string   `bun:"bol"`
-}
-
-type glAccountRow struct {
-	ID pulid.ID `bun:"id"`
+	ID        pulid.ID
+	ProNumber string
+	BOL       string
 }
 
 type journalEntryRow struct {
-	ID          pulid.ID `bun:"id"`
-	Status      string   `bun:"status"`
-	TotalDebit  int64    `bun:"total_debit"`
-	TotalCredit int64    `bun:"total_credit"`
+	ID          pulid.ID
+	Status      string
+	TotalDebit  int64
+	TotalCredit int64
 }
 
 type journalEntryLineRow struct {
-	GLAccountID  pulid.ID `bun:"gl_account_id"`
-	DebitAmount  int64    `bun:"debit_amount"`
-	CreditAmount int64    `bun:"credit_amount"`
+	GLAccountID  pulid.ID
+	DebitAmount  int64
+	CreditAmount int64
 }
 
 type fakeGenerator struct {
@@ -337,13 +338,17 @@ func TestInvoiceAdjustmentService_EngineScenarios(t *testing.T) {
 			makeInvoiceLine(2, invoice.InvoiceLineTypeAccessorial, "Fuel", 1, 25),
 		}, invoice.SettlementStatusUnpaid, decimal.Zero)
 
-		adjustment, submitErr := h.service.Submit(h.ctx, &invoiceadjustmentports.InvoiceAdjustmentRequest{
-			InvoiceID:      entity.ID,
-			Kind:           invoiceadjustment.KindCreditOnly,
-			IdempotencyKey: "credit-only-" + entity.ID.String(),
-			Reason:         "Customer concession",
-			TenantInfo:     h.tenantInfo(),
-		}, h.actor())
+		adjustment, submitErr := h.service.Submit(
+			h.ctx,
+			&invoiceadjustmentports.InvoiceAdjustmentRequest{
+				InvoiceID:      entity.ID,
+				Kind:           invoiceadjustment.KindCreditOnly,
+				IdempotencyKey: "credit-only-" + entity.ID.String(),
+				Reason:         "Customer concession",
+				TenantInfo:     h.tenantInfo(),
+			},
+			h.actor(),
+		)
 		require.NoError(t, submitErr)
 		require.Equal(t, invoiceadjustment.StatusExecuted, adjustment.Status)
 		require.True(t, adjustment.ReplacementInvoiceID.IsNil())
@@ -378,30 +383,34 @@ func TestInvoiceAdjustmentService_EngineScenarios(t *testing.T) {
 			makeInvoiceLine(2, invoice.InvoiceLineTypeAccessorial, "Fuel", 1, 50),
 		}, invoice.SettlementStatusUnpaid, decimal.Zero)
 
-		adjustment, submitErr := h.service.Submit(h.ctx, &invoiceadjustmentports.InvoiceAdjustmentRequest{
-			InvoiceID:      entity.ID,
-			Kind:           invoiceadjustment.KindCreditRebill,
-			RebillStrategy: invoiceadjustment.RebillStrategyManual,
-			IdempotencyKey: "credit-rebill-" + entity.ID.String(),
-			Reason:         "Rate correction",
-			TenantInfo:     h.tenantInfo(),
-			Lines: []*invoiceadjustmentports.InvoiceAdjustmentLineInput{
-				{
-					OriginalLineID: entity.Lines[0].ID,
-					CreditQuantity: decimal.NewFromInt(1),
-					CreditAmount:   decimal.NewFromInt(100),
-					RebillQuantity: decimal.NewFromInt(1),
-					RebillAmount:   decimal.NewFromInt(110),
-				},
-				{
-					OriginalLineID: entity.Lines[1].ID,
-					CreditQuantity: decimal.NewFromInt(1),
-					CreditAmount:   decimal.NewFromInt(50),
-					RebillQuantity: decimal.NewFromInt(1),
-					RebillAmount:   decimal.NewFromInt(60),
+		adjustment, submitErr := h.service.Submit(
+			h.ctx,
+			&invoiceadjustmentports.InvoiceAdjustmentRequest{
+				InvoiceID:      entity.ID,
+				Kind:           invoiceadjustment.KindCreditRebill,
+				RebillStrategy: invoiceadjustment.RebillStrategyManual,
+				IdempotencyKey: "credit-rebill-" + entity.ID.String(),
+				Reason:         "Rate correction",
+				TenantInfo:     h.tenantInfo(),
+				Lines: []*invoiceadjustmentports.InvoiceAdjustmentLineInput{
+					{
+						OriginalLineID: entity.Lines[0].ID,
+						CreditQuantity: decimal.NewFromInt(1),
+						CreditAmount:   decimal.NewFromInt(100),
+						RebillQuantity: decimal.NewFromInt(1),
+						RebillAmount:   decimal.NewFromInt(110),
+					},
+					{
+						OriginalLineID: entity.Lines[1].ID,
+						CreditQuantity: decimal.NewFromInt(1),
+						CreditAmount:   decimal.NewFromInt(50),
+						RebillQuantity: decimal.NewFromInt(1),
+						RebillAmount:   decimal.NewFromInt(60),
+					},
 				},
 			},
-		}, h.actor())
+			h.actor(),
+		)
 		require.NoError(t, submitErr)
 		require.Equal(t, invoiceadjustment.StatusExecuted, adjustment.Status)
 		require.True(t, adjustment.CreditMemoInvoiceID.IsNotNil())
@@ -479,40 +488,48 @@ func TestInvoiceAdjustmentService_EngineScenarios(t *testing.T) {
 			makeInvoiceLine(2, invoice.InvoiceLineTypeAccessorial, "Fuel", 1, 50),
 		}, invoice.SettlementStatusUnpaid, decimal.Zero)
 
-		preview, previewErr := h.service.Preview(h.ctx, &invoiceadjustmentports.InvoiceAdjustmentRequest{
-			InvoiceID:      entity.ID,
-			Kind:           invoiceadjustment.KindFullReversal,
-			IdempotencyKey: "full-reversal-preview-" + entity.ID.String(),
-			Reason:         "Reverse the invoice",
-			TenantInfo:     h.tenantInfo(),
-			Lines: []*invoiceadjustmentports.InvoiceAdjustmentLineInput{{
-				OriginalLineID: entity.Lines[0].ID,
-				CreditQuantity: decimal.NewFromInt(1),
-				CreditAmount:   decimal.NewFromInt(25),
-				RebillQuantity: decimal.NewFromInt(1),
-				RebillAmount:   decimal.NewFromInt(25),
-			}},
-		}, h.actor())
+		preview, previewErr := h.service.Preview(
+			h.ctx,
+			&invoiceadjustmentports.InvoiceAdjustmentRequest{
+				InvoiceID:      entity.ID,
+				Kind:           invoiceadjustment.KindFullReversal,
+				IdempotencyKey: "full-reversal-preview-" + entity.ID.String(),
+				Reason:         "Reverse the invoice",
+				TenantInfo:     h.tenantInfo(),
+				Lines: []*invoiceadjustmentports.InvoiceAdjustmentLineInput{{
+					OriginalLineID: entity.Lines[0].ID,
+					CreditQuantity: decimal.NewFromInt(1),
+					CreditAmount:   decimal.NewFromInt(25),
+					RebillQuantity: decimal.NewFromInt(1),
+					RebillAmount:   decimal.NewFromInt(25),
+				}},
+			},
+			h.actor(),
+		)
 		require.NoError(t, previewErr)
 		require.Empty(t, preview.Errors)
 		require.Len(t, preview.Lines, 2)
 		assert.True(t, decimal.NewFromInt(150).Equal(preview.CreditTotalAmount))
 		assert.True(t, preview.RebillTotalAmount.IsZero())
 
-		adjustment, submitErr := h.service.Submit(h.ctx, &invoiceadjustmentports.InvoiceAdjustmentRequest{
-			InvoiceID:      entity.ID,
-			Kind:           invoiceadjustment.KindFullReversal,
-			IdempotencyKey: "full-reversal-submit-" + entity.ID.String(),
-			Reason:         "Reverse the invoice",
-			TenantInfo:     h.tenantInfo(),
-			Lines: []*invoiceadjustmentports.InvoiceAdjustmentLineInput{{
-				OriginalLineID: entity.Lines[0].ID,
-				CreditQuantity: decimal.NewFromInt(1),
-				CreditAmount:   decimal.NewFromInt(25),
-				RebillQuantity: decimal.NewFromInt(1),
-				RebillAmount:   decimal.NewFromInt(25),
-			}},
-		}, h.actor())
+		adjustment, submitErr := h.service.Submit(
+			h.ctx,
+			&invoiceadjustmentports.InvoiceAdjustmentRequest{
+				InvoiceID:      entity.ID,
+				Kind:           invoiceadjustment.KindFullReversal,
+				IdempotencyKey: "full-reversal-submit-" + entity.ID.String(),
+				Reason:         "Reverse the invoice",
+				TenantInfo:     h.tenantInfo(),
+				Lines: []*invoiceadjustmentports.InvoiceAdjustmentLineInput{{
+					OriginalLineID: entity.Lines[0].ID,
+					CreditQuantity: decimal.NewFromInt(1),
+					CreditAmount:   decimal.NewFromInt(25),
+					RebillQuantity: decimal.NewFromInt(1),
+					RebillAmount:   decimal.NewFromInt(25),
+				}},
+			},
+			h.actor(),
+		)
 		require.NoError(t, submitErr)
 		assert.True(t, decimal.NewFromInt(150).Equal(adjustment.CreditTotalAmount))
 		assert.True(t, adjustment.RebillTotalAmount.IsZero())
@@ -526,18 +543,22 @@ func TestInvoiceAdjustmentService_EngineScenarios(t *testing.T) {
 			makeInvoiceLine(2, invoice.InvoiceLineTypeAccessorial, "Fuel", 1, 50),
 		}, invoice.SettlementStatusUnpaid, decimal.Zero)
 
-		preview, previewErr := h.service.Preview(h.ctx, &invoiceadjustmentports.InvoiceAdjustmentRequest{
-			InvoiceID:      entity.ID,
-			Kind:           invoiceadjustment.KindCreditOnly,
-			IdempotencyKey: "credit-only-partial-preview-" + entity.ID.String(),
-			Reason:         "Partial concession",
-			TenantInfo:     h.tenantInfo(),
-			Lines: []*invoiceadjustmentports.InvoiceAdjustmentLineInput{{
-				OriginalLineID: entity.Lines[0].ID,
-				CreditQuantity: decimal.NewFromInt(1),
-				CreditAmount:   decimal.NewFromInt(40),
-			}},
-		}, h.actor())
+		preview, previewErr := h.service.Preview(
+			h.ctx,
+			&invoiceadjustmentports.InvoiceAdjustmentRequest{
+				InvoiceID:      entity.ID,
+				Kind:           invoiceadjustment.KindCreditOnly,
+				IdempotencyKey: "credit-only-partial-preview-" + entity.ID.String(),
+				Reason:         "Partial concession",
+				TenantInfo:     h.tenantInfo(),
+				Lines: []*invoiceadjustmentports.InvoiceAdjustmentLineInput{{
+					OriginalLineID: entity.Lines[0].ID,
+					CreditQuantity: decimal.NewFromInt(1),
+					CreditAmount:   decimal.NewFromInt(40),
+				}},
+			},
+			h.actor(),
+		)
 		require.NoError(t, previewErr)
 		require.Empty(t, preview.Errors)
 		require.Len(t, preview.Lines, 1)
@@ -555,13 +576,17 @@ func TestInvoiceAdjustmentService_EngineScenarios(t *testing.T) {
 			makeInvoiceLine(1, invoice.InvoiceLineTypeFreight, "Open balance", 1, 80),
 		}, invoice.SettlementStatusUnpaid, decimal.Zero)
 
-		pending, submitErr := h.service.Submit(h.ctx, &invoiceadjustmentports.InvoiceAdjustmentRequest{
-			InvoiceID:      entity.ID,
-			Kind:           invoiceadjustment.KindWriteOff,
-			IdempotencyKey: "writeoff-" + entity.ID.String(),
-			Reason:         "Bad debt",
-			TenantInfo:     h.tenantInfo(),
-		}, h.actor())
+		pending, submitErr := h.service.Submit(
+			h.ctx,
+			&invoiceadjustmentports.InvoiceAdjustmentRequest{
+				InvoiceID:      entity.ID,
+				Kind:           invoiceadjustment.KindWriteOff,
+				IdempotencyKey: "writeoff-" + entity.ID.String(),
+				Reason:         "Bad debt",
+				TenantInfo:     h.tenantInfo(),
+			},
+			h.actor(),
+		)
 		require.NoError(t, submitErr)
 		require.Equal(t, invoiceadjustment.StatusPendingApproval, pending.Status)
 
@@ -578,23 +603,16 @@ func TestInvoiceAdjustmentService_EngineScenarios(t *testing.T) {
 		assert.Contains(t, approved.Metadata, "writeOffJournalEntryId")
 
 		var entry journalEntryRow
-		require.NoError(t, h.db.NewSelect().
-			Table("journal_entries").
-			Column("id", "status", "total_debit", "total_credit").
-			Where("reference_id = ?", approved.ID.String()).
-			Limit(1).
-			Scan(h.ctx, &entry))
+		require.NoError(t, h.db.Pool().QueryRow(h.ctx,
+			`SELECT id, status, total_debit, total_credit FROM journal_entries
+			WHERE organization_id = $1 AND business_unit_id = $2 AND reference_id = $3 LIMIT 1`,
+			h.orgID, h.buID, approved.ID.String(),
+		).Scan(&entry.ID, &entry.Status, &entry.TotalDebit, &entry.TotalCredit))
 		assert.Equal(t, "Posted", entry.Status)
 		assert.Equal(t, int64(8000), entry.TotalDebit)
 		assert.Equal(t, int64(8000), entry.TotalCredit)
 
-		lines := make([]journalEntryLineRow, 0, 2)
-		require.NoError(t, h.db.NewSelect().
-			Table("journal_entry_lines").
-			Column("gl_account_id", "debit_amount", "credit_amount").
-			Where("journal_entry_id = ?", entry.ID).
-			OrderExpr("line_number ASC").
-			Scan(h.ctx, &lines))
+		lines := h.journalEntryLines(t, entry.ID)
 		require.Len(t, lines, 2)
 		assert.Equal(t, h.lookupGLAccount(t, "6940"), lines[0].GLAccountID)
 		assert.Equal(t, int64(8000), lines[0].DebitAmount)
@@ -602,28 +620,26 @@ func TestInvoiceAdjustmentService_EngineScenarios(t *testing.T) {
 		assert.Equal(t, int64(8000), lines[1].CreditAmount)
 
 		var source struct {
-			SourceEventType string `bun:"source_event_type"`
-			Status          string `bun:"status"`
+			SourceEventType string
+			Status          string
 		}
-		require.NoError(t, h.db.NewSelect().
-			Table("journal_sources").
-			Column("source_event_type", "status").
-			Where("source_object_id = ?", approved.ID.String()).
-			Limit(1).
-			Scan(h.ctx, &source))
+		require.NoError(t, h.db.Pool().QueryRow(h.ctx,
+			`SELECT source_event_type, status FROM journal_sources
+			WHERE organization_id = $1 AND business_unit_id = $2 AND source_object_id = $3 LIMIT 1`,
+			h.orgID, h.buID, approved.ID.String(),
+		).Scan(&source.SourceEventType, &source.Status))
 		assert.Equal(t, "InvoiceWriteOffCreated", source.SourceEventType)
 		assert.Equal(t, "Posted", source.Status)
 
 		var balance struct {
-			PeriodDebitMinor  int64 `bun:"period_debit_minor"`
-			PeriodCreditMinor int64 `bun:"period_credit_minor"`
+			PeriodDebitMinor  int64
+			PeriodCreditMinor int64
 		}
-		require.NoError(t, h.db.NewSelect().
-			Table("gl_account_balances_by_period").
-			Column("period_debit_minor", "period_credit_minor").
-			Where("gl_account_id = ?", h.lookupGLAccount(t, "6940")).
-			Limit(1).
-			Scan(h.ctx, &balance))
+		require.NoError(t, h.db.Pool().QueryRow(h.ctx,
+			`SELECT period_debit_minor, period_credit_minor FROM gl_account_balances_by_period
+			WHERE organization_id = $1 AND business_unit_id = $2 AND gl_account_id = $3 LIMIT 1`,
+			h.orgID, h.buID, h.lookupGLAccount(t, "6940"),
+		).Scan(&balance.PeriodDebitMinor, &balance.PeriodCreditMinor))
 		assert.Equal(t, int64(8000), balance.PeriodDebitMinor)
 		assert.Equal(t, int64(0), balance.PeriodCreditMinor)
 
@@ -643,13 +659,17 @@ func TestInvoiceAdjustmentService_EngineScenarios(t *testing.T) {
 			makeInvoiceLine(1, invoice.InvoiceLineTypeFreight, "Base freight", 1, 100),
 		}, invoice.SettlementStatusUnpaid, decimal.Zero)
 
-		pending, submitErr := h.service.Submit(h.ctx, &invoiceadjustmentports.InvoiceAdjustmentRequest{
-			InvoiceID:      entity.ID,
-			Kind:           invoiceadjustment.KindCreditOnly,
-			IdempotencyKey: "pending-" + entity.ID.String(),
-			Reason:         "Pending review",
-			TenantInfo:     h.tenantInfo(),
-		}, h.actor())
+		pending, submitErr := h.service.Submit(
+			h.ctx,
+			&invoiceadjustmentports.InvoiceAdjustmentRequest{
+				InvoiceID:      entity.ID,
+				Kind:           invoiceadjustment.KindCreditOnly,
+				IdempotencyKey: "pending-" + entity.ID.String(),
+				Reason:         "Pending review",
+				TenantInfo:     h.tenantInfo(),
+			},
+			h.actor(),
+		)
 		require.NoError(t, submitErr)
 		require.Equal(t, invoiceadjustment.StatusPendingApproval, pending.Status)
 
@@ -688,13 +708,17 @@ func TestInvoiceAdjustmentService_EngineScenarios(t *testing.T) {
 			makeInvoiceLine(1, invoice.InvoiceLineTypeFreight, "Base freight", 1, 100),
 		}, invoice.SettlementStatusUnpaid, decimal.Zero)
 
-		pending, submitErr := h.service.Submit(h.ctx, &invoiceadjustmentports.InvoiceAdjustmentRequest{
-			InvoiceID:      entity.ID,
-			Kind:           invoiceadjustment.KindCreditOnly,
-			IdempotencyKey: "reject-" + entity.ID.String(),
-			Reason:         "Awaiting approval",
-			TenantInfo:     h.tenantInfo(),
-		}, h.actor())
+		pending, submitErr := h.service.Submit(
+			h.ctx,
+			&invoiceadjustmentports.InvoiceAdjustmentRequest{
+				InvoiceID:      entity.ID,
+				Kind:           invoiceadjustment.KindCreditOnly,
+				IdempotencyKey: "reject-" + entity.ID.String(),
+				Reason:         "Awaiting approval",
+				TenantInfo:     h.tenantInfo(),
+			},
+			h.actor(),
+		)
 		require.NoError(t, submitErr)
 		require.Equal(t, invoiceadjustment.StatusPendingApproval, pending.Status)
 
@@ -740,18 +764,22 @@ func TestInvoiceAdjustmentService_EngineScenarios(t *testing.T) {
 		require.NoError(t, retryErr)
 		assert.Equal(t, first.ID, second.ID)
 
-		_, submitSecondErr := h.service.Submit(h.ctx, &invoiceadjustmentports.InvoiceAdjustmentRequest{
-			InvoiceID:      entity.ID,
-			Kind:           invoiceadjustment.KindCreditOnly,
-			IdempotencyKey: "idem-second-" + entity.ID.String(),
-			Reason:         "Second partial",
-			TenantInfo:     h.tenantInfo(),
-			Lines: []*invoiceadjustmentports.InvoiceAdjustmentLineInput{{
-				OriginalLineID: entity.Lines[0].ID,
-				CreditQuantity: decimal.NewFromInt(1),
-				CreditAmount:   decimal.NewFromInt(60),
-			}},
-		}, h.actor())
+		_, submitSecondErr := h.service.Submit(
+			h.ctx,
+			&invoiceadjustmentports.InvoiceAdjustmentRequest{
+				InvoiceID:      entity.ID,
+				Kind:           invoiceadjustment.KindCreditOnly,
+				IdempotencyKey: "idem-second-" + entity.ID.String(),
+				Reason:         "Second partial",
+				TenantInfo:     h.tenantInfo(),
+				Lines: []*invoiceadjustmentports.InvoiceAdjustmentLineInput{{
+					OriginalLineID: entity.Lines[0].ID,
+					CreditQuantity: decimal.NewFromInt(1),
+					CreditAmount:   decimal.NewFromInt(60),
+				}},
+			},
+			h.actor(),
+		)
 		require.NoError(t, submitSecondErr)
 	})
 
@@ -763,26 +791,34 @@ func TestInvoiceAdjustmentService_EngineScenarios(t *testing.T) {
 		h.setControls(t, func(control *tenant.InvoiceAdjustmentControl) {
 			control.PaidInvoiceAdjustmentPolicy = tenant.AdjustmentEligibilityDisallow
 		})
-		blocked, blockedErr := h.service.Preview(h.ctx, &invoiceadjustmentports.InvoiceAdjustmentRequest{
-			InvoiceID:      entity.ID,
-			Kind:           invoiceadjustment.KindCreditOnly,
-			IdempotencyKey: "paid-blocked-" + entity.ID.String(),
-			Reason:         "Blocked case",
-			TenantInfo:     h.tenantInfo(),
-		}, h.actor())
+		blocked, blockedErr := h.service.Preview(
+			h.ctx,
+			&invoiceadjustmentports.InvoiceAdjustmentRequest{
+				InvoiceID:      entity.ID,
+				Kind:           invoiceadjustment.KindCreditOnly,
+				IdempotencyKey: "paid-blocked-" + entity.ID.String(),
+				Reason:         "Blocked case",
+				TenantInfo:     h.tenantInfo(),
+			},
+			h.actor(),
+		)
 		require.NoError(t, blockedErr)
 		assert.Contains(t, blocked.Errors, "invoiceId")
 
 		h.setControls(t, func(control *tenant.InvoiceAdjustmentControl) {
 			control.PaidInvoiceAdjustmentPolicy = tenant.AdjustmentEligibilityAllowWithApproval
 		})
-		allowed, allowedErr := h.service.Preview(h.ctx, &invoiceadjustmentports.InvoiceAdjustmentRequest{
-			InvoiceID:      entity.ID,
-			Kind:           invoiceadjustment.KindCreditOnly,
-			IdempotencyKey: "paid-approval-" + entity.ID.String(),
-			Reason:         "Approval case",
-			TenantInfo:     h.tenantInfo(),
-		}, h.actor())
+		allowed, allowedErr := h.service.Preview(
+			h.ctx,
+			&invoiceadjustmentports.InvoiceAdjustmentRequest{
+				InvoiceID:      entity.ID,
+				Kind:           invoiceadjustment.KindCreditOnly,
+				IdempotencyKey: "paid-approval-" + entity.ID.String(),
+				Reason:         "Approval case",
+				TenantInfo:     h.tenantInfo(),
+			},
+			h.actor(),
+		)
 		require.NoError(t, allowedErr)
 		assert.True(t, allowed.RequiresApproval)
 		assert.True(t, allowed.RequiresReconciliationException)
@@ -869,26 +905,34 @@ func TestInvoiceAdjustmentService_EngineScenarios(t *testing.T) {
 		}, invoice.SettlementStatusUnpaid, decimal.Zero)
 
 		archived := h.createDocument(t, document.StatusArchived)
-		preview, previewErr := h.service.Preview(h.ctx, &invoiceadjustmentports.InvoiceAdjustmentRequest{
-			InvoiceID:      entity.ID,
-			Kind:           invoiceadjustment.KindCreditOnly,
-			IdempotencyKey: "archived-doc-" + entity.ID.String(),
-			Reason:         "Archived attachment",
-			AttachmentIDs:  []pulid.ID{archived.ID},
-			TenantInfo:     h.tenantInfo(),
-		}, h.actor())
+		preview, previewErr := h.service.Preview(
+			h.ctx,
+			&invoiceadjustmentports.InvoiceAdjustmentRequest{
+				InvoiceID:      entity.ID,
+				Kind:           invoiceadjustment.KindCreditOnly,
+				IdempotencyKey: "archived-doc-" + entity.ID.String(),
+				Reason:         "Archived attachment",
+				AttachmentIDs:  []pulid.ID{archived.ID},
+				TenantInfo:     h.tenantInfo(),
+			},
+			h.actor(),
+		)
 		require.NoError(t, previewErr)
 		assert.Contains(t, preview.Errors, "attachmentIds")
 
 		active := h.createDocument(t, document.StatusActive)
-		executed, submitErr := h.service.Submit(h.ctx, &invoiceadjustmentports.InvoiceAdjustmentRequest{
-			InvoiceID:      entity.ID,
-			Kind:           invoiceadjustment.KindCreditOnly,
-			IdempotencyKey: "active-doc-" + entity.ID.String(),
-			Reason:         "Active attachment",
-			AttachmentIDs:  []pulid.ID{active.ID},
-			TenantInfo:     h.tenantInfo(),
-		}, h.actor())
+		executed, submitErr := h.service.Submit(
+			h.ctx,
+			&invoiceadjustmentports.InvoiceAdjustmentRequest{
+				InvoiceID:      entity.ID,
+				Kind:           invoiceadjustment.KindCreditOnly,
+				IdempotencyKey: "active-doc-" + entity.ID.String(),
+				Reason:         "Active attachment",
+				AttachmentIDs:  []pulid.ID{active.ID},
+				TenantInfo:     h.tenantInfo(),
+			},
+			h.actor(),
+		)
 		require.NoError(t, submitErr)
 		assert.Equal(t, invoiceadjustment.StatusExecuted, executed.Status)
 	})
@@ -941,7 +985,11 @@ func TestInvoiceAdjustmentService_EngineScenarios(t *testing.T) {
 
 			temporalStarter := &fakeWorkflowStarter{enabled: true}
 			h.service = h.buildService(t, temporalStarter, decimal.NewFromInt(100))
-			items := make([]*invoiceadjustmentports.InvoiceAdjustmentRequest, 0, batchInlineThreshold+1)
+			items := make(
+				[]*invoiceadjustmentports.InvoiceAdjustmentRequest,
+				0,
+				batchInlineThreshold+1,
+			)
 			for i := range batchInlineThreshold + 1 {
 				items = append(items, &invoiceadjustmentports.InvoiceAdjustmentRequest{
 					InvoiceID:      first.ID,
@@ -975,7 +1023,7 @@ func TestInvoiceAdjustmentService_EngineScenarios(t *testing.T) {
 func newIntegrationHarness(
 	t *testing.T,
 	ctx context.Context,
-	db *bun.DB,
+	db *keel.DB,
 	starter kernelports.WorkflowStarter,
 	formulaAmount decimal.Decimal,
 ) *integrationHarness {
@@ -1000,9 +1048,8 @@ func newIntegrationHarness(
 		billingcontrolrepository.Params{DB: conn, Logger: logger},
 	)
 	customerRepo := customerrepository.New(customerrepository.Params{
-		DB:      conn,
-		Logger:  logger,
-		M2MSync: m2msync.NewSyncer(m2msync.SyncerParams{Logger: logger}),
+		DB:     conn,
+		Logger: logger,
 	})
 	shipmentRepo := shipmentrepository.New(shipmentrepository.Params{
 		DB:     conn,
@@ -1029,47 +1076,40 @@ func newIntegrationHarness(
 	documentRepo := documentrepository.New(documentrepository.Params{DB: conn, Logger: logger})
 
 	var org seededOrg
-	require.NoError(
-		t,
-		db.NewSelect().
-			Table("organizations").
-			Column("id", "business_unit_id").
-			Limit(1).
-			Scan(ctx, &org),
-	)
+	require.NoError(t, db.Pool().QueryRow(ctx,
+		"SELECT id, business_unit_id FROM organizations ORDER BY id LIMIT 1",
+	).Scan(&org.ID, &org.BusinessUnitID))
 	var user seededUser
-	require.NoError(
-		t,
-		db.NewSelect().
-			Table("users").
-			Column("id").
-			Where("current_organization_id = ?", org.ID).
-			Where("business_unit_id = ?", org.BusinessUnitID).
-			Limit(1).
-			Scan(ctx, &user),
-	)
+	require.NoError(t, db.Pool().QueryRow(ctx,
+		`SELECT id FROM users WHERE current_organization_id = $1 AND business_unit_id = $2
+		ORDER BY id LIMIT 1`,
+		org.ID, org.BusinessUnitID,
+	).Scan(&user.ID))
 	var customer seededCustomer
-	require.NoError(
-		t,
-		db.NewSelect().
-			Table("customers").
-			Column("id", "name", "code", "address_line_1", "city", "postal_code").
-			Where("organization_id = ?", org.ID).
-			Where("business_unit_id = ?", org.BusinessUnitID).
-			Limit(1).
-			Scan(ctx, &customer),
-	)
+	require.NoError(t, db.Pool().QueryRow(ctx,
+		`SELECT id, name, code, address_line_1, city, postal_code FROM customers
+		WHERE organization_id = $1 AND business_unit_id = $2 ORDER BY id LIMIT 1`,
+		org.ID, org.BusinessUnitID,
+	).Scan(
+		&customer.ID,
+		&customer.Name,
+		&customer.Code,
+		&customer.AddressLine1,
+		&customer.City,
+		&customer.PostalCode,
+	))
 	var shp seededShipment
-	require.NoError(
-		t,
-		db.NewSelect().
-			Table("shipments").
-			Column("id", "pro_number", "bol").
-			Where("organization_id = ?", org.ID).
-			Where("business_unit_id = ?", org.BusinessUnitID).
-			Limit(1).
-			Scan(ctx, &shp),
-	)
+	require.NoError(t, db.Pool().QueryRow(ctx,
+		`SELECT id, COALESCE(pro_number, ''), COALESCE(bol, '') FROM shipments
+		WHERE organization_id = $1 AND business_unit_id = $2 ORDER BY id LIMIT 1`,
+		org.ID, org.BusinessUnitID,
+	).Scan(&shp.ID, &shp.ProNumber, &shp.BOL))
+
+	ctx = dbscope.WithTenant(ctx, pagination.TenantInfo{
+		OrgID:  org.ID,
+		BuID:   org.BusinessUnitID,
+		UserID: user.ID,
+	}.DBTenant())
 
 	h := &integrationHarness{
 		ctx:                ctx,
@@ -1148,9 +1188,8 @@ func (h *integrationHarness) buildService(
 		Repo:        h.adjustmentRepo,
 		InvoiceRepo: h.invoiceRepo,
 		CustomerRepo: customerrepository.New(customerrepository.Params{
-			DB:      h.conn,
-			Logger:  zap.NewNop(),
-			M2MSync: m2msync.NewSyncer(m2msync.SyncerParams{Logger: zap.NewNop()}),
+			DB:     h.conn,
+			Logger: zap.NewNop(),
 		}),
 		BillingQueueRepo: h.billingQueueRepo,
 		ShipmentRepo: shipmentrepository.New(
@@ -1230,11 +1269,7 @@ func (h *integrationHarness) buildBillingQueueService() billingqueueports.Billin
 func (h *integrationHarness) ensureOpenFiscalPeriod(t *testing.T) {
 	t.Helper()
 
-	count, err := h.db.NewSelect().
-		Table("fiscal_periods").
-		Where("organization_id = ?", h.orgID).
-		Where("business_unit_id = ?", h.buID).
-		Count(h.ctx)
+	count, err := fiscalperioddb.FiscalPeriods.Query().Count(h.ctx, h.db)
 	require.NoError(t, err)
 	if count > 0 {
 		return
@@ -1266,10 +1301,8 @@ func (h *integrationHarness) ensureOpenFiscalPeriod(t *testing.T) {
 		EndDate:               end,
 		AllowAdjustingEntries: true,
 	}
-	_, err = h.db.NewInsert().Model(year).Exec(h.ctx)
-	require.NoError(t, err)
-	_, err = h.db.NewInsert().Model(period).Exec(h.ctx)
-	require.NoError(t, err)
+	require.NoError(t, fiscalyeardb.FiscalYears.Create(h.ctx, h.db, year))
+	require.NoError(t, fiscalperioddb.FiscalPeriods.Create(h.ctx, h.db, period))
 }
 
 func (h *integrationHarness) ensureAccountingDefaults(t *testing.T) {
@@ -1301,40 +1334,45 @@ func (h *integrationHarness) creditMemoJournal(
 ) *creditMemoJournalRow {
 	t.Helper()
 
-	var sources []struct {
-		SourceEventType string   `bun:"source_event_type"`
-		Status          string   `bun:"status"`
-		JournalEntryID  pulid.ID `bun:"journal_entry_id"`
-	}
-	require.NoError(t, h.db.NewSelect().
-		Table("journal_sources").
-		Column("source_event_type", "status", "journal_entry_id").
-		Where("organization_id = ?", h.orgID).
-		Where("source_object_type = ?", "Invoice").
-		Where("source_object_id = ?", creditMemoID.String()).
-		Scan(h.ctx, &sources))
-	require.LessOrEqual(t, len(sources), 1)
-	if len(sources) == 0 {
+	var row creditMemoJournalRow
+	var journalEntryID pulid.ID
+	err := h.db.Pool().QueryRow(h.ctx,
+		`SELECT source_event_type, status, journal_entry_id FROM journal_sources
+		WHERE organization_id = $1 AND business_unit_id = $2
+			AND source_object_type = 'Invoice' AND source_object_id = $3`,
+		h.orgID, h.buID, creditMemoID.String(),
+	).Scan(&row.SourceEventType, &row.Status, &journalEntryID)
+	if errors.Is(err, pgx.ErrNoRows) {
 		return nil
 	}
+	require.NoError(t, err)
 
-	row := &creditMemoJournalRow{
-		SourceEventType: sources[0].SourceEventType,
-		Status:          sources[0].Status,
-	}
-	require.NoError(t, h.db.NewSelect().
-		Table("journal_entry_lines").
-		Column("gl_account_id", "debit_amount", "credit_amount").
-		Where("journal_entry_id = ?", sources[0].JournalEntryID).
-		OrderExpr("line_number ASC").
-		Scan(h.ctx, &row.Lines))
-	return row
+	row.Lines = h.journalEntryLines(t, journalEntryID)
+	return &row
+}
+
+func (h *integrationHarness) journalEntryLines(
+	t *testing.T,
+	journalEntryID pulid.ID,
+) []journalEntryLineRow {
+	t.Helper()
+
+	rows, err := h.db.Pool().Query(h.ctx,
+		`SELECT gl_account_id, debit_amount, credit_amount FROM journal_entry_lines
+		WHERE organization_id = $1 AND business_unit_id = $2 AND journal_entry_id = $3
+		ORDER BY line_number ASC`,
+		h.orgID, h.buID, journalEntryID,
+	)
+	require.NoError(t, err)
+	lines, err := pgx.CollectRows(rows, pgx.RowToStructByPos[journalEntryLineRow])
+	require.NoError(t, err)
+	return lines
 }
 
 type customerLedgerRow struct {
-	AmountMinor      int64    `bun:"amount_minor"`
-	SourceEventType  string   `bun:"source_event_type"`
-	RelatedInvoiceID pulid.ID `bun:"related_invoice_id"`
+	AmountMinor      int64
+	SourceEventType  string
+	RelatedInvoiceID pulid.ID
 }
 
 func (h *integrationHarness) customerLedgerLines(
@@ -1343,29 +1381,27 @@ func (h *integrationHarness) customerLedgerLines(
 ) []customerLedgerRow {
 	t.Helper()
 
-	rows := make([]customerLedgerRow, 0, 1)
-	require.NoError(t, h.db.NewSelect().
-		Table("customer_ledger_entries").
-		Column("amount_minor", "source_event_type", "related_invoice_id").
-		Where("organization_id = ?", h.orgID).
-		Where("source_object_id = ?", invoiceID.String()).
-		Scan(h.ctx, &rows))
-	return rows
+	rows, err := h.db.Pool().Query(h.ctx,
+		`SELECT amount_minor, source_event_type, related_invoice_id FROM customer_ledger_entries
+		WHERE organization_id = $1 AND business_unit_id = $2 AND source_object_id = $3`,
+		h.orgID, h.buID, invoiceID.String(),
+	)
+	require.NoError(t, err)
+	lines, err := pgx.CollectRows(rows, pgx.RowToStructByPos[customerLedgerRow])
+	require.NoError(t, err)
+	return lines
 }
 
 func (h *integrationHarness) lookupGLAccount(t *testing.T, code string) pulid.ID {
 	t.Helper()
 
-	var row glAccountRow
-	require.NoError(t, h.db.NewSelect().
-		Table("gl_accounts").
-		Column("id").
-		Where("organization_id = ?", h.orgID).
-		Where("business_unit_id = ?", h.buID).
-		Where("account_code = ?", code).
-		Limit(1).
-		Scan(h.ctx, &row))
-	return row.ID
+	var id pulid.ID
+	require.NoError(t, h.db.Pool().QueryRow(h.ctx,
+		`SELECT id FROM gl_accounts
+		WHERE organization_id = $1 AND business_unit_id = $2 AND account_code = $3 LIMIT 1`,
+		h.orgID, h.buID, code,
+	).Scan(&id))
+	return id
 }
 
 func (h *integrationHarness) setControls(
@@ -1511,8 +1547,7 @@ func (h *integrationHarness) createDocument(
 		ResourceType:   "Shipment",
 		UploadedByID:   h.userID,
 	}
-	_, err := h.db.NewInsert().Model(entity).Exec(h.ctx)
-	require.NoError(t, err)
+	require.NoError(t, documentdb.Documents.Create(h.ctx, h.db, entity))
 	return entity
 }
 
@@ -1520,9 +1555,6 @@ func TestInvoiceAdjustmentSchemaAndSeeds(t *testing.T) {
 	ctx, db, cleanup := seededtest.SetupTestDB(t)
 	defer cleanup()
 
-	type tableCheck struct {
-		Name string `bun:"to_regclass"`
-	}
 	for _, tableName := range []string{
 		"invoice_adjustments",
 		"invoice_adjustment_lines",
@@ -1531,62 +1563,46 @@ func TestInvoiceAdjustmentSchemaAndSeeds(t *testing.T) {
 		"invoice_correction_groups",
 		"invoice_reconciliation_exceptions",
 	} {
-		var row tableCheck
-		require.NoError(
-			t,
-			db.NewSelect().ColumnExpr("to_regclass(?)", tableName).Scan(ctx, &row.Name),
-		)
-		assert.Equal(t, tableName, row.Name)
+		var name string
+		require.NoError(t, db.Pool().QueryRow(ctx,
+			"SELECT to_regclass($1)::text", tableName,
+		).Scan(&name))
+		assert.Equal(t, tableName, name)
 	}
 
-	type columnCheck struct {
-		IsNullable    string `bun:"is_nullable"`
-		ColumnDefault string `bun:"column_default"`
-	}
-	var rerateColumn columnCheck
-	require.NoError(t, db.NewSelect().
-		Table("information_schema.columns").
-		Column("is_nullable", "column_default").
-		Where("table_name = ?", "billing_queue_items").
-		Where("column_name = ?", "rerate_variance_percent").
-		Scan(ctx, &rerateColumn))
-	assert.Equal(t, "NO", rerateColumn.IsNullable)
-	assert.Contains(t, rerateColumn.ColumnDefault, "0")
+	var isNullable, columnDefault string
+	require.NoError(t, db.Pool().QueryRow(ctx,
+		`SELECT is_nullable, COALESCE(column_default, '') FROM information_schema.columns
+		WHERE table_name = $1 AND column_name = $2`,
+		"billing_queue_items", "rerate_variance_percent",
+	).Scan(&isNullable, &columnDefault))
+	assert.Equal(t, "NO", isNullable)
+	assert.Contains(t, columnDefault, "0")
 
-	type enumLabel struct {
-		Label string `bun:"enumlabel"`
-	}
-	enumRows := make([]enumLabel, 0, 3)
-	require.NoError(t, db.NewSelect().
-		TableExpr("pg_enum e").
-		Column("e.enumlabel").
-		Join("JOIN pg_type t ON t.oid = e.enumtypid").
-		Where("t.typname = ?", "write_off_approval_policy_enum").
-		OrderExpr("e.enumsortorder ASC").
-		Scan(ctx, &enumRows))
+	labelRows, err := db.Pool().Query(ctx,
+		`SELECT e.enumlabel::text FROM pg_enum e JOIN pg_type t ON t.oid = e.enumtypid
+		WHERE t.typname = $1 ORDER BY e.enumsortorder ASC`,
+		"write_off_approval_policy_enum",
+	)
+	require.NoError(t, err)
+	labels, err := pgx.CollectRows(labelRows, pgx.RowTo[string])
+	require.NoError(t, err)
 	assert.Equal(t, []string{
 		"Disallow",
 		"AlwaysRequireApproval",
 		"RequireApprovalAboveThreshold",
-	}, []string{enumRows[0].Label, enumRows[1].Label, enumRows[2].Label})
+	}, labels)
 
-	type seedCheck struct {
-		AdjustmentControls int `bun:"adjustment_controls"`
-		AccountingControls int `bun:"accounting_controls"`
-		WriteOffConfigured int `bun:"write_off_configured"`
-		ARConfigured       int `bun:"ar_configured"`
-	}
-	var counts seedCheck
-	require.NoError(t, db.NewSelect().
-		TableExpr("invoice_adjustment_controls iac").
-		ColumnExpr("(SELECT COUNT(*) FROM invoice_adjustment_controls) AS adjustment_controls").
-		ColumnExpr("(SELECT COUNT(*) FROM accounting_controls) AS accounting_controls").
-		ColumnExpr("(SELECT COUNT(*) FROM accounting_controls WHERE default_write_off_account_id IS NOT NULL) AS write_off_configured").
-		ColumnExpr("(SELECT COUNT(*) FROM accounting_controls WHERE default_ar_account_id IS NOT NULL) AS ar_configured").
-		Limit(1).
-		Scan(ctx, &counts))
-	assert.GreaterOrEqual(t, counts.AdjustmentControls, 1)
-	assert.GreaterOrEqual(t, counts.AccountingControls, 1)
-	assert.Equal(t, counts.AccountingControls, counts.WriteOffConfigured)
-	assert.Equal(t, counts.AccountingControls, counts.ARConfigured)
+	var adjustmentControls, accountingControls, writeOffConfigured, arConfigured int
+	require.NoError(t, db.Pool().QueryRow(ctx,
+		`SELECT
+			(SELECT COUNT(*) FROM invoice_adjustment_controls),
+			(SELECT COUNT(*) FROM accounting_controls),
+			(SELECT COUNT(*) FROM accounting_controls WHERE default_write_off_account_id IS NOT NULL),
+			(SELECT COUNT(*) FROM accounting_controls WHERE default_ar_account_id IS NOT NULL)`,
+	).Scan(&adjustmentControls, &accountingControls, &writeOffConfigured, &arConfigured))
+	assert.GreaterOrEqual(t, adjustmentControls, 1)
+	assert.GreaterOrEqual(t, accountingControls, 1)
+	assert.Equal(t, accountingControls, writeOffConfigured)
+	assert.Equal(t, accountingControls, arConfigured)
 }

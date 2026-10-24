@@ -13,7 +13,6 @@ import (
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/intutils"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/uptrace/bun"
 )
 
 type applyStep struct {
@@ -87,7 +86,7 @@ func (s *RemittanceService) Apply(
 	result := &factoringports.ApplyRemittanceResult{}
 	var before *factoring.Remittance
 	var booked int
-	err := s.db.WithTx(ctx, kernelports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
+	err := s.db.Transact(ctx, kernelports.TxOptions{}, func(txCtx context.Context) error {
 		rem, err := s.lock(txCtx, req.TenantInfo, req.ID, req.Version)
 		if err != nil {
 			return err

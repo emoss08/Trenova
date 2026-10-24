@@ -30,41 +30,40 @@ func (w openAsOfWindow) start() int64 {
 	return w.asOf - int64(w.points-1)*w.step
 }
 
+const openAsOfArgs = 7
+
 func (w openAsOfWindow) args() []any {
-	org, bu, start := w.tenantInfo.OrgID, w.tenantInfo.BuID, w.start()
+	org, bu := tenantArgs(w.tenantInfo)
 	return []any{
-		w.asOf, w.step, w.points,
-		org, bu, w.asOf,
-		org, bu, start,
-		org, bu, start,
-		org, bu, start,
-		org, bu, start,
-		org, bu, customerledger.SourceFactoringItem, start,
-		org, bu, w.asOf,
+		w.asOf,
+		w.step,
+		w.points,
+		org,
+		bu,
+		w.start(),
 		customerledger.SourceFactoringItem,
-		w.asOf, w.step, w.points, w.asOf, w.step,
 	}
 }
 
 const openAsOfCTEs = `
 		points AS (
-			SELECT n, ?::BIGINT - n * ?::BIGINT AS period_end
-			FROM generate_series(0, ?::INT - 1) AS n
+			SELECT n, $1::BIGINT - n * $2::BIGINT AS period_end
+			FROM generate_series(0, $3::INT - 1) AS n
 		),
 		candidates AS (
 			SELECT inv.id, inv.organization_id, inv.business_unit_id, inv.invoice_date, inv.due_date, inv.total_amount_minor
 			FROM invoices inv
-			WHERE inv.organization_id = ?
-			  AND inv.business_unit_id = ?
-			  AND inv.invoice_date <= ?` + openInvoicePredicate + `
+			WHERE inv.organization_id = $4
+			  AND inv.business_unit_id = $5
+			  AND inv.invoice_date <= $1` + openInvoicePredicate + `
 			UNION
 			SELECT inv.id, inv.organization_id, inv.business_unit_id, inv.invoice_date, inv.due_date, inv.total_amount_minor
 			FROM (
 				SELECT cpa.invoice_id
 				FROM customer_payment_applications cpa
-				WHERE cpa.organization_id = ?
-				  AND cpa.business_unit_id = ?
-				  AND cpa.created_at > ?
+				WHERE cpa.organization_id = $4
+				  AND cpa.business_unit_id = $5
+				  AND cpa.created_at > $6
 				UNION
 				SELECT cpa.invoice_id
 				FROM customer_payments cp
@@ -72,37 +71,37 @@ const openAsOfCTEs = `
 				  ON cpa.customer_payment_id = cp.id
 				 AND cpa.organization_id = cp.organization_id
 				 AND cpa.business_unit_id = cp.business_unit_id
-				WHERE cp.organization_id = ?
-				  AND cp.business_unit_id = ?
-				  AND cp.reversed_at > ?
+				WHERE cp.organization_id = $4
+				  AND cp.business_unit_id = $5
+				  AND cp.reversed_at > $6
 				UNION
 				SELECT cma.invoice_id
 				FROM credit_memo_applications cma
-				WHERE cma.organization_id = ?
-				  AND cma.business_unit_id = ?
-				  AND cma.created_at > ?
+				WHERE cma.organization_id = $4
+				  AND cma.business_unit_id = $5
+				  AND cma.created_at > $6
 				UNION
 				SELECT cma.invoice_id
 				FROM credit_memo_applications cma
-				WHERE cma.organization_id = ?
-				  AND cma.business_unit_id = ?
-				  AND cma.unapplied_at > ?
+				WHERE cma.organization_id = $4
+				  AND cma.business_unit_id = $5
+				  AND cma.unapplied_at > $6
 				UNION
 				SELECT cle.related_invoice_id
 				FROM customer_ledger_entries cle
-				WHERE cle.organization_id = ?
-				  AND cle.business_unit_id = ?
-				  AND cle.source_object_type = ?
+				WHERE cle.organization_id = $4
+				  AND cle.business_unit_id = $5
+				  AND cle.source_object_type = $7
 				  AND cle.related_invoice_id IS NOT NULL
-				  AND cle.created_at > ?
+				  AND cle.created_at > $6
 			) moved
 			JOIN invoices inv
 			  ON inv.id = moved.invoice_id
-			 AND inv.organization_id = ?
-			 AND inv.business_unit_id = ?
+			 AND inv.organization_id = $4
+			 AND inv.business_unit_id = $5
 			WHERE inv.status = 'Posted'
 			  AND inv.bill_type IN ('Invoice', 'DebitMemo')
-			  AND inv.invoice_date <= ?
+			  AND inv.invoice_date <= $1
 		),
 		settlements AS (
 			SELECT c.id AS invoice_id, c.due_date, cpa.created_at AS settled_at, cp.reversed_at AS released_at,
@@ -130,7 +129,7 @@ const openAsOfCTEs = `
 			  ON cle.related_invoice_id = c.id
 			 AND cle.organization_id = c.organization_id
 			 AND cle.business_unit_id = c.business_unit_id
-			 AND cle.source_object_type = ?
+			 AND cle.source_object_type = $7
 		),
 		changes AS (
 			SELECT c.id AS invoice_id, c.due_date, c.invoice_date AS changed_at, c.total_amount_minor AS delta
@@ -160,9 +159,9 @@ const openAsOfCTEs = `
 			CROSS JOIN LATERAL generate_series(
 				CASE
 					WHEN seg.ends_at IS NULL THEN 0
-					ELSE GREATEST(0, FLOOR((?::BIGINT - seg.ends_at)::NUMERIC / ?::BIGINT)::INT + 1)
+					ELSE GREATEST(0, FLOOR(($1::BIGINT - seg.ends_at)::NUMERIC / $2::BIGINT)::INT + 1)
 				END,
-				LEAST(?::INT - 1, FLOOR((?::BIGINT - seg.starts_at)::NUMERIC / ?::BIGINT)::INT)
+				LEAST($3::INT - 1, FLOOR(($1::BIGINT - seg.starts_at)::NUMERIC / $2::BIGINT)::INT)
 			) AS n
 			WHERE seg.open_minor > 0
 		)`

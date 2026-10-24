@@ -6,6 +6,14 @@ import (
 	"testing"
 	"time"
 
+	"github.com/emoss08/trenova/internal/modules/billing/billingtest"
+
+	"github.com/emoss08/keel"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue/billingqueuedb"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/customerledger/customerledgerdb"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/customerpayment/customerpaymentdb"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice/invoicedb"
+
 	"github.com/emoss08/trenova/internal/testutil/seededtest"
 
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
@@ -16,7 +24,6 @@ import (
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/customerledgerports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
-	"github.com/emoss08/trenova/internal/testutil/seedtest"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
@@ -36,38 +43,8 @@ func TestOpenAsOfFollowsEverySettlementSource(t *testing.T) {
 	repo := NewAnalytics(Params{DB: conn, Logger: logger})
 	invoiceRepo := invoicerepository.New(invoicerepository.Params{DB: conn, Logger: logger})
 
-	var org seededAROrg
-	require.NoError(
-		t,
-		db.NewSelect().
-			Table("organizations").
-			Column("id", "business_unit_id").
-			Limit(1).
-			Scan(ctx, &org),
-	)
-	var user seededARUser
-	require.NoError(
-		t,
-		db.NewSelect().
-			Table("users").
-			Column("id").
-			Where("current_organization_id = ?", org.ID).
-			Where("business_unit_id = ?", org.BusinessUnitID).
-			Limit(1).
-			Scan(ctx, &user),
-	)
-	var shp seededARShipment
-	require.NoError(
-		t,
-		db.NewSelect().
-			Table("shipments").
-			Column("id", "customer_id", "pro_number", "bol").
-			Where("organization_id = ?", org.ID).
-			Where("business_unit_id = ?", org.BusinessUnitID).
-			Apply(seedtest.ShipmentsWithoutReceivables).
-			Limit(1).
-			Scan(ctx, &shp),
-	)
+	seeded := billingtest.SeededTenant(t, ctx, db)
+	ctx, org, user, shp := seeded.Ctx, seeded.Org, seeded.User, seeded.Shipment
 
 	tenantInfo := pagination.TenantInfo{OrgID: org.ID, BuID: org.BusinessUnitID}
 	asOf := time.Now().UTC().Unix()
@@ -113,7 +90,7 @@ func TestOpenAsOfFollowsEverySettlementSource(t *testing.T) {
 			Status:           billingqueue.StatusPosted,
 			BillType:         billType,
 		}
-		_, qErr := db.NewInsert().Model(queue).Exec(ctx)
+		qErr := billingqueuedb.BillingQueueItems.Create(ctx, db, queue)
 		require.NoError(t, qErr)
 		postedAt := invoiceDate
 		amount := decimal.NewFromInt(total)
@@ -153,24 +130,25 @@ func TestOpenAsOfFollowsEverySettlementSource(t *testing.T) {
 		return inv
 	}
 	settle := func(inv *invoice.Invoice, appliedMinor int64) {
-		_, uErr := db.NewUpdate().
-			Table("invoices").
-			Set("applied_amount_minor = ?", appliedMinor).
-			Set("applied_amount = ?", decimal.New(appliedMinor, -2)).
-			Where("id = ?", inv.ID).
-			Where("organization_id = ?", org.ID).
-			Where("business_unit_id = ?", org.BusinessUnitID).
-			Exec(ctx)
+		invs := invoicedb.Invoices
+		_, uErr := invs.Where(invs.ID.Eq(inv.ID)).Update(
+			ctx,
+			db,
+			invs.AppliedAmountMinor.To(appliedMinor),
+			invs.AppliedAmount.To(decimal.New(appliedMinor, -2)),
+		)
 		require.NoError(t, uErr)
 	}
 	backdate := func(table string, id pulid.ID, createdAt int64) {
-		_, uErr := db.NewUpdate().
-			Table(table).
-			Set("created_at = ?", createdAt).
-			Where("id = ?", id).
-			Where("organization_id = ?", org.ID).
-			Where("business_unit_id = ?", org.BusinessUnitID).
-			Exec(ctx)
+		_, uErr := keel.Exec(
+			ctx,
+			db,
+			"UPDATE "+table+" SET created_at = $1 WHERE id = $2 AND organization_id = $3 AND business_unit_id = $4",
+			createdAt,
+			id.String(),
+			org.ID.String(),
+			org.BusinessUnitID.String(),
+		)
 		require.NoError(t, uErr)
 	}
 	pay := func(
@@ -199,7 +177,7 @@ func TestOpenAsOfFollowsEverySettlementSource(t *testing.T) {
 			ReversedAt:         reversedAt,
 			CreatedByID:        user.ID,
 		}
-		_, pErr := db.NewInsert().Model(payment).Exec(ctx)
+		pErr := customerpaymentdb.Payments.Create(ctx, db, payment)
 		require.NoError(t, pErr)
 		application := &customerpayment.Application{
 			OrganizationID:     org.ID,
@@ -209,7 +187,7 @@ func TestOpenAsOfFollowsEverySettlementSource(t *testing.T) {
 			AppliedAmountMinor: amountMinor,
 			LineNumber:         1,
 		}
-		_, aErr := db.NewInsert().Model(application).Exec(ctx)
+		aErr := customerpaymentdb.Applications.Create(ctx, db, application)
 		require.NoError(t, aErr)
 		backdate("customer_payment_applications", application.ID, appliedAt)
 	}
@@ -232,7 +210,7 @@ func TestOpenAsOfFollowsEverySettlementSource(t *testing.T) {
 		Status:              customerpayment.CreditApplicationStatusApplied,
 		CreatedByID:         user.ID,
 	}
-	_, err := db.NewInsert().Model(credit).Exec(ctx)
+	err := customerpaymentdb.CreditMemoApplications.Create(ctx, db, credit)
 	require.NoError(t, err)
 	backdate("credit_memo_applications", credit.ID, before(6))
 	factoring := &customerledger.CustomerLedgerEntry{
@@ -249,7 +227,7 @@ func TestOpenAsOfFollowsEverySettlementSource(t *testing.T) {
 		AmountMinor:      -50_000,
 		CreatedByID:      user.ID,
 	}
-	_, err = db.NewInsert().Model(factoring).Exec(ctx)
+	err = customerledgerdb.CustomerLedgerEntries.Create(ctx, db, factoring)
 	require.NoError(t, err)
 	backdate("customer_ledger_entries", factoring.ID, before(4))
 	settle(factored, 100_000)

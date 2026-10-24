@@ -8,6 +8,11 @@ import (
 	"testing"
 	"time"
 
+	"github.com/emoss08/keel"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue/billingqueuedb"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice/invoicedb"
+	"github.com/emoss08/trenova/pkg/dbscope"
+
 	"github.com/emoss08/trenova/internal/testutil/seededtest"
 
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
@@ -28,13 +33,12 @@ import (
 	"github.com/shopspring/decimal"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"github.com/uptrace/bun"
 	"go.uber.org/zap"
 )
 
 type factoringEnv struct {
 	ctx         context.Context
-	db          *bun.DB
+	db          *keel.DB
 	tenantInfo  pagination.TenantInfo
 	customerID  pulid.ID
 	shipmentID  pulid.ID
@@ -53,49 +57,42 @@ func setupFactoringEnv(t *testing.T) *factoringEnv {
 	ctx, db, cleanup := seededtest.SetupTestDB(t)
 	t.Cleanup(cleanup)
 
-	var org struct {
-		ID             pulid.ID `bun:"id"`
-		BusinessUnitID pulid.ID `bun:"business_unit_id"`
-	}
-	require.NoError(t, db.NewSelect().
-		Table("organizations").
-		Column("id", "business_unit_id").
-		Limit(1).
-		Scan(ctx, &org))
+	var orgID, buID pulid.ID
+	require.NoError(t, db.Pool().QueryRow(ctx,
+		"SELECT id, business_unit_id FROM organizations ORDER BY id LIMIT 1",
+	).Scan(&orgID, &buID))
 
-	var shp struct {
-		ID         pulid.ID `bun:"id"`
-		CustomerID pulid.ID `bun:"customer_id"`
-	}
-	require.NoError(t, db.NewSelect().
-		Table("shipments").
-		Column("id", "customer_id").
-		Where("organization_id = ?", org.ID).
-		Where("business_unit_id = ?", org.BusinessUnitID).
-		Limit(1).
-		Scan(ctx, &shp))
+	var shipmentID, customerID pulid.ID
+	require.NoError(t, db.Pool().QueryRow(ctx,
+		"SELECT id, customer_id FROM shipments WHERE organization_id = $1 AND business_unit_id = $2 ORDER BY id LIMIT 1",
+		orgID, buID,
+	).
+		Scan(&shipmentID, &customerID))
 
 	var stateID pulid.ID
-	require.NoError(t, db.NewSelect().Table("us_states").Column("id").Limit(1).Scan(ctx, &stateID))
+	require.NoError(
+		t,
+		db.Pool().QueryRow(ctx, "SELECT id FROM us_states ORDER BY id LIMIT 1").Scan(&stateID),
+	)
 
 	var docTypeID pulid.ID
-	require.NoError(t, db.NewSelect().
-		Table("document_types").
-		Column("id").
-		Where("organization_id = ?", org.ID).
-		Where("business_unit_id = ?", org.BusinessUnitID).
-		Limit(1).
-		Scan(ctx, &docTypeID))
+	require.NoError(t, db.Pool().QueryRow(ctx,
+		"SELECT id FROM document_types WHERE organization_id = $1 AND business_unit_id = $2 ORDER BY id LIMIT 1",
+		orgID, buID,
+	).
+		Scan(&docTypeID))
 
+	tenantInfo := pagination.TenantInfo{OrgID: orgID, BuID: buID}
+	ctx = dbscope.WithTenant(ctx, tenantInfo.DBTenant())
 	conn := postgres.NewTestConnection(db)
 	logger := zap.NewNop()
 	p := Params{DB: conn, Logger: logger}
 	return &factoringEnv{
 		ctx:        ctx,
 		db:         db,
-		tenantInfo: pagination.TenantInfo{OrgID: org.ID, BuID: org.BusinessUnitID},
-		customerID: shp.CustomerID,
-		shipmentID: shp.ID,
+		tenantInfo: tenantInfo,
+		customerID: customerID,
+		shipmentID: shipmentID,
 		stateID:    stateID,
 		docTypeID:  docTypeID,
 		agreements: NewAgreementRepository(p),
@@ -150,7 +147,11 @@ func (e *factoringEnv) agreement(factorID pulid.ID, from int64, to *int64) *fact
 	}
 }
 
-func (e *factoringEnv) postInvoice(t *testing.T, amountMinor int64, factorID *pulid.ID) *invoice.Invoice {
+func (e *factoringEnv) postInvoice(
+	t *testing.T,
+	amountMinor int64,
+	factorID *pulid.ID,
+) *invoice.Invoice {
 	t.Helper()
 	e.invoiceSeed++
 	number := "INV-FAC-" + time.Now().Format("150405") + "-" + string(rune('A'+e.invoiceSeed))
@@ -163,8 +164,7 @@ func (e *factoringEnv) postInvoice(t *testing.T, amountMinor int64, factorID *pu
 		Status:           billingqueue.StatusPosted,
 		BillType:         billingqueue.BillTypeInvoice,
 	}
-	_, err := e.db.NewInsert().Model(queue).Exec(e.ctx)
-	require.NoError(t, err)
+	require.NoError(t, billingqueuedb.BillingQueueItems.Create(e.ctx, e.db, queue))
 
 	amount := decimal.New(amountMinor, -2)
 	postedAt := time.Now().Unix()
@@ -244,11 +244,14 @@ func TestAgreementLifecycle(t *testing.T) {
 	assert.Equal(t, 250, updated.FeeTiers[0].RateBP)
 	assert.Empty(t, updated.DocumentTypes)
 
-	byFactor, err := env.agreements.ListInForce(env.ctx, &factoringports.ListAgreementsInForceRequest{
-		TenantInfo:          env.tenantInfo,
-		FactoringCompanyIDs: []pulid.ID{factor.ID},
-		At:                  now + 7200,
-	})
+	byFactor, err := env.agreements.ListInForce(
+		env.ctx,
+		&factoringports.ListAgreementsInForceRequest{
+			TenantInfo:          env.tenantInfo,
+			FactoringCompanyIDs: []pulid.ID{factor.ID},
+			At:                  now + 7200,
+		},
+	)
 	require.NoError(t, err)
 	assert.Empty(t, byFactor, "the agreement ended before that time")
 
@@ -308,11 +311,14 @@ func TestNoaOpenUniquenessAndExpiry(t *testing.T) {
 	require.NoError(t, err)
 	require.Len(t, expiring, 1)
 
-	claimed, err := env.noas.ClaimExpiryWarning(env.ctx, factoringports.ClaimNoaExpiryWarningRequest{
-		TenantInfo: env.tenantInfo,
-		ID:         noa.ID,
-		At:         now,
-	})
+	claimed, err := env.noas.ClaimExpiryWarning(
+		env.ctx,
+		factoringports.ClaimNoaExpiryWarningRequest{
+			TenantInfo: env.tenantInfo,
+			ID:         noa.ID,
+			At:         now,
+		},
+	)
 	require.NoError(t, err)
 	assert.True(t, claimed)
 	claimed, err = env.noas.ClaimExpiryWarning(env.ctx, factoringports.ClaimNoaExpiryWarningRequest{
@@ -406,10 +412,13 @@ func TestInvoiceStateProjection(t *testing.T) {
 	assert.Equal(t, factored.TotalAmountMinor, summary.Ready.AmountMinor)
 	assert.Equal(t, 1, summary.ReadyUnsubmitted.Count)
 
-	late, err := env.states.ListReadyUnsubmitted(env.ctx, factoringports.ListReadyUnsubmittedRequest{
-		TenantInfo:  env.tenantInfo,
-		ReadyBefore: now - factoring.ReadyUnsubmittedSeconds,
-	})
+	late, err := env.states.ListReadyUnsubmitted(
+		env.ctx,
+		factoringports.ListReadyUnsubmittedRequest{
+			TenantInfo:  env.tenantInfo,
+			ReadyBefore: now - factoring.ReadyUnsubmittedSeconds,
+		},
+	)
 	require.NoError(t, err)
 	require.Len(t, late, 1)
 
@@ -427,14 +436,17 @@ func TestInvoiceStateProjection(t *testing.T) {
 	}, now)
 	require.NoError(t, env.states.Upsert(env.ctx, notReady))
 
-	page, err := env.states.ListConnection(env.ctx, &factoringports.ListInvoiceStateConnectionRequest{
-		Filter: &pagination.QueryOptions{
-			TenantInfo: env.tenantInfo,
-			Pagination: pagination.Info{Limit: 10},
+	page, err := env.states.ListConnection(
+		env.ctx,
+		&factoringports.ListInvoiceStateConnectionRequest{
+			Filter: &pagination.QueryOptions{
+				TenantInfo: env.tenantInfo,
+				Pagination: pagination.Info{Limit: 10},
+			},
+			Cursor:   pagination.CursorInfo{Limit: 10},
+			Verdicts: []factoring.Verdict{factoring.VerdictNotReady},
 		},
-		Cursor:   pagination.CursorInfo{Limit: 10},
-		Verdicts: []factoring.Verdict{factoring.VerdictNotReady},
-	})
+	)
 	require.NoError(t, err)
 	require.Len(t, page.Items, 1)
 	assert.Nil(t, page.Items[0].ReadySince)
@@ -465,10 +477,13 @@ func TestInvoiceStateProjection(t *testing.T) {
 	assert.Len(t, search(factor.Name).Items, 1)
 	assert.Empty(t, search("no-such-invoice_%").Items)
 
-	byID, err := env.states.ListByInvoiceIDs(env.ctx, &factoringports.ListInvoiceStatesByInvoiceIDsRequest{
-		TenantInfo: env.tenantInfo,
-		InvoiceIDs: []pulid.ID{factored.ID, unfactored.ID},
-	})
+	byID, err := env.states.ListByInvoiceIDs(
+		env.ctx,
+		&factoringports.ListInvoiceStatesByInvoiceIDsRequest{
+			TenantInfo: env.tenantInfo,
+			InvoiceIDs: []pulid.ID{factored.ID, unfactored.ID},
+		},
+	)
 	require.NoError(t, err)
 	assert.Len(t, byID, 1)
 
@@ -490,33 +505,35 @@ func TestSetInvoiceOverrideKeepsTheReasonOnlyWhileExcluded(t *testing.T) {
 
 	read := func() *invoice.Invoice {
 		t.Helper()
-		got := new(invoice.Invoice)
-		require.NoError(t, env.db.NewSelect().
-			Model(got).
-			Where("inv.id = ?", inv.ID).
-			Where("inv.organization_id = ?", env.tenantInfo.OrgID).
-			Scan(env.ctx))
+		got, err := invoicedb.Invoices.Get(env.ctx, env.db, inv.ID)
+		require.NoError(t, err)
 		return got
 	}
 
-	require.NoError(t, env.states.SetInvoiceOverride(env.ctx, &factoringports.SetInvoiceOverrideRequest{
-		TenantInfo: env.tenantInfo,
-		InvoiceID:  inv.ID,
-		Override:   invoice.FactoringOverrideExclude,
-		Reason:     "Customer pays us directly",
-	}))
+	require.NoError(
+		t,
+		env.states.SetInvoiceOverride(env.ctx, &factoringports.SetInvoiceOverrideRequest{
+			TenantInfo: env.tenantInfo,
+			InvoiceID:  inv.ID,
+			Override:   invoice.FactoringOverrideExclude,
+			Reason:     "Customer pays us directly",
+		}),
+	)
 	excluded := read()
 	assert.Equal(t, invoice.FactoringOverrideExclude, excluded.FactoringOverride)
 	assert.Equal(t, "Customer pays us directly", excluded.FactoringOverrideReason)
 	assert.Nil(t, excluded.FactoringCompanyID)
 	assert.Greater(t, excluded.Version, inv.Version)
 
-	require.NoError(t, env.states.SetInvoiceOverride(env.ctx, &factoringports.SetInvoiceOverrideRequest{
-		TenantInfo:         env.tenantInfo,
-		InvoiceID:          inv.ID,
-		Override:           invoice.FactoringOverrideDefault,
-		FactoringCompanyID: &factor.ID,
-	}))
+	require.NoError(
+		t,
+		env.states.SetInvoiceOverride(env.ctx, &factoringports.SetInvoiceOverrideRequest{
+			TenantInfo:         env.tenantInfo,
+			InvoiceID:          inv.ID,
+			Override:           invoice.FactoringOverrideDefault,
+			FactoringCompanyID: &factor.ID,
+		}),
+	)
 	restored := read()
 	assert.Equal(t, invoice.FactoringOverrideDefault, restored.FactoringOverride)
 	assert.Empty(t, restored.FactoringOverrideReason)

@@ -10,7 +10,6 @@ import (
 	"github.com/emoss08/trenova/internal/modules/reference/domain/documenttype"
 	"github.com/emoss08/trenova/pkg/domainvalidation"
 	"github.com/emoss08/trenova/pkg/errortypes"
-	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
@@ -37,9 +36,8 @@ var (
 
 // The terms each factor buys invoices on, with their advance, reserve and effective dates
 type Agreement struct {
-	bun.BaseModel             `bun:"table:factoring_agreements,alias:facagr" json:"-"`
-	keel.Table                `                                                       keel:"factoring_agreements,report=Billing,label=Factoring Agreement"`
-	pagination.CursorValueSet `bun:",embed"                                  json:"-"`
+	bun.BaseModel `bun:"table:factoring_agreements,alias:facagr" json:"-"`
+	keel.Table    `                                                       keel:"factoring_agreements,report=Billing,label=Factoring Agreement"`
 
 	ID                     pulid.ID            `json:"id"                     bun:"id,pk,type:VARCHAR(100),notnull"                              keel:"id,pk,autoid:facagr_"`
 	OrganizationID         pulid.ID            `json:"organizationId"         bun:"organization_id,pk,type:VARCHAR(100),notnull"                 keel:"organization_id,pk,tenant"`

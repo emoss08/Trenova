@@ -60,23 +60,24 @@ var invoiceRunsTable = schema.Table{
 	Relations: []schema.Relation{
 		{Name: "Groups", Alias: "g", Kind: schema.HasMany, Local: []int32{0}, Remote: []int32{3}, Label: `Groups`, JSON: `groups`},
 	},
-	PK:         []int32{0, 1, 2},
-	Tenant:     []int32{1, 2},
-	Select:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28},
-	Insert:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28},
-	Update:     []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 28},
-	Returning:  nil,
-	Version:    26,
-	AutoID:     0,
-	AutoCreate: 27,
-	AutoUpdate: 28,
-	IDPrefix:   "invrun_",
-	New:        newInvoiceRun,
-	NewN:       newNInvoiceRun,
-	Size:       unsafe.Sizeof(invoicerun.InvoiceRun{}),
-	Ptr:        ptrInvoiceRun,
-	Value:      valueInvoiceRun,
-	Attach:     attachInvoiceRun,
+	PK:           []int32{0, 1, 2},
+	Tenant:       []int32{1, 2},
+	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28},
+	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28},
+	Update:       []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 28},
+	Returning:    nil,
+	Version:      26,
+	AutoID:       0,
+	AutoCreate:   27,
+	AutoUpdate:   28,
+	IDPrefix:     "invrun_",
+	New:          newInvoiceRun,
+	NewN:         newNInvoiceRun,
+	Size:         unsafe.Sizeof(invoicerun.InvoiceRun{}),
+	Ptr:          ptrInvoiceRun,
+	Value:        valueInvoiceRun,
+	Attach:       attachInvoiceRun,
+	BeforeCreate: beforeCreateInvoiceRun,
 }
 
 var invoiceRunsRef = keel.Ref{Table: &invoiceRunsTable}
@@ -377,6 +378,10 @@ func attachInvoiceRun(p unsafe.Pointer, rel int32, child unsafe.Pointer) {
 	}
 }
 
+func beforeCreateInvoiceRun(ctx context.Context, p unsafe.Pointer) error {
+	return (*invoicerun.InvoiceRun)(p).BeforeCreate(ctx)
+}
+
 // invoiceRunGroupsTable is the schema of invoicerun.InvoiceRunGroup.
 var invoiceRunGroupsTable = schema.Table{
 	Name:   "invoice_run_groups",
@@ -416,23 +421,24 @@ var invoiceRunGroupsTable = schema.Table{
 		{Name: "Invoice", Alias: "i", Kind: schema.BelongsTo, Local: []int32{17}, Remote: []int32{0}, Label: `Invoice`, JSON: `invoice`},
 		{Name: "Items", Alias: "i", Kind: schema.HasMany, Local: []int32{0}, Remote: []int32{4}, Label: `Items`, JSON: `items`},
 	},
-	PK:         []int32{0, 1, 2},
-	Tenant:     []int32{1, 2},
-	Select:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21},
-	Insert:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21},
-	Update:     []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 21},
-	Returning:  nil,
-	Version:    19,
-	AutoID:     0,
-	AutoCreate: 20,
-	AutoUpdate: 21,
-	IDPrefix:   "invrg_",
-	New:        newInvoiceRunGroup,
-	NewN:       newNInvoiceRunGroup,
-	Size:       unsafe.Sizeof(invoicerun.InvoiceRunGroup{}),
-	Ptr:        ptrInvoiceRunGroup,
-	Value:      valueInvoiceRunGroup,
-	Attach:     attachInvoiceRunGroup,
+	PK:           []int32{0, 1, 2},
+	Tenant:       []int32{1, 2},
+	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21},
+	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21},
+	Update:       []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 21},
+	Returning:    nil,
+	Version:      19,
+	AutoID:       0,
+	AutoCreate:   20,
+	AutoUpdate:   21,
+	IDPrefix:     "invrg_",
+	New:          newInvoiceRunGroup,
+	NewN:         newNInvoiceRunGroup,
+	Size:         unsafe.Sizeof(invoicerun.InvoiceRunGroup{}),
+	Ptr:          ptrInvoiceRunGroup,
+	Value:        valueInvoiceRunGroup,
+	Attach:       attachInvoiceRunGroup,
+	BeforeCreate: beforeCreateInvoiceRunGroup,
 }
 
 var invoiceRunGroupsRef = keel.Ref{Table: &invoiceRunGroupsTable}
@@ -677,6 +683,10 @@ func attachInvoiceRunGroup(p unsafe.Pointer, rel int32, child unsafe.Pointer) {
 	case 3:
 		r.Items = append(r.Items, (*invoicerun.InvoiceRunGroupItem)(child))
 	}
+}
+
+func beforeCreateInvoiceRunGroup(ctx context.Context, p unsafe.Pointer) error {
+	return (*invoicerun.InvoiceRunGroup)(p).BeforeCreate(ctx)
 }
 
 // invoiceRunGroupItemsTable is the schema of invoicerun.InvoiceRunGroupItem.

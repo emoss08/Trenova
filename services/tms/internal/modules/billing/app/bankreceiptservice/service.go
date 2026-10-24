@@ -6,7 +6,6 @@ import (
 	"strings"
 
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
-	"github.com/uptrace/bun"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
@@ -39,7 +38,7 @@ type Params struct {
 	fx.In
 
 	Logger              *zap.Logger
-	DB                  kernelports.DBConnection
+	DB                  kernelports.Transactor
 	Repo                bankreceiptports.BankReceiptRepository
 	WorkItemRepo        bankreceiptworkitemports.BankReceiptWorkItemRepository
 	PaymentRepo         customerpaymentports.CustomerPaymentRepository
@@ -54,7 +53,7 @@ type Params struct {
 
 type Service struct {
 	l                   *zap.Logger
-	db                  kernelports.DBConnection
+	db                  kernelports.Transactor
 	repo                bankreceiptports.BankReceiptRepository
 	workItemRepo        bankreceiptworkitemports.BankReceiptWorkItemRepository
 	paymentRepo         customerpaymentports.CustomerPaymentRepository
@@ -214,7 +213,7 @@ func (s *Service) Match(
 		plan    *MatchPreview
 		updated *bankreceipt.BankReceipt
 	)
-	err := s.db.WithTx(ctx, kernelports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
+	err := s.db.Transact(ctx, kernelports.TxOptions{}, func(txCtx context.Context) error {
 		var txErr error
 		plan, txErr = s.planStoredMatch(txCtx, req, actor, s.repo.LockForUpdate)
 		if txErr != nil {

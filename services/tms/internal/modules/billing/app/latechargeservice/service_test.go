@@ -7,7 +7,6 @@ import (
 	"github.com/emoss08/trenova/internal/testutil/mocks/invoiceportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/latechargeportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/tenantportsmock"
-	"github.com/uptrace/bun"
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
@@ -416,18 +415,12 @@ type txMarker struct{}
 // and would roll back together.
 type markingDB struct{}
 
-func (markingDB) DB() *bun.DB                          { return nil }
-func (markingDB) DBForContext(context.Context) bun.IDB { return nil }
-func (markingDB) HealthCheck(context.Context) error    { return nil }
-func (markingDB) IsHealthy(context.Context) bool       { return true }
-func (markingDB) Close() error                         { return nil }
-
-func (markingDB) WithTx(
+func (markingDB) Transact(
 	ctx context.Context,
 	_ kernelports.TxOptions,
-	fn func(context.Context, bun.Tx) error,
+	fn func(context.Context) error,
 ) error {
-	return fn(context.WithValue(ctx, txMarker{}, true), bun.Tx{})
+	return fn(context.WithValue(ctx, txMarker{}, true))
 }
 
 func inTx(ctx context.Context) bool {

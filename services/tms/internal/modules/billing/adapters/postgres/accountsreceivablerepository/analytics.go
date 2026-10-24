@@ -4,10 +4,13 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/billing/adapters/postgres/factoringsql"
+	"github.com/emoss08/trenova/internal/modules/billing/adapters/postgres/receivablesql"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/customerledgerports"
 	"github.com/emoss08/trenova/shared/pulid"
+	"github.com/jackc/pgx/v5"
 )
 
 const (
@@ -18,25 +21,34 @@ const (
 )
 
 const openInvoicePredicate = `
-	  AND inv.status = 'Posted'
-	  AND inv.bill_type IN ('Invoice', 'DebitMemo')
-	  AND inv.total_amount_minor > inv.applied_amount_minor`
+	  AND ` + receivablesql.OpenInvoice
+
+func queryOne[T any](ctx context.Context, db *keel.DB, sql string, args ...any) (*T, error) {
+	rows, err := keel.QueryAll(ctx, db, pgx.RowToAddrOfStructByName[T], sql, args...)
+	if err != nil {
+		return nil, err
+	}
+	if len(rows) == 0 {
+		return nil, keel.ErrNotFound
+	}
+	return rows[0], nil
+}
 
 type balanceOverviewRecord struct {
-	HasInvoiced          bool    `bun:"has_invoiced"`
-	TotalOpenMinor       int64   `bun:"total_open_minor"`
-	OverdueMinor         int64   `bun:"overdue_minor"`
-	UnappliedCashMinor   int64   `bun:"unapplied_cash_minor"`
-	DisputedOpenMinor    int64   `bun:"disputed_open_minor"`
-	OpenInvoiceCount     int     `bun:"open_invoice_count"`
-	OverdueInvoiceCount  int     `bun:"overdue_invoice_count"`
-	DisputedInvoiceCount int     `bun:"disputed_invoice_count"`
-	AvgDaysPastDue       float64 `bun:"avg_days_past_due"`
-	CurrentMinor         int64   `bun:"current_minor"`
-	Days1To30Minor       int64   `bun:"days1_to30_minor"`
-	Days31To60Minor      int64   `bun:"days31_to60_minor"`
-	Days61To90Minor      int64   `bun:"days61_to90_minor"`
-	DaysOver90Minor      int64   `bun:"days_over90_minor"`
+	HasInvoiced          bool    `db:"has_invoiced"`
+	TotalOpenMinor       int64   `db:"total_open_minor"`
+	OverdueMinor         int64   `db:"overdue_minor"`
+	UnappliedCashMinor   int64   `db:"unapplied_cash_minor"`
+	DisputedOpenMinor    int64   `db:"disputed_open_minor"`
+	OpenInvoiceCount     int     `db:"open_invoice_count"`
+	OverdueInvoiceCount  int     `db:"overdue_invoice_count"`
+	DisputedInvoiceCount int     `db:"disputed_invoice_count"`
+	AvgDaysPastDue       float64 `db:"avg_days_past_due"`
+	CurrentMinor         int64   `db:"current_minor"`
+	Days1To30Minor       int64   `db:"days1_to30_minor"`
+	Days31To60Minor      int64   `db:"days31_to60_minor"`
+	Days61To90Minor      int64   `db:"days61_to90_minor"`
+	DaysOver90Minor      int64   `db:"days_over90_minor"`
 }
 
 func (r *repository) GetBalanceOverview(
@@ -47,51 +59,44 @@ func (r *repository) GetBalanceOverview(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*customerledgerports.ARBalanceOverview, error) {
-			rec := new(balanceOverviewRecord)
-			err := r.db.DBForContext(ctx).NewRaw(`
+			org, bu := tenantArgs(req.TenantInfo)
+			rec, err := queryOne[balanceOverviewRecord](
+				ctx,
+				r.db.Keel(ctx),
+				`
 		SELECT
 			EXISTS (
 				SELECT 1
 				FROM invoices posted
-				WHERE posted.organization_id = ?
-				  AND posted.business_unit_id = ?
+				WHERE posted.organization_id = $1
+				  AND posted.business_unit_id = $2
 				  AND posted.bill_type IN ('Invoice', 'DebitMemo')
 				  AND posted.posted_at IS NOT NULL
 			) AS has_invoiced,
 			COALESCE(SUM(inv.total_amount_minor - inv.applied_amount_minor), 0) AS total_open_minor,
-			COALESCE(SUM(CASE WHEN inv.due_date IS NOT NULL AND inv.due_date < ? THEN inv.total_amount_minor - inv.applied_amount_minor ELSE 0 END), 0) AS overdue_minor,
+			COALESCE(SUM(CASE WHEN inv.due_date IS NOT NULL AND inv.due_date < $3 THEN inv.total_amount_minor - inv.applied_amount_minor ELSE 0 END), 0) AS overdue_minor,
 			COALESCE((
 				SELECT SUM(cp.unapplied_amount_minor)
 				FROM customer_payments cp
-				WHERE cp.organization_id = ?
-				  AND cp.business_unit_id = ?
+				WHERE cp.organization_id = $1
+				  AND cp.business_unit_id = $2
 				  AND cp.status = 'Posted'
 			), 0) AS unapplied_cash_minor,
 			COALESCE(SUM(CASE WHEN inv.dispute_status = 'Disputed' THEN inv.total_amount_minor - inv.applied_amount_minor ELSE 0 END), 0) AS disputed_open_minor,
 			COUNT(*) AS open_invoice_count,
-			COUNT(*) FILTER (WHERE inv.due_date IS NOT NULL AND inv.due_date < ?) AS overdue_invoice_count,
+			COUNT(*) FILTER (WHERE inv.due_date IS NOT NULL AND inv.due_date < $3) AS overdue_invoice_count,
 			COUNT(*) FILTER (WHERE inv.dispute_status = 'Disputed') AS disputed_invoice_count,
-			COALESCE(AVG(CASE WHEN inv.due_date IS NOT NULL AND inv.due_date < ? THEN (? - inv.due_date) / 86400.0 END), 0) AS avg_days_past_due,
-			COALESCE(SUM(CASE WHEN inv.due_date IS NULL OR inv.due_date >= ? THEN inv.total_amount_minor - inv.applied_amount_minor ELSE 0 END), 0) AS current_minor,
-			COALESCE(SUM(CASE WHEN inv.due_date < ? AND (? - inv.due_date) / 86400 BETWEEN 1 AND 30 THEN inv.total_amount_minor - inv.applied_amount_minor ELSE 0 END), 0) AS days1_to30_minor,
-			COALESCE(SUM(CASE WHEN inv.due_date < ? AND (? - inv.due_date) / 86400 BETWEEN 31 AND 60 THEN inv.total_amount_minor - inv.applied_amount_minor ELSE 0 END), 0) AS days31_to60_minor,
-			COALESCE(SUM(CASE WHEN inv.due_date < ? AND (? - inv.due_date) / 86400 BETWEEN 61 AND 90 THEN inv.total_amount_minor - inv.applied_amount_minor ELSE 0 END), 0) AS days61_to90_minor,
-			COALESCE(SUM(CASE WHEN inv.due_date < ? AND (? - inv.due_date) / 86400 > 90 THEN inv.total_amount_minor - inv.applied_amount_minor ELSE 0 END), 0) AS days_over90_minor
+			COALESCE(AVG(CASE WHEN inv.due_date IS NOT NULL AND inv.due_date < $3 THEN ($3 - inv.due_date) / 86400.0 END), 0) AS avg_days_past_due,
+			COALESCE(SUM(CASE WHEN inv.due_date IS NULL OR inv.due_date >= $3 THEN inv.total_amount_minor - inv.applied_amount_minor ELSE 0 END), 0) AS current_minor,
+			COALESCE(SUM(CASE WHEN inv.due_date < $3 AND ($3 - inv.due_date) / 86400 BETWEEN 1 AND 30 THEN inv.total_amount_minor - inv.applied_amount_minor ELSE 0 END), 0) AS days1_to30_minor,
+			COALESCE(SUM(CASE WHEN inv.due_date < $3 AND ($3 - inv.due_date) / 86400 BETWEEN 31 AND 60 THEN inv.total_amount_minor - inv.applied_amount_minor ELSE 0 END), 0) AS days31_to60_minor,
+			COALESCE(SUM(CASE WHEN inv.due_date < $3 AND ($3 - inv.due_date) / 86400 BETWEEN 61 AND 90 THEN inv.total_amount_minor - inv.applied_amount_minor ELSE 0 END), 0) AS days61_to90_minor,
+			COALESCE(SUM(CASE WHEN inv.due_date < $3 AND ($3 - inv.due_date) / 86400 > 90 THEN inv.total_amount_minor - inv.applied_amount_minor ELSE 0 END), 0) AS days_over90_minor
 		FROM invoices inv
-		WHERE inv.organization_id = ?
-		  AND inv.business_unit_id = ?`+openInvoicePredicate,
-				req.TenantInfo.OrgID, req.TenantInfo.BuID,
-				req.AsOfDate,
-				req.TenantInfo.OrgID, req.TenantInfo.BuID,
-				req.AsOfDate,
-				req.AsOfDate, req.AsOfDate,
-				req.AsOfDate,
-				req.AsOfDate, req.AsOfDate,
-				req.AsOfDate, req.AsOfDate,
-				req.AsOfDate, req.AsOfDate,
-				req.AsOfDate, req.AsOfDate,
-				req.TenantInfo.OrgID, req.TenantInfo.BuID,
-			).Scan(ctx, rec)
+		WHERE inv.organization_id = $1
+		  AND inv.business_unit_id = $2`+openInvoicePredicate,
+				org, bu, req.AsOfDate,
+			)
 			if err != nil {
 				return nil, fmt.Errorf("get ar balance overview: %w", err)
 			}
@@ -120,12 +125,12 @@ func (r *repository) GetBalanceOverview(
 }
 
 type paymentStatsRecord struct {
-	PostedTodayMinor      int64 `bun:"posted_today_minor"`
-	PostedTodayCount      int   `bun:"posted_today_count"`
-	UnappliedCashMinor    int64 `bun:"unapplied_cash_minor"`
-	UnappliedPaymentCount int   `bun:"unapplied_payment_count"`
-	ReversedLast30Minor   int64 `bun:"reversed_last30_minor"`
-	ReversedLast30Count   int   `bun:"reversed_last30_count"`
+	PostedTodayMinor      int64 `db:"posted_today_minor"`
+	PostedTodayCount      int   `db:"posted_today_count"`
+	UnappliedCashMinor    int64 `db:"unapplied_cash_minor"`
+	UnappliedPaymentCount int   `db:"unapplied_payment_count"`
+	ReversedLast30Minor   int64 `db:"reversed_last30_minor"`
+	ReversedLast30Count   int   `db:"reversed_last30_count"`
 }
 
 func (r *repository) GetPaymentStats(
@@ -137,22 +142,23 @@ func (r *repository) GetPaymentStats(
 		r.db,
 		func(ctx context.Context) (*customerledgerports.ARPaymentStats, error) {
 			dayStart := req.AsOfDate - (req.AsOfDate % secondsPerDay)
-			rec := new(paymentStatsRecord)
-			err := r.db.DBForContext(ctx).NewRaw(`
+			org, bu := tenantArgs(req.TenantInfo)
+			rec, err := queryOne[paymentStatsRecord](
+				ctx,
+				r.db.Keel(ctx),
+				`
 		SELECT
-			COALESCE(SUM(cp.amount_minor) FILTER (WHERE cp.status = 'Posted' AND cp.payment_date >= ?), 0) AS posted_today_minor,
-			COUNT(*) FILTER (WHERE cp.status = 'Posted' AND cp.payment_date >= ?) AS posted_today_count,
+			COALESCE(SUM(cp.amount_minor) FILTER (WHERE cp.status = 'Posted' AND cp.payment_date >= $1), 0) AS posted_today_minor,
+			COUNT(*) FILTER (WHERE cp.status = 'Posted' AND cp.payment_date >= $1) AS posted_today_count,
 			COALESCE(SUM(cp.unapplied_amount_minor) FILTER (WHERE cp.status = 'Posted'), 0) AS unapplied_cash_minor,
 			COUNT(*) FILTER (WHERE cp.status = 'Posted' AND cp.unapplied_amount_minor > 0) AS unapplied_payment_count,
-			COALESCE(SUM(cp.amount_minor) FILTER (WHERE cp.status = 'Reversed' AND cp.reversed_at >= ?), 0) AS reversed_last30_minor,
-			COUNT(*) FILTER (WHERE cp.status = 'Reversed' AND cp.reversed_at >= ?) AS reversed_last30_count
+			COALESCE(SUM(cp.amount_minor) FILTER (WHERE cp.status = 'Reversed' AND cp.reversed_at >= $2), 0) AS reversed_last30_minor,
+			COUNT(*) FILTER (WHERE cp.status = 'Reversed' AND cp.reversed_at >= $2) AS reversed_last30_count
 		FROM customer_payments cp
-		WHERE cp.organization_id = ?
-		  AND cp.business_unit_id = ?`,
-				dayStart, dayStart,
-				req.AsOfDate-30*secondsPerDay, req.AsOfDate-30*secondsPerDay,
-				req.TenantInfo.OrgID, req.TenantInfo.BuID,
-			).Scan(ctx, rec)
+		WHERE cp.organization_id = $3
+		  AND cp.business_unit_id = $4`,
+				dayStart, req.AsOfDate-30*secondsPerDay, org, bu,
+			)
 			if err != nil {
 				return nil, fmt.Errorf("get ar payment stats: %w", err)
 			}
@@ -170,9 +176,9 @@ func (r *repository) GetPaymentStats(
 }
 
 type draftInvoicesRecord struct {
-	Count           int   `bun:"draft_count"`
-	AmountMinor     int64 `bun:"draft_amount_minor"`
-	OldestCreatedAt int64 `bun:"oldest_created_at"`
+	Count           int   `db:"draft_count"`
+	AmountMinor     int64 `db:"draft_amount_minor"`
+	OldestCreatedAt int64 `db:"oldest_created_at"`
 }
 
 func (r *repository) GetDraftInvoices(
@@ -183,20 +189,23 @@ func (r *repository) GetDraftInvoices(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*customerledgerports.ARDraftInvoices, error) {
-			rec := new(draftInvoicesRecord)
-			err := r.db.DBForContext(ctx).NewRaw(`
+			org, bu := tenantArgs(req.TenantInfo)
+			rec, err := queryOne[draftInvoicesRecord](
+				ctx,
+				r.db.Keel(ctx),
+				`
 		SELECT
 			COUNT(*) AS draft_count,
 			COALESCE(SUM(inv.total_amount_minor), 0) AS draft_amount_minor,
 			COALESCE(MIN(inv.created_at), 0) AS oldest_created_at
 		FROM invoices inv
-		WHERE inv.organization_id = ?
-		  AND inv.business_unit_id = ?
+		WHERE inv.organization_id = $1
+		  AND inv.business_unit_id = $2
 		  AND inv.status = 'Draft'
 		  AND inv.bill_type IN ('Invoice', 'DebitMemo')
-		  AND inv.created_at <= ?`,
-				req.TenantInfo.OrgID, req.TenantInfo.BuID, req.AsOfDate,
-			).Scan(ctx, rec)
+		  AND inv.created_at <= $3`,
+				org, bu, req.AsOfDate,
+			)
 			if err != nil {
 				return nil, fmt.Errorf("get ar draft invoices: %w", err)
 			}
@@ -211,9 +220,9 @@ func (r *repository) GetDraftInvoices(
 }
 
 type balancePointRecord struct {
-	PeriodEnd      int64 `bun:"period_end"`
-	ARBalanceMinor int64 `bun:"ar_balance_minor"`
-	BilledMinor    int64 `bun:"billed_minor"`
+	PeriodEnd      int64 `db:"period_end"`
+	ARBalanceMinor int64 `db:"ar_balance_minor"`
+	BilledMinor    int64 `db:"billed_minor"`
 }
 
 func (r *repository) ListBalanceSeries(
@@ -224,12 +233,12 @@ func (r *repository) ListBalanceSeries(
 		ctx,
 		r.db,
 		func(ctx context.Context) ([]*customerledgerports.ARBalancePoint, error) {
-			records := make([]*balancePointRecord, 0, req.Weeks)
-			args := append(seriesWindow(req).args(),
-				req.TenantInfo.OrgID, req.TenantInfo.BuID,
-				trailingDSOWindow,
-			)
-			err := r.db.DBForContext(ctx).NewRaw(`
+			args := append(seriesWindow(req).args(), trailingDSOWindow)
+			records, err := keel.QueryAll(
+				ctx,
+				r.db.Keel(ctx),
+				pgx.RowToAddrOfStructByName[balancePointRecord],
+				`
 		WITH`+openAsOfCTEs+`,
 		balances AS (
 			SELECT n, SUM(open_minor) AS ar_balance_minor
@@ -242,17 +251,19 @@ func (r *repository) ListBalanceSeries(
 			COALESCE((
 				SELECT SUM(inv.total_amount_minor)
 				FROM invoices inv
-				WHERE inv.organization_id = ?
-				  AND inv.business_unit_id = ?
+				WHERE inv.organization_id = $4
+				  AND inv.business_unit_id = $5
 				  AND inv.posted_at IS NOT NULL
 				  AND (inv.voided_at IS NULL OR inv.voided_at > p.period_end)
 				  AND inv.bill_type IN ('Invoice', 'DebitMemo')
-				  AND inv.invoice_date > p.period_end - ?::BIGINT
+				  AND inv.invoice_date > p.period_end - $8::BIGINT
 				  AND inv.invoice_date <= p.period_end
 			), 0) AS billed_minor
 		FROM points p
 		LEFT JOIN balances b ON b.n = p.n
-		ORDER BY p.period_end ASC`, args...).Scan(ctx, &records)
+		ORDER BY p.period_end ASC`,
+				args...,
+			)
 			if err != nil {
 				return nil, fmt.Errorf("list ar balance series: %w", err)
 			}
@@ -271,13 +282,13 @@ func (r *repository) ListBalanceSeries(
 }
 
 type agingTrendRecord struct {
-	PeriodEnd       int64 `bun:"period_end"`
-	CurrentMinor    int64 `bun:"current_minor"`
-	Days1To30Minor  int64 `bun:"days1_to30_minor"`
-	Days31To60Minor int64 `bun:"days31_to60_minor"`
-	Days61To90Minor int64 `bun:"days61_to90_minor"`
-	DaysOver90Minor int64 `bun:"days_over90_minor"`
-	TotalOpenMinor  int64 `bun:"total_open_minor"`
+	PeriodEnd       int64 `db:"period_end"`
+	CurrentMinor    int64 `db:"current_minor"`
+	Days1To30Minor  int64 `db:"days1_to30_minor"`
+	Days31To60Minor int64 `db:"days31_to60_minor"`
+	Days61To90Minor int64 `db:"days61_to90_minor"`
+	DaysOver90Minor int64 `db:"days_over90_minor"`
+	TotalOpenMinor  int64 `db:"total_open_minor"`
 }
 
 func (r *repository) ListAgingTrend(
@@ -288,8 +299,11 @@ func (r *repository) ListAgingTrend(
 		ctx,
 		r.db,
 		func(ctx context.Context) ([]*customerledgerports.ARAgingTrendPoint, error) {
-			records := make([]*agingTrendRecord, 0, req.Weeks)
-			err := r.db.DBForContext(ctx).NewRaw(`
+			records, err := keel.QueryAll(
+				ctx,
+				r.db.Keel(ctx),
+				pgx.RowToAddrOfStructByName[agingTrendRecord],
+				`
 		WITH`+openAsOfCTEs+`
 		SELECT
 			p.period_end,
@@ -302,7 +316,9 @@ func (r *repository) ListAgingTrend(
 		FROM points p
 		LEFT JOIN open_items oi ON oi.n = p.n
 		GROUP BY p.period_end
-		ORDER BY p.period_end ASC`, seriesWindow(req).args()...).Scan(ctx, &records)
+		ORDER BY p.period_end ASC`,
+				seriesWindow(req).args()...,
+			)
 			if err != nil {
 				return nil, fmt.Errorf("list ar aging trend: %w", err)
 			}
@@ -327,13 +343,13 @@ func (r *repository) ListAgingTrend(
 }
 
 type cashFlowRecord struct {
-	WeekStart            int64 `bun:"week_start"`
-	ExpectedMinor        int64 `bun:"expected_minor"`
-	OpenDueMinor         int64 `bun:"open_due_minor"`
-	ActualMinor          int64 `bun:"actual_minor"`
-	FactorAdvancesMinor  int64 `bun:"factor_advances_minor"`
-	ReserveReleasesMinor int64 `bun:"reserve_releases_minor"`
-	IsForecast           bool  `bun:"is_forecast"`
+	WeekStart            int64 `db:"week_start"`
+	ExpectedMinor        int64 `db:"expected_minor"`
+	OpenDueMinor         int64 `db:"open_due_minor"`
+	ActualMinor          int64 `db:"actual_minor"`
+	FactorAdvancesMinor  int64 `db:"factor_advances_minor"`
+	ReserveReleasesMinor int64 `db:"reserve_releases_minor"`
+	IsForecast           bool  `db:"is_forecast"`
 }
 
 func (r *repository) ListCashFlow(
@@ -344,17 +360,14 @@ func (r *repository) ListCashFlow(
 		ctx,
 		r.db,
 		func(ctx context.Context) ([]*customerledgerports.ARCashFlowPoint, error) {
-			records := make([]*cashFlowRecord, 0, req.PastWeeks+req.FutureWeeks)
-			err := r.db.DBForContext(ctx).NewRaw(cashFlowSQL,
-				req.AsOfDate, secondsPerWeek, req.PastWeeks, req.FutureWeeks,
-				req.TenantInfo.OrgID, req.TenantInfo.BuID, secondsPerWeek,
-				req.TenantInfo.OrgID, req.TenantInfo.BuID, secondsPerWeek,
-				req.TenantInfo.OrgID, req.TenantInfo.BuID, secondsPerWeek,
-				req.TenantInfo.OrgID, req.TenantInfo.BuID, req.AsOfDate, req.AsOfDate, secondsPerWeek,
-				req.TenantInfo.OrgID, req.TenantInfo.BuID, req.AsOfDate, req.AsOfDate, secondsPerWeek,
-				req.AsOfDate,
-			).
-				Scan(ctx, &records)
+			org, bu := tenantArgs(req.TenantInfo)
+			records, err := keel.QueryAll(
+				ctx,
+				r.db.Keel(ctx),
+				pgx.RowToAddrOfStructByName[cashFlowRecord],
+				cashFlowSQL,
+				req.AsOfDate, secondsPerWeek, req.PastWeeks, req.FutureWeeks, org, bu,
+			)
 			if err != nil {
 				return nil, fmt.Errorf("list ar cash flow: %w", err)
 			}
@@ -378,42 +391,42 @@ func (r *repository) ListCashFlow(
 
 var cashFlowSQL = `
 		WITH weeks AS (
-			SELECT (?::BIGINT + (n * ?::BIGINT))::BIGINT AS week_start
-			FROM generate_series(-?::INT, ?::INT - 1) AS n
+			SELECT ($1::BIGINT + (n * $2::BIGINT))::BIGINT AS week_start
+			FROM generate_series(-$3::INT, $4::INT - 1) AS n
 		)
 		SELECT
 			w.week_start,
 			COALESCE((
 				SELECT SUM(inv.total_amount_minor)
 				FROM invoices inv
-				WHERE inv.organization_id = ?
-				  AND inv.business_unit_id = ?
+				WHERE inv.organization_id = $5
+				  AND inv.business_unit_id = $6
 				  AND inv.status = 'Posted'
 				  AND inv.bill_type IN ('Invoice', 'DebitMemo')
 				  AND inv.due_date >= w.week_start
-				  AND inv.due_date < w.week_start + ?::BIGINT
+				  AND inv.due_date < w.week_start + $2::BIGINT
 				  AND NOT ` + factoringsql.LiveInvoice() + `
 			), 0) AS expected_minor,
 			COALESCE((
 				SELECT SUM(inv.total_amount_minor - inv.applied_amount_minor)
 				FROM invoices inv
-				WHERE inv.organization_id = ?
-				  AND inv.business_unit_id = ?
+				WHERE inv.organization_id = $5
+				  AND inv.business_unit_id = $6
 				  AND inv.status = 'Posted'
 				  AND inv.bill_type IN ('Invoice', 'DebitMemo')
 				  AND inv.total_amount_minor > inv.applied_amount_minor
 				  AND inv.due_date >= w.week_start
-				  AND inv.due_date < w.week_start + ?::BIGINT
+				  AND inv.due_date < w.week_start + $2::BIGINT
 				  AND NOT ` + factoringsql.LiveInvoice() + `
 			), 0) AS open_due_minor,
 			COALESCE((
 				SELECT SUM(cp.amount_minor)
 				FROM customer_payments cp
-				WHERE cp.organization_id = ?
-				  AND cp.business_unit_id = ?
+				WHERE cp.organization_id = $5
+				  AND cp.business_unit_id = $6
 				  AND cp.status = 'Posted'
 				  AND cp.payment_date >= w.week_start
-				  AND cp.payment_date < w.week_start + ?::BIGINT
+				  AND cp.payment_date < w.week_start + $2::BIGINT
 			), 0) AS actual_minor,
 			COALESCE((
 				SELECT SUM(fsi.expected_advance_minor)
@@ -426,14 +439,14 @@ var cashFlowSQL = `
 				  ON agr.id = fs.agreement_id
 				  AND agr.organization_id = fs.organization_id
 				  AND agr.business_unit_id = fs.business_unit_id
-				WHERE fsi.organization_id = ?
-				  AND fsi.business_unit_id = ?
+				WHERE fsi.organization_id = $5
+				  AND fsi.business_unit_id = $6
 				  AND fsi.status = 'Pending'
 				  AND fs.status IN ('Sent', 'PartiallyFunded')
 				  AND fs.sent_at IS NOT NULL
-				  AND GREATEST(fs.sent_at + agr.funding_days * 86400, ?::BIGINT) >= w.week_start
-				  AND GREATEST(fs.sent_at + agr.funding_days * 86400, ?::BIGINT)
-				    < w.week_start + ?::BIGINT
+				  AND GREATEST(fs.sent_at + agr.funding_days * 86400, $1::BIGINT) >= w.week_start
+				  AND GREATEST(fs.sent_at + agr.funding_days * 86400, $1::BIGINT)
+				    < w.week_start + $2::BIGINT
 			), 0) AS factor_advances_minor,
 			COALESCE((
 				SELECT SUM(fsi.reserve_minor)
@@ -442,50 +455,50 @@ var cashFlowSQL = `
 				  ON inv.id = fsi.invoice_id
 				  AND inv.organization_id = fsi.organization_id
 				  AND inv.business_unit_id = fsi.business_unit_id
-				WHERE fsi.organization_id = ?
-				  AND fsi.business_unit_id = ?
+				WHERE fsi.organization_id = $5
+				  AND fsi.business_unit_id = $6
 				  AND fsi.status = 'Funded'
 				  AND inv.due_date IS NOT NULL
-				  AND GREATEST(inv.due_date, ?::BIGINT) >= w.week_start
-				  AND GREATEST(inv.due_date, ?::BIGINT) < w.week_start + ?::BIGINT
+				  AND GREATEST(inv.due_date, $1::BIGINT) >= w.week_start
+				  AND GREATEST(inv.due_date, $1::BIGINT) < w.week_start + $2::BIGINT
 			), 0) AS reserve_releases_minor,
-			(w.week_start >= ?::BIGINT) AS is_forecast
+			(w.week_start >= $1::BIGINT) AS is_forecast
 		FROM weeks w
 		ORDER BY w.week_start ASC`
 
 type collectionTotalsRecord struct {
-	BeginningOpenMinor       int64   `bun:"beginning_open_minor"`
-	EndingOpenMinor          int64   `bun:"ending_open_minor"`
-	EndingCurrentMinor       int64   `bun:"ending_current_minor"`
-	CreditSalesMinor         int64   `bun:"credit_sales_minor"`
-	CollectedMinor           int64   `bun:"collected_minor"`
-	AvgDaysToPay             float64 `bun:"avg_days_to_pay"`
-	ShortPayMinor            int64   `bun:"short_pay_minor"`
-	ShortPayApplicationCount int     `bun:"short_pay_application_count"`
-	ApplicationCount         int     `bun:"application_count"`
-	DisputedInvoiceCount     int     `bun:"disputed_invoice_count"`
-	PostedInvoiceCount       int     `bun:"posted_invoice_count"`
+	BeginningOpenMinor       int64   `db:"beginning_open_minor"`
+	EndingOpenMinor          int64   `db:"ending_open_minor"`
+	EndingCurrentMinor       int64   `db:"ending_current_minor"`
+	CreditSalesMinor         int64   `db:"credit_sales_minor"`
+	CollectedMinor           int64   `db:"collected_minor"`
+	AvgDaysToPay             float64 `db:"avg_days_to_pay"`
+	ShortPayMinor            int64   `db:"short_pay_minor"`
+	ShortPayApplicationCount int     `db:"short_pay_application_count"`
+	ApplicationCount         int     `db:"application_count"`
+	DisputedInvoiceCount     int     `db:"disputed_invoice_count"`
+	PostedInvoiceCount       int     `db:"posted_invoice_count"`
 }
 
 const collectionTotalsSQL = `
-		WITH bounds AS (SELECT ?::BIGINT AS period_start, ?::BIGINT AS period_end),` + openAsOfCTEs + `
+		WITH bounds AS (SELECT $1::BIGINT AS period_start, $8::BIGINT AS period_end),` + openAsOfCTEs + `
 		SELECT
 			(SELECT COALESCE(SUM(oi.open_minor), 0) FROM open_items oi) AS beginning_open_minor,
 			(SELECT COALESCE(SUM(inv.total_amount_minor - inv.applied_amount_minor), 0)
 				FROM invoices inv
-				WHERE inv.organization_id = ?
-				  AND inv.business_unit_id = ?` + openInvoicePredicate + `
+				WHERE inv.organization_id = $4
+				  AND inv.business_unit_id = $5` + openInvoicePredicate + `
 			) AS ending_open_minor,
 			(SELECT COALESCE(SUM(inv.total_amount_minor - inv.applied_amount_minor), 0)
 				FROM bounds, invoices inv
-				WHERE inv.organization_id = ?
-				  AND inv.business_unit_id = ?` + openInvoicePredicate + `
+				WHERE inv.organization_id = $4
+				  AND inv.business_unit_id = $5` + openInvoicePredicate + `
 				  AND (inv.due_date IS NULL OR inv.due_date >= bounds.period_end)
 			) AS ending_current_minor,
 			(SELECT COALESCE(SUM(inv.total_amount_minor), 0)
 				FROM bounds, invoices inv
-				WHERE inv.organization_id = ?
-				  AND inv.business_unit_id = ?
+				WHERE inv.organization_id = $4
+				  AND inv.business_unit_id = $5
 				  AND inv.posted_at IS NOT NULL
 				  AND (inv.voided_at IS NULL OR inv.voided_at > bounds.period_end)
 				  AND inv.bill_type IN ('Invoice', 'DebitMemo')
@@ -494,8 +507,8 @@ const collectionTotalsSQL = `
 			) AS credit_sales_minor,
 			(SELECT COALESCE(SUM(cp.amount_minor), 0)
 				FROM bounds, customer_payments cp
-				WHERE cp.organization_id = ?
-				  AND cp.business_unit_id = ?
+				WHERE cp.organization_id = $4
+				  AND cp.business_unit_id = $5
 				  AND cp.status = 'Posted'
 				  AND cp.payment_date > bounds.period_start
 				  AND cp.payment_date <= bounds.period_end
@@ -511,8 +524,8 @@ const collectionTotalsSQL = `
 				  ON inv.id = cpa.invoice_id
 				 AND inv.organization_id = cpa.organization_id
 				 AND inv.business_unit_id = cpa.business_unit_id
-				WHERE cpa.organization_id = ?
-				  AND cpa.business_unit_id = ?
+				WHERE cpa.organization_id = $4
+				  AND cpa.business_unit_id = $5
 				  AND cpa.applied_amount_minor > 0
 				  AND cpa.created_at > bounds.period_start
 				  AND cpa.created_at <= bounds.period_end
@@ -524,8 +537,8 @@ const collectionTotalsSQL = `
 				 AND cp.organization_id = cpa.organization_id
 				 AND cp.business_unit_id = cpa.business_unit_id
 				 AND cp.status = 'Posted'
-				WHERE cpa.organization_id = ?
-				  AND cpa.business_unit_id = ?
+				WHERE cpa.organization_id = $4
+				  AND cpa.business_unit_id = $5
 				  AND cpa.created_at > bounds.period_start
 				  AND cpa.created_at <= bounds.period_end
 			) AS short_pay_minor,
@@ -536,8 +549,8 @@ const collectionTotalsSQL = `
 				 AND cp.organization_id = cpa.organization_id
 				 AND cp.business_unit_id = cpa.business_unit_id
 				 AND cp.status = 'Posted'
-				WHERE cpa.organization_id = ?
-				  AND cpa.business_unit_id = ?
+				WHERE cpa.organization_id = $4
+				  AND cpa.business_unit_id = $5
 				  AND cpa.short_pay_amount_minor > 0
 				  AND cpa.created_at > bounds.period_start
 				  AND cpa.created_at <= bounds.period_end
@@ -549,15 +562,15 @@ const collectionTotalsSQL = `
 				 AND cp.organization_id = cpa.organization_id
 				 AND cp.business_unit_id = cpa.business_unit_id
 				 AND cp.status = 'Posted'
-				WHERE cpa.organization_id = ?
-				  AND cpa.business_unit_id = ?
+				WHERE cpa.organization_id = $4
+				  AND cpa.business_unit_id = $5
 				  AND cpa.created_at > bounds.period_start
 				  AND cpa.created_at <= bounds.period_end
 			) AS application_count,
 			(SELECT COUNT(*)
 				FROM bounds, invoices inv
-				WHERE inv.organization_id = ?
-				  AND inv.business_unit_id = ?
+				WHERE inv.organization_id = $4
+				  AND inv.business_unit_id = $5
 				  AND inv.status = 'Posted'
 				  AND inv.bill_type IN ('Invoice', 'DebitMemo')
 				  AND inv.dispute_status = 'Disputed'
@@ -566,8 +579,8 @@ const collectionTotalsSQL = `
 			) AS disputed_invoice_count,
 			(SELECT COUNT(*)
 				FROM bounds, invoices inv
-				WHERE inv.organization_id = ?
-				  AND inv.business_unit_id = ?
+				WHERE inv.organization_id = $4
+				  AND inv.business_unit_id = $5
 				  AND inv.posted_at IS NOT NULL
 				  AND (inv.voided_at IS NULL OR inv.voided_at > bounds.period_end)
 				  AND inv.bill_type IN ('Invoice', 'DebitMemo')
@@ -584,22 +597,12 @@ func (r *repository) GetCollectionTotals(
 		r.db,
 		func(ctx context.Context) (*customerledgerports.ARCollectionTotals, error) {
 			periodStart := req.AsOfDate - int64(req.PeriodDays)*secondsPerDay
-			rec := new(collectionTotalsRecord)
-			args := []any{periodStart, req.AsOfDate}
-			args = append(args, instantWindow(req.TenantInfo, periodStart).args()...)
-			args = append(args,
-				req.TenantInfo.OrgID, req.TenantInfo.BuID,
-				req.TenantInfo.OrgID, req.TenantInfo.BuID,
-				req.TenantInfo.OrgID, req.TenantInfo.BuID,
-				req.TenantInfo.OrgID, req.TenantInfo.BuID,
-				req.TenantInfo.OrgID, req.TenantInfo.BuID,
-				req.TenantInfo.OrgID, req.TenantInfo.BuID,
-				req.TenantInfo.OrgID, req.TenantInfo.BuID,
-				req.TenantInfo.OrgID, req.TenantInfo.BuID,
-				req.TenantInfo.OrgID, req.TenantInfo.BuID,
-				req.TenantInfo.OrgID, req.TenantInfo.BuID,
+			rec, err := queryOne[collectionTotalsRecord](
+				ctx,
+				r.db.Keel(ctx),
+				collectionTotalsSQL,
+				append(instantWindow(req.TenantInfo, periodStart).args(), req.AsOfDate)...,
 			)
-			err := r.db.DBForContext(ctx).NewRaw(collectionTotalsSQL, args...).Scan(ctx, rec)
 			if err != nil {
 				return nil, fmt.Errorf("get ar collection totals: %w", err)
 			}
@@ -624,12 +627,12 @@ func (r *repository) GetCollectionTotals(
 }
 
 type topOverdueRecord struct {
-	CustomerID        string `bun:"customer_id"`
-	CustomerName      string `bun:"customer_name"`
-	OverdueMinor      int64  `bun:"overdue_minor"`
-	TotalOpenMinor    int64  `bun:"total_open_minor"`
-	OldestDaysPastDue int    `bun:"oldest_days_past_due"`
-	OpenInvoiceCount  int    `bun:"open_invoice_count"`
+	CustomerID        string `db:"customer_id"`
+	CustomerName      string `db:"customer_name"`
+	OverdueMinor      int64  `db:"overdue_minor"`
+	TotalOpenMinor    int64  `db:"total_open_minor"`
+	OldestDaysPastDue int    `db:"oldest_days_past_due"`
+	OpenInvoiceCount  int    `db:"open_invoice_count"`
 }
 
 func (r *repository) ListTopOverdueCustomers(
@@ -640,27 +643,28 @@ func (r *repository) ListTopOverdueCustomers(
 		ctx,
 		r.db,
 		func(ctx context.Context) ([]*customerledgerports.ARTopOverdueCustomer, error) {
-			records := make([]*topOverdueRecord, 0, req.Limit)
-			err := r.db.DBForContext(ctx).NewRaw(`
+			org, bu := tenantArgs(req.TenantInfo)
+			records, err := keel.QueryAll(
+				ctx,
+				r.db.Keel(ctx),
+				pgx.RowToAddrOfStructByName[topOverdueRecord],
+				`
 		SELECT
 			inv.customer_id,
 			inv.bill_to_name AS customer_name,
-			SUM(CASE WHEN inv.due_date IS NOT NULL AND inv.due_date < ? THEN inv.total_amount_minor - inv.applied_amount_minor ELSE 0 END) AS overdue_minor,
+			SUM(CASE WHEN inv.due_date IS NOT NULL AND inv.due_date < $1 THEN inv.total_amount_minor - inv.applied_amount_minor ELSE 0 END) AS overdue_minor,
 			SUM(inv.total_amount_minor - inv.applied_amount_minor) AS total_open_minor,
-			COALESCE(MAX(CASE WHEN inv.due_date IS NOT NULL AND inv.due_date < ? THEN ((? - inv.due_date) / 86400)::INT END), 0) AS oldest_days_past_due,
+			COALESCE(MAX(CASE WHEN inv.due_date IS NOT NULL AND inv.due_date < $1 THEN (($1 - inv.due_date) / 86400)::INT END), 0) AS oldest_days_past_due,
 			COUNT(*) AS open_invoice_count
 		FROM invoices inv
-		WHERE inv.organization_id = ?
-		  AND inv.business_unit_id = ?`+openInvoicePredicate+`
+		WHERE inv.organization_id = $2
+		  AND inv.business_unit_id = $3`+openInvoicePredicate+`
 		GROUP BY inv.customer_id, inv.bill_to_name
-		HAVING SUM(CASE WHEN inv.due_date IS NOT NULL AND inv.due_date < ? THEN inv.total_amount_minor - inv.applied_amount_minor ELSE 0 END) > 0
+		HAVING SUM(CASE WHEN inv.due_date IS NOT NULL AND inv.due_date < $1 THEN inv.total_amount_minor - inv.applied_amount_minor ELSE 0 END) > 0
 		ORDER BY overdue_minor DESC
-		LIMIT ?`,
-				req.AsOfDate, req.AsOfDate, req.AsOfDate,
-				req.TenantInfo.OrgID, req.TenantInfo.BuID,
-				req.AsOfDate,
-				req.Limit,
-			).Scan(ctx, &records)
+		LIMIT $4`,
+				req.AsOfDate, org, bu, req.Limit,
+			)
 			if err != nil {
 				return nil, fmt.Errorf("list ar top overdue customers: %w", err)
 			}
@@ -682,18 +686,18 @@ func (r *repository) ListTopOverdueCustomers(
 }
 
 type worklistRecord struct {
-	InvoiceID             string `bun:"invoice_id"`
-	CustomerID            string `bun:"customer_id"`
-	CustomerName          string `bun:"customer_name"`
-	InvoiceNumber         string `bun:"invoice_number"`
-	DueDate               int64  `bun:"due_date"`
-	OpenAmountMinor       int64  `bun:"open_amount_minor"`
-	DaysPastDue           int    `bun:"days_past_due"`
-	IsDisputed            bool   `bun:"is_disputed"`
-	HasShortPay           bool   `bun:"has_short_pay"`
-	OpenDisputeReasonCode string `bun:"open_dispute_reason_code"`
-	DisputedAmountMinor   int64  `bun:"disputed_amount_minor"`
-	DisputeOpenedAt       *int64 `bun:"dispute_opened_at"`
+	InvoiceID             string `db:"invoice_id"`
+	CustomerID            string `db:"customer_id"`
+	CustomerName          string `db:"customer_name"`
+	InvoiceNumber         string `db:"invoice_number"`
+	DueDate               int64  `db:"due_date"`
+	OpenAmountMinor       int64  `db:"open_amount_minor"`
+	DaysPastDue           int    `db:"days_past_due"`
+	IsDisputed            bool   `db:"is_disputed"`
+	HasShortPay           bool   `db:"has_short_pay"`
+	OpenDisputeReasonCode string `db:"open_dispute_reason_code"`
+	DisputedAmountMinor   int64  `db:"disputed_amount_minor"`
+	DisputeOpenedAt       *int64 `db:"dispute_opened_at"`
 }
 
 func (r *repository) ListCollectionsWorklist(
@@ -704,8 +708,12 @@ func (r *repository) ListCollectionsWorklist(
 		ctx,
 		r.db,
 		func(ctx context.Context) ([]*customerledgerports.ARCollectionsWorklistItem, error) {
-			records := make([]*worklistRecord, 0, req.Limit)
-			err := r.db.DBForContext(ctx).NewRaw(`
+			org, bu := tenantArgs(req.TenantInfo)
+			records, err := keel.QueryAll(
+				ctx,
+				r.db.Keel(ctx),
+				pgx.RowToAddrOfStructByName[worklistRecord],
+				`
 		SELECT *
 		FROM (
 			SELECT
@@ -716,8 +724,8 @@ func (r *repository) ListCollectionsWorklist(
 				COALESCE(inv.due_date, 0) AS due_date,
 				(inv.total_amount_minor - inv.applied_amount_minor) AS open_amount_minor,
 				CASE
-					WHEN inv.due_date IS NULL OR inv.due_date >= ? THEN 0
-					ELSE GREATEST(((? - inv.due_date) / 86400)::INT, 0)
+					WHEN inv.due_date IS NULL OR inv.due_date >= $1 THEN 0
+					ELSE GREATEST((($1 - inv.due_date) / 86400)::INT, 0)
 				END AS days_past_due,
 				(inv.dispute_status = 'Disputed' OR od.id IS NOT NULL) AS is_disputed,
 				COALESCE(od.reason_code, '') AS open_dispute_reason_code,
@@ -747,18 +755,16 @@ func (r *repository) ListCollectionsWorklist(
 				ORDER BY idsp.opened_at DESC
 				LIMIT 1
 			) od ON TRUE
-			WHERE inv.organization_id = ?
-			  AND inv.business_unit_id = ?`+openInvoicePredicate+`
+			WHERE inv.organization_id = $2
+			  AND inv.business_unit_id = $3`+openInvoicePredicate+`
 		) items
 		WHERE items.days_past_due >= 15
 		   OR items.is_disputed
 		   OR items.has_short_pay
 		ORDER BY items.days_past_due DESC, items.open_amount_minor DESC
-		LIMIT ?`,
-				req.AsOfDate, req.AsOfDate,
-				req.TenantInfo.OrgID, req.TenantInfo.BuID,
-				req.Limit,
-			).Scan(ctx, &records)
+		LIMIT $4`,
+				req.AsOfDate, org, bu, req.Limit,
+			)
 			if err != nil {
 				return nil, fmt.Errorf("list ar collections worklist: %w", err)
 			}
@@ -787,22 +793,22 @@ func (r *repository) ListCollectionsWorklist(
 }
 
 type customerSnapshotRecord struct {
-	CustomerName          string  `bun:"customer_name"`
-	CreditLimitMinor      int64   `bun:"credit_limit_minor"`
-	HasCreditLimit        bool    `bun:"has_credit_limit"`
-	UnappliedCashMinor    int64   `bun:"unapplied_cash_minor"`
-	OpenInvoiceCount      int     `bun:"open_invoice_count"`
-	OldestOpenInvoiceDate int64   `bun:"oldest_open_invoice_date"`
-	OldestDaysPastDue     int     `bun:"oldest_days_past_due"`
-	LastPaymentDate       int64   `bun:"last_payment_date"`
-	LastPaymentMinor      int64   `bun:"last_payment_minor"`
-	AvgDaysToPay          float64 `bun:"avg_days_to_pay"`
-	BilledTrailing91Minor int64   `bun:"billed_trailing91_minor"`
+	CustomerName          string  `db:"customer_name"`
+	CreditLimitMinor      int64   `db:"credit_limit_minor"`
+	HasCreditLimit        bool    `db:"has_credit_limit"`
+	UnappliedCashMinor    int64   `db:"unapplied_cash_minor"`
+	OpenInvoiceCount      int     `db:"open_invoice_count"`
+	OldestOpenInvoiceDate int64   `db:"oldest_open_invoice_date"`
+	OldestDaysPastDue     int     `db:"oldest_days_past_due"`
+	LastPaymentDate       int64   `db:"last_payment_date"`
+	LastPaymentMinor      int64   `db:"last_payment_minor"`
+	AvgDaysToPay          float64 `db:"avg_days_to_pay"`
+	BilledTrailing91Minor int64   `db:"billed_trailing91_minor"`
 }
 
 type monthlyCollectionRecord struct {
-	MonthStart  int64 `bun:"month_start"`
-	AmountMinor int64 `bun:"amount_minor"`
+	MonthStart  int64 `db:"month_start"`
+	AmountMinor int64 `db:"amount_minor"`
 }
 
 const customerSnapshotSQL = `
@@ -845,7 +851,7 @@ const customerSnapshotSQL = `
 				  AND inv.customer_id = cus.id` + openInvoicePredicate + `
 			), 0) AS oldest_open_invoice_date,
 			COALESCE((
-				SELECT MAX(CASE WHEN inv.due_date IS NOT NULL AND inv.due_date < ? THEN ((? - inv.due_date) / 86400)::INT ELSE 0 END)
+				SELECT MAX(CASE WHEN inv.due_date IS NOT NULL AND inv.due_date < $1 THEN (($1 - inv.due_date) / 86400)::INT ELSE 0 END)
 				FROM invoices inv
 				WHERE inv.organization_id = cus.organization_id
 				  AND inv.business_unit_id = cus.business_unit_id
@@ -887,7 +893,7 @@ const customerSnapshotSQL = `
 				  AND cpa.business_unit_id = cus.business_unit_id
 				  AND cp.customer_id = cus.id
 				  AND cpa.applied_amount_minor > 0
-				  AND cpa.created_at > ? - ?::BIGINT
+				  AND cpa.created_at > $1 - $2::BIGINT
 			), 0) AS avg_days_to_pay,
 			COALESCE((
 				SELECT SUM(inv.total_amount_minor)
@@ -896,26 +902,26 @@ const customerSnapshotSQL = `
 				  AND inv.business_unit_id = cus.business_unit_id
 				  AND inv.customer_id = cus.id
 				  AND inv.posted_at IS NOT NULL
-				  AND (inv.voided_at IS NULL OR inv.voided_at > ?)
+				  AND (inv.voided_at IS NULL OR inv.voided_at > $1)
 				  AND inv.bill_type IN ('Invoice', 'DebitMemo')
-				  AND inv.invoice_date > ? - ?::BIGINT
-				  AND inv.invoice_date <= ?
+				  AND inv.invoice_date > $1 - $3::BIGINT
+				  AND inv.invoice_date <= $1
 			), 0) AS billed_trailing91_minor
 		FROM customers cus
-		WHERE cus.organization_id = ?
-		  AND cus.business_unit_id = ?
-		  AND cus.id = ?`
+		WHERE cus.organization_id = $4
+		  AND cus.business_unit_id = $5
+		  AND cus.id = $6`
 
 const customerMonthlyCollectionsSQL = `
 		SELECT
 			EXTRACT(EPOCH FROM date_trunc('month', to_timestamp(cp.payment_date)))::BIGINT AS month_start,
 			SUM(cp.amount_minor) AS amount_minor
 		FROM customer_payments cp
-		WHERE cp.organization_id = ?
-		  AND cp.business_unit_id = ?
-		  AND cp.customer_id = ?
+		WHERE cp.organization_id = $1
+		  AND cp.business_unit_id = $2
+		  AND cp.customer_id = $3
 		  AND cp.status = 'Posted'
-		  AND cp.payment_date > ? - ?::BIGINT
+		  AND cp.payment_date > $4 - $5::BIGINT
 		GROUP BY 1
 		ORDER BY 1 ASC`
 
@@ -935,22 +941,24 @@ func (r *repository) GetCustomerSnapshot(
 				return nil, err
 			}
 
-			rec := new(customerSnapshotRecord)
-			err = r.db.DBForContext(ctx).NewRaw(customerSnapshotSQL,
-				req.AsOfDate, req.AsOfDate,
-				req.AsOfDate, trailingYearWindow,
-				req.AsOfDate, trailingDSOWindow, req.AsOfDate, req.AsOfDate,
-				req.TenantInfo.OrgID, req.TenantInfo.BuID, req.CustomerID,
-			).Scan(ctx, rec)
+			org, bu := tenantArgs(req.TenantInfo)
+			rec, err := queryOne[customerSnapshotRecord](
+				ctx,
+				r.db.Keel(ctx),
+				customerSnapshotSQL,
+				req.AsOfDate, trailingYearWindow, trailingDSOWindow, org, bu, req.CustomerID.String(),
+			)
 			if err != nil {
 				return nil, fmt.Errorf("get ar customer snapshot: %w", err)
 			}
 
-			monthly := make([]*monthlyCollectionRecord, 0, 12)
-			err = r.db.DBForContext(ctx).NewRaw(customerMonthlyCollectionsSQL,
-				req.TenantInfo.OrgID, req.TenantInfo.BuID, req.CustomerID,
-				req.AsOfDate, trailingYearWindow,
-			).Scan(ctx, &monthly)
+			monthly, err := keel.QueryAll(
+				ctx,
+				r.db.Keel(ctx),
+				pgx.RowToAddrOfStructByName[monthlyCollectionRecord],
+				customerMonthlyCollectionsSQL,
+				org, bu, req.CustomerID.String(), req.AsOfDate, trailingYearWindow,
+			)
 			if err != nil {
 				return nil, fmt.Errorf("get ar customer monthly collections: %w", err)
 			}

@@ -9,7 +9,6 @@ import (
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/domainvalidation"
 	"github.com/emoss08/trenova/pkg/errortypes"
-	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/intutils"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/stringutils"
@@ -37,9 +36,8 @@ var (
 
 // The funding and reserve reports factors sent, how far each was read, matched and booked
 type Remittance struct {
-	bun.BaseModel             `bun:"table:factoring_remittances,alias:facrem" json:"-"`
-	keel.Table                `                                                        keel:"factoring_remittances,report=Billing,label=Factoring Remittance"`
-	pagination.CursorValueSet `bun:",embed"                                   json:"-"`
+	bun.BaseModel `bun:"table:factoring_remittances,alias:facrem" json:"-"`
+	keel.Table    `                                                        keel:"factoring_remittances,report=Billing,label=Factoring Remittance"`
 
 	ID                 pulid.ID           `json:"id"                 bun:"id,pk,type:VARCHAR(100),notnull"                         keel:"id,pk,autoid:facrem_"`
 	OrganizationID     pulid.ID           `json:"organizationId"     bun:"organization_id,pk,type:VARCHAR(100),notnull"            keel:"organization_id,pk,tenant"`
@@ -87,9 +85,8 @@ type RemittanceSuggestion struct {
 
 // Each row of a factor's remittance, its amounts as printed and the schedule item it was matched to
 type RemittanceLine struct {
-	bun.BaseModel             `bun:"table:factoring_remittance_lines,alias:facrml" json:"-"`
-	keel.Table                `                                                             keel:"factoring_remittance_lines,report=Billing,label=Factoring Remittance Line"`
-	pagination.CursorValueSet `bun:",embed"                                        json:"-"`
+	bun.BaseModel `bun:"table:factoring_remittance_lines,alias:facrml" json:"-"`
+	keel.Table    `                                                             keel:"factoring_remittance_lines,report=Billing,label=Factoring Remittance Line"`
 
 	ID                pulid.ID                `json:"id"               bun:"id,pk,type:VARCHAR(100),notnull"                           keel:"id,pk,autoid:facrml_"`
 	OrganizationID    pulid.ID                `json:"organizationId"   bun:"organization_id,pk,type:VARCHAR(100),notnull"              keel:"organization_id,pk,tenant"`
@@ -616,6 +613,10 @@ func (l *RemittanceLine) Matchable() bool {
 		l.MatchStatus != RemittanceLineIgnored &&
 		l.MatchStatus != RemittanceLineError &&
 		(l.MatchStatus != RemittanceLineMatched || l.MatchedBy != RemittanceMatchedByPerson)
+}
+
+func (l *RemittanceLine) BeforeCreate(ctx context.Context) error {
+	return l.BeforeAppendModel(ctx, (*bun.InsertQuery)(nil))
 }
 
 func (l *RemittanceLine) BeforeAppendModel(_ context.Context, query bun.Query) error {

@@ -10,7 +10,6 @@ import (
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/intutils"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/uptrace/bun"
 	"go.uber.org/zap"
 )
 
@@ -240,7 +239,7 @@ func (s *Service) compareRecords(
 	}
 	tally.compared = len(comparisons)
 
-	err = s.db.WithTx(ctx, kernelports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
+	err = s.db.Transact(ctx, kernelports.TxOptions{}, func(txCtx context.Context) error {
 		return s.applyObservations(txCtx, sess, objectIDs, observed, at, tally)
 	})
 	if err != nil {

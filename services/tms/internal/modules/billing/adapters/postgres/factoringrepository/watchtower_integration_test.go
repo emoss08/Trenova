@@ -6,16 +6,16 @@ import (
 	"testing"
 	"time"
 
+	"github.com/emoss08/keel"
+
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/factoring"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/factoring/factoringdb"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/factoringports"
-	"github.com/emoss08/trenova/internal/modules/parties/domain/customer"
-	"github.com/emoss08/trenova/pkg/buncolgen/customercol"
-	"github.com/emoss08/trenova/pkg/buncolgen/factoringcol"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/customer/customerdb"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"github.com/uptrace/bun"
 	"go.uber.org/zap"
 )
 
@@ -25,29 +25,17 @@ func (e *factoringEnv) watchtowerReader() factoringports.WatchtowerReader {
 
 func (e *factoringEnv) nameFactorOnProfile(t *testing.T, factorID *pulid.ID) {
 	t.Helper()
-	cbp := customercol.CustomerBillingProfileColumns
-	_, err := e.db.NewUpdate().
-		Model((*customer.CustomerBillingProfile)(nil)).
-		Set(cbp.FactoringCompanyID.Set(), factorID).
-		Apply(func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-			return customercol.CustomerBillingProfileScopeTenantUpdate(uq, e.tenantInfo).
-				Where(cbp.CustomerID.Eq(), e.customerID)
-		}).
-		Exec(e.ctx)
+	cbp := customerdb.CustomerBillingProfiles
+	_, err := cbp.Where(cbp.CustomerID.Eq(e.customerID)).
+		Update(e.ctx, e.db, cbp.FactoringCompanyID.ToExpr(keel.Val(factorID)))
 	require.NoError(t, err)
 }
 
 func (e *factoringEnv) setNoaDates(t *testing.T, id pulid.ID, acknowledgedAt, expiresAt int64) {
 	t.Helper()
-	cols := factoringcol.NoaColumns
-	_, err := e.db.NewUpdate().
-		Model((*factoring.Noa)(nil)).
-		Set(cols.AcknowledgedAt.Set(), acknowledgedAt).
-		Set(cols.ExpiresAt.Set(), expiresAt).
-		Apply(func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-			return factoringcol.NoaScopeTenantUpdate(uq, e.tenantInfo).Where(cols.ID.Eq(), id)
-		}).
-		Exec(e.ctx)
+	noa := factoringdb.Noas
+	_, err := noa.Where(noa.ID.Eq(id)).
+		Update(e.ctx, e.db, noa.AcknowledgedAt.To(acknowledgedAt), noa.ExpiresAt.To(expiresAt))
 	require.NoError(t, err)
 }
 

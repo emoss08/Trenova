@@ -97,39 +97,39 @@ type ListConsolidationCandidatesRequest struct {
 // the shipment: a split-billed shipment yields one candidate per payer, each on
 // its own payer's statement.
 type ConsolidationCandidate struct {
-	BillingQueueItemID pulid.ID            `bun:"billing_queue_item_id"`
-	ShipmentID         pulid.ID            `bun:"shipment_id"`
-	OrderID            pulid.ID            `bun:"order_id"`
-	CustomerID         pulid.ID            `bun:"customer_id"`
-	CustomerName       string              `bun:"customer_name"`
-	ProNumber          string              `bun:"pro_number"`
-	ShipmentBOL        string              `bun:"shipment_bol"`
-	OrderNumber        string              `bun:"order_number"`
-	OrderPONumber      string              `bun:"order_po_number"`
-	ServiceTypeCode    string              `bun:"service_type_code"`
-	OriginKey          string              `bun:"origin_key"`
-	DestinationKey     string              `bun:"destination_key"`
-	ServiceDate        *int64              `bun:"service_date"`
-	TotalChargeAmount  decimal.NullDecimal `bun:"total_charge_amount"`
-	CurrencyCode       string              `bun:"currency_code"`
+	BillingQueueItemID pulid.ID            `db:"billing_queue_item_id"`
+	ShipmentID         pulid.ID            `db:"shipment_id"`
+	OrderID            pulid.ID            `db:"order_id"`
+	CustomerID         pulid.ID            `db:"customer_id"`
+	CustomerName       string              `db:"customer_name"`
+	ProNumber          string              `db:"pro_number"`
+	ShipmentBOL        string              `db:"shipment_bol"`
+	OrderNumber        string              `db:"order_number"`
+	OrderPONumber      string              `db:"order_po_number"`
+	ServiceTypeCode    string              `db:"service_type_code"`
+	OriginKey          string              `db:"origin_key"`
+	DestinationKey     string              `db:"destination_key"`
+	ServiceDate        *int64              `db:"service_date"`
+	TotalChargeAmount  decimal.NullDecimal `db:"total_charge_amount"`
+	CurrencyCode       string              `db:"currency_code"`
 
 	// OrderEligibleLegs and OrderTotalLegs decide whether this run may carry the
 	// order's own charges: only when it bills every billable leg of that order.
 	// Otherwise a statement catching two of three legs would bill the order's
 	// customs brokerage a period early, and stamp it so the completing invoice
 	// never sees it.
-	OrderEligibleLegs int `bun:"order_eligible_legs"`
-	OrderTotalLegs    int `bun:"order_total_legs"`
+	OrderEligibleLegs int `db:"order_eligible_legs"`
+	OrderTotalLegs    int `db:"order_total_legs"`
 
 	// The customer's own schedule settings ride along so grouping needs no second
 	// lookup per customer, and so the settings the operator configured are the
 	// ones that actually shape the run.
-	SplitBy                customer.InvoiceSplitKey   `bun:"split_by"`
-	SectionBy              customer.InvoiceSectionKey `bun:"section_by"`
-	InvoiceDetail          customer.InvoiceDetail     `bun:"invoice_detail"`
-	MaxShipmentsPerInvoice int16                      `bun:"max_shipments_per_invoice"`
-	MinConsolidatedAmount  decimal.NullDecimal        `bun:"min_consolidated_amount"`
-	AutoBill               bool                       `bun:"auto_bill"`
+	SplitBy                customer.InvoiceSplitKey   `db:"split_by"`
+	SectionBy              customer.InvoiceSectionKey `db:"section_by"`
+	InvoiceDetail          customer.InvoiceDetail     `db:"invoice_detail"`
+	MaxShipmentsPerInvoice int16                      `db:"max_shipments_per_invoice"`
+	MinConsolidatedAmount  decimal.NullDecimal        `db:"min_consolidated_amount"`
+	AutoBill               bool                       `db:"auto_bill"`
 }
 
 // CountHeldForPeriodRequest asks what freight is owed by the end of a period but is
@@ -144,9 +144,9 @@ type CountHeldForPeriodRequest struct {
 
 // HeldForPeriod is one customer's unreviewed freight for a period.
 type HeldForPeriod struct {
-	CustomerID    pulid.ID        `bun:"customer_id"`
-	ShipmentCount int             `bun:"shipment_count"`
-	TotalAmount   decimal.Decimal `bun:"total_amount"`
+	CustomerID    pulid.ID        `db:"customer_id"`
+	ShipmentCount int             `db:"shipment_count"`
+	TotalAmount   decimal.Decimal `db:"total_amount"`
 }
 
 type BillingQueueRepository interface {

@@ -60,23 +60,24 @@ var billingTransferRunsTable = schema.Table{
 	Relations: []schema.Relation{
 		{Name: "RequestedBy", Alias: "rb", Kind: schema.BelongsTo, Local: []int32{3}, Remote: []int32{0}, Label: `Requested By`, JSON: `requestedBy`},
 	},
-	PK:         []int32{0, 1, 2},
-	Tenant:     []int32{1, 2},
-	Select:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29},
-	Insert:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29},
-	Update:     []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 29},
-	Returning:  nil,
-	Version:    27,
-	AutoID:     0,
-	AutoCreate: 28,
-	AutoUpdate: 29,
-	IDPrefix:   "btr_",
-	New:        newBillingTransferRun,
-	NewN:       newNBillingTransferRun,
-	Size:       unsafe.Sizeof(billingtransfer.BillingTransferRun{}),
-	Ptr:        ptrBillingTransferRun,
-	Value:      valueBillingTransferRun,
-	Attach:     attachBillingTransferRun,
+	PK:           []int32{0, 1, 2},
+	Tenant:       []int32{1, 2},
+	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29},
+	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29},
+	Update:       []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 29},
+	Returning:    nil,
+	Version:      27,
+	AutoID:       0,
+	AutoCreate:   28,
+	AutoUpdate:   29,
+	IDPrefix:     "btr_",
+	New:          newBillingTransferRun,
+	NewN:         newNBillingTransferRun,
+	Size:         unsafe.Sizeof(billingtransfer.BillingTransferRun{}),
+	Ptr:          ptrBillingTransferRun,
+	Value:        valueBillingTransferRun,
+	Attach:       attachBillingTransferRun,
+	BeforeCreate: beforeCreateBillingTransferRun,
 }
 
 var billingTransferRunsRef = keel.Ref{Table: &billingTransferRunsTable}
@@ -386,6 +387,10 @@ func attachBillingTransferRun(p unsafe.Pointer, rel int32, child unsafe.Pointer)
 	}
 }
 
+func beforeCreateBillingTransferRun(ctx context.Context, p unsafe.Pointer) error {
+	return (*billingtransfer.BillingTransferRun)(p).BeforeCreate(ctx)
+}
+
 // billingTransferRunItemsTable is the schema of billingtransfer.BillingTransferRunItem.
 var billingTransferRunItemsTable = schema.Table{
 	Name:   "billing_transfer_run_items",
@@ -415,22 +420,23 @@ var billingTransferRunItemsTable = schema.Table{
 		{Name: "created_at", Quoted: `"created_at"`, Field: "CreatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoCreate, Label: `Created At`, JSON: `createdAt`},
 		{Name: "updated_at", Quoted: `"updated_at"`, Field: "UpdatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoUpdate, Label: `Updated At`, JSON: `updatedAt`},
 	},
-	PK:         []int32{0, 1, 2},
-	Tenant:     []int32{1, 2},
-	Select:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18},
-	Insert:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18},
-	Update:     []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 18},
-	Returning:  nil,
-	Version:    -1,
-	AutoID:     0,
-	AutoCreate: 17,
-	AutoUpdate: 18,
-	IDPrefix:   "btri_",
-	New:        newBillingTransferRunItem,
-	NewN:       newNBillingTransferRunItem,
-	Size:       unsafe.Sizeof(billingtransfer.BillingTransferRunItem{}),
-	Ptr:        ptrBillingTransferRunItem,
-	Value:      valueBillingTransferRunItem,
+	PK:           []int32{0, 1, 2},
+	Tenant:       []int32{1, 2},
+	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18},
+	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18},
+	Update:       []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 18},
+	Returning:    nil,
+	Version:      -1,
+	AutoID:       0,
+	AutoCreate:   17,
+	AutoUpdate:   18,
+	IDPrefix:     "btri_",
+	New:          newBillingTransferRunItem,
+	NewN:         newNBillingTransferRunItem,
+	Size:         unsafe.Sizeof(billingtransfer.BillingTransferRunItem{}),
+	Ptr:          ptrBillingTransferRunItem,
+	Value:        valueBillingTransferRunItem,
+	BeforeCreate: beforeCreateBillingTransferRunItem,
 }
 
 var billingTransferRunItemsRef = keel.Ref{Table: &billingTransferRunItemsTable}
@@ -645,6 +651,10 @@ func valueBillingTransferRunItem(p unsafe.Pointer, c int32) any {
 		return r.UpdatedAt
 	}
 	return nil
+}
+
+func beforeCreateBillingTransferRunItem(ctx context.Context, p unsafe.Pointer) error {
+	return (*billingtransfer.BillingTransferRunItem)(p).BeforeCreate(ctx)
 }
 
 func init() {

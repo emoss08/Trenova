@@ -2,26 +2,26 @@ package billingqueuerepository
 
 import (
 	"context"
-	"fmt"
 
-	"github.com/emoss08/trenova/pkg/buncolgen/billingqueuecol"
-	"github.com/emoss08/trenova/pkg/buncolgen/shipmentcol"
-
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue/billingqueuedb"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/billingqueueports"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/order/orderdb"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
-	"github.com/emoss08/trenova/pkg/buncolgen"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment/shipmentdb"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/errortypes"
+	"github.com/emoss08/trenova/pkg/listquery"
 	"github.com/emoss08/trenova/pkg/pagination"
-	"github.com/emoss08/trenova/pkg/querybuilder"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/uptrace/bun"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
+
+var itemErrors = dberror.Mapping{Entity: "Billing queue item"}
 
 type Params struct {
 	fx.In
@@ -42,33 +42,6 @@ func New(p Params) billingqueueports.BillingQueueRepository {
 	}
 }
 
-func (r *repository) filterQuery(
-	q *bun.SelectQuery,
-	req *billingqueueports.ListBillingQueueItemsRequest,
-) *bun.SelectQuery {
-	bqi := billingqueuecol.BillingQueueItemColumns
-
-	q = querybuilder.ApplyFilters(
-		q,
-		billingqueuecol.BillingQueueItemTable.Alias,
-		req.Filter,
-		(*billingqueue.BillingQueueItem)(nil),
-	)
-
-	if !req.IncludePosted {
-		q = q.Where(bqi.Status.Ne(), billingqueue.StatusPosted)
-	}
-
-	q = q.Relation(billingqueuecol.BillingQueueItemRelations.Shipment).
-		Relation(buncolgen.Rel(billingqueuecol.BillingQueueItemRelations.Shipment, shipmentcol.ShipmentRelations.Customer)).
-		Relation(billingqueuecol.BillingQueueItemRelations.BillToCustomer).
-		Relation(billingqueuecol.BillingQueueItemRelations.AssignedBiller).
-		Relation(billingqueuecol.BillingQueueItemRelations.CanceledBy)
-
-	return q.Limit(int64(req.Filter.Pagination.SafeLimit())).
-		Offset(int64(req.Filter.Pagination.SafeOffset()))
-}
-
 func (r *repository) List(
 	ctx context.Context,
 	req *billingqueueports.ListBillingQueueItemsRequest,
@@ -77,31 +50,50 @@ func (r *repository) List(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*pagination.ListResult[*billingqueue.BillingQueueItem], error) {
-			log := r.l.With(
-				zap.String("operation", "List"),
-				zap.Any("request", req),
+			bq := billingqueuedb.BillingQueueItems
+			result, err := listquery.List(
+				ctx,
+				r.db.Keel(ctx),
+				bq.Where(keel.When(!req.IncludePosted, bq.Status.Ne(billingqueue.StatusPosted))),
+				&listquery.Request[billingqueue.BillingQueueItem]{
+					Filter: req.Filter,
+					Shape: func(
+						q *keel.Query[billingqueue.BillingQueueItem],
+					) *keel.Query[billingqueue.BillingQueueItem] {
+						return q.Load(
+							bq.Shipment().Customer(),
+							bq.BillToCustomer(),
+							bq.AssignedBiller(),
+							bq.CanceledBy(),
+						)
+					},
+				},
 			)
-
-			entities := make([]*billingqueue.BillingQueueItem, 0, req.Filter.Pagination.SafeLimit())
-
-			total, err := r.db.DBForContext(ctx).
-				NewSelect().
-				Model(&entities).
-				Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-					return r.filterQuery(sq, req)
-				}).
-				ScanAndCount(ctx)
 			if err != nil {
-				log.Error("failed to scan and count billing queue items", zap.Error(err))
+				r.l.Error("failed to list billing queue items", zap.Error(err))
 				return nil, err
 			}
 
-			return &pagination.ListResult[*billingqueue.BillingQueueItem]{
-				Items: entities,
-				Total: int(total),
-			}, nil
+			return result, nil
 		},
 	)
+}
+
+func itemDetail() *keel.Query[billingqueue.BillingQueueItem] {
+	bq := billingqueuedb.BillingQueueItems
+	ord := orderdb.Orders
+	sh := bq.Shipment()
+	po := keel.Scalar(ord.Pick(ord.PONumber).Where(ord.ID.EqCol(bq.OrderID)).Limit(1))
+
+	return bq.Compute(bq.PONumber, keel.Raw("COALESCE(?, '')", po)).
+		Load(
+			sh.Customer(),
+			sh.AdditionalCharges(),
+			sh.ChargeAllocations(),
+			bq.BillToCustomer(),
+			bq.AssignedBiller(),
+			bq.CanceledBy(),
+		)
 }
 
 func (r *repository) GetByID(
@@ -109,35 +101,11 @@ func (r *repository) GetByID(
 	req *billingqueueports.GetBillingQueueItemByIDRequest,
 ) (*billingqueue.BillingQueueItem, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*billingqueue.BillingQueueItem, error) {
-		bqi := billingqueuecol.BillingQueueItemColumns
-		db := r.db.DBForContext(ctx)
-		entity := new(billingqueue.BillingQueueItem)
-
-		// The PO lives on the order; it is read with the item because the
-		// item's header and its invoice both show it.
-		po := db.NewSelect().
-			TableExpr("orders AS ord").
-			Column("ord.po_number").
-			Where("ord.id = bqi.order_id").
-			Where("ord.organization_id = bqi.organization_id").
-			Where("ord.business_unit_id = bqi.business_unit_id").
-			Limit(1)
-
-		if err := db.NewSelect().
-			Model(entity).
-			ColumnExpr("bqi.*").
-			ColumnExpr("(?) AS po_number", po).
-			Where(bqi.ID.Eq(), req.ItemID).
-			Apply(billingqueuecol.BillingQueueItemApplyTenant(req.TenantInfo)).
-			Relation(billingqueuecol.BillingQueueItemRelations.Shipment).
-			Relation(buncolgen.Rel(billingqueuecol.BillingQueueItemRelations.Shipment, shipmentcol.ShipmentRelations.Customer)).
-			Relation(buncolgen.Rel(billingqueuecol.BillingQueueItemRelations.Shipment, shipmentcol.ShipmentRelations.AdditionalCharges)).
-			Relation(buncolgen.Rel(billingqueuecol.BillingQueueItemRelations.Shipment, shipmentcol.ShipmentRelations.ChargeAllocations)).
-			Relation(billingqueuecol.BillingQueueItemRelations.BillToCustomer).
-			Relation(billingqueuecol.BillingQueueItemRelations.AssignedBiller).
-			Relation(billingqueuecol.BillingQueueItemRelations.CanceledBy).
-			Scan(ctx); err != nil {
-			return nil, dberror.HandleNotFoundError(err, "Billing queue item")
+		entity, err := itemDetail().
+			Where(billingqueuedb.BillingQueueItems.ID.Eq(req.ItemID)).
+			One(ctx, r.db.Keel(ctx))
+		if err != nil {
+			return nil, itemErrors.Map(err, req.ItemID.String())
 		}
 
 		return entity, nil
@@ -149,17 +117,12 @@ func (r *repository) Create(
 	entity *billingqueue.BillingQueueItem,
 ) (*billingqueue.BillingQueueItem, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*billingqueue.BillingQueueItem, error) {
-		db := r.db.DBForContext(ctx)
-
-		if _, err := db.NewInsert().Model(entity).Exec(ctx); err != nil {
-			return nil, fmt.Errorf("insert billing queue item: %w", err)
+		if err := billingqueuedb.BillingQueueItems.Create(ctx, r.db.Keel(ctx), entity); err != nil {
+			r.l.Error("failed to create billing queue item", zap.Error(err))
+			return nil, itemErrors.Map(err, entity.ID.String())
 		}
 
-		if err := r.syncShipmentTransferState(
-			ctx,
-			tenantInfo(entity),
-			[]pulid.ID{entity.ShipmentID},
-		); err != nil {
+		if err := r.syncShipmentTransferState(ctx, []pulid.ID{entity.ShipmentID}); err != nil {
 			return nil, err
 		}
 
@@ -175,48 +138,29 @@ func (r *repository) Update(
 	entity *billingqueue.BillingQueueItem,
 ) (*billingqueue.BillingQueueItem, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*billingqueue.BillingQueueItem, error) {
-		bqi := billingqueuecol.BillingQueueItemColumns
-		db := r.db.DBForContext(ctx)
-
-		result, err := db.NewUpdate().
-			Model(entity).
-			Where(bqi.ID.Eq(), entity.ID).
-			Where(bqi.OrganizationID.Eq(), entity.OrganizationID).
-			Where(bqi.BusinessUnitID.Eq(), entity.BusinessUnitID).
-			Where(bqi.Version.Eq(), entity.Version).
-			Set(bqi.Status.Set(), entity.Status).
-			Set(bqi.AssignedBillerID.Set(), entity.AssignedBillerID).
-			Set(bqi.ExceptionReasonCode.Set(), entity.ExceptionReasonCode).
-			Set(bqi.ReviewNotes.Set(), entity.ReviewNotes).
-			Set(bqi.ExceptionNotes.Set(), entity.ExceptionNotes).
-			Set(bqi.ReviewStartedAt.Set(), entity.ReviewStartedAt).
-			Set(bqi.ReviewCompletedAt.Set(), entity.ReviewCompletedAt).
-			Set(bqi.CanceledByID.Set(), entity.CanceledByID).
-			Set(bqi.CanceledAt.Set(), entity.CanceledAt).
-			Set(bqi.CancelReason.Set(), entity.CancelReason).
-			Set("hold_reason_code = ?", entity.HoldReasonCode).
-			Set("held_at = ?", entity.HeldAt).
-			Set("held_by_id = ?", entity.HeldByID).
-			Set("status_before_hold = ?", entity.StatusBeforeHold).
-			Set(bqi.Version.Inc(1)).
-			Exec(ctx)
+		bq := billingqueuedb.BillingQueueItems
+		err := bq.Save(ctx, r.db.Keel(ctx), entity,
+			bq.Status,
+			bq.AssignedBillerID,
+			bq.ExceptionReasonCode,
+			bq.ReviewNotes,
+			bq.ExceptionNotes,
+			bq.ReviewStartedAt,
+			bq.ReviewCompletedAt,
+			bq.CanceledByID,
+			bq.CanceledAt,
+			bq.CancelReason,
+			bq.HoldReasonCode,
+			bq.HeldAt,
+			bq.HeldByID,
+			bq.StatusBeforeHold,
+		)
 		if err != nil {
-			return nil, fmt.Errorf("update billing queue item: %w", err)
+			r.l.Error("failed to update billing queue item", zap.Error(err))
+			return nil, itemErrors.Map(err, entity.ID.String())
 		}
 
-		if rowsErr := dberror.CheckRowsAffected(
-			result,
-			"Billing queue item",
-			entity.ID.String(),
-		); rowsErr != nil {
-			return nil, rowsErr
-		}
-
-		if err = r.syncShipmentTransferState(
-			ctx,
-			tenantInfo(entity),
-			[]pulid.ID{entity.ShipmentID},
-		); err != nil {
+		if err = r.syncShipmentTransferState(ctx, []pulid.ID{entity.ShipmentID}); err != nil {
 			return nil, err
 		}
 
@@ -227,9 +171,6 @@ func (r *repository) Update(
 	})
 }
 
-// AttachInvoice links the given billing-queue items to the invoice that bills them.
-// Only items still approved and not on an invoice are linked, and the count says
-// how many were, so a caller can detect an item billed elsewhere in the meantime.
 func (r *repository) AttachInvoice(
 	ctx context.Context,
 	req *billingqueueports.AttachInvoiceRequest,
@@ -239,34 +180,20 @@ func (r *repository) AttachInvoice(
 			return 0, nil
 		}
 
-		bqi := billingqueuecol.BillingQueueItemColumns
-		result, err := r.db.DBForContext(ctx).NewUpdate().
-			Model((*billingqueue.BillingQueueItem)(nil)).
-			Where(bqi.ID.In(), bun.List(req.ItemIDs)).
-			Where(bqi.OrganizationID.Eq(), req.TenantInfo.OrgID).
-			Where(bqi.BusinessUnitID.Eq(), req.TenantInfo.BuID).
-			Where(bqi.Status.Eq(), billingqueue.StatusApproved).
-			Where(bqi.InvoiceID.IsNull()).
-			Set(bqi.InvoiceID.Set(), req.InvoiceID).
-			Set(bqi.Version.Inc(1)).
-			Exec(ctx)
+		bq := billingqueuedb.BillingQueueItems
+		n, err := bq.Where(
+			bq.ID.In(req.ItemIDs...),
+			bq.Status.Eq(billingqueue.StatusApproved),
+			bq.InvoiceID.IsNull(),
+		).Update(ctx, r.db.Keel(ctx), bq.InvoiceID.To(req.InvoiceID))
 		if err != nil {
-			return 0, fmt.Errorf("attach invoice to billing queue items: %w", err)
+			return 0, itemErrors.Map(err, req.InvoiceID.String())
 		}
 
-		affected, err := result.RowsAffected()
-		if err != nil {
-			return 0, fmt.Errorf("rows affected: %w", err)
-		}
-
-		return affected, nil
+		return n, nil
 	})
 }
 
-// MarkPostedForInvoice flips every non-terminal billing-queue item an invoice bills to
-// Posted, so a grouped or consolidated invoice settles all of its items and not just
-// the anchor. The invoice back-link is the predicate; the order fallback exists only
-// for rows written before that link, which the migration could not always resolve.
 func (r *repository) MarkPostedForInvoice(
 	ctx context.Context,
 	req *billingqueueports.MarkPostedForInvoiceRequest,
@@ -275,10 +202,8 @@ func (r *repository) MarkPostedForInvoice(
 		return 0, nil
 	}
 
-	bqi := billingqueuecol.BillingQueueItemColumns
-	affected, err := r.markPosted(ctx, req.TenantInfo, func(q *bun.UpdateQuery) *bun.UpdateQuery {
-		return q.Where(bqi.InvoiceID.Eq(), req.InvoiceID)
-	})
+	bq := billingqueuedb.BillingQueueItems
+	affected, err := r.markPosted(ctx, bq.InvoiceID.Eq(req.InvoiceID))
 	if err != nil {
 		return 0, err
 	}
@@ -286,101 +211,90 @@ func (r *repository) MarkPostedForInvoice(
 		return affected, nil
 	}
 
-	return r.markPosted(ctx, req.TenantInfo, func(q *bun.UpdateQuery) *bun.UpdateQuery {
-		q = q.Where(bqi.OrderID.Eq(), req.OrderID)
-		if len(req.ShipmentIDs) > 0 {
-			q = q.Where(bqi.ShipmentID.In(), bun.List(req.ShipmentIDs))
-		}
-		if req.PayerID.IsNotNil() {
-			q = q.Where(bqi.BillToCustomerID.Eq(), req.PayerID)
-		}
-		return q
-	})
+	return r.markPosted(ctx, keel.And(
+		bq.OrderID.Eq(req.OrderID),
+		keel.When(len(req.ShipmentIDs) > 0, bq.ShipmentID.In(req.ShipmentIDs...)),
+		keel.When(req.PayerID.IsNotNil(), bq.BillToCustomerID.Eq(req.PayerID)),
+	))
 }
 
-func (r *repository) markPosted(
-	ctx context.Context,
-	tenantInfo pagination.TenantInfo,
-	scope func(*bun.UpdateQuery) *bun.UpdateQuery,
-) (int64, error) {
+func (r *repository) markPosted(ctx context.Context, scope keel.Pred) (int64, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (int64, error) {
-		bqi := billingqueuecol.BillingQueueItemColumns
-		q := r.db.DBForContext(ctx).NewUpdate().
-			Model((*billingqueue.BillingQueueItem)(nil)).
-			Where(bqi.OrganizationID.Eq(), tenantInfo.OrgID).
-			Where(bqi.BusinessUnitID.Eq(), tenantInfo.BuID).
-			Where(bqi.Status.Ne(), billingqueue.StatusPosted).
-			Where(bqi.Status.Ne(), billingqueue.StatusCanceled).
-			Set(bqi.Status.Set(), billingqueue.StatusPosted).
-			Set(bqi.Version.Inc(1)).
-			Returning(bqi.ShipmentID.Bare())
-
-		shipmentIDs := make([]pulid.ID, 0)
-		if _, err := scope(q).Exec(ctx, &shipmentIDs); err != nil {
-			return 0, fmt.Errorf("mark billing queue items posted: %w", err)
+		bq := billingqueuedb.BillingQueueItems
+		rows, err := bq.Pick(bq.ShipmentID).
+			Where(
+				scope,
+				bq.Status.Ne(billingqueue.StatusPosted),
+				bq.Status.Ne(billingqueue.StatusCanceled),
+			).
+			UpdateReturning(ctx, r.db.Keel(ctx), bq.Status.To(billingqueue.StatusPosted))
+		if err != nil {
+			return 0, itemErrors.Map(err, "")
 		}
 
-		if err := r.syncShipmentTransferState(ctx, tenantInfo, shipmentIDs); err != nil {
+		shipmentIDs := make([]pulid.ID, 0, len(rows))
+		for _, row := range rows {
+			shipmentIDs = append(shipmentIDs, row.ShipmentID)
+		}
+		if err = r.syncShipmentTransferState(ctx, shipmentIDs); err != nil {
 			return 0, err
 		}
 
-		return int64(len(shipmentIDs)), nil
+		return int64(len(rows)), nil
 	})
 }
 
-// syncShipmentTransferState copies each shipment's billing-queue state onto the
-// shipment inside the caller's transaction. Every write to a billing queue item
-// goes through this repository, so this is the only writer of the shipment's
-// billing_transfer_status and transferred_to_billing_at columns.
-//
-// A split-billed shipment carries one invoice item per payer, and the shipment
-// reflects the least advanced of them: it is not posted until every payer's item
-// is, and a payer's item still in review keeps it in review.
-func (r *repository) syncShipmentTransferState(
-	ctx context.Context,
-	ti pagination.TenantInfo,
-	shipmentIDs []pulid.ID,
-) error {
+func (r *repository) syncShipmentTransferState(ctx context.Context, shipmentIDs []pulid.ID) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
-		if len(shipmentIDs) == 0 {
-			return nil
-		}
-
-		bqi := billingqueuecol.BillingQueueItemColumns
-		sp := shipmentcol.ShipmentColumns
-		db := r.db.DBForContext(ctx)
-
-		latest := db.NewSelect().
-			Model((*billingqueue.BillingQueueItem)(nil)).
-			DistinctOn(bqi.ShipmentID.Qualified()).
-			Column(bqi.ShipmentID.Bare(), bqi.Status.Bare(), bqi.CreatedAt.Bare()).
-			Apply(billingqueuecol.BillingQueueItemApplyTenant(ti)).
-			Where(bqi.ShipmentID.In(), bun.List(shipmentIDs)).
-			Where(bqi.BillType.Eq(), billingqueue.BillTypeInvoice).
-			OrderExpr(bqi.ShipmentID.OrderAsc()).
-			OrderExpr(bqi.Status.Expr(transferStatusRankExpr)+" ASC").
-			Order(bqi.CreatedAt.OrderDesc(), bqi.ID.OrderDesc())
-
-		if _, err := db.NewUpdate().
-			Model((*shipment.Shipment)(nil)).
-			TableExpr("(?) AS latest", latest).
-			Set(sp.BillingTransferStatus.SetExpr("latest.status::text")).
-			Set(sp.TransferredToBillingAt.SetExpr("latest.created_at")).
-			WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-				return shipmentcol.ShipmentScopeTenantUpdate(uq, ti).
-					Where(sp.ID.Expr("{} = latest.shipment_id"))
-			}).
-			Exec(ctx); err != nil {
-			return fmt.Errorf("sync shipment billing transfer state: %w", err)
-		}
-
-		return nil
+		return syncTransferState(ctx, r.db.Keel(ctx), shipmentIDs)
 	})
 }
 
-// ReleaseForInvoice hands back every item a voided invoice billed. The anchor
-// is found by id because a draft never wrote the back-link; the rest by the
-// link. Released items get a fresh number: the voided invoice keeps the old one.
+func syncTransferState(ctx context.Context, db *keel.DB, shipmentIDs []pulid.ID) error {
+	if len(shipmentIDs) == 0 {
+		return nil
+	}
+
+	q, sets := shipmentTransferSync(shipmentIDs)
+	_, err := q.Update(ctx, db, sets...)
+	return err
+}
+
+func shipmentTransferSync(
+	shipmentIDs []pulid.ID,
+) (*keel.Query[shipment.Shipment], []keel.Assignment) {
+	bq := billingqueuedb.BillingQueueItems
+	sh := shipmentdb.Shipments
+
+	latest := keel.CTE(
+		"latest",
+		[]string{"shipment_id", "status", "created_at"},
+		bq.DistinctOn(bq.ShipmentID).
+			Pick(bq.ShipmentID, bq.Status, bq.CreatedAt).
+			Where(
+				bq.ShipmentID.In(shipmentIDs...),
+				bq.BillType.Eq(billingqueue.BillTypeInvoice),
+			).
+			Order(
+				bq.ShipmentID.Asc(),
+				keel.Asc(keel.Raw(transferStatusRankExpr, bq.Status)),
+				bq.CreatedAt.Desc(),
+				bq.ID.Desc(),
+			),
+	)
+
+	q := sh.With(latest).
+		Join(latest, latest.Col("shipment_id").EqCol(sh.ID)).
+		Where(sh.ID.In(shipmentIDs...))
+
+	return q, []keel.Assignment{
+		sh.BillingTransferStatus.ToExpr(keel.Raw("?::text", latest.Col("status"))),
+		sh.TransferredToBillingAt.ToExpr(latest.Col("created_at")),
+		sh.Version.ToExpr(sh.Version),
+		sh.UpdatedAt.ToExpr(sh.UpdatedAt),
+	}
+}
+
 func (r *repository) ReleaseForInvoice(
 	ctx context.Context,
 	req *billingqueueports.ReleaseForInvoiceRequest,
@@ -393,78 +307,24 @@ func (r *repository) ReleaseForInvoice(
 				return nil, nil
 			}
 
-			bqi := billingqueuecol.BillingQueueItemColumns
-			db := r.db.DBForContext(ctx)
-
-			items := make([]*billingqueue.BillingQueueItem, 0, 1)
-			if err := db.NewSelect().
-				Model(&items).
-				Apply(billingqueuecol.BillingQueueItemApplyTenant(req.TenantInfo)).
-				WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-					return sq.WhereGroup(" OR ", func(inner *bun.SelectQuery) *bun.SelectQuery {
-						inner = inner.Where(bqi.InvoiceID.Eq(), req.InvoiceID)
-						if req.AnchorItemID.IsNotNil() {
-							inner = inner.WhereOr(bqi.ID.Eq(), req.AnchorItemID)
-						}
-						return inner
-					})
-				}).
-				Where(bqi.Status.Ne(), billingqueue.StatusCanceled).
-				For("UPDATE").
-				Scan(ctx); err != nil {
-				return nil, fmt.Errorf("load billing queue items for release: %w", err)
+			db := r.db.Keel(ctx)
+			bq := billingqueuedb.BillingQueueItems
+			items, err := bq.Where(
+				keel.Or(
+					bq.InvoiceID.Eq(req.InvoiceID),
+					keel.When(req.AnchorItemID.IsNotNil(), bq.ID.Eq(req.AnchorItemID)),
+				),
+				bq.Status.Ne(billingqueue.StatusCanceled),
+			).Lock(keel.ForUpdate).All(ctx, db)
+			if err != nil {
+				return nil, err
 			}
 
 			released := make([]*billingqueue.BillingQueueItem, 0, len(items))
 			shipmentIDs := make([]pulid.ID, 0, len(items))
 			for _, item := range items {
-				target := billingqueue.StatusCanceled
-				if req.Rebill {
-					target = billingqueue.StatusApproved
-				}
-				if !billingqueue.IsAllowedVoidReleaseTransition(item.Status, target) {
-					return nil, errortypes.NewValidationError(
-						"invoiceId",
-						errortypes.ErrInvalidOperation,
-						"Billing queue item {0} cannot be released from {1}",
-						item.Number,
-						string(item.Status),
-					)
-				}
-
-				update := db.NewUpdate().
-					Model((*billingqueue.BillingQueueItem)(nil)).
-					Where(bqi.ID.Eq(), item.ID).
-					Apply(func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-						return billingqueuecol.BillingQueueItemScopeTenantUpdate(uq, req.TenantInfo)
-					}).
-					Set(bqi.Status.Set(), target).
-					Set(bqi.InvoiceID.SetNull()).
-					Set(bqi.Version.Inc(1))
-				item.Status = target
-				item.InvoiceID = pulid.Nil
-
-				if req.Rebill {
-					if req.RenumberFn != nil {
-						number, err := req.RenumberFn(ctx, item)
-						if err != nil {
-							return nil, err
-						}
-						update = update.Set(bqi.Number.Set(), number)
-						item.Number = number
-					}
-				} else {
-					update = update.
-						Set(bqi.CanceledByID.Set(), req.CanceledByID).
-						Set(bqi.CanceledAt.Set(), req.CanceledAt).
-						Set(bqi.CancelReason.Set(), req.CancelReason)
-					item.CanceledByID = req.CanceledByID
-					at := req.CanceledAt
-					item.CanceledAt = &at
-					item.CancelReason = req.CancelReason
-				}
-				if _, err := update.Exec(ctx); err != nil {
-					return nil, fmt.Errorf("release billing queue item %s: %w", item.ID, err)
+				if err = r.releaseItem(ctx, req, item); err != nil {
+					return nil, err
 				}
 				released = append(released, item)
 				if item.ShipmentID.IsNotNil() {
@@ -472,7 +332,7 @@ func (r *repository) ReleaseForInvoice(
 				}
 			}
 
-			if err := r.syncShipmentTransferState(ctx, req.TenantInfo, shipmentIDs); err != nil {
+			if err = syncTransferState(ctx, db, shipmentIDs); err != nil {
 				return nil, err
 			}
 
@@ -481,31 +341,77 @@ func (r *repository) ReleaseForInvoice(
 	)
 }
 
+func (r *repository) releaseItem(
+	ctx context.Context,
+	req *billingqueueports.ReleaseForInvoiceRequest,
+	item *billingqueue.BillingQueueItem,
+) error {
+	target := billingqueue.StatusCanceled
+	if req.Rebill {
+		target = billingqueue.StatusApproved
+	}
+	if !billingqueue.IsAllowedVoidReleaseTransition(item.Status, target) {
+		return errortypes.NewValidationError(
+			"invoiceId",
+			errortypes.ErrInvalidOperation,
+			"Billing queue item {0} cannot be released from {1}",
+			item.Number,
+			string(item.Status),
+		)
+	}
+
+	bq := billingqueuedb.BillingQueueItems
+	sets := []keel.Assignment{bq.Status.To(target), bq.InvoiceID.ToNull()}
+	item.Status = target
+	item.InvoiceID = pulid.Nil
+
+	if req.Rebill {
+		if req.RenumberFn != nil {
+			number, err := req.RenumberFn(ctx, item)
+			if err != nil {
+				return err
+			}
+			sets = append(sets, bq.Number.To(number))
+			item.Number = number
+		}
+	} else {
+		at := req.CanceledAt
+		sets = append(sets,
+			bq.CanceledByID.ToExpr(keel.Val(req.CanceledByID)),
+			bq.CanceledAt.To(at),
+			bq.CancelReason.To(req.CancelReason),
+		)
+		item.CanceledByID = req.CanceledByID
+		item.CanceledAt = &at
+		item.CancelReason = req.CancelReason
+	}
+
+	if _, err := bq.Where(bq.ID.Eq(item.ID)).Update(ctx, r.db.Keel(ctx), sets...); err != nil {
+		return itemErrors.Map(err, item.ID.String())
+	}
+	item.Version++
+
+	return nil
+}
+
 func (r *repository) ExistsByShipmentPayerAndType(
 	ctx context.Context,
-	ti pagination.TenantInfo,
+	_ pagination.TenantInfo,
 	shipmentID pulid.ID,
 	payerID pulid.ID,
 	billType billingqueue.BillType,
 ) (bool, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (bool, error) {
-		bqi := billingqueuecol.BillingQueueItemColumns
-		db := r.db.DBForContext(ctx)
-
-		return db.NewSelect().
-			Model((*billingqueue.BillingQueueItem)(nil)).
-			Where(bqi.ShipmentID.Eq(), shipmentID).
-			Where(bqi.BillToCustomerID.Eq(), payerID).
-			Where(bqi.BillType.Eq(), billType).
-			Where(bqi.Status.Ne(), billingqueue.StatusCanceled).
-			Apply(billingqueuecol.BillingQueueItemApplyTenant(ti)).
-			Exists(ctx)
+		bq := billingqueuedb.BillingQueueItems
+		return bq.Where(
+			bq.ShipmentID.Eq(shipmentID),
+			bq.BillToCustomerID.Eq(payerID),
+			bq.BillType.Eq(billType),
+			bq.Status.Ne(billingqueue.StatusCanceled),
+		).Exists(ctx, r.db.Keel(ctx))
 	})
 }
 
-// ListActiveInvoiceItemsByShipmentIDs returns, per shipment, the invoice items
-// that are neither posted nor canceled. Posting reads it to decide whether the
-// shipment is fully invoiced or another payer's share is still open.
 func (r *repository) ListActiveInvoiceItemsByShipmentIDs(
 	ctx context.Context,
 	req *billingqueueports.ListActiveInvoiceItemsRequest,
@@ -519,20 +425,14 @@ func (r *repository) ListActiveInvoiceItemsByShipmentIDs(
 				return result, nil
 			}
 
-			bqi := billingqueuecol.BillingQueueItemColumns
-			items := make([]*billingqueue.BillingQueueItem, 0, len(req.ShipmentIDs))
-			if err := r.db.DBForContext(ctx).NewSelect().
-				Model(&items).
-				Where(bqi.ShipmentID.In(), bun.List(req.ShipmentIDs)).
-				Where(bqi.BillType.Eq(), billingqueue.BillTypeInvoice).
-				Where(bqi.Status.NotIn(), bun.List([]billingqueue.Status{
-					billingqueue.StatusPosted,
-					billingqueue.StatusCanceled,
-				})).
-				Apply(billingqueuecol.BillingQueueItemApplyTenant(req.TenantInfo)).
-				Order(bqi.ShipmentID.OrderAsc(), bqi.CreatedAt.OrderAsc()).
-				Scan(ctx); err != nil {
-				return nil, fmt.Errorf("list active billing queue items: %w", err)
+			bq := billingqueuedb.BillingQueueItems
+			items, err := bq.Where(
+				bq.ShipmentID.In(req.ShipmentIDs...),
+				bq.BillType.Eq(billingqueue.BillTypeInvoice),
+				bq.Status.NotIn(billingqueue.StatusPosted, billingqueue.StatusCanceled),
+			).Order(bq.ShipmentID.Asc(), bq.CreatedAt.Asc()).All(ctx, r.db.Keel(ctx))
+			if err != nil {
+				return nil, err
 			}
 
 			for _, item := range items {
@@ -549,48 +449,43 @@ func (r *repository) ListOpenShipmentIDs(
 	req *billingqueueports.ListOpenShipmentIDsRequest,
 ) ([]pulid.ID, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]pulid.ID, error) {
-		bqi := billingqueuecol.BillingQueueItemColumns
-		ids := make([]pulid.ID, 0, max(req.Limit, 0))
-		if err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model((*billingqueue.BillingQueueItem)(nil)).
-			ColumnExpr(bqi.ShipmentID.Qualified()).
-			Where(bqi.Status.NotIn(), bun.List([]billingqueue.Status{
-				billingqueue.StatusPosted,
-				billingqueue.StatusCanceled,
-			})).
-			Apply(billingqueuecol.BillingQueueItemApplyTenant(req.TenantInfo)).
-			GroupExpr(bqi.ShipmentID.Qualified()).
-			OrderExpr(bqi.CreatedAt.Expr("MAX({}) DESC")).
-			Limit(int64(req.Limit)).
-			Scan(ctx, &ids); err != nil {
-			return nil, fmt.Errorf("list open billing queue shipments: %w", err)
+		if req.Limit <= 0 {
+			return []pulid.ID{}, nil
+		}
+
+		bq := billingqueuedb.BillingQueueItems
+		ids, err := keel.Into[pulid.ID](ctx, r.db.Keel(ctx), bq.
+			Pick(bq.ShipmentID).
+			Where(bq.Status.NotIn(billingqueue.StatusPosted, billingqueue.StatusCanceled)).
+			Group(bq.ShipmentID).
+			Order(bq.CreatedAt.Max().Desc()).
+			Limit(req.Limit))
+		if err != nil {
+			return nil, err
+		}
+		if ids == nil {
+			return []pulid.ID{}, nil
 		}
 
 		return ids, nil
 	})
 }
 
+type statusCount struct {
+	Status billingqueue.Status
+	Count  int
+}
+
 func (r *repository) GetStatusCounts(
 	ctx context.Context,
-	req *billingqueueports.GetBillingQueueStatsRequest,
+	_ *billingqueueports.GetBillingQueueStatsRequest,
 ) (map[billingqueue.Status]int, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (map[billingqueue.Status]int, error) {
-		bqi := billingqueuecol.BillingQueueItemColumns
-		db := r.db.DBForContext(ctx)
-
-		var rows []struct {
-			Status billingqueue.Status `bun:"status"`
-			Count  int                 `bun:"count"`
-		}
-
-		if err := db.NewSelect().
-			Model((*billingqueue.BillingQueueItem)(nil)).
-			ColumnExpr(bqi.Status.Qualified()).
-			ColumnExpr("COUNT(*) AS count").
-			Apply(billingqueuecol.BillingQueueItemApplyTenant(req.TenantInfo)).
-			GroupExpr(bqi.Status.Qualified()).
-			Scan(ctx, &rows); err != nil {
+		bq := billingqueuedb.BillingQueueItems
+		rows, err := keel.Into[statusCount](ctx, r.db.Keel(ctx), bq.
+			Group(bq.Status).
+			Pick(bq.Status, keel.Count()))
+		if err != nil {
 			return nil, err
 		}
 
@@ -610,9 +505,7 @@ func tenantInfo(entity *billingqueue.BillingQueueItem) pagination.TenantInfo {
 	}
 }
 
-// transferStatusRankExpr orders billing-queue statuses from least to most
-// advanced, so the shipment's transfer state follows the payer furthest behind.
-const transferStatusRankExpr = `CASE {}
+const transferStatusRankExpr = `CASE ?
 	WHEN 'SentBackToOps' THEN 0
 	WHEN 'Exception' THEN 1
 	WHEN 'OnHold' THEN 1

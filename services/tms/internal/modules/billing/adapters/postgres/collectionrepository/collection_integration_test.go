@@ -7,53 +7,49 @@ import (
 	"testing"
 	"time"
 
-	"github.com/emoss08/trenova/internal/testutil/seededtest"
+	"github.com/emoss08/trenova/internal/modules/billing/billingtest"
 
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/modules/billing/adapters/postgres/customerledgerrepository"
 	"github.com/emoss08/trenova/internal/modules/billing/adapters/postgres/factoringrepository"
 	"github.com/emoss08/trenova/internal/modules/billing/adapters/postgres/invoicerepository"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue/billingqueuedb"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/customerledger"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/factoring"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice/invoicedb"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/collectionports"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/customerledgerports"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/factoringports"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/usstate/usstatedb"
 	"github.com/emoss08/trenova/internal/modules/parties/adapters/postgres/factoringcompanyrepository"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/factoringcompany"
 	"github.com/emoss08/trenova/internal/modules/parties/ports/factoringcompanyports"
-	"github.com/emoss08/trenova/internal/testutil/seedtest"
+	"github.com/emoss08/trenova/internal/testutil/seededtest"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"github.com/uptrace/bun"
 	"go.uber.org/zap"
 )
 
 type nonRecourseEnv struct {
 	ctx        context.Context
-	db         *bun.DB
+	db         *keel.DB
 	tenantInfo pagination.TenantInfo
 	customerID pulid.ID
-	shipment   seededShipment
+	shipment   billingtest.Shipment
 	invoices   invoiceports.InvoiceRepository
 	ledger     customerledgerports.CustomerLedgerProjectionRepository
 	factors    factoringcompanyports.FactoringCompanyRepository
 	stateID    pulid.ID
 	dueDate    int64
-}
-
-type seededShipment struct {
-	ID         pulid.ID `bun:"id"`
-	CustomerID pulid.ID `bun:"customer_id"`
-	ProNumber  string   `bun:"pro_number"`
-	BOL        string   `bun:"bol"`
 }
 
 func TestNonRecourseFactoredInvoicesLeaveCollectionsAndCreditExposure(t *testing.T) {
@@ -177,13 +173,9 @@ func (e *nonRecourseEnv) agreeWith(
 
 func (e *nonRecourseEnv) stampAgreement(t *testing.T, inv *invoice.Invoice, agreementID pulid.ID) {
 	t.Helper()
-	_, err := e.db.NewUpdate().
-		Table("invoices").
-		Set("factoring_agreement_id = ?", agreementID).
-		Where("id = ?", inv.ID).
-		Where("organization_id = ?", e.tenantInfo.OrgID).
-		Where("business_unit_id = ?", e.tenantInfo.BuID).
-		Exec(e.ctx)
+	invs := invoicedb.Invoices
+	_, err := invs.Where(invs.ID.Eq(inv.ID)).
+		Update(e.ctx, e.db, invs.FactoringAgreementID.To(agreementID))
 	require.NoError(t, err)
 }
 
@@ -216,54 +208,21 @@ func setupNonRecourseEnv(t *testing.T) *nonRecourseEnv {
 	ctx, db, cleanup := seededtest.SetupTestDB(t)
 	t.Cleanup(cleanup)
 
-	var org struct {
-		ID             pulid.ID `bun:"id"`
-		BusinessUnitID pulid.ID `bun:"business_unit_id"`
-	}
-	require.NoError(t, db.NewSelect().
-		Table("organizations").
-		Column("id", "business_unit_id").
-		Limit(1).
-		Scan(ctx, &org))
+	seeded := billingtest.SeededTenant(t, ctx, db)
+	ctx = seeded.Ctx
+	tenantInfo := seeded.Info
+	shp := seeded.Shipment
 
-	var user struct {
-		ID pulid.ID `bun:"id"`
-	}
-	require.NoError(t, db.NewSelect().
-		Table("users").
-		Column("id").
-		Where("current_organization_id = ?", org.ID).
-		Where("business_unit_id = ?", org.BusinessUnitID).
-		Limit(1).
-		Scan(ctx, &user))
-
-	var shp seededShipment
-	require.NoError(t, db.NewSelect().
-		Table("shipments").
-		Column("id", "customer_id", "pro_number", "bol").
-		Where("organization_id = ?", org.ID).
-		Where("business_unit_id = ?", org.BusinessUnitID).
-		Apply(seedtest.ShipmentsWithoutReceivables).
-		Limit(1).
-		Scan(ctx, &shp))
-
-	var stateID pulid.ID
-	require.NoError(t, db.NewSelect().
-		Table("us_states").
-		Column("id").
-		Limit(1).
-		Scan(ctx, &stateID))
+	states := usstatedb.UsStates
+	stateID, err := keel.IntoOne[pulid.ID](ctx, db, states.Pick(states.ID).Order(states.ID.Asc()).Limit(1))
+	require.NoError(t, err)
 
 	conn := postgres.NewTestConnection(db)
 	logger := zap.NewNop()
 	return &nonRecourseEnv{
-		ctx: ctx,
-		db:  db,
-		tenantInfo: pagination.TenantInfo{
-			OrgID:  org.ID,
-			BuID:   org.BusinessUnitID,
-			UserID: user.ID,
-		},
+		ctx:        ctx,
+		db:         db,
+		tenantInfo: tenantInfo,
 		customerID: shp.CustomerID,
 		shipment:   shp,
 		invoices:   invoicerepository.New(invoicerepository.Params{DB: conn, Logger: logger}),
@@ -318,8 +277,7 @@ func (e *nonRecourseEnv) postInvoice(
 		Status:           billingqueue.StatusPosted,
 		BillType:         billingqueue.BillTypeInvoice,
 	}
-	_, err := e.db.NewInsert().Model(queue).Exec(e.ctx)
-	require.NoError(t, err)
+	require.NoError(t, billingqueuedb.BillingQueueItems.Create(e.ctx, e.db, queue))
 
 	amount := decimal.New(amountMinor, -2)
 	postedAt := time.Now().Unix()

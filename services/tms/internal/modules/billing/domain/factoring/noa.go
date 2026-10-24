@@ -10,7 +10,6 @@ import (
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/domainvalidation"
 	"github.com/emoss08/trenova/pkg/errortypes"
-	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
@@ -31,9 +30,8 @@ var _ bun.BeforeAppendModelHook = (*Noa)(nil)
 
 // Notices telling each customer to pay a factor, from draft to signed acknowledgement, expiry and release
 type Noa struct {
-	bun.BaseModel             `bun:"table:factoring_noas,alias:facnoa" json:"-"`
-	keel.Table                `                                                 keel:"factoring_noas,report=Billing,label=Notice of Assignment,plural=Notices of Assignment"`
-	pagination.CursorValueSet `bun:",embed"                            json:"-"`
+	bun.BaseModel `bun:"table:factoring_noas,alias:facnoa" json:"-"`
+	keel.Table    `                                                 keel:"factoring_noas,report=Billing,label=Notice of Assignment,plural=Notices of Assignment"`
 
 	ID                 pulid.ID  `json:"id"                 bun:"id,pk,type:VARCHAR(100),notnull"                 keel:"id,pk,autoid:facnoa_"`
 	OrganizationID     pulid.ID  `json:"organizationId"     bun:"organization_id,pk,type:VARCHAR(100),notnull"    keel:"organization_id,pk,tenant"`

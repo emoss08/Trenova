@@ -4,12 +4,28 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/billing/adapters/postgres/receivablesql"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/shared/sliceutils"
 	"github.com/emoss08/trenova/shared/timeutils"
-	"github.com/uptrace/bun"
+	"github.com/jackc/pgx/v5"
 	"go.uber.org/zap"
 )
+
+const customerOpenBalancesSQL = `
+		SELECT
+			inv.customer_id,
+			SUM(inv.total_amount_minor - inv.applied_amount_minor) AS open_minor,
+			SUM(CASE WHEN inv.due_date < $1 THEN inv.total_amount_minor - inv.applied_amount_minor ELSE 0 END) AS overdue_minor,
+			MIN(inv.currency_code) AS currency_code
+		FROM invoices inv
+		WHERE inv.organization_id = $2
+		  AND inv.business_unit_id = $3
+		  AND inv.customer_id = ANY($4::TEXT[])
+		  AND ` + receivablesql.OpenInvoice + `
+		GROUP BY inv.customer_id`
 
 func NewOpenBalanceReader(p Params) kernelports.CustomerOpenBalanceReader {
 	return &repository{db: p.DB, l: p.Logger.Named("postgres.customer-open-balance-reader")}
@@ -27,23 +43,17 @@ func (r *repository) ListCustomerOpenBalances(
 				return nil, nil
 			}
 
-			now := timeutils.NowUnix()
-			balances := make([]*kernelports.CustomerOpenBalance, 0, len(req.CustomerIDs))
-			err := r.db.DBForContext(ctx).NewRaw(`
-		SELECT
-			inv.customer_id,
-			SUM(inv.total_amount_minor - inv.applied_amount_minor) AS open_minor,
-			SUM(CASE WHEN inv.due_date < ? THEN inv.total_amount_minor - inv.applied_amount_minor ELSE 0 END) AS overdue_minor,
-			MIN(inv.currency_code) AS currency_code
-		FROM invoices inv
-		WHERE inv.organization_id = ?
-		  AND inv.business_unit_id = ?
-		  AND inv.customer_id IN (?)
-		  AND inv.status = 'Posted'
-		  AND inv.bill_type IN ('Invoice', 'DebitMemo')
-		  AND inv.total_amount_minor > inv.applied_amount_minor
-		GROUP BY inv.customer_id
-	`, now, req.TenantInfo.OrgID, req.TenantInfo.BuID, bun.List(req.CustomerIDs)).Scan(ctx, &balances)
+			org, bu := tenantArgs(req.TenantInfo)
+			balances, err := keel.QueryAll(
+				ctx,
+				r.db.Keel(ctx),
+				pgx.RowToAddrOfStructByName[kernelports.CustomerOpenBalance],
+				customerOpenBalancesSQL,
+				timeutils.NowUnix(),
+				org,
+				bu,
+				sliceutils.Strings(req.CustomerIDs),
+			)
 			if err != nil {
 				r.l.Error("failed to list customer open balances", zap.Error(err))
 				return nil, fmt.Errorf("list customer open balances: %w", err)

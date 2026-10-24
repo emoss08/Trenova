@@ -58,14 +58,14 @@ type ListOpenRemittancesRequest struct {
 }
 
 type OpenRemittance struct {
-	RemittanceID       pulid.ID                   `json:"remittanceId"       bun:"remittance_id"`
-	FactoringCompanyID pulid.ID                   `json:"factoringCompanyId" bun:"factoring_company_id"`
-	FactorName         string                     `json:"factorName"         bun:"factor_name"`
-	FileName           string                     `json:"fileName"           bun:"file_name"`
-	Status             factoring.RemittanceStatus `json:"status"             bun:"status"`
-	ExceptionCount     int                        `json:"exceptionCount"     bun:"exception_count"`
-	MatchedCount       int                        `json:"matchedCount"       bun:"matched_count"`
-	CreatedAt          int64                      `json:"createdAt"          bun:"created_at"`
+	RemittanceID       pulid.ID                   `json:"remittanceId"`
+	FactoringCompanyID pulid.ID                   `json:"factoringCompanyId"`
+	FactorName         string                     `json:"factorName"`
+	FileName           string                     `json:"fileName"`
+	Status             factoring.RemittanceStatus `json:"status"`
+	ExceptionCount     int                        `json:"exceptionCount"`
+	MatchedCount       int                        `json:"matchedCount"`
+	CreatedAt          int64                      `json:"createdAt"`
 }
 
 type RemittanceRepository interface {

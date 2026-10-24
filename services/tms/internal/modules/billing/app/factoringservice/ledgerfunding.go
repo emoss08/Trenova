@@ -13,7 +13,6 @@ import (
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/uptrace/bun"
 )
 
 const fundingKeyPrefix = "factoring-funded:"
@@ -47,7 +46,7 @@ func (s *LedgerService) RecordFunding(
 
 	entries := make([]*factoring.ReserveEntry, 0, len(draft.inputs))
 	var updated *factoring.Submission
-	err = s.db.WithTx(ctx, kernelports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
+	err = s.db.Transact(ctx, kernelports.TxOptions{}, func(txCtx context.Context) error {
 		for _, in := range draft.inputs {
 			entry, postErr := s.postMovement(txCtx, in)
 			if postErr != nil {

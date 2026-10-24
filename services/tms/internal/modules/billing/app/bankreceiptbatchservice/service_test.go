@@ -20,7 +20,6 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
-	"github.com/uptrace/bun"
 	"go.uber.org/zap"
 )
 
@@ -174,20 +173,10 @@ func TestImportBatchReturnsErrorWhenReceiptImportFails(t *testing.T) {
 
 type fakeBatchDB struct{}
 
-func (fakeBatchDB) DB() *bun.DB { return nil }
-
-func (fakeBatchDB) DBForContext(context.Context) bun.IDB { return nil }
-
-func (fakeBatchDB) WithTx(
+func (fakeBatchDB) Transact(
 	ctx context.Context,
 	_ kernelports.TxOptions,
-	fn func(context.Context, bun.Tx) error,
+	fn func(context.Context) error,
 ) error {
-	return fn(ctx, bun.Tx{})
+	return fn(ctx)
 }
-
-func (fakeBatchDB) HealthCheck(context.Context) error { return nil }
-
-func (fakeBatchDB) IsHealthy(context.Context) bool { return true }
-
-func (fakeBatchDB) Close() error { return nil }

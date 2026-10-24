@@ -19,7 +19,6 @@ import (
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/domainvalidation"
 	"github.com/emoss08/trenova/pkg/errortypes"
-	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/validationframework"
 	"github.com/emoss08/trenova/shared/money"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -43,9 +42,8 @@ var (
 
 // Customer invoices
 type Invoice struct {
-	bun.BaseModel             `bun:"table:invoices,alias:inv" json:"-"`
-	keel.Table                `                                        keel:"invoices,report=Billing"`
-	pagination.CursorValueSet `bun:",embed"                   json:"-"`
+	bun.BaseModel `bun:"table:invoices,alias:inv" json:"-"`
+	keel.Table    `                                        keel:"invoices,report=Billing"`
 
 	ID                        pulid.ID                   `json:"id"                        bun:"id,pk,type:VARCHAR(100),notnull"                                                      keel:"id,pk,autoid:inv_"`
 	OrganizationID            pulid.ID                   `json:"organizationId"            bun:"organization_id,pk,type:VARCHAR(100),notnull"                                         keel:"organization_id,pk,tenant"`
@@ -709,6 +707,10 @@ func (i *Invoice) BeforeCreate(ctx context.Context) error {
 	return i.BeforeAppendModel(ctx, (*bun.InsertQuery)(nil))
 }
 
+func (i *Invoice) BeforeUpdate(ctx context.Context) error {
+	return i.BeforeAppendModel(ctx, (*bun.UpdateQuery)(nil))
+}
+
 func (a *Attachment) BeforeAppendModel(_ context.Context, query bun.Query) error {
 	now := timeutils.NowUnix()
 	switch query.(type) {
@@ -738,6 +740,10 @@ func (a *EmailAttempt) BeforeAppendModel(_ context.Context, query bun.Query) err
 		a.UpdatedAt = now
 	}
 	return nil
+}
+
+func (a *EmailAttempt) BeforeCreate(ctx context.Context) error {
+	return a.BeforeAppendModel(ctx, (*bun.InsertQuery)(nil))
 }
 
 func (a *EmailAttemptAttachment) BeforeAppendModel(_ context.Context, query bun.Query) error {

@@ -34,7 +34,6 @@ import (
 	"github.com/emoss08/trenova/shared/jsonutils"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
-	"github.com/uptrace/bun"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
@@ -43,7 +42,7 @@ type Params struct {
 	fx.In
 
 	Logger             *zap.Logger
-	DB                 kernelports.DBConnection
+	DB                 kernelports.Transactor
 	Repo               customerpaymentports.CustomerPaymentRepository
 	InvoiceRepo        invoiceports.InvoiceRepository
 	CustomerLedgerRepo customerledgerports.CustomerLedgerProjectionRepository
@@ -61,7 +60,7 @@ type Params struct {
 
 type Service struct {
 	l                  *zap.Logger
-	db                 kernelports.DBConnection
+	db                 kernelports.Transactor
 	repo               customerpaymentports.CustomerPaymentRepository
 	invoiceRepo        invoiceports.InvoiceRepository
 	customerLedgerRepo customerledgerports.CustomerLedgerProjectionRepository
@@ -171,7 +170,7 @@ func (s *Service) PostAndApply( //nolint:funlen,gocognit // legacy workflow
 	)
 	originalInvoices := cloneInvoices(invoices)
 	var created *customerpayment.Payment
-	err = s.db.WithTx(ctx, kernelports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
+	err = s.db.Transact(ctx, kernelports.TxOptions{}, func(txCtx context.Context) error {
 		var txErr error
 		created, txErr = s.repo.Create(txCtx, entity)
 		if txErr != nil {
@@ -398,7 +397,7 @@ func (s *Service) ApplyUnapplied( //nolint:funlen // legacy workflow
 	)
 	originalPayment := *payment
 	originalInvoices := cloneInvoices(invoices)
-	err = s.db.WithTx(ctx, kernelports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
+	err = s.db.Transact(ctx, kernelports.TxOptions{}, func(txCtx context.Context) error {
 		payment.Applications = append(payment.Applications, applications...)
 		payment.UpdatedByID = actor.UserID
 		for idx, inv := range invoices {
@@ -548,7 +547,7 @@ func (s *Service) Reverse( //nolint:funlen // legacy workflow
 	)
 	originalPayment := *payment
 	originalInvoices := cloneInvoices(invoices)
-	err = s.db.WithTx(ctx, kernelports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
+	err = s.db.Transact(ctx, kernelports.TxOptions{}, func(txCtx context.Context) error {
 		for idx, app := range payment.Applications {
 			if app == nil {
 				continue

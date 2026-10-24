@@ -21,7 +21,6 @@ import (
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
-	"github.com/uptrace/bun"
 )
 
 // CreateFromShipments bills the shipments and returns the primary payer's
@@ -158,7 +157,7 @@ func (s *Service) createSingleShipmentInvoices(
 	result := &invoiceports.CreateInvoicesResult{
 		Invoices: make([]*invoice.Invoice, 0, len(plans)),
 	}
-	err := s.db.WithTx(ctx, kernelports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
+	err := s.db.Transact(ctx, kernelports.TxOptions{}, func(txCtx context.Context) error {
 		for _, plan := range plans {
 			queueItem, txErr := s.billingQueueRepo.Create(txCtx, &billingqueue.BillingQueueItem{
 				OrganizationID:       tenantInfo.OrgID,
@@ -366,7 +365,7 @@ func (s *Service) CreateInvoicesFromOrder(
 	}
 
 	result := &invoiceports.CreateInvoicesResult{}
-	err = s.db.WithTx(ctx, kernelports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
+	err = s.db.Transact(ctx, kernelports.TxOptions{}, func(txCtx context.Context) error {
 		var txErr error
 		result, txErr = s.createOrderInvoicesTx(txCtx, req, orderCustomer, number, actor)
 		return txErr

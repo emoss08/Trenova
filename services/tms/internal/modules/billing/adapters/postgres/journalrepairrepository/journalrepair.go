@@ -4,25 +4,23 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/emoss08/trenova/pkg/buncolgen/customerledgercol"
-	"github.com/emoss08/trenova/pkg/buncolgen/driversettlementcol"
-	"github.com/emoss08/trenova/pkg/buncolgen/invoiceadjustmentcol"
-	"github.com/emoss08/trenova/pkg/buncolgen/invoicecol"
-	"github.com/emoss08/trenova/pkg/buncolgen/journalsourcecol"
-
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
-	"github.com/emoss08/trenova/internal/modules/accounting/domain/journalsource"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/journalsource/journalsourcedb"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
-	"github.com/emoss08/trenova/internal/modules/billing/domain/customerledger"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/customerledger/customerledgerdb"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice/invoicedb"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoiceadjustment"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/invoiceadjustment/invoiceadjustmentdb"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/driversettlement"
+	"github.com/emoss08/trenova/internal/modules/settlement/domain/driversettlement/driversettlementdb"
 	"github.com/emoss08/trenova/internal/modules/settlement/ports/driversettlementports"
+	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/uptrace/bun"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
@@ -56,38 +54,34 @@ func (r *repository) ListUnjournaledAdjustmentMemos(
 	ctx context.Context,
 	req *driversettlementports.ListJournalRepairRequest,
 ) ([]*driversettlementports.AdjustmentMemoRepair, error) {
-	return dbtx.Write(
+	ctx = dbscope.WithSystem(ctx, "list adjustment credit memos missing a journal across every organization")
+	return dbtx.Read(
 		ctx,
 		r.db,
 		func(ctx context.Context) ([]*driversettlementports.AdjustmentMemoRepair, error) {
-			dba := r.db.DBForContext(ctx)
-			cols := invoicecol.InvoiceColumns
-			ledgerCols := customerledgercol.CustomerLedgerEntryColumns
+			db := r.db.Keel(ctx)
+			inv := invoicedb.Invoices
+			cle := customerledgerdb.CustomerLedgerEntries.As("cle")
+			ledgerLine := cle.AllTenants().Pick(keel.Raw("1")).Where(
+				cle.SourceObjectID.EqCol(inv.ID),
+				cle.OrganizationID.EqCol(inv.OrganizationID),
+				cle.BusinessUnitID.EqCol(inv.BusinessUnitID),
+			)
 
-			ledgerLine := dba.NewSelect().
-				Model((*customerledger.CustomerLedgerEntry)(nil)).
-				ColumnExpr("1").
-				Where(ledgerCols.SourceObjectID.EqColumn(cols.ID)).
-				Where(ledgerCols.OrganizationID.EqColumn(cols.OrganizationID)).
-				Where(ledgerCols.BusinessUnitID.EqColumn(cols.BusinessUnitID))
-
-			memos := make([]*invoice.Invoice, 0, limitOf(req))
-			q := dba.NewSelect().
-				Model(&memos).
-				Where(cols.IsAdjustmentArtifact.IsTrue()).
-				Where(cols.BillType.Eq(), billingqueue.BillTypeCreditMemo).
-				Where(cols.Status.Eq(), invoice.StatusPosted).
-				Where(cols.SourceInvoiceAdjustmentID.IsNotNull()).
-				Where("NOT EXISTS (?)", ledgerLine).
-				Order(cols.ID.OrderAsc()).
-				Limit(int64(limitOf(req)))
-			if req.OrganizationID.IsNotNil() {
-				q = q.Where(cols.OrganizationID.Eq(), req.OrganizationID)
-			}
-			if req.AfterID.IsNotNil() {
-				q = q.Where(cols.ID.Gt(), req.AfterID)
-			}
-			if err := q.Scan(ctx); err != nil {
+			memos, err := inv.AllTenants().
+				Where(
+					inv.IsAdjustmentArtifact.IsTrue(),
+					inv.BillType.Eq(billingqueue.BillTypeCreditMemo),
+					inv.Status.Eq(invoice.StatusPosted),
+					inv.SourceInvoiceAdjustmentID.IsNotNull(),
+					keel.NotExists(ledgerLine),
+					keel.When(req.OrganizationID.IsNotNil(), inv.OrganizationID.Eq(req.OrganizationID)),
+					keel.When(req.AfterID.IsNotNil(), inv.ID.Gt(req.AfterID)),
+				).
+				Order(inv.ID.Asc()).
+				Limit(limitOf(req)).
+				List(ctx, db)
+			if err != nil {
 				return nil, fmt.Errorf("list unjournaled adjustment credit memos: %w", err)
 			}
 			if len(memos) == 0 {
@@ -95,17 +89,17 @@ func (r *repository) ListUnjournaledAdjustmentMemos(
 			}
 
 			adjustmentIDs := make([]pulid.ID, 0, len(memos))
+			memoIDs := make([]pulid.ID, 0, len(memos))
 			for _, memo := range memos {
 				adjustmentIDs = append(adjustmentIDs, memo.SourceInvoiceAdjustmentID)
+				memoIDs = append(memoIDs, memo.ID)
 			}
-			adjustments := make([]*invoiceadjustment.InvoiceAdjustment, 0, len(adjustmentIDs))
-			adjCols := invoiceadjustmentcol.InvoiceAdjustmentColumns
-			if err := dba.NewSelect().
-				Model(&adjustments).
-				Column(adjCols.ID.String(), adjCols.OrganizationID.String(), adjCols.BusinessUnitID.String(),
-					adjCols.Kind.String(), adjCols.OriginalInvoiceID.String()).
-				Where(adjCols.ID.In(), bun.List(adjustmentIDs)).
-				Scan(ctx); err != nil {
+			ia := invoiceadjustmentdb.InvoiceAdjustments
+			adjustments, err := ia.AllTenants().
+				Pick(ia.ID, ia.OrganizationID, ia.BusinessUnitID, ia.Kind, ia.OriginalInvoiceID).
+				Where(ia.ID.In(adjustmentIDs...)).
+				All(ctx, db)
+			if err != nil {
 				return nil, fmt.Errorf("read adjustments for credit memos: %w", err)
 			}
 			byID := make(map[pulid.ID]*invoiceadjustment.InvoiceAdjustment, len(adjustments))
@@ -113,11 +107,7 @@ func (r *repository) ListUnjournaledAdjustmentMemos(
 				byID[adjustment.ID] = adjustment
 			}
 
-			memoIDs := make([]pulid.ID, 0, len(memos))
-			for _, memo := range memos {
-				memoIDs = append(memoIDs, memo.ID)
-			}
-			journaled, err := existingJournalBatches(ctx, dba, &existingJournalRequest{
+			journaled, err := existingJournalBatches(ctx, db, &existingJournalRequest{
 				ObjectType: "Invoice",
 				Event:      tenant.JournalSourceEventCreditMemoPosted,
 				ObjectIDs:  memoIDs,
@@ -153,28 +143,26 @@ func (r *repository) ListUnjournaledDriverPayments(
 	ctx context.Context,
 	req *driversettlementports.ListJournalRepairRequest,
 ) ([]*driversettlementports.DriverPaymentRepair, error) {
-	return dbtx.Write(
+	ctx = dbscope.WithSystem(ctx, "list paid driver settlements missing a journal across every organization")
+	return dbtx.Read(
 		ctx,
 		r.db,
 		func(ctx context.Context) ([]*driversettlementports.DriverPaymentRepair, error) {
-			dba := r.db.DBForContext(ctx)
-			cols := driversettlementcol.SettlementColumns
-			settlements := make([]*driversettlement.Settlement, 0, limitOf(req))
-			q := dba.NewSelect().
-				Model(&settlements).
-				Where(cols.Status.Eq(), driversettlement.StatusPaid).
-				Where(cols.NetPayMinor.Ne(), 0).
-				Where(cols.PaidJournalBatchID.IsNull()).
-				Where(cols.PaidAt.IsNotNull()).
-				Order(cols.ID.OrderAsc()).
-				Limit(int64(limitOf(req)))
-			if req.OrganizationID.IsNotNil() {
-				q = q.Where(cols.OrganizationID.Eq(), req.OrganizationID)
-			}
-			if req.AfterID.IsNotNil() {
-				q = q.Where(cols.ID.Gt(), req.AfterID)
-			}
-			if err := q.Scan(ctx); err != nil {
+			db := r.db.Keel(ctx)
+			ds := driversettlementdb.Settlements
+			settlements, err := ds.AllTenants().
+				Where(
+					ds.Status.Eq(driversettlement.StatusPaid),
+					ds.NetPayMinor.Ne(0),
+					ds.PaidJournalBatchID.IsNull(),
+					ds.PaidAt.IsNotNull(),
+					keel.When(req.OrganizationID.IsNotNil(), ds.OrganizationID.Eq(req.OrganizationID)),
+					keel.When(req.AfterID.IsNotNil(), ds.ID.Gt(req.AfterID)),
+				).
+				Order(ds.ID.Asc()).
+				Limit(limitOf(req)).
+				List(ctx, db)
+			if err != nil {
 				return nil, fmt.Errorf("list unjournaled driver settlement payments: %w", err)
 			}
 			if len(settlements) == 0 {
@@ -185,7 +173,7 @@ func (r *repository) ListUnjournaledDriverPayments(
 			for _, settlement := range settlements {
 				settlementIDs = append(settlementIDs, settlement.ID)
 			}
-			batches, err := existingJournalBatches(ctx, dba, &existingJournalRequest{
+			batches, err := existingJournalBatches(ctx, db, &existingJournalRequest{
 				ObjectType: "DriverSettlement",
 				Event:      tenant.JournalSourceEventDriverSettlementPaid,
 				ObjectIDs:  settlementIDs,
@@ -232,7 +220,7 @@ func journalKey(orgID, buID, objectID pulid.ID) journalSourceKey {
 
 func existingJournalBatches(
 	ctx context.Context,
-	dba bun.IDB,
+	db *keel.DB,
 	req *existingJournalRequest,
 ) (map[journalSourceKey]pulid.ID, error) {
 	objectIDs := make([]string, 0, len(req.ObjectIDs))
@@ -240,20 +228,16 @@ func existingJournalBatches(
 		objectIDs = append(objectIDs, id.String())
 	}
 
-	cols := journalsourcecol.SourceColumns
-	sources := make([]*journalsource.Source, 0, len(objectIDs))
-	if err := dba.NewSelect().
-		Model(&sources).
-		Column(
-			cols.OrganizationID.String(),
-			cols.BusinessUnitID.String(),
-			cols.SourceObjectID.String(),
-			cols.JournalBatchID.String(),
+	js := journalsourcedb.Sources
+	sources, err := js.AllTenants().
+		Pick(js.OrganizationID, js.BusinessUnitID, js.SourceObjectID, js.JournalBatchID).
+		Where(
+			js.SourceObjectType.Eq(req.ObjectType),
+			js.SourceEventType.Eq(string(req.Event)),
+			js.SourceObjectID.In(objectIDs...),
 		).
-		Where(cols.SourceObjectType.Eq(), req.ObjectType).
-		Where(cols.SourceEventType.Eq(), string(req.Event)).
-		Where(cols.SourceObjectID.In(), bun.List(objectIDs)).
-		Scan(ctx); err != nil {
+		All(ctx, db)
+	if err != nil {
 		return nil, fmt.Errorf("read existing %s journals: %w", req.Event, err)
 	}
 
@@ -273,24 +257,11 @@ func (r *repository) SetDriverSettlementPaidBatch(
 	params *driversettlementports.SetDriverSettlementPaidBatchParams,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
-		cols := driversettlementcol.SettlementColumns
-		result, err := r.db.DBForContext(ctx).
-			NewUpdate().
-			Model((*driversettlement.Settlement)(nil)).
-			WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-				return driversettlementcol.SettlementScopeTenantUpdate(uq, params.TenantInfo).
-					Where(cols.ID.Eq(), params.SettlementID).
-					Where(cols.PaidJournalBatchID.IsNull())
-			}).
-			Set(cols.PaidJournalBatchID.Set(), params.BatchID).
-			Set(cols.Version.Inc(1)).
-			Exec(ctx)
+		ds := driversettlementdb.Settlements
+		affected, err := ds.Where(ds.ID.Eq(params.SettlementID), ds.PaidJournalBatchID.IsNull()).
+			Update(ctx, r.db.Keel(ctx), ds.PaidJournalBatchID.To(params.BatchID))
 		if err != nil {
 			return fmt.Errorf("record driver settlement payment journal: %w", err)
-		}
-		affected, err := result.RowsAffected()
-		if err != nil {
-			return fmt.Errorf("read affected rows: %w", err)
 		}
 		if affected != 1 {
 			return errortypes.NewConflictError(

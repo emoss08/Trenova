@@ -10,7 +10,6 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/pkg/errortypes"
-	"github.com/uptrace/bun"
 )
 
 const draftPreviewIdempotencyKey = "draft-preview"
@@ -25,7 +24,7 @@ func (s *Service) SaveDraft(
 	}
 
 	var saved *invoiceadjustment.InvoiceAdjustment
-	err := s.db.WithTx(ctx, kernelports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
+	err := s.db.Transact(ctx, kernelports.TxOptions{}, func(txCtx context.Context) error {
 		adjustmentID := req.AdjustmentID
 		if adjustmentID.IsNil() {
 			created, createErr := s.CreateDraft(

@@ -13,7 +13,6 @@ import (
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
-	"github.com/uptrace/bun"
 	"go.uber.org/zap"
 )
 
@@ -134,7 +133,7 @@ func (s *Service) UpdateDraft(
 
 	lines := s.buildAdjustmentLines(entity.ID, sourceInvoice.ID, req.Lines, req.TenantInfo)
 
-	if err = s.db.WithTx(ctx, kernelports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
+	if err = s.db.Transact(ctx, kernelports.TxOptions{}, func(txCtx context.Context) error {
 		if _, txErr := s.repo.UpdateAdjustment(txCtx, entity); txErr != nil {
 			return txErr
 		}

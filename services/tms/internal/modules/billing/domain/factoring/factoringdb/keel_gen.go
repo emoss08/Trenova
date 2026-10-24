@@ -1609,23 +1609,24 @@ var remittanceLinesTable = schema.Table{
 	Relations: []schema.Relation{
 		{Name: "SubmissionItem", Alias: "si", Kind: schema.BelongsTo, Local: []int32{19}, Remote: []int32{0}, Label: `Submission Item`, JSON: `submissionItem`},
 	},
-	PK:         []int32{0, 1, 2},
-	Tenant:     []int32{1, 2},
-	Select:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 28, 29},
-	Insert:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 28, 29},
-	Update:     []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 29},
-	Returning:  nil,
-	Version:    -1,
-	AutoID:     0,
-	AutoCreate: 28,
-	AutoUpdate: 29,
-	IDPrefix:   "facrml_",
-	New:        newRemittanceLine,
-	NewN:       newNRemittanceLine,
-	Size:       unsafe.Sizeof(factoring.RemittanceLine{}),
-	Ptr:        ptrRemittanceLine,
-	Value:      valueRemittanceLine,
-	Attach:     attachRemittanceLine,
+	PK:           []int32{0, 1, 2},
+	Tenant:       []int32{1, 2},
+	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 28, 29},
+	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 28, 29},
+	Update:       []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 29},
+	Returning:    nil,
+	Version:      -1,
+	AutoID:       0,
+	AutoCreate:   28,
+	AutoUpdate:   29,
+	IDPrefix:     "facrml_",
+	New:          newRemittanceLine,
+	NewN:         newNRemittanceLine,
+	Size:         unsafe.Sizeof(factoring.RemittanceLine{}),
+	Ptr:          ptrRemittanceLine,
+	Value:        valueRemittanceLine,
+	Attach:       attachRemittanceLine,
+	BeforeCreate: beforeCreateRemittanceLine,
 }
 
 var remittanceLinesRef = keel.Ref{Table: &remittanceLinesTable}
@@ -1955,6 +1956,10 @@ func attachRemittanceLine(p unsafe.Pointer, rel int32, child unsafe.Pointer) {
 	case 0:
 		r.SubmissionItem = (*factoring.SubmissionItem)(child)
 	}
+}
+
+func beforeCreateRemittanceLine(ctx context.Context, p unsafe.Pointer) error {
+	return (*factoring.RemittanceLine)(p).BeforeCreate(ctx)
 }
 
 // remittanceProfilesTable is the schema of factoring.RemittanceProfile.
@@ -2914,6 +2919,7 @@ var submissionItemsTable = schema.Table{
 	Relations: []schema.Relation{
 		{Name: "Invoice", Alias: "i", Kind: schema.BelongsTo, Local: []int32{4}, Remote: []int32{0}, Label: `Invoice`, JSON: `invoice`},
 		{Name: "Customer", Alias: "c", Kind: schema.BelongsTo, Local: []int32{6}, Remote: []int32{0}, Label: `Customer`, JSON: `customer`},
+		{Name: "Submission", Alias: "s", Kind: schema.BelongsTo, Local: []int32{3}, Remote: []int32{0}, Label: `Submission`, NoReport: true},
 	},
 	PK:           []int32{0, 1, 2},
 	Tenant:       []int32{1, 2},
@@ -3051,6 +3057,11 @@ func (t *SubmissionItemsTable) Invoice() *invoicedb.InvoicesTable {
 // Customer is the belongs relation.
 func (t *SubmissionItemsTable) Customer() *customerdb.CustomersTable {
 	return keel.Path(t.Ref, 1, customerdb.BuildCustomers)
+}
+
+// Submission is the belongs relation.
+func (t *SubmissionItemsTable) Submission() *SubmissionsTable {
+	return keel.Path(t.Ref, 2, BuildSubmissions)
 }
 
 // Get returns the factoring_submission_items row with the given key, or keel.ErrNotFound.
@@ -3226,6 +3237,8 @@ func attachSubmissionItem(p unsafe.Pointer, rel int32, child unsafe.Pointer) {
 		r.Invoice = (*invoice.Invoice)(child)
 	case 1:
 		r.Customer = (*customer.Customer)(child)
+	case 2:
+		r.Submission = (*factoring.Submission)(child)
 	}
 }
 
@@ -3523,6 +3536,7 @@ func init() {
 	submissionsTable.Relations[2].Target = SubmissionItemsSchema()
 	submissionItemsTable.Relations[0].Target = invoicedb.InvoicesSchema()
 	submissionItemsTable.Relations[1].Target = customerdb.CustomersSchema()
+	submissionItemsTable.Relations[2].Target = SubmissionsSchema()
 }
 
 // intIs64 fails the build where int is not 64 bits: int fields are read through *int64.

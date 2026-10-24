@@ -4,7 +4,10 @@ import (
 	"context"
 
 	"github.com/emoss08/keel"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/document"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/pkg/domainvalidation"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/validationframework"
@@ -73,13 +76,21 @@ type InvoiceAdjustment struct {
 	Metadata                        map[string]any          `json:"metadata"                        bun:"metadata,type:JSONB,notnull,default:'{}'"                                             keel:"metadata,jsonb,noreport"`
 	Version                         int64                   `json:"version"                         bun:"version,type:BIGINT,notnull"                                                          keel:"version,version"`
 	CreatedAt                       int64                   `json:"createdAt"                       bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"created_at"`
-	UpdatedAt                       int64                   `json:"updatedAt"                       bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"updated_at"`
+	UpdatedAt                       int64                   `json:"updatedAt"                       bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"updated_at,autoupdate"`
 
 	Lines                    []*InvoiceAdjustmentLine                    `json:"lines,omitempty"                    bun:"rel:has-many,join:id=adjustment_id" keel:"many:adjustment_id,label=Adjustment Lines"`
 	Snapshots                []*InvoiceAdjustmentSnapshot                `json:"snapshots,omitempty"                bun:"rel:has-many,join:id=adjustment_id" keel:"many:adjustment_id,noreport"`
 	ReconciliationExceptions []*InvoiceAdjustmentReconciliationException `json:"reconciliationExceptions,omitempty" bun:"rel:has-many,join:id=adjustment_id" keel:"many:adjustment_id,noreport"`
 	DocumentReferences       []*InvoiceAdjustmentDocumentReference       `json:"referencedDocuments,omitempty"      bun:"rel:has-many,join:id=adjustment_id" keel:"many:adjustment_id,noreport"`
 	AdjustmentDocuments      []*document.Document                        `json:"adjustmentDocuments,omitempty"      bun:"-"`
+
+	OriginalInvoice    *invoice.Invoice               `json:"-" bun:"-" keel:"belongs:original_invoice_id,noreport"`
+	CreditMemoInvoice  *invoice.Invoice               `json:"-" bun:"-" keel:"belongs:credit_memo_invoice_id,noreport"`
+	ReplacementInvoice *invoice.Invoice               `json:"-" bun:"-" keel:"belongs:replacement_invoice_id,noreport"`
+	RebillQueueItem    *billingqueue.BillingQueueItem `json:"-" bun:"-" keel:"belongs:rebill_queue_item_id,noreport"`
+	SubmittedBy        *tenant.User                   `json:"-" bun:"-" keel:"belongs:submitted_by_id,noreport"`
+	ApprovedBy         *tenant.User                   `json:"-" bun:"-" keel:"belongs:approved_by_id,noreport"`
+	RejectedBy         *tenant.User                   `json:"-" bun:"-" keel:"belongs:rejected_by_id,noreport"`
 }
 
 type InvoiceAdjustmentDocumentReference struct {
@@ -100,7 +111,7 @@ type InvoiceAdjustmentDocumentReference struct {
 	SnapshotResourceID   string   `json:"snapshotResourceId"   bun:"snapshot_resource_id,type:VARCHAR(100),notnull"                                       keel:"snapshot_resource_id"`
 	Version              int64    `json:"version"              bun:"version,type:BIGINT,notnull"                                                          keel:"version,version"`
 	CreatedAt            int64    `json:"createdAt"            bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"created_at"`
-	UpdatedAt            int64    `json:"updatedAt"            bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"updated_at"`
+	UpdatedAt            int64    `json:"updatedAt"            bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"updated_at,autoupdate"`
 
 	Document *document.Document `json:"document,omitempty" bun:"rel:belongs-to,join:document_id=id,join:organization_id=organization_id,join:business_unit_id=business_unit_id" keel:"belongs:document_id"`
 }
@@ -129,7 +140,7 @@ type InvoiceAdjustmentLine struct {
 	RebillAmountMinor       int64           `json:"rebillAmountMinor"       bun:"rebill_amount_minor,type:BIGINT,notnull"                                              keel:"rebill_amount_minor,label=Rebill Amount (Minor)"`
 	ReplacementPayload      map[string]any  `json:"replacementPayload"      bun:"replacement_payload,type:JSONB,notnull,default:'{}'"                                  keel:"replacement_payload,jsonb,noreport"`
 	CreatedAt               int64           `json:"createdAt"               bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"created_at"`
-	UpdatedAt               int64           `json:"updatedAt"               bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"updated_at"`
+	UpdatedAt               int64           `json:"updatedAt"               bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"updated_at,autoupdate"`
 }
 
 type InvoiceAdjustmentSnapshot struct {
@@ -158,7 +169,7 @@ type InvoiceAdjustmentCorrectionGroup struct {
 	CurrentInvoiceID pulid.ID       `json:"currentInvoiceId" bun:"current_invoice_id,type:VARCHAR(100),nullzero"                                        keel:"current_invoice_id,nullzero"`
 	Metadata         map[string]any `json:"metadata"         bun:"metadata,type:JSONB,notnull,default:'{}'"                                             keel:"metadata,jsonb"`
 	CreatedAt        int64          `json:"createdAt"        bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"created_at"`
-	UpdatedAt        int64          `json:"updatedAt"        bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"updated_at"`
+	UpdatedAt        int64          `json:"updatedAt"        bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"updated_at,autoupdate"`
 }
 
 type InvoiceAdjustmentReconciliationException struct {
@@ -176,7 +187,10 @@ type InvoiceAdjustmentReconciliationException struct {
 	Amount              decimal.Decimal `json:"amount"              bun:"amount,type:NUMERIC(19,4),notnull,default:0"                                          keel:"amount"`
 	Metadata            map[string]any  `json:"metadata"            bun:"metadata,type:JSONB,notnull,default:'{}'"                                             keel:"metadata,jsonb"`
 	CreatedAt           int64           `json:"createdAt"           bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"created_at"`
-	UpdatedAt           int64           `json:"updatedAt"           bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"updated_at"`
+	UpdatedAt           int64           `json:"updatedAt"           bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" keel:"updated_at,autoupdate"`
+
+	Adjustment        *InvoiceAdjustment `json:"-" bun:"-" keel:"belongs:adjustment_id"`
+	CreditMemoInvoice *invoice.Invoice   `json:"-" bun:"-" keel:"belongs:credit_memo_invoice_id"`
 }
 
 func (a *InvoiceAdjustment) Validate(multiErr *errortypes.MultiError) {
@@ -298,12 +312,20 @@ func (s *InvoiceAdjustmentSnapshot) BeforeCreate(ctx context.Context) error {
 	return s.BeforeAppendModel(ctx, (*bun.InsertQuery)(nil))
 }
 
+func (g *InvoiceAdjustmentCorrectionGroup) BeforeCreate(ctx context.Context) error {
+	return g.BeforeAppendModel(ctx, (*bun.InsertQuery)(nil))
+}
+
 func (g *InvoiceAdjustmentCorrectionGroup) BeforeAppendModel(
 	_ context.Context,
 	query bun.Query,
 ) error {
 	beforeAppendIDModel(query, &g.ID, "icg_", &g.CreatedAt, &g.UpdatedAt)
 	return nil
+}
+
+func (e *InvoiceAdjustmentReconciliationException) BeforeCreate(ctx context.Context) error {
+	return e.BeforeAppendModel(ctx, (*bun.InsertQuery)(nil))
 }
 
 func (e *InvoiceAdjustmentReconciliationException) BeforeAppendModel(
@@ -330,6 +352,10 @@ func (b *InvoiceAdjustmentBatchItem) BeforeAppendModel(_ context.Context, query 
 
 func (b *InvoiceAdjustmentBatchItem) BeforeCreate(ctx context.Context) error {
 	return b.BeforeAppendModel(ctx, (*bun.InsertQuery)(nil))
+}
+
+func (d *InvoiceAdjustmentDocumentReference) BeforeCreate(ctx context.Context) error {
+	return d.BeforeAppendModel(ctx, (*bun.InsertQuery)(nil))
 }
 
 func (d *InvoiceAdjustmentDocumentReference) BeforeAppendModel(

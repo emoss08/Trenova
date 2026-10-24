@@ -8,9 +8,15 @@ import (
 
 	"github.com/emoss08/keel"
 	"github.com/emoss08/keel/schema"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue/billingqueuedb"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice/invoicedb"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoiceadjustment"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/document"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/document/documentdb"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant/tenantdb"
 	"github.com/emoss08/trenova/pkg/keelkinds"
 	"github.com/emoss08/trenova/shared/pulid"
 )
@@ -65,13 +71,20 @@ var invoiceAdjustmentsTable = schema.Table{
 		{Name: "metadata", Quoted: `"metadata"`, Field: "Metadata", Kind: schema.KindJSON, Flags: schema.FlagJSONB, Label: `Metadata`, JSON: `metadata`, Report: &reportDimJsonbHidden},
 		{Name: "version", Quoted: `"version"`, Field: "Version", Kind: schema.KindInt64, Flags: schema.FlagVersion, Label: `Version`, JSON: `version`, Report: &reportMeasureIntegerHidden},
 		{Name: "created_at", Quoted: `"created_at"`, Field: "CreatedAt", Kind: schema.KindInt64, Flags: 0, Label: `Created At`, JSON: `createdAt`, Report: &reportDimEpoch},
-		{Name: "updated_at", Quoted: `"updated_at"`, Field: "UpdatedAt", Kind: schema.KindInt64, Flags: 0, Label: `Updated At`, JSON: `updatedAt`, Report: &reportDimEpoch},
+		{Name: "updated_at", Quoted: `"updated_at"`, Field: "UpdatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoUpdate, Label: `Updated At`, JSON: `updatedAt`, Report: &reportDimEpoch},
 	},
 	Relations: []schema.Relation{
 		{Name: "Lines", Alias: "l", Kind: schema.HasMany, Local: []int32{0}, Remote: []int32{3}, Label: `Adjustment Lines`, JSON: `lines`},
 		{Name: "Snapshots", Alias: "s", Kind: schema.HasMany, Local: []int32{0}, Remote: []int32{3}, Label: `Snapshots`, JSON: `snapshots`, NoReport: true},
 		{Name: "ReconciliationExceptions", Alias: "re", Kind: schema.HasMany, Local: []int32{0}, Remote: []int32{3}, Label: `Reconciliation Exceptions`, JSON: `reconciliationExceptions`, NoReport: true},
 		{Name: "DocumentReferences", Alias: "dr", Kind: schema.HasMany, Local: []int32{0}, Remote: []int32{3}, Label: `Document References`, JSON: `referencedDocuments`, NoReport: true},
+		{Name: "OriginalInvoice", Alias: "oi", Kind: schema.BelongsTo, Local: []int32{4}, Remote: []int32{0}, Label: `Original Invoice`, NoReport: true},
+		{Name: "CreditMemoInvoice", Alias: "cmi", Kind: schema.BelongsTo, Local: []int32{5}, Remote: []int32{0}, Label: `Credit Memo Invoice`, NoReport: true},
+		{Name: "ReplacementInvoice", Alias: "ri", Kind: schema.BelongsTo, Local: []int32{6}, Remote: []int32{0}, Label: `Replacement Invoice`, NoReport: true},
+		{Name: "RebillQueueItem", Alias: "rqi", Kind: schema.BelongsTo, Local: []int32{7}, Remote: []int32{0}, Label: `Rebill Queue Item`, NoReport: true},
+		{Name: "SubmittedBy", Alias: "sb", Kind: schema.BelongsTo, Local: []int32{28}, Remote: []int32{0}, Label: `Submitted By`, NoReport: true},
+		{Name: "ApprovedBy", Alias: "ab", Kind: schema.BelongsTo, Local: []int32{30}, Remote: []int32{0}, Label: `Approved By`, NoReport: true},
+		{Name: "RejectedBy", Alias: "rb", Kind: schema.BelongsTo, Local: []int32{32}, Remote: []int32{0}, Label: `Rejected By`, NoReport: true},
 	},
 	PK:           []int32{0, 1, 2},
 	Tenant:       []int32{1, 2},
@@ -82,7 +95,7 @@ var invoiceAdjustmentsTable = schema.Table{
 	Version:      37,
 	AutoID:       -1,
 	AutoCreate:   -1,
-	AutoUpdate:   -1,
+	AutoUpdate:   39,
 	IDPrefix:     "",
 	New:          newInvoiceAdjustment,
 	NewN:         newNInvoiceAdjustment,
@@ -258,6 +271,41 @@ func (t *InvoiceAdjustmentsTable) ReconciliationExceptions() *InvoiceAdjustmentR
 // DocumentReferences is the many relation.
 func (t *InvoiceAdjustmentsTable) DocumentReferences() *InvoiceAdjustmentDocumentReferencesTable {
 	return keel.Path(t.Ref, 3, BuildInvoiceAdjustmentDocumentReferences)
+}
+
+// OriginalInvoice is the belongs relation.
+func (t *InvoiceAdjustmentsTable) OriginalInvoice() *invoicedb.InvoicesTable {
+	return keel.Path(t.Ref, 4, invoicedb.BuildInvoices)
+}
+
+// CreditMemoInvoice is the belongs relation.
+func (t *InvoiceAdjustmentsTable) CreditMemoInvoice() *invoicedb.InvoicesTable {
+	return keel.Path(t.Ref, 5, invoicedb.BuildInvoices)
+}
+
+// ReplacementInvoice is the belongs relation.
+func (t *InvoiceAdjustmentsTable) ReplacementInvoice() *invoicedb.InvoicesTable {
+	return keel.Path(t.Ref, 6, invoicedb.BuildInvoices)
+}
+
+// RebillQueueItem is the belongs relation.
+func (t *InvoiceAdjustmentsTable) RebillQueueItem() *billingqueuedb.BillingQueueItemsTable {
+	return keel.Path(t.Ref, 7, billingqueuedb.BuildBillingQueueItems)
+}
+
+// SubmittedBy is the belongs relation.
+func (t *InvoiceAdjustmentsTable) SubmittedBy() *tenantdb.UsersTable {
+	return keel.Path(t.Ref, 8, tenantdb.BuildUsers)
+}
+
+// ApprovedBy is the belongs relation.
+func (t *InvoiceAdjustmentsTable) ApprovedBy() *tenantdb.UsersTable {
+	return keel.Path(t.Ref, 9, tenantdb.BuildUsers)
+}
+
+// RejectedBy is the belongs relation.
+func (t *InvoiceAdjustmentsTable) RejectedBy() *tenantdb.UsersTable {
+	return keel.Path(t.Ref, 10, tenantdb.BuildUsers)
 }
 
 // Get returns the invoice_adjustments row with the given key, or keel.ErrNotFound.
@@ -506,6 +554,20 @@ func attachInvoiceAdjustment(p unsafe.Pointer, rel int32, child unsafe.Pointer) 
 		r.ReconciliationExceptions = append(r.ReconciliationExceptions, (*invoiceadjustment.InvoiceAdjustmentReconciliationException)(child))
 	case 3:
 		r.DocumentReferences = append(r.DocumentReferences, (*invoiceadjustment.InvoiceAdjustmentDocumentReference)(child))
+	case 4:
+		r.OriginalInvoice = (*invoice.Invoice)(child)
+	case 5:
+		r.CreditMemoInvoice = (*invoice.Invoice)(child)
+	case 6:
+		r.ReplacementInvoice = (*invoice.Invoice)(child)
+	case 7:
+		r.RebillQueueItem = (*billingqueue.BillingQueueItem)(child)
+	case 8:
+		r.SubmittedBy = (*tenant.User)(child)
+	case 9:
+		r.ApprovedBy = (*tenant.User)(child)
+	case 10:
+		r.RejectedBy = (*tenant.User)(child)
 	}
 }
 
@@ -540,10 +602,11 @@ var invoiceAdjustmentBatchesTable = schema.Table{
 		{Name: "metadata", Quoted: `"metadata"`, Field: "Metadata", Kind: schema.KindJSON, Flags: schema.FlagJSONB, Label: `Metadata`, JSON: `metadata`},
 		{Name: "version", Quoted: `"version"`, Field: "Version", Kind: schema.KindInt64, Flags: schema.FlagVersion, Label: `Version`, JSON: `version`},
 		{Name: "created_at", Quoted: `"created_at"`, Field: "CreatedAt", Kind: schema.KindInt64, Flags: 0, Label: `Created At`, JSON: `createdAt`},
-		{Name: "updated_at", Quoted: `"updated_at"`, Field: "UpdatedAt", Kind: schema.KindInt64, Flags: 0, Label: `Updated At`, JSON: `updatedAt`},
+		{Name: "updated_at", Quoted: `"updated_at"`, Field: "UpdatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoUpdate, Label: `Updated At`, JSON: `updatedAt`},
 	},
 	Relations: []schema.Relation{
 		{Name: "Items", Alias: "i", Kind: schema.HasMany, Local: []int32{0}, Remote: []int32{3}, Label: `Items`, JSON: `items`},
+		{Name: "SubmittedBy", Alias: "sb", Kind: schema.BelongsTo, Local: []int32{9}, Remote: []int32{0}, Label: `Submitted By`},
 	},
 	PK:           []int32{0, 1, 2},
 	Tenant:       []int32{1, 2},
@@ -554,7 +617,7 @@ var invoiceAdjustmentBatchesTable = schema.Table{
 	Version:      16,
 	AutoID:       -1,
 	AutoCreate:   -1,
-	AutoUpdate:   -1,
+	AutoUpdate:   18,
 	IDPrefix:     "",
 	New:          newInvoiceAdjustmentBatch,
 	NewN:         newNInvoiceAdjustmentBatch,
@@ -652,6 +715,11 @@ func (t *InvoiceAdjustmentBatchesTable) As(alias string) *InvoiceAdjustmentBatch
 // Items is the many relation.
 func (t *InvoiceAdjustmentBatchesTable) Items() *InvoiceAdjustmentBatchItemsTable {
 	return keel.Path(t.Ref, 0, BuildInvoiceAdjustmentBatchItems)
+}
+
+// SubmittedBy is the belongs relation.
+func (t *InvoiceAdjustmentBatchesTable) SubmittedBy() *tenantdb.UsersTable {
+	return keel.Path(t.Ref, 1, tenantdb.BuildUsers)
 }
 
 // Get returns the invoice_adjustment_batches row with the given key, or keel.ErrNotFound.
@@ -771,6 +839,8 @@ func attachInvoiceAdjustmentBatch(p unsafe.Pointer, rel int32, child unsafe.Poin
 	switch rel {
 	case 0:
 		r.Items = append(r.Items, (*invoiceadjustment.InvoiceAdjustmentBatchItem)(child))
+	case 1:
+		r.SubmittedBy = (*tenant.User)(child)
 	}
 }
 
@@ -799,7 +869,7 @@ var invoiceAdjustmentBatchItemsTable = schema.Table{
 		{Name: "request_payload", Quoted: `"request_payload"`, Field: "RequestPayload", Kind: schema.KindJSON, Flags: schema.FlagJSONB, Label: `Request Payload`, JSON: `requestPayload`},
 		{Name: "result_payload", Quoted: `"result_payload"`, Field: "ResultPayload", Kind: schema.KindJSON, Flags: schema.FlagJSONB, Label: `Result Payload`, JSON: `resultPayload`},
 		{Name: "created_at", Quoted: `"created_at"`, Field: "CreatedAt", Kind: schema.KindInt64, Flags: 0, Label: `Created At`, JSON: `createdAt`},
-		{Name: "updated_at", Quoted: `"updated_at"`, Field: "UpdatedAt", Kind: schema.KindInt64, Flags: 0, Label: `Updated At`, JSON: `updatedAt`},
+		{Name: "updated_at", Quoted: `"updated_at"`, Field: "UpdatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoUpdate, Label: `Updated At`, JSON: `updatedAt`},
 	},
 	PK:           []int32{0, 1, 2},
 	Tenant:       []int32{1, 2},
@@ -810,7 +880,7 @@ var invoiceAdjustmentBatchItemsTable = schema.Table{
 	Version:      -1,
 	AutoID:       -1,
 	AutoCreate:   -1,
-	AutoUpdate:   -1,
+	AutoUpdate:   12,
 	IDPrefix:     "",
 	New:          newInvoiceAdjustmentBatchItem,
 	NewN:         newNInvoiceAdjustmentBatchItem,
@@ -997,24 +1067,25 @@ var invoiceAdjustmentCorrectionGroupsTable = schema.Table{
 		{Name: "current_invoice_id", Quoted: `"current_invoice_id"`, Field: "CurrentInvoiceID", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Current Invoice ID`, JSON: `currentInvoiceId`},
 		{Name: "metadata", Quoted: `"metadata"`, Field: "Metadata", Kind: schema.KindJSON, Flags: schema.FlagJSONB, Label: `Metadata`, JSON: `metadata`},
 		{Name: "created_at", Quoted: `"created_at"`, Field: "CreatedAt", Kind: schema.KindInt64, Flags: 0, Label: `Created At`, JSON: `createdAt`},
-		{Name: "updated_at", Quoted: `"updated_at"`, Field: "UpdatedAt", Kind: schema.KindInt64, Flags: 0, Label: `Updated At`, JSON: `updatedAt`},
+		{Name: "updated_at", Quoted: `"updated_at"`, Field: "UpdatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoUpdate, Label: `Updated At`, JSON: `updatedAt`},
 	},
-	PK:         []int32{0, 1, 2},
-	Tenant:     []int32{1, 2},
-	Select:     []int32{0, 1, 2, 3, 4, 5, 6, 7},
-	Insert:     []int32{0, 1, 2, 3, 4, 5, 6, 7},
-	Update:     []int32{3, 4, 5, 6, 7},
-	Returning:  nil,
-	Version:    -1,
-	AutoID:     -1,
-	AutoCreate: -1,
-	AutoUpdate: -1,
-	IDPrefix:   "",
-	New:        newInvoiceAdjustmentCorrectionGroup,
-	NewN:       newNInvoiceAdjustmentCorrectionGroup,
-	Size:       unsafe.Sizeof(invoiceadjustment.InvoiceAdjustmentCorrectionGroup{}),
-	Ptr:        ptrInvoiceAdjustmentCorrectionGroup,
-	Value:      valueInvoiceAdjustmentCorrectionGroup,
+	PK:           []int32{0, 1, 2},
+	Tenant:       []int32{1, 2},
+	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7},
+	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7},
+	Update:       []int32{3, 4, 5, 6, 7},
+	Returning:    nil,
+	Version:      -1,
+	AutoID:       -1,
+	AutoCreate:   -1,
+	AutoUpdate:   7,
+	IDPrefix:     "",
+	New:          newInvoiceAdjustmentCorrectionGroup,
+	NewN:         newNInvoiceAdjustmentCorrectionGroup,
+	Size:         unsafe.Sizeof(invoiceadjustment.InvoiceAdjustmentCorrectionGroup{}),
+	Ptr:          ptrInvoiceAdjustmentCorrectionGroup,
+	Value:        valueInvoiceAdjustmentCorrectionGroup,
+	BeforeCreate: beforeCreateInvoiceAdjustmentCorrectionGroup,
 }
 
 var invoiceAdjustmentCorrectionGroupsRef = keel.Ref{Table: &invoiceAdjustmentCorrectionGroupsTable}
@@ -1135,6 +1206,10 @@ func valueInvoiceAdjustmentCorrectionGroup(p unsafe.Pointer, c int32) any {
 	return nil
 }
 
+func beforeCreateInvoiceAdjustmentCorrectionGroup(ctx context.Context, p unsafe.Pointer) error {
+	return (*invoiceadjustment.InvoiceAdjustmentCorrectionGroup)(p).BeforeCreate(ctx)
+}
+
 // invoiceAdjustmentDocumentReferencesTable is the schema of invoiceadjustment.InvoiceAdjustmentDocumentReference.
 var invoiceAdjustmentDocumentReferencesTable = schema.Table{
 	Name:   "invoice_adjustment_document_references",
@@ -1158,28 +1233,29 @@ var invoiceAdjustmentDocumentReferencesTable = schema.Table{
 		{Name: "snapshot_resource_id", Quoted: `"snapshot_resource_id"`, Field: "SnapshotResourceID", Kind: schema.KindString, Flags: 0, Label: `Snapshot Resource ID`, JSON: `snapshotResourceId`},
 		{Name: "version", Quoted: `"version"`, Field: "Version", Kind: schema.KindInt64, Flags: schema.FlagVersion, Label: `Version`, JSON: `version`},
 		{Name: "created_at", Quoted: `"created_at"`, Field: "CreatedAt", Kind: schema.KindInt64, Flags: 0, Label: `Created At`, JSON: `createdAt`},
-		{Name: "updated_at", Quoted: `"updated_at"`, Field: "UpdatedAt", Kind: schema.KindInt64, Flags: 0, Label: `Updated At`, JSON: `updatedAt`},
+		{Name: "updated_at", Quoted: `"updated_at"`, Field: "UpdatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoUpdate, Label: `Updated At`, JSON: `updatedAt`},
 	},
 	Relations: []schema.Relation{
 		{Name: "Document", Alias: "d", Kind: schema.BelongsTo, Local: []int32{4}, Remote: []int32{0}, Label: `Document`, JSON: `document`},
 	},
-	PK:         []int32{0, 1, 2},
-	Tenant:     []int32{1, 2},
-	Select:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14},
-	Insert:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14},
-	Update:     []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 13, 14},
-	Returning:  nil,
-	Version:    12,
-	AutoID:     -1,
-	AutoCreate: -1,
-	AutoUpdate: -1,
-	IDPrefix:   "",
-	New:        newInvoiceAdjustmentDocumentReference,
-	NewN:       newNInvoiceAdjustmentDocumentReference,
-	Size:       unsafe.Sizeof(invoiceadjustment.InvoiceAdjustmentDocumentReference{}),
-	Ptr:        ptrInvoiceAdjustmentDocumentReference,
-	Value:      valueInvoiceAdjustmentDocumentReference,
-	Attach:     attachInvoiceAdjustmentDocumentReference,
+	PK:           []int32{0, 1, 2},
+	Tenant:       []int32{1, 2},
+	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14},
+	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14},
+	Update:       []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 13, 14},
+	Returning:    nil,
+	Version:      12,
+	AutoID:       -1,
+	AutoCreate:   -1,
+	AutoUpdate:   14,
+	IDPrefix:     "",
+	New:          newInvoiceAdjustmentDocumentReference,
+	NewN:         newNInvoiceAdjustmentDocumentReference,
+	Size:         unsafe.Sizeof(invoiceadjustment.InvoiceAdjustmentDocumentReference{}),
+	Ptr:          ptrInvoiceAdjustmentDocumentReference,
+	Value:        valueInvoiceAdjustmentDocumentReference,
+	Attach:       attachInvoiceAdjustmentDocumentReference,
+	BeforeCreate: beforeCreateInvoiceAdjustmentDocumentReference,
 }
 
 var invoiceAdjustmentDocumentReferencesRef = keel.Ref{Table: &invoiceAdjustmentDocumentReferencesTable}
@@ -1362,6 +1438,10 @@ func attachInvoiceAdjustmentDocumentReference(p unsafe.Pointer, rel int32, child
 	}
 }
 
+func beforeCreateInvoiceAdjustmentDocumentReference(ctx context.Context, p unsafe.Pointer) error {
+	return (*invoiceadjustment.InvoiceAdjustmentDocumentReference)(p).BeforeCreate(ctx)
+}
+
 // invoiceAdjustmentLinesTable is the schema of invoiceadjustment.InvoiceAdjustmentLine.
 var invoiceAdjustmentLinesTable = schema.Table{
 	Name:   "invoice_adjustment_lines",
@@ -1392,7 +1472,7 @@ var invoiceAdjustmentLinesTable = schema.Table{
 		{Name: "rebill_amount_minor", Quoted: `"rebill_amount_minor"`, Field: "RebillAmountMinor", Kind: schema.KindInt64, Flags: 0, Label: `Rebill Amount (Minor)`, JSON: `rebillAmountMinor`, Report: &reportMeasureInteger},
 		{Name: "replacement_payload", Quoted: `"replacement_payload"`, Field: "ReplacementPayload", Kind: schema.KindJSON, Flags: schema.FlagJSONB, Label: `Replacement Payload`, JSON: `replacementPayload`, Report: &reportDimJsonbHidden},
 		{Name: "created_at", Quoted: `"created_at"`, Field: "CreatedAt", Kind: schema.KindInt64, Flags: 0, Label: `Created At`, JSON: `createdAt`, Report: &reportDimEpoch},
-		{Name: "updated_at", Quoted: `"updated_at"`, Field: "UpdatedAt", Kind: schema.KindInt64, Flags: 0, Label: `Updated At`, JSON: `updatedAt`, Report: &reportDimEpoch},
+		{Name: "updated_at", Quoted: `"updated_at"`, Field: "UpdatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoUpdate, Label: `Updated At`, JSON: `updatedAt`, Report: &reportDimEpoch},
 	},
 	PK:           []int32{0, 1, 2},
 	Tenant:       []int32{1, 2},
@@ -1403,7 +1483,7 @@ var invoiceAdjustmentLinesTable = schema.Table{
 	Version:      -1,
 	AutoID:       -1,
 	AutoCreate:   -1,
-	AutoUpdate:   -1,
+	AutoUpdate:   19,
 	IDPrefix:     "",
 	New:          newInvoiceAdjustmentLine,
 	NewN:         newNInvoiceAdjustmentLine,
@@ -1640,24 +1720,30 @@ var invoiceAdjustmentReconciliationExceptionsTable = schema.Table{
 		{Name: "amount", Quoted: `"amount"`, Field: "Amount", Kind: schema.KindOther, Flags: 0, Label: `Amount`, JSON: `amount`},
 		{Name: "metadata", Quoted: `"metadata"`, Field: "Metadata", Kind: schema.KindJSON, Flags: schema.FlagJSONB, Label: `Metadata`, JSON: `metadata`},
 		{Name: "created_at", Quoted: `"created_at"`, Field: "CreatedAt", Kind: schema.KindInt64, Flags: 0, Label: `Created At`, JSON: `createdAt`},
-		{Name: "updated_at", Quoted: `"updated_at"`, Field: "UpdatedAt", Kind: schema.KindInt64, Flags: 0, Label: `Updated At`, JSON: `updatedAt`},
+		{Name: "updated_at", Quoted: `"updated_at"`, Field: "UpdatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoUpdate, Label: `Updated At`, JSON: `updatedAt`},
 	},
-	PK:         []int32{0, 1, 2},
-	Tenant:     []int32{1, 2},
-	Select:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11},
-	Insert:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11},
-	Update:     []int32{3, 4, 5, 6, 7, 8, 9, 10, 11},
-	Returning:  nil,
-	Version:    -1,
-	AutoID:     -1,
-	AutoCreate: -1,
-	AutoUpdate: -1,
-	IDPrefix:   "",
-	New:        newInvoiceAdjustmentReconciliationException,
-	NewN:       newNInvoiceAdjustmentReconciliationException,
-	Size:       unsafe.Sizeof(invoiceadjustment.InvoiceAdjustmentReconciliationException{}),
-	Ptr:        ptrInvoiceAdjustmentReconciliationException,
-	Value:      valueInvoiceAdjustmentReconciliationException,
+	Relations: []schema.Relation{
+		{Name: "Adjustment", Alias: "a", Kind: schema.BelongsTo, Local: []int32{3}, Remote: []int32{0}, Label: `Adjustment`},
+		{Name: "CreditMemoInvoice", Alias: "cmi", Kind: schema.BelongsTo, Local: []int32{5}, Remote: []int32{0}, Label: `Credit Memo Invoice`},
+	},
+	PK:           []int32{0, 1, 2},
+	Tenant:       []int32{1, 2},
+	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11},
+	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11},
+	Update:       []int32{3, 4, 5, 6, 7, 8, 9, 10, 11},
+	Returning:    nil,
+	Version:      -1,
+	AutoID:       -1,
+	AutoCreate:   -1,
+	AutoUpdate:   11,
+	IDPrefix:     "",
+	New:          newInvoiceAdjustmentReconciliationException,
+	NewN:         newNInvoiceAdjustmentReconciliationException,
+	Size:         unsafe.Sizeof(invoiceadjustment.InvoiceAdjustmentReconciliationException{}),
+	Ptr:          ptrInvoiceAdjustmentReconciliationException,
+	Value:        valueInvoiceAdjustmentReconciliationException,
+	Attach:       attachInvoiceAdjustmentReconciliationException,
+	BeforeCreate: beforeCreateInvoiceAdjustmentReconciliationException,
 }
 
 var invoiceAdjustmentReconciliationExceptionsRef = keel.Ref{Table: &invoiceAdjustmentReconciliationExceptionsTable}
@@ -1723,6 +1809,16 @@ func InvoiceAdjustmentReconciliationExceptionsSchema() *schema.Table {
 // As returns a handle that references invoice_reconciliation_exceptions under its own alias.
 func (t *InvoiceAdjustmentReconciliationExceptionsTable) As(alias string) *InvoiceAdjustmentReconciliationExceptionsTable {
 	return keel.Alias(t.Ref, alias, BuildInvoiceAdjustmentReconciliationExceptions)
+}
+
+// Adjustment is the belongs relation.
+func (t *InvoiceAdjustmentReconciliationExceptionsTable) Adjustment() *InvoiceAdjustmentsTable {
+	return keel.Path(t.Ref, 0, BuildInvoiceAdjustments)
+}
+
+// CreditMemoInvoice is the belongs relation.
+func (t *InvoiceAdjustmentReconciliationExceptionsTable) CreditMemoInvoice() *invoicedb.InvoicesTable {
+	return keel.Path(t.Ref, 1, invoicedb.BuildInvoices)
 }
 
 // Get returns the invoice_reconciliation_exceptions row with the given key, or keel.ErrNotFound.
@@ -1804,6 +1900,20 @@ func valueInvoiceAdjustmentReconciliationException(p unsafe.Pointer, c int32) an
 		return r.UpdatedAt
 	}
 	return nil
+}
+
+func attachInvoiceAdjustmentReconciliationException(p unsafe.Pointer, rel int32, child unsafe.Pointer) {
+	r := (*invoiceadjustment.InvoiceAdjustmentReconciliationException)(p)
+	switch rel {
+	case 0:
+		r.Adjustment = (*invoiceadjustment.InvoiceAdjustment)(child)
+	case 1:
+		r.CreditMemoInvoice = (*invoice.Invoice)(child)
+	}
+}
+
+func beforeCreateInvoiceAdjustmentReconciliationException(ctx context.Context, p unsafe.Pointer) error {
+	return (*invoiceadjustment.InvoiceAdjustmentReconciliationException)(p).BeforeCreate(ctx)
 }
 
 // invoiceAdjustmentSnapshotsTable is the schema of invoiceadjustment.InvoiceAdjustmentSnapshot.
@@ -1976,8 +2086,18 @@ func init() {
 	invoiceAdjustmentsTable.Relations[1].Target = InvoiceAdjustmentSnapshotsSchema()
 	invoiceAdjustmentsTable.Relations[2].Target = InvoiceAdjustmentReconciliationExceptionsSchema()
 	invoiceAdjustmentsTable.Relations[3].Target = InvoiceAdjustmentDocumentReferencesSchema()
+	invoiceAdjustmentsTable.Relations[4].Target = invoicedb.InvoicesSchema()
+	invoiceAdjustmentsTable.Relations[5].Target = invoicedb.InvoicesSchema()
+	invoiceAdjustmentsTable.Relations[6].Target = invoicedb.InvoicesSchema()
+	invoiceAdjustmentsTable.Relations[7].Target = billingqueuedb.BillingQueueItemsSchema()
+	invoiceAdjustmentsTable.Relations[8].Target = tenantdb.UsersSchema()
+	invoiceAdjustmentsTable.Relations[9].Target = tenantdb.UsersSchema()
+	invoiceAdjustmentsTable.Relations[10].Target = tenantdb.UsersSchema()
 	invoiceAdjustmentBatchesTable.Relations[0].Target = InvoiceAdjustmentBatchItemsSchema()
+	invoiceAdjustmentBatchesTable.Relations[1].Target = tenantdb.UsersSchema()
 	invoiceAdjustmentDocumentReferencesTable.Relations[0].Target = documentdb.DocumentsSchema()
+	invoiceAdjustmentReconciliationExceptionsTable.Relations[0].Target = InvoiceAdjustmentsSchema()
+	invoiceAdjustmentReconciliationExceptionsTable.Relations[1].Target = invoicedb.InvoicesSchema()
 }
 
 // intIs64 fails the build where int is not 64 bits: int fields are read through *int64.

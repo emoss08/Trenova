@@ -11,7 +11,6 @@ import (
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/domainvalidation"
 	"github.com/emoss08/trenova/pkg/errortypes"
-	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/stringutils"
 	"github.com/emoss08/trenova/shared/timeutils"
@@ -35,9 +34,8 @@ var (
 
 // Schedules of accounts sent to each factor, with their invoices' total, expected advance, fee and reserve, and how delivery went
 type Submission struct {
-	bun.BaseModel             `bun:"table:factoring_submissions,alias:facsub" json:"-"`
-	keel.Table                `                                                        keel:"factoring_submissions,report=Billing,label=Factoring Schedule"`
-	pagination.CursorValueSet `bun:",embed"                                   json:"-"`
+	bun.BaseModel `bun:"table:factoring_submissions,alias:facsub" json:"-"`
+	keel.Table    `                                                        keel:"factoring_submissions,report=Billing,label=Factoring Schedule"`
 
 	ID                    pulid.ID         `json:"id"                    bun:"id,pk,type:VARCHAR(100),notnull"                     keel:"id,pk,autoid:facsub_"`
 	OrganizationID        pulid.ID         `json:"organizationId"        bun:"organization_id,pk,type:VARCHAR(100),notnull"        keel:"organization_id,pk,tenant"`
@@ -110,8 +108,9 @@ type SubmissionItem struct {
 	CreatedAt            int64                `json:"createdAt"            bun:"created_at,type:BIGINT,notnull"                    keel:"created_at,autocreate"`
 	UpdatedAt            int64                `json:"updatedAt"            bun:"updated_at,type:BIGINT,notnull"                    keel:"updated_at,autoupdate"`
 
-	Invoice  *invoice.Invoice   `json:"invoice,omitempty"  bun:"rel:belongs-to,join:invoice_id=id,join:organization_id=organization_id,join:business_unit_id=business_unit_id"  keel:"belongs:invoice_id"`
-	Customer *customer.Customer `json:"customer,omitempty" bun:"rel:belongs-to,join:customer_id=id,join:organization_id=organization_id,join:business_unit_id=business_unit_id" keel:"belongs:customer_id"`
+	Invoice    *invoice.Invoice   `json:"invoice,omitempty"  bun:"rel:belongs-to,join:invoice_id=id,join:organization_id=organization_id,join:business_unit_id=business_unit_id"  keel:"belongs:invoice_id"`
+	Customer   *customer.Customer `json:"customer,omitempty" bun:"rel:belongs-to,join:customer_id=id,join:organization_id=organization_id,join:business_unit_id=business_unit_id" keel:"belongs:customer_id"`
+	Submission *Submission        `json:"-"                  bun:"-"                                                                                                              keel:"belongs:submission_id,noreport"`
 }
 
 func (s *Submission) Validate(multiErr *errortypes.MultiError) {

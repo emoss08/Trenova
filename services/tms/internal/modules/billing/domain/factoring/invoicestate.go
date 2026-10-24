@@ -6,7 +6,6 @@ import (
 	"github.com/emoss08/trenova/internal/modules/parties/domain/customer"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/factoringcompany"
 	"github.com/emoss08/trenova/pkg/domaintypes"
-	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/uptrace/bun"
 )
@@ -15,9 +14,8 @@ const ReadyUnsubmittedSeconds = 24 * 60 * 60
 
 // Whether each factored invoice is ready to submit to its factor, what is holding it back, and since when
 type InvoiceState struct {
-	bun.BaseModel             `bun:"table:factoring_invoice_states,alias:facst" json:"-"`
-	keel.Table                `                                                          keel:"factoring_invoice_states,report=Billing,label=Invoice Factoring State"`
-	pagination.CursorValueSet `bun:",embed"                                     json:"-"`
+	bun.BaseModel `bun:"table:factoring_invoice_states,alias:facst" json:"-"`
+	keel.Table    `                                                          keel:"factoring_invoice_states,report=Billing,label=Invoice Factoring State"`
 
 	InvoiceID          pulid.ID  `json:"id"                 bun:"invoice_id,pk,type:VARCHAR(100),notnull"         keel:"invoice_id,pk"`
 	OrganizationID     pulid.ID  `json:"organizationId"     bun:"organization_id,pk,type:VARCHAR(100),notnull"    keel:"organization_id,pk,tenant"`

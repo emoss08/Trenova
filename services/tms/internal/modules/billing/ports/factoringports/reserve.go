@@ -28,15 +28,15 @@ type ListReserveEntriesForItemRequest struct {
 }
 
 type ReserveBalance struct {
-	FactoringCompanyID pulid.ID `json:"factoringCompanyId" bun:"factoring_company_id"`
-	ReserveMinor       int64    `json:"reserveMinor"       bun:"reserve_minor"`
-	LiabilityMinor     int64    `json:"liabilityMinor"     bun:"liability_minor"`
-	AdvancedMinor      int64    `json:"advancedMinor"      bun:"advanced_minor"`
-	ReleasedMinor      int64    `json:"releasedMinor"      bun:"released_minor"`
-	ChargedBackMinor   int64    `json:"chargedBackMinor"   bun:"charged_back_minor"`
-	FeeMinor           int64    `json:"feeMinor"           bun:"fee_minor"`
-	EntryCount         int      `json:"entryCount"         bun:"entry_count"`
-	LastOccurredOn     *int64   `json:"lastOccurredOn"     bun:"last_occurred_on"`
+	FactoringCompanyID pulid.ID `json:"factoringCompanyId"`
+	ReserveMinor       int64    `json:"reserveMinor"`
+	LiabilityMinor     int64    `json:"liabilityMinor"`
+	AdvancedMinor      int64    `json:"advancedMinor"`
+	ReleasedMinor      int64    `json:"releasedMinor"`
+	ChargedBackMinor   int64    `json:"chargedBackMinor"`
+	FeeMinor           int64    `json:"feeMinor"`
+	EntryCount         int      `json:"entryCount"`
+	LastOccurredOn     *int64   `json:"lastOccurredOn"`
 }
 
 type ReserveEntryRepository interface {
