@@ -17,24 +17,7 @@ import (
 	"go.uber.org/zap"
 )
 
-const recalculateBatchAggregatesSQL = `UPDATE carrier_settlement_batches AS b SET
-	settlement_count = agg.settlement_count,
-	total_gross_minor = agg.total_gross_minor,
-	total_net_minor = agg.total_net_minor,
-	updated_at = extract(epoch from current_timestamp)::bigint
-FROM (
-	SELECT
-		COUNT(*) FILTER (WHERE s.status != 'Voided') AS settlement_count,
-		COALESCE(SUM(s.gross_cost_minor) FILTER (WHERE s.status != 'Voided'), 0) AS total_gross_minor,
-		COALESCE(SUM(s.net_payable_minor) FILTER (WHERE s.status != 'Voided'), 0) AS total_net_minor
-	FROM carrier_settlements s
-	WHERE s.batch_id = $1
-		AND s.organization_id = $2
-		AND s.business_unit_id = $3
-) AS agg
-WHERE b.id = $1
-	AND b.organization_id = $2
-	AND b.business_unit_id = $3`
+const batchAggregateCTE = "agg"
 
 var batchErrors = dberror.Mapping{Entity: "CarrierSettlementBatch"}
 
@@ -162,18 +145,31 @@ func (r *batchRepository) RecalculateAggregates(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*carriersettlement.CarrierSettlementBatch, error) {
-			db := r.db.Keel(ctx)
-			if _, err := keel.Exec(
-				ctx,
-				db,
-				recalculateBatchAggregatesSQL,
-				batchID.String(),
-				tenantInfo.OrgID.String(),
-				tenantInfo.BuID.String(),
-			); err != nil {
+			s := carriersettlementdb.CarrierSettlements
+			b := carriersettlementdb.CarrierSettlementBatches
+			live := s.Status.Ne(carriersettlement.StatusVoided)
+			agg := keel.CTE(
+				batchAggregateCTE,
+				[]string{"settlement_count", "total_gross_minor", "total_net_minor"},
+				s.Pick(
+					keel.Count().Filter(live),
+					keel.DynOf(s.GrossCostMinor.Sum().Filter(live)).Coalesce(0),
+					keel.DynOf(s.NetPayableMinor.Sum().Filter(live)).Coalesce(0),
+				).Where(s.BatchID.Eq(batchID)),
+			)
+
+			if _, err := b.With(agg).
+				Join(agg).
+				Where(b.ID.Eq(batchID)).
+				Update(
+					ctx,
+					r.db.Keel(ctx),
+					b.SettlementCount.ToExpr(agg.Col("settlement_count")),
+					b.TotalGrossMinor.ToExpr(agg.Col("total_gross_minor")),
+					b.TotalNetMinor.ToExpr(agg.Col("total_net_minor")),
+				); err != nil {
 				return nil, fmt.Errorf("recalculate carrier settlement batch aggregates: %w", err)
 			}
-			keel.MarkChanged(ctx, db, carriersettlementdb.CarrierSettlementBatchesSchema().Name)
 
 			return r.GetByID(ctx, carriersettlementports.GetCarrierSettlementBatchByIDRequest{
 				ID:         batchID,

@@ -65,7 +65,7 @@ var dashboardsRef = keel.Ref{Table: &dashboardsTable}
 
 // DashboardsTable is the table of report.Dashboard.
 type DashboardsTable struct {
-	keel.Handle[report.Dashboard]
+	keel.Handle[*report.Dashboard]
 	ID             keelkinds.PulidIDCol
 	BusinessUnitID keelkinds.PulidIDCol
 	OrganizationID keelkinds.PulidIDCol
@@ -83,7 +83,7 @@ type DashboardsTable struct {
 
 // Dashboards references the report_dashboards table.
 var Dashboards = &DashboardsTable{
-	Handle:         keel.Handle[report.Dashboard]{Ref: &dashboardsRef},
+	Handle:         keel.Handle[*report.Dashboard]{Ref: &dashboardsRef},
 	ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &dashboardsRef, Index: 0}}},
 	BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &dashboardsRef, Index: 1}}},
 	OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &dashboardsRef, Index: 2}}},
@@ -102,7 +102,7 @@ var Dashboards = &DashboardsTable{
 // BuildDashboards builds the handle of report_dashboards for ref. Generated relation and alias methods call it.
 func BuildDashboards(r *keel.Ref) *DashboardsTable {
 	return &DashboardsTable{
-		Handle:         keel.Handle[report.Dashboard]{Ref: r},
+		Handle:         keel.Handle[*report.Dashboard]{Ref: r},
 		ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -294,7 +294,7 @@ var reportDefinitionsRef = keel.Ref{Table: &reportDefinitionsTable}
 
 // ReportDefinitionsTable is the table of report.ReportDefinition.
 type ReportDefinitionsTable struct {
-	keel.Handle[report.ReportDefinition]
+	keel.Handle[*report.ReportDefinition]
 	ID              keelkinds.PulidIDCol
 	BusinessUnitID  keelkinds.PulidIDCol
 	OrganizationID  keelkinds.PulidIDCol
@@ -321,7 +321,7 @@ type ReportDefinitionsTable struct {
 
 // ReportDefinitions references the report_definitions table.
 var ReportDefinitions = &ReportDefinitionsTable{
-	Handle:          keel.Handle[report.ReportDefinition]{Ref: &reportDefinitionsRef},
+	Handle:          keel.Handle[*report.ReportDefinition]{Ref: &reportDefinitionsRef},
 	ID:              keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &reportDefinitionsRef, Index: 0}}},
 	BusinessUnitID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &reportDefinitionsRef, Index: 1}}},
 	OrganizationID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &reportDefinitionsRef, Index: 2}}},
@@ -349,7 +349,7 @@ var ReportDefinitions = &ReportDefinitionsTable{
 // BuildReportDefinitions builds the handle of report_definitions for ref. Generated relation and alias methods call it.
 func BuildReportDefinitions(r *keel.Ref) *ReportDefinitionsTable {
 	return &ReportDefinitionsTable{
-		Handle:          keel.Handle[report.ReportDefinition]{Ref: r},
+		Handle:          keel.Handle[*report.ReportDefinition]{Ref: r},
 		ID:              keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -582,7 +582,7 @@ var reportDefinitionRevisionsRef = keel.Ref{Table: &reportDefinitionRevisionsTab
 
 // ReportDefinitionRevisionsTable is the table of report.ReportDefinitionRevision.
 type ReportDefinitionRevisionsTable struct {
-	keel.Handle[report.ReportDefinitionRevision]
+	keel.Handle[*report.ReportDefinitionRevision]
 	ID             keelkinds.PulidIDCol
 	BusinessUnitID keelkinds.PulidIDCol
 	OrganizationID keelkinds.PulidIDCol
@@ -596,7 +596,7 @@ type ReportDefinitionRevisionsTable struct {
 
 // ReportDefinitionRevisions references the report_definition_revisions table.
 var ReportDefinitionRevisions = &ReportDefinitionRevisionsTable{
-	Handle:         keel.Handle[report.ReportDefinitionRevision]{Ref: &reportDefinitionRevisionsRef},
+	Handle:         keel.Handle[*report.ReportDefinitionRevision]{Ref: &reportDefinitionRevisionsRef},
 	ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &reportDefinitionRevisionsRef, Index: 0}}},
 	BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &reportDefinitionRevisionsRef, Index: 1}}},
 	OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &reportDefinitionRevisionsRef, Index: 2}}},
@@ -611,7 +611,7 @@ var ReportDefinitionRevisions = &ReportDefinitionRevisionsTable{
 // BuildReportDefinitionRevisions builds the handle of report_definition_revisions for ref. Generated relation and alias methods call it.
 func BuildReportDefinitionRevisions(r *keel.Ref) *ReportDefinitionRevisionsTable {
 	return &ReportDefinitionRevisionsTable{
-		Handle:         keel.Handle[report.ReportDefinitionRevision]{Ref: r},
+		Handle:         keel.Handle[*report.ReportDefinitionRevision]{Ref: r},
 		ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -782,7 +782,7 @@ var reportRunsRef = keel.Ref{Table: &reportRunsTable}
 
 // ReportRunsTable is the table of report.ReportRun.
 type ReportRunsTable struct {
-	keel.Handle[report.ReportRun]
+	keel.Handle[*report.ReportRun]
 	ID                 keelkinds.PulidIDCol
 	BusinessUnitID     keelkinds.PulidIDCol
 	OrganizationID     keelkinds.PulidIDCol
@@ -817,7 +817,7 @@ type ReportRunsTable struct {
 
 // ReportRuns references the report_runs table.
 var ReportRuns = &ReportRunsTable{
-	Handle:             keel.Handle[report.ReportRun]{Ref: &reportRunsRef},
+	Handle:             keel.Handle[*report.ReportRun]{Ref: &reportRunsRef},
 	ID:                 keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &reportRunsRef, Index: 0}}},
 	BusinessUnitID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &reportRunsRef, Index: 1}}},
 	OrganizationID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &reportRunsRef, Index: 2}}},
@@ -853,7 +853,7 @@ var ReportRuns = &ReportRunsTable{
 // BuildReportRuns builds the handle of report_runs for ref. Generated relation and alias methods call it.
 func BuildReportRuns(r *keel.Ref) *ReportRunsTable {
 	return &ReportRunsTable{
-		Handle:             keel.Handle[report.ReportRun]{Ref: r},
+		Handle:             keel.Handle[*report.ReportRun]{Ref: r},
 		ID:                 keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -1180,7 +1180,7 @@ var reportSchedulesRef = keel.Ref{Table: &reportSchedulesTable}
 
 // ReportSchedulesTable is the table of report.ReportSchedule.
 type ReportSchedulesTable struct {
-	keel.Handle[report.ReportSchedule]
+	keel.Handle[*report.ReportSchedule]
 	ID                  keelkinds.PulidIDCol
 	BusinessUnitID      keelkinds.PulidIDCol
 	OrganizationID      keelkinds.PulidIDCol
@@ -1203,7 +1203,7 @@ type ReportSchedulesTable struct {
 
 // ReportSchedules references the report_schedules table.
 var ReportSchedules = &ReportSchedulesTable{
-	Handle:              keel.Handle[report.ReportSchedule]{Ref: &reportSchedulesRef},
+	Handle:              keel.Handle[*report.ReportSchedule]{Ref: &reportSchedulesRef},
 	ID:                  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &reportSchedulesRef, Index: 0}}},
 	BusinessUnitID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &reportSchedulesRef, Index: 1}}},
 	OrganizationID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &reportSchedulesRef, Index: 2}}},
@@ -1227,7 +1227,7 @@ var ReportSchedules = &ReportSchedulesTable{
 // BuildReportSchedules builds the handle of report_schedules for ref. Generated relation and alias methods call it.
 func BuildReportSchedules(r *keel.Ref) *ReportSchedulesTable {
 	return &ReportSchedulesTable{
-		Handle:              keel.Handle[report.ReportSchedule]{Ref: r},
+		Handle:              keel.Handle[*report.ReportSchedule]{Ref: r},
 		ID:                  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -1443,7 +1443,7 @@ var reportViewsRef = keel.Ref{Table: &reportViewsTable}
 
 // ReportViewsTable is the table of report.ReportView.
 type ReportViewsTable struct {
-	keel.Handle[report.ReportView]
+	keel.Handle[*report.ReportView]
 	ID             keelkinds.PulidIDCol
 	BusinessUnitID keelkinds.PulidIDCol
 	OrganizationID keelkinds.PulidIDCol
@@ -1464,7 +1464,7 @@ type ReportViewsTable struct {
 
 // ReportViews references the report_views table.
 var ReportViews = &ReportViewsTable{
-	Handle:         keel.Handle[report.ReportView]{Ref: &reportViewsRef},
+	Handle:         keel.Handle[*report.ReportView]{Ref: &reportViewsRef},
 	ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &reportViewsRef, Index: 0}}},
 	BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &reportViewsRef, Index: 1}}},
 	OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &reportViewsRef, Index: 2}}},
@@ -1486,7 +1486,7 @@ var ReportViews = &ReportViewsTable{
 // BuildReportViews builds the handle of report_views for ref. Generated relation and alias methods call it.
 func BuildReportViews(r *keel.Ref) *ReportViewsTable {
 	return &ReportViewsTable{
-		Handle:         keel.Handle[report.ReportView]{Ref: r},
+		Handle:         keel.Handle[*report.ReportView]{Ref: r},
 		ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},

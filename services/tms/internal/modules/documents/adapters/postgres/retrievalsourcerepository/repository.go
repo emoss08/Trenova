@@ -35,12 +35,11 @@ const (
 	defaultSearchLimit = 20
 	maxSearchLimit     = 200
 	maxQueryChars      = 500
-
-	anyWordSimple = "replace(replace(websearch_to_tsquery('simple', ?)::text, ' & ', ' | '), " +
-		"' | !', ' & !')::tsquery"
-	anyWordEnglish = "replace(replace(websearch_to_tsquery('english', ?)::text, ' & ', ' | '), " +
-		"' | !', ' & !')::tsquery"
 )
+
+func anyWord(config string) []keel.SearchOption {
+	return []keel.SearchOption{keel.SearchConfig(config), keel.SearchModes(keel.AnyWebSearch)}
+}
 
 var _ agentports.RetrievalSourceRepository = (*repository)(nil)
 
@@ -352,14 +351,15 @@ func (r *repository) SearchDocuments(
 	)
 }
 
-func searchDocumentsQuery(plan keywordPlan) *keel.Query[document.Document] {
+func searchDocumentsQuery(plan keywordPlan) *keel.Query[*document.Document] {
 	d := documentdb.Documents
 	dc := documentcontentdb.Contents
-	simple := keel.Raw(anyWordSimple, plan.query)
-	english := keel.Raw(anyWordEnglish, plan.query)
-	rank := keel.Raw(
-		"GREATEST(ts_rank_cd(?, ?), COALESCE(ts_rank_cd(?, ?), 0))",
-		d.SearchVector, simple, dc.SearchVector, english,
+	simple := anyWord("simple")
+	english := anyWord("english")
+	rank := keel.DynFunc(
+		"greatest",
+		d.SearchVector.RankCD(plan.query, simple...),
+		keel.DynOf(dc.SearchVector.RankCD(plan.query, english...)).Coalesce(0),
 	)
 
 	return d.LeftJoin(dc, dc.DocumentID.EqCol(d.ID)).
@@ -368,11 +368,11 @@ func searchDocumentsQuery(plan keywordPlan) *keel.Query[document.Document] {
 			d.IsCurrentVersion.IsTrue(),
 			d.Status.NotIn(document.UnsearchableStatuses()...),
 			keel.Or(
-				keel.Raw("? @@ ?", d.SearchVector, simple),
-				keel.Raw("? @@ ?", dc.SearchVector, english),
+				d.SearchVector.Match(plan.query, simple...),
+				dc.SearchVector.Match(plan.query, english...),
 			),
 		).
-		Order(keel.Desc(rank), d.ID.Asc()).
+		Order(rank.Desc(), d.ID.Asc()).
 		Limit(plan.limit)
 }
 
@@ -409,18 +409,18 @@ func (r *repository) SearchInboundMessages(
 func searchMessagesQuery(
 	plan keywordPlan,
 	filter agentports.InboundMessageFilter,
-) *keel.Query[inboundmessage.InboundMessage] {
+) *keel.Query[*inboundmessage.InboundMessage] {
 	m := inboundmessagedb.InboundMessages
-	english := keel.Raw(anyWordEnglish, plan.query)
-	rank := keel.Raw("ts_rank_cd(?, ?)", m.SearchVector, english)
+	english := anyWord("english")
+	rank := m.SearchVector.RankCD(plan.query, english...)
 
 	return m.Pick(m.ID, rank).
 		Where(
-			keel.Raw("? @@ ?", m.SearchVector, english),
+			m.SearchVector.Match(plan.query, english...),
 			keel.When(len(filter.Statuses) > 0, m.Status.In(filter.Statuses...)),
 			keel.When(filter.Classification != "", m.Classification.Eq(filter.Classification)),
 			keel.When(filter.MailboxID.IsNotNil(), m.MailboxID.Eq(filter.MailboxID)),
 		).
-		Order(keel.Desc(rank), m.ReceivedAt.Desc(), m.ID.Asc()).
+		Order(rank.Desc(), m.ReceivedAt.Desc(), m.ID.Asc()).
 		Limit(plan.limit)
 }

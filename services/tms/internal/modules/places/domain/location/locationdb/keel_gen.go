@@ -86,7 +86,7 @@ var locationsRef = keel.Ref{Table: &locationsTable}
 
 // LocationsTable is the table of location.Location.
 type LocationsTable struct {
-	keel.Handle[location.Location]
+	keel.Handle[*location.Location]
 	ID                   keelkinds.PulidIDCol
 	BusinessUnitID       keelkinds.PulidIDCol
 	OrganizationID       keelkinds.PulidIDCol
@@ -118,7 +118,7 @@ type LocationsTable struct {
 
 // Locations references the locations table.
 var Locations = &LocationsTable{
-	Handle:               keel.Handle[location.Location]{Ref: &locationsRef},
+	Handle:               keel.Handle[*location.Location]{Ref: &locationsRef},
 	ID:                   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &locationsRef, Index: 0}}},
 	BusinessUnitID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &locationsRef, Index: 1}}},
 	OrganizationID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &locationsRef, Index: 2}}},
@@ -151,7 +151,7 @@ var Locations = &LocationsTable{
 // BuildLocations builds the handle of locations for ref. Generated relation and alias methods call it.
 func BuildLocations(r *keel.Ref) *LocationsTable {
 	return &LocationsTable{
-		Handle:               keel.Handle[location.Location]{Ref: r},
+		Handle:               keel.Handle[*location.Location]{Ref: r},
 		ID:                   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},

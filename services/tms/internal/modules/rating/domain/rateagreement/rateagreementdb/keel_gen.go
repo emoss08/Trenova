@@ -106,7 +106,7 @@ var rateAgreementsRef = keel.Ref{Table: &rateAgreementsTable}
 
 // RateAgreementsTable is the table of rateagreement.RateAgreement.
 type RateAgreementsTable struct {
-	keel.Handle[rateagreement.RateAgreement]
+	keel.Handle[*rateagreement.RateAgreement]
 	ID                   keelkinds.PulidIDCol
 	BusinessUnitID       keelkinds.PulidIDCol
 	OrganizationID       keelkinds.PulidIDCol
@@ -145,7 +145,7 @@ type RateAgreementsTable struct {
 
 // RateAgreements references the rate_agreements table.
 var RateAgreements = &RateAgreementsTable{
-	Handle:               keel.Handle[rateagreement.RateAgreement]{Ref: &rateAgreementsRef},
+	Handle:               keel.Handle[*rateagreement.RateAgreement]{Ref: &rateAgreementsRef},
 	ID:                   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &rateAgreementsRef, Index: 0}}},
 	BusinessUnitID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &rateAgreementsRef, Index: 1}}},
 	OrganizationID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &rateAgreementsRef, Index: 2}}},
@@ -185,7 +185,7 @@ var RateAgreements = &RateAgreementsTable{
 // BuildRateAgreements builds the handle of rate_agreements for ref. Generated relation and alias methods call it.
 func BuildRateAgreements(r *keel.Ref) *RateAgreementsTable {
 	return &RateAgreementsTable{
-		Handle:               keel.Handle[rateagreement.RateAgreement]{Ref: r},
+		Handle:               keel.Handle[*rateagreement.RateAgreement]{Ref: r},
 		ID:                   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -560,7 +560,7 @@ var rateAgreementAccessorialsRef = keel.Ref{Table: &rateAgreementAccessorialsTab
 
 // RateAgreementAccessorialsTable is the table of rateagreement.RateAgreementAccessorial.
 type RateAgreementAccessorialsTable struct {
-	keel.Handle[rateagreement.RateAgreementAccessorial]
+	keel.Handle[*rateagreement.RateAgreementAccessorial]
 	ID                  keelkinds.PulidIDCol
 	BusinessUnitID      keelkinds.PulidIDCol
 	OrganizationID      keelkinds.PulidIDCol
@@ -585,7 +585,7 @@ type RateAgreementAccessorialsTable struct {
 
 // RateAgreementAccessorials references the rate_agreement_accessorials table.
 var RateAgreementAccessorials = &RateAgreementAccessorialsTable{
-	Handle:              keel.Handle[rateagreement.RateAgreementAccessorial]{Ref: &rateAgreementAccessorialsRef},
+	Handle:              keel.Handle[*rateagreement.RateAgreementAccessorial]{Ref: &rateAgreementAccessorialsRef},
 	ID:                  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &rateAgreementAccessorialsRef, Index: 0}}},
 	BusinessUnitID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &rateAgreementAccessorialsRef, Index: 1}}},
 	OrganizationID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &rateAgreementAccessorialsRef, Index: 2}}},
@@ -611,7 +611,7 @@ var RateAgreementAccessorials = &RateAgreementAccessorialsTable{
 // BuildRateAgreementAccessorials builds the handle of rate_agreement_accessorials for ref. Generated relation and alias methods call it.
 func BuildRateAgreementAccessorials(r *keel.Ref) *RateAgreementAccessorialsTable {
 	return &RateAgreementAccessorialsTable{
-		Handle:              keel.Handle[rateagreement.RateAgreementAccessorial]{Ref: r},
+		Handle:              keel.Handle[*rateagreement.RateAgreementAccessorial]{Ref: r},
 		ID:                  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -850,7 +850,7 @@ var rateAgreementFuelBindingsRef = keel.Ref{Table: &rateAgreementFuelBindingsTab
 
 // RateAgreementFuelBindingsTable is the table of rateagreement.RateAgreementFuelBinding.
 type RateAgreementFuelBindingsTable struct {
-	keel.Handle[rateagreement.RateAgreementFuelBinding]
+	keel.Handle[*rateagreement.RateAgreementFuelBinding]
 	ID                     keelkinds.PulidIDCol
 	BusinessUnitID         keelkinds.PulidIDCol
 	OrganizationID         keelkinds.PulidIDCol
@@ -867,7 +867,7 @@ type RateAgreementFuelBindingsTable struct {
 
 // RateAgreementFuelBindings references the rate_agreement_fuel_bindings table.
 var RateAgreementFuelBindings = &RateAgreementFuelBindingsTable{
-	Handle:                 keel.Handle[rateagreement.RateAgreementFuelBinding]{Ref: &rateAgreementFuelBindingsRef},
+	Handle:                 keel.Handle[*rateagreement.RateAgreementFuelBinding]{Ref: &rateAgreementFuelBindingsRef},
 	ID:                     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &rateAgreementFuelBindingsRef, Index: 0}}},
 	BusinessUnitID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &rateAgreementFuelBindingsRef, Index: 1}}},
 	OrganizationID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &rateAgreementFuelBindingsRef, Index: 2}}},
@@ -885,7 +885,7 @@ var RateAgreementFuelBindings = &RateAgreementFuelBindingsTable{
 // BuildRateAgreementFuelBindings builds the handle of rate_agreement_fuel_bindings for ref. Generated relation and alias methods call it.
 func BuildRateAgreementFuelBindings(r *keel.Ref) *RateAgreementFuelBindingsTable {
 	return &RateAgreementFuelBindingsTable{
-		Handle:                 keel.Handle[rateagreement.RateAgreementFuelBinding]{Ref: r},
+		Handle:                 keel.Handle[*rateagreement.RateAgreementFuelBinding]{Ref: r},
 		ID:                     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -1097,7 +1097,7 @@ var rateAgreementRulesRef = keel.Ref{Table: &rateAgreementRulesTable}
 
 // RateAgreementRulesTable is the table of rateagreement.RateAgreementRule.
 type RateAgreementRulesTable struct {
-	keel.Handle[rateagreement.RateAgreementRule]
+	keel.Handle[*rateagreement.RateAgreementRule]
 	ID                      keelkinds.PulidIDCol
 	BusinessUnitID          keelkinds.PulidIDCol
 	OrganizationID          keelkinds.PulidIDCol
@@ -1155,7 +1155,7 @@ type RateAgreementRulesTable struct {
 
 // RateAgreementRules references the rate_agreement_rules table.
 var RateAgreementRules = &RateAgreementRulesTable{
-	Handle:                  keel.Handle[rateagreement.RateAgreementRule]{Ref: &rateAgreementRulesRef},
+	Handle:                  keel.Handle[*rateagreement.RateAgreementRule]{Ref: &rateAgreementRulesRef},
 	ID:                      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &rateAgreementRulesRef, Index: 0}}},
 	BusinessUnitID:          keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &rateAgreementRulesRef, Index: 1}}},
 	OrganizationID:          keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &rateAgreementRulesRef, Index: 2}}},
@@ -1214,7 +1214,7 @@ var RateAgreementRules = &RateAgreementRulesTable{
 // BuildRateAgreementRules builds the handle of rate_agreement_rules for ref. Generated relation and alias methods call it.
 func BuildRateAgreementRules(r *keel.Ref) *RateAgreementRulesTable {
 	return &RateAgreementRulesTable{
-		Handle:                  keel.Handle[rateagreement.RateAgreementRule]{Ref: r},
+		Handle:                  keel.Handle[*rateagreement.RateAgreementRule]{Ref: r},
 		ID:                      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID:          keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID:          keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -1698,7 +1698,7 @@ var rateAgreementVersionsRef = keel.Ref{Table: &rateAgreementVersionsTable}
 
 // RateAgreementVersionsTable is the table of rateagreement.RateAgreementVersion.
 type RateAgreementVersionsTable struct {
-	keel.Handle[rateagreement.RateAgreementVersion]
+	keel.Handle[*rateagreement.RateAgreementVersion]
 	ID                     keelkinds.PulidIDCol
 	BusinessUnitID         keelkinds.PulidIDCol
 	OrganizationID         keelkinds.PulidIDCol
@@ -1736,7 +1736,7 @@ type RateAgreementVersionsTable struct {
 
 // RateAgreementVersions references the rate_agreement_versions table.
 var RateAgreementVersions = &RateAgreementVersionsTable{
-	Handle:                 keel.Handle[rateagreement.RateAgreementVersion]{Ref: &rateAgreementVersionsRef},
+	Handle:                 keel.Handle[*rateagreement.RateAgreementVersion]{Ref: &rateAgreementVersionsRef},
 	ID:                     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &rateAgreementVersionsRef, Index: 0}}},
 	BusinessUnitID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &rateAgreementVersionsRef, Index: 1}}},
 	OrganizationID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &rateAgreementVersionsRef, Index: 2}}},
@@ -1775,7 +1775,7 @@ var RateAgreementVersions = &RateAgreementVersionsTable{
 // BuildRateAgreementVersions builds the handle of rate_agreement_versions for ref. Generated relation and alias methods call it.
 func BuildRateAgreementVersions(r *keel.Ref) *RateAgreementVersionsTable {
 	return &RateAgreementVersionsTable{
-		Handle:                 keel.Handle[rateagreement.RateAgreementVersion]{Ref: r},
+		Handle:                 keel.Handle[*rateagreement.RateAgreementVersion]{Ref: r},
 		ID:                     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},

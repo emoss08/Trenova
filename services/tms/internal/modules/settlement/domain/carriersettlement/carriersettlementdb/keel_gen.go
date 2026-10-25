@@ -99,7 +99,7 @@ var carrierSettlementsRef = keel.Ref{Table: &carrierSettlementsTable}
 
 // CarrierSettlementsTable is the table of carriersettlement.CarrierSettlement.
 type CarrierSettlementsTable struct {
-	keel.Handle[carriersettlement.CarrierSettlement]
+	keel.Handle[*carriersettlement.CarrierSettlement]
 	ID                     keelkinds.PulidIDCol
 	BusinessUnitID         keelkinds.PulidIDCol
 	OrganizationID         keelkinds.PulidIDCol
@@ -145,7 +145,7 @@ type CarrierSettlementsTable struct {
 
 // CarrierSettlements references the carrier_settlements table.
 var CarrierSettlements = &CarrierSettlementsTable{
-	Handle:                 keel.Handle[carriersettlement.CarrierSettlement]{Ref: &carrierSettlementsRef},
+	Handle:                 keel.Handle[*carriersettlement.CarrierSettlement]{Ref: &carrierSettlementsRef},
 	ID:                     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &carrierSettlementsRef, Index: 0}}},
 	BusinessUnitID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &carrierSettlementsRef, Index: 1}}},
 	OrganizationID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &carrierSettlementsRef, Index: 2}}},
@@ -192,7 +192,7 @@ var CarrierSettlements = &CarrierSettlementsTable{
 // BuildCarrierSettlements builds the handle of carrier_settlements for ref. Generated relation and alias methods call it.
 func BuildCarrierSettlements(r *keel.Ref) *CarrierSettlementsTable {
 	return &CarrierSettlementsTable{
-		Handle:                 keel.Handle[carriersettlement.CarrierSettlement]{Ref: r},
+		Handle:                 keel.Handle[*carriersettlement.CarrierSettlement]{Ref: r},
 		ID:                     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -592,7 +592,7 @@ var carrierSettlementBatchesRef = keel.Ref{Table: &carrierSettlementBatchesTable
 
 // CarrierSettlementBatchesTable is the table of carriersettlement.CarrierSettlementBatch.
 type CarrierSettlementBatchesTable struct {
-	keel.Handle[carriersettlement.CarrierSettlementBatch]
+	keel.Handle[*carriersettlement.CarrierSettlementBatch]
 	ID              keelkinds.PulidIDCol
 	BusinessUnitID  keelkinds.PulidIDCol
 	OrganizationID  keelkinds.PulidIDCol
@@ -618,7 +618,7 @@ type CarrierSettlementBatchesTable struct {
 
 // CarrierSettlementBatches references the carrier_settlement_batches table.
 var CarrierSettlementBatches = &CarrierSettlementBatchesTable{
-	Handle:          keel.Handle[carriersettlement.CarrierSettlementBatch]{Ref: &carrierSettlementBatchesRef},
+	Handle:          keel.Handle[*carriersettlement.CarrierSettlementBatch]{Ref: &carrierSettlementBatchesRef},
 	ID:              keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &carrierSettlementBatchesRef, Index: 0}}},
 	BusinessUnitID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &carrierSettlementBatchesRef, Index: 1}}},
 	OrganizationID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &carrierSettlementBatchesRef, Index: 2}}},
@@ -645,7 +645,7 @@ var CarrierSettlementBatches = &CarrierSettlementBatchesTable{
 // BuildCarrierSettlementBatches builds the handle of carrier_settlement_batches for ref. Generated relation and alias methods call it.
 func BuildCarrierSettlementBatches(r *keel.Ref) *CarrierSettlementBatchesTable {
 	return &CarrierSettlementBatchesTable{
-		Handle:          keel.Handle[carriersettlement.CarrierSettlementBatch]{Ref: r},
+		Handle:          keel.Handle[*carriersettlement.CarrierSettlementBatch]{Ref: r},
 		ID:              keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -872,7 +872,7 @@ var carrierSettlementLinesRef = keel.Ref{Table: &carrierSettlementLinesTable}
 
 // CarrierSettlementLinesTable is the table of carriersettlement.CarrierSettlementLine.
 type CarrierSettlementLinesTable struct {
-	keel.Handle[carriersettlement.CarrierSettlementLine]
+	keel.Handle[*carriersettlement.CarrierSettlementLine]
 	ID             keelkinds.PulidIDCol
 	BusinessUnitID keelkinds.PulidIDCol
 	OrganizationID keelkinds.PulidIDCol
@@ -893,7 +893,7 @@ type CarrierSettlementLinesTable struct {
 
 // CarrierSettlementLines references the carrier_settlement_lines table.
 var CarrierSettlementLines = &CarrierSettlementLinesTable{
-	Handle:         keel.Handle[carriersettlement.CarrierSettlementLine]{Ref: &carrierSettlementLinesRef},
+	Handle:         keel.Handle[*carriersettlement.CarrierSettlementLine]{Ref: &carrierSettlementLinesRef},
 	ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &carrierSettlementLinesRef, Index: 0}}},
 	BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &carrierSettlementLinesRef, Index: 1}}},
 	OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &carrierSettlementLinesRef, Index: 2}}},
@@ -915,7 +915,7 @@ var CarrierSettlementLines = &CarrierSettlementLinesTable{
 // BuildCarrierSettlementLines builds the handle of carrier_settlement_lines for ref. Generated relation and alias methods call it.
 func BuildCarrierSettlementLines(r *keel.Ref) *CarrierSettlementLinesTable {
 	return &CarrierSettlementLinesTable{
-		Handle:         keel.Handle[carriersettlement.CarrierSettlementLine]{Ref: r},
+		Handle:         keel.Handle[*carriersettlement.CarrierSettlementLine]{Ref: r},
 		ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -1110,7 +1110,7 @@ var costEventsRef = keel.Ref{Table: &costEventsTable}
 
 // CostEventsTable is the table of carriersettlement.CostEvent.
 type CostEventsTable struct {
-	keel.Handle[carriersettlement.CostEvent]
+	keel.Handle[*carriersettlement.CostEvent]
 	ID                  keelkinds.PulidIDCol
 	BusinessUnitID      keelkinds.PulidIDCol
 	OrganizationID      keelkinds.PulidIDCol
@@ -1137,7 +1137,7 @@ type CostEventsTable struct {
 
 // CostEvents references the carrier_cost_events table.
 var CostEvents = &CostEventsTable{
-	Handle:              keel.Handle[carriersettlement.CostEvent]{Ref: &costEventsRef},
+	Handle:              keel.Handle[*carriersettlement.CostEvent]{Ref: &costEventsRef},
 	ID:                  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &costEventsRef, Index: 0}}},
 	BusinessUnitID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &costEventsRef, Index: 1}}},
 	OrganizationID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &costEventsRef, Index: 2}}},
@@ -1165,7 +1165,7 @@ var CostEvents = &CostEventsTable{
 // BuildCostEvents builds the handle of carrier_cost_events for ref. Generated relation and alias methods call it.
 func BuildCostEvents(r *keel.Ref) *CostEventsTable {
 	return &CostEventsTable{
-		Handle:              keel.Handle[carriersettlement.CostEvent]{Ref: r},
+		Handle:              keel.Handle[*carriersettlement.CostEvent]{Ref: r},
 		ID:                  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -1417,7 +1417,7 @@ var invoiceMatchesRef = keel.Ref{Table: &invoiceMatchesTable}
 
 // InvoiceMatchesTable is the table of carriersettlement.InvoiceMatch.
 type InvoiceMatchesTable struct {
-	keel.Handle[carriersettlement.InvoiceMatch]
+	keel.Handle[*carriersettlement.InvoiceMatch]
 	ID                     keelkinds.PulidIDCol
 	BusinessUnitID         keelkinds.PulidIDCol
 	OrganizationID         keelkinds.PulidIDCol
@@ -1447,7 +1447,7 @@ type InvoiceMatchesTable struct {
 
 // InvoiceMatches references the carrier_invoice_matches table.
 var InvoiceMatches = &InvoiceMatchesTable{
-	Handle:                 keel.Handle[carriersettlement.InvoiceMatch]{Ref: &invoiceMatchesRef},
+	Handle:                 keel.Handle[*carriersettlement.InvoiceMatch]{Ref: &invoiceMatchesRef},
 	ID:                     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &invoiceMatchesRef, Index: 0}}},
 	BusinessUnitID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &invoiceMatchesRef, Index: 1}}},
 	OrganizationID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &invoiceMatchesRef, Index: 2}}},
@@ -1478,7 +1478,7 @@ var InvoiceMatches = &InvoiceMatchesTable{
 // BuildInvoiceMatches builds the handle of carrier_invoice_matches for ref. Generated relation and alias methods call it.
 func BuildInvoiceMatches(r *keel.Ref) *InvoiceMatchesTable {
 	return &InvoiceMatchesTable{
-		Handle:                 keel.Handle[carriersettlement.InvoiceMatch]{Ref: r},
+		Handle:                 keel.Handle[*carriersettlement.InvoiceMatch]{Ref: r},
 		ID:                     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -1753,7 +1753,7 @@ var ledgerEntriesRef = keel.Ref{Table: &ledgerEntriesTable}
 
 // LedgerEntriesTable is the table of carriersettlement.LedgerEntry.
 type LedgerEntriesTable struct {
-	keel.Handle[carriersettlement.LedgerEntry]
+	keel.Handle[*carriersettlement.LedgerEntry]
 	ID                  keelkinds.PulidIDCol
 	BusinessUnitID      keelkinds.PulidIDCol
 	OrganizationID      keelkinds.PulidIDCol
@@ -1774,7 +1774,7 @@ type LedgerEntriesTable struct {
 
 // LedgerEntries references the carrier_ledger_entries table.
 var LedgerEntries = &LedgerEntriesTable{
-	Handle:              keel.Handle[carriersettlement.LedgerEntry]{Ref: &ledgerEntriesRef},
+	Handle:              keel.Handle[*carriersettlement.LedgerEntry]{Ref: &ledgerEntriesRef},
 	ID:                  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &ledgerEntriesRef, Index: 0}}},
 	BusinessUnitID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &ledgerEntriesRef, Index: 1}}},
 	OrganizationID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &ledgerEntriesRef, Index: 2}}},
@@ -1796,7 +1796,7 @@ var LedgerEntries = &LedgerEntriesTable{
 // BuildLedgerEntries builds the handle of carrier_ledger_entries for ref. Generated relation and alias methods call it.
 func BuildLedgerEntries(r *keel.Ref) *LedgerEntriesTable {
 	return &LedgerEntriesTable{
-		Handle:              keel.Handle[carriersettlement.LedgerEntry]{Ref: r},
+		Handle:              keel.Handle[*carriersettlement.LedgerEntry]{Ref: r},
 		ID:                  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},

@@ -14,13 +14,6 @@ import (
 	"go.uber.org/zap"
 )
 
-const reserveSQL = "INSERT INTO agent_extension_usage_daily " +
-	"(organization_id, business_unit_id, extension_type, day, requests, failures, cost_usd, updated_at) " +
-	"VALUES ($1, $2, $3, $4, 1, 0, 0, $5) " +
-	"ON CONFLICT (organization_id, business_unit_id, extension_type, day) DO UPDATE SET " +
-	"requests = agent_extension_usage_daily.requests + 1, updated_at = EXCLUDED.updated_at " +
-	"WHERE agent_extension_usage_daily.requests < $6"
-
 type usageRepository struct {
 	db *postgres.Connection
 	l  *zap.Logger
@@ -33,14 +26,31 @@ func NewUsageRepository(p Params) agentextensionports.AgentExtensionUsageReposit
 	}
 }
 
-func reserveArgs(params *agentextensionports.ReserveExtensionRequestParams) []any {
-	return []any{
-		params.TenantInfo.OrgID.String(),
-		params.TenantInfo.BuID.String(),
-		string(params.Type),
-		params.Day,
-		params.Now,
-		params.Limit,
+func reserve(
+	params *agentextensionports.ReserveExtensionRequestParams,
+) (*keel.RowsTable, keel.Conflict, []keel.Column) {
+	u := agentextensiondb.ExtensionUsageDailies
+	src := keel.Rows(
+		"req",
+		[]string{"extension_type", "day", "requests", "failures", "cost_usd", "updated_at"},
+		keel.DynLit(string(params.Type)),
+		keel.DynLit(params.Day),
+		keel.DynLit(1),
+		keel.DynLit(0),
+		keel.DynLit(0),
+		keel.DynLit(params.Now),
+	)
+	conflict := keel.OnConflict(u.OrganizationID, u.BusinessUnitID, u.ExtensionType, u.Day).
+		Set(u.Requests.Add(1), u.UpdatedAt.ToExpr(u.UpdatedAt.Excluded())).
+		UpdateWhere(u.Requests.Lt(int64(params.Limit)))
+
+	return src, conflict, []keel.Column{
+		u.ExtensionType,
+		u.Day,
+		u.Requests,
+		u.Failures,
+		u.CostUSD,
+		u.UpdatedAt,
 	}
 }
 
@@ -49,7 +59,9 @@ func (r *usageRepository) Reserve(
 	params agentextensionports.ReserveExtensionRequestParams,
 ) (bool, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (bool, error) {
-		affected, err := keel.Exec(ctx, r.db.Keel(ctx), reserveSQL, reserveArgs(&params)...)
+		u := agentextensiondb.ExtensionUsageDailies
+		src, conflict, cols := reserve(&params)
+		affected, err := u.UpsertFrom(ctx, r.db.Keel(ctx), src, conflict, cols...)
 		if err != nil {
 			r.l.Error("failed to reserve agent extension request", zap.Error(err))
 			return false, fmt.Errorf("reserve agent extension request: %w", err)
@@ -61,7 +73,7 @@ func (r *usageRepository) Reserve(
 
 func recordOutcome(
 	params agentextensionports.RecordExtensionOutcomeParams,
-) (*keel.Query[agentextension.ExtensionUsageDaily], []keel.Assignment) {
+) (*keel.Query[*agentextension.ExtensionUsageDaily], []keel.Assignment) {
 	u := agentextensiondb.ExtensionUsageDailies
 	var failures int64
 	if params.Failed {
@@ -105,7 +117,7 @@ type usageTotals struct {
 
 func summarize(
 	params agentextensionports.SummarizeExtensionUsageParams,
-) *keel.Query[agentextension.ExtensionUsageDaily] {
+) *keel.Query[*agentextension.ExtensionUsageDaily] {
 	u := agentextensiondb.ExtensionUsageDailies
 
 	return u.Group(u.ExtensionType).

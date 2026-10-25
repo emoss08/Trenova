@@ -57,7 +57,7 @@ var checklistTemplatesRef = keel.Ref{Table: &checklistTemplatesTable}
 
 // ChecklistTemplatesTable is the table of deskcase.ChecklistTemplate.
 type ChecklistTemplatesTable struct {
-	keel.Handle[deskcase.ChecklistTemplate]
+	keel.Handle[*deskcase.ChecklistTemplate]
 	ID             keelkinds.PulidIDCol
 	OrganizationID keelkinds.PulidIDCol
 	BusinessUnitID keelkinds.PulidIDCol
@@ -73,7 +73,7 @@ type ChecklistTemplatesTable struct {
 
 // ChecklistTemplates references the case_checklist_templates table.
 var ChecklistTemplates = &ChecklistTemplatesTable{
-	Handle:         keel.Handle[deskcase.ChecklistTemplate]{Ref: &checklistTemplatesRef},
+	Handle:         keel.Handle[*deskcase.ChecklistTemplate]{Ref: &checklistTemplatesRef},
 	ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &checklistTemplatesRef, Index: 0}}},
 	OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &checklistTemplatesRef, Index: 1}}},
 	BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &checklistTemplatesRef, Index: 2}}},
@@ -90,7 +90,7 @@ var ChecklistTemplates = &ChecklistTemplatesTable{
 // BuildChecklistTemplates builds the handle of case_checklist_templates for ref. Generated relation and alias methods call it.
 func BuildChecklistTemplates(r *keel.Ref) *ChecklistTemplatesTable {
 	return &ChecklistTemplatesTable{
-		Handle:         keel.Handle[deskcase.ChecklistTemplate]{Ref: r},
+		Handle:         keel.Handle[*deskcase.ChecklistTemplate]{Ref: r},
 		ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -233,7 +233,7 @@ var checklistTicksRef = keel.Ref{Table: &checklistTicksTable}
 
 // ChecklistTicksTable is the table of deskcase.ChecklistTick.
 type ChecklistTicksTable struct {
-	keel.Handle[deskcase.ChecklistTick]
+	keel.Handle[*deskcase.ChecklistTick]
 	ID             keelkinds.PulidIDCol
 	OrganizationID keelkinds.PulidIDCol
 	BusinessUnitID keelkinds.PulidIDCol
@@ -247,7 +247,7 @@ type ChecklistTicksTable struct {
 
 // ChecklistTicks references the case_checklist_ticks table.
 var ChecklistTicks = &ChecklistTicksTable{
-	Handle:         keel.Handle[deskcase.ChecklistTick]{Ref: &checklistTicksRef},
+	Handle:         keel.Handle[*deskcase.ChecklistTick]{Ref: &checklistTicksRef},
 	ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &checklistTicksRef, Index: 0}}},
 	OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &checklistTicksRef, Index: 1}}},
 	BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &checklistTicksRef, Index: 2}}},
@@ -262,7 +262,7 @@ var ChecklistTicks = &ChecklistTicksTable{
 // BuildChecklistTicks builds the handle of case_checklist_ticks for ref. Generated relation and alias methods call it.
 func BuildChecklistTicks(r *keel.Ref) *ChecklistTicksTable {
 	return &ChecklistTicksTable{
-		Handle:         keel.Handle[deskcase.ChecklistTick]{Ref: r},
+		Handle:         keel.Handle[*deskcase.ChecklistTick]{Ref: r},
 		ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},

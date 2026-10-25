@@ -61,7 +61,7 @@ var fixturesRef = keel.Ref{Table: &fixturesTable}
 
 // FixturesTable is the table of documentparsingrule.Fixture.
 type FixturesTable struct {
-	keel.Handle[documentparsingrule.Fixture]
+	keel.Handle[*documentparsingrule.Fixture]
 	ID                  keelkinds.PulidIDCol
 	RuleSetID           keelkinds.PulidIDCol
 	OrganizationID      keelkinds.PulidIDCol
@@ -80,7 +80,7 @@ type FixturesTable struct {
 
 // Fixtures references the document_parsing_rule_fixtures table.
 var Fixtures = &FixturesTable{
-	Handle:              keel.Handle[documentparsingrule.Fixture]{Ref: &fixturesRef},
+	Handle:              keel.Handle[*documentparsingrule.Fixture]{Ref: &fixturesRef},
 	ID:                  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &fixturesRef, Index: 0}}},
 	RuleSetID:           keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &fixturesRef, Index: 1}}},
 	OrganizationID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &fixturesRef, Index: 2}}},
@@ -100,7 +100,7 @@ var Fixtures = &FixturesTable{
 // BuildFixtures builds the handle of document_parsing_rule_fixtures for ref. Generated relation and alias methods call it.
 func BuildFixtures(r *keel.Ref) *FixturesTable {
 	return &FixturesTable{
-		Handle:              keel.Handle[documentparsingrule.Fixture]{Ref: r},
+		Handle:              keel.Handle[*documentparsingrule.Fixture]{Ref: r},
 		ID:                  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		RuleSetID:           keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -268,7 +268,7 @@ var ruleSetsRef = keel.Ref{Table: &ruleSetsTable}
 
 // RuleSetsTable is the table of documentparsingrule.RuleSet.
 type RuleSetsTable struct {
-	keel.Handle[documentparsingrule.RuleSet]
+	keel.Handle[*documentparsingrule.RuleSet]
 	ID                 keelkinds.PulidIDCol
 	OrganizationID     keelkinds.PulidIDCol
 	BusinessUnitID     keelkinds.PulidIDCol
@@ -284,7 +284,7 @@ type RuleSetsTable struct {
 
 // RuleSets references the document_parsing_rule_sets table.
 var RuleSets = &RuleSetsTable{
-	Handle:             keel.Handle[documentparsingrule.RuleSet]{Ref: &ruleSetsRef},
+	Handle:             keel.Handle[*documentparsingrule.RuleSet]{Ref: &ruleSetsRef},
 	ID:                 keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &ruleSetsRef, Index: 0}}},
 	OrganizationID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &ruleSetsRef, Index: 1}}},
 	BusinessUnitID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &ruleSetsRef, Index: 2}}},
@@ -301,7 +301,7 @@ var RuleSets = &RuleSetsTable{
 // BuildRuleSets builds the handle of document_parsing_rule_sets for ref. Generated relation and alias methods call it.
 func BuildRuleSets(r *keel.Ref) *RuleSetsTable {
 	return &RuleSetsTable{
-		Handle:             keel.Handle[documentparsingrule.RuleSet]{Ref: r},
+		Handle:             keel.Handle[*documentparsingrule.RuleSet]{Ref: r},
 		ID:                 keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		OrganizationID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		BusinessUnitID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -457,7 +457,7 @@ var ruleVersionsRef = keel.Ref{Table: &ruleVersionsTable}
 
 // RuleVersionsTable is the table of documentparsingrule.RuleVersion.
 type RuleVersionsTable struct {
-	keel.Handle[documentparsingrule.RuleVersion]
+	keel.Handle[*documentparsingrule.RuleVersion]
 	ID                keelkinds.PulidIDCol
 	RuleSetID         keelkinds.PulidIDCol
 	OrganizationID    keelkinds.PulidIDCol
@@ -478,7 +478,7 @@ type RuleVersionsTable struct {
 
 // RuleVersions references the document_parsing_rule_versions table.
 var RuleVersions = &RuleVersionsTable{
-	Handle:            keel.Handle[documentparsingrule.RuleVersion]{Ref: &ruleVersionsRef},
+	Handle:            keel.Handle[*documentparsingrule.RuleVersion]{Ref: &ruleVersionsRef},
 	ID:                keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &ruleVersionsRef, Index: 0}}},
 	RuleSetID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &ruleVersionsRef, Index: 1}}},
 	OrganizationID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &ruleVersionsRef, Index: 2}}},
@@ -500,7 +500,7 @@ var RuleVersions = &RuleVersionsTable{
 // BuildRuleVersions builds the handle of document_parsing_rule_versions for ref. Generated relation and alias methods call it.
 func BuildRuleVersions(r *keel.Ref) *RuleVersionsTable {
 	return &RuleVersionsTable{
-		Handle:            keel.Handle[documentparsingrule.RuleVersion]{Ref: r},
+		Handle:            keel.Handle[*documentparsingrule.RuleVersion]{Ref: r},
 		ID:                keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		RuleSetID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},

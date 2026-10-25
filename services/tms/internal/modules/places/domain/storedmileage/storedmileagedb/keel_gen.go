@@ -75,7 +75,7 @@ var storedMileagesRef = keel.Ref{Table: &storedMileagesTable}
 
 // StoredMileagesTable is the table of storedmileage.StoredMileage.
 type StoredMileagesTable struct {
-	keel.Handle[storedmileage.StoredMileage]
+	keel.Handle[*storedmileage.StoredMileage]
 	ID                    keelkinds.PulidIDCol
 	BusinessUnitID        keelkinds.PulidIDCol
 	OrganizationID        keelkinds.PulidIDCol
@@ -110,7 +110,7 @@ type StoredMileagesTable struct {
 
 // StoredMileages references the stored_mileages table.
 var StoredMileages = &StoredMileagesTable{
-	Handle:                keel.Handle[storedmileage.StoredMileage]{Ref: &storedMileagesRef},
+	Handle:                keel.Handle[*storedmileage.StoredMileage]{Ref: &storedMileagesRef},
 	ID:                    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &storedMileagesRef, Index: 0}}},
 	BusinessUnitID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &storedMileagesRef, Index: 1}}},
 	OrganizationID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &storedMileagesRef, Index: 2}}},
@@ -146,7 +146,7 @@ var StoredMileages = &StoredMileagesTable{
 // BuildStoredMileages builds the handle of stored_mileages for ref. Generated relation and alias methods call it.
 func BuildStoredMileages(r *keel.Ref) *StoredMileagesTable {
 	return &StoredMileagesTable{
-		Handle:                keel.Handle[storedmileage.StoredMileage]{Ref: r},
+		Handle:                keel.Handle[*storedmileage.StoredMileage]{Ref: r},
 		ID:                    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},

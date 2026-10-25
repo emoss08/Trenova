@@ -6,6 +6,7 @@ import (
 	"strconv"
 
 	"github.com/emoss08/keel"
+	keelvector "github.com/emoss08/keel/vector"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/airetrieval"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/airetrieval/airetrievaldb"
@@ -453,9 +454,11 @@ func (r *repository) Search(
 func searchQuery(req *agentports.VectorSearchRequest, plan searchPlan) *keel.Query[keel.Row] {
 	e := airetrievaldb.Embeddings
 	query := pgvector.NewHalfVector(req.Query)
-	cast := "::halfvec(" + strconv.Itoa(plan.dimensions) + ")"
 	distance := func() keel.Expr {
-		return keel.Raw("?"+cast+" <=> ?"+cast, e.Embedding, query)
+		return keelvector.CosineDistance(
+			keelvector.HalfVec(e.Embedding, plan.dimensions),
+			keelvector.HalfVec(query, plan.dimensions),
+		)
 	}
 
 	candidate := keel.CTE("candidate", rankedColumns, e.

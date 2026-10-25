@@ -5,14 +5,14 @@ import (
 	"errors"
 
 	"github.com/emoss08/keel"
-	"github.com/emoss08/trenova/internal/infrastructure/observability"
+	"github.com/emoss08/keel/keellog"
+	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
 	"go.opentelemetry.io/otel/metric"
 	semconv "go.opentelemetry.io/otel/semconv/v1.20.0"
 	"go.opentelemetry.io/otel/trace"
-	"go.uber.org/zap"
 )
 
 const keelInstrumentation = "github.com/emoss08/keel"
@@ -89,32 +89,19 @@ func spanName(e *keel.QueryEvent) string {
 	return e.Op + " " + e.Table
 }
 
-type debugObserver struct {
-	logger  *observability.ContextLogger
-	verbose bool
+var queryLogSkip = []string{
+	"github.com/emoss08/trenova/pkg/listquery.",
+	"github.com/emoss08/trenova/pkg/lanequery.",
 }
 
-var _ keel.Observer = (*debugObserver)(nil)
-
-func (o *debugObserver) BeforeQuery(ctx context.Context, _ *keel.QueryEvent) context.Context {
-	return ctx
-}
-
-func (o *debugObserver) AfterQuery(ctx context.Context, e *keel.QueryEvent) {
-	if e.Err == nil && !o.verbose {
-		return
+func queryLog(cfg *config.Config) keel.Observer {
+	if !cfg.App.IsDevelopment() {
+		return nil
+	}
+	mode, ok := keellog.ParseMode(cfg.Database.QueryLog)
+	if !ok {
+		return nil
 	}
 
-	fields := []zap.Field{
-		zap.String("operation", e.Op),
-		zap.String("table", e.Table),
-		zap.Duration("duration", e.Duration),
-		zap.Int64("rows", e.Rows),
-		zap.String("query", e.SQL),
-	}
-	if e.Err != nil {
-		fields = append(fields, zap.Error(e.Err))
-	}
-
-	o.logger.Debug(ctx, "keel query", fields...)
+	return keellog.New(keellog.Options{Mode: mode, Skip: queryLogSkip})
 }

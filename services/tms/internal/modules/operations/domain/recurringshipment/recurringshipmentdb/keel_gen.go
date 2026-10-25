@@ -94,7 +94,7 @@ var recurringShipmentsRef = keel.Ref{Table: &recurringShipmentsTable}
 
 // RecurringShipmentsTable is the table of recurringshipment.RecurringShipment.
 type RecurringShipmentsTable struct {
-	keel.Handle[recurringshipment.RecurringShipment]
+	keel.Handle[*recurringshipment.RecurringShipment]
 	ID                      keelkinds.PulidIDCol
 	BusinessUnitID          keelkinds.PulidIDCol
 	OrganizationID          keelkinds.PulidIDCol
@@ -130,7 +130,7 @@ type RecurringShipmentsTable struct {
 
 // RecurringShipments references the recurring_shipments table.
 var RecurringShipments = &RecurringShipmentsTable{
-	Handle:                  keel.Handle[recurringshipment.RecurringShipment]{Ref: &recurringShipmentsRef},
+	Handle:                  keel.Handle[*recurringshipment.RecurringShipment]{Ref: &recurringShipmentsRef},
 	ID:                      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &recurringShipmentsRef, Index: 0}}},
 	BusinessUnitID:          keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &recurringShipmentsRef, Index: 1}}},
 	OrganizationID:          keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &recurringShipmentsRef, Index: 2}}},
@@ -167,7 +167,7 @@ var RecurringShipments = &RecurringShipmentsTable{
 // BuildRecurringShipments builds the handle of recurring_shipments for ref. Generated relation and alias methods call it.
 func BuildRecurringShipments(r *keel.Ref) *RecurringShipmentsTable {
 	return &RecurringShipmentsTable{
-		Handle:                  keel.Handle[recurringshipment.RecurringShipment]{Ref: r},
+		Handle:                  keel.Handle[*recurringshipment.RecurringShipment]{Ref: r},
 		ID:                      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID:          keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID:          keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -499,7 +499,7 @@ var recurringShipmentRunsRef = keel.Ref{Table: &recurringShipmentRunsTable}
 
 // RecurringShipmentRunsTable is the table of recurringshipment.RecurringShipmentRun.
 type RecurringShipmentRunsTable struct {
-	keel.Handle[recurringshipment.RecurringShipmentRun]
+	keel.Handle[*recurringshipment.RecurringShipmentRun]
 	ID                   keelkinds.PulidIDCol
 	BusinessUnitID       keelkinds.PulidIDCol
 	OrganizationID       keelkinds.PulidIDCol
@@ -516,7 +516,7 @@ type RecurringShipmentRunsTable struct {
 
 // RecurringShipmentRuns references the recurring_shipment_runs table.
 var RecurringShipmentRuns = &RecurringShipmentRunsTable{
-	Handle:               keel.Handle[recurringshipment.RecurringShipmentRun]{Ref: &recurringShipmentRunsRef},
+	Handle:               keel.Handle[*recurringshipment.RecurringShipmentRun]{Ref: &recurringShipmentRunsRef},
 	ID:                   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &recurringShipmentRunsRef, Index: 0}}},
 	BusinessUnitID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &recurringShipmentRunsRef, Index: 1}}},
 	OrganizationID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &recurringShipmentRunsRef, Index: 2}}},
@@ -534,7 +534,7 @@ var RecurringShipmentRuns = &RecurringShipmentRunsTable{
 // BuildRecurringShipmentRuns builds the handle of recurring_shipment_runs for ref. Generated relation and alias methods call it.
 func BuildRecurringShipmentRuns(r *keel.Ref) *RecurringShipmentRunsTable {
 	return &RecurringShipmentRunsTable{
-		Handle:               keel.Handle[recurringshipment.RecurringShipmentRun]{Ref: r},
+		Handle:               keel.Handle[*recurringshipment.RecurringShipmentRun]{Ref: r},
 		ID:                   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},

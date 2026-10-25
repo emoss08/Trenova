@@ -74,7 +74,7 @@ var correctionsRef = keel.Ref{Table: &correctionsTable}
 
 // CorrectionsTable is the table of aicorrection.Correction.
 type CorrectionsTable struct {
-	keel.Handle[aicorrection.Correction]
+	keel.Handle[*aicorrection.Correction]
 	ID                   keelkinds.PulidIDCol
 	BusinessUnitID       keelkinds.PulidIDCol
 	OrganizationID       keelkinds.PulidIDCol
@@ -107,7 +107,7 @@ type CorrectionsTable struct {
 
 // Corrections references the ai_corrections table.
 var Corrections = &CorrectionsTable{
-	Handle:               keel.Handle[aicorrection.Correction]{Ref: &correctionsRef},
+	Handle:               keel.Handle[*aicorrection.Correction]{Ref: &correctionsRef},
 	ID:                   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &correctionsRef, Index: 0}}},
 	BusinessUnitID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &correctionsRef, Index: 1}}},
 	OrganizationID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &correctionsRef, Index: 2}}},
@@ -141,7 +141,7 @@ var Corrections = &CorrectionsTable{
 // BuildCorrections builds the handle of ai_corrections for ref. Generated relation and alias methods call it.
 func BuildCorrections(r *keel.Ref) *CorrectionsTable {
 	return &CorrectionsTable{
-		Handle:               keel.Handle[aicorrection.Correction]{Ref: r},
+		Handle:               keel.Handle[*aicorrection.Correction]{Ref: r},
 		ID:                   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},

@@ -60,7 +60,7 @@ var briefsRef = keel.Ref{Table: &briefsTable}
 
 // BriefsTable is the table of shipmentbrief.Brief.
 type BriefsTable struct {
-	keel.Handle[shipmentbrief.Brief]
+	keel.Handle[*shipmentbrief.Brief]
 	ID              keelkinds.PulidIDCol
 	BusinessUnitID  keelkinds.PulidIDCol
 	OrganizationID  keelkinds.PulidIDCol
@@ -80,7 +80,7 @@ type BriefsTable struct {
 
 // Briefs references the shipment_board_briefs table.
 var Briefs = &BriefsTable{
-	Handle:          keel.Handle[shipmentbrief.Brief]{Ref: &briefsRef},
+	Handle:          keel.Handle[*shipmentbrief.Brief]{Ref: &briefsRef},
 	ID:              keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &briefsRef, Index: 0}}},
 	BusinessUnitID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &briefsRef, Index: 1}}},
 	OrganizationID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &briefsRef, Index: 2}}},
@@ -101,7 +101,7 @@ var Briefs = &BriefsTable{
 // BuildBriefs builds the handle of shipment_board_briefs for ref. Generated relation and alias methods call it.
 func BuildBriefs(r *keel.Ref) *BriefsTable {
 	return &BriefsTable{
-		Handle:          keel.Handle[shipmentbrief.Brief]{Ref: r},
+		Handle:          keel.Handle[*shipmentbrief.Brief]{Ref: r},
 		ID:              keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},

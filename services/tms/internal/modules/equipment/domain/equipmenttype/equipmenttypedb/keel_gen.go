@@ -74,7 +74,7 @@ var equipmentTypesRef = keel.Ref{Table: &equipmentTypesTable}
 
 // EquipmentTypesTable is the table of equipmenttype.EquipmentType.
 type EquipmentTypesTable struct {
-	keel.Handle[equipmenttype.EquipmentType]
+	keel.Handle[*equipmenttype.EquipmentType]
 	ID               keelkinds.PulidIDCol
 	BusinessUnitID   keelkinds.PulidIDCol
 	OrganizationID   keelkinds.PulidIDCol
@@ -97,7 +97,7 @@ type EquipmentTypesTable struct {
 
 // EquipmentTypes references the equipment_types table.
 var EquipmentTypes = &EquipmentTypesTable{
-	Handle:           keel.Handle[equipmenttype.EquipmentType]{Ref: &equipmentTypesRef},
+	Handle:           keel.Handle[*equipmenttype.EquipmentType]{Ref: &equipmentTypesRef},
 	ID:               keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &equipmentTypesRef, Index: 0}}},
 	BusinessUnitID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &equipmentTypesRef, Index: 1}}},
 	OrganizationID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &equipmentTypesRef, Index: 2}}},
@@ -121,7 +121,7 @@ var EquipmentTypes = &EquipmentTypesTable{
 // BuildEquipmentTypes builds the handle of equipment_types for ref. Generated relation and alias methods call it.
 func BuildEquipmentTypes(r *keel.Ref) *EquipmentTypesTable {
 	return &EquipmentTypesTable{
-		Handle:           keel.Handle[equipmenttype.EquipmentType]{Ref: r},
+		Handle:           keel.Handle[*equipmenttype.EquipmentType]{Ref: r},
 		ID:               keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},

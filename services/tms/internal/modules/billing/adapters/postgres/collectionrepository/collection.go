@@ -8,19 +8,21 @@ import (
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
-	"github.com/emoss08/trenova/internal/modules/billing/adapters/postgres/factoringsql"
 	"github.com/emoss08/trenova/internal/modules/billing/adapters/postgres/receivablesql"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/collection"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/collection/collectiondb"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/customerpayment"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/customerpayment/customerpaymentdb"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice/invoicedb"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/collectionports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant/tenantdb"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/customer"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/customer/customerdb"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/jackc/pgx/v5"
+	"github.com/emoss08/trenova/shared/sliceutils"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
@@ -226,107 +228,6 @@ func (r *repository) ListActivities(
 	})
 }
 
-var worklistSQL = `
-	WITH open_invoices AS (
-		SELECT inv.customer_id,
-			SUM(inv.total_amount_minor - inv.applied_amount_minor) AS open_minor,
-			SUM(CASE WHEN inv.due_date IS NOT NULL AND inv.due_date < $1
-				THEN inv.total_amount_minor - inv.applied_amount_minor ELSE 0 END) AS overdue_minor,
-			MAX(CASE WHEN inv.due_date IS NOT NULL AND inv.due_date < $1
-				THEN (($1 - inv.due_date) / 86400)::INT ELSE 0 END) AS oldest_days,
-			COUNT(*) AS open_count,
-			COUNT(*) FILTER (WHERE inv.dispute_status = 'Disputed') AS disputed_count
-		FROM invoices AS inv
-		WHERE inv.organization_id = $2
-			AND inv.business_unit_id = $3
-			AND ` + receivablesql.OpenInvoice + `
-			AND NOT EXISTS (
-				SELECT 1 FROM factoring_companies AS fac
-				LEFT JOIN factoring_agreements AS agr
-					ON agr.id = inv.factoring_agreement_id
-					AND agr.organization_id = inv.organization_id
-					AND agr.business_unit_id = inv.business_unit_id
-				WHERE fac.id = inv.factoring_company_id
-					AND fac.organization_id = inv.organization_id
-					AND fac.business_unit_id = inv.business_unit_id
-					AND COALESCE(agr.recourse = 'NonRecourse', fac.non_recourse)
-					AND NOT ` + factoringsql.ChargedBackInvoice() + `
-			)
-		GROUP BY inv.customer_id
-	)
-	SELECT
-		cus.id AS customer_id,
-		cus.name AS customer_name,
-		cus.code AS customer_code,
-		COALESCE(cbp.credit_status::TEXT, 'Active') AS credit_status,
-		COALESCE(cbp.billing_currency, 'USD') AS currency_code,
-		COALESCE(oi.open_minor, 0) AS open_minor,
-		COALESCE(oi.overdue_minor, 0) AS overdue_minor,
-		COALESCE(oi.oldest_days, 0) AS oldest_days,
-		COALESCE(oi.open_count, 0) AS open_count,
-		COALESCE(oi.disputed_count, 0) AS disputed_count,
-		acc.collector_id,
-		COALESCE(col.name, '') AS collector_name,
-		acc.next_follow_up_on,
-		recent.created_at AS last_activity_at,
-		COALESCE(recent.kind, '') AS last_activity_kind,
-		COALESCE(recent.summary, '') AS last_activity_summary,
-		prm.id AS promise_id,
-		prm.promised_amount_minor,
-		prm.currency_code AS promise_currency_code,
-		prm.promised_on,
-		prm.created_at AS promise_made_at,
-		COALESCE(pby.name, '') AS promise_made_by_name,
-		CASE WHEN prm.id IS NULL THEN 0 ELSE COALESCE((
-			SELECT SUM(cp.amount_minor)
-			FROM customer_payments AS cp
-			WHERE cp.organization_id = cus.organization_id
-				AND cp.business_unit_id = cus.business_unit_id
-				AND cp.customer_id = cus.id
-				AND cp.status = 'Posted'
-				AND cp.created_at >= prm.created_at
-		), 0) END AS paid_since_promise
-	FROM customers AS cus
-	LEFT JOIN open_invoices AS oi ON oi.customer_id = cus.id
-	LEFT JOIN customer_billing_profiles AS cbp
-		ON cbp.customer_id = cus.id
-		AND cbp.organization_id = cus.organization_id
-		AND cbp.business_unit_id = cus.business_unit_id
-	LEFT JOIN collection_accounts AS acc
-		ON acc.customer_id = cus.id
-		AND acc.organization_id = cus.organization_id
-		AND acc.business_unit_id = cus.business_unit_id
-	LEFT JOIN users AS col ON col.id = acc.collector_id
-	LEFT JOIN collection_activities AS prm
-		ON prm.id = acc.promise_activity_id
-		AND prm.organization_id = acc.organization_id
-		AND prm.business_unit_id = acc.business_unit_id
-	LEFT JOIN users AS pby ON pby.id = prm.created_by_id
-	LEFT JOIN LATERAL (
-		SELECT a.created_at, a.kind, a.summary
-		FROM collection_activities AS a
-		WHERE a.organization_id = cus.organization_id
-			AND a.business_unit_id = cus.business_unit_id
-			AND a.customer_id = cus.id
-		ORDER BY a.created_at DESC, a.id DESC
-		LIMIT 1
-	) AS recent ON TRUE
-	WHERE cus.organization_id = $2
-		AND cus.business_unit_id = $3`
-
-const worklistFilterSQL = `
-		AND ($5::text IS NOT NULL
-			OR COALESCE(oi.overdue_minor, 0) > 0
-			OR (acc.id IS NOT NULL AND COALESCE(oi.open_minor, 0) > 0))
-		AND ($5::text IS NULL OR cus.id = $5)
-		AND ($6::text IS NULL OR acc.collector_id = $6)
-		AND (NOT $7::boolean OR acc.collector_id IS NULL)
-		AND ($8::text IS NULL OR cus.name ILIKE $8 OR cus.code ILIKE $8)
-	ORDER BY COALESCE(oi.overdue_minor, 0) DESC, cus.id
-	LIMIT $4`
-
-var worklistQuerySQL = worklistSQL + worklistFilterSQL
-
 type worklistRecord struct {
 	CustomerID          pulid.ID
 	CustomerName        string
@@ -355,37 +256,122 @@ type worklistRecord struct {
 
 type worklistQuery struct {
 	asOf        int64
-	tenantOrg   pulid.ID
-	tenantBU    pulid.ID
-	customerID  *string
-	collectorID *string
+	customerID  pulid.ID
+	collectorID pulid.ID
 	unassigned  bool
-	pattern     *string
+	pattern     string
 	limit       int
+}
+
+func openInvoicesByCustomer(asOf int64) *keel.CTETable {
+	inv := invoicedb.Invoices
+	open := receivablesql.OpenMinor(inv)
+	overdue := keel.And(inv.DueDate.IsNotNull(), inv.DueDate.Lt(asOf))
+	daysPastDue := keel.DynLit(asOf).Sub(inv.DueDate).Div(receivablesql.SecondsPerDay)
+	return keel.CTE(
+		"open_invoices",
+		[]string{
+			"customer_id",
+			"open_minor",
+			"overdue_minor",
+			"oldest_days",
+			"open_count",
+			"disputed_count",
+		},
+		inv.
+			Pick(
+				inv.CustomerID,
+				open.Sum(),
+				keel.DynCase().When(overdue, open).Else(0).Sum(),
+				keel.DynCase().When(overdue, daysPastDue).Else(0).Max(),
+				keel.Count(),
+				keel.Count().Filter(inv.DisputeStatus.Eq(invoice.DisputeStatusDisputed)),
+			).
+			Where(receivablesql.Open(inv), keel.Not(receivablesql.SoldWithoutRecourse(inv))).
+			Group(inv.CustomerID),
+	)
+}
+
+func worklistStatement(q *worklistQuery) *keel.Query[customer.Customer] {
+	cus := customerdb.Customers
+	oi := openInvoicesByCustomer(q.asOf)
+	cbp := customerdb.CustomerBillingProfiles
+	acc := collectiondb.Accounts
+	col := tenantdb.Users.As("col")
+	prm := collectiondb.Activities.As("prm")
+	pby := tenantdb.Users.As("pby")
+	recent := collectiondb.Activities.As("recent")
+	cp := customerpaymentdb.Payments.As("cp")
+	paidSincePromise := keel.Scalar(cp.Pick(cp.AmountMinor.Sum()).Where(
+		cp.CustomerID.EqCol(cus.ID),
+		cp.Status.Eq(customerpayment.StatusPosted),
+		keel.DynOf(cp.CreatedAt).Gte(prm.CreatedAt),
+	))
+	openMinor := keel.DynOf(oi.Col("open_minor")).Coalesce(0)
+	overdueMinor := keel.DynOf(oi.Col("overdue_minor")).Coalesce(0)
+
+	return cus.With(oi).
+		LeftJoin(oi, oi.Col("customer_id").EqCol(cus.ID)).
+		LeftJoin(cbp, cbp.CustomerID.EqCol(cus.ID)).
+		LeftJoin(acc, acc.CustomerID.EqCol(cus.ID)).
+		LeftJoin(col, col.ID.EqCol(acc.CollectorID)).
+		LeftJoin(prm, prm.ID.EqCol(acc.PromiseActivityID)).
+		LeftJoin(pby, pby.ID.EqCol(prm.CreatedByID)).
+		LeftJoinLateral(recent.
+			Pick(recent.CreatedAt, recent.Kind, recent.Summary).
+			Where(recent.CustomerID.EqCol(cus.ID)).
+			Order(recent.CreatedAt.Desc(), recent.ID.Desc()).
+			Limit(1)).
+		Pick(
+			cus.ID,
+			cus.Name,
+			cus.Code,
+			keel.DynOf(cbp.CreditStatus).Cast(keel.TypeString).Coalesce("Active"),
+			cbp.BillingCurrency.Coalesce("USD"),
+			openMinor,
+			overdueMinor,
+			keel.DynOf(oi.Col("oldest_days")).Coalesce(0),
+			keel.DynOf(oi.Col("open_count")).Coalesce(0),
+			keel.DynOf(oi.Col("disputed_count")).Coalesce(0),
+			acc.CollectorID,
+			col.Name.Coalesce(""),
+			acc.NextFollowUpOn,
+			recent.CreatedAt,
+			recent.Kind.Coalesce(""),
+			recent.Summary.Coalesce(""),
+			prm.ID,
+			prm.PromisedAmountMinor,
+			prm.CurrencyCode,
+			prm.PromisedOn,
+			prm.CreatedAt,
+			pby.Name.Coalesce(""),
+			keel.DynCase().
+				When(prm.ID.IsNull(), 0).
+				Else(keel.DynOf(paidSincePromise).Coalesce(0)),
+		).
+		Where(
+			keel.When(q.customerID.IsNotNil(), cus.ID.Eq(q.customerID)),
+			keel.When(q.customerID.IsNil(), keel.Or(
+				overdueMinor.Gt(0),
+				keel.And(acc.ID.IsNotNull(), openMinor.Gt(0)),
+			)),
+			keel.When(q.collectorID.IsNotNil(), acc.CollectorID.Eq(q.collectorID)),
+			keel.When(q.unassigned, acc.CollectorID.IsNull()),
+			keel.When(q.pattern != "", keel.Or(cus.Name.ILike(q.pattern), cus.Code.ILike(q.pattern))),
+		).
+		Order(overdueMinor.Desc(), cus.ID.Asc()).
+		Limit(q.limit)
 }
 
 func (r *repository) readWorklist(
 	ctx context.Context,
 	q *worklistQuery,
 ) ([]*worklistRecord, error) {
-	records, err := keel.QueryAll(
-		ctx,
-		r.db.Keel(ctx),
-		pgx.RowToAddrOfStructByName[worklistRecord],
-		worklistQuerySQL,
-		q.asOf,
-		q.tenantOrg.String(),
-		q.tenantBU.String(),
-		q.limit,
-		q.customerID,
-		q.collectorID,
-		q.unassigned,
-		q.pattern,
-	)
+	records, err := keel.Into[worklistRecord](ctx, r.db.Keel(ctx), worklistStatement(q))
 	if err != nil {
 		return nil, fmt.Errorf("read collections worklist: %w", err)
 	}
-	return records, nil
+	return sliceutils.Pointers(records), nil
 }
 
 func (r *repository) ListWorklist(
@@ -394,22 +380,18 @@ func (r *repository) ListWorklist(
 ) (*collectionports.WorklistPage, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*collectionports.WorklistPage, error) {
 		q := worklistQuery{
-			asOf:      req.AsOf,
-			tenantOrg: req.TenantInfo.OrgID,
-			tenantBU:  req.TenantInfo.BuID,
-			limit:     MaxWorklistAccounts,
+			asOf:  req.AsOf,
+			limit: MaxWorklistAccounts,
 		}
 		switch req.Scope {
 		case collectionports.CollectorScopeMine:
-			collector := req.TenantInfo.UserID.String()
-			q.collectorID = &collector
+			q.collectorID = req.TenantInfo.UserID
 		case collectionports.CollectorScopeUnassigned:
 			q.unassigned = true
 		case collectionports.CollectorScopeAll:
 		}
 		if search := strings.TrimSpace(req.Search); search != "" {
-			pattern := "%" + escapeLike(search) + "%"
-			q.pattern = &pattern
+			q.pattern = "%" + escapeLike(search) + "%"
 		}
 
 		records, err := r.readWorklist(ctx, &q)
@@ -431,13 +413,10 @@ func (r *repository) GetWorklistRow(
 ) (*collectionports.WorklistRow, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*collectionports.WorklistRow, error) {
 		q := worklistQuery{
-			asOf:      asOf,
-			tenantOrg: req.TenantInfo.OrgID,
-			tenantBU:  req.TenantInfo.BuID,
-			limit:     1,
+			asOf:       asOf,
+			customerID: req.CustomerID,
+			limit:      1,
 		}
-		customerID := req.CustomerID.String()
-		q.customerID = &customerID
 		records, err := r.readWorklist(ctx, &q)
 		if err != nil {
 			return nil, err

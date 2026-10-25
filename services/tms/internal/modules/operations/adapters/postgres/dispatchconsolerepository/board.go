@@ -115,7 +115,7 @@ func (r *repository) ListBoardMoves(
 					Else(keel.DynFunc(
 						"concat",
 						assignedWorkers.FirstName,
-						keel.DynLit(" ").Cast(keel.TypeString),
+						keel.DynLit(" "),
 						assignedWorkers.LastName,
 					)),
 				text(asn.TractorID),

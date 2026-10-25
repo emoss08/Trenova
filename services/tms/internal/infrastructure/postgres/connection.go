@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"strconv"
 	"time"
 
 	"github.com/emoss08/keel"
@@ -12,6 +13,7 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/observability/metrics"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbpool"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/keeltables"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/pkg/dbscope"
 	"go.uber.org/fx"
@@ -215,6 +217,8 @@ func (c *Connection) connect(ctx context.Context) error {
 func (c *Connection) openPool(ctx context.Context, opts *dbpool.Options) (*keel.DB, error) {
 	slow := newSlowQueryLog(c.logger)
 	opts.Observers = c.observers(slow)
+	opts.ObserveArgs = queryLog(c.cfg) != nil
+	opts.Tables = keeltables.All()
 	opts.VersionErrors = func(err error) {
 		c.logger.Warn(context.Background(), "Failed to record data versions", zap.Error(err))
 	}
@@ -231,11 +235,8 @@ func (c *Connection) openPool(ctx context.Context, opts *dbpool.Options) (*keel.
 
 func (c *Connection) observers(slow *slowQueryLog) []keel.Observer {
 	observers := make([]keel.Observer, 0, 3)
-	if c.cfg.App.IsDevelopment() && c.cfg.App.Debug {
-		observers = append(observers, &debugObserver{
-			logger:  c.logger.Named("keel"),
-			verbose: c.cfg.Database.Verbose,
-		})
+	if log := queryLog(c.cfg); log != nil {
+		observers = append(observers, log)
 	}
 
 	return append(observers,
@@ -319,18 +320,19 @@ func (c *Connection) Transact(
 	}
 
 	if c.joins(ctx, db) {
-		if opts.LockTimeout > 0 {
-			if err := applyLockTimeout(ctx, db, opts.LockTimeout); err != nil {
-				return err
-			}
-		}
-
 		if opts.ReadOnly {
 			ctx = kernelports.WithReadOnly(ctx)
 		}
 
-		if len(opts.Settings) > 0 {
-			return keel.Read(ctx, db, fn, txSettings(opts.Settings)...)
+		settings := txSettings(opts.Settings)
+		if opts.LockTimeout > 0 {
+			settings = append(settings, keel.Setting(
+				"lock_timeout",
+				strconv.FormatInt(max(opts.LockTimeout.Milliseconds(), 1), 10)+"ms",
+			))
+		}
+		if len(settings) > 0 {
+			return keel.Read(ctx, db, fn, settings...)
 		}
 
 		return fn(ctx)
@@ -397,17 +399,6 @@ func txSettings(settings []kernelports.TxSetting) []keel.TxOption {
 
 func (c *Connection) Savepoint(ctx context.Context, fn func(context.Context) error) error {
 	return dbtx.Savepoint(ctx, c, fn)
-}
-
-func applyLockTimeout(ctx context.Context, db *keel.DB, timeout time.Duration) error {
-	lockTimeoutMS := max(timeout.Milliseconds(), 1)
-	query := fmt.Sprintf("SET LOCAL lock_timeout = '%dms'", lockTimeoutMS)
-
-	if _, err := keel.Exec(ctx, db, query); err != nil {
-		return fmt.Errorf("set local lock_timeout: %w", err)
-	}
-
-	return nil
 }
 
 func (c *Connection) HealthCheck(ctx context.Context) error {

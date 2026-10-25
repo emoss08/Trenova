@@ -77,7 +77,7 @@ var approvalRunsRef = keel.Ref{Table: &approvalRunsTable}
 
 // ApprovalRunsTable is the table of billingqueue.ApprovalRun.
 type ApprovalRunsTable struct {
-	keel.Handle[billingqueue.ApprovalRun]
+	keel.Handle[*billingqueue.ApprovalRun]
 	ID                  keelkinds.PulidIDCol
 	BusinessUnitID      keelkinds.PulidIDCol
 	OrganizationID      keelkinds.PulidIDCol
@@ -103,7 +103,7 @@ type ApprovalRunsTable struct {
 
 // ApprovalRuns references the billingqueue_approval_runs table.
 var ApprovalRuns = &ApprovalRunsTable{
-	Handle:              keel.Handle[billingqueue.ApprovalRun]{Ref: &approvalRunsRef},
+	Handle:              keel.Handle[*billingqueue.ApprovalRun]{Ref: &approvalRunsRef},
 	ID:                  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &approvalRunsRef, Index: 0}}},
 	BusinessUnitID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &approvalRunsRef, Index: 1}}},
 	OrganizationID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &approvalRunsRef, Index: 2}}},
@@ -130,7 +130,7 @@ var ApprovalRuns = &ApprovalRunsTable{
 // BuildApprovalRuns builds the handle of billingqueue_approval_runs for ref. Generated relation and alias methods call it.
 func BuildApprovalRuns(r *keel.Ref) *ApprovalRunsTable {
 	return &ApprovalRunsTable{
-		Handle:              keel.Handle[billingqueue.ApprovalRun]{Ref: r},
+		Handle:              keel.Handle[*billingqueue.ApprovalRun]{Ref: r},
 		ID:                  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -353,7 +353,7 @@ var approvalRunItemsRef = keel.Ref{Table: &approvalRunItemsTable}
 
 // ApprovalRunItemsTable is the table of billingqueue.ApprovalRunItem.
 type ApprovalRunItemsTable struct {
-	keel.Handle[billingqueue.ApprovalRunItem]
+	keel.Handle[*billingqueue.ApprovalRunItem]
 	ID             keelkinds.PulidIDCol
 	BusinessUnitID keelkinds.PulidIDCol
 	OrganizationID keelkinds.PulidIDCol
@@ -372,7 +372,7 @@ type ApprovalRunItemsTable struct {
 
 // ApprovalRunItems references the billingqueue_approval_run_items table.
 var ApprovalRunItems = &ApprovalRunItemsTable{
-	Handle:         keel.Handle[billingqueue.ApprovalRunItem]{Ref: &approvalRunItemsRef},
+	Handle:         keel.Handle[*billingqueue.ApprovalRunItem]{Ref: &approvalRunItemsRef},
 	ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &approvalRunItemsRef, Index: 0}}},
 	BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &approvalRunItemsRef, Index: 1}}},
 	OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &approvalRunItemsRef, Index: 2}}},
@@ -392,7 +392,7 @@ var ApprovalRunItems = &ApprovalRunItemsTable{
 // BuildApprovalRunItems builds the handle of billingqueue_approval_run_items for ref. Generated relation and alias methods call it.
 func BuildApprovalRunItems(r *keel.Ref) *ApprovalRunItemsTable {
 	return &ApprovalRunItemsTable{
-		Handle:         keel.Handle[billingqueue.ApprovalRunItem]{Ref: r},
+		Handle:         keel.Handle[*billingqueue.ApprovalRunItem]{Ref: r},
 		ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -593,7 +593,7 @@ var billingQueueItemsRef = keel.Ref{Table: &billingQueueItemsTable}
 
 // BillingQueueItemsTable is the table of billingqueue.BillingQueueItem.
 type BillingQueueItemsTable struct {
-	keel.Handle[billingqueue.BillingQueueItem]
+	keel.Handle[*billingqueue.BillingQueueItem]
 	ID                        keelkinds.PulidIDCol
 	OrganizationID            keelkinds.PulidIDCol
 	BusinessUnitID            keelkinds.PulidIDCol
@@ -637,7 +637,7 @@ type BillingQueueItemsTable struct {
 
 // BillingQueueItems references the billing_queue_items table.
 var BillingQueueItems = &BillingQueueItemsTable{
-	Handle:                    keel.Handle[billingqueue.BillingQueueItem]{Ref: &billingQueueItemsRef},
+	Handle:                    keel.Handle[*billingqueue.BillingQueueItem]{Ref: &billingQueueItemsRef},
 	ID:                        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &billingQueueItemsRef, Index: 0}}},
 	OrganizationID:            keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &billingQueueItemsRef, Index: 1}}},
 	BusinessUnitID:            keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &billingQueueItemsRef, Index: 2}}},
@@ -682,7 +682,7 @@ var BillingQueueItems = &BillingQueueItemsTable{
 // BuildBillingQueueItems builds the handle of billing_queue_items for ref. Generated relation and alias methods call it.
 func BuildBillingQueueItems(r *keel.Ref) *BillingQueueItemsTable {
 	return &BillingQueueItemsTable{
-		Handle:                    keel.Handle[billingqueue.BillingQueueItem]{Ref: r},
+		Handle:                    keel.Handle[*billingqueue.BillingQueueItem]{Ref: r},
 		ID:                        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		OrganizationID:            keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		BusinessUnitID:            keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -1078,7 +1078,7 @@ var issuesRef = keel.Ref{Table: &issuesTable}
 
 // IssuesTable is the table of billingqueue.Issue.
 type IssuesTable struct {
-	keel.Handle[billingqueue.Issue]
+	keel.Handle[*billingqueue.Issue]
 	ID              keelkinds.PulidIDCol
 	BusinessUnitID  keelkinds.PulidIDCol
 	OrganizationID  keelkinds.PulidIDCol
@@ -1106,7 +1106,7 @@ type IssuesTable struct {
 
 // Issues references the billing_queue_issues table.
 var Issues = &IssuesTable{
-	Handle:          keel.Handle[billingqueue.Issue]{Ref: &issuesRef},
+	Handle:          keel.Handle[*billingqueue.Issue]{Ref: &issuesRef},
 	ID:              keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &issuesRef, Index: 0}}},
 	BusinessUnitID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &issuesRef, Index: 1}}},
 	OrganizationID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &issuesRef, Index: 2}}},
@@ -1135,7 +1135,7 @@ var Issues = &IssuesTable{
 // BuildIssues builds the handle of billing_queue_issues for ref. Generated relation and alias methods call it.
 func BuildIssues(r *keel.Ref) *IssuesTable {
 	return &IssuesTable{
-		Handle:          keel.Handle[billingqueue.Issue]{Ref: r},
+		Handle:          keel.Handle[*billingqueue.Issue]{Ref: r},
 		ID:              keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -1368,7 +1368,7 @@ var itemEventsRef = keel.Ref{Table: &itemEventsTable}
 
 // ItemEventsTable is the table of billingqueue.ItemEvent.
 type ItemEventsTable struct {
-	keel.Handle[billingqueue.ItemEvent]
+	keel.Handle[*billingqueue.ItemEvent]
 	ID             keelkinds.PulidIDCol
 	BusinessUnitID keelkinds.PulidIDCol
 	OrganizationID keelkinds.PulidIDCol
@@ -1385,7 +1385,7 @@ type ItemEventsTable struct {
 
 // ItemEvents references the billing_queue_events table.
 var ItemEvents = &ItemEventsTable{
-	Handle:         keel.Handle[billingqueue.ItemEvent]{Ref: &itemEventsRef},
+	Handle:         keel.Handle[*billingqueue.ItemEvent]{Ref: &itemEventsRef},
 	ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &itemEventsRef, Index: 0}}},
 	BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &itemEventsRef, Index: 1}}},
 	OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &itemEventsRef, Index: 2}}},
@@ -1403,7 +1403,7 @@ var ItemEvents = &ItemEventsTable{
 // BuildItemEvents builds the handle of billing_queue_events for ref. Generated relation and alias methods call it.
 func BuildItemEvents(r *keel.Ref) *ItemEventsTable {
 	return &ItemEventsTable{
-		Handle:         keel.Handle[billingqueue.ItemEvent]{Ref: r},
+		Handle:         keel.Handle[*billingqueue.ItemEvent]{Ref: r},
 		ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},

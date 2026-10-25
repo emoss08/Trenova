@@ -53,7 +53,7 @@ var instanceBootstrapsRef = keel.Ref{Table: &instanceBootstrapsTable}
 
 // InstanceBootstrapsTable is the table of instancebootstrap.InstanceBootstrap.
 type InstanceBootstrapsTable struct {
-	keel.Handle[instancebootstrap.InstanceBootstrap]
+	keel.Handle[*instancebootstrap.InstanceBootstrap]
 	ID             keelkinds.PulidIDCol
 	BusinessUnitID keelkinds.PulidIDCol
 	OrganizationID keelkinds.PulidIDCol
@@ -65,7 +65,7 @@ type InstanceBootstrapsTable struct {
 
 // InstanceBootstraps references the instance_bootstraps table.
 var InstanceBootstraps = &InstanceBootstrapsTable{
-	Handle:         keel.Handle[instancebootstrap.InstanceBootstrap]{Ref: &instanceBootstrapsRef},
+	Handle:         keel.Handle[*instancebootstrap.InstanceBootstrap]{Ref: &instanceBootstrapsRef},
 	ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &instanceBootstrapsRef, Index: 0}}},
 	BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &instanceBootstrapsRef, Index: 1}}},
 	OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &instanceBootstrapsRef, Index: 2}}},
@@ -78,7 +78,7 @@ var InstanceBootstraps = &InstanceBootstrapsTable{
 // BuildInstanceBootstraps builds the handle of instance_bootstraps for ref. Generated relation and alias methods call it.
 func BuildInstanceBootstraps(r *keel.Ref) *InstanceBootstrapsTable {
 	return &InstanceBootstrapsTable{
-		Handle:         keel.Handle[instancebootstrap.InstanceBootstrap]{Ref: r},
+		Handle:         keel.Handle[*instancebootstrap.InstanceBootstrap]{Ref: r},
 		ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},

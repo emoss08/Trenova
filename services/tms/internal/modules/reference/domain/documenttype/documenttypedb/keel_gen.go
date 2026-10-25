@@ -63,7 +63,7 @@ var documentTypesRef = keel.Ref{Table: &documentTypesTable}
 
 // DocumentTypesTable is the table of documenttype.DocumentType.
 type DocumentTypesTable struct {
-	keel.Handle[documenttype.DocumentType]
+	keel.Handle[*documenttype.DocumentType]
 	ID                     keelkinds.PulidIDCol
 	BusinessUnitID         keelkinds.PulidIDCol
 	OrganizationID         keelkinds.PulidIDCol
@@ -84,7 +84,7 @@ type DocumentTypesTable struct {
 
 // DocumentTypes references the document_types table.
 var DocumentTypes = &DocumentTypesTable{
-	Handle:                 keel.Handle[documenttype.DocumentType]{Ref: &documentTypesRef},
+	Handle:                 keel.Handle[*documenttype.DocumentType]{Ref: &documentTypesRef},
 	ID:                     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &documentTypesRef, Index: 0}}},
 	BusinessUnitID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &documentTypesRef, Index: 1}}},
 	OrganizationID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &documentTypesRef, Index: 2}}},
@@ -106,7 +106,7 @@ var DocumentTypes = &DocumentTypesTable{
 // BuildDocumentTypes builds the handle of document_types for ref. Generated relation and alias methods call it.
 func BuildDocumentTypes(r *keel.Ref) *DocumentTypesTable {
 	return &DocumentTypesTable{
-		Handle:                 keel.Handle[documenttype.DocumentType]{Ref: r},
+		Handle:                 keel.Handle[*documenttype.DocumentType]{Ref: r},
 		ID:                     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},

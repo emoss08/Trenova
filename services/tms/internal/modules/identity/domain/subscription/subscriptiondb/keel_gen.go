@@ -57,7 +57,7 @@ var subscriptionsRef = keel.Ref{Table: &subscriptionsTable}
 
 // SubscriptionsTable is the table of subscription.Subscription.
 type SubscriptionsTable struct {
-	keel.Handle[subscription.Subscription]
+	keel.Handle[*subscription.Subscription]
 	ID                   keelkinds.PulidIDCol
 	BusinessUnitID       keelkinds.PulidIDCol
 	OrganizationID       keelkinds.PulidIDCol
@@ -74,7 +74,7 @@ type SubscriptionsTable struct {
 
 // Subscriptions references the organization_subscriptions table.
 var Subscriptions = &SubscriptionsTable{
-	Handle:               keel.Handle[subscription.Subscription]{Ref: &subscriptionsRef},
+	Handle:               keel.Handle[*subscription.Subscription]{Ref: &subscriptionsRef},
 	ID:                   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &subscriptionsRef, Index: 0}}},
 	BusinessUnitID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &subscriptionsRef, Index: 1}}},
 	OrganizationID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &subscriptionsRef, Index: 2}}},
@@ -92,7 +92,7 @@ var Subscriptions = &SubscriptionsTable{
 // BuildSubscriptions builds the handle of organization_subscriptions for ref. Generated relation and alias methods call it.
 func BuildSubscriptions(r *keel.Ref) *SubscriptionsTable {
 	return &SubscriptionsTable{
-		Handle:               keel.Handle[subscription.Subscription]{Ref: r},
+		Handle:               keel.Handle[*subscription.Subscription]{Ref: r},
 		ID:                   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},

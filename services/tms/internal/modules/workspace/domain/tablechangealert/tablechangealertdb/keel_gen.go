@@ -55,7 +55,7 @@ var tCAAllowlistedTablesRef = keel.Ref{Table: &tCAAllowlistedTablesTable}
 
 // TCAAllowlistedTablesTable is the table of tablechangealert.TCAAllowlistedTable.
 type TCAAllowlistedTablesTable struct {
-	keel.Handle[tablechangealert.TCAAllowlistedTable]
+	keel.Handle[*tablechangealert.TCAAllowlistedTable]
 	ID             keelkinds.PulidIDCol
 	OrganizationID keelkinds.PulidIDCol
 	BusinessUnitID keelkinds.PulidIDCol
@@ -68,7 +68,7 @@ type TCAAllowlistedTablesTable struct {
 
 // TCAAllowlistedTables references the tca_allowlisted_tables table.
 var TCAAllowlistedTables = &TCAAllowlistedTablesTable{
-	Handle:         keel.Handle[tablechangealert.TCAAllowlistedTable]{Ref: &tCAAllowlistedTablesRef},
+	Handle:         keel.Handle[*tablechangealert.TCAAllowlistedTable]{Ref: &tCAAllowlistedTablesRef},
 	ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &tCAAllowlistedTablesRef, Index: 0}}},
 	OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &tCAAllowlistedTablesRef, Index: 1}}},
 	BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &tCAAllowlistedTablesRef, Index: 2}}},
@@ -82,7 +82,7 @@ var TCAAllowlistedTables = &TCAAllowlistedTablesTable{
 // BuildTCAAllowlistedTables builds the handle of tca_allowlisted_tables for ref. Generated relation and alias methods call it.
 func BuildTCAAllowlistedTables(r *keel.Ref) *TCAAllowlistedTablesTable {
 	return &TCAAllowlistedTablesTable{
-		Handle:         keel.Handle[tablechangealert.TCAAllowlistedTable]{Ref: r},
+		Handle:         keel.Handle[*tablechangealert.TCAAllowlistedTable]{Ref: r},
 		ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -217,7 +217,7 @@ var tCASubscriptionsRef = keel.Ref{Table: &tCASubscriptionsTable}
 
 // TCASubscriptionsTable is the table of tablechangealert.TCASubscription.
 type TCASubscriptionsTable struct {
-	keel.Handle[tablechangealert.TCASubscription]
+	keel.Handle[*tablechangealert.TCASubscription]
 	ID             keelkinds.PulidIDCol
 	OrganizationID keelkinds.PulidIDCol
 	BusinessUnitID keelkinds.PulidIDCol
@@ -241,7 +241,7 @@ type TCASubscriptionsTable struct {
 
 // TCASubscriptions references the tca_subscriptions table.
 var TCASubscriptions = &TCASubscriptionsTable{
-	Handle:         keel.Handle[tablechangealert.TCASubscription]{Ref: &tCASubscriptionsRef},
+	Handle:         keel.Handle[*tablechangealert.TCASubscription]{Ref: &tCASubscriptionsRef},
 	ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &tCASubscriptionsRef, Index: 0}}},
 	OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &tCASubscriptionsRef, Index: 1}}},
 	BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &tCASubscriptionsRef, Index: 2}}},
@@ -266,7 +266,7 @@ var TCASubscriptions = &TCASubscriptionsTable{
 // BuildTCASubscriptions builds the handle of tca_subscriptions for ref. Generated relation and alias methods call it.
 func BuildTCASubscriptions(r *keel.Ref) *TCASubscriptionsTable {
 	return &TCASubscriptionsTable{
-		Handle:         keel.Handle[tablechangealert.TCASubscription]{Ref: r},
+		Handle:         keel.Handle[*tablechangealert.TCASubscription]{Ref: r},
 		ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},

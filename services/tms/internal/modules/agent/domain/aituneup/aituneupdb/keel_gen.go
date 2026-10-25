@@ -65,7 +65,7 @@ var tuneUpsRef = keel.Ref{Table: &tuneUpsTable}
 
 // TuneUpsTable is the table of aituneup.TuneUp.
 type TuneUpsTable struct {
-	keel.Handle[aituneup.TuneUp]
+	keel.Handle[*aituneup.TuneUp]
 	ID                keelkinds.PulidIDCol
 	BusinessUnitID    keelkinds.PulidIDCol
 	OrganizationID    keelkinds.PulidIDCol
@@ -89,7 +89,7 @@ type TuneUpsTable struct {
 
 // TuneUps references the ai_tune_ups table.
 var TuneUps = &TuneUpsTable{
-	Handle:            keel.Handle[aituneup.TuneUp]{Ref: &tuneUpsRef},
+	Handle:            keel.Handle[*aituneup.TuneUp]{Ref: &tuneUpsRef},
 	ID:                keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &tuneUpsRef, Index: 0}}},
 	BusinessUnitID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &tuneUpsRef, Index: 1}}},
 	OrganizationID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &tuneUpsRef, Index: 2}}},
@@ -114,7 +114,7 @@ var TuneUps = &TuneUpsTable{
 // BuildTuneUps builds the handle of ai_tune_ups for ref. Generated relation and alias methods call it.
 func BuildTuneUps(r *keel.Ref) *TuneUpsTable {
 	return &TuneUpsTable{
-		Handle:            keel.Handle[aituneup.TuneUp]{Ref: r},
+		Handle:            keel.Handle[*aituneup.TuneUp]{Ref: r},
 		ID:                keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},

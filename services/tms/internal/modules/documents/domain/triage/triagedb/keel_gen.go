@@ -63,7 +63,7 @@ var activitiesRef = keel.Ref{Table: &activitiesTable}
 
 // ActivitiesTable is the table of triage.Activity.
 type ActivitiesTable struct {
-	keel.Handle[triage.Activity]
+	keel.Handle[*triage.Activity]
 	ID                 keelkinds.PulidIDCol
 	BusinessUnitID     keelkinds.PulidIDCol
 	OrganizationID     keelkinds.PulidIDCol
@@ -82,7 +82,7 @@ type ActivitiesTable struct {
 
 // Activities references the inbound_message_activities table.
 var Activities = &ActivitiesTable{
-	Handle:             keel.Handle[triage.Activity]{Ref: &activitiesRef},
+	Handle:             keel.Handle[*triage.Activity]{Ref: &activitiesRef},
 	ID:                 keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &activitiesRef, Index: 0}}},
 	BusinessUnitID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &activitiesRef, Index: 1}}},
 	OrganizationID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &activitiesRef, Index: 2}}},
@@ -102,7 +102,7 @@ var Activities = &ActivitiesTable{
 // BuildActivities builds the handle of inbound_message_activities for ref. Generated relation and alias methods call it.
 func BuildActivities(r *keel.Ref) *ActivitiesTable {
 	return &ActivitiesTable{
-		Handle:             keel.Handle[triage.Activity]{Ref: r},
+		Handle:             keel.Handle[*triage.Activity]{Ref: r},
 		ID:                 keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -298,7 +298,7 @@ var repliesRef = keel.Ref{Table: &repliesTable}
 
 // RepliesTable is the table of triage.Reply.
 type RepliesTable struct {
-	keel.Handle[triage.Reply]
+	keel.Handle[*triage.Reply]
 	ID                keelkinds.PulidIDCol
 	BusinessUnitID    keelkinds.PulidIDCol
 	OrganizationID    keelkinds.PulidIDCol
@@ -329,7 +329,7 @@ type RepliesTable struct {
 
 // Replies references the inbound_replies table.
 var Replies = &RepliesTable{
-	Handle:            keel.Handle[triage.Reply]{Ref: &repliesRef},
+	Handle:            keel.Handle[*triage.Reply]{Ref: &repliesRef},
 	ID:                keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &repliesRef, Index: 0}}},
 	BusinessUnitID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &repliesRef, Index: 1}}},
 	OrganizationID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &repliesRef, Index: 2}}},
@@ -361,7 +361,7 @@ var Replies = &RepliesTable{
 // BuildReplies builds the handle of inbound_replies for ref. Generated relation and alias methods call it.
 func BuildReplies(r *keel.Ref) *RepliesTable {
 	return &RepliesTable{
-		Handle:            keel.Handle[triage.Reply]{Ref: r},
+		Handle:            keel.Handle[*triage.Reply]{Ref: r},
 		ID:                keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -610,7 +610,7 @@ var replyTemplatesRef = keel.Ref{Table: &replyTemplatesTable}
 
 // ReplyTemplatesTable is the table of triage.ReplyTemplate.
 type ReplyTemplatesTable struct {
-	keel.Handle[triage.ReplyTemplate]
+	keel.Handle[*triage.ReplyTemplate]
 	ID             keelkinds.PulidIDCol
 	BusinessUnitID keelkinds.PulidIDCol
 	OrganizationID keelkinds.PulidIDCol
@@ -624,7 +624,7 @@ type ReplyTemplatesTable struct {
 
 // ReplyTemplates references the triage_reply_templates table.
 var ReplyTemplates = &ReplyTemplatesTable{
-	Handle:         keel.Handle[triage.ReplyTemplate]{Ref: &replyTemplatesRef},
+	Handle:         keel.Handle[*triage.ReplyTemplate]{Ref: &replyTemplatesRef},
 	ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &replyTemplatesRef, Index: 0}}},
 	BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &replyTemplatesRef, Index: 1}}},
 	OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &replyTemplatesRef, Index: 2}}},
@@ -639,7 +639,7 @@ var ReplyTemplates = &ReplyTemplatesTable{
 // BuildReplyTemplates builds the handle of triage_reply_templates for ref. Generated relation and alias methods call it.
 func BuildReplyTemplates(r *keel.Ref) *ReplyTemplatesTable {
 	return &ReplyTemplatesTable{
-		Handle:         keel.Handle[triage.ReplyTemplate]{Ref: r},
+		Handle:         keel.Handle[*triage.ReplyTemplate]{Ref: r},
 		ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -771,7 +771,7 @@ var responseTargetsRef = keel.Ref{Table: &responseTargetsTable}
 
 // ResponseTargetsTable is the table of triage.ResponseTarget.
 type ResponseTargetsTable struct {
-	keel.Handle[triage.ResponseTarget]
+	keel.Handle[*triage.ResponseTarget]
 	OrganizationID keelkinds.PulidIDCol
 	BusinessUnitID keelkinds.PulidIDCol
 	Classification inboundmessagedb.ClassificationCol
@@ -783,7 +783,7 @@ type ResponseTargetsTable struct {
 
 // ResponseTargets references the triage_response_targets table.
 var ResponseTargets = &ResponseTargetsTable{
-	Handle:         keel.Handle[triage.ResponseTarget]{Ref: &responseTargetsRef},
+	Handle:         keel.Handle[*triage.ResponseTarget]{Ref: &responseTargetsRef},
 	OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &responseTargetsRef, Index: 0}}},
 	BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &responseTargetsRef, Index: 1}}},
 	Classification: inboundmessagedb.ClassificationCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &responseTargetsRef, Index: 2}}},
@@ -796,7 +796,7 @@ var ResponseTargets = &ResponseTargetsTable{
 // BuildResponseTargets builds the handle of triage_response_targets for ref. Generated relation and alias methods call it.
 func BuildResponseTargets(r *keel.Ref) *ResponseTargetsTable {
 	return &ResponseTargetsTable{
-		Handle:         keel.Handle[triage.ResponseTarget]{Ref: r},
+		Handle:         keel.Handle[*triage.ResponseTarget]{Ref: r},
 		OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		Classification: inboundmessagedb.ClassificationCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -923,7 +923,7 @@ var rulesRef = keel.Ref{Table: &rulesTable}
 
 // RulesTable is the table of triage.Rule.
 type RulesTable struct {
-	keel.Handle[triage.Rule]
+	keel.Handle[*triage.Rule]
 	ID             keelkinds.PulidIDCol
 	BusinessUnitID keelkinds.PulidIDCol
 	OrganizationID keelkinds.PulidIDCol
@@ -945,7 +945,7 @@ type RulesTable struct {
 
 // Rules references the triage_rules table.
 var Rules = &RulesTable{
-	Handle:         keel.Handle[triage.Rule]{Ref: &rulesRef},
+	Handle:         keel.Handle[*triage.Rule]{Ref: &rulesRef},
 	ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &rulesRef, Index: 0}}},
 	BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &rulesRef, Index: 1}}},
 	OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &rulesRef, Index: 2}}},
@@ -968,7 +968,7 @@ var Rules = &RulesTable{
 // BuildRules builds the handle of triage_rules for ref. Generated relation and alias methods call it.
 func BuildRules(r *keel.Ref) *RulesTable {
 	return &RulesTable{
-		Handle:         keel.Handle[triage.Rule]{Ref: r},
+		Handle:         keel.Handle[*triage.Rule]{Ref: r},
 		ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -1150,7 +1150,7 @@ var senderHintsRef = keel.Ref{Table: &senderHintsTable}
 
 // SenderHintsTable is the table of triage.SenderHint.
 type SenderHintsTable struct {
-	keel.Handle[triage.SenderHint]
+	keel.Handle[*triage.SenderHint]
 	OrganizationID  keelkinds.PulidIDCol
 	BusinessUnitID  keelkinds.PulidIDCol
 	SenderDomain    keel.StringCol
@@ -1161,7 +1161,7 @@ type SenderHintsTable struct {
 
 // SenderHints references the inbound_sender_hints table.
 var SenderHints = &SenderHintsTable{
-	Handle:          keel.Handle[triage.SenderHint]{Ref: &senderHintsRef},
+	Handle:          keel.Handle[*triage.SenderHint]{Ref: &senderHintsRef},
 	OrganizationID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &senderHintsRef, Index: 0}}},
 	BusinessUnitID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &senderHintsRef, Index: 1}}},
 	SenderDomain:    keel.StringCol{Col: keel.Col{Ref: &senderHintsRef, Index: 2}},
@@ -1173,7 +1173,7 @@ var SenderHints = &SenderHintsTable{
 // BuildSenderHints builds the handle of inbound_sender_hints for ref. Generated relation and alias methods call it.
 func BuildSenderHints(r *keel.Ref) *SenderHintsTable {
 	return &SenderHintsTable{
-		Handle:          keel.Handle[triage.SenderHint]{Ref: r},
+		Handle:          keel.Handle[*triage.SenderHint]{Ref: r},
 		OrganizationID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		SenderDomain:    keel.StringCol{Col: keel.Col{Ref: r, Index: 2}},
@@ -1275,7 +1275,7 @@ var settingsesRef = keel.Ref{Table: &settingsesTable}
 
 // SettingsesTable is the table of triage.Settings.
 type SettingsesTable struct {
-	keel.Handle[triage.Settings]
+	keel.Handle[*triage.Settings]
 	OrganizationID keelkinds.PulidIDCol
 	BusinessUnitID keelkinds.PulidIDCol
 	OnCallUserID   keelkinds.PulidIDCol
@@ -1287,7 +1287,7 @@ type SettingsesTable struct {
 
 // Settingses references the triage_settings table.
 var Settingses = &SettingsesTable{
-	Handle:         keel.Handle[triage.Settings]{Ref: &settingsesRef},
+	Handle:         keel.Handle[*triage.Settings]{Ref: &settingsesRef},
 	OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &settingsesRef, Index: 0}}},
 	BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &settingsesRef, Index: 1}}},
 	OnCallUserID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &settingsesRef, Index: 2}}},
@@ -1300,7 +1300,7 @@ var Settingses = &SettingsesTable{
 // BuildSettingses builds the handle of triage_settings for ref. Generated relation and alias methods call it.
 func BuildSettingses(r *keel.Ref) *SettingsesTable {
 	return &SettingsesTable{
-		Handle:         keel.Handle[triage.Settings]{Ref: r},
+		Handle:         keel.Handle[*triage.Settings]{Ref: r},
 		OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OnCallUserID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -1417,7 +1417,7 @@ var viewsRef = keel.Ref{Table: &viewsTable}
 
 // ViewsTable is the table of triage.View.
 type ViewsTable struct {
-	keel.Handle[triage.View]
+	keel.Handle[*triage.View]
 	ID             keelkinds.PulidIDCol
 	BusinessUnitID keelkinds.PulidIDCol
 	OrganizationID keelkinds.PulidIDCol
@@ -1431,7 +1431,7 @@ type ViewsTable struct {
 
 // Views references the triage_views table.
 var Views = &ViewsTable{
-	Handle:         keel.Handle[triage.View]{Ref: &viewsRef},
+	Handle:         keel.Handle[*triage.View]{Ref: &viewsRef},
 	ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &viewsRef, Index: 0}}},
 	BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &viewsRef, Index: 1}}},
 	OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &viewsRef, Index: 2}}},
@@ -1446,7 +1446,7 @@ var Views = &ViewsTable{
 // BuildViews builds the handle of triage_views for ref. Generated relation and alias methods call it.
 func BuildViews(r *keel.Ref) *ViewsTable {
 	return &ViewsTable{
-		Handle:         keel.Handle[triage.View]{Ref: r},
+		Handle:         keel.Handle[*triage.View]{Ref: r},
 		ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},

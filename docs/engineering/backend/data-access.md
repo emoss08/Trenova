@@ -95,6 +95,22 @@ Shape: an fx `Params{DB *postgres.Connection; Logger}`, an unexported `repositor
   `postgis.Pt`, `postgis.Buffer`, `postgis.FromGeoJSON` and `postgis.DistanceSphere` build values.
   Write no `ST_*` SQL by hand. GeoJSON in Go goes through `pkg/geojson`; a constant that a partial
   GiST index's predicate names stays inline with `keel.DynConst`.
+- **Partial and expression indexes under generic plans.** A prepared statement settles on a plan
+  without its parameters' values, so a predicate reaches a partial index only through a constant.
+  keel writes a declared constant of an enum column into the statement (`s.Status.Eq(shipment.StatusNew)`
+  is `status = 'New'`); a fixed constant of a plain string column takes `keel.DynConst`. A lookup an
+  index on `lower(code)` serves compares `t.Code.Lower().Eq(strings.ToLower(v))`, never `t.Code.Eq(v)`.
+  Pin a hot path with `keeltest.UsesIndex` in `schemalint/index_plans_integration_test.go`.
+- **Vectors and text search.** pgvector distances come from `github.com/emoss08/keel/vector`
+  (`CosineDistance(HalfVec(col, n), HalfVec(query, n))`, `EFSearch`); full-text search is
+  `TSVectorCol.Match` with `SearchModes` (`AnyWebSearch`, `TSQuery`) and `SearchAlso`. Neither is
+  written as SQL text.
+- **Literals and grouping.** A bound value takes the type of its Go value where nothing else types
+  it (a picked literal, an all-literal CASE, `concat` arguments), so `.Cast` is for another type
+  only. Group and order by the same expression variable you picked: keel writes `GROUP BY 2`.
+- **Enum assignments.** A field whose column is a Postgres enum and is assigned from a text
+  expression declares `sqltype=<enum>` in its keel tag; `ToExpr` casts to it and `keel.Verify` holds
+  the tag to the column.
 - **Batch reads are first-class.** Every entity read per parent row has a `GetByIDs`/`…ByIDs`
   method so a dataloader can batch it ([api.md](api.md)):
   `t.Where(t.ID.In(ids...)).Limit(len(ids)).List(ctx, db)`. `In` binds one array, so 3 or 3,000
@@ -255,13 +271,15 @@ security scoped.
 | Pool size and lifetimes | `maxOpenConns`, `connMaxLifetime`, `connMaxIdleTime` (and `database.system.maxOpenConns`) |
 | Enum types | keel registers every enum and its array type on each new connection with one catalog query |
 | Slow queries, tracing, query timing | one `slowQueryLog` per pool and `tracingObserver` (`go.sql.query_timing`) |
+| Development query log | `database.queryLog` (`off`, `errors`, `all`; development only): `keel/keellog` prints each statement to stderr with its values, caller, transaction and outcome; `errors` prints failed and slow ones (`keelobserve.go`) |
+| Constraint catalog, generic plans | keel reads the constraints of `keeltables.All()` at open (`dbpool.Options.Tables`); `keeltest.UsesIndex` asserts a hot-path query reaches its index under a generic plan (`schemalint/index_plans_integration_test.go`) |
 | Pool metrics | `trenova_db_pool_*` from `pgxpool.Stat` (`metrics.Database.RegisterPoolStats`) |
 
 `dbtx.Read`/`Write` and services' `kernelports.Transactor.Transact(ctx, opts, fn)` go through
 `Connection.Transact`:
 
 - A call whose context already holds a transaction of the same DB and the same scope joins it
-  (applying a `LockTimeout` with `SET LOCAL`); any other call opens a new, detached transaction
+  (applying a `LockTimeout` and `Settings` as `keel.Setting`s for the call, restored after it); any other call opens a new, detached transaction
   (`keel.Detached()`), so a context with another tenant's scope, or a `RunDetached` one, never
   writes in the caller's transaction.
 - `TxOptions` carries `ReadOnly` (a `keel.Read` transaction), `Isolation` (read committed,
@@ -333,8 +351,11 @@ A new column, relation or table needs `task keel-gen` in the same change, and
 ## Tests
 
 - **SQL**: render statements with `keeltest.Render(t, q)` (`internal/testutil/keeltest`), a keel DB
-  that never connects, under a test tenant; assert the SQL and the arguments
-  (`tractorrepository/tractor_test.go`). A unit test that needs a database is an integration test.
+  that never connects, under a test tenant; assert the fragments that matter
+  (`tractorrepository/tractor_test.go`). A test that pins a whole statement uses
+  `keeltest.Snapshot(t, q)`: the formatted SQL and its values live in
+  `testdata/keel/<test>.sql`, rewritten with `KEEL_UPDATE=1 go test ./…` when keel's rendering
+  changes, so the change is one reviewed diff. A unit test that needs a database is an integration test.
 - **Integration**: `seedtest` copies every test database from a keel template (`migrate.Template`,
   key `seedtest.TemplateKey` joined to the migrations' and the seeds' fingerprints), built once per
   server: `SetupTestDB` from migrations plus reference seeds, `seededtest.SetupTestDB` with the

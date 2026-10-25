@@ -8,6 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission/permissiondb"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant/tenantdb"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/dberror"
@@ -18,7 +19,6 @@ import (
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
-	"github.com/jackc/pgx/v5"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
@@ -32,51 +32,11 @@ const (
 	roleClosureRoleColumn    = "id"
 	alreadyAssignedMessage   = "Role is already assigned to this user"
 	alreadyAssignedFieldName = "roleId"
+	heldRolesName            = "held"
+	heldUserColumn           = "user_id"
+	heldRoleColumn           = "role_id"
+	heldParentColumn         = "parent_role_ids"
 )
-
-const orphanedAssignmentsSQL = `
-SELECT DISTINCT ura.user_id, ura.organization_id, o.business_unit_id
-FROM user_role_assignments ura
-JOIN organizations o ON o.id = ura.organization_id
-JOIN users u ON u.id = ura.user_id
-WHERE u.current_organization_id <> ura.organization_id
-  AND NOT EXISTS (
-    SELECT 1
-    FROM user_organization_memberships m
-    WHERE m.user_id = ura.user_id
-      AND m.organization_id = ura.organization_id
-      AND (m.expires_at IS NULL OR m.expires_at > $1)
-  )
-ORDER BY ura.organization_id, ura.user_id
-LIMIT $2`
-
-// usersWithPermissionSQL walks each active assignment up through its role's
-// parents, so a person who holds a child role inherits what its parents
-// grant, the way the permission engine reads it. A grant is stored as it was
-// made, so it matches on any operation that implies the one asked for
-// (approve brings update and read), as the engine evaluates it.
-const usersWithPermissionSQL = `
-WITH RECURSIVE held AS (
-    SELECT ura.user_id, r.id AS role_id, r.parent_role_ids
-    FROM user_role_assignments ura
-    JOIN roles r ON r.id = ura.role_id
-    WHERE ura.organization_id = $1
-      AND r.business_unit_id = $2
-      AND (ura.expires_at IS NULL OR ura.expires_at > $3)
-    UNION
-    SELECT h.user_id, p.id, p.parent_role_ids
-    FROM held h
-    JOIN roles p ON p.id = ANY(h.parent_role_ids)
-)
-SELECT DISTINCT u.id AS user_id, u.name, u.username, u.email_address,
-    COALESCE(u.profile_pic_url, '') AS profile_pic_url, u.locale
-FROM held h
-JOIN resource_permissions rp ON rp.role_id = h.role_id
-JOIN users u ON u.id = h.user_id
-WHERE rp.resource = $4
-  AND rp.operations && $5::text[]
-  AND u.status = $6
-ORDER BY u.name`
 
 var (
 	roleErrors           = dberror.Mapping{Entity: "Role"}
@@ -604,13 +564,10 @@ func (r *repository) ListOrphanedAssignments(
 		ctx,
 		r.db,
 		func(ctx context.Context) ([]permissionports.OrphanedAssignment, error) {
-			orphans, err := keel.QueryAll(
+			orphans, err := keel.Into[permissionports.OrphanedAssignment](
 				ctx,
 				r.db.Keel(ctx),
-				pgx.RowToStructByPos[permissionports.OrphanedAssignment],
-				orphanedAssignmentsSQL,
-				now,
-				limit,
+				orphanedAssignmentsQuery(now, limit),
 			)
 			if err != nil {
 				r.l.Error("failed to list orphaned role assignments", zap.Error(err))
@@ -623,6 +580,30 @@ func (r *repository) ListOrphanedAssignments(
 			return orphans, nil
 		},
 	)
+}
+
+func orphanedAssignmentsQuery(now int64, limit int) *keel.Query[*permission.UserRoleAssignment] {
+	ura := permissiondb.UserRoleAssignments
+	o := tenantdb.Organizations
+	u := tenantdb.Users
+	m := tenantdb.OrganizationMemberships
+
+	return ura.Query().
+		AllTenants().
+		Join(o, o.ID.EqCol(ura.OrganizationID)).
+		Join(u, u.ID.EqCol(ura.UserID)).
+		DistinctOn(ura.OrganizationID, ura.UserID).
+		Pick(ura.UserID, ura.OrganizationID, o.BusinessUnitID).
+		Where(
+			u.CurrentOrganizationID.NeCol(ura.OrganizationID),
+			keel.NotExists(m.Query().AllTenants().Where(
+				m.UserID.EqCol(ura.UserID),
+				m.OrganizationID.EqCol(ura.OrganizationID),
+				keel.Or(m.ExpiresAt.IsNull(), m.ExpiresAt.Gt(now)),
+			)),
+		).
+		Order(ura.OrganizationID.Asc(), ura.UserID.Asc()).
+		Limit(limit)
 }
 
 func (r *repository) CreateResourcePermission(
@@ -750,17 +731,10 @@ func (r *repository) ListUsersWithPermission(
 		ctx,
 		r.db,
 		func(ctx context.Context) ([]permissionports.PermittedUser, error) {
-			users, err := keel.QueryAll(
+			users, err := keel.Into[permissionports.PermittedUser](
 				ctx,
 				r.db.Keel(ctx),
-				pgx.RowToStructByPos[permissionports.PermittedUser],
-				usersWithPermissionSQL,
-				req.OrganizationID.String(),
-				req.BusinessUnitID.String(),
-				req.Now,
-				req.Resource.String(),
-				grantingOperations(req.Operation),
-				string(domaintypes.StatusActive),
+				usersWithPermissionQuery(&req),
 			)
 			if err != nil {
 				r.l.Error(
@@ -778,6 +752,42 @@ func (r *repository) ListUsersWithPermission(
 			return users, nil
 		},
 	)
+}
+
+func usersWithPermissionQuery(
+	req *permissionports.ListUsersWithPermissionRequest,
+) *keel.Query[*tenant.User] {
+	ura := permissiondb.UserRoleAssignments
+	ro := permissiondb.Roles
+	parent := ro.As(parentRoleAlias)
+	rp := permissiondb.ResourcePermissions
+	u := tenantdb.Users
+
+	held := keel.RecursiveCTE(
+		heldRolesName,
+		[]string{heldUserColumn, heldRoleColumn, heldParentColumn},
+		ura.Join(ro, ro.ID.EqCol(ura.RoleID)).
+			Pick(ura.UserID, ro.ID, ro.ParentRoleIDs).
+			Where(keel.Or(ura.ExpiresAt.IsNull(), ura.ExpiresAt.Gt(req.Now))),
+	)
+	held.Recurse(parent.
+		Pick(held.Col(heldUserColumn), parent.ID, parent.ParentRoleIDs).
+		Join(held, keel.DynOf(parent.ID).In(held.Col(heldParentColumn)))).
+		Distinct()
+
+	return u.With(held).
+		Pick(u.ID, u.Name, u.Username, u.EmailAddress, u.ProfilePicURL.Coalesce(""), u.Locale).
+		Where(
+			u.Status.Eq(domaintypes.StatusActive),
+			keel.Exists(held.Query().
+				Join(rp, rp.RoleID.EqCol(held.Col(heldRoleColumn))).
+				Where(
+					held.Col(heldUserColumn).EqCol(u.ID),
+					rp.Resource.Eq(req.Resource.String()),
+					rp.Operations.Overlaps(grantingOperations(req.Operation)...),
+				)),
+		).
+		Order(u.Name.Asc())
 }
 
 func grantingOperations(op permission.Operation) []string {

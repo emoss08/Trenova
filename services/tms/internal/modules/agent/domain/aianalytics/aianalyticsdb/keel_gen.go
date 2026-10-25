@@ -57,7 +57,7 @@ var providerHoursRef = keel.Ref{Table: &providerHoursTable}
 
 // ProviderHoursTable is the table of aianalytics.ProviderHour.
 type ProviderHoursTable struct {
-	keel.Handle[aianalytics.ProviderHour]
+	keel.Handle[*aianalytics.ProviderHour]
 	OrganizationID    keelkinds.PulidIDCol
 	BusinessUnitID    keelkinds.PulidIDCol
 	Hour              keel.Int64Col
@@ -74,7 +74,7 @@ type ProviderHoursTable struct {
 
 // ProviderHours references the ai_provider_hourly_stats table.
 var ProviderHours = &ProviderHoursTable{
-	Handle:            keel.Handle[aianalytics.ProviderHour]{Ref: &providerHoursRef},
+	Handle:            keel.Handle[*aianalytics.ProviderHour]{Ref: &providerHoursRef},
 	OrganizationID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &providerHoursRef, Index: 0}}},
 	BusinessUnitID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &providerHoursRef, Index: 1}}},
 	Hour:              keel.Int64Col{Col: keel.Col{Ref: &providerHoursRef, Index: 2}},
@@ -92,7 +92,7 @@ var ProviderHours = &ProviderHoursTable{
 // BuildProviderHours builds the handle of ai_provider_hourly_stats for ref. Generated relation and alias methods call it.
 func BuildProviderHours(r *keel.Ref) *ProviderHoursTable {
 	return &ProviderHoursTable{
-		Handle:            keel.Handle[aianalytics.ProviderHour]{Ref: r},
+		Handle:            keel.Handle[*aianalytics.ProviderHour]{Ref: r},
 		OrganizationID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		Hour:              keel.Int64Col{Col: keel.Col{Ref: r, Index: 2}},
@@ -223,7 +223,7 @@ var refreshStatesRef = keel.Ref{Table: &refreshStatesTable}
 
 // RefreshStatesTable is the table of aianalytics.RefreshState.
 type RefreshStatesTable struct {
-	keel.Handle[aianalytics.RefreshState]
+	keel.Handle[*aianalytics.RefreshState]
 	OrganizationID   keelkinds.PulidIDCol
 	BusinessUnitID   keelkinds.PulidIDCol
 	RefreshedThrough keel.Int64Col
@@ -232,7 +232,7 @@ type RefreshStatesTable struct {
 
 // RefreshStates references the ai_analytics_refresh_state table.
 var RefreshStates = &RefreshStatesTable{
-	Handle:           keel.Handle[aianalytics.RefreshState]{Ref: &refreshStatesRef},
+	Handle:           keel.Handle[*aianalytics.RefreshState]{Ref: &refreshStatesRef},
 	OrganizationID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &refreshStatesRef, Index: 0}}},
 	BusinessUnitID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &refreshStatesRef, Index: 1}}},
 	RefreshedThrough: keel.Int64Col{Col: keel.Col{Ref: &refreshStatesRef, Index: 2}},
@@ -242,7 +242,7 @@ var RefreshStates = &RefreshStatesTable{
 // BuildRefreshStates builds the handle of ai_analytics_refresh_state for ref. Generated relation and alias methods call it.
 func BuildRefreshStates(r *keel.Ref) *RefreshStatesTable {
 	return &RefreshStatesTable{
-		Handle:           keel.Handle[aianalytics.RefreshState]{Ref: r},
+		Handle:           keel.Handle[*aianalytics.RefreshState]{Ref: r},
 		OrganizationID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		RefreshedThrough: keel.Int64Col{Col: keel.Col{Ref: r, Index: 2}},
@@ -337,7 +337,7 @@ var unitToolsRef = keel.Ref{Table: &unitToolsTable}
 
 // UnitToolsTable is the table of aianalytics.UnitTool.
 type UnitToolsTable struct {
-	keel.Handle[aianalytics.UnitTool]
+	keel.Handle[*aianalytics.UnitTool]
 	OrganizationID    keelkinds.PulidIDCol
 	BusinessUnitID    keelkinds.PulidIDCol
 	UnitID            keel.StringCol
@@ -353,7 +353,7 @@ type UnitToolsTable struct {
 
 // UnitTools references the ai_work_unit_tools table.
 var UnitTools = &UnitToolsTable{
-	Handle:            keel.Handle[aianalytics.UnitTool]{Ref: &unitToolsRef},
+	Handle:            keel.Handle[*aianalytics.UnitTool]{Ref: &unitToolsRef},
 	OrganizationID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &unitToolsRef, Index: 0}}},
 	BusinessUnitID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &unitToolsRef, Index: 1}}},
 	UnitID:            keel.StringCol{Col: keel.Col{Ref: &unitToolsRef, Index: 2}},
@@ -370,7 +370,7 @@ var UnitTools = &UnitToolsTable{
 // BuildUnitTools builds the handle of ai_work_unit_tools for ref. Generated relation and alias methods call it.
 func BuildUnitTools(r *keel.Ref) *UnitToolsTable {
 	return &UnitToolsTable{
-		Handle:            keel.Handle[aianalytics.UnitTool]{Ref: r},
+		Handle:            keel.Handle[*aianalytics.UnitTool]{Ref: r},
 		OrganizationID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		UnitID:            keel.StringCol{Col: keel.Col{Ref: r, Index: 2}},
@@ -520,7 +520,7 @@ var workUnitsRef = keel.Ref{Table: &workUnitsTable}
 
 // WorkUnitsTable is the table of aianalytics.WorkUnit.
 type WorkUnitsTable struct {
-	keel.Handle[aianalytics.WorkUnit]
+	keel.Handle[*aianalytics.WorkUnit]
 	ID                  keel.StringCol
 	BusinessUnitID      keelkinds.PulidIDCol
 	OrganizationID      keelkinds.PulidIDCol
@@ -556,7 +556,7 @@ type WorkUnitsTable struct {
 
 // WorkUnits references the ai_work_units table.
 var WorkUnits = &WorkUnitsTable{
-	Handle:              keel.Handle[aianalytics.WorkUnit]{Ref: &workUnitsRef},
+	Handle:              keel.Handle[*aianalytics.WorkUnit]{Ref: &workUnitsRef},
 	ID:                  keel.StringCol{Col: keel.Col{Ref: &workUnitsRef, Index: 0}},
 	BusinessUnitID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workUnitsRef, Index: 1}}},
 	OrganizationID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workUnitsRef, Index: 2}}},
@@ -593,7 +593,7 @@ var WorkUnits = &WorkUnitsTable{
 // BuildWorkUnits builds the handle of ai_work_units for ref. Generated relation and alias methods call it.
 func BuildWorkUnits(r *keel.Ref) *WorkUnitsTable {
 	return &WorkUnitsTable{
-		Handle:              keel.Handle[aianalytics.WorkUnit]{Ref: r},
+		Handle:              keel.Handle[*aianalytics.WorkUnit]{Ref: r},
 		ID:                  keel.StringCol{Col: keel.Col{Ref: r, Index: 0}},
 		BusinessUnitID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},

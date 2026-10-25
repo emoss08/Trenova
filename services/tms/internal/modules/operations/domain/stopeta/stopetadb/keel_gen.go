@@ -69,7 +69,7 @@ var stopETAsRef = keel.Ref{Table: &stopETAsTable}
 
 // StopETAsTable is the table of stopeta.StopETA.
 type StopETAsTable struct {
-	keel.Handle[stopeta.StopETA]
+	keel.Handle[*stopeta.StopETA]
 	ID                 keelkinds.PulidIDCol
 	OrganizationID     keelkinds.PulidIDCol
 	BusinessUnitID     keelkinds.PulidIDCol
@@ -98,7 +98,7 @@ type StopETAsTable struct {
 
 // StopETAs references the stop_etas table.
 var StopETAs = &StopETAsTable{
-	Handle:             keel.Handle[stopeta.StopETA]{Ref: &stopETAsRef},
+	Handle:             keel.Handle[*stopeta.StopETA]{Ref: &stopETAsRef},
 	ID:                 keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &stopETAsRef, Index: 0}}},
 	OrganizationID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &stopETAsRef, Index: 1}}},
 	BusinessUnitID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &stopETAsRef, Index: 2}}},
@@ -128,7 +128,7 @@ var StopETAs = &StopETAsTable{
 // BuildStopETAs builds the handle of stop_etas for ref. Generated relation and alias methods call it.
 func BuildStopETAs(r *keel.Ref) *StopETAsTable {
 	return &StopETAsTable{
-		Handle:             keel.Handle[stopeta.StopETA]{Ref: r},
+		Handle:             keel.Handle[*stopeta.StopETA]{Ref: r},
 		ID:                 keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		OrganizationID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		BusinessUnitID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},

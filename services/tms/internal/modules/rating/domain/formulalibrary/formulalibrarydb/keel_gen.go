@@ -73,7 +73,7 @@ var formulaLibrariesRef = keel.Ref{Table: &formulaLibrariesTable}
 
 // FormulaLibrariesTable is the table of formulalibrary.FormulaLibrary.
 type FormulaLibrariesTable struct {
-	keel.Handle[formulalibrary.FormulaLibrary]
+	keel.Handle[*formulalibrary.FormulaLibrary]
 	ID                   keelkinds.PulidIDCol
 	OrganizationID       keelkinds.PulidIDCol
 	BusinessUnitID       keelkinds.PulidIDCol
@@ -100,7 +100,7 @@ type FormulaLibrariesTable struct {
 
 // FormulaLibraries references the formula_libraries table.
 var FormulaLibraries = &FormulaLibrariesTable{
-	Handle:               keel.Handle[formulalibrary.FormulaLibrary]{Ref: &formulaLibrariesRef},
+	Handle:               keel.Handle[*formulalibrary.FormulaLibrary]{Ref: &formulaLibrariesRef},
 	ID:                   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &formulaLibrariesRef, Index: 0}}},
 	OrganizationID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &formulaLibrariesRef, Index: 1}}},
 	BusinessUnitID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &formulaLibrariesRef, Index: 2}}},
@@ -128,7 +128,7 @@ var FormulaLibraries = &FormulaLibrariesTable{
 // BuildFormulaLibraries builds the handle of formula_libraries for ref. Generated relation and alias methods call it.
 func BuildFormulaLibraries(r *keel.Ref) *FormulaLibrariesTable {
 	return &FormulaLibrariesTable{
-		Handle:               keel.Handle[formulalibrary.FormulaLibrary]{Ref: r},
+		Handle:               keel.Handle[*formulalibrary.FormulaLibrary]{Ref: r},
 		ID:                   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		OrganizationID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		BusinessUnitID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -363,7 +363,7 @@ var formulaLibraryReviewsRef = keel.Ref{Table: &formulaLibraryReviewsTable}
 
 // FormulaLibraryReviewsTable is the table of formulalibrary.FormulaLibraryReview.
 type FormulaLibraryReviewsTable struct {
-	keel.Handle[formulalibrary.FormulaLibraryReview]
+	keel.Handle[*formulalibrary.FormulaLibraryReview]
 	ID                  keelkinds.PulidIDCol
 	OrganizationID      keelkinds.PulidIDCol
 	BusinessUnitID      keelkinds.PulidIDCol
@@ -380,7 +380,7 @@ type FormulaLibraryReviewsTable struct {
 
 // FormulaLibraryReviews references the formula_library_reviews table.
 var FormulaLibraryReviews = &FormulaLibraryReviewsTable{
-	Handle:              keel.Handle[formulalibrary.FormulaLibraryReview]{Ref: &formulaLibraryReviewsRef},
+	Handle:              keel.Handle[*formulalibrary.FormulaLibraryReview]{Ref: &formulaLibraryReviewsRef},
 	ID:                  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &formulaLibraryReviewsRef, Index: 0}}},
 	OrganizationID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &formulaLibraryReviewsRef, Index: 1}}},
 	BusinessUnitID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &formulaLibraryReviewsRef, Index: 2}}},
@@ -398,7 +398,7 @@ var FormulaLibraryReviews = &FormulaLibraryReviewsTable{
 // BuildFormulaLibraryReviews builds the handle of formula_library_reviews for ref. Generated relation and alias methods call it.
 func BuildFormulaLibraryReviews(r *keel.Ref) *FormulaLibraryReviewsTable {
 	return &FormulaLibraryReviewsTable{
-		Handle:              keel.Handle[formulalibrary.FormulaLibraryReview]{Ref: r},
+		Handle:              keel.Handle[*formulalibrary.FormulaLibraryReview]{Ref: r},
 		ID:                  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		OrganizationID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		BusinessUnitID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -581,7 +581,7 @@ var formulaLibraryVersionsRef = keel.Ref{Table: &formulaLibraryVersionsTable}
 
 // FormulaLibraryVersionsTable is the table of formulalibrary.FormulaLibraryVersion.
 type FormulaLibraryVersionsTable struct {
-	keel.Handle[formulalibrary.FormulaLibraryVersion]
+	keel.Handle[*formulalibrary.FormulaLibraryVersion]
 	ID             keelkinds.PulidIDCol
 	OrganizationID keelkinds.PulidIDCol
 	BusinessUnitID keelkinds.PulidIDCol
@@ -601,7 +601,7 @@ type FormulaLibraryVersionsTable struct {
 
 // FormulaLibraryVersions references the formula_library_versions table.
 var FormulaLibraryVersions = &FormulaLibraryVersionsTable{
-	Handle:         keel.Handle[formulalibrary.FormulaLibraryVersion]{Ref: &formulaLibraryVersionsRef},
+	Handle:         keel.Handle[*formulalibrary.FormulaLibraryVersion]{Ref: &formulaLibraryVersionsRef},
 	ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &formulaLibraryVersionsRef, Index: 0}}},
 	OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &formulaLibraryVersionsRef, Index: 1}}},
 	BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &formulaLibraryVersionsRef, Index: 2}}},
@@ -622,7 +622,7 @@ var FormulaLibraryVersions = &FormulaLibraryVersionsTable{
 // BuildFormulaLibraryVersions builds the handle of formula_library_versions for ref. Generated relation and alias methods call it.
 func BuildFormulaLibraryVersions(r *keel.Ref) *FormulaLibraryVersionsTable {
 	return &FormulaLibraryVersionsTable{
-		Handle:         keel.Handle[formulalibrary.FormulaLibraryVersion]{Ref: r},
+		Handle:         keel.Handle[*formulalibrary.FormulaLibraryVersion]{Ref: r},
 		ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},

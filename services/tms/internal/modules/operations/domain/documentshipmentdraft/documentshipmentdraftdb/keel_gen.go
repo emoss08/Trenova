@@ -63,7 +63,7 @@ var documentShipmentDraftsRef = keel.Ref{Table: &documentShipmentDraftsTable}
 
 // DocumentShipmentDraftsTable is the table of documentshipmentdraft.DocumentShipmentDraft.
 type DocumentShipmentDraftsTable struct {
-	keel.Handle[documentshipmentdraft.DocumentShipmentDraft]
+	keel.Handle[*documentshipmentdraft.DocumentShipmentDraft]
 	ID                 keelkinds.PulidIDCol
 	DocumentID         keelkinds.PulidIDCol
 	OrganizationID     keelkinds.PulidIDCol
@@ -84,7 +84,7 @@ type DocumentShipmentDraftsTable struct {
 
 // DocumentShipmentDrafts references the document_shipment_drafts table.
 var DocumentShipmentDrafts = &DocumentShipmentDraftsTable{
-	Handle:             keel.Handle[documentshipmentdraft.DocumentShipmentDraft]{Ref: &documentShipmentDraftsRef},
+	Handle:             keel.Handle[*documentshipmentdraft.DocumentShipmentDraft]{Ref: &documentShipmentDraftsRef},
 	ID:                 keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &documentShipmentDraftsRef, Index: 0}}},
 	DocumentID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &documentShipmentDraftsRef, Index: 1}}},
 	OrganizationID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &documentShipmentDraftsRef, Index: 2}}},
@@ -106,7 +106,7 @@ var DocumentShipmentDrafts = &DocumentShipmentDraftsTable{
 // BuildDocumentShipmentDrafts builds the handle of document_shipment_drafts for ref. Generated relation and alias methods call it.
 func BuildDocumentShipmentDrafts(r *keel.Ref) *DocumentShipmentDraftsTable {
 	return &DocumentShipmentDraftsTable{
-		Handle:             keel.Handle[documentshipmentdraft.DocumentShipmentDraft]{Ref: r},
+		Handle:             keel.Handle[*documentshipmentdraft.DocumentShipmentDraft]{Ref: r},
 		ID:                 keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		DocumentID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},

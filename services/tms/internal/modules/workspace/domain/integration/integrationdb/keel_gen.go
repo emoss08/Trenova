@@ -69,7 +69,7 @@ var integrationsRef = keel.Ref{Table: &integrationsTable}
 
 // IntegrationsTable is the table of integration.Integration.
 type IntegrationsTable struct {
-	keel.Handle[integration.Integration]
+	keel.Handle[*integration.Integration]
 	ID             keelkinds.PulidIDCol
 	BusinessUnitID keelkinds.PulidIDCol
 	OrganizationID keelkinds.PulidIDCol
@@ -92,7 +92,7 @@ type IntegrationsTable struct {
 
 // Integrations references the integrations table.
 var Integrations = &IntegrationsTable{
-	Handle:         keel.Handle[integration.Integration]{Ref: &integrationsRef},
+	Handle:         keel.Handle[*integration.Integration]{Ref: &integrationsRef},
 	ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &integrationsRef, Index: 0}}},
 	BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &integrationsRef, Index: 1}}},
 	OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &integrationsRef, Index: 2}}},
@@ -116,7 +116,7 @@ var Integrations = &IntegrationsTable{
 // BuildIntegrations builds the handle of integrations for ref. Generated relation and alias methods call it.
 func BuildIntegrations(r *keel.Ref) *IntegrationsTable {
 	return &IntegrationsTable{
-		Handle:         keel.Handle[integration.Integration]{Ref: r},
+		Handle:         keel.Handle[*integration.Integration]{Ref: r},
 		ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},

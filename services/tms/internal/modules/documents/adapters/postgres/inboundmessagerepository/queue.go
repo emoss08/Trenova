@@ -247,7 +247,7 @@ func patchAssignments(patch inboundmessageports.QueuePatch, now int64) []keel.As
 		sets = append(sets, m.ActionState.ToExpr(keel.DynOf(m.ActionState).Concat(keel.DynFunc(
 			"jsonb_build_object",
 			keel.DynConst("handedOffTo"),
-			keel.DynLit(patch.HandOff.To.String()).Cast(keel.TypeString),
+			keel.DynLit(patch.HandOff.To.String()),
 			keel.DynConst("handedOffAt"),
 			keel.DynLit(now).Cast(keel.TypeInt64),
 		))))

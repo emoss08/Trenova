@@ -254,9 +254,7 @@ func outcomeUpdate(
 		item.MarkedReadyToInvoice.ToExpr(outcome.Col("marked_ready_to_invoice")),
 		item.BillingQueueItemID.ToExpr(orNull("billing_queue_item_id")),
 		item.BillingQueueNumber.ToExpr(orNull("billing_queue_number")),
-		item.BillingQueueStatus.ToExpr(
-			keel.Raw("NULLIF(?, '')::billing_queue_status", outcome.Col("billing_queue_status")),
-		),
+		item.BillingQueueStatus.ToExpr(orNull("billing_queue_status")),
 		item.MissingRequirements.ToExpr(keel.DynOf(outcome.Col("missing_requirements")).Cast(keel.TypeJSON)),
 		item.ValidationFailures.ToExpr(keel.DynOf(outcome.Col("validation_failures")).Cast(keel.TypeJSON)),
 		item.ProcessedAt.ToExpr(outcome.Col("processed_at")),

@@ -166,7 +166,7 @@ type BillingTransferRunItem struct {
 	MarkedReadyToInvoice bool                 `json:"markedReadyToInvoice" keel:"marked_ready_to_invoice"`
 	BillingQueueItemID   pulid.ID             `json:"billingQueueItemId"   keel:"billing_queue_item_id,nullzero"`
 	BillingQueueNumber   string               `json:"billingQueueNumber"   keel:"billing_queue_number,nullzero"`
-	BillingQueueStatus   billingqueue.Status  `json:"billingQueueStatus"   keel:"billing_queue_status,nullzero"`
+	BillingQueueStatus   billingqueue.Status  `json:"billingQueueStatus"   keel:"billing_queue_status,nullzero,sqltype=billing_queue_status"`
 	MissingRequirements  []MissingRequirement `json:"missingRequirements"  keel:"missing_requirements,jsonb"`
 	ValidationFailures   []ValidationFailure  `json:"validationFailures"   keel:"validation_failures,jsonb"`
 	ProcessedAt          *int64               `json:"processedAt"          keel:"processed_at"`

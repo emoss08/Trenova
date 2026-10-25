@@ -726,7 +726,7 @@ type DatabaseConfig struct {
 	Password         string        `mapstructure:"password"                        validate:"required"`
 	SSLMode          string        `mapstructure:"sslMode"                         validate:"required,oneof=disable require verify-ca verify-full"`
 	MaxOpenConns     int           `mapstructure:"maxOpenConns"                    validate:"min=1,max=1000"`
-	Verbose          bool          `mapstructure:"verbose"`
+	QueryLog         string        `mapstructure:"queryLog"                        validate:"omitempty,oneof=off errors all"`
 	ConnMaxLifetime  time.Duration `mapstructure:"connMaxLifetime"`
 	ConnMaxIdleTime  time.Duration `mapstructure:"connMaxIdleTime"`
 	StatementTimeout time.Duration `mapstructure:"statementTimeout"`

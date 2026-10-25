@@ -421,9 +421,9 @@ func applyOutcome(
 			e.Status.ToExpr(keel.DynCase().
 				When(
 					keel.DynOf(outcome.Col("next_attempt_at")).Eq(0),
-					keel.DynLit(string(airetrieval.IndexStatusFailed)).Cast(keel.TypeString),
+					keel.DynLit(string(airetrieval.IndexStatusFailed)),
 				).
-				Else(keel.DynLit(string(airetrieval.IndexStatusPending)).Cast(keel.TypeString))),
+				Else(keel.DynLit(string(airetrieval.IndexStatusPending)))),
 			e.NextAttemptAt.ToExpr(keel.DynOf(outcome.Col("next_attempt_at")).NullIf(0)),
 		)
 	} else {

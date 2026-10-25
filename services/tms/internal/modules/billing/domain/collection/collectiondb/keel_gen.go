@@ -57,7 +57,7 @@ var accountsRef = keel.Ref{Table: &accountsTable}
 
 // AccountsTable is the table of collection.Account.
 type AccountsTable struct {
-	keel.Handle[collection.Account]
+	keel.Handle[*collection.Account]
 	ID                keelkinds.PulidIDCol
 	OrganizationID    keelkinds.PulidIDCol
 	BusinessUnitID    keelkinds.PulidIDCol
@@ -72,7 +72,7 @@ type AccountsTable struct {
 
 // Accounts references the collection_accounts table.
 var Accounts = &AccountsTable{
-	Handle:            keel.Handle[collection.Account]{Ref: &accountsRef},
+	Handle:            keel.Handle[*collection.Account]{Ref: &accountsRef},
 	ID:                keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &accountsRef, Index: 0}}},
 	OrganizationID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &accountsRef, Index: 1}}},
 	BusinessUnitID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &accountsRef, Index: 2}}},
@@ -88,7 +88,7 @@ var Accounts = &AccountsTable{
 // BuildAccounts builds the handle of collection_accounts for ref. Generated relation and alias methods call it.
 func BuildAccounts(r *keel.Ref) *AccountsTable {
 	return &AccountsTable{
-		Handle:            keel.Handle[collection.Account]{Ref: r},
+		Handle:            keel.Handle[*collection.Account]{Ref: r},
 		ID:                keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		OrganizationID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		BusinessUnitID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -233,7 +233,7 @@ var activitiesRef = keel.Ref{Table: &activitiesTable}
 
 // ActivitiesTable is the table of collection.Activity.
 type ActivitiesTable struct {
-	keel.Handle[collection.Activity]
+	keel.Handle[*collection.Activity]
 	ID                  keelkinds.PulidIDCol
 	OrganizationID      keelkinds.PulidIDCol
 	BusinessUnitID      keelkinds.PulidIDCol
@@ -253,7 +253,7 @@ type ActivitiesTable struct {
 
 // Activities references the collection_activities table.
 var Activities = &ActivitiesTable{
-	Handle:              keel.Handle[collection.Activity]{Ref: &activitiesRef},
+	Handle:              keel.Handle[*collection.Activity]{Ref: &activitiesRef},
 	ID:                  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &activitiesRef, Index: 0}}},
 	OrganizationID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &activitiesRef, Index: 1}}},
 	BusinessUnitID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &activitiesRef, Index: 2}}},
@@ -274,7 +274,7 @@ var Activities = &ActivitiesTable{
 // BuildActivities builds the handle of collection_activities for ref. Generated relation and alias methods call it.
 func BuildActivities(r *keel.Ref) *ActivitiesTable {
 	return &ActivitiesTable{
-		Handle:              keel.Handle[collection.Activity]{Ref: r},
+		Handle:              keel.Handle[*collection.Activity]{Ref: r},
 		ID:                  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		OrganizationID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		BusinessUnitID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},

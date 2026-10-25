@@ -67,7 +67,7 @@ var guidancesRef = keel.Ref{Table: &guidancesTable}
 
 // GuidancesTable is the table of agentprofile.Guidance.
 type GuidancesTable struct {
-	keel.Handle[agentprofile.Guidance]
+	keel.Handle[*agentprofile.Guidance]
 	ID             keelkinds.PulidIDCol
 	BusinessUnitID keelkinds.PulidIDCol
 	OrganizationID keelkinds.PulidIDCol
@@ -87,7 +87,7 @@ type GuidancesTable struct {
 
 // Guidances references the agent_profile_guidance table.
 var Guidances = &GuidancesTable{
-	Handle:         keel.Handle[agentprofile.Guidance]{Ref: &guidancesRef},
+	Handle:         keel.Handle[*agentprofile.Guidance]{Ref: &guidancesRef},
 	ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &guidancesRef, Index: 0}}},
 	BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &guidancesRef, Index: 1}}},
 	OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &guidancesRef, Index: 2}}},
@@ -108,7 +108,7 @@ var Guidances = &GuidancesTable{
 // BuildGuidances builds the handle of agent_profile_guidance for ref. Generated relation and alias methods call it.
 func BuildGuidances(r *keel.Ref) *GuidancesTable {
 	return &GuidancesTable{
-		Handle:         keel.Handle[agentprofile.Guidance]{Ref: r},
+		Handle:         keel.Handle[*agentprofile.Guidance]{Ref: r},
 		ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -303,7 +303,7 @@ var profilesRef = keel.Ref{Table: &profilesTable}
 
 // ProfilesTable is the table of agentprofile.Profile.
 type ProfilesTable struct {
-	keel.Handle[agentprofile.Profile]
+	keel.Handle[*agentprofile.Profile]
 	ID             keelkinds.PulidIDCol
 	BusinessUnitID keelkinds.PulidIDCol
 	OrganizationID keelkinds.PulidIDCol
@@ -329,7 +329,7 @@ type ProfilesTable struct {
 
 // Profiles references the agent_profiles table.
 var Profiles = &ProfilesTable{
-	Handle:         keel.Handle[agentprofile.Profile]{Ref: &profilesRef},
+	Handle:         keel.Handle[*agentprofile.Profile]{Ref: &profilesRef},
 	ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &profilesRef, Index: 0}}},
 	BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &profilesRef, Index: 1}}},
 	OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &profilesRef, Index: 2}}},
@@ -356,7 +356,7 @@ var Profiles = &ProfilesTable{
 // BuildProfiles builds the handle of agent_profiles for ref. Generated relation and alias methods call it.
 func BuildProfiles(r *keel.Ref) *ProfilesTable {
 	return &ProfilesTable{
-		Handle:         keel.Handle[agentprofile.Profile]{Ref: r},
+		Handle:         keel.Handle[*agentprofile.Profile]{Ref: r},
 		ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},

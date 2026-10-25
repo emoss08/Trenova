@@ -68,7 +68,7 @@ var capabilityRulesRef = keel.Ref{Table: &capabilityRulesTable}
 
 // CapabilityRulesTable is the table of modeprofile.CapabilityRule.
 type CapabilityRulesTable struct {
-	keel.Handle[modeprofile.CapabilityRule]
+	keel.Handle[*modeprofile.CapabilityRule]
 	ID             keelkinds.PulidIDCol
 	BusinessUnitID keelkinds.PulidIDCol
 	OrganizationID keelkinds.PulidIDCol
@@ -86,7 +86,7 @@ type CapabilityRulesTable struct {
 
 // CapabilityRules references the mode_profile_capability_rules table.
 var CapabilityRules = &CapabilityRulesTable{
-	Handle:         keel.Handle[modeprofile.CapabilityRule]{Ref: &capabilityRulesRef},
+	Handle:         keel.Handle[*modeprofile.CapabilityRule]{Ref: &capabilityRulesRef},
 	ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &capabilityRulesRef, Index: 0}}},
 	BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &capabilityRulesRef, Index: 1}}},
 	OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &capabilityRulesRef, Index: 2}}},
@@ -105,7 +105,7 @@ var CapabilityRules = &CapabilityRulesTable{
 // BuildCapabilityRules builds the handle of mode_profile_capability_rules for ref. Generated relation and alias methods call it.
 func BuildCapabilityRules(r *keel.Ref) *CapabilityRulesTable {
 	return &CapabilityRulesTable{
-		Handle:         keel.Handle[modeprofile.CapabilityRule]{Ref: r},
+		Handle:         keel.Handle[*modeprofile.CapabilityRule]{Ref: r},
 		ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -300,7 +300,7 @@ var deviationsRef = keel.Ref{Table: &deviationsTable}
 
 // DeviationsTable is the table of modeprofile.Deviation.
 type DeviationsTable struct {
-	keel.Handle[modeprofile.Deviation]
+	keel.Handle[*modeprofile.Deviation]
 	ID                    keelkinds.PulidIDCol
 	BusinessUnitID        keelkinds.PulidIDCol
 	OrganizationID        keelkinds.PulidIDCol
@@ -328,7 +328,7 @@ type DeviationsTable struct {
 
 // Deviations references the mode_profile_deviations table.
 var Deviations = &DeviationsTable{
-	Handle:                keel.Handle[modeprofile.Deviation]{Ref: &deviationsRef},
+	Handle:                keel.Handle[*modeprofile.Deviation]{Ref: &deviationsRef},
 	ID:                    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &deviationsRef, Index: 0}}},
 	BusinessUnitID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &deviationsRef, Index: 1}}},
 	OrganizationID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &deviationsRef, Index: 2}}},
@@ -357,7 +357,7 @@ var Deviations = &DeviationsTable{
 // BuildDeviations builds the handle of mode_profile_deviations for ref. Generated relation and alias methods call it.
 func BuildDeviations(r *keel.Ref) *DeviationsTable {
 	return &DeviationsTable{
-		Handle:                keel.Handle[modeprofile.Deviation]{Ref: r},
+		Handle:                keel.Handle[*modeprofile.Deviation]{Ref: r},
 		ID:                    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -622,7 +622,7 @@ var profilesRef = keel.Ref{Table: &profilesTable}
 
 // ProfilesTable is the table of modeprofile.Profile.
 type ProfilesTable struct {
-	keel.Handle[modeprofile.Profile]
+	keel.Handle[*modeprofile.Profile]
 	ID                 keelkinds.PulidIDCol
 	BusinessUnitID     keelkinds.PulidIDCol
 	OrganizationID     keelkinds.PulidIDCol
@@ -652,7 +652,7 @@ type ProfilesTable struct {
 
 // Profiles references the mode_profiles table.
 var Profiles = &ProfilesTable{
-	Handle:             keel.Handle[modeprofile.Profile]{Ref: &profilesRef},
+	Handle:             keel.Handle[*modeprofile.Profile]{Ref: &profilesRef},
 	ID:                 keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &profilesRef, Index: 0}}},
 	BusinessUnitID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &profilesRef, Index: 1}}},
 	OrganizationID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &profilesRef, Index: 2}}},
@@ -683,7 +683,7 @@ var Profiles = &ProfilesTable{
 // BuildProfiles builds the handle of mode_profiles for ref. Generated relation and alias methods call it.
 func BuildProfiles(r *keel.Ref) *ProfilesTable {
 	return &ProfilesTable{
-		Handle:             keel.Handle[modeprofile.Profile]{Ref: r},
+		Handle:             keel.Handle[*modeprofile.Profile]{Ref: r},
 		ID:                 keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},

@@ -66,7 +66,7 @@ var equipmentManufacturersRef = keel.Ref{Table: &equipmentManufacturersTable}
 
 // EquipmentManufacturersTable is the table of equipmentmanufacturer.EquipmentManufacturer.
 type EquipmentManufacturersTable struct {
-	keel.Handle[equipmentmanufacturer.EquipmentManufacturer]
+	keel.Handle[*equipmentmanufacturer.EquipmentManufacturer]
 	ID             keelkinds.PulidIDCol
 	BusinessUnitID keelkinds.PulidIDCol
 	OrganizationID keelkinds.PulidIDCol
@@ -81,7 +81,7 @@ type EquipmentManufacturersTable struct {
 
 // EquipmentManufacturers references the equipment_manufacturers table.
 var EquipmentManufacturers = &EquipmentManufacturersTable{
-	Handle:         keel.Handle[equipmentmanufacturer.EquipmentManufacturer]{Ref: &equipmentManufacturersRef},
+	Handle:         keel.Handle[*equipmentmanufacturer.EquipmentManufacturer]{Ref: &equipmentManufacturersRef},
 	ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &equipmentManufacturersRef, Index: 0}}},
 	BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &equipmentManufacturersRef, Index: 1}}},
 	OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &equipmentManufacturersRef, Index: 2}}},
@@ -97,7 +97,7 @@ var EquipmentManufacturers = &EquipmentManufacturersTable{
 // BuildEquipmentManufacturers builds the handle of equipment_manufacturers for ref. Generated relation and alias methods call it.
 func BuildEquipmentManufacturers(r *keel.Ref) *EquipmentManufacturersTable {
 	return &EquipmentManufacturersTable{
-		Handle:         keel.Handle[equipmentmanufacturer.EquipmentManufacturer]{Ref: r},
+		Handle:         keel.Handle[*equipmentmanufacturer.EquipmentManufacturer]{Ref: r},
 		ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},

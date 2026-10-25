@@ -61,7 +61,7 @@ var settingVersionsRef = keel.Ref{Table: &settingVersionsTable}
 
 // SettingVersionsTable is the table of settingversion.SettingVersion.
 type SettingVersionsTable struct {
-	keel.Handle[settingversion.SettingVersion]
+	keel.Handle[*settingversion.SettingVersion]
 	ID             keelkinds.PulidIDCol
 	BusinessUnitID keelkinds.PulidIDCol
 	OrganizationID keelkinds.PulidIDCol
@@ -75,7 +75,7 @@ type SettingVersionsTable struct {
 
 // SettingVersions references the ai_setting_versions table.
 var SettingVersions = &SettingVersionsTable{
-	Handle:         keel.Handle[settingversion.SettingVersion]{Ref: &settingVersionsRef},
+	Handle:         keel.Handle[*settingversion.SettingVersion]{Ref: &settingVersionsRef},
 	ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &settingVersionsRef, Index: 0}}},
 	BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &settingVersionsRef, Index: 1}}},
 	OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &settingVersionsRef, Index: 2}}},
@@ -90,7 +90,7 @@ var SettingVersions = &SettingVersionsTable{
 // BuildSettingVersions builds the handle of ai_setting_versions for ref. Generated relation and alias methods call it.
 func BuildSettingVersions(r *keel.Ref) *SettingVersionsTable {
 	return &SettingVersionsTable{
-		Handle:         keel.Handle[settingversion.SettingVersion]{Ref: r},
+		Handle:         keel.Handle[*settingversion.SettingVersion]{Ref: r},
 		ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},

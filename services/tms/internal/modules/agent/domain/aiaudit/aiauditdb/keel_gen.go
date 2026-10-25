@@ -59,7 +59,7 @@ var aIAuditChainHeadsRef = keel.Ref{Table: &aIAuditChainHeadsTable}
 
 // AIAuditChainHeadsTable is the table of aiaudit.AIAuditChainHead.
 type AIAuditChainHeadsTable struct {
-	keel.Handle[aiaudit.AIAuditChainHead]
+	keel.Handle[*aiaudit.AIAuditChainHead]
 	OrganizationID            keelkinds.PulidIDCol
 	BusinessUnitID            keelkinds.PulidIDCol
 	LastSeq                   keel.Int64Col
@@ -77,7 +77,7 @@ type AIAuditChainHeadsTable struct {
 
 // AIAuditChainHeads references the ai_audit_chain_heads table.
 var AIAuditChainHeads = &AIAuditChainHeadsTable{
-	Handle:                    keel.Handle[aiaudit.AIAuditChainHead]{Ref: &aIAuditChainHeadsRef},
+	Handle:                    keel.Handle[*aiaudit.AIAuditChainHead]{Ref: &aIAuditChainHeadsRef},
 	OrganizationID:            keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &aIAuditChainHeadsRef, Index: 0}}},
 	BusinessUnitID:            keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &aIAuditChainHeadsRef, Index: 1}}},
 	LastSeq:                   keel.Int64Col{Col: keel.Col{Ref: &aIAuditChainHeadsRef, Index: 2}},
@@ -96,7 +96,7 @@ var AIAuditChainHeads = &AIAuditChainHeadsTable{
 // BuildAIAuditChainHeads builds the handle of ai_audit_chain_heads for ref. Generated relation and alias methods call it.
 func BuildAIAuditChainHeads(r *keel.Ref) *AIAuditChainHeadsTable {
 	return &AIAuditChainHeadsTable{
-		Handle:                    keel.Handle[aiaudit.AIAuditChainHead]{Ref: r},
+		Handle:                    keel.Handle[*aiaudit.AIAuditChainHead]{Ref: r},
 		OrganizationID:            keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID:            keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		LastSeq:                   keel.Int64Col{Col: keel.Col{Ref: r, Index: 2}},
@@ -315,7 +315,7 @@ var aIAuditEventsRef = keel.Ref{Table: &aIAuditEventsTable}
 
 // AIAuditEventsTable is the table of aiaudit.AIAuditEvent.
 type AIAuditEventsTable struct {
-	keel.Handle[aiaudit.AIAuditEvent]
+	keel.Handle[*aiaudit.AIAuditEvent]
 	ID                     keelkinds.PulidIDCol
 	BusinessUnitID         keelkinds.PulidIDCol
 	OrganizationID         keelkinds.PulidIDCol
@@ -393,7 +393,7 @@ type AIAuditEventsTable struct {
 
 // AIAuditEvents references the ai_audit_events table.
 var AIAuditEvents = &AIAuditEventsTable{
-	Handle:                 keel.Handle[aiaudit.AIAuditEvent]{Ref: &aIAuditEventsRef},
+	Handle:                 keel.Handle[*aiaudit.AIAuditEvent]{Ref: &aIAuditEventsRef},
 	ID:                     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &aIAuditEventsRef, Index: 0}}},
 	BusinessUnitID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &aIAuditEventsRef, Index: 1}}},
 	OrganizationID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &aIAuditEventsRef, Index: 2}}},
@@ -472,7 +472,7 @@ var AIAuditEvents = &AIAuditEventsTable{
 // BuildAIAuditEvents builds the handle of ai_audit_events for ref. Generated relation and alias methods call it.
 func BuildAIAuditEvents(r *keel.Ref) *AIAuditEventsTable {
 	return &AIAuditEventsTable{
-		Handle:                 keel.Handle[aiaudit.AIAuditEvent]{Ref: r},
+		Handle:                 keel.Handle[*aiaudit.AIAuditEvent]{Ref: r},
 		ID:                     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -1079,7 +1079,7 @@ var aIAuditExportsRef = keel.Ref{Table: &aIAuditExportsTable}
 
 // AIAuditExportsTable is the table of aiaudit.AIAuditExport.
 type AIAuditExportsTable struct {
-	keel.Handle[aiaudit.AIAuditExport]
+	keel.Handle[*aiaudit.AIAuditExport]
 	ID                keelkinds.PulidIDCol
 	BusinessUnitID    keelkinds.PulidIDCol
 	OrganizationID    keelkinds.PulidIDCol
@@ -1110,7 +1110,7 @@ type AIAuditExportsTable struct {
 
 // AIAuditExports references the ai_audit_exports table.
 var AIAuditExports = &AIAuditExportsTable{
-	Handle:            keel.Handle[aiaudit.AIAuditExport]{Ref: &aIAuditExportsRef},
+	Handle:            keel.Handle[*aiaudit.AIAuditExport]{Ref: &aIAuditExportsRef},
 	ID:                keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &aIAuditExportsRef, Index: 0}}},
 	BusinessUnitID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &aIAuditExportsRef, Index: 1}}},
 	OrganizationID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &aIAuditExportsRef, Index: 2}}},
@@ -1142,7 +1142,7 @@ var AIAuditExports = &AIAuditExportsTable{
 // BuildAIAuditExports builds the handle of ai_audit_exports for ref. Generated relation and alias methods call it.
 func BuildAIAuditExports(r *keel.Ref) *AIAuditExportsTable {
 	return &AIAuditExportsTable{
-		Handle:            keel.Handle[aiaudit.AIAuditExport]{Ref: r},
+		Handle:            keel.Handle[*aiaudit.AIAuditExport]{Ref: r},
 		ID:                keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -1383,7 +1383,7 @@ var aIAuditProjectorStatesRef = keel.Ref{Table: &aIAuditProjectorStatesTable}
 
 // AIAuditProjectorStatesTable is the table of aiaudit.AIAuditProjectorState.
 type AIAuditProjectorStatesTable struct {
-	keel.Handle[aiaudit.AIAuditProjectorState]
+	keel.Handle[*aiaudit.AIAuditProjectorState]
 	Source      SourceCol
 	WatermarkTS keel.Int64Col
 	WatermarkID keel.StringCol
@@ -1392,7 +1392,7 @@ type AIAuditProjectorStatesTable struct {
 
 // AIAuditProjectorStates references the ai_audit_projector_state table.
 var AIAuditProjectorStates = &AIAuditProjectorStatesTable{
-	Handle:      keel.Handle[aiaudit.AIAuditProjectorState]{Ref: &aIAuditProjectorStatesRef},
+	Handle:      keel.Handle[*aiaudit.AIAuditProjectorState]{Ref: &aIAuditProjectorStatesRef},
 	Source:      SourceCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &aIAuditProjectorStatesRef, Index: 0}}},
 	WatermarkTS: keel.Int64Col{Col: keel.Col{Ref: &aIAuditProjectorStatesRef, Index: 1}},
 	WatermarkID: keel.StringCol{Col: keel.Col{Ref: &aIAuditProjectorStatesRef, Index: 2}},
@@ -1402,7 +1402,7 @@ var AIAuditProjectorStates = &AIAuditProjectorStatesTable{
 // BuildAIAuditProjectorStates builds the handle of ai_audit_projector_state for ref. Generated relation and alias methods call it.
 func BuildAIAuditProjectorStates(r *keel.Ref) *AIAuditProjectorStatesTable {
 	return &AIAuditProjectorStatesTable{
-		Handle:      keel.Handle[aiaudit.AIAuditProjectorState]{Ref: r},
+		Handle:      keel.Handle[*aiaudit.AIAuditProjectorState]{Ref: r},
 		Source:      SourceCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		WatermarkTS: keel.Int64Col{Col: keel.Col{Ref: r, Index: 1}},
 		WatermarkID: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}},
@@ -1503,7 +1503,7 @@ var aIAuditSealsRef = keel.Ref{Table: &aIAuditSealsTable}
 
 // AIAuditSealsTable is the table of aiaudit.AIAuditSeal.
 type AIAuditSealsTable struct {
-	keel.Handle[aiaudit.AIAuditSeal]
+	keel.Handle[*aiaudit.AIAuditSeal]
 	OrganizationID keelkinds.PulidIDCol
 	BusinessUnitID keelkinds.PulidIDCol
 	ToSeq          keel.Int64Col
@@ -1516,7 +1516,7 @@ type AIAuditSealsTable struct {
 
 // AIAuditSeals references the ai_audit_seals table.
 var AIAuditSeals = &AIAuditSealsTable{
-	Handle:         keel.Handle[aiaudit.AIAuditSeal]{Ref: &aIAuditSealsRef},
+	Handle:         keel.Handle[*aiaudit.AIAuditSeal]{Ref: &aIAuditSealsRef},
 	OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &aIAuditSealsRef, Index: 0}}},
 	BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &aIAuditSealsRef, Index: 1}}},
 	ToSeq:          keel.Int64Col{Col: keel.Col{Ref: &aIAuditSealsRef, Index: 2}},
@@ -1530,7 +1530,7 @@ var AIAuditSeals = &AIAuditSealsTable{
 // BuildAIAuditSeals builds the handle of ai_audit_seals for ref. Generated relation and alias methods call it.
 func BuildAIAuditSeals(r *keel.Ref) *AIAuditSealsTable {
 	return &AIAuditSealsTable{
-		Handle:         keel.Handle[aiaudit.AIAuditSeal]{Ref: r},
+		Handle:         keel.Handle[*aiaudit.AIAuditSeal]{Ref: r},
 		OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		ToSeq:          keel.Int64Col{Col: keel.Col{Ref: r, Index: 2}},

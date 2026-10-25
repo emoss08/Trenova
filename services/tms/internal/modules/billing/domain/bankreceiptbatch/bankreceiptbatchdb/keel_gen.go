@@ -63,7 +63,7 @@ var bankReceiptBatchesRef = keel.Ref{Table: &bankReceiptBatchesTable}
 
 // BankReceiptBatchesTable is the table of bankreceiptbatch.BankReceiptBatch.
 type BankReceiptBatchesTable struct {
-	keel.Handle[bankreceiptbatch.BankReceiptBatch]
+	keel.Handle[*bankreceiptbatch.BankReceiptBatch]
 	ID                   keelkinds.PulidIDCol
 	OrganizationID       keelkinds.PulidIDCol
 	BusinessUnitID       keelkinds.PulidIDCol
@@ -85,7 +85,7 @@ type BankReceiptBatchesTable struct {
 
 // BankReceiptBatches references the bank_receipt_import_batches table.
 var BankReceiptBatches = &BankReceiptBatchesTable{
-	Handle:               keel.Handle[bankreceiptbatch.BankReceiptBatch]{Ref: &bankReceiptBatchesRef},
+	Handle:               keel.Handle[*bankreceiptbatch.BankReceiptBatch]{Ref: &bankReceiptBatchesRef},
 	ID:                   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &bankReceiptBatchesRef, Index: 0}}},
 	OrganizationID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &bankReceiptBatchesRef, Index: 1}}},
 	BusinessUnitID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &bankReceiptBatchesRef, Index: 2}}},
@@ -108,7 +108,7 @@ var BankReceiptBatches = &BankReceiptBatchesTable{
 // BuildBankReceiptBatches builds the handle of bank_receipt_import_batches for ref. Generated relation and alias methods call it.
 func BuildBankReceiptBatches(r *keel.Ref) *BankReceiptBatchesTable {
 	return &BankReceiptBatchesTable{
-		Handle:               keel.Handle[bankreceiptbatch.BankReceiptBatch]{Ref: r},
+		Handle:               keel.Handle[*bankreceiptbatch.BankReceiptBatch]{Ref: r},
 		ID:                   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		OrganizationID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		BusinessUnitID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},

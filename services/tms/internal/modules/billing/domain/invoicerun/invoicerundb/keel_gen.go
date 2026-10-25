@@ -85,7 +85,7 @@ var invoiceRunsRef = keel.Ref{Table: &invoiceRunsTable}
 
 // InvoiceRunsTable is the table of invoicerun.InvoiceRun.
 type InvoiceRunsTable struct {
-	keel.Handle[invoicerun.InvoiceRun]
+	keel.Handle[*invoicerun.InvoiceRun]
 	ID               keelkinds.PulidIDCol
 	BusinessUnitID   keelkinds.PulidIDCol
 	OrganizationID   keelkinds.PulidIDCol
@@ -119,7 +119,7 @@ type InvoiceRunsTable struct {
 
 // InvoiceRuns references the invoice_runs table.
 var InvoiceRuns = &InvoiceRunsTable{
-	Handle:           keel.Handle[invoicerun.InvoiceRun]{Ref: &invoiceRunsRef},
+	Handle:           keel.Handle[*invoicerun.InvoiceRun]{Ref: &invoiceRunsRef},
 	ID:               keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &invoiceRunsRef, Index: 0}}},
 	BusinessUnitID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &invoiceRunsRef, Index: 1}}},
 	OrganizationID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &invoiceRunsRef, Index: 2}}},
@@ -154,7 +154,7 @@ var InvoiceRuns = &InvoiceRunsTable{
 // BuildInvoiceRuns builds the handle of invoice_runs for ref. Generated relation and alias methods call it.
 func BuildInvoiceRuns(r *keel.Ref) *InvoiceRunsTable {
 	return &InvoiceRunsTable{
-		Handle:           keel.Handle[invoicerun.InvoiceRun]{Ref: r},
+		Handle:           keel.Handle[*invoicerun.InvoiceRun]{Ref: r},
 		ID:               keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -446,7 +446,7 @@ var invoiceRunGroupsRef = keel.Ref{Table: &invoiceRunGroupsTable}
 
 // InvoiceRunGroupsTable is the table of invoicerun.InvoiceRunGroup.
 type InvoiceRunGroupsTable struct {
-	keel.Handle[invoicerun.InvoiceRunGroup]
+	keel.Handle[*invoicerun.InvoiceRunGroup]
 	ID                  keelkinds.PulidIDCol
 	BusinessUnitID      keelkinds.PulidIDCol
 	OrganizationID      keelkinds.PulidIDCol
@@ -473,7 +473,7 @@ type InvoiceRunGroupsTable struct {
 
 // InvoiceRunGroups references the invoice_run_groups table.
 var InvoiceRunGroups = &InvoiceRunGroupsTable{
-	Handle:              keel.Handle[invoicerun.InvoiceRunGroup]{Ref: &invoiceRunGroupsRef},
+	Handle:              keel.Handle[*invoicerun.InvoiceRunGroup]{Ref: &invoiceRunGroupsRef},
 	ID:                  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &invoiceRunGroupsRef, Index: 0}}},
 	BusinessUnitID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &invoiceRunGroupsRef, Index: 1}}},
 	OrganizationID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &invoiceRunGroupsRef, Index: 2}}},
@@ -501,7 +501,7 @@ var InvoiceRunGroups = &InvoiceRunGroupsTable{
 // BuildInvoiceRunGroups builds the handle of invoice_run_groups for ref. Generated relation and alias methods call it.
 func BuildInvoiceRunGroups(r *keel.Ref) *InvoiceRunGroupsTable {
 	return &InvoiceRunGroupsTable{
-		Handle:              keel.Handle[invoicerun.InvoiceRunGroup]{Ref: r},
+		Handle:              keel.Handle[*invoicerun.InvoiceRunGroup]{Ref: r},
 		ID:                  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -747,7 +747,7 @@ var invoiceRunGroupItemsRef = keel.Ref{Table: &invoiceRunGroupItemsTable}
 
 // InvoiceRunGroupItemsTable is the table of invoicerun.InvoiceRunGroupItem.
 type InvoiceRunGroupItemsTable struct {
-	keel.Handle[invoicerun.InvoiceRunGroupItem]
+	keel.Handle[*invoicerun.InvoiceRunGroupItem]
 	ID                 keelkinds.PulidIDCol
 	BusinessUnitID     keelkinds.PulidIDCol
 	OrganizationID     keelkinds.PulidIDCol
@@ -772,7 +772,7 @@ type InvoiceRunGroupItemsTable struct {
 
 // InvoiceRunGroupItems references the invoice_run_group_items table.
 var InvoiceRunGroupItems = &InvoiceRunGroupItemsTable{
-	Handle:             keel.Handle[invoicerun.InvoiceRunGroupItem]{Ref: &invoiceRunGroupItemsRef},
+	Handle:             keel.Handle[*invoicerun.InvoiceRunGroupItem]{Ref: &invoiceRunGroupItemsRef},
 	ID:                 keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &invoiceRunGroupItemsRef, Index: 0}}},
 	BusinessUnitID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &invoiceRunGroupItemsRef, Index: 1}}},
 	OrganizationID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &invoiceRunGroupItemsRef, Index: 2}}},
@@ -798,7 +798,7 @@ var InvoiceRunGroupItems = &InvoiceRunGroupItemsTable{
 // BuildInvoiceRunGroupItems builds the handle of invoice_run_group_items for ref. Generated relation and alias methods call it.
 func BuildInvoiceRunGroupItems(r *keel.Ref) *InvoiceRunGroupItemsTable {
 	return &InvoiceRunGroupItemsTable{
-		Handle:             keel.Handle[invoicerun.InvoiceRunGroupItem]{Ref: r},
+		Handle:             keel.Handle[*invoicerun.InvoiceRunGroupItem]{Ref: r},
 		ID:                 keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},

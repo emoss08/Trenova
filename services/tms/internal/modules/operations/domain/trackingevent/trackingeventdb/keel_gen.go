@@ -68,7 +68,7 @@ var trackingEventsRef = keel.Ref{Table: &trackingEventsTable}
 
 // TrackingEventsTable is the table of trackingevent.TrackingEvent.
 type TrackingEventsTable struct {
-	keel.Handle[trackingevent.TrackingEvent]
+	keel.Handle[*trackingevent.TrackingEvent]
 	ID             keelkinds.PulidIDCol
 	OrganizationID keelkinds.PulidIDCol
 	BusinessUnitID keelkinds.PulidIDCol
@@ -94,7 +94,7 @@ type TrackingEventsTable struct {
 
 // TrackingEvents references the tracking_events table.
 var TrackingEvents = &TrackingEventsTable{
-	Handle:         keel.Handle[trackingevent.TrackingEvent]{Ref: &trackingEventsRef},
+	Handle:         keel.Handle[*trackingevent.TrackingEvent]{Ref: &trackingEventsRef},
 	ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &trackingEventsRef, Index: 0}}},
 	OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &trackingEventsRef, Index: 1}}},
 	BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &trackingEventsRef, Index: 2}}},
@@ -121,7 +121,7 @@ var TrackingEvents = &TrackingEventsTable{
 // BuildTrackingEvents builds the handle of tracking_events for ref. Generated relation and alias methods call it.
 func BuildTrackingEvents(r *keel.Ref) *TrackingEventsTable {
 	return &TrackingEventsTable{
-		Handle:         keel.Handle[trackingevent.TrackingEvent]{Ref: r},
+		Handle:         keel.Handle[*trackingevent.TrackingEvent]{Ref: r},
 		ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},

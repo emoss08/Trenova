@@ -65,7 +65,7 @@ var cardFeedStatesRef = keel.Ref{Table: &cardFeedStatesTable}
 
 // CardFeedStatesTable is the table of fuelpurchase.CardFeedState.
 type CardFeedStatesTable struct {
-	keel.Handle[fuelpurchase.CardFeedState]
+	keel.Handle[*fuelpurchase.CardFeedState]
 	OrganizationID keelkinds.PulidIDCol
 	BusinessUnitID keelkinds.PulidIDCol
 	Provider       CardProviderCol
@@ -79,7 +79,7 @@ type CardFeedStatesTable struct {
 
 // CardFeedStates references the fuel_card_feed_states table.
 var CardFeedStates = &CardFeedStatesTable{
-	Handle:         keel.Handle[fuelpurchase.CardFeedState]{Ref: &cardFeedStatesRef},
+	Handle:         keel.Handle[*fuelpurchase.CardFeedState]{Ref: &cardFeedStatesRef},
 	OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &cardFeedStatesRef, Index: 0}}},
 	BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &cardFeedStatesRef, Index: 1}}},
 	Provider:       CardProviderCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &cardFeedStatesRef, Index: 2}}},
@@ -94,7 +94,7 @@ var CardFeedStates = &CardFeedStatesTable{
 // BuildCardFeedStates builds the handle of fuel_card_feed_states for ref. Generated relation and alias methods call it.
 func BuildCardFeedStates(r *keel.Ref) *CardFeedStatesTable {
 	return &CardFeedStatesTable{
-		Handle:         keel.Handle[fuelpurchase.CardFeedState]{Ref: r},
+		Handle:         keel.Handle[*fuelpurchase.CardFeedState]{Ref: r},
 		OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		Provider:       CardProviderCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -243,7 +243,7 @@ var fuelCardsRef = keel.Ref{Table: &fuelCardsTable}
 
 // FuelCardsTable is the table of fuelpurchase.FuelCard.
 type FuelCardsTable struct {
-	keel.Handle[fuelpurchase.FuelCard]
+	keel.Handle[*fuelpurchase.FuelCard]
 	ID                keelkinds.PulidIDCol
 	BusinessUnitID    keelkinds.PulidIDCol
 	OrganizationID    keelkinds.PulidIDCol
@@ -268,7 +268,7 @@ type FuelCardsTable struct {
 
 // FuelCards references the fuel_cards table.
 var FuelCards = &FuelCardsTable{
-	Handle:            keel.Handle[fuelpurchase.FuelCard]{Ref: &fuelCardsRef},
+	Handle:            keel.Handle[*fuelpurchase.FuelCard]{Ref: &fuelCardsRef},
 	ID:                keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &fuelCardsRef, Index: 0}}},
 	BusinessUnitID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &fuelCardsRef, Index: 1}}},
 	OrganizationID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &fuelCardsRef, Index: 2}}},
@@ -294,7 +294,7 @@ var FuelCards = &FuelCardsTable{
 // BuildFuelCards builds the handle of fuel_cards for ref. Generated relation and alias methods call it.
 func BuildFuelCards(r *keel.Ref) *FuelCardsTable {
 	return &FuelCardsTable{
-		Handle:            keel.Handle[fuelpurchase.FuelCard]{Ref: r},
+		Handle:            keel.Handle[*fuelpurchase.FuelCard]{Ref: r},
 		ID:                keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -552,7 +552,7 @@ var fuelPurchasesRef = keel.Ref{Table: &fuelPurchasesTable}
 
 // FuelPurchasesTable is the table of fuelpurchase.FuelPurchase.
 type FuelPurchasesTable struct {
-	keel.Handle[fuelpurchase.FuelPurchase]
+	keel.Handle[*fuelpurchase.FuelPurchase]
 	ID                   keelkinds.PulidIDCol
 	BusinessUnitID       keelkinds.PulidIDCol
 	OrganizationID       keelkinds.PulidIDCol
@@ -587,7 +587,7 @@ type FuelPurchasesTable struct {
 
 // FuelPurchases references the fuel_purchases table.
 var FuelPurchases = &FuelPurchasesTable{
-	Handle:               keel.Handle[fuelpurchase.FuelPurchase]{Ref: &fuelPurchasesRef},
+	Handle:               keel.Handle[*fuelpurchase.FuelPurchase]{Ref: &fuelPurchasesRef},
 	ID:                   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &fuelPurchasesRef, Index: 0}}},
 	BusinessUnitID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &fuelPurchasesRef, Index: 1}}},
 	OrganizationID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &fuelPurchasesRef, Index: 2}}},
@@ -623,7 +623,7 @@ var FuelPurchases = &FuelPurchasesTable{
 // BuildFuelPurchases builds the handle of fuel_purchases for ref. Generated relation and alias methods call it.
 func BuildFuelPurchases(r *keel.Ref) *FuelPurchasesTable {
 	return &FuelPurchasesTable{
-		Handle:               keel.Handle[fuelpurchase.FuelPurchase]{Ref: r},
+		Handle:               keel.Handle[*fuelpurchase.FuelPurchase]{Ref: r},
 		ID:                   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -953,7 +953,7 @@ var importBatchesRef = keel.Ref{Table: &importBatchesTable}
 
 // ImportBatchesTable is the table of fuelpurchase.ImportBatch.
 type ImportBatchesTable struct {
-	keel.Handle[fuelpurchase.ImportBatch]
+	keel.Handle[*fuelpurchase.ImportBatch]
 	ID                keelkinds.PulidIDCol
 	BusinessUnitID    keelkinds.PulidIDCol
 	OrganizationID    keelkinds.PulidIDCol
@@ -987,7 +987,7 @@ type ImportBatchesTable struct {
 
 // ImportBatches references the fuel_purchase_import_batches table.
 var ImportBatches = &ImportBatchesTable{
-	Handle:            keel.Handle[fuelpurchase.ImportBatch]{Ref: &importBatchesRef},
+	Handle:            keel.Handle[*fuelpurchase.ImportBatch]{Ref: &importBatchesRef},
 	ID:                keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &importBatchesRef, Index: 0}}},
 	BusinessUnitID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &importBatchesRef, Index: 1}}},
 	OrganizationID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &importBatchesRef, Index: 2}}},
@@ -1022,7 +1022,7 @@ var ImportBatches = &ImportBatchesTable{
 // BuildImportBatches builds the handle of fuel_purchase_import_batches for ref. Generated relation and alias methods call it.
 func BuildImportBatches(r *keel.Ref) *ImportBatchesTable {
 	return &ImportBatchesTable{
-		Handle:            keel.Handle[fuelpurchase.ImportBatch]{Ref: r},
+		Handle:            keel.Handle[*fuelpurchase.ImportBatch]{Ref: r},
 		ID:                keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -1343,7 +1343,7 @@ var importRowsRef = keel.Ref{Table: &importRowsTable}
 
 // ImportRowsTable is the table of fuelpurchase.ImportRow.
 type ImportRowsTable struct {
-	keel.Handle[fuelpurchase.ImportRow]
+	keel.Handle[*fuelpurchase.ImportRow]
 	ID                     keelkinds.PulidIDCol
 	BusinessUnitID         keelkinds.PulidIDCol
 	OrganizationID         keelkinds.PulidIDCol
@@ -1364,7 +1364,7 @@ type ImportRowsTable struct {
 
 // ImportRows references the fuel_purchase_import_rows table.
 var ImportRows = &ImportRowsTable{
-	Handle:                 keel.Handle[fuelpurchase.ImportRow]{Ref: &importRowsRef},
+	Handle:                 keel.Handle[*fuelpurchase.ImportRow]{Ref: &importRowsRef},
 	ID:                     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &importRowsRef, Index: 0}}},
 	BusinessUnitID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &importRowsRef, Index: 1}}},
 	OrganizationID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &importRowsRef, Index: 2}}},
@@ -1386,7 +1386,7 @@ var ImportRows = &ImportRowsTable{
 // BuildImportRows builds the handle of fuel_purchase_import_rows for ref. Generated relation and alias methods call it.
 func BuildImportRows(r *keel.Ref) *ImportRowsTable {
 	return &ImportRowsTable{
-		Handle:                 keel.Handle[fuelpurchase.ImportRow]{Ref: r},
+		Handle:                 keel.Handle[*fuelpurchase.ImportRow]{Ref: r},
 		ID:                     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},

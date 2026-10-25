@@ -80,7 +80,7 @@ var formulaTemplatesRef = keel.Ref{Table: &formulaTemplatesTable}
 
 // FormulaTemplatesTable is the table of formulatemplate.FormulaTemplate.
 type FormulaTemplatesTable struct {
-	keel.Handle[formulatemplate.FormulaTemplate]
+	keel.Handle[*formulatemplate.FormulaTemplate]
 	ID                   keelkinds.PulidIDCol
 	OrganizationID       keelkinds.PulidIDCol
 	BusinessUnitID       keelkinds.PulidIDCol
@@ -110,7 +110,7 @@ type FormulaTemplatesTable struct {
 
 // FormulaTemplates references the formula_templates table.
 var FormulaTemplates = &FormulaTemplatesTable{
-	Handle:               keel.Handle[formulatemplate.FormulaTemplate]{Ref: &formulaTemplatesRef},
+	Handle:               keel.Handle[*formulatemplate.FormulaTemplate]{Ref: &formulaTemplatesRef},
 	ID:                   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &formulaTemplatesRef, Index: 0}}},
 	OrganizationID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &formulaTemplatesRef, Index: 1}}},
 	BusinessUnitID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &formulaTemplatesRef, Index: 2}}},
@@ -141,7 +141,7 @@ var FormulaTemplates = &FormulaTemplatesTable{
 // BuildFormulaTemplates builds the handle of formula_templates for ref. Generated relation and alias methods call it.
 func BuildFormulaTemplates(r *keel.Ref) *FormulaTemplatesTable {
 	return &FormulaTemplatesTable{
-		Handle:               keel.Handle[formulatemplate.FormulaTemplate]{Ref: r},
+		Handle:               keel.Handle[*formulatemplate.FormulaTemplate]{Ref: r},
 		ID:                   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		OrganizationID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		BusinessUnitID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -428,7 +428,7 @@ var formulaTemplateVersionsRef = keel.Ref{Table: &formulaTemplateVersionsTable}
 
 // FormulaTemplateVersionsTable is the table of formulatemplate.FormulaTemplateVersion.
 type FormulaTemplateVersionsTable struct {
-	keel.Handle[formulatemplate.FormulaTemplateVersion]
+	keel.Handle[*formulatemplate.FormulaTemplateVersion]
 	ID             keelkinds.PulidIDCol
 	TemplateID     keelkinds.PulidIDCol
 	OrganizationID keelkinds.PulidIDCol
@@ -453,7 +453,7 @@ type FormulaTemplateVersionsTable struct {
 
 // FormulaTemplateVersions references the formula_template_versions table.
 var FormulaTemplateVersions = &FormulaTemplateVersionsTable{
-	Handle:         keel.Handle[formulatemplate.FormulaTemplateVersion]{Ref: &formulaTemplateVersionsRef},
+	Handle:         keel.Handle[*formulatemplate.FormulaTemplateVersion]{Ref: &formulaTemplateVersionsRef},
 	ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &formulaTemplateVersionsRef, Index: 0}}},
 	TemplateID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &formulaTemplateVersionsRef, Index: 1}}},
 	OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &formulaTemplateVersionsRef, Index: 2}}},
@@ -479,7 +479,7 @@ var FormulaTemplateVersions = &FormulaTemplateVersionsTable{
 // BuildFormulaTemplateVersions builds the handle of formula_template_versions for ref. Generated relation and alias methods call it.
 func BuildFormulaTemplateVersions(r *keel.Ref) *FormulaTemplateVersionsTable {
 	return &FormulaTemplateVersionsTable{
-		Handle:         keel.Handle[formulatemplate.FormulaTemplateVersion]{Ref: r},
+		Handle:         keel.Handle[*formulatemplate.FormulaTemplateVersion]{Ref: r},
 		ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		TemplateID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -712,7 +712,7 @@ var reviewsRef = keel.Ref{Table: &reviewsTable}
 
 // ReviewsTable is the table of formulatemplate.Review.
 type ReviewsTable struct {
-	keel.Handle[formulatemplate.Review]
+	keel.Handle[*formulatemplate.Review]
 	ID                  keelkinds.PulidIDCol
 	TemplateID          keelkinds.PulidIDCol
 	OrganizationID      keelkinds.PulidIDCol
@@ -729,7 +729,7 @@ type ReviewsTable struct {
 
 // Reviews references the formula_template_reviews table.
 var Reviews = &ReviewsTable{
-	Handle:              keel.Handle[formulatemplate.Review]{Ref: &reviewsRef},
+	Handle:              keel.Handle[*formulatemplate.Review]{Ref: &reviewsRef},
 	ID:                  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &reviewsRef, Index: 0}}},
 	TemplateID:          keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &reviewsRef, Index: 1}}},
 	OrganizationID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &reviewsRef, Index: 2}}},
@@ -747,7 +747,7 @@ var Reviews = &ReviewsTable{
 // BuildReviews builds the handle of formula_template_reviews for ref. Generated relation and alias methods call it.
 func BuildReviews(r *keel.Ref) *ReviewsTable {
 	return &ReviewsTable{
-		Handle:              keel.Handle[formulatemplate.Review]{Ref: r},
+		Handle:              keel.Handle[*formulatemplate.Review]{Ref: r},
 		ID:                  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		TemplateID:          keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -912,7 +912,7 @@ var versionImportsRef = keel.Ref{Table: &versionImportsTable}
 
 // VersionImportsTable is the table of formulatemplate.VersionImport.
 type VersionImportsTable struct {
-	keel.Handle[formulatemplate.VersionImport]
+	keel.Handle[*formulatemplate.VersionImport]
 	TemplateVersionID    keelkinds.PulidIDCol
 	LibraryID            keelkinds.PulidIDCol
 	OrganizationID       keelkinds.PulidIDCol
@@ -925,7 +925,7 @@ type VersionImportsTable struct {
 
 // VersionImports references the formula_template_version_imports table.
 var VersionImports = &VersionImportsTable{
-	Handle:               keel.Handle[formulatemplate.VersionImport]{Ref: &versionImportsRef},
+	Handle:               keel.Handle[*formulatemplate.VersionImport]{Ref: &versionImportsRef},
 	TemplateVersionID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &versionImportsRef, Index: 0}}},
 	LibraryID:            keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &versionImportsRef, Index: 1}}},
 	OrganizationID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &versionImportsRef, Index: 2}}},
@@ -939,7 +939,7 @@ var VersionImports = &VersionImportsTable{
 // BuildVersionImports builds the handle of formula_template_version_imports for ref. Generated relation and alias methods call it.
 func BuildVersionImports(r *keel.Ref) *VersionImportsTable {
 	return &VersionImportsTable{
-		Handle:               keel.Handle[formulatemplate.VersionImport]{Ref: r},
+		Handle:               keel.Handle[*formulatemplate.VersionImport]{Ref: r},
 		TemplateVersionID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		LibraryID:            keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -1051,7 +1051,7 @@ var versionTablesRef = keel.Ref{Table: &versionTablesTable}
 
 // VersionTablesTable is the table of formulatemplate.VersionTable.
 type VersionTablesTable struct {
-	keel.Handle[formulatemplate.VersionTable]
+	keel.Handle[*formulatemplate.VersionTable]
 	TemplateVersionID   keelkinds.PulidIDCol
 	RateMatrixID        keelkinds.PulidIDCol
 	OrganizationID      keelkinds.PulidIDCol
@@ -1064,7 +1064,7 @@ type VersionTablesTable struct {
 
 // VersionTables references the formula_template_version_tables table.
 var VersionTables = &VersionTablesTable{
-	Handle:              keel.Handle[formulatemplate.VersionTable]{Ref: &versionTablesRef},
+	Handle:              keel.Handle[*formulatemplate.VersionTable]{Ref: &versionTablesRef},
 	TemplateVersionID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &versionTablesRef, Index: 0}}},
 	RateMatrixID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &versionTablesRef, Index: 1}}},
 	OrganizationID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &versionTablesRef, Index: 2}}},
@@ -1078,7 +1078,7 @@ var VersionTables = &VersionTablesTable{
 // BuildVersionTables builds the handle of formula_template_version_tables for ref. Generated relation and alias methods call it.
 func BuildVersionTables(r *keel.Ref) *VersionTablesTable {
 	return &VersionTablesTable{
-		Handle:              keel.Handle[formulatemplate.VersionTable]{Ref: r},
+		Handle:              keel.Handle[*formulatemplate.VersionTable]{Ref: r},
 		TemplateVersionID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		RateMatrixID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},

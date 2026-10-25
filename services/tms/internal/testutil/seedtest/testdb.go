@@ -13,6 +13,7 @@ import (
 	"github.com/emoss08/keel"
 	"github.com/emoss08/keel/migrate"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbpool"
+	"github.com/emoss08/trenova/internal/keeltables"
 	"github.com/emoss08/trenova/schema/migrations"
 	"github.com/jackc/pgx/v5"
 	"github.com/stretchr/testify/require"
@@ -105,6 +106,7 @@ func openDB(dsn string, maxOpen int) (*keel.DB, error) {
 		MaxConns:        maxOpen,
 		MaxConnIdleTime: 30 * time.Second,
 		MaxConnLifetime: 2 * time.Minute,
+		Tables:          keeltables.All(),
 	})
 	if err != nil {
 		return nil, fmt.Errorf("open test database: %w", err)

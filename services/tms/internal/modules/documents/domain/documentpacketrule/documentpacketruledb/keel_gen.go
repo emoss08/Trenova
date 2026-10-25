@@ -60,7 +60,7 @@ var documentPacketRulesRef = keel.Ref{Table: &documentPacketRulesTable}
 
 // DocumentPacketRulesTable is the table of documentpacketrule.DocumentPacketRule.
 type DocumentPacketRulesTable struct {
-	keel.Handle[documentpacketrule.DocumentPacketRule]
+	keel.Handle[*documentpacketrule.DocumentPacketRule]
 	ID                    keelkinds.PulidIDCol
 	OrganizationID        keelkinds.PulidIDCol
 	BusinessUnitID        keelkinds.PulidIDCol
@@ -78,7 +78,7 @@ type DocumentPacketRulesTable struct {
 
 // DocumentPacketRules references the document_packet_rules table.
 var DocumentPacketRules = &DocumentPacketRulesTable{
-	Handle:                keel.Handle[documentpacketrule.DocumentPacketRule]{Ref: &documentPacketRulesRef},
+	Handle:                keel.Handle[*documentpacketrule.DocumentPacketRule]{Ref: &documentPacketRulesRef},
 	ID:                    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &documentPacketRulesRef, Index: 0}}},
 	OrganizationID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &documentPacketRulesRef, Index: 1}}},
 	BusinessUnitID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &documentPacketRulesRef, Index: 2}}},
@@ -97,7 +97,7 @@ var DocumentPacketRules = &DocumentPacketRulesTable{
 // BuildDocumentPacketRules builds the handle of document_packet_rules for ref. Generated relation and alias methods call it.
 func BuildDocumentPacketRules(r *keel.Ref) *DocumentPacketRulesTable {
 	return &DocumentPacketRulesTable{
-		Handle:                keel.Handle[documentpacketrule.DocumentPacketRule]{Ref: r},
+		Handle:                keel.Handle[*documentpacketrule.DocumentPacketRule]{Ref: r},
 		ID:                    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		OrganizationID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		BusinessUnitID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},

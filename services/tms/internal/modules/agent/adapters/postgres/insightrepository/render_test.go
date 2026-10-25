@@ -67,3 +67,35 @@ func TestCloseActiveSupersedesNothingWhenARunFoundNothing(t *testing.T) {
 	}))
 	assert.Contains(t, supersedes, `i."dedupe_key" = ANY($`, supersedes)
 }
+
+func TestMetricQueriesRender(t *testing.T) {
+	t.Parallel()
+
+	window := insightports.InsightWindowRequest{WindowStart: 1_790_000_000, WindowEnd: 1_792_592_000}
+
+	t.Run("customer on-time", func(t *testing.T) {
+		t.Parallel()
+		keeltest.Snapshot(t, customerOnTimeQuery(window))
+	})
+	t.Run("unbilled shipments", func(t *testing.T) {
+		t.Parallel()
+		keeltest.Snapshot(t, unbilledShipmentsQuery(insightports.UnbilledShipmentsRequest{
+			DeliveredBefore: 1_790_000_000,
+		}))
+	})
+	t.Run("unbilled detention", func(t *testing.T) {
+		t.Parallel()
+		keeltest.Snapshot(t, unbilledDetentionQuery(window))
+	})
+	t.Run("customer empty miles", func(t *testing.T) {
+		t.Parallel()
+		keeltest.Snapshot(t, customerEmptyMilesQuery(window))
+	})
+	t.Run("expiring credentials", func(t *testing.T) {
+		t.Parallel()
+		keeltest.Snapshot(t, expiringCredentialsQuery(insightports.ExpiringCredentialsRequest{
+			From:    1_790_000_000,
+			Through: 1_792_592_000,
+		}))
+	})
+}

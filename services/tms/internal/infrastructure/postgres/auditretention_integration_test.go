@@ -96,7 +96,7 @@ func TestAuditRetention_TheSystemRoleMustOptInToDelete(t *testing.T) {
 	assert.Contains(t, err.Error(), "append-only")
 
 	err = execInTransaction(ctx, conn,
-		enableAuditRetentionSQL, "UPDATE audit_entries SET comment = 'rewritten'")
+		"SET LOCAL trenova.audit_retention = 'on'", "UPDATE audit_entries SET comment = 'rewritten'")
 	require.Error(t, err, "retention never permits an update")
 
 	assert.Len(t, f.auditEntryIDs(t), 1)

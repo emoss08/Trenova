@@ -22,7 +22,6 @@ func TestLanes_CountsShipmentsBetweenTheirFirstPickupAndLastDeliveryState(t *tes
 		},
 		Limit: 5,
 	}))
-	t.Log(sql)
 
 	assert.Contains(t, sql, `WITH "lane_endpoints" ("origin_location_id", "destination_location_id") AS (`)
 	assert.Contains(t, sql, `(array_agg(s2."location_id" ORDER BY sm."sequence" ASC, s2."sequence" ASC) FILTER (WHERE s2."type" = ANY(`)

@@ -67,7 +67,7 @@ var detentionEvidencesRef = keel.Ref{Table: &detentionEvidencesTable}
 
 // DetentionEvidencesTable is the table of detention.DetentionEvidence.
 type DetentionEvidencesTable struct {
-	keel.Handle[detention.DetentionEvidence]
+	keel.Handle[*detention.DetentionEvidence]
 	ID                    keelkinds.PulidIDCol
 	BusinessUnitID        keelkinds.PulidIDCol
 	OrganizationID        keelkinds.PulidIDCol
@@ -88,7 +88,7 @@ type DetentionEvidencesTable struct {
 
 // DetentionEvidences references the detention_evidence table.
 var DetentionEvidences = &DetentionEvidencesTable{
-	Handle:                keel.Handle[detention.DetentionEvidence]{Ref: &detentionEvidencesRef},
+	Handle:                keel.Handle[*detention.DetentionEvidence]{Ref: &detentionEvidencesRef},
 	ID:                    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &detentionEvidencesRef, Index: 0}}},
 	BusinessUnitID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &detentionEvidencesRef, Index: 1}}},
 	OrganizationID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &detentionEvidencesRef, Index: 2}}},
@@ -110,7 +110,7 @@ var DetentionEvidences = &DetentionEvidencesTable{
 // BuildDetentionEvidences builds the handle of detention_evidence for ref. Generated relation and alias methods call it.
 func BuildDetentionEvidences(r *keel.Ref) *DetentionEvidencesTable {
 	return &DetentionEvidencesTable{
-		Handle:                keel.Handle[detention.DetentionEvidence]{Ref: r},
+		Handle:                keel.Handle[*detention.DetentionEvidence]{Ref: r},
 		ID:                    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -306,7 +306,7 @@ var detentionNoticesRef = keel.Ref{Table: &detentionNoticesTable}
 
 // DetentionNoticesTable is the table of detention.DetentionNotice.
 type DetentionNoticesTable struct {
-	keel.Handle[detention.DetentionNotice]
+	keel.Handle[*detention.DetentionNotice]
 	ID                    keelkinds.PulidIDCol
 	BusinessUnitID        keelkinds.PulidIDCol
 	OrganizationID        keelkinds.PulidIDCol
@@ -341,7 +341,7 @@ type DetentionNoticesTable struct {
 
 // DetentionNotices references the detention_notices table.
 var DetentionNotices = &DetentionNoticesTable{
-	Handle:                keel.Handle[detention.DetentionNotice]{Ref: &detentionNoticesRef},
+	Handle:                keel.Handle[*detention.DetentionNotice]{Ref: &detentionNoticesRef},
 	ID:                    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &detentionNoticesRef, Index: 0}}},
 	BusinessUnitID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &detentionNoticesRef, Index: 1}}},
 	OrganizationID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &detentionNoticesRef, Index: 2}}},
@@ -377,7 +377,7 @@ var DetentionNotices = &DetentionNoticesTable{
 // BuildDetentionNotices builds the handle of detention_notices for ref. Generated relation and alias methods call it.
 func BuildDetentionNotices(r *keel.Ref) *DetentionNoticesTable {
 	return &DetentionNoticesTable{
-		Handle:                keel.Handle[detention.DetentionNotice]{Ref: r},
+		Handle:                keel.Handle[*detention.DetentionNotice]{Ref: r},
 		ID:                    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -708,7 +708,7 @@ var detentionOccurrencesRef = keel.Ref{Table: &detentionOccurrencesTable}
 
 // DetentionOccurrencesTable is the table of detention.DetentionOccurrence.
 type DetentionOccurrencesTable struct {
-	keel.Handle[detention.DetentionOccurrence]
+	keel.Handle[*detention.DetentionOccurrence]
 	ID                  keelkinds.PulidIDCol
 	BusinessUnitID      keelkinds.PulidIDCol
 	OrganizationID      keelkinds.PulidIDCol
@@ -774,7 +774,7 @@ type DetentionOccurrencesTable struct {
 
 // DetentionOccurrences references the detention_occurrences table.
 var DetentionOccurrences = &DetentionOccurrencesTable{
-	Handle:              keel.Handle[detention.DetentionOccurrence]{Ref: &detentionOccurrencesRef},
+	Handle:              keel.Handle[*detention.DetentionOccurrence]{Ref: &detentionOccurrencesRef},
 	ID:                  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &detentionOccurrencesRef, Index: 0}}},
 	BusinessUnitID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &detentionOccurrencesRef, Index: 1}}},
 	OrganizationID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &detentionOccurrencesRef, Index: 2}}},
@@ -841,7 +841,7 @@ var DetentionOccurrences = &DetentionOccurrencesTable{
 // BuildDetentionOccurrences builds the handle of detention_occurrences for ref. Generated relation and alias methods call it.
 func BuildDetentionOccurrences(r *keel.Ref) *DetentionOccurrencesTable {
 	return &DetentionOccurrencesTable{
-		Handle:              keel.Handle[detention.DetentionOccurrence]{Ref: r},
+		Handle:              keel.Handle[*detention.DetentionOccurrence]{Ref: r},
 		ID:                  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -1377,7 +1377,7 @@ var detentionPoliciesRef = keel.Ref{Table: &detentionPoliciesTable}
 
 // DetentionPoliciesTable is the table of detention.DetentionPolicy.
 type DetentionPoliciesTable struct {
-	keel.Handle[detention.DetentionPolicy]
+	keel.Handle[*detention.DetentionPolicy]
 	ID                          keelkinds.PulidIDCol
 	BusinessUnitID              keelkinds.PulidIDCol
 	OrganizationID              keelkinds.PulidIDCol
@@ -1436,7 +1436,7 @@ type DetentionPoliciesTable struct {
 
 // DetentionPolicies references the detention_policies table.
 var DetentionPolicies = &DetentionPoliciesTable{
-	Handle:                      keel.Handle[detention.DetentionPolicy]{Ref: &detentionPoliciesRef},
+	Handle:                      keel.Handle[*detention.DetentionPolicy]{Ref: &detentionPoliciesRef},
 	ID:                          keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &detentionPoliciesRef, Index: 0}}},
 	BusinessUnitID:              keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &detentionPoliciesRef, Index: 1}}},
 	OrganizationID:              keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &detentionPoliciesRef, Index: 2}}},
@@ -1496,7 +1496,7 @@ var DetentionPolicies = &DetentionPoliciesTable{
 // BuildDetentionPolicies builds the handle of detention_policies for ref. Generated relation and alias methods call it.
 func BuildDetentionPolicies(r *keel.Ref) *DetentionPoliciesTable {
 	return &DetentionPoliciesTable{
-		Handle:                      keel.Handle[detention.DetentionPolicy]{Ref: r},
+		Handle:                      keel.Handle[*detention.DetentionPolicy]{Ref: r},
 		ID:                          keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID:              keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID:              keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -1926,7 +1926,7 @@ var detentionPolicyTiersRef = keel.Ref{Table: &detentionPolicyTiersTable}
 
 // DetentionPolicyTiersTable is the table of detention.DetentionPolicyTier.
 type DetentionPolicyTiersTable struct {
-	keel.Handle[detention.DetentionPolicyTier]
+	keel.Handle[*detention.DetentionPolicyTier]
 	ID                keelkinds.PulidIDCol
 	BusinessUnitID    keelkinds.PulidIDCol
 	OrganizationID    keelkinds.PulidIDCol
@@ -1943,7 +1943,7 @@ type DetentionPolicyTiersTable struct {
 
 // DetentionPolicyTiers references the detention_policy_tiers table.
 var DetentionPolicyTiers = &DetentionPolicyTiersTable{
-	Handle:            keel.Handle[detention.DetentionPolicyTier]{Ref: &detentionPolicyTiersRef},
+	Handle:            keel.Handle[*detention.DetentionPolicyTier]{Ref: &detentionPolicyTiersRef},
 	ID:                keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &detentionPolicyTiersRef, Index: 0}}},
 	BusinessUnitID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &detentionPolicyTiersRef, Index: 1}}},
 	OrganizationID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &detentionPolicyTiersRef, Index: 2}}},
@@ -1961,7 +1961,7 @@ var DetentionPolicyTiers = &DetentionPolicyTiersTable{
 // BuildDetentionPolicyTiers builds the handle of detention_policy_tiers for ref. Generated relation and alias methods call it.
 func BuildDetentionPolicyTiers(r *keel.Ref) *DetentionPolicyTiersTable {
 	return &DetentionPolicyTiersTable{
-		Handle:            keel.Handle[detention.DetentionPolicyTier]{Ref: r},
+		Handle:            keel.Handle[*detention.DetentionPolicyTier]{Ref: r},
 		ID:                keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},

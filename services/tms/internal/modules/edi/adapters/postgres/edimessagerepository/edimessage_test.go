@@ -29,6 +29,12 @@ func TestLifecycleMessageQuery_MatchesTheLifecycleIdentity(t *testing.T) {
 	assert.Contains(t, args, "Reviewed")
 }
 
+func TestServiceFailure214StatusQuery_ReadsTheLatestLifecycleMessage(t *testing.T) {
+	t.Parallel()
+
+	keeltest.Snapshot(t, serviceFailure214StatusQuery("sf_1"))
+}
+
 func TestScorecardQuery_GroupsEveryCountByPartner(t *testing.T) {
 	t.Parallel()
 

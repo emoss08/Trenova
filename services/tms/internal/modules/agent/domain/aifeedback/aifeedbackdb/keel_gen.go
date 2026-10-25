@@ -74,7 +74,7 @@ var feedbacksRef = keel.Ref{Table: &feedbacksTable}
 
 // FeedbacksTable is the table of aifeedback.Feedback.
 type FeedbacksTable struct {
-	keel.Handle[aifeedback.Feedback]
+	keel.Handle[*aifeedback.Feedback]
 	ID                keelkinds.PulidIDCol
 	BusinessUnitID    keelkinds.PulidIDCol
 	OrganizationID    keelkinds.PulidIDCol
@@ -107,7 +107,7 @@ type FeedbacksTable struct {
 
 // Feedbacks references the ai_feedback table.
 var Feedbacks = &FeedbacksTable{
-	Handle:            keel.Handle[aifeedback.Feedback]{Ref: &feedbacksRef},
+	Handle:            keel.Handle[*aifeedback.Feedback]{Ref: &feedbacksRef},
 	ID:                keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &feedbacksRef, Index: 0}}},
 	BusinessUnitID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &feedbacksRef, Index: 1}}},
 	OrganizationID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &feedbacksRef, Index: 2}}},
@@ -141,7 +141,7 @@ var Feedbacks = &FeedbacksTable{
 // BuildFeedbacks builds the handle of ai_feedback for ref. Generated relation and alias methods call it.
 func BuildFeedbacks(r *keel.Ref) *FeedbacksTable {
 	return &FeedbacksTable{
-		Handle:            keel.Handle[aifeedback.Feedback]{Ref: r},
+		Handle:            keel.Handle[*aifeedback.Feedback]{Ref: r},
 		ID:                keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},

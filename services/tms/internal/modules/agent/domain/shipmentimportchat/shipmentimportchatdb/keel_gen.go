@@ -60,7 +60,7 @@ var conversationsRef = keel.Ref{Table: &conversationsTable}
 
 // ConversationsTable is the table of shipmentimportchat.Conversation.
 type ConversationsTable struct {
-	keel.Handle[shipmentimportchat.Conversation]
+	keel.Handle[*shipmentimportchat.Conversation]
 	ID                     keelkinds.PulidIDCol
 	OrganizationID         keelkinds.PulidIDCol
 	BusinessUnitID         keelkinds.PulidIDCol
@@ -78,7 +78,7 @@ type ConversationsTable struct {
 
 // Conversations references the shipment_import_chat_conversations table.
 var Conversations = &ConversationsTable{
-	Handle:                 keel.Handle[shipmentimportchat.Conversation]{Ref: &conversationsRef},
+	Handle:                 keel.Handle[*shipmentimportchat.Conversation]{Ref: &conversationsRef},
 	ID:                     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &conversationsRef, Index: 0}}},
 	OrganizationID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &conversationsRef, Index: 1}}},
 	BusinessUnitID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &conversationsRef, Index: 2}}},
@@ -97,7 +97,7 @@ var Conversations = &ConversationsTable{
 // BuildConversations builds the handle of shipment_import_chat_conversations for ref. Generated relation and alias methods call it.
 func BuildConversations(r *keel.Ref) *ConversationsTable {
 	return &ConversationsTable{
-		Handle:                 keel.Handle[shipmentimportchat.Conversation]{Ref: r},
+		Handle:                 keel.Handle[*shipmentimportchat.Conversation]{Ref: r},
 		ID:                     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		OrganizationID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		BusinessUnitID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -268,7 +268,7 @@ var turnsRef = keel.Ref{Table: &turnsTable}
 
 // TurnsTable is the table of shipmentimportchat.Turn.
 type TurnsTable struct {
-	keel.Handle[shipmentimportchat.Turn]
+	keel.Handle[*shipmentimportchat.Turn]
 	ID                     keelkinds.PulidIDCol
 	ConversationID         keelkinds.PulidIDCol
 	OrganizationID         keelkinds.PulidIDCol
@@ -292,7 +292,7 @@ type TurnsTable struct {
 
 // Turns references the shipment_import_chat_turns table.
 var Turns = &TurnsTable{
-	Handle:                 keel.Handle[shipmentimportchat.Turn]{Ref: &turnsRef},
+	Handle:                 keel.Handle[*shipmentimportchat.Turn]{Ref: &turnsRef},
 	ID:                     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &turnsRef, Index: 0}}},
 	ConversationID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &turnsRef, Index: 1}}},
 	OrganizationID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &turnsRef, Index: 2}}},
@@ -317,7 +317,7 @@ var Turns = &TurnsTable{
 // BuildTurns builds the handle of shipment_import_chat_turns for ref. Generated relation and alias methods call it.
 func BuildTurns(r *keel.Ref) *TurnsTable {
 	return &TurnsTable{
-		Handle:                 keel.Handle[shipmentimportchat.Turn]{Ref: r},
+		Handle:                 keel.Handle[*shipmentimportchat.Turn]{Ref: r},
 		ID:                     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		ConversationID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},

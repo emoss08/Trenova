@@ -77,7 +77,7 @@ var attachmentsRef = keel.Ref{Table: &attachmentsTable}
 
 // AttachmentsTable is the table of invoice.Attachment.
 type AttachmentsTable struct {
-	keel.Handle[invoice.Attachment]
+	keel.Handle[*invoice.Attachment]
 	ID             keelkinds.PulidIDCol
 	OrganizationID keelkinds.PulidIDCol
 	BusinessUnitID keelkinds.PulidIDCol
@@ -91,7 +91,7 @@ type AttachmentsTable struct {
 
 // Attachments references the invoice_attachments table.
 var Attachments = &AttachmentsTable{
-	Handle:         keel.Handle[invoice.Attachment]{Ref: &attachmentsRef},
+	Handle:         keel.Handle[*invoice.Attachment]{Ref: &attachmentsRef},
 	ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &attachmentsRef, Index: 0}}},
 	OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &attachmentsRef, Index: 1}}},
 	BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &attachmentsRef, Index: 2}}},
@@ -106,7 +106,7 @@ var Attachments = &AttachmentsTable{
 // BuildAttachments builds the handle of invoice_attachments for ref. Generated relation and alias methods call it.
 func BuildAttachments(r *keel.Ref) *AttachmentsTable {
 	return &AttachmentsTable{
-		Handle:         keel.Handle[invoice.Attachment]{Ref: r},
+		Handle:         keel.Handle[*invoice.Attachment]{Ref: r},
 		ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -256,7 +256,7 @@ var documentShareTokensRef = keel.Ref{Table: &documentShareTokensTable}
 
 // DocumentShareTokensTable is the table of invoice.DocumentShareToken.
 type DocumentShareTokensTable struct {
-	keel.Handle[invoice.DocumentShareToken]
+	keel.Handle[*invoice.DocumentShareToken]
 	ID             keelkinds.PulidIDCol
 	OrganizationID keelkinds.PulidIDCol
 	BusinessUnitID keelkinds.PulidIDCol
@@ -273,7 +273,7 @@ type DocumentShareTokensTable struct {
 
 // DocumentShareTokens references the invoice_document_share_tokens table.
 var DocumentShareTokens = &DocumentShareTokensTable{
-	Handle:         keel.Handle[invoice.DocumentShareToken]{Ref: &documentShareTokensRef},
+	Handle:         keel.Handle[*invoice.DocumentShareToken]{Ref: &documentShareTokensRef},
 	ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &documentShareTokensRef, Index: 0}}},
 	OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &documentShareTokensRef, Index: 1}}},
 	BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &documentShareTokensRef, Index: 2}}},
@@ -291,7 +291,7 @@ var DocumentShareTokens = &DocumentShareTokensTable{
 // BuildDocumentShareTokens builds the handle of invoice_document_share_tokens for ref. Generated relation and alias methods call it.
 func BuildDocumentShareTokens(r *keel.Ref) *DocumentShareTokensTable {
 	return &DocumentShareTokensTable{
-		Handle:         keel.Handle[invoice.DocumentShareToken]{Ref: r},
+		Handle:         keel.Handle[*invoice.DocumentShareToken]{Ref: r},
 		ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -479,7 +479,7 @@ var emailAttemptsRef = keel.Ref{Table: &emailAttemptsTable}
 
 // EmailAttemptsTable is the table of invoice.EmailAttempt.
 type EmailAttemptsTable struct {
-	keel.Handle[invoice.EmailAttempt]
+	keel.Handle[*invoice.EmailAttempt]
 	ID                keelkinds.PulidIDCol
 	OrganizationID    keelkinds.PulidIDCol
 	BusinessUnitID    keelkinds.PulidIDCol
@@ -507,7 +507,7 @@ type EmailAttemptsTable struct {
 
 // EmailAttempts references the invoice_email_attempts table.
 var EmailAttempts = &EmailAttemptsTable{
-	Handle:            keel.Handle[invoice.EmailAttempt]{Ref: &emailAttemptsRef},
+	Handle:            keel.Handle[*invoice.EmailAttempt]{Ref: &emailAttemptsRef},
 	ID:                keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &emailAttemptsRef, Index: 0}}},
 	OrganizationID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &emailAttemptsRef, Index: 1}}},
 	BusinessUnitID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &emailAttemptsRef, Index: 2}}},
@@ -536,7 +536,7 @@ var EmailAttempts = &EmailAttemptsTable{
 // BuildEmailAttempts builds the handle of invoice_email_attempts for ref. Generated relation and alias methods call it.
 func BuildEmailAttempts(r *keel.Ref) *EmailAttemptsTable {
 	return &EmailAttemptsTable{
-		Handle:            keel.Handle[invoice.EmailAttempt]{Ref: r},
+		Handle:            keel.Handle[*invoice.EmailAttempt]{Ref: r},
 		ID:                keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		OrganizationID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		BusinessUnitID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -801,7 +801,7 @@ var emailAttemptAttachmentsRef = keel.Ref{Table: &emailAttemptAttachmentsTable}
 
 // EmailAttemptAttachmentsTable is the table of invoice.EmailAttemptAttachment.
 type EmailAttemptAttachmentsTable struct {
-	keel.Handle[invoice.EmailAttemptAttachment]
+	keel.Handle[*invoice.EmailAttemptAttachment]
 	ID             keelkinds.PulidIDCol
 	OrganizationID keelkinds.PulidIDCol
 	BusinessUnitID keelkinds.PulidIDCol
@@ -819,7 +819,7 @@ type EmailAttemptAttachmentsTable struct {
 
 // EmailAttemptAttachments references the invoice_email_attempt_attachments table.
 var EmailAttemptAttachments = &EmailAttemptAttachmentsTable{
-	Handle:         keel.Handle[invoice.EmailAttemptAttachment]{Ref: &emailAttemptAttachmentsRef},
+	Handle:         keel.Handle[*invoice.EmailAttemptAttachment]{Ref: &emailAttemptAttachmentsRef},
 	ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &emailAttemptAttachmentsRef, Index: 0}}},
 	OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &emailAttemptAttachmentsRef, Index: 1}}},
 	BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &emailAttemptAttachmentsRef, Index: 2}}},
@@ -838,7 +838,7 @@ var EmailAttemptAttachments = &EmailAttemptAttachmentsTable{
 // BuildEmailAttemptAttachments builds the handle of invoice_email_attempt_attachments for ref. Generated relation and alias methods call it.
 func BuildEmailAttemptAttachments(r *keel.Ref) *EmailAttemptAttachmentsTable {
 	return &EmailAttemptAttachmentsTable{
-		Handle:         keel.Handle[invoice.EmailAttemptAttachment]{Ref: r},
+		Handle:         keel.Handle[*invoice.EmailAttemptAttachment]{Ref: r},
 		ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -1114,7 +1114,7 @@ var invoicesRef = keel.Ref{Table: &invoicesTable}
 
 // InvoicesTable is the table of invoice.Invoice.
 type InvoicesTable struct {
-	keel.Handle[invoice.Invoice]
+	keel.Handle[*invoice.Invoice]
 	ID                        keelkinds.PulidIDCol
 	OrganizationID            keelkinds.PulidIDCol
 	BusinessUnitID            keelkinds.PulidIDCol
@@ -1207,7 +1207,7 @@ type InvoicesTable struct {
 
 // Invoices references the invoices table.
 var Invoices = &InvoicesTable{
-	Handle:                    keel.Handle[invoice.Invoice]{Ref: &invoicesRef},
+	Handle:                    keel.Handle[*invoice.Invoice]{Ref: &invoicesRef},
 	ID:                        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &invoicesRef, Index: 0}}},
 	OrganizationID:            keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &invoicesRef, Index: 1}}},
 	BusinessUnitID:            keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &invoicesRef, Index: 2}}},
@@ -1301,7 +1301,7 @@ var Invoices = &InvoicesTable{
 // BuildInvoices builds the handle of invoices for ref. Generated relation and alias methods call it.
 func BuildInvoices(r *keel.Ref) *InvoicesTable {
 	return &InvoicesTable{
-		Handle:                    keel.Handle[invoice.Invoice]{Ref: r},
+		Handle:                    keel.Handle[*invoice.Invoice]{Ref: r},
 		ID:                        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		OrganizationID:            keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		BusinessUnitID:            keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -2077,7 +2077,7 @@ var invoiceDisputesRef = keel.Ref{Table: &invoiceDisputesTable}
 
 // InvoiceDisputesTable is the table of invoice.InvoiceDispute.
 type InvoiceDisputesTable struct {
-	keel.Handle[invoice.InvoiceDispute]
+	keel.Handle[*invoice.InvoiceDispute]
 	ID                     keelkinds.PulidIDCol
 	OrganizationID         keelkinds.PulidIDCol
 	BusinessUnitID         keelkinds.PulidIDCol
@@ -2102,7 +2102,7 @@ type InvoiceDisputesTable struct {
 
 // InvoiceDisputes references the invoice_disputes table.
 var InvoiceDisputes = &InvoiceDisputesTable{
-	Handle:                 keel.Handle[invoice.InvoiceDispute]{Ref: &invoiceDisputesRef},
+	Handle:                 keel.Handle[*invoice.InvoiceDispute]{Ref: &invoiceDisputesRef},
 	ID:                     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &invoiceDisputesRef, Index: 0}}},
 	OrganizationID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &invoiceDisputesRef, Index: 1}}},
 	BusinessUnitID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &invoiceDisputesRef, Index: 2}}},
@@ -2128,7 +2128,7 @@ var InvoiceDisputes = &InvoiceDisputesTable{
 // BuildInvoiceDisputes builds the handle of invoice_disputes for ref. Generated relation and alias methods call it.
 func BuildInvoiceDisputes(r *keel.Ref) *InvoiceDisputesTable {
 	return &InvoiceDisputesTable{
-		Handle:                 keel.Handle[invoice.InvoiceDispute]{Ref: r},
+		Handle:                 keel.Handle[*invoice.InvoiceDispute]{Ref: r},
 		ID:                     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		OrganizationID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		BusinessUnitID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -2372,7 +2372,7 @@ var invoiceLinesRef = keel.Ref{Table: &invoiceLinesTable}
 
 // InvoiceLinesTable is the table of invoice.InvoiceLine.
 type InvoiceLinesTable struct {
-	keel.Handle[invoice.InvoiceLine]
+	keel.Handle[*invoice.InvoiceLine]
 	ID                  keelkinds.PulidIDCol
 	OrganizationID      keelkinds.PulidIDCol
 	BusinessUnitID      keelkinds.PulidIDCol
@@ -2405,7 +2405,7 @@ type InvoiceLinesTable struct {
 
 // InvoiceLines references the invoice_lines table.
 var InvoiceLines = &InvoiceLinesTable{
-	Handle:              keel.Handle[invoice.InvoiceLine]{Ref: &invoiceLinesRef},
+	Handle:              keel.Handle[*invoice.InvoiceLine]{Ref: &invoiceLinesRef},
 	ID:                  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &invoiceLinesRef, Index: 0}}},
 	OrganizationID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &invoiceLinesRef, Index: 1}}},
 	BusinessUnitID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &invoiceLinesRef, Index: 2}}},
@@ -2439,7 +2439,7 @@ var InvoiceLines = &InvoiceLinesTable{
 // BuildInvoiceLines builds the handle of invoice_lines for ref. Generated relation and alias methods call it.
 func BuildInvoiceLines(r *keel.Ref) *InvoiceLinesTable {
 	return &InvoiceLinesTable{
-		Handle:              keel.Handle[invoice.InvoiceLine]{Ref: r},
+		Handle:              keel.Handle[*invoice.InvoiceLine]{Ref: r},
 		ID:                  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		OrganizationID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		BusinessUnitID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -2710,7 +2710,7 @@ var invoiceSharesRef = keel.Ref{Table: &invoiceSharesTable}
 
 // InvoiceSharesTable is the table of invoice.InvoiceShare.
 type InvoiceSharesTable struct {
-	keel.Handle[invoice.InvoiceShare]
+	keel.Handle[*invoice.InvoiceShare]
 	ID             keelkinds.PulidIDCol
 	BusinessUnitID keelkinds.PulidIDCol
 	OrganizationID keelkinds.PulidIDCol
@@ -2728,7 +2728,7 @@ type InvoiceSharesTable struct {
 
 // InvoiceShares references the invoice_shares table.
 var InvoiceShares = &InvoiceSharesTable{
-	Handle:         keel.Handle[invoice.InvoiceShare]{Ref: &invoiceSharesRef},
+	Handle:         keel.Handle[*invoice.InvoiceShare]{Ref: &invoiceSharesRef},
 	ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &invoiceSharesRef, Index: 0}}},
 	BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &invoiceSharesRef, Index: 1}}},
 	OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &invoiceSharesRef, Index: 2}}},
@@ -2747,7 +2747,7 @@ var InvoiceShares = &InvoiceSharesTable{
 // BuildInvoiceShares builds the handle of invoice_shares for ref. Generated relation and alias methods call it.
 func BuildInvoiceShares(r *keel.Ref) *InvoiceSharesTable {
 	return &InvoiceSharesTable{
-		Handle:         keel.Handle[invoice.InvoiceShare]{Ref: r},
+		Handle:         keel.Handle[*invoice.InvoiceShare]{Ref: r},
 		ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},

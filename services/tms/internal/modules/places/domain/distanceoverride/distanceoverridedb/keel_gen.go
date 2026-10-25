@@ -69,7 +69,7 @@ var distanceOverridesRef = keel.Ref{Table: &distanceOverridesTable}
 
 // DistanceOverridesTable is the table of distanceoverride.DistanceOverride.
 type DistanceOverridesTable struct {
-	keel.Handle[distanceoverride.DistanceOverride]
+	keel.Handle[*distanceoverride.DistanceOverride]
 	ID                    keelkinds.PulidIDCol
 	BusinessUnitID        keelkinds.PulidIDCol
 	OrganizationID        keelkinds.PulidIDCol
@@ -86,7 +86,7 @@ type DistanceOverridesTable struct {
 
 // DistanceOverrides references the distance_overrides table.
 var DistanceOverrides = &DistanceOverridesTable{
-	Handle:                keel.Handle[distanceoverride.DistanceOverride]{Ref: &distanceOverridesRef},
+	Handle:                keel.Handle[*distanceoverride.DistanceOverride]{Ref: &distanceOverridesRef},
 	ID:                    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &distanceOverridesRef, Index: 0}}},
 	BusinessUnitID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &distanceOverridesRef, Index: 1}}},
 	OrganizationID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &distanceOverridesRef, Index: 2}}},
@@ -104,7 +104,7 @@ var DistanceOverrides = &DistanceOverridesTable{
 // BuildDistanceOverrides builds the handle of distance_overrides for ref. Generated relation and alias methods call it.
 func BuildDistanceOverrides(r *keel.Ref) *DistanceOverridesTable {
 	return &DistanceOverridesTable{
-		Handle:                keel.Handle[distanceoverride.DistanceOverride]{Ref: r},
+		Handle:                keel.Handle[*distanceoverride.DistanceOverride]{Ref: r},
 		ID:                    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -282,7 +282,7 @@ var distanceOverrideStopsRef = keel.Ref{Table: &distanceOverrideStopsTable}
 
 // DistanceOverrideStopsTable is the table of distanceoverride.DistanceOverrideStop.
 type DistanceOverrideStopsTable struct {
-	keel.Handle[distanceoverride.DistanceOverrideStop]
+	keel.Handle[*distanceoverride.DistanceOverrideStop]
 	DistanceOverrideID keelkinds.PulidIDCol
 	BusinessUnitID     keelkinds.PulidIDCol
 	OrganizationID     keelkinds.PulidIDCol
@@ -292,7 +292,7 @@ type DistanceOverrideStopsTable struct {
 
 // DistanceOverrideStops references the distance_override_stops table.
 var DistanceOverrideStops = &DistanceOverrideStopsTable{
-	Handle:             keel.Handle[distanceoverride.DistanceOverrideStop]{Ref: &distanceOverrideStopsRef},
+	Handle:             keel.Handle[*distanceoverride.DistanceOverrideStop]{Ref: &distanceOverrideStopsRef},
 	DistanceOverrideID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &distanceOverrideStopsRef, Index: 0}}},
 	BusinessUnitID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &distanceOverrideStopsRef, Index: 1}}},
 	OrganizationID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &distanceOverrideStopsRef, Index: 2}}},
@@ -303,7 +303,7 @@ var DistanceOverrideStops = &DistanceOverrideStopsTable{
 // BuildDistanceOverrideStops builds the handle of distance_override_stops for ref. Generated relation and alias methods call it.
 func BuildDistanceOverrideStops(r *keel.Ref) *DistanceOverrideStopsTable {
 	return &DistanceOverrideStopsTable{
-		Handle:             keel.Handle[distanceoverride.DistanceOverrideStop]{Ref: r},
+		Handle:             keel.Handle[*distanceoverride.DistanceOverrideStop]{Ref: r},
 		DistanceOverrideID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},

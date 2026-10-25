@@ -396,28 +396,31 @@ func candidateMatch(invoices []string, amounts []int64) (invoiceMatch, amountMat
 		keel.DynConst("g"),
 	))
 	tolerance := keel.DynFunc("greatest", minCandidateTolerance, item.ExpectedFeeMinor)
-	near := func(target keel.Expr) keel.Expr {
-		return keel.Raw("abs(abs(amt.v) - ?) <= ?", target, tolerance)
+	amt := keel.Unnest("amt", []string{"v"}, amounts)
+	amount := keel.DynFunc("abs", amt.Col("v"))
+	near := func(target keel.Expr) keel.Pred {
+		return keel.DynFunc("abs", amount.Sub(target)).Lte(tolerance)
 	}
-
-	amountMatch = keel.Raw(
-		"EXISTS (SELECT 1 FROM unnest(?::bigint[]) AS amt(v) WHERE ? OR ? OR ? OR ?)",
-		amounts,
+	amountMatch = keel.Exists(amt.Query().With(amt).Where(keel.Or(
 		near(item.ExpectedAdvanceMinor),
 		near(item.FaceMinor),
 		near(keel.DynOf(item.ReserveMinor).Coalesce(-1)),
 		near(keel.DynOf(item.AdvanceMinor).Coalesce(0).Add(keel.DynOf(item.FeeMinor).Coalesce(0))),
-	)
-	invoiceMatch = keel.Raw(
-		"EXISTS (SELECT 1 FROM unnest(?::text[]) AS ref(v) WHERE ? = ref.v OR "+
-			"(length(ref.v) >= 4 AND length(?) >= 4 AND "+
-			"(? LIKE '%' || ref.v || '%' OR ref.v LIKE '%' || ? || '%')))",
-		invoices,
-		normalized,
-		normalized,
-		normalized,
-		normalized,
-	)
+	)))
+
+	ref := keel.Unnest("ref", []string{"v"}, invoices)
+	text := keel.DynOf(ref.Col("v"))
+	contains := func(needle keel.DynExpr) keel.DynExpr {
+		return keel.DynConst("%").Concat(needle).Concat(keel.DynConst("%"))
+	}
+	invoiceMatch = keel.Exists(ref.Query().With(ref).Where(keel.Or(
+		normalized.Eq(text),
+		keel.And(
+			keel.DynFunc("length", text).Gte(4),
+			keel.DynFunc("length", normalized).Gte(4),
+			keel.Or(normalized.Like(contains(text)), text.Like(contains(normalized))),
+		),
+	)))
 
 	return invoiceMatch, amountMatch
 }

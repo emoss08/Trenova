@@ -59,7 +59,7 @@ var sidebarPreferencesRef = keel.Ref{Table: &sidebarPreferencesTable}
 
 // SidebarPreferencesTable is the table of sidebarpreference.SidebarPreference.
 type SidebarPreferencesTable struct {
-	keel.Handle[sidebarpreference.SidebarPreference]
+	keel.Handle[*sidebarpreference.SidebarPreference]
 	ID             keelkinds.PulidIDCol
 	OrganizationID keelkinds.PulidIDCol
 	BusinessUnitID keelkinds.PulidIDCol
@@ -72,7 +72,7 @@ type SidebarPreferencesTable struct {
 
 // SidebarPreferences references the sidebar_preferences table.
 var SidebarPreferences = &SidebarPreferencesTable{
-	Handle:         keel.Handle[sidebarpreference.SidebarPreference]{Ref: &sidebarPreferencesRef},
+	Handle:         keel.Handle[*sidebarpreference.SidebarPreference]{Ref: &sidebarPreferencesRef},
 	ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &sidebarPreferencesRef, Index: 0}}},
 	OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &sidebarPreferencesRef, Index: 1}}},
 	BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &sidebarPreferencesRef, Index: 2}}},
@@ -86,7 +86,7 @@ var SidebarPreferences = &SidebarPreferencesTable{
 // BuildSidebarPreferences builds the handle of sidebar_preferences for ref. Generated relation and alias methods call it.
 func BuildSidebarPreferences(r *keel.Ref) *SidebarPreferencesTable {
 	return &SidebarPreferencesTable{
-		Handle:         keel.Handle[sidebarpreference.SidebarPreference]{Ref: r},
+		Handle:         keel.Handle[*sidebarpreference.SidebarPreference]{Ref: r},
 		ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},

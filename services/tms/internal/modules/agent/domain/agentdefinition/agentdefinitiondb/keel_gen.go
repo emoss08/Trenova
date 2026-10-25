@@ -103,7 +103,7 @@ var definitionsRef = keel.Ref{Table: &definitionsTable}
 
 // DefinitionsTable is the table of agentdefinition.Definition.
 type DefinitionsTable struct {
-	keel.Handle[agentdefinition.Definition]
+	keel.Handle[*agentdefinition.Definition]
 	ID                     keelkinds.PulidIDCol
 	BusinessUnitID         keelkinds.PulidIDCol
 	OrganizationID         keelkinds.PulidIDCol
@@ -162,7 +162,7 @@ type DefinitionsTable struct {
 
 // Definitions references the agent_definitions table.
 var Definitions = &DefinitionsTable{
-	Handle:                 keel.Handle[agentdefinition.Definition]{Ref: &definitionsRef},
+	Handle:                 keel.Handle[*agentdefinition.Definition]{Ref: &definitionsRef},
 	ID:                     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &definitionsRef, Index: 0}}},
 	BusinessUnitID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &definitionsRef, Index: 1}}},
 	OrganizationID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &definitionsRef, Index: 2}}},
@@ -222,7 +222,7 @@ var Definitions = &DefinitionsTable{
 // BuildDefinitions builds the handle of agent_definitions for ref. Generated relation and alias methods call it.
 func BuildDefinitions(r *keel.Ref) *DefinitionsTable {
 	return &DefinitionsTable{
-		Handle:                 keel.Handle[agentdefinition.Definition]{Ref: r},
+		Handle:                 keel.Handle[*agentdefinition.Definition]{Ref: r},
 		ID:                     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -666,7 +666,7 @@ var definitionVersionsRef = keel.Ref{Table: &definitionVersionsTable}
 
 // DefinitionVersionsTable is the table of agentdefinition.DefinitionVersion.
 type DefinitionVersionsTable struct {
-	keel.Handle[agentdefinition.DefinitionVersion]
+	keel.Handle[*agentdefinition.DefinitionVersion]
 	ID                keelkinds.PulidIDCol
 	BusinessUnitID    keelkinds.PulidIDCol
 	OrganizationID    keelkinds.PulidIDCol
@@ -680,7 +680,7 @@ type DefinitionVersionsTable struct {
 
 // DefinitionVersions references the agent_definition_versions table.
 var DefinitionVersions = &DefinitionVersionsTable{
-	Handle:            keel.Handle[agentdefinition.DefinitionVersion]{Ref: &definitionVersionsRef},
+	Handle:            keel.Handle[*agentdefinition.DefinitionVersion]{Ref: &definitionVersionsRef},
 	ID:                keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &definitionVersionsRef, Index: 0}}},
 	BusinessUnitID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &definitionVersionsRef, Index: 1}}},
 	OrganizationID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &definitionVersionsRef, Index: 2}}},
@@ -695,7 +695,7 @@ var DefinitionVersions = &DefinitionVersionsTable{
 // BuildDefinitionVersions builds the handle of agent_definition_versions for ref. Generated relation and alias methods call it.
 func BuildDefinitionVersions(r *keel.Ref) *DefinitionVersionsTable {
 	return &DefinitionVersionsTable{
-		Handle:            keel.Handle[agentdefinition.DefinitionVersion]{Ref: r},
+		Handle:            keel.Handle[*agentdefinition.DefinitionVersion]{Ref: r},
 		ID:                keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -841,7 +841,7 @@ var testPromptsRef = keel.Ref{Table: &testPromptsTable}
 
 // TestPromptsTable is the table of agentdefinition.TestPrompt.
 type TestPromptsTable struct {
-	keel.Handle[agentdefinition.TestPrompt]
+	keel.Handle[*agentdefinition.TestPrompt]
 	ID                keelkinds.PulidIDCol
 	BusinessUnitID    keelkinds.PulidIDCol
 	OrganizationID    keelkinds.PulidIDCol
@@ -853,7 +853,7 @@ type TestPromptsTable struct {
 
 // TestPrompts references the agent_test_prompts table.
 var TestPrompts = &TestPromptsTable{
-	Handle:            keel.Handle[agentdefinition.TestPrompt]{Ref: &testPromptsRef},
+	Handle:            keel.Handle[*agentdefinition.TestPrompt]{Ref: &testPromptsRef},
 	ID:                keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &testPromptsRef, Index: 0}}},
 	BusinessUnitID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &testPromptsRef, Index: 1}}},
 	OrganizationID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &testPromptsRef, Index: 2}}},
@@ -866,7 +866,7 @@ var TestPrompts = &TestPromptsTable{
 // BuildTestPrompts builds the handle of agent_test_prompts for ref. Generated relation and alias methods call it.
 func BuildTestPrompts(r *keel.Ref) *TestPromptsTable {
 	return &TestPromptsTable{
-		Handle:            keel.Handle[agentdefinition.TestPrompt]{Ref: r},
+		Handle:            keel.Handle[*agentdefinition.TestPrompt]{Ref: r},
 		ID:                keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},

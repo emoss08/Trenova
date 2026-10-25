@@ -66,7 +66,7 @@ var accountingAppCredentialsRef = keel.Ref{Table: &accountingAppCredentialsTable
 
 // AccountingAppCredentialsTable is the table of accountingsync.AccountingAppCredential.
 type AccountingAppCredentialsTable struct {
-	keel.Handle[accountingsync.AccountingAppCredential]
+	keel.Handle[*accountingsync.AccountingAppCredential]
 	ID                        keelkinds.PulidIDCol
 	BusinessUnitID            keelkinds.PulidIDCol
 	OrganizationID            keelkinds.PulidIDCol
@@ -84,7 +84,7 @@ type AccountingAppCredentialsTable struct {
 
 // AccountingAppCredentials references the accounting_app_credentials table.
 var AccountingAppCredentials = &AccountingAppCredentialsTable{
-	Handle:                    keel.Handle[accountingsync.AccountingAppCredential]{Ref: &accountingAppCredentialsRef},
+	Handle:                    keel.Handle[*accountingsync.AccountingAppCredential]{Ref: &accountingAppCredentialsRef},
 	ID:                        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &accountingAppCredentialsRef, Index: 0}}},
 	BusinessUnitID:            keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &accountingAppCredentialsRef, Index: 1}}},
 	OrganizationID:            keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &accountingAppCredentialsRef, Index: 2}}},
@@ -103,7 +103,7 @@ var AccountingAppCredentials = &AccountingAppCredentialsTable{
 // BuildAccountingAppCredentials builds the handle of accounting_app_credentials for ref. Generated relation and alias methods call it.
 func BuildAccountingAppCredentials(r *keel.Ref) *AccountingAppCredentialsTable {
 	return &AccountingAppCredentialsTable{
-		Handle:                    keel.Handle[accountingsync.AccountingAppCredential]{Ref: r},
+		Handle:                    keel.Handle[*accountingsync.AccountingAppCredential]{Ref: r},
 		ID:                        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID:            keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID:            keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -276,7 +276,7 @@ var accountingBackfillsRef = keel.Ref{Table: &accountingBackfillsTable}
 
 // AccountingBackfillsTable is the table of accountingsync.AccountingBackfill.
 type AccountingBackfillsTable struct {
-	keel.Handle[accountingsync.AccountingBackfill]
+	keel.Handle[*accountingsync.AccountingBackfill]
 	ID                 keelkinds.PulidIDCol
 	BusinessUnitID     keelkinds.PulidIDCol
 	OrganizationID     keelkinds.PulidIDCol
@@ -299,7 +299,7 @@ type AccountingBackfillsTable struct {
 
 // AccountingBackfills references the accounting_backfills table.
 var AccountingBackfills = &AccountingBackfillsTable{
-	Handle:             keel.Handle[accountingsync.AccountingBackfill]{Ref: &accountingBackfillsRef},
+	Handle:             keel.Handle[*accountingsync.AccountingBackfill]{Ref: &accountingBackfillsRef},
 	ID:                 keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &accountingBackfillsRef, Index: 0}}},
 	BusinessUnitID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &accountingBackfillsRef, Index: 1}}},
 	OrganizationID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &accountingBackfillsRef, Index: 2}}},
@@ -323,7 +323,7 @@ var AccountingBackfills = &AccountingBackfillsTable{
 // BuildAccountingBackfills builds the handle of accounting_backfills for ref. Generated relation and alias methods call it.
 func BuildAccountingBackfills(r *keel.Ref) *AccountingBackfillsTable {
 	return &AccountingBackfillsTable{
-		Handle:             keel.Handle[accountingsync.AccountingBackfill]{Ref: r},
+		Handle:             keel.Handle[*accountingsync.AccountingBackfill]{Ref: r},
 		ID:                 keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -569,7 +569,7 @@ var accountingConnectionsRef = keel.Ref{Table: &accountingConnectionsTable}
 
 // AccountingConnectionsTable is the table of accountingsync.AccountingConnection.
 type AccountingConnectionsTable struct {
-	keel.Handle[accountingsync.AccountingConnection]
+	keel.Handle[*accountingsync.AccountingConnection]
 	ID                            keelkinds.PulidIDCol
 	BusinessUnitID                keelkinds.PulidIDCol
 	OrganizationID                keelkinds.PulidIDCol
@@ -637,7 +637,7 @@ type AccountingConnectionsTable struct {
 
 // AccountingConnections references the accounting_connections table.
 var AccountingConnections = &AccountingConnectionsTable{
-	Handle:                        keel.Handle[accountingsync.AccountingConnection]{Ref: &accountingConnectionsRef},
+	Handle:                        keel.Handle[*accountingsync.AccountingConnection]{Ref: &accountingConnectionsRef},
 	ID:                            keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &accountingConnectionsRef, Index: 0}}},
 	BusinessUnitID:                keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &accountingConnectionsRef, Index: 1}}},
 	OrganizationID:                keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &accountingConnectionsRef, Index: 2}}},
@@ -706,7 +706,7 @@ var AccountingConnections = &AccountingConnectionsTable{
 // BuildAccountingConnections builds the handle of accounting_connections for ref. Generated relation and alias methods call it.
 func BuildAccountingConnections(r *keel.Ref) *AccountingConnectionsTable {
 	return &AccountingConnectionsTable{
-		Handle:                        keel.Handle[accountingsync.AccountingConnection]{Ref: r},
+		Handle:                        keel.Handle[*accountingsync.AccountingConnection]{Ref: r},
 		ID:                            keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID:                keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID:                keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -1303,7 +1303,7 @@ var accountingDriftFindingsRef = keel.Ref{Table: &accountingDriftFindingsTable}
 
 // AccountingDriftFindingsTable is the table of accountingsync.AccountingDriftFinding.
 type AccountingDriftFindingsTable struct {
-	keel.Handle[accountingsync.AccountingDriftFinding]
+	keel.Handle[*accountingsync.AccountingDriftFinding]
 	ID                 keelkinds.PulidIDCol
 	BusinessUnitID     keelkinds.PulidIDCol
 	OrganizationID     keelkinds.PulidIDCol
@@ -1341,7 +1341,7 @@ type AccountingDriftFindingsTable struct {
 
 // AccountingDriftFindings references the accounting_drift_findings table.
 var AccountingDriftFindings = &AccountingDriftFindingsTable{
-	Handle:             keel.Handle[accountingsync.AccountingDriftFinding]{Ref: &accountingDriftFindingsRef},
+	Handle:             keel.Handle[*accountingsync.AccountingDriftFinding]{Ref: &accountingDriftFindingsRef},
 	ID:                 keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &accountingDriftFindingsRef, Index: 0}}},
 	BusinessUnitID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &accountingDriftFindingsRef, Index: 1}}},
 	OrganizationID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &accountingDriftFindingsRef, Index: 2}}},
@@ -1380,7 +1380,7 @@ var AccountingDriftFindings = &AccountingDriftFindingsTable{
 // BuildAccountingDriftFindings builds the handle of accounting_drift_findings for ref. Generated relation and alias methods call it.
 func BuildAccountingDriftFindings(r *keel.Ref) *AccountingDriftFindingsTable {
 	return &AccountingDriftFindingsTable{
-		Handle:             keel.Handle[accountingsync.AccountingDriftFinding]{Ref: r},
+		Handle:             keel.Handle[*accountingsync.AccountingDriftFinding]{Ref: r},
 		ID:                 keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -1735,7 +1735,7 @@ var accountingInboundChangesRef = keel.Ref{Table: &accountingInboundChangesTable
 
 // AccountingInboundChangesTable is the table of accountingsync.AccountingInboundChange.
 type AccountingInboundChangesTable struct {
-	keel.Handle[accountingsync.AccountingInboundChange]
+	keel.Handle[*accountingsync.AccountingInboundChange]
 	ID                 keelkinds.PulidIDCol
 	BusinessUnitID     keelkinds.PulidIDCol
 	OrganizationID     keelkinds.PulidIDCol
@@ -1768,7 +1768,7 @@ type AccountingInboundChangesTable struct {
 
 // AccountingInboundChanges references the accounting_inbound_changes table.
 var AccountingInboundChanges = &AccountingInboundChangesTable{
-	Handle:             keel.Handle[accountingsync.AccountingInboundChange]{Ref: &accountingInboundChangesRef},
+	Handle:             keel.Handle[*accountingsync.AccountingInboundChange]{Ref: &accountingInboundChangesRef},
 	ID:                 keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &accountingInboundChangesRef, Index: 0}}},
 	BusinessUnitID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &accountingInboundChangesRef, Index: 1}}},
 	OrganizationID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &accountingInboundChangesRef, Index: 2}}},
@@ -1802,7 +1802,7 @@ var AccountingInboundChanges = &AccountingInboundChangesTable{
 // BuildAccountingInboundChanges builds the handle of accounting_inbound_changes for ref. Generated relation and alias methods call it.
 func BuildAccountingInboundChanges(r *keel.Ref) *AccountingInboundChangesTable {
 	return &AccountingInboundChangesTable{
-		Handle:             keel.Handle[accountingsync.AccountingInboundChange]{Ref: r},
+		Handle:             keel.Handle[*accountingsync.AccountingInboundChange]{Ref: r},
 		ID:                 keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -2106,7 +2106,7 @@ var accountingMappingsRef = keel.Ref{Table: &accountingMappingsTable}
 
 // AccountingMappingsTable is the table of accountingsync.AccountingMapping.
 type AccountingMappingsTable struct {
-	keel.Handle[accountingsync.AccountingMapping]
+	keel.Handle[*accountingsync.AccountingMapping]
 	ID              keelkinds.PulidIDCol
 	BusinessUnitID  keelkinds.PulidIDCol
 	OrganizationID  keelkinds.PulidIDCol
@@ -2133,7 +2133,7 @@ type AccountingMappingsTable struct {
 
 // AccountingMappings references the accounting_mappings table.
 var AccountingMappings = &AccountingMappingsTable{
-	Handle:          keel.Handle[accountingsync.AccountingMapping]{Ref: &accountingMappingsRef},
+	Handle:          keel.Handle[*accountingsync.AccountingMapping]{Ref: &accountingMappingsRef},
 	ID:              keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &accountingMappingsRef, Index: 0}}},
 	BusinessUnitID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &accountingMappingsRef, Index: 1}}},
 	OrganizationID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &accountingMappingsRef, Index: 2}}},
@@ -2161,7 +2161,7 @@ var AccountingMappings = &AccountingMappingsTable{
 // BuildAccountingMappings builds the handle of accounting_mappings for ref. Generated relation and alias methods call it.
 func BuildAccountingMappings(r *keel.Ref) *AccountingMappingsTable {
 	return &AccountingMappingsTable{
-		Handle:          keel.Handle[accountingsync.AccountingMapping]{Ref: r},
+		Handle:          keel.Handle[*accountingsync.AccountingMapping]{Ref: r},
 		ID:              keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -2409,7 +2409,7 @@ var accountingPendingCertificatesRef = keel.Ref{Table: &accountingPendingCertifi
 
 // AccountingPendingCertificatesTable is the table of accountingsync.AccountingPendingCertificate.
 type AccountingPendingCertificatesTable struct {
-	keel.Handle[accountingsync.AccountingPendingCertificate]
+	keel.Handle[*accountingsync.AccountingPendingCertificate]
 	ID                   keelkinds.PulidIDCol
 	BusinessUnitID       keelkinds.PulidIDCol
 	OrganizationID       keelkinds.PulidIDCol
@@ -2425,7 +2425,7 @@ type AccountingPendingCertificatesTable struct {
 
 // AccountingPendingCertificates references the accounting_pending_certificates table.
 var AccountingPendingCertificates = &AccountingPendingCertificatesTable{
-	Handle:               keel.Handle[accountingsync.AccountingPendingCertificate]{Ref: &accountingPendingCertificatesRef},
+	Handle:               keel.Handle[*accountingsync.AccountingPendingCertificate]{Ref: &accountingPendingCertificatesRef},
 	ID:                   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &accountingPendingCertificatesRef, Index: 0}}},
 	BusinessUnitID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &accountingPendingCertificatesRef, Index: 1}}},
 	OrganizationID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &accountingPendingCertificatesRef, Index: 2}}},
@@ -2442,7 +2442,7 @@ var AccountingPendingCertificates = &AccountingPendingCertificatesTable{
 // BuildAccountingPendingCertificates builds the handle of accounting_pending_certificates for ref. Generated relation and alias methods call it.
 func BuildAccountingPendingCertificates(r *keel.Ref) *AccountingPendingCertificatesTable {
 	return &AccountingPendingCertificatesTable{
-		Handle:               keel.Handle[accountingsync.AccountingPendingCertificate]{Ref: r},
+		Handle:               keel.Handle[*accountingsync.AccountingPendingCertificate]{Ref: r},
 		ID:                   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -2619,7 +2619,7 @@ var accountingReferenceObjectsRef = keel.Ref{Table: &accountingReferenceObjectsT
 
 // AccountingReferenceObjectsTable is the table of accountingsync.AccountingReferenceObject.
 type AccountingReferenceObjectsTable struct {
-	keel.Handle[accountingsync.AccountingReferenceObject]
+	keel.Handle[*accountingsync.AccountingReferenceObject]
 	ID                      keelkinds.PulidIDCol
 	BusinessUnitID          keelkinds.PulidIDCol
 	OrganizationID          keelkinds.PulidIDCol
@@ -2659,7 +2659,7 @@ type AccountingReferenceObjectsTable struct {
 
 // AccountingReferenceObjects references the accounting_reference_objects table.
 var AccountingReferenceObjects = &AccountingReferenceObjectsTable{
-	Handle:                  keel.Handle[accountingsync.AccountingReferenceObject]{Ref: &accountingReferenceObjectsRef},
+	Handle:                  keel.Handle[*accountingsync.AccountingReferenceObject]{Ref: &accountingReferenceObjectsRef},
 	ID:                      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &accountingReferenceObjectsRef, Index: 0}}},
 	BusinessUnitID:          keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &accountingReferenceObjectsRef, Index: 1}}},
 	OrganizationID:          keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &accountingReferenceObjectsRef, Index: 2}}},
@@ -2700,7 +2700,7 @@ var AccountingReferenceObjects = &AccountingReferenceObjectsTable{
 // BuildAccountingReferenceObjects builds the handle of accounting_reference_objects for ref. Generated relation and alias methods call it.
 func BuildAccountingReferenceObjects(r *keel.Ref) *AccountingReferenceObjectsTable {
 	return &AccountingReferenceObjectsTable{
-		Handle:                  keel.Handle[accountingsync.AccountingReferenceObject]{Ref: r},
+		Handle:                  keel.Handle[*accountingsync.AccountingReferenceObject]{Ref: r},
 		ID:                      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID:          keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID:          keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -3037,7 +3037,7 @@ var accountingSyncAttemptsRef = keel.Ref{Table: &accountingSyncAttemptsTable}
 
 // AccountingSyncAttemptsTable is the table of accountingsync.AccountingSyncAttempt.
 type AccountingSyncAttemptsTable struct {
-	keel.Handle[accountingsync.AccountingSyncAttempt]
+	keel.Handle[*accountingsync.AccountingSyncAttempt]
 	ID             keelkinds.PulidIDCol
 	BusinessUnitID keelkinds.PulidIDCol
 	OrganizationID keelkinds.PulidIDCol
@@ -3055,7 +3055,7 @@ type AccountingSyncAttemptsTable struct {
 
 // AccountingSyncAttempts references the accounting_sync_attempts table.
 var AccountingSyncAttempts = &AccountingSyncAttemptsTable{
-	Handle:         keel.Handle[accountingsync.AccountingSyncAttempt]{Ref: &accountingSyncAttemptsRef},
+	Handle:         keel.Handle[*accountingsync.AccountingSyncAttempt]{Ref: &accountingSyncAttemptsRef},
 	ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &accountingSyncAttemptsRef, Index: 0}}},
 	BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &accountingSyncAttemptsRef, Index: 1}}},
 	OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &accountingSyncAttemptsRef, Index: 2}}},
@@ -3074,7 +3074,7 @@ var AccountingSyncAttempts = &AccountingSyncAttemptsTable{
 // BuildAccountingSyncAttempts builds the handle of accounting_sync_attempts for ref. Generated relation and alias methods call it.
 func BuildAccountingSyncAttempts(r *keel.Ref) *AccountingSyncAttemptsTable {
 	return &AccountingSyncAttemptsTable{
-		Handle:         keel.Handle[accountingsync.AccountingSyncAttempt]{Ref: r},
+		Handle:         keel.Handle[*accountingsync.AccountingSyncAttempt]{Ref: r},
 		ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -3269,7 +3269,7 @@ var accountingSyncRecordsRef = keel.Ref{Table: &accountingSyncRecordsTable}
 
 // AccountingSyncRecordsTable is the table of accountingsync.AccountingSyncRecord.
 type AccountingSyncRecordsTable struct {
-	keel.Handle[accountingsync.AccountingSyncRecord]
+	keel.Handle[*accountingsync.AccountingSyncRecord]
 	ID                keelkinds.PulidIDCol
 	BusinessUnitID    keelkinds.PulidIDCol
 	OrganizationID    keelkinds.PulidIDCol
@@ -3314,7 +3314,7 @@ type AccountingSyncRecordsTable struct {
 
 // AccountingSyncRecords references the accounting_sync_records table.
 var AccountingSyncRecords = &AccountingSyncRecordsTable{
-	Handle:            keel.Handle[accountingsync.AccountingSyncRecord]{Ref: &accountingSyncRecordsRef},
+	Handle:            keel.Handle[*accountingsync.AccountingSyncRecord]{Ref: &accountingSyncRecordsRef},
 	ID:                keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &accountingSyncRecordsRef, Index: 0}}},
 	BusinessUnitID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &accountingSyncRecordsRef, Index: 1}}},
 	OrganizationID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &accountingSyncRecordsRef, Index: 2}}},
@@ -3360,7 +3360,7 @@ var AccountingSyncRecords = &AccountingSyncRecordsTable{
 // BuildAccountingSyncRecords builds the handle of accounting_sync_records for ref. Generated relation and alias methods call it.
 func BuildAccountingSyncRecords(r *keel.Ref) *AccountingSyncRecordsTable {
 	return &AccountingSyncRecordsTable{
-		Handle:            keel.Handle[accountingsync.AccountingSyncRecord]{Ref: r},
+		Handle:            keel.Handle[*accountingsync.AccountingSyncRecord]{Ref: r},
 		ID:                keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -3750,7 +3750,7 @@ var accountingWebhookSubscriptionsRef = keel.Ref{Table: &accountingWebhookSubscr
 
 // AccountingWebhookSubscriptionsTable is the table of accountingsync.AccountingWebhookSubscription.
 type AccountingWebhookSubscriptionsTable struct {
-	keel.Handle[accountingsync.AccountingWebhookSubscription]
+	keel.Handle[*accountingsync.AccountingWebhookSubscription]
 	ID                     keelkinds.PulidIDCol
 	BusinessUnitID         keelkinds.PulidIDCol
 	OrganizationID         keelkinds.PulidIDCol
@@ -3772,7 +3772,7 @@ type AccountingWebhookSubscriptionsTable struct {
 
 // AccountingWebhookSubscriptions references the accounting_webhook_subscriptions table.
 var AccountingWebhookSubscriptions = &AccountingWebhookSubscriptionsTable{
-	Handle:                 keel.Handle[accountingsync.AccountingWebhookSubscription]{Ref: &accountingWebhookSubscriptionsRef},
+	Handle:                 keel.Handle[*accountingsync.AccountingWebhookSubscription]{Ref: &accountingWebhookSubscriptionsRef},
 	ID:                     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &accountingWebhookSubscriptionsRef, Index: 0}}},
 	BusinessUnitID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &accountingWebhookSubscriptionsRef, Index: 1}}},
 	OrganizationID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &accountingWebhookSubscriptionsRef, Index: 2}}},
@@ -3795,7 +3795,7 @@ var AccountingWebhookSubscriptions = &AccountingWebhookSubscriptionsTable{
 // BuildAccountingWebhookSubscriptions builds the handle of accounting_webhook_subscriptions for ref. Generated relation and alias methods call it.
 func BuildAccountingWebhookSubscriptions(r *keel.Ref) *AccountingWebhookSubscriptionsTable {
 	return &AccountingWebhookSubscriptionsTable{
-		Handle:                 keel.Handle[accountingsync.AccountingWebhookSubscription]{Ref: r},
+		Handle:                 keel.Handle[*accountingsync.AccountingWebhookSubscription]{Ref: r},
 		ID:                     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},

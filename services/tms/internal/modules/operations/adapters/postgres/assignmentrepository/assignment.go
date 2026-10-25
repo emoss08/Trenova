@@ -399,7 +399,7 @@ func actualTimelineEvents(column keelkinds.PulidIDCol, resourceID pulid.ID) *kee
 			LeftJoin(loc, loc.ID.EqCol(st.LocationID)).
 			Pick(
 				at(st),
-				keel.DynLit(string(kind)).Cast(keel.TypeString),
+				keel.DynLit(string(kind)),
 				st.ID,
 				st.ShipmentMoveID,
 				sm.ShipmentID,

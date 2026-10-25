@@ -4,6 +4,9 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/emoss08/keel"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agent/agentdb"
+	"github.com/emoss08/trenova/internal/testutil/keeltest"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -16,11 +19,9 @@ func TestTextQuery_MatchesTheWholeQueryOrEveryWordAsAPrefix(t *testing.T) {
 	require.False(t, query.unmatchable())
 
 	primary := query.primary()
-	assert.Equal(t,
-		"(websearch_to_tsquery('simple', ?) || to_tsquery('simple', ?))",
-		primary.tsquery,
-	)
-	assert.Equal(t, []any{"Acme dock-hours", "acme:* & dock:* & hours:*"}, primary.args)
+	assert.Equal(t, keel.WebSearch, primary.mode)
+	assert.Equal(t, "Acme dock-hours", primary.text)
+	assert.Equal(t, "acme:* & dock:* & hours:*", primary.prefixes)
 
 	assert.Nil(t, query.fallback(), "with no meaningful words named there is no looser pass")
 }
@@ -35,10 +36,11 @@ func TestTextQuery_FallsBackToAnyTwoMeaningfulWords(t *testing.T) {
 
 	fallback := query.fallback()
 	require.NotNil(t, fallback)
-	assert.Equal(t, "to_tsquery('simple', ?)", fallback.tsquery)
+	assert.Equal(t, keel.TSQuery, fallback.mode)
+	assert.Empty(t, fallback.prefixes)
 	assert.Equal(t,
-		[]any{"(dock:* & hour:*) | (dock:* & acme:*) | (hour:* & acme:*)"},
-		fallback.args,
+		"(dock:* & hour:*) | (dock:* & acme:*) | (hour:* & acme:*)",
+		fallback.text,
 		"a memory must share two words; a repeat, a phrase and a short word are not terms",
 	)
 }
@@ -56,7 +58,7 @@ func TestTextQuery_BoundsTheFallbackTerms(t *testing.T) {
 	terms := []string{"aaa", "bbb", "ccc", "ddd", "eee", "fff", "ggg", "hhh", "iii", "jjj"}
 	query := newTextQuery(strings.Join(terms, " "), terms)
 	assert.Len(t, query.terms, maxFallbackTerms)
-	pairs := strings.Count(query.fallback().args[0].(string), "&")
+	pairs := strings.Count(query.fallback().text, "&")
 	assert.Equal(t, maxFallbackTerms*(maxFallbackTerms-1)/2, pairs)
 }
 
@@ -66,8 +68,9 @@ func TestTextQuery_KeepsWebsearchOperatorsWhole(t *testing.T) {
 	for _, raw := range []string{`"dock 9"`, "acme -friday", "acme OR beta", "acme or beta"} {
 		query := newTextQuery(raw, nil)
 		primary := query.primary()
-		assert.Equal(t, "websearch_to_tsquery('simple', ?)", primary.tsquery, raw)
-		assert.Equal(t, []any{raw}, primary.args, raw)
+		assert.Equal(t, keel.WebSearch, primary.mode, raw)
+		assert.Equal(t, raw, primary.text, raw)
+		assert.Empty(t, primary.prefixes, raw)
 		assert.Nil(t, query.fallback(), "an exclusion is never undone by a looser pass: %s", raw)
 	}
 }
@@ -76,8 +79,9 @@ func TestTextQuery_OneWordHasNoLooserPass(t *testing.T) {
 	t.Parallel()
 
 	query := newTextQuery("deliver", nil)
-	assert.Equal(t, []any{"deliver", "deliver:*"}, query.primary().args,
-		"deliver finds delivery through its prefix")
+	primary := query.primary()
+	assert.Equal(t, "deliver", primary.text)
+	assert.Equal(t, "deliver:*", primary.prefixes, "deliver finds delivery through its prefix")
 	assert.Nil(t, query.fallback())
 }
 
@@ -85,7 +89,7 @@ func TestTextQuery_SingleLettersAreNotPrefixes(t *testing.T) {
 	t.Parallel()
 
 	query := newTextQuery("a b", nil)
-	assert.Equal(t, "websearch_to_tsquery('simple', ?)", query.primary().tsquery,
+	assert.Empty(t, query.primary().prefixes,
 		"a one-letter prefix would match nearly every memory")
 	assert.Nil(t, query.fallback())
 }
@@ -107,4 +111,21 @@ func TestTextQuery_BoundsTheWordsAndDropsRepeats(t *testing.T) {
 	assert.Len(t, query.words, maxQueryWords)
 	assert.Equal(t, "acme", query.words[0])
 	assert.Equal(t, "word", query.words[1], "repeats are dropped and the order typed is kept")
+}
+
+func TestTextQuery_RendersOneSimpleSearch(t *testing.T) {
+	t.Parallel()
+
+	m := agentdb.Memories
+	primary := newTextQuery("Acme dock-hours", nil).primary()
+	sql, args := keeltest.Render(t, m.Pick(m.ID).
+		Where(primary.matches(m.SearchVector)).
+		Order(keel.Desc(primary.rank(m.SearchVector))).
+		Limit(1))
+
+	assert.Contains(t, sql, `@@ (websearch_to_tsquery('simple'::regconfig, $`)
+	assert.Contains(t, sql, `) || to_tsquery('simple'::regconfig, $`)
+	assert.Contains(t, sql, `ts_rank_cd(`)
+	assert.Contains(t, args, "Acme dock-hours")
+	assert.Contains(t, args, "acme:* & dock:* & hours:*")
 }

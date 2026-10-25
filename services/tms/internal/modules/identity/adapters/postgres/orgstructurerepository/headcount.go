@@ -55,7 +55,7 @@ func (r *repository) rosterCount(
 				keel.DynOf(jp.IsDrivingPosition).Coalesce(true),
 			)),
 			keel.Count().Filter(w.Status.Ne(domaintypes.StatusActive)),
-			keel.DynLit(0).Cast(keel.TypeInt64),
+			keel.DynLit(0),
 		).
 		Order(workers.Desc(), keel.Asc(g.label)))
 	if err != nil {

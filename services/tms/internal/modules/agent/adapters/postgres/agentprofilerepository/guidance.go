@@ -87,13 +87,13 @@ func (r *guidanceRepository) List(
 				keel.DynCase().
 					When(
 						g.Status.Eq(agentprofile.GuidanceStatusActive),
-						keel.DynLit(0).Cast(keel.TypeInt64),
+						keel.DynLit(0),
 					).
 					When(
 						g.Status.Eq(agentprofile.GuidanceStatusSuggested),
-						keel.DynLit(1).Cast(keel.TypeInt64),
+						keel.DynLit(1),
 					).
-					Else(keel.DynLit(2).Cast(keel.TypeInt64)).
+					Else(keel.DynLit(2)).
 					Asc(),
 				g.CreatedAt.Desc(),
 				g.ID.Desc(),

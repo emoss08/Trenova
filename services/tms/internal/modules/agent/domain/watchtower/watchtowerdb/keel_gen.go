@@ -53,7 +53,7 @@ var cursorsRef = keel.Ref{Table: &cursorsTable}
 
 // CursorsTable is the table of watchtower.Cursor.
 type CursorsTable struct {
-	keel.Handle[watchtower.Cursor]
+	keel.Handle[*watchtower.Cursor]
 	UserID         keelkinds.PulidIDCol
 	BusinessUnitID keelkinds.PulidIDCol
 	OrganizationID keelkinds.PulidIDCol
@@ -63,7 +63,7 @@ type CursorsTable struct {
 
 // Cursors references the watchtower_cursors table.
 var Cursors = &CursorsTable{
-	Handle:         keel.Handle[watchtower.Cursor]{Ref: &cursorsRef},
+	Handle:         keel.Handle[*watchtower.Cursor]{Ref: &cursorsRef},
 	UserID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &cursorsRef, Index: 0}}},
 	BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &cursorsRef, Index: 1}}},
 	OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &cursorsRef, Index: 2}}},
@@ -74,7 +74,7 @@ var Cursors = &CursorsTable{
 // BuildCursors builds the handle of watchtower_cursors for ref. Generated relation and alias methods call it.
 func BuildCursors(r *keel.Ref) *CursorsTable {
 	return &CursorsTable{
-		Handle:         keel.Handle[watchtower.Cursor]{Ref: r},
+		Handle:         keel.Handle[*watchtower.Cursor]{Ref: r},
 		UserID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -176,7 +176,7 @@ var eventsRef = keel.Ref{Table: &eventsTable}
 
 // EventsTable is the table of watchtower.Event.
 type EventsTable struct {
-	keel.Handle[watchtower.Event]
+	keel.Handle[*watchtower.Event]
 	ID             keelkinds.PulidIDCol
 	BusinessUnitID keelkinds.PulidIDCol
 	OrganizationID keelkinds.PulidIDCol
@@ -191,7 +191,7 @@ type EventsTable struct {
 
 // Events references the watchtower_item_events table.
 var Events = &EventsTable{
-	Handle:         keel.Handle[watchtower.Event]{Ref: &eventsRef},
+	Handle:         keel.Handle[*watchtower.Event]{Ref: &eventsRef},
 	ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &eventsRef, Index: 0}}},
 	BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &eventsRef, Index: 1}}},
 	OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &eventsRef, Index: 2}}},
@@ -207,7 +207,7 @@ var Events = &EventsTable{
 // BuildEvents builds the handle of watchtower_item_events for ref. Generated relation and alias methods call it.
 func BuildEvents(r *keel.Ref) *EventsTable {
 	return &EventsTable{
-		Handle:         keel.Handle[watchtower.Event]{Ref: r},
+		Handle:         keel.Handle[*watchtower.Event]{Ref: r},
 		ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -379,7 +379,7 @@ var itemsRef = keel.Ref{Table: &itemsTable}
 
 // ItemsTable is the table of watchtower.Item.
 type ItemsTable struct {
-	keel.Handle[watchtower.Item]
+	keel.Handle[*watchtower.Item]
 	ID                keelkinds.PulidIDCol
 	BusinessUnitID    keelkinds.PulidIDCol
 	OrganizationID    keelkinds.PulidIDCol
@@ -425,7 +425,7 @@ type ItemsTable struct {
 
 // Items references the watchtower_items table.
 var Items = &ItemsTable{
-	Handle:            keel.Handle[watchtower.Item]{Ref: &itemsRef},
+	Handle:            keel.Handle[*watchtower.Item]{Ref: &itemsRef},
 	ID:                keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &itemsRef, Index: 0}}},
 	BusinessUnitID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &itemsRef, Index: 1}}},
 	OrganizationID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &itemsRef, Index: 2}}},
@@ -472,7 +472,7 @@ var Items = &ItemsTable{
 // BuildItems builds the handle of watchtower_items for ref. Generated relation and alias methods call it.
 func BuildItems(r *keel.Ref) *ItemsTable {
 	return &ItemsTable{
-		Handle:            keel.Handle[watchtower.Item]{Ref: r},
+		Handle:            keel.Handle[*watchtower.Item]{Ref: r},
 		ID:                keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -831,7 +831,7 @@ var readsRef = keel.Ref{Table: &readsTable}
 
 // ReadsTable is the table of watchtower.Read.
 type ReadsTable struct {
-	keel.Handle[watchtower.Read]
+	keel.Handle[*watchtower.Read]
 	ItemID         keelkinds.PulidIDCol
 	UserID         keelkinds.PulidIDCol
 	BusinessUnitID keelkinds.PulidIDCol
@@ -841,7 +841,7 @@ type ReadsTable struct {
 
 // Reads references the watchtower_item_reads table.
 var Reads = &ReadsTable{
-	Handle:         keel.Handle[watchtower.Read]{Ref: &readsRef},
+	Handle:         keel.Handle[*watchtower.Read]{Ref: &readsRef},
 	ItemID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &readsRef, Index: 0}}},
 	UserID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &readsRef, Index: 1}}},
 	BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &readsRef, Index: 2}}},
@@ -852,7 +852,7 @@ var Reads = &ReadsTable{
 // BuildReads builds the handle of watchtower_item_reads for ref. Generated relation and alias methods call it.
 func BuildReads(r *keel.Ref) *ReadsTable {
 	return &ReadsTable{
-		Handle:         keel.Handle[watchtower.Read]{Ref: r},
+		Handle:         keel.Handle[*watchtower.Read]{Ref: r},
 		ItemID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		UserID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},

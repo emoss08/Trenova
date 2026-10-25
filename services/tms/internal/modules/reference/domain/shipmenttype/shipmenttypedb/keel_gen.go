@@ -61,7 +61,7 @@ var shipmentTypesRef = keel.Ref{Table: &shipmentTypesTable}
 
 // ShipmentTypesTable is the table of shipmenttype.ShipmentType.
 type ShipmentTypesTable struct {
-	keel.Handle[shipmenttype.ShipmentType]
+	keel.Handle[*shipmenttype.ShipmentType]
 	ID             keelkinds.PulidIDCol
 	BusinessUnitID keelkinds.PulidIDCol
 	OrganizationID keelkinds.PulidIDCol
@@ -78,7 +78,7 @@ type ShipmentTypesTable struct {
 
 // ShipmentTypes references the shipment_types table.
 var ShipmentTypes = &ShipmentTypesTable{
-	Handle:         keel.Handle[shipmenttype.ShipmentType]{Ref: &shipmentTypesRef},
+	Handle:         keel.Handle[*shipmenttype.ShipmentType]{Ref: &shipmentTypesRef},
 	ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &shipmentTypesRef, Index: 0}}},
 	BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &shipmentTypesRef, Index: 1}}},
 	OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &shipmentTypesRef, Index: 2}}},
@@ -96,7 +96,7 @@ var ShipmentTypes = &ShipmentTypesTable{
 // BuildShipmentTypes builds the handle of shipment_types for ref. Generated relation and alias methods call it.
 func BuildShipmentTypes(r *keel.Ref) *ShipmentTypesTable {
 	return &ShipmentTypesTable{
-		Handle:         keel.Handle[shipmenttype.ShipmentType]{Ref: r},
+		Handle:         keel.Handle[*shipmenttype.ShipmentType]{Ref: r},
 		ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},

@@ -76,7 +76,7 @@ var rateSimulationsRef = keel.Ref{Table: &rateSimulationsTable}
 
 // RateSimulationsTable is the table of ratesimulation.RateSimulation.
 type RateSimulationsTable struct {
-	keel.Handle[ratesimulation.RateSimulation]
+	keel.Handle[*ratesimulation.RateSimulation]
 	ID              keelkinds.PulidIDCol
 	BusinessUnitID  keelkinds.PulidIDCol
 	OrganizationID  keelkinds.PulidIDCol
@@ -102,7 +102,7 @@ type RateSimulationsTable struct {
 
 // RateSimulations references the rate_simulations table.
 var RateSimulations = &RateSimulationsTable{
-	Handle:          keel.Handle[ratesimulation.RateSimulation]{Ref: &rateSimulationsRef},
+	Handle:          keel.Handle[*ratesimulation.RateSimulation]{Ref: &rateSimulationsRef},
 	ID:              keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &rateSimulationsRef, Index: 0}}},
 	BusinessUnitID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &rateSimulationsRef, Index: 1}}},
 	OrganizationID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &rateSimulationsRef, Index: 2}}},
@@ -129,7 +129,7 @@ var RateSimulations = &RateSimulationsTable{
 // BuildRateSimulations builds the handle of rate_simulations for ref. Generated relation and alias methods call it.
 func BuildRateSimulations(r *keel.Ref) *RateSimulationsTable {
 	return &RateSimulationsTable{
-		Handle:          keel.Handle[ratesimulation.RateSimulation]{Ref: r},
+		Handle:          keel.Handle[*ratesimulation.RateSimulation]{Ref: r},
 		ID:              keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -374,7 +374,7 @@ var rateSimulationResultsRef = keel.Ref{Table: &rateSimulationResultsTable}
 
 // RateSimulationResultsTable is the table of ratesimulation.RateSimulationResult.
 type RateSimulationResultsTable struct {
-	keel.Handle[ratesimulation.RateSimulationResult]
+	keel.Handle[*ratesimulation.RateSimulationResult]
 	ID               keelkinds.PulidIDCol
 	BusinessUnitID   keelkinds.PulidIDCol
 	OrganizationID   keelkinds.PulidIDCol
@@ -397,7 +397,7 @@ type RateSimulationResultsTable struct {
 
 // RateSimulationResults references the rate_simulation_results table.
 var RateSimulationResults = &RateSimulationResultsTable{
-	Handle:           keel.Handle[ratesimulation.RateSimulationResult]{Ref: &rateSimulationResultsRef},
+	Handle:           keel.Handle[*ratesimulation.RateSimulationResult]{Ref: &rateSimulationResultsRef},
 	ID:               keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &rateSimulationResultsRef, Index: 0}}},
 	BusinessUnitID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &rateSimulationResultsRef, Index: 1}}},
 	OrganizationID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &rateSimulationResultsRef, Index: 2}}},
@@ -421,7 +421,7 @@ var RateSimulationResults = &RateSimulationResultsTable{
 // BuildRateSimulationResults builds the handle of rate_simulation_results for ref. Generated relation and alias methods call it.
 func BuildRateSimulationResults(r *keel.Ref) *RateSimulationResultsTable {
 	return &RateSimulationResultsTable{
-		Handle:           keel.Handle[ratesimulation.RateSimulationResult]{Ref: r},
+		Handle:           keel.Handle[*ratesimulation.RateSimulationResult]{Ref: r},
 		ID:               keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},

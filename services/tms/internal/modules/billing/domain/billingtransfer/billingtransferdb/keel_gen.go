@@ -84,7 +84,7 @@ var billingTransferRunsRef = keel.Ref{Table: &billingTransferRunsTable}
 
 // BillingTransferRunsTable is the table of billingtransfer.BillingTransferRun.
 type BillingTransferRunsTable struct {
-	keel.Handle[billingtransfer.BillingTransferRun]
+	keel.Handle[*billingtransfer.BillingTransferRun]
 	ID                          keelkinds.PulidIDCol
 	BusinessUnitID              keelkinds.PulidIDCol
 	OrganizationID              keelkinds.PulidIDCol
@@ -119,7 +119,7 @@ type BillingTransferRunsTable struct {
 
 // BillingTransferRuns references the billing_transfer_runs table.
 var BillingTransferRuns = &BillingTransferRunsTable{
-	Handle:                      keel.Handle[billingtransfer.BillingTransferRun]{Ref: &billingTransferRunsRef},
+	Handle:                      keel.Handle[*billingtransfer.BillingTransferRun]{Ref: &billingTransferRunsRef},
 	ID:                          keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &billingTransferRunsRef, Index: 0}}},
 	BusinessUnitID:              keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &billingTransferRunsRef, Index: 1}}},
 	OrganizationID:              keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &billingTransferRunsRef, Index: 2}}},
@@ -155,7 +155,7 @@ var BillingTransferRuns = &BillingTransferRunsTable{
 // BuildBillingTransferRuns builds the handle of billing_transfer_runs for ref. Generated relation and alias methods call it.
 func BuildBillingTransferRuns(r *keel.Ref) *BillingTransferRunsTable {
 	return &BillingTransferRunsTable{
-		Handle:                      keel.Handle[billingtransfer.BillingTransferRun]{Ref: r},
+		Handle:                      keel.Handle[*billingtransfer.BillingTransferRun]{Ref: r},
 		ID:                          keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID:              keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID:              keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -443,7 +443,7 @@ var billingTransferRunItemsRef = keel.Ref{Table: &billingTransferRunItemsTable}
 
 // BillingTransferRunItemsTable is the table of billingtransfer.BillingTransferRunItem.
 type BillingTransferRunItemsTable struct {
-	keel.Handle[billingtransfer.BillingTransferRunItem]
+	keel.Handle[*billingtransfer.BillingTransferRunItem]
 	ID                   keelkinds.PulidIDCol
 	BusinessUnitID       keelkinds.PulidIDCol
 	OrganizationID       keelkinds.PulidIDCol
@@ -467,7 +467,7 @@ type BillingTransferRunItemsTable struct {
 
 // BillingTransferRunItems references the billing_transfer_run_items table.
 var BillingTransferRunItems = &BillingTransferRunItemsTable{
-	Handle:               keel.Handle[billingtransfer.BillingTransferRunItem]{Ref: &billingTransferRunItemsRef},
+	Handle:               keel.Handle[*billingtransfer.BillingTransferRunItem]{Ref: &billingTransferRunItemsRef},
 	ID:                   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &billingTransferRunItemsRef, Index: 0}}},
 	BusinessUnitID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &billingTransferRunItemsRef, Index: 1}}},
 	OrganizationID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &billingTransferRunItemsRef, Index: 2}}},
@@ -492,7 +492,7 @@ var BillingTransferRunItems = &BillingTransferRunItemsTable{
 // BuildBillingTransferRunItems builds the handle of billing_transfer_run_items for ref. Generated relation and alias methods call it.
 func BuildBillingTransferRunItems(r *keel.Ref) *BillingTransferRunItemsTable {
 	return &BillingTransferRunItemsTable{
-		Handle:               keel.Handle[billingtransfer.BillingTransferRunItem]{Ref: r},
+		Handle:               keel.Handle[*billingtransfer.BillingTransferRunItem]{Ref: r},
 		ID:                   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},

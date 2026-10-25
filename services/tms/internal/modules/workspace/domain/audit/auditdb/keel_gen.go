@@ -63,7 +63,7 @@ var dLQEntriesRef = keel.Ref{Table: &dLQEntriesTable}
 
 // DLQEntriesTable is the table of audit.DLQEntry.
 type DLQEntriesTable struct {
-	keel.Handle[audit.DLQEntry]
+	keel.Handle[*audit.DLQEntry]
 	ID              keelkinds.PulidIDCol
 	OriginalEntryID keelkinds.PulidIDCol
 	EntryData       keel.JSONBCol
@@ -80,7 +80,7 @@ type DLQEntriesTable struct {
 
 // DLQEntries references the audit_dlq_entries table.
 var DLQEntries = &DLQEntriesTable{
-	Handle:          keel.Handle[audit.DLQEntry]{Ref: &dLQEntriesRef},
+	Handle:          keel.Handle[*audit.DLQEntry]{Ref: &dLQEntriesRef},
 	ID:              keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &dLQEntriesRef, Index: 0}}},
 	OriginalEntryID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &dLQEntriesRef, Index: 1}}},
 	EntryData:       keel.JSONBCol{Col: keel.Col{Ref: &dLQEntriesRef, Index: 2}},
@@ -98,7 +98,7 @@ var DLQEntries = &DLQEntriesTable{
 // BuildDLQEntries builds the handle of audit_dlq_entries for ref. Generated relation and alias methods call it.
 func BuildDLQEntries(r *keel.Ref) *DLQEntriesTable {
 	return &DLQEntriesTable{
-		Handle:          keel.Handle[audit.DLQEntry]{Ref: r},
+		Handle:          keel.Handle[*audit.DLQEntry]{Ref: r},
 		ID:              keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		OriginalEntryID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		EntryData:       keel.JSONBCol{Col: keel.Col{Ref: r, Index: 2}},
@@ -268,7 +268,7 @@ var entriesRef = keel.Ref{Table: &entriesTable}
 
 // EntriesTable is the table of audit.Entry.
 type EntriesTable struct {
-	keel.Handle[audit.Entry]
+	keel.Handle[*audit.Entry]
 	ID             keelkinds.PulidIDCol
 	UserID         keelkinds.PulidIDCol
 	PrincipalType  keel.StringCol
@@ -295,7 +295,7 @@ type EntriesTable struct {
 
 // Entries references the audit_entries table.
 var Entries = &EntriesTable{
-	Handle:         keel.Handle[audit.Entry]{Ref: &entriesRef},
+	Handle:         keel.Handle[*audit.Entry]{Ref: &entriesRef},
 	ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &entriesRef, Index: 0}}},
 	UserID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &entriesRef, Index: 1}}},
 	PrincipalType:  keel.StringCol{Col: keel.Col{Ref: &entriesRef, Index: 2}},
@@ -323,7 +323,7 @@ var Entries = &EntriesTable{
 // BuildEntries builds the handle of audit_entries for ref. Generated relation and alias methods call it.
 func BuildEntries(r *keel.Ref) *EntriesTable {
 	return &EntriesTable{
-		Handle:         keel.Handle[audit.Entry]{Ref: r},
+		Handle:         keel.Handle[*audit.Entry]{Ref: r},
 		ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		UserID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		PrincipalType:  keel.StringCol{Col: keel.Col{Ref: r, Index: 2}},

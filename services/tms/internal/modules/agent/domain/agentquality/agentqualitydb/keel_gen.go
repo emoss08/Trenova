@@ -64,7 +64,7 @@ var controlsRef = keel.Ref{Table: &controlsTable}
 
 // ControlsTable is the table of agentquality.Control.
 type ControlsTable struct {
-	keel.Handle[agentquality.Control]
+	keel.Handle[*agentquality.Control]
 	ID                  keelkinds.PulidIDCol
 	BusinessUnitID      keelkinds.PulidIDCol
 	OrganizationID      keelkinds.PulidIDCol
@@ -86,7 +86,7 @@ type ControlsTable struct {
 
 // Controls references the agent_quality_controls table.
 var Controls = &ControlsTable{
-	Handle:              keel.Handle[agentquality.Control]{Ref: &controlsRef},
+	Handle:              keel.Handle[*agentquality.Control]{Ref: &controlsRef},
 	ID:                  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &controlsRef, Index: 0}}},
 	BusinessUnitID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &controlsRef, Index: 1}}},
 	OrganizationID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &controlsRef, Index: 2}}},
@@ -109,7 +109,7 @@ var Controls = &ControlsTable{
 // BuildControls builds the handle of agent_quality_controls for ref. Generated relation and alias methods call it.
 func BuildControls(r *keel.Ref) *ControlsTable {
 	return &ControlsTable{
-		Handle:              keel.Handle[agentquality.Control]{Ref: r},
+		Handle:              keel.Handle[*agentquality.Control]{Ref: r},
 		ID:                  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -303,7 +303,7 @@ var evalCasesRef = keel.Ref{Table: &evalCasesTable}
 
 // EvalCasesTable is the table of agentquality.EvalCase.
 type EvalCasesTable struct {
-	keel.Handle[agentquality.EvalCase]
+	keel.Handle[*agentquality.EvalCase]
 	ID                  keelkinds.PulidIDCol
 	BusinessUnitID      keelkinds.PulidIDCol
 	OrganizationID      keelkinds.PulidIDCol
@@ -340,7 +340,7 @@ type EvalCasesTable struct {
 
 // EvalCases references the agent_eval_cases table.
 var EvalCases = &EvalCasesTable{
-	Handle:              keel.Handle[agentquality.EvalCase]{Ref: &evalCasesRef},
+	Handle:              keel.Handle[*agentquality.EvalCase]{Ref: &evalCasesRef},
 	ID:                  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &evalCasesRef, Index: 0}}},
 	BusinessUnitID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &evalCasesRef, Index: 1}}},
 	OrganizationID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &evalCasesRef, Index: 2}}},
@@ -378,7 +378,7 @@ var EvalCases = &EvalCasesTable{
 // BuildEvalCases builds the handle of agent_eval_cases for ref. Generated relation and alias methods call it.
 func BuildEvalCases(r *keel.Ref) *EvalCasesTable {
 	return &EvalCasesTable{
-		Handle:              keel.Handle[agentquality.EvalCase]{Ref: r},
+		Handle:              keel.Handle[*agentquality.EvalCase]{Ref: r},
 		ID:                  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -702,7 +702,7 @@ var suiteRunsRef = keel.Ref{Table: &suiteRunsTable}
 
 // SuiteRunsTable is the table of agentquality.SuiteRun.
 type SuiteRunsTable struct {
-	keel.Handle[agentquality.SuiteRun]
+	keel.Handle[*agentquality.SuiteRun]
 	ID                 keelkinds.PulidIDCol
 	BusinessUnitID     keelkinds.PulidIDCol
 	OrganizationID     keelkinds.PulidIDCol
@@ -739,7 +739,7 @@ type SuiteRunsTable struct {
 
 // SuiteRuns references the agent_suite_runs table.
 var SuiteRuns = &SuiteRunsTable{
-	Handle:             keel.Handle[agentquality.SuiteRun]{Ref: &suiteRunsRef},
+	Handle:             keel.Handle[*agentquality.SuiteRun]{Ref: &suiteRunsRef},
 	ID:                 keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &suiteRunsRef, Index: 0}}},
 	BusinessUnitID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &suiteRunsRef, Index: 1}}},
 	OrganizationID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &suiteRunsRef, Index: 2}}},
@@ -777,7 +777,7 @@ var SuiteRuns = &SuiteRunsTable{
 // BuildSuiteRuns builds the handle of agent_suite_runs for ref. Generated relation and alias methods call it.
 func BuildSuiteRuns(r *keel.Ref) *SuiteRunsTable {
 	return &SuiteRunsTable{
-		Handle:             keel.Handle[agentquality.SuiteRun]{Ref: r},
+		Handle:             keel.Handle[*agentquality.SuiteRun]{Ref: r},
 		ID:                 keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},

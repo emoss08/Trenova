@@ -71,7 +71,7 @@ var bulkEditsRef = keel.Ref{Table: &bulkEditsTable}
 
 // BulkEditsTable is the table of bulkedit.BulkEdit.
 type BulkEditsTable struct {
-	keel.Handle[bulkedit.BulkEdit]
+	keel.Handle[*bulkedit.BulkEdit]
 	ID             keelkinds.PulidIDCol
 	OrganizationID keelkinds.PulidIDCol
 	BusinessUnitID keelkinds.PulidIDCol
@@ -96,7 +96,7 @@ type BulkEditsTable struct {
 
 // BulkEdits references the bulk_edits table.
 var BulkEdits = &BulkEditsTable{
-	Handle:         keel.Handle[bulkedit.BulkEdit]{Ref: &bulkEditsRef},
+	Handle:         keel.Handle[*bulkedit.BulkEdit]{Ref: &bulkEditsRef},
 	ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &bulkEditsRef, Index: 0}}},
 	OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &bulkEditsRef, Index: 1}}},
 	BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &bulkEditsRef, Index: 2}}},
@@ -122,7 +122,7 @@ var BulkEdits = &BulkEditsTable{
 // BuildBulkEdits builds the handle of bulk_edits for ref. Generated relation and alias methods call it.
 func BuildBulkEdits(r *keel.Ref) *BulkEditsTable {
 	return &BulkEditsTable{
-		Handle:         keel.Handle[bulkedit.BulkEdit]{Ref: r},
+		Handle:         keel.Handle[*bulkedit.BulkEdit]{Ref: r},
 		ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},

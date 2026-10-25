@@ -69,7 +69,7 @@ var assistantTurnsRef = keel.Ref{Table: &assistantTurnsTable}
 
 // AssistantTurnsTable is the table of conversation.AssistantTurn.
 type AssistantTurnsTable struct {
-	keel.Handle[conversation.AssistantTurn]
+	keel.Handle[*conversation.AssistantTurn]
 	ID             keelkinds.PulidIDCol
 	BusinessUnitID keelkinds.PulidIDCol
 	OrganizationID keelkinds.PulidIDCol
@@ -92,7 +92,7 @@ type AssistantTurnsTable struct {
 
 // AssistantTurns references the assistant_turns table.
 var AssistantTurns = &AssistantTurnsTable{
-	Handle:         keel.Handle[conversation.AssistantTurn]{Ref: &assistantTurnsRef},
+	Handle:         keel.Handle[*conversation.AssistantTurn]{Ref: &assistantTurnsRef},
 	ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &assistantTurnsRef, Index: 0}}},
 	BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &assistantTurnsRef, Index: 1}}},
 	OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &assistantTurnsRef, Index: 2}}},
@@ -116,7 +116,7 @@ var AssistantTurns = &AssistantTurnsTable{
 // BuildAssistantTurns builds the handle of assistant_turns for ref. Generated relation and alias methods call it.
 func BuildAssistantTurns(r *keel.Ref) *AssistantTurnsTable {
 	return &AssistantTurnsTable{
-		Handle:         keel.Handle[conversation.AssistantTurn]{Ref: r},
+		Handle:         keel.Handle[*conversation.AssistantTurn]{Ref: r},
 		ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -353,7 +353,7 @@ var messagesRef = keel.Ref{Table: &messagesTable}
 
 // MessagesTable is the table of conversation.Message.
 type MessagesTable struct {
-	keel.Handle[conversation.Message]
+	keel.Handle[*conversation.Message]
 	ID                keelkinds.PulidIDCol
 	BusinessUnitID    keelkinds.PulidIDCol
 	OrganizationID    keelkinds.PulidIDCol
@@ -402,7 +402,7 @@ type MessagesTable struct {
 
 // Messages references the assistant_messages table.
 var Messages = &MessagesTable{
-	Handle:            keel.Handle[conversation.Message]{Ref: &messagesRef},
+	Handle:            keel.Handle[*conversation.Message]{Ref: &messagesRef},
 	ID:                keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &messagesRef, Index: 0}}},
 	BusinessUnitID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &messagesRef, Index: 1}}},
 	OrganizationID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &messagesRef, Index: 2}}},
@@ -452,7 +452,7 @@ var Messages = &MessagesTable{
 // BuildMessages builds the handle of assistant_messages for ref. Generated relation and alias methods call it.
 func BuildMessages(r *keel.Ref) *MessagesTable {
 	return &MessagesTable{
-		Handle:            keel.Handle[conversation.Message]{Ref: r},
+		Handle:            keel.Handle[*conversation.Message]{Ref: r},
 		ID:                keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -866,7 +866,7 @@ var queuedMessagesRef = keel.Ref{Table: &queuedMessagesTable}
 
 // QueuedMessagesTable is the table of conversation.QueuedMessage.
 type QueuedMessagesTable struct {
-	keel.Handle[conversation.QueuedMessage]
+	keel.Handle[*conversation.QueuedMessage]
 	ID             keelkinds.PulidIDCol
 	OrganizationID keelkinds.PulidIDCol
 	BusinessUnitID keelkinds.PulidIDCol
@@ -883,7 +883,7 @@ type QueuedMessagesTable struct {
 
 // QueuedMessages references the assistant_queued_messages table.
 var QueuedMessages = &QueuedMessagesTable{
-	Handle:         keel.Handle[conversation.QueuedMessage]{Ref: &queuedMessagesRef},
+	Handle:         keel.Handle[*conversation.QueuedMessage]{Ref: &queuedMessagesRef},
 	ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &queuedMessagesRef, Index: 0}}},
 	OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &queuedMessagesRef, Index: 1}}},
 	BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &queuedMessagesRef, Index: 2}}},
@@ -901,7 +901,7 @@ var QueuedMessages = &QueuedMessagesTable{
 // BuildQueuedMessages builds the handle of assistant_queued_messages for ref. Generated relation and alias methods call it.
 func BuildQueuedMessages(r *keel.Ref) *QueuedMessagesTable {
 	return &QueuedMessagesTable{
-		Handle:         keel.Handle[conversation.QueuedMessage]{Ref: r},
+		Handle:         keel.Handle[*conversation.QueuedMessage]{Ref: r},
 		ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -1084,7 +1084,7 @@ var threadsRef = keel.Ref{Table: &threadsTable}
 
 // ThreadsTable is the table of conversation.Thread.
 type ThreadsTable struct {
-	keel.Handle[conversation.Thread]
+	keel.Handle[*conversation.Thread]
 	ID                  keelkinds.PulidIDCol
 	BusinessUnitID      keelkinds.PulidIDCol
 	OrganizationID      keelkinds.PulidIDCol
@@ -1116,7 +1116,7 @@ type ThreadsTable struct {
 
 // Threads references the assistant_threads table.
 var Threads = &ThreadsTable{
-	Handle:              keel.Handle[conversation.Thread]{Ref: &threadsRef},
+	Handle:              keel.Handle[*conversation.Thread]{Ref: &threadsRef},
 	ID:                  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &threadsRef, Index: 0}}},
 	BusinessUnitID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &threadsRef, Index: 1}}},
 	OrganizationID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &threadsRef, Index: 2}}},
@@ -1149,7 +1149,7 @@ var Threads = &ThreadsTable{
 // BuildThreads builds the handle of assistant_threads for ref. Generated relation and alias methods call it.
 func BuildThreads(r *keel.Ref) *ThreadsTable {
 	return &ThreadsTable{
-		Handle:              keel.Handle[conversation.Thread]{Ref: r},
+		Handle:              keel.Handle[*conversation.Thread]{Ref: r},
 		ID:                  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},

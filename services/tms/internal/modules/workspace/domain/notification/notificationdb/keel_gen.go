@@ -72,7 +72,7 @@ var notificationsRef = keel.Ref{Table: &notificationsTable}
 
 // NotificationsTable is the table of notification.Notification.
 type NotificationsTable struct {
-	keel.Handle[notification.Notification]
+	keel.Handle[*notification.Notification]
 	ID              keelkinds.PulidIDCol
 	OrganizationID  keelkinds.PulidIDCol
 	BusinessUnitID  keelkinds.PulidIDCol
@@ -103,7 +103,7 @@ type NotificationsTable struct {
 
 // Notifications references the notifications table.
 var Notifications = &NotificationsTable{
-	Handle:          keel.Handle[notification.Notification]{Ref: &notificationsRef},
+	Handle:          keel.Handle[*notification.Notification]{Ref: &notificationsRef},
 	ID:              keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &notificationsRef, Index: 0}}},
 	OrganizationID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &notificationsRef, Index: 1}}},
 	BusinessUnitID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &notificationsRef, Index: 2}}},
@@ -135,7 +135,7 @@ var Notifications = &NotificationsTable{
 // BuildNotifications builds the handle of notifications for ref. Generated relation and alias methods call it.
 func BuildNotifications(r *keel.Ref) *NotificationsTable {
 	return &NotificationsTable{
-		Handle:          keel.Handle[notification.Notification]{Ref: r},
+		Handle:          keel.Handle[*notification.Notification]{Ref: r},
 		ID:              keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		OrganizationID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		BusinessUnitID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -393,7 +393,7 @@ var preferencesRef = keel.Ref{Table: &preferencesTable}
 
 // PreferencesTable is the table of notification.Preference.
 type PreferencesTable struct {
-	keel.Handle[notification.Preference]
+	keel.Handle[*notification.Preference]
 	ID                    keelkinds.PulidIDCol
 	OrganizationID        keelkinds.PulidIDCol
 	BusinessUnitID        keelkinds.PulidIDCol
@@ -417,7 +417,7 @@ type PreferencesTable struct {
 
 // Preferences references the user_notification_preferences table.
 var Preferences = &PreferencesTable{
-	Handle:                keel.Handle[notification.Preference]{Ref: &preferencesRef},
+	Handle:                keel.Handle[*notification.Preference]{Ref: &preferencesRef},
 	ID:                    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &preferencesRef, Index: 0}}},
 	OrganizationID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &preferencesRef, Index: 1}}},
 	BusinessUnitID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &preferencesRef, Index: 2}}},
@@ -442,7 +442,7 @@ var Preferences = &PreferencesTable{
 // BuildPreferences builds the handle of user_notification_preferences for ref. Generated relation and alias methods call it.
 func BuildPreferences(r *keel.Ref) *PreferencesTable {
 	return &PreferencesTable{
-		Handle:                keel.Handle[notification.Preference]{Ref: r},
+		Handle:                keel.Handle[*notification.Preference]{Ref: r},
 		ID:                    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		OrganizationID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		BusinessUnitID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -628,7 +628,7 @@ var pushSubscriptionsRef = keel.Ref{Table: &pushSubscriptionsTable}
 
 // PushSubscriptionsTable is the table of notification.PushSubscription.
 type PushSubscriptionsTable struct {
-	keel.Handle[notification.PushSubscription]
+	keel.Handle[*notification.PushSubscription]
 	ID             keelkinds.PulidIDCol
 	BusinessUnitID keelkinds.PulidIDCol
 	OrganizationID keelkinds.PulidIDCol
@@ -643,7 +643,7 @@ type PushSubscriptionsTable struct {
 
 // PushSubscriptions references the user_push_subscriptions table.
 var PushSubscriptions = &PushSubscriptionsTable{
-	Handle:         keel.Handle[notification.PushSubscription]{Ref: &pushSubscriptionsRef},
+	Handle:         keel.Handle[*notification.PushSubscription]{Ref: &pushSubscriptionsRef},
 	ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &pushSubscriptionsRef, Index: 0}}},
 	BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &pushSubscriptionsRef, Index: 1}}},
 	OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &pushSubscriptionsRef, Index: 2}}},
@@ -659,7 +659,7 @@ var PushSubscriptions = &PushSubscriptionsTable{
 // BuildPushSubscriptions builds the handle of user_push_subscriptions for ref. Generated relation and alias methods call it.
 func BuildPushSubscriptions(r *keel.Ref) *PushSubscriptionsTable {
 	return &PushSubscriptionsTable{
-		Handle:         keel.Handle[notification.PushSubscription]{Ref: r},
+		Handle:         keel.Handle[*notification.PushSubscription]{Ref: r},
 		ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},

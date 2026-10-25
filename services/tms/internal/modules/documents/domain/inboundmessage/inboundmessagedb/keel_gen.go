@@ -69,7 +69,7 @@ var inboundAttachmentsRef = keel.Ref{Table: &inboundAttachmentsTable}
 
 // InboundAttachmentsTable is the table of inboundmessage.InboundAttachment.
 type InboundAttachmentsTable struct {
-	keel.Handle[inboundmessage.InboundAttachment]
+	keel.Handle[*inboundmessage.InboundAttachment]
 	ID                   keelkinds.PulidIDCol
 	BusinessUnitID       keelkinds.PulidIDCol
 	OrganizationID       keelkinds.PulidIDCol
@@ -96,7 +96,7 @@ type InboundAttachmentsTable struct {
 
 // InboundAttachments references the inbound_message_attachments table.
 var InboundAttachments = &InboundAttachmentsTable{
-	Handle:               keel.Handle[inboundmessage.InboundAttachment]{Ref: &inboundAttachmentsRef},
+	Handle:               keel.Handle[*inboundmessage.InboundAttachment]{Ref: &inboundAttachmentsRef},
 	ID:                   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &inboundAttachmentsRef, Index: 0}}},
 	BusinessUnitID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &inboundAttachmentsRef, Index: 1}}},
 	OrganizationID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &inboundAttachmentsRef, Index: 2}}},
@@ -124,7 +124,7 @@ var InboundAttachments = &InboundAttachmentsTable{
 // BuildInboundAttachments builds the handle of inbound_message_attachments for ref. Generated relation and alias methods call it.
 func BuildInboundAttachments(r *keel.Ref) *InboundAttachmentsTable {
 	return &InboundAttachmentsTable{
-		Handle:               keel.Handle[inboundmessage.InboundAttachment]{Ref: r},
+		Handle:               keel.Handle[*inboundmessage.InboundAttachment]{Ref: r},
 		ID:                   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -412,7 +412,7 @@ var inboundMessagesRef = keel.Ref{Table: &inboundMessagesTable}
 
 // InboundMessagesTable is the table of inboundmessage.InboundMessage.
 type InboundMessagesTable struct {
-	keel.Handle[inboundmessage.InboundMessage]
+	keel.Handle[*inboundmessage.InboundMessage]
 	ID                      keelkinds.PulidIDCol
 	BusinessUnitID          keelkinds.PulidIDCol
 	OrganizationID          keelkinds.PulidIDCol
@@ -473,7 +473,7 @@ type InboundMessagesTable struct {
 
 // InboundMessages references the inbound_messages table.
 var InboundMessages = &InboundMessagesTable{
-	Handle:                  keel.Handle[inboundmessage.InboundMessage]{Ref: &inboundMessagesRef},
+	Handle:                  keel.Handle[*inboundmessage.InboundMessage]{Ref: &inboundMessagesRef},
 	ID:                      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &inboundMessagesRef, Index: 0}}},
 	BusinessUnitID:          keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &inboundMessagesRef, Index: 1}}},
 	OrganizationID:          keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &inboundMessagesRef, Index: 2}}},
@@ -535,7 +535,7 @@ var InboundMessages = &InboundMessagesTable{
 // BuildInboundMessages builds the handle of inbound_messages for ref. Generated relation and alias methods call it.
 func BuildInboundMessages(r *keel.Ref) *InboundMessagesTable {
 	return &InboundMessagesTable{
-		Handle:                  keel.Handle[inboundmessage.InboundMessage]{Ref: r},
+		Handle:                  keel.Handle[*inboundmessage.InboundMessage]{Ref: r},
 		ID:                      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID:          keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID:          keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -1050,7 +1050,7 @@ var mailboxesRef = keel.Ref{Table: &mailboxesTable}
 
 // MailboxesTable is the table of inboundmessage.Mailbox.
 type MailboxesTable struct {
-	keel.Handle[inboundmessage.Mailbox]
+	keel.Handle[*inboundmessage.Mailbox]
 	ID             keelkinds.PulidIDCol
 	BusinessUnitID keelkinds.PulidIDCol
 	OrganizationID keelkinds.PulidIDCol
@@ -1076,7 +1076,7 @@ type MailboxesTable struct {
 
 // Mailboxes references the inbound_mailboxes table.
 var Mailboxes = &MailboxesTable{
-	Handle:         keel.Handle[inboundmessage.Mailbox]{Ref: &mailboxesRef},
+	Handle:         keel.Handle[*inboundmessage.Mailbox]{Ref: &mailboxesRef},
 	ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &mailboxesRef, Index: 0}}},
 	BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &mailboxesRef, Index: 1}}},
 	OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &mailboxesRef, Index: 2}}},
@@ -1103,7 +1103,7 @@ var Mailboxes = &MailboxesTable{
 // BuildMailboxes builds the handle of inbound_mailboxes for ref. Generated relation and alias methods call it.
 func BuildMailboxes(r *keel.Ref) *MailboxesTable {
 	return &MailboxesTable{
-		Handle:         keel.Handle[inboundmessage.Mailbox]{Ref: r},
+		Handle:         keel.Handle[*inboundmessage.Mailbox]{Ref: r},
 		ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},

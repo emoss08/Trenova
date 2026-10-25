@@ -38,7 +38,8 @@ yet (absent vs null vs empty, many where every fixture has one, a second tenant)
   is what is being tested. Include a second tenant and assert it sees nothing.
 - keel SQL is asserted by rendering, not sqlmock: `keeltest.Render(t, q)`
   (`internal/testutil/keeltest`) renders a query under a test tenant without a database
-  (`tractorrepository/tractor_test.go`). A module's integration fixtures build on `seedtest` in
+  (`tractorrepository/tractor_test.go`); `keeltest.Snapshot(t, q)` pins a whole statement in a
+  golden file (`KEEL_UPDATE=1` rewrites them). A module's integration fixtures build on `seedtest` in
   its `<module>test` package: `equipmenttest.NewDatabase(t)` is two tenants, an RLS-enforcing
   connection and scoped contexts.
 - The imaging worker runs from its image through `internal/testutil/imagingtest`; unit tests use

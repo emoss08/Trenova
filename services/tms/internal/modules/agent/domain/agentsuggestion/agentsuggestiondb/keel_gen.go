@@ -56,7 +56,7 @@ var suggestionsRef = keel.Ref{Table: &suggestionsTable}
 
 // SuggestionsTable is the table of agentsuggestion.Suggestion.
 type SuggestionsTable struct {
-	keel.Handle[agentsuggestion.Suggestion]
+	keel.Handle[*agentsuggestion.Suggestion]
 	ID               keelkinds.PulidIDCol
 	BusinessUnitID   keelkinds.PulidIDCol
 	OrganizationID   keelkinds.PulidIDCol
@@ -72,7 +72,7 @@ type SuggestionsTable struct {
 
 // Suggestions references the agent_suggestions table.
 var Suggestions = &SuggestionsTable{
-	Handle:           keel.Handle[agentsuggestion.Suggestion]{Ref: &suggestionsRef},
+	Handle:           keel.Handle[*agentsuggestion.Suggestion]{Ref: &suggestionsRef},
 	ID:               keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &suggestionsRef, Index: 0}}},
 	BusinessUnitID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &suggestionsRef, Index: 1}}},
 	OrganizationID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &suggestionsRef, Index: 2}}},
@@ -89,7 +89,7 @@ var Suggestions = &SuggestionsTable{
 // BuildSuggestions builds the handle of agent_suggestions for ref. Generated relation and alias methods call it.
 func BuildSuggestions(r *keel.Ref) *SuggestionsTable {
 	return &SuggestionsTable{
-		Handle:           keel.Handle[agentsuggestion.Suggestion]{Ref: r},
+		Handle:           keel.Handle[*agentsuggestion.Suggestion]{Ref: r},
 		ID:               keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},

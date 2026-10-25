@@ -77,7 +77,7 @@ var benefitPlansRef = keel.Ref{Table: &benefitPlansTable}
 
 // BenefitPlansTable is the table of driverpay.BenefitPlan.
 type BenefitPlansTable struct {
-	keel.Handle[driverpay.BenefitPlan]
+	keel.Handle[*driverpay.BenefitPlan]
 	ID                keelkinds.PulidIDCol
 	BusinessUnitID    keelkinds.PulidIDCol
 	OrganizationID    keelkinds.PulidIDCol
@@ -101,7 +101,7 @@ type BenefitPlansTable struct {
 
 // BenefitPlans references the benefit_plans table.
 var BenefitPlans = &BenefitPlansTable{
-	Handle:            keel.Handle[driverpay.BenefitPlan]{Ref: &benefitPlansRef},
+	Handle:            keel.Handle[*driverpay.BenefitPlan]{Ref: &benefitPlansRef},
 	ID:                keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &benefitPlansRef, Index: 0}}},
 	BusinessUnitID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &benefitPlansRef, Index: 1}}},
 	OrganizationID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &benefitPlansRef, Index: 2}}},
@@ -126,7 +126,7 @@ var BenefitPlans = &BenefitPlansTable{
 // BuildBenefitPlans builds the handle of benefit_plans for ref. Generated relation and alias methods call it.
 func BuildBenefitPlans(r *keel.Ref) *BenefitPlansTable {
 	return &BenefitPlansTable{
-		Handle:            keel.Handle[driverpay.BenefitPlan]{Ref: r},
+		Handle:            keel.Handle[*driverpay.BenefitPlan]{Ref: r},
 		ID:                keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -339,7 +339,7 @@ var escrowAccountsRef = keel.Ref{Table: &escrowAccountsTable}
 
 // EscrowAccountsTable is the table of driverpay.EscrowAccount.
 type EscrowAccountsTable struct {
-	keel.Handle[driverpay.EscrowAccount]
+	keel.Handle[*driverpay.EscrowAccount]
 	ID                      keelkinds.PulidIDCol
 	BusinessUnitID          keelkinds.PulidIDCol
 	OrganizationID          keelkinds.PulidIDCol
@@ -359,7 +359,7 @@ type EscrowAccountsTable struct {
 
 // EscrowAccounts references the escrow_accounts table.
 var EscrowAccounts = &EscrowAccountsTable{
-	Handle:                  keel.Handle[driverpay.EscrowAccount]{Ref: &escrowAccountsRef},
+	Handle:                  keel.Handle[*driverpay.EscrowAccount]{Ref: &escrowAccountsRef},
 	ID:                      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &escrowAccountsRef, Index: 0}}},
 	BusinessUnitID:          keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &escrowAccountsRef, Index: 1}}},
 	OrganizationID:          keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &escrowAccountsRef, Index: 2}}},
@@ -380,7 +380,7 @@ var EscrowAccounts = &EscrowAccountsTable{
 // BuildEscrowAccounts builds the handle of escrow_accounts for ref. Generated relation and alias methods call it.
 func BuildEscrowAccounts(r *keel.Ref) *EscrowAccountsTable {
 	return &EscrowAccountsTable{
-		Handle:                  keel.Handle[driverpay.EscrowAccount]{Ref: r},
+		Handle:                  keel.Handle[*driverpay.EscrowAccount]{Ref: r},
 		ID:                      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID:          keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID:          keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -579,7 +579,7 @@ var escrowTransactionsRef = keel.Ref{Table: &escrowTransactionsTable}
 
 // EscrowTransactionsTable is the table of driverpay.EscrowTransaction.
 type EscrowTransactionsTable struct {
-	keel.Handle[driverpay.EscrowTransaction]
+	keel.Handle[*driverpay.EscrowTransaction]
 	ID                keelkinds.PulidIDCol
 	BusinessUnitID    keelkinds.PulidIDCol
 	OrganizationID    keelkinds.PulidIDCol
@@ -596,7 +596,7 @@ type EscrowTransactionsTable struct {
 
 // EscrowTransactions references the escrow_transactions table.
 var EscrowTransactions = &EscrowTransactionsTable{
-	Handle:            keel.Handle[driverpay.EscrowTransaction]{Ref: &escrowTransactionsRef},
+	Handle:            keel.Handle[*driverpay.EscrowTransaction]{Ref: &escrowTransactionsRef},
 	ID:                keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &escrowTransactionsRef, Index: 0}}},
 	BusinessUnitID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &escrowTransactionsRef, Index: 1}}},
 	OrganizationID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &escrowTransactionsRef, Index: 2}}},
@@ -614,7 +614,7 @@ var EscrowTransactions = &EscrowTransactionsTable{
 // BuildEscrowTransactions builds the handle of escrow_transactions for ref. Generated relation and alias methods call it.
 func BuildEscrowTransactions(r *keel.Ref) *EscrowTransactionsTable {
 	return &EscrowTransactionsTable{
-		Handle:            keel.Handle[driverpay.EscrowTransaction]{Ref: r},
+		Handle:            keel.Handle[*driverpay.EscrowTransaction]{Ref: r},
 		ID:                keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -792,7 +792,7 @@ var expensesRef = keel.Ref{Table: &expensesTable}
 
 // ExpensesTable is the table of driverpay.Expense.
 type ExpensesTable struct {
-	keel.Handle[driverpay.Expense]
+	keel.Handle[*driverpay.Expense]
 	ID                keelkinds.PulidIDCol
 	BusinessUnitID    keelkinds.PulidIDCol
 	OrganizationID    keelkinds.PulidIDCol
@@ -817,7 +817,7 @@ type ExpensesTable struct {
 
 // Expenses references the driver_expenses table.
 var Expenses = &ExpensesTable{
-	Handle:            keel.Handle[driverpay.Expense]{Ref: &expensesRef},
+	Handle:            keel.Handle[*driverpay.Expense]{Ref: &expensesRef},
 	ID:                keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &expensesRef, Index: 0}}},
 	BusinessUnitID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &expensesRef, Index: 1}}},
 	OrganizationID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &expensesRef, Index: 2}}},
@@ -843,7 +843,7 @@ var Expenses = &ExpensesTable{
 // BuildExpenses builds the handle of driver_expenses for ref. Generated relation and alias methods call it.
 func BuildExpenses(r *keel.Ref) *ExpensesTable {
 	return &ExpensesTable{
-		Handle:            keel.Handle[driverpay.Expense]{Ref: r},
+		Handle:            keel.Handle[*driverpay.Expense]{Ref: r},
 		ID:                keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -1089,7 +1089,7 @@ var payAdvancesRef = keel.Ref{Table: &payAdvancesTable}
 
 // PayAdvancesTable is the table of driverpay.PayAdvance.
 type PayAdvancesTable struct {
-	keel.Handle[driverpay.PayAdvance]
+	keel.Handle[*driverpay.PayAdvance]
 	ID              keelkinds.PulidIDCol
 	BusinessUnitID  keelkinds.PulidIDCol
 	OrganizationID  keelkinds.PulidIDCol
@@ -1114,7 +1114,7 @@ type PayAdvancesTable struct {
 
 // PayAdvances references the pay_advances table.
 var PayAdvances = &PayAdvancesTable{
-	Handle:          keel.Handle[driverpay.PayAdvance]{Ref: &payAdvancesRef},
+	Handle:          keel.Handle[*driverpay.PayAdvance]{Ref: &payAdvancesRef},
 	ID:              keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &payAdvancesRef, Index: 0}}},
 	BusinessUnitID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &payAdvancesRef, Index: 1}}},
 	OrganizationID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &payAdvancesRef, Index: 2}}},
@@ -1140,7 +1140,7 @@ var PayAdvances = &PayAdvancesTable{
 // BuildPayAdvances builds the handle of pay_advances for ref. Generated relation and alias methods call it.
 func BuildPayAdvances(r *keel.Ref) *PayAdvancesTable {
 	return &PayAdvancesTable{
-		Handle:          keel.Handle[driverpay.PayAdvance]{Ref: r},
+		Handle:          keel.Handle[*driverpay.PayAdvance]{Ref: r},
 		ID:              keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -1368,7 +1368,7 @@ var payCodesRef = keel.Ref{Table: &payCodesTable}
 
 // PayCodesTable is the table of driverpay.PayCode.
 type PayCodesTable struct {
-	keel.Handle[driverpay.PayCode]
+	keel.Handle[*driverpay.PayCode]
 	ID                    keelkinds.PulidIDCol
 	BusinessUnitID        keelkinds.PulidIDCol
 	OrganizationID        keelkinds.PulidIDCol
@@ -1389,7 +1389,7 @@ type PayCodesTable struct {
 
 // PayCodes references the pay_codes table.
 var PayCodes = &PayCodesTable{
-	Handle:                keel.Handle[driverpay.PayCode]{Ref: &payCodesRef},
+	Handle:                keel.Handle[*driverpay.PayCode]{Ref: &payCodesRef},
 	ID:                    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &payCodesRef, Index: 0}}},
 	BusinessUnitID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &payCodesRef, Index: 1}}},
 	OrganizationID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &payCodesRef, Index: 2}}},
@@ -1411,7 +1411,7 @@ var PayCodes = &PayCodesTable{
 // BuildPayCodes builds the handle of pay_codes for ref. Generated relation and alias methods call it.
 func BuildPayCodes(r *keel.Ref) *PayCodesTable {
 	return &PayCodesTable{
-		Handle:                keel.Handle[driverpay.PayCode]{Ref: r},
+		Handle:                keel.Handle[*driverpay.PayCode]{Ref: r},
 		ID:                    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -1606,7 +1606,7 @@ var payProfilesRef = keel.Ref{Table: &payProfilesTable}
 
 // PayProfilesTable is the table of driverpay.PayProfile.
 type PayProfilesTable struct {
-	keel.Handle[driverpay.PayProfile]
+	keel.Handle[*driverpay.PayProfile]
 	ID                           keelkinds.PulidIDCol
 	BusinessUnitID               keelkinds.PulidIDCol
 	OrganizationID               keelkinds.PulidIDCol
@@ -1625,7 +1625,7 @@ type PayProfilesTable struct {
 
 // PayProfiles references the driver_pay_profiles table.
 var PayProfiles = &PayProfilesTable{
-	Handle:                       keel.Handle[driverpay.PayProfile]{Ref: &payProfilesRef},
+	Handle:                       keel.Handle[*driverpay.PayProfile]{Ref: &payProfilesRef},
 	ID:                           keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &payProfilesRef, Index: 0}}},
 	BusinessUnitID:               keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &payProfilesRef, Index: 1}}},
 	OrganizationID:               keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &payProfilesRef, Index: 2}}},
@@ -1645,7 +1645,7 @@ var PayProfiles = &PayProfilesTable{
 // BuildPayProfiles builds the handle of driver_pay_profiles for ref. Generated relation and alias methods call it.
 func BuildPayProfiles(r *keel.Ref) *PayProfilesTable {
 	return &PayProfilesTable{
-		Handle:                       keel.Handle[driverpay.PayProfile]{Ref: r},
+		Handle:                       keel.Handle[*driverpay.PayProfile]{Ref: r},
 		ID:                           keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID:               keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID:               keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -1821,7 +1821,7 @@ var payProfileComponentsRef = keel.Ref{Table: &payProfileComponentsTable}
 
 // PayProfileComponentsTable is the table of driverpay.PayProfileComponent.
 type PayProfileComponentsTable struct {
-	keel.Handle[driverpay.PayProfileComponent]
+	keel.Handle[*driverpay.PayProfileComponent]
 	ID              keelkinds.PulidIDCol
 	BusinessUnitID  keelkinds.PulidIDCol
 	OrganizationID  keelkinds.PulidIDCol
@@ -1843,7 +1843,7 @@ type PayProfileComponentsTable struct {
 
 // PayProfileComponents references the driver_pay_profile_components table.
 var PayProfileComponents = &PayProfileComponentsTable{
-	Handle:          keel.Handle[driverpay.PayProfileComponent]{Ref: &payProfileComponentsRef},
+	Handle:          keel.Handle[*driverpay.PayProfileComponent]{Ref: &payProfileComponentsRef},
 	ID:              keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &payProfileComponentsRef, Index: 0}}},
 	BusinessUnitID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &payProfileComponentsRef, Index: 1}}},
 	OrganizationID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &payProfileComponentsRef, Index: 2}}},
@@ -1866,7 +1866,7 @@ var PayProfileComponents = &PayProfileComponentsTable{
 // BuildPayProfileComponents builds the handle of driver_pay_profile_components for ref. Generated relation and alias methods call it.
 func BuildPayProfileComponents(r *keel.Ref) *PayProfileComponentsTable {
 	return &PayProfileComponentsTable{
-		Handle:          keel.Handle[driverpay.PayProfileComponent]{Ref: r},
+		Handle:          keel.Handle[*driverpay.PayProfileComponent]{Ref: r},
 		ID:              keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -2071,7 +2071,7 @@ var recurringDeductionsRef = keel.Ref{Table: &recurringDeductionsTable}
 
 // RecurringDeductionsTable is the table of driverpay.RecurringDeduction.
 type RecurringDeductionsTable struct {
-	keel.Handle[driverpay.RecurringDeduction]
+	keel.Handle[*driverpay.RecurringDeduction]
 	ID                  keelkinds.PulidIDCol
 	BusinessUnitID      keelkinds.PulidIDCol
 	OrganizationID      keelkinds.PulidIDCol
@@ -2100,7 +2100,7 @@ type RecurringDeductionsTable struct {
 
 // RecurringDeductions references the recurring_deductions table.
 var RecurringDeductions = &RecurringDeductionsTable{
-	Handle:              keel.Handle[driverpay.RecurringDeduction]{Ref: &recurringDeductionsRef},
+	Handle:              keel.Handle[*driverpay.RecurringDeduction]{Ref: &recurringDeductionsRef},
 	ID:                  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &recurringDeductionsRef, Index: 0}}},
 	BusinessUnitID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &recurringDeductionsRef, Index: 1}}},
 	OrganizationID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &recurringDeductionsRef, Index: 2}}},
@@ -2130,7 +2130,7 @@ var RecurringDeductions = &RecurringDeductionsTable{
 // BuildRecurringDeductions builds the handle of recurring_deductions for ref. Generated relation and alias methods call it.
 func BuildRecurringDeductions(r *keel.Ref) *RecurringDeductionsTable {
 	return &RecurringDeductionsTable{
-		Handle:              keel.Handle[driverpay.RecurringDeduction]{Ref: r},
+		Handle:              keel.Handle[*driverpay.RecurringDeduction]{Ref: r},
 		ID:                  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -2399,7 +2399,7 @@ var recurringEarningsRef = keel.Ref{Table: &recurringEarningsTable}
 
 // RecurringEarningsTable is the table of driverpay.RecurringEarning.
 type RecurringEarningsTable struct {
-	keel.Handle[driverpay.RecurringEarning]
+	keel.Handle[*driverpay.RecurringEarning]
 	ID              keelkinds.PulidIDCol
 	BusinessUnitID  keelkinds.PulidIDCol
 	OrganizationID  keelkinds.PulidIDCol
@@ -2423,7 +2423,7 @@ type RecurringEarningsTable struct {
 
 // RecurringEarnings references the recurring_earnings table.
 var RecurringEarnings = &RecurringEarningsTable{
-	Handle:          keel.Handle[driverpay.RecurringEarning]{Ref: &recurringEarningsRef},
+	Handle:          keel.Handle[*driverpay.RecurringEarning]{Ref: &recurringEarningsRef},
 	ID:              keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &recurringEarningsRef, Index: 0}}},
 	BusinessUnitID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &recurringEarningsRef, Index: 1}}},
 	OrganizationID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &recurringEarningsRef, Index: 2}}},
@@ -2448,7 +2448,7 @@ var RecurringEarnings = &RecurringEarningsTable{
 // BuildRecurringEarnings builds the handle of recurring_earnings for ref. Generated relation and alias methods call it.
 func BuildRecurringEarnings(r *keel.Ref) *RecurringEarningsTable {
 	return &RecurringEarningsTable{
-		Handle:          keel.Handle[driverpay.RecurringEarning]{Ref: r},
+		Handle:          keel.Handle[*driverpay.RecurringEarning]{Ref: r},
 		ID:              keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -2670,7 +2670,7 @@ var workerBenefitEnrollmentsRef = keel.Ref{Table: &workerBenefitEnrollmentsTable
 
 // WorkerBenefitEnrollmentsTable is the table of driverpay.WorkerBenefitEnrollment.
 type WorkerBenefitEnrollmentsTable struct {
-	keel.Handle[driverpay.WorkerBenefitEnrollment]
+	keel.Handle[*driverpay.WorkerBenefitEnrollment]
 	ID                   keelkinds.PulidIDCol
 	BusinessUnitID       keelkinds.PulidIDCol
 	OrganizationID       keelkinds.PulidIDCol
@@ -2693,7 +2693,7 @@ type WorkerBenefitEnrollmentsTable struct {
 
 // WorkerBenefitEnrollments references the worker_benefit_enrollments table.
 var WorkerBenefitEnrollments = &WorkerBenefitEnrollmentsTable{
-	Handle:               keel.Handle[driverpay.WorkerBenefitEnrollment]{Ref: &workerBenefitEnrollmentsRef},
+	Handle:               keel.Handle[*driverpay.WorkerBenefitEnrollment]{Ref: &workerBenefitEnrollmentsRef},
 	ID:                   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workerBenefitEnrollmentsRef, Index: 0}}},
 	BusinessUnitID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workerBenefitEnrollmentsRef, Index: 1}}},
 	OrganizationID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workerBenefitEnrollmentsRef, Index: 2}}},
@@ -2717,7 +2717,7 @@ var WorkerBenefitEnrollments = &WorkerBenefitEnrollmentsTable{
 // BuildWorkerBenefitEnrollments builds the handle of worker_benefit_enrollments for ref. Generated relation and alias methods call it.
 func BuildWorkerBenefitEnrollments(r *keel.Ref) *WorkerBenefitEnrollmentsTable {
 	return &WorkerBenefitEnrollmentsTable{
-		Handle:               keel.Handle[driverpay.WorkerBenefitEnrollment]{Ref: r},
+		Handle:               keel.Handle[*driverpay.WorkerBenefitEnrollment]{Ref: r},
 		ID:                   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -2944,7 +2944,7 @@ var workerPayAssignmentsRef = keel.Ref{Table: &workerPayAssignmentsTable}
 
 // WorkerPayAssignmentsTable is the table of driverpay.WorkerPayAssignment.
 type WorkerPayAssignmentsTable struct {
-	keel.Handle[driverpay.WorkerPayAssignment]
+	keel.Handle[*driverpay.WorkerPayAssignment]
 	ID             keelkinds.PulidIDCol
 	BusinessUnitID keelkinds.PulidIDCol
 	OrganizationID keelkinds.PulidIDCol
@@ -2963,7 +2963,7 @@ type WorkerPayAssignmentsTable struct {
 
 // WorkerPayAssignments references the worker_pay_assignments table.
 var WorkerPayAssignments = &WorkerPayAssignmentsTable{
-	Handle:         keel.Handle[driverpay.WorkerPayAssignment]{Ref: &workerPayAssignmentsRef},
+	Handle:         keel.Handle[*driverpay.WorkerPayAssignment]{Ref: &workerPayAssignmentsRef},
 	ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workerPayAssignmentsRef, Index: 0}}},
 	BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workerPayAssignmentsRef, Index: 1}}},
 	OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workerPayAssignmentsRef, Index: 2}}},
@@ -2983,7 +2983,7 @@ var WorkerPayAssignments = &WorkerPayAssignmentsTable{
 // BuildWorkerPayAssignments builds the handle of worker_pay_assignments for ref. Generated relation and alias methods call it.
 func BuildWorkerPayAssignments(r *keel.Ref) *WorkerPayAssignmentsTable {
 	return &WorkerPayAssignmentsTable{
-		Handle:         keel.Handle[driverpay.WorkerPayAssignment]{Ref: r},
+		Handle:         keel.Handle[*driverpay.WorkerPayAssignment]{Ref: r},
 		ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},

@@ -73,7 +73,7 @@ var insightsRef = keel.Ref{Table: &insightsTable}
 
 // InsightsTable is the table of insight.Insight.
 type InsightsTable struct {
-	keel.Handle[insight.Insight]
+	keel.Handle[*insight.Insight]
 	ID              keelkinds.PulidIDCol
 	BusinessUnitID  keelkinds.PulidIDCol
 	OrganizationID  keelkinds.PulidIDCol
@@ -105,7 +105,7 @@ type InsightsTable struct {
 
 // Insights references the insights table.
 var Insights = &InsightsTable{
-	Handle:          keel.Handle[insight.Insight]{Ref: &insightsRef},
+	Handle:          keel.Handle[*insight.Insight]{Ref: &insightsRef},
 	ID:              keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &insightsRef, Index: 0}}},
 	BusinessUnitID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &insightsRef, Index: 1}}},
 	OrganizationID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &insightsRef, Index: 2}}},
@@ -138,7 +138,7 @@ var Insights = &InsightsTable{
 // BuildInsights builds the handle of insights for ref. Generated relation and alias methods call it.
 func BuildInsights(r *keel.Ref) *InsightsTable {
 	return &InsightsTable{
-		Handle:          keel.Handle[insight.Insight]{Ref: r},
+		Handle:          keel.Handle[*insight.Insight]{Ref: r},
 		ID:              keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},

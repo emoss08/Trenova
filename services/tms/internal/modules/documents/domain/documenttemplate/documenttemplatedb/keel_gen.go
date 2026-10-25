@@ -73,7 +73,7 @@ var documentTemplatesRef = keel.Ref{Table: &documentTemplatesTable}
 
 // DocumentTemplatesTable is the table of documenttemplate.DocumentTemplate.
 type DocumentTemplatesTable struct {
-	keel.Handle[documenttemplate.DocumentTemplate]
+	keel.Handle[*documenttemplate.DocumentTemplate]
 	ID              keelkinds.PulidIDCol
 	BusinessUnitID  keelkinds.PulidIDCol
 	OrganizationID  keelkinds.PulidIDCol
@@ -94,7 +94,7 @@ type DocumentTemplatesTable struct {
 
 // DocumentTemplates references the document_templates table.
 var DocumentTemplates = &DocumentTemplatesTable{
-	Handle:          keel.Handle[documenttemplate.DocumentTemplate]{Ref: &documentTemplatesRef},
+	Handle:          keel.Handle[*documenttemplate.DocumentTemplate]{Ref: &documentTemplatesRef},
 	ID:              keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &documentTemplatesRef, Index: 0}}},
 	BusinessUnitID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &documentTemplatesRef, Index: 1}}},
 	OrganizationID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &documentTemplatesRef, Index: 2}}},
@@ -116,7 +116,7 @@ var DocumentTemplates = &DocumentTemplatesTable{
 // BuildDocumentTemplates builds the handle of document_templates for ref. Generated relation and alias methods call it.
 func BuildDocumentTemplates(r *keel.Ref) *DocumentTemplatesTable {
 	return &DocumentTemplatesTable{
-		Handle:          keel.Handle[documenttemplate.DocumentTemplate]{Ref: r},
+		Handle:          keel.Handle[*documenttemplate.DocumentTemplate]{Ref: r},
 		ID:              keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -331,7 +331,7 @@ var documentTemplateAssignmentsRef = keel.Ref{Table: &documentTemplateAssignment
 
 // DocumentTemplateAssignmentsTable is the table of documenttemplate.DocumentTemplateAssignment.
 type DocumentTemplateAssignmentsTable struct {
-	keel.Handle[documenttemplate.DocumentTemplateAssignment]
+	keel.Handle[*documenttemplate.DocumentTemplateAssignment]
 	ID             keelkinds.PulidIDCol
 	BusinessUnitID keelkinds.PulidIDCol
 	OrganizationID keelkinds.PulidIDCol
@@ -346,7 +346,7 @@ type DocumentTemplateAssignmentsTable struct {
 
 // DocumentTemplateAssignments references the document_template_assignments table.
 var DocumentTemplateAssignments = &DocumentTemplateAssignmentsTable{
-	Handle:         keel.Handle[documenttemplate.DocumentTemplateAssignment]{Ref: &documentTemplateAssignmentsRef},
+	Handle:         keel.Handle[*documenttemplate.DocumentTemplateAssignment]{Ref: &documentTemplateAssignmentsRef},
 	ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &documentTemplateAssignmentsRef, Index: 0}}},
 	BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &documentTemplateAssignmentsRef, Index: 1}}},
 	OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &documentTemplateAssignmentsRef, Index: 2}}},
@@ -362,7 +362,7 @@ var DocumentTemplateAssignments = &DocumentTemplateAssignmentsTable{
 // BuildDocumentTemplateAssignments builds the handle of document_template_assignments for ref. Generated relation and alias methods call it.
 func BuildDocumentTemplateAssignments(r *keel.Ref) *DocumentTemplateAssignmentsTable {
 	return &DocumentTemplateAssignmentsTable{
-		Handle:         keel.Handle[documenttemplate.DocumentTemplateAssignment]{Ref: r},
+		Handle:         keel.Handle[*documenttemplate.DocumentTemplateAssignment]{Ref: r},
 		ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -544,7 +544,7 @@ var documentTemplateVersionsRef = keel.Ref{Table: &documentTemplateVersionsTable
 
 // DocumentTemplateVersionsTable is the table of documenttemplate.DocumentTemplateVersion.
 type DocumentTemplateVersionsTable struct {
-	keel.Handle[documenttemplate.DocumentTemplateVersion]
+	keel.Handle[*documenttemplate.DocumentTemplateVersion]
 	ID              keelkinds.PulidIDCol
 	BusinessUnitID  keelkinds.PulidIDCol
 	OrganizationID  keelkinds.PulidIDCol
@@ -580,7 +580,7 @@ type DocumentTemplateVersionsTable struct {
 
 // DocumentTemplateVersions references the document_template_versions table.
 var DocumentTemplateVersions = &DocumentTemplateVersionsTable{
-	Handle:          keel.Handle[documenttemplate.DocumentTemplateVersion]{Ref: &documentTemplateVersionsRef},
+	Handle:          keel.Handle[*documenttemplate.DocumentTemplateVersion]{Ref: &documentTemplateVersionsRef},
 	ID:              keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &documentTemplateVersionsRef, Index: 0}}},
 	BusinessUnitID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &documentTemplateVersionsRef, Index: 1}}},
 	OrganizationID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &documentTemplateVersionsRef, Index: 2}}},
@@ -617,7 +617,7 @@ var DocumentTemplateVersions = &DocumentTemplateVersionsTable{
 // BuildDocumentTemplateVersions builds the handle of document_template_versions for ref. Generated relation and alias methods call it.
 func BuildDocumentTemplateVersions(r *keel.Ref) *DocumentTemplateVersionsTable {
 	return &DocumentTemplateVersionsTable{
-		Handle:          keel.Handle[documenttemplate.DocumentTemplateVersion]{Ref: r},
+		Handle:          keel.Handle[*documenttemplate.DocumentTemplateVersion]{Ref: r},
 		ID:              keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -961,7 +961,7 @@ var generatedDocumentsRef = keel.Ref{Table: &generatedDocumentsTable}
 
 // GeneratedDocumentsTable is the table of documenttemplate.GeneratedDocument.
 type GeneratedDocumentsTable struct {
-	keel.Handle[documenttemplate.GeneratedDocument]
+	keel.Handle[*documenttemplate.GeneratedDocument]
 	ID                keelkinds.PulidIDCol
 	BusinessUnitID    keelkinds.PulidIDCol
 	OrganizationID    keelkinds.PulidIDCol
@@ -994,7 +994,7 @@ type GeneratedDocumentsTable struct {
 
 // GeneratedDocuments references the generated_documents table.
 var GeneratedDocuments = &GeneratedDocumentsTable{
-	Handle:            keel.Handle[documenttemplate.GeneratedDocument]{Ref: &generatedDocumentsRef},
+	Handle:            keel.Handle[*documenttemplate.GeneratedDocument]{Ref: &generatedDocumentsRef},
 	ID:                keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &generatedDocumentsRef, Index: 0}}},
 	BusinessUnitID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &generatedDocumentsRef, Index: 1}}},
 	OrganizationID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &generatedDocumentsRef, Index: 2}}},
@@ -1028,7 +1028,7 @@ var GeneratedDocuments = &GeneratedDocumentsTable{
 // BuildGeneratedDocuments builds the handle of generated_documents for ref. Generated relation and alias methods call it.
 func BuildGeneratedDocuments(r *keel.Ref) *GeneratedDocumentsTable {
 	return &GeneratedDocumentsTable{
-		Handle:            keel.Handle[documenttemplate.GeneratedDocument]{Ref: r},
+		Handle:            keel.Handle[*documenttemplate.GeneratedDocument]{Ref: r},
 		ID:                keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},

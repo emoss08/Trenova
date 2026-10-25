@@ -105,7 +105,7 @@ var carriersRef = keel.Ref{Table: &carriersTable}
 
 // CarriersTable is the table of carrier.Carrier.
 type CarriersTable struct {
-	keel.Handle[carrier.Carrier]
+	keel.Handle[*carrier.Carrier]
 	ID                  keelkinds.PulidIDCol
 	BusinessUnitID      keelkinds.PulidIDCol
 	OrganizationID      keelkinds.PulidIDCol
@@ -154,7 +154,7 @@ type CarriersTable struct {
 
 // Carriers references the carriers table.
 var Carriers = &CarriersTable{
-	Handle:              keel.Handle[carrier.Carrier]{Ref: &carriersRef},
+	Handle:              keel.Handle[*carrier.Carrier]{Ref: &carriersRef},
 	ID:                  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &carriersRef, Index: 0}}},
 	BusinessUnitID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &carriersRef, Index: 1}}},
 	OrganizationID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &carriersRef, Index: 2}}},
@@ -204,7 +204,7 @@ var Carriers = &CarriersTable{
 // BuildCarriers builds the handle of carriers for ref. Generated relation and alias methods call it.
 func BuildCarriers(r *keel.Ref) *CarriersTable {
 	return &CarriersTable{
-		Handle:              keel.Handle[carrier.Carrier]{Ref: r},
+		Handle:              keel.Handle[*carrier.Carrier]{Ref: r},
 		ID:                  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -627,7 +627,7 @@ var carrierContactsRef = keel.Ref{Table: &carrierContactsTable}
 
 // CarrierContactsTable is the table of carrier.CarrierContact.
 type CarrierContactsTable struct {
-	keel.Handle[carrier.CarrierContact]
+	keel.Handle[*carrier.CarrierContact]
 	ID                        keelkinds.PulidIDCol
 	BusinessUnitID            keelkinds.PulidIDCol
 	OrganizationID            keelkinds.PulidIDCol
@@ -645,7 +645,7 @@ type CarrierContactsTable struct {
 
 // CarrierContacts references the carrier_contacts table.
 var CarrierContacts = &CarrierContactsTable{
-	Handle:                    keel.Handle[carrier.CarrierContact]{Ref: &carrierContactsRef},
+	Handle:                    keel.Handle[*carrier.CarrierContact]{Ref: &carrierContactsRef},
 	ID:                        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &carrierContactsRef, Index: 0}}},
 	BusinessUnitID:            keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &carrierContactsRef, Index: 1}}},
 	OrganizationID:            keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &carrierContactsRef, Index: 2}}},
@@ -664,7 +664,7 @@ var CarrierContacts = &CarrierContactsTable{
 // BuildCarrierContacts builds the handle of carrier_contacts for ref. Generated relation and alias methods call it.
 func BuildCarrierContacts(r *keel.Ref) *CarrierContactsTable {
 	return &CarrierContactsTable{
-		Handle:                    keel.Handle[carrier.CarrierContact]{Ref: r},
+		Handle:                    keel.Handle[*carrier.CarrierContact]{Ref: r},
 		ID:                        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID:            keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID:            keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -836,7 +836,7 @@ var carrierEDIChannelsRef = keel.Ref{Table: &carrierEDIChannelsTable}
 
 // CarrierEDIChannelsTable is the table of carrier.CarrierEDIChannel.
 type CarrierEDIChannelsTable struct {
-	keel.Handle[carrier.CarrierEDIChannel]
+	keel.Handle[*carrier.CarrierEDIChannel]
 	ID                       keelkinds.PulidIDCol
 	BusinessUnitID           keelkinds.PulidIDCol
 	OrganizationID           keelkinds.PulidIDCol
@@ -853,7 +853,7 @@ type CarrierEDIChannelsTable struct {
 
 // CarrierEDIChannels references the carrier_edi_channels table.
 var CarrierEDIChannels = &CarrierEDIChannelsTable{
-	Handle:                   keel.Handle[carrier.CarrierEDIChannel]{Ref: &carrierEDIChannelsRef},
+	Handle:                   keel.Handle[*carrier.CarrierEDIChannel]{Ref: &carrierEDIChannelsRef},
 	ID:                       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &carrierEDIChannelsRef, Index: 0}}},
 	BusinessUnitID:           keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &carrierEDIChannelsRef, Index: 1}}},
 	OrganizationID:           keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &carrierEDIChannelsRef, Index: 2}}},
@@ -871,7 +871,7 @@ var CarrierEDIChannels = &CarrierEDIChannelsTable{
 // BuildCarrierEDIChannels builds the handle of carrier_edi_channels for ref. Generated relation and alias methods call it.
 func BuildCarrierEDIChannels(r *keel.Ref) *CarrierEDIChannelsTable {
 	return &CarrierEDIChannelsTable{
-		Handle:                   keel.Handle[carrier.CarrierEDIChannel]{Ref: r},
+		Handle:                   keel.Handle[*carrier.CarrierEDIChannel]{Ref: r},
 		ID:                       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID:           keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID:           keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -1045,7 +1045,7 @@ var carrierInsurancePoliciesRef = keel.Ref{Table: &carrierInsurancePoliciesTable
 
 // CarrierInsurancePoliciesTable is the table of carrier.CarrierInsurancePolicy.
 type CarrierInsurancePoliciesTable struct {
-	keel.Handle[carrier.CarrierInsurancePolicy]
+	keel.Handle[*carrier.CarrierInsurancePolicy]
 	ID             keelkinds.PulidIDCol
 	BusinessUnitID keelkinds.PulidIDCol
 	OrganizationID keelkinds.PulidIDCol
@@ -1064,7 +1064,7 @@ type CarrierInsurancePoliciesTable struct {
 
 // CarrierInsurancePolicies references the carrier_insurance_policies table.
 var CarrierInsurancePolicies = &CarrierInsurancePoliciesTable{
-	Handle:         keel.Handle[carrier.CarrierInsurancePolicy]{Ref: &carrierInsurancePoliciesRef},
+	Handle:         keel.Handle[*carrier.CarrierInsurancePolicy]{Ref: &carrierInsurancePoliciesRef},
 	ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &carrierInsurancePoliciesRef, Index: 0}}},
 	BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &carrierInsurancePoliciesRef, Index: 1}}},
 	OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &carrierInsurancePoliciesRef, Index: 2}}},
@@ -1084,7 +1084,7 @@ var CarrierInsurancePolicies = &CarrierInsurancePoliciesTable{
 // BuildCarrierInsurancePolicies builds the handle of carrier_insurance_policies for ref. Generated relation and alias methods call it.
 func BuildCarrierInsurancePolicies(r *keel.Ref) *CarrierInsurancePoliciesTable {
 	return &CarrierInsurancePoliciesTable{
-		Handle:         keel.Handle[carrier.CarrierInsurancePolicy]{Ref: r},
+		Handle:         keel.Handle[*carrier.CarrierInsurancePolicy]{Ref: r},
 		ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},

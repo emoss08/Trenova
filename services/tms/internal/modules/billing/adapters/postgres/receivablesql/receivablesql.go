@@ -17,11 +17,12 @@ const OpenInvoice = `inv.status = 'Posted'
 	  AND inv.bill_type IN ('Invoice', 'DebitMemo')
 	  AND inv.total_amount_minor > inv.applied_amount_minor`
 
+func ReceivableBillType(inv *invoicedb.InvoicesTable) keel.Pred {
+	return inv.BillType.In(billingqueue.BillTypeInvoice, billingqueue.BillTypeDebitMemo)
+}
+
 func Receivable(inv *invoicedb.InvoicesTable) keel.Pred {
-	return keel.And(
-		inv.Status.Eq(invoice.StatusPosted),
-		inv.BillType.In(billingqueue.BillTypeInvoice, billingqueue.BillTypeDebitMemo),
-	)
+	return keel.And(inv.Status.Eq(invoice.StatusPosted), ReceivableBillType(inv))
 }
 
 func Open(inv *invoicedb.InvoicesTable) keel.Pred {
@@ -31,7 +32,7 @@ func Open(inv *invoicedb.InvoicesTable) keel.Pred {
 	)
 }
 
-func OpenMinor(inv *invoicedb.InvoicesTable) keel.Expr {
+func OpenMinor(inv *invoicedb.InvoicesTable) keel.DynExpr {
 	return keel.DynOf(inv.TotalAmountMinor).Sub(inv.AppliedAmountMinor)
 }
 

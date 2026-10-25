@@ -2,6 +2,7 @@ package userrepository
 
 import (
 	"context"
+	"strings"
 	"time"
 
 	"github.com/emoss08/keel"
@@ -296,7 +297,7 @@ func (ur *repository) FindByEmail(ctx context.Context, emailAddress string) (*te
 	return dbtx.Read(ctx, ur.db, func(ctx context.Context) (*tenant.User, error) {
 		u := tenantdb.Users
 		user, err := u.AllTenants().
-			Where(u.EmailAddress.Eq(emailAddress)).
+			Where(u.EmailAddress.Lower().Eq(strings.ToLower(emailAddress))).
 			One(ctx, ur.db.Keel(ctx))
 		if err != nil {
 			if dberror.IsNotFoundError(err) {
@@ -714,7 +715,7 @@ func (ur *repository) GetSystemUser(ctx context.Context, columns ...string) (*te
 			return nil, err
 		}
 
-		user, err := q.Where(u.Username.Eq(tenant.SystemUsername)).One(ctx, ur.db.Keel(ctx))
+		user, err := q.Where(u.Username.Lower().Eq(strings.ToLower(tenant.SystemUsername))).One(ctx, ur.db.Keel(ctx))
 		if err != nil {
 			return nil, userErrors.Map(err, tenant.SystemUsername)
 		}

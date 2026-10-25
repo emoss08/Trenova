@@ -66,7 +66,7 @@ var customFieldDefinitionsRef = keel.Ref{Table: &customFieldDefinitionsTable}
 
 // CustomFieldDefinitionsTable is the table of customfield.CustomFieldDefinition.
 type CustomFieldDefinitionsTable struct {
-	keel.Handle[customfield.CustomFieldDefinition]
+	keel.Handle[*customfield.CustomFieldDefinition]
 	ID              keelkinds.PulidIDCol
 	BusinessUnitID  keelkinds.PulidIDCol
 	OrganizationID  keelkinds.PulidIDCol
@@ -91,7 +91,7 @@ type CustomFieldDefinitionsTable struct {
 
 // CustomFieldDefinitions references the custom_field_definitions table.
 var CustomFieldDefinitions = &CustomFieldDefinitionsTable{
-	Handle:          keel.Handle[customfield.CustomFieldDefinition]{Ref: &customFieldDefinitionsRef},
+	Handle:          keel.Handle[*customfield.CustomFieldDefinition]{Ref: &customFieldDefinitionsRef},
 	ID:              keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &customFieldDefinitionsRef, Index: 0}}},
 	BusinessUnitID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &customFieldDefinitionsRef, Index: 1}}},
 	OrganizationID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &customFieldDefinitionsRef, Index: 2}}},
@@ -117,7 +117,7 @@ var CustomFieldDefinitions = &CustomFieldDefinitionsTable{
 // BuildCustomFieldDefinitions builds the handle of custom_field_definitions for ref. Generated relation and alias methods call it.
 func BuildCustomFieldDefinitions(r *keel.Ref) *CustomFieldDefinitionsTable {
 	return &CustomFieldDefinitionsTable{
-		Handle:          keel.Handle[customfield.CustomFieldDefinition]{Ref: r},
+		Handle:          keel.Handle[*customfield.CustomFieldDefinition]{Ref: r},
 		ID:              keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -321,7 +321,7 @@ var customFieldValuesRef = keel.Ref{Table: &customFieldValuesTable}
 
 // CustomFieldValuesTable is the table of customfield.CustomFieldValue.
 type CustomFieldValuesTable struct {
-	keel.Handle[customfield.CustomFieldValue]
+	keel.Handle[*customfield.CustomFieldValue]
 	ID             keelkinds.PulidIDCol
 	OrganizationID keelkinds.PulidIDCol
 	BusinessUnitID keelkinds.PulidIDCol
@@ -336,7 +336,7 @@ type CustomFieldValuesTable struct {
 
 // CustomFieldValues references the custom_field_values table.
 var CustomFieldValues = &CustomFieldValuesTable{
-	Handle:         keel.Handle[customfield.CustomFieldValue]{Ref: &customFieldValuesRef},
+	Handle:         keel.Handle[*customfield.CustomFieldValue]{Ref: &customFieldValuesRef},
 	ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &customFieldValuesRef, Index: 0}}},
 	OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &customFieldValuesRef, Index: 1}}},
 	BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &customFieldValuesRef, Index: 2}}},
@@ -352,7 +352,7 @@ var CustomFieldValues = &CustomFieldValuesTable{
 // BuildCustomFieldValues builds the handle of custom_field_values for ref. Generated relation and alias methods call it.
 func BuildCustomFieldValues(r *keel.Ref) *CustomFieldValuesTable {
 	return &CustomFieldValuesTable{
-		Handle:         keel.Handle[customfield.CustomFieldValue]{Ref: r},
+		Handle:         keel.Handle[*customfield.CustomFieldValue]{Ref: r},
 		ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},

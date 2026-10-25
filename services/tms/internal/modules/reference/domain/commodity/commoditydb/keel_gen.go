@@ -79,7 +79,7 @@ var commoditiesRef = keel.Ref{Table: &commoditiesTable}
 
 // CommoditiesTable is the table of commodity.Commodity.
 type CommoditiesTable struct {
-	keel.Handle[commodity.Commodity]
+	keel.Handle[*commodity.Commodity]
 	ID                     keelkinds.PulidIDCol
 	BusinessUnitID         keelkinds.PulidIDCol
 	OrganizationID         keelkinds.PulidIDCol
@@ -108,7 +108,7 @@ type CommoditiesTable struct {
 
 // Commodities references the commodities table.
 var Commodities = &CommoditiesTable{
-	Handle:                 keel.Handle[commodity.Commodity]{Ref: &commoditiesRef},
+	Handle:                 keel.Handle[*commodity.Commodity]{Ref: &commoditiesRef},
 	ID:                     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &commoditiesRef, Index: 0}}},
 	BusinessUnitID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &commoditiesRef, Index: 1}}},
 	OrganizationID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &commoditiesRef, Index: 2}}},
@@ -138,7 +138,7 @@ var Commodities = &CommoditiesTable{
 // BuildCommodities builds the handle of commodities for ref. Generated relation and alias methods call it.
 func BuildCommodities(r *keel.Ref) *CommoditiesTable {
 	return &CommoditiesTable{
-		Handle:                 keel.Handle[commodity.Commodity]{Ref: r},
+		Handle:                 keel.Handle[*commodity.Commodity]{Ref: r},
 		ID:                     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},

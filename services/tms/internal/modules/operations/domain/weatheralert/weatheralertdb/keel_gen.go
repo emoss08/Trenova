@@ -56,7 +56,7 @@ var activitiesRef = keel.Ref{Table: &activitiesTable}
 
 // ActivitiesTable is the table of weatheralert.Activity.
 type ActivitiesTable struct {
-	keel.Handle[weatheralert.Activity]
+	keel.Handle[*weatheralert.Activity]
 	ID             keelkinds.PulidIDCol
 	OrganizationID keelkinds.PulidIDCol
 	BusinessUnitID keelkinds.PulidIDCol
@@ -70,7 +70,7 @@ type ActivitiesTable struct {
 
 // Activities references the weather_alert_activities table.
 var Activities = &ActivitiesTable{
-	Handle:         keel.Handle[weatheralert.Activity]{Ref: &activitiesRef},
+	Handle:         keel.Handle[*weatheralert.Activity]{Ref: &activitiesRef},
 	ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &activitiesRef, Index: 0}}},
 	OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &activitiesRef, Index: 1}}},
 	BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &activitiesRef, Index: 2}}},
@@ -85,7 +85,7 @@ var Activities = &ActivitiesTable{
 // BuildActivities builds the handle of weather_alert_activities for ref. Generated relation and alias methods call it.
 func BuildActivities(r *keel.Ref) *ActivitiesTable {
 	return &ActivitiesTable{
-		Handle:         keel.Handle[weatheralert.Activity]{Ref: r},
+		Handle:         keel.Handle[*weatheralert.Activity]{Ref: r},
 		ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -232,7 +232,7 @@ var weatherAlertsRef = keel.Ref{Table: &weatherAlertsTable}
 
 // WeatherAlertsTable is the table of weatheralert.WeatherAlert.
 type WeatherAlertsTable struct {
-	keel.Handle[weatheralert.WeatherAlert]
+	keel.Handle[*weatheralert.WeatherAlert]
 	ID             keelkinds.PulidIDCol
 	OrganizationID keelkinds.PulidIDCol
 	BusinessUnitID keelkinds.PulidIDCol
@@ -266,7 +266,7 @@ type WeatherAlertsTable struct {
 
 // WeatherAlerts references the weather_alerts table.
 var WeatherAlerts = &WeatherAlertsTable{
-	Handle:         keel.Handle[weatheralert.WeatherAlert]{Ref: &weatherAlertsRef},
+	Handle:         keel.Handle[*weatheralert.WeatherAlert]{Ref: &weatherAlertsRef},
 	ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &weatherAlertsRef, Index: 0}}},
 	OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &weatherAlertsRef, Index: 1}}},
 	BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &weatherAlertsRef, Index: 2}}},
@@ -301,7 +301,7 @@ var WeatherAlerts = &WeatherAlertsTable{
 // BuildWeatherAlerts builds the handle of weather_alerts for ref. Generated relation and alias methods call it.
 func BuildWeatherAlerts(r *keel.Ref) *WeatherAlertsTable {
 	return &WeatherAlertsTable{
-		Handle:         keel.Handle[weatheralert.WeatherAlert]{Ref: r},
+		Handle:         keel.Handle[*weatheralert.WeatherAlert]{Ref: r},
 		ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},

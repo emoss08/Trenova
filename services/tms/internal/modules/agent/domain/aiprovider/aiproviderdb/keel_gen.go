@@ -53,7 +53,7 @@ var failureDismissalsRef = keel.Ref{Table: &failureDismissalsTable}
 
 // FailureDismissalsTable is the table of aiprovider.FailureDismissal.
 type FailureDismissalsTable struct {
-	keel.Handle[aiprovider.FailureDismissal]
+	keel.Handle[*aiprovider.FailureDismissal]
 	ID             keelkinds.PulidIDCol
 	BusinessUnitID keelkinds.PulidIDCol
 	OrganizationID keelkinds.PulidIDCol
@@ -65,7 +65,7 @@ type FailureDismissalsTable struct {
 
 // FailureDismissals references the ai_provider_failure_dismissals table.
 var FailureDismissals = &FailureDismissalsTable{
-	Handle:         keel.Handle[aiprovider.FailureDismissal]{Ref: &failureDismissalsRef},
+	Handle:         keel.Handle[*aiprovider.FailureDismissal]{Ref: &failureDismissalsRef},
 	ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &failureDismissalsRef, Index: 0}}},
 	BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &failureDismissalsRef, Index: 1}}},
 	OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &failureDismissalsRef, Index: 2}}},
@@ -78,7 +78,7 @@ var FailureDismissals = &FailureDismissalsTable{
 // BuildFailureDismissals builds the handle of ai_provider_failure_dismissals for ref. Generated relation and alias methods call it.
 func BuildFailureDismissals(r *keel.Ref) *FailureDismissalsTable {
 	return &FailureDismissalsTable{
-		Handle:         keel.Handle[aiprovider.FailureDismissal]{Ref: r},
+		Handle:         keel.Handle[*aiprovider.FailureDismissal]{Ref: r},
 		ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -232,7 +232,7 @@ var providersRef = keel.Ref{Table: &providersTable}
 
 // ProvidersTable is the table of aiprovider.Provider.
 type ProvidersTable struct {
-	keel.Handle[aiprovider.Provider]
+	keel.Handle[*aiprovider.Provider]
 	ID                       keelkinds.PulidIDCol
 	BusinessUnitID           keelkinds.PulidIDCol
 	OrganizationID           keelkinds.PulidIDCol
@@ -285,7 +285,7 @@ type ProvidersTable struct {
 
 // Providers references the ai_providers table.
 var Providers = &ProvidersTable{
-	Handle:                   keel.Handle[aiprovider.Provider]{Ref: &providersRef},
+	Handle:                   keel.Handle[*aiprovider.Provider]{Ref: &providersRef},
 	ID:                       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &providersRef, Index: 0}}},
 	BusinessUnitID:           keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &providersRef, Index: 1}}},
 	OrganizationID:           keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &providersRef, Index: 2}}},
@@ -339,7 +339,7 @@ var Providers = &ProvidersTable{
 // BuildProviders builds the handle of ai_providers for ref. Generated relation and alias methods call it.
 func BuildProviders(r *keel.Ref) *ProvidersTable {
 	return &ProvidersTable{
-		Handle:                   keel.Handle[aiprovider.Provider]{Ref: r},
+		Handle:                   keel.Handle[*aiprovider.Provider]{Ref: r},
 		ID:                       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID:           keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID:           keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},

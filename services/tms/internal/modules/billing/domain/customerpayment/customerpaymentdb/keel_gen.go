@@ -66,7 +66,7 @@ var applicationsRef = keel.Ref{Table: &applicationsTable}
 
 // ApplicationsTable is the table of customerpayment.Application.
 type ApplicationsTable struct {
-	keel.Handle[customerpayment.Application]
+	keel.Handle[*customerpayment.Application]
 	ID                  keelkinds.PulidIDCol
 	OrganizationID      keelkinds.PulidIDCol
 	BusinessUnitID      keelkinds.PulidIDCol
@@ -81,7 +81,7 @@ type ApplicationsTable struct {
 
 // Applications references the customer_payment_applications table.
 var Applications = &ApplicationsTable{
-	Handle:              keel.Handle[customerpayment.Application]{Ref: &applicationsRef},
+	Handle:              keel.Handle[*customerpayment.Application]{Ref: &applicationsRef},
 	ID:                  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &applicationsRef, Index: 0}}},
 	OrganizationID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &applicationsRef, Index: 1}}},
 	BusinessUnitID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &applicationsRef, Index: 2}}},
@@ -97,7 +97,7 @@ var Applications = &ApplicationsTable{
 // BuildApplications builds the handle of customer_payment_applications for ref. Generated relation and alias methods call it.
 func BuildApplications(r *keel.Ref) *ApplicationsTable {
 	return &ApplicationsTable{
-		Handle:              keel.Handle[customerpayment.Application]{Ref: r},
+		Handle:              keel.Handle[*customerpayment.Application]{Ref: r},
 		ID:                  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		OrganizationID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		BusinessUnitID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -256,7 +256,7 @@ var creditMemoApplicationsRef = keel.Ref{Table: &creditMemoApplicationsTable}
 
 // CreditMemoApplicationsTable is the table of customerpayment.CreditMemoApplication.
 type CreditMemoApplicationsTable struct {
-	keel.Handle[customerpayment.CreditMemoApplication]
+	keel.Handle[*customerpayment.CreditMemoApplication]
 	ID                  keelkinds.PulidIDCol
 	OrganizationID      keelkinds.PulidIDCol
 	BusinessUnitID      keelkinds.PulidIDCol
@@ -276,7 +276,7 @@ type CreditMemoApplicationsTable struct {
 
 // CreditMemoApplications references the credit_memo_applications table.
 var CreditMemoApplications = &CreditMemoApplicationsTable{
-	Handle:              keel.Handle[customerpayment.CreditMemoApplication]{Ref: &creditMemoApplicationsRef},
+	Handle:              keel.Handle[*customerpayment.CreditMemoApplication]{Ref: &creditMemoApplicationsRef},
 	ID:                  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &creditMemoApplicationsRef, Index: 0}}},
 	OrganizationID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &creditMemoApplicationsRef, Index: 1}}},
 	BusinessUnitID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &creditMemoApplicationsRef, Index: 2}}},
@@ -297,7 +297,7 @@ var CreditMemoApplications = &CreditMemoApplicationsTable{
 // BuildCreditMemoApplications builds the handle of credit_memo_applications for ref. Generated relation and alias methods call it.
 func BuildCreditMemoApplications(r *keel.Ref) *CreditMemoApplicationsTable {
 	return &CreditMemoApplicationsTable{
-		Handle:              keel.Handle[customerpayment.CreditMemoApplication]{Ref: r},
+		Handle:              keel.Handle[*customerpayment.CreditMemoApplication]{Ref: r},
 		ID:                  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		OrganizationID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		BusinessUnitID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -510,7 +510,7 @@ var paymentsRef = keel.Ref{Table: &paymentsTable}
 
 // PaymentsTable is the table of customerpayment.Payment.
 type PaymentsTable struct {
-	keel.Handle[customerpayment.Payment]
+	keel.Handle[*customerpayment.Payment]
 	ID                   keelkinds.PulidIDCol
 	OrganizationID       keelkinds.PulidIDCol
 	BusinessUnitID       keelkinds.PulidIDCol
@@ -541,7 +541,7 @@ type PaymentsTable struct {
 
 // Payments references the customer_payments table.
 var Payments = &PaymentsTable{
-	Handle:               keel.Handle[customerpayment.Payment]{Ref: &paymentsRef},
+	Handle:               keel.Handle[*customerpayment.Payment]{Ref: &paymentsRef},
 	ID:                   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &paymentsRef, Index: 0}}},
 	OrganizationID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &paymentsRef, Index: 1}}},
 	BusinessUnitID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &paymentsRef, Index: 2}}},
@@ -573,7 +573,7 @@ var Payments = &PaymentsTable{
 // BuildPayments builds the handle of customer_payments for ref. Generated relation and alias methods call it.
 func BuildPayments(r *keel.Ref) *PaymentsTable {
 	return &PaymentsTable{
-		Handle:               keel.Handle[customerpayment.Payment]{Ref: r},
+		Handle:               keel.Handle[*customerpayment.Payment]{Ref: r},
 		ID:                   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		OrganizationID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		BusinessUnitID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},

@@ -56,7 +56,7 @@ var dataEntryControlsRef = keel.Ref{Table: &dataEntryControlsTable}
 
 // DataEntryControlsTable is the table of dataentrycontrol.DataEntryControl.
 type DataEntryControlsTable struct {
-	keel.Handle[dataentrycontrol.DataEntryControl]
+	keel.Handle[*dataentrycontrol.DataEntryControl]
 	ID             keelkinds.PulidIDCol
 	BusinessUnitID keelkinds.PulidIDCol
 	OrganizationID keelkinds.PulidIDCol
@@ -71,7 +71,7 @@ type DataEntryControlsTable struct {
 
 // DataEntryControls references the data_entry_controls table.
 var DataEntryControls = &DataEntryControlsTable{
-	Handle:         keel.Handle[dataentrycontrol.DataEntryControl]{Ref: &dataEntryControlsRef},
+	Handle:         keel.Handle[*dataentrycontrol.DataEntryControl]{Ref: &dataEntryControlsRef},
 	ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &dataEntryControlsRef, Index: 0}}},
 	BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &dataEntryControlsRef, Index: 1}}},
 	OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &dataEntryControlsRef, Index: 2}}},
@@ -87,7 +87,7 @@ var DataEntryControls = &DataEntryControlsTable{
 // BuildDataEntryControls builds the handle of data_entry_controls for ref. Generated relation and alias methods call it.
 func BuildDataEntryControls(r *keel.Ref) *DataEntryControlsTable {
 	return &DataEntryControlsTable{
-		Handle:         keel.Handle[dataentrycontrol.DataEntryControl]{Ref: r},
+		Handle:         keel.Handle[*dataentrycontrol.DataEntryControl]{Ref: r},
 		ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},

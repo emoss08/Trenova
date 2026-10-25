@@ -71,7 +71,7 @@ var routingGuidesRef = keel.Ref{Table: &routingGuidesTable}
 
 // RoutingGuidesTable is the table of tender.RoutingGuide.
 type RoutingGuidesTable struct {
-	keel.Handle[tender.RoutingGuide]
+	keel.Handle[*tender.RoutingGuide]
 	ID                    keelkinds.PulidIDCol
 	BusinessUnitID        keelkinds.PulidIDCol
 	OrganizationID        keelkinds.PulidIDCol
@@ -92,7 +92,7 @@ type RoutingGuidesTable struct {
 
 // RoutingGuides references the routing_guides table.
 var RoutingGuides = &RoutingGuidesTable{
-	Handle:                keel.Handle[tender.RoutingGuide]{Ref: &routingGuidesRef},
+	Handle:                keel.Handle[*tender.RoutingGuide]{Ref: &routingGuidesRef},
 	ID:                    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &routingGuidesRef, Index: 0}}},
 	BusinessUnitID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &routingGuidesRef, Index: 1}}},
 	OrganizationID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &routingGuidesRef, Index: 2}}},
@@ -114,7 +114,7 @@ var RoutingGuides = &RoutingGuidesTable{
 // BuildRoutingGuides builds the handle of routing_guides for ref. Generated relation and alias methods call it.
 func BuildRoutingGuides(r *keel.Ref) *RoutingGuidesTable {
 	return &RoutingGuidesTable{
-		Handle:                keel.Handle[tender.RoutingGuide]{Ref: r},
+		Handle:                keel.Handle[*tender.RoutingGuide]{Ref: r},
 		ID:                    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -322,7 +322,7 @@ var routingGuideEntriesRef = keel.Ref{Table: &routingGuideEntriesTable}
 
 // RoutingGuideEntriesTable is the table of tender.RoutingGuideEntry.
 type RoutingGuideEntriesTable struct {
-	keel.Handle[tender.RoutingGuideEntry]
+	keel.Handle[*tender.RoutingGuideEntry]
 	ID              keelkinds.PulidIDCol
 	BusinessUnitID  keelkinds.PulidIDCol
 	OrganizationID  keelkinds.PulidIDCol
@@ -341,7 +341,7 @@ type RoutingGuideEntriesTable struct {
 
 // RoutingGuideEntries references the routing_guide_entries table.
 var RoutingGuideEntries = &RoutingGuideEntriesTable{
-	Handle:          keel.Handle[tender.RoutingGuideEntry]{Ref: &routingGuideEntriesRef},
+	Handle:          keel.Handle[*tender.RoutingGuideEntry]{Ref: &routingGuideEntriesRef},
 	ID:              keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &routingGuideEntriesRef, Index: 0}}},
 	BusinessUnitID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &routingGuideEntriesRef, Index: 1}}},
 	OrganizationID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &routingGuideEntriesRef, Index: 2}}},
@@ -361,7 +361,7 @@ var RoutingGuideEntries = &RoutingGuideEntriesTable{
 // BuildRoutingGuideEntries builds the handle of routing_guide_entries for ref. Generated relation and alias methods call it.
 func BuildRoutingGuideEntries(r *keel.Ref) *RoutingGuideEntriesTable {
 	return &RoutingGuideEntriesTable{
-		Handle:          keel.Handle[tender.RoutingGuideEntry]{Ref: r},
+		Handle:          keel.Handle[*tender.RoutingGuideEntry]{Ref: r},
 		ID:              keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -557,7 +557,7 @@ var tendersRef = keel.Ref{Table: &tendersTable}
 
 // TendersTable is the table of tender.Tender.
 type TendersTable struct {
-	keel.Handle[tender.Tender]
+	keel.Handle[*tender.Tender]
 	ID                 keelkinds.PulidIDCol
 	BusinessUnitID     keelkinds.PulidIDCol
 	OrganizationID     keelkinds.PulidIDCol
@@ -586,7 +586,7 @@ type TendersTable struct {
 
 // Tenders references the tenders table.
 var Tenders = &TendersTable{
-	Handle:             keel.Handle[tender.Tender]{Ref: &tendersRef},
+	Handle:             keel.Handle[*tender.Tender]{Ref: &tendersRef},
 	ID:                 keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &tendersRef, Index: 0}}},
 	BusinessUnitID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &tendersRef, Index: 1}}},
 	OrganizationID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &tendersRef, Index: 2}}},
@@ -616,7 +616,7 @@ var Tenders = &TendersTable{
 // BuildTenders builds the handle of tenders for ref. Generated relation and alias methods call it.
 func BuildTenders(r *keel.Ref) *TendersTable {
 	return &TendersTable{
-		Handle:             keel.Handle[tender.Tender]{Ref: r},
+		Handle:             keel.Handle[*tender.Tender]{Ref: r},
 		ID:                 keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -915,7 +915,7 @@ var tenderOffersRef = keel.Ref{Table: &tenderOffersTable}
 
 // TenderOffersTable is the table of tender.TenderOffer.
 type TenderOffersTable struct {
-	keel.Handle[tender.TenderOffer]
+	keel.Handle[*tender.TenderOffer]
 	ID                   keelkinds.PulidIDCol
 	BusinessUnitID       keelkinds.PulidIDCol
 	OrganizationID       keelkinds.PulidIDCol
@@ -956,7 +956,7 @@ type TenderOffersTable struct {
 
 // TenderOffers references the tender_offers table.
 var TenderOffers = &TenderOffersTable{
-	Handle:               keel.Handle[tender.TenderOffer]{Ref: &tenderOffersRef},
+	Handle:               keel.Handle[*tender.TenderOffer]{Ref: &tenderOffersRef},
 	ID:                   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &tenderOffersRef, Index: 0}}},
 	BusinessUnitID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &tenderOffersRef, Index: 1}}},
 	OrganizationID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &tenderOffersRef, Index: 2}}},
@@ -998,7 +998,7 @@ var TenderOffers = &TenderOffersTable{
 // BuildTenderOffers builds the handle of tender_offers for ref. Generated relation and alias methods call it.
 func BuildTenderOffers(r *keel.Ref) *TenderOffersTable {
 	return &TenderOffersTable{
-		Handle:               keel.Handle[tender.TenderOffer]{Ref: r},
+		Handle:               keel.Handle[*tender.TenderOffer]{Ref: r},
 		ID:                   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -1342,7 +1342,7 @@ var tenderOfferTokensRef = keel.Ref{Table: &tenderOfferTokensTable}
 
 // TenderOfferTokensTable is the table of tender.TenderOfferToken.
 type TenderOfferTokensTable struct {
-	keel.Handle[tender.TenderOfferToken]
+	keel.Handle[*tender.TenderOfferToken]
 	ID             keelkinds.PulidIDCol
 	BusinessUnitID keelkinds.PulidIDCol
 	OrganizationID keelkinds.PulidIDCol
@@ -1358,7 +1358,7 @@ type TenderOfferTokensTable struct {
 
 // TenderOfferTokens references the tender_offer_tokens table.
 var TenderOfferTokens = &TenderOfferTokensTable{
-	Handle:         keel.Handle[tender.TenderOfferToken]{Ref: &tenderOfferTokensRef},
+	Handle:         keel.Handle[*tender.TenderOfferToken]{Ref: &tenderOfferTokensRef},
 	ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &tenderOfferTokensRef, Index: 0}}},
 	BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &tenderOfferTokensRef, Index: 1}}},
 	OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &tenderOfferTokensRef, Index: 2}}},
@@ -1375,7 +1375,7 @@ var TenderOfferTokens = &TenderOfferTokensTable{
 // BuildTenderOfferTokens builds the handle of tender_offer_tokens for ref. Generated relation and alias methods call it.
 func BuildTenderOfferTokens(r *keel.Ref) *TenderOfferTokensTable {
 	return &TenderOfferTokensTable{
-		Handle:         keel.Handle[tender.TenderOfferToken]{Ref: r},
+		Handle:         keel.Handle[*tender.TenderOfferToken]{Ref: r},
 		ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},

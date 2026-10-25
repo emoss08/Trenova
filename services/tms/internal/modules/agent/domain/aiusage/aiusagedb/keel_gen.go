@@ -92,7 +92,7 @@ var aIUsageRecordsRef = keel.Ref{Table: &aIUsageRecordsTable}
 
 // AIUsageRecordsTable is the table of aiusage.AIUsageRecord.
 type AIUsageRecordsTable struct {
-	keel.Handle[aiusage.AIUsageRecord]
+	keel.Handle[*aiusage.AIUsageRecord]
 	ID                      keelkinds.PulidIDCol
 	BusinessUnitID          keelkinds.PulidIDCol
 	OrganizationID          keelkinds.PulidIDCol
@@ -141,7 +141,7 @@ type AIUsageRecordsTable struct {
 
 // AIUsageRecords references the ai_usage_records table.
 var AIUsageRecords = &AIUsageRecordsTable{
-	Handle:                  keel.Handle[aiusage.AIUsageRecord]{Ref: &aIUsageRecordsRef},
+	Handle:                  keel.Handle[*aiusage.AIUsageRecord]{Ref: &aIUsageRecordsRef},
 	ID:                      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &aIUsageRecordsRef, Index: 0}}},
 	BusinessUnitID:          keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &aIUsageRecordsRef, Index: 1}}},
 	OrganizationID:          keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &aIUsageRecordsRef, Index: 2}}},
@@ -191,7 +191,7 @@ var AIUsageRecords = &AIUsageRecordsTable{
 // BuildAIUsageRecords builds the handle of ai_usage_records for ref. Generated relation and alias methods call it.
 func BuildAIUsageRecords(r *keel.Ref) *AIUsageRecordsTable {
 	return &AIUsageRecordsTable{
-		Handle:                  keel.Handle[aiusage.AIUsageRecord]{Ref: r},
+		Handle:                  keel.Handle[*aiusage.AIUsageRecord]{Ref: r},
 		ID:                      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID:          keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID:          keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},

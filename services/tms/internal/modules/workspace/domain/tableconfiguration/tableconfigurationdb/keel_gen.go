@@ -68,7 +68,7 @@ var tableConfigurationsRef = keel.Ref{Table: &tableConfigurationsTable}
 
 // TableConfigurationsTable is the table of tableconfiguration.TableConfiguration.
 type TableConfigurationsTable struct {
-	keel.Handle[tableconfiguration.TableConfiguration]
+	keel.Handle[*tableconfiguration.TableConfiguration]
 	ID             keelkinds.PulidIDCol
 	OrganizationID keelkinds.PulidIDCol
 	BusinessUnitID keelkinds.PulidIDCol
@@ -89,7 +89,7 @@ type TableConfigurationsTable struct {
 
 // TableConfigurations references the table_configurations table.
 var TableConfigurations = &TableConfigurationsTable{
-	Handle:         keel.Handle[tableconfiguration.TableConfiguration]{Ref: &tableConfigurationsRef},
+	Handle:         keel.Handle[*tableconfiguration.TableConfiguration]{Ref: &tableConfigurationsRef},
 	ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &tableConfigurationsRef, Index: 0}}},
 	OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &tableConfigurationsRef, Index: 1}}},
 	BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &tableConfigurationsRef, Index: 2}}},
@@ -111,7 +111,7 @@ var TableConfigurations = &TableConfigurationsTable{
 // BuildTableConfigurations builds the handle of table_configurations for ref. Generated relation and alias methods call it.
 func BuildTableConfigurations(r *keel.Ref) *TableConfigurationsTable {
 	return &TableConfigurationsTable{
-		Handle:         keel.Handle[tableconfiguration.TableConfiguration]{Ref: r},
+		Handle:         keel.Handle[*tableconfiguration.TableConfiguration]{Ref: r},
 		ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},

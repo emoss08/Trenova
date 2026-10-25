@@ -61,7 +61,7 @@ var serviceTypesRef = keel.Ref{Table: &serviceTypesTable}
 
 // ServiceTypesTable is the table of servicetype.ServiceType.
 type ServiceTypesTable struct {
-	keel.Handle[servicetype.ServiceType]
+	keel.Handle[*servicetype.ServiceType]
 	ID             keelkinds.PulidIDCol
 	BusinessUnitID keelkinds.PulidIDCol
 	OrganizationID keelkinds.PulidIDCol
@@ -78,7 +78,7 @@ type ServiceTypesTable struct {
 
 // ServiceTypes references the service_types table.
 var ServiceTypes = &ServiceTypesTable{
-	Handle:         keel.Handle[servicetype.ServiceType]{Ref: &serviceTypesRef},
+	Handle:         keel.Handle[*servicetype.ServiceType]{Ref: &serviceTypesRef},
 	ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &serviceTypesRef, Index: 0}}},
 	BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &serviceTypesRef, Index: 1}}},
 	OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &serviceTypesRef, Index: 2}}},
@@ -96,7 +96,7 @@ var ServiceTypes = &ServiceTypesTable{
 // BuildServiceTypes builds the handle of service_types for ref. Generated relation and alias methods call it.
 func BuildServiceTypes(r *keel.Ref) *ServiceTypesTable {
 	return &ServiceTypesTable{
-		Handle:         keel.Handle[servicetype.ServiceType]{Ref: r},
+		Handle:         keel.Handle[*servicetype.ServiceType]{Ref: r},
 		ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},

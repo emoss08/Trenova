@@ -65,7 +65,7 @@ var projectionsRef = keel.Ref{Table: &projectionsTable}
 
 // ProjectionsTable is the table of documentsearchprojection.Projection.
 type ProjectionsTable struct {
-	keel.Handle[documentsearchprojection.Projection]
+	keel.Handle[*documentsearchprojection.Projection]
 	ID                  keelkinds.PulidIDCol
 	OrganizationID      keelkinds.PulidIDCol
 	BusinessUnitID      keelkinds.PulidIDCol
@@ -86,7 +86,7 @@ type ProjectionsTable struct {
 
 // Projections references the document_search_projections table.
 var Projections = &ProjectionsTable{
-	Handle:              keel.Handle[documentsearchprojection.Projection]{Ref: &projectionsRef},
+	Handle:              keel.Handle[*documentsearchprojection.Projection]{Ref: &projectionsRef},
 	ID:                  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &projectionsRef, Index: 0}}},
 	OrganizationID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &projectionsRef, Index: 1}}},
 	BusinessUnitID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &projectionsRef, Index: 2}}},
@@ -108,7 +108,7 @@ var Projections = &ProjectionsTable{
 // BuildProjections builds the handle of document_search_projections for ref. Generated relation and alias methods call it.
 func BuildProjections(r *keel.Ref) *ProjectionsTable {
 	return &ProjectionsTable{
-		Handle:              keel.Handle[documentsearchprojection.Projection]{Ref: r},
+		Handle:              keel.Handle[*documentsearchprojection.Projection]{Ref: r},
 		ID:                  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		OrganizationID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		BusinessUnitID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},

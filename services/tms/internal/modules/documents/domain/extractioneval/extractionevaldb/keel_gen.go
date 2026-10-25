@@ -58,7 +58,7 @@ var casePagesesRef = keel.Ref{Table: &casePagesesTable}
 
 // CasePagesesTable is the table of extractioneval.CasePages.
 type CasePagesesTable struct {
-	keel.Handle[extractioneval.CasePages]
+	keel.Handle[*extractioneval.CasePages]
 	ID               keelkinds.PulidIDCol
 	BusinessUnitID   keelkinds.PulidIDCol
 	OrganizationID   keelkinds.PulidIDCol
@@ -75,7 +75,7 @@ type CasePagesesTable struct {
 
 // CasePageses references the extraction_eval_case_pages table.
 var CasePageses = &CasePagesesTable{
-	Handle:           keel.Handle[extractioneval.CasePages]{Ref: &casePagesesRef},
+	Handle:           keel.Handle[*extractioneval.CasePages]{Ref: &casePagesesRef},
 	ID:               keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &casePagesesRef, Index: 0}}},
 	BusinessUnitID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &casePagesesRef, Index: 1}}},
 	OrganizationID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &casePagesesRef, Index: 2}}},
@@ -93,7 +93,7 @@ var CasePageses = &CasePagesesTable{
 // BuildCasePageses builds the handle of extraction_eval_case_pages for ref. Generated relation and alias methods call it.
 func BuildCasePageses(r *keel.Ref) *CasePagesesTable {
 	return &CasePagesesTable{
-		Handle:           keel.Handle[extractioneval.CasePages]{Ref: r},
+		Handle:           keel.Handle[*extractioneval.CasePages]{Ref: r},
 		ID:               keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -250,7 +250,7 @@ var extractionCasesRef = keel.Ref{Table: &extractionCasesTable}
 
 // ExtractionCasesTable is the table of extractioneval.ExtractionCase.
 type ExtractionCasesTable struct {
-	keel.Handle[extractioneval.ExtractionCase]
+	keel.Handle[*extractioneval.ExtractionCase]
 	ID                  keelkinds.PulidIDCol
 	BusinessUnitID      keelkinds.PulidIDCol
 	OrganizationID      keelkinds.PulidIDCol
@@ -276,7 +276,7 @@ type ExtractionCasesTable struct {
 
 // ExtractionCases references the extraction_eval_cases table.
 var ExtractionCases = &ExtractionCasesTable{
-	Handle:              keel.Handle[extractioneval.ExtractionCase]{Ref: &extractionCasesRef},
+	Handle:              keel.Handle[*extractioneval.ExtractionCase]{Ref: &extractionCasesRef},
 	ID:                  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &extractionCasesRef, Index: 0}}},
 	BusinessUnitID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &extractionCasesRef, Index: 1}}},
 	OrganizationID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &extractionCasesRef, Index: 2}}},
@@ -303,7 +303,7 @@ var ExtractionCases = &ExtractionCasesTable{
 // BuildExtractionCases builds the handle of extraction_eval_cases for ref. Generated relation and alias methods call it.
 func BuildExtractionCases(r *keel.Ref) *ExtractionCasesTable {
 	return &ExtractionCasesTable{
-		Handle:              keel.Handle[extractioneval.ExtractionCase]{Ref: r},
+		Handle:              keel.Handle[*extractioneval.ExtractionCase]{Ref: r},
 		ID:                  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -535,7 +535,7 @@ var extractionResultsRef = keel.Ref{Table: &extractionResultsTable}
 
 // ExtractionResultsTable is the table of extractioneval.ExtractionResult.
 type ExtractionResultsTable struct {
-	keel.Handle[extractioneval.ExtractionResult]
+	keel.Handle[*extractioneval.ExtractionResult]
 	ID               keelkinds.PulidIDCol
 	BusinessUnitID   keelkinds.PulidIDCol
 	OrganizationID   keelkinds.PulidIDCol
@@ -569,7 +569,7 @@ type ExtractionResultsTable struct {
 
 // ExtractionResults references the extraction_eval_results table.
 var ExtractionResults = &ExtractionResultsTable{
-	Handle:           keel.Handle[extractioneval.ExtractionResult]{Ref: &extractionResultsRef},
+	Handle:           keel.Handle[*extractioneval.ExtractionResult]{Ref: &extractionResultsRef},
 	ID:               keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &extractionResultsRef, Index: 0}}},
 	BusinessUnitID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &extractionResultsRef, Index: 1}}},
 	OrganizationID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &extractionResultsRef, Index: 2}}},
@@ -604,7 +604,7 @@ var ExtractionResults = &ExtractionResultsTable{
 // BuildExtractionResults builds the handle of extraction_eval_results for ref. Generated relation and alias methods call it.
 func BuildExtractionResults(r *keel.Ref) *ExtractionResultsTable {
 	return &ExtractionResultsTable{
-		Handle:           keel.Handle[extractioneval.ExtractionResult]{Ref: r},
+		Handle:           keel.Handle[*extractioneval.ExtractionResult]{Ref: r},
 		ID:               keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -881,7 +881,7 @@ var extractionRunsRef = keel.Ref{Table: &extractionRunsTable}
 
 // ExtractionRunsTable is the table of extractioneval.ExtractionRun.
 type ExtractionRunsTable struct {
-	keel.Handle[extractioneval.ExtractionRun]
+	keel.Handle[*extractioneval.ExtractionRun]
 	ID               keelkinds.PulidIDCol
 	BusinessUnitID   keelkinds.PulidIDCol
 	OrganizationID   keelkinds.PulidIDCol
@@ -921,7 +921,7 @@ type ExtractionRunsTable struct {
 
 // ExtractionRuns references the extraction_eval_runs table.
 var ExtractionRuns = &ExtractionRunsTable{
-	Handle:           keel.Handle[extractioneval.ExtractionRun]{Ref: &extractionRunsRef},
+	Handle:           keel.Handle[*extractioneval.ExtractionRun]{Ref: &extractionRunsRef},
 	ID:               keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &extractionRunsRef, Index: 0}}},
 	BusinessUnitID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &extractionRunsRef, Index: 1}}},
 	OrganizationID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &extractionRunsRef, Index: 2}}},
@@ -962,7 +962,7 @@ var ExtractionRuns = &ExtractionRunsTable{
 // BuildExtractionRuns builds the handle of extraction_eval_runs for ref. Generated relation and alias methods call it.
 func BuildExtractionRuns(r *keel.Ref) *ExtractionRunsTable {
 	return &ExtractionRunsTable{
-		Handle:           keel.Handle[extractioneval.ExtractionRun]{Ref: r},
+		Handle:           keel.Handle[*extractioneval.ExtractionRun]{Ref: r},
 		ID:               keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},

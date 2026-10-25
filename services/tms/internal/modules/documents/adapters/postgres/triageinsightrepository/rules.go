@@ -146,13 +146,13 @@ func manualOutcomesQuery(
 			keel.DynCase().
 				When(
 					keel.DynFunc("bool_or", act.Kind.Eq(triage.ActivityIgnored)),
-					keel.DynLit(string(triage.ActivityIgnored)).Cast(keel.TypeString),
+					keel.DynLit(string(triage.ActivityIgnored)),
 				).
 				When(
 					keel.DynFunc("bool_or", act.Kind.Eq(triage.ActivityFiled)),
-					keel.DynLit(string(triage.ActivityFiled)).Cast(keel.TypeString),
+					keel.DynLit(string(triage.ActivityFiled)),
 				).
-				Else(keel.DynLit(string(triage.ActivityHandled)).Cast(keel.TypeString)),
+				Else(keel.DynLit(string(triage.ActivityHandled))),
 		).
 		Where(
 			act.ActorKind.Eq(triage.ActorPerson),

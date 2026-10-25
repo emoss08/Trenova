@@ -75,7 +75,7 @@ var rateImportBatchesRef = keel.Ref{Table: &rateImportBatchesTable}
 
 // RateImportBatchesTable is the table of rateimport.RateImportBatch.
 type RateImportBatchesTable struct {
-	keel.Handle[rateimport.RateImportBatch]
+	keel.Handle[*rateimport.RateImportBatch]
 	ID              keelkinds.PulidIDCol
 	BusinessUnitID  keelkinds.PulidIDCol
 	OrganizationID  keelkinds.PulidIDCol
@@ -101,7 +101,7 @@ type RateImportBatchesTable struct {
 
 // RateImportBatches references the rate_import_batches table.
 var RateImportBatches = &RateImportBatchesTable{
-	Handle:          keel.Handle[rateimport.RateImportBatch]{Ref: &rateImportBatchesRef},
+	Handle:          keel.Handle[*rateimport.RateImportBatch]{Ref: &rateImportBatchesRef},
 	ID:              keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &rateImportBatchesRef, Index: 0}}},
 	BusinessUnitID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &rateImportBatchesRef, Index: 1}}},
 	OrganizationID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &rateImportBatchesRef, Index: 2}}},
@@ -128,7 +128,7 @@ var RateImportBatches = &RateImportBatchesTable{
 // BuildRateImportBatches builds the handle of rate_import_batches for ref. Generated relation and alias methods call it.
 func BuildRateImportBatches(r *keel.Ref) *RateImportBatchesTable {
 	return &RateImportBatchesTable{
-		Handle:          keel.Handle[rateimport.RateImportBatch]{Ref: r},
+		Handle:          keel.Handle[*rateimport.RateImportBatch]{Ref: r},
 		ID:              keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -365,7 +365,7 @@ var rateImportRowsRef = keel.Ref{Table: &rateImportRowsTable}
 
 // RateImportRowsTable is the table of rateimport.RateImportRow.
 type RateImportRowsTable struct {
-	keel.Handle[rateimport.RateImportRow]
+	keel.Handle[*rateimport.RateImportRow]
 	ID                keelkinds.PulidIDCol
 	BusinessUnitID    keelkinds.PulidIDCol
 	OrganizationID    keelkinds.PulidIDCol
@@ -380,7 +380,7 @@ type RateImportRowsTable struct {
 
 // RateImportRows references the rate_import_rows table.
 var RateImportRows = &RateImportRowsTable{
-	Handle:            keel.Handle[rateimport.RateImportRow]{Ref: &rateImportRowsRef},
+	Handle:            keel.Handle[*rateimport.RateImportRow]{Ref: &rateImportRowsRef},
 	ID:                keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &rateImportRowsRef, Index: 0}}},
 	BusinessUnitID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &rateImportRowsRef, Index: 1}}},
 	OrganizationID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &rateImportRowsRef, Index: 2}}},
@@ -396,7 +396,7 @@ var RateImportRows = &RateImportRowsTable{
 // BuildRateImportRows builds the handle of rate_import_rows for ref. Generated relation and alias methods call it.
 func BuildRateImportRows(r *keel.Ref) *RateImportRowsTable {
 	return &RateImportRowsTable{
-		Handle:            keel.Handle[rateimport.RateImportRow]{Ref: r},
+		Handle:            keel.Handle[*rateimport.RateImportRow]{Ref: r},
 		ID:                keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},

@@ -38,7 +38,7 @@ func (r *repository) ListWorkerOnTimeStats(
 					countIf(keel.DynOf(st.ActualArrival).Lte(
 						keel.DynOf(st.ScheduledWindowEnd).Coalesce(st.ScheduledWindowStart),
 					)),
-					keel.DynLit(0).Cast(keel.TypeInt64),
+					keel.DynLit(0),
 				).
 				Where(
 					asn.PrimaryWorkerID.In(req.WorkerIDs...),
@@ -58,8 +58,8 @@ func (r *repository) ListWorkerOnTimeStats(
 				Group(fa.PrimaryWorkerID).
 				Pick(
 					fa.PrimaryWorkerID,
-					keel.DynLit(0).Cast(keel.TypeInt64),
-					keel.DynLit(0).Cast(keel.TypeInt64),
+					keel.DynLit(0),
+					keel.DynLit(0),
 					keel.Count(),
 				).
 				Where(

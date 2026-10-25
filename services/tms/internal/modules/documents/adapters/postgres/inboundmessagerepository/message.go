@@ -415,8 +415,8 @@ func settledCensusQuery(
 			keel.DynOf(m.Classification).Coalesce(""),
 			m.MailboxID,
 			keel.DynLit(""),
-			keel.DynLit(false).Cast(keel.TypeBool),
-			keel.DynLit(false).Cast(keel.TypeBool),
+			keel.DynLit(false),
+			keel.DynLit(false),
 			keel.Count(),
 		).
 		Group(m.Status, m.Classification, m.MailboxID)

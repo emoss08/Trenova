@@ -67,7 +67,7 @@ var fuelIndexesRef = keel.Ref{Table: &fuelIndexesTable}
 
 // FuelIndexesTable is the table of fuelsurcharge.FuelIndex.
 type FuelIndexesTable struct {
-	keel.Handle[fuelsurcharge.FuelIndex]
+	keel.Handle[*fuelsurcharge.FuelIndex]
 	ID             keelkinds.PulidIDCol
 	BusinessUnitID keelkinds.PulidIDCol
 	OrganizationID keelkinds.PulidIDCol
@@ -89,7 +89,7 @@ type FuelIndexesTable struct {
 
 // FuelIndexes references the fuel_indices table.
 var FuelIndexes = &FuelIndexesTable{
-	Handle:         keel.Handle[fuelsurcharge.FuelIndex]{Ref: &fuelIndexesRef},
+	Handle:         keel.Handle[*fuelsurcharge.FuelIndex]{Ref: &fuelIndexesRef},
 	ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &fuelIndexesRef, Index: 0}}},
 	BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &fuelIndexesRef, Index: 1}}},
 	OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &fuelIndexesRef, Index: 2}}},
@@ -112,7 +112,7 @@ var FuelIndexes = &FuelIndexesTable{
 // BuildFuelIndexes builds the handle of fuel_indices for ref. Generated relation and alias methods call it.
 func BuildFuelIndexes(r *keel.Ref) *FuelIndexesTable {
 	return &FuelIndexesTable{
-		Handle:         keel.Handle[fuelsurcharge.FuelIndex]{Ref: r},
+		Handle:         keel.Handle[*fuelsurcharge.FuelIndex]{Ref: r},
 		ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -301,7 +301,7 @@ var fuelIndexPricesRef = keel.Ref{Table: &fuelIndexPricesTable}
 
 // FuelIndexPricesTable is the table of fuelsurcharge.FuelIndexPrice.
 type FuelIndexPricesTable struct {
-	keel.Handle[fuelsurcharge.FuelIndexPrice]
+	keel.Handle[*fuelsurcharge.FuelIndexPrice]
 	ID             keelkinds.PulidIDCol
 	BusinessUnitID keelkinds.PulidIDCol
 	OrganizationID keelkinds.PulidIDCol
@@ -317,7 +317,7 @@ type FuelIndexPricesTable struct {
 
 // FuelIndexPrices references the fuel_index_prices table.
 var FuelIndexPrices = &FuelIndexPricesTable{
-	Handle:         keel.Handle[fuelsurcharge.FuelIndexPrice]{Ref: &fuelIndexPricesRef},
+	Handle:         keel.Handle[*fuelsurcharge.FuelIndexPrice]{Ref: &fuelIndexPricesRef},
 	ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &fuelIndexPricesRef, Index: 0}}},
 	BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &fuelIndexPricesRef, Index: 1}}},
 	OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &fuelIndexPricesRef, Index: 2}}},
@@ -334,7 +334,7 @@ var FuelIndexPrices = &FuelIndexPricesTable{
 // BuildFuelIndexPrices builds the handle of fuel_index_prices for ref. Generated relation and alias methods call it.
 func BuildFuelIndexPrices(r *keel.Ref) *FuelIndexPricesTable {
 	return &FuelIndexPricesTable{
-		Handle:         keel.Handle[fuelsurcharge.FuelIndexPrice]{Ref: r},
+		Handle:         keel.Handle[*fuelsurcharge.FuelIndexPrice]{Ref: r},
 		ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -528,7 +528,7 @@ var fuelSurchargeProgramsRef = keel.Ref{Table: &fuelSurchargeProgramsTable}
 
 // FuelSurchargeProgramsTable is the table of fuelsurcharge.FuelSurchargeProgram.
 type FuelSurchargeProgramsTable struct {
-	keel.Handle[fuelsurcharge.FuelSurchargeProgram]
+	keel.Handle[*fuelsurcharge.FuelSurchargeProgram]
 	ID                   keelkinds.PulidIDCol
 	BusinessUnitID       keelkinds.PulidIDCol
 	OrganizationID       keelkinds.PulidIDCol
@@ -567,7 +567,7 @@ type FuelSurchargeProgramsTable struct {
 
 // FuelSurchargePrograms references the fuel_surcharge_programs table.
 var FuelSurchargePrograms = &FuelSurchargeProgramsTable{
-	Handle:               keel.Handle[fuelsurcharge.FuelSurchargeProgram]{Ref: &fuelSurchargeProgramsRef},
+	Handle:               keel.Handle[*fuelsurcharge.FuelSurchargeProgram]{Ref: &fuelSurchargeProgramsRef},
 	ID:                   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &fuelSurchargeProgramsRef, Index: 0}}},
 	BusinessUnitID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &fuelSurchargeProgramsRef, Index: 1}}},
 	OrganizationID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &fuelSurchargeProgramsRef, Index: 2}}},
@@ -607,7 +607,7 @@ var FuelSurchargePrograms = &FuelSurchargeProgramsTable{
 // BuildFuelSurchargePrograms builds the handle of fuel_surcharge_programs for ref. Generated relation and alias methods call it.
 func BuildFuelSurchargePrograms(r *keel.Ref) *FuelSurchargeProgramsTable {
 	return &FuelSurchargeProgramsTable{
-		Handle:               keel.Handle[fuelsurcharge.FuelSurchargeProgram]{Ref: r},
+		Handle:               keel.Handle[*fuelsurcharge.FuelSurchargeProgram]{Ref: r},
 		ID:                   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -914,7 +914,7 @@ var fuelSurchargeTableRowsRef = keel.Ref{Table: &fuelSurchargeTableRowsTable}
 
 // FuelSurchargeTableRowsTable is the table of fuelsurcharge.FuelSurchargeTableRow.
 type FuelSurchargeTableRowsTable struct {
-	keel.Handle[fuelsurcharge.FuelSurchargeTableRow]
+	keel.Handle[*fuelsurcharge.FuelSurchargeTableRow]
 	ID                     keelkinds.PulidIDCol
 	BusinessUnitID         keelkinds.PulidIDCol
 	OrganizationID         keelkinds.PulidIDCol
@@ -929,7 +929,7 @@ type FuelSurchargeTableRowsTable struct {
 
 // FuelSurchargeTableRows references the fuel_surcharge_table_rows table.
 var FuelSurchargeTableRows = &FuelSurchargeTableRowsTable{
-	Handle:                 keel.Handle[fuelsurcharge.FuelSurchargeTableRow]{Ref: &fuelSurchargeTableRowsRef},
+	Handle:                 keel.Handle[*fuelsurcharge.FuelSurchargeTableRow]{Ref: &fuelSurchargeTableRowsRef},
 	ID:                     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &fuelSurchargeTableRowsRef, Index: 0}}},
 	BusinessUnitID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &fuelSurchargeTableRowsRef, Index: 1}}},
 	OrganizationID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &fuelSurchargeTableRowsRef, Index: 2}}},
@@ -945,7 +945,7 @@ var FuelSurchargeTableRows = &FuelSurchargeTableRowsTable{
 // BuildFuelSurchargeTableRows builds the handle of fuel_surcharge_table_rows for ref. Generated relation and alias methods call it.
 func BuildFuelSurchargeTableRows(r *keel.Ref) *FuelSurchargeTableRowsTable {
 	return &FuelSurchargeTableRowsTable{
-		Handle:                 keel.Handle[fuelsurcharge.FuelSurchargeTableRow]{Ref: r},
+		Handle:                 keel.Handle[*fuelsurcharge.FuelSurchargeTableRow]{Ref: r},
 		ID:                     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},

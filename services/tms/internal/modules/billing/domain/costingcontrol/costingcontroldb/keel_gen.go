@@ -70,7 +70,7 @@ var costCategoriesRef = keel.Ref{Table: &costCategoriesTable}
 
 // CostCategoriesTable is the table of costingcontrol.CostCategory.
 type CostCategoriesTable struct {
-	keel.Handle[costingcontrol.CostCategory]
+	keel.Handle[*costingcontrol.CostCategory]
 	ID                   keelkinds.PulidIDCol
 	BusinessUnitID       keelkinds.PulidIDCol
 	OrganizationID       keelkinds.PulidIDCol
@@ -90,7 +90,7 @@ type CostCategoriesTable struct {
 
 // CostCategories references the cost_categories table.
 var CostCategories = &CostCategoriesTable{
-	Handle:               keel.Handle[costingcontrol.CostCategory]{Ref: &costCategoriesRef},
+	Handle:               keel.Handle[*costingcontrol.CostCategory]{Ref: &costCategoriesRef},
 	ID:                   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &costCategoriesRef, Index: 0}}},
 	BusinessUnitID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &costCategoriesRef, Index: 1}}},
 	OrganizationID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &costCategoriesRef, Index: 2}}},
@@ -111,7 +111,7 @@ var CostCategories = &CostCategoriesTable{
 // BuildCostCategories builds the handle of cost_categories for ref. Generated relation and alias methods call it.
 func BuildCostCategories(r *keel.Ref) *CostCategoriesTable {
 	return &CostCategoriesTable{
-		Handle:               keel.Handle[costingcontrol.CostCategory]{Ref: r},
+		Handle:               keel.Handle[*costingcontrol.CostCategory]{Ref: r},
 		ID:                   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -282,7 +282,7 @@ var costCategoryGLAccountsRef = keel.Ref{Table: &costCategoryGLAccountsTable}
 
 // CostCategoryGLAccountsTable is the table of costingcontrol.CostCategoryGLAccount.
 type CostCategoryGLAccountsTable struct {
-	keel.Handle[costingcontrol.CostCategoryGLAccount]
+	keel.Handle[*costingcontrol.CostCategoryGLAccount]
 	ID             keelkinds.PulidIDCol
 	BusinessUnitID keelkinds.PulidIDCol
 	OrganizationID keelkinds.PulidIDCol
@@ -293,7 +293,7 @@ type CostCategoryGLAccountsTable struct {
 
 // CostCategoryGLAccounts references the cost_category_gl_accounts table.
 var CostCategoryGLAccounts = &CostCategoryGLAccountsTable{
-	Handle:         keel.Handle[costingcontrol.CostCategoryGLAccount]{Ref: &costCategoryGLAccountsRef},
+	Handle:         keel.Handle[*costingcontrol.CostCategoryGLAccount]{Ref: &costCategoryGLAccountsRef},
 	ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &costCategoryGLAccountsRef, Index: 0}}},
 	BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &costCategoryGLAccountsRef, Index: 1}}},
 	OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &costCategoryGLAccountsRef, Index: 2}}},
@@ -305,7 +305,7 @@ var CostCategoryGLAccounts = &CostCategoryGLAccountsTable{
 // BuildCostCategoryGLAccounts builds the handle of cost_category_gl_accounts for ref. Generated relation and alias methods call it.
 func BuildCostCategoryGLAccounts(r *keel.Ref) *CostCategoryGLAccountsTable {
 	return &CostCategoryGLAccountsTable{
-		Handle:         keel.Handle[costingcontrol.CostCategoryGLAccount]{Ref: r},
+		Handle:         keel.Handle[*costingcontrol.CostCategoryGLAccount]{Ref: r},
 		ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -439,7 +439,7 @@ var costingControlsRef = keel.Ref{Table: &costingControlsTable}
 
 // CostingControlsTable is the table of costingcontrol.CostingControl.
 type CostingControlsTable struct {
-	keel.Handle[costingcontrol.CostingControl]
+	keel.Handle[*costingcontrol.CostingControl]
 	ID                   keelkinds.PulidIDCol
 	BusinessUnitID       keelkinds.PulidIDCol
 	OrganizationID       keelkinds.PulidIDCol
@@ -458,7 +458,7 @@ type CostingControlsTable struct {
 
 // CostingControls references the costing_controls table.
 var CostingControls = &CostingControlsTable{
-	Handle:               keel.Handle[costingcontrol.CostingControl]{Ref: &costingControlsRef},
+	Handle:               keel.Handle[*costingcontrol.CostingControl]{Ref: &costingControlsRef},
 	ID:                   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &costingControlsRef, Index: 0}}},
 	BusinessUnitID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &costingControlsRef, Index: 1}}},
 	OrganizationID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &costingControlsRef, Index: 2}}},
@@ -478,7 +478,7 @@ var CostingControls = &CostingControlsTable{
 // BuildCostingControls builds the handle of costing_controls for ref. Generated relation and alias methods call it.
 func BuildCostingControls(r *keel.Ref) *CostingControlsTable {
 	return &CostingControlsTable{
-		Handle:               keel.Handle[costingcontrol.CostingControl]{Ref: r},
+		Handle:               keel.Handle[*costingcontrol.CostingControl]{Ref: r},
 		ID:                   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},

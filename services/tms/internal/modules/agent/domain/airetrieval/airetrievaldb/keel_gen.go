@@ -52,7 +52,7 @@ var catalogEmbeddingsRef = keel.Ref{Table: &catalogEmbeddingsTable}
 
 // CatalogEmbeddingsTable is the table of airetrieval.CatalogEmbedding.
 type CatalogEmbeddingsTable struct {
-	keel.Handle[airetrieval.CatalogEmbedding]
+	keel.Handle[*airetrieval.CatalogEmbedding]
 	ModelKey    keel.StringCol
 	Corpus      CatalogCorpusCol
 	ItemKey     keel.StringCol
@@ -64,7 +64,7 @@ type CatalogEmbeddingsTable struct {
 
 // CatalogEmbeddings references the ai_catalog_embeddings table.
 var CatalogEmbeddings = &CatalogEmbeddingsTable{
-	Handle:      keel.Handle[airetrieval.CatalogEmbedding]{Ref: &catalogEmbeddingsRef},
+	Handle:      keel.Handle[*airetrieval.CatalogEmbedding]{Ref: &catalogEmbeddingsRef},
 	ModelKey:    keel.StringCol{Col: keel.Col{Ref: &catalogEmbeddingsRef, Index: 0}},
 	Corpus:      CatalogCorpusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &catalogEmbeddingsRef, Index: 1}}},
 	ItemKey:     keel.StringCol{Col: keel.Col{Ref: &catalogEmbeddingsRef, Index: 2}},
@@ -77,7 +77,7 @@ var CatalogEmbeddings = &CatalogEmbeddingsTable{
 // BuildCatalogEmbeddings builds the handle of ai_catalog_embeddings for ref. Generated relation and alias methods call it.
 func BuildCatalogEmbeddings(r *keel.Ref) *CatalogEmbeddingsTable {
 	return &CatalogEmbeddingsTable{
-		Handle:      keel.Handle[airetrieval.CatalogEmbedding]{Ref: r},
+		Handle:      keel.Handle[*airetrieval.CatalogEmbedding]{Ref: r},
 		ModelKey:    keel.StringCol{Col: keel.Col{Ref: r, Index: 0}},
 		Corpus:      CatalogCorpusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		ItemKey:     keel.StringCol{Col: keel.Col{Ref: r, Index: 2}},
@@ -187,7 +187,7 @@ var embeddingsRef = keel.Ref{Table: &embeddingsTable}
 
 // EmbeddingsTable is the table of airetrieval.Embedding.
 type EmbeddingsTable struct {
-	keel.Handle[airetrieval.Embedding]
+	keel.Handle[*airetrieval.Embedding]
 	OrganizationID keelkinds.PulidIDCol
 	BusinessUnitID keelkinds.PulidIDCol
 	SourceType     SourceTypeCol
@@ -203,7 +203,7 @@ type EmbeddingsTable struct {
 
 // Embeddings references the ai_embeddings table.
 var Embeddings = &EmbeddingsTable{
-	Handle:         keel.Handle[airetrieval.Embedding]{Ref: &embeddingsRef},
+	Handle:         keel.Handle[*airetrieval.Embedding]{Ref: &embeddingsRef},
 	OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &embeddingsRef, Index: 0}}},
 	BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &embeddingsRef, Index: 1}}},
 	SourceType:     SourceTypeCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &embeddingsRef, Index: 2}}},
@@ -220,7 +220,7 @@ var Embeddings = &EmbeddingsTable{
 // BuildEmbeddings builds the handle of ai_embeddings for ref. Generated relation and alias methods call it.
 func BuildEmbeddings(r *keel.Ref) *EmbeddingsTable {
 	return &EmbeddingsTable{
-		Handle:         keel.Handle[airetrieval.Embedding]{Ref: r},
+		Handle:         keel.Handle[*airetrieval.Embedding]{Ref: r},
 		OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		SourceType:     SourceTypeCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -356,7 +356,7 @@ var indexEntriesRef = keel.Ref{Table: &indexEntriesTable}
 
 // IndexEntriesTable is the table of airetrieval.IndexEntry.
 type IndexEntriesTable struct {
-	keel.Handle[airetrieval.IndexEntry]
+	keel.Handle[*airetrieval.IndexEntry]
 	OrganizationID keelkinds.PulidIDCol
 	BusinessUnitID keelkinds.PulidIDCol
 	SourceType     SourceTypeCol
@@ -377,7 +377,7 @@ type IndexEntriesTable struct {
 
 // IndexEntries references the ai_index_entries table.
 var IndexEntries = &IndexEntriesTable{
-	Handle:         keel.Handle[airetrieval.IndexEntry]{Ref: &indexEntriesRef},
+	Handle:         keel.Handle[*airetrieval.IndexEntry]{Ref: &indexEntriesRef},
 	OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &indexEntriesRef, Index: 0}}},
 	BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &indexEntriesRef, Index: 1}}},
 	SourceType:     SourceTypeCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &indexEntriesRef, Index: 2}}},
@@ -399,7 +399,7 @@ var IndexEntries = &IndexEntriesTable{
 // BuildIndexEntries builds the handle of ai_index_entries for ref. Generated relation and alias methods call it.
 func BuildIndexEntries(r *keel.Ref) *IndexEntriesTable {
 	return &IndexEntriesTable{
-		Handle:         keel.Handle[airetrieval.IndexEntry]{Ref: r},
+		Handle:         keel.Handle[*airetrieval.IndexEntry]{Ref: r},
 		OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		SourceType:     SourceTypeCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -579,7 +579,7 @@ var settingsesRef = keel.Ref{Table: &settingsesTable}
 
 // SettingsesTable is the table of airetrieval.Settings.
 type SettingsesTable struct {
-	keel.Handle[airetrieval.Settings]
+	keel.Handle[*airetrieval.Settings]
 	ID                       keelkinds.PulidIDCol
 	BusinessUnitID           keelkinds.PulidIDCol
 	OrganizationID           keelkinds.PulidIDCol
@@ -601,7 +601,7 @@ type SettingsesTable struct {
 
 // Settingses references the ai_retrieval_settings table.
 var Settingses = &SettingsesTable{
-	Handle:                   keel.Handle[airetrieval.Settings]{Ref: &settingsesRef},
+	Handle:                   keel.Handle[*airetrieval.Settings]{Ref: &settingsesRef},
 	ID:                       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &settingsesRef, Index: 0}}},
 	BusinessUnitID:           keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &settingsesRef, Index: 1}}},
 	OrganizationID:           keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &settingsesRef, Index: 2}}},
@@ -624,7 +624,7 @@ var Settingses = &SettingsesTable{
 // BuildSettingses builds the handle of ai_retrieval_settings for ref. Generated relation and alias methods call it.
 func BuildSettingses(r *keel.Ref) *SettingsesTable {
 	return &SettingsesTable{
-		Handle:                   keel.Handle[airetrieval.Settings]{Ref: r},
+		Handle:                   keel.Handle[*airetrieval.Settings]{Ref: r},
 		ID:                       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID:           keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID:           keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},

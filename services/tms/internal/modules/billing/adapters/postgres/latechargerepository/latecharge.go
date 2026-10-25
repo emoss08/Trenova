@@ -8,16 +8,17 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/billing/adapters/postgres/receivablesql"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice/invoicedb"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/latecharge"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/latecharge/latechargedb"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/latechargeports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant/tenantdb"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/customer/customerdb"
 	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/emoss08/trenova/shared/sliceutils"
-	"github.com/jackc/pgx/v5"
 	"github.com/shopspring/decimal"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
@@ -57,81 +58,47 @@ type candidateRecord struct {
 	AssessedPeriods  []int64
 }
 
-const candidatesSQL = `
-	SELECT
-		cus.id AS customer_id,
-		cus.name AS customer_name,
-		inv.id AS invoice_id,
-		inv.number AS invoice_number,
-		inv.currency_code,
-		inv.due_date,
-		cbp.grace_period_days,
-		cbp.late_charge_rate AS rate_percent,
-		(inv.total_amount_minor - inv.applied_amount_minor) AS open_balance_minor,
-		COALESCE((
-			SELECT array_agg(lca.period_index ORDER BY lca.period_index)
-			FROM late_charge_assessments lca
-			WHERE lca.source_invoice_id = inv.id
-			  AND lca.organization_id = inv.organization_id
-			  AND lca.business_unit_id = inv.business_unit_id
-		), '{}'::INT[]) AS assessed_periods
-	FROM invoices inv
-	JOIN customers cus
-	  ON cus.id = inv.customer_id
-	 AND cus.organization_id = inv.organization_id
-	 AND cus.business_unit_id = inv.business_unit_id
-	JOIN customer_billing_profiles cbp
-	  ON cbp.customer_id = cus.id
-	 AND cbp.organization_id = cus.organization_id
-	 AND cbp.business_unit_id = cus.business_unit_id
-	WHERE inv.organization_id = $1
-	  AND inv.business_unit_id = $2
-	  AND ` + receivablesql.OpenInvoice + `
-	  AND inv.due_date IS NOT NULL
-	  AND inv.due_date + (cbp.grace_period_days::BIGINT * 86400) <= $3
-	  AND cbp.apply_late_charges = TRUE
-	  AND cbp.late_charge_rate IS NOT NULL
-	  AND cbp.late_charge_rate > 0
-	  AND inv.dispute_status <> 'Disputed'
-	  AND COALESCE(inv.memo_kind, '') <> 'LateCharge'
-	  AND NOT EXISTS (
-		SELECT 1
-		FROM invoice_disputes idsp
-		WHERE idsp.invoice_id = inv.id
-		  AND idsp.organization_id = inv.organization_id
-		  AND idsp.business_unit_id = inv.business_unit_id
-		  AND idsp.status = 'Open'
-	  )
-	  AND (COALESCE(cardinality($4::TEXT[]), 0) = 0 OR inv.customer_id = ANY($4::TEXT[]))`
+func candidatesQuery(asOf int64, customerIDs []pulid.ID) *keel.Query[invoice.Invoice] {
+	inv := invoicedb.Invoices
+	cus := customerdb.Customers
+	cbp := customerdb.CustomerBillingProfiles
+	dispute := invoicedb.InvoiceDisputes
+	graceEnds := keel.DynOf(inv.DueDate).
+		Add(keel.DynOf(cbp.GracePeriodDays).Cast(keel.TypeInt64).Mul(receivablesql.SecondsPerDay))
 
-const candidateCustomersSQL = `
-	SELECT DISTINCT candidate.customer_id
-	FROM (` + candidatesSQL + `
-	) AS candidate
-	WHERE candidate.customer_id > $5
-	ORDER BY candidate.customer_id ASC
-	LIMIT $6`
-
-const listCandidatesSQL = candidatesSQL + `
-	ORDER BY cus.name ASC, inv.due_date ASC, inv.number ASC`
+	return inv.
+		Join(cus, cus.ID.EqCol(inv.CustomerID)).
+		Join(cbp, cbp.CustomerID.EqCol(cus.ID)).
+		Where(
+			receivablesql.Open(inv),
+			inv.DueDate.IsNotNull(),
+			graceEnds.Lte(asOf),
+			cbp.ApplyLateCharges.Eq(true),
+			cbp.LateChargeRate.IsNotNull(),
+			keel.DynOf(cbp.LateChargeRate).Gt(keel.DynConst(0)),
+			inv.DisputeStatus.Ne(invoice.DisputeStatusDisputed),
+			inv.MemoKind.Ne(invoice.MemoKindLateCharge),
+			keel.NotExists(dispute.Where(
+				dispute.InvoiceID.EqCol(inv.ID),
+				dispute.Status.Eq(invoice.DisputeCaseStatusOpen),
+			)),
+			keel.When(len(customerIDs) > 0, inv.CustomerID.In(customerIDs...)),
+		)
+}
 
 func (r *repository) ListCandidateCustomers(
 	ctx context.Context,
 	req *latechargeports.ListLateChargeCustomersRequest,
 ) ([]pulid.ID, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]pulid.ID, error) {
-		ids, err := keel.QueryAll(
-			ctx,
-			r.db.Keel(ctx),
-			pgx.RowTo[pulid.ID],
-			candidateCustomersSQL,
-			req.TenantInfo.OrgID.String(),
-			req.TenantInfo.BuID.String(),
-			req.AsOfDate,
-			sliceutils.Strings(req.CustomerIDs),
-			req.AfterCustomerID.String(),
-			req.Limit,
-		)
+		inv := invoicedb.Invoices
+		customers := candidatesQuery(req.AsOfDate, req.CustomerIDs).
+			Pick(inv.CustomerID).
+			Where(inv.CustomerID.Gt(req.AfterCustomerID)).
+			Group(inv.CustomerID).
+			Order(inv.CustomerID.Asc()).
+			Limit(req.Limit)
+		ids, err := keel.Into[pulid.ID](ctx, r.db.Keel(ctx), customers)
 		if err != nil {
 			return nil, fmt.Errorf("list late charge customers: %w", err)
 		}
@@ -148,16 +115,30 @@ func (r *repository) ListCandidates(
 		ctx,
 		r.db,
 		func(ctx context.Context) ([]*latechargeports.LateChargeCandidate, error) {
-			records, err := keel.QueryAll(
-				ctx,
-				r.db.Keel(ctx),
-				pgx.RowToAddrOfStructByName[candidateRecord],
-				listCandidatesSQL,
-				req.TenantInfo.OrgID.String(),
-				req.TenantInfo.BuID.String(),
+			inv := invoicedb.Invoices
+			cus := customerdb.Customers
+			cbp := customerdb.CustomerBillingProfiles
+			lca := latechargedb.LateChargeAssessments
+			assessed := keel.Scalar(lca.
+				Pick(keel.ArrayAgg(lca.PeriodIndex).OrderBy(lca.PeriodIndex.Asc())).
+				Where(lca.SourceInvoiceID.EqCol(inv.ID)))
+			records, err := keel.Into[candidateRecord](ctx, r.db.Keel(ctx), candidatesQuery(
 				req.AsOfDate,
-				sliceutils.Strings(req.CustomerIDs),
-			)
+				req.CustomerIDs,
+			).
+				Pick(
+					cus.ID,
+					cus.Name,
+					inv.ID,
+					inv.Number,
+					inv.CurrencyCode,
+					inv.DueDate,
+					cbp.GracePeriodDays,
+					cbp.LateChargeRate,
+					receivablesql.OpenMinor(inv),
+					keel.DynOf(assessed).Coalesce([]int64{}),
+				).
+				Order(cus.Name.Asc(), inv.DueDate.Asc(), inv.Number.Asc()))
 			if err != nil {
 				return nil, fmt.Errorf("list late charge candidates: %w", err)
 			}

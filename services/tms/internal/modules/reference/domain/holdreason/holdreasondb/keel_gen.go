@@ -66,7 +66,7 @@ var holdReasonsRef = keel.Ref{Table: &holdReasonsTable}
 
 // HoldReasonsTable is the table of holdreason.HoldReason.
 type HoldReasonsTable struct {
-	keel.Handle[holdreason.HoldReason]
+	keel.Handle[*holdreason.HoldReason]
 	ID                       keelkinds.PulidIDCol
 	BusinessUnitID           keelkinds.PulidIDCol
 	OrganizationID           keelkinds.PulidIDCol
@@ -90,7 +90,7 @@ type HoldReasonsTable struct {
 
 // HoldReasons references the hold_reasons table.
 var HoldReasons = &HoldReasonsTable{
-	Handle:                   keel.Handle[holdreason.HoldReason]{Ref: &holdReasonsRef},
+	Handle:                   keel.Handle[*holdreason.HoldReason]{Ref: &holdReasonsRef},
 	ID:                       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &holdReasonsRef, Index: 0}}},
 	BusinessUnitID:           keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &holdReasonsRef, Index: 1}}},
 	OrganizationID:           keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &holdReasonsRef, Index: 2}}},
@@ -115,7 +115,7 @@ var HoldReasons = &HoldReasonsTable{
 // BuildHoldReasons builds the handle of hold_reasons for ref. Generated relation and alias methods call it.
 func BuildHoldReasons(r *keel.Ref) *HoldReasonsTable {
 	return &HoldReasonsTable{
-		Handle:                   keel.Handle[holdreason.HoldReason]{Ref: r},
+		Handle:                   keel.Handle[*holdreason.HoldReason]{Ref: r},
 		ID:                       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID:           keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID:           keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},

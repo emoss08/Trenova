@@ -77,7 +77,7 @@ var gLAccountsRef = keel.Ref{Table: &gLAccountsTable}
 
 // GLAccountsTable is the table of glaccount.GLAccount.
 type GLAccountsTable struct {
-	keel.Handle[glaccount.GLAccount]
+	keel.Handle[*glaccount.GLAccount]
 	ID             keelkinds.PulidIDCol
 	BusinessUnitID keelkinds.PulidIDCol
 	OrganizationID keelkinds.PulidIDCol
@@ -102,7 +102,7 @@ type GLAccountsTable struct {
 
 // GLAccounts references the gl_accounts table.
 var GLAccounts = &GLAccountsTable{
-	Handle:         keel.Handle[glaccount.GLAccount]{Ref: &gLAccountsRef},
+	Handle:         keel.Handle[*glaccount.GLAccount]{Ref: &gLAccountsRef},
 	ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &gLAccountsRef, Index: 0}}},
 	BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &gLAccountsRef, Index: 1}}},
 	OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &gLAccountsRef, Index: 2}}},
@@ -128,7 +128,7 @@ var GLAccounts = &GLAccountsTable{
 // BuildGLAccounts builds the handle of gl_accounts for ref. Generated relation and alias methods call it.
 func BuildGLAccounts(r *keel.Ref) *GLAccountsTable {
 	return &GLAccountsTable{
-		Handle:         keel.Handle[glaccount.GLAccount]{Ref: r},
+		Handle:         keel.Handle[*glaccount.GLAccount]{Ref: r},
 		ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},

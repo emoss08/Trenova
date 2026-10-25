@@ -98,7 +98,7 @@ var dispatchControlsRef = keel.Ref{Table: &dispatchControlsTable}
 
 // DispatchControlsTable is the table of dispatchcontrol.DispatchControl.
 type DispatchControlsTable struct {
-	keel.Handle[dispatchcontrol.DispatchControl]
+	keel.Handle[*dispatchcontrol.DispatchControl]
 	ID                                   keelkinds.PulidIDCol
 	BusinessUnitID                       keelkinds.PulidIDCol
 	OrganizationID                       keelkinds.PulidIDCol
@@ -155,7 +155,7 @@ type DispatchControlsTable struct {
 
 // DispatchControls references the dispatch_controls table.
 var DispatchControls = &DispatchControlsTable{
-	Handle:                               keel.Handle[dispatchcontrol.DispatchControl]{Ref: &dispatchControlsRef},
+	Handle:                               keel.Handle[*dispatchcontrol.DispatchControl]{Ref: &dispatchControlsRef},
 	ID:                                   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &dispatchControlsRef, Index: 0}}},
 	BusinessUnitID:                       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &dispatchControlsRef, Index: 1}}},
 	OrganizationID:                       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &dispatchControlsRef, Index: 2}}},
@@ -213,7 +213,7 @@ var DispatchControls = &DispatchControlsTable{
 // BuildDispatchControls builds the handle of dispatch_controls for ref. Generated relation and alias methods call it.
 func BuildDispatchControls(r *keel.Ref) *DispatchControlsTable {
 	return &DispatchControlsTable{
-		Handle:                               keel.Handle[dispatchcontrol.DispatchControl]{Ref: r},
+		Handle:                               keel.Handle[*dispatchcontrol.DispatchControl]{Ref: r},
 		ID:                                   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID:                       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID:                       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},

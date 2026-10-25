@@ -60,7 +60,7 @@ var tableLayoutsRef = keel.Ref{Table: &tableLayoutsTable}
 
 // TableLayoutsTable is the table of tablelayout.TableLayout.
 type TableLayoutsTable struct {
-	keel.Handle[tablelayout.TableLayout]
+	keel.Handle[*tablelayout.TableLayout]
 	ID             keelkinds.PulidIDCol
 	OrganizationID keelkinds.PulidIDCol
 	BusinessUnitID keelkinds.PulidIDCol
@@ -74,7 +74,7 @@ type TableLayoutsTable struct {
 
 // TableLayouts references the table_layouts table.
 var TableLayouts = &TableLayoutsTable{
-	Handle:         keel.Handle[tablelayout.TableLayout]{Ref: &tableLayoutsRef},
+	Handle:         keel.Handle[*tablelayout.TableLayout]{Ref: &tableLayoutsRef},
 	ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &tableLayoutsRef, Index: 0}}},
 	OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &tableLayoutsRef, Index: 1}}},
 	BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &tableLayoutsRef, Index: 2}}},
@@ -89,7 +89,7 @@ var TableLayouts = &TableLayoutsTable{
 // BuildTableLayouts builds the handle of table_layouts for ref. Generated relation and alias methods call it.
 func BuildTableLayouts(r *keel.Ref) *TableLayoutsTable {
 	return &TableLayoutsTable{
-		Handle:         keel.Handle[tablelayout.TableLayout]{Ref: r},
+		Handle:         keel.Handle[*tablelayout.TableLayout]{Ref: r},
 		ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},

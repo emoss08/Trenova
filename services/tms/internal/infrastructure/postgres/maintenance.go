@@ -3,27 +3,22 @@ package postgres
 import (
 	"context"
 	"fmt"
-	"os"
 	"time"
 
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
-	"github.com/emoss08/trenova/internal/infrastructure/observability"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbpool"
-	"go.uber.org/zap"
+	"github.com/emoss08/trenova/internal/keeltables"
 )
 
 const (
 	maintenanceStatementBackstop = 30 * time.Minute
-	maintenanceDebugEnv          = "BUNDEBUG"
-	maintenanceDebugOff          = "0"
-	maintenanceDebugVerbose      = "2"
 )
 
 func OpenMaintenanceDB(ctx context.Context, cfg *config.Config) (*keel.DB, error) {
-	observers, err := maintenanceObservers(cfg)
-	if err != nil {
-		return nil, err
+	var observers []keel.Observer
+	if log := queryLog(cfg); log != nil {
+		observers = append(observers, log)
 	}
 
 	db, err := dbpool.Open(ctx, &dbpool.Options{
@@ -35,28 +30,13 @@ func OpenMaintenanceDB(ctx context.Context, cfg *config.Config) (*keel.DB, error
 				max(cfg.Database.GetLockTimeout().Milliseconds(), 1),
 			),
 		},
-		Observers: observers,
+		Observers:   observers,
+		ObserveArgs: len(observers) > 0,
+		Tables:      keeltables.All(),
 	})
 	if err != nil {
 		return nil, fmt.Errorf("open the maintenance connection: %w", err)
 	}
 
 	return db, nil
-}
-
-func maintenanceObservers(cfg *config.Config) ([]keel.Observer, error) {
-	mode := os.Getenv(maintenanceDebugEnv)
-	if !cfg.App.Debug || mode == maintenanceDebugOff {
-		return nil, nil
-	}
-
-	logger, err := zap.NewDevelopment()
-	if err != nil {
-		return nil, fmt.Errorf("build the maintenance query logger: %w", err)
-	}
-
-	return []keel.Observer{&debugObserver{
-		logger:  observability.NewContextLogger(logger).Named("keel"),
-		verbose: cfg.Database.Verbose || mode == maintenanceDebugVerbose,
-	}}, nil
 }

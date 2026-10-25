@@ -180,13 +180,13 @@ func verdictsQuery(req *agentports.ScorecardRequest) *keel.Query[keel.Row] {
 			keel.DynOf(step.Outcome.Text("verdict")).NullIf("").Coalesce(keel.DynCase().
 				When(
 					keel.DynOf(step.Status).Eq(string(agentports.RunStepStarted)),
-					keel.DynLit(string(aitrace.OutcomeUnknown)).Cast(keel.TypeString),
+					keel.DynLit(string(aitrace.OutcomeUnknown)),
 				).
 				When(
 					keel.DynOf(step.Status).Eq(string(agentports.RunStepFailed)),
-					keel.DynLit(string(aitrace.OutcomeFailed)).Cast(keel.TypeString),
+					keel.DynLit(string(aitrace.OutcomeFailed)),
 				).
-				Else(keel.DynLit(string(aitrace.OutcomeRan)).Cast(keel.TypeString))),
+				Else(keel.DynLit(string(aitrace.OutcomeRan)))),
 			keel.DynOf(step.Outcome.Text("reason")).Coalesce(""),
 		).
 		Where(

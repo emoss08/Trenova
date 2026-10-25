@@ -57,7 +57,7 @@ var onboardingsRef = keel.Ref{Table: &onboardingsTable}
 
 // OnboardingsTable is the table of onboarding.Onboarding.
 type OnboardingsTable struct {
-	keel.Handle[onboarding.Onboarding]
+	keel.Handle[*onboarding.Onboarding]
 	ID               keelkinds.PulidIDCol
 	BusinessUnitID   keelkinds.PulidIDCol
 	OrganizationID   keelkinds.PulidIDCol
@@ -73,7 +73,7 @@ type OnboardingsTable struct {
 
 // Onboardings references the organization_onboarding table.
 var Onboardings = &OnboardingsTable{
-	Handle:           keel.Handle[onboarding.Onboarding]{Ref: &onboardingsRef},
+	Handle:           keel.Handle[*onboarding.Onboarding]{Ref: &onboardingsRef},
 	ID:               keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &onboardingsRef, Index: 0}}},
 	BusinessUnitID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &onboardingsRef, Index: 1}}},
 	OrganizationID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &onboardingsRef, Index: 2}}},
@@ -90,7 +90,7 @@ var Onboardings = &OnboardingsTable{
 // BuildOnboardings builds the handle of organization_onboarding for ref. Generated relation and alias methods call it.
 func BuildOnboardings(r *keel.Ref) *OnboardingsTable {
 	return &OnboardingsTable{
-		Handle:           keel.Handle[onboarding.Onboarding]{Ref: r},
+		Handle:           keel.Handle[*onboarding.Onboarding]{Ref: r},
 		ID:               keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},

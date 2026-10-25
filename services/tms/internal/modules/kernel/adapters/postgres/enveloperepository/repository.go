@@ -297,7 +297,7 @@ func (s *source) listQuery(req *kernelports.ListEnvelopeRowsRequest) *keel.Query
 
 func (s *source) extraArray() keel.Expr {
 	if len(s.extra) == 0 {
-		return keel.Raw("ARRAY[]::text[]")
+		return keel.DynLit([]string{})
 	}
 
 	items := make([]any, len(s.extra))

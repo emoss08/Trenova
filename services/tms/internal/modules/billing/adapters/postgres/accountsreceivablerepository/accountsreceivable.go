@@ -9,12 +9,16 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/billing/adapters/postgres/receivablesql"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/customerledger/customerledgerdb"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/customerpayment"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/customerpayment/customerpaymentdb"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice/invoicedb"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/customerledgerports"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/customer/customerdb"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/factoringcompany/factoringcompanydb"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/jackc/pgx/v5"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
@@ -107,33 +111,57 @@ func (r *repository) ListCustomerLedger(
 	)
 }
 
-const agingColumnsSQL = `
-			inv.customer_id,
-			inv.bill_to_name AS customer_name,
-			SUM(CASE WHEN inv.due_date IS NULL OR inv.due_date >= $1 THEN inv.total_amount_minor - inv.applied_amount_minor ELSE 0 END) AS current_minor,
-			SUM(CASE WHEN inv.due_date < $1 AND ($1 - inv.due_date) / 86400 BETWEEN 1 AND 30 THEN inv.total_amount_minor - inv.applied_amount_minor ELSE 0 END) AS days1_to30_minor,
-			SUM(CASE WHEN inv.due_date < $1 AND ($1 - inv.due_date) / 86400 BETWEEN 31 AND 60 THEN inv.total_amount_minor - inv.applied_amount_minor ELSE 0 END) AS days31_to60_minor,
-			SUM(CASE WHEN inv.due_date < $1 AND ($1 - inv.due_date) / 86400 BETWEEN 61 AND 90 THEN inv.total_amount_minor - inv.applied_amount_minor ELSE 0 END) AS days61_to90_minor,
-			SUM(CASE WHEN inv.due_date < $1 AND ($1 - inv.due_date) / 86400 > 90 THEN inv.total_amount_minor - inv.applied_amount_minor ELSE 0 END) AS days_over90_minor,
-			SUM(inv.total_amount_minor - inv.applied_amount_minor) AS total_open_minor`
+func pastDueDays(inv *invoicedb.InvoicesTable, asOf int64) keel.DynExpr {
+	return keel.DynLit(asOf).Sub(inv.DueDate).Div(secondsPerDay)
+}
 
-const agingSQL = `
-		SELECT` + agingColumnsSQL + `
-		FROM invoices inv
-		WHERE inv.organization_id = $2
-		  AND inv.business_unit_id = $3
-		  AND ` + receivablesql.OpenInvoice + `
-		GROUP BY inv.customer_id, inv.bill_to_name
-		ORDER BY inv.bill_to_name ASC`
+func daysPastDue(inv *invoicedb.InvoicesTable, asOf int64) keel.DynExpr {
+	return keel.DynCase().
+		When(keel.Or(inv.DueDate.IsNull(), inv.DueDate.Gte(asOf)), 0).
+		Else(keel.DynFunc("greatest", pastDueDays(inv, asOf), 0))
+}
 
-const customerAgingSQL = `
-		SELECT` + agingColumnsSQL + `
-		FROM invoices inv
-		WHERE inv.organization_id = $2
-		  AND inv.business_unit_id = $3
-		  AND inv.customer_id = $4
-		  AND ` + receivablesql.OpenInvoice + `
-		GROUP BY inv.customer_id, inv.bill_to_name`
+func amountWhen(p keel.Pred, amount any) keel.DynExpr {
+	return keel.DynCase().When(p, amount).Else(0)
+}
+
+func agingBuckets(inv *invoicedb.InvoicesTable, asOf int64) []keel.DynExpr {
+	open := receivablesql.OpenMinor(inv)
+	days := pastDueDays(inv, asOf)
+	overdue := inv.DueDate.Lt(asOf)
+	return []keel.DynExpr{
+		amountWhen(keel.Or(inv.DueDate.IsNull(), inv.DueDate.Gte(asOf)), open).Sum(),
+		amountWhen(keel.And(overdue, days.Between(1, 30)), open).Sum(),
+		amountWhen(keel.And(overdue, days.Between(31, 60)), open).Sum(),
+		amountWhen(keel.And(overdue, days.Between(61, 90)), open).Sum(),
+		amountWhen(keel.And(overdue, days.Gt(90)), open).Sum(),
+	}
+}
+
+func agingQuery(inv *invoicedb.InvoicesTable, asOf int64) *keel.Query[invoice.Invoice] {
+	buckets := agingBuckets(inv, asOf)
+	return inv.
+		Pick(
+			inv.CustomerID,
+			inv.BillToName,
+			buckets[0],
+			buckets[1],
+			buckets[2],
+			buckets[3],
+			buckets[4],
+			receivablesql.OpenMinor(inv).Sum(),
+		).
+		Where(receivablesql.Open(inv)).
+		Group(inv.CustomerID, inv.BillToName)
+}
+
+func hasShortPay(inv *invoicedb.InvoicesTable) keel.Pred {
+	cpa := customerpaymentdb.Applications.As("cpa")
+	cp := customerpaymentdb.Payments.As("cp")
+	return keel.Exists(cpa.
+		Join(cp, cp.ID.EqCol(cpa.CustomerPaymentID), cp.Status.Eq(customerpayment.StatusPosted)).
+		Where(cpa.InvoiceID.EqCol(inv.ID), cpa.ShortPayAmountMinor.Gt(0)))
+}
 
 func (rec *agingRowRecord) row() *customerledgerports.ARCustomerAgingRow {
 	return &customerledgerports.ARCustomerAgingRow{
@@ -162,20 +190,15 @@ func (r *repository) ListARAging(
 		ctx,
 		r.db,
 		func(ctx context.Context) ([]*customerledgerports.ARCustomerAgingRow, error) {
-			org, bu := tenantArgs(req.TenantInfo)
-			records, err := keel.QueryAll(
-				ctx,
-				r.db.Keel(ctx),
-				pgx.RowToAddrOfStructByName[agingRowRecord],
-				agingSQL,
-				req.AsOfDate, org, bu,
-			)
+			inv := invoicedb.Invoices
+			records, err := keel.Into[agingRowRecord](ctx, r.db.Keel(ctx), agingQuery(inv, req.AsOfDate).
+				Order(inv.BillToName.Asc()))
 			if err != nil {
 				return nil, err
 			}
 			rows := make([]*customerledgerports.ARCustomerAgingRow, 0, len(records))
-			for _, rec := range records {
-				rows = append(rows, rec.row())
+			for i := range records {
+				rows = append(rows, records[i].row())
 			}
 			return rows, nil
 		},
@@ -190,67 +213,36 @@ func (r *repository) ListOpenItems(
 		ctx,
 		r.db,
 		func(ctx context.Context) ([]*customerledgerports.AROpenItem, error) {
-			query := `
-		SELECT
-			inv.id AS invoice_id,
-			inv.customer_id,
-			inv.bill_to_name AS customer_name,
-			inv.number AS invoice_number,
-			inv.bill_type,
-			inv.invoice_date,
-			COALESCE(inv.due_date, 0) AS due_date,
-			inv.currency_code,
-			COALESCE(inv.shipment_pro_number, '') AS shipment_pro_number,
-			COALESCE(inv.shipment_bol, '') AS shipment_bol,
-			inv.total_amount_minor,
-			inv.applied_amount_minor,
-			(inv.total_amount_minor - inv.applied_amount_minor) AS open_amount_minor,
-			CASE
-				WHEN inv.due_date IS NULL OR inv.due_date >= $1 THEN 0
-				ELSE GREATEST((($1 - inv.due_date) / 86400)::INT, 0)
-			END AS days_past_due,
-			inv.settlement_status,
-			inv.dispute_status,
-			EXISTS (
-				SELECT 1
-				FROM customer_payment_applications cpa
-				JOIN customer_payments cp
-				  ON cp.id = cpa.customer_payment_id
-				 AND cp.organization_id = cpa.organization_id
-				 AND cp.business_unit_id = cpa.business_unit_id
-				 AND cp.status = 'Posted'
-				WHERE cpa.invoice_id = inv.id
-				  AND cpa.organization_id = inv.organization_id
-				  AND cpa.business_unit_id = inv.business_unit_id
-				  AND cpa.short_pay_amount_minor > 0
-			) AS has_short_pay,
-			COALESCE(inv.factoring_company_id, '') AS factoring_company_id,
-			COALESCE(fac.name, '') AS factoring_company_name
-		FROM invoices inv
-		LEFT JOIN factoring_companies fac
-		  ON fac.id = inv.factoring_company_id
-		 AND fac.organization_id = inv.organization_id
-		 AND fac.business_unit_id = inv.business_unit_id
-		WHERE inv.organization_id = $2
-		  AND inv.business_unit_id = $3
-		  AND ` + receivablesql.OpenInvoice
-			org, bu := tenantArgs(req.TenantInfo)
-			args := []any{req.AsOfDate, org, bu}
-			if !req.CustomerID.IsNil() {
-				query += `
-		  AND inv.customer_id = $4`
-				args = append(args, req.CustomerID.String())
-			}
-			query += `
-		ORDER BY inv.due_date ASC NULLS FIRST, inv.invoice_date ASC, inv.number ASC`
-
-			records, err := keel.QueryAll(
-				ctx,
-				r.db.Keel(ctx),
-				pgx.RowToAddrOfStructByName[openItemRecord],
-				query,
-				args...,
-			)
+			inv := invoicedb.Invoices
+			fac := factoringcompanydb.FactoringCompanies
+			records, err := keel.Into[openItemRecord](ctx, r.db.Keel(ctx), inv.
+				Pick(
+					inv.ID,
+					inv.CustomerID,
+					inv.BillToName,
+					inv.Number,
+					inv.BillType,
+					inv.InvoiceDate,
+					inv.DueDate.Coalesce(0),
+					inv.CurrencyCode,
+					inv.ShipmentProNumber.Coalesce(""),
+					inv.ShipmentBOL.Coalesce(""),
+					inv.TotalAmountMinor,
+					inv.AppliedAmountMinor,
+					receivablesql.OpenMinor(inv),
+					daysPastDue(inv, req.AsOfDate),
+					inv.SettlementStatus,
+					inv.DisputeStatus,
+					hasShortPay(inv),
+					inv.FactoringCompanyID.Coalesce(""),
+					fac.Name.Coalesce(""),
+				).
+				LeftJoin(fac, fac.ID.EqCol(inv.FactoringCompanyID)).
+				Where(
+					receivablesql.Open(inv),
+					keel.When(!req.CustomerID.IsNil(), inv.CustomerID.Eq(req.CustomerID)),
+				).
+				Order(inv.DueDate.Asc().NullsFirst(), inv.InvoiceDate.Asc(), inv.Number.Asc()))
 			if err != nil {
 				return nil, fmt.Errorf("list ar open items: %w", err)
 			}
@@ -310,14 +302,9 @@ func (r *repository) GetCustomerAging(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*customerledgerports.ARCustomerAgingRow, error) {
-			org, bu := tenantArgs(req.TenantInfo)
-			records, err := keel.QueryAll(
-				ctx,
-				r.db.Keel(ctx),
-				pgx.RowToAddrOfStructByName[agingRowRecord],
-				customerAgingSQL,
-				req.AsOfDate, org, bu, req.CustomerID.String(),
-			)
+			inv := invoicedb.Invoices
+			records, err := keel.Into[agingRowRecord](ctx, r.db.Keel(ctx), agingQuery(inv, req.AsOfDate).
+				Where(inv.CustomerID.Eq(req.CustomerID)))
 			if err != nil {
 				return nil, fmt.Errorf("get customer ar aging: %w", err)
 			}

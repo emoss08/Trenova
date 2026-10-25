@@ -70,7 +70,7 @@ var checkCallsRef = keel.Ref{Table: &checkCallsTable}
 
 // CheckCallsTable is the table of checkcall.CheckCall.
 type CheckCallsTable struct {
-	keel.Handle[checkcall.CheckCall]
+	keel.Handle[*checkcall.CheckCall]
 	ID               keelkinds.PulidIDCol
 	OrganizationID   keelkinds.PulidIDCol
 	BusinessUnitID   keelkinds.PulidIDCol
@@ -99,7 +99,7 @@ type CheckCallsTable struct {
 
 // CheckCalls references the check_calls table.
 var CheckCalls = &CheckCallsTable{
-	Handle:           keel.Handle[checkcall.CheckCall]{Ref: &checkCallsRef},
+	Handle:           keel.Handle[*checkcall.CheckCall]{Ref: &checkCallsRef},
 	ID:               keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &checkCallsRef, Index: 0}}},
 	OrganizationID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &checkCallsRef, Index: 1}}},
 	BusinessUnitID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &checkCallsRef, Index: 2}}},
@@ -129,7 +129,7 @@ var CheckCalls = &CheckCallsTable{
 // BuildCheckCalls builds the handle of check_calls for ref. Generated relation and alias methods call it.
 func BuildCheckCalls(r *keel.Ref) *CheckCallsTable {
 	return &CheckCallsTable{
-		Handle:           keel.Handle[checkcall.CheckCall]{Ref: r},
+		Handle:           keel.Handle[*checkcall.CheckCall]{Ref: r},
 		ID:               keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		OrganizationID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		BusinessUnitID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -368,7 +368,7 @@ var trackingLinksRef = keel.Ref{Table: &trackingLinksTable}
 
 // TrackingLinksTable is the table of checkcall.TrackingLink.
 type TrackingLinksTable struct {
-	keel.Handle[checkcall.TrackingLink]
+	keel.Handle[*checkcall.TrackingLink]
 	ID             keelkinds.PulidIDCol
 	OrganizationID keelkinds.PulidIDCol
 	BusinessUnitID keelkinds.PulidIDCol
@@ -387,7 +387,7 @@ type TrackingLinksTable struct {
 
 // TrackingLinks references the carrier_tracking_links table.
 var TrackingLinks = &TrackingLinksTable{
-	Handle:         keel.Handle[checkcall.TrackingLink]{Ref: &trackingLinksRef},
+	Handle:         keel.Handle[*checkcall.TrackingLink]{Ref: &trackingLinksRef},
 	ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &trackingLinksRef, Index: 0}}},
 	OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &trackingLinksRef, Index: 1}}},
 	BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &trackingLinksRef, Index: 2}}},
@@ -407,7 +407,7 @@ var TrackingLinks = &TrackingLinksTable{
 // BuildTrackingLinks builds the handle of carrier_tracking_links for ref. Generated relation and alias methods call it.
 func BuildTrackingLinks(r *keel.Ref) *TrackingLinksTable {
 	return &TrackingLinksTable{
-		Handle:         keel.Handle[checkcall.TrackingLink]{Ref: r},
+		Handle:         keel.Handle[*checkcall.TrackingLink]{Ref: r},
 		ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},

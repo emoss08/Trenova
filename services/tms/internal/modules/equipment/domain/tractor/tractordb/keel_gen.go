@@ -107,7 +107,7 @@ var tractorsRef = keel.Ref{Table: &tractorsTable}
 
 // TractorsTable is the table of tractor.Tractor.
 type TractorsTable struct {
-	keel.Handle[tractor.Tractor]
+	keel.Handle[*tractor.Tractor]
 	ID                         keelkinds.PulidIDCol
 	BusinessUnitID             keelkinds.PulidIDCol
 	OrganizationID             keelkinds.PulidIDCol
@@ -145,7 +145,7 @@ type TractorsTable struct {
 
 // Tractors references the tractors table.
 var Tractors = &TractorsTable{
-	Handle:                     keel.Handle[tractor.Tractor]{Ref: &tractorsRef},
+	Handle:                     keel.Handle[*tractor.Tractor]{Ref: &tractorsRef},
 	ID:                         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &tractorsRef, Index: 0}}},
 	BusinessUnitID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &tractorsRef, Index: 1}}},
 	OrganizationID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &tractorsRef, Index: 2}}},
@@ -184,7 +184,7 @@ var Tractors = &TractorsTable{
 // BuildTractors builds the handle of tractors for ref. Generated relation and alias methods call it.
 func BuildTractors(r *keel.Ref) *TractorsTable {
 	return &TractorsTable{
-		Handle:                     keel.Handle[tractor.Tractor]{Ref: r},
+		Handle:                     keel.Handle[*tractor.Tractor]{Ref: r},
 		ID:                         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},

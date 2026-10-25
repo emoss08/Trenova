@@ -64,7 +64,7 @@ var accountTypesRef = keel.Ref{Table: &accountTypesTable}
 
 // AccountTypesTable is the table of accounttype.AccountType.
 type AccountTypesTable struct {
-	keel.Handle[accounttype.AccountType]
+	keel.Handle[*accounttype.AccountType]
 	ID             keelkinds.PulidIDCol
 	BusinessUnitID keelkinds.PulidIDCol
 	OrganizationID keelkinds.PulidIDCol
@@ -84,7 +84,7 @@ type AccountTypesTable struct {
 
 // AccountTypes references the account_types table.
 var AccountTypes = &AccountTypesTable{
-	Handle:         keel.Handle[accounttype.AccountType]{Ref: &accountTypesRef},
+	Handle:         keel.Handle[*accounttype.AccountType]{Ref: &accountTypesRef},
 	ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &accountTypesRef, Index: 0}}},
 	BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &accountTypesRef, Index: 1}}},
 	OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &accountTypesRef, Index: 2}}},
@@ -105,7 +105,7 @@ var AccountTypes = &AccountTypesTable{
 // BuildAccountTypes builds the handle of account_types for ref. Generated relation and alias methods call it.
 func BuildAccountTypes(r *keel.Ref) *AccountTypesTable {
 	return &AccountTypesTable{
-		Handle:         keel.Handle[accounttype.AccountType]{Ref: r},
+		Handle:         keel.Handle[*accounttype.AccountType]{Ref: r},
 		ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
