@@ -246,6 +246,18 @@ tenant predicate: write it, and keep the text constant with values as `$n`. Insi
 `keel.Raw("…?…", col, value)` writes columns and binds values. A CTE is `keel.CTE(name, columns,
 query)` declared with `With`; a recursive one is `keel.RecursiveCTE`.
 
+SQL functions in a typed query are keel's typed functions (`col.Lower()`, `a.Greatest(b)`,
+`keel.ConcatWS`, `keel.ToTimestamp(t).AtTimeZone(keel.Text(zone)).ToChar(f)`, `keel.NumericOf(
+col.Sum()).Coalesce(0)`, `keel.CastText(e)`), and a literal in a select list is `keel.Text(s)` or
+`keel.Int64(n)`. `keel.DynOf`/`DynFunc`/`DynLit` belong to queries built at run time (the report
+engine, `reportaccess`, `listquery`, the agent's query tools); a typed query keeps the Dyn API only
+where keel has no typed form: `DynCase`, `DynRow`, arithmetic, text `||`, array subscripts, and
+`DynConst` where an expression or partial index must see the constant
+(`watchtowerrepository.dueSortExpr`). A database function called by name is declared once with
+`keel.DeclareFuncN` in the module that owns it, behind an unexported variable and a
+`XxxFuncs() []keel.DeclaredFunc`, and listed in the `keel.VerifyFuncs` test in
+`internal/infrastructure/postgres/schemalint`.
+
 ### Validators
 
 Validators build one checker over the entity's table:
