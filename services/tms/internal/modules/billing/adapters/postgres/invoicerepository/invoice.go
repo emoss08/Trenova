@@ -468,24 +468,20 @@ func reconciliationDiscrepancies(
 		orderLines.ShipmentID.IsNull(),
 	))
 
+	sign := keel.DynCase().
+		When(keel.DynOf(inv.BillType).Eq(billingqueue.BillTypeCreditMemo), signed(-1)).
+		Else(signed(1))
+	orderPart := keel.DynCase().
+		When(inv.OrderID.IsNotNull(), keel.DynOf(orderTotal).Coalesce(0)).
+		Else(signed(0))
+	expected := sign.Mul(keel.DynOf(splitTotal).Coalesce(legTotal, shipmentTotal, 0)).Add(orderPart)
+
 	return inv.Where(
 		inv.Status.Eq(invoice.StatusPosted),
 		inv.PostedAt.IsNotNull(),
 		inv.PostedAt.Gte(req.PeriodStartDate),
 		inv.PostedAt.Lte(req.PeriodEndDate),
-		keel.Raw(
-			"ABS(? - (CASE WHEN ? = ? THEN -1 ELSE 1 END * COALESCE(?, ?, ?, 0)"+
-				" + CASE WHEN ? IS NOT NULL THEN COALESCE(?, 0) ELSE 0 END)) > ?",
-			inv.TotalAmount,
-			inv.BillType,
-			billingqueue.BillTypeCreditMemo,
-			splitTotal,
-			legTotal,
-			shipmentTotal,
-			inv.OrderID,
-			orderTotal,
-			req.ToleranceAmount,
-		),
+		keel.DynFunc("abs", keel.DynOf(inv.TotalAmount).Sub(expected)).Gt(req.ToleranceAmount),
 	)
 }
 
@@ -1034,4 +1030,8 @@ func (r *repository) StampExchangeRate(
 
 		return dberror.CheckFoundCount(n, "Invoice")
 	})
+}
+
+func signed(n int64) keel.DynExpr {
+	return keel.DynLit(n).Cast(keel.TypeInt64)
 }

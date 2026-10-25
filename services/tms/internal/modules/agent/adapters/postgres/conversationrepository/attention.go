@@ -153,7 +153,7 @@ func (r *repository) MarkThreadRead(
 		n, err := th.Where(th.ID.Eq(req.ThreadID), th.UserID.Eq(req.UserID)).Update(
 			ctx,
 			r.db.Keel(ctx),
-			th.LastReadAt.ToExpr(keel.Raw("GREATEST(?, ?)", th.LastReadAt, req.ReadAt)),
+			th.LastReadAt.ToExpr(keel.DynFunc("greatest", th.LastReadAt, req.ReadAt)),
 			keepThreadVersion(),
 			keepThreadUpdatedAt(),
 		)

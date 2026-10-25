@@ -119,11 +119,11 @@ func organizationItems(w agentprofileports.FactsWindow, reads *organizationReads
 	ep := edidb.EDIPartners
 	live := sp.Status.Ne(shipment.StatusCanceled)
 
-	pickupName := keel.Raw(
-		"concat_ws(', ', ?, NULLIF(concat_ws(' ', ?, ?), ''))",
+	pickupName := keel.DynFunc(
+		"concat_ws",
+		", ",
 		loc.Name,
-		loc.City,
-		ust.Abbreviation,
+		keel.DynFunc("concat_ws", " ", loc.City, ust.Abbreviation).NullIf(""),
 	)
 	activeWorkers := wrk.Status.Eq(domaintypes.StatusActive)
 
@@ -172,9 +172,9 @@ func organizationItems(w agentprofileports.FactsWindow, reads *organizationReads
 			Where(activeWorkers), &reads.workers),
 		keel.IntoSlice(wrk.
 			Group(wrk.DriverType).
-			Pick(keel.Raw("?::text", wrk.DriverType), keel.Count()).
+			Pick(keel.DynOf(wrk.DriverType).Cast(keel.TypeString), keel.Count()).
 			Where(activeWorkers, wrk.DriverType.IsNotNull()).
-			Order(countDesc(), keel.Asc(keel.Raw("?::text", wrk.DriverType))),
+			Order(countDesc(), keel.Asc(keel.DynOf(wrk.DriverType).Cast(keel.TypeString))),
 			&out.Workers.ByDriverType),
 		keel.IntoValue(ca.
 			Pick(ca.CarrierID.CountDistinct()).
@@ -182,11 +182,11 @@ func organizationItems(w agentprofileports.FactsWindow, reads *organizationReads
 			Join(sp, sp.ID.EqCol(sm.ShipmentID)).
 			Where(live, inWindow(w)), &out.CarriersUsed),
 		keel.IntoSlice(integ.
-			Pick(keel.Raw("?::text", integ.Type)).
+			Pick(keel.DynOf(integ.Type).Cast(keel.TypeString)).
 			Where(integ.Enabled.IsTrue()).
 			Order(integ.Type.Asc()), &out.Integrations),
 		keel.IntoSlice(ac.
-			Pick(keel.Raw("?::text", ac.IntegrationType), keel.Raw("?::text", ac.Status)).
+			Pick(keel.DynOf(ac.IntegrationType).Cast(keel.TypeString), keel.DynOf(ac.Status).Cast(keel.TypeString)).
 			Where(ac.Status.Ne(accountingsync.ConnectionStatusDisconnected)).
 			Order(ac.IntegrationType.Asc()), &out.AccountingConnections),
 		keel.CountInto(ep.Where(ep.Status.Eq(domaintypes.StatusActive)), &out.EDIPartners),
@@ -205,7 +205,7 @@ type fleet struct {
 func tractorFleet() fleet {
 	t := tractordb.Tractors
 	et := equipmenttypedb.EquipmentTypes
-	name := keel.Raw("COALESCE(NULLIF(?, ''), ?)", et.Description, et.Code)
+	name := keel.DynOf(et.Description).NullIf("").Coalesce(et.Code)
 
 	return fleet{
 		counts: t.Pick(
@@ -224,7 +224,7 @@ func tractorFleet() fleet {
 func trailerFleet() fleet {
 	t := trailerdb.Trailers
 	et := equipmenttypedb.EquipmentTypes
-	name := keel.Raw("COALESCE(NULLIF(?, ''), ?)", et.Description, et.Code)
+	name := keel.DynOf(et.Description).NullIf("").Coalesce(et.Code)
 
 	return fleet{
 		counts: t.Pick(
@@ -336,12 +336,12 @@ func userItems(req *agentprofileports.UserFactsRequest, reads *userReads) []keel
 	msg := conversationdb.Messages
 	msgThread := conversationdb.Threads.As("message_thread")
 	pf := pagefavoritedb.PageFavorites
-	statusName := keel.Raw("?::text", sp.Status)
-	aboutName := keel.Raw("?::text", th.SubjectType)
+	statusName := keel.DynOf(sp.Status).Cast(keel.TypeString)
+	aboutName := keel.DynOf(th.SubjectType).Cast(keel.TypeString)
 
 	return []keel.BatchItem{
 		keel.IntoSlice(usr.
-			Pick(keel.Raw("COALESCE(?, '')", usr.JobTitle)).
+			Pick(keel.DynOf(usr.JobTitle).Coalesce("")).
 			Where(usr.ID.Eq(req.UserID)).
 			Limit(1), &reads.titles),
 		keel.ExistsInto(wrk.Where(wrk.UserID.Eq(req.UserID)), &out.Driver),
@@ -367,7 +367,7 @@ func userItems(req *agentprofileports.UserFactsRequest, reads *userReads) []keel
 			Limit(agentprofileports.TopRows), &out.Customers),
 		keel.IntoSlice(ae.
 			Group(ae.Resource).
-			Pick(keel.Raw("?::text", ae.Resource), keel.Count()).
+			Pick(keel.DynOf(ae.Resource).Cast(keel.TypeString), keel.Count()).
 			Where(
 				ae.UserID.Eq(req.UserID),
 				ae.PrincipalType.Eq(authctx.PrincipalTypeUser),
@@ -387,7 +387,7 @@ func userItems(req *agentprofileports.UserFactsRequest, reads *userReads) []keel
 				th.UserID.Eq(req.UserID),
 				th.LastMessageAt.Gte(w.Start),
 				th.SubjectType.IsNotNull(),
-				keel.Raw("? <> ''", th.SubjectType),
+				keel.DynOf(th.SubjectType).Ne(""),
 			).
 			Order(countDesc(), keel.Asc(aboutName)).
 			Limit(agentprofileports.TopRows), &out.ConversationAbout),

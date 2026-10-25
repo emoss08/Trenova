@@ -23,7 +23,7 @@ func statsQuery(templateIDs []pulid.ID) *keel.Query[formulatemplate.FormulaTempl
 	rr := rateagreementdb.RateAgreementRules
 	rules := keel.Scalar(rr.Pick(keel.Count()).Where(rr.FormulaTemplateID.EqCol(ft.ID)))
 
-	return ft.Pick(ft.ID, keel.Raw("? + ?", shipmentUsage(ft), rules)).
+	return ft.Pick(ft.ID, keel.DynOf(shipmentUsage(ft)).Add(rules)).
 		Where(ft.ID.In(templateIDs...)).
 		Limit(len(templateIDs))
 }

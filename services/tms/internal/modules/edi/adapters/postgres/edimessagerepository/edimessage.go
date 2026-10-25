@@ -574,7 +574,7 @@ func scorecardQuery(req *ediports.GetEDIPartnerScorecardsRequest) *keel.Query[ed
 	}
 	pendingDelivery := keel.And(outbound, m.DeliveryStatus.In(pendingDeliveryStatuses...))
 	acknowledged := keel.And(m.AckReceivedAt.IsNotNull(), m.DeliverySentAt.IsNotNull())
-	latency := keel.Raw("? - ?", m.AckReceivedAt, m.DeliverySentAt)
+	latency := keel.DynOf(m.AckReceivedAt).Sub(m.DeliverySentAt)
 
 	return m.Where(
 		m.EDIPartnerID.IsNotNull(),
@@ -591,12 +591,9 @@ func scorecardQuery(req *ediports.GetEDIPartnerScorecardsRequest) *keel.Query[ed
 			keel.Count().Filter(delivered(edi.MessageDeliveryStatusFailed)),
 			keel.Count().Filter(delivered(edi.MessageDeliveryStatusDeadLettered)),
 			keel.Count().Filter(m.Direction.Eq(edi.DocumentDirectionInbound)),
-			keel.Raw("(?)::float8", keel.Avg(latency).Filter(acknowledged)),
-			keel.Raw(
-				"(percentile_cont(0.95) WITHIN GROUP (ORDER BY ?) FILTER (WHERE ?))::float8",
-				latency,
-				acknowledged,
-			),
+			latency.Avg().Filter(acknowledged).Cast(keel.TypeFloat64),
+			keel.DynOf(keel.PercentileCont(0.95, latency.Asc()).Filter(acknowledged)).
+				Cast(keel.TypeFloat64),
 			keel.Count().Filter(keel.And(
 				m.AckStatus.Eq(edi.MessageAcknowledgmentStatusPending),
 				m.GeneratedAt.Lt(req.OverdueAckPendingSince),
@@ -634,7 +631,7 @@ func volumeQuery(req *ediports.GetEDIVolumeSeriesRequest) *keel.Query[edi.EDIMes
 	if bucket <= 0 {
 		bucket = defaultBucketSeconds
 	}
-	bucketStart := keel.Raw("(? / ?) * ?", m.GeneratedAt, bucket, bucket)
+	bucketStart := keel.DynOf(m.GeneratedAt).Div(bucket).Mul(bucket)
 	outbound := m.Direction.Eq(edi.DocumentDirectionOutbound)
 
 	return m.Where(
@@ -841,7 +838,7 @@ func (r *repository) PurgeRawX12Before(
 			ctx,
 			r.db.Keel(ctx),
 			m.RawX12.To(""),
-			m.PayloadSnapshot.ToExpr(keel.Raw("'{}'::jsonb")),
+			m.PayloadSnapshot.To(map[string]any{}),
 			m.RawPurgedAt.To(req.PurgedAt),
 			m.Version.ToExpr(m.Version),
 			m.UpdatedAt.ToExpr(m.UpdatedAt),
@@ -874,12 +871,10 @@ func (r *repository) GetOutboundMessageForAck(
 		entity, err := m.Where(
 			m.EDIPartnerID.Eq(req.PartnerID),
 			m.Direction.Eq(edi.DocumentDirectionOutbound),
-			keel.Raw("ltrim(?, '0') = ltrim(?, '0')", m.GroupControlNumber, req.GroupControlNumber),
-			keel.Raw(
-				"ltrim(?, '0') = ltrim(?, '0')",
-				m.TransactionControlNumber,
-				req.TransactionControlNumber,
-			),
+			keel.DynFunc("ltrim", m.GroupControlNumber, "0").
+				Eq(keel.DynFunc("ltrim", req.GroupControlNumber, "0")),
+			keel.DynFunc("ltrim", m.TransactionControlNumber, "0").
+				Eq(keel.DynFunc("ltrim", req.TransactionControlNumber, "0")),
 			keel.When(req.TransactionSet != "", m.TransactionSet.Eq(req.TransactionSet)),
 		).
 			Order(m.GeneratedAt.Desc()).

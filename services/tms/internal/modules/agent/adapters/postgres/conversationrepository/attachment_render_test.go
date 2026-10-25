@@ -39,8 +39,9 @@ func TestMessagesSinceCompactionReadAfterTheLatestSummary(t *testing.T) {
 		SinceCompaction: true,
 	}))
 
-	assert.Contains(t, sql, `am."sequence" > COALESCE((SELECT ((compacted."compaction" #>> $5))::int`, sql)
+	assert.Contains(t, sql, `am."sequence" > coalesce((SELECT CAST((compacted."compaction" #>> $5) AS bigint)`, sql)
 	assert.Contains(t, sql, `compacted."thread_id" = $3 AND compacted."kind" = $4`, sql)
-	assert.Contains(t, sql, `ORDER BY compacted."sequence" DESC LIMIT 1), -1)`, sql)
+	assert.Contains(t, sql, `ORDER BY compacted."sequence" DESC LIMIT 1), $6)`, sql)
 	assert.Equal(t, string(conversation.MessageKindCompaction), args[3])
+	assert.Equal(t, -1, args[5])
 }

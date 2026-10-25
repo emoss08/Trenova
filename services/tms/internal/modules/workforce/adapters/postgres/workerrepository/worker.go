@@ -11,6 +11,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/ports/platformplanports"
 	"github.com/emoss08/trenova/internal/modules/kernel/domain/platformcatalog"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/driverpay"
+	"github.com/emoss08/trenova/internal/modules/settlement/domain/driverpay/driverpaydb"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker/workerdb"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
@@ -27,21 +28,6 @@ const (
 	workerBusyMessage    = "Worker is busy. Retry the request."
 	syncDriftBusyMessage = "Worker sync state is busy. Retry the request."
 )
-
-const ownerOperatorPaySQL = `EXISTS (
-	SELECT 1
-	FROM worker_pay_assignments wpa
-	JOIN driver_pay_profiles dpp
-		ON dpp.id = wpa.pay_profile_id
-		AND dpp.organization_id = wpa.organization_id
-		AND dpp.business_unit_id = wpa.business_unit_id
-	WHERE wpa.worker_id = ?
-		AND wpa.organization_id = ?
-		AND wpa.business_unit_id = ?
-		AND wpa.effective_from <= ?
-		AND (wpa.effective_to IS NULL OR wpa.effective_to > ?)
-		AND dpp.classification = ?
-)`
 
 var workerErrors = dberror.Mapping{
 	Entity: "Worker",
@@ -116,17 +102,26 @@ func New(p Params) workerports.WorkerRepository {
 func ownerOperatorFilter(now int64) keel.Pred {
 	w := workerdb.Workers
 
+	wpa := driverpaydb.WorkerPayAssignments.As("wpa")
+	dpp := driverpaydb.PayProfiles.As("dpp")
+
 	return keel.Or(
 		w.Type.Eq(worker.WorkerTypeContractor),
-		keel.Raw(
-			ownerOperatorPaySQL,
-			w.ID,
-			w.OrganizationID,
-			w.BusinessUnitID,
-			now,
-			now,
-			string(driverpay.PayeeClassificationOwnerOperator),
-		),
+		keel.Exists(wpa.
+			Join(
+				dpp,
+				dpp.ID.EqCol(wpa.PayProfileID),
+				dpp.OrganizationID.EqCol(wpa.OrganizationID),
+				dpp.BusinessUnitID.EqCol(wpa.BusinessUnitID),
+			).
+			Where(
+				wpa.WorkerID.EqCol(w.ID),
+				wpa.OrganizationID.EqCol(w.OrganizationID),
+				wpa.BusinessUnitID.EqCol(w.BusinessUnitID),
+				wpa.EffectiveFrom.Lte(now),
+				keel.Or(wpa.EffectiveTo.IsNull(), wpa.EffectiveTo.Gt(now)),
+				dpp.Classification.Eq(driverpay.PayeeClassificationOwnerOperator),
+			)),
 	)
 }
 
@@ -330,7 +325,7 @@ func (r *repository) GetWorkerSyncReadinessCounts(
 					keel.Count().Filter(active),
 					keel.Count().Filter(keel.And(
 						active,
-						keel.Raw("NULLIF(BTRIM(?), '') IS NOT NULL", w.ExternalID),
+						keel.DynFunc("btrim", w.ExternalID).NullIf("").IsNotNull(),
 					)),
 				),
 			)

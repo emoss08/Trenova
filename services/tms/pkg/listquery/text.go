@@ -1,10 +1,7 @@
 package listquery
 
-import (
-	"github.com/emoss08/keel"
-	"github.com/emoss08/trenova/shared/stringutils"
-)
+import "github.com/emoss08/keel"
 
 func TextContainsFold(e keel.Expr, s string) keel.Pred {
-	return keel.Raw("?::text ILIKE ?", e, "%"+stringutils.EscapeLikePattern(s)+"%")
+	return keel.DynOf(e).Cast(keel.TypeString).ContainsFold(s)
 }

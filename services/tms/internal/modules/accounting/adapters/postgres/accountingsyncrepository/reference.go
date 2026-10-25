@@ -190,7 +190,7 @@ func (r *referenceRepository) Search(
 					ro.SearchName.Contains(term),
 					ro.Number.ILike(prefix),
 					ro.ExternalID.Eq(strings.TrimSpace(req.Query)),
-				)).Order(keel.Asc(keel.Raw("CASE WHEN ? LIKE ? THEN 0 ELSE 1 END", ro.SearchName, prefix)))
+				)).Order(keel.Desc(ro.SearchName.Like(prefix)).NullsLast())
 			}
 
 			return q.Order(ro.SearchName.Asc(), ro.ExternalID.Asc()).List(ctx, r.db.Keel(ctx))

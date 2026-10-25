@@ -89,29 +89,18 @@ func (r *repository) SavePending(
 						ex.FailureMessage,
 					).
 					Set(
-						ex.ResponseID.ToExpr(keel.Raw(
-							"COALESCE(NULLIF(?, ''), ?)",
-							ex.ResponseID.Excluded(),
-							ex.ResponseID,
-						)),
-						ex.Model.ToExpr(keel.Raw(
-							"COALESCE(NULLIF(?, ''), ?)",
-							ex.Model.Excluded(),
-							ex.Model,
-						)),
-						ex.Status.ToExpr(keel.Raw(
-							"CASE WHEN ? IN (?, ?) THEN ? ELSE ? END",
-							ex.Status,
-							string(documentaiextraction.StatusApplied),
-							string(documentaiextraction.StatusSkipped),
-							ex.Status,
-							ex.Status.Excluded(),
-						)),
-						ex.SubmittedAt.ToExpr(keel.Raw(
-							"COALESCE(?, ?)",
-							ex.SubmittedAt.Excluded(),
-							ex.SubmittedAt,
-						)),
+						ex.ResponseID.ToExpr(keel.DynOf(ex.ResponseID.Excluded()).NullIf("").Coalesce(ex.ResponseID)),
+						ex.Model.ToExpr(keel.DynOf(ex.Model.Excluded()).NullIf("").Coalesce(ex.Model)),
+						ex.Status.ToExpr(keel.DynCase().
+							When(
+								ex.Status.In(
+									documentaiextraction.StatusApplied,
+									documentaiextraction.StatusSkipped,
+								),
+								ex.Status,
+							).
+							Else(ex.Status.Excluded())),
+						ex.SubmittedAt.ToExpr(keel.DynOf(ex.SubmittedAt.Excluded()).Coalesce(ex.SubmittedAt)),
 					),
 			)
 			if err != nil {

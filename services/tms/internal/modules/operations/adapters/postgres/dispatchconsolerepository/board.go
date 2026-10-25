@@ -88,7 +88,7 @@ func (r *repository) ListBoardMoves(
 				sp.TemperatureMax,
 				hasHazmat(sm),
 				hasActiveHold(sm),
-				keel.Raw("?::float8", sp.TotalChargeAmount),
+				keel.DynOf(sp.TotalChargeAmount).Cast(keel.TypeFloat64),
 				text(orig.stop.ID),
 				text(orig.stop.LocationID),
 				text(orig.loc.Name),
@@ -110,12 +110,14 @@ func (r *repository) ListBoardMoves(
 				dest.stop.ScheduledWindowEnd,
 				text(asn.ID),
 				text(asn.PrimaryWorkerID),
-				keel.Raw(
-					"CASE WHEN ? IS NULL THEN '' ELSE concat(?, ' ', ?) END",
-					assignedWorkers.ID,
-					assignedWorkers.FirstName,
-					assignedWorkers.LastName,
-				),
+				keel.DynCase().
+					When(keel.DynOf(assignedWorkers.ID).IsNull(), keel.DynLit("").Cast(keel.TypeString)).
+					Else(keel.DynFunc(
+						"concat",
+						assignedWorkers.FirstName,
+						keel.DynLit(" ").Cast(keel.TypeString),
+						assignedWorkers.LastName,
+					)),
 				text(asn.TractorID),
 				text(assignedTractors.Code),
 				text(asn.TrailerID),
@@ -126,7 +128,7 @@ func (r *repository) ListBoardMoves(
 				text(ca.ID),
 				text(ca.CarrierID),
 				text(assignedCarriers.Name),
-				keel.Raw("?::float8", ca.TotalCost),
+				keel.DynOf(ca.TotalCost).Cast(keel.TypeFloat64),
 			).
 			Where(moveFilters(filter)...).
 			Where(
@@ -161,7 +163,7 @@ func pointers[T any](rows []T) []*T {
 func moveCount(sm *shipmentdb.ShipmentMovesTable) keel.Expr {
 	sib := shipmentdb.ShipmentMoves.As("sib")
 	return keel.Scalar(sib.
-		Pick(keel.Raw("count(*)::int")).
+		Pick(keel.Count()).
 		Where(sib.ShipmentID.EqCol(sm.ShipmentID)))
 }
 
@@ -170,14 +172,12 @@ func hasHazmat(sm *shipmentdb.ShipmentMovesTable) keel.Expr {
 	com := commoditydb.Commodities
 	return keel.Exists(sc.
 		Join(com, com.ID.EqCol(sc.CommodityID)).
-		Pick(keel.Raw("1")).
 		Where(sc.ShipmentID.EqCol(sm.ShipmentID), com.HazardousMaterialID.IsNotNull()))
 }
 
 func hasActiveHold(sm *shipmentdb.ShipmentMovesTable) keel.Expr {
 	h := shipmentdb.ShipmentHolds
 	return keel.Exists(h.
-		Pick(keel.Raw("1")).
 		Where(
 			h.ShipmentID.EqCol(sm.ShipmentID),
 			h.BlocksDispatch.IsTrue(),
@@ -193,7 +193,7 @@ func previousTrailer(sm *shipmentdb.ShipmentMovesTable) keel.Expr {
 		Pick(pa.TrailerID).
 		Where(
 			pm.ShipmentID.EqCol(sm.ShipmentID),
-			keel.Raw("? < ?", pm.Sequence, sm.Sequence),
+			keel.DynOf(pm.Sequence).Lt(sm.Sequence),
 			pa.TrailerID.IsNotNull(),
 		).
 		Order(pm.Sequence.Desc()).

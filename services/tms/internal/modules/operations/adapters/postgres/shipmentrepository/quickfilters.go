@@ -45,7 +45,7 @@ const (
 )
 
 func DeliveryAt(st *shipmentdb.StopsTable) keel.Expr {
-	return keel.Raw("COALESCE(?, ?)", st.ActualArrival, st.ScheduledWindowStart)
+	return keel.DynOf(st.ActualArrival).Coalesce(st.ScheduledWindowStart)
 }
 
 func FirstPickupStop(
@@ -193,7 +193,7 @@ func deliveryWithin(start, end int64) keel.Pred {
 
 	return keel.And(
 		sp.Status.Ne(shipment.StatusCanceled),
-		keel.Raw("int8range(?, ?) @> (?)", start, end, keel.Scalar(delivery)),
+		keel.DynFunc("int8range", start, end).Covers(keel.Scalar(delivery)),
 	)
 }
 
@@ -214,7 +214,11 @@ func pickupWindowCondition(now int64, spec shipment.QuickFilterSpec) keel.Pred {
 
 	return keel.And(
 		StageCondition(shipment.StageNeedsCoverage),
-		keel.Raw("int8range(?::bigint, ?::bigint) @> (?)", lower, upper, keel.Scalar(pickup)),
+		keel.DynFunc(
+			"int8range",
+			keel.DynLit(lower).Cast(keel.TypeInt64),
+			keel.DynLit(upper).Cast(keel.TypeInt64),
+		).Covers(keel.Scalar(pickup)),
 	)
 }
 
@@ -225,7 +229,7 @@ func reeferCondition() keel.Pred {
 	profiles := mpf.Where(
 		mpf.Status.Eq(modeprofile.ProfileStatusActive),
 		mpf.EquipmentClass.Eq(modeprofile.EquipmentClassRefrigerated),
-		keel.Raw("? @> jsonb_build_array(?)", mpf.EquipmentTypeIDs, sp.TrailerTypeID),
+		mpf.EquipmentTypeIDs.Contains(keel.DynFunc("jsonb_build_array", sp.TrailerTypeID)),
 	)
 
 	return keel.Or(
@@ -237,10 +241,10 @@ func reeferCondition() keel.Pred {
 
 func costMiles(sm *shipmentdb.ShipmentMovesTable, includeDeadhead bool) keel.Expr {
 	if includeDeadhead {
-		return keel.Raw("COALESCE(SUM(?), 0)", sm.Distance)
+		return keel.DynOf(sm.Distance).Sum().Coalesce(0)
 	}
 
-	return keel.Raw("COALESCE(SUM(?) FILTER (WHERE ?), 0)", sm.Distance, sm.Loaded)
+	return keel.DynOf(sm.Distance).Sum().Filter(keel.DynOf(sm.Loaded)).Coalesce(0)
 }
 
 func lowMarginCondition(margin *shipmentports.ShipmentMarginBasis) keel.Pred {
@@ -248,18 +252,20 @@ func lowMarginCondition(margin *shipmentports.ShipmentMarginBasis) keel.Pred {
 	sm := shipmentdb.ShipmentMoves.As(quickMilesAlias)
 	revenue := sp.TotalChargeAmount
 
-	miles := sm.Pick(keel.Raw("1")).
+	cost := keel.DynFunc(
+		"round",
+		keel.DynLit(margin.CostPerMile).Cast(keel.TypeNumeric).
+			Mul(keel.DynOf(costMiles(sm, margin.IncludeDeadheadMiles)).Cast(keel.TypeNumeric)),
+		2,
+	)
+
+	miles := sm.
 		Where(sm.ShipmentID.EqCol(sp.ID), sm.Status.Ne(shipment.MoveStatusCanceled)).
 		Having(
-			keel.Raw("COALESCE(SUM(?), 0) > 0", sm.Distance),
-			keel.Raw(
-				"(? <= 0 OR ROUND((? - ROUND(?::numeric * (?)::numeric, 2)) * 100 / ?, 2) < ?)",
-				revenue,
-				revenue,
-				margin.CostPerMile,
-				costMiles(sm, margin.IncludeDeadheadMiles),
-				revenue,
-				margin.TargetMarginPercent,
+			keel.DynOf(sm.Distance).Sum().Coalesce(0).Gt(0),
+			keel.DynOf(revenue).Lte(0).Or(
+				keel.DynFunc("round", keel.DynOf(revenue).Sub(cost).Mul(100).Div(revenue), 2).
+					Lt(margin.TargetMarginPercent),
 			),
 		)
 
@@ -298,9 +304,9 @@ func DwellingStops(
 		sm.ShipmentID.EqCol(sp.ID),
 		sm.Status.Ne(shipment.MoveStatusCanceled),
 		st.Status.Ne(shipment.StopStatusCanceled),
-		keel.Raw("COALESCE(?, 0) > 0", st.ActualArrival),
-		keel.Raw("COALESCE(?, 0) = 0", st.ActualDeparture),
-		keel.Raw("COALESCE(?, TRUE)", st.CountDetentionOverride),
+		keel.DynOf(st.ActualArrival).Coalesce(0).Gt(0),
+		keel.DynOf(st.ActualDeparture).Coalesce(0).Eq(0),
+		keel.DynOf(st.CountDetentionOverride).Coalesce(true),
 		st.ActualArrival.Lte(now-thresholdMinutes*secondsPerMinute),
 	)
 }

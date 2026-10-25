@@ -46,7 +46,7 @@ func (r *repository) ReviewCredit(
 			identity, err := keel.IntoOne[customerIdentity](
 				ctx,
 				db,
-				c.Pick(keel.Raw("coalesce(?, '')", c.Name), c.Code).Where(c.ID.Eq(req.CustomerID)),
+				c.Pick(keel.DynOf(c.Name).Coalesce(""), c.Code).Where(c.ID.Eq(req.CustomerID)),
 			)
 			if dberror.IsNotFoundError(err) {
 				return result, nil
@@ -111,14 +111,12 @@ func (r *repository) ListCreditReviewCustomers(
 				Order(cbp.OrganizationID.Asc(), cbp.BusinessUnitID.Asc(), cbp.CustomerID.Asc()).
 				Limit(req.Limit)
 			if req.After != nil {
-				q = q.Where(keel.Raw(
-					"(?, ?, ?) > (?, ?, ?)",
-					cbp.OrganizationID,
-					cbp.BusinessUnitID,
-					cbp.CustomerID,
-					req.After.TenantInfo.OrgID.String(),
-					req.After.TenantInfo.BuID.String(),
-					req.After.CustomerID.String(),
+				q = q.Where(keel.DynRow(cbp.OrganizationID, cbp.BusinessUnitID, cbp.CustomerID).Gt(
+					keel.DynRow(
+						req.After.TenantInfo.OrgID.String(),
+						req.After.TenantInfo.BuID.String(),
+						req.After.CustomerID.String(),
+					),
 				))
 			}
 

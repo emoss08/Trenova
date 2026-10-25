@@ -404,8 +404,8 @@ func (r *repository) Summarize(
 				r.db.Keel(ctx),
 				scoped(scope).Pick(
 					keel.Count(),
-					keel.Raw("COALESCE(MIN(?), 0)", e.Seq),
-					keel.Raw("COALESCE(MAX(?), 0)", e.Seq),
+					keel.DynOf(e.Seq).Min().Coalesce(0),
+					keel.DynOf(e.Seq).Max().Coalesce(0),
 				),
 			)
 			if err != nil && !errors.Is(err, keel.ErrNotFound) {
@@ -425,7 +425,7 @@ func (r *repository) ListPage(
 		e := aiauditdb.AIAuditEvents
 		q := scoped(&req.Scope)
 		if req.HasAfterCursor {
-			q.Where(keel.Raw("(?, ?) > (?, ?)", e.OccurredAt, e.ID, req.AfterOccurred, req.AfterID))
+			q.Where(keel.DynRow(e.OccurredAt, e.ID).Gt(keel.DynRow(req.AfterOccurred, req.AfterID)))
 		}
 
 		events, err := q.

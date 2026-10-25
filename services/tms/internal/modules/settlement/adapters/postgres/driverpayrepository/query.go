@@ -6,8 +6,6 @@ import (
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
-const nowEpochSQL = "extract(epoch from current_timestamp)::bigint"
-
 func when(include bool, p keel.Pred) keel.Pred {
 	if !include {
 		return nil
@@ -30,7 +28,10 @@ func searchPred(query string, cols ...keel.StringCol) keel.Pred {
 }
 
 func openAfterNow(col keel.Int64Col) keel.Pred {
-	return keel.Or(col.IsNull(), keel.Raw("? > "+nowEpochSQL, col))
+	return keel.Or(
+		col.IsNull(),
+		keel.DynOf(col).Gt(keel.DynFunc("date_part", "epoch", keel.DynFunc("now")).Cast(keel.TypeInt64)),
+	)
 }
 
 func openAfter(col keel.Int64Col, at int64) keel.Pred {

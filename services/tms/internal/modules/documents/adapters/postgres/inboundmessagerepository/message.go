@@ -120,8 +120,7 @@ func newerInFolder(
 
 	probe := nwr.Pick(nwr.ID).Where(
 		nwr.ThreadKey.EqCol(m.ThreadKey),
-		keel.Raw("(? > ? OR (? = ? AND ? > ?))",
-			nwr.ReceivedAt, m.ReceivedAt, nwr.ReceivedAt, m.ReceivedAt, nwr.ID, m.ID),
+		keel.DynRow(nwr.ReceivedAt, nwr.ID).Gt(keel.DynRow(m.ReceivedAt, m.ID)),
 	).Where(applyFolder(nwr, req)...)
 	if req.Filter != nil && strings.TrimSpace(req.Filter.Query) != "" {
 		probe = searchPredicate(probe, req.Filter.Query)
@@ -394,10 +393,10 @@ func openCensusQuery(
 	statuses []inboundmessage.Status,
 ) *keel.Query[inboundmessage.InboundMessage] {
 	m := inboundmessagedb.InboundMessages
-	classification := keel.Raw("COALESCE(?, '')", m.Classification)
-	parked := keel.Raw("COALESCE(?, '')", m.Parked)
-	mine := keel.Raw("COALESCE(? = ?, FALSE)", m.OwnerID, req.ViewerID.String())
-	overdue := keel.Raw("COALESCE(? < ?, FALSE)", m.DueAt, req.Now)
+	classification := keel.DynOf(m.Classification).Coalesce("")
+	parked := keel.DynOf(m.Parked).Coalesce("")
+	mine := keel.DynOf(m.OwnerID).Eq(keel.DynLit(req.ViewerID.String())).Coalesce(false)
+	overdue := keel.DynOf(m.DueAt).Lt(keel.DynLit(req.Now)).Coalesce(false)
 
 	return censusBase(req, statuses).
 		Pick(m.Status, classification, m.MailboxID, parked, mine, overdue, keel.Count()).
@@ -413,11 +412,11 @@ func settledCensusQuery(
 	return censusBase(req, statuses).
 		Pick(
 			m.Status,
-			keel.Raw("COALESCE(?, '')", m.Classification),
+			keel.DynOf(m.Classification).Coalesce(""),
 			m.MailboxID,
-			keel.Raw("''"),
-			keel.Raw("FALSE"),
-			keel.Raw("FALSE"),
+			keel.DynLit(""),
+			keel.DynLit(false).Cast(keel.TypeBool),
+			keel.DynLit(false).Cast(keel.TypeBool),
 			keel.Count(),
 		).
 		Group(m.Status, m.Classification, m.MailboxID)

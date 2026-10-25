@@ -281,13 +281,7 @@ func (r *repository) ListEvents(
 					e.ItemID.Eq(req.ItemID),
 					keel.When(
 						req.BeforeAt > 0,
-						keel.Raw(
-							"(?, ?) < (?, ?)",
-							e.At,
-							e.ID,
-							req.BeforeAt,
-							req.BeforeID.String(),
-						),
+						keel.DynRow(e.At, e.ID).Lt(keel.DynRow(req.BeforeAt, req.BeforeID.String())),
 					),
 				).Order(e.At.Desc(), e.ID.Desc()).Limit(limit+1), &events),
 			)
@@ -380,8 +374,8 @@ func neighborQueries(
 				req.Filter,
 			)
 		},
-		after:        keel.Raw("(?, ?) > (?, ?)", bq.CreatedAt, bq.ID, createdAt, id),
-		beforeAnchor: keel.Raw("(?, ?) < (?, ?)", bq.CreatedAt, bq.ID, createdAt, id),
+		after:        keel.DynRow(bq.CreatedAt, bq.ID).Gt(keel.DynRow(createdAt, id)),
+		beforeAnchor: keel.DynRow(bq.CreatedAt, bq.ID).Lt(keel.DynRow(createdAt, id)),
 	}
 }
 

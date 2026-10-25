@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"slices"
-	"strings"
 
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
@@ -151,9 +150,9 @@ func (r *repository) Swap(ctx context.Context, req *kernelports.SwapEnvelopeRequ
 			return false, err
 		}
 
-		replacement := keel.Raw("?", req.Replacement)
+		replacement := keel.DynLit(req.Replacement)
 		if req.Column.JSONMap {
-			replacement = keel.Raw("?::jsonb", req.Replacement)
+			replacement = replacement.Cast(keel.TypeJSON)
 		}
 
 		sets := slices.Concat(src.untouched, []keel.Assignment{src.value.ToExpr(replacement)})
@@ -180,13 +179,14 @@ func (r *repository) SwapVersion(
 			return fmt.Errorf("%s version: %w", src.name, err)
 		}
 
-		set := version.ToExpr(keel.Raw("?", req.Replacement))
+		set := version.ToExpr(keel.DynLit(req.Replacement))
 		if req.Replacement == "" {
 			set = version.ToNull()
 		}
-		expected := keel.Raw("?::text = ?", version, req.Expected)
+		versionText := keel.DynOf(version).Cast(keel.TypeString)
+		expected := versionText.Eq(req.Expected)
 		if req.Expected == "" {
-			expected = keel.Raw("COALESCE(?::text, '') = ''", version)
+			expected = versionText.Coalesce("").Eq("")
 		}
 
 		sets := slices.Concat(src.untouched, []keel.Assignment{set})
@@ -274,21 +274,21 @@ func (s *source) column(e keel.Expr) (keel.Col, error) {
 }
 
 func (s *source) listQuery(req *kernelports.ListEnvelopeRowsRequest) *keel.Query[keel.Row] {
-	bu := keel.Expr(keel.Raw("?::text", req.Tenant.BuID.String()))
+	bu := keel.Expr(keel.DynLit(req.Tenant.BuID.String()).Cast(keel.TypeString))
 	if s.bu != nil {
-		bu = keel.Raw("?::text", *s.bu)
+		bu = keel.DynOf(*s.bu).Cast(keel.TypeString)
 	}
 
 	return s.table.Pick(
-		keel.Raw("?::text", s.id),
-		keel.Raw("?::text", s.org),
+		keel.DynOf(s.id).Cast(keel.TypeString),
+		keel.DynOf(s.org).Cast(keel.TypeString),
 		bu,
-		keel.Raw("?::text", s.value),
+		keel.DynOf(s.value).Cast(keel.TypeString),
 		s.extraArray(),
 	).
 		Where(
 			s.value.IsNotNull(),
-			keel.Raw("?::text <> ''", s.value),
+			keel.DynOf(s.value).Cast(keel.TypeString).Ne(""),
 			keel.When(req.After != "", s.id.Gt(req.After)),
 		).
 		Order(s.id.Asc()).
@@ -300,18 +300,17 @@ func (s *source) extraArray() keel.Expr {
 		return keel.Raw("ARRAY[]::text[]")
 	}
 
-	args := make([]any, len(s.extra))
+	items := make([]any, len(s.extra))
 	for i := range s.extra {
-		args[i] = s.extra[i]
+		items[i] = keel.DynOf(s.extra[i]).Cast(keel.TypeString).Coalesce("")
 	}
-	items := strings.TrimSuffix(strings.Repeat("COALESCE(?::text, ''), ", len(s.extra)), ", ")
-	return keel.Raw("ARRAY["+items+"]::text[]", args...)
+	return keel.DynArray(items...)
 }
 
 func (s *source) matches(row *kernelports.EnvelopeRow) []keel.Pred {
 	return []keel.Pred{
 		s.id.Eq(row.ID),
-		keel.Raw("?::text = ?", s.value, row.Sealed),
+		keel.DynOf(s.value).Cast(keel.TypeString).Eq(row.Sealed),
 	}
 }
 

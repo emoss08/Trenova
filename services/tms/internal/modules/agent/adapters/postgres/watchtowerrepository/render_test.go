@@ -126,8 +126,8 @@ func TestListOrderedByDueContinuesAfterTheCursor(t *testing.T) {
 		Limit:       1000,
 	}))
 
-	due := `COALESCE(wi."due_at", ` + strconv.FormatInt(watchtower.NoDueSortKey, 10) + `)`
-	assert.Contains(t, sql, "("+due+`, wi."id") > ($`, sql)
+	due := `coalesce(wi."due_at", ` + strconv.FormatInt(watchtower.NoDueSortKey, 10) + `)`
+	assert.Contains(t, sql, "ROW("+due+`, wi."id") > ROW($`, sql)
 	assert.Contains(t, sql, `ORDER BY `+due+` ASC, wi."id" ASC LIMIT 200`, sql)
 	assert.Contains(t, sql, `(wi."assignee_id" IS NULL OR wi."assignee_id" = ANY(`, sql)
 	assert.Contains(t, args, int64(500))
@@ -143,7 +143,7 @@ func TestListNewestFirstContinuesBeforeTheCursor(t *testing.T) {
 		UnresolvedOnly:   true,
 	}))
 
-	assert.Contains(t, sql, `(wi."occurred_at", wi."id") < ($`, sql)
+	assert.Contains(t, sql, `ROW(wi."occurred_at", wi."id") < ROW($`, sql)
 	assert.Contains(t, sql, `wi."resolved_at" IS NULL`, sql)
 	assert.Contains(t, sql, `ORDER BY wi."occurred_at" DESC, wi."id" DESC LIMIT 50`, sql)
 }

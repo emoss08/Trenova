@@ -80,7 +80,7 @@ func ruleCandidates(req *triageports.RuleCandidatesRequest) []keel.Pred {
 	case triage.SenderAddress:
 		preds = append(preds,
 			m.SenderDomain.Eq(emailutils.Domain(req.Sender)),
-			keel.Raw("LOWER(BTRIM(?)) = ?", m.FromAddress, strings.ToLower(req.Sender)),
+			keel.DynFunc("lower", keel.DynFunc("btrim", m.FromAddress)).Eq(strings.ToLower(req.Sender)),
 		)
 	case triage.SenderAnyCustomer:
 		preds = append(preds, m.MatchedCustomerID.IsNotNull())
@@ -143,12 +143,16 @@ func manualOutcomesQuery(
 	outcomes := keel.CTE("manual_outcomes", []string{"message_id", "outcome"}, act.
 		Pick(
 			act.MessageID,
-			keel.Raw(
-				"CASE WHEN BOOL_OR(? = ?) THEN ? WHEN BOOL_OR(? = ?) THEN ? ELSE ? END",
-				act.Kind, string(triage.ActivityIgnored), string(triage.ActivityIgnored),
-				act.Kind, string(triage.ActivityFiled), string(triage.ActivityFiled),
-				string(triage.ActivityHandled),
-			),
+			keel.DynCase().
+				When(
+					keel.DynFunc("bool_or", act.Kind.Eq(triage.ActivityIgnored)),
+					keel.DynLit(string(triage.ActivityIgnored)).Cast(keel.TypeString),
+				).
+				When(
+					keel.DynFunc("bool_or", act.Kind.Eq(triage.ActivityFiled)),
+					keel.DynLit(string(triage.ActivityFiled)).Cast(keel.TypeString),
+				).
+				Else(keel.DynLit(string(triage.ActivityHandled)).Cast(keel.TypeString)),
 		).
 		Where(
 			act.ActorKind.Eq(triage.ActorPerson),
@@ -188,8 +192,8 @@ func manualOutcomesQuery(
 			keel.Max(arrivals.Col("arrived")),
 			m.MailboxID.CountDistinct(),
 			m.MailboxID.Min(),
-			keel.Raw("BOOL_AND(? IS NOT NULL)", m.MatchedCustomerID),
-			keel.Raw("BOOL_AND(? IS NOT NULL)", m.MatchedCarrierID),
+			keel.DynFunc("bool_and", keel.DynOf(m.MatchedCustomerID).IsNotNull()),
+			keel.DynFunc("bool_and", keel.DynOf(m.MatchedCarrierID).IsNotNull()),
 		).
 		Where(m.ReceivedAt.Gte(req.Since)).
 		Group(m.SenderDomain, m.Classification, outcome)
@@ -219,7 +223,7 @@ func messageRowsQuery(
 	m := inboundmessagedb.InboundMessages
 
 	return withReference(messages()).
-		Pick(messageRowColumns(keel.Raw("FALSE"))...).
+		Pick(messageRowColumns(keel.DynLit(false).Cast(keel.TypeBool))...).
 		Where(m.ID.In(req.IDs...)).
 		Limit(len(req.IDs))
 }

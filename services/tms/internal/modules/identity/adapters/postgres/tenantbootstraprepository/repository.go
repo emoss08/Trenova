@@ -131,7 +131,7 @@ func (r *repository) Bootstrap(
 func (r *repository) resolveState(ctx context.Context, abbreviation string) (pulid.ID, error) {
 	us := usstatedb.UsStates
 	state, err := us.Pick(us.ID).
-		Where(keel.Raw("upper(?) = ?", us.Abbreviation, strings.ToUpper(strings.TrimSpace(abbreviation)))).
+		Where(keel.DynFunc("upper", us.Abbreviation).Eq(strings.ToUpper(strings.TrimSpace(abbreviation)))).
 		First(ctx, r.db.Keel(ctx))
 	if err != nil {
 		return "", fmt.Errorf(

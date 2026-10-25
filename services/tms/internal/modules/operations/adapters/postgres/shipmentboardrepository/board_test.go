@@ -53,11 +53,13 @@ func TestGroupSummaryBucketsShipDatesByLocalDayOfTheFirstPickup(t *testing.T) {
 
 	assert.Contains(t, sql, `LEFT JOIN "stops" grp_stop ON`)
 	assert.Contains(t, sql, `grp_stop."id" = (SELECT end_stp."id"`)
-	assert.Contains(t, sql, `ORDER BY end_sm."sequence" ASC, end_stp."sequence" ASC, end_stp."id" COLLATE "C" ASC LIMIT 1`)
-	assert.Contains(t, sql, `to_char(to_timestamp(grp_stop."scheduled_window_start") AT TIME ZONE `)
-	assert.Contains(t, sql, `GROUP BY COALESCE(to_char(`)
-	assert.Contains(t, sql, `MIN(grp_stop."scheduled_window_start") ASC NULLS LAST`)
-	assert.Contains(t, args, "America/Chicago")
+	assert.Contains(t, sql, `ORDER BY end_sm."sequence" ASC, end_stp."sequence" ASC, (end_stp."id" COLLATE "C") ASC LIMIT 1`)
+	key := `coalesce(to_char(timezone($3::text, to_timestamp(grp_stop."scheduled_window_start")), $4), $5)`
+	assert.Contains(t, sql, `SELECT `+key+`, $6, count(*), coalesce(sum(s."total_charge_amount"), $7) FROM`)
+	assert.Contains(t, sql, `GROUP BY `+key+` ORDER BY`)
+	assert.Contains(t, sql, `min(grp_stop."scheduled_window_start") ASC NULLS LAST`)
+	assert.Equal(t, "America/Chicago", args[2])
+	assert.Equal(t, []any{"", "", 0}, args[4:7])
 	assert.Contains(t, args, []string{"Pickup", "SplitPickup"})
 }
 
@@ -66,7 +68,7 @@ func TestGroupSummaryBucketsDeliveryDatesByTheLastDelivery(t *testing.T) {
 
 	sql, args := renderGroupSummary(t, shipment.BoardGroupingDeliveryDate)
 
-	assert.Contains(t, sql, `ORDER BY end_sm."sequence" DESC, end_stp."sequence" DESC, end_stp."id" COLLATE "C" DESC LIMIT 1`)
+	assert.Contains(t, sql, `ORDER BY end_sm."sequence" DESC, end_stp."sequence" DESC, (end_stp."id" COLLATE "C") DESC LIMIT 1`)
 	assert.Contains(t, args, []string{"Delivery", "SplitDelivery"})
 }
 
@@ -86,7 +88,7 @@ func TestGroupSummaryPutsShipmentsWithoutAnOwnerLast(t *testing.T) {
 	sql, _ := renderGroupSummary(t, shipment.BoardGroupingOwner)
 
 	assert.Contains(t, sql, `LEFT JOIN "users"`)
-	assert.Contains(t, sql, `COALESCE(s."owner_id", '')`)
+	assert.Contains(t, sql, `SELECT coalesce(s."owner_id", $3), coalesce(o."name", $4), count(*)`)
 	assert.Contains(t, sql, `s."owner_id" ASC NULLS LAST`)
 }
 
@@ -106,7 +108,7 @@ func TestStageSummaryReadsTheScopedShipments(t *testing.T) {
 	sp := shipmentdb.Shipments
 	sql, args := keeltest.Render(t, q.Group(sp.StageRank).Pick(sp.StageRank, revenueSum()))
 	assert.Contains(t, sql, `GROUP BY s."stage_rank"`)
-	assert.Contains(t, sql, `COALESCE(SUM(s."total_charge_amount"), 0)`)
+	assert.Contains(t, sql, `coalesce(sum(s."total_charge_amount"), $4)`)
 	assert.Contains(t, args, "New")
 
 	_, err = scoped(nil)
@@ -126,8 +128,7 @@ func TestQuickFilterTotalsIsOneQuery(t *testing.T) {
 	require.NoError(t, err)
 
 	sql, _ := keeltest.Render(t, totals)
-	assert.Contains(t, sql, `ARRAY[COUNT(*) FILTER (WHERE s."stage_rank" = `)
-	assert.Contains(t, sql, `]::bigint[]`)
-	assert.Contains(t, sql, `]::text[]`)
-	assert.Contains(t, sql, `COALESCE(SUM(s."total_charge_amount") FILTER (WHERE `)
+	assert.Contains(t, sql, `ARRAY[count(*) FILTER (WHERE s."stage_rank" = `)
+	assert.Contains(t, sql, `ARRAY[CAST(coalesce(sum(s."total_charge_amount") FILTER (WHERE `)
+	assert.Contains(t, sql, ` AS text)]`)
 }

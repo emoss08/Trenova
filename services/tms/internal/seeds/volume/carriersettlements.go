@@ -1479,8 +1479,8 @@ func (g *generator) csBatchAggregates(
 	).Group(cs.BatchID).Pick(
 		cs.BatchID,
 		keel.Count(),
-		keel.Raw("COALESCE(SUM(?), 0)::bigint", cs.GrossCostMinor),
-		keel.Raw("COALESCE(SUM(?), 0)::bigint", cs.NetPayableMinor),
+		keel.DynOf(cs.GrossCostMinor).Sum().Coalesce(0).Cast(keel.TypeInt64),
+		keel.DynOf(cs.NetPayableMinor).Sum().Coalesce(0).Cast(keel.TypeInt64),
 	))
 	if err != nil {
 		return fmt.Errorf("total carrier settlement batches: %w", err)

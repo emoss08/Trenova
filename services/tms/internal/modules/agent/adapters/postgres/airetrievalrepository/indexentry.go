@@ -414,17 +414,17 @@ func applyOutcome(
 	sets := []keel.Assignment{
 		e.LeaseExpiresAt.ToNull(),
 		e.UpdatedAt.To(now),
-		e.LastError.ToExpr(keel.Raw("NULLIF(?, '')", outcome.Col("last_error"))),
+		e.LastError.ToExpr(keel.DynOf(outcome.Col("last_error")).NullIf("")),
 	}
 	if status == airetrieval.IndexStatusFailed {
 		sets = append(sets,
-			e.Status.ToExpr(keel.Raw(
-				"CASE WHEN ? = 0 THEN ? ELSE ? END",
-				outcome.Col("next_attempt_at"),
-				string(airetrieval.IndexStatusFailed),
-				string(airetrieval.IndexStatusPending),
-			)),
-			e.NextAttemptAt.ToExpr(keel.Raw("NULLIF(?, 0)", outcome.Col("next_attempt_at"))),
+			e.Status.ToExpr(keel.DynCase().
+				When(
+					keel.DynOf(outcome.Col("next_attempt_at")).Eq(0),
+					keel.DynLit(string(airetrieval.IndexStatusFailed)).Cast(keel.TypeString),
+				).
+				Else(keel.DynLit(string(airetrieval.IndexStatusPending)).Cast(keel.TypeString))),
+			e.NextAttemptAt.ToExpr(keel.DynOf(outcome.Col("next_attempt_at")).NullIf(0)),
 		)
 	} else {
 		sets = append(sets,
@@ -494,11 +494,11 @@ func staleIndexEntry(
 		entry.SourceID.IsNull(),
 		keel.And(
 			entry.Status.In(airetrieval.IndexStatusIndexed, airetrieval.IndexStatusSkipped),
-			keel.Raw("? >= COALESCE(?, 0)", updatedAt, entry.IndexedAt),
+			keel.DynOf(updatedAt).Gte(keel.DynOf(entry.IndexedAt).Coalesce(0)),
 		),
 		keel.And(
 			entry.Status.Eq(airetrieval.IndexStatusFailed),
-			keel.Raw("? >= COALESCE(?, 0)", updatedAt, entry.LastAttemptAt),
+			keel.DynOf(updatedAt).Gte(keel.DynOf(entry.LastAttemptAt).Coalesce(0)),
 		),
 	)
 }
@@ -630,7 +630,7 @@ func (r *repository) AverageIndexChunks(
 				e.Status.Eq(airetrieval.IndexStatusIndexed),
 				e.ChunkCount.Gt(0),
 			).
-			Pick(keel.Count(), keel.Raw("COALESCE(AVG(?), 0)::float8", e.ChunkCount)))
+			Pick(keel.Count(), keel.DynOf(e.ChunkCount).Avg().Coalesce(0).Cast(keel.TypeFloat64)))
 		if err != nil {
 			return agentports.IndexChunkAverage{}, fmt.Errorf(
 				"average %s chunks per source: %w",

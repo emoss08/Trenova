@@ -337,7 +337,7 @@ func (r *repository) ListForSweep(
 		t := tenderdb.Tenders
 		inFlight := tenderdb.TenderOffers.As("tof")
 		awaiting := func(extra ...keel.Pred) *keel.Query[tender.TenderOffer] {
-			q := inFlight.Pick(keel.Raw("1")).Where(
+			q := inFlight.Where(
 				inFlight.TenderID.EqCol(t.ID),
 				inFlight.OrganizationID.EqCol(t.OrganizationID),
 				inFlight.BusinessUnitID.EqCol(t.BusinessUnitID),
@@ -360,12 +360,8 @@ func (r *repository) ListForSweep(
 				keel.Exists(awaiting(inFlight.ExpiresAt.Lte(req.ExpiredBy))),
 				keel.And(
 					keel.NotExists(awaiting()),
-					keel.Raw(
-						"greatest(?, coalesce(?, 0)) <= ?",
-						t.CreatedAt,
-						t.LastBouncedAt,
-						req.ExpiredBy,
-					),
+					keel.DynFunc("greatest", t.CreatedAt, keel.DynOf(t.LastBouncedAt).Coalesce(0)).
+						Lte(req.ExpiredBy),
 				),
 			),
 		).
@@ -781,7 +777,6 @@ func (r *repository) ListAcceptedMissingRateConfirmation(
 			)
 
 		standingRateConfirmation := rc.AllTenants().
-			Pick(keel.Raw("1")).
 			Where(
 				rc.CarrierAssignmentID.EqCol(ca.ID),
 				rc.OrganizationID.EqCol(ca.OrganizationID),
@@ -790,7 +785,6 @@ func (r *repository) ListAcceptedMissingRateConfirmation(
 			)
 
 		coveringAssignment := ca.AllTenants().
-			Pick(keel.Raw("1")).
 			Where(
 				ca.ShipmentMoveID.EqCol(t.ShipmentMoveID),
 				ca.OrganizationID.EqCol(t.OrganizationID),
@@ -840,13 +834,7 @@ func (r *repository) PurgeDeadOfferTokens(
 		n, err := tk.AllTenants().
 			Where(tk.ID.InQuery(dead.AllTenants().
 				Pick(dead.ID).
-				Where(keel.Raw(
-					"coalesce(?, ?, ?) < ?",
-					dead.UsedAt,
-					dead.RevokedAt,
-					dead.ExpiresAt,
-					req.DeadBefore,
-				)).
+				Where(keel.DynOf(dead.UsedAt).Coalesce(dead.RevokedAt, dead.ExpiresAt).Lt(req.DeadBefore)).
 				Limit(limit))).
 			Delete(ctx, r.db.Keel(ctx))
 		if err != nil {

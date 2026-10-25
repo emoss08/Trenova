@@ -15,7 +15,7 @@ func when(include bool, p keel.Pred) keel.Pred {
 }
 
 func coalesceZero(e keel.Expr) keel.Expr {
-	return keel.Raw("coalesce(?, 0)", e)
+	return keel.DynOf(e).Coalesce(0)
 }
 
 func tenantOf(orgID, buID pulid.ID) pagination.TenantInfo {

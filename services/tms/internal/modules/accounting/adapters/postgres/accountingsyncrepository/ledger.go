@@ -190,23 +190,15 @@ func (s *ledgerSource) SumLines(
 				includeClosing: req.IncludeClosing,
 			})
 
-			customer := keel.Expr(keel.Raw("''::varchar"))
-			sourceEntry := keel.Expr(keel.Raw("''::varchar"))
+			customer := keel.DynLit("").Cast(keel.TypeString)
+			sourceEntry := customer
 			if len(req.PartyAccountIDs) > 0 {
-				partyAccounts := idStrings(req.PartyAccountIDs)
-				customer = keel.Raw(
-					"COALESCE(CASE WHEN ? = ANY(?) THEN ? END, '')",
-					jel.GLAccountID,
-					partyAccounts,
-					jel.CustomerID,
-				)
-				sourceEntry = keel.Raw(
-					"COALESCE(CASE WHEN ? = ANY(?) THEN COALESCE(?, ?) END, '')",
-					jel.GLAccountID,
-					partyAccounts,
-					je.ReversalOfID,
-					je.ID,
-				)
+				party := jel.GLAccountID.In(req.PartyAccountIDs...)
+				customer = keel.DynCase().When(party, jel.CustomerID).End().Coalesce("")
+				sourceEntry = keel.DynCase().
+					When(party, keel.DynOf(je.ReversalOfID).Coalesce(je.ID)).
+					End().
+					Coalesce("")
 			}
 
 			rows, err := keel.Into[ledgerSumRow](ctx, s.db.Keel(ctx), query.
@@ -217,7 +209,7 @@ func (s *ledgerSource) SumLines(
 					jel.DebitAmount.Sum(),
 					jel.CreditAmount.Sum(),
 				).
-				Group(keel.Raw("1"), keel.Raw("2"), keel.Raw("3")))
+				Group(jel.GLAccountID, customer, sourceEntry))
 			if err != nil {
 				s.l.Error("failed to sum posted journal lines", zap.Error(err))
 				return nil, fmt.Errorf("sum posted journal lines: %w", err)
@@ -361,14 +353,6 @@ func postedLines(filter *postedLinesFilter) *keel.Query[journalentry.JournalEntr
 		preds = append(preds, je.AccountingDate.Lt(*filter.before))
 	}
 	return jel.Where(preds...)
-}
-
-func idStrings(ids []pulid.ID) []string {
-	out := make([]string, len(ids))
-	for i, id := range ids {
-		out[i] = id.String()
-	}
-	return out
 }
 
 func (s *ledgerSource) assemble(
@@ -759,7 +743,7 @@ func (s *ledgerSource) nameParties(
 					wrk := workerdb.Workers
 					return wrk.Pick(
 						wrk.ID,
-						keel.Raw("CONCAT_WS(' ', ?, ?)", wrk.FirstName, wrk.LastName),
+						keel.DynFunc("concat_ws", " ", wrk.FirstName, wrk.LastName),
 					).Where(wrk.ID.In(ids...))
 				},
 			},

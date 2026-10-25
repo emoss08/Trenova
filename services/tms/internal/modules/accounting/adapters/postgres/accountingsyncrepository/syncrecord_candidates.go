@@ -201,9 +201,9 @@ func (s *candidateSource) build(
 		queued = append(queued, rec.ObjectID.EqCol(s.id), rec.Operation.Eq(req.Operation))
 	}
 
-	number := keel.Expr(keel.Raw("''::text"))
+	number := keel.Expr(keel.DynLit("").Cast(keel.TypeString))
 	if s.number != nil {
-		number = keel.Raw("COALESCE(?, '')", *s.number)
+		number = keel.DynOf(*s.number).Coalesce("")
 	}
 
 	preds := []keel.Pred{
@@ -220,7 +220,7 @@ func (s *candidateSource) build(
 	if req.AfterAt > 0 || !req.AfterID.IsNil() {
 		preds = append(
 			preds,
-			keel.Raw("(?, ?) > (?, ?)", s.at, s.id, req.AfterAt, req.AfterID.String()),
+			keel.DynRow(s.at, s.id).Gt(keel.DynRow(req.AfterAt, req.AfterID.String())),
 		)
 	}
 
@@ -262,14 +262,11 @@ func journalDayQueued(
 		timezone = time.UTC.String()
 	}
 	return []keel.Pred{
-		keel.Raw(
-			"? = ?::text || to_char(to_timestamp(?) AT TIME ZONE ?::text, ?::text)",
-			rec.ObjectID,
-			accountingsync.JournalDayPrefix,
-			je.AccountingDate,
-			timezone,
-			accountingsync.JournalDaySQLLayout,
-		),
-		keel.Raw("? >= ?", rec.QueuedAt, je.PostedAt),
+		keel.DynOf(rec.ObjectID).Eq(keel.DynLit(accountingsync.JournalDayPrefix).Cast(keel.TypeString).Concat(keel.DynFunc(
+			"to_char",
+			keel.DynFunc("timezone", keel.DynLit(timezone).Cast(keel.TypeString), keel.DynFunc("to_timestamp", je.AccountingDate)),
+			keel.DynLit(accountingsync.JournalDaySQLLayout).Cast(keel.TypeString),
+		))),
+		keel.DynOf(rec.QueuedAt).Gte(je.PostedAt),
 	}
 }

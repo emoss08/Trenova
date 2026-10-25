@@ -286,7 +286,7 @@ func (r *repository) UpdateItems(
 			Update(ctx, r.db.Keel(ctx),
 				itm.GroupID.ToExpr(edits.Col("group_id")),
 				itm.Excluded.ToExpr(edits.Col("excluded")),
-				itm.ExclusionReason.ToExpr(keel.Raw("NULLIF(?, '')", edits.Col("exclusion_reason"))),
+				itm.ExclusionReason.ToExpr(keel.DynOf(edits.Col("exclusion_reason")).NullIf("")),
 				itm.SortKey.ToExpr(edits.Col("sort_key")),
 				itm.Version.ToExpr(itm.Version),
 			)

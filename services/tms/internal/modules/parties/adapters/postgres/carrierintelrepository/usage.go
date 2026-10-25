@@ -97,7 +97,7 @@ func (r *usageRepository) CostSince(
 		total, err := keel.IntoOne[decimal.Decimal](
 			ctx,
 			r.db.Keel(ctx),
-			u.Pick(keel.Raw("COALESCE(SUM(?), 0)", u.EstimatedCost)).
+			u.Pick(keel.DynOf(u.EstimatedCost).Sum().Coalesce(0)).
 				Where(u.CreatedAt.Gte(since)),
 		)
 		if err != nil {

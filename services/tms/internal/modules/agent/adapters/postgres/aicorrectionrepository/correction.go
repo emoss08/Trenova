@@ -212,6 +212,7 @@ func (r *repository) TotalsByProvider(
 		r.db,
 		func(ctx context.Context) ([]aicorrectionports.AICorrectionProviderTotal, error) {
 			c := aicorrectiondb.Corrections
+			isProvider := keel.DynOf(c.ExtractionProviderID).Eq(req.ProviderID)
 			totals, err := keel.Into[aicorrectionports.AICorrectionProviderTotal](
 				ctx,
 				r.db.Keel(ctx),
@@ -220,11 +221,11 @@ func (r *repository) TotalsByProvider(
 					c.CapturedAt.Gte(req.Since),
 					c.ExtractionProviderID.IsNotNull(),
 				).
-					Group(keel.Raw("1")).
+					Group(isProvider).
 					Pick(
-						keel.Raw("? = ?", c.ExtractionProviderID, req.ProviderID),
-						keel.Raw("COALESCE(SUM(?), 0)", c.ScoredCount),
-						keel.Raw("COALESCE(SUM(?), 0)", c.CorrectCount),
+						isProvider,
+						keel.DynOf(c.ScoredCount).Sum().Coalesce(0),
+						keel.DynOf(c.CorrectCount).Sum().Coalesce(0),
 					),
 			)
 			if err != nil {
@@ -272,20 +273,22 @@ func (r *repository) weeklyTotals(
 ) ([]aicorrection.WeekTotal, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]aicorrection.WeekTotal, error) {
 		c := aicorrectiondb.Corrections
+		week := keel.DynOf(c.CapturedAt).Sub(
+			keel.DynOf(c.CapturedAt).Sub(int64(firstMondayEpoch)).Mod(int64(secondsPerWeek)),
+		)
 		totals, err := keel.Into[aicorrection.WeekTotal](ctx, r.db.Keel(ctx), q.
 			Where(
 				c.Task.Eq(task),
 				c.CapturedAt.Gte(since),
 				c.ExtractionProviderID.IsNotNull(),
 			).
-			Group(keel.Raw("1"), keel.Raw("2")).
+			Group(c.ExtractionProviderID, week).
 			Pick(
 				c.ExtractionProviderID,
-				keel.Raw("? - ((? - ?) % ?)", c.CapturedAt, c.CapturedAt,
-					int64(firstMondayEpoch), int64(secondsPerWeek)),
+				week,
 				keel.Count(),
-				keel.Raw("COALESCE(SUM(?), 0)", c.ScoredCount),
-				keel.Raw("COALESCE(SUM(?), 0)", c.CorrectCount),
+				keel.DynOf(c.ScoredCount).Sum().Coalesce(0),
+				keel.DynOf(c.CorrectCount).Sum().Coalesce(0),
 			))
 		if err != nil {
 			r.l.Error("failed to total ai corrections by week and provider", zap.Error(err))
@@ -305,7 +308,7 @@ func trainingConsent(allTenants bool) keel.Pred {
 		consent.OrganizationID.EqCol(c.OrganizationID),
 		consent.BusinessUnitID.EqCol(c.BusinessUnitID),
 		consent.AITrainingConsent.IsTrue(),
-	), allTenants).Pick(keel.Raw("1")))
+	), allTenants))
 }
 
 func trainable(
@@ -326,7 +329,7 @@ func trainable(
 			promoted.SourceCorrectionID.EqCol(c.ID),
 			promoted.OrganizationID.EqCol(c.OrganizationID),
 			promoted.BusinessUnitID.EqCol(c.BusinessUnitID),
-		), allTenants).Pick(keel.Raw("1"))),
+		), allTenants)),
 	}
 }
 
@@ -353,11 +356,10 @@ func (r *repository) CountTrainable(
 
 		total, err := keel.IntoOne[int](ctx, r.db.Keel(ctx), perOrganization.Query().
 			With(perOrganization).
-			Pick(keel.Raw(
-				"COALESCE(SUM(LEAST(?, ?)), 0)::bigint",
-				perOrganization.Col("examples"),
-				capPerOrganization,
-			)))
+			Pick(keel.DynFunc("least", perOrganization.Col("examples"), capPerOrganization).
+				Sum().
+				Coalesce(0).
+				Cast(keel.TypeInt64)))
 		if err != nil && !errors.Is(err, keel.ErrNotFound) {
 			r.l.Error("failed to count trainable ai corrections", zap.Error(err))
 

@@ -26,8 +26,8 @@ const (
 	shipmentIDKey    = "externalShipmentId"
 	paymentMethodKey = "paymentMethod"
 
-	transferReferencesPath = "{ratingDetail}"
-	messageReferencesPath  = "{loadTender,ratingDetail}"
+	ratingDetailKey = "ratingDetail"
+	loadTenderKey   = "loadTender"
 )
 
 type Params struct {
@@ -76,7 +76,7 @@ func inboundTenders(orgID pulid.ID) []keel.Pred {
 
 func ratingDetailText(key string) keel.Expr {
 	m := edidb.EDIMessages
-	return keel.Raw("COALESCE(?, '')", m.PayloadSnapshot.Text("loadTender", "ratingDetail", key))
+	return keel.DynOf(m.PayloadSnapshot.Text("loadTender", "ratingDetail", key)).Coalesce("")
 }
 
 func candidatesQuery(
@@ -92,7 +92,7 @@ func candidatesQuery(
 			m.BusinessUnitID,
 			m.TransferID.Coalesce(""),
 			m.RawX12,
-			keel.Raw("COALESCE(SUBSTRING(? FROM 1 FOR ?), '')", f.RawContent, fileHeadSize),
+			keel.DynFunc("substr", f.RawContent, 1, fileHeadSize).Coalesce(""),
 			ratingDetailText(shipmentIDKey),
 			ratingDetailText(paymentMethodKey),
 		).
@@ -104,7 +104,7 @@ func candidatesQuery(
 		).
 		Where(inboundTenders(req.OrganizationID)...).
 		Where(
-			keel.Raw("NULLIF(BTRIM(?), '') IS NOT NULL", m.RawX12),
+			keel.DynFunc("btrim", m.RawX12).NullIf("").IsNotNull(),
 			keel.When(req.AfterID.IsNotNil(), m.ID.Gt(req.AfterID)),
 		).
 		Order(m.ID.Asc()).
@@ -155,8 +155,8 @@ func (r *repository) CountUnreadableTenders(
 		count, err := m.AllTenants().
 			Where(inboundTenders(req.OrganizationID)...).
 			Where(
-				keel.Raw("NULLIF(BTRIM(?), '') IS NULL", m.RawX12),
-				keel.Raw("? <> ''", ratingDetailText(shipmentIDKey)),
+				keel.DynFunc("btrim", m.RawX12).NullIf("").IsNull(),
+				keel.DynOf(ratingDetailText(shipmentIDKey)).Ne(""),
 			).
 			Count(ctx, r.db.Keel(ctx))
 		if err != nil {
@@ -217,16 +217,17 @@ func referencesJSON(shipmentID, paymentMethod string) (string, error) {
 	return encoded, nil
 }
 
-func withReferences(column keel.JSONBCol, path, references string) keel.Assignment {
-	return column.ToExpr(keel.Raw(
-		"jsonb_set(?, ?::text[], (COALESCE(? #> ?::text[], jsonb_build_object()) - ? - ?) || ?::jsonb)",
+func withReferences(column keel.JSONBCol, references string, path ...string) keel.Assignment {
+	kept := column.Path(path...).
+		Coalesce(keel.DynFunc("jsonb_build_object")).
+		Sub(keel.DynLit(shipmentIDKey).Cast(keel.TypeString)).
+		Sub(keel.DynLit(paymentMethodKey).Cast(keel.TypeString))
+
+	return column.ToExpr(keel.DynFunc(
+		"jsonb_set",
 		column,
 		path,
-		column,
-		path,
-		shipmentIDKey,
-		paymentMethodKey,
-		references,
+		kept.Concat(keel.DynLit(references).Cast(keel.TypeJSON)),
 	))
 }
 
@@ -238,11 +239,7 @@ func transferMatch(req *ediports.RepairTenderReferenceRequest) keel.Pred {
 			t.InboundMessageID.Eq(candidate.MessageID),
 			keel.When(candidate.TransferID.IsNotNil(), t.ID.Eq(candidate.TransferID)),
 		),
-		keel.Raw(
-			"COALESCE(?, '') = ?",
-			t.TenderPayload.Text("ratingDetail", shipmentIDKey),
-			candidate.ShipmentID,
-		),
+		keel.DynOf(t.TenderPayload.Text("ratingDetail", shipmentIDKey)).Coalesce("").Eq(candidate.ShipmentID),
 	)
 }
 
@@ -285,7 +282,7 @@ func repairTransfers(
 ) (int, error) {
 	t := edidb.EDITransfers
 	n, err := t.Where(transferMatch(req)).
-		Update(ctx, db, withReferences(t.TenderPayload, transferReferencesPath, references))
+		Update(ctx, db, withReferences(t.TenderPayload, references, ratingDetailKey))
 	if err != nil {
 		return 0, fmt.Errorf("repair the tender references of transfers: %w", err)
 	}
@@ -307,7 +304,11 @@ func repairMessage(
 			m.OrganizationID.Eq(candidate.OrganizationID),
 			m.BusinessUnitID.Eq(candidate.BusinessUnitID),
 		).
-		Update(ctx, db, withReferences(m.PayloadSnapshot, messageReferencesPath, references))
+		Update(
+			ctx,
+			db,
+			withReferences(m.PayloadSnapshot, references, loadTenderKey, ratingDetailKey),
+		)
 	if err != nil {
 		return fmt.Errorf(
 			"repair the tender references of message %s: %w",

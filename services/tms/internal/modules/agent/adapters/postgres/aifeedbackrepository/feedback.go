@@ -225,19 +225,24 @@ func (r *repository) DailySatisfaction(
 		r.db,
 		func(ctx context.Context) ([]*aifeedbackports.AIFeedbackDay, error) {
 			f := aifeedbackdb.Feedbacks
+			day := keel.DynFunc(
+				"to_char",
+				keel.DynFunc(
+					"timezone",
+					keel.DynLit(timezoneOf(req.Timezone)).Cast(keel.TypeString),
+					keel.DynFunc("to_timestamp", f.CreatedAt),
+				),
+				keel.DynLit("YYYY-MM-DD").Cast(keel.TypeString),
+			)
 			days, err := keel.Into[aifeedbackports.AIFeedbackDay](ctx, r.db.Keel(ctx),
 				f.Where(windowScope(&req)...).
-					Group(keel.Raw("1")).
+					Group(day).
 					Pick(
-						keel.Raw(
-							"to_char(to_timestamp(?) AT TIME ZONE ?, 'YYYY-MM-DD')",
-							f.CreatedAt,
-							timezoneOf(req.Timezone),
-						),
+						day,
 						ratingCount(aifeedback.RatingPositive),
 						ratingCount(aifeedback.RatingNegative),
 					).
-					Order(keel.Asc(keel.Raw("1"))))
+					Order(day.Asc()))
 			if err != nil {
 				r.l.Error("failed to read ai feedback satisfaction by day", zap.Error(err))
 
@@ -274,7 +279,7 @@ func (r *repository) WorstRated(
 			scores, err := keel.Into[aifeedbackports.AIFeedbackTargetScore](ctx, r.db.Keel(ctx),
 				f.Where(windowScope(&req)...).
 					Group(f.TargetType, f.TargetID, f.TargetPart).
-					Having(keel.Raw("? > 0", negative)).
+					Having(keel.DynOf(negative).Gt(0)).
 					Pick(
 						f.TargetType,
 						f.TargetID,
@@ -282,15 +287,12 @@ func (r *repository) WorstRated(
 						positive,
 						negative,
 						f.CreatedAt.Max(),
-						keel.Raw(
-							"(ARRAY_AGG(? ORDER BY ? ASC, ? DESC))[1]",
-							f.ID,
-							f.Rating,
-							f.CreatedAt,
-						),
+						keel.DynOf(
+							keel.ArrayAgg(f.ID).OrderBy(f.Rating.Asc(), f.CreatedAt.Desc()),
+						).At(1),
 					).
 					Order(
-						keel.Desc(keel.Raw("? - ?", negative, positive)),
+						keel.Desc(keel.DynOf(negative).Sub(positive)),
 						keel.Desc(negative),
 						keel.Desc(f.CreatedAt.Max()),
 						f.TargetType.Asc(),

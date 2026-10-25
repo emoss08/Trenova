@@ -254,7 +254,7 @@ func retentionQuery(req *workerports.ListDQFRetentionCandidatesRequest) *keel.Qu
 		Pick(w.ID, w.OrganizationID, w.BusinessUnitID, w.FirstName, w.LastName, wp.TerminationDate).
 		Where(
 			wp.TerminationDate.IsNotNull(),
-			keel.Raw("? + ? <= ?", wp.TerminationDate, req.RetentionSeconds, req.AsOf),
+			keel.DynOf(wp.TerminationDate).Add(req.RetentionSeconds).Lte(req.AsOf),
 		).
 		Order(w.ID.Asc()).
 		Limit(limitOr(req.Limit, defaultRetentionPageSize))

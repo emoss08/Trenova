@@ -155,7 +155,7 @@ func (r *linkRepository) PurgeDead(ctx context.Context, before int64, limit int)
 			Where(l.ID.InQuery(
 				dead.AllTenants().
 					Pick(dead.ID).
-					Where(keel.Raw("coalesce(?, ?) < ?", dead.RevokedAt, dead.ExpiresAt, before)).
+					Where(keel.DynOf(dead.RevokedAt).Coalesce(dead.ExpiresAt).Lt(before)).
 					Limit(limit),
 			)).
 			Delete(ctx, r.db.Keel(ctx))

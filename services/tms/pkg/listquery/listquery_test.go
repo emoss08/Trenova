@@ -739,7 +739,7 @@ func TestComputedFilters_ResolveOnlyWithTheRepositorysExpression(t *testing.T) {
 	_, ok := (&plan{cat: cat, ref: ref}).resolve("lastSeenId")
 	assert.False(t, ok, "a computed field without its expression is not filterable")
 
-	p := &plan{cat: cat, ref: ref, computed: map[string]keel.Expr{"lastSeenId": keel.Raw("'loc_1'")}}
+	p := &plan{cat: cat, ref: ref, computed: map[string]keel.Expr{"lastSeenId": keel.DynLit("loc_1")}}
 	fd, ok := p.resolve("lastSeenId")
 	require.True(t, ok)
 	assert.False(t, fd.base)

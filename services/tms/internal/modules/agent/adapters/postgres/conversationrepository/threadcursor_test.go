@@ -19,7 +19,7 @@ func threadPageRequest() *agentports.ListThreadsRequest {
 }
 
 const (
-	threadPosition = `(at_."pinned", greatest(at_."last_message_at", at_."created_at"), at_."id")`
+	threadPosition = `ROW(at_."pinned", greatest(at_."last_message_at", at_."created_at"), at_."id")`
 	threadTouched  = `greatest(at_."last_message_at", at_."created_at")`
 )
 
@@ -94,7 +94,7 @@ func TestThreadPageQueryContinuesBelowTheCursorInRailOrder(t *testing.T) {
 
 	sql, args := keeltest.Render(t, threadPageQuery(req, threadWindow{after: after, limit: 50}))
 
-	assert.Contains(t, sql, threadPosition+" < ($5, $6, $7)", sql)
+	assert.Contains(t, sql, threadPosition+" < ROW($5, $6, $7)", sql)
 	assert.Equal(t, []any{false, int64(42), "athr_01J00000000000000000000000"}, args[4:7])
 	assert.Contains(
 		t,
@@ -114,7 +114,7 @@ func TestThreadPageQueryReadsTheFirstPageWithoutACursor(t *testing.T) {
 
 	sql, _ := keeltest.Render(t, threadPageQuery(req, threadWindow{limit: 100}))
 
-	assert.NotContains(t, sql, ") < (", sql)
+	assert.NotContains(t, sql, ") < ROW(", sql)
 	assert.NotContains(t, sql, `"origin"`+" <> ALL", sql)
 	assert.Contains(t, sql, "LIMIT 101", sql)
 }
@@ -139,11 +139,11 @@ func TestThreadPageQueryReadsOneRangeBetweenTwoBoundaries(t *testing.T) {
 
 	sql, args := keeltest.Render(t, threadPageQuery(req, window))
 
-	assert.Contains(t, sql, threadPosition+" < ($5, $6, $7)", sql)
+	assert.Contains(t, sql, threadPosition+" < ROW($5, $6, $7)", sql)
 	assert.Contains(
 		t,
 		sql,
-		threadPosition+" >= ($8, $9, $10)",
+		threadPosition+" >= ROW($8, $9, $10)",
 		"the boundary row's place is in the range, whichever row now sits there",
 	)
 	assert.Equal(t, []any{
@@ -250,13 +250,15 @@ func TestThreadShelfCountQueryBandsEveryConversationOnce(t *testing.T) {
 
 	sql, args := keeltest.Render(t, threadShelfCountQuery(req))
 
-	band := `CASE WHEN at_."pinned" THEN -1` +
-		" WHEN " + threadTouched + " >= $5 THEN 0" +
-		" WHEN " + threadTouched + " >= $6 THEN 1" +
-		" WHEN " + threadTouched + " >= $7 THEN 2" +
-		" ELSE 3 END"
+	band := `CASE WHEN at_."pinned" THEN $5::bigint` +
+		" WHEN (" + threadTouched + " >= $6) THEN $7::bigint" +
+		" WHEN (" + threadTouched + " >= $8) THEN $9::bigint" +
+		" WHEN (" + threadTouched + " >= $10) THEN $11::bigint" +
+		" ELSE $12::bigint END"
 	assert.Contains(t, sql, "SELECT "+band+", count(*)", sql)
 	assert.Contains(t, sql, "GROUP BY "+band, sql)
-	assert.Equal(t, []any{int64(3_000), int64(2_000), int64(1_000)}, args[4:7])
+	assert.Equal(t, []any{
+		-1, int64(3_000), 0, int64(2_000), 1, int64(1_000), 2, 3,
+	}, args[4:12])
 	assert.Contains(t, sql, `at_."origin" <> ALL($4)`, "unlisted conversations are not counted")
 }

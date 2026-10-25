@@ -2182,7 +2182,7 @@ func (g *generator) facUpdateInvoices(ctx context.Context, tx *keel.DB, run *fac
 		if _, err := inv.With(d).Join(d, d.Col("id").EqCol(inv.ID)).Where(keel.True()).Update(
 			ctx,
 			tx,
-			inv.AppliedAmount.ToExpr(keel.Raw("?::numeric", d.Col("applied_amount"))),
+			inv.AppliedAmount.ToExpr(keel.DynOf(d.Col("applied_amount")).Cast(keel.TypeNumeric)),
 			inv.AppliedAmountMinor.ToExpr(d.Col("applied_amount_minor")),
 			inv.SettlementStatus.ToExpr(d.Col("settlement_status")),
 			inv.FactoringOverride.ToExpr(d.Col("factoring_override")),

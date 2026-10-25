@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"strings"
 
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
@@ -49,7 +48,7 @@ func scoped(scope *shipmentports.ShipmentBoardScope) (*keel.Query[shipment.Shipm
 }
 
 func revenueSum() keel.Expr {
-	return keel.Raw("COALESCE(SUM(?), 0)", shipmentdb.Shipments.TotalChargeAmount)
+	return keel.DynOf(shipmentdb.Shipments.TotalChargeAmount).Sum().Coalesce(0)
 }
 
 func (r *Repository) StageSummary(
@@ -148,40 +147,18 @@ func quickFilterTotalsQuery(
 	filters []shipment.QuickFilterSpec,
 ) (*keel.Query[shipment.Shipment], error) {
 	counts := make([]any, 0, len(filters))
-	revenues := make([]any, 0, len(filters)*2)
-	revenue := shipmentdb.Shipments.TotalChargeAmount
+	revenues := make([]any, 0, len(filters))
+	revenue := keel.DynOf(shipmentdb.Shipments.TotalChargeAmount)
 	for _, spec := range filters {
 		cond, err := shipmentrepository.QuickFilterCondition(basis, spec)
 		if err != nil {
 			return nil, err
 		}
-		counts = append(counts, cond)
-		revenues = append(revenues, revenue, cond)
+		counts = append(counts, keel.Count().Filter(cond))
+		revenues = append(revenues, revenue.Sum().Filter(cond).Coalesce(0).Cast(keel.TypeString))
 	}
 
-	return q.Pick(
-		keel.Raw(arraySQL("COUNT(*) FILTER (WHERE ?)", len(filters), "bigint"), counts...),
-		keel.Raw(
-			arraySQL("COALESCE(SUM(?) FILTER (WHERE ?), 0)::text", len(filters), "text"),
-			revenues...,
-		),
-	), nil
-}
-
-func arraySQL(element string, n int, elementType string) string {
-	var b strings.Builder
-	b.WriteString("ARRAY[")
-	for i := range n {
-		if i > 0 {
-			b.WriteString(", ")
-		}
-		b.WriteString(element)
-	}
-	b.WriteString("]::")
-	b.WriteString(elementType)
-	b.WriteString("[]")
-
-	return b.String()
+	return q.Pick(keel.DynArray(counts...), keel.DynArray(revenues...)), nil
 }
 
 func pointers[T any](rows []T) []*T {

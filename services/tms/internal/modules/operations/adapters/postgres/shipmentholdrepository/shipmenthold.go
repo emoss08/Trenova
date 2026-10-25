@@ -76,9 +76,9 @@ func (r *repository) ListByShipmentID(
 			rows := holdQuery().
 				Where(h.ShipmentID.Eq(req.ShipmentID)).
 				Order(
-					keel.Desc(keel.Raw("? IS NULL", h.ReleasedAt)),
+					keel.DynOf(h.ReleasedAt).IsNull().Desc(),
 					h.StartedAt.Desc(),
-					keel.Desc(keel.Raw("COALESCE(?, 0)", h.ReleasedAt)),
+					keel.Desc(keel.DynOf(h.ReleasedAt).Coalesce(0)),
 				).
 				Limit(req.Filter.Pagination.Limit).
 				Offset(req.Filter.Pagination.Offset)

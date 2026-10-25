@@ -42,7 +42,7 @@ var sourceTables = map[airetrieval.SourceType]sourceTable{
 		},
 		sample: func(limit int) *keel.CTETable {
 			m := agentdb.Memories
-			return charsSample(m.Pick(keel.Raw("LENGTH(COALESCE(?, ''))", m.Content)).
+			return charsSample(m.Pick(charCount(m.Content)).
 				Order(m.ID.Desc()).
 				Limit(limit))
 		},
@@ -62,7 +62,7 @@ var sourceTables = map[airetrieval.SourceType]sourceTable{
 			d := documentdb.Documents
 			dc := documentcontentdb.Contents
 			return charsSample(d.LeftJoin(dc, dc.DocumentID.EqCol(d.ID)).
-				Pick(keel.Raw("LENGTH(COALESCE(?, ''))", dc.ContentText)).
+				Pick(charCount(dc.ContentText)).
 				Order(d.ID.Desc()).
 				Limit(limit))
 		},
@@ -80,15 +80,15 @@ var sourceTables = map[airetrieval.SourceType]sourceTable{
 		},
 		sample: func(limit int) *keel.CTETable {
 			m := inboundmessagedb.InboundMessages
-			return charsSample(m.Pick(keel.Raw(
-				"LENGTH(COALESCE(?, '')) + LENGTH(COALESCE(?, ''))",
-				m.Subject,
-				m.TextBody,
-			)).
+			return charsSample(m.Pick(charCount(m.Subject).Add(charCount(m.TextBody))).
 				Order(m.ID.Desc()).
 				Limit(limit))
 		},
 	},
+}
+
+func charCount(e keel.Expr) keel.DynExpr {
+	return keel.DynFunc("length", keel.DynOf(e).Coalesce(""))
 }
 
 func charsSample[T any](q *keel.Query[T]) *keel.CTETable {
@@ -159,7 +159,7 @@ func (r *repository) AverageSourceChars(
 			r.db.Keel(ctx),
 			newest.Query().
 				With(newest).
-				Pick(keel.Count(), keel.Raw("COALESCE(AVG(?), 0)::float8", newest.Col("chars"))),
+				Pick(keel.Count(), keel.DynOf(newest.Col("chars")).Avg().Coalesce(0).Cast(keel.TypeFloat64)),
 		)
 		if err != nil {
 			return agentports.RetrievalSourceChars{}, fmt.Errorf(

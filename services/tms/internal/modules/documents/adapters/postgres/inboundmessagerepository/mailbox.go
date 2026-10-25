@@ -170,10 +170,10 @@ func markReceivedAssignments(req inboundmessageports.MailboxReceivedRequest) []k
 	mb := inboundmessagedb.Mailboxes
 
 	return []keel.Assignment{
-		mb.LastReceivedAt.ToExpr(keel.Raw(
-			"GREATEST(COALESCE(?, 0), ?::bigint)",
-			mb.LastReceivedAt,
-			req.ReceivedAt,
+		mb.LastReceivedAt.ToExpr(keel.DynFunc(
+			"greatest",
+			keel.DynOf(mb.LastReceivedAt).Coalesce(0),
+			keel.DynLit(req.ReceivedAt).Cast(keel.TypeInt64),
 		)),
 		mb.Version.ToExpr(mb.Version),
 		mb.UpdatedAt.ToExpr(mb.UpdatedAt),

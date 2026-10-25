@@ -85,7 +85,7 @@ func deskVisible(filter *agentports.DeskMemoryFilter) keel.Pred {
 	case text.empty():
 		return visible
 	case text.unmatchable():
-		return keel.Raw("FALSE")
+		return keel.Not(keel.True())
 	default:
 		return keel.And(visible, text.primary().matches(m.SearchVector))
 	}
@@ -101,13 +101,7 @@ func listDeskQuery(req *agentports.ListDeskMemoriesQuery) *keel.Query[agent.Memo
 
 	var after keel.Pred
 	if req.After != nil {
-		after = keel.Raw(
-			"(?, ?) < (?, ?)",
-			m.CreatedAt,
-			m.ID,
-			req.After.CreatedAt,
-			req.After.ID.String(),
-		)
+		after = keel.DynRow(m.CreatedAt, m.ID).Lt(keel.DynRow(req.After.CreatedAt, req.After.ID.String()))
 	}
 
 	return deskSelect().

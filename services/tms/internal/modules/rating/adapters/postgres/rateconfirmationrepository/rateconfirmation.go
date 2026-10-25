@@ -18,10 +18,7 @@ import (
 	"go.uber.org/zap"
 )
 
-const (
-	defaultTokenPurgeLimit = 500
-	deadTokenSQL           = "COALESCE(?, ?, ?) < ?" //nolint:gosec // G101: a SQL fragment about expired tokens, not a token
-)
+const defaultTokenPurgeLimit = 500
 
 var (
 	confirmationErrors = dberror.Mapping{Entity: "Rate confirmation"}
@@ -288,7 +285,7 @@ func deadTokensQuery(
 
 	return t.AllTenants().Where(t.ID.InQuery(dead.AllTenants().
 		Pick(dead.ID).
-		Where(keel.Raw(deadTokenSQL, dead.UsedAt, dead.RevokedAt, dead.ExpiresAt, req.DeadBefore)).
+		Where(keel.DynOf(dead.UsedAt).Coalesce(dead.RevokedAt, dead.ExpiresAt).Lt(req.DeadBefore)).
 		Limit(limit)))
 }
 

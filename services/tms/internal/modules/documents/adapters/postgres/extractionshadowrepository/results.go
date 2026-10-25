@@ -228,8 +228,8 @@ func (r *resultRepository) TotalsByStatus(
 				sr.Pick(
 					sr.Status,
 					keel.Count(),
-					keel.Raw("COALESCE(SUM(?), 0)", sr.CostUSD),
-					keel.Raw("COALESCE(SUM(?) FILTER (WHERE ?), 0)", sr.LatencyMs, timed),
+					keel.DynOf(sr.CostUSD).Sum().Coalesce(0),
+					keel.DynOf(sr.LatencyMs).Sum().Filter(timed).Coalesce(0),
 					keel.Count().Filter(timed),
 				).
 					Where(

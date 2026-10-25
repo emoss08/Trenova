@@ -25,7 +25,7 @@ func TestLanes_CountsShipmentsBetweenTheirFirstPickupAndLastDeliveryState(t *tes
 	t.Log(sql)
 
 	assert.Contains(t, sql, `WITH "lane_endpoints" ("origin_location_id", "destination_location_id") AS (`)
-	assert.Contains(t, sql, `(array_agg(s2."location_id" ORDER BY sm."sequence", s2."sequence") FILTER (WHERE s2."type" = ANY(`)
+	assert.Contains(t, sql, `(array_agg(s2."location_id" ORDER BY sm."sequence" ASC, s2."sequence" ASC) FILTER (WHERE s2."type" = ANY(`)
 	assert.Contains(t, sql, `(array_agg(s2."location_id" ORDER BY sm."sequence" DESC, s2."sequence" DESC) FILTER (WHERE s2."type" = ANY(`)
 	assert.Contains(t, sql, `GROUP BY s."id"`)
 	assert.Contains(t, sql, `JOIN "locations" loc_orig ON`)
@@ -33,7 +33,7 @@ func TestLanes_CountsShipmentsBetweenTheirFirstPickupAndLastDeliveryState(t *tes
 	assert.Contains(t, sql, `JOIN "locations" loc_dest ON`)
 	assert.Contains(t, sql, `JOIN "us_states" ust_dest ON ust_dest."id" = loc_dest."state_id"`)
 	assert.Contains(t, sql, `GROUP BY ust_orig."abbreviation", ust_dest."abbreviation"`)
-	assert.Contains(t, sql, `ORDER BY count(*)::int DESC, ust_orig."abbreviation" ASC, ust_dest."abbreviation" ASC LIMIT 5`)
+	assert.Contains(t, sql, `ORDER BY count(*) DESC, ust_orig."abbreviation" ASC, ust_dest."abbreviation" ASC LIMIT 5`)
 	assert.Contains(t, args, keeltest.TestOrganizationID.String())
 	assert.Contains(t, args, string(shipment.StatusCanceled))
 }

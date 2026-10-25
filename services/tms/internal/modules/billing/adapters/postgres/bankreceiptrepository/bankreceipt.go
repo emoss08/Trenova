@@ -146,22 +146,22 @@ func summaryQuery(asOf int64) *keel.Query[bankreceipt.BankReceipt] {
 	wi := bankreceiptworkitemdb.WorkItems.As("wi")
 	count := func(p keel.Pred) keel.Expr { return keel.Count().Filter(p) }
 	amount := func(p keel.Pred) keel.Expr {
-		return keel.Raw("COALESCE(?, 0)", br.AmountMinor.Sum().Filter(p))
+		return keel.DynOf(br.AmountMinor.Sum().Filter(p)).Coalesce(0)
 	}
 	workItems := func(statuses ...bankreceiptworkitem.Status) keel.Expr {
 		return keel.Scalar(wi.Pick(keel.Count()).Where(wi.Status.In(statuses...)))
 	}
-	days := keel.Raw("(? - ?) / 86400", asOf, br.ReceiptDate)
+	days := keel.DynLit(asOf).Sub(br.ReceiptDate).Div(86400)
 	exception := br.Status.Eq(bankreceipt.StatusException)
-	aged := func(band string) keel.Pred {
-		return keel.And(exception, keel.Raw("? "+band, days))
+	aged := func(band keel.Pred) keel.Pred {
+		return keel.And(exception, band)
 	}
 	imported := br.Status.Eq(bankreceipt.StatusImported)
 	matched := br.Status.Eq(bankreceipt.StatusMatched)
-	current := aged("<= 0")
-	days1To3 := aged("BETWEEN 1 AND 3")
-	days4To7 := aged("BETWEEN 4 AND 7")
-	daysOver7 := aged("> 7")
+	current := aged(days.Lte(0))
+	days1To3 := aged(days.Between(1, 3))
+	days4To7 := aged(days.Between(4, 7))
+	daysOver7 := aged(days.Gt(7))
 
 	return br.
 		Pick(

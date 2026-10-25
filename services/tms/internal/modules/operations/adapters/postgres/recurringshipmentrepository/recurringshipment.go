@@ -349,7 +349,6 @@ func laneStop(
 
 	return keel.Exists(sm.
 		Join(st, st.ShipmentMoveID.EqCol(sm.ID)).
-		Pick(keel.Raw("1")).
 		Where(
 			sm.ShipmentID.EqCol(sp.ID),
 			st.Type.In(types...),
@@ -375,9 +374,9 @@ func (r *repository) DetectLanePattern(
 				ctx,
 				r.db.Keel(ctx),
 				sp.Pick(
-					keel.Raw("count(*)::int"),
-					keel.Raw("coalesce(min(?), 0)", sp.CreatedAt),
-					keel.Raw("coalesce(max(?), 0)", sp.CreatedAt),
+					keel.Count(),
+					keel.DynOf(sp.CreatedAt).Min().Coalesce(0),
+					keel.DynOf(sp.CreatedAt).Max().Coalesce(0),
 				).Where(
 					sp.CustomerID.Eq(req.CustomerID),
 					sp.Status.Ne(shipment.StatusCanceled),
@@ -422,12 +421,9 @@ func (r *repository) ListDue(
 					rsh.Status.Eq(recurringshipment.StatusActive),
 					rsh.AutoGenerate.IsTrue(),
 					rsh.NextOccurrenceAt.IsNotNull(),
-					keel.Raw(
-						"? - (?::bigint * 86400) <= ?",
-						rsh.NextOccurrenceAt,
-						rsh.LeadTimeDays,
-						req.Now,
-					),
+					keel.DynOf(rsh.NextOccurrenceAt).
+						Sub(keel.DynOf(rsh.LeadTimeDays).Cast(keel.TypeInt64).Mul(86400)).
+						Lte(req.Now),
 				).
 				Order(rsh.NextOccurrenceAt.Asc())
 			if req.Limit > 0 {

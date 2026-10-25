@@ -4,6 +4,7 @@ import (
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/modules/billing/adapters/postgres/factoringsql"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/factoring"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/factoring/factoringdb"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice/invoicedb"
@@ -26,12 +27,12 @@ func Receivable(inv *invoicedb.InvoicesTable) keel.Pred {
 func Open(inv *invoicedb.InvoicesTable) keel.Pred {
 	return keel.And(
 		Receivable(inv),
-		keel.Raw("? > ?", inv.TotalAmountMinor, inv.AppliedAmountMinor),
+		keel.DynOf(inv.TotalAmountMinor).Gt(inv.AppliedAmountMinor),
 	)
 }
 
 func OpenMinor(inv *invoicedb.InvoicesTable) keel.Expr {
-	return keel.Raw("? - ?", inv.TotalAmountMinor, inv.AppliedAmountMinor)
+	return keel.DynOf(inv.TotalAmountMinor).Sub(inv.AppliedAmountMinor)
 }
 
 func SoldWithoutRecourse(inv *invoicedb.InvoicesTable) keel.Pred {
@@ -40,10 +41,9 @@ func SoldWithoutRecourse(inv *invoicedb.InvoicesTable) keel.Pred {
 	return keel.And(
 		keel.Exists(fac.
 			LeftJoin(agr, agr.ID.EqCol(inv.FactoringAgreementID)).
-			Pick(keel.Raw("1")).
 			Where(
 				fac.ID.EqCol(inv.FactoringCompanyID),
-				keel.Raw("COALESCE(? = 'NonRecourse', ?)", agr.Recourse, fac.NonRecourse),
+				keel.DynOf(agr.Recourse.Eq(factoring.RecourseNone)).Coalesce(fac.NonRecourse),
 			)),
 		keel.Not(factoringsql.ChargedBackInvoicePred(inv)),
 	)

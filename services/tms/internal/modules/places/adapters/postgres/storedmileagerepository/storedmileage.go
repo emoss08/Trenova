@@ -19,10 +19,7 @@ import (
 	"go.uber.org/zap"
 )
 
-const (
-	bulkUpsertScopeReason = "store a batch of mileage lookups that can span organizations"
-	activePolicySQL       = "status = 'Active'"
-)
+const bulkUpsertScopeReason = "store a batch of mileage lookups that can span organizations"
 
 var storedMileageErrors = dberror.Mapping{Entity: "StoredMileage"}
 
@@ -164,7 +161,7 @@ func (r *repository) BulkUpsert(
 				sm.DistanceProfileID,
 				sm.HazmatSignature,
 			).
-				Where(keel.Raw(activePolicySQL)).
+				Where(keel.DynOf(sm.Status).Eq(keel.DynConst(storedmileage.StatusActive))).
 				Update(
 					sm.Distance,
 					sm.Provider,
@@ -174,11 +171,7 @@ func (r *repository) BulkUpsert(
 					sm.ProviderMetadata,
 					sm.LastCalculatedAt,
 				).
-				Set(sm.JurisdictionDistances.ToExpr(keel.Raw(
-					"COALESCE(?, ?)",
-					sm.JurisdictionDistances.Excluded(),
-					sm.JurisdictionDistances,
-				))),
+				Set(sm.JurisdictionDistances.ToExpr(keel.DynOf(sm.JurisdictionDistances.Excluded()).Coalesce(sm.JurisdictionDistances))),
 		)
 		return err
 	})

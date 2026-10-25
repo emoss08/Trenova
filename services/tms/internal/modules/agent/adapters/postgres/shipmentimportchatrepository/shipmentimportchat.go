@@ -48,11 +48,7 @@ func conversationByDocumentQuery(
 		q = q.Where(c.Status.Eq(req.Status))
 	} else {
 		q = q.Order(
-			keel.Asc(keel.Raw(
-				"CASE WHEN ? = ? THEN 0 ELSE 1 END",
-				c.Status,
-				string(shipmentimportchat.ConversationStatusActive),
-			)),
+			keel.Desc(c.Status.Eq(shipmentimportchat.ConversationStatusActive)),
 		)
 	}
 

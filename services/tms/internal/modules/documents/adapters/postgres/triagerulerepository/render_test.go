@@ -34,7 +34,7 @@ func TestSentenceQueryMatchesTheWholeSentence(t *testing.T) {
 		sqlText,
 		`FROM "triage_rules" tr WHERE tr."business_unit_id" = $1 AND tr."organization_id" = $2 `+
 			`AND tr."classification" = $3 AND tr."sender_scope" = $4 `+
-			`AND COALESCE(tr."sender", '') = $5 AND COALESCE(tr."mailbox_id", '') = $6 `+
+			`AND (coalesce(tr."sender", '') = $5) AND (coalesce(tr."mailbox_id", '') = $6) `+
 			`AND tr."action" = $7 LIMIT 1`,
 	)
 	assert.Equal(t, []any{
@@ -62,7 +62,7 @@ func TestSentenceQueryLeavesTheRuleBeingEditedOut(t *testing.T) {
 	assert.Contains(
 		t,
 		sqlText,
-		`AND COALESCE(tr."mailbox_id", '') = $6 AND tr."action" = $7 AND tr."id" <> $8 LIMIT 1`,
+		`AND (coalesce(tr."mailbox_id", '') = $6) AND tr."action" = $7 AND tr."id" <> $8 LIMIT 1`,
 	)
 	require.Len(t, args, 8)
 	assert.Equal(t, "imbx_1", args[5])

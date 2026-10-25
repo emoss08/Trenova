@@ -18,8 +18,6 @@ import (
 	"go.uber.org/zap"
 )
 
-const notExpiredSQL = "? > extract(epoch from current_timestamp)::bigint"
-
 // rolePermissionCountSQL counts the distinct resource/operation grants a role carries,
 // following the same inheritance edge the permission engine follows when it merges a
 // role's permissions: parent_role_ids, walked transitively. Counting only a role's own
@@ -214,7 +212,13 @@ func (r *repository) GetAuthorizedRoles(
 			ro.Join(ura, ura.RoleID.EqCol(ro.ID)),
 			ura.UserID.Eq(userID),
 			ura.OrganizationID.Eq(orgID),
-			keel.Or(ura.ExpiresAt.IsNull(), keel.Raw(notExpiredSQL, ura.ExpiresAt)),
+			keel.Or(
+				ura.ExpiresAt.IsNull(),
+				keel.DynOf(ura.ExpiresAt).Gt(
+					keel.DynFunc("date_part", keel.DynLit("epoch").Cast(keel.TypeString), keel.DynFunc("now")).
+						Cast(keel.TypeInt64),
+				),
+			),
 		).
 			Order(ro.Name.Asc()).
 			All(ctx, r.db.Keel(ctx))

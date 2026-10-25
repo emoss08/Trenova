@@ -39,8 +39,9 @@ func TestListReadsTheTitlesOfThePagesConversationsOnly(t *testing.T) {
 
 	sql, args := keeltest.Render(t, threadTitlesQuery(page))
 
-	assert.Contains(t, sql, `SELECT at_."id", COALESCE(at_."title", '') FROM "assistant_threads" at_`, sql)
+	assert.Contains(t, sql, `SELECT at_."id", coalesce(at_."title", $5) FROM "assistant_threads" at_`, sql)
 	assert.Contains(t, sql, `at_."id" IN (SELECT cs."thread_id" FROM "conversation_schedules" cs`, sql)
 	assert.Contains(t, sql, `ORDER BY cs."created_at" DESC, cs."id" DESC LIMIT 5 OFFSET 10)`, sql)
 	assert.Contains(t, args, threadID.String())
+	assert.Equal(t, "", args[4])
 }

@@ -376,11 +376,11 @@ func (r *repository) matchTier(
 }
 
 func upperEq(col keel.Expr, value string) keel.Pred {
-	return keel.Raw("upper(?) = ?", col, strings.ToUpper(value))
+	return keel.DynFunc("upper", col).Eq(strings.ToUpper(value))
 }
 
 func lowerEq(col keel.Expr, value string) keel.Pred {
-	return keel.Raw("lower(?) = ?", col, strings.ToLower(value))
+	return keel.DynFunc("lower", col).Eq(strings.ToLower(value))
 }
 
 func (r *repository) MatchLane(

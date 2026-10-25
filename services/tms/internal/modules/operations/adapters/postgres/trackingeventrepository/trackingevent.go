@@ -153,7 +153,7 @@ func (r *repository) RecordVerdicts(
 				ctx,
 				r.db.Keel(ctx),
 				te.Outcome.ToExpr(v.Col("outcome")),
-				te.OutcomeReason.ToExpr(keel.Raw("nullif(?, '')", v.Col("reason"))),
+				te.OutcomeReason.ToExpr(keel.DynOf(v.Col("reason")).NullIf("")),
 				te.UpdatedAt.To(at),
 			)
 		if err != nil {

@@ -104,12 +104,11 @@ func senderSummaryQuery(
 
 	return messages().
 		Pick(
-			keel.Raw(
-				"PERCENTILE_CONT(0.5) WITHIN GROUP (ORDER BY ? - ?) FILTER (WHERE ? AND ? >= ?)",
-				m.ReviewedAt, m.ReceivedAt, settledByPerson(), m.ReviewedAt, m.ReceivedAt,
+			keel.PercentileCont(0.5, keel.DynOf(m.ReviewedAt).Sub(m.ReceivedAt).Asc()).Filter(
+				keel.And(settledByPerson(), keel.DynOf(m.ReviewedAt).Gte(m.ReceivedAt)),
 			),
-			text(keel.Raw("MODE() WITHIN GROUP (ORDER BY ?)", m.MatchedCustomerID)),
-			text(keel.Raw("MODE() WITHIN GROUP (ORDER BY ?)", m.MatchedCarrierID)),
+			text(keel.Mode(m.MatchedCustomerID.Asc())),
+			text(keel.Mode(m.MatchedCarrierID.Asc())),
 		).
 		Where(fromSender(req)...)
 }
@@ -120,7 +119,7 @@ func senderRecentQuery(
 	m := inboundmessagedb.InboundMessages
 
 	return withReference(messages()).
-		Pick(messageRowColumns(keel.Raw("FALSE"))...).
+		Pick(messageRowColumns(keel.DynLit(false).Cast(keel.TypeBool))...).
 		Where(fromSender(req)...).
 		Where(keel.When(req.ExcludeID.IsNotNil(), m.ID.Ne(req.ExcludeID))).
 		Order(m.ReceivedAt.Desc(), m.ID.Desc()).
@@ -217,18 +216,14 @@ func driverParty(
 	}
 
 	w := workerdb.Workers
-	email := keel.Raw("LOWER(BTRIM(?))", w.Email)
+	email := keel.DynFunc("lower", keel.DynFunc("btrim", w.Email))
 	exists, err := w.Where(
 		w.Status.Eq(domaintypes.StatusActive),
 		keel.Or(
-			keel.When(address != "", keel.Raw("? = ?", email, address)),
+			keel.When(address != "", keel.DynOf(email).Eq(address)),
 			keel.When(
 				req.SenderDomain != "",
-				keel.Raw(
-					"? LIKE ?",
-					email,
-					"%@"+stringutils.EscapeLikePattern(strings.ToLower(req.SenderDomain)),
-				),
+				keel.DynOf(email).Like("%@"+stringutils.EscapeLikePattern(strings.ToLower(req.SenderDomain))),
 			),
 		),
 	).Exists(ctx, db)

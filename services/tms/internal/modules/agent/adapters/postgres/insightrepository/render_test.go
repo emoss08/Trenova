@@ -17,8 +17,14 @@ func TestActiveInsightsReadTheMostUrgentFirst(t *testing.T) {
 		Limit:               500,
 	}))
 
-	assert.Contains(t, sql, `ORDER BY CASE i."severity" WHEN 'Critical' THEN 3`, sql)
-	assert.Contains(t, sql, `ELSE 0 END DESC, i."detected_at" DESC LIMIT 50`, sql)
+	assert.Contains(t, sql, `ORDER BY CASE WHEN i."severity" = $5 THEN $6::bigint`, sql)
+	assert.Contains(t, sql, `ELSE $11::bigint END DESC, i."detected_at" DESC LIMIT 50`, sql)
+	assert.Equal(t, []any{
+		string(insight.SeverityCritical), int64(3),
+		string(insight.SeverityWarning), int64(2),
+		string(insight.SeverityInfo), int64(1),
+		int64(0),
+	}, args[4:11])
 	assert.Contains(t, sql, `i."detector_key" = ANY($`, sql)
 	assert.NotContains(t, sql, `"category"`+" = ANY", sql)
 	assert.Contains(t, args, string(insight.StatusActive))

@@ -193,13 +193,7 @@ func (r *repository) ListActivities(
 
 		var before keel.Pred
 		if req.Before != nil {
-			before = keel.Raw(
-				"(?, ?) < (?, ?)",
-				cact.CreatedAt,
-				cact.ID,
-				req.Before.CreatedAt,
-				req.Before.ID,
-			)
+			before = keel.DynRow(cact.CreatedAt, cact.ID).Lt(keel.DynRow(req.Before.CreatedAt, req.Before.ID))
 		}
 
 		records, err := keel.Into[activityRecord](ctx, r.db.Keel(ctx), cact.
@@ -518,15 +512,15 @@ func (r *repository) ListAwaitingPromise(
 		paid := keel.Scalar(cp.Pick(cp.AmountMinor.Sum()).Where(
 			cp.CustomerID.EqCol(acc.CustomerID),
 			cp.Status.Eq(customerpayment.StatusPosted),
-			keel.Raw("? >= ?", cp.CreatedAt, prm.CreatedAt),
+			keel.DynOf(cp.CreatedAt).Gte(prm.CreatedAt),
 		))
 		ids, err := keel.Into[pulid.ID](ctx, r.db.Keel(ctx), acc.
 			Join(prm, prm.ID.EqCol(acc.PromiseActivityID)).
 			Pick(acc.CustomerID).
 			Where(
 				acc.CustomerID.In(req.CustomerIDs...),
-				keel.Raw("? + 86400 > ?", prm.PromisedOn, req.AsOf),
-				keel.Raw("? > COALESCE(?, 0)", prm.PromisedAmountMinor, paid),
+				keel.DynOf(prm.PromisedOn).Add(86400).Gt(req.AsOf),
+				keel.DynOf(prm.PromisedAmountMinor).Gt(keel.DynOf(paid).Coalesce(0)),
 			))
 		if err != nil {
 			return nil, fmt.Errorf("list customers awaiting a promise: %w", err)

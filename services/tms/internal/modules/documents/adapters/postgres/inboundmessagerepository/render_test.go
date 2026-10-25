@@ -56,20 +56,24 @@ func TestTheCensusGroupsOpenMailByParkingOwnerAndLateness(t *testing.T) {
 
 	assert.Equal(
 		t,
-		`SELECT im."status", COALESCE(im."classification", ''), im."mailbox_id", `+
-			`COALESCE(im."parked", ''), COALESCE(im."owner_id" = $4, FALSE), `+
-			`COALESCE(im."due_at" < $5, FALSE), count(*) FROM "inbound_messages" im `+
+		`SELECT im."status", coalesce(im."classification", $4), im."mailbox_id", `+
+			`coalesce(im."parked", $5), coalesce((im."owner_id" = $6), $7), `+
+			`coalesce((im."due_at" < $8), $9), count(*) FROM "inbound_messages" im `+
 			`WHERE im."business_unit_id" = $1 AND im."organization_id" = $2 AND im."status" = ANY($3) `+
-			`GROUP BY im."status", COALESCE(im."classification", ''), im."mailbox_id", `+
-			`COALESCE(im."parked", ''), COALESCE(im."owner_id" = $4, FALSE), COALESCE(im."due_at" < $5, FALSE)`,
+			`GROUP BY im."status", coalesce(im."classification", $4), im."mailbox_id", `+
+			`coalesce(im."parked", $5), coalesce((im."owner_id" = $6), $7), coalesce((im."due_at" < $8), $9)`,
 		sqlText,
 	)
 	assert.Equal(t, []any{
 		"bu_1",
 		"org_1",
 		[]string{"Received", "Processing", "Classified", "InReview", "Quarantined"},
+		"",
+		"",
 		"usr_01J00000000000000000000VW",
+		false,
 		int64(1_700_000_000),
+		false,
 	}, args)
 }
 
@@ -84,12 +88,12 @@ func TestTheCensusCountsSettledMailWithoutTheOpenLanesWork(t *testing.T) {
 
 	assert.Equal(
 		t,
-		`SELECT im."status", COALESCE(im."classification", ''), im."mailbox_id", '', FALSE, FALSE, count(*) `+
+		`SELECT im."status", coalesce(im."classification", $4), im."mailbox_id", $5, $6::boolean, $6::boolean, count(*) `+
 			`FROM "inbound_messages" im WHERE im."business_unit_id" = $1 AND im."organization_id" = $2 `+
 			`AND im."status" = ANY($3) GROUP BY im."status", im."classification", im."mailbox_id"`,
 		sqlText,
 	)
-	assert.Equal(t, []any{"bu_1", "org_1", []string{"Actioned", "Ignored"}}, args)
+	assert.Equal(t, []any{"bu_1", "org_1", []string{"Actioned", "Ignored"}, "", "", false}, args)
 
 	_, bothHalves := countBreakdownQuery(inboundmessageports.CountInboundMessagesRequest{}).(keel.Compound)
 	assert.True(t, bothHalves, "open and settled mail are counted by one UNION ALL")
@@ -100,7 +104,7 @@ func TestTheCensusCountsSettledMailWithoutTheOpenLanesWork(t *testing.T) {
 	assert.True(t, oneHalf, "only settled statuses need no union")
 	if oneHalf {
 		sqlText, _ = keeltest.Render(t, settledOnly)
-		assert.Contains(t, sqlText, `'', FALSE, FALSE, count(*)`, sqlText)
+		assert.Contains(t, sqlText, `$5, $6::boolean, $6::boolean, count(*)`, sqlText)
 	}
 }
 
@@ -193,8 +197,7 @@ func TestCollapsingKeepsTheNewestOfEachThreadInTheFolder(t *testing.T) {
 	assert.Contains(
 		t,
 		sqlText,
-		`(nwr."received_at" > im."received_at" OR `+
-			`(nwr."received_at" = im."received_at" AND nwr."id" > im."id"))`,
+		`(ROW(nwr."received_at", nwr."id") > ROW(im."received_at", im."id"))`,
 		sqlText,
 	)
 	assert.Contains(t, sqlText, `(nwr."status" = ANY($5) AND nwr."parked" IS NULL)`, sqlText)

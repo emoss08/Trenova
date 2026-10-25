@@ -177,17 +177,17 @@ func verdictsQuery(req *agentports.ScorecardRequest) *keel.Query[keel.Row] {
 	labelled := keel.CTE("labelled", []string{"tool_name", "verdict", "reason"}, step.
 		Pick(
 			step.ToolName,
-			keel.Raw(
-				"COALESCE(NULLIF(?->>'verdict', ''), CASE ? WHEN ? THEN ? WHEN ? THEN ? ELSE ? END)",
-				step.Outcome,
-				step.Status,
-				string(agentports.RunStepStarted),
-				string(aitrace.OutcomeUnknown),
-				string(agentports.RunStepFailed),
-				string(aitrace.OutcomeFailed),
-				string(aitrace.OutcomeRan),
-			),
-			keel.Raw("COALESCE(?->>'reason', '')", step.Outcome),
+			keel.DynOf(step.Outcome.Text("verdict")).NullIf("").Coalesce(keel.DynCase().
+				When(
+					keel.DynOf(step.Status).Eq(string(agentports.RunStepStarted)),
+					keel.DynLit(string(aitrace.OutcomeUnknown)).Cast(keel.TypeString),
+				).
+				When(
+					keel.DynOf(step.Status).Eq(string(agentports.RunStepFailed)),
+					keel.DynLit(string(aitrace.OutcomeFailed)).Cast(keel.TypeString),
+				).
+				Else(keel.DynLit(string(aitrace.OutcomeRan)).Cast(keel.TypeString))),
+			keel.DynOf(step.Outcome.Text("reason")).Coalesce(""),
 		).
 		Where(
 			step.Kind.Eq(string(agentports.RunStepTool)),
@@ -213,10 +213,10 @@ func verdictsQuery(req *agentports.ScorecardRequest) *keel.Query[keel.Row] {
 				verdict,
 				reason,
 				keel.Count(),
-				keel.Raw("(?)::bigint", keel.Sum(keel.Count()).Over(partition)),
+				keel.DynOf(keel.Sum(keel.Count()).Over(partition)).Cast(keel.TypeInt64),
 				keel.RowNumber().Over(
 					partition,
-					keel.Asc(keel.Raw("? = ''", reason)),
+					keel.Asc(keel.DynOf(reason).Eq("")),
 					keel.Count().Desc(),
 					reason.Asc(),
 				),
@@ -278,8 +278,8 @@ func usageQuery(req *agentports.ScorecardRequest) *keel.Query[aiusage.AIUsageRec
 	u := aiusagedb.AIUsageRecords
 
 	return u.Pick(
-		keel.Raw("COALESCE(SUM(?), 0)", u.InputTokens),
-		keel.Raw("COALESCE(SUM(?), 0)", u.OutputTokens),
-		keel.Raw("COALESCE(SUM(?), 0)", u.CostUSD),
+		keel.DynOf(u.InputTokens).Sum().Coalesce(0),
+		keel.DynOf(u.OutputTokens).Sum().Coalesce(0),
+		keel.DynOf(u.CostUSD).Sum().Coalesce(0),
 	).Where(u.AgentDefinitionID.Eq(req.AgentDefinitionID), u.CreatedAt.Gte(req.Since))
 }

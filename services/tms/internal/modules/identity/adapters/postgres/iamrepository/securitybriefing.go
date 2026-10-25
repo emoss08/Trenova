@@ -20,11 +20,7 @@ import (
 	"go.uber.org/zap"
 )
 
-const (
-	mfaCoverageScopeReason = "count an organization's members' two-factor enrolment, which is recorded under the organization each person enrolled from"
-
-	lastSignInSQL = "NULLIF(?, 0)"
-)
+const mfaCoverageScopeReason = "count an organization's members' two-factor enrolment, which is recorded under the organization each person enrolled from"
 
 type securityBriefingRepository struct {
 	db *postgres.Connection
@@ -68,7 +64,7 @@ func activeTOTP(ctx context.Context) keel.Pred {
 		mfa.UserID.EqCol(u.ID),
 		mfa.Type.Eq(iam.MFAAuthenticatorTypeTOTP),
 		mfa.Enabled.IsTrue(),
-		keel.Raw("COALESCE(?, 0) > 0", mfa.VerifiedAt),
+		keel.DynOf(mfa.VerifiedAt).Coalesce(0).Gt(0),
 	))
 }
 
@@ -85,13 +81,10 @@ func (r *securityBriefingRepository) MemberSummary(
 			memberQuery(ctx, memberScope{TenantInfo: req.TenantInfo, Now: req.Now}).Pick(
 				keel.Count(),
 				keel.Count().Filter(u.IsLocked.IsTrue()),
-				keel.Count().Filter(keel.Raw("COALESCE(?, 0) = 0", u.LastLoginAt)),
-				keel.Count().Filter(keel.Raw(
-					"COALESCE(NULLIF(?, 0), ?) < ?",
-					u.LastLoginAt,
-					m.JoinedAt,
-					req.DormantBefore,
-				)),
+				keel.Count().Filter(keel.DynOf(u.LastLoginAt).Coalesce(0).Eq(0)),
+				keel.Count().Filter(
+					keel.DynOf(u.LastLoginAt).NullIf(0).Coalesce(m.JoinedAt).Lt(req.DormantBefore),
+				),
 				keel.Count().Filter(u.MustChangePassword.IsTrue()),
 			),
 		)
@@ -140,7 +133,7 @@ func (r *securityBriefingRepository) MFACoverage(
 		}
 
 		u := tenantdb.Users
-		lastSignIn := keel.Raw(lastSignInSQL, u.LastLoginAt)
+		lastSignIn := keel.DynOf(u.LastLoginAt).NullIf(0)
 		members, err := keel.Into[iam.SecurityMemberRef](
 			ctx,
 			db,
@@ -233,23 +226,18 @@ func (r *securityBriefingRepository) APIKeySummary(
 		k := apikeydb.Keys
 		summary, err := keel.IntoOne[iam.SecurityAPIKeySummary](ctx, r.db.Keel(ctx), k.Where(
 			k.Status.Eq(apikey.StatusActive),
-			keel.Raw("(COALESCE(?, 0) = 0 OR ? > ?)", k.ExpiresAt, k.ExpiresAt, req.Now),
+			keel.DynOf(k.ExpiresAt).Coalesce(0).Eq(0).Or(keel.DynOf(k.ExpiresAt).Gt(req.Now)),
 		).Pick(
 			keel.Count(),
-			keel.Count().Filter(keel.Raw("COALESCE(?, 0) = 0", k.ExpiresAt)),
-			keel.Count().Filter(keel.Raw(
-				"COALESCE(NULLIF(?, 0), ?) < ?",
-				k.LastUsedAt,
-				k.CreatedAt,
-				req.UnusedBefore,
-			)),
-			keel.Count().Filter(keel.Raw(
-				"? > ? AND ? <= ?",
-				k.ExpiresAt,
-				req.Now,
-				k.ExpiresAt,
-				req.ExpiringBefore,
-			)),
+			keel.Count().Filter(keel.DynOf(k.ExpiresAt).Coalesce(0).Eq(0)),
+			keel.Count().Filter(
+				keel.DynOf(k.LastUsedAt).NullIf(0).Coalesce(k.CreatedAt).Lt(req.UnusedBefore),
+			),
+			keel.Count().Filter(
+				keel.DynOf(k.ExpiresAt).
+					Gt(req.Now).
+					And(keel.DynOf(k.ExpiresAt).Lte(req.ExpiringBefore)),
+			),
 		))
 		if err != nil {
 			r.l.Error("failed to summarize api keys", zap.Error(err))

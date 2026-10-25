@@ -43,7 +43,8 @@ func TestLabelQueries_AreScopedToTheTenantAndNameEachRow(t *testing.T) {
 		assert.Contains(t, args, keeltest.TestBusinessUnitID.String(), resource)
 		assert.Contains(t, sql, "organization_id", resource)
 		assert.Contains(t, sql, "business_unit_id", resource)
-		assert.Contains(t, sql, "COALESCE((", resource)
+		assert.Regexp(t, `^SELECT \w+\."id", coalesce\(CAST\(.+ AS text\), \$\d+\) FROM `, sql, resource)
+		assert.Contains(t, args, "", resource)
 		assert.True(t, idArg(args, ids), "%s: %v", resource, args)
 	}
 }

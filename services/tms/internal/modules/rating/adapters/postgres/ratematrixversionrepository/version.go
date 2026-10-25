@@ -20,9 +20,6 @@ const (
 	defaultHistoryLimit = 50
 	maxHistoryLimit     = 200
 	maxServedTables     = 1000
-
-	servedStampSQL = "concat_ws(':', count(*), " +
-		"md5(coalesce(string_agg(? || '@' || ?, ',' ORDER BY ?), '')))"
 )
 
 var versionErrors = dberror.Mapping{Entity: "RateMatrixVersion"}
@@ -199,7 +196,17 @@ func (r *repository) ListServed(
 func servedStampQuery() *keel.Query[ratematrix.RateMatrix] {
 	rm := ratematrixdb.RateMatrixes
 
-	return rm.Pick(keel.Raw(servedStampSQL, rm.ID, rm.PublishedVersionNumber, rm.ID)).
+	stamps := keel.StringAgg(
+		keel.DynOf(rm.ID).Concat(keel.DynConst("@")).Concat(rm.PublishedVersionNumber),
+		",",
+	).OrderBy(rm.ID.Asc())
+
+	return rm.Pick(keel.DynFunc(
+		"concat_ws",
+		":",
+		keel.Count(),
+		keel.DynFunc("md5", keel.DynOf(stamps).Coalesce("")),
+	)).
 		Where(servedMatrices()...)
 }
 

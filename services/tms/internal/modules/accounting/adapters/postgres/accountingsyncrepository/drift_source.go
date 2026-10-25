@@ -69,7 +69,7 @@ func (s *driftSource) ScopeStart(
 		start, err := keel.IntoOne[int64](
 			ctx,
 			s.db.Keel(ctx),
-			fp.Pick(keel.Raw("COALESCE(MIN(?), 0)", fp.StartDate)).
+			fp.Pick(keel.DynOf(fp.StartDate).Min().Coalesce(0)).
 				Where(fp.Status.In(fiscalperiod.UnclosedStatuses()...)),
 		)
 		if err != nil {
@@ -99,7 +99,7 @@ func latestSynced(
 			newer.ObjectID.EqCol(sr.ObjectID),
 			newer.Status.Eq(accountingsync.SyncStatusSynced),
 			newer.Operation.In(creates...),
-			keel.Raw("? > ?", newer.Revision, sr.Revision),
+			keel.DynOf(newer.Revision).Gt(sr.Revision),
 		)),
 	}
 }
@@ -187,17 +187,13 @@ func reflectedMemos(
 	rec := accountingsyncdb.AccountingSyncRecords.As(reflectedRecordAlias)
 
 	return keel.Scalar(memo.Join(rec, rec.ObjectID.EqCol(memo.ID)).
-		Pick(keel.Raw("COALESCE(SUM(?), 0)", amount(memo))).
+		Pick(keel.DynOf(amount(memo)).Sum().Coalesce(0)).
 		Where(
 			memo.ReferenceInvoiceID.EqCol(inv.ID),
 			memo.Status.Eq(invoice.StatusPosted),
 			rec.ConnectionID.Eq(connectionID),
 			rec.Status.Eq(accountingsync.SyncStatusSkipped),
-			keel.Raw(
-				"? ->> ?::text IS NOT NULL",
-				rec.ExternalRefs,
-				accountingsync.ExternalRefReflectedIn,
-			),
+			keel.DynOf(rec.ExternalRefs.Text(accountingsync.ExternalRefReflectedIn)).IsNotNull(),
 		))
 }
 
@@ -211,7 +207,7 @@ func salesStates(req *accountingsyncports.ListAccountingDriftStatesRequest) keel
 			inv.CustomerID,
 			cus.Name,
 			inv.CurrencyCode,
-			keel.Raw("ABS(?)", inv.TotalAmountMinor),
+			keel.DynFunc("abs", inv.TotalAmountMinor),
 			inv.BalanceDueMinor,
 			inv.AppliedAmountMinor,
 			reflectedMemos(req.ConnectionID, func(memo *invoicedb.InvoicesTable) keel.Expr {
@@ -229,14 +225,14 @@ func paymentStates(req *accountingsyncports.ListAccountingDriftStatesRequest) ke
 	return cp.Join(cus, cus.ID.EqCol(cp.CustomerID)).
 		Pick(
 			cp.ID,
-			keel.Raw("COALESCE(?, '')", cp.ReferenceNumber),
+			keel.DynOf(cp.ReferenceNumber).Coalesce(""),
 			cp.CustomerID,
 			cus.Name,
 			cp.CurrencyCode,
 			cp.AmountMinor,
 			cp.UnappliedAmountMinor,
 			cp.AppliedAmountMinor,
-			keel.Raw("0::bigint"),
+			keel.DynLit(0).Cast(keel.TypeInt64),
 			cp.Status.Eq(customerpayment.StatusReversed),
 			cp.Status,
 		).
@@ -256,9 +252,9 @@ func applicationStates(req *accountingsyncports.ListAccountingDriftStatesRequest
 			cus.Name,
 			inv.CurrencyCode,
 			cma.AppliedAmountMinor,
-			keel.Raw("0::bigint"),
+			keel.DynLit(0).Cast(keel.TypeInt64),
 			cma.AppliedAmountMinor,
-			keel.Raw("0::bigint"),
+			keel.DynLit(0).Cast(keel.TypeInt64),
 			cma.Status.Eq(customerpayment.CreditApplicationStatusUnapplied),
 			cma.Status,
 		).
@@ -285,10 +281,10 @@ func carrierStates(req *accountingsyncports.ListAccountingDriftStatesRequest) ke
 			cs.CarrierID,
 			carr.Name,
 			cs.CurrencyCode,
-			keel.Raw("ABS(?)", cs.NetPayableMinor),
-			keel.Raw("0::bigint"),
-			keel.Raw("0::bigint"),
-			keel.Raw("0::bigint"),
+			keel.DynFunc("abs", cs.NetPayableMinor),
+			keel.DynLit(0).Cast(keel.TypeInt64),
+			keel.DynLit(0).Cast(keel.TypeInt64),
+			keel.DynLit(0).Cast(keel.TypeInt64),
 			settlementVoided(
 				req.ObjectType,
 				cs.Status.Eq(carriersettlement.StatusVoided),
@@ -307,12 +303,12 @@ func driverStates(req *accountingsyncports.ListAccountingDriftStatesRequest) kee
 			ds.ID,
 			ds.SettlementNumber,
 			ds.WorkerID,
-			keel.Raw("TRIM(CONCAT(?, ' ', ?))", wrk.FirstName, wrk.LastName),
+			keel.DynFunc("trim", keel.DynOf(wrk.FirstName).Concat(" ").Concat(wrk.LastName)),
 			ds.CurrencyCode,
-			keel.Raw("ABS(?)", ds.NetPayMinor),
-			keel.Raw("0::bigint"),
-			keel.Raw("0::bigint"),
-			keel.Raw("0::bigint"),
+			keel.DynFunc("abs", ds.NetPayMinor),
+			keel.DynLit(0).Cast(keel.TypeInt64),
+			keel.DynLit(0).Cast(keel.TypeInt64),
+			keel.DynLit(0).Cast(keel.TypeInt64),
 			settlementVoided(
 				req.ObjectType,
 				ds.Status.Eq(driversettlement.StatusVoided),
@@ -377,7 +373,7 @@ func (s *driftSource) ListBalances(
 						sr.ObjectType,
 						inv.ID,
 						inv.Number,
-						keel.Raw("? + ?", inv.BalanceDueMinor, reflectedMemos(
+						keel.DynOf(inv.BalanceDueMinor).Add(reflectedMemos(
 							req.ConnectionID,
 							func(memo *invoicedb.InvoicesTable) keel.Expr { return memo.BalanceDueMinor },
 						)),

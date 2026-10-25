@@ -78,7 +78,7 @@ func (r *repository) GetBoardSummary(
 }
 
 func countIf(preds ...keel.Pred) keel.Expr {
-	return keel.Raw("?::int", keel.Count().Filter(keel.And(preds...)))
+	return keel.Count().Filter(keel.And(preds...))
 }
 
 func moveSummaryQuery(
@@ -92,7 +92,7 @@ func moveSummaryQuery(
 
 	uncovered := keel.And(asn.ID.IsNull(), ca.ID.IsNull())
 	covered := keel.Or(asn.ID.IsNotNull(), ca.ID.IsNotNull())
-	scheduled := keel.Raw("coalesce(?, 0) > 0", windowStart)
+	scheduled := keel.DynOf(windowStart).Coalesce(0).Gt(0)
 
 	return boardMoves().
 		LeftJoin(pos,
@@ -102,16 +102,16 @@ func moveSummaryQuery(
 		Pick(
 			countIf(uncovered),
 			countIf(covered),
-			countIf(uncovered, scheduled, keel.Raw("? < ?", windowStart, now)),
+			countIf(uncovered, scheduled, keel.DynOf(windowStart).Lt(now)),
 			countIf(
 				uncovered,
 				scheduled,
-				keel.Raw("? >= ?", windowStart, now),
-				keel.Raw("? <= ?", windowStart, now+atRiskLeadSeconds),
+				keel.DynOf(windowStart).Gte(now),
+				keel.DynOf(windowStart).Lte(now+atRiskLeadSeconds),
 			),
 			countIf(
 				covered,
-				keel.Raw("coalesce(?, ?) >= ?", asn.CreatedAt, ca.CreatedAt, dayStart),
+				keel.DynOf(asn.CreatedAt).Coalesce(ca.CreatedAt).Gte(dayStart),
 			),
 			keel.Raw(
 				"coalesce(avg(ST_DistanceSphere(ST_MakePoint(?, ?), ST_MakePoint(?, ?)) / ?) "+
@@ -131,8 +131,8 @@ func driverSummaryQuery(filter *shipmentports.DispatchBoardFilter) *keel.Query[w
 	w := workerdb.Workers
 	return w.
 		Pick(
-			keel.Raw("count(*)::int"),
-			countIf(keel.Raw("coalesce(?, 0) = 0", openAssignments(w))),
+			keel.Count(),
+			countIf(keel.DynOf(openAssignments(w)).Coalesce(0).Eq(0)),
 		).
 		Where(driverFilters(filter)...).
 		Where(w.AvailableForDispatch.IsTrue())

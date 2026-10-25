@@ -28,7 +28,7 @@ func (r *Repository) LeadingLateReason(
 			sf := servicefailuredb.ServiceFailures
 			rc := servicefailuredb.ReasonCodes
 			sp := shipmentdb.Shipments
-			count := keel.Raw("COUNT(DISTINCT ?)", sf.ShipmentID)
+			count := keel.DynOf(sf.ShipmentID).CountDistinct()
 
 			rows, err := keel.Into[shipmentports.ShipmentLateReason](ctx, r.db.Keel(ctx), sf.
 				Join(sp, sp.ID.EqCol(sf.ShipmentID)).

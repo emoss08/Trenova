@@ -35,7 +35,7 @@ func invoiceWithItemPred(
 	statuses ...factoring.SubmissionItemStatus,
 ) keel.Pred {
 	item := factoringdb.SubmissionItems.As("fsi")
-	return keel.Exists(item.Pick(keel.Raw("1")).Where(
+	return keel.Exists(item.Where(
 		item.InvoiceID.EqCol(inv.ID),
 		item.Status.In(statuses...),
 	))

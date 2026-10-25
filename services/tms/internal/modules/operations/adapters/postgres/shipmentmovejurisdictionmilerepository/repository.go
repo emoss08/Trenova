@@ -142,7 +142,11 @@ func (r *repository) ListUnattributedMoves(
 				With(mc).
 				Pick(
 					keel.Count(),
-					keel.Raw("ROUND(COALESCE(SUM(?), 0)::numeric, 2)", mc.Col(completedMoveMiles)),
+					keel.DynFunc(
+						"round",
+						keel.DynOf(mc.Col(completedMoveMiles)).Sum().Coalesce(0).Cast(keel.TypeNumeric),
+						2,
+					),
 				).
 				Where(inPeriod...))
 			if err != nil {
@@ -190,20 +194,13 @@ func completedMovesWithoutBreakdown() *keel.CTETable {
 		Group(sm.ID, sm.OrganizationID, sm.BusinessUnitID, sm.Distance, sm.DistanceUnits, sm.UpdatedAt).
 		Pick(
 			sm.ID,
-			keel.Raw(
-				"CASE WHEN ? = ? THEN ? / ? ELSE ? END",
-				sm.DistanceUnits,
-				shipment.JurisdictionDistanceUnitsKilometers,
-				sm.Distance,
-				kilometersPerMile,
-				sm.Distance,
-			),
-			keel.Raw(
-				"COALESCE(MAX(COALESCE(?, ?)), ?)",
-				st.ActualDeparture,
-				st.ActualArrival,
-				sm.UpdatedAt,
-			),
+			keel.DynCase().
+				When(
+					keel.DynOf(sm.DistanceUnits).Eq(shipment.JurisdictionDistanceUnitsKilometers),
+					keel.DynOf(sm.Distance).Div(kilometersPerMile),
+				).
+				Else(sm.Distance),
+			keel.DynOf(st.ActualDeparture).Coalesce(st.ActualArrival).Max().Coalesce(sm.UpdatedAt),
 		)
 
 	return keel.CTE(

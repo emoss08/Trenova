@@ -44,10 +44,14 @@ func New(p Params) insightports.InsightRepository {
 }
 
 func severityRank() keel.Expr {
-	return keel.Raw(
-		"CASE ? WHEN 'Critical' THEN 3 WHEN 'Warning' THEN 2 WHEN 'Info' THEN 1 ELSE 0 END",
-		insightdb.Insights.Severity,
-	)
+	severity := insightdb.Insights.Severity
+	rank := func(n int64) keel.DynExpr { return keel.DynLit(n).Cast(keel.TypeInt64) }
+
+	return keel.DynCase().
+		When(severity.Eq(insight.SeverityCritical), rank(3)).
+		When(severity.Eq(insight.SeverityWarning), rank(2)).
+		When(severity.Eq(insight.SeverityInfo), rank(1)).
+		Else(rank(0))
 }
 
 func urgentFirst() []keel.Order {

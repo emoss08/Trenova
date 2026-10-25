@@ -3,7 +3,6 @@ package inboundmessagerepository
 
 import (
 	"context"
-	"strings"
 
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
@@ -245,12 +244,13 @@ func patchAssignments(patch inboundmessageports.QueuePatch, now int64) []keel.As
 		sets = append(sets, m.HandledByRuleID.ToNull(), m.HandledAction.ToNull())
 	}
 	if patch.HandOff != nil {
-		sets = append(sets, m.ActionState.ToExpr(keel.Raw(
-			"? || jsonb_build_object('handedOffTo', ?::text, 'handedOffAt', ?::bigint)",
-			m.ActionState,
-			patch.HandOff.To.String(),
-			now,
-		)))
+		sets = append(sets, m.ActionState.ToExpr(keel.DynOf(m.ActionState).Concat(keel.DynFunc(
+			"jsonb_build_object",
+			keel.DynConst("handedOffTo"),
+			keel.DynLit(patch.HandOff.To.String()).Cast(keel.TypeString),
+			keel.DynConst("handedOffAt"),
+			keel.DynLit(now).Cast(keel.TypeInt64),
+		))))
 	}
 	if patch.ClearShipment {
 		sets = append(sets, m.MatchedShipmentID.ToNull())
@@ -280,7 +280,7 @@ func reviewAssignments(review *inboundmessageports.ReviewPatch, now int64) []kee
 	return []keel.Assignment{
 		m.ReviewedBy.To(review.ReviewerID),
 		m.ReviewedAt.To(now),
-		m.ReviewNote.ToExpr(keel.Raw("COALESCE(NULLIF(?, ''), ?)", review.Note, m.ReviewNote)),
+		m.ReviewNote.ToExpr(keel.DynLit(review.Note).NullIf("").Coalesce(m.ReviewNote)),
 	}
 }
 
@@ -352,18 +352,17 @@ func dueFromTargetsExpr(targets triage.Targets) keel.Expr {
 	m := inboundmessagedb.InboundMessages
 	kinds := inboundmessage.AllClassifications()
 
-	var b strings.Builder
-	args := make([]any, 0, len(kinds)*2+4)
-	b.WriteString("? + 60 * CASE COALESCE(?, ?)")
-	args = append(args, m.ReceivedAt, m.Classification, string(inboundmessage.ClassificationOther))
+	classification := keel.DynOf(m.Classification).Coalesce(string(inboundmessage.ClassificationOther))
+	minutes := keel.DynCase()
 	for _, kind := range kinds {
-		b.WriteString(" WHEN ? THEN ?::bigint")
-		args = append(args, string(kind), int64(targets.For(kind)))
+		minutes = minutes.When(
+			classification.Eq(string(kind)),
+			keel.DynLit(int64(targets.For(kind))).Cast(keel.TypeInt64),
+		)
 	}
-	b.WriteString(" ELSE ?::bigint END")
-	args = append(args, int64(targets.For(inboundmessage.ClassificationOther)))
+	fallback := keel.DynLit(int64(targets.For(inboundmessage.ClassificationOther))).Cast(keel.TypeInt64)
 
-	return keel.Raw(b.String(), args...)
+	return keel.DynOf(m.ReceivedAt).Add(keel.DynLit(60).Mul(minutes.Else(fallback)))
 }
 
 func (r *repository) ListByIDs(
@@ -593,7 +592,7 @@ func (r *repository) RecomputeDue(
 		return m.Where(m.Status.In(needsReviewStatuses...), classification).Update(
 			ctx,
 			r.db.Keel(ctx),
-			m.DueAt.ToExpr(keel.Raw("? + ?::bigint", m.ReceivedAt, int64(req.Minutes)*60)),
+			m.DueAt.ToExpr(keel.DynOf(m.ReceivedAt).Add(keel.DynLit(int64(req.Minutes)*60).Cast(keel.TypeInt64))),
 			m.Version.ToExpr(m.Version),
 			m.UpdatedAt.ToExpr(m.UpdatedAt),
 		)
@@ -656,7 +655,7 @@ func handOffCandidatesQuery(
 		Where(
 			m.Status.In(needsReviewStatuses...),
 			m.Parked.IsNull(),
-			keel.Raw("? IS DISTINCT FROM ?", m.OwnerID, req.To.String()),
+			keel.DynOf(m.OwnerID).IsDistinctFrom(req.To.String()),
 		).
 		Order(m.DueAt.Asc().NullsLast(), m.ID.Asc()).
 		Limit(req.Limit)

@@ -563,10 +563,10 @@ func disputeRecordsQuery(ids []pulid.ID) *keel.Query[invoice.InvoiceDispute] {
 	return d.Pick(
 		d.ID,
 		d.Status,
-		keel.Raw("COALESCE(?, '')", d.Resolution),
+		keel.DynOf(d.Resolution).Coalesce(""),
 		d.CustomerID,
 		d.InvoiceID,
-		keel.Raw("COALESCE(?, '')", d.Invoice().Number),
+		keel.DynOf(d.Invoice().Number).Coalesce(""),
 	).Where(d.ID.In(ids...))
 }
 

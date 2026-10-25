@@ -3,8 +3,6 @@ package conversationrepository
 import (
 	"context"
 	"fmt"
-	"strconv"
-	"strings"
 
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
@@ -176,7 +174,7 @@ func threadWindowOf(req *agentports.ListThreadsRequest) (threadWindow, error) {
 func threadTouchedAt() keel.Expr {
 	th := conversationdb.Threads
 
-	return keel.Raw("greatest(?, ?)", th.LastMessageAt, th.CreatedAt)
+	return keel.DynFunc("greatest", th.LastMessageAt, th.CreatedAt)
 }
 
 func threadListScope(userID pulid.ID, includeUnlisted bool) keel.Pred {
@@ -188,21 +186,20 @@ func threadListScope(userID pulid.ID, includeUnlisted bool) keel.Pred {
 	)
 }
 
-func threadPositionPred(touchedAt keel.Expr, op string, cursor *threadCursor) keel.Pred {
+func threadPositionPred(
+	touchedAt keel.Expr,
+	compare func(keel.DynExpr, any) keel.DynExpr,
+	cursor *threadCursor,
+) keel.Pred {
 	if cursor == nil {
 		return nil
 	}
 
 	th := conversationdb.Threads
 
-	return keel.Raw(
-		"(?, ?, ?) "+op+" (?, ?, ?)",
-		th.Pinned,
-		touchedAt,
-		th.ID,
-		cursor.pinned,
-		cursor.touchedAt,
-		cursor.id.String(),
+	return compare(
+		keel.DynRow(th.Pinned, touchedAt, th.ID),
+		keel.DynRow(cursor.pinned, cursor.touchedAt, cursor.id.String()),
 	)
 }
 
@@ -221,10 +218,10 @@ func threadPageQuery(
 	return th.Where(
 		threadListScope(req.UserID, req.IncludeUnlisted),
 		pinned,
-		keel.When(req.TouchedFrom > 0, keel.Raw("? >= ?", touchedAt, req.TouchedFrom)),
-		keel.When(req.TouchedBefore > 0, keel.Raw("? < ?", touchedAt, req.TouchedBefore)),
-		threadPositionPred(touchedAt, "<", window.after),
-		threadPositionPred(touchedAt, ">=", window.until),
+		keel.When(req.TouchedFrom > 0, keel.DynOf(touchedAt).Gte(req.TouchedFrom)),
+		keel.When(req.TouchedBefore > 0, keel.DynOf(touchedAt).Lt(req.TouchedBefore)),
+		threadPositionPred(touchedAt, keel.DynExpr.Lt, window.after),
+		threadPositionPred(touchedAt, keel.DynExpr.Gte, window.until),
 	).
 		Order(th.Pinned.Desc(), keel.Desc(touchedAt), th.ID.Desc()).
 		Limit(window.limit + 1)
@@ -238,21 +235,12 @@ type threadShelfBand struct {
 func threadShelfBandExpr(edges []int64) keel.Expr {
 	th := conversationdb.Threads
 	touchedAt := threadTouchedAt()
-	var band strings.Builder
-	args := make([]any, 0, len(edges)*2+1)
-
-	band.WriteString("CASE WHEN ? THEN -1")
-	args = append(args, th.Pinned)
+	band := keel.DynCase().When(keel.DynOf(th.Pinned), keel.DynLit(-1).Cast(keel.TypeInt64))
 	for index, edge := range edges {
-		band.WriteString(" WHEN ? >= ? THEN ")
-		band.WriteString(strconv.Itoa(index))
-		args = append(args, touchedAt, edge)
+		band = band.When(keel.DynOf(touchedAt).Gte(edge), keel.DynLit(index).Cast(keel.TypeInt64))
 	}
-	band.WriteString(" ELSE ")
-	band.WriteString(strconv.Itoa(len(edges)))
-	band.WriteString(" END")
 
-	return keel.Raw(band.String(), args...)
+	return band.Else(keel.DynLit(len(edges)).Cast(keel.TypeInt64))
 }
 
 func threadShelfCountQuery(
@@ -357,7 +345,7 @@ func (r *repository) MarkThreadTainted(
 		th := conversationdb.Threads
 		n, err := th.Where(th.ID.Eq(req.ThreadID)).Update(ctx, r.db.Keel(ctx),
 			th.Taint.To(req.Taint),
-			th.TaintedAt.ToExpr(keel.Raw("COALESCE(?, ?)", th.TaintedAt, req.TaintedAt)),
+			th.TaintedAt.ToExpr(keel.DynOf(th.TaintedAt).Coalesce(req.TaintedAt)),
 			keepThreadVersion(),
 			keepThreadUpdatedAt(),
 		)
@@ -480,12 +468,12 @@ func messagesQuery(req *agentports.ListMessagesRequest) *keel.Query[conversation
 func afterLatestCompaction(threadID pulid.ID) keel.Pred {
 	m := conversationdb.Messages
 	c := conversationdb.Messages.As("compacted")
-	through := c.Pick(keel.Raw("(?)::int", c.Compaction.Text("through"))).
+	through := c.Pick(keel.DynOf(c.Compaction.Text("through")).Cast(keel.TypeInt64)).
 		Where(c.ThreadID.Eq(threadID), c.Kind.Eq(conversation.MessageKindCompaction)).
 		Order(c.Sequence.Desc()).
 		Limit(1)
 
-	return keel.Raw("? > COALESCE(?, -1)", m.Sequence, keel.Scalar(through))
+	return keel.DynOf(m.Sequence).Gt(keel.DynOf(keel.Scalar(through)).Coalesce(-1))
 }
 
 func (r *repository) ListMessages(

@@ -38,7 +38,7 @@ func lanes(opts Options) *keel.Query[keel.Row] {
 	destinationLocation := locationdb.Locations.As(destinationLocationAlias)
 	originState := usstatedb.UsStates.As(originStateAlias)
 	destinationState := usstatedb.UsStates.As(destinationStateAlias)
-	count := keel.Raw("count(*)::int")
+	count := keel.Count()
 
 	q := endpoints.Query().With(endpoints).
 		Join(originLocation, originLocation.ID.EqCol(origin)).
@@ -70,14 +70,11 @@ func shipmentEndpoints(filter []keel.Pred) *keel.Query[shipment.Shipment] {
 		Where(filter...).
 		Group(s.ID).
 		Pick(
-			keel.Raw("(array_agg(? ORDER BY ?, ?) FILTER (WHERE ?))[1]",
-				st.LocationID, m.Sequence, st.Sequence, st.Type.In(shipment.PickupStopTypes()...)),
-			keel.Raw(
-				"(array_agg(? ORDER BY ? DESC, ? DESC) FILTER (WHERE ?))[1]",
-				st.LocationID,
-				m.Sequence,
-				st.Sequence,
-				st.Type.In(shipment.DeliveryStopTypes()...),
-			),
+			keel.DynOf(keel.ArrayAgg(st.LocationID).
+				OrderBy(m.Sequence.Asc(), st.Sequence.Asc()).
+				Filter(st.Type.In(shipment.PickupStopTypes()...))).At(1),
+			keel.DynOf(keel.ArrayAgg(st.LocationID).
+				OrderBy(m.Sequence.Desc(), st.Sequence.Desc()).
+				Filter(st.Type.In(shipment.DeliveryStopTypes()...))).At(1),
 		)
 }

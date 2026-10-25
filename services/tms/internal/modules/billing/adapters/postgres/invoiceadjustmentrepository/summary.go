@@ -37,7 +37,7 @@ func (r *repository) GetOperationsSummary(
 			b := invoiceadjustmentdb.InvoiceAdjustmentBatches
 			bi := invoiceadjustmentdb.InvoiceAdjustmentBatchItems
 			orig := ia.OriginalInvoice()
-			reason := keel.Raw("COALESCE(NULLIF(TRIM(?), ''), 'Unspecified')", ia.Reason)
+			reason := keel.DynFunc("trim", ia.Reason).NullIf("").Coalesce("Unspecified")
 
 			var (
 				byStatus, reasons            []summaryCount

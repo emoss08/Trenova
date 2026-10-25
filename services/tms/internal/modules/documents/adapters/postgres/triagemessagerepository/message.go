@@ -78,13 +78,12 @@ func (r *repository) CorrectClassification(
 			m.UpdatedAt.To(req.At),
 		}
 		if req.TargetSeconds > 0 {
-			sets = append(sets, m.DueAt.ToExpr(keel.Raw(
-				"CASE WHEN ? THEN ? + ? ELSE ? END",
-				m.Status.In(inboundmessage.StatusInReview, inboundmessage.StatusQuarantined),
-				m.ReceivedAt,
-				req.TargetSeconds,
-				m.DueAt,
-			)))
+			sets = append(sets, m.DueAt.ToExpr(keel.DynCase().
+				When(
+					m.Status.In(inboundmessage.StatusInReview, inboundmessage.StatusQuarantined),
+					keel.DynOf(m.ReceivedAt).Add(req.TargetSeconds),
+				).
+				Else(m.DueAt)))
 		}
 
 		n, err := m.Where(
@@ -111,14 +110,14 @@ func (r *repository) SaveTriageFields(
 			if err != nil {
 				return fmt.Errorf("encode facts: %w", err)
 			}
-			sets = append(sets, m.Facts.ToExpr(keel.Raw("?::jsonb", encoded)))
+			sets = append(sets, m.Facts.ToExpr(keel.DynLit(encoded).Cast(keel.TypeJSON)))
 		}
 		if req.Conflicts != nil {
 			encoded, err := jsonOrNull(*req.Conflicts)
 			if err != nil {
 				return fmt.Errorf("encode conflicts: %w", err)
 			}
-			sets = append(sets, m.Conflicts.ToExpr(keel.Raw("?::jsonb", encoded)))
+			sets = append(sets, m.Conflicts.ToExpr(keel.DynLit(encoded).Cast(keel.TypeJSON)))
 		}
 
 		if len(sets) == 0 {

@@ -341,11 +341,11 @@ func (r *repository) BenefitCosts(
 				Pick(
 					bp.ID,
 					bp.Name,
-					keel.Raw("?::text", bp.PlanType),
+					keel.DynOf(bp.PlanType).Cast(keel.TypeString),
 					enrolled,
 					keel.Count().Filter(e.Status.Eq(driverpay.EnrollmentWaived)),
-					keel.Raw("coalesce(?, 0)", e.EmployeeCostMinor.Sum().Filter(active)),
-					keel.Raw("coalesce(?, 0)", e.EmployerCostMinor.Sum().Filter(active)),
+					keel.DynOf(e.EmployeeCostMinor.Sum().Filter(active)).Coalesce(0),
+					keel.DynOf(e.EmployerCostMinor.Sum().Filter(active)).Coalesce(0),
 				).
 				Order(enrolled.Desc(), bp.Name.Asc()),
 		)

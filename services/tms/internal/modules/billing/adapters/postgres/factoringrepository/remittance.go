@@ -2,7 +2,6 @@ package factoringrepository
 
 import (
 	"context"
-	"strconv"
 
 	"github.com/bytedance/sonic"
 	"github.com/emoss08/keel"
@@ -129,8 +128,8 @@ func withMatchedItem(
 	line := factoringdb.RemittanceLines
 	item := line.SubmissionItem()
 	return q.
-		Compute(line.MatchedInvoice, keel.Raw("COALESCE(?, '')", item.InvoiceNumber)).
-		Compute(line.MatchedSubmission, keel.Raw("COALESCE(?, '')", item.SubmissionID))
+		Compute(line.MatchedInvoice, keel.DynOf(item.InvoiceNumber).Coalesce("")).
+		Compute(line.MatchedSubmission, keel.DynOf(item.SubmissionID).Coalesce(""))
 }
 
 func (r *remittanceRepository) FindByInboundDocument(
@@ -306,7 +305,7 @@ func lineOutcomes(
 		"reason", "suggestions", "ignored_reason", "reserve_entry_id",
 	}, ids, kinds, statuses, matchedBy, items, scores, reasons, suggestions, ignored, reserves)
 	orNull := func(column string) keel.Expr {
-		return keel.Raw("NULLIF(?, '')", outcome.Col(column))
+		return keel.DynOf(outcome.Col(column)).NullIf("")
 	}
 
 	q := line.With(outcome).
@@ -320,7 +319,7 @@ func lineOutcomes(
 		line.SubmissionItemID.ToExpr(orNull("submission_item_id")),
 		line.Score.ToExpr(outcome.Col("score")),
 		line.Reason.ToExpr(orNull("reason")),
-		line.Suggestions.ToExpr(keel.Raw("?::jsonb", outcome.Col("suggestions"))),
+		line.Suggestions.ToExpr(keel.DynOf(outcome.Col("suggestions")).Cast(keel.TypeJSON)),
 		line.IgnoredReason.ToExpr(orNull("ignored_reason")),
 		line.ReserveEntryID.ToExpr(orNull("reserve_entry_id")),
 	}, nil
@@ -389,11 +388,14 @@ func remittanceCandidates(
 
 func candidateMatch(invoices []string, amounts []int64) (invoiceMatch, amountMatch keel.Pred) {
 	item := factoringdb.SubmissionItems
-	normalized := keel.Raw("upper(regexp_replace(?, '[^[:alnum:]]', '', 'g'))", item.InvoiceNumber)
-	tolerance := keel.Raw(
-		"greatest("+strconv.Itoa(minCandidateTolerance)+", ?)",
-		item.ExpectedFeeMinor,
-	)
+	normalized := keel.DynFunc("upper", keel.DynFunc(
+		"regexp_replace",
+		item.InvoiceNumber,
+		keel.DynConst("[^[:alnum:]]"),
+		keel.DynConst(""),
+		keel.DynConst("g"),
+	))
+	tolerance := keel.DynFunc("greatest", minCandidateTolerance, item.ExpectedFeeMinor)
 	near := func(target keel.Expr) keel.Expr {
 		return keel.Raw("abs(abs(amt.v) - ?) <= ?", target, tolerance)
 	}
@@ -403,8 +405,8 @@ func candidateMatch(invoices []string, amounts []int64) (invoiceMatch, amountMat
 		amounts,
 		near(item.ExpectedAdvanceMinor),
 		near(item.FaceMinor),
-		near(keel.Raw("coalesce(?, -1)", item.ReserveMinor)),
-		near(keel.Raw("coalesce(?, 0) + coalesce(?, 0)", item.AdvanceMinor, item.FeeMinor)),
+		near(keel.DynOf(item.ReserveMinor).Coalesce(-1)),
+		near(keel.DynOf(item.AdvanceMinor).Coalesce(0).Add(keel.DynOf(item.FeeMinor).Coalesce(0))),
 	)
 	invoiceMatch = keel.Raw(
 		"EXISTS (SELECT 1 FROM unnest(?::text[]) AS ref(v) WHERE ? = ref.v OR "+
@@ -453,8 +455,8 @@ func openRemittances(limit int) *keel.Query[factoring.Remittance] {
 	return rem.Pick(
 		rem.ID,
 		rem.FactoringCompanyID,
-		keel.Raw("COALESCE(?, '')", fac.Name),
-		keel.Raw("COALESCE(?, '')", rem.FileName),
+		keel.DynOf(fac.Name).Coalesce(""),
+		keel.DynOf(rem.FileName).Coalesce(""),
 		rem.Status,
 		rem.ExceptionCount,
 		rem.MatchedCount,

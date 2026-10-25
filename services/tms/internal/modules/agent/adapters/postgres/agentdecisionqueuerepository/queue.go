@@ -67,19 +67,19 @@ func pendingQueue(req *agentports.ListPendingDecisionsQuery) *keel.CTETable {
 	pDef := agentdefinitiondb.Definitions.As("pdef")
 	proposals := p.
 		Pick(
-			keel.Raw("?::text", string(agentports.PendingDecisionProposal)),
+			keel.DynLit(string(agentports.PendingDecisionProposal)).Cast(keel.TypeString),
 			p.ID,
 			p.CreatedAt,
 			pRun.AgentDefinitionID,
-			keel.Raw("COALESCE(?, '')", pDef.Name),
-			keel.Raw("COALESCE(?, FALSE)", pDef.ShadowMode),
-			keel.Raw("?::text", p.ToolName),
+			keel.DynOf(pDef.Name).Coalesce(""),
+			keel.DynOf(pDef.ShadowMode).Coalesce(false),
+			keel.DynOf(p.ToolName).Cast(keel.TypeString),
 		).
 		Join(pRun, pRun.ID.EqCol(p.RunID)).
 		LeftJoin(pDef, pDef.ID.EqCol(pRun.AgentDefinitionID)).
 		Where(
 			p.Status.Eq(agent.ProposalStatusPending),
-			keel.Or(p.ExpiresAt.IsNull(), keel.Raw("? = 0", p.ExpiresAt), p.ExpiresAt.Gt(req.Now)),
+			keel.Or(p.ExpiresAt.IsNull(), keel.DynOf(p.ExpiresAt).Eq(0), p.ExpiresAt.Gt(req.Now)),
 			keel.When(!req.AgentDefinitionID.IsNil(), pRun.AgentDefinitionID.Eq(req.AgentDefinitionID)),
 			audience(pDef, req.Audience),
 			p.PlanID.IsNull(),
@@ -92,19 +92,19 @@ func pendingQueue(req *agentports.ListPendingDecisionsQuery) *keel.CTETable {
 	step := agentdb.AgentProposals.As("step")
 	plans := pl.
 		Pick(
-			keel.Raw("?::text", string(agentports.PendingDecisionPlan)),
+			keel.DynLit(string(agentports.PendingDecisionPlan)).Cast(keel.TypeString),
 			pl.ID,
 			pl.CreatedAt,
 			plRun.AgentDefinitionID,
-			keel.Raw("COALESCE(?, '')", plDef.Name),
-			keel.Raw("COALESCE(?, FALSE)", plDef.ShadowMode),
-			keel.Raw("?::text", agent.PlanToolName),
+			keel.DynOf(plDef.Name).Coalesce(""),
+			keel.DynOf(plDef.ShadowMode).Coalesce(false),
+			keel.DynLit(agent.PlanToolName).Cast(keel.TypeString),
 		).
 		Join(plRun, plRun.ID.EqCol(pl.RunID)).
 		LeftJoin(plDef, plDef.ID.EqCol(plRun.AgentDefinitionID)).
 		Where(
 			pl.Status.Eq(agent.PlanStatusPending),
-			keel.Or(pl.ExpiresAt.IsNull(), keel.Raw("? = 0", pl.ExpiresAt), pl.ExpiresAt.Gt(req.Now)),
+			keel.Or(pl.ExpiresAt.IsNull(), keel.DynOf(pl.ExpiresAt).Eq(0), pl.ExpiresAt.Gt(req.Now)),
 			keel.When(!req.AgentDefinitionID.IsNil(), plRun.AgentDefinitionID.Eq(req.AgentDefinitionID)),
 			audience(plDef, req.Audience),
 			keel.When(req.ToolName != "", keel.Exists(step.Where(
@@ -199,7 +199,7 @@ func (r *repository) CountPending(
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (int, error) {
 		q := pendingQueue(&req)
 		count, err := q.Query().With(q).
-			Where(keel.When(req.ActionableOnly, keel.Raw("NOT ?", q.Col("shadow")))).
+			Where(keel.When(req.ActionableOnly, keel.DynOf(q.Col("shadow")).Not())).
 			Count(ctx, r.db.Keel(ctx))
 		if err != nil {
 			r.l.Error("failed to count pending decisions", zap.Error(err))
@@ -300,11 +300,11 @@ func (r *repository) ListRecent(
 				Pick(
 					d.ID,
 					p.ID,
-					keel.Raw("?::text", d.Decision),
+					keel.DynOf(d.Decision).Cast(keel.TypeString),
 					d.ReasonCode,
-					keel.Raw("COALESCE(?, '')", d.Note),
+					keel.DynOf(d.Note).Coalesce(""),
 					d.DecidedByUserID,
-					keel.Raw("COALESCE(?, '')", u.Name),
+					keel.DynOf(u.Name).Coalesce(""),
 					d.CreatedAt,
 				).
 				Join(p, p.ID.EqCol(d.ProposalID)).

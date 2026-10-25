@@ -355,7 +355,7 @@ type searchPlan struct {
 	limit       int
 	candidates  int
 	efSearch    int
-	dimensions  string
+	dimensions  int
 }
 
 func planSearch(req *agentports.VectorSearchRequest) (searchPlan, error) {
@@ -384,7 +384,7 @@ func planSearch(req *agentports.VectorSearchRequest) (searchPlan, error) {
 	plan := searchPlan{
 		sourceTypes: req.SourceTypes,
 		limit:       req.Limit,
-		dimensions:  strconv.Itoa(req.Dimensions),
+		dimensions:  req.Dimensions,
 	}
 	if len(plan.sourceTypes) == 0 {
 		plan.sourceTypes = airetrieval.AllSourceTypes()
@@ -460,7 +460,7 @@ func (r *repository) Search(
 func searchQuery(req *agentports.VectorSearchRequest, plan searchPlan) *keel.Query[keel.Row] {
 	e := airetrievaldb.Embeddings
 	query := pgvector.NewHalfVector(req.Query)
-	cast := "::halfvec(" + plan.dimensions + ")"
+	cast := "::halfvec(" + strconv.Itoa(plan.dimensions) + ")"
 	distance := func() keel.Expr {
 		return keel.Raw("?"+cast+" <=> ?"+cast, e.Embedding, query)
 	}
@@ -469,7 +469,7 @@ func searchQuery(req *agentports.VectorSearchRequest, plan searchPlan) *keel.Que
 		Where(
 			e.SourceType.In(plan.sourceTypes...),
 			e.ModelKey.Eq(req.ModelKey),
-			keel.Raw("? = "+plan.dimensions, e.Dimensions),
+			keel.DynOf(e.Dimensions).Eq(keel.DynConst(plan.dimensions)),
 		).
 		Pick(e.SourceType, e.SourceID, e.ChunkIndex, distance()).
 		Order(keel.Asc(distance())).
@@ -489,14 +489,14 @@ func searchQuery(req *agentports.VectorSearchRequest, plan searchPlan) *keel.Que
 			candidate.Col("distance").Asc(),
 		))
 
-	similarity := keel.Raw("1 - ?", best.Col("distance"))
+	similarity := keel.DynLit(1).Sub(best.Col("distance"))
 	outer := best.Query().
 		With(candidate, best).
 		Pick(best.Col(colSourceType), best.Col(colSourceID), best.Col("chunk_index"), similarity).
 		Order(best.Col("distance").Asc(), best.Col(colSourceID).Asc()).
 		Limit(plan.limit)
 	if req.MinSimilarity != 0 {
-		outer.Where(keel.Raw("1 - ? >= ?", best.Col("distance"), req.MinSimilarity))
+		outer.Where(similarity.Gte(req.MinSimilarity))
 	}
 
 	return outer

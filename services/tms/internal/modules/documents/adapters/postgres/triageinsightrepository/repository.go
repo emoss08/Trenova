@@ -137,11 +137,11 @@ func messageRows(scanned []scannedRow[bool], personFiled bool) []*triageports.Me
 }
 
 func text(e keel.Expr) keel.Expr {
-	return keel.Raw("COALESCE(?, '')", e)
+	return keel.DynOf(e).Coalesce("")
 }
 
 func number(e keel.Expr) keel.Expr {
-	return keel.Raw("COALESCE(?, 0)", e)
+	return keel.DynOf(e).Coalesce(0)
 }
 
 func messages() *keel.Query[inboundmessage.InboundMessage] {

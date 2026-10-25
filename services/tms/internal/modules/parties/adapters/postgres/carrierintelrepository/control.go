@@ -124,13 +124,7 @@ func (r *controlRepository) ListConfigured(
 				Order(c.OrganizationID.Asc(), c.BusinessUnitID.Asc()).
 				Limit(limit)
 			if !req.After.OrganizationID.IsNil() {
-				q = q.Where(keel.Raw(
-					"(?, ?) > (?, ?)",
-					c.OrganizationID,
-					c.BusinessUnitID,
-					req.After.OrganizationID.String(),
-					req.After.BusinessUnitID.String(),
-				))
+				q = q.Where(keel.DynRow(c.OrganizationID, c.BusinessUnitID).Gt(keel.DynRow(req.After.OrganizationID.String(), req.After.BusinessUnitID.String())))
 			}
 
 			entities, err := q.List(ctx, r.db.Keel(ctx))

@@ -210,9 +210,9 @@ func (r *repository) manualRows(
 				j.CountryCode,
 				j.Code,
 				me.JurisdictionID,
-				keel.Raw("coalesce(?, 0)", me.Miles.Sum()),
-				keel.Raw("coalesce(?, 0)", me.Miles.Sum().Filter(me.Loaded.IsTrue())),
-				keel.Raw("coalesce(?, 0)", me.Miles.Sum().Filter(me.Loaded.IsFalse())),
+				keel.DynOf(me.Miles.Sum()).Coalesce(0),
+				keel.DynOf(me.Miles.Sum().Filter(me.Loaded.IsTrue())).Coalesce(0),
+				keel.DynOf(me.Miles.Sum().Filter(me.Loaded.IsFalse())).Coalesce(0),
 				keel.Count(),
 			).
 			Where(

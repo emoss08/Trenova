@@ -461,13 +461,7 @@ func (r *repository) ListIndexedTenants(
 			Order(s.OrganizationID.Asc(), s.BusinessUnitID.Asc()).
 			Limit(limit)
 		if req.After != nil {
-			q.Where(keel.Raw(
-				"(?, ?) > (?, ?)",
-				s.OrganizationID,
-				s.BusinessUnitID,
-				req.After.OrgID,
-				req.After.BuID,
-			))
+			q.Where(keel.DynRow(s.OrganizationID, s.BusinessUnitID).Gt(keel.DynRow(req.After.OrgID, req.After.BuID)))
 		}
 
 		rows, err := keel.Into[indexedTenantRow](ctx, r.db.Keel(ctx), q)

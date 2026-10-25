@@ -89,11 +89,11 @@ func buildCarrierSubjectsQuery(
 
 	q := c.Pick(
 		c.ID,
-		keel.Raw("coalesce(?, '')", c.Name),
+		keel.DynOf(c.Name).Coalesce(""),
 		c.DOTNumber,
-		keel.Raw("coalesce(?, '')", c.MCNumber),
+		keel.DynOf(c.MCNumber).Coalesce(""),
 		c.CarrierType,
-		keel.Raw("GREATEST(?, ?)", lastAssignment, lastOffer),
+		keel.DynFunc("greatest", lastAssignment, lastOffer),
 	).
 		Where(
 			c.DOTNumber.IsNotNull(),
@@ -182,9 +182,9 @@ func customerSubjectQuery(preds ...keel.Pred) *keel.Query[customer.Customer] {
 	c := customerdb.Customers
 	return c.Pick(
 		c.ID,
-		keel.Raw("coalesce(?, '')", c.Name),
-		keel.Raw("coalesce(?, '')", c.DOTNumber),
-		keel.Raw("coalesce(?, '')", c.MCNumber),
+		keel.DynOf(c.Name).Coalesce(""),
+		keel.DynOf(c.DOTNumber).Coalesce(""),
+		keel.DynOf(c.MCNumber).Coalesce(""),
 	).Where(preds...)
 }
 

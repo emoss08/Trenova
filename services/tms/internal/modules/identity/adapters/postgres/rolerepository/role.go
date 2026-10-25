@@ -28,8 +28,6 @@ const (
 	parentRoleAlias          = "parent_role"
 	directAssignment         = "direct"
 	orphanedScopeReason      = "find role assignments in organizations their holders no longer belong to, across every organization"
-	inParentRolesSQL         = "? = ANY(?)"
-	removeParentRoleSQL      = "array_remove(?, ?)"
 	roleClosureParentColumn  = "parent_role_ids"
 	roleClosureRoleColumn    = "id"
 	alreadyAssignedMessage   = "Role is already assigned to this user"
@@ -228,11 +226,7 @@ func rolesWithInheritance(ctx context.Context, roleIDs []pulid.ID) *keel.Query[p
 	closure.Recurse(forTenant(
 		ctx,
 		parent.Pick(parent.ID, parent.ParentRoleIDs).
-			Join(closure, keel.Raw(
-				inParentRolesSQL,
-				parent.ID,
-				closure.Col(roleClosureParentColumn),
-			)),
+			Join(closure, keel.DynOf(parent.ID).In(closure.Col(roleClosureParentColumn))),
 	)).Distinct()
 
 	return forTenant(
@@ -282,7 +276,7 @@ func (r *repository) GetUsersWithRole(
 			u.Name,
 			ura.OrganizationID,
 			o.Name,
-			keel.Raw("?::text", directAssignment),
+			keel.DynLit(directAssignment).Cast(keel.TypeString),
 		))
 		if err != nil {
 			r.l.Error(
@@ -416,12 +410,12 @@ func (r *repository) Delete(ctx context.Context, req permissionports.DeleteRoleR
 		if _, err = forTenant(
 			ctx,
 			ro.Query(),
-			keel.Raw(inParentRolesSQL, req.RoleID.String(), ro.ParentRoleIDs),
+			ro.ParentRoleIDs.Has(req.RoleID.String()),
 			ro.OrganizationID.Eq(req.OrganizationID),
 		).Update(
 			ctx,
 			db,
-			ro.ParentRoleIDs.ToExpr(keel.Raw(removeParentRoleSQL, ro.ParentRoleIDs, req.RoleID.String())),
+			ro.ParentRoleIDs.Remove(req.RoleID.String()),
 		); err != nil {
 			r.l.Error("failed to drop the deleted role from its seniors", zap.Error(err))
 			return err

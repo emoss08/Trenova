@@ -206,7 +206,7 @@ func (r *repository) NextCaseNumber(
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (int32, error) {
 		i := workerdb.WorkerInjuries
 		highest, err := keel.IntoOne[int32](ctx, r.db.Keel(ctx), i.
-			Pick(keel.Raw("COALESCE(MAX(?), 0)::int", i.CaseNumber)).
+			Pick(keel.DynOf(i.CaseNumber).Max().Coalesce(0)).
 			Where(i.CaseYear.Eq(req.CaseYear)))
 		if err != nil {
 			r.l.Error("failed to read the next case number", zap.Error(err))
