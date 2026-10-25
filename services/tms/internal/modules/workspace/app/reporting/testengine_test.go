@@ -111,14 +111,6 @@ func (f *fakeEngine) Page(
 	return nil, errNotExecuted
 }
 
-func (f *fakeEngine) Count(ctx context.Context, req *analytics.Request) (int64, error) {
-	f.record(engineCall{Kind: "count", Request: *req})
-	if _, err := f.compile(ctx, req); err != nil {
-		return 0, err
-	}
-	return 0, errNotExecuted
-}
-
 func (f *fakeEngine) Drill(
 	ctx context.Context,
 	req *analytics.Request,

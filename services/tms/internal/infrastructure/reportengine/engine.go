@@ -117,7 +117,6 @@ func (e *Engine) options(store analytics.Cache) analytics.RunnerOptions {
 		Timeouts: analytics.Timeouts{
 			Preview: cfg.GetPreviewStatementTimeout(),
 			Run:     cfg.GetStatementTimeout(),
-			Count:   cfg.GetPreviewStatementTimeout(),
 			Page:    cfg.GetPreviewStatementTimeout(),
 		},
 		Primary: true,
@@ -164,14 +163,6 @@ func (e *Engine) Page(
 		return nil, err
 	}
 	return interactive.Page(ctx, *req, cursor, size)
-}
-
-func (e *Engine) Count(ctx context.Context, req *analytics.Request) (int64, error) {
-	interactive, _, err := e.runners()
-	if err != nil {
-		return 0, err
-	}
-	return interactive.Count(ctx, *req)
 }
 
 func (e *Engine) Drill(

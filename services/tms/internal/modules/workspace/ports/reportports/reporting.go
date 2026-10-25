@@ -19,7 +19,6 @@ type ReportEngine interface {
 		cursor string,
 		size int,
 	) (*analytics.Result, error)
-	Count(ctx context.Context, req *analytics.Request) (int64, error)
 	Drill(
 		ctx context.Context,
 		req *analytics.Request,
