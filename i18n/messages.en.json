@@ -989,11 +989,13 @@
     ]
   },
   "1099 Eligible": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
+      "go",
       "ts"
     ],
     "areas": [
+      "go/other",
       "routes/carrier"
     ]
   },
@@ -38642,7 +38644,7 @@
       "template/invoice.pdf"
     ]
   },
-  "Balance Due Minor": {
+  "Balance Due (Minor Units)": {
     "sites": 1,
     "scope": [
       "go"
@@ -83165,7 +83167,7 @@
     ]
   },
   "Document does not exist or belongs to a different organization": {
-    "sites": 12,
+    "sites": 10,
     "scope": [
       "go"
     ],
@@ -83563,7 +83565,7 @@
     ]
   },
   "Document template does not exist": {
-    "sites": 3,
+    "sites": 1,
     "scope": [
       "go"
     ],
@@ -114027,6 +114029,15 @@
       "routes/desk"
     ]
   },
+  "Full Name": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Full Reversal": {
     "sites": 2,
     "scope": [
@@ -130740,15 +130751,6 @@
     ],
     "areas": [
       "apps/web/lib"
-    ]
-  },
-  "Is 1099 Eligible": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
     ]
   },
   "Is Adjustment Artifact": {
@@ -304431,15 +304433,6 @@
       "api/handlers"
     ]
   },
-  "W 9 On File": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
   "W-2 employee paid through driver pay expense.": {
     "sites": 1,
     "scope": [
@@ -304465,6 +304458,15 @@
     ],
     "areas": [
       "routes/desk"
+    ]
+  },
+  "W-9 On File": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "W-9 on file": {
@@ -313643,15 +313645,6 @@
       "routes/invoice-adjustment-control"
     ]
   },
-  "Whole Name": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
   "Whole days past the due date; zero when it is not yet due.": {
     "sites": 1,
     "scope": [
@@ -315632,7 +315625,7 @@
     ]
   },
   "Worker does not exist or belongs to a different organization": {
-    "sites": 26,
+    "sites": 21,
     "scope": [
       "go"
     ],

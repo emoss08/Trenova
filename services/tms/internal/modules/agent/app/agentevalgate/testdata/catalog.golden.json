@@ -6131,7 +6131,7 @@
             "type": "boolean"
           },
           "provider": {
-            "description": "Only records whose provider contains this text.",
+            "description": "Only records whose provider is exactly this.",
             "type": "string"
           },
           "query": {
@@ -6195,11 +6195,9 @@
               "carrierId",
               "category",
               "createdAt",
-              "currentValue",
               "detectedAt",
               "dotNumber",
               "fieldPath",
-              "priorValue",
               "provider",
               "resolution",
               "resolutionNote",
@@ -12144,7 +12142,7 @@
             "type": "string"
           },
           "transactionSet": {
-            "description": "Only records whose transaction set contains this text. 204 tender, 210 invoice, 214 status, 990 tender response, 997 or 999 acknowledgment.",
+            "description": "Only records whose transaction set is exactly this. 204 tender, 210 invoice, 214 status, 990 tender response, 997 or 999 acknowledgment.",
             "type": "string"
           },
           "transferId": {
@@ -12609,7 +12607,6 @@
               "createdAt",
               "failureReason",
               "inboundMessageId",
-              "mappingSnapshot",
               "processedAt",
               "rejectionReason",
               "sourceBusinessUnitId",
@@ -12622,7 +12619,6 @@
               "targetOrganizationId",
               "targetPartnerId",
               "targetShipmentId",
-              "tenderPayload",
               "updatedAt"
             ],
             "type": "string",
@@ -13707,7 +13703,7 @@
     },
     {
       "name": "equipment_list_tractors",
-      "description": "List tractors (power units) narrowed by status, ownership, or a registration or lease date. Use it for questions about which units are out of service or coming due for plates. Filters: code, createdAtFrom/To, equipmentManufacturerId, equipmentTypeId, externalId, fleetCodeId, fuelType, hasFleetCode, hasLastKnownLocation, hasOwnerWorker, hasSecondaryWorker, hasState, iftaQualified, includeEquipmentDetails, includeFleetDetails, includeWorkerDetails, lastKnownLocationId, lastKnownLocationName, leaseEndDateFrom/To, leaseReference, lessorName, licensePlateNumber, make, model, ownerWorkerId, ownershipType, primaryWorkerId, registrationExpiryFrom/To, registrationNumber, secondaryWorkerId, status, updatedAtFrom/To, vin, yearMin/Max.",
+      "description": "List tractors (power units) narrowed by status, ownership, or a registration or lease date. Use it for questions about which units are out of service or coming due for plates. Filters: code, createdAtFrom/To, equipmentManufacturerId, equipmentTypeId, externalId, fleetCodeId, fuelType, hasFleetCode, hasLastKnownLocation, hasOwnerWorker, hasSecondaryWorker, hasState, iftaQualified, includeEquipmentDetails, includeFleetDetails, includeWorkerDetails, lastKnownLocationId, leaseEndDateFrom/To, leaseReference, lessorName, licensePlateNumber, make, model, ownerWorkerId, ownershipType, primaryWorkerId, registrationExpiryFrom/To, registrationNumber, secondaryWorkerId, status, updatedAtFrom/To, vin, yearMin/Max.",
       "parameters": {
         "additionalProperties": false,
         "properties": {
@@ -13823,10 +13819,6 @@
             "type": "string",
             "x-recordOf": "location"
           },
-          "lastKnownLocationName": {
-            "description": "Only records whose last known location name contains this text.",
-            "type": "string"
-          },
           "leaseEndDateFrom": {
             "description": "When the lease on a leased tractor ends. Only records whose lease end date is on or after this day, in the organization's timezone. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
             "examples": [
@@ -13935,7 +13927,6 @@
               "fuelType",
               "iftaQualified",
               "lastKnownLocationId",
-              "lastKnownLocationName",
               "leaseEndDate",
               "leaseReference",
               "lessorName",
@@ -14042,7 +14033,7 @@
     },
     {
       "name": "equipment_list_trailers",
-      "description": "List trailers narrowed by status, ownership, or a registration, lease or inspection date, each with its equipment type (dry van, reefer, flatbed). Use it for questions about which trailers are out of service or overdue for inspection. Filters: code, createdAtFrom/To, equipmentManufacturerId, equipmentTypeId, externalId, fleetCodeId, hasFleetCode, hasLastKnownLocation, hasOwnerWorker, hasRegistrationState, includeEquipmentDetails, includeFleetDetails, lastInspectionDateFrom/To, lastKnownLocationId, lastKnownLocationName, leaseEndDateFrom/To, leaseReference, lessorName, licensePlateNumber, make, maxLoadWeightMin/Max, model, ownerWorkerId, ownershipType, registrationExpiryFrom/To, registrationNumber, status, updatedAtFrom/To, vin, yearMin/Max.",
+      "description": "List trailers narrowed by status, ownership, or a registration, lease or inspection date, each with its equipment type (dry van, reefer, flatbed). Use it for questions about which trailers are out of service or overdue for inspection. Filters: code, createdAtFrom/To, equipmentManufacturerId, equipmentTypeId, externalId, fleetCodeId, hasFleetCode, hasLastKnownLocation, hasOwnerWorker, hasRegistrationState, includeEquipmentDetails, includeFleetDetails, lastInspectionDateFrom/To, lastKnownLocationId, leaseEndDateFrom/To, leaseReference, lessorName, licensePlateNumber, make, maxLoadWeightMin/Max, model, ownerWorkerId, ownershipType, registrationExpiryFrom/To, registrationNumber, status, updatedAtFrom/To, vin, yearMin/Max.",
       "parameters": {
         "additionalProperties": false,
         "properties": {
@@ -14133,10 +14124,6 @@
             "description": "The location it was last seen at, from location_list. Never guess one.",
             "type": "string",
             "x-recordOf": "location"
-          },
-          "lastKnownLocationName": {
-            "description": "Only records whose last known location name contains this text.",
-            "type": "string"
           },
           "leaseEndDateFrom": {
             "description": "When the lease on a leased trailer ends. Only records whose lease end date is on or after this day, in the organization's timezone. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
@@ -14243,7 +14230,6 @@
               "fleetCodeId",
               "lastInspectionDate",
               "lastKnownLocationId",
-              "lastKnownLocationName",
               "leaseEndDate",
               "leaseReference",
               "lessorName",
@@ -15448,7 +15434,6 @@
               "defaultReasonCode",
               "defaultStatusCode",
               "description",
-              "externalMap",
               "label",
               "sortOrder",
               "updatedAt"
@@ -19456,7 +19441,6 @@
               "createdAt",
               "currentVersionNumber",
               "description",
-              "metadata",
               "name",
               "reviewComment",
               "source",
@@ -21444,14 +21428,12 @@
               "errorCount",
               "feedReference",
               "fileName",
-              "mapping",
               "origin",
               "provider",
               "rowCount",
               "sourceFormat",
               "stagedAt",
               "status",
-              "summary",
               "updatedAt",
               "uploadedById"
             ],
@@ -28747,7 +28729,7 @@
             "type": "string"
           },
           "entryType": {
-            "description": "Only records whose entry type contains this text. Such as Standard, Adjusting, Closing or Reversal.",
+            "description": "Only records whose entry type is exactly this. Such as Standard, Adjusting, Closing or Reversal.",
             "type": "string"
           },
           "fiscalPeriodId": {
@@ -30010,7 +29992,7 @@
     },
     {
       "name": "location_list",
-      "description": "List locations (facilities, terminals, yards) narrowed by status, code, name or city. Filters: addressLine1, addressLine2, city, code, createdAtFrom/To, description, geofenceRadiusMetersMin/Max, geofenceType, isGeocoded, latitudeMin/Max, locationCategoryId, longitudeMin/Max, name, postalCode, status, timezone, updatedAtFrom/To.",
+      "description": "List locations (facilities, terminals, yards) narrowed by status, code, name or city. Filters: addressLine1, addressLine2, city, code, createdAtFrom/To, description, geofenceRadiusMetersMin/Max, geofenceType, isGeocoded, latitudeMin/Max, locationCategoryId, longitudeMin/Max, name, postalCode, status, timezone, updatedAtFrom/To; locationCategory fields, each named locationCategory and the field (locationCategoryAllowsOvernight): allowsOvernight, color, createdAtFrom/To, description, facilityType, hasRestroom, hasSecureParking, name, requiresAppointment, type, updatedAtFrom/To.",
       "parameters": {
         "additionalProperties": false,
         "properties": {
@@ -30096,10 +30078,106 @@
             "type": "integer",
             "x-clamp": true
           },
+          "locationCategoryAllowsOvernight": {
+            "description": "true for only the records whose allowsOvernight is true, false for only those whose allowsOvernight is false.",
+            "type": "boolean"
+          },
+          "locationCategoryColor": {
+            "description": "Only records whose color contains this text.",
+            "type": "string"
+          },
+          "locationCategoryCreatedAtFrom": {
+            "description": "Only records whose created at is on or after this day, in the organization's timezone. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
+            "type": "string"
+          },
+          "locationCategoryCreatedAtTo": {
+            "description": "Only records whose created at is on or before this day, in the organization's timezone. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
+            "type": "string"
+          },
+          "locationCategoryDescription": {
+            "description": "Only records whose description contains this text.",
+            "type": "string"
+          },
+          "locationCategoryFacilityType": {
+            "description": "Only records whose facility type is one of these.",
+            "items": {
+              "enum": [
+                "CrossDock",
+                "StorageWarehouse",
+                "ColdStorage",
+                "HazmatFacility",
+                "IntermodalFacility"
+              ],
+              "type": "string",
+              "x-enumOf": "graphql.FacilityType"
+            },
+            "minItems": 1,
+            "type": "array"
+          },
+          "locationCategoryHasRestroom": {
+            "description": "true for only the records whose hasRestroom is true, false for only those whose hasRestroom is false.",
+            "type": "boolean"
+          },
+          "locationCategoryHasSecureParking": {
+            "description": "true for only the records whose hasSecureParking is true, false for only those whose hasSecureParking is false.",
+            "type": "boolean"
+          },
           "locationCategoryId": {
             "description": "The location category, from location_list_categories. Never guess one.",
             "type": "string",
             "x-recordOf": "location_category"
+          },
+          "locationCategoryName": {
+            "description": "Only records whose name contains this text.",
+            "type": "string"
+          },
+          "locationCategoryRequiresAppointment": {
+            "description": "true for only the records whose requiresAppointment is true, false for only those whose requiresAppointment is false.",
+            "type": "boolean"
+          },
+          "locationCategoryType": {
+            "description": "Only records whose type is one of these.",
+            "items": {
+              "enum": [
+                "Terminal",
+                "Warehouse",
+                "DistributionCenter",
+                "TruckStop",
+                "RestArea",
+                "CustomerLocation",
+                "Port",
+                "RailYard",
+                "MaintenanceFacility"
+              ],
+              "type": "string",
+              "x-enumOf": "graphql.LocationCategoryType"
+            },
+            "minItems": 1,
+            "type": "array"
+          },
+          "locationCategoryUpdatedAtFrom": {
+            "description": "Only records whose updated at is on or after this day, in the organization's timezone. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
+            "type": "string"
+          },
+          "locationCategoryUpdatedAtTo": {
+            "description": "Only records whose updated at is on or before this day, in the organization's timezone. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
+            "type": "string"
           },
           "longitudeMax": {
             "description": "Only records whose longitude is at most this. Write it as a decimal, such as 1250.00.",
@@ -30134,6 +30212,17 @@
               "geofenceType",
               "isGeocoded",
               "latitude",
+              "locationCategory.allowsOvernight",
+              "locationCategory.color",
+              "locationCategory.createdAt",
+              "locationCategory.description",
+              "locationCategory.facilityType",
+              "locationCategory.hasRestroom",
+              "locationCategory.hasSecureParking",
+              "locationCategory.name",
+              "locationCategory.requiresAppointment",
+              "locationCategory.type",
+              "locationCategory.updatedAt",
               "locationCategoryId",
               "longitude",
               "name",
@@ -31699,7 +31788,6 @@
               "defaultSeverity",
               "defaultVisibleToCustomer",
               "description",
-              "externalMap",
               "label",
               "sortOrder",
               "type",
@@ -34586,7 +34674,6 @@
               "description",
               "effectiveFrom",
               "effectiveTo",
-              "inputs",
               "marginFloorPercent",
               "maxPayPercentOfSell",
               "name",
@@ -39719,7 +39806,7 @@
             "x-recordOf": "report"
           },
           "format": {
-            "description": "Only records whose format contains this text.",
+            "description": "Only records whose format is exactly this.",
             "type": "string"
           },
           "hasDefinition": {
@@ -39757,9 +39844,7 @@
               "createdAt",
               "definitionId",
               "durationMs",
-              "error",
               "format",
-              "params",
               "queuedAt",
               "requestedById",
               "revisionId",
@@ -39782,11 +39867,11 @@
             "x-enumOf": "list.sortDirection"
           },
           "status": {
-            "description": "Only records whose status contains this text. queued, running, succeeded, failed, canceled or expired; only a succeeded run can be compared.",
+            "description": "Only records whose status is exactly this. queued, running, succeeded, failed, canceled or expired; only a succeeded run can be compared.",
             "type": "string"
           },
           "trigger": {
-            "description": "Only records whose trigger contains this text.",
+            "description": "Only records whose trigger is exactly this.",
             "type": "string"
           },
           "truncated": {
