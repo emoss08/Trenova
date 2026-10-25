@@ -37,7 +37,7 @@ func TestVersionsQueryReadsTheWholePayloadInLineageOrder(t *testing.T) {
 
 	assert.NotContains(t, sql, "jsonb_object_agg")
 	assert.Contains(t, sql, `aa."payload"`)
-	assert.Contains(t, sql, `COALESCE(aa."lineage_id", aa."id") = ANY(`)
+	assert.Contains(t, sql, `coalesce(aa."lineage_id", aa."id") = ANY(`)
 	assert.Contains(
 		t,
 		sql,

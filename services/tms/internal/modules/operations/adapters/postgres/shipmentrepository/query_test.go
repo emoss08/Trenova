@@ -22,7 +22,7 @@ func TestShipmentOptionPredicates_ActivityWindowAddsOverlapPredicate(t *testing.
 
 	assert.Contains(t, sql, "EXISTS (SELECT 1 FROM \"shipment_moves\"")
 	assert.Contains(t, sql, `"scheduled_window_start" > $`)
-	assert.Contains(t, sql, `COALESCE(`)
+	assert.Contains(t, sql, `(coalesce(s2."scheduled_window_end", s2."scheduled_window_start") >= $`)
 	assert.Contains(t, args, int64(1_700_086_400))
 	assert.Contains(t, args, int64(1_700_000_000))
 	assert.Contains(t, args, "Canceled")
@@ -136,7 +136,7 @@ func TestAutoDelayedShipmentIDs_JoinsTheShipmentControl(t *testing.T) {
 
 	assert.Contains(t, sql, `"shipment_controls" auto_sc`)
 	assert.Contains(t, sql, `auto_sc."auto_delay_shipments" IS TRUE`)
-	assert.Contains(t, sql, `COALESCE(auto_sc."auto_delay_shipments_threshold", `)
+	assert.Contains(t, sql, `(coalesce(auto_sc."auto_delay_shipments_threshold", $5) * $6::bigint)`)
 	assert.Contains(t, args, int64(1_800_000_000))
 }
 
@@ -155,11 +155,18 @@ func TestAutoCancelableShipments_UsesThreshold(t *testing.T) {
 func TestControlledAutoCancelIDs_JoinsTheShipmentControl(t *testing.T) {
 	t.Parallel()
 
-	sql, _ := keeltest.Render(t, controlledAutoCancelIDs(1_800_000_000, scopedTenant).Limit(10))
+	sql, args := keeltest.Render(t, controlledAutoCancelIDs(1_800_000_000, scopedTenant).Limit(10))
 
 	assert.Contains(t, sql, `"shipment_controls" cancel_sc`)
 	assert.Contains(t, sql, `cancel_sc."auto_cancel_shipments" IS TRUE`)
-	assert.Contains(t, sql, `* 86400`)
+	assert.Contains(
+		t,
+		sql,
+		`(cancel_sp."created_at" <= ($4 - (coalesce(cancel_sc."auto_cancel_shipments_threshold", $5) * $6::bigint)))`,
+		"the day length is bigint so the threshold and the clock are not read as smallint",
+	)
+	assert.Equal(t, int64(1_800_000_000), args[3])
+	assert.Equal(t, secondsPerDay, args[5])
 }
 
 func TestPreviousRateOrigins_PinsTheFirstPickup(t *testing.T) {

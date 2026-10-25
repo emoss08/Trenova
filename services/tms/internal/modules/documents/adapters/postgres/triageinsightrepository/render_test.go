@@ -52,9 +52,12 @@ func TestHandledKeepsThreeSamplesPerGroup(t *testing.T) {
 		sqlText,
 	)
 	assert.Contains(t, sqlText, `WHERE r."sample_rank" <= $1`, sqlText)
-	assert.Contains(t, sqlText, `COALESCE(s."pro_number", '')`, sqlText)
+	assert.Contains(t, sqlText, `coalesce(s."pro_number", $18)`, sqlText)
 	assert.NotContains(t, sqlText, `r.*`, sqlText)
-	assert.Equal(t, []any{3, "bu_1", "org_1", int64(1_760_245_200)}, args)
+	assert.Equal(t, []any{
+		3, "bu_1", "org_1", int64(1_760_245_200),
+		"", "", "", 0, "", "", "", "", "", "", "", "", 0, "",
+	}, args)
 }
 
 func TestArrivalsAreBucketedByHourSinceMidnight(t *testing.T) {
@@ -63,11 +66,13 @@ func TestArrivalsAreBucketedByHourSinceMidnight(t *testing.T) {
 	sqlText, args := keeltest.Render(t, arrivalsQuery(window()))
 
 	assertTenant(t, sqlText)
-	assert.Contains(t, sqlText, `FLOOR((im."received_at" - $5) / 3600)::int8`, sqlText)
+	hour := `CAST(floor(((im."received_at" - $5::bigint) / $6::bigint)) AS bigint)`
+	assert.Contains(t, sqlText, "SELECT "+hour, sqlText)
 	assert.Contains(t, sqlText, `im."received_at" <= $4`, sqlText)
-	assert.Contains(t, sqlText, `GROUP BY FLOOR((im."received_at" - $5) / 3600)::int8`, sqlText)
+	assert.Contains(t, sqlText, "GROUP BY "+hour+" ORDER BY "+hour+" ASC", sqlText)
 	assert.Equal(t, int64(1_760_290_000), args[3])
 	assert.Equal(t, int64(1_760_245_200), args[4])
+	assert.Equal(t, 3600, args[5])
 }
 
 func TestRiverBoundsEachLane(t *testing.T) {
@@ -141,7 +146,10 @@ func TestRuleCandidatesNarrowBySentence(t *testing.T) {
 	assert.Contains(t, sqlText, "LIMIT 5000", sqlText)
 	assert.Equal(
 		t,
-		[]any{"bu_1", "org_1", "ProofOfDelivery", int64(1_757_700_000), "imbx_1", "drivers.example", "%.drivers.example"},
+		[]any{
+			"bu_1", "org_1", "ProofOfDelivery", int64(1_757_700_000), "imbx_1", "drivers.example",
+			"%.drivers.example", "", "", "", 0, "", "", "", "", "", "", "", "", 0, "",
+		},
 		args,
 	)
 
@@ -152,7 +160,7 @@ func TestRuleCandidatesNarrowBySentence(t *testing.T) {
 	assert.Contains(
 		t,
 		sqlText,
-		`im."sender_domain" = $5 AND LOWER(BTRIM(im."from_address")) = $6`,
+		`im."sender_domain" = $5 AND (lower(btrim(im."from_address")) = $6)`,
 		sqlText,
 	)
 	assert.Equal(t, []any{"acme.example", "ops@acme.example"}, args[4:])
@@ -220,5 +228,8 @@ func TestSenderRecentLeavesTheOpenMessageOut(t *testing.T) {
 			`ORDER BY im."received_at" DESC, im."id" DESC LIMIT 3`,
 		sqlText,
 	)
-	assert.Equal(t, []any{"bu_1", "org_1", "acme.example", int64(1), "imsg_open"}, args)
+	assert.Equal(t, []any{
+		"bu_1", "org_1", "acme.example", int64(1), "imsg_open",
+		"", "", "", 0, "", "", "", "", "", "", "", "", 0, "", false,
+	}, args)
 }

@@ -13,10 +13,11 @@ import (
 func TestConversationByDocumentQuery(t *testing.T) {
 	t.Parallel()
 
-	active, _ := keeltest.Render(t, conversationByDocumentQuery(
+	active, activeArgs := keeltest.Render(t, conversationByDocumentQuery(
 		shipmentimportchatports.GetShipmentImportConversationRequest{DocumentID: pulid.ID("doc_1")},
 	))
-	assert.Contains(t, active, "CASE WHEN")
+	assert.Contains(t, active, `ORDER BY sicc."status" = $4 DESC, sicc."updated_at" DESC`)
+	assert.Equal(t, string(shipmentimportchat.ConversationStatusActive), activeArgs[3])
 	assert.Contains(t, active, "LIMIT 1")
 
 	byStatus, args := keeltest.Render(t, conversationByDocumentQuery(
@@ -25,7 +26,7 @@ func TestConversationByDocumentQuery(t *testing.T) {
 			Status:     shipmentimportchat.ConversationStatusCompleted,
 		},
 	))
-	assert.NotContains(t, byStatus, "CASE WHEN")
+	assert.Contains(t, byStatus, `ORDER BY sicc."updated_at" DESC`)
 	assert.Contains(t, args, string(shipmentimportchat.ConversationStatusCompleted))
 }
 

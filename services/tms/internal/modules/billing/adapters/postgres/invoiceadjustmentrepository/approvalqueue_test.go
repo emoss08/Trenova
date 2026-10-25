@@ -29,7 +29,7 @@ func TestApprovalQueue_PagesBySubmissionTimeThenID(t *testing.T) {
 
 	sql, args := renderApprovalQueue(t, &pagination.QueryOptions{})
 
-	assert.Contains(t, sql, `ORDER BY COALESCE(`)
+	assert.Contains(t, sql, `ORDER BY coalesce(`)
 	assert.Contains(t, sql, `"submitted_at", `)
 	assert.Contains(t, sql, `"created_at") DESC, `)
 	assert.Contains(t, sql, `"id" DESC LIMIT 3`)

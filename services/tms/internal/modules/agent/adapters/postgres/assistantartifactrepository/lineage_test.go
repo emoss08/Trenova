@@ -52,11 +52,11 @@ func TestPageQueryStartsAfterTheCursorInPaneOrder(t *testing.T) {
 	sql, args := keeltest.Render(t, pageQuery(lineageQuery(req), req, cursor, 60))
 
 	assert.Contains(t, sql, `WITH "lineages"`)
-	assert.Contains(t, sql, `::int, `)
-	assert.Contains(t, sql, ") < (")
+	assert.Contains(t, sql, `ROW(l."pinned", l."last", l."root") < ROW(`)
 	assert.Contains(t, sql, "DESC")
 	assert.Contains(t, sql, "LIMIT 61", "one more than the page says whether another follows")
-	assert.Contains(t, sql, `GROUP BY COALESCE(aa."lineage_id", aa."id")`)
+	assert.Contains(t, sql, `GROUP BY coalesce(aa."lineage_id", aa."id")`)
+	assert.Contains(t, args, false)
 	assert.Contains(t, args, int64(42))
 	assert.Contains(t, args, "art_b")
 }
@@ -72,21 +72,31 @@ func TestPageQueryFiltersOnTheServer(t *testing.T) {
 	sql, args := keeltest.Render(t, pageQuery(lineageQuery(req), req, nil, 10))
 
 	assert.Contains(t, sql, `aa."title" ILIKE `)
-	assert.Contains(t, sql, `aa."payload"->>'tool' ILIKE `)
+	assert.Regexp(t, `\(aa\."payload" #>> \$\d+\) ILIKE `, sql)
+	assert.Contains(t, args, []string{"tool"})
 	assert.Contains(t, args, `%50\%\_off%`)
 	assert.Contains(t, args, string(assistantartifact.FamilyView))
-	assert.NotContains(t, sql, ") < (")
+	assert.NotContains(t, sql, ") < ROW(")
 }
 
 func TestFamilyExprMatchesTheDomainsFamilies(t *testing.T) {
 	t.Parallel()
 
 	a := assistantartifactdb.Artifacts
-	sql, _ := keeltest.Render(t, a.Pick(familyExpr()))
+	sql, args := keeltest.Render(t, a.Pick(familyExpr()))
 
-	assert.Contains(t, sql, `WHEN ((aa."kind" = 'table_view' AND aa."payload"->'path' IS NULL)) THEN 'table'`)
-	assert.Contains(t, sql, `(aa."kind" = 'table_view' AND aa."payload"->'path' IS NOT NULL)) THEN 'view'`)
-	assert.Contains(t, sql, `WHEN (aa."kind" IN ('extraction', 'edi_connection_draft')) THEN 'extract'`)
-	assert.Contains(t, sql,
-		`WHEN (aa."kind" IN ('report_preview', 'report_run', 'analysis', 'portal_task')) THEN 'report'`)
+	assert.Regexp(t,
+		`WHEN \(\(aa\."kind" = \$3 AND NOT \(aa\."payload" \? \$4\)\)\) THEN \$5::text `, sql)
+	assert.Regexp(t,
+		`\(aa\."kind" = \$3 AND aa\."payload" \? \$4\)\) THEN \$21::text `, sql)
+	assert.Regexp(t, `WHEN \(aa\."kind" = ANY\(\$24\)\) THEN \$25::text `, sql)
+	assert.Regexp(t, `WHEN \(aa\."kind" = ANY\(\$14\)\) THEN \$15::text `, sql)
+	assert.Equal(t, "table_view", args[2])
+	assert.Equal(t, "path", args[3])
+	assert.Equal(t, "table", args[4])
+	assert.Equal(t, "view", args[20])
+	assert.Equal(t, []string{"extraction", "edi_connection_draft"}, args[23])
+	assert.Equal(t, "extract", args[24])
+	assert.Equal(t, []string{"report_preview", "report_run", "analysis", "portal_task"}, args[13])
+	assert.Equal(t, "report", args[14])
 }

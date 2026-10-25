@@ -80,7 +80,7 @@ func TestQuickFilterCondition_DeliveringTodayUsesLocalDay(t *testing.T) {
 	assert.Contains(t, args, int64(1791262800))
 	assert.Contains(t, args, int64(1791349200))
 	assert.Contains(t, sql, "int8range(")
-	assert.Contains(t, sql, `COALESCE(qf_stp."actual_arrival", qf_stp."scheduled_window_start")`)
+	assert.Contains(t, sql, `coalesce(qf_stp."actual_arrival", qf_stp."scheduled_window_start")`)
 	assert.Contains(t, sql, `ORDER BY qf_sm."sequence" DESC, qf_stp."sequence" DESC LIMIT 1`)
 	assert.Contains(t, sql, `qf_sm."shipment_id" = s."id"`)
 	assert.Contains(t, args, []string{"Delivery", "SplitDelivery"})
@@ -122,15 +122,18 @@ func TestQuickFilterCondition_LowMarginMatchesEstimator(t *testing.T) {
 
 	basis := quickFilterTestBasis(t)
 	sql, args := renderQuickFilter(t, basis, shipment.Quick(shipment.QuickFilterLowMargin))
-	assert.Contains(t, sql, `HAVING COALESCE(SUM(qf_mi."distance"), 0) > 0`)
-	assert.Contains(t, sql, `s."total_charge_amount" <= 0`)
-	assert.Contains(t, sql, `(COALESCE(SUM(qf_mi."distance"), 0))::numeric`)
+	assert.Contains(t, sql, `HAVING (coalesce(sum(qf_mi."distance"), $4) > $5)`)
+	assert.Contains(t, sql, `(s."total_charge_amount" <= $6)`)
+	assert.Contains(t, sql, `round(($7::numeric * CAST(coalesce(sum(qf_mi."distance"), $8) AS numeric)), $9)`)
+	assert.Contains(t, sql, `* $10) / s."total_charge_amount"), $11) < $12)`)
+	assert.Equal(t, []any{0, 0, 0}, args[3:6])
+	assert.Equal(t, []any{0, 2, 100, 2}, args[7:11])
 	assert.Contains(t, args, decimal.RequireFromString("1.85"))
 	assert.Contains(t, args, decimal.NewFromInt(12))
 
 	basis.Margin.IncludeDeadheadMiles = false
 	loaded, _ := renderQuickFilter(t, basis, shipment.Quick(shipment.QuickFilterLowMargin))
-	assert.Contains(t, loaded, `COALESCE(SUM(qf_mi."distance") FILTER (WHERE qf_mi."loaded"), 0)`)
+	assert.Contains(t, loaded, `coalesce(sum(qf_mi."distance") FILTER (WHERE qf_mi."loaded"), $8)`)
 }
 
 func TestQuickFilterCondition_DetentionFollowsTheEngine(t *testing.T) {
@@ -138,7 +141,10 @@ func TestQuickFilterCondition_DetentionFollowsTheEngine(t *testing.T) {
 
 	basis := quickFilterTestBasis(t)
 	dwell, dwellArgs := renderQuickFilter(t, basis, shipment.Quick(shipment.QuickFilterDetention))
-	assert.Contains(t, dwell, `COALESCE(qf_dw."actual_departure", 0) = 0`)
+	assert.Contains(t, dwell, `(coalesce(qf_dw."actual_arrival", $5) > $6)`)
+	assert.Contains(t, dwell, `(coalesce(qf_dw."actual_departure", $7) = $8)`)
+	assert.Contains(t, dwell, `coalesce(qf_dw."count_detention_override", $9)`)
+	assert.Equal(t, []any{0, 0, 0, 0, true}, dwellArgs[4:9])
 	assert.Contains(t, dwellArgs, basis.Now.Unix()-30*60)
 
 	basis.Detention.UsePolicyEngine = true

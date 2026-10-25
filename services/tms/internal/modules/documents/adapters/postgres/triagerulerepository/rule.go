@@ -106,8 +106,8 @@ func sentenceQuery(req triageports.FindRuleBySentenceRequest) *keel.Query[triage
 	return ru.Where(
 		ru.Classification.Eq(sentence.Classification),
 		ru.SenderScope.Eq(sentence.SenderScope),
-		keel.DynOf(ru.Sender).Coalesce("").Eq(sentence.Sender),
-		keel.DynOf(ru.MailboxID).Coalesce("").Eq(sentence.MailboxID.String()),
+		keel.DynOf(ru.Sender).Coalesce(keel.DynConst("")).Eq(sentence.Sender),
+		keel.DynOf(ru.MailboxID).Coalesce(keel.DynConst("")).Eq(sentence.MailboxID.String()),
 		ru.Action.Eq(sentence.Action),
 		keel.When(sentence.ID.IsNotNil(), ru.ID.Ne(sentence.ID)),
 	)

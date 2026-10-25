@@ -174,7 +174,7 @@ func controlledAutoCancelIDs(currentTime int64, t tenancy) *keel.Query[shipment.
 				keel.DynLit(currentTime).Sub(
 					keel.DynOf(sc.AutoCancelShipmentsThreshold).
 						Coalesce(shipmentstate.DefaultAutoCancelThresholdDays).
-						Mul(86400),
+						Mul(keel.DynLit(secondsPerDay).Cast(keel.TypeInt64)),
 				),
 			),
 		).

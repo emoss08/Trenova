@@ -40,7 +40,9 @@ func TestScorecardQuery_GroupsEveryCountByPartner(t *testing.T) {
 	}))
 
 	assert.Contains(t, sql, `SELECT em."edi_partner_id", max(p."name"), max(p."code"), count(*) FILTER`)
-	assert.Contains(t, sql, `percentile_cont(0.95) WITHIN GROUP (ORDER BY em."ack_received_at" - em."delivery_sent_at")`)
+	assert.Contains(t, sql, `CAST(percentile_cont($9) WITHIN GROUP `+
+		`(ORDER BY (em."ack_received_at" - em."delivery_sent_at") ASC) FILTER (WHERE `)
+	assert.Equal(t, 0.95, args[8])
 	assert.Contains(t, sql, `em."edi_partner_id" IS NOT NULL AND em."generated_at" >= $3`)
 	assert.Contains(t, sql, `GROUP BY em."edi_partner_id" ORDER BY max(p."name") ASC`)
 	assert.Contains(t, args, "Pending")
@@ -52,9 +54,9 @@ func TestVolumeQuery_GroupsByTheBucketItSelects(t *testing.T) {
 
 	sql, args := keeltest.Render(t, volumeQuery(&ediports.GetEDIVolumeSeriesRequest{Since: 100}))
 
-	assert.Contains(t, sql, `SELECT (em."generated_at" / $4) * $5, count(*) FILTER (WHERE em."direction" = $6)`)
+	assert.Contains(t, sql, `SELECT ((em."generated_at" / $4::bigint) * $5::bigint), count(*) FILTER (WHERE em."direction" = $6)`)
 	assert.Contains(t, sql, `WHERE em."business_unit_id" = $1 AND em."organization_id" = $2 AND em."generated_at" >= $3`)
-	assert.Contains(t, sql, `GROUP BY (em."generated_at" / $4) * $5 ORDER BY (em."generated_at" / $4) * $5 ASC`)
+	assert.Contains(t, sql, `GROUP BY ((em."generated_at" / $4::bigint) * $5::bigint) ORDER BY ((em."generated_at" / $4::bigint) * $5::bigint) ASC`)
 	assert.Contains(t, args, []string{"Failed", "DeadLettered"})
 	assert.Contains(t, args, "Inbound")
 }

@@ -24,9 +24,10 @@ func TestListQueryOrdersTheQueue(t *testing.T) {
 func TestTallyQueryCountsTheThread(t *testing.T) {
 	t.Parallel()
 
-	sql, _ := keeltest.Render(t, tallyQuery(pulid.ID("ath_1")))
+	sql, args := keeltest.Render(t, tallyQuery(pulid.ID("ath_1")))
 	assert.Contains(t, sql, "count(*)")
-	assert.Contains(t, sql, "COALESCE(MAX(")
+	assert.Regexp(t, `coalesce\(max\(aqm\."position"\), \$\d+\)`, sql)
+	assert.Contains(t, args, 0)
 }
 
 func TestHeadQuerySkipsLockedRows(t *testing.T) {

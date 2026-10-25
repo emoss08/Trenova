@@ -19,7 +19,7 @@ func TestSumAutomaticMoney_CountsOnlyWritesThatRanInTheFunctionalCurrency(t *tes
 		Since:    100,
 	}, "USD"))
 
-	assert.Contains(t, sql, `SELECT count(*), COALESCE(SUM(ABS(ap."money_minor")), 0) FROM "agent_proposals" ap`)
+	assert.Regexp(t, `^SELECT count\(\*\), coalesce\(sum\(abs\(ap\."money_minor"\)\), \$\d+\) FROM "agent_proposals" ap `, sql)
 	assert.Contains(t, sql, `ap."autonomy_tier" = `)
 	assert.Contains(t, sql, `ap."status" = `)
 	assert.Contains(t, sql, `ap."money_minor" IS NOT NULL`)
@@ -31,6 +31,7 @@ func TestSumAutomaticMoney_CountsOnlyWritesThatRanInTheFunctionalCurrency(t *tes
 	assert.Contains(t, args, "Executed")
 	assert.Contains(t, args, "USD")
 	assert.Contains(t, args, int64(100))
+	assert.Contains(t, args, 0)
 }
 
 func TestSumAutomaticMoney_ASimulatedRunCountsItsSimulatedWrites(t *testing.T) {

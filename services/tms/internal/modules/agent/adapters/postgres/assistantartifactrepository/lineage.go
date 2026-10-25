@@ -74,8 +74,7 @@ func decodeCursor(raw string) (lineageCursor, error) {
 }
 
 // familyExpr is the family of the row's kind, written out from the domain's
-// own table so the server filters on the families the Desk draws. The kinds
-// are the domain's own constants, never input, so they are written in place.
+// own table so the server filters on the families the Desk draws.
 func familyExpr() keel.Expr {
 	a := assistantartifactdb.Artifacts
 	family := keel.DynCase()

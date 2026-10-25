@@ -33,7 +33,7 @@ func TestLanes_CountsShipmentsBetweenTheirFirstPickupAndLastDeliveryState(t *tes
 	assert.Contains(t, sql, `JOIN "locations" loc_dest ON`)
 	assert.Contains(t, sql, `JOIN "us_states" ust_dest ON ust_dest."id" = loc_dest."state_id"`)
 	assert.Contains(t, sql, `GROUP BY ust_orig."abbreviation", ust_dest."abbreviation"`)
-	assert.Contains(t, sql, `ORDER BY count(*)::int DESC, ust_orig."abbreviation" ASC, ust_dest."abbreviation" ASC LIMIT 5`)
+	assert.Contains(t, sql, `ORDER BY count(*) DESC, ust_orig."abbreviation" ASC, ust_dest."abbreviation" ASC LIMIT 5`)
 	assert.Contains(t, args, keeltest.TestOrganizationID.String())
 	assert.Contains(t, args, string(shipment.StatusCanceled))
 }

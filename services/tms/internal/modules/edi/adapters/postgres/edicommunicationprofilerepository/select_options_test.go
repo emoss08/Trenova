@@ -30,7 +30,7 @@ func TestProfileOptionsQuery_AppliesTheFiltersAndSearch(t *testing.T) {
 			`FROM "edi_communication_profiles" ecp `+
 			`WHERE ecp."business_unit_id" = $1 AND ecp."organization_id" = $2 AND ecp."status" = $3 `+
 			`AND ecp."method" = $4 AND ecp."edi_partner_id" = $5 `+
-			`AND (ecp."name" ILIKE $6 OR ecp."description" ILIKE $7 OR ecp."method"::text ILIKE $8) `+
+			`AND (ecp."name" ILIKE $6 OR ecp."description" ILIKE $7 OR (CAST(ecp."method" AS text) ILIKE $8)) `+
 			`ORDER BY ecp."name" ASC LIMIT 10`,
 		sql,
 	)

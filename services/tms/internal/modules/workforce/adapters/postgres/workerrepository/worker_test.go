@@ -14,9 +14,9 @@ func TestSelectOptionsQuery_OwnerOperatorsMatchTheTypeOrTheirCurrentPayProfile(t
 	sql, args := keeltest.Render(t, selectOptionsQuery(true, 1_700_000_000).Limit(10))
 
 	assert.Contains(t, sql, `w."type" = $`)
-	assert.Contains(t, sql, `WHERE wpa.worker_id = w."id"`)
-	assert.Contains(t, sql, `AND wpa.organization_id = w."organization_id"`)
-	assert.Contains(t, sql, `AND wpa.business_unit_id = w."business_unit_id"`)
+	assert.Contains(t, sql, `AND wpa."worker_id" = w."id"`)
+	assert.Contains(t, sql, `AND wpa."organization_id" = w."organization_id"`)
+	assert.Contains(t, sql, `AND wpa."business_unit_id" = w."business_unit_id"`)
 	assert.Contains(t, sql, `LEFT JOIN "fleet_codes" fc ON `)
 	assert.Contains(t, args, "Contractor")
 	assert.Contains(t, args, "OwnerOperator")
