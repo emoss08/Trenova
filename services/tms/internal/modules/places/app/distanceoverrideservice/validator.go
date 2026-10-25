@@ -7,7 +7,7 @@ import (
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
-	"github.com/emoss08/trenova/internal/modules/parties/domain/customer/customerdb"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/keelcatalog"
 	"github.com/emoss08/trenova/internal/modules/places/domain/distanceoverride"
 	"github.com/emoss08/trenova/internal/modules/places/domain/distanceoverride/distanceoverridedb"
 	"github.com/emoss08/trenova/internal/modules/places/domain/location/locationdb"
@@ -57,7 +57,7 @@ func NewValidator(p ValidatorParams) *Validator {
 				"customerId",
 				"Customer does not exist in your organization",
 				func(d *distanceoverride.DistanceOverride) pulid.ID { return d.CustomerID },
-				validationframework.KeelReferenceCheck(p.DB, customerdb.CustomersSchema()),
+				validationframework.KeelReferenceCheck(p.DB, keelcatalog.MustNamed("customers")),
 			).
 			WithCustomRule(
 				validationframework.
