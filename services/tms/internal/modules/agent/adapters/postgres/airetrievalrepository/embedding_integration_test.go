@@ -145,17 +145,13 @@ func TestSearch_UsesThePartialHNSWIndexForItsDimensions(t *testing.T) {
 	require.NoError(t, err)
 
 	var explained []string
-	err = h.conn.Transact(h.ctx, kernelports.TxOptions{}, func(ctx context.Context) error {
+	settings := kernelports.TxOptions{Settings: []kernelports.TxSetting{
+		{Name: "enable_seqscan", Value: "off"},
+		{Name: "enable_sort", Value: "off"},
+		{Name: "hnsw.iterative_scan", Value: "relaxed_order"},
+	}}
+	err = h.conn.Transact(h.ctx, settings, func(ctx context.Context) error {
 		db := h.conn.Keel(ctx)
-		for _, setting := range []string{
-			"SET LOCAL enable_seqscan = off",
-			"SET LOCAL enable_sort = off",
-			setIterativeScan,
-		} {
-			if _, execErr := keel.Exec(ctx, db, setting); execErr != nil {
-				return execErr
-			}
-		}
 
 		query, args, renderErr := searchQuery(req, plan).ToSQL(ctx, db)
 		if renderErr != nil {

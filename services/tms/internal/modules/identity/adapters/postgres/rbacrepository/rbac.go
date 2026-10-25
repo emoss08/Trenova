@@ -13,31 +13,9 @@ import (
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/jackc/pgx/v5"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
-
-// rolePermissionCountSQL counts the distinct resource/operation grants a role carries,
-// following the same inheritance edge the permission engine follows when it merges a
-// role's permissions: parent_role_ids, walked transitively. Counting only a role's own
-// resource_permissions rows would report 0 for a role that exists purely to inherit.
-const rolePermissionCountSQL = `
-WITH RECURSIVE role_closure AS (
-	SELECT r.id AS root_id, r.id AS role_id, r.parent_role_ids
-	FROM roles r
-	WHERE r.id = ANY($1::text[])
-	UNION
-	SELECT c.root_id, p.id, p.parent_role_ids
-	FROM role_closure c
-	JOIN roles p ON p.id = ANY(c.parent_role_ids)
-)
-SELECT c.root_id AS role_id,
-	COUNT(DISTINCT rp.resource || ':' || op) AS permission_count
-FROM role_closure c
-LEFT JOIN resource_permissions rp ON rp.role_id = c.role_id
-LEFT JOIN LATERAL unnest(rp.operations) AS op ON TRUE
-GROUP BY c.root_id`
 
 var (
 	edgeErrors       = dberror.Mapping{Entity: "Role hierarchy edge"}
@@ -225,6 +203,32 @@ func (r *repository) GetAuthorizedRoles(
 	})
 }
 
+func rolePermissionCounts(ctx context.Context, roleIDs []pulid.ID) keel.Projection {
+	ro := permissiondb.Roles
+	parent := ro.As("parent_role")
+	closure := keel.RecursiveCTE(
+		"role_closure",
+		[]string{"root_id", "role_id", "parent_role_ids"},
+		forTenant(ctx, ro.Pick(ro.ID, ro.ID, ro.ParentRoleIDs), ro.ID.In(roleIDs...)),
+	)
+	closure.Recurse(forTenant(
+		ctx,
+		parent.Pick(closure.Col("root_id"), parent.ID, parent.ParentRoleIDs).
+			Join(closure, keel.DynOf(parent.ID).In(closure.Col("parent_role_ids"))),
+	)).Distinct()
+
+	rp := permissiondb.ResourcePermissions
+	op := keel.Rows("op", []string{"op"}, keel.DynFunc("unnest", rp.Operations))
+	root := closure.Col("root_id")
+
+	return forTenant(ctx, closure.Query().
+		With(closure).
+		LeftJoin(rp, rp.RoleID.EqCol(closure.Col("role_id"))).
+		LeftJoinLateral(op).
+		Pick(root, keel.DynOf(rp.Resource).Concat(":").Concat(op.Col("op")).CountDistinct()).
+		Group(root))
+}
+
 func (r *repository) CountRolePermissions(
 	ctx context.Context,
 	roleIDs []pulid.ID,
@@ -235,17 +239,10 @@ func (r *repository) CountRolePermissions(
 			return counts, nil
 		}
 
-		ids := make([]string, len(roleIDs))
-		for i, id := range roleIDs {
-			ids[i] = id.String()
-		}
-
-		rows, err := keel.QueryAll(
+		rows, err := keel.Into[rolePermissionCount](
 			ctx,
 			r.db.Keel(ctx),
-			pgx.RowToStructByPos[rolePermissionCount],
-			rolePermissionCountSQL,
-			ids,
+			rolePermissionCounts(ctx, roleIDs),
 		)
 		if err != nil {
 			return nil, err
