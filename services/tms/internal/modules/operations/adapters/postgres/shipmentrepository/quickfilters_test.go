@@ -125,7 +125,7 @@ func TestQuickFilterCondition_LowMarginMatchesEstimator(t *testing.T) {
 	assert.Contains(t, sql, `HAVING (coalesce(sum(qf_mi."distance"), $4) > $5)`)
 	assert.Contains(t, sql, `(s."total_charge_amount" <= $6)`)
 	assert.Contains(t, sql, `round(($7::numeric * CAST(coalesce(sum(qf_mi."distance"), $8) AS numeric)), $9)`)
-	assert.Contains(t, sql, `* $10) / s."total_charge_amount"), $11) < $12)`)
+	assert.Contains(t, sql, `* $10::bigint) / s."total_charge_amount"), $11) < $12)`)
 	assert.Equal(t, []any{0, 0, 0}, args[3:6])
 	assert.Equal(t, []any{0, 2, 100, 2}, args[7:11])
 	assert.Contains(t, args, decimal.RequireFromString("1.85"))
