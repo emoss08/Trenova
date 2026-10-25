@@ -158,20 +158,15 @@ func copyVersion(
 	return copyCells(ctx, db, req)
 }
 
-func copiedID(prefix string) keel.Expr {
-	uuid := keel.DynFunc("gen_random_uuid").Cast(keel.TypeString)
-
-	return keel.DynLit(prefix).Concat(keel.DynFunc("upper", keel.DynFunc(
-		"substr",
-		keel.DynFunc("replace", uuid, keel.DynConst("-"), keel.DynConst("")),
-		keel.DynConst(1),
-		keel.DynConst(26),
-	)))
+func copiedID(prefix string) keel.StringExpr {
+	return keel.Concat(
+		keel.Text(prefix),
+		keel.GenRandomUUID().Replace("-", "").Substr(1, 26).Upper(),
+	)
 }
 
-func copiedNow() keel.Expr {
-	return keel.DynFunc("date_part", keel.DynLit("epoch").Cast(keel.TypeString), keel.DynFunc("now")).
-		Cast(keel.TypeInt64)
+func copiedNow() keel.Int64Expr {
+	return keel.NowEpoch()
 }
 
 func copyDimensions(
@@ -294,6 +289,6 @@ func (r *repository) CountMisfitCells(
 	})
 }
 
-func versionNumber(n int64) keel.Expr {
-	return keel.DynLit(n).Cast(keel.TypeInt64)
+func versionNumber(n int64) keel.Int64Expr {
+	return keel.Int64(n)
 }

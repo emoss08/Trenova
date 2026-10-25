@@ -113,7 +113,7 @@ func laneSummaryQuery(
 	ft := formulatemplatedb.FormulaTemplates
 	rate := keel.DynCase().
 		When(
-			keel.DynFunc("jsonb_typeof", rr.Inputs.Path("rate")).Eq(keel.DynConst("object")),
+			keel.JSONBOf(rr.Inputs.Path("rate")).TypeOf().Eq("object"),
 			keel.DynOf(rr.Inputs.Text("rate", "$q")).Cast(keel.TypeNumeric),
 		).
 		End()
@@ -124,8 +124,8 @@ func laneSummaryQuery(
 		Group(rr.FormulaTemplateID, ft.Name, rr.Currency).
 		Pick(
 			rr.FormulaTemplateID,
-			keel.DynOf(ft.Name).Coalesce(""),
-			keel.DynOf(rr.Currency).Coalesce(""),
+			ft.Name.Coalesce(""),
+			rr.Currency.Coalesce(""),
 			keel.Count(),
 			keel.Min(rate),
 			keel.Max(rate),

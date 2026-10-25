@@ -212,7 +212,7 @@ func simulationShipmentsQuery(
 	req *ratesimulationports.ListSimulationShipmentsRequest,
 ) *keel.Query[*shipment.Shipment] {
 	sp := shipmentdb.Shipments
-	shipDate := keel.DynOf(sp.ActualShipDate).Coalesce(sp.CreatedAt)
+	shipDate := sp.ActualShipDate.Coalesce(sp.CreatedAt)
 
 	return sp.Pick(sp.ID).
 		Where(
