@@ -12,6 +12,7 @@ import (
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/pkg/resultcache"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
@@ -45,7 +46,8 @@ func (r *settingsRepository) Get(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*extractionshadow.ShadowSettings, error) {
-			entity, err := extractionshadowdb.ShadowSettingses.Query().One(ctx, r.db.Keel(ctx))
+			entity, err := extractionshadowdb.ShadowSettingses.Cache(resultcache.Settings()...).
+				One(ctx, r.db.Keel(ctx))
 			if err != nil {
 				return nil, settingsErrors.Map(err, "")
 			}

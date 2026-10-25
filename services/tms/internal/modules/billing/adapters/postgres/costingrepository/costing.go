@@ -9,6 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/billing/domain/costingcontrol/costingcontroldb"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/costingcontrolports"
 	"github.com/emoss08/trenova/pkg/dberror"
+	"github.com/emoss08/trenova/pkg/resultcache"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
@@ -81,6 +82,7 @@ func (r *repository) selectControl(ctx context.Context) (*costingcontrol.Costing
 				cats.Order(cats.SortOrder.Asc(), cats.CreatedAt.Asc()).
 					Load(links.Load(links.GLAccount())),
 			).
+			Cache(resultcache.Settings()...).
 			One(ctx, r.db.Keel(ctx))
 	})
 }

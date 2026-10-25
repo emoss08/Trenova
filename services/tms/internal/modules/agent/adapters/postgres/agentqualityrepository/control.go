@@ -16,6 +16,7 @@ import (
 	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/pkg/resultcache"
 	"github.com/emoss08/trenova/shared/pulid"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
@@ -53,7 +54,8 @@ func (r *controlRepository) Get(
 	_ pagination.TenantInfo,
 ) (*agentquality.Control, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*agentquality.Control, error) {
-		entity, err := agentqualitydb.Controls.Query().First(ctx, r.db.Keel(ctx))
+		entity, err := agentqualitydb.Controls.Cache(resultcache.Settings()...).
+			First(ctx, r.db.Keel(ctx))
 		if err != nil {
 			return nil, controlErrors.Map(err, "")
 		}

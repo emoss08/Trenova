@@ -14,6 +14,7 @@ import (
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/pkg/resultcache"
 	"github.com/emoss08/trenova/shared/pulid"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
@@ -53,7 +54,8 @@ func (r *repository) Get(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*distancecontrol.DistanceControl, error) {
-			entity, err := distancecontroldb.DistanceControls.Query().One(ctx, r.db.Keel(ctx))
+			entity, err := distancecontroldb.DistanceControls.Cache(resultcache.Settings()...).
+				One(ctx, r.db.Keel(ctx))
 			if err != nil {
 				return nil, distanceControlErrors.Map(err, "")
 			}
@@ -66,6 +68,14 @@ func (r *repository) EnsureDefault(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 ) (*distancecontrol.DistanceControl, error) {
+	found, findErr := r.Get(ctx, tenantInfo)
+	if findErr == nil {
+		return found, nil
+	}
+	if !errortypes.IsNotFoundError(findErr) {
+		return nil, findErr
+	}
+
 	return dbtx.Write(
 		ctx,
 		r.db,
