@@ -65,7 +65,7 @@ func (r *repository) ListUnjournaledAdjustmentMemos(
 			db := r.db.Keel(ctx)
 			inv := invoicedb.Invoices
 			cle := customerledgerdb.CustomerLedgerEntries.As("cle")
-			ledgerLine := cle.AllTenants().Pick(keel.Raw("1")).Where(
+			ledgerLine := cle.AllTenants().Where(
 				cle.SourceObjectID.EqCol(inv.ID),
 				cle.OrganizationID.EqCol(inv.OrganizationID),
 				cle.BusinessUnitID.EqCol(inv.BusinessUnitID),

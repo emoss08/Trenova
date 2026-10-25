@@ -219,7 +219,7 @@ func lineCreditUsage(
 	l := invoiceadjustmentdb.InvoiceAdjustmentLines
 	ia := invoiceadjustmentdb.InvoiceAdjustments
 
-	return l.Pick(l.OriginalLineID, keel.Raw("COALESCE(SUM(ABS(?)), 0)", l.CreditAmount)).
+	return l.Pick(l.OriginalLineID, keel.DynFunc("abs", l.CreditAmount).Sum().Coalesce(0)).
 		Where(
 			l.OriginalInvoiceID.Eq(req.InvoiceID),
 			l.AdjustmentID.InQuery(ia.Pick(ia.ID).Where(ia.Status.In(

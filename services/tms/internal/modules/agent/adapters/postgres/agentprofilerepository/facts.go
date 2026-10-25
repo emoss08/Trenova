@@ -119,11 +119,11 @@ func organizationItems(w agentprofileports.FactsWindow, reads *organizationReads
 	ep := edidb.EDIPartners
 	live := sp.Status.Ne(shipment.StatusCanceled)
 
-	pickupName := keel.Raw(
-		"concat_ws(', ', ?, NULLIF(concat_ws(' ', ?, ?), ''))",
+	pickupName := keel.DynFunc(
+		"concat_ws",
+		", ",
 		loc.Name,
-		loc.City,
-		ust.Abbreviation,
+		keel.DynFunc("concat_ws", " ", loc.City, ust.Abbreviation).NullIf(""),
 	)
 	activeWorkers := wrk.Status.Eq(domaintypes.StatusActive)
 

@@ -199,7 +199,7 @@ func (r *repository) CountPending(
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (int, error) {
 		q := pendingQueue(&req)
 		count, err := q.Query().With(q).
-			Where(keel.When(req.ActionableOnly, keel.Raw("NOT ?", q.Col("shadow")))).
+			Where(keel.When(req.ActionableOnly, keel.DynOf(q.Col("shadow")).Not())).
 			Count(ctx, r.db.Keel(ctx))
 		if err != nil {
 			r.l.Error("failed to count pending decisions", zap.Error(err))

@@ -50,11 +50,9 @@ func recordConflict() keel.Conflict {
 
 	return keel.OnConflict(t.OrganizationID, t.BusinessUnitID, t.AgentDefinitionID, t.ToolName).
 		Set(
-			t.Streak.ToExpr(keel.Raw(
-				"CASE WHEN ? > 0 THEN ? + 1 ELSE 0 END",
-				t.Streak.Excluded(),
-				t.Streak,
-			)),
+			t.Streak.ToExpr(keel.DynCase().
+				When(keel.DynOf(t.Streak.Excluded()).Gt(0), keel.DynOf(t.Streak).Add(1)).
+				Else(keel.DynLit(0).Cast(keel.TypeInt64))),
 			sum(t.Approvals),
 			sum(t.Modifications),
 			sum(t.Rejections),

@@ -88,7 +88,7 @@ func orBlank(e keel.Expr) keel.Expr {
 	return keel.DynOf(e).Coalesce("")
 }
 
-var noSubtitle = keel.Raw("''")
+var noSubtitle = keel.DynLit("").Cast(keel.TypeString)
 
 var recordKinds = map[string]recordKind{
 	permission.ResourceShipment.String(): kindOf(shipmentdb.Shipments, recordShape{
@@ -97,8 +97,8 @@ var recordKinds = map[string]recordKind{
 		subtitle: orBlank(shipmentdb.Shipments.BOL),
 	}),
 	permission.ResourceWorker.String(): kindOf(workerdb.Workers, recordShape{
-		id: workerdb.Workers.ID,
-		title: keel.DynFunc("concat_ws", " ", workerdb.Workers.FirstName, workerdb.Workers.LastName),
+		id:       workerdb.Workers.ID,
+		title:    keel.DynFunc("concat_ws", " ", workerdb.Workers.FirstName, workerdb.Workers.LastName),
 		subtitle: noSubtitle,
 	}),
 	permission.ResourceTractor.String(): kindOf(tractordb.Tractors, recordShape{
