@@ -369,7 +369,7 @@ func (r *repository) ListByIDs(
 	})
 }
 
-func scoped(scope *aiauditports.AIAuditEventScope) *keel.Query[aiaudit.AIAuditEvent] {
+func scoped(scope *aiauditports.AIAuditEventScope) *keel.Query[*aiaudit.AIAuditEvent] {
 	e := aiauditdb.AIAuditEvents
 	filter := scope.Filter
 	if filter == nil {

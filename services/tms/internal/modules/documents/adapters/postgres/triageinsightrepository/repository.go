@@ -144,13 +144,13 @@ func number(e keel.Expr) keel.Expr {
 	return keel.DynOf(e).Coalesce(0)
 }
 
-func messages() *keel.Query[inboundmessage.InboundMessage] {
+func messages() *keel.Query[*inboundmessage.InboundMessage] {
 	return inboundmessagedb.InboundMessages.Query()
 }
 
 func withReference(
-	q *keel.Query[inboundmessage.InboundMessage],
-) *keel.Query[inboundmessage.InboundMessage] {
+	q *keel.Query[*inboundmessage.InboundMessage],
+) *keel.Query[*inboundmessage.InboundMessage] {
 	m := inboundmessagedb.InboundMessages
 	sp := shipmentdb.Shipments
 

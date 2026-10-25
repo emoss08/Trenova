@@ -160,7 +160,7 @@ func (r *mailboxRepository) MarkReceived(
 
 func markReceivedQuery(
 	req inboundmessageports.MailboxReceivedRequest,
-) *keel.Query[inboundmessage.Mailbox] {
+) *keel.Query[*inboundmessage.Mailbox] {
 	mb := inboundmessagedb.Mailboxes
 
 	return mb.Where(mb.ID.Eq(req.MailboxID))
@@ -226,7 +226,7 @@ func (r *mailboxRepository) MarkTestReceived(
 
 func markTestReceivedQuery(
 	req inboundmessageports.MailboxTestRequest,
-) *keel.Query[inboundmessage.Mailbox] {
+) *keel.Query[*inboundmessage.Mailbox] {
 	mb := inboundmessagedb.Mailboxes
 
 	return mb.Where(mb.ID.Eq(req.MailboxID), mb.TestToken.Eq(req.Token))

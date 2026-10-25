@@ -56,8 +56,8 @@ func (r *templateRepository) List(
 				&listquery.Request[documenttemplate.DocumentTemplate]{
 					Filter: req.Filter,
 					Shape: func(
-						q *keel.Query[documenttemplate.DocumentTemplate],
-					) *keel.Query[documenttemplate.DocumentTemplate] {
+						q *keel.Query[*documenttemplate.DocumentTemplate],
+					) *keel.Query[*documenttemplate.DocumentTemplate] {
 						return q.Load(t.ActiveVersion())
 					},
 					Then: []keel.Order{t.CreatedAt.Desc()},

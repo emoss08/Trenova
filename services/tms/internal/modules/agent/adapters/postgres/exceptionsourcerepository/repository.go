@@ -70,7 +70,7 @@ func deliveredShipmentStatuses() []shipment.Status {
 	}
 }
 
-func missedStopsQuery(req *watchtowerports.ListMissedStopsRequest) *keel.Query[shipment.Stop] {
+func missedStopsQuery(req *watchtowerports.ListMissedStopsRequest) *keel.Query[*shipment.Stop] {
 	stp := shipmentdb.Stops
 	sm := shipmentdb.ShipmentMoves
 	sp := shipmentdb.Shipments
@@ -106,7 +106,7 @@ func missedStopsQuery(req *watchtowerports.ListMissedStopsRequest) *keel.Query[s
 		Limit(boundedLimit(req.Limit))
 }
 
-func lastDeliveryQuery(sp *shipmentdb.ShipmentsTable) *keel.Query[shipment.Stop] {
+func lastDeliveryQuery(sp *shipmentdb.ShipmentsTable) *keel.Query[*shipment.Stop] {
 	stp := shipmentdb.Stops.As(latestStopAlias)
 	sm := shipmentdb.ShipmentMoves.As(latestMoveAlias)
 
@@ -135,7 +135,7 @@ func podOnFile(sp *shipmentdb.ShipmentsTable) keel.Pred {
 	))
 }
 
-func missingPODsQuery(req *watchtowerports.ListMissingPODsRequest) *keel.Query[shipment.Shipment] {
+func missingPODsQuery(req *watchtowerports.ListMissingPODsRequest) *keel.Query[*shipment.Shipment] {
 	sp := shipmentdb.Shipments
 	delivered := shipmentdb.Stops.As(latestStopAlias).ActualArrival
 
@@ -160,7 +160,7 @@ func missingPODsQuery(req *watchtowerports.ListMissingPODsRequest) *keel.Query[s
 
 func exhaustedTendersQuery(
 	req *watchtowerports.ListExhaustedTendersRequest,
-) *keel.Query[tender.Tender] {
+) *keel.Query[*tender.Tender] {
 	tc := tenderdb.Tenders
 	sm := shipmentdb.ShipmentMoves
 	sp := shipmentdb.Shipments

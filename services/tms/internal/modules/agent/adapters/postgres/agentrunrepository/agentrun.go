@@ -63,13 +63,13 @@ func ReadableBy(run *agentdb.AgentRunsTable, reader agentports.RunReader) keel.P
 	)))
 }
 
-func readableRuns(reader agentports.RunReader) *keel.Query[agent.AgentRun] {
+func readableRuns(reader agentports.RunReader) *keel.Query[*agent.AgentRun] {
 	run := agentdb.AgentRuns
 
 	return run.Omit(run.Transcript).Where(ReadableBy(run, reader))
 }
 
-func transcripts(ids []pulid.ID, reader agentports.RunReader) *keel.Query[agent.AgentRun] {
+func transcripts(ids []pulid.ID, reader agentports.RunReader) *keel.Query[*agent.AgentRun] {
 	run := agentdb.AgentRuns
 
 	return run.Pick(run.ID, run.BusinessUnitID, run.OrganizationID, run.Transcript).
@@ -92,7 +92,7 @@ func (r *repository) List(
 				run.Where(ReadableBy(run, req.Reader)),
 				&listquery.Request[agent.AgentRun]{
 					Filter: req.Filter,
-					Shape: func(q *keel.Query[agent.AgentRun]) *keel.Query[agent.AgentRun] {
+					Shape: func(q *keel.Query[*agent.AgentRun]) *keel.Query[*agent.AgentRun] {
 						return q.Omit(run.Transcript)
 					},
 					Then: []keel.Order{run.CreatedAt.Desc()},
@@ -123,7 +123,7 @@ func (r *repository) ListConnection(
 				Columns: req.Columns,
 			}
 			if len(req.Columns) == 0 {
-				request.Shape = func(q *keel.Query[agent.AgentRun]) *keel.Query[agent.AgentRun] {
+				request.Shape = func(q *keel.Query[*agent.AgentRun]) *keel.Query[*agent.AgentRun] {
 					return q.Omit(run.Transcript)
 				}
 			}

@@ -43,7 +43,7 @@ func (r *repository) RuleCandidates(
 
 func ruleCandidatesQuery(
 	req *triageports.RuleCandidatesRequest,
-) *keel.Query[inboundmessage.InboundMessage] {
+) *keel.Query[*inboundmessage.InboundMessage] {
 	m := inboundmessagedb.InboundMessages
 	att := inboundmessagedb.InboundAttachments
 
@@ -135,7 +135,7 @@ func (r *repository) ManualOutcomes(
 
 func manualOutcomesQuery(
 	req *triageports.ManualOutcomesRequest,
-) *keel.Query[inboundmessage.InboundMessage] {
+) *keel.Query[*inboundmessage.InboundMessage] {
 	m := inboundmessagedb.InboundMessages
 	act := triagedb.Activities
 	arrivedMessages := inboundmessagedb.InboundMessages.As("arrived_messages")
@@ -219,7 +219,7 @@ func (r *repository) MessageRows(
 
 func messageRowsQuery(
 	req *triageports.MessageRowsRequest,
-) *keel.Query[inboundmessage.InboundMessage] {
+) *keel.Query[*inboundmessage.InboundMessage] {
 	m := inboundmessagedb.InboundMessages
 
 	return withReference(messages()).
@@ -251,7 +251,7 @@ func (r *repository) SenderDomains(
 
 func senderDomainsQuery(
 	req *triageports.SenderDomainsRequest,
-) *keel.Query[inboundmessage.InboundMessage] {
+) *keel.Query[*inboundmessage.InboundMessage] {
 	m := inboundmessagedb.InboundMessages
 	term := strings.ToLower(strings.TrimSpace(req.Query))
 

@@ -315,7 +315,7 @@ func (r *repository) ExpirePendingByDefinition(
 
 func (r *repository) expireByRuns(
 	ctx context.Context,
-	runs *keel.Query[agent.AgentRun],
+	runs *keel.Query[*agent.AgentRun],
 ) (int, error) {
 	p := agentdb.AgentPlans
 	n, err := p.Where(p.Status.Eq(agent.PlanStatusPending), p.RunID.InQuery(runs)).

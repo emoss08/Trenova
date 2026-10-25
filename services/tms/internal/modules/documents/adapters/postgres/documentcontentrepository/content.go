@@ -202,7 +202,7 @@ func (r *repository) ListPendingExtractionTenants(
 
 func pendingExtractionQuery(
 	req *documentcontentports.ListPendingDocumentExtractionRequest,
-) *keel.Query[document.Document] {
+) *keel.Query[*document.Document] {
 	d := documentdb.Documents
 	dc := documentcontentdb.Contents
 
@@ -215,7 +215,7 @@ func pendingExtractionQuery(
 
 func pendingTenantsQuery(
 	req *documentcontentports.ListPendingDocumentExtractionRequest,
-) *keel.Query[document.Document] {
+) *keel.Query[*document.Document] {
 	d := documentdb.Documents
 	dc := documentcontentdb.Contents
 

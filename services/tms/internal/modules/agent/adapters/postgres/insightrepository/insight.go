@@ -80,7 +80,7 @@ func (r *repository) ListActive(
 	})
 }
 
-func activeQuery(req *insightports.ListActiveInsightsRequest) *keel.Query[insight.Insight] {
+func activeQuery(req *insightports.ListActiveInsightsRequest) *keel.Query[*insight.Insight] {
 	limit := req.Limit
 	if limit <= 0 || limit > defaultActiveLimit {
 		limit = defaultActiveLimit
@@ -140,7 +140,7 @@ func (r *repository) List(
 	)
 }
 
-func listFilter(req *insightports.ListInsightsQuery) *keel.Query[insight.Insight] {
+func listFilter(req *insightports.ListInsightsQuery) *keel.Query[*insight.Insight] {
 	in := insightdb.Insights
 
 	status := in.Status.Eq(insight.StatusActive)
@@ -435,7 +435,7 @@ type closeParams struct {
 	within      bool
 }
 
-func closeActiveQuery(params closeParams) *keel.Query[insight.Insight] {
+func closeActiveQuery(params closeParams) *keel.Query[*insight.Insight] {
 	in := insightdb.Insights
 
 	var keys keel.Pred

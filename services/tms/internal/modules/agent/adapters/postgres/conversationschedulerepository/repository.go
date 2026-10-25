@@ -200,7 +200,7 @@ func (r *repository) List(
 func listPageQuery(
 	req *conversationscheduleports.ListConversationSchedulesRequest,
 	limit int,
-) *keel.Query[conversationschedule.Schedule] {
+) *keel.Query[*conversationschedule.Schedule] {
 	s := conversationscheduledb.Schedules
 	order := []keel.Order{s.CreatedAt.Desc(), s.ID.Desc()}
 	if req.Order == conversationscheduleports.ConversationScheduleOrderNextRun {
@@ -214,8 +214,8 @@ func listPageQuery(
 }
 
 func threadTitlesQuery(
-	page *keel.Query[conversationschedule.Schedule],
-) *keel.Query[conversation.Thread] {
+	page *keel.Query[*conversationschedule.Schedule],
+) *keel.Query[*conversation.Thread] {
 	s := conversationscheduledb.Schedules
 	th := conversationdb.Threads
 
@@ -237,7 +237,7 @@ func (r *repository) Count(
 	})
 }
 
-func scoped(userID, threadID pulid.ID) *keel.Query[conversationschedule.Schedule] {
+func scoped(userID, threadID pulid.ID) *keel.Query[*conversationschedule.Schedule] {
 	s := conversationscheduledb.Schedules
 
 	return s.Where(

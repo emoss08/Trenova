@@ -47,7 +47,7 @@ func deskRows(memories []*agent.Memory) []*agentports.DeskMemoryRow {
 // deskSelect reads memories with their conversation's title and their role's
 // name. Both are joined within the tenant, so a title is only ever read from
 // the memory's own organization.
-func deskSelect() *keel.Query[agent.Memory] {
+func deskSelect() *keel.Query[*agent.Memory] {
 	m := agentdb.Memories
 	thread := conversationdb.Threads.As("desk_thread")
 	role := permissiondb.Roles.As("desk_role")
@@ -91,7 +91,7 @@ func deskVisible(filter *agentports.DeskMemoryFilter) keel.Pred {
 	}
 }
 
-func listDeskQuery(req *agentports.ListDeskMemoriesQuery) *keel.Query[agent.Memory] {
+func listDeskQuery(req *agentports.ListDeskMemoriesQuery) *keel.Query[*agent.Memory] {
 	m := agentdb.Memories
 	limit := req.Limit
 	if limit <= 0 {

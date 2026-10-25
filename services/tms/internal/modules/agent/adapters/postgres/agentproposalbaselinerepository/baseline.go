@@ -114,7 +114,7 @@ func (r *repository) PurgeOrphans(
 // names. A proposal is filed after its baseline is kept, so only an old
 // baseline can be known to be an orphan: its filing was retried under
 // another id, or never happened.
-func orphans(before int64, limit int) *keel.Query[agent.ProposalBaseline] {
+func orphans(before int64, limit int) *keel.Query[*agent.ProposalBaseline] {
 	orphan := agentdb.ProposalBaselines.As("orphan")
 	p := agentdb.AgentProposals
 

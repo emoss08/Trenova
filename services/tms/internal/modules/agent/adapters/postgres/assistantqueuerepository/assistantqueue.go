@@ -60,17 +60,17 @@ func inOrder() []keel.Order {
 	return []keel.Order{q.Position.Asc(), q.CreatedAt.Asc(), q.ID.Asc()}
 }
 
-func listQuery(scope *agentports.AssistantQueueScope) *keel.Query[conversation.QueuedMessage] {
+func listQuery(scope *agentports.AssistantQueueScope) *keel.Query[*conversation.QueuedMessage] {
 	return conversationdb.QueuedMessages.Where(inScope(scope)).Order(inOrder()...)
 }
 
-func getQuery(req *agentports.QueuedMessageRequest) *keel.Query[conversation.QueuedMessage] {
+func getQuery(req *agentports.QueuedMessageRequest) *keel.Query[*conversation.QueuedMessage] {
 	q := conversationdb.QueuedMessages
 
 	return q.Where(inScope(&req.Scope), q.ID.Eq(req.ID))
 }
 
-func tallyQuery(threadID pulid.ID) *keel.Query[conversation.QueuedMessage] {
+func tallyQuery(threadID pulid.ID) *keel.Query[*conversation.QueuedMessage] {
 	q := conversationdb.QueuedMessages
 
 	return q.Pick(keel.Count(), keel.DynOf(q.Position).Max().Coalesce(0)).
@@ -80,7 +80,7 @@ func tallyQuery(threadID pulid.ID) *keel.Query[conversation.QueuedMessage] {
 func editQuery(
 	entity *conversation.QueuedMessage,
 	version int64,
-) *keel.Query[conversation.QueuedMessage] {
+) *keel.Query[*conversation.QueuedMessage] {
 	q := conversationdb.QueuedMessages
 
 	return q.Where(
@@ -92,7 +92,7 @@ func editQuery(
 
 func reorderQuery(
 	req *agentports.ReorderQueuedMessagesRequest,
-) *keel.Query[conversation.QueuedMessage] {
+) *keel.Query[*conversation.QueuedMessage] {
 	q := conversationdb.QueuedMessages
 
 	return q.Where(inScope(&req.Scope), q.ID.In(req.IDs...))
@@ -108,11 +108,11 @@ func reorderPosition(ids []pulid.ID) keel.Assignment {
 	))
 }
 
-func headQuery(scope *agentports.AssistantQueueScope) *keel.Query[conversation.QueuedMessage] {
+func headQuery(scope *agentports.AssistantQueueScope) *keel.Query[*conversation.QueuedMessage] {
 	return listQuery(scope).Limit(1).Lock(keel.ForUpdate, keel.SkipLocked)
 }
 
-func claimQuery(req *agentports.QueuedMessageRequest) *keel.Query[conversation.QueuedMessage] {
+func claimQuery(req *agentports.QueuedMessageRequest) *keel.Query[*conversation.QueuedMessage] {
 	return getQuery(req).Lock(keel.ForUpdate)
 }
 
@@ -304,7 +304,7 @@ func (r *repository) Claim(
 func (r *repository) claim(
 	ctx context.Context,
 	scope *agentports.AssistantQueueScope,
-	pick *keel.Query[conversation.QueuedMessage],
+	pick *keel.Query[*conversation.QueuedMessage],
 ) (*conversation.QueuedMessage, error) {
 	db := r.db.Keel(ctx)
 	entity, err := pick.First(ctx, db)

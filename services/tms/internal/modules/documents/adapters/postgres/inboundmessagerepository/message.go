@@ -114,7 +114,7 @@ func lane(
 
 func newerInFolder(
 	req *inboundmessageports.ListInboundMessagesRequest,
-) *keel.Query[inboundmessage.InboundMessage] {
+) *keel.Query[*inboundmessage.InboundMessage] {
 	m := inboundmessagedb.InboundMessages
 	nwr := inboundmessagedb.InboundMessages.As(newerAlias)
 
@@ -130,9 +130,9 @@ func newerInFolder(
 }
 
 func searchPredicate(
-	q *keel.Query[inboundmessage.InboundMessage],
+	q *keel.Query[*inboundmessage.InboundMessage],
 	query string,
-) *keel.Query[inboundmessage.InboundMessage] {
+) *keel.Query[*inboundmessage.InboundMessage] {
 	return listquery.Filter(q, &pagination.QueryOptions{Query: query})
 }
 
@@ -160,8 +160,8 @@ func (r *repository) List(
 }
 
 func withMailbox(
-	q *keel.Query[inboundmessage.InboundMessage],
-) *keel.Query[inboundmessage.InboundMessage] {
+	q *keel.Query[*inboundmessage.InboundMessage],
+) *keel.Query[*inboundmessage.InboundMessage] {
 	return q.Load(inboundmessagedb.InboundMessages.Mailbox())
 }
 
@@ -379,7 +379,7 @@ func censusStatuses(
 func censusBase(
 	req inboundmessageports.CountInboundMessagesRequest,
 	statuses []inboundmessage.Status,
-) *keel.Query[inboundmessage.InboundMessage] {
+) *keel.Query[*inboundmessage.InboundMessage] {
 	m := inboundmessagedb.InboundMessages
 
 	return m.Where(
@@ -391,7 +391,7 @@ func censusBase(
 func openCensusQuery(
 	req inboundmessageports.CountInboundMessagesRequest,
 	statuses []inboundmessage.Status,
-) *keel.Query[inboundmessage.InboundMessage] {
+) *keel.Query[*inboundmessage.InboundMessage] {
 	m := inboundmessagedb.InboundMessages
 	classification := keel.DynOf(m.Classification).Coalesce("")
 	parked := keel.DynOf(m.Parked).Coalesce("")
@@ -406,7 +406,7 @@ func openCensusQuery(
 func settledCensusQuery(
 	req inboundmessageports.CountInboundMessagesRequest,
 	statuses []inboundmessage.Status,
-) *keel.Query[inboundmessage.InboundMessage] {
+) *keel.Query[*inboundmessage.InboundMessage] {
 	m := inboundmessagedb.InboundMessages
 
 	return censusBase(req, statuses).
@@ -524,7 +524,7 @@ func (r *repository) ListSettledBefore(
 
 func settledBeforeQuery(
 	req inboundmessageports.ListSettledInboundMessagesRequest,
-) *keel.Query[inboundmessage.InboundMessage] {
+) *keel.Query[*inboundmessage.InboundMessage] {
 	m := inboundmessagedb.InboundMessages
 
 	return m.Pick(m.ID, m.OrganizationID, m.BusinessUnitID, m.HTMLKey).

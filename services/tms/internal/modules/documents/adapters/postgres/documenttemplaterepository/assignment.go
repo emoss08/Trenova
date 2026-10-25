@@ -61,8 +61,8 @@ func (r *assignmentRepository) List(
 				&listquery.Request[documenttemplate.DocumentTemplateAssignment]{
 					Filter: req.Filter,
 					Shape: func(
-						q *keel.Query[documenttemplate.DocumentTemplateAssignment],
-					) *keel.Query[documenttemplate.DocumentTemplateAssignment] {
+						q *keel.Query[*documenttemplate.DocumentTemplateAssignment],
+					) *keel.Query[*documenttemplate.DocumentTemplateAssignment] {
 						return q.Load(a.Customer(), a.Template())
 					},
 					Then: []keel.Order{a.CreatedAt.Desc()},

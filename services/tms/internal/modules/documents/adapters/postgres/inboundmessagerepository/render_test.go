@@ -100,7 +100,7 @@ func TestTheCensusCountsSettledMailWithoutTheOpenLanesWork(t *testing.T) {
 
 	settledOnly, oneHalf := countBreakdownQuery(inboundmessageports.CountInboundMessagesRequest{
 		Statuses: []inboundmessage.Status{inboundmessage.StatusActioned},
-	}).(*keel.Query[inboundmessage.InboundMessage])
+	}).(*keel.Query[*inboundmessage.InboundMessage])
 	assert.True(t, oneHalf, "only settled statuses need no union")
 	if oneHalf {
 		sqlText, _ = keeltest.Render(t, settledOnly)

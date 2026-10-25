@@ -63,7 +63,7 @@ func (r *activityRepository) ListByMessageIDs(
 
 func listActivitiesQuery(
 	req inboundmessageports.ListActivitiesRequest,
-) *keel.Query[triage.Activity] {
+) *keel.Query[*triage.Activity] {
 	limit := req.Limit
 	if limit <= 0 {
 		limit = inboundmessageports.MaxActivitiesPerRead

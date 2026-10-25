@@ -96,7 +96,7 @@ func (r *assignmentRepository) GetByExtraction(
 func byExtraction(
 	documentID pulid.ID,
 	extractedAt int64,
-) *keel.Query[extractionrollout.RolloutAssignment] {
+) *keel.Query[*extractionrollout.RolloutAssignment] {
 	ra := extractionrolloutdb.RolloutAssignments
 
 	return ra.Where(ra.DocumentID.Eq(documentID), ra.ExtractedAt.Eq(extractedAt))
