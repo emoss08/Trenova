@@ -150,7 +150,12 @@ func (r *batchRepository) RecalculateAggregates(
 			live := s.Status.Ne(driversettlement.StatusVoided)
 			agg := keel.CTE(
 				batchAggregateCTE,
-				[]string{"settlement_count", "exception_count", "total_gross_minor", "total_net_minor"},
+				[]string{
+					"settlement_count",
+					"exception_count",
+					"total_gross_minor",
+					"total_net_minor",
+				},
 				s.Pick(
 					keel.Count().Filter(live),
 					keel.Count().Filter(keel.And(s.HasExceptions.IsTrue(), live)),

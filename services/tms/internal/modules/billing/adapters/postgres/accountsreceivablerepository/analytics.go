@@ -246,7 +246,7 @@ func balanceSeriesQuery(req customerledgerports.ListARSeriesRequest) *keel.Query
 	balances := keel.CTE("balances", []string{"n", "ar_balance_minor"}, items.Query().
 		Pick(items.Col("n"), keel.Sum(items.Col("open_minor"))).
 		Group(items.Col("n")))
-	periodEnd := keel.DynOf(points.Col("period_end"))
+	periodEnd := keel.DynOf(points.Col(colPeriodEnd))
 	inv := invoicedb.Invoices
 
 	return points.Query().
@@ -270,7 +270,11 @@ func (r *repository) ListBalanceSeries(
 		ctx,
 		r.db,
 		func(ctx context.Context) ([]*customerledgerports.ARBalancePoint, error) {
-			records, err := keel.Into[balancePointRecord](ctx, r.db.Keel(ctx), balanceSeriesQuery(req))
+			records, err := keel.Into[balancePointRecord](
+				ctx,
+				r.db.Keel(ctx),
+				balanceSeriesQuery(req),
+			)
 			if err != nil {
 				return nil, fmt.Errorf("list ar balance series: %w", err)
 			}
@@ -302,9 +306,9 @@ func agingTrendQuery(req customerledgerports.ListARSeriesRequest) *keel.Query[*k
 	at := seriesWindow(req).build()
 	items := at.items
 	points := at.points
-	periodEnd := keel.DynOf(points.Col("period_end"))
+	periodEnd := keel.DynOf(points.Col(colPeriodEnd))
 	open := keel.DynOf(items.Col("open_minor"))
-	buckets := agingBuckets(keel.DynOf(items.Col("due_date")), periodEnd, open)
+	buckets := agingBuckets(keel.DynOf(items.Col(colDueDate)), periodEnd, open)
 
 	return points.Query().
 		With(at.ctes...).
@@ -457,7 +461,8 @@ func cashFlowQuery(req customerledgerports.ListARCashFlowRequest) *keel.Query[*k
 					fs.Status.In(factoring.SubmissionStatusSent, factoring.SubmissionStatusPartially),
 					fs.SentAt.IsNotNull(),
 					inWeek(advanceAt),
-				))),
+				),
+			)),
 			orZero(keel.Scalar(reserved.
 				Pick(reserved.ReserveMinor.Sum()).
 				Join(reservedInv, reservedInv.ID.EqCol(reserved.InvoiceID)).
@@ -488,14 +493,14 @@ type collectionTotalsRecord struct {
 func collectionTotalsQuery(periodStart, periodEnd int64) *keel.Query[*keel.Row] {
 	at := instantWindow(periodStart).build()
 	items := at.items
-	bounds := keel.CTE("bounds", []string{"period_start", "period_end"}, keel.Rows(
+	bounds := keel.CTE("bounds", []string{"period_start", colPeriodEnd}, keel.Rows(
 		"bound",
-		[]string{"period_start", "period_end"},
+		[]string{"period_start", colPeriodEnd},
 		keel.DynLit(periodStart),
 		keel.DynLit(periodEnd),
 	))
 	start := keel.DynOf(bounds.Col("period_start"))
-	end := keel.DynOf(bounds.Col("period_end"))
+	end := keel.DynOf(bounds.Col(colPeriodEnd))
 	inPeriod := func(ts keel.Expr) keel.Pred {
 		return keel.And(keel.DynOf(ts).Gt(start), keel.DynOf(ts).Lte(end))
 	}
@@ -521,7 +526,9 @@ func collectionTotalsQuery(periodStart, periodEnd int64) *keel.Query[*keel.Row] 
 					receivablesql.Open(inv),
 					keel.Or(inv.DueDate.IsNull(), keel.DynOf(inv.DueDate).Gte(end)),
 				))),
-			orZero(keel.Scalar(inv.Pick(inv.TotalAmountMinor.Sum()).Where(billedIn(inv, start, end)))),
+			orZero(
+				keel.Scalar(inv.Pick(inv.TotalAmountMinor.Sum()).Where(billedIn(inv, start, end))),
+			),
 			orZero(keel.Scalar(cp.
 				Pick(cp.AmountMinor.Sum()).
 				Where(cp.Status.Eq(customerpayment.StatusPosted), inPeriod(cp.PaymentDate)))),
@@ -652,11 +659,11 @@ type worklistRecord struct {
 }
 
 var worklistColumns = []string{
-	"invoice_id",
+	colInvoiceID,
 	"customer_id",
 	"customer_name",
 	"invoice_number",
-	"due_date",
+	colDueDate,
 	"open_amount_minor",
 	"days_past_due",
 	"is_disputed",
@@ -819,7 +826,11 @@ func customerMonthlyCollectionsQuery(
 	month := keel.DynFunc(
 		"date_part",
 		keel.DynConst("epoch"),
-		keel.DynFunc("date_trunc", keel.DynConst("month"), keel.DynFunc("to_timestamp", cp.PaymentDate)),
+		keel.DynFunc(
+			"date_trunc",
+			keel.DynConst("month"),
+			keel.DynFunc("to_timestamp", cp.PaymentDate),
+		),
 	).Cast(keel.TypeInt64)
 	return cp.
 		Pick(month, cp.AmountMinor.Sum()).

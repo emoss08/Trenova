@@ -137,7 +137,9 @@ func listConditions(req *shipmentports.ListShipmentCommentsRequest) []keel.Pred 
 	return preds
 }
 
-func withReplyCount(q *keel.Query[*shipment.ShipmentComment]) *keel.Query[*shipment.ShipmentComment] {
+func withReplyCount(
+	q *keel.Query[*shipment.ShipmentComment],
+) *keel.Query[*shipment.ShipmentComment] {
 	sc := shipmentdb.ShipmentComments
 	replies := sc.As("scr")
 

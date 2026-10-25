@@ -109,7 +109,9 @@ func (r *repository) SelectOptions(
 	)
 }
 
-func partnerOptionsQuery(req *ediports.EDIPartnerSelectOptionsRequest) *keel.Query[*edi.EDIPartner] {
+func partnerOptionsQuery(
+	req *ediports.EDIPartnerSelectOptionsRequest,
+) *keel.Query[*edi.EDIPartner] {
 	ep := edidb.EDIPartners
 	return ep.Pick(
 		ep.ID,

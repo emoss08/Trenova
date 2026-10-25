@@ -715,7 +715,8 @@ func (ur *repository) GetSystemUser(ctx context.Context, columns ...string) (*te
 			return nil, err
 		}
 
-		user, err := q.Where(u.Username.Lower().Eq(strings.ToLower(tenant.SystemUsername))).One(ctx, ur.db.Keel(ctx))
+		user, err := q.Where(u.Username.Lower().Eq(strings.ToLower(tenant.SystemUsername))).
+			One(ctx, ur.db.Keel(ctx))
 		if err != nil {
 			return nil, userErrors.Map(err, tenant.SystemUsername)
 		}

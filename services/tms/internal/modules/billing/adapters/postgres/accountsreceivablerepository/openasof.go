@@ -10,6 +10,12 @@ import (
 	"github.com/emoss08/trenova/internal/modules/billing/ports/customerledgerports"
 )
 
+const (
+	colPeriodEnd = "period_end"
+	colInvoiceID = "invoice_id"
+	colDueDate   = "due_date"
+)
+
 type openAsOfWindow struct {
 	asOf   int64
 	step   int64
@@ -41,7 +47,7 @@ func (w openAsOfWindow) build() openAsOf {
 		keel.DynLit(int64(w.points-1)).Cast(keel.TypeInt64),
 	)))
 	seriesN := keel.DynOf(series.Col("n"))
-	points := keel.CTE("points", []string{"n", "period_end"}, series.Query().Pick(
+	points := keel.CTE("points", []string{"n", colPeriodEnd}, series.Query().Pick(
 		seriesN,
 		keel.DynLit(w.asOf).Cast(keel.TypeInt64).Sub(seriesN.Mul(w.step)),
 	))
@@ -77,7 +83,7 @@ func (w openAsOfWindow) movedInvoices() *keel.CTETable {
 	memo := customerpaymentdb.CreditMemoApplications.As("cma")
 	ledger := customerledgerdb.CustomerLedgerEntries.As("cle")
 
-	return keel.CTE("moved", []string{"invoice_id"}, keel.Union(
+	return keel.CTE("moved", []string{colInvoiceID}, keel.Union(
 		applied.Pick(applied.InvoiceID).Where(applied.CreatedAt.Gt(start)),
 		reversed.
 			Join(reversedApp, reversedApp.CustomerPaymentID.EqCol(reversed.ID)).
@@ -100,13 +106,13 @@ func (w openAsOfWindow) candidates(moved *keel.CTETable) *keel.CTETable {
 	touched := invoicedb.Invoices.As("inv")
 	return keel.CTE(
 		"candidates",
-		[]string{"id", "invoice_date", "due_date", "total_amount_minor"},
+		[]string{"id", "invoice_date", colDueDate, "total_amount_minor"},
 		keel.Union(
 			open.
 				Pick(open.ID, open.InvoiceDate, open.DueDate, open.TotalAmountMinor).
 				Where(open.InvoiceDate.Lte(w.asOf), receivablesql.Open(open)),
 			touched.
-				Join(moved, moved.Col("invoice_id").EqCol(touched.ID)).
+				Join(moved, moved.Col(colInvoiceID).EqCol(touched.ID)).
 				Pick(touched.ID, touched.InvoiceDate, touched.DueDate, touched.TotalAmountMinor).
 				Where(receivablesql.Receivable(touched), touched.InvoiceDate.Lte(w.asOf)),
 		),
@@ -115,7 +121,7 @@ func (w openAsOfWindow) candidates(moved *keel.CTETable) *keel.CTETable {
 
 func settlementsOf(candidates *keel.CTETable) *keel.CTETable {
 	id := candidates.Col("id")
-	due := candidates.Col("due_date")
+	due := candidates.Col(colDueDate)
 	cpa := customerpaymentdb.Applications.As("cpa")
 	cp := customerpaymentdb.Payments.As("cp")
 	cma := customerpaymentdb.CreditMemoApplications.As("cma")
@@ -123,7 +129,7 @@ func settlementsOf(candidates *keel.CTETable) *keel.CTETable {
 
 	return keel.CTE(
 		"settlements",
-		[]string{"invoice_id", "due_date", "settled_at", "released_at", "amount"},
+		[]string{colInvoiceID, colDueDate, "settled_at", "released_at", "amount"},
 		keel.UnionAll(
 			cpa.
 				Join(candidates, id.EqCol(cpa.InvoiceID)).
@@ -156,24 +162,24 @@ func changesOf(candidates, settlements *keel.CTETable) *keel.CTETable {
 
 	return keel.CTE(
 		"changes",
-		[]string{"invoice_id", "due_date", "changed_at", "delta"},
+		[]string{colInvoiceID, colDueDate, "changed_at", "delta"},
 		keel.UnionAll(
 			candidates.Query().Pick(
 				candidates.Col("id"),
-				candidates.Col("due_date"),
+				candidates.Col(colDueDate),
 				candidates.Col("invoice_date"),
 				candidates.Col("total_amount_minor"),
 			),
 			settlements.Query().Pick(
-				settlements.Col("invoice_id"),
-				settlements.Col("due_date"),
+				settlements.Col(colInvoiceID),
+				settlements.Col(colDueDate),
 				settledAt,
 				amount.Neg(),
 			),
 			settlements.Query().
 				Pick(
-					settlements.Col("invoice_id"),
-					settlements.Col("due_date"),
+					settlements.Col(colInvoiceID),
+					settlements.Col(colDueDate),
 					keel.DynFunc("greatest", settledAt, releasedAt),
 					amount,
 				).
@@ -183,14 +189,14 @@ func changesOf(candidates, settlements *keel.CTETable) *keel.CTETable {
 }
 
 func segmentsOf(changes *keel.CTETable) *keel.CTETable {
-	id := changes.Col("invoice_id")
-	due := changes.Col("due_date")
+	id := changes.Col(colInvoiceID)
+	due := changes.Col(colDueDate)
 	changedAt := changes.Col("changed_at")
 	window := keel.NamedWindow("w")
 
 	return keel.CTE(
 		"segments",
-		[]string{"invoice_id", "due_date", "starts_at", "ends_at", "open_minor"},
+		[]string{colInvoiceID, colDueDate, "starts_at", "ends_at", "open_minor"},
 		changes.Query().
 			Pick(
 				id,
@@ -223,13 +229,13 @@ func (w openAsOfWindow) openItems(segments *keel.CTETable) *keel.CTETable {
 
 	return keel.CTE(
 		"open_items",
-		[]string{"n", "invoice_id", "due_date", "open_minor"},
+		[]string{"n", colInvoiceID, colDueDate, "open_minor"},
 		segments.Query().
 			JoinLateral(offsets).
 			Pick(
 				offsets.Col("n"),
-				segments.Col("invoice_id"),
-				segments.Col("due_date"),
+				segments.Col(colInvoiceID),
+				segments.Col(colDueDate),
 				segments.Col("open_minor"),
 			).
 			Where(keel.DynOf(segments.Col("open_minor")).Gt(0)),

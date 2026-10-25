@@ -189,7 +189,11 @@ func (r *repository) RefreshUnits(
 			return 0, fmt.Errorf("clear ai work unit tools: %w", err)
 		}
 		t := aianalyticsdb.UnitTools
-		if _, err := t.InsertFrom(ctx, db, unitToolsSource(req.Stamp), unitToolColumns(t)...); err != nil {
+		if _, err := t.InsertFrom(
+			ctx,
+			db,
+			unitToolsSource(req.Stamp),
+			unitToolColumns(t)...); err != nil {
 			r.l.Error("failed to write ai work unit tools", zap.Error(err))
 			return 0, fmt.Errorf("write ai work unit tools: %w", err)
 		}

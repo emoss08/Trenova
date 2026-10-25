@@ -460,7 +460,11 @@ func standaloneCalls(u *aiusagedb.AIUsageRecordsTable) []keel.Pred {
 		u.OwnerID.IsNull(),
 		u.RunID.IsNull(),
 		u.ThreadID.IsNull(),
-		u.Surface.NotIn(aiusage.SurfaceEvaluation, aiusage.SurfaceIndexing, aiusage.SurfaceRetrieval),
+		u.Surface.NotIn(
+			aiusage.SurfaceEvaluation,
+			aiusage.SurfaceIndexing,
+			aiusage.SurfaceRetrieval,
+		),
 		keel.DynOf(u.Feature).Coalesce("").Ne(string(aiusage.FeatureAgentEvaluation)),
 	}
 }
@@ -468,12 +472,12 @@ func standaloneCalls(u *aiusagedb.AIUsageRecordsTable) []keel.Pred {
 func callUnitsSource(req *unitRefresh) *keel.Query[*keel.Row] {
 	u := aiusagedb.AIUsageRecords
 	key := callUnitKey(u)
-	touched := keel.CTE("touched", []string{"unit_id"}, u.
+	touched := keel.CTE("touched", []string{colUnitID}, u.
 		Pick(key).
 		Where(append(standaloneCalls(u), u.CreatedAt.Gte(req.from), u.CreatedAt.Lt(req.to))...).
 		Distinct())
-	touchedID := touched.Col("unit_id")
-	calls := keel.CTE("calls", append([]string{"unit_id"}, callColumns...), u.
+	touchedID := touched.Col(colUnitID)
+	calls := keel.CTE("calls", append([]string{colUnitID}, callColumns...), u.
 		Pick(append([]keel.Expr{key}, callAggregates(u)...)...).
 		Where(append(standaloneCalls(u),
 			u.CreatedAt.Gte(req.from-lookbackSeconds),
@@ -484,7 +488,7 @@ func callUnitsSource(req *unitRefresh) *keel.Query[*keel.Row] {
 	col := calls.Col
 
 	picks := []keel.Expr{
-		col("unit_id"),
+		col(colUnitID),
 		keel.DynLit(string(aianalytics.SourceCall)),
 		col("agent_definition_id"),
 		col("provider_id"),

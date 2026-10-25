@@ -62,7 +62,9 @@ func prepareTurn(turn *conversation.AssistantTurn) {
 	}
 }
 
-func getByIDQuery(req *agentports.GetAssistantTurnRequest) *keel.Query[*conversation.AssistantTurn] {
+func getByIDQuery(
+	req *agentports.GetAssistantTurnRequest,
+) *keel.Query[*conversation.AssistantTurn] {
 	at := conversationdb.AssistantTurns
 
 	return at.Where(

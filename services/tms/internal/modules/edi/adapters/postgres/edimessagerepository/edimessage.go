@@ -269,8 +269,16 @@ func serviceFailure214StatusQuery(failureID string) *keel.Query[*edi.EDIMessage]
 	return m.
 		Pick(
 			keel.DynLit(failureID),
-			serviceFailure214LatestFor(serviceFailure214ReviewedAlias, failureID, serviceFailure214ReviewedTrigger),
-			serviceFailure214LatestFor(serviceFailure214ResolvedAlias, failureID, serviceFailure214ResolvedTrigger),
+			serviceFailure214LatestFor(
+				serviceFailure214ReviewedAlias,
+				failureID,
+				serviceFailure214ReviewedTrigger,
+			),
+			serviceFailure214LatestFor(
+				serviceFailure214ResolvedAlias,
+				failureID,
+				serviceFailure214ResolvedTrigger,
+			),
 			m.ID,
 			keel.DynOf(m.Status).Cast(keel.TypeString).Coalesce(""),
 			keel.DynOf(m.DeliveryStatus).Cast(keel.TypeString).Coalesce(""),

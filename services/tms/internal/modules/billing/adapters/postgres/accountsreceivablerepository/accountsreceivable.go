@@ -161,7 +161,11 @@ func postedApplications(
 	cpa *customerpaymentdb.ApplicationsTable,
 	cp *customerpaymentdb.PaymentsTable,
 ) *keel.Query[*customerpayment.Application] {
-	return cpa.Join(cp, cp.ID.EqCol(cpa.CustomerPaymentID), cp.Status.Eq(customerpayment.StatusPosted))
+	return cpa.Join(
+		cp,
+		cp.ID.EqCol(cpa.CustomerPaymentID),
+		cp.Status.Eq(customerpayment.StatusPosted),
+	)
 }
 
 func hasShortPay(inv *invoicedb.InvoicesTable) keel.Pred {
@@ -195,8 +199,12 @@ func (r *repository) ListARAging(
 		r.db,
 		func(ctx context.Context) ([]*customerledgerports.ARCustomerAgingRow, error) {
 			inv := invoicedb.Invoices
-			records, err := keel.Into[agingRowRecord](ctx, r.db.Keel(ctx), agingQuery(inv, req.AsOfDate).
-				Order(inv.BillToName.Asc()))
+			records, err := keel.Into[agingRowRecord](
+				ctx,
+				r.db.Keel(ctx),
+				agingQuery(inv, req.AsOfDate).
+					Order(inv.BillToName.Asc()),
+			)
 			if err != nil {
 				return nil, err
 			}
@@ -307,8 +315,12 @@ func (r *repository) GetCustomerAging(
 		r.db,
 		func(ctx context.Context) (*customerledgerports.ARCustomerAgingRow, error) {
 			inv := invoicedb.Invoices
-			records, err := keel.Into[agingRowRecord](ctx, r.db.Keel(ctx), agingQuery(inv, req.AsOfDate).
-				Where(inv.CustomerID.Eq(req.CustomerID)))
+			records, err := keel.Into[agingRowRecord](
+				ctx,
+				r.db.Keel(ctx),
+				agingQuery(inv, req.AsOfDate).
+					Where(inv.CustomerID.Eq(req.CustomerID)),
+			)
 			if err != nil {
 				return nil, fmt.Errorf("get customer ar aging: %w", err)
 			}

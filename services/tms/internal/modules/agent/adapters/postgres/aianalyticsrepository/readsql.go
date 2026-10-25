@@ -17,6 +17,10 @@ import (
 	"github.com/emoss08/trenova/internal/modules/kernel/domain/settingversion/settingversiondb"
 )
 
+const (
+	colUnitID = "unit_id"
+)
+
 var durationFractions = []float64{0.25, 0.5, 0.75, 0.95}
 
 func unitScope(w *aianalyticsdb.WorkUnitsTable, filter *aianalyticsports.Filter) []keel.Pred {
@@ -357,7 +361,7 @@ func toolExamplesQuery(req *aianalyticsports.ToolFailureRequest) *keel.Query[*ke
 	w := aianalyticsdb.WorkUnits
 	s := agentdb.AgentRunSteps
 	latest := t.FinishedAt.Max()
-	candidates := keel.CTE("candidates", []string{"unit_id", "finished_at"}, t.
+	candidates := keel.CTE("candidates", []string{colUnitID, "finished_at"}, t.
 		Pick(t.UnitID, latest).
 		Where(append(toolScope(t, &req.Filter),
 			t.ToolName.Eq(req.ToolName),
@@ -367,7 +371,7 @@ func toolExamplesQuery(req *aianalyticsports.ToolFailureRequest) *keel.Query[*ke
 		Group(t.UnitID).
 		Order(latest.Desc()).
 		Limit(req.Limit*toolExampleCandidatesPerExample))
-	unitID := candidates.Col("unit_id")
+	unitID := candidates.Col(colUnitID)
 	outcome := s.Outcome
 
 	return candidates.Query().With(candidates).

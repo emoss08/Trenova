@@ -27,7 +27,7 @@ type pendingProposalRunRow struct {
 }
 
 func threadAttentionQuery(
-	req agentports.ListThreadAttentionRequest,
+	req *agentports.ListThreadAttentionRequest,
 ) *keel.Query[*conversation.Thread] {
 	th := conversationdb.Threads
 	pl := agentdb.AgentPlans
@@ -80,7 +80,7 @@ func (r *repository) ListThreadAttention(
 			}
 
 			db := r.db.Keel(ctx)
-			rows, err := keel.Into[threadAttentionRow](ctx, db, threadAttentionQuery(req))
+			rows, err := keel.Into[threadAttentionRow](ctx, db, threadAttentionQuery(&req))
 			if err != nil {
 				return nil, fmt.Errorf("list thread attention: %w", err)
 			}

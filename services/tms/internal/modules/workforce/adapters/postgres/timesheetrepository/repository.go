@@ -56,7 +56,9 @@ func limitOr(requested, fallback int) int {
 	return fallback
 }
 
-func entriesQuery(req *workerports.ListTimeClockEntriesRequest) *keel.Query[*worker.TimeClockEntry] {
+func entriesQuery(
+	req *workerports.ListTimeClockEntriesRequest,
+) *keel.Query[*worker.TimeClockEntry] {
 	e := workerdb.TimeClockEntries
 	q := e.Where(
 		keel.When(req.WorkerID.IsNotNil(), e.WorkerID.Eq(req.WorkerID)),
