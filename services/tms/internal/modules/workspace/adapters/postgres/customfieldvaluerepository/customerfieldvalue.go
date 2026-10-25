@@ -230,7 +230,7 @@ func (r *repository) GetOptionUsageCounts(
 			r.db.Keel(ctx),
 			v.Where(v.DefinitionID.Eq(req.DefinitionID)).
 				Group(v.Value).
-				Pick(keel.DynFunc("btrim", keel.DynOf(v.Value).Cast(keel.TypeString), `"`), keel.Count()),
+				Pick(keel.CastText(v.Value).TrimChars(`"`), keel.Count()),
 		)
 		if err != nil {
 			r.l.Error(

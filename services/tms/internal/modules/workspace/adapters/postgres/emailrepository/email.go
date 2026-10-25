@@ -431,7 +431,7 @@ func (r *repository) GetEmailWebhookConfig(
 				Pick(
 					i.OrganizationID,
 					i.BusinessUnitID,
-					keel.DynOf(i.Configuration.Text("webhookSigningSecret")).Coalesce(""),
+					i.Configuration.Text("webhookSigningSecret").Coalesce(""),
 				).
 				Where(
 					i.Type.Eq(req.IntegrationType),
@@ -503,7 +503,7 @@ func (r *repository) ListEventRecipients(
 ) ([]string, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]string, error) {
 		e := emaildb.Events
-		recipient := keel.DynFunc("lower", e.Recipient)
+		recipient := e.Recipient.Lower()
 		recipients, err := keel.Into[string](
 			ctx,
 			r.db.Keel(ctx),
