@@ -1,4 +1,4 @@
-package core
+package crossref
 
 import (
 	"testing"
@@ -10,7 +10,7 @@ import (
 func TestVisibleRecordSources_CoverEveryKindTheDatabaseScopes(t *testing.T) {
 	t.Parallel()
 
-	sources := newVisibleRecordSources()
+	sources := VisibleRecordSources()
 	kinds := make([]string, 0, len(sources))
 	for _, source := range sources {
 		kinds = append(kinds, source.Kind)

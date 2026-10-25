@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/keel"
+	"github.com/emoss08/trenova/internal/bootstrap/crossref"
 	"github.com/emoss08/trenova/internal/modules/equipment/adapters/postgres/tractorrepository"
 	"github.com/emoss08/trenova/internal/modules/equipment/domain/tractor"
 	"github.com/emoss08/trenova/internal/modules/equipment/equipmenttest"
@@ -24,7 +25,12 @@ func TestCreateRefusesATractorPastTheQuota(t *testing.T) {
 	db := equipmenttest.NewDatabase(t)
 	a := db.A
 	guard := platformplanportsmock.NewMockQuotaGuard(t)
-	repo := tractorrepository.New(tractorrepository.Params{DB: db.Conn, Logger: zap.NewNop(), Quota: guard})
+	repo := tractorrepository.New(tractorrepository.Params{
+		DB:        db.Conn,
+		Logger:    zap.NewNop(),
+		Quota:     guard,
+		Locations: crossref.LocationColumns(),
+	})
 	entity := &tractor.Tractor{
 		OrganizationID: a.Info.OrgID,
 		BusinessUnitID: a.Info.BuID,

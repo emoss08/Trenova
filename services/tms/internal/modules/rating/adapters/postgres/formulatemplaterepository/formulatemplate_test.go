@@ -4,9 +4,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment/shipmentdb"
-	"github.com/emoss08/trenova/internal/modules/rating/ports/formulatemplateports"
-
+	"github.com/emoss08/trenova/internal/bootstrap/crossref"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/formulatemplate"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/formulatemplate/formulatemplatedb"
 	"github.com/emoss08/trenova/internal/testutil/keeltest"
@@ -94,7 +92,5 @@ func TestUsageQueryCountsEveryConsumerInOneStatement(t *testing.T) {
 }
 
 func testRepository() *repository {
-	return &repository{consumers: formulatemplateports.TemplateConsumers{
-		Shipments: shipmentdb.Shipments.FormulaTemplateID,
-	}}
+	return &repository{consumers: crossref.TemplateConsumers()}
 }

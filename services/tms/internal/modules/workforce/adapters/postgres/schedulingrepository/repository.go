@@ -41,19 +41,22 @@ type templateCount struct {
 type Params struct {
 	fx.In
 
-	DB     *postgres.Connection
-	Logger *zap.Logger
+	DB          *postgres.Connection
+	Logger      *zap.Logger
+	Assignments workerports.RotaAssignments
 }
 
 type repository struct {
-	db *postgres.Connection
-	l  *zap.Logger
+	db          *postgres.Connection
+	l           *zap.Logger
+	assignments workerports.RotaAssignments
 }
 
 func New(p Params) workerports.SchedulingRepository {
 	return &repository{
-		db: p.DB,
-		l:  p.Logger.Named("postgres.scheduling-repository"),
+		db:          p.DB,
+		l:           p.Logger.Named("postgres.scheduling-repository"),
+		assignments: p.Assignments,
 	}
 }
 

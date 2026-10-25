@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/api/graphql/agentread/agentreadtest"
+	"github.com/emoss08/trenova/internal/bootstrap/crossref"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentquerytoolservice"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/workforce/adapters/postgres/schedulingrepository"
@@ -160,7 +161,9 @@ func TestConvertedLists_SchedulingAndRandomTestingReadTheTenantsOwnUnderRowLevel
 	logger := zap.NewNop()
 	_, resolvers := convertedListCases(conn, admin)
 	workers := workerrepository.New(workerrepository.Params{DB: conn, Logger: logger})
-	schedules := schedulingrepository.New(schedulingrepository.Params{DB: conn, Logger: logger})
+	schedules := schedulingrepository.New(schedulingrepository.Params{
+		DB: conn, Logger: logger, Assignments: crossref.RotaAssignments(),
+	})
 	draws := workerdrugalcoholrepository.New(
 		workerdrugalcoholrepository.Params{DB: conn, Logger: logger})
 	resolvers.SchedulingService = schedulingservice.New(schedulingservice.Params{

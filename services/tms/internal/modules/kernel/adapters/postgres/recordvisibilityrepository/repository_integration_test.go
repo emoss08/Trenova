@@ -7,6 +7,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/bootstrap/crossref"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment/shipmentdb"
@@ -23,11 +24,6 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
-
-var sources = kernelports.VisibleRecordSources{
-	{Kind: "shipment", ID: shipmentdb.Shipments.ID},
-	{Kind: "worker", ID: workerdb.Workers.ID},
-}
 
 func TestVisibleIDs_AppliesTheRequestsReadScope(t *testing.T) {
 	ctx, admin, dsn, cleanup := seedtest.SetupTestDBWithDSN(t)
@@ -55,7 +51,10 @@ func TestVisibleIDs_AppliesTheRequestsReadScope(t *testing.T) {
 		Update(data.Ctx(ctx), admin, sh.OwnerID.To(data.User.ID))
 	require.NoError(t, err)
 
-	repo := New(Params{DB: dbtest.NewRLSConnection(t, admin, dsn), Sources: sources})
+	repo := New(Params{
+		DB:      dbtest.NewRLSConnection(t, admin, dsn),
+		Sources: crossref.VisibleRecordSources(),
+	})
 	ids := []pulid.ID{owned.ID, others.ID, pulid.MustNew("shp_")}
 	request := &kernelports.ListVisibleRecordsRequest{TenantInfo: tenant, Kind: "shipment", IDs: ids}
 
@@ -144,7 +143,10 @@ func TestVisibleIDs_AKindThePersonCannotReadIsLeftToTheCaller(t *testing.T) {
 	})
 	require.NoError(t, err)
 
-	repo := New(Params{DB: dbtest.NewRLSConnection(t, admin, dsn), Sources: sources})
+	repo := New(Params{
+		DB:      dbtest.NewRLSConnection(t, admin, dsn),
+		Sources: crossref.VisibleRecordSources(),
+	})
 	cannotRead := readscope.With(
 		dbscope.WithTenant(t.Context(), tenant.DBTenant()),
 		func(context.Context) (readscope.Grants, error) {

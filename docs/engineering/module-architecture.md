@@ -168,6 +168,28 @@ templates render invoices and detention notices without importing either: the gr
 declared as `documenttemplateports.ContextBuilderGroup`, and `billing` and `operations` each
 provide a builder with `fx.ResultTags(documenttemplateports.ContextBuilderGroup)`.
 
+#### Column ports
+
+A repository that needs to read a table of a module it may not import doesn't need that
+module's code. It needs only the table's columns. The consumer's `ports` package declares a
+struct or slice of the `keel`/`keelkinds` column types it reads.
+`internal/bootstrap/crossref` fills it from the owning module's generated `<entity>db`
+package, `internal/bootstrap/core` provides it, and the repository builds typed queries
+from it with `keel.Handle[*keel.Row]{Ref: col.Ref}`. Tenant predicates come from the scope as
+with any typed query, so no SQL is written by hand.
+
+| Port | Consumer | Columns |
+|---|---|---|
+| `kernelports.VisibleRecordSources` | `recordvisibilityrepository` | id of each database-scoped kind |
+| `orderports.OrderReferences` | `orderrepository.DeleteIfEmpty` | every `order_id` outside operations |
+| `formulatemplateports.TemplateConsumers` | `formulatemplaterepository` | `shipments.formula_template_id` |
+| `workerports.RotaAssignments` | `schedulingrepository` (rota) | assignment worker, created and archived |
+| `equipmentcontinuityports.LocationColumns` | tractor and trailer last-known location | location id, name, coordinates |
+
+Tests build repositories with the same `crossref` functions, so a test and the running
+process read the same columns. Add a column port when the need is a read of another module's
+table; use an interface port when the need is that module's behaviour.
+
 An `optional:"true"` dependency resolves to nil when nothing provides it, and the service then
 silently does nothing. If the port must be present in a process, add it to
 `TestWiring_BestEffortPortsAreActuallyProvided` in `internal/bootstrap/wiring_test.go`, which

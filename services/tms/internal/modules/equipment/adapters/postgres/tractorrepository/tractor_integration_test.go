@@ -6,6 +6,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/bootstrap/crossref"
 	"github.com/emoss08/trenova/internal/modules/equipment/adapters/postgres/tractorrepository"
 	"github.com/emoss08/trenova/internal/modules/equipment/domain/tractor"
 	"github.com/emoss08/trenova/internal/modules/equipment/equipmenttest"
@@ -26,7 +27,12 @@ func TestTractorRepository(t *testing.T) {
 	a := db.A
 	guard := platformplanportsmock.NewMockQuotaGuard(t)
 	repo := tractorrepository.New(
-		tractorrepository.Params{DB: db.Conn, Logger: zap.NewNop(), Quota: guard},
+		tractorrepository.Params{
+			DB:        db.Conn,
+			Logger:    zap.NewNop(),
+			Quota:     guard,
+			Locations: crossref.LocationColumns(),
+		},
 	)
 
 	total := int(equipmenttest.Value[int64](t, db,

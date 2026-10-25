@@ -1,0 +1,55 @@
+package crossref
+
+import (
+	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue/billingqueuedb"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice/invoicedb"
+	"github.com/emoss08/trenova/internal/modules/equipment/ports/equipmentcontinuityports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/order/orderdb"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment/shipmentdb"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/orderports"
+	"github.com/emoss08/trenova/internal/modules/places/domain/location/locationdb"
+	"github.com/emoss08/trenova/internal/modules/rating/ports/formulatemplateports"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker/workerdb"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
+)
+
+func VisibleRecordSources() kernelports.VisibleRecordSources {
+	return kernelports.VisibleRecordSources{
+		{Kind: permission.ResourceInvoice.String(), ID: invoicedb.Invoices.ID},
+		{Kind: permission.ResourceOrder.String(), ID: orderdb.Orders.ID},
+		{Kind: permission.ResourceShipment.String(), ID: shipmentdb.Shipments.ID},
+		{Kind: permission.ResourceWorker.String(), ID: workerdb.Workers.ID},
+	}
+}
+
+func OrderReferences() orderports.OrderReferences {
+	return orderports.OrderReferences{
+		invoicedb.Invoices.OrderID,
+		billingqueuedb.BillingQueueItems.OrderID,
+	}
+}
+
+func TemplateConsumers() formulatemplateports.TemplateConsumers {
+	return formulatemplateports.TemplateConsumers{Shipments: shipmentdb.Shipments.FormulaTemplateID}
+}
+
+func RotaAssignments() workerports.RotaAssignments {
+	a := shipmentdb.Assignments
+	return workerports.RotaAssignments{
+		WorkerID:   a.PrimaryWorkerID,
+		CreatedAt:  a.CreatedAt,
+		ArchivedAt: a.ArchivedAt,
+	}
+}
+
+func LocationColumns() equipmentcontinuityports.LocationColumns {
+	l := locationdb.Locations
+	return equipmentcontinuityports.LocationColumns{
+		ID:        l.ID,
+		Name:      l.Name,
+		Latitude:  l.Latitude,
+		Longitude: l.Longitude,
+	}
+}

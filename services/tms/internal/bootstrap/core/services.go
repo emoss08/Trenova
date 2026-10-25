@@ -4,6 +4,7 @@ package core
 import (
 	"context"
 
+	"github.com/emoss08/trenova/internal/bootstrap/crossref"
 	"github.com/emoss08/trenova/internal/infrastructure/inboundmail"
 	"github.com/emoss08/trenova/internal/infrastructure/temporaljobs/workflowstarter"
 	"github.com/emoss08/trenova/internal/modules/accounting/app/ledgersync"
@@ -36,9 +37,11 @@ var ServiceModule = fx.Module("api-services", ledgersync.Module, fx.Provide(
 	workflowstarter.NewSignalStarter,
 	newDetectorRegistry,
 	newBriefingSources,
-	newVisibleRecordSources,
-	newOrderReferences,
-	newTemplateConsumers,
+	crossref.VisibleRecordSources,
+	crossref.OrderReferences,
+	crossref.TemplateConsumers,
+	crossref.RotaAssignments,
+	crossref.LocationColumns,
 	fx.Annotate(
 		internaledistatussync.New,
 		fx.As(new(shipmenteventports.ShipmentEventObserver)),
