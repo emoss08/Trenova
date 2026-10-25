@@ -226,6 +226,7 @@ var lookups = map[permission.Resource]lookup{
 			t := fuelpurchasedb.FuelPurchases
 			return t.Pick(t.Version).Where(t.ID.Eq(id))
 		}),
+		"fpib_": fuelImportLookup,
 	}},
 	permission.ResourceFuelCard: by(func(id pulid.ID) keel.Projection {
 		t := fuelpurchasedb.FuelCards

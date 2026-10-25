@@ -24,49 +24,49 @@ var (
 type ServiceFailure struct {
 	keel.Table `keel:"service_failures"`
 
-	ID                    pulid.ID          `json:"id" keel:"id,pk"`
-	BusinessUnitID        pulid.ID          `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
-	OrganizationID        pulid.ID          `json:"organizationId" keel:"organization_id,pk,tenant"`
-	ShipmentID            pulid.ID          `json:"shipmentId" keel:"shipment_id"`
-	ShipmentMoveID        pulid.ID          `json:"shipmentMoveId" keel:"shipment_move_id"`
-	StopID                pulid.ID          `json:"stopId" keel:"stop_id"`
-	ReasonCodeID          *pulid.ID         `json:"reasonCodeId" keel:"reason_code_id"`
-	Number                string            `json:"number" keel:"number"`
-	Type                  Type              `json:"type" keel:"type"`
-	Source                Source            `json:"source" keel:"source"`
-	Status                Status            `json:"status" keel:"status"`
-	StopType              shipment.StopType `json:"stopType" keel:"stop_type"`
-	ScheduledCutoff       int64             `json:"scheduledCutoff" keel:"scheduled_cutoff"`
-	ActualArrival         int64             `json:"actualArrival" keel:"actual_arrival"`
-	GracePeriodMinutes    int               `json:"gracePeriodMinutes" keel:"grace_period_minutes"`
-	LateMinutes           int64             `json:"lateMinutes" keel:"late_minutes"`
-	Notes                 string            `json:"notes" keel:"notes,nullzero"`
-	InternalNotes         string            `json:"internalNotes" keel:"internal_notes,nullzero"`
+	ID                    pulid.ID          `json:"id"                    keel:"id,pk,autoid:sf_"`
+	BusinessUnitID        pulid.ID          `json:"businessUnitId"        keel:"business_unit_id,pk,tenant"`
+	OrganizationID        pulid.ID          `json:"organizationId"        keel:"organization_id,pk,tenant"`
+	ShipmentID            pulid.ID          `json:"shipmentId"            keel:"shipment_id"`
+	ShipmentMoveID        pulid.ID          `json:"shipmentMoveId"        keel:"shipment_move_id"`
+	StopID                pulid.ID          `json:"stopId"                keel:"stop_id"`
+	ReasonCodeID          *pulid.ID         `json:"reasonCodeId"          keel:"reason_code_id"`
+	Number                string            `json:"number"                keel:"number"`
+	Type                  Type              `json:"type"                  keel:"type"`
+	Source                Source            `json:"source"                keel:"source"`
+	Status                Status            `json:"status"                keel:"status"`
+	StopType              shipment.StopType `json:"stopType"              keel:"stop_type"`
+	ScheduledCutoff       int64             `json:"scheduledCutoff"       keel:"scheduled_cutoff"`
+	ActualArrival         int64             `json:"actualArrival"         keel:"actual_arrival"`
+	GracePeriodMinutes    int               `json:"gracePeriodMinutes"    keel:"grace_period_minutes"`
+	LateMinutes           int64             `json:"lateMinutes"           keel:"late_minutes"`
+	Notes                 string            `json:"notes"                 keel:"notes,nullzero"`
+	InternalNotes         string            `json:"internalNotes"         keel:"internal_notes,nullzero"`
 	X12StatusCodeOverride string            `json:"x12StatusCodeOverride" keel:"x12_status_code_override,nullzero"`
 	X12ReasonCodeOverride string            `json:"x12ReasonCodeOverride" keel:"x12_reason_code_override,nullzero"`
-	X12ExceptionCode      string            `json:"x12ExceptionCode" keel:"x12_exception_code,nullzero"`
-	DetectedAt            int64             `json:"detectedAt" keel:"detected_at"`
-	ReviewedAt            *int64            `json:"reviewedAt" keel:"reviewed_at"`
-	ReviewedByID          *pulid.ID         `json:"reviewedById" keel:"reviewed_by_id"`
-	ResolvedAt            *int64            `json:"resolvedAt" keel:"resolved_at"`
-	ResolvedByID          *pulid.ID         `json:"resolvedById" keel:"resolved_by_id"`
-	VoidedAt              *int64            `json:"voidedAt" keel:"voided_at"`
-	VoidedByID            *pulid.ID         `json:"voidedById" keel:"voided_by_id"`
-	VoidReason            string            `json:"voidReason" keel:"void_reason,nullzero"`
-	CreatedByID           *pulid.ID         `json:"createdById" keel:"created_by_id"`
-	Version               int64             `json:"version" keel:"version,version"`
-	CreatedAt             int64             `json:"createdAt" keel:"created_at,autocreate"`
-	UpdatedAt             int64             `json:"updatedAt" keel:"updated_at,autoupdate"`
-	SearchVector          string            `json:"-" keel:"search_vector,tsvector,readonly,noselect"`
+	X12ExceptionCode      string            `json:"x12ExceptionCode"      keel:"x12_exception_code,nullzero"`
+	DetectedAt            int64             `json:"detectedAt"            keel:"detected_at"`
+	ReviewedAt            *int64            `json:"reviewedAt"            keel:"reviewed_at"`
+	ReviewedByID          *pulid.ID         `json:"reviewedById"          keel:"reviewed_by_id"`
+	ResolvedAt            *int64            `json:"resolvedAt"            keel:"resolved_at"`
+	ResolvedByID          *pulid.ID         `json:"resolvedById"          keel:"resolved_by_id"`
+	VoidedAt              *int64            `json:"voidedAt"              keel:"voided_at"`
+	VoidedByID            *pulid.ID         `json:"voidedById"            keel:"voided_by_id"`
+	VoidReason            string            `json:"voidReason"            keel:"void_reason,nullzero"`
+	CreatedByID           *pulid.ID         `json:"createdById"           keel:"created_by_id"`
+	Version               int64             `json:"version"               keel:"version,version"`
+	CreatedAt             int64             `json:"createdAt"             keel:"created_at,autocreate"`
+	UpdatedAt             int64             `json:"updatedAt"             keel:"updated_at,autoupdate"`
+	SearchVector          string            `json:"-"                     keel:"search_vector,tsvector,readonly,noselect"`
 
-	ReasonCode   *ReasonCode            `json:"reasonCode,omitempty" keel:"belongs:reason_code_id"`
-	Shipment     *shipment.Shipment     `json:"shipment,omitempty" keel:"belongs:shipment_id"`
+	ReasonCode   *ReasonCode            `json:"reasonCode,omitempty"   keel:"belongs:reason_code_id"`
+	Shipment     *shipment.Shipment     `json:"shipment,omitempty"     keel:"belongs:shipment_id"`
 	ShipmentMove *shipment.ShipmentMove `json:"shipmentMove,omitempty" keel:"belongs:shipment_move_id"`
-	Stop         *shipment.Stop         `json:"stop,omitempty" keel:"belongs:stop_id"`
-	CreatedBy    *tenant.User           `json:"createdBy,omitempty" keel:"belongs:created_by_id"`
-	ReviewedBy   *tenant.User           `json:"reviewedBy,omitempty" keel:"belongs:reviewed_by_id"`
-	ResolvedBy   *tenant.User           `json:"resolvedBy,omitempty" keel:"belongs:resolved_by_id"`
-	VoidedBy     *tenant.User           `json:"voidedBy,omitempty" keel:"belongs:voided_by_id"`
+	Stop         *shipment.Stop         `json:"stop,omitempty"         keel:"belongs:stop_id"`
+	CreatedBy    *tenant.User           `json:"createdBy,omitempty"    keel:"belongs:created_by_id"`
+	ReviewedBy   *tenant.User           `json:"reviewedBy,omitempty"   keel:"belongs:reviewed_by_id"`
+	ResolvedBy   *tenant.User           `json:"resolvedBy,omitempty"   keel:"belongs:resolved_by_id"`
+	VoidedBy     *tenant.User           `json:"voidedBy,omitempty"     keel:"belongs:voided_by_id"`
 	BusinessUnit *tenant.BusinessUnit   `json:"-"`
 	Organization *tenant.Organization   `json:"-"`
 }
