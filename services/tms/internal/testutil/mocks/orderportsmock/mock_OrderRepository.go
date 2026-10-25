@@ -13,7 +13,6 @@ import (
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	mock "github.com/stretchr/testify/mock"
-	"github.com/uptrace/bun"
 )
 
 // NewMockOrderRepository creates a new instance of MockOrderRepository. It also registers a testing interface on the mock and a cleanup function to assert the mocks expectations.
@@ -189,6 +188,72 @@ func (_c *MockOrderRepository_AttachShipments_Call) RunAndReturn(run func(ctx co
 	return _c
 }
 
+// ClearChargesInvoice provides a mock function for the type MockOrderRepository
+func (_mock *MockOrderRepository) ClearChargesInvoice(ctx context.Context, req *orderports.ClearOrderChargesInvoiceRequest) (int64, error) {
+	ret := _mock.Called(ctx, req)
+
+	if len(ret) == 0 {
+		panic("no return value specified for ClearChargesInvoice")
+	}
+
+	var r0 int64
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *orderports.ClearOrderChargesInvoiceRequest) (int64, error)); ok {
+		return returnFunc(ctx, req)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *orderports.ClearOrderChargesInvoiceRequest) int64); ok {
+		r0 = returnFunc(ctx, req)
+	} else {
+		r0 = ret.Get(0).(int64)
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, *orderports.ClearOrderChargesInvoiceRequest) error); ok {
+		r1 = returnFunc(ctx, req)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockOrderRepository_ClearChargesInvoice_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ClearChargesInvoice'
+type MockOrderRepository_ClearChargesInvoice_Call struct {
+	*mock.Call
+}
+
+// ClearChargesInvoice is a helper method to define mock.On call
+//   - ctx context.Context
+//   - req *orderports.ClearOrderChargesInvoiceRequest
+func (_e *MockOrderRepository_Expecter) ClearChargesInvoice(ctx any, req any) *MockOrderRepository_ClearChargesInvoice_Call {
+	return &MockOrderRepository_ClearChargesInvoice_Call{Call: _e.mock.On("ClearChargesInvoice", ctx, req)}
+}
+
+func (_c *MockOrderRepository_ClearChargesInvoice_Call) Run(run func(ctx context.Context, req *orderports.ClearOrderChargesInvoiceRequest)) *MockOrderRepository_ClearChargesInvoice_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 *orderports.ClearOrderChargesInvoiceRequest
+		if args[1] != nil {
+			arg1 = args[1].(*orderports.ClearOrderChargesInvoiceRequest)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockOrderRepository_ClearChargesInvoice_Call) Return(n int64, err error) *MockOrderRepository_ClearChargesInvoice_Call {
+	_c.Call.Return(n, err)
+	return _c
+}
+
+func (_c *MockOrderRepository_ClearChargesInvoice_Call) RunAndReturn(run func(ctx context.Context, req *orderports.ClearOrderChargesInvoiceRequest) (int64, error)) *MockOrderRepository_ClearChargesInvoice_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // Create provides a mock function for the type MockOrderRepository
 func (_mock *MockOrderRepository) Create(ctx context.Context, entity *order.Order) (*order.Order, error) {
 	ret := _mock.Called(ctx, entity)
@@ -253,135 +318,6 @@ func (_c *MockOrderRepository_Create_Call) Return(order1 *order.Order, err error
 }
 
 func (_c *MockOrderRepository_Create_Call) RunAndReturn(run func(ctx context.Context, entity *order.Order) (*order.Order, error)) *MockOrderRepository_Create_Call {
-	_c.Call.Return(run)
-	return _c
-}
-
-// CreateInTx provides a mock function for the type MockOrderRepository
-func (_mock *MockOrderRepository) CreateInTx(ctx context.Context, tx bun.IDB, entity *order.Order) error {
-	ret := _mock.Called(ctx, tx, entity)
-
-	if len(ret) == 0 {
-		panic("no return value specified for CreateInTx")
-	}
-
-	var r0 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, bun.IDB, *order.Order) error); ok {
-		r0 = returnFunc(ctx, tx, entity)
-	} else {
-		r0 = ret.Error(0)
-	}
-	return r0
-}
-
-// MockOrderRepository_CreateInTx_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'CreateInTx'
-type MockOrderRepository_CreateInTx_Call struct {
-	*mock.Call
-}
-
-// CreateInTx is a helper method to define mock.On call
-//   - ctx context.Context
-//   - tx bun.IDB
-//   - entity *order.Order
-func (_e *MockOrderRepository_Expecter) CreateInTx(ctx any, tx any, entity any) *MockOrderRepository_CreateInTx_Call {
-	return &MockOrderRepository_CreateInTx_Call{Call: _e.mock.On("CreateInTx", ctx, tx, entity)}
-}
-
-func (_c *MockOrderRepository_CreateInTx_Call) Run(run func(ctx context.Context, tx bun.IDB, entity *order.Order)) *MockOrderRepository_CreateInTx_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		var arg0 context.Context
-		if args[0] != nil {
-			arg0 = args[0].(context.Context)
-		}
-		var arg1 bun.IDB
-		if args[1] != nil {
-			arg1 = args[1].(bun.IDB)
-		}
-		var arg2 *order.Order
-		if args[2] != nil {
-			arg2 = args[2].(*order.Order)
-		}
-		run(
-			arg0,
-			arg1,
-			arg2,
-		)
-	})
-	return _c
-}
-
-func (_c *MockOrderRepository_CreateInTx_Call) Return(err error) *MockOrderRepository_CreateInTx_Call {
-	_c.Call.Return(err)
-	return _c
-}
-
-func (_c *MockOrderRepository_CreateInTx_Call) RunAndReturn(run func(ctx context.Context, tx bun.IDB, entity *order.Order) error) *MockOrderRepository_CreateInTx_Call {
-	_c.Call.Return(run)
-	return _c
-}
-
-// ClearChargesInvoice provides a mock function for the type MockOrderRepository
-func (_mock *MockOrderRepository) ClearChargesInvoice(ctx context.Context, req *orderports.ClearOrderChargesInvoiceRequest) (int64, error) {
-	ret := _mock.Called(ctx, req)
-
-	if len(ret) == 0 {
-		panic("no return value specified for ClearChargesInvoice")
-	}
-
-	var r0 int64
-	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *orderports.ClearOrderChargesInvoiceRequest) (int64, error)); ok {
-		return returnFunc(ctx, req)
-	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *orderports.ClearOrderChargesInvoiceRequest) int64); ok {
-		r0 = returnFunc(ctx, req)
-	} else {
-		r0 = ret.Get(0).(int64)
-	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, *orderports.ClearOrderChargesInvoiceRequest) error); ok {
-		r1 = returnFunc(ctx, req)
-	} else {
-		r1 = ret.Error(1)
-	}
-	return r0, r1
-}
-
-// MockOrderRepository_ClearChargesInvoice_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ClearChargesInvoice'
-type MockOrderRepository_ClearChargesInvoice_Call struct {
-	*mock.Call
-}
-
-// ClearChargesInvoice is a helper method to define mock.On call
-//   - ctx context.Context
-//   - req *repositories.ClearOrderChargesInvoiceRequest
-func (_e *MockOrderRepository_Expecter) ClearChargesInvoice(ctx any, req any) *MockOrderRepository_ClearChargesInvoice_Call {
-	return &MockOrderRepository_ClearChargesInvoice_Call{Call: _e.mock.On("ClearChargesInvoice", ctx, req)}
-}
-
-func (_c *MockOrderRepository_ClearChargesInvoice_Call) Run(run func(ctx context.Context, req *orderports.ClearOrderChargesInvoiceRequest)) *MockOrderRepository_ClearChargesInvoice_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		var arg0 context.Context
-		if args[0] != nil {
-			arg0 = args[0].(context.Context)
-		}
-		var arg1 *orderports.ClearOrderChargesInvoiceRequest
-		if args[1] != nil {
-			arg1 = args[1].(*orderports.ClearOrderChargesInvoiceRequest)
-		}
-		run(
-			arg0,
-			arg1,
-		)
-	})
-	return _c
-}
-
-func (_c *MockOrderRepository_ClearChargesInvoice_Call) Return(v0 int64, err error) *MockOrderRepository_ClearChargesInvoice_Call {
-	_c.Call.Return(v0, err)
-	return _c
-}
-
-func (_c *MockOrderRepository_ClearChargesInvoice_Call) RunAndReturn(run func(ctx context.Context, req *orderports.ClearOrderChargesInvoiceRequest) (int64, error)) *MockOrderRepository_ClearChargesInvoice_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -577,7 +513,7 @@ type MockOrderRepository_GetByID_Call struct {
 
 // GetByID is a helper method to define mock.On call
 //   - ctx context.Context
-//   - req repositories.GetOrderByIDRequest
+//   - req orderports.GetOrderByIDRequest
 func (_e *MockOrderRepository_Expecter) GetByID(ctx any, req any) *MockOrderRepository_GetByID_Call {
 	return &MockOrderRepository_GetByID_Call{Call: _e.mock.On("GetByID", ctx, req)}
 }
@@ -645,7 +581,7 @@ type MockOrderRepository_GetByIDs_Call struct {
 
 // GetByIDs is a helper method to define mock.On call
 //   - ctx context.Context
-//   - req repositories.GetOrdersByIDsRequest
+//   - req orderports.GetOrdersByIDsRequest
 func (_e *MockOrderRepository_Expecter) GetByIDs(ctx any, req any) *MockOrderRepository_GetByIDs_Call {
 	return &MockOrderRepository_GetByIDs_Call{Call: _e.mock.On("GetByIDs", ctx, req)}
 }
@@ -861,7 +797,7 @@ type MockOrderRepository_List_Call struct {
 
 // List is a helper method to define mock.On call
 //   - ctx context.Context
-//   - req *repositories.ListOrdersRequest
+//   - req *orderports.ListOrdersRequest
 func (_e *MockOrderRepository_Expecter) List(ctx any, req any) *MockOrderRepository_List_Call {
 	return &MockOrderRepository_List_Call{Call: _e.mock.On("List", ctx, req)}
 }
@@ -1003,7 +939,7 @@ type MockOrderRepository_ListConnection_Call struct {
 
 // ListConnection is a helper method to define mock.On call
 //   - ctx context.Context
-//   - req *repositories.ListOrdersConnectionRequest
+//   - req *orderports.ListOrdersConnectionRequest
 func (_e *MockOrderRepository_Expecter) ListConnection(ctx any, req any) *MockOrderRepository_ListConnection_Call {
 	return &MockOrderRepository_ListConnection_Call{Call: _e.mock.On("ListConnection", ctx, req)}
 }
@@ -1032,6 +968,74 @@ func (_c *MockOrderRepository_ListConnection_Call) Return(cursorListResult *pagi
 }
 
 func (_c *MockOrderRepository_ListConnection_Call) RunAndReturn(run func(ctx context.Context, req *orderports.ListOrdersConnectionRequest) (*pagination.CursorListResult[*order.Order], error)) *MockOrderRepository_ListConnection_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// ListUninvoicedChargeSharesForPayer provides a mock function for the type MockOrderRepository
+func (_mock *MockOrderRepository) ListUninvoicedChargeSharesForPayer(ctx context.Context, req *orderports.ListUninvoicedChargeSharesRequest) ([]*order.OrderCharge, error) {
+	ret := _mock.Called(ctx, req)
+
+	if len(ret) == 0 {
+		panic("no return value specified for ListUninvoicedChargeSharesForPayer")
+	}
+
+	var r0 []*order.OrderCharge
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *orderports.ListUninvoicedChargeSharesRequest) ([]*order.OrderCharge, error)); ok {
+		return returnFunc(ctx, req)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *orderports.ListUninvoicedChargeSharesRequest) []*order.OrderCharge); ok {
+		r0 = returnFunc(ctx, req)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]*order.OrderCharge)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, *orderports.ListUninvoicedChargeSharesRequest) error); ok {
+		r1 = returnFunc(ctx, req)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockOrderRepository_ListUninvoicedChargeSharesForPayer_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ListUninvoicedChargeSharesForPayer'
+type MockOrderRepository_ListUninvoicedChargeSharesForPayer_Call struct {
+	*mock.Call
+}
+
+// ListUninvoicedChargeSharesForPayer is a helper method to define mock.On call
+//   - ctx context.Context
+//   - req *orderports.ListUninvoicedChargeSharesRequest
+func (_e *MockOrderRepository_Expecter) ListUninvoicedChargeSharesForPayer(ctx any, req any) *MockOrderRepository_ListUninvoicedChargeSharesForPayer_Call {
+	return &MockOrderRepository_ListUninvoicedChargeSharesForPayer_Call{Call: _e.mock.On("ListUninvoicedChargeSharesForPayer", ctx, req)}
+}
+
+func (_c *MockOrderRepository_ListUninvoicedChargeSharesForPayer_Call) Run(run func(ctx context.Context, req *orderports.ListUninvoicedChargeSharesRequest)) *MockOrderRepository_ListUninvoicedChargeSharesForPayer_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 *orderports.ListUninvoicedChargeSharesRequest
+		if args[1] != nil {
+			arg1 = args[1].(*orderports.ListUninvoicedChargeSharesRequest)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockOrderRepository_ListUninvoicedChargeSharesForPayer_Call) Return(orderCharges []*order.OrderCharge, err error) *MockOrderRepository_ListUninvoicedChargeSharesForPayer_Call {
+	_c.Call.Return(orderCharges, err)
+	return _c
+}
+
+func (_c *MockOrderRepository_ListUninvoicedChargeSharesForPayer_Call) RunAndReturn(run func(ctx context.Context, req *orderports.ListUninvoicedChargeSharesRequest) ([]*order.OrderCharge, error)) *MockOrderRepository_ListUninvoicedChargeSharesForPayer_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -1110,74 +1114,6 @@ func (_c *MockOrderRepository_ListUninvoicedCharges_Call) RunAndReturn(run func(
 	return _c
 }
 
-// ListUninvoicedChargeSharesForPayer provides a mock function for the type MockOrderRepository
-func (_mock *MockOrderRepository) ListUninvoicedChargeSharesForPayer(ctx context.Context, req *orderports.ListUninvoicedChargeSharesRequest) ([]*order.OrderCharge, error) {
-	ret := _mock.Called(ctx, req)
-
-	if len(ret) == 0 {
-		panic("no return value specified for ListUninvoicedChargeSharesForPayer")
-	}
-
-	var r0 []*order.OrderCharge
-	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *orderports.ListUninvoicedChargeSharesRequest) ([]*order.OrderCharge, error)); ok {
-		return returnFunc(ctx, req)
-	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *orderports.ListUninvoicedChargeSharesRequest) []*order.OrderCharge); ok {
-		r0 = returnFunc(ctx, req)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).([]*order.OrderCharge)
-		}
-	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, *orderports.ListUninvoicedChargeSharesRequest) error); ok {
-		r1 = returnFunc(ctx, req)
-	} else {
-		r1 = ret.Error(1)
-	}
-	return r0, r1
-}
-
-// MockOrderRepository_ListUninvoicedChargeSharesForPayer_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ListUninvoicedChargeSharesForPayer'
-type MockOrderRepository_ListUninvoicedChargeSharesForPayer_Call struct {
-	*mock.Call
-}
-
-// ListUninvoicedChargeSharesForPayer is a helper method to define mock.On call
-//   - ctx context.Context
-//   - req *repositories.ListUninvoicedChargeSharesRequest
-func (_e *MockOrderRepository_Expecter) ListUninvoicedChargeSharesForPayer(ctx any, req any) *MockOrderRepository_ListUninvoicedChargeSharesForPayer_Call {
-	return &MockOrderRepository_ListUninvoicedChargeSharesForPayer_Call{Call: _e.mock.On("ListUninvoicedChargeSharesForPayer", ctx, req)}
-}
-
-func (_c *MockOrderRepository_ListUninvoicedChargeSharesForPayer_Call) Run(run func(ctx context.Context, req *orderports.ListUninvoicedChargeSharesRequest)) *MockOrderRepository_ListUninvoicedChargeSharesForPayer_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		var arg0 context.Context
-		if args[0] != nil {
-			arg0 = args[0].(context.Context)
-		}
-		var arg1 *orderports.ListUninvoicedChargeSharesRequest
-		if args[1] != nil {
-			arg1 = args[1].(*orderports.ListUninvoicedChargeSharesRequest)
-		}
-		run(
-			arg0,
-			arg1,
-		)
-	})
-	return _c
-}
-
-func (_c *MockOrderRepository_ListUninvoicedChargeSharesForPayer_Call) Return(v0 []*order.OrderCharge, err error) *MockOrderRepository_ListUninvoicedChargeSharesForPayer_Call {
-	_c.Call.Return(v0, err)
-	return _c
-}
-
-func (_c *MockOrderRepository_ListUninvoicedChargeSharesForPayer_Call) RunAndReturn(run func(ctx context.Context, req *orderports.ListUninvoicedChargeSharesRequest) ([]*order.OrderCharge, error)) *MockOrderRepository_ListUninvoicedChargeSharesForPayer_Call {
-	_c.Call.Return(run)
-	return _c
-}
-
 // MarkChargesFullyInvoicedWhereComplete provides a mock function for the type MockOrderRepository
 func (_mock *MockOrderRepository) MarkChargesFullyInvoicedWhereComplete(ctx context.Context, req *orderports.MarkChargesFullyInvoicedRequest) (int64, error) {
 	ret := _mock.Called(ctx, req)
@@ -1211,7 +1147,7 @@ type MockOrderRepository_MarkChargesFullyInvoicedWhereComplete_Call struct {
 
 // MarkChargesFullyInvoicedWhereComplete is a helper method to define mock.On call
 //   - ctx context.Context
-//   - req *repositories.MarkChargesFullyInvoicedRequest
+//   - req *orderports.MarkChargesFullyInvoicedRequest
 func (_e *MockOrderRepository_Expecter) MarkChargesFullyInvoicedWhereComplete(ctx any, req any) *MockOrderRepository_MarkChargesFullyInvoicedWhereComplete_Call {
 	return &MockOrderRepository_MarkChargesFullyInvoicedWhereComplete_Call{Call: _e.mock.On("MarkChargesFullyInvoicedWhereComplete", ctx, req)}
 }
@@ -1234,8 +1170,8 @@ func (_c *MockOrderRepository_MarkChargesFullyInvoicedWhereComplete_Call) Run(ru
 	return _c
 }
 
-func (_c *MockOrderRepository_MarkChargesFullyInvoicedWhereComplete_Call) Return(v0 int64, err error) *MockOrderRepository_MarkChargesFullyInvoicedWhereComplete_Call {
-	_c.Call.Return(v0, err)
+func (_c *MockOrderRepository_MarkChargesFullyInvoicedWhereComplete_Call) Return(n int64, err error) *MockOrderRepository_MarkChargesFullyInvoicedWhereComplete_Call {
+	_c.Call.Return(n, err)
 	return _c
 }
 
@@ -1277,7 +1213,7 @@ type MockOrderRepository_MarkChargesInvoiced_Call struct {
 
 // MarkChargesInvoiced is a helper method to define mock.On call
 //   - ctx context.Context
-//   - req *repositories.MarkOrderChargesInvoicedRequest
+//   - req *orderports.MarkOrderChargesInvoicedRequest
 func (_e *MockOrderRepository_Expecter) MarkChargesInvoiced(ctx any, req any) *MockOrderRepository_MarkChargesInvoiced_Call {
 	return &MockOrderRepository_MarkChargesInvoiced_Call{Call: _e.mock.On("MarkChargesInvoiced", ctx, req)}
 }
@@ -1406,7 +1342,7 @@ type MockOrderRepository_RemoveCharge_Call struct {
 
 // RemoveCharge is a helper method to define mock.On call
 //   - ctx context.Context
-//   - req *repositories.RemoveOrderChargeRequest
+//   - req *orderports.RemoveOrderChargeRequest
 func (_e *MockOrderRepository_Expecter) RemoveCharge(ctx any, req any) *MockOrderRepository_RemoveCharge_Call {
 	return &MockOrderRepository_RemoveCharge_Call{Call: _e.mock.On("RemoveCharge", ctx, req)}
 }
@@ -1474,7 +1410,7 @@ type MockOrderRepository_SelectOptions_Call struct {
 
 // SelectOptions is a helper method to define mock.On call
 //   - ctx context.Context
-//   - req *repositories.OrderSelectOptionsRequest
+//   - req *orderports.OrderSelectOptionsRequest
 func (_e *MockOrderRepository_Expecter) SelectOptions(ctx any, req any) *MockOrderRepository_SelectOptions_Call {
 	return &MockOrderRepository_SelectOptions_Call{Call: _e.mock.On("SelectOptions", ctx, req)}
 }
@@ -1676,7 +1612,7 @@ type MockOrderRepository_UpdateStatus_Call struct {
 
 // UpdateStatus is a helper method to define mock.On call
 //   - ctx context.Context
-//   - req *repositories.UpdateOrderStatusRequest
+//   - req *orderports.UpdateOrderStatusRequest
 func (_e *MockOrderRepository_Expecter) UpdateStatus(ctx any, req any) *MockOrderRepository_UpdateStatus_Call {
 	return &MockOrderRepository_UpdateStatus_Call{Call: _e.mock.On("UpdateStatus", ctx, req)}
 }

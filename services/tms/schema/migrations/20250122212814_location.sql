@@ -1,0 +1,118 @@
+CREATE TABLE IF NOT EXISTS "locations"(
+    "id" varchar(100) NOT NULL,
+    "business_unit_id" varchar(100) NOT NULL,
+    "organization_id" varchar(100) NOT NULL,
+    "location_category_id" varchar(100) NOT NULL,
+    "state_id" varchar(100) NOT NULL,
+    "status" status_enum NOT NULL DEFAULT 'Active',
+    "code" varchar(100) NOT NULL,
+    "name" text,
+    "description" text,
+    "address_line_1" varchar(150),
+    "address_line_2" varchar(150),
+    "city" varchar(100),
+    "postal_code" us_postal_code,
+    "longitude" float,
+    "latitude" float,
+    "geom" geography(point, 4326),
+    "place_id" text,
+    "is_geocoded" boolean NOT NULL DEFAULT FALSE,
+    "version" bigint NOT NULL DEFAULT 0,
+    "created_at" bigint NOT NULL DEFAULT EXTRACT(EPOCH FROM current_timestamp) ::bigint,
+    "updated_at" bigint NOT NULL DEFAULT EXTRACT(EPOCH FROM current_timestamp) ::bigint,
+    CONSTRAINT "pk_locations" PRIMARY KEY ("id", "business_unit_id", "organization_id"),
+    CONSTRAINT "fk_locations_business_unit" FOREIGN KEY ("business_unit_id") REFERENCES "business_units"("id") ON UPDATE NO ACTION ON DELETE CASCADE,
+    CONSTRAINT "fk_locations_organization" FOREIGN KEY ("organization_id") REFERENCES "organizations"("id") ON UPDATE NO ACTION ON DELETE CASCADE,
+    CONSTRAINT "fk_locations_state" FOREIGN KEY ("state_id") REFERENCES "us_states"("id") ON UPDATE NO ACTION ON DELETE RESTRICT,
+    CONSTRAINT "fk_locations_location_category" FOREIGN KEY ("location_category_id", "business_unit_id", "organization_id") REFERENCES "location_categories"("id", "business_unit_id", "organization_id") ON UPDATE NO ACTION ON DELETE CASCADE
+);
+
+CREATE UNIQUE INDEX "idx_locations_code" ON "locations"(lower("code"), "organization_id");
+
+CREATE INDEX "idx_locations_name" ON "locations"("name");
+
+CREATE INDEX "idx_locations_business_unit" ON "locations"("business_unit_id");
+
+CREATE INDEX "idx_locations_organization" ON "locations"("organization_id");
+
+CREATE INDEX "idx_locations_created_updated" ON "locations"("created_at", "updated_at");
+
+CREATE INDEX "idx_locations_geom" ON "locations" USING GIST("geom");
+
+COMMENT ON TABLE "locations" IS 'Stores information about locations';
+
+COMMENT ON COLUMN "locations"."geom" IS 'PostGIS geography point for spatial operations (auto-synced from longitude/latitude)';
+
+ALTER TABLE "stops"
+    ADD COLUMN "location_id" varchar(100) NOT NULL;
+
+ALTER TABLE "stops"
+    ADD CONSTRAINT "fk_stops_location" FOREIGN KEY ("location_id", "business_unit_id", "organization_id") REFERENCES "locations"("id", "business_unit_id", "organization_id") ON UPDATE NO ACTION ON DELETE SET NULL;
+
+ALTER TABLE "locations"
+    ADD COLUMN IF NOT EXISTS search_vector tsvector GENERATED ALWAYS AS (
+        setweight(immutable_to_tsvector('simple', COALESCE("code", '')), 'A') ||
+        setweight(immutable_to_tsvector('simple', COALESCE("name", '')), 'A') ||
+        setweight(immutable_to_tsvector('simple', COALESCE("description", '')), 'B') ||
+        setweight(immutable_to_tsvector('simple', COALESCE("address_line_1", '')), 'B') ||
+        setweight(immutable_to_tsvector('simple', COALESCE("address_line_2", '')), 'B') ||
+        setweight(immutable_to_tsvector('simple', COALESCE("city", '')), 'B') ||
+        setweight(immutable_to_tsvector('simple', COALESCE("postal_code"::text, '')), 'C')
+    ) STORED;
+
+CREATE INDEX IF NOT EXISTS idx_locations_search ON locations USING GIN(search_vector);
+
+CREATE OR REPLACE FUNCTION locations_geom_sync()
+    RETURNS TRIGGER
+    AS $$
+BEGIN
+    IF NEW.longitude IS NOT NULL AND NEW.latitude IS NOT NULL THEN
+        NEW.geom := ST_SetSRID(ST_MakePoint(NEW.longitude, NEW.latitude), 4326)::geography;
+    ELSE
+        NEW.geom := NULL;
+    END IF;
+    RETURN NEW;
+END;
+$$
+LANGUAGE plpgsql;
+
+CREATE OR REPLACE FUNCTION locations_update_timestamp()
+    RETURNS TRIGGER
+    AS $$
+BEGIN
+    NEW.updated_at := EXTRACT(EPOCH FROM CURRENT_TIMESTAMP)::bigint;
+    RETURN NEW;
+END;
+$$
+LANGUAGE plpgsql;
+
+DROP TRIGGER IF EXISTS locations_geom_sync_trigger ON locations;
+
+DROP TRIGGER IF EXISTS locations_update_timestamp_trigger ON locations;
+
+CREATE TRIGGER locations_geom_sync_trigger
+    BEFORE INSERT OR UPDATE ON locations
+    FOR EACH ROW
+    EXECUTE FUNCTION locations_geom_sync();
+
+CREATE TRIGGER locations_update_timestamp_trigger
+    BEFORE INSERT OR UPDATE ON locations
+    FOR EACH ROW
+    EXECUTE FUNCTION locations_update_timestamp();
+
+CREATE INDEX IF NOT EXISTS idx_locations_trgm_code ON locations USING gin(code gin_trgm_ops);
+
+CREATE INDEX IF NOT EXISTS idx_locations_trgm_name ON locations USING gin(name gin_trgm_ops);
+
+CREATE INDEX IF NOT EXISTS idx_locations_trgm_description ON locations USING gin(description gin_trgm_ops);
+
+CREATE INDEX IF NOT EXISTS idx_locations_trgm_address_line_1 ON locations USING gin(address_line_1 gin_trgm_ops);
+
+CREATE INDEX IF NOT EXISTS idx_locations_trgm_address_line_2 ON locations USING gin(address_line_2 gin_trgm_ops);
+
+CREATE INDEX IF NOT EXISTS idx_locations_trgm_city ON locations USING gin(city gin_trgm_ops);
+
+CREATE INDEX IF NOT EXISTS idx_locations_trgm_postal_code ON locations USING gin(postal_code gin_trgm_ops);
+
+CREATE INDEX IF NOT EXISTS idx_locations_trgm_code_name_description ON locations USING gin((code || ' ' || name || ' ' || description) gin_trgm_ops);
+

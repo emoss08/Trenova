@@ -4,24 +4,15 @@ import (
 	"context"
 	"strings"
 
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/inboundmessage"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/inboundmessage/inboundmessagedb"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/triage"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/triage/triagedb"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/triageports"
-	"github.com/emoss08/trenova/pkg/buncolgen/inboundmessagecol"
-	"github.com/emoss08/trenova/pkg/buncolgen/triagecol"
 	"github.com/emoss08/trenova/shared/emailutils"
-	"github.com/emoss08/trenova/shared/stringutils"
-	"github.com/uptrace/bun"
-)
-
-const (
-	outcomesCTE      = "manual_outcomes"
-	arrivalsCTE      = "manual_arrivals"
-	outcomeAlias     = "mo"
-	arrivalAlias     = "ma"
-	outcomeMessageID = "message_id"
-	outcomeColumn    = "outcome"
+	"github.com/emoss08/trenova/shared/pulid"
 )
 
 func (r *repository) RuleCandidates(
@@ -29,86 +20,88 @@ func (r *repository) RuleCandidates(
 	req *triageports.RuleCandidatesRequest,
 ) (*triageports.RuleCandidates, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*triageports.RuleCandidates, error) {
-		db := r.db.DBForContext(ctx)
+		db := r.db.Keel(ctx)
 
-		counted, err := ruleCandidatesCountQuery(db, req).Count(ctx)
+		counted, err := messages().Where(ruleCandidates(req)...).Count(ctx, db)
 		if err != nil {
 			return nil, err
 		}
 		total := int(counted)
 
-		rows := make([]*triageports.MessageRow, 0, min(req.Limit, total))
-		if total > 0 {
-			if err = ruleCandidatesQuery(db, req).Scan(ctx, &rows); err != nil {
-				return nil, err
+		rows := []*triageports.MessageRow{}
+		if total > 0 && req.Limit > 0 {
+			scanned, scanErr := keel.Into[scannedRow[bool]](ctx, db, ruleCandidatesQuery(req))
+			if scanErr != nil {
+				return nil, scanErr
 			}
+			rows = messageRows(scanned, true)
 		}
 
 		return &triageports.RuleCandidates{Total: total, Rows: rows}, nil
 	})
 }
 
-func ruleCandidatesCountQuery(db bun.IDB, req *triageports.RuleCandidatesRequest) *bun.SelectQuery {
-	return messages(db).
-		Apply(func(sq *bun.SelectQuery) *bun.SelectQuery { return narrowToRule(sq, req) })
-}
-
-func ruleCandidatesQuery(db bun.IDB, req *triageports.RuleCandidatesRequest) *bun.SelectQuery {
-	cols := inboundmessagecol.InboundMessageColumns
-	att := inboundmessagecol.InboundAttachmentColumns
-
-	personFiled := db.NewSelect().
-		Model((*inboundmessage.InboundAttachment)(nil)).
-		ColumnExpr("1").
-		Where(att.MessageID.EqColumn(cols.ID)).
-		Where(att.OrganizationID.EqColumn(cols.OrganizationID)).
-		Where(att.BusinessUnitID.EqColumn(cols.BusinessUnitID)).
-		Where(att.FiledAt.IsNotNull()).
-		Where(att.FiledBy.IsNotNull())
-
-	return messages(db).
-		Apply(messageRowColumns).
-		ColumnExpr("EXISTS (?) AS person_filed", personFiled).
-		Apply(func(sq *bun.SelectQuery) *bun.SelectQuery { return narrowToRule(sq, req) }).
-		Order(cols.ReceivedAt.OrderDesc(), cols.ID.OrderDesc()).
-		Limit(int64(req.Limit))
-}
-
-func narrowToRule(
-	sq *bun.SelectQuery,
+func ruleCandidatesQuery(
 	req *triageports.RuleCandidatesRequest,
-) *bun.SelectQuery {
-	cols := inboundmessagecol.InboundMessageColumns
+) *keel.Query[inboundmessage.InboundMessage] {
+	m := inboundmessagedb.InboundMessages
+	att := inboundmessagedb.InboundAttachments
 
-	sq = sq.
-		Apply(inboundmessagecol.InboundMessageApplyTenant(req.TenantInfo)).
-		Where(cols.Classification.Eq(), req.Classification).
-		Where(cols.ReceivedAt.Gte(), req.Since).
-		Where(cols.NovaRead.IsTrue())
-	if req.MailboxID.IsNotNil() {
-		sq = sq.Where(cols.MailboxID.Eq(), req.MailboxID)
+	personFiled := keel.Exists(att.Pick(att.ID).Where(
+		att.MessageID.EqCol(m.ID),
+		att.FiledAt.IsNotNull(),
+		att.FiledBy.IsNotNull(),
+	))
+
+	return withReference(messages()).
+		Pick(messageRowColumns(personFiled)...).
+		Where(ruleCandidates(req)...).
+		Order(m.ReceivedAt.Desc(), m.ID.Desc()).
+		Limit(req.Limit)
+}
+
+func ruleCandidates(req *triageports.RuleCandidatesRequest) []keel.Pred {
+	m := inboundmessagedb.InboundMessages
+
+	preds := []keel.Pred{
+		m.Classification.Eq(req.Classification),
+		m.ReceivedAt.Gte(req.Since),
+		m.NovaRead.IsTrue(),
+		keel.When(req.MailboxID.IsNotNil(), m.MailboxID.Eq(req.MailboxID)),
 	}
 
 	switch req.SenderScope {
 	case triage.SenderDomain:
 		domain := strings.ToLower(req.Sender)
-		sq = sq.WhereGroup(" AND ", func(q *bun.SelectQuery) *bun.SelectQuery {
-			return q.
-				Where(cols.SenderDomain.Eq(), domain).
-				WhereOr(cols.SenderDomain.Like(), "%."+stringutils.EscapeLikePattern(domain))
-		})
+		preds = append(
+			preds,
+			keel.Or(m.SenderDomain.Eq(domain), m.SenderDomain.HasSuffix("."+domain)),
+		)
 	case triage.SenderAddress:
-		sq = sq.
-			Where(cols.SenderDomain.Eq(), emailutils.Domain(req.Sender)).
-			Where(cols.FromAddress.Expr("LOWER(BTRIM({})) = ?"), strings.ToLower(req.Sender))
+		preds = append(preds,
+			m.SenderDomain.Eq(emailutils.Domain(req.Sender)),
+			keel.Raw("LOWER(BTRIM(?)) = ?", m.FromAddress, strings.ToLower(req.Sender)),
+		)
 	case triage.SenderAnyCustomer:
-		sq = sq.Where(cols.MatchedCustomerID.IsNotNull())
+		preds = append(preds, m.MatchedCustomerID.IsNotNull())
 	case triage.SenderAnyCarrier:
-		sq = sq.Where(cols.MatchedCarrierID.IsNotNull())
+		preds = append(preds, m.MatchedCarrierID.IsNotNull())
 	case triage.SenderAnyone:
 	}
 
-	return sq
+	return preds
+}
+
+type manualOutcomeScan struct {
+	SenderDomain   string
+	Classification inboundmessage.Classification
+	Outcome        triage.ActivityKind
+	Count          int64
+	Arrived        int64
+	Mailboxes      int64
+	MailboxID      pulid.ID
+	AllCustomers   bool
+	AllCarriers    bool
 }
 
 func (r *repository) ManualOutcomes(
@@ -116,75 +109,90 @@ func (r *repository) ManualOutcomes(
 	req *triageports.ManualOutcomesRequest,
 ) ([]*triageports.ManualOutcomeRow, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*triageports.ManualOutcomeRow, error) {
-		rows := make([]*triageports.ManualOutcomeRow, 0, 32)
-		if err := manualOutcomesQuery(r.db.DBForContext(ctx), req).Scan(ctx, &rows); err != nil {
+		scanned, err := keel.Into[manualOutcomeScan](ctx, r.db.Keel(ctx), manualOutcomesQuery(req))
+		if err != nil {
 			return nil, err
+		}
+
+		rows := make([]*triageports.ManualOutcomeRow, 0, len(scanned))
+		for _, s := range scanned {
+			rows = append(rows, &triageports.ManualOutcomeRow{
+				SenderDomain:   s.SenderDomain,
+				Classification: s.Classification,
+				Outcome:        s.Outcome,
+				Count:          int(s.Count),
+				Arrived:        int(s.Arrived),
+				Mailboxes:      int(s.Mailboxes),
+				MailboxID:      s.MailboxID,
+				AllCustomers:   s.AllCustomers,
+				AllCarriers:    s.AllCarriers,
+			})
 		}
 
 		return rows, nil
 	})
 }
 
-func manualOutcomesQuery(db bun.IDB, req *triageports.ManualOutcomesRequest) *bun.SelectQuery {
-	cols := inboundmessagecol.InboundMessageColumns
-	act := triagecol.ActivityColumns
-	table := inboundmessagecol.InboundMessageTable
+func manualOutcomesQuery(
+	req *triageports.ManualOutcomesRequest,
+) *keel.Query[inboundmessage.InboundMessage] {
+	m := inboundmessagedb.InboundMessages
+	act := triagedb.Activities
+	arrivedMessages := inboundmessagedb.InboundMessages.As("arrived_messages")
 
-	outcomes := db.NewSelect().
-		Model((*triage.Activity)(nil)).
-		ColumnExpr(act.MessageID.As(outcomeMessageID)).
-		ColumnExpr(
-			"CASE WHEN BOOL_OR("+act.Kind.Eq()+") THEN ? WHEN BOOL_OR("+act.Kind.Eq()+
-				") THEN ? ELSE ? END AS "+outcomeColumn,
-			triage.ActivityIgnored, triage.ActivityIgnored,
-			triage.ActivityFiled, triage.ActivityFiled,
-			triage.ActivityHandled,
+	outcomes := keel.CTE("manual_outcomes", []string{"message_id", "outcome"}, act.
+		Pick(
+			act.MessageID,
+			keel.Raw(
+				"CASE WHEN BOOL_OR(? = ?) THEN ? WHEN BOOL_OR(? = ?) THEN ? ELSE ? END",
+				act.Kind, string(triage.ActivityIgnored), string(triage.ActivityIgnored),
+				act.Kind, string(triage.ActivityFiled), string(triage.ActivityFiled),
+				string(triage.ActivityHandled),
+			),
 		).
-		Apply(triagecol.ActivityApplyTenant(req.TenantInfo)).
-		Where(act.ActorKind.Eq(), triage.ActorPerson).
-		Where(act.Kind.In(), bun.List([]triage.ActivityKind{
-			triage.ActivityFiled,
-			triage.ActivityHandled,
-			triage.ActivityIgnored,
-		})).
-		Where(act.CreatedAt.Gte(), req.Since).
-		GroupExpr(act.MessageID.Qualified())
+		Where(
+			act.ActorKind.Eq(triage.ActorPerson),
+			act.Kind.In(triage.ActivityFiled, triage.ActivityHandled, triage.ActivityIgnored),
+			act.CreatedAt.Gte(req.Since),
+		).
+		Group(act.MessageID))
 
-	arrivals := messages(db).
-		ColumnExpr(cols.SenderDomain.Qualified()).
-		ColumnExpr(cols.Classification.Qualified()).
-		ColumnExpr("COUNT(*) AS arrived").
-		Apply(inboundmessagecol.InboundMessageApplyTenant(req.TenantInfo)).
-		Where(cols.ReceivedAt.Gte(), req.Since).
-		Where(cols.Classification.IsNotNull()).
-		Where(cols.SenderDomain.NotEq(), "").
-		GroupExpr(cols.SenderDomain.Qualified()).
-		GroupExpr(cols.Classification.Qualified())
+	arrivals := keel.CTE(
+		"manual_arrivals",
+		[]string{"sender_domain", "classification", "arrived"},
+		arrivedMessages.
+			Pick(arrivedMessages.SenderDomain, arrivedMessages.Classification, keel.Count()).
+			Where(
+				arrivedMessages.ReceivedAt.Gte(req.Since),
+				arrivedMessages.Classification.IsNotNull(),
+				arrivedMessages.SenderDomain.Ne(""),
+			).
+			Group(arrivedMessages.SenderDomain, arrivedMessages.Classification),
+	)
 
-	return db.NewSelect().
-		With(outcomesCTE, outcomes).
-		With(arrivalsCTE, arrivals).
-		TableExpr(outcomesCTE+" AS "+outcomeAlias).
-		Join("JOIN "+table.Name+" AS "+table.Alias).
-		JoinOn(cols.ID.Qualified()+" = "+outcomeAlias+"."+outcomeMessageID).
-		JoinOn(cols.OrganizationID.Eq(), req.TenantInfo.OrgID).
-		JoinOn(cols.BusinessUnitID.Eq(), req.TenantInfo.BuID).
-		Join("JOIN "+arrivalsCTE+" AS "+arrivalAlias).
-		JoinOn(arrivalAlias+"."+cols.SenderDomain.Bare()+" = "+cols.SenderDomain.Qualified()).
-		JoinOn(arrivalAlias+"."+cols.Classification.Bare()+" = "+cols.Classification.Qualified()).
-		ColumnExpr(cols.SenderDomain.Qualified()).
-		ColumnExpr(cols.Classification.Qualified()).
-		ColumnExpr(outcomeAlias+"."+outcomeColumn).
-		ColumnExpr("COUNT(*) AS count").
-		ColumnExpr("MAX("+arrivalAlias+".arrived) AS arrived").
-		ColumnExpr("COUNT(DISTINCT "+cols.MailboxID.Qualified()+") AS mailboxes").
-		ColumnExpr("MIN("+cols.MailboxID.Qualified()+") AS mailbox_id").
-		ColumnExpr(cols.MatchedCustomerID.Expr("BOOL_AND({} IS NOT NULL) AS all_customers")).
-		ColumnExpr(cols.MatchedCarrierID.Expr("BOOL_AND({} IS NOT NULL) AS all_carriers")).
-		Where(cols.ReceivedAt.Gte(), req.Since).
-		GroupExpr(cols.SenderDomain.Qualified()).
-		GroupExpr(cols.Classification.Qualified()).
-		GroupExpr(outcomeAlias + "." + outcomeColumn)
+	outcome := outcomes.Col("outcome")
+
+	return messages().
+		With(outcomes, arrivals).
+		Join(outcomes, outcomes.Col("message_id").EqCol(m.ID)).
+		Join(
+			arrivals,
+			arrivals.Col("sender_domain").EqCol(m.SenderDomain),
+			arrivals.Col("classification").EqCol(m.Classification),
+		).
+		Pick(
+			m.SenderDomain,
+			m.Classification,
+			outcome,
+			keel.Count(),
+			keel.Max(arrivals.Col("arrived")),
+			m.MailboxID.CountDistinct(),
+			m.MailboxID.Min(),
+			keel.Raw("BOOL_AND(? IS NOT NULL)", m.MatchedCustomerID),
+			keel.Raw("BOOL_AND(? IS NOT NULL)", m.MatchedCarrierID),
+		).
+		Where(m.ReceivedAt.Gte(req.Since)).
+		Group(m.SenderDomain, m.Classification, outcome)
 }
 
 func (r *repository) MessageRows(
@@ -192,24 +200,28 @@ func (r *repository) MessageRows(
 	req *triageports.MessageRowsRequest,
 ) ([]*triageports.MessageRow, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*triageports.MessageRow, error) {
-		rows := make([]*triageports.MessageRow, 0, len(req.IDs))
 		if len(req.IDs) == 0 {
-			return rows, nil
+			return []*triageports.MessageRow{}, nil
 		}
 
-		if err := messageRowsQuery(r.db.DBForContext(ctx), req).Scan(ctx, &rows); err != nil {
+		scanned, err := keel.Into[scannedRow[bool]](ctx, r.db.Keel(ctx), messageRowsQuery(req))
+		if err != nil {
 			return nil, err
 		}
 
-		return rows, nil
+		return messageRows(scanned, false), nil
 	})
 }
 
-func messageRowsQuery(db bun.IDB, req *triageports.MessageRowsRequest) *bun.SelectQuery {
-	return messages(db).
-		Apply(messageRowColumns).
-		Apply(inboundmessagecol.InboundMessageApplyTenant(req.TenantInfo)).
-		Where(inboundmessagecol.InboundMessageColumns.ID.In(), bun.List(req.IDs))
+func messageRowsQuery(
+	req *triageports.MessageRowsRequest,
+) *keel.Query[inboundmessage.InboundMessage] {
+	m := inboundmessagedb.InboundMessages
+
+	return withReference(messages()).
+		Pick(messageRowColumns(keel.Raw("FALSE"))...).
+		Where(m.ID.In(req.IDs...)).
+		Limit(len(req.IDs))
 }
 
 func (r *repository) SenderDomains(
@@ -217,30 +229,36 @@ func (r *repository) SenderDomains(
 	req *triageports.SenderDomainsRequest,
 ) ([]string, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]string, error) {
-		domains := make([]string, 0, req.Limit)
-		if err := senderDomainsQuery(r.db.DBForContext(ctx), req).Scan(ctx, &domains); err != nil {
+		if req.Limit <= 0 {
+			return []string{}, nil
+		}
+
+		domains, err := keel.Into[string](ctx, r.db.Keel(ctx), senderDomainsQuery(req))
+		if err != nil {
 			return nil, err
+		}
+		if domains == nil {
+			domains = []string{}
 		}
 
 		return domains, nil
 	})
 }
 
-func senderDomainsQuery(db bun.IDB, req *triageports.SenderDomainsRequest) *bun.SelectQuery {
-	cols := inboundmessagecol.InboundMessageColumns
+func senderDomainsQuery(
+	req *triageports.SenderDomainsRequest,
+) *keel.Query[inboundmessage.InboundMessage] {
+	m := inboundmessagedb.InboundMessages
+	term := strings.ToLower(strings.TrimSpace(req.Query))
 
-	query := messages(db).
-		ColumnExpr(cols.SenderDomain.Qualified()).
-		Apply(inboundmessagecol.InboundMessageApplyTenant(req.TenantInfo)).
-		Where(cols.ReceivedAt.Gte(), req.Since).
-		Where(cols.SenderDomain.NotEq(), "")
-	if term := strings.ToLower(strings.TrimSpace(req.Query)); term != "" {
-		query = query.Where(cols.SenderDomain.Like(), "%"+stringutils.EscapeLikePattern(term)+"%")
-	}
-
-	return query.
-		GroupExpr(cols.SenderDomain.Qualified()).
-		OrderExpr("COUNT(*) DESC").
-		Order(cols.SenderDomain.OrderAsc()).
-		Limit(int64(req.Limit))
+	return messages().
+		Pick(m.SenderDomain).
+		Where(
+			m.ReceivedAt.Gte(req.Since),
+			m.SenderDomain.Ne(""),
+			keel.When(term != "", m.SenderDomain.Contains(term)),
+		).
+		Group(m.SenderDomain).
+		Order(keel.Count().Desc(), m.SenderDomain.Asc()).
+		Limit(req.Limit)
 }

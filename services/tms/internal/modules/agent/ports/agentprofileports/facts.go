@@ -29,39 +29,39 @@ type FactsWindow struct {
 }
 
 type NamedCount struct {
-	Name  string `bun:"name"`
-	Count int64  `bun:"count"`
+	Name  string
+	Count int64
 }
 
 type LaneCount struct {
-	Origin      string `bun:"origin_state"`
-	Destination string `bun:"destination_state"`
-	Count       int64  `bun:"count"`
+	Origin      string
+	Destination string
+	Count       int64
 }
 
 type NamedStatus struct {
-	Name   string `bun:"name"`
-	Status string `bun:"status"`
+	Name   string
+	Status string
 }
 
 type ShipmentVolume struct {
-	Total     int64 `bun:"total"`
-	Canceled  int64 `bun:"canceled"`
-	Moves     int64 `bun:"moves"`
-	Brokered  int64 `bun:"brokered"`
-	Customers int64 `bun:"customers"`
+	Total     int64
+	Canceled  int64
+	Moves     int64
+	Brokered  int64
+	Customers int64
 }
 
 type FleetCounts struct {
-	Active       int64        `bun:"active"`
-	OutOfService int64        `bun:"out_of_service"`
-	ByType       []NamedCount `bun:"-"`
+	Active       int64
+	OutOfService int64
+	ByType       []NamedCount
 }
 
 type WorkforceCounts struct {
-	Active       int64        `bun:"active"`
-	Contractors  int64        `bun:"contractors"`
-	ByDriverType []NamedCount `bun:"-"`
+	Active       int64
+	Contractors  int64
+	ByDriverType []NamedCount
 }
 
 // OrganizationActivity is what an organization's records say about the work

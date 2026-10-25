@@ -4,16 +4,15 @@ import (
 	"context"
 	"strings"
 
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/triageports"
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/usstate/usstatedb"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
-	"github.com/emoss08/trenova/pkg/buncolgen/locationcol"
-	"github.com/emoss08/trenova/pkg/buncolgen/shipmentcol"
-	"github.com/emoss08/trenova/pkg/buncolgen/usstatecol"
-	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment/shipmentdb"
+	"github.com/emoss08/trenova/internal/modules/places/domain/location/locationdb"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/uptrace/bun"
 	"go.uber.org/fx"
 )
 
@@ -43,24 +42,32 @@ func (r *repository) FindOverlappingLoads(
 			return found, nil
 		}
 
-		db := r.db.DBForContext(ctx)
+		checked := make([]*triageports.TenderLoad, 0, min(len(req.Loads), maxLoadsChecked))
 		for i := range req.Loads {
 			if i >= maxLoadsChecked {
 				break
 			}
-			load := &req.Loads[i]
-			if !checkable(load) {
-				continue
+			if load := &req.Loads[i]; checkable(load) {
+				checked = append(checked, load)
 			}
+		}
+		if len(checked) == 0 {
+			return found, nil
+		}
 
-			ids := make([]pulid.ID, 0, 1)
-			if err := overlapQuery(db, req.TenantInfo, req.CustomerID, load).
-				Scan(ctx, &ids); err != nil {
-				return nil, err
-			}
+		matches := make([][]pulid.ID, len(checked))
+		items := make([]keel.BatchItem, len(checked))
+		for i, load := range checked {
+			items[i] = keel.IntoSlice(overlapQuery(req.CustomerID, load), &matches[i])
+		}
+		if err := keel.Batch(ctx, r.db.Keel(ctx), items...); err != nil {
+			return nil, err
+		}
+
+		for i, ids := range matches {
 			if len(ids) > 0 {
 				found = append(found, triageports.OverlappingLoad{
-					LoadIndex:  load.Index,
+					LoadIndex:  checked[i].Index,
 					ShipmentID: ids[0],
 				})
 			}
@@ -77,35 +84,32 @@ func checkable(load *triageports.TenderLoad) bool {
 }
 
 func overlapQuery(
-	db bun.IDB,
-	tenantInfo pagination.TenantInfo,
 	customerID pulid.ID,
 	load *triageports.TenderLoad,
-) *bun.SelectQuery {
-	cols := shipmentcol.ShipmentColumns
+) *keel.Query[shipment.Shipment] {
+	sp := shipmentdb.Shipments
 
-	pickup := stopAt(db, tenantInfo, stopAtRequest{
+	pickup := stopAt(sp, "pick", stopAtRequest{
 		types: []shipment.StopType{shipment.StopTypePickup, shipment.StopTypeSplitPickup},
 		city:  load.OriginCity,
 		state: load.OriginState,
 		from:  load.PickupFrom,
 		to:    load.PickupTo,
 	})
-	delivery := stopAt(db, tenantInfo, stopAtRequest{
+	delivery := stopAt(sp, "drop", stopAtRequest{
 		types: []shipment.StopType{shipment.StopTypeDelivery, shipment.StopTypeSplitDelivery},
 		city:  load.DestinationCity,
 		state: load.DestinationState,
 	})
 
-	return db.NewSelect().
-		Model((*shipment.Shipment)(nil)).
-		ColumnExpr(cols.ID.Qualified()).
-		Apply(shipmentcol.ShipmentApplyTenant(tenantInfo)).
-		Where(cols.CustomerID.Eq(), customerID).
-		Where(cols.Status.NotEq(), shipment.StatusCanceled).
-		Where("EXISTS (?)", pickup).
-		Where("EXISTS (?)", delivery).
-		Order(cols.CreatedAt.OrderDesc()).
+	return sp.Pick(sp.ID).
+		Where(
+			sp.CustomerID.Eq(customerID),
+			sp.Status.Ne(shipment.StatusCanceled),
+			keel.Exists(pickup),
+			keel.Exists(delivery),
+		).
+		Order(sp.CreatedAt.Desc()).
 		Limit(1)
 }
 
@@ -118,41 +122,27 @@ type stopAtRequest struct {
 }
 
 func stopAt(
-	db bun.IDB,
-	tenantInfo pagination.TenantInfo,
+	sp *shipmentdb.ShipmentsTable,
+	alias string,
 	req stopAtRequest,
-) *bun.SelectQuery {
-	ship := shipmentcol.ShipmentColumns
-	move := shipmentcol.ShipmentMoveColumns
-	stop := shipmentcol.StopColumns
-	loc := locationcol.LocationColumns
-	state := usstatecol.UsStateColumns
+) *keel.Query[shipment.ShipmentMove] {
+	move := shipmentdb.ShipmentMoves.As(alias + "_sm")
+	stop := shipmentdb.Stops.As(alias + "_stp")
+	loc := locationdb.Locations.As(alias + "_loc")
+	state := usstatedb.UsStates.As(alias + "_st")
 
-	query := db.NewSelect().
-		Model((*shipment.ShipmentMove)(nil)).
-		ColumnExpr("1").
-		Join("JOIN "+shipmentcol.StopTable.Name+" AS "+shipmentcol.StopTable.Alias).
-		JoinOn(stop.ShipmentMoveID.EqColumn(move.ID)).
-		JoinOn(stop.OrganizationID.EqColumn(move.OrganizationID)).
-		JoinOn(stop.BusinessUnitID.EqColumn(move.BusinessUnitID)).
-		Join("JOIN "+locationcol.LocationTable.Name+" AS "+locationcol.LocationTable.Alias).
-		JoinOn(loc.ID.EqColumn(stop.LocationID)).
-		JoinOn(loc.OrganizationID.EqColumn(stop.OrganizationID)).
-		JoinOn(loc.BusinessUnitID.EqColumn(stop.BusinessUnitID)).
-		Join("JOIN "+usstatecol.UsStateTable.Name+" AS "+usstatecol.UsStateTable.Alias).
-		JoinOn(state.ID.EqColumn(loc.StateID)).
-		Where(move.ShipmentID.EqColumn(ship.ID)).
-		Where(move.OrganizationID.Eq(), tenantInfo.OrgID).
-		Where(move.BusinessUnitID.Eq(), tenantInfo.BuID).
-		Where(stop.Type.In(), bun.List(req.types)).
-		Where(stop.Status.NotEq(), shipment.StopStatusCanceled).
-		Where(loc.City.Expr("LOWER(BTRIM({})) = ?"), strings.ToLower(strings.TrimSpace(req.city))).
-		Where(state.Abbreviation.Expr("UPPER({}) = ?"), strings.ToUpper(req.state))
-	if req.from > 0 && req.to > req.from {
-		query = query.
-			Where(stop.ScheduledWindowStart.Gte(), req.from).
-			Where(stop.ScheduledWindowStart.Lt(), req.to)
-	}
-
-	return query
+	return move.
+		Join(stop, stop.ShipmentMoveID.EqCol(move.ID)).
+		Join(loc, loc.ID.EqCol(stop.LocationID)).
+		Join(state, state.ID.EqCol(loc.StateID)).
+		Pick(keel.Raw("1")).
+		Where(
+			move.ShipmentID.EqCol(sp.ID),
+			stop.Type.In(req.types...),
+			stop.Status.Ne(shipment.StopStatusCanceled),
+			keel.Raw("lower(btrim(?)) = ?", loc.City, strings.ToLower(strings.TrimSpace(req.city))),
+			keel.Raw("upper(?) = ?", state.Abbreviation, strings.ToUpper(req.state)),
+			keel.When(req.from > 0 && req.to > req.from, stop.ScheduledWindowStart.Gte(req.from)),
+			keel.When(req.from > 0 && req.to > req.from, stop.ScheduledWindowStart.Lt(req.to)),
+		)
 }

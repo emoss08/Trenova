@@ -217,10 +217,10 @@ type SearchMentionsRequest struct {
 }
 
 type MentionRow struct {
-	Type     string `bun:"type"`
-	ID       string `bun:"id"`
-	Label    string `bun:"label"`
-	Subtitle string `bun:"subtitle"`
+	Type     string
+	ID       string
+	Label    string
+	Subtitle string
 }
 
 // SearchDeskRequest searches what one person has in the Desk: their
@@ -241,15 +241,15 @@ type CountQuestionsSinceRequest struct {
 }
 
 type DeskSearchRow struct {
-	Kind         string   `bun:"kind"`
-	ID           string   `bun:"id"`
-	ThreadID     pulid.ID `bun:"thread_id"`
-	AgentID      pulid.ID `bun:"agent_id"`
-	Title        string   `bun:"title"`
-	ThreadTitle  string   `bun:"thread_title"`
-	ArtifactKind string   `bun:"artifact_kind"`
-	Status       string   `bun:"status"`
-	At           int64    `bun:"at"`
+	Kind         string
+	ID           string
+	ThreadID     pulid.ID
+	AgentID      pulid.ID
+	Title        string
+	ThreadTitle  string
+	ArtifactKind string
+	Status       string
+	At           int64
 }
 
 type ConversationRepository interface {

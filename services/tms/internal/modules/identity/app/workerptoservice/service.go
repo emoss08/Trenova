@@ -31,7 +31,6 @@ import (
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
 	"github.com/shopspring/decimal"
-	"github.com/uptrace/bun"
 	"go.temporal.io/sdk/client"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
@@ -41,7 +40,7 @@ type Params struct {
 	fx.In
 
 	Logger          *zap.Logger
-	DB              kernelports.DBConnection
+	DB              kernelports.Transactor
 	Repo            workerports.WorkerPTORepository
 	UserRepo        tenantports.UserRepository
 	WorkerRepo      workerports.WorkerRepository
@@ -55,7 +54,7 @@ type Params struct {
 
 type Service struct {
 	l               *zap.Logger
-	db              kernelports.DBConnection
+	db              kernelports.Transactor
 	repo            workerports.WorkerPTORepository
 	userRepo        tenantports.UserRepository
 	workerRepo      workerports.WorkerRepository
@@ -690,7 +689,7 @@ func (s *Service) inTx(ctx context.Context, fn func(context.Context) error) erro
 	if s.db == nil {
 		return fn(ctx)
 	}
-	return s.db.WithTx(ctx, kernelports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
+	return s.db.Transact(ctx, kernelports.TxOptions{}, func(txCtx context.Context) error {
 		return fn(txCtx)
 	})
 }

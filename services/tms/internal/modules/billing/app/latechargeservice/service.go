@@ -28,7 +28,6 @@ import (
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
 	"github.com/shopspring/decimal"
-	"github.com/uptrace/bun"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
@@ -37,7 +36,7 @@ type Params struct {
 	fx.In
 
 	Logger              *zap.Logger
-	DB                  kernelports.DBConnection
+	DB                  kernelports.Transactor
 	Repo                latechargeports.LateChargeRepository
 	BillingControlRepo  tenantports.BillingControlRepository
 	InvoiceService      invoiceports.InvoiceService
@@ -50,7 +49,7 @@ type Params struct {
 // first so a concurrent run cannot charge the same period twice.
 type Service struct {
 	l                   *zap.Logger
-	db                  kernelports.DBConnection
+	db                  kernelports.Transactor
 	repo                latechargeports.LateChargeRepository
 	billingRepo         tenantports.BillingControlRepository
 	invoiceService      invoiceports.InvoiceService
@@ -399,7 +398,7 @@ func (s *Service) raiseMemo(
 	)
 	// The assessment rows and the memo they add up to stand or fall together:
 	// a memo that fails leaves no assessment claiming a period was charged.
-	err := s.db.WithTx(ctx, kernelports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
+	err := s.db.Transact(ctx, kernelports.TxOptions{}, func(txCtx context.Context) error {
 		var txErr error
 		if inserted, txErr = s.repo.InsertAssessments(txCtx, plan.assessments); txErr != nil {
 			return txErr

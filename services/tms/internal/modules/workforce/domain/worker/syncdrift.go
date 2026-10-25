@@ -1,23 +1,23 @@
 package worker
 
 import (
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
-	"github.com/uptrace/bun"
 )
 
 type WorkerSyncDrift struct {
-	bun.BaseModel `bun:"table:samsara_worker_sync_drifts,alias:wsd"`
+	keel.Table `keel:"samsara_worker_sync_drifts"`
 
-	OrganizationID  string `bun:"organization_id,pk,type:VARCHAR(100),notnull"`
-	BusinessUnitID  string `bun:"business_unit_id,pk,type:VARCHAR(100),notnull"`
-	WorkerID        string `bun:"worker_id,pk,type:VARCHAR(100),notnull"`
-	DriftType       string `bun:"drift_type,pk,type:VARCHAR(64),notnull"`
-	WorkerName      string `bun:"worker_name,type:VARCHAR(255),notnull"`
-	Message         string `bun:"message,type:TEXT,notnull"`
-	LocalExternalID string `bun:"local_external_id,type:TEXT,nullzero"`
-	RemoteDriverID  string `bun:"remote_driver_id,type:TEXT,nullzero"`
-	DetectedAt      int64  `bun:"detected_at,type:BIGINT,notnull"`
+	OrganizationID  string `keel:"organization_id,pk,tenant"`
+	BusinessUnitID  string `keel:"business_unit_id,pk,tenant"`
+	WorkerID        string `keel:"worker_id,pk"`
+	DriftType       string `keel:"drift_type,pk"`
+	WorkerName      string `keel:"worker_name"`
+	Message         string `keel:"message"`
+	LocalExternalID string `keel:"local_external_id,nullzero"`
+	RemoteDriverID  string `keel:"remote_driver_id,nullzero"`
+	DetectedAt      int64  `keel:"detected_at"`
 }
 
 func (d *WorkerSyncDrift) Validate(multiErr *errortypes.MultiError) {

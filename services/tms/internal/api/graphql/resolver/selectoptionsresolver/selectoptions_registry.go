@@ -38,7 +38,7 @@ type SelectOptionsRequest struct {
 
 type selectOptionConnectionItem struct {
 	option *gqlmodel.SelectOption
-	cursor pagination.Cursor
+	cursor pagination.PositionCursor
 }
 
 func (r *Deps) RequireAuthContext(ctx context.Context) (*authctx.AuthContext, error) {
@@ -373,7 +373,7 @@ func selectOptionConnection(
 
 	edges := make([]*gqlmodel.SelectOptionEdge, len(items))
 	for i, item := range items {
-		cursor, err := pagination.EncodeCursor(item.cursor)
+		cursor, err := pagination.EncodePositionCursor(item.cursor)
 		if err != nil {
 			return nil, err
 		}
@@ -424,9 +424,9 @@ func selectOptionConnectionItemFor(
 ) selectOptionConnectionItem {
 	return selectOptionConnectionItem{
 		option: option,
-		cursor: pagination.Cursor{
-			CreatedAt: createdAt,
-			ID:        id,
+		cursor: pagination.PositionCursor{
+			At: createdAt,
+			ID: id,
 		},
 	}
 }

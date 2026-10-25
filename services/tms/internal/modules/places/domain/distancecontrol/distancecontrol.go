@@ -1,22 +1,19 @@
 package distancecontrol
 
 import (
-	"context"
 	"strings"
 
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/places/domain/distanceprofile"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/validationframework"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/emoss08/trenova/shared/timeutils"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
-	"github.com/uptrace/bun"
 )
 
 var (
-	_ bun.BeforeAppendModelHook          = (*DistanceControl)(nil)
 	_ validationframework.TenantedEntity = (*DistanceControl)(nil)
 	_ domaintypes.PostgresSearchable     = (*DistanceControl)(nil)
 )
@@ -33,31 +30,31 @@ const (
 )
 
 type DistanceControl struct {
-	bun.BaseModel `bun:"table:distance_controls,alias:dc" json:"-"`
+	keel.Table `keel:"distance_controls"`
 
-	ID                                           pulid.ID `json:"id"                                           bun:"id,type:VARCHAR(100),pk,notnull"`
-	BusinessUnitID                               pulid.ID `json:"businessUnitId"                               bun:"business_unit_id,type:VARCHAR(100),pk,notnull"`
-	OrganizationID                               pulid.ID `json:"organizationId"                               bun:"organization_id,type:VARCHAR(100),pk,notnull"`
-	StoreMileage                                 bool     `json:"storeMileage"                                 bun:"store_mileage,type:BOOLEAN,notnull"`
-	StoredDistanceUnits                          string   `json:"storedDistanceUnits"                          bun:"stored_distance_units,type:VARCHAR(50),notnull"`
-	PostalCodeFallbackToCity                     bool     `json:"postalCodeFallbackToCity"                     bun:"postal_code_fallback_to_city,type:BOOLEAN,notnull"`
-	AutoCreateStoredMileage                      bool     `json:"autoCreateStoredMileage"                      bun:"auto_create_stored_mileage,type:BOOLEAN,notnull"`
-	LoadedMoveDistanceProfileID                  pulid.ID `json:"loadedMoveDistanceProfileId"                  bun:"loaded_move_distance_profile_id,type:VARCHAR(100),notnull"`
-	EmptyMoveDistanceProfileID                   pulid.ID `json:"emptyMoveDistanceProfileId"                   bun:"empty_move_distance_profile_id,type:VARCHAR(100),notnull"`
-	PayDistanceProfileID                         pulid.ID `json:"payDistanceProfileId"                         bun:"pay_distance_profile_id,type:VARCHAR(100),notnull"`
-	BillingDistanceProfileID                     pulid.ID `json:"billingDistanceProfileId"                     bun:"billing_distance_profile_id,type:VARCHAR(100),notnull"`
-	FuelDistanceProfileID                        pulid.ID `json:"fuelDistanceProfileId"                        bun:"fuel_distance_profile_id,type:VARCHAR(100),notnull"`
-	EtaOutOfRouteDistanceProfileID               pulid.ID `json:"etaOutOfRouteDistanceProfileId"               bun:"eta_out_of_route_distance_profile_id,type:VARCHAR(100),notnull"`
-	DistanceCalculatorShortestDistanceProfileID  pulid.ID `json:"distanceCalculatorShortestDistanceProfileId"  bun:"distance_calculator_shortest_distance_profile_id,type:VARCHAR(100),notnull"`
-	DistanceCalculatorPracticalDistanceProfileID pulid.ID `json:"distanceCalculatorPracticalDistanceProfileId" bun:"distance_calculator_practical_distance_profile_id,type:VARCHAR(100),notnull"`
-	CaptureJurisdictionMiles                     bool     `json:"captureJurisdictionMiles"                     bun:"capture_jurisdiction_miles,type:BOOLEAN,notnull"`
-	Version                                      int64    `json:"version"                                      bun:"version,type:BIGINT,notnull"`
-	CreatedAt                                    int64    `json:"createdAt"                                    bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
-	UpdatedAt                                    int64    `json:"updatedAt"                                    bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
-	SearchVector                                 string   `json:"-"                                            bun:"search_vector,type:TSVECTOR,scanonly"`
+	ID                                           pulid.ID `json:"id"                                           keel:"id,pk,autoid:dc_"`
+	BusinessUnitID                               pulid.ID `json:"businessUnitId"                               keel:"business_unit_id,pk,tenant"`
+	OrganizationID                               pulid.ID `json:"organizationId"                               keel:"organization_id,pk,tenant"`
+	StoreMileage                                 bool     `json:"storeMileage"                                 keel:"store_mileage"`
+	StoredDistanceUnits                          string   `json:"storedDistanceUnits"                          keel:"stored_distance_units"`
+	PostalCodeFallbackToCity                     bool     `json:"postalCodeFallbackToCity"                     keel:"postal_code_fallback_to_city"`
+	AutoCreateStoredMileage                      bool     `json:"autoCreateStoredMileage"                      keel:"auto_create_stored_mileage"`
+	LoadedMoveDistanceProfileID                  pulid.ID `json:"loadedMoveDistanceProfileId"                  keel:"loaded_move_distance_profile_id"`
+	EmptyMoveDistanceProfileID                   pulid.ID `json:"emptyMoveDistanceProfileId"                   keel:"empty_move_distance_profile_id"`
+	PayDistanceProfileID                         pulid.ID `json:"payDistanceProfileId"                         keel:"pay_distance_profile_id"`
+	BillingDistanceProfileID                     pulid.ID `json:"billingDistanceProfileId"                     keel:"billing_distance_profile_id"`
+	FuelDistanceProfileID                        pulid.ID `json:"fuelDistanceProfileId"                        keel:"fuel_distance_profile_id"`
+	EtaOutOfRouteDistanceProfileID               pulid.ID `json:"etaOutOfRouteDistanceProfileId"               keel:"eta_out_of_route_distance_profile_id"`
+	DistanceCalculatorShortestDistanceProfileID  pulid.ID `json:"distanceCalculatorShortestDistanceProfileId"  keel:"distance_calculator_shortest_distance_profile_id"`
+	DistanceCalculatorPracticalDistanceProfileID pulid.ID `json:"distanceCalculatorPracticalDistanceProfileId" keel:"distance_calculator_practical_distance_profile_id"`
+	CaptureJurisdictionMiles                     bool     `json:"captureJurisdictionMiles"                     keel:"capture_jurisdiction_miles"`
+	Version                                      int64    `json:"version"                                      keel:"version,version"`
+	CreatedAt                                    int64    `json:"createdAt"                                    keel:"created_at,autocreate"`
+	UpdatedAt                                    int64    `json:"updatedAt"                                    keel:"updated_at,autoupdate"`
+	SearchVector                                 string   `json:"-"`
 
-	BusinessUnit *tenant.BusinessUnit `json:"-" bun:"rel:belongs-to,join:business_unit_id=id"`
-	Organization *tenant.Organization `json:"-" bun:"rel:belongs-to,join:organization_id=id"`
+	BusinessUnit *tenant.BusinessUnit `json:"-"`
+	Organization *tenant.Organization `json:"-"`
 }
 
 func NewDefault(
@@ -181,18 +178,4 @@ func (d *DistanceControl) GetPostgresSearchConfig() domaintypes.PostgresSearchCo
 			},
 		},
 	}
-}
-
-func (d *DistanceControl) BeforeAppendModel(_ context.Context, query bun.Query) error {
-	now := timeutils.NowUnix()
-	switch query.(type) {
-	case *bun.InsertQuery:
-		if d.ID.IsNil() {
-			d.ID = pulid.MustNew("dc_")
-		}
-		d.CreatedAt = now
-	case *bun.UpdateQuery:
-		d.UpdatedAt = now
-	}
-	return nil
 }

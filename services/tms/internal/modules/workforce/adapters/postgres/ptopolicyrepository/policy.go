@@ -4,23 +4,47 @@ import (
 	"context"
 	"strings"
 
-	"github.com/emoss08/trenova/pkg/buncolgen/workercol"
-
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
-	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker/workerdb"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
-	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dberror"
-	"github.com/emoss08/trenova/pkg/dbhelper"
+	"github.com/emoss08/trenova/pkg/listquery"
 	"github.com/emoss08/trenova/pkg/pagination"
-	"github.com/emoss08/trenova/pkg/querybuilder"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/uptrace/bun"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
+
+const policyBusyMessage = "PTO policy is busy. Retry the request."
+
+var policyErrors = dberror.Mapping{
+	Entity: "PTOPolicy",
+	Unique: []dberror.Constraint{
+		{
+			Name:    "uq_pto_policies_code",
+			Field:   "code",
+			Message: "PTO policy with this code already exists in your organization",
+		},
+		{
+			Name:    "uq_pto_policies_default",
+			Field:   "isDefault",
+			Message: "Another PTO policy is already the default",
+		},
+		{
+			Name:    "uq_pto_policy_rules_type",
+			Field:   "rules",
+			Message: "Each PTO type may appear only once in a policy",
+		},
+	},
+}
+
+type policyCount struct {
+	PolicyID pulid.ID
+	Count    int64
+}
 
 type Params struct {
 	fx.In
@@ -41,85 +65,42 @@ func New(p Params) workerports.PTOPolicyRepository {
 	}
 }
 
-func orderRules(sq *bun.SelectQuery) *bun.SelectQuery {
-	cols := workercol.PTOPolicyRuleColumns
-	return sq.Order(cols.SortOrder.OrderAsc()).Order(cols.PTOType.OrderAsc())
+func orderedRules() keel.Loader {
+	rl := workerdb.PTOPolicies.Rules()
+	return rl.Order(rl.SortOrder.Asc(), rl.PTOType.Asc())
 }
 
-func (r *repository) applyListFilters(
-	q *bun.SelectQuery,
-	req *workerports.ListPTOPoliciesRequest,
-) *bun.SelectQuery {
-	cols := workercol.PTOPolicyColumns
-	if req.Status != "" {
-		q = q.Where(cols.Status.Eq(), req.Status)
+func statusFilter(status string) keel.Pred {
+	if status == "" {
+		return nil
 	}
-	if req.IncludeRules {
-		q = q.Relation(workercol.PTOPolicyRelations.Rules, orderRules)
-	}
-	return q
+
+	return workerdb.PTOPolicies.Status.Eq(worker.PTOPolicyStatus(status))
 }
 
 func (r *repository) List(
 	ctx context.Context,
 	req *workerports.ListPTOPoliciesRequest,
 ) (*pagination.CursorListResult[*worker.PTOPolicy], error) {
-	return dbtx.Write(
+	return dbtx.Read(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*pagination.CursorListResult[*worker.PTOPolicy], error) {
-			log := r.l.With(zap.String("operation", "List"))
-
-			dba := r.db.DBForContext(ctx)
-			var totalCount *int
-			if req.Cursor.IncludeTotalCount {
-				total, err := dba.
-					NewSelect().
-					Model((*worker.PTOPolicy)(nil)).
-					Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-						sq = querybuilder.ApplyFiltersWithoutSort(
-							sq,
-							workercol.PTOPolicyTable.Alias,
-							req.Filter,
-							(*worker.PTOPolicy)(nil),
-						)
-						cols := workercol.PTOPolicyColumns
-						if req.Status != "" {
-							sq = sq.Where(cols.Status.Eq(), req.Status)
-						}
-						return sq
-					}).
-					Count(ctx)
-				if err != nil {
-					log.Error("failed to count PTO policies", zap.Error(err))
-					return nil, err
-				}
-				totalCount = new(int(total))
-			}
-
-			result, err := dbhelper.CursorList(ctx, dbhelper.CursorListParams[*worker.PTOPolicy]{
-				Filter:     req.Filter,
-				Cursor:     req.Cursor,
-				TotalCount: totalCount,
-				Query: func(items *[]*worker.PTOPolicy) *bun.SelectQuery {
-					return dba.NewSelect().Model(items).ColumnExpr(workercol.PTOPolicyTable.All())
+			p := workerdb.PTOPolicies
+			result, err := listquery.Connection(
+				ctx,
+				r.db.Keel(ctx),
+				p.Where(statusFilter(req.Status)),
+				&listquery.Request[worker.PTOPolicy]{
+					Filter: req.Filter,
+					Cursor: req.Cursor,
+					Shape: func(q *keel.Query[worker.PTOPolicy]) *keel.Query[worker.PTOPolicy] {
+						return q.Load(listquery.When(req.IncludeRules, orderedRules())...)
+					},
 				},
-				Apply: func(sq *bun.SelectQuery) (*bun.SelectQuery, error) {
-					sq, applyErr := querybuilder.ApplyCursorFilters(
-						sq,
-						workercol.PTOPolicyTable.Alias,
-						req.Filter,
-						req.Cursor,
-						(*worker.PTOPolicy)(nil),
-					)
-					if applyErr != nil {
-						return sq, applyErr
-					}
-					return r.applyListFilters(sq, req), nil
-				},
-			})
+			)
 			if err != nil {
-				log.Error("failed to list PTO policies", zap.Error(err))
+				r.l.Error("failed to list PTO policies", zap.Error(err))
 				return nil, err
 			}
 
@@ -132,45 +113,36 @@ func (r *repository) SelectOptions(
 	ctx context.Context,
 	req *workerports.PTOPolicySelectOptionsRequest,
 ) (*pagination.ListResult[*worker.PTOPolicy], error) {
-	return dbtx.Write(
+	return dbtx.Read(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*pagination.ListResult[*worker.PTOPolicy], error) {
-			cols := workercol.PTOPolicyColumns
-			return dbhelper.SelectOptions[*worker.PTOPolicy](
+			p := workerdb.PTOPolicies
+			q := p.Pick(
+				p.ID,
+				p.Code,
+				p.Name,
+				p.Description,
+				p.IsDefault,
+				p.YearBasis,
+				p.RequiresApproval,
+				p.CreatedAt,
+			).
+				Where(p.Status.Eq(worker.PTOPolicyStatusActive)).
+				Load(orderedRules()).
+				Order(p.IsDefault.Desc(), p.Name.Asc())
+
+			return listquery.SelectOptions(
 				ctx,
-				r.db.DBForContext(ctx),
+				r.db.Keel(ctx),
+				q,
 				req.SelectQueryRequest,
-				&dbhelper.SelectOptionsConfig{
-					ColumnRefs: []buncolgen.Column{
-						cols.ID,
-						// The tenant keys are selected so Bun can key the Rules
-						// relation; the picker offers a policy's tracked PTO types as
-						// the opening-balance rows to fill in.
-						cols.OrganizationID,
-						cols.BusinessUnitID,
-						cols.Code,
-						cols.Name,
-						cols.Description,
-						cols.IsDefault,
-						cols.YearBasis,
-						cols.RequiresApproval,
-						cols.CreatedAt,
-					},
-					OrgColumnRef: &cols.OrganizationID,
-					BuColumnRef:  &cols.BusinessUnitID,
-					QueryModifier: func(q *bun.SelectQuery) *bun.SelectQuery {
-						return q.Where(cols.Status.Eq(), worker.PTOPolicyStatusActive).
-							Relation(workercol.PTOPolicyRelations.Rules, orderRules).
-							Order(cols.IsDefault.OrderDesc()).
-							Order(cols.Name.OrderAsc())
-					},
-					EntityName: "PTOPolicy",
-					SearchColumnRefs: []buncolgen.Column{
-						cols.Code,
-						cols.Name,
-						cols.Description,
-					},
+				func(s string) keel.Pred {
+					return keel.Or(
+						p.Code.ContainsFold(s),
+						p.Name.ContainsFold(s),
+						p.Description.ContainsFold(s),
+					)
 				},
 			)
 		},
@@ -182,23 +154,12 @@ func (r *repository) GetByID(
 	req *workerports.GetPTOPolicyByIDRequest,
 ) (*worker.PTOPolicy, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*worker.PTOPolicy, error) {
-		log := r.l.With(zap.String("operation", "GetByID"), zap.String("id", req.ID.String()))
-
-		entity := new(worker.PTOPolicy)
-		q := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(entity).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return workercol.PTOPolicyScopeTenant(sq, req.TenantInfo).
-					Where(workercol.PTOPolicyColumns.ID.Eq(), req.ID)
-			})
-		if req.IncludeRules {
-			q = q.Relation(workercol.PTOPolicyRelations.Rules, orderRules)
-		}
-
-		if err := q.Scan(ctx); err != nil {
-			log.Error("failed to get PTO policy", zap.Error(err))
-			return nil, dberror.HandleNotFoundError(err, "PTOPolicy")
+		p := workerdb.PTOPolicies
+		entity, err := p.Where(p.ID.Eq(req.ID)).
+			Load(listquery.When(req.IncludeRules, orderedRules())...).
+			One(ctx, r.db.Keel(ctx))
+		if err != nil {
+			return nil, policyErrors.Map(err, req.ID.String())
 		}
 
 		return entity, nil
@@ -207,30 +168,19 @@ func (r *repository) GetByID(
 
 func (r *repository) GetDefault(
 	ctx context.Context,
-	tenantInfo pagination.TenantInfo,
+	_ pagination.TenantInfo,
 ) (*worker.PTOPolicy, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*worker.PTOPolicy, error) {
-		log := r.l.With(zap.String("operation", "GetDefault"))
-
-		cols := workercol.PTOPolicyColumns
-		entity := new(worker.PTOPolicy)
-		err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(entity).
-			Relation(workercol.PTOPolicyRelations.Rules, orderRules).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return workercol.PTOPolicyScopeTenant(sq, tenantInfo).
-					Where(cols.IsDefault.Eq(), true).
-					Where(cols.Status.Eq(), worker.PTOPolicyStatusActive)
-			}).
-			Limit(1).
-			Scan(ctx)
+		p := workerdb.PTOPolicies
+		entity, err := p.Where(p.IsDefault.IsTrue(), p.Status.Eq(worker.PTOPolicyStatusActive)).
+			Load(orderedRules()).
+			Order(p.CreatedAt.Asc()).
+			First(ctx, r.db.Keel(ctx))
 		if err != nil {
-			if dberror.IsNotFoundError(err) {
-				return nil, dberror.HandleNotFoundError(err, "PTOPolicy")
+			if !dberror.IsNotFoundError(err) {
+				r.l.Error("failed to get default PTO policy", zap.Error(err))
 			}
-			log.Error("failed to get default PTO policy", zap.Error(err))
-			return nil, err
+			return nil, policyErrors.Map(err, "")
 		}
 
 		return entity, nil
@@ -242,19 +192,11 @@ func (r *repository) CodeExists(
 	req *workerports.PTOPolicyCodeExistsRequest,
 ) (bool, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (bool, error) {
-		cols := workercol.PTOPolicyColumns
-		q := r.db.DBForContext(ctx).
-			NewSelect().
-			Model((*worker.PTOPolicy)(nil)).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return workercol.PTOPolicyScopeTenant(sq, req.TenantInfo).
-					Where("LOWER("+cols.Code.String()+") = ?", strings.ToLower(req.Code))
-			})
-		if !req.ExcludeID.IsNil() {
-			q = q.Where(cols.ID.Ne(), req.ExcludeID)
-		}
-
-		exists, err := q.Exists(ctx)
+		p := workerdb.PTOPolicies
+		exists, err := p.Where(
+			p.Code.Lower().Eq(strings.ToLower(req.Code)),
+			keel.When(req.ExcludeID.IsNotNil(), p.ID.Ne(req.ExcludeID)),
+		).Exists(ctx, r.db.Keel(ctx))
 		if err != nil {
 			r.l.Error("failed to check PTO policy code", zap.Error(err))
 			return false, err
@@ -264,11 +206,13 @@ func (r *repository) CodeExists(
 	})
 }
 
-func stampRules(entity *worker.PTOPolicy, resetIDs bool) {
+func stampRules(entity *worker.PTOPolicy, resetIDs bool) []*worker.PTOPolicyRule {
+	rules := make([]*worker.PTOPolicyRule, 0, len(entity.Rules))
 	for i, rule := range entity.Rules {
 		if rule == nil {
 			continue
 		}
+
 		if resetIDs {
 			rule.ID = pulid.Nil
 		}
@@ -276,23 +220,18 @@ func stampRules(entity *worker.PTOPolicy, resetIDs bool) {
 		rule.OrganizationID = entity.OrganizationID
 		rule.BusinessUnitID = entity.BusinessUnitID
 		rule.SortOrder = int32(i) //nolint:gosec // rule counts are tiny
+		rules = append(rules, rule)
 	}
+
+	return rules
 }
 
-func (r *repository) insertRules(ctx context.Context, entity *worker.PTOPolicy) error {
-	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
-		if len(entity.Rules) == 0 {
-			return nil
-		}
+func (r *repository) insertRules(ctx context.Context, rules []*worker.PTOPolicyRule) error {
+	if len(rules) == 0 {
+		return nil
+	}
 
-		_, err := r.db.DBForContext(ctx).
-			NewInsert().
-			Model(&entity.Rules).
-			Returning("*").
-			Exec(ctx)
-
-		return err
-	})
+	return workerdb.PTOPolicyRules.CreateMany(ctx, r.db.Keel(ctx), rules)
 }
 
 func (r *repository) Create(
@@ -300,41 +239,30 @@ func (r *repository) Create(
 	entity *worker.PTOPolicy,
 ) (*worker.PTOPolicy, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*worker.PTOPolicy, error) {
-		log := r.l.With(zap.String("operation", "Create"))
-
-		err := r.db.WithTx(ctx, kernelports.TxOptions{}, func(c context.Context, _ bun.Tx) error {
-			if entity.IsDefault {
-				if cErr := r.ClearDefault(c, &workerports.ClearDefaultPTOPolicyRequest{
-					TenantInfo: pagination.TenantInfo{
-						OrgID: entity.OrganizationID,
-						BuID:  entity.BusinessUnitID,
-					},
-				}); cErr != nil {
-					return cErr
-				}
-			}
-
-			if _, iErr := r.db.DBForContext(c).
-				NewInsert().
-				Model(entity).
-				Returning("*").
-				Exec(c); iErr != nil {
-				return iErr
-			}
-
-			stampRules(entity, false)
-			return r.insertRules(c, entity)
-		})
-		if err != nil {
-			log.Error("failed to create PTO policy", zap.Error(err))
+		if err := r.create(ctx, entity); err != nil {
+			r.l.Error("failed to create PTO policy", zap.Error(err))
 			return nil, dberror.MapRetryableTransactionError(
-				err,
-				"PTO policy is busy. Retry the request.",
+				policyErrors.Map(err, entity.ID.String()),
+				policyBusyMessage,
 			)
 		}
 
 		return entity, nil
 	})
+}
+
+func (r *repository) create(ctx context.Context, entity *worker.PTOPolicy) error {
+	if entity.IsDefault {
+		if err := r.ClearDefault(ctx, &workerports.ClearDefaultPTOPolicyRequest{}); err != nil {
+			return err
+		}
+	}
+
+	if err := workerdb.PTOPolicies.Create(ctx, r.db.Keel(ctx), entity); err != nil {
+		return err
+	}
+
+	return r.insertRules(ctx, stampRules(entity, false))
 }
 
 func (r *repository) Update(
@@ -342,60 +270,15 @@ func (r *repository) Update(
 	entity *worker.PTOPolicy,
 ) (*worker.PTOPolicy, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*worker.PTOPolicy, error) {
-		log := r.l.With(zap.String("operation", "Update"), zap.String("id", entity.ID.String()))
-
-		ov := entity.Version
-		entity.Version++
-		ruleCols := workercol.PTOPolicyRuleColumns
-		tenant := pagination.TenantInfo{OrgID: entity.OrganizationID, BuID: entity.BusinessUnitID}
-
-		err := r.db.WithTx(ctx, kernelports.TxOptions{}, func(c context.Context, _ bun.Tx) error {
-			if entity.IsDefault {
-				if cErr := r.ClearDefault(c, &workerports.ClearDefaultPTOPolicyRequest{
-					TenantInfo: tenant,
-					ExceptID:   entity.ID,
-				}); cErr != nil {
-					return cErr
-				}
-			}
-
-			results, uErr := r.db.DBForContext(c).
-				NewUpdate().
-				Model(entity).
-				WherePK().
-				Where(workercol.PTOPolicyColumns.Version.Eq(), ov).
-				Returning("*").
-				Exec(c)
-			if uErr != nil {
-				return uErr
-			}
-			if uErr = dberror.CheckRowsAffected(
-				results,
-				"PTOPolicy",
-				entity.ID.String(),
-			); uErr != nil {
-				return uErr
-			}
-
-			if _, dErr := r.db.DBForContext(c).
-				NewDelete().
-				Model((*worker.PTOPolicyRule)(nil)).
-				WhereGroup(" AND ", func(dq *bun.DeleteQuery) *bun.DeleteQuery {
-					return workercol.PTOPolicyRuleScopeTenantDelete(dq, tenant).
-						Where(ruleCols.PTOPolicyID.Eq(), entity.ID)
-				}).
-				Exec(c); dErr != nil {
-				return dErr
-			}
-
-			stampRules(entity, true)
-			return r.insertRules(c, entity)
-		})
-		if err != nil {
-			log.Error("failed to update PTO policy", zap.Error(err))
+		if err := r.update(ctx, entity); err != nil {
+			r.l.Error(
+				"failed to update PTO policy",
+				zap.String("id", entity.ID.String()),
+				zap.Error(err),
+			)
 			return nil, dberror.MapRetryableTransactionError(
-				err,
-				"PTO policy is busy. Retry the request.",
+				policyErrors.Map(err, entity.ID.String()),
+				policyBusyMessage,
 			)
 		}
 
@@ -403,25 +286,38 @@ func (r *repository) Update(
 	})
 }
 
+func (r *repository) update(ctx context.Context, entity *worker.PTOPolicy) error {
+	if entity.IsDefault {
+		err := r.ClearDefault(ctx, &workerports.ClearDefaultPTOPolicyRequest{ExceptID: entity.ID})
+		if err != nil {
+			return err
+		}
+	}
+
+	db := r.db.Keel(ctx)
+	if err := workerdb.PTOPolicies.Save(ctx, db, entity); err != nil {
+		return err
+	}
+
+	rl := workerdb.PTOPolicyRules
+	if _, err := rl.Where(rl.PTOPolicyID.Eq(entity.ID)).Delete(ctx, db); err != nil {
+		return err
+	}
+
+	return r.insertRules(ctx, stampRules(entity, true))
+}
+
 func (r *repository) ClearDefault(
 	ctx context.Context,
 	req *workerports.ClearDefaultPTOPolicyRequest,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
-		cols := workercol.PTOPolicyColumns
-		q := r.db.DBForContext(ctx).
-			NewUpdate().
-			Model((*worker.PTOPolicy)(nil)).
-			Set(cols.IsDefault.Set(), false).
-			WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-				return workercol.PTOPolicyScopeTenantUpdate(uq, req.TenantInfo).
-					Where(cols.IsDefault.Eq(), true)
-			})
-		if !req.ExceptID.IsNil() {
-			q = q.Where(cols.ID.Ne(), req.ExceptID)
-		}
-
-		if _, err := q.Exec(ctx); err != nil {
+		p := workerdb.PTOPolicies
+		_, err := p.Where(
+			p.IsDefault.IsTrue(),
+			keel.When(req.ExceptID.IsNotNil(), p.ID.Ne(req.ExceptID)),
+		).Update(ctx, r.db.Keel(ctx), p.IsDefault.To(false))
+		if err != nil {
 			r.l.Error("failed to clear default PTO policy", zap.Error(err))
 			return err
 		}
@@ -435,16 +331,9 @@ func (r *repository) CountOpenAssignments(
 	req *workerports.CountOpenPTOAssignmentsRequest,
 ) (int, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (int, error) {
-		cols := workercol.WorkerPTOPolicyAssignmentColumns
-		count, err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model((*worker.WorkerPTOPolicyAssignment)(nil)).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return workercol.WorkerPTOPolicyAssignmentScopeTenant(sq, req.TenantInfo).
-					Where(cols.PTOPolicyID.Eq(), req.PolicyID).
-					Where(cols.EffectiveTo.IsNull())
-			}).
-			Count(ctx)
+		a := workerdb.WorkerPTOPolicyAssignments
+		count, err := a.Where(a.PTOPolicyID.Eq(req.PolicyID), a.EffectiveTo.IsNull()).
+			Count(ctx, r.db.Keel(ctx))
 		if err != nil {
 			r.l.Error("failed to count open PTO assignments", zap.Error(err))
 			return 0, err
@@ -458,25 +347,24 @@ func (r *repository) CountOpenAssignmentsByIDs(
 	ctx context.Context,
 	req *workerports.CountOpenPTOAssignmentsByIDsRequest,
 ) (map[pulid.ID]int, error) {
-	return dbtx.Write(ctx, r.db, func(ctx context.Context) (map[pulid.ID]int, error) {
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) (map[pulid.ID]int, error) {
 		if len(req.PolicyIDs) == 0 {
 			return map[pulid.ID]int{}, nil
 		}
 
-		cols := workercol.WorkerPTOPolicyAssignmentColumns
-		q := r.db.DBForContext(ctx).
-			NewSelect().
-			Model((*worker.WorkerPTOPolicyAssignment)(nil)).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return workercol.WorkerPTOPolicyAssignmentScopeTenant(sq, req.TenantInfo).
-					Where(cols.PTOPolicyID.In(), bun.In(req.PolicyIDs)).
-					Where(cols.EffectiveTo.IsNull())
-			})
-
-		counts, err := dbhelper.CountByID(ctx, q, cols.PTOPolicyID, len(req.PolicyIDs))
+		a := workerdb.WorkerPTOPolicyAssignments
+		rows, err := keel.Into[policyCount](ctx, r.db.Keel(ctx), a.
+			Group(a.PTOPolicyID).
+			Pick(a.PTOPolicyID, keel.Count()).
+			Where(a.PTOPolicyID.In(req.PolicyIDs...), a.EffectiveTo.IsNull()))
 		if err != nil {
 			r.l.Error("failed to count open PTO assignments by policy", zap.Error(err))
 			return nil, err
+		}
+
+		counts := make(map[pulid.ID]int, len(rows))
+		for _, row := range rows {
+			counts[row.PolicyID] = int(row.Count)
 		}
 
 		return counts, nil

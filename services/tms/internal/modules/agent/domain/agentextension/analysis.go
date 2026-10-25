@@ -1,7 +1,6 @@
 package agentextension
 
 import (
-	"context"
 	"errors"
 	"fmt"
 	"regexp"
@@ -9,11 +8,10 @@ import (
 	"strings"
 	"unicode/utf8"
 
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/stringutils"
-	"github.com/emoss08/trenova/shared/timeutils"
 	"github.com/shopspring/decimal"
-	"github.com/uptrace/bun"
 )
 
 const (
@@ -41,11 +39,6 @@ var (
 	ErrAnalysisCodeTooLong = errors.New("the code is longer than 20,000 characters")
 
 	datasetNamePattern = regexp.MustCompile(`^[a-z][a-z0-9_]{0,39}$`)
-)
-
-var (
-	_ bun.BeforeAppendModelHook = (*AnalysisRun)(nil)
-	_ bun.BeforeAppendModelHook = (*AnalysisChart)(nil)
 )
 
 // CheckAnalysisCode refuses code that cannot be run as one cell.
@@ -135,57 +128,40 @@ func (s AnalysisRunStatus) Finished() bool {
 }
 
 type AnalysisRun struct {
-	bun.BaseModel `bun:"table:agent_analysis_runs,alias:aanr" json:"-"`
+	keel.Table `keel:"agent_analysis_runs"`
 
-	ID                pulid.ID          `json:"id"                bun:"id,pk,type:VARCHAR(100),notnull"`
-	BusinessUnitID    pulid.ID          `json:"businessUnitId"    bun:"business_unit_id,pk,type:VARCHAR(100),notnull"`
-	OrganizationID    pulid.ID          `json:"organizationId"    bun:"organization_id,pk,type:VARCHAR(100),notnull"`
-	ExtensionType     Type              `json:"extensionType"     bun:"extension_type,type:VARCHAR(50),notnull"`
-	Status            AnalysisRunStatus `json:"status"            bun:"status,type:VARCHAR(20),notnull"`
-	Title             string            `json:"title"             bun:"title,type:VARCHAR(80),notnull,default:''"`
-	Purpose           string            `json:"purpose"           bun:"purpose,type:VARCHAR(500),notnull,default:''"`
-	Code              string            `json:"code"              bun:"code,type:TEXT,notnull"`
-	Datasets          []AnalysisDataset `json:"datasets"          bun:"datasets,type:JSONB,notnull,default:'[]'::jsonb"`
-	Stdout            string            `json:"stdout"            bun:"stdout,type:TEXT,notnull,default:''"`
-	Stderr            string            `json:"stderr"            bun:"stderr,type:TEXT,notnull,default:''"`
-	Results           []string          `json:"results"           bun:"results,type:JSONB,notnull,default:'[]'::jsonb"`
-	Tables            []AnalysisTable   `json:"tables"            bun:"tables,type:JSONB,notnull,default:'[]'::jsonb"`
-	Figures           []AnalysisFigure  `json:"figures"           bun:"figures,type:JSONB,notnull,default:'[]'::jsonb"`
-	Layout            []AnalysisBlock   `json:"layout"            bun:"layout,type:JSONB,notnull,default:'[]'::jsonb"`
-	ErrorName         string            `json:"errorName"         bun:"error_name,type:VARCHAR(200),notnull,default:''"`
-	ErrorValue        string            `json:"errorValue"        bun:"error_value,type:TEXT,notnull,default:''"`
-	Traceback         string            `json:"traceback"         bun:"traceback,type:TEXT,notnull,default:''"`
-	ChartCount        int               `json:"chartCount"        bun:"chart_count,type:INTEGER,notnull,default:0"`
-	Failure           string            `json:"failure"           bun:"failure,type:TEXT,notnull,default:''"`
-	VendorSandboxID   string            `json:"-"                 bun:"vendor_sandbox_id,type:VARCHAR(100),notnull,default:''"`
-	DurationMs        int64             `json:"durationMs"        bun:"duration_ms,type:BIGINT,notnull,default:0"`
-	CostUSD           decimal.Decimal   `json:"costUsd"           bun:"cost_usd,type:NUMERIC(19,6),notnull,default:0"`
-	AgentDefinitionID pulid.ID          `json:"agentDefinitionId" bun:"agent_definition_id,type:VARCHAR(100),nullzero"`
-	AgentRunID        pulid.ID          `json:"agentRunId"        bun:"agent_run_id,type:VARCHAR(100),nullzero"`
-	ThreadID          pulid.ID          `json:"threadId"          bun:"thread_id,type:VARCHAR(100),nullzero"`
-	RequestedByID     pulid.ID          `json:"requestedById"     bun:"requested_by_id,type:VARCHAR(100),nullzero"`
-	StartedAt         int64             `json:"startedAt"         bun:"started_at,type:BIGINT,notnull"`
-	FinishedAt        *int64            `json:"finishedAt"        bun:"finished_at,type:BIGINT,nullzero"`
-	Version           int64             `json:"version"           bun:"version,type:BIGINT,notnull"`
-	CreatedAt         int64             `json:"createdAt"         bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
-	UpdatedAt         int64             `json:"updatedAt"         bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
-}
-
-func (r *AnalysisRun) BeforeAppendModel(_ context.Context, query bun.Query) error {
-	now := timeutils.NowUnix()
-
-	switch query.(type) {
-	case *bun.InsertQuery:
-		if r.ID.IsNil() {
-			r.ID = pulid.MustNew(AnalysisRunIDPrefix)
-		}
-		r.CreatedAt = now
-		r.UpdatedAt = now
-	case *bun.UpdateQuery:
-		r.UpdatedAt = now
-	}
-
-	return nil
+	ID                pulid.ID          `json:"id"                keel:"id,pk,autoid:aanr_"`
+	BusinessUnitID    pulid.ID          `json:"businessUnitId"    keel:"business_unit_id,pk,tenant"`
+	OrganizationID    pulid.ID          `json:"organizationId"    keel:"organization_id,pk,tenant"`
+	ExtensionType     Type              `json:"extensionType"     keel:"extension_type"`
+	Status            AnalysisRunStatus `json:"status"            keel:"status"`
+	Title             string            `json:"title"             keel:"title"`
+	Purpose           string            `json:"purpose"           keel:"purpose"`
+	Code              string            `json:"code"              keel:"code"`
+	Datasets          []AnalysisDataset `json:"datasets"          keel:"datasets,jsonb"`
+	Stdout            string            `json:"stdout"            keel:"stdout"`
+	Stderr            string            `json:"stderr"            keel:"stderr"`
+	Results           []string          `json:"results"           keel:"results,jsonb"`
+	Tables            []AnalysisTable   `json:"tables"            keel:"tables,jsonb"`
+	Figures           []AnalysisFigure  `json:"figures"           keel:"figures,jsonb"`
+	Layout            []AnalysisBlock   `json:"layout"            keel:"layout,jsonb"`
+	ErrorName         string            `json:"errorName"         keel:"error_name"`
+	ErrorValue        string            `json:"errorValue"        keel:"error_value"`
+	Traceback         string            `json:"traceback"         keel:"traceback"`
+	ChartCount        int               `json:"chartCount"        keel:"chart_count"`
+	Failure           string            `json:"failure"           keel:"failure"`
+	VendorSandboxID   string            `json:"-"                 keel:"vendor_sandbox_id"`
+	DurationMs        int64             `json:"durationMs"        keel:"duration_ms"`
+	CostUSD           decimal.Decimal   `json:"costUsd"           keel:"cost_usd"`
+	AgentDefinitionID pulid.ID          `json:"agentDefinitionId" keel:"agent_definition_id,nullzero"`
+	AgentRunID        pulid.ID          `json:"agentRunId"        keel:"agent_run_id,nullzero"`
+	ThreadID          pulid.ID          `json:"threadId"          keel:"thread_id,nullzero"`
+	RequestedByID     pulid.ID          `json:"requestedById"     keel:"requested_by_id,nullzero"`
+	StartedAt         int64             `json:"startedAt"         keel:"started_at"`
+	FinishedAt        *int64            `json:"finishedAt"        keel:"finished_at"`
+	Version           int64             `json:"version"           keel:"version,version"`
+	CreatedAt         int64             `json:"createdAt"         keel:"created_at,autocreate"`
+	UpdatedAt         int64             `json:"updatedAt"         keel:"updated_at,autoupdate"`
 }
 
 // AnalysisError is the exception the code raised, as the interpreter named it.
@@ -252,21 +228,13 @@ func boundedResults(results []string) []string {
 // AnalysisChart is one image the code displayed, kept with its run so the
 // person sees it beside the reply and in the history.
 type AnalysisChart struct {
-	bun.BaseModel `bun:"table:agent_analysis_charts,alias:aanc" json:"-"`
+	keel.Table `keel:"agent_analysis_charts"`
 
-	RunID          pulid.ID `json:"runId"          bun:"run_id,pk,type:VARCHAR(100),notnull"`
-	Position       int      `json:"position"       bun:"position,pk,type:INTEGER,notnull"`
-	BusinessUnitID pulid.ID `json:"businessUnitId" bun:"business_unit_id,pk,type:VARCHAR(100),notnull"`
-	OrganizationID pulid.ID `json:"organizationId" bun:"organization_id,pk,type:VARCHAR(100),notnull"`
-	Title          string   `json:"title"          bun:"title,type:VARCHAR(200),notnull,default:''"`
-	Image          []byte   `json:"-"              bun:"image,type:BYTEA,notnull"`
-	CreatedAt      int64    `json:"createdAt"      bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
-}
-
-func (c *AnalysisChart) BeforeAppendModel(_ context.Context, query bun.Query) error {
-	if _, ok := query.(*bun.InsertQuery); ok {
-		c.CreatedAt = timeutils.NowUnix()
-	}
-
-	return nil
+	RunID          pulid.ID `json:"runId"          keel:"run_id,pk"`
+	Position       int      `json:"position"       keel:"position,pk"`
+	BusinessUnitID pulid.ID `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
+	OrganizationID pulid.ID `json:"organizationId" keel:"organization_id,pk,tenant"`
+	Title          string   `json:"title"          keel:"title"`
+	Image          []byte   `json:"-"              keel:"image"`
+	CreatedAt      int64    `json:"createdAt"      keel:"created_at,autocreate"`
 }

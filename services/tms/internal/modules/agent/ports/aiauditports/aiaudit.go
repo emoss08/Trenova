@@ -71,9 +71,9 @@ type ListAIAuditEventPageRequest struct {
 
 // AIAuditEventSummary counts a scope and finds the ends of its chain range.
 type AIAuditEventSummary struct {
-	Count    int64 `bun:"row_count"`
-	FirstSeq int64 `bun:"first_seq"`
-	LastSeq  int64 `bun:"last_seq"`
+	Count    int64
+	FirstSeq int64
+	LastSeq  int64
 }
 
 // ListAIAuditChainRangeRequest walks one tenant's chain in seq order.

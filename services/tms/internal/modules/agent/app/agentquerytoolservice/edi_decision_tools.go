@@ -5,8 +5,6 @@ import (
 	"fmt"
 	"slices"
 
-	"github.com/emoss08/trenova/pkg/buncolgen/edicol"
-
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
@@ -23,13 +21,14 @@ import (
 )
 
 const (
-	paramTransactionSet    = "transactionSet"
-	paramShipmentLinkID    = "shipmentLinkId"
-	paramInvoiceID         = "invoiceId"
-	ediTenderChangeEntity  = "edi_tender_change"
-	ediTransferChgEntity   = "edi_transfer_change"
-	maxChangedValueRunes   = 120
-	nestedChangeDescriptor = "changed"
+	paramTransactionSet       = "transactionSet"
+	paramShipmentLinkID       = "shipmentLinkId"
+	paramInvoiceID            = "invoiceId"
+	ediTenderChangeEntity     = "edi_tender_change"
+	ediTransferChgEntity      = "edi_transfer_change"
+	maxChangedValueRunes      = 120
+	nestedChangeDescriptor    = "changed"
+	transferChangeStatusField = "status"
 )
 
 var (
@@ -329,7 +328,7 @@ func (t *listEDITransferChangesTool) Query(
 	criteria := filtercatalog.NewCriteria("EDI transfer changes").At(clockFor(params))
 	if status != "" {
 		req.Filter.FieldFilters = []domaintypes.FieldFilter{
-			edicol.TransferChangeFilter.Status(dbtype.OpEqual, status),
+			{Field: transferChangeStatusField, Operator: dbtype.OpEqual, Value: status},
 		}
 		criteria.Field(paramStatus, status)
 	}

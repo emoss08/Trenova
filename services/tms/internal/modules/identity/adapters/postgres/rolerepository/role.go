@@ -2,26 +2,88 @@ package rolerepository
 
 import (
 	"context"
-	"fmt"
 
-	"github.com/emoss08/trenova/pkg/buncolgen/permissioncol"
-
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission/permissiondb"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant/tenantdb"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/dberror"
-	"github.com/emoss08/trenova/pkg/dbhelper"
 	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/errortypes"
+	"github.com/emoss08/trenova/pkg/listquery"
 	"github.com/emoss08/trenova/pkg/pagination"
-	"github.com/emoss08/trenova/pkg/querybuilder"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/uptrace/bun"
-	"github.com/uptrace/bun/dialect/pgdialect"
+	"github.com/emoss08/trenova/shared/timeutils"
+	"github.com/jackc/pgx/v5"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
+)
+
+const (
+	roleClosureName          = "role_closure"
+	parentRoleAlias          = "parent_role"
+	directAssignment         = "direct"
+	orphanedScopeReason      = "find role assignments in organizations their holders no longer belong to, across every organization"
+	inParentRolesSQL         = "? = ANY(?)"
+	removeParentRoleSQL      = "array_remove(?, ?)"
+	roleClosureParentColumn  = "parent_role_ids"
+	roleClosureRoleColumn    = "id"
+	alreadyAssignedMessage   = "Role is already assigned to this user"
+	alreadyAssignedFieldName = "roleId"
+)
+
+const orphanedAssignmentsSQL = `
+SELECT DISTINCT ura.user_id, ura.organization_id, o.business_unit_id
+FROM user_role_assignments ura
+JOIN organizations o ON o.id = ura.organization_id
+JOIN users u ON u.id = ura.user_id
+WHERE u.current_organization_id <> ura.organization_id
+  AND NOT EXISTS (
+    SELECT 1
+    FROM user_organization_memberships m
+    WHERE m.user_id = ura.user_id
+      AND m.organization_id = ura.organization_id
+      AND (m.expires_at IS NULL OR m.expires_at > $1)
+  )
+ORDER BY ura.organization_id, ura.user_id
+LIMIT $2`
+
+// usersWithPermissionSQL walks each active assignment up through its role's
+// parents, so a person who holds a child role inherits what its parents
+// grant, the way the permission engine reads it. A grant is stored as it was
+// made, so it matches on any operation that implies the one asked for
+// (approve brings update and read), as the engine evaluates it.
+const usersWithPermissionSQL = `
+WITH RECURSIVE held AS (
+    SELECT ura.user_id, r.id AS role_id, r.parent_role_ids
+    FROM user_role_assignments ura
+    JOIN roles r ON r.id = ura.role_id
+    WHERE ura.organization_id = $1
+      AND r.business_unit_id = $2
+      AND (ura.expires_at IS NULL OR ura.expires_at > $3)
+    UNION
+    SELECT h.user_id, p.id, p.parent_role_ids
+    FROM held h
+    JOIN roles p ON p.id = ANY(h.parent_role_ids)
+)
+SELECT DISTINCT u.id AS user_id, u.name, u.username, u.email_address,
+    COALESCE(u.profile_pic_url, '') AS profile_pic_url, u.locale
+FROM held h
+JOIN resource_permissions rp ON rp.role_id = h.role_id
+JOIN users u ON u.id = h.user_id
+WHERE rp.resource = $4
+  AND rp.operations && $5::text[]
+  AND u.status = $6
+ORDER BY u.name`
+
+var (
+	roleErrors           = dberror.Mapping{Entity: "Role"}
+	assignmentErrors     = dberror.Mapping{Entity: "Role assignment"}
+	rolePermissionErrors = dberror.Mapping{Entity: "Role permission"}
 )
 
 type Params struct {
@@ -43,18 +105,16 @@ func New(p Params) permissionports.RoleRepository {
 	}
 }
 
-func (r *repository) filterQuery(
-	q *bun.SelectQuery,
-	req *permissionports.ListRolesRequest,
-) *bun.SelectQuery {
-	q = querybuilder.ApplyFilters(q, "r", req.Filter, (*permission.Role)(nil))
-	q = q.WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-		return sq.Where("r.organization_id = ?", req.Filter.TenantInfo.OrgID).
-			Where("r.business_unit_id = ?", req.Filter.TenantInfo.BuID)
-	})
+func forTenant[T any](
+	ctx context.Context,
+	q *keel.Query[T],
+	preds ...keel.Pred,
+) *keel.Query[T] {
+	if dbscope.IsSystem(ctx) {
+		q = q.AllTenants()
+	}
 
-	return q.Limit(int64(req.Filter.Pagination.SafeLimit())).
-		Offset(int64(req.Filter.Pagination.SafeOffset()))
+	return q.Where(preds...)
 }
 
 func (r *repository) List(
@@ -65,54 +125,19 @@ func (r *repository) List(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*pagination.ListResult[*permission.Role], error) {
-			log := r.l.With(
-				zap.String("operation", "List"),
-				zap.Any("request", req),
+			result, err := listquery.List(
+				ctx,
+				r.db.Keel(ctx),
+				permissiondb.Roles.Query(),
+				&listquery.Request[permission.Role]{Filter: req.Filter},
 			)
-
-			entities := make([]*permission.Role, 0, req.Filter.Pagination.SafeLimit())
-
-			total, err := r.db.DBForContext(ctx).
-				NewSelect().
-				Model(&entities).
-				Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-					return r.filterQuery(sq, req)
-				}).ScanAndCount(ctx)
 			if err != nil {
-				log.Error("failed to scan and count roles", zap.Error(err))
+				r.l.Error("failed to list roles", zap.Error(err))
 				return nil, err
 			}
 
-			return &pagination.ListResult[*permission.Role]{
-				Items: entities,
-				Total: int(total),
-			}, nil
+			return result, nil
 		},
-	)
-}
-
-func (r *repository) applyCursorPageFilters(
-	q *bun.SelectQuery,
-	req *permissionports.ListRoleConnectionRequest,
-) (*bun.SelectQuery, error) {
-	return querybuilder.ApplyCursorFilters(
-		q,
-		"r",
-		req.Filter,
-		req.Cursor,
-		(*permission.Role)(nil),
-	)
-}
-
-func (r *repository) applyTotalCountFilters(
-	q *bun.SelectQuery,
-	req *permissionports.ListRoleConnectionRequest,
-) *bun.SelectQuery {
-	return querybuilder.ApplyFiltersWithoutSort(
-		q,
-		"r",
-		req.Filter,
-		(*permission.Role)(nil),
 	)
 }
 
@@ -120,50 +145,21 @@ func (r *repository) ListConnection(
 	ctx context.Context,
 	req *permissionports.ListRoleConnectionRequest,
 ) (*pagination.CursorListResult[*permission.Role], error) {
-	return dbtx.Write(
+	return dbtx.Read(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*pagination.CursorListResult[*permission.Role], error) {
-			log := r.l.With(
-				zap.String("operation", "ListConnection"),
-				zap.Any("request", req),
-			)
-
-			dba := r.db.DBForContext(ctx)
-			var totalCount *int
-			if req.Cursor.IncludeTotalCount {
-				total, err := dba.
-					NewSelect().
-					Model((*permission.Role)(nil)).
-					Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-						return r.applyTotalCountFilters(sq, req)
-					}).
-					Count(ctx)
-				if err != nil {
-					log.Error("failed to count roles", zap.Error(err))
-					return nil, err
-				}
-				totalCount = new(int(total))
-			}
-
-			result, err := dbhelper.CursorList(
+			result, err := listquery.Connection(
 				ctx,
-				dbhelper.CursorListParams[*permission.Role]{
-					Filter:     req.Filter,
-					Cursor:     req.Cursor,
-					TotalCount: totalCount,
-					Query: func(entities *[]*permission.Role) *bun.SelectQuery {
-						return dba.
-							NewSelect().
-							Model(entities).
-							ColumnExpr("r.*")
-					},
-					Apply: func(sq *bun.SelectQuery) (*bun.SelectQuery, error) {
-						return r.applyCursorPageFilters(sq, req)
-					},
-				})
+				r.db.Keel(ctx),
+				permissiondb.Roles.Query(),
+				&listquery.Request[permission.Role]{
+					Filter: req.Filter,
+					Cursor: req.Cursor,
+				},
+			)
 			if err != nil {
-				log.Error("failed to scan roles", zap.Error(err))
+				r.l.Error("failed to list roles", zap.Error(err))
 				return nil, err
 			}
 
@@ -176,20 +172,18 @@ func (r *repository) SelectOptions(
 	ctx context.Context,
 	req *pagination.SelectQueryRequest,
 ) (*pagination.ListResult[*permission.Role], error) {
-	return dbtx.Write(
+	return dbtx.Read(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*pagination.ListResult[*permission.Role], error) {
-			return dbhelper.SelectOptions[*permission.Role](
+			ro := permissiondb.Roles
+			return listquery.SelectOptions(
 				ctx,
-				r.db.DBForContext(ctx),
+				r.db.Keel(ctx),
+				ro.Pick(ro.ID, ro.Name, ro.Description),
 				req,
-				&dbhelper.SelectOptionsConfig{
-					Columns:       []string{"id", "name", "description"},
-					OrgColumn:     "r.organization_id",
-					BuColumn:      "r.business_unit_id",
-					SearchColumns: []string{"r.name", "r.description"},
-					EntityName:    "Role",
+				func(s string) keel.Pred {
+					return keel.Or(ro.Name.ContainsFold(s), ro.Description.ContainsFold(s))
 				},
 			)
 		},
@@ -201,65 +195,69 @@ func (r *repository) GetByID(
 	req permissionports.GetRoleByIDRequest,
 ) (*permission.Role, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*permission.Role, error) {
-		log := r.l.With(
-			zap.String("operation", "GetByID"),
-			zap.String("id", req.ID.String()),
-		)
-
-		role := new(permission.Role)
-		err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(role).
-			Relation("Permissions").
-			Where("r.id = ?", req.ID).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return sq.Where("r.organization_id = ?", req.TenantInfo.OrgID).
-					WhereOr("r.organization_id IS NULL")
-			}).
-			Scan(ctx)
+		ro := permissiondb.Roles
+		role, err := forTenant(
+			ctx,
+			ro.Query(),
+			ro.ID.Eq(req.ID),
+			ro.OrganizationID.Eq(req.TenantInfo.OrgID),
+		).
+			Load(ro.Permissions()).
+			One(ctx, r.db.Keel(ctx))
 		if err != nil {
-			log.Error("failed to get role", zap.Error(err))
-			return nil, dberror.HandleNotFoundError(err, "Role")
+			r.l.Error(
+				"failed to get role",
+				zap.String("id", req.ID.String()),
+				zap.Error(err),
+			)
+			return nil, roleErrors.Map(err, req.ID.String())
 		}
 
 		return role, nil
 	})
 }
 
-const roleClosureQuery = `
-SELECT r.id, r.parent_role_ids
-FROM roles r
-WHERE r.id IN (?)
-UNION
-SELECT p.id, p.parent_role_ids
-FROM role_closure c
-JOIN roles p ON p.id = ANY(c.parent_role_ids)`
+func rolesWithInheritance(ctx context.Context, roleIDs []pulid.ID) *keel.Query[permission.Role] {
+	ro := permissiondb.Roles
+	parent := ro.As(parentRoleAlias)
+	closure := keel.RecursiveCTE(
+		roleClosureName,
+		[]string{roleClosureRoleColumn, roleClosureParentColumn},
+		forTenant(ctx, ro.Pick(ro.ID, ro.ParentRoleIDs), ro.ID.In(roleIDs...)),
+	)
+	closure.Recurse(forTenant(
+		ctx,
+		parent.Pick(parent.ID, parent.ParentRoleIDs).
+			Join(closure, keel.Raw(
+				inParentRolesSQL,
+				parent.ID,
+				closure.Col(roleClosureParentColumn),
+			)),
+	)).Distinct()
+
+	return forTenant(
+		ctx,
+		ro.With(closure),
+		ro.ID.InQuery(closure.Query().Pick(closure.Col(roleClosureRoleColumn))),
+	).Load(ro.Permissions())
+}
 
 func (r *repository) GetRolesWithInheritance(
 	ctx context.Context,
 	roleIDs []pulid.ID,
 ) ([]*permission.Role, error) {
-	return dbtx.Write(ctx, r.db, func(ctx context.Context) ([]*permission.Role, error) {
-		log := r.l.With(
-			zap.String("operation", "GetRolesWithInheritance"),
-			zap.Int("roleCount", len(roleIDs)),
-		)
-
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*permission.Role, error) {
 		if len(roleIDs) == 0 {
 			return []*permission.Role{}, nil
 		}
 
-		db := r.db.DBForContext(ctx)
-		roles := make([]*permission.Role, 0, len(roleIDs))
-		err := db.
-			NewSelect().
-			Model(&roles).
-			Relation("Permissions").
-			WithRecursive("role_closure", db.NewRaw(roleClosureQuery, bun.List(roleIDs))).
-			Where("r.id IN (SELECT c.id FROM role_closure c)").
-			Scan(ctx)
+		roles, err := rolesWithInheritance(ctx, roleIDs).All(ctx, r.db.Keel(ctx))
 		if err != nil {
-			log.Error("failed to get roles with inheritance", zap.Error(err))
+			r.l.Error(
+				"failed to get roles with inheritance",
+				zap.Int("roleCount", len(roleIDs)),
+				zap.Error(err),
+			)
 			return nil, err
 		}
 
@@ -272,25 +270,26 @@ func (r *repository) GetUsersWithRole(
 	roleID pulid.ID,
 ) ([]permissionports.ImpactedUser, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]permissionports.ImpactedUser, error) {
-		log := r.l.With(
-			zap.String("operation", "GetUsersWithRole"),
-			zap.String("roleId", roleID.String()),
-		)
-
-		var results []permissionports.ImpactedUser
-		err := r.db.DBForContext(ctx).NewSelect().
-			TableExpr("user_role_assignments AS ura").
-			ColumnExpr("ura.user_id").
-			ColumnExpr("u.name AS user_name").
-			ColumnExpr("ura.organization_id").
-			ColumnExpr("o.name AS org_name").
-			ColumnExpr("'direct' AS assignment_type").
-			Join("JOIN users AS u ON u.id = ura.user_id").
-			Join("JOIN organizations AS o ON o.id = ura.organization_id").
-			Where("ura.role_id = ?", roleID).
-			Scan(ctx, &results)
+		ura := permissiondb.UserRoleAssignments
+		u := tenantdb.Users
+		o := tenantdb.Organizations
+		results, err := keel.Into[permissionports.ImpactedUser](ctx, r.db.Keel(ctx), forTenant(
+			ctx,
+			ura.Join(u, u.ID.EqCol(ura.UserID)).Join(o, o.ID.EqCol(ura.OrganizationID)),
+			ura.RoleID.Eq(roleID),
+		).Pick(
+			ura.UserID,
+			u.Name,
+			ura.OrganizationID,
+			o.Name,
+			keel.Raw("?::text", directAssignment),
+		))
 		if err != nil {
-			log.Error("failed to get users with role", zap.Error(err))
+			r.l.Error(
+				"failed to get users with role",
+				zap.String("roleId", roleID.String()),
+				zap.Error(err),
+			)
 			return nil, err
 		}
 
@@ -306,22 +305,22 @@ func (r *repository) GetUserRoleAssignments(
 		ctx,
 		r.db,
 		func(ctx context.Context) ([]*permission.UserRoleAssignment, error) {
-			log := r.l.With(
-				zap.String("operation", "GetUserRoleAssignments"),
-				zap.String("userId", userID.String()),
-				zap.String("orgId", orgID.String()),
-			)
-
-			assignments := make([]*permission.UserRoleAssignment, 0)
-			err := r.db.DBForContext(ctx).
-				NewSelect().
-				Model(&assignments).
-				Relation("Role").
-				Where("ura.user_id = ?", userID).
-				Where("ura.organization_id = ?", orgID).
-				Scan(ctx)
+			ura := permissiondb.UserRoleAssignments
+			assignments, err := forTenant(
+				ctx,
+				ura.Query(),
+				ura.UserID.Eq(userID),
+				ura.OrganizationID.Eq(orgID),
+			).
+				Load(ura.Role()).
+				All(ctx, r.db.Keel(ctx))
 			if err != nil {
-				log.Error("failed to get user role assignments", zap.Error(err))
+				r.l.Error(
+					"failed to get user role assignments",
+					zap.String("userId", userID.String()),
+					zap.String("orgId", orgID.String()),
+					zap.Error(err),
+				)
 				return nil, err
 			}
 
@@ -332,27 +331,26 @@ func (r *repository) GetUserRoleAssignments(
 
 func (r *repository) Create(ctx context.Context, role *permission.Role) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
-		log := r.l.With(
-			zap.String("operation", "Create"),
-			zap.String("name", role.Name),
-		)
+		db := r.db.Keel(ctx)
+		if err := permissiondb.Roles.Create(ctx, db, role); err != nil {
+			r.l.Error("failed to create role", zap.String("name", role.Name), zap.Error(err))
+			return roleErrors.Map(err, role.ID.String())
+		}
 
-		_, err := r.db.DBForContext(ctx).NewInsert().Model(role).Returning("*").Exec(ctx)
-		if err != nil {
-			log.Error("failed to create role", zap.Error(err))
-			return err
+		if len(role.Permissions) == 0 {
+			return nil
 		}
 
 		for _, rp := range role.Permissions {
 			rp.RoleID = role.ID
-			if _, err = r.db.DBForContext(ctx).
-				NewInsert().
-				Model(rp).
-				Returning("*").
-				Exec(ctx); err != nil {
-				log.Error("failed to create resource permission", zap.Error(err))
-				return err
-			}
+		}
+		if err := permissiondb.ResourcePermissions.CreateMany(
+			ctx,
+			db,
+			role.Permissions,
+		); err != nil {
+			r.l.Error("failed to create resource permissions", zap.Error(err))
+			return rolePermissionErrors.Map(err, role.ID.String())
 		}
 
 		return nil
@@ -361,41 +359,30 @@ func (r *repository) Create(ctx context.Context, role *permission.Role) error {
 
 func (r *repository) Update(ctx context.Context, role *permission.Role) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
-		log := r.l.With(
-			zap.String("operation", "Update"),
-			zap.String("id", role.ID.String()),
-		)
-
-		cols := permissioncol.RoleColumns
-		result, err := r.db.DBForContext(ctx).
-			NewUpdate().
-			Model(role).
-			Column(
-				cols.Name.Bare(),
-				cols.Description.Bare(),
-				cols.CoreResponsibility.Bare(),
-				cols.MaxSensitivity.Bare(),
-				cols.UpdatedAt.Bare(),
-			).
-			WherePK().
-			Where(cols.OrganizationID.Eq(), role.OrganizationID).
-			Returning("*").
-			Exec(ctx)
-		if err != nil {
-			log.Error("failed to update role", zap.Error(err))
-			return err
-		}
-
-		if err = dberror.CheckFound(result, "Role"); err != nil {
-			return err
+		ro := permissiondb.Roles
+		if err := ro.Save(
+			ctx,
+			r.db.Keel(ctx),
+			role,
+			ro.Name,
+			ro.Description,
+			ro.CoreResponsibility,
+			ro.MaxSensitivity,
+		); err != nil {
+			r.l.Error(
+				"failed to update role",
+				zap.String("id", role.ID.String()),
+				zap.Error(err),
+			)
+			return roleErrors.Map(err, role.ID.String())
 		}
 
 		if role.Permissions == nil {
 			return nil
 		}
 
-		if err = r.replaceResourcePermissions(ctx, role.ID, role.Permissions); err != nil {
-			log.Error("failed to replace role permissions", zap.Error(err))
+		if err := r.replaceResourcePermissions(ctx, role.ID, role.Permissions); err != nil {
+			r.l.Error("failed to replace role permissions", zap.Error(err))
 			return err
 		}
 
@@ -405,34 +392,38 @@ func (r *repository) Update(ctx context.Context, role *permission.Role) error {
 
 func (r *repository) Delete(ctx context.Context, req permissionports.DeleteRoleRequest) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
-		log := r.l.With(
-			zap.String("operation", "Delete"),
-			zap.String("id", req.RoleID.String()),
-		)
-
-		db := r.db.DBForContext(ctx)
-		cols := permissioncol.RoleColumns
-		result, err := db.NewDelete().
-			Model((*permission.Role)(nil)).
-			Where(cols.ID.Eq(), req.RoleID).
-			Where(cols.OrganizationID.Eq(), req.OrganizationID).
-			Where(cols.IsSystem.IsFalse()).
-			Exec(ctx)
+		db := r.db.Keel(ctx)
+		ro := permissiondb.Roles
+		deleted, err := forTenant(
+			ctx,
+			ro.Query(),
+			ro.ID.Eq(req.RoleID),
+			ro.OrganizationID.Eq(req.OrganizationID),
+			ro.IsSystem.IsFalse(),
+		).Delete(ctx, db)
 		if err != nil {
-			log.Error("failed to delete role", zap.Error(err))
-			return err
+			r.l.Error(
+				"failed to delete role",
+				zap.String("id", req.RoleID.String()),
+				zap.Error(err),
+			)
+			return roleErrors.Map(err, req.RoleID.String())
 		}
-		if err = dberror.CheckFound(result, "Role"); err != nil {
+		if err = dberror.CheckFoundCount(deleted, roleErrors.Entity); err != nil {
 			return err
 		}
 
-		if _, err = db.NewUpdate().
-			Model((*permission.Role)(nil)).
-			Set(cols.ParentRoleIDs.Bare()+" = array_remove("+cols.ParentRoleIDs.Bare()+", ?)", req.RoleID).
-			Where("? = ANY("+cols.ParentRoleIDs.Qualified()+")", req.RoleID).
-			Where(cols.OrganizationID.Eq(), req.OrganizationID).
-			Exec(ctx); err != nil {
-			log.Error("failed to drop the deleted role from its seniors", zap.Error(err))
+		if _, err = forTenant(
+			ctx,
+			ro.Query(),
+			keel.Raw(inParentRolesSQL, req.RoleID.String(), ro.ParentRoleIDs),
+			ro.OrganizationID.Eq(req.OrganizationID),
+		).Update(
+			ctx,
+			db,
+			ro.ParentRoleIDs.ToExpr(keel.Raw(removeParentRoleSQL, ro.ParentRoleIDs, req.RoleID.String())),
+		); err != nil {
+			r.l.Error("failed to drop the deleted role from its seniors", zap.Error(err))
 			return err
 		}
 
@@ -445,11 +436,9 @@ func (r *repository) replaceResourcePermissions(
 	roleID pulid.ID,
 	permissions []*permission.ResourcePermission,
 ) error {
-	db := r.db.DBForContext(ctx)
-	if _, err := db.NewDelete().
-		Model((*permission.ResourcePermission)(nil)).
-		Where(permissioncol.ResourcePermissionColumns.RoleID.Eq(), roleID).
-		Exec(ctx); err != nil {
+	db := r.db.Keel(ctx)
+	rp := permissiondb.ResourcePermissions
+	if _, err := rp.Where(rp.RoleID.Eq(roleID)).Delete(ctx, db); err != nil {
 		return err
 	}
 
@@ -457,13 +446,12 @@ func (r *repository) replaceResourcePermissions(
 		return nil
 	}
 
-	for _, rp := range permissions {
-		rp.ID = pulid.Nil
-		rp.RoleID = roleID
+	for _, p := range permissions {
+		p.ID = pulid.Nil
+		p.RoleID = roleID
 	}
 
-	_, err := db.NewInsert().Model(&permissions).Returning("*").Exec(ctx)
-	return err
+	return rp.CreateMany(ctx, db, permissions)
 }
 
 func (r *repository) CreateAssignment(
@@ -471,48 +459,69 @@ func (r *repository) CreateAssignment(
 	assignment *permission.UserRoleAssignment,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
-		log := r.l.With(
-			zap.String("operation", "CreateAssignment"),
-			zap.String("userId", assignment.UserID.String()),
-			zap.String("roleId", assignment.RoleID.String()),
-		)
+		db := r.db.Keel(ctx)
+		ura := permissiondb.UserRoleAssignments
 
-		cols := permissioncol.UserRoleAssignmentColumns
-		result, err := r.db.DBForContext(ctx).
-			NewInsert().
-			Model(assignment).
-			On(fmt.Sprintf(
-				"CONFLICT (%s, %s, %s) DO UPDATE",
-				cols.UserID.Bare(),
-				cols.RoleID.Bare(),
-				cols.OrganizationID.Bare(),
-			)).
-			Set(cols.ExpiresAt.Bare() + " = EXCLUDED." + cols.ExpiresAt.Bare()).
-			Set(cols.AssignedBy.Bare() + " = EXCLUDED." + cols.AssignedBy.Bare()).
-			Set(cols.AssignedAt.Bare() + " = EXCLUDED." + cols.AssignedAt.Bare()).
-			Where(cols.ExpiresAt.IsNotNull()).
-			Where(cols.ExpiresAt.Qualified() + " <= EXCLUDED." + cols.AssignedAt.Bare()).
-			Returning("*").
-			Exec(ctx)
-		if err != nil {
-			log.Error("failed to create role assignment", zap.Error(err))
-			return err
-		}
-
-		affected, err := result.RowsAffected()
-		if err != nil {
-			return err
-		}
-		if affected == 0 {
-			return errortypes.NewValidationError(
-				"roleId",
-				errortypes.ErrDuplicate,
-				"Role is already assigned to this user",
+		existing, err := forTenant(
+			ctx,
+			ura.Query(),
+			ura.UserID.Eq(assignment.UserID),
+			ura.RoleID.Eq(assignment.RoleID),
+			ura.OrganizationID.Eq(assignment.OrganizationID),
+		).Lock(keel.ForUpdate).First(ctx, db)
+		switch {
+		case dberror.IsNotFoundError(err):
+			inserted, createErr := ura.CreateOrSkip(
+				ctx,
+				db,
+				[]*permission.UserRoleAssignment{assignment},
+				ura.UserID,
+				ura.RoleID,
+				ura.OrganizationID,
 			)
+			if createErr != nil {
+				r.l.Error("failed to create role assignment", zap.Error(createErr))
+				return assignmentErrors.Map(createErr, assignment.ID.String())
+			}
+			if inserted == 0 {
+				return alreadyAssigned()
+			}
+			return nil
+		case err != nil:
+			return err
 		}
 
+		assignment.AssignedAt = timeutils.NowUnix()
+		if existing.ExpiresAt == nil || *existing.ExpiresAt > assignment.AssignedAt {
+			return alreadyAssigned()
+		}
+
+		expiresAt := ura.ExpiresAt.ToNull()
+		if assignment.ExpiresAt != nil {
+			expiresAt = ura.ExpiresAt.To(*assignment.ExpiresAt)
+		}
+		if _, err = forTenant(ctx, ura.Query(), ura.ID.Eq(existing.ID)).Update(
+			ctx,
+			db,
+			expiresAt,
+			ura.AssignedBy.To(assignment.AssignedBy),
+			ura.AssignedAt.To(assignment.AssignedAt),
+		); err != nil {
+			r.l.Error("failed to renew role assignment", zap.Error(err))
+			return err
+		}
+
+		assignment.ID = existing.ID
 		return nil
 	})
+}
+
+func alreadyAssigned() error {
+	return errortypes.NewValidationError(
+		alreadyAssignedFieldName,
+		errortypes.ErrDuplicate,
+		alreadyAssignedMessage,
+	)
 }
 
 func (r *repository) DeleteAssignment(
@@ -520,30 +529,32 @@ func (r *repository) DeleteAssignment(
 	req permissionports.DeleteRoleAssignmentRequest,
 ) (*permission.UserRoleAssignment, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*permission.UserRoleAssignment, error) {
-		log := r.l.With(
-			zap.String("operation", "DeleteAssignment"),
-			zap.String("id", req.AssignmentID.String()),
-		)
-
-		cols := permissioncol.UserRoleAssignmentColumns
-		deleted := new(permission.UserRoleAssignment)
-		result, err := r.db.DBForContext(ctx).
-			NewDelete().
-			Model(deleted).
-			Where(cols.ID.Eq(), req.AssignmentID).
-			Where(cols.OrganizationID.Eq(), req.OrganizationID).
-			Returning("*").
-			Exec(ctx)
+		db := r.db.Keel(ctx)
+		ura := permissiondb.UserRoleAssignments
+		assignment, err := forTenant(
+			ctx,
+			ura.Query(),
+			ura.ID.Eq(req.AssignmentID),
+			ura.OrganizationID.Eq(req.OrganizationID),
+		).Lock(keel.ForUpdate).One(ctx, db)
 		if err != nil {
-			log.Error("failed to delete role assignment", zap.Error(err))
+			return nil, assignmentErrors.Map(err, req.AssignmentID.String())
+		}
+
+		if _, err = forTenant(
+			ctx,
+			ura.Query(),
+			ura.ID.Eq(assignment.ID),
+		).Delete(ctx, db); err != nil {
+			r.l.Error(
+				"failed to delete role assignment",
+				zap.String("id", req.AssignmentID.String()),
+				zap.Error(err),
+			)
 			return nil, err
 		}
 
-		if err = dberror.CheckFound(result, "Role assignment"); err != nil {
-			return nil, err
-		}
-
-		return deleted, nil
+		return assignment, nil
 	})
 }
 
@@ -555,65 +566,64 @@ func (r *repository) DeleteUserAssignments(
 		ctx,
 		r.db,
 		func(ctx context.Context) ([]*permission.UserRoleAssignment, error) {
-			log := r.l.With(
-				zap.String("operation", "DeleteUserAssignments"),
-				zap.String("userId", userID.String()),
-				zap.String("orgId", orgID.String()),
-			)
+			db := r.db.Keel(ctx)
+			ura := permissiondb.UserRoleAssignments
+			assignments, err := forTenant(
+				ctx,
+				ura.Query(),
+				ura.UserID.Eq(userID),
+				ura.OrganizationID.Eq(orgID),
+			).Lock(keel.ForUpdate).All(ctx, db)
+			if err != nil {
+				return nil, err
+			}
+			if len(assignments) == 0 {
+				return []*permission.UserRoleAssignment{}, nil
+			}
 
-			cols := permissioncol.UserRoleAssignmentColumns
-			deleted := make([]*permission.UserRoleAssignment, 0)
-			if _, err := r.db.DBForContext(ctx).
-				NewDelete().
-				Model(&deleted).
-				Where(cols.UserID.Eq(), userID).
-				Where(cols.OrganizationID.Eq(), orgID).
-				Returning("*").
-				Exec(ctx); err != nil {
-				log.Error("failed to delete user role assignments", zap.Error(err))
+			ids := make([]pulid.ID, len(assignments))
+			for i, assignment := range assignments {
+				ids[i] = assignment.ID
+			}
+			if _, err = forTenant(ctx, ura.Query(), ura.ID.In(ids...)).Delete(ctx, db); err != nil {
+				r.l.Error(
+					"failed to delete user role assignments",
+					zap.String("userId", userID.String()),
+					zap.String("orgId", orgID.String()),
+					zap.Error(err),
+				)
 				return nil, err
 			}
 
-			return deleted, nil
+			return assignments, nil
 		},
 	)
 }
-
-const orphanedAssignmentsQuery = `
-SELECT DISTINCT ura.user_id, ura.organization_id, o.business_unit_id
-FROM user_role_assignments ura
-JOIN organizations o ON o.id = ura.organization_id
-JOIN users u ON u.id = ura.user_id
-WHERE u.current_organization_id <> ura.organization_id
-  AND NOT EXISTS (
-    SELECT 1
-    FROM user_organization_memberships m
-    WHERE m.user_id = ura.user_id
-      AND m.organization_id = ura.organization_id
-      AND (m.expires_at IS NULL OR m.expires_at > ?)
-  )
-ORDER BY ura.organization_id, ura.user_id
-LIMIT ?`
 
 func (r *repository) ListOrphanedAssignments(
 	ctx context.Context,
 	now int64,
 	limit int,
 ) ([]permissionports.OrphanedAssignment, error) {
-	ctx = dbscope.WithSystem(
-		ctx,
-		"find role assignments in organizations their holders no longer belong to, across every organization",
-	)
+	ctx = dbscope.WithSystem(ctx, orphanedScopeReason)
 	return dbtx.Read(
 		ctx,
 		r.db,
 		func(ctx context.Context) ([]permissionports.OrphanedAssignment, error) {
-			orphans := make([]permissionports.OrphanedAssignment, 0)
-			if err := r.db.DBForContext(ctx).
-				NewRaw(orphanedAssignmentsQuery, now, limit).
-				Scan(ctx, &orphans); err != nil {
+			orphans, err := keel.QueryAll(
+				ctx,
+				r.db.Keel(ctx),
+				pgx.RowToStructByPos[permissionports.OrphanedAssignment],
+				orphanedAssignmentsSQL,
+				now,
+				limit,
+			)
+			if err != nil {
 				r.l.Error("failed to list orphaned role assignments", zap.Error(err))
 				return nil, err
+			}
+			if orphans == nil {
+				return []permissionports.OrphanedAssignment{}, nil
 			}
 
 			return orphans, nil
@@ -626,16 +636,14 @@ func (r *repository) CreateResourcePermission(
 	rp *permission.ResourcePermission,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
-		log := r.l.With(
-			zap.String("operation", "CreateResourcePermission"),
-			zap.String("roleId", rp.RoleID.String()),
-			zap.String("resource", rp.Resource),
-		)
-
-		_, err := r.db.DBForContext(ctx).NewInsert().Model(rp).Returning("*").Exec(ctx)
-		if err != nil {
-			log.Error("failed to create resource permission", zap.Error(err))
-			return err
+		if err := permissiondb.ResourcePermissions.Create(ctx, r.db.Keel(ctx), rp); err != nil {
+			r.l.Error(
+				"failed to create resource permission",
+				zap.String("roleId", rp.RoleID.String()),
+				zap.String("resource", rp.Resource),
+				zap.Error(err),
+			)
+			return rolePermissionErrors.Map(err, rp.ID.String())
 		}
 
 		return nil
@@ -647,26 +655,52 @@ func (r *repository) UpdateResourcePermission(
 	rp *permission.ResourcePermission,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
-		log := r.l.With(
-			zap.String("operation", "UpdateResourcePermission"),
-			zap.String("id", rp.ID.String()),
-		)
+		p := permissiondb.ResourcePermissions
+		sets := make([]keel.Assignment, 0, 3)
+		if rp.Resource != "" {
+			sets = append(sets, p.Resource.To(rp.Resource))
+		}
+		if len(rp.Operations) > 0 {
+			sets = append(
+				sets,
+				p.Operations.To(operationNames(permission.Normalize(rp.Operations))),
+			)
+		}
+		if rp.DataScope != "" {
+			sets = append(sets, p.DataScope.To(rp.DataScope))
+		}
+		if len(sets) == 0 {
+			sets = append(sets, p.UpdatedAt.To(timeutils.NowUnix()))
+		}
 
-		result, err := r.db.DBForContext(ctx).
-			NewUpdate().
-			Model(rp).
-			WherePK().
-			Where(permissioncol.ResourcePermissionColumns.RoleID.Eq(), rp.RoleID).
-			OmitZero().
-			Returning("*").
-			Exec(ctx)
+		rows, err := p.Where(p.ID.Eq(rp.ID), p.RoleID.Eq(rp.RoleID)).
+			UpdateReturning(ctx, r.db.Keel(ctx), sets...)
 		if err != nil {
-			log.Error("failed to update resource permission", zap.Error(err))
+			r.l.Error(
+				"failed to update resource permission",
+				zap.String("id", rp.ID.String()),
+				zap.Error(err),
+			)
+			return rolePermissionErrors.Map(err, rp.ID.String())
+		}
+		if err = dberror.CheckFoundCount(
+			int64(len(rows)),
+			rolePermissionErrors.Entity,
+		); err != nil {
 			return err
 		}
 
-		return dberror.CheckFound(result, "Role permission")
+		*rp = *rows[0]
+		return nil
 	})
+}
+
+func operationNames(ops []permission.Operation) []string {
+	names := make([]string, len(ops))
+	for i, op := range ops {
+		names[i] = string(op)
+	}
+	return names
 }
 
 func (r *repository) DeleteResourcePermission(
@@ -674,24 +708,19 @@ func (r *repository) DeleteResourcePermission(
 	req permissionports.DeleteResourcePermissionRequest,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
-		log := r.l.With(
-			zap.String("operation", "DeleteResourcePermission"),
-			zap.String("id", req.PermissionID.String()),
-		)
-
-		cols := permissioncol.ResourcePermissionColumns
-		result, err := r.db.DBForContext(ctx).
-			NewDelete().
-			Model((*permission.ResourcePermission)(nil)).
-			Where(cols.ID.Eq(), req.PermissionID).
-			Where(cols.RoleID.Eq(), req.RoleID).
-			Exec(ctx)
+		p := permissiondb.ResourcePermissions
+		deleted, err := p.Where(p.ID.Eq(req.PermissionID), p.RoleID.Eq(req.RoleID)).
+			Delete(ctx, r.db.Keel(ctx))
 		if err != nil {
-			log.Error("failed to delete resource permission", zap.Error(err))
+			r.l.Error(
+				"failed to delete resource permission",
+				zap.String("id", req.PermissionID.String()),
+				zap.Error(err),
+			)
 			return err
 		}
 
-		return dberror.CheckFound(result, "Role permission")
+		return dberror.CheckFoundCount(deleted, rolePermissionErrors.Entity)
 	})
 }
 
@@ -703,19 +732,14 @@ func (r *repository) GetResourcePermissionsByRoleID(
 		ctx,
 		r.db,
 		func(ctx context.Context) ([]*permission.ResourcePermission, error) {
-			log := r.l.With(
-				zap.String("operation", "GetResourcePermissionsByRoleID"),
-				zap.String("roleId", roleID.String()),
-			)
-
-			permissions := make([]*permission.ResourcePermission, 0)
-			err := r.db.DBForContext(ctx).
-				NewSelect().
-				Model(&permissions).
-				Where("rp.role_id = ?", roleID).
-				Scan(ctx)
+			p := permissiondb.ResourcePermissions
+			permissions, err := p.Where(p.RoleID.Eq(roleID)).All(ctx, r.db.Keel(ctx))
 			if err != nil {
-				log.Error("failed to get resource permissions", zap.Error(err))
+				r.l.Error(
+					"failed to get resource permissions",
+					zap.String("roleId", roleID.String()),
+					zap.Error(err),
+				)
 				return nil, err
 			}
 
@@ -724,60 +748,37 @@ func (r *repository) GetResourcePermissionsByRoleID(
 	)
 }
 
-// usersWithPermissionQuery walks each active assignment up through its role's
-// parents, so a person who holds a child role inherits what its parents
-// grant, the way the permission engine reads it. A grant is stored as it was
-// made, so it matches on any operation that implies the one asked for
-// (approve brings update and read), as the engine evaluates it.
-const usersWithPermissionQuery = `
-WITH RECURSIVE held AS (
-    SELECT ura.user_id, r.id AS role_id, r.parent_role_ids
-    FROM user_role_assignments ura
-    JOIN roles r ON r.id = ura.role_id
-    WHERE ura.organization_id = ?
-      AND r.business_unit_id = ?
-      AND (ura.expires_at IS NULL OR ura.expires_at > ?)
-    UNION
-    SELECT h.user_id, p.id, p.parent_role_ids
-    FROM held h
-    JOIN roles p ON p.id = ANY(h.parent_role_ids)
-)
-SELECT DISTINCT u.id AS user_id, u.name, u.username, u.email_address,
-    COALESCE(u.profile_pic_url, '') AS profile_pic_url, u.locale
-FROM held h
-JOIN resource_permissions rp ON rp.role_id = h.role_id
-JOIN users u ON u.id = h.user_id
-WHERE rp.resource = ?
-  AND rp.operations && ?::text[]
-  AND u.status = ?
-ORDER BY u.name`
-
 func (r *repository) ListUsersWithPermission(
 	ctx context.Context,
 	req permissionports.ListUsersWithPermissionRequest,
 ) ([]permissionports.PermittedUser, error) {
-	return dbtx.Write(
+	return dbtx.Read(
 		ctx,
 		r.db,
 		func(ctx context.Context) ([]permissionports.PermittedUser, error) {
-			log := r.l.With(
-				zap.String("operation", "ListUsersWithPermission"),
-				zap.String("resource", req.Resource.String()),
-				zap.String("permissionOperation", string(req.Operation)),
-			)
-
-			users := make([]permissionports.PermittedUser, 0)
-			if err := r.db.DBForContext(ctx).NewRaw(
-				usersWithPermissionQuery,
-				req.OrganizationID,
-				req.BusinessUnitID,
+			users, err := keel.QueryAll(
+				ctx,
+				r.db.Keel(ctx),
+				pgx.RowToStructByPos[permissionports.PermittedUser],
+				usersWithPermissionSQL,
+				req.OrganizationID.String(),
+				req.BusinessUnitID.String(),
 				req.Now,
 				req.Resource.String(),
-				pgdialect.Array(grantingOperations(req.Operation)),
-				domaintypes.StatusActive,
-			).Scan(ctx, &users); err != nil {
-				log.Error("failed to list users with permission", zap.Error(err))
+				grantingOperations(req.Operation),
+				string(domaintypes.StatusActive),
+			)
+			if err != nil {
+				r.l.Error(
+					"failed to list users with permission",
+					zap.String("resource", req.Resource.String()),
+					zap.String("permissionOperation", string(req.Operation)),
+					zap.Error(err),
+				)
 				return nil, err
+			}
+			if users == nil {
+				return []permissionports.PermittedUser{}, nil
 			}
 
 			return users, nil

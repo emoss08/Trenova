@@ -3,76 +3,64 @@ package accountingsyncrepository
 import (
 	"fmt"
 
-	"github.com/emoss08/trenova/pkg/buncolgen/carriersettlementcol"
-	"github.com/emoss08/trenova/pkg/buncolgen/driversettlementcol"
-
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/carriersettlement"
+	"github.com/emoss08/trenova/internal/modules/settlement/domain/carriersettlement/carriersettlementdb"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/driverpay"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/driversettlement"
-	"github.com/emoss08/trenova/pkg/buncolgen"
-	"github.com/uptrace/bun"
+	"github.com/emoss08/trenova/internal/modules/settlement/domain/driversettlement/driversettlementdb"
+	"github.com/emoss08/trenova/pkg/keelkinds"
 )
 
 type settlementTable struct {
-	model    any
-	org      buncolgen.Column
-	bu       buncolgen.Column
-	id       buncolgen.Column
-	number   buncolgen.Column
-	status   buncolgen.Column
-	net      buncolgen.Column
-	postedAt buncolgen.Column
-	paidAt   buncolgen.Column
-	voidedAt buncolgen.Column
-	statuses map[string]string
-	scope    func(q *bun.SelectQuery) *bun.SelectQuery
+	query    candidateQueryFunc
+	id       keelkinds.PulidIDCol
+	number   keel.StringCol
+	status   keel.StringCol
+	net      keel.Int64Col
+	postedAt keel.Int64Col
+	paidAt   keel.Int64Col
+	voidedAt keel.Int64Col
+	posted   string
+	paid     string
+	voided   string
+	scope    []keel.Pred
 }
 
 func carrierSettlementTable() *settlementTable {
-	cols := carriersettlementcol.CarrierSettlementColumns
+	cs := carriersettlementdb.CarrierSettlements
 	return &settlementTable{
-		model:    (*carriersettlement.CarrierSettlement)(nil),
-		org:      cols.OrganizationID,
-		bu:       cols.BusinessUnitID,
-		id:       cols.ID,
-		number:   cols.SettlementNumber,
-		status:   cols.Status,
-		net:      cols.NetPayableMinor,
-		postedAt: cols.PostedAt,
-		paidAt:   cols.PaidAt,
-		voidedAt: cols.VoidedAt,
-		statuses: map[string]string{
-			"posted": carriersettlement.StatusPosted.String(),
-			"paid":   carriersettlement.StatusPaid.String(),
-			"voided": carriersettlement.StatusVoided.String(),
-		},
-		scope: func(q *bun.SelectQuery) *bun.SelectQuery { return q },
+		query:    candidateQuery[carriersettlement.CarrierSettlement](cs),
+		id:       cs.ID,
+		number:   cs.SettlementNumber,
+		status:   cs.Status.StringCol,
+		net:      cs.NetPayableMinor,
+		postedAt: cs.PostedAt,
+		paidAt:   cs.PaidAt,
+		voidedAt: cs.VoidedAt,
+		posted:   carriersettlement.StatusPosted.String(),
+		paid:     carriersettlement.StatusPaid.String(),
+		voided:   carriersettlement.StatusVoided.String(),
 	}
 }
 
 func driverSettlementTable() *settlementTable {
-	cols := driversettlementcol.SettlementColumns
+	ds := driversettlementdb.Settlements
 	return &settlementTable{
-		model:    (*driversettlement.Settlement)(nil),
-		org:      cols.OrganizationID,
-		bu:       cols.BusinessUnitID,
-		id:       cols.ID,
-		number:   cols.SettlementNumber,
-		status:   cols.Status,
-		net:      cols.NetPayMinor,
-		postedAt: cols.PostedAt,
-		paidAt:   cols.PaidAt,
-		voidedAt: cols.VoidedAt,
-		statuses: map[string]string{
-			"posted": driversettlement.StatusPosted.String(),
-			"paid":   driversettlement.StatusPaid.String(),
-			"voided": driversettlement.StatusVoided.String(),
-		},
-		scope: func(q *bun.SelectQuery) *bun.SelectQuery {
-			return q.Where(cols.Classification.Eq(), driverpay.PayeeClassificationOwnerOperator)
-		},
+		query:    candidateQuery[driversettlement.Settlement](ds),
+		id:       ds.ID,
+		number:   ds.SettlementNumber,
+		status:   ds.Status.StringCol,
+		net:      ds.NetPayMinor,
+		postedAt: ds.PostedAt,
+		paidAt:   ds.PaidAt,
+		voidedAt: ds.VoidedAt,
+		posted:   driversettlement.StatusPosted.String(),
+		paid:     driversettlement.StatusPaid.String(),
+		voided:   driversettlement.StatusVoided.String(),
+		scope:    []keel.Pred{ds.Classification.Eq(driverpay.PayeeClassificationOwnerOperator)},
 	}
 }
 
@@ -86,9 +74,7 @@ func settlementSource(
 	}
 	number := table.number
 	source := &candidateSource{
-		model:  table.model,
-		org:    table.org,
-		bu:     table.bu,
+		query:  table.query,
 		id:     table.id,
 		number: &number,
 		date:   table.postedAt,
@@ -97,48 +83,37 @@ func settlementSource(
 	switch {
 	case objectType.IsBill() && operation == accountingsync.SyncOperationCreate:
 		source.at = table.postedAt
-		source.filter = func(
-			q *bun.SelectQuery,
-			req *accountingsyncports.ListAccountingSyncCandidatesRequest,
-		) *bun.SelectQuery {
-			q = table.scope(q).
-				Where(table.postedAt.IsNotNull()).
-				Where(table.status.In(), bun.List([]string{
-					table.statuses["posted"],
-					table.statuses["paid"],
-					table.statuses["voided"],
-				}))
+		source.filter = func(req *accountingsyncports.ListAccountingSyncCandidatesRequest) []keel.Pred {
+			preds := append([]keel.Pred{
+				table.postedAt.IsNotNull(),
+				table.status.In(table.posted, table.paid, table.voided),
+			}, table.scope...)
 			if req.UndoneBefore == nil {
-				return q
+				return preds
 			}
-			return q.WhereGroup(" AND ", func(q *bun.SelectQuery) *bun.SelectQuery {
-				return q.
-					Where(table.status.NotEq(), table.statuses["voided"]).
-					WhereOr(table.voidedAt.Gte(), *req.UndoneBefore)
-			})
+			return append(preds, keel.Or(
+				table.status.Ne(table.voided),
+				table.voidedAt.Gte(*req.UndoneBefore),
+			))
 		}
 	case objectType.IsBill() && operation == accountingsync.SyncOperationVoid:
 		source.at = table.voidedAt
-		source.filter = func(
-			q *bun.SelectQuery,
-			_ *accountingsyncports.ListAccountingSyncCandidatesRequest,
-		) *bun.SelectQuery {
-			return table.scope(q).
-				Where(table.status.Eq(), table.statuses["voided"]).
-				Where(table.postedAt.IsNotNull()).
-				Where(table.voidedAt.IsNotNull())
+		source.filter = func(_ *accountingsyncports.ListAccountingSyncCandidatesRequest) []keel.Pred {
+			return append([]keel.Pred{
+				table.status.Eq(table.voided),
+				table.postedAt.IsNotNull(),
+				table.voidedAt.IsNotNull(),
+			}, table.scope...)
 		}
 	case objectType.IsBillPayment() && operation == accountingsync.SyncOperationCreate:
 		source.at = table.paidAt
-		source.filter = func(
-			q *bun.SelectQuery,
-			_ *accountingsyncports.ListAccountingSyncCandidatesRequest,
-		) *bun.SelectQuery {
-			return table.scope(q).
-				Where(table.status.Eq(), table.statuses["paid"]).
-				Where(table.postedAt.IsNotNull()).
-				Where(table.paidAt.IsNotNull()).
-				Where(table.net.Ne(), 0)
+		source.filter = func(_ *accountingsyncports.ListAccountingSyncCandidatesRequest) []keel.Pred {
+			return append([]keel.Pred{
+				table.status.Eq(table.paid),
+				table.postedAt.IsNotNull(),
+				table.paidAt.IsNotNull(),
+				table.net.Ne(0),
+			}, table.scope...)
 		}
 	default:
 		return nil, fmt.Errorf("no settlements back %s %s records", objectType, operation)

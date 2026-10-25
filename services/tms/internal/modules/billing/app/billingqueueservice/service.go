@@ -39,7 +39,6 @@ import (
 	"github.com/emoss08/trenova/shared/jsonutils"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
-	"github.com/uptrace/bun"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
@@ -48,7 +47,7 @@ type Params struct {
 	fx.In
 
 	Logger               *zap.Logger
-	DB                   kernelports.DBConnection
+	DB                   kernelports.Transactor
 	Repo                 billingqueueports.BillingQueueRepository
 	ShipmentRepo         shipmentports.ShipmentRepository
 	ControlRepo          tenantports.ShipmentControlRepository
@@ -83,7 +82,7 @@ type Params struct {
 
 type service struct {
 	l                    *zap.Logger
-	db                   kernelports.DBConnection
+	db                   kernelports.Transactor
 	repo                 billingqueueports.BillingQueueRepository
 	shipmentRepo         shipmentports.ShipmentRepository
 	controlRepo          tenantports.ShipmentControlRepository
@@ -450,7 +449,7 @@ func (s *service) TransferToBillingItems(
 	}
 
 	created := make([]*billingqueue.BillingQueueItem, 0, len(entities))
-	err = s.db.WithTx(ctx, kernelports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
+	err = s.db.Transact(ctx, kernelports.TxOptions{}, func(txCtx context.Context) error {
 		for _, entity := range entities {
 			item, txErr := s.repo.Create(txCtx, entity)
 			if txErr != nil {
@@ -759,7 +758,7 @@ func (s *service) UpdateStatus(
 		createResult *invoiceports.CreateInvoiceFromBillingQueueResult
 	)
 
-	err := s.db.WithTx(ctx, kernelports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
+	err := s.db.Transact(ctx, kernelports.TxOptions{}, func(txCtx context.Context) error {
 		entity, getErr := s.repo.GetByID(txCtx, &billingqueueports.GetBillingQueueItemByIDRequest{
 			ItemID:     req.ItemID,
 			TenantInfo: req.TenantInfo,

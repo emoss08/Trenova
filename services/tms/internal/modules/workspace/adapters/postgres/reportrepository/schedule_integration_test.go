@@ -5,12 +5,12 @@ package reportrepository
 import (
 	"testing"
 
+	"github.com/emoss08/keel/analytics/ir"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/report"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/reportports"
 	"github.com/emoss08/trenova/internal/testutil/seedtest"
 	"github.com/emoss08/trenova/pkg/pagination"
-	"github.com/emoss08/trenova/pkg/reportcatalog"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -23,26 +23,23 @@ func TestListSchedulesShowsOwnSchedulesAndThoseOnOwnedReports(t *testing.T) {
 
 	data := seedtest.SeedFullTestData(t, ctx, db)
 
-	tx, err := db.BeginTx(ctx, nil)
-	require.NoError(t, err)
 	colleague := seedtest.NewUser(data.Organization.ID, data.BusinessUnit.ID).
 		WithUsername("schedule_colleague").
 		WithEmail("schedule_colleague@example.com").
 		WithPassword("password123").
-		Build(t, ctx, tx)
-	stateB := seedtest.NewState().WithName("Texas").WithAbbreviation("TX").Build(t, ctx, tx)
-	buB := seedtest.NewBusinessUnit().WithName("Schedules B BU").WithCode("SCHB").Build(t, ctx, tx)
+		Build(t, ctx, db)
+	stateB := seedtest.NewState().WithName("Texas").WithAbbreviation("TX").Build(t, ctx, db)
+	buB := seedtest.NewBusinessUnit().WithName("Schedules B BU").WithCode("SCHB").Build(t, ctx, db)
 	orgB := seedtest.NewOrganization(buB.ID, stateB.ID).
 		WithName("Schedules Org B").
 		WithScacCode("SCHB").
 		WithBucketName("schedules-bucket-b").
-		Build(t, ctx, tx)
+		Build(t, ctx, db)
 	userB := seedtest.NewUser(orgB.ID, buB.ID).
 		WithUsername("schedules_b_user").
 		WithEmail("schedules_b@example.com").
 		WithPassword("password123").
-		Build(t, ctx, tx)
-	require.NoError(t, tx.Commit())
+		Build(t, ctx, db)
 
 	conn := postgres.NewTestConnection(db)
 	definitions := NewDefinitionRepository(DefinitionParams{DB: conn, Logger: zap.NewNop()})
@@ -57,7 +54,7 @@ func TestListSchedulesShowsOwnSchedulesAndThoseOnOwnedReports(t *testing.T) {
 	other := pagination.TenantInfo{OrgID: orgB.ID, BuID: buB.ID, UserID: userB.ID}
 
 	createDefinition := func(tenant pagination.TenantInfo, name string) *report.ReportDefinition {
-		created, createErr := definitions.Create(ctx, &report.ReportDefinition{
+		created, createErr := definitions.Create(tenantCtx(ctx, tenant), &report.ReportDefinition{
 			BusinessUnitID: tenant.BuID,
 			OrganizationID: tenant.OrgID,
 			Name:           name,
@@ -65,9 +62,13 @@ func TestListSchedulesShowsOwnSchedulesAndThoseOnOwnedReports(t *testing.T) {
 			OwnerID:        tenant.UserID,
 			Visibility:     report.VisibilityShared,
 			Status:         report.DefinitionStatusActive,
-			CatalogVersion: reportcatalog.Version,
-			Definition:     &report.Definition{IRVersion: report.CurrentIRVersion},
-			DefaultFormat:  report.FormatCSV,
+			CatalogVersion: "integration-catalog",
+			Definition: &ir.Definition{
+				Version: ir.Version,
+				Entity:  "shipment",
+				Columns: []ir.Column{{ID: "pro", Dimension: &ir.Dimension{Field: "proNumber"}}},
+			},
+			DefaultFormat: report.FormatCSV,
 		}, tenant.UserID)
 		require.NoError(t, createErr)
 		return created
@@ -76,7 +77,7 @@ func TestListSchedulesShowsOwnSchedulesAndThoseOnOwnedReports(t *testing.T) {
 		tenant pagination.TenantInfo,
 		definitionID pulid.ID,
 	) *report.ReportSchedule {
-		created, createErr := schedules.Create(ctx, &report.ReportSchedule{
+		created, createErr := schedules.Create(tenantCtx(ctx, tenant), &report.ReportSchedule{
 			ID:             pulid.MustNew("rsch_"),
 			BusinessUnitID: tenant.BuID,
 			OrganizationID: tenant.OrgID,
@@ -104,12 +105,15 @@ func TestListSchedulesShowsOwnSchedulesAndThoseOnOwnedReports(t *testing.T) {
 	otherOnOtherReport := createSchedule(other, otherReport.ID)
 
 	list := func(tenant pagination.TenantInfo, definitionID pulid.ID) []pulid.ID {
-		listed, listErr := schedules.List(ctx, &reportports.ListReportSchedulesRequest{
-			TenantInfo:   tenant,
-			VisibleTo:    tenant.UserID,
-			DefinitionID: definitionID,
-			Limit:        100,
-		})
+		listed, listErr := schedules.List(
+			tenantCtx(ctx, tenant),
+			&reportports.ListReportSchedulesRequest{
+				TenantInfo:   tenant,
+				VisibleTo:    tenant.UserID,
+				DefinitionID: definitionID,
+				Limit:        100,
+			},
+		)
 		require.NoError(t, listErr)
 		ids := make([]pulid.ID, 0, len(listed))
 		for _, schedule := range listed {

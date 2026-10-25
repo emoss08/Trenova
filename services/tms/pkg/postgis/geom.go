@@ -6,8 +6,11 @@ import (
 	"fmt"
 
 	"github.com/paulmach/orb"
+	"github.com/paulmach/orb/encoding/ewkb"
 	"github.com/paulmach/orb/encoding/wkb"
 )
+
+const SRID = 4326
 
 type Point struct {
 	orb.Point
@@ -68,7 +71,7 @@ func (p *Point) Value() (driver.Value, error) {
 		return nil, nil //nolint:nilnil // valid for driver.Value
 	}
 
-	return wkb.Marshal(p.Point)
+	return ewkb.Marshal(p.Point, SRID)
 }
 
 func stripEWKBHeader(data []byte) ([]byte, error) {

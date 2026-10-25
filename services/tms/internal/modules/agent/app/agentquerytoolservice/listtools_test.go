@@ -70,8 +70,8 @@ func filterParams(entries ...map[string]any) map[string]any {
 
 /*
 An unknown filter field is the dangerous case, not the annoying one.
-QueryBuilder.ApplyFilters drops a field that is not in FilterableFields and
-carries on (pkg/querybuilder/querybuilder.go:89) — so a mistyped field returns
+listquery drops a filter on a field it cannot resolve and carries on
+(pkg/listquery/filters.go) — so a mistyped field returns
 an unfiltered page that the model reports as a filtered answer. The tool has to
 refuse it, and say what it could have asked for instead.
 */
@@ -136,7 +136,7 @@ func TestListTool_NormalizesEnumCase(t *testing.T) {
 }
 
 /*
-OpNextNDays applies only an upper bound (pkg/querybuilder/querybuilder.go:333:
+OpNextNDays applies only an upper bound (pkg/listquery/filters.go:
 `field <= now + N days`), so asking for registrations expiring in the next 30
 days also matches every registration that lapsed years ago. That is the exact
 shape of confidently wrong answer this catalog exists to prevent, so the tool

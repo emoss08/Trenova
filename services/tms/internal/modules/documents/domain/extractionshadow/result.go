@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aicorrection"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/pkg/domaintypes"
@@ -11,14 +12,11 @@ import (
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/emoss08/trenova/shared/timeutils"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
 	"github.com/shopspring/decimal"
-	"github.com/uptrace/bun"
 )
 
 var (
-	_ bun.BeforeAppendModelHook      = (*ShadowResult)(nil)
 	_ pagination.CursorEntity        = (*ShadowResult)(nil)
 	_ domaintypes.PostgresSearchable = (*ShadowResult)(nil)
 )
@@ -34,63 +32,61 @@ func WorkflowID(resultID pulid.ID) string {
 }
 
 type ShadowResult struct {
-	bun.BaseModel `bun:"table:extraction_shadow_results,alias:exsr" json:"-"`
+	keel.Table `keel:"extraction_shadow_results"`
 
-	pagination.CursorValueSet `json:"-" bun:",embed"`
+	ID             pulid.ID `json:"id"             keel:"id,pk,autoid:exsr_"`
+	BusinessUnitID pulid.ID `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
+	OrganizationID pulid.ID `json:"organizationId" keel:"organization_id,pk,tenant"`
 
-	ID             pulid.ID `json:"id"             bun:"id,pk,type:VARCHAR(100),notnull"`
-	BusinessUnitID pulid.ID `json:"businessUnitId" bun:"business_unit_id,pk,type:VARCHAR(100),notnull"`
-	OrganizationID pulid.ID `json:"organizationId" bun:"organization_id,pk,type:VARCHAR(100),notnull"`
+	DocumentID   pulid.ID     `json:"documentId"   keel:"document_id"`
+	ExtractedAt  int64        `json:"extractedAt"  keel:"extracted_at"`
+	Status       ResultStatus `json:"status"       keel:"status"`
+	StatusReason string       `json:"statusReason" keel:"status_reason,nullzero"`
 
-	DocumentID   pulid.ID     `json:"documentId"   bun:"document_id,type:VARCHAR(100),notnull"`
-	ExtractedAt  int64        `json:"extractedAt"  bun:"extracted_at,type:BIGINT,notnull"`
-	Status       ResultStatus `json:"status"       bun:"status,type:VARCHAR(20),notnull,default:'Pending'"`
-	StatusReason string       `json:"statusReason" bun:"status_reason,type:TEXT,nullzero"`
+	ProviderID           pulid.ID  `json:"providerId"           keel:"provider_id"`
+	ProviderName         string    `json:"providerName"         keel:"provider_name"`
+	ServedModel          string    `json:"servedModel"          keel:"served_model,nullzero"`
+	ProductionProviderID *pulid.ID `json:"productionProviderId" keel:"production_provider_id"`
+	ProductionModel      string    `json:"productionModel"      keel:"production_model,nullzero"`
 
-	ProviderID           pulid.ID  `json:"providerId"           bun:"provider_id,type:VARCHAR(100),notnull"`
-	ProviderName         string    `json:"providerName"         bun:"provider_name,type:VARCHAR(100),notnull"`
-	ServedModel          string    `json:"servedModel"          bun:"served_model,type:VARCHAR(255),nullzero"`
-	ProductionProviderID *pulid.ID `json:"productionProviderId" bun:"production_provider_id,type:VARCHAR(100),nullzero"`
-	ProductionModel      string    `json:"productionModel"      bun:"production_model,type:VARCHAR(255),nullzero"`
+	Accepted        bool                   `json:"accepted"        keel:"accepted"`
+	RejectionReason string                 `json:"rejectionReason" keel:"rejection_reason,nullzero"`
+	DraftData       map[string]any         `json:"-"               keel:"draft_data,jsonb,nullzero"`
+	Predicted       *aicorrection.Snapshot `json:"predicted"       keel:"predicted,jsonb"`
 
-	Accepted        bool                   `json:"accepted"        bun:"accepted,type:BOOLEAN,notnull,default:false"`
-	RejectionReason string                 `json:"rejectionReason" bun:"rejection_reason,type:TEXT,nullzero"`
-	DraftData       map[string]any         `json:"-"               bun:"draft_data,type:JSONB,nullzero"`
-	Predicted       *aicorrection.Snapshot `json:"predicted"       bun:"predicted,type:JSONB,nullzero"`
+	CorrectionID *pulid.ID                  `json:"correctionId" keel:"correction_id"`
+	ScoredAt     *int64                     `json:"scoredAt"     keel:"scored_at"`
+	Verdict      Verdict                    `json:"verdict"      keel:"verdict,nullzero"`
+	FieldResults []aicorrection.FieldResult `json:"fieldResults" keel:"field_results,jsonb"`
 
-	CorrectionID *pulid.ID                  `json:"correctionId" bun:"correction_id,type:VARCHAR(100),nullzero"`
-	ScoredAt     *int64                     `json:"scoredAt"     bun:"scored_at,type:BIGINT,nullzero"`
-	Verdict      Verdict                    `json:"verdict"      bun:"verdict,type:VARCHAR(20),nullzero"`
-	FieldResults []aicorrection.FieldResult `json:"fieldResults" bun:"field_results,type:JSONB,notnull,default:'[]'"`
+	ScoredCount    int     `json:"scoredCount"    keel:"scored_count"`
+	CorrectCount   int     `json:"correctCount"   keel:"correct_count"`
+	CorrectedCount int     `json:"correctedCount" keel:"corrected_count"`
+	MissedCount    int     `json:"missedCount"    keel:"missed_count"`
+	Accuracy       float64 `json:"accuracy"       keel:"accuracy"`
 
-	ScoredCount    int     `json:"scoredCount"    bun:"scored_count,type:INTEGER,notnull,default:0"`
-	CorrectCount   int     `json:"correctCount"   bun:"correct_count,type:INTEGER,notnull,default:0"`
-	CorrectedCount int     `json:"correctedCount" bun:"corrected_count,type:INTEGER,notnull,default:0"`
-	MissedCount    int     `json:"missedCount"    bun:"missed_count,type:INTEGER,notnull,default:0"`
-	Accuracy       float64 `json:"accuracy"       bun:"accuracy,type:DOUBLE PRECISION,notnull,default:0"`
+	BaselineFieldResults   []aicorrection.FieldResult `json:"baselineFieldResults"   keel:"baseline_field_results,jsonb"`
+	BaselineScoredCount    int                        `json:"baselineScoredCount"    keel:"baseline_scored_count"`
+	BaselineCorrectCount   int                        `json:"baselineCorrectCount"   keel:"baseline_correct_count"`
+	BaselineCorrectedCount int                        `json:"baselineCorrectedCount" keel:"baseline_corrected_count"`
+	BaselineMissedCount    int                        `json:"baselineMissedCount"    keel:"baseline_missed_count"`
+	BaselineAccuracy       float64                    `json:"baselineAccuracy"       keel:"baseline_accuracy"`
 
-	BaselineFieldResults   []aicorrection.FieldResult `json:"baselineFieldResults"   bun:"baseline_field_results,type:JSONB,notnull,default:'[]'"`
-	BaselineScoredCount    int                        `json:"baselineScoredCount"    bun:"baseline_scored_count,type:INTEGER,notnull,default:0"`
-	BaselineCorrectCount   int                        `json:"baselineCorrectCount"   bun:"baseline_correct_count,type:INTEGER,notnull,default:0"`
-	BaselineCorrectedCount int                        `json:"baselineCorrectedCount" bun:"baseline_corrected_count,type:INTEGER,notnull,default:0"`
-	BaselineMissedCount    int                        `json:"baselineMissedCount"    bun:"baseline_missed_count,type:INTEGER,notnull,default:0"`
-	BaselineAccuracy       float64                    `json:"baselineAccuracy"       bun:"baseline_accuracy,type:DOUBLE PRECISION,notnull,default:0"`
+	LatencyMs    int64           `json:"latencyMs"    keel:"latency_ms"`
+	InputTokens  int64           `json:"inputTokens"  keel:"input_tokens"`
+	OutputTokens int64           `json:"outputTokens" keel:"output_tokens"`
+	CostUSD      decimal.Decimal `json:"costUsd"      keel:"cost_usd"`
 
-	LatencyMs    int64           `json:"latencyMs"    bun:"latency_ms,type:BIGINT,notnull,default:0"`
-	InputTokens  int64           `json:"inputTokens"  bun:"input_tokens,type:BIGINT,notnull,default:0"`
-	OutputTokens int64           `json:"outputTokens" bun:"output_tokens,type:BIGINT,notnull,default:0"`
-	CostUSD      decimal.Decimal `json:"costUsd"      bun:"cost_usd,type:NUMERIC(14,6),notnull,default:0"`
+	WorkflowID  string `json:"workflowId"  keel:"workflow_id,nullzero"`
+	StartedAt   *int64 `json:"startedAt"   keel:"started_at"`
+	CompletedAt *int64 `json:"completedAt" keel:"completed_at"`
 
-	WorkflowID  string `json:"workflowId"  bun:"workflow_id,type:VARCHAR(255),nullzero"`
-	StartedAt   *int64 `json:"startedAt"   bun:"started_at,type:BIGINT,nullzero"`
-	CompletedAt *int64 `json:"completedAt" bun:"completed_at,type:BIGINT,nullzero"`
+	Version   int64 `json:"version"   keel:"version,version"`
+	CreatedAt int64 `json:"createdAt" keel:"created_at,autocreate"`
+	UpdatedAt int64 `json:"updatedAt" keel:"updated_at,autoupdate"`
 
-	Version   int64 `json:"version"   bun:"version,type:BIGINT,notnull,default:0"`
-	CreatedAt int64 `json:"createdAt" bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
-	UpdatedAt int64 `json:"updatedAt" bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
-
-	BusinessUnit *tenant.BusinessUnit `bun:"rel:belongs-to,join:business_unit_id=id" json:"-"`
-	Organization *tenant.Organization `bun:"rel:belongs-to,join:organization_id=id"  json:"-"`
+	BusinessUnit *tenant.BusinessUnit `json:"-"`
+	Organization *tenant.Organization `json:"-"`
 }
 
 func (r *ShadowResult) Validate(multiErr *errortypes.MultiError) {
@@ -193,20 +189,9 @@ func (r *ShadowResult) GetPostgresSearchConfig() domaintypes.PostgresSearchConfi
 	}
 }
 
-func (r *ShadowResult) BeforeAppendModel(_ context.Context, query bun.Query) error {
-	now := timeutils.NowUnix()
-
-	switch query.(type) {
-	case *bun.InsertQuery:
-		if r.ID.IsNil() {
-			r.ID = pulid.MustNew("exsr_")
-		}
-		if r.CreatedAt == 0 {
-			r.CreatedAt = now
-		}
-		r.UpdatedAt = now
-	case *bun.UpdateQuery:
-		r.UpdatedAt = now
+func (r *ShadowResult) BeforeCreate(_ context.Context) error {
+	if r.Status == "" {
+		r.Status = ResultStatusPending
 	}
 
 	return nil

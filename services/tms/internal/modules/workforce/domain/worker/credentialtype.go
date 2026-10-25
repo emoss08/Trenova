@@ -7,15 +7,14 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/domainvalidation"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/validationframework"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/emoss08/trenova/shared/timeutils"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
-	"github.com/uptrace/bun"
 )
 
 var (
@@ -175,37 +174,60 @@ const (
 )
 
 var (
-	_ bun.BeforeAppendModelHook          = (*WorkerCredentialType)(nil)
 	_ domaintypes.PostgresSearchable     = (*WorkerCredentialType)(nil)
 	_ pagination.CursorEntity            = (*WorkerCredentialType)(nil)
 	_ validationframework.TenantedEntity = (*WorkerCredentialType)(nil)
 )
 
+// The catalog of credentials a carrier tracks
 type WorkerCredentialType struct {
-	bun.BaseModel             `bun:"table:worker_credential_types,alias:wct" json:"-"`
-	pagination.CursorValueSet `bun:",embed"                                  json:"-"`
+	keel.Table             `keel:"worker_credential_types,report=Parties,label=Credential Type"`
+	ID                     pulid.ID               `keel:"id,pk,autoid:wct_"                                                      json:"id"`
+	BusinessUnitID         pulid.ID               `keel:"business_unit_id,pk,tenant"                                             json:"businessUnitId"`
+	OrganizationID         pulid.ID               `keel:"organization_id,pk,tenant"                                              json:"organizationId"`
+	Code                   string                 `keel:"code"                                                                   json:"code"`
+	Name                   string                 `keel:"name"                                                                   json:"name"`
+	Description            string                 `keel:"description,nullzero"                                                   json:"description"`
+	Category               CredentialCategory     `keel:"category"                                                               json:"category"`
+	Status                 domaintypes.Status     `keel:"status"                                                                 json:"status"`
+	IsRequired             bool                   `keel:"is_required,label=Required"                                             json:"isRequired"`
+	RequiredForDriverTypes []DriverType           `keel:"required_for_driver_types,jsonb"                                        json:"requiredForDriverTypes"`
+	RenewalWindowDays      int32                  `keel:"renewal_window_days,label=Renewal Window (days),format=count,dimension" json:"renewalWindowDays"`
+	ValidityMonths         *int32                 `keel:"validity_months,label=Valid For (months),format=count,dimension"        json:"validityMonths"`
+	RequiresNumber         bool                   `keel:"requires_number"                                                        json:"requiresNumber"`
+	RequiresDocument       bool                   `keel:"requires_document"                                                      json:"requiresDocument"`
+	ProfileField           CredentialProfileField `keel:"profile_field,nullzero"                                                 json:"profileField"`
+	IsSystem               bool                   `keel:"is_system"                                                              json:"isSystem"`
+	SortOrder              int32                  `keel:"sort_order,dimension"                                                   json:"sortOrder"`
+	Version                int64                  `keel:"version,version"                                                        json:"version"`
+	CreatedAt              int64                  `keel:"created_at,autocreate"                                                  json:"createdAt"`
+	UpdatedAt              int64                  `keel:"updated_at,autoupdate"                                                  json:"updatedAt"`
+	SearchVector           string                 `keel:"search_vector,tsvector,readonly,noselect"                               json:"-"`
+}
 
-	ID                     pulid.ID               `json:"id"                     bun:"id,pk,type:VARCHAR(100),notnull"`
-	BusinessUnitID         pulid.ID               `json:"businessUnitId"         bun:"business_unit_id,pk,type:VARCHAR(100),notnull"`
-	OrganizationID         pulid.ID               `json:"organizationId"         bun:"organization_id,pk,type:VARCHAR(100),notnull"`
-	Code                   string                 `json:"code"                   bun:"code,type:VARCHAR(50),notnull"`
-	Name                   string                 `json:"name"                   bun:"name,type:VARCHAR(100),notnull"`
-	Description            string                 `json:"description"            bun:"description,type:TEXT,nullzero"`
-	Category               CredentialCategory     `json:"category"               bun:"category,type:worker_credential_category_enum,notnull,default:'Other'"`
-	Status                 domaintypes.Status     `json:"status"                 bun:"status,type:status_enum,notnull,default:'Active'"`
-	IsRequired             bool                   `json:"isRequired"             bun:"is_required,type:BOOLEAN,notnull"`
-	RequiredForDriverTypes []DriverType           `json:"requiredForDriverTypes" bun:"required_for_driver_types,type:JSONB,notnull,default:'[]'"`
-	RenewalWindowDays      int32                  `json:"renewalWindowDays"      bun:"renewal_window_days,type:INTEGER,notnull,default:30"`
-	ValidityMonths         *int32                 `json:"validityMonths"         bun:"validity_months,type:INTEGER,nullzero"`
-	RequiresNumber         bool                   `json:"requiresNumber"         bun:"requires_number,type:BOOLEAN,notnull"`
-	RequiresDocument       bool                   `json:"requiresDocument"       bun:"requires_document,type:BOOLEAN,notnull"`
-	ProfileField           CredentialProfileField `json:"profileField"           bun:"profile_field,type:VARCHAR(40),nullzero"`
-	IsSystem               bool                   `json:"isSystem"               bun:"is_system,type:BOOLEAN,notnull"`
-	SortOrder              int32                  `json:"sortOrder"              bun:"sort_order,type:INTEGER,notnull"`
-	Version                int64                  `json:"version"                bun:"version,type:BIGINT"`
-	CreatedAt              int64                  `json:"createdAt"              bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
-	UpdatedAt              int64                  `json:"updatedAt"              bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
-	SearchVector           string                 `json:"-"                      bun:"search_vector,type:TSVECTOR,scanonly"`
+func (t *WorkerCredentialType) BeforeUpdate(_ context.Context) error {
+	if t.RequiredForDriverTypes == nil {
+		t.RequiredForDriverTypes = []DriverType{}
+	}
+
+	return nil
+}
+
+func (t *WorkerCredentialType) BeforeCreate(_ context.Context) error {
+	if t.RequiredForDriverTypes == nil {
+		t.RequiredForDriverTypes = []DriverType{}
+	}
+	if t.Category == "" {
+		t.Category = CredentialCategoryOther
+	}
+	if t.Status == "" {
+		t.Status = domaintypes.StatusActive
+	}
+	if t.RenewalWindowDays == 0 {
+		t.RenewalWindowDays = 30
+	}
+
+	return nil
 }
 
 func (t *WorkerCredentialType) Validate(multiErr *errortypes.MultiError) {
@@ -304,24 +326,9 @@ func (t *WorkerCredentialType) GetPostgresSearchConfig() domaintypes.PostgresSea
 	}
 }
 
-func (t *WorkerCredentialType) BeforeAppendModel(_ context.Context, query bun.Query) error {
-	now := timeutils.NowUnix()
-
-	switch query.(type) {
-	case *bun.InsertQuery:
-		if t.ID.IsNil() {
-			t.ID = pulid.MustNew("wct_")
-		}
-		if t.RequiredForDriverTypes == nil {
-			t.RequiredForDriverTypes = []DriverType{}
-		}
-		t.CreatedAt = now
-		t.UpdatedAt = now
-	case *bun.UpdateQuery:
-		if t.RequiredForDriverTypes == nil {
-			t.RequiredForDriverTypes = []DriverType{}
-		}
-		t.UpdatedAt = now
+func (t *WorkerCredentialType) BeforeSave(_ context.Context) error {
+	if t.RequiredForDriverTypes == nil {
+		t.RequiredForDriverTypes = []DriverType{}
 	}
 
 	return nil

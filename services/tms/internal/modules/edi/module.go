@@ -14,6 +14,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/edi/adapters/postgres/edipartnerrepository"
 	"github.com/emoss08/trenova/internal/modules/edi/adapters/postgres/edipartnersettingrepository"
 	"github.com/emoss08/trenova/internal/modules/edi/adapters/postgres/edishipmentlinkrepository"
+	"github.com/emoss08/trenova/internal/modules/edi/adapters/postgres/edishipmenttenderrepository"
 	"github.com/emoss08/trenova/internal/modules/edi/adapters/postgres/edisourcecontextrepository"
 	"github.com/emoss08/trenova/internal/modules/edi/adapters/postgres/editemplaterepository"
 	"github.com/emoss08/trenova/internal/modules/edi/adapters/postgres/editenderchangerepository"
@@ -56,6 +57,7 @@ func SharedOptions() fx.Option {
 			editestcaserepository.New,
 			ediinboundfilerepository.New,
 			edicarrierinvoicerepository.New,
+			edishipmenttenderrepository.New,
 			ediservice.NewValidator,
 			ediservice.New,
 			func(s *ediservice.Service) ediports.EDIService { return s },

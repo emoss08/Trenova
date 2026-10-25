@@ -13,10 +13,10 @@ import (
 	"github.com/emoss08/trenova/internal/modules/settlement/app/driversettlementservice"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/driversettlement"
 	"github.com/emoss08/trenova/internal/modules/settlement/ports/driversettlementports"
+	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/uptrace/bun"
 )
 
 const (
@@ -25,7 +25,7 @@ const (
 )
 
 type Deps struct {
-	DB       kernelports.DBConnection
+	DB       kernelports.Transactor
 	Repo     driversettlementports.JournalRepairRepository
 	Controls invoiceledger.ControlReader
 	Periods  journalposting.PeriodReader
@@ -143,7 +143,13 @@ func (s *Service) repairCreditMemos(ctx context.Context, req *Request, report *R
 			ledgerReq.Now = s.deps.Now()
 			ledgerReq.LedgerOnly = ledgerReq.LedgerOnly || candidate.Journaled
 
-			err = s.inTx(ctx, req.DryRun, func(txCtx context.Context) error {
+			memoCtx := tenantScope(
+				ctx,
+				candidate.Memo.OrganizationID,
+				candidate.Memo.BusinessUnitID,
+				req.ActorID,
+			)
+			err = s.inTx(memoCtx, req.DryRun, func(txCtx context.Context) error {
 				if req.DryRun {
 					_, planErr := s.poster().Plan(txCtx, ledgerReq)
 					return planErr
@@ -197,7 +203,13 @@ func (s *Service) repairDriverPayments(
 		for _, candidate := range batch {
 			settlement := candidate.Settlement
 			after = settlement.ID
-			err = s.inTx(ctx, req.DryRun, func(txCtx context.Context) error {
+			paymentCtx := tenantScope(
+				ctx,
+				settlement.OrganizationID,
+				settlement.BusinessUnitID,
+				req.ActorID,
+			)
+			err = s.inTx(paymentCtx, req.DryRun, func(txCtx context.Context) error {
 				return s.repairDriverPayment(txCtx, req, candidate, controls)
 			})
 			if err != nil {
@@ -315,14 +327,22 @@ func (r *Report) skip(err error, skip Skip) error { //nolint:gocritic // Skip is
 	return nil
 }
 
+func tenantScope(ctx context.Context, orgID, buID, userID pulid.ID) context.Context {
+	return dbscope.WithTenant(ctx, dbscope.Tenant{
+		OrganizationID: orgID,
+		BusinessUnitID: buID,
+		UserID:         userID,
+	})
+}
+
 func (s *Service) inTx(ctx context.Context, dryRun bool, fn func(context.Context) error) error {
 	if dryRun {
 		return fn(ctx)
 	}
-	return s.deps.DB.WithTx(
+	return s.deps.DB.Transact(
 		ctx,
 		kernelports.TxOptions{},
-		func(txCtx context.Context, _ bun.Tx) error {
+		func(txCtx context.Context) error {
 			return fn(txCtx)
 		},
 	)

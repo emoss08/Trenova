@@ -4,6 +4,8 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/identity/app/ptoledgerservice"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
@@ -29,6 +31,7 @@ type Params struct {
 	Logger       *zap.Logger
 	Repo         workerports.PTOPolicyRepository
 	Ledger       *ptoledgerservice.Service
+	DB           kernelports.Transactor
 	WorkerRepo   workerports.WorkerRepository
 	AuditService auditports.AuditService
 	Realtime     agentports.RealtimeService `optional:"true"`
@@ -38,6 +41,7 @@ type Service struct {
 	l            *zap.Logger
 	repo         workerports.PTOPolicyRepository
 	ledger       *ptoledgerservice.Service
+	db           kernelports.Transactor
 	workerRepo   workerports.WorkerRepository
 	auditService auditports.AuditService
 	realtime     agentports.RealtimeService
@@ -48,6 +52,7 @@ func New(p Params) *Service {
 		l:            p.Logger.Named("service.pto-policy"),
 		repo:         p.Repo,
 		ledger:       p.Ledger,
+		db:           p.DB,
 		workerRepo:   p.WorkerRepo,
 		auditService: p.AuditService,
 		realtime:     p.Realtime,

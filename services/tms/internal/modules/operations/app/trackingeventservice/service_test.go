@@ -9,7 +9,8 @@ import (
 	"sync"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/internal/testutil/dbtest"
+
 	"github.com/emoss08/trenova/internal/modules/operations/app/trackingeventservice"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/trackingevent"
@@ -26,21 +27,8 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
-	"github.com/uptrace/bun"
 	"go.uber.org/zap"
 )
-
-type fakeDB struct {
-	kernelports.DBConnection
-}
-
-func (fakeDB) WithTx(
-	ctx context.Context,
-	_ kernelports.TxOptions,
-	fn func(context.Context, bun.Tx) error,
-) error {
-	return fn(ctx, bun.Tx{})
-}
 
 type memoryRepo struct {
 	trackingeventports.TrackingEventRepository
@@ -203,7 +191,7 @@ func newHarness(t *testing.T, stopCount int) *harness {
 	repo := &memoryRepo{}
 	moves := &memoryMoves{move: move}
 	service := trackingeventservice.New(trackingeventservice.Params{
-		DB:           fakeDB{},
+		DB:           dbtest.NopConnection{},
 		Logger:       zap.NewNop(),
 		Repo:         repo,
 		MoveRepo:     moveRepo,

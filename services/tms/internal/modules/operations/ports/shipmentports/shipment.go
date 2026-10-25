@@ -477,23 +477,23 @@ type IdempotencyKeyLookupRequest struct {
 }
 
 type DuplicateBOLResult struct {
-	ID        pulid.ID `bun:"id"`
-	ProNumber string   `bun:"pro_number"`
+	ID        pulid.ID
+	ProNumber string
 }
 
 type PreviousRateSummary struct {
-	ShipmentID          pulid.ID        `json:"shipmentId"          bun:"shipment_id"`
-	ProNumber           string          `json:"proNumber"           bun:"pro_number"`
-	CustomerID          pulid.ID        `json:"customerId"          bun:"customer_id"`
-	ServiceTypeID       pulid.ID        `json:"serviceTypeId"       bun:"service_type_id"`
-	ShipmentTypeID      pulid.ID        `json:"shipmentTypeId"      bun:"shipment_type_id"`
-	FormulaTemplateID   pulid.ID        `json:"formulaTemplateId"   bun:"formula_template_id"`
-	FreightChargeAmount decimal.Decimal `json:"freightChargeAmount" bun:"freight_charge_amount"`
-	OtherChargeAmount   decimal.Decimal `json:"otherChargeAmount"   bun:"other_charge_amount"`
-	TotalChargeAmount   decimal.Decimal `json:"totalChargeAmount"   bun:"total_charge_amount"`
-	Pieces              *int64          `json:"pieces"              bun:"pieces"`
-	Weight              *int64          `json:"weight"              bun:"weight"`
-	CreatedAt           int64           `json:"createdAt"           bun:"created_at"`
+	ShipmentID          pulid.ID        `json:"shipmentId"`
+	ProNumber           string          `json:"proNumber"`
+	CustomerID          pulid.ID        `json:"customerId"`
+	ServiceTypeID       pulid.ID        `json:"serviceTypeId"`
+	ShipmentTypeID      pulid.ID        `json:"shipmentTypeId"`
+	FormulaTemplateID   pulid.ID        `json:"formulaTemplateId"`
+	FreightChargeAmount decimal.Decimal `json:"freightChargeAmount"`
+	OtherChargeAmount   decimal.Decimal `json:"otherChargeAmount"`
+	TotalChargeAmount   decimal.Decimal `json:"totalChargeAmount"`
+	Pieces              *int64          `json:"pieces"`
+	Weight              *int64          `json:"weight"`
+	CreatedAt           int64           `json:"createdAt"`
 }
 
 type ListBillingTransferCandidateIDsQuery struct {
@@ -533,16 +533,16 @@ type ListShipmentSummariesRequest struct {
 // stops and locations to render one row apiece would be dozens of round trips
 // for data the document throws away.
 type ShipmentSummary struct {
-	ShipmentID       pulid.ID            `bun:"shipment_id"`
-	ProNumber        string              `bun:"pro_number"`
-	BOL              string              `bun:"bol"`
-	PONumber         string              `bun:"po_number"`
-	ServiceDate      *int64              `bun:"service_date"`
-	OriginCity       string              `bun:"origin_city"`
-	OriginState      string              `bun:"origin_state"`
-	DestinationCity  string              `bun:"destination_city"`
-	DestinationState string              `bun:"destination_state"`
-	TotalCharge      decimal.NullDecimal `bun:"total_charge_amount"`
+	ShipmentID       pulid.ID            `db:"shipment_id"`
+	ProNumber        string              `db:"pro_number"`
+	BOL              string              `db:"bol"`
+	PONumber         string              `db:"po_number"`
+	ServiceDate      *int64              `db:"service_date"`
+	OriginCity       string              `db:"origin_city"`
+	OriginState      string              `db:"origin_state"`
+	DestinationCity  string              `db:"destination_city"`
+	DestinationState string              `db:"destination_state"`
+	TotalCharge      decimal.NullDecimal `db:"total_charge_amount"`
 }
 
 func (s *ShipmentSummary) GetID() pulid.ID { return s.ShipmentID }
@@ -675,12 +675,12 @@ type ShipmentRepository interface {
 	GetAutoCancelableShipments(
 		ctx context.Context,
 		req *GetAutoCancelableShipmentsRequest,
-		thresholdDays int8,
+		thresholdDays int16,
 	) ([]*shipment.Shipment, error)
 	AutoCancelShipments(
 		ctx context.Context,
 		req *AutoCancelShipmentsRequest,
-		thresholdDays int8,
+		thresholdDays int16,
 	) ([]*shipment.Shipment, error)
 	ListAutoDelayShipmentTenants(ctx context.Context, limit int) ([]pagination.TenantInfo, error)
 	ListAutoCancelShipmentTenants(ctx context.Context, limit int) ([]pagination.TenantInfo, error)

@@ -1,0 +1,132 @@
+{
+  "key": "factoring-schedules",
+  "version": "1.0.0",
+  "name": "Factoring Schedules",
+  "description": "Every schedule of accounts sent to a factor, newest first, with how many invoices it carried, their total, the advance, fee and reserve the agreement expected, and whether it was delivered",
+  "category": "Billing",
+  "tags": [
+    "invoices",
+    "ar",
+    "factoring"
+  ],
+  "defaultFormat": "xlsx",
+  "definition": {
+    "version": 2,
+    "entity": "submission",
+    "columns": [
+      {
+        "id": "schedule_number",
+        "label": "Schedule",
+        "dimension": {
+          "field": "number"
+        }
+      },
+      {
+        "id": "factor",
+        "label": "Factor",
+        "dimension": {
+          "field": "factoringCompany.name"
+        }
+      },
+      {
+        "id": "submitted_on",
+        "label": "Submitted",
+        "dimension": {
+          "field": "createdAt"
+        },
+        "display": {
+          "style": "date",
+          "dateStyle": "date"
+        }
+      },
+      {
+        "id": "status",
+        "label": "Status",
+        "dimension": {
+          "field": "status"
+        }
+      },
+      {
+        "id": "sent_to",
+        "label": "Sent To",
+        "dimension": {
+          "field": "transportTarget"
+        }
+      },
+      {
+        "id": "face",
+        "label": "Face Amount",
+        "measure": {
+          "field": "faceMinor",
+          "agg": "sum"
+        },
+        "transform": {
+          "op": "scale",
+          "factor": 0.01
+        },
+        "display": {
+          "style": "currency",
+          "decimals": 2,
+          "negative": "parentheses"
+        }
+      },
+      {
+        "id": "expected_advance",
+        "label": "Expected Advance",
+        "measure": {
+          "field": "expectedAdvanceMinor",
+          "agg": "sum"
+        },
+        "transform": {
+          "op": "scale",
+          "factor": 0.01
+        },
+        "display": {
+          "style": "currency",
+          "decimals": 2,
+          "negative": "parentheses"
+        }
+      },
+      {
+        "id": "expected_fee",
+        "label": "Expected Fee",
+        "measure": {
+          "field": "expectedFeeMinor",
+          "agg": "sum"
+        },
+        "transform": {
+          "op": "scale",
+          "factor": 0.01
+        },
+        "display": {
+          "style": "currency",
+          "decimals": 2,
+          "negative": "parentheses"
+        }
+      },
+      {
+        "id": "expected_reserve",
+        "label": "Expected Reserve",
+        "measure": {
+          "field": "expectedReserveMinor",
+          "agg": "sum"
+        },
+        "transform": {
+          "op": "scale",
+          "factor": 0.01
+        },
+        "display": {
+          "style": "currency",
+          "decimals": 2,
+          "negative": "parentheses"
+        }
+      }
+    ],
+    "sort": [
+      {
+        "column": "submitted_on",
+        "desc": true
+      }
+    ]
+  }
+}

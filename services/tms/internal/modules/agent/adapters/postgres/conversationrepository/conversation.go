@@ -6,19 +6,18 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/emoss08/trenova/pkg/buncolgen/conversationcol"
-
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation/conversationdb"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
-	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/dbscope"
-	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/pkg/listquery"
 	"github.com/emoss08/trenova/shared/pulid"
+	"github.com/emoss08/trenova/shared/sliceutils"
 	"github.com/emoss08/trenova/shared/timeutils"
-	"github.com/uptrace/bun"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
@@ -53,11 +52,7 @@ func (r *repository) CreateThread(
 	thread *conversation.Thread,
 ) (*conversation.Thread, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*conversation.Thread, error) {
-		if _, err := r.db.DBForContext(ctx).
-			NewInsert().
-			Model(thread).
-			Returning("*").
-			Exec(ctx); err != nil {
+		if err := conversationdb.Threads.Create(ctx, r.db.Keel(ctx), thread); err != nil {
 			r.l.Error("failed to create thread", zap.Error(err))
 			return nil, err
 		}
@@ -66,25 +61,13 @@ func (r *repository) CreateThread(
 	})
 }
 
-// GetThread scopes by user as well as tenant. A thread reveals what someone was
-// investigating, so belonging to the same organization is not enough to read it.
 func (r *repository) GetThread(
 	ctx context.Context,
 	req agentports.GetThreadRequest,
 ) (*conversation.Thread, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*conversation.Thread, error) {
-		cols := conversationcol.ThreadColumns
-		entity := new(conversation.Thread)
-
-		err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(entity).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return conversationcol.ThreadScopeTenant(sq, req.TenantInfo).
-					Where(cols.ID.Eq(), req.ID).
-					Where(cols.UserID.Eq(), req.UserID)
-			}).
-			Scan(ctx)
+		th := conversationdb.Threads
+		entity, err := th.Where(th.ID.Eq(req.ID), th.UserID.Eq(req.UserID)).One(ctx, r.db.Keel(ctx))
 		if err != nil {
 			return nil, dberror.HandleNotFoundError(err, "Thread")
 		}
@@ -98,17 +81,7 @@ func (r *repository) GetThreadOwned(
 	req agentports.GetThreadOwnedRequest,
 ) (*conversation.Thread, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*conversation.Thread, error) {
-		cols := conversationcol.ThreadColumns
-		entity := new(conversation.Thread)
-
-		err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(entity).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return conversationcol.ThreadScopeTenant(sq, req.TenantInfo).
-					Where(cols.ID.Eq(), req.ID)
-			}).
-			Scan(ctx)
+		entity, err := conversationdb.Threads.Get(ctx, r.db.Keel(ctx), req.ID)
 		if err != nil {
 			return nil, dberror.HandleNotFoundError(err, "Thread")
 		}
@@ -126,22 +99,11 @@ func (r *repository) ListThreadAgentsByIDs(
 			return []*conversation.Thread{}, nil
 		}
 
-		cols := conversationcol.ThreadColumns
-		threads := make([]*conversation.Thread, 0, len(req.IDs))
-		err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(&threads).
-			Column(
-				cols.ID.Bare(),
-				cols.OrganizationID.Bare(),
-				cols.BusinessUnitID.Bare(),
-				cols.AgentDefinitionID.Bare(),
-			).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return conversationcol.ThreadScopeTenant(sq, req.TenantInfo).
-					Where(cols.ID.In(), bun.List(req.IDs))
-			}).
-			Scan(ctx)
+		th := conversationdb.Threads
+		threads, err := th.Pick(th.ID, th.OrganizationID, th.BusinessUnitID, th.AgentDefinitionID).
+			Where(th.ID.In(req.IDs...)).
+			Limit(len(req.IDs)).
+			List(ctx, r.db.Keel(ctx))
 		if err != nil {
 			return nil, fmt.Errorf("list thread agents by ids: %w", err)
 		}
@@ -160,11 +122,10 @@ func (r *repository) ListThreads(
 	}
 
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*agentports.ThreadPage, error) {
-		entities := make([]*conversation.Thread, 0, window.limit+1)
-		if scanErr := threadPageQuery(r.db.DBForContext(ctx), &entities, &req, window).
-			Scan(ctx); scanErr != nil {
-			r.l.Error("failed to list threads", zap.Error(scanErr))
-			return nil, scanErr
+		entities, listErr := threadPageQuery(&req, window).List(ctx, r.db.Keel(ctx))
+		if listErr != nil {
+			r.l.Error("failed to list threads", zap.Error(listErr))
+			return nil, listErr
 		}
 
 		page := &agentports.ThreadPage{Items: entities}
@@ -212,117 +173,97 @@ func threadWindowOf(req *agentports.ListThreadsRequest) (threadWindow, error) {
 	return window, nil
 }
 
-func threadTouchedAt() string {
-	cols := conversationcol.ThreadColumns
+func threadTouchedAt() keel.Expr {
+	th := conversationdb.Threads
 
-	return buncolgen.Expr("greatest({0}, {1})", cols.LastMessageAt, cols.CreatedAt)
+	return keel.Raw("greatest(?, ?)", th.LastMessageAt, th.CreatedAt)
 }
 
-func threadListScope(
-	sq *bun.SelectQuery,
-	userID pulid.ID,
-	tenant pagination.TenantInfo,
-	includeUnlisted bool,
-) *bun.SelectQuery {
-	cols := conversationcol.ThreadColumns
-	sq = conversationcol.ThreadScopeTenant(sq, tenant).Where(cols.UserID.Eq(), userID)
-	if !includeUnlisted {
-		sq = sq.Where(cols.Origin.NotIn(), bun.List(conversation.UnlistedOrigins()))
+func threadListScope(userID pulid.ID, includeUnlisted bool) keel.Pred {
+	th := conversationdb.Threads
+
+	return keel.And(
+		th.UserID.Eq(userID),
+		keel.When(!includeUnlisted, th.Origin.NotIn(conversation.UnlistedOrigins()...)),
+	)
+}
+
+func threadPositionPred(touchedAt keel.Expr, op string, cursor *threadCursor) keel.Pred {
+	if cursor == nil {
+		return nil
 	}
 
-	return sq
+	th := conversationdb.Threads
+
+	return keel.Raw(
+		"(?, ?, ?) "+op+" (?, ?, ?)",
+		th.Pinned,
+		touchedAt,
+		th.ID,
+		cursor.pinned,
+		cursor.touchedAt,
+		cursor.id.String(),
+	)
 }
 
 func threadPageQuery(
-	db bun.IDB,
-	dest *[]*conversation.Thread,
 	req *agentports.ListThreadsRequest,
 	window threadWindow,
-) *bun.SelectQuery {
-	cols := conversationcol.ThreadColumns
+) *keel.Query[conversation.Thread] {
+	th := conversationdb.Threads
 	touchedAt := threadTouchedAt()
-	order := "(" + cols.Pinned.Qualified() + ", " + touchedAt + ", " + cols.ID.Qualified() + ")"
 
-	return db.NewSelect().
-		Model(dest).
-		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-			sq = threadListScope(sq, req.UserID, req.TenantInfo, req.IncludeUnlisted)
-			if req.Pinned != nil {
-				sq = sq.Where(cols.Pinned.Eq(), *req.Pinned)
-			}
-			if req.TouchedFrom > 0 {
-				sq = sq.Where(touchedAt+" >= ?", req.TouchedFrom)
-			}
-			if req.TouchedBefore > 0 {
-				sq = sq.Where(touchedAt+" < ?", req.TouchedBefore)
-			}
-			if window.after != nil {
-				sq = sq.Where(
-					order+" < (?, ?, ?)",
-					window.after.pinned,
-					window.after.touchedAt,
-					window.after.id,
-				)
-			}
-			if window.until != nil {
-				sq = sq.Where(
-					order+" >= (?, ?, ?)",
-					window.until.pinned,
-					window.until.touchedAt,
-					window.until.id,
-				)
-			}
+	var pinned keel.Pred
+	if req.Pinned != nil {
+		pinned = th.Pinned.Eq(*req.Pinned)
+	}
 
-			return sq
-		}).
-		Order(cols.Pinned.OrderDesc()).
-		OrderExpr(touchedAt + " DESC").
-		Order(cols.ID.OrderDesc()).
-		Limit(int64(window.limit + 1))
+	return th.Where(
+		threadListScope(req.UserID, req.IncludeUnlisted),
+		pinned,
+		keel.When(req.TouchedFrom > 0, keel.Raw("? >= ?", touchedAt, req.TouchedFrom)),
+		keel.When(req.TouchedBefore > 0, keel.Raw("? < ?", touchedAt, req.TouchedBefore)),
+		threadPositionPred(touchedAt, "<", window.after),
+		threadPositionPred(touchedAt, ">=", window.until),
+	).
+		Order(th.Pinned.Desc(), keel.Desc(touchedAt), th.ID.Desc()).
+		Limit(window.limit + 1)
 }
 
 type threadShelfBand struct {
-	Band  int `bun:"band"`
-	Total int `bun:"total"`
+	Band  int32
+	Total int64
 }
 
-func threadShelfBandExpr(edges []int64) (expr string, args []any) {
-	cols := conversationcol.ThreadColumns
+func threadShelfBandExpr(edges []int64) keel.Expr {
+	th := conversationdb.Threads
 	touchedAt := threadTouchedAt()
 	var band strings.Builder
-	args = make([]any, 0, len(edges))
+	args := make([]any, 0, len(edges)*2+1)
 
-	band.WriteString("CASE WHEN ")
-	band.WriteString(cols.Pinned.Qualified())
-	band.WriteString(" THEN -1")
+	band.WriteString("CASE WHEN ? THEN -1")
+	args = append(args, th.Pinned)
 	for index, edge := range edges {
-		band.WriteString(" WHEN ")
-		band.WriteString(touchedAt)
-		band.WriteString(" >= ? THEN ")
+		band.WriteString(" WHEN ? >= ? THEN ")
 		band.WriteString(strconv.Itoa(index))
-		args = append(args, edge)
+		args = append(args, touchedAt, edge)
 	}
 	band.WriteString(" ELSE ")
 	band.WriteString(strconv.Itoa(len(edges)))
-	band.WriteString(" END AS band")
+	band.WriteString(" END")
 
-	return band.String(), args
+	return keel.Raw(band.String(), args...)
 }
 
 func threadShelfCountQuery(
-	db bun.IDB,
 	req *agentports.CountThreadShelvesRequest,
-) *bun.SelectQuery {
-	band, args := threadShelfBandExpr(req.Edges)
+) *keel.Query[conversation.Thread] {
+	th := conversationdb.Threads
+	band := threadShelfBandExpr(req.Edges)
 
-	return db.NewSelect().
-		Model((*conversation.Thread)(nil)).
-		ColumnExpr(band, args...).
-		ColumnExpr(buncolgen.Count("total")).
-		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-			return threadListScope(sq, req.UserID, req.TenantInfo, false)
-		}).
-		GroupExpr("band")
+	return th.Pick(band, keel.Count()).
+		Where(threadListScope(req.UserID, false)).
+		Group(band)
 }
 
 func (r *repository) CountThreadShelves(
@@ -333,9 +274,8 @@ func (r *repository) CountThreadShelves(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*agentports.ThreadShelfCounts, error) {
-			rows := make([]threadShelfBand, 0, len(req.Edges)+2)
-			if err := threadShelfCountQuery(r.db.DBForContext(ctx), req).
-				Scan(ctx, &rows); err != nil {
+			rows, err := keel.Into[threadShelfBand](ctx, r.db.Keel(ctx), threadShelfCountQuery(req))
+			if err != nil {
 				r.l.Error("failed to count thread shelves", zap.Error(err))
 				return nil, err
 			}
@@ -344,9 +284,9 @@ func (r *repository) CountThreadShelves(
 			for _, row := range rows {
 				switch {
 				case row.Band < 0:
-					counts.Pinned = row.Total
-				case row.Band < len(counts.Bands):
-					counts.Bands[row.Band] = row.Total
+					counts.Pinned = int(row.Total)
+				case int(row.Band) < len(counts.Bands):
+					counts.Bands[row.Band] = int(row.Total)
 				}
 			}
 
@@ -355,48 +295,51 @@ func (r *repository) CountThreadShelves(
 	)
 }
 
+func keepThreadVersion() keel.Assignment {
+	th := conversationdb.Threads
+
+	return th.Version.ToExpr(th.Version)
+}
+
+func keepThreadUpdatedAt() keel.Assignment {
+	th := conversationdb.Threads
+
+	return th.UpdatedAt.ToExpr(th.UpdatedAt)
+}
+
 func (r *repository) UpdateThread(
 	ctx context.Context,
 	thread *conversation.Thread,
 ) (*conversation.Thread, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*conversation.Thread, error) {
-		cols := conversationcol.ThreadColumns
-		ov := thread.Version
-		thread.Version++
-
-		res, err := r.db.DBForContext(ctx).
-			NewUpdate().
-			Model(thread).
-			WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-				return conversationcol.ThreadScopeTenantUpdate(uq, pagination.TenantInfo{
-					OrgID: thread.OrganizationID,
-					BuID:  thread.BusinessUnitID,
-				}).Where(cols.ID.Eq(), thread.ID).
-					Where(cols.UserID.Eq(), thread.UserID).
-					Where(cols.Version.Eq(), ov)
-			}).
-			Set(cols.Title.Set(), thread.Title).
-			Set(cols.Status.Set(), thread.Status).
-			Set(cols.PreferredProviderID.Set(), thread.PreferredProviderID).
-			Set(cols.Origin.Set(), thread.Origin).
-			Set(cols.Pinned.Set(), thread.Pinned).
-			Set(cols.PinnedFacts.Set(), thread.PinnedFacts).
-			Set(cols.AutoCompactOff.Set(), thread.AutoCompactOff).
-			Set(cols.SubjectType.Set(), thread.SubjectType).
-			Set(cols.SubjectID.Set(), thread.SubjectID).
-			Set(cols.SnoozedUntil.Set(), thread.SnoozedUntil).
-			Set(cols.SnoozeAnchor.Set(), thread.SnoozeAnchor).
-			Set(cols.SnoozeStopID.Set(), thread.SnoozeStopID).
-			Set(cols.UpdatedAt.Set(), timeutils.NowUnix()).
-			Set(cols.Version.Set(), thread.Version).
-			Exec(ctx)
+		th := conversationdb.Threads
+		n, err := th.Where(
+			th.ID.Eq(thread.ID),
+			th.UserID.Eq(thread.UserID),
+			th.Version.Eq(thread.Version),
+		).Update(ctx, r.db.Keel(ctx),
+			th.Title.To(thread.Title),
+			th.Status.To(thread.Status),
+			th.PreferredProviderID.To(thread.PreferredProviderID),
+			th.Origin.To(thread.Origin),
+			th.Pinned.To(thread.Pinned),
+			th.PinnedFacts.To(thread.PinnedFacts),
+			th.AutoCompactOff.To(thread.AutoCompactOff),
+			th.SubjectType.To(thread.SubjectType),
+			th.SubjectID.To(thread.SubjectID),
+			listquery.OptionalInt64(th.SnoozedUntil, thread.SnoozedUntil),
+			th.SnoozeAnchor.To(thread.SnoozeAnchor),
+			th.SnoozeStopID.To(thread.SnoozeStopID),
+		)
 		if err != nil {
 			return nil, fmt.Errorf("update thread: %w", err)
 		}
 
-		if err = dberror.CheckRowsAffected(res, "Thread", thread.ID.String()); err != nil {
+		if err = dberror.CheckAffected(n, "Thread", thread.ID.String()); err != nil {
 			return nil, err
 		}
+
+		thread.Version++
 
 		return thread, nil
 	})
@@ -411,22 +354,18 @@ func (r *repository) MarkThreadTainted(
 			return nil
 		}
 
-		cols := conversationcol.ThreadColumns
-		res, err := r.db.DBForContext(ctx).
-			NewUpdate().
-			Model((*conversation.Thread)(nil)).
-			WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-				return conversationcol.ThreadScopeTenantUpdate(uq, req.TenantInfo).
-					Where(cols.ID.Eq(), req.ThreadID)
-			}).
-			Set(cols.Taint.Set(), req.Taint).
-			Set(cols.TaintedAt.SetExpr("COALESCE({}, ?)"), req.TaintedAt).
-			Exec(ctx)
+		th := conversationdb.Threads
+		n, err := th.Where(th.ID.Eq(req.ThreadID)).Update(ctx, r.db.Keel(ctx),
+			th.Taint.To(req.Taint),
+			th.TaintedAt.ToExpr(keel.Raw("COALESCE(?, ?)", th.TaintedAt, req.TaintedAt)),
+			keepThreadVersion(),
+			keepThreadUpdatedAt(),
+		)
 		if err != nil {
 			return fmt.Errorf("mark thread tainted: %w", err)
 		}
 
-		return dberror.CheckRowsAffected(res, "Thread", req.ThreadID.String())
+		return dberror.CheckAffected(n, "Thread", req.ThreadID.String())
 	})
 }
 
@@ -439,30 +378,24 @@ func (r *repository) UpdateThreadContext(
 			return nil
 		}
 
-		cols := conversationcol.ThreadColumns
-		query := r.db.DBForContext(ctx).
-			NewUpdate().
-			Model((*conversation.Thread)(nil)).
-			WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-				return conversationcol.ThreadScopeTenantUpdate(uq, req.TenantInfo).
-					Where(cols.ID.Eq(), req.ThreadID)
-			})
+		th := conversationdb.Threads
+		sets := []keel.Assignment{keepThreadVersion(), keepThreadUpdatedAt()}
 		if req.Usage != nil {
-			query = query.Set(cols.ContextUsage.Set(), req.Usage)
+			sets = append(sets, th.ContextUsage.To(req.Usage))
 		}
 		if req.AutoCompactOff != nil {
-			query = query.Set(cols.AutoCompactOff.Set(), *req.AutoCompactOff)
+			sets = append(sets, th.AutoCompactOff.To(*req.AutoCompactOff))
 		}
 		if req.WorkingSet != nil {
-			query = query.Set(cols.WorkingSet.Set(), *req.WorkingSet)
+			sets = append(sets, th.WorkingSet.To(*req.WorkingSet))
 		}
 
-		res, err := query.Exec(ctx)
+		n, err := th.Where(th.ID.Eq(req.ThreadID)).Update(ctx, r.db.Keel(ctx), sets...)
 		if err != nil {
 			return fmt.Errorf("update thread context: %w", err)
 		}
 
-		return dberror.CheckRowsAffected(res, "Thread", req.ThreadID.String())
+		return dberror.CheckAffected(n, "Thread", req.ThreadID.String())
 	})
 }
 
@@ -475,19 +408,12 @@ func (r *repository) AddSavedMemories(
 			return nil
 		}
 
-		cols := conversationcol.MessageColumns
-		message := new(conversation.Message)
-		if err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(message).
-			Column(cols.ID.Bare(), cols.SavedMemories.Bare()).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return conversationcol.MessageScopeTenant(sq, req.TenantInfo).
-					Where(cols.ID.Eq(), req.MessageID).
-					Where(cols.ThreadID.Eq(), req.ThreadID)
-			}).
-			For("UPDATE").
-			Scan(ctx); err != nil {
+		m := conversationdb.Messages
+		message, err := m.Pick(m.ID, m.SavedMemories).
+			Where(m.ID.Eq(req.MessageID), m.ThreadID.Eq(req.ThreadID)).
+			Lock(keel.ForUpdate).
+			One(ctx, r.db.Keel(ctx))
+		if err != nil {
 			return dberror.HandleNotFoundError(err, "Message")
 		}
 
@@ -496,20 +422,13 @@ func (r *repository) AddSavedMemories(
 			return nil
 		}
 
-		res, err := r.db.DBForContext(ctx).
-			NewUpdate().
-			Model((*conversation.Message)(nil)).
-			WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-				return conversationcol.MessageScopeTenantUpdate(uq, req.TenantInfo).
-					Where(cols.ID.Eq(), req.MessageID)
-			}).
-			Set(cols.SavedMemories.Set(), saved).
-			Exec(ctx)
+		n, err := m.Where(m.ID.Eq(req.MessageID)).
+			Update(ctx, r.db.Keel(ctx), m.SavedMemories.To(saved))
 		if err != nil {
 			return fmt.Errorf("add saved memories to a message: %w", err)
 		}
 
-		return dberror.CheckRowsAffected(res, "Message", req.MessageID.String())
+		return dberror.CheckAffected(n, "Message", req.MessageID.String())
 	})
 }
 
@@ -517,44 +436,56 @@ func (r *repository) DeleteThread(
 	ctx context.Context,
 	req agentports.GetThreadRequest,
 ) error {
-	return dbtx.WriteErr(ctx, r.db, func(ctx context.
+	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
+		db := r.db.Keel(ctx)
+		m := conversationdb.Messages
+		if _, err := m.Where(m.ThreadID.Eq(req.ID)).Delete(ctx, db); err != nil {
+			return err
+		}
 
-		// Messages are removed explicitly rather than by cascade: they carry no
-		// foreign key to the thread, since a thread's primary key is composite and a
-		// per-message reference to all three columns would buy nothing.
-		Context) error {
-		cols := conversationcol.ThreadColumns
-
-		err := r.db.DBForContext(ctx).
-			RunInTx(ctx, nil, func(txCtx context.Context, tx bun.Tx) error {
-				if _, txErr := tx.NewDelete().
-					Model((*conversation.Message)(nil)).
-					Where(conversationcol.MessageColumns.ThreadID.Eq(), req.ID).
-					Where(conversationcol.MessageColumns.OrganizationID.Eq(), req.TenantInfo.OrgID).
-					Where(conversationcol.MessageColumns.BusinessUnitID.Eq(), req.TenantInfo.BuID).
-					Exec(txCtx); txErr != nil {
-					return txErr
-				}
-
-				res, txErr := tx.NewDelete().
-					Model((*conversation.Thread)(nil)).
-					Where(cols.ID.Eq(), req.ID).
-					Where(cols.UserID.Eq(), req.UserID).
-					Where(cols.OrganizationID.Eq(), req.TenantInfo.OrgID).
-					Where(cols.BusinessUnitID.Eq(), req.TenantInfo.BuID).
-					Exec(txCtx)
-				if txErr != nil {
-					return txErr
-				}
-
-				return dberror.CheckRowsAffected(res, "Thread", req.ID.String())
-			})
+		th := conversationdb.Threads
+		n, err := th.Where(th.ID.Eq(req.ID), th.UserID.Eq(req.UserID)).Delete(ctx, db)
 		if err != nil {
 			return err
 		}
 
-		return nil
+		return dberror.CheckAffected(n, "Thread", req.ID.String())
 	})
+}
+
+func messagesQuery(req *agentports.ListMessagesRequest) *keel.Query[conversation.Message] {
+	m := conversationdb.Messages
+
+	var before, after, sinceCompaction keel.Pred
+	if req.BeforeSequence != nil {
+		before = m.Sequence.Lt(int64(*req.BeforeSequence))
+	}
+	if req.AfterSequence != nil {
+		after = m.Sequence.Gt(int64(*req.AfterSequence))
+	}
+	if req.SinceCompaction {
+		sinceCompaction = afterLatestCompaction(req.ThreadID)
+	}
+
+	return m.Where(
+		m.ThreadID.Eq(req.ThreadID),
+		before,
+		after,
+		keel.When(len(req.ExcludeKinds) > 0, m.Kind.NotIn(req.ExcludeKinds...)),
+		keel.When(len(req.Kinds) > 0, m.Kind.In(req.Kinds...)),
+		sinceCompaction,
+	)
+}
+
+func afterLatestCompaction(threadID pulid.ID) keel.Pred {
+	m := conversationdb.Messages
+	c := conversationdb.Messages.As("compacted")
+	through := c.Pick(keel.Raw("(?)::int", c.Compaction.Text("through"))).
+		Where(c.ThreadID.Eq(threadID), c.Kind.Eq(conversation.MessageKindCompaction)).
+		Order(c.Sequence.Desc()).
+		Limit(1)
+
+	return keel.Raw("? > COALESCE(?, -1)", m.Sequence, keel.Scalar(through))
 }
 
 func (r *repository) ListMessages(
@@ -562,76 +493,36 @@ func (r *repository) ListMessages(
 	req agentports.ListMessagesRequest,
 ) ([]conversation.Message, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]conversation.Message, error) {
-		cols := conversationcol.MessageColumns
-
-		messages := make([]conversation.Message, 0, 32)
-		query := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(&messages).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return conversationcol.MessageScopeTenant(sq, req.TenantInfo).
-					Where(cols.ThreadID.Eq(), req.ThreadID)
-			})
-
-		if req.BeforeSequence != nil {
-			query = query.Where(cols.Sequence.Lt(), *req.BeforeSequence)
-		}
-
-		if req.AfterSequence != nil {
-			query = query.Where(cols.Sequence.Gt(), *req.AfterSequence)
-		}
-
-		if len(req.ExcludeKinds) > 0 {
-			query = query.Where(cols.Kind.NotIn(), bun.List(req.ExcludeKinds))
-		}
-
-		if len(req.Kinds) > 0 {
-			query = query.Where(cols.Kind.In(), bun.List(req.Kinds))
-		}
-
-		if req.SinceCompaction {
-			// The latest summary stands in for every message up to the
-			// sequence it names; the summary itself is numbered after that,
-			// so it is read with what follows. The subquery names the thread
-			// outright, so it is planned once rather than once a row.
-			query = query.Where(
-				`? > COALESCE((
-					SELECT ("c"."compaction"->>'through')::int
-					FROM "assistant_messages" AS "c"
-					WHERE "c"."organization_id" = ?
-						AND "c"."business_unit_id" = ?
-						AND "c"."thread_id" = ?
-						AND "c"."kind" = ?
-					ORDER BY "c"."sequence" DESC
-					LIMIT 1
-				), -1)`,
-				bun.Ident("amsg.sequence"),
-				req.TenantInfo.OrgID,
-				req.TenantInfo.BuID,
-				req.ThreadID,
-				conversation.MessageKindCompaction,
-			)
-		}
+		m := conversationdb.Messages
+		query := messagesQuery(&req)
 
 		if req.Limit > 0 {
-			// Taking the newest N and reversing keeps the most recent context rather
-			// than the oldest, which is what a long conversation needs.
-			if err := query.Order(cols.Sequence.OrderDesc()).
-				Limit(int64(req.Limit)).
-				Scan(ctx); err != nil {
+			rows, err := query.Order(m.Sequence.Desc()).Limit(req.Limit).List(ctx, r.db.Keel(ctx))
+			if err != nil {
 				return nil, err
 			}
+			messages := derefMessages(rows)
 			reverse(messages)
 
 			return messages, nil
 		}
 
-		if err := query.Order(cols.Sequence.OrderAsc()).Scan(ctx); err != nil {
+		rows, err := query.Order(m.Sequence.Asc()).All(ctx, r.db.Keel(ctx))
+		if err != nil {
 			return nil, err
 		}
 
-		return messages, nil
+		return derefMessages(rows), nil
 	})
+}
+
+func derefMessages(rows []*conversation.Message) []conversation.Message {
+	messages := make([]conversation.Message, len(rows))
+	for idx, row := range rows {
+		messages[idx] = *row
+	}
+
+	return messages
 }
 
 func (r *repository) CountMessages(
@@ -639,16 +530,8 @@ func (r *repository) CountMessages(
 	req agentports.CountMessagesRequest,
 ) (int, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (int, error) {
-		cols := conversationcol.MessageColumns
-
-		count, err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model((*conversation.Message)(nil)).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return conversationcol.MessageScopeTenant(sq, req.TenantInfo).
-					Where(cols.ThreadID.Eq(), req.ThreadID)
-			}).
-			Count(ctx)
+		m := conversationdb.Messages
+		count, err := m.Where(m.ThreadID.Eq(req.ThreadID)).Count(ctx, r.db.Keel(ctx))
 		if err != nil {
 			return 0, fmt.Errorf("count messages: %w", err)
 		}
@@ -662,25 +545,20 @@ func (r *repository) CarriesAttachment(
 	req *agentports.CarriesAttachmentRequest,
 ) (bool, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (bool, error) {
-		return buildCarriesAttachmentQuery(r.db.DBForContext(ctx), req).Exists(ctx)
+		return carriesAttachmentQuery(req).Exists(ctx, r.db.Keel(ctx))
 	})
 }
 
-func buildCarriesAttachmentQuery(
-	db bun.IDB,
+func carriesAttachmentQuery(
 	req *agentports.CarriesAttachmentRequest,
-) *bun.SelectQuery {
-	cols := conversationcol.MessageColumns
-	contained := `[{"documentId":"` + req.DocumentID.String() + `"}]`
+) *keel.Query[conversation.Message] {
+	m := conversationdb.Messages
 
-	return db.NewSelect().
-		Model((*conversation.Message)(nil)).
-		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-			return conversationcol.MessageScopeTenant(sq, req.TenantInfo).
-				Where(cols.ThreadID.Eq(), req.ThreadID).
-				Where(cols.Role.Eq(), conversation.RoleUser).
-				Where(cols.Attachments.Expr("{} @> ?::jsonb"), contained)
-		})
+	return m.Where(
+		m.ThreadID.Eq(req.ThreadID),
+		m.Role.Eq(conversation.RoleUser),
+		m.Attachments.Contains([]map[string]string{{"documentId": req.DocumentID.String()}}),
+	)
 }
 
 func reverse(messages []conversation.Message) {
@@ -689,14 +567,23 @@ func reverse(messages []conversation.Message) {
 	}
 }
 
-// AppendTurn numbers and writes a turn's messages in one transaction.
-//
-// Sequence is allocated from the current maximum inside the transaction, and the
-// unique index on (thread_id, sequence) is what makes that safe: two concurrent
-// turns cannot both claim the same number, and the loser fails rather than
-// silently interleaving. Writing the messages together matters because a turn
-// saved halfway would leave a tool call with no result, which breaks the next
-// replay.
+func nextSequence(ctx context.Context, db *keel.DB, threadID pulid.ID) (int, error) {
+	m := conversationdb.Messages
+	current, err := keel.IntoOne[*int64](
+		ctx,
+		db,
+		m.Pick(m.Sequence.Max()).Where(m.ThreadID.Eq(threadID)),
+	)
+	if err != nil {
+		return 0, fmt.Errorf("read current sequence: %w", err)
+	}
+	if current == nil {
+		return 0, nil
+	}
+
+	return int(*current) + 1, nil
+}
+
 func (r *repository) AppendTurn(
 	ctx context.Context,
 	req agentports.AppendTurnRequest,
@@ -706,68 +593,60 @@ func (r *repository) AppendTurn(
 			return nil, nil
 		}
 
-		saved := make([]conversation.Message, 0, len(req.Messages))
-
-		err := r.db.DBForContext(ctx).
-			RunInTx(ctx, nil, func(txCtx context.Context, tx bun.Tx) error {
-				cols := conversationcol.MessageColumns
-
-				var maxSequence int
-				err := tx.NewSelect().
-					Model((*conversation.Message)(nil)).
-					ColumnExpr("COALESCE(MAX(?), -1)", bun.Ident(cols.Sequence.Bare())).
-					Where(cols.ThreadID.Eq(), req.ThreadID).
-					Where(cols.OrganizationID.Eq(), req.TenantInfo.OrgID).
-					Where(cols.BusinessUnitID.Eq(), req.TenantInfo.BuID).
-					Scan(txCtx, &maxSequence)
-				if err != nil {
-					return fmt.Errorf("read current sequence: %w", err)
-				}
-
-				now := timeutils.NowUnix()
-				batch := make([]conversation.Message, 0, len(req.Messages))
-				for idx := range req.Messages {
-					msg := req.Messages[idx]
-					msg.ThreadID = req.ThreadID
-					msg.OrganizationID = req.TenantInfo.OrgID
-					msg.BusinessUnitID = req.TenantInfo.BuID
-					msg.Sequence = maxSequence + 1 + idx
-					batch = append(batch, msg)
-				}
-				conversation.StampUnstamped(batch, now)
-
-				if _, err = tx.NewInsert().Model(&batch).Returning("*").Exec(txCtx); err != nil {
-					return fmt.Errorf("insert turn: %w", err)
-				}
-
-				threadCols := conversationcol.ThreadColumns
-				if _, err = tx.NewUpdate().
-					Model((*conversation.Thread)(nil)).
-					Where(threadCols.ID.Eq(), req.ThreadID).
-					Where(threadCols.OrganizationID.Eq(), req.TenantInfo.OrgID).
-					Where(threadCols.BusinessUnitID.Eq(), req.TenantInfo.BuID).
-					Set(threadCols.LastMessageAt.Set(), now).
-					Set(threadCols.UpdatedAt.Set(), now).
-					Exec(txCtx); err != nil {
-					return fmt.Errorf("touch thread: %w", err)
-				}
-
-				saved = batch
-
-				return nil
-			})
+		db := r.db.Keel(ctx)
+		first, err := nextSequence(ctx, db, req.ThreadID)
 		if err != nil {
 			return nil, err
 		}
 
-		return saved, nil
+		now := timeutils.NowUnix()
+		batch := make([]conversation.Message, 0, len(req.Messages))
+		for idx := range req.Messages {
+			msg := req.Messages[idx]
+			msg.ThreadID = req.ThreadID
+			msg.OrganizationID = req.TenantInfo.OrgID
+			msg.BusinessUnitID = req.TenantInfo.BuID
+			msg.Sequence = first + idx
+			batch = append(batch, msg)
+		}
+		conversation.StampUnstamped(batch, now)
+
+		if err = conversationdb.Messages.CreateMany(
+			ctx,
+			db,
+			sliceutils.Pointers(batch),
+		); err != nil {
+			return nil, fmt.Errorf("insert turn: %w", err)
+		}
+
+		th := conversationdb.Threads
+		if _, err = th.Where(th.ID.Eq(req.ThreadID)).
+			Update(ctx, db, th.LastMessageAt.To(now), keepThreadVersion()); err != nil {
+			return nil, fmt.Errorf("touch thread: %w", err)
+		}
+
+		return batch, nil
 	})
 }
 
-// DeleteStaleThreads removes unkept conversations of one origin whose last
-// activity is older than the cut-off. Threads are picked first, bounded by
-// the limit, then their messages and the threads go in one transaction;
-// artifacts follow the thread by cascade.
+func staleThreadsQuery(
+	req *agentports.DeleteStaleThreadsRequest,
+	limit int,
+) *keel.Query[conversation.Thread] {
+	th := conversationdb.Threads
+
+	return th.AllTenants().
+		Pick(th.ID, th.OrganizationID, th.BusinessUnitID).
+		Where(
+			th.Origin.Eq(req.Origin),
+			th.LastMessageAt.Lt(req.Before),
+			th.CreatedAt.Lt(req.Before),
+			keel.When(req.SubjectlessOnly, th.SubjectID.IsNull()),
+		).
+		Order(th.LastMessageAt.Asc()).
+		Limit(limit)
+}
+
 func (r *repository) DeleteStaleThreads(
 	ctx context.Context,
 	req agentports.DeleteStaleThreadsRequest,
@@ -782,56 +661,7 @@ func (r *repository) DeleteStaleThreads(
 			limit = defaultThreadLimit * 10
 		}
 
-		cols := conversationcol.ThreadColumns
-
-		deleted := 0
-		err := r.db.DBForContext(ctx).
-			RunInTx(ctx, nil, func(txCtx context.Context, tx bun.Tx) error {
-				var stale []conversation.Thread
-				q := tx.NewSelect().
-					Model(&stale).
-					Column(cols.ID.Bare(), cols.OrganizationID.Bare(), cols.BusinessUnitID.Bare()).
-					Where(cols.Origin.Eq(), req.Origin).
-					Where(cols.LastMessageAt.Lt(), req.Before).
-					Where(cols.CreatedAt.Lt(), req.Before)
-				if req.SubjectlessOnly {
-					q = q.Where(cols.SubjectID.IsNull())
-				}
-				if err := q.Order(cols.LastMessageAt.OrderAsc()).
-					Limit(int64(limit)).
-					Scan(txCtx); err != nil {
-					return err
-				}
-				if len(stale) == 0 {
-					return nil
-				}
-
-				for i := range stale {
-					thread := &stale[i]
-					if _, err := tx.NewDelete().
-						Model((*conversation.Message)(nil)).
-						Where(conversationcol.MessageColumns.ThreadID.Eq(), thread.ID).
-						Where(conversationcol.MessageColumns.OrganizationID.Eq(), thread.OrganizationID).
-						Where(conversationcol.MessageColumns.BusinessUnitID.Eq(), thread.BusinessUnitID).
-						Exec(txCtx); err != nil {
-						return err
-					}
-					res, err := tx.NewDelete().
-						Model((*conversation.Thread)(nil)).
-						Where(cols.ID.Eq(), thread.ID).
-						Where(cols.OrganizationID.Eq(), thread.OrganizationID).
-						Where(cols.BusinessUnitID.Eq(), thread.BusinessUnitID).
-						Exec(txCtx)
-					if err != nil {
-						return err
-					}
-					if affected, _ := res.RowsAffected(); affected > 0 {
-						deleted++
-					}
-				}
-
-				return nil
-			})
+		deleted, err := r.deleteStaleThreads(ctx, &req, limit)
 		if err != nil {
 			r.l.Error("failed to delete stale threads",
 				zap.String("origin", string(req.Origin)),
@@ -843,4 +673,64 @@ func (r *repository) DeleteStaleThreads(
 
 		return deleted, nil
 	})
+}
+
+func (r *repository) deleteStaleThreads(
+	ctx context.Context,
+	req *agentports.DeleteStaleThreadsRequest,
+	limit int,
+) (int, error) {
+	db := r.db.Keel(ctx)
+	stale, err := staleThreadsQuery(req, limit).List(ctx, db)
+	if err != nil {
+		return 0, err
+	}
+	if len(stale) == 0 {
+		return 0, nil
+	}
+
+	ids := make([]pulid.ID, len(stale))
+	orgs := make([]pulid.ID, len(stale))
+	bus := make([]pulid.ID, len(stale))
+	for idx, thread := range stale {
+		ids[idx] = thread.ID
+		orgs[idx] = thread.OrganizationID
+		bus[idx] = thread.BusinessUnitID
+	}
+	doomed := keel.Unnest(
+		"doomed",
+		[]string{"id", "organization_id", "business_unit_id"},
+		ids,
+		orgs,
+		bus,
+	)
+
+	m := conversationdb.Messages
+	if _, err = m.AllTenants().
+		With(doomed).
+		Join(doomed, keel.And(
+			doomed.Col("id").EqCol(m.ThreadID),
+			doomed.Col("organization_id").EqCol(m.OrganizationID),
+			doomed.Col("business_unit_id").EqCol(m.BusinessUnitID),
+		)).
+		Where(keel.True()).
+		Delete(ctx, db); err != nil {
+		return 0, err
+	}
+
+	th := conversationdb.Threads
+	n, err := th.AllTenants().
+		With(doomed).
+		Join(doomed, keel.And(
+			doomed.Col("id").EqCol(th.ID),
+			doomed.Col("organization_id").EqCol(th.OrganizationID),
+			doomed.Col("business_unit_id").EqCol(th.BusinessUnitID),
+		)).
+		Where(keel.True()).
+		Delete(ctx, db)
+	if err != nil {
+		return 0, err
+	}
+
+	return int(n), nil
 }

@@ -6,12 +6,18 @@ import (
 	"fmt"
 	"sort"
 
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/glaccount/glaccountdb"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/glbalance"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/glbalance/glbalancedb"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/journalentry"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/journalentry/journalentrydb"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/journalsource"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/journalsource/journalsourcedb"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/journalentryports"
-	"github.com/emoss08/trenova/pkg/dbhelper"
-	"github.com/uptrace/bun"
+	"github.com/emoss08/trenova/shared/pulid"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
@@ -32,36 +38,8 @@ func New(p Params) journalentryports.JournalPostingRepository {
 	return &repository{db: p.DB, l: p.Logger.Named("postgres.journal-posting-repository")}
 }
 
-type journalSourceRecord struct {
-	bun.BaseModel `bun:"table:journal_sources"`
-
-	ID                   string `bun:"id,pk"`
-	BusinessUnitID       string `bun:"business_unit_id,pk"`
-	OrganizationID       string `bun:"organization_id,pk"`
-	SourceObjectType     string `bun:"source_object_type"`
-	SourceObjectID       string `bun:"source_object_id"`
-	SourceEventType      string `bun:"source_event_type"`
-	SourceDocumentNumber string `bun:"source_document_number"`
-	Status               string `bun:"status"`
-	IdempotencyKey       string `bun:"idempotency_key"`
-	JournalBatchID       string `bun:"journal_batch_id"`
-	JournalEntryID       string `bun:"journal_entry_id"`
-}
-
-type sourceJournalLinkRecord struct {
-	bun.BaseModel `bun:"table:source_journal_links"`
-
-	ID              string `bun:"id,pk"`
-	BusinessUnitID  string `bun:"business_unit_id,pk"`
-	OrganizationID  string `bun:"organization_id,pk"`
-	JournalSourceID string `bun:"journal_source_id"`
-	JournalBatchID  string `bun:"journal_batch_id"`
-	JournalEntryID  string `bun:"journal_entry_id"`
-	LinkRole        string `bun:"link_role"`
-}
-
 type lineAggregate struct {
-	glAccountID string
+	glAccountID pulid.ID
 	debit       int64
 	credit      int64
 	net         int64
@@ -143,57 +121,54 @@ func (r *repository) CreatePosting(
 			})
 		}
 
-		if _, err := r.db.DBForContext(ctx).NewInsert().Model(batch).Exec(ctx); err != nil {
+		db := r.db.Keel(ctx)
+		if err := journalentrydb.JournalBatches.Create(ctx, db, batch); err != nil {
 			return fmt.Errorf("insert journal batch: %w", err)
 		}
-		if _, err := r.db.DBForContext(ctx).NewInsert().Model(entry).Exec(ctx); err != nil {
+		if err := journalentrydb.JournalEntries.Create(ctx, db, entry); err != nil {
 			return fmt.Errorf("insert journal entry: %w", err)
 		}
-		if len(lines) > 0 {
-			if _, err := r.db.DBForContext(ctx).NewInsert().Model(&lines).Exec(ctx); err != nil {
-				return fmt.Errorf("insert journal entry lines: %w", err)
-			}
+		if err := journalentrydb.JournalEntryLines.CreateMany(ctx, db, lines); err != nil {
+			return fmt.Errorf("insert journal entry lines: %w", err)
 		}
 
 		if params.SourceID.IsNotNil() {
-			source := &journalSourceRecord{
-				ID:                   params.SourceID.String(),
-				BusinessUnitID:       params.BusinessUnitID.String(),
-				OrganizationID:       params.OrganizationID.String(),
+			source := &journalsource.Source{
+				ID:                   params.SourceID,
+				BusinessUnitID:       params.BusinessUnitID,
+				OrganizationID:       params.OrganizationID,
 				SourceObjectType:     params.SourceObjectType,
 				SourceObjectID:       params.SourceObjectID,
 				SourceEventType:      params.SourceEventType,
 				SourceDocumentNumber: params.SourceDocumentNumber,
 				Status:               params.SourceStatus,
 				IdempotencyKey:       params.SourceIdempotencyKey,
-				JournalBatchID:       params.BatchID.String(),
-				JournalEntryID:       params.EntryID.String(),
+				JournalBatchID:       params.BatchID,
+				JournalEntryID:       params.EntryID,
 			}
-			if _, err := r.db.DBForContext(ctx).NewInsert().Model(source).Exec(ctx); err != nil {
+			if err := journalsourcedb.Sources.Create(ctx, db, source); err != nil {
 				return fmt.Errorf("insert journal source: %w", err)
 			}
 
-			link := &sourceJournalLinkRecord{
-				ID:              params.SourceID.String(),
-				BusinessUnitID:  params.BusinessUnitID.String(),
-				OrganizationID:  params.OrganizationID.String(),
-				JournalSourceID: params.SourceID.String(),
-				JournalBatchID:  params.BatchID.String(),
-				JournalEntryID:  params.EntryID.String(),
+			link := &journalsource.SourceJournalLink{
+				ID:              params.SourceID,
+				BusinessUnitID:  params.BusinessUnitID,
+				OrganizationID:  params.OrganizationID,
+				JournalSourceID: params.SourceID,
+				JournalBatchID:  params.BatchID,
+				JournalEntryID:  params.EntryID,
 				LinkRole:        "Primary",
 			}
-			if _, err := r.db.DBForContext(ctx).NewInsert().Model(link).Exec(ctx); err != nil {
+			if err := journalsourcedb.SourceJournalLinks.Create(ctx, db, link); err != nil {
 				return fmt.Errorf("insert source journal link: %w", err)
 			}
 		}
 
 		if params.IsPosted {
-			return r.applyBalances(ctx, balanceTarget{
-				organizationID: params.OrganizationID.String(),
-				businessUnitID: params.BusinessUnitID.String(),
-				fiscalYearID:   params.FiscalYearID.String(),
-				fiscalPeriodID: params.FiscalPeriodID.String(),
-				entryID:        params.EntryID.String(),
+			return applyBalances(ctx, db, balanceTarget{
+				fiscalYearID:   params.FiscalYearID,
+				fiscalPeriodID: params.FiscalPeriodID,
+				entryID:        params.EntryID,
 			}, params.Lines)
 		}
 
@@ -202,23 +177,22 @@ func (r *repository) CreatePosting(
 }
 
 type balanceTarget struct {
-	organizationID string
-	businessUnitID string
-	fiscalYearID   string
-	fiscalPeriodID string
-	entryID        string
+	fiscalYearID   pulid.ID
+	fiscalPeriodID pulid.ID
+	entryID        pulid.ID
 }
 
-func (r *repository) applyBalances(
+func applyBalances(
 	ctx context.Context,
+	db *keel.DB,
 	target balanceTarget,
 	lines []journalentryports.JournalPostingLine,
 ) error {
 	for _, aggregate := range aggregateLinesByAccount(lines) {
-		if err := r.upsertPeriodBalance(ctx, target, aggregate); err != nil {
+		if err := upsertPeriodBalance(ctx, db, target, aggregate); err != nil {
 			return err
 		}
-		if err := r.updateGLAccountRunningBalance(ctx, target, aggregate); err != nil {
+		if err := updateGLAccountRunningBalance(ctx, db, aggregate); err != nil {
 			return err
 		}
 	}
@@ -226,13 +200,12 @@ func (r *repository) applyBalances(
 }
 
 func aggregateLinesByAccount(lines []journalentryports.JournalPostingLine) []lineAggregate {
-	byAccount := make(map[string]*lineAggregate, len(lines))
+	byAccount := make(map[pulid.ID]*lineAggregate, len(lines))
 	for _, line := range lines {
-		accountID := line.GLAccountID.String()
-		agg, ok := byAccount[accountID]
+		agg, ok := byAccount[line.GLAccountID]
 		if !ok {
-			agg = &lineAggregate{glAccountID: accountID}
-			byAccount[accountID] = agg
+			agg = &lineAggregate{glAccountID: line.GLAccountID}
+			byAccount[line.GLAccountID] = agg
 		}
 		agg.debit += line.DebitAmount
 		agg.credit += line.CreditAmount
@@ -247,71 +220,63 @@ func aggregateLinesByAccount(lines []journalentryports.JournalPostingLine) []lin
 	return result
 }
 
-func (r *repository) upsertPeriodBalance(
+func upsertPeriodBalance(
 	ctx context.Context,
-	params balanceTarget,
+	db *keel.DB,
+	target balanceTarget,
 	aggregate lineAggregate,
 ) error {
-	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
-		_, err := r.db.DBForContext(ctx).NewRaw(`
-		INSERT INTO gl_account_balances_by_period AS gb (
-			organization_id,
-			business_unit_id,
-			gl_account_id,
-			fiscal_year_id,
-			fiscal_period_id,
-			period_debit_minor,
-			period_credit_minor,
-			net_change_minor,
-			last_journal_entry_id
-		) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-		ON CONFLICT (organization_id, business_unit_id, gl_account_id, fiscal_year_id, fiscal_period_id)
-		DO UPDATE SET
-			period_debit_minor = gb.period_debit_minor + EXCLUDED.period_debit_minor,
-			period_credit_minor = gb.period_credit_minor + EXCLUDED.period_credit_minor,
-			net_change_minor = gb.net_change_minor + EXCLUDED.net_change_minor,
-			last_journal_entry_id = EXCLUDED.last_journal_entry_id,
-			updated_at = `+dbhelper.NowEpoch+`
-	`,
-			params.organizationID,
-			params.businessUnitID,
-			aggregate.glAccountID,
-			params.fiscalYearID,
-			params.fiscalPeriodID,
-			aggregate.debit,
-			aggregate.credit,
-			aggregate.net,
-			params.entryID,
-		).Exec(ctx)
-		if err != nil {
-			return fmt.Errorf("upsert gl balance by period: %w", err)
-		}
+	gb := glbalancedb.GLAccountPeriodBalances
+	row := &glbalance.GLAccountPeriodBalance{
+		GLAccountID:        aggregate.glAccountID,
+		FiscalYearID:       target.fiscalYearID,
+		FiscalPeriodID:     target.fiscalPeriodID,
+		PeriodDebitMinor:   aggregate.debit,
+		PeriodCreditMinor:  aggregate.credit,
+		NetChangeMinor:     aggregate.net,
+		LastJournalEntryID: target.entryID,
+	}
+	_, err := gb.Upsert(
+		ctx,
+		db,
+		[]*glbalance.GLAccountPeriodBalance{row},
+		keel.OnConflict(
+			gb.OrganizationID,
+			gb.BusinessUnitID,
+			gb.GLAccountID,
+			gb.FiscalYearID,
+			gb.FiscalPeriodID,
+		).Set(
+			gb.PeriodDebitMinor.Add(aggregate.debit),
+			gb.PeriodCreditMinor.Add(aggregate.credit),
+			gb.NetChangeMinor.Add(aggregate.net),
+			gb.LastJournalEntryID.ToExpr(gb.LastJournalEntryID.Excluded()),
+		),
+	)
+	if err != nil {
+		return fmt.Errorf("upsert gl balance by period: %w", err)
+	}
 
-		return nil
-	})
+	return nil
 }
 
-func (r *repository) updateGLAccountRunningBalance(
+func updateGLAccountRunningBalance(
 	ctx context.Context,
-	params balanceTarget,
+	db *keel.DB,
 	aggregate lineAggregate,
 ) error {
-	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
-		_, err := r.db.DBForContext(ctx).
-			NewUpdate().
-			Table("gl_accounts").
-			Set("current_balance = current_balance + ?", aggregate.net).
-			Set("debit_balance = debit_balance + ?", aggregate.debit).
-			Set("credit_balance = credit_balance + ?", aggregate.credit).
-			Set("updated_at = "+dbhelper.NowEpoch).
-			Where("id = ?", aggregate.glAccountID).
-			Where("organization_id = ?", params.organizationID).
-			Where("business_unit_id = ?", params.businessUnitID).
-			Exec(ctx)
-		if err != nil {
-			return fmt.Errorf("update gl account running balance: %w", err)
-		}
+	gla := glaccountdb.GLAccounts
+	_, err := gla.Where(gla.ID.Eq(aggregate.glAccountID)).Update(
+		ctx,
+		db,
+		gla.CurrentBalance.Add(aggregate.net),
+		gla.DebitBalance.Add(aggregate.debit),
+		gla.CreditBalance.Add(aggregate.credit),
+		gla.Version.ToExpr(gla.Version),
+	)
+	if err != nil {
+		return fmt.Errorf("update gl account running balance: %w", err)
+	}
 
-		return nil
-	})
+	return nil
 }

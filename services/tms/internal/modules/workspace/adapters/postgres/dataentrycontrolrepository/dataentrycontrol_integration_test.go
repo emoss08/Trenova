@@ -7,12 +7,13 @@ import (
 	"sync"
 	"testing"
 
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/internal/modules/workspace/domain/dataentrycontrol/dataentrycontroldb"
 	"github.com/emoss08/trenova/internal/testutil/seedtest"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"github.com/uptrace/bun"
 	"go.uber.org/zap"
 )
 
@@ -21,6 +22,7 @@ func TestGetOrCreateConcurrentCreatesSingleTenantControl(t *testing.T) {
 	t.Cleanup(cleanup)
 
 	data := seedtest.SeedFullTestData(t, ctx, db)
+	tenantCtx := data.Ctx(ctx)
 	repo := New(Params{
 		DB:     postgres.NewTestConnection(db),
 		Logger: zap.NewNop(),
@@ -36,7 +38,7 @@ func TestGetOrCreateConcurrentCreatesSingleTenantControl(t *testing.T) {
 		go func() {
 			defer wg.Done()
 
-			entity, err := repo.GetOrCreate(ctx, data.Organization.ID, data.BusinessUnit.ID)
+			entity, err := repo.GetOrCreate(tenantCtx, data.Organization.ID, data.BusinessUnit.ID)
 			if err != nil {
 				errs[idx] = err
 				return
@@ -55,47 +57,39 @@ func TestGetOrCreateConcurrentCreatesSingleTenantControl(t *testing.T) {
 		assert.Equal(t, results[0], id)
 	}
 
-	count, err := db.NewSelect().
-		TableExpr("data_entry_controls").
-		Where("organization_id = ?", data.Organization.ID).
-		Where("business_unit_id = ?", data.BusinessUnit.ID).
-		Count(ctx)
+	count, err := dataentrycontroldb.DataEntryControls.Query().Count(tenantCtx, db)
 	require.NoError(t, err)
 	assert.Equal(t, int64(1), count)
 }
 
-// A preview reads inside a read-only snapshot. The default control's insert
-// failed there and aborted the transaction, so every check after it failed and
-// no customer could be proposed. It returns the defaults and leaves the
-// transaction usable.
 func TestGetOrCreateInAReadOnlyTransactionWritesNothing(t *testing.T) {
 	ctx, db, cleanup := seedtest.SetupTestDB(t)
 	t.Cleanup(cleanup)
 
 	data := seedtest.SeedFullTestData(t, ctx, db)
+	tenantCtx := data.Ctx(ctx)
 	conn := postgres.NewTestConnection(db)
 	repo := New(Params{DB: conn, Logger: zap.NewNop()})
 
-	_, err := db.NewDelete().
-		TableExpr("data_entry_controls").
-		Where("organization_id = ?", data.Organization.ID).
-		Exec(ctx)
+	d := dataentrycontroldb.DataEntryControls
+	_, err := d.Where(d.OrganizationID.Eq(data.Organization.ID)).Delete(tenantCtx, db)
 	require.NoError(t, err)
 
-	err = conn.WithTx(ctx, kernelports.TxOptions{ReadOnly: true}, func(txCtx context.Context, tx bun.Tx) error {
-		entity, getErr := repo.GetOrCreate(txCtx, data.Organization.ID, data.BusinessUnit.ID)
-		require.NoError(t, getErr)
-		require.NotNil(t, entity)
+	err = conn.Transact(
+		tenantCtx,
+		kernelports.TxOptions{ReadOnly: true},
+		func(txCtx context.Context) error {
+			entity, getErr := repo.GetOrCreate(txCtx, data.Organization.ID, data.BusinessUnit.ID)
+			require.NoError(t, getErr)
+			require.NotNil(t, entity)
 
-		var one int
-		return tx.NewSelect().ColumnExpr("1").Scan(txCtx, &one)
-	})
+			_, queryErr := keel.QueryValue[int](txCtx, conn.Keel(txCtx), "SELECT 1")
+			return queryErr
+		},
+	)
 	require.NoError(t, err, "the transaction is still usable after the read")
 
-	count, err := db.NewSelect().
-		TableExpr("data_entry_controls").
-		Where("organization_id = ?", data.Organization.ID).
-		Count(ctx)
+	count, err := d.Query().Count(tenantCtx, db)
 	require.NoError(t, err)
 	assert.Zero(t, count, "nothing is written from a read-only transaction")
 }

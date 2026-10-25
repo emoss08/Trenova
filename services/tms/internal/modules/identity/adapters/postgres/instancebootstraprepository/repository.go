@@ -4,13 +4,14 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/emoss08/trenova/pkg/buncolgen/tenantcol"
-
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/tenantbootstrap"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/instancebootstrap"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/instancebootstrap/instancebootstrapdb"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant/tenantdb"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/instancebootstrapports"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/dbscope"
@@ -51,14 +52,10 @@ func (r *repository) GetState(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*instancebootstrapports.InstanceBootstrapState, error) {
-			db := r.db.DBForContext(ctx)
+			db := r.db.Keel(ctx)
 
 			state := new(instancebootstrapports.InstanceBootstrapState)
-			record := new(instancebootstrap.InstanceBootstrap)
-			err := db.NewSelect().
-				Model(record).
-				Limit(1).
-				Scan(ctx)
+			record, err := instancebootstrapdb.InstanceBootstraps.AllTenants().First(ctx, db)
 			switch {
 			case err == nil:
 				state.Record = record
@@ -66,11 +63,10 @@ func (r *repository) GetState(
 				return nil, fmt.Errorf("read instance bootstrap: %w", err)
 			}
 
-			userCols := tenantcol.UserColumns
-			count, err := db.NewSelect().
-				Model((*tenant.User)(nil)).
-				Where("lower("+userCols.Username.Qualified()+") <> ?", tenant.SystemUsername).
-				Count(ctx)
+			u := tenantdb.Users
+			count, err := u.AllTenants().
+				Where(keel.Raw("lower(?) <> ?", u.Username, tenant.SystemUsername)).
+				Count(ctx, db)
 			if err != nil {
 				return nil, fmt.Errorf("count users: %w", err)
 			}
@@ -91,20 +87,15 @@ func (r *repository) Finalize(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*instancebootstrapports.FinalizeInstanceBootstrapResult, error) {
-			db := r.db.DBForContext(ctx)
 			scope := tenantbootstrap.Scope{
 				OrganizationID: req.OrganizationID,
 				BusinessUnitID: req.BusinessUnitID,
 				Now:            req.Now,
 			}
 
-			if _, err := tenantbootstrap.CreateTCAAllowlist(ctx, db, scope); err != nil {
-				return nil, err
-			}
-
 			systemUserID, created, err := tenantbootstrap.EnsureSystemUser(
 				ctx,
-				db,
+				r.db.Keel(ctx),
 				tenantbootstrap.SystemUserParams{Scope: scope, Password: req.SystemUserPassword},
 			)
 			if err != nil {
@@ -119,7 +110,11 @@ func (r *repository) Finalize(
 				CompletedAt:    req.Now,
 				CreatedAt:      req.Now,
 			}
-			if _, err = db.NewInsert().Model(record).Exec(ctx); err != nil {
+			if err = instancebootstrapdb.InstanceBootstraps.Create(
+				ctx,
+				r.db.Keel(ctx),
+				record,
+			); err != nil {
 				r.l.Error("failed to record the instance bootstrap", zap.Error(err))
 				return nil, fmt.Errorf("record instance bootstrap: %w", err)
 			}

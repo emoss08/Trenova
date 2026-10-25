@@ -1,9 +1,9 @@
 package distanceprofile
 
 import (
-	"context"
 	"strings"
 
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/integration"
 	"github.com/emoss08/trenova/pkg/domaintypes"
@@ -12,13 +12,10 @@ import (
 	"github.com/emoss08/trenova/pkg/validationframework"
 	"github.com/emoss08/trenova/shared/pcmiler"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/emoss08/trenova/shared/timeutils"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
-	"github.com/uptrace/bun"
 )
 
 var (
-	_ bun.BeforeAppendModelHook          = (*DistanceProfile)(nil)
 	_ validationframework.TenantedEntity = (*DistanceProfile)(nil)
 	_ domaintypes.PostgresSearchable     = (*DistanceProfile)(nil)
 	_ pagination.CursorEntity            = (*DistanceProfile)(nil)
@@ -39,34 +36,32 @@ const (
 )
 
 type DistanceProfile struct {
-	bun.BaseModel             `bun:"table:distance_profiles,alias:dp" json:"-"`
-	pagination.CursorValueSet `bun:",embed"                           json:"-"`
+	keel.Table          `keel:"distance_profiles"`
+	ID                  pulid.ID         `keel:"id,pk,autoid:dp_"           json:"id"`
+	BusinessUnitID      pulid.ID         `keel:"business_unit_id,pk,tenant" json:"businessUnitId"`
+	OrganizationID      pulid.ID         `keel:"organization_id,pk,tenant"  json:"organizationId"`
+	Name                string           `keel:"name"                       json:"name"`
+	Description         string           `keel:"description,nullzero"       json:"description"`
+	Status              string           `keel:"status"                     json:"status"`
+	IsDefault           bool             `keel:"is_default"                 json:"isDefault"`
+	Provider            integration.Type `keel:"provider"                   json:"provider"`
+	DataVersion         string           `keel:"data_version"               json:"dataVersion"`
+	Region              string           `keel:"region"                     json:"region"`
+	RoutingType         string           `keel:"routing_type"               json:"routingType"`
+	DistanceUnits       string           `keel:"distance_units"             json:"distanceUnits"`
+	LocationGranularity string           `keel:"location_granularity"       json:"locationGranularity"`
+	ProfileName         string           `keel:"profile_name,nullzero"      json:"profileName"`
+	HighwayOnly         bool             `keel:"highway_only"               json:"highwayOnly"`
+	TollRoads           bool             `keel:"toll_roads"                 json:"tollRoads"`
+	BordersOpen         bool             `keel:"borders_open"               json:"bordersOpen"`
+	IncludeTollData     bool             `keel:"include_toll_data"          json:"includeTollData"`
+	Version             int64            `keel:"version,version"            json:"version"`
+	CreatedAt           int64            `keel:"created_at,autocreate"      json:"createdAt"`
+	UpdatedAt           int64            `keel:"updated_at,autoupdate"      json:"updatedAt"`
+	SearchVector        string           `                                  json:"-"`
 
-	ID                  pulid.ID         `json:"id"                  bun:"id,type:VARCHAR(100),pk,notnull"`
-	BusinessUnitID      pulid.ID         `json:"businessUnitId"      bun:"business_unit_id,type:VARCHAR(100),pk,notnull"`
-	OrganizationID      pulid.ID         `json:"organizationId"      bun:"organization_id,type:VARCHAR(100),pk,notnull"`
-	Name                string           `json:"name"                bun:"name,type:VARCHAR(100),notnull"`
-	Description         string           `json:"description"         bun:"description,type:TEXT,nullzero"`
-	Status              string           `json:"status"              bun:"status,type:VARCHAR(20),notnull"`
-	IsDefault           bool             `json:"isDefault"           bun:"is_default,type:BOOLEAN,notnull"`
-	Provider            integration.Type `json:"provider"            bun:"provider,type:VARCHAR(50),notnull"`
-	DataVersion         string           `json:"dataVersion"         bun:"data_version,type:VARCHAR(50),notnull"`
-	Region              string           `json:"region"              bun:"region,type:VARCHAR(20),notnull"`
-	RoutingType         string           `json:"routingType"         bun:"routing_type,type:VARCHAR(50),notnull"`
-	DistanceUnits       string           `json:"distanceUnits"       bun:"distance_units,type:VARCHAR(50),notnull"`
-	LocationGranularity string           `json:"locationGranularity" bun:"location_granularity,type:VARCHAR(50),notnull"`
-	ProfileName         string           `json:"profileName"         bun:"profile_name,type:VARCHAR(100),nullzero"`
-	HighwayOnly         bool             `json:"highwayOnly"         bun:"highway_only,type:BOOLEAN,notnull"`
-	TollRoads           bool             `json:"tollRoads"           bun:"toll_roads,type:BOOLEAN,notnull"`
-	BordersOpen         bool             `json:"bordersOpen"         bun:"borders_open,type:BOOLEAN,notnull"`
-	IncludeTollData     bool             `json:"includeTollData"     bun:"include_toll_data,type:BOOLEAN,notnull"`
-	Version             int64            `json:"version"             bun:"version,type:BIGINT,notnull"`
-	CreatedAt           int64            `json:"createdAt"           bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
-	UpdatedAt           int64            `json:"updatedAt"           bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
-	SearchVector        string           `json:"-"                   bun:"search_vector,type:TSVECTOR,scanonly"`
-
-	BusinessUnit *tenant.BusinessUnit `json:"-" bun:"rel:belongs-to,join:business_unit_id=id"`
-	Organization *tenant.Organization `json:"-" bun:"rel:belongs-to,join:organization_id=id"`
+	BusinessUnit *tenant.BusinessUnit `json:"-"`
+	Organization *tenant.Organization `json:"-"`
 }
 
 func NewDefault(orgID, buID pulid.ID) *DistanceProfile {
@@ -185,18 +180,4 @@ func (d *DistanceProfile) GetPostgresSearchConfig() domaintypes.PostgresSearchCo
 			{Name: "provider", Type: domaintypes.FieldTypeText, Weight: domaintypes.SearchWeightC},
 		},
 	}
-}
-
-func (d *DistanceProfile) BeforeAppendModel(_ context.Context, query bun.Query) error {
-	now := timeutils.NowUnix()
-	switch query.(type) {
-	case *bun.InsertQuery:
-		if d.ID.IsNil() {
-			d.ID = pulid.MustNew("dp_")
-		}
-		d.CreatedAt = now
-	case *bun.UpdateQuery:
-		d.UpdatedAt = now
-	}
-	return nil
 }

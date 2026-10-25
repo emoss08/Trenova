@@ -21,6 +21,7 @@ func TestInviteTokensKeepTheirPurposeAndStayOutOfTheResetAllowance(t *testing.T)
 
 	repo := New(Params{DB: postgres.NewTestConnection(db), Logger: zap.NewNop()})
 	data := seedtest.SeedFullTestData(t, ctx, db)
+	ctx = data.Ctx(ctx)
 	now := timeutils.NowUnix()
 
 	invite := &tenant.PasswordResetToken{

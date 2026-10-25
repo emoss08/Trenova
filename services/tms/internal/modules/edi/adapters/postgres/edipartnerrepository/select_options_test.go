@@ -3,92 +3,43 @@ package edipartnerrepository
 import (
 	"testing"
 
-	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
-	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
-	"github.com/emoss08/trenova/pkg/domaintypes"
-	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/internal/testutil/keeltest"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/stretchr/testify/require"
-	"github.com/uptrace/bun"
-	"github.com/uptrace/bun/dialect/pgdialect"
-	"go.uber.org/zap"
+	"github.com/stretchr/testify/assert"
 )
 
-func newEDISelectOptionsTestRepository(t *testing.T) (*repository, sqlmock.Sqlmock) {
-	t.Helper()
-
-	db, sqlMock, err := sqlmock.New(sqlmock.QueryMatcherOption(sqlmock.QueryMatcherRegexp))
-	require.NoError(t, err)
-	sqlMock.MatchExpectationsInOrder(false)
-
-	bunDB := bun.NewDB(db, pgdialect.New())
-	t.Cleanup(func() {
-		require.NoError(t, sqlMock.ExpectationsWereMet())
-		_ = bunDB.Close()
-	})
-
-	return &repository{
-		db: postgres.NewTestConnection(bunDB),
-		l:  zap.NewNop(),
-	}, sqlMock
-}
-
-func TestSelectPartnerOptions_FiltersByExternalKind(t *testing.T) {
+func TestPartnerOptionsQuery_AppliesTheFiltersAndSearch(t *testing.T) {
 	t.Parallel()
 
-	repo, sqlMock := newEDISelectOptionsTestRepository(t)
-	orgID := pulid.MustNew("org_")
-	buID := pulid.MustNew("bu_")
-	partnerID := pulid.MustNew("edip_")
+	q := partnerOptionsQuery(&ediports.EDIPartnerSelectOptionsRequest{
+		Kind:               edi.PartnerKindExternal,
+		EnabledForOutbound: true,
+	}).Where(partnerSearch("acme")).Limit(10)
 
-	sqlMock.ExpectQuery(`SELECT count\(\*\) FROM "edi_partners" AS "ep".*ep\.organization_id.*ep\.business_unit_id.*LOWER\(ep\.name\) LIKE.*LOWER\(ep\.code\) LIKE.*ep\.kind`).
-		WillReturnRows(sqlmock.NewRows([]string{"count"}).AddRow(1))
-	sqlMock.ExpectQuery(`SELECT "ep"."id", "ep"."business_unit_id", "ep"."organization_id".*FROM "edi_partners" AS "ep".*ep\.organization_id.*ep\.business_unit_id.*LOWER\(ep\.name\) LIKE.*LOWER\(ep\.code\) LIKE.*ep\.kind`).
-		WillReturnRows(sqlmock.NewRows([]string{
-			"id",
-			"business_unit_id",
-			"organization_id",
-			"kind",
-			"status",
-			"code",
-			"name",
-			"internal_organization_id",
-			"edi_connection_id",
-			"default_transport_id",
-			"enabled_for_inbound",
-			"enabled_for_outbound",
-		}).AddRow(
-			partnerID,
-			buID,
-			orgID,
-			edi.PartnerKindExternal,
-			domaintypes.StatusActive,
-			"EXT",
-			"External Partner",
-			"",
-			"",
-			"",
-			true,
-			true,
-		))
+	sql, args := keeltest.Render(t, q)
 
-	result, err := repo.SelectOptions(
-		t.Context(),
-		&ediports.EDIPartnerSelectOptionsRequest{
-			SelectQueryRequest: &pagination.SelectQueryRequest{
-				TenantInfo: pagination.TenantInfo{OrgID: orgID, BuID: buID},
-				Pagination: pagination.Info{Limit: 10},
-				Query:      "ext",
-			},
-			Kind: edi.PartnerKindExternal,
-		},
-	)
+	assert.Contains(t, sql, `FROM "edi_partners" ep WHERE`)
+	assert.Contains(t, sql, `ep."kind" = $3 AND ep."enabled_for_outbound" IS TRUE AND (ep."name" ILIKE $4 OR ep."code" ILIKE $5) LIMIT 10`)
+	assert.Contains(t, args, "External")
+	assert.Contains(t, args, "%acme%")
+}
 
-	require.NoError(t, err)
-	require.Equal(t, 1, result.Total)
-	require.Len(t, result.Items, 1)
-	require.Equal(t, partnerID, result.Items[0].ID)
-	require.Equal(t, edi.PartnerKindExternal, result.Items[0].Kind)
+func TestReadinessQuery_ChecksEverySetupStepInOneStatement(t *testing.T) {
+	t.Parallel()
+
+	q := readinessQuery(&ediports.GetEDIPartnerReadinessRequest{
+		PartnerIDs: []pulid.ID{"edip_1", "edip_2"},
+	})
+
+	sql, args := keeltest.Render(t, q)
+
+	assert.Contains(t, sql, `EXISTS (SELECT 1 FROM "edi_communication_profiles" ecp`)
+	assert.Contains(t, sql, `EXISTS (SELECT 1 FROM "edi_mapping_profile_items" empi`)
+	assert.Contains(t, sql, `EXISTS (SELECT 1 FROM "edi_test_cases" etc`)
+	assert.Contains(t, sql, `FROM "edi_partners" ep WHERE ep."business_unit_id" = $1 AND ep."organization_id" = $2 AND ep."id" = ANY($3)`)
+	assert.Contains(t, args, []string{"edip_1", "edip_2"})
+	assert.Contains(t, args, "Inbound")
+	assert.Contains(t, args, "Outbound")
 }

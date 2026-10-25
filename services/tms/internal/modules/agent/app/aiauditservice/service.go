@@ -4,8 +4,6 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/emoss08/trenova/pkg/buncolgen/aiauditcol"
-
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiaudit"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aiauditports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
@@ -22,6 +20,11 @@ import (
 // PersonFilterField is the trail filter for "everything done for or decided
 // by this person", which no single column answers.
 const PersonFilterField = "personId"
+
+const (
+	onBehalfOfUserField = "onBehalfOfUserId"
+	decidedByUserField  = "decidedByUserId"
+)
 
 // Service is the trail as the API reads it, verifies it and exports it.
 type Service struct {
@@ -101,8 +104,8 @@ func NormalizePersonFilters(
 			operator = dbtype.OpEqual
 		}
 		groups = append(groups, domaintypes.FilterGroup{Filters: []domaintypes.FieldFilter{
-			aiauditcol.AIAuditEventFilter.OnBehalfOfUserID(operator, filter.Value),
-			aiauditcol.AIAuditEventFilter.DecidedByUserID(operator, filter.Value),
+			{Field: onBehalfOfUserField, Operator: operator, Value: filter.Value},
+			{Field: decidedByUserField, Operator: operator, Value: filter.Value},
 		}})
 	}
 

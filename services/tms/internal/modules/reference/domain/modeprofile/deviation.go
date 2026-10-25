@@ -3,65 +3,76 @@ package modeprofile
 import (
 	"context"
 
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/domainvalidation"
 	"github.com/emoss08/trenova/pkg/errortypes"
-	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/validationframework"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
-	"github.com/uptrace/bun"
 )
 
 const MinAcknowledgementReasonLength = 10
 
 var (
-	_ bun.BeforeAppendModelHook          = (*Deviation)(nil)
 	_ validationframework.TenantedEntity = (*Deviation)(nil)
 	_ domaintypes.PostgresSearchable     = (*Deviation)(nil)
 )
 
 type Deviation struct {
-	bun.BaseModel             `bun:"table:mode_profile_deviations,alias:mpd" json:"-"`
-	pagination.CursorValueSet `bun:",embed"                                  json:"-"`
+	keel.Table       `keel:"mode_profile_deviations"`
+	ID               pulid.ID  `keel:"id,pk,autoid:mpd_"          json:"id"`
+	BusinessUnitID   pulid.ID  `keel:"business_unit_id,pk,tenant" json:"businessUnitId"`
+	OrganizationID   pulid.ID  `keel:"organization_id,pk,tenant"  json:"organizationId"`
+	ModeProfileID    pulid.ID  `keel:"mode_profile_id"            json:"modeProfileId"`
+	CapabilityRuleID *pulid.ID `keel:"capability_rule_id"         json:"capabilityRuleId"`
 
-	ID               pulid.ID  `json:"id"               bun:"id,pk,type:VARCHAR(100),notnull"`
-	BusinessUnitID   pulid.ID  `json:"businessUnitId"   bun:"business_unit_id,pk,type:VARCHAR(100),notnull"`
-	OrganizationID   pulid.ID  `json:"organizationId"   bun:"organization_id,pk,type:VARCHAR(100),notnull"`
-	ModeProfileID    pulid.ID  `json:"modeProfileId"    bun:"mode_profile_id,type:VARCHAR(100),notnull"`
-	CapabilityRuleID *pulid.ID `json:"capabilityRuleId" bun:"capability_rule_id,type:VARCHAR(100),nullzero"`
+	RuleKey     RuleKey                 `json:"ruleKey"     keel:"rule_key"`
+	Capability  Capability              `json:"capability"  keel:"capability"`
+	Enforcement tenant.EnforcementLevel `json:"enforcement" keel:"enforcement"`
 
-	RuleKey     RuleKey                 `json:"ruleKey"     bun:"rule_key,type:VARCHAR(100),notnull"`
-	Capability  Capability              `json:"capability"  bun:"capability,type:VARCHAR(100),notnull"`
-	Enforcement tenant.EnforcementLevel `json:"enforcement" bun:"enforcement,type:enforcement_level_enum,notnull"`
+	ResourceType string   `json:"resourceType" keel:"resource_type"`
+	ResourceID   pulid.ID `json:"resourceId"   keel:"resource_id"`
 
-	ResourceType string   `json:"resourceType" bun:"resource_type,type:VARCHAR(100),notnull"`
-	ResourceID   pulid.ID `json:"resourceId"   bun:"resource_id,type:VARCHAR(100),notnull"`
+	Field   string `json:"field"   keel:"field,nullzero"`
+	Message string `json:"message" keel:"message"`
 
-	Field   string `json:"field"   bun:"field,type:VARCHAR(200),nullzero"`
-	Message string `json:"message" bun:"message,type:TEXT,notnull"`
+	State      DeviationState `json:"state"      keel:"state"`
+	OccurredAt int64          `json:"occurredAt" keel:"occurred_at"`
 
-	State      DeviationState `json:"state"      bun:"state,type:mode_profile_deviation_state_enum,notnull,default:'Open'"`
-	OccurredAt int64          `json:"occurredAt" bun:"occurred_at,type:BIGINT,notnull"`
+	AcknowledgedByID      *pulid.ID `json:"acknowledgedById"      keel:"acknowledged_by_id"`
+	AcknowledgedAt        *int64    `json:"acknowledgedAt"        keel:"acknowledged_at"`
+	AcknowledgementReason string    `json:"acknowledgementReason" keel:"acknowledgement_reason,nullzero"`
 
-	AcknowledgedByID      *pulid.ID `json:"acknowledgedById"      bun:"acknowledged_by_id,type:VARCHAR(100),nullzero"`
-	AcknowledgedAt        *int64    `json:"acknowledgedAt"        bun:"acknowledged_at,type:BIGINT,nullzero"`
-	AcknowledgementReason string    `json:"acknowledgementReason" bun:"acknowledgement_reason,type:TEXT,nullzero"`
+	Provenance *Provenance `json:"provenance" keel:"provenance,jsonb"`
 
-	Provenance *Provenance `json:"provenance" bun:"provenance,type:JSONB,nullzero"`
+	Version      int64  `json:"version"   keel:"version,version"`
+	CreatedAt    int64  `json:"createdAt" keel:"created_at,autocreate"`
+	UpdatedAt    int64  `json:"updatedAt" keel:"updated_at,autoupdate"`
+	SearchVector string `json:"-"         keel:"search_vector,tsvector,readonly,noselect"`
+	Rank         string `json:"-"         keel:"rank,computed"`
 
-	Version      int64  `json:"version"   bun:"version,type:BIGINT"`
-	CreatedAt    int64  `json:"createdAt" bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
-	UpdatedAt    int64  `json:"updatedAt" bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
-	SearchVector string `json:"-"         bun:"search_vector,type:TSVECTOR,scanonly"`
-	Rank         string `json:"-"         bun:"rank,type:VARCHAR(100),scanonly"`
+	BusinessUnit   *tenant.BusinessUnit `json:"-"`
+	Organization   *tenant.Organization `json:"-"`
+	Profile        *Profile             `json:"profile,omitempty"        keel:"belongs:mode_profile_id"`
+	AcknowledgedBy *tenant.User         `json:"acknowledgedBy,omitempty" keel:"belongs:acknowledged_by_id"`
+}
 
-	BusinessUnit   *tenant.BusinessUnit `json:"-"                        bun:"rel:belongs-to,join:business_unit_id=id"`
-	Organization   *tenant.Organization `json:"-"                        bun:"rel:belongs-to,join:organization_id=id"`
-	Profile        *Profile             `json:"profile,omitempty"        bun:"rel:belongs-to,join:mode_profile_id=id"`
-	AcknowledgedBy *tenant.User         `json:"acknowledgedBy,omitempty" bun:"rel:belongs-to,join:acknowledged_by_id=id"`
+func (d *Deviation) BeforeUpdate(_ context.Context) error {
+	d.applyDefaults()
+
+	return nil
+}
+
+func (d *Deviation) BeforeCreate(_ context.Context) error {
+	d.applyDefaults()
+	if d.State == "" {
+		d.State = DeviationStateOpen
+	}
+
+	return nil
 }
 
 func (d *Deviation) GetID() pulid.ID { return d.ID }
@@ -140,31 +151,21 @@ func (d *Deviation) validateAcknowledgement(multiErr *errortypes.MultiError) {
 	}
 }
 
-func (d *Deviation) BeforeAppendModel(_ context.Context, query bun.Query) error {
-	now := timeutils.NowUnix()
-
+func (d *Deviation) applyDefaults() {
 	if d.State == "" {
 		d.State = DeviationStateOpen
 	}
 	if d.OccurredAt == 0 {
-		d.OccurredAt = now
+		d.OccurredAt = timeutils.NowUnix()
 	}
 	if d.Capability == "" {
 		if def, err := RuleDefinitionFor(d.RuleKey); err == nil {
 			d.Capability = def.Capability
 		}
 	}
+}
 
-	switch query.(type) {
-	case *bun.InsertQuery:
-		if d.ID.IsNil() {
-			d.ID = pulid.MustNew("mpd_")
-		}
-		d.CreatedAt = now
-		d.UpdatedAt = now
-	case *bun.UpdateQuery:
-		d.UpdatedAt = now
-	}
-
+func (d *Deviation) BeforeSave(_ context.Context) error {
+	d.applyDefaults()
 	return nil
 }

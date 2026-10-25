@@ -5,47 +5,41 @@ package paymentreminder
 import (
 	"context"
 
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
-	"github.com/uptrace/bun"
 )
 
 // ManualStep marks a reminder a person sent by hand. Scheduled steps count
 // from one and are each sent once per invoice; a manual reminder may repeat.
 const ManualStep = 0
 
-var _ bun.BeforeAppendModelHook = (*Reminder)(nil)
-
 // Reminder records that one invoice was included in a reminder email: which
 // step of the schedule it was, how late and how much was open, and who it
 // went to.
 type Reminder struct {
-	bun.BaseModel `bun:"table:invoice_payment_reminders,alias:ipr" json:"-"`
+	keel.Table `keel:"invoice_payment_reminders"`
 
-	ID              pulid.ID `json:"id"              bun:"id,pk,type:VARCHAR(100),notnull"`
-	OrganizationID  pulid.ID `json:"organizationId"  bun:"organization_id,pk,type:VARCHAR(100),notnull"`
-	BusinessUnitID  pulid.ID `json:"businessUnitId"  bun:"business_unit_id,pk,type:VARCHAR(100),notnull"`
-	InvoiceID       pulid.ID `json:"invoiceId"       bun:"invoice_id,type:VARCHAR(100),notnull"`
-	CustomerID      pulid.ID `json:"customerId"      bun:"customer_id,type:VARCHAR(100),notnull"`
-	Step            int16    `json:"step"            bun:"step,type:SMALLINT,notnull"`
-	DaysPastDue     int      `json:"daysPastDue"     bun:"days_past_due,type:INTEGER,notnull"`
-	OpenAmountMinor int64    `json:"openAmountMinor" bun:"open_amount_minor,type:BIGINT,notnull"`
-	CurrencyCode    string   `json:"currencyCode"    bun:"currency_code,type:VARCHAR(3),notnull"`
-	SentTo          string   `json:"sentTo"          bun:"sent_to,type:TEXT,notnull"`
-	Manual          bool     `json:"manual"          bun:"manual,type:BOOLEAN,notnull"`
-	SentByID        pulid.ID `json:"sentById"        bun:"sent_by_id,type:VARCHAR(100),nullzero"`
-	SentAt          int64    `json:"sentAt"          bun:"sent_at,type:BIGINT,notnull"`
+	ID              pulid.ID `json:"id"              keel:"id,pk,autoid:ipr_"`
+	OrganizationID  pulid.ID `json:"organizationId"  keel:"organization_id,pk,tenant"`
+	BusinessUnitID  pulid.ID `json:"businessUnitId"  keel:"business_unit_id,pk,tenant"`
+	InvoiceID       pulid.ID `json:"invoiceId"       keel:"invoice_id"`
+	CustomerID      pulid.ID `json:"customerId"      keel:"customer_id"`
+	Step            int16    `json:"step"            keel:"step"`
+	DaysPastDue     int      `json:"daysPastDue"     keel:"days_past_due"`
+	OpenAmountMinor int64    `json:"openAmountMinor" keel:"open_amount_minor"`
+	CurrencyCode    string   `json:"currencyCode"    keel:"currency_code"`
+	SentTo          string   `json:"sentTo"          keel:"sent_to"`
+	Manual          bool     `json:"manual"          keel:"manual"`
+	SentByID        pulid.ID `json:"sentById"        keel:"sent_by_id,nullzero"`
+	SentAt          int64    `json:"sentAt"          keel:"sent_at"`
 }
 
-func (r *Reminder) BeforeAppendModel(_ context.Context, query bun.Query) error {
-	if _, ok := query.(*bun.InsertQuery); ok {
-		if r.ID.IsNil() {
-			r.ID = pulid.MustNew("ipr_")
-		}
-		if r.SentAt == 0 {
-			r.SentAt = timeutils.NowUnix()
-		}
+func (r *Reminder) BeforeCreate(ctx context.Context) error {
+	if r.SentAt == 0 {
+		r.SentAt = timeutils.NowUnix()
 	}
+
 	return nil
 }
 

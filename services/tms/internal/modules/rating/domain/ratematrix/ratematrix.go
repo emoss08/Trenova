@@ -15,20 +15,17 @@ import (
 	"slices"
 	"strings"
 
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/formulatemplate"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/errortypes"
-	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/validationframework"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/emoss08/trenova/shared/timeutils"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
-	"github.com/uptrace/bun"
 )
 
 var (
-	_ bun.BeforeAppendModelHook          = (*RateMatrix)(nil)
 	_ validationframework.TenantedEntity = (*RateMatrix)(nil)
 	_ domaintypes.PostgresSearchable     = (*RateMatrix)(nil)
 )
@@ -42,39 +39,46 @@ const (
 )
 
 type RateMatrix struct {
-	bun.BaseModel             `bun:"table:rate_matrices,alias:rmx" json:"-"`
-	pagination.CursorValueSet `bun:",embed"                        json:"-"`
+	keel.Table `keel:"rate_matrices"`
 
-	ID             pulid.ID `json:"id"             bun:"id,pk,type:VARCHAR(100),notnull"`
-	BusinessUnitID pulid.ID `json:"businessUnitId" bun:"business_unit_id,pk,type:VARCHAR(100),notnull"`
-	OrganizationID pulid.ID `json:"organizationId" bun:"organization_id,pk,type:VARCHAR(100),notnull"`
+	ID             pulid.ID `json:"id"             keel:"id,pk,autoid:rmx_"`
+	BusinessUnitID pulid.ID `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
+	OrganizationID pulid.ID `json:"organizationId" keel:"organization_id,pk,tenant"`
 
-	Code        string                 `json:"code"        bun:"code,type:VARCHAR(64),notnull"`
-	Name        string                 `json:"name"        bun:"name,type:VARCHAR(100),notnull"`
-	Description string                 `json:"description" bun:"description,type:TEXT,nullzero"`
-	ValueType   string                 `json:"valueType"   bun:"value_type,type:VARCHAR(32),notnull"`
-	Status      formulatemplate.Status `json:"status"      bun:"status,type:formula_template_status_enum,notnull,default:'Draft'"`
+	Code        string                 `json:"code"        keel:"code"`
+	Name        string                 `json:"name"        keel:"name"`
+	Description string                 `json:"description" keel:"description,nullzero"`
+	ValueType   string                 `json:"valueType"   keel:"value_type"`
+	Status      formulatemplate.Status `json:"status"      keel:"status"`
 
-	SubmittedByID          *pulid.ID  `json:"submittedById"          bun:"submitted_by_id,type:VARCHAR(100)"`
-	SubmittedAt            *int64     `json:"submittedAt"            bun:"submitted_at,type:BIGINT"`
-	ApprovedByID           *pulid.ID  `json:"approvedById"           bun:"approved_by_id,type:VARCHAR(100)"`
-	ApprovedAt             *int64     `json:"approvedAt"             bun:"approved_at,type:BIGINT"`
-	ReviewComment          string     `json:"reviewComment"          bun:"review_comment,type:TEXT,nullzero"`
-	PublishedVersionNumber int64      `json:"publishedVersionNumber" bun:"published_version_number,type:BIGINT,notnull,default:0"`
-	PublishedAt            *int64     `json:"publishedAt"            bun:"published_at,type:BIGINT"`
-	HasDraftChanges        bool       `json:"hasDraftChanges"        bun:"has_draft_changes,type:BOOLEAN,notnull"`
-	DraftCellCount         int64      `json:"draftCellCount"         bun:"draft_cell_count,type:BIGINT,notnull,default:0"`
-	DraftEditorIDs         []pulid.ID `json:"draftEditorIds"         bun:"draft_editor_ids,type:JSONB,notnull,default:'[]'"`
+	SubmittedByID          *pulid.ID  `json:"submittedById"          keel:"submitted_by_id"`
+	SubmittedAt            *int64     `json:"submittedAt"            keel:"submitted_at"`
+	ApprovedByID           *pulid.ID  `json:"approvedById"           keel:"approved_by_id"`
+	ApprovedAt             *int64     `json:"approvedAt"             keel:"approved_at"`
+	ReviewComment          string     `json:"reviewComment"          keel:"review_comment,nullzero"`
+	PublishedVersionNumber int64      `json:"publishedVersionNumber" keel:"published_version_number"`
+	PublishedAt            *int64     `json:"publishedAt"            keel:"published_at"`
+	HasDraftChanges        bool       `json:"hasDraftChanges"        keel:"has_draft_changes"`
+	DraftCellCount         int64      `json:"draftCellCount"         keel:"draft_cell_count"`
+	DraftEditorIDs         []pulid.ID `json:"draftEditorIds"         keel:"draft_editor_ids,jsonb"`
 
-	Version      int64  `json:"version"   bun:"version,type:BIGINT"`
-	CreatedAt    int64  `json:"createdAt" bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
-	UpdatedAt    int64  `json:"updatedAt" bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
-	SearchVector string `json:"-"         bun:"search_vector,type:TSVECTOR,scanonly"`
-	Rank         string `json:"-"         bun:"rank,type:VARCHAR(100),scanonly"`
+	Version      int64  `json:"version"   keel:"version,version"`
+	CreatedAt    int64  `json:"createdAt" keel:"created_at,autocreate"`
+	UpdatedAt    int64  `json:"updatedAt" keel:"updated_at,autoupdate"`
+	SearchVector string `json:"-"         keel:"search_vector,tsvector,readonly,noselect"`
+	Rank         string `json:"-"         keel:"rank,computed"`
 
-	BusinessUnit *tenant.BusinessUnit   `json:"-"                    bun:"rel:belongs-to,join:business_unit_id=id"`
-	Organization *tenant.Organization   `json:"-"                    bun:"rel:belongs-to,join:organization_id=id"`
-	Dimensions   []*RateMatrixDimension `json:"dimensions,omitempty" bun:"rel:has-many,join:id=rate_matrix_id"`
+	BusinessUnit *tenant.BusinessUnit   `json:"-"`
+	Organization *tenant.Organization   `json:"-"`
+	Dimensions   []*RateMatrixDimension `json:"dimensions,omitempty" keel:"many:rate_matrix_id"`
+}
+
+func (rm *RateMatrix) BeforeUpdate(_ context.Context) error {
+	if rm.DraftEditorIDs == nil {
+		rm.DraftEditorIDs = []pulid.ID{}
+	}
+
+	return nil
 }
 
 // applyDefaults fills in the values the database would have defaulted, so a
@@ -269,24 +273,21 @@ func (rm *RateMatrix) OrderedDimensions() []*RateMatrixDimension {
 	return trimmed
 }
 
-func (rm *RateMatrix) BeforeAppendModel(_ context.Context, query bun.Query) error {
-	now := timeutils.NowUnix()
-
+func (rm *RateMatrix) BeforeCreate(ctx context.Context) error {
+	if rm.Status == "" {
+		rm.Status = formulatemplate.StatusDraft
+	}
 	if rm.DraftEditorIDs == nil {
 		rm.DraftEditorIDs = []pulid.ID{}
 	}
 
-	switch query.(type) {
-	case *bun.InsertQuery:
-		if rm.ID.IsNil() {
-			rm.ID = pulid.MustNew("rmx_")
-		}
-		rm.CreatedAt = now
-		rm.UpdatedAt = now
-	case *bun.UpdateQuery:
-		rm.UpdatedAt = now
-	}
+	return nil
+}
 
+func (rm *RateMatrix) BeforeSave(_ context.Context) error {
+	if rm.DraftEditorIDs == nil {
+		rm.DraftEditorIDs = []pulid.ID{}
+	}
 	return nil
 }
 

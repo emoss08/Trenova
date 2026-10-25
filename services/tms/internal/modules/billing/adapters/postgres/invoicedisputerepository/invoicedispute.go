@@ -2,30 +2,38 @@ package invoicedisputerepository
 
 import (
 	"context"
-	"fmt"
 
-	"github.com/emoss08/trenova/pkg/buncolgen/invoicecol"
-
+	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice/invoicedb"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
-	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/uptrace/bun"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
 
+var disputeErrors = dberror.Mapping{
+	Entity: "InvoiceDispute",
+	Unique: []dberror.Constraint{
+		{
+			Name:    "uq_invoice_disputes_open",
+			Field:   "invoiceId",
+			Message: "This invoice already has an open dispute",
+		},
+	},
+}
+
 type Params struct {
 	fx.In
 
-	DB     kernelports.DBConnection
+	DB     *postgres.Connection
 	Logger *zap.Logger
 }
 
 type repository struct {
-	db kernelports.DBConnection
+	db *postgres.Connection
 	l  *zap.Logger
 }
 
@@ -42,12 +50,8 @@ func (r *repository) Create(
 ) (*invoice.InvoiceDispute, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*invoice.InvoiceDispute, error) {
 		entity.SyncMinor()
-		if _, err := r.db.DBForContext(ctx).
-			NewInsert().
-			Model(entity).
-			Returning("*").
-			Exec(ctx); err != nil {
-			return nil, fmt.Errorf("create invoice dispute: %w", err)
+		if err := invoicedb.InvoiceDisputes.Create(ctx, r.db.Keel(ctx), entity); err != nil {
+			return nil, disputeErrors.Map(err, entity.ID.String())
 		}
 
 		return entity, nil
@@ -60,22 +64,8 @@ func (r *repository) Update(
 ) (*invoice.InvoiceDispute, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*invoice.InvoiceDispute, error) {
 		entity.SyncMinor()
-		previousVersion := entity.Version
-		entity.Version++
-
-		res, err := r.db.DBForContext(ctx).NewUpdate().
-			Model(entity).
-			WherePK().
-			Where(invoicecol.InvoiceDisputeColumns.Version.Eq(), previousVersion).
-			Returning("*").
-			Exec(ctx)
-		if err != nil {
-			entity.Version = previousVersion
-			return nil, fmt.Errorf("update invoice dispute: %w", err)
-		}
-		if err = dberror.CheckRowsAffected(res, "InvoiceDispute", entity.ID.String()); err != nil {
-			entity.Version = previousVersion
-			return nil, err
+		if err := invoicedb.InvoiceDisputes.Save(ctx, r.db.Keel(ctx), entity); err != nil {
+			return nil, disputeErrors.Map(err, entity.ID.String())
 		}
 
 		return entity, nil
@@ -87,16 +77,9 @@ func (r *repository) GetByID(
 	req invoiceports.GetInvoiceDisputeByIDRequest,
 ) (*invoice.InvoiceDispute, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*invoice.InvoiceDispute, error) {
-		cols := invoicecol.InvoiceDisputeColumns
-		entity := new(invoice.InvoiceDispute)
-		if err := r.db.DBForContext(ctx).NewSelect().
-			Model(entity).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return invoicecol.InvoiceDisputeScopeTenant(sq, req.TenantInfo).
-					Where(cols.ID.Eq(), req.ID)
-			}).
-			Scan(ctx); err != nil {
-			return nil, dberror.HandleNotFoundError(err, "InvoiceDispute")
+		entity, err := invoicedb.InvoiceDisputes.Get(ctx, r.db.Keel(ctx), req.ID)
+		if err != nil {
+			return nil, disputeErrors.Map(err, req.ID.String())
 		}
 
 		return entity, nil
@@ -108,18 +91,13 @@ func (r *repository) GetOpenByInvoiceID(
 	req invoiceports.GetOpenInvoiceDisputeRequest,
 ) (*invoice.InvoiceDispute, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*invoice.InvoiceDispute, error) {
-		cols := invoicecol.InvoiceDisputeColumns
-		entity := new(invoice.InvoiceDispute)
-		if err := r.db.DBForContext(ctx).NewSelect().
-			Model(entity).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return invoicecol.InvoiceDisputeScopeTenant(sq, req.TenantInfo).
-					Where(cols.InvoiceID.Eq(), req.InvoiceID).
-					Where(cols.Status.Eq(), invoice.DisputeCaseStatusOpen)
-			}).
-			Limit(1).
-			Scan(ctx); err != nil {
-			return nil, dberror.HandleNotFoundError(err, "InvoiceDispute")
+		d := invoicedb.InvoiceDisputes
+		entity, err := d.Where(
+			d.InvoiceID.Eq(req.InvoiceID),
+			d.Status.Eq(invoice.DisputeCaseStatusOpen),
+		).First(ctx, r.db.Keel(ctx))
+		if err != nil {
+			return nil, disputeErrors.Map(err, req.InvoiceID.String())
 		}
 
 		return entity, nil
@@ -139,17 +117,12 @@ func (r *repository) ListByInvoiceIDs(
 				return result, nil
 			}
 
-			cols := invoicecol.InvoiceDisputeColumns
-			rows := make([]*invoice.InvoiceDispute, 0, len(req.InvoiceIDs))
-			if err := r.db.DBForContext(ctx).NewSelect().
-				Model(&rows).
-				WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-					return invoicecol.InvoiceDisputeScopeTenant(sq, req.TenantInfo).
-						Where(cols.InvoiceID.In(), bun.List(req.InvoiceIDs))
-				}).
-				Order(cols.OpenedAt.OrderDesc(), cols.ID.OrderDesc()).
-				Scan(ctx); err != nil {
-				return nil, fmt.Errorf("list invoice disputes by invoice: %w", err)
+			d := invoicedb.InvoiceDisputes
+			rows, err := d.Where(d.InvoiceID.In(req.InvoiceIDs...)).
+				Order(d.OpenedAt.Desc(), d.ID.Desc()).
+				All(ctx, r.db.Keel(ctx))
+			if err != nil {
+				return nil, err
 			}
 
 			for _, row := range rows {

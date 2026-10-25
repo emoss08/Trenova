@@ -6,6 +6,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/domainvalidation"
@@ -16,7 +17,6 @@ import (
 	"github.com/emoss08/trenova/shared/timeutils"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
 	"github.com/shopspring/decimal"
-	"github.com/uptrace/bun"
 )
 
 var (
@@ -39,30 +39,46 @@ type ReviewItem struct {
 }
 
 var (
-	_ bun.BeforeAppendModelHook          = (*PerformanceReviewTemplate)(nil)
 	_ domaintypes.PostgresSearchable     = (*PerformanceReviewTemplate)(nil)
 	_ pagination.CursorEntity            = (*PerformanceReviewTemplate)(nil)
 	_ validationframework.TenantedEntity = (*PerformanceReviewTemplate)(nil)
 )
 
 type PerformanceReviewTemplate struct {
-	bun.BaseModel             `bun:"table:performance_review_templates,alias:prt" json:"-"`
-	pagination.CursorValueSet `bun:",embed"                                       json:"-"`
+	keel.Table     `keel:"performance_review_templates"`
+	ID             pulid.ID           `keel:"id,pk,autoid:prt_"                        json:"id"`
+	BusinessUnitID pulid.ID           `keel:"business_unit_id,pk,tenant"               json:"businessUnitId"`
+	OrganizationID pulid.ID           `keel:"organization_id,pk,tenant"                json:"organizationId"`
+	Code           string             `keel:"code"                                     json:"code"`
+	Name           string             `keel:"name"                                     json:"name"`
+	Description    string             `keel:"description,nullzero"                     json:"description"`
+	Status         domaintypes.Status `keel:"status"                                   json:"status"`
+	IsDefault      bool               `keel:"is_default"                               json:"isDefault"`
+	CadenceMonths  *int32             `keel:"cadence_months"                           json:"cadenceMonths"`
+	Items          []ReviewItem       `keel:"items,jsonb"                              json:"items"`
+	Version        int64              `keel:"version,version"                          json:"version"`
+	CreatedAt      int64              `keel:"created_at,autocreate"                    json:"createdAt"`
+	UpdatedAt      int64              `keel:"updated_at,autoupdate"                    json:"updatedAt"`
+	SearchVector   string             `keel:"search_vector,tsvector,readonly,noselect" json:"-"`
+}
 
-	ID             pulid.ID           `json:"id"             bun:"id,pk,type:VARCHAR(100),notnull"`
-	BusinessUnitID pulid.ID           `json:"businessUnitId" bun:"business_unit_id,pk,type:VARCHAR(100),notnull"`
-	OrganizationID pulid.ID           `json:"organizationId" bun:"organization_id,pk,type:VARCHAR(100),notnull"`
-	Code           string             `json:"code"           bun:"code,type:VARCHAR(50),notnull"`
-	Name           string             `json:"name"           bun:"name,type:VARCHAR(100),notnull"`
-	Description    string             `json:"description"    bun:"description,type:TEXT,nullzero"`
-	Status         domaintypes.Status `json:"status"         bun:"status,type:status_enum,notnull,default:'Active'"`
-	IsDefault      bool               `json:"isDefault"      bun:"is_default,type:BOOLEAN,notnull"`
-	CadenceMonths  *int32             `json:"cadenceMonths"  bun:"cadence_months,type:INTEGER,nullzero"`
-	Items          []ReviewItem       `json:"items"          bun:"items,type:JSONB,notnull,default:'[]'"`
-	Version        int64              `json:"version"        bun:"version,type:BIGINT"`
-	CreatedAt      int64              `json:"createdAt"      bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
-	UpdatedAt      int64              `json:"updatedAt"      bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
-	SearchVector   string             `json:"-"              bun:"search_vector,type:TSVECTOR,scanonly"`
+func (t *PerformanceReviewTemplate) BeforeUpdate(_ context.Context) error {
+	if t.Items == nil {
+		t.Items = []ReviewItem{}
+	}
+
+	return nil
+}
+
+func (t *PerformanceReviewTemplate) BeforeCreate(_ context.Context) error {
+	if t.Items == nil {
+		t.Items = []ReviewItem{}
+	}
+	if t.Status == "" {
+		t.Status = domaintypes.StatusActive
+	}
+
+	return nil
 }
 
 func (t *PerformanceReviewTemplate) Validate(multiErr *errortypes.MultiError) {
@@ -149,24 +165,9 @@ func (t *PerformanceReviewTemplate) GetPostgresSearchConfig() domaintypes.Postgr
 	}
 }
 
-func (t *PerformanceReviewTemplate) BeforeAppendModel(_ context.Context, query bun.Query) error {
-	now := timeutils.NowUnix()
-
-	switch query.(type) {
-	case *bun.InsertQuery:
-		if t.ID.IsNil() {
-			t.ID = pulid.MustNew("prt_")
-		}
-		if t.Items == nil {
-			t.Items = []ReviewItem{}
-		}
-		t.CreatedAt = now
-		t.UpdatedAt = now
-	case *bun.UpdateQuery:
-		if t.Items == nil {
-			t.Items = []ReviewItem{}
-		}
-		t.UpdatedAt = now
+func (t *PerformanceReviewTemplate) BeforeSave(_ context.Context) error {
+	if t.Items == nil {
+		t.Items = []ReviewItem{}
 	}
 
 	return nil
@@ -242,42 +243,41 @@ type ReviewGoal struct {
 }
 
 var (
-	_ bun.BeforeAppendModelHook          = (*PerformanceReview)(nil)
 	_ validationframework.TenantedEntity = (*PerformanceReview)(nil)
 )
 
 type PerformanceReview struct {
-	bun.BaseModel `bun:"table:performance_reviews,alias:prev" json:"-"`
+	keel.Table `keel:"performance_reviews"`
 
-	ID             pulid.ID            `json:"id"             bun:"id,pk,type:VARCHAR(100),notnull"`
-	BusinessUnitID pulid.ID            `json:"businessUnitId" bun:"business_unit_id,pk,type:VARCHAR(100),notnull"`
-	OrganizationID pulid.ID            `json:"organizationId" bun:"organization_id,pk,type:VARCHAR(100),notnull"`
-	WorkerID       pulid.ID            `json:"workerId"       bun:"worker_id,type:VARCHAR(100),notnull"`
-	TemplateID     pulid.ID            `json:"templateId"     bun:"template_id,type:VARCHAR(100),notnull"`
-	ReviewerID     pulid.ID            `json:"reviewerId"     bun:"reviewer_id,type:VARCHAR(100),nullzero"`
-	Status         ReviewStatus        `json:"status"         bun:"status,type:performance_review_status_enum,notnull,default:'Draft'"`
-	Title          string              `json:"title"          bun:"title,type:VARCHAR(120),notnull"`
-	PeriodStart    int64               `json:"periodStart"    bun:"period_start,type:BIGINT,notnull"`
-	PeriodEnd      int64               `json:"periodEnd"      bun:"period_end,type:BIGINT,notnull"`
-	Ratings        []ReviewRating      `json:"ratings"        bun:"ratings,type:JSONB,notnull,default:'[]'"`
-	OverallScore   decimal.NullDecimal `json:"overallScore"   bun:"overall_score,type:NUMERIC(4,2),nullzero"`
-	Summary        string              `json:"summary"        bun:"summary,type:TEXT,nullzero"`
-	Strengths      string              `json:"strengths"      bun:"strengths,type:TEXT,nullzero"`
-	Improvements   string              `json:"improvements"   bun:"improvements,type:TEXT,nullzero"`
-	Goals          []ReviewGoal        `json:"goals"          bun:"goals,type:JSONB,notnull,default:'[]'"`
-	SubmittedAt    *int64              `json:"submittedAt"    bun:"submitted_at,type:BIGINT,nullzero"`
-	AcknowledgedAt *int64              `json:"acknowledgedAt" bun:"acknowledged_at,type:BIGINT,nullzero"`
-	WorkerComment  string              `json:"workerComment"  bun:"worker_comment,type:TEXT,nullzero"`
-	ClosedAt       *int64              `json:"closedAt"       bun:"closed_at,type:BIGINT,nullzero"`
-	ClosedByID     pulid.ID            `json:"closedById"     bun:"closed_by_id,type:VARCHAR(100),nullzero"`
-	NextReviewAt   *int64              `json:"nextReviewAt"   bun:"next_review_at,type:BIGINT,nullzero"`
-	Version        int64               `json:"version"        bun:"version,type:BIGINT"`
-	CreatedAt      int64               `json:"createdAt"      bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
-	UpdatedAt      int64               `json:"updatedAt"      bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
+	ID             pulid.ID            `json:"id"             keel:"id,pk,autoid:prev_"`
+	BusinessUnitID pulid.ID            `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
+	OrganizationID pulid.ID            `json:"organizationId" keel:"organization_id,pk,tenant"`
+	WorkerID       pulid.ID            `json:"workerId"       keel:"worker_id"`
+	TemplateID     pulid.ID            `json:"templateId"     keel:"template_id"`
+	ReviewerID     pulid.ID            `json:"reviewerId"     keel:"reviewer_id,nullzero"`
+	Status         ReviewStatus        `json:"status"         keel:"status"`
+	Title          string              `json:"title"          keel:"title"`
+	PeriodStart    int64               `json:"periodStart"    keel:"period_start"`
+	PeriodEnd      int64               `json:"periodEnd"      keel:"period_end"`
+	Ratings        []ReviewRating      `json:"ratings"        keel:"ratings,jsonb"`
+	OverallScore   decimal.NullDecimal `json:"overallScore"   keel:"overall_score"`
+	Summary        string              `json:"summary"        keel:"summary,nullzero"`
+	Strengths      string              `json:"strengths"      keel:"strengths,nullzero"`
+	Improvements   string              `json:"improvements"   keel:"improvements,nullzero"`
+	Goals          []ReviewGoal        `json:"goals"          keel:"goals,jsonb"`
+	SubmittedAt    *int64              `json:"submittedAt"    keel:"submitted_at"`
+	AcknowledgedAt *int64              `json:"acknowledgedAt" keel:"acknowledged_at"`
+	WorkerComment  string              `json:"workerComment"  keel:"worker_comment,nullzero"`
+	ClosedAt       *int64              `json:"closedAt"       keel:"closed_at"`
+	ClosedByID     pulid.ID            `json:"closedById"     keel:"closed_by_id,nullzero"`
+	NextReviewAt   *int64              `json:"nextReviewAt"   keel:"next_review_at"`
+	Version        int64               `json:"version"        keel:"version,version"`
+	CreatedAt      int64               `json:"createdAt"      keel:"created_at,autocreate"`
+	UpdatedAt      int64               `json:"updatedAt"      keel:"updated_at,autoupdate"`
 
-	Worker   *Worker                    `json:"worker,omitempty"   bun:"rel:belongs-to,join:worker_id=id,join:organization_id=organization_id,join:business_unit_id=business_unit_id"`
-	Template *PerformanceReviewTemplate `json:"template,omitempty" bun:"rel:belongs-to,join:template_id=id,join:organization_id=organization_id,join:business_unit_id=business_unit_id"`
-	Reviewer *tenant.User               `json:"reviewer,omitempty" bun:"rel:belongs-to,join:reviewer_id=id"`
+	Worker   *Worker                    `json:"worker,omitempty"   keel:"belongs:worker_id"`
+	Template *PerformanceReviewTemplate `json:"template,omitempty" keel:"belongs:template_id"`
+	Reviewer *tenant.User               `json:"reviewer,omitempty" keel:"belongs:reviewer_id"`
 }
 
 func (r *PerformanceReview) Validate(multiErr *errortypes.MultiError) {
@@ -413,33 +413,26 @@ func (r *PerformanceReview) GetResourceType() string { return "performance_revie
 
 func (r *PerformanceReview) GetResourceID() string { return r.ID.String() }
 
-func (r *PerformanceReview) BeforeAppendModel(_ context.Context, query bun.Query) error {
-	now := timeutils.NowUnix()
+func (r *PerformanceReview) BeforeCreate(_ context.Context) error {
+	if r.Status == "" {
+		r.Status = ReviewStatusDraft
+	}
+	if r.Ratings == nil {
+		r.Ratings = []ReviewRating{}
+	}
+	if r.Goals == nil {
+		r.Goals = []ReviewGoal{}
+	}
 
-	switch query.(type) {
-	case *bun.InsertQuery:
-		if r.ID.IsNil() {
-			r.ID = pulid.MustNew("prev_")
-		}
-		if r.Status == "" {
-			r.Status = ReviewStatusDraft
-		}
-		if r.Ratings == nil {
-			r.Ratings = []ReviewRating{}
-		}
-		if r.Goals == nil {
-			r.Goals = []ReviewGoal{}
-		}
-		r.CreatedAt = now
-		r.UpdatedAt = now
-	case *bun.UpdateQuery:
-		if r.Ratings == nil {
-			r.Ratings = []ReviewRating{}
-		}
-		if r.Goals == nil {
-			r.Goals = []ReviewGoal{}
-		}
-		r.UpdatedAt = now
+	return nil
+}
+
+func (r *PerformanceReview) BeforeUpdate(_ context.Context) error {
+	if r.Ratings == nil {
+		r.Ratings = []ReviewRating{}
+	}
+	if r.Goals == nil {
+		r.Goals = []ReviewGoal{}
 	}
 
 	return nil

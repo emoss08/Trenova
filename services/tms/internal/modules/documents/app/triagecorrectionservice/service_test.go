@@ -8,30 +8,17 @@ import (
 	"github.com/emoss08/trenova/internal/modules/documents/domain/triage"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/inboundmessageports"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/triageports"
-	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/internal/testutil/dbtest"
 	"github.com/emoss08/trenova/internal/testutil/mocks/triageportsmock"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
-	"github.com/uptrace/bun"
 	"go.uber.org/zap"
 )
 
 var tenantInfo = pagination.TenantInfo{OrgID: "org_test", BuID: "bu_test"}
-
-type fakeTx struct {
-	kernelports.DBConnection
-}
-
-func (fakeTx) WithTx(
-	ctx context.Context,
-	_ kernelports.TxOptions,
-	fn func(context.Context, bun.Tx) error,
-) error {
-	return fn(ctx, bun.Tx{})
-}
 
 type fakeMessages struct {
 	inboundmessageports.InboundMessageRepository
@@ -105,7 +92,7 @@ func newRig(t *testing.T, reads ...*inboundmessage.InboundMessage) *rig {
 	}
 	r.service = &Service{
 		l:        zap.NewNop(),
-		db:       fakeTx{},
+		db:       dbtest.NopConnection{},
 		messages: r.messages,
 		store:    r.store,
 		hints:    r.hints,

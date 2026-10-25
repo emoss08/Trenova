@@ -6,6 +6,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant/tenantdb"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/shared/pulid"
 	"go.uber.org/fx"
@@ -36,15 +37,16 @@ func (p *formatProvider) GetFormat(
 	sequenceType tenant.SequenceType,
 	orgID, buID pulid.ID,
 ) (*tenant.SequenceFormat, error) {
-	cfg := new(tenant.SequenceConfig)
+	var cfg *tenant.SequenceConfig
 	err := p.db.RunDetached(ctx, true, func(ctx context.Context) error {
-		return p.db.DBForContext(ctx).NewSelect().
-			Model(cfg).
-			Where("sequence_type = ?", sequenceType).
-			Where("organization_id = ?", orgID).
-			Where("business_unit_id = ?", buID).
-			Limit(1).
-			Scan(ctx)
+		sc := tenantdb.SequenceConfigs
+		var err error
+		cfg, err = sc.Where(
+			sc.SequenceType.Eq(sequenceType),
+			sc.OrganizationID.Eq(orgID),
+			sc.BusinessUnitID.Eq(buID),
+		).First(ctx, p.db.Keel(ctx))
+		return err
 	})
 	if err != nil {
 		if dberror.IsNotFoundError(err) {
@@ -53,25 +55,5 @@ func (p *formatProvider) GetFormat(
 		return nil, fmt.Errorf("find sequence config: %w", err)
 	}
 
-	format := &tenant.SequenceFormat{
-		Type:                    cfg.SequenceType,
-		Prefix:                  cfg.Prefix,
-		IncludeYear:             cfg.IncludeYear,
-		YearDigits:              int(cfg.YearDigits),
-		IncludeMonth:            cfg.IncludeMonth,
-		IncludeWeekNumber:       cfg.IncludeWeekNumber,
-		IncludeDay:              cfg.IncludeDay,
-		SequenceDigits:          int(cfg.SequenceDigits),
-		IncludeLocationCode:     cfg.IncludeLocationCode,
-		IncludeRandomDigits:     cfg.IncludeRandomDigits,
-		RandomDigitsCount:       int(cfg.RandomDigitsCount),
-		IncludeCheckDigit:       cfg.IncludeCheckDigit,
-		IncludeBusinessUnitCode: cfg.IncludeBusinessUnitCode,
-		UseSeparators:           cfg.UseSeparators,
-		SeparatorChar:           cfg.SeparatorChar,
-		AllowCustomFormat:       cfg.AllowCustomFormat,
-		CustomFormat:            cfg.CustomFormat,
-	}
-
-	return format, nil
+	return cfg.Format(), nil
 }

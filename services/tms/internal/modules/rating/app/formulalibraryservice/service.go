@@ -25,7 +25,6 @@ import (
 	"github.com/emoss08/trenova/shared/intutils"
 	"github.com/emoss08/trenova/shared/jsonutils"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/uptrace/bun"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
@@ -55,7 +54,7 @@ type Params struct {
 	fx.In
 
 	Logger           *zap.Logger
-	DB               kernelports.DBConnection
+	DB               kernelports.Transactor
 	Repo             formulalibraryports.FormulaLibraryRepository
 	VersionRepo      formulalibraryports.FormulaLibraryVersionRepository
 	ReviewRepo       formulalibraryports.FormulaLibraryReviewRepository
@@ -68,7 +67,7 @@ type Params struct {
 
 type Service struct {
 	l             *zap.Logger
-	db            kernelports.DBConnection
+	db            kernelports.Transactor
 	repo          formulalibraryports.FormulaLibraryRepository
 	versionRepo   formulalibraryports.FormulaLibraryVersionRepository
 	reviewRepo    formulalibraryports.FormulaLibraryReviewRepository
@@ -266,7 +265,7 @@ func (s *Service) createWithSnapshot(
 	changeMessage string,
 ) (*formulalibrary.FormulaLibrary, error) {
 	var created *formulalibrary.FormulaLibrary
-	err := s.db.WithTx(ctx, kernelports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
+	err := s.db.Transact(ctx, kernelports.TxOptions{}, func(txCtx context.Context) error {
 		saved, txErr := s.repo.Create(txCtx, entity)
 		if txErr != nil {
 			return txErr
@@ -327,7 +326,7 @@ func (s *Service) Update(
 	}
 
 	var updated *formulalibrary.FormulaLibrary
-	err = s.db.WithTx(ctx, kernelports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
+	err = s.db.Transact(ctx, kernelports.TxOptions{}, func(txCtx context.Context) error {
 		saved, txErr := s.repo.Update(txCtx, entity)
 		if txErr != nil {
 			return txErr
@@ -469,7 +468,7 @@ func (s *Service) Duplicate(
 	}
 
 	created := make([]*formulalibrary.FormulaLibrary, 0, len(pending))
-	err = s.db.WithTx(ctx, kernelports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
+	err = s.db.Transact(ctx, kernelports.TxOptions{}, func(txCtx context.Context) error {
 		for _, entity := range pending {
 			saved, txErr := s.repo.Create(txCtx, entity)
 			if txErr != nil {

@@ -7,15 +7,13 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/pkg/domainvalidation"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
-	"github.com/uptrace/bun"
 )
-
-var _ bun.BeforeAppendModelHook = (*DetentionEvidence)(nil)
 
 // GenesisHash anchors the first link of every occurrence's evidence chain.
 const GenesisHash = "0000000000000000000000000000000000000000000000000000000000000000"
@@ -32,24 +30,24 @@ const (
 // is "you edited the arrival time after the fact" — chaining makes any edit
 // provable rather than deniable.
 type DetentionEvidence struct {
-	bun.BaseModel `bun:"table:detention_evidence,alias:dte" json:"-"`
+	keel.Table `keel:"detention_evidence"`
 
-	ID                    pulid.ID       `json:"id"                    bun:"id,pk,type:VARCHAR(100),notnull"`
-	BusinessUnitID        pulid.ID       `json:"businessUnitId"        bun:"business_unit_id,pk,type:VARCHAR(100),notnull"`
-	OrganizationID        pulid.ID       `json:"organizationId"        bun:"organization_id,pk,type:VARCHAR(100),notnull"`
-	DetentionOccurrenceID pulid.ID       `json:"detentionOccurrenceId" bun:"detention_occurrence_id,type:VARCHAR(100),notnull"`
-	Sequence              int32          `json:"sequence"              bun:"sequence,type:INTEGER,notnull"`
-	Kind                  EvidenceKind   `json:"kind"                  bun:"kind,type:detention_evidence_kind_enum,notnull"`
-	Source                EvidenceSource `json:"source"                bun:"source,type:detention_evidence_source_enum,notnull"`
-	Summary               string         `json:"summary"               bun:"summary,type:TEXT,notnull"`
-	ObservedAt            int64          `json:"observedAt"            bun:"observed_at,type:BIGINT,notnull"`
-	RecordedAt            int64          `json:"recordedAt"            bun:"recorded_at,type:BIGINT,notnull"`
-	RecordedByID          *pulid.ID      `json:"recordedById"          bun:"recorded_by_id,type:VARCHAR(100),nullzero"`
-	DocumentID            *pulid.ID      `json:"documentId"            bun:"document_id,type:VARCHAR(100),nullzero"`
-	Payload               map[string]any `json:"payload"               bun:"payload,type:JSONB,nullzero"`
-	PrevHash              string         `json:"prevHash"              bun:"prev_hash,type:VARCHAR(64),notnull"`
-	Hash                  string         `json:"hash"                  bun:"hash,type:VARCHAR(64),notnull"`
-	CreatedAt             int64          `json:"createdAt"             bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
+	ID                    pulid.ID       `json:"id"                    keel:"id,pk,autoid:dte_"`
+	BusinessUnitID        pulid.ID       `json:"businessUnitId"        keel:"business_unit_id,pk,tenant"`
+	OrganizationID        pulid.ID       `json:"organizationId"        keel:"organization_id,pk,tenant"`
+	DetentionOccurrenceID pulid.ID       `json:"detentionOccurrenceId" keel:"detention_occurrence_id"`
+	Sequence              int32          `json:"sequence"              keel:"sequence"`
+	Kind                  EvidenceKind   `json:"kind"                  keel:"kind"`
+	Source                EvidenceSource `json:"source"                keel:"source"`
+	Summary               string         `json:"summary"               keel:"summary"`
+	ObservedAt            int64          `json:"observedAt"            keel:"observed_at"`
+	RecordedAt            int64          `json:"recordedAt"            keel:"recorded_at"`
+	RecordedByID          *pulid.ID      `json:"recordedById"          keel:"recorded_by_id"`
+	DocumentID            *pulid.ID      `json:"documentId"            keel:"document_id"`
+	Payload               map[string]any `json:"payload"               keel:"payload,jsonb,nullzero"`
+	PrevHash              string         `json:"prevHash"              keel:"prev_hash"`
+	Hash                  string         `json:"hash"                  keel:"hash"`
+	CreatedAt             int64          `json:"createdAt"             keel:"created_at,autocreate"`
 }
 
 // ComputeHash derives the chain link from the immutable fields of this record.
@@ -162,23 +160,16 @@ func (e *DetentionEvidence) Validate(multiErr *errortypes.MultiError) {
 	))
 }
 
-func (e *DetentionEvidence) BeforeAppendModel(_ context.Context, query bun.Query) error {
+func (e *DetentionEvidence) BeforeCreate(ctx context.Context) error {
 	now := timeutils.NowUnix()
-
-	if _, ok := query.(*bun.InsertQuery); ok {
-		if e.ID.IsNil() {
-			e.ID = pulid.MustNew("dte_")
-		}
-		if e.RecordedAt == 0 {
-			e.RecordedAt = now
-		}
-		if e.PrevHash == "" {
-			e.PrevHash = GenesisHash
-		}
-		if e.Hash == "" {
-			e.Seal()
-		}
-		e.CreatedAt = now
+	if e.RecordedAt == 0 {
+		e.RecordedAt = now
+	}
+	if e.PrevHash == "" {
+		e.PrevHash = GenesisHash
+	}
+	if e.Hash == "" {
+		e.Seal()
 	}
 
 	return nil

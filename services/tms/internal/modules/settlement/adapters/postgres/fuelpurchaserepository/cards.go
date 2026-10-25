@@ -2,113 +2,62 @@ package fuelpurchaserepository
 
 import (
 	"context"
-	"database/sql"
-	"errors"
 	"fmt"
 	"strings"
 
-	"github.com/emoss08/trenova/pkg/buncolgen/fuelpurchasecol"
-
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/fuelpurchase"
+	"github.com/emoss08/trenova/internal/modules/settlement/domain/fuelpurchase/fuelpurchasedb"
 	"github.com/emoss08/trenova/internal/modules/settlement/ports/fuelpurchaseports"
 	"github.com/emoss08/trenova/pkg/dberror"
-	"github.com/emoss08/trenova/pkg/dbhelper"
+	"github.com/emoss08/trenova/pkg/listquery"
 	"github.com/emoss08/trenova/pkg/pagination"
-	"github.com/emoss08/trenova/pkg/querybuilder"
-	"github.com/uptrace/bun"
 	"go.uber.org/zap"
 )
 
-func (r *repository) applyCardFilters(
-	q *bun.SelectQuery,
-	req *fuelpurchaseports.ListFuelCardsRequest,
-) *bun.SelectQuery {
-	cols := fuelpurchasecol.FuelCardColumns
+func cardFilters(req *fuelpurchaseports.ListFuelCardsRequest) []keel.Pred {
+	fc := fuelpurchasedb.FuelCards
 
-	if len(req.Statuses) > 0 {
-		q = q.Where(cols.Status.In(), bun.In(req.Statuses))
+	return []keel.Pred{
+		when(len(req.Statuses) > 0, fc.Status.In(req.Statuses...)),
+		when(req.Provider != "", fc.Provider.Eq(req.Provider)),
+		when(!req.AssignedTractorID.IsNil(), fc.AssignedTractorID.Eq(req.AssignedTractorID)),
+		when(!req.AssignedWorkerID.IsNil(), fc.AssignedWorkerID.Eq(req.AssignedWorkerID)),
+		when(
+			req.UnassignedOnly,
+			keel.And(fc.AssignedTractorID.IsNull(), fc.AssignedWorkerID.IsNull()),
+		),
+		when(req.DiscoveredOnly, fc.DiscoveredAt.IsNotNull()),
 	}
-	if req.Provider != "" {
-		q = q.Where(cols.Provider.Eq(), req.Provider)
-	}
-	if !req.AssignedTractorID.IsNil() {
-		q = q.Where(cols.AssignedTractorID.Eq(), req.AssignedTractorID)
-	}
-	if !req.AssignedWorkerID.IsNil() {
-		q = q.Where(cols.AssignedWorkerID.Eq(), req.AssignedWorkerID)
-	}
-	if req.UnassignedOnly {
-		q = q.Where(cols.AssignedTractorID.IsNull()).
-			Where(cols.AssignedWorkerID.IsNull())
-	}
-	if req.DiscoveredOnly {
-		q = q.Where(cols.DiscoveredAt.IsNotNull())
+}
+
+func cardAssignments(include bool) []keel.Loader {
+	if !include {
+		return nil
 	}
 
-	return q
+	fc := fuelpurchasedb.FuelCards
+	return []keel.Loader{fc.AssignedWorker(), fc.AssignedTractor()}
 }
 
 func (r *repository) ListCards(
 	ctx context.Context,
 	req *fuelpurchaseports.ListFuelCardsRequest,
 ) (*pagination.CursorListResult[*fuelpurchase.FuelCard], error) {
-	return dbtx.Write(
+	return dbtx.Read(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*pagination.CursorListResult[*fuelpurchase.FuelCard], error) {
-			dba := r.db.DBForContext(ctx)
-
-			var totalCount *int
-			if req.Cursor.IncludeTotalCount {
-				total, err := dba.
-					NewSelect().
-					Model((*fuelpurchase.FuelCard)(nil)).
-					Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-						sq = querybuilder.ApplyFiltersWithoutSort(
-							sq,
-							fuelpurchasecol.FuelCardTable.Alias,
-							req.Filter,
-							(*fuelpurchase.FuelCard)(nil),
-						)
-						return r.applyCardFilters(sq, req)
-					}).
-					Count(ctx)
-				if err != nil {
-					r.l.Error("failed to count fuel cards", zap.Error(err))
-					return nil, fmt.Errorf("count fuel cards: %w", err)
-				}
-				totalCount = new(int(total))
-			}
-
-			result, err := dbhelper.CursorList(
+			result, err := listquery.Connection(
 				ctx,
-				dbhelper.CursorListParams[*fuelpurchase.FuelCard]{
-					Filter:     req.Filter,
-					Cursor:     req.Cursor,
-					TotalCount: totalCount,
-					Query: func(items *[]*fuelpurchase.FuelCard) *bun.SelectQuery {
-						q := dba.NewSelect().
-							Model(items).
-							ColumnExpr(fuelpurchasecol.FuelCardTable.All())
-						if req.IncludeAssignments {
-							q = q.Relation(fuelpurchasecol.FuelCardRelations.AssignedWorker).
-								Relation(fuelpurchasecol.FuelCardRelations.AssignedTractor)
-						}
-						return q
-					},
-					Apply: func(sq *bun.SelectQuery) (*bun.SelectQuery, error) {
-						sq, applyErr := querybuilder.ApplyCursorFilters(
-							sq,
-							fuelpurchasecol.FuelCardTable.Alias,
-							req.Filter,
-							req.Cursor,
-							(*fuelpurchase.FuelCard)(nil),
-						)
-						if applyErr != nil {
-							return sq, applyErr
-						}
-						return r.applyCardFilters(sq, req), nil
+				r.db.Keel(ctx),
+				fuelpurchasedb.FuelCards.Where(cardFilters(req)...),
+				&listquery.Request[fuelpurchase.FuelCard]{
+					Filter: req.Filter,
+					Cursor: req.Cursor,
+					Shape: func(q *keel.Query[fuelpurchase.FuelCard]) *keel.Query[fuelpurchase.FuelCard] {
+						return q.Load(cardAssignments(req.IncludeAssignments)...)
 					},
 				},
 			)
@@ -127,22 +76,12 @@ func (r *repository) GetCardByID(
 	req *fuelpurchaseports.GetFuelCardByIDRequest,
 ) (*fuelpurchase.FuelCard, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*fuelpurchase.FuelCard, error) {
-		entity := new(fuelpurchase.FuelCard)
-		q := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(entity).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return fuelpurchasecol.FuelCardScopeTenant(sq, req.TenantInfo).
-					Where(fuelpurchasecol.FuelCardColumns.ID.Eq(), req.ID)
-			})
-
-		if req.IncludeAssignments {
-			q = q.Relation(fuelpurchasecol.FuelCardRelations.AssignedWorker).
-				Relation(fuelpurchasecol.FuelCardRelations.AssignedTractor)
-		}
-
-		if err := q.Scan(ctx); err != nil {
-			return nil, dberror.HandleNotFoundError(err, "FuelCard")
+		fc := fuelpurchasedb.FuelCards
+		entity, err := fc.Where(fc.ID.Eq(req.ID)).
+			Load(cardAssignments(req.IncludeAssignments)...).
+			One(ctx, r.db.Keel(ctx))
+		if err != nil {
+			return nil, cardErrors.Map(err, req.ID.String())
 		}
 
 		return entity, nil
@@ -154,19 +93,14 @@ func (r *repository) GetCardsByIDs(
 	req *fuelpurchaseports.GetFuelCardsByIDsRequest,
 ) ([]*fuelpurchase.FuelCard, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*fuelpurchase.FuelCard, error) {
-		entities := make([]*fuelpurchase.FuelCard, 0, len(req.IDs))
 		if len(req.IDs) == 0 {
-			return entities, nil
+			return []*fuelpurchase.FuelCard{}, nil
 		}
 
-		err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(&entities).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return fuelpurchasecol.FuelCardScopeTenant(sq, req.TenantInfo).
-					Where(fuelpurchasecol.FuelCardColumns.ID.In(), bun.List(req.IDs))
-			}).
-			Scan(ctx)
+		fc := fuelpurchasedb.FuelCards
+		entities, err := fc.Where(fc.ID.In(req.IDs...)).
+			Limit(len(req.IDs)).
+			List(ctx, r.db.Keel(ctx))
 		if err != nil {
 			r.l.Error("failed to get fuel cards by ids", zap.Error(err))
 			return nil, fmt.Errorf("get fuel cards by ids: %w", err)
@@ -176,10 +110,6 @@ func (r *repository) GetCardsByIDs(
 	})
 }
 
-// FindCardsByLastFour resolves many cards in one round trip, which is what a feed
-// needs: it has to know which of a file's cards already exist before it can
-// decide which to create. Cancelled cards are excluded so a reissued last four
-// resolves to the live card.
 func (r *repository) FindCardsByLastFour(
 	ctx context.Context,
 	req *fuelpurchaseports.FindFuelCardsByLastFourRequest,
@@ -188,8 +118,6 @@ func (r *repository) FindCardsByLastFour(
 		ctx,
 		r.db,
 		func(ctx context.Context) (map[string]*fuelpurchase.FuelCard, error) {
-			cols := fuelpurchasecol.FuelCardColumns
-
 			wanted := make([]string, 0, len(req.LastFours))
 			seen := make(map[string]struct{}, len(req.LastFours))
 			for _, lastFour := range req.LastFours {
@@ -209,29 +137,17 @@ func (r *repository) FindCardsByLastFour(
 				return found, nil
 			}
 
-			entities := make([]*fuelpurchase.FuelCard, 0, len(wanted))
-			if err := r.db.DBForContext(ctx).
-				NewSelect().
-				Model(&entities).
-				WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-					sq = fuelpurchasecol.FuelCardScopeTenant(sq, req.TenantInfo).
-						Where(cols.LastFour.In(), bun.List(wanted)).
-						Where(cols.Status.Ne(), fuelpurchase.CardStatusCancelled)
-					if req.Provider != "" {
-						sq = sq.Where(cols.Provider.Eq(), req.Provider)
-					}
-
-					return sq
-				}).
-				Order(cols.CreatedAt.OrderDesc()).
-				Scan(ctx); err != nil {
+			fc := fuelpurchasedb.FuelCards
+			entities, err := fc.Where(
+				fc.LastFour.In(wanted...),
+				fc.Status.Ne(fuelpurchase.CardStatusCancelled),
+				when(req.Provider != "", fc.Provider.Eq(req.Provider)),
+			).Order(fc.CreatedAt.Desc()).All(ctx, r.db.Keel(ctx))
+			if err != nil {
 				r.l.Error("failed to find fuel cards by last four", zap.Error(err))
-
 				return nil, fmt.Errorf("find fuel cards by last four: %w", err)
 			}
 
-			// Ordered newest first, so the first row for a last four wins and later
-			// duplicates are ignored, matching what the single-card lookup returns.
 			for _, entity := range entities {
 				if _, taken := found[entity.LastFour]; taken {
 					continue
@@ -249,32 +165,21 @@ func (r *repository) FindCardByLastFour(
 	req *fuelpurchaseports.FindFuelCardByLastFourRequest,
 ) (*fuelpurchase.FuelCard, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*fuelpurchase.FuelCard, error) {
-		cols := fuelpurchasecol.FuelCardColumns
 		lastFour := strings.TrimSpace(req.LastFour)
 		if lastFour == "" {
 			return nil, nil
 		}
 
-		entity := new(fuelpurchase.FuelCard)
-		err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(entity).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				sq = fuelpurchasecol.FuelCardScopeTenant(sq, req.TenantInfo).
-					Where(cols.LastFour.Eq(), lastFour).
-					Where(cols.Status.Ne(), fuelpurchase.CardStatusCancelled)
-				if req.Provider != "" {
-					sq = sq.Where(cols.Provider.Eq(), req.Provider)
-				}
-				return sq
-			}).
-			Order(cols.CreatedAt.OrderDesc()).
-			Limit(1).
-			Scan(ctx)
+		fc := fuelpurchasedb.FuelCards
+		entity, err := fc.Where(
+			fc.LastFour.Eq(lastFour),
+			fc.Status.Ne(fuelpurchase.CardStatusCancelled),
+			when(req.Provider != "", fc.Provider.Eq(req.Provider)),
+		).Order(fc.CreatedAt.Desc()).First(ctx, r.db.Keel(ctx))
+		if dberror.IsNotFoundError(err) {
+			return nil, nil
+		}
 		if err != nil {
-			if errors.Is(err, sql.ErrNoRows) {
-				return nil, nil
-			}
 			r.l.Error("failed to find fuel card by last four", zap.Error(err))
 			return nil, fmt.Errorf("find fuel card by last four: %w", err)
 		}
@@ -288,30 +193,16 @@ func (r *repository) ListActiveCards(
 	req *fuelpurchaseports.ListActiveFuelCardsRequest,
 ) ([]*fuelpurchase.FuelCard, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*fuelpurchase.FuelCard, error) {
-		cols := fuelpurchasecol.FuelCardColumns
-		limit := limitOr(req.Limit, defaultActiveCardLimit, maxActiveCardLimit)
-		entities := make([]*fuelpurchase.FuelCard, 0, limit)
+		fc := fuelpurchasedb.FuelCards
 		term := strings.TrimSpace(req.Query)
 
-		err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(&entities).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				sq = fuelpurchasecol.FuelCardScopeTenant(sq, req.TenantInfo).
-					Where(cols.Status.Eq(), fuelpurchase.CardStatusActive)
-				if term != "" {
-					pattern := "%" + term + "%"
-					sq = sq.WhereGroup(" AND ", func(tq *bun.SelectQuery) *bun.SelectQuery {
-						return tq.Where(cols.Label.ILike(), pattern).
-							WhereOr(cols.LastFour.Like(), pattern)
-					})
-				}
-				return sq
-			}).
-			Order(cols.Label.OrderAsc()).
-			Order(cols.LastFour.OrderAsc()).
-			Limit(int64(limit)).
-			Scan(ctx)
+		entities, err := fc.Where(
+			fc.Status.Eq(fuelpurchase.CardStatusActive),
+			when(term != "", keel.Or(fc.Label.ContainsFold(term), fc.LastFour.Contains(term))),
+		).
+			Order(fc.Label.Asc(), fc.LastFour.Asc()).
+			Limit(limitOr(req.Limit, defaultActiveCardLimit, maxActiveCardLimit)).
+			List(ctx, r.db.Keel(ctx))
 		if err != nil {
 			r.l.Error("failed to list active fuel cards", zap.Error(err))
 			return nil, fmt.Errorf("list active fuel cards: %w", err)
@@ -326,16 +217,12 @@ func (r *repository) CreateCard(
 	entity *fuelpurchase.FuelCard,
 ) (*fuelpurchase.FuelCard, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*fuelpurchase.FuelCard, error) {
-		if _, err := r.db.DBForContext(ctx).
-			NewInsert().
-			Model(entity).
-			Returning("*").
-			Exec(ctx); err != nil {
+		if err := fuelpurchasedb.FuelCards.Create(ctx, r.db.Keel(ctx), entity); err != nil {
 			if dberror.IsUniqueConstraintViolation(err) {
 				return nil, duplicateCard()
 			}
 			r.l.Error("failed to create fuel card", zap.Error(err))
-			return nil, fmt.Errorf("create fuel card: %w", err)
+			return nil, cardErrors.Map(err, entity.ID.String())
 		}
 
 		return entity, nil
@@ -347,25 +234,12 @@ func (r *repository) UpdateCard(
 	entity *fuelpurchase.FuelCard,
 ) (*fuelpurchase.FuelCard, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*fuelpurchase.FuelCard, error) {
-		ov := entity.Version
-		entity.Version++
-
-		results, err := r.db.DBForContext(ctx).
-			NewUpdate().
-			Model(entity).
-			WherePK().
-			Where(fuelpurchasecol.FuelCardColumns.Version.Eq(), ov).
-			Returning("*").
-			Exec(ctx)
-		if err != nil {
+		if err := fuelpurchasedb.FuelCards.Save(ctx, r.db.Keel(ctx), entity); err != nil {
 			if dberror.IsUniqueConstraintViolation(err) {
 				return nil, duplicateCard()
 			}
 			r.l.Error("failed to update fuel card", zap.Error(err))
-			return nil, fmt.Errorf("update fuel card: %w", err)
-		}
-		if err = dberror.CheckRowsAffected(results, "FuelCard", entity.ID.String()); err != nil {
-			return nil, err
+			return nil, cardErrors.Map(err, entity.ID.String())
 		}
 
 		return entity, nil

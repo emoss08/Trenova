@@ -12,6 +12,9 @@ const (
 	fieldEDICarrierInvoiceID = "ediCarrierInvoiceId"
 	fieldDocumentExtraction  = "documentAiExtractionId"
 	fieldMatchSource         = "source"
+	fieldFieldPath           = "fieldPath"
+	fieldRuleCode            = "ruleCode"
+	fieldVendorChangedAt     = "vendorChangedAt"
 
 	matchSourceEDI      = "EDI"
 	matchSourceDocument = "Document"
@@ -53,7 +56,7 @@ func carrierIntelEventsListSpec() graphQLListSpec {
 		},
 		unoffered: []string{
 			"status", "severity", "category", "carrierId", "subjectType", "subjectId",
-			"fieldPath", "ruleCode", "priorValue", "currentValue", "vendorChangedAt",
+			fieldFieldPath, fieldRuleCode, fieldVendorChangedAt,
 			"acknowledgedById", "resolvedById", "resolutionNote", "snapshotId", "updatedAt",
 			"createdAt",
 		},

@@ -15,16 +15,16 @@ type ShipmentBoardScope struct {
 }
 
 type ShipmentStageSummaryRow struct {
-	StageRank int16           `bun:"stage_rank"`
-	Count     int             `bun:"count"`
-	Revenue   decimal.Decimal `bun:"revenue"`
+	StageRank int16
+	Count     int
+	Revenue   decimal.Decimal
 }
 
 type ShipmentBoardGroupRow struct {
-	Key     string          `bun:"group_key"`
-	Label   string          `bun:"group_label"`
-	Count   int             `bun:"count"`
-	Revenue decimal.Decimal `bun:"revenue"`
+	Key     string
+	Label   string
+	Count   int
+	Revenue decimal.Decimal
 }
 
 type SummarizeShipmentBoardGroupsQuery struct {
@@ -61,37 +61,37 @@ type ShipmentWatchlistRequest struct {
 }
 
 type ShipmentDeliveryRow struct {
-	ShipmentID    pulid.ID `bun:"shipment_id"`
-	ProNumber     string   `bun:"pro_number"`
-	StageRank     int16    `bun:"stage_rank"`
-	CustomerName  string   `bun:"customer_name"`
-	City          string   `bun:"city"`
-	DeliveryAt    int64    `bun:"delivery_at"`
-	ActualArrival *int64   `bun:"actual_arrival"`
-	Cutoff        int64    `bun:"cutoff"`
+	ShipmentID    pulid.ID
+	ProNumber     string
+	StageRank     int16
+	CustomerName  string
+	City          string
+	DeliveryAt    int64
+	ActualArrival *int64
+	Cutoff        int64
 }
 
 type ShipmentPickupRow struct {
-	ShipmentID      pulid.ID `bun:"shipment_id"`
-	PickupAt        int64    `bun:"pickup_at"`
-	OriginCity      string   `bun:"origin_city"`
-	DestinationCity string   `bun:"destination_city"`
+	ShipmentID      pulid.ID
+	PickupAt        int64
+	OriginCity      string
+	DestinationCity string
 }
 
 type ShipmentDwellRow struct {
-	ShipmentID    pulid.ID `bun:"shipment_id"`
-	MoveID        pulid.ID `bun:"move_id"`
-	StopID        pulid.ID `bun:"stop_id"`
-	FacilityName  string   `bun:"facility_name"`
-	ActualArrival int64    `bun:"actual_arrival"`
+	ShipmentID    pulid.ID
+	MoveID        pulid.ID
+	StopID        pulid.ID
+	FacilityName  string
+	ActualArrival int64
 }
 
 type ShipmentBillingCustomerRow struct {
-	CustomerID     pulid.ID        `bun:"customer_id"`
-	Name           string          `bun:"name"`
-	Count          int             `bun:"count"`
-	Total          decimal.Decimal `bun:"total"`
-	TotalCustomers int             `bun:"total_customers"`
+	CustomerID     pulid.ID
+	Name           string
+	Count          int
+	Total          decimal.Decimal
+	TotalCustomers int
 }
 
 type ListReadyToBillCustomersRequest struct {
@@ -119,8 +119,8 @@ type ShipmentWatchlistRepository interface {
 }
 
 type ShipmentLateReason struct {
-	Label string `bun:"label"`
-	Count int    `bun:"count"`
+	Label string
+	Count int
 }
 
 type ShipmentBriefingRepository interface {

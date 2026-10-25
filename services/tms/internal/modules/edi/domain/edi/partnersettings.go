@@ -1,92 +1,62 @@
 package edi
 
 import (
-	"context"
 	"errors"
 	"regexp"
 
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/pkg/domainvalidation"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/emoss08/trenova/shared/timeutils"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
-	"github.com/uptrace/bun"
 )
 
 type EDIPartnerSettingSchema struct {
-	bun.BaseModel `json:"-" bun:"table:edi_partner_setting_schemas,alias:epss"`
+	keel.Table `keel:"edi_partner_setting_schemas"`
 
-	ID             pulid.ID             `json:"id"             bun:"id,pk,type:VARCHAR(100),notnull"`
-	BusinessUnitID pulid.ID             `json:"businessUnitId" bun:"business_unit_id,type:VARCHAR(100),nullzero"`
-	OrganizationID pulid.ID             `json:"organizationId" bun:"organization_id,type:VARCHAR(100),nullzero"`
-	DocumentTypeID pulid.ID             `json:"documentTypeId" bun:"document_type_id,type:VARCHAR(100),nullzero"`
-	Standard       EDIStandard          `json:"standard"       bun:"standard,type:edi_standard_enum,notnull"`
-	TransactionSet TransactionSet       `json:"transactionSet" bun:"transaction_set,type:edi_transaction_set_enum,notnull"`
-	Direction      DocumentDirection    `json:"direction"      bun:"direction,type:edi_document_direction_enum,notnull"`
-	X12Version     string               `json:"x12Version"     bun:"x12_version,type:VARCHAR(20),notnull"`
-	SchemaVersion  int64                `json:"schemaVersion"  bun:"schema_version,type:BIGINT,notnull"`
-	Name           string               `json:"name"           bun:"name,type:VARCHAR(200),notnull"`
-	Description    string               `json:"description"    bun:"description,type:TEXT,nullzero"`
-	Status         PartnerSettingStatus `json:"status"         bun:"status,type:edi_partner_setting_status_enum,notnull"`
-	CreatedAt      int64                `json:"createdAt"      bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
-	UpdatedAt      int64                `json:"updatedAt"      bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
+	ID             pulid.ID             `json:"id"             keel:"id,pk,autoid:edips_"`
+	BusinessUnitID pulid.ID             `json:"businessUnitId" keel:"business_unit_id,nullzero"`
+	OrganizationID pulid.ID             `json:"organizationId" keel:"organization_id,nullzero"`
+	DocumentTypeID pulid.ID             `json:"documentTypeId" keel:"document_type_id,nullzero"`
+	Standard       EDIStandard          `json:"standard"       keel:"standard"`
+	TransactionSet TransactionSet       `json:"transactionSet" keel:"transaction_set"`
+	Direction      DocumentDirection    `json:"direction"      keel:"direction"`
+	X12Version     string               `json:"x12Version"     keel:"x12_version"`
+	SchemaVersion  int64                `json:"schemaVersion"  keel:"schema_version"`
+	Name           string               `json:"name"           keel:"name"`
+	Description    string               `json:"description"    keel:"description,nullzero"`
+	Status         PartnerSettingStatus `json:"status"         keel:"status"`
+	CreatedAt      int64                `json:"createdAt"      keel:"created_at,autocreate"`
+	UpdatedAt      int64                `json:"updatedAt"      keel:"updated_at,autoupdate"`
 
-	Fields []*EDIPartnerSettingField `json:"fields,omitempty" bun:"rel:has-many,join:id=schema_id"`
-}
-
-func (s *EDIPartnerSettingSchema) BeforeAppendModel(_ context.Context, query bun.Query) error {
-	now := timeutils.NowUnix()
-	switch query.(type) {
-	case *bun.InsertQuery:
-		if s.ID.IsNil() {
-			s.ID = pulid.MustNew("edips_")
-		}
-		s.CreatedAt = now
-	case *bun.UpdateQuery:
-		s.UpdatedAt = now
-	}
-	return nil
+	Fields []*EDIPartnerSettingField `json:"fields,omitempty" keel:"many:schema_id"`
 }
 
 type EDIPartnerSettingField struct {
-	bun.BaseModel `json:"-" bun:"table:edi_partner_setting_fields,alias:epsf"`
+	keel.Table `keel:"edi_partner_setting_fields"`
 
-	ID                pulid.ID               `json:"id"                bun:"id,pk,type:VARCHAR(100),notnull"`
-	SchemaID          pulid.ID               `json:"schemaId"          bun:"schema_id,type:VARCHAR(100),notnull"`
-	Path              string                 `json:"path"              bun:"path,type:TEXT,notnull"`
-	Label             string                 `json:"label"             bun:"label,type:VARCHAR(200),notnull"`
-	Description       string                 `json:"description"       bun:"description,type:TEXT,nullzero"`
-	DataType          PartnerSettingDataType `json:"dataType"          bun:"data_type,type:edi_partner_setting_data_type_enum,notnull"`
-	Required          bool                   `json:"required"          bun:"required,type:BOOLEAN,notnull"`
-	Nullable          bool                   `json:"nullable"          bun:"nullable,type:BOOLEAN,notnull"`
-	DefaultValue      any                    `json:"defaultValue"      bun:"default_value,type:JSONB,nullzero"`
-	AllowedValues     []string               `json:"allowedValues"     bun:"allowed_values,type:JSONB,notnull,default:'[]'"`
-	Secret            bool                   `json:"secret"            bun:"secret,type:BOOLEAN,notnull"`
-	GroupKey          string                 `json:"groupKey"          bun:"group_key,type:VARCHAR(100),nullzero"`
-	DisplayOrder      int                    `json:"displayOrder"      bun:"display_order,type:INTEGER,notnull"`
-	ValidationPattern string                 `json:"validationPattern" bun:"validation_pattern,type:TEXT,nullzero"`
-	MinLength         int                    `json:"minLength"         bun:"min_length,type:INTEGER,notnull"`
-	MaxLength         int                    `json:"maxLength"         bun:"max_length,type:INTEGER,notnull"`
-	UsageNotes        string                 `json:"usageNotes"        bun:"usage_notes,type:TEXT,nullzero"`
-	Status            PartnerSettingStatus   `json:"status"            bun:"status,type:edi_partner_setting_status_enum,notnull"`
-	CreatedAt         int64                  `json:"createdAt"         bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
-	UpdatedAt         int64                  `json:"updatedAt"         bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
+	ID                pulid.ID               `json:"id"                keel:"id,pk,autoid:edipsf_"`
+	SchemaID          pulid.ID               `json:"schemaId"          keel:"schema_id"`
+	Path              string                 `json:"path"              keel:"path"`
+	Label             string                 `json:"label"             keel:"label"`
+	Description       string                 `json:"description"       keel:"description,nullzero"`
+	DataType          PartnerSettingDataType `json:"dataType"          keel:"data_type"`
+	Required          bool                   `json:"required"          keel:"required"`
+	Nullable          bool                   `json:"nullable"          keel:"nullable"`
+	DefaultValue      any                    `json:"defaultValue"      keel:"default_value,jsonb,nullzero"`
+	AllowedValues     []string               `json:"allowedValues"     keel:"allowed_values,jsonb"`
+	Secret            bool                   `json:"secret"            keel:"secret"`
+	GroupKey          string                 `json:"groupKey"          keel:"group_key,nullzero"`
+	DisplayOrder      int                    `json:"displayOrder"      keel:"display_order"`
+	ValidationPattern string                 `json:"validationPattern" keel:"validation_pattern,nullzero"`
+	MinLength         int                    `json:"minLength"         keel:"min_length"`
+	MaxLength         int                    `json:"maxLength"         keel:"max_length"`
+	UsageNotes        string                 `json:"usageNotes"        keel:"usage_notes,nullzero"`
+	Status            PartnerSettingStatus   `json:"status"            keel:"status"`
+	CreatedAt         int64                  `json:"createdAt"         keel:"created_at,autocreate"`
+	UpdatedAt         int64                  `json:"updatedAt"         keel:"updated_at,autoupdate"`
 
-	Schema *EDIPartnerSettingSchema `json:"schema,omitempty" bun:"rel:belongs-to,join:schema_id=id"`
-}
-
-func (f *EDIPartnerSettingField) BeforeAppendModel(_ context.Context, query bun.Query) error {
-	now := timeutils.NowUnix()
-	switch query.(type) {
-	case *bun.InsertQuery:
-		if f.ID.IsNil() {
-			f.ID = pulid.MustNew("edipsf_")
-		}
-		f.CreatedAt = now
-	case *bun.UpdateQuery:
-		f.UpdatedAt = now
-	}
-	return nil
+	Schema *EDIPartnerSettingSchema `json:"schema,omitempty" keel:"belongs:schema_id"`
 }
 
 func (s *EDIPartnerSettingSchema) Validate(multiErr *errortypes.MultiError) {

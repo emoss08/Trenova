@@ -6,8 +6,6 @@ import (
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
-	"github.com/uptrace/bun"
 )
 
 func validWorkerProfile() *WorkerProfile {
@@ -45,46 +43,6 @@ func TestWorkerProfile_GetTableName(t *testing.T) {
 
 	wp := &WorkerProfile{}
 	assert.Equal(t, "worker_profiles", wp.GetTableName())
-}
-
-func TestWorkerProfile_BeforeAppendModel(t *testing.T) {
-	t.Parallel()
-
-	t.Run("insert sets ID and CreatedAt", func(t *testing.T) {
-		t.Parallel()
-
-		wp := &WorkerProfile{}
-		require.True(t, wp.ID.IsNil())
-
-		err := wp.BeforeAppendModel(t.Context(), (*bun.InsertQuery)(nil))
-		require.NoError(t, err)
-
-		assert.False(t, wp.ID.IsNil())
-		assert.NotZero(t, wp.CreatedAt)
-	})
-
-	t.Run("insert does not overwrite existing ID", func(t *testing.T) {
-		t.Parallel()
-
-		existingID := pulid.MustNew("wrkp_")
-		wp := &WorkerProfile{ID: existingID}
-
-		err := wp.BeforeAppendModel(t.Context(), (*bun.InsertQuery)(nil))
-		require.NoError(t, err)
-
-		assert.Equal(t, existingID, wp.ID)
-	})
-
-	t.Run("update sets UpdatedAt", func(t *testing.T) {
-		t.Parallel()
-
-		wp := &WorkerProfile{}
-
-		err := wp.BeforeAppendModel(t.Context(), (*bun.UpdateQuery)(nil))
-		require.NoError(t, err)
-
-		assert.NotZero(t, wp.UpdatedAt)
-	})
 }
 
 func TestWorkerProfile_Validate(t *testing.T) {
@@ -209,46 +167,6 @@ func TestWorkerPTO_GetTableName(t *testing.T) {
 
 	wpto := &WorkerPTO{}
 	assert.Equal(t, "worker_pto", wpto.GetTableName())
-}
-
-func TestWorkerPTO_BeforeAppendModel(t *testing.T) {
-	t.Parallel()
-
-	t.Run("insert sets ID and CreatedAt", func(t *testing.T) {
-		t.Parallel()
-
-		wpto := &WorkerPTO{}
-		require.True(t, wpto.ID.IsNil())
-
-		err := wpto.BeforeAppendModel(t.Context(), (*bun.InsertQuery)(nil))
-		require.NoError(t, err)
-
-		assert.False(t, wpto.ID.IsNil())
-		assert.NotZero(t, wpto.CreatedAt)
-	})
-
-	t.Run("insert does not overwrite existing ID", func(t *testing.T) {
-		t.Parallel()
-
-		existingID := pulid.MustNew("wrkpto_")
-		wpto := &WorkerPTO{ID: existingID}
-
-		err := wpto.BeforeAppendModel(t.Context(), (*bun.InsertQuery)(nil))
-		require.NoError(t, err)
-
-		assert.Equal(t, existingID, wpto.ID)
-	})
-
-	t.Run("update sets UpdatedAt", func(t *testing.T) {
-		t.Parallel()
-
-		wpto := &WorkerPTO{}
-
-		err := wpto.BeforeAppendModel(t.Context(), (*bun.UpdateQuery)(nil))
-		require.NoError(t, err)
-
-		assert.NotZero(t, wpto.UpdatedAt)
-	})
 }
 
 func TestWorkerPTO_Validate(t *testing.T) {

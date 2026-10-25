@@ -33,6 +33,7 @@ func newSearchFixture(t *testing.T) (context.Context, searchFixture) {
 	t.Cleanup(cleanup)
 
 	data := seedtest.SeedFullTestData(t, ctx, db)
+	ctx = data.Ctx(ctx)
 
 	return ctx, searchFixture{
 		repo:   New(Params{DB: postgres.NewTestConnection(db), Logger: zap.NewNop()}),

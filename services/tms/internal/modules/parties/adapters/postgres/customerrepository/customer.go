@@ -3,89 +3,78 @@ package customerrepository
 import (
 	"context"
 
-	"github.com/emoss08/trenova/pkg/buncolgen/customercol"
-
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
-	"github.com/emoss08/trenova/internal/infrastructure/postgres/m2msync"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/quotatx"
 	"github.com/emoss08/trenova/internal/modules/identity/app/quotaservice"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/platformplanports"
 	"github.com/emoss08/trenova/internal/modules/kernel/domain/platformcatalog"
-	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/customer"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/customer/customerdb"
 	"github.com/emoss08/trenova/internal/modules/parties/ports/customerports"
 	"github.com/emoss08/trenova/pkg/dberror"
-	"github.com/emoss08/trenova/pkg/dbhelper"
 	"github.com/emoss08/trenova/pkg/domaintypes"
+	"github.com/emoss08/trenova/pkg/listquery"
 	"github.com/emoss08/trenova/pkg/pagination"
-	"github.com/emoss08/trenova/pkg/querybuilder"
-	"github.com/uptrace/bun"
+	"github.com/emoss08/trenova/shared/pulid"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
+)
+
+var (
+	customerErrors = dberror.Mapping{
+		Entity: "Customer",
+		Unique: []dberror.Constraint{
+			{
+				Name:    "idx_customers_code",
+				Field:   "code",
+				Message: "Customer with this code already exists in your organization",
+			},
+		},
+	}
+	billingProfileErrors = dberror.Mapping{Entity: "Customer billing profile"}
+	emailProfileErrors   = dberror.Mapping{Entity: "Customer email profile"}
 )
 
 type Params struct {
 	fx.In
 
-	DB      *postgres.Connection
-	Logger  *zap.Logger
-	M2MSync *m2msync.Syncer
-	Quota   platformplanports.QuotaGuard `optional:"true"`
+	DB     *postgres.Connection
+	Logger *zap.Logger
+	Quota  platformplanports.QuotaGuard `optional:"true"`
 }
 
 type repository struct {
-	db      *postgres.Connection
-	l       *zap.Logger
-	m2mSync *m2msync.Syncer
-	quota   platformplanports.QuotaGuard
+	db    *postgres.Connection
+	l     *zap.Logger
+	quota platformplanports.QuotaGuard
 }
 
 func New(p Params) customerports.CustomerRepository {
 	return &repository{
-		db:      p.DB,
-		l:       p.Logger.Named("postgres.customer-repository"),
-		m2mSync: p.M2MSync,
-		quota:   quotaservice.OrUnlimited(p.Quota),
+		db:    p.DB,
+		l:     p.Logger.Named("postgres.customer-repository"),
+		quota: quotaservice.OrUnlimited(p.Quota),
 	}
 }
 
-func (r *repository) addOptions(
-	q *bun.SelectQuery,
-	opts customerports.CustomerFilterOptions,
-) *bun.SelectQuery {
+func customerLoads(opts customerports.CustomerFilterOptions) []keel.Loader {
+	c := customerdb.Customers
+	bp := c.BillingProfile()
+
+	loads := make([]keel.Loader, 0, 3)
 	if opts.IncludeState {
-		q = q.Relation("State")
+		loads = append(loads, c.State())
 	}
-
 	if opts.IncludeBillingProfile {
-		q = q.Relation("BillingProfile")
-		q = q.Relation("BillingProfile.DocumentTypes")
+		loads = append(loads, bp.Load(bp.DocumentTypes()))
 	}
-
 	if opts.IncludeEmailProfile {
-		q = q.Relation("EmailProfile")
+		loads = append(loads, c.EmailProfile())
 	}
 
-	return q
-}
-
-func (r *repository) filterQuery(
-	q *bun.SelectQuery,
-	req *customerports.ListCustomerRequest,
-) *bun.SelectQuery {
-	q = querybuilder.ApplyFilters(
-		q,
-		"cus",
-		req.Filter,
-		(*customer.Customer)(nil),
-	)
-
-	q = q.Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-		return r.addOptions(sq, req.CustomerFilterOptions)
-	})
-
-	return q.Limit(int64(req.Filter.Pagination.SafeLimit())).
-		Offset(int64(req.Filter.Pagination.SafeOffset()))
+	return loads
 }
 
 func (r *repository) List(
@@ -96,118 +85,52 @@ func (r *repository) List(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*pagination.ListResult[*customer.Customer], error) {
-			log := r.l.With(
-				zap.String("operation", "List"),
-				zap.Any("request", req),
+			c := customerdb.Customers
+			result, err := listquery.List(
+				ctx,
+				r.db.Keel(ctx),
+				c.Query(),
+				&listquery.Request[customer.Customer]{
+					Filter: req.Filter,
+					Shape: func(q *keel.Query[customer.Customer]) *keel.Query[customer.Customer] {
+						return q.Load(customerLoads(req.CustomerFilterOptions)...)
+					},
+				},
 			)
-
-			entities := make([]*customer.Customer, 0, req.Filter.Pagination.SafeLimit())
-			total, err := r.db.DBForContext(ctx).
-				NewSelect().
-				Model(&entities).
-				Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-					return r.filterQuery(sq, req)
-				}).ScanAndCount(ctx)
 			if err != nil {
-				log.Error("failed to scan and count customers", zap.Error(err))
+				r.l.Error("failed to list customers", zap.Error(err))
 				return nil, err
 			}
 
-			return &pagination.ListResult[*customer.Customer]{
-				Items: entities,
-				Total: int(total),
-			}, nil
+			return result, nil
 		},
 	)
-}
-
-func (r *repository) applyCursorPageFilters(
-	q *bun.SelectQuery,
-	req *customerports.ListCustomerConnectionRequest,
-) (*bun.SelectQuery, error) {
-	return querybuilder.ApplyCursorFilters(
-		q,
-		customercol.CustomerTable.Alias,
-		req.Filter,
-		req.Cursor,
-		(*customer.Customer)(nil),
-	)
-}
-
-func (r *repository) applyTotalCountFilters(
-	q *bun.SelectQuery,
-	req *customerports.ListCustomerConnectionRequest,
-) *bun.SelectQuery {
-	return querybuilder.ApplyFiltersWithoutSort(
-		q,
-		customercol.CustomerTable.Alias,
-		req.Filter,
-		(*customer.Customer)(nil),
-	)
-}
-
-func applyCustomerColumns(q *bun.SelectQuery, columns []string) *bun.SelectQuery {
-	if len(columns) == 0 {
-		return q.ColumnExpr(customercol.CustomerTable.All())
-	}
-
-	return q.Column(columns...)
 }
 
 func (r *repository) ListConnection(
 	ctx context.Context,
 	req *customerports.ListCustomerConnectionRequest,
 ) (*pagination.CursorListResult[*customer.Customer], error) {
-	return dbtx.Write(
+	return dbtx.Read(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*pagination.CursorListResult[*customer.Customer], error) {
-			log := r.l.With(
-				zap.String("operation", "ListConnection"),
-				zap.Any("request", req),
-			)
-
-			dba := r.db.DBForContext(ctx)
-			var totalCount *int
-			if req.Cursor.IncludeTotalCount {
-				total, err := dba.
-					NewSelect().
-					Model((*customer.Customer)(nil)).
-					Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-						return r.applyTotalCountFilters(sq, req)
-					}).
-					Count(ctx)
-				if err != nil {
-					log.Error("failed to count customers", zap.Error(err))
-					return nil, err
-				}
-				totalCount = new(int(total))
-			}
-
-			result, err := dbhelper.CursorList(
+			c := customerdb.Customers
+			result, err := listquery.Connection(
 				ctx,
-				dbhelper.CursorListParams[*customer.Customer]{
-					Filter:     req.Filter,
-					Cursor:     req.Cursor,
-					TotalCount: totalCount,
-					Query: func(entities *[]*customer.Customer) *bun.SelectQuery {
-						return dba.
-							NewSelect().
-							Model(entities).
-							Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-								return applyCustomerColumns(sq, req.CustomerColumns)
-							}).
-							Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-								return r.addOptions(sq, req.CustomerFilterOptions)
-							})
-					},
-					Apply: func(sq *bun.SelectQuery) (*bun.SelectQuery, error) {
-						return r.applyCursorPageFilters(sq, req)
+				r.db.Keel(ctx),
+				c.Query(),
+				&listquery.Request[customer.Customer]{
+					Filter:  req.Filter,
+					Cursor:  req.Cursor,
+					Columns: req.CustomerColumns,
+					Shape: func(q *keel.Query[customer.Customer]) *keel.Query[customer.Customer] {
+						return q.Load(customerLoads(req.CustomerFilterOptions)...)
 					},
 				},
 			)
 			if err != nil {
-				log.Error("failed to scan customers", zap.Error(err))
+				r.l.Error("failed to list customer connection", zap.Error(err))
 				return nil, err
 			}
 
@@ -221,28 +144,16 @@ func (r *repository) GetByID(
 	req customerports.GetCustomerByIDRequest,
 ) (*customer.Customer, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*customer.Customer, error) {
-		log := r.l.With(
-			zap.String("operation", "GetByID"),
-			zap.String("id", req.ID.String()),
-		)
+		c := customerdb.Customers
+		opts := req.CustomerFilterOptions
+		opts.IncludeState = true
 
-		entity := new(customer.Customer)
-		err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(entity).
-			Relation("State").
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return sq.Where("cus.id = ?", req.ID).
-					Where("cus.organization_id = ?", req.TenantInfo.OrgID).
-					Where("cus.business_unit_id = ?", req.TenantInfo.BuID)
-			}).
-			Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return r.addOptions(sq, req.CustomerFilterOptions)
-			}).
-			Scan(ctx)
+		entity, err := c.Where(c.ID.Eq(req.ID)).
+			Load(customerLoads(opts)...).
+			One(ctx, r.db.Keel(ctx))
 		if err != nil {
-			log.Error("failed to get customer", zap.Error(err))
-			return nil, dberror.HandleNotFoundError(err, "Customer")
+			r.l.Error("failed to get customer", zap.String("id", req.ID.String()), zap.Error(err))
+			return nil, customerErrors.Map(err, req.ID.String())
 		}
 
 		return entity, nil
@@ -257,24 +168,17 @@ func (r *repository) GetBillingProfile(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*customer.CustomerBillingProfile, error) {
-			log := r.l.With(
-				zap.String("operation", "getBillingProfile"),
-				zap.String("customerID", req.CustomerID.String()),
-			)
-
-			entity := new(customer.CustomerBillingProfile)
-			err := r.db.DBForContext(ctx).
-				NewSelect().
-				Model(entity).
-				WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-					return customercol.CustomerBillingProfileScopeTenant(sq, req.TenantInfo).
-						Where(customercol.CustomerBillingProfileColumns.CustomerID.Eq(), req.CustomerID)
-				}).
-				Relation("DocumentTypes").
-				Scan(ctx)
+			cbp := customerdb.CustomerBillingProfiles
+			entity, err := cbp.Where(cbp.CustomerID.Eq(req.CustomerID)).
+				Load(cbp.DocumentTypes()).
+				One(ctx, r.db.Keel(ctx))
 			if err != nil {
-				log.Error("failed to get billing profile", zap.Error(err))
-				return nil, dberror.HandleNotFoundError(err, "Customer billing profile")
+				r.l.Error(
+					"failed to get billing profile",
+					zap.String("customerID", req.CustomerID.String()),
+					zap.Error(err),
+				)
+				return nil, billingProfileErrors.Map(err, req.CustomerID.String())
 			}
 
 			return entity, nil
@@ -287,26 +191,18 @@ func (r *repository) GetByIDs(
 	req customerports.GetCustomersByIDsRequest,
 ) ([]*customer.Customer, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*customer.Customer, error) {
-		log := r.l.With(
-			zap.String("operation", "GetByIDs"),
-			zap.Any("request", req),
-		)
+		if len(req.CustomerIDs) == 0 {
+			return []*customer.Customer{}, nil
+		}
 
-		entities := make([]*customer.Customer, 0, len(req.CustomerIDs))
-		err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(&entities).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return customercol.CustomerScopeTenant(sq, req.TenantInfo).
-					Where(customercol.CustomerColumns.ID.In(), bun.List(req.CustomerIDs))
-			}).
-			Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return r.addOptions(sq, req.CustomerFilterOptions)
-			}).
-			Scan(ctx)
+		c := customerdb.Customers
+		entities, err := c.Where(c.ID.In(req.CustomerIDs...)).
+			Load(customerLoads(req.CustomerFilterOptions)...).
+			Limit(len(req.CustomerIDs)).
+			List(ctx, r.db.Keel(ctx))
 		if err != nil {
-			log.Error("failed to get customers", zap.Error(err))
-			return nil, dberror.HandleNotFoundError(err, "Customer")
+			r.l.Error("failed to get customers", zap.Error(err))
+			return nil, err
 		}
 
 		return entities, nil
@@ -317,30 +213,21 @@ func (r *repository) SelectOptions(
 	ctx context.Context,
 	req *customerports.CustomerSelectOptionsRequest,
 ) (*pagination.ListResult[*customer.Customer], error) {
-	return dbtx.Write(
+	return dbtx.Read(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*pagination.ListResult[*customer.Customer], error) {
-			return dbhelper.SelectOptions[*customer.Customer](
+			c := customerdb.Customers
+			q := c.Pick(c.ID, c.Code, c.Name).
+				Where(c.Status.Eq(domaintypes.StatusActive))
+
+			return listquery.SelectOptions(
 				ctx,
-				r.db.DBForContext(ctx),
+				r.db.Keel(ctx),
+				q,
 				req.SelectQueryRequest,
-				&dbhelper.SelectOptionsConfig{
-					Columns: []string{
-						"id",
-						"code",
-						"name",
-					},
-					OrgColumn: "cus.organization_id",
-					BuColumn:  "cus.business_unit_id",
-					QueryModifier: func(q *bun.SelectQuery) *bun.SelectQuery {
-						return q.Where("cus.status = ?", domaintypes.StatusActive)
-					},
-					EntityName: "Customer",
-					SearchColumns: []string{
-						"cus.code",
-						"cus.name",
-					},
+				func(s string) keel.Pred {
+					return keel.Or(c.Code.ContainsFold(s), c.Name.ContainsFold(s))
 				},
 			)
 		},
@@ -362,32 +249,11 @@ func (r *repository) Create(
 	entity *customer.Customer,
 ) (*customer.Customer, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*customer.Customer, error) {
-		log := r.l.With(
-			zap.String("operation", "Create"),
-			zap.String("code", entity.Code),
-		)
-
-		err := r.db.WithTx(ctx, kernelports.TxOptions{}, func(c context.Context, tx bun.Tx) error {
-			if err := quotaservice.EnforceAll(c, r.quota, platformplanports.QuotaRequest{
-				TenantInfo: pagination.TenantInfo{
-					OrgID: entity.OrganizationID,
-					BuID:  entity.BusinessUnitID,
-				},
-				Meter:    platformcatalog.MeterCustomersTotal,
-				Quantity: 1,
-			}); err != nil {
-				return err
-			}
-
+		err := quotatx.Run(ctx, r.db, r.quota, func(c context.Context) error {
 			entity = r.geocodeIfApplicable(entity)
 
-			if _, err := r.db.DBForContext(c).
-				NewInsert().
-				Model(entity).
-				Returning("*").
-				Exec(c); err != nil {
-				log.Error("failed to create customer", zap.Error(err))
-				return err
+			if err := customerdb.Customers.Create(c, r.db.Keel(c), entity); err != nil {
+				return customerErrors.Map(err, entity.ID.String())
 			}
 
 			if !entity.HasBillingProfile() {
@@ -398,18 +264,21 @@ func (r *repository) Create(
 				)
 			}
 
-			if err := r.saveBillingProfile(c, tx, entity); err != nil {
+			if err := r.saveBillingProfile(c, entity); err != nil {
 				return err
 			}
 
-			if err := r.saveEmailProfile(c, tx, entity); err != nil {
-				return err
-			}
-
-			return nil
+			return r.saveEmailProfile(c, entity)
+		}, platformplanports.QuotaRequest{
+			TenantInfo: pagination.TenantInfo{
+				OrgID: entity.OrganizationID,
+				BuID:  entity.BusinessUnitID,
+			},
+			Meter:    platformcatalog.MeterCustomersTotal,
+			Quantity: 1,
 		})
 		if err != nil {
-			log.Error("failed to create customer", zap.Error(err))
+			r.l.Error("failed to create customer", zap.String("code", entity.Code), zap.Error(err))
 			return nil, err
 		}
 
@@ -417,228 +286,28 @@ func (r *repository) Create(
 	})
 }
 
-func (r *repository) syncBillingProfileDocumentTypes(
-	ctx context.Context,
-	tx bun.IDB,
-	bp *customer.CustomerBillingProfile,
-) error {
-	log := r.l.With(
-		zap.String("operation", "syncBillingProfileDocumentTypes"),
-		zap.String("billingProfileID", bp.GetID()),
-		zap.Int("documentTypeCount", len(bp.DocumentTypes)),
-	)
-
-	config := m2msync.Config{
-		Table:       "customer_billing_profile_document_types",
-		SourceField: "billing_profile_id",
-		TargetField: "document_type_id",
-		AdditionalFields: map[string]any{
-			"organization_id":  bp.OrganizationID,
-			"business_unit_id": bp.BusinessUnitID,
-		},
-	}
-
-	if err := r.m2mSync.SyncEntities(ctx, tx, config, bp.ID, bp.DocumentTypes); err != nil {
-		log.Error("failed to sync billing profile document types", zap.Error(err))
-		return err
-	}
-
-	log.Debug("successfully synced billing profile document types")
-	return nil
-}
-
-func (r *repository) saveBillingProfile(
-	ctx context.Context,
-	tx bun.IDB,
-	cus *customer.Customer,
-) error {
-	log := r.l.With(
-		zap.String("operation", "saveBillingProfile"),
-		zap.String("customerID", cus.ID.String()),
-	)
-
-	if !cus.HasBillingProfile() {
-		return nil
-	}
-
-	billingProfile := cus.BillingProfile
-	billingProfile.CustomerID = cus.ID
-	billingProfile.OrganizationID = cus.OrganizationID
-	billingProfile.BusinessUnitID = cus.BusinessUnitID
-
-	cbp := customercol.CustomerBillingProfileColumns
-
-	// credit_balance and credit_reviewed_at are the credit review's, not the
-	// form's: the balance is the customer's open receivables, recomputed as its
-	// ledger moves. credit_hold_automatic stays with the review unless the
-	// status itself changes here, at which point the status is a person's.
-	//
-	// Every column the profile owns is listed below except last_billed_period_end,
-	// and that omission is deliberate: the billing watermark is advanced only by
-	// AdvanceBilledPeriod inside the commit transaction. Taking it from the
-	// incoming row would let an ordinary customer edit drag it backwards and
-	// re-open a period whose invoices already exist.
-	if _, err := tx.NewInsert().
-		Model(billingProfile).
-		On("CONFLICT (customer_id, organization_id, business_unit_id) DO UPDATE").
-		Set(cbp.InvoiceDelivery.SetExcluded()).
-		Set(cbp.BillingCycle.SetExcluded()).
-		Set(cbp.BillingCycleAnchorDay.SetExcluded()).
-		Set(cbp.BillingCycleTimezone.SetExcluded()).
-		Set(cbp.PaymentTerm.SetExcluded()).
-		Set(cbp.HasBillingControlOverrides.SetExcluded()).
-		Set(cbp.CreditLimit.SetExcluded()).
-		Set(cbp.CreditHoldAutomatic.SetExpr(
-			"CASE WHEN " + cbp.CreditStatus.Qualified() + " IS DISTINCT FROM EXCLUDED." +
-				cbp.CreditStatus.Bare() + " THEN FALSE ELSE " + cbp.CreditHoldAutomatic.Qualified() + " END",
-		)).
-		Set(cbp.CreditStatus.SetExcluded()).
-		Set(cbp.EnforceCreditLimit.SetExcluded()).
-		Set(cbp.AutoCreditHold.SetExcluded()).
-		Set(cbp.CreditHoldReason.SetExcluded()).
-		Set(cbp.AutoSendInvoiceOnGeneration.SetExcluded()).
-		Set(cbp.SendPaymentReminders.SetExcluded()).
-		Set(cbp.SendStatements.SetExcluded()).
-		Set(cbp.FactoringCompanyID.SetExcluded()).
-		Set(cbp.EmailInvoiceEnabled.SetExcluded()).
-		Set(cbp.EDIInvoiceEnabled.SetExcluded()).
-		Set(cbp.SplitBy.SetExcluded()).
-		Set(cbp.SectionBy.SetExcluded()).
-		Set(cbp.InvoiceDetail.SetExcluded()).
-		Set(cbp.MinConsolidatedAmount.SetExcluded()).
-		Set(cbp.MinConsolidatedAmountMinor.SetExcluded()).
-		Set(cbp.MaxShipmentsPerInvoice.SetExcluded()).
-		Set(cbp.InvoiceNumberFormat.SetExcluded()).
-		Set(cbp.CustomerInvoicePrefix.SetExcluded()).
-		Set(cbp.InvoiceCopies.SetExcluded()).
-		Set(cbp.RevenueAccountID.SetExcluded()).
-		Set(cbp.ARAccountID.SetExcluded()).
-		Set(cbp.ApplyLateCharges.SetExcluded()).
-		Set(cbp.LateChargeRate.SetExcluded()).
-		Set(cbp.GracePeriodDays.SetExcluded()).
-		Set(cbp.TaxExempt.SetExcluded()).
-		Set(cbp.TaxExemptNumber.SetExcluded()).
-		Set(cbp.EnforceCustomerBillingReq.SetExcluded()).
-		Set(cbp.ValidateCustomerRates.SetExcluded()).
-		Set(cbp.AutoTransfer.SetExcluded()).
-		Set(cbp.AutoMarkReadyToBill.SetExcluded()).
-		Set(cbp.AutoApprove.SetExcluded()).
-		Set(cbp.AutoBill.SetExcluded()).
-		Set(cbp.CountLateOnlyOnAppointmentStops.SetExcluded()).
-		Set(cbp.AutoApplyAccessorials.SetExcluded()).
-		Set(cbp.BillingCurrency.SetExcluded()).
-		Set(cbp.RequirePONumber.SetExcluded()).
-		Set(cbp.RequireBOLNumber.SetExcluded()).
-		Set(cbp.RequireDeliveryNumber.SetExcluded()).
-		Set(cbp.DefaultBillerID.SetExcluded()).
-		Set(cbp.BillingNotes.SetExcluded()).
-		Set(cbp.FuelSurchargeMode.SetExcluded()).
-		Set(cbp.FuelSurchargeProgramID.SetExcluded()).
-		Set(cbp.Version.SetExpr("cbp.version + 1")).
-		Set(cbp.UpdatedAt.SetExcluded()).
-		Returning("*").
-		Exec(ctx); err != nil {
-		log.Error("failed to save billing profile", zap.Error(err))
-		return err
-	}
-
-	if err := r.syncBillingProfileDocumentTypes(ctx, tx, billingProfile); err != nil {
-		return err
-	}
-
-	return nil
-}
-
-func (r *repository) saveEmailProfile(
-	ctx context.Context,
-	tx bun.IDB,
-	cus *customer.Customer,
-) error {
-	log := r.l.With(
-		zap.String("operation", "saveEmailProfile"),
-		zap.String("customerID", cus.ID.String()),
-	)
-
-	if !cus.HasEmailProfile() {
-		return nil
-	}
-
-	emailProfile := cus.EmailProfile
-	emailProfile.CustomerID = cus.ID
-	emailProfile.OrganizationID = cus.OrganizationID
-	emailProfile.BusinessUnitID = cus.BusinessUnitID
-
-	if _, err := tx.NewInsert().
-		Model(emailProfile).
-		On("CONFLICT (customer_id, organization_id, business_unit_id) DO UPDATE").
-		Set("subject = EXCLUDED.subject").
-		Set("comment = EXCLUDED.comment").
-		Set("to_recipients = EXCLUDED.to_recipients").
-		Set("cc_recipients = EXCLUDED.cc_recipients").
-		Set("bcc_recipients = EXCLUDED.bcc_recipients").
-		Set("attachment_name = EXCLUDED.attachment_name").
-		Set("read_receipt = EXCLUDED.read_receipt").
-		Set("include_shipment_detail = EXCLUDED.include_shipment_detail").
-		Set("version = cem.version + 1").
-		Set("updated_at = EXCLUDED.updated_at").
-		Returning("*").
-		Exec(ctx); err != nil {
-		log.Error("failed to save email profile", zap.Error(err))
-		return err
-	}
-
-	return nil
-}
-
 func (r *repository) Update(
 	ctx context.Context,
 	entity *customer.Customer,
 ) (*customer.Customer, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*customer.Customer, error) {
-		log := r.l.With(
-			zap.String("operation", "Update"),
-			zap.String("id", entity.ID.String()),
-		)
+		entity = r.geocodeIfApplicable(entity)
 
-		err := r.db.WithTx(ctx, kernelports.TxOptions{}, func(c context.Context, tx bun.Tx) error {
-			ov := entity.Version
-			entity.Version++
-
-			entity = r.geocodeIfApplicable(entity)
-
-			results, err := r.db.DBForContext(c).NewUpdate().
-				Model(entity).
-				WherePK().
-				Where("version = ?", ov).
-				Returning("*").
-				Exec(c)
-			if err != nil {
-				log.Error("failed to update customer", zap.Error(err))
-				return err
-			}
-
-			if err = dberror.CheckRowsAffected(
-				results,
-				"Customer",
-				entity.ID.String(),
-			); err != nil {
-				return err
-			}
-
-			if err = r.saveBillingProfile(c, tx, entity); err != nil {
-				return err
-			}
-
-			if err = r.saveEmailProfile(c, tx, entity); err != nil {
-				return err
-			}
-
-			return nil
-		})
+		err := customerdb.Customers.Save(ctx, r.db.Keel(ctx), entity)
+		if err == nil {
+			err = r.saveBillingProfile(ctx, entity)
+		}
+		if err == nil {
+			err = r.saveEmailProfile(ctx, entity)
+		}
 		if err != nil {
-			log.Error("failed to update customer", zap.Error(err))
+			r.l.Error(
+				"failed to update customer",
+				zap.String("id", entity.ID.String()),
+				zap.Error(err),
+			)
 			return nil, dberror.MapRetryableTransactionError(
-				err,
+				customerErrors.Map(err, entity.ID.String()),
 				"Customer is busy. Retry the request.",
 			)
 		}
@@ -652,32 +321,193 @@ func (r *repository) BulkUpdateStatus(
 	req *customerports.BulkUpdateCustomerStatusRequest,
 ) ([]*customer.Customer, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) ([]*customer.Customer, error) {
-		log := r.l.With(
-			zap.String("operation", "BulkUpdateStatus"),
-			zap.Any("request", req),
-		)
-
-		entities := make([]*customer.Customer, 0, len(req.CustomerIDs))
-		results, err := r.db.DBForContext(ctx).
-			NewUpdate().
-			Model(&entities).
-			WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-				return uq.Where("cus.organization_id = ?", req.TenantInfo.OrgID).
-					Where("cus.business_unit_id = ?", req.TenantInfo.BuID).
-					Where("cus.id IN (?)", bun.List(req.CustomerIDs))
-			}).
-			Set("status = ?", req.Status).
-			Returning("*").
-			Exec(ctx)
+		c := customerdb.Customers
+		entities, err := c.Where(c.ID.In(req.CustomerIDs...)).
+			UpdateReturning(ctx, r.db.Keel(ctx), c.Status.To(req.Status))
 		if err != nil {
-			log.Error("failed to bulk update customer status", zap.Error(err))
+			r.l.Error("failed to bulk update customer status", zap.Error(err))
 			return nil, err
 		}
 
-		if err = dberror.CheckBulkRowsAffected(results, "Customer", req.CustomerIDs); err != nil {
+		if err = dberror.CheckBulkAffected(
+			int64(len(entities)),
+			"Customer",
+			req.CustomerIDs,
+		); err != nil {
 			return nil, err
 		}
 
 		return entities, nil
 	})
+}
+
+func billingProfileFormColumns() []keel.Col {
+	cbp := customerdb.CustomerBillingProfiles
+
+	return []keel.Col{
+		cbp.InvoiceDelivery.Col,
+		cbp.BillingCycle.Col,
+		cbp.BillingCycleAnchorDay.Col,
+		cbp.BillingCycleTimezone.Col,
+		cbp.PaymentTerm.Col,
+		cbp.HasBillingControlOverrides.Col,
+		cbp.CreditLimit.Col,
+		cbp.CreditStatus.Col,
+		cbp.EnforceCreditLimit.Col,
+		cbp.AutoCreditHold.Col,
+		cbp.CreditHoldReason.Col,
+		cbp.AutoSendInvoiceOnGeneration.Col,
+		cbp.SendPaymentReminders.Col,
+		cbp.SendStatements.Col,
+		cbp.FactoringCompanyID.Col,
+		cbp.EmailInvoiceEnabled.Col,
+		cbp.EDIInvoiceEnabled.Col,
+		cbp.SplitBy.Col,
+		cbp.SectionBy.Col,
+		cbp.InvoiceDetail.Col,
+		cbp.MinConsolidatedAmount.Col,
+		cbp.MinConsolidatedAmountMinor.Col,
+		cbp.MaxShipmentsPerInvoice.Col,
+		cbp.InvoiceNumberFormat.Col,
+		cbp.CustomerInvoicePrefix.Col,
+		cbp.InvoiceCopies.Col,
+		cbp.RevenueAccountID.Col,
+		cbp.ARAccountID.Col,
+		cbp.ApplyLateCharges.Col,
+		cbp.LateChargeRate.Col,
+		cbp.GracePeriodDays.Col,
+		cbp.TaxExempt.Col,
+		cbp.TaxExemptNumber.Col,
+		cbp.EnforceCustomerBillingReq.Col,
+		cbp.ValidateCustomerRates.Col,
+		cbp.AutoTransfer.Col,
+		cbp.AutoMarkReadyToBill.Col,
+		cbp.AutoApprove.Col,
+		cbp.AutoBill.Col,
+		cbp.CountLateOnlyOnAppointmentStops.Col,
+		cbp.AutoApplyAccessorials.Col,
+		cbp.BillingCurrency.Col,
+		cbp.RequirePONumber.Col,
+		cbp.RequireBOLNumber.Col,
+		cbp.RequireDeliveryNumber.Col,
+		cbp.DefaultBillerID.Col,
+		cbp.BillingNotes.Col,
+		cbp.FuelSurchargeMode.Col,
+		cbp.FuelSurchargeProgramID.Col,
+	}
+}
+
+func billingProfileConflict() keel.Conflict {
+	cbp := customerdb.CustomerBillingProfiles
+	conflict := keel.OnConflict(cbp.CustomerID, cbp.OrganizationID, cbp.BusinessUnitID)
+	for _, col := range billingProfileFormColumns() {
+		conflict = conflict.Update(col)
+	}
+
+	return conflict.Set(cbp.CreditHoldAutomatic.ToExpr(keel.Raw(
+		"CASE WHEN ? IS DISTINCT FROM ? THEN FALSE ELSE ? END",
+		cbp.CreditStatus,
+		cbp.CreditStatus.Excluded(),
+		cbp.CreditHoldAutomatic,
+	)))
+}
+
+func (r *repository) saveBillingProfile(ctx context.Context, cus *customer.Customer) error {
+	if !cus.HasBillingProfile() {
+		return nil
+	}
+
+	profile := cus.BillingProfile
+	profile.CustomerID = cus.ID
+	profile.OrganizationID = cus.OrganizationID
+	profile.BusinessUnitID = cus.BusinessUnitID
+
+	cbp := customerdb.CustomerBillingProfiles
+	db := r.db.Keel(ctx)
+	inserted, err := cbp.Upsert(
+		ctx,
+		db,
+		[]*customer.CustomerBillingProfile{profile},
+		billingProfileConflict(),
+	)
+	if err != nil {
+		r.l.Error("failed to save billing profile", zap.Error(err))
+		return billingProfileErrors.Map(err, profile.ID.String())
+	}
+
+	if !inserted[0] {
+		stored, readErr := cbp.Where(cbp.CustomerID.Eq(cus.ID)).One(ctx, db)
+		if readErr != nil {
+			return billingProfileErrors.Map(readErr, cus.ID.String())
+		}
+		stored.DocumentTypes = profile.DocumentTypes
+		*profile = *stored
+	}
+
+	if err = keel.SetLinks(
+		ctx,
+		db,
+		cbp.DocumentTypes(),
+		profile.ID,
+		documentTypeIDs(profile),
+	); err != nil {
+		r.l.Error("failed to sync billing profile document types", zap.Error(err))
+		return err
+	}
+
+	return nil
+}
+
+func documentTypeIDs(profile *customer.CustomerBillingProfile) []pulid.ID {
+	ids := make([]pulid.ID, 0, len(profile.DocumentTypes))
+	for _, dt := range profile.DocumentTypes {
+		if dt != nil {
+			ids = append(ids, dt.ID)
+		}
+	}
+
+	return ids
+}
+
+func (r *repository) saveEmailProfile(ctx context.Context, cus *customer.Customer) error {
+	if !cus.HasEmailProfile() {
+		return nil
+	}
+
+	profile := cus.EmailProfile
+	profile.CustomerID = cus.ID
+	profile.OrganizationID = cus.OrganizationID
+	profile.BusinessUnitID = cus.BusinessUnitID
+
+	cem := customerdb.CustomerEmailProfiles
+	db := r.db.Keel(ctx)
+	inserted, err := cem.Upsert(
+		ctx,
+		db,
+		[]*customer.CustomerEmailProfile{profile},
+		keel.OnConflict(cem.CustomerID, cem.OrganizationID, cem.BusinessUnitID).Update(
+			cem.Subject,
+			cem.Comment,
+			cem.ToRecipients,
+			cem.CCRecipients,
+			cem.BCCRecipients,
+			cem.AttachmentName,
+			cem.ReadReceipt,
+			cem.IncludeShipmentDetail,
+		),
+	)
+	if err != nil {
+		r.l.Error("failed to save email profile", zap.Error(err))
+		return emailProfileErrors.Map(err, profile.ID.String())
+	}
+
+	if !inserted[0] {
+		stored, readErr := cem.Where(cem.CustomerID.Eq(cus.ID)).One(ctx, db)
+		if readErr != nil {
+			return emailProfileErrors.Map(readErr, cus.ID.String())
+		}
+		*profile = *stored
+	}
+
+	return nil
 }

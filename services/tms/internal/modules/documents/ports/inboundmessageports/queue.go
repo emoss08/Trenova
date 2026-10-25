@@ -34,33 +34,33 @@ func (s Sort) OrDefault() Sort {
 }
 
 type QueueState struct {
-	ID                   pulid.ID                      `bun:"id"`
-	OrganizationID       pulid.ID                      `bun:"organization_id"`
-	BusinessUnitID       pulid.ID                      `bun:"business_unit_id"`
-	MailboxID            pulid.ID                      `bun:"mailbox_id"`
-	Status               inboundmessage.Status         `bun:"status"`
-	Classification       inboundmessage.Classification `bun:"classification"`
-	ReceivedAt           int64                         `bun:"received_at"`
-	FromAddress          string                        `bun:"from_address"`
-	FromName             string                        `bun:"from_name"`
-	Subject              string                        `bun:"subject"`
-	SenderDomain         string                        `bun:"sender_domain"`
-	ThreadKey            string                        `bun:"thread_key"`
-	OwnerID              pulid.ID                      `bun:"owner_id"`
-	DueAt                int64                         `bun:"due_at"`
-	Parked               inboundmessage.Parking        `bun:"parked"`
-	SnoozedUntil         int64                         `bun:"snoozed_until"`
-	SnoozeEvent          inboundmessage.SnoozeEvent    `bun:"snooze_event"`
-	SnoozeWatchID        pulid.ID                      `bun:"snooze_watch_id"`
-	SnoozeDocumentTypeID pulid.ID                      `bun:"snooze_document_type_id"`
-	AwaitingUntil        int64                         `bun:"awaiting_until"`
-	MatchedShipmentID    pulid.ID                      `bun:"matched_shipment_id"`
-	MatchedCustomerID    pulid.ID                      `bun:"matched_customer_id"`
-	MatchedCarrierID     pulid.ID                      `bun:"matched_carrier_id"`
-	MatchReason          string                        `bun:"match_reason"`
-	FailureText          string                        `bun:"failure_text"`
-	ReviewNote           string                        `bun:"review_note"`
-	NovaRead             bool                          `bun:"nova_read"`
+	ID                   pulid.ID
+	OrganizationID       pulid.ID
+	BusinessUnitID       pulid.ID
+	MailboxID            pulid.ID
+	Status               inboundmessage.Status
+	Classification       inboundmessage.Classification
+	ReceivedAt           int64
+	FromAddress          string
+	FromName             string
+	Subject              string
+	SenderDomain         string
+	ThreadKey            string
+	OwnerID              pulid.ID
+	DueAt                int64
+	Parked               inboundmessage.Parking
+	SnoozedUntil         int64
+	SnoozeEvent          inboundmessage.SnoozeEvent
+	SnoozeWatchID        pulid.ID
+	SnoozeDocumentTypeID pulid.ID
+	AwaitingUntil        int64
+	MatchedShipmentID    pulid.ID
+	MatchedCustomerID    pulid.ID
+	MatchedCarrierID     pulid.ID
+	MatchReason          string
+	FailureText          string
+	ReviewNote           string
+	NovaRead             bool
 }
 
 func (s *QueueState) TenantInfo() pagination.TenantInfo {
@@ -265,9 +265,9 @@ type WakeByEventRequest struct {
 }
 
 type ParkedRef struct {
-	ID             pulid.ID `bun:"id"`
-	OrganizationID pulid.ID `bun:"organization_id"`
-	BusinessUnitID pulid.ID `bun:"business_unit_id"`
+	ID             pulid.ID
+	OrganizationID pulid.ID
+	BusinessUnitID pulid.ID
 }
 
 func (r ParkedRef) TenantInfo() pagination.TenantInfo {

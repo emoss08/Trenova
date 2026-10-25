@@ -3,16 +3,20 @@ package dothazmatreferencerepository
 import (
 	"context"
 
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/reference/domain/dothazmatreference"
+	"github.com/emoss08/trenova/internal/modules/reference/domain/dothazmatreference/dothazmatreferencedb"
 	"github.com/emoss08/trenova/internal/modules/reference/ports/dothazmatreferenceports"
 	"github.com/emoss08/trenova/pkg/dberror"
+	"github.com/emoss08/trenova/pkg/listquery"
 	"github.com/emoss08/trenova/pkg/pagination"
-	"github.com/uptrace/bun"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
+
+var dotHazmatReferenceErrors = dberror.Mapping{Entity: "DotHazmatReference"}
 
 type Params struct {
 	fx.In
@@ -41,20 +45,13 @@ func (r *repository) GetByID(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*dothazmatreference.DotHazmatReference, error) {
-			log := r.l.With(
-				zap.String("operation", "GetByID"),
-				zap.String("id", req.DotHazmatReferenceID.String()),
+			entity, err := dothazmatreferencedb.DotHazmatReferences.Get(
+				ctx,
+				r.db.Keel(ctx),
+				req.DotHazmatReferenceID,
 			)
-
-			entity := new(dothazmatreference.DotHazmatReference)
-			err := r.db.DBForContext(ctx).
-				NewSelect().
-				Model(entity).
-				Where("dhr.id = ?", req.DotHazmatReferenceID).
-				Scan(ctx)
 			if err != nil {
-				log.Error("failed to get dot hazmat reference", zap.Error(err))
-				return nil, dberror.HandleNotFoundError(err, "DotHazmatReference")
+				return nil, dotHazmatReferenceErrors.Map(err, req.DotHazmatReferenceID.String())
 			}
 
 			return entity, nil
@@ -70,35 +67,28 @@ func (r *repository) SelectOptions(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*pagination.ListResult[*dothazmatreference.DotHazmatReference], error) {
-			entities := make(
-				[]*dothazmatreference.DotHazmatReference,
-				0,
-				req.Pagination.SafeLimit(),
+			d := dothazmatreferencedb.DotHazmatReferences
+			q := d.Pick(
+				d.ID,
+				d.UnNumber,
+				d.ProperShippingName,
+				d.HazardClass,
+				d.SubsidiaryHazard,
+				d.PackingGroup,
+				d.SpecialProvisions,
+				d.ErgGuide,
+				d.Symbols,
 			)
 
-			q := r.db.DBForContext(ctx).
-				NewSelect().
-				Model(&entities).
-				Column("id", "un_number", "proper_shipping_name", "hazard_class", "subsidiary_hazard", "packing_group", "special_provisions", "erg_guide", "symbols").
-				Limit(int64(req.Pagination.Limit)).
-				Offset(int64(req.Pagination.Offset))
-
-			if req.Query != "" {
-				q.WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-					return sq.WhereOr("dhr.un_number LIKE ?", req.Query+"%").
-						WhereOr("LOWER(dhr.proper_shipping_name) LIKE LOWER(?)", "%"+req.Query+"%")
-				})
-			}
-
-			total, err := q.ScanAndCount(ctx)
-			if err != nil {
-				return nil, err
-			}
-
-			return &pagination.ListResult[*dothazmatreference.DotHazmatReference]{
-				Items: entities,
-				Total: int(total),
-			}, nil
+			return listquery.SelectOptions(
+				ctx,
+				r.db.Keel(ctx),
+				q,
+				req,
+				func(s string) keel.Pred {
+					return keel.Or(d.UnNumber.HasPrefix(s), d.ProperShippingName.ContainsFold(s))
+				},
+			)
 		},
 	)
 }

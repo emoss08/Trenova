@@ -3,18 +3,20 @@
 package rolerepository
 
 import (
+	"context"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/keel"
+
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission/permissiondb"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/testutil/seedtest"
 	"github.com/emoss08/trenova/pkg/errortypes"
-	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"github.com/uptrace/bun"
 	"go.uber.org/zap"
 )
 
@@ -26,47 +28,34 @@ type roleTenantFixture struct {
 
 func seedRoleTenantFixture(
 	t *testing.T,
-	db *bun.DB,
+	ctx context.Context,
+	db *keel.DB,
 	tenant *seedtest.TestData,
 ) roleTenantFixture {
 	t.Helper()
 
-	ctx := t.Context()
-	now := timeutils.NowUnix()
-
+	ctx = tenant.Ctx(ctx)
 	role := &permission.Role{
-		ID:             pulid.MustNew("rol_"),
-		BusinessUnitID: tenant.BusinessUnit.ID,
-		OrganizationID: tenant.Organization.ID,
 		Name:           "Dispatcher " + tenant.Organization.ID.String(),
 		MaxSensitivity: permission.SensitivityInternal,
-		CreatedAt:      now,
-		UpdatedAt:      now,
 	}
-	_, err := db.NewInsert().Model(role).Exec(ctx)
-	require.NoError(t, err)
+	require.NoError(t, permissiondb.Roles.Create(ctx, db, role))
 
 	rp := &permission.ResourcePermission{
-		ID:         pulid.MustNew("rp_"),
 		RoleID:     role.ID,
 		Resource:   permission.ResourceShipment.String(),
 		Operations: []permission.Operation{permission.OpRead},
 		DataScope:  permission.DataScopeOrganization,
-		CreatedAt:  now,
-		UpdatedAt:  now,
 	}
-	_, err = db.NewInsert().Model(rp).Exec(ctx)
-	require.NoError(t, err)
+	require.NoError(t, permissiondb.ResourcePermissions.Create(ctx, db, rp))
 
 	assignment := &permission.UserRoleAssignment{
-		ID:             pulid.MustNew("ura_"),
 		UserID:         tenant.User.ID,
 		OrganizationID: tenant.Organization.ID,
 		RoleID:         role.ID,
-		AssignedAt:     now,
+		AssignedAt:     timeutils.NowUnix(),
 	}
-	_, err = db.NewInsert().Model(assignment).Exec(ctx)
-	require.NoError(t, err)
+	require.NoError(t, permissiondb.UserRoleAssignments.Create(ctx, db, assignment))
 
 	return roleTenantFixture{role: role, permission: rp, assignment: assignment}
 }
@@ -77,10 +66,13 @@ func TestRoleRepository_DeletesAndUpdatesStayInsideTheTenant(t *testing.T) {
 
 	tenantA := seedtest.SeedFullTestData(t, ctx, db)
 	tenantB := seedtest.SeedAdditionalTenant(t, ctx, db, "RB")
-	fixtureA := seedRoleTenantFixture(t, db, tenantA)
-	fixtureB := seedRoleTenantFixture(t, db, tenantB)
+	fixtureA := seedRoleTenantFixture(t, ctx, db, tenantA)
+	fixtureB := seedRoleTenantFixture(t, ctx, db, tenantB)
 
 	repo := New(Params{DB: postgres.NewTestConnection(db), Logger: zap.NewNop()})
+	ctx = tenantA.Ctx(ctx)
+	ura := permissiondb.UserRoleAssignments
+	rps := permissiondb.ResourcePermissions
 
 	t.Run("an assignment cannot be deleted from another organization", func(t *testing.T) {
 		_, err := repo.DeleteAssignment(ctx, permissionports.DeleteRoleAssignmentRequest{
@@ -90,10 +82,7 @@ func TestRoleRepository_DeletesAndUpdatesStayInsideTheTenant(t *testing.T) {
 		require.Error(t, err)
 		assert.True(t, errortypes.IsNotFoundError(err))
 
-		count, err := db.NewSelect().
-			Model((*permission.UserRoleAssignment)(nil)).
-			Where("id = ?", fixtureB.assignment.ID).
-			Count(ctx)
+		count, err := ura.AllTenants().Where(ura.ID.Eq(fixtureB.assignment.ID)).Count(systemCtx(ctx), db)
 		require.NoError(t, err)
 		assert.Equal(t, int64(1), count)
 	})
@@ -106,10 +95,7 @@ func TestRoleRepository_DeletesAndUpdatesStayInsideTheTenant(t *testing.T) {
 		require.Error(t, err)
 		assert.True(t, errortypes.IsNotFoundError(err))
 
-		count, err := db.NewSelect().
-			Model((*permission.ResourcePermission)(nil)).
-			Where("id = ?", fixtureB.permission.ID).
-			Count(ctx)
+		count, err := rps.Where(rps.ID.Eq(fixtureB.permission.ID)).Count(systemCtx(ctx), db)
 		require.NoError(t, err)
 		assert.Equal(t, int64(1), count)
 	})
@@ -126,11 +112,8 @@ func TestRoleRepository_DeletesAndUpdatesStayInsideTheTenant(t *testing.T) {
 		require.Error(t, err)
 		assert.True(t, errortypes.IsNotFoundError(err))
 
-		stored := new(permission.ResourcePermission)
-		require.NoError(t, db.NewSelect().
-			Model(stored).
-			Where("id = ?", fixtureB.permission.ID).
-			Scan(ctx))
+		stored, err := rps.Get(systemCtx(ctx), db, fixtureB.permission.ID)
+		require.NoError(t, err)
 		assert.Equal(t, fixtureB.role.ID, stored.RoleID)
 		assert.Equal(t, []permission.Operation{permission.OpRead}, stored.Operations)
 	})

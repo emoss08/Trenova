@@ -8,13 +8,12 @@ import (
 	"go/format"
 	"go/parser"
 	"go/token"
+	"maps"
 	"os"
 	"path/filepath"
 	"reflect"
-	"regexp"
 	"slices"
 	"sort"
-	"strconv"
 	"strings"
 	"text/template"
 	"unicode"
@@ -33,10 +32,13 @@ const (
 const (
 	reportCatalogDTO    = "GraphQL report catalog manifest DTO"
 	reportPreviewDTO    = "GraphQL report preview DTO"
-	jsonbValueObject    = "GraphQL value object stored as JSONB without Bun projection metadata"
+	jsonbValueObject    = "GraphQL value object stored as JSONB without column projection metadata"
 	homeWidgetDTO       = "GraphQL home widget catalog DTO"
 	deskMemoryDTO       = "GraphQL Desk memory DTO built by its resolver"
 	shipmentWorkflowDTO = "GraphQL shipment workflow DTO"
+	journalDTO          = "GraphQL journal DTO without column projection metadata"
+	costingDTO          = "GraphQL costing DTO without column projection metadata"
+	telematicsFormDTO   = "GraphQL telematics form DTO without column projection metadata"
 )
 
 var nonProjectionObjects = map[string]string{
@@ -66,9 +68,10 @@ var nonProjectionObjects = map[string]string{
 	"FuelIndexLatestPrice":            "GraphQL fuel dashboard DTO",
 	"FuelProgramCurrentRate":          "GraphQL fuel dashboard DTO",
 	"GeneratedFuelTableRow":           "GraphQL fuel table generator DTO",
-	"GeofenceVertex":                  "GraphQL value object without Bun projection metadata",
+	"GeofenceVertex":                  "GraphQL value object without column projection metadata",
 	"ShipmentFreightLine":             jsonbValueObject,
 	"ShipmentRatingSkip":              jsonbValueObject,
+	"ShipmentRatingReviewApproval":    jsonbValueObject,
 	"ShipmentContractRateCharge":      "GraphQL contract rate preview DTO built by its resolver",
 	"TariffBill":                      jsonbValueObject,
 	"TariffBillLine":                  jsonbValueObject,
@@ -103,30 +106,30 @@ var nonProjectionObjects = map[string]string{
 	"ShipmentLoadingRecommendation":   shipmentWorkflowDTO,
 	"ShipmentStopDivider":             shipmentWorkflowDTO,
 	// Assembled in Go from the documents table rather than stored; the parent
-	// field is bun:"-", so there is no column to project.
-	"ShipmentCommentAttachment": "GraphQL shipment comment DTO without Bun projection metadata",
-	"JournalEntry":              "GraphQL journal DTO without Bun projection metadata",
-	"JournalEntryLine":          "GraphQL journal DTO without Bun projection metadata",
-	"JournalBatch":              "GraphQL journal DTO without Bun projection metadata",
-	"ResolvedCategoryRate":      "GraphQL costing DTO without Bun projection metadata",
-	"FuelCostResolution":        "GraphQL costing DTO without Bun projection metadata",
-	"ResolvedCostProfile":       "GraphQL costing DTO without Bun projection metadata",
-	"CostCategoryGLAccountLink": "GraphQL costing DTO without Bun projection metadata",
-	"TelematicsFormFieldValue":  "GraphQL telematics form DTO without Bun projection metadata",
-	"TelematicsFormSubmission":  "GraphQL telematics form DTO without Bun projection metadata",
-	"TelematicsFormMapping":     "GraphQL telematics form DTO without Bun projection metadata",
-	"TelematicsFormMappingItem": "GraphQL telematics form DTO without Bun projection metadata",
+	// field is keel:"-", so there is no column to project.
+	"ShipmentCommentAttachment": "GraphQL shipment comment DTO without column projection metadata",
+	"JournalEntry":              journalDTO,
+	"JournalEntryLine":          journalDTO,
+	"JournalBatch":              journalDTO,
+	"ResolvedCategoryRate":      costingDTO,
+	"FuelCostResolution":        costingDTO,
+	"ResolvedCostProfile":       costingDTO,
+	"CostCategoryGLAccountLink": costingDTO,
+	"TelematicsFormFieldValue":  telematicsFormDTO,
+	"TelematicsFormSubmission":  telematicsFormDTO,
+	"TelematicsFormMapping":     telematicsFormDTO,
+	"TelematicsFormMappingItem": telematicsFormDTO,
 	// Assembled in Go by unioning the worker and user rosters, so it maps to no
 	// single table and fuzzy matching would otherwise bind it to an unrelated one.
-	"PositionHolder": "GraphQL org structure DTO without Bun projection metadata",
+	"PositionHolder": "GraphQL org structure DTO without column projection metadata",
 	// Fuel and IFTA value objects: stored as JSONB on their parent, assembled in
 	// Go, or served straight from the domain, so none of them own a table.
-	"FuelPurchaseImportParsed":        "GraphQL fuel import DTO without Bun projection metadata",
-	"FuelPurchaseImportSummary":       "GraphQL fuel import DTO stored as JSONB without Bun projection metadata",
+	"FuelPurchaseImportParsed":        "GraphQL fuel import DTO without column projection metadata",
+	"FuelPurchaseImportSummary":       "GraphQL fuel import DTO stored as JSONB without column projection metadata",
 	"FuelImportTemplate":              "GraphQL fuel import template DTO",
-	"IFTAPeriod":                      "GraphQL IFTA period value object without Bun projection metadata",
-	"IFTAFleetMPG":                    "GraphQL IFTA value object stored as JSONB without Bun projection metadata",
-	"IFTAReturnProblem":               "GraphQL IFTA value object stored as JSONB without Bun projection metadata",
+	"IFTAPeriod":                      "GraphQL IFTA period value object without column projection metadata",
+	"IFTAFleetMPG":                    "GraphQL IFTA value object stored as JSONB without column projection metadata",
+	"IFTAReturnProblem":               "GraphQL IFTA value object stored as JSONB without column projection metadata",
 	"JurisdictionMilesBackfillResult": "GraphQL jurisdiction mileage backfill DTO",
 }
 
@@ -161,17 +164,11 @@ func run(opts generatorOptions) error {
 		return err
 	}
 
-	fieldMaps, err := loadFieldMaps(resolved.BuncolgenDir)
-	if err != nil {
-		return err
-	}
-
 	output, err := generate(discovery{
-		Schema:    schema,
-		Manifest:  data,
-		Gqlgen:    gqlgen,
-		Structs:   structs,
-		FieldMaps: fieldMaps,
+		Schema:   schema,
+		Manifest: data,
+		Gqlgen:   gqlgen,
+		Structs:  structs,
 	})
 	if err != nil {
 		return err
@@ -188,7 +185,6 @@ func resolveOptions(opts generatorOptions) (generatorOptions, error) {
 		resolved.OutputPath != "" &&
 		resolved.GqlgenPath != "" &&
 		resolved.DomainDir != "" &&
-		resolved.BuncolgenDir != "" &&
 		resolved.GoModPath != "" {
 		return resolved, nil
 	}
@@ -208,9 +204,6 @@ func resolveOptions(opts generatorOptions) (generatorOptions, error) {
 	}
 	if resolved.DomainDir == "" {
 		resolved.DomainDir = filepath.Join(root, "internal", "modules", "*", "domain")
-	}
-	if resolved.BuncolgenDir == "" {
-		resolved.BuncolgenDir = filepath.Join(root, "pkg/buncolgen")
 	}
 	if resolved.GoModPath == "" {
 		resolved.GoModPath = filepath.Join(root, "go.mod")
@@ -370,15 +363,9 @@ func generate(data discovery) ([]byte, error) {
 		return nil, fmt.Errorf("executing template: %w", err)
 	}
 
-	source := bytes.Replace(
-		buf.Bytes(),
-		[]byte(specsImportPlaceholder),
-		[]byte(columnImports(specs)),
-		1,
-	)
-	formatted, err := format.Source(source)
+	formatted, err := format.Source(buf.Bytes())
 	if err != nil {
-		return nil, fmt.Errorf("formatting generated specs: %w\n%s", err, string(source))
+		return nil, fmt.Errorf("formatting generated specs: %w\n%s", err, buf.String())
 	}
 
 	return formatted, nil
@@ -402,7 +389,7 @@ func discoverProjectionTypes(
 			return nil, nil, err
 		}
 		if selection.TypeName == "" {
-			skipped[name] = "no projection-backed Go struct and field map were discovered"
+			skipped[name] = "no keel table model with columns was discovered"
 			continue
 		}
 		selections[name] = selection
@@ -504,7 +491,7 @@ func selectProjectionType(typeName string, data discovery) (typeSelection, error
 func isNonProjectionBindingError(err error) bool {
 	message := err.Error()
 	return strings.Contains(message, "was not found in parsed Go structs") ||
-		strings.Contains(message, "has no buncolgen")
+		strings.Contains(message, "is not a keel table model")
 }
 
 func firstModelBinding(model gqlgenModel) string {
@@ -537,95 +524,34 @@ func selectionForModelOverride(
 		return typeSelection{}, fmt.Errorf("model %q was not found in parsed Go structs", model)
 	}
 
-	fieldMap, ok := data.FieldMaps[st.Name]
-	if ok && !fieldMapCoversStruct(&fieldMap, &st) {
-		// FieldMaps are keyed by unqualified struct name, so a same-named entity
-		// from another domain package (e.g. modeprofile.Profile vs email.Profile)
-		// can shadow the bound model's map. Treat a map that does not cover this
-		// struct's own columns as absent and synthesize instead.
-		ok = false
-	}
+	columns, ok := tableColumns(&st)
 	if !ok {
-		// Some domain packages are intentionally excluded from buncolgen (e.g.
-		// email, whose unqualified model names would collide). When a bound bun
-		// entity has no generated field map, synthesize one from its own column
-		// tags so the type still gets a projection spec instead of being dropped.
-		synthesized, synthOK := synthesizeFieldMap(st)
-		if !synthOK {
-			return typeSelection{}, fmt.Errorf(
-				"model %q has no buncolgen %sFieldMap",
-				model,
-				st.Name,
-			)
-		}
-		fieldMap = synthesized
+		return typeSelection{}, fmt.Errorf("model %q is not a keel table model with columns", model)
 	}
 
 	return typeSelection{
 		TypeName: typeName,
 		Struct:   st,
-		FieldMap: fieldMap,
+		Columns:  columns,
 	}, nil
 }
 
-func fieldMapCoversStruct(fieldMap *fieldMapRegistration, st *goStruct) bool {
-	columns := 0
-	for _, field := range st.Fields {
-		if !field.IsColumn {
-			continue
-		}
-		columns++
-		if column, exists := fieldMap.Values[field.JSONName]; !exists ||
-			column != field.ColumnName {
-			return false
-		}
-	}
-
-	return columns > 0
-}
-
-func synthesizeFieldMap(st goStruct) (fieldMapRegistration, bool) {
+func tableColumns(st *goStruct) (tableColumnMap, bool) {
 	if !st.IsEntity {
-		return fieldMapRegistration{}, false
+		return tableColumnMap{}, false
 	}
 
 	values := make(map[string]string, len(st.Fields))
-	relations := make(map[string]string, len(st.Fields))
 	for _, field := range st.Fields {
-		switch {
-		case field.IsColumn:
+		if field.IsColumn {
 			values[field.JSONName] = field.ColumnName
-		case field.IsRelation:
-			relations[field.JSONName] = field.GoName
 		}
 	}
 	if len(values) == 0 {
-		return fieldMapRegistration{}, false
+		return tableColumnMap{}, false
 	}
 
-	return fieldMapRegistration{
-		EntityName:   st.Name,
-		Values:       values,
-		Relations:    relations,
-		GoExpression: goMapLiteral(values),
-	}, true
-}
-
-func goMapLiteral(values map[string]string) string {
-	keys := make([]string, 0, len(values))
-	for key := range values {
-		keys = append(keys, key)
-	}
-	sort.Strings(keys)
-
-	var builder strings.Builder
-	builder.WriteString("map[string]string{")
-	for _, key := range keys {
-		fmt.Fprintf(&builder, "%q: %q,", key, values[key])
-	}
-	builder.WriteString("}")
-
-	return builder.String()
+	return tableColumnMap{Values: values}, true
 }
 
 func normalizeModelName(model string) string {
@@ -638,15 +564,15 @@ func exactStructSelection(typeName string, data discovery) (typeSelection, bool,
 		if st.Name != typeName {
 			continue
 		}
-		fieldMap, ok := data.FieldMaps[st.Name]
-		if !ok || !fieldMapCoversStruct(&fieldMap, &st) {
+		columns, ok := tableColumns(&st)
+		if !ok {
 			continue
 		}
 
 		matches = append(matches, typeSelection{
 			TypeName: typeName,
 			Struct:   st,
-			FieldMap: fieldMap,
+			Columns:  columns,
 		})
 	}
 
@@ -679,8 +605,8 @@ func coverageStructSelection(typeName string, data discovery) (typeSelection, er
 	def := data.Schema.Types[typeName]
 	candidates := []candidate{}
 	for _, st := range data.Structs {
-		fieldMap, ok := data.FieldMaps[st.Name]
-		if !ok || !fieldMapCoversStruct(&fieldMap, &st) {
+		columns, ok := tableColumns(&st)
+		if !ok {
 			continue
 		}
 
@@ -693,7 +619,7 @@ func coverageStructSelection(typeName string, data discovery) (typeSelection, er
 			selection: typeSelection{
 				TypeName: typeName,
 				Struct:   st,
-				FieldMap: fieldMap,
+				Columns:  columns,
 			},
 			score: score,
 			ratio: ratio,
@@ -960,7 +886,6 @@ func buildSpec(typeName string, data discovery) (generatedSpec, error) {
 
 	return generatedSpec{
 		Name:          typeName,
-		FieldMap:      selection.FieldMap.GoExpression,
 		AlwaysColumns: always,
 		Fields:        fields,
 	}, nil
@@ -972,10 +897,10 @@ func buildAlwaysColumns(
 	data manifest,
 ) ([]string, error) {
 	keys := []string{}
-	if _, ok := selection.FieldMap.Values["id"]; ok {
+	if _, ok := selection.Columns.Values["id"]; ok {
 		keys = append(keys, "id")
 	}
-	if _, ok := selection.FieldMap.Values["createdAt"]; ok {
+	if _, ok := selection.Columns.Values["createdAt"]; ok {
 		keys = append(keys, "createdAt")
 	}
 	keys = append(keys, data.Always[typeName]...)
@@ -983,11 +908,11 @@ func buildAlwaysColumns(
 	seen := make(map[string]struct{}, len(keys))
 	columns := make([]string, 0, len(keys))
 	for _, field := range keys {
-		key := fieldMapKey(field, data.Aliases[typeName])
-		column, ok := selection.FieldMap.Values[key]
+		key := columnKey(field, data.Aliases[typeName])
+		column, ok := selection.Columns.Values[key]
 		if !ok {
 			return nil, fmt.Errorf(
-				"type %q always field %q uses missing field-map key %q",
+				"type %q always field %q uses missing column key %q",
 				typeName,
 				field,
 				key,
@@ -1028,9 +953,9 @@ func buildField(params fieldBuildParams) (generatedField, error) {
 		return generated, nil
 	}
 
-	key := fieldMapKey(field.Name, manifest.Aliases[typeName])
-	if _, ok := params.Selection.FieldMap.Values[key]; ok {
-		generated.FieldMapKey = key
+	key := columnKey(field.Name, manifest.Aliases[typeName])
+	if column, ok := params.Selection.Columns.Values[key]; ok {
+		generated.Column = column
 		return generated, nil
 	}
 
@@ -1039,11 +964,11 @@ func buildField(params fieldBuildParams) (generatedField, error) {
 			Target: relation.Target,
 			Gate:   relation.Gate,
 		}
-		generated.FieldMapKey = relation.ColumnKey
+		generated.Column = relation.Column
 		return generated, nil
 	}
 
-	const unresolvedFieldMessage = "type %q field %q is neither a buncolgen column, inferred relation, " +
+	const unresolvedFieldMessage = "type %q field %q is neither a keel column, inferred relation, " +
 		"nor configured projection override; add aliases.%s.%s, virtuals.%s list entry, " +
 		"specials.%s.<specialKey> list entry, or modelOverrides.%s"
 
@@ -1070,9 +995,9 @@ func specialKeyForField(specials map[string][]string, fieldName string) (string,
 }
 
 type inferredRelation struct {
-	Target    string
-	Gate      string
-	ColumnKey string
+	Target string
+	Gate   string
+	Column string
 }
 
 func inferRelation(params fieldBuildParams) (inferredRelation, bool) {
@@ -1087,37 +1012,32 @@ func inferRelation(params fieldBuildParams) (inferredRelation, bool) {
 		return inferredRelation{}, false
 	}
 
-	if relationName := params.Selection.FieldMap.Relations[fieldName]; relationName == "" {
-		return inferredRelation{}, false
-	}
-
-	columnKey := ""
-	if structField.RelationKind == "belongs-to" && structField.RelationLocal != "" {
-		columnKey = reverseFieldMap(params.Selection.FieldMap.Values)[structField.RelationLocal]
+	column := ""
+	switch structField.RelationKind {
+	case relationBelongsTo:
+		if slices.Contains(
+			slices.Collect(maps.Values(params.Selection.Columns.Values)),
+			structField.RelationLocal,
+		) {
+			column = structField.RelationLocal
+		}
+	case "":
+		column = params.Selection.Columns.Values[fieldName+"Id"]
 	}
 
 	return inferredRelation{
-		Target:    target,
-		Gate:      params.Discovery.Manifest.Gates[params.TypeName][fieldName],
-		ColumnKey: columnKey,
+		Target: target,
+		Gate:   params.Discovery.Manifest.Gates[params.TypeName][fieldName],
+		Column: column,
 	}, true
 }
 
-func fieldMapKey(field string, aliases map[string]string) string {
+func columnKey(field string, aliases map[string]string) string {
 	if key, ok := aliases[field]; ok {
 		return key
 	}
 
 	return field
-}
-
-func reverseFieldMap(fieldMap map[string]string) map[string]string {
-	reversed := make(map[string]string, len(fieldMap))
-	for key, value := range fieldMap {
-		reversed[value] = key
-	}
-
-	return reversed
 }
 
 func namedType(t *gqlast.Type) string {
@@ -1227,7 +1147,7 @@ func buildGoStruct(packagePath, packageName, name string, structType *ast.Struct
 	}
 	for _, field := range structType.Fields.List {
 		if len(field.Names) == 0 {
-			if isBunEntityEmbed(field) {
+			if isKeelTableEmbed(field) {
 				st.IsEntity = true
 			}
 			continue
@@ -1269,14 +1189,22 @@ func packagePathForFile(root, modulePath, path string) (string, error) {
 	return domainImportRoot + "/" + filepath.ToSlash(rel), nil
 }
 
-func isBunEntityEmbed(field *ast.Field) bool {
-	if field.Tag == nil {
+func isKeelTableEmbed(field *ast.Field) bool {
+	selector, ok := field.Type.(*ast.SelectorExpr)
+	if !ok || selector.Sel.Name != "Table" {
 		return false
 	}
-	tag := reflect.StructTag(strings.Trim(field.Tag.Value, "`"))
+	pkg, ok := selector.X.(*ast.Ident)
 
-	return strings.Contains(tag.Get("bun"), "table:")
+	return ok && pkg.Name == "keel"
 }
+
+const (
+	relationBelongsTo = "belongs"
+	keelTagSkip       = "-"
+)
+
+var keelRelationKinds = []string{relationBelongsTo, "one", "many", "m2m", "pick"}
 
 func parseGoStructField(field *ast.Field) (goField, bool) {
 	name := field.Names[0].Name
@@ -1285,15 +1213,21 @@ func parseGoStructField(field *ast.Field) (goField, bool) {
 	}
 
 	jsonName := lowerCamel(name)
-	var bunTag string
+	var keelTag string
+	tagged := false
 	if field.Tag != nil {
 		tag := reflect.StructTag(strings.Trim(field.Tag.Value, "`"))
 		if value := tag.Get("json"); value != "" {
 			jsonName = strings.Split(value, ",")[0]
 		}
-		bunTag = tag.Get("bun")
+		keelTag, tagged = tag.Lookup("keel")
 	}
-	if jsonName == "-" && strings.Contains(bunTag, "rel:") {
+	head := strings.TrimSpace(strings.Split(keelTag, ",")[0])
+	kind, local, isRelation := keelRelation(head)
+	if !tagged && isRelationType(field.Type) {
+		isRelation = true
+	}
+	if jsonName == "-" && isRelation {
 		jsonName = lowerCamel(name)
 	}
 	if jsonName == "" || jsonName == "-" {
@@ -1306,46 +1240,54 @@ func parseGoStructField(field *ast.Field) (goField, bool) {
 		TypeName: exprName(field.Type),
 	}
 
-	if bunTag == "" || bunTag == "-" {
-		return parsed, true
+	switch {
+	case isRelation:
+		parsed.IsRelation = true
+		parsed.RelationKind = kind
+		parsed.RelationLocal = local
+	case head != "" && head != keelTagSkip && !strings.Contains(head, ":"):
+		parsed.IsColumn = true
+		parsed.ColumnName = head
 	}
-
-	parts := strings.Split(bunTag, ",")
-	for _, part := range parts {
-		switch {
-		case strings.HasPrefix(part, "rel:"):
-			parsed.IsRelation = true
-			parsed.RelationKind = strings.TrimPrefix(part, "rel:")
-		case strings.HasPrefix(part, "join:"):
-			parsed.RelationLocal = relationLocalColumn(part)
-		}
-	}
-	if parsed.IsRelation {
-		return parsed, true
-	}
-
-	columnName := strings.TrimSpace(parts[0])
-	if columnName == "" || strings.Contains(columnName, ":") {
-		return parsed, true
-	}
-	parsed.IsColumn = true
-	parsed.ColumnName = columnName
 
 	return parsed, true
 }
 
-func relationLocalColumn(joinTag string) string {
-	join := strings.TrimPrefix(joinTag, "join:")
-	if join == "" {
-		return ""
-	}
-	first := strings.Split(join, ",")[0]
-	left, _, ok := strings.Cut(first, "=")
-	if !ok {
-		return ""
+func isRelationType(expr ast.Expr) bool {
+	switch value := expr.(type) {
+	case *ast.StarExpr:
+		return isNamedStruct(value.X)
+	case *ast.ArrayType:
+		if star, ok := value.Elt.(*ast.StarExpr); ok {
+			return isNamedStruct(star.X)
+		}
+		return isNamedStruct(value.Elt)
 	}
 
-	return strings.TrimSpace(left)
+	return false
+}
+
+func isNamedStruct(expr ast.Expr) bool {
+	switch value := expr.(type) {
+	case *ast.SelectorExpr:
+		return true
+	case *ast.Ident:
+		return value.Obj != nil || isExported(value.Name)
+	}
+
+	return false
+}
+
+func keelRelation(head string) (kind, local string, ok bool) {
+	prefix, value, found := strings.Cut(head, ":")
+	if !found || !slices.Contains(keelRelationKinds, prefix) {
+		return "", "", false
+	}
+	if prefix != relationBelongsTo {
+		return prefix, "", true
+	}
+
+	return prefix, strings.TrimSpace(strings.Split(value, "|")[0]), true
 }
 
 func exprName(expr ast.Expr) string {
@@ -1361,150 +1303,6 @@ func exprName(expr ast.Expr) string {
 	}
 
 	return ""
-}
-
-func loadFieldMaps(root string) (map[string]fieldMapRegistration, error) {
-	fieldMaps := map[string]fieldMapRegistration{}
-	fset := token.NewFileSet()
-
-	matches, err := filepath.Glob(filepath.Join(root, "*", "*_gen.go"))
-	if err != nil {
-		return nil, fmt.Errorf("globbing buncolgen files: %w", err)
-	}
-	sort.Strings(matches)
-	for _, match := range matches {
-		file, err := parser.ParseFile(fset, match, nil, 0)
-		if err != nil {
-			return nil, fmt.Errorf("parsing buncolgen file %q: %w", match, err)
-		}
-
-		for _, decl := range file.Decls {
-			genDecl, ok := decl.(*ast.GenDecl)
-			if !ok || genDecl.Tok != token.VAR {
-				continue
-			}
-			for _, spec := range genDecl.Specs {
-				valueSpec, ok := spec.(*ast.ValueSpec)
-				if !ok {
-					continue
-				}
-				parseFieldMapSpec(fieldMaps, valueSpec, file.Name.Name)
-				parseRelationsSpec(fieldMaps, valueSpec)
-			}
-		}
-	}
-
-	return fieldMaps, nil
-}
-
-func parseFieldMapSpec(
-	registrations map[string]fieldMapRegistration,
-	spec *ast.ValueSpec,
-	packageName string,
-) {
-	for i, name := range spec.Names {
-		if !strings.HasSuffix(name.Name, "FieldMap") || i >= len(spec.Values) {
-			continue
-		}
-		entity := strings.TrimSuffix(name.Name, "FieldMap")
-		values := stringMapLiteral(spec.Values[i])
-		if values == nil {
-			continue
-		}
-
-		current := registrations[entity]
-		current.EntityName = entity
-		current.Values = values
-		current.GoExpression = packageName + "." + name.Name
-		if current.Relations == nil {
-			current.Relations = map[string]string{}
-		}
-		registrations[entity] = current
-	}
-}
-
-func parseRelationsSpec(registrations map[string]fieldMapRegistration, spec *ast.ValueSpec) {
-	for i, name := range spec.Names {
-		if !strings.HasSuffix(name.Name, "Relations") || i >= len(spec.Values) {
-			continue
-		}
-		entity := strings.TrimSuffix(name.Name, "Relations")
-		values := relationMapLiteral(spec.Values[i])
-		if values == nil {
-			continue
-		}
-
-		current := registrations[entity]
-		current.EntityName = entity
-		current.Relations = values
-		if current.Values == nil {
-			current.Values = map[string]string{}
-		}
-		registrations[entity] = current
-	}
-}
-
-func stringMapLiteral(expr ast.Expr) map[string]string {
-	literal, ok := expr.(*ast.CompositeLit)
-	if !ok {
-		return nil
-	}
-
-	values := map[string]string{}
-	for _, elt := range literal.Elts {
-		kv, ok := elt.(*ast.KeyValueExpr)
-		if !ok {
-			continue
-		}
-		key, keyOK := stringLiteral(kv.Key)
-		value, valueOK := stringLiteral(kv.Value)
-		if !keyOK || !valueOK {
-			continue
-		}
-		values[key] = value
-	}
-
-	return values
-}
-
-func relationMapLiteral(expr ast.Expr) map[string]string {
-	literal, ok := expr.(*ast.CompositeLit)
-	if !ok {
-		return nil
-	}
-
-	values := map[string]string{}
-	for _, elt := range literal.Elts {
-		kv, ok := elt.(*ast.KeyValueExpr)
-		if !ok {
-			continue
-		}
-		keyIdent, ok := kv.Key.(*ast.Ident)
-		if !ok {
-			continue
-		}
-		value, ok := stringLiteral(kv.Value)
-		if !ok {
-			continue
-		}
-		values[lowerCamel(keyIdent.Name)] = value
-	}
-
-	return values
-}
-
-func stringLiteral(expr ast.Expr) (string, bool) {
-	lit, ok := expr.(*ast.BasicLit)
-	if !ok || lit.Kind != token.STRING {
-		return "", false
-	}
-
-	value, err := strconv.Unquote(lit.Value)
-	if err != nil {
-		return "", false
-	}
-
-	return value, true
 }
 
 func lowerCamel(value string) string {
@@ -1531,38 +1329,4 @@ func isExported(name string) bool {
 
 func quote(value string) string {
 	return fmt.Sprintf("%q", value)
-}
-
-const (
-	specsImportPlaceholder = "import \"github.com/emoss08/trenova/pkg/buncolgen\""
-	columnsImportRoot      = "github.com/emoss08/trenova/pkg/buncolgen/"
-)
-
-var columnsFieldMap = regexp.MustCompile(`^(\w+col)\.\w+FieldMap$`)
-
-func columnImports(specs []generatedSpec) string {
-	packages := map[string]struct{}{}
-	for _, spec := range specs {
-		if match := columnsFieldMap.FindStringSubmatch(spec.FieldMap); match != nil {
-			packages[match[1]] = struct{}{}
-		}
-	}
-	if len(packages) == 0 {
-		return ""
-	}
-
-	names := make([]string, 0, len(packages))
-	for name := range packages {
-		names = append(names, name)
-	}
-	sort.Strings(names)
-
-	var b strings.Builder
-	b.WriteString("import (\n")
-	for _, name := range names {
-		fmt.Fprintf(&b, "\t%q\n", columnsImportRoot+name)
-	}
-	b.WriteString(")")
-
-	return b.String()
 }

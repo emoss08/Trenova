@@ -5,29 +5,31 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accounttype"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accounttype/accounttypedb"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/glaccount"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/glaccount/glaccountdb"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/costingcontrol"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/costingcontrol/costingcontroldb"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant/tenantdb"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/uptrace/bun"
 )
 
-func HasChartOfAccounts(ctx context.Context, db bun.IDB, orgID, buID pulid.ID) (bool, error) {
-	count, err := db.NewSelect().
-		Model((*accounttype.AccountType)(nil)).
-		Where("organization_id = ?", orgID).
-		Where("business_unit_id = ?", buID).
-		Count(ctx)
+func EnsureChartOfAccounts(ctx context.Context, db *keel.DB, scope Scope) (int, error) {
+	a := accounttypedb.AccountTypes
+	exists, err := scoped(ctx, a.Where(
+		a.OrganizationID.Eq(scope.OrganizationID),
+		a.BusinessUnitID.Eq(scope.BusinessUnitID),
+	)).Exists(ctx, db)
 	if err != nil {
-		return false, fmt.Errorf("check existing account types: %w", err)
+		return 0, fmt.Errorf("check existing account types: %w", err)
+	}
+	if exists {
+		return 0, nil
 	}
 
-	return count > 0, nil
-}
-
-func CreateChartOfAccounts(ctx context.Context, db bun.IDB, scope Scope) (int, error) {
 	accountTypeIDs, err := createDefaultAccountTypes(ctx, db, scope)
 	if err != nil {
 		return 0, fmt.Errorf("create default account types: %w", err)
@@ -38,12 +40,7 @@ func CreateChartOfAccounts(ctx context.Context, db bun.IDB, scope Scope) (int, e
 		return 0, fmt.Errorf("create default chart of accounts: %w", err)
 	}
 
-	if err = applyAccountingDefaults(
-		ctx,
-		db,
-		scope.OrganizationID,
-		scope.BusinessUnitID,
-	); err != nil {
+	if err = applyAccountingDefaults(ctx, db, scope); err != nil {
 		return 0, fmt.Errorf("apply accounting control defaults: %w", err)
 	}
 
@@ -54,24 +51,23 @@ func CreateChartOfAccounts(ctx context.Context, db bun.IDB, scope Scope) (int, e
 	return accountCount, nil
 }
 
-func applyAccountingDefaults(
+func accountsByCode(
 	ctx context.Context,
-	tx bun.IDB,
-	orgID, buID pulid.ID,
-) error {
-	type accountRow struct {
-		ID   pulid.ID `bun:"id"`
-		Code string   `bun:"account_code"`
-	}
+	db *keel.DB,
+	scope Scope,
+	codes []string,
+) ([]*glaccount.GLAccount, error) {
+	g := glaccountdb.GLAccounts
+	return scoped(ctx, g.Pick(g.ID, g.AccountCode).Where(
+		g.OrganizationID.Eq(scope.OrganizationID),
+		g.BusinessUnitID.Eq(scope.BusinessUnitID),
+		g.AccountCode.In(codes...),
+	)).All(ctx, db)
+}
 
-	rows := make([]accountRow, 0, 4)
-	if err := tx.NewSelect().
-		Model((*glaccount.GLAccount)(nil)).
-		Column("id", "account_code").
-		Where("organization_id = ?", orgID).
-		Where("business_unit_id = ?", buID).
-		Where("account_code IN (?)", bun.List([]string{"1110", "4010", "6940", "3030"})).
-		Scan(ctx, &rows); err != nil {
+func applyAccountingDefaults(ctx context.Context, db *keel.DB, scope Scope) error {
+	rows, err := accountsByCode(ctx, db, scope, []string{"1110", "4010", "6940", "3030"})
+	if err != nil {
 		return err
 	}
 
@@ -80,7 +76,7 @@ func applyAccountingDefaults(
 	var writeOffAccountID pulid.ID
 	var retainedEarningsAccountID pulid.ID
 	for i := range rows {
-		switch rows[i].Code {
+		switch rows[i].AccountCode {
 		case "1110":
 			arAccountID = rows[i].ID
 		case "4010":
@@ -111,15 +107,18 @@ func applyAccountingDefaults(
 		)
 	}
 
-	_, err := tx.NewUpdate().
-		Model((*tenant.AccountingControl)(nil)).
-		Set("default_ar_account_id = ?", arAccountID).
-		Set("default_revenue_account_id = ?", revenueAccountID).
-		Set("default_write_off_account_id = ?", writeOffAccountID).
-		Set("default_retained_earnings_account_id = ?", retainedEarningsAccountID).
-		Where("organization_id = ?", orgID).
-		Where("business_unit_id = ?", buID).
-		Exec(ctx)
+	c := tenantdb.AccountingControls
+	_, err = scoped(ctx, c.Where(
+		c.OrganizationID.Eq(scope.OrganizationID),
+		c.BusinessUnitID.Eq(scope.BusinessUnitID),
+	)).Update(
+		ctx,
+		db,
+		c.DefaultARAccountID.To(arAccountID),
+		c.DefaultRevenueAccountID.To(revenueAccountID),
+		c.DefaultWriteOffAccountID.To(writeOffAccountID),
+		c.DefaultRetainedEarningsAccountID.To(retainedEarningsAccountID),
+	)
 	return err
 }
 
@@ -136,18 +135,14 @@ var costCategoryGLAccountCodes = map[costingcontrol.CategoryType][]string{
 	costingcontrol.CategoryTypeOverhead:          {"6010", "6020", "6030", "6040", "6110", "6130"},
 }
 
-func applyCostCategoryGLAccounts(
-	ctx context.Context,
-	tx bun.IDB,
-	scope Scope,
-) error {
+func applyCostCategoryGLAccounts(ctx context.Context, db *keel.DB, scope Scope) error {
 	orgID, buID := scope.OrganizationID, scope.BusinessUnitID
-	categories := make([]*costingcontrol.CostCategory, 0, len(costCategoryGLAccountCodes))
-	if err := tx.NewSelect().
-		Model(&categories).
-		Where("organization_id = ?", orgID).
-		Where("business_unit_id = ?", buID).
-		Scan(ctx); err != nil {
+	cc := costingcontroldb.CostCategories
+	categories, err := scoped(ctx, cc.Pick(cc.ID, cc.Category).Where(
+		cc.OrganizationID.Eq(orgID),
+		cc.BusinessUnitID.Eq(buID),
+	)).All(ctx, db)
+	if err != nil {
 		return err
 	}
 
@@ -160,25 +155,14 @@ func applyCostCategoryGLAccounts(
 		allCodes = append(allCodes, codes...)
 	}
 
-	type accountRow struct {
-		ID   pulid.ID `bun:"id"`
-		Code string   `bun:"account_code"`
-	}
-
-	rows := make([]accountRow, 0, len(allCodes))
-	if err := tx.NewSelect().
-		Model((*glaccount.GLAccount)(nil)).
-		Column("id", "account_code").
-		Where("organization_id = ?", orgID).
-		Where("business_unit_id = ?", buID).
-		Where("account_code IN (?)", bun.List(allCodes)).
-		Scan(ctx, &rows); err != nil {
+	rows, err := accountsByCode(ctx, db, scope, allCodes)
+	if err != nil {
 		return err
 	}
 
-	accountsByCode := make(map[string]pulid.ID, len(rows))
+	accountIDs := make(map[string]pulid.ID, len(rows))
 	for i := range rows {
-		accountsByCode[rows[i].Code] = rows[i].ID
+		accountIDs[rows[i].AccountCode] = rows[i].ID
 	}
 
 	now := scope.now()
@@ -189,7 +173,7 @@ func applyCostCategoryGLAccounts(
 			continue
 		}
 		for _, code := range codes {
-			accountID, found := accountsByCode[code]
+			accountID, found := accountIDs[code]
 			if !found {
 				continue
 			}
@@ -204,33 +188,18 @@ func applyCostCategoryGLAccounts(
 		}
 	}
 
-	if len(links) == 0 {
-		return nil
-	}
-
-	if _, err := tx.NewInsert().
-		Model(&links).
-		On("CONFLICT (organization_id, cost_category_id, gl_account_id) DO NOTHING").
-		Exec(ctx); err != nil {
-		return err
-	}
-
-	for _, link := range links {
-		if err := scope.record(ctx, "cost_category_gl_accounts", link.ID); err != nil {
-			return err
-		}
-	}
-
-	return nil
+	l := costingcontroldb.CostCategoryGLAccounts
+	_, err = l.CreateOrSkip(ctx, db, links, l.OrganizationID, l.CostCategoryID, l.GLAccountID)
+	return err
 }
 
 func createDefaultAccountTypes(
 	ctx context.Context,
-	tx bun.IDB,
+	db *keel.DB,
 	scope Scope,
 ) (map[accounttype.Category]pulid.ID, error) {
 	orgID, buID := scope.OrganizationID, scope.BusinessUnitID
-	accountTypes := []accounttype.AccountType{
+	accountTypes := []*accounttype.AccountType{
 		{
 			ID:             pulid.MustNew("at_"),
 			BusinessUnitID: buID,
@@ -305,21 +274,13 @@ func createDefaultAccountTypes(
 		},
 	}
 
-	_, err := tx.NewInsert().
-		Model(&accountTypes).
-		Exec(ctx)
-	if err != nil {
+	if err := accounttypedb.AccountTypes.CreateMany(ctx, db, accountTypes); err != nil {
 		return nil, fmt.Errorf("insert account types: %w", err)
 	}
 
 	accountTypeMap := make(map[accounttype.Category]pulid.ID, len(accountTypes))
-	for i := range accountTypes {
-		at := &accountTypes[i]
+	for _, at := range accountTypes {
 		accountTypeMap[at.Category] = at.ID
-
-		if err = scope.record(ctx, "account_types", at.ID); err != nil {
-			return nil, fmt.Errorf("track account type: %w", err)
-		}
 	}
 
 	return accountTypeMap, nil
@@ -1396,14 +1357,14 @@ func getDefaultTruckingCOA() []glAccountSeedData {
 
 func createDefaultCOA(
 	ctx context.Context,
-	tx bun.IDB,
+	db *keel.DB,
 	scope Scope,
 	accountTypeIDs map[accounttype.Category]pulid.ID,
 ) (int, error) {
 	orgID, buID := scope.OrganizationID, scope.BusinessUnitID
 	coaData := getDefaultTruckingCOA()
 
-	accountsByCode := make(map[string]*glaccount.GLAccount, len(coaData))
+	byCode := make(map[string]*glaccount.GLAccount, len(coaData))
 	accounts := make([]*glaccount.GLAccount, 0, len(coaData))
 	for _, seed := range coaData {
 		account := &glaccount.GLAccount{
@@ -1420,47 +1381,17 @@ func createDefaultCOA(
 			RequireProject: false,
 		}
 		accounts = append(accounts, account)
-		accountsByCode[seed.Code] = account
-	}
-
-	_, err := tx.NewInsert().
-		Model(&accounts).
-		Exec(ctx)
-	if err != nil {
-		return 0, fmt.Errorf("insert GL accounts: %w", err)
-	}
-
-	for _, account := range accounts {
-		if err = scope.record(ctx, "gl_accounts", account.ID); err != nil {
-			return 0, fmt.Errorf("track GL account: %w", err)
-		}
+		byCode[seed.Code] = account
 	}
 
 	for i, seed := range coaData {
-		if seed.Parent != "" {
-			if parent, ok := accountsByCode[seed.Parent]; ok {
-				accounts[i].ParentID = parent.ID
-			}
+		if parent, ok := byCode[seed.Parent]; ok {
+			accounts[i].ParentID = parent.ID
 		}
 	}
 
-	for _, account := range accounts {
-		if !account.ParentID.IsNil() {
-			_, err = tx.NewUpdate().
-				Model(account).
-				Column("parent_id").
-				Where("id = ?", account.ID).
-				Where("organization_id = ?", orgID).
-				Where("business_unit_id = ?", buID).
-				Exec(ctx)
-			if err != nil {
-				return 0, fmt.Errorf(
-					"update parent relationship for %s: %w",
-					account.AccountCode,
-					err,
-				)
-			}
-		}
+	if err := glaccountdb.GLAccounts.CreateMany(ctx, db, accounts); err != nil {
+		return 0, fmt.Errorf("insert GL accounts: %w", err)
 	}
 
 	return len(accounts), nil

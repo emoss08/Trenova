@@ -7,6 +7,13 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/emoss08/keel"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue/billingqueuedb"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/customerpayment/customerpaymentdb"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice/invoicedb"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/invoiceadjustment/invoiceadjustmentdb"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment/shipmentdb"
+
 	"github.com/emoss08/trenova/internal/api/graphql/agentread"
 	"github.com/emoss08/trenova/internal/api/graphql/agentread/agentreadtest"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
@@ -37,7 +44,6 @@ import (
 	"github.com/shopspring/decimal"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"github.com/uptrace/bun"
 	"go.uber.org/zap"
 )
 
@@ -62,7 +68,7 @@ var adjustmentWithheldAtInternal = []string{
 // tenant: each invoice bills a shipment of its own, as a posted one does.
 type billingSeed struct {
 	t        *testing.T
-	admin    *bun.DB
+	admin    *keel.DB
 	invoices invoiceports.InvoiceRepository
 	fixtures map[pulid.ID]*testutil.ShipmentIntegrationFixture
 }
@@ -98,8 +104,9 @@ func (b *billingSeed) invoice(
 			BOL: "BOL" + label, ProNumber: "PRO" + label, ShipmentID: pulid.MustNew("shp_"),
 		})
 	if owner.IsNotNil() {
-		_, err := b.admin.NewUpdate().Table("shipments").Set("owner_id = ?", owner).
-			Where("id = ?", graph.Shipment.ID).Exec(b.t.Context())
+		shipments := shipmentdb.Shipments
+		_, err := shipments.Where(shipments.ID.Eq(graph.Shipment.ID)).
+			Update(tenant.Ctx(b.t.Context()), b.admin, shipments.OwnerID.To(owner))
 		require.NoError(b.t, err)
 	}
 	queue := &billingqueue.BillingQueueItem{
@@ -107,8 +114,7 @@ func (b *billingSeed) invoice(
 		BillToCustomerID: fixture.Customer.ID, Number: "INV-" + label,
 		Status: billingqueue.StatusPosted, BillType: billingqueue.BillTypeInvoice,
 	}
-	_, err := b.admin.NewInsert().Model(queue).Exec(b.t.Context())
-	require.NoError(b.t, err)
+	require.NoError(b.t, billingqueuedb.BillingQueueItems.Create(tenant.Ctx(b.t.Context()), b.admin, queue))
 
 	posted := timeutils.NowUnix()
 	due := posted + 30*86_400
@@ -151,8 +157,8 @@ func (b *billingSeed) adjustment(
 	group := &invoiceadjustment.InvoiceAdjustmentCorrectionGroup{
 		OrganizationID: info.OrgID, BusinessUnitID: info.BuID, RootInvoiceID: original.ID,
 	}
-	_, err = b.admin.NewInsert().Model(group).Exec(b.t.Context())
-	require.NoError(b.t, err)
+	tenantCtx := tenant.Ctx(b.t.Context())
+	require.NoError(b.t, invoiceadjustmentdb.InvoiceAdjustmentCorrectionGroups.Create(tenantCtx, b.admin, group))
 	adjustment := &invoiceadjustment.InvoiceAdjustment{
 		OrganizationID: info.OrgID, BusinessUnitID: info.BuID, CorrectionGroupID: group.ID,
 		OriginalInvoiceID: original.ID, Kind: invoiceadjustment.KindCreditOnly,
@@ -161,15 +167,13 @@ func (b *billingSeed) adjustment(
 		CreditTotalAmount: decimal.NewFromInt(-25), CreditTotalAmountMinor: -2_500,
 		NetDeltaAmount: decimal.NewFromInt(-25), NetDeltaAmountMinor: -2_500,
 	}
-	_, err = b.admin.NewInsert().Model(adjustment).Exec(b.t.Context())
-	require.NoError(b.t, err)
-	_, err = b.admin.NewInsert().Model(&invoiceadjustment.InvoiceAdjustmentLine{
+	require.NoError(b.t, invoiceadjustmentdb.InvoiceAdjustments.Create(tenantCtx, b.admin, adjustment))
+	require.NoError(b.t, invoiceadjustmentdb.InvoiceAdjustmentLines.Create(tenantCtx, b.admin, &invoiceadjustment.InvoiceAdjustmentLine{
 		OrganizationID: info.OrgID, BusinessUnitID: info.BuID, AdjustmentID: adjustment.ID,
 		OriginalInvoiceID: original.ID, OriginalLineID: original.Lines[0].ID, LineNumber: 1,
 		Description: "Linehaul", CreditQuantity: decimal.NewFromInt(1),
 		CreditAmount: decimal.NewFromInt(-25), CreditAmountMinor: -2_500,
-	}).Exec(b.t.Context())
-	require.NoError(b.t, err)
+	}))
 
 	return adjustment.ID, nil
 }
@@ -190,8 +194,7 @@ func (b *billingSeed) dispute(
 		Notes: "Customer says the rate was 110", OpenedByID: info.UserID,
 		OpenedAt: timeutils.NowUnix(),
 	}
-	_, err := b.admin.NewInsert().Model(row).Exec(b.t.Context())
-	require.NoError(b.t, err)
+	require.NoError(b.t, invoicedb.InvoiceDisputes.Create(tenant.Ctx(b.t.Context()), b.admin, row))
 
 	return row.ID
 }
@@ -212,8 +215,7 @@ func (b *billingSeed) payment(tenant *agentreadtest.Tenant, label string, revers
 		ReferenceNumber: "ACH" + label, Memo: "Remittance " + label, CurrencyCode: "USD",
 		CreatedByID: info.UserID,
 	}
-	_, err := b.admin.NewInsert().Model(row).Exec(b.t.Context())
-	require.NoError(b.t, err)
+	require.NoError(b.t, customerpaymentdb.Payments.Create(tenant.Ctx(b.t.Context()), b.admin, row))
 
 	return row.ID
 }
@@ -223,7 +225,7 @@ func (b *billingSeed) payment(tenant *agentreadtest.Tenant, label string, revers
 func billingServices(
 	t *testing.T,
 	conn *postgres.Connection,
-	admin *bun.DB,
+	admin *keel.DB,
 ) (*billingSeed, agentread.ResolverParams, invoiceports.InvoiceRepository) {
 	t.Helper()
 

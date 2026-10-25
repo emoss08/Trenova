@@ -86,7 +86,6 @@ func trailerConnectionToModel(
 		result.Items,
 		result.HasNextPage,
 		result.TotalCount,
-		result.CursorSort,
 		result,
 	)
 }
@@ -95,13 +94,11 @@ func trailerConnectionFromItems(
 	items []*trailer.Trailer,
 	hasNextPage bool,
 	totalCount *int,
-	sort []pagination.CursorSortField,
-	cursorValues pagination.CursorValueProvider,
+	cursors pagination.EdgeCursorProvider,
 ) (*gqlmodel.TrailerConnection, error) {
 	edges, err := base.EntityCursorEdges(
 		items,
-		sort,
-		cursorValues,
+		cursors,
 		func(node *trailer.Trailer, cursor string) *gqlmodel.TrailerEdge {
 			return &gqlmodel.TrailerEdge{
 				Node:   node,

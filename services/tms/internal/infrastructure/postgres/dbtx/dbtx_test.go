@@ -5,45 +5,31 @@ import (
 	"errors"
 	"testing"
 
+	"github.com/emoss08/keel"
+
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"github.com/uptrace/bun"
 )
 
 type fakeConn struct {
 	kernelports.DBConnection
-	scoped bool
 	opened []kernelports.TxOptions
 }
 
-func (f *fakeConn) ScopedTransactions() bool { return f.scoped }
-
-func (f *fakeConn) WithTx(
+func (f *fakeConn) Transact(
 	ctx context.Context,
 	opts kernelports.TxOptions,
-	fn func(context.Context, bun.Tx) error,
+	fn func(context.Context) error,
 ) error {
 	f.opened = append(f.opened, opts)
-	return fn(ctx, bun.Tx{})
+	return fn(ctx)
 }
 
-func TestHelpersRunDirectlyWhenScopedTransactionsAreOff(t *testing.T) {
+func TestHelpersRunEveryCallInATransaction(t *testing.T) {
 	t.Parallel()
 
 	conn := &fakeConn{}
-	got, err := Read(t.Context(), conn, func(context.Context) (int, error) { return 7, nil })
-	require.NoError(t, err)
-	assert.Equal(t, 7, got)
-	require.NoError(t, WriteErr(t.Context(), conn, func(context.Context) error { return nil }))
-	assert.Empty(t, conn.opened)
-	assert.False(t, Required(conn))
-}
-
-func TestHelpersOpenATransactionPerCallWhenScoped(t *testing.T) {
-	t.Parallel()
-
-	conn := &fakeConn{scoped: true}
 	failure := errors.New("boom")
 
 	got, err := Read(t.Context(), conn, func(context.Context) (string, error) { return "row", nil })
@@ -71,7 +57,6 @@ func TestHelpersOpenATransactionPerCallWhenScoped(t *testing.T) {
 		{ReadOnly: true},
 		{ReadOnly: false},
 	}, conn.opened)
-	assert.True(t, Required(conn))
 }
 
 func TestSavepointRunsDirectlyOutsideATransaction(t *testing.T) {
@@ -90,4 +75,12 @@ type outsideTx struct {
 	kernelports.DBConnection
 }
 
-func (outsideTx) DBForContext(context.Context) bun.IDB { return (*bun.DB)(nil) }
+func (outsideTx) Keel(context.Context) *keel.DB { return nil }
+
+func (outsideTx) Transact(
+	ctx context.Context,
+	_ kernelports.TxOptions,
+	fn func(context.Context) error,
+) error {
+	return fn(ctx)
+}

@@ -4,15 +4,14 @@ import (
 	"context"
 	"errors"
 
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/domainvalidation"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/validationframework"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/emoss08/trenova/shared/timeutils"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
 	"github.com/shopspring/decimal"
-	"github.com/uptrace/bun"
 )
 
 var (
@@ -84,35 +83,42 @@ func (a PTOLedgerActorType) IsValid() bool {
 }
 
 var (
-	_ bun.BeforeAppendModelHook          = (*WorkerPTOLedgerEntry)(nil)
 	_ validationframework.TenantedEntity = (*WorkerPTOLedgerEntry)(nil)
 	_ domaintypes.PostgresSearchable     = (*WorkerPTOLedgerEntry)(nil)
 )
 
 type WorkerPTOLedgerEntry struct {
-	bun.BaseModel `bun:"table:worker_pto_ledger,alias:wpl" json:"-"`
+	keel.Table `keel:"worker_pto_ledger"`
 
-	ID               pulid.ID           `json:"id"               bun:"id,pk,type:VARCHAR(100),notnull"`
-	BusinessUnitID   pulid.ID           `json:"businessUnitId"   bun:"business_unit_id,pk,type:VARCHAR(100),notnull"`
-	OrganizationID   pulid.ID           `json:"organizationId"   bun:"organization_id,pk,type:VARCHAR(100),notnull"`
-	WorkerID         pulid.ID           `json:"workerId"         bun:"worker_id,type:VARCHAR(100),notnull"`
-	PTOType          PTOType            `json:"ptoType"          bun:"pto_type,type:worker_pto_type_enum,notnull"`
-	EntryType        PTOLedgerEntryType `json:"entryType"        bun:"entry_type,type:pto_ledger_entry_type_enum,notnull"`
-	AmountDays       decimal.Decimal    `json:"amountDays"       bun:"amount_days,type:NUMERIC(8,2),notnull"`
-	BalanceAfterDays decimal.Decimal    `json:"balanceAfterDays" bun:"balance_after_days,type:NUMERIC(8,2),notnull"`
-	Sequence         int64              `json:"sequence"         bun:"sequence,type:BIGINT,notnull"`
-	EffectiveAt      int64              `json:"effectiveAt"      bun:"effective_at,type:BIGINT,notnull"`
-	PeriodKey        string             `json:"periodKey"        bun:"period_key,type:VARCHAR(64),nullzero"`
-	SourcePTOID      pulid.ID           `json:"sourcePtoId"      bun:"source_pto_id,type:VARCHAR(100),nullzero"`
-	AssignmentID     pulid.ID           `json:"assignmentId"     bun:"assignment_id,type:VARCHAR(100),nullzero"`
-	PTOPolicyID      pulid.ID           `json:"ptoPolicyId"      bun:"pto_policy_id,type:VARCHAR(100),nullzero"`
-	ActorType        PTOLedgerActorType `json:"actorType"        bun:"actor_type,type:pto_ledger_actor_type_enum,notnull,default:'User'"`
-	CreatedByID      pulid.ID           `json:"createdById"      bun:"created_by_id,type:VARCHAR(100),nullzero"`
-	Note             string             `json:"note"             bun:"note,type:VARCHAR(255),nullzero"`
-	CreatedAt        int64              `json:"createdAt"        bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
+	ID               pulid.ID           `json:"id"               keel:"id,pk,autoid:wpl_"`
+	BusinessUnitID   pulid.ID           `json:"businessUnitId"   keel:"business_unit_id,pk,tenant"`
+	OrganizationID   pulid.ID           `json:"organizationId"   keel:"organization_id,pk,tenant"`
+	WorkerID         pulid.ID           `json:"workerId"         keel:"worker_id"`
+	PTOType          PTOType            `json:"ptoType"          keel:"pto_type"`
+	EntryType        PTOLedgerEntryType `json:"entryType"        keel:"entry_type"`
+	AmountDays       decimal.Decimal    `json:"amountDays"       keel:"amount_days"`
+	BalanceAfterDays decimal.Decimal    `json:"balanceAfterDays" keel:"balance_after_days"`
+	Sequence         int64              `json:"sequence"         keel:"sequence"`
+	EffectiveAt      int64              `json:"effectiveAt"      keel:"effective_at"`
+	PeriodKey        string             `json:"periodKey"        keel:"period_key,nullzero"`
+	SourcePTOID      pulid.ID           `json:"sourcePtoId"      keel:"source_pto_id,nullzero"`
+	AssignmentID     pulid.ID           `json:"assignmentId"     keel:"assignment_id,nullzero"`
+	PTOPolicyID      pulid.ID           `json:"ptoPolicyId"      keel:"pto_policy_id,nullzero"`
+	ActorType        PTOLedgerActorType `json:"actorType"        keel:"actor_type"`
+	CreatedByID      pulid.ID           `json:"createdById"      keel:"created_by_id,nullzero"`
+	Note             string             `json:"note"             keel:"note,nullzero"`
+	CreatedAt        int64              `json:"createdAt"        keel:"created_at,autocreate"`
 
-	Worker    *Worker    `json:"worker,omitempty"    bun:"rel:belongs-to,join:worker_id=id,join:organization_id=organization_id,join:business_unit_id=business_unit_id"`
-	SourcePTO *WorkerPTO `json:"sourcePto,omitempty" bun:"rel:belongs-to,join:source_pto_id=id,join:worker_id=worker_id,join:organization_id=organization_id,join:business_unit_id=business_unit_id"`
+	Worker    *Worker    `json:"worker,omitempty"    keel:"belongs:worker_id"`
+	SourcePTO *WorkerPTO `json:"sourcePto,omitempty" keel:"belongs:source_pto_id|worker_id"`
+}
+
+func (e *WorkerPTOLedgerEntry) BeforeCreate(_ context.Context) error {
+	if e.ActorType == "" {
+		e.ActorType = PTOLedgerActorUser
+	}
+
+	return nil
 }
 
 func (e *WorkerPTOLedgerEntry) Validate(multiErr *errortypes.MultiError) {
@@ -191,15 +197,4 @@ func (e *WorkerPTOLedgerEntry) GetPostgresSearchConfig() domaintypes.PostgresSea
 			},
 		},
 	}
-}
-
-func (e *WorkerPTOLedgerEntry) BeforeAppendModel(_ context.Context, query bun.Query) error {
-	if _, ok := query.(*bun.InsertQuery); ok {
-		if e.ID.IsNil() {
-			e.ID = pulid.MustNew("wpl_")
-		}
-		e.CreatedAt = timeutils.NowUnix()
-	}
-
-	return nil
 }

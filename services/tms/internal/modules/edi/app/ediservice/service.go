@@ -2,6 +2,7 @@ package ediservice
 
 import (
 	"context"
+
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 
 	"github.com/emoss08/trenova/internal/infrastructure/observability/metrics"
@@ -71,7 +72,9 @@ type Params struct {
 	Notifications       *notificationservice.Service
 	Encryption          *encryptionservice.Service
 	Validator           *Validator
-	DB                  kernelports.DBConnection
+	DB                  kernelports.Transactor
+	Savepoints          kernelports.Savepointer
+	ShipmentTenderRepo  ediports.EDIShipmentTenderRepository
 	Coordinator         *shipmentstate.Coordinator
 	Transport           ediports.EDITransportDispatcher
 	OrderDerivation     orderports.OrderDerivationService
@@ -119,7 +122,9 @@ type Service struct {
 	notifications       *notificationservice.Service
 	encryption          *encryptionservice.Service
 	validator           *Validator
-	db                  kernelports.DBConnection
+	db                  kernelports.Transactor
+	savepoints          kernelports.Savepointer
+	shipmentTenderRepo  ediports.EDIShipmentTenderRepository
 	coordinator         *shipmentstate.Coordinator
 	transport           ediports.EDITransportDispatcher
 	orderDerivation     orderports.OrderDerivationService
@@ -174,6 +179,8 @@ func New(p Params) *Service {
 		encryption:          p.Encryption,
 		validator:           p.Validator,
 		db:                  p.DB,
+		savepoints:          p.Savepoints,
+		shipmentTenderRepo:  p.ShipmentTenderRepo,
 		coordinator:         p.Coordinator,
 		transport:           p.Transport,
 		orderDerivation:     p.OrderDerivation,

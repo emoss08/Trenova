@@ -14,6 +14,7 @@ const helperFixture = `package fixture
 import (
 	"context"
 
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 )
@@ -45,12 +46,12 @@ func (r *repository) outer(ctx context.Context) (int, error) {
 }
 
 func (r *repository) count(ctx context.Context) (int, error) {
-	return r.db.DBForContext(ctx).NewSelect().Count(ctx)
+	return keel.QueryValue[int](ctx, r.db.Keel(ctx), "SELECT 1")
 }
 
 func (r *repository) scopedCount(ctx context.Context) (int, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (int, error) {
-		return r.db.DBForContext(ctx).NewSelect().Count(ctx)
+		return keel.QueryValue[int](ctx, r.db.Keel(ctx), "SELECT 1")
 	})
 }
 `
@@ -73,5 +74,58 @@ func TestScanRepositories_FollowsHelpersThatTouchTheConnection(t *testing.T) {
 	assert.ElementsMatch(t, []string{
 		"fixture/repo.go:repository.Unscoped",
 		"fixture/repo.go:repository.ThroughTwoHelpers",
+	}, flagged)
+}
+
+const keelFixture = `package fixture
+
+import (
+	"context"
+
+	"github.com/emoss08/keel"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+)
+
+type repository struct {
+	db *postgres.Connection
+}
+
+func (r *repository) Unscoped(ctx context.Context) (int64, error) {
+	return keel.QueryValue[int64](ctx, r.db.Keel(ctx), "SELECT 1")
+}
+
+func (r *repository) Scoped(ctx context.Context) (int64, error) {
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) (int64, error) {
+		return keel.QueryValue[int64](ctx, r.db.Keel(ctx), "SELECT 1")
+	})
+}
+
+func (r *repository) ReadsBeforeTheTransaction(ctx context.Context) (int64, error) {
+	db := r.db.Keel(ctx)
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) (int64, error) {
+		return keel.QueryValue[int64](ctx, db, "SELECT 1")
+	})
+}
+`
+
+func TestScanRepositories_HoldsKeelAccessToTheSameRule(t *testing.T) {
+	t.Parallel()
+
+	root := t.TempDir()
+	dir := filepath.Join(root, "fixture")
+	require.NoError(t, os.MkdirAll(dir, 0o750))
+	require.NoError(t, os.WriteFile(filepath.Join(dir, "repo.go"), []byte(keelFixture), 0o600))
+
+	violations, err := ScanRepositories(dir, root)
+	require.NoError(t, err)
+
+	flagged := make([]string, 0, len(violations))
+	for _, violation := range violations {
+		flagged = append(flagged, violation.Key)
+	}
+	assert.ElementsMatch(t, []string{
+		"fixture/repo.go:repository.Unscoped",
+		"fixture/repo.go:repository.ReadsBeforeTheTransaction",
 	}, flagged)
 }

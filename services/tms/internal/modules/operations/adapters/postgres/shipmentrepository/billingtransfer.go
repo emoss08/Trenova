@@ -3,21 +3,13 @@ package shipmentrepository
 import (
 	"context"
 
-	"github.com/emoss08/trenova/pkg/buncolgen/shipmentcol"
-
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
-	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment/shipmentdb"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
-	"github.com/emoss08/trenova/pkg/querybuilder"
+	"github.com/emoss08/trenova/pkg/listquery"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/uptrace/bun"
 )
-
-const billingTransferCandidateAlias = "candidate"
-
-func billingTransferCandidatePredicate(q *bun.SelectQuery) *bun.SelectQuery {
-	return q.Where("?", BillingTransferCandidateCondition())
-}
 
 func (r *repository) ListBillingTransferCandidateIDs(
 	ctx context.Context,
@@ -27,27 +19,16 @@ func (r *repository) ListBillingTransferCandidateIDs(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*shipmentports.BillingTransferCandidateIDsResult, error) {
-			dba := r.db.DBForContext(ctx)
-			sp := shipmentcol.ShipmentColumns
-
-			scope := func(q *bun.SelectQuery) *bun.SelectQuery {
-				q = querybuilder.ApplyFiltersWithoutSort(
-					q,
-					shipmentcol.ShipmentTable.Alias,
-					req.Filter,
-					(*shipment.Shipment)(nil),
-				)
-				q = billingTransferCandidatePredicate(q)
-				if req.Status != "" {
-					q = q.Where(sp.Status.Eq(), req.Status)
-				}
-				return q
+			sp := shipmentdb.Shipments
+			q := sp.Where(BillingTransferCandidateCondition())
+			if req.Status != "" {
+				q = q.Where(sp.Status.Eq(req.Status))
+			}
+			if req.Filter != nil {
+				q = listquery.Filter(q, req.Filter)
 			}
 
-			total, err := dba.NewSelect().
-				Model((*shipment.Shipment)(nil)).
-				Apply(scope).
-				Count(ctx)
+			total, err := q.Clone().Count(ctx, r.db.Keel(ctx))
 			if err != nil {
 				return nil, err
 			}
@@ -60,27 +41,20 @@ func (r *repository) ListBillingTransferCandidateIDs(
 				return result, nil
 			}
 
-			matched := dba.NewSelect().
-				Model((*shipment.Shipment)(nil)).
-				Apply(scope)
-			candidate := sp.ID.WithAlias(billingTransferCandidateAlias)
-			candidateCreatedAt := sp.CreatedAt.WithAlias(billingTransferCandidateAlias)
-			order := []string{candidateCreatedAt.OrderAsc(), candidate.OrderAsc()}
+			order := []keel.Order{sp.CreatedAt.Asc(), sp.ID.Asc()}
 			if req.RecentFirst {
-				order = []string{
-					sp.UpdatedAt.WithAlias(billingTransferCandidateAlias).OrderDesc(),
-					candidate.OrderDesc(),
-				}
+				order = []keel.Order{sp.UpdatedAt.Desc(), sp.ID.Desc()}
 			}
 
-			if err = dba.NewSelect().
-				TableExpr("(?) AS ?", matched, bun.Ident(billingTransferCandidateAlias)).
-				ColumnExpr(candidate.Qualified()).
-				Order(order...).
-				Limit(int64(req.Limit)).
-				Scan(ctx, &result.IDs); err != nil {
+			ids, err := keel.Into[pulid.ID](
+				ctx,
+				r.db.Keel(ctx),
+				q.Pick(sp.ID).Order(order...).Limit(req.Limit),
+			)
+			if err != nil {
 				return nil, err
 			}
+			result.IDs = append(result.IDs, ids...)
 
 			return result, nil
 		},

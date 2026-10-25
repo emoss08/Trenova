@@ -7,13 +7,13 @@ import (
 	"testing"
 	"time"
 
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"github.com/uptrace/bun"
 )
 
 func daysAgo(days int) int64 {
@@ -24,13 +24,13 @@ func (f *rlsFixture) seedAuditEntry(t *testing.T, critical bool, timestamp int64
 	t.Helper()
 
 	id := pulid.MustNew("ae_").String()
-	_, err := f.admin.NewRaw(`
+	_, err := keel.Exec(t.Context(), f.admin, `
 		INSERT INTO audit_entries (id, business_unit_id, organization_id, resource, resource_id, operation,
 			user_id, principal_type, principal_id, timestamp, critical)
-		VALUES (?, ?, ?, 'user', 'res', 'update', ?, 'session_user', ?, ?, ?)`,
-		id, f.tenantA.BusinessUnitID, f.tenantA.OrganizationID, f.tenantA.UserID, f.tenantA.UserID,
-		timestamp, critical,
-	).Exec(t.Context())
+		VALUES ($1, $2, $3, 'user', 'res', 'update', $4, 'session_user', $4, $5, $6)`,
+		id, f.tenantA.BusinessUnitID.String(), f.tenantA.OrganizationID.String(),
+		f.tenantA.UserID.String(), timestamp, critical,
+	)
 	require.NoError(t, err)
 
 	return id
@@ -39,22 +39,31 @@ func (f *rlsFixture) seedAuditEntry(t *testing.T, critical bool, timestamp int64
 func (f *rlsFixture) auditEntryIDs(t *testing.T) []string {
 	t.Helper()
 
-	var ids []string
-	err := f.admin.NewRaw("SELECT id FROM audit_entries WHERE organization_id = ? ORDER BY id",
-		f.tenantA.OrganizationID).Scan(t.Context(), &ids)
+	ids, err := queryStrings(t.Context(), f.admin,
+		"SELECT id FROM audit_entries WHERE organization_id = $1 ORDER BY id",
+		f.tenantA.OrganizationID.String())
 	require.NoError(t, err)
 
 	return ids
 }
 
-func deleteAuditEntriesBefore(before, criticalBefore int64) func(bun.Tx) *bun.DeleteQuery {
-	return func(tx bun.Tx) *bun.DeleteQuery {
-		return tx.NewDelete().TableExpr("audit_entries").
-			Where("timestamp < ?", before).
-			WhereGroup(" AND ", func(q *bun.DeleteQuery) *bun.DeleteQuery {
-				return q.Where("NOT critical").WhereOr("timestamp < ?", criticalBefore)
-			})
+func deleteAuditEntriesBefore(before, criticalBefore int64) AuditRetentionDelete {
+	return func(ctx context.Context, db *keel.DB) (int64, error) {
+		return keel.Exec(ctx, db,
+			"DELETE FROM audit_entries WHERE timestamp < $1 AND (NOT critical OR timestamp < $2)",
+			before, criticalBefore)
 	}
+}
+
+func execInTransaction(ctx context.Context, conn *Connection, statements ...string) error {
+	return conn.Transact(ctx, kernelports.TxOptions{}, func(ctx context.Context) error {
+		for _, statement := range statements {
+			if _, err := keel.Exec(ctx, conn.Keel(ctx), statement); err != nil {
+				return err
+			}
+		}
+		return nil
+	})
 }
 
 func TestAuditRetention_TheApplicationRoleCannotDeleteOrUpdate(t *testing.T) {
@@ -68,10 +77,7 @@ func TestAuditRetention_TheApplicationRoleCannotDeleteOrUpdate(t *testing.T) {
 		"UPDATE audit_entries SET comment = 'rewritten'",
 		"DELETE FROM auth_events",
 	} {
-		err := conn.WithTx(ctx, kernelports.TxOptions{}, func(ctx context.Context, tx bun.Tx) error {
-			_, err := tx.ExecContext(ctx, statement)
-			return err
-		})
+		err := execInTransaction(ctx, conn, statement)
 		require.Error(t, err, statement)
 		assert.Contains(t, err.Error(), "permission denied", statement)
 	}
@@ -85,20 +91,12 @@ func TestAuditRetention_TheSystemRoleMustOptInToDelete(t *testing.T) {
 	f.seedAuditEntry(t, false, daysAgo(400))
 
 	ctx := dbscope.WithSystem(t.Context(), "integration test retention")
-	err := conn.WithTx(ctx, kernelports.TxOptions{}, func(ctx context.Context, tx bun.Tx) error {
-		_, err := tx.ExecContext(ctx, "DELETE FROM audit_entries")
-		return err
-	})
+	err := execInTransaction(ctx, conn, "DELETE FROM audit_entries")
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), "append-only")
 
-	err = conn.WithTx(ctx, kernelports.TxOptions{}, func(ctx context.Context, tx bun.Tx) error {
-		if _, err := tx.ExecContext(ctx, enableAuditRetentionSQL); err != nil {
-			return err
-		}
-		_, err := tx.ExecContext(ctx, "UPDATE audit_entries SET comment = 'rewritten'")
-		return err
-	})
+	err = execInTransaction(ctx, conn,
+		enableAuditRetentionSQL, "UPDATE audit_entries SET comment = 'rewritten'")
 	require.Error(t, err, "retention never permits an update")
 
 	assert.Len(t, f.auditEntryIDs(t), 1)
@@ -136,35 +134,36 @@ func TestAuditRetention_AuthEventsAreAppendOnly(t *testing.T) {
 
 	insert := func(occurredAt int64) string {
 		id := pulid.MustNew("aue_").String()
-		_, err := f.admin.NewRaw(`
+		_, err := keel.Exec(ctx, f.admin, `
 			INSERT INTO auth_events (id, user_id, organization_id, business_unit_id, provider, outcome, occurred_at)
-			VALUES (?, ?, ?, ?, 'password', 'success', ?)`,
-			id, f.tenantA.UserID, f.tenantA.OrganizationID, f.tenantA.BusinessUnitID, occurredAt,
-		).Exec(ctx)
+			VALUES ($1, $2, $3, $4, 'password', 'success', $5)`,
+			id, f.tenantA.UserID.String(), f.tenantA.OrganizationID.String(),
+			f.tenantA.BusinessUnitID.String(), occurredAt,
+		)
 		require.NoError(t, err)
 		return id
 	}
 	recent := insert(daysAgo(5))
 	expired := insert(daysAgo(400))
 
-	_, err := f.admin.NewRaw("UPDATE auth_events SET outcome = 'failed' WHERE id = ?", recent).Exec(ctx)
+	_, err := keel.Exec(ctx, f.admin, "UPDATE auth_events SET outcome = 'failed' WHERE id = $1", recent)
 	require.Error(t, err)
 
-	_, err = f.admin.NewRaw("UPDATE auth_events SET user_id = NULL WHERE id = ?", recent).Exec(ctx)
+	_, err = keel.Exec(ctx, f.admin, "UPDATE auth_events SET user_id = NULL WHERE id = $1", recent)
 	require.NoError(t, err, "a deleted user or identity provider is unlinked by its foreign key")
 
-	_, err = f.admin.NewRaw("DELETE FROM auth_events WHERE id = ?", expired).Exec(ctx)
+	_, err = keel.Exec(ctx, f.admin, "DELETE FROM auth_events WHERE id = $1", expired)
 	require.Error(t, err)
 
 	systemCtx := dbscope.WithSystem(ctx, "integration test retention")
-	deleted, err := DeleteUnderAuditRetention(systemCtx, conn, func(tx bun.Tx) *bun.DeleteQuery {
-		return tx.NewDelete().TableExpr("auth_events").Where("occurred_at < ?", daysAgo(365))
+	deleted, err := DeleteUnderAuditRetention(systemCtx, conn, func(ctx context.Context, db *keel.DB) (int64, error) {
+		return keel.Exec(ctx, db, "DELETE FROM auth_events WHERE occurred_at < $1", daysAgo(365))
 	})
 	require.NoError(t, err)
 	assert.EqualValues(t, 1, deleted)
 
-	_, err = DeleteUnderAuditRetention(systemCtx, conn, func(tx bun.Tx) *bun.DeleteQuery {
-		return tx.NewDelete().TableExpr("auth_events").Where("id = ?", recent)
+	_, err = DeleteUnderAuditRetention(systemCtx, conn, func(ctx context.Context, db *keel.DB) (int64, error) {
+		return keel.Exec(ctx, db, "DELETE FROM auth_events WHERE id = $1", recent)
 	})
 	require.Error(t, err, "an event younger than the retention period cannot be deleted")
 }

@@ -5,6 +5,7 @@ import (
 	"errors"
 	"strings"
 
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/document"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/pkg/domainvalidation"
@@ -14,7 +15,6 @@ import (
 	"github.com/emoss08/trenova/shared/timeutils"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
 	"github.com/shopspring/decimal"
-	"github.com/uptrace/bun"
 )
 
 var (
@@ -195,46 +195,45 @@ func DefaultSafetyPoints(
 }
 
 var (
-	_ bun.BeforeAppendModelHook          = (*WorkerSafetyEvent)(nil)
 	_ validationframework.TenantedEntity = (*WorkerSafetyEvent)(nil)
 )
 
 type WorkerSafetyEvent struct {
-	bun.BaseModel `bun:"table:worker_safety_events,alias:wsev" json:"-"`
+	keel.Table `keel:"worker_safety_events"`
 
-	ID               pulid.ID            `json:"id"               bun:"id,pk,type:VARCHAR(100),notnull"`
-	BusinessUnitID   pulid.ID            `json:"businessUnitId"   bun:"business_unit_id,pk,type:VARCHAR(100),notnull"`
-	OrganizationID   pulid.ID            `json:"organizationId"   bun:"organization_id,pk,type:VARCHAR(100),notnull"`
-	WorkerID         pulid.ID            `json:"workerId"         bun:"worker_id,type:VARCHAR(100),notnull"`
-	Kind             SafetyEventKind     `json:"kind"             bun:"kind,type:safety_event_kind_enum,notnull"`
-	Severity         SafetySeverity      `json:"severity"         bun:"severity,type:safety_severity_enum,notnull,default:'Minor'"`
-	Status           SafetyEventStatus   `json:"status"           bun:"status,type:safety_event_status_enum,notnull,default:'Open'"`
-	OccurredAt       int64               `json:"occurredAt"       bun:"occurred_at,type:BIGINT,notnull"`
-	Location         string              `json:"location"         bun:"location,type:VARCHAR(255),nullzero"`
-	Description      string              `json:"description"      bun:"description,type:TEXT,notnull"`
-	Preventable      bool                `json:"preventable"      bun:"preventable,type:BOOLEAN,notnull"`
-	Points           int32               `json:"points"           bun:"points,type:INTEGER,notnull"`
-	PointsExpireAt   *int64              `json:"pointsExpireAt"   bun:"points_expire_at,type:BIGINT,nullzero"`
-	ReferenceNumber  string              `json:"referenceNumber"  bun:"reference_number,type:VARCHAR(100),nullzero"`
-	ShipmentID       pulid.ID            `json:"shipmentId"       bun:"shipment_id,type:VARCHAR(100),nullzero"`
-	InspectionLevel  *int16              `json:"inspectionLevel"  bun:"inspection_level,type:SMALLINT,nullzero"`
-	InspectionResult InspectionResult    `json:"inspectionResult" bun:"inspection_result,type:inspection_result_enum,nullzero"`
-	OutOfService     bool                `json:"outOfService"     bun:"out_of_service,type:BOOLEAN,notnull"`
-	FineAmount       decimal.NullDecimal `json:"fineAmount"       bun:"fine_amount,type:NUMERIC(12,2),nullzero"`
-	CostAmount       decimal.NullDecimal `json:"costAmount"       bun:"cost_amount,type:NUMERIC(12,2),nullzero"`
-	DocumentID       pulid.ID            `json:"documentId"       bun:"document_id,type:VARCHAR(100),nullzero"`
-	RecordedByID     pulid.ID            `json:"recordedById"     bun:"recorded_by_id,type:VARCHAR(100),nullzero"`
-	ClosedByID       pulid.ID            `json:"closedById"       bun:"closed_by_id,type:VARCHAR(100),nullzero"`
-	ClosedAt         *int64              `json:"closedAt"         bun:"closed_at,type:BIGINT,nullzero"`
-	Resolution       string              `json:"resolution"       bun:"resolution,type:TEXT,nullzero"`
-	Version          int64               `json:"version"          bun:"version,type:BIGINT"`
-	CreatedAt        int64               `json:"createdAt"        bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
-	UpdatedAt        int64               `json:"updatedAt"        bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
+	ID               pulid.ID            `json:"id"               keel:"id,pk,autoid:wsev_"`
+	BusinessUnitID   pulid.ID            `json:"businessUnitId"   keel:"business_unit_id,pk,tenant"`
+	OrganizationID   pulid.ID            `json:"organizationId"   keel:"organization_id,pk,tenant"`
+	WorkerID         pulid.ID            `json:"workerId"         keel:"worker_id"`
+	Kind             SafetyEventKind     `json:"kind"             keel:"kind"`
+	Severity         SafetySeverity      `json:"severity"         keel:"severity"`
+	Status           SafetyEventStatus   `json:"status"           keel:"status"`
+	OccurredAt       int64               `json:"occurredAt"       keel:"occurred_at"`
+	Location         string              `json:"location"         keel:"location,nullzero"`
+	Description      string              `json:"description"      keel:"description"`
+	Preventable      bool                `json:"preventable"      keel:"preventable"`
+	Points           int32               `json:"points"           keel:"points"`
+	PointsExpireAt   *int64              `json:"pointsExpireAt"   keel:"points_expire_at"`
+	ReferenceNumber  string              `json:"referenceNumber"  keel:"reference_number,nullzero"`
+	ShipmentID       pulid.ID            `json:"shipmentId"       keel:"shipment_id,nullzero"`
+	InspectionLevel  *int16              `json:"inspectionLevel"  keel:"inspection_level"`
+	InspectionResult InspectionResult    `json:"inspectionResult" keel:"inspection_result,nullzero"`
+	OutOfService     bool                `json:"outOfService"     keel:"out_of_service"`
+	FineAmount       decimal.NullDecimal `json:"fineAmount"       keel:"fine_amount"`
+	CostAmount       decimal.NullDecimal `json:"costAmount"       keel:"cost_amount"`
+	DocumentID       pulid.ID            `json:"documentId"       keel:"document_id,nullzero"`
+	RecordedByID     pulid.ID            `json:"recordedById"     keel:"recorded_by_id,nullzero"`
+	ClosedByID       pulid.ID            `json:"closedById"       keel:"closed_by_id,nullzero"`
+	ClosedAt         *int64              `json:"closedAt"         keel:"closed_at"`
+	Resolution       string              `json:"resolution"       keel:"resolution,nullzero"`
+	Version          int64               `json:"version"          keel:"version,version"`
+	CreatedAt        int64               `json:"createdAt"        keel:"created_at,autocreate"`
+	UpdatedAt        int64               `json:"updatedAt"        keel:"updated_at,autoupdate"`
 
-	Worker     *Worker            `json:"worker,omitempty"     bun:"rel:belongs-to,join:worker_id=id,join:organization_id=organization_id,join:business_unit_id=business_unit_id"`
-	Document   *document.Document `json:"document,omitempty"   bun:"rel:belongs-to,join:document_id=id,join:organization_id=organization_id,join:business_unit_id=business_unit_id"`
-	RecordedBy *tenant.User       `json:"recordedBy,omitempty" bun:"rel:belongs-to,join:recorded_by_id=id"`
-	ClosedBy   *tenant.User       `json:"closedBy,omitempty"   bun:"rel:belongs-to,join:closed_by_id=id"`
+	Worker     *Worker            `json:"worker,omitempty"     keel:"belongs:worker_id"`
+	Document   *document.Document `json:"document,omitempty"   keel:"belongs:document_id"`
+	RecordedBy *tenant.User       `json:"recordedBy,omitempty" keel:"belongs:recorded_by_id"`
+	ClosedBy   *tenant.User       `json:"closedBy,omitempty"   keel:"belongs:closed_by_id"`
 }
 
 func (e *WorkerSafetyEvent) Validate(multiErr *errortypes.MultiError) {
@@ -345,24 +344,12 @@ func (e *WorkerSafetyEvent) GetResourceType() string { return "worker_safety_eve
 
 func (e *WorkerSafetyEvent) GetResourceID() string { return e.ID.String() }
 
-func (e *WorkerSafetyEvent) BeforeAppendModel(_ context.Context, query bun.Query) error {
-	now := timeutils.NowUnix()
-
-	switch query.(type) {
-	case *bun.InsertQuery:
-		if e.ID.IsNil() {
-			e.ID = pulid.MustNew("wsev_")
-		}
-		if e.Status == "" {
-			e.Status = SafetyEventStatusOpen
-		}
-		if e.Severity == "" {
-			e.Severity = SafetySeverityMinor
-		}
-		e.CreatedAt = now
-		e.UpdatedAt = now
-	case *bun.UpdateQuery:
-		e.UpdatedAt = now
+func (e *WorkerSafetyEvent) BeforeCreate(_ context.Context) error {
+	if e.Status == "" {
+		e.Status = SafetyEventStatusOpen
+	}
+	if e.Severity == "" {
+		e.Severity = SafetySeverityMinor
 	}
 
 	return nil

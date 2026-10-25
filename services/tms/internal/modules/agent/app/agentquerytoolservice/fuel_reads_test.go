@@ -4,6 +4,8 @@ import (
 	"context"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/testutil/pagetest"
+
 	"github.com/emoss08/trenova/internal/api/graphql/agentread"
 	"github.com/emoss08/trenova/internal/api/graphql/agentread/agentreadtest"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentquerytoolservice"
@@ -143,7 +145,7 @@ func (r *purchaseRows) ListPurchases(
 	unit := &tractor.Tractor{ID: pulid.MustNew("tr_"), Code: "TRC-001"}
 	texas := &ifta.Jurisdiction{ID: pulid.MustNew("ifj_"), CountryCode: "US", Code: "TX"}
 
-	return pagination.NewCursorListResult([]*fuelpurchase.FuelPurchase{{
+	return pagetest.Of([]*fuelpurchase.FuelPurchase{{
 		ID: pulid.MustNew("fpur_"), TractorID: unit.ID, Tractor: unit,
 		JurisdictionID: texas.ID, Jurisdiction: texas, FuelType: domaintypes.IFTAFuelTypeDiesel,
 		Source: fuelpurchase.PurchaseSourceManual, TaxPaid: true, CurrencyCode: "USD",

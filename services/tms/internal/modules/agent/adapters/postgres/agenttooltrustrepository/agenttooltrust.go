@@ -4,19 +4,22 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/emoss08/trenova/pkg/buncolgen/agentcol"
-
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agent/agentdb"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/uptrace/bun"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
+
+const trustEntity = "AgentToolTrust"
+
+var trustErrors = dberror.Mapping{Entity: trustEntity}
 
 type Params struct {
 	fx.In
@@ -37,7 +40,28 @@ func New(p Params) agentports.AgentToolTrustRepository {
 	}
 }
 
-const conflictTarget = "CONFLICT (organization_id, business_unit_id, agent_definition_id, tool_name) DO UPDATE"
+// recordConflict folds an outcome into the stored row: the counters add the
+// inserted deltas and the streak grows on a clean approval or resets.
+func recordConflict() keel.Conflict {
+	t := agentdb.ToolTrusts
+	sum := func(col keel.Int64Col) keel.Assignment {
+		return col.ToExpr(keel.Raw("? + ?", col, col.Excluded()))
+	}
+
+	return keel.OnConflict(t.OrganizationID, t.BusinessUnitID, t.AgentDefinitionID, t.ToolName).
+		Set(
+			t.Streak.ToExpr(keel.Raw(
+				"CASE WHEN ? > 0 THEN ? + 1 ELSE 0 END",
+				t.Streak.Excluded(),
+				t.Streak,
+			)),
+			sum(t.Approvals),
+			sum(t.Modifications),
+			sum(t.Rejections),
+			sum(t.ExecutionFailures),
+			t.LastDecisionAt.ToExpr(t.LastDecisionAt.Excluded()),
+		)
+}
 
 // Record folds one outcome into the row for the agent and tool, in a single
 // upsert so two decisions landing at once both count. The inserted row
@@ -84,21 +108,14 @@ func (r *repository) Record(
 			return nil, me
 		}
 
-		cols := agentcol.ToolTrustColumns
-		if _, err := r.db.DBForContext(ctx).
-			NewInsert().
-			Model(entity).
-			On(conflictTarget).
-			Set(cols.Streak.SetExpr("CASE WHEN EXCLUDED.{} > 0 THEN " + cols.Streak.Qualified() + " + 1 ELSE 0 END")).
-			Set(cols.Approvals.SetExpr(cols.Approvals.Qualified() + " + EXCLUDED.{}")).
-			Set(cols.Modifications.SetExpr(cols.Modifications.Qualified() + " + EXCLUDED.{}")).
-			Set(cols.Rejections.SetExpr(cols.Rejections.Qualified() + " + EXCLUDED.{}")).
-			Set(cols.ExecutionFailures.SetExpr(cols.ExecutionFailures.Qualified() + " + EXCLUDED.{}")).
-			Set(cols.LastDecisionAt.SetExpr("EXCLUDED.{}")).
-			Set(cols.UpdatedAt.SetExpr("EXCLUDED.{}")).
-			Set(cols.Version.IncConflict(1)).
-			Returning("*").
-			Exec(ctx); err != nil {
+		t := agentdb.ToolTrusts
+		inserted, err := t.Upsert(
+			ctx,
+			r.db.Keel(ctx),
+			[]*agent.ToolTrust{entity},
+			recordConflict(),
+		)
+		if err != nil {
 			r.l.Error("failed to record tool trust outcome",
 				zap.String("agentDefinitionId", req.AgentDefinitionID.String()),
 				zap.String("tool", req.ToolName),
@@ -107,8 +124,19 @@ func (r *repository) Record(
 
 			return nil, fmt.Errorf("record tool trust: %w", err)
 		}
+		if len(inserted) > 0 && inserted[0] {
+			return entity, nil
+		}
 
-		return entity, nil
+		stored, err := t.Where(
+			t.AgentDefinitionID.Eq(req.AgentDefinitionID),
+			t.ToolName.Eq(req.ToolName),
+		).One(ctx, r.db.Keel(ctx))
+		if err != nil {
+			return nil, trustErrors.Map(err, req.ToolName)
+		}
+
+		return stored, nil
 	})
 }
 
@@ -117,18 +145,11 @@ func (r *repository) ListByDefinition(
 	req agentports.ListToolTrustRequest,
 ) ([]*agent.ToolTrust, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*agent.ToolTrust, error) {
-		cols := agentcol.ToolTrustColumns
-		rows := make([]*agent.ToolTrust, 0)
-
-		if err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(&rows).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return agentcol.ToolTrustScopeTenant(sq, req.TenantInfo).
-					Where(cols.AgentDefinitionID.Eq(), req.AgentDefinitionID)
-			}).
-			OrderExpr(cols.ToolName.OrderAsc()).
-			Scan(ctx); err != nil {
+		t := agentdb.ToolTrusts
+		rows, err := t.Where(t.AgentDefinitionID.Eq(req.AgentDefinitionID)).
+			Order(t.ToolName.Asc()).
+			All(ctx, r.db.Keel(ctx))
+		if err != nil {
 			r.l.Error("failed to list tool trust",
 				zap.String("agentDefinitionId", req.AgentDefinitionID.String()),
 				zap.Error(err),
@@ -151,17 +172,11 @@ func (r *repository) ListByDefinitionIDs(
 			return grouped, nil
 		}
 
-		cols := agentcol.ToolTrustColumns
-		rows := make([]*agent.ToolTrust, 0, len(req.AgentDefinitionIDs))
-		if err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(&rows).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return agentcol.ToolTrustScopeTenant(sq, req.TenantInfo).
-					Where(cols.AgentDefinitionID.In(), bun.List(req.AgentDefinitionIDs))
-			}).
-			OrderExpr(cols.ToolName.OrderAsc()).
-			Scan(ctx); err != nil {
+		t := agentdb.ToolTrusts
+		rows, err := t.Where(t.AgentDefinitionID.In(req.AgentDefinitionIDs...)).
+			Order(t.ToolName.Asc()).
+			All(ctx, r.db.Keel(ctx))
+		if err != nil {
 			r.l.Error("failed to list tool trust for agents",
 				zap.Int("agents", len(req.AgentDefinitionIDs)),
 				zap.Error(err),
@@ -186,50 +201,24 @@ func (r *repository) MarkTierChange(
 	req agentports.MarkToolTierChangeRequest,
 ) (*agent.ToolTrust, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*agent.ToolTrust, error) {
-		cols := agentcol.ToolTrustColumns
-		query := r.db.DBForContext(ctx).
-			NewUpdate().
-			Model((*agent.ToolTrust)(nil)).
-			WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-				return agentcol.ToolTrustScopeTenantUpdate(uq, req.TenantInfo).
-					Where(cols.ID.Eq(), req.ID).
-					Where(cols.Version.Eq(), req.Version)
-			}).
-			Set(cols.Streak.Set(), 0).
-			Set(cols.UpdatedAt.Set(), req.At).
-			Set(cols.Version.Inc(1))
-
+		t := agentdb.ToolTrusts
+		sets := []keel.Assignment{t.Streak.To(0), t.UpdatedAt.To(req.At)}
 		if req.Promoted {
-			query = query.
-				Set(cols.EarnedTier.Set(), req.EarnedTier).
-				Set(cols.PromotedAt.Set(), req.At)
+			sets = append(sets, t.EarnedTier.To(req.EarnedTier), t.PromotedAt.To(req.At))
 		} else {
-			query = query.
-				Set(cols.EarnedTier.Set(), nil).
-				Set(cols.DemotedAt.Set(), req.At)
+			sets = append(sets, t.EarnedTier.ToNull(), t.DemotedAt.To(req.At))
 		}
 
-		res, err := query.Exec(ctx)
+		rows, err := t.Where(t.ID.Eq(req.ID), t.Version.Eq(req.Version)).
+			UpdateReturning(ctx, r.db.Keel(ctx), sets...)
 		if err != nil {
 			return nil, fmt.Errorf("mark tool trust tier change: %w", err)
 		}
-		if err = dberror.CheckRowsAffected(res, "AgentToolTrust", req.ID.String()); err != nil {
+		if err = dberror.CheckAffected(int64(len(rows)), trustEntity, req.ID.String()); err != nil {
 			return nil, err
 		}
 
-		entity := new(agent.ToolTrust)
-		if err = r.db.DBForContext(ctx).
-			NewSelect().
-			Model(entity).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return agentcol.ToolTrustScopeTenant(sq, req.TenantInfo).
-					Where(cols.ID.Eq(), req.ID)
-			}).
-			Scan(ctx); err != nil {
-			return nil, dberror.HandleNotFoundError(err, "AgentToolTrust")
-		}
-
-		return entity, nil
+		return rows[0], nil
 	})
 }
 
@@ -238,18 +227,12 @@ func (r *repository) ListReady(
 	req agentports.ListReadyToolTrustRequest,
 ) ([]*agent.ToolTrust, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*agent.ToolTrust, error) {
-		cols := agentcol.ToolTrustColumns
-		rows := make([]*agent.ToolTrust, 0, req.Limit)
-		if err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(&rows).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return agentcol.ToolTrustScopeTenant(sq, req.TenantInfo).
-					Where(cols.Streak.Gte(), max(req.MinStreak, 1))
-			}).
-			OrderExpr(cols.Streak.OrderDesc()).
-			Limit(int64(req.Limit)).
-			Scan(ctx); err != nil {
+		t := agentdb.ToolTrusts
+		rows, err := t.Where(t.Streak.Gte(int64(max(req.MinStreak, 1)))).
+			Order(t.Streak.Desc()).
+			Limit(req.Limit).
+			List(ctx, r.db.Keel(ctx))
+		if err != nil {
 			return nil, fmt.Errorf("list tools ready for promotion: %w", err)
 		}
 		return rows, nil

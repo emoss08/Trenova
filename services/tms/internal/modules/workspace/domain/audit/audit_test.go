@@ -8,7 +8,6 @@ import (
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"github.com/uptrace/bun"
 )
 
 func validEntry() *Entry {
@@ -175,32 +174,18 @@ func TestEntry_CreditAgentNamesTheAgentInTheDescription(t *testing.T) {
 	assert.Equal(t, "Ran by an agent", unknown.Comment)
 }
 
-func TestEntry_BeforeAppendModel(t *testing.T) {
+func TestEntry_BeforeCreate(t *testing.T) {
 	t.Parallel()
 
-	t.Run("insert sets ID and Timestamp", func(t *testing.T) {
+	t.Run("insert sets Timestamp", func(t *testing.T) {
 		t.Parallel()
 
 		e := &Entry{}
-		require.True(t, e.ID.IsNil())
 
-		err := e.BeforeAppendModel(t.Context(), (*bun.InsertQuery)(nil))
+		err := e.BeforeCreate(t.Context())
 		require.NoError(t, err)
 
-		assert.False(t, e.ID.IsNil())
 		assert.NotZero(t, e.Timestamp)
-	})
-
-	t.Run("insert does not overwrite existing ID", func(t *testing.T) {
-		t.Parallel()
-
-		existingID := pulid.MustNew("ae_")
-		e := &Entry{ID: existingID}
-
-		err := e.BeforeAppendModel(t.Context(), (*bun.InsertQuery)(nil))
-		require.NoError(t, err)
-
-		assert.Equal(t, existingID, e.ID)
 	})
 
 	t.Run("insert does not overwrite existing Timestamp", func(t *testing.T) {
@@ -208,7 +193,7 @@ func TestEntry_BeforeAppendModel(t *testing.T) {
 
 		e := &Entry{Timestamp: 1234567890}
 
-		err := e.BeforeAppendModel(t.Context(), (*bun.InsertQuery)(nil))
+		err := e.BeforeCreate(t.Context())
 		require.NoError(t, err)
 
 		assert.Equal(t, int64(1234567890), e.Timestamp)
@@ -219,7 +204,7 @@ func TestEntry_BeforeAppendModel(t *testing.T) {
 
 		e := &Entry{}
 
-		err := e.BeforeAppendModel(t.Context(), (*bun.InsertQuery)(nil))
+		err := e.BeforeCreate(t.Context())
 		require.NoError(t, err)
 
 		assert.Equal(t, CategorySystem, e.Category)
@@ -230,34 +215,10 @@ func TestEntry_BeforeAppendModel(t *testing.T) {
 
 		e := &Entry{Category: CategoryUser}
 
-		err := e.BeforeAppendModel(t.Context(), (*bun.InsertQuery)(nil))
+		err := e.BeforeCreate(t.Context())
 		require.NoError(t, err)
 
 		assert.Equal(t, CategoryUser, e.Category)
-	})
-
-	t.Run("update does not set ID or Timestamp", func(t *testing.T) {
-		t.Parallel()
-
-		e := &Entry{}
-
-		err := e.BeforeAppendModel(t.Context(), (*bun.UpdateQuery)(nil))
-		require.NoError(t, err)
-
-		assert.True(t, e.ID.IsNil())
-		assert.Zero(t, e.Timestamp)
-	})
-
-	t.Run("select query does nothing", func(t *testing.T) {
-		t.Parallel()
-
-		e := &Entry{}
-
-		err := e.BeforeAppendModel(t.Context(), (*bun.SelectQuery)(nil))
-		require.NoError(t, err)
-
-		assert.True(t, e.ID.IsNil())
-		assert.Zero(t, e.Timestamp)
 	})
 }
 
@@ -358,41 +319,15 @@ func TestDLQEntry_Validate(t *testing.T) {
 	}
 }
 
-func TestDLQEntry_BeforeAppendModel(t *testing.T) {
+func TestDLQEntry_BeforeCreate(t *testing.T) {
 	t.Parallel()
-
-	t.Run("insert sets ID CreatedAt and UpdatedAt", func(t *testing.T) {
-		t.Parallel()
-
-		e := &DLQEntry{}
-		require.True(t, e.ID.IsNil())
-
-		err := e.BeforeAppendModel(t.Context(), (*bun.InsertQuery)(nil))
-		require.NoError(t, err)
-
-		assert.False(t, e.ID.IsNil())
-		assert.NotZero(t, e.CreatedAt)
-		assert.NotZero(t, e.UpdatedAt)
-	})
-
-	t.Run("insert does not overwrite existing ID", func(t *testing.T) {
-		t.Parallel()
-
-		existingID := pulid.MustNew("dlq_")
-		e := &DLQEntry{ID: existingID}
-
-		err := e.BeforeAppendModel(t.Context(), (*bun.InsertQuery)(nil))
-		require.NoError(t, err)
-
-		assert.Equal(t, existingID, e.ID)
-	})
 
 	t.Run("insert sets default status if empty", func(t *testing.T) {
 		t.Parallel()
 
 		e := &DLQEntry{}
 
-		err := e.BeforeAppendModel(t.Context(), (*bun.InsertQuery)(nil))
+		err := e.BeforeCreate(t.Context())
 		require.NoError(t, err)
 
 		assert.Equal(t, DLQStatusPending, e.Status)
@@ -403,46 +338,10 @@ func TestDLQEntry_BeforeAppendModel(t *testing.T) {
 
 		e := &DLQEntry{Status: DLQStatusRetrying}
 
-		err := e.BeforeAppendModel(t.Context(), (*bun.InsertQuery)(nil))
+		err := e.BeforeCreate(t.Context())
 		require.NoError(t, err)
 
 		assert.Equal(t, DLQStatusRetrying, e.Status)
-	})
-
-	t.Run("update sets UpdatedAt", func(t *testing.T) {
-		t.Parallel()
-
-		e := &DLQEntry{}
-
-		err := e.BeforeAppendModel(t.Context(), (*bun.UpdateQuery)(nil))
-		require.NoError(t, err)
-
-		assert.NotZero(t, e.UpdatedAt)
-	})
-
-	t.Run("update does not set CreatedAt", func(t *testing.T) {
-		t.Parallel()
-
-		e := &DLQEntry{}
-
-		err := e.BeforeAppendModel(t.Context(), (*bun.UpdateQuery)(nil))
-		require.NoError(t, err)
-
-		assert.Zero(t, e.CreatedAt)
-		assert.NotZero(t, e.UpdatedAt)
-	})
-
-	t.Run("select query does nothing", func(t *testing.T) {
-		t.Parallel()
-
-		e := &DLQEntry{}
-
-		err := e.BeforeAppendModel(t.Context(), (*bun.SelectQuery)(nil))
-		require.NoError(t, err)
-
-		assert.True(t, e.ID.IsNil())
-		assert.Zero(t, e.CreatedAt)
-		assert.Zero(t, e.UpdatedAt)
 	})
 }
 

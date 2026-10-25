@@ -672,12 +672,7 @@ func (s *Service) listWorkersForSamsaraSync(
 			break
 		}
 
-		last := page.Items[len(page.Items)-1]
-		if len(page.CursorSort) > 0 {
-			after, err = pagination.EncodeCursorFromEntityWithSort(last, page.CursorSort)
-		} else {
-			after, err = pagination.EncodeCursorFromEntity(last)
-		}
+		after, err = page.NextCursor()
 		if err != nil {
 			return nil, err
 		}

@@ -5,6 +5,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/modules/reference/domain/holdreason"
+	"github.com/emoss08/trenova/internal/modules/reference/domain/holdreason/holdreasondb"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/validationframework"
 	"go.uber.org/fx"
@@ -21,11 +22,13 @@ type Validator struct {
 }
 
 func NewValidator(p ValidatorParams) *Validator {
+	checker := validationframework.NewKeelChecker(p.DB, holdreasondb.HoldReasonsSchema())
+
 	return &Validator{
 		validator: validationframework.
 			NewTenantedValidatorBuilder[*holdreason.HoldReason]().
 			WithModelName("HoldReason").
-			WithUniquenessChecker(validationframework.NewBunUniquenessCheckerScoped(p.DB)).
+			WithUniquenessChecker(checker).
 			WithUniqueField(
 				"code",
 				"code",

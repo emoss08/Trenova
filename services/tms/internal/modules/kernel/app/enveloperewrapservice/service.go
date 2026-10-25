@@ -409,7 +409,7 @@ func (s *Service) rewrapObject(
 		if err = s.repo.SwapVersion(ctx, &kernelports.SwapEnvelopeVersionRequest{
 			Object:      object,
 			Row:         row,
-			Expected:    row.Extra[object.Version.Name],
+			Expected:    row.Extra[kernelports.EnvelopeColumnName(object.Version)],
 			Replacement: info.VersionID,
 		}); err != nil {
 			return outcomeCurrent, err

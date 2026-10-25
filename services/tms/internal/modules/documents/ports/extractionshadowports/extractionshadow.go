@@ -42,11 +42,11 @@ type TotalExtractionShadowResultsRequest struct {
 }
 
 type ExtractionShadowStatusTotal struct {
-	Status       extractionshadow.ResultStatus `bun:"status"`
-	Count        int                           `bun:"count"`
-	CostUSD      decimal.Decimal               `bun:"cost_usd"`
-	LatencyMsSum int64                         `bun:"latency_ms_sum"`
-	Timed        int                           `bun:"timed"`
+	Status       extractionshadow.ResultStatus
+	Count        int
+	CostUSD      decimal.Decimal
+	LatencyMsSum int64
+	Timed        int
 }
 
 type ListExtractionShadowResultConnectionRequest struct {

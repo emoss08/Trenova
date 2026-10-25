@@ -4,20 +4,13 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/emoss08/trenova/pkg/buncolgen/carriercol"
-	"github.com/emoss08/trenova/pkg/buncolgen/customercol"
-	"github.com/emoss08/trenova/pkg/buncolgen/servicetypecol"
-	"github.com/emoss08/trenova/pkg/buncolgen/shipmentcol"
-	"github.com/emoss08/trenova/pkg/buncolgen/tractorcol"
-	"github.com/emoss08/trenova/pkg/buncolgen/trailercol"
-	"github.com/emoss08/trenova/pkg/buncolgen/workercol"
-
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
-	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment/shipmentdb"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
-	"github.com/emoss08/trenova/pkg/buncolgen"
-	"github.com/uptrace/bun"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/customer/customerdb"
+	"github.com/emoss08/trenova/internal/modules/reference/domain/commodity/commoditydb"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
@@ -25,45 +18,6 @@ import (
 const defaultBoardLimit = 500
 
 const maxBoardLimit = 2000
-
-const (
-	assignedWorkerAlias  = "asn_wrk"
-	assignedTractorAlias = "asn_trac"
-	assignedTrailerAlias = "asn_tr"
-)
-
-var (
-	asnWorkerID        = workercol.WorkerColumns.ID.WithAlias(assignedWorkerAlias)
-	asnWorkerFirstName = workercol.WorkerColumns.FirstName.WithAlias(assignedWorkerAlias)
-	asnWorkerLastName  = workercol.WorkerColumns.LastName.WithAlias(assignedWorkerAlias)
-	asnWorkerOrgID     = workercol.WorkerColumns.OrganizationID.WithAlias(assignedWorkerAlias)
-	asnWorkerBuID      = workercol.WorkerColumns.BusinessUnitID.WithAlias(assignedWorkerAlias)
-
-	asnTractorID    = tractorcol.TractorColumns.ID.WithAlias(assignedTractorAlias)
-	asnTractorCode  = tractorcol.TractorColumns.Code.WithAlias(assignedTractorAlias)
-	asnTractorOrgID = tractorcol.TractorColumns.OrganizationID.WithAlias(assignedTractorAlias)
-	asnTractorBuID  = tractorcol.TractorColumns.BusinessUnitID.WithAlias(assignedTractorAlias)
-
-	asnTrailerID    = trailercol.TrailerColumns.ID.WithAlias(assignedTrailerAlias)
-	asnTrailerCode  = trailercol.TrailerColumns.Code.WithAlias(assignedTrailerAlias)
-	asnTrailerOrgID = trailercol.TrailerColumns.OrganizationID.WithAlias(assignedTrailerAlias)
-	asnTrailerBuID  = trailercol.TrailerColumns.BusinessUnitID.WithAlias(assignedTrailerAlias)
-
-	assignedWorkerJoin = "LEFT JOIN " + workercol.WorkerTable.As(assignedWorkerAlias) +
-		" ON " + asnWorkerID.EqColumn(shipmentcol.AssignmentColumns.PrimaryWorkerID) +
-		" AND " + asnWorkerOrgID.EqColumn(shipmentcol.AssignmentColumns.OrganizationID) +
-		" AND " + asnWorkerBuID.EqColumn(shipmentcol.AssignmentColumns.BusinessUnitID)
-
-	assignedTractorJoin = "LEFT JOIN " + tractorcol.TractorTable.As(assignedTractorAlias) +
-		" ON " + asnTractorID.EqColumn(shipmentcol.AssignmentColumns.TractorID) +
-		" AND " + asnTractorOrgID.EqColumn(shipmentcol.AssignmentColumns.OrganizationID) +
-		" AND " + asnTractorBuID.EqColumn(shipmentcol.AssignmentColumns.BusinessUnitID)
-
-	assignedTrailerJoin = "LEFT JOIN " + trailercol.TrailerTable.As(assignedTrailerAlias) +
-		" ON " + asnTrailerID.EqColumn(shipmentcol.AssignmentColumns.TrailerID) +
-		" AND " + asnTrailerOrgID.EqColumn(shipmentcol.AssignmentColumns.OrganizationID) +
-		" AND " + asnTrailerBuID.EqColumn(shipmentcol.AssignmentColumns.BusinessUnitID)
-)
 
 type Params struct {
 	fx.In
@@ -100,164 +54,148 @@ func (r *repository) ListBoardMoves(
 	filter *shipmentports.DispatchBoardFilter,
 ) ([]*shipmentports.BoardMove, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*shipmentports.BoardMove, error) {
-		moveCols := shipmentcol.ShipmentMoveColumns
-		shipCols := shipmentcol.ShipmentColumns
-		asnCols := shipmentcol.AssignmentColumns
-		casnCols := shipmentcol.CarrierAssignmentColumns
+		sm := shipmentdb.ShipmentMoves
+		sp := shipmentdb.Shipments
+		asn := assignments
+		ca := carrierAssignments
+		orig := origin
+		dest := destination
 
-		entities := make([]*shipmentports.BoardMove, 0, boardLimit(filter.Limit))
+		q := boardMoves().
+			LeftJoin(serviceTypes, serviceTypes.ID.EqCol(sp.ServiceTypeID)).
+			LeftJoin(assignedWorkers, assignedWorkers.ID.EqCol(asn.PrimaryWorkerID)).
+			LeftJoin(assignedTractors, assignedTractors.ID.EqCol(asn.TractorID)).
+			LeftJoin(assignedTrailers, assignedTrailers.ID.EqCol(asn.TrailerID)).
+			LeftJoin(assignedCarriers, assignedCarriers.ID.EqCol(ca.CarrierID)).
+			Pick(
+				sm.ID,
+				sm.ShipmentID,
+				sp.ProNumber,
+				text(sp.BOL),
+				sm.Status,
+				sp.Status,
+				sm.Sequence,
+				moveCount(sm),
+				sm.Loaded,
+				sm.Distance,
+				sp.CustomerID,
+				text(customerdb.Customers.Name),
+				text(sp.ServiceTypeID),
+				text(serviceTypes.Code),
+				text(sp.TractorTypeID),
+				text(sp.TrailerTypeID),
+				sp.TemperatureMin,
+				sp.TemperatureMax,
+				hasHazmat(sm),
+				hasActiveHold(sm),
+				keel.Raw("?::float8", sp.TotalChargeAmount),
+				text(orig.stop.ID),
+				text(orig.stop.LocationID),
+				text(orig.loc.Name),
+				text(orig.loc.City),
+				text(orig.state.Abbreviation),
+				orig.loc.Latitude,
+				orig.loc.Longitude,
+				zero(orig.stop.ScheduledWindowStart),
+				orig.stop.ScheduledWindowEnd,
+				orig.stop.ActualArrival,
+				text(dest.stop.ID),
+				text(dest.stop.LocationID),
+				text(dest.loc.Name),
+				text(dest.loc.City),
+				text(dest.state.Abbreviation),
+				dest.loc.Latitude,
+				dest.loc.Longitude,
+				zero(dest.stop.ScheduledWindowStart),
+				dest.stop.ScheduledWindowEnd,
+				text(asn.ID),
+				text(asn.PrimaryWorkerID),
+				keel.Raw(
+					"CASE WHEN ? IS NULL THEN '' ELSE concat(?, ' ', ?) END",
+					assignedWorkers.ID,
+					assignedWorkers.FirstName,
+					assignedWorkers.LastName,
+				),
+				text(asn.TractorID),
+				text(assignedTractors.Code),
+				text(asn.TrailerID),
+				text(assignedTrailers.Code),
+				enumText(asn.AckStatus),
+				text(previousTrailer(sm)),
+				sm.CoverageType,
+				text(ca.ID),
+				text(ca.CarrierID),
+				text(assignedCarriers.Name),
+				keel.Raw("?::float8", ca.TotalCost),
+			).
+			Where(moveFilters(filter)...).
+			Where(
+				keel.When(!filter.IncludeCovered, asn.ID.IsNull()),
+				keel.When(!filter.IncludeCovered, ca.ID.IsNull()),
+			).
+			Order(
+				keel.Asc(zero(orig.stop.ScheduledWindowStart)),
+				sm.Sequence.Asc(),
+				sm.ID.Asc(),
+			).
+			Limit(boardLimit(filter.Limit))
 
-		q := r.db.DBForContext(ctx).NewSelect().
-			Model((*shipment.ShipmentMove)(nil)).
-			ColumnExpr(moveCols.ID.As("move_id")).
-			ColumnExpr(moveCols.ShipmentID.As("shipment_id")).
-			ColumnExpr(moveCols.Status.As("move_status")).
-			ColumnExpr(moveCols.Sequence.As("sequence")).
-			ColumnExpr(moveCols.Loaded.As("loaded")).
-			ColumnExpr(moveCols.Distance.As("distance")).
-			ColumnExpr(shipCols.ProNumber.As("pro_number")).
-			ColumnExpr(shipCols.BOL.As("bol")).
-			ColumnExpr(shipCols.Status.As("shipment_status")).
-			ColumnExpr(shipCols.CustomerID.As("customer_id")).
-			ColumnExpr(shipCols.ServiceTypeID.As("service_type_id")).
-			ColumnExpr(shipCols.TractorTypeID.As("tractor_type_id")).
-			ColumnExpr(shipCols.TrailerTypeID.As("trailer_type_id")).
-			ColumnExpr(shipCols.TemperatureMin.As("temperature_min")).
-			ColumnExpr(shipCols.TemperatureMax.As("temperature_max")).
-			ColumnExpr(shipCols.TotalChargeAmount.Expr("{}::float8 AS revenue")).
-			ColumnExpr(customercol.CustomerColumns.Name.As("customer_name")).
-			ColumnExpr(servicetypecol.ServiceTypeColumns.Code.As("service_type_code")).
-			ColumnExpr(asnCols.ID.As("assignment_id")).
-			ColumnExpr(asnCols.PrimaryWorkerID.As("assigned_worker_id")).
-			ColumnExpr(asnCols.TractorID.As("assigned_tractor_id")).
-			ColumnExpr(asnCols.TrailerID.As("assigned_trailer_id")).
-			ColumnExpr(asnCols.AckStatus.As("assignment_ack_status")).
-			ColumnExpr(buncolgen.Expr(
-				"CASE WHEN {0} IS NULL THEN '' ELSE CONCAT({1}, ' ', {2}) END AS assigned_worker_name",
-				asnWorkerID,
-				asnWorkerFirstName,
-				asnWorkerLastName,
-			)).
-			ColumnExpr(asnTractorCode.Expr("COALESCE({}, '') AS assigned_tractor_code")).
-			ColumnExpr(asnTrailerCode.Expr("COALESCE({}, '') AS assigned_trailer_code")).
-			ColumnExpr("COALESCE(mc.move_count, 0) AS move_count").
-			ColumnExpr("COALESCE(hz.has_hazmat, FALSE) AS has_hazmat").
-			ColumnExpr("COALESCE(hd.has_active_hold, FALSE) AS has_active_hold").
-			ColumnExpr("COALESCE(prev.trailer_id, '') AS previous_trailer_id").
-			ColumnExpr("COALESCE(orig.stop_id, '') AS origin_stop_id").
-			ColumnExpr("COALESCE(orig.location_id, '') AS origin_location_id").
-			ColumnExpr("COALESCE(orig.name, '') AS origin_name").
-			ColumnExpr("COALESCE(orig.city, '') AS origin_city").
-			ColumnExpr("COALESCE(orig.state_abbr, '') AS origin_state").
-			ColumnExpr("orig.latitude AS origin_latitude").
-			ColumnExpr("orig.longitude AS origin_longitude").
-			ColumnExpr("COALESCE(orig.window_start, 0) AS origin_window_start").
-			ColumnExpr("orig.window_end AS origin_window_end").
-			ColumnExpr("orig.actual_arrival AS origin_actual_arrive").
-			ColumnExpr("COALESCE(dest.stop_id, '') AS destination_stop_id").
-			ColumnExpr("COALESCE(dest.location_id, '') AS destination_location_id").
-			ColumnExpr("COALESCE(dest.name, '') AS destination_name").
-			ColumnExpr("COALESCE(dest.city, '') AS destination_city").
-			ColumnExpr("COALESCE(dest.state_abbr, '') AS destination_state").
-			ColumnExpr("dest.latitude AS destination_latitude").
-			ColumnExpr("dest.longitude AS destination_longitude").
-			ColumnExpr("COALESCE(dest.window_start, 0) AS destination_window_start").
-			ColumnExpr("dest.window_end AS destination_window_end").
-			ColumnExpr(moveCols.CoverageType.As("coverage_type")).
-			ColumnExpr(casnCols.ID.As("carrier_assignment_id")).
-			ColumnExpr(casnCols.CarrierID.As("assigned_carrier_id")).
-			ColumnExpr(casnCols.TotalCost.Expr("{}::float8 AS carrier_total_cost")).
-			ColumnExpr(carriercol.CarrierColumns.Name.Expr(
-				"COALESCE({}, '') AS assigned_carrier_name")).
-			Join(shipmentJoin).
-			Join(customerJoin).
-			Join(serviceTypeJoin).
-			Join(assignmentJoin).
-			Join(assignedWorkerJoin).
-			Join(assignedTractorJoin).
-			Join(assignedTrailerJoin).
-			Join(carrierAssignmentJoin).
-			Join(assignedCarrierJoin)
-
-		q = joinMoveStopEdges(q)
-		q = joinMoveAggregates(q)
-
-		q = q.WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-			sq = shipmentcol.ShipmentMoveScopeTenant(sq, filter.TenantInfo)
-			sq = applyMoveFilters(sq, filter)
-			if !filter.IncludeCovered {
-				sq = sq.Where(asnCols.ID.IsNull()).
-					Where(casnCols.ID.IsNull())
-			}
-			return sq
-		}).
-			OrderExpr("COALESCE(orig.window_start, 0) ASC").
-			Order(moveCols.Sequence.OrderAsc()).
-			Order(moveCols.ID.OrderAsc()).
-			Limit(int64(boardLimit(filter.Limit)))
-
-		if err := q.Scan(ctx, &entities); err != nil {
+		rows, err := keel.Into[shipmentports.BoardMove](ctx, r.db.Keel(ctx), q)
+		if err != nil {
 			return nil, fmt.Errorf("list dispatch board moves: %w", err)
 		}
 
-		return entities, nil
+		return pointers(rows), nil
 	})
 }
 
-func joinMoveStopEdges(q *bun.SelectQuery) *bun.SelectQuery {
-	return q.
-		Join(stopEdgeLateral(originAlias, orderAscending), shipment.StopStatusCanceled).
-		Join(stopEdgeLateral(destinationAlias, orderDescending), shipment.StopStatusCanceled)
+func pointers[T any](rows []T) []*T {
+	out := make([]*T, len(rows))
+	for i := range rows {
+		out[i] = &rows[i]
+	}
+
+	return out
 }
 
-func joinMoveAggregates(q *bun.SelectQuery) *bun.SelectQuery {
-	const moveCountJoin = `LEFT JOIN LATERAL (
-		SELECT COUNT(*)::int AS move_count
-		FROM shipment_moves AS sib
-		WHERE sib.shipment_id = sm.shipment_id
-			AND sib.organization_id = sm.organization_id
-			AND sib.business_unit_id = sm.business_unit_id
-	) AS mc ON TRUE`
+func moveCount(sm *shipmentdb.ShipmentMovesTable) keel.Expr {
+	sib := shipmentdb.ShipmentMoves.As("sib")
+	return keel.Scalar(sib.
+		Pick(keel.Raw("count(*)::int")).
+		Where(sib.ShipmentID.EqCol(sm.ShipmentID)))
+}
 
-	const hazmatJoin = `LEFT JOIN LATERAL (
-		SELECT TRUE AS has_hazmat
-		FROM shipment_commodities AS sc
-		JOIN commodities AS com ON com.id = sc.commodity_id
-			AND com.organization_id = sc.organization_id
-			AND com.business_unit_id = sc.business_unit_id
-		WHERE sc.shipment_id = sm.shipment_id
-			AND sc.organization_id = sm.organization_id
-			AND sc.business_unit_id = sm.business_unit_id
-			AND com.hazardous_material_id IS NOT NULL
-		LIMIT 1
-	) AS hz ON TRUE`
+func hasHazmat(sm *shipmentdb.ShipmentMovesTable) keel.Expr {
+	sc := shipmentdb.ShipmentCommodities
+	com := commoditydb.Commodities
+	return keel.Exists(sc.
+		Join(com, com.ID.EqCol(sc.CommodityID)).
+		Pick(keel.Raw("1")).
+		Where(sc.ShipmentID.EqCol(sm.ShipmentID), com.HazardousMaterialID.IsNotNull()))
+}
 
-	const holdJoin = `LEFT JOIN LATERAL (
-		SELECT TRUE AS has_active_hold
-		FROM shipment_holds AS shh
-		WHERE shh.shipment_id = sm.shipment_id
-			AND shh.organization_id = sm.organization_id
-			AND shh.business_unit_id = sm.business_unit_id
-			AND shh.blocks_dispatch = TRUE
-			AND shh.released_at IS NULL
-		LIMIT 1
-	) AS hd ON TRUE`
+func hasActiveHold(sm *shipmentdb.ShipmentMovesTable) keel.Expr {
+	h := shipmentdb.ShipmentHolds
+	return keel.Exists(h.
+		Pick(keel.Raw("1")).
+		Where(
+			h.ShipmentID.EqCol(sm.ShipmentID),
+			h.BlocksDispatch.IsTrue(),
+			h.ReleasedAt.IsNull(),
+		))
+}
 
-	const previousTrailerJoin = `LEFT JOIN LATERAL (
-		SELECT pa.trailer_id
-		FROM shipment_moves AS pm
-		JOIN assignments AS pa ON pa.shipment_move_id = pm.id
-			AND pa.organization_id = pm.organization_id
-			AND pa.business_unit_id = pm.business_unit_id
-			AND pa.archived_at IS NULL
-		WHERE pm.shipment_id = sm.shipment_id
-			AND pm.organization_id = sm.organization_id
-			AND pm.business_unit_id = sm.business_unit_id
-			AND pm.sequence < sm.sequence
-			AND pa.trailer_id IS NOT NULL
-		ORDER BY pm.sequence DESC
-		LIMIT 1
-	) AS prev ON TRUE`
-
-	return q.Join(moveCountJoin).Join(hazmatJoin).Join(holdJoin).Join(previousTrailerJoin)
+func previousTrailer(sm *shipmentdb.ShipmentMovesTable) keel.Expr {
+	pm := shipmentdb.ShipmentMoves.As("pm")
+	pa := shipmentdb.Assignments.As("pa")
+	return keel.Scalar(pm.
+		Join(pa, pa.ShipmentMoveID.EqCol(pm.ID), pa.ArchivedAt.IsNull()).
+		Pick(pa.TrailerID).
+		Where(
+			pm.ShipmentID.EqCol(sm.ShipmentID),
+			keel.Raw("? < ?", pm.Sequence, sm.Sequence),
+			pa.TrailerID.IsNotNull(),
+		).
+		Order(pm.Sequence.Desc()).
+		Limit(1))
 }

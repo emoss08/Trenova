@@ -2,20 +2,18 @@ package factoringrepository
 
 import (
 	"context"
-	"fmt"
 
+	"github.com/emoss08/keel"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/factoring"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/factoring/factoringdb"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/factoringports"
-	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
-	"github.com/emoss08/trenova/pkg/buncolgen/factoringcol"
 	"github.com/emoss08/trenova/pkg/dberror"
-	"github.com/emoss08/trenova/pkg/dbhelper"
 	"github.com/emoss08/trenova/pkg/errortypes"
+	"github.com/emoss08/trenova/pkg/listquery"
 	"github.com/emoss08/trenova/pkg/pagination"
-	"github.com/emoss08/trenova/pkg/querybuilder"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/uptrace/bun"
 	"go.uber.org/zap"
 )
 
@@ -25,8 +23,10 @@ const (
 	maxExpiringNoas = 500
 )
 
+var noaErrors = dberror.Mapping{Entity: noaEntity}
+
 type noaRepository struct {
-	db kernelports.DBConnection
+	db *postgres.Connection
 	l  *zap.Logger
 }
 
@@ -39,12 +39,8 @@ func NewNoaRepository(p Params) factoringports.NoaRepository {
 
 func (r *noaRepository) Create(ctx context.Context, entity *factoring.Noa) (*factoring.Noa, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*factoring.Noa, error) {
-		if _, err := r.db.DBForContext(ctx).
-			NewInsert().
-			Model(entity).
-			Returning("*").
-			Exec(ctx); err != nil {
-			return nil, translateNoaError(err, "create factoring notice of assignment")
+		if err := factoringdb.Noas.Create(ctx, r.db.Keel(ctx), entity); err != nil {
+			return nil, translateNoaError(err, entity.ID)
 		}
 
 		return entity, nil
@@ -53,28 +49,15 @@ func (r *noaRepository) Create(ctx context.Context, entity *factoring.Noa) (*fac
 
 func (r *noaRepository) Update(ctx context.Context, entity *factoring.Noa) (*factoring.Noa, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*factoring.Noa, error) {
-		previousVersion := entity.Version
-		entity.Version++
-
-		res, err := r.db.DBForContext(ctx).
-			NewUpdate().
-			Model(entity).
-			ExcludeColumn(
-				factoringcol.NoaColumns.CreatedAt.Bare(),
-				factoringcol.NoaColumns.CustomerID.Bare(),
-				factoringcol.NoaColumns.FactoringCompanyID.Bare(),
-			).
-			WherePK().
-			Where(factoringcol.NoaColumns.Version.Eq(), previousVersion).
-			Returning("*").
-			Exec(ctx)
-		if err != nil {
-			entity.Version = previousVersion
-			return nil, translateNoaError(err, "update factoring notice of assignment")
-		}
-		if err = dberror.CheckRowsAffected(res, noaEntity, entity.ID.String()); err != nil {
-			entity.Version = previousVersion
-			return nil, err
+		n := factoringdb.Noas
+		if err := n.SaveExcept(
+			ctx,
+			r.db.Keel(ctx),
+			entity,
+			n.CustomerID,
+			n.FactoringCompanyID,
+		); err != nil {
+			return nil, translateNoaError(err, entity.ID)
 		}
 
 		return entity, nil
@@ -86,15 +69,9 @@ func (r *noaRepository) GetByID(
 	req factoringports.GetNoaRequest,
 ) (*factoring.Noa, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*factoring.Noa, error) {
-		entity := new(factoring.Noa)
-		if err := r.db.DBForContext(ctx).NewSelect().
-			Model(entity).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return factoringcol.NoaScopeTenant(sq, req.TenantInfo).
-					Where(factoringcol.NoaColumns.ID.Eq(), req.ID)
-			}).
-			Scan(ctx); err != nil {
-			return nil, dberror.HandleNotFoundError(err, noaEntity)
+		entity, err := factoringdb.Noas.Get(ctx, r.db.Keel(ctx), req.ID)
+		if err != nil {
+			return nil, noaErrors.Map(err, req.ID.String())
 		}
 
 		return entity, nil
@@ -106,19 +83,14 @@ func (r *noaRepository) GetOpen(
 	req *factoringports.GetOpenNoaRequest,
 ) (*factoring.Noa, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*factoring.Noa, error) {
-		cols := factoringcol.NoaColumns
-		entity := new(factoring.Noa)
-		if err := r.db.DBForContext(ctx).NewSelect().
-			Model(entity).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return factoringcol.NoaScopeTenant(sq, req.TenantInfo).
-					Where(cols.CustomerID.Eq(), req.CustomerID).
-					Where(cols.FactoringCompanyID.Eq(), req.FactoringCompanyID).
-					Where(cols.Status.Ne(), factoring.NoaStatusReleased)
-			}).
-			Limit(1).
-			Scan(ctx); err != nil {
-			return nil, dberror.HandleNotFoundError(err, noaEntity)
+		n := factoringdb.Noas
+		entity, err := n.Where(
+			n.CustomerID.Eq(req.CustomerID),
+			n.FactoringCompanyID.Eq(req.FactoringCompanyID),
+			n.Status.Ne(factoring.NoaStatusReleased),
+		).First(ctx, r.db.Keel(ctx))
+		if err != nil {
+			return nil, noaErrors.Map(err, "")
 		}
 
 		return entity, nil
@@ -138,22 +110,9 @@ func (r *noaRepository) ListOpen(
 				return result, nil
 			}
 
-			cols := factoringcol.NoaColumns
-			rows := make([]*factoring.Noa, 0, len(req.Pairs))
-			if err := r.db.DBForContext(ctx).NewSelect().
-				Model(&rows).
-				WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-					return factoringcol.NoaScopeTenant(sq, req.TenantInfo).
-						Where(cols.Status.Ne(), factoring.NoaStatusReleased).
-						Where(
-							"("+cols.CustomerID.Qualified()+
-								", "+cols.FactoringCompanyID.Qualified()+
-								") IN (?)",
-							bun.List(pairValues(req.Pairs)),
-						)
-				}).
-				Scan(ctx); err != nil {
-				return nil, fmt.Errorf("list open notices of assignment: %w", err)
+			rows, err := openNoas(req.Pairs).All(ctx, r.db.Keel(ctx))
+			if err != nil {
+				return nil, err
 			}
 
 			for _, row := range rows {
@@ -168,6 +127,31 @@ func (r *noaRepository) ListOpen(
 	)
 }
 
+func openNoas(pairs []factoringports.NoaPair) *keel.Query[factoring.Noa] {
+	customers := make([]pulid.ID, len(pairs))
+	factors := make([]pulid.ID, len(pairs))
+	for i, pair := range pairs {
+		customers[i] = pair.CustomerID
+		factors[i] = pair.FactoringCompanyID
+	}
+
+	n := factoringdb.Noas
+	wanted := keel.Unnest(
+		"wanted",
+		[]string{"customer_id", "factoring_company_id"},
+		customers,
+		factors,
+	)
+
+	return n.With(wanted).
+		Join(
+			wanted,
+			wanted.Col("customer_id").EqCol(n.CustomerID),
+			wanted.Col("factoring_company_id").EqCol(n.FactoringCompanyID),
+		).
+		Where(n.Status.Ne(factoring.NoaStatusReleased))
+}
+
 func (r *noaRepository) ListConnection(
 	ctx context.Context,
 	req *factoringports.ListNoaConnectionRequest,
@@ -176,56 +160,23 @@ func (r *noaRepository) ListConnection(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*pagination.CursorListResult[*factoring.Noa], error) {
-			dba := r.db.DBForContext(ctx)
-			alias := factoringcol.NoaTable.Alias
-
-			var totalCount *int
-			if req.Cursor.IncludeTotalCount {
-				total, err := dba.NewSelect().
-					Model((*factoring.Noa)(nil)).
-					Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-						return r.scope(
-							querybuilder.ApplyFiltersWithoutSort(
-								sq,
-								alias,
-								req.Filter,
-								(*factoring.Noa)(nil),
-							),
-							req,
-						)
-					}).
-					Count(ctx)
-				if err != nil {
-					return nil, fmt.Errorf("count notices of assignment: %w", err)
-				}
-				totalCount = new(int(total))
-			}
-
-			result, err := dbhelper.CursorList(ctx, dbhelper.CursorListParams[*factoring.Noa]{
-				Filter:     req.Filter,
-				Cursor:     req.Cursor,
-				TotalCount: totalCount,
-				Query: func(entities *[]*factoring.Noa) *bun.SelectQuery {
-					return dba.NewSelect().
-						Model(entities).
-						ColumnExpr(factoringcol.NoaTable.All())
-				},
-				Apply: func(sq *bun.SelectQuery) (*bun.SelectQuery, error) {
-					q, applyErr := querybuilder.ApplyCursorFilters(
-						sq,
-						alias,
-						req.Filter,
-						req.Cursor,
-						(*factoring.Noa)(nil),
-					)
-					if applyErr != nil {
-						return nil, applyErr
-					}
-					return r.scope(q, req), nil
-				},
-			})
+			n := factoringdb.Noas
+			result, err := listquery.Connection(
+				ctx,
+				r.db.Keel(ctx),
+				n.Where(
+					keel.When(req.CustomerID.IsNotNil(), n.CustomerID.Eq(req.CustomerID)),
+					keel.When(
+						req.FactoringCompanyID.IsNotNil(),
+						n.FactoringCompanyID.Eq(req.FactoringCompanyID),
+					),
+					keel.When(len(req.Statuses) > 0, n.Status.In(req.Statuses...)),
+				),
+				&listquery.Request[factoring.Noa]{Filter: req.Filter, Cursor: req.Cursor},
+			)
 			if err != nil {
-				return nil, fmt.Errorf("list notices of assignment: %w", err)
+				r.l.Error("failed to list notices of assignment", zap.Error(err))
+				return nil, err
 			}
 
 			return result, nil
@@ -233,49 +184,32 @@ func (r *noaRepository) ListConnection(
 	)
 }
 
-func (r *noaRepository) scope(
-	q *bun.SelectQuery,
-	req *factoringports.ListNoaConnectionRequest,
-) *bun.SelectQuery {
-	cols := factoringcol.NoaColumns
-	if !req.CustomerID.IsNil() {
-		q = q.Where(cols.CustomerID.Eq(), req.CustomerID)
-	}
-	if !req.FactoringCompanyID.IsNil() {
-		q = q.Where(cols.FactoringCompanyID.Eq(), req.FactoringCompanyID)
-	}
-	if len(req.Statuses) > 0 {
-		q = q.Where(cols.Status.In(), bun.List(req.Statuses))
-	}
-	return q
-}
-
 func (r *noaRepository) ListExpiring(
 	ctx context.Context,
 	req factoringports.ListExpiringNoasRequest,
 ) ([]*factoring.Noa, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*factoring.Noa, error) {
-		cols := factoringcol.NoaColumns
 		limit := req.Limit
 		if limit <= 0 || limit > maxExpiringNoas {
 			limit = maxExpiringNoas
 		}
 
-		rows := make([]*factoring.Noa, 0, limit)
-		if err := r.db.DBForContext(ctx).NewSelect().
-			Model(&rows).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return factoringcol.NoaScopeTenant(sq, req.TenantInfo).
-					Where(cols.Status.Eq(), factoring.NoaStatusAcknowledged).
-					Where(cols.ExpiresAt.IsNotNull()).
-					Where(cols.ExpiresAt.Gt(), req.At).
-					Where(cols.ExpiresAt.Lte(), req.Before).
-					Where(cols.ExpiryWarnedAt.IsNull())
-			}).
-			Order(cols.ExpiresAt.OrderAsc(), cols.ID.OrderAsc()).
-			Limit(int64(limit)).
-			Scan(ctx); err != nil {
-			return nil, fmt.Errorf("list expiring notices of assignment: %w", err)
+		n := factoringdb.Noas
+		rows, err := n.Where(
+			n.Status.Eq(factoring.NoaStatusAcknowledged),
+			n.ExpiresAt.IsNotNull(),
+			n.ExpiresAt.Gt(req.At),
+			n.ExpiresAt.Lte(req.Before),
+			n.ExpiryWarnedAt.IsNull(),
+		).
+			Order(n.ExpiresAt.Asc(), n.ID.Asc()).
+			Limit(limit).
+			List(ctx, r.db.Keel(ctx))
+		if err != nil {
+			return nil, err
+		}
+		if rows == nil {
+			return []*factoring.Noa{}, nil
 		}
 
 		return rows, nil
@@ -287,42 +221,28 @@ func (r *noaRepository) ClaimExpiryWarning(
 	req factoringports.ClaimNoaExpiryWarningRequest,
 ) (bool, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (bool, error) {
-		cols := factoringcol.NoaColumns
-		res, err := r.db.DBForContext(ctx).NewUpdate().
-			Model((*factoring.Noa)(nil)).
-			Set(cols.ExpiryWarnedAt.Set(), req.At).
-			Apply(func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-				return factoringcol.NoaScopeTenantUpdate(uq, req.TenantInfo).
-					Where(cols.ID.Eq(), req.ID).
-					Where(cols.ExpiryWarnedAt.IsNull())
-			}).
-			Exec(ctx)
+		n := factoringdb.Noas
+		rows, err := n.Where(n.ID.Eq(req.ID), n.ExpiryWarnedAt.IsNull()).
+			Update(ctx, r.db.Keel(ctx),
+				n.ExpiryWarnedAt.To(req.At),
+				n.Version.ToExpr(n.Version),
+				n.UpdatedAt.ToExpr(n.UpdatedAt),
+			)
 		if err != nil {
-			return false, fmt.Errorf("claim notice expiry warning: %w", err)
-		}
-		rows, err := res.RowsAffected()
-		if err != nil {
-			return false, fmt.Errorf("claim notice expiry warning: %w", err)
+			return false, noaErrors.Map(err, req.ID.String())
 		}
 
 		return rows > 0, nil
 	})
 }
 
-func pairValues(pairs []factoringports.NoaPair) []bun.TupleValues {
-	values := make([]bun.TupleValues, 0, len(pairs))
-	for _, pair := range pairs {
-		values = append(values, bun.Tuple([]pulid.ID{pair.CustomerID, pair.FactoringCompanyID}))
-	}
-	return values
-}
-
-func translateNoaError(err error, action string) error {
+func translateNoaError(err error, id pulid.ID) error {
 	if dberror.IsUniqueConstraintViolation(err) &&
 		dberror.ExtractConstraintName(err) == openNoaIndex {
 		return errortypes.NewConflictError(
 			"This customer already has an open notice of assignment for this factor",
 		)
 	}
-	return fmt.Errorf("%s: %w", action, err)
+
+	return noaErrors.Map(err, id.String())
 }

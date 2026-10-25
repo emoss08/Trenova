@@ -78,11 +78,10 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 // @Accept json
 // @Produce json
 // @Param query query string false "Search query"
-// @Param includeManagerDetails query bool false "Include fleet manager details"
 // @Param status query string false "Filter by status"
 // @Param limit query int false "Page size" minimum(1) maximum(100)
-// @Param offset query int false "Page offset" minimum(0)
-// @Success 200 {object} pagination.Response[[]fleetcode.FleetCode]
+// @Param after query string false "Cursor for the next page"
+// @Success 200 {object} pagination.CursorResponse[[]fleetcode.FleetCode]
 // @Failure 400 {object} helpers.ProblemDetail
 // @Failure 401 {object} helpers.ProblemDetail
 // @Failure 403 {object} helpers.ProblemDetail
@@ -93,16 +92,16 @@ func (h *Handler) list(c *gin.Context) {
 	authCtx := authctx.GetAuthContext(c)
 	req := pagination.NewQueryOptions(c, authCtx)
 
-	pagination.List(
+	pagination.CursorList(
 		c,
 		req,
 		h.eh,
-		func() (*pagination.ListResult[*fleetcode.FleetCode], error) {
-			return h.service.List(
+		func(cursor pagination.CursorInfo) (*pagination.CursorListResult[*fleetcode.FleetCode], error) {
+			return h.service.ListConnection(
 				c.Request.Context(),
-				&fleetcodeports.ListFleetCodesRequest{
-					Filter:                req,
-					IncludeManagerDetails: helpers.QueryBool(c, "includeManagerDetails", false),
+				&fleetcodeports.ListFleetCodeConnectionRequest{
+					Filter: req,
+					Cursor: cursor,
 				},
 			)
 		},

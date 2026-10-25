@@ -32,10 +32,10 @@ type TotalRolloutAssignmentsRequest struct {
 }
 
 type RolloutAssignmentTotal struct {
-	Arm      extractionrollout.Arm      `bun:"arm"`
-	ServedBy extractionrollout.ServedBy `bun:"served_by"`
-	Outcome  extractionrollout.Outcome  `bun:"outcome"`
-	Count    int                        `bun:"count"`
+	Arm      extractionrollout.Arm
+	ServedBy extractionrollout.ServedBy
+	Outcome  extractionrollout.Outcome
+	Count    int
 }
 
 type PurgeRolloutAssignmentsRequest struct {

@@ -5,18 +5,37 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment/shipmentdb"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/places/domain/location/locationdb"
 	"github.com/emoss08/trenova/pkg/dberror"
+	"github.com/emoss08/trenova/pkg/keelkinds"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
-	"github.com/uptrace/bun"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
+
+var assignmentErrors = dberror.Mapping{
+	Entity: "Assignment",
+	Unique: []dberror.Constraint{
+		{
+			Name:    "uq_assignments_move_tenant_active",
+			Field:   "shipmentMoveId",
+			Message: "Move already has an active assignment",
+		},
+	},
+}
+
+var activeMoveStatuses = []shipment.MoveStatus{
+	shipment.MoveStatusInTransit,
+	shipment.MoveStatusAssigned,
+}
 
 type Params struct {
 	fx.In
@@ -37,6 +56,33 @@ func New(p Params) shipmentports.AssignmentRepository {
 	}
 }
 
+type assignmentQuery = keel.Query[shipment.Assignment]
+
+func liveAssignments() *assignmentQuery {
+	a := shipmentdb.Assignments
+	return a.Where(a.ArchivedAt.IsNull())
+}
+
+func liveOnMove(moveID pulid.ID) *assignmentQuery {
+	return liveAssignments().Where(shipmentdb.Assignments.ShipmentMoveID.Eq(moveID))
+}
+
+func unassignable(entity *shipment.Assignment) *assignmentQuery {
+	a := shipmentdb.Assignments
+	return liveAssignments().Where(a.ID.Eq(entity.ID), a.Version.Eq(entity.Version))
+}
+
+func withResources(q *assignmentQuery) *assignmentQuery {
+	a := shipmentdb.Assignments
+	return q.Load(
+		a.ShipmentMove(),
+		a.Tractor(),
+		a.Trailer(),
+		a.PrimaryWorker(),
+		a.SecondaryWorker(),
+	)
+}
+
 func (r *repository) List(
 	ctx context.Context,
 	req *shipmentports.ListAssignmentsRequest,
@@ -45,29 +91,24 @@ func (r *repository) List(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*pagination.ListResult[*shipment.Assignment], error) {
-			entities := make([]*shipment.Assignment, 0, req.Filter.Pagination.SafeLimit())
+			a := shipmentdb.Assignments
+			live := liveAssignments()
 
-			total, err := r.db.DBForContext(ctx).
-				NewSelect().
-				Model(&entities).
-				Where("a.organization_id = ?", req.Filter.TenantInfo.OrgID).
-				Where("a.business_unit_id = ?", req.Filter.TenantInfo.BuID).
-				Where("a.archived_at IS NULL").
-				Relation("ShipmentMove").
-				Relation("Tractor").
-				Relation("Trailer").
-				Relation("PrimaryWorker").
-				Relation("SecondaryWorker").
-				Order("a.created_at DESC").
-				Limit(int64(req.Filter.Pagination.Limit)).
-				Offset(int64(req.Filter.Pagination.Offset)).
-				ScanAndCount(ctx)
+			var items []*shipment.Assignment
+			var total int64
+			err := keel.Batch(ctx, r.db.Keel(ctx),
+				keel.ListInto(withResources(live.Clone()).
+					Order(a.CreatedAt.Desc()).
+					Limit(req.Filter.Pagination.SafeLimit()).
+					Offset(req.Filter.Pagination.SafeOffset()), &items),
+				keel.CountInto(live, &total),
+			)
 			if err != nil {
 				return nil, err
 			}
 
 			return &pagination.ListResult[*shipment.Assignment]{
-				Items: entities,
+				Items: items,
 				Total: int(total),
 			}, nil
 		},
@@ -79,49 +120,38 @@ func (r *repository) GetByID(
 	req *shipmentports.GetAssignmentByIDRequest,
 ) (*shipment.Assignment, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*shipment.Assignment, error) {
-		entity := new(shipment.Assignment)
-		err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(entity).
-			Where("a.id = ?", req.AssignmentID).
-			Where("a.organization_id = ?", req.TenantInfo.OrgID).
-			Where("a.business_unit_id = ?", req.TenantInfo.BuID).
-			Relation("ShipmentMove").
-			Relation("Tractor").
-			Relation("Trailer").
-			Relation("PrimaryWorker").
-			Relation("SecondaryWorker").
-			Scan(ctx)
-		if err != nil {
-			return nil, dberror.HandleNotFoundError(err, "Assignment")
-		}
-
-		return entity, nil
+		return r.get(ctx, req.AssignmentID)
 	})
+}
+
+func (r *repository) get(ctx context.Context, id pulid.ID) (*shipment.Assignment, error) {
+	a := shipmentdb.Assignments
+	entity, err := withResources(a.Where(a.ID.Eq(id))).One(ctx, r.db.Keel(ctx))
+	if err != nil {
+		return nil, assignmentErrors.Map(err, id.String())
+	}
+
+	return entity, nil
 }
 
 func (r *repository) GetByMoveID(
 	ctx context.Context,
-	tenantInfo pagination.TenantInfo,
+	_ pagination.TenantInfo,
 	moveID pulid.ID,
 ) (*shipment.Assignment, error) {
-	return r.getAssignmentByMoveID(ctx, tenantInfo, moveID)
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*shipment.Assignment, error) {
+		entity, err := liveOnMove(moveID).First(ctx, r.db.Keel(ctx))
+		return optional(entity, err)
+	})
 }
 
 func (r *repository) GetMoveByID(
 	ctx context.Context,
-	tenantInfo pagination.TenantInfo,
+	_ pagination.TenantInfo,
 	moveID pulid.ID,
 ) (*shipment.ShipmentMove, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*shipment.ShipmentMove, error) {
-		move := new(shipment.ShipmentMove)
-		err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(move).
-			Where("sm.id = ?", moveID).
-			Where("sm.organization_id = ?", tenantInfo.OrgID).
-			Where("sm.business_unit_id = ?", tenantInfo.BuID).
-			Scan(ctx)
+		move, err := shipmentdb.ShipmentMoves.Get(ctx, r.db.Keel(ctx), moveID)
 		if err != nil {
 			return nil, dberror.HandleNotFoundError(err, "Shipment move")
 		}
@@ -130,34 +160,54 @@ func (r *repository) GetMoveByID(
 	})
 }
 
+func optional(entity *shipment.Assignment, err error) (*shipment.Assignment, error) {
+	if err != nil {
+		if dberror.IsNotFoundError(err) {
+			return nil, nil //nolint:nilnil // nil result represents an optional absence in this API
+		}
+		return nil, err
+	}
+
+	return entity, nil
+}
+
 func (r *repository) FindInProgressByTractorID(
 	ctx context.Context,
-	tenantInfo pagination.TenantInfo,
+	_ pagination.TenantInfo,
 	tractorID pulid.ID,
 	excludeMoveID pulid.ID,
 ) (*shipment.Assignment, error) {
-	return r.findInProgressAssignment(ctx, tenantInfo, "a.tractor_id", tractorID, excludeMoveID)
+	return r.findInProgressAssignment(
+		ctx,
+		shipmentdb.Assignments.TractorID,
+		tractorID,
+		excludeMoveID,
+	)
 }
 
 func (r *repository) FindInProgressByTrailerID(
 	ctx context.Context,
-	tenantInfo pagination.TenantInfo,
+	_ pagination.TenantInfo,
 	trailerID pulid.ID,
 	excludeMoveID pulid.ID,
 ) (*shipment.Assignment, error) {
-	return r.findInProgressAssignment(ctx, tenantInfo, "a.trailer_id", trailerID, excludeMoveID)
+	return r.findInProgressAssignment(
+		ctx,
+		shipmentdb.Assignments.TrailerID,
+		trailerID,
+		excludeMoveID,
+	)
 }
 
 func (r *repository) FindInProgressByPrimaryWorkerID(
 	ctx context.Context,
-	tenantInfo pagination.TenantInfo,
+	_ pagination.TenantInfo,
 	workerID pulid.ID,
 	excludeMoveID pulid.ID,
 ) (*shipment.Assignment, error) {
 	return r.findInProgressAssignment(
 		ctx,
-		tenantInfo,
-		"a.primary_worker_id",
+		shipmentdb.Assignments.PrimaryWorkerID,
 		workerID,
 		excludeMoveID,
 	)
@@ -165,79 +215,64 @@ func (r *repository) FindInProgressByPrimaryWorkerID(
 
 func (r *repository) FindActiveByTractorID(
 	ctx context.Context,
-	tenantInfo pagination.TenantInfo,
+	_ pagination.TenantInfo,
 	tractorID pulid.ID,
 ) (*shipment.Assignment, error) {
-	return r.findActiveAssignment(ctx, tenantInfo, "a.tractor_id", tractorID)
+	return r.findActiveAssignment(ctx, shipmentdb.Assignments.TractorID.Eq(tractorID))
 }
 
 func (r *repository) FindActiveByWorkerID(
 	ctx context.Context,
-	tenantInfo pagination.TenantInfo,
+	_ pagination.TenantInfo,
 	workerID pulid.ID,
 ) (*shipment.Assignment, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*shipment.Assignment, error) {
-		entity := new(shipment.Assignment)
-		err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(entity).
-			Join("JOIN shipment_moves AS sm ON sm.id = a.shipment_move_id").
-			Where("a.organization_id = ?", tenantInfo.OrgID).
-			Where("a.business_unit_id = ?", tenantInfo.BuID).
-			Where("a.archived_at IS NULL").
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return sq.Where("a.primary_worker_id = ?", workerID).
-					WhereOr("a.secondary_worker_id = ?", workerID)
-			}).
-			Where("sm.status IN (?)", bun.List([]shipment.MoveStatus{
-				shipment.MoveStatusInTransit,
-				shipment.MoveStatusAssigned,
-			})).
-			OrderExpr("CASE sm.status WHEN ? THEN 0 ELSE 1 END ASC", shipment.MoveStatusInTransit).
-			Order("sm.created_at DESC").
-			Limit(1).
-			Scan(ctx)
-		if err != nil {
-			if dberror.IsNotFoundError(err) {
-				return nil, nil //nolint:nilnil // nil result represents an optional absence in this API
-			}
-			return nil, err
-		}
-		return entity, nil
-	})
+	a := shipmentdb.Assignments
+	return r.findActiveAssignment(
+		ctx,
+		keel.Or(a.PrimaryWorkerID.Eq(workerID), a.SecondaryWorkerID.Eq(workerID)),
+	)
 }
 
 func (r *repository) findActiveAssignment(
 	ctx context.Context,
-	tenantInfo pagination.TenantInfo,
-	column string,
-	subjectID pulid.ID,
+	subject keel.Pred,
 ) (*shipment.Assignment, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*shipment.Assignment, error) {
-		entity := new(shipment.Assignment)
-		err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(entity).
-			Join("JOIN shipment_moves AS sm ON sm.id = a.shipment_move_id").
-			Where("a.organization_id = ?", tenantInfo.OrgID).
-			Where("a.business_unit_id = ?", tenantInfo.BuID).
-			Where("a.archived_at IS NULL").
-			Where(column+" = ?", subjectID).
-			Where("sm.status IN (?)", bun.List([]shipment.MoveStatus{
-				shipment.MoveStatusInTransit,
-				shipment.MoveStatusAssigned,
-			})).
-			OrderExpr("CASE sm.status WHEN ? THEN 0 ELSE 1 END ASC", shipment.MoveStatusInTransit).
-			Order("sm.created_at DESC").
-			Limit(1).
-			Scan(ctx)
-		if err != nil {
-			if dberror.IsNotFoundError(err) {
-				return nil, nil //nolint:nilnil // nil result represents an optional absence in this API
-			}
-			return nil, err
-		}
-		return entity, nil
+		a := shipmentdb.Assignments
+		sm := shipmentdb.ShipmentMoves
+		entity, err := a.Join(sm, sm.ID.EqCol(a.ShipmentMoveID)).
+			Where(a.ArchivedAt.IsNull(), subject, sm.Status.In(activeMoveStatuses...)).
+			Order(
+				keel.Asc(keel.Raw(
+					"CASE ? WHEN ? THEN 0 ELSE 1 END",
+					sm.Status,
+					string(shipment.MoveStatusInTransit),
+				)),
+				sm.CreatedAt.Desc(),
+			).
+			First(ctx, r.db.Keel(ctx))
+		return optional(entity, err)
+	})
+}
+
+func (r *repository) findInProgressAssignment(
+	ctx context.Context,
+	column keelkinds.PulidIDCol,
+	equipmentID pulid.ID,
+	excludeMoveID pulid.ID,
+) (*shipment.Assignment, error) {
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*shipment.Assignment, error) {
+		a := shipmentdb.Assignments
+		sm := shipmentdb.ShipmentMoves
+		entity, err := a.Join(sm, sm.ID.EqCol(a.ShipmentMoveID)).
+			Where(
+				a.ArchivedAt.IsNull(),
+				column.Eq(equipmentID),
+				sm.Status.Eq(shipment.MoveStatusInTransit),
+				keel.When(!excludeMoveID.IsNil(), a.ShipmentMoveID.Ne(excludeMoveID)),
+			).
+			First(ctx, r.db.Keel(ctx))
+		return optional(entity, err)
 	})
 }
 
@@ -246,7 +281,7 @@ func (r *repository) FindNearestActualEventByTractorID(
 	req shipmentports.FindNearestActualTimelineEventRequest,
 	tractorID pulid.ID,
 ) (*shipmentports.ActualTimelineEvent, error) {
-	return r.findNearestActualEvent(ctx, req, "a.tractor_id", tractorID)
+	return r.findNearestActualEvent(ctx, req, shipmentdb.Assignments.TractorID, tractorID)
 }
 
 func (r *repository) FindNearestActualEventByPrimaryWorkerID(
@@ -254,7 +289,7 @@ func (r *repository) FindNearestActualEventByPrimaryWorkerID(
 	req shipmentports.FindNearestActualTimelineEventRequest,
 	workerID pulid.ID,
 ) (*shipmentports.ActualTimelineEvent, error) {
-	return r.findNearestActualEvent(ctx, req, "a.primary_worker_id", workerID)
+	return r.findNearestActualEvent(ctx, req, shipmentdb.Assignments.PrimaryWorkerID, workerID)
 }
 
 func (r *repository) FindOverlappingActualWindowByTractorID(
@@ -262,7 +297,7 @@ func (r *repository) FindOverlappingActualWindowByTractorID(
 	req shipmentports.FindOverlappingActualTimelineWindowRequest,
 	tractorID pulid.ID,
 ) (*shipmentports.ActualTimelineWindow, error) {
-	return r.findOverlappingActualWindow(ctx, req, "a.tractor_id", tractorID)
+	return r.findOverlappingActualWindow(ctx, shipmentdb.Assignments.TractorID, tractorID, req)
 }
 
 func (r *repository) FindOverlappingActualWindowByPrimaryWorkerID(
@@ -270,212 +305,145 @@ func (r *repository) FindOverlappingActualWindowByPrimaryWorkerID(
 	req shipmentports.FindOverlappingActualTimelineWindowRequest,
 	workerID pulid.ID,
 ) (*shipmentports.ActualTimelineWindow, error) {
-	return r.findOverlappingActualWindow(ctx, req, "a.primary_worker_id", workerID)
-}
-
-func (r *repository) getAssignmentByMoveID(
-	ctx context.Context,
-	tenantInfo pagination.TenantInfo,
-	moveID pulid.ID,
-) (*shipment.Assignment, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*shipment.Assignment, error) {
-		entity := new(shipment.Assignment)
-		err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(entity).
-			Where("a.shipment_move_id = ?", moveID).
-			Where("a.organization_id = ?", tenantInfo.OrgID).
-			Where("a.business_unit_id = ?", tenantInfo.BuID).
-			Where("a.archived_at IS NULL").
-			Scan(ctx)
-		if err != nil {
-			if dberror.IsNotFoundError(err) {
-				return nil, nil //nolint:nilnil // nil result represents an optional absence in this API
-			}
-			return nil, err
-		}
-
-		return entity, nil
-	})
-}
-
-func (r *repository) findInProgressAssignment(
-	ctx context.Context,
-	tenantInfo pagination.TenantInfo,
-	column string,
-	equipmentID pulid.ID,
-	excludeMoveID pulid.ID,
-) (*shipment.Assignment, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*shipment.Assignment, error) {
-		entity := new(shipment.Assignment)
-		query := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(entity).
-			Join("JOIN shipment_moves AS sm ON sm.id = a.shipment_move_id").
-			Where("a.organization_id = ?", tenantInfo.OrgID).
-			Where("a.business_unit_id = ?", tenantInfo.BuID).
-			Where("a.archived_at IS NULL").
-			Where(column+" = ?", equipmentID).
-			Where("sm.status = ?", shipment.MoveStatusInTransit)
-
-		if !excludeMoveID.IsNil() {
-			query = query.Where("a.shipment_move_id != ?", excludeMoveID)
-		}
-
-		if err := query.Scan(ctx); err != nil {
-			if dberror.IsNotFoundError(err) {
-				return nil, nil //nolint:nilnil // nil result represents an optional absence in this API
-			}
-			return nil, err
-		}
-
-		return entity, nil
-	})
+	return r.findOverlappingActualWindow(ctx, shipmentdb.Assignments.PrimaryWorkerID, workerID, req)
 }
 
 func (r *repository) findNearestActualEvent(
 	ctx context.Context,
 	req shipmentports.FindNearestActualTimelineEventRequest,
-	column string,
+	column keelkinds.PulidIDCol,
 	resourceID pulid.ID,
 ) (*shipmentports.ActualTimelineEvent, error) {
-	return dbtx.Write(
+	return dbtx.Read(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*shipmentports.ActualTimelineEvent, error) {
-			event := new(shipmentports.ActualTimelineEvent)
-			comparison := "<="
-			order := "event.timestamp DESC"
+			ev := actualTimelineEvents(column, resourceID)
+			ts := ev.Col("timestamp")
+
+			near := ts.Lte(req.Timestamp)
+			order := keel.Desc(ts)
 			if req.Direction == shipmentports.ActualTimelineDirectionNext {
-				comparison = ">="
-				order = "event.timestamp ASC"
+				near = ts.Gte(req.Timestamp)
+				order = keel.Asc(ts)
 			}
 
-			actualEvent := r.buildAssignedActualTimelineEventQuery(
-				ctx,
-				req.TenantInfo,
-				column,
-				resourceID,
-			)
-
-			query := r.db.DBForContext(ctx).
-				NewSelect().
-				With("actual_event", actualEvent).
-				TableExpr("actual_event AS event").
-				Column("event.timestamp", "event.event_type", "event.stop_id", "event.shipment_move_id", "event.shipment_id", "event.location_name").
-				Where("event.timestamp "+comparison+" ?", req.Timestamp)
-
-			if !req.ExcludeShipmentID.IsNil() {
-				query = query.Where("event.shipment_id != ?", req.ExcludeShipmentID)
-			}
-
-			if err := query.OrderExpr(order).Limit(1).Scan(ctx, event); err != nil {
-				if dberror.IsNotFoundError(err) {
-					return nil, nil //nolint:nilnil // nil result represents an optional absence in this API
-				}
+			events, err := keel.Into[shipmentports.ActualTimelineEvent](ctx, r.db.Keel(ctx), ev.
+				Query().
+				With(ev).
+				Pick(
+					ts,
+					ev.Col("event_type"),
+					ev.Col("stop_id"),
+					ev.Col("shipment_move_id"),
+					ev.Col("shipment_id"),
+					ev.Col("location_name"),
+				).
+				Where(
+					near,
+					keel.When(!req.ExcludeShipmentID.IsNil(),
+						ev.Col("shipment_id").Ne(req.ExcludeShipmentID.String())),
+				).
+				Order(order).
+				Limit(1))
+			if err != nil {
 				return nil, err
 			}
+			if len(events) == 0 {
+				return nil, nil
+			}
 
-			return event, nil
+			return &events[0], nil
 		},
 	)
 }
 
 func (r *repository) findOverlappingActualWindow(
 	ctx context.Context,
-	req shipmentports.FindOverlappingActualTimelineWindowRequest,
-	column string,
+	column keelkinds.PulidIDCol,
 	resourceID pulid.ID,
+	req shipmentports.FindOverlappingActualTimelineWindowRequest,
 ) (*shipmentports.ActualTimelineWindow, error) {
-	return dbtx.Write(
+	return dbtx.Read(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*shipmentports.ActualTimelineWindow, error) {
-			window := new(shipmentports.ActualTimelineWindow)
-			actualEvent := r.buildAssignedActualTimelineEventQuery(
-				ctx,
-				req.TenantInfo,
-				column,
-				resourceID,
-			)
+			ev := actualTimelineEvents(column, resourceID)
+			ts := ev.Col("timestamp")
+			moveID := ev.Col("shipment_move_id")
+			shipmentID := ev.Col("shipment_id")
 
-			query := r.db.DBForContext(ctx).
-				NewSelect().
-				With("actual_event", actualEvent).
-				TableExpr("actual_event AS event").
-				ColumnExpr("MIN(event.timestamp) AS start_timestamp").
-				ColumnExpr("MAX(event.timestamp) AS end_timestamp").
-				ColumnExpr("event.shipment_move_id").
-				ColumnExpr("event.shipment_id").
-				GroupExpr("event.shipment_move_id, event.shipment_id").
-				Having("MIN(event.timestamp) <= ?", req.Timestamp).
-				Having("MAX(event.timestamp) >= ?", req.Timestamp)
-
-			if !req.ExcludeShipmentID.IsNil() {
-				query = query.Where("event.shipment_id != ?", req.ExcludeShipmentID)
-			}
-
-			if err := query.OrderExpr("MIN(event.timestamp) DESC").
-				Limit(1).
-				Scan(ctx, window); err != nil {
-				if dberror.IsNotFoundError(err) {
-					return nil, nil //nolint:nilnil // nil result represents an optional absence in this API
-				}
+			windows, err := keel.Into[shipmentports.ActualTimelineWindow](ctx, r.db.Keel(ctx), ev.
+				Query().
+				With(ev).
+				Group(moveID, shipmentID).
+				Pick(keel.Min(ts), keel.Max(ts), moveID, shipmentID).
+				Where(keel.When(!req.ExcludeShipmentID.IsNil(),
+					shipmentID.Ne(req.ExcludeShipmentID.String()))).
+				Having(keel.Min(ts).Lte(req.Timestamp), keel.Max(ts).Gte(req.Timestamp)).
+				Order(keel.Min(ts).Desc()).
+				Limit(1))
+			if err != nil {
 				return nil, err
 			}
+			if len(windows) == 0 {
+				return nil, nil
+			}
 
-			return window, nil
+			return &windows[0], nil
 		},
 	)
 }
 
-func (r *repository) buildAssignedActualTimelineEventQuery(
-	ctx context.Context,
-	tenantInfo pagination.TenantInfo,
-	column string,
-	resourceID pulid.ID,
-) *bun.SelectQuery {
-	db := r.db.DBForContext(ctx)
+// actualTimelineEvents is every actual arrival and departure on the live
+// assignments of one resource, as one row per event.
+func actualTimelineEvents(column keelkinds.PulidIDCol, resourceID pulid.ID) *keel.CTETable {
+	stopEvents := func(
+		at func(*shipmentdb.StopsTable) keel.Int64Col,
+		kind shipmentports.ActualTimelineEventType,
+	) *keel.Query[shipment.Assignment] {
+		a := shipmentdb.Assignments
+		sm := shipmentdb.ShipmentMoves
+		st := shipmentdb.Stops
+		loc := locationdb.Locations
+		return a.
+			Join(sm, sm.ID.EqCol(a.ShipmentMoveID)).
+			Join(st, st.ShipmentMoveID.EqCol(sm.ID)).
+			LeftJoin(loc, loc.ID.EqCol(st.LocationID)).
+			Pick(
+				at(st),
+				keel.Raw("?::text", string(kind)),
+				st.ID,
+				st.ShipmentMoveID,
+				sm.ShipmentID,
+				keel.Raw("coalesce(?, '')", loc.Name),
+			).
+			Where(
+				a.ArchivedAt.IsNull(),
+				column.Eq(resourceID),
+				sm.Status.Ne(shipment.MoveStatusCanceled),
+				st.Status.Ne(shipment.StopStatusCanceled),
+				at(st).IsNotNull(),
+			)
+	}
 
-	arrivalQuery := db.NewSelect().
-		TableExpr("assignments AS a").
-		ColumnExpr("s.actual_arrival AS timestamp").
-		ColumnExpr("? AS event_type", shipmentports.ActualTimelineEventTypeArrival).
-		ColumnExpr("s.id AS stop_id").
-		ColumnExpr("s.shipment_move_id").
-		ColumnExpr("sm.shipment_id").
-		ColumnExpr("COALESCE(loc.name, '') AS location_name").
-		Join("JOIN shipment_moves AS sm ON sm.id = a.shipment_move_id AND sm.organization_id = a.organization_id AND sm.business_unit_id = a.business_unit_id").
-		Join("JOIN stops AS s ON s.shipment_move_id = sm.id AND s.organization_id = sm.organization_id AND s.business_unit_id = sm.business_unit_id").
-		Join("LEFT JOIN locations AS loc ON loc.id = s.location_id AND loc.organization_id = s.organization_id AND loc.business_unit_id = s.business_unit_id").
-		Where("a.organization_id = ?", tenantInfo.OrgID).
-		Where("a.business_unit_id = ?", tenantInfo.BuID).
-		Where("a.archived_at IS NULL").
-		Where(column+" = ?", resourceID).
-		Where("sm.status != ?", shipment.MoveStatusCanceled).
-		Where("s.status != ?", shipment.StopStatusCanceled).
-		Where("s.actual_arrival IS NOT NULL")
-
-	departureQuery := db.NewSelect().
-		TableExpr("assignments AS a").
-		ColumnExpr("s.actual_departure AS timestamp").
-		ColumnExpr("? AS event_type", shipmentports.ActualTimelineEventTypeDeparture).
-		ColumnExpr("s.id AS stop_id").
-		ColumnExpr("s.shipment_move_id").
-		ColumnExpr("sm.shipment_id").
-		ColumnExpr("COALESCE(loc.name, '') AS location_name").
-		Join("JOIN shipment_moves AS sm ON sm.id = a.shipment_move_id AND sm.organization_id = a.organization_id AND sm.business_unit_id = a.business_unit_id").
-		Join("JOIN stops AS s ON s.shipment_move_id = sm.id AND s.organization_id = sm.organization_id AND s.business_unit_id = sm.business_unit_id").
-		Join("LEFT JOIN locations AS loc ON loc.id = s.location_id AND loc.organization_id = s.organization_id AND loc.business_unit_id = s.business_unit_id").
-		Where("a.organization_id = ?", tenantInfo.OrgID).
-		Where("a.business_unit_id = ?", tenantInfo.BuID).
-		Where("a.archived_at IS NULL").
-		Where(column+" = ?", resourceID).
-		Where("sm.status != ?", shipment.MoveStatusCanceled).
-		Where("s.status != ?", shipment.StopStatusCanceled).
-		Where("s.actual_departure IS NOT NULL")
-
-	return arrivalQuery.UnionAll(departureQuery)
+	return keel.CTE(
+		"actual_event",
+		[]string{
+			"timestamp",
+			"event_type",
+			"stop_id",
+			"shipment_move_id",
+			"shipment_id",
+			"location_name",
+		},
+		keel.UnionAll(
+			stopEvents(func(st *shipmentdb.StopsTable) keel.Int64Col { return st.ActualArrival },
+				shipmentports.ActualTimelineEventTypeArrival),
+			stopEvents(func(st *shipmentdb.StopsTable) keel.Int64Col { return st.ActualDeparture },
+				shipmentports.ActualTimelineEventTypeDeparture),
+		),
+	)
 }
 
 func (r *repository) Create(
@@ -483,17 +451,11 @@ func (r *repository) Create(
 	entity *shipment.Assignment,
 ) (*shipment.Assignment, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*shipment.Assignment, error) {
-		if _, err := r.db.DBForContext(ctx).NewInsert().Model(entity).Exec(ctx); err != nil {
-			return nil, err
+		if err := shipmentdb.Assignments.Create(ctx, r.db.Keel(ctx), entity); err != nil {
+			return nil, assignmentErrors.Map(err, entity.ID.String())
 		}
 
-		return r.GetByID(ctx, &shipmentports.GetAssignmentByIDRequest{
-			TenantInfo: pagination.TenantInfo{
-				OrgID: entity.OrganizationID,
-				BuID:  entity.BusinessUnitID,
-			},
-			AssignmentID: entity.ID,
-		})
+		return r.get(ctx, entity.ID)
 	})
 }
 
@@ -502,40 +464,24 @@ func (r *repository) Update(
 	entity *shipment.Assignment,
 ) (*shipment.Assignment, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*shipment.Assignment, error) {
-		ov := entity.Version
-		entity.Version++
-
-		result, err := r.db.DBForContext(ctx).NewUpdate().
-			Model(entity).
-			Column(
-				"primary_worker_id",
-				"tractor_id",
-				"trailer_id",
-				"secondary_worker_id",
-				"status",
-				"version",
-				"updated_at",
-			).
-			Where("id = ?", entity.ID).
-			Where("organization_id = ?", entity.OrganizationID).
-			Where("business_unit_id = ?", entity.BusinessUnitID).
-			Where("version = ?", ov).
-			Exec(ctx)
-		if err != nil {
-			return nil, fmt.Errorf("update assignment: %w", err)
+		a := shipmentdb.Assignments
+		if err := a.Save(
+			ctx,
+			r.db.Keel(ctx),
+			entity,
+			a.PrimaryWorkerID,
+			a.TractorID,
+			a.TrailerID,
+			a.SecondaryWorkerID,
+			a.Status,
+		); err != nil {
+			return nil, fmt.Errorf(
+				"update assignment: %w",
+				assignmentErrors.Map(err, entity.ID.String()),
+			)
 		}
 
-		if err = dberror.CheckRowsAffected(result, "Assignment", entity.ID.String()); err != nil {
-			return nil, err
-		}
-
-		return r.GetByID(ctx, &shipmentports.GetAssignmentByIDRequest{
-			TenantInfo: pagination.TenantInfo{
-				OrgID: entity.OrganizationID,
-				BuID:  entity.BusinessUnitID,
-			},
-			AssignmentID: entity.ID,
-		})
+		return r.get(ctx, entity.ID)
 	})
 }
 
@@ -544,36 +490,21 @@ func (r *repository) Unassign(
 	entity *shipment.Assignment,
 ) (*shipment.Assignment, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*shipment.Assignment, error) {
-		ov := entity.Version
-		entity.Version++
-
 		now := timeutils.NowUnix()
-		entity.Status = shipment.AssignmentStatusCanceled
-		entity.ArchivedAt = &now
-
-		result, err := r.db.DBForContext(ctx).NewUpdate().
-			Model(entity).
-			Column("status", "archived_at", "version", "updated_at").
-			Where("id = ?", entity.ID).
-			Where("organization_id = ?", entity.OrganizationID).
-			Where("business_unit_id = ?", entity.BusinessUnitID).
-			Where("version = ?", ov).
-			Where("archived_at IS NULL").
-			Exec(ctx)
+		a := shipmentdb.Assignments
+		n, err := unassignable(entity).Update(
+			ctx,
+			r.db.Keel(ctx),
+			a.Status.To(shipment.AssignmentStatusCanceled),
+			a.ArchivedAt.To(now),
+		)
 		if err != nil {
 			return nil, fmt.Errorf("unassign assignment: %w", err)
 		}
-
-		if err = dberror.CheckRowsAffected(result, "Assignment", entity.ID.String()); err != nil {
+		if err = dberror.CheckAffected(n, "Assignment", entity.ID.String()); err != nil {
 			return nil, err
 		}
 
-		return r.GetByID(ctx, &shipmentports.GetAssignmentByIDRequest{
-			TenantInfo: pagination.TenantInfo{
-				OrgID: entity.OrganizationID,
-				BuID:  entity.BusinessUnitID,
-			},
-			AssignmentID: entity.ID,
-		})
+		return r.get(ctx, entity.ID)
 	})
 }

@@ -3,20 +3,20 @@
 package airetrievalrepository
 
 import (
+	"context"
 	"os"
 	"testing"
 	"time"
 
-	"github.com/emoss08/trenova/pkg/buncolgen/agentcol"
-	"github.com/emoss08/trenova/pkg/buncolgen/documentcol"
-
-	"github.com/emoss08/trenova/internal/infrastructure/postgres/migrations"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/keel"
+	"github.com/emoss08/trenova/internal/infrastructure/database/dbcli"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agent/agentdb"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/airetrieval"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
-	"github.com/emoss08/trenova/internal/modules/documents/domain/document"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/document/documentdb"
 	"github.com/emoss08/trenova/pkg/pgvector"
 	"github.com/emoss08/trenova/shared/pulid"
+	"github.com/jackc/pgx/v5"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -65,15 +65,9 @@ func TestDeletingASourceRemovesItsRetrievalRows(t *testing.T) {
 				Vector: axisVector(768, map[int]float32{3: 1})})
 	}
 
-	_, err = h.db.NewDelete().
-		Model((*agent.Memory)(nil)).
-		Where(agentcol.MemoryColumns.ID.Eq(), memory.ID).
-		Exec(h.ctx)
-	require.NoError(t, err)
-	_, err = h.db.NewDelete().
-		Model((*document.Document)(nil)).
-		Where(documentcol.DocumentColumns.ID.Eq(), doc.ID).
-		Exec(h.ctx)
+	h.deleteMemory(t, memory.ID)
+	d := documentdb.Documents
+	_, err = d.Where(d.ID.Eq(doc.ID)).Delete(h.ctx, h.db)
 	require.NoError(t, err)
 
 	assert.Zero(t, h.countIndexEntries(t, memory.ID, ""))
@@ -98,16 +92,17 @@ func TestDeletingASourceRemovesItsRetrievalRows(t *testing.T) {
 func (h *harness) triggersOn(t *testing.T) map[string][]string {
 	t.Helper()
 
-	var rows []struct {
-		Table   string `bun:"table_name"`
-		Trigger string `bun:"trigger_name"`
+	type triggerRow struct {
+		Table   string `db:"table_name"`
+		Trigger string `db:"trigger_name"`
 	}
-	require.NoError(t, h.db.NewRaw(
+	rows, err := keel.QueryAll(h.ctx, h.db, pgx.RowToStructByName[triggerRow],
 		`SELECT c.relname AS table_name, tg.tgname AS trigger_name
 		FROM pg_trigger AS tg
 		JOIN pg_class AS c ON c.oid = tg.tgrelid
 		WHERE NOT tg.tgisinternal AND tg.tgname LIKE 'trg_%_purge'`,
-	).Scan(h.ctx, &rows))
+	)
+	require.NoError(t, err)
 
 	byTable := make(map[string][]string, len(rows))
 	for _, row := range rows {
@@ -240,11 +235,8 @@ func TestIndexOutbox_ClaimsOnceAndKeepsLateWritesPending(t *testing.T) {
 	)
 
 	third := h.insertMemory(t, "Receiver needs appointments a day ahead")
-	_, err = h.db.NewUpdate().
-		Model((*agent.Memory)(nil)).
-		Set(agentcol.MemoryColumns.UpdatedAt.Set(), now+100).
-		Where(agentcol.MemoryColumns.ID.Eq(), first.ID).
-		Exec(h.ctx)
+	m := agentdb.Memories
+	_, err = m.Where(m.ID.Eq(first.ID)).Update(h.ctx, h.db, m.UpdatedAt.To(now+100))
 	require.NoError(t, err)
 
 	stale, err = h.repo.FindStaleSources(h.ctx, &agentports.FindStaleAIRetrievalSourcesRequest{
@@ -274,7 +266,7 @@ func TestFallback_ReportsUnavailableWithoutTheExtension(t *testing.T) {
 		"DROP FUNCTION IF EXISTS ai_embeddings_purge_source() CASCADE",
 		"DROP EXTENSION IF EXISTS vector",
 	} {
-		_, err = h.db.ExecContext(h.ctx, statement)
+		_, err = keel.Exec(h.ctx, h.db, statement)
 		require.NoError(t, err)
 	}
 
@@ -342,10 +334,8 @@ func TestFallback_ReportsUnavailableWithoutTheExtension(t *testing.T) {
 	assert.True(t, settings.ID.IsNil(), "an organization without a row reads the defaults")
 	assert.True(t, settings.MemoryEnabled)
 
-	_, err = h.db.NewDelete().
-		Model((*agent.Memory)(nil)).
-		Where(agentcol.MemoryColumns.ID.Eq(), memory.ID).
-		Exec(h.ctx)
+	m := agentdb.Memories
+	_, err = m.Where(m.ID.Eq(memory.ID)).Delete(h.ctx, h.db)
 	require.NoError(t, err, "deleting a source works without the vector triggers")
 }
 
@@ -358,7 +348,7 @@ func TestEnableVector_InstallsTheSchemaAMigrationSkipped(t *testing.T) {
 		"DROP TABLE IF EXISTS ai_embeddings",
 		"DROP FUNCTION IF EXISTS ai_embeddings_purge_source() CASCADE",
 	} {
-		_, err := h.db.ExecContext(h.ctx, statement)
+		_, err := keel.Exec(h.ctx, h.db, statement)
 		require.NoError(t, err)
 	}
 
@@ -369,12 +359,16 @@ func TestEnableVector_InstallsTheSchemaAMigrationSkipped(t *testing.T) {
 	assert.Equal(t, airetrieval.UnavailableReasonSchemaMissing, availability.Reason)
 	assert.True(t, availability.ExtensionInstalled)
 
-	result, err := migrations.EnableVector(h.ctx, h.db)
+	vectorConn, err := pgx.Connect(h.ctx, h.dsn)
+	require.NoError(t, err)
+	t.Cleanup(func() { _ = vectorConn.Close(context.WithoutCancel(h.ctx)) })
+
+	result, err := dbcli.EnableVector(h.ctx, vectorConn)
 	require.NoError(t, err)
 	assert.Equal(t, pgvector.VectorSchemaMissing, result.Before.State)
 	assert.Equal(t, pgvector.VectorReady, result.After.State)
 
-	again, err := migrations.EnableVector(h.ctx, h.db)
+	again, err := dbcli.EnableVector(h.ctx, vectorConn)
 	require.NoError(t, err, "enabling twice is harmless")
 	assert.Equal(t, pgvector.VectorReady, again.Before.State)
 
@@ -388,10 +382,14 @@ func TestEnableVector_InstallsTheSchemaAMigrationSkipped(t *testing.T) {
 	h.replace(t, h.tenant, airetrieval.SourceTypeMemory, memory.ID, modelA, 768,
 		agentports.EmbeddingChunk{ChunkIndex: 0, ContentHash: "e",
 			Vector: axisVector(768, map[int]float32{0: 1})})
-	_, err = h.db.NewDelete().
-		Model((*agent.Memory)(nil)).
-		Where(agentcol.MemoryColumns.ID.Eq(), memory.ID).
-		Exec(h.ctx)
-	require.NoError(t, err)
+	h.deleteMemory(t, memory.ID)
 	assert.Zero(t, h.countEmbeddings(t, memory.ID, ""), "the re-created trigger removes rows")
+}
+
+func (h *harness) deleteMemory(t *testing.T, id pulid.ID) {
+	t.Helper()
+
+	m := agentdb.Memories
+	_, err := m.Where(m.ID.Eq(id)).Delete(h.ctx, h.db)
+	require.NoError(t, err)
 }

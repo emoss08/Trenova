@@ -18,8 +18,8 @@ import (
 The catalog's one unforgiving requirement: every curated field has to still map
 to a column on its entity.
 
-QueryBuilder.ApplyFilters skips a field that is not in FilterableFields and runs
-the query anyway (pkg/querybuilder/querybuilder.go:89), so a column renamed in a
+listquery skips a filter on a field it cannot resolve and runs the query
+anyway (pkg/listquery/filters.go), so a column renamed in a
 migration turns "shipments delivered yesterday" into "the 25 most recent
 shipments" with no error anywhere — and the model presents that as the answer.
 Pinning the spec against the computed configuration makes the rename a failing

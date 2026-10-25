@@ -3,28 +3,53 @@ package permitrepository
 import (
 	"context"
 
-	"github.com/emoss08/trenova/pkg/buncolgen/holdreasoncol"
-	"github.com/emoss08/trenova/pkg/buncolgen/jurisdictionrulecol"
-	"github.com/emoss08/trenova/pkg/buncolgen/locationcol"
-	"github.com/emoss08/trenova/pkg/buncolgen/permitcol"
-
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
-	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/modules/places/domain/jurisdictionrule"
-	"github.com/emoss08/trenova/internal/modules/places/domain/location"
+	"github.com/emoss08/trenova/internal/modules/places/domain/jurisdictionrule/jurisdictionruledb"
+	"github.com/emoss08/trenova/internal/modules/places/domain/location/locationdb"
 	"github.com/emoss08/trenova/internal/modules/reference/domain/holdreason"
+	"github.com/emoss08/trenova/internal/modules/reference/domain/holdreason/holdreasondb"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/permit"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/permit/permitdb"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/permitports"
 	"github.com/emoss08/trenova/pkg/dberror"
-	"github.com/emoss08/trenova/pkg/dbhelper"
+	"github.com/emoss08/trenova/pkg/listquery"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/emoss08/trenova/shared/timeutils"
-	"github.com/uptrace/bun"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
+
+var (
+	permitErrors      = dberror.Mapping{Entity: "Permit"}
+	requirementErrors = dberror.Mapping{Entity: "PermitRequirement"}
+	holdReasonErrors  = dberror.Mapping{Entity: "HoldReason"}
+	ruleErrors        = dberror.Mapping{Entity: "JurisdictionRule"}
+	overrideErrors    = dberror.Mapping{
+		Entity: "JurisdictionOverride",
+		Unique: []dberror.Constraint{
+			{
+				Name:    "uq_jurisdiction_rule_overrides_state",
+				Field:   "stateId",
+				Message: "Your organization already has an override for this state",
+			},
+		},
+		ForeignKey: []dberror.Constraint{
+			{
+				Name:    "fk_jurisdiction_rule_overrides_state",
+				Field:   "stateId",
+				Message: "State does not exist",
+			},
+		},
+	}
+)
+
+type locationState struct {
+	ID      pulid.ID
+	StateID pulid.ID
+}
 
 type Params struct {
 	fx.In
@@ -50,23 +75,15 @@ func (r *repository) ListByShipment(
 	req *permitports.ListPermitsRequest,
 ) ([]*permit.Permit, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*permit.Permit, error) {
-		cols := permitcol.PermitColumns
-		entities := make([]*permit.Permit, 0, 8)
-
-		q := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(&entities).
-			Relation(permitcol.PermitRelations.State).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return permitcol.PermitScopeTenant(sq, req.TenantInfo).
-					Where(cols.ShipmentID.Eq(), req.ShipmentID)
-			})
-
-		if req.Status != "" {
-			q = q.Where(cols.Status.Eq(), req.Status)
-		}
-
-		if err := q.Order(cols.CreatedAt.OrderAsc()).Scan(ctx); err != nil {
+		p := permitdb.Permits
+		entities, err := p.Where(
+			p.ShipmentID.Eq(req.ShipmentID),
+			keel.When(req.Status != "", p.Status.Eq(permit.Status(req.Status))),
+		).
+			Load(p.State()).
+			Order(p.CreatedAt.Asc()).
+			All(ctx, r.db.Keel(ctx))
+		if err != nil {
 			r.l.Error("failed to list permits", zap.Error(err))
 			return nil, err
 		}
@@ -80,20 +97,11 @@ func (r *repository) GetByID(
 	req *permitports.GetPermitByIDRequest,
 ) (*permit.Permit, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*permit.Permit, error) {
-		entity := new(permit.Permit)
-
-		err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(entity).
-			Relation(permitcol.PermitRelations.State).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return permitcol.PermitScopeTenant(sq, req.TenantInfo).
-					Where(permitcol.PermitColumns.ID.Eq(), req.PermitID)
-			}).
-			Scan(ctx)
+		p := permitdb.Permits
+		entity, err := p.Where(p.ID.Eq(req.PermitID)).Load(p.State()).One(ctx, r.db.Keel(ctx))
 		if err != nil {
 			r.l.Error("failed to get permit", zap.Error(err))
-			return nil, err
+			return nil, permitErrors.Map(err, req.PermitID.String())
 		}
 
 		return entity, nil
@@ -105,13 +113,9 @@ func (r *repository) Create(
 	entity *permit.Permit,
 ) (*permit.Permit, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*permit.Permit, error) {
-		if _, err := r.db.DBForContext(ctx).
-			NewInsert().
-			Model(entity).
-			Returning("*").
-			Exec(ctx); err != nil {
+		if err := permitdb.Permits.Create(ctx, r.db.Keel(ctx), entity); err != nil {
 			r.l.Error("failed to create permit", zap.Error(err))
-			return nil, err
+			return nil, permitErrors.Map(err, entity.ID.String())
 		}
 
 		return entity, nil
@@ -123,24 +127,9 @@ func (r *repository) Update(
 	entity *permit.Permit,
 ) (*permit.Permit, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*permit.Permit, error) {
-		ov := entity.Version
-		entity.Version++
-
-		results, err := r.db.DBForContext(ctx).
-			NewUpdate().
-			Model(entity).
-			WherePK().
-			Where("version = ?", ov).
-			OmitZero().
-			Returning("*").
-			Exec(ctx)
-		if err != nil {
+		if err := permitdb.Permits.Save(ctx, r.db.Keel(ctx), entity); err != nil {
 			r.l.Error("failed to update permit", zap.Error(err))
-			return nil, err
-		}
-
-		if err = dberror.CheckRowsAffected(results, "Permit", entity.ID.String()); err != nil {
-			return nil, err
+			return nil, permitErrors.Map(err, entity.ID.String())
 		}
 
 		return entity, nil
@@ -152,26 +141,16 @@ func (r *repository) ListRequirements(
 	req *permitports.ListRequirementsRequest,
 ) ([]*permit.Requirement, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*permit.Requirement, error) {
-		cols := permitcol.RequirementColumns
-		entities := make([]*permit.Requirement, 0, 8)
-
-		q := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(&entities).
-			Relation(permitcol.RequirementRelations.State).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return permitcol.RequirementScopeTenant(sq, req.TenantInfo).
-					Where(cols.ShipmentID.Eq(), req.ShipmentID)
-			})
-
-		if req.Status != "" {
-			q = q.Where(cols.Status.Eq(), req.Status)
-		}
-		if req.ExcludeSuperseded {
-			q = q.Where(cols.Status.NotEq(), permit.RequirementSuperseded)
-		}
-
-		if err := q.Order(cols.RouteSequence.OrderAsc()).Scan(ctx); err != nil {
+		rq := permitdb.Requirements
+		entities, err := rq.Where(
+			rq.ShipmentID.Eq(req.ShipmentID),
+			keel.When(req.Status != "", rq.Status.Eq(permit.RequirementStatus(req.Status))),
+			keel.When(req.ExcludeSuperseded, rq.Status.Ne(permit.RequirementSuperseded)),
+		).
+			Load(rq.State()).
+			Order(rq.RouteSequence.Asc()).
+			All(ctx, r.db.Keel(ctx))
+		if err != nil {
 			r.l.Error("failed to list permit requirements", zap.Error(err))
 			return nil, err
 		}
@@ -193,51 +172,43 @@ func (r *repository) ReplaceForShipment(
 	req *permitports.ReplaceRequirementsRequest,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
-		cols := permitcol.RequirementColumns
-
-		err := r.db.WithTx(ctx, kernelports.TxOptions{}, func(c context.Context, _ bun.Tx) error {
-			if _, dErr := r.db.DBForContext(c).
-				NewUpdate().
-				Model((*permit.Requirement)(nil)).
-				WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-					return permitcol.RequirementScopeTenantUpdate(uq, req.TenantInfo).
-						Where(cols.ShipmentID.Eq(), req.ShipmentID).
-						Where(cols.Status.NotEq(), permit.RequirementSuperseded)
-				}).
-				Set(cols.Status.Set(), permit.RequirementSuperseded).
-				Set(cols.UpdatedAt.Set(), timeutils.NowUnix()).
-				Exec(c); dErr != nil {
-				return dErr
-			}
-
-			if len(req.Requirements) == 0 {
-				return nil
-			}
-
-			for _, requirement := range req.Requirements {
-				requirement.ShipmentID = req.ShipmentID
-				requirement.OrganizationID = req.TenantInfo.OrgID
-				requirement.BusinessUnitID = req.TenantInfo.BuID
-			}
-
-			_, iErr := r.db.DBForContext(c).
-				NewInsert().
-				Model(&req.Requirements).
-				Returning("*").
-				Exec(c)
-
-			return iErr
-		})
-		if err != nil {
+		if err := r.replace(ctx, req); err != nil {
 			r.l.Error("failed to replace permit requirements", zap.Error(err))
 			return dberror.MapRetryableTransactionError(
-				err,
+				requirementErrors.Map(err, ""),
 				"Permit requirements are busy. Retry the request.",
 			)
 		}
 
 		return nil
 	})
+}
+
+func (r *repository) replace(
+	ctx context.Context,
+	req *permitports.ReplaceRequirementsRequest,
+) error {
+	db := r.db.Keel(ctx)
+	rq := permitdb.Requirements
+	_, err := rq.Where(
+		rq.ShipmentID.Eq(req.ShipmentID),
+		rq.Status.Ne(permit.RequirementSuperseded),
+	).Update(ctx, db, rq.Status.To(permit.RequirementSuperseded))
+	if err != nil {
+		return err
+	}
+
+	if len(req.Requirements) == 0 {
+		return nil
+	}
+
+	for _, requirement := range req.Requirements {
+		requirement.ShipmentID = req.ShipmentID
+		requirement.OrganizationID = req.TenantInfo.OrgID
+		requirement.BusinessUnitID = req.TenantInfo.BuID
+	}
+
+	return rq.CreateMany(ctx, db, req.Requirements)
 }
 
 func (r *repository) ResolveRouteStates(
@@ -249,18 +220,11 @@ func (r *repository) ResolveRouteStates(
 			return map[pulid.ID]pulid.ID{}, nil
 		}
 
-		cols := locationcol.LocationColumns
-		rows := make([]*location.Location, 0, len(req.LocationIDs))
-
-		err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(&rows).
-			Column(cols.ID.Bare(), cols.StateID.Bare()).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return locationcol.LocationScopeTenant(sq, req.TenantInfo).
-					Where(cols.ID.In(), bun.List(req.LocationIDs))
-			}).
-			Scan(ctx)
+		l := locationdb.Locations
+		rows, err := keel.Into[locationState](ctx, r.db.Keel(ctx), l.
+			Pick(l.ID, l.StateID).
+			Where(l.ID.In(req.LocationIDs...)).
+			Limit(len(req.LocationIDs)))
 		if err != nil {
 			r.l.Error("failed to resolve route states", zap.Error(err))
 			return nil, err
@@ -268,7 +232,7 @@ func (r *repository) ResolveRouteStates(
 
 		states := make(map[pulid.ID]pulid.ID, len(rows))
 		for _, row := range rows {
-			if row != nil && row.StateID.IsNotNil() {
+			if row.StateID.IsNotNil() {
 				states[row.ID] = row.StateID
 			}
 		}
@@ -282,54 +246,33 @@ func (r *repository) WaiveRequirement(
 	req *permitports.WaiveRequirementRepoRequest,
 ) (*permit.Requirement, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*permit.Requirement, error) {
-		cols := permitcol.RequirementColumns
-		now := timeutils.NowUnix()
-		waivedBy := req.WaivedByID
-
-		entity := new(permit.Requirement)
-
-		err := r.db.DBForContext(ctx).
-			NewUpdate().
-			Model(entity).
-			WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-				return permitcol.RequirementScopeTenantUpdate(uq, req.TenantInfo).
-					Where(cols.ID.Eq(), req.RequirementID)
-			}).
-			Set(cols.Status.Set(), permit.RequirementWaived).
-			Set(cols.WaivedByID.Set(), waivedBy).
-			Set(cols.WaiverReason.Set(), req.Reason).
-			Set(cols.UpdatedAt.Set(), now).
-			Returning("*").
-			Scan(ctx)
+		rq := permitdb.Requirements
+		rows, err := rq.Where(rq.ID.Eq(req.RequirementID)).
+			UpdateReturning(ctx, r.db.Keel(ctx), rq.Status.To(permit.RequirementWaived), rq.WaivedByID.To(req.WaivedByID), rq.WaiverReason.To(req.Reason))
 		if err != nil {
 			r.l.Error("failed to waive permit requirement", zap.Error(err))
-			return nil, err
+			return nil, requirementErrors.Map(err, req.RequirementID.String())
+		}
+		if len(rows) == 0 {
+			return nil, requirementErrors.Map(keel.ErrNotFound, req.RequirementID.String())
 		}
 
-		return entity, nil
+		return rows[0], nil
 	})
 }
 
 func (r *repository) FindHoldReasonByCode(
 	ctx context.Context,
-	tenantInfo pagination.TenantInfo,
+	_ pagination.TenantInfo,
 	code string,
 ) (*holdreason.HoldReason, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*holdreason.HoldReason, error) {
-		entity := new(holdreason.HoldReason)
-
-		err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(entity).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return holdreasoncol.HoldReasonScopeTenant(sq, tenantInfo).
-					Where(holdreasoncol.HoldReasonColumns.Code.Eq(), code).
-					Where(holdreasoncol.HoldReasonColumns.Active.IsTrue())
-			}).
-			Limit(1).
-			Scan(ctx)
+		hr := holdreasondb.HoldReasons
+		entity, err := hr.Where(hr.Code.Eq(code), hr.Active.IsTrue()).
+			Order(hr.CreatedAt.Asc()).
+			First(ctx, r.db.Keel(ctx))
 		if err != nil {
-			return nil, err
+			return nil, holdReasonErrors.Map(err, code)
 		}
 
 		return entity, nil
@@ -369,17 +312,13 @@ func (r *jurisdictionRepository) GetActiveByStateIDs(
 				return nil, nil
 			}
 
-			cols := jurisdictionrulecol.JurisdictionRuleColumns
-			entities := make([]*jurisdictionrule.JurisdictionRule, 0, len(req.StateIDs))
-
-			err := r.db.DBForContext(ctx).
-				NewSelect().
-				Model(&entities).
-				Relation(jurisdictionrulecol.JurisdictionRuleRelations.State).
-				Relation(jurisdictionrulecol.JurisdictionRuleRelations.EscortThresholds).
-				Where(cols.Status.Eq(), jurisdictionrule.StatusActive).
-				Where(cols.StateID.In(), bun.List(req.StateIDs)).
-				Scan(ctx)
+			jr := jurisdictionruledb.JurisdictionRules
+			entities, err := jr.Where(
+				jr.Status.Eq(jurisdictionrule.StatusActive),
+				jr.StateID.In(req.StateIDs...),
+			).
+				Load(jr.State(), jr.EscortThresholds()).
+				All(ctx, r.db.Keel(ctx))
 			if err != nil {
 				r.l.Error("failed to load jurisdiction rules", zap.Error(err))
 				return nil, err
@@ -392,18 +331,11 @@ func (r *jurisdictionRepository) GetActiveByStateIDs(
 
 func (r *jurisdictionRepository) GetOverrides(
 	ctx context.Context,
-	tenantInfo pagination.TenantInfo,
+	_ pagination.TenantInfo,
 ) ([]*jurisdictionrule.Override, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*jurisdictionrule.Override, error) {
-		entities := make([]*jurisdictionrule.Override, 0, 8)
-
-		err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(&entities).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return jurisdictionrulecol.OverrideScopeTenant(sq, tenantInfo)
-			}).
-			Scan(ctx)
+		o := jurisdictionruledb.Overrides
+		entities, err := o.Query().Order(o.StateID.Asc()).All(ctx, r.db.Keel(ctx))
 		if err != nil {
 			r.l.Error("failed to load jurisdiction overrides", zap.Error(err))
 			return nil, err
@@ -421,38 +353,31 @@ func (r *jurisdictionRepository) List(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*pagination.ListResult[*jurisdictionrule.JurisdictionRule], error) {
-			cols := jurisdictionrulecol.JurisdictionRuleColumns
-			entities := make(
-				[]*jurisdictionrule.JurisdictionRule,
-				0,
-				req.Filter.Pagination.SafeLimit(),
+			jr := jurisdictionruledb.JurisdictionRules
+			q := jr.Where(
+				keel.When(
+					req.VerificationState != "",
+					jr.VerificationState.Eq(req.VerificationState),
+				),
+				keel.When(req.Status != "", jr.Status.Eq(req.Status)),
 			)
 
-			total, err := r.db.DBForContext(ctx).
-				NewSelect().
-				Model(&entities).
-				Relation(jurisdictionrulecol.JurisdictionRuleRelations.State).
-				Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-					if req.VerificationState != "" {
-						sq = sq.Where(cols.VerificationState.Eq(), req.VerificationState)
-					}
-					if req.Status != "" {
-						sq = sq.Where(cols.Status.Eq(), req.Status)
-					}
-					return sq.
-						Limit(int64(req.Filter.Pagination.SafeLimit())).
-						Offset(int64(req.Filter.Pagination.SafeOffset()))
-				}).
-				ScanAndCount(ctx)
+			result, err := listquery.List(ctx, r.db.Keel(ctx), q,
+				&listquery.Request[jurisdictionrule.JurisdictionRule]{
+					Filter: req.Filter,
+					Shape: func(
+						q *keel.Query[jurisdictionrule.JurisdictionRule],
+					) *keel.Query[jurisdictionrule.JurisdictionRule] {
+						return q.Load(jr.State())
+					},
+					Then: []keel.Order{jr.StateID.Asc()},
+				})
 			if err != nil {
 				r.l.Error("failed to list jurisdiction rules", zap.Error(err))
 				return nil, err
 			}
 
-			return &pagination.ListResult[*jurisdictionrule.JurisdictionRule]{
-				Items: entities,
-				Total: int(total),
-			}, nil
+			return result, nil
 		},
 	)
 }
@@ -465,21 +390,14 @@ func (r *jurisdictionRepository) GetByID(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*jurisdictionrule.JurisdictionRule, error) {
-			entity := new(jurisdictionrule.JurisdictionRule)
-
-			q := r.db.DBForContext(ctx).
-				NewSelect().
-				Model(entity).
-				Relation(jurisdictionrulecol.JurisdictionRuleRelations.State).
-				Where(jurisdictionrulecol.JurisdictionRuleColumns.ID.Eq(), req.RuleID)
-
-			if req.ExpandThresholds {
-				q = q.Relation(jurisdictionrulecol.JurisdictionRuleRelations.EscortThresholds)
-			}
-
-			if err := q.Scan(ctx); err != nil {
+			jr := jurisdictionruledb.JurisdictionRules
+			entity, err := jr.Where(jr.ID.Eq(req.RuleID)).
+				Load(jr.State()).
+				Load(listquery.When(req.ExpandThresholds, jr.EscortThresholds())...).
+				One(ctx, r.db.Keel(ctx))
+			if err != nil {
 				r.l.Error("failed to get jurisdiction rule", zap.Error(err))
-				return nil, err
+				return nil, ruleErrors.Map(err, req.RuleID.String())
 			}
 
 			return entity, nil
@@ -495,13 +413,10 @@ func (r *jurisdictionRepository) Create(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*jurisdictionrule.JurisdictionRule, error) {
-			if _, err := r.db.DBForContext(ctx).
-				NewInsert().
-				Model(entity).
-				Returning("*").
-				Exec(ctx); err != nil {
+			err := jurisdictionruledb.JurisdictionRules.Create(ctx, r.db.Keel(ctx), entity)
+			if err != nil {
 				r.l.Error("failed to create jurisdiction rule", zap.Error(err))
-				return nil, err
+				return nil, ruleErrors.Map(err, entity.ID.String())
 			}
 
 			return entity, nil
@@ -517,26 +432,10 @@ func (r *jurisdictionRepository) Update(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*jurisdictionrule.JurisdictionRule, error) {
-			ov := entity.Version
-			entity.Version++
-
-			results, err := r.db.DBForContext(ctx).
-				NewUpdate().
-				Model(entity).
-				WherePK().
-				Where("version = ?", ov).
-				OmitZero().
-				Returning("*").
-				Exec(ctx)
+			err := jurisdictionruledb.JurisdictionRules.Save(ctx, r.db.Keel(ctx), entity)
 			if err != nil {
 				r.l.Error("failed to update jurisdiction rule", zap.Error(err))
-				return nil, err
-			}
-
-			if err = dberror.CheckRowsAffected(
-				results, "JurisdictionRule", entity.ID.String(),
-			); err != nil {
-				return nil, err
+				return nil, ruleErrors.Map(err, entity.ID.String())
 			}
 
 			return entity, nil
@@ -558,33 +457,24 @@ func (r *jurisdictionRepository) Verify(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*jurisdictionrule.JurisdictionRule, error) {
-			cols := jurisdictionrulecol.JurisdictionRuleColumns
-
-			q := r.db.DBForContext(ctx).
-				NewUpdate().
-				Model((*jurisdictionrule.JurisdictionRule)(nil)).
-				Set("verification_state = ?", req.State).
-				Set("verified_at = ?", req.VerifiedAt).
-				Set("version = version + 1").
-				Set("updated_at = ?", timeutils.NowUnix()).
-				Where(cols.ID.Eq(), req.RuleID)
-
+			jr := jurisdictionruledb.JurisdictionRules
+			sets := []keel.Assignment{
+				jr.VerificationState.To(req.State),
+				jr.VerifiedAt.To(req.VerifiedAt),
+			}
 			if req.SourceNote != "" {
-				q = q.Set("source_note = ?", req.SourceNote)
+				sets = append(sets, jr.SourceNote.To(req.SourceNote))
 			}
 			if req.SourceURL != "" {
-				q = q.Set("source_url = ?", req.SourceURL)
+				sets = append(sets, jr.SourceURL.To(req.SourceURL))
 			}
 
-			results, err := q.Exec(ctx)
+			n, err := jr.Where(jr.ID.Eq(req.RuleID)).Update(ctx, r.db.Keel(ctx), sets...)
 			if err != nil {
 				r.l.Error("failed to verify jurisdiction rule", zap.Error(err))
 				return nil, err
 			}
-
-			if err = dberror.CheckRowsAffected(
-				results, "JurisdictionRule", req.RuleID.String(),
-			); err != nil {
+			if err = dberror.CheckAffected(n, "JurisdictionRule", req.RuleID.String()); err != nil {
 				return nil, err
 			}
 
@@ -601,43 +491,23 @@ func (r *jurisdictionRepository) ListConnection(
 	ctx context.Context,
 	req *permitports.ListJurisdictionRuleConnectionRequest,
 ) (*pagination.CursorListResult[*jurisdictionrule.JurisdictionRule], error) {
-	return dbtx.Write(
+	return dbtx.Read(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*pagination.CursorListResult[*jurisdictionrule.JurisdictionRule], error) {
-			dba := r.db.DBForContext(ctx)
-
-			var totalCount *int
-			if req.Cursor.IncludeTotalCount {
-				total, err := dba.
-					NewSelect().
-					Model((*jurisdictionrule.JurisdictionRule)(nil)).
-					Count(ctx)
-				if err != nil {
-					r.l.Error("failed to count jurisdiction rules", zap.Error(err))
-					return nil, err
-				}
-				totalCount = new(int(total))
-			}
-
-			result, err := dbhelper.CursorList(
-				ctx,
-				dbhelper.CursorListParams[*jurisdictionrule.JurisdictionRule]{
-					Filter:     req.Filter,
-					Cursor:     req.Cursor,
-					TotalCount: totalCount,
-					Query: func(entities *[]*jurisdictionrule.JurisdictionRule) *bun.SelectQuery {
-						return dba.
-							NewSelect().
-							Model(entities).
-							Relation(jurisdictionrulecol.JurisdictionRuleRelations.State)
-					},
-					Apply: func(sq *bun.SelectQuery) (*bun.SelectQuery, error) {
-						return sq, nil
+			jr := jurisdictionruledb.JurisdictionRules
+			result, err := listquery.Connection(ctx, r.db.Keel(ctx), jr.Query(),
+				&listquery.Request[jurisdictionrule.JurisdictionRule]{
+					Filter: req.Filter,
+					Cursor: req.Cursor,
+					Shape: func(
+						q *keel.Query[jurisdictionrule.JurisdictionRule],
+					) *keel.Query[jurisdictionrule.JurisdictionRule] {
+						return q.Load(jr.State())
 					},
 				})
 			if err != nil {
-				r.l.Error("failed to scan jurisdiction rules", zap.Error(err))
+				r.l.Error("failed to list jurisdiction rules", zap.Error(err))
 				return nil, err
 			}
 
@@ -649,50 +519,25 @@ func (r *jurisdictionRepository) ListConnection(
 func (r *jurisdictionRepository) ListOverridesConnection(
 	ctx context.Context,
 	req *permitports.ListOverridesRequest,
-	tenantInfo pagination.TenantInfo,
+	_ pagination.TenantInfo,
 ) (*pagination.CursorListResult[*jurisdictionrule.Override], error) {
-	return dbtx.Write(
+	return dbtx.Read(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*pagination.CursorListResult[*jurisdictionrule.Override], error) {
-			dba := r.db.DBForContext(ctx)
-
-			var totalCount *int
-			if req.Cursor.IncludeTotalCount {
-				total, err := dba.
-					NewSelect().
-					Model((*jurisdictionrule.Override)(nil)).
-					WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-						return jurisdictionrulecol.OverrideScopeTenant(sq, tenantInfo)
-					}).
-					Count(ctx)
-				if err != nil {
-					r.l.Error("failed to count jurisdiction overrides", zap.Error(err))
-					return nil, err
-				}
-				totalCount = new(int(total))
-			}
-
-			result, err := dbhelper.CursorList(
-				ctx,
-				dbhelper.CursorListParams[*jurisdictionrule.Override]{
-					Filter:     req.Filter,
-					Cursor:     req.Cursor,
-					TotalCount: totalCount,
-					Query: func(entities *[]*jurisdictionrule.Override) *bun.SelectQuery {
-						return dba.
-							NewSelect().
-							Model(entities).
-							Relation(jurisdictionrulecol.OverrideRelations.State)
-					},
-					Apply: func(sq *bun.SelectQuery) (*bun.SelectQuery, error) {
-						return sq.WhereGroup(" AND ", func(q *bun.SelectQuery) *bun.SelectQuery {
-							return jurisdictionrulecol.OverrideScopeTenant(q, tenantInfo)
-						}), nil
+			o := jurisdictionruledb.Overrides
+			result, err := listquery.Connection(ctx, r.db.Keel(ctx), o.Query(),
+				&listquery.Request[jurisdictionrule.Override]{
+					Filter: req.Filter,
+					Cursor: req.Cursor,
+					Shape: func(
+						q *keel.Query[jurisdictionrule.Override],
+					) *keel.Query[jurisdictionrule.Override] {
+						return q.Load(o.State())
 					},
 				})
 			if err != nil {
-				r.l.Error("failed to scan jurisdiction overrides", zap.Error(err))
+				r.l.Error("failed to list jurisdiction overrides", zap.Error(err))
 				return nil, err
 			}
 
@@ -706,20 +551,11 @@ func (r *jurisdictionRepository) GetOverrideByID(
 	req *permitports.GetOverrideByIDRequest,
 ) (*jurisdictionrule.Override, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*jurisdictionrule.Override, error) {
-		entity := new(jurisdictionrule.Override)
-
-		err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(entity).
-			Relation(jurisdictionrulecol.OverrideRelations.State).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return jurisdictionrulecol.OverrideScopeTenant(sq, req.TenantInfo).
-					Where(jurisdictionrulecol.OverrideColumns.ID.Eq(), req.OverrideID)
-			}).
-			Scan(ctx)
+		o := jurisdictionruledb.Overrides
+		entity, err := o.Where(o.ID.Eq(req.OverrideID)).Load(o.State()).One(ctx, r.db.Keel(ctx))
 		if err != nil {
 			r.l.Error("failed to get jurisdiction override", zap.Error(err))
-			return nil, err
+			return nil, overrideErrors.Map(err, req.OverrideID.String())
 		}
 
 		return entity, nil
@@ -731,13 +567,9 @@ func (r *jurisdictionRepository) CreateOverride(
 	entity *jurisdictionrule.Override,
 ) (*jurisdictionrule.Override, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*jurisdictionrule.Override, error) {
-		if _, err := r.db.DBForContext(ctx).
-			NewInsert().
-			Model(entity).
-			Returning("*").
-			Exec(ctx); err != nil {
+		if err := jurisdictionruledb.Overrides.Create(ctx, r.db.Keel(ctx), entity); err != nil {
 			r.l.Error("failed to create jurisdiction override", zap.Error(err))
-			return nil, err
+			return nil, overrideErrors.Map(err, entity.ID.String())
 		}
 
 		return entity, nil
@@ -749,28 +581,9 @@ func (r *jurisdictionRepository) UpdateOverride(
 	entity *jurisdictionrule.Override,
 ) (*jurisdictionrule.Override, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*jurisdictionrule.Override, error) {
-		ov := entity.Version
-		entity.Version++
-
-		results, err := r.db.DBForContext(ctx).
-			NewUpdate().
-			Model(entity).
-			WherePK().
-			Where("version = ?", ov).
-			// Not OmitZero: every override field is a nullable pointer where nil
-			// means "defer to the statute", so clearing one has to write NULL rather
-			// than be skipped as a zero value.
-			Returning("*").
-			Exec(ctx)
-		if err != nil {
+		if err := jurisdictionruledb.Overrides.Save(ctx, r.db.Keel(ctx), entity); err != nil {
 			r.l.Error("failed to update jurisdiction override", zap.Error(err))
-			return nil, err
-		}
-
-		if err = dberror.CheckRowsAffected(
-			results, "JurisdictionOverride", entity.ID.String(),
-		); err != nil {
-			return nil, err
+			return nil, overrideErrors.Map(err, entity.ID.String())
 		}
 
 		return entity, nil
@@ -782,23 +595,16 @@ func (r *jurisdictionRepository) DeleteOverride(
 	req *permitports.DeleteOverrideRequest,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
-		results, err := r.db.DBForContext(ctx).
-			NewDelete().
-			Model((*jurisdictionrule.Override)(nil)).
-			WhereGroup(" AND ", func(sq *bun.DeleteQuery) *bun.DeleteQuery {
-				return sq.
-					Where(jurisdictionrulecol.OverrideColumns.ID.Eq(), req.OverrideID).
-					Where(jurisdictionrulecol.OverrideColumns.OrganizationID.Eq(), req.TenantInfo.OrgID).
-					Where(jurisdictionrulecol.OverrideColumns.BusinessUnitID.Eq(), req.TenantInfo.BuID)
-			}).
-			Exec(ctx)
+		err := jurisdictionruledb.Overrides.DeleteRow(
+			ctx,
+			r.db.Keel(ctx),
+			&jurisdictionrule.Override{ID: req.OverrideID},
+		)
 		if err != nil {
 			r.l.Error("failed to delete jurisdiction override", zap.Error(err))
-			return err
+			return overrideErrors.Map(err, req.OverrideID.String())
 		}
 
-		return dberror.CheckRowsAffected(
-			results, "JurisdictionOverride", req.OverrideID.String(),
-		)
+		return nil
 	})
 }

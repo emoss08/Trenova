@@ -5,6 +5,9 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/emoss08/trenova/internal/modules/rating/domain/formulatemplate/formulatemplatedb"
+	"github.com/emoss08/trenova/pkg/listquery"
+
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
@@ -15,7 +18,6 @@ import (
 	"github.com/emoss08/trenova/internal/modules/workspace/app/formulaassistantservice"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/pagedraft"
 	"github.com/emoss08/trenova/pkg/pagination"
-	"github.com/emoss08/trenova/pkg/querybuilder"
 	"github.com/emoss08/trenova/pkg/tarifftypes"
 	"github.com/emoss08/trenova/shared/pulid"
 )
@@ -145,7 +147,10 @@ func newListFormulaTemplatesTool(
 		entityPlural: pluralFormulaTemplates,
 		summary:      formulaTemplatesSummary,
 		resource:     permission.ResourceFormulaTemplate,
-		config:       querybuilder.GetFieldConfiguration((*formulatemplate.FormulaTemplate)(nil)),
+		config: listquery.Describe(
+			(*formulatemplate.FormulaTemplate)(nil),
+			formulatemplatedb.FormulaTemplatesSchema(),
+		),
 		fields: []listField{
 			{Name: "name", Kind: filterText, Sortable: true},
 			{

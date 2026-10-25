@@ -1,22 +1,24 @@
 package trailerhandler_test
 
 import (
-	"github.com/emoss08/trenova/internal/testutil/mocks/customfieldportsmock"
-	"github.com/emoss08/trenova/internal/testutil/mocks/trailerportsmock"
 	"context"
 	"errors"
 	"net/http"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/testutil/mocks/customfieldportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/trailerportsmock"
+	"github.com/emoss08/trenova/internal/testutil/pagetest"
+
 	"github.com/emoss08/trenova/internal/api/handlers/trailerhandler"
 	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/api/middleware"
-	"github.com/emoss08/trenova/internal/modules/workspace/domain/customfield"
-	"github.com/emoss08/trenova/internal/modules/equipment/domain/trailer"
-	"github.com/emoss08/trenova/internal/modules/workspace/app/customfieldservice"
-	"github.com/emoss08/trenova/internal/modules/equipment/app/trailerservice"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/modules/equipment/app/trailerservice"
+	"github.com/emoss08/trenova/internal/modules/equipment/domain/trailer"
 	"github.com/emoss08/trenova/internal/modules/equipment/ports/trailerports"
+	"github.com/emoss08/trenova/internal/modules/workspace/app/customfieldservice"
+	"github.com/emoss08/trenova/internal/modules/workspace/domain/customfield"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -97,7 +99,7 @@ func TestTrailerHandler_List_Success(t *testing.T) {
 	trID := pulid.MustNew("tr_")
 	repo := trailerportsmock.NewMockTrailerRepository(t)
 	repo.On("List", mock.Anything, mock.Anything).Return(
-		pagination.NewCursorListResult([]*trailer.Trailer{
+		pagetest.Of([]*trailer.Trailer{
 			{
 				ID:             trID,
 				OrganizationID: testutil.TestOrgID,
@@ -135,7 +137,7 @@ func TestTrailerHandler_List_WithPagination(t *testing.T) {
 	repo := trailerportsmock.NewMockTrailerRepository(t)
 	repo.On("List", mock.Anything, mock.MatchedBy(func(req *trailerports.ListTrailersRequest) bool {
 		return req.Cursor.Limit == 10 && req.Cursor.After == ""
-	})).Return(pagination.NewCursorListResult([]*trailer.Trailer{}, 10), nil)
+	})).Return(pagetest.Of([]*trailer.Trailer{}, 10), nil)
 
 	deps := setupTrailerHandler(t, repo)
 
@@ -179,7 +181,7 @@ func TestTrailerHandler_List_WithQueryParams(t *testing.T) {
 
 	repo := trailerportsmock.NewMockTrailerRepository(t)
 	repo.On("List", mock.Anything, mock.Anything).Return(
-		pagination.NewCursorListResult([]*trailer.Trailer{}, pagination.DefaultLimit),
+		pagetest.Of([]*trailer.Trailer{}, pagination.DefaultLimit),
 		nil,
 	)
 

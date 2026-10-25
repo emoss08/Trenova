@@ -17,7 +17,6 @@ import (
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
-	"github.com/uptrace/bun"
 	"go.uber.org/zap"
 )
 
@@ -78,7 +77,7 @@ func (s *Service) approvals(
 
 func (s *Service) Submit(ctx context.Context, req *SubmitRequest) (*ratematrix.RateMatrix, error) {
 	var submitted *ratematrix.RateMatrix
-	err := s.db.WithTx(ctx, kernelports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
+	err := s.db.Transact(ctx, kernelports.TxOptions{}, func(txCtx context.Context) error {
 		result, txErr := s.approvals(ctx).Apply(txCtx, &req.ApprovalActionRequest, matrixTransition{
 			Operation:    "Submit",
 			From:         formulatemplate.StatusDraft,
@@ -217,7 +216,7 @@ func (s *Service) Approve(
 	var approved *ratematrix.RateMatrix
 	var publishes bool
 	tenant := req.TenantInfo
-	err := s.db.WithTx(ctx, kernelports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
+	err := s.db.Transact(ctx, kernelports.TxOptions{}, func(txCtx context.Context) error {
 		result, txErr := s.approvals(ctx).Apply(txCtx, req, matrixTransition{
 			Operation:    "Approve",
 			From:         formulatemplate.StatusInReview,
@@ -355,7 +354,7 @@ func (s *Service) Reject(
 	var submitterID *pulid.ID
 	var publishedVersion int64
 	var rejected *ratematrix.RateMatrix
-	err := s.db.WithTx(ctx, kernelports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
+	err := s.db.Transact(ctx, kernelports.TxOptions{}, func(txCtx context.Context) error {
 		current, err := s.repo.GetByID(txCtx, &ratematrixports.GetRateMatrixByIDRequest{
 			RateMatrixID: req.EntityID,
 			TenantInfo:   req.TenantInfo,
@@ -437,7 +436,7 @@ func (s *Service) RequestChanges(
 
 	var submitterID *pulid.ID
 	var returned *ratematrix.RateMatrix
-	err := s.db.WithTx(ctx, kernelports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
+	err := s.db.Transact(ctx, kernelports.TxOptions{}, func(txCtx context.Context) error {
 		result, txErr := s.approvals(ctx).Apply(txCtx, req, matrixTransition{
 			Operation:    "RequestChanges",
 			From:         formulatemplate.StatusInReview,
@@ -543,7 +542,7 @@ func (s *Service) expireSubmission(
 	matrix.ReviewComment = "Submission expired after waiting for review"
 
 	var updated *ratematrix.RateMatrix
-	err := s.db.WithTx(ctx, kernelports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
+	err := s.db.Transact(ctx, kernelports.TxOptions{}, func(txCtx context.Context) error {
 		saved, txErr := s.repo.UpdateHeader(txCtx, matrix)
 		if txErr != nil {
 			return txErr

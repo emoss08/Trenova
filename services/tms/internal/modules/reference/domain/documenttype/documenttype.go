@@ -3,53 +3,60 @@ package documenttype
 import (
 	"context"
 
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/validationframework"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/emoss08/trenova/shared/timeutils"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
 	"github.com/go-ozzo/ozzo-validation/v4/is"
-	"github.com/uptrace/bun"
 )
 
 // CodePOD is the code a proof of delivery is filed under.
 const CodePOD = "POD"
 
 var (
-	_ bun.BeforeAppendModelHook          = (*DocumentType)(nil)
 	_ validationframework.TenantedEntity = (*DocumentType)(nil)
 	_ domaintypes.PostgresSearchable     = (*DocumentType)(nil)
 	_ pagination.CursorEntity            = (*DocumentType)(nil)
 )
 
 type DocumentType struct {
-	bun.BaseModel             `bun:"table:document_types,alias:dt" json:"-"`
-	pagination.CursorValueSet `bun:",embed"                        json:"-"`
-
-	ID                     pulid.ID               `json:"id"                     bun:"id,type:VARCHAR(100),pk,notnull"`
-	BusinessUnitID         pulid.ID               `json:"businessUnitId"         bun:"business_unit_id,type:VARCHAR(100),notnull,pk"`
-	OrganizationID         pulid.ID               `json:"organizationId"         bun:"organization_id,type:VARCHAR(100),notnull,pk"`
-	Code                   string                 `json:"code"                   bun:"code,type:VARCHAR(10),notnull"`
-	Name                   string                 `json:"name"                   bun:"name,type:VARCHAR(100),notnull"`
-	Description            string                 `json:"description"            bun:"description,type:TEXT,nullzero"`
-	Color                  string                 `json:"color"                  bun:"color,type:VARCHAR(10),nullzero"`
-	DocumentClassification DocumentClassification `json:"documentClassification" bun:"document_classification,type:document_classification_enum,notnull,default:'Public'"`
-	DocumentCategory       DocumentCategory       `json:"documentCategory"       bun:"document_category,type:document_category_enum,notnull,default:'Other'"`
-	IsSystem               bool                   `json:"isSystem"               bun:"is_system,type:BOOLEAN"`
+	keel.Table             `keel:"document_types"`
+	ID                     pulid.ID               `keel:"id,pk,autoid:dt_"           json:"id"`
+	BusinessUnitID         pulid.ID               `keel:"business_unit_id,pk,tenant" json:"businessUnitId"`
+	OrganizationID         pulid.ID               `keel:"organization_id,pk,tenant"  json:"organizationId"`
+	Code                   string                 `keel:"code"                       json:"code"`
+	Name                   string                 `keel:"name"                       json:"name"`
+	Description            string                 `keel:"description,nullzero"       json:"description"`
+	Color                  string                 `keel:"color,nullzero"             json:"color"`
+	DocumentClassification DocumentClassification `keel:"document_classification"    json:"documentClassification"`
+	DocumentCategory       DocumentCategory       `keel:"document_category"          json:"documentCategory"`
+	IsSystem               bool                   `keel:"is_system"                  json:"isSystem"`
 	// RequiresSignature makes a document of this type count only once it is
 	// signed, the way a proof of delivery is proof only with the receiver's name.
-	RequiresSignature bool   `json:"requiresSignature" bun:"requires_signature,type:BOOLEAN,notnull,default:false"`
-	Version           int64  `json:"version"           bun:"version,type:BIGINT"`
-	CreatedAt         int64  `json:"createdAt"         bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
-	UpdatedAt         int64  `json:"updatedAt"         bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
-	SearchVector      string `json:"-"                 bun:"search_vector,type:TSVECTOR,scanonly"`
-	Rank              string `json:"-"                 bun:"rank,type:VARCHAR(100),scanonly"`
+	RequiresSignature bool   `json:"requiresSignature" keel:"requires_signature"`
+	Version           int64  `json:"version"           keel:"version,version"`
+	CreatedAt         int64  `json:"createdAt"         keel:"created_at,autocreate"`
+	UpdatedAt         int64  `json:"updatedAt"         keel:"updated_at,autoupdate"`
+	SearchVector      string `json:"-"                 keel:"search_vector,tsvector,readonly,noselect"`
+	Rank              string `json:"-"                 keel:"rank,computed"`
 
-	BusinessUnit *tenant.BusinessUnit `json:"businessUnit,omitempty" bun:"rel:belongs-to,join:business_unit_id=id"`
-	Organization *tenant.Organization `json:"organization,omitempty" bun:"rel:belongs-to,join:organization_id=id"`
+	BusinessUnit *tenant.BusinessUnit `json:"businessUnit,omitempty"`
+	Organization *tenant.Organization `json:"organization,omitempty"`
+}
+
+func (dt *DocumentType) BeforeCreate(_ context.Context) error {
+	if dt.DocumentClassification == "" {
+		dt.DocumentClassification = ClassificationPublic
+	}
+	if dt.DocumentCategory == "" {
+		dt.DocumentCategory = CategoryOther
+	}
+
+	return nil
 }
 
 func (dt *DocumentType) Validate(multiErr *errortypes.MultiError) {
@@ -88,22 +95,6 @@ func (dt *DocumentType) Validate(multiErr *errortypes.MultiError) {
 			).Error("Document category must be valid"),
 		),
 	))
-}
-
-func (dt *DocumentType) BeforeAppendModel(_ context.Context, query bun.Query) error {
-	now := timeutils.NowUnix()
-
-	switch query.(type) {
-	case *bun.InsertQuery:
-		if dt.ID.IsNil() {
-			dt.ID = pulid.MustNew("dt_")
-		}
-		dt.CreatedAt = now
-	case *bun.UpdateQuery:
-		dt.UpdatedAt = now
-	}
-
-	return nil
 }
 
 func (dt *DocumentType) GetID() pulid.ID {

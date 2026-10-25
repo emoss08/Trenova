@@ -9,6 +9,12 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/emoss08/keel"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/capture/capturedb"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/inboundmessage/inboundmessagedb"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/triage/triagedb"
+	"github.com/emoss08/trenova/internal/modules/workspace/domain/email/emaildb"
+
 	"github.com/emoss08/trenova/internal/api/graphql/agentread"
 	"github.com/emoss08/trenova/internal/api/graphql/agentread/agentreadtest"
 	"github.com/emoss08/trenova/internal/api/graphql/loaders"
@@ -38,7 +44,6 @@ import (
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"github.com/uptrace/bun"
 	"go.uber.org/zap"
 )
 
@@ -79,7 +84,7 @@ var errOrganizationNotCached = errors.New("organization not cached")
 // services the screen's resolvers call over the real repositories, and the
 // loaders its fields resolve through.
 type inboxEnv struct {
-	admin     *bun.DB
+	admin     *keel.DB
 	engine    permissionports.PermissionEngine
 	reader    agentports.GraphQLReader
 	public    agentports.GraphQLReader
@@ -189,9 +194,9 @@ func (e *inboxEnv) write(t *testing.T, tenant *agentreadtest.Tenant, label strin
 
 	ctx := t.Context()
 	org, bu, user := tenant.Actor.OrganizationID, tenant.Actor.BusinessUnitID, tenant.Actor.UserID
-	insert := func(model any) {
+	writeCtx := tenant.Ctx(ctx)
+	must := func(err error) {
 		t.Helper()
-		_, err := e.admin.NewInsert().Model(model).Exec(ctx)
 		require.NoError(t, err)
 	}
 	out := &inboxTenant{
@@ -206,7 +211,7 @@ func (e *inboxEnv) write(t *testing.T, tenant *agentreadtest.Tenant, label strin
 		Provider: inboundmessage.ProviderPostmark, TokenHash: pulid.MustNew("tok_").String(),
 		ReviewPolicy: inboundmessage.ReviewAlways, Status: inboundmessage.MailboxActive,
 	}
-	insert(mailbox)
+	must(inboundmessagedb.Mailboxes.Create(writeCtx, e.admin, mailbox))
 	out.mailbox, out.address = mailbox.ID.String(), mailbox.Address
 
 	for idx := range inboxMessagesPerTenant {
@@ -228,7 +233,7 @@ func (e *inboxEnv) write(t *testing.T, tenant *agentreadtest.Tenant, label strin
 			message.TextBody = strings.Repeat("x", inboxLongBody)
 			out.long = message.ID.String()
 		}
-		insert(message)
+		must(inboundmessagedb.InboundMessages.Create(writeCtx, e.admin, message))
 		out.messages = append(out.messages, message.ID.String())
 		if idx < inboxWaitingPerTenant {
 			out.waiting = append(out.waiting, message.ID.String())
@@ -253,7 +258,7 @@ func (e *inboxEnv) write(t *testing.T, tenant *agentreadtest.Tenant, label strin
 		if idx == 0 {
 			out.senderEmail = profile.SenderEmail
 		}
-		insert(profile)
+		must(emaildb.Profiles.Create(writeCtx, e.admin, profile))
 	}
 
 	device := &capture.CaptureDevice{
@@ -263,7 +268,7 @@ func (e *inboxEnv) write(t *testing.T, tenant *agentreadtest.Tenant, label strin
 		RefreshTokenHash: pulid.MustNew("rt_").String(), AccessTokenHash: pulid.MustNew("at_").String(),
 		AccessTokenExpiresAt: 10,
 	}
-	insert(device)
+	must(capturedb.CaptureDevices.Create(writeCtx, e.admin, device))
 	for idx := range 4 {
 		batch := &capture.CaptureBatch{
 			ID: pulid.MustNew("cbat_"), OrganizationID: org, BusinessUnitID: bu, UserID: user,
@@ -277,14 +282,14 @@ func (e *inboxEnv) write(t *testing.T, tenant *agentreadtest.Tenant, label strin
 		} else {
 			out.batches = append(out.batches, batch.ID.String())
 		}
-		insert(batch)
+		must(capturedb.CaptureBatches.Create(writeCtx, e.admin, batch))
 		for position := 2; position >= 1; position-- {
 			item := &capture.CaptureItem{
 				ID: pulid.MustNew("citm_"), OrganizationID: org, BusinessUnitID: bu,
 				BatchID: batch.ID, Position: position, Status: capture.ItemProposed,
 				PageIDs: []pulid.ID{pulid.MustNew("cpag_")},
 			}
-			insert(item)
+			must(capturedb.CaptureItems.Create(writeCtx, e.admin, item))
 			out.batchItems[batch.ID.String()] = append(
 				[]string{item.ID.String()}, out.batchItems[batch.ID.String()]...)
 		}
@@ -293,7 +298,7 @@ func (e *inboxEnv) write(t *testing.T, tenant *agentreadtest.Tenant, label strin
 	e.directory.people[org] = []permissionports.PermittedUser{{UserID: user, Name: "Reader " + label}}
 	settings := triage.DefaultSettings(org, bu)
 	settings.OnCallUserID, settings.EndOfDayMinute = user, inboxEndOfDayMinute
-	insert(settings)
+	must(triagedb.Settingses.Create(writeCtx, e.admin, settings))
 
 	return out
 }

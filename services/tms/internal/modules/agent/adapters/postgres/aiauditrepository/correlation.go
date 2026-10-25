@@ -4,13 +4,11 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/emoss08/trenova/pkg/buncolgen/auditcol"
-
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aiauditports"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/audit"
-	"github.com/emoss08/trenova/pkg/buncolgen"
-	"github.com/uptrace/bun"
+	"github.com/emoss08/trenova/internal/modules/workspace/domain/audit/auditdb"
 )
 
 const (
@@ -43,36 +41,24 @@ func (r *repository) ListCorrelatedAuditEntries(
 			limit = defaultCorrelationLimit
 		}
 
-		cols := auditcol.EntryColumns
-		condition := buncolgen.Expr(
-			"{0} = ? AND ({1} = ? OR {2} = ?) AND {3} BETWEEN ? AND ?",
-			cols.ResourceID, cols.PrincipalID, cols.UserID, cols.Timestamp,
-		)
+		e := auditdb.Entries
+		windows := make([]keel.Pred, 0, len(matches))
+		for _, match := range matches {
+			end := max(match.WindowEnd, match.WindowStart)
+			windows = append(windows, keel.And(
+				e.ResourceID.Eq(match.ResourceID),
+				keel.Or(e.PrincipalID.Eq(match.PrincipalID), e.UserID.Eq(match.PrincipalID)),
+				e.Timestamp.Between(
+					match.WindowStart-correlationSlackSeconds,
+					end+correlationSlackSeconds,
+				),
+			))
+		}
 
-		entries := make([]*audit.Entry, 0, len(matches))
-		err := r.db.DBForContext(ctx).NewSelect().
-			Model(&entries).
-			Apply(auditcol.EntryApplyTenant(req.TenantInfo)).
-			WhereGroup(" AND ", func(q *bun.SelectQuery) *bun.SelectQuery {
-				for _, match := range matches {
-					end := match.WindowEnd
-					if end < match.WindowStart {
-						end = match.WindowStart
-					}
-					q = q.WhereOr(condition,
-						match.ResourceID,
-						match.PrincipalID,
-						match.PrincipalID,
-						match.WindowStart-correlationSlackSeconds,
-						end+correlationSlackSeconds,
-					)
-				}
-
-				return q
-			}).
-			Order(cols.Timestamp.OrderAsc(), cols.ID.OrderAsc()).
-			Limit(int64(limit)).
-			Scan(ctx)
+		entries, err := e.Where(keel.Or(windows...)).
+			Order(e.Timestamp.Asc(), e.ID.Asc()).
+			Limit(limit).
+			List(ctx, r.db.Keel(ctx))
 		if err != nil {
 			return nil, fmt.Errorf("list audit entries correlated with the AI audit trail: %w", err)
 		}

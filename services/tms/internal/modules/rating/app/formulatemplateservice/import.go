@@ -12,7 +12,6 @@ import (
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/uptrace/bun"
 	"go.uber.org/zap"
 )
 
@@ -69,7 +68,7 @@ func (s *Service) Import(
 	}
 
 	var created []*formulatemplate.FormulaTemplate
-	err = s.db.WithTx(ctx, kernelports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
+	err = s.db.Transact(ctx, kernelports.TxOptions{}, func(txCtx context.Context) error {
 		created = make([]*formulatemplate.FormulaTemplate, 0, len(entities))
 		for _, entity := range entities {
 			createdEntity, txErr := s.repo.Create(txCtx, entity)

@@ -6,7 +6,9 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment/shipmentdb"
 	"github.com/emoss08/trenova/internal/modules/places/domain/distancecalculation"
+	"github.com/emoss08/trenova/internal/modules/places/domain/distancecalculation/distancecalculationdb"
 	"github.com/emoss08/trenova/internal/modules/places/ports/distancecalculationports"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"go.uber.org/fx"
@@ -34,7 +36,7 @@ func New(p Params) distancecalculationports.DistanceCalculationRepository {
 
 func (r *repository) CreateRun(ctx context.Context, entity *distancecalculation.Run) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
-		if _, err := r.db.DBForContext(ctx).NewInsert().Model(entity).Exec(ctx); err != nil {
+		if err := distancecalculationdb.Runs.Create(ctx, r.db.Keel(ctx), entity); err != nil {
 			r.l.Error("failed to create distance calculation run", zap.Error(err))
 			return err
 		}
@@ -44,29 +46,35 @@ func (r *repository) CreateRun(ctx context.Context, entity *distancecalculation.
 
 func (r *repository) UpdateMoveDistance(ctx context.Context, move *shipment.ShipmentMove) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
-		result, err := r.db.DBForContext(ctx).NewUpdate().
-			Model(move).
-			Column(
-				"distance",
-				"distance_source",
-				"distance_provider",
-				"distance_calculated_at",
-				"distance_route_signature",
-				"distance_data_version",
-				"distance_routing_type",
-				"distance_units",
-				"distance_metadata",
-				"updated_at",
-			).
-			Where("id = ?", move.ID).
-			Where("organization_id = ?", move.OrganizationID).
-			Where("business_unit_id = ?", move.BusinessUnitID).
-			Exec(ctx)
+		sm := shipmentdb.ShipmentMoves
+		distance := sm.Distance.ToNull()
+		if move.Distance != nil {
+			distance = sm.Distance.To(*move.Distance)
+		}
+		calculatedAt := sm.DistanceCalculatedAt.ToNull()
+		if move.DistanceCalculatedAt != nil {
+			calculatedAt = sm.DistanceCalculatedAt.To(*move.DistanceCalculatedAt)
+		}
+
+		affected, err := sm.Where(sm.ID.Eq(move.ID)).Update(
+			ctx,
+			r.db.Keel(ctx),
+			distance,
+			sm.DistanceSource.To(move.DistanceSource),
+			sm.DistanceProvider.To(move.DistanceProvider),
+			calculatedAt,
+			sm.DistanceRouteSignature.To(move.DistanceRouteSignature),
+			sm.DistanceDataVersion.To(move.DistanceDataVersion),
+			sm.DistanceRoutingType.To(move.DistanceRoutingType),
+			sm.DistanceUnits.To(move.DistanceUnits),
+			sm.DistanceMetadata.To(move.DistanceMetadata),
+			sm.Version.ToExpr(sm.Version),
+		)
 		if err != nil {
 			r.l.Error("failed to update shipment move distance", zap.Error(err))
 			return err
 		}
 
-		return dberror.CheckRowsAffected(result, "ShipmentMove", move.ID.String())
+		return dberror.CheckAffected(affected, "ShipmentMove", move.ID.String())
 	})
 }

@@ -3,21 +3,27 @@ package edipartnerdocumentprofilerepository
 
 import (
 	"context"
-	"database/sql"
 	"errors"
 	"strings"
 
-	"github.com/emoss08/trenova/pkg/buncolgen/edicol"
-
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/edi/edidb"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
 	"github.com/emoss08/trenova/pkg/dberror"
+	"github.com/emoss08/trenova/pkg/listquery"
 	"github.com/emoss08/trenova/pkg/pagination"
-	"github.com/uptrace/bun"
+	"github.com/emoss08/trenova/shared/pulid"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
+)
+
+var documentProfileErrors = dberror.Mapping{Entity: "EDIPartnerDocumentProfile"}
+
+var errAmbiguousActiveProfile = errors.New(
+	"multiple active EDI document profiles match partner; transaction set and direction are required",
 )
 
 type Params struct {
@@ -39,6 +45,33 @@ func New(p Params) ediports.EDIPartnerDocumentProfileRepository {
 	}
 }
 
+type profileFilter struct {
+	transactionSet edi.TransactionSet
+	direction      edi.DocumentDirection
+	standard       edi.EDIStandard
+	status         edi.DocumentStatus
+	partnerID      pulid.ID
+	search         string
+}
+
+func (f *profileFilter) where() []keel.Pred {
+	dp := edidb.EDIPartnerDocumentProfiles
+	search := strings.TrimSpace(f.search)
+	return []keel.Pred{
+		keel.When(f.transactionSet != "", dp.TransactionSet.Eq(f.transactionSet)),
+		keel.When(f.direction != "", dp.Direction.Eq(f.direction)),
+		keel.When(f.standard != "", dp.Standard.Eq(f.standard)),
+		keel.When(f.status != "", dp.Status.Eq(f.status)),
+		keel.When(f.partnerID.IsNotNil(), dp.EDIPartnerID.Eq(f.partnerID)),
+		keel.When(search != "", keel.Or(
+			dp.Name.ContainsFold(search),
+			dp.Partner().Code.ContainsFold(search),
+			dp.Partner().Name.ContainsFold(search),
+			dp.DocumentType().Name.ContainsFold(search),
+		)),
+	}
+}
+
 func (r *repository) ListPartnerDocumentProfiles(
 	ctx context.Context,
 	req *ediports.ListEDIPartnerDocumentProfilesRequest,
@@ -47,53 +80,31 @@ func (r *repository) ListPartnerDocumentProfiles(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*pagination.ListResult[*edi.EDIPartnerDocumentProfile], error) {
-			entities := make([]*edi.EDIPartnerDocumentProfile, 0, req.Filter.Pagination.SafeLimit())
-			cols := edicol.EDIPartnerDocumentProfileColumns
-			rel := edicol.EDIPartnerDocumentProfileRelations
-
-			query := r.db.DBForContext(ctx).
-				NewSelect().
-				Model(&entities).
-				Relation(rel.Partner).
-				Relation(rel.DocumentType).
-				Relation(rel.Template).
-				Relation(rel.PartnerSettingsSchema).
-				Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-					return edicol.EDIPartnerDocumentProfileScopeTenant(sq, req.Filter.TenantInfo)
-				})
-
-			if req.TransactionSet != "" {
-				query = query.Where(cols.TransactionSet.Eq(), req.TransactionSet)
-			}
-
-			if req.Direction != "" {
-				query = query.Where(cols.Direction.Eq(), req.Direction)
-			}
-			if req.Standard != "" {
-				query = query.Where(cols.Standard.Eq(), req.Standard)
-			}
-			if req.Status != "" {
-				query = query.Where(cols.Status.Eq(), req.Status)
-			}
-			if req.PartnerID.IsNotNil() {
-				query = query.Where(cols.EDIPartnerID.Eq(), req.PartnerID)
-			}
-			query = applyPartnerDocumentProfileSearch(query, req.Filter.Query)
-
-			total, err := query.
-				Order(cols.CreatedAt.OrderDesc()).
-				Limit(int64(req.Filter.Pagination.SafeLimit())).
-				Offset(int64(req.Filter.Pagination.SafeOffset())).
-				ScanAndCount(ctx)
-			if err != nil {
-				return nil, err
-			}
-
-			return &pagination.ListResult[*edi.EDIPartnerDocumentProfile]{
-				Items: entities,
-				Total: int(total),
-			}, nil
+			dp := edidb.EDIPartnerDocumentProfiles
+			q := listProfilesQuery(req).Order(dp.CreatedAt.Desc())
+			return listquery.Offset(ctx, r.db.Keel(ctx), q, req.Filter.Pagination)
 		},
+	)
+}
+
+func listProfilesQuery(
+	req *ediports.ListEDIPartnerDocumentProfilesRequest,
+) *keel.Query[edi.EDIPartnerDocumentProfile] {
+	dp := edidb.EDIPartnerDocumentProfiles
+	filter := profileFilter{
+		transactionSet: req.TransactionSet,
+		direction:      req.Direction,
+		standard:       req.Standard,
+		status:         req.Status,
+		partnerID:      req.PartnerID,
+		search:         req.Filter.Query,
+	}
+
+	return dp.Where(filter.where()...).Load(
+		dp.Partner(),
+		dp.DocumentType(),
+		dp.Template(),
+		dp.PartnerSettingsSchema(),
 	)
 }
 
@@ -105,58 +116,32 @@ func (r *repository) SelectPartnerDocumentProfileOptions(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*pagination.ListResult[*edi.EDIPartnerDocumentProfile], error) {
-			entities := make(
-				[]*edi.EDIPartnerDocumentProfile,
-				0,
-				req.SelectQueryRequest.Pagination.SafeLimit(),
+			return listquery.Offset(
+				ctx,
+				r.db.Keel(ctx),
+				profileOptionsQuery(req),
+				req.SelectQueryRequest.Pagination,
 			)
-			cols := edicol.EDIPartnerDocumentProfileColumns
-			rel := edicol.EDIPartnerDocumentProfileRelations
-
-			query := r.db.DBForContext(ctx).
-				NewSelect().
-				Model(&entities).
-				Relation(rel.Partner).
-				Relation(rel.Template).
-				Relation(rel.DocumentType).
-				Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-					return edicol.EDIPartnerDocumentProfileScopeTenant(
-						sq,
-						req.SelectQueryRequest.TenantInfo,
-					)
-				})
-			if req.TransactionSet != "" {
-				query = query.Where(cols.TransactionSet.Eq(), req.TransactionSet)
-			}
-			if req.Direction != "" {
-				query = query.Where(cols.Direction.Eq(), req.Direction)
-			}
-			if req.Standard != "" {
-				query = query.Where(cols.Standard.Eq(), req.Standard)
-			}
-			if req.Status != "" {
-				query = query.Where(cols.Status.Eq(), req.Status)
-			}
-			if req.PartnerID.IsNotNil() {
-				query = query.Where(cols.EDIPartnerID.Eq(), req.PartnerID)
-			}
-			query = applyPartnerDocumentProfileSearch(query, req.SelectQueryRequest.Query)
-
-			total, err := query.
-				Order(cols.Name.OrderAsc()).
-				Limit(int64(req.SelectQueryRequest.Pagination.SafeLimit())).
-				Offset(int64(req.SelectQueryRequest.Pagination.SafeOffset())).
-				ScanAndCount(ctx)
-			if err != nil {
-				return nil, err
-			}
-
-			return &pagination.ListResult[*edi.EDIPartnerDocumentProfile]{
-				Items: entities,
-				Total: int(total),
-			}, nil
 		},
 	)
+}
+
+func profileOptionsQuery(
+	req *ediports.EDIPartnerDocumentProfileSelectOptionsRequest,
+) *keel.Query[edi.EDIPartnerDocumentProfile] {
+	dp := edidb.EDIPartnerDocumentProfiles
+	filter := profileFilter{
+		transactionSet: req.TransactionSet,
+		direction:      req.Direction,
+		standard:       req.Standard,
+		status:         req.Status,
+		partnerID:      req.PartnerID,
+		search:         req.SelectQueryRequest.Query,
+	}
+
+	return dp.Where(filter.where()...).
+		Load(dp.Partner(), dp.Template(), dp.DocumentType()).
+		Order(dp.Name.Asc())
 }
 
 func (r *repository) GetPartnerDocumentProfileByID(
@@ -164,26 +149,20 @@ func (r *repository) GetPartnerDocumentProfileByID(
 	req ediports.GetEDIPartnerDocumentProfileByIDRequest,
 ) (*edi.EDIPartnerDocumentProfile, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*edi.EDIPartnerDocumentProfile, error) {
-		entity := new(edi.EDIPartnerDocumentProfile)
-		cols := edicol.EDIPartnerDocumentProfileColumns
-		rel := edicol.EDIPartnerDocumentProfileRelations
-
-		err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(entity).
-			Relation(rel.Partner).
-			Relation(rel.DocumentType).
-			Relation(rel.Template).
-			Relation(rel.TemplateVersion).
-			Relation(rel.PartnerSettingsSchema).
-			Where(cols.ID.Eq(), req.ID).
-			Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return edicol.EDIPartnerDocumentProfileScopeTenant(sq, req.TenantInfo)
-			}).
-			Scan(ctx)
+		dp := edidb.EDIPartnerDocumentProfiles
+		entity, err := dp.Where(dp.ID.Eq(req.ID)).
+			Load(
+				dp.Partner(),
+				dp.DocumentType(),
+				dp.Template(),
+				dp.TemplateVersion(),
+				dp.PartnerSettingsSchema(),
+			).
+			One(ctx, r.db.Keel(ctx))
 		if err != nil {
-			return nil, dberror.HandleNotFoundError(err, "EDIPartnerDocumentProfile")
+			return nil, documentProfileErrors.Map(err, req.ID.String())
 		}
+
 		return entity, nil
 	})
 }
@@ -193,46 +172,25 @@ func (r *repository) GetActivePartnerDocumentProfile(
 	req ediports.GetActiveEDIPartnerDocumentProfileRequest,
 ) (*edi.EDIPartnerDocumentProfile, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*edi.EDIPartnerDocumentProfile, error) {
-		entities := make([]*edi.EDIPartnerDocumentProfile, 0, 2)
-		cols := edicol.EDIPartnerDocumentProfileColumns
-		rel := edicol.EDIPartnerDocumentProfileRelations
-
-		query := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(&entities).
-			Relation(rel.DocumentType).
-			Relation(rel.Template).
-			Relation(rel.PartnerSettingsSchema).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return sq.Where(cols.EDIPartnerID.Eq(), req.PartnerID).
-					Where(cols.Status.Eq(), edi.DocumentStatusActive)
-			}).
-			Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return edicol.EDIPartnerDocumentProfileApplyTenant(req.TenantInfo)(sq)
-			})
-
-		if req.TransactionSet != "" {
-			query = query.Where(cols.TransactionSet.Eq(), req.TransactionSet)
-		}
-		if req.Direction != "" {
-			query = query.Where(cols.Direction.Eq(), req.Direction)
-		}
-
-		err := query.
-			Order(cols.CreatedAt.OrderDesc()).
+		dp := edidb.EDIPartnerDocumentProfiles
+		entities, err := dp.Where(
+			dp.EDIPartnerID.Eq(req.PartnerID),
+			dp.Status.Eq(edi.DocumentStatusActive),
+			keel.When(req.TransactionSet != "", dp.TransactionSet.Eq(req.TransactionSet)),
+			keel.When(req.Direction != "", dp.Direction.Eq(req.Direction)),
+		).
+			Load(dp.DocumentType(), dp.Template(), dp.PartnerSettingsSchema()).
+			Order(dp.CreatedAt.Desc()).
 			Limit(2).
-			Scan(ctx)
+			List(ctx, r.db.Keel(ctx))
 		if err != nil {
-			return nil, dberror.HandleNotFoundError(err, "EDIPartnerDocumentProfile")
+			return nil, documentProfileErrors.Map(err, req.PartnerID.String())
 		}
-
 		if len(entities) == 0 {
-			return nil, dberror.HandleNotFoundError(sql.ErrNoRows, "EDIPartnerDocumentProfile")
+			return nil, documentProfileErrors.Map(keel.ErrNotFound, req.PartnerID.String())
 		}
 		if (req.TransactionSet == "" || req.Direction == "") && len(entities) > 1 {
-			return nil, errors.New(
-				"multiple active EDI document profiles match partner; transaction set and direction are required",
-			)
+			return nil, errAmbiguousActiveProfile
 		}
 
 		return entities[0], nil
@@ -244,13 +202,10 @@ func (r *repository) CreatePartnerDocumentProfile(
 	entity *edi.EDIPartnerDocumentProfile,
 ) (*edi.EDIPartnerDocumentProfile, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*edi.EDIPartnerDocumentProfile, error) {
-		if _, err := r.db.DBForContext(ctx).
-			NewInsert().
-			Model(entity).
-			Returning("*").
-			Exec(ctx); err != nil {
-			return nil, err
+		if err := edidb.EDIPartnerDocumentProfiles.Create(ctx, r.db.Keel(ctx), entity); err != nil {
+			return nil, documentProfileErrors.Map(err, entity.ID.String())
 		}
+
 		return entity, nil
 	})
 }
@@ -260,65 +215,32 @@ func (r *repository) UpdatePartnerDocumentProfile(
 	entity *edi.EDIPartnerDocumentProfile,
 ) (*edi.EDIPartnerDocumentProfile, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*edi.EDIPartnerDocumentProfile, error) {
-		ov := entity.Version
-		entity.Version++
-		cols := edicol.EDIPartnerDocumentProfileColumns
-		results, err := r.db.DBForContext(ctx).
-			NewUpdate().
-			Model(entity).
-			WherePK().
-			Where(cols.Version.Eq(), ov).
-			Column(
-				cols.TemplateID.Bare(),
-				cols.TemplateVersionID.Bare(),
-				cols.DocumentTypeID.Bare(),
-				cols.Name.Bare(),
-				cols.Status.Bare(),
-				cols.Direction.Bare(),
-				cols.Standard.Bare(),
-				cols.TransactionSet.Bare(),
-				cols.X12VersionOverride.Bare(),
-				cols.FunctionalGroupID.Bare(),
-				cols.Envelope.Bare(),
-				cols.Acknowledgment.Bare(),
-				cols.ValidationMode.Bare(),
-				cols.PartnerSettings.Bare(),
-				cols.PartnerSettingsSchemaID.Bare(),
-				cols.PartnerSettingsSchemaVersion.Bare(),
-				cols.Version.Bare(),
-				cols.UpdatedAt.Bare(),
-			).
-			Returning("*").
-			Exec(ctx)
+		dp := edidb.EDIPartnerDocumentProfiles
+		err := dp.Save(
+			ctx,
+			r.db.Keel(ctx),
+			entity,
+			dp.TemplateID,
+			dp.TemplateVersionID,
+			dp.DocumentTypeID,
+			dp.Name,
+			dp.Status,
+			dp.Direction,
+			dp.Standard,
+			dp.TransactionSet,
+			dp.X12VersionOverride,
+			dp.FunctionalGroupID,
+			dp.Envelope,
+			dp.Acknowledgment,
+			dp.ValidationMode,
+			dp.PartnerSettings,
+			dp.PartnerSettingsSchemaID,
+			dp.PartnerSettingsSchemaVersion,
+		)
 		if err != nil {
-			return nil, err
+			return nil, documentProfileErrors.Map(err, entity.ID.String())
 		}
-		if err = dberror.CheckRowsAffected(
-			results,
-			"EDIPartnerDocumentProfile",
-			entity.ID.String(),
-		); err != nil {
-			return nil, err
-		}
+
 		return entity, nil
-	})
-}
-
-func applyPartnerDocumentProfileSearch(query *bun.SelectQuery, search string) *bun.SelectQuery {
-	search = strings.TrimSpace(search)
-	if search == "" {
-		return query
-	}
-
-	term := "%" + strings.ToLower(search) + "%"
-	cols := edicol.EDIPartnerDocumentProfileColumns
-	partnerCols := edicol.EDIPartnerColumns
-	documentTypeCols := edicol.EDIDocumentTypeColumns
-
-	return query.WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-		return sq.WhereOr(cols.Name.LowerLike(), term).
-			WhereOr(partnerCols.Code.WithAlias("partner").LowerLike(), term).
-			WhereOr(partnerCols.Name.WithAlias("partner").LowerLike(), term).
-			WhereOr(documentTypeCols.Name.WithAlias("document_type").LowerLike(), term)
 	})
 }

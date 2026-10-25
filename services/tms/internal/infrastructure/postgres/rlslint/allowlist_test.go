@@ -112,7 +112,7 @@ var allowed = map[string]string{
 	"internal/modules/workspace/adapters/postgres/emailrepository/email.go:repository.GetEmailWebhookConfig":                                                    "resolve the email provider webhook that was called before its tenant is known",
 	"internal/modules/rating/adapters/postgres/formulalibraryreviewrepository/formulalibraryreview.go:repository.ListStaleSubmissions":                          "list stale formula library submissions across every organization",
 	"internal/modules/rating/adapters/postgres/formulatemplatereviewrepository/formulatemplatereview.go:repository.ListStaleSubmissions":                        "list stale formula template submissions across every organization",
-	"internal/modules/rating/adapters/postgres/ratematrixreviewrepository/review.go:repository.ListStaleSubmissions": "list stale rate matrix submissions across every organization",
+	"internal/modules/rating/adapters/postgres/ratematrixreviewrepository/review.go:repository.ListStaleSubmissions":                                            "list stale rate matrix submissions across every organization",
 	"internal/modules/identity/adapters/postgres/iamrepository/authevent.go:authEventRepository.Create":                                                         "record an authentication attempt that matched no organization, which no tenant scope can name",
 	"internal/modules/identity/adapters/postgres/iamrepository/authevent.go:authEventRepository.DeleteBefore":                                                   "delete authentication events past the retention period for every organization",
 	"internal/modules/identity/adapters/postgres/iamrepository/securitybriefing.go:securityBriefingRepository.MFACoverage":                                      "count an organization's members' two-factor enrolment, which is recorded under the organization each person enrolled from",
@@ -161,6 +161,7 @@ var allowed = map[string]string{
 	"internal/modules/identity/adapters/postgres/userrepository/user.go:repository.GetSystemUser":                                                               "resolve the instance system user, which belongs to the default organization, as the actor for any tenant",
 	"internal/modules/identity/adapters/postgres/userrepository/user.go:repository.ListOrganizationMemberships":                                                 "list one user's memberships across the organizations of the caller's business unit, filtered to that user and business unit",
 	"internal/modules/identity/adapters/postgres/userrepository/user.go:repository.ReplaceOrganizationMemberships":                                              "add and remove one user's memberships in several organizations of the caller's business unit in one transaction; the service has already checked the caller may manage users in each organization it changes",
+	"internal/modules/identity/adapters/postgres/userrepository/user.go:membershipReadScope":                                                                    "read the memberships row-level security shows a person, their own in every organization and everyone's in the organization they are working in, with that visibility rule written into every query",
 	"internal/modules/agent/adapters/postgres/watchtowerrepository/watchtower.go:repository.DeleteResolvedBefore":                                               "delete resolved watchtower items past retention across every organization",
 	"internal/modules/agent/adapters/postgres/watchtowerrepository/watchtower.go:repository.ListTenantsNeedingAttention":                                        "list the organizations with overdue or waking exceptions for the escalation sweep",
 	"internal/modules/operations/adapters/postgres/weatheralertrepository/weatheralert.go:repository.ExpireStaleAlerts":                                         "expire stale weather alerts across every organization",
@@ -172,6 +173,20 @@ var allowed = map[string]string{
 	"internal/modules/workforce/adapters/postgres/workertrainingrepository/repository.go:repository.ListExpiring":                                               "list expiring training across every organization for the reminder sweep",
 	"internal/modules/identity/adapters/postgres/tenantbootstraprepository/repository.go:repository.Bootstrap":                                                  "create a new tenant's business unit, organization, owner and defaults before the tenant exists",
 	"internal/modules/identity/adapters/postgres/tenantbootstraprepository/repository.go:repository.LockProvisioning":                                           "serialize tenant provisioning so instance-wide signup caps hold under concurrency",
+	"internal/seeds/seedenv/seedenv.go:Env.System":                                                                                                              "apply seeds and keep their bookkeeping across every organization, for trenova-db and trenova-devdb",
+	"internal/seeds/volume/volumeseed.go:Run":                                                                                       "find the development organization a volume data set fills before its tenant is known",
+	"cmd/cli/db/db_backfill_fiscal_periods.go:runBackfillFiscalPeriods":                                                             "backfill the fiscal periods of every organization's fiscal years",
+	"internal/modules/billing/adapters/postgres/journalrepairrepository/journalrepair.go:repository.ListUnjournaledAdjustmentMemos": "list adjustment credit memos missing a journal across every organization",
+	"internal/modules/billing/adapters/postgres/journalrepairrepository/journalrepair.go:repository.ListUnjournaledDriverPayments":  "list paid driver settlements missing a journal across every organization",
+	"internal/modules/billing/billingtest/seed.go:SeededTenant":                                                                     "read back the organization and business unit a billing test seeded, before the test has a tenant",
+	"internal/modules/edi/adapters/postgres/editenderrepairrepository/editenderrepair.go:repository.CountUnreadableTenders":         "count inbound EDI tenders whose X12 was purged across every organization",
+	"internal/modules/edi/adapters/postgres/editenderrepairrepository/editenderrepair.go:repository.ListTenderReferenceCandidates":  "re-read inbound EDI tenders across every organization",
+	"internal/modules/edi/adapters/postgres/editenderrepairrepository/editenderrepair.go:repository.RepairTenderReference":          "repair the references of a re-read inbound EDI tender for the organization the repair sweep names",
+	"internal/testutil/seedtest/entities.go:systemContext":                                                                          "seed the fixture tenants a test runs against, which exist before any tenant scope does",
 }
 
-var rawPoolAllowed = map[string]string{}
+var rawPoolAllowed = map[string]string{
+	"internal/modules/agent/adapters/postgres/aiauditrepository/chain.go:repository.Prune":  "prune in one transaction per batch, so a long retention sweep never holds one transaction open",
+	"internal/modules/identity/adapters/postgres/userrepository/user.go:repository.GetByID": "read the user in the tenant's transaction, then their memberships in a system-scoped one: memberships span organizations and a system scope cannot join a tenant transaction",
+	"internal/modules/identity/adapters/postgres/userrepository/user.go:repository.List":    "list users in the tenant's transaction, then their memberships in a system-scoped one: memberships span organizations and a system scope cannot join a tenant transaction",
+}

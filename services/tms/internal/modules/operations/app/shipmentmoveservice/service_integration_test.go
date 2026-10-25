@@ -10,6 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/testutil/mocks/tenantportsmock"
 	"github.com/shopspring/decimal"
 
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/modules/billing/adapters/postgres/chargeallocationrepository"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
@@ -32,7 +33,6 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
-	"github.com/uptrace/bun"
 	"go.uber.org/zap"
 )
 
@@ -42,7 +42,7 @@ func TestUpdateStatusIntegrationRecomputesShipmentStatus(t *testing.T) {
 	ctx, db, cleanup := seedtest.SetupTestDB(t)
 	t.Cleanup(cleanup)
 
-	svc, shipmentRepo, _, tenantInfo, fixture, controlRepo := newIntegrationService(t, ctx, db)
+	ctx, svc, shipmentRepo, _, tenantInfo, fixture, controlRepo := newIntegrationService(t, ctx, db)
 	// Only the flows that recompute shipment state read the control record, so
 	// the expectation belongs to those tests rather than the shared harness.
 	controlRepo.EXPECT().
@@ -93,7 +93,7 @@ func TestBulkUpdateStatusIntegrationRollsBackOnInvalidMove(t *testing.T) {
 	ctx, db, cleanup := seedtest.SetupTestDB(t)
 	t.Cleanup(cleanup)
 
-	svc, _, moveRepo, tenantInfo, fixture, _ := newIntegrationService(t, ctx, db)
+	ctx, svc, _, moveRepo, tenantInfo, fixture, _ := newIntegrationService(t, ctx, db)
 	graph := testutil.CreateShipmentGraph(
 		t,
 		ctx,
@@ -140,7 +140,7 @@ func TestSplitMoveIntegrationPersistsTwoLegHandoff(t *testing.T) {
 	ctx, db, cleanup := seedtest.SetupTestDB(t)
 	t.Cleanup(cleanup)
 
-	svc, shipmentRepo, _, tenantInfo, fixture, controlRepo := newIntegrationService(t, ctx, db)
+	ctx, svc, shipmentRepo, _, tenantInfo, fixture, controlRepo := newIntegrationService(t, ctx, db)
 	// Only the flows that recompute shipment state read the control record, so
 	// the expectation belongs to those tests rather than the shared harness.
 	controlRepo.EXPECT().
@@ -230,7 +230,7 @@ func TestRecordStopActualIntegrationPersistsBackdatedActuals(t *testing.T) {
 	ctx, db, cleanup := seedtest.SetupTestDB(t)
 	t.Cleanup(cleanup)
 
-	svc, _, moveRepo, tenantInfo, fixture, controlRepo := newIntegrationService(t, ctx, db)
+	ctx, svc, _, moveRepo, tenantInfo, fixture, controlRepo := newIntegrationService(t, ctx, db)
 	controlRepo.EXPECT().
 		Get(mock.Anything, mock.AnythingOfType("tenantports.GetShipmentControlRequest")).
 		Return(&tenant.ShipmentControl{}, nil)
@@ -301,8 +301,9 @@ func TestRecordStopActualIntegrationPersistsBackdatedActuals(t *testing.T) {
 func newIntegrationService(
 	t *testing.T,
 	ctx context.Context,
-	db *bun.DB,
+	db *keel.DB,
 ) (
+	context.Context,
 	shipmentports.ShipmentMoveService,
 	shipmentports.ShipmentRepository,
 	shipmentports.ShipmentMoveRepository,
@@ -381,7 +382,7 @@ func newIntegrationService(
 
 	fixture := testutil.SeedShipmentIntegrationFixture(t, ctx, db, data, tenantInfo)
 
-	return svc, shipmentRepo, moveRepo, tenantInfo, fixture, controlRepo
+	return data.Ctx(ctx), svc, shipmentRepo, moveRepo, tenantInfo, fixture, controlRepo
 }
 
 func int16Ptr(value int16) *int16 {

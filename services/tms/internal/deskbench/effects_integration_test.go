@@ -6,16 +6,18 @@ import (
 	"context"
 	"testing"
 
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agent/agentdb"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/testutil/dbtest"
 	"github.com/emoss08/trenova/internal/testutil/seedtest"
+	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"github.com/uptrace/bun"
 )
 
 type writeRegistry []string
@@ -35,19 +37,18 @@ func (r writeRegistry) Descriptors() []agentports.AgentToolDescriptor { return n
 
 type auditFixture struct {
 	ctx    context.Context
-	admin  *bun.DB
+	admin  *keel.DB
 	tenant pagination.TenantInfo
 	run    *agent.AgentRun
 	thread pulid.ID
 	now    int64
 }
 
-func (f *auditFixture) insert(t *testing.T, models ...any) {
-	t.Helper()
-	for _, model := range models {
-		_, err := f.admin.NewInsert().Model(model).Exec(f.ctx)
-		require.NoError(t, err)
-	}
+func (f *auditFixture) tenantCtx() context.Context {
+	return dbscope.WithTenant(f.ctx, dbscope.Tenant{
+		OrganizationID: f.tenant.OrgID,
+		BusinessUnitID: f.tenant.BuID,
+	})
 }
 
 func (f *auditFixture) proposal(tool string, tier agent.AutonomyTier) *agent.AgentProposal {
@@ -130,7 +131,7 @@ func TestAuditEffects_ReadsTheCasesRowsFromTheDatabase(t *testing.T) {
 		SubjectID: f.thread, Status: agent.RunStatusCompleted,
 		PromptVersion: "v1", InputContextHash: "hash", StartedAt: f.now - 30,
 	}
-	f.insert(t, f.run)
+	require.NoError(t, agentdb.AgentRuns.Create(f.tenantCtx(), admin, f.run))
 
 	unapproved := f.proposal("shipment_hold", agent.TierPropose)
 	undone := f.proposal("shipment_hold", agent.TierPropose)
@@ -155,16 +156,20 @@ func TestAuditEffects_ReadsTheCasesRowsFromTheDatabase(t *testing.T) {
 	}}
 	directed := f.proposal("dispatch_assign_move", agent.TierPropose)
 	directed.StepKey = "directed"
-	f.insert(t, unapproved, undone, pinnedAtZero, fromTheWeb, heldButRun, internal, directed)
+	require.NoError(t, agentdb.AgentProposals.CreateMany(f.tenantCtx(), admin, []*agent.AgentProposal{
+		unapproved, undone, pinnedAtZero, fromTheWeb, heldButRun, internal, directed,
+	}))
 
-	f.insert(t,
+	require.NoError(t, agentdb.AgentDecisions.CreateMany(f.tenantCtx(), admin, []*agent.AgentDecision{
 		f.decision(undone, nil, true),
 		f.decision(pinnedAtZero, version(1), false),
 		f.decision(directed, nil, false),
+	}))
+	require.NoError(t, agentdb.AgentRunSteps.CreateMany(f.tenantCtx(), admin, []*agent.AgentRunStep{
 		f.step("fan", "delegate_task", "del_1", "", "ran"),
 		f.step("fanned", "shipment_hold", "w2", "del_1", "ran"),
 		f.step("directed", "dispatch_assign_move", "w3", "dir_1", "proposed"),
-	)
+	}))
 
 	bench := &Bench{deps: deps{
 		DB:          dbtest.NewRLSConnection(t, admin, dsn),

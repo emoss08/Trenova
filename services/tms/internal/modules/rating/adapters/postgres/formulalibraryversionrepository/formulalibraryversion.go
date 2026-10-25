@@ -2,21 +2,18 @@ package formulalibraryversionrepository
 
 import (
 	"context"
-	"database/sql"
-	"errors"
 	"strings"
 
-	"github.com/emoss08/trenova/pkg/buncolgen"
-	"github.com/emoss08/trenova/pkg/buncolgen/formulalibrarycol"
-
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/formulalibrary"
+	"github.com/emoss08/trenova/internal/modules/rating/domain/formulalibrary/formulalibrarydb"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/formulatemplate"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/formulalibraryports"
 	"github.com/emoss08/trenova/pkg/dberror"
+	"github.com/emoss08/trenova/pkg/tarifftypes"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/uptrace/bun"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
@@ -26,6 +23,8 @@ const (
 	maxHistoryLimit      = 500
 	maxApprovedLibraries = 500
 )
+
+var versionErrors = dberror.Mapping{Entity: "FormulaLibraryVersion"}
 
 type Params struct {
 	fx.In
@@ -54,14 +53,16 @@ func (r *repository) Create(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*formulalibrary.FormulaLibraryVersion, error) {
-			if _, err := r.db.DBForContext(ctx).NewInsert().Model(version).Exec(ctx); err != nil {
+			err := formulalibrarydb.FormulaLibraryVersions.Create(ctx, r.db.Keel(ctx), version)
+			if err != nil {
 				r.l.Error("failed to create formula library version",
 					zap.String("libraryID", version.LibraryID.String()),
 					zap.Int64("versionNumber", version.VersionNumber),
 					zap.Error(err),
 				)
-				return nil, err
+				return nil, versionErrors.Map(err, version.ID.String())
 			}
+
 			return version, nil
 		},
 	)
@@ -75,20 +76,15 @@ func (r *repository) GetByLibraryAndVersion(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*formulalibrary.FormulaLibraryVersion, error) {
-			cols := formulalibrarycol.FormulaLibraryVersionColumns
-			entity := new(formulalibrary.FormulaLibraryVersion)
-			err := r.db.DBForContext(ctx).
-				NewSelect().
-				Model(entity).
-				WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-					return formulalibrarycol.FormulaLibraryVersionScopeTenant(sq, req.TenantInfo).
-						Where(cols.LibraryID.Eq(), req.LibraryID).
-						Where(cols.VersionNumber.Eq(), req.VersionNumber)
-				}).
-				Scan(ctx)
+			v := formulalibrarydb.FormulaLibraryVersions
+			entity, err := v.Where(
+				v.LibraryID.Eq(req.LibraryID),
+				v.VersionNumber.Eq(req.VersionNumber),
+			).One(ctx, r.db.Keel(ctx))
 			if err != nil {
-				return nil, dberror.HandleNotFoundError(err, "FormulaLibraryVersion")
+				return nil, versionErrors.Map(err, req.LibraryID.String())
 			}
+
 			return entity, nil
 		},
 	)
@@ -102,29 +98,23 @@ func (r *repository) List(
 		ctx,
 		r.db,
 		func(ctx context.Context) ([]*formulalibrary.FormulaLibraryVersion, error) {
-			cols := formulalibrarycol.FormulaLibraryVersionColumns
 			limit := req.Limit
 			if limit <= 0 {
 				limit = defaultHistoryLimit
 			}
 			limit = min(limit, maxHistoryLimit)
 
-			versions := make([]*formulalibrary.FormulaLibraryVersion, 0, 8)
-			err := r.db.DBForContext(ctx).
-				NewSelect().
-				Model(&versions).
-				Relation(buncolgen.Rel(formulalibrarycol.FormulaLibraryVersionRelations.CreatedBy)).
-				WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-					return formulalibrarycol.FormulaLibraryVersionScopeTenant(sq, req.TenantInfo).
-						Where(cols.LibraryID.Eq(), req.LibraryID)
-				}).
-				Order(cols.VersionNumber.OrderDesc()).
-				Limit(int64(limit)).
-				Scan(ctx)
+			v := formulalibrarydb.FormulaLibraryVersions
+			versions, err := v.Where(v.LibraryID.Eq(req.LibraryID)).
+				Load(v.CreatedBy()).
+				Order(v.VersionNumber.Desc()).
+				Limit(limit).
+				List(ctx, r.db.Keel(ctx))
 			if err != nil {
 				r.l.Error("failed to list formula library versions", zap.Error(err))
 				return nil, err
 			}
+
 			return versions, nil
 		},
 	)
@@ -138,59 +128,34 @@ func (r *repository) GetVersionRange(
 		ctx,
 		r.db,
 		func(ctx context.Context) ([]*formulalibrary.FormulaLibraryVersion, error) {
-			cols := formulalibrarycol.FormulaLibraryVersionColumns
-			versions := make([]*formulalibrary.FormulaLibraryVersion, 0, 2)
-			err := r.db.DBForContext(ctx).
-				NewSelect().
-				Model(&versions).
-				WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-					return formulalibrarycol.FormulaLibraryVersionScopeTenant(sq, req.TenantInfo).
-						Where(cols.LibraryID.Eq(), req.LibraryID).
-						Where(cols.VersionNumber.In(), bun.List([]int64{req.FromVersion, req.ToVersion}))
-				}).
-				Order(cols.VersionNumber.OrderAsc()).
-				Scan(ctx)
+			v := formulalibrarydb.FormulaLibraryVersions
+			versions, err := v.Where(
+				v.LibraryID.Eq(req.LibraryID),
+				v.VersionNumber.In(req.FromVersion, req.ToVersion),
+			).Order(v.VersionNumber.Asc()).Limit(2).List(ctx, r.db.Keel(ctx))
 			if err != nil {
 				r.l.Error("failed to read formula library versions", zap.Error(err))
 				return nil, err
 			}
+
 			return versions, nil
 		},
 	)
 }
 
-func (r *repository) latestApproved(
-	ctx context.Context,
-	apply func(*bun.SelectQuery) *bun.SelectQuery,
+func latestApprovedQuery(
 	limit int,
-) ([]*formulalibrary.FormulaLibraryVersion, error) {
-	versions := formulalibrarycol.FormulaLibraryVersionColumns
-	libraries := formulalibrarycol.FormulaLibraryColumns
+	filters ...keel.Pred,
+) *keel.Query[formulalibrary.FormulaLibraryVersion] {
+	v := formulalibrarydb.FormulaLibraryVersions
+	fl := formulalibrarydb.FormulaLibraries
 
-	out := make([]*formulalibrary.FormulaLibraryVersion, 0, 4)
-	err := r.db.DBForContext(ctx).
-		NewSelect().
-		Model(&out).
-		DistinctOn(versions.LibraryID.Qualified()).
-		Join(
-			"JOIN ? AS ? ON ? AND ? AND ?",
-			bun.Ident(formulalibrarycol.FormulaLibraryTable.Name),
-			bun.Ident(formulalibrarycol.FormulaLibraryTable.Alias),
-			bun.Safe(libraries.ID.EqColumn(versions.LibraryID)),
-			bun.Safe(libraries.OrganizationID.EqColumn(versions.OrganizationID)),
-			bun.Safe(libraries.BusinessUnitID.EqColumn(versions.BusinessUnitID)),
-		).
-		Where(versions.Status.Eq(), formulatemplate.StatusActive).
-		Where(libraries.Status.NotEq(), formulatemplate.StatusInactive).
-		Apply(apply).
-		OrderExpr(versions.LibraryID.OrderAsc()).
-		OrderExpr(versions.VersionNumber.OrderDesc()).
-		Limit(int64(limit)).
-		Scan(ctx)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
+	return v.DistinctOn(v.LibraryID).
+		Join(fl, fl.ID.EqCol(v.LibraryID)).
+		Where(v.Status.Eq(formulatemplate.StatusActive), fl.Status.Ne(formulatemplate.StatusInactive)).
+		Where(filters...).
+		Order(v.LibraryID.Asc(), v.VersionNumber.Desc()).
+		Limit(limit)
 }
 
 func (r *repository) LatestApprovedByNames(
@@ -209,15 +174,14 @@ func (r *repository) LatestApprovedByNames(
 				lowered = append(lowered, strings.ToLower(name))
 			}
 
-			libraries := formulalibrarycol.FormulaLibraryColumns
-			out, err := r.latestApproved(ctx, func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return formulalibrarycol.FormulaLibraryScopeTenant(sq, req.TenantInfo).
-					Where(libraries.Name.Expr("lower({})")+" IN (?)", bun.List(lowered))
-			}, len(lowered))
+			fl := formulalibrarydb.FormulaLibraries
+			out, err := latestApprovedQuery(len(lowered), fl.Name.Lower().In(lowered...)).
+				List(ctx, r.db.Keel(ctx))
 			if err != nil {
 				r.l.Error("failed to resolve formula libraries by name", zap.Error(err))
 				return nil, err
 			}
+
 			return out, nil
 		},
 	)
@@ -235,16 +199,36 @@ func (r *repository) ListLatestApproved(
 			if limit <= 0 || limit > maxApprovedLibraries {
 				limit = maxApprovedLibraries
 			}
-			out, err := r.latestApproved(ctx, func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return formulalibrarycol.FormulaLibraryScopeTenant(sq, req.TenantInfo)
-			}, limit)
+
+			out, err := latestApprovedQuery(limit).List(ctx, r.db.Keel(ctx))
 			if err != nil {
 				r.l.Error("failed to list approved formula libraries", zap.Error(err))
 				return nil, err
 			}
+
 			return out, nil
 		},
 	)
+}
+
+func pinsQuery(pins []tarifftypes.Import) *keel.Query[formulalibrary.FormulaLibraryVersion] {
+	ids := make([]string, 0, len(pins))
+	numbers := make([]int64, 0, len(pins))
+	for _, pin := range pins {
+		ids = append(ids, pin.LibraryID.String())
+		numbers = append(numbers, pin.VersionNumber)
+	}
+
+	v := formulalibrarydb.FormulaLibraryVersions
+	pinned := keel.Unnest("pins", []string{"library_id", "version_number"}, ids, numbers)
+
+	return v.With(pinned).
+		Join(
+			pinned,
+			pinned.Col("library_id").EqCol(v.LibraryID),
+			pinned.Col("version_number").EqCol(v.VersionNumber),
+		).
+		Order(v.LibraryID.Asc())
 }
 
 func (r *repository) GetByPins(
@@ -255,36 +239,16 @@ func (r *repository) GetByPins(
 		ctx,
 		r.db,
 		func(ctx context.Context) ([]*formulalibrary.FormulaLibraryVersion, error) {
-			out := make([]*formulalibrary.FormulaLibraryVersion, 0, len(req.Pins))
 			if len(req.Pins) == 0 {
-				return out, nil
+				return []*formulalibrary.FormulaLibraryVersion{}, nil
 			}
 
-			cols := formulalibrarycol.FormulaLibraryVersionColumns
-			pairs := make([]any, 0, len(req.Pins))
-			placeholders := make([]string, 0, len(req.Pins))
-			for _, pin := range req.Pins {
-				pairs = append(pairs, pin.LibraryID, pin.VersionNumber)
-				placeholders = append(placeholders, "(?, ?)")
-			}
-
-			err := r.db.DBForContext(ctx).
-				NewSelect().
-				Model(&out).
-				WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-					return formulalibrarycol.FormulaLibraryVersionScopeTenant(sq, req.TenantInfo).
-						Where(
-							buncolgen.Expr("({0}, {1})", cols.LibraryID, cols.VersionNumber)+
-								" IN ("+strings.Join(placeholders, ", ")+")",
-							pairs...,
-						)
-				}).
-				Order(cols.LibraryID.OrderAsc()).
-				Scan(ctx)
+			out, err := pinsQuery(req.Pins).Limit(len(req.Pins)).List(ctx, r.db.Keel(ctx))
 			if err != nil {
 				r.l.Error("failed to load pinned formula library versions", zap.Error(err))
 				return nil, err
 			}
+
 			return out, nil
 		},
 	)
@@ -295,23 +259,15 @@ func (r *repository) ListAuthorIDsSince(
 	req *formulalibraryports.ListLibraryAuthorsRequest,
 ) ([]pulid.ID, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]pulid.ID, error) {
-		cols := formulalibrarycol.FormulaLibraryVersionColumns
-		ids := make([]pulid.ID, 0, 4)
-		err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model((*formulalibrary.FormulaLibraryVersion)(nil)).
-			Distinct().
-			Column(cols.CreatedByID.String()).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return formulalibrarycol.FormulaLibraryVersionScopeTenant(sq, req.TenantInfo).
-					Where(cols.LibraryID.Eq(), req.LibraryID).
-					Where(cols.VersionNumber.Gt(), req.AfterVersion)
-			}).
-			Scan(ctx, &ids)
+		v := formulalibrarydb.FormulaLibraryVersions
+		ids, err := keel.Into[pulid.ID](ctx, r.db.Keel(ctx), v.Group(v.CreatedByID).
+			Pick(v.CreatedByID).
+			Where(v.LibraryID.Eq(req.LibraryID), v.VersionNumber.Gt(req.AfterVersion)))
 		if err != nil {
 			r.l.Error("failed to list formula library authors", zap.Error(err))
 			return nil, err
 		}
+
 		return ids, nil
 	})
 }
@@ -324,26 +280,18 @@ func (r *repository) GetLatestByStatus(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*formulalibrary.FormulaLibraryVersion, error) {
-			cols := formulalibrarycol.FormulaLibraryVersionColumns
-			version := new(formulalibrary.FormulaLibraryVersion)
-			err := r.db.DBForContext(ctx).
-				NewSelect().
-				Model(version).
-				WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-					return formulalibrarycol.FormulaLibraryVersionScopeTenant(sq, req.TenantInfo).
-						Where(cols.LibraryID.Eq(), req.LibraryID).
-						Where(cols.Status.Eq(), req.Status)
-				}).
-				Order(cols.VersionNumber.OrderDesc()).
-				Limit(1).
-				Scan(ctx)
+			v := formulalibrarydb.FormulaLibraryVersions
+			version, err := v.Where(v.LibraryID.Eq(req.LibraryID), v.Status.Eq(req.Status)).
+				Order(v.VersionNumber.Desc()).
+				First(ctx, r.db.Keel(ctx))
 			if err != nil {
-				if errors.Is(err, sql.ErrNoRows) {
+				if dberror.IsNotFoundError(err) {
 					return nil, nil
 				}
 				r.l.Error("failed to read the latest formula library version", zap.Error(err))
 				return nil, err
 			}
+
 			return version, nil
 		},
 	)

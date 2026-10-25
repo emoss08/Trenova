@@ -3,48 +3,46 @@ package driverpay
 import (
 	"context"
 
+	"github.com/emoss08/trenova/shared/money"
+
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/validationframework"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/emoss08/trenova/shared/timeutils"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
 	"github.com/shopspring/decimal"
-	"github.com/uptrace/bun"
 )
 
 var (
-	_ bun.BeforeAppendModelHook          = (*PayProfile)(nil)
 	_ domaintypes.PostgresSearchable     = (*PayProfile)(nil)
 	_ pagination.CursorEntity            = (*PayProfile)(nil)
 	_ validationframework.TenantedEntity = (*PayProfile)(nil)
-	_ bun.BeforeAppendModelHook          = (*PayProfileComponent)(nil)
 )
 
 type PayProfile struct {
-	bun.BaseModel             `bun:"table:driver_pay_profiles,alias:dpp" json:"-"`
-	pagination.CursorValueSet `bun:",embed"                              json:"-"`
+	keel.Table `keel:"driver_pay_profiles"`
 
-	ID                           pulid.ID            `json:"id"                           bun:"id,pk,type:VARCHAR(100),notnull"`
-	BusinessUnitID               pulid.ID            `json:"businessUnitId"               bun:"business_unit_id,pk,type:VARCHAR(100),notnull"`
-	OrganizationID               pulid.ID            `json:"organizationId"               bun:"organization_id,pk,type:VARCHAR(100),notnull"`
-	Status                       domaintypes.Status  `json:"status"                       bun:"status,type:status_enum,notnull,default:'Active'"`
-	Name                         string              `json:"name"                         bun:"name,type:VARCHAR(100),notnull"`
-	Description                  string              `json:"description"                  bun:"description,type:TEXT,nullzero"`
-	Classification               PayeeClassification `json:"classification"               bun:"classification,type:VARCHAR(50),notnull,default:'CompanyDriver'"`
-	CurrencyCode                 string              `json:"currencyCode"                 bun:"currency_code,type:VARCHAR(3),notnull,default:'USD'"`
-	GuaranteedPeriodMinimumMinor int64               `json:"guaranteedPeriodMinimumMinor" bun:"guaranteed_period_minimum_minor,type:BIGINT,notnull"`
-	PerDiemRatePerMile           decimal.Decimal     `json:"perDiemRatePerMile"           bun:"per_diem_rate_per_mile,type:NUMERIC(19,4),notnull,default:0"`
-	PerDiemDailyCapMinor         int64               `json:"perDiemDailyCapMinor"         bun:"per_diem_daily_cap_minor,type:BIGINT,notnull"`
-	Version                      int64               `json:"version"                      bun:"version,type:BIGINT,notnull"`
-	CreatedAt                    int64               `json:"createdAt"                    bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
-	UpdatedAt                    int64               `json:"updatedAt"                    bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
+	ID                           pulid.ID            `json:"id"                           keel:"id,pk,autoid:dpp_"`
+	BusinessUnitID               pulid.ID            `json:"businessUnitId"               keel:"business_unit_id,pk,tenant"`
+	OrganizationID               pulid.ID            `json:"organizationId"               keel:"organization_id,pk,tenant"`
+	Status                       domaintypes.Status  `json:"status"                       keel:"status"`
+	Name                         string              `json:"name"                         keel:"name"`
+	Description                  string              `json:"description"                  keel:"description,nullzero"`
+	Classification               PayeeClassification `json:"classification"               keel:"classification"`
+	CurrencyCode                 string              `json:"currencyCode"                 keel:"currency_code"`
+	GuaranteedPeriodMinimumMinor int64               `json:"guaranteedPeriodMinimumMinor" keel:"guaranteed_period_minimum_minor"`
+	PerDiemRatePerMile           decimal.Decimal     `json:"perDiemRatePerMile"           keel:"per_diem_rate_per_mile"`
+	PerDiemDailyCapMinor         int64               `json:"perDiemDailyCapMinor"         keel:"per_diem_daily_cap_minor"`
+	Version                      int64               `json:"version"                      keel:"version,version"`
+	CreatedAt                    int64               `json:"createdAt"                    keel:"created_at,autocreate"`
+	UpdatedAt                    int64               `json:"updatedAt"                    keel:"updated_at,autoupdate"`
 
-	BusinessUnit *tenant.BusinessUnit   `json:"businessUnit,omitempty" bun:"rel:belongs-to,join:business_unit_id=id"`
-	Organization *tenant.Organization   `json:"organization,omitempty" bun:"rel:belongs-to,join:organization_id=id"`
-	Components   []*PayProfileComponent `json:"components,omitempty"   bun:"rel:has-many,join:id=pay_profile_id,join:organization_id=organization_id,join:business_unit_id=business_unit_id"`
+	BusinessUnit *tenant.BusinessUnit   `json:"businessUnit,omitempty"`
+	Organization *tenant.Organization   `json:"organization,omitempty"`
+	Components   []*PayProfileComponent `json:"components,omitempty"   keel:"many:pay_profile_id"`
 }
 
 type MileageBand struct {
@@ -54,25 +52,25 @@ type MileageBand struct {
 }
 
 type PayProfileComponent struct {
-	bun.BaseModel `bun:"table:driver_pay_profile_components,alias:dppc" json:"-"`
+	keel.Table `keel:"driver_pay_profile_components"`
 
-	ID              pulid.ID        `json:"id"              bun:"id,pk,type:VARCHAR(100),notnull"`
-	BusinessUnitID  pulid.ID        `json:"businessUnitId"  bun:"business_unit_id,pk,type:VARCHAR(100),notnull"`
-	OrganizationID  pulid.ID        `json:"organizationId"  bun:"organization_id,pk,type:VARCHAR(100),notnull"`
-	PayProfileID    pulid.ID        `json:"payProfileId"    bun:"pay_profile_id,type:VARCHAR(100),notnull"`
-	Kind            ComponentKind   `json:"kind"            bun:"kind,type:VARCHAR(50),notnull"`
-	Method          CalcMethod      `json:"method"          bun:"method,type:VARCHAR(50),notnull"`
-	Description     string          `json:"description"     bun:"description,type:VARCHAR(255),nullzero"`
-	Rate            decimal.Decimal `json:"rate"            bun:"rate,type:NUMERIC(19,4),notnull,default:0"`
-	RevenueBasis    RevenueBasis    `json:"revenueBasis"    bun:"revenue_basis,type:VARCHAR(50),nullzero"`
-	Bands           []MileageBand   `json:"bands"           bun:"bands,type:JSONB,nullzero"`
-	FreeTimeMinutes int             `json:"freeTimeMinutes" bun:"free_time_minutes,type:INTEGER,notnull"`
-	MinAmountMinor  *int64          `json:"minAmountMinor"  bun:"min_amount_minor,type:BIGINT,nullzero"`
-	MaxAmountMinor  *int64          `json:"maxAmountMinor"  bun:"max_amount_minor,type:BIGINT,nullzero"`
-	Sequence        int             `json:"sequence"        bun:"sequence,type:INTEGER,notnull"`
-	IsActive        bool            `json:"isActive"        bun:"is_active,type:BOOLEAN,notnull"`
-	CreatedAt       int64           `json:"createdAt"       bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
-	UpdatedAt       int64           `json:"updatedAt"       bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
+	ID              pulid.ID        `json:"id"              keel:"id,pk,autoid:dppc_"`
+	BusinessUnitID  pulid.ID        `json:"businessUnitId"  keel:"business_unit_id,pk,tenant"`
+	OrganizationID  pulid.ID        `json:"organizationId"  keel:"organization_id,pk,tenant"`
+	PayProfileID    pulid.ID        `json:"payProfileId"    keel:"pay_profile_id"`
+	Kind            ComponentKind   `json:"kind"            keel:"kind"`
+	Method          CalcMethod      `json:"method"          keel:"method"`
+	Description     string          `json:"description"     keel:"description,nullzero"`
+	Rate            decimal.Decimal `json:"rate"            keel:"rate"`
+	RevenueBasis    RevenueBasis    `json:"revenueBasis"    keel:"revenue_basis,nullzero"`
+	Bands           []MileageBand   `json:"bands"           keel:"bands,jsonb,nullzero"`
+	FreeTimeMinutes int             `json:"freeTimeMinutes" keel:"free_time_minutes"`
+	MinAmountMinor  *int64          `json:"minAmountMinor"  keel:"min_amount_minor"`
+	MaxAmountMinor  *int64          `json:"maxAmountMinor"  keel:"max_amount_minor"`
+	Sequence        int             `json:"sequence"        keel:"sequence"`
+	IsActive        bool            `json:"isActive"        keel:"is_active"`
+	CreatedAt       int64           `json:"createdAt"       keel:"created_at,autocreate"`
+	UpdatedAt       int64           `json:"updatedAt"       keel:"updated_at,autoupdate"`
 }
 
 const searchFieldDescription = "description"
@@ -303,30 +301,16 @@ func (p *PayProfile) GetPostgresSearchConfig() domaintypes.PostgresSearchConfig 
 	}
 }
 
-func (p *PayProfile) BeforeAppendModel(_ context.Context, query bun.Query) error {
-	now := timeutils.NowUnix()
-	switch query.(type) {
-	case *bun.InsertQuery:
-		if p.ID.IsNil() {
-			p.ID = pulid.MustNew("dpp_")
-		}
-		p.CreatedAt = now
-	case *bun.UpdateQuery:
-		p.UpdatedAt = now
+func (p *PayProfile) BeforeCreate(ctx context.Context) error {
+	if p.Status == "" {
+		p.Status = domaintypes.StatusActive
 	}
-	return nil
-}
+	if p.Classification == "" {
+		p.Classification = PayeeClassificationCompanyDriver
+	}
+	if p.CurrencyCode == "" {
+		p.CurrencyCode = money.DefaultCurrencyCode
+	}
 
-func (c *PayProfileComponent) BeforeAppendModel(_ context.Context, query bun.Query) error {
-	now := timeutils.NowUnix()
-	switch query.(type) {
-	case *bun.InsertQuery:
-		if c.ID.IsNil() {
-			c.ID = pulid.MustNew("dppc_")
-		}
-		c.CreatedAt = now
-	case *bun.UpdateQuery:
-		c.UpdatedAt = now
-	}
 	return nil
 }

@@ -4,24 +4,29 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
-	"github.com/emoss08/trenova/internal/modules/documents/domain/inboundmessage"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/inboundmessage/inboundmessagedb"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/triage"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/triage/triagedb"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/triageports"
-	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
-	"github.com/emoss08/trenova/pkg/buncolgen/inboundmessagecol"
-	"github.com/emoss08/trenova/pkg/buncolgen/triagecol"
 	"github.com/emoss08/trenova/pkg/dberror"
-	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/emoss08/trenova/shared/timeutils"
-	"github.com/uptrace/bun"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
 
-const ruleEntity = "TriageRule"
+var ruleErrors = dberror.Mapping{
+	Entity: "TriageRule",
+	ForeignKey: []dberror.Constraint{
+		{
+			Name:    "fk_triage_rules_mailbox",
+			Field:   "mailboxId",
+			Message: "Mailbox does not exist",
+		},
+	},
+}
 
 type Params struct {
 	fx.In
@@ -47,22 +52,16 @@ func (r *repository) List(
 	req triageports.ListRulesRequest,
 ) ([]*triage.Rule, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*triage.Rule, error) {
-		cols := triagecol.RuleColumns
-		rules := make([]*triage.Rule, 0, 16)
-
-		query := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(&rules).
-			Apply(triagecol.RuleApplyTenant(req.TenantInfo))
-		if req.EnabledOnly {
-			query = query.Where(cols.Enabled.IsTrue())
-		}
-
-		if err := query.
-			Order(cols.CreatedAt.OrderAsc(), cols.ID.OrderAsc()).
+		ru := triagedb.Rules
+		rules, err := ru.Where(keel.When(req.EnabledOnly, ru.Enabled.IsTrue())).
+			Order(ru.CreatedAt.Asc(), ru.ID.Asc()).
 			Limit(triage.MaxRulesPerTenant).
-			Scan(ctx); err != nil {
+			List(ctx, r.db.Keel(ctx))
+		if err != nil {
 			return nil, err
+		}
+		if rules == nil {
+			rules = []*triage.Rule{}
 		}
 
 		return rules, nil
@@ -74,16 +73,9 @@ func (r *repository) GetByID(
 	req triageports.GetRuleRequest,
 ) (*triage.Rule, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*triage.Rule, error) {
-		rule := new(triage.Rule)
-		if err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(rule).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return triagecol.RuleScopeTenant(sq, req.TenantInfo).
-					Where(triagecol.RuleColumns.ID.Eq(), req.ID)
-			}).
-			Scan(ctx); err != nil {
-			return nil, dberror.HandleNotFoundError(err, ruleEntity)
+		rule, err := triagedb.Rules.Get(ctx, r.db.Keel(ctx), req.ID)
+		if err != nil {
+			return nil, ruleErrors.Map(err, req.ID.String())
 		}
 
 		return rule, nil
@@ -95,11 +87,8 @@ func (r *repository) FindBySentence(
 	req triageports.FindRuleBySentenceRequest,
 ) (*triage.Rule, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*triage.Rule, error) {
-		rules := make([]*triage.Rule, 0, 1)
-		if err := sentenceQuery(
-			r.db.DBForContext(ctx).NewSelect().Model(&rules),
-			req,
-		).Limit(1).Scan(ctx); err != nil {
+		rules, err := sentenceQuery(req).Limit(1).List(ctx, r.db.Keel(ctx))
+		if err != nil {
 			return nil, err
 		}
 		if len(rules) == 0 {
@@ -110,24 +99,18 @@ func (r *repository) FindBySentence(
 	})
 }
 
-func sentenceQuery(
-	sq *bun.SelectQuery,
-	req triageports.FindRuleBySentenceRequest,
-) *bun.SelectQuery {
-	cols := triagecol.RuleColumns
+func sentenceQuery(req triageports.FindRuleBySentenceRequest) *keel.Query[triage.Rule] {
+	ru := triagedb.Rules
 	sentence := req.Sentence
 
-	sq = triagecol.RuleScopeTenant(sq, req.TenantInfo).
-		Where(cols.Classification.Eq(), sentence.Classification).
-		Where(cols.SenderScope.Eq(), sentence.SenderScope).
-		Where(cols.Sender.Expr("COALESCE({}, '') = ?"), sentence.Sender).
-		Where(cols.MailboxID.Expr("COALESCE({}, '') = ?"), sentence.MailboxID.String()).
-		Where(cols.Action.Eq(), sentence.Action)
-	if sentence.ID.IsNotNil() {
-		sq = sq.Where(cols.ID.NotEq(), sentence.ID)
-	}
-
-	return sq
+	return ru.Where(
+		ru.Classification.Eq(sentence.Classification),
+		ru.SenderScope.Eq(sentence.SenderScope),
+		keel.Raw("COALESCE(?, '') = ?", ru.Sender, sentence.Sender),
+		keel.Raw("COALESCE(?, '') = ?", ru.MailboxID, sentence.MailboxID.String()),
+		ru.Action.Eq(sentence.Action),
+		keel.When(sentence.ID.IsNotNil(), ru.ID.Ne(sentence.ID)),
+	)
 }
 
 func (r *repository) Create(
@@ -136,43 +119,28 @@ func (r *repository) Create(
 	limit int,
 ) (*triage.Rule, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*triage.Rule, error) {
-		err := r.db.WithTx(
+		db := r.db.Keel(ctx)
+		ru := triagedb.Rules
+
+		if err := keel.LockKey(
 			ctx,
-			kernelports.TxOptions{},
-			func(ctx context.Context, tx bun.Tx) error {
-				tenantInfo := pagination.TenantInfo{
-					OrgID: rule.OrganizationID,
-					BuID:  rule.BusinessUnitID,
-				}
-				if _, err := tx.NewRaw(
-					"SELECT pg_advisory_xact_lock(hashtextextended(?, 0))",
-					"triage-rules:"+rule.OrganizationID.String()+":"+rule.BusinessUnitID.String(),
-				).Exec(ctx); err != nil {
-					return fmt.Errorf("hold the organization's rules: %w", err)
-				}
+			db,
+			"triage-rules:"+rule.OrganizationID.String()+":"+rule.BusinessUnitID.String(),
+		); err != nil {
+			return nil, fmt.Errorf("hold the organization's rules: %w", err)
+		}
 
-				count, err := tx.NewSelect().
-					Model((*triage.Rule)(nil)).
-					Apply(triagecol.RuleApplyTenant(tenantInfo)).
-					Count(ctx)
-				if err != nil {
-					return fmt.Errorf("count the organization's rules: %w", err)
-				}
-				if count >= int64(limit) {
-					return triageports.ErrTooManyRules
-				}
-
-				if _, err = tx.NewInsert().Model(rule).Returning("*").Exec(ctx); err != nil {
-					r.l.Error("failed to create a triage rule", zap.Error(err))
-
-					return err
-				}
-
-				return nil
-			},
-		)
+		count, err := ru.Query().Count(ctx, db)
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("count the organization's rules: %w", err)
+		}
+		if count >= int64(limit) {
+			return nil, triageports.ErrTooManyRules
+		}
+
+		if err = ru.Create(ctx, db, rule); err != nil {
+			r.l.Error("failed to create a triage rule", zap.Error(err))
+			return nil, ruleErrors.Map(err, rule.ID.String())
 		}
 
 		return rule, nil
@@ -181,37 +149,20 @@ func (r *repository) Create(
 
 func (r *repository) Update(ctx context.Context, rule *triage.Rule) (*triage.Rule, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*triage.Rule, error) {
-		cols := triagecol.RuleColumns
-		previous := rule.Version
-		rule.Version++
-
-		result, err := r.db.DBForContext(ctx).
-			NewUpdate().
-			Model(rule).
-			Column(
-				cols.Classification.Bare(),
-				cols.SenderScope.Bare(),
-				cols.Sender.Bare(),
-				cols.MailboxID.Bare(),
-				cols.Action.Bare(),
-				cols.AssigneeID.Bare(),
-				cols.Enabled.Bare(),
-				cols.Version.Bare(),
-				cols.UpdatedAt.Bare(),
-			).
-			WherePK().
-			Where(cols.Version.Eq(), previous).
-			Returning("*").
-			Exec(ctx)
-		if err != nil {
-			rule.Version = previous
-
-			return nil, err
-		}
-		if err = dberror.CheckRowsAffected(result, ruleEntity, rule.ID.String()); err != nil {
-			rule.Version = previous
-
-			return nil, err
+		ru := triagedb.Rules
+		if err := ru.Save(
+			ctx,
+			r.db.Keel(ctx),
+			rule,
+			ru.Classification,
+			ru.SenderScope,
+			ru.Sender,
+			ru.MailboxID,
+			ru.Action,
+			ru.AssigneeID,
+			ru.Enabled,
+		); err != nil {
+			return nil, ruleErrors.Map(err, rule.ID.String())
 		}
 
 		return rule, nil
@@ -223,47 +174,33 @@ func (r *repository) SetEnabled(
 	req triageports.SetRuleEnabledRequest,
 ) (*triage.Rule, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*triage.Rule, error) {
-		cols := triagecol.RuleColumns
-		rule := new(triage.Rule)
-
-		result, err := r.db.DBForContext(ctx).
-			NewUpdate().
-			Model(rule).
-			Set(cols.Enabled.Set(), req.Enabled).
-			Set(cols.Version.Inc(1)).
-			Set(cols.UpdatedAt.Set(), timeutils.NowUnix()).
-			WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-				return triagecol.RuleScopeTenantUpdate(uq, req.TenantInfo).
-					Where(cols.ID.Eq(), req.ID)
-			}).
-			Returning("*").
-			Exec(ctx)
+		ru := triagedb.Rules
+		rules, err := ru.Where(ru.ID.Eq(req.ID)).
+			UpdateReturning(ctx, r.db.Keel(ctx), ru.Enabled.To(req.Enabled))
 		if err != nil {
-			return nil, err
+			return nil, ruleErrors.Map(err, req.ID.String())
 		}
-		if err = dberror.CheckRowsAffected(result, ruleEntity, req.ID.String()); err != nil {
+		if err = dberror.CheckAffected(
+			int64(len(rules)),
+			"TriageRule",
+			req.ID.String(),
+		); err != nil {
 			return nil, err
 		}
 
-		return rule, nil
+		return rules[0], nil
 	})
 }
 
 func (r *repository) Delete(ctx context.Context, req triageports.GetRuleRequest) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
-		result, err := r.db.DBForContext(ctx).
-			NewDelete().
-			Model((*triage.Rule)(nil)).
-			WhereGroup(" AND ", func(dq *bun.DeleteQuery) *bun.DeleteQuery {
-				return triagecol.RuleScopeTenantDelete(dq, req.TenantInfo).
-					Where(triagecol.RuleColumns.ID.Eq(), req.ID)
-			}).
-			Exec(ctx)
+		ru := triagedb.Rules
+		n, err := ru.Where(ru.ID.Eq(req.ID)).Delete(ctx, r.db.Keel(ctx))
 		if err != nil {
-			return err
+			return ruleErrors.Map(err, req.ID.String())
 		}
 
-		return dberror.CheckRowsAffected(result, ruleEntity, req.ID.String())
+		return dberror.CheckAffected(n, "TriageRule", req.ID.String())
 	})
 }
 
@@ -272,18 +209,16 @@ func (r *repository) RecordMatch(
 	req *triageports.RecordRuleMatchRequest,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
-		cols := triagecol.RuleColumns
-		_, err := r.db.DBForContext(ctx).
-			NewUpdate().
-			Model((*triage.Rule)(nil)).
-			Set(cols.MatchCount.Inc(1)).
-			Set(cols.LastMatchedAt.SetExpr("GREATEST(COALESCE({}, 0), ?)"), req.At).
-			Set(cols.LastMessageID.Set(), req.MessageID).
-			WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-				return triagecol.RuleScopeTenantUpdate(uq, req.TenantInfo).
-					Where(cols.ID.Eq(), req.RuleID)
-			}).
-			Exec(ctx)
+		ru := triagedb.Rules
+		_, err := ru.Where(ru.ID.Eq(req.RuleID)).Update(
+			ctx,
+			r.db.Keel(ctx),
+			ru.MatchCount.Add(1),
+			ru.LastMatchedAt.ToExpr(keel.Raw("GREATEST(COALESCE(?, 0), ?)", ru.LastMatchedAt, req.At)),
+			ru.LastMessageID.To(req.MessageID),
+			ru.Version.ToExpr(ru.Version),
+			ru.UpdatedAt.ToExpr(ru.UpdatedAt),
+		)
 
 		return err
 	})
@@ -299,27 +234,22 @@ func (r *repository) CountSettledSince(
 			return counts, nil
 		}
 
-		cols := inboundmessagecol.InboundMessageColumns
-		rows := make([]struct {
-			RuleID pulid.ID `bun:"rule_id"`
-			Count  int      `bun:"count"`
-		}, 0, len(req.RuleIDs))
+		type settled struct {
+			RuleID pulid.ID
+			Count  int64
+		}
 
-		if err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model((*inboundmessage.InboundMessage)(nil)).
-			ColumnExpr(cols.HandledByRuleID.As("rule_id")).
-			ColumnExpr("COUNT(*) AS count").
-			Apply(inboundmessagecol.InboundMessageApplyTenant(req.TenantInfo)).
-			Where(cols.HandledByRuleID.In(), bun.List(req.RuleIDs)).
-			Where(cols.ReceivedAt.Gte(), req.Since).
-			GroupExpr(cols.HandledByRuleID.Qualified()).
-			Scan(ctx, &rows); err != nil {
+		m := inboundmessagedb.InboundMessages
+		rows, err := keel.Into[settled](ctx, r.db.Keel(ctx), m.
+			Where(m.HandledByRuleID.In(req.RuleIDs...), m.ReceivedAt.Gte(req.Since)).
+			Group(m.HandledByRuleID).
+			Pick(m.HandledByRuleID, keel.Count()))
+		if err != nil {
 			return nil, err
 		}
 
 		for _, row := range rows {
-			counts[row.RuleID] = row.Count
+			counts[row.RuleID] = int(row.Count)
 		}
 
 		return counts, nil

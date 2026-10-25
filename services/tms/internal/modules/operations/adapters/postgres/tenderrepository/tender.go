@@ -5,25 +5,22 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/emoss08/trenova/pkg/buncolgen/rateconfirmationcol"
-	"github.com/emoss08/trenova/pkg/buncolgen/shipmentcol"
-	"github.com/emoss08/trenova/pkg/buncolgen/tendercol"
-
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
-	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment/shipmentdb"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/tender"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/tender/tenderdb"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/tenderports"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/rateconfirmation"
-	"github.com/emoss08/trenova/pkg/buncolgen"
+	"github.com/emoss08/trenova/internal/modules/rating/domain/rateconfirmation/rateconfirmationdb"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/emoss08/trenova/shared/timeutils"
-	"github.com/uptrace/bun"
+	"github.com/shopspring/decimal"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
@@ -39,6 +36,56 @@ const (
 	defaultSweepLimit      = 100
 	defaultTokenPurgeLimit = 500
 )
+
+var tenderErrors = dberror.Mapping{
+	Entity: "Tender",
+	Unique: []dberror.Constraint{
+		{
+			Name:    "uq_tenders_live_move",
+			Field:   "shipmentMoveId",
+			Message: "Move already has a live tender",
+		},
+	},
+	ForeignKey: []dberror.Constraint{
+		{
+			Name:    "fk_tenders_shipment",
+			Field:   "shipmentId",
+			Message: "Shipment does not exist in your organization",
+		},
+		{
+			Name:    "fk_tenders_shipment_move",
+			Field:   "shipmentMoveId",
+			Message: "Move does not exist in your organization",
+		},
+	},
+}
+
+var offerErrors = dberror.Mapping{
+	Entity: "Tender offer",
+	ForeignKey: []dberror.Constraint{
+		{
+			Name:    "fk_tender_offers_carrier",
+			Field:   "carrierId",
+			Message: "Carrier does not exist in your organization",
+		},
+		{
+			Name:    "fk_tender_offers_edi_partner",
+			Field:   "ediPartnerId",
+			Message: "EDI partner does not exist in your organization",
+		},
+	},
+}
+
+var tokenErrors = dberror.Mapping{
+	Entity: "Tender offer token",
+	Unique: []dberror.Constraint{
+		{
+			Name:    "uq_tender_offer_tokens_hash",
+			Field:   "tokenHash",
+			Message: "Tender offer token already exists",
+		},
+	},
+}
 
 type repository struct {
 	db *postgres.Connection
@@ -57,11 +104,19 @@ var awaitingAnswerStatuses = []tender.OfferStatus{
 	tender.OfferStatusCountered,
 }
 
-func (r *repository) offersRelation(q *bun.SelectQuery) *bun.SelectQuery {
-	q = q.Relation("Offers", func(sq *bun.SelectQuery) *bun.SelectQuery {
-		return sq.Order(tendercol.TenderOfferColumns.Rank.OrderAsc())
-	})
-	return q.Relation("Offers.Carrier")
+var liveStatuses = []tender.Status{tender.StatusActive, tender.StatusNeedsReview}
+
+func rankedOffers() keel.Loader {
+	o := tenderdb.Tenders.Offers()
+	return o.Order(o.Rank.Asc()).Load(o.Carrier())
+}
+
+func stampOffers(offers []*tender.TenderOffer, tenderID pulid.ID, tenant pagination.TenantInfo) {
+	for _, offer := range offers {
+		offer.TenderID = tenderID
+		offer.OrganizationID = tenant.OrgID
+		offer.BusinessUnitID = tenant.BuID
+	}
 }
 
 func (r *repository) Create(ctx context.Context, entity *tender.Tender) (*tender.Tender, error) {
@@ -71,30 +126,19 @@ func (r *repository) Create(ctx context.Context, entity *tender.Tender) (*tender
 			zap.String("shipmentMoveId", entity.ShipmentMoveID.String()),
 		)
 
-		if _, err := r.db.DBForContext(ctx).
-			NewInsert().
-			Model(entity).
-			Returning("*").
-			Exec(ctx); err != nil {
+		db := r.db.Keel(ctx)
+		if err := tenderdb.Tenders.Create(ctx, db, entity); err != nil {
 			log.Error("failed to create tender", zap.Error(err))
-			return nil, err
+			return nil, tenderErrors.Map(err, entity.ID.String())
 		}
 
-		for _, offer := range entity.Offers {
-			offer.TenderID = entity.ID
-			offer.OrganizationID = entity.OrganizationID
-			offer.BusinessUnitID = entity.BusinessUnitID
-		}
-
-		if len(entity.Offers) > 0 {
-			if _, err := r.db.DBForContext(ctx).
-				NewInsert().
-				Model(&entity.Offers).
-				Returning("*").
-				Exec(ctx); err != nil {
-				log.Error("failed to create tender offers", zap.Error(err))
-				return nil, err
-			}
+		stampOffers(entity.Offers, entity.ID, pagination.TenantInfo{
+			OrgID: entity.OrganizationID,
+			BuID:  entity.BusinessUnitID,
+		})
+		if err := tenderdb.TenderOffers.CreateMany(ctx, db, entity.Offers); err != nil {
+			log.Error("failed to create tender offers", zap.Error(err))
+			return nil, offerErrors.Map(err, entity.ID.String())
 		}
 
 		return entity, nil
@@ -106,25 +150,16 @@ func (r *repository) GetByID(
 	req tenderports.GetTenderByIDRequest,
 ) (*tender.Tender, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*tender.Tender, error) {
-		cols := tendercol.TenderColumns
-		entity := new(tender.Tender)
-		err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(entity).
-			Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-				if req.IncludeOffers {
-					sq = r.offersRelation(sq)
-				}
-				return sq
-			}).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return tendercol.TenderScopeTenant(sq, req.TenantInfo).
-					Where(cols.ID.Eq(), req.TenderID)
-			}).
-			Scan(ctx)
+		t := tenderdb.Tenders
+		q := t.Where(t.ID.Eq(req.TenderID))
+		if req.IncludeOffers {
+			q = q.Load(rankedOffers())
+		}
+
+		entity, err := q.One(ctx, r.db.Keel(ctx))
 		if err != nil {
 			r.l.Error("failed to get tender", zap.Error(err))
-			return nil, dberror.HandleNotFoundError(err, "Tender")
+			return nil, tenderErrors.Map(err, req.TenderID.String())
 		}
 
 		return entity, nil
@@ -136,21 +171,10 @@ func (r *repository) GetLiveByMoveID(
 	req tenderports.GetLiveTenderByMoveRequest,
 ) (*tender.Tender, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*tender.Tender, error) {
-		cols := tendercol.TenderColumns
-		entity := new(tender.Tender)
-		err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(entity).
-			Apply(r.offersRelation).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return tendercol.TenderScopeTenant(sq, req.TenantInfo).
-					Where(cols.ShipmentMoveID.Eq(), req.MoveID).
-					Where(cols.Status.In(), bun.List([]tender.Status{
-						tender.StatusActive,
-						tender.StatusNeedsReview,
-					}))
-			}).
-			Scan(ctx)
+		t := tenderdb.Tenders
+		entity, err := t.Where(t.ShipmentMoveID.Eq(req.MoveID), t.Status.In(liveStatuses...)).
+			Load(rankedOffers()).
+			One(ctx, r.db.Keel(ctx))
 		if err != nil {
 			if dberror.IsNotFoundError(err) {
 				return nil, nil //nolint:nilnil // nil tender represents an optional absence
@@ -172,21 +196,11 @@ func (r *repository) ListLiveByMoveIDs(
 			return []*tender.Tender{}, nil
 		}
 
-		cols := tendercol.TenderColumns
-		entities := make([]*tender.Tender, 0, len(req.MoveIDs))
-		err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(&entities).
-			Apply(r.offersRelation).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return tendercol.TenderScopeTenant(sq, req.TenantInfo).
-					Where(cols.ShipmentMoveID.In(), bun.List(req.MoveIDs)).
-					Where(cols.Status.In(), bun.List([]tender.Status{
-						tender.StatusActive,
-						tender.StatusNeedsReview,
-					}))
-			}).
-			Scan(ctx)
+		t := tenderdb.Tenders
+		entities, err := t.Where(t.ShipmentMoveID.In(req.MoveIDs...), t.Status.In(liveStatuses...)).
+			Load(rankedOffers()).
+			Limit(len(req.MoveIDs)).
+			List(ctx, r.db.Keel(ctx))
 		if err != nil {
 			r.l.Error("failed to list live tenders by moves", zap.Error(err))
 			return nil, err
@@ -201,26 +215,16 @@ func (r *repository) GetOfferByID(
 	req tenderports.GetTenderOfferByIDRequest,
 ) (*tender.TenderOffer, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*tender.TenderOffer, error) {
-		cols := tendercol.TenderOfferColumns
-		entity := new(tender.TenderOffer)
-		err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(entity).
-			Relation("Carrier").
-			Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-				if req.IncludeTender {
-					sq = sq.Relation("Tender")
-				}
-				return sq
-			}).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return tendercol.TenderOfferScopeTenant(sq, req.TenantInfo).
-					Where(cols.ID.Eq(), req.OfferID)
-			}).
-			Scan(ctx)
+		o := tenderdb.TenderOffers
+		q := o.Where(o.ID.Eq(req.OfferID)).Load(o.Carrier())
+		if req.IncludeTender {
+			q = q.Load(o.Tender())
+		}
+
+		entity, err := q.One(ctx, r.db.Keel(ctx))
 		if err != nil {
 			r.l.Error("failed to get tender offer", zap.Error(err))
-			return nil, dberror.HandleNotFoundError(err, "Tender offer")
+			return nil, offerErrors.Map(err, req.OfferID.String())
 		}
 
 		return entity, nil
@@ -240,43 +244,34 @@ func (r *repository) GetAcceptedOfferForPartnerReference(
 			return nil, errortypes.NewNotFoundError("Tender offer")
 		}
 
-		offerCols := tendercol.TenderOfferColumns
-		tenderCols := tendercol.TenderColumns
-		shipmentCols := shipmentcol.ShipmentColumns
-		entity := new(tender.TenderOffer)
-		err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(entity).
-			Relation(tendercol.TenderOfferRelations.Tender).
-			Relation(tendercol.TenderOfferRelations.Carrier).
-			Join("JOIN "+tendercol.TenderTable.Name+" AS "+tendercol.TenderTable.Alias+
-				" ON "+tenderCols.ID.EqColumn(offerCols.TenderID)).
-			Join("JOIN "+shipmentcol.ShipmentTable.Name+" AS "+shipmentcol.ShipmentTable.Alias+
-				" ON "+shipmentCols.ID.EqColumn(tenderCols.ShipmentID)).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				sq = tendercol.TenderOfferScopeTenant(sq, req.TenantInfo)
-				sq = tendercol.TenderScopeTenant(sq, req.TenantInfo)
-				sq = shipmentcol.ShipmentScopeTenant(sq, req.TenantInfo)
-				return sq.
-					Where(offerCols.EDIPartnerID.Eq(), req.PartnerID).
-					Where(offerCols.Status.Eq(), tender.OfferStatusAccepted).
-					WhereGroup(" AND ", func(inner *bun.SelectQuery) *bun.SelectQuery {
-						if !req.OfferID.IsNil() {
-							inner = inner.WhereOr(offerCols.ID.Eq(), req.OfferID)
-						}
-						if len(req.References) > 0 {
-							references := bun.List(req.References)
-							inner = inner.
-								WhereOr(shipmentCols.ID.In(), references).
-								WhereOr(shipmentCols.ProNumber.In(), references).
-								WhereOr(shipmentCols.BOL.In(), references)
-						}
-						return inner
-					})
-			}).
-			OrderExpr(offerCols.RespondedAt.Qualified() + " DESC NULLS LAST").
-			Limit(1).
-			Scan(ctx)
+		o := tenderdb.TenderOffers
+		sp := o.Tender().Shipment()
+		references := make([]pulid.ID, len(req.References))
+		for i, reference := range req.References {
+			references[i] = pulid.ID(reference)
+		}
+
+		var match []keel.Pred
+		if !req.OfferID.IsNil() {
+			match = append(match, o.ID.Eq(req.OfferID))
+		}
+		if len(req.References) > 0 {
+			match = append(match,
+				sp.ID.In(references...),
+				sp.ProNumber.In(req.References...),
+				sp.BOL.In(req.References...),
+			)
+		}
+
+		entity, err := o.Where(
+			o.EDIPartnerID.Eq(req.PartnerID),
+			o.Status.Eq(tender.OfferStatusAccepted),
+			sp.ID.IsNotNull(),
+			keel.Or(match...),
+		).
+			Load(o.Tender(), o.Carrier()).
+			Order(o.RespondedAt.Desc().NullsLast()).
+			First(ctx, r.db.Keel(ctx))
 		if err != nil {
 			if !dberror.IsNotFoundError(err) {
 				r.l.Error(
@@ -284,7 +279,7 @@ func (r *repository) GetAcceptedOfferForPartnerReference(
 					zap.Error(err),
 				)
 			}
-			return nil, dberror.HandleNotFoundError(err, "Tender offer")
+			return nil, offerErrors.Map(err, req.OfferID.String())
 		}
 
 		return entity, nil
@@ -296,22 +291,14 @@ func (r *repository) ListByShipment(
 	req tenderports.ListTendersByShipmentRequest,
 ) ([]*tender.Tender, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*tender.Tender, error) {
-		cols := tendercol.TenderColumns
-		entities := make([]*tender.Tender, 0, 4)
-		err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(&entities).
-			Apply(r.offersRelation).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				sq = tendercol.TenderScopeTenant(sq, req.TenantInfo).
-					Where(cols.ShipmentID.Eq(), req.ShipmentID)
-				if req.ShipmentMoveID.IsNotNil() {
-					sq = sq.Where(cols.ShipmentMoveID.Eq(), req.ShipmentMoveID)
-				}
-				return sq
-			}).
-			Order(cols.CreatedAt.OrderDesc()).
-			Scan(ctx)
+		t := tenderdb.Tenders
+		entities, err := t.Where(
+			t.ShipmentID.Eq(req.ShipmentID),
+			keel.When(req.ShipmentMoveID.IsNotNil(), t.ShipmentMoveID.Eq(req.ShipmentMoveID)),
+		).
+			Load(rankedOffers()).
+			Order(t.CreatedAt.Desc()).
+			All(ctx, r.db.Keel(ctx))
 		if err != nil {
 			r.l.Error("failed to list tenders by shipment", zap.Error(err))
 			return nil, err
@@ -328,56 +315,68 @@ func (r *repository) ListForSweep(
 	ctx context.Context,
 	req tenderports.ListTendersForSweepRequest,
 ) ([]*tender.Tender, error) {
-	if req.TenantInfo == nil {
+	system := req.TenantInfo == nil
+	if system {
 		ctx = dbscope.WithSystem(
 			ctx,
 			"list stalled tenders across every organization for the tender sweep",
 		)
+	} else {
+		ctx = dbscope.EnsureTenant(ctx, dbscope.Tenant{
+			OrganizationID: req.TenantInfo.OrgID,
+			BusinessUnitID: req.TenantInfo.BuID,
+		})
 	}
+
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*tender.Tender, error) {
 		limit := req.Limit
 		if limit <= 0 {
 			limit = defaultSweepLimit
 		}
 
-		entities := make([]*tender.Tender, 0, limit)
-		q := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(&entities).
-			Apply(r.offersRelation).
-			Where(tendercol.TenderColumns.Status.Eq(), tender.StatusActive).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				// Arm 1: the current offer is overdue. Arm 2: no offer is in
-				// flight at all past the grace window — a workflow that died
-				// before its first dispatch, or after its last offer resolved
-				// without reaching a terminal tender status. Nudging a healthy
-				// workflow that is merely between offers is harmless.
-				return sq.Where(
-					"EXISTS (SELECT 1 FROM tender_offers tof WHERE tof.tender_id = tnd.id "+
-						"AND tof.organization_id = tnd.organization_id "+
-						"AND tof.business_unit_id = tnd.business_unit_id "+
-						"AND tof.status IN (?) AND tof.expires_at <= ?)",
-					bun.List(awaitingAnswerStatuses),
-					req.ExpiredBy,
-				).WhereOr(
-					"NOT EXISTS (SELECT 1 FROM tender_offers tof WHERE tof.tender_id = tnd.id "+
-						"AND tof.organization_id = tnd.organization_id "+
-						"AND tof.business_unit_id = tnd.business_unit_id "+
-						"AND tof.status IN (?)) "+
-						"AND GREATEST(tnd.created_at, COALESCE(tnd.last_bounced_at, 0)) <= ?",
-					bun.List(awaitingAnswerStatuses),
-					req.ExpiredBy,
-				)
-			}).
-			Limit(int64(limit))
-
-		if req.TenantInfo != nil {
-			q = q.WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return tendercol.TenderScopeTenant(sq, *req.TenantInfo)
-			})
+		t := tenderdb.Tenders
+		inFlight := tenderdb.TenderOffers.As("tof")
+		awaiting := func(extra ...keel.Pred) *keel.Query[tender.TenderOffer] {
+			q := inFlight.Pick(keel.Raw("1")).Where(
+				inFlight.TenderID.EqCol(t.ID),
+				inFlight.OrganizationID.EqCol(t.OrganizationID),
+				inFlight.BusinessUnitID.EqCol(t.BusinessUnitID),
+				inFlight.Status.In(awaitingAnswerStatuses...),
+			).Where(extra...)
+			if system {
+				q = q.AllTenants()
+			}
+			return q
 		}
 
-		if err := q.Scan(ctx); err != nil {
+		// Arm 1: the current offer is overdue. Arm 2: no offer is in flight at
+		// all past the grace window — a workflow that died before its first
+		// dispatch, or after its last offer resolved without reaching a terminal
+		// tender status. Nudging a healthy workflow that is merely between
+		// offers is harmless.
+		q := t.Where(
+			t.Status.Eq(tender.StatusActive),
+			keel.Or(
+				keel.Exists(awaiting(inFlight.ExpiresAt.Lte(req.ExpiredBy))),
+				keel.And(
+					keel.NotExists(awaiting()),
+					keel.Raw(
+						"greatest(?, coalesce(?, 0)) <= ?",
+						t.CreatedAt,
+						t.LastBouncedAt,
+						req.ExpiredBy,
+					),
+				),
+			),
+		).
+			Load(rankedOffers()).
+			Limit(limit)
+		if system {
+			q = q.AllTenants()
+		}
+
+		entities, err := q.List(ctx, r.db.Keel(ctx))
+		if err != nil {
 			r.l.Error("failed to list tenders for sweep", zap.Error(err))
 			return nil, err
 		}
@@ -388,28 +387,24 @@ func (r *repository) ListForSweep(
 
 func (r *repository) SetWorkflowID(
 	ctx context.Context,
-	tenantInfo pagination.TenantInfo,
+	_ pagination.TenantInfo,
 	tenderID pulid.ID,
 	workflowID string,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
-		cols := tendercol.TenderColumns
-		results, err := r.db.DBForContext(ctx).
-			NewUpdate().
-			Model((*tender.Tender)(nil)).
-			Set("workflow_id = ?", workflowID).
-			Set("updated_at = ?", timeutils.NowUnix()).
-			WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-				return tendercol.TenderScopeTenantUpdate(uq, tenantInfo).
-					Where(cols.ID.Eq(), tenderID)
-			}).
-			Exec(ctx)
+		t := tenderdb.Tenders
+		n, err := t.Where(t.ID.Eq(tenderID)).Update(
+			ctx,
+			r.db.Keel(ctx),
+			t.WorkflowID.To(workflowID),
+			t.Version.ToExpr(t.Version),
+		)
 		if err != nil {
 			r.l.Error("failed to set tender workflow id", zap.Error(err))
 			return err
 		}
 
-		return dberror.CheckRowsAffected(results, "Tender", tenderID.String())
+		return dberror.CheckAffected(n, "Tender", tenderID.String())
 	})
 }
 
@@ -421,56 +416,38 @@ func (r *repository) UpdateTenderStatus(
 	req *tenderports.UpdateTenderStatusRequest,
 ) (bool, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (bool, error) {
-		cols := tendercol.TenderColumns
-		now := timeutils.NowUnix()
-
-		q := r.db.DBForContext(ctx).
-			NewUpdate().
-			Model((*tender.Tender)(nil)).
-			Set("status = ?", req.ToStatus).
-			Set("version = version + 1").
-			Set("updated_at = ?", now)
-
+		t := tenderdb.Tenders
+		sets := []keel.Assignment{t.Status.To(req.ToStatus)}
 		if req.CurrentRank != nil {
-			q = q.Set("current_rank = ?", *req.CurrentRank)
+			sets = append(sets, t.CurrentRank.To(*req.CurrentRank))
 		}
 		if req.CanceledByID != nil {
-			q = q.Set("canceled_by_id = ?", *req.CanceledByID)
+			sets = append(sets, t.CanceledByID.To(*req.CanceledByID))
 		}
 		if req.CancellationReason != "" {
-			q = q.Set("cancellation_reason = ?", req.CancellationReason)
+			sets = append(sets, t.CancellationReason.To(req.CancellationReason))
 		}
 		if req.AcceptedOfferID != nil {
-			q = q.Set("accepted_offer_id = ?", *req.AcceptedOfferID)
+			sets = append(sets, t.AcceptedOfferID.To(*req.AcceptedOfferID))
 		}
 		if req.AcceptedAt != nil {
-			q = q.Set("accepted_at = ?", *req.AcceptedAt)
+			sets = append(sets, t.AcceptedAt.To(*req.AcceptedAt))
 		}
 		if req.ExhaustedAt != nil {
-			q = q.Set("exhausted_at = ?", *req.ExhaustedAt)
+			sets = append(sets, t.ExhaustedAt.To(*req.ExhaustedAt))
 		}
 		if req.CanceledAt != nil {
-			q = q.Set("canceled_at = ?", *req.CanceledAt)
+			sets = append(sets, t.CanceledAt.To(*req.CanceledAt))
 		}
 
-		results, err := q.
-			WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-				return tendercol.TenderScopeTenantUpdate(uq, req.TenantInfo).
-					Where(cols.ID.Eq(), req.TenderID).
-					Where(cols.Status.In(), bun.List(req.FromStatus))
-			}).
-			Exec(ctx)
+		n, err := t.Where(t.ID.Eq(req.TenderID), t.Status.In(req.FromStatus...)).
+			Update(ctx, r.db.Keel(ctx), sets...)
 		if err != nil {
 			r.l.Error("failed to update tender status", zap.Error(err))
 			return false, err
 		}
 
-		affected, err := results.RowsAffected()
-		if err != nil {
-			return false, err
-		}
-
-		return affected > 0, nil
+		return n > 0, nil
 	})
 }
 
@@ -481,79 +458,61 @@ func (r *repository) UpdateOfferStatus(
 	req *tenderports.UpdateOfferStatusRequest,
 ) (bool, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (bool, error) {
-		cols := tendercol.TenderOfferColumns
-		now := timeutils.NowUnix()
-
-		q := r.db.DBForContext(ctx).
-			NewUpdate().
-			Model((*tender.TenderOffer)(nil)).
-			Set("status = ?", req.ToStatus).
-			Set("version = version + 1").
-			Set("updated_at = ?", now)
-
+		o := tenderdb.TenderOffers
+		sets := []keel.Assignment{o.Status.To(req.ToStatus)}
 		if req.SentAt != nil {
-			q = q.Set("sent_at = ?", *req.SentAt)
+			sets = append(sets, o.SentAt.To(*req.SentAt))
 		}
 		if req.ExpiresAt != nil {
-			q = q.Set("expires_at = ?", *req.ExpiresAt)
+			sets = append(sets, o.ExpiresAt.To(*req.ExpiresAt))
 		}
 		if req.RespondedAt != nil {
-			q = q.Set("responded_at = ?", *req.RespondedAt)
+			sets = append(sets, o.RespondedAt.To(*req.RespondedAt))
 		}
 		if req.ResponseSource != "" {
-			q = q.Set("response_source = ?", req.ResponseSource)
+			sets = append(sets, o.ResponseSource.To(req.ResponseSource))
 		}
 		if req.DeclineReason != "" {
-			q = q.Set("decline_reason = ?", req.DeclineReason)
+			sets = append(sets, o.DeclineReason.To(req.DeclineReason))
 		}
 		if req.DeliveryError != "" {
-			q = q.Set("delivery_error = ?", req.DeliveryError)
+			sets = append(sets, o.DeliveryError.To(req.DeliveryError))
 		}
 		if req.EDIMessageID != nil {
-			q = q.Set("edi_message_id = ?", *req.EDIMessageID)
+			sets = append(sets, o.EDIMessageID.To(*req.EDIMessageID))
 		}
-		q = applyOfferCounter(q, req)
+		sets = append(sets, offerCounterSets(req)...)
 
-		results, err := q.
-			WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-				return tendercol.TenderOfferScopeTenantUpdate(uq, req.TenantInfo).
-					Where(cols.ID.Eq(), req.OfferID).
-					Where(cols.Status.In(), bun.List(req.FromStatus))
-			}).
-			Exec(ctx)
+		n, err := o.Where(o.ID.Eq(req.OfferID), o.Status.In(req.FromStatus...)).
+			Update(ctx, r.db.Keel(ctx), sets...)
 		if err != nil {
 			r.l.Error("failed to update tender offer status", zap.Error(err))
 			return false, err
 		}
 
-		affected, err := results.RowsAffected()
-		if err != nil {
-			return false, err
-		}
-
-		return affected > 0, nil
+		return n > 0, nil
 	})
 }
 
-func applyOfferCounter(
-	q *bun.UpdateQuery,
-	req *tenderports.UpdateOfferStatusRequest,
-) *bun.UpdateQuery {
-	cols := tendercol.TenderOfferColumns
+func offerCounterSets(req *tenderports.UpdateOfferStatusRequest) []keel.Assignment {
+	o := tenderdb.TenderOffers
+	var sets []keel.Assignment
 	if counter := req.Counter; counter != nil {
-		q = q.Set(cols.CounterRate.Set(), counter.Rate).
-			Set(cols.CounterNote.Set(), counter.Note).
-			Set(cols.CounteredAt.Set(), counter.At).
-			Set(cols.CounterMargin.Set(), counter.MarginPercent).
-			Set(cols.CounterNeedsApproval.Set(), counter.NeedsApproval)
+		sets = append(sets,
+			o.CounterRate.To(decimal.NullDecimal{Decimal: counter.Rate, Valid: true}),
+			o.CounterNote.To(counter.Note),
+			o.CounteredAt.To(counter.At),
+			o.CounterMargin.To(counter.MarginPercent),
+			o.CounterNeedsApproval.To(counter.NeedsApproval),
+		)
 	}
 	if decided := req.CounterDecided; decided != nil {
-		q = q.Set(cols.CounterDecidedAt.Set(), decided.At)
+		sets = append(sets, o.CounterDecidedAt.To(decided.At))
 		if decided.UserID != nil {
-			q = q.Set(cols.CounterDecidedByID.Set(), *decided.UserID)
+			sets = append(sets, o.CounterDecidedByID.To(*decided.UserID))
 		}
 	}
-	return q
+	return sets
 }
 
 // errReopenLost unwinds a reopen whose tender moved but whose accepted offer
@@ -562,32 +521,29 @@ func applyOfferCounter(
 var errReopenLost = errors.New("tender reopen rolled back: accepted offer moved")
 
 // Reopen revokes the accepted offer, puts the tender back to live on the next
-// round and inserts the re-offers, all in one transaction. It reports false
-// when the tender no longer holds that acceptance.
+// round and inserts the re-offers, all in one savepoint. It reports false when
+// the tender no longer holds that acceptance.
 func (r *repository) Reopen(
 	ctx context.Context,
 	req *tenderports.ReopenTenderRequest,
 ) (bool, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (bool, error) {
 		reopened := false
-		err := r.db.WithTx(
-			ctx,
-			kernelports.TxOptions{},
-			func(txCtx context.Context, _ bun.Tx) error {
-				moved, err := r.reopenTender(txCtx, req)
-				if err != nil || !moved {
-					return err
-				}
-				if err = r.revokeAccepted(txCtx, req); err != nil {
-					return err
-				}
-				if err = r.insertReoffers(txCtx, req); err != nil {
-					return err
-				}
-				reopened = true
-				return nil
-			},
-		)
+		err := dbtx.Savepoint(ctx, r.db, func(ctx context.Context) error {
+			db := r.db.Keel(ctx)
+			moved, err := reopenTender(ctx, db, req)
+			if err != nil || !moved {
+				return err
+			}
+			if err = revokeAccepted(ctx, db, req); err != nil {
+				return err
+			}
+			if err = insertReoffers(ctx, db, req); err != nil {
+				return err
+			}
+			reopened = true
+			return nil
+		})
 		if errors.Is(err, errReopenLost) {
 			return false, nil
 		}
@@ -600,95 +556,78 @@ func (r *repository) Reopen(
 	})
 }
 
-func (r *repository) reopenTender(
+func reopenTender(
 	ctx context.Context,
+	db *keel.DB,
 	req *tenderports.ReopenTenderRequest,
 ) (bool, error) {
-	cols := tendercol.TenderColumns
-	result, err := r.db.DBForContext(ctx).NewUpdate().
-		Model((*tender.Tender)(nil)).
-		Set(cols.Status.Set(), tender.StatusActive).
-		Set(cols.BounceCount.Inc(1)).
-		Set(cols.LastBouncedAt.Set(), req.At).
-		Set(cols.AcceptedOfferID.SetNull()).
-		Set(cols.AcceptedAt.SetNull()).
-		Set(cols.CurrentRank.Set(), 0).
-		Set(cols.Version.Inc(1)).
-		Set(cols.UpdatedAt.Set(), req.At).
-		WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-			return tendercol.TenderScopeTenantUpdate(uq, req.TenantInfo).
-				Where(cols.ID.Eq(), req.TenderID).
-				Where(cols.AcceptedOfferID.Eq(), req.RevokedOfferID).
-				Where(cols.Status.In(), bun.List([]tender.Status{
-					tender.StatusAccepted,
-					tender.StatusNeedsReview,
-				}))
-		}).
-		Exec(ctx)
+	t := tenderdb.Tenders
+	n, err := t.Where(
+		t.ID.Eq(req.TenderID),
+		t.AcceptedOfferID.Eq(req.RevokedOfferID),
+		t.Status.In(tender.StatusAccepted, tender.StatusNeedsReview),
+	).Update(
+		ctx,
+		db,
+		t.Status.To(tender.StatusActive),
+		t.BounceCount.Add(1),
+		t.LastBouncedAt.To(req.At),
+		t.AcceptedOfferID.ToNull(),
+		t.AcceptedAt.ToNull(),
+		t.CurrentRank.To(0),
+		t.UpdatedAt.To(req.At),
+	)
 	if err != nil {
 		return false, fmt.Errorf("reopen tender: %w", err)
 	}
-	affected, err := result.RowsAffected()
-	if err != nil {
-		return false, err
-	}
-	return affected > 0, nil
+
+	return n > 0, nil
 }
 
-func (r *repository) revokeAccepted(
+func revokeAccepted(
 	ctx context.Context,
+	db *keel.DB,
 	req *tenderports.ReopenTenderRequest,
 ) error {
-	cols := tendercol.TenderOfferColumns
-	q := r.db.DBForContext(ctx).NewUpdate().
-		Model((*tender.TenderOffer)(nil)).
-		Set(cols.Status.Set(), tender.OfferStatusRevoked).
-		Set(cols.RevokedAt.Set(), req.At).
-		Set(cols.RevokeReason.Set(), req.Reason).
-		Set(cols.Version.Inc(1)).
-		Set(cols.UpdatedAt.Set(), req.At)
-	if req.RevokedByID != nil {
-		q = q.Set(cols.RevokedByID.Set(), *req.RevokedByID)
+	o := tenderdb.TenderOffers
+	sets := []keel.Assignment{
+		o.Status.To(tender.OfferStatusRevoked),
+		o.RevokedAt.To(req.At),
+		o.RevokeReason.To(req.Reason),
+		o.UpdatedAt.To(req.At),
 	}
-	result, err := q.
-		WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-			return tendercol.TenderOfferScopeTenantUpdate(uq, req.TenantInfo).
-				Where(cols.ID.Eq(), req.RevokedOfferID).
-				Where(cols.TenderID.Eq(), req.TenderID).
-				Where(cols.Status.Eq(), tender.OfferStatusAccepted)
-		}).
-		Exec(ctx)
+	if req.RevokedByID != nil {
+		sets = append(sets, o.RevokedByID.To(*req.RevokedByID))
+	}
+
+	n, err := o.Where(
+		o.ID.Eq(req.RevokedOfferID),
+		o.TenderID.Eq(req.TenderID),
+		o.Status.Eq(tender.OfferStatusAccepted),
+	).Update(ctx, db, sets...)
 	if err != nil {
 		return fmt.Errorf("revoke accepted tender offer: %w", err)
 	}
-	affected, err := result.RowsAffected()
-	if err != nil {
-		return err
-	}
-	if affected == 0 {
+	if n == 0 {
 		return errReopenLost
 	}
+
 	return nil
 }
 
-func (r *repository) insertReoffers(
+func insertReoffers(
 	ctx context.Context,
+	db *keel.DB,
 	req *tenderports.ReopenTenderRequest,
 ) error {
-	if len(req.Reoffers) == 0 {
-		return nil
+	stampOffers(req.Reoffers, req.TenderID, req.TenantInfo)
+	if err := tenderdb.TenderOffers.CreateMany(ctx, db, req.Reoffers); err != nil {
+		return fmt.Errorf(
+			"insert tender re-offers: %w",
+			offerErrors.Map(err, req.TenderID.String()),
+		)
 	}
-	for _, offer := range req.Reoffers {
-		offer.TenderID = req.TenderID
-		offer.OrganizationID = req.TenantInfo.OrgID
-		offer.BusinessUnitID = req.TenantInfo.BuID
-	}
-	if _, err := r.db.DBForContext(ctx).NewInsert().
-		Model(&req.Reoffers).
-		Returning("*").
-		Exec(ctx); err != nil {
-		return fmt.Errorf("insert tender re-offers: %w", err)
-	}
+
 	return nil
 }
 
@@ -697,31 +636,18 @@ func (r *repository) BulkUpdateOfferStatus(
 	req *tenderports.BulkOfferStatusRequest,
 ) (int64, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (int64, error) {
-		cols := tendercol.TenderOfferColumns
-
-		q := r.db.DBForContext(ctx).
-			NewUpdate().
-			Model((*tender.TenderOffer)(nil)).
-			Set("status = ?", req.ToStatus).
-			Set("version = version + 1").
-			Set("updated_at = ?", timeutils.NowUnix()).
-			WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-				uq = tendercol.TenderOfferScopeTenantUpdate(uq, req.TenantInfo).
-					Where(cols.TenderID.Eq(), req.TenderID).
-					Where(cols.Status.In(), bun.List(req.FromStatus))
-				if !req.ExceptID.IsNil() {
-					uq = uq.Where(cols.ID.Ne(), req.ExceptID)
-				}
-				return uq
-			})
-
-		results, err := q.Exec(ctx)
+		o := tenderdb.TenderOffers
+		n, err := o.Where(
+			o.TenderID.Eq(req.TenderID),
+			o.Status.In(req.FromStatus...),
+			keel.When(!req.ExceptID.IsNil(), o.ID.Ne(req.ExceptID)),
+		).Update(ctx, r.db.Keel(ctx), o.Status.To(req.ToStatus))
 		if err != nil {
 			r.l.Error("failed to bulk update tender offer status", zap.Error(err))
 			return 0, err
 		}
 
-		return results.RowsAffected()
+		return n, nil
 	})
 }
 
@@ -732,19 +658,15 @@ func (r *repository) RecordLateOfferResponse(
 	req *tenderports.RecordLateOfferResponseRequest,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
-		cols := tendercol.TenderOfferColumns
-		_, err := r.db.DBForContext(ctx).
-			NewUpdate().
-			Model((*tender.TenderOffer)(nil)).
-			Set("late_response_action = ?", req.Action).
-			Set("late_response_at = ?", req.OccurredAt).
-			Set("response_source = ?", req.Source).
-			Set("updated_at = ?", timeutils.NowUnix()).
-			WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-				return tendercol.TenderOfferScopeTenantUpdate(uq, req.TenantInfo).
-					Where(cols.ID.Eq(), req.OfferID)
-			}).
-			Exec(ctx)
+		o := tenderdb.TenderOffers
+		_, err := o.Where(o.ID.Eq(req.OfferID)).Update(
+			ctx,
+			r.db.Keel(ctx),
+			o.LateResponseAction.To(string(req.Action)),
+			o.LateResponseAt.To(req.OccurredAt),
+			o.ResponseSource.To(req.Source),
+			o.Version.ToExpr(o.Version),
+		)
 		if err != nil {
 			r.l.Error("failed to record late tender offer response", zap.Error(err))
 		}
@@ -757,13 +679,9 @@ func (r *repository) CreateToken(
 	entity *tender.TenderOfferToken,
 ) (*tender.TenderOfferToken, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*tender.TenderOfferToken, error) {
-		if _, err := r.db.DBForContext(ctx).
-			NewInsert().
-			Model(entity).
-			Returning("*").
-			Exec(ctx); err != nil {
+		if err := tenderdb.TenderOfferTokens.Create(ctx, r.db.Keel(ctx), entity); err != nil {
 			r.l.Error("failed to create tender offer token", zap.Error(err))
-			return nil, err
+			return nil, tokenErrors.Map(err, entity.ID.String())
 		}
 
 		return entity, nil
@@ -779,13 +697,8 @@ func (r *repository) GetTokenByHash(
 ) (*tender.TenderOfferToken, error) {
 	ctx = dbscope.WithSystem(ctx, "resolve a public tender offer link before its tenant is known")
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*tender.TenderOfferToken, error) {
-		cols := tendercol.TenderOfferTokenColumns
-		entity := new(tender.TenderOfferToken)
-		err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(entity).
-			Where(cols.TokenHash.Eq(), tokenHash).
-			Scan(ctx)
+		tk := tenderdb.TenderOfferTokens
+		entity, err := tk.AllTenants().Where(tk.TokenHash.Eq(tokenHash)).One(ctx, r.db.Keel(ctx))
 		if err != nil {
 			if dberror.IsNotFoundError(err) {
 				return nil, nil //nolint:nilnil // nil token represents an optional absence
@@ -805,53 +718,28 @@ func (r *repository) MarkTokenUsed(
 	req *tenderports.MarkTokenUsedRequest,
 ) (bool, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (bool, error) {
-		cols := tendercol.TenderOfferTokenColumns
-		results, err := r.db.DBForContext(ctx).
-			NewUpdate().
-			Model((*tender.TenderOfferToken)(nil)).
-			Set("used_at = ?", req.UsedAt).
-			Set("updated_at = ?", timeutils.NowUnix()).
-			WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-				return tendercol.TenderOfferTokenScopeTenantUpdate(uq, req.TenantInfo).
-					Where(cols.ID.Eq(), req.TokenID).
-					Where(cols.UsedAt.IsNull()).
-					Where(cols.RevokedAt.IsNull())
-			}).
-			Exec(ctx)
+		tk := tenderdb.TenderOfferTokens
+		n, err := tk.Where(tk.ID.Eq(req.TokenID), tk.UsedAt.IsNull(), tk.RevokedAt.IsNull()).
+			Update(ctx, r.db.Keel(ctx), tk.UsedAt.To(req.UsedAt))
 		if err != nil {
 			r.l.Error("failed to mark tender offer token used", zap.Error(err))
 			return false, err
 		}
 
-		affected, err := results.RowsAffected()
-		if err != nil {
-			return false, err
-		}
-
-		return affected > 0, nil
+		return n > 0, nil
 	})
 }
 
 func (r *repository) RevokeTokensForOffer(
 	ctx context.Context,
-	tenantInfo pagination.TenantInfo,
+	_ pagination.TenantInfo,
 	offerID pulid.ID,
 	revokedAt int64,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
-		cols := tendercol.TenderOfferTokenColumns
-		_, err := r.db.DBForContext(ctx).
-			NewUpdate().
-			Model((*tender.TenderOfferToken)(nil)).
-			Set("revoked_at = ?", revokedAt).
-			Set("updated_at = ?", timeutils.NowUnix()).
-			WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-				return tendercol.TenderOfferTokenScopeTenantUpdate(uq, tenantInfo).
-					Where(cols.TenderOfferID.Eq(), offerID).
-					Where(cols.RevokedAt.IsNull()).
-					Where(cols.UsedAt.IsNull())
-			}).
-			Exec(ctx)
+		tk := tenderdb.TenderOfferTokens
+		_, err := tk.Where(tk.TenderOfferID.Eq(offerID), tk.RevokedAt.IsNull(), tk.UsedAt.IsNull()).
+			Update(ctx, r.db.Keel(ctx), tk.RevokedAt.To(revokedAt))
 		if err != nil {
 			r.l.Error("failed to revoke tender offer tokens", zap.Error(err))
 		}
@@ -879,48 +767,50 @@ func (r *repository) ListAcceptedMissingRateConfirmation(
 			limit = defaultSweepLimit
 		}
 
-		tenderCols := tendercol.TenderColumns
-		offerCols := tendercol.TenderOfferColumns
-		assignCols := shipmentcol.CarrierAssignmentColumns
-		rateConCols := rateconfirmationcol.RateConfirmationColumns
-		dba := r.db.DBForContext(ctx)
+		t := tenderdb.Tenders
+		o := tenderdb.TenderOffers
+		ca := shipmentdb.CarrierAssignments
+		rc := rateconfirmationdb.RateConfirmations
 
-		acceptedOfferCarrier := dba.NewSelect().
-			Model((*tender.TenderOffer)(nil)).
-			ColumnExpr(offerCols.CarrierID.Qualified()).
-			Where(offerCols.ID.EqColumn(tenderCols.AcceptedOfferID)).
-			Where(offerCols.OrganizationID.EqColumn(tenderCols.OrganizationID)).
-			Where(offerCols.BusinessUnitID.EqColumn(tenderCols.BusinessUnitID))
+		acceptedOfferCarrier := o.AllTenants().
+			Pick(o.CarrierID).
+			Where(
+				o.ID.EqCol(t.AcceptedOfferID),
+				o.OrganizationID.EqCol(t.OrganizationID),
+				o.BusinessUnitID.EqCol(t.BusinessUnitID),
+			)
 
-		standingRateConfirmation := dba.NewSelect().
-			Model((*rateconfirmation.RateConfirmation)(nil)).
-			ColumnExpr("1").
-			Where(rateConCols.CarrierAssignmentID.EqColumn(assignCols.ID)).
-			Where(rateConCols.OrganizationID.EqColumn(assignCols.OrganizationID)).
-			Where(rateConCols.BusinessUnitID.EqColumn(assignCols.BusinessUnitID)).
-			Where(rateConCols.Status.NotEq(), rateconfirmation.StatusVoided)
+		standingRateConfirmation := rc.AllTenants().
+			Pick(keel.Raw("1")).
+			Where(
+				rc.CarrierAssignmentID.EqCol(ca.ID),
+				rc.OrganizationID.EqCol(ca.OrganizationID),
+				rc.BusinessUnitID.EqCol(ca.BusinessUnitID),
+				rc.Status.Ne(rateconfirmation.StatusVoided),
+			)
 
-		coveringAssignment := dba.NewSelect().
-			Model((*shipment.CarrierAssignment)(nil)).
-			ColumnExpr("1").
-			Where(assignCols.ShipmentMoveID.EqColumn(tenderCols.ShipmentMoveID)).
-			Where(assignCols.OrganizationID.EqColumn(tenderCols.OrganizationID)).
-			Where(assignCols.BusinessUnitID.EqColumn(tenderCols.BusinessUnitID)).
-			Where(assignCols.Status.NotEq(), shipment.CarrierAssignmentStatusCanceled).
-			Where(assignCols.CarrierID.Expr("{} = (?)"), acceptedOfferCarrier).
-			Where("NOT EXISTS (?)", standingRateConfirmation)
+		coveringAssignment := ca.AllTenants().
+			Pick(keel.Raw("1")).
+			Where(
+				ca.ShipmentMoveID.EqCol(t.ShipmentMoveID),
+				ca.OrganizationID.EqCol(t.OrganizationID),
+				ca.BusinessUnitID.EqCol(t.BusinessUnitID),
+				ca.Status.Ne(shipment.CarrierAssignmentStatusCanceled),
+				ca.CarrierID.EqCol(keel.Scalar(acceptedOfferCarrier)),
+				keel.NotExists(standingRateConfirmation),
+			)
 
-		entities := make([]*tender.Tender, 0, limit)
-		err := dba.NewSelect().
-			Model(&entities).
-			Where(tenderCols.Status.Eq(), tender.StatusAccepted).
-			Where(tenderCols.AcceptedOfferID.IsNotNull()).
-			Where(tenderCols.AcceptedAt.Gt(), req.AcceptedAfter).
-			Where(tenderCols.AcceptedAt.Lte(), req.AcceptedBefore).
-			Where("EXISTS (?)", coveringAssignment).
-			Order(tenderCols.AcceptedAt.OrderAsc()).
-			Limit(int64(limit)).
-			Scan(ctx)
+		entities, err := t.AllTenants().
+			Where(
+				t.Status.Eq(tender.StatusAccepted),
+				t.AcceptedOfferID.IsNotNull(),
+				t.AcceptedAt.Gt(req.AcceptedAfter),
+				t.AcceptedAt.Lte(req.AcceptedBefore),
+				keel.Exists(coveringAssignment),
+			).
+			Order(t.AcceptedAt.Asc()).
+			Limit(limit).
+			List(ctx, r.db.Keel(ctx))
 		if err != nil {
 			r.l.Error("failed to list accepted tenders missing a rate confirmation", zap.Error(err))
 			return nil, err
@@ -945,27 +835,25 @@ func (r *repository) PurgeDeadOfferTokens(
 			limit = defaultTokenPurgeLimit
 		}
 
-		cols := tendercol.TenderOfferTokenColumns
-		deadAt := buncolgen.Expr(
-			"COALESCE({0}, {1}, {2})", cols.UsedAt, cols.RevokedAt, cols.ExpiresAt,
-		)
-		dba := r.db.DBForContext(ctx)
-
-		dead := dba.NewSelect().
-			Model((*tender.TenderOfferToken)(nil)).
-			Column(cols.ID.Bare()).
-			Where(deadAt+" < ?", req.DeadBefore).
-			Limit(int64(limit))
-
-		result, err := dba.NewDelete().
-			Model((*tender.TenderOfferToken)(nil)).
-			Where(cols.ID.Expr("{} IN (?)"), dead).
-			Exec(ctx)
+		tk := tenderdb.TenderOfferTokens
+		dead := tk.As("dead")
+		n, err := tk.AllTenants().
+			Where(tk.ID.InQuery(dead.AllTenants().
+				Pick(dead.ID).
+				Where(keel.Raw(
+					"coalesce(?, ?, ?) < ?",
+					dead.UsedAt,
+					dead.RevokedAt,
+					dead.ExpiresAt,
+					req.DeadBefore,
+				)).
+				Limit(limit))).
+			Delete(ctx, r.db.Keel(ctx))
 		if err != nil {
 			r.l.Error("failed to purge dead tender offer tokens", zap.Error(err))
 			return 0, err
 		}
 
-		return result.RowsAffected()
+		return n, nil
 	})
 }

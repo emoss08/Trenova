@@ -18,7 +18,6 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
-	"github.com/uptrace/bun"
 )
 
 type txKey struct{}
@@ -27,24 +26,14 @@ type fakeConnection struct {
 	transactions int
 }
 
-func (f *fakeConnection) DB() *bun.DB { return nil }
-
-func (f *fakeConnection) DBForContext(context.Context) bun.IDB { return nil }
-
-func (f *fakeConnection) WithTx(
+func (f *fakeConnection) Transact(
 	ctx context.Context,
 	_ kernelports.TxOptions,
-	fn func(context.Context, bun.Tx) error,
+	fn func(context.Context) error,
 ) error {
 	f.transactions++
-	return fn(context.WithValue(ctx, txKey{}, true), bun.Tx{})
+	return fn(context.WithValue(ctx, txKey{}, true))
 }
-
-func (f *fakeConnection) HealthCheck(context.Context) error { return nil }
-
-func (f *fakeConnection) IsHealthy(context.Context) bool { return true }
-
-func (f *fakeConnection) Close() error { return nil }
 
 func request(meter platformcatalog.MeterKey) platformplanports.QuotaRequest {
 	return platformplanports.QuotaRequest{

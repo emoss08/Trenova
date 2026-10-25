@@ -5,59 +5,38 @@ import (
 	"testing"
 
 	"github.com/bytedance/sonic"
+	"github.com/emoss08/keel/analytics/format"
+	"github.com/emoss08/keel/analytics/ir"
+	"github.com/emoss08/keel/analytics/table"
+	"github.com/emoss08/keel/analytics/value"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/reporting"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/report"
-	"github.com/emoss08/trenova/internal/modules/workspace/ports/reportports"
-	"github.com/emoss08/trenova/pkg/dbtype"
-	"github.com/emoss08/trenova/pkg/reportcatalog"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
-func revenueDefinition() *report.Definition {
-	return &report.Definition{
-		IRVersion: report.CurrentIRVersion,
-		Entity:    "shipment",
-		Columns: []report.ColumnSpec{
+func revenueDefinition() *ir.Definition {
+	return &ir.Definition{
+		Version: ir.Version,
+		Entity:  "shipment",
+		Columns: []ir.Column{
+			{ID: "c1", Dimension: &ir.Dimension{Field: "customer.name"}},
 			{
-				ID:   "c1",
-				Ref:  report.FieldRef{Path: []string{"customer"}, Field: "name"},
-				Kind: report.ColumnKindDimension,
-			},
-			{
-				ID:    "c2",
-				Ref:   report.FieldRef{Field: "totalChargeAmount"},
-				Kind:  report.ColumnKindMeasure,
-				Agg:   reportcatalog.AggSum,
-				Label: "Revenue",
+				ID:      "c2",
+				Label:   "Revenue",
+				Measure: &ir.Measure{Field: "totalChargeAmount", Agg: ir.AggSum},
 			},
 		},
-		Filters: &report.FilterGroup{
-			Op: report.BoolOpAnd,
-			Filters: []report.FieldFilter{
-				{
-					Ref:      report.FieldRef{Field: "status"},
-					Operator: dbtype.OpEqual,
-					Value:    "Completed",
-				},
-				{
-					Ref:      report.FieldRef{Field: "createdAt"},
-					Operator: dbtype.OpLastNDays,
-					Param:    "windowDays",
-				},
-			},
-		},
-		Sort: []report.SortSpec{{ColumnID: "c2", Direction: dbtype.SortDirectionDesc}},
-		Parameters: []report.ParameterDef{
-			{
-				Name:     "windowDays",
-				Label:    "Window (days)",
-				Type:     reportcatalog.FieldInt,
-				Required: true,
-			},
+		Filters: ir.And(
+			ir.Filter{Field: "status", Op: ir.OpEq, Value: "Completed"},
+			ir.Filter{Field: "createdAt", Op: ir.OpLastNDays, Param: "windowDays"},
+		),
+		Sort: []ir.Sort{{Column: "c2", Desc: true}},
+		Parameters: []ir.Parameter{
+			{Name: "windowDays", Label: "Window (days)", Type: "int", Required: true},
 		},
 	}
 }
@@ -241,7 +220,7 @@ func TestDescribeReport_ReadsABuiltInReportBack(t *testing.T) {
 	require.Len(t, description.Filters, 1)
 	assert.Equal(
 		t,
-		"status eq Completed AND createdAt lastndays :windowDays",
+		"status eq Completed AND createdAt last_n_days @windowDays",
 		description.Filters[0],
 	)
 	assert.Equal(t, []string{"c2 desc"}, description.Sort)
@@ -385,7 +364,7 @@ func TestDescribeReportDataset_NamesFieldsAndWhatTheActorMayReadOfThem(t *testin
 	assert.GreaterOrEqual(t, description.FieldCount, description.Shown,
 		"the count is the dataset's, the shown count is this result's")
 	assert.LessOrEqual(t, description.Shown, defaultFieldPage)
-	assert.Contains(t, description.Note, "{\"path\": [\"<edge>\"], \"field\": \"<key>\"}")
+	assert.Contains(t, description.Note, "\"<edge>.<key>\"")
 	if description.Shown < description.FieldCount {
 		// A description that stops short has to say so, or the model
 		// reports that a field it never saw does not exist.
@@ -539,7 +518,7 @@ func TestDescribeReportDataset_FindsAFieldOnARelatedDataset(t *testing.T) {
 	assert.Empty(t, description.Fields)
 	assert.Contains(t, description.RelatedFields, "destinationStop.actualArrival")
 	assert.Contains(t, description.Note, "No field of shipment itself matches")
-	assert.Contains(t, description.Note, `{"path": [`)
+	assert.Contains(t, description.Note, "a definition writes it exactly so")
 
 	encoded, err := sonic.Marshal(description)
 	require.NoError(t, err)
@@ -663,21 +642,15 @@ func TestPreviewReport_RunsAnInlineDefinitionAndKeysRowsByLabel(t *testing.T) {
 	t.Parallel()
 
 	service, _, tools := reportingTools(t)
+	revenue := testColumn("c2", "Revenue", value.Decimal)
+	revenue.Display = format.Resolve(value.Decimal, format.Hint{Kind: format.Money}, nil)
 	service.preview = &reporting.PreviewResult{
-		Columns: []reportports.ReportResultColumn{
-			{ID: "c1", Label: "Customer", Type: reportcatalog.FieldString},
-			{
-				ID:     "c2",
-				Label:  "Revenue",
-				Type:   reportcatalog.FieldDecimal,
-				Format: reportcatalog.FormatMoney,
-			},
-		},
-		Rows: []reportports.ReportRow{
+		Columns: []table.Column{testColumn("c1", "Customer", value.String), revenue},
+		Rows: [][]any{
 			{"Acme", "1200.00"},
 			{"Globex", "800.00"},
 		},
-		Totals: reportports.ReportRow{nil, "2000.00"},
+		Totals: []any{nil, "2000.00"},
 	}
 
 	result, err := tools["report_preview"].Query(t.Context(), testParams(map[string]any{
@@ -685,16 +658,13 @@ func TestPreviewReport_RunsAnInlineDefinitionAndKeysRowsByLabel(t *testing.T) {
 			"entity": "shipment",
 			"columns": []any{
 				map[string]any{
-					"id":   "c1",
-					"ref":  map[string]any{"path": []any{"customer"}, "field": "name"},
-					"kind": "dimension",
+					"id":        "c1",
+					"dimension": map[string]any{"field": "customer.name"},
 				},
 				map[string]any{
-					"id":    "c2",
-					"ref":   map[string]any{"field": "totalChargeAmount"},
-					"kind":  "measure",
-					"agg":   "sum",
-					"label": "Revenue",
+					"id":      "c2",
+					"label":   "Revenue",
+					"measure": map[string]any{"field": "totalChargeAmount", "agg": "sum"},
 				},
 			},
 		},
@@ -703,10 +673,10 @@ func TestPreviewReport_RunsAnInlineDefinitionAndKeysRowsByLabel(t *testing.T) {
 
 	require.NotNil(t, service.previewed)
 	assert.Equal(t, "shipment", service.previewed.Definition.Entity)
-	assert.Equal(t, report.CurrentIRVersion, service.previewed.Definition.IRVersion)
+	assert.Equal(t, ir.Version, service.previewed.Definition.Version)
 	require.Len(t, service.previewed.Definition.Columns, 2)
-	assert.Equal(t, []string{"customer"}, service.previewed.Definition.Columns[0].Ref.Path)
-	assert.Equal(t, reportcatalog.AggSum, service.previewed.Definition.Columns[1].Agg)
+	assert.Equal(t, "customer.name", service.previewed.Definition.Columns[0].Dimension.Field)
+	assert.Equal(t, ir.AggSum, service.previewed.Definition.Columns[1].Measure.Agg)
 	assert.False(t, service.previewed.Supersede, "a tool preview never cancels the builder's")
 
 	preview, ok := result.(reportPreview)
@@ -714,7 +684,7 @@ func TestPreviewReport_RunsAnInlineDefinitionAndKeysRowsByLabel(t *testing.T) {
 	assert.Empty(t, preview.Name, "an inline definition has no name to report")
 	assert.Equal(t, 2, preview.RowCount)
 	require.Len(t, preview.Columns, 2)
-	assert.Equal(t, "money", preview.Columns[1].Format)
+	assert.Equal(t, "currency", preview.Columns[1].Format)
 	assert.Equal(t, map[string]any{"Customer": "Acme", "Revenue": "1200.00"}, preview.Rows[0])
 	assert.Equal(t, map[string]any{"Customer": nil, "Revenue": "2000.00"}, preview.Totals)
 	assert.Contains(t, preview.Note, "2 rows")
@@ -724,12 +694,12 @@ func TestPreviewReport_CapsTheRowsItHandsBack(t *testing.T) {
 	t.Parallel()
 
 	service, _, tools := reportingTools(t)
-	rows := make([]reportports.ReportRow, 0, maxPreviewRows+5)
+	rows := make([][]any, 0, maxPreviewRows+5)
 	for i := 0; i < maxPreviewRows+5; i++ {
-		rows = append(rows, reportports.ReportRow{i})
+		rows = append(rows, []any{int64(i)})
 	}
 	service.preview = &reporting.PreviewResult{
-		Columns: []reportports.ReportResultColumn{{ID: "c1", Label: "N"}},
+		Columns: []table.Column{testColumn("c1", "N", value.Int)},
 		Rows:    rows,
 	}
 
@@ -737,11 +707,7 @@ func TestPreviewReport_CapsTheRowsItHandsBack(t *testing.T) {
 		"definition": map[string]any{
 			"entity": "shipment",
 			"columns": []any{
-				map[string]any{
-					"id":   "c1",
-					"ref":  map[string]any{"field": "id"},
-					"kind": "dimension",
-				},
+				map[string]any{"id": "c1", "dimension": map[string]any{"field": "id"}},
 			},
 		},
 	}))
@@ -808,11 +774,7 @@ func TestPreviewReport_ReportsACompileErrorAsItsOwn(t *testing.T) {
 		"definition": map[string]any{
 			"entity": "shipment",
 			"columns": []any{
-				map[string]any{
-					"id":   "c1",
-					"ref":  map[string]any{"field": "margin"},
-					"kind": "dimension",
-				},
+				map[string]any{"id": "c1", "dimension": map[string]any{"field": "margin"}},
 			},
 		},
 	}))
@@ -820,20 +782,6 @@ func TestPreviewReport_ReportsACompileErrorAsItsOwn(t *testing.T) {
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), "could not be previewed")
 	assert.Contains(t, err.Error(), "margin")
-}
-
-func TestPreviewReport_RefusesADefinitionWithoutColumns(t *testing.T) {
-	t.Parallel()
-
-	service, _, tools := reportingTools(t)
-
-	_, err := tools["report_preview"].Query(t.Context(), testParams(map[string]any{
-		"definition": map[string]any{"entity": "shipment"},
-	}))
-
-	require.Error(t, err)
-	assert.Contains(t, err.Error(), "columns")
-	assert.Nil(t, service.previewed)
 }
 
 func TestPreviewReport_NeedsSomethingToPreview(t *testing.T) {
@@ -860,7 +808,11 @@ func TestPreviewReport_DeclaresTheDefinitionShapeInItsSchema(t *testing.T) {
 	require.True(t, ok)
 	definition, ok := properties["definition"].(map[string]any)
 	require.True(t, ok)
-	assert.Equal(t, []string{"entity", "columns"}, definition["required"])
+	defs, ok := definition["$defs"].(map[string]any)
+	require.True(t, ok, "the schema is keel's, with its definitions")
+	shape, ok := defs["Definition"].(map[string]any)
+	require.True(t, ok)
+	assert.Equal(t, []any{"version", "entity", "columns"}, shape["required"])
 }
 
 // A person asked for "dates I can read" and the model, reading epoch
@@ -872,11 +824,11 @@ func TestPreviewReport_WritesDateColumnsAsReadableDates(t *testing.T) {
 
 	service, _, tools := reportingTools(t)
 	service.preview = &reporting.PreviewResult{
-		Columns: []reportports.ReportResultColumn{
-			{ID: "c1", Label: "Driver", Type: reportcatalog.FieldString},
-			{ID: "c2", Label: "Last Move", Type: reportcatalog.FieldEpoch},
+		Columns: []table.Column{
+			testColumn("c1", "Driver", value.String),
+			testColumn("c2", "Last Move", value.Epoch),
 		},
-		Rows: []reportports.ReportRow{
+		Rows: [][]any{
 			{"Mike Johnson", int64(1789996617)},
 			{"Nobody", nil},
 		},
@@ -887,18 +839,12 @@ func TestPreviewReport_WritesDateColumnsAsReadableDates(t *testing.T) {
 			"entity": "shipment_move",
 			"columns": []any{
 				map[string]any{
-					"id": "c1",
-					"ref": map[string]any{
-						"path":  []any{"assignment", "primaryWorker"},
-						"field": "firstName",
-					},
-					"kind": "dimension",
+					"id":        "c1",
+					"dimension": map[string]any{"field": "assignment.primaryWorker.firstName"},
 				},
 				map[string]any{
-					"id":   "c2",
-					"ref":  map[string]any{"field": "createdAt"},
-					"kind": "measure",
-					"agg":  "max",
+					"id":      "c2",
+					"measure": map[string]any{"field": "createdAt", "agg": "max"},
 				},
 			},
 		},

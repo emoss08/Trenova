@@ -5,6 +5,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/dataentrycontrol"
+	"github.com/emoss08/trenova/internal/modules/workspace/domain/dataentrycontrol/dataentrycontroldb"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/validationframework"
 	"go.uber.org/fx"
@@ -21,16 +22,17 @@ type Validator struct {
 }
 
 func NewValidator(p ValidatorParams) *Validator {
+	checker := validationframework.NewKeelChecker(
+		p.DB,
+		dataentrycontroldb.DataEntryControlsSchema(),
+	)
+
 	return &Validator{
 		validator: validationframework.
 			NewTenantedValidatorBuilder[*dataentrycontrol.DataEntryControl]().
 			WithModelName("DataEntryControl").
-			WithUniquenessChecker(
-				validationframework.NewBunUniquenessCheckerScoped(p.DB),
-			).
-			WithReferenceChecker(
-				validationframework.NewBunReferenceCheckerScoped(p.DB),
-			).
+			WithUniquenessChecker(checker).
+			WithReferenceChecker(checker).
 			Build(),
 	}
 }

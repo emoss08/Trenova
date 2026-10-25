@@ -4,20 +4,18 @@
 package agentwait
 
 import (
-	"context"
 	"fmt"
 	"slices"
 	"strings"
 	"unicode/utf8"
 
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/validationframework"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/emoss08/trenova/shared/timeutils"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
-	"github.com/uptrace/bun"
 )
 
 const (
@@ -156,51 +154,50 @@ type Condition struct {
 }
 
 var (
-	_ bun.BeforeAppendModelHook          = (*Wait)(nil)
 	_ validationframework.TenantedEntity = (*Wait)(nil)
 )
 
 type Wait struct {
-	bun.BaseModel `bun:"table:agent_waits,alias:awt" json:"-"`
+	keel.Table `keel:"agent_waits"`
 
-	ID                pulid.ID          `json:"id"                    bun:"id,pk,type:VARCHAR(100)"`
-	OrganizationID    pulid.ID          `json:"organizationId"        bun:"organization_id,pk,type:VARCHAR(100),notnull"`
-	BusinessUnitID    pulid.ID          `json:"businessUnitId"        bun:"business_unit_id,pk,type:VARCHAR(100),notnull"`
-	Kind              Kind              `json:"kind"                  bun:"kind,type:VARCHAR(50),notnull"`
-	Condition         *Condition        `json:"condition"             bun:"condition,type:JSONB,notnull"`
-	WatchID           pulid.ID          `json:"watchId,omitempty"     bun:"watch_id,type:VARCHAR(100),nullzero"`
-	Description       string            `json:"description"           bun:"description,type:TEXT,notnull"`
-	Then              string            `json:"nextStep,omitempty"    bun:"then_note,type:TEXT,nullzero"`
-	AgentDefinitionID pulid.ID          `json:"agentDefinitionId"     bun:"agent_definition_id,type:VARCHAR(100),notnull"`
-	ThreadID          pulid.ID          `json:"threadId,omitempty"    bun:"thread_id,type:VARCHAR(100),nullzero"`
-	UserID            pulid.ID          `json:"userId,omitempty"      bun:"user_id,type:VARCHAR(100),nullzero"`
-	RunID             pulid.ID          `json:"runId,omitempty"       bun:"run_id,type:VARCHAR(100),nullzero"`
-	SubjectType       agent.SubjectType `json:"subjectType,omitempty" bun:"subject_type,type:VARCHAR(50),nullzero"`
-	SubjectID         pulid.ID          `json:"subjectId,omitempty"   bun:"subject_id,type:VARCHAR(100),nullzero"`
+	ID                pulid.ID          `json:"id"                    keel:"id,pk,autoid:awt_"`
+	OrganizationID    pulid.ID          `json:"organizationId"        keel:"organization_id,pk,tenant"`
+	BusinessUnitID    pulid.ID          `json:"businessUnitId"        keel:"business_unit_id,pk,tenant"`
+	Kind              Kind              `json:"kind"                  keel:"kind"`
+	Condition         *Condition        `json:"condition"             keel:"condition,jsonb"`
+	WatchID           pulid.ID          `json:"watchId,omitempty"     keel:"watch_id,nullzero"`
+	Description       string            `json:"description"           keel:"description"`
+	Then              string            `json:"nextStep,omitempty"    keel:"then_note,nullzero"`
+	AgentDefinitionID pulid.ID          `json:"agentDefinitionId"     keel:"agent_definition_id"`
+	ThreadID          pulid.ID          `json:"threadId,omitempty"    keel:"thread_id,nullzero"`
+	UserID            pulid.ID          `json:"userId,omitempty"      keel:"user_id,nullzero"`
+	RunID             pulid.ID          `json:"runId,omitempty"       keel:"run_id,nullzero"`
+	SubjectType       agent.SubjectType `json:"subjectType,omitempty" keel:"subject_type,nullzero"`
+	SubjectID         pulid.ID          `json:"subjectId,omitempty"   keel:"subject_id,nullzero"`
 	// Taint is the outside content the work had read when it set the wait.
 	// The work picks up with it, so a wait never launders what was read.
-	Taint         *agent.RunTaint `json:"-"                       bun:"taint,type:JSONB,nullzero"`
-	Status        Status          `json:"status"                  bun:"status,type:VARCHAR(50),notnull"`
-	DueAt         *int64          `json:"dueAt,omitempty"         bun:"due_at,type:BIGINT,nullzero"`
-	ExpiresAt     int64           `json:"expiresAt"               bun:"expires_at,type:BIGINT,notnull"`
-	ResolvedAt    *int64          `json:"resolvedAt,omitempty"    bun:"resolved_at,type:BIGINT,nullzero"`
-	Outcome       string          `json:"outcome,omitempty"       bun:"outcome,type:TEXT,nullzero"`
-	ResumedTurnID pulid.ID        `json:"resumedTurnId,omitempty" bun:"resumed_turn_id,type:VARCHAR(100),nullzero"`
-	ResumedRunID  pulid.ID        `json:"resumedRunId,omitempty"  bun:"resumed_run_id,type:VARCHAR(100),nullzero"`
-	WorkflowID    string          `json:"-"                       bun:"workflow_id,type:VARCHAR(200),nullzero"`
-	Version       int64           `json:"version"                 bun:"version,type:BIGINT"`
-	CreatedAt     int64           `json:"createdAt"               bun:"created_at,nullzero,notnull,default:extract(epoch from current_timestamp)::bigint"`
-	UpdatedAt     int64           `json:"updatedAt"               bun:"updated_at,nullzero,notnull,default:extract(epoch from current_timestamp)::bigint"`
+	Taint         *agent.RunTaint `json:"-"                       keel:"taint,jsonb"`
+	Status        Status          `json:"status"                  keel:"status"`
+	DueAt         *int64          `json:"dueAt,omitempty"         keel:"due_at"`
+	ExpiresAt     int64           `json:"expiresAt"               keel:"expires_at"`
+	ResolvedAt    *int64          `json:"resolvedAt,omitempty"    keel:"resolved_at"`
+	Outcome       string          `json:"outcome,omitempty"       keel:"outcome,nullzero"`
+	ResumedTurnID pulid.ID        `json:"resumedTurnId,omitempty" keel:"resumed_turn_id,nullzero"`
+	ResumedRunID  pulid.ID        `json:"resumedRunId,omitempty"  keel:"resumed_run_id,nullzero"`
+	WorkflowID    string          `json:"-"                       keel:"workflow_id,nullzero"`
+	Version       int64           `json:"version"                 keel:"version,version"`
+	CreatedAt     int64           `json:"createdAt"               keel:"created_at,autocreate"`
+	UpdatedAt     int64           `json:"updatedAt"               keel:"updated_at,autoupdate"`
 
-	Organization *tenant.Organization `json:"-" bun:"rel:belongs-to,join:organization_id=id"`
-	BusinessUnit *tenant.BusinessUnit `json:"-" bun:"rel:belongs-to,join:business_unit_id=id"`
+	Organization *tenant.Organization `json:"-"`
+	BusinessUnit *tenant.BusinessUnit `json:"-"`
 
 	// SignInCode is set on an open portal wait whose task is waiting on a
 	// sign-in code, when a conversation's waits are listed for its owner.
-	SignInCode *SignInCode `json:"signInCode,omitempty" bun:"-"`
+	SignInCode *SignInCode `json:"signInCode,omitempty"`
 	// WebWatch is set on an open web watch wait, when a conversation's waits
 	// are listed for its owner.
-	WebWatch *WebWatchSummary `json:"webWatch,omitempty" bun:"-"`
+	WebWatch *WebWatchSummary `json:"webWatch,omitempty"`
 }
 
 // WebWatchSummary is the watch a wait follows, as the conversation shows it:
@@ -387,24 +384,6 @@ func (w *Wait) ResumeNote() string {
 	b.WriteString(w.ID.String())
 
 	return b.String()
-}
-
-func (w *Wait) BeforeAppendModel(_ context.Context, query bun.Query) error {
-	now := timeutils.NowUnix()
-	switch query.(type) {
-	case *bun.InsertQuery:
-		if w.ID.IsNil() {
-			w.ID = pulid.MustNew(IDPrefix)
-		}
-		if w.CreatedAt == 0 {
-			w.CreatedAt = now
-		}
-		w.UpdatedAt = now
-	case *bun.UpdateQuery:
-		w.UpdatedAt = now
-	}
-
-	return nil
 }
 
 func (w *Wait) GetID() pulid.ID { return w.ID }

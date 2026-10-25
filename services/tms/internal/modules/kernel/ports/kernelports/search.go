@@ -54,10 +54,10 @@ type ListCustomerOpenBalancesRequest struct {
 }
 
 type CustomerOpenBalance struct {
-	CustomerID   pulid.ID `bun:"customer_id"`
-	OpenMinor    int64    `bun:"open_minor"`
-	OverdueMinor int64    `bun:"overdue_minor"`
-	CurrencyCode string   `bun:"currency_code"`
+	CustomerID   pulid.ID
+	OpenMinor    int64
+	OverdueMinor int64
+	CurrencyCode string
 }
 
 // CustomerOpenBalanceReader is provided by billing so a search can show what a

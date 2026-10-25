@@ -4,19 +4,16 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/emoss08/trenova/pkg/buncolgen/briefingcol"
-
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/briefing"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/briefing/briefingdb"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/briefingports"
-	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/emoss08/trenova/shared/timeutils"
-	"github.com/uptrace/bun"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
@@ -46,17 +43,19 @@ func New(p Params) briefingports.BriefingRepository {
 	}
 }
 
-// Upsert writes the day's briefing, replacing whatever was written for the
-// same organization, role, reader and day. The unique index carries the
-// reader as COALESCE(user_id, ”), so the conflict target names the same
-// expression: a shared briefing and a per-person one are different rows,
-// and a rerun of either replaces itself rather than stacking.
 func (r *repository) Upsert(
 	ctx context.Context,
 	entity *briefing.Briefing,
 ) (*briefing.Briefing, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*briefing.Briefing, error) {
-		if _, err := buildUpsert(r.db.DBForContext(ctx), entity).Exec(ctx); err != nil {
+		b := briefingdb.Briefings
+		inserted, err := b.Upsert(
+			ctx,
+			r.db.Keel(ctx),
+			[]*briefing.Briefing{entity},
+			upsertConflict(),
+		)
+		if err != nil {
 			r.l.Error("failed to upsert briefing",
 				zap.String("role", string(entity.RoleKey)),
 				zap.String("date", entity.BriefingDate),
@@ -64,32 +63,39 @@ func (r *repository) Upsert(
 
 			return nil, fmt.Errorf("upsert briefing: %w", err)
 		}
+		if len(inserted) > 0 && inserted[0] {
+			return entity, nil
+		}
 
-		return entity, nil
+		stored, err := forDay(entity.RoleKey, entity.BriefingDate, entity.UserID).
+			One(ctx, r.db.Keel(ctx))
+		if err != nil {
+			return nil, fmt.Errorf("read upserted briefing: %w", err)
+		}
+
+		return stored, nil
 	})
 }
 
-func buildUpsert(db bun.IDB, entity *briefing.Briefing) *bun.InsertQuery {
-	cols := briefingcol.BriefingColumns
-	target := "CONFLICT (" + cols.OrganizationID.Name + ", " + cols.BusinessUnitID.Name + ", " +
-		cols.RoleKey.Name + ", " + cols.BriefingDate.Name + ", COALESCE(" + cols.UserID.Name +
-		", '')) DO UPDATE"
-
-	return db.NewInsert().
-		Model(entity).
-		On(target).
-		Set(cols.RunID.SetExcluded()).
-		Set(cols.Status.SetExcluded()).
-		Set(cols.Headline.SetExcluded()).
-		Set(cols.Sections.SetExcluded()).
-		Set(cols.Facts.SetExcluded()).
-		Set(cols.Narrated.SetExcluded()).
-		Set(cols.ModelIdentifier.SetExcluded()).
-		Set(cols.ProviderID.SetExcluded()).
-		Set(cols.FailureReason.SetExcluded()).
-		Set(cols.Version.IncConflict(1)).
-		Set(cols.UpdatedAt.Set(), timeutils.NowUnix()).
-		Returning("*")
+func upsertConflict() keel.Conflict {
+	b := briefingdb.Briefings
+	return keel.OnConflict(
+		b.OrganizationID,
+		b.BusinessUnitID,
+		b.RoleKey,
+		b.BriefingDate,
+		keel.Raw("COALESCE(?, '')", b.UserID),
+	).Update(
+		b.RunID,
+		b.Status,
+		b.Headline,
+		b.Sections,
+		b.Facts,
+		b.Narrated,
+		b.ModelIdentifier,
+		b.ProviderID,
+		b.FailureReason,
+	)
 }
 
 func (r *repository) GetByID(
@@ -97,17 +103,7 @@ func (r *repository) GetByID(
 	req briefingports.GetBriefingByIDRequest,
 ) (*briefing.Briefing, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*briefing.Briefing, error) {
-		cols := briefingcol.BriefingColumns
-		entity := new(briefing.Briefing)
-
-		err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(entity).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return briefingcol.BriefingScopeTenant(sq, req.TenantInfo).
-					Where(cols.ID.Eq(), req.ID)
-			}).
-			Scan(ctx)
+		entity, err := briefingdb.Briefings.Get(ctx, r.db.Keel(ctx), req.ID)
 		if err != nil {
 			if dberror.IsNotFoundError(err) {
 				return nil, errortypes.NewNotFoundError("Briefing not found")
@@ -120,28 +116,12 @@ func (r *repository) GetByID(
 	})
 }
 
-// GetForDay reads one role's briefing for a day, or nil when it has not
-// been written. A missing briefing is not an error: a reader who opens the
-// page before the morning job has run is shown that it is on its way.
 func (r *repository) GetForDay(
 	ctx context.Context,
 	req briefingports.GetBriefingForDayRequest,
 ) (*briefing.Briefing, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*briefing.Briefing, error) {
-		cols := briefingcol.BriefingColumns
-		entity := new(briefing.Briefing)
-
-		err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(entity).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				sq = briefingcol.BriefingScopeTenant(sq, req.TenantInfo).
-					Where(cols.RoleKey.Eq(), req.RoleKey).
-					Where(cols.BriefingDate.Eq(), req.BriefingDate)
-
-				return scopeReader(sq, req.UserID)
-			}).
-			Scan(ctx)
+		entity, err := forDay(req.RoleKey, req.BriefingDate, req.UserID).One(ctx, r.db.Keel(ctx))
 		if err != nil {
 			if dberror.IsNotFoundError(err) {
 				return nil, nil
@@ -154,35 +134,25 @@ func (r *repository) GetForDay(
 	})
 }
 
+func forDay(
+	roleKey briefing.RoleKey,
+	briefingDate string,
+	userID *pulid.ID,
+) *keel.Query[briefing.Briefing] {
+	b := briefingdb.Briefings
+	return b.Where(
+		b.RoleKey.Eq(roleKey),
+		b.BriefingDate.Eq(briefingDate),
+		readerPred(userID),
+	)
+}
+
 func (r *repository) List(
 	ctx context.Context,
 	req briefingports.ListBriefingsQuery,
 ) ([]*briefing.Briefing, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*briefing.Briefing, error) {
-		cols := briefingcol.BriefingColumns
-		limit := req.Limit
-		if limit <= 0 {
-			limit = defaultListLimit
-		}
-		if limit > maxListLimit {
-			limit = maxListLimit
-		}
-
-		entities := make([]*briefing.Briefing, 0, limit)
-		err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(&entities).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				sq = briefingcol.BriefingScopeTenant(sq, req.TenantInfo)
-				if req.RoleKey != "" {
-					sq = sq.Where(cols.RoleKey.Eq(), req.RoleKey)
-				}
-
-				return scopeReader(sq, req.UserID)
-			}).
-			Order(cols.BriefingDate.OrderDesc()).
-			Limit(int64(limit)).
-			Scan(ctx)
+		entities, err := listQuery(&req).List(ctx, r.db.Keel(ctx))
 		if err != nil {
 			return nil, fmt.Errorf("list briefings: %w", err)
 		}
@@ -191,12 +161,30 @@ func (r *repository) List(
 	})
 }
 
+func listQuery(req *briefingports.ListBriefingsQuery) *keel.Query[briefing.Briefing] {
+	limit := req.Limit
+	if limit <= 0 {
+		limit = defaultListLimit
+	}
+	if limit > maxListLimit {
+		limit = maxListLimit
+	}
+
+	b := briefingdb.Briefings
+	return b.Where(
+		keel.When(req.RoleKey != "", b.RoleKey.Eq(req.RoleKey)),
+		readerPred(req.UserID),
+	).
+		Order(b.BriefingDate.Desc()).
+		Limit(limit)
+}
+
 func (r *repository) MarkRead(
 	ctx context.Context,
 	req briefingports.GetBriefingByIDRequest,
 	readAt int64,
 ) (*briefing.Briefing, error) {
-	return r.stamp(ctx, req, briefingcol.BriefingColumns.ReadAt, readAt)
+	return r.stamp(ctx, req, briefingdb.Briefings.ReadAt, readAt)
 }
 
 func (r *repository) MarkEmailed(
@@ -204,12 +192,9 @@ func (r *repository) MarkEmailed(
 	req briefingports.GetBriefingByIDRequest,
 	emailedAt int64,
 ) (*briefing.Briefing, error) {
-	return r.stamp(ctx, req, briefingcol.BriefingColumns.EmailedAt, emailedAt)
+	return r.stamp(ctx, req, briefingdb.Briefings.EmailedAt, emailedAt)
 }
 
-// DeleteBefore removes briefings for days before a cut-off. The day is a
-// string, so one comparison serves every timezone without converting
-// anything.
 func (r *repository) DeleteBefore(
 	ctx context.Context,
 	req briefingports.DeleteBriefingsBeforeRequest,
@@ -221,71 +206,53 @@ func (r *repository) DeleteBefore(
 			limit = maxDeleteBatch
 		}
 
-		res, err := buildDeleteBefore(r.db.DBForContext(ctx), req.BeforeDate, limit).Exec(ctx)
+		b := briefingdb.Briefings
+		n, err := b.AllTenants().
+			Where(staleBatch(req.BeforeDate, limit)).
+			Delete(ctx, r.db.Keel(ctx))
 		if err != nil {
 			return 0, fmt.Errorf("delete briefings: %w", err)
 		}
-		affected, _ := res.RowsAffected()
 
-		return int(affected), nil
+		return int(n), nil
 	})
 }
 
-func buildDeleteBefore(db bun.IDB, beforeDate string, limit int) *bun.DeleteQuery {
-	cols := briefingcol.BriefingColumns
-	return db.NewDelete().
-		Model((*briefing.Briefing)(nil)).
-		Where(
-			cols.ID.Qualified()+" IN (SELECT "+cols.ID.Qualified()+" FROM "+
-				briefingcol.BriefingTable.Name+" AS "+briefingcol.BriefingTable.Alias+
-				" WHERE "+cols.BriefingDate.Qualified()+" < ? ORDER BY "+
-				cols.BriefingDate.Qualified()+" LIMIT ?)",
-			beforeDate,
-			limit,
-		)
+func staleBatch(beforeDate string, limit int) keel.Pred {
+	b := briefingdb.Briefings
+	stale := b.As("stale")
+	return b.ID.InQuery(stale.AllTenants().
+		Pick(stale.ID).
+		Where(stale.BriefingDate.Lt(beforeDate)).
+		Order(stale.BriefingDate.Asc()).
+		Limit(limit))
 }
 
 func (r *repository) stamp(
 	ctx context.Context,
 	req briefingports.GetBriefingByIDRequest,
-	column buncolgen.Column,
+	column keel.Int64Col,
 	at int64,
 ) (*briefing.Briefing, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*briefing.Briefing, error) {
-		cols := briefingcol.BriefingColumns
-		entity := new(briefing.Briefing)
-
-		res, err := r.db.DBForContext(ctx).
-			NewUpdate().
-			Model(entity).
-			Set(column.Set(), at).
-			Set(cols.Version.SetExpr("{} + 1")).
-			Set(cols.UpdatedAt.Set(), timeutils.NowUnix()).
-			WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-				return briefingcol.BriefingScopeTenantUpdate(uq, req.TenantInfo).
-					Where(cols.ID.Eq(), req.ID)
-			}).
-			Returning("*").
-			Exec(ctx)
+		b := briefingdb.Briefings
+		rows, err := b.Where(b.ID.Eq(req.ID)).UpdateReturning(ctx, r.db.Keel(ctx), column.To(at))
 		if err != nil {
 			return nil, fmt.Errorf("stamp briefing: %w", err)
 		}
-		if err = dberror.CheckRowsAffected(res, "Briefing", req.ID.String()); err != nil {
+		if err = dberror.CheckAffected(int64(len(rows)), "Briefing", req.ID.String()); err != nil {
 			return nil, err
 		}
 
-		return entity, nil
+		return rows[0], nil
 	})
 }
 
-// scopeReader narrows to the shared briefing or to one person's. A nil
-// reader must match IS NULL rather than an empty string, so the two never
-// read each other's row.
-func scopeReader(q *bun.SelectQuery, userID *pulid.ID) *bun.SelectQuery {
-	cols := briefingcol.BriefingColumns
+func readerPred(userID *pulid.ID) keel.Pred {
+	b := briefingdb.Briefings
 	if userID == nil || userID.IsNil() {
-		return q.Where(cols.UserID.IsNull())
+		return b.UserID.IsNull()
 	}
 
-	return q.Where(cols.UserID.Eq(), *userID)
+	return b.UserID.Eq(*userID)
 }

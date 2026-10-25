@@ -370,7 +370,7 @@ export type AiRetrievalUnavailableReason =
   | 'ProviderFailed'
   /** The provider did not embed a query within its time budget. */
   | 'QueryTimeout'
-  /** pgvector is installed but the retrieval tables are not; run trenova db enable-vector. */
+  /** pgvector is installed but the retrieval tables are not; run trenova-db enable-vector. */
   | 'SchemaMissing'
   /** pgvector is older than 0.8. */
   | 'TooOld';
@@ -6511,70 +6511,20 @@ export type RenewAccountingCertificateInput = {
   connectionId: string | number;
 };
 
-export type ReportBandInput = {
-  edges?: Array<number> | null | undefined;
-  width?: number | null | undefined;
-};
-
-export type ReportChartGoalInput = {
-  columnId?: string | null | undefined;
-  label?: string | null | undefined;
-  value?: number | null | undefined;
-};
-
-export type ReportChartInput = {
-  compareId?: string | null | undefined;
-  curved?: boolean | null | undefined;
-  goal?: ReportChartGoalInput | null | undefined;
-  hideLegend?: boolean | null | undefined;
-  id: string;
-  labelColumnId?: string | null | undefined;
-  latColumnId?: string | null | undefined;
-  limit?: number | null | undefined;
-  lngColumnId?: string | null | undefined;
-  seriesIds?: Array<string> | null | undefined;
-  showValues?: boolean | null | undefined;
-  stacked?: boolean | null | undefined;
-  title?: string | null | undefined;
-  type: string;
-  xColumnId?: string | null | undefined;
-};
-
-export type ReportColumnInput = {
-  agg?: string | null | undefined;
-  band?: ReportBandInput | null | undefined;
-  bucket?: string | null | undefined;
-  computed?: ReportComputedInput | null | undefined;
-  display?: ReportDisplayInput | null | undefined;
-  filter?: ReportFilterGroupInput | null | undefined;
-  id: string;
-  kind: string;
-  label?: string | null | undefined;
-  ref?: ReportFieldRefInput | null | undefined;
-  transform?: ReportTransformInput | null | undefined;
-};
-
-export type ReportComputedInput = {
-  format?: string | null | undefined;
-  leftId?: string | null | undefined;
-  leftValue?: number | null | undefined;
-  op: string;
-  rightId?: string | null | undefined;
-  rightValue?: number | null | undefined;
-};
-
+/** A dashboard filter applied to every tile whose report starts from its entity. */
 export type ReportDashboardFilterInput = {
   default?: unknown;
   entity: string;
+  /** The filtered field's path from the entity. */
+  field: string;
   id: string;
   label?: string | null | undefined;
-  operator: string;
-  ref: ReportFieldRefInput;
+  op: string;
 };
 
 export type ReportDashboardLayoutInput = {
   filters?: Array<ReportDashboardFilterInput> | null | undefined;
-  parameters?: Array<ReportParameterDefInput> | null | undefined;
+  parameters?: Array<ReportParameterInput> | null | undefined;
   tiles: Array<ReportDashboardTileInput>;
 };
 
@@ -6595,36 +6545,15 @@ export type ReportDashboardTileInput = {
   y: number;
 };
 
-export type ReportDisplayInput = {
-  boolStyle?: string | null | undefined;
-  currency?: string | null | undefined;
-  dateStyle?: string | null | undefined;
-  decimals?: number | null | undefined;
-  durationStyle?: string | null | undefined;
-  durationUnit?: string | null | undefined;
-  grouping?: boolean | null | undefined;
-  negative?: string | null | undefined;
-  notation?: string | null | undefined;
-  nullText?: string | null | undefined;
-  prefix?: string | null | undefined;
-  rules?: Array<ReportDisplayRuleInput> | null | undefined;
-  style?: string | null | undefined;
-  suffix?: string | null | undefined;
-};
-
-export type ReportDisplayRuleInput = {
-  op: string;
-  tone: string;
-  upper?: number | null | undefined;
-  value: number;
-};
-
 export type ReportDrillInput = {
   columnId?: string | null | undefined;
-  definition: ReportIrInput;
+  /** A report definition in keel analytics IR version 2. */
+  definition: unknown;
   dimensions: Array<ReportDrillValueInput>;
   limit?: number | null | undefined;
   params?: unknown;
+  /** The pivot values of the cell drilled into, when the report pivots. */
+  pivotValues?: Array<string> | null | undefined;
 };
 
 export type ReportDrillValueInput = {
@@ -6634,7 +6563,7 @@ export type ReportDrillValueInput = {
 
 /**
  * Whether a caller may use a catalog field or edge in a report, decided by the
- * rule the report compiler applies, so a field marked Available compiles and
+ * policy the report engine applies, so a field marked Available compiles and
  * any other is refused.
  */
 export type ReportFieldAccess =
@@ -6650,56 +6579,19 @@ export type ReportFieldAccess =
   /** It is ranked above the caller's sensitivity ceiling. */
   | 'WithheldByCeiling';
 
-export type ReportFieldRefInput = {
-  field: string;
-  path?: Array<string> | null | undefined;
-};
-
-export type ReportFilterGroupInput = {
-  filters?: Array<ReportFilterInput> | null | undefined;
-  groups?: Array<ReportFilterGroupInput> | null | undefined;
-  op: string;
-};
-
-export type ReportFilterInput = {
-  agg?: string | null | undefined;
-  operator: string;
-  param?: string | null | undefined;
-  ref: ReportFieldRefInput;
-  transform?: ReportTransformInput | null | undefined;
-  value?: unknown;
-};
-
-export type ReportIrInput = {
-  charts?: Array<ReportChartInput> | null | undefined;
-  columns: Array<ReportColumnInput>;
-  entity: string;
-  filters?: ReportFilterGroupInput | null | undefined;
-  having?: ReportFilterGroupInput | null | undefined;
-  limit?: number | null | undefined;
-  parameters?: Array<ReportParameterDefInput> | null | undefined;
-  pivot?: ReportPivotInput | null | undefined;
-  sort?: Array<ReportSortInput> | null | undefined;
-  totals?: boolean | null | undefined;
-};
-
-export type ReportParameterDefInput = {
-  allowedValues?: Array<string> | null | undefined;
+/** A parameter a dashboard asks for once and binds to its tiles' report parameters. */
+export type ReportParameterInput = {
+  /** The values the parameter may take, when it is limited to a list. */
+  allowed?: Array<unknown> | null | undefined;
   default?: unknown;
+  /** The entity whose records the parameter picks, for a record picker. */
+  entity?: string | null | undefined;
   label?: string | null | undefined;
   multi?: boolean | null | undefined;
   name: string;
-  refEntity?: string | null | undefined;
   required?: boolean | null | undefined;
+  /** The value type: string, int, decimal, float, bool, date, timestamp, epoch or enum. */
   type: string;
-};
-
-export type ReportPivotInput = {
-  includeOther?: boolean | null | undefined;
-  labels?: Array<string> | null | undefined;
-  measureIds: Array<string>;
-  ref: ReportFieldRefInput;
-  values: Array<string>;
 };
 
 export type ReportRunsFilterInput = {
@@ -6713,17 +6605,6 @@ export type ReportScheduleAlertInput = {
   suppressWhileFiring?: boolean | null | undefined;
   threshold: number;
   value?: number | null | undefined;
-};
-
-export type ReportSortInput = {
-  columnId: string;
-  direction: string;
-};
-
-export type ReportTransformInput = {
-  factor?: number | null | undefined;
-  op: string;
-  precision?: number | null | undefined;
 };
 
 export type RequestAiAuditExportInput = {
@@ -7039,7 +6920,8 @@ export type SaveReportDashboardInput = {
 export type SaveReportDefinitionInput = {
   category?: string | null | undefined;
   defaultFormat?: string | null | undefined;
-  definition: ReportIrInput;
+  /** A report definition in keel analytics IR version 2. */
+  definition: unknown;
   description?: string | null | undefined;
   name: string;
   status?: string | null | undefined;
@@ -7114,6 +6996,7 @@ export type SelectOptionResource =
   | 'IFTA_FUEL_TYPE'
   | 'IFTA_JURISDICTION'
   | 'JOB_POSITION'
+  | 'JOURNAL_ENTRY'
   | 'LOCATION'
   | 'LOCATION_CATEGORY'
   | 'ORDER'
@@ -8715,7 +8598,8 @@ export type UpdateReportDashboardInput = {
 export type UpdateReportDefinitionInput = {
   category?: string | null | undefined;
   defaultFormat?: string | null | undefined;
-  definition: ReportIrInput;
+  /** A report definition in keel analytics IR version 2. */
+  definition: unknown;
   description?: string | null | undefined;
   id: string | number;
   name: string;
@@ -17257,7 +17141,7 @@ export type CannedReportsQuery = { cannedReports: Array<{ key: string, version: 
 export type ReportCatalogQueryVariables = Exact<{ [key: string]: never; }>;
 
 
-export type ReportCatalogQuery = { reportCatalog: { version: string, entities: Array<{ key: string, resource: string, label: string, pluralLabel: string, description: string | null, category: string, ownScopeSupported: boolean, readable: boolean, exportable: boolean, fields: Array<{ key: string, label: string, description: string | null, type: string, format: string | null, nullable: boolean, aggregations: Array<string>, filterable: boolean, groupable: boolean, access: ReportFieldAccess, inReferenceView: boolean, sensitivity: string, enumValues: Array<{ value: string, label: string }>, protection: { group: ProtectedFieldGroup, held: boolean } | null }>, edges: Array<{ name: string, label: string, target: string, cardinality: string, traversable: boolean, access: ReportFieldAccess, inReferenceView: boolean, needsReadOf: { resource: string, label: string } | null }> }> } };
+export type ReportCatalogQuery = { reportCatalog: { version: string, rules: unknown, entities: Array<{ key: string, resource: string, label: string, pluralLabel: string, description: string | null, category: string, ownScopeSupported: boolean, readable: boolean, exportable: boolean, fields: Array<{ key: string, label: string, description: string | null, type: string, format: string | null, measure: boolean, aggregations: Array<string>, operators: Array<string>, filterable: boolean, groupable: boolean, access: ReportFieldAccess, inReferenceView: boolean, sensitivity: string, enumValues: Array<{ value: string, label: string }>, protection: { group: ProtectedFieldGroup, held: boolean } | null }>, edges: Array<{ name: string, label: string, description: string | null, target: string, toMany: boolean, pick: boolean, access: ReportFieldAccess, inReferenceView: boolean, needsReadOf: { resource: string, label: string } | null }> }> } };
 
 export type ReportDashboardFieldsFragment = { id: string, name: string, description: string, category: string, tags: Array<string>, ownerId: string, visibility: string, layout: unknown, version: number, createdAt: number, updatedAt: number } & { ' $fragmentName'?: 'ReportDashboardFieldsFragment' };
 
@@ -17380,12 +17264,14 @@ export type DeskReportSchedulesQueryVariables = Exact<{
 
 export type DeskReportSchedulesQuery = { reportSchedules: Array<{ id: string, definitionId: string, cronExpression: string, timezone: string, formats: Array<string>, emailRecipients: Array<string>, enabled: boolean, mine: boolean, nextRunAt: number | null, consecutiveFailures: number }> };
 
-export type ReportPreviewFieldsFragment = { rows: unknown, totals: unknown, truncated: boolean, timezone: string, columns: Array<{ id: string, label: string, type: string, format: string | null, display: { style: string, decimals: number, grouping: boolean, currency: string, negative: string, notation: string, prefix: string, suffix: string, dateStyle: string, boolStyle: string, durationUnit: string, durationStyle: string, nullText: string, rules: Array<{ op: string, value: number, upper: number, tone: string }>, band: { width: number, edges: Array<number> } | null } }> } & { ' $fragmentName'?: 'ReportPreviewFieldsFragment' };
+export type ReportPreviewFieldsFragment = { rows: unknown, levels: Array<number>, totals: unknown, truncated: boolean, cursor: string | null, timezone: string, rollup: string | null, cached: boolean, columns: Array<{ id: string, label: string, type: string, sensitivity: string | null, display: { style: string, decimals: number, grouping: boolean, currency: string, negative: string, notation: string, prefix: string, suffix: string, dateStyle: string, boolStyle: string, durationUnit: string, durationStyle: string, nullText: string, labels: unknown, rules: Array<{ op: string, value: number, upper: number, tone: string }>, band: { width: number, edges: Array<number> } | null } }> } & { ' $fragmentName'?: 'ReportPreviewFieldsFragment' };
 
 export type PreviewReportQueryVariables = Exact<{
-  definition: ReportIrInput;
+  definition: unknown;
   params?: unknown;
   supersede?: boolean | null | undefined;
+  cursor?: string | null | undefined;
+  pageSize?: number | null | undefined;
 }>;
 
 

@@ -37,7 +37,7 @@ func newProfileFixture(t *testing.T) (context.Context, profileFixture) {
 
 	params := Params{DB: postgres.NewTestConnection(db), Logger: zap.NewNop()}
 
-	return ctx, profileFixture{
+	return data.Ctx(ctx), profileFixture{
 		profiles: NewProfiles(params),
 		guidance: NewGuidance(params),
 		facts:    NewFacts(params),

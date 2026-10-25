@@ -2,26 +2,23 @@ package aiauditrepository
 
 import (
 	"context"
-	"database/sql"
 	"errors"
 	"fmt"
 
-	"github.com/emoss08/trenova/pkg/buncolgen/aiauditcol"
-
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiaudit"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aiaudit/aiauditdb"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aiauditports"
-	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/pagination"
-	"github.com/emoss08/trenova/shared/stringutils"
-	"github.com/uptrace/bun"
 	"go.uber.org/zap"
 )
 
 const (
 	pruneSetting      = "trenova.ai_audit_prune"
 	defaultPruneBatch = 5000
+	admitPruneSQL     = "SELECT set_config($1, 'on', true)"
 )
 
 // GetChainHead reads a tenant's chain head, or an empty one for a tenant
@@ -31,12 +28,8 @@ func (r *repository) GetChainHead(
 	tenantInfo pagination.TenantInfo,
 ) (*aiaudit.AIAuditChainHead, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*aiaudit.AIAuditChainHead, error) {
-		head := new(aiaudit.AIAuditChainHead)
-		err := r.db.DBForContext(ctx).NewSelect().
-			Model(head).
-			Apply(aiauditcol.AIAuditChainHeadApplyTenant(tenantInfo)).
-			Scan(ctx)
-		if errors.Is(err, sql.ErrNoRows) {
+		head, err := aiauditdb.AIAuditChainHeads.Query().One(ctx, r.db.Keel(ctx))
+		if errors.Is(err, keel.ErrNotFound) {
 			return &aiaudit.AIAuditChainHead{
 				OrganizationID: tenantInfo.OrgID,
 				BusinessUnitID: tenantInfo.BuID,
@@ -53,14 +46,12 @@ func (r *repository) GetChainHead(
 func (r *repository) ListChainHeads(ctx context.Context) ([]*aiaudit.AIAuditChainHead, error) {
 	ctx = dbscope.WithSystem(ctx, "list every organization's AI audit chain head")
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*aiaudit.AIAuditChainHead, error) {
-		cols := aiauditcol.AIAuditChainHeadColumns
-		heads := make([]*aiaudit.AIAuditChainHead, 0, 16)
-
-		if err := r.db.DBForContext(ctx).NewSelect().
-			Model(&heads).
-			Where(cols.LastSeq.Gt(), 0).
-			Order(cols.OrganizationID.OrderAsc(), cols.BusinessUnitID.OrderAsc()).
-			Scan(ctx); err != nil {
+		h := aiauditdb.AIAuditChainHeads
+		heads, err := h.AllTenants().
+			Where(h.LastSeq.Gt(0)).
+			Order(h.OrganizationID.Asc(), h.BusinessUnitID.Asc()).
+			All(ctx, r.db.Keel(ctx))
+		if err != nil {
 			return nil, fmt.Errorf("list AI audit chain heads: %w", err)
 		}
 
@@ -76,52 +67,46 @@ func (r *repository) RecordVerification(
 	req *aiauditports.RecordAIAuditVerificationRequest,
 ) (*aiaudit.AIAuditChainHead, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*aiaudit.AIAuditChainHead, error) {
-		cols := aiauditcol.AIAuditChainHeadColumns
-		head := new(aiaudit.AIAuditChainHead)
-
-		q := r.db.DBForContext(ctx).NewUpdate().
-			Model(head).
-			Set(cols.LastVerificationStatus.Set(), req.Status).
-			Set(cols.LastVerifiedAt.Set(), req.At).
-			Set(cols.LastVerificationDetail.Set(), stringutils.Ptr(req.Detail)).
-			Set(cols.UpdatedAt.Set(), req.At).
-			WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-				return aiauditcol.AIAuditChainHeadScopeTenantUpdate(uq, req.TenantInfo)
-			}).
-			Returning("*")
+		h := aiauditdb.AIAuditChainHeads
+		sets := []keel.Assignment{
+			h.LastVerificationStatus.To(req.Status),
+			h.LastVerifiedAt.To(req.At),
+			h.LastVerificationDetail.To(req.Detail),
+			h.UpdatedAt.To(req.At),
+			h.Version.ToExpr(h.Version),
+		}
 		if req.Status == aiaudit.VerificationVerified {
-			q = q.Set(cols.LastVerifiedSeq.Set(), req.VerifiedSeq).
-				Set(cols.LastVerificationFailedSeq.SetNull())
+			sets = append(sets,
+				h.LastVerifiedSeq.To(req.VerifiedSeq),
+				h.LastVerificationFailedSeq.ToNull(),
+			)
+		} else if req.FailedSeq != nil {
+			sets = append(sets, h.LastVerificationFailedSeq.To(*req.FailedSeq))
 		} else {
-			q = q.Set(cols.LastVerificationFailedSeq.Set(), req.FailedSeq)
+			sets = append(sets, h.LastVerificationFailedSeq.ToNull())
 		}
 
-		if _, err := q.Exec(ctx); err != nil && !errors.Is(err, sql.ErrNoRows) {
+		heads, err := h.Query().UpdateReturning(ctx, r.db.Keel(ctx), sets...)
+		if err != nil {
 			return nil, fmt.Errorf("record AI audit verification: %w", err)
 		}
-		if head.OrganizationID.IsNil() {
+		if len(heads) == 0 {
 			return r.GetChainHead(ctx, req.TenantInfo)
 		}
 
-		return head, nil
+		return heads[0], nil
 	})
 }
 
 func (r *repository) GetSealEndingAt(
 	ctx context.Context,
-	tenantInfo pagination.TenantInfo,
+	_ pagination.TenantInfo,
 	toSeq int64,
 ) (*aiaudit.AIAuditSeal, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*aiaudit.AIAuditSeal, error) {
-		cols := aiauditcol.AIAuditSealColumns
-		seal := new(aiaudit.AIAuditSeal)
-
-		err := r.db.DBForContext(ctx).NewSelect().
-			Model(seal).
-			Apply(aiauditcol.AIAuditSealApplyTenant(tenantInfo)).
-			Where(cols.ToSeq.Eq(), toSeq).
-			Scan(ctx)
-		if errors.Is(err, sql.ErrNoRows) {
+		s := aiauditdb.AIAuditSeals
+		seal, err := s.Where(s.ToSeq.Eq(toSeq)).One(ctx, r.db.Keel(ctx))
+		if errors.Is(err, keel.ErrNotFound) {
 			return nil, nil //nolint:nilnil // no seal ends there
 		}
 		if err != nil {
@@ -137,16 +122,12 @@ func (r *repository) ListSeals(
 	req aiauditports.ListAIAuditSealsRequest,
 ) ([]*aiaudit.AIAuditSeal, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*aiaudit.AIAuditSeal, error) {
-		cols := aiauditcol.AIAuditSealColumns
-		seals := make([]*aiaudit.AIAuditSeal, 0, req.Limit)
-
-		if err := r.db.DBForContext(ctx).NewSelect().
-			Model(&seals).
-			Apply(aiauditcol.AIAuditSealApplyTenant(req.TenantInfo)).
-			Where(cols.ToSeq.Gte(), req.FromSeq).
-			Order(cols.ToSeq.OrderAsc()).
-			Limit(int64(req.Limit)).
-			Scan(ctx); err != nil {
+		s := aiauditdb.AIAuditSeals
+		seals, err := s.Where(s.ToSeq.Gte(req.FromSeq)).
+			Order(s.ToSeq.Asc()).
+			Limit(req.Limit).
+			List(ctx, r.db.Keel(ctx))
+		if err != nil {
 			return nil, fmt.Errorf("list AI audit seals: %w", err)
 		}
 
@@ -167,17 +148,16 @@ func (r *repository) LastSealBefore(
 		"read an organization's last AI audit seal during the retention sweep",
 	)
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*aiaudit.AIAuditSeal, error) {
-		cols := aiauditcol.AIAuditSealColumns
-		seal := new(aiaudit.AIAuditSeal)
-
-		err := r.db.DBForContext(ctx).NewSelect().
-			Model(seal).
-			Apply(aiauditcol.AIAuditSealApplyTenant(tenantInfo)).
-			Where(cols.SealedAt.Lt(), sealedBefore).
-			Order(cols.ToSeq.OrderDesc()).
-			Limit(1).
-			Scan(ctx)
-		if errors.Is(err, sql.ErrNoRows) {
+		s := aiauditdb.AIAuditSeals
+		seal, err := s.AllTenants().
+			Where(
+				s.OrganizationID.Eq(tenantInfo.OrgID),
+				s.BusinessUnitID.Eq(tenantInfo.BuID),
+				s.SealedAt.Lt(sealedBefore),
+			).
+			Order(s.ToSeq.Desc()).
+			First(ctx, r.db.Keel(ctx))
+		if errors.Is(err, keel.ErrNotFound) {
 			return nil, nil //nolint:nilnil // nothing is old enough
 		}
 		if err != nil {
@@ -198,71 +178,68 @@ func (r *repository) Prune(
 		ctx,
 		"prune AI audit events past retention behind the projector horizon",
 	)
-	return dbtx.Write(ctx, r.db, func(ctx context.Context) (int, error) {
-		batch := req.BatchSize
-		if batch <= 0 {
-			batch = defaultPruneBatch
-		}
-		cols := aiauditcol.AIAuditEventColumns
+	batch := req.BatchSize
+	if batch <= 0 {
+		batch = defaultPruneBatch
+	}
 
-		total := 0
-		for {
-			deleted := 0
-			err := r.db.WithTx(
-				ctx,
-				kernelports.TxOptions{},
-				func(txCtx context.Context, tx bun.Tx) error {
-					if _, err := tx.NewSelect().
-						ColumnExpr("set_config(?, 'on', true)", pruneSetting).
-						Exec(txCtx); err != nil {
-						return fmt.Errorf("admit the AI audit prune: %w", err)
-					}
-
-					doomed := tx.NewSelect().
-						Model((*aiaudit.AIAuditEvent)(nil)).
-						Column(cols.ID.String()).
-						Apply(aiauditcol.AIAuditEventApplyTenant(req.TenantInfo)).
-						Where(cols.Seq.Lte(), req.ThroughSeq).
-						Order(cols.Seq.OrderAsc()).
-						Limit(int64(batch))
-
-					res, err := tx.NewDelete().
-						Model((*aiaudit.AIAuditEvent)(nil)).
-						WhereGroup(" AND ", func(dq *bun.DeleteQuery) *bun.DeleteQuery {
-							return aiauditcol.AIAuditEventScopeTenantDelete(dq, req.TenantInfo).
-								Where(cols.ID.In(), doomed)
-						}).
-						Exec(txCtx)
-					if err != nil {
-						return fmt.Errorf("prune AI audit events: %w", err)
-					}
-					affected, err := res.RowsAffected()
-					if err != nil {
-						return fmt.Errorf("prune AI audit events: %w", err)
-					}
-					deleted = int(affected)
-
-					return nil
-				},
+	total := 0
+	for {
+		deleted, err := dbtx.Write(ctx, r.db, func(ctx context.Context) (int, error) {
+			return r.pruneBatch(ctx, req.TenantInfo, req.ThroughSeq, batch)
+		})
+		if err != nil {
+			r.l.Error("failed to prune AI audit events",
+				zap.String("organizationId", req.TenantInfo.OrgID.String()),
+				zap.Error(err),
 			)
-			if err != nil {
-				r.l.Error("failed to prune AI audit events",
-					zap.String("organizationId", req.TenantInfo.OrgID.String()),
-					zap.Error(err),
-				)
 
-				return total, err
-			}
-
-			total += deleted
-			if deleted < batch {
-				return total, nil
-			}
-			if err = ctx.Err(); err != nil {
-				return total, err
-			}
+			return total, err
 		}
-	})
+
+		total += deleted
+		if deleted < batch {
+			return total, nil
+		}
+		if err = ctx.Err(); err != nil {
+			return total, err
+		}
+	}
+}
+
+func (r *repository) pruneBatch(
+	ctx context.Context,
+	tenantInfo pagination.TenantInfo,
+	throughSeq int64,
+	batch int,
+) (int, error) {
+	db := r.db.Keel(ctx)
+	if _, err := keel.Exec(ctx, db, admitPruneSQL, pruneSetting); err != nil {
+		return 0, fmt.Errorf("admit the AI audit prune: %w", err)
+	}
+
+	e := aiauditdb.AIAuditEvents
+	doomed := aiauditdb.AIAuditEvents.As("doomed")
+	deleted, err := e.AllTenants().
+		Where(
+			e.OrganizationID.Eq(tenantInfo.OrgID),
+			e.BusinessUnitID.Eq(tenantInfo.BuID),
+			e.ID.InQuery(doomed.AllTenants().
+				Where(
+					doomed.OrganizationID.Eq(tenantInfo.OrgID),
+					doomed.BusinessUnitID.Eq(tenantInfo.BuID),
+					doomed.Seq.Lte(throughSeq),
+				).
+				Order(doomed.Seq.Asc()).
+				Limit(batch).
+				Pick(doomed.ID)),
+		).
+		Delete(ctx, db)
+	if err != nil {
+		return 0, fmt.Errorf("prune AI audit events: %w", err)
+	}
+
+	return int(deleted), nil
 }
 
 func (r *repository) GetWatermarks(
@@ -273,8 +250,8 @@ func (r *repository) GetWatermarks(
 		ctx,
 		r.db,
 		func(ctx context.Context) (map[aiaudit.Source]*aiaudit.AIAuditProjectorState, error) {
-			states := make([]*aiaudit.AIAuditProjectorState, 0, len(aiaudit.AllSources()))
-			if err := r.db.DBForContext(ctx).NewSelect().Model(&states).Scan(ctx); err != nil {
+			states, err := aiauditdb.AIAuditProjectorStates.Query().All(ctx, r.db.Keel(ctx))
+			if err != nil {
 				return nil, fmt.Errorf("read AI audit projector watermarks: %w", err)
 			}
 
@@ -294,15 +271,13 @@ func (r *repository) SaveWatermark(
 ) error {
 	ctx = dbscope.WithSystem(ctx, "advance the AI audit projector's watermark")
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
-		cols := aiauditcol.AIAuditProjectorStateColumns
-
-		if _, err := r.db.DBForContext(ctx).NewInsert().
-			Model(state).
-			On("CONFLICT (" + cols.Source.Bare() + ") DO UPDATE").
-			Set(cols.WatermarkTS.SetExcluded()).
-			Set(cols.WatermarkID.SetExcluded()).
-			Set(cols.UpdatedAt.SetExcluded()).
-			Exec(ctx); err != nil {
+		p := aiauditdb.AIAuditProjectorStates
+		if _, err := p.Upsert(
+			ctx,
+			r.db.Keel(ctx),
+			[]*aiaudit.AIAuditProjectorState{state},
+			keel.OnConflict(p.Source).Update(p.WatermarkTS, p.WatermarkID, p.UpdatedAt),
+		); err != nil {
 			return fmt.Errorf("save AI audit projector watermark: %w", err)
 		}
 

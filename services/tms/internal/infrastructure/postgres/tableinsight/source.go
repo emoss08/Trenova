@@ -1,32 +1,66 @@
 package tableinsight
 
 import (
+	"cmp"
 	"context"
+	"slices"
 
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
-	"github.com/emoss08/trenova/pkg/buncolgen"
-	"github.com/emoss08/trenova/pkg/dbhelper"
-	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/errortypes"
-	"github.com/emoss08/trenova/pkg/querybuilder"
-	"github.com/uptrace/bun"
+	"github.com/emoss08/trenova/pkg/listquery"
 	"go.uber.org/fx"
 )
 
-type BaseQuery func(
-	ctx context.Context,
-	dba bun.IDB,
-	scope *permissionports.TableInsightScope,
-) (*bun.SelectQuery, error)
+type BaseQuery func(ctx context.Context, scope *permissionports.TableInsightScope) (Base, error)
+
+type Column struct {
+	Col       keel.Col
+	Facetable bool
+	Summable  bool
+	Timeline  bool
+}
+
+type Columns map[string]Column
+
+func Facet(col keel.Col) Column {
+	return Column{Col: col, Facetable: true}
+}
+
+func Sum(col keel.Col) Column {
+	return Column{Col: col, Summable: true}
+}
+
+func Timeline(col keel.Col) Column {
+	return Column{Col: col, Timeline: true}
+}
+
+func (c Columns) Fields() []permissionports.TableInsightField {
+	fields := make([]permissionports.TableInsightField, 0, len(c))
+	for name := range c {
+		column := c[name]
+		fields = append(fields, permissionports.TableInsightField{
+			Name:      name,
+			Facetable: column.Facetable,
+			Summable:  column.Summable,
+			Timeline:  column.Timeline,
+		})
+	}
+	slices.SortFunc(fields, func(a, b permissionports.TableInsightField) int {
+		return cmp.Compare(a.Name, b.Name)
+	})
+
+	return fields
+}
 
 type Config struct {
 	Resource permission.Resource
 	DB       *postgres.Connection
-	IDColumn buncolgen.Column
-	Columns  dbhelper.InsightColumns
+	IDColumn keel.Col
+	Columns  Columns
 	Base     BaseQuery
 }
 
@@ -44,12 +78,11 @@ func New(cfg *Config) Result {
 	return Result{Source: &source{cfg: cfg}}
 }
 
-func Filtered[T domaintypes.PostgresSearchable](model T, alias string) BaseQuery {
+func Filtered[T any](table keel.Handle[T]) BaseQuery {
 	return func(
 		_ context.Context,
-		dba bun.IDB,
 		scope *permissionports.TableInsightScope,
-	) (*bun.SelectQuery, error) {
+	) (Base, error) {
 		if scope.Filter == nil {
 			return nil, errortypes.NewValidationError(
 				"filter",
@@ -57,11 +90,8 @@ func Filtered[T domaintypes.PostgresSearchable](model T, alias string) BaseQuery
 				"Counts and totals need the table's filters",
 			)
 		}
-		return dba.NewSelect().
-			Model(model).
-			Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return querybuilder.ApplyFiltersWithoutSort(sq, alias, scope.Filter, model)
-			}), nil
+
+		return Typed(listquery.Filter(table.Query(), scope.Filter)), nil
 	}
 }
 
@@ -81,11 +111,11 @@ func (s *source) Facet(
 		ctx,
 		s.cfg.DB,
 		func(ctx context.Context) (*permissionports.TableFacetResult, error) {
-			base, err := s.cfg.Base(ctx, s.cfg.DB.DBForContext(ctx), &req.Scope)
+			base, err := s.cfg.Base(ctx, &req.Scope)
 			if err != nil {
 				return nil, err
 			}
-			return dbhelper.Facet(ctx, base, s.cfg.Columns, req)
+			return base.facet(ctx, s.cfg.DB.Keel(ctx), s.cfg.Columns, req)
 		},
 	)
 }
@@ -98,11 +128,11 @@ func (s *source) Aggregate(
 		ctx,
 		s.cfg.DB,
 		func(ctx context.Context) (*permissionports.TableAggregateResult, error) {
-			base, err := s.cfg.Base(ctx, s.cfg.DB.DBForContext(ctx), &req.Scope)
+			base, err := s.cfg.Base(ctx, &req.Scope)
 			if err != nil {
 				return nil, err
 			}
-			return dbhelper.Aggregate(ctx, base, s.cfg.Columns, req)
+			return base.aggregate(ctx, s.cfg.DB.Keel(ctx), s.cfg.Columns, req)
 		},
 	)
 }
@@ -115,11 +145,11 @@ func (s *source) MatchingIDs(
 		ctx,
 		s.cfg.DB,
 		func(ctx context.Context) (*permissionports.TableMatchResult, error) {
-			base, err := s.cfg.Base(ctx, s.cfg.DB.DBForContext(ctx), &req.Scope)
+			base, err := s.cfg.Base(ctx, &req.Scope)
 			if err != nil {
 				return nil, err
 			}
-			return dbhelper.MatchingIDs(ctx, base, &s.cfg.IDColumn, req.Limit)
+			return base.matchingIDs(ctx, s.cfg.DB.Keel(ctx), s.cfg.IDColumn, req.Limit)
 		},
 	)
 }
@@ -132,11 +162,11 @@ func (s *source) Series(
 		ctx,
 		s.cfg.DB,
 		func(ctx context.Context) (*permissionports.TableSeriesResult, error) {
-			base, err := s.cfg.Base(ctx, s.cfg.DB.DBForContext(ctx), &req.Scope)
+			base, err := s.cfg.Base(ctx, &req.Scope)
 			if err != nil {
 				return nil, err
 			}
-			return dbhelper.Series(ctx, base, s.cfg.Columns, req)
+			return base.series(ctx, s.cfg.DB.Keel(ctx), s.cfg.Columns, req)
 		},
 	)
 }

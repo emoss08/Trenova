@@ -5,36 +5,47 @@ import (
 	"slices"
 	"strings"
 
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/edi/edidb"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
-	"github.com/emoss08/trenova/pkg/buncolgen"
-	"github.com/emoss08/trenova/pkg/buncolgen/accessorialchargecol"
-	"github.com/emoss08/trenova/pkg/buncolgen/commoditycol"
-	"github.com/emoss08/trenova/pkg/buncolgen/customercol"
-	"github.com/emoss08/trenova/pkg/buncolgen/edicol"
-	"github.com/emoss08/trenova/pkg/buncolgen/formulatemplatecol"
-	"github.com/emoss08/trenova/pkg/buncolgen/locationcol"
-	"github.com/emoss08/trenova/pkg/buncolgen/servicefailurecol"
-	"github.com/emoss08/trenova/pkg/buncolgen/servicetypecol"
-	"github.com/emoss08/trenova/pkg/buncolgen/shipmenttypecol"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/servicefailure/servicefailuredb"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/customer/customerdb"
+	"github.com/emoss08/trenova/internal/modules/places/domain/location/locationdb"
+	"github.com/emoss08/trenova/internal/modules/rating/domain/formulatemplate/formulatemplatedb"
+	"github.com/emoss08/trenova/internal/modules/reference/domain/accessorialcharge/accessorialchargedb"
+	"github.com/emoss08/trenova/internal/modules/reference/domain/commodity/commoditydb"
+	"github.com/emoss08/trenova/internal/modules/reference/domain/servicetype/servicetypedb"
+	"github.com/emoss08/trenova/internal/modules/reference/domain/shipmenttype/shipmenttypedb"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/uptrace/bun"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
 
 const (
-	envelopeReceiverID        = "{}->>'interchangeReceiverId'"
-	envelopeReceiverQualifier = "{}->>'interchangeReceiverQualifier'"
-	envelopeSenderID          = "{}->>'interchangeSenderId'"
-	envelopeSenderQualifier   = "{}->>'interchangeSenderQualifier'"
-	envelopeApplicationSender = "{}->>'applicationSenderCode'"
-	configPartnerAS2ID        = "{}->>'partnerAS2Id'"
+	envelopeReceiverID        = "interchangeReceiverId"
+	envelopeReceiverQualifier = "interchangeReceiverQualifier"
+	envelopeSenderID          = "interchangeSenderId"
+	envelopeSenderQualifier   = "interchangeSenderQualifier"
+	envelopeApplicationSender = "applicationSenderCode"
+	configPartnerAS2ID        = "partnerAS2Id"
 )
+
+var partnerErrors = dberror.Mapping{Entity: "EDIPartner"}
+
+var excludedTemplateStatuses = []edi.TemplateStatus{
+	edi.TemplateStatusArchived,
+	edi.TemplateStatusSuperseded,
+}
+
+var candidateVersionStatuses = []edi.TemplateStatus{
+	edi.TemplateStatusActive,
+	edi.TemplateStatusCertified,
+}
 
 type Params struct {
 	fx.In
@@ -133,7 +144,7 @@ func (r *repository) FindPartnerMatches(
 			return nil, err
 		}
 		if extra := set.missing(byInterchange, byAS2); len(extra) > 0 {
-			partners, loadErr := r.partnersByIDs(ctx, req.TenantInfo, extra)
+			partners, loadErr := r.partnersByIDs(ctx, extra)
 			if loadErr != nil {
 				return nil, loadErr
 			}
@@ -160,28 +171,14 @@ func (r *repository) partnersByIdentity(
 		return nil, nil
 	}
 
-	cols := edicol.EDIPartnerColumns
-	partners := make([]*edi.EDIPartner, 0, 2)
-	err := r.db.DBForContext(ctx).
-		NewSelect().
-		Model(&partners).
-		Apply(edicol.EDIPartnerApplyTenant(req.TenantInfo)).
-		WhereGroup(" AND ", func(q *bun.SelectQuery) *bun.SelectQuery {
-			if code != "" {
-				q = q.WhereOr(cols.Code.Expr("LOWER({}) = LOWER(?)"), code)
-			}
-			if name != "" {
-				q = q.WhereOr(cols.Name.Expr("LOWER({}) = LOWER(?)"), name)
-			}
-			if req.CustomerID.IsNotNil() {
-				q = q.WhereOr(cols.CustomerID.Eq(), req.CustomerID)
-			}
-			return q
-		}).
-		Order(cols.CreatedAt.OrderAsc()).
-		Scan(ctx)
-
-	return partners, err
+	ep := edidb.EDIPartners
+	return ep.Where(keel.Or(
+		keel.When(code != "", ep.Code.Lower().Eq(strings.ToLower(code))),
+		keel.When(name != "", ep.Name.Lower().Eq(strings.ToLower(name))),
+		keel.When(req.CustomerID.IsNotNil(), ep.CustomerID.Eq(req.CustomerID)),
+	)).
+		Order(ep.CreatedAt.Asc()).
+		All(ctx, r.db.Keel(ctx))
 }
 
 func (r *repository) partnerIDsByInterchange(
@@ -193,37 +190,25 @@ func (r *repository) partnerIDsByInterchange(
 		return nil, nil
 	}
 
-	cols := edicol.EDIPartnerDocumentProfileColumns
+	dp := edidb.EDIPartnerDocumentProfiles
 	qualifier := strings.TrimSpace(req.ISAQualifier)
-	ids := make([]pulid.ID, 0, 2)
-	err := r.db.DBForContext(ctx).
-		NewSelect().
-		Model((*edi.EDIPartnerDocumentProfile)(nil)).
-		Apply(edicol.EDIPartnerDocumentProfileApplyTenant(req.TenantInfo)).
-		ColumnExpr(cols.EDIPartnerID.Qualified()).
-		Distinct().
-		WhereGroup(" AND ", func(q *bun.SelectQuery) *bun.SelectQuery {
-			return q.
-				WhereGroup(" OR ", func(q *bun.SelectQuery) *bun.SelectQuery {
-					q = q.Where(cols.Direction.Eq(), edi.DocumentDirectionOutbound).
-						Where(cols.Envelope.Expr(envelopeReceiverID)+" = ?", isaID)
-					if qualifier != "" {
-						q = q.Where(cols.Envelope.Expr(envelopeReceiverQualifier)+" = ?", qualifier)
-					}
-					return q
-				}).
-				WhereGroup(" OR ", func(q *bun.SelectQuery) *bun.SelectQuery {
-					q = q.Where(cols.Direction.Eq(), edi.DocumentDirectionInbound).
-						Where(cols.Envelope.Expr(envelopeSenderID)+" = ?", isaID)
-					if qualifier != "" {
-						q = q.Where(cols.Envelope.Expr(envelopeSenderQualifier)+" = ?", qualifier)
-					}
-					return q
-				})
-		}).
-		Scan(ctx, &ids)
-
-	return ids, err
+	return keel.Into[pulid.ID](ctx, r.db.Keel(ctx), dp.Pick(dp.EDIPartnerID).
+		DistinctOn(dp.EDIPartnerID).
+		Where(keel.Or(
+			keel.And(
+				dp.Direction.Eq(edi.DocumentDirectionOutbound),
+				dp.Envelope.Text(envelopeReceiverID).Eq(isaID),
+				keel.When(
+					qualifier != "",
+					dp.Envelope.Text(envelopeReceiverQualifier).Eq(qualifier),
+				),
+			),
+			keel.And(
+				dp.Direction.Eq(edi.DocumentDirectionInbound),
+				dp.Envelope.Text(envelopeSenderID).Eq(isaID),
+				keel.When(qualifier != "", dp.Envelope.Text(envelopeSenderQualifier).Eq(qualifier)),
+			),
+		)))
 }
 
 func (r *repository) partnerIDsByAS2(
@@ -235,38 +220,22 @@ func (r *repository) partnerIDsByAS2(
 		return nil, nil
 	}
 
-	cols := edicol.EDICommunicationProfileColumns
-	ids := make([]pulid.ID, 0, 1)
-	err := r.db.DBForContext(ctx).
-		NewSelect().
-		Model((*edi.EDICommunicationProfile)(nil)).
-		Apply(edicol.EDICommunicationProfileApplyTenant(req.TenantInfo)).
-		ColumnExpr(cols.EDIPartnerID.Qualified()).
-		Distinct().
-		Where(cols.Method.Eq(), edi.ConnectionMethodAS2).
-		Where(cols.EDIPartnerID.IsNotNull()).
-		Where(cols.Config.Expr(configPartnerAS2ID)+" = ?", as2ID).
-		Scan(ctx, &ids)
-
-	return ids, err
+	cp := edidb.EDICommunicationProfiles
+	return keel.Into[pulid.ID](ctx, r.db.Keel(ctx), cp.Pick(cp.EDIPartnerID).
+		DistinctOn(cp.EDIPartnerID).
+		Where(
+			cp.Method.Eq(edi.ConnectionMethodAS2),
+			cp.EDIPartnerID.IsNotNull(),
+			cp.Config.Text(configPartnerAS2ID).Eq(as2ID),
+		))
 }
 
-func (r *repository) partnersByIDs(
-	ctx context.Context,
-	tenantInfo pagination.TenantInfo,
-	ids []pulid.ID,
-) ([]*edi.EDIPartner, error) {
-	cols := edicol.EDIPartnerColumns
-	partners := make([]*edi.EDIPartner, 0, len(ids))
-	err := r.db.DBForContext(ctx).
-		NewSelect().
-		Model(&partners).
-		Apply(edicol.EDIPartnerApplyTenant(tenantInfo)).
-		Where(cols.ID.In(), bun.List(ids)).
-		Order(cols.CreatedAt.OrderAsc()).
-		Scan(ctx)
-
-	return partners, err
+func (r *repository) partnersByIDs(ctx context.Context, ids []pulid.ID) ([]*edi.EDIPartner, error) {
+	ep := edidb.EDIPartners
+	return ep.Where(ep.ID.In(ids...)).
+		Order(ep.CreatedAt.Asc()).
+		Limit(len(ids)).
+		List(ctx, r.db.Keel(ctx))
 }
 
 func (r *repository) GetPartnerSetup(
@@ -274,55 +243,37 @@ func (r *repository) GetPartnerSetup(
 	req *ediports.GetEDIPartnerSetupRequest,
 ) (*ediports.EDIPartnerSetup, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*ediports.EDIPartnerSetup, error) {
-		db := r.db.DBForContext(ctx)
-		setup := &ediports.EDIPartnerSetup{Partner: new(edi.EDIPartner)}
+		db := r.db.Keel(ctx)
+		ep := edidb.EDIPartners
+		cp := edidb.EDICommunicationProfiles
+		dp := edidb.EDIPartnerDocumentProfiles
+		mi := edidb.EDIMappingProfileItems
+		cn := edidb.EDIControlNumberSequences
 
-		if err := db.NewSelect().
-			Model(setup.Partner).
-			Apply(edicol.EDIPartnerApplyTenant(req.TenantInfo)).
-			Where(edicol.EDIPartnerColumns.ID.Eq(), req.PartnerID).
-			Scan(ctx); err != nil {
-			return nil, dberror.HandleNotFoundError(err, "EDIPartner")
-		}
-
-		profileCols := edicol.EDICommunicationProfileColumns
-		if err := db.NewSelect().
-			Model(&setup.CommunicationProfiles).
-			Apply(edicol.EDICommunicationProfileApplyTenant(req.TenantInfo)).
-			Where(profileCols.EDIPartnerID.Eq(), req.PartnerID).
-			Order(profileCols.CreatedAt.OrderAsc()).
-			Scan(ctx); err != nil {
-			return nil, err
-		}
-
-		documentCols := edicol.EDIPartnerDocumentProfileColumns
-		if err := db.NewSelect().
-			Model(&setup.DocumentProfiles).
-			Apply(edicol.EDIPartnerDocumentProfileApplyTenant(req.TenantInfo)).
-			Relation(edicol.EDIPartnerDocumentProfileRelations.Template).
-			Where(documentCols.EDIPartnerID.Eq(), req.PartnerID).
-			Order(documentCols.CreatedAt.OrderAsc()).
-			Scan(ctx); err != nil {
-			return nil, err
-		}
-
-		itemCols := edicol.EDIMappingProfileItemColumns
-		if err := db.NewSelect().
-			Model(&setup.MappingItems).
-			Apply(edicol.EDIMappingProfileItemApplyTenant(req.TenantInfo)).
-			Where(itemCols.EDIPartnerID.Eq(), req.PartnerID).
-			Order(itemCols.EntityType.OrderAsc(), itemCols.SourceID.OrderAsc()).
-			Scan(ctx); err != nil {
-			return nil, err
-		}
-
-		sequenceCols := edicol.EDIControlNumberSequenceColumns
-		if err := db.NewSelect().
-			Model(&setup.ControlNumbers).
-			Apply(edicol.EDIControlNumberSequenceApplyTenant(req.TenantInfo)).
-			Where(sequenceCols.EDIPartnerID.Eq(), req.PartnerID).
-			Scan(ctx); err != nil {
-			return nil, err
+		setup := new(ediports.EDIPartnerSetup)
+		err := keel.Batch(
+			ctx,
+			db,
+			keel.OneInto(ep.Where(ep.ID.Eq(req.PartnerID)), &setup.Partner),
+			keel.AllInto(
+				cp.Where(cp.EDIPartnerID.Eq(req.PartnerID)).Order(cp.CreatedAt.Asc()),
+				&setup.CommunicationProfiles,
+			),
+			keel.AllInto(
+				dp.Where(dp.EDIPartnerID.Eq(req.PartnerID)).
+					Load(dp.Template()).
+					Order(dp.CreatedAt.Asc()),
+				&setup.DocumentProfiles,
+			),
+			keel.AllInto(
+				mi.Where(mi.EDIPartnerID.Eq(req.PartnerID)).
+					Order(mi.EntityType.Asc(), mi.SourceID.Asc()),
+				&setup.MappingItems,
+			),
+			keel.AllInto(cn.Where(cn.EDIPartnerID.Eq(req.PartnerID)), &setup.ControlNumbers),
+		)
+		if err != nil {
+			return nil, partnerErrors.Map(err, req.PartnerID.String())
 		}
 
 		return setup, nil
@@ -334,21 +285,17 @@ func (r *repository) ListTemplateCandidates(
 	req *ediports.ListEDITemplateCandidatesRequest,
 ) ([]*edi.EDITemplateVersion, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*edi.EDITemplateVersion, error) {
-		db := r.db.DBForContext(ctx)
-		templateCols := edicol.EDITemplateColumns
-		templates := make([]*edi.EDITemplate, 0, 4)
-		if err := db.NewSelect().
-			Model(&templates).
-			Apply(edicol.EDITemplateApplyTenant(req.TenantInfo)).
-			Where(templateCols.Standard.Eq(), edi.EDIStandardX12).
-			Where(templateCols.TransactionSet.Eq(), req.TransactionSet).
-			Where(templateCols.Direction.Eq(), req.Direction).
-			Where(templateCols.Status.NotIn(), bun.List([]edi.TemplateStatus{
-				edi.TemplateStatusArchived,
-				edi.TemplateStatusSuperseded,
-			})).
-			Order(templateCols.CreatedAt.OrderAsc()).
-			Scan(ctx); err != nil {
+		db := r.db.Keel(ctx)
+		t := edidb.EDITemplates
+		templates, err := t.Where(
+			t.Standard.Eq(edi.EDIStandardX12),
+			t.TransactionSet.Eq(req.TransactionSet),
+			t.Direction.Eq(req.Direction),
+			t.Status.NotIn(excludedTemplateStatuses...),
+		).
+			Order(t.CreatedAt.Asc()).
+			All(ctx, db)
+		if err != nil {
 			return nil, err
 		}
 		if len(templates) == 0 {
@@ -362,19 +309,12 @@ func (r *repository) ListTemplateCandidates(
 			ids = append(ids, template.ID)
 		}
 
-		versionCols := edicol.EDITemplateVersionColumns
-		versions := make([]*edi.EDITemplateVersion, 0, len(templates))
-		if err := db.NewSelect().
-			Model(&versions).
-			Apply(edicol.EDITemplateVersionApplyTenant(req.TenantInfo)).
-			Relation(edicol.EDITemplateVersionRelations.Segments).
-			Where(versionCols.TemplateID.In(), bun.List(ids)).
-			Where(versionCols.Status.In(), bun.List([]edi.TemplateStatus{
-				edi.TemplateStatusActive,
-				edi.TemplateStatusCertified,
-			})).
-			Order(versionCols.TemplateID.OrderAsc(), versionCols.VersionNumber.OrderDesc()).
-			Scan(ctx); err != nil {
+		tv := edidb.EDITemplateVersions
+		versions, err := tv.Where(tv.TemplateID.In(ids...), tv.Status.In(candidateVersionStatuses...)).
+			Load(tv.Segments()).
+			Order(tv.TemplateID.Asc(), tv.VersionNumber.Desc()).
+			All(ctx, db)
+		if err != nil {
 			return nil, err
 		}
 
@@ -392,6 +332,7 @@ func (r *repository) ListTemplateCandidates(
 			version.Template = byID[version.TemplateID]
 			latest = append(latest, version)
 		}
+
 		return latest, nil
 	})
 }
@@ -411,105 +352,74 @@ func replaceVersion(
 
 func (r *repository) GetInterchangeIdentity(
 	ctx context.Context,
-	tenantInfo pagination.TenantInfo,
+	_ pagination.TenantInfo,
 ) (*ediports.InterchangeIdentity, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*ediports.InterchangeIdentity, error) {
-		cols := edicol.EDIPartnerDocumentProfileColumns
-		identity := new(ediports.InterchangeIdentity)
-		err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model((*edi.EDIPartnerDocumentProfile)(nil)).
-			Apply(edicol.EDIPartnerDocumentProfileApplyTenant(tenantInfo)).
-			ColumnExpr(cols.Envelope.Expr(envelopeSenderQualifier)+" AS qualifier").
-			ColumnExpr(cols.Envelope.Expr(envelopeSenderID)+" AS id").
-			ColumnExpr(cols.Envelope.Expr(envelopeApplicationSender)+" AS application_id").
-			ColumnExpr("COUNT(*) AS profiles").
-			Where(cols.Direction.Eq(), edi.DocumentDirectionOutbound).
-			Where(cols.Envelope.Expr("NULLIF(BTRIM("+envelopeSenderID+"), '') IS NOT NULL")).
-			GroupExpr("1, 2, 3").
-			OrderExpr("profiles DESC, 2 ASC").
-			Limit(1).
-			Scan(ctx, identity)
+		dp := edidb.EDIPartnerDocumentProfiles
+		qualifier := keel.Raw("COALESCE(?, '')", dp.Envelope.Text(envelopeSenderQualifier))
+		senderID := dp.Envelope.Text(envelopeSenderID)
+		applicationID := keel.Raw("COALESCE(?, '')", dp.Envelope.Text(envelopeApplicationSender))
+
+		identity, err := keel.IntoOne[ediports.InterchangeIdentity](ctx, r.db.Keel(ctx), dp.
+			Where(
+				dp.Direction.Eq(edi.DocumentDirectionOutbound),
+				keel.Raw("NULLIF(BTRIM(?), '') IS NOT NULL", senderID),
+			).
+			Group(qualifier, senderID, applicationID).
+			Pick(qualifier, senderID, applicationID, keel.Count()).
+			Order(keel.Count().Desc(), senderID.Asc()).
+			Limit(1))
 		if err != nil {
 			if dberror.IsNotFoundError(err) {
 				return &ediports.InterchangeIdentity{}, nil
 			}
 			return nil, err
 		}
-		return identity, nil
+
+		return &identity, nil
 	})
 }
 
-type mappingTarget struct {
-	table buncolgen.TableInfo
-	id    buncolgen.Column
-	label buncolgen.Column
-	org   buncolgen.Column
-	bu    buncolgen.Column
-}
+type mappingTarget func(ids []pulid.ID) keel.Projection
 
 var mappingTargets = map[edi.MappingEntityType]mappingTarget{
-	edi.MappingEntityTypeCustomer: {
-		table: customercol.CustomerTable,
-		id:    customercol.CustomerColumns.ID,
-		label: customercol.CustomerColumns.Name,
-		org:   customercol.CustomerColumns.OrganizationID,
-		bu:    customercol.CustomerColumns.BusinessUnitID,
+	edi.MappingEntityTypeCustomer: func(ids []pulid.ID) keel.Projection {
+		c := customerdb.Customers
+		return c.Pick(c.ID, c.Name).Where(c.ID.In(ids...))
 	},
-	edi.MappingEntityTypeServiceType: {
-		table: servicetypecol.ServiceTypeTable,
-		id:    servicetypecol.ServiceTypeColumns.ID,
-		label: servicetypecol.ServiceTypeColumns.Code,
-		org:   servicetypecol.ServiceTypeColumns.OrganizationID,
-		bu:    servicetypecol.ServiceTypeColumns.BusinessUnitID,
+	edi.MappingEntityTypeServiceType: func(ids []pulid.ID) keel.Projection {
+		st := servicetypedb.ServiceTypes
+		return st.Pick(st.ID, st.Code).Where(st.ID.In(ids...))
 	},
-	edi.MappingEntityTypeShipmentType: {
-		table: shipmenttypecol.ShipmentTypeTable,
-		id:    shipmenttypecol.ShipmentTypeColumns.ID,
-		label: shipmenttypecol.ShipmentTypeColumns.Code,
-		org:   shipmenttypecol.ShipmentTypeColumns.OrganizationID,
-		bu:    shipmenttypecol.ShipmentTypeColumns.BusinessUnitID,
+	edi.MappingEntityTypeShipmentType: func(ids []pulid.ID) keel.Projection {
+		st := shipmenttypedb.ShipmentTypes
+		return st.Pick(st.ID, st.Code).Where(st.ID.In(ids...))
 	},
-	edi.MappingEntityTypeFormulaTemplate: {
-		table: formulatemplatecol.FormulaTemplateTable,
-		id:    formulatemplatecol.FormulaTemplateColumns.ID,
-		label: formulatemplatecol.FormulaTemplateColumns.Name,
-		org:   formulatemplatecol.FormulaTemplateColumns.OrganizationID,
-		bu:    formulatemplatecol.FormulaTemplateColumns.BusinessUnitID,
+	edi.MappingEntityTypeFormulaTemplate: func(ids []pulid.ID) keel.Projection {
+		ft := formulatemplatedb.FormulaTemplates
+		return ft.Pick(ft.ID, ft.Name).Where(ft.ID.In(ids...))
 	},
-	edi.MappingEntityTypeLocation: {
-		table: locationcol.LocationTable,
-		id:    locationcol.LocationColumns.ID,
-		label: locationcol.LocationColumns.Name,
-		org:   locationcol.LocationColumns.OrganizationID,
-		bu:    locationcol.LocationColumns.BusinessUnitID,
+	edi.MappingEntityTypeLocation: func(ids []pulid.ID) keel.Projection {
+		l := locationdb.Locations
+		return l.Pick(l.ID, l.Name).Where(l.ID.In(ids...))
 	},
-	edi.MappingEntityTypeCommodity: {
-		table: commoditycol.CommodityTable,
-		id:    commoditycol.CommodityColumns.ID,
-		label: commoditycol.CommodityColumns.Name,
-		org:   commoditycol.CommodityColumns.OrganizationID,
-		bu:    commoditycol.CommodityColumns.BusinessUnitID,
+	edi.MappingEntityTypeCommodity: func(ids []pulid.ID) keel.Projection {
+		c := commoditydb.Commodities
+		return c.Pick(c.ID, c.Name).Where(c.ID.In(ids...))
 	},
-	edi.MappingEntityTypeAccessorialCharge: {
-		table: accessorialchargecol.AccessorialChargeTable,
-		id:    accessorialchargecol.AccessorialChargeColumns.ID,
-		label: accessorialchargecol.AccessorialChargeColumns.Code,
-		org:   accessorialchargecol.AccessorialChargeColumns.OrganizationID,
-		bu:    accessorialchargecol.AccessorialChargeColumns.BusinessUnitID,
+	edi.MappingEntityTypeAccessorialCharge: func(ids []pulid.ID) keel.Projection {
+		ac := accessorialchargedb.AccessorialCharges
+		return ac.Pick(ac.ID, ac.Code).Where(ac.ID.In(ids...))
 	},
-	edi.MappingEntityTypeServiceFailureReasonCode: {
-		table: servicefailurecol.ReasonCodeTable,
-		id:    servicefailurecol.ReasonCodeColumns.ID,
-		label: servicefailurecol.ReasonCodeColumns.Code,
-		org:   servicefailurecol.ReasonCodeColumns.OrganizationID,
-		bu:    servicefailurecol.ReasonCodeColumns.BusinessUnitID,
+	edi.MappingEntityTypeServiceFailureReasonCode: func(ids []pulid.ID) keel.Projection {
+		rc := servicefailuredb.ReasonCodes
+		return rc.Pick(rc.ID, rc.Code).Where(rc.ID.In(ids...))
 	},
 }
 
 type targetRow struct {
-	ID    pulid.ID `bun:"id"`
-	Label string   `bun:"label"`
+	ID    pulid.ID
+	Label string
 }
 
 func (r *repository) ResolveMappingTargets(
@@ -526,16 +436,8 @@ func (r *repository) ResolveMappingTargets(
 				if !ok || len(ids) == 0 {
 					continue
 				}
-				rows := make([]targetRow, 0, len(ids))
-				if err := r.db.DBForContext(ctx).
-					NewSelect().
-					TableExpr(target.table.As(target.table.Alias)).
-					ColumnExpr(target.id.As("id")).
-					ColumnExpr(target.label.As("label")).
-					Where(target.id.In(), bun.List(ids)).
-					Where(target.org.Eq(), req.TenantInfo.OrgID).
-					Where(target.bu.Eq(), req.TenantInfo.BuID).
-					Scan(ctx, &rows); err != nil {
+				rows, err := keel.Into[targetRow](ctx, r.db.Keel(ctx), target(ids))
+				if err != nil {
 					return nil, err
 				}
 				labels := make(map[pulid.ID]string, len(rows))
@@ -544,6 +446,7 @@ func (r *repository) ResolveMappingTargets(
 				}
 				resolved[entityType] = labels
 			}
+
 			return resolved, nil
 		},
 	)

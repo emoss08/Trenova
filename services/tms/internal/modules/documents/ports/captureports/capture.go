@@ -386,10 +386,10 @@ type ListCaptureRecordLabelsRequest struct {
 // CaptureRecordLabel is how a person recognises a record a capture is filed
 // onto: a shipment's PRO and BOL, a worker's name, a unit's number and plate.
 type CaptureRecordLabel struct {
-	ResourceType string   `json:"resourceType" bun:"-"`
-	ID           pulid.ID `json:"id"           bun:"id"`
-	Title        string   `json:"title"        bun:"title"`
-	Subtitle     string   `json:"subtitle"     bun:"subtitle"`
+	ResourceType string   `json:"resourceType"`
+	ID           pulid.ID `json:"id"`
+	Title        string   `json:"title"`
+	Subtitle     string   `json:"subtitle"`
 }
 
 // GetID lets a label be loaded by id.

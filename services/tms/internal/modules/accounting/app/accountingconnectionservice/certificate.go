@@ -17,7 +17,6 @@ import (
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/stringutils"
 	"github.com/emoss08/trenova/shared/timeutils"
-	"github.com/uptrace/bun"
 	"go.uber.org/zap"
 )
 
@@ -527,7 +526,7 @@ func (s *Service) storeRenewedCertificate(
 	in *certificateRenewal,
 ) (*renewedCertificate, error) {
 	out := &renewedCertificate{}
-	err := s.db.WithTx(ctx, kernelports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
+	err := s.db.Transact(ctx, kernelports.TxOptions{}, func(txCtx context.Context) error {
 		locked, lockErr := s.connections.LockWithTokens(
 			txCtx,
 			accountingsyncports.GetAccountingConnectionByIDRequest{

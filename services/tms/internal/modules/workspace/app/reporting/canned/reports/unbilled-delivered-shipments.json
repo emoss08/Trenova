@@ -1,0 +1,185 @@
+{
+  "key": "unbilled-delivered-shipments",
+  "version": "1.0.0",
+  "name": "Delivered, Not Billed",
+  "description": "Revenue sitting in the billing queue — delivered shipments with no invoice, aged by delivery date",
+  "category": "Billing",
+  "tags": [
+    "billing",
+    "revenue-leakage",
+    "aging"
+  ],
+  "defaultFormat": "xlsx",
+  "definition": {
+    "version": 2,
+    "entity": "shipment",
+    "columns": [
+      {
+        "id": "pro_number",
+        "label": "PRO Number",
+        "dimension": {
+          "field": "proNumber"
+        }
+      },
+      {
+        "id": "bol",
+        "label": "BOL",
+        "dimension": {
+          "field": "bol"
+        }
+      },
+      {
+        "id": "customer",
+        "label": "Customer",
+        "dimension": {
+          "field": "customer.name"
+        }
+      },
+      {
+        "id": "customer_code",
+        "label": "Customer Code",
+        "dimension": {
+          "field": "customer.code"
+        }
+      },
+      {
+        "id": "status",
+        "label": "Status",
+        "dimension": {
+          "field": "status"
+        }
+      },
+      {
+        "id": "transfer_status",
+        "label": "Billing Transfer",
+        "dimension": {
+          "field": "billingTransferStatus"
+        }
+      },
+      {
+        "id": "service_type",
+        "label": "Service Type",
+        "dimension": {
+          "field": "serviceType.code"
+        }
+      },
+      {
+        "id": "ship_date",
+        "label": "Ship Date",
+        "dimension": {
+          "field": "actualShipDate"
+        },
+        "display": {
+          "style": "date",
+          "dateStyle": "date"
+        }
+      },
+      {
+        "id": "delivered_at",
+        "label": "Delivery Date",
+        "dimension": {
+          "field": "actualDeliveryDate"
+        },
+        "display": {
+          "style": "date",
+          "dateStyle": "date"
+        }
+      },
+      {
+        "id": "ready_to_bill_at",
+        "label": "Ready to Bill",
+        "dimension": {
+          "field": "markedReadyToBillAt"
+        },
+        "display": {
+          "style": "date",
+          "dateStyle": "date"
+        }
+      },
+      {
+        "id": "total_charge",
+        "label": "Total Charge",
+        "dimension": {
+          "field": "totalChargeAmount"
+        }
+      },
+      {
+        "id": "freight_charge",
+        "label": "Freight Charge",
+        "dimension": {
+          "field": "freightChargeAmount"
+        }
+      },
+      {
+        "id": "accessorial_charge",
+        "label": "Accessorial Charges",
+        "dimension": {
+          "field": "otherChargeAmount"
+        }
+      },
+      {
+        "id": "weight",
+        "label": "Weight",
+        "dimension": {
+          "field": "weight"
+        }
+      },
+      {
+        "id": "pieces",
+        "label": "Pieces",
+        "dimension": {
+          "field": "pieces"
+        }
+      }
+    ],
+    "filters": {
+      "and": [
+        {
+          "field": "actualDeliveryDate",
+          "op": "last_n_days",
+          "param": "windowDays"
+        },
+        {
+          "field": "billedAt",
+          "op": "is_null"
+        },
+        {
+          "field": "status",
+          "op": "in",
+          "param": "statuses"
+        }
+      ]
+    },
+    "sort": [
+      {
+        "column": "delivered_at"
+      }
+    ],
+    "parameters": [
+      {
+        "name": "windowDays",
+        "label": "Window (days)",
+        "type": "int",
+        "required": true,
+        "default": 90
+      },
+      {
+        "name": "statuses",
+        "label": "Statuses",
+        "type": "enum",
+        "required": true,
+        "multi": true,
+        "default": [
+          "Completed",
+          "ReadyToInvoice"
+        ],
+        "allowed": [
+          "Completed",
+          "ReadyToInvoice",
+          "PartiallyCompleted",
+          "Invoiced"
+        ]
+      }
+    ]
+  }
+}

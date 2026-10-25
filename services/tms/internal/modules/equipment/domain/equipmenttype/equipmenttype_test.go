@@ -7,8 +7,6 @@ import (
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
-	"github.com/uptrace/bun"
 )
 
 func TestEquipmentType_Validate(t *testing.T) {
@@ -134,72 +132,6 @@ func TestEquipmentType_Validate(t *testing.T) {
 			}
 		})
 	}
-}
-
-func TestEquipmentType_BeforeAppendModel(t *testing.T) {
-	t.Parallel()
-
-	t.Run("insert sets ID and CreatedAt", func(t *testing.T) {
-		t.Parallel()
-
-		et := &EquipmentType{}
-		require.True(t, et.ID.IsNil())
-
-		err := et.BeforeAppendModel(t.Context(), (*bun.InsertQuery)(nil))
-		require.NoError(t, err)
-
-		assert.False(t, et.ID.IsNil())
-		assert.NotZero(t, et.CreatedAt)
-	})
-
-	t.Run("insert does not overwrite existing ID", func(t *testing.T) {
-		t.Parallel()
-
-		existingID := pulid.MustNew("et_")
-		et := &EquipmentType{ID: existingID}
-
-		err := et.BeforeAppendModel(t.Context(), (*bun.InsertQuery)(nil))
-		require.NoError(t, err)
-
-		assert.Equal(t, existingID, et.ID)
-		assert.NotZero(t, et.CreatedAt)
-	})
-
-	t.Run("update sets UpdatedAt", func(t *testing.T) {
-		t.Parallel()
-
-		et := &EquipmentType{}
-
-		err := et.BeforeAppendModel(t.Context(), (*bun.UpdateQuery)(nil))
-		require.NoError(t, err)
-
-		assert.NotZero(t, et.UpdatedAt)
-	})
-
-	t.Run("update does not set CreatedAt", func(t *testing.T) {
-		t.Parallel()
-
-		et := &EquipmentType{}
-
-		err := et.BeforeAppendModel(t.Context(), (*bun.UpdateQuery)(nil))
-		require.NoError(t, err)
-
-		assert.Zero(t, et.CreatedAt)
-		assert.NotZero(t, et.UpdatedAt)
-	})
-
-	t.Run("select query does nothing", func(t *testing.T) {
-		t.Parallel()
-
-		et := &EquipmentType{}
-
-		err := et.BeforeAppendModel(t.Context(), (*bun.SelectQuery)(nil))
-		require.NoError(t, err)
-
-		assert.True(t, et.ID.IsNil())
-		assert.Zero(t, et.CreatedAt)
-		assert.Zero(t, et.UpdatedAt)
-	})
 }
 
 func TestEquipmentType_GetTableName(t *testing.T) {

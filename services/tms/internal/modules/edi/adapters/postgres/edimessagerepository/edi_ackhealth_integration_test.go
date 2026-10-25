@@ -9,6 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/modules/edi/adapters/postgres/edimessagerepository"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
+	"github.com/emoss08/trenova/internal/modules/edi/editest"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -30,34 +31,22 @@ type ackHealthMessage struct {
 func TestOverdueAcks_ListAndCountAgreeOnWhatIsOverdue(t *testing.T) {
 	ctx, db := seededDevelopmentDB(t)
 
-	var org seededSummaryOrg
-	require.NoError(t, db.NewSelect().
-		Table("organizations").
-		Column("id", "business_unit_id").
-		Where("NOT EXISTS (SELECT 1 FROM edi_partners AS ep WHERE ep.organization_id = organizations.id)").
-		Limit(1).
-		Scan(ctx, &org))
-	var documentType seededSummaryDocumentType
-	require.NoError(t, db.NewSelect().
-		Table("edi_document_types").
-		Column("id").
-		Where("transaction_set = ?", edi.TransactionSet204).
-		Where("direction = ?", edi.DocumentDirectionOutbound).
-		Limit(1).
-		Scan(ctx, &documentType))
-	tenant := pagination.TenantInfo{OrgID: org.ID, BuID: org.BusinessUnitID}
+	scope := tenantWithoutPartners(t, ctx, db)
+	ctx = scope.Ctx
+	org := scope.Info
+	documentType := findDocumentType(t, ctx, db, edi.TransactionSet204, edi.DocumentDirectionOutbound)
+	tenant := org
 
 	partners := make([]*edi.EDIPartner, 0, 2)
 	for index, name := range []string{"Acme Retail", "Bolt Logistics"} {
 		partner := &edi.EDIPartner{
-			BusinessUnitID: org.BusinessUnitID,
-			OrganizationID: org.ID,
+			BusinessUnitID: org.BuID,
+			OrganizationID: org.OrgID,
 			Kind:           edi.PartnerKindExternal,
 			Code:           fmt.Sprintf("ACK-HEALTH-%d", index),
 			Name:           name,
 		}
-		_, err := db.NewInsert().Model(partner).Exec(ctx)
-		require.NoError(t, err)
+		require.NoError(t, create(ctx, db, partner))
 		partners = append(partners, partner)
 	}
 
@@ -79,8 +68,8 @@ func TestOverdueAcks_ListAndCountAgreeOnWhatIsOverdue(t *testing.T) {
 	ids := make(map[string]pulid.ID, len(fixtures))
 	for index, entry := range fixtures {
 		message := &edi.EDIMessage{
-			BusinessUnitID:           org.BusinessUnitID,
-			OrganizationID:           org.ID,
+			BusinessUnitID:           org.BuID,
+			OrganizationID:           org.OrgID,
 			EDIPartnerID:             partners[entry.partner].ID,
 			DocumentTypeID:           documentType.ID,
 			Direction:                edi.DocumentDirectionOutbound,
@@ -97,8 +86,7 @@ func TestOverdueAcks_ListAndCountAgreeOnWhatIsOverdue(t *testing.T) {
 			AckStatus:                entry.ack,
 			GeneratedAt:              now - entry.age,
 		}
-		_, err := db.NewInsert().Model(message).Exec(ctx)
-		require.NoError(t, err, entry.name)
+		require.NoError(t, create(ctx, db, message), entry.name)
 		ids[entry.name] = message.ID
 	}
 
@@ -324,17 +312,15 @@ func messageIDs(messages []*edi.EDIMessage) []pulid.ID {
 func TestDevelopmentSeed_TheEDIPartnerHasAcknowledgmentsInEveryState(t *testing.T) {
 	ctx, db := seededDevelopmentDB(t)
 
-	var partner struct {
-		ID             pulid.ID `bun:"id"`
-		OrganizationID pulid.ID `bun:"organization_id"`
-		BusinessUnitID pulid.ID `bun:"business_unit_id"`
-	}
-	require.NoError(t, db.NewSelect().
-		Table("edi_partners").
-		Column("id", "organization_id", "business_unit_id").
-		Where("code = ?", "ACMEMFG").
-		Scan(ctx, &partner))
-	tenant := pagination.TenantInfo{OrgID: partner.OrganizationID, BuID: partner.BusinessUnitID}
+	var partnerID, orgID, buID string
+	require.NoError(t, db.Pool().QueryRow(ctx,
+		"SELECT id, organization_id, business_unit_id FROM edi_partners WHERE code = $1",
+		"ACMEMFG",
+	).Scan(&partnerID, &orgID, &buID))
+	partner := struct{ ID pulid.ID }{ID: pulid.ID(partnerID)}
+	scope := editest.TenantOf(ctx, pagination.TenantInfo{OrgID: pulid.ID(orgID), BuID: pulid.ID(buID)})
+	ctx = scope.Ctx
+	tenant := scope.Info
 	repo := edimessagerepository.New(edimessagerepository.Params{
 		DB:     postgres.NewTestConnection(db),
 		Logger: zap.NewNop(),

@@ -5,8 +5,9 @@ package ssoidentitylinkrepository
 import (
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant/tenantdb"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/internal/testutil/seedtest"
 	"github.com/emoss08/trenova/pkg/dberror"
@@ -22,13 +23,11 @@ func TestSSOIdentityLinks_BindOneSubjectToOneUserPerProvider(t *testing.T) {
 	t.Cleanup(cleanup)
 
 	data := seedtest.SeedFullTestData(t, ctx, db)
-	other := seedtest.NewUser(data.Organization.ID, data.BusinessUnit.ID).
+	ctx = data.Ctx(ctx)
+	secondUser := seedtest.NewUser(data.Organization.ID, data.BusinessUnit.ID).
 		WithUsername("second").
-		WithEmail("second@example.com")
-	tx, err := db.BeginTx(ctx, nil)
-	require.NoError(t, err)
-	secondUser := other.Build(t, ctx, tx)
-	require.NoError(t, tx.Commit())
+		WithEmail("second@example.com").
+		Build(t, ctx, db)
 
 	cfg := &tenant.SSOConfig{
 		OrganizationID:   data.Organization.ID,
@@ -43,8 +42,7 @@ func TestSSOIdentityLinks_BindOneSubjectToOneUserPerProvider(t *testing.T) {
 		OIDCRedirectURL:  "https://app.example.com/callback",
 		OIDCScopes:       []string{"openid", "email"},
 	}
-	_, err = db.NewInsert().Model(cfg).Exec(ctx)
-	require.NoError(t, err)
+	require.NoError(t, tenantdb.SSOConfigs.Create(ctx, db, cfg))
 
 	repo := New(Params{DB: postgres.NewTestConnection(db), Logger: zap.NewNop()})
 	link := &tenant.SSOIdentityLink{

@@ -4,285 +4,192 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/emoss08/trenova/pkg/buncolgen/iftacol"
-	"github.com/emoss08/trenova/pkg/buncolgen/shipmentcol"
-
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
-	"github.com/emoss08/trenova/internal/modules/settlement/domain/ifta"
+	"github.com/emoss08/trenova/internal/modules/settlement/domain/ifta/iftadb"
 	"github.com/emoss08/trenova/internal/modules/settlement/ports/iftaports"
-	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/shared/pulid"
+	"github.com/jackc/pgx/v5"
 	"github.com/shopspring/decimal"
-	"github.com/uptrace/bun"
 	"go.uber.org/zap"
 )
 
 const (
-	kilometresPerMile   = "1.609344"
-	milesScale          = "3"
-	mismatchFloorMiles  = "1"
-	mismatchTolerance   = "0.02"
-	defaultRouteRowSize = 64
-)
+	accumulationPrefix = `WITH mc AS (
+	SELECT sm.id, sm.organization_id, sm.business_unit_id, sm.loaded,
+		CASE WHEN sm.distance_units = $1 THEN sm.distance / 1.609344 ELSE sm.distance END AS distance,
+		COALESCE(MAX(COALESCE(stp.actual_departure, stp.actual_arrival)), sm.updated_at) AS completed_at
+	FROM shipment_moves AS sm
+	LEFT JOIN stops AS stp
+		ON stp.shipment_move_id = sm.id
+		AND stp.organization_id = sm.organization_id
+		AND stp.business_unit_id = sm.business_unit_id
+	WHERE sm.organization_id = $2 AND sm.business_unit_id = $3 AND sm.status = $4
+	GROUP BY sm.id, sm.organization_id, sm.business_unit_id, sm.loaded, sm.distance,
+		sm.distance_units, sm.updated_at
+), inp AS (
+	SELECT mc.* FROM mc WHERE mc.completed_at >= $5 AND mc.completed_at < $6
+), overridden AS (
+	SELECT DISTINCT ifme.shipment_move_id
+	FROM ifta_jurisdiction_mileage_entries AS ifme
+	WHERE ifme.organization_id = $2 AND ifme.business_unit_id = $3
+		AND ifme.shipment_move_id IS NOT NULL
+), jm AS (
+	SELECT smjm.shipment_move_id, smjm.organization_id, smjm.business_unit_id,
+		smjm.country_code, smjm.jurisdiction_code, inp.loaded AS loaded,
+		inp.distance AS move_distance,
+		CASE WHEN smjm.distance_units = $7 THEN smjm.distance / 1.609344 ELSE smjm.distance END AS miles
+	FROM shipment_move_jurisdiction_miles AS smjm
+	JOIN inp ON inp.id = smjm.shipment_move_id
+		AND inp.organization_id = smjm.organization_id
+		AND inp.business_unit_id = smjm.business_unit_id
+	WHERE smjm.organization_id = $2 AND smjm.business_unit_id = $3
+		AND NOT EXISTS (SELECT 1 FROM overridden o WHERE o.shipment_move_id = smjm.shipment_move_id)
+) `
 
-type tenantCols struct {
-	org, bu buncolgen.Column
-}
+	routeRowsSQL = accumulationPrefix + `SELECT a.tractor_id AS tractor_id,
+	jm.country_code AS country_code, jm.jurisdiction_code AS jurisdiction_code,
+	ifj.id AS jurisdiction_id,
+	ROUND((COALESCE(SUM(jm.miles), 0))::numeric, 3) AS miles,
+	ROUND((COALESCE(SUM(jm.miles) FILTER (WHERE jm.loaded), 0))::numeric, 3) AS loaded_miles,
+	ROUND((COALESCE(SUM(jm.miles) FILTER (WHERE NOT jm.loaded), 0))::numeric, 3) AS empty_miles,
+	COUNT(DISTINCT jm.shipment_move_id) AS move_count
+FROM jm
+LEFT JOIN assignments AS a
+	ON a.shipment_move_id = jm.shipment_move_id
+	AND a.organization_id = jm.organization_id
+	AND a.business_unit_id = jm.business_unit_id
+	AND a.archived_at IS NULL
+LEFT JOIN ifta_jurisdictions AS ifj
+	ON ifj.country_code = jm.country_code
+	AND ifj.code = jm.jurisdiction_code
+GROUP BY a.tractor_id, jm.country_code, jm.jurisdiction_code, ifj.id
+ORDER BY a.tractor_id NULLS FIRST, jm.country_code, jm.jurisdiction_code`
+
+	noTractorSQL = accumulationPrefix + `SELECT jm.shipment_move_id AS move_id,
+	ROUND((COALESCE(SUM(jm.miles), 0))::numeric, 3) AS miles
+FROM jm
+LEFT JOIN assignments AS a
+	ON a.shipment_move_id = jm.shipment_move_id
+	AND a.organization_id = jm.organization_id
+	AND a.business_unit_id = jm.business_unit_id
+	AND a.archived_at IS NULL
+WHERE a.tractor_id IS NULL
+GROUP BY jm.shipment_move_id
+ORDER BY jm.shipment_move_id`
+
+	unattributedSQL = accumulationPrefix + `SELECT inp.id AS move_id,
+	ROUND((inp.distance)::numeric, 3) AS miles
+FROM inp
+WHERE inp.distance > 0
+	AND NOT EXISTS (SELECT 1 FROM shipment_move_jurisdiction_miles AS smjm
+		WHERE smjm.shipment_move_id = inp.id
+		AND smjm.organization_id = inp.organization_id
+		AND smjm.business_unit_id = inp.business_unit_id)
+	AND NOT EXISTS (SELECT 1 FROM overridden o WHERE o.shipment_move_id = inp.id)
+ORDER BY inp.completed_at, inp.id`
+
+	mismatchSQL = accumulationPrefix + `SELECT jm.shipment_move_id AS move_id,
+	ROUND((jm.move_distance)::numeric, 3) AS move_distance,
+	ROUND((SUM(jm.miles))::numeric, 3) AS attributed_miles
+FROM jm
+WHERE jm.move_distance IS NOT NULL
+GROUP BY jm.shipment_move_id, jm.move_distance
+HAVING ABS(SUM(jm.miles) - jm.move_distance) > GREATEST(1, jm.move_distance * 0.02)
+ORDER BY jm.shipment_move_id`
+)
 
 type moveMiles struct {
-	MoveID pulid.ID        `bun:"move_id"`
-	Miles  decimal.Decimal `bun:"miles"`
-}
-
-var (
-	smCols   = shipmentcol.ShipmentMoveColumns
-	stpCols  = shipmentcol.StopColumns
-	jmCols   = shipmentcol.ShipmentMoveJurisdictionMileColumns
-	aCols    = shipmentcol.AssignmentColumns
-	ifmeCols = iftacol.JurisdictionMileageEntryColumns
-	ifjCols  = iftacol.JurisdictionColumns
-
-	accumulationPrefix = buildAccumulationPrefix()
-	routeRowsSQL       = accumulationPrefix + buildRouteRowsBody()
-	noTractorSQL       = accumulationPrefix + buildNoTractorBody()
-	unattributedSQL    = accumulationPrefix + buildUnattributedBody()
-	mismatchSQL        = accumulationPrefix + buildMismatchBody()
-)
-
-func normalisedMiles(distance, units buncolgen.Column) string {
-	return "CASE WHEN " + units.Qualified() + " = ? THEN " +
-		distance.Qualified() + " / " + kilometresPerMile +
-		" ELSE " + distance.Qualified() + " END"
-}
-
-func rounded(expr string) string {
-	return "ROUND((" + expr + ")::numeric, " + milesScale + ")"
-}
-
-func tenantJoin(left, right tenantCols) string {
-	return left.org.EqColumn(right.org) + " AND " + left.bu.EqColumn(right.bu)
-}
-
-func buildAccumulationPrefix() string {
-	inpID := buncolgen.NewColumn(smCols.ID.Name, "inp")
-	inpOrg := buncolgen.NewColumn(smCols.OrganizationID.Name, "inp")
-	inpBu := buncolgen.NewColumn(smCols.BusinessUnitID.Name, "inp")
-	inpLoaded := buncolgen.NewColumn(smCols.Loaded.Name, "inp")
-	inpDistance := buncolgen.NewColumn(smCols.Distance.Name, "inp")
-	mcCompleted := buncolgen.NewColumn("completed_at", "mc")
-	ovMove := buncolgen.NewColumn(ifmeCols.ShipmentMoveID.Name, "o")
-
-	return "WITH mc AS (" +
-		" SELECT " + smCols.ID.Qualified() + ", " + smCols.OrganizationID.Qualified() + ", " +
-		smCols.BusinessUnitID.Qualified() + ", " + smCols.Loaded.Qualified() + ", " +
-		normalisedMiles(
-			smCols.Distance,
-			smCols.DistanceUnits,
-		) + " AS " + smCols.Distance.Name + ", " +
-		"COALESCE(MAX(COALESCE(" + stpCols.ActualDeparture.Qualified() + ", " +
-		stpCols.ActualArrival.Qualified() + ")), " + smCols.UpdatedAt.Qualified() + ") AS completed_at" +
-		" FROM " + shipmentcol.ShipmentMoveTable.As(shipmentcol.ShipmentMoveTable.Alias) +
-		" LEFT JOIN " + shipmentcol.StopTable.As(shipmentcol.StopTable.Alias) +
-		" ON " + stpCols.ShipmentMoveID.EqColumn(smCols.ID) +
-		" AND " + tenantJoin(
-		tenantCols{stpCols.OrganizationID, stpCols.BusinessUnitID},
-		tenantCols{smCols.OrganizationID, smCols.BusinessUnitID},
-	) +
-		" WHERE " + smCols.OrganizationID.Eq() + " AND " + smCols.BusinessUnitID.Eq() +
-		" AND " + smCols.Status.Eq() +
-		" GROUP BY " + smCols.ID.Qualified() + ", " + smCols.OrganizationID.Qualified() + ", " +
-		smCols.BusinessUnitID.Qualified() + ", " + smCols.Loaded.Qualified() + ", " +
-		smCols.Distance.Qualified() + ", " + smCols.DistanceUnits.Qualified() + ", " +
-		smCols.UpdatedAt.Qualified() +
-		"), inp AS (" +
-		" SELECT mc.* FROM mc WHERE " + mcCompleted.Gte() + " AND " + mcCompleted.Lt() +
-		"), overridden AS (" +
-		" SELECT DISTINCT " + ifmeCols.ShipmentMoveID.Qualified() +
-		" FROM " + iftacol.JurisdictionMileageEntryTable.As(
-		iftacol.JurisdictionMileageEntryTable.Alias,
-	) +
-		" WHERE " + ifmeCols.OrganizationID.Eq() + " AND " + ifmeCols.BusinessUnitID.Eq() +
-		" AND " + ifmeCols.ShipmentMoveID.IsNotNull() +
-		"), jm AS (" +
-		" SELECT " + jmCols.ShipmentMoveID.Qualified() + ", " + jmCols.OrganizationID.Qualified() + ", " +
-		jmCols.BusinessUnitID.Qualified() + ", " + jmCols.CountryCode.Qualified() + ", " +
-		jmCols.JurisdictionCode.Qualified() + ", " + inpLoaded.Qualified() + " AS loaded, " +
-		inpDistance.Qualified() + " AS move_distance, " +
-		normalisedMiles(jmCols.Distance, jmCols.DistanceUnits) + " AS miles" +
-		" FROM " + shipmentcol.ShipmentMoveJurisdictionMileTable.As(
-		shipmentcol.ShipmentMoveJurisdictionMileTable.Alias,
-	) +
-		" JOIN inp ON " + inpID.EqColumn(jmCols.ShipmentMoveID) +
-		" AND " + tenantJoin(
-		tenantCols{inpOrg, inpBu},
-		tenantCols{jmCols.OrganizationID, jmCols.BusinessUnitID},
-	) +
-		" WHERE " + jmCols.OrganizationID.Eq() + " AND " + jmCols.BusinessUnitID.Eq() +
-		" AND NOT EXISTS (SELECT 1 FROM overridden o WHERE " +
-		ovMove.EqColumn(jmCols.ShipmentMoveID) + ")" +
-		") "
+	MoveID pulid.ID
+	Miles  decimal.Decimal
 }
 
 func accumulationArgs(req *iftaports.AccumulateMilesRequest) []any {
+	kilometers := string(shipment.JurisdictionDistanceUnitsKilometers)
+
 	return []any{
-		shipment.JurisdictionDistanceUnitsKilometers,
-		req.TenantInfo.OrgID, req.TenantInfo.BuID, shipment.MoveStatusCompleted,
-		req.Start, req.End,
-		req.TenantInfo.OrgID, req.TenantInfo.BuID,
-		shipment.JurisdictionDistanceUnitsKilometers,
-		req.TenantInfo.OrgID, req.TenantInfo.BuID,
+		kilometers,
+		req.TenantInfo.OrgID.String(),
+		req.TenantInfo.BuID.String(),
+		string(shipment.MoveStatusCompleted),
+		req.Start,
+		req.End,
+		kilometers,
 	}
-}
-
-func buildRouteRowsBody() string {
-	jmMove := buncolgen.NewColumn(jmCols.ShipmentMoveID.Name, "jm")
-	jmOrg := buncolgen.NewColumn(jmCols.OrganizationID.Name, "jm")
-	jmBu := buncolgen.NewColumn(jmCols.BusinessUnitID.Name, "jm")
-	jmCountry := buncolgen.NewColumn(jmCols.CountryCode.Name, "jm")
-	jmCode := buncolgen.NewColumn(jmCols.JurisdictionCode.Name, "jm")
-	jmLoaded := buncolgen.NewColumn("loaded", "jm")
-	jmMiles := buncolgen.NewColumn("miles", "jm")
-
-	return "SELECT " + aCols.TractorID.As("tractor_id") + ", " +
-		jmCountry.As("country_code") + ", " + jmCode.As("jurisdiction_code") + ", " +
-		ifjCols.ID.As("jurisdiction_id") + ", " +
-		rounded("COALESCE(SUM("+jmMiles.Qualified()+"), 0)") + " AS miles, " +
-		rounded(
-			"COALESCE(SUM("+jmMiles.Qualified()+") FILTER (WHERE "+jmLoaded.Qualified()+"), 0)",
-		) +
-		" AS loaded_miles, " +
-		rounded(
-			"COALESCE(SUM("+jmMiles.Qualified()+") FILTER (WHERE NOT "+jmLoaded.Qualified()+"), 0)",
-		) +
-		" AS empty_miles, " +
-		buncolgen.CountDistinct(jmMove, "move_count") +
-		" FROM jm" +
-		" LEFT JOIN " + shipmentcol.AssignmentTable.As(shipmentcol.AssignmentTable.Alias) +
-		" ON " + aCols.ShipmentMoveID.EqColumn(jmMove) +
-		" AND " + tenantJoin(
-		tenantCols{aCols.OrganizationID, aCols.BusinessUnitID},
-		tenantCols{jmOrg, jmBu},
-	) +
-		" AND " + aCols.ArchivedAt.IsNull() +
-		" LEFT JOIN " + iftacol.JurisdictionTable.As(iftacol.JurisdictionTable.Alias) +
-		" ON " + ifjCols.CountryCode.EqColumn(jmCountry) +
-		" AND " + ifjCols.Code.EqColumn(jmCode) +
-		" GROUP BY " + aCols.TractorID.Qualified() + ", " + jmCountry.Qualified() + ", " +
-		jmCode.Qualified() + ", " + ifjCols.ID.Qualified() +
-		" ORDER BY " + aCols.TractorID.Qualified() + " NULLS FIRST, " +
-		jmCountry.Qualified() + ", " + jmCode.Qualified()
-}
-
-func buildNoTractorBody() string {
-	jmMove := buncolgen.NewColumn(jmCols.ShipmentMoveID.Name, "jm")
-	jmOrg := buncolgen.NewColumn(jmCols.OrganizationID.Name, "jm")
-	jmBu := buncolgen.NewColumn(jmCols.BusinessUnitID.Name, "jm")
-	jmMiles := buncolgen.NewColumn("miles", "jm")
-
-	return "SELECT " + jmMove.As("move_id") + ", " +
-		rounded("COALESCE(SUM("+jmMiles.Qualified()+"), 0)") + " AS miles" +
-		" FROM jm" +
-		" LEFT JOIN " + shipmentcol.AssignmentTable.As(shipmentcol.AssignmentTable.Alias) +
-		" ON " + aCols.ShipmentMoveID.EqColumn(jmMove) +
-		" AND " + tenantJoin(
-		tenantCols{aCols.OrganizationID, aCols.BusinessUnitID},
-		tenantCols{jmOrg, jmBu},
-	) +
-		" AND " + aCols.ArchivedAt.IsNull() +
-		" WHERE " + aCols.TractorID.IsNull() +
-		" GROUP BY " + jmMove.Qualified() +
-		" ORDER BY " + jmMove.Qualified()
-}
-
-func buildUnattributedBody() string {
-	inpID := buncolgen.NewColumn(smCols.ID.Name, "inp")
-	inpOrg := buncolgen.NewColumn(smCols.OrganizationID.Name, "inp")
-	inpBu := buncolgen.NewColumn(smCols.BusinessUnitID.Name, "inp")
-	inpDistance := buncolgen.NewColumn(smCols.Distance.Name, "inp")
-	inpCompleted := buncolgen.NewColumn("completed_at", "inp")
-	ovMove := buncolgen.NewColumn(ifmeCols.ShipmentMoveID.Name, "o")
-
-	return "SELECT " + inpID.As("move_id") + ", " +
-		rounded(inpDistance.Qualified()) + " AS miles" +
-		" FROM inp" +
-		" WHERE " + inpDistance.Qualified() + " > 0" +
-		" AND NOT EXISTS (SELECT 1 FROM " +
-		shipmentcol.ShipmentMoveJurisdictionMileTable.As(
-			shipmentcol.ShipmentMoveJurisdictionMileTable.Alias,
-		) +
-		" WHERE " + jmCols.ShipmentMoveID.EqColumn(inpID) +
-		" AND " + tenantJoin(
-		tenantCols{jmCols.OrganizationID, jmCols.BusinessUnitID},
-		tenantCols{inpOrg, inpBu},
-	) + ")" +
-		" AND NOT EXISTS (SELECT 1 FROM overridden o WHERE " + ovMove.EqColumn(inpID) + ")" +
-		" ORDER BY " + inpCompleted.Qualified() + ", " + inpID.Qualified()
-}
-
-func buildMismatchBody() string {
-	jmMove := buncolgen.NewColumn(jmCols.ShipmentMoveID.Name, "jm")
-	jmMiles := buncolgen.NewColumn("miles", "jm")
-	jmDistance := buncolgen.NewColumn("move_distance", "jm")
-	sum := "SUM(" + jmMiles.Qualified() + ")"
-
-	return "SELECT " + jmMove.As("move_id") + ", " +
-		rounded(jmDistance.Qualified()) + " AS move_distance, " +
-		rounded(sum) + " AS attributed_miles" +
-		" FROM jm" +
-		" WHERE " + jmDistance.IsNotNull() +
-		" GROUP BY " + jmMove.Qualified() + ", " + jmDistance.Qualified() +
-		" HAVING ABS(" + sum + " - " + jmDistance.Qualified() + ") > GREATEST(" +
-		mismatchFloorMiles + ", " + jmDistance.Qualified() + " * " + mismatchTolerance + ")" +
-		" ORDER BY " + jmMove.Qualified()
 }
 
 func (r *repository) AccumulateMiles(
 	ctx context.Context,
 	req *iftaports.AccumulateMilesRequest,
 ) (*iftaports.MileAccumulation, error) {
-	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*iftaports.MileAccumulation, error) {
-		dba := r.db.DBForContext(ctx)
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*iftaports.MileAccumulation, error) {
+		db := r.db.Keel(ctx)
 		args := accumulationArgs(req)
-		out := &iftaports.MileAccumulation{
-			RouteRows:  make([]*iftaports.MileRow, 0, defaultRouteRowSize),
-			ManualRows: make([]*iftaports.MileRow, 0, defaultRouteRowSize),
-			Mismatches: make([]iftaports.MoveMismatch, 0),
-		}
 
-		if err := dba.NewRaw(routeRowsSQL, args...).Scan(ctx, &out.RouteRows); err != nil {
+		routeRows, err := keel.QueryAll(
+			ctx,
+			db,
+			pgx.RowToAddrOfStructByPos[iftaports.MileRow],
+			routeRowsSQL,
+			args...,
+		)
+		if err != nil {
 			r.l.Error("failed to accumulate route miles", zap.Error(err))
 			return nil, fmt.Errorf("accumulate route miles: %w", err)
 		}
 
-		noTractor := make([]moveMiles, 0)
-		if err := dba.NewRaw(noTractorSQL, args...).Scan(ctx, &noTractor); err != nil {
+		noTractor, err := keel.QueryAll(
+			ctx,
+			db,
+			pgx.RowToStructByPos[moveMiles],
+			noTractorSQL,
+			args...)
+		if err != nil {
 			r.l.Error("failed to accumulate no-tractor miles", zap.Error(err))
 			return nil, fmt.Errorf("accumulate no-tractor miles: %w", err)
 		}
-		for i := range noTractor {
-			out.NoTractor.Add(noTractor[i].MoveID, noTractor[i].Miles)
-		}
 
-		unattributed := make([]moveMiles, 0)
-		if err := dba.NewRaw(unattributedSQL, args...).Scan(ctx, &unattributed); err != nil {
+		unattributed, err := keel.QueryAll(
+			ctx,
+			db,
+			pgx.RowToStructByPos[moveMiles],
+			unattributedSQL,
+			args...,
+		)
+		if err != nil {
 			r.l.Error("failed to list unattributed moves", zap.Error(err))
 			return nil, fmt.Errorf("list unattributed moves: %w", err)
 		}
-		for i := range unattributed {
-			out.Unattributed.Add(unattributed[i].MoveID, unattributed[i].Miles)
-		}
 
-		if err := dba.NewRaw(mismatchSQL, args...).Scan(ctx, &out.Mismatches); err != nil {
+		mismatches, err := keel.QueryAll(
+			ctx,
+			db,
+			pgx.RowToStructByPos[iftaports.MoveMismatch],
+			mismatchSQL,
+			args...,
+		)
+		if err != nil {
 			r.l.Error("failed to detect jurisdiction mileage mismatches", zap.Error(err))
 			return nil, fmt.Errorf("detect mileage mismatches: %w", err)
 		}
 
-		manual, err := r.manualRows(ctx, dba, req)
+		manual, err := r.manualRows(ctx, req)
 		if err != nil {
 			return nil, err
 		}
-		out.ManualRows = manual
+
+		out := &iftaports.MileAccumulation{
+			RouteRows:  nonNil(routeRows),
+			ManualRows: manual,
+			Mismatches: nonNil(mismatches),
+		}
+		for i := range noTractor {
+			out.NoTractor.Add(noTractor[i].MoveID, noTractor[i].Miles)
+		}
+		for i := range unattributed {
+			out.Unattributed.Add(unattributed[i].MoveID, unattributed[i].Miles)
+		}
 
 		return out, nil
 	})
@@ -290,45 +197,48 @@ func (r *repository) AccumulateMiles(
 
 func (r *repository) manualRows(
 	ctx context.Context,
-	dba bun.IDB,
 	req *iftaports.AccumulateMilesRequest,
 ) ([]*iftaports.MileRow, error) {
-	rows := make([]*iftaports.MileRow, 0, defaultRouteRowSize)
-	err := dba.NewSelect().
-		Model((*ifta.JurisdictionMileageEntry)(nil)).
-		ColumnExpr(ifmeCols.TractorID.As("tractor_id")).
-		ColumnExpr(ifjCols.CountryCode.As("country_code")).
-		ColumnExpr(ifjCols.Code.As("jurisdiction_code")).
-		ColumnExpr(ifmeCols.JurisdictionID.As("jurisdiction_id")).
-		ColumnExpr(ifmeCols.Miles.Expr("COALESCE(SUM({}), 0) AS miles")).
-		ColumnExpr(buncolgen.Expr(
-			"COALESCE(SUM({0}) FILTER (WHERE {1}), 0) AS loaded_miles",
-			ifmeCols.Miles, ifmeCols.Loaded,
-		)).
-		ColumnExpr(buncolgen.Expr(
-			"COALESCE(SUM({0}) FILTER (WHERE NOT {1}), 0) AS empty_miles",
-			ifmeCols.Miles, ifmeCols.Loaded,
-		)).
-		ColumnExpr(buncolgen.Count("move_count")).
-		Join("JOIN "+iftacol.JurisdictionTable.As(iftacol.JurisdictionTable.Alias)+
-			" ON "+ifjCols.ID.EqColumn(ifmeCols.JurisdictionID)).
-		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-			return iftacol.JurisdictionMileageEntryScopeTenant(sq, req.TenantInfo).
-				Where(ifmeCols.Year.Eq(), req.Year).
-				Where(ifmeCols.Quarter.Eq(), req.Quarter)
-		}).
-		GroupExpr(ifmeCols.TractorID.Qualified()).
-		GroupExpr(ifjCols.CountryCode.Qualified()).
-		GroupExpr(ifjCols.Code.Qualified()).
-		GroupExpr(ifmeCols.JurisdictionID.Qualified()).
-		Order(ifmeCols.TractorID.OrderAsc()).
-		Order(ifjCols.CountryCode.OrderAsc()).
-		Order(ifjCols.Code.OrderAsc()).
-		Scan(ctx, &rows)
+	me := iftadb.JurisdictionMileageEntries
+	j := iftadb.Jurisdictions
+	rows, err := keel.Into[iftaports.MileRow](
+		ctx,
+		r.db.Keel(ctx),
+		me.Join(j, j.ID.EqCol(me.JurisdictionID)).
+			Pick(
+				me.TractorID,
+				j.CountryCode,
+				j.Code,
+				me.JurisdictionID,
+				keel.Raw("coalesce(?, 0)", me.Miles.Sum()),
+				keel.Raw("coalesce(?, 0)", me.Miles.Sum().Filter(me.Loaded.IsTrue())),
+				keel.Raw("coalesce(?, 0)", me.Miles.Sum().Filter(me.Loaded.IsFalse())),
+				keel.Count(),
+			).
+			Where(
+				me.Year.Eq(int64(req.Year)),
+				me.Quarter.Eq(int64(req.Quarter)),
+			).
+			Group(me.TractorID, j.CountryCode, j.Code, me.JurisdictionID).
+			Order(me.TractorID.Asc(), j.CountryCode.Asc(), j.Code.Asc()),
+	)
 	if err != nil {
 		r.l.Error("failed to accumulate manual miles", zap.Error(err))
 		return nil, fmt.Errorf("accumulate manual miles: %w", err)
 	}
 
-	return rows, nil
+	out := make([]*iftaports.MileRow, len(rows))
+	for i := range rows {
+		out[i] = &rows[i]
+	}
+
+	return out, nil
+}
+
+func nonNil[T any](items []T) []T {
+	if items == nil {
+		return []T{}
+	}
+
+	return items
 }

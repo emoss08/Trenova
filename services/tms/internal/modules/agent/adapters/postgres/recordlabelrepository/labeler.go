@@ -1,6 +1,3 @@
-// Package recordlabelrepository reads the words records are known by, for a
-// preview that names a customer rather than its id. One query per resource,
-// inside the tenant, through the caller's transaction when there is one.
 package recordlabelrepository
 
 import (
@@ -10,100 +7,55 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/emoss08/trenova/pkg/buncolgen/accessorialchargecol"
-	"github.com/emoss08/trenova/pkg/buncolgen/bankreceiptcol"
-	"github.com/emoss08/trenova/pkg/buncolgen/billingqueuecol"
-	"github.com/emoss08/trenova/pkg/buncolgen/carriercol"
-	"github.com/emoss08/trenova/pkg/buncolgen/carriersettlementcol"
-	"github.com/emoss08/trenova/pkg/buncolgen/commoditycol"
-	"github.com/emoss08/trenova/pkg/buncolgen/customercol"
-	"github.com/emoss08/trenova/pkg/buncolgen/customerpaymentcol"
-	"github.com/emoss08/trenova/pkg/buncolgen/documentcol"
-	"github.com/emoss08/trenova/pkg/buncolgen/documenttypecol"
-	"github.com/emoss08/trenova/pkg/buncolgen/driversettlementcol"
-	"github.com/emoss08/trenova/pkg/buncolgen/equipmentmanufacturercol"
-	"github.com/emoss08/trenova/pkg/buncolgen/equipmenttypecol"
-	"github.com/emoss08/trenova/pkg/buncolgen/factoringcol"
-	"github.com/emoss08/trenova/pkg/buncolgen/factoringcompanycol"
-	"github.com/emoss08/trenova/pkg/buncolgen/fiscalperiodcol"
-	"github.com/emoss08/trenova/pkg/buncolgen/fleetcodecol"
-	"github.com/emoss08/trenova/pkg/buncolgen/formulatemplatecol"
-	"github.com/emoss08/trenova/pkg/buncolgen/glaccountcol"
-	"github.com/emoss08/trenova/pkg/buncolgen/hazardousmaterialcol"
-	"github.com/emoss08/trenova/pkg/buncolgen/holdreasoncol"
-	"github.com/emoss08/trenova/pkg/buncolgen/inboundmessagecol"
-	"github.com/emoss08/trenova/pkg/buncolgen/insightcol"
-	"github.com/emoss08/trenova/pkg/buncolgen/invoicecol"
-	"github.com/emoss08/trenova/pkg/buncolgen/journalentrycol"
-	"github.com/emoss08/trenova/pkg/buncolgen/locationcategorycol"
-	"github.com/emoss08/trenova/pkg/buncolgen/locationcol"
-	"github.com/emoss08/trenova/pkg/buncolgen/ordercol"
-	"github.com/emoss08/trenova/pkg/buncolgen/reportcol"
-	"github.com/emoss08/trenova/pkg/buncolgen/servicefailurecol"
-	"github.com/emoss08/trenova/pkg/buncolgen/servicetypecol"
-	"github.com/emoss08/trenova/pkg/buncolgen/shipmentcol"
-	"github.com/emoss08/trenova/pkg/buncolgen/shipmenttypecol"
-	"github.com/emoss08/trenova/pkg/buncolgen/tenantcol"
-	"github.com/emoss08/trenova/pkg/buncolgen/tendercol"
-	"github.com/emoss08/trenova/pkg/buncolgen/tractorcol"
-	"github.com/emoss08/trenova/pkg/buncolgen/trailercol"
-	"github.com/emoss08/trenova/pkg/buncolgen/workercol"
-
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
-	"github.com/emoss08/trenova/internal/modules/accounting/domain/fiscalperiod"
-	"github.com/emoss08/trenova/internal/modules/accounting/domain/glaccount"
-	"github.com/emoss08/trenova/internal/modules/accounting/domain/journalentry"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/insight"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/fiscalperiod/fiscalperioddb"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/glaccount/glaccountdb"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/journalentry/journalentrydb"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/insight/insightdb"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
-	"github.com/emoss08/trenova/internal/modules/billing/domain/bankreceipt"
-	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
-	"github.com/emoss08/trenova/internal/modules/billing/domain/customerpayment"
-	"github.com/emoss08/trenova/internal/modules/billing/domain/factoring"
-	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
-	"github.com/emoss08/trenova/internal/modules/documents/domain/document"
-	"github.com/emoss08/trenova/internal/modules/documents/domain/inboundmessage"
-	"github.com/emoss08/trenova/internal/modules/equipment/domain/equipmentmanufacturer"
-	"github.com/emoss08/trenova/internal/modules/equipment/domain/equipmenttype"
-	"github.com/emoss08/trenova/internal/modules/equipment/domain/fleetcode"
-	"github.com/emoss08/trenova/internal/modules/equipment/domain/tractor"
-	"github.com/emoss08/trenova/internal/modules/equipment/domain/trailer"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/bankreceipt/bankreceiptdb"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue/billingqueuedb"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/customerpayment/customerpaymentdb"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/factoring/factoringdb"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice/invoicedb"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/document/documentdb"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/inboundmessage/inboundmessagedb"
+	"github.com/emoss08/trenova/internal/modules/equipment/domain/equipmentmanufacturer/equipmentmanufacturerdb"
+	"github.com/emoss08/trenova/internal/modules/equipment/domain/equipmenttype/equipmenttypedb"
+	"github.com/emoss08/trenova/internal/modules/equipment/domain/fleetcode/fleetcodedb"
+	"github.com/emoss08/trenova/internal/modules/equipment/domain/tractor/tractordb"
+	"github.com/emoss08/trenova/internal/modules/equipment/domain/trailer/trailerdb"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
-	tenantdomain "github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
-	"github.com/emoss08/trenova/internal/modules/operations/domain/order"
-	"github.com/emoss08/trenova/internal/modules/operations/domain/servicefailure"
-	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
-	"github.com/emoss08/trenova/internal/modules/operations/domain/tender"
-	"github.com/emoss08/trenova/internal/modules/parties/domain/carrier"
-	"github.com/emoss08/trenova/internal/modules/parties/domain/customer"
-	"github.com/emoss08/trenova/internal/modules/parties/domain/factoringcompany"
-	"github.com/emoss08/trenova/internal/modules/places/domain/location"
-	"github.com/emoss08/trenova/internal/modules/places/domain/locationcategory"
-	"github.com/emoss08/trenova/internal/modules/rating/domain/formulatemplate"
-	"github.com/emoss08/trenova/internal/modules/reference/domain/accessorialcharge"
-	"github.com/emoss08/trenova/internal/modules/reference/domain/commodity"
-	"github.com/emoss08/trenova/internal/modules/reference/domain/documenttype"
-	"github.com/emoss08/trenova/internal/modules/reference/domain/hazardousmaterial"
-	"github.com/emoss08/trenova/internal/modules/reference/domain/holdreason"
-	"github.com/emoss08/trenova/internal/modules/reference/domain/servicetype"
-	"github.com/emoss08/trenova/internal/modules/reference/domain/shipmenttype"
-	"github.com/emoss08/trenova/internal/modules/settlement/domain/carriersettlement"
-	"github.com/emoss08/trenova/internal/modules/settlement/domain/driversettlement"
-	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
-	"github.com/emoss08/trenova/internal/modules/workspace/domain/report"
-	"github.com/emoss08/trenova/pkg/buncolgen"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant/tenantdb"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/order/orderdb"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/servicefailure/servicefailuredb"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment/shipmentdb"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/tender/tenderdb"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/carrier/carrierdb"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/customer/customerdb"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/factoringcompany/factoringcompanydb"
+	"github.com/emoss08/trenova/internal/modules/places/domain/location/locationdb"
+	"github.com/emoss08/trenova/internal/modules/places/domain/locationcategory/locationcategorydb"
+	"github.com/emoss08/trenova/internal/modules/rating/domain/formulatemplate/formulatemplatedb"
+	"github.com/emoss08/trenova/internal/modules/reference/domain/accessorialcharge/accessorialchargedb"
+	"github.com/emoss08/trenova/internal/modules/reference/domain/commodity/commoditydb"
+	"github.com/emoss08/trenova/internal/modules/reference/domain/documenttype/documenttypedb"
+	"github.com/emoss08/trenova/internal/modules/reference/domain/hazardousmaterial/hazardousmaterialdb"
+	"github.com/emoss08/trenova/internal/modules/reference/domain/holdreason/holdreasondb"
+	"github.com/emoss08/trenova/internal/modules/reference/domain/servicetype/servicetypedb"
+	"github.com/emoss08/trenova/internal/modules/reference/domain/shipmenttype/shipmenttypedb"
+	"github.com/emoss08/trenova/internal/modules/settlement/domain/carriersettlement/carriersettlementdb"
+	"github.com/emoss08/trenova/internal/modules/settlement/domain/driversettlement/driversettlementdb"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker/workerdb"
+	"github.com/emoss08/trenova/internal/modules/workspace/domain/report/reportdb"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/uptrace/bun"
 	"go.uber.org/fx"
 )
 
-// MaxIDsPerResource bounds one resource's query: every record the longest
-// record subset may offer a person to untick. A preview names a few dozen;
-// anything past this is left unlabelled.
 const MaxIDsPerResource = agentports.MaxRecordLabelsPerResource
-
-const labelAlias = " AS label"
 
 type Params struct {
 	fx.In
@@ -120,14 +72,20 @@ func New(p Params) agentports.RecordLabeler {
 }
 
 type labelRow struct {
-	ID    pulid.ID `bun:"id"`
-	Label string   `bun:"label"`
+	ID    pulid.ID
+	Label string
 }
 
 type ownedRow struct {
-	ID      pulid.ID `bun:"id"`
-	OwnerID pulid.ID `bun:"owner_id"`
-	Label   string   `bun:"label"`
+	ID      pulid.ID
+	OwnerID pulid.ID
+	Label   string
+}
+
+type moveRow struct {
+	ID         pulid.ID
+	ShipmentID pulid.ID
+	Sequence   int64
 }
 
 type labelReader func(
@@ -136,356 +94,238 @@ type labelReader func(
 	ids []pulid.ID,
 ) (map[pulid.ID]string, error)
 
-// source is one resource's label: which table, how it is scoped to the
-// tenant, which column is the id and what expression names a row.
-type source struct {
-	model func() any
-	scope func(*bun.SelectQuery, pagination.TenantInfo) *bun.SelectQuery
-	id    buncolgen.Column
-	label string
+type projection interface {
+	keel.Projection
+	ToSQL(ctx context.Context, db *keel.DB) (string, []any, error)
 }
 
-// ownedSource is a record named by its owner and, when label is set, what it
-// is of that owner.
+type source func(ids []pulid.ID) projection
+
 type ownedSource struct {
-	source
-	ownerID buncolgen.Column
-	owner   permission.Resource
+	query source
+	owner permission.Resource
+}
+
+func labelText(e keel.Expr) keel.Expr {
+	return keel.Raw("COALESCE((?)::text, '')", e)
 }
 
 //nolint:exhaustive // only the resources whose records a preview names by label are listed
 var sources = map[permission.Resource]source{
-	permission.ResourceShipment: {
-		model: func() any { return (*shipment.Shipment)(nil) },
-		scope: shipmentcol.ShipmentScopeTenant,
-		id:    shipmentcol.ShipmentColumns.ID,
-		label: shipmentcol.ShipmentColumns.ProNumber.Qualified(),
+	permission.ResourceShipment: func(ids []pulid.ID) projection {
+		t := shipmentdb.Shipments
+		return t.Pick(t.ID, labelText(t.ProNumber)).Where(t.ID.In(ids...))
 	},
-	permission.ResourceCustomer: {
-		model: func() any { return (*customer.Customer)(nil) },
-		scope: customercol.CustomerScopeTenant,
-		id:    customercol.CustomerColumns.ID,
-		label: customercol.CustomerColumns.Name.Qualified(),
+	permission.ResourceCustomer: func(ids []pulid.ID) projection {
+		t := customerdb.Customers
+		return t.Pick(t.ID, labelText(t.Name)).Where(t.ID.In(ids...))
 	},
-	permission.ResourceLocation: {
-		model: func() any { return (*location.Location)(nil) },
-		scope: locationcol.LocationScopeTenant,
-		id:    locationcol.LocationColumns.ID,
-		label: locationcol.LocationColumns.Name.Qualified(),
+	permission.ResourceLocation: func(ids []pulid.ID) projection {
+		t := locationdb.Locations
+		return t.Pick(t.ID, labelText(t.Name)).Where(t.ID.In(ids...))
 	},
-	permission.ResourceWorker: {
-		model: func() any { return (*worker.Worker)(nil) },
-		scope: workercol.WorkerScopeTenant,
-		id:    workercol.WorkerColumns.ID,
-		label: buncolgen.Expr(
-			"CONCAT_WS(' ', {0}, {1})",
-			workercol.WorkerColumns.FirstName,
-			workercol.WorkerColumns.LastName,
-		),
+	permission.ResourceWorker: func(ids []pulid.ID) projection {
+		t := workerdb.Workers
+		return t.Pick(t.ID, labelText(keel.Raw("CONCAT_WS(' ', ?, ?)", t.FirstName, t.LastName))).
+			Where(t.ID.In(ids...))
 	},
-	permission.ResourceTractor: {
-		model: func() any { return (*tractor.Tractor)(nil) },
-		scope: tractorcol.TractorScopeTenant,
-		id:    tractorcol.TractorColumns.ID,
-		label: tractorcol.TractorColumns.Code.Qualified(),
+	permission.ResourceTractor: func(ids []pulid.ID) projection {
+		t := tractordb.Tractors
+		return t.Pick(t.ID, labelText(t.Code)).Where(t.ID.In(ids...))
 	},
-	permission.ResourceTrailer: {
-		model: func() any { return (*trailer.Trailer)(nil) },
-		scope: trailercol.TrailerScopeTenant,
-		id:    trailercol.TrailerColumns.ID,
-		label: trailercol.TrailerColumns.Code.Qualified(),
+	permission.ResourceTrailer: func(ids []pulid.ID) projection {
+		t := trailerdb.Trailers
+		return t.Pick(t.ID, labelText(t.Code)).Where(t.ID.In(ids...))
 	},
-	permission.ResourceCarrier: {
-		model: func() any { return (*carrier.Carrier)(nil) },
-		scope: carriercol.CarrierScopeTenant,
-		id:    carriercol.CarrierColumns.ID,
-		label: carriercol.CarrierColumns.Name.Qualified(),
+	permission.ResourceCarrier: func(ids []pulid.ID) projection {
+		t := carrierdb.Carriers
+		return t.Pick(t.ID, labelText(t.Name)).Where(t.ID.In(ids...))
 	},
-	permission.ResourceCommodity: {
-		model: func() any { return (*commodity.Commodity)(nil) },
-		scope: commoditycol.CommodityScopeTenant,
-		id:    commoditycol.CommodityColumns.ID,
-		label: commoditycol.CommodityColumns.Name.Qualified(),
+	permission.ResourceCommodity: func(ids []pulid.ID) projection {
+		t := commoditydb.Commodities
+		return t.Pick(t.ID, labelText(t.Name)).Where(t.ID.In(ids...))
 	},
-	permission.ResourceEquipmentType: {
-		model: func() any { return (*equipmenttype.EquipmentType)(nil) },
-		scope: equipmenttypecol.EquipmentTypeScopeTenant,
-		id:    equipmenttypecol.EquipmentTypeColumns.ID,
-		label: equipmenttypecol.EquipmentTypeColumns.Code.Qualified(),
+	permission.ResourceEquipmentType: func(ids []pulid.ID) projection {
+		t := equipmenttypedb.EquipmentTypes
+		return t.Pick(t.ID, labelText(t.Code)).Where(t.ID.In(ids...))
 	},
-	permission.ResourceFleetCode: {
-		model: func() any { return (*fleetcode.FleetCode)(nil) },
-		scope: fleetcodecol.FleetCodeScopeTenant,
-		id:    fleetcodecol.FleetCodeColumns.ID,
-		label: fleetcodecol.FleetCodeColumns.Code.Qualified(),
+	permission.ResourceFleetCode: func(ids []pulid.ID) projection {
+		t := fleetcodedb.FleetCodes
+		return t.Pick(t.ID, labelText(t.Code)).Where(t.ID.In(ids...))
 	},
-	permission.ResourceAccessorialCharge: {
-		model: func() any { return (*accessorialcharge.AccessorialCharge)(nil) },
-		scope: accessorialchargecol.AccessorialChargeScopeTenant,
-		id:    accessorialchargecol.AccessorialChargeColumns.ID,
-		label: accessorialchargecol.AccessorialChargeColumns.Code.Qualified(),
+	permission.ResourceAccessorialCharge: func(ids []pulid.ID) projection {
+		t := accessorialchargedb.AccessorialCharges
+		return t.Pick(t.ID, labelText(t.Code)).Where(t.ID.In(ids...))
 	},
-	permission.ResourceFactoringCompany: {
-		model: func() any { return (*factoringcompany.FactoringCompany)(nil) },
-		scope: factoringcompanycol.FactoringCompanyScopeTenant,
-		id:    factoringcompanycol.FactoringCompanyColumns.ID,
-		label: factoringcompanycol.FactoringCompanyColumns.Name.Qualified(),
+	permission.ResourceFactoringCompany: func(ids []pulid.ID) projection {
+		t := factoringcompanydb.FactoringCompanies
+		return t.Pick(t.ID, labelText(t.Name)).Where(t.ID.In(ids...))
 	},
-	permission.ResourceFactoringSubmission: {
-		model: func() any { return (*factoring.Submission)(nil) },
-		scope: factoringcol.SubmissionScopeTenant,
-		id:    factoringcol.SubmissionColumns.ID,
-		label: factoringcol.SubmissionColumns.Number.Qualified(),
+	permission.ResourceFactoringSubmission: func(ids []pulid.ID) projection {
+		t := factoringdb.Submissions
+		return t.Pick(t.ID, labelText(t.Number)).Where(t.ID.In(ids...))
 	},
-	permission.ResourceInvoice: {
-		model: func() any { return (*invoice.Invoice)(nil) },
-		scope: invoicecol.InvoiceScopeTenant,
-		id:    invoicecol.InvoiceColumns.ID,
-		label: invoicecol.InvoiceColumns.Number.Qualified(),
+	permission.ResourceInvoice: func(ids []pulid.ID) projection {
+		t := invoicedb.Invoices
+		return t.Pick(t.ID, labelText(t.Number)).Where(t.ID.In(ids...))
 	},
-	permission.ResourceDocument: {
-		model: func() any { return (*document.Document)(nil) },
-		scope: documentcol.DocumentScopeTenant,
-		id:    documentcol.DocumentColumns.ID,
-		label: buncolgen.Expr(
-			"COALESCE(NULLIF({0}, ''), {1})",
-			documentcol.DocumentColumns.OriginalName,
-			documentcol.DocumentColumns.FileName,
-		),
+	permission.ResourceDocument: func(ids []pulid.ID) projection {
+		t := documentdb.Documents
+		return t.Pick(t.ID, labelText(keel.Raw("COALESCE(NULLIF(?, ''), ?)", t.OriginalName, t.FileName))).
+			Where(t.ID.In(ids...))
 	},
-	permission.ResourceDashboard: {
-		model: func() any { return (*report.Dashboard)(nil) },
-		scope: reportcol.DashboardScopeTenant,
-		id:    reportcol.DashboardColumns.ID,
-		label: reportcol.DashboardColumns.Name.Qualified(),
+	permission.ResourceDashboard: func(ids []pulid.ID) projection {
+		t := reportdb.Dashboards
+		return t.Pick(t.ID, labelText(t.Name)).Where(t.ID.In(ids...))
 	},
-	permission.ResourceReport: {
-		model: func() any { return (*report.ReportDefinition)(nil) },
-		scope: reportcol.ReportDefinitionScopeTenant,
-		id:    reportcol.ReportDefinitionColumns.ID,
-		label: reportcol.ReportDefinitionColumns.Name.Qualified(),
+	permission.ResourceReport: func(ids []pulid.ID) projection {
+		t := reportdb.ReportDefinitions
+		return t.Pick(t.ID, labelText(t.Name)).Where(t.ID.In(ids...))
 	},
-	permission.ResourceBillingQueue: {
-		model: func() any { return (*billingqueue.BillingQueueItem)(nil) },
-		scope: billingqueuecol.BillingQueueItemScopeTenant,
-		id:    billingqueuecol.BillingQueueItemColumns.ID,
-		label: billingqueuecol.BillingQueueItemColumns.Number.Qualified(),
+	permission.ResourceBillingQueue: func(ids []pulid.ID) projection {
+		t := billingqueuedb.BillingQueueItems
+		return t.Pick(t.ID, labelText(t.Number)).Where(t.ID.In(ids...))
 	},
-	permission.ResourceDriverSettlement: {
-		model: func() any { return (*driversettlement.Settlement)(nil) },
-		scope: driversettlementcol.SettlementScopeTenant,
-		id:    driversettlementcol.SettlementColumns.ID,
-		label: driversettlementcol.SettlementColumns.SettlementNumber.Qualified(),
+	permission.ResourceDriverSettlement: func(ids []pulid.ID) projection {
+		t := driversettlementdb.Settlements
+		return t.Pick(t.ID, labelText(t.SettlementNumber)).Where(t.ID.In(ids...))
 	},
-	permission.ResourceCarrierSettlement: {
-		model: func() any { return (*carriersettlement.CarrierSettlement)(nil) },
-		scope: carriersettlementcol.CarrierSettlementScopeTenant,
-		id:    carriersettlementcol.CarrierSettlementColumns.ID,
-		label: carriersettlementcol.CarrierSettlementColumns.SettlementNumber.Qualified(),
+	permission.ResourceCarrierSettlement: func(ids []pulid.ID) projection {
+		t := carriersettlementdb.CarrierSettlements
+		return t.Pick(t.ID, labelText(t.SettlementNumber)).Where(t.ID.In(ids...))
 	},
-	permission.ResourceBankReceipt: {
-		model: func() any { return (*bankreceipt.BankReceipt)(nil) },
-		scope: bankreceiptcol.BankReceiptScopeTenant,
-		id:    bankreceiptcol.BankReceiptColumns.ID,
-		label: bankreceiptcol.BankReceiptColumns.ReferenceNumber.Qualified(),
+	permission.ResourceBankReceipt: func(ids []pulid.ID) projection {
+		t := bankreceiptdb.BankReceipts
+		return t.Pick(t.ID, labelText(t.ReferenceNumber)).Where(t.ID.In(ids...))
 	},
-	permission.ResourceInsight: {
-		model: func() any { return (*insight.Insight)(nil) },
-		scope: insightcol.InsightScopeTenant,
-		id:    insightcol.InsightColumns.ID,
-		label: insightcol.InsightColumns.Headline.Qualified(),
+	permission.ResourceInsight: func(ids []pulid.ID) projection {
+		t := insightdb.Insights
+		return t.Pick(t.ID, labelText(t.Headline)).Where(t.ID.In(ids...))
 	},
-	permission.ResourceInboundMessage: {
-		model: func() any { return (*inboundmessage.InboundMessage)(nil) },
-		scope: inboundmessagecol.InboundMessageScopeTenant,
-		id:    inboundmessagecol.InboundMessageColumns.ID,
-		label: inboundmessagecol.InboundMessageColumns.Subject.Qualified(),
+	permission.ResourceInboundMessage: func(ids []pulid.ID) projection {
+		t := inboundmessagedb.InboundMessages
+		return t.Pick(t.ID, labelText(t.Subject)).Where(t.ID.In(ids...))
 	},
-	permission.ResourceServiceFailure: {
-		model: func() any { return (*servicefailure.ServiceFailure)(nil) },
-		scope: servicefailurecol.ServiceFailureScopeTenant,
-		id:    servicefailurecol.ServiceFailureColumns.ID,
-		label: servicefailurecol.ServiceFailureColumns.Number.Qualified(),
+	permission.ResourceServiceFailure: func(ids []pulid.ID) projection {
+		t := servicefailuredb.ServiceFailures
+		return t.Pick(t.ID, labelText(t.Number)).Where(t.ID.In(ids...))
 	},
-	permission.ResourceHoldReason: {
-		model: func() any { return (*holdreason.HoldReason)(nil) },
-		scope: holdreasoncol.HoldReasonScopeTenant,
-		id:    holdreasoncol.HoldReasonColumns.ID,
-		label: holdreasoncol.HoldReasonColumns.Label.Qualified(),
+	permission.ResourceHoldReason: func(ids []pulid.ID) projection {
+		t := holdreasondb.HoldReasons
+		return t.Pick(t.ID, labelText(t.Label)).Where(t.ID.In(ids...))
 	},
-	permission.ResourceCustomerPayment: {
-		model: func() any { return (*customerpayment.Payment)(nil) },
-		scope: customerpaymentcol.PaymentScopeTenant,
-		id:    customerpaymentcol.PaymentColumns.ID,
-		label: buncolgen.Expr(
-			"COALESCE(NULLIF({0}, ''), 'Payment of ' || "+
-				"TO_CHAR(TO_TIMESTAMP({1}) AT TIME ZONE 'UTC', 'YYYY-MM-DD'))",
-			customerpaymentcol.PaymentColumns.ReferenceNumber,
-			customerpaymentcol.PaymentColumns.PaymentDate,
-		),
+	permission.ResourceCustomerPayment: func(ids []pulid.ID) projection {
+		t := customerpaymentdb.Payments
+		return t.Pick(t.ID, labelText(keel.Raw("COALESCE(NULLIF(?, ''), 'Payment of ' || TO_CHAR(TO_TIMESTAMP(?) AT TIME ZONE 'UTC', 'YYYY-MM-DD'))", t.ReferenceNumber, t.PaymentDate))).
+			Where(t.ID.In(ids...))
 	},
-	permission.ResourceDocumentType: {
-		model: func() any { return (*documenttype.DocumentType)(nil) },
-		scope: documenttypecol.DocumentTypeScopeTenant,
-		id:    documenttypecol.DocumentTypeColumns.ID,
-		label: documenttypecol.DocumentTypeColumns.Name.Qualified(),
+	permission.ResourceDocumentType: func(ids []pulid.ID) projection {
+		t := documenttypedb.DocumentTypes
+		return t.Pick(t.ID, labelText(t.Name)).Where(t.ID.In(ids...))
 	},
-	permission.ResourceEquipmentManufacturer: {
-		model: func() any { return (*equipmentmanufacturer.EquipmentManufacturer)(nil) },
-		scope: equipmentmanufacturercol.EquipmentManufacturerScopeTenant,
-		id:    equipmentmanufacturercol.EquipmentManufacturerColumns.ID,
-		label: equipmentmanufacturercol.EquipmentManufacturerColumns.Name.Qualified(),
+	permission.ResourceEquipmentManufacturer: func(ids []pulid.ID) projection {
+		t := equipmentmanufacturerdb.EquipmentManufacturers
+		return t.Pick(t.ID, labelText(t.Name)).Where(t.ID.In(ids...))
 	},
-	permission.ResourceFiscalPeriod: {
-		model: func() any { return (*fiscalperiod.FiscalPeriod)(nil) },
-		scope: fiscalperiodcol.FiscalPeriodScopeTenant,
-		id:    fiscalperiodcol.FiscalPeriodColumns.ID,
-		label: fiscalperiodcol.FiscalPeriodColumns.Name.Qualified(),
+	permission.ResourceFiscalPeriod: func(ids []pulid.ID) projection {
+		t := fiscalperioddb.FiscalPeriods
+		return t.Pick(t.ID, labelText(t.Name)).Where(t.ID.In(ids...))
 	},
-	permission.ResourceFormulaTemplate: {
-		model: func() any { return (*formulatemplate.FormulaTemplate)(nil) },
-		scope: formulatemplatecol.FormulaTemplateScopeTenant,
-		id:    formulatemplatecol.FormulaTemplateColumns.ID,
-		label: formulatemplatecol.FormulaTemplateColumns.Name.Qualified(),
+	permission.ResourceFormulaTemplate: func(ids []pulid.ID) projection {
+		t := formulatemplatedb.FormulaTemplates
+		return t.Pick(t.ID, labelText(t.Name)).Where(t.ID.In(ids...))
 	},
-	permission.ResourceGeneralLedgerAccount: {
-		model: func() any { return (*glaccount.GLAccount)(nil) },
-		scope: glaccountcol.GLAccountScopeTenant,
-		id:    glaccountcol.GLAccountColumns.ID,
-		label: buncolgen.Expr(
-			"CONCAT_WS(' ', {0}, {1})",
-			glaccountcol.GLAccountColumns.AccountCode,
-			glaccountcol.GLAccountColumns.Name,
-		),
+	permission.ResourceGeneralLedgerAccount: func(ids []pulid.ID) projection {
+		t := glaccountdb.GLAccounts
+		return t.Pick(t.ID, labelText(keel.Raw("CONCAT_WS(' ', ?, ?)", t.AccountCode, t.Name))).
+			Where(t.ID.In(ids...))
 	},
-	permission.ResourceHazardousMaterial: {
-		model: func() any { return (*hazardousmaterial.HazardousMaterial)(nil) },
-		scope: hazardousmaterialcol.HazardousMaterialScopeTenant,
-		id:    hazardousmaterialcol.HazardousMaterialColumns.ID,
-		label: hazardousmaterialcol.HazardousMaterialColumns.Name.Qualified(),
+	permission.ResourceHazardousMaterial: func(ids []pulid.ID) projection {
+		t := hazardousmaterialdb.HazardousMaterials
+		return t.Pick(t.ID, labelText(t.Name)).Where(t.ID.In(ids...))
 	},
-	permission.ResourceJournalEntry: {
-		model: func() any { return (*journalentry.JournalEntry)(nil) },
-		scope: journalentrycol.JournalEntryScopeTenant,
-		id:    journalentrycol.JournalEntryColumns.ID,
-		label: journalentrycol.JournalEntryColumns.EntryNumber.Qualified(),
+	permission.ResourceJournalEntry: func(ids []pulid.ID) projection {
+		t := journalentrydb.JournalEntries
+		return t.Pick(t.ID, labelText(t.EntryNumber)).Where(t.ID.In(ids...))
 	},
-	permission.ResourceLocationCategory: {
-		model: func() any { return (*locationcategory.LocationCategory)(nil) },
-		scope: locationcategorycol.LocationCategoryScopeTenant,
-		id:    locationcategorycol.LocationCategoryColumns.ID,
-		label: locationcategorycol.LocationCategoryColumns.Name.Qualified(),
+	permission.ResourceLocationCategory: func(ids []pulid.ID) projection {
+		t := locationcategorydb.LocationCategories
+		return t.Pick(t.ID, labelText(t.Name)).Where(t.ID.In(ids...))
 	},
-	permission.ResourceOrder: {
-		model: func() any { return (*order.Order)(nil) },
-		scope: ordercol.OrderScopeTenant,
-		id:    ordercol.OrderColumns.ID,
-		label: ordercol.OrderColumns.OrderNumber.Qualified(),
+	permission.ResourceOrder: func(ids []pulid.ID) projection {
+		t := orderdb.Orders
+		return t.Pick(t.ID, labelText(t.OrderNumber)).Where(t.ID.In(ids...))
 	},
-	permission.ResourceRoutingGuide: {
-		model: func() any { return (*tender.RoutingGuide)(nil) },
-		scope: tendercol.RoutingGuideScopeTenant,
-		id:    tendercol.RoutingGuideColumns.ID,
-		label: tendercol.RoutingGuideColumns.Name.Qualified(),
+	permission.ResourceRoutingGuide: func(ids []pulid.ID) projection {
+		t := tenderdb.RoutingGuides
+		return t.Pick(t.ID, labelText(t.Name)).Where(t.ID.In(ids...))
 	},
-	permission.ResourceServiceFailureReasonCode: {
-		model: func() any { return (*servicefailure.ReasonCode)(nil) },
-		scope: servicefailurecol.ReasonCodeScopeTenant,
-		id:    servicefailurecol.ReasonCodeColumns.ID,
-		label: servicefailurecol.ReasonCodeColumns.Label.Qualified(),
+	permission.ResourceServiceFailureReasonCode: func(ids []pulid.ID) projection {
+		t := servicefailuredb.ReasonCodes
+		return t.Pick(t.ID, labelText(t.Label)).Where(t.ID.In(ids...))
 	},
-	permission.ResourceServiceType: {
-		model: func() any { return (*servicetype.ServiceType)(nil) },
-		scope: servicetypecol.ServiceTypeScopeTenant,
-		id:    servicetypecol.ServiceTypeColumns.ID,
-		label: servicetypecol.ServiceTypeColumns.Code.Qualified(),
+	permission.ResourceServiceType: func(ids []pulid.ID) projection {
+		t := servicetypedb.ServiceTypes
+		return t.Pick(t.ID, labelText(t.Code)).Where(t.ID.In(ids...))
 	},
-	permission.ResourceShipmentType: {
-		model: func() any { return (*shipmenttype.ShipmentType)(nil) },
-		scope: shipmenttypecol.ShipmentTypeScopeTenant,
-		id:    shipmenttypecol.ShipmentTypeColumns.ID,
-		label: shipmenttypecol.ShipmentTypeColumns.Code.Qualified(),
+	permission.ResourceShipmentType: func(ids []pulid.ID) projection {
+		t := shipmenttypedb.ShipmentTypes
+		return t.Pick(t.ID, labelText(t.Code)).Where(t.ID.In(ids...))
 	},
-	permission.ResourceShiftTemplate: {
-		model: func() any { return (*worker.ShiftTemplate)(nil) },
-		scope: workercol.ShiftTemplateScopeTenant,
-		id:    workercol.ShiftTemplateColumns.ID,
-		label: workercol.ShiftTemplateColumns.Name.Qualified(),
+	permission.ResourceShiftTemplate: func(ids []pulid.ID) projection {
+		t := workerdb.ShiftTemplates
+		return t.Pick(t.ID, labelText(t.Name)).Where(t.ID.In(ids...))
 	},
-	permission.ResourceTrainingCourse: {
-		model: func() any { return (*worker.TrainingCourse)(nil) },
-		scope: workercol.TrainingCourseScopeTenant,
-		id:    workercol.TrainingCourseColumns.ID,
-		label: workercol.TrainingCourseColumns.Name.Qualified(),
+	permission.ResourceTrainingCourse: func(ids []pulid.ID) projection {
+		t := workerdb.TrainingCourses
+		return t.Pick(t.ID, labelText(t.Name)).Where(t.ID.In(ids...))
 	},
-	permission.ResourceWorkerChecklistTemplate: {
-		model: func() any { return (*worker.WorkerChecklistTemplate)(nil) },
-		scope: workercol.WorkerChecklistTemplateScopeTenant,
-		id:    workercol.WorkerChecklistTemplateColumns.ID,
-		label: workercol.WorkerChecklistTemplateColumns.Name.Qualified(),
+	permission.ResourceWorkerChecklistTemplate: func(ids []pulid.ID) projection {
+		t := workerdb.WorkerChecklistTemplates
+		return t.Pick(t.ID, labelText(t.Name)).Where(t.ID.In(ids...))
 	},
-	permission.ResourceWorkerCredentialType: {
-		model: func() any { return (*worker.WorkerCredentialType)(nil) },
-		scope: workercol.WorkerCredentialTypeScopeTenant,
-		id:    workercol.WorkerCredentialTypeColumns.ID,
-		label: workercol.WorkerCredentialTypeColumns.Name.Qualified(),
+	permission.ResourceWorkerCredentialType: func(ids []pulid.ID) projection {
+		t := workerdb.WorkerCredentialTypes
+		return t.Pick(t.ID, labelText(t.Name)).Where(t.ID.In(ids...))
 	},
 }
 
-// ownedSources are records known by the record they belong to and what they
-// are of it: a driver's leave case as "Jane Doe · Medical", a tender offer
-// by the carrier it went to. The owner is named through sources.
-//
 //nolint:exhaustive // only the resources whose records a preview names by label are listed
 var ownedSources = map[permission.Resource]ownedSource{
 	permission.ResourceTender: {
-		source: source{
-			model: func() any { return (*tender.TenderOffer)(nil) },
-			scope: tendercol.TenderOfferScopeTenant,
-			id:    tendercol.TenderOfferColumns.ID,
+		query: func(ids []pulid.ID) projection {
+			t := tenderdb.TenderOffers
+			return t.Pick(t.ID, t.CarrierID, keel.Raw("''")).Where(t.ID.In(ids...))
 		},
-		ownerID: tendercol.TenderOfferColumns.CarrierID,
-		owner:   permission.ResourceCarrier,
+		owner: permission.ResourceCarrier,
 	},
 	permission.ResourceFactoringAgreement: {
-		source: source{
-			model: func() any { return (*factoring.Agreement)(nil) },
-			scope: factoringcol.AgreementScopeTenant,
-			id:    factoringcol.AgreementColumns.ID,
-			label: factoringcol.AgreementColumns.Status.Qualified(),
+		query: func(ids []pulid.ID) projection {
+			t := factoringdb.Agreements
+			return t.Pick(t.ID, t.FactoringCompanyID, labelText(t.Status)).Where(t.ID.In(ids...))
 		},
-		ownerID: factoringcol.AgreementColumns.FactoringCompanyID,
-		owner:   permission.ResourceFactoringCompany,
+		owner: permission.ResourceFactoringCompany,
 	},
 	permission.ResourceWorkerLeave: {
-		source: source{
-			model: func() any { return (*worker.WorkerLeaveCase)(nil) },
-			scope: workercol.WorkerLeaveCaseScopeTenant,
-			id:    workercol.WorkerLeaveCaseColumns.ID,
-			label: workercol.WorkerLeaveCaseColumns.LeaveType.Qualified(),
+		query: func(ids []pulid.ID) projection {
+			t := workerdb.WorkerLeaveCases
+			return t.Pick(t.ID, t.WorkerID, labelText(t.LeaveType)).Where(t.ID.In(ids...))
 		},
-		ownerID: workercol.WorkerLeaveCaseColumns.WorkerID,
-		owner:   permission.ResourceWorker,
+		owner: permission.ResourceWorker,
 	},
 	permission.ResourceWorkerPTO: {
-		source: source{
-			model: func() any { return (*worker.WorkerPTO)(nil) },
-			scope: workercol.WorkerPTOScopeTenant,
-			id:    workercol.WorkerPTOColumns.ID,
-			label: workercol.WorkerPTOColumns.Type.Qualified(),
+		query: func(ids []pulid.ID) projection {
+			t := workerdb.WorkerPTOs
+			return t.Pick(t.ID, t.WorkerID, labelText(t.Type)).Where(t.ID.In(ids...))
 		},
-		ownerID: workercol.WorkerPTOColumns.WorkerID,
-		owner:   permission.ResourceWorker,
+		owner: permission.ResourceWorker,
 	},
 	permission.ResourceWorkerSafetyEvent: {
-		source: source{
-			model: func() any { return (*worker.WorkerSafetyEvent)(nil) },
-			scope: workercol.WorkerSafetyEventScopeTenant,
-			id:    workercol.WorkerSafetyEventColumns.ID,
-			label: workercol.WorkerSafetyEventColumns.Kind.Qualified(),
+		query: func(ids []pulid.ID) projection {
+			t := workerdb.WorkerSafetyEvents
+			return t.Pick(t.ID, t.WorkerID, labelText(t.Kind)).Where(t.ID.In(ids...))
 		},
-		ownerID: workercol.WorkerSafetyEventColumns.WorkerID,
-		owner:   permission.ResourceWorker,
+		owner: permission.ResourceWorker,
 	},
 }
 
@@ -524,8 +364,6 @@ func (l *Labeler) Labels(
 	return labels, nil
 }
 
-// reader is how one resource's labels are read; nil for a resource with no
-// label.
 func (l *Labeler) reader(resource permission.Resource) labelReader {
 	if resource == permission.ResourceShipmentMove {
 		return l.moveLabels
@@ -536,19 +374,19 @@ func (l *Labeler) reader(resource permission.Resource) labelReader {
 	if src, ok := sources[resource]; ok {
 		return func(
 			ctx context.Context,
-			tenant pagination.TenantInfo,
+			_ pagination.TenantInfo,
 			ids []pulid.ID,
 		) (map[pulid.ID]string, error) {
-			return l.read(ctx, tenant, &src, ids)
+			return l.read(ctx, src, ids)
 		}
 	}
 	if src, ok := ownedSources[resource]; ok {
 		return func(
 			ctx context.Context,
-			tenant pagination.TenantInfo,
+			_ pagination.TenantInfo,
 			ids []pulid.ID,
 		) (map[pulid.ID]string, error) {
-			return l.readOwned(ctx, tenant, &src, ids)
+			return l.readOwned(ctx, &src, ids)
 		}
 	}
 
@@ -557,18 +395,12 @@ func (l *Labeler) reader(resource permission.Resource) labelReader {
 
 func (l *Labeler) read(
 	ctx context.Context,
-	tenant pagination.TenantInfo,
-	src *source,
+	src source,
 	ids []pulid.ID,
 ) (map[pulid.ID]string, error) {
 	return dbtx.Read(ctx, l.db, func(ctx context.Context) (map[pulid.ID]string, error) {
-		rows := make([]labelRow, 0, len(ids))
-		if err := labelQuery(
-			l.db.DBForContext(ctx),
-			tenant,
-			src,
-			ids,
-		).Scan(ctx, &rows); err != nil {
+		rows, err := keel.Into[labelRow](ctx, l.db.Keel(ctx), src(ids))
+		if err != nil {
 			return nil, err
 		}
 
@@ -576,37 +408,14 @@ func (l *Labeler) read(
 	})
 }
 
-func labelQuery(
-	db bun.IDB,
-	tenant pagination.TenantInfo,
-	src *source,
-	ids []pulid.ID,
-) *bun.SelectQuery {
-	return db.NewSelect().
-		Model(src.model()).
-		ColumnExpr(src.id.As("id")).
-		ColumnExpr(src.label+labelAlias).
-		WhereGroup(" AND ", func(q *bun.SelectQuery) *bun.SelectQuery {
-			return src.scope(q, tenant).Where(src.id.In(), bun.List(ids))
-		})
-}
-
-// readOwned names each record by its owner's label and its own, "Jane Doe ·
-// Medical"; a record whose owner cannot be named keeps its own label alone.
 func (l *Labeler) readOwned(
 	ctx context.Context,
-	tenant pagination.TenantInfo,
 	src *ownedSource,
 	ids []pulid.ID,
 ) (map[pulid.ID]string, error) {
 	return dbtx.Read(ctx, l.db, func(ctx context.Context) (map[pulid.ID]string, error) {
-		rows := make([]ownedRow, 0, len(ids))
-		if err := ownedQuery(
-			l.db.DBForContext(ctx),
-			tenant,
-			src,
-			ids,
-		).Scan(ctx, &rows); err != nil {
+		rows, err := keel.Into[ownedRow](ctx, l.db.Keel(ctx), src.query(ids))
+		if err != nil {
 			return nil, err
 		}
 		if len(rows) == 0 {
@@ -617,8 +426,7 @@ func (l *Labeler) readOwned(
 		for i := range rows {
 			ownerIDs = append(ownerIDs, rows[i].OwnerID)
 		}
-		owner := sources[src.owner]
-		owners, err := l.read(ctx, tenant, &owner, distinctIDs(ownerIDs))
+		owners, err := l.read(ctx, sources[src.owner], distinctIDs(ownerIDs))
 		if err != nil {
 			return nil, err
 		}
@@ -634,27 +442,6 @@ func (l *Labeler) readOwned(
 	})
 }
 
-func ownedQuery(
-	db bun.IDB,
-	tenant pagination.TenantInfo,
-	src *ownedSource,
-	ids []pulid.ID,
-) *bun.SelectQuery {
-	label := src.label
-	if label == "" {
-		label = "''"
-	}
-
-	return db.NewSelect().
-		Model(src.model()).
-		ColumnExpr(src.id.As("id")).
-		ColumnExpr(src.ownerID.As("owner_id")).
-		ColumnExpr(label+labelAlias).
-		WhereGroup(" AND ", func(q *bun.SelectQuery) *bun.SelectQuery {
-			return src.scope(q, tenant).Where(src.id.In(), bun.List(ids))
-		})
-}
-
 func joinLabel(owner, own string) string {
 	owner, own = strings.TrimSpace(owner), strings.TrimSpace(own)
 	switch {
@@ -667,18 +454,14 @@ func joinLabel(owner, own string) string {
 	}
 }
 
-// userLabels names the people of the tenant: a user is not scoped to one
-// organization, so only one who holds, or held, a membership in it, or works
-// in it now, is named. A membership that has since lapsed still names the
-// person on the records they left behind.
 func (l *Labeler) userLabels(
 	ctx context.Context,
 	ti pagination.TenantInfo,
 	ids []pulid.ID,
 ) (map[pulid.ID]string, error) {
 	return dbtx.Read(ctx, l.db, func(ctx context.Context) (map[pulid.ID]string, error) {
-		rows := make([]labelRow, 0, len(ids))
-		if err := userQuery(l.db.DBForContext(ctx), ti, ids).Scan(ctx, &rows); err != nil {
+		rows, err := keel.Into[labelRow](ctx, l.db.Keel(ctx), userQuery(ti, ids))
+		if err != nil {
 			return nil, err
 		}
 
@@ -686,47 +469,33 @@ func (l *Labeler) userLabels(
 	})
 }
 
-func userQuery(db bun.IDB, ti pagination.TenantInfo, ids []pulid.ID) *bun.SelectQuery {
-	user := tenantcol.UserColumns
-	membership := tenantcol.OrganizationMembershipColumns
+func userQuery(ti pagination.TenantInfo, ids []pulid.ID) projection {
+	u := tenantdb.Users
+	m := tenantdb.OrganizationMemberships
 
-	member := db.NewSelect().
-		Model((*tenantdomain.OrganizationMembership)(nil)).
-		ColumnExpr("1").
-		Where(membership.UserID.EqColumn(user.ID)).
-		Where(membership.OrganizationID.Eq(), ti.OrgID).
-		Where(membership.BusinessUnitID.Eq(), ti.BuID)
-
-	return db.NewSelect().
-		Model((*tenantdomain.User)(nil)).
-		ColumnExpr(user.ID.As("id")).
-		ColumnExpr(user.Name.Qualified()+labelAlias).
-		Where(user.ID.In(), bun.List(ids)).
-		Where(user.BusinessUnitID.Eq(), ti.BuID).
-		WhereGroup(" AND ", func(q *bun.SelectQuery) *bun.SelectQuery {
-			return q.Where("EXISTS (?)", member).
-				WhereOr(user.CurrentOrganizationID.Eq(), ti.OrgID)
-		})
+	return u.Pick(u.ID, labelText(u.Name)).Where(
+		u.ID.In(ids...),
+		keel.Or(
+			keel.Exists(m.Where(m.UserID.EqCol(u.ID), m.OrganizationID.Eq(ti.OrgID))),
+			u.CurrentOrganizationID.Eq(ti.OrgID),
+		),
+	)
 }
 
-// moveLabels names a move by its shipment and its place in it: "PRO-100
-// move 2".
+func movesQuery(ids []pulid.ID) projection {
+	sm := shipmentdb.ShipmentMoves
+
+	return sm.Pick(sm.ID, sm.ShipmentID, sm.Sequence).Where(sm.ID.In(ids...))
+}
+
 func (l *Labeler) moveLabels(
 	ctx context.Context,
-	tenant pagination.TenantInfo,
+	_ pagination.TenantInfo,
 	ids []pulid.ID,
 ) (map[pulid.ID]string, error) {
 	return dbtx.Write(ctx, l.db, func(ctx context.Context) (map[pulid.ID]string, error) {
-		moves := make([]*shipment.ShipmentMove, 0, len(ids))
-		cols := shipmentcol.ShipmentMoveColumns
-		if err := l.db.DBForContext(ctx).NewSelect().
-			Model(&moves).
-			Column(cols.ID.String(), cols.ShipmentID.String(), cols.Sequence.String()).
-			WhereGroup(" AND ", func(q *bun.SelectQuery) *bun.SelectQuery {
-				return shipmentcol.ShipmentMoveScopeTenant(q, tenant).
-					Where(cols.ID.In(), bun.List(ids))
-			}).
-			Scan(ctx); err != nil {
+		moves, err := keel.Into[moveRow](ctx, l.db.Keel(ctx), movesQuery(ids))
+		if err != nil {
 			return nil, err
 		}
 		if len(moves) == 0 {
@@ -737,8 +506,7 @@ func (l *Labeler) moveLabels(
 		for _, move := range moves {
 			shipmentIDs = append(shipmentIDs, move.ShipmentID)
 		}
-		shipmentSource := sources[permission.ResourceShipment]
-		pros, err := l.read(ctx, tenant, &shipmentSource, distinctIDs(shipmentIDs))
+		pros, err := l.read(ctx, sources[permission.ResourceShipment], distinctIDs(shipmentIDs))
 		if err != nil {
 			return nil, err
 		}

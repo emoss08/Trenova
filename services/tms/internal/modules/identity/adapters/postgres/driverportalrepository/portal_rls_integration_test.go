@@ -8,7 +8,9 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment/shipmentdb"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker/workerdb"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
 	"github.com/emoss08/trenova/internal/testutil"
 	"github.com/emoss08/trenova/internal/testutil/dbtest"
@@ -61,8 +63,7 @@ func TestDriverPortal_UnderRowLevelSecurityReadsOnlyTheDriversOwnRecords(t *test
 			Gender:         worker.GenderMale,
 			CanBeAssigned:  true,
 		}
-		_, err := admin.NewInsert().Model(entity).Exec(ctx)
-		require.NoError(t, err)
+		require.NoError(t, workerdb.Workers.Create(data.Ctx(ctx), admin, entity))
 		return entity
 	}
 	me := newWorker("Mine", data.User.ID)
@@ -76,14 +77,14 @@ func TestDriverPortal_UnderRowLevelSecurityReadsOnlyTheDriversOwnRecords(t *test
 			ShipmentID:   pulid.MustNew("shp_"),
 			MoveStatuses: []shipment.MoveStatus{shipment.MoveStatusAssigned},
 		})
-		_, err := admin.NewInsert().Model(&shipment.Assignment{
+		err := shipmentdb.Assignments.Create(data.Ctx(ctx), admin, &shipment.Assignment{
 			ID:              pulid.MustNew("a_"),
 			BusinessUnitID:  tenant.BuID,
 			OrganizationID:  tenant.OrgID,
 			ShipmentMoveID:  graph.Moves[0].ID,
 			PrimaryWorkerID: &driver.ID,
 			Status:          shipment.AssignmentStatusNew,
-		}).Exec(ctx)
+		})
 		require.NoError(t, err)
 		return graph
 	}

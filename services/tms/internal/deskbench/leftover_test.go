@@ -4,8 +4,6 @@ import (
 	"context"
 	"testing"
 
-	"github.com/DATA-DOG/go-sqlmock"
-	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/agentjobs/agentcontract"
@@ -16,8 +14,6 @@ import (
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"github.com/uptrace/bun"
-	"github.com/uptrace/bun/dialect/pgdialect"
 	"go.temporal.io/sdk/client"
 )
 
@@ -63,22 +59,13 @@ type leftoverWorkflowRun struct {
 func TestStartFreshRun_StopsTheRunAnEarlierBenchLeftAndFiresAgain(t *testing.T) {
 	t.Parallel()
 
-	sqlDB, sqlMock, err := sqlmock.New()
-	require.NoError(t, err)
-	sqlMock.MatchExpectationsInOrder(false)
-	bunDB := bun.NewDB(sqlDB, pgdialect.New())
-	t.Cleanup(func() { _ = bunDB.Close() })
-
 	leftover := "agent-run-agdef_left-subject-inst_left"
-	sqlMock.ExpectExec("SET LOCAL statement_timeout").WillReturnResult(sqlmock.NewResult(0, 0))
-	sqlMock.ExpectQuery("SELECT workflow_id FROM agent_runs").
-		WillReturnRows(sqlmock.NewRows([]string{"workflow_id"}).AddRow(leftover))
-
 	starter := &leftoverStarter{}
 	watcher := NewTurnWatcher(starter)
 	runs := &leftoverRuns{watcher: watcher, starter: starter}
 	bench := &Bench{
-		deps:    deps{DB: postgres.NewTestConnection(bunDB), Runs: runs},
+		deps:    deps{Runs: runs},
+		facts:   factRows(t, "SELECT workflow_id FROM agent_runs", []string{leftover}),
 		watcher: watcher,
 	}
 	session := &Session{
@@ -93,5 +80,14 @@ func TestStartFreshRun_StopsTheRunAnEarlierBenchLeftAndFiresAgain(t *testing.T) 
 	require.NotNil(t, fired)
 	assert.Equal(t, []string{leftover}, starter.cancelled, "the leftover run is stopped once")
 	assert.Equal(t, 2, runs.starts, "the fire is tried again after the leftover stops")
-	assert.NoError(t, sqlMock.ExpectationsWereMet())
+}
+
+func factRows(t *testing.T, statement string, rows []string) factSource {
+	t.Helper()
+
+	return func(_ context.Context, _ *Session, query string) ([]string, error) {
+		require.Contains(t, query, statement)
+
+		return rows, nil
+	}
 }

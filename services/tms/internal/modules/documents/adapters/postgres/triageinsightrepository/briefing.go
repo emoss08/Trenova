@@ -2,71 +2,79 @@ package triageinsightrepository
 
 import (
 	"context"
+	"slices"
 
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/inboundmessage"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/inboundmessage/inboundmessagedb"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/triage"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/triage/triagedb"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/triageports"
-	"github.com/emoss08/trenova/pkg/buncolgen/inboundmessagecol"
-	"github.com/emoss08/trenova/pkg/buncolgen/triagecol"
-	"github.com/uptrace/bun"
 )
 
 const (
 	handledSamplesPerGroup = 3
-	rankedAlias            = "ranked"
+	rankedCTE              = "ranked"
 )
+
+type briefingScan struct {
+	Waiting             int64
+	Overdue             int64
+	ClosedByPeopleToday int64
+	HandledByNovaToday  int64
+	ComingBack          int64
+	AnyMessage          bool
+}
 
 func (r *repository) BriefingCounts(
 	ctx context.Context,
 	req triageports.BriefingWindow,
 ) (*triageports.BriefingCounts, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*triageports.BriefingCounts, error) {
-		counts := new(triageports.BriefingCounts)
-		if err := briefingCountsQuery(r.db.DBForContext(ctx), req).Scan(ctx, counts); err != nil {
+		s, err := keel.IntoOne[briefingScan](ctx, r.db.Keel(ctx), briefingCountsQuery(req))
+		if err != nil {
 			return nil, err
 		}
 
-		return counts, nil
+		return &triageports.BriefingCounts{
+			Waiting:             int(s.Waiting),
+			Overdue:             int(s.Overdue),
+			ClosedByPeopleToday: int(s.ClosedByPeopleToday),
+			HandledByNovaToday:  int(s.HandledByNovaToday),
+			ComingBack:          int(s.ComingBack),
+			AnyMessage:          s.AnyMessage,
+		}, nil
 	})
 }
 
-func briefingCountsQuery(db bun.IDB, req triageports.BriefingWindow) *bun.SelectQuery {
-	cols := inboundmessagecol.InboundMessageColumns
-	tenant := inboundmessagecol.InboundMessageApplyTenant(req.TenantInfo)
-	count := func(apply func(*bun.SelectQuery) *bun.SelectQuery) *bun.SelectQuery {
-		return messages(db).ColumnExpr("COUNT(*)").Apply(tenant).Apply(apply)
-	}
+func briefingCountsQuery(
+	req triageports.BriefingWindow,
+) *keel.Query[inboundmessage.InboundMessage] {
+	m := inboundmessagedb.InboundMessages
+	anyMessage := inboundmessagedb.InboundMessages.As("any_message")
 
-	waiting := count(func(sq *bun.SelectQuery) *bun.SelectQuery {
-		return sq.Where(cols.Status.In(), bun.List(needsReview)).Where(cols.Parked.IsNull())
-	})
-	overdue := count(func(sq *bun.SelectQuery) *bun.SelectQuery {
-		return sq.Where(cols.Status.In(), bun.List(needsReview)).
-			Where(cols.Parked.IsNull()).
-			Where(cols.DueAt.Lt(), req.Now)
-	})
-	closed := count(func(sq *bun.SelectQuery) *bun.SelectQuery {
-		return sq.Where(cols.Status.In(), bun.List(settled)).
-			Where(cols.ReviewedAt.Gte(), req.DayStart).
-			Where(cols.ReviewedBy.IsNotNull())
-	})
-	handled := count(func(sq *bun.SelectQuery) *bun.SelectQuery {
-		return sq.Where(cols.HandledByRuleID.IsNotNull()).
-			Where(cols.ReceivedAt.Gte(), req.DayStart)
-	})
-	comingBack := count(func(sq *bun.SelectQuery) *bun.SelectQuery {
-		return sq.Where(cols.Status.In(), bun.List(needsReview)).Where(cols.Parked.IsNotNull())
-	})
-	anyMessage := messages(db).ColumnExpr("1").Apply(tenant).Limit(1)
+	open := m.Status.In(needsReview...)
+	waiting := keel.And(open, m.Parked.IsNull())
+	overdue := keel.And(waiting, m.DueAt.Lt(req.Now))
+	closed := keel.And(
+		m.Status.In(settled...),
+		m.ReviewedAt.Gte(req.DayStart),
+		m.ReviewedBy.IsNotNull(),
+	)
+	handled := keel.And(m.HandledByRuleID.IsNotNull(), m.ReceivedAt.Gte(req.DayStart))
+	comingBack := keel.And(open, m.Parked.IsNotNull())
 
-	return db.NewSelect().
-		ColumnExpr("(?) AS waiting", waiting).
-		ColumnExpr("(?) AS overdue", overdue).
-		ColumnExpr("(?) AS closed_by_people_today", closed).
-		ColumnExpr("(?) AS handled_by_nova_today", handled).
-		ColumnExpr("(?) AS coming_back", comingBack).
-		ColumnExpr("EXISTS (?) AS any_message", anyMessage)
+	return messages().
+		Pick(
+			keel.Count().Filter(waiting),
+			keel.Count().Filter(overdue),
+			keel.Count().Filter(closed),
+			keel.Count().Filter(handled),
+			keel.Count().Filter(comingBack),
+			keel.Exists(anyMessage.Pick(anyMessage.ID).Limit(1)),
+		).
+		Where(keel.Or(open, closed, handled))
 }
 
 func (r *repository) HandledByNova(
@@ -74,37 +82,54 @@ func (r *repository) HandledByNova(
 	req triageports.BriefingWindow,
 ) ([]*triageports.HandledRow, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*triageports.HandledRow, error) {
-		rows := make([]*triageports.HandledRow, 0, 16)
-		if err := handledQuery(r.db.DBForContext(ctx), req).Scan(ctx, &rows); err != nil {
+		scanned, err := keel.Into[scannedRow[int64]](ctx, r.db.Keel(ctx), handledQuery(req))
+		if err != nil {
 			return nil, err
+		}
+
+		rows := make([]*triageports.HandledRow, 0, len(scanned))
+		for i := range scanned {
+			rows = append(rows, &triageports.HandledRow{
+				MessageRow: scanned[i].row(),
+				GroupCount: int(scanned[i].Extra),
+			})
 		}
 
 		return rows, nil
 	})
 }
 
-func handledQuery(db bun.IDB, req triageports.BriefingWindow) *bun.SelectQuery {
-	cols := inboundmessagecol.InboundMessageColumns
-	partition := "PARTITION BY " + cols.HandledAction.Qualified() + ", " +
-		cols.Classification.Qualified()
+func handledQuery(req triageports.BriefingWindow) *keel.Query[keel.Row] {
+	m := inboundmessagedb.InboundMessages
+	partition := []keel.Expr{m.HandledAction, m.Classification}
 
-	inner := messages(db).
-		Apply(messageRowColumns).
-		ColumnExpr("COUNT(*) OVER ("+partition+") AS group_count").
-		ColumnExpr("ROW_NUMBER() OVER ("+partition+" ORDER BY "+
-			cols.ReceivedAt.OrderDesc()+", "+cols.ID.OrderDesc()+") AS sample_rank").
-		Apply(inboundmessagecol.InboundMessageApplyTenant(req.TenantInfo)).
-		Where(cols.HandledByRuleID.IsNotNull()).
-		Where(cols.ReceivedAt.Gte(), req.DayStart)
+	ranked := keel.CTE(
+		rankedCTE,
+		append(slices.Clone(messageRowNames), "group_count", "sample_rank"),
+		withReference(messages()).
+			Pick(messageRowColumns(
+				keel.Count().Over(partition),
+				keel.RowNumber().Over(partition, m.ReceivedAt.Desc(), m.ID.Desc()),
+			)...).
+			Where(m.HandledByRuleID.IsNotNull(), m.ReceivedAt.Gte(req.DayStart)),
+	)
 
-	return db.NewSelect().
-		TableExpr("(?) AS "+rankedAlias, inner).
-		Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-			return rankedRowColumns(sq, rankedAlias, "group_count")
-		}).
-		Where(rankedAlias+".sample_rank <= ?", handledSamplesPerGroup).
-		OrderExpr(rankedAlias + ".group_count DESC, " + rankedAlias + ".handled_action, " +
-			rankedAlias + ".classification, " + rankedAlias + ".sample_rank")
+	return ranked.Query().
+		With(ranked).
+		Pick(rankedColumns(ranked, "group_count")...).
+		Where(ranked.Col("sample_rank").Lte(handledSamplesPerGroup)).
+		Order(
+			ranked.Col("group_count").Desc(),
+			ranked.Col("handled_action").Asc(),
+			ranked.Col("classification").Asc(),
+			ranked.Col("sample_rank").Asc(),
+		)
+}
+
+type arrivalScan struct {
+	Hour          int64
+	HandledByNova int64
+	LeftForPerson int64
 }
 
 func (r *repository) Arrivals(
@@ -112,28 +137,34 @@ func (r *repository) Arrivals(
 	req triageports.BriefingWindow,
 ) ([]*triageports.ArrivalRow, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*triageports.ArrivalRow, error) {
-		rows := make([]*triageports.ArrivalRow, 0, 24)
-		if err := arrivalsQuery(r.db.DBForContext(ctx), req).Scan(ctx, &rows); err != nil {
+		scanned, err := keel.Into[arrivalScan](ctx, r.db.Keel(ctx), arrivalsQuery(req))
+		if err != nil {
 			return nil, err
+		}
+
+		rows := make([]*triageports.ArrivalRow, 0, len(scanned))
+		for _, s := range scanned {
+			rows = append(rows, &triageports.ArrivalRow{
+				Hour:          int(s.Hour),
+				HandledByNova: int(s.HandledByNova),
+				LeftForPerson: int(s.LeftForPerson),
+			})
 		}
 
 		return rows, nil
 	})
 }
 
-func arrivalsQuery(db bun.IDB, req triageports.BriefingWindow) *bun.SelectQuery {
-	cols := inboundmessagecol.InboundMessageColumns
+func arrivalsQuery(req triageports.BriefingWindow) *keel.Query[inboundmessage.InboundMessage] {
+	m := inboundmessagedb.InboundMessages
+	hour := keel.Raw("FLOOR((? - ?) / 3600)::int8", m.ReceivedAt, req.DayStart)
+	nova := settledByRule()
 
-	return messages(db).
-		ColumnExpr(cols.ReceivedAt.Expr("FLOOR(({} - ?) / 3600)::int AS hour"), req.DayStart).
-		ColumnExpr("COUNT(*) FILTER (WHERE "+settledByRule()+") AS handled_by_nova", bun.List(settled)).
-		ColumnExpr("COUNT(*) FILTER (WHERE NOT "+settledByRule()+") AS left_for_person",
-			bun.List(settled)).
-		Apply(inboundmessagecol.InboundMessageApplyTenant(req.TenantInfo)).
-		Where(cols.ReceivedAt.Gte(), req.DayStart).
-		Where(cols.ReceivedAt.Lte(), req.Now).
-		GroupExpr("1").
-		OrderExpr("1")
+	return messages().
+		Pick(hour, keel.Count().Filter(nova), keel.Count().Filter(keel.Not(nova))).
+		Where(m.ReceivedAt.Gte(req.DayStart), m.ReceivedAt.Lte(req.Now)).
+		Group(hour).
+		Order(keel.Asc(hour))
 }
 
 func (r *repository) River(
@@ -141,41 +172,44 @@ func (r *repository) River(
 	req triageports.BriefingWindow,
 ) ([]*triageports.RiverRow, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*triageports.RiverRow, error) {
-		rows := make([]*triageports.RiverRow, 0, req.Limit*2)
-		if err := riverQuery(r.db.DBForContext(ctx), req).Scan(ctx, &rows); err != nil {
+		scanned, err := keel.Into[scannedRow[bool]](ctx, r.db.Keel(ctx), riverQuery(req))
+		if err != nil {
 			return nil, err
+		}
+
+		rows := make([]*triageports.RiverRow, 0, len(scanned))
+		for i := range scanned {
+			rows = append(rows, &triageports.RiverRow{
+				MessageRow: scanned[i].row(),
+				Nova:       scanned[i].Extra,
+			})
 		}
 
 		return rows, nil
 	})
 }
 
-func riverQuery(db bun.IDB, req triageports.BriefingWindow) *bun.SelectQuery {
-	cols := inboundmessagecol.InboundMessageColumns
+func riverQuery(req triageports.BriefingWindow) *keel.Query[keel.Row] {
+	m := inboundmessagedb.InboundMessages
+	nova := settledByRule()
 
-	inner := messages(db).
-		Apply(messageRowColumns).
-		ColumnExpr(settledByRule()+" AS nova", bun.List(settled)).
-		ColumnExpr("ROW_NUMBER() OVER (PARTITION BY "+settledByRule()+" ORDER BY "+
-			cols.ReceivedAt.OrderDesc()+", "+cols.ID.OrderDesc()+") AS lane_rank",
-			bun.List(settled)).
-		Apply(inboundmessagecol.InboundMessageApplyTenant(req.TenantInfo)).
-		Where(cols.ReceivedAt.Gte(), req.DayStart).
-		Where(cols.ReceivedAt.Lte(), req.Now).
-		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-			return sq.
-				Where(settledByRule(), bun.List(settled)).
-				WhereOr(cols.Status.In(), bun.List(needsReview)).
-				WhereOr(settledByPerson(), bun.List(settled))
-		})
+	ranked := keel.CTE(rankedCTE, append(slices.Clone(messageRowNames), "nova", "lane_rank"),
+		withReference(messages()).
+			Pick(messageRowColumns(
+				nova,
+				keel.RowNumber().Over([]keel.Expr{nova}, m.ReceivedAt.Desc(), m.ID.Desc()),
+			)...).
+			Where(
+				m.ReceivedAt.Gte(req.DayStart),
+				m.ReceivedAt.Lte(req.Now),
+				keel.Or(nova, m.Status.In(needsReview...), settledByPerson()),
+			))
 
-	return db.NewSelect().
-		TableExpr("(?) AS "+rankedAlias, inner).
-		Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-			return rankedRowColumns(sq, rankedAlias, "nova")
-		}).
-		Where(rankedAlias+".lane_rank <= ?", req.Limit).
-		OrderExpr(rankedAlias + ".received_at ASC, " + rankedAlias + ".id ASC")
+	return ranked.Query().
+		With(ranked).
+		Pick(rankedColumns(ranked, "nova")...).
+		Where(ranked.Col("lane_rank").Lte(req.Limit)).
+		Order(ranked.Col("received_at").Asc(), ranked.Col("id").Asc())
 }
 
 func (r *repository) Waiting(
@@ -186,9 +220,12 @@ func (r *repository) Waiting(
 		ctx,
 		r.db,
 		func(ctx context.Context) ([]*inboundmessage.InboundMessage, error) {
-			entities := make([]*inboundmessage.InboundMessage, 0, req.Limit)
-			if err := waitingQuery(r.db.DBForContext(ctx), req, &entities).Scan(ctx); err != nil {
+			entities, err := waitingQuery(req).List(ctx, r.db.Keel(ctx))
+			if err != nil {
 				return nil, err
+			}
+			if entities == nil {
+				entities = []*inboundmessage.InboundMessage{}
 			}
 
 			return entities, nil
@@ -196,22 +233,21 @@ func (r *repository) Waiting(
 	)
 }
 
-func waitingQuery(
-	db bun.IDB,
-	req triageports.WaitingRequest,
-	entities *[]*inboundmessage.InboundMessage,
-) *bun.SelectQuery {
-	cols := inboundmessagecol.InboundMessageColumns
+func waitingQuery(req triageports.WaitingRequest) *keel.Query[inboundmessage.InboundMessage] {
+	m := inboundmessagedb.InboundMessages
 
-	return db.NewSelect().
-		Model(entities).
-		ExcludeColumn(cols.TextBody.Bare(), cols.HTMLKey.Bare()).
-		Apply(inboundmessagecol.InboundMessageApplyTenant(req.TenantInfo)).
-		Where(cols.Status.In(), bun.List(needsReview)).
-		Where(cols.Parked.IsNull()).
-		OrderExpr(cols.DueAt.Qualified()+" ASC NULLS LAST").
-		Order(cols.ReceivedAt.OrderAsc(), cols.ID.OrderAsc()).
-		Limit(int64(req.Limit))
+	return m.Omit(m.TextBody, m.HTMLKey).
+		Where(m.Status.In(needsReview...), m.Parked.IsNull()).
+		Order(m.DueAt.Asc().NullsLast(), m.ReceivedAt.Asc(), m.ID.Asc()).
+		Limit(max(req.Limit, 1))
+}
+
+type correctionScan struct {
+	CorrectionsThisWeek int64
+	ReadThisWeek        int64
+	CorrectedThisWeek   int64
+	ReadLastWeek        int64
+	CorrectedLastWeek   int64
 }
 
 func (r *repository) CorrectionTotals(
@@ -219,44 +255,47 @@ func (r *repository) CorrectionTotals(
 	req triageports.CorrectionTotalsRequest,
 ) (*triageports.CorrectionTotals, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*triageports.CorrectionTotals, error) {
-		totals := new(triageports.CorrectionTotals)
-		if err := correctionTotalsQuery(r.db.DBForContext(ctx), req).Scan(ctx, totals); err != nil {
+		s, err := keel.IntoOne[correctionScan](ctx, r.db.Keel(ctx), correctionTotalsQuery(req))
+		if err != nil {
 			return nil, err
 		}
 
-		return totals, nil
+		return &triageports.CorrectionTotals{
+			CorrectionsThisWeek: int(s.CorrectionsThisWeek),
+			ReadThisWeek:        int(s.ReadThisWeek),
+			CorrectedThisWeek:   int(s.CorrectedThisWeek),
+			ReadLastWeek:        int(s.ReadLastWeek),
+			CorrectedLastWeek:   int(s.CorrectedLastWeek),
+		}, nil
 	})
 }
 
-func correctionTotalsQuery(db bun.IDB, req triageports.CorrectionTotalsRequest) *bun.SelectQuery {
-	cols := inboundmessagecol.InboundMessageColumns
-	act := triagecol.ActivityColumns
+func correctionTotalsQuery(
+	req triageports.CorrectionTotalsRequest,
+) *keel.Query[inboundmessage.InboundMessage] {
+	m := inboundmessagedb.InboundMessages
+	act := triagedb.Activities
 
-	corrections := db.NewSelect().
-		Model((*triage.Activity)(nil)).
-		ColumnExpr("COUNT(*)").
-		Apply(triagecol.ActivityApplyTenant(req.TenantInfo)).
-		Where(act.Kind.In(), bun.List([]triage.ActivityKind{
-			triage.ActivityCorrected,
-			triage.ActivityFactFlagged,
-		})).
-		Where(act.ActorKind.Eq(), triage.ActorPerson).
-		Where(act.CreatedAt.Gte(), req.WeekStart)
+	corrections := keel.Scalar(act.Pick(keel.Count()).Where(
+		act.Kind.In(triage.ActivityCorrected, triage.ActivityFactFlagged),
+		act.ActorKind.Eq(triage.ActorPerson),
+		act.CreatedAt.Gte(req.WeekStart),
+	))
+	corrected := keel.Raw(
+		"(? OR COALESCE(? @> '[{\"flagged\": true}]'::jsonb, FALSE))",
+		m.ClassificationCorrected,
+		m.Facts,
+	)
+	thisWeek := m.ReceivedAt.Gte(req.WeekStart)
+	lastWeek := m.ReceivedAt.Lt(req.WeekStart)
 
-	corrected := "(" + cols.ClassificationCorrected.Qualified() + " OR COALESCE(" +
-		cols.Facts.Qualified() + " @> '[{\"flagged\": true}]'::jsonb, FALSE))"
-
-	return messages(db).
-		ColumnExpr("(?) AS corrections_this_week", corrections).
-		ColumnExpr("COUNT(*) FILTER (WHERE "+cols.ReceivedAt.Gte()+") AS read_this_week",
-			req.WeekStart).
-		ColumnExpr("COUNT(*) FILTER (WHERE "+cols.ReceivedAt.Gte()+" AND "+corrected+
-			") AS corrected_this_week", req.WeekStart).
-		ColumnExpr("COUNT(*) FILTER (WHERE "+cols.ReceivedAt.Lt()+") AS read_last_week",
-			req.WeekStart).
-		ColumnExpr("COUNT(*) FILTER (WHERE "+cols.ReceivedAt.Lt()+" AND "+corrected+
-			") AS corrected_last_week", req.WeekStart).
-		Apply(inboundmessagecol.InboundMessageApplyTenant(req.TenantInfo)).
-		Where(cols.NovaRead.IsTrue()).
-		Where(cols.ReceivedAt.Gte(), req.LastWeekStart)
+	return messages().
+		Pick(
+			corrections,
+			keel.Count().Filter(thisWeek),
+			keel.Count().Filter(keel.And(thisWeek, corrected)),
+			keel.Count().Filter(lastWeek),
+			keel.Count().Filter(keel.And(lastWeek, corrected)),
+		).
+		Where(m.NovaRead.IsTrue(), m.ReceivedAt.Gte(req.LastWeekStart))
 }

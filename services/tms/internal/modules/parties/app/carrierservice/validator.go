@@ -4,7 +4,9 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/usstate/usstatedb"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/carrier"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/carrier/carrierdb"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/validationframework"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -22,12 +24,15 @@ type Validator struct {
 }
 
 func NewValidator(p ValidatorParams) *Validator {
+	checker := validationframework.NewKeelChecker(p.DB, carrierdb.CarriersSchema())
+	states := validationframework.KeelReferenceCheck(p.DB, usstatedb.UsStatesSchema())
+
 	return &Validator{
 		validator: validationframework.
 			NewTenantedValidatorBuilder[*carrier.Carrier]().
 			WithModelName("Carrier").
-			WithUniquenessChecker(validationframework.NewBunUniquenessCheckerScoped(p.DB)).
-			WithReferenceChecker(validationframework.NewBunReferenceCheckerScoped(p.DB)).
+			WithUniquenessChecker(checker).
+			WithReferenceChecker(checker).
 			WithUniqueField(
 				"code",
 				"code",
@@ -55,7 +60,7 @@ func NewValidator(p ValidatorParams) *Validator {
 					}
 					return *c.StateID
 				},
-				validationframework.NewUSStateReferenceCheck(p.DB),
+				states,
 			).
 			WithCustomReferenceCheck(
 				"remitStateId",
@@ -66,7 +71,7 @@ func NewValidator(p ValidatorParams) *Validator {
 					}
 					return *c.RemitStateID
 				},
-				validationframework.NewUSStateReferenceCheck(p.DB),
+				states,
 			).
 			Build(),
 	}

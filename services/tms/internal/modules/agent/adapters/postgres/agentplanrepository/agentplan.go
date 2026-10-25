@@ -4,23 +4,23 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/emoss08/trenova/pkg/buncolgen/agentcol"
-
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agent/agentdb"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/pkg/dberror"
-	"github.com/emoss08/trenova/pkg/dbhelper"
 	"github.com/emoss08/trenova/pkg/dbscope"
+	"github.com/emoss08/trenova/pkg/listquery"
 	"github.com/emoss08/trenova/pkg/pagination"
-	"github.com/emoss08/trenova/pkg/querybuilder"
-	"github.com/emoss08/trenova/shared/stringutils"
-	"github.com/emoss08/trenova/shared/timeutils"
-	"github.com/uptrace/bun"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
+
+const planEntity = "AgentPlan"
+
+var planErrors = dberror.Mapping{Entity: planEntity}
 
 type Params struct {
 	fx.In
@@ -46,11 +46,7 @@ func (r *repository) Create(
 	entity *agent.AgentPlan,
 ) (*agent.AgentPlan, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*agent.AgentPlan, error) {
-		if _, err := r.db.DBForContext(ctx).
-			NewInsert().
-			Model(entity).
-			Returning("*").
-			Exec(ctx); err != nil {
+		if err := agentdb.AgentPlans.Create(ctx, r.db.Keel(ctx), entity); err != nil {
 			r.l.Error("failed to create agent plan", zap.Error(err))
 
 			return nil, fmt.Errorf("create agent plan: %w", err)
@@ -69,16 +65,8 @@ func (r *repository) ListByIDs(
 			return []*agent.AgentPlan{}, nil
 		}
 
-		cols := agentcol.AgentPlanColumns
-		plans := make([]*agent.AgentPlan, 0, len(req.IDs))
-		err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(&plans).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return agentcol.AgentPlanScopeTenant(sq, req.TenantInfo).
-					Where(cols.ID.In(), bun.In(req.IDs))
-			}).
-			Scan(ctx)
+		p := agentdb.AgentPlans
+		plans, err := p.Where(p.ID.In(req.IDs...)).Limit(len(req.IDs)).List(ctx, r.db.Keel(ctx))
 		if err != nil {
 			return nil, fmt.Errorf("list agent plans by ids: %w", err)
 		}
@@ -92,18 +80,9 @@ func (r *repository) GetByID(
 	req agentports.GetAgentPlanByIDRequest,
 ) (*agent.AgentPlan, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*agent.AgentPlan, error) {
-		entity := new(agent.AgentPlan)
-		cols := agentcol.AgentPlanColumns
-		err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(entity).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return agentcol.AgentPlanScopeTenant(sq, req.TenantInfo).
-					Where(cols.ID.Eq(), req.ID)
-			}).
-			Scan(ctx)
+		entity, err := agentdb.AgentPlans.Get(ctx, r.db.Keel(ctx), req.ID)
 		if err != nil {
-			return nil, dberror.HandleNotFoundError(err, "AgentPlan")
+			return nil, planErrors.Map(err, req.ID.String())
 		}
 
 		return entity, nil
@@ -117,23 +96,14 @@ func (r *repository) ListByThread(
 	req agentports.ListAgentPlansByThreadRequest,
 ) ([]*agent.AgentPlan, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*agent.AgentPlan, error) {
-		cols := agentcol.AgentPlanColumns
-		runs := agentcol.AgentRunColumns
-		plans := make([]*agent.AgentPlan, 0)
-
-		err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(&plans).
-			Join("JOIN agent_runs AS ar ON "+runs.ID.Qualified()+" = "+cols.RunID.Qualified()+
-				" AND "+runs.OrganizationID.Qualified()+" = "+cols.OrganizationID.Qualified()+
-				" AND "+runs.BusinessUnitID.Qualified()+" = "+cols.BusinessUnitID.Qualified()).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return agentcol.AgentPlanScopeTenant(sq, req.TenantInfo).
-					Where(runs.SubjectType.Qualified()+" = ?", agent.SubjectAssistantThread).
-					Where(runs.SubjectID.Qualified()+" = ?", req.ThreadID)
-			}).
-			Order(cols.CreatedAt.OrderAsc(), cols.ID.OrderAsc()).
-			Scan(ctx)
+		p := agentdb.AgentPlans
+		run := p.Run()
+		plans, err := p.Where(
+			run.SubjectType.Eq(agent.SubjectAssistantThread),
+			run.SubjectID.Eq(req.ThreadID),
+		).
+			Order(p.CreatedAt.Asc(), p.ID.Asc()).
+			All(ctx, r.db.Keel(ctx))
 		if err != nil {
 			r.l.Error("failed to list agent plans for thread", zap.Error(err))
 
@@ -148,69 +118,22 @@ func (r *repository) ListConnection(
 	ctx context.Context,
 	req *agentports.ListAgentPlanConnectionRequest,
 ) (*pagination.CursorListResult[*agent.AgentPlan], error) {
-	return dbtx.Write(
+	return dbtx.Read(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*pagination.CursorListResult[*agent.AgentPlan], error) {
-			log := r.l.With(zap.String("operation", "ListConnection"))
-
-			dba := r.db.DBForContext(ctx)
-			var totalCount *int
-			if req.Cursor.IncludeTotalCount {
-				total, err := dba.
-					NewSelect().
-					Model((*agent.AgentPlan)(nil)).
-					Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-						sq = querybuilder.ApplyFiltersWithoutSort(
-							sq,
-							agentcol.AgentPlanTable.Alias,
-							req.Filter,
-							(*agent.AgentPlan)(nil),
-						)
-						sq = sq.Apply(agentcol.AgentPlanApplyTenant(req.Filter.TenantInfo))
-
-						return sq
-					}).
-					Count(ctx)
-				if err != nil {
-					log.Error("failed to count agent plans", zap.Error(err))
-
-					return nil, err
-				}
-				totalCount = new(int(total))
-			}
-
-			result, err := dbhelper.CursorList(
+			result, err := listquery.Connection(
 				ctx,
-				dbhelper.CursorListParams[*agent.AgentPlan]{
-					Filter:     req.Filter,
-					Cursor:     req.Cursor,
-					TotalCount: totalCount,
-					Query: func(entities *[]*agent.AgentPlan) *bun.SelectQuery {
-						q := dba.NewSelect().Model(entities)
-						if len(req.Columns) > 0 {
-							q = q.Column(req.Columns...)
-						}
-
-						return q
-					},
-					Apply: func(sq *bun.SelectQuery) (*bun.SelectQuery, error) {
-						sq, applyErr := querybuilder.ApplyCursorFilters(
-							sq,
-							agentcol.AgentPlanTable.Alias,
-							req.Filter,
-							req.Cursor,
-							(*agent.AgentPlan)(nil),
-						)
-						if applyErr != nil {
-							return nil, applyErr
-						}
-
-						return sq, nil
-					},
-				})
+				r.db.Keel(ctx),
+				agentdb.AgentPlans.Query(),
+				&listquery.Request[agent.AgentPlan]{
+					Filter:  req.Filter,
+					Cursor:  req.Cursor,
+					Columns: req.Columns,
+				},
+			)
 			if err != nil {
-				log.Error("failed to list agent plans", zap.Error(err))
+				r.l.Error("failed to list agent plans", zap.Error(err))
 
 				return nil, err
 			}
@@ -220,71 +143,71 @@ func (r *repository) ListConnection(
 	)
 }
 
+func statusAssignments(req *agentports.UpdateAgentPlanStatusRequest) []keel.Assignment {
+	p := agentdb.AgentPlans
+	sets := []keel.Assignment{p.Status.To(req.Status)}
+	approval := []keel.Assignment{
+		p.ApprovalReasonCode.To(req.Approval.ReasonCode),
+		p.ApprovalNote.To(req.Approval.Note),
+		p.ApprovalPreviewDigest.To(req.Approval.PreviewDigest),
+	}
+	switch {
+	case req.Reopen:
+		sets = append(sets,
+			p.CommitsAt.ToNull(),
+			p.ApprovalReasonCode.ToNull(),
+			p.ApprovalNote.ToNull(),
+			p.ApprovalPreviewDigest.ToNull(),
+			p.DecidedByUserID.ToNull(),
+			p.DecidedAt.ToNull(),
+		)
+	case req.CommitsAt != 0:
+		if req.DecidedByUserID.IsNotNil() {
+			sets = append(sets,
+				p.DecidedByUserID.To(req.DecidedByUserID),
+				p.DecidedAt.To(req.DecidedAt),
+			)
+		}
+		sets = append(sets, p.CommitsAt.To(req.CommitsAt))
+		sets = append(sets, approval...)
+		if req.UndoneByUserID.IsNil() {
+			sets = append(sets, p.UndoneAt.ToNull(), p.UndoneByUserID.ToNull())
+		}
+	case req.DecidedByUserID.IsNotNil():
+		sets = append(sets,
+			p.DecidedByUserID.To(req.DecidedByUserID),
+			p.DecidedAt.To(req.DecidedAt),
+		)
+		sets = append(sets, approval...)
+	}
+	if req.UndoneByUserID.IsNotNil() {
+		sets = append(sets,
+			p.UndoneByUserID.To(req.UndoneByUserID),
+			p.UndoneAt.To(req.UndoneAt),
+		)
+	}
+
+	return sets
+}
+
 func (r *repository) UpdateStatus(
 	ctx context.Context,
 	req agentports.UpdateAgentPlanStatusRequest,
 ) (*agent.AgentPlan, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*agent.AgentPlan, error) {
-		entity := new(agent.AgentPlan)
-		cols := agentcol.AgentPlanColumns
-		query := r.db.DBForContext(ctx).
-			NewUpdate().
-			Model(entity).
-			WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-				scoped := agentcol.AgentPlanScopeTenantUpdate(uq, req.TenantInfo).
-					Where(cols.ID.Eq(), req.ID)
-				if req.FromStatus != "" {
-					scoped = scoped.Where(cols.Status.Eq(), req.FromStatus)
-				}
-
-				return scoped
-			}).
-			Set(cols.Status.Set(), req.Status).
-			Set(cols.UpdatedAt.Set(), timeutils.NowUnix()).
-			Set(cols.Version.Inc(1))
-		if req.DecidedByUserID.IsNotNil() {
-			query = query.
-				Set(cols.DecidedByUserID.Set(), req.DecidedByUserID).
-				Set(cols.DecidedAt.Set(), req.DecidedAt)
-		}
-		if req.CommitsAt != 0 {
-			query = query.
-				Set(cols.CommitsAt.Set(), req.CommitsAt).
-				Set(cols.ApprovalReasonCode.Set(), stringutils.Ptr(req.Approval.ReasonCode)).
-				Set(cols.ApprovalNote.Set(), stringutils.Ptr(req.Approval.Note)).
-				Set(cols.ApprovalPreviewDigest.Set(), stringutils.Ptr(req.Approval.PreviewDigest)).
-				Set(cols.UndoneAt.SetNull()).
-				Set(cols.UndoneByUserID.SetNull())
-		} else if req.DecidedByUserID.IsNotNil() {
-			query = query.
-				Set(cols.ApprovalReasonCode.Set(), stringutils.Ptr(req.Approval.ReasonCode)).
-				Set(cols.ApprovalNote.Set(), stringutils.Ptr(req.Approval.Note)).
-				Set(cols.ApprovalPreviewDigest.Set(), stringutils.Ptr(req.Approval.PreviewDigest))
-		}
-		if req.Reopen {
-			query = query.
-				Set(cols.CommitsAt.SetNull()).
-				Set(cols.ApprovalReasonCode.SetNull()).
-				Set(cols.ApprovalNote.SetNull()).
-				Set(cols.ApprovalPreviewDigest.SetNull()).
-				Set(cols.DecidedByUserID.SetNull()).
-				Set(cols.DecidedAt.SetNull())
-		}
-		if req.UndoneByUserID.IsNotNil() {
-			query = query.
-				Set(cols.UndoneByUserID.Set(), req.UndoneByUserID).
-				Set(cols.UndoneAt.Set(), req.UndoneAt)
-		}
-
-		results, err := query.Returning("*").Exec(ctx)
+		p := agentdb.AgentPlans
+		rows, err := p.Where(
+			p.ID.Eq(req.ID),
+			keel.When(req.FromStatus != "", p.Status.Eq(req.FromStatus)),
+		).UpdateReturning(ctx, r.db.Keel(ctx), statusAssignments(&req)...)
 		if err != nil {
 			return nil, fmt.Errorf("update agent plan status: %w", err)
 		}
-		if err = dberror.CheckRowsAffected(results, "AgentPlan", req.ID.String()); err != nil {
+		if err = dberror.CheckAffected(int64(len(rows)), planEntity, req.ID.String()); err != nil {
 			return nil, err
 		}
 
-		return entity, nil
+		return rows[0], nil
 	})
 }
 
@@ -293,31 +216,28 @@ func (r *repository) RecordProgress(
 	req agentports.RecordAgentPlanProgressRequest,
 ) (*agent.AgentPlan, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*agent.AgentPlan, error) {
-		entity := new(agent.AgentPlan)
-		cols := agentcol.AgentPlanColumns
-		results, err := r.db.DBForContext(ctx).
-			NewUpdate().
-			Model(entity).
-			WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-				return agentcol.AgentPlanScopeTenantUpdate(uq, req.TenantInfo).
-					Where(cols.ID.Eq(), req.ID)
-			}).
-			Set(cols.Status.Set(), req.Status).
-			Set(cols.CompletedSteps.Set(), req.CompletedSteps).
-			Set(cols.FailedStep.Set(), req.FailedStep).
-			Set(cols.FailureError.Set(), req.FailureError).
-			Set(cols.UpdatedAt.Set(), timeutils.NowUnix()).
-			Set(cols.Version.Inc(1)).
-			Returning("*").
-			Exec(ctx)
+		p := agentdb.AgentPlans
+		failedStep := p.FailedStep.ToNull()
+		if req.FailedStep != nil {
+			failedStep = p.FailedStep.To(int64(*req.FailedStep))
+		}
+
+		rows, err := p.Where(p.ID.Eq(req.ID)).UpdateReturning(
+			ctx,
+			r.db.Keel(ctx),
+			p.Status.To(req.Status),
+			p.CompletedSteps.To(int64(req.CompletedSteps)),
+			failedStep,
+			p.FailureError.To(req.FailureError),
+		)
 		if err != nil {
 			return nil, fmt.Errorf("record agent plan progress: %w", err)
 		}
-		if err = dberror.CheckRowsAffected(results, "AgentPlan", req.ID.String()); err != nil {
+		if err = dberror.CheckAffected(int64(len(rows)), planEntity, req.ID.String()); err != nil {
 			return nil, err
 		}
 
-		return entity, nil
+		return rows[0], nil
 	})
 }
 
@@ -327,28 +247,26 @@ func (r *repository) ExpirePending(
 ) (int, error) {
 	ctx = dbscope.WithSystem(ctx, "expire stale agent plans across every organization")
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (int, error) {
-		cols := agentcol.AgentPlanColumns
-		results, err := r.db.DBForContext(ctx).
-			NewUpdate().
-			Model((*agent.AgentPlan)(nil)).
-			Where(cols.Status.Eq(), agent.PlanStatusPending).
-			Where(cols.ExpiresAt.IsNotNull()).
-			Where(cols.ExpiresAt.Lte(), req.Before).
-			Set(cols.Status.Set(), agent.PlanStatusExpired).
-			Set(cols.UpdatedAt.Set(), timeutils.NowUnix()).
-			Exec(ctx)
+		p := agentdb.AgentPlans
+		n, err := p.AllTenants().
+			Where(
+				p.Status.Eq(agent.PlanStatusPending),
+				p.ExpiresAt.IsNotNull(),
+				p.ExpiresAt.Lte(req.Before),
+			).
+			Update(
+				ctx,
+				r.db.Keel(ctx),
+				p.Status.To(agent.PlanStatusExpired),
+				p.Version.ToExpr(p.Version),
+			)
 		if err != nil {
 			r.l.Error("failed to expire pending agent plans", zap.Error(err))
 
 			return 0, err
 		}
 
-		affected, err := results.RowsAffected()
-		if err != nil {
-			return 0, err
-		}
-
-		return int(affected), nil
+		return int(n), nil
 	})
 }
 
@@ -357,28 +275,11 @@ func (r *repository) ExpirePendingByThread(
 	req agentports.ExpireAgentPlansByThreadRequest,
 ) (int, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (int, error) {
-		db := r.db.DBForContext(ctx)
-		cols := agentcol.AgentPlanColumns
-		runCols := agentcol.AgentRunColumns
-
-		runs := agentcol.AgentRunScopeTenant(
-			db.NewSelect().Model((*agent.AgentRun)(nil)).Column(runCols.ID.Bare()),
-			req.TenantInfo,
-		).
-			Where(runCols.SubjectType.Eq(), agent.SubjectAssistantThread).
-			Where(runCols.SubjectID.Eq(), req.ThreadID)
-
-		results, err := db.NewUpdate().
-			Model((*agent.AgentPlan)(nil)).
-			WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-				return agentcol.AgentPlanScopeTenantUpdate(uq, req.TenantInfo).
-					Where(cols.Status.Eq(), agent.PlanStatusPending).
-					Where(cols.RunID.In(), runs)
-			}).
-			Set(cols.Status.Set(), agent.PlanStatusExpired).
-			Set(cols.UpdatedAt.Set(), timeutils.NowUnix()).
-			Set(cols.Version.Inc(1)).
-			Exec(ctx)
+		run := agentdb.AgentRuns
+		n, err := r.expireByRuns(ctx, run.Pick(run.ID).Where(
+			run.SubjectType.Eq(agent.SubjectAssistantThread),
+			run.SubjectID.Eq(req.ThreadID),
+		))
 		if err != nil {
 			r.l.Error("failed to withdraw the pending plans of a conversation",
 				zap.String("threadId", req.ThreadID.String()),
@@ -387,12 +288,7 @@ func (r *repository) ExpirePendingByThread(
 			return 0, err
 		}
 
-		affected, err := results.RowsAffected()
-		if err != nil {
-			return 0, err
-		}
-
-		return int(affected), nil
+		return n, nil
 	})
 }
 
@@ -401,26 +297,10 @@ func (r *repository) ExpirePendingByDefinition(
 	req agentports.ExpireAgentPlansByDefinitionRequest,
 ) (int, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (int, error) {
-		db := r.db.DBForContext(ctx)
-		cols := agentcol.AgentPlanColumns
-		runCols := agentcol.AgentRunColumns
-
-		runs := agentcol.AgentRunScopeTenant(
-			db.NewSelect().Model((*agent.AgentRun)(nil)).Column(runCols.ID.Bare()),
-			req.TenantInfo,
-		).Where(runCols.AgentDefinitionID.Eq(), req.AgentDefinitionID)
-
-		results, err := db.NewUpdate().
-			Model((*agent.AgentPlan)(nil)).
-			WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-				return agentcol.AgentPlanScopeTenantUpdate(uq, req.TenantInfo).
-					Where(cols.Status.Eq(), agent.PlanStatusPending).
-					Where(cols.RunID.In(), runs)
-			}).
-			Set(cols.Status.Set(), agent.PlanStatusExpired).
-			Set(cols.UpdatedAt.Set(), timeutils.NowUnix()).
-			Set(cols.Version.Inc(1)).
-			Exec(ctx)
+		run := agentdb.AgentRuns
+		n, err := r.expireByRuns(ctx, run.Pick(run.ID).Where(
+			run.AgentDefinitionID.Eq(req.AgentDefinitionID),
+		))
 		if err != nil {
 			r.l.Error("failed to withdraw the pending plans of an agent",
 				zap.String("agentDefinitionId", req.AgentDefinitionID.String()),
@@ -429,11 +309,20 @@ func (r *repository) ExpirePendingByDefinition(
 			return 0, err
 		}
 
-		affected, err := results.RowsAffected()
-		if err != nil {
-			return 0, err
-		}
-
-		return int(affected), nil
+		return n, nil
 	})
+}
+
+func (r *repository) expireByRuns(
+	ctx context.Context,
+	runs *keel.Query[agent.AgentRun],
+) (int, error) {
+	p := agentdb.AgentPlans
+	n, err := p.Where(p.Status.Eq(agent.PlanStatusPending), p.RunID.InQuery(runs)).
+		Update(ctx, r.db.Keel(ctx), p.Status.To(agent.PlanStatusExpired))
+	if err != nil {
+		return 0, err
+	}
+
+	return int(n), nil
 }

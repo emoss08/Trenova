@@ -5,12 +5,11 @@ package rateagreementrepository
 import (
 	"testing"
 
-	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/customer"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/rateagreement"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/rateagreementports"
+	"github.com/emoss08/trenova/internal/modules/rating/ratingtest/ratingdb"
 	"github.com/emoss08/trenova/internal/modules/reference/domain/accessorialcharge"
-	"github.com/emoss08/trenova/internal/testutil/seedtest"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/jsonutils"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -28,16 +27,14 @@ import (
 func TestListVersions_ResolvesAccessorialNamesAtReadTime(t *testing.T) {
 	t.Parallel()
 
-	ctx, db, cleanup := seedtest.SetupTestDB(t)
-	t.Cleanup(cleanup)
-
-	data := seedtest.SeedFullTestData(t, ctx, db)
+	rdb := ratingdb.NewDatabase(t)
+	ctx, db, data := rdb.A.Ctx, rdb.Admin, rdb.A.Data
 	tenantInfo := pagination.TenantInfo{
 		OrgID: data.Organization.ID,
 		BuID:  data.BusinessUnit.ID,
 	}
 
-	repo := New(Params{DB: postgres.NewTestConnection(db), Logger: zap.NewNop()})
+	repo := New(Params{DB: rdb.Conn, Logger: zap.NewNop()})
 
 	cust := &customer.Customer{
 		ID:             pulid.MustNew("cus_"),
@@ -50,8 +47,7 @@ func TestListVersions_ResolvesAccessorialNamesAtReadTime(t *testing.T) {
 		City:           "Atlanta",
 		PostalCode:     "30303",
 	}
-	_, err := db.NewInsert().Model(cust).Exec(ctx)
-	require.NoError(t, err)
+	insertRow(t, ctx, db, cust)
 
 	keptCharge := &accessorialcharge.AccessorialCharge{
 		ID:             pulid.MustNew("acc_"),
@@ -71,10 +67,7 @@ func TestListVersions_ResolvesAccessorialNamesAtReadTime(t *testing.T) {
 		Method:         accessorialcharge.MethodFlat,
 		Amount:         decimal.NewFromInt(250),
 	}
-	_, err = db.NewInsert().
-		Model(&[]*accessorialcharge.AccessorialCharge{keptCharge, droppedCharge}).
-		Exec(ctx)
-	require.NoError(t, err)
+	insertRow(t, ctx, db, keptCharge, droppedCharge)
 
 	agreement := &rateagreement.RateAgreement{
 		ID:             pulid.MustNew("ragr_"),
@@ -89,8 +82,7 @@ func TestListVersions_ResolvesAccessorialNamesAtReadTime(t *testing.T) {
 		Currency:       "USD",
 		EffectiveFrom:  100,
 	}
-	_, err = db.NewInsert().Model(agreement).Exec(ctx)
-	require.NoError(t, err)
+	insertRow(t, ctx, db, agreement)
 
 	version := rateagreement.NewVersionFromAgreement(agreement, 2, 200, data.User.ID, "", nil)
 	version.AccessorialTerms = map[string]rateagreement.AccessorialTermSnapshot{
@@ -106,7 +98,7 @@ func TestListVersions_ResolvesAccessorialNamesAtReadTime(t *testing.T) {
 		},
 	}
 
-	_, err = repo.CreateVersion(ctx, version)
+	_, err := repo.CreateVersion(ctx, version)
 	require.NoError(t, err)
 
 	listed, err := repo.ListVersions(ctx, &rateagreementports.ListRateAgreementVersionsRequest{

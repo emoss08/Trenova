@@ -2,31 +2,43 @@ package trailerrepository
 
 import (
 	"context"
+	"slices"
 
-	"github.com/emoss08/trenova/pkg/buncolgen/equipmentmanufacturercol"
-	"github.com/emoss08/trenova/pkg/buncolgen/equipmenttypecol"
-	"github.com/emoss08/trenova/pkg/buncolgen/fleetcodecol"
-	"github.com/emoss08/trenova/pkg/buncolgen/tenantcol"
-	"github.com/emoss08/trenova/pkg/buncolgen/trailercol"
-
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/quotatx"
+	"github.com/emoss08/trenova/internal/modules/equipment/adapters/postgres/lastknownlocation"
+	"github.com/emoss08/trenova/internal/modules/equipment/domain/equipmentcontinuity"
 	"github.com/emoss08/trenova/internal/modules/equipment/domain/trailer"
+	"github.com/emoss08/trenova/internal/modules/equipment/domain/trailer/trailerdb"
 	"github.com/emoss08/trenova/internal/modules/equipment/ports/trailerports"
 	"github.com/emoss08/trenova/internal/modules/identity/app/quotaservice"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/platformplanports"
 	"github.com/emoss08/trenova/internal/modules/kernel/domain/platformcatalog"
-	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dberror"
-	"github.com/emoss08/trenova/pkg/dbhelper"
 	"github.com/emoss08/trenova/pkg/domaintypes"
+	"github.com/emoss08/trenova/pkg/listquery"
 	"github.com/emoss08/trenova/pkg/pagination"
-	"github.com/emoss08/trenova/pkg/querybuilder"
-	"github.com/uptrace/bun"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
+
+var trailerErrors = dberror.Mapping{
+	Entity: "Trailer",
+	Unique: []dberror.Constraint{
+		{
+			Name:    "idx_trailers_code",
+			Field:   "code",
+			Message: "Trailer with this code already exists in your organization",
+		},
+		{
+			Name:    "idx_trailers_external_id_tenant",
+			Field:   "externalId",
+			Message: "Trailer with this external ID already exists in your organization",
+		},
+	},
+}
 
 type Params struct {
 	fx.In
@@ -50,107 +62,54 @@ func New(p Params) trailerports.TrailerRepository {
 	}
 }
 
-func (r *repository) applyListFilters(
-	q *bun.SelectQuery,
-	req *trailerports.ListTrailersRequest,
-) (*bun.SelectQuery, error) {
-	q = applyTrailerRelations(q, req.TrailerRelationIncludes)
-
-	q, err := querybuilder.ApplyCursorFilters(
-		q,
-		trailercol.TrailerTable.Alias,
-		req.Filter,
-		req.Cursor,
-		(*trailer.Trailer)(nil),
-	)
-	if err != nil {
-		return q, err
-	}
-
-	q = r.applyStatusFilter(q, req.Status)
-
-	return q, nil
-}
-
-func (r *repository) applyListCountFilters(
-	q *bun.SelectQuery,
-	req *trailerports.ListTrailersRequest,
-) *bun.SelectQuery {
-	q = querybuilder.ApplyFiltersWithoutSort(
-		q,
-		trailercol.TrailerTable.Alias,
-		req.Filter,
-		(*trailer.Trailer)(nil),
-	)
-
-	return r.applyStatusFilter(q, req.Status)
-}
-
-func (r *repository) applyStatusFilter(q *bun.SelectQuery, value string) *bun.SelectQuery {
+func (r *repository) statusFilter(value string) keel.Pred {
 	if value == "" {
-		return q
+		return nil
 	}
 
 	status, err := domaintypes.EquipmentStatusFromString(value)
 	if err != nil {
 		r.l.Error("failed to parse equipment status", zap.Error(err))
-		return q
+		return nil
 	}
 
-	return q.Where(trailercol.TrailerColumns.Status.Eq(), status)
+	return trailerdb.Trailers.Status.Eq(status)
 }
 
 func (r *repository) List(
 	ctx context.Context,
 	req *trailerports.ListTrailersRequest,
 ) (*pagination.CursorListResult[*trailer.Trailer], error) {
-	return dbtx.Write(
+	return dbtx.Read(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*pagination.CursorListResult[*trailer.Trailer], error) {
-			log := r.l.With(
-				zap.String("operation", "List"),
-				zap.Any("request", req),
-			)
-
-			dba := r.db.DBForContext(ctx)
-			var totalCount *int
-			if req.Cursor.IncludeTotalCount {
-				total, err := dba.
-					NewSelect().
-					Model((*trailer.Trailer)(nil)).
-					Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-						return r.applyListCountFilters(sq, req)
-					}).
-					Count(ctx)
-				if err != nil {
-					log.Error("failed to count trailers", zap.Error(err))
-					return nil, err
-				}
-				totalCount = new(int(total))
+			loads, err := trailerLoads(&req.TrailerRelationIncludes)
+			if err != nil {
+				return nil, err
 			}
 
-			result, err := dbhelper.CursorList(ctx, dbhelper.CursorListParams[*trailer.Trailer]{
-				Filter:     req.Filter,
-				Cursor:     req.Cursor,
-				TotalCount: totalCount,
-				Query: func(items *[]*trailer.Trailer) *bun.SelectQuery {
-					return dba.
-						NewSelect().
-						Model(items).
-						Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-							return applyTrailerColumns(sq, req.TrailerRelationIncludes)
-						}).
-						Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-							return applyLastKnownLocationJoin(sq, req.TrailerRelationIncludes)
-						})
+			result, err := listquery.Connection(
+				ctx,
+				r.db.Keel(ctx),
+				trailerdb.Trailers.Where(r.statusFilter(req.Status)),
+				&listquery.Request[trailer.Trailer]{
+					Filter:  req.Filter,
+					Cursor:  req.Cursor,
+					Columns: req.TrailerColumns,
+					Computed: map[string]keel.Expr{
+						lastKnownLocationFilter: lastknownlocation.LocationID(
+							trailerdb.Trailers.ID,
+							equipmentcontinuity.EquipmentTypeTrailer,
+						),
+					},
+					Shape: func(q *keel.Query[trailer.Trailer]) *keel.Query[trailer.Trailer] {
+						return withLastKnownLocation(q.Load(loads...), &req.TrailerRelationIncludes)
+					},
 				},
-				Apply: func(sq *bun.SelectQuery) (*bun.SelectQuery, error) {
-					return r.applyListFilters(sq, req)
-				},
-			})
+			)
 			if err != nil {
-				log.Error("failed to scan trailers", zap.Error(err))
+				r.l.Error("failed to list trailers", zap.Error(err))
 				return nil, err
 			}
 
@@ -164,22 +123,8 @@ func (r *repository) Create(
 	entity *trailer.Trailer,
 ) (*trailer.Trailer, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*trailer.Trailer, error) {
-		log := r.l.With(
-			zap.String("operation", "Create"),
-			zap.String("code", entity.Code),
-		)
-
 		err := quotatx.Run(ctx, r.db, r.quota, func(c context.Context) error {
-			if _, insertErr := r.db.DBForContext(c).
-				NewInsert().
-				Model(entity).
-				Returning("*").
-				Exec(c); insertErr != nil {
-				log.Error("failed to create trailer", zap.Error(insertErr))
-				return insertErr
-			}
-
-			return nil
+			return trailerdb.Trailers.Create(c, r.db.Keel(c), entity)
 		}, platformplanports.QuotaRequest{
 			TenantInfo: pagination.TenantInfo{
 				OrgID: entity.OrganizationID,
@@ -189,7 +134,8 @@ func (r *repository) Create(
 			Quantity: 1,
 		})
 		if err != nil {
-			return nil, err
+			r.l.Error("failed to create trailer", zap.String("code", entity.Code), zap.Error(err))
+			return nil, trailerErrors.Map(err, entity.ID.String())
 		}
 
 		return entity, nil
@@ -201,28 +147,13 @@ func (r *repository) Update(
 	entity *trailer.Trailer,
 ) (*trailer.Trailer, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*trailer.Trailer, error) {
-		log := r.l.With(
-			zap.String("operation", "Update"),
-			zap.String("id", entity.ID.String()),
-		)
-
-		ov := entity.Version
-		entity.Version++
-
-		results, err := r.db.DBForContext(ctx).
-			NewUpdate().
-			Model(entity).
-			WherePK().
-			Where(trailercol.TrailerColumns.Version.Eq(), ov).
-			Returning("*").
-			Exec(ctx)
-		if err != nil {
-			log.Error("failed to update trailer", zap.Error(err))
-			return nil, err
-		}
-
-		if err = dberror.CheckRowsAffected(results, "Trailer", entity.ID.String()); err != nil {
-			return nil, err
+		if err := trailerdb.Trailers.Save(ctx, r.db.Keel(ctx), entity); err != nil {
+			r.l.Error(
+				"failed to update trailer",
+				zap.String("id", entity.ID.String()),
+				zap.Error(err),
+			)
+			return nil, trailerErrors.Map(err, entity.ID.String())
 		}
 
 		return r.GetByID(ctx, trailerports.GetTrailerByIDRequest{
@@ -240,32 +171,15 @@ func (r *repository) GetByID(
 	req trailerports.GetTrailerByIDRequest,
 ) (*trailer.Trailer, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*trailer.Trailer, error) {
-		log := r.l.With(
-			zap.String("operation", "GetByID"),
-			zap.String("id", req.ID.String()),
-		)
-
-		entity := new(trailer.Trailer)
-		err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(entity).
-			Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return applyTrailerColumns(sq, req.TrailerRelationIncludes)
-			}).
-			Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return applyLastKnownLocationJoin(sq, req.TrailerRelationIncludes)
-			}).
-			Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return applyTrailerRelations(sq, req.TrailerRelationIncludes)
-			}).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return trailercol.TrailerScopeTenant(sq, req.TenantInfo).
-					Where(trailercol.TrailerColumns.ID.Eq(), req.ID)
-			}).
-			Scan(ctx)
+		tr := trailerdb.Trailers
+		q, err := trailerQuery(&req.TrailerRelationIncludes)
 		if err != nil {
-			log.Error("failed to get trailer", zap.Error(err))
-			return nil, dberror.HandleNotFoundError(err, "Trailer")
+			return nil, err
+		}
+
+		entity, err := q.Where(tr.ID.Eq(req.ID)).One(ctx, r.db.Keel(ctx))
+		if err != nil {
+			return nil, trailerErrors.Map(err, req.ID.String())
 		}
 
 		return entity, nil
@@ -276,32 +190,17 @@ func (r *repository) SelectOptions(
 	ctx context.Context,
 	req *pagination.SelectQueryRequest,
 ) (*pagination.ListResult[*trailer.Trailer], error) {
-	return dbtx.Write(
+	return dbtx.Read(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*pagination.ListResult[*trailer.Trailer], error) {
-			cols := trailercol.TrailerColumns
+			tr := trailerdb.Trailers
+			q := tr.Pick(tr.ID, tr.CreatedAt, tr.Status, tr.Code).
+				Where(tr.Status.Eq(domaintypes.EquipmentStatusAvailable))
 
-			return dbhelper.SelectOptions[*trailer.Trailer](
-				ctx,
-				r.db.DBForContext(ctx),
-				req,
-				&dbhelper.SelectOptionsConfig{
-					ColumnRefs: []buncolgen.Column{
-						cols.ID,
-						cols.CreatedAt,
-						cols.Status,
-						cols.Code,
-					},
-					OrgColumnRef: &cols.OrganizationID,
-					BuColumnRef:  &cols.BusinessUnitID,
-					QueryModifier: func(q *bun.SelectQuery) *bun.SelectQuery {
-						return q.Where(cols.Status.Eq(), domaintypes.EquipmentStatusAvailable)
-					},
-					EntityName:       "Trailer",
-					SearchColumnRefs: []buncolgen.Column{cols.Code},
-				},
-			)
+			return listquery.SelectOptions(ctx, r.db.Keel(ctx), q, req, func(s string) keel.Pred {
+				return tr.Code.ContainsFold(s)
+			})
 		},
 	)
 }
@@ -311,32 +210,22 @@ func (r *repository) GetByIDs(
 	req trailerports.GetTrailersByIDsRequest,
 ) ([]*trailer.Trailer, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*trailer.Trailer, error) {
-		log := r.l.With(
-			zap.String("operation", "GetByIDs"),
-			zap.Any("request", req),
-		)
+		if len(req.TrailerIDs) == 0 {
+			return []*trailer.Trailer{}, nil
+		}
 
-		entities := make([]*trailer.Trailer, 0, len(req.TrailerIDs))
-		err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(&entities).
-			Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return applyTrailerColumns(sq, req.TrailerRelationIncludes)
-			}).
-			Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return applyLastKnownLocationJoin(sq, req.TrailerRelationIncludes)
-			}).
-			Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return applyTrailerRelations(sq, req.TrailerRelationIncludes)
-			}).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return trailercol.TrailerScopeTenant(sq, req.TenantInfo).
-					Where(trailercol.TrailerColumns.ID.In(), bun.List(req.TrailerIDs))
-			}).
-			Scan(ctx)
+		tr := trailerdb.Trailers
+		q, err := trailerQuery(&req.TrailerRelationIncludes)
 		if err != nil {
-			log.Error("failed to get trailers", zap.Error(err))
-			return nil, dberror.HandleNotFoundError(err, "Trailer")
+			return nil, err
+		}
+
+		entities, err := q.Where(tr.ID.In(req.TrailerIDs...)).
+			Limit(len(req.TrailerIDs)).
+			List(ctx, r.db.Keel(ctx))
+		if err != nil {
+			r.l.Error("failed to get trailers", zap.Error(err))
+			return nil, err
 		}
 
 		return entities, nil
@@ -348,28 +237,16 @@ func (r *repository) BulkUpdateStatus(
 	req *trailerports.BulkUpdateTrailerStatusRequest,
 ) ([]*trailer.Trailer, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) ([]*trailer.Trailer, error) {
-		log := r.l.With(
-			zap.String("operation", "BulkUpdateStatus"),
-			zap.Any("request", req),
-		)
-
-		entities := make([]*trailer.Trailer, 0, len(req.TrailerIDs))
-		results, err := r.db.DBForContext(ctx).
-			NewUpdate().
-			Model(&entities).
-			WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-				return trailercol.TrailerScopeTenantUpdate(uq, req.TenantInfo).
-					Where(trailercol.TrailerColumns.ID.In(), bun.List(req.TrailerIDs))
-			}).
-			Set(trailercol.TrailerColumns.Status.Set(), req.Status).
-			Returning("*").
-			Exec(ctx)
+		tr := trailerdb.Trailers
+		entities, err := tr.Where(tr.ID.In(req.TrailerIDs...)).
+			UpdateReturning(ctx, r.db.Keel(ctx), tr.Status.To(req.Status))
 		if err != nil {
-			log.Error("failed to bulk update trailer status", zap.Error(err))
+			r.l.Error("failed to bulk update trailer status", zap.Error(err))
 			return nil, err
 		}
 
-		if err = dberror.CheckBulkRowsAffected(results, "Trailer", req.TrailerIDs); err != nil {
+		err = dberror.CheckBulkAffected(int64(len(entities)), "Trailer", req.TrailerIDs)
+		if err != nil {
 			return nil, err
 		}
 
@@ -377,104 +254,98 @@ func (r *repository) BulkUpdateStatus(
 	})
 }
 
-func applyTrailerRelations(
-	q *bun.SelectQuery,
-	includes trailerports.TrailerRelationIncludes,
-) *bun.SelectQuery {
-	rel := trailercol.TrailerRelations
-	equipmentTypeRel := equipmenttypecol.EquipmentTypeRelations
-	equipmentManufacturerRel := equipmentmanufacturercol.EquipmentManufacturerRelations
-	fleetCodeRel := fleetcodecol.FleetCodeRelations
-	organizationRel := tenantcol.OrganizationRelations
-	includeBusinessUnit := includes.IncludeTenantDetails || includes.IncludeBusinessUnit
-	includeOrganization := includes.IncludeTenantDetails || includes.IncludeOrganization
-	includeRegistrationState := includes.IncludeRegistrationDetails ||
-		includes.IncludeRegistrationState
-	includeEquipmentType := includes.IncludeEquipmentDetails || includes.IncludeEquipmentType
-	includeEquipmentManufacturer := includes.IncludeEquipmentDetails ||
-		includes.IncludeEquipmentManufacturer
-	includeFleetCode := includes.IncludeFleetDetails || includes.IncludeFleetCode
-
-	if includeBusinessUnit {
-		q = q.Relation(rel.BusinessUnit)
-	}
-	if includeOrganization {
-		q = q.Relation(rel.Organization)
-	}
-	if includes.IncludeTenantDetails {
-		q = q.Relation(buncolgen.Rel(rel.Organization, organizationRel.BusinessUnit)).
-			Relation(buncolgen.Rel(rel.Organization, organizationRel.State))
-	}
-	if includeRegistrationState {
-		q = q.Relation(rel.RegistrationState)
-	}
-	if includes.IncludeOwnerWorker {
-		q = q.Relation(rel.OwnerWorker, dbhelper.RelationColumns(includes.OwnerWorkerColumns))
-	}
-	if includeEquipmentType {
-		q = q.Relation(rel.EquipmentType, dbhelper.RelationColumns(includes.EquipmentTypeColumns))
-	}
-	if includeEquipmentManufacturer {
-		q = q.Relation(
-			rel.EquipmentManufacturer,
-			dbhelper.RelationColumns(includes.EquipmentManufacturerColumns),
-		)
-	}
-	if includeEquipmentType && includes.IncludeTenantDetails {
-		q = q.Relation(buncolgen.Rel(rel.EquipmentType, equipmentTypeRel.BusinessUnit)).
-			Relation(buncolgen.Rel(rel.EquipmentType, equipmentTypeRel.Organization))
-	}
-	if includeEquipmentManufacturer && includes.IncludeTenantDetails {
-		q = q.Relation(buncolgen.Rel(
-			rel.EquipmentManufacturer,
-			equipmentManufacturerRel.BusinessUnit,
-		)).
-			Relation(buncolgen.Rel(
-				rel.EquipmentManufacturer,
-				equipmentManufacturerRel.Organization,
-			))
-	}
-	if includeFleetCode {
-		q = q.Relation(rel.FleetCode, dbhelper.RelationColumns(includes.FleetCodeColumns))
-	}
-	if includes.IncludeFleetManager {
-		q = q.Relation(buncolgen.Rel(rel.FleetCode, fleetCodeRel.Manager))
-	}
-	if includeFleetCode && includes.IncludeTenantDetails {
-		q = q.Relation(buncolgen.Rel(rel.FleetCode, fleetCodeRel.BusinessUnit)).
-			Relation(buncolgen.Rel(rel.FleetCode, fleetCodeRel.Organization))
+func trailerQuery(
+	includes *trailerports.TrailerRelationIncludes,
+) (*keel.Query[trailer.Trailer], error) {
+	loads, err := trailerLoads(includes)
+	if err != nil {
+		return nil, err
 	}
 
-	return q
+	q, err := listquery.Pick(trailerdb.Trailers.Query(), includes.TrailerColumns)
+	if err != nil {
+		return nil, err
+	}
+
+	return withLastKnownLocation(q.Load(loads...), includes), nil
 }
 
-func applyTrailerColumns(
-	q *bun.SelectQuery,
-	includes trailerports.TrailerRelationIncludes,
-) *bun.SelectQuery {
-	if len(includes.TrailerColumns) == 0 {
-		return q.ColumnExpr(trailercol.TrailerTable.All())
-	}
+func trailerLoads(includes *trailerports.TrailerRelationIncludes) ([]keel.Loader, error) {
+	tr := trailerdb.Trailers
+	details := includes.IncludeTenantDetails
+	org := tr.Organization()
+	et := tr.EquipmentType()
+	em := tr.EquipmentManufacturer()
+	fc := tr.FleetCode()
 
-	return q.Column(includes.TrailerColumns...)
+	var loads listquery.Loads
+	loads.Add(details || includes.IncludeBusinessUnit, func() (keel.Loader, error) {
+		return tr.BusinessUnit(), nil
+	})
+	loads.Add(details || includes.IncludeOrganization, func() (keel.Loader, error) {
+		return listquery.Load(
+			org.Query(),
+			nil,
+			listquery.When(details, org.BusinessUnit(), org.State())...)
+	})
+	loads.Add(
+		includes.IncludeRegistrationDetails || includes.IncludeRegistrationState,
+		func() (keel.Loader, error) { return tr.RegistrationState(), nil },
+	)
+	loads.Add(includes.IncludeOwnerWorker, func() (keel.Loader, error) {
+		return listquery.Load(tr.OwnerWorker().Query(), includes.OwnerWorkerColumns)
+	})
+	loads.Add(
+		includes.IncludeEquipmentDetails || includes.IncludeEquipmentType,
+		func() (keel.Loader, error) {
+			return listquery.Load(et.Query(), includes.EquipmentTypeColumns,
+				listquery.When(details, et.BusinessUnit(), et.Organization())...)
+		},
+	)
+	loads.Add(
+		includes.IncludeEquipmentDetails || includes.IncludeEquipmentManufacturer,
+		func() (keel.Loader, error) {
+			return listquery.Load(em.Query(), includes.EquipmentManufacturerColumns,
+				listquery.When(details, em.BusinessUnit(), em.Organization())...)
+		},
+	)
+	loads.Add(
+		includes.IncludeFleetDetails || includes.IncludeFleetCode || includes.IncludeFleetManager,
+		func() (keel.Loader, error) {
+			nested := slices.Concat(
+				listquery.When(includes.IncludeFleetManager, fc.Manager()),
+				listquery.When(details, fc.BusinessUnit(), fc.Organization()),
+			)
+			return listquery.Load(fc.Query(), includes.FleetCodeColumns, nested...)
+		},
+	)
+
+	return loads.Result()
 }
 
-func applyLastKnownLocationJoin(
-	q *bun.SelectQuery,
-	includes trailerports.TrailerRelationIncludes,
-) *bun.SelectQuery {
+const lastKnownLocationFilter = "lastKnownLocationId"
+
+func withLastKnownLocation(
+	q *keel.Query[trailer.Trailer],
+	includes *trailerports.TrailerRelationIncludes,
+) *keel.Query[trailer.Trailer] {
 	if !includes.IncludeLastKnownLocation {
 		return q
 	}
 
-	if len(includes.TrailerColumns) == 0 {
-		q = q.Column("tr.*")
-	}
+	tr := trailerdb.Trailers
+	ec := lastknownlocation.Continuity()
+	location := lastknownlocation.Of(ec, lastknownlocation.Tenant{
+		OrganizationID: tr.OrganizationID,
+		BusinessUnitID: tr.BusinessUnitID,
+	})
+	current := ec.Pick(ec.CurrentLocationID).
+		Where(lastknownlocation.Current(ec, tr.ID, equipmentcontinuity.EquipmentTypeTrailer)...).
+		Limit(1)
 
-	return q.ColumnExpr("ec.current_location_id AS last_known_location_id").
-		ColumnExpr("COALESCE(lkl.name, '') AS last_known_location_name").
-		ColumnExpr("lkl.latitude AS last_known_location_latitude").
-		ColumnExpr("lkl.longitude AS last_known_location_longitude").
-		Join("LEFT JOIN equipment_continuity AS ec ON ec.equipment_id = tr.id AND ec.equipment_type = ? AND ec.organization_id = tr.organization_id AND ec.business_unit_id = tr.business_unit_id AND ec.is_current = TRUE", "Trailer").
-		Join("LEFT JOIN locations AS lkl ON lkl.id = ec.current_location_id AND lkl.organization_id = ec.organization_id AND lkl.business_unit_id = ec.business_unit_id")
+	return q.LeftJoinLateral(current).
+		Compute(tr.LastKnownLocationID, location.LocationID).
+		Compute(tr.LastKnownLocationName, location.Name).
+		Compute(tr.LastKnownLocationLatitude, location.Latitude).
+		Compute(tr.LastKnownLocationLongitude, location.Longitude)
 }

@@ -21,7 +21,6 @@ import (
 	"github.com/emoss08/trenova/pkg/factoringremit"
 	"github.com/emoss08/trenova/pkg/rateimport"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/uptrace/bun"
 )
 
 const (
@@ -90,7 +89,7 @@ func (s *RemittanceService) Stage(
 	}
 
 	var updated *factoring.Remittance
-	err = s.db.WithTx(ctx, kernelports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
+	err = s.db.Transact(ctx, kernelports.TxOptions{}, func(txCtx context.Context) error {
 		rem, lockErr := s.lock(txCtx, req.TenantInfo, req.ID, req.Version)
 		if lockErr != nil {
 			return lockErr
@@ -178,7 +177,7 @@ func (s *RemittanceService) StagePending(
 		prepared.problem = problemOf(err)
 	}
 
-	err = s.db.WithTx(ctx, kernelports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
+	err = s.db.Transact(ctx, kernelports.TxOptions{}, func(txCtx context.Context) error {
 		rem, lockErr := s.remittances.Get(txCtx, factoringports.GetRemittanceRequest{
 			TenantInfo:   req.TenantInfo,
 			ID:           req.ID,

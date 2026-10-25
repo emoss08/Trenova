@@ -4,20 +4,29 @@ package editestcaserepository
 import (
 	"context"
 
-	"github.com/emoss08/trenova/pkg/buncolgen/edicol"
-
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/edi/edidb"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
 	"github.com/emoss08/trenova/pkg/dberror"
-	"github.com/emoss08/trenova/pkg/dbhelper"
+	"github.com/emoss08/trenova/pkg/listquery"
 	"github.com/emoss08/trenova/pkg/pagination"
-	"github.com/emoss08/trenova/pkg/querybuilder"
-	"github.com/uptrace/bun"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
+
+var testCaseErrors = dberror.Mapping{
+	Entity: "EDITestCase",
+	Unique: []dberror.Constraint{
+		{
+			Name:    "idx_edi_test_cases_name_profile",
+			Field:   "name",
+			Message: "An EDI test case with this name already exists for the document profile",
+		},
+	},
+}
 
 type Params struct {
 	fx.In
@@ -42,29 +51,38 @@ func (r *repository) ListTestCases(
 	ctx context.Context,
 	req *ediports.ListEDITestCasesRequest,
 ) (*pagination.ListResult[*edi.EDITestCase], error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*pagination.ListResult[*edi.EDITestCase], error) {
-		entities := make([]*edi.EDITestCase, 0, req.Filter.Pagination.SafeLimit())
-		cols := edicol.EDITestCaseColumns
+	return dbtx.Read(
+		ctx,
+		r.db,
+		func(ctx context.Context) (*pagination.ListResult[*edi.EDITestCase], error) {
+			tc := edidb.EDITestCases
+			q := withDocumentProfile(listedTestCases(req)).Order(tc.CreatedAt.Desc())
 
-		query := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(&entities).
-			Relation("DocumentProfile").
-			Relation("DocumentProfile.Partner").
-			Apply(edicol.EDITestCaseApplyTenant(req.Filter.TenantInfo))
-		if !req.PartnerDocumentProfileID.IsNil() {
-			query = query.Where(cols.PartnerDocumentProfileID.Eq(), req.PartnerDocumentProfileID)
-		}
-		total, err := query.
-			Order(cols.CreatedAt.OrderDesc()).
-			Limit(int64(req.Filter.Pagination.SafeLimit())).
-			Offset(int64(req.Filter.Pagination.SafeOffset())).
-			ScanAndCount(ctx)
-		if err != nil {
-			return nil, err
-		}
-		return &pagination.ListResult[*edi.EDITestCase]{Items: entities, Total: int(total)}, nil
-	})
+			return listquery.Offset(ctx, r.db.Keel(ctx), q, req.Filter.Pagination)
+		},
+	)
+}
+
+func (r *repository) ListTestCasesCursor(
+	ctx context.Context,
+	req *ediports.ListEDITestCasesRequest,
+) (*pagination.CursorListResult[*edi.EDITestCase], error) {
+	return dbtx.Read(
+		ctx,
+		r.db,
+		func(ctx context.Context) (*pagination.CursorListResult[*edi.EDITestCase], error) {
+			return listquery.Connection(
+				ctx,
+				r.db.Keel(ctx),
+				listedTestCases(req),
+				&listquery.Request[edi.EDITestCase]{
+					Filter: req.Filter,
+					Cursor: req.Cursor,
+					Shape:  withDocumentProfile,
+				},
+			)
+		},
+	)
 }
 
 func (r *repository) GetTestCaseByID(
@@ -72,18 +90,11 @@ func (r *repository) GetTestCaseByID(
 	req ediports.GetEDITestCaseByIDRequest,
 ) (*edi.EDITestCase, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*edi.EDITestCase, error) {
-		entity := new(edi.EDITestCase)
-		cols := edicol.EDITestCaseColumns
-
-		err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(entity).
-			Where(cols.ID.Eq(), req.ID).
-			Apply(edicol.EDITestCaseApplyTenant(req.TenantInfo)).
-			Scan(ctx)
+		entity, err := edidb.EDITestCases.Get(ctx, r.db.Keel(ctx), req.ID)
 		if err != nil {
-			return nil, dberror.HandleNotFoundError(err, "EDITestCase")
+			return nil, testCaseErrors.Map(err, req.ID.String())
 		}
+
 		return entity, nil
 	})
 }
@@ -93,13 +104,10 @@ func (r *repository) CreateTestCase(
 	entity *edi.EDITestCase,
 ) (*edi.EDITestCase, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*edi.EDITestCase, error) {
-		if _, err := r.db.DBForContext(ctx).
-			NewInsert().
-			Model(entity).
-			Returning("*").
-			Exec(ctx); err != nil {
-			return nil, err
+		if err := edidb.EDITestCases.Create(ctx, r.db.Keel(ctx), entity); err != nil {
+			return nil, testCaseErrors.Map(err, entity.ID.String())
 		}
+
 		return entity, nil
 	})
 }
@@ -109,22 +117,10 @@ func (r *repository) UpdateTestCase(
 	entity *edi.EDITestCase,
 ) (*edi.EDITestCase, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*edi.EDITestCase, error) {
-		ov := entity.Version
-		entity.Version++
-		results, err := r.db.DBForContext(ctx).
-			NewUpdate().
-			Model(entity).
-			WherePK().
-			Where("version = ?", ov).
-			Returning("*").
-			Exec(ctx)
-		if err != nil {
-			entity.Version = ov
-			return nil, err
+		if err := edidb.EDITestCases.Save(ctx, r.db.Keel(ctx), entity); err != nil {
+			return nil, testCaseErrors.Map(err, entity.ID.String())
 		}
-		if err = dberror.CheckRowsAffected(results, "EDITestCase", entity.ID.String()); err != nil {
-			return nil, err
-		}
+
 		return entity, nil
 	})
 }
@@ -134,19 +130,19 @@ func (r *repository) RecordTestCaseRun(
 	req *ediports.RecordEDITestCaseRunRequest,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
-		cols := edicol.EDITestCaseColumns
-		_, err := r.db.DBForContext(ctx).
-			NewUpdate().
-			Model((*edi.EDITestCase)(nil)).
-			Set("last_run_at = ?", req.RanAt).
-			Set("last_run_passed = ?", req.Passed).
-			Set("last_run_warnings = ?", req.Warnings).
-			Set("last_run_errors = ?", req.Errors).
-			Where(cols.ID.Eq(), req.ID).
-			Where(cols.OrganizationID.Eq(), req.TenantInfo.OrgID).
-			Where(cols.BusinessUnitID.Eq(), req.TenantInfo.BuID).
-			Exec(ctx)
-		return err
+		tc := edidb.EDITestCases
+		_, err := tc.Where(tc.ID.Eq(req.ID)).Update(
+			ctx,
+			r.db.Keel(ctx),
+			tc.LastRunAt.To(req.RanAt),
+			tc.LastRunPassed.To(req.Passed),
+			tc.LastRunWarnings.To(int64(req.Warnings)),
+			tc.LastRunErrors.To(int64(req.Errors)),
+			tc.Version.ToExpr(tc.Version),
+			tc.UpdatedAt.ToExpr(tc.UpdatedAt),
+		)
+
+		return testCaseErrors.Map(err, req.ID.String())
 	})
 }
 
@@ -155,80 +151,24 @@ func (r *repository) DeleteTestCase(
 	req ediports.DeleteEDITestCaseRequest,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
-		cols := edicol.EDITestCaseColumns
-		results, err := r.db.DBForContext(ctx).
-			NewDelete().
-			Model((*edi.EDITestCase)(nil)).
-			Where(cols.ID.Eq(), req.ID).
-			Where(cols.OrganizationID.Eq(), req.TenantInfo.OrgID).
-			Where(cols.BusinessUnitID.Eq(), req.TenantInfo.BuID).
-			Exec(ctx)
+		tc := edidb.EDITestCases
+		n, err := tc.Where(tc.ID.Eq(req.ID)).Delete(ctx, r.db.Keel(ctx))
 		if err != nil {
-			return err
+			return testCaseErrors.Map(err, req.ID.String())
 		}
-		return dberror.CheckRowsAffected(results, "EDITestCase", req.ID.String())
+
+		return dberror.CheckAffected(n, "EDITestCase", req.ID.String())
 	})
 }
 
-func (r *repository) ListTestCasesCursor(
-	ctx context.Context,
-	req *ediports.ListEDITestCasesRequest,
-) (*pagination.CursorListResult[*edi.EDITestCase], error) {
-	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*pagination.CursorListResult[*edi.EDITestCase], error) {
-		dba := r.db.DBForContext(ctx)
-		cols := edicol.EDITestCaseColumns
-		extraFilters := func(sq *bun.SelectQuery) *bun.SelectQuery {
-			if !req.PartnerDocumentProfileID.IsNil() {
-				sq = sq.Where(cols.PartnerDocumentProfileID.Eq(), req.PartnerDocumentProfileID)
-			}
-			return sq
-		}
+func listedTestCases(req *ediports.ListEDITestCasesRequest) *keel.Query[edi.EDITestCase] {
+	tc := edidb.EDITestCases
+	return tc.Where(keel.When(
+		req.PartnerDocumentProfileID.IsNotNil(),
+		tc.PartnerDocumentProfileID.Eq(req.PartnerDocumentProfileID),
+	))
+}
 
-		var totalCount *int
-		if req.Cursor.IncludeTotalCount {
-			total, err := dba.
-				NewSelect().
-				Model((*edi.EDITestCase)(nil)).
-				Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-					sq = querybuilder.ApplyFiltersWithoutSort(
-						sq,
-						"etc",
-						req.Filter,
-						(*edi.EDITestCase)(nil),
-					)
-					return extraFilters(sq)
-				}).
-				Count(ctx)
-			if err != nil {
-				return nil, err
-			}
-			totalCount = new(int(total))
-		}
-
-		return dbhelper.CursorList(ctx, dbhelper.CursorListParams[*edi.EDITestCase]{
-			Filter:     req.Filter,
-			Cursor:     req.Cursor,
-			TotalCount: totalCount,
-			Query: func(entities *[]*edi.EDITestCase) *bun.SelectQuery {
-				return dba.
-					NewSelect().
-					Model(entities).
-					Relation("DocumentProfile").
-					Relation("DocumentProfile.Partner")
-			},
-			Apply: func(sq *bun.SelectQuery) (*bun.SelectQuery, error) {
-				sq, applyErr := querybuilder.ApplyCursorFilters(
-					sq,
-					"etc",
-					req.Filter,
-					req.Cursor,
-					(*edi.EDITestCase)(nil),
-				)
-				if applyErr != nil {
-					return sq, applyErr
-				}
-				return extraFilters(sq), nil
-			},
-		})
-	})
+func withDocumentProfile(q *keel.Query[edi.EDITestCase]) *keel.Query[edi.EDITestCase] {
+	return q.Load(edidb.EDITestCases.DocumentProfile().Partner())
 }

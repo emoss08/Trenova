@@ -138,12 +138,12 @@ type RateAgreementLaneSummary struct {
 }
 
 type LanePricingGroup struct {
-	FormulaTemplateID   *pulid.ID           `json:"formulaTemplateId"   bun:"formula_template_id"`
-	FormulaTemplateName string              `json:"formulaTemplateName" bun:"formula_template_name"`
-	Currency            string              `json:"currency"            bun:"currency"`
-	Lanes               int                 `json:"lanes"               bun:"lanes"`
-	MinRate             decimal.NullDecimal `json:"minRate"             bun:"min_rate"`
-	MaxRate             decimal.NullDecimal `json:"maxRate"             bun:"max_rate"`
+	FormulaTemplateID   *pulid.ID           `json:"formulaTemplateId"`
+	FormulaTemplateName string              `json:"formulaTemplateName"`
+	Currency            string              `json:"currency"`
+	Lanes               int                 `json:"lanes"`
+	MinRate             decimal.NullDecimal `json:"minRate"`
+	MaxRate             decimal.NullDecimal `json:"maxRate"`
 }
 
 type GetRateAgreementRuleByIDRequest struct {

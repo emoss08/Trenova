@@ -5,70 +5,69 @@ import (
 	"strings"
 	"time"
 
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/customer"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/errortypes"
-	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/money"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/emoss08/trenova/shared/timeutils"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
 	"github.com/shopspring/decimal"
-	"github.com/uptrace/bun"
 )
 
+// Cash received from customers and how much of it is applied
 type Payment struct {
-	bun.BaseModel             `bun:"table:customer_payments,alias:cp" json:"-"`
-	pagination.CursorValueSet `bun:",embed"                           json:"-"`
+	keel.Table `keel:"customer_payments,report=Accounting,label=Customer Payment"`
 
-	ID                   pulid.ID            `json:"id"                   bun:"id,pk,type:VARCHAR(100),notnull"`
-	OrganizationID       pulid.ID            `json:"organizationId"       bun:"organization_id,pk,type:VARCHAR(100),notnull"`
-	BusinessUnitID       pulid.ID            `json:"businessUnitId"       bun:"business_unit_id,pk,type:VARCHAR(100),notnull"`
-	CustomerID           pulid.ID            `json:"customerId"           bun:"customer_id,type:VARCHAR(100),notnull"`
-	PaymentDate          int64               `json:"paymentDate"          bun:"payment_date,type:BIGINT,notnull"`
-	AccountingDate       int64               `json:"accountingDate"       bun:"accounting_date,type:BIGINT,notnull"`
-	AmountMinor          int64               `json:"amountMinor"          bun:"amount_minor,type:BIGINT,notnull"`
-	AppliedAmountMinor   int64               `json:"appliedAmountMinor"   bun:"applied_amount_minor,type:BIGINT,notnull"`
-	UnappliedAmountMinor int64               `json:"unappliedAmountMinor" bun:"unapplied_amount_minor,type:BIGINT,notnull"`
-	Status               Status              `json:"status"               bun:"status,type:VARCHAR(50),notnull"`
-	PaymentMethod        Method              `json:"paymentMethod"        bun:"payment_method,type:VARCHAR(50),notnull"`
-	ReferenceNumber      string              `json:"referenceNumber"      bun:"reference_number,type:VARCHAR(100),nullzero"`
-	Memo                 string              `json:"memo"                 bun:"memo,type:TEXT,nullzero"`
-	CurrencyCode         string              `json:"currencyCode"         bun:"currency_code,type:VARCHAR(3),notnull,default:'USD'"`
-	ExchangeRate         decimal.NullDecimal `json:"exchangeRate"         bun:"exchange_rate,type:NUMERIC(24,12),nullzero"`
-	ExchangeRateDate     *int64              `json:"exchangeRateDate"     bun:"exchange_rate_date,type:BIGINT,nullzero"`
-	PostedBatchID        pulid.ID            `json:"postedBatchId"        bun:"posted_batch_id,type:VARCHAR(100),nullzero"`
-	ReversalBatchID      pulid.ID            `json:"reversalBatchId"      bun:"reversal_batch_id,type:VARCHAR(100),nullzero"`
-	ReversedByID         pulid.ID            `json:"reversedById"         bun:"reversed_by_id,type:VARCHAR(100),nullzero"`
-	ReversedAt           *int64              `json:"reversedAt"           bun:"reversed_at,type:BIGINT,nullzero"`
-	ReversalReason       string              `json:"reversalReason"       bun:"reversal_reason,type:TEXT,nullzero"`
-	CreatedByID          pulid.ID            `json:"createdById"          bun:"created_by_id,type:VARCHAR(100),notnull"`
-	UpdatedByID          pulid.ID            `json:"updatedById"          bun:"updated_by_id,type:VARCHAR(100),nullzero"`
-	Version              int64               `json:"version"              bun:"version,type:BIGINT,notnull"`
-	CreatedAt            int64               `json:"createdAt"            bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
-	UpdatedAt            int64               `json:"updatedAt"            bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
+	ID                   pulid.ID            `json:"id"                   keel:"id,pk,autoid:cpay_"`
+	OrganizationID       pulid.ID            `json:"organizationId"       keel:"organization_id,pk,tenant"`
+	BusinessUnitID       pulid.ID            `json:"businessUnitId"       keel:"business_unit_id,pk,tenant"`
+	CustomerID           pulid.ID            `json:"customerId"           keel:"customer_id"`
+	PaymentDate          int64               `json:"paymentDate"          keel:"payment_date"`
+	AccountingDate       int64               `json:"accountingDate"       keel:"accounting_date"`
+	AmountMinor          int64               `json:"amountMinor"          keel:"amount_minor,label=Amount (Minor)"`
+	AppliedAmountMinor   int64               `json:"appliedAmountMinor"   keel:"applied_amount_minor,label=Applied (Minor)"`
+	UnappliedAmountMinor int64               `json:"unappliedAmountMinor" keel:"unapplied_amount_minor,label=Unapplied (Minor)"`
+	Status               Status              `json:"status"               keel:"status"`
+	PaymentMethod        Method              `json:"paymentMethod"        keel:"payment_method"`
+	ReferenceNumber      string              `json:"referenceNumber"      keel:"reference_number,nullzero"`
+	Memo                 string              `json:"memo"                 keel:"memo,nullzero"`
+	CurrencyCode         string              `json:"currencyCode"         keel:"currency_code,label=Currency"`
+	ExchangeRate         decimal.NullDecimal `json:"exchangeRate"         keel:"exchange_rate"`
+	ExchangeRateDate     *int64              `json:"exchangeRateDate"     keel:"exchange_rate_date"`
+	PostedBatchID        pulid.ID            `json:"postedBatchId"        keel:"posted_batch_id,nullzero"`
+	ReversalBatchID      pulid.ID            `json:"reversalBatchId"      keel:"reversal_batch_id,nullzero"`
+	ReversedByID         pulid.ID            `json:"reversedById"         keel:"reversed_by_id,nullzero"`
+	ReversedAt           *int64              `json:"reversedAt"           keel:"reversed_at"`
+	ReversalReason       string              `json:"reversalReason"       keel:"reversal_reason,nullzero"`
+	CreatedByID          pulid.ID            `json:"createdById"          keel:"created_by_id"`
+	UpdatedByID          pulid.ID            `json:"updatedById"          keel:"updated_by_id,nullzero"`
+	Version              int64               `json:"version"              keel:"version,version"`
+	CreatedAt            int64               `json:"createdAt"            keel:"created_at,autocreate"`
+	UpdatedAt            int64               `json:"updatedAt"            keel:"updated_at,autoupdate"`
 
-	Applications []*Application     `json:"applications,omitempty" bun:"rel:has-many,join:id=customer_payment_id"`
-	Customer     *customer.Customer `json:"customer,omitempty"     bun:"rel:belongs-to,join:customer_id=id,join:organization_id=organization_id,join:business_unit_id=business_unit_id"`
+	Applications []*Application     `json:"applications,omitempty" keel:"many:customer_payment_id"`
+	Customer     *customer.Customer `json:"customer,omitempty"     keel:"belongs:customer_id"`
 }
 
+// Which invoice each dollar of a payment was applied to
 type Application struct {
-	bun.BaseModel `bun:"table:customer_payment_applications,alias:cpa" json:"-"`
+	keel.Table `keel:"customer_payment_applications,report=Accounting,label=Payment Application"`
 
-	ID                  pulid.ID `json:"id"                  bun:"id,pk,type:VARCHAR(100),notnull"`
-	OrganizationID      pulid.ID `json:"organizationId"      bun:"organization_id,pk,type:VARCHAR(100),notnull"`
-	BusinessUnitID      pulid.ID `json:"businessUnitId"      bun:"business_unit_id,pk,type:VARCHAR(100),notnull"`
-	CustomerPaymentID   pulid.ID `json:"customerPaymentId"   bun:"customer_payment_id,type:VARCHAR(100),notnull"`
-	InvoiceID           pulid.ID `json:"invoiceId"           bun:"invoice_id,type:VARCHAR(100),notnull"`
-	AppliedAmountMinor  int64    `json:"appliedAmountMinor"  bun:"applied_amount_minor,type:BIGINT,notnull"`
-	ShortPayAmountMinor int64    `json:"shortPayAmountMinor" bun:"short_pay_amount_minor,type:BIGINT,notnull"`
-	LineNumber          int      `json:"lineNumber"          bun:"line_number,type:INTEGER,notnull"`
-	CreatedAt           int64    `json:"createdAt"           bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
-	UpdatedAt           int64    `json:"updatedAt"           bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
+	ID                  pulid.ID `json:"id"                  keel:"id,pk,autoid:cpapp_"`
+	OrganizationID      pulid.ID `json:"organizationId"      keel:"organization_id,pk,tenant"`
+	BusinessUnitID      pulid.ID `json:"businessUnitId"      keel:"business_unit_id,pk,tenant"`
+	CustomerPaymentID   pulid.ID `json:"customerPaymentId"   keel:"customer_payment_id"`
+	InvoiceID           pulid.ID `json:"invoiceId"           keel:"invoice_id"`
+	AppliedAmountMinor  int64    `json:"appliedAmountMinor"  keel:"applied_amount_minor,label=Applied (Minor)"`
+	ShortPayAmountMinor int64    `json:"shortPayAmountMinor" keel:"short_pay_amount_minor,label=Short Pay (Minor)"`
+	LineNumber          int      `json:"lineNumber"          keel:"line_number,label=Line,dimension"`
+	CreatedAt           int64    `json:"createdAt"           keel:"created_at,autocreate"`
+	UpdatedAt           int64    `json:"updatedAt"           keel:"updated_at,autoupdate"`
 
-	Payment *Payment         `json:"payment,omitempty" bun:"rel:belongs-to,join:customer_payment_id=id,join:organization_id=organization_id,join:business_unit_id=business_unit_id"`
-	Invoice *invoice.Invoice `json:"invoice,omitempty" bun:"rel:belongs-to,join:invoice_id=id,join:organization_id=organization_id,join:business_unit_id=business_unit_id"`
+	Payment *Payment         `json:"payment,omitempty" keel:"belongs:customer_payment_id,label=Customer Payment"`
+	Invoice *invoice.Invoice `json:"invoice,omitempty" keel:"belongs:invoice_id"`
 }
 
 func (p *Payment) Validate(multiErr *errortypes.MultiError) {
@@ -190,31 +189,11 @@ func (p *Payment) CanReverse() bool {
 	return p != nil && p.Status == StatusPosted
 }
 
-func (p *Payment) BeforeAppendModel(_ context.Context, query bun.Query) error {
-	now := timeutils.NowUnix()
-	switch query.(type) {
-	case *bun.InsertQuery:
-		if p.ID.IsNil() {
-			p.ID = pulid.MustNew("cpay_")
-		}
-		p.CreatedAt = now
-	case *bun.UpdateQuery:
-		p.UpdatedAt = now
+func (p *Payment) BeforeCreate(ctx context.Context) error {
+	if p.CurrencyCode == "" {
+		p.CurrencyCode = "USD"
 	}
-	return nil
-}
 
-func (a *Application) BeforeAppendModel(_ context.Context, query bun.Query) error {
-	now := timeutils.NowUnix()
-	switch query.(type) {
-	case *bun.InsertQuery:
-		if a.ID.IsNil() {
-			a.ID = pulid.MustNew("cpapp_")
-		}
-		a.CreatedAt = now
-	case *bun.UpdateQuery:
-		a.UpdatedAt = now
-	}
 	return nil
 }
 

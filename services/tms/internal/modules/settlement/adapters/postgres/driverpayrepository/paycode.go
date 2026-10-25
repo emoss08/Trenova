@@ -4,22 +4,30 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/emoss08/trenova/pkg/buncolgen/driverpaycol"
-
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/driverpay"
+	"github.com/emoss08/trenova/internal/modules/settlement/domain/driverpay/driverpaydb"
 	"github.com/emoss08/trenova/internal/modules/settlement/ports/driverpayports"
-	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dberror"
-	"github.com/emoss08/trenova/pkg/dbhelper"
 	"github.com/emoss08/trenova/pkg/domaintypes"
+	"github.com/emoss08/trenova/pkg/listquery"
 	"github.com/emoss08/trenova/pkg/pagination"
-	"github.com/emoss08/trenova/pkg/querybuilder"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/uptrace/bun"
 	"go.uber.org/zap"
 )
+
+var payCodeErrors = dberror.Mapping{
+	Entity: "PayCode",
+	Unique: []dberror.Constraint{
+		{
+			Name:    "uq_pay_codes_org_direction_code",
+			Field:   "code",
+			Message: "Pay code with this code and direction already exists in your organization",
+		},
+	},
+}
 
 type payCodeRepository struct {
 	db *postgres.Connection
@@ -41,33 +49,18 @@ func (r *payCodeRepository) List(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*pagination.ListResult[*driverpay.PayCode], error) {
-			limit := req.Filter.Pagination.SafeLimit()
-			items := make([]*driverpay.PayCode, 0, limit)
+			pc := driverpaydb.PayCodes
+			q := pc.Where(
+				searchPred(req.Filter.Query, pc.Code, pc.Name),
+				when(req.Direction != "", pc.Direction.Eq(req.Direction)),
+			).Load(pc.GLAccount()).Order(pc.Direction.Asc(), pc.Code.Asc())
 
-			query := r.db.DBForContext(ctx).
-				NewSelect().
-				Model(&items).
-				Where("payc.organization_id = ?", req.Filter.TenantInfo.OrgID).
-				Where("payc.business_unit_id = ?", req.Filter.TenantInfo.BuID).
-				Relation("GLAccount", func(q *bun.SelectQuery) *bun.SelectQuery { return q }).
-				Order("payc.direction ASC", "payc.code ASC").
-				Limit(int64(limit)).
-				Offset(int64(req.Filter.Pagination.SafeOffset()))
-
-			if req.Filter.Query != "" {
-				term := "%" + req.Filter.Query + "%"
-				query = query.Where("(payc.code ILIKE ? OR payc.name ILIKE ?)", term, term)
-			}
-			if req.Direction != "" {
-				query = query.Where("payc.direction = ?", req.Direction)
-			}
-
-			total, err := query.ScanAndCount(ctx)
+			result, err := listquery.Offset(ctx, r.db.Keel(ctx), q, req.Filter.Pagination)
 			if err != nil {
 				return nil, fmt.Errorf("list pay codes: %w", err)
 			}
 
-			return &pagination.ListResult[*driverpay.PayCode]{Items: items, Total: int(total)}, nil
+			return result, nil
 		},
 	)
 }
@@ -76,59 +69,25 @@ func (r *payCodeRepository) ListConnection(
 	ctx context.Context,
 	req *driverpayports.ListPayCodeConnectionRequest,
 ) (*pagination.CursorListResult[*driverpay.PayCode], error) {
-	return dbtx.Write(
+	return dbtx.Read(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*pagination.CursorListResult[*driverpay.PayCode], error) {
-			log := r.l.With(zap.String("operation", "ListConnection"))
-
-			dba := r.db.DBForContext(ctx)
-			var totalCount *int
-			if req.Cursor.IncludeTotalCount {
-				total, err := dba.
-					NewSelect().
-					Model((*driverpay.PayCode)(nil)).
-					Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-						return querybuilder.ApplyFiltersWithoutSort(
-							sq,
-							"payc",
-							req.Filter,
-							(*driverpay.PayCode)(nil),
-						)
-					}).
-					Count(ctx)
-				if err != nil {
-					log.Error("failed to count pay codes", zap.Error(err))
-					return nil, err
-				}
-				totalCount = new(int(total))
-			}
-
-			result, err := dbhelper.CursorList(
+			pc := driverpaydb.PayCodes
+			result, err := listquery.Connection(
 				ctx,
-				dbhelper.CursorListParams[*driverpay.PayCode]{
-					Filter:     req.Filter,
-					Cursor:     req.Cursor,
-					TotalCount: totalCount,
-					Query: func(entities *[]*driverpay.PayCode) *bun.SelectQuery {
-						return dba.NewSelect().
-							Model(entities).
-							ColumnExpr(driverpaycol.PayCodeTable.All()).
-							Relation("GLAccount", func(q *bun.SelectQuery) *bun.SelectQuery { return q })
-					},
-					Apply: func(sq *bun.SelectQuery) (*bun.SelectQuery, error) {
-						return querybuilder.ApplyCursorFilters(
-							sq,
-							"payc",
-							req.Filter,
-							req.Cursor,
-							(*driverpay.PayCode)(nil),
-						)
+				r.db.Keel(ctx),
+				pc.Query(),
+				&listquery.Request[driverpay.PayCode]{
+					Filter: req.Filter,
+					Cursor: req.Cursor,
+					Shape: func(q *keel.Query[driverpay.PayCode]) *keel.Query[driverpay.PayCode] {
+						return q.Load(pc.GLAccount())
 					},
 				},
 			)
 			if err != nil {
-				log.Error("failed to scan pay codes", zap.Error(err))
+				r.l.Error("failed to list pay codes", zap.Error(err))
 				return nil, err
 			}
 
@@ -142,20 +101,15 @@ func (r *payCodeRepository) ListActive(
 	req driverpayports.ListActivePayCodesRequest,
 ) ([]*driverpay.PayCode, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*driverpay.PayCode, error) {
-		items := make([]*driverpay.PayCode, 0)
-		query := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(&items).
-			Where("payc.organization_id = ?", req.TenantInfo.OrgID).
-			Where("payc.business_unit_id = ?", req.TenantInfo.BuID).
-			Where("payc.status = ?", domaintypes.StatusActive).
-			Order("payc.code ASC")
-		if req.Direction != "" {
-			query = query.Where("payc.direction = ?", req.Direction)
-		}
-		if err := query.Scan(ctx); err != nil {
+		pc := driverpaydb.PayCodes
+		items, err := pc.Where(
+			pc.Status.Eq(domaintypes.StatusActive),
+			when(req.Direction != "", pc.Direction.Eq(req.Direction)),
+		).Order(pc.Code.Asc()).All(ctx, r.db.Keel(ctx))
+		if err != nil {
 			return nil, fmt.Errorf("list active pay codes: %w", err)
 		}
+
 		return items, nil
 	})
 }
@@ -164,42 +118,37 @@ func (r *payCodeRepository) SelectOptions(
 	ctx context.Context,
 	req *driverpayports.PayCodeSelectOptionsRequest,
 ) (*pagination.ListResult[*driverpay.PayCode], error) {
-	return dbtx.Write(
+	return dbtx.Read(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*pagination.ListResult[*driverpay.PayCode], error) {
-			cols := driverpaycol.PayCodeColumns
-			return dbhelper.SelectOptions[*driverpay.PayCode](
+			pc := driverpaydb.PayCodes
+			q := pc.Pick(
+				pc.ID,
+				pc.Code,
+				pc.Name,
+				pc.Description,
+				pc.Direction,
+				pc.Taxable,
+				pc.CountsTowardGuarantee,
+				pc.DefaultAmountMinor,
+				pc.CreatedAt,
+			).Where(
+				pc.Status.Eq(domaintypes.StatusActive),
+				when(req.Direction != "", pc.Direction.Eq(req.Direction)),
+			).Order(pc.Code.Asc())
+
+			return listquery.SelectOptions(
 				ctx,
-				r.db.DBForContext(ctx),
+				r.db.Keel(ctx),
+				q,
 				req.SelectQueryRequest,
-				&dbhelper.SelectOptionsConfig{
-					ColumnRefs: []buncolgen.Column{
-						cols.ID,
-						cols.Code,
-						cols.Name,
-						cols.Description,
-						cols.Direction,
-						cols.Taxable,
-						cols.CountsTowardGuarantee,
-						cols.DefaultAmountMinor,
-						cols.CreatedAt,
-					},
-					OrgColumnRef: &cols.OrganizationID,
-					BuColumnRef:  &cols.BusinessUnitID,
-					QueryModifier: func(q *bun.SelectQuery) *bun.SelectQuery {
-						q = q.Where(cols.Status.Eq(), domaintypes.StatusActive)
-						if req.Direction != "" {
-							q = q.Where(cols.Direction.Eq(), req.Direction)
-						}
-						return q.Order(cols.Code.OrderAsc())
-					},
-					EntityName: "PayCode",
-					SearchColumnRefs: []buncolgen.Column{
-						cols.Code,
-						cols.Name,
-						cols.Description,
-					},
+				func(s string) keel.Pred {
+					return keel.Or(
+						pc.Code.ContainsFold(s),
+						pc.Name.ContainsFold(s),
+						pc.Description.ContainsFold(s),
+					)
 				},
 			)
 		},
@@ -211,42 +160,34 @@ func (r *payCodeRepository) GetByID(
 	req driverpayports.GetPayCodeByIDRequest,
 ) (*driverpay.PayCode, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*driverpay.PayCode, error) {
-		entity := new(driverpay.PayCode)
-		err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(entity).
-			Where("payc.id = ?", req.ID).
-			Where("payc.organization_id = ?", req.TenantInfo.OrgID).
-			Where("payc.business_unit_id = ?", req.TenantInfo.BuID).
-			Relation("GLAccount", func(q *bun.SelectQuery) *bun.SelectQuery { return q }).
-			Scan(ctx)
+		pc := driverpaydb.PayCodes
+		entity, err := pc.Where(pc.ID.Eq(req.ID)).
+			Load(pc.GLAccount()).
+			One(ctx, r.db.Keel(ctx))
 		if err != nil {
-			return nil, dberror.HandleNotFoundError(err, "PayCode")
+			return nil, payCodeErrors.Map(err, req.ID.String())
 		}
+
 		return entity, nil
 	})
 }
 
 func (r *payCodeRepository) GetByIDs(
 	ctx context.Context,
-	tenantInfo pagination.TenantInfo,
+	_ pagination.TenantInfo,
 	ids []pulid.ID,
 ) ([]*driverpay.PayCode, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*driverpay.PayCode, error) {
 		if len(ids) == 0 {
 			return []*driverpay.PayCode{}, nil
 		}
-		items := make([]*driverpay.PayCode, 0, len(ids))
-		err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(&items).
-			Where("payc.organization_id = ?", tenantInfo.OrgID).
-			Where("payc.business_unit_id = ?", tenantInfo.BuID).
-			Where("payc.id IN (?)", bun.List(ids)).
-			Scan(ctx)
+
+		pc := driverpaydb.PayCodes
+		items, err := pc.Where(pc.ID.In(ids...)).Limit(len(ids)).List(ctx, r.db.Keel(ctx))
 		if err != nil {
 			return nil, fmt.Errorf("get pay codes by ids: %w", err)
 		}
+
 		return items, nil
 	})
 }
@@ -256,18 +197,13 @@ func (r *payCodeRepository) Create(
 	entity *driverpay.PayCode,
 ) (*driverpay.PayCode, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*driverpay.PayCode, error) {
-		if entity.ID.IsNil() {
-			entity.ID = pulid.MustNew("payc_")
+		if err := driverpaydb.PayCodes.Create(ctx, r.db.Keel(ctx), entity); err != nil {
+			return nil, payCodeErrors.Map(err, entity.ID.String())
 		}
-		if _, err := r.db.DBForContext(ctx).NewInsert().Model(entity).Exec(ctx); err != nil {
-			return nil, fmt.Errorf("create pay code: %w", err)
-		}
+
 		return r.GetByID(ctx, driverpayports.GetPayCodeByIDRequest{
-			ID: entity.ID,
-			TenantInfo: pagination.TenantInfo{
-				OrgID: entity.OrganizationID,
-				BuID:  entity.BusinessUnitID,
-			},
+			ID:         entity.ID,
+			TenantInfo: tenantOf(entity.OrganizationID, entity.BusinessUnitID),
 		})
 	})
 }
@@ -277,35 +213,26 @@ func (r *payCodeRepository) Update(
 	entity *driverpay.PayCode,
 ) (*driverpay.PayCode, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*driverpay.PayCode, error) {
-		res, err := r.db.DBForContext(ctx).
-			NewUpdate().
-			Model(entity).
-			Where("id = ?", entity.ID).
-			Where("organization_id = ?", entity.OrganizationID).
-			Where("business_unit_id = ?", entity.BusinessUnitID).
-			Where("version = ?", entity.Version).
-			Set("status = ?", entity.Status).
-			Set("code = ?", entity.Code).
-			Set("name = ?", entity.Name).
-			Set("description = ?", entity.Description).
-			Set("taxable = ?", entity.Taxable).
-			Set("counts_toward_guarantee = ?", entity.CountsTowardGuarantee).
-			Set("gl_account_id = ?", entity.GLAccountID).
-			Set("default_amount_minor = ?", entity.DefaultAmountMinor).
-			Set("version = version + 1").
-			Exec(ctx)
-		if err != nil {
-			return nil, fmt.Errorf("update pay code: %w", err)
+		pc := driverpaydb.PayCodes
+		if err := pc.Save(
+			ctx,
+			r.db.Keel(ctx),
+			entity,
+			pc.Status,
+			pc.Code,
+			pc.Name,
+			pc.Description,
+			pc.Taxable,
+			pc.CountsTowardGuarantee,
+			pc.GLAccountID,
+			pc.DefaultAmountMinor,
+		); err != nil {
+			return nil, payCodeErrors.Map(err, entity.ID.String())
 		}
-		if err = dberror.CheckRowsAffected(res, "PayCode", entity.ID.String()); err != nil {
-			return nil, err
-		}
+
 		return r.GetByID(ctx, driverpayports.GetPayCodeByIDRequest{
-			ID: entity.ID,
-			TenantInfo: pagination.TenantInfo{
-				OrgID: entity.OrganizationID,
-				BuID:  entity.BusinessUnitID,
-			},
+			ID:         entity.ID,
+			TenantInfo: tenantOf(entity.OrganizationID, entity.BusinessUnitID),
 		})
 	})
 }
@@ -319,7 +246,6 @@ func (r *payCodeRepository) EnsureSystemDefaults(
 		rows := make([]*driverpay.PayCode, 0, len(defs))
 		for _, def := range defs {
 			rows = append(rows, &driverpay.PayCode{
-				ID:                    pulid.MustNew("payc_"),
 				BusinessUnitID:        tenantInfo.BuID,
 				OrganizationID:        tenantInfo.OrgID,
 				Status:                domaintypes.StatusActive,
@@ -332,13 +258,19 @@ func (r *payCodeRepository) EnsureSystemDefaults(
 			})
 		}
 
-		if _, err := r.db.DBForContext(ctx).
-			NewInsert().
-			Model(&rows).
-			On("CONFLICT (organization_id, business_unit_id, direction, code) DO NOTHING").
-			Exec(ctx); err != nil {
+		pc := driverpaydb.PayCodes
+		if _, err := pc.CreateOrSkip(
+			ctx,
+			r.db.Keel(ctx),
+			rows,
+			pc.OrganizationID,
+			pc.BusinessUnitID,
+			pc.Direction,
+			pc.Code,
+		); err != nil {
 			return fmt.Errorf("ensure system pay codes: %w", err)
 		}
+
 		return nil
 	})
 }

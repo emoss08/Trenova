@@ -5,17 +5,14 @@ package aiusagerepository
 import (
 	"testing"
 
-	"github.com/emoss08/trenova/pkg/buncolgen/agentdefinitioncol"
-
-	"github.com/emoss08/trenova/internal/infrastructure/config"
-	"github.com/emoss08/trenova/internal/infrastructure/database/common"
-	"github.com/emoss08/trenova/internal/infrastructure/database/seeder"
-	"github.com/emoss08/trenova/internal/infrastructure/database/seeds"
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition/agentdefinitiondb"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiusage"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aiusageports"
-	"github.com/emoss08/trenova/internal/testutil/seedtest"
+	"github.com/emoss08/trenova/internal/testutil/seededtest"
+	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
@@ -26,32 +23,23 @@ import (
 )
 
 type definitionRow struct {
-	ID             pulid.ID `bun:"id"`
-	OrganizationID pulid.ID `bun:"organization_id"`
-	BusinessUnitID pulid.ID `bun:"business_unit_id"`
+	ID             pulid.ID
+	OrganizationID pulid.ID
+	BusinessUnitID pulid.ID
 }
 
 func TestCostByDefinition_LeavesEvaluationSpendOut(t *testing.T) {
-	ctx, db, cleanup := seedtest.SetupTestDB(t)
+	ctx, db, cleanup := seededtest.SetupTestDB(t)
 	t.Cleanup(cleanup)
 
-	registry := seeder.NewRegistry()
-	seeds.Register(registry)
-	engine := seeder.NewEngine(
-		db,
-		registry,
-		&config.Config{System: config.SystemConfig{SystemUserPassword: "test-system-password"}},
-	)
-	_, err := engine.Execute(ctx, seeder.ExecuteOptions{Environment: common.EnvDevelopment})
+	d := agentdefinitiondb.Definitions
+	row, err := keel.IntoOne[definitionRow](dbscope.WithSystem(ctx, "test"), db,
+		d.AllTenants().Pick(d.ID, d.OrganizationID, d.BusinessUnitID).Limit(1))
 	require.NoError(t, err)
-
-	cols := agentdefinitioncol.DefinitionColumns
-	var row definitionRow
-	require.NoError(t, db.NewSelect().
-		TableExpr(agentdefinitioncol.DefinitionTable.As(agentdefinitioncol.DefinitionTable.Alias)).
-		Column(cols.ID.Bare(), cols.OrganizationID.Bare(), cols.BusinessUnitID.Bare()).
-		Limit(1).
-		Scan(ctx, &row))
+	ctx = dbscope.WithTenant(ctx, dbscope.Tenant{
+		OrganizationID: row.OrganizationID,
+		BusinessUnitID: row.BusinessUnitID,
+	})
 
 	repo := New(Params{DB: postgres.NewTestConnection(db), Logger: zap.NewNop()})
 	since := timeutils.NowUnix() - 60

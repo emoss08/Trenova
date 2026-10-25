@@ -18,7 +18,7 @@ func ScheduleFormats(params map[string]any) []string {
 		return normalized
 	}
 
-	return []string{string(report.DefaultScheduleFormat)}
+	return []string{string(report.DefaultScheduleFormat())}
 }
 
 // stringSliceParam reads an array of strings, dropping anything that is not

@@ -5,7 +5,6 @@ import (
 
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 )
 
 func TestReferenceRequest(t *testing.T) {
@@ -26,16 +25,6 @@ func TestReferenceRequest(t *testing.T) {
 	assert.Equal(t, orgID, req.OrganizationID)
 	assert.Equal(t, buID, req.BusinessUnitID)
 	assert.Equal(t, refID, req.ID)
-}
-
-func TestNewBunReferenceChecker(t *testing.T) {
-	t.Parallel()
-
-	checker := NewBunReferenceChecker(nil)
-
-	require.NotNil(t, checker)
-	assert.Nil(t, checker.source.db)
-	assert.Nil(t, checker.source.scoped)
 }
 
 func TestReferenceFieldConfig(t *testing.T) {

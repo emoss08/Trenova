@@ -6,6 +6,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/document"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/reference/domain/documenttype"
@@ -15,9 +16,7 @@ import (
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/validationframework"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/emoss08/trenova/shared/timeutils"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
-	"github.com/uptrace/bun"
 )
 
 var (
@@ -192,36 +191,44 @@ func (s ChecklistItemStatus) IsValid() bool {
 func (s ChecklistItemStatus) Settled() bool { return s != ChecklistItemPending }
 
 var (
-	_ bun.BeforeAppendModelHook          = (*WorkerChecklistTemplate)(nil)
 	_ domaintypes.PostgresSearchable     = (*WorkerChecklistTemplate)(nil)
 	_ pagination.CursorEntity            = (*WorkerChecklistTemplate)(nil)
 	_ validationframework.TenantedEntity = (*WorkerChecklistTemplate)(nil)
-	_ bun.BeforeAppendModelHook          = (*WorkerChecklistTemplateItem)(nil)
-	_ bun.BeforeAppendModelHook          = (*WorkerChecklist)(nil)
 	_ validationframework.TenantedEntity = (*WorkerChecklist)(nil)
-	_ bun.BeforeAppendModelHook          = (*WorkerChecklistItem)(nil)
 )
 
 type WorkerChecklistTemplate struct {
-	bun.BaseModel             `bun:"table:worker_checklist_templates,alias:wclt" json:"-"`
-	pagination.CursorValueSet `bun:",embed"                                      json:"-"`
+	keel.Table     `keel:"worker_checklist_templates"`
+	ID             pulid.ID           `keel:"id,pk,autoid:wclt_"                       json:"id"`
+	BusinessUnitID pulid.ID           `keel:"business_unit_id,pk,tenant"               json:"businessUnitId"`
+	OrganizationID pulid.ID           `keel:"organization_id,pk,tenant"                json:"organizationId"`
+	Code           string             `keel:"code"                                     json:"code"`
+	Name           string             `keel:"name"                                     json:"name"`
+	Description    string             `keel:"description,nullzero"                     json:"description"`
+	Kind           ChecklistKind      `keel:"kind"                                     json:"kind"`
+	Trigger        ChecklistTrigger   `keel:"trigger"                                  json:"trigger"`
+	Status         domaintypes.Status `keel:"status"                                   json:"status"`
+	IsDefault      bool               `keel:"is_default"                               json:"isDefault"`
+	Version        int64              `keel:"version,version"                          json:"version"`
+	CreatedAt      int64              `keel:"created_at,autocreate"                    json:"createdAt"`
+	UpdatedAt      int64              `keel:"updated_at,autoupdate"                    json:"updatedAt"`
+	SearchVector   string             `keel:"search_vector,tsvector,readonly,noselect" json:"-"`
 
-	ID             pulid.ID           `json:"id"             bun:"id,pk,type:VARCHAR(100),notnull"`
-	BusinessUnitID pulid.ID           `json:"businessUnitId" bun:"business_unit_id,pk,type:VARCHAR(100),notnull"`
-	OrganizationID pulid.ID           `json:"organizationId" bun:"organization_id,pk,type:VARCHAR(100),notnull"`
-	Code           string             `json:"code"           bun:"code,type:VARCHAR(50),notnull"`
-	Name           string             `json:"name"           bun:"name,type:VARCHAR(100),notnull"`
-	Description    string             `json:"description"    bun:"description,type:TEXT,nullzero"`
-	Kind           ChecklistKind      `json:"kind"           bun:"kind,type:worker_checklist_kind_enum,notnull,default:'Custom'"`
-	Trigger        ChecklistTrigger   `json:"trigger"        bun:"trigger,type:worker_checklist_trigger_enum,notnull,default:'Manual'"`
-	Status         domaintypes.Status `json:"status"         bun:"status,type:status_enum,notnull,default:'Active'"`
-	IsDefault      bool               `json:"isDefault"      bun:"is_default,type:BOOLEAN,notnull"`
-	Version        int64              `json:"version"        bun:"version,type:BIGINT"`
-	CreatedAt      int64              `json:"createdAt"      bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
-	UpdatedAt      int64              `json:"updatedAt"      bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
-	SearchVector   string             `json:"-"              bun:"search_vector,type:TSVECTOR,scanonly"`
+	Items []*WorkerChecklistTemplateItem `json:"items,omitempty" keel:"many:template_id"`
+}
 
-	Items []*WorkerChecklistTemplateItem `json:"items,omitempty" bun:"rel:has-many,join:id=template_id,join:organization_id=organization_id,join:business_unit_id=business_unit_id"`
+func (t *WorkerChecklistTemplate) BeforeCreate(_ context.Context) error {
+	if t.Kind == "" {
+		t.Kind = ChecklistKindCustom
+	}
+	if t.Trigger == "" {
+		t.Trigger = ChecklistTriggerManual
+	}
+	if t.Status == "" {
+		t.Status = domaintypes.StatusActive
+	}
+
+	return nil
 }
 
 func (t *WorkerChecklistTemplate) Validate(multiErr *errortypes.MultiError) {
@@ -314,44 +321,38 @@ func (t *WorkerChecklistTemplate) GetPostgresSearchConfig() domaintypes.Postgres
 	}
 }
 
-func (t *WorkerChecklistTemplate) BeforeAppendModel(_ context.Context, query bun.Query) error {
-	now := timeutils.NowUnix()
+type WorkerChecklistTemplateItem struct {
+	keel.Table `keel:"worker_checklist_template_items"`
 
-	switch query.(type) {
-	case *bun.InsertQuery:
-		if t.ID.IsNil() {
-			t.ID = pulid.MustNew("wclt_")
-		}
-		t.CreatedAt = now
-		t.UpdatedAt = now
-	case *bun.UpdateQuery:
-		t.UpdatedAt = now
+	ID               pulid.ID          `json:"id"               keel:"id,pk,autoid:wclti_"`
+	BusinessUnitID   pulid.ID          `json:"businessUnitId"   keel:"business_unit_id,pk,tenant"`
+	OrganizationID   pulid.ID          `json:"organizationId"   keel:"organization_id,pk,tenant"`
+	TemplateID       pulid.ID          `json:"templateId"       keel:"template_id"`
+	Label            string            `json:"label"            keel:"label"`
+	Description      string            `json:"description"      keel:"description,nullzero"`
+	Kind             ChecklistItemKind `json:"kind"             keel:"kind"`
+	Required         bool              `json:"required"         keel:"required"`
+	DueOffsetDays    int32             `json:"dueOffsetDays"    keel:"due_offset_days"`
+	Owner            ChecklistOwner    `json:"owner"            keel:"owner"`
+	CredentialTypeID pulid.ID          `json:"credentialTypeId" keel:"credential_type_id,nullzero"`
+	DocumentTypeID   pulid.ID          `json:"documentTypeId"   keel:"document_type_id,nullzero"`
+	SortOrder        int32             `json:"sortOrder"        keel:"sort_order"`
+	CreatedAt        int64             `json:"createdAt"        keel:"created_at,autocreate"`
+	UpdatedAt        int64             `json:"updatedAt"        keel:"updated_at,autoupdate"`
+
+	CredentialType *WorkerCredentialType      `json:"credentialType,omitempty" keel:"belongs:credential_type_id"`
+	DocumentType   *documenttype.DocumentType `json:"documentType,omitempty"   keel:"belongs:document_type_id"`
+}
+
+func (i *WorkerChecklistTemplateItem) BeforeCreate(_ context.Context) error {
+	if i.Kind == "" {
+		i.Kind = ChecklistItemTask
+	}
+	if i.Owner == "" {
+		i.Owner = ChecklistOwnerHR
 	}
 
 	return nil
-}
-
-type WorkerChecklistTemplateItem struct {
-	bun.BaseModel `bun:"table:worker_checklist_template_items,alias:wclti" json:"-"`
-
-	ID               pulid.ID          `json:"id"               bun:"id,pk,type:VARCHAR(100),notnull"`
-	BusinessUnitID   pulid.ID          `json:"businessUnitId"   bun:"business_unit_id,pk,type:VARCHAR(100),notnull"`
-	OrganizationID   pulid.ID          `json:"organizationId"   bun:"organization_id,pk,type:VARCHAR(100),notnull"`
-	TemplateID       pulid.ID          `json:"templateId"       bun:"template_id,type:VARCHAR(100),notnull"`
-	Label            string            `json:"label"            bun:"label,type:VARCHAR(150),notnull"`
-	Description      string            `json:"description"      bun:"description,type:TEXT,nullzero"`
-	Kind             ChecklistItemKind `json:"kind"             bun:"kind,type:worker_checklist_item_kind_enum,notnull,default:'Task'"`
-	Required         bool              `json:"required"         bun:"required,type:BOOLEAN,notnull"`
-	DueOffsetDays    int32             `json:"dueOffsetDays"    bun:"due_offset_days,type:INTEGER,notnull"`
-	Owner            ChecklistOwner    `json:"owner"            bun:"owner,type:worker_checklist_owner_enum,notnull,default:'HR'"`
-	CredentialTypeID pulid.ID          `json:"credentialTypeId" bun:"credential_type_id,type:VARCHAR(100),nullzero"`
-	DocumentTypeID   pulid.ID          `json:"documentTypeId"   bun:"document_type_id,type:VARCHAR(100),nullzero"`
-	SortOrder        int32             `json:"sortOrder"        bun:"sort_order,type:INTEGER,notnull"`
-	CreatedAt        int64             `json:"createdAt"        bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
-	UpdatedAt        int64             `json:"updatedAt"        bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
-
-	CredentialType *WorkerCredentialType      `json:"credentialType,omitempty" bun:"rel:belongs-to,join:credential_type_id=id,join:organization_id=organization_id,join:business_unit_id=business_unit_id"`
-	DocumentType   *documenttype.DocumentType `json:"documentType,omitempty"   bun:"rel:belongs-to,join:document_type_id=id,join:organization_id=organization_id,join:business_unit_id=business_unit_id"`
 }
 
 func (i *WorkerChecklistTemplateItem) Validate(multiErr *errortypes.MultiError) {
@@ -394,49 +395,32 @@ func (i *WorkerChecklistTemplateItem) Validate(multiErr *errortypes.MultiError) 
 	}
 }
 
-func (i *WorkerChecklistTemplateItem) BeforeAppendModel(_ context.Context, query bun.Query) error {
-	now := timeutils.NowUnix()
-
-	switch query.(type) {
-	case *bun.InsertQuery:
-		if i.ID.IsNil() {
-			i.ID = pulid.MustNew("wclti_")
-		}
-		i.CreatedAt = now
-		i.UpdatedAt = now
-	case *bun.UpdateQuery:
-		i.UpdatedAt = now
-	}
-
-	return nil
-}
-
 type WorkerChecklist struct {
-	bun.BaseModel `bun:"table:worker_checklists,alias:wcl" json:"-"`
+	keel.Table `keel:"worker_checklists"`
 
-	ID             pulid.ID        `json:"id"             bun:"id,pk,type:VARCHAR(100),notnull"`
-	BusinessUnitID pulid.ID        `json:"businessUnitId" bun:"business_unit_id,pk,type:VARCHAR(100),notnull"`
-	OrganizationID pulid.ID        `json:"organizationId" bun:"organization_id,pk,type:VARCHAR(100),notnull"`
-	WorkerID       pulid.ID        `json:"workerId"       bun:"worker_id,type:VARCHAR(100),notnull"`
-	TemplateID     pulid.ID        `json:"templateId"     bun:"template_id,type:VARCHAR(100),nullzero"`
-	Name           string          `json:"name"           bun:"name,type:VARCHAR(100),notnull"`
-	Kind           ChecklistKind   `json:"kind"           bun:"kind,type:worker_checklist_kind_enum,notnull,default:'Custom'"`
-	Status         ChecklistStatus `json:"status"         bun:"status,type:worker_checklist_status_enum,notnull,default:'Open'"`
-	StartedAt      int64           `json:"startedAt"      bun:"started_at,type:BIGINT,notnull"`
-	DueAt          *int64          `json:"dueAt"          bun:"due_at,type:BIGINT,nullzero"`
-	CompletedAt    *int64          `json:"completedAt"    bun:"completed_at,type:BIGINT,nullzero"`
-	CancelledAt    *int64          `json:"cancelledAt"    bun:"cancelled_at,type:BIGINT,nullzero"`
-	CancelReason   string          `json:"cancelReason"   bun:"cancel_reason,type:VARCHAR(255),nullzero"`
-	SourceEventID  pulid.ID        `json:"sourceEventId"  bun:"source_event_id,type:VARCHAR(100),nullzero"`
-	StartedByID    pulid.ID        `json:"startedById"    bun:"started_by_id,type:VARCHAR(100),nullzero"`
-	Version        int64           `json:"version"        bun:"version,type:BIGINT"`
-	CreatedAt      int64           `json:"createdAt"      bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
-	UpdatedAt      int64           `json:"updatedAt"      bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
+	ID             pulid.ID        `json:"id"             keel:"id,pk,autoid:wcl_"`
+	BusinessUnitID pulid.ID        `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
+	OrganizationID pulid.ID        `json:"organizationId" keel:"organization_id,pk,tenant"`
+	WorkerID       pulid.ID        `json:"workerId"       keel:"worker_id"`
+	TemplateID     pulid.ID        `json:"templateId"     keel:"template_id,nullzero"`
+	Name           string          `json:"name"           keel:"name"`
+	Kind           ChecklistKind   `json:"kind"           keel:"kind"`
+	Status         ChecklistStatus `json:"status"         keel:"status"`
+	StartedAt      int64           `json:"startedAt"      keel:"started_at"`
+	DueAt          *int64          `json:"dueAt"          keel:"due_at"`
+	CompletedAt    *int64          `json:"completedAt"    keel:"completed_at"`
+	CancelledAt    *int64          `json:"cancelledAt"    keel:"cancelled_at"`
+	CancelReason   string          `json:"cancelReason"   keel:"cancel_reason,nullzero"`
+	SourceEventID  pulid.ID        `json:"sourceEventId"  keel:"source_event_id,nullzero"`
+	StartedByID    pulid.ID        `json:"startedById"    keel:"started_by_id,nullzero"`
+	Version        int64           `json:"version"        keel:"version,version"`
+	CreatedAt      int64           `json:"createdAt"      keel:"created_at,autocreate"`
+	UpdatedAt      int64           `json:"updatedAt"      keel:"updated_at,autoupdate"`
 
-	Items     []*WorkerChecklistItem   `json:"items,omitempty"     bun:"rel:has-many,join:id=checklist_id,join:organization_id=organization_id,join:business_unit_id=business_unit_id"`
-	Worker    *Worker                  `json:"worker,omitempty"    bun:"rel:belongs-to,join:worker_id=id,join:organization_id=organization_id,join:business_unit_id=business_unit_id"`
-	Template  *WorkerChecklistTemplate `json:"template,omitempty"  bun:"rel:belongs-to,join:template_id=id,join:organization_id=organization_id,join:business_unit_id=business_unit_id"`
-	StartedBy *tenant.User             `json:"startedBy,omitempty" bun:"rel:belongs-to,join:started_by_id=id"`
+	Items     []*WorkerChecklistItem   `json:"items,omitempty"     keel:"many:checklist_id"`
+	Worker    *Worker                  `json:"worker,omitempty"    keel:"belongs:worker_id"`
+	Template  *WorkerChecklistTemplate `json:"template,omitempty"  keel:"belongs:template_id"`
+	StartedBy *tenant.User             `json:"startedBy,omitempty" keel:"belongs:started_by_id"`
 }
 
 func (c *WorkerChecklist) Validate(multiErr *errortypes.MultiError) {
@@ -476,58 +460,49 @@ func (c *WorkerChecklist) GetResourceType() string { return "worker_checklist" }
 
 func (c *WorkerChecklist) GetResourceID() string { return c.ID.String() }
 
-func (c *WorkerChecklist) BeforeAppendModel(_ context.Context, query bun.Query) error {
-	now := timeutils.NowUnix()
-
-	switch query.(type) {
-	case *bun.InsertQuery:
-		if c.ID.IsNil() {
-			c.ID = pulid.MustNew("wcl_")
-		}
-		if c.Status == "" {
-			c.Status = ChecklistStatusOpen
-		}
-		c.CreatedAt = now
-		c.UpdatedAt = now
-	case *bun.UpdateQuery:
-		c.UpdatedAt = now
+func (c *WorkerChecklist) BeforeCreate(_ context.Context) error {
+	if c.Status == "" {
+		c.Status = ChecklistStatusOpen
+	}
+	if c.Kind == "" {
+		c.Kind = ChecklistKindCustom
 	}
 
 	return nil
 }
 
 type WorkerChecklistItem struct {
-	bun.BaseModel `bun:"table:worker_checklist_items,alias:wcli" json:"-"`
+	keel.Table `keel:"worker_checklist_items"`
 
-	ID                   pulid.ID            `json:"id"                   bun:"id,pk,type:VARCHAR(100),notnull"`
-	BusinessUnitID       pulid.ID            `json:"businessUnitId"       bun:"business_unit_id,pk,type:VARCHAR(100),notnull"`
-	OrganizationID       pulid.ID            `json:"organizationId"       bun:"organization_id,pk,type:VARCHAR(100),notnull"`
-	ChecklistID          pulid.ID            `json:"checklistId"          bun:"checklist_id,type:VARCHAR(100),notnull"`
-	TemplateItemID       pulid.ID            `json:"templateItemId"       bun:"template_item_id,type:VARCHAR(100),nullzero"`
-	Label                string              `json:"label"                bun:"label,type:VARCHAR(150),notnull"`
-	Description          string              `json:"description"          bun:"description,type:TEXT,nullzero"`
-	Kind                 ChecklistItemKind   `json:"kind"                 bun:"kind,type:worker_checklist_item_kind_enum,notnull,default:'Task'"`
-	Required             bool                `json:"required"             bun:"required,type:BOOLEAN,notnull"`
-	Owner                ChecklistOwner      `json:"owner"                bun:"owner,type:worker_checklist_owner_enum,notnull,default:'HR'"`
-	DueAt                *int64              `json:"dueAt"                bun:"due_at,type:BIGINT,nullzero"`
-	CredentialTypeID     pulid.ID            `json:"credentialTypeId"     bun:"credential_type_id,type:VARCHAR(100),nullzero"`
-	DocumentTypeID       pulid.ID            `json:"documentTypeId"       bun:"document_type_id,type:VARCHAR(100),nullzero"`
-	Status               ChecklistItemStatus `json:"status"               bun:"status,type:worker_checklist_item_status_enum,notnull,default:'Pending'"`
-	CompletedByID        pulid.ID            `json:"completedById"        bun:"completed_by_id,type:VARCHAR(100),nullzero"`
-	CompletedAt          *int64              `json:"completedAt"          bun:"completed_at,type:BIGINT,nullzero"`
-	AutoCompleted        bool                `json:"autoCompleted"        bun:"auto_completed,type:BOOLEAN,notnull"`
-	Note                 string              `json:"note"                 bun:"note,type:VARCHAR(500),nullzero"`
-	EvidenceDocumentID   pulid.ID            `json:"evidenceDocumentId"   bun:"evidence_document_id,type:VARCHAR(100),nullzero"`
-	EvidenceCredentialID pulid.ID            `json:"evidenceCredentialId" bun:"evidence_credential_id,type:VARCHAR(100),nullzero"`
-	SortOrder            int32               `json:"sortOrder"            bun:"sort_order,type:INTEGER,notnull"`
-	Version              int64               `json:"version"              bun:"version,type:BIGINT"`
-	CreatedAt            int64               `json:"createdAt"            bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
-	UpdatedAt            int64               `json:"updatedAt"            bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
+	ID                   pulid.ID            `json:"id"                   keel:"id,pk,autoid:wcli_"`
+	BusinessUnitID       pulid.ID            `json:"businessUnitId"       keel:"business_unit_id,pk,tenant"`
+	OrganizationID       pulid.ID            `json:"organizationId"       keel:"organization_id,pk,tenant"`
+	ChecklistID          pulid.ID            `json:"checklistId"          keel:"checklist_id"`
+	TemplateItemID       pulid.ID            `json:"templateItemId"       keel:"template_item_id,nullzero"`
+	Label                string              `json:"label"                keel:"label"`
+	Description          string              `json:"description"          keel:"description,nullzero"`
+	Kind                 ChecklistItemKind   `json:"kind"                 keel:"kind"`
+	Required             bool                `json:"required"             keel:"required"`
+	Owner                ChecklistOwner      `json:"owner"                keel:"owner"`
+	DueAt                *int64              `json:"dueAt"                keel:"due_at"`
+	CredentialTypeID     pulid.ID            `json:"credentialTypeId"     keel:"credential_type_id,nullzero"`
+	DocumentTypeID       pulid.ID            `json:"documentTypeId"       keel:"document_type_id,nullzero"`
+	Status               ChecklistItemStatus `json:"status"               keel:"status"`
+	CompletedByID        pulid.ID            `json:"completedById"        keel:"completed_by_id,nullzero"`
+	CompletedAt          *int64              `json:"completedAt"          keel:"completed_at"`
+	AutoCompleted        bool                `json:"autoCompleted"        keel:"auto_completed"`
+	Note                 string              `json:"note"                 keel:"note,nullzero"`
+	EvidenceDocumentID   pulid.ID            `json:"evidenceDocumentId"   keel:"evidence_document_id,nullzero"`
+	EvidenceCredentialID pulid.ID            `json:"evidenceCredentialId" keel:"evidence_credential_id,nullzero"`
+	SortOrder            int32               `json:"sortOrder"            keel:"sort_order"`
+	Version              int64               `json:"version"              keel:"version,version"`
+	CreatedAt            int64               `json:"createdAt"            keel:"created_at,autocreate"`
+	UpdatedAt            int64               `json:"updatedAt"            keel:"updated_at,autoupdate"`
 
-	CompletedBy        *tenant.User          `json:"completedBy,omitempty"        bun:"rel:belongs-to,join:completed_by_id=id"`
-	EvidenceDocument   *document.Document    `json:"evidenceDocument,omitempty"   bun:"rel:belongs-to,join:evidence_document_id=id,join:organization_id=organization_id,join:business_unit_id=business_unit_id"`
-	EvidenceCredential *WorkerCredential     `json:"evidenceCredential,omitempty" bun:"rel:belongs-to,join:evidence_credential_id=id,join:organization_id=organization_id,join:business_unit_id=business_unit_id"`
-	CredentialType     *WorkerCredentialType `json:"credentialType,omitempty"     bun:"rel:belongs-to,join:credential_type_id=id,join:organization_id=organization_id,join:business_unit_id=business_unit_id"`
+	CompletedBy        *tenant.User          `json:"completedBy,omitempty"        keel:"belongs:completed_by_id"`
+	EvidenceDocument   *document.Document    `json:"evidenceDocument,omitempty"   keel:"belongs:evidence_document_id"`
+	EvidenceCredential *WorkerCredential     `json:"evidenceCredential,omitempty" keel:"belongs:evidence_credential_id"`
+	CredentialType     *WorkerCredentialType `json:"credentialType,omitempty"     keel:"belongs:credential_type_id"`
 }
 
 func (i *WorkerChecklistItem) IsOverdue(now int64) bool {
@@ -539,21 +514,15 @@ func (i *WorkerChecklistItem) Blocks() bool {
 	return i.Required && i.Status == ChecklistItemPending
 }
 
-func (i *WorkerChecklistItem) BeforeAppendModel(_ context.Context, query bun.Query) error {
-	now := timeutils.NowUnix()
-
-	switch query.(type) {
-	case *bun.InsertQuery:
-		if i.ID.IsNil() {
-			i.ID = pulid.MustNew("wcli_")
-		}
-		if i.Status == "" {
-			i.Status = ChecklistItemPending
-		}
-		i.CreatedAt = now
-		i.UpdatedAt = now
-	case *bun.UpdateQuery:
-		i.UpdatedAt = now
+func (i *WorkerChecklistItem) BeforeCreate(_ context.Context) error {
+	if i.Status == "" {
+		i.Status = ChecklistItemPending
+	}
+	if i.Kind == "" {
+		i.Kind = ChecklistItemTask
+	}
+	if i.Owner == "" {
+		i.Owner = ChecklistOwnerHR
 	}
 
 	return nil

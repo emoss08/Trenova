@@ -3,38 +3,42 @@ package shipmenttype
 import (
 	"context"
 
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/errortypes"
-	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/emoss08/trenova/shared/timeutils"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
 	"github.com/go-ozzo/ozzo-validation/v4/is"
-	"github.com/uptrace/bun"
 )
 
+// Shipment classification
 type ShipmentType struct {
-	bun.BaseModel `bun:"table:shipment_types,alias:sht" json:"-"`
+	keel.Table `keel:"shipment_types,report=Configuration"`
 
-	pagination.CursorValueSet `json:"-" bun:",embed"`
+	ID             pulid.ID           `json:"id"             keel:"id,pk,autoid:sht_"`
+	BusinessUnitID pulid.ID           `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
+	OrganizationID pulid.ID           `json:"organizationId" keel:"organization_id,pk,tenant"`
+	Status         domaintypes.Status `json:"status"         keel:"status"`
+	Code           string             `json:"code"           keel:"code"`
+	Description    string             `json:"description"    keel:"description,nullzero"`
+	Color          string             `json:"color"          keel:"color,nullzero"`
+	Version        int64              `json:"version"        keel:"version,version"`
+	CreatedAt      int64              `json:"createdAt"      keel:"created_at,autocreate"`
+	UpdatedAt      int64              `json:"updatedAt"      keel:"updated_at,autoupdate"`
+	SearchVector   string             `json:"-"              keel:"search_vector,tsvector,readonly,noselect"`
+	Rank           string             `json:"-"              keel:"rank,computed"`
 
-	ID             pulid.ID           `json:"id"             bun:"id,type:VARCHAR(100),pk,notnull"`
-	BusinessUnitID pulid.ID           `json:"businessUnitId" bun:"business_unit_id,type:VARCHAR(100),pk,notnull"`
-	OrganizationID pulid.ID           `json:"organizationId" bun:"organization_id,type:VARCHAR(100),pk,notnull"`
-	Status         domaintypes.Status `json:"status"         bun:"status,type:status_enum,notnull,default:'Active'"`
-	Code           string             `json:"code"           bun:"code,type:VARCHAR(10),notnull"`
-	Description    string             `json:"description"    bun:"description,type:TEXT,nullzero"`
-	Color          string             `json:"color"          bun:"color,type:VARCHAR(10)"`
-	Version        int64              `json:"version"        bun:"version,type:BIGINT"`
-	CreatedAt      int64              `json:"createdAt"      bun:"created_at,notnull,default:extract(epoch from current_timestamp)::bigint"`
-	UpdatedAt      int64              `json:"updatedAt"      bun:"updated_at,notnull,default:extract(epoch from current_timestamp)::bigint"`
-	SearchVector   string             `json:"-"              bun:"search_vector,type:TSVECTOR,scanonly"`
-	Rank           string             `json:"-"              bun:"rank,type:VARCHAR(100),scanonly"`
+	BusinessUnit *tenant.BusinessUnit `json:"businessUnit,omitempty"`
+	Organization *tenant.Organization `json:"organization,omitempty"`
+}
 
-	// Relationships
-	BusinessUnit *tenant.BusinessUnit `json:"businessUnit,omitempty" bun:"rel:belongs-to,join:business_unit_id=id"`
-	Organization *tenant.Organization `json:"organization,omitempty" bun:"rel:belongs-to,join:organization_id=id"`
+func (sht *ShipmentType) BeforeCreate(_ context.Context) error {
+	if sht.Status == "" {
+		sht.Status = domaintypes.StatusActive
+	}
+
+	return nil
 }
 
 func (sht *ShipmentType) Validate(multiErr *errortypes.MultiError) {
@@ -81,21 +85,4 @@ func (sht *ShipmentType) GetPostgresSearchConfig() domaintypes.PostgresSearchCon
 			},
 		},
 	}
-}
-
-func (sht *ShipmentType) BeforeAppendModel(_ context.Context, query bun.Query) error {
-	now := timeutils.NowUnix()
-
-	switch query.(type) {
-	case *bun.InsertQuery:
-		if sht.ID.IsNil() {
-			sht.ID = pulid.MustNew("sht_")
-		}
-
-		sht.CreatedAt = now
-	case *bun.UpdateQuery:
-		sht.UpdatedAt = now
-	}
-
-	return nil
 }

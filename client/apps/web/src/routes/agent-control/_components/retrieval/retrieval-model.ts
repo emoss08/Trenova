@@ -18,7 +18,7 @@ export const RETRIEVAL_STALE_MS = 30_000;
 export const RETRIEVAL_REFRESH_MS = 30_000;
 
 /** The command that creates the vector tables once pgvector is installed. */
-export const ENABLE_VECTOR_COMMAND = "trenova db enable-vector";
+export const ENABLE_VECTOR_COMMAND = "trenova-db enable-vector";
 
 /** The sources in the order the server lists them and the section shows them. */
 export const RETRIEVAL_SOURCE_TYPES: readonly AIRetrievalSourceType[] = [

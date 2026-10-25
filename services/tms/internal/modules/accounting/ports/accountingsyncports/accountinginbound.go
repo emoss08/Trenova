@@ -45,10 +45,10 @@ type SummarizeAccountingInboundChangesRequest struct {
 }
 
 type AccountingInboundSummary struct {
-	Detected     int `bun:"detected"`
-	Proposed     int `bun:"proposed"`
-	AppliedSince int `bun:"applied_since"`
-	IgnoredSince int `bun:"ignored_since"`
+	Detected     int
+	Proposed     int
+	AppliedSince int
+	IgnoredSince int
 }
 
 type ListAccountingInboundAttentionRequest struct {
@@ -58,10 +58,10 @@ type ListAccountingInboundAttentionRequest struct {
 }
 
 type AccountingInboundAttentionGroup struct {
-	Reason           accountingsync.InboundChangeReason `bun:"reason"`
-	Count            int                                `bun:"count"`
-	OldestDetectedAt int64                              `bun:"oldest_detected_at"`
-	SampleID         pulid.ID                           `bun:"sample_id"`
+	Reason           accountingsync.InboundChangeReason
+	Count            int
+	OldestDetectedAt int64
+	SampleID         pulid.ID
 }
 
 type AccountingInboundChangeRepository interface {

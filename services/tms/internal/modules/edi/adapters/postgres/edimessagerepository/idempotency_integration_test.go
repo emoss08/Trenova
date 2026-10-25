@@ -5,18 +5,14 @@ package edimessagerepository_test
 import (
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
-	"github.com/emoss08/trenova/internal/infrastructure/config"
-	"github.com/emoss08/trenova/internal/infrastructure/database/common"
-	"github.com/emoss08/trenova/internal/infrastructure/database/seeder"
-	"github.com/emoss08/trenova/internal/infrastructure/database/seeds"
+	"github.com/emoss08/trenova/internal/testutil/seededtest"
+
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/modules/edi/adapters/postgres/edimessagerepository"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
-	"github.com/emoss08/trenova/internal/testutil/seedtest"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/errortypes"
-	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/timeutils"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -24,43 +20,25 @@ import (
 )
 
 func TestEDIMessageIdempotencyKey_Integration(t *testing.T) {
-	ctx, db, cleanup := seedtest.SetupTestDB(t)
+	ctx, db, cleanup := seededtest.SetupTestDB(t)
 	defer cleanup()
-	registry := seeder.NewRegistry()
-	seeds.Register(registry)
-	engine := seeder.NewEngine(
-		db,
-		registry,
-		&config.Config{System: config.SystemConfig{SystemUserPassword: "test-system-password"}},
-	)
-	_, err := engine.Execute(ctx, seeder.ExecuteOptions{Environment: common.EnvDevelopment})
-	require.NoError(t, err)
 
-	var org seededSummaryOrg
-	require.NoError(t, db.NewSelect().
-		Table("organizations").
-		Column("id", "business_unit_id").
-		Limit(1).
-		Scan(ctx, &org))
-	var documentType seededSummaryDocumentType
-	require.NoError(t, db.NewSelect().
-		Table("edi_document_types").
-		Column("id").
-		Where("transaction_set = ?", edi.TransactionSet204).
-		Where("direction = ?", edi.DocumentDirectionOutbound).
-		Limit(1).
-		Scan(ctx, &documentType))
-	tenantInfo := pagination.TenantInfo{OrgID: org.ID, BuID: org.BusinessUnitID}
+	var err error
+
+	scope := tenantWithoutPartners(t, ctx, db)
+	ctx = scope.Ctx
+	org := scope.Info
+	documentType := findDocumentType(t, ctx, db, edi.TransactionSet204, edi.DocumentDirectionOutbound)
+	tenantInfo := org
 
 	partner := &edi.EDIPartner{
-		BusinessUnitID: org.BusinessUnitID,
-		OrganizationID: org.ID,
+		BusinessUnitID: org.BuID,
+		OrganizationID: org.OrgID,
 		Kind:           edi.PartnerKindExternal,
 		Code:           "IDEMPOTENCY-TEST",
 		Name:           "Idempotency Test Partner",
 	}
-	_, err = db.NewInsert().Model(partner).Exec(ctx)
-	require.NoError(t, err)
+	require.NoError(t, create(ctx, db, partner))
 
 	repo := edimessagerepository.New(edimessagerepository.Params{
 		DB:     postgres.NewTestConnection(db),
@@ -68,8 +46,8 @@ func TestEDIMessageIdempotencyKey_Integration(t *testing.T) {
 	})
 	newMessage := func(key, control string) *edi.EDIMessage {
 		return &edi.EDIMessage{
-			BusinessUnitID:           org.BusinessUnitID,
-			OrganizationID:           org.ID,
+			BusinessUnitID:           org.BuID,
+			OrganizationID:           org.OrgID,
 			EDIPartnerID:             partner.ID,
 			DocumentTypeID:           documentType.ID,
 			Direction:                edi.DocumentDirectionOutbound,

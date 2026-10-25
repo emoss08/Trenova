@@ -6,21 +6,20 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/emoss08/keel/analytics/ir"
 	"github.com/emoss08/trenova/internal/infrastructure/reporting/render"
+	"github.com/emoss08/trenova/internal/modules/workspace/app/reporting/reportaccess"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/report"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/fileutils"
+	"github.com/emoss08/trenova/shared/i18n"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
 	"go.uber.org/zap"
 )
 
-// TileFilterOverride carries one tile's ad-hoc narrowing. Tile filters are
-// viewer state the dashboard never persists, so the caller has to supply both
-// the fields and the chosen values or the export would quietly disagree with
-// the screen it was taken from.
 type TileFilterOverride struct {
-	Filters []report.DashboardFilter
+	Filters []ir.DashboardFilter
 	Values  map[string]any
 }
 
@@ -41,12 +40,6 @@ type DashboardExport struct {
 
 const dashboardExportContentType = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
 
-// ExportDashboard runs every tile of a dashboard and returns one workbook.
-//
-// It executes synchronously rather than through Temporal because a dashboard
-// is already a synchronous surface: the browser runs the same tiles, with the
-// same preview row limits, every time it renders. An export is that same work
-// once more, bounded by MaxDashboardTiles.
 func (s *Service) ExportDashboard(
 	ctx context.Context,
 	req *ExportDashboardRequest,
@@ -76,50 +69,47 @@ func (s *Service) ExportDashboard(
 	}
 
 	sheets := make([]render.DashboardSheet, 0, len(tiles))
+	timezone := ""
 	for i := range tiles {
 		tile := &tiles[i]
-		// Each tile reuses the preview path, so an exported figure is the same
-		// figure the dashboard shows — same compiler, same executor, same row
-		// limit. A tile that fails takes the export down with it rather than
-		// shipping a workbook with a silently missing sheet.
 		definition := applyTileFilterOverride(tile.Definition, req.TileFilters[tile.TileID])
 
-		result, previewErr := s.runPreview(ctx, &PreviewRequest{
-			Request:    req.Request,
+		prepared, prepErr := s.Prepare(ctx, &PrepareParams{
+			Tenant:     req.TenantInfo,
 			Definition: definition,
 			Params:     tile.Params,
-			export:     true,
+			Mode:       reportaccess.ModeExport,
 		})
+		if prepErr != nil {
+			return nil, prepErr
+		}
+		timezone = prepared.Location.String()
+
+		result, previewErr := s.engine.Preview(prepared.Context, &prepared.Request)
 		if previewErr != nil {
 			s.l.Error("dashboard tile failed to export",
 				zap.String("dashboardId", req.DashboardID.String()),
 				zap.String("tileId", tile.TileID),
 				zap.Error(previewErr))
-			return nil, previewErr
+			return nil, EngineError(prepared.Context, prepared.Access, previewErr)
 		}
 
-		sheets = append(sheets, render.DashboardSheet{
-			Title:     tile.Title,
-			Schema:    result.Columns,
-			Rows:      result.Rows,
-			Totals:    result.Totals,
-			Truncated: result.Truncated,
-		})
+		sheets = append(sheets, render.DashboardSheet{Title: tile.Title, Result: result.Reader()})
 	}
 
 	var buf bytes.Buffer
-	renderErr := render.NewXLSX().RenderDashboard(ctx, &render.DashboardRenderRequest{
+	if renderErr := render.RenderDashboard(ctx, &render.DashboardRenderRequest{
 		Title:       dashboard.Name,
 		Description: dashboard.Description,
 		GeneratedAt: timeutils.NowUnix(),
-		Timezone:    s.orgTimezone(ctx, req.TenantInfo),
+		Timezone:    timezone,
+		Locale:      i18n.FromContext(ctx).String(),
 		RequestedBy: req.TenantInfo.UserID.String(),
-		Filters:     req.FilterValues,
-		Params:      req.ParamValues,
+		Filters:     dashboardValues(dashboard.Layout, req.FilterValues),
+		Params:      paramValues(req.ParamValues),
 		Sheets:      sheets,
 		Sink:        &buf,
-	})
-	if renderErr != nil {
+	}); renderErr != nil {
 		s.l.Error("failed to render dashboard export", zap.Error(renderErr))
 		return nil, renderErr
 	}
@@ -131,24 +121,52 @@ func (s *Service) ExportDashboard(
 	}, nil
 }
 
-// applyTileFilterOverride folds a tile's own narrowing on top of the
-// dashboard's shared filters, in that order — the same precedence the screen
-// applies, so both override a matching condition rather than stacking a
-// second one on the same field.
 func applyTileFilterOverride(
-	definition *report.Definition,
+	definition *ir.Definition,
 	override TileFilterOverride,
-) *report.Definition {
+) *ir.Definition {
 	if len(override.Filters) == 0 || len(override.Values) == 0 {
 		return definition
 	}
-	scoped := &report.DashboardLayout{Filters: override.Filters}
-	return scoped.ApplyFilters(definition, override.Values)
+	applied, _ := ir.ApplyFilters(
+		definition,
+		report.FilterValues(override.Filters, override.Values),
+		ir.Params{},
+	)
+	return applied
 }
 
-// dashboardExportFileName keeps the dashboard recognisable on disk and dates
-// the file, since an export is a snapshot rather than a living document. It
-// uses the same sanitiser as a report download so the two agree.
+func dashboardValues(
+	layout *report.DashboardLayout,
+	values map[string]any,
+) []render.DashboardValue {
+	if layout == nil {
+		return nil
+	}
+	out := make([]render.DashboardValue, 0, len(layout.Filters))
+	for i := range layout.Filters {
+		filter := &layout.Filters[i]
+		value, ok := values[filter.ID]
+		if !ok || value == nil {
+			continue
+		}
+		name := filter.Label
+		if name == "" {
+			name = filter.ID
+		}
+		out = append(out, render.DashboardValue{Name: name, Value: value})
+	}
+	return out
+}
+
+func paramValues(values map[string]any) []render.DashboardValue {
+	out := make([]render.DashboardValue, 0, len(values))
+	for _, name := range sortedNames(values) {
+		out = append(out, render.DashboardValue{Name: name, Value: values[name]})
+	}
+	return out
+}
+
 func dashboardExportFileName(dashboard *report.Dashboard) string {
 	stamp := time.Unix(timeutils.NowUnix(), 0).UTC().Format("2006-01-02")
 	return fmt.Sprintf(

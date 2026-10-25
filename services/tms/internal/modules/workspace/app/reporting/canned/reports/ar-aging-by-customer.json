@@ -1,0 +1,157 @@
+{
+  "key": "ar-aging-by-customer",
+  "version": "1.0.0",
+  "name": "AR Aging by Customer",
+  "description": "Outstanding receivables rolled up per customer with collection rate and the oldest open invoice date",
+  "category": "Billing",
+  "tags": [
+    "ar",
+    "collections",
+    "customers"
+  ],
+  "defaultFormat": "xlsx",
+  "definition": {
+    "version": 2,
+    "entity": "invoice",
+    "columns": [
+      {
+        "id": "customer",
+        "label": "Customer",
+        "dimension": {
+          "field": "customer.name"
+        }
+      },
+      {
+        "id": "customer_code",
+        "label": "Customer Code",
+        "dimension": {
+          "field": "customer.code"
+        }
+      },
+      {
+        "id": "invoice_count",
+        "label": "Open Invoices",
+        "measure": {
+          "field": "id",
+          "agg": "count"
+        },
+        "display": {
+          "style": "number",
+          "decimals": 0,
+          "grouping": true
+        }
+      },
+      {
+        "id": "total_amount",
+        "label": "Total Invoiced",
+        "measure": {
+          "field": "totalAmount",
+          "agg": "sum"
+        },
+        "display": {
+          "style": "currency",
+          "decimals": 2,
+          "negative": "parentheses"
+        }
+      },
+      {
+        "id": "applied_amount",
+        "label": "Total Applied",
+        "measure": {
+          "field": "appliedAmount",
+          "agg": "sum"
+        },
+        "display": {
+          "style": "currency",
+          "decimals": 2,
+          "negative": "parentheses"
+        }
+      },
+      {
+        "id": "oldest_invoice",
+        "label": "Oldest Invoice",
+        "measure": {
+          "field": "invoiceDate",
+          "agg": "min"
+        },
+        "display": {
+          "style": "date",
+          "dateStyle": "dateTime"
+        }
+      },
+      {
+        "id": "earliest_due",
+        "label": "Earliest Due Date",
+        "measure": {
+          "field": "dueDate",
+          "agg": "min"
+        },
+        "display": {
+          "style": "date",
+          "dateStyle": "dateTime"
+        }
+      },
+      {
+        "id": "open_balance",
+        "label": "Open Balance",
+        "calc": "[total_amount] - [applied_amount]",
+        "display": {
+          "style": "currency",
+          "decimals": 2,
+          "negative": "parentheses"
+        }
+      },
+      {
+        "id": "collection_rate",
+        "label": "Collection Rate",
+        "calc": "[applied_amount] / [total_amount]",
+        "transform": {
+          "op": "round",
+          "precision": 3
+        },
+        "display": {
+          "style": "percent",
+          "decimals": 1
+        }
+      }
+    ],
+    "filters": {
+      "and": [
+        {
+          "field": "status",
+          "op": "eq",
+          "value": "Posted"
+        },
+        {
+          "field": "settlementStatus",
+          "op": "in",
+          "param": "settlementStatuses"
+        }
+      ]
+    },
+    "sort": [
+      {
+        "column": "open_balance",
+        "desc": true
+      }
+    ],
+    "parameters": [
+      {
+        "name": "settlementStatuses",
+        "label": "Settlement Statuses",
+        "type": "enum",
+        "required": true,
+        "multi": true,
+        "default": [
+          "Unpaid",
+          "PartiallyPaid"
+        ],
+        "allowed": [
+          "Unpaid",
+          "PartiallyPaid",
+          "Paid"
+        ]
+      }
+    ]
+  }
+}

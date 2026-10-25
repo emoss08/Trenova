@@ -10,6 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment/shipmentdb"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/internal/modules/parties/ports/customerports"
 	"github.com/emoss08/trenova/internal/modules/reference/ports/commodityports"
@@ -108,9 +109,11 @@ func newValidatorBuilder(
 		return builder
 	}
 
+	checker := validationframework.NewKeelChecker(db, shipmentdb.ShipmentsSchema())
+
 	return builder.
-		WithUniquenessChecker(validationframework.NewBunUniquenessCheckerScoped(db)).
-		WithReferenceChecker(validationframework.NewBunReferenceCheckerScoped(db)).
+		WithUniquenessChecker(checker).
+		WithReferenceChecker(checker).
 		WithReferenceCheck(
 			"serviceTypeId",
 			"service_types",

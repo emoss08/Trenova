@@ -11,9 +11,8 @@ import (
 	carrierintelinfra "github.com/emoss08/trenova/internal/infrastructure/carrierintel"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/infrastructure/fuelcard"
-	reportingexecutor "github.com/emoss08/trenova/internal/infrastructure/reporting/executor"
+	"github.com/emoss08/trenova/internal/infrastructure/reportengine"
 	reportingrender "github.com/emoss08/trenova/internal/infrastructure/reporting/render"
-	reportingresultcache "github.com/emoss08/trenova/internal/infrastructure/reporting/resultcache"
 	telematicsinfra "github.com/emoss08/trenova/internal/infrastructure/telematics"
 	"github.com/emoss08/trenova/internal/infrastructure/temporaljobs"
 	"github.com/emoss08/trenova/internal/infrastructure/turnstream"
@@ -53,7 +52,6 @@ func OptionsFor(e *edition.Edition) fx.Option {
 		infrastructure.DatabaseModule,
 		modules.ValidatorModule,
 		modules.PostgresRepositoryModule,
-		modules.QueryCacheModule,
 		fuelcard.Module,
 		carrierintelinfra.Module,
 		accountinginfra.Module,
@@ -61,8 +59,7 @@ func OptionsFor(e *edition.Edition) fx.Option {
 		fx.Provide(telematicsinfra.NewFactory),
 		temporaljobs.Module,
 		reportingrender.Module,
-		reportingresultcache.Module,
-		fx.Provide(reportingexecutor.New),
+		reportengine.Module,
 		ServiceModule,
 		modulesinfra.StorageModule,
 		modulesinfra.SMSModule,

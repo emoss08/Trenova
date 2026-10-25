@@ -5,15 +5,15 @@ import (
 	"fmt"
 	"strconv"
 
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentextension"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentextension/agentextensiondb"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentextensionports"
-	"github.com/emoss08/trenova/pkg/buncolgen/agentextensioncol"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/uptrace/bun"
 	"go.uber.org/zap"
 )
 
@@ -23,6 +23,8 @@ const (
 	defaultAnalysisRuns     = 50
 	maxAnalysisRuns         = 200
 )
+
+var analysisRunErrors = dberror.Mapping{Entity: analysisRunEntityName}
 
 type analysisRunRepository struct {
 	db *postgres.Connection
@@ -41,11 +43,7 @@ func (r *analysisRunRepository) Create(
 	run *agentextension.AnalysisRun,
 ) (*agentextension.AnalysisRun, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*agentextension.AnalysisRun, error) {
-		if _, err := r.db.DBForContext(ctx).
-			NewInsert().
-			Model(run).
-			Returning("*").
-			Exec(ctx); err != nil {
+		if err := agentextensiondb.AnalysisRuns.Create(ctx, r.db.Keel(ctx), run); err != nil {
 			r.l.Error("failed to create analysis run", zap.Error(err))
 			return nil, fmt.Errorf("create analysis run: %w", err)
 		}
@@ -56,21 +54,13 @@ func (r *analysisRunRepository) Create(
 
 func (r *analysisRunRepository) Get(
 	ctx context.Context,
-	tenantInfo pagination.TenantInfo,
+	_ pagination.TenantInfo,
 	id pulid.ID,
 ) (*agentextension.AnalysisRun, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*agentextension.AnalysisRun, error) {
-		run := new(agentextension.AnalysisRun)
-		err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(run).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return agentextensioncol.AnalysisRunScopeTenant(sq, tenantInfo).
-					Where(agentextensioncol.AnalysisRunColumns.ID.Eq(), id)
-			}).
-			Scan(ctx)
+		run, err := agentextensiondb.AnalysisRuns.Get(ctx, r.db.Keel(ctx), id)
 		if err != nil {
-			return nil, dberror.HandleNotFoundError(err, analysisRunEntityName)
+			return nil, analysisRunErrors.Map(err, id.String())
 		}
 
 		return run, nil
@@ -82,22 +72,12 @@ func (r *analysisRunRepository) Update(
 	run *agentextension.AnalysisRun,
 ) (*agentextension.AnalysisRun, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*agentextension.AnalysisRun, error) {
-		ov := run.Version
-		run.Version++
-
-		result, err := r.db.DBForContext(ctx).
-			NewUpdate().
-			Model(run).
-			WherePK().
-			Where(agentextensioncol.AnalysisRunColumns.Version.Eq(), ov).
-			Returning("*").
-			Exec(ctx)
-		if err != nil {
+		if err := agentextensiondb.AnalysisRuns.Save(ctx, r.db.Keel(ctx), run); err != nil {
+			if dberror.IsVersionConflict(err) {
+				return nil, analysisRunErrors.Map(err, run.ID.String())
+			}
 			r.l.Error("failed to update analysis run", zap.Error(err))
 			return nil, fmt.Errorf("update analysis run: %w", err)
-		}
-		if err = dberror.CheckRowsAffected(result, analysisRunEntityName, run.ID.String()); err != nil {
-			return nil, err
 		}
 
 		return run, nil
@@ -115,21 +95,11 @@ func (r *analysisRunRepository) List(
 	limit = min(limit, maxAnalysisRuns)
 
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*agentextension.AnalysisRun, error) {
-		runs := make([]*agentextension.AnalysisRun, 0, limit)
-		cols := agentextensioncol.AnalysisRunColumns
-		err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(&runs).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				sq = agentextensioncol.AnalysisRunScopeTenant(sq, req.TenantInfo)
-				if req.Before > 0 {
-					sq = sq.Where(cols.StartedAt.Lt(), req.Before)
-				}
-				return sq
-			}).
-			Order(cols.StartedAt.OrderDesc(), cols.ID.OrderDesc()).
-			Limit(int64(limit)).
-			Scan(ctx)
+		a := agentextensiondb.AnalysisRuns
+		runs, err := a.Where(keel.When(req.Before > 0, a.StartedAt.Lt(req.Before))).
+			Order(a.StartedAt.Desc(), a.ID.Desc()).
+			Limit(limit).
+			List(ctx, r.db.Keel(ctx))
 		if err != nil {
 			r.l.Error("failed to list analysis runs", zap.Error(err))
 			return nil, fmt.Errorf("list analysis runs: %w", err)
@@ -148,10 +118,11 @@ func (r *analysisRunRepository) SaveCharts(
 	}
 
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
-		if _, err := r.db.DBForContext(ctx).
-			NewInsert().
-			Model(&charts).
-			Exec(ctx); err != nil {
+		if err := agentextensiondb.AnalysisCharts.CreateMany(
+			ctx,
+			r.db.Keel(ctx),
+			charts,
+		); err != nil {
 			r.l.Error("failed to save analysis charts", zap.Error(err))
 			return fmt.Errorf("save analysis charts: %w", err)
 		}
@@ -162,22 +133,14 @@ func (r *analysisRunRepository) SaveCharts(
 
 func (r *analysisRunRepository) GetChart(
 	ctx context.Context,
-	tenantInfo pagination.TenantInfo,
+	_ pagination.TenantInfo,
 	runID pulid.ID,
 	position int,
 ) (*agentextension.AnalysisChart, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*agentextension.AnalysisChart, error) {
-		chart := new(agentextension.AnalysisChart)
-		cols := agentextensioncol.AnalysisChartColumns
-		err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(chart).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return agentextensioncol.AnalysisChartScopeTenant(sq, tenantInfo).
-					Where(cols.RunID.Eq(), runID).
-					Where(cols.Position.Eq(), position)
-			}).
-			Scan(ctx)
+		c := agentextensiondb.AnalysisCharts
+		chart, err := c.Where(c.RunID.Eq(runID), c.Position.Eq(int64(position))).
+			One(ctx, r.db.Keel(ctx))
 		if err != nil {
 			return nil, dberror.HandleNotFoundError(err,
 				analysisChartEntityName+" "+strconv.Itoa(position))

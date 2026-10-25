@@ -3,22 +3,21 @@ package journalsourcerepository
 
 import (
 	"context"
-	"database/sql"
-	"errors"
 
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
-	"github.com/emoss08/trenova/internal/modules/accounting/domain/journalentry"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/journalsource"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/journalsource/journalsourcedb"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/journalsourceports"
-	"github.com/emoss08/trenova/pkg/buncolgen/journalentrycol"
-	"github.com/emoss08/trenova/pkg/buncolgen/journalsourcecol"
 	"github.com/emoss08/trenova/pkg/dberror"
-	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/uptrace/bun"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
+
+const maxSourcesPerObject = 1000
+
+var sourceErrors = dberror.Mapping{Entity: "JournalSource"}
 
 type Params struct {
 	fx.In
@@ -34,22 +33,6 @@ type repository struct {
 
 func New(p Params) journalsourceports.JournalSourceRepository {
 	return &repository{db: p.DB, l: p.Logger.Named("postgres.journal-source-repository")}
-}
-
-type sourceRecord struct {
-	bun.BaseModel `bun:"table:journal_sources,alias:js"`
-
-	ID                   string `bun:"id,pk"`
-	OrganizationID       string `bun:"organization_id,pk"`
-	BusinessUnitID       string `bun:"business_unit_id,pk"`
-	SourceObjectType     string `bun:"source_object_type"`
-	SourceObjectID       string `bun:"source_object_id"`
-	SourceEventType      string `bun:"source_event_type"`
-	SourceDocumentNumber string `bun:"source_document_number"`
-	Status               string `bun:"status"`
-	IdempotencyKey       string `bun:"idempotency_key"`
-	JournalBatchID       string `bun:"journal_batch_id"`
-	JournalEntryID       string `bun:"journal_entry_id"`
 }
 
 func (r *repository) GetByObject(
@@ -72,24 +55,14 @@ func (r *repository) ListByObject(
 	req journalsourceports.GetJournalSourceByObjectRequest,
 ) ([]*journalsource.Source, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*journalsource.Source, error) {
-		records := make([]*sourceRecord, 0)
-		err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(&records).
-			Where("js.organization_id = ?", req.TenantInfo.OrgID).
-			Where("js.business_unit_id = ?", req.TenantInfo.BuID).
-			Where("js.source_object_type = ?", req.SourceObjectType).
-			Where("js.source_object_id = ?", req.SourceObjectID).
-			Order("js.created_at ASC").
-			Scan(ctx)
-		if err != nil {
-			return nil, err
-		}
-		sources := make([]*journalsource.Source, 0, len(records))
-		for _, rec := range records {
-			sources = append(sources, mapSourceRecord(rec))
-		}
-		return sources, nil
+		js := journalsourcedb.Sources
+		return js.Where(
+			js.SourceObjectType.Eq(req.SourceObjectType),
+			js.SourceObjectID.Eq(req.SourceObjectID),
+		).
+			Order(js.CreatedAt.Asc()).
+			Limit(maxSourcesPerObject).
+			List(ctx, r.db.Keel(ctx))
 	})
 }
 
@@ -99,24 +72,19 @@ func (r *repository) getByObjectQuery(
 	sourceEventType string,
 ) (*journalsource.Source, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*journalsource.Source, error) {
-		rec := new(sourceRecord)
-		query := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(rec).
-			Where("js.organization_id = ?", req.TenantInfo.OrgID).
-			Where("js.business_unit_id = ?", req.TenantInfo.BuID).
-			Where("js.source_object_type = ?", req.SourceObjectType).
-			Where("js.source_object_id = ?", req.SourceObjectID).
-			Order("js.created_at DESC").
-			Limit(1)
-		if sourceEventType != "" {
-			query = query.Where("js.source_event_type = ?", sourceEventType)
-		}
-		err := query.Scan(ctx)
+		js := journalsourcedb.Sources
+		source, err := js.Where(
+			js.SourceObjectType.Eq(req.SourceObjectType),
+			js.SourceObjectID.Eq(req.SourceObjectID),
+			keel.When(sourceEventType != "", js.SourceEventType.Eq(sourceEventType)),
+		).
+			Order(js.CreatedAt.Desc()).
+			First(ctx, r.db.Keel(ctx))
 		if err != nil {
-			return nil, dberror.HandleNotFoundError(err, "JournalSource")
+			return nil, sourceErrors.Map(err, req.SourceObjectID)
 		}
-		return mapSourceRecord(rec), nil
+
+		return source, nil
 	})
 }
 
@@ -125,59 +93,16 @@ func (r *repository) GetByJournalEntry(
 	req journalsourceports.GetJournalSourceByEntryRequest,
 ) (*journalsource.Source, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*journalsource.Source, error) {
-		cols := journalsourcecol.SourceColumns
-		rec := new(sourceRecord)
-		err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(rec).
-			Where(cols.OrganizationID.Eq(), req.TenantInfo.OrgID).
-			Where(cols.BusinessUnitID.Eq(), req.TenantInfo.BuID).
-			Where(cols.JournalEntryID.Eq(), req.JournalEntryID).
-			Order(cols.CreatedAt.OrderDesc()).
-			Limit(1).
-			Scan(ctx)
+		js := journalsourcedb.Sources
+		jb := js.JournalBatch()
+		source, err := js.Where(js.JournalEntryID.Eq(req.JournalEntryID)).
+			Load(jb.Pick(jb.ID, jb.BatchNumber, jb.BatchType)).
+			Order(js.CreatedAt.Desc()).
+			First(ctx, r.db.Keel(ctx))
 		if err != nil {
-			return nil, dberror.HandleNotFoundError(err, "JournalSource")
-		}
-
-		source := mapSourceRecord(rec)
-		if source.JournalBatchID.IsNil() {
-			return source, nil
-		}
-
-		batchCols := journalentrycol.JournalBatchColumns
-		batch := new(journalentry.JournalBatch)
-		err = r.db.DBForContext(ctx).
-			NewSelect().
-			Model(batch).
-			Column(batchCols.ID.Bare(), batchCols.BatchNumber.Bare(), batchCols.BatchType.Bare()).
-			Where(batchCols.ID.Eq(), source.JournalBatchID).
-			Where(batchCols.OrganizationID.Eq(), req.TenantInfo.OrgID).
-			Where(batchCols.BusinessUnitID.Eq(), req.TenantInfo.BuID).
-			Scan(ctx)
-		switch {
-		case err == nil:
-			source.JournalBatch = batch
-		case !errors.Is(err, sql.ErrNoRows):
-			return nil, err
+			return nil, sourceErrors.Map(err, req.JournalEntryID.String())
 		}
 
 		return source, nil
 	})
-}
-
-func mapSourceRecord(rec *sourceRecord) *journalsource.Source {
-	return &journalsource.Source{
-		ID:                   pulid.ID(rec.ID),
-		OrganizationID:       pulid.ID(rec.OrganizationID),
-		BusinessUnitID:       pulid.ID(rec.BusinessUnitID),
-		SourceObjectType:     rec.SourceObjectType,
-		SourceObjectID:       rec.SourceObjectID,
-		SourceEventType:      rec.SourceEventType,
-		SourceDocumentNumber: rec.SourceDocumentNumber,
-		Status:               rec.Status,
-		IdempotencyKey:       rec.IdempotencyKey,
-		JournalBatchID:       pulid.ID(rec.JournalBatchID),
-		JournalEntryID:       pulid.ID(rec.JournalEntryID),
-	}
 }

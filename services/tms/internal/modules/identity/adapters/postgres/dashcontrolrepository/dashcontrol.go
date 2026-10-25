@@ -7,6 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant/tenantdb"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -14,6 +15,8 @@ import (
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
+
+var dashControlErrors = dberror.Mapping{Entity: "DashControl"}
 
 type Params struct {
 	fx.In
@@ -62,43 +65,31 @@ func (r *repository) GetOrCreate(
 	}
 
 	return dbtx.GetOrCreate(ctx, r.db, dbtx.GetOrCreateSpec[*tenant.DashControl]{
-		Find: func(ctx context.Context) (*tenant.DashControl, error) {
-			return r.selectControl(ctx, tenantInfo)
-		},
+		Find: r.selectControl,
 		Create: func(ctx context.Context) error {
-			if _, insertErr := r.db.DBForContext(ctx).
-				NewInsert().
-				Model(newDefault()).
-				On("CONFLICT (organization_id, business_unit_id) DO NOTHING").
-				Exec(ctx); insertErr != nil {
-				return fmt.Errorf("create default dash control: %w", insertErr)
+			dc := tenantdb.DashControls
+			if _, err := dc.CreateOrSkip(
+				ctx,
+				r.db.Keel(ctx),
+				[]*tenant.DashControl{newDefault()},
+				dc.OrganizationID,
+				dc.BusinessUnitID,
+			); err != nil {
+				return fmt.Errorf("create default dash control: %w", err)
 			}
 
 			return nil
 		},
 		Default: newDefault,
 		MapError: func(err error) error {
-			return dberror.HandleNotFoundError(err, "DashControl")
+			return dashControlErrors.Map(err, tenantInfo.OrgID.String())
 		},
 	})
 }
 
-func (r *repository) selectControl(
-	ctx context.Context,
-	tenantInfo pagination.TenantInfo,
-) (*tenant.DashControl, error) {
+func (r *repository) selectControl(ctx context.Context) (*tenant.DashControl, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*tenant.DashControl, error) {
-		entity := new(tenant.DashControl)
-		err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(entity).
-			Where("dashc.organization_id = ?", tenantInfo.OrgID).
-			Where("dashc.business_unit_id = ?", tenantInfo.BuID).
-			Scan(ctx)
-		if err != nil {
-			return nil, err
-		}
-		return entity, nil
+		return tenantdb.DashControls.Query().One(ctx, r.db.Keel(ctx))
 	})
 }
 
@@ -107,38 +98,32 @@ func (r *repository) Update(
 	entity *tenant.DashControl,
 ) (*tenant.DashControl, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*tenant.DashControl, error) {
-		res, err := r.db.DBForContext(ctx).
-			NewUpdate().
-			Model(entity).
-			Where("id = ?", entity.ID).
-			Where("organization_id = ?", entity.OrganizationID).
-			Where("business_unit_id = ?", entity.BusinessUnitID).
-			Where("version = ?", entity.Version).
-			Set("require_load_acknowledgment = ?", entity.RequireLoadAcknowledgment).
-			Set("allow_load_refusals = ?", entity.AllowLoadRefusals).
-			Set("allow_stop_actions = ?", entity.AllowStopActions).
-			Set("allow_load_document_upload = ?", entity.AllowLoadDocumentUpload).
-			Set("allow_load_comments = ?", entity.AllowLoadComments).
-			Set("show_load_pay = ?", entity.ShowLoadPay).
-			Set("show_pay_estimates = ?", entity.ShowPayEstimates).
-			Set("allow_expense_submission = ?", entity.AllowExpenseSubmission).
-			Set("require_expense_receipt = ?", entity.RequireExpenseReceipt).
-			Set("allow_settlement_disputes = ?", entity.AllowSettlementDisputes).
-			Set("allow_profile_document_upload = ?", entity.AllowProfileDocumentUpload).
-			Set("allow_contact_info_edit = ?", entity.AllowContactInfoEdit).
-			Set("allow_pto_requests = ?", entity.AllowPtoRequests).
-			Set("send_credential_reminders = ?", entity.SendCredentialReminders).
-			Set("require_contact_change_approval = ?", entity.RequireContactChangeApproval).
-			Set("enable_detention_alerts = ?", entity.EnableDetentionAlerts).
-			Set("detention_alert_threshold_minutes = ?", entity.DetentionAlertThresholdMinutes).
-			Set("version = version + 1").
-			Exec(ctx)
-		if err != nil {
-			return nil, fmt.Errorf("update dash control: %w", err)
+		dc := tenantdb.DashControls
+		if err := dc.Save(
+			ctx,
+			r.db.Keel(ctx),
+			entity,
+			dc.RequireLoadAcknowledgment,
+			dc.AllowLoadRefusals,
+			dc.AllowStopActions,
+			dc.AllowLoadDocumentUpload,
+			dc.AllowLoadComments,
+			dc.ShowLoadPay,
+			dc.ShowPayEstimates,
+			dc.AllowExpenseSubmission,
+			dc.RequireExpenseReceipt,
+			dc.AllowSettlementDisputes,
+			dc.AllowProfileDocumentUpload,
+			dc.AllowContactInfoEdit,
+			dc.AllowPtoRequests,
+			dc.SendCredentialReminders,
+			dc.RequireContactChangeApproval,
+			dc.EnableDetentionAlerts,
+			dc.DetentionAlertThresholdMinutes,
+		); err != nil {
+			return nil, dashControlErrors.Map(err, entity.ID.String())
 		}
-		if err = dberror.CheckRowsAffected(res, "DashControl", entity.ID.String()); err != nil {
-			return nil, err
-		}
+
 		return r.GetOrCreate(ctx, pagination.TenantInfo{
 			OrgID: entity.OrganizationID,
 			BuID:  entity.BusinessUnitID,

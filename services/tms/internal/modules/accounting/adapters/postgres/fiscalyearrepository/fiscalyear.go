@@ -4,23 +4,26 @@ package fiscalyearrepository
 import (
 	"context"
 
-	"github.com/emoss08/trenova/pkg/buncolgen/fiscalyearcol"
-
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/fiscalyear"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/fiscalyear/fiscalyeardb"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/fiscalyearports"
-	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
-	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dberror"
-	"github.com/emoss08/trenova/pkg/dbhelper"
+	"github.com/emoss08/trenova/pkg/listquery"
 	"github.com/emoss08/trenova/pkg/pagination"
-	"github.com/emoss08/trenova/pkg/querybuilder"
-	"github.com/emoss08/trenova/shared/timeutils"
-	"github.com/uptrace/bun"
+	"github.com/emoss08/trenova/shared/pulid"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
+
+const (
+	maxExpiredOpenFiscalYears = 100
+	busyMessage               = "The fiscal year is busy. Retry the request."
+)
+
+var fiscalYearErrors = dberror.Mapping{Entity: "FiscalYear"}
 
 type Params struct {
 	fx.In
@@ -41,25 +44,6 @@ func New(p Params) fiscalyearports.FiscalYearRepository {
 	}
 }
 
-func (r *repository) filterQuery(
-	q *bun.SelectQuery,
-	req *fiscalyearports.ListFiscalYearsRequest,
-) *bun.SelectQuery {
-	q = querybuilder.ApplyFilters(
-		q,
-		"fy",
-		req.Filter,
-		(*fiscalyear.FiscalYear)(nil),
-	)
-
-	if req.IncludePeriods {
-		q = q.Relation("Periods")
-	}
-
-	return q.Limit(int64(req.Filter.Pagination.SafeLimit())).
-		Offset(int64(req.Filter.Pagination.SafeOffset()))
-}
-
 func (r *repository) List(
 	ctx context.Context,
 	req *fiscalyearports.ListFiscalYearsRequest,
@@ -68,27 +52,28 @@ func (r *repository) List(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*pagination.ListResult[*fiscalyear.FiscalYear], error) {
-			log := r.l.With(
-				zap.String("operation", "List"),
-				zap.Any("request", req),
+			fy := fiscalyeardb.FiscalYears
+			result, err := listquery.List(
+				ctx,
+				r.db.Keel(ctx),
+				fy.Query(),
+				&listquery.Request[fiscalyear.FiscalYear]{
+					Filter: req.Filter,
+					Shape: func(q *keel.Query[fiscalyear.FiscalYear]) *keel.Query[fiscalyear.FiscalYear] {
+						if req.IncludePeriods {
+							return q.Load(fy.Periods())
+						}
+						return q
+					},
+					Then: []keel.Order{fy.StartDate.Desc()},
+				},
 			)
-
-			entities := make([]*fiscalyear.FiscalYear, 0, req.Filter.Pagination.SafeLimit())
-			total, err := r.db.DBForContext(ctx).
-				NewSelect().
-				Model(&entities).
-				Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-					return r.filterQuery(sq, req)
-				}).ScanAndCount(ctx)
 			if err != nil {
-				log.Error("failed to scan and count fiscal years", zap.Error(err))
+				r.l.Error("failed to list fiscal years", zap.Error(err))
 				return nil, err
 			}
 
-			return &pagination.ListResult[*fiscalyear.FiscalYear]{
-				Items: entities,
-				Total: int(total),
-			}, nil
+			return result, nil
 		},
 	)
 }
@@ -97,122 +82,53 @@ func (r *repository) SelectOptions(
 	ctx context.Context,
 	req *fiscalyearports.FiscalYearSelectOptionsRequest,
 ) (*pagination.ListResult[*fiscalyear.FiscalYear], error) {
-	return dbtx.Write(
+	return dbtx.Read(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*pagination.ListResult[*fiscalyear.FiscalYear], error) {
-			cols := fiscalyearcol.FiscalYearColumns
-			return dbhelper.SelectOptions[*fiscalyear.FiscalYear](
+			fy := fiscalyeardb.FiscalYears
+			q := fy.Pick(
+				fy.ID,
+				fy.Name,
+				fy.Year,
+				fy.Status,
+				fy.StartDate,
+				fy.EndDate,
+				fy.IsCurrent,
+				fy.CreatedAt,
+			).Order(fy.IsCurrent.Desc(), fy.Year.Desc())
+
+			return listquery.SelectOptions(
 				ctx,
-				r.db.DBForContext(ctx),
+				r.db.Keel(ctx),
+				q,
 				req.SelectQueryRequest,
-				&dbhelper.SelectOptionsConfig{
-					ColumnRefs: []buncolgen.Column{
-						cols.ID,
-						cols.Name,
-						cols.Year,
-						cols.Status,
-						cols.StartDate,
-						cols.EndDate,
-						cols.IsCurrent,
-						cols.CreatedAt,
-					},
-					OrgColumnRef: &cols.OrganizationID,
-					BuColumnRef:  &cols.BusinessUnitID,
-					QueryModifier: func(q *bun.SelectQuery) *bun.SelectQuery {
-						return q.Order(cols.IsCurrent.OrderDesc(), cols.Year.OrderDesc())
-					},
-					EntityName:       "FiscalYear",
-					SearchColumnRefs: []buncolgen.Column{cols.Name},
-				},
+				func(s string) keel.Pred { return fy.Name.ContainsFold(s) },
 			)
 		},
 	)
-}
-
-func (r *repository) applyCursorPageFilters(
-	q *bun.SelectQuery,
-	req *fiscalyearports.ListFiscalYearConnectionRequest,
-) (*bun.SelectQuery, error) {
-	return querybuilder.ApplyCursorFilters(
-		q,
-		"fy",
-		req.Filter,
-		req.Cursor,
-		(*fiscalyear.FiscalYear)(nil),
-	)
-}
-
-func (r *repository) applyTotalCountFilters(
-	q *bun.SelectQuery,
-	req *fiscalyearports.ListFiscalYearConnectionRequest,
-) *bun.SelectQuery {
-	return querybuilder.ApplyFiltersWithoutSort(
-		q,
-		"fy",
-		req.Filter,
-		(*fiscalyear.FiscalYear)(nil),
-	)
-}
-
-func applyFiscalYearColumns(q *bun.SelectQuery, columns []string) *bun.SelectQuery {
-	if len(columns) == 0 {
-		return q
-	}
-
-	return q.Column(columns...)
 }
 
 func (r *repository) ListConnection(
 	ctx context.Context,
 	req *fiscalyearports.ListFiscalYearConnectionRequest,
 ) (*pagination.CursorListResult[*fiscalyear.FiscalYear], error) {
-	return dbtx.Write(
+	return dbtx.Read(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*pagination.CursorListResult[*fiscalyear.FiscalYear], error) {
-			log := r.l.With(
-				zap.String("operation", "ListConnection"),
-				zap.Any("request", req),
-			)
-
-			dba := r.db.DBForContext(ctx)
-			var totalCount *int
-			if req.Cursor.IncludeTotalCount {
-				total, err := dba.
-					NewSelect().
-					Model((*fiscalyear.FiscalYear)(nil)).
-					Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-						return r.applyTotalCountFilters(sq, req)
-					}).
-					Count(ctx)
-				if err != nil {
-					log.Error("failed to count fiscal years", zap.Error(err))
-					return nil, err
-				}
-				totalCount = new(int(total))
-			}
-
-			result, err := dbhelper.CursorList(
+			result, err := listquery.Connection(
 				ctx,
-				dbhelper.CursorListParams[*fiscalyear.FiscalYear]{
-					Filter:     req.Filter,
-					Cursor:     req.Cursor,
-					TotalCount: totalCount,
-					Query: func(entities *[]*fiscalyear.FiscalYear) *bun.SelectQuery {
-						return dba.
-							NewSelect().
-							Model(entities).
-							Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-								return applyFiscalYearColumns(sq, req.FiscalYearColumns)
-							})
-					},
-					Apply: func(sq *bun.SelectQuery) (*bun.SelectQuery, error) {
-						return r.applyCursorPageFilters(sq, req)
-					},
-				})
+				r.db.Keel(ctx),
+				fiscalyeardb.FiscalYears.Query(),
+				&listquery.Request[fiscalyear.FiscalYear]{
+					Filter:  req.Filter,
+					Cursor:  req.Cursor,
+					Columns: req.FiscalYearColumns,
+				},
+			)
 			if err != nil {
-				log.Error("failed to scan fiscal years", zap.Error(err))
+				r.l.Error("failed to list fiscal years", zap.Error(err))
 				return nil, err
 			}
 
@@ -225,8 +141,9 @@ func (r *repository) GetByID(
 	ctx context.Context,
 	req fiscalyearports.GetFiscalYearByIDRequest,
 ) (*fiscalyear.FiscalYear, error) {
-	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*fiscalyear.FiscalYear, error) {
-		return r.getByID(ctx, r.db.DBForContext(ctx), req, false)
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*fiscalyear.FiscalYear, error) {
+		fy := fiscalyeardb.FiscalYears
+		return r.one(ctx, fy.Where(fy.ID.Eq(req.ID)), req.ID.String())
 	})
 }
 
@@ -235,95 +152,53 @@ func (r *repository) GetByIDForUpdate(
 	req fiscalyearports.GetFiscalYearByIDRequest,
 ) (*fiscalyear.FiscalYear, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*fiscalyear.FiscalYear, error) {
-		return r.getByID(ctx, r.db.DBForContext(ctx), req, true)
+		fy := fiscalyeardb.FiscalYears
+		return r.one(
+			ctx,
+			fy.Where(fy.ID.Eq(req.ID)).Lock(keel.ForUpdate, keel.NoWait),
+			req.ID.String(),
+		)
 	})
-}
-
-func (r *repository) getByID(
-	ctx context.Context,
-	db bun.IDB,
-	req fiscalyearports.GetFiscalYearByIDRequest,
-	forUpdate bool,
-) (*fiscalyear.FiscalYear, error) {
-	log := r.l.With(
-		zap.String("operation", "GetByID"),
-		zap.String("id", req.ID.String()),
-	)
-
-	entity := new(fiscalyear.FiscalYear)
-	query := db.
-		NewSelect().
-		Model(entity).
-		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-			return sq.Where("fy.id = ?", req.ID).
-				Where("fy.organization_id = ?", req.TenantInfo.OrgID).
-				Where("fy.business_unit_id = ?", req.TenantInfo.BuID)
-		})
-	if forUpdate {
-		query = query.For("UPDATE NOWAIT")
-	}
-
-	err := query.Scan(ctx)
-	if err != nil {
-		log.Error("failed to get fiscal year", zap.Error(err))
-		if dberror.IsRetryableTransactionError(err) {
-			return nil, err
-		}
-		return nil, dberror.HandleNotFoundError(err, "FiscalYear")
-	}
-
-	return entity, nil
 }
 
 func (r *repository) GetCurrentFiscalYear(
 	ctx context.Context,
-	req fiscalyearports.GetCurrentFiscalYearRequest,
+	_ fiscalyearports.GetCurrentFiscalYearRequest,
 ) (*fiscalyear.FiscalYear, error) {
-	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*fiscalyear.FiscalYear, error) {
-		return r.getCurrentFiscalYear(ctx, r.db.DBForContext(ctx), req, false)
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*fiscalyear.FiscalYear, error) {
+		fy := fiscalyeardb.FiscalYears
+		return r.one(ctx, fy.Where(fy.IsCurrent.IsTrue()), "")
 	})
 }
 
 func (r *repository) GetCurrentFiscalYearForUpdate(
 	ctx context.Context,
-	req fiscalyearports.GetCurrentFiscalYearRequest,
+	_ fiscalyearports.GetCurrentFiscalYearRequest,
 ) (*fiscalyear.FiscalYear, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*fiscalyear.FiscalYear, error) {
-		return r.getCurrentFiscalYear(ctx, r.db.DBForContext(ctx), req, true)
+		fy := fiscalyeardb.FiscalYears
+		return r.one(
+			ctx,
+			fy.Where(fy.IsCurrent.IsTrue()).Lock(keel.ForUpdate, keel.NoWait),
+			"",
+		)
 	})
 }
 
-func (r *repository) getCurrentFiscalYear(
+func (r *repository) one(
 	ctx context.Context,
-	db bun.IDB,
-	req fiscalyearports.GetCurrentFiscalYearRequest,
-	forUpdate bool,
+	q *keel.Query[fiscalyear.FiscalYear],
+	id string,
 ) (*fiscalyear.FiscalYear, error) {
-	log := r.l.With(
-		zap.String("operation", "GetCurrentFiscalYear"),
-		zap.String("orgId", req.OrgID.String()),
-	)
-
-	entity := new(fiscalyear.FiscalYear)
-	query := db.
-		NewSelect().
-		Model(entity).
-		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-			return sq.Where("fy.organization_id = ?", req.OrgID).
-				Where("fy.business_unit_id = ?", req.BuID).
-				Where("fy.is_current = ?", true)
-		})
-	if forUpdate {
-		query = query.For("UPDATE NOWAIT")
-	}
-
-	err := query.Scan(ctx)
+	entity, err := q.One(ctx, r.db.Keel(ctx))
 	if err != nil {
-		log.Error("failed to get current fiscal year", zap.Error(err))
 		if dberror.IsRetryableTransactionError(err) {
 			return nil, err
 		}
-		return nil, dberror.HandleNotFoundError(err, "FiscalYear")
+		if !dberror.IsNotFoundError(err) {
+			r.l.Error("failed to get fiscal year", zap.String("id", id), zap.Error(err))
+		}
+		return nil, fiscalYearErrors.Map(err, id)
 	}
 
 	return entity, nil
@@ -331,25 +206,12 @@ func (r *repository) getCurrentFiscalYear(
 
 func (r *repository) CountByTenant(
 	ctx context.Context,
-	req fiscalyearports.CountFiscalYearsByTenantRequest,
+	_ fiscalyearports.CountFiscalYearsByTenantRequest,
 ) (int, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (int, error) {
-		log := r.l.With(
-			zap.String("operation", "CountByTenant"),
-			zap.String("orgId", req.OrgID.String()),
-			zap.String("buId", req.BuID.String()),
-		)
-
-		count, err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model((*fiscalyear.FiscalYear)(nil)).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return sq.Where("fy.organization_id = ?", req.OrgID).
-					Where("fy.business_unit_id = ?", req.BuID)
-			}).
-			Count(ctx)
+		count, err := fiscalyeardb.FiscalYears.Where(keel.True()).Count(ctx, r.db.Keel(ctx))
 		if err != nil {
-			log.Error("failed to count fiscal years", zap.Error(err))
+			r.l.Error("failed to count fiscal years", zap.Error(err))
 			return 0, err
 		}
 
@@ -362,18 +224,13 @@ func (r *repository) Create(
 	entity *fiscalyear.FiscalYear,
 ) (*fiscalyear.FiscalYear, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*fiscalyear.FiscalYear, error) {
-		log := r.l.With(
-			zap.String("operation", "Create"),
-			zap.Int("year", entity.Year),
-		)
-
-		if _, err := r.db.DBForContext(ctx).
-			NewInsert().
-			Model(entity).
-			Returning("*").
-			Exec(ctx); err != nil {
-			log.Error("failed to create fiscal year", zap.Error(err))
-			return nil, err
+		if err := fiscalyeardb.FiscalYears.Create(ctx, r.db.Keel(ctx), entity); err != nil {
+			r.l.Error(
+				"failed to create fiscal year",
+				zap.Int("year", entity.Year),
+				zap.Error(err),
+			)
+			return nil, fiscalYearErrors.Map(err, entity.ID.String())
 		}
 
 		return entity, nil
@@ -385,36 +242,22 @@ func (r *repository) Update(
 	entity *fiscalyear.FiscalYear,
 ) (*fiscalyear.FiscalYear, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*fiscalyear.FiscalYear, error) {
-		log := r.l.With(
-			zap.String("operation", "Update"),
-			zap.String("id", entity.ID.String()),
+		fy := fiscalyeardb.FiscalYears
+		err := fy.Save(
+			ctx,
+			r.db.Keel(ctx),
+			entity,
+			fy.Name,
+			fy.Description,
+			fy.AllowAdjustingEntries,
 		)
-
-		cols := fiscalyearcol.FiscalYearColumns
-		ov := entity.Version
-		entity.Version++
-
-		results, err := r.db.DBForContext(ctx).
-			NewUpdate().
-			Model(entity).
-			Column(
-				cols.Name.String(),
-				cols.Description.String(),
-				cols.AllowAdjustingEntries.String(),
-				cols.Version.String(),
-				cols.UpdatedAt.String(),
-			).
-			WherePK().
-			Where(cols.Version.Eq(), ov).
-			Returning("*").
-			Exec(ctx)
 		if err != nil {
-			log.Error("failed to update fiscal year", zap.Error(err))
-			return nil, err
-		}
-
-		if err = dberror.CheckRowsAffected(results, "FiscalYear", entity.ID.String()); err != nil {
-			return nil, err
+			r.l.Error(
+				"failed to update fiscal year",
+				zap.String("id", entity.ID.String()),
+				zap.Error(err),
+			)
+			return nil, fiscalYearErrors.Map(err, entity.ID.String())
 		}
 
 		return entity, nil
@@ -426,26 +269,21 @@ func (r *repository) Delete(
 	req fiscalyearports.DeleteFiscalYearRequest,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
-		log := r.l.With(
-			zap.String("operation", "Delete"),
-			zap.String("id", req.ID.String()),
+		err := fiscalyeardb.FiscalYears.DeleteRow(
+			ctx,
+			r.db.Keel(ctx),
+			&fiscalyear.FiscalYear{ID: req.ID},
 		)
-
-		result, err := r.db.DBForContext(ctx).
-			NewDelete().
-			Model((*fiscalyear.FiscalYear)(nil)).
-			WhereGroup(" AND ", func(dq *bun.DeleteQuery) *bun.DeleteQuery {
-				return dq.Where("fy.id = ?", req.ID).
-					Where("fy.organization_id = ?", req.TenantInfo.OrgID).
-					Where("fy.business_unit_id = ?", req.TenantInfo.BuID)
-			}).
-			Exec(ctx)
 		if err != nil {
-			log.Error("failed to delete fiscal year", zap.Error(err))
-			return err
+			r.l.Error(
+				"failed to delete fiscal year",
+				zap.String("id", req.ID.String()),
+				zap.Error(err),
+			)
+			return fiscalYearErrors.Map(err, req.ID.String())
 		}
 
-		return dberror.CheckRowsAffected(result, "FiscalYear", req.ID.String())
+		return nil
 	})
 }
 
@@ -454,33 +292,21 @@ func (r *repository) Close(
 	req fiscalyearports.CloseFiscalYearRequest,
 ) (*fiscalyear.FiscalYear, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*fiscalyear.FiscalYear, error) {
-		log := r.l.With(
-			zap.String("operation", "Close"),
-			zap.String("id", req.ID.String()),
+		fy := fiscalyeardb.FiscalYears
+		entity, err := r.updateOne(
+			ctx,
+			req.ID,
+			fy.Where(fy.ID.Eq(req.ID)),
+			fy.Status.To(fiscalyear.StatusClosed),
+			fy.ClosedAt.To(req.ClosedAt),
+			fy.ClosedByID.To(req.ClosedByID),
 		)
-
-		entity := new(fiscalyear.FiscalYear)
-		result, err := r.db.DBForContext(ctx).
-			NewUpdate().
-			Model(entity).
-			Set(fiscalyearcol.FiscalYearColumns.Version.Inc(1)).
-			Set(fiscalyearcol.FiscalYearColumns.UpdatedAt.Set(), timeutils.NowUnix()).
-			Set("status = ?", fiscalyear.StatusClosed).
-			Set("closed_at = ?", req.ClosedAt).
-			Set("closed_by_id = ?", req.ClosedByID).
-			WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-				return uq.Where("fy.id = ?", req.ID).
-					Where("fy.organization_id = ?", req.TenantInfo.OrgID).
-					Where("fy.business_unit_id = ?", req.TenantInfo.BuID)
-			}).
-			Returning("*").
-			Exec(ctx)
 		if err != nil {
-			log.Error("failed to close fiscal year", zap.Error(err))
-			return nil, err
-		}
-
-		if err = dberror.CheckRowsAffected(result, "FiscalYear", req.ID.String()); err != nil {
+			r.l.Error(
+				"failed to close fiscal year",
+				zap.String("id", req.ID.String()),
+				zap.Error(err),
+			)
 			return nil, err
 		}
 
@@ -493,37 +319,24 @@ func (r *repository) Reopen(
 	req fiscalyearports.ReopenFiscalYearRequest,
 ) (*fiscalyear.FiscalYear, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*fiscalyear.FiscalYear, error) {
-		log := r.l.With(
-			zap.String("operation", "Reopen"),
-			zap.String("id", req.ID.String()),
+		fy := fiscalyeardb.FiscalYears
+		entity, err := r.updateOne(
+			ctx,
+			req.ID,
+			fy.Where(fy.ID.Eq(req.ID), fy.Status.Eq(fiscalyear.StatusClosed)),
+			fy.Status.To(fiscalyear.StatusOpen),
+			fy.ClosedAt.ToNull(),
+			fy.ClosedByID.ToNull(),
+			fy.ReopenedAt.To(req.ReopenedAt),
+			fy.ReopenedByID.To(req.ReopenedByID),
+			fy.ReopenReason.To(req.ReopenReason),
 		)
-
-		entity := new(fiscalyear.FiscalYear)
-		result, err := r.db.DBForContext(ctx).
-			NewUpdate().
-			Model(entity).
-			Set(fiscalyearcol.FiscalYearColumns.Version.Inc(1)).
-			Set(fiscalyearcol.FiscalYearColumns.UpdatedAt.Set(), timeutils.NowUnix()).
-			Set("status = ?", fiscalyear.StatusOpen).
-			Set("closed_at = NULL").
-			Set("closed_by_id = NULL").
-			Set("reopened_at = ?", req.ReopenedAt).
-			Set("reopened_by_id = ?", req.ReopenedByID).
-			Set("reopen_reason = ?", req.ReopenReason).
-			WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-				return uq.Where("fy.id = ?", req.ID).
-					Where("fy.organization_id = ?", req.TenantInfo.OrgID).
-					Where("fy.business_unit_id = ?", req.TenantInfo.BuID).
-					Where("fy.status = ?", fiscalyear.StatusClosed)
-			}).
-			Returning("*").
-			Exec(ctx)
 		if err != nil {
-			log.Error("failed to reopen fiscal year", zap.Error(err))
-			return nil, err
-		}
-
-		if err = dberror.CheckRowsAffected(result, "FiscalYear", req.ID.String()); err != nil {
+			r.l.Error(
+				"failed to reopen fiscal year",
+				zap.String("id", req.ID.String()),
+				zap.Error(err),
+			)
 			return nil, err
 		}
 
@@ -531,31 +344,34 @@ func (r *repository) Reopen(
 	})
 }
 
+func (r *repository) updateOne(
+	ctx context.Context,
+	id pulid.ID,
+	q *keel.Query[fiscalyear.FiscalYear],
+	sets ...keel.Assignment,
+) (*fiscalyear.FiscalYear, error) {
+	rows, err := q.UpdateReturning(ctx, r.db.Keel(ctx), sets...)
+	if err != nil {
+		return nil, err
+	}
+	if err = dberror.CheckAffected(int64(len(rows)), "FiscalYear", id.String()); err != nil {
+		return nil, err
+	}
+
+	return rows[0], nil
+}
+
 func (r *repository) GetNextFiscalYear(
 	ctx context.Context,
 	req fiscalyearports.GetNextFiscalYearRequest,
 ) (*fiscalyear.FiscalYear, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*fiscalyear.FiscalYear, error) {
-		log := r.l.With(
-			zap.String("operation", "GetNextFiscalYear"),
-			zap.Int64("afterDate", req.AfterDate),
-		)
-
-		entity := new(fiscalyear.FiscalYear)
-		err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(entity).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return sq.Where("fy.organization_id = ?", req.TenantInfo.OrgID).
-					Where("fy.business_unit_id = ?", req.TenantInfo.BuID).
-					Where("fy.start_date > ?", req.AfterDate)
-			}).
-			Order("fy.start_date ASC").
-			Limit(1).
-			Scan(ctx)
+		fy := fiscalyeardb.FiscalYears
+		entity, err := fy.Where(fy.StartDate.Gt(req.AfterDate)).
+			Order(fy.StartDate.Asc()).
+			First(ctx, r.db.Keel(ctx))
 		if err != nil {
-			log.Error("failed to get next fiscal year", zap.Error(err))
-			return nil, dberror.HandleNotFoundError(err, "FiscalYear")
+			return nil, fiscalYearErrors.Map(err, "")
 		}
 
 		return entity, nil
@@ -567,25 +383,16 @@ func (r *repository) GetExpiredOpenFiscalYears(
 	req fiscalyearports.GetExpiredOpenFiscalYearsRequest,
 ) ([]*fiscalyear.FiscalYear, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*fiscalyear.FiscalYear, error) {
-		log := r.l.With(
-			zap.String("operation", "GetExpiredOpenFiscalYears"),
-			zap.Int64("beforeDate", req.BeforeDate),
-		)
-
-		entities := make([]*fiscalyear.FiscalYear, 0)
-		err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(&entities).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return sq.Where("fy.organization_id = ?", req.OrgID).
-					Where("fy.business_unit_id = ?", req.BuID).
-					Where("fy.status = ?", fiscalyear.StatusOpen).
-					Where("fy.end_date < ?", req.BeforeDate)
-			}).
-			Order("fy.end_date ASC").
-			Scan(ctx)
+		fy := fiscalyeardb.FiscalYears
+		entities, err := fy.Where(
+			fy.Status.Eq(fiscalyear.StatusOpen),
+			fy.EndDate.Lt(req.BeforeDate),
+		).
+			Order(fy.EndDate.Asc()).
+			Limit(maxExpiredOpenFiscalYears).
+			List(ctx, r.db.Keel(ctx))
 		if err != nil {
-			log.Error("failed to list expired open fiscal years", zap.Error(err))
+			r.l.Error("failed to list expired open fiscal years", zap.Error(err))
 			return nil, err
 		}
 
@@ -598,84 +405,29 @@ func (r *repository) Activate(
 	req fiscalyearports.ActivateFiscalYearRequest,
 ) (*fiscalyear.FiscalYear, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*fiscalyear.FiscalYear, error) {
-		log := r.l.With(
-			zap.String("operation", "Activate"),
-			zap.String("id", req.ID.String()),
-		)
-
-		entity := new(fiscalyear.FiscalYear)
-		if tx, ok := r.db.DBForContext(ctx).(bun.Tx); ok {
-			err := r.activateInTx(ctx, tx, req, entity)
-			if err != nil {
-				log.Error("failed to activate fiscal year", zap.Error(err))
-				return nil, dberror.MapRetryableTransactionError(
-					err,
-					"The fiscal year is busy. Retry the request.",
-				)
-			}
-
-			return entity, nil
+		fy := fiscalyeardb.FiscalYears
+		_, err := fy.Where(fy.IsCurrent.IsTrue()).
+			Update(ctx, r.db.Keel(ctx), fy.IsCurrent.To(false))
+		if err != nil {
+			return nil, r.activateError(req.ID, err)
 		}
 
-		err := r.db.WithTx(ctx, kernelports.TxOptions{}, func(c context.Context, tx bun.Tx) error {
-			return r.activateInTx(c, tx, req, entity)
-		})
+		entity, err := r.updateOne(
+			ctx,
+			req.ID,
+			fy.Where(fy.ID.Eq(req.ID)),
+			fy.Status.To(fiscalyear.StatusOpen),
+			fy.IsCurrent.To(true),
+		)
 		if err != nil {
-			log.Error("failed to activate fiscal year", zap.Error(err))
-			return nil, dberror.MapRetryableTransactionError(
-				err,
-				"The fiscal year is busy. Retry the request.",
-			)
+			return nil, r.activateError(req.ID, err)
 		}
 
 		return entity, nil
 	})
 }
 
-func (r *repository) activateInTx(
-	ctx context.Context,
-	tx bun.Tx,
-	req fiscalyearports.ActivateFiscalYearRequest,
-	entity *fiscalyear.FiscalYear,
-) error {
-	err := func() error {
-		_, txErr := tx.NewUpdate().
-			Model((*fiscalyear.FiscalYear)(nil)).
-			Set(fiscalyearcol.FiscalYearColumns.Version.Inc(1)).
-			Set(fiscalyearcol.FiscalYearColumns.UpdatedAt.Set(), timeutils.NowUnix()).
-			Set("is_current = ?", false).
-			WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-				return uq.Where("fy.organization_id = ?", req.TenantInfo.OrgID).
-					Where("fy.business_unit_id = ?", req.TenantInfo.BuID).
-					Where("fy.is_current = ?", true)
-			}).
-			Exec(ctx)
-		if txErr != nil {
-			return txErr
-		}
-
-		result, txErr := tx.NewUpdate().
-			Model(entity).
-			Set(fiscalyearcol.FiscalYearColumns.Version.Inc(1)).
-			Set(fiscalyearcol.FiscalYearColumns.UpdatedAt.Set(), timeutils.NowUnix()).
-			Set("status = ?", fiscalyear.StatusOpen).
-			Set("is_current = ?", true).
-			WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-				return uq.Where("fy.id = ?", req.ID).
-					Where("fy.organization_id = ?", req.TenantInfo.OrgID).
-					Where("fy.business_unit_id = ?", req.TenantInfo.BuID)
-			}).
-			Returning("*").
-			Exec(ctx)
-		if txErr != nil {
-			return txErr
-		}
-
-		return dberror.CheckRowsAffected(result, "FiscalYear", req.ID.String())
-	}()
-	if err != nil {
-		return err
-	}
-
-	return nil
+func (r *repository) activateError(id pulid.ID, err error) error {
+	r.l.Error("failed to activate fiscal year", zap.String("id", id.String()), zap.Error(err))
+	return dberror.MapRetryableTransactionError(err, busyMessage)
 }

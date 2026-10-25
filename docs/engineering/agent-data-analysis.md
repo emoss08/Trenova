@@ -50,7 +50,7 @@ the code reads and given exactly one source:
 - **A report run** (`reportRunId`, kind `report_run`). Only a run the same person ran
   (`RequestedByID`), and only while they may read reports (`report:read`, checked by the
   tool). Its stored rows are read through `reporting.Service.ReadRunRows`, which audits the
-  read, and written as CSV by `reportrows.Envelope.WriteCSV`: the header is each column's id
+  read, and written as CSV by keel's raw CSV export (`export.CSVOptions{Raw: true}`): the header is each column's id
   and values stay raw (decimals as exact text, times as unix seconds), so a program reads
   them without parsing a person's formatting. Totals are left out.
 - **An attached file** (`documentId`). Only one the person attached to this conversation
@@ -191,7 +191,7 @@ connection test lists the account's running sandboxes, starting none.
 | The preparation the sandbox runs first | `internal/modules/agent/app/agentextensionservice/analysis_prelude.py` |
 | Tables, figures, layout and their bounds | `internal/modules/agent/domain/agentextension/analysisresult.go` |
 | The tool and dataset resolution | `internal/modules/agent/app/agentquerytoolservice/analysis_tool.go` |
-| Report rows as CSV | `pkg/reportrows/csv.go` |
+| Report rows as CSV | `export.CSV` with `Raw` (keel analytics), called from `analysis_tool.go` |
 | Vendor connector | `internal/infrastructure/agentextension/e2bconnector/` over `shared/e2b` |
 | The Desk artifact | `assistantservice/analysis_artifact.go`; client `routes/desk/_components/artifacts/kinds/analysis/` |
 | The result view both surfaces draw | `client/apps/web/src/components/assistant/analysis-result.tsx` |

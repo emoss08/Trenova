@@ -14,7 +14,6 @@ import (
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/uptrace/bun"
 )
 
 // ApplyCreditMemo settles open invoices with a posted credit memo of the same
@@ -32,7 +31,7 @@ func (s *Service) ApplyCreditMemo(
 
 	var applied []*customerpayment.CreditMemoApplication
 	var settled []*invoice.Invoice
-	err := s.db.WithTx(ctx, kernelports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
+	err := s.db.Transact(ctx, kernelports.TxOptions{}, func(txCtx context.Context) error {
 		plan, txErr := s.planCreditApplication(txCtx, req, actor, s.invoiceRepo.LockForUpdate)
 		if txErr != nil {
 			return txErr
@@ -93,7 +92,7 @@ func (s *Service) UnapplyCreditMemoApplication(
 	}
 
 	var updated *customerpayment.CreditMemoApplication
-	err := s.db.WithTx(ctx, kernelports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
+	err := s.db.Transact(ctx, kernelports.TxOptions{}, func(txCtx context.Context) error {
 		plan, txErr := s.planUnapplyCredit(txCtx, req, actor, s.invoiceRepo.LockForUpdate)
 		if txErr != nil {
 			return txErr

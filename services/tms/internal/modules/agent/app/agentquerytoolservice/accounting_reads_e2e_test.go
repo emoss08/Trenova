@@ -2,6 +2,7 @@ package agentquerytoolservice
 
 import (
 	"context"
+	"strconv"
 	"sync"
 	"testing"
 
@@ -37,7 +38,7 @@ func (f *fakeAccountingDrift) List(
 	f.list = req
 	difference := int64(-300)
 
-	return &pagination.CursorListResult[*accountingsync.AccountingDriftFinding]{
+	return withEdges(&pagination.CursorListResult[*accountingsync.AccountingDriftFinding]{
 		Items: []*accountingsync.AccountingDriftFinding{{
 			ID:              pulid.MustNew("acctdf_"),
 			Kind:            accountingsync.DriftAmountMismatch,
@@ -50,7 +51,7 @@ func (f *fakeAccountingDrift) List(
 			DifferenceMinor: &difference,
 			Detail:          []accountingsync.DriftLine{},
 		}},
-	}, nil
+	}), nil
 }
 
 func (f *fakeAccountingDrift) Overview(
@@ -79,9 +80,9 @@ func (f *fakeAccountingSync) ListRecords(
 	defer f.mu.Unlock()
 	f.list = req
 
-	return &pagination.CursorListResult[*accountingsync.AccountingSyncRecord]{
+	return withEdges(&pagination.CursorListResult[*accountingsync.AccountingSyncRecord]{
 		Items: []*accountingsync.AccountingSyncRecord{syncRecordFixture()},
-	}, nil
+	}), nil
 }
 
 func (f *fakeAccountingSync) ObjectStates(
@@ -178,9 +179,9 @@ func (f *fakeAccountingMappings) ListMappings(
 	defer f.mu.Unlock()
 	f.list = req
 
-	return &pagination.CursorListResult[*accountingsync.AccountingMapping]{
+	return withEdges(&pagination.CursorListResult[*accountingsync.AccountingMapping]{
 		Items: []*accountingsync.AccountingMapping{mappingFixture()},
-	}, nil
+	}), nil
 }
 
 func (f *fakeAccountingMappings) Summary(
@@ -473,4 +474,13 @@ func TestAccountingMappingAndRecordReads_ThroughTheExecutor(t *testing.T) {
 	require.Len(t, tries, 1)
 	assert.NotContains(t, tries[0], "errorMessage")
 	assert.NotContains(t, record, "errorMessage")
+}
+
+func withEdges[T any](page *pagination.CursorListResult[T]) *pagination.CursorListResult[T] {
+	page.EdgeCursors = make([]string, len(page.Items))
+	for idx := range page.Items {
+		page.EdgeCursors[idx] = "edge-" + strconv.Itoa(idx)
+	}
+
+	return page
 }

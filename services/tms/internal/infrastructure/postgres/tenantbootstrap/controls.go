@@ -5,107 +5,56 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/costingcontrol"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/costingcontrol/costingcontroldb"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
-	"github.com/emoss08/trenova/internal/modules/operations/domain/dispatchcontrol"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant/tenantdb"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/dispatchcontrol/dispatchcontroldb"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/dataentrycontrol"
+	"github.com/emoss08/trenova/internal/modules/workspace/domain/dataentrycontrol/dataentrycontroldb"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/shopspring/decimal"
-	"github.com/uptrace/bun"
 )
 
-func CreateControls(ctx context.Context, db bun.IDB, scope Scope) error {
+func CreateControls(ctx context.Context, db *keel.DB, scope Scope) error {
 	now := scope.now()
 
-	accountingControl := &tenant.AccountingControl{
-		ID:                              pulid.MustNew("ac_"),
-		OrganizationID:                  scope.OrganizationID,
-		BusinessUnitID:                  scope.BusinessUnitID,
-		RequireManualJEApproval:         true,
-		RequirePeriodCloseApproval:      true,
-		NotifyOnReconciliationException: true,
-		CreatedAt:                       now,
-		UpdatedAt:                       now,
-	}
-	if _, err := db.NewInsert().Model(accountingControl).Exec(ctx); err != nil {
+	org, bu := scope.OrganizationID, scope.BusinessUnitID
+
+	accountingControl := tenant.NewDefaultAccountingControl(org, bu)
+	accountingControl.ID = pulid.MustNew("ac_")
+	if err := tenantdb.AccountingControls.Create(ctx, db, accountingControl); err != nil {
 		return fmt.Errorf("create accounting control: %w", err)
 	}
-	if err := scope.record(ctx, "accounting_controls", accountingControl.ID); err != nil {
-		return err
-	}
 
-	billingControl := &tenant.BillingControl{
-		ID:                           pulid.MustNew("bc_"),
-		OrganizationID:               scope.OrganizationID,
-		BusinessUnitID:               scope.BusinessUnitID,
-		BillingQueueTransferSchedule: tenant.TransferScheduleContinuous,
-		ShowDueDateOnInvoice:         true,
-		ShowBalanceDueOnInvoice:      true,
-		NotifyOnBillingExceptions:    true,
-		RequireRateOverrideReason:    true,
-		CreatedAt:                    now,
-		UpdatedAt:                    now,
-	}
-	if _, err := db.NewInsert().Model(billingControl).Exec(ctx); err != nil {
+	billingControl := tenant.NewDefaultBillingControl(org, bu)
+	billingControl.ID = pulid.MustNew("bc_")
+	if err := tenantdb.BillingControls.Create(ctx, db, billingControl); err != nil {
 		return fmt.Errorf("create billing control: %w", err)
 	}
-	if err := scope.record(ctx, "billing_controls", billingControl.ID); err != nil {
-		return err
-	}
 
-	invoiceAdjustmentControl := &tenant.InvoiceAdjustmentControl{
-		ID:                                  pulid.MustNew("iac_"),
-		OrganizationID:                      scope.OrganizationID,
-		BusinessUnitID:                      scope.BusinessUnitID,
-		StandardAdjustmentApprovalThreshold: decimal.NewFromFloat(0.01),
-		WriteOffApprovalThreshold:           decimal.NewFromFloat(0.01),
-		CreatedAt:                           now,
-		UpdatedAt:                           now,
-	}
-	if _, err := db.NewInsert().Model(invoiceAdjustmentControl).Exec(ctx); err != nil {
+	invoiceAdjustmentControl := tenant.NewDefaultInvoiceAdjustmentControl(org, bu)
+	invoiceAdjustmentControl.ID = pulid.MustNew("iac_")
+	if err := tenantdb.InvoiceAdjustmentControls.Create(
+		ctx,
+		db,
+		invoiceAdjustmentControl,
+	); err != nil {
 		return fmt.Errorf("create invoice adjustment control: %w", err)
 	}
-	if err := scope.record(
-		ctx,
-		"invoice_adjustment_controls",
-		invoiceAdjustmentControl.ID,
-	); err != nil {
-		return err
-	}
 
-	tenderPolicy := dispatchcontrol.DefaultTenderPolicy()
-	dispatchControl := &dispatchcontrol.DispatchControl{
-		ID:                              pulid.MustNew("dc_"),
-		OrganizationID:                  scope.OrganizationID,
-		BusinessUnitID:                  scope.BusinessUnitID,
-		EnableEtaAlerts:                 true,
-		TenderCounterOffersEnabled:      tenderPolicy.CountersEnabled,
-		TenderCounterMarginFloorPercent: decimal.NewNullDecimal(tenderPolicy.CounterMarginFloor),
-		TenderMaxEscalations:            tenderPolicy.MaxEscalations,
-		CreatedAt:                       now,
-		UpdatedAt:                       now,
-	}
-	if _, err := db.NewInsert().Model(dispatchControl).Exec(ctx); err != nil {
+	if err := dispatchcontroldb.DispatchControls.Create(
+		ctx,
+		db,
+		newDispatchControl(scope),
+	); err != nil {
 		return fmt.Errorf("create dispatch control: %w", err)
 	}
-	if err := scope.record(ctx, "dispatch_controls", dispatchControl.ID); err != nil {
-		return err
-	}
 
-	shipmentControl := &tenant.ShipmentControl{
-		ID:                     pulid.MustNew("sc_"),
-		OrganizationID:         scope.OrganizationID,
-		BusinessUnitID:         scope.BusinessUnitID,
-		CheckForDuplicateBOLs:  true,
-		CheckHazmatSegregation: true,
-		CreatedAt:              now,
-		UpdatedAt:              now,
-	}
-	if _, err := db.NewInsert().Model(shipmentControl).Exec(ctx); err != nil {
+	shipmentControl := tenant.NewDefaultShipmentControl(org, bu)
+	shipmentControl.ID = pulid.MustNew("sc_")
+	if err := tenantdb.ShipmentControls.Create(ctx, db, shipmentControl); err != nil {
 		return fmt.Errorf("create shipment control: %w", err)
-	}
-	if err := scope.record(ctx, "shipment_controls", shipmentControl.ID); err != nil {
-		return err
 	}
 
 	if err := createCostingControl(ctx, db, scope, now); err != nil {
@@ -113,11 +62,8 @@ func CreateControls(ctx context.Context, db bun.IDB, scope Scope) error {
 	}
 
 	documentControl := tenant.NewDefaultDocumentControl(scope.OrganizationID, scope.BusinessUnitID)
-	if _, err := db.NewInsert().Model(documentControl).Exec(ctx); err != nil {
+	if err := tenantdb.DocumentControls.Create(ctx, db, documentControl); err != nil {
 		return fmt.Errorf("create document control: %w", err)
-	}
-	if err := scope.record(ctx, "document_controls", documentControl.ID); err != nil {
-		return err
 	}
 
 	dataEntryControl := &dataentrycontrol.DataEntryControl{
@@ -131,14 +77,14 @@ func CreateControls(ctx context.Context, db bun.IDB, scope Scope) error {
 		EmailCase:      dataentrycontrol.CaseFormatLower,
 		CityCase:       dataentrycontrol.CaseFormatTitleCase,
 	}
-	if _, err := db.NewInsert().Model(dataEntryControl).Exec(ctx); err != nil {
+	if err := dataentrycontroldb.DataEntryControls.Create(ctx, db, dataEntryControl); err != nil {
 		return fmt.Errorf("create data entry control: %w", err)
 	}
 
-	return scope.record(ctx, "data_entry_controls", dataEntryControl.ID)
+	return nil
 }
 
-func createCostingControl(ctx context.Context, db bun.IDB, scope Scope, now int64) error {
+func createCostingControl(ctx context.Context, db *keel.DB, scope Scope, now int64) error {
 	costingControl := &costingcontrol.CostingControl{
 		ID:                   pulid.MustNew("cstc_"),
 		OrganizationID:       scope.OrganizationID,
@@ -150,11 +96,8 @@ func createCostingControl(ctx context.Context, db bun.IDB, scope Scope, now int6
 		CreatedAt:            now,
 		UpdatedAt:            now,
 	}
-	if _, err := db.NewInsert().Model(costingControl).Exec(ctx); err != nil {
+	if err := costingcontroldb.CostingControls.Create(ctx, db, costingControl); err != nil {
 		return fmt.Errorf("create costing control: %w", err)
-	}
-	if err := scope.record(ctx, "costing_controls", costingControl.ID); err != nil {
-		return err
 	}
 
 	costCategories := costingcontrol.DefaultCategories()
@@ -166,13 +109,8 @@ func createCostingControl(ctx context.Context, db bun.IDB, scope Scope, now int6
 		category.CreatedAt = now
 		category.UpdatedAt = now
 	}
-	if _, err := db.NewInsert().Model(&costCategories).Exec(ctx); err != nil {
+	if err := costingcontroldb.CostCategories.CreateMany(ctx, db, costCategories); err != nil {
 		return fmt.Errorf("create cost categories: %w", err)
-	}
-	for _, category := range costCategories {
-		if err := scope.record(ctx, "cost_categories", category.ID); err != nil {
-			return err
-		}
 	}
 
 	return nil
@@ -194,37 +132,36 @@ func DefaultSequenceTypes() []tenant.SequenceType {
 	return types
 }
 
-func CreateSequences(ctx context.Context, db bun.IDB, scope Scope) error {
+func CreateSequences(ctx context.Context, db *keel.DB, scope Scope) error {
 	now := scope.now()
 	year, month := sequencePeriod(now)
 
+	sequences := make([]*tenant.Sequence, 0, len(defaultSequenceTypes))
 	for _, sequenceType := range defaultSequenceTypes {
-		sequence := &tenant.Sequence{
-			ID:              pulid.MustNew("seq_"),
-			SequenceType:    sequenceType,
-			OrganizationID:  scope.OrganizationID,
-			BusinessUnitID:  scope.BusinessUnitID,
-			Year:            year,
-			Month:           month,
-			CurrentSequence: 0,
-			Version:         0,
-			CreatedAt:       now,
-			UpdatedAt:       now,
-		}
+		sequences = append(sequences, &tenant.Sequence{
+			ID:             pulid.MustNew("seq_"),
+			SequenceType:   sequenceType,
+			OrganizationID: scope.OrganizationID,
+			BusinessUnitID: scope.BusinessUnitID,
+			Year:           year,
+			Month:          month,
+			CreatedAt:      now,
+			UpdatedAt:      now,
+		})
+	}
 
-		result, err := db.NewInsert().
-			Model(sequence).
-			On("CONFLICT (sequence_type, organization_id, business_unit_id, year, month) DO NOTHING").
-			Exec(ctx)
-		if err != nil {
-			return fmt.Errorf("create sequence seed: %w", err)
-		}
-
-		if rows, _ := result.RowsAffected(); rows > 0 {
-			if err = scope.record(ctx, "sequences", sequence.ID); err != nil {
-				return err
-			}
-		}
+	s := tenantdb.Sequences
+	if _, err := s.CreateOrSkip(
+		ctx,
+		db,
+		sequences,
+		s.SequenceType,
+		s.OrganizationID,
+		s.BusinessUnitID,
+		s.Year,
+		s.Month,
+	); err != nil {
+		return fmt.Errorf("create sequences: %w", err)
 	}
 
 	return nil

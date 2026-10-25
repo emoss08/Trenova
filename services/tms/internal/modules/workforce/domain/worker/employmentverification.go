@@ -4,16 +4,15 @@ import (
 	"context"
 	"errors"
 
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/document"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/pkg/domainvalidation"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/validationframework"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/emoss08/trenova/shared/timeutils"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
 	"github.com/go-ozzo/ozzo-validation/v4/is"
-	"github.com/uptrace/bun"
 )
 
 var (
@@ -124,7 +123,6 @@ func (m EmploymentVerificationMethod) IsValid() bool {
 }
 
 var (
-	_ bun.BeforeAppendModelHook          = (*WorkerEmploymentVerification)(nil)
 	_ validationframework.TenantedEntity = (*WorkerEmploymentVerification)(nil)
 )
 
@@ -133,49 +131,49 @@ var (
 // separately because 49 CFR 382.413 asks for it specifically and an employer
 // often answers the general request without it.
 type WorkerEmploymentVerification struct {
-	bun.BaseModel `bun:"table:worker_employment_verifications,alias:wemv" json:"-"`
+	keel.Table `keel:"worker_employment_verifications"`
 
-	ID             pulid.ID `json:"id"             bun:"id,pk,type:VARCHAR(100),notnull"`
-	BusinessUnitID pulid.ID `json:"businessUnitId" bun:"business_unit_id,pk,type:VARCHAR(100),notnull"`
-	OrganizationID pulid.ID `json:"organizationId" bun:"organization_id,pk,type:VARCHAR(100),notnull"`
-	WorkerID       pulid.ID `json:"workerId"       bun:"worker_id,type:VARCHAR(100),notnull"`
+	ID             pulid.ID `json:"id"             keel:"id,pk,autoid:wemv_"`
+	BusinessUnitID pulid.ID `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
+	OrganizationID pulid.ID `json:"organizationId" keel:"organization_id,pk,tenant"`
+	WorkerID       pulid.ID `json:"workerId"       keel:"worker_id"`
 
-	EmployerName      string `json:"employerName"      bun:"employer_name,type:VARCHAR(150),notnull"`
-	EmployerDOTNumber string `json:"employerDotNumber" bun:"employer_dot_number,type:VARCHAR(20),nullzero"`
-	EmployerMCNumber  string `json:"employerMcNumber"  bun:"employer_mc_number,type:VARCHAR(20),nullzero"`
-	ContactName       string `json:"contactName"       bun:"contact_name,type:VARCHAR(100),nullzero"`
-	ContactPhone      string `json:"contactPhone"      bun:"contact_phone,type:VARCHAR(30),nullzero"`
-	ContactEmail      string `json:"contactEmail"      bun:"contact_email,type:VARCHAR(150),nullzero"`
+	EmployerName      string `json:"employerName"      keel:"employer_name"`
+	EmployerDOTNumber string `json:"employerDotNumber" keel:"employer_dot_number,nullzero"`
+	EmployerMCNumber  string `json:"employerMcNumber"  keel:"employer_mc_number,nullzero"`
+	ContactName       string `json:"contactName"       keel:"contact_name,nullzero"`
+	ContactPhone      string `json:"contactPhone"      keel:"contact_phone,nullzero"`
+	ContactEmail      string `json:"contactEmail"      keel:"contact_email,nullzero"`
 
-	EmployedFrom    *int64 `json:"employedFrom"    bun:"employed_from,type:BIGINT,nullzero"`
-	EmployedTo      *int64 `json:"employedTo"      bun:"employed_to,type:BIGINT,nullzero"`
-	WasDOTRegulated bool   `json:"wasDotRegulated" bun:"was_dot_regulated,type:BOOLEAN,notnull"`
+	EmployedFrom    *int64 `json:"employedFrom"    keel:"employed_from"`
+	EmployedTo      *int64 `json:"employedTo"      keel:"employed_to"`
+	WasDOTRegulated bool   `json:"wasDotRegulated" keel:"was_dot_regulated"`
 
-	Status EmploymentVerificationStatus `json:"status" bun:"status,type:employment_verification_status_enum,notnull,default:'Pending'"`
-	Method EmploymentVerificationMethod `json:"method" bun:"method,type:employment_verification_method_enum,notnull,default:'Email'"`
+	Status EmploymentVerificationStatus `json:"status" keel:"status"`
+	Method EmploymentVerificationMethod `json:"method" keel:"method"`
 
-	RequestedAt                   *int64 `json:"requestedAt"                   bun:"requested_at,type:BIGINT,nullzero"`
-	ResponseReceivedAt            *int64 `json:"responseReceivedAt"            bun:"response_received_at,type:BIGINT,nullzero"`
-	LastFollowUpAt                *int64 `json:"lastFollowUpAt"                bun:"last_follow_up_at,type:BIGINT,nullzero"`
-	FollowUpCount                 int32  `json:"followUpCount"                 bun:"follow_up_count,type:INTEGER,notnull"`
-	DrugAlcoholResponseReceivedAt *int64 `json:"drugAlcoholResponseReceivedAt" bun:"drug_alcohol_response_received_at,type:BIGINT,nullzero"`
+	RequestedAt                   *int64 `json:"requestedAt"                   keel:"requested_at"`
+	ResponseReceivedAt            *int64 `json:"responseReceivedAt"            keel:"response_received_at"`
+	LastFollowUpAt                *int64 `json:"lastFollowUpAt"                keel:"last_follow_up_at"`
+	FollowUpCount                 int32  `json:"followUpCount"                 keel:"follow_up_count"`
+	DrugAlcoholResponseReceivedAt *int64 `json:"drugAlcoholResponseReceivedAt" keel:"drug_alcohol_response_received_at"`
 
-	HadAccidents             bool  `json:"hadAccidents"             bun:"had_accidents,type:BOOLEAN,notnull"`
-	AccidentCount            int32 `json:"accidentCount"            bun:"accident_count,type:INTEGER,notnull"`
-	HadDrugAlcoholViolations bool  `json:"hadDrugAlcoholViolations" bun:"had_drug_alcohol_violations,type:BOOLEAN,notnull"`
+	HadAccidents             bool  `json:"hadAccidents"             keel:"had_accidents"`
+	AccidentCount            int32 `json:"accidentCount"            keel:"accident_count"`
+	HadDrugAlcoholViolations bool  `json:"hadDrugAlcoholViolations" keel:"had_drug_alcohol_violations"`
 
-	Findings      string   `json:"findings"      bun:"findings,type:TEXT,nullzero"`
-	Notes         string   `json:"notes"         bun:"notes,type:TEXT,nullzero"`
-	DocumentID    pulid.ID `json:"documentId"    bun:"document_id,type:VARCHAR(100),nullzero"`
-	RequestedByID pulid.ID `json:"requestedById" bun:"requested_by_id,type:VARCHAR(100),nullzero"`
+	Findings      string   `json:"findings"      keel:"findings,nullzero"`
+	Notes         string   `json:"notes"         keel:"notes,nullzero"`
+	DocumentID    pulid.ID `json:"documentId"    keel:"document_id,nullzero"`
+	RequestedByID pulid.ID `json:"requestedById" keel:"requested_by_id,nullzero"`
 
-	Version   int64 `json:"version"   bun:"version,type:BIGINT"`
-	CreatedAt int64 `json:"createdAt" bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
-	UpdatedAt int64 `json:"updatedAt" bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
+	Version   int64 `json:"version"   keel:"version,version"`
+	CreatedAt int64 `json:"createdAt" keel:"created_at,autocreate"`
+	UpdatedAt int64 `json:"updatedAt" keel:"updated_at,autoupdate"`
 
-	Worker      *Worker            `json:"worker,omitempty"      bun:"rel:belongs-to,join:worker_id=id,join:organization_id=organization_id,join:business_unit_id=business_unit_id"`
-	Document    *document.Document `json:"document,omitempty"    bun:"rel:belongs-to,join:document_id=id,join:organization_id=organization_id,join:business_unit_id=business_unit_id"`
-	RequestedBy *tenant.User       `json:"requestedBy,omitempty" bun:"rel:belongs-to,join:requested_by_id=id"`
+	Worker      *Worker            `json:"worker,omitempty"      keel:"belongs:worker_id"`
+	Document    *document.Document `json:"document,omitempty"    keel:"belongs:document_id"`
+	RequestedBy *tenant.User       `json:"requestedBy,omitempty" keel:"belongs:requested_by_id"`
 }
 
 func (v *WorkerEmploymentVerification) Validate(multiErr *errortypes.MultiError) {
@@ -292,24 +290,12 @@ func (v *WorkerEmploymentVerification) GetResourceType() string {
 
 func (v *WorkerEmploymentVerification) GetResourceID() string { return v.ID.String() }
 
-func (v *WorkerEmploymentVerification) BeforeAppendModel(_ context.Context, query bun.Query) error {
-	now := timeutils.NowUnix()
-
-	switch query.(type) {
-	case *bun.InsertQuery:
-		if v.ID.IsNil() {
-			v.ID = pulid.MustNew("wemv_")
-		}
-		if v.Status == "" {
-			v.Status = VerificationPending
-		}
-		if v.Method == "" {
-			v.Method = VerificationByEmail
-		}
-		v.CreatedAt = now
-		v.UpdatedAt = now
-	case *bun.UpdateQuery:
-		v.UpdatedAt = now
+func (v *WorkerEmploymentVerification) BeforeCreate(_ context.Context) error {
+	if v.Status == "" {
+		v.Status = VerificationPending
+	}
+	if v.Method == "" {
+		v.Method = VerificationByEmail
 	}
 
 	return nil

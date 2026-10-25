@@ -5,6 +5,7 @@ import (
 	"errors"
 	"strings"
 
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/domainvalidation"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -12,7 +13,6 @@ import (
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
-	"github.com/uptrace/bun"
 )
 
 var ErrInvalidPolicyAudience = errors.New("invalid policy audience")
@@ -54,7 +54,6 @@ func (a PolicyAudience) Covers(workerType WorkerType) bool {
 }
 
 var (
-	_ bun.BeforeAppendModelHook          = (*WorkerPolicy)(nil)
 	_ validationframework.TenantedEntity = (*WorkerPolicy)(nil)
 )
 
@@ -68,27 +67,27 @@ var (
 // changing the version is refused: it would make every existing signature a
 // signature on words nobody saw.
 type WorkerPolicy struct {
-	bun.BaseModel `bun:"table:worker_policies,alias:wpol" json:"-"`
+	keel.Table `keel:"worker_policies"`
 
-	ID             pulid.ID `json:"id"             bun:"id,pk,type:VARCHAR(100),notnull"`
-	BusinessUnitID pulid.ID `json:"businessUnitId" bun:"business_unit_id,pk,type:VARCHAR(100),notnull"`
-	OrganizationID pulid.ID `json:"organizationId" bun:"organization_id,pk,type:VARCHAR(100),notnull"`
+	ID             pulid.ID `json:"id"             keel:"id,pk,autoid:wpol_"`
+	BusinessUnitID pulid.ID `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
+	OrganizationID pulid.ID `json:"organizationId" keel:"organization_id,pk,tenant"`
 
-	Status            domaintypes.Status `json:"status"            bun:"status,type:status_enum,notnull,default:'Active'"`
-	Code              string             `json:"code"              bun:"code,type:VARCHAR(30),notnull"`
-	Title             string             `json:"title"             bun:"title,type:VARCHAR(150),notnull"`
-	Summary           string             `json:"summary"           bun:"summary,type:TEXT,nullzero"`
-	Body              string             `json:"body"              bun:"body,type:TEXT,nullzero"`
-	DocumentID        pulid.ID           `json:"documentId"        bun:"document_id,type:VARCHAR(100),nullzero"`
-	VersionLabel      string             `json:"versionLabel"      bun:"version_label,type:VARCHAR(30),notnull,default:'1'"`
-	RequiresSignature bool               `json:"requiresSignature" bun:"requires_signature,type:BOOLEAN,notnull"`
-	AppliesTo         PolicyAudience     `json:"appliesTo"         bun:"applies_to,type:worker_policy_audience_enum,notnull,default:'All'"`
-	EffectiveFrom     int64              `json:"effectiveFrom"     bun:"effective_from,type:BIGINT,notnull"`
-	CreatedByID       pulid.ID           `json:"createdById"       bun:"created_by_id,type:VARCHAR(100),nullzero"`
+	Status            domaintypes.Status `json:"status"            keel:"status"`
+	Code              string             `json:"code"              keel:"code"`
+	Title             string             `json:"title"             keel:"title"`
+	Summary           string             `json:"summary"           keel:"summary,nullzero"`
+	Body              string             `json:"body"              keel:"body,nullzero"`
+	DocumentID        pulid.ID           `json:"documentId"        keel:"document_id,nullzero"`
+	VersionLabel      string             `json:"versionLabel"      keel:"version_label"`
+	RequiresSignature bool               `json:"requiresSignature" keel:"requires_signature"`
+	AppliesTo         PolicyAudience     `json:"appliesTo"         keel:"applies_to"`
+	EffectiveFrom     int64              `json:"effectiveFrom"     keel:"effective_from"`
+	CreatedByID       pulid.ID           `json:"createdById"       keel:"created_by_id,nullzero"`
 
-	Version   int64 `json:"version"   bun:"version,type:BIGINT"`
-	CreatedAt int64 `json:"createdAt" bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
-	UpdatedAt int64 `json:"updatedAt" bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
+	Version   int64 `json:"version"   keel:"version,version"`
+	CreatedAt int64 `json:"createdAt" keel:"created_at,autocreate"`
+	UpdatedAt int64 `json:"updatedAt" keel:"updated_at,autoupdate"`
 }
 
 // HasContent reports whether there is anything to sign.
@@ -165,37 +164,25 @@ func (p *WorkerPolicy) GetResourceType() string { return "worker_policy" }
 
 func (p *WorkerPolicy) GetResourceID() string { return p.ID.String() }
 
-func (p *WorkerPolicy) BeforeAppendModel(_ context.Context, query bun.Query) error {
+func (p *WorkerPolicy) BeforeCreate(_ context.Context) error {
 	now := timeutils.NowUnix()
-
-	switch query.(type) {
-	case *bun.InsertQuery:
-		if p.ID.IsNil() {
-			p.ID = pulid.MustNew("wpol_")
-		}
-		if p.Status == "" {
-			p.Status = domaintypes.StatusActive
-		}
-		if p.VersionLabel == "" {
-			p.VersionLabel = "1"
-		}
-		if p.AppliesTo == "" {
-			p.AppliesTo = PolicyAudienceAll
-		}
-		if p.EffectiveFrom <= 0 {
-			p.EffectiveFrom = now
-		}
-		p.CreatedAt = now
-		p.UpdatedAt = now
-	case *bun.UpdateQuery:
-		p.UpdatedAt = now
+	if p.Status == "" {
+		p.Status = domaintypes.StatusActive
+	}
+	if p.VersionLabel == "" {
+		p.VersionLabel = "1"
+	}
+	if p.AppliesTo == "" {
+		p.AppliesTo = PolicyAudienceAll
+	}
+	if p.EffectiveFrom <= 0 {
+		p.EffectiveFrom = now
 	}
 
 	return nil
 }
 
 var (
-	_ bun.BeforeAppendModelHook          = (*WorkerPolicyAcknowledgement)(nil)
 	_ validationframework.TenantedEntity = (*WorkerPolicyAcknowledgement)(nil)
 )
 
@@ -208,27 +195,27 @@ var (
 // picture of handwriting, but a record that a specific person, from a specific
 // place, at a specific time, agreed to a specific text.
 type WorkerPolicyAcknowledgement struct {
-	bun.BaseModel `bun:"table:worker_policy_acknowledgements,alias:wpak" json:"-"`
+	keel.Table `keel:"worker_policy_acknowledgements"`
 
-	ID             pulid.ID `json:"id"             bun:"id,pk,type:VARCHAR(100),notnull"`
-	BusinessUnitID pulid.ID `json:"businessUnitId" bun:"business_unit_id,pk,type:VARCHAR(100),notnull"`
-	OrganizationID pulid.ID `json:"organizationId" bun:"organization_id,pk,type:VARCHAR(100),notnull"`
-	PolicyID       pulid.ID `json:"policyId"       bun:"policy_id,type:VARCHAR(100),notnull"`
-	WorkerID       pulid.ID `json:"workerId"       bun:"worker_id,type:VARCHAR(100),notnull"`
+	ID             pulid.ID `json:"id"             keel:"id,pk,autoid:wpak_"`
+	BusinessUnitID pulid.ID `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
+	OrganizationID pulid.ID `json:"organizationId" keel:"organization_id,pk,tenant"`
+	PolicyID       pulid.ID `json:"policyId"       keel:"policy_id"`
+	WorkerID       pulid.ID `json:"workerId"       keel:"worker_id"`
 
-	VersionLabel       string `json:"versionLabel"       bun:"version_label,type:VARCHAR(30),notnull"`
-	AcknowledgedAt     int64  `json:"acknowledgedAt"     bun:"acknowledged_at,type:BIGINT,notnull"`
-	SignatureName      string `json:"signatureName"      bun:"signature_name,type:VARCHAR(150),nullzero"`
-	SignatureIP        string `json:"signatureIp"        bun:"signature_ip,type:VARCHAR(64),nullzero"`
-	SignatureUserAgent string `json:"signatureUserAgent" bun:"signature_user_agent,type:VARCHAR(255),nullzero"`
-	DocumentChecksum   string `json:"documentChecksum"   bun:"document_checksum,type:VARCHAR(64),nullzero"`
+	VersionLabel       string `json:"versionLabel"       keel:"version_label"`
+	AcknowledgedAt     int64  `json:"acknowledgedAt"     keel:"acknowledged_at"`
+	SignatureName      string `json:"signatureName"      keel:"signature_name,nullzero"`
+	SignatureIP        string `json:"signatureIp"        keel:"signature_ip,nullzero"`
+	SignatureUserAgent string `json:"signatureUserAgent" keel:"signature_user_agent,nullzero"`
+	DocumentChecksum   string `json:"documentChecksum"   keel:"document_checksum,nullzero"`
 
-	Version   int64 `json:"version"   bun:"version,type:BIGINT"`
-	CreatedAt int64 `json:"createdAt" bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
-	UpdatedAt int64 `json:"updatedAt" bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
+	Version   int64 `json:"version"   keel:"version,version"`
+	CreatedAt int64 `json:"createdAt" keel:"created_at,autocreate"`
+	UpdatedAt int64 `json:"updatedAt" keel:"updated_at,autoupdate"`
 
-	Policy *WorkerPolicy `json:"policy,omitempty" bun:"rel:belongs-to,join:policy_id=id,join:organization_id=organization_id,join:business_unit_id=business_unit_id"`
-	Worker *Worker       `json:"worker,omitempty" bun:"rel:belongs-to,join:worker_id=id,join:organization_id=organization_id,join:business_unit_id=business_unit_id"`
+	Policy *WorkerPolicy `json:"policy,omitempty" keel:"belongs:policy_id"`
+	Worker *Worker       `json:"worker,omitempty" keel:"belongs:worker_id"`
 }
 
 func (a *WorkerPolicyAcknowledgement) Validate(multiErr *errortypes.MultiError) {
@@ -271,24 +258,10 @@ func (a *WorkerPolicyAcknowledgement) GetResourceType() string {
 
 func (a *WorkerPolicyAcknowledgement) GetResourceID() string { return a.ID.String() }
 
-func (a *WorkerPolicyAcknowledgement) BeforeAppendModel(
-	_ context.Context,
-	query bun.Query,
-) error {
+func (a *WorkerPolicyAcknowledgement) BeforeCreate(_ context.Context) error {
 	now := timeutils.NowUnix()
-
-	switch query.(type) {
-	case *bun.InsertQuery:
-		if a.ID.IsNil() {
-			a.ID = pulid.MustNew("wpak_")
-		}
-		if a.AcknowledgedAt <= 0 {
-			a.AcknowledgedAt = now
-		}
-		a.CreatedAt = now
-		a.UpdatedAt = now
-	case *bun.UpdateQuery:
-		a.UpdatedAt = now
+	if a.AcknowledgedAt <= 0 {
+		a.AcknowledgedAt = now
 	}
 
 	return nil

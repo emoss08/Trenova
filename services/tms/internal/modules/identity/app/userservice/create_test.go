@@ -22,7 +22,6 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
-	"github.com/uptrace/bun"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -48,14 +47,14 @@ type recordingTx struct {
 	log *eventLog
 }
 
-func (c *recordingTx) WithTx(
+func (c *recordingTx) Transact(
 	ctx context.Context,
 	_ kernelports.TxOptions,
-	fn func(context.Context, bun.Tx) error,
+	fn func(context.Context) error,
 ) error {
 	txCtx, hooks := kernelports.WithAfterCommitHooks(ctx)
 	c.log.add("begin")
-	if err := fn(txCtx, bun.Tx{}); err != nil {
+	if err := fn(txCtx); err != nil {
 		c.log.add("rollback")
 		return err
 	}

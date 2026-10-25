@@ -3,15 +3,29 @@ package shipmentrepository
 import (
 	"context"
 
-	"github.com/emoss08/trenova/pkg/buncolgen/shipmentcol"
-
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment/shipmentdb"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentstate"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/sliceutils"
-	"github.com/uptrace/bun"
 )
+
+type tenancy bool
+
+const (
+	scopedTenant tenancy = false
+	everyTenant  tenancy = true
+)
+
+func scoped[T any](q *keel.Query[T], t tenancy) *keel.Query[T] {
+	if t == everyTenant {
+		return q.AllTenants()
+	}
+
+	return q
+}
 
 func restoredShipmentStatus(req *shipmentports.UncancelShipmentRequest) shipment.Status {
 	if req.RestoredStatus == "" || req.RestoredStatus == shipment.StatusCanceled {
@@ -21,54 +35,44 @@ func restoredShipmentStatus(req *shipmentports.UncancelShipmentRequest) shipment
 	return req.RestoredStatus
 }
 
+func movesOf(shipmentIDs []pulid.ID, t tenancy) *keel.Query[shipment.ShipmentMove] {
+	sm := shipmentdb.ShipmentMoves.As("cancel_sm")
+	return scoped(sm.Pick(sm.ID).Where(sm.ShipmentID.In(shipmentIDs...)), t)
+}
+
 func (r *repository) cancelShipmentComponents(
 	ctx context.Context,
-	tx bun.IDB,
-	shipmentID pulid.ID,
+	shipmentIDs []pulid.ID,
+	t tenancy,
 ) error {
-	moveIDs, err := r.getMoveIDsForShipment(ctx, tx, shipmentID)
-	if err != nil {
-		return err
-	}
-
-	if len(moveIDs) == 0 {
+	if len(shipmentIDs) == 0 {
 		return nil
 	}
 
-	cols := shipmentcol.ShipmentMoveColumns
-	if _, err = tx.NewUpdate().
-		Model((*shipment.ShipmentMove)(nil)).
-		Set(cols.Status.Set(), shipment.MoveStatusCanceled).
-		Set(cols.Version.Inc(1)).
-		Where(cols.ID.In(), bun.List(moveIDs)).
-		Where(cols.Status.NotIn(), bun.List(shipmentstate.CancelPreservedMoveStatuses())).
-		Exec(ctx); err != nil {
+	db := r.db.Keel(ctx)
+
+	sm := shipmentdb.ShipmentMoves
+	if _, err := scoped(sm.Where(
+		sm.ShipmentID.In(shipmentIDs...),
+		sm.Status.NotIn(shipmentstate.CancelPreservedMoveStatuses()...),
+	), t).Update(ctx, db, sm.Status.To(shipment.MoveStatusCanceled)); err != nil {
 		return err
 	}
 
-	assignmentCols := shipmentcol.AssignmentColumns
-	if _, err = tx.NewUpdate().
-		Model((*shipment.Assignment)(nil)).
-		Set(assignmentCols.Status.Set(), shipment.AssignmentStatusCanceled).
-		Set(assignmentCols.Version.Inc(1)).
-		Where(assignmentCols.ShipmentMoveID.In(), bun.List(moveIDs)).
-		Where(assignmentCols.ArchivedAt.IsNull()).
-		Where(
-			assignmentCols.Status.NotIn(),
-			bun.List(shipmentstate.CancelPreservedAssignmentStatuses()),
-		).
-		Exec(ctx); err != nil {
+	a := shipmentdb.Assignments
+	if _, err := scoped(a.Where(
+		a.ShipmentMoveID.InQuery(movesOf(shipmentIDs, t)),
+		a.ArchivedAt.IsNull(),
+		a.Status.NotIn(shipmentstate.CancelPreservedAssignmentStatuses()...),
+	), t).Update(ctx, db, a.Status.To(shipment.AssignmentStatusCanceled)); err != nil {
 		return err
 	}
 
-	stopCols := shipmentcol.StopColumns
-	if _, err = tx.NewUpdate().
-		Model((*shipment.Stop)(nil)).
-		Set(stopCols.Status.Set(), shipment.StopStatusCanceled).
-		Set(stopCols.Version.Inc(1)).
-		Where(stopCols.ShipmentMoveID.In(), bun.List(moveIDs)).
-		Where(stopCols.Status.NotIn(), bun.List(shipmentstate.CancelPreservedStopStatuses())).
-		Exec(ctx); err != nil {
+	st := shipmentdb.Stops
+	if _, err := scoped(st.Where(
+		st.ShipmentMoveID.InQuery(movesOf(shipmentIDs, t)),
+		st.Status.NotIn(shipmentstate.CancelPreservedStopStatuses()...),
+	), t).Update(ctx, db, st.Status.To(shipment.StopStatusCanceled)); err != nil {
 		return err
 	}
 
@@ -77,44 +81,34 @@ func (r *repository) cancelShipmentComponents(
 
 func (r *repository) uncancelShipmentComponents(
 	ctx context.Context,
-	tx bun.IDB,
 	req *shipmentports.UncancelShipmentRequest,
 ) error {
-	moveIDs, err := r.getMoveIDsForShipment(ctx, tx, req.ShipmentID)
-	if err != nil {
+	db := r.db.Keel(ctx)
+	moves := movesOf([]pulid.ID{req.ShipmentID}, scopedTenant)
+
+	if err := restoreMoveStatuses(ctx, db, req.ShipmentID, req.MoveStatuses); err != nil {
 		return err
 	}
 
-	if len(moveIDs) == 0 {
-		return nil
-	}
-
-	if err = restoreMoveStatuses(ctx, tx, moveIDs, req.MoveStatuses); err != nil {
+	a := shipmentdb.Assignments
+	if _, err := a.Where(
+		a.ShipmentMoveID.InQuery(moves),
+		a.ArchivedAt.IsNull(),
+		a.Status.Eq(shipment.AssignmentStatusCanceled),
+	).Update(ctx, db, a.Status.To(shipment.AssignmentStatusNew)); err != nil {
 		return err
 	}
 
-	assignmentCols := shipmentcol.AssignmentColumns
-	if _, err = tx.NewUpdate().
-		Model((*shipment.Assignment)(nil)).
-		Set(assignmentCols.Status.Set(), shipment.AssignmentStatusNew).
-		Set(assignmentCols.Version.Inc(1)).
-		Where(assignmentCols.ShipmentMoveID.In(), bun.List(moveIDs)).
-		Where(assignmentCols.ArchivedAt.IsNull()).
-		Where(assignmentCols.Status.Eq(), shipment.AssignmentStatusCanceled).
-		Exec(ctx); err != nil {
-		return err
-	}
-
-	return restoreStopStatuses(ctx, tx, moveIDs, req.StopStatuses)
+	return restoreStopStatuses(ctx, db, req.ShipmentID, req.StopStatuses)
 }
 
 func restoreMoveStatuses(
 	ctx context.Context,
-	tx bun.IDB,
-	moveIDs []pulid.ID,
+	db *keel.DB,
+	shipmentID pulid.ID,
 	restores []shipmentports.MoveStatusRestore,
 ) error {
-	cols := shipmentcol.ShipmentMoveColumns
+	sm := shipmentdb.ShipmentMoves
 	groups := sliceutils.GroupBy(
 		restores,
 		func(item shipmentports.MoveStatusRestore) shipment.MoveStatus {
@@ -132,14 +126,11 @@ func restoreMoveStatuses(
 			ids = append(ids, item.MoveID)
 		}
 
-		if _, err := tx.NewUpdate().
-			Model((*shipment.ShipmentMove)(nil)).
-			Set(cols.Status.Set(), status).
-			Set(cols.Version.Inc(1)).
-			Where(cols.ID.In(), bun.List(ids)).
-			Where(cols.ID.In(), bun.List(moveIDs)).
-			Where(cols.Status.Eq(), shipment.MoveStatusCanceled).
-			Exec(ctx); err != nil {
+		if _, err := sm.Where(
+			sm.ID.In(ids...),
+			sm.ShipmentID.Eq(shipmentID),
+			sm.Status.Eq(shipment.MoveStatusCanceled),
+		).Update(ctx, db, sm.Status.To(status)); err != nil {
 			return err
 		}
 	}
@@ -149,11 +140,11 @@ func restoreMoveStatuses(
 
 func restoreStopStatuses(
 	ctx context.Context,
-	tx bun.IDB,
-	moveIDs []pulid.ID,
+	db *keel.DB,
+	shipmentID pulid.ID,
 	restores []shipmentports.StopStatusRestore,
 ) error {
-	cols := shipmentcol.StopColumns
+	st := shipmentdb.Stops
 	groups := sliceutils.GroupBy(
 		restores,
 		func(item shipmentports.StopStatusRestore) shipment.StopStatus {
@@ -171,36 +162,14 @@ func restoreStopStatuses(
 			ids = append(ids, item.StopID)
 		}
 
-		if _, err := tx.NewUpdate().
-			Model((*shipment.Stop)(nil)).
-			Set(cols.Status.Set(), status).
-			Set(cols.Version.Inc(1)).
-			Where(cols.ID.In(), bun.List(ids)).
-			Where(cols.ShipmentMoveID.In(), bun.List(moveIDs)).
-			Where(cols.Status.Eq(), shipment.StopStatusCanceled).
-			Exec(ctx); err != nil {
+		if _, err := st.Where(
+			st.ID.In(ids...),
+			st.ShipmentMoveID.InQuery(movesOf([]pulid.ID{shipmentID}, scopedTenant)),
+			st.Status.Eq(shipment.StopStatusCanceled),
+		).Update(ctx, db, st.Status.To(status)); err != nil {
 			return err
 		}
 	}
 
 	return nil
-}
-
-func (r *repository) getMoveIDsForShipment(
-	ctx context.Context,
-	tx bun.IDB,
-	shipmentID pulid.ID,
-) ([]pulid.ID, error) {
-	moveIDs := make([]pulid.ID, 0)
-	cols := shipmentcol.ShipmentMoveColumns
-
-	if err := tx.NewSelect().
-		Model((*shipment.ShipmentMove)(nil)).
-		Column(cols.ID.Bare()).
-		Where(cols.ShipmentID.Eq(), shipmentID).
-		Scan(ctx, &moveIDs); err != nil {
-		return nil, err
-	}
-
-	return moveIDs, nil
 }

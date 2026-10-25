@@ -42,9 +42,9 @@ type ListLiveAssistantTurnsRequest struct {
 // the conversation it is producing it in, so a list of them can be read
 // without a second query per conversation.
 type LiveAssistantTurn struct {
-	conversation.AssistantTurn `bun:",extend"`
+	conversation.AssistantTurn
 
-	ThreadTitle string `bun:"thread_title,scanonly"`
+	ThreadTitle string
 }
 
 // CompleteAssistantTurnRequest closes a turn.

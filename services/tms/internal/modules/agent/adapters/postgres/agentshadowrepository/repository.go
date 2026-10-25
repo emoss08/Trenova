@@ -4,16 +4,14 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/emoss08/trenova/pkg/buncolgen/agentcol"
-	"github.com/emoss08/trenova/pkg/buncolgen/auditcol"
-
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agent/agentdb"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentshadow"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentshadowports"
+	"github.com/emoss08/trenova/internal/modules/workspace/domain/audit/auditdb"
 	"github.com/emoss08/trenova/pkg/authctx"
-	"github.com/uptrace/bun"
 	"go.uber.org/fx"
 )
 
@@ -31,57 +29,37 @@ func New(p Params) agentshadowports.AgentShadowRepository {
 	return &repository{db: p.DB}
 }
 
-type shadowProposalRow struct {
-	TargetID       string                `bun:"target_id"`
-	CreatedAt      int64                 `bun:"created_at"`
-	Status         agent.ProposalStatus  `bun:"status"`
-	ExecutionError string                `bun:"execution_error"`
-	Simulation     *agent.ToolSimulation `bun:"simulation,type:jsonb"`
-}
-
 func (r *repository) ListShadowProposals(
 	ctx context.Context,
 	req *agentshadowports.ListShadowProposalsRequest,
 ) ([]agentshadow.Proposal, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]agentshadow.Proposal, error) {
-		cols := agentcol.AgentProposalColumns
-		runCols := agentcol.AgentRunColumns
-		rows := make([]shadowProposalRow, 0, req.Limit)
-
-		err := r.db.DBForContext(ctx).
-			NewSelect().
-			TableExpr("agent_proposals AS ap").
-			ColumnExpr(cols.TargetID.Qualified()).
-			ColumnExpr(cols.CreatedAt.Qualified()).
-			ColumnExpr(cols.Status.Qualified()).
-			ColumnExpr(cols.ExecutionError.Qualified()).
-			ColumnExpr(cols.Simulation.Qualified()).
-			Join("JOIN agent_runs AS ar ON "+runCols.ID.Qualified()+" = "+cols.RunID.Qualified()+
-				" AND "+runCols.OrganizationID.Qualified()+" = "+cols.OrganizationID.Qualified()+
-				" AND "+runCols.BusinessUnitID.Qualified()+" = "+cols.BusinessUnitID.Qualified()).
-			Where(runCols.OrganizationID.Eq(), req.TenantInfo.OrgID).
-			Where(runCols.BusinessUnitID.Eq(), req.TenantInfo.BuID).
-			Where(runCols.AgentDefinitionID.Eq(), req.AgentDefinitionID).
-			Where(runCols.Status.Eq(), agent.RunStatusShadowCompleted).
-			Where(runCols.CreatedAt.Gte(), req.Since).
-			OrderExpr(cols.CreatedAt.OrderDesc()).
-			Limit(int64(req.Limit)).
-			Scan(ctx, &rows)
+		p := agentdb.AgentProposals
+		run := p.Run()
+		rows, err := p.Pick(p.TargetID, p.CreatedAt, p.Status, p.ExecutionError, p.Simulation).
+			Where(
+				run.AgentDefinitionID.Eq(req.AgentDefinitionID),
+				run.Status.Eq(agent.RunStatusShadowCompleted),
+				run.CreatedAt.Gte(req.Since),
+			).
+			Order(p.CreatedAt.Desc()).
+			Limit(req.Limit).
+			List(ctx, r.db.Keel(ctx))
 		if err != nil {
 			return nil, fmt.Errorf("list shadow proposals: %w", err)
 		}
 
 		proposals := make([]agentshadow.Proposal, 0, len(rows))
-		for idx := range rows {
-			proposals = append(proposals, rows[idx].proposal())
+		for _, row := range rows {
+			proposals = append(proposals, shadowProposal(row))
 		}
 		return proposals, nil
 	})
 }
 
-func (row *shadowProposalRow) proposal() agentshadow.Proposal {
+func shadowProposal(row *agent.AgentProposal) agentshadow.Proposal {
 	proposal := agentshadow.Proposal{
-		TargetID:  row.TargetID,
+		TargetID:  row.TargetID.String(),
 		CreatedAt: row.CreatedAt,
 		Failed:    row.Status == agent.ProposalStatusExecutionFailed || row.ExecutionError != "",
 	}
@@ -94,12 +72,6 @@ func (row *shadowProposalRow) proposal() agentshadow.Proposal {
 	return proposal
 }
 
-type personChangeRow struct {
-	ResourceID string         `bun:"resource_id"`
-	Timestamp  int64          `bun:"timestamp"`
-	Changes    map[string]any `bun:"changes,type:jsonb"`
-}
-
 func (r *repository) ListPersonChanges(
 	ctx context.Context,
 	req *agentshadowports.ListPersonChangesRequest,
@@ -109,34 +81,27 @@ func (r *repository) ListPersonChanges(
 	}
 
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]agentshadow.PersonChange, error) {
-		cols := auditcol.EntryColumns
-		rows := make([]personChangeRow, 0, len(req.ResourceIDs))
-
-		err := r.db.DBForContext(ctx).
-			NewSelect().
-			TableExpr("audit_entries AS ae").
-			ColumnExpr(cols.ResourceID.Qualified()).
-			ColumnExpr(cols.Timestamp.Qualified()).
-			ColumnExpr(cols.Changes.Qualified()).
-			Where(cols.OrganizationID.Eq(), req.TenantInfo.OrgID).
-			Where(cols.BusinessUnitID.Eq(), req.TenantInfo.BuID).
-			Where(cols.ResourceID.In(), bun.List(req.ResourceIDs)).
-			Where(cols.Timestamp.Between(), req.Since, req.Until).
-			Where(cols.PrincipalType.Eq(), authctx.PrincipalTypeUser).
-			Scan(ctx, &rows)
+		ae := auditdb.Entries
+		rows, err := ae.Pick(ae.ResourceID, ae.Timestamp, ae.Changes).
+			Where(
+				ae.ResourceID.In(req.ResourceIDs...),
+				ae.Timestamp.Between(req.Since, req.Until),
+				ae.PrincipalType.Eq(authctx.PrincipalTypeUser),
+			).
+			All(ctx, r.db.Keel(ctx))
 		if err != nil {
 			return nil, fmt.Errorf("list person changes: %w", err)
 		}
 
 		changes := make([]agentshadow.PersonChange, 0, len(rows))
-		for idx := range rows {
-			fields := make([]string, 0, len(rows[idx].Changes))
-			for field := range rows[idx].Changes {
+		for _, row := range rows {
+			fields := make([]string, 0, len(row.Changes))
+			for field := range row.Changes {
 				fields = append(fields, field)
 			}
 			changes = append(changes, agentshadow.PersonChange{
-				ResourceID: rows[idx].ResourceID,
-				Timestamp:  rows[idx].Timestamp,
+				ResourceID: row.ResourceID,
+				Timestamp:  row.Timestamp,
 				Fields:     fields,
 			})
 		}

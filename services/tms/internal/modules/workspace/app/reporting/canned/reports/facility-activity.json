@@ -1,0 +1,170 @@
+{
+  "key": "facility-activity",
+  "version": "1.0.0",
+  "name": "Facility Activity",
+  "description": "Throughput by facility — stops handled, pieces, weight, and the average time trucks spend on site",
+  "category": "Operations",
+  "tags": [
+    "stops",
+    "facilities",
+    "throughput"
+  ],
+  "defaultFormat": "xlsx",
+  "definition": {
+    "version": 2,
+    "entity": "stop",
+    "columns": [
+      {
+        "id": "facility",
+        "label": "Facility",
+        "dimension": {
+          "field": "location.name"
+        }
+      },
+      {
+        "id": "city",
+        "label": "City",
+        "dimension": {
+          "field": "location.city"
+        }
+      },
+      {
+        "id": "facility_type",
+        "label": "Facility Type",
+        "dimension": {
+          "field": "location.locationCategory.facilityType"
+        }
+      },
+      {
+        "id": "stop_type",
+        "label": "Stop Type",
+        "dimension": {
+          "field": "type"
+        }
+      },
+      {
+        "id": "stop_count",
+        "label": "Stops",
+        "measure": {
+          "field": "id",
+          "agg": "count"
+        },
+        "display": {
+          "style": "number",
+          "decimals": 0,
+          "grouping": true
+        }
+      },
+      {
+        "id": "total_pieces",
+        "label": "Total Pieces",
+        "measure": {
+          "field": "pieces",
+          "agg": "sum"
+        },
+        "display": {
+          "style": "number",
+          "decimals": 0,
+          "grouping": true
+        }
+      },
+      {
+        "id": "total_weight",
+        "label": "Total Weight",
+        "measure": {
+          "field": "weight",
+          "agg": "sum"
+        },
+        "display": {
+          "style": "number",
+          "decimals": 0,
+          "suffix": " lbs"
+        }
+      },
+      {
+        "id": "avg_arrival",
+        "label": "Average Arrival",
+        "measure": {
+          "field": "actualArrival",
+          "agg": "avg"
+        },
+        "display": {
+          "style": "date",
+          "dateStyle": "dateTime"
+        }
+      },
+      {
+        "id": "avg_departure",
+        "label": "Average Departure",
+        "measure": {
+          "field": "actualDeparture",
+          "agg": "avg"
+        },
+        "display": {
+          "style": "date",
+          "dateStyle": "dateTime"
+        }
+      },
+      {
+        "id": "avg_dwell",
+        "label": "Average Dwell",
+        "calc": "[avg_departure] - [avg_arrival]",
+        "display": {
+          "style": "duration",
+          "durationUnit": "seconds",
+          "durationStyle": "compact"
+        }
+      }
+    ],
+    "filters": {
+      "and": [
+        {
+          "field": "actualArrival",
+          "op": "last_n_days",
+          "param": "windowDays"
+        },
+        {
+          "field": "actualDeparture",
+          "op": "is_not_null"
+        },
+        {
+          "field": "type",
+          "op": "in",
+          "param": "stopTypes"
+        }
+      ]
+    },
+    "sort": [
+      {
+        "column": "stop_count",
+        "desc": true
+      }
+    ],
+    "parameters": [
+      {
+        "name": "windowDays",
+        "label": "Window (days)",
+        "type": "int",
+        "required": true,
+        "default": 30
+      },
+      {
+        "name": "stopTypes",
+        "label": "Stop Types",
+        "type": "enum",
+        "required": true,
+        "multi": true,
+        "default": [
+          "Pickup",
+          "Delivery"
+        ],
+        "allowed": [
+          "Pickup",
+          "Delivery",
+          "SplitPickup",
+          "SplitDelivery"
+        ]
+      }
+    ]
+  }
+}

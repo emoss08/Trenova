@@ -3,49 +3,66 @@ package edi
 import (
 	"context"
 
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/domainvalidation"
 	"github.com/emoss08/trenova/pkg/errortypes"
-	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
-	"github.com/uptrace/bun"
 )
 
 type EDIInboundFile struct {
-	bun.BaseModel             `json:"-" bun:"table:edi_inbound_files,alias:eif"`
-	pagination.CursorValueSet `json:"-" bun:",embed"`
+	keel.Table `keel:"edi_inbound_files"`
 
-	ID                       pulid.ID          `json:"id"                       bun:"id,pk,type:VARCHAR(100),notnull"`
-	BusinessUnitID           pulid.ID          `json:"businessUnitId"           bun:"business_unit_id,type:VARCHAR(100),pk,notnull"`
-	OrganizationID           pulid.ID          `json:"organizationId"           bun:"organization_id,type:VARCHAR(100),pk,notnull"`
-	CommunicationProfileID   pulid.ID          `json:"communicationProfileId"   bun:"communication_profile_id,type:VARCHAR(100),notnull"`
-	EDIPartnerID             pulid.ID          `json:"ediPartnerId"             bun:"edi_partner_id,type:VARCHAR(100),nullzero"`
-	Method                   ConnectionMethod  `json:"method"                   bun:"method,type:edi_connection_method_enum,notnull"`
-	RemotePath               string            `json:"remotePath"               bun:"remote_path,type:TEXT,notnull"`
-	FileName                 string            `json:"fileName"                 bun:"file_name,type:VARCHAR(512),notnull"`
-	Checksum                 string            `json:"checksum"                 bun:"checksum,type:VARCHAR(64),notnull"`
-	SizeBytes                int64             `json:"sizeBytes"                bun:"size_bytes,type:BIGINT,notnull"`
-	RawContent               string            `json:"rawContent"               bun:"raw_content,type:TEXT,notnull"`
-	InterchangeControlNumber string            `json:"interchangeControlNumber" bun:"interchange_control_number,type:VARCHAR(20),nullzero"`
-	ISASenderQualifier       string            `json:"isaSenderQualifier"       bun:"isa_sender_qualifier,type:VARCHAR(4),nullzero"`
-	ISASenderID              string            `json:"isaSenderId"              bun:"isa_sender_id,type:VARCHAR(20),nullzero"`
-	ISAReceiverQualifier     string            `json:"isaReceiverQualifier"     bun:"isa_receiver_qualifier,type:VARCHAR(4),nullzero"`
-	ISAReceiverID            string            `json:"isaReceiverId"            bun:"isa_receiver_id,type:VARCHAR(20),nullzero"`
-	Status                   InboundFileStatus `json:"status"                   bun:"status,type:edi_inbound_file_status_enum,notnull,default:'Received'"`
-	FailureReason            string            `json:"failureReason"            bun:"failure_reason,type:TEXT,nullzero"`
-	TransactionCount         int               `json:"transactionCount"         bun:"transaction_count,type:INTEGER,notnull"`
-	ReceivedAt               int64             `json:"receivedAt"               bun:"received_at,type:BIGINT,notnull"`
-	ProcessedAt              *int64            `json:"processedAt"              bun:"processed_at,type:BIGINT,nullzero"`
-	RawPurgedAt              *int64            `json:"rawPurgedAt"              bun:"raw_purged_at,type:BIGINT,nullzero"`
-	Version                  int64             `json:"version"                  bun:"version,type:BIGINT,notnull"`
-	CreatedAt                int64             `json:"createdAt"                bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
-	UpdatedAt                int64             `json:"updatedAt"                bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
+	ID                       pulid.ID          `json:"id"                       keel:"id,pk,autoid:ediinf_"`
+	BusinessUnitID           pulid.ID          `json:"businessUnitId"           keel:"business_unit_id,pk,tenant"`
+	OrganizationID           pulid.ID          `json:"organizationId"           keel:"organization_id,pk,tenant"`
+	CommunicationProfileID   pulid.ID          `json:"communicationProfileId"   keel:"communication_profile_id"`
+	EDIPartnerID             pulid.ID          `json:"ediPartnerId"             keel:"edi_partner_id,nullzero"`
+	Method                   ConnectionMethod  `json:"method"                   keel:"method"`
+	RemotePath               string            `json:"remotePath"               keel:"remote_path"`
+	FileName                 string            `json:"fileName"                 keel:"file_name"`
+	Checksum                 string            `json:"checksum"                 keel:"checksum"`
+	SizeBytes                int64             `json:"sizeBytes"                keel:"size_bytes"`
+	RawContent               string            `json:"rawContent"               keel:"raw_content"`
+	InterchangeControlNumber string            `json:"interchangeControlNumber" keel:"interchange_control_number,nullzero"`
+	ISASenderQualifier       string            `json:"isaSenderQualifier"       keel:"isa_sender_qualifier,nullzero"`
+	ISASenderID              string            `json:"isaSenderId"              keel:"isa_sender_id,nullzero"`
+	ISAReceiverQualifier     string            `json:"isaReceiverQualifier"     keel:"isa_receiver_qualifier,nullzero"`
+	ISAReceiverID            string            `json:"isaReceiverId"            keel:"isa_receiver_id,nullzero"`
+	Status                   InboundFileStatus `json:"status"                   keel:"status"`
+	FailureReason            string            `json:"failureReason"            keel:"failure_reason,nullzero"`
+	TransactionCount         int               `json:"transactionCount"         keel:"transaction_count"`
+	ReceivedAt               int64             `json:"receivedAt"               keel:"received_at"`
+	ProcessedAt              *int64            `json:"processedAt"              keel:"processed_at"`
+	RawPurgedAt              *int64            `json:"rawPurgedAt"              keel:"raw_purged_at"`
+	Version                  int64             `json:"version"                  keel:"version,version"`
+	CreatedAt                int64             `json:"createdAt"                keel:"created_at,autocreate"`
+	UpdatedAt                int64             `json:"updatedAt"                keel:"updated_at,autoupdate"`
 
-	Partner              *EDIPartner              `json:"partner,omitempty"              bun:"rel:belongs-to,join:edi_partner_id=id"`
-	CommunicationProfile *EDICommunicationProfile `json:"communicationProfile,omitempty" bun:"rel:belongs-to,join:communication_profile_id=id"`
-	Messages             []*EDIMessage            `json:"messages,omitempty"             bun:"rel:has-many,join:id=inbound_file_id"`
+	Partner              *EDIPartner              `json:"partner,omitempty"              keel:"belongs:edi_partner_id"`
+	CommunicationProfile *EDICommunicationProfile `json:"communicationProfile,omitempty" keel:"belongs:communication_profile_id"`
+	Messages             []*EDIMessage            `json:"messages,omitempty"             keel:"many:inbound_file_id"`
+}
+
+func (f *EDIInboundFile) BeforeUpdate(ctx context.Context) error {
+	if err := f.BeforeSave(ctx); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (f *EDIInboundFile) BeforeCreate(ctx context.Context) error {
+	if err := f.BeforeSave(ctx); err != nil {
+		return err
+	}
+	if f.Status == "" {
+		f.Status = InboundFileStatusReceived
+	}
+
+	return nil
 }
 
 func (f *EDIInboundFile) GetID() pulid.ID {
@@ -75,19 +92,9 @@ func (f *EDIInboundFile) GetBusinessUnitID() pulid.ID {
 	return f.BusinessUnitID
 }
 
-func (f *EDIInboundFile) BeforeAppendModel(_ context.Context, query bun.Query) error {
-	now := timeutils.NowUnix()
+func (f *EDIInboundFile) BeforeSave(_ context.Context) error {
 	if f.ReceivedAt == 0 {
-		f.ReceivedAt = now
-	}
-	switch query.(type) {
-	case *bun.InsertQuery:
-		if f.ID.IsNil() {
-			f.ID = pulid.MustNew("ediinf_")
-		}
-		f.CreatedAt = now
-	case *bun.UpdateQuery:
-		f.UpdatedAt = now
+		f.ReceivedAt = timeutils.NowUnix()
 	}
 	return nil
 }

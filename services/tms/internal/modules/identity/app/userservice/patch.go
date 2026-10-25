@@ -4,12 +4,12 @@ import (
 	"context"
 	"strings"
 
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant/tenantdb"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
-	"github.com/emoss08/trenova/pkg/buncolgen"
-	"github.com/emoss08/trenova/pkg/buncolgen/tenantcol"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -25,56 +25,56 @@ type PatchUserRequest struct {
 }
 
 type patchableColumn struct {
-	column  buncolgen.Column
+	column  keel.Col
 	changed func(before, after *tenant.User) bool
 	access  bool
 }
 
 var patchableColumns = []patchableColumn{
 	{
-		column:  tenantcol.UserColumns.Status,
+		column:  tenantdb.Users.Status.Col,
 		changed: func(b, a *tenant.User) bool { return b.Status != a.Status },
 		access:  true,
 	},
 	{
-		column:  tenantcol.UserColumns.Name,
+		column:  tenantdb.Users.Name.Col,
 		changed: func(b, a *tenant.User) bool { return b.Name != a.Name },
 	},
 	{
-		column:  tenantcol.UserColumns.EmailAddress,
+		column:  tenantdb.Users.EmailAddress.Col,
 		changed: func(b, a *tenant.User) bool { return b.EmailAddress != a.EmailAddress },
 		access:  true,
 	},
 	{
-		column:  tenantcol.UserColumns.Timezone,
+		column:  tenantdb.Users.Timezone.Col,
 		changed: func(b, a *tenant.User) bool { return b.Timezone != a.Timezone },
 	},
 	{
-		column:  tenantcol.UserColumns.TimeFormat,
+		column:  tenantdb.Users.TimeFormat.Col,
 		changed: func(b, a *tenant.User) bool { return b.TimeFormat != a.TimeFormat },
 	},
 	{
-		column:  tenantcol.UserColumns.Locale,
+		column:  tenantdb.Users.Locale.Col,
 		changed: func(b, a *tenant.User) bool { return b.Locale != a.Locale },
 	},
 	{
-		column:  tenantcol.UserColumns.IsLocked,
+		column:  tenantdb.Users.IsLocked.Col,
 		changed: func(b, a *tenant.User) bool { return b.IsLocked != a.IsLocked },
 		access:  true,
 	},
 	{
-		column: tenantcol.UserColumns.MustChangePassword,
+		column: tenantdb.Users.MustChangePassword.Col,
 		changed: func(b, a *tenant.User) bool {
 			return b.MustChangePassword != a.MustChangePassword
 		},
 		access: true,
 	},
 	{
-		column:  tenantcol.UserColumns.JobTitle,
+		column:  tenantdb.Users.JobTitle.Col,
 		changed: func(b, a *tenant.User) bool { return b.JobTitle != a.JobTitle },
 	},
 	{
-		column:  tenantcol.UserColumns.PhoneNumber,
+		column:  tenantdb.Users.PhoneNumber.Col,
 		changed: func(b, a *tenant.User) bool { return b.PhoneNumber != a.PhoneNumber },
 	},
 }
@@ -91,9 +91,9 @@ func diffPatchedUser(before, after *tenant.User) userChanges {
 		if !candidate.changed(before, after) {
 			continue
 		}
-		changes.columns = append(changes.columns, candidate.column.String())
+		changes.columns = append(changes.columns, columnName(candidate.column))
 		if candidate.access {
-			changes.access = append(changes.access, candidate.column.String())
+			changes.access = append(changes.access, columnName(candidate.column))
 		}
 	}
 

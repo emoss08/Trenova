@@ -9,7 +9,6 @@ import (
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"github.com/uptrace/bun"
 )
 
 func TestTableConfiguration_Validate(t *testing.T) {
@@ -204,72 +203,6 @@ func TestTableConfiguration_Validate(t *testing.T) {
 			}
 		})
 	}
-}
-
-func TestTableConfiguration_BeforeAppendModel(t *testing.T) {
-	t.Parallel()
-
-	t.Run("insert sets ID and CreatedAt", func(t *testing.T) {
-		t.Parallel()
-
-		tc := &TableConfiguration{}
-		require.True(t, tc.ID.IsNil())
-
-		err := tc.BeforeAppendModel(t.Context(), (*bun.InsertQuery)(nil))
-		require.NoError(t, err)
-
-		assert.False(t, tc.ID.IsNil())
-		assert.NotZero(t, tc.CreatedAt)
-	})
-
-	t.Run("insert does not overwrite existing ID", func(t *testing.T) {
-		t.Parallel()
-
-		existingID := pulid.MustNew("tc_")
-		tc := &TableConfiguration{ID: existingID}
-
-		err := tc.BeforeAppendModel(t.Context(), (*bun.InsertQuery)(nil))
-		require.NoError(t, err)
-
-		assert.Equal(t, existingID, tc.ID)
-		assert.NotZero(t, tc.CreatedAt)
-	})
-
-	t.Run("update sets UpdatedAt", func(t *testing.T) {
-		t.Parallel()
-
-		tc := &TableConfiguration{}
-
-		err := tc.BeforeAppendModel(t.Context(), (*bun.UpdateQuery)(nil))
-		require.NoError(t, err)
-
-		assert.NotZero(t, tc.UpdatedAt)
-	})
-
-	t.Run("update does not set CreatedAt", func(t *testing.T) {
-		t.Parallel()
-
-		tc := &TableConfiguration{}
-
-		err := tc.BeforeAppendModel(t.Context(), (*bun.UpdateQuery)(nil))
-		require.NoError(t, err)
-
-		assert.Zero(t, tc.CreatedAt)
-		assert.NotZero(t, tc.UpdatedAt)
-	})
-
-	t.Run("select query does nothing", func(t *testing.T) {
-		t.Parallel()
-
-		tc := &TableConfiguration{}
-
-		err := tc.BeforeAppendModel(t.Context(), (*bun.SelectQuery)(nil))
-		require.NoError(t, err)
-
-		assert.True(t, tc.ID.IsNil())
-		assert.Zero(t, tc.CreatedAt)
-		assert.Zero(t, tc.UpdatedAt)
-	})
 }
 
 func TestTableConfiguration_GetTableName(t *testing.T) {

@@ -14,8 +14,8 @@ import (
 func TestScopedTables_CoverEveryKindTheDatabaseScopes(t *testing.T) {
 	t.Parallel()
 
-	kinds := make([]string, 0, len(scopedTables))
-	for kind := range scopedTables {
+	kinds := make([]string, 0, len(visibleIDsSQL))
+	for kind := range visibleIDsSQL {
 		kinds = append(kinds, kind)
 	}
 	assert.ElementsMatch(t, permission.NewRegistry().DatabaseScopedResources(), kinds)

@@ -6,9 +6,11 @@ import (
 	"context"
 	"testing"
 
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/modules/operations/adapters/postgres/stopetarepository"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment/shipmentdb"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/stopeta"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/stopetaports"
 	"github.com/emoss08/trenova/internal/testutil"
@@ -18,13 +20,12 @@ import (
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"github.com/uptrace/bun"
 	"go.uber.org/zap"
 )
 
 type harness struct {
 	ctx      context.Context
-	db       *bun.DB
+	db       *keel.DB
 	repo     stopetaports.Repository
 	tenant   pagination.TenantInfo
 	fixture  *testutil.ShipmentIntegrationFixture
@@ -58,7 +59,7 @@ func newHarness(t *testing.T) *harness {
 func createShipment(
 	t *testing.T,
 	ctx context.Context,
-	db *bun.DB,
+	db *keel.DB,
 	fixture *testutil.ShipmentIntegrationFixture,
 	tenant pagination.TenantInfo,
 	code string,
@@ -72,10 +73,22 @@ func createShipment(
 		ShipmentID:   pulid.MustNew("shp_"),
 		MoveStatuses: []shipment.MoveStatus{shipment.MoveStatusInTransit},
 	})
-	_, err := db.NewRaw(`UPDATE shipments SET status = ? WHERE id = ?`, status, graph.Shipment.ID).
-		Exec(dbscope.WithTenant(ctx, tenant.DBTenant()))
-	require.NoError(t, err)
+	setStatus(t, dbscope.WithTenant(ctx, tenant.DBTenant()), db, graph.Shipment.ID, status)
 	return graph
+}
+
+func setStatus(
+	t *testing.T,
+	ctx context.Context,
+	db *keel.DB,
+	shipmentID pulid.ID,
+	status shipment.Status,
+) {
+	t.Helper()
+
+	sp := shipmentdb.Shipments
+	_, err := sp.Where(sp.ID.Eq(shipmentID)).Update(ctx, db, sp.Status.To(status))
+	require.NoError(t, err)
 }
 
 func (h *harness) row(
@@ -198,9 +211,7 @@ func TestListAttention_ReturnsUnarrivedRiskOnTrackedShipmentsWithStopDetails(t *
 	assert.Equal(t, "Delivery", stops[0].LocationName)
 	assert.Equal(t, "Charlotte", stops[0].City)
 
-	_, err = h.db.NewRaw(`UPDATE shipments SET status = ? WHERE id = ?`, shipment.StatusCompleted, h.shipment.ID).
-		Exec(h.ctx)
-	require.NoError(t, err)
+	setStatus(t, h.ctx, h.db, h.shipment.ID, shipment.StatusCompleted)
 	stops, err = h.repo.ListAttention(h.ctx, &stopetaports.ListAttentionRequest{
 		TenantInfo: h.tenant,
 		Statuses:   stopeta.TrackedShipmentStatuses(),
@@ -230,9 +241,7 @@ func TestListTrackedShipmentIDs_IncludesActiveShipmentsAndLeftoverRows(t *testin
 		ShipmentIDs: []pulid.ID{finished.Shipment.ID},
 		Rows:        []*stopeta.StopETA{finishedRow},
 	}))
-	_, err := h.db.NewRaw(`UPDATE shipments SET status = ? WHERE id = ?`, shipment.StatusCompleted, finished.Shipment.ID).
-		Exec(h.ctx)
-	require.NoError(t, err)
+	setStatus(t, h.ctx, h.db, finished.Shipment.ID, shipment.StatusCompleted)
 	newShipment := createShipment(t, h.ctx, h.db, h.fixture, h.tenant, "ETA-3", shipment.StatusNew)
 
 	ids, err := h.repo.ListTrackedShipmentIDs(h.ctx, &stopetaports.ListTrackedShipmentIDsRequest{

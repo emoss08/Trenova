@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/emoss08/keel"
+
 	"github.com/emoss08/trenova/internal/api/graphql/agentread"
 	"github.com/emoss08/trenova/internal/api/graphql/agentread/agentreadtest"
 	"github.com/emoss08/trenova/internal/modules/equipment/adapters/postgres/equipmentmanufacturerrepository"
@@ -19,7 +21,6 @@ import (
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"github.com/uptrace/bun"
 	"go.uber.org/zap"
 )
 
@@ -32,7 +33,7 @@ type seededTenant struct {
 // seedTenant writes one tenant with active manufacturers and one inactive
 // one, straight through the admin connection, which row-level security does
 // not hold.
-func seedTenant(t *testing.T, admin *bun.DB, label string, active int) *seededTenant {
+func seedTenant(t *testing.T, admin *keel.DB, label string, active int) *seededTenant {
 	t.Helper()
 
 	written := agentreadtest.SeedTenant(t, admin, label)
@@ -40,11 +41,11 @@ func seedTenant(t *testing.T, admin *bun.DB, label string, active int) *seededTe
 	insert := func(name, status string, createdAt int64) pulid.ID {
 		t.Helper()
 		id := pulid.MustNew("em_")
-		_, err := admin.ExecContext(t.Context(), `INSERT INTO equipment_manufacturers (id,
+		_, err := keel.Exec(t.Context(), admin, `INSERT INTO equipment_manufacturers (id,
 			business_unit_id, organization_id, status, name, description, created_at, updated_at)
-			VALUES (?, ?, ?, ?, ?, '', ?, ?)`,
-			id, tenant.actor.BusinessUnitID, tenant.actor.OrganizationID, status, name,
-			createdAt, createdAt)
+			VALUES ($1, $2, $3, $4, $5, '', $6, $7)`,
+			id.String(), tenant.actor.BusinessUnitID.String(), tenant.actor.OrganizationID.String(),
+			status, name, createdAt, createdAt)
 		require.NoError(t, err)
 		return id
 	}

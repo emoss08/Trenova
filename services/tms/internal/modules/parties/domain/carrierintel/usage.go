@@ -3,11 +3,11 @@ package carrierintel
 import (
 	"context"
 
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/integration"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
 	"github.com/shopspring/decimal"
-	"github.com/uptrace/bun"
 )
 
 type BillingModel string
@@ -67,60 +67,51 @@ func BillingDedupeKey(endpoint Endpoint, price EndpointPrice, dotNumber string, 
 	}
 }
 
-var _ bun.BeforeAppendModelHook = (*CarrierIntelUsageRecord)(nil)
-
 type CarrierIntelUsageRecord struct {
-	bun.BaseModel `bun:"table:carrier_intel_usage_ledger,alias:ciuse" json:"-"`
+	keel.Table `keel:"carrier_intel_usage_ledger"`
 
-	ID              pulid.ID         `json:"id"              bun:"id,type:VARCHAR(100),pk,notnull"`
-	BusinessUnitID  pulid.ID         `json:"businessUnitId"  bun:"business_unit_id,type:VARCHAR(100),pk,notnull"`
-	OrganizationID  pulid.ID         `json:"organizationId"  bun:"organization_id,type:VARCHAR(100),pk,notnull"`
-	Provider        integration.Type `json:"provider"        bun:"provider,type:integration_type,notnull"`
-	Endpoint        Endpoint         `json:"endpoint"        bun:"endpoint,type:VARCHAR(40),notnull"`
-	Purpose         Purpose          `json:"purpose"         bun:"purpose,type:VARCHAR(20),notnull"`
-	DOTNumber       string           `json:"dotNumber"       bun:"dot_number,type:VARCHAR(12),nullzero"`
-	CarrierID       pulid.ID         `json:"carrierId"       bun:"carrier_id,type:VARCHAR(100),nullzero"`
-	Billable        bool             `json:"billable"        bun:"billable,type:BOOLEAN,notnull"`
-	BillableUnits   int              `json:"billableUnits"   bun:"billable_units,type:INTEGER,notnull"`
-	EstimatedCost   decimal.Decimal  `json:"estimatedCost"   bun:"estimated_cost,type:NUMERIC(19,6),notnull"`
-	Currency        string           `json:"currency"        bun:"currency,type:VARCHAR(3),notnull"`
-	DedupeKey       string           `json:"dedupeKey"       bun:"dedupe_key,type:VARCHAR(128),nullzero"`
-	StatusCode      int              `json:"statusCode"      bun:"status_code,type:INTEGER,notnull"`
-	Outcome         UsageOutcome     `json:"outcome"         bun:"outcome,type:VARCHAR(20),notnull"`
-	LatencyMS       int              `json:"latencyMs"       bun:"latency_ms,type:INTEGER,notnull"`
-	InitiatedByType string           `json:"initiatedByType" bun:"initiated_by_type,type:VARCHAR(20),notnull"`
-	InitiatedByID   pulid.ID         `json:"initiatedById"   bun:"initiated_by_id,type:VARCHAR(100),nullzero"`
-	WorkflowID      string           `json:"workflowId"      bun:"workflow_id,type:VARCHAR(200),nullzero"`
-	CreatedAt       int64            `json:"createdAt"       bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
+	ID              pulid.ID         `json:"id"              keel:"id,pk,autoid:ciuse_"`
+	BusinessUnitID  pulid.ID         `json:"businessUnitId"  keel:"business_unit_id,pk,tenant"`
+	OrganizationID  pulid.ID         `json:"organizationId"  keel:"organization_id,pk,tenant"`
+	Provider        integration.Type `json:"provider"        keel:"provider"`
+	Endpoint        Endpoint         `json:"endpoint"        keel:"endpoint"`
+	Purpose         Purpose          `json:"purpose"         keel:"purpose"`
+	DOTNumber       string           `json:"dotNumber"       keel:"dot_number,nullzero"`
+	CarrierID       pulid.ID         `json:"carrierId"       keel:"carrier_id,nullzero"`
+	Billable        bool             `json:"billable"        keel:"billable"`
+	BillableUnits   int              `json:"billableUnits"   keel:"billable_units"`
+	EstimatedCost   decimal.Decimal  `json:"estimatedCost"   keel:"estimated_cost"`
+	Currency        string           `json:"currency"        keel:"currency"`
+	DedupeKey       string           `json:"dedupeKey"       keel:"dedupe_key,nullzero"`
+	StatusCode      int              `json:"statusCode"      keel:"status_code"`
+	Outcome         UsageOutcome     `json:"outcome"         keel:"outcome"`
+	LatencyMS       int              `json:"latencyMs"       keel:"latency_ms"`
+	InitiatedByType string           `json:"initiatedByType" keel:"initiated_by_type"`
+	InitiatedByID   pulid.ID         `json:"initiatedById"   keel:"initiated_by_id,nullzero"`
+	WorkflowID      string           `json:"workflowId"      keel:"workflow_id,nullzero"`
+	CreatedAt       int64            `json:"createdAt"       keel:"created_at,autocreate"`
 }
 
-func (u *CarrierIntelUsageRecord) BeforeAppendModel(_ context.Context, query bun.Query) error {
-	if _, ok := query.(*bun.InsertQuery); ok {
-		if u.ID.IsNil() {
-			u.ID = pulid.MustNew("ciuse_")
-		}
-		if u.Currency == "" {
-			u.Currency = "USD"
-		}
-		if u.InitiatedByType == "" {
-			u.InitiatedByType = "System"
-		}
-		if u.CreatedAt == 0 {
-			u.CreatedAt = timeutils.NowUnix()
-		}
+func (u *CarrierIntelUsageRecord) BeforeCreate(_ context.Context) error {
+	if u.Currency == "" {
+		u.Currency = "USD"
 	}
+	if u.InitiatedByType == "" {
+		u.InitiatedByType = "System"
+	}
+
 	return nil
 }
 
 type CarrierIntelUsageDaily struct {
-	bun.BaseModel `bun:"table:carrier_intel_usage_daily,alias:ciusd" json:"-"`
+	keel.Table `keel:"carrier_intel_usage_daily"`
 
-	OrganizationID pulid.ID         `json:"organizationId" bun:"organization_id,type:VARCHAR(100),pk,notnull"`
-	BusinessUnitID pulid.ID         `json:"businessUnitId" bun:"business_unit_id,type:VARCHAR(100),pk,notnull"`
-	Provider       integration.Type `json:"provider"       bun:"provider,type:integration_type,pk,notnull"`
-	Endpoint       Endpoint         `json:"endpoint"       bun:"endpoint,type:VARCHAR(40),pk,notnull"`
-	Day            int              `json:"day"            bun:"day,type:INTEGER,pk,notnull"`
-	Calls          int              `json:"calls"          bun:"calls,type:INTEGER,notnull"`
-	BillableUnits  int              `json:"billableUnits"  bun:"billable_units,type:INTEGER,notnull"`
-	EstimatedCost  decimal.Decimal  `json:"estimatedCost"  bun:"estimated_cost,type:NUMERIC(19,6),notnull"`
+	OrganizationID pulid.ID         `json:"organizationId" keel:"organization_id,pk,tenant"`
+	BusinessUnitID pulid.ID         `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
+	Provider       integration.Type `json:"provider"       keel:"provider,pk"`
+	Endpoint       Endpoint         `json:"endpoint"       keel:"endpoint,pk"`
+	Day            int              `json:"day"            keel:"day,pk"`
+	Calls          int              `json:"calls"          keel:"calls"`
+	BillableUnits  int              `json:"billableUnits"  keel:"billable_units"`
+	EstimatedCost  decimal.Decimal  `json:"estimatedCost"  keel:"estimated_cost"`
 }

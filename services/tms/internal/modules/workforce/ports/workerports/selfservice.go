@@ -36,12 +36,12 @@ type ListPolicyAcknowledgementsRequest struct {
 // version in force. It is derived on read: the roster and the acknowledgements
 // both move, and a stored answer would be wrong by the next hire.
 type PolicyComplianceRow struct {
-	WorkerID       pulid.ID `bun:"worker_id"`
-	FirstName      string   `bun:"first_name"`
-	LastName       string   `bun:"last_name"`
-	WorkerType     string   `bun:"worker_type"`
-	AcknowledgedAt int64    `bun:"acknowledged_at"`
-	SignatureName  string   `bun:"signature_name"`
+	WorkerID       pulid.ID
+	FirstName      string
+	LastName       string
+	WorkerType     string
+	AcknowledgedAt int64
+	SignatureName  string
 }
 
 type PolicyComplianceRequest struct {

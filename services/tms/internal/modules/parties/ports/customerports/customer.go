@@ -120,28 +120,28 @@ type ListBillingSchedulesRequest struct {
 // Cross-tenant by design: the sweep runs once for the whole deployment rather
 // than once per organization, so the tenant travels with the row.
 type DueBillingSchedule struct {
-	TenantInfo            pagination.TenantInfo    `bun:"-"`
-	OrganizationID        pulid.ID                 `bun:"organization_id"`
-	BusinessUnitID        pulid.ID                 `bun:"business_unit_id"`
-	CustomerID            pulid.ID                 `bun:"customer_id"`
-	CustomerName          string                   `bun:"customer_name"`
-	CustomerCode          string                   `bun:"customer_code"`
-	CustomerStatus        string                   `bun:"customer_status"`
-	BillingCycle          customer.BillingCycle    `bun:"billing_cycle"`
-	BillingCycleAnchorDay int16                    `bun:"billing_cycle_anchor_day"`
-	BillingCycleTimezone  string                   `bun:"billing_cycle_timezone"`
-	InvoiceDelivery       customer.InvoiceDelivery `bun:"invoice_delivery"`
-	LastBilledPeriodEnd   *int64                   `bun:"last_billed_period_end"`
+	TenantInfo            pagination.TenantInfo
+	OrganizationID        pulid.ID
+	BusinessUnitID        pulid.ID
+	CustomerID            pulid.ID
+	CustomerName          string
+	CustomerCode          string
+	CustomerStatus        string
+	BillingCycle          customer.BillingCycle
+	BillingCycleAnchorDay int16
+	BillingCycleTimezone  string
+	InvoiceDelivery       customer.InvoiceDelivery
+	LastBilledPeriodEnd   *int64
 
 	// The billing and presentation rules ride along so describing an open
 	// statement needs no second lookup per customer.
-	SplitBy                customer.InvoiceSplitKey   `bun:"split_by"`
-	SectionBy              customer.InvoiceSectionKey `bun:"section_by"`
-	InvoiceDetail          customer.InvoiceDetail     `bun:"invoice_detail"`
-	MinConsolidatedAmount  decimal.NullDecimal        `bun:"min_consolidated_amount"`
-	MaxShipmentsPerInvoice int16                      `bun:"max_shipments_per_invoice"`
-	AutoBill               bool                       `bun:"auto_bill"`
-	BillingCurrency        string                     `bun:"billing_currency"`
+	SplitBy                customer.InvoiceSplitKey
+	SectionBy              customer.InvoiceSectionKey
+	InvoiceDetail          customer.InvoiceDetail
+	MinConsolidatedAmount  decimal.NullDecimal
+	MaxShipmentsPerInvoice int16
+	AutoBill               bool
+	BillingCurrency        string
 }
 
 // Profile rebuilds just enough of the billing profile for the period maths and

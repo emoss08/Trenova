@@ -6131,7 +6131,7 @@
             "type": "boolean"
           },
           "provider": {
-            "description": "Only records whose provider contains this text.",
+            "description": "Only records whose provider is exactly this.",
             "type": "string"
           },
           "query": {
@@ -6195,11 +6195,9 @@
               "carrierId",
               "category",
               "createdAt",
-              "currentValue",
               "detectedAt",
               "dotNumber",
               "fieldPath",
-              "priorValue",
               "provider",
               "resolution",
               "resolutionNote",
@@ -12144,7 +12142,7 @@
             "type": "string"
           },
           "transactionSet": {
-            "description": "Only records whose transaction set contains this text. 204 tender, 210 invoice, 214 status, 990 tender response, 997 or 999 acknowledgment.",
+            "description": "Only records whose transaction set is exactly this. 204 tender, 210 invoice, 214 status, 990 tender response, 997 or 999 acknowledgment.",
             "type": "string"
           },
           "transferId": {
@@ -12609,7 +12607,6 @@
               "createdAt",
               "failureReason",
               "inboundMessageId",
-              "mappingSnapshot",
               "processedAt",
               "rejectionReason",
               "sourceBusinessUnitId",
@@ -12622,7 +12619,6 @@
               "targetOrganizationId",
               "targetPartnerId",
               "targetShipmentId",
-              "tenderPayload",
               "updatedAt"
             ],
             "type": "string",
@@ -13707,7 +13703,7 @@
     },
     {
       "name": "equipment_list_tractors",
-      "description": "List tractors (power units) narrowed by status, ownership, or a registration or lease date. Use it for questions about which units are out of service or coming due for plates. Filters: code, createdAtFrom/To, equipmentManufacturerId, equipmentTypeId, externalId, fleetCodeId, fuelType, hasFleetCode, hasLastKnownLocation, hasOwnerWorker, hasSecondaryWorker, hasState, iftaQualified, includeEquipmentDetails, includeFleetDetails, includeWorkerDetails, lastKnownLocationId, lastKnownLocationName, leaseEndDateFrom/To, leaseReference, lessorName, licensePlateNumber, make, model, ownerWorkerId, ownershipType, primaryWorkerId, registrationExpiryFrom/To, registrationNumber, secondaryWorkerId, status, updatedAtFrom/To, vin, yearMin/Max.",
+      "description": "List tractors (power units) narrowed by status, ownership, or a registration or lease date. Use it for questions about which units are out of service or coming due for plates. Filters: code, createdAtFrom/To, equipmentManufacturerId, equipmentTypeId, externalId, fleetCodeId, fuelType, hasFleetCode, hasLastKnownLocation, hasOwnerWorker, hasSecondaryWorker, hasState, iftaQualified, includeEquipmentDetails, includeFleetDetails, includeWorkerDetails, lastKnownLocationId, leaseEndDateFrom/To, leaseReference, lessorName, licensePlateNumber, make, model, ownerWorkerId, ownershipType, primaryWorkerId, registrationExpiryFrom/To, registrationNumber, secondaryWorkerId, status, updatedAtFrom/To, vin, yearMin/Max.",
       "parameters": {
         "additionalProperties": false,
         "properties": {
@@ -13823,10 +13819,6 @@
             "type": "string",
             "x-recordOf": "location"
           },
-          "lastKnownLocationName": {
-            "description": "Only records whose last known location name contains this text.",
-            "type": "string"
-          },
           "leaseEndDateFrom": {
             "description": "When the lease on a leased tractor ends. Only records whose lease end date is on or after this day, in the organization's timezone. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
             "examples": [
@@ -13935,7 +13927,6 @@
               "fuelType",
               "iftaQualified",
               "lastKnownLocationId",
-              "lastKnownLocationName",
               "leaseEndDate",
               "leaseReference",
               "lessorName",
@@ -14042,7 +14033,7 @@
     },
     {
       "name": "equipment_list_trailers",
-      "description": "List trailers narrowed by status, ownership, or a registration, lease or inspection date, each with its equipment type (dry van, reefer, flatbed). Use it for questions about which trailers are out of service or overdue for inspection. Filters: code, createdAtFrom/To, equipmentManufacturerId, equipmentTypeId, externalId, fleetCodeId, hasFleetCode, hasLastKnownLocation, hasOwnerWorker, hasRegistrationState, includeEquipmentDetails, includeFleetDetails, lastInspectionDateFrom/To, lastKnownLocationId, lastKnownLocationName, leaseEndDateFrom/To, leaseReference, lessorName, licensePlateNumber, make, maxLoadWeightMin/Max, model, ownerWorkerId, ownershipType, registrationExpiryFrom/To, registrationNumber, status, updatedAtFrom/To, vin, yearMin/Max.",
+      "description": "List trailers narrowed by status, ownership, or a registration, lease or inspection date, each with its equipment type (dry van, reefer, flatbed). Use it for questions about which trailers are out of service or overdue for inspection. Filters: code, createdAtFrom/To, equipmentManufacturerId, equipmentTypeId, externalId, fleetCodeId, hasFleetCode, hasLastKnownLocation, hasOwnerWorker, hasRegistrationState, includeEquipmentDetails, includeFleetDetails, lastInspectionDateFrom/To, lastKnownLocationId, leaseEndDateFrom/To, leaseReference, lessorName, licensePlateNumber, make, maxLoadWeightMin/Max, model, ownerWorkerId, ownershipType, registrationExpiryFrom/To, registrationNumber, status, updatedAtFrom/To, vin, yearMin/Max.",
       "parameters": {
         "additionalProperties": false,
         "properties": {
@@ -14133,10 +14124,6 @@
             "description": "The location it was last seen at, from location_list. Never guess one.",
             "type": "string",
             "x-recordOf": "location"
-          },
-          "lastKnownLocationName": {
-            "description": "Only records whose last known location name contains this text.",
-            "type": "string"
           },
           "leaseEndDateFrom": {
             "description": "When the lease on a leased trailer ends. Only records whose lease end date is on or after this day, in the organization's timezone. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
@@ -14243,7 +14230,6 @@
               "fleetCodeId",
               "lastInspectionDate",
               "lastKnownLocationId",
-              "lastKnownLocationName",
               "leaseEndDate",
               "leaseReference",
               "lessorName",
@@ -15448,7 +15434,6 @@
               "defaultReasonCode",
               "defaultStatusCode",
               "description",
-              "externalMap",
               "label",
               "sortOrder",
               "updatedAt"
@@ -19456,7 +19441,6 @@
               "createdAt",
               "currentVersionNumber",
               "description",
-              "metadata",
               "name",
               "reviewComment",
               "source",
@@ -21444,14 +21428,12 @@
               "errorCount",
               "feedReference",
               "fileName",
-              "mapping",
               "origin",
               "provider",
               "rowCount",
               "sourceFormat",
               "stagedAt",
               "status",
-              "summary",
               "updatedAt",
               "uploadedById"
             ],
@@ -28747,7 +28729,7 @@
             "type": "string"
           },
           "entryType": {
-            "description": "Only records whose entry type contains this text. Such as Standard, Adjusting, Closing or Reversal.",
+            "description": "Only records whose entry type is exactly this. Such as Standard, Adjusting, Closing or Reversal.",
             "type": "string"
           },
           "fiscalPeriodId": {
@@ -30010,7 +29992,7 @@
     },
     {
       "name": "location_list",
-      "description": "List locations (facilities, terminals, yards) narrowed by status, code, name or city. Filters: addressLine1, addressLine2, city, code, createdAtFrom/To, description, geofenceRadiusMetersMin/Max, geofenceType, isGeocoded, latitudeMin/Max, locationCategoryId, longitudeMin/Max, name, postalCode, status, timezone, updatedAtFrom/To.",
+      "description": "List locations (facilities, terminals, yards) narrowed by status, code, name or city. Filters: addressLine1, addressLine2, city, code, createdAtFrom/To, description, geofenceRadiusMetersMin/Max, geofenceType, isGeocoded, latitudeMin/Max, locationCategoryId, longitudeMin/Max, name, postalCode, status, timezone, updatedAtFrom/To; locationCategory fields, each named locationCategory and the field (locationCategoryAllowsOvernight): allowsOvernight, color, createdAtFrom/To, description, facilityType, hasRestroom, hasSecureParking, name, requiresAppointment, type, updatedAtFrom/To.",
       "parameters": {
         "additionalProperties": false,
         "properties": {
@@ -30096,10 +30078,106 @@
             "type": "integer",
             "x-clamp": true
           },
+          "locationCategoryAllowsOvernight": {
+            "description": "true for only the records whose allowsOvernight is true, false for only those whose allowsOvernight is false.",
+            "type": "boolean"
+          },
+          "locationCategoryColor": {
+            "description": "Only records whose color contains this text.",
+            "type": "string"
+          },
+          "locationCategoryCreatedAtFrom": {
+            "description": "Only records whose created at is on or after this day, in the organization's timezone. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
+            "type": "string"
+          },
+          "locationCategoryCreatedAtTo": {
+            "description": "Only records whose created at is on or before this day, in the organization's timezone. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
+            "type": "string"
+          },
+          "locationCategoryDescription": {
+            "description": "Only records whose description contains this text.",
+            "type": "string"
+          },
+          "locationCategoryFacilityType": {
+            "description": "Only records whose facility type is one of these.",
+            "items": {
+              "enum": [
+                "CrossDock",
+                "StorageWarehouse",
+                "ColdStorage",
+                "HazmatFacility",
+                "IntermodalFacility"
+              ],
+              "type": "string",
+              "x-enumOf": "graphql.FacilityType"
+            },
+            "minItems": 1,
+            "type": "array"
+          },
+          "locationCategoryHasRestroom": {
+            "description": "true for only the records whose hasRestroom is true, false for only those whose hasRestroom is false.",
+            "type": "boolean"
+          },
+          "locationCategoryHasSecureParking": {
+            "description": "true for only the records whose hasSecureParking is true, false for only those whose hasSecureParking is false.",
+            "type": "boolean"
+          },
           "locationCategoryId": {
             "description": "The location category, from location_list_categories. Never guess one.",
             "type": "string",
             "x-recordOf": "location_category"
+          },
+          "locationCategoryName": {
+            "description": "Only records whose name contains this text.",
+            "type": "string"
+          },
+          "locationCategoryRequiresAppointment": {
+            "description": "true for only the records whose requiresAppointment is true, false for only those whose requiresAppointment is false.",
+            "type": "boolean"
+          },
+          "locationCategoryType": {
+            "description": "Only records whose type is one of these.",
+            "items": {
+              "enum": [
+                "Terminal",
+                "Warehouse",
+                "DistributionCenter",
+                "TruckStop",
+                "RestArea",
+                "CustomerLocation",
+                "Port",
+                "RailYard",
+                "MaintenanceFacility"
+              ],
+              "type": "string",
+              "x-enumOf": "graphql.LocationCategoryType"
+            },
+            "minItems": 1,
+            "type": "array"
+          },
+          "locationCategoryUpdatedAtFrom": {
+            "description": "Only records whose updated at is on or after this day, in the organization's timezone. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
+            "type": "string"
+          },
+          "locationCategoryUpdatedAtTo": {
+            "description": "Only records whose updated at is on or before this day, in the organization's timezone. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
+            "type": "string"
           },
           "longitudeMax": {
             "description": "Only records whose longitude is at most this. Write it as a decimal, such as 1250.00.",
@@ -30134,6 +30212,17 @@
               "geofenceType",
               "isGeocoded",
               "latitude",
+              "locationCategory.allowsOvernight",
+              "locationCategory.color",
+              "locationCategory.createdAt",
+              "locationCategory.description",
+              "locationCategory.facilityType",
+              "locationCategory.hasRestroom",
+              "locationCategory.hasSecureParking",
+              "locationCategory.name",
+              "locationCategory.requiresAppointment",
+              "locationCategory.type",
+              "locationCategory.updatedAt",
               "locationCategoryId",
               "longitude",
               "name",
@@ -31699,7 +31788,6 @@
               "defaultSeverity",
               "defaultVisibleToCustomer",
               "description",
-              "externalMap",
               "label",
               "sortOrder",
               "type",
@@ -34586,7 +34674,6 @@
               "description",
               "effectiveFrom",
               "effectiveTo",
-              "inputs",
               "marginFloorPercent",
               "maxPayPercentOfSell",
               "name",
@@ -37608,7 +37695,7 @@
     },
     {
       "name": "report_create",
-      "description": "Save a new custom report from a definition you wrote. Pick the dataset with report_list_datasets, the fields with report_get_dataset, and run report_preview on the definition before proposing it. Send the report once, inside definition: its dataset, columns, filters and sort never go beside it. For \"shipments for customer X\" build a list: dimension columns only, no measures and no bucket, which returns one row per record. Narrow to one related record by its id, from customer_list, on the dataset's own key for it — {\"ref\": {\"field\": \"customerId\"}, \"operator\": \"eq\", \"value\": \"cus_…\"} — not by its name, which two records can share and a rename changes. Totals by month or customer are the only reason to add a measure or bucket. It saves the report and does not run it; report_run does that.",
+      "description": "Save a new custom report from a definition you wrote. Pick the dataset with report_list_datasets, the fields with report_get_dataset, and run report_preview on the definition before proposing it. Send the report once, inside definition: its dataset, columns, filters and sort never go beside it. For \"shipments for customer X\" build a list: dimension columns only, no measures and no bucket, which returns one row per record. Narrow to one related record by its id, from customer_list, on the dataset's own key for it — {\"field\": \"customer.id\", \"op\": \"eq\", \"value\": \"cus_…\"} — not by its name, which two records can share and a rename changes. Totals by month or customer are the only reason to add a measure or bucket. It saves the report and does not run it; report_run does that.",
       "parameters": {
         "additionalProperties": false,
         "properties": {
@@ -37628,187 +37715,1064 @@
             "x-enumOf": "report.format"
           },
           "definition": {
-            "additionalProperties": true,
-            "description": "A report as the report builder saves it, whole: its dataset, columns, filters and sort all go here and nowhere else. Grouping is implied: a dimension column groups, a measure column aggregates. A report with only dimensions lists rows.",
-            "properties": {
-              "charts": {
-                "description": "Optional: {id, type: bar|hbar|line|area|pie|donut|scatter|kpi, title, xColumnId, seriesIds}.",
-                "items": {
-                  "type": "object"
-                },
-                "type": "array"
-              },
-              "columns": {
-                "items": {
-                  "additionalProperties": true,
-                  "properties": {
-                    "agg": {
-                      "description": "Required for a measure; the field must support it.",
-                      "enum": [
-                        "count",
-                        "count_distinct",
-                        "sum",
-                        "avg",
-                        "min",
-                        "max"
-                      ],
-                      "type": "string"
-                    },
-                    "bucket": {
-                      "description": "Groups a date dimension by period.",
-                      "enum": [
-                        "day",
-                        "week",
-                        "month",
-                        "quarter",
-                        "year"
-                      ],
-                      "type": "string"
-                    },
-                    "computed": {
-                      "description": "For kind computed: {op: add|subtract|multiply|divide, leftId, rightId} over two other column ids, or leftValue/rightValue for a constant.",
-                      "type": "object"
-                    },
-                    "id": {
-                      "description": "Your own short unique id for the column, such as c1.",
-                      "type": "string"
-                    },
-                    "kind": {
-                      "enum": [
-                        "dimension",
-                        "measure",
-                        "computed"
-                      ],
-                      "type": "string"
-                    },
-                    "label": {
-                      "type": "string"
-                    },
-                    "ref": {
-                      "additionalProperties": false,
-                      "description": "A field on the dataset, or on a related dataset reached along edges: {\"field\": \"name\"} for the dataset's own field, {\"path\": [\"customer\"], \"field\": \"name\"} for a field one edge away. Edge names and field keys come from report_get_dataset.",
-                      "properties": {
-                        "field": {
-                          "type": "string"
-                        },
-                        "path": {
-                          "items": {
-                            "type": "string"
-                          },
-                          "type": "array"
-                        }
-                      },
-                      "required": [
-                        "field"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "id",
-                    "kind",
-                    "ref"
-                  ],
-                  "type": "object"
-                },
-                "type": "array"
-              },
-              "entity": {
-                "description": "The dataset key from report_list_datasets, such as shipment.",
-                "type": "string"
-              },
-              "filters": {
+            "$defs": {
+              "Band": {
                 "additionalProperties": false,
-                "description": "An object, not a list: {\"op\": \"and\", \"filters\": [conditions]}. For workers whose driver type is OTR: {\"op\": \"and\", \"filters\": [{\"ref\": {\"field\": \"driverType\"}, \"operator\": \"eq\", \"value\": \"OTR\"}]}. For one related record whose id you know, compare the dataset's own reference key with it, {\"field\": \"customerId\"}, not the record's name. Leave it out for no filter.",
+                "description": "Band groups a number into ranges: a fixed width, or ascending boundaries where the last range is open-ended. A grouped value is the lower bound of its range.",
                 "properties": {
-                  "filters": {
+                  "edges": {
+                    "description": "Edges are ascending range boundaries.",
                     "items": {
-                      "additionalProperties": false,
-                      "properties": {
-                        "agg": {
-                          "description": "Only inside having: the aggregation to filter on.",
-                          "type": "string"
-                        },
-                        "operator": {
-                          "enum": [
-                            "eq",
-                            "ne",
-                            "gt",
-                            "gte",
-                            "lt",
-                            "lte",
-                            "contains",
-                            "startswith",
-                            "endswith",
-                            "in",
-                            "notin",
-                            "isnull",
-                            "isnotnull",
-                            "daterange",
-                            "lastndays",
-                            "nextndays",
-                            "today",
-                            "yesterday",
-                            "tomorrow",
-                            "thisweek",
-                            "lastweek",
-                            "thismonth",
-                            "lastmonth",
-                            "thisquarter",
-                            "lastquarter",
-                            "thisyear",
-                            "lastyear"
-                          ],
-                          "type": "string"
-                        },
-                        "param": {
-                          "description": "Bind the value to a parameter by name instead of fixing it.",
-                          "type": "string"
-                        },
-                        "ref": {
-                          "additionalProperties": false,
-                          "description": "A field on the dataset, or on a related dataset reached along edges: {\"field\": \"name\"} for the dataset's own field, {\"path\": [\"customer\"], \"field\": \"name\"} for a field one edge away. Edge names and field keys come from report_get_dataset.",
-                          "properties": {
-                            "field": {
-                              "type": "string"
-                            },
-                            "path": {
-                              "items": {
-                                "type": "string"
-                              },
-                              "type": "array"
-                            }
-                          },
-                          "required": [
-                            "field"
-                          ],
-                          "type": "object"
-                        },
-                        "value": {
-                          "description": "The value to compare with: a scalar, a list for in and notin, a number of days for lastndays and nextndays, [from, to] epoch seconds for daterange. Omit when param is set."
-                        }
-                      },
-                      "required": [
-                        "ref",
-                        "operator"
-                      ],
-                      "type": "object"
+                      "type": "number"
                     },
                     "type": "array"
                   },
-                  "groups": {
-                    "description": "Nested groups, each the same shape as this one.",
+                  "width": {
+                    "description": "Width is the size of every range.",
+                    "type": "number"
+                  }
+                },
+                "type": "object"
+              },
+              "Chart": {
+                "additionalProperties": false,
+                "description": "Chart draws columns the report already returns.",
+                "properties": {
+                  "compare": {
+                    "description": "Compare is the value column a KPI tile compares with.",
+                    "type": "string"
+                  },
+                  "curved": {
+                    "description": "Curved smooths lines.",
+                    "type": "boolean"
+                  },
+                  "goal": {
+                    "$ref": "#/$defs/Goal",
+                    "description": "Goal draws a target line or a KPI target."
+                  },
+                  "hideLegend": {
+                    "description": "HideLegend hides the legend.",
+                    "type": "boolean"
+                  },
+                  "id": {
+                    "description": "ID names the chart.",
+                    "type": "string"
+                  },
+                  "lat": {
+                    "description": "Lat is the latitude column of a map.",
+                    "type": "string"
+                  },
+                  "limit": {
+                    "description": "Limit caps the categories drawn; zero draws all.",
+                    "type": "integer"
+                  },
+                  "lng": {
+                    "description": "Lng is the longitude column of a map.",
+                    "type": "string"
+                  },
+                  "pointLabel": {
+                    "description": "PointLabel names each point of a map; empty uses the first dimension.",
+                    "type": "string"
+                  },
+                  "series": {
+                    "description": "Series are the value columns drawn.",
                     "items": {
-                      "type": "object"
+                      "type": "string"
                     },
                     "type": "array"
                   },
-                  "op": {
+                  "showValues": {
+                    "description": "ShowValues labels each mark with its value.",
+                    "type": "boolean"
+                  },
+                  "stacked": {
+                    "description": "Stacked stacks the series.",
+                    "type": "boolean"
+                  },
+                  "title": {
+                    "description": "Title is the chart heading.",
+                    "type": "string"
+                  },
+                  "type": {
+                    "description": "Type is the visual encoding.",
                     "enum": [
-                      "and",
-                      "or"
+                      "bar",
+                      "hbar",
+                      "line",
+                      "area",
+                      "pie",
+                      "donut",
+                      "scatter",
+                      "kpi",
+                      "map"
                     ],
                     "type": "string"
+                  },
+                  "x": {
+                    "description": "X is the dimension column on the category axis, or the measure on a scatter plot's x axis.",
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "id",
+                  "type"
+                ],
+                "type": "object"
+              },
+              "Column": {
+                "additionalProperties": false,
+                "description": "Column is one column of a report: exactly one of a dimension, a measure, a calculation or a window over another column.",
+                "properties": {
+                  "calc": {
+                    "$ref": "#/$defs/Formula",
+                    "description": "Calc computes the column from a formula over other columns, fields and parameters."
+                  },
+                  "dimension": {
+                    "$ref": "#/$defs/Dimension",
+                    "description": "Dimension groups by a field."
+                  },
+                  "display": {
+                    "description": "Display is the author's display spec, an object of the analytics/format package.",
+                    "type": "object"
+                  },
+                  "format": {
+                    "description": "Format is a format hint for the display spec, such as \"money\" or \"percent\".",
+                    "type": "string"
+                  },
+                  "hidden": {
+                    "description": "Hidden computes the column for other columns, having or sort without returning it.",
+                    "type": "boolean"
+                  },
+                  "id": {
+                    "description": "ID names the column in formulas, sort, charts and output; letters, digits and underscores.",
+                    "type": "string"
+                  },
+                  "label": {
+                    "description": "Label is the column heading; empty derives one from the field.",
+                    "type": "string"
+                  },
+                  "measure": {
+                    "$ref": "#/$defs/Measure",
+                    "description": "Measure aggregates a field."
+                  },
+                  "transform": {
+                    "$ref": "#/$defs/Transform",
+                    "description": "Transform rewrites the column's value in SQL."
+                  },
+                  "window": {
+                    "$ref": "#/$defs/Window",
+                    "description": "Window computes the column across the grouped rows."
+                  }
+                },
+                "required": [
+                  "id"
+                ],
+                "type": "object"
+              },
+              "Count": {
+                "description": "Count is a whole number or the name of an int parameter that supplies it. It encodes as a number, or as {\"param\": \"name\"}.",
+                "oneOf": [
+                  {
+                    "minimum": 0,
+                    "type": "integer"
+                  },
+                  {
+                    "additionalProperties": false,
+                    "properties": {
+                      "param": {
+                        "description": "The name of the parameter that supplies the value.",
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "param"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              },
+              "DashboardFilter": {
+                "additionalProperties": false,
+                "description": "DashboardFilter is a dashboard-wide condition on a field. It narrows every tile whose report starts from the same entity, without the report declaring anything.",
+                "properties": {
+                  "default": {
+                    "description": "Default is the value used before anyone picks one."
+                  },
+                  "entity": {
+                    "description": "Entity is the entity whose reports the filter narrows.",
+                    "type": "string"
+                  },
+                  "field": {
+                    "description": "Field is the dotted path of the field compared.",
+                    "type": "string"
+                  },
+                  "id": {
+                    "description": "ID names the filter; its value is supplied under this id.",
+                    "type": "string"
+                  },
+                  "label": {
+                    "description": "Label is the filter's heading on the dashboard.",
+                    "type": "string"
+                  },
+                  "op": {
+                    "description": "Op is the comparison.",
+                    "enum": [
+                      "eq",
+                      "ne",
+                      "gt",
+                      "gte",
+                      "lt",
+                      "lte",
+                      "between",
+                      "contains",
+                      "starts_with",
+                      "ends_with",
+                      "like",
+                      "ilike",
+                      "in",
+                      "not_in",
+                      "is_null",
+                      "is_not_null",
+                      "last_n_days",
+                      "next_n_days",
+                      "today",
+                      "yesterday",
+                      "tomorrow",
+                      "this_week",
+                      "last_week",
+                      "this_month",
+                      "last_month",
+                      "this_quarter",
+                      "last_quarter",
+                      "this_year",
+                      "last_year"
+                    ],
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "id",
+                  "entity",
+                  "field",
+                  "op"
+                ],
+                "type": "object"
+              },
+              "Definition": {
+                "additionalProperties": false,
+                "description": "Definition is a report: the entity it starts from, its output columns, filters, layout, parameters and charts.",
+                "properties": {
+                  "charts": {
+                    "description": "Charts draw the output; they never change what is queried.",
+                    "items": {
+                      "$ref": "#/$defs/Chart"
+                    },
+                    "type": "array"
+                  },
+                  "columns": {
+                    "description": "Columns are the report's columns in display order.",
+                    "items": {
+                      "$ref": "#/$defs/Column"
+                    },
+                    "type": "array"
+                  },
+                  "entity": {
+                    "description": "Entity is the catalog key of the entity the report starts from, such as \"shipment\".",
+                    "type": "string"
+                  },
+                  "filters": {
+                    "$ref": "#/$defs/Filter",
+                    "description": "Filters narrow the source rows before grouping."
+                  },
+                  "groupings": {
+                    "$ref": "#/$defs/Groupings",
+                    "description": "Groupings adds subtotal and total rows."
+                  },
+                  "having": {
+                    "$ref": "#/$defs/Filter",
+                    "description": "Having narrows the grouped rows by output columns."
+                  },
+                  "limit": {
+                    "$ref": "#/$defs/Count",
+                    "description": "Limit caps the number of output rows; zero means the runner's limit."
+                  },
+                  "page": {
+                    "$ref": "#/$defs/Page",
+                    "description": "Page asks for one page of the sorted output."
+                  },
+                  "parameters": {
+                    "description": "Parameters are the values the report asks for when it runs.",
+                    "items": {
+                      "$ref": "#/$defs/Parameter"
+                    },
+                    "type": "array"
+                  },
+                  "pivot": {
+                    "$ref": "#/$defs/Pivot",
+                    "description": "Pivot spreads measure columns across the values of a field."
+                  },
+                  "sort": {
+                    "description": "Sort orders the output rows.",
+                    "items": {
+                      "$ref": "#/$defs/Sort"
+                    },
+                    "type": "array"
+                  },
+                  "top": {
+                    "$ref": "#/$defs/Top",
+                    "description": "Top keeps the first N rows per group by a column."
+                  },
+                  "version": {
+                    "const": 2,
+                    "description": "Version is the definition format version; Decode upgrades older versions."
+                  }
+                },
+                "required": [
+                  "version",
+                  "entity",
+                  "columns"
+                ],
+                "type": "object"
+              },
+              "Dimension": {
+                "additionalProperties": false,
+                "description": "Dimension groups the report by a field, optionally bucketed in time or banded into ranges.",
+                "properties": {
+                  "band": {
+                    "$ref": "#/$defs/Band",
+                    "description": "Band groups a number into ranges."
+                  },
+                  "bucket": {
+                    "$ref": "#/$defs/Grain",
+                    "description": "Bucket truncates a date or time to a period, or names a parameter that chooses one."
+                  },
+                  "field": {
+                    "description": "Field is the dotted path of the field, such as \"customer.name\".",
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "field"
+                ],
+                "type": "object"
+              },
+              "Filter": {
+                "additionalProperties": false,
+                "description": "Filter is a node of a filter tree: a group (And or Or, possibly empty) or a condition. A condition compares a subject, which is exactly one of Field, Calc or Column, with Op and a Value or a Param. A Calc with no Op is a condition when the formula is true.",
+                "oneOf": [
+                  {
+                    "maxProperties": 1,
+                    "required": [
+                      "and"
+                    ]
+                  },
+                  {
+                    "maxProperties": 1,
+                    "required": [
+                      "or"
+                    ]
+                  },
+                  {
+                    "not": {
+                      "anyOf": [
+                        {
+                          "required": [
+                            "and"
+                          ]
+                        },
+                        {
+                          "required": [
+                            "or"
+                          ]
+                        }
+                      ]
+                    },
+                    "required": [
+                      "field"
+                    ]
+                  },
+                  {
+                    "not": {
+                      "anyOf": [
+                        {
+                          "required": [
+                            "and"
+                          ]
+                        },
+                        {
+                          "required": [
+                            "or"
+                          ]
+                        }
+                      ]
+                    },
+                    "required": [
+                      "calc"
+                    ]
+                  },
+                  {
+                    "not": {
+                      "anyOf": [
+                        {
+                          "required": [
+                            "and"
+                          ]
+                        },
+                        {
+                          "required": [
+                            "or"
+                          ]
+                        }
+                      ]
+                    },
+                    "required": [
+                      "column"
+                    ]
+                  }
+                ],
+                "properties": {
+                  "and": {
+                    "description": "And holds conditions that must all hold.",
+                    "items": {
+                      "$ref": "#/$defs/Filter"
+                    },
+                    "type": "array"
+                  },
+                  "calc": {
+                    "$ref": "#/$defs/Formula",
+                    "description": "Calc is a row-level formula compared, or a boolean formula used as the condition."
+                  },
+                  "column": {
+                    "description": "Column is the output column compared; in Having, or a row-level column in Filters.",
+                    "type": "string"
+                  },
+                  "field": {
+                    "description": "Field is the dotted path of the field compared.",
+                    "type": "string"
+                  },
+                  "op": {
+                    "description": "Op is the comparison.",
+                    "enum": [
+                      "eq",
+                      "ne",
+                      "gt",
+                      "gte",
+                      "lt",
+                      "lte",
+                      "between",
+                      "contains",
+                      "starts_with",
+                      "ends_with",
+                      "like",
+                      "ilike",
+                      "in",
+                      "not_in",
+                      "is_null",
+                      "is_not_null",
+                      "last_n_days",
+                      "next_n_days",
+                      "today",
+                      "yesterday",
+                      "tomorrow",
+                      "this_week",
+                      "last_week",
+                      "this_month",
+                      "last_month",
+                      "this_quarter",
+                      "last_quarter",
+                      "this_year",
+                      "last_year"
+                    ],
+                    "type": "string"
+                  },
+                  "or": {
+                    "description": "Or holds conditions of which one must hold.",
+                    "items": {
+                      "$ref": "#/$defs/Filter"
+                    },
+                    "type": "array"
+                  },
+                  "param": {
+                    "description": "Param names the parameter that supplies the value instead.",
+                    "type": "string"
+                  },
+                  "transform": {
+                    "$ref": "#/$defs/Transform",
+                    "description": "Transform rewrites the subject before it is compared."
+                  },
+                  "value": {
+                    "description": "Value is the value compared with: a scalar, a list for in and not_in, [from, to] for between, a day count for last_n_days and next_n_days."
+                  }
+                },
+                "type": "object"
+              },
+              "Formula": {
+                "description": "Expr is a formula as it appears in a report definition: text a person typed, or an AST a structured editor built. It encodes in the form it was given: a JSON string for text, an object for an AST.",
+                "oneOf": [
+                  {
+                    "description": "Formula text.",
+                    "type": "string"
+                  },
+                  {
+                    "$ref": "#/$defs/FormulaNode"
+                  }
+                ]
+              },
+              "FormulaNode": {
+                "description": "Node is one node of a formula AST. Kind decides which other fields are set; in JSON a node is an object keyed by its kind, such as {\"column\": \"revenue\"} or {\"call\": \"round\", \"args\": […]}.",
+                "oneOf": [
+                  {
+                    "additionalProperties": false,
+                    "properties": {
+                      "number": {
+                        "pattern": "^(0|[1-9][0-9]*)(\\.[0-9]+)?$",
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "number"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "additionalProperties": false,
+                    "properties": {
+                      "string": {
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "string"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "additionalProperties": false,
+                    "properties": {
+                      "bool": {
+                        "type": "boolean"
+                      }
+                    },
+                    "required": [
+                      "bool"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "additionalProperties": false,
+                    "properties": {
+                      "null": {
+                        "const": true
+                      }
+                    },
+                    "required": [
+                      "null"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "additionalProperties": false,
+                    "properties": {
+                      "date": {
+                        "format": "date",
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "date"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "additionalProperties": false,
+                    "properties": {
+                      "timestamp": {
+                        "format": "date-time",
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "timestamp"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "additionalProperties": false,
+                    "properties": {
+                      "column": {
+                        "pattern": "^[A-Za-z0-9_]+$",
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "column"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "additionalProperties": false,
+                    "properties": {
+                      "field": {
+                        "pattern": "^[A-Za-z_][A-Za-z0-9_]*(\\.[A-Za-z_][A-Za-z0-9_]*)*$",
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "field"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "additionalProperties": false,
+                    "properties": {
+                      "param": {
+                        "pattern": "^[A-Za-z_][A-Za-z0-9_]*$",
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "param"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "additionalProperties": false,
+                    "properties": {
+                      "args": {
+                        "items": {
+                          "$ref": "#/$defs/FormulaNode"
+                        },
+                        "maxItems": 2,
+                        "minItems": 1,
+                        "type": "array"
+                      },
+                      "op": {
+                        "enum": [
+                          "or",
+                          "and",
+                          "not",
+                          "=",
+                          "!=",
+                          "<",
+                          "<=",
+                          ">",
+                          ">=",
+                          "is null",
+                          "is not null",
+                          "||",
+                          "+",
+                          "-",
+                          "*",
+                          "/",
+                          "%"
+                        ],
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "args",
+                      "op"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "additionalProperties": false,
+                    "properties": {
+                      "args": {
+                        "items": {
+                          "$ref": "#/$defs/FormulaNode"
+                        },
+                        "type": "array"
+                      },
+                      "call": {
+                        "enum": [
+                          "if",
+                          "coalesce",
+                          "nullif",
+                          "round",
+                          "trunc",
+                          "floor",
+                          "ceil",
+                          "abs",
+                          "greatest",
+                          "least",
+                          "concat",
+                          "lower",
+                          "upper",
+                          "trim",
+                          "length",
+                          "date_trunc",
+                          "date_diff",
+                          "extract",
+                          "now",
+                          "today",
+                          "count",
+                          "count_distinct",
+                          "sum",
+                          "avg",
+                          "min",
+                          "max"
+                        ],
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "args",
+                      "call"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "additionalProperties": false,
+                    "properties": {
+                      "case": {
+                        "additionalProperties": false,
+                        "properties": {
+                          "else": {
+                            "$ref": "#/$defs/FormulaNode"
+                          },
+                          "subject": {
+                            "$ref": "#/$defs/FormulaNode"
+                          },
+                          "when": {
+                            "items": {
+                              "additionalProperties": false,
+                              "properties": {
+                                "if": {
+                                  "$ref": "#/$defs/FormulaNode"
+                                },
+                                "then": {
+                                  "$ref": "#/$defs/FormulaNode"
+                                }
+                              },
+                              "required": [
+                                "if",
+                                "then"
+                              ],
+                              "type": "object"
+                            },
+                            "minItems": 1,
+                            "type": "array"
+                          }
+                        },
+                        "required": [
+                          "when"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "case"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              },
+              "Goal": {
+                "additionalProperties": false,
+                "description": "Goal is a chart target: a fixed number or a value column.",
+                "properties": {
+                  "column": {
+                    "description": "Column is a value column holding the target.",
+                    "type": "string"
+                  },
+                  "label": {
+                    "description": "Label names the target.",
+                    "type": "string"
+                  },
+                  "value": {
+                    "description": "Value is a fixed target.",
+                    "type": "number"
+                  }
+                },
+                "type": "object"
+              },
+              "Grain": {
+                "description": "Grain is a bucket, or the name of a string parameter that chooses one when the report runs. It encodes as \"month\", or as {\"param\": \"name\"}.",
+                "oneOf": [
+                  {
+                    "enum": [
+                      "hour",
+                      "day",
+                      "week",
+                      "month",
+                      "quarter",
+                      "year"
+                    ],
+                    "type": "string"
+                  },
+                  {
+                    "additionalProperties": false,
+                    "properties": {
+                      "param": {
+                        "description": "The name of the parameter that supplies the value.",
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "param"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              },
+              "Groupings": {
+                "additionalProperties": false,
+                "description": "Groupings adds subtotal rows and a grand total row, computed in the same statement as the rows.",
+                "properties": {
+                  "subtotals": {
+                    "description": "Subtotals lists dimension columns; each adds rows grouped by that column and every dimension column before it.",
+                    "items": {
+                      "type": "string"
+                    },
+                    "type": "array"
+                  },
+                  "total": {
+                    "description": "Total adds a grand total row.",
+                    "type": "boolean"
+                  }
+                },
+                "type": "object"
+              },
+              "Measure": {
+                "additionalProperties": false,
+                "description": "Measure aggregates a field over each group, optionally over a subset of its rows.",
+                "properties": {
+                  "agg": {
+                    "description": "Agg is the aggregation.",
+                    "enum": [
+                      "count",
+                      "count_distinct",
+                      "sum",
+                      "avg",
+                      "min",
+                      "max"
+                    ],
+                    "type": "string"
+                  },
+                  "field": {
+                    "description": "Field is the dotted path of the aggregated field; empty counts rows.",
+                    "type": "string"
+                  },
+                  "filter": {
+                    "$ref": "#/$defs/Filter",
+                    "description": "Filter narrows the rows this measure aggregates without narrowing the report."
+                  }
+                },
+                "required": [
+                  "agg"
+                ],
+                "type": "object"
+              },
+              "Page": {
+                "additionalProperties": false,
+                "description": "Page asks for one page of the sorted output with keyset paging.",
+                "properties": {
+                  "after": {
+                    "description": "After is the opaque cursor of the previous page's last row.",
+                    "type": "string"
+                  },
+                  "size": {
+                    "description": "Size is the number of rows in the page.",
+                    "type": "integer"
+                  }
+                },
+                "required": [
+                  "size"
+                ],
+                "type": "object"
+              },
+              "Parameter": {
+                "additionalProperties": false,
+                "description": "Parameter is a value the report asks for when it runs.",
+                "properties": {
+                  "allowed": {
+                    "description": "Allowed restricts the values that can be given.",
+                    "items": {},
+                    "type": "array"
+                  },
+                  "default": {
+                    "description": "Default is used when no value is given; a list when Multi."
+                  },
+                  "entity": {
+                    "description": "Entity is the catalog key of the entity a ref parameter points at.",
+                    "type": "string"
+                  },
+                  "label": {
+                    "description": "Label is the prompt shown to the person running the report.",
+                    "type": "string"
+                  },
+                  "multi": {
+                    "description": "Multi takes a list of values.",
+                    "type": "boolean"
+                  },
+                  "name": {
+                    "description": "Name is how filters, formulas and settings reference the parameter.",
+                    "type": "string"
+                  },
+                  "required": {
+                    "description": "Required refuses to run without a value or a default.",
+                    "type": "boolean"
+                  },
+                  "type": {
+                    "description": "Type is the value type.",
+                    "enum": [
+                      "string",
+                      "int",
+                      "decimal",
+                      "float",
+                      "bool",
+                      "date",
+                      "timestamp",
+                      "epoch",
+                      "enum",
+                      "ref",
+                      "json"
+                    ],
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "name",
+                  "type"
+                ],
+                "type": "object"
+              },
+              "Pivot": {
+                "additionalProperties": false,
+                "description": "Pivot spreads measure columns into one column per value of a field.",
+                "properties": {
+                  "columns": {
+                    "description": "Columns are the measure columns to spread.",
+                    "items": {
+                      "type": "string"
+                    },
+                    "type": "array"
+                  },
+                  "field": {
+                    "description": "Field is the dotted path of the field whose values become columns.",
+                    "type": "string"
+                  },
+                  "labels": {
+                    "description": "Labels are column headings for listed values, in the same order.",
+                    "items": {
+                      "type": "string"
+                    },
+                    "type": "array"
+                  },
+                  "other": {
+                    "description": "Other adds a column for every value not listed or discovered, nulls included.",
+                    "type": "boolean"
+                  },
+                  "top": {
+                    "$ref": "#/$defs/PivotTop",
+                    "description": "Top discovers the values when the report runs: the first N by a measure."
+                  },
+                  "values": {
+                    "$ref": "#/$defs/Values",
+                    "description": "Values lists the values to spread, or names a multi-value parameter."
+                  }
+                },
+                "required": [
+                  "field",
+                  "columns"
+                ],
+                "type": "object"
+              },
+              "PivotTop": {
+                "additionalProperties": false,
+                "description": "PivotTop discovers pivot values: the N values with the largest measure.",
+                "properties": {
+                  "by": {
+                    "description": "By is the measure column that ranks the values.",
+                    "type": "string"
+                  },
+                  "n": {
+                    "$ref": "#/$defs/Count",
+                    "description": "N is how many values to discover, or a parameter."
+                  }
+                },
+                "required": [
+                  "n",
+                  "by"
+                ],
+                "type": "object"
+              },
+              "Sort": {
+                "additionalProperties": false,
+                "description": "Sort orders the output by a column.",
+                "properties": {
+                  "column": {
+                    "description": "Column is an output column id, or a pivot cell \"column:value\".",
+                    "type": "string"
+                  },
+                  "desc": {
+                    "description": "Desc sorts largest first.",
+                    "type": "boolean"
+                  }
+                },
+                "required": [
+                  "column"
+                ],
+                "type": "object"
+              },
+              "Top": {
+                "additionalProperties": false,
+                "description": "Top keeps the first N rows of each group, ranked by a column.",
+                "properties": {
+                  "bottom": {
+                    "description": "Bottom keeps the smallest values instead of the largest.",
+                    "type": "boolean"
+                  },
+                  "by": {
+                    "description": "By is the column that ranks the rows.",
+                    "type": "string"
+                  },
+                  "n": {
+                    "$ref": "#/$defs/Count",
+                    "description": "N is how many rows to keep, or a parameter."
+                  },
+                  "per": {
+                    "description": "Per lists the dimension columns that form the groups; empty ranks the whole result.",
+                    "items": {
+                      "type": "string"
+                    },
+                    "type": "array"
+                  }
+                },
+                "required": [
+                  "n",
+                  "by"
+                ],
+                "type": "object"
+              },
+              "Transform": {
+                "additionalProperties": false,
+                "description": "Transform rewrites a value in SQL, so exports, sorting and filters see the rewritten value.",
+                "properties": {
+                  "factor": {
+                    "description": "Factor is the multiplier for scale.",
+                    "type": "number"
+                  },
+                  "op": {
+                    "description": "Op is the transform.",
+                    "enum": [
+                      "round",
+                      "ceil",
+                      "floor",
+                      "truncate",
+                      "abs",
+                      "scale",
+                      "upper",
+                      "lower",
+                      "title",
+                      "trim"
+                    ],
+                    "type": "string"
+                  },
+                  "precision": {
+                    "description": "Precision is the number of decimal places for round, ceil, floor and truncate.",
+                    "type": "integer"
                   }
                 },
                 "required": [
@@ -37816,98 +38780,89 @@
                 ],
                 "type": "object"
               },
-              "having": {
-                "description": "Filters over aggregated measures, the same shape as filters.",
-                "type": "object"
-              },
-              "limit": {
-                "description": "The most rows a run returns; 0 or left out returns as many as a report may.",
-                "maximum": 100000,
-                "minimum": 0,
-                "type": "integer",
-                "x-clamp": true
-              },
-              "parameters": {
-                "description": "Values asked for at run time and bound to filters by param.",
-                "items": {
-                  "additionalProperties": false,
-                  "properties": {
-                    "allowedValues": {
-                      "items": {
+              "Values": {
+                "description": "Values is a list of values or the name of a multi-value parameter that supplies them. It encodes as an array, or as {\"param\": \"name\"}.",
+                "oneOf": [
+                  {
+                    "items": {
+                      "type": "string"
+                    },
+                    "type": "array"
+                  },
+                  {
+                    "additionalProperties": false,
+                    "properties": {
+                      "param": {
+                        "description": "The name of the parameter that supplies the value.",
                         "type": "string"
-                      },
-                      "type": "array"
+                      }
                     },
-                    "default": {},
-                    "label": {
-                      "type": "string"
-                    },
-                    "multi": {
-                      "type": "boolean"
-                    },
-                    "name": {
-                      "type": "string"
-                    },
-                    "refEntity": {
-                      "type": "string"
-                    },
-                    "required": {
-                      "type": "boolean"
-                    },
-                    "type": {
-                      "enum": [
-                        "string",
-                        "int",
-                        "decimal",
-                        "bool",
-                        "enum",
-                        "epoch",
-                        "ref"
-                      ],
-                      "type": "string"
-                    }
-                  },
-                  "required": [
-                    "name",
-                    "type"
-                  ],
-                  "type": "object"
-                },
-                "type": "array"
+                    "required": [
+                      "param"
+                    ],
+                    "type": "object"
+                  }
+                ]
               },
-              "sort": {
-                "items": {
-                  "additionalProperties": false,
-                  "properties": {
-                    "columnId": {
-                      "description": "The id of one of this definition's columns, or of a column report_get lists.",
+              "Window": {
+                "additionalProperties": false,
+                "description": "Window computes a value across the grouped rows from another column.",
+                "properties": {
+                  "desc": {
+                    "description": "Desc ranks the largest value first.",
+                    "type": "boolean"
+                  },
+                  "fn": {
+                    "description": "Fn is the window function.",
+                    "enum": [
+                      "running_total",
+                      "percent_of_total",
+                      "rank",
+                      "dense_rank",
+                      "moving_avg",
+                      "change",
+                      "percent_change",
+                      "first",
+                      "last"
+                    ],
+                    "type": "string"
+                  },
+                  "of": {
+                    "description": "Of is the column the window reads.",
+                    "type": "string"
+                  },
+                  "offset": {
+                    "description": "Offset is how many rows back change and percent_change compare with; zero means one.",
+                    "type": "integer"
+                  },
+                  "over": {
+                    "description": "Over is the column that orders the rows, for running, moving, change and first/last.",
+                    "type": "string"
+                  },
+                  "partition": {
+                    "description": "Partition restarts the window for each combination of these dimension columns.",
+                    "items": {
                       "type": "string"
                     },
-                    "direction": {
-                      "enum": [
-                        "asc",
-                        "desc"
-                      ],
-                      "type": "string"
-                    }
+                    "type": "array"
                   },
-                  "required": [
-                    "columnId",
-                    "direction"
-                  ],
-                  "type": "object"
+                  "size": {
+                    "description": "Size is the number of rows a moving average spans.",
+                    "type": "integer"
+                  }
                 },
-                "type": "array"
-              },
-              "totals": {
-                "type": "boolean"
+                "required": [
+                  "of",
+                  "fn"
+                ],
+                "type": "object"
               }
             },
-            "required": [
-              "entity",
-              "columns"
-            ],
-            "type": "object"
+            "$id": "https://github.com/emoss08/keel/analytics/ir/definition.schema.json",
+            "$ref": "#/$defs/Definition",
+            "$schema": "https://json-schema.org/draft/2020-12/schema",
+            "description": "A report in keel analytics IR version 2, whole: its entity, columns, filters and sort all go here and nowhere else. Fields are dotted paths from the entity, such as customer.name. A dimension column groups, a measure column aggregates, and a report with only dimensions lists rows.",
+            "title": "Definition"
           },
           "description": {
             "description": "Optional sentence on what the report shows and who it is for.",
@@ -38759,8 +39714,8 @@
             "type": "string"
           },
           "limit": {
-            "description": "How many rows to return: 20 unless you ask, at most 70.",
-            "maximum": 70,
+            "description": "How many rows to return: 20 unless you ask, at most 90.",
+            "maximum": 90,
             "minimum": 1,
             "type": "integer",
             "x-clamp": true
@@ -38851,7 +39806,7 @@
             "x-recordOf": "report"
           },
           "format": {
-            "description": "Only records whose format contains this text.",
+            "description": "Only records whose format is exactly this.",
             "type": "string"
           },
           "hasDefinition": {
@@ -38889,9 +39844,7 @@
               "createdAt",
               "definitionId",
               "durationMs",
-              "error",
               "format",
-              "params",
               "queuedAt",
               "requestedById",
               "revisionId",
@@ -38914,11 +39867,11 @@
             "x-enumOf": "list.sortDirection"
           },
           "status": {
-            "description": "Only records whose status contains this text. queued, running, succeeded, failed, canceled or expired; only a succeeded run can be compared.",
+            "description": "Only records whose status is exactly this. queued, running, succeeded, failed, canceled or expired; only a succeeded run can be compared.",
             "type": "string"
           },
           "trigger": {
-            "description": "Only records whose trigger contains this text.",
+            "description": "Only records whose trigger is exactly this.",
             "type": "string"
           },
           "truncated": {
@@ -39111,192 +40064,1069 @@
     },
     {
       "name": "report_preview",
-      "description": "Run a report definition now and see its first rows, without saving it or producing a file. Use it to check a definition before report_create or report_update, to answer a quick question a small custom report can answer, or to look at what a saved or built-in report produces. Give a definition to preview (the shape report_get returns and report_create takes), or name an existing report by definitionId or reportKey. The compiler checks every field against the person's access and says what is wrong, in which case fix the definition and try again rather than reporting the error to the person. At most 20 rows come back; for the full result, report_run.",
+      "description": "Run a report definition now and see its first rows, without saving it or producing a file. Use it to check a definition before report_create or report_update, to answer a quick question a small custom report can answer, or to look at what a saved or built-in report produces. Give a definition to preview (the shape report_get returns and report_create takes), or name an existing report by definitionId or reportKey. The engine checks every field against the person's access and says what is wrong, naming the part of the definition at fault and the closest names it knows, in which case fix the definition and try again rather than reporting the error to the person. At most 20 rows come back; for the full result, report_run.",
       "parameters": {
         "additionalProperties": false,
         "properties": {
           "definition": {
-            "additionalProperties": true,
-            "description": "A report as the report builder saves it, whole: its dataset, columns, filters and sort all go here and nowhere else. Grouping is implied: a dimension column groups, a measure column aggregates. A report with only dimensions lists rows.",
-            "properties": {
-              "charts": {
-                "description": "Optional: {id, type: bar|hbar|line|area|pie|donut|scatter|kpi, title, xColumnId, seriesIds}.",
-                "items": {
-                  "type": "object"
-                },
-                "type": "array"
-              },
-              "columns": {
-                "items": {
-                  "additionalProperties": true,
-                  "properties": {
-                    "agg": {
-                      "description": "Required for a measure; the field must support it.",
-                      "enum": [
-                        "count",
-                        "count_distinct",
-                        "sum",
-                        "avg",
-                        "min",
-                        "max"
-                      ],
-                      "type": "string"
-                    },
-                    "bucket": {
-                      "description": "Groups a date dimension by period.",
-                      "enum": [
-                        "day",
-                        "week",
-                        "month",
-                        "quarter",
-                        "year"
-                      ],
-                      "type": "string"
-                    },
-                    "computed": {
-                      "description": "For kind computed: {op: add|subtract|multiply|divide, leftId, rightId} over two other column ids, or leftValue/rightValue for a constant.",
-                      "type": "object"
-                    },
-                    "id": {
-                      "description": "Your own short unique id for the column, such as c1.",
-                      "type": "string"
-                    },
-                    "kind": {
-                      "enum": [
-                        "dimension",
-                        "measure",
-                        "computed"
-                      ],
-                      "type": "string"
-                    },
-                    "label": {
-                      "type": "string"
-                    },
-                    "ref": {
-                      "additionalProperties": false,
-                      "description": "A field on the dataset, or on a related dataset reached along edges: {\"field\": \"name\"} for the dataset's own field, {\"path\": [\"customer\"], \"field\": \"name\"} for a field one edge away. Edge names and field keys come from report_get_dataset.",
-                      "properties": {
-                        "field": {
-                          "type": "string"
-                        },
-                        "path": {
-                          "items": {
-                            "type": "string"
-                          },
-                          "type": "array"
-                        }
-                      },
-                      "required": [
-                        "field"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "id",
-                    "kind",
-                    "ref"
-                  ],
-                  "type": "object"
-                },
-                "type": "array"
-              },
-              "entity": {
-                "description": "The dataset key from report_list_datasets, such as shipment.",
-                "type": "string"
-              },
-              "filters": {
+            "$defs": {
+              "Band": {
                 "additionalProperties": false,
-                "description": "An object, not a list: {\"op\": \"and\", \"filters\": [conditions]}. For workers whose driver type is OTR: {\"op\": \"and\", \"filters\": [{\"ref\": {\"field\": \"driverType\"}, \"operator\": \"eq\", \"value\": \"OTR\"}]}. For one related record whose id you know, compare the dataset's own reference key with it, {\"field\": \"customerId\"}, not the record's name. Leave it out for no filter.",
+                "description": "Band groups a number into ranges: a fixed width, or ascending boundaries where the last range is open-ended. A grouped value is the lower bound of its range.",
                 "properties": {
-                  "filters": {
+                  "edges": {
+                    "description": "Edges are ascending range boundaries.",
                     "items": {
-                      "additionalProperties": false,
-                      "properties": {
-                        "agg": {
-                          "description": "Only inside having: the aggregation to filter on.",
-                          "type": "string"
-                        },
-                        "operator": {
-                          "enum": [
-                            "eq",
-                            "ne",
-                            "gt",
-                            "gte",
-                            "lt",
-                            "lte",
-                            "contains",
-                            "startswith",
-                            "endswith",
-                            "in",
-                            "notin",
-                            "isnull",
-                            "isnotnull",
-                            "daterange",
-                            "lastndays",
-                            "nextndays",
-                            "today",
-                            "yesterday",
-                            "tomorrow",
-                            "thisweek",
-                            "lastweek",
-                            "thismonth",
-                            "lastmonth",
-                            "thisquarter",
-                            "lastquarter",
-                            "thisyear",
-                            "lastyear"
-                          ],
-                          "type": "string"
-                        },
-                        "param": {
-                          "description": "Bind the value to a parameter by name instead of fixing it.",
-                          "type": "string"
-                        },
-                        "ref": {
-                          "additionalProperties": false,
-                          "description": "A field on the dataset, or on a related dataset reached along edges: {\"field\": \"name\"} for the dataset's own field, {\"path\": [\"customer\"], \"field\": \"name\"} for a field one edge away. Edge names and field keys come from report_get_dataset.",
-                          "properties": {
-                            "field": {
-                              "type": "string"
-                            },
-                            "path": {
-                              "items": {
-                                "type": "string"
-                              },
-                              "type": "array"
-                            }
-                          },
-                          "required": [
-                            "field"
-                          ],
-                          "type": "object"
-                        },
-                        "value": {
-                          "description": "The value to compare with: a scalar, a list for in and notin, a number of days for lastndays and nextndays, [from, to] epoch seconds for daterange. Omit when param is set."
-                        }
-                      },
-                      "required": [
-                        "ref",
-                        "operator"
-                      ],
-                      "type": "object"
+                      "type": "number"
                     },
                     "type": "array"
                   },
-                  "groups": {
-                    "description": "Nested groups, each the same shape as this one.",
+                  "width": {
+                    "description": "Width is the size of every range.",
+                    "type": "number"
+                  }
+                },
+                "type": "object"
+              },
+              "Chart": {
+                "additionalProperties": false,
+                "description": "Chart draws columns the report already returns.",
+                "properties": {
+                  "compare": {
+                    "description": "Compare is the value column a KPI tile compares with.",
+                    "type": "string"
+                  },
+                  "curved": {
+                    "description": "Curved smooths lines.",
+                    "type": "boolean"
+                  },
+                  "goal": {
+                    "$ref": "#/$defs/Goal",
+                    "description": "Goal draws a target line or a KPI target."
+                  },
+                  "hideLegend": {
+                    "description": "HideLegend hides the legend.",
+                    "type": "boolean"
+                  },
+                  "id": {
+                    "description": "ID names the chart.",
+                    "type": "string"
+                  },
+                  "lat": {
+                    "description": "Lat is the latitude column of a map.",
+                    "type": "string"
+                  },
+                  "limit": {
+                    "description": "Limit caps the categories drawn; zero draws all.",
+                    "type": "integer"
+                  },
+                  "lng": {
+                    "description": "Lng is the longitude column of a map.",
+                    "type": "string"
+                  },
+                  "pointLabel": {
+                    "description": "PointLabel names each point of a map; empty uses the first dimension.",
+                    "type": "string"
+                  },
+                  "series": {
+                    "description": "Series are the value columns drawn.",
                     "items": {
-                      "type": "object"
+                      "type": "string"
                     },
                     "type": "array"
                   },
-                  "op": {
+                  "showValues": {
+                    "description": "ShowValues labels each mark with its value.",
+                    "type": "boolean"
+                  },
+                  "stacked": {
+                    "description": "Stacked stacks the series.",
+                    "type": "boolean"
+                  },
+                  "title": {
+                    "description": "Title is the chart heading.",
+                    "type": "string"
+                  },
+                  "type": {
+                    "description": "Type is the visual encoding.",
                     "enum": [
-                      "and",
-                      "or"
+                      "bar",
+                      "hbar",
+                      "line",
+                      "area",
+                      "pie",
+                      "donut",
+                      "scatter",
+                      "kpi",
+                      "map"
                     ],
                     "type": "string"
+                  },
+                  "x": {
+                    "description": "X is the dimension column on the category axis, or the measure on a scatter plot's x axis.",
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "id",
+                  "type"
+                ],
+                "type": "object"
+              },
+              "Column": {
+                "additionalProperties": false,
+                "description": "Column is one column of a report: exactly one of a dimension, a measure, a calculation or a window over another column.",
+                "properties": {
+                  "calc": {
+                    "$ref": "#/$defs/Formula",
+                    "description": "Calc computes the column from a formula over other columns, fields and parameters."
+                  },
+                  "dimension": {
+                    "$ref": "#/$defs/Dimension",
+                    "description": "Dimension groups by a field."
+                  },
+                  "display": {
+                    "description": "Display is the author's display spec, an object of the analytics/format package.",
+                    "type": "object"
+                  },
+                  "format": {
+                    "description": "Format is a format hint for the display spec, such as \"money\" or \"percent\".",
+                    "type": "string"
+                  },
+                  "hidden": {
+                    "description": "Hidden computes the column for other columns, having or sort without returning it.",
+                    "type": "boolean"
+                  },
+                  "id": {
+                    "description": "ID names the column in formulas, sort, charts and output; letters, digits and underscores.",
+                    "type": "string"
+                  },
+                  "label": {
+                    "description": "Label is the column heading; empty derives one from the field.",
+                    "type": "string"
+                  },
+                  "measure": {
+                    "$ref": "#/$defs/Measure",
+                    "description": "Measure aggregates a field."
+                  },
+                  "transform": {
+                    "$ref": "#/$defs/Transform",
+                    "description": "Transform rewrites the column's value in SQL."
+                  },
+                  "window": {
+                    "$ref": "#/$defs/Window",
+                    "description": "Window computes the column across the grouped rows."
+                  }
+                },
+                "required": [
+                  "id"
+                ],
+                "type": "object"
+              },
+              "Count": {
+                "description": "Count is a whole number or the name of an int parameter that supplies it. It encodes as a number, or as {\"param\": \"name\"}.",
+                "oneOf": [
+                  {
+                    "minimum": 0,
+                    "type": "integer"
+                  },
+                  {
+                    "additionalProperties": false,
+                    "properties": {
+                      "param": {
+                        "description": "The name of the parameter that supplies the value.",
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "param"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              },
+              "DashboardFilter": {
+                "additionalProperties": false,
+                "description": "DashboardFilter is a dashboard-wide condition on a field. It narrows every tile whose report starts from the same entity, without the report declaring anything.",
+                "properties": {
+                  "default": {
+                    "description": "Default is the value used before anyone picks one."
+                  },
+                  "entity": {
+                    "description": "Entity is the entity whose reports the filter narrows.",
+                    "type": "string"
+                  },
+                  "field": {
+                    "description": "Field is the dotted path of the field compared.",
+                    "type": "string"
+                  },
+                  "id": {
+                    "description": "ID names the filter; its value is supplied under this id.",
+                    "type": "string"
+                  },
+                  "label": {
+                    "description": "Label is the filter's heading on the dashboard.",
+                    "type": "string"
+                  },
+                  "op": {
+                    "description": "Op is the comparison.",
+                    "enum": [
+                      "eq",
+                      "ne",
+                      "gt",
+                      "gte",
+                      "lt",
+                      "lte",
+                      "between",
+                      "contains",
+                      "starts_with",
+                      "ends_with",
+                      "like",
+                      "ilike",
+                      "in",
+                      "not_in",
+                      "is_null",
+                      "is_not_null",
+                      "last_n_days",
+                      "next_n_days",
+                      "today",
+                      "yesterday",
+                      "tomorrow",
+                      "this_week",
+                      "last_week",
+                      "this_month",
+                      "last_month",
+                      "this_quarter",
+                      "last_quarter",
+                      "this_year",
+                      "last_year"
+                    ],
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "id",
+                  "entity",
+                  "field",
+                  "op"
+                ],
+                "type": "object"
+              },
+              "Definition": {
+                "additionalProperties": false,
+                "description": "Definition is a report: the entity it starts from, its output columns, filters, layout, parameters and charts.",
+                "properties": {
+                  "charts": {
+                    "description": "Charts draw the output; they never change what is queried.",
+                    "items": {
+                      "$ref": "#/$defs/Chart"
+                    },
+                    "type": "array"
+                  },
+                  "columns": {
+                    "description": "Columns are the report's columns in display order.",
+                    "items": {
+                      "$ref": "#/$defs/Column"
+                    },
+                    "type": "array"
+                  },
+                  "entity": {
+                    "description": "Entity is the catalog key of the entity the report starts from, such as \"shipment\".",
+                    "type": "string"
+                  },
+                  "filters": {
+                    "$ref": "#/$defs/Filter",
+                    "description": "Filters narrow the source rows before grouping."
+                  },
+                  "groupings": {
+                    "$ref": "#/$defs/Groupings",
+                    "description": "Groupings adds subtotal and total rows."
+                  },
+                  "having": {
+                    "$ref": "#/$defs/Filter",
+                    "description": "Having narrows the grouped rows by output columns."
+                  },
+                  "limit": {
+                    "$ref": "#/$defs/Count",
+                    "description": "Limit caps the number of output rows; zero means the runner's limit."
+                  },
+                  "page": {
+                    "$ref": "#/$defs/Page",
+                    "description": "Page asks for one page of the sorted output."
+                  },
+                  "parameters": {
+                    "description": "Parameters are the values the report asks for when it runs.",
+                    "items": {
+                      "$ref": "#/$defs/Parameter"
+                    },
+                    "type": "array"
+                  },
+                  "pivot": {
+                    "$ref": "#/$defs/Pivot",
+                    "description": "Pivot spreads measure columns across the values of a field."
+                  },
+                  "sort": {
+                    "description": "Sort orders the output rows.",
+                    "items": {
+                      "$ref": "#/$defs/Sort"
+                    },
+                    "type": "array"
+                  },
+                  "top": {
+                    "$ref": "#/$defs/Top",
+                    "description": "Top keeps the first N rows per group by a column."
+                  },
+                  "version": {
+                    "const": 2,
+                    "description": "Version is the definition format version; Decode upgrades older versions."
+                  }
+                },
+                "required": [
+                  "version",
+                  "entity",
+                  "columns"
+                ],
+                "type": "object"
+              },
+              "Dimension": {
+                "additionalProperties": false,
+                "description": "Dimension groups the report by a field, optionally bucketed in time or banded into ranges.",
+                "properties": {
+                  "band": {
+                    "$ref": "#/$defs/Band",
+                    "description": "Band groups a number into ranges."
+                  },
+                  "bucket": {
+                    "$ref": "#/$defs/Grain",
+                    "description": "Bucket truncates a date or time to a period, or names a parameter that chooses one."
+                  },
+                  "field": {
+                    "description": "Field is the dotted path of the field, such as \"customer.name\".",
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "field"
+                ],
+                "type": "object"
+              },
+              "Filter": {
+                "additionalProperties": false,
+                "description": "Filter is a node of a filter tree: a group (And or Or, possibly empty) or a condition. A condition compares a subject, which is exactly one of Field, Calc or Column, with Op and a Value or a Param. A Calc with no Op is a condition when the formula is true.",
+                "oneOf": [
+                  {
+                    "maxProperties": 1,
+                    "required": [
+                      "and"
+                    ]
+                  },
+                  {
+                    "maxProperties": 1,
+                    "required": [
+                      "or"
+                    ]
+                  },
+                  {
+                    "not": {
+                      "anyOf": [
+                        {
+                          "required": [
+                            "and"
+                          ]
+                        },
+                        {
+                          "required": [
+                            "or"
+                          ]
+                        }
+                      ]
+                    },
+                    "required": [
+                      "field"
+                    ]
+                  },
+                  {
+                    "not": {
+                      "anyOf": [
+                        {
+                          "required": [
+                            "and"
+                          ]
+                        },
+                        {
+                          "required": [
+                            "or"
+                          ]
+                        }
+                      ]
+                    },
+                    "required": [
+                      "calc"
+                    ]
+                  },
+                  {
+                    "not": {
+                      "anyOf": [
+                        {
+                          "required": [
+                            "and"
+                          ]
+                        },
+                        {
+                          "required": [
+                            "or"
+                          ]
+                        }
+                      ]
+                    },
+                    "required": [
+                      "column"
+                    ]
+                  }
+                ],
+                "properties": {
+                  "and": {
+                    "description": "And holds conditions that must all hold.",
+                    "items": {
+                      "$ref": "#/$defs/Filter"
+                    },
+                    "type": "array"
+                  },
+                  "calc": {
+                    "$ref": "#/$defs/Formula",
+                    "description": "Calc is a row-level formula compared, or a boolean formula used as the condition."
+                  },
+                  "column": {
+                    "description": "Column is the output column compared; in Having, or a row-level column in Filters.",
+                    "type": "string"
+                  },
+                  "field": {
+                    "description": "Field is the dotted path of the field compared.",
+                    "type": "string"
+                  },
+                  "op": {
+                    "description": "Op is the comparison.",
+                    "enum": [
+                      "eq",
+                      "ne",
+                      "gt",
+                      "gte",
+                      "lt",
+                      "lte",
+                      "between",
+                      "contains",
+                      "starts_with",
+                      "ends_with",
+                      "like",
+                      "ilike",
+                      "in",
+                      "not_in",
+                      "is_null",
+                      "is_not_null",
+                      "last_n_days",
+                      "next_n_days",
+                      "today",
+                      "yesterday",
+                      "tomorrow",
+                      "this_week",
+                      "last_week",
+                      "this_month",
+                      "last_month",
+                      "this_quarter",
+                      "last_quarter",
+                      "this_year",
+                      "last_year"
+                    ],
+                    "type": "string"
+                  },
+                  "or": {
+                    "description": "Or holds conditions of which one must hold.",
+                    "items": {
+                      "$ref": "#/$defs/Filter"
+                    },
+                    "type": "array"
+                  },
+                  "param": {
+                    "description": "Param names the parameter that supplies the value instead.",
+                    "type": "string"
+                  },
+                  "transform": {
+                    "$ref": "#/$defs/Transform",
+                    "description": "Transform rewrites the subject before it is compared."
+                  },
+                  "value": {
+                    "description": "Value is the value compared with: a scalar, a list for in and not_in, [from, to] for between, a day count for last_n_days and next_n_days."
+                  }
+                },
+                "type": "object"
+              },
+              "Formula": {
+                "description": "Expr is a formula as it appears in a report definition: text a person typed, or an AST a structured editor built. It encodes in the form it was given: a JSON string for text, an object for an AST.",
+                "oneOf": [
+                  {
+                    "description": "Formula text.",
+                    "type": "string"
+                  },
+                  {
+                    "$ref": "#/$defs/FormulaNode"
+                  }
+                ]
+              },
+              "FormulaNode": {
+                "description": "Node is one node of a formula AST. Kind decides which other fields are set; in JSON a node is an object keyed by its kind, such as {\"column\": \"revenue\"} or {\"call\": \"round\", \"args\": […]}.",
+                "oneOf": [
+                  {
+                    "additionalProperties": false,
+                    "properties": {
+                      "number": {
+                        "pattern": "^(0|[1-9][0-9]*)(\\.[0-9]+)?$",
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "number"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "additionalProperties": false,
+                    "properties": {
+                      "string": {
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "string"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "additionalProperties": false,
+                    "properties": {
+                      "bool": {
+                        "type": "boolean"
+                      }
+                    },
+                    "required": [
+                      "bool"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "additionalProperties": false,
+                    "properties": {
+                      "null": {
+                        "const": true
+                      }
+                    },
+                    "required": [
+                      "null"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "additionalProperties": false,
+                    "properties": {
+                      "date": {
+                        "format": "date",
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "date"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "additionalProperties": false,
+                    "properties": {
+                      "timestamp": {
+                        "format": "date-time",
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "timestamp"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "additionalProperties": false,
+                    "properties": {
+                      "column": {
+                        "pattern": "^[A-Za-z0-9_]+$",
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "column"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "additionalProperties": false,
+                    "properties": {
+                      "field": {
+                        "pattern": "^[A-Za-z_][A-Za-z0-9_]*(\\.[A-Za-z_][A-Za-z0-9_]*)*$",
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "field"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "additionalProperties": false,
+                    "properties": {
+                      "param": {
+                        "pattern": "^[A-Za-z_][A-Za-z0-9_]*$",
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "param"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "additionalProperties": false,
+                    "properties": {
+                      "args": {
+                        "items": {
+                          "$ref": "#/$defs/FormulaNode"
+                        },
+                        "maxItems": 2,
+                        "minItems": 1,
+                        "type": "array"
+                      },
+                      "op": {
+                        "enum": [
+                          "or",
+                          "and",
+                          "not",
+                          "=",
+                          "!=",
+                          "<",
+                          "<=",
+                          ">",
+                          ">=",
+                          "is null",
+                          "is not null",
+                          "||",
+                          "+",
+                          "-",
+                          "*",
+                          "/",
+                          "%"
+                        ],
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "args",
+                      "op"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "additionalProperties": false,
+                    "properties": {
+                      "args": {
+                        "items": {
+                          "$ref": "#/$defs/FormulaNode"
+                        },
+                        "type": "array"
+                      },
+                      "call": {
+                        "enum": [
+                          "if",
+                          "coalesce",
+                          "nullif",
+                          "round",
+                          "trunc",
+                          "floor",
+                          "ceil",
+                          "abs",
+                          "greatest",
+                          "least",
+                          "concat",
+                          "lower",
+                          "upper",
+                          "trim",
+                          "length",
+                          "date_trunc",
+                          "date_diff",
+                          "extract",
+                          "now",
+                          "today",
+                          "count",
+                          "count_distinct",
+                          "sum",
+                          "avg",
+                          "min",
+                          "max"
+                        ],
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "args",
+                      "call"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "additionalProperties": false,
+                    "properties": {
+                      "case": {
+                        "additionalProperties": false,
+                        "properties": {
+                          "else": {
+                            "$ref": "#/$defs/FormulaNode"
+                          },
+                          "subject": {
+                            "$ref": "#/$defs/FormulaNode"
+                          },
+                          "when": {
+                            "items": {
+                              "additionalProperties": false,
+                              "properties": {
+                                "if": {
+                                  "$ref": "#/$defs/FormulaNode"
+                                },
+                                "then": {
+                                  "$ref": "#/$defs/FormulaNode"
+                                }
+                              },
+                              "required": [
+                                "if",
+                                "then"
+                              ],
+                              "type": "object"
+                            },
+                            "minItems": 1,
+                            "type": "array"
+                          }
+                        },
+                        "required": [
+                          "when"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "case"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              },
+              "Goal": {
+                "additionalProperties": false,
+                "description": "Goal is a chart target: a fixed number or a value column.",
+                "properties": {
+                  "column": {
+                    "description": "Column is a value column holding the target.",
+                    "type": "string"
+                  },
+                  "label": {
+                    "description": "Label names the target.",
+                    "type": "string"
+                  },
+                  "value": {
+                    "description": "Value is a fixed target.",
+                    "type": "number"
+                  }
+                },
+                "type": "object"
+              },
+              "Grain": {
+                "description": "Grain is a bucket, or the name of a string parameter that chooses one when the report runs. It encodes as \"month\", or as {\"param\": \"name\"}.",
+                "oneOf": [
+                  {
+                    "enum": [
+                      "hour",
+                      "day",
+                      "week",
+                      "month",
+                      "quarter",
+                      "year"
+                    ],
+                    "type": "string"
+                  },
+                  {
+                    "additionalProperties": false,
+                    "properties": {
+                      "param": {
+                        "description": "The name of the parameter that supplies the value.",
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "param"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              },
+              "Groupings": {
+                "additionalProperties": false,
+                "description": "Groupings adds subtotal rows and a grand total row, computed in the same statement as the rows.",
+                "properties": {
+                  "subtotals": {
+                    "description": "Subtotals lists dimension columns; each adds rows grouped by that column and every dimension column before it.",
+                    "items": {
+                      "type": "string"
+                    },
+                    "type": "array"
+                  },
+                  "total": {
+                    "description": "Total adds a grand total row.",
+                    "type": "boolean"
+                  }
+                },
+                "type": "object"
+              },
+              "Measure": {
+                "additionalProperties": false,
+                "description": "Measure aggregates a field over each group, optionally over a subset of its rows.",
+                "properties": {
+                  "agg": {
+                    "description": "Agg is the aggregation.",
+                    "enum": [
+                      "count",
+                      "count_distinct",
+                      "sum",
+                      "avg",
+                      "min",
+                      "max"
+                    ],
+                    "type": "string"
+                  },
+                  "field": {
+                    "description": "Field is the dotted path of the aggregated field; empty counts rows.",
+                    "type": "string"
+                  },
+                  "filter": {
+                    "$ref": "#/$defs/Filter",
+                    "description": "Filter narrows the rows this measure aggregates without narrowing the report."
+                  }
+                },
+                "required": [
+                  "agg"
+                ],
+                "type": "object"
+              },
+              "Page": {
+                "additionalProperties": false,
+                "description": "Page asks for one page of the sorted output with keyset paging.",
+                "properties": {
+                  "after": {
+                    "description": "After is the opaque cursor of the previous page's last row.",
+                    "type": "string"
+                  },
+                  "size": {
+                    "description": "Size is the number of rows in the page.",
+                    "type": "integer"
+                  }
+                },
+                "required": [
+                  "size"
+                ],
+                "type": "object"
+              },
+              "Parameter": {
+                "additionalProperties": false,
+                "description": "Parameter is a value the report asks for when it runs.",
+                "properties": {
+                  "allowed": {
+                    "description": "Allowed restricts the values that can be given.",
+                    "items": {},
+                    "type": "array"
+                  },
+                  "default": {
+                    "description": "Default is used when no value is given; a list when Multi."
+                  },
+                  "entity": {
+                    "description": "Entity is the catalog key of the entity a ref parameter points at.",
+                    "type": "string"
+                  },
+                  "label": {
+                    "description": "Label is the prompt shown to the person running the report.",
+                    "type": "string"
+                  },
+                  "multi": {
+                    "description": "Multi takes a list of values.",
+                    "type": "boolean"
+                  },
+                  "name": {
+                    "description": "Name is how filters, formulas and settings reference the parameter.",
+                    "type": "string"
+                  },
+                  "required": {
+                    "description": "Required refuses to run without a value or a default.",
+                    "type": "boolean"
+                  },
+                  "type": {
+                    "description": "Type is the value type.",
+                    "enum": [
+                      "string",
+                      "int",
+                      "decimal",
+                      "float",
+                      "bool",
+                      "date",
+                      "timestamp",
+                      "epoch",
+                      "enum",
+                      "ref",
+                      "json"
+                    ],
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "name",
+                  "type"
+                ],
+                "type": "object"
+              },
+              "Pivot": {
+                "additionalProperties": false,
+                "description": "Pivot spreads measure columns into one column per value of a field.",
+                "properties": {
+                  "columns": {
+                    "description": "Columns are the measure columns to spread.",
+                    "items": {
+                      "type": "string"
+                    },
+                    "type": "array"
+                  },
+                  "field": {
+                    "description": "Field is the dotted path of the field whose values become columns.",
+                    "type": "string"
+                  },
+                  "labels": {
+                    "description": "Labels are column headings for listed values, in the same order.",
+                    "items": {
+                      "type": "string"
+                    },
+                    "type": "array"
+                  },
+                  "other": {
+                    "description": "Other adds a column for every value not listed or discovered, nulls included.",
+                    "type": "boolean"
+                  },
+                  "top": {
+                    "$ref": "#/$defs/PivotTop",
+                    "description": "Top discovers the values when the report runs: the first N by a measure."
+                  },
+                  "values": {
+                    "$ref": "#/$defs/Values",
+                    "description": "Values lists the values to spread, or names a multi-value parameter."
+                  }
+                },
+                "required": [
+                  "field",
+                  "columns"
+                ],
+                "type": "object"
+              },
+              "PivotTop": {
+                "additionalProperties": false,
+                "description": "PivotTop discovers pivot values: the N values with the largest measure.",
+                "properties": {
+                  "by": {
+                    "description": "By is the measure column that ranks the values.",
+                    "type": "string"
+                  },
+                  "n": {
+                    "$ref": "#/$defs/Count",
+                    "description": "N is how many values to discover, or a parameter."
+                  }
+                },
+                "required": [
+                  "n",
+                  "by"
+                ],
+                "type": "object"
+              },
+              "Sort": {
+                "additionalProperties": false,
+                "description": "Sort orders the output by a column.",
+                "properties": {
+                  "column": {
+                    "description": "Column is an output column id, or a pivot cell \"column:value\".",
+                    "type": "string"
+                  },
+                  "desc": {
+                    "description": "Desc sorts largest first.",
+                    "type": "boolean"
+                  }
+                },
+                "required": [
+                  "column"
+                ],
+                "type": "object"
+              },
+              "Top": {
+                "additionalProperties": false,
+                "description": "Top keeps the first N rows of each group, ranked by a column.",
+                "properties": {
+                  "bottom": {
+                    "description": "Bottom keeps the smallest values instead of the largest.",
+                    "type": "boolean"
+                  },
+                  "by": {
+                    "description": "By is the column that ranks the rows.",
+                    "type": "string"
+                  },
+                  "n": {
+                    "$ref": "#/$defs/Count",
+                    "description": "N is how many rows to keep, or a parameter."
+                  },
+                  "per": {
+                    "description": "Per lists the dimension columns that form the groups; empty ranks the whole result.",
+                    "items": {
+                      "type": "string"
+                    },
+                    "type": "array"
+                  }
+                },
+                "required": [
+                  "n",
+                  "by"
+                ],
+                "type": "object"
+              },
+              "Transform": {
+                "additionalProperties": false,
+                "description": "Transform rewrites a value in SQL, so exports, sorting and filters see the rewritten value.",
+                "properties": {
+                  "factor": {
+                    "description": "Factor is the multiplier for scale.",
+                    "type": "number"
+                  },
+                  "op": {
+                    "description": "Op is the transform.",
+                    "enum": [
+                      "round",
+                      "ceil",
+                      "floor",
+                      "truncate",
+                      "abs",
+                      "scale",
+                      "upper",
+                      "lower",
+                      "title",
+                      "trim"
+                    ],
+                    "type": "string"
+                  },
+                  "precision": {
+                    "description": "Precision is the number of decimal places for round, ceil, floor and truncate.",
+                    "type": "integer"
                   }
                 },
                 "required": [
@@ -39304,98 +41134,89 @@
                 ],
                 "type": "object"
               },
-              "having": {
-                "description": "Filters over aggregated measures, the same shape as filters.",
-                "type": "object"
-              },
-              "limit": {
-                "description": "The most rows a run returns; 0 or left out returns as many as a report may.",
-                "maximum": 100000,
-                "minimum": 0,
-                "type": "integer",
-                "x-clamp": true
-              },
-              "parameters": {
-                "description": "Values asked for at run time and bound to filters by param.",
-                "items": {
-                  "additionalProperties": false,
-                  "properties": {
-                    "allowedValues": {
-                      "items": {
+              "Values": {
+                "description": "Values is a list of values or the name of a multi-value parameter that supplies them. It encodes as an array, or as {\"param\": \"name\"}.",
+                "oneOf": [
+                  {
+                    "items": {
+                      "type": "string"
+                    },
+                    "type": "array"
+                  },
+                  {
+                    "additionalProperties": false,
+                    "properties": {
+                      "param": {
+                        "description": "The name of the parameter that supplies the value.",
                         "type": "string"
-                      },
-                      "type": "array"
+                      }
                     },
-                    "default": {},
-                    "label": {
-                      "type": "string"
-                    },
-                    "multi": {
-                      "type": "boolean"
-                    },
-                    "name": {
-                      "type": "string"
-                    },
-                    "refEntity": {
-                      "type": "string"
-                    },
-                    "required": {
-                      "type": "boolean"
-                    },
-                    "type": {
-                      "enum": [
-                        "string",
-                        "int",
-                        "decimal",
-                        "bool",
-                        "enum",
-                        "epoch",
-                        "ref"
-                      ],
-                      "type": "string"
-                    }
-                  },
-                  "required": [
-                    "name",
-                    "type"
-                  ],
-                  "type": "object"
-                },
-                "type": "array"
+                    "required": [
+                      "param"
+                    ],
+                    "type": "object"
+                  }
+                ]
               },
-              "sort": {
-                "items": {
-                  "additionalProperties": false,
-                  "properties": {
-                    "columnId": {
-                      "description": "The id of one of this definition's columns, or of a column report_get lists.",
+              "Window": {
+                "additionalProperties": false,
+                "description": "Window computes a value across the grouped rows from another column.",
+                "properties": {
+                  "desc": {
+                    "description": "Desc ranks the largest value first.",
+                    "type": "boolean"
+                  },
+                  "fn": {
+                    "description": "Fn is the window function.",
+                    "enum": [
+                      "running_total",
+                      "percent_of_total",
+                      "rank",
+                      "dense_rank",
+                      "moving_avg",
+                      "change",
+                      "percent_change",
+                      "first",
+                      "last"
+                    ],
+                    "type": "string"
+                  },
+                  "of": {
+                    "description": "Of is the column the window reads.",
+                    "type": "string"
+                  },
+                  "offset": {
+                    "description": "Offset is how many rows back change and percent_change compare with; zero means one.",
+                    "type": "integer"
+                  },
+                  "over": {
+                    "description": "Over is the column that orders the rows, for running, moving, change and first/last.",
+                    "type": "string"
+                  },
+                  "partition": {
+                    "description": "Partition restarts the window for each combination of these dimension columns.",
+                    "items": {
                       "type": "string"
                     },
-                    "direction": {
-                      "enum": [
-                        "asc",
-                        "desc"
-                      ],
-                      "type": "string"
-                    }
+                    "type": "array"
                   },
-                  "required": [
-                    "columnId",
-                    "direction"
-                  ],
-                  "type": "object"
+                  "size": {
+                    "description": "Size is the number of rows a moving average spans.",
+                    "type": "integer"
+                  }
                 },
-                "type": "array"
-              },
-              "totals": {
-                "type": "boolean"
+                "required": [
+                  "of",
+                  "fn"
+                ],
+                "type": "object"
               }
             },
-            "required": [
-              "entity",
-              "columns"
-            ],
-            "type": "object"
+            "$id": "https://github.com/emoss08/keel/analytics/ir/definition.schema.json",
+            "$ref": "#/$defs/Definition",
+            "$schema": "https://json-schema.org/draft/2020-12/schema",
+            "description": "A report in keel analytics IR version 2, whole: its entity, columns, filters and sort all go here and nowhere else. Fields are dotted paths from the entity, such as customer.name. A dimension column groups, a measure column aggregates, and a report with only dimensions lists rows.",
+            "title": "Definition"
           },
           "definitionId": {
             "description": "Preview a saved report from report_list instead of a definition.",
@@ -39700,187 +41521,1064 @@
             "x-enumOf": "report.format"
           },
           "definition": {
-            "additionalProperties": true,
-            "description": "A report as the report builder saves it, whole: its dataset, columns, filters and sort all go here and nowhere else. Grouping is implied: a dimension column groups, a measure column aggregates. A report with only dimensions lists rows.",
-            "properties": {
-              "charts": {
-                "description": "Optional: {id, type: bar|hbar|line|area|pie|donut|scatter|kpi, title, xColumnId, seriesIds}.",
-                "items": {
-                  "type": "object"
-                },
-                "type": "array"
-              },
-              "columns": {
-                "items": {
-                  "additionalProperties": true,
-                  "properties": {
-                    "agg": {
-                      "description": "Required for a measure; the field must support it.",
-                      "enum": [
-                        "count",
-                        "count_distinct",
-                        "sum",
-                        "avg",
-                        "min",
-                        "max"
-                      ],
-                      "type": "string"
-                    },
-                    "bucket": {
-                      "description": "Groups a date dimension by period.",
-                      "enum": [
-                        "day",
-                        "week",
-                        "month",
-                        "quarter",
-                        "year"
-                      ],
-                      "type": "string"
-                    },
-                    "computed": {
-                      "description": "For kind computed: {op: add|subtract|multiply|divide, leftId, rightId} over two other column ids, or leftValue/rightValue for a constant.",
-                      "type": "object"
-                    },
-                    "id": {
-                      "description": "Your own short unique id for the column, such as c1.",
-                      "type": "string"
-                    },
-                    "kind": {
-                      "enum": [
-                        "dimension",
-                        "measure",
-                        "computed"
-                      ],
-                      "type": "string"
-                    },
-                    "label": {
-                      "type": "string"
-                    },
-                    "ref": {
-                      "additionalProperties": false,
-                      "description": "A field on the dataset, or on a related dataset reached along edges: {\"field\": \"name\"} for the dataset's own field, {\"path\": [\"customer\"], \"field\": \"name\"} for a field one edge away. Edge names and field keys come from report_get_dataset.",
-                      "properties": {
-                        "field": {
-                          "type": "string"
-                        },
-                        "path": {
-                          "items": {
-                            "type": "string"
-                          },
-                          "type": "array"
-                        }
-                      },
-                      "required": [
-                        "field"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "id",
-                    "kind",
-                    "ref"
-                  ],
-                  "type": "object"
-                },
-                "type": "array"
-              },
-              "entity": {
-                "description": "The dataset key from report_list_datasets, such as shipment.",
-                "type": "string"
-              },
-              "filters": {
+            "$defs": {
+              "Band": {
                 "additionalProperties": false,
-                "description": "An object, not a list: {\"op\": \"and\", \"filters\": [conditions]}. For workers whose driver type is OTR: {\"op\": \"and\", \"filters\": [{\"ref\": {\"field\": \"driverType\"}, \"operator\": \"eq\", \"value\": \"OTR\"}]}. For one related record whose id you know, compare the dataset's own reference key with it, {\"field\": \"customerId\"}, not the record's name. Leave it out for no filter.",
+                "description": "Band groups a number into ranges: a fixed width, or ascending boundaries where the last range is open-ended. A grouped value is the lower bound of its range.",
                 "properties": {
-                  "filters": {
+                  "edges": {
+                    "description": "Edges are ascending range boundaries.",
                     "items": {
-                      "additionalProperties": false,
-                      "properties": {
-                        "agg": {
-                          "description": "Only inside having: the aggregation to filter on.",
-                          "type": "string"
-                        },
-                        "operator": {
-                          "enum": [
-                            "eq",
-                            "ne",
-                            "gt",
-                            "gte",
-                            "lt",
-                            "lte",
-                            "contains",
-                            "startswith",
-                            "endswith",
-                            "in",
-                            "notin",
-                            "isnull",
-                            "isnotnull",
-                            "daterange",
-                            "lastndays",
-                            "nextndays",
-                            "today",
-                            "yesterday",
-                            "tomorrow",
-                            "thisweek",
-                            "lastweek",
-                            "thismonth",
-                            "lastmonth",
-                            "thisquarter",
-                            "lastquarter",
-                            "thisyear",
-                            "lastyear"
-                          ],
-                          "type": "string"
-                        },
-                        "param": {
-                          "description": "Bind the value to a parameter by name instead of fixing it.",
-                          "type": "string"
-                        },
-                        "ref": {
-                          "additionalProperties": false,
-                          "description": "A field on the dataset, or on a related dataset reached along edges: {\"field\": \"name\"} for the dataset's own field, {\"path\": [\"customer\"], \"field\": \"name\"} for a field one edge away. Edge names and field keys come from report_get_dataset.",
-                          "properties": {
-                            "field": {
-                              "type": "string"
-                            },
-                            "path": {
-                              "items": {
-                                "type": "string"
-                              },
-                              "type": "array"
-                            }
-                          },
-                          "required": [
-                            "field"
-                          ],
-                          "type": "object"
-                        },
-                        "value": {
-                          "description": "The value to compare with: a scalar, a list for in and notin, a number of days for lastndays and nextndays, [from, to] epoch seconds for daterange. Omit when param is set."
-                        }
-                      },
-                      "required": [
-                        "ref",
-                        "operator"
-                      ],
-                      "type": "object"
+                      "type": "number"
                     },
                     "type": "array"
                   },
-                  "groups": {
-                    "description": "Nested groups, each the same shape as this one.",
+                  "width": {
+                    "description": "Width is the size of every range.",
+                    "type": "number"
+                  }
+                },
+                "type": "object"
+              },
+              "Chart": {
+                "additionalProperties": false,
+                "description": "Chart draws columns the report already returns.",
+                "properties": {
+                  "compare": {
+                    "description": "Compare is the value column a KPI tile compares with.",
+                    "type": "string"
+                  },
+                  "curved": {
+                    "description": "Curved smooths lines.",
+                    "type": "boolean"
+                  },
+                  "goal": {
+                    "$ref": "#/$defs/Goal",
+                    "description": "Goal draws a target line or a KPI target."
+                  },
+                  "hideLegend": {
+                    "description": "HideLegend hides the legend.",
+                    "type": "boolean"
+                  },
+                  "id": {
+                    "description": "ID names the chart.",
+                    "type": "string"
+                  },
+                  "lat": {
+                    "description": "Lat is the latitude column of a map.",
+                    "type": "string"
+                  },
+                  "limit": {
+                    "description": "Limit caps the categories drawn; zero draws all.",
+                    "type": "integer"
+                  },
+                  "lng": {
+                    "description": "Lng is the longitude column of a map.",
+                    "type": "string"
+                  },
+                  "pointLabel": {
+                    "description": "PointLabel names each point of a map; empty uses the first dimension.",
+                    "type": "string"
+                  },
+                  "series": {
+                    "description": "Series are the value columns drawn.",
                     "items": {
-                      "type": "object"
+                      "type": "string"
                     },
                     "type": "array"
                   },
-                  "op": {
+                  "showValues": {
+                    "description": "ShowValues labels each mark with its value.",
+                    "type": "boolean"
+                  },
+                  "stacked": {
+                    "description": "Stacked stacks the series.",
+                    "type": "boolean"
+                  },
+                  "title": {
+                    "description": "Title is the chart heading.",
+                    "type": "string"
+                  },
+                  "type": {
+                    "description": "Type is the visual encoding.",
                     "enum": [
-                      "and",
-                      "or"
+                      "bar",
+                      "hbar",
+                      "line",
+                      "area",
+                      "pie",
+                      "donut",
+                      "scatter",
+                      "kpi",
+                      "map"
                     ],
                     "type": "string"
+                  },
+                  "x": {
+                    "description": "X is the dimension column on the category axis, or the measure on a scatter plot's x axis.",
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "id",
+                  "type"
+                ],
+                "type": "object"
+              },
+              "Column": {
+                "additionalProperties": false,
+                "description": "Column is one column of a report: exactly one of a dimension, a measure, a calculation or a window over another column.",
+                "properties": {
+                  "calc": {
+                    "$ref": "#/$defs/Formula",
+                    "description": "Calc computes the column from a formula over other columns, fields and parameters."
+                  },
+                  "dimension": {
+                    "$ref": "#/$defs/Dimension",
+                    "description": "Dimension groups by a field."
+                  },
+                  "display": {
+                    "description": "Display is the author's display spec, an object of the analytics/format package.",
+                    "type": "object"
+                  },
+                  "format": {
+                    "description": "Format is a format hint for the display spec, such as \"money\" or \"percent\".",
+                    "type": "string"
+                  },
+                  "hidden": {
+                    "description": "Hidden computes the column for other columns, having or sort without returning it.",
+                    "type": "boolean"
+                  },
+                  "id": {
+                    "description": "ID names the column in formulas, sort, charts and output; letters, digits and underscores.",
+                    "type": "string"
+                  },
+                  "label": {
+                    "description": "Label is the column heading; empty derives one from the field.",
+                    "type": "string"
+                  },
+                  "measure": {
+                    "$ref": "#/$defs/Measure",
+                    "description": "Measure aggregates a field."
+                  },
+                  "transform": {
+                    "$ref": "#/$defs/Transform",
+                    "description": "Transform rewrites the column's value in SQL."
+                  },
+                  "window": {
+                    "$ref": "#/$defs/Window",
+                    "description": "Window computes the column across the grouped rows."
+                  }
+                },
+                "required": [
+                  "id"
+                ],
+                "type": "object"
+              },
+              "Count": {
+                "description": "Count is a whole number or the name of an int parameter that supplies it. It encodes as a number, or as {\"param\": \"name\"}.",
+                "oneOf": [
+                  {
+                    "minimum": 0,
+                    "type": "integer"
+                  },
+                  {
+                    "additionalProperties": false,
+                    "properties": {
+                      "param": {
+                        "description": "The name of the parameter that supplies the value.",
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "param"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              },
+              "DashboardFilter": {
+                "additionalProperties": false,
+                "description": "DashboardFilter is a dashboard-wide condition on a field. It narrows every tile whose report starts from the same entity, without the report declaring anything.",
+                "properties": {
+                  "default": {
+                    "description": "Default is the value used before anyone picks one."
+                  },
+                  "entity": {
+                    "description": "Entity is the entity whose reports the filter narrows.",
+                    "type": "string"
+                  },
+                  "field": {
+                    "description": "Field is the dotted path of the field compared.",
+                    "type": "string"
+                  },
+                  "id": {
+                    "description": "ID names the filter; its value is supplied under this id.",
+                    "type": "string"
+                  },
+                  "label": {
+                    "description": "Label is the filter's heading on the dashboard.",
+                    "type": "string"
+                  },
+                  "op": {
+                    "description": "Op is the comparison.",
+                    "enum": [
+                      "eq",
+                      "ne",
+                      "gt",
+                      "gte",
+                      "lt",
+                      "lte",
+                      "between",
+                      "contains",
+                      "starts_with",
+                      "ends_with",
+                      "like",
+                      "ilike",
+                      "in",
+                      "not_in",
+                      "is_null",
+                      "is_not_null",
+                      "last_n_days",
+                      "next_n_days",
+                      "today",
+                      "yesterday",
+                      "tomorrow",
+                      "this_week",
+                      "last_week",
+                      "this_month",
+                      "last_month",
+                      "this_quarter",
+                      "last_quarter",
+                      "this_year",
+                      "last_year"
+                    ],
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "id",
+                  "entity",
+                  "field",
+                  "op"
+                ],
+                "type": "object"
+              },
+              "Definition": {
+                "additionalProperties": false,
+                "description": "Definition is a report: the entity it starts from, its output columns, filters, layout, parameters and charts.",
+                "properties": {
+                  "charts": {
+                    "description": "Charts draw the output; they never change what is queried.",
+                    "items": {
+                      "$ref": "#/$defs/Chart"
+                    },
+                    "type": "array"
+                  },
+                  "columns": {
+                    "description": "Columns are the report's columns in display order.",
+                    "items": {
+                      "$ref": "#/$defs/Column"
+                    },
+                    "type": "array"
+                  },
+                  "entity": {
+                    "description": "Entity is the catalog key of the entity the report starts from, such as \"shipment\".",
+                    "type": "string"
+                  },
+                  "filters": {
+                    "$ref": "#/$defs/Filter",
+                    "description": "Filters narrow the source rows before grouping."
+                  },
+                  "groupings": {
+                    "$ref": "#/$defs/Groupings",
+                    "description": "Groupings adds subtotal and total rows."
+                  },
+                  "having": {
+                    "$ref": "#/$defs/Filter",
+                    "description": "Having narrows the grouped rows by output columns."
+                  },
+                  "limit": {
+                    "$ref": "#/$defs/Count",
+                    "description": "Limit caps the number of output rows; zero means the runner's limit."
+                  },
+                  "page": {
+                    "$ref": "#/$defs/Page",
+                    "description": "Page asks for one page of the sorted output."
+                  },
+                  "parameters": {
+                    "description": "Parameters are the values the report asks for when it runs.",
+                    "items": {
+                      "$ref": "#/$defs/Parameter"
+                    },
+                    "type": "array"
+                  },
+                  "pivot": {
+                    "$ref": "#/$defs/Pivot",
+                    "description": "Pivot spreads measure columns across the values of a field."
+                  },
+                  "sort": {
+                    "description": "Sort orders the output rows.",
+                    "items": {
+                      "$ref": "#/$defs/Sort"
+                    },
+                    "type": "array"
+                  },
+                  "top": {
+                    "$ref": "#/$defs/Top",
+                    "description": "Top keeps the first N rows per group by a column."
+                  },
+                  "version": {
+                    "const": 2,
+                    "description": "Version is the definition format version; Decode upgrades older versions."
+                  }
+                },
+                "required": [
+                  "version",
+                  "entity",
+                  "columns"
+                ],
+                "type": "object"
+              },
+              "Dimension": {
+                "additionalProperties": false,
+                "description": "Dimension groups the report by a field, optionally bucketed in time or banded into ranges.",
+                "properties": {
+                  "band": {
+                    "$ref": "#/$defs/Band",
+                    "description": "Band groups a number into ranges."
+                  },
+                  "bucket": {
+                    "$ref": "#/$defs/Grain",
+                    "description": "Bucket truncates a date or time to a period, or names a parameter that chooses one."
+                  },
+                  "field": {
+                    "description": "Field is the dotted path of the field, such as \"customer.name\".",
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "field"
+                ],
+                "type": "object"
+              },
+              "Filter": {
+                "additionalProperties": false,
+                "description": "Filter is a node of a filter tree: a group (And or Or, possibly empty) or a condition. A condition compares a subject, which is exactly one of Field, Calc or Column, with Op and a Value or a Param. A Calc with no Op is a condition when the formula is true.",
+                "oneOf": [
+                  {
+                    "maxProperties": 1,
+                    "required": [
+                      "and"
+                    ]
+                  },
+                  {
+                    "maxProperties": 1,
+                    "required": [
+                      "or"
+                    ]
+                  },
+                  {
+                    "not": {
+                      "anyOf": [
+                        {
+                          "required": [
+                            "and"
+                          ]
+                        },
+                        {
+                          "required": [
+                            "or"
+                          ]
+                        }
+                      ]
+                    },
+                    "required": [
+                      "field"
+                    ]
+                  },
+                  {
+                    "not": {
+                      "anyOf": [
+                        {
+                          "required": [
+                            "and"
+                          ]
+                        },
+                        {
+                          "required": [
+                            "or"
+                          ]
+                        }
+                      ]
+                    },
+                    "required": [
+                      "calc"
+                    ]
+                  },
+                  {
+                    "not": {
+                      "anyOf": [
+                        {
+                          "required": [
+                            "and"
+                          ]
+                        },
+                        {
+                          "required": [
+                            "or"
+                          ]
+                        }
+                      ]
+                    },
+                    "required": [
+                      "column"
+                    ]
+                  }
+                ],
+                "properties": {
+                  "and": {
+                    "description": "And holds conditions that must all hold.",
+                    "items": {
+                      "$ref": "#/$defs/Filter"
+                    },
+                    "type": "array"
+                  },
+                  "calc": {
+                    "$ref": "#/$defs/Formula",
+                    "description": "Calc is a row-level formula compared, or a boolean formula used as the condition."
+                  },
+                  "column": {
+                    "description": "Column is the output column compared; in Having, or a row-level column in Filters.",
+                    "type": "string"
+                  },
+                  "field": {
+                    "description": "Field is the dotted path of the field compared.",
+                    "type": "string"
+                  },
+                  "op": {
+                    "description": "Op is the comparison.",
+                    "enum": [
+                      "eq",
+                      "ne",
+                      "gt",
+                      "gte",
+                      "lt",
+                      "lte",
+                      "between",
+                      "contains",
+                      "starts_with",
+                      "ends_with",
+                      "like",
+                      "ilike",
+                      "in",
+                      "not_in",
+                      "is_null",
+                      "is_not_null",
+                      "last_n_days",
+                      "next_n_days",
+                      "today",
+                      "yesterday",
+                      "tomorrow",
+                      "this_week",
+                      "last_week",
+                      "this_month",
+                      "last_month",
+                      "this_quarter",
+                      "last_quarter",
+                      "this_year",
+                      "last_year"
+                    ],
+                    "type": "string"
+                  },
+                  "or": {
+                    "description": "Or holds conditions of which one must hold.",
+                    "items": {
+                      "$ref": "#/$defs/Filter"
+                    },
+                    "type": "array"
+                  },
+                  "param": {
+                    "description": "Param names the parameter that supplies the value instead.",
+                    "type": "string"
+                  },
+                  "transform": {
+                    "$ref": "#/$defs/Transform",
+                    "description": "Transform rewrites the subject before it is compared."
+                  },
+                  "value": {
+                    "description": "Value is the value compared with: a scalar, a list for in and not_in, [from, to] for between, a day count for last_n_days and next_n_days."
+                  }
+                },
+                "type": "object"
+              },
+              "Formula": {
+                "description": "Expr is a formula as it appears in a report definition: text a person typed, or an AST a structured editor built. It encodes in the form it was given: a JSON string for text, an object for an AST.",
+                "oneOf": [
+                  {
+                    "description": "Formula text.",
+                    "type": "string"
+                  },
+                  {
+                    "$ref": "#/$defs/FormulaNode"
+                  }
+                ]
+              },
+              "FormulaNode": {
+                "description": "Node is one node of a formula AST. Kind decides which other fields are set; in JSON a node is an object keyed by its kind, such as {\"column\": \"revenue\"} or {\"call\": \"round\", \"args\": […]}.",
+                "oneOf": [
+                  {
+                    "additionalProperties": false,
+                    "properties": {
+                      "number": {
+                        "pattern": "^(0|[1-9][0-9]*)(\\.[0-9]+)?$",
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "number"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "additionalProperties": false,
+                    "properties": {
+                      "string": {
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "string"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "additionalProperties": false,
+                    "properties": {
+                      "bool": {
+                        "type": "boolean"
+                      }
+                    },
+                    "required": [
+                      "bool"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "additionalProperties": false,
+                    "properties": {
+                      "null": {
+                        "const": true
+                      }
+                    },
+                    "required": [
+                      "null"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "additionalProperties": false,
+                    "properties": {
+                      "date": {
+                        "format": "date",
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "date"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "additionalProperties": false,
+                    "properties": {
+                      "timestamp": {
+                        "format": "date-time",
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "timestamp"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "additionalProperties": false,
+                    "properties": {
+                      "column": {
+                        "pattern": "^[A-Za-z0-9_]+$",
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "column"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "additionalProperties": false,
+                    "properties": {
+                      "field": {
+                        "pattern": "^[A-Za-z_][A-Za-z0-9_]*(\\.[A-Za-z_][A-Za-z0-9_]*)*$",
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "field"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "additionalProperties": false,
+                    "properties": {
+                      "param": {
+                        "pattern": "^[A-Za-z_][A-Za-z0-9_]*$",
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "param"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "additionalProperties": false,
+                    "properties": {
+                      "args": {
+                        "items": {
+                          "$ref": "#/$defs/FormulaNode"
+                        },
+                        "maxItems": 2,
+                        "minItems": 1,
+                        "type": "array"
+                      },
+                      "op": {
+                        "enum": [
+                          "or",
+                          "and",
+                          "not",
+                          "=",
+                          "!=",
+                          "<",
+                          "<=",
+                          ">",
+                          ">=",
+                          "is null",
+                          "is not null",
+                          "||",
+                          "+",
+                          "-",
+                          "*",
+                          "/",
+                          "%"
+                        ],
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "args",
+                      "op"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "additionalProperties": false,
+                    "properties": {
+                      "args": {
+                        "items": {
+                          "$ref": "#/$defs/FormulaNode"
+                        },
+                        "type": "array"
+                      },
+                      "call": {
+                        "enum": [
+                          "if",
+                          "coalesce",
+                          "nullif",
+                          "round",
+                          "trunc",
+                          "floor",
+                          "ceil",
+                          "abs",
+                          "greatest",
+                          "least",
+                          "concat",
+                          "lower",
+                          "upper",
+                          "trim",
+                          "length",
+                          "date_trunc",
+                          "date_diff",
+                          "extract",
+                          "now",
+                          "today",
+                          "count",
+                          "count_distinct",
+                          "sum",
+                          "avg",
+                          "min",
+                          "max"
+                        ],
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "args",
+                      "call"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "additionalProperties": false,
+                    "properties": {
+                      "case": {
+                        "additionalProperties": false,
+                        "properties": {
+                          "else": {
+                            "$ref": "#/$defs/FormulaNode"
+                          },
+                          "subject": {
+                            "$ref": "#/$defs/FormulaNode"
+                          },
+                          "when": {
+                            "items": {
+                              "additionalProperties": false,
+                              "properties": {
+                                "if": {
+                                  "$ref": "#/$defs/FormulaNode"
+                                },
+                                "then": {
+                                  "$ref": "#/$defs/FormulaNode"
+                                }
+                              },
+                              "required": [
+                                "if",
+                                "then"
+                              ],
+                              "type": "object"
+                            },
+                            "minItems": 1,
+                            "type": "array"
+                          }
+                        },
+                        "required": [
+                          "when"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "case"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              },
+              "Goal": {
+                "additionalProperties": false,
+                "description": "Goal is a chart target: a fixed number or a value column.",
+                "properties": {
+                  "column": {
+                    "description": "Column is a value column holding the target.",
+                    "type": "string"
+                  },
+                  "label": {
+                    "description": "Label names the target.",
+                    "type": "string"
+                  },
+                  "value": {
+                    "description": "Value is a fixed target.",
+                    "type": "number"
+                  }
+                },
+                "type": "object"
+              },
+              "Grain": {
+                "description": "Grain is a bucket, or the name of a string parameter that chooses one when the report runs. It encodes as \"month\", or as {\"param\": \"name\"}.",
+                "oneOf": [
+                  {
+                    "enum": [
+                      "hour",
+                      "day",
+                      "week",
+                      "month",
+                      "quarter",
+                      "year"
+                    ],
+                    "type": "string"
+                  },
+                  {
+                    "additionalProperties": false,
+                    "properties": {
+                      "param": {
+                        "description": "The name of the parameter that supplies the value.",
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "param"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              },
+              "Groupings": {
+                "additionalProperties": false,
+                "description": "Groupings adds subtotal rows and a grand total row, computed in the same statement as the rows.",
+                "properties": {
+                  "subtotals": {
+                    "description": "Subtotals lists dimension columns; each adds rows grouped by that column and every dimension column before it.",
+                    "items": {
+                      "type": "string"
+                    },
+                    "type": "array"
+                  },
+                  "total": {
+                    "description": "Total adds a grand total row.",
+                    "type": "boolean"
+                  }
+                },
+                "type": "object"
+              },
+              "Measure": {
+                "additionalProperties": false,
+                "description": "Measure aggregates a field over each group, optionally over a subset of its rows.",
+                "properties": {
+                  "agg": {
+                    "description": "Agg is the aggregation.",
+                    "enum": [
+                      "count",
+                      "count_distinct",
+                      "sum",
+                      "avg",
+                      "min",
+                      "max"
+                    ],
+                    "type": "string"
+                  },
+                  "field": {
+                    "description": "Field is the dotted path of the aggregated field; empty counts rows.",
+                    "type": "string"
+                  },
+                  "filter": {
+                    "$ref": "#/$defs/Filter",
+                    "description": "Filter narrows the rows this measure aggregates without narrowing the report."
+                  }
+                },
+                "required": [
+                  "agg"
+                ],
+                "type": "object"
+              },
+              "Page": {
+                "additionalProperties": false,
+                "description": "Page asks for one page of the sorted output with keyset paging.",
+                "properties": {
+                  "after": {
+                    "description": "After is the opaque cursor of the previous page's last row.",
+                    "type": "string"
+                  },
+                  "size": {
+                    "description": "Size is the number of rows in the page.",
+                    "type": "integer"
+                  }
+                },
+                "required": [
+                  "size"
+                ],
+                "type": "object"
+              },
+              "Parameter": {
+                "additionalProperties": false,
+                "description": "Parameter is a value the report asks for when it runs.",
+                "properties": {
+                  "allowed": {
+                    "description": "Allowed restricts the values that can be given.",
+                    "items": {},
+                    "type": "array"
+                  },
+                  "default": {
+                    "description": "Default is used when no value is given; a list when Multi."
+                  },
+                  "entity": {
+                    "description": "Entity is the catalog key of the entity a ref parameter points at.",
+                    "type": "string"
+                  },
+                  "label": {
+                    "description": "Label is the prompt shown to the person running the report.",
+                    "type": "string"
+                  },
+                  "multi": {
+                    "description": "Multi takes a list of values.",
+                    "type": "boolean"
+                  },
+                  "name": {
+                    "description": "Name is how filters, formulas and settings reference the parameter.",
+                    "type": "string"
+                  },
+                  "required": {
+                    "description": "Required refuses to run without a value or a default.",
+                    "type": "boolean"
+                  },
+                  "type": {
+                    "description": "Type is the value type.",
+                    "enum": [
+                      "string",
+                      "int",
+                      "decimal",
+                      "float",
+                      "bool",
+                      "date",
+                      "timestamp",
+                      "epoch",
+                      "enum",
+                      "ref",
+                      "json"
+                    ],
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "name",
+                  "type"
+                ],
+                "type": "object"
+              },
+              "Pivot": {
+                "additionalProperties": false,
+                "description": "Pivot spreads measure columns into one column per value of a field.",
+                "properties": {
+                  "columns": {
+                    "description": "Columns are the measure columns to spread.",
+                    "items": {
+                      "type": "string"
+                    },
+                    "type": "array"
+                  },
+                  "field": {
+                    "description": "Field is the dotted path of the field whose values become columns.",
+                    "type": "string"
+                  },
+                  "labels": {
+                    "description": "Labels are column headings for listed values, in the same order.",
+                    "items": {
+                      "type": "string"
+                    },
+                    "type": "array"
+                  },
+                  "other": {
+                    "description": "Other adds a column for every value not listed or discovered, nulls included.",
+                    "type": "boolean"
+                  },
+                  "top": {
+                    "$ref": "#/$defs/PivotTop",
+                    "description": "Top discovers the values when the report runs: the first N by a measure."
+                  },
+                  "values": {
+                    "$ref": "#/$defs/Values",
+                    "description": "Values lists the values to spread, or names a multi-value parameter."
+                  }
+                },
+                "required": [
+                  "field",
+                  "columns"
+                ],
+                "type": "object"
+              },
+              "PivotTop": {
+                "additionalProperties": false,
+                "description": "PivotTop discovers pivot values: the N values with the largest measure.",
+                "properties": {
+                  "by": {
+                    "description": "By is the measure column that ranks the values.",
+                    "type": "string"
+                  },
+                  "n": {
+                    "$ref": "#/$defs/Count",
+                    "description": "N is how many values to discover, or a parameter."
+                  }
+                },
+                "required": [
+                  "n",
+                  "by"
+                ],
+                "type": "object"
+              },
+              "Sort": {
+                "additionalProperties": false,
+                "description": "Sort orders the output by a column.",
+                "properties": {
+                  "column": {
+                    "description": "Column is an output column id, or a pivot cell \"column:value\".",
+                    "type": "string"
+                  },
+                  "desc": {
+                    "description": "Desc sorts largest first.",
+                    "type": "boolean"
+                  }
+                },
+                "required": [
+                  "column"
+                ],
+                "type": "object"
+              },
+              "Top": {
+                "additionalProperties": false,
+                "description": "Top keeps the first N rows of each group, ranked by a column.",
+                "properties": {
+                  "bottom": {
+                    "description": "Bottom keeps the smallest values instead of the largest.",
+                    "type": "boolean"
+                  },
+                  "by": {
+                    "description": "By is the column that ranks the rows.",
+                    "type": "string"
+                  },
+                  "n": {
+                    "$ref": "#/$defs/Count",
+                    "description": "N is how many rows to keep, or a parameter."
+                  },
+                  "per": {
+                    "description": "Per lists the dimension columns that form the groups; empty ranks the whole result.",
+                    "items": {
+                      "type": "string"
+                    },
+                    "type": "array"
+                  }
+                },
+                "required": [
+                  "n",
+                  "by"
+                ],
+                "type": "object"
+              },
+              "Transform": {
+                "additionalProperties": false,
+                "description": "Transform rewrites a value in SQL, so exports, sorting and filters see the rewritten value.",
+                "properties": {
+                  "factor": {
+                    "description": "Factor is the multiplier for scale.",
+                    "type": "number"
+                  },
+                  "op": {
+                    "description": "Op is the transform.",
+                    "enum": [
+                      "round",
+                      "ceil",
+                      "floor",
+                      "truncate",
+                      "abs",
+                      "scale",
+                      "upper",
+                      "lower",
+                      "title",
+                      "trim"
+                    ],
+                    "type": "string"
+                  },
+                  "precision": {
+                    "description": "Precision is the number of decimal places for round, ceil, floor and truncate.",
+                    "type": "integer"
                   }
                 },
                 "required": [
@@ -39888,98 +42586,89 @@
                 ],
                 "type": "object"
               },
-              "having": {
-                "description": "Filters over aggregated measures, the same shape as filters.",
-                "type": "object"
-              },
-              "limit": {
-                "description": "The most rows a run returns; 0 or left out returns as many as a report may.",
-                "maximum": 100000,
-                "minimum": 0,
-                "type": "integer",
-                "x-clamp": true
-              },
-              "parameters": {
-                "description": "Values asked for at run time and bound to filters by param.",
-                "items": {
-                  "additionalProperties": false,
-                  "properties": {
-                    "allowedValues": {
-                      "items": {
+              "Values": {
+                "description": "Values is a list of values or the name of a multi-value parameter that supplies them. It encodes as an array, or as {\"param\": \"name\"}.",
+                "oneOf": [
+                  {
+                    "items": {
+                      "type": "string"
+                    },
+                    "type": "array"
+                  },
+                  {
+                    "additionalProperties": false,
+                    "properties": {
+                      "param": {
+                        "description": "The name of the parameter that supplies the value.",
                         "type": "string"
-                      },
-                      "type": "array"
+                      }
                     },
-                    "default": {},
-                    "label": {
-                      "type": "string"
-                    },
-                    "multi": {
-                      "type": "boolean"
-                    },
-                    "name": {
-                      "type": "string"
-                    },
-                    "refEntity": {
-                      "type": "string"
-                    },
-                    "required": {
-                      "type": "boolean"
-                    },
-                    "type": {
-                      "enum": [
-                        "string",
-                        "int",
-                        "decimal",
-                        "bool",
-                        "enum",
-                        "epoch",
-                        "ref"
-                      ],
-                      "type": "string"
-                    }
-                  },
-                  "required": [
-                    "name",
-                    "type"
-                  ],
-                  "type": "object"
-                },
-                "type": "array"
+                    "required": [
+                      "param"
+                    ],
+                    "type": "object"
+                  }
+                ]
               },
-              "sort": {
-                "items": {
-                  "additionalProperties": false,
-                  "properties": {
-                    "columnId": {
-                      "description": "The id of one of this definition's columns, or of a column report_get lists.",
+              "Window": {
+                "additionalProperties": false,
+                "description": "Window computes a value across the grouped rows from another column.",
+                "properties": {
+                  "desc": {
+                    "description": "Desc ranks the largest value first.",
+                    "type": "boolean"
+                  },
+                  "fn": {
+                    "description": "Fn is the window function.",
+                    "enum": [
+                      "running_total",
+                      "percent_of_total",
+                      "rank",
+                      "dense_rank",
+                      "moving_avg",
+                      "change",
+                      "percent_change",
+                      "first",
+                      "last"
+                    ],
+                    "type": "string"
+                  },
+                  "of": {
+                    "description": "Of is the column the window reads.",
+                    "type": "string"
+                  },
+                  "offset": {
+                    "description": "Offset is how many rows back change and percent_change compare with; zero means one.",
+                    "type": "integer"
+                  },
+                  "over": {
+                    "description": "Over is the column that orders the rows, for running, moving, change and first/last.",
+                    "type": "string"
+                  },
+                  "partition": {
+                    "description": "Partition restarts the window for each combination of these dimension columns.",
+                    "items": {
                       "type": "string"
                     },
-                    "direction": {
-                      "enum": [
-                        "asc",
-                        "desc"
-                      ],
-                      "type": "string"
-                    }
+                    "type": "array"
                   },
-                  "required": [
-                    "columnId",
-                    "direction"
-                  ],
-                  "type": "object"
+                  "size": {
+                    "description": "Size is the number of rows a moving average spans.",
+                    "type": "integer"
+                  }
                 },
-                "type": "array"
-              },
-              "totals": {
-                "type": "boolean"
+                "required": [
+                  "of",
+                  "fn"
+                ],
+                "type": "object"
               }
             },
-            "required": [
-              "entity",
-              "columns"
-            ],
-            "type": "object"
+            "$id": "https://github.com/emoss08/keel/analytics/ir/definition.schema.json",
+            "$ref": "#/$defs/Definition",
+            "$schema": "https://json-schema.org/draft/2020-12/schema",
+            "description": "A report in keel analytics IR version 2, whole: its entity, columns, filters and sort all go here and nowhere else. Fields are dotted paths from the entity, such as customer.name. A dimension column groups, a measure column aggregates, and a report with only dimensions lists rows.",
+            "title": "Definition"
           },
           "definitionId": {
             "description": "The definitionId of the saved report, from report_list or report_get.",

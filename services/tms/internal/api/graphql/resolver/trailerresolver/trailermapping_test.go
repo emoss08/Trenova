@@ -256,7 +256,8 @@ func TestTrailerConnectionToModel_PropagatesTotalCount(t *testing.T) {
 				Code:      "TRL-100",
 			},
 		},
-		TotalCount: &total,
+		TotalCount:  &total,
+		EdgeCursors: []string{"edge-1"},
 	})
 
 	require.NoError(t, err)

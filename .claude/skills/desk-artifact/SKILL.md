@@ -65,7 +65,7 @@ round trips, and never make the client stitch records together.
   - It depends on narrow interfaces it declares itself, not on whole repositories.
   - Aggregates and side reads go through a new **port**,
     `ports/<entity>ports/deskcard.go`, implemented in the module's postgres adapter with
-    buncolgen column helpers, under `dbtx.Read` and `DBForContext(ctx)`.
+    the generated keel tables, under `dbtx.Read` and `Keel(ctx)`.
   - Register both in the module's `module.go`.
 - Put the date logic on the server: quarters, months and "today" are worked out in the
   organization's time zone (`orgzone.Location`). Money is decimals or minor units, never

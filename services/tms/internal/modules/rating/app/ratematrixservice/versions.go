@@ -13,7 +13,6 @@ import (
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/uptrace/bun"
 )
 
 func (s *Service) ListVersions(
@@ -100,7 +99,7 @@ func (s *Service) Archive(
 	req *ArchiveRequest,
 ) (*ratematrix.RateMatrix, error) {
 	var original, archived *ratematrix.RateMatrix
-	err := s.db.WithTx(ctx, kernelports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
+	err := s.db.Transact(ctx, kernelports.TxOptions{}, func(txCtx context.Context) error {
 		matrix, err := s.repo.GetByID(txCtx, &ratematrixports.GetRateMatrixByIDRequest{
 			RateMatrixID: req.RateMatrixID,
 			TenantInfo:   req.TenantInfo,
@@ -176,7 +175,7 @@ func (s *Service) RestoreVersion(
 	req *RestoreVersionRequest,
 ) (*ratematrix.RateMatrix, error) {
 	var original, restored *ratematrix.RateMatrix
-	err := s.db.WithTx(ctx, kernelports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
+	err := s.db.Transact(ctx, kernelports.TxOptions{}, func(txCtx context.Context) error {
 		matrix, err := s.repo.GetByID(txCtx, &ratematrixports.GetRateMatrixByIDRequest{
 			RateMatrixID:      req.RateMatrixID,
 			TenantInfo:        req.TenantInfo,

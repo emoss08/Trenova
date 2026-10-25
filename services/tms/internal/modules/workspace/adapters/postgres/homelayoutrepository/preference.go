@@ -3,40 +3,34 @@ package homelayoutrepository
 import (
 	"context"
 
-	"github.com/emoss08/trenova/pkg/buncolgen/homelayoutcol"
-
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/homelayout"
+	"github.com/emoss08/trenova/internal/modules/workspace/domain/homelayout/homelayoutdb"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/homelayoutports"
 	"github.com/emoss08/trenova/pkg/dberror"
-	"github.com/uptrace/bun"
 	"go.uber.org/zap"
 )
+
+const preferenceEntityName = "HomePreference"
+
+var preferenceErrors = dberror.Mapping{Entity: preferenceEntityName}
 
 func (r *repository) GetPreference(
 	ctx context.Context,
 	req *homelayoutports.GetHomePreferenceRequest,
 ) (*homelayout.Preference, bool, error) {
 	return dbtx.Read2(ctx, r.db, func(ctx context.Context) (*homelayout.Preference, bool, error) {
-		log := r.l.With(
-			zap.String("operation", "GetPreference"),
-			zap.String("userID", req.TenantInfo.UserID.String()),
-		)
-
-		entity := new(homelayout.Preference)
-		err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(entity).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return homelayoutcol.PreferenceScopeTenant(sq, req.TenantInfo).
-					Where(homelayoutcol.PreferenceColumns.UserID.Eq(), req.TenantInfo.UserID)
-			}).
-			Scan(ctx)
+		p := homelayoutdb.Preferences
+		entity, err := p.Where(p.UserID.Eq(req.TenantInfo.UserID)).One(ctx, r.db.Keel(ctx))
+		if dberror.IsNotFoundError(err) {
+			return nil, false, nil
+		}
 		if err != nil {
-			if dberror.IsNotFoundError(err) {
-				return nil, false, nil
-			}
-			log.Error("failed to get home preference", zap.Error(err))
+			r.l.Error(
+				"failed to get home preference",
+				zap.String("userID", req.TenantInfo.UserID.String()),
+				zap.Error(err),
+			)
 			return nil, false, err
 		}
 
@@ -49,19 +43,18 @@ func (r *repository) CreatePreference(
 	entity *homelayout.Preference,
 ) (*homelayout.Preference, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*homelayout.Preference, error) {
-		log := r.l.With(
-			zap.String("operation", "CreatePreference"),
-			zap.String("userID", entity.UserID.String()),
-		)
-
-		if _, err := r.db.DBForContext(ctx).NewInsert().Model(entity).Exec(ctx); err != nil {
+		if err := homelayoutdb.Preferences.Create(ctx, r.db.Keel(ctx), entity); err != nil {
 			if dberror.IsUniqueConstraintViolation(err) {
 				return nil, dberror.CreateVersionMismatchError(
-					"HomePreference",
+					preferenceEntityName,
 					entity.UserID.String(),
 				)
 			}
-			log.Error("failed to create home preference", zap.Error(err))
+			r.l.Error(
+				"failed to create home preference",
+				zap.String("userID", entity.UserID.String()),
+				zap.Error(err),
+			)
 			return nil, err
 		}
 
@@ -74,33 +67,13 @@ func (r *repository) UpdatePreference(
 	entity *homelayout.Preference,
 ) (*homelayout.Preference, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*homelayout.Preference, error) {
-		log := r.l.With(
-			zap.String("operation", "UpdatePreference"),
-			zap.String("id", entity.ID.String()),
-		)
-
-		ov := entity.Version
-		entity.Version++
-
-		result, err := r.db.DBForContext(ctx).
-			NewUpdate().
-			Model(entity).
-			WherePK().
-			Where(homelayoutcol.PreferenceColumns.Version.Eq(), ov).
-			OmitZero().
-			Returning("*").
-			Exec(ctx)
-		if err != nil {
-			log.Error("failed to update home preference", zap.Error(err))
-			return nil, err
-		}
-
-		if err = dberror.CheckRowsAffected(
-			result,
-			"HomePreference",
-			entity.ID.String(),
-		); err != nil {
-			return nil, err
+		if err := homelayoutdb.Preferences.Save(ctx, r.db.Keel(ctx), entity); err != nil {
+			r.l.Error(
+				"failed to update home preference",
+				zap.String("id", entity.ID.String()),
+				zap.Error(err),
+			)
+			return nil, preferenceErrors.Map(err, entity.ID.String())
 		}
 
 		return entity, nil

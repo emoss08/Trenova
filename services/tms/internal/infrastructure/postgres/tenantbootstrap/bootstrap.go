@@ -7,13 +7,12 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/emoss08/trenova/pkg/buncolgen/tenantcol"
-
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant/tenantdb"
 	"github.com/emoss08/trenova/shared/timeutils"
 	"github.com/emoss08/trenova/shared/tokenutils"
-	"github.com/uptrace/bun"
 )
 
 const (
@@ -37,7 +36,6 @@ type BootstrapParams struct {
 	Organization *tenant.Organization
 	Owner        *tenant.User
 	Now          int64
-	Record       Recorder
 }
 
 type BootstrapResult struct {
@@ -48,7 +46,7 @@ type BootstrapResult struct {
 	AdminRole    *permission.Role
 }
 
-func Bootstrap(ctx context.Context, db bun.IDB, params BootstrapParams) (*BootstrapResult, error) {
+func Bootstrap(ctx context.Context, db *keel.DB, params BootstrapParams) (*BootstrapResult, error) {
 	if err := params.validate(); err != nil {
 		return nil, err
 	}
@@ -67,7 +65,6 @@ func Bootstrap(ctx context.Context, db bun.IDB, params BootstrapParams) (*Bootst
 		OrganizationID: org.ID,
 		BusinessUnitID: bu.ID,
 		Now:            now,
-		Record:         params.Record,
 	}
 
 	if err = CreateControls(ctx, db, scope); err != nil {
@@ -92,12 +89,11 @@ func Bootstrap(ctx context.Context, db bun.IDB, params BootstrapParams) (*Bootst
 		RoleID:         role.ID,
 		AssignedBy:     owner.ID,
 		AssignedAt:     now,
-		Record:         params.Record,
 	}); err != nil {
 		return nil, err
 	}
 
-	if err = createReferenceData(ctx, db, scope); err != nil {
+	if err = CreateReferenceData(ctx, db, scope); err != nil {
 		return nil, err
 	}
 
@@ -125,7 +121,7 @@ func (p BootstrapParams) validate() error {
 
 func createTenant(
 	ctx context.Context,
-	db bun.IDB,
+	db *keel.DB,
 	params BootstrapParams,
 	now int64,
 ) (*tenant.BusinessUnit, *tenant.Organization, error) {
@@ -134,25 +130,15 @@ func createTenant(
 		bu.CreatedAt = now
 	}
 	bu.UpdatedAt = now
-	if _, err := db.NewInsert().Model(bu).Exec(ctx); err != nil {
+	if err := tenantdb.BusinessUnits.Create(ctx, db, bu); err != nil {
 		return nil, nil, fmt.Errorf("create business unit: %w", err)
-	}
-	if params.Record != nil {
-		if err := params.Record(ctx, "business_units", bu.ID); err != nil {
-			return nil, nil, err
-		}
 	}
 
 	org := params.Organization
 	org.BusinessUnitID = bu.ID
 	org.UpdatedAt = now
-	if _, err := db.NewInsert().Model(org).Exec(ctx); err != nil {
+	if err := tenantdb.Organizations.Create(ctx, db, org); err != nil {
 		return nil, nil, fmt.Errorf("create organization: %w", err)
-	}
-	if params.Record != nil {
-		if err := params.Record(ctx, "organizations", org.ID); err != nil {
-			return nil, nil, err
-		}
 	}
 
 	return bu, org, nil
@@ -160,7 +146,7 @@ func createTenant(
 
 func createOwner(
 	ctx context.Context,
-	db bun.IDB,
+	db *keel.DB,
 	params BootstrapParams,
 	scope Scope,
 ) (*tenant.User, *tenant.OrganizationMembership, error) {
@@ -168,11 +154,8 @@ func createOwner(
 	owner.CurrentOrganizationID = scope.OrganizationID
 	owner.BusinessUnitID = scope.BusinessUnitID
 	owner.UpdatedAt = scope.Now
-	if _, err := db.NewInsert().Model(owner).Exec(ctx); err != nil {
+	if err := tenantdb.Users.Create(ctx, db, owner); err != nil {
 		return nil, nil, fmt.Errorf("create owner user: %w", err)
-	}
-	if err := scope.record(ctx, "users", owner.ID); err != nil {
-		return nil, nil, err
 	}
 
 	membership := &tenant.OrganizationMembership{
@@ -183,18 +166,15 @@ func createOwner(
 		GrantedByID:    owner.ID,
 		IsDefault:      true,
 	}
-	if _, err := db.NewInsert().Model(membership).Exec(ctx); err != nil {
+	if err := tenantdb.OrganizationMemberships.Create(ctx, db, membership); err != nil {
 		return nil, nil, fmt.Errorf("create owner membership: %w", err)
-	}
-	if err := scope.record(ctx, "organization_memberships", membership.ID); err != nil {
-		return nil, nil, err
 	}
 
 	return owner, membership, nil
 }
 
-func createReferenceData(ctx context.Context, db bun.IDB, scope Scope) error {
-	if _, err := CreateChartOfAccounts(ctx, db, scope); err != nil {
+func CreateReferenceData(ctx context.Context, db *keel.DB, scope Scope) error {
+	if _, err := EnsureChartOfAccounts(ctx, db, scope); err != nil {
 		return err
 	}
 	if _, err := CreateDocumentTypes(ctx, db, scope); err != nil {
@@ -209,41 +189,41 @@ func createReferenceData(ctx context.Context, db bun.IDB, scope Scope) error {
 	if _, err := CreateSystemAgentDefinitions(ctx, db, scope); err != nil {
 		return fmt.Errorf("create system agent definitions: %w", err)
 	}
+	if _, err := CreateTCAAllowlist(ctx, db, scope); err != nil {
+		return fmt.Errorf("create table change alert allowlist: %w", err)
+	}
 
 	return nil
 }
 
-func AvailableLoginSlug(ctx context.Context, db bun.IDB, base string) (string, error) {
+func AvailableLoginSlug(ctx context.Context, db *keel.DB, base string) (string, error) {
 	base = strings.Trim(base, "-")
 	if base == "" {
 		base = "workspace"
 	}
 
 	return firstAvailable(ctx, base, maxLoginSlugLength, func(candidate string) (bool, error) {
-		cols := tenantcol.OrganizationColumns
-		return db.NewSelect().
-			Model((*tenant.Organization)(nil)).
-			Where(cols.LoginSlug.Eq(), candidate).
-			Exists(ctx)
+		o := tenantdb.Organizations
+		return scoped(ctx, o.Where(o.LoginSlug.Eq(candidate))).Exists(ctx, db)
 	})
 }
 
-func AvailableUsername(ctx context.Context, db bun.IDB, base string) (string, error) {
+func AvailableUsername(ctx context.Context, db *keel.DB, base string) (string, error) {
 	base = strings.Trim(base, "-._")
 	if base == "" {
 		base = "owner"
 	}
 
 	return firstAvailable(ctx, base, maxUsernameLength, func(candidate string) (bool, error) {
-		cols := tenantcol.UserColumns
-		return db.NewSelect().
-			Model((*tenant.User)(nil)).
-			Where("lower("+cols.Username.Qualified()+") = ?", strings.ToLower(candidate)).
-			Exists(ctx)
+		u := tenantdb.Users
+		return scoped(
+			ctx,
+			u.Where(u.Username.Lower().Eq(strings.ToLower(candidate))),
+		).Exists(ctx, db)
 	})
 }
 
-func AvailableBusinessUnitCode(ctx context.Context, db bun.IDB) (string, error) {
+func AvailableBusinessUnitCode(ctx context.Context, db *keel.DB) (string, error) {
 	for range maxCandidateAttempts {
 		suffix, err := tokenutils.RandomHex(businessUnitCodeBytes)
 		if err != nil {
@@ -251,11 +231,8 @@ func AvailableBusinessUnitCode(ctx context.Context, db bun.IDB) (string, error) 
 		}
 		code := businessUnitCodeHead + strings.ToUpper(suffix)
 
-		cols := tenantcol.BusinessUnitColumns
-		taken, err := db.NewSelect().
-			Model((*tenant.BusinessUnit)(nil)).
-			Where("lower("+cols.Code.Qualified()+") = ?", strings.ToLower(code)).
-			Exists(ctx)
+		b := tenantdb.BusinessUnits
+		taken, err := b.Where(b.Code.Lower().Eq(strings.ToLower(code))).Exists(ctx, db)
 		if err != nil {
 			return "", fmt.Errorf("check business unit code: %w", err)
 		}

@@ -1,0 +1,159 @@
+{
+  "key": "order-revenue-summary",
+  "version": "1.0.0",
+  "name": "Order Revenue Summary",
+  "description": "Quoted versus actual order value by customer, with the shipment charges booked underneath each order",
+  "category": "Billing",
+  "tags": [
+    "orders",
+    "revenue",
+    "customers"
+  ],
+  "defaultFormat": "xlsx",
+  "definition": {
+    "version": 2,
+    "entity": "order",
+    "columns": [
+      {
+        "id": "customer",
+        "label": "Customer",
+        "dimension": {
+          "field": "customer.name"
+        }
+      },
+      {
+        "id": "customer_code",
+        "label": "Customer Code",
+        "dimension": {
+          "field": "customer.code"
+        }
+      },
+      {
+        "id": "order_count",
+        "label": "Orders",
+        "measure": {
+          "field": "id",
+          "agg": "count"
+        },
+        "display": {
+          "style": "number",
+          "decimals": 0,
+          "grouping": true
+        }
+      },
+      {
+        "id": "quoted_total",
+        "label": "Quoted",
+        "measure": {
+          "field": "quotedAmount",
+          "agg": "sum"
+        },
+        "display": {
+          "style": "currency",
+          "decimals": 2,
+          "negative": "parentheses"
+        }
+      },
+      {
+        "id": "order_total",
+        "label": "Order Total",
+        "measure": {
+          "field": "totalAmount",
+          "agg": "sum"
+        },
+        "display": {
+          "style": "currency",
+          "decimals": 2,
+          "negative": "parentheses"
+        }
+      },
+      {
+        "id": "shipment_charges",
+        "label": "Shipment Charges",
+        "measure": {
+          "field": "shipments.totalChargeAmount",
+          "agg": "sum"
+        },
+        "display": {
+          "style": "currency",
+          "decimals": 2,
+          "negative": "parentheses"
+        }
+      },
+      {
+        "id": "shipment_count",
+        "label": "Shipments",
+        "measure": {
+          "field": "shipments.id",
+          "agg": "count"
+        },
+        "display": {
+          "style": "number",
+          "decimals": 0,
+          "grouping": true
+        }
+      },
+      {
+        "id": "avg_order",
+        "label": "Average Order Value",
+        "measure": {
+          "field": "totalAmount",
+          "agg": "avg"
+        },
+        "transform": {
+          "op": "round",
+          "precision": 2
+        },
+        "display": {
+          "style": "currency",
+          "decimals": 2,
+          "negative": "parentheses"
+        }
+      },
+      {
+        "id": "quote_variance",
+        "label": "Quote Variance",
+        "calc": "[order_total] - [quoted_total]",
+        "display": {
+          "style": "currency",
+          "decimals": 2,
+          "negative": "parentheses"
+        }
+      },
+      {
+        "id": "billing_variance",
+        "label": "Order vs Shipment Charges",
+        "calc": "[order_total] - [shipment_charges]",
+        "display": {
+          "style": "currency",
+          "decimals": 2,
+          "negative": "parentheses"
+        }
+      }
+    ],
+    "filters": {
+      "and": [
+        {
+          "field": "createdAt",
+          "op": "last_n_days",
+          "param": "windowDays"
+        }
+      ]
+    },
+    "sort": [
+      {
+        "column": "order_total",
+        "desc": true
+      }
+    ],
+    "parameters": [
+      {
+        "name": "windowDays",
+        "label": "Window (days)",
+        "type": "int",
+        "required": true,
+        "default": 90
+      }
+    ]
+  }
+}

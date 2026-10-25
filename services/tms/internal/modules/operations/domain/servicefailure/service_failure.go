@@ -4,74 +4,77 @@ import (
 	"context"
 	"strings"
 
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/domainvalidation"
 	"github.com/emoss08/trenova/pkg/errortypes"
-	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/validationframework"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
-	"github.com/uptrace/bun"
 )
 
 var (
-	_ bun.BeforeAppendModelHook          = (*ServiceFailure)(nil)
 	_ validationframework.TenantedEntity = (*ServiceFailure)(nil)
 	_ domaintypes.PostgresSearchable     = (*ServiceFailure)(nil)
 )
 
 type ServiceFailure struct {
-	bun.BaseModel             `bun:"table:service_failures,alias:sf" json:"-"`
-	pagination.CursorValueSet `bun:",embed"                          json:"-"`
+	keel.Table `keel:"service_failures"`
 
-	ID                    pulid.ID          `json:"id"                    bun:"id,type:VARCHAR(100),pk,notnull"`
-	BusinessUnitID        pulid.ID          `json:"businessUnitId"        bun:"business_unit_id,type:VARCHAR(100),pk,notnull"`
-	OrganizationID        pulid.ID          `json:"organizationId"        bun:"organization_id,type:VARCHAR(100),pk,notnull"`
-	ShipmentID            pulid.ID          `json:"shipmentId"            bun:"shipment_id,type:VARCHAR(100),notnull"`
-	ShipmentMoveID        pulid.ID          `json:"shipmentMoveId"        bun:"shipment_move_id,type:VARCHAR(100),notnull"`
-	StopID                pulid.ID          `json:"stopId"                bun:"stop_id,type:VARCHAR(100),notnull"`
-	ReasonCodeID          *pulid.ID         `json:"reasonCodeId"          bun:"reason_code_id,type:VARCHAR(100),nullzero"`
-	Number                string            `json:"number"                bun:"number,type:VARCHAR(64),notnull"`
-	Type                  Type              `json:"type"                  bun:"type,type:service_failure_type_enum,notnull"`
-	Source                Source            `json:"source"                bun:"source,type:service_failure_source_enum,notnull,default:'Detected'"`
-	Status                Status            `json:"status"                bun:"status,type:service_failure_status_enum,notnull,default:'Open'"`
-	StopType              shipment.StopType `json:"stopType"              bun:"stop_type,type:stop_type_enum,notnull"`
-	ScheduledCutoff       int64             `json:"scheduledCutoff"       bun:"scheduled_cutoff,type:BIGINT,notnull"`
-	ActualArrival         int64             `json:"actualArrival"         bun:"actual_arrival,type:BIGINT,notnull"`
-	GracePeriodMinutes    int               `json:"gracePeriodMinutes"    bun:"grace_period_minutes,type:INTEGER,notnull,default:30"`
-	LateMinutes           int64             `json:"lateMinutes"           bun:"late_minutes,type:BIGINT,notnull"`
-	Notes                 string            `json:"notes"                 bun:"notes,type:TEXT,nullzero"`
-	InternalNotes         string            `json:"internalNotes"         bun:"internal_notes,type:TEXT,nullzero"`
-	X12StatusCodeOverride string            `json:"x12StatusCodeOverride" bun:"x12_status_code_override,type:VARCHAR(3),nullzero"`
-	X12ReasonCodeOverride string            `json:"x12ReasonCodeOverride" bun:"x12_reason_code_override,type:VARCHAR(3),nullzero"`
-	X12ExceptionCode      string            `json:"x12ExceptionCode"      bun:"x12_exception_code,type:VARCHAR(3),nullzero"`
-	DetectedAt            int64             `json:"detectedAt"            bun:"detected_at,type:BIGINT,notnull"`
-	ReviewedAt            *int64            `json:"reviewedAt"            bun:"reviewed_at,type:BIGINT,nullzero"`
-	ReviewedByID          *pulid.ID         `json:"reviewedById"          bun:"reviewed_by_id,type:VARCHAR(100),nullzero"`
-	ResolvedAt            *int64            `json:"resolvedAt"            bun:"resolved_at,type:BIGINT,nullzero"`
-	ResolvedByID          *pulid.ID         `json:"resolvedById"          bun:"resolved_by_id,type:VARCHAR(100),nullzero"`
-	VoidedAt              *int64            `json:"voidedAt"              bun:"voided_at,type:BIGINT,nullzero"`
-	VoidedByID            *pulid.ID         `json:"voidedById"            bun:"voided_by_id,type:VARCHAR(100),nullzero"`
-	VoidReason            string            `json:"voidReason"            bun:"void_reason,type:TEXT,nullzero"`
-	CreatedByID           *pulid.ID         `json:"createdById"           bun:"created_by_id,type:VARCHAR(100),nullzero"`
-	Version               int64             `json:"version"               bun:"version,type:BIGINT,notnull"`
-	CreatedAt             int64             `json:"createdAt"             bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
-	UpdatedAt             int64             `json:"updatedAt"             bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
-	SearchVector          string            `json:"-"                     bun:"search_vector,type:TSVECTOR,scanonly"`
+	ID                    pulid.ID          `json:"id"                    keel:"id,pk,autoid:sf_"`
+	BusinessUnitID        pulid.ID          `json:"businessUnitId"        keel:"business_unit_id,pk,tenant"`
+	OrganizationID        pulid.ID          `json:"organizationId"        keel:"organization_id,pk,tenant"`
+	ShipmentID            pulid.ID          `json:"shipmentId"            keel:"shipment_id"`
+	ShipmentMoveID        pulid.ID          `json:"shipmentMoveId"        keel:"shipment_move_id"`
+	StopID                pulid.ID          `json:"stopId"                keel:"stop_id"`
+	ReasonCodeID          *pulid.ID         `json:"reasonCodeId"          keel:"reason_code_id"`
+	Number                string            `json:"number"                keel:"number"`
+	Type                  Type              `json:"type"                  keel:"type"`
+	Source                Source            `json:"source"                keel:"source"`
+	Status                Status            `json:"status"                keel:"status"`
+	StopType              shipment.StopType `json:"stopType"              keel:"stop_type"`
+	ScheduledCutoff       int64             `json:"scheduledCutoff"       keel:"scheduled_cutoff"`
+	ActualArrival         int64             `json:"actualArrival"         keel:"actual_arrival"`
+	GracePeriodMinutes    int               `json:"gracePeriodMinutes"    keel:"grace_period_minutes"`
+	LateMinutes           int64             `json:"lateMinutes"           keel:"late_minutes"`
+	Notes                 string            `json:"notes"                 keel:"notes,nullzero"`
+	InternalNotes         string            `json:"internalNotes"         keel:"internal_notes,nullzero"`
+	X12StatusCodeOverride string            `json:"x12StatusCodeOverride" keel:"x12_status_code_override,nullzero"`
+	X12ReasonCodeOverride string            `json:"x12ReasonCodeOverride" keel:"x12_reason_code_override,nullzero"`
+	X12ExceptionCode      string            `json:"x12ExceptionCode"      keel:"x12_exception_code,nullzero"`
+	DetectedAt            int64             `json:"detectedAt"            keel:"detected_at"`
+	ReviewedAt            *int64            `json:"reviewedAt"            keel:"reviewed_at"`
+	ReviewedByID          *pulid.ID         `json:"reviewedById"          keel:"reviewed_by_id"`
+	ResolvedAt            *int64            `json:"resolvedAt"            keel:"resolved_at"`
+	ResolvedByID          *pulid.ID         `json:"resolvedById"          keel:"resolved_by_id"`
+	VoidedAt              *int64            `json:"voidedAt"              keel:"voided_at"`
+	VoidedByID            *pulid.ID         `json:"voidedById"            keel:"voided_by_id"`
+	VoidReason            string            `json:"voidReason"            keel:"void_reason,nullzero"`
+	CreatedByID           *pulid.ID         `json:"createdById"           keel:"created_by_id"`
+	Version               int64             `json:"version"               keel:"version,version"`
+	CreatedAt             int64             `json:"createdAt"             keel:"created_at,autocreate"`
+	UpdatedAt             int64             `json:"updatedAt"             keel:"updated_at,autoupdate"`
+	SearchVector          string            `json:"-"                     keel:"search_vector,tsvector,readonly,noselect"`
 
-	ReasonCode   *ReasonCode            `json:"reasonCode,omitempty"   bun:"rel:belongs-to,join:reason_code_id=id,join:organization_id=organization_id,join:business_unit_id=business_unit_id"`
-	Shipment     *shipment.Shipment     `json:"shipment,omitempty"     bun:"rel:belongs-to,join:shipment_id=id,join:organization_id=organization_id,join:business_unit_id=business_unit_id"`
-	ShipmentMove *shipment.ShipmentMove `json:"shipmentMove,omitempty" bun:"rel:belongs-to,join:shipment_move_id=id,join:organization_id=organization_id,join:business_unit_id=business_unit_id"`
-	Stop         *shipment.Stop         `json:"stop,omitempty"         bun:"rel:belongs-to,join:stop_id=id,join:organization_id=organization_id,join:business_unit_id=business_unit_id"`
-	CreatedBy    *tenant.User           `json:"createdBy,omitempty"    bun:"rel:belongs-to,join:created_by_id=id"`
-	ReviewedBy   *tenant.User           `json:"reviewedBy,omitempty"   bun:"rel:belongs-to,join:reviewed_by_id=id"`
-	ResolvedBy   *tenant.User           `json:"resolvedBy,omitempty"   bun:"rel:belongs-to,join:resolved_by_id=id"`
-	VoidedBy     *tenant.User           `json:"voidedBy,omitempty"     bun:"rel:belongs-to,join:voided_by_id=id"`
-	BusinessUnit *tenant.BusinessUnit   `json:"-"                      bun:"rel:belongs-to,join:business_unit_id=id"`
-	Organization *tenant.Organization   `json:"-"                      bun:"rel:belongs-to,join:organization_id=id"`
+	ReasonCode   *ReasonCode            `json:"reasonCode,omitempty"   keel:"belongs:reason_code_id"`
+	Shipment     *shipment.Shipment     `json:"shipment,omitempty"     keel:"belongs:shipment_id"`
+	ShipmentMove *shipment.ShipmentMove `json:"shipmentMove,omitempty" keel:"belongs:shipment_move_id"`
+	Stop         *shipment.Stop         `json:"stop,omitempty"         keel:"belongs:stop_id"`
+	CreatedBy    *tenant.User           `json:"createdBy,omitempty"    keel:"belongs:created_by_id"`
+	ReviewedBy   *tenant.User           `json:"reviewedBy,omitempty"   keel:"belongs:reviewed_by_id"`
+	ResolvedBy   *tenant.User           `json:"resolvedBy,omitempty"   keel:"belongs:resolved_by_id"`
+	VoidedBy     *tenant.User           `json:"voidedBy,omitempty"     keel:"belongs:voided_by_id"`
+	BusinessUnit *tenant.BusinessUnit   `json:"-"`
+	Organization *tenant.Organization   `json:"-"`
+}
+
+func (sf *ServiceFailure) BeforeUpdate(_ context.Context) error {
+	sf.Normalize()
+
+	return nil
 }
 
 func (sf *ServiceFailure) Normalize() {
@@ -203,28 +206,36 @@ func (sf *ServiceFailure) GetPostgresSearchConfig() domaintypes.PostgresSearchCo
 	}
 }
 
-func (sf *ServiceFailure) BeforeAppendModel(_ context.Context, query bun.Query) error {
+func (sf *ServiceFailure) BeforeCreate(_ context.Context) error {
 	now := timeutils.NowUnix()
 	sf.Normalize()
-
-	switch query.(type) {
-	case *bun.InsertQuery:
-		sf.ensureIdentity()
-		if sf.Source == "" {
-			sf.Source = SourceDetected
-		}
-		if sf.Status == "" {
-			sf.Status = StatusOpen
-		}
-		if sf.DetectedAt == 0 {
-			sf.DetectedAt = now
-		}
-		sf.CreatedAt = now
-	case *bun.UpdateQuery:
-		sf.UpdatedAt = now
+	sf.applyCreateDefaults(now)
+	if sf.Source == "" {
+		sf.Source = SourceDetected
 	}
+	if sf.Status == "" {
+		sf.Status = StatusOpen
+	}
+	if sf.GracePeriodMinutes == 0 {
+		sf.GracePeriodMinutes = 30
+	}
+	sf.Normalize()
+	sf.applyCreateDefaults(timeutils.NowUnix())
 
 	return nil
+}
+
+func (sf *ServiceFailure) applyCreateDefaults(now int64) {
+	sf.ensureIdentity()
+	if sf.Source == "" {
+		sf.Source = SourceDetected
+	}
+	if sf.Status == "" {
+		sf.Status = StatusOpen
+	}
+	if sf.DetectedAt == 0 {
+		sf.DetectedAt = now
+	}
 }
 
 func (sf *ServiceFailure) ensureIdentity() {

@@ -2,17 +2,15 @@ package fuelpurchaserepository
 
 import (
 	"context"
-	"database/sql"
-	"errors"
 	"fmt"
 
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/fuelpurchase"
+	"github.com/emoss08/trenova/internal/modules/settlement/domain/fuelpurchase/fuelpurchasedb"
 	"github.com/emoss08/trenova/internal/modules/settlement/ports/fuelpurchaseports"
-	"github.com/emoss08/trenova/pkg/buncolgen"
-	"github.com/emoss08/trenova/pkg/buncolgen/fuelpurchasecol"
+	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/domaintypes"
-	"github.com/uptrace/bun"
 	"go.uber.org/zap"
 )
 
@@ -29,33 +27,17 @@ func NewDeskCardReader(p Params) fuelpurchaseports.FuelDeskCardReader {
 	}
 }
 
-func scopeSums(
-	sq *bun.SelectQuery,
-	req *fuelpurchaseports.SumFuelPurchasesRequest,
-) *bun.SelectQuery {
-	cols := fuelpurchasecol.FuelPurchaseColumns
+func sumFilters(req *fuelpurchaseports.SumFuelPurchasesRequest) []keel.Pred {
+	fp := fuelpurchasedb.FuelPurchases
 
-	sq = fuelpurchasecol.FuelPurchaseScopeTenant(sq, req.TenantInfo)
-	if !req.TractorID.IsNil() {
-		sq = sq.Where(cols.TractorID.Eq(), req.TractorID)
+	return []keel.Pred{
+		when(!req.TractorID.IsNil(), fp.TractorID.Eq(req.TractorID)),
+		when(!req.FuelCardID.IsNil(), fp.FuelCardID.Eq(req.FuelCardID)),
+		when(!req.JurisdictionID.IsNil(), fp.JurisdictionID.Eq(req.JurisdictionID)),
+		when(len(req.FuelTypes) > 0, fp.FuelType.In(req.FuelTypes...)),
+		when(req.From > 0, fp.PurchasedAt.Gte(req.From)),
+		when(req.To > 0, fp.PurchasedAt.Lt(req.To)),
 	}
-	if !req.FuelCardID.IsNil() {
-		sq = sq.Where(cols.FuelCardID.Eq(), req.FuelCardID)
-	}
-	if !req.JurisdictionID.IsNil() {
-		sq = sq.Where(cols.JurisdictionID.Eq(), req.JurisdictionID)
-	}
-	if len(req.FuelTypes) > 0 {
-		sq = sq.Where(cols.FuelType.In(), bun.List(req.FuelTypes))
-	}
-	if req.From > 0 {
-		sq = sq.Where(cols.PurchasedAt.Gte(), req.From)
-	}
-	if req.To > 0 {
-		sq = sq.Where(cols.PurchasedAt.Lt(), req.To)
-	}
-
-	return sq
 }
 
 func (r *repository) SumPurchases(
@@ -66,34 +48,29 @@ func (r *repository) SumPurchases(
 		ctx,
 		r.db,
 		func(ctx context.Context) ([]*fuelpurchaseports.FuelSpendRow, error) {
-			cols := fuelpurchasecol.FuelPurchaseColumns
-			rows := make([]*fuelpurchaseports.FuelSpendRow, 0, 2)
-
-			err := r.db.DBForContext(ctx).
-				NewSelect().
-				Model((*fuelpurchase.FuelPurchase)(nil)).
-				ColumnExpr(cols.CurrencyCode.As("currency_code")).
-				ColumnExpr(buncolgen.Count("purchase_count")).
-				ColumnExpr(buncolgen.Sum(cols.Gallons, "gallons")).
-				ColumnExpr(buncolgen.Expr(
-					"COALESCE(SUM({0}) FILTER (WHERE NOT {1}), 0) AS untaxed_gallons",
-					cols.Gallons,
-					cols.TaxPaid,
-				)).
-				ColumnExpr(buncolgen.Sum(cols.TotalAmountMinor, "total_amount_minor")).
-				ColumnExpr(buncolgen.Max(cols.PurchasedAt, "last_purchased_at")).
-				WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-					return scopeSums(sq, req)
-				}).
-				GroupExpr(cols.CurrencyCode.Qualified()).
-				OrderExpr("total_amount_minor DESC").
-				Scan(ctx, &rows)
+			fp := fuelpurchasedb.FuelPurchases
+			total := fp.TotalAmountMinor.Sum()
+			rows, err := keel.Into[fuelpurchaseports.FuelSpendRow](
+				ctx,
+				r.db.Keel(ctx),
+				fp.Pick(
+					fp.CurrencyCode,
+					keel.Count(),
+					fp.Gallons.Sum(),
+					keel.Raw("coalesce(?, 0)", fp.Gallons.Sum().Filter(fp.TaxPaid.IsFalse())),
+					total,
+					fp.PurchasedAt.Max(),
+				).
+					Where(sumFilters(req)...).
+					Group(fp.CurrencyCode).
+					Order(total.Desc()),
+			)
 			if err != nil {
 				r.l.Error("failed to total fuel purchases", zap.Error(err))
 				return nil, fmt.Errorf("total fuel purchases: %w", err)
 			}
 
-			return rows, nil
+			return pointers(rows), nil
 		},
 	)
 }
@@ -106,28 +83,22 @@ func (r *repository) SumGallonsByJurisdiction(
 		ctx,
 		r.db,
 		func(ctx context.Context) ([]*fuelpurchaseports.FuelJurisdictionRow, error) {
-			cols := fuelpurchasecol.FuelPurchaseColumns
-			rows := make([]*fuelpurchaseports.FuelJurisdictionRow, 0, 8)
-
-			err := r.db.DBForContext(ctx).
-				NewSelect().
-				Model((*fuelpurchase.FuelPurchase)(nil)).
-				ColumnExpr(cols.JurisdictionID.As("jurisdiction_id")).
-				ColumnExpr(buncolgen.Sum(cols.Gallons, "gallons")).
-				ColumnExpr(buncolgen.Count("purchase_count")).
-				WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-					return scopeSums(sq, req)
-				}).
-				GroupExpr(cols.JurisdictionID.Qualified()).
-				OrderExpr("gallons DESC").
-				OrderExpr(cols.JurisdictionID.OrderAsc()).
-				Scan(ctx, &rows)
+			fp := fuelpurchasedb.FuelPurchases
+			gallons := fp.Gallons.Sum()
+			rows, err := keel.Into[fuelpurchaseports.FuelJurisdictionRow](
+				ctx,
+				r.db.Keel(ctx),
+				fp.Pick(fp.JurisdictionID, gallons, keel.Count()).
+					Where(sumFilters(req)...).
+					Group(fp.JurisdictionID).
+					Order(gallons.Desc(), fp.JurisdictionID.Asc()),
+			)
 			if err != nil {
 				r.l.Error("failed to total fuel gallons by jurisdiction", zap.Error(err))
 				return nil, fmt.Errorf("total fuel gallons by jurisdiction: %w", err)
 			}
 
-			return rows, nil
+			return pointers(rows), nil
 		},
 	)
 }
@@ -137,33 +108,25 @@ func (r *repository) GetPreviousFill(
 	req *fuelpurchaseports.GetPreviousFillRequest,
 ) (*fuelpurchase.FuelPurchase, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*fuelpurchase.FuelPurchase, error) {
-		cols := fuelpurchasecol.FuelPurchaseColumns
+		fp := fuelpurchasedb.FuelPurchases
 		current := req.Purchase
-		entity := new(fuelpurchase.FuelPurchase)
-
-		err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(entity).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return fuelpurchasecol.FuelPurchaseScopeTenant(sq, req.TenantInfo).
-					Where(cols.TractorID.Eq(), current.TractorID).
-					Where(cols.ID.NotEq(), current.ID).
-					Where(cols.Odometer.IsNotNull()).
-					Where(cols.FuelType.In(), bun.List(domaintypes.IFTAFuelTypes())).
-					Where(
-						buncolgen.Expr("({0}, {1}) < (?, ?)", cols.PurchasedAt, cols.ID),
-						current.PurchasedAt,
-						current.ID,
-					)
-			}).
-			Order(cols.PurchasedAt.OrderDesc()).
-			Order(cols.ID.OrderDesc()).
-			Limit(1).
-			Scan(ctx)
+		entity, err := fp.Where(
+			fp.TractorID.Eq(current.TractorID),
+			fp.ID.Ne(current.ID),
+			fp.Odometer.IsNotNull(),
+			fp.FuelType.In(domaintypes.IFTAFuelTypes()...),
+			keel.Raw(
+				"(?, ?) < (?, ?)",
+				fp.PurchasedAt,
+				fp.ID,
+				current.PurchasedAt,
+				current.ID.String(),
+			),
+		).Order(fp.PurchasedAt.Desc(), fp.ID.Desc()).First(ctx, r.db.Keel(ctx))
+		if dberror.IsNotFoundError(err) {
+			return nil, nil
+		}
 		if err != nil {
-			if errors.Is(err, sql.ErrNoRows) {
-				return nil, nil
-			}
 			r.l.Error("failed to read the previous fill", zap.Error(err))
 			return nil, fmt.Errorf("read the previous fill: %w", err)
 		}
@@ -177,25 +140,15 @@ func (r *repository) GetPurchaseImportRow(
 	req *fuelpurchaseports.GetPurchaseImportRowRequest,
 ) (*fuelpurchase.ImportRow, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*fuelpurchase.ImportRow, error) {
-		cols := fuelpurchasecol.ImportRowColumns
-		row := new(fuelpurchase.ImportRow)
-
-		err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(row).
-			Relation(fuelpurchasecol.ImportRowRelations.Batch).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return fuelpurchasecol.ImportRowScopeTenant(sq, req.TenantInfo).
-					Where(cols.FuelPurchaseID.Eq(), req.PurchaseID).
-					Where(cols.Status.Eq(), fuelpurchase.ImportRowStatusCommitted)
-			}).
-			Order(cols.CreatedAt.OrderDesc()).
-			Limit(1).
-			Scan(ctx)
+		ir := fuelpurchasedb.ImportRows
+		row, err := ir.Where(
+			ir.FuelPurchaseID.Eq(req.PurchaseID),
+			ir.Status.Eq(fuelpurchase.ImportRowStatusCommitted),
+		).Load(ir.Batch()).Order(ir.CreatedAt.Desc()).First(ctx, r.db.Keel(ctx))
+		if dberror.IsNotFoundError(err) {
+			return nil, nil
+		}
 		if err != nil {
-			if errors.Is(err, sql.ErrNoRows) {
-				return nil, nil
-			}
 			r.l.Error("failed to read a purchase's import row", zap.Error(err))
 			return nil, fmt.Errorf("read a purchase's import row: %w", err)
 		}
@@ -209,52 +162,29 @@ func (r *repository) ListHeldCardRows(
 	req *fuelpurchaseports.ListHeldCardRowsRequest,
 ) ([]*fuelpurchase.ImportRow, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*fuelpurchase.ImportRow, error) {
-		cols := fuelpurchasecol.ImportRowColumns
-		batchCols := fuelpurchasecol.ImportBatchColumns
-		dba := r.db.DBForContext(ctx)
-		limit := limitOr(req.Limit, maxHeldCardRows, maxHeldCardRows)
+		ir := fuelpurchasedb.ImportRows
+		b := fuelpurchasedb.ImportBatches
+		openBatches := b.Pick(b.ID).Where(keel.Or(
+			keel.And(
+				b.Origin.Eq(fuelpurchase.ImportOriginFeed),
+				b.Status.Ne(fuelpurchase.ImportStatusDiscarded),
+			),
+			keel.And(
+				b.Origin.Eq(fuelpurchase.ImportOriginUpload),
+				b.Status.In(fuelpurchase.ImportStatusPending, fuelpurchase.ImportStatusParsed),
+			),
+		))
 
-		openBatches := dba.NewSelect().
-			Model((*fuelpurchase.ImportBatch)(nil)).
-			Column(batchCols.ID.String()).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return fuelpurchasecol.ImportBatchScopeTenant(sq, req.TenantInfo).
-					WhereGroup(" AND ", func(open *bun.SelectQuery) *bun.SelectQuery {
-						return open.
-							WhereGroup(" OR ", func(feed *bun.SelectQuery) *bun.SelectQuery {
-								return feed.
-									Where(batchCols.Origin.Eq(), fuelpurchase.ImportOriginFeed).
-									Where(batchCols.Status.NotEq(), fuelpurchase.ImportStatusDiscarded)
-							}).
-							WhereGroup(" OR ", func(upload *bun.SelectQuery) *bun.SelectQuery {
-								return upload.
-									Where(batchCols.Origin.Eq(), fuelpurchase.ImportOriginUpload).
-									Where(batchCols.Status.In(), bun.List([]fuelpurchase.ImportStatus{
-										fuelpurchase.ImportStatusPending,
-										fuelpurchase.ImportStatusParsed,
-									}))
-							})
-					})
-			})
-
-		rows := make([]*fuelpurchase.ImportRow, 0, defaultDeskRowLimit)
-		err := dba.NewSelect().
-			Model(&rows).
-			Relation(fuelpurchasecol.ImportRowRelations.Batch).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return fuelpurchasecol.ImportRowScopeTenant(sq, req.TenantInfo).
-					Where(cols.ResolvedFuelCardID.Eq(), req.CardID).
-					Where(cols.FuelPurchaseID.IsNull()).
-					Where(cols.Status.In(), bun.List([]fuelpurchase.ImportRowStatus{
-						fuelpurchase.ImportRowStatusNew,
-						fuelpurchase.ImportRowStatusError,
-					})).
-					Where(cols.ImportBatchID.In(), openBatches)
-			}).
-			Order(cols.CreatedAt.OrderDesc()).
-			Order(cols.RowNumber.OrderAsc()).
-			Limit(int64(limit)).
-			Scan(ctx)
+		rows, err := ir.Where(
+			ir.ResolvedFuelCardID.Eq(req.CardID),
+			ir.FuelPurchaseID.IsNull(),
+			ir.Status.In(fuelpurchase.ImportRowStatusNew, fuelpurchase.ImportRowStatusError),
+			ir.ImportBatchID.InQuery(openBatches),
+		).
+			Load(ir.Batch()).
+			Order(ir.CreatedAt.Desc(), ir.RowNumber.Asc()).
+			Limit(limitOr(req.Limit, maxHeldCardRows, maxHeldCardRows)).
+			List(ctx, r.db.Keel(ctx))
 		if err != nil {
 			r.l.Error("failed to list a card's held rows", zap.Error(err))
 			return nil, fmt.Errorf("list a card's held rows: %w", err)
@@ -269,22 +199,12 @@ func (r *repository) ListRecentCardPurchases(
 	req *fuelpurchaseports.ListRecentCardPurchasesRequest,
 ) ([]*fuelpurchase.FuelPurchase, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*fuelpurchase.FuelPurchase, error) {
-		cols := fuelpurchasecol.FuelPurchaseColumns
-		limit := limitOr(req.Limit, defaultDeskRowLimit, maxRecentPurchases)
-		purchases := make([]*fuelpurchase.FuelPurchase, 0, limit)
-
-		err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(&purchases).
-			Relation(fuelpurchasecol.FuelPurchaseRelations.Jurisdiction).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return fuelpurchasecol.FuelPurchaseScopeTenant(sq, req.TenantInfo).
-					Where(cols.FuelCardID.Eq(), req.CardID)
-			}).
-			Order(cols.PurchasedAt.OrderDesc()).
-			Order(cols.ID.OrderDesc()).
-			Limit(int64(limit)).
-			Scan(ctx)
+		fp := fuelpurchasedb.FuelPurchases
+		purchases, err := fp.Where(fp.FuelCardID.Eq(req.CardID)).
+			Load(fp.Jurisdiction()).
+			Order(fp.PurchasedAt.Desc(), fp.ID.Desc()).
+			Limit(limitOr(req.Limit, defaultDeskRowLimit, maxRecentPurchases)).
+			List(ctx, r.db.Keel(ctx))
 		if err != nil {
 			r.l.Error("failed to list a card's recent purchases", zap.Error(err))
 			return nil, fmt.Errorf("list a card's recent purchases: %w", err)

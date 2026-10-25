@@ -261,13 +261,13 @@ type ListUnsettledWorkerSummariesRequest struct {
 }
 
 type UnsettledWorkerSummary struct {
-	WorkerID         pulid.ID `json:"workerId"         bun:"worker_id"`
-	WorkerName       string   `json:"workerName"       bun:"worker_name"`
-	EventCount       int      `json:"eventCount"       bun:"event_count"`
-	GrossAmountMinor int64    `json:"grossAmountMinor" bun:"gross_amount_minor"`
-	HeldCount        int      `json:"heldCount"        bun:"held_count"`
-	HeldGrossMinor   int64    `json:"heldGrossMinor"   bun:"held_gross_minor"`
-	HasSettlement    bool     `json:"hasSettlement"    bun:"has_settlement"`
+	WorkerID         pulid.ID `json:"workerId"`
+	WorkerName       string   `json:"workerName"`
+	EventCount       int      `json:"eventCount"`
+	GrossAmountMinor int64    `json:"grossAmountMinor"`
+	HeldCount        int      `json:"heldCount"`
+	HeldGrossMinor   int64    `json:"heldGrossMinor"`
+	HasSettlement    bool     `json:"hasSettlement"`
 }
 
 type UnsettledPayEventSummary struct {

@@ -49,12 +49,6 @@ github.com/dustin/go-humanize v1.1.0 h1:dbKTrvD0klcbBV/h4AWJdMuZogJACoMlvWIWZ5b2
 github.com/dustin/go-humanize v1.1.0/go.mod h1:hc1CvRkJMsgxqjmjMQF3QNRAZBwY8AXBAzKYoSX9sFI=
 github.com/ebitengine/purego v0.11.1 h1:2zpWRSQNVKN4eKsKO9eM1ILDgWfYMY9GwqRmK6XeQ/0=
 github.com/ebitengine/purego v0.11.1/go.mod h1:DCHPP08djqhNSoTfImcnHYQRZmd0qhakvrozqaEYhGQ=
-github.com/emoss08/bun v0.0.0-20261016005222-2580fd217ad8 h1:LkwRW8Jka6mOqMj4P9LEfK9n3jDgMHEuIg0PCjeQ8ww=
-github.com/emoss08/bun v0.0.0-20261016005222-2580fd217ad8/go.mod h1:wNltaKJk4JtOt4SG5I5zmA7v0/Mzjh1+/S906Rayd3Y=
-github.com/emoss08/bun/dialect/pgdialect v0.0.0-20261016005222-2580fd217ad8 h1:BaiQGL9nULZlLa1mCf0mijkUy5oK1NHi8TtDUUS8ogs=
-github.com/emoss08/bun/dialect/pgdialect v0.0.0-20261016005222-2580fd217ad8/go.mod h1:kP5HGEpAX8iJCqj3WHm04XnoeBPacdCN1P2HiwMtHpg=
-github.com/emoss08/bun/driver/pgdriver v0.0.0-20261016005222-2580fd217ad8 h1:K5uk6VTaaTbbSIwbK5BbicvmW4ajSWqZzi/0Pn7XgUA=
-github.com/emoss08/bun/driver/pgdriver v0.0.0-20261016005222-2580fd217ad8/go.mod h1:dARxa/PXsaP0bbvQHQxGy4wiMK409XFNrCvWF5HKX/8=
 github.com/emoss08/go-redis/v9 v9.0.0-20261016021426-01e29e5f58fd h1:czVtU38p6zeQImwwXB37konNd45hFBytdCtYo+UICx8=
 github.com/emoss08/go-redis/v9 v9.0.0-20261016021426-01e29e5f58fd/go.mod h1:P+AahU/A8xicUEwF20voqpQB1GC9z6XeSbxBPtnxMOI=
 github.com/felixge/httpsnoop v1.1.0 h1:3YtUj32ZZkqZtt3sZZsClsymw/QDuVfpNhoA31zeORc=

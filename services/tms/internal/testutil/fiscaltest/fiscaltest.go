@@ -2,25 +2,25 @@ package fiscaltest
 
 import (
 	"context"
-	"database/sql"
 	"errors"
 	"fmt"
 	"testing"
 	"time"
 
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/fiscalperiod"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/fiscalperiod/fiscalperioddb"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/fiscalyear"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/fiscalyear/fiscalyeardb"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/glbalance"
-	"github.com/emoss08/trenova/pkg/buncolgen/fiscalperiodcol"
-	"github.com/emoss08/trenova/pkg/buncolgen/fiscalyearcol"
-	"github.com/emoss08/trenova/pkg/buncolgen/glbalancecol"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/glbalance/glbalancedb"
+	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/require"
-	"github.com/uptrace/bun"
 )
 
 type OpenPeriodParams struct {
-	DB             bun.IDB
+	DB             *keel.DB
 	OrganizationID pulid.ID
 	BusinessUnitID pulid.ID
 	At             int64
@@ -33,46 +33,34 @@ func OpenPeriod(
 ) (*fiscalyear.FiscalYear, *fiscalperiod.FiscalPeriod) {
 	t.Helper()
 
+	ctx = tenantContext(ctx, p.OrganizationID, p.BusinessUnitID)
 	fy := findYear(t, ctx, p)
 	if fy == nil {
 		fy = createCalendarYear(t, ctx, p)
 	}
 
-	fyCols := fiscalyearcol.FiscalYearColumns
-	_, err := p.DB.NewUpdate().
-		Model((*fiscalyear.FiscalYear)(nil)).
-		Set(fyCols.Status.Set(), fiscalyear.StatusOpen).
-		Set(fyCols.AllowAdjustingEntries.Set(), true).
-		Where(fyCols.ID.Eq(), fy.ID).
-		Where(fyCols.OrganizationID.Eq(), p.OrganizationID).
-		Where(fyCols.BusinessUnitID.Eq(), p.BusinessUnitID).
-		Exec(ctx)
+	y := fiscalyeardb.FiscalYears
+	_, err := y.Where(y.ID.Eq(fy.ID)).Update(ctx, p.DB,
+		y.Status.To(fiscalyear.StatusOpen),
+		y.AllowAdjustingEntries.To(true),
+	)
 	require.NoError(t, err)
 	fy.Status = fiscalyear.StatusOpen
 	fy.AllowAdjustingEntries = true
 
-	fpCols := fiscalperiodcol.FiscalPeriodColumns
-	fp := new(fiscalperiod.FiscalPeriod)
-	err = p.DB.NewSelect().
-		Model(fp).
-		Where(fpCols.FiscalYearID.Eq(), fy.ID).
-		Where(fpCols.OrganizationID.Eq(), p.OrganizationID).
-		Where(fpCols.BusinessUnitID.Eq(), p.BusinessUnitID).
-		Where(fpCols.IsAdjusting.IsFalse()).
-		Where(fpCols.StartDate.Lte(), p.At).
-		Where(fpCols.EndDate.Gte(), p.At).
-		Limit(1).
-		Scan(ctx)
+	fpt := fiscalperioddb.FiscalPeriods
+	fp, err := fpt.Where(
+		fpt.FiscalYearID.Eq(fy.ID),
+		fpt.IsAdjusting.IsFalse(),
+		fpt.StartDate.Lte(p.At),
+		fpt.EndDate.Gte(p.At),
+	).Limit(1).One(ctx, p.DB)
 	require.NoError(t, err, "fiscal year %s has no operating period covering %d", fy.ID, p.At)
 
-	_, err = p.DB.NewUpdate().
-		Model((*fiscalperiod.FiscalPeriod)(nil)).
-		Set(fpCols.Status.Set(), fiscalperiod.StatusOpen).
-		Set(fpCols.AllowAdjustingEntries.Set(), true).
-		Where(fpCols.ID.Eq(), fp.ID).
-		Where(fpCols.OrganizationID.Eq(), p.OrganizationID).
-		Where(fpCols.BusinessUnitID.Eq(), p.BusinessUnitID).
-		Exec(ctx)
+	_, err = fpt.Where(fpt.ID.Eq(fp.ID)).Update(ctx, p.DB,
+		fpt.Status.To(fiscalperiod.StatusOpen),
+		fpt.AllowAdjustingEntries.To(true),
+	)
 	require.NoError(t, err)
 	fp.Status = fiscalperiod.StatusOpen
 	fp.AllowAdjustingEntries = true
@@ -83,17 +71,9 @@ func OpenPeriod(
 func findYear(t testing.TB, ctx context.Context, p OpenPeriodParams) *fiscalyear.FiscalYear {
 	t.Helper()
 
-	cols := fiscalyearcol.FiscalYearColumns
-	fy := new(fiscalyear.FiscalYear)
-	err := p.DB.NewSelect().
-		Model(fy).
-		Where(cols.OrganizationID.Eq(), p.OrganizationID).
-		Where(cols.BusinessUnitID.Eq(), p.BusinessUnitID).
-		Where(cols.StartDate.Lte(), p.At).
-		Where(cols.EndDate.Gte(), p.At).
-		Limit(1).
-		Scan(ctx)
-	if errors.Is(err, sql.ErrNoRows) {
+	y := fiscalyeardb.FiscalYears
+	fy, err := y.Where(y.StartDate.Lte(p.At), y.EndDate.Gte(p.At)).Limit(1).One(ctx, p.DB)
+	if errors.Is(err, keel.ErrNotFound) {
 		return nil
 	}
 	require.NoError(t, err)
@@ -123,18 +103,14 @@ func createCalendarYear(
 		IsCalendarYear:        true,
 		AllowAdjustingEntries: true,
 	}
-	_, err := p.DB.NewInsert().Model(fy).Exec(ctx)
-	require.NoError(t, err)
-
-	periods := fy.GenerateMonthlyPeriods()
-	_, err = p.DB.NewInsert().Model(&periods).Exec(ctx)
-	require.NoError(t, err)
+	require.NoError(t, fiscalyeardb.FiscalYears.Create(ctx, p.DB, fy))
+	require.NoError(t, fiscalperioddb.FiscalPeriods.CreateMany(ctx, p.DB, fy.GenerateMonthlyPeriods()))
 
 	return fy
 }
 
 type PeriodBalanceParams struct {
-	DB             bun.IDB
+	DB             *keel.DB
 	OrganizationID pulid.ID
 	BusinessUnitID pulid.ID
 	GLAccountID    pulid.ID
@@ -148,19 +124,19 @@ func PeriodBalance(
 ) glbalance.GLAccountPeriodBalance {
 	t.Helper()
 
-	cols := glbalancecol.GLAccountPeriodBalanceColumns
-	var balance glbalance.GLAccountPeriodBalance
-	err := p.DB.NewSelect().
-		Model(&balance).
-		Where(cols.OrganizationID.Eq(), p.OrganizationID).
-		Where(cols.BusinessUnitID.Eq(), p.BusinessUnitID).
-		Where(cols.GLAccountID.Eq(), p.GLAccountID).
-		Where(cols.FiscalPeriodID.Eq(), p.FiscalPeriodID).
-		Scan(ctx)
-	if errors.Is(err, sql.ErrNoRows) {
+	b := glbalancedb.GLAccountPeriodBalances
+	balance, err := b.Where(
+		b.GLAccountID.Eq(p.GLAccountID),
+		b.FiscalPeriodID.Eq(p.FiscalPeriodID),
+	).One(tenantContext(ctx, p.OrganizationID, p.BusinessUnitID), p.DB)
+	if errors.Is(err, keel.ErrNotFound) {
 		return glbalance.GLAccountPeriodBalance{}
 	}
 	require.NoError(t, err)
 
-	return balance
+	return *balance
+}
+
+func tenantContext(ctx context.Context, orgID, buID pulid.ID) context.Context {
+	return dbscope.WithTenant(ctx, dbscope.Tenant{OrganizationID: orgID, BusinessUnitID: buID})
 }

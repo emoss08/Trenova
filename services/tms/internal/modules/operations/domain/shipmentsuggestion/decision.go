@@ -1,14 +1,12 @@
 package shipmentsuggestion
 
 import (
-	"context"
 	"errors"
 	"slices"
 	"strings"
 
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/emoss08/trenova/shared/timeutils"
-	"github.com/uptrace/bun"
 )
 
 type Decision string
@@ -90,35 +88,16 @@ func ParseKey(value string) (Key, error) {
 	return NewKey(Kind(kind), recordID), nil
 }
 
-var _ bun.BeforeAppendModelHook = (*DecisionRecord)(nil)
-
 type DecisionRecord struct {
-	bun.BaseModel `bun:"table:shipment_suggestion_decisions,alias:ssd" json:"-"`
+	keel.Table `keel:"shipment_suggestion_decisions"`
 
-	ID             pulid.ID `json:"id"             bun:"id,type:VARCHAR(100),pk,notnull"`
-	BusinessUnitID pulid.ID `json:"businessUnitId" bun:"business_unit_id,type:VARCHAR(100),pk,notnull"`
-	OrganizationID pulid.ID `json:"organizationId" bun:"organization_id,type:VARCHAR(100),pk,notnull"`
-	UserID         pulid.ID `json:"userId"         bun:"user_id,type:VARCHAR(100),notnull"`
-	SuggestionKey  string   `json:"suggestionKey"  bun:"suggestion_key,type:VARCHAR(200),notnull"`
-	Decision       Decision `json:"decision"       bun:"decision,type:VARCHAR(10),notnull"`
-	DecidedAt      int64    `json:"decidedAt"      bun:"decided_at,type:BIGINT,notnull"`
-	CreatedAt      int64    `json:"createdAt"      bun:"created_at,type:BIGINT,notnull"`
-	UpdatedAt      int64    `json:"updatedAt"      bun:"updated_at,type:BIGINT,notnull"`
-}
-
-func (d *DecisionRecord) BeforeAppendModel(_ context.Context, query bun.Query) error {
-	now := timeutils.NowUnix()
-
-	switch query.(type) {
-	case *bun.InsertQuery:
-		if d.ID.IsNil() {
-			d.ID = pulid.MustNew("ssd_")
-		}
-		d.CreatedAt = now
-		d.UpdatedAt = now
-	case *bun.UpdateQuery:
-		d.UpdatedAt = now
-	}
-
-	return nil
+	ID             pulid.ID `json:"id"             keel:"id,pk,autoid:ssd_"`
+	BusinessUnitID pulid.ID `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
+	OrganizationID pulid.ID `json:"organizationId" keel:"organization_id,pk,tenant"`
+	UserID         pulid.ID `json:"userId"         keel:"user_id"`
+	SuggestionKey  string   `json:"suggestionKey"  keel:"suggestion_key"`
+	Decision       Decision `json:"decision"       keel:"decision"`
+	DecidedAt      int64    `json:"decidedAt"      keel:"decided_at"`
+	CreatedAt      int64    `json:"createdAt"      keel:"created_at,autocreate"`
+	UpdatedAt      int64    `json:"updatedAt"      keel:"updated_at,autoupdate"`
 }

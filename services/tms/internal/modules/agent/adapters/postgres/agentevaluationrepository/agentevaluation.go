@@ -4,24 +4,22 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/emoss08/trenova/pkg/buncolgen/agentcol"
-
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agent/agentdb"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/pkg/dberror"
-	"github.com/emoss08/trenova/pkg/dbhelper"
+	"github.com/emoss08/trenova/pkg/listquery"
 	"github.com/emoss08/trenova/pkg/pagination"
-	"github.com/emoss08/trenova/pkg/querybuilder"
-	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/emoss08/trenova/shared/timeutils"
-	"github.com/uptrace/bun"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
 
 const maxSuitePage = 200
+
+var evaluationErrors = dberror.Mapping{Entity: "AgentEvaluation"}
 
 type Params struct {
 	fx.In
@@ -47,11 +45,7 @@ func (r *repository) Create(
 	entity *agent.Evaluation,
 ) (*agent.Evaluation, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*agent.Evaluation, error) {
-		if _, err := r.db.DBForContext(ctx).
-			NewInsert().
-			Model(entity).
-			Returning("*").
-			Exec(ctx); err != nil {
+		if err := agentdb.Evaluations.Create(ctx, r.db.Keel(ctx), entity); err != nil {
 			r.l.Error("failed to create agent evaluation", zap.Error(err))
 
 			return nil, fmt.Errorf("create agent evaluation: %w", err)
@@ -68,52 +62,37 @@ func (r *repository) Update(
 	entity *agent.Evaluation,
 ) (*agent.Evaluation, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*agent.Evaluation, error) {
-		cols := agentcol.EvaluationColumns
-		ov := entity.Version
-		entity.Version++
-
-		res, err := r.db.DBForContext(ctx).
-			NewUpdate().
-			Model(entity).
-			WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-				return agentcol.EvaluationScopeTenantUpdate(uq, pagination.TenantInfo{
-					OrgID: entity.OrganizationID,
-					BuID:  entity.BusinessUnitID,
-				}).Where(cols.ID.Eq(), entity.ID).
-					Where(cols.Version.Eq(), ov)
-			}).
-			Set(cols.Status.Set(), entity.Status).
-			Set(cols.Input.Set(), entity.Input).
-			Set(cols.DefinitionVersion.Set(), entity.DefinitionVersion).
-			Set(cols.PromptVersion.Set(), entity.PromptVersion).
-			Set(cols.Model.Set(), entity.Model).
-			Set(cols.ProviderID.Set(), entity.ProviderID).
-			Set(cols.Reply.Set(), entity.Reply).
-			Set(cols.Actions.Set(), entity.Actions).
-			Set(cols.Comparison.Set(), entity.Comparison).
-			Set(cols.OriginalProposals.Set(), entity.OriginalProposals).
-			Set(cols.ToolCallsUsed.Set(), entity.ToolCallsUsed).
-			Set(cols.Checks.Set(), entity.Checks).
-			Set(cols.Judge.Set(), entity.Judge).
-			Set(cols.CaseScore.Set(), entity.CaseScore).
-			Set(cols.Fingerprint.Set(), entity.Fingerprint).
-			Set(cols.WorkflowID.Set(), entity.WorkflowID).
-			Set(cols.ErrorMessage.Set(), entity.ErrorMessage).
-			Set(cols.StartedAt.Set(), entity.StartedAt).
-			Set(cols.CompletedAt.Set(), entity.CompletedAt).
-			Set(cols.UpdatedAt.Set(), timeutils.NowUnix()).
-			Set(cols.Version.Set(), entity.Version).
-			Exec(ctx)
+		e := agentdb.Evaluations
+		err := e.Save(
+			ctx,
+			r.db.Keel(ctx),
+			entity,
+			e.Status,
+			e.Input,
+			e.DefinitionVersion,
+			e.PromptVersion,
+			e.Model,
+			e.ProviderID,
+			e.Reply,
+			e.Actions,
+			e.Comparison,
+			e.OriginalProposals,
+			e.ToolCallsUsed,
+			e.Checks,
+			e.Judge,
+			e.CaseScore,
+			e.Fingerprint,
+			e.WorkflowID,
+			e.ErrorMessage,
+			e.StartedAt,
+			e.CompletedAt,
+		)
 		if err != nil {
+			if dberror.IsVersionConflict(err) {
+				return nil, evaluationErrors.Map(err, entity.ID.String())
+			}
+
 			return nil, fmt.Errorf("update agent evaluation: %w", err)
-		}
-
-		rows, err := res.RowsAffected()
-		if err != nil {
-			return nil, fmt.Errorf("update agent evaluation rows: %w", err)
-		}
-		if rows == 0 {
-			return nil, dberror.CreateVersionMismatchError("AgentEvaluation", entity.ID.String())
 		}
 
 		return entity, nil
@@ -125,18 +104,9 @@ func (r *repository) GetByID(
 	req agentports.GetAgentEvaluationByIDRequest,
 ) (*agent.Evaluation, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*agent.Evaluation, error) {
-		entity := new(agent.Evaluation)
-		cols := agentcol.EvaluationColumns
-		err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(entity).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return agentcol.EvaluationScopeTenant(sq, req.TenantInfo).
-					Where(cols.ID.Eq(), req.ID)
-			}).
-			Scan(ctx)
+		entity, err := agentdb.Evaluations.Get(ctx, r.db.Keel(ctx), req.ID)
 		if err != nil {
-			return nil, dberror.HandleNotFoundError(err, "AgentEvaluation")
+			return nil, evaluationErrors.Map(err, req.ID.String())
 		}
 
 		return entity, nil
@@ -147,64 +117,23 @@ func (r *repository) ListConnection(
 	ctx context.Context,
 	req *agentports.ListAgentEvaluationConnectionRequest,
 ) (*pagination.CursorListResult[*agent.Evaluation], error) {
-	return dbtx.Write(
+	return dbtx.Read(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*pagination.CursorListResult[*agent.Evaluation], error) {
-			log := r.l.With(zap.String("operation", "ListConnection"))
-
-			dba := r.db.DBForContext(ctx)
-			var totalCount *int
-			if req.Cursor.IncludeTotalCount {
-				total, err := dba.
-					NewSelect().
-					Model((*agent.Evaluation)(nil)).
-					Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-						sq = querybuilder.ApplyFiltersWithoutSort(
-							sq,
-							agentcol.EvaluationTable.Alias,
-							req.Filter,
-							(*agent.Evaluation)(nil),
-						)
-
-						return suiteScope(sq, req.SuiteRunID).
-							Apply(agentcol.EvaluationApplyTenant(req.Filter.TenantInfo))
-					}).
-					Count(ctx)
-				if err != nil {
-					log.Error("failed to count agent evaluations", zap.Error(err))
-
-					return nil, err
-				}
-				totalCount = new(int(total))
-			}
-
-			result, err := dbhelper.CursorList(
+			e := agentdb.Evaluations
+			result, err := listquery.Connection(
 				ctx,
-				dbhelper.CursorListParams[*agent.Evaluation]{
-					Filter:     req.Filter,
-					Cursor:     req.Cursor,
-					TotalCount: totalCount,
-					Query: func(entities *[]*agent.Evaluation) *bun.SelectQuery {
-						q := dba.NewSelect().Model(entities)
-						if len(req.Columns) > 0 {
-							q = q.Column(req.Columns...)
-						}
-
-						return q
-					},
-					Apply: func(sq *bun.SelectQuery) (*bun.SelectQuery, error) {
-						return querybuilder.ApplyCursorFilters(
-							suiteScope(sq, req.SuiteRunID),
-							agentcol.EvaluationTable.Alias,
-							req.Filter,
-							req.Cursor,
-							(*agent.Evaluation)(nil),
-						)
-					},
-				})
+				r.db.Keel(ctx),
+				e.Where(keel.When(req.SuiteRunID.IsNotNil(), e.SuiteRunID.Eq(req.SuiteRunID))),
+				&listquery.Request[agent.Evaluation]{
+					Filter:  req.Filter,
+					Cursor:  req.Cursor,
+					Columns: req.Columns,
+				},
+			)
 			if err != nil {
-				log.Error("failed to list agent evaluations", zap.Error(err))
+				r.l.Error("failed to list agent evaluations", zap.Error(err))
 
 				return nil, err
 			}
@@ -214,21 +143,13 @@ func (r *repository) ListConnection(
 	)
 }
 
-func suiteScope(sq *bun.SelectQuery, suiteRunID pulid.ID) *bun.SelectQuery {
-	if suiteRunID.IsNil() {
-		return sq
-	}
-
-	return sq.Where(agentcol.EvaluationColumns.SuiteRunID.Eq(), suiteRunID)
-}
-
 func (r *repository) CreateMany(ctx context.Context, entities []*agent.Evaluation) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
 		if len(entities) == 0 {
 			return nil
 		}
 
-		if _, err := r.db.DBForContext(ctx).NewInsert().Model(&entities).Exec(ctx); err != nil {
+		if err := agentdb.Evaluations.CreateMany(ctx, r.db.Keel(ctx), entities); err != nil {
 			r.l.Error("failed to create suite evaluations", zap.Error(err))
 
 			return fmt.Errorf("create suite evaluations: %w", err)
@@ -243,24 +164,17 @@ func (r *repository) ListBySuiteRun(
 	req agentports.ListSuiteEvaluationsRequest,
 ) ([]*agent.Evaluation, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*agent.Evaluation, error) {
-		cols := agentcol.EvaluationColumns
 		limit := req.Limit
 		if limit <= 0 || limit > maxSuitePage {
 			limit = maxSuitePage
 		}
 
-		entities := make([]*agent.Evaluation, 0, limit)
-		if err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(&entities).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return agentcol.EvaluationScopeTenant(sq, req.TenantInfo).
-					Where(cols.SuiteRunID.Eq(), req.SuiteRunID).
-					Where(cols.SuiteOrdinal.Gt(), req.AfterOrdinal)
-			}).
-			Order(cols.SuiteOrdinal.OrderAsc()).
-			Limit(int64(limit)).
-			Scan(ctx); err != nil {
+		e := agentdb.Evaluations
+		entities, err := e.Where(e.SuiteRunID.Eq(req.SuiteRunID), e.SuiteOrdinal.Gt(int64(req.AfterOrdinal))).
+			Order(e.SuiteOrdinal.Asc()).
+			Limit(limit).
+			List(ctx, r.db.Keel(ctx))
+		if err != nil {
 			return nil, fmt.Errorf("list suite evaluations: %w", err)
 		}
 
@@ -273,33 +187,22 @@ func (r *repository) SkipPendingBySuiteRun(
 	req agentports.SkipPendingSuiteEvaluationsRequest,
 ) (int, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (int, error) {
-		cols := agentcol.EvaluationColumns
-
-		res, err := r.db.DBForContext(ctx).
-			NewUpdate().
-			Model((*agent.Evaluation)(nil)).
-			WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-				return agentcol.EvaluationScopeTenantUpdate(uq, req.TenantInfo).
-					Where(cols.SuiteRunID.Eq(), req.SuiteRunID).
-					Where(cols.Status.In(), bun.List([]agent.EvaluationStatus{
-						agent.EvaluationStatusPending,
-					}))
-			}).
-			Set(cols.Status.Set(), agent.EvaluationStatusSkipped).
-			Set(cols.ErrorMessage.Set(), req.Reason).
-			Set(cols.CompletedAt.Set(), req.At).
-			Set(cols.UpdatedAt.Set(), req.At).
-			Set(cols.Version.Inc(1)).
-			Exec(ctx)
+		e := agentdb.Evaluations
+		n, err := e.Where(
+			e.SuiteRunID.Eq(req.SuiteRunID),
+			e.Status.Eq(agent.EvaluationStatusPending),
+		).Update(
+			ctx,
+			r.db.Keel(ctx),
+			e.Status.To(agent.EvaluationStatusSkipped),
+			e.ErrorMessage.To(req.Reason),
+			e.CompletedAt.To(req.At),
+			e.UpdatedAt.To(req.At),
+		)
 		if err != nil {
 			return 0, fmt.Errorf("skip pending suite evaluations: %w", err)
 		}
 
-		rows, err := res.RowsAffected()
-		if err != nil {
-			return 0, fmt.Errorf("skip pending suite evaluations rows: %w", err)
-		}
-
-		return int(rows), nil
+		return int(n), nil
 	})
 }

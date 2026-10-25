@@ -4,10 +4,11 @@ import (
 	"context"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/testutil/dbtest"
+
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
-	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/modules/operations/app/internaledilifecycle"
 	"github.com/emoss08/trenova/internal/modules/operations/app/shipmentinvalidation"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
@@ -16,7 +17,6 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/require"
-	"github.com/uptrace/bun"
 	"go.uber.org/zap"
 )
 
@@ -470,7 +470,7 @@ func newObserverFixture(t *testing.T) *observerFixture {
 	}
 	fixture.observer = &Observer{
 		l:                  zap.NewNop(),
-		db:                 fakeDBConnection{},
+		db:                 dbtest.NopConnection{},
 		shipmentRepo:       shipmentRepo,
 		shipmentEventRepo:  eventRepo,
 		shipmentLinkRepo:   linkRepo,
@@ -586,21 +586,6 @@ func (f *observerFixture) idempotencyKey(
 	changeType string,
 ) string {
 	return f.link.ID.String() + ":" + event.ID.String() + ":" + string(direction) + ":" + changeType
-}
-
-type fakeDBConnection struct{}
-
-func (fakeDBConnection) DB() *bun.DB                          { return nil }
-func (fakeDBConnection) DBForContext(context.Context) bun.IDB { return nil }
-func (fakeDBConnection) HealthCheck(context.Context) error    { return nil }
-func (fakeDBConnection) IsHealthy(context.Context) bool       { return true }
-func (fakeDBConnection) Close() error                         { return nil }
-func (fakeDBConnection) WithTx(
-	ctx context.Context,
-	_ kernelports.TxOptions,
-	fn func(context.Context, bun.Tx) error,
-) error {
-	return fn(ctx, bun.Tx{})
 }
 
 type fakeShipmentRepository struct {

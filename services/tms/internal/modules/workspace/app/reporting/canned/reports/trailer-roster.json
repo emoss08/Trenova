@@ -1,0 +1,159 @@
+{
+  "key": "trailer-roster",
+  "version": "1.0.0",
+  "name": "Fleet Roster — Trailers",
+  "description": "Trailer roster with specification, capacity, registration, and last inspection date",
+  "category": "Fleet",
+  "tags": [
+    "trailers",
+    "fleet",
+    "roster",
+    "assets"
+  ],
+  "defaultFormat": "xlsx",
+  "definition": {
+    "version": 2,
+    "entity": "trailer",
+    "columns": [
+      {
+        "id": "unit",
+        "label": "Unit Number",
+        "dimension": {
+          "field": "code"
+        }
+      },
+      {
+        "id": "status",
+        "label": "Status",
+        "dimension": {
+          "field": "status"
+        }
+      },
+      {
+        "id": "year",
+        "label": "Year",
+        "dimension": {
+          "field": "year"
+        }
+      },
+      {
+        "id": "make",
+        "label": "Make",
+        "dimension": {
+          "field": "make"
+        }
+      },
+      {
+        "id": "model",
+        "label": "Model",
+        "dimension": {
+          "field": "model"
+        }
+      },
+      {
+        "id": "vin",
+        "label": "VIN",
+        "dimension": {
+          "field": "vin"
+        },
+        "display": {
+          "nullText": "—"
+        }
+      },
+      {
+        "id": "license_plate",
+        "label": "License Plate",
+        "dimension": {
+          "field": "licensePlateNumber"
+        },
+        "display": {
+          "nullText": "—"
+        }
+      },
+      {
+        "id": "equipment_type",
+        "label": "Equipment Type",
+        "dimension": {
+          "field": "equipmentType.code"
+        }
+      },
+      {
+        "id": "manufacturer",
+        "label": "Manufacturer",
+        "dimension": {
+          "field": "equipmentManufacturer.name"
+        }
+      },
+      {
+        "id": "fleet_code",
+        "label": "Fleet",
+        "dimension": {
+          "field": "fleetCode.code"
+        }
+      },
+      {
+        "id": "max_load_weight",
+        "label": "Max Load Weight",
+        "dimension": {
+          "field": "maxLoadWeight"
+        }
+      },
+      {
+        "id": "last_inspection",
+        "label": "Last Inspection",
+        "dimension": {
+          "field": "lastInspectionDate"
+        },
+        "display": {
+          "style": "date",
+          "dateStyle": "date"
+        }
+      },
+      {
+        "id": "registration_expiry",
+        "label": "Registration Expiry",
+        "dimension": {
+          "field": "registrationExpiry"
+        },
+        "display": {
+          "style": "date",
+          "dateStyle": "date"
+        }
+      }
+    ],
+    "filters": {
+      "and": [
+        {
+          "field": "status",
+          "op": "in",
+          "param": "statuses"
+        }
+      ]
+    },
+    "sort": [
+      {
+        "column": "unit"
+      }
+    ],
+    "parameters": [
+      {
+        "name": "statuses",
+        "label": "Statuses",
+        "type": "enum",
+        "required": true,
+        "multi": true,
+        "default": [
+          "Available",
+          "OutOfService",
+          "AtMaintenance"
+        ],
+        "allowed": [
+          "Available",
+          "OutOfService",
+          "AtMaintenance",
+          "Sold"
+        ]
+      }
+    ]
+  }
+}

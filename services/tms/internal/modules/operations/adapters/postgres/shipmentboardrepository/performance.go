@@ -4,16 +4,15 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/emoss08/trenova/pkg/buncolgen/shipmentcol"
-	"github.com/emoss08/trenova/pkg/buncolgen/tendercol"
-
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment/shipmentdb"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/tender"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/tender/tenderdb"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
-	"github.com/uptrace/bun"
 )
 
 func NewCarrierPerformanceRepository(r *Repository) shipmentports.CarrierPerformanceRepository {
@@ -21,15 +20,15 @@ func NewCarrierPerformanceRepository(r *Repository) shipmentports.CarrierPerform
 }
 
 type offerTotalsRow struct {
-	CarrierID pulid.ID `bun:"carrier_id"`
-	Answered  int      `bun:"answered"`
-	Accepted  int      `bun:"accepted"`
+	CarrierID pulid.ID
+	Answered  int64
+	Accepted  int64
 }
 
 type rateRow struct {
-	CarrierID pulid.ID            `bun:"carrier_id"`
-	Loads     int                 `bun:"loads"`
-	AvgRate   decimal.NullDecimal `bun:"avg_rate"`
+	CarrierID pulid.ID
+	Loads     int64
+	AvgRate   decimal.NullDecimal
 }
 
 func (r *Repository) ListCarrierPerformance(
@@ -40,14 +39,15 @@ func (r *Repository) ListCarrierPerformance(
 		ctx,
 		r.db,
 		func(ctx context.Context) ([]*shipmentports.CarrierPerformance, error) {
-			dba := r.db.DBForContext(ctx)
-			offers, err := r.offerTotals(ctx, dba, req)
-			if err != nil {
-				return nil, err
-			}
-			rates, err := r.perMileRates(ctx, dba, req)
-			if err != nil {
-				return nil, err
+			var offers []offerTotalsRow
+			var rates []rateRow
+			if err := keel.Batch(
+				ctx,
+				r.db.Keel(ctx),
+				keel.IntoSlice(offerTotalsQuery(req), &offers),
+				keel.IntoSlice(perMileRatesQuery(req), &rates),
+			); err != nil {
+				return nil, fmt.Errorf("read carrier performance: %w", err)
 			}
 
 			return mergePerformance(offers, rates), nil
@@ -55,68 +55,40 @@ func (r *Repository) ListCarrierPerformance(
 	)
 }
 
-func (r *Repository) offerTotals(
-	ctx context.Context,
-	dba bun.IDB,
-	req *shipmentports.ListCarrierPerformanceRequest,
-) ([]offerTotalsRow, error) {
-	cols := tendercol.TenderOfferColumns
-	answered := []tender.OfferStatus{
-		tender.OfferStatusAccepted,
-		tender.OfferStatusDeclined,
-		tender.OfferStatusExpired,
-	}
-
-	rows := make([]offerTotalsRow, 0)
-	q := dba.NewSelect().
-		Model((*tender.TenderOffer)(nil)).
-		ColumnExpr(cols.CarrierID.As("carrier_id")).
-		ColumnExpr("COUNT(*) FILTER (WHERE "+cols.Status.In()+") AS answered", bun.List(answered)).
-		ColumnExpr(
-			"COUNT(*) FILTER (WHERE "+cols.Status.Eq()+") AS accepted",
-			tender.OfferStatusAccepted,
+func offerTotalsQuery(req *shipmentports.ListCarrierPerformanceRequest) keel.Projection {
+	to := tenderdb.TenderOffers
+	q := to.Group(to.CarrierID).
+		Pick(
+			to.CarrierID,
+			keel.Count().Filter(to.Status.In(
+				tender.OfferStatusAccepted,
+				tender.OfferStatusDeclined,
+				tender.OfferStatusExpired,
+			)),
+			keel.Count().Filter(to.Status.Eq(tender.OfferStatusAccepted)),
 		).
-		Where(cols.OrganizationID.Eq(), req.TenantInfo.OrgID).
-		Where(cols.BusinessUnitID.Eq(), req.TenantInfo.BuID).
-		Where(cols.SentAt.Gte(), req.Since).
-		GroupExpr(cols.CarrierID.Qualified())
+		Where(to.SentAt.Gte(req.Since))
 	if len(req.CarrierIDs) > 0 {
-		q = q.Where(cols.CarrierID.In(), bun.List(req.CarrierIDs))
-	}
-	if err := q.Scan(ctx, &rows); err != nil {
-		return nil, fmt.Errorf("count carrier tender answers: %w", err)
+		q = q.Where(to.CarrierID.In(req.CarrierIDs...))
 	}
 
-	return rows, nil
+	return q
 }
 
-func (r *Repository) perMileRates(
-	ctx context.Context,
-	dba bun.IDB,
-	req *shipmentports.ListCarrierPerformanceRequest,
-) ([]rateRow, error) {
-	cols := shipmentcol.CarrierAssignmentColumns
-
-	rows := make([]rateRow, 0)
-	q := dba.NewSelect().
-		Model((*shipment.CarrierAssignment)(nil)).
-		ColumnExpr(cols.CarrierID.As("carrier_id")).
-		ColumnExpr("COUNT(*) AS loads").
-		ColumnExpr("AVG("+cols.BaseRate.Qualified()+") AS avg_rate").
-		Where(cols.OrganizationID.Eq(), req.TenantInfo.OrgID).
-		Where(cols.BusinessUnitID.Eq(), req.TenantInfo.BuID).
-		Where(cols.RateMethod.Eq(), shipment.CarrierRateMethodPerMile).
-		Where(cols.Status.NotEq(), shipment.CarrierAssignmentStatusCanceled).
-		Where(cols.CreatedAt.Gte(), req.Since).
-		GroupExpr(cols.CarrierID.Qualified())
+func perMileRatesQuery(req *shipmentports.ListCarrierPerformanceRequest) keel.Projection {
+	ca := shipmentdb.CarrierAssignments
+	q := ca.Group(ca.CarrierID).
+		Pick(ca.CarrierID, keel.Count(), keel.Avg(ca.BaseRate)).
+		Where(
+			ca.RateMethod.Eq(shipment.CarrierRateMethodPerMile),
+			ca.Status.Ne(shipment.CarrierAssignmentStatusCanceled),
+			ca.CreatedAt.Gte(req.Since),
+		)
 	if len(req.CarrierIDs) > 0 {
-		q = q.Where(cols.CarrierID.In(), bun.List(req.CarrierIDs))
-	}
-	if err := q.Scan(ctx, &rows); err != nil {
-		return nil, fmt.Errorf("average carrier rates: %w", err)
+		q = q.Where(ca.CarrierID.In(req.CarrierIDs...))
 	}
 
-	return rows, nil
+	return q
 }
 
 func mergePerformance(
@@ -135,12 +107,12 @@ func mergePerformance(
 	}
 	for _, row := range offers {
 		perf := entry(row.CarrierID)
-		perf.OffersAnswered = row.Answered
-		perf.OffersAccepted = row.Accepted
+		perf.OffersAnswered = int(row.Answered)
+		perf.OffersAccepted = int(row.Accepted)
 	}
 	for _, row := range rates {
 		perf := entry(row.CarrierID)
-		perf.PerMileLoads = row.Loads
+		perf.PerMileLoads = int(row.Loads)
 		perf.AvgRatePerMile = row.AvgRate
 	}
 

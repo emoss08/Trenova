@@ -122,13 +122,13 @@ type Tractor struct {
 	OrganizationID pulid.ID `+"`json:\"organizationId\"`"+`
 	BusinessUnitID pulid.ID `+"`json:\"businessUnitId\"`"+`
 	PrimaryWorkerID pulid.ID `+"`json:\"primaryWorkerId\"`"+`
-	StateID        pulid.ID `+"`json:\"stateId\" bun:\"state_id,type:VARCHAR(100),nullzero\"`"+`
+	StateID        pulid.ID `+"`json:\"stateId\" keel:\"state_id,nullzero\"`"+`
 	Status         string   `+"`json:\"status\"`"+`
-	Code           string   `+"`json:\"code\" bun:\"code,type:VARCHAR(50),notnull\"`"+`
-	Model          string   `+"`json:\"model\" bun:\"model,type:VARCHAR(50),notnull\"`"+`
-	Vin            string   `+"`json:\"vin\" bun:\"vin,type:VARCHAR(50),nullzero\"`"+`
-	Year           *int     `+"`json:\"year\" bun:\"year,type:INT,nullzero\"`"+`
-	CustomFields   map[string]any `+"`json:\"customFields,omitempty\" bun:\"-\"`"+`
+	Code           string   `+"`json:\"code\" keel:\"code\"`"+`
+	Model          string   `+"`json:\"model\" keel:\"model\"`"+`
+	Vin            string   `+"`json:\"vin\" keel:\"vin,nullzero\"`"+`
+	Year           *int     `+"`json:\"year\" keel:\"year,nullzero\"`"+`
+	CustomFields   map[string]any `+"`json:\"customFields,omitempty\" keel:\"-\"`"+`
 }
 `)
 	writeTestFile(
@@ -176,8 +176,8 @@ type User struct {
 	ID                    pulid.ID `+"`json:\"id\"`"+`
 	BusinessUnitID        pulid.ID `+"`json:\"businessUnitId\"`"+`
 	CurrentOrganizationID pulid.ID `+"`json:\"currentOrganizationId\"`"+`
-	Name                  string   `+"`json:\"name\" bun:\"name,type:VARCHAR(255),notnull\"`"+`
-	IsLocked              bool     `+"`json:\"isLocked\" bun:\"is_locked,type:BOOLEAN,notnull\"`"+`
+	Name                  string   `+"`json:\"name\" keel:\"name\"`"+`
+	IsLocked              bool     `+"`json:\"isLocked\" keel:\"is_locked\"`"+`
 }
 `)
 	writeTestFile(t, root, "internal/modules/workforce/domain/worker/worker.go", `package worker
@@ -190,7 +190,7 @@ type Worker struct {
 	ID             pulid.ID  `+"`json:\"id\"`"+`
 	OrganizationID pulid.ID  `+"`json:\"organizationId\"`"+`
 	BusinessUnitID pulid.ID  `+"`json:\"businessUnitId\"`"+`
-	Type           WorkerType `+"`json:\"type\" bun:\"type,type:worker_type_enum,notnull\"`"+`
+	Type           WorkerType `+"`json:\"type\" keel:\"type\"`"+`
 }
 `)
 	writeTestFile(t, root, "internal/api/graphql/resolver/existing.go", `package resolver

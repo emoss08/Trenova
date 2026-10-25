@@ -4,27 +4,21 @@ import (
 	"context"
 	"errors"
 
-	"github.com/emoss08/trenova/pkg/buncolgen/customercol"
-	"github.com/emoss08/trenova/pkg/buncolgen/shipmentcol"
-	"github.com/emoss08/trenova/pkg/buncolgen/tenantcol"
-
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment/shipmentdb"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
-	"github.com/emoss08/trenova/pkg/buncolgen"
-	"github.com/uptrace/bun"
 	"go.uber.org/zap"
 )
 
 var ErrUnsupportedGrouping = errors.New("shipment board grouping is not supported")
 
 const (
-	groupKeyAlias   = "group_key"
-	groupLabelAlias = "group_label"
-	groupStopAlias  = "grp_stop"
-	groupCusAlias   = "grp_cus"
-	groupOwnerAlias = "grp_own"
-	dayKeyFormat    = "YYYY-MM-DD"
+	groupStopAlias = "grp_stop"
+	endStopAlias   = "end_stp"
+	endMoveAlias   = "end_sm"
+	dayKeyFormat   = "YYYY-MM-DD"
 )
 
 func (r *Repository) GroupSummary(
@@ -39,7 +33,7 @@ func (r *Repository) GroupSummary(
 				return nil, ErrScopeMissing
 			}
 
-			q, err := r.scoped(r.db.DBForContext(ctx), req.Scope)
+			q, err := scoped(req.Scope)
 			if err != nil {
 				return nil, err
 			}
@@ -49,8 +43,8 @@ func (r *Repository) GroupSummary(
 				return nil, err
 			}
 
-			rows := make([]*shipmentports.ShipmentBoardGroupRow, 0)
-			if err = q.Scan(ctx, &rows); err != nil {
+			rows, err := keel.Into[shipmentports.ShipmentBoardGroupRow](ctx, r.db.Keel(ctx), q)
+			if err != nil {
 				r.l.Error(
 					"failed to summarize shipment board groups",
 					zap.String("groupBy", string(req.GroupBy)),
@@ -59,34 +53,21 @@ func (r *Repository) GroupSummary(
 				return nil, err
 			}
 
-			return rows, nil
+			return pointers(rows), nil
 		},
 	)
 }
 
 func groupSummaryQuery(
-	q *bun.SelectQuery,
+	q *keel.Query[shipment.Shipment],
 	groupBy shipment.BoardGrouping,
 	timezone string,
-) (*bun.SelectQuery, error) {
-	sp := shipmentcol.ShipmentColumns
-	q = q.
-		ColumnExpr(buncolgen.Count(countAlias)).
-		ColumnExpr(sp.TotalChargeAmount.Expr("COALESCE(SUM({}), 0) AS " + stageRevenueAlias))
-
+) (*keel.Query[shipment.Shipment], error) {
 	switch groupBy {
 	case shipment.BoardGroupingShipDate:
-		return dayGroups(
-			q,
-			shipment.ShipperStopIDSQL(shipmentcol.ShipmentTable.Alias),
-			timezone,
-		), nil
+		return dayGroups(q, shipment.PickupStopTypes(), false, timezone), nil
 	case shipment.BoardGroupingDeliveryDate:
-		return dayGroups(
-			q,
-			shipment.ConsigneeStopIDSQL(shipmentcol.ShipmentTable.Alias),
-			timezone,
-		), nil
+		return dayGroups(q, shipment.DeliveryStopTypes(), true, timezone), nil
 	case shipment.BoardGroupingCustomer:
 		return customerGroups(q), nil
 	case shipment.BoardGroupingOwner:
@@ -96,54 +77,70 @@ func groupSummaryQuery(
 	}
 }
 
-func dayGroups(q *bun.SelectQuery, stopIDSQL, timezone string) *bun.SelectQuery {
-	start := shipmentcol.StopColumns.ScheduledWindowStart.WithAlias(groupStopAlias)
+func endStopID(types []shipment.StopType, last bool) keel.Expr {
+	sp := shipmentdb.Shipments
+	st := shipmentdb.Stops.As(endStopAlias)
+	sm := shipmentdb.ShipmentMoves.As(endMoveAlias)
 
-	return q.
-		Join("LEFT JOIN stops AS "+groupStopAlias).
-		JoinOn(shipmentcol.StopColumns.ID.WithAlias(groupStopAlias).Qualified()+" = "+stopIDSQL).
-		ColumnExpr(
-			"COALESCE(to_char(to_timestamp("+start.Qualified()+") AT TIME ZONE ?, ?), '') AS ?",
-			timezone,
-			dayKeyFormat,
-			bun.Ident(groupKeyAlias),
-		).
-		ColumnExpr("'' AS ?", bun.Ident(groupLabelAlias)).
-		GroupExpr("?", bun.Ident(groupKeyAlias)).
-		OrderExpr("MIN(" + start.Qualified() + ") ASC NULLS LAST")
+	order := []keel.Order{
+		sm.Sequence.Asc(),
+		st.Sequence.Asc(),
+		keel.Asc(keel.Raw(`? COLLATE "C"`, st.ID)),
+	}
+	if last {
+		order = []keel.Order{
+			sm.Sequence.Desc(),
+			st.Sequence.Desc(),
+			keel.Desc(keel.Raw(`? COLLATE "C"`, st.ID)),
+		}
+	}
+
+	return keel.Scalar(sm.Pick(st.ID).
+		Join(st, st.ShipmentMoveID.EqCol(sm.ID)).
+		Where(sm.ShipmentID.EqCol(sp.ID), st.Type.In(types...)).
+		Order(order...).
+		Limit(1))
 }
 
-func customerGroups(q *bun.SelectQuery) *bun.SelectQuery {
-	sp := shipmentcol.ShipmentColumns
-	cus := customercol.CustomerColumns
-	id := cus.ID.WithAlias(groupCusAlias)
-	name := cus.Name.WithAlias(groupCusAlias)
+func dayGroups(
+	q *keel.Query[shipment.Shipment],
+	types []shipment.StopType,
+	last bool,
+	timezone string,
+) *keel.Query[shipment.Shipment] {
+	gs := shipmentdb.Stops.As(groupStopAlias)
+	key := keel.Raw(
+		"COALESCE(to_char(to_timestamp(?) AT TIME ZONE ?, ?), '')",
+		gs.ScheduledWindowStart,
+		timezone,
+		dayKeyFormat,
+	)
 
-	return q.
-		Join("LEFT JOIN customers AS " + groupCusAlias).
-		JoinOn(id.EqColumn(sp.CustomerID)).
-		JoinOn(cus.OrganizationID.WithAlias(groupCusAlias).EqColumn(sp.OrganizationID)).
-		JoinOn(cus.BusinessUnitID.WithAlias(groupCusAlias).EqColumn(sp.BusinessUnitID)).
-		ColumnExpr(sp.CustomerID.As(groupKeyAlias)).
-		ColumnExpr(name.Expr("COALESCE({}, '') AS " + groupLabelAlias)).
-		GroupExpr(sp.CustomerID.Qualified()).
-		GroupExpr(name.Qualified()).
-		OrderExpr(name.Qualified() + " ASC NULLS LAST").
-		OrderExpr(sp.CustomerID.OrderAsc())
+	return q.LeftJoin(gs, gs.ID.EqCol(endStopID(types, last))).
+		Pick(key, keel.Raw("''"), keel.Count(), revenueSum()).
+		Group(key).
+		Order(keel.Asc(keel.Raw("MIN(?)", gs.ScheduledWindowStart)).NullsLast())
 }
 
-func ownerGroups(q *bun.SelectQuery) *bun.SelectQuery {
-	sp := shipmentcol.ShipmentColumns
-	usr := tenantcol.UserColumns
-	name := usr.Name.WithAlias(groupOwnerAlias)
+func customerGroups(q *keel.Query[shipment.Shipment]) *keel.Query[shipment.Shipment] {
+	sp := shipmentdb.Shipments
+	cus := sp.Customer()
 
-	return q.
-		Join("LEFT JOIN users AS " + groupOwnerAlias).
-		JoinOn(usr.ID.WithAlias(groupOwnerAlias).EqColumn(sp.OwnerID)).
-		ColumnExpr(sp.OwnerID.Expr("COALESCE({}, '') AS " + groupKeyAlias)).
-		ColumnExpr(name.Expr("COALESCE({}, '') AS " + groupLabelAlias)).
-		GroupExpr(sp.OwnerID.Qualified()).
-		GroupExpr(name.Qualified()).
-		OrderExpr(name.Qualified() + " ASC NULLS LAST").
-		OrderExpr(sp.OwnerID.Qualified() + " ASC NULLS LAST")
+	return q.Pick(sp.CustomerID, keel.Raw("COALESCE(?, '')", cus.Name), keel.Count(), revenueSum()).
+		Group(sp.CustomerID, cus.Name).
+		Order(cus.Name.Asc().NullsLast(), sp.CustomerID.Asc())
+}
+
+func ownerGroups(q *keel.Query[shipment.Shipment]) *keel.Query[shipment.Shipment] {
+	sp := shipmentdb.Shipments
+	owner := sp.Owner()
+
+	return q.Pick(
+		keel.Raw("COALESCE(?, '')", sp.OwnerID),
+		keel.Raw("COALESCE(?, '')", owner.Name),
+		keel.Count(),
+		revenueSum(),
+	).
+		Group(sp.OwnerID, owner.Name).
+		Order(owner.Name.Asc().NullsLast(), sp.OwnerID.Asc().NullsLast())
 }

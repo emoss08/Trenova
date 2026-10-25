@@ -24,7 +24,6 @@ import (
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/uptrace/bun"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
@@ -33,7 +32,7 @@ type Params struct {
 	fx.In
 
 	Logger          *zap.Logger
-	DB              kernelports.DBConnection
+	DB              kernelports.Transactor
 	Repo            shipmentports.ShipmentMoveRepository
 	AssignmentRepo  shipmentports.AssignmentRepository
 	ShipmentRepo    shipmentports.ShipmentRepository
@@ -53,7 +52,7 @@ type Params struct {
 
 type service struct {
 	l               *zap.Logger
-	db              kernelports.DBConnection
+	db              kernelports.Transactor
 	repo            shipmentports.ShipmentMoveRepository
 	assignmentRepo  shipmentports.AssignmentRepository
 	shipmentRepo    shipmentports.ShipmentRepository
@@ -155,7 +154,7 @@ func (s *service) UpdateStatus(
 
 	var updatedMove *shipment.ShipmentMove
 	var previousStatus shipment.MoveStatus
-	err := s.db.WithTx(ctx, kernelports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
+	err := s.db.Transact(ctx, kernelports.TxOptions{}, func(txCtx context.Context) error {
 		plan, err := s.planMoveStatus(txCtx, &moveStatusRequest{
 			tenantInfo: req.TenantInfo,
 			moveIDs:    []pulid.ID{req.MoveID},
@@ -217,7 +216,7 @@ func (s *service) BulkUpdateStatus(
 
 	var updatedMoves []*shipment.ShipmentMove
 	var plan *moveStatusPlan
-	err := s.db.WithTx(ctx, kernelports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
+	err := s.db.Transact(ctx, kernelports.TxOptions{}, func(txCtx context.Context) error {
 		var err error
 		plan, err = s.planMoveStatus(txCtx, &moveStatusRequest{
 			tenantInfo: req.TenantInfo,
@@ -342,7 +341,7 @@ func (s *service) SplitMove(
 	}
 
 	var response *shipmentports.SplitMoveResponse
-	err := s.db.WithTx(ctx, kernelports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
+	err := s.db.Transact(ctx, kernelports.TxOptions{}, func(txCtx context.Context) error {
 		lockedMove, err := s.repo.GetByID(txCtx, &shipmentports.GetMoveByIDRequest{
 			MoveID:            req.MoveID,
 			TenantInfo:        req.TenantInfo,

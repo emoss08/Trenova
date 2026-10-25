@@ -4,16 +4,19 @@ package invoiceservice
 
 import (
 	"context"
-	"github.com/emoss08/trenova/internal/testutil/mocks/shipmentportsmock"
 	"testing"
 	"time"
 
+	"github.com/emoss08/keel"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue/billingqueuedb"
+	"github.com/emoss08/trenova/pkg/dbscope"
+
+	"github.com/emoss08/trenova/internal/testutil/seededtest"
+
+	"github.com/emoss08/trenova/internal/testutil/mocks/shipmentportsmock"
+
 	"github.com/emoss08/trenova/internal/testutil/fiscaltest"
 
-	"github.com/emoss08/trenova/internal/infrastructure/config"
-	"github.com/emoss08/trenova/internal/infrastructure/database/common"
-	"github.com/emoss08/trenova/internal/infrastructure/database/seeder"
-	"github.com/emoss08/trenova/internal/infrastructure/database/seeds"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/modules/accounting/adapters/postgres/fiscalperiodrepository"
 	"github.com/emoss08/trenova/internal/modules/accounting/adapters/postgres/journalpostingrepository"
@@ -29,7 +32,6 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/internal/testutil"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
-	"github.com/emoss08/trenova/internal/testutil/seedtest"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/seqgen"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -37,39 +39,28 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
-	"github.com/uptrace/bun"
 	"go.uber.org/zap"
 )
 
 type seededInvoiceOrg struct {
-	ID             pulid.ID `bun:"id"`
-	BusinessUnitID pulid.ID `bun:"business_unit_id"`
+	ID             pulid.ID
+	BusinessUnitID pulid.ID
 }
 
 type seededInvoiceUser struct {
-	ID pulid.ID `bun:"id"`
+	ID pulid.ID
 }
 
 type seededInvoiceShipment struct {
-	ID         pulid.ID `bun:"id"`
-	CustomerID pulid.ID `bun:"customer_id"`
-	ProNumber  string   `bun:"pro_number"`
-	BOL        string   `bun:"bol"`
+	ID         pulid.ID
+	CustomerID pulid.ID
+	ProNumber  string
+	BOL        string
 }
 
 func TestPostCreatesInvoiceJournalSourceAndBalances(t *testing.T) {
-	ctx, db, cleanup := seedtest.SetupTestDB(t)
+	ctx, db, cleanup := seededtest.SetupTestDB(t)
 	defer cleanup()
-
-	seedRegistry := seeder.NewRegistry()
-	seeds.Register(seedRegistry)
-	engine := seeder.NewEngine(
-		db,
-		seedRegistry,
-		&config.Config{System: config.SystemConfig{SystemUserPassword: "test-system-password"}},
-	)
-	_, err := engine.Execute(ctx, seeder.ExecuteOptions{Environment: common.EnvDevelopment})
-	require.NoError(t, err)
 
 	conn := postgres.NewTestConnection(db)
 	logger := zap.NewNop()
@@ -93,37 +84,7 @@ func TestPostCreatesInvoiceJournalSourceAndBalances(t *testing.T) {
 		seqgen.GeneratorParams{Store: store, Provider: provider, Logger: logger},
 	)
 
-	var org seededInvoiceOrg
-	require.NoError(
-		t,
-		db.NewSelect().
-			Table("organizations").
-			Column("id", "business_unit_id").
-			Limit(1).
-			Scan(ctx, &org),
-	)
-	var user seededInvoiceUser
-	require.NoError(
-		t,
-		db.NewSelect().
-			Table("users").
-			Column("id").
-			Where("current_organization_id = ?", org.ID).
-			Where("business_unit_id = ?", org.BusinessUnitID).
-			Limit(1).
-			Scan(ctx, &user),
-	)
-	var shp seededInvoiceShipment
-	require.NoError(
-		t,
-		db.NewSelect().
-			Table("shipments").
-			Column("id", "customer_id", "pro_number", "bol").
-			Where("organization_id = ?", org.ID).
-			Where("business_unit_id = ?", org.BusinessUnitID).
-			Limit(1).
-			Scan(ctx, &shp),
-	)
+	ctx, org, user, shp := seededInvoiceFixture(t, ctx, db)
 
 	control, err := accountingRepo.GetByOrgID(ctx, org.ID)
 	require.NoError(t, err)
@@ -168,8 +129,7 @@ func TestPostCreatesInvoiceJournalSourceAndBalances(t *testing.T) {
 		Status:           billingqueue.StatusApproved,
 		BillType:         billingqueue.BillTypeInvoice,
 	}
-	_, err = db.NewInsert().Model(queue).Exec(ctx)
-	require.NoError(t, err)
+	require.NoError(t, billingqueuedb.BillingQueueItems.Create(ctx, db, queue))
 
 	entity, err := invoiceRepo.Create(ctx, &invoice.Invoice{
 		OrganizationID:     org.ID,
@@ -275,38 +235,29 @@ func TestPostCreatesInvoiceJournalSourceAndBalances(t *testing.T) {
 	require.NotNil(t, posted.PostedAt)
 
 	var entry struct {
-		ReferenceType string `bun:"reference_type"`
-		ReferenceID   string `bun:"reference_id"`
-		TotalDebit    int64  `bun:"total_debit"`
-		TotalCredit   int64  `bun:"total_credit"`
+		ReferenceType string
+		ReferenceID   string
+		TotalDebit    int64
+		TotalCredit   int64
 	}
-	require.NoError(
-		t,
-		db.NewSelect().
-			Table("journal_entries").
-			Column("reference_type", "reference_id", "total_debit", "total_credit").
-			Where("reference_id = ?", entity.ID.String()).
-			Limit(1).
-			Scan(ctx, &entry),
-	)
+	require.NoError(t, db.Pool().QueryRow(ctx,
+		`SELECT reference_type, reference_id, total_debit, total_credit
+		FROM journal_entries WHERE reference_id = $1 LIMIT 1`,
+		entity.ID.String(),
+	).Scan(&entry.ReferenceType, &entry.ReferenceID, &entry.TotalDebit, &entry.TotalCredit))
 	assert.Equal(t, tenant.JournalSourceEventInvoicePosted.String(), entry.ReferenceType)
 	assert.Equal(t, entity.ID.String(), entry.ReferenceID)
 	assert.Equal(t, int64(10000), entry.TotalDebit)
 	assert.Equal(t, int64(10000), entry.TotalCredit)
 
 	var source struct {
-		SourceEventType string `bun:"source_event_type"`
-		Status          string `bun:"status"`
+		SourceEventType string
+		Status          string
 	}
-	require.NoError(
-		t,
-		db.NewSelect().
-			Table("journal_sources").
-			Column("source_event_type", "status").
-			Where("source_object_id = ?", entity.ID.String()).
-			Limit(1).
-			Scan(ctx, &source),
-	)
+	require.NoError(t, db.Pool().QueryRow(ctx,
+		"SELECT source_event_type, status FROM journal_sources WHERE source_object_id = $1 LIMIT 1",
+		entity.ID.String(),
+	).Scan(&source.SourceEventType, &source.Status))
 	assert.Equal(t, tenant.JournalSourceEventInvoicePosted.String(), source.SourceEventType)
 	assert.Equal(t, "Posted", source.Status)
 
@@ -322,18 +273,8 @@ func TestPostCreatesInvoiceJournalSourceAndBalances(t *testing.T) {
 }
 
 func TestPostSkipsInvoiceLedgerWhenRevenueRecognitionIsCashReceipt(t *testing.T) {
-	ctx, db, cleanup := seedtest.SetupTestDB(t)
+	ctx, db, cleanup := seededtest.SetupTestDB(t)
 	defer cleanup()
-
-	seedRegistry := seeder.NewRegistry()
-	seeds.Register(seedRegistry)
-	engine := seeder.NewEngine(
-		db,
-		seedRegistry,
-		&config.Config{System: config.SystemConfig{SystemUserPassword: "test-system-password"}},
-	)
-	_, err := engine.Execute(ctx, seeder.ExecuteOptions{Environment: common.EnvDevelopment})
-	require.NoError(t, err)
 
 	conn := postgres.NewTestConnection(db)
 	logger := zap.NewNop()
@@ -357,37 +298,7 @@ func TestPostSkipsInvoiceLedgerWhenRevenueRecognitionIsCashReceipt(t *testing.T)
 		seqgen.GeneratorParams{Store: store, Provider: provider, Logger: logger},
 	)
 
-	var org seededInvoiceOrg
-	require.NoError(
-		t,
-		db.NewSelect().
-			Table("organizations").
-			Column("id", "business_unit_id").
-			Limit(1).
-			Scan(ctx, &org),
-	)
-	var user seededInvoiceUser
-	require.NoError(
-		t,
-		db.NewSelect().
-			Table("users").
-			Column("id").
-			Where("current_organization_id = ?", org.ID).
-			Where("business_unit_id = ?", org.BusinessUnitID).
-			Limit(1).
-			Scan(ctx, &user),
-	)
-	var shp seededInvoiceShipment
-	require.NoError(
-		t,
-		db.NewSelect().
-			Table("shipments").
-			Column("id", "customer_id", "pro_number", "bol").
-			Where("organization_id = ?", org.ID).
-			Where("business_unit_id = ?", org.BusinessUnitID).
-			Limit(1).
-			Scan(ctx, &shp),
-	)
+	ctx, org, user, shp := seededInvoiceFixture(t, ctx, db)
 
 	control, err := accountingRepo.GetByOrgID(ctx, org.ID)
 	require.NoError(t, err)
@@ -434,8 +345,7 @@ func TestPostSkipsInvoiceLedgerWhenRevenueRecognitionIsCashReceipt(t *testing.T)
 		Status:           billingqueue.StatusApproved,
 		BillType:         billingqueue.BillTypeInvoice,
 	}
-	_, err = db.NewInsert().Model(queue).Exec(ctx)
-	require.NoError(t, err)
+	require.NoError(t, billingqueuedb.BillingQueueItems.Create(ctx, db, queue))
 	entity, err := invoiceRepo.Create(
 		ctx,
 		&invoice.Invoice{
@@ -517,42 +427,61 @@ func TestPostSkipsInvoiceLedgerWhenRevenueRecognitionIsCashReceipt(t *testing.T)
 	require.NoError(t, err)
 	require.Equal(t, invoice.StatusPosted, posted.Status)
 
-	entryCount, err := db.NewSelect().
-		Table("journal_entries").
-		Where("reference_id = ?", entity.ID.String()).
-		Count(ctx)
-	require.NoError(t, err)
+	var entryCount, sourceCount int64
+	require.NoError(t, db.Pool().QueryRow(ctx,
+		"SELECT count(*) FROM journal_entries WHERE reference_id = $1", entity.ID.String(),
+	).Scan(&entryCount))
 	assert.Equal(t, int64(0), entryCount)
-	sourceCount, err := db.NewSelect().
-		Table("journal_sources").
-		Where("source_object_id = ?", entity.ID.String()).
-		Count(ctx)
-	require.NoError(t, err)
+	require.NoError(t, db.Pool().QueryRow(ctx,
+		"SELECT count(*) FROM journal_sources WHERE source_object_id = $1", entity.ID.String(),
+	).Scan(&sourceCount))
 	assert.Equal(t, int64(0), sourceCount)
 }
 
 func lookupInvoiceGLAccount(
 	t *testing.T,
 	ctx context.Context,
-	db *bun.DB,
+	db *keel.DB,
 	orgID, buID pulid.ID,
 	accountCode string,
 ) pulid.ID {
 	t.Helper()
 
-	var row struct {
-		ID pulid.ID `bun:"id"`
-	}
-	require.NoError(
-		t,
-		db.NewSelect().
-			Table("gl_accounts").
-			Column("id").
-			Where("organization_id = ?", orgID).
-			Where("business_unit_id = ?", buID).
-			Where("account_code = ?", accountCode).
-			Limit(1).
-			Scan(ctx, &row),
-	)
-	return row.ID
+	var id pulid.ID
+	require.NoError(t, db.Pool().QueryRow(ctx,
+		"SELECT id FROM gl_accounts WHERE organization_id = $1 AND business_unit_id = $2 AND account_code = $3 LIMIT 1",
+		orgID, buID, accountCode,
+	).
+		Scan(&id))
+	return id
+}
+
+func seededInvoiceFixture(
+	t *testing.T,
+	ctx context.Context,
+	db *keel.DB,
+) (context.Context, seededInvoiceOrg, seededInvoiceUser, seededInvoiceShipment) {
+	t.Helper()
+
+	var org seededInvoiceOrg
+	require.NoError(t, db.Pool().QueryRow(ctx,
+		"SELECT id, business_unit_id FROM organizations ORDER BY id LIMIT 1",
+	).Scan(&org.ID, &org.BusinessUnitID))
+
+	var user seededInvoiceUser
+	require.NoError(t, db.Pool().QueryRow(ctx,
+		"SELECT id FROM users WHERE current_organization_id = $1 AND business_unit_id = $2 ORDER BY id LIMIT 1",
+		org.ID, org.BusinessUnitID,
+	).
+		Scan(&user.ID))
+
+	var shp seededInvoiceShipment
+	require.NoError(t, db.Pool().QueryRow(ctx,
+		`SELECT id, customer_id, COALESCE(pro_number, ''), COALESCE(bol, '') FROM shipments
+		WHERE organization_id = $1 AND business_unit_id = $2 ORDER BY id LIMIT 1`,
+		org.ID, org.BusinessUnitID,
+	).Scan(&shp.ID, &shp.CustomerID, &shp.ProNumber, &shp.BOL))
+
+	info := pagination.TenantInfo{OrgID: org.ID, BuID: org.BusinessUnitID, UserID: user.ID}
+	return dbscope.WithTenant(ctx, info.DBTenant()), org, user, shp
 }

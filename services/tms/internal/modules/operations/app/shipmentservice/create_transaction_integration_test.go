@@ -7,12 +7,14 @@ import (
 	"errors"
 	"testing"
 
+	"github.com/emoss08/keel"
+
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment/shipmentdb"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmenteventports"
 	internaltestutil "github.com/emoss08/trenova/internal/testutil"
 	"github.com/emoss08/trenova/internal/testutil/seedtest"
-	"github.com/emoss08/trenova/pkg/dbhelper"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -42,6 +44,7 @@ func TestCreateIntegration_RollsBackEverythingWhenALaterStepFails(t *testing.T) 
 		db,
 		func(p *Params) { p.EventService = failingShipmentEventService{} },
 	)
+	ctx = integrationTenantContext(ctx, tenantInfo)
 	configureShipmentControl(t, ctx, controlRepo, tenantInfo, func(sc *tenant.ShipmentControl) {
 		sc.CheckHazmatSegregation = false
 	})
@@ -57,25 +60,20 @@ func TestCreateIntegration_RollsBackEverythingWhenALaterStepFails(t *testing.T) 
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), "event store unavailable")
 
-	moveCount, err := db.NewSelect().
-		TableExpr("shipment_moves").
-		Where("shipment_id = ?", entity.ID).
-		Count(ctx)
+	moveCount, err := keel.QueryValue[int64](ctx, db,
+		"SELECT count(*) FROM shipment_moves WHERE shipment_id = $1", entity.ID.String())
 	require.NoError(t, err)
 	assert.Zero(t, moveCount, "the moves are rolled back with the shipment")
 
-	shipmentCount, err := db.NewSelect().
-		Model((*shipment.Shipment)(nil)).
-		Where("id = ?", entity.ID).
-		Count(ctx)
+	shipmentCount, err := keel.QueryValue[int64](ctx, db,
+		"SELECT count(*) FROM shipments WHERE id = $1", entity.ID.String())
 	require.NoError(t, err)
 	assert.Zero(t, shipmentCount, "the shipment row is rolled back with the rest")
 
-	var orphanOrders int
-	orphanOrders, err = dbhelper.Count(ctx, db.NewSelect().
-		TableExpr("orders AS o").
-		Where("o.organization_id = ?", tenantInfo.OrgID).
-		Where("NOT EXISTS (SELECT 1 FROM shipments AS s WHERE s.order_id = o.id)"))
+	orphanOrders, err := keel.QueryValue[int64](ctx, db,
+		"SELECT count(*) FROM orders AS o WHERE o.organization_id = $1 "+
+			"AND NOT EXISTS (SELECT 1 FROM shipments AS s WHERE s.order_id = o.id)",
+		tenantInfo.OrgID.String())
 	require.NoError(t, err)
 	assert.Zero(t, orphanOrders, "the auto-created order is rolled back too")
 }
@@ -87,6 +85,7 @@ func TestCreateIntegration_ExternalReferenceNamesOneLiveShipmentPerCustomer(t *t
 	t.Cleanup(cleanup)
 
 	svc, _, controlRepo, _, tenantInfo, fixture, data := newIntegrationShipmentService(t, ctx, db)
+	ctx = integrationTenantContext(ctx, tenantInfo)
 	configureShipmentControl(t, ctx, controlRepo, tenantInfo, func(sc *tenant.ShipmentControl) {
 		sc.CheckHazmatSegregation = false
 		sc.CheckForDuplicateBOLs = false
@@ -111,7 +110,7 @@ func TestCreateIntegration_ExternalReferenceNamesOneLiveShipmentPerCustomer(t *t
 	assert.Equal(t, "externalReference", multiErr.Errors[0].Field)
 	assert.Contains(t, multiErr.Error(), created.ProNumber)
 
-	_, err = db.NewInsert().Model(&shipment.Shipment{
+	err = shipmentdb.Shipments.Create(ctx, db, &shipment.Shipment{
 		ID:                pulid.MustNew("shp_"),
 		OrganizationID:    tenantInfo.OrgID,
 		BusinessUnitID:    tenantInfo.BuID,
@@ -122,19 +121,17 @@ func TestCreateIntegration_ExternalReferenceNamesOneLiveShipmentPerCustomer(t *t
 		ProNumber:         "PRO-RACE-EXTREF",
 		ExternalReference: "Po-7781",
 		Status:            shipment.StatusNew,
-	}).Exec(ctx)
+	})
 	require.Error(t, err, "the unique index holds even when the check is raced")
 	assert.Nil(t, externalReferenceConflict(errors.New("unrelated"), repeat))
 	require.Error(t, externalReferenceConflict(err, repeat))
 
-	_, err = db.NewUpdate().
-		Model((*shipment.Shipment)(nil)).
-		Set("status = ?", shipment.StatusCanceled).
-		Where("id = ?", created.ID).
-		Exec(ctx)
+	_, err = keel.Exec(ctx, db,
+		"UPDATE shipments SET status = $1 WHERE id = $2",
+		string(shipment.StatusCanceled), created.ID.String())
 	require.NoError(t, err)
 
-	_, err = db.NewInsert().Model(&shipment.Shipment{
+	err = shipmentdb.Shipments.Create(ctx, db, &shipment.Shipment{
 		ID:                pulid.MustNew("shp_"),
 		OrganizationID:    tenantInfo.OrgID,
 		BusinessUnitID:    tenantInfo.BuID,
@@ -145,6 +142,6 @@ func TestCreateIntegration_ExternalReferenceNamesOneLiveShipmentPerCustomer(t *t
 		ProNumber:         "PRO-REBOOK-EXTREF",
 		ExternalReference: "PO-7781",
 		Status:            shipment.StatusNew,
-	}).Exec(ctx)
+	})
 	require.NoError(t, err, "a canceled shipment releases its reference")
 }

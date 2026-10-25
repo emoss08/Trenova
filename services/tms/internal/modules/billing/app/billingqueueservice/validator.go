@@ -3,6 +3,8 @@ package billingqueueservice
 import (
 	"context"
 
+	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue/billingqueuedb"
+
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -24,7 +26,7 @@ func NewValidator(p ValidatorParams) *Validator {
 	return &Validator{
 		validator: validationframework.NewTenantedValidatorBuilder[*billingqueue.BillingQueueItem]().
 			WithModelName("Billing Queue Item").
-			WithUniquenessChecker(validationframework.NewBunUniquenessCheckerScoped(p.DB)).
+			WithUniquenessChecker(validationframework.NewKeelChecker(p.DB, billingqueuedb.BillingQueueItemsSchema())).
 			WithCustomRule(createStatusConstraintsRule()).
 			Build(),
 	}

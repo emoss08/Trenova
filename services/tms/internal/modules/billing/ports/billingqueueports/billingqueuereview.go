@@ -82,16 +82,16 @@ type ListBillingQueueSummariesRequest struct {
 
 // BillingQueueItemSummary is an item's live state as a queue row shows it.
 type BillingQueueItemSummary struct {
-	ID                   pulid.ID                     `json:"id"                   bun:"id"`
-	Number               string                       `json:"number"               bun:"number"`
-	Status               billingqueue.Status          `json:"status"               bun:"status"`
-	HoldReasonCode       *billingqueue.HoldReasonCode `json:"holdReasonCode"       bun:"hold_reason_code"`
-	AssignedBillerID     *pulid.ID                    `json:"assignedBillerId"     bun:"assigned_biller_id"`
-	AllocatedTotalAmount decimal.Decimal              `json:"allocatedTotalAmount" bun:"allocated_total_amount"`
+	ID                   pulid.ID                     `json:"id"`
+	Number               string                       `json:"number"`
+	Status               billingqueue.Status          `json:"status"`
+	HoldReasonCode       *billingqueue.HoldReasonCode `json:"holdReasonCode"`
+	AssignedBillerID     *pulid.ID                    `json:"assignedBillerId"`
+	AllocatedTotalAmount decimal.Decimal              `json:"allocatedTotalAmount"`
 	// OpenChecks is how many of the four issue-backed checks wait on an issue.
-	OpenChecks int  `json:"-"          bun:"open_checks"`
-	NeedsCount int  `json:"needsCount" bun:"-"`
-	Ready      bool `json:"ready"      bun:"-"`
+	OpenChecks int  `json:"-"`
+	NeedsCount int  `json:"needsCount"`
+	Ready      bool `json:"ready"`
 }
 
 type CreateApprovalRunRequest struct {

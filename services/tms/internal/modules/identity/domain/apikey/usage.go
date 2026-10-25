@@ -3,20 +3,20 @@ package apikey
 import (
 	"time"
 
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
-	"github.com/uptrace/bun"
 )
 
 type UsageDaily struct {
-	bun.BaseModel `bun:"table:api_key_usage_daily,alias:akud" json:"-"`
+	keel.Table `keel:"api_key_usage_daily"`
 
-	APIKeyID       pulid.ID  `json:"apiKeyId"       bun:"api_key_id,pk,type:VARCHAR(100),notnull"`
-	OrganizationID pulid.ID  `json:"organizationId" bun:"organization_id,type:VARCHAR(100),notnull"`
-	BusinessUnitID pulid.ID  `json:"businessUnitId" bun:"business_unit_id,type:VARCHAR(100),notnull"`
-	UsageDate      time.Time `json:"usageDate"      bun:"usage_date,pk,type:date,notnull"`
-	RequestCount   int64     `json:"requestCount"   bun:"request_count,notnull"`
+	APIKeyID       pulid.ID  `json:"apiKeyId"       keel:"api_key_id,pk"`
+	OrganizationID pulid.ID  `json:"organizationId" keel:"organization_id,tenant"`
+	BusinessUnitID pulid.ID  `json:"businessUnitId" keel:"business_unit_id,tenant"`
+	UsageDate      time.Time `json:"usageDate"      keel:"usage_date,pk"`
+	RequestCount   int64     `json:"requestCount"   keel:"request_count"`
 }
 
 func (u *UsageDaily) Validate(multiErr *errortypes.MultiError) {

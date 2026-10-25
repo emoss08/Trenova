@@ -5,18 +5,15 @@ import (
 	"context"
 	"strings"
 
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/inboundmessage"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/inboundmessage/inboundmessagedb"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/triage"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/inboundmessageports"
-	"github.com/emoss08/trenova/pkg/buncolgen"
-	"github.com/emoss08/trenova/pkg/buncolgen/inboundmessagecol"
 	"github.com/emoss08/trenova/pkg/dbscope"
-	"github.com/emoss08/trenova/pkg/querybuilder"
-	"github.com/emoss08/trenova/shared/intutils"
+	"github.com/emoss08/trenova/pkg/listquery"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/emoss08/trenova/shared/stringutils"
-	"github.com/uptrace/bun"
 )
 
 func NewQueueRepository(p Params) inboundmessageports.TriageQueueRepository {
@@ -26,47 +23,87 @@ func NewQueueRepository(p Params) inboundmessageports.TriageQueueRepository {
 	}
 }
 
-func queueStateColumns() []string {
-	cols := inboundmessagecol.InboundMessageColumns
+func stateColumns() []keel.Expr {
+	m := inboundmessagedb.InboundMessages
 
-	return []string{
-		cols.ID.Bare(),
-		cols.OrganizationID.Bare(),
-		cols.BusinessUnitID.Bare(),
-		cols.MailboxID.Bare(),
-		cols.Status.Bare(),
-		cols.Classification.Bare(),
-		cols.ReceivedAt.Bare(),
-		cols.FromAddress.Bare(),
-		cols.FromName.Bare(),
-		cols.Subject.Bare(),
-		cols.SenderDomain.Bare(),
-		cols.ThreadKey.Bare(),
-		cols.OwnerID.Bare(),
-		cols.DueAt.Bare(),
-		cols.Parked.Bare(),
-		cols.SnoozedUntil.Bare(),
-		cols.SnoozeEvent.Bare(),
-		cols.SnoozeWatchID.Bare(),
-		cols.SnoozeDocumentTypeID.Bare(),
-		cols.AwaitingUntil.Bare(),
-		cols.MatchedShipmentID.Bare(),
-		cols.MatchedCustomerID.Bare(),
-		cols.MatchedCarrierID.Bare(),
-		cols.MatchReason.Bare(),
-		cols.FailureText.Bare(),
-		cols.ReviewNote.Bare(),
-		cols.NovaRead.Bare(),
+	return []keel.Expr{
+		m.ID,
+		m.OrganizationID,
+		m.BusinessUnitID,
+		m.MailboxID,
+		m.Status,
+		m.Classification,
+		m.ReceivedAt,
+		m.FromAddress,
+		m.FromName,
+		m.Subject,
+		m.SenderDomain,
+		m.ThreadKey,
+		m.OwnerID,
+		m.DueAt,
+		m.Parked,
+		m.SnoozedUntil,
+		m.SnoozeEvent,
+		m.SnoozeWatchID,
+		m.SnoozeDocumentTypeID,
+		m.AwaitingUntil,
+		m.MatchedShipmentID,
+		m.MatchedCustomerID,
+		m.MatchedCarrierID,
+		m.MatchReason,
+		m.FailureText,
+		m.ReviewNote,
+		m.NovaRead,
 	}
 }
 
-var stateColumns = queueStateColumns()
-
-func returningState() string {
-	return strings.Join(stateColumns, ", ")
+func stateOf(m *inboundmessage.InboundMessage) *inboundmessageports.QueueState {
+	return &inboundmessageports.QueueState{
+		ID:                   m.ID,
+		OrganizationID:       m.OrganizationID,
+		BusinessUnitID:       m.BusinessUnitID,
+		MailboxID:            m.MailboxID,
+		Status:               m.Status,
+		Classification:       m.Classification,
+		ReceivedAt:           m.ReceivedAt,
+		FromAddress:          m.FromAddress,
+		FromName:             m.FromName,
+		Subject:              m.Subject,
+		SenderDomain:         m.SenderDomain,
+		ThreadKey:            m.ThreadKey,
+		OwnerID:              m.OwnerID,
+		DueAt:                m.DueAt,
+		Parked:               m.Parked,
+		SnoozedUntil:         m.SnoozedUntil,
+		SnoozeEvent:          m.SnoozeEvent,
+		SnoozeWatchID:        m.SnoozeWatchID,
+		SnoozeDocumentTypeID: m.SnoozeDocumentTypeID,
+		AwaitingUntil:        m.AwaitingUntil,
+		MatchedShipmentID:    m.MatchedShipmentID,
+		MatchedCustomerID:    m.MatchedCustomerID,
+		MatchedCarrierID:     m.MatchedCarrierID,
+		MatchReason:          m.MatchReason,
+		FailureText:          m.FailureText,
+		ReviewNote:           m.ReviewNote,
+		NovaRead:             m.NovaRead,
+	}
 }
 
-var stateReturning = returningState()
+func statesOf(
+	messages []*inboundmessage.InboundMessage,
+	err error,
+) ([]*inboundmessageports.QueueState, error) {
+	if err != nil {
+		return nil, err
+	}
+
+	states := make([]*inboundmessageports.QueueState, 0, len(messages))
+	for _, m := range messages {
+		states = append(states, stateOf(m))
+	}
+
+	return states, nil
+}
 
 func (r *repository) QueueStates(
 	ctx context.Context,
@@ -95,30 +132,26 @@ func (r *repository) queueStates(
 	ctx context.Context,
 	req inboundmessageports.QueueStatesRequest,
 ) ([]*inboundmessageports.QueueState, error) {
-	states := make([]*inboundmessageports.QueueState, 0, len(req.IDs))
 	if len(req.IDs) == 0 {
-		return states, nil
-	}
-	if err := queueStatesQuery(r.db.DBForContext(ctx), req).Scan(ctx, &states); err != nil {
-		return nil, err
+		return []*inboundmessageports.QueueState{}, nil
 	}
 
-	return states, nil
+	return statesOf(queueStatesQuery(req).List(ctx, r.db.Keel(ctx)))
 }
 
-func queueStatesQuery(db bun.IDB, req inboundmessageports.QueueStatesRequest) *bun.SelectQuery {
-	cols := inboundmessagecol.InboundMessageColumns
-	query := db.NewSelect().
-		Model((*inboundmessage.InboundMessage)(nil)).
-		Column(stateColumns...).
-		Apply(inboundmessagecol.InboundMessageApplyTenant(req.TenantInfo)).
-		Where(cols.ID.In(), bun.List(req.IDs)).
-		Order(cols.ID.OrderAsc())
+func queueStatesQuery(
+	req inboundmessageports.QueueStatesRequest,
+) *keel.Query[inboundmessage.InboundMessage] {
+	m := inboundmessagedb.InboundMessages
+	q := m.Pick(stateColumns()...).
+		Where(m.ID.In(req.IDs...)).
+		Order(m.ID.Asc()).
+		Limit(len(req.IDs))
 	if req.ForUpdate {
-		query = query.For("UPDATE")
+		q = q.Lock(keel.ForUpdate)
 	}
 
-	return query
+	return q
 }
 
 func (r *repository) SelectIDs(
@@ -126,10 +159,16 @@ func (r *repository) SelectIDs(
 	req inboundmessageports.SelectInboundMessageIDsRequest,
 ) ([]pulid.ID, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]pulid.ID, error) {
-		ids := make([]pulid.ID, 0, req.Limit)
-		dba := r.db.DBForContext(ctx)
-		if err := selectIDsQuery(dba, req).Scan(ctx, &ids); err != nil {
+		if req.Limit <= 0 {
+			return []pulid.ID{}, nil
+		}
+
+		ids, err := keel.Into[pulid.ID](ctx, r.db.Keel(ctx), selectIDsQuery(req))
+		if err != nil {
 			return nil, err
+		}
+		if ids == nil {
+			ids = []pulid.ID{}
 		}
 
 		return ids, nil
@@ -137,39 +176,24 @@ func (r *repository) SelectIDs(
 }
 
 func selectIDsQuery(
-	db bun.IDB,
 	req inboundmessageports.SelectInboundMessageIDsRequest,
-) *bun.SelectQuery {
-	cols := inboundmessagecol.InboundMessageColumns
+) *keel.Query[inboundmessage.InboundMessage] {
+	m := inboundmessagedb.InboundMessages
 	folder := req.Folder
-	query := db.NewSelect().
-		Model((*inboundmessage.InboundMessage)(nil)).
-		ColumnExpr(cols.ID.Qualified())
-	query = querybuilder.ApplyFiltersWithoutSort(
-		query,
-		inboundmessagecol.InboundMessageTable.Alias,
-		folder.Filter,
-		(*inboundmessage.InboundMessage)(nil),
-	)
-	query = narrow(db, query, folder)
-	for _, term := range folderOrder(folder.Sort) {
-		query = query.Order(term)
-	}
 
-	return query.Limit(int64(req.Limit))
+	return listquery.Filter(m.Where(narrow(folder)...), folder.Filter).
+		Pick(m.ID).
+		Order(folderOrder(folder.Sort)...).
+		Limit(req.Limit)
 }
 
-func folderOrder(sort inboundmessageports.Sort) []string {
-	cols := inboundmessagecol.InboundMessageColumns
+func folderOrder(sort inboundmessageports.Sort) []keel.Order {
+	m := inboundmessagedb.InboundMessages
 	if sort == inboundmessageports.SortDue {
-		return []string{
-			cols.DueAt.OrderAsc() + " NULLS LAST",
-			cols.ReceivedAt.OrderDesc(),
-			cols.ID.OrderDesc(),
-		}
+		return []keel.Order{m.DueAt.Asc().NullsLast(), m.ReceivedAt.Desc(), m.ID.Desc()}
 	}
 
-	return []string{cols.ReceivedAt.OrderDesc(), cols.ID.OrderDesc()}
+	return []keel.Order{m.ReceivedAt.Desc(), m.ID.Desc()}
 }
 
 func (r *repository) UpdateQueueState(
@@ -180,195 +204,166 @@ func (r *repository) UpdateQueueState(
 		ctx,
 		r.db,
 		func(ctx context.Context) ([]*inboundmessageports.QueueState, error) {
-			states := make([]*inboundmessageports.QueueState, 0, len(req.IDs))
 			if len(req.IDs) == 0 {
-				return states, nil
-			}
-			if err := updateQueueStateQuery(
-				r.db.DBForContext(ctx),
-				req,
-			).Scan(ctx, &states); err != nil {
-				return nil, err
+				return []*inboundmessageports.QueueState{}, nil
 			}
 
-			return states, nil
+			m := inboundmessagedb.InboundMessages
+			sets := append(
+				[]keel.Assignment{m.UpdatedAt.To(req.Now)},
+				patchAssignments(req.Patch, req.Now)...,
+			)
+
+			return statesOf(m.Pick(stateColumns()...).
+				Where(m.ID.In(req.IDs...)).
+				UpdateReturning(ctx, r.db.Keel(ctx), sets...))
 		},
 	)
 }
 
-func updateQueueStateQuery(
-	db bun.IDB,
-	req inboundmessageports.UpdateQueueStateRequest,
-) *bun.UpdateQuery {
-	cols := inboundmessagecol.InboundMessageColumns
-	query := db.NewUpdate().
-		Model((*inboundmessage.InboundMessage)(nil)).
-		WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-			return inboundmessagecol.InboundMessageScopeTenantUpdate(uq, req.TenantInfo).
-				Where(cols.ID.In(), bun.List(req.IDs))
-		}).
-		Set(cols.Version.Inc(1)).
-		Set(cols.UpdatedAt.Set(), req.Now)
+func patchAssignments(patch inboundmessageports.QueuePatch, now int64) []keel.Assignment {
+	m := inboundmessagedb.InboundMessages
+	sets := make([]keel.Assignment, 0, 16)
 
-	query = applyPatch(query, req.Patch, req.Now)
-
-	return query.Returning(stateReturning)
-}
-
-func applyPatch(
-	query *bun.UpdateQuery,
-	patch inboundmessageports.QueuePatch,
-	now int64,
-) *bun.UpdateQuery {
-	cols := inboundmessagecol.InboundMessageColumns
 	if patch.Status != "" {
-		query = query.Set(cols.Status.Set(), patch.Status)
+		sets = append(sets, m.Status.To(patch.Status))
 	}
 	if patch.Review != nil {
-		query = applyReviewPatch(query, patch.Review, now)
+		sets = append(sets, reviewAssignments(patch.Review, now)...)
 	}
 	if patch.Owner != nil {
-		query = query.Set(cols.OwnerID.Set(), *patch.Owner)
+		sets = append(sets, m.OwnerID.To(*patch.Owner))
 	}
 	switch {
 	case patch.Park != nil:
-		query = applyParkPatch(query, patch.Park, now)
+		sets = append(sets, parkAssignments(patch.Park, now)...)
 	case patch.Unpark:
-		query = clearParking(query)
+		sets = append(sets, clearParking()...)
 	}
-	query = applyDuePatch(query, patch)
+	sets = append(sets, dueAssignments(patch)...)
 	if patch.ClearHandled {
-		query = query.Set(cols.HandledByRuleID.SetNull()).Set(cols.HandledAction.SetNull())
+		sets = append(sets, m.HandledByRuleID.ToNull(), m.HandledAction.ToNull())
 	}
 	if patch.HandOff != nil {
-		query = query.Set(
-			cols.ActionState.SetExpr(
-				"{} || jsonb_build_object('handedOffTo', ?::text, 'handedOffAt', ?::bigint)",
-			),
+		sets = append(sets, m.ActionState.ToExpr(keel.Raw(
+			"? || jsonb_build_object('handedOffTo', ?::text, 'handedOffAt', ?::bigint)",
+			m.ActionState,
 			patch.HandOff.To.String(),
 			now,
-		)
+		)))
 	}
 	if patch.ClearShipment {
-		query = query.Set(cols.MatchedShipmentID.SetNull())
+		sets = append(sets, m.MatchedShipmentID.ToNull())
 	}
 	if patch.ClearCustomer {
-		query = query.Set(cols.MatchedCustomerID.SetNull())
+		sets = append(sets, m.MatchedCustomerID.ToNull())
 	}
 	if patch.ClearCarrier {
-		query = query.Set(cols.MatchedCarrierID.SetNull())
+		sets = append(sets, m.MatchedCarrierID.ToNull())
 	}
 	if patch.ClearReason {
-		query = query.Set(cols.MatchReason.SetNull())
+		sets = append(sets, m.MatchReason.ToNull())
 	}
 	if patch.NovaUnread {
-		query = query.Set(cols.NovaRead.Set(), false)
+		sets = append(sets, m.NovaRead.To(false))
 	}
 
-	return query
+	return sets
 }
 
-func applyReviewPatch(
-	query *bun.UpdateQuery,
-	review *inboundmessageports.ReviewPatch,
-	now int64,
-) *bun.UpdateQuery {
-	cols := inboundmessagecol.InboundMessageColumns
+func reviewAssignments(review *inboundmessageports.ReviewPatch, now int64) []keel.Assignment {
+	m := inboundmessagedb.InboundMessages
 	if review.Clear {
-		return query.Set(cols.ReviewedBy.SetNull()).Set(cols.ReviewedAt.SetNull())
+		return []keel.Assignment{m.ReviewedBy.ToNull(), m.ReviewedAt.ToNull()}
 	}
 
-	return query.
-		Set(cols.ReviewedBy.Set(), review.ReviewerID).
-		Set(cols.ReviewedAt.Set(), now).
-		Set(cols.ReviewNote.SetExpr("COALESCE(NULLIF(?, ''), {})"), review.Note)
+	return []keel.Assignment{
+		m.ReviewedBy.To(review.ReviewerID),
+		m.ReviewedAt.To(now),
+		m.ReviewNote.ToExpr(keel.Raw("COALESCE(NULLIF(?, ''), ?)", review.Note, m.ReviewNote)),
+	}
 }
 
-func clearParking(query *bun.UpdateQuery) *bun.UpdateQuery {
-	cols := inboundmessagecol.InboundMessageColumns
+func clearParking() []keel.Assignment {
+	m := inboundmessagedb.InboundMessages
 
-	return query.
-		Set(cols.Parked.SetNull()).
-		Set(cols.SnoozedUntil.SetNull()).
-		Set(cols.SnoozeEvent.SetNull()).
-		Set(cols.SnoozeWatchID.SetNull()).
-		Set(cols.SnoozeDocumentTypeID.SetNull()).
-		Set(cols.SnoozedAt.SetNull()).
-		Set(cols.SnoozedBy.SetNull()).
-		Set(cols.AwaitingSince.SetNull()).
-		Set(cols.AwaitingUntil.SetNull())
+	return []keel.Assignment{
+		m.Parked.ToNull(),
+		m.SnoozedUntil.ToNull(),
+		m.SnoozeEvent.ToNull(),
+		m.SnoozeWatchID.ToNull(),
+		m.SnoozeDocumentTypeID.ToNull(),
+		m.SnoozedAt.ToNull(),
+		m.SnoozedBy.ToNull(),
+		m.AwaitingSince.ToNull(),
+		m.AwaitingUntil.ToNull(),
+	}
 }
 
-func applyParkPatch(
-	query *bun.UpdateQuery,
-	park *inboundmessageports.ParkPatch,
-	now int64,
-) *bun.UpdateQuery {
-	cols := inboundmessagecol.InboundMessageColumns
-	query = query.Set(cols.Parked.Set(), park.Parking)
+func parkAssignments(park *inboundmessageports.ParkPatch, now int64) []keel.Assignment {
+	m := inboundmessagedb.InboundMessages
 	if park.Parking == inboundmessage.ParkingAwaitingReply {
-		return query.
-			Set(cols.AwaitingSince.Set(), now).
-			Set(cols.AwaitingUntil.Set(), park.AwaitingUntil).
-			Set(cols.SnoozedUntil.SetNull()).
-			Set(cols.SnoozeEvent.SetNull()).
-			Set(cols.SnoozeWatchID.SetNull()).
-			Set(cols.SnoozeDocumentTypeID.SetNull()).
-			Set(cols.SnoozedAt.SetNull()).
-			Set(cols.SnoozedBy.SetNull())
+		return []keel.Assignment{
+			m.Parked.To(park.Parking),
+			m.AwaitingSince.To(now),
+			m.AwaitingUntil.To(park.AwaitingUntil),
+			m.SnoozedUntil.ToNull(),
+			m.SnoozeEvent.ToNull(),
+			m.SnoozeWatchID.ToNull(),
+			m.SnoozeDocumentTypeID.ToNull(),
+			m.SnoozedAt.ToNull(),
+			m.SnoozedBy.ToNull(),
+		}
 	}
 
-	query = query.
-		Set(cols.SnoozedUntil.Set(), intutils.NilIfZero(park.SnoozedUntil)).
-		Set(cols.SnoozeEvent.Set(), stringutils.NilIfEmpty(park.SnoozeEvent)).
-		Set(cols.SnoozeDocumentTypeID.Set(), park.DocumentTypeID).
-		Set(cols.SnoozedAt.Set(), now).
-		Set(cols.SnoozedBy.Set(), park.By).
-		Set(cols.AwaitingSince.SetNull()).
-		Set(cols.AwaitingUntil.SetNull())
+	watch := m.SnoozeWatchID.ToNull()
 	if park.WatchShipment {
-		return query.Set(cols.SnoozeWatchID.SetExpr(cols.MatchedShipmentID.Bare()))
+		watch = m.SnoozeWatchID.ToExpr(m.MatchedShipmentID)
 	}
 
-	return query.Set(cols.SnoozeWatchID.SetNull())
+	return []keel.Assignment{
+		m.Parked.To(park.Parking),
+		m.SnoozedUntil.To(park.SnoozedUntil),
+		m.SnoozeEvent.To(park.SnoozeEvent),
+		m.SnoozeDocumentTypeID.To(park.DocumentTypeID),
+		m.SnoozedAt.To(now),
+		m.SnoozedBy.To(park.By),
+		m.AwaitingSince.ToNull(),
+		m.AwaitingUntil.ToNull(),
+		watch,
+	}
 }
 
-func applyDuePatch(
-	query *bun.UpdateQuery,
-	patch inboundmessageports.QueuePatch,
-) *bun.UpdateQuery {
-	cols := inboundmessagecol.InboundMessageColumns
+func dueAssignments(patch inboundmessageports.QueuePatch) []keel.Assignment {
+	m := inboundmessagedb.InboundMessages
 	switch patch.Due {
 	case inboundmessageports.DueClear:
-		return query.Set(cols.DueAt.SetNull())
+		return []keel.Assignment{m.DueAt.ToNull()}
 	case inboundmessageports.DueFromTargets:
-		expr, args := dueFromTargetsExpr(patch.Targets)
-		return query.Set(cols.DueAt.SetExpr(expr), args...)
+		return []keel.Assignment{m.DueAt.ToExpr(dueFromTargetsExpr(patch.Targets))}
 	case inboundmessageports.DueKeep:
-		return query
+		return nil
 	default:
-		return query
+		return nil
 	}
 }
 
-func dueFromTargetsExpr(targets triage.Targets) (string, []any) {
-	cols := inboundmessagecol.InboundMessageColumns
+func dueFromTargetsExpr(targets triage.Targets) keel.Expr {
+	m := inboundmessagedb.InboundMessages
 	kinds := inboundmessage.AllClassifications()
+
 	var b strings.Builder
-	args := make([]any, 0, len(kinds)*2)
-	b.WriteString(cols.ReceivedAt.Bare())
-	b.WriteString(" + 60 * CASE COALESCE(")
-	b.WriteString(cols.Classification.Bare())
-	b.WriteString(", ?)")
-	args = append(args, inboundmessage.ClassificationOther)
+	args := make([]any, 0, len(kinds)*2+4)
+	b.WriteString("? + 60 * CASE COALESCE(?, ?)")
+	args = append(args, m.ReceivedAt, m.Classification, string(inboundmessage.ClassificationOther))
 	for _, kind := range kinds {
 		b.WriteString(" WHEN ? THEN ?::bigint")
-		args = append(args, kind, targets.For(kind))
+		args = append(args, string(kind), int64(targets.For(kind)))
 	}
 	b.WriteString(" ELSE ?::bigint END")
-	args = append(args, targets.For(inboundmessage.ClassificationOther))
+	args = append(args, int64(targets.For(inboundmessage.ClassificationOther)))
 
-	return b.String(), args
+	return keel.Raw(b.String(), args...)
 }
 
 func (r *repository) ListByIDs(
@@ -379,23 +374,16 @@ func (r *repository) ListByIDs(
 		ctx,
 		r.db,
 		func(ctx context.Context) ([]*inboundmessage.InboundMessage, error) {
-			entities := make([]*inboundmessage.InboundMessage, 0, len(req.IDs))
 			if len(req.IDs) == 0 {
-				return entities, nil
-			}
-			cols := inboundmessagecol.InboundMessageColumns
-			if err := r.db.DBForContext(ctx).
-				NewSelect().
-				Model(&entities).
-				Relation(inboundmessagecol.InboundMessageRelations.Mailbox).
-				Apply(inboundmessagecol.InboundMessageApplyTenant(req.TenantInfo)).
-				Where(cols.ID.In(), bun.List(req.IDs)).
-				Order(cols.ReceivedAt.OrderDesc(), cols.ID.OrderDesc()).
-				Scan(ctx); err != nil {
-				return nil, err
+				return []*inboundmessage.InboundMessage{}, nil
 			}
 
-			return entities, nil
+			m := inboundmessagedb.InboundMessages
+			return orEmptyMessages(m.Where(m.ID.In(req.IDs...)).
+				Load(m.Mailbox()).
+				Order(m.ReceivedAt.Desc(), m.ID.Desc()).
+				Limit(len(req.IDs)).
+				List(ctx, r.db.Keel(ctx)))
 		},
 	)
 }
@@ -410,20 +398,17 @@ func (r *repository) ThreadKeysByMessageKeys(
 			return found, nil
 		}
 
-		rows := make([]struct {
-			MessageKey string `bun:"message_key"`
-			ThreadKey  string `bun:"thread_key"`
-		}, 0, len(req.MessageKeys))
-		cols := inboundmessagecol.InboundMessageColumns
-		if err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model((*inboundmessage.InboundMessage)(nil)).
-			ColumnExpr(cols.MessageKey.Qualified()).
-			ColumnExpr(cols.ThreadKey.Qualified()).
-			Apply(inboundmessagecol.InboundMessageApplyTenant(req.TenantInfo)).
-			Where(cols.MessageKey.In(), bun.List(req.MessageKeys)).
-			Order(cols.ReceivedAt.OrderAsc()).
-			Scan(ctx, &rows); err != nil {
+		type threadRow struct {
+			MessageKey string
+			ThreadKey  string
+		}
+
+		m := inboundmessagedb.InboundMessages
+		rows, err := keel.Into[threadRow](ctx, r.db.Keel(ctx), m.
+			Pick(m.MessageKey, m.ThreadKey).
+			Where(m.MessageKey.In(req.MessageKeys...)).
+			Order(m.ReceivedAt.Asc()))
+		if err != nil {
 			return nil, err
 		}
 		for _, row := range rows {
@@ -446,24 +431,21 @@ func (r *repository) CountByThreadKeys(
 			return counts, nil
 		}
 
-		rows := make([]struct {
-			ThreadKey string `bun:"thread_key"`
-			Count     int    `bun:"count"`
-		}, 0, len(req.ThreadKeys))
-		cols := inboundmessagecol.InboundMessageColumns
-		if err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model((*inboundmessage.InboundMessage)(nil)).
-			ColumnExpr(cols.ThreadKey.Qualified()).
-			ColumnExpr(buncolgen.Count("count")).
-			Apply(inboundmessagecol.InboundMessageApplyTenant(req.TenantInfo)).
-			Where(cols.ThreadKey.In(), bun.List(req.ThreadKeys)).
-			GroupExpr(cols.ThreadKey.Qualified()).
-			Scan(ctx, &rows); err != nil {
+		type threadCount struct {
+			ThreadKey string
+			Count     int64
+		}
+
+		m := inboundmessagedb.InboundMessages
+		rows, err := keel.Into[threadCount](ctx, r.db.Keel(ctx), m.
+			Pick(m.ThreadKey, keel.Count()).
+			Where(m.ThreadKey.In(req.ThreadKeys...)).
+			Group(m.ThreadKey))
+		if err != nil {
 			return nil, err
 		}
 		for _, row := range rows {
-			counts[row.ThreadKey] = row.Count
+			counts[row.ThreadKey] = int(row.Count)
 		}
 
 		return counts, nil
@@ -478,40 +460,27 @@ func (r *repository) ListThread(
 		ctx,
 		r.db,
 		func(ctx context.Context) ([]*inboundmessage.InboundMessage, error) {
-			entities := make([]*inboundmessage.InboundMessage, 0, req.Limit)
-			if err := listThreadQuery(
-				r.db.DBForContext(ctx),
-				req,
-				&entities,
-			).Scan(ctx); err != nil {
-				return nil, err
-			}
-
-			return entities, nil
+			return orEmptyMessages(listThreadQuery(req).List(ctx, r.db.Keel(ctx)))
 		},
 	)
 }
 
 func listThreadQuery(
-	db bun.IDB,
 	req inboundmessageports.ListThreadRequest,
-	entities *[]*inboundmessage.InboundMessage,
-) *bun.SelectQuery {
-	cols := inboundmessagecol.InboundMessageColumns
-	newest := db.NewSelect().
-		Model((*inboundmessage.InboundMessage)(nil)).
-		ColumnExpr(cols.ID.Qualified()).
-		Apply(inboundmessagecol.InboundMessageApplyTenant(req.TenantInfo)).
-		Where(cols.ThreadKey.Eq(), req.ThreadKey).
-		Order(cols.ReceivedAt.OrderDesc(), cols.ID.OrderDesc()).
-		Limit(int64(req.Limit))
+) *keel.Query[inboundmessage.InboundMessage] {
+	m := inboundmessagedb.InboundMessages
+	newest := inboundmessagedb.InboundMessages.As("newest")
+	limit := max(req.Limit, 1)
 
-	return db.NewSelect().
-		Model(entities).
-		Relation(inboundmessagecol.InboundMessageRelations.Mailbox).
-		Apply(inboundmessagecol.InboundMessageApplyTenant(req.TenantInfo)).
-		Where(cols.ID.In(), newest).
-		Order(cols.ReceivedAt.OrderAsc(), cols.ID.OrderAsc())
+	return m.Where(m.ID.InQuery(newest.
+		Pick(newest.ID).
+		Where(newest.ThreadKey.Eq(req.ThreadKey)).
+		Order(newest.ReceivedAt.Desc(), newest.ID.Desc()).
+		Limit(limit),
+	)).
+		Load(m.Mailbox()).
+		Order(m.ReceivedAt.Asc(), m.ID.Asc()).
+		Limit(limit)
 }
 
 func (r *repository) AwaitingOnThread(
@@ -522,24 +491,15 @@ func (r *repository) AwaitingOnThread(
 		ctx,
 		r.db,
 		func(ctx context.Context) ([]*inboundmessageports.QueueState, error) {
-			states := make([]*inboundmessageports.QueueState, 0, 2)
-			cols := inboundmessagecol.InboundMessageColumns
-			query := r.db.DBForContext(ctx).
-				NewSelect().
-				Model((*inboundmessage.InboundMessage)(nil)).
-				Column(stateColumns...).
-				Apply(inboundmessagecol.InboundMessageApplyTenant(req.TenantInfo)).
-				Where(cols.ThreadKey.Eq(), req.ThreadKey).
-				Where(cols.Parked.Eq(), inboundmessage.ParkingAwaitingReply).
-				Limit(inboundmessageports.MaxThreadMessages)
-			if req.ExcludeID.IsNotNil() {
-				query = query.Where(cols.ID.NotEq(), req.ExcludeID)
-			}
-			if err := query.Scan(ctx, &states); err != nil {
-				return nil, err
-			}
-
-			return states, nil
+			m := inboundmessagedb.InboundMessages
+			return statesOf(m.Pick(stateColumns()...).
+				Where(
+					m.ThreadKey.Eq(req.ThreadKey),
+					m.Parked.Eq(inboundmessage.ParkingAwaitingReply),
+					keel.When(req.ExcludeID.IsNotNil(), m.ID.Ne(req.ExcludeID)),
+				).
+				Limit(inboundmessageports.MaxThreadMessages).
+				List(ctx, r.db.Keel(ctx)))
 		},
 	)
 }
@@ -552,35 +512,22 @@ func (r *repository) WakeByEvent(
 		ctx,
 		r.db,
 		func(ctx context.Context) ([]*inboundmessageports.QueueState, error) {
-			states := make([]*inboundmessageports.QueueState, 0, 2)
-			if err := wakeByEventQuery(r.db.DBForContext(ctx), req).Scan(ctx, &states); err != nil {
-				return nil, err
-			}
+			m := inboundmessagedb.InboundMessages
+			sets := append([]keel.Assignment{m.UpdatedAt.To(req.Now)}, clearParking()...)
 
-			return states, nil
+			return statesOf(m.Pick(stateColumns()...).
+				Where(
+					m.SnoozeEvent.Eq(req.Event),
+					m.SnoozeWatchID.Eq(req.WatchID),
+					m.Parked.Eq(inboundmessage.ParkingSnoozed),
+					keel.When(
+						req.DocumentTypeID.IsNotNil(),
+						m.SnoozeDocumentTypeID.Eq(req.DocumentTypeID),
+					),
+				).
+				UpdateReturning(ctx, r.db.Keel(ctx), sets...))
 		},
 	)
-}
-
-func wakeByEventQuery(db bun.IDB, req inboundmessageports.WakeByEventRequest) *bun.UpdateQuery {
-	cols := inboundmessagecol.InboundMessageColumns
-	query := db.NewUpdate().
-		Model((*inboundmessage.InboundMessage)(nil)).
-		WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-			uq = inboundmessagecol.InboundMessageScopeTenantUpdate(uq, req.TenantInfo).
-				Where(cols.SnoozeEvent.Eq(), req.Event).
-				Where(cols.SnoozeWatchID.Eq(), req.WatchID).
-				Where(cols.Parked.Eq(), inboundmessage.ParkingSnoozed)
-			if req.DocumentTypeID.IsNotNil() {
-				uq = uq.Where(cols.SnoozeDocumentTypeID.Eq(), req.DocumentTypeID)
-			}
-
-			return uq
-		}).
-		Set(cols.Version.Inc(1)).
-		Set(cols.UpdatedAt.Set(), req.Now)
-
-	return clearParking(query).Returning(stateReturning)
 }
 
 func (r *repository) ListOverdueParked(
@@ -593,40 +540,43 @@ func (r *repository) ListOverdueParked(
 	)
 
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]inboundmessageports.ParkedRef, error) {
-		refs := make([]inboundmessageports.ParkedRef, 0, req.Limit)
-		if err := overdueParkedQuery(r.db.DBForContext(ctx), req).Scan(ctx, &refs); err != nil {
+		if req.Limit <= 0 {
+			return []inboundmessageports.ParkedRef{}, nil
+		}
+
+		refs, err := keel.Into[inboundmessageports.ParkedRef](
+			ctx,
+			r.db.Keel(ctx),
+			overdueParkedQuery(req),
+		)
+		if err != nil {
 			return nil, err
 		}
 
-		return refs, nil
+		return refs[:min(len(refs), req.Limit)], nil
 	})
 }
 
-func overdueParkedQuery(
-	db bun.IDB,
-	req inboundmessageports.ListOverdueParkedRequest,
-) *bun.SelectQuery {
-	cols := inboundmessagecol.InboundMessageColumns
-	refColumns := []string{cols.ID.Bare(), cols.OrganizationID.Bare(), cols.BusinessUnitID.Bare()}
+func overdueParkedQuery(req inboundmessageports.ListOverdueParkedRequest) keel.Compound {
+	m := inboundmessagedb.InboundMessages
 
-	snoozed := db.NewSelect().
-		Model((*inboundmessage.InboundMessage)(nil)).
-		Column(refColumns...).
-		Where(cols.Parked.Eq(), inboundmessage.ParkingSnoozed).
-		Where(cols.SnoozedUntil.IsNotNull()).
-		Where(cols.SnoozedUntil.Lte(), req.Now).
-		Limit(int64(req.Limit))
-	awaiting := db.NewSelect().
-		Model((*inboundmessage.InboundMessage)(nil)).
-		Column(refColumns...).
-		Where(cols.Parked.Eq(), inboundmessage.ParkingAwaitingReply).
-		Where(cols.AwaitingUntil.Lte(), req.Now).
-		Limit(int64(req.Limit))
+	snoozed := m.AllTenants().
+		Pick(m.ID, m.OrganizationID, m.BusinessUnitID).
+		Where(
+			m.Parked.Eq(inboundmessage.ParkingSnoozed),
+			m.SnoozedUntil.IsNotNull(),
+			m.SnoozedUntil.Lte(req.Now),
+		).
+		Limit(req.Limit)
+	awaiting := m.AllTenants().
+		Pick(m.ID, m.OrganizationID, m.BusinessUnitID).
+		Where(
+			m.Parked.Eq(inboundmessage.ParkingAwaitingReply),
+			m.AwaitingUntil.Lte(req.Now),
+		).
+		Limit(req.Limit)
 
-	return db.NewSelect().
-		TableExpr("((?) UNION ALL (?)) AS overdue", snoozed, awaiting).
-		ColumnExpr("*").
-		Limit(int64(req.Limit))
+	return keel.UnionAll(snoozed, awaiting)
 }
 
 func (r *repository) RecomputeDue(
@@ -634,33 +584,20 @@ func (r *repository) RecomputeDue(
 	req inboundmessageports.RecomputeDueRequest,
 ) (int64, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (int64, error) {
-		result, err := recomputeDueQuery(r.db.DBForContext(ctx), req).Exec(ctx)
-		if err != nil {
-			return 0, err
+		m := inboundmessagedb.InboundMessages
+		classification := m.Classification.Eq(req.Classification)
+		if req.Classification == inboundmessage.ClassificationOther {
+			classification = keel.Or(classification, m.Classification.IsNull())
 		}
 
-		return result.RowsAffected()
+		return m.Where(m.Status.In(needsReviewStatuses...), classification).Update(
+			ctx,
+			r.db.Keel(ctx),
+			m.DueAt.ToExpr(keel.Raw("? + ?::bigint", m.ReceivedAt, int64(req.Minutes)*60)),
+			m.Version.ToExpr(m.Version),
+			m.UpdatedAt.ToExpr(m.UpdatedAt),
+		)
 	})
-}
-
-func recomputeDueQuery(db bun.IDB, req inboundmessageports.RecomputeDueRequest) *bun.UpdateQuery {
-	cols := inboundmessagecol.InboundMessageColumns
-
-	return db.NewUpdate().
-		Model((*inboundmessage.InboundMessage)(nil)).
-		WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-			uq = inboundmessagecol.InboundMessageScopeTenantUpdate(uq, req.TenantInfo).
-				Where(cols.Status.In(), bun.List(needsReviewStatuses))
-			if req.Classification == inboundmessage.ClassificationOther {
-				return uq.WhereGroup(" AND ", func(g *bun.UpdateQuery) *bun.UpdateQuery {
-					return g.Where(cols.Classification.Eq(), req.Classification).
-						WhereOr(cols.Classification.IsNull())
-				})
-			}
-
-			return uq.Where(cols.Classification.Eq(), req.Classification)
-		}).
-		Set(cols.DueAt.SetExpr(cols.ReceivedAt.Bare()+" + ?::bigint"), int64(req.Minutes)*60)
 }
 
 func (r *repository) UnreadInReview(
@@ -668,19 +605,21 @@ func (r *repository) UnreadInReview(
 	req inboundmessageports.UnreadInReviewRequest,
 ) ([]pulid.ID, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]pulid.ID, error) {
-		ids := make([]pulid.ID, 0, req.Limit)
-		cols := inboundmessagecol.InboundMessageColumns
-		if err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model((*inboundmessage.InboundMessage)(nil)).
-			ColumnExpr(cols.ID.Qualified()).
-			Apply(inboundmessagecol.InboundMessageApplyTenant(req.TenantInfo)).
-			Where(cols.Status.Eq(), inboundmessage.StatusInReview).
-			Where(cols.NovaRead.IsFalse()).
-			Order(cols.ReceivedAt.OrderAsc(), cols.ID.OrderAsc()).
-			Limit(int64(req.Limit)).
-			Scan(ctx, &ids); err != nil {
+		if req.Limit <= 0 {
+			return []pulid.ID{}, nil
+		}
+
+		m := inboundmessagedb.InboundMessages
+		ids, err := keel.Into[pulid.ID](ctx, r.db.Keel(ctx), m.
+			Pick(m.ID).
+			Where(m.Status.Eq(inboundmessage.StatusInReview), m.NovaRead.IsFalse()).
+			Order(m.ReceivedAt.Asc(), m.ID.Asc()).
+			Limit(req.Limit))
+		if err != nil {
 			return nil, err
+		}
+		if ids == nil {
+			ids = []pulid.ID{}
 		}
 
 		return ids, nil
@@ -692,9 +631,16 @@ func (r *repository) HandOffCandidates(
 	req inboundmessageports.HandOffCandidatesRequest,
 ) ([]pulid.ID, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]pulid.ID, error) {
-		ids := make([]pulid.ID, 0, req.Limit)
-		if err := handOffCandidatesQuery(r.db.DBForContext(ctx), req).Scan(ctx, &ids); err != nil {
+		if req.Limit <= 0 {
+			return []pulid.ID{}, nil
+		}
+
+		ids, err := keel.Into[pulid.ID](ctx, r.db.Keel(ctx), handOffCandidatesQuery(req))
+		if err != nil {
 			return nil, err
+		}
+		if ids == nil {
+			ids = []pulid.ID{}
 		}
 
 		return ids, nil
@@ -702,20 +648,18 @@ func (r *repository) HandOffCandidates(
 }
 
 func handOffCandidatesQuery(
-	db bun.IDB,
 	req inboundmessageports.HandOffCandidatesRequest,
-) *bun.SelectQuery {
-	cols := inboundmessagecol.InboundMessageColumns
+) *keel.Query[inboundmessage.InboundMessage] {
+	m := inboundmessagedb.InboundMessages
 
-	return db.NewSelect().
-		Model((*inboundmessage.InboundMessage)(nil)).
-		ColumnExpr(cols.ID.Qualified()).
-		Apply(inboundmessagecol.InboundMessageApplyTenant(req.TenantInfo)).
-		Where(cols.Status.In(), bun.List(needsReviewStatuses)).
-		Where(cols.Parked.IsNull()).
-		Where(cols.OwnerID.Expr("{} IS DISTINCT FROM ?"), req.To).
-		Order(cols.DueAt.OrderAsc()+" NULLS LAST", cols.ID.OrderAsc()).
-		Limit(int64(req.Limit))
+	return m.Pick(m.ID).
+		Where(
+			m.Status.In(needsReviewStatuses...),
+			m.Parked.IsNull(),
+			keel.Raw("? IS DISTINCT FROM ?", m.OwnerID, req.To.String()),
+		).
+		Order(m.DueAt.Asc().NullsLast(), m.ID.Asc()).
+		Limit(req.Limit)
 }
 
 func (r *repository) WaitingByOwners(
@@ -728,26 +672,25 @@ func (r *repository) WaitingByOwners(
 			return counts, nil
 		}
 
-		rows := make([]struct {
-			OwnerID pulid.ID `bun:"owner_id"`
-			Count   int      `bun:"count"`
-		}, 0, len(req.OwnerIDs))
-		cols := inboundmessagecol.InboundMessageColumns
-		if err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model((*inboundmessage.InboundMessage)(nil)).
-			ColumnExpr(cols.OwnerID.Qualified()).
-			ColumnExpr(buncolgen.Count("count")).
-			Apply(inboundmessagecol.InboundMessageApplyTenant(req.TenantInfo)).
-			Where(cols.Status.In(), bun.List(needsReviewStatuses)).
-			Where(cols.Parked.IsNull()).
-			Where(cols.OwnerID.In(), bun.List(req.OwnerIDs)).
-			GroupExpr(cols.OwnerID.Qualified()).
-			Scan(ctx, &rows); err != nil {
+		type ownerCount struct {
+			OwnerID pulid.ID
+			Count   int64
+		}
+
+		m := inboundmessagedb.InboundMessages
+		rows, err := keel.Into[ownerCount](ctx, r.db.Keel(ctx), m.
+			Pick(m.OwnerID, keel.Count()).
+			Where(
+				m.Status.In(needsReviewStatuses...),
+				m.Parked.IsNull(),
+				m.OwnerID.In(req.OwnerIDs...),
+			).
+			Group(m.OwnerID))
+		if err != nil {
 			return nil, err
 		}
 		for _, row := range rows {
-			counts[row.OwnerID] = row.Count
+			counts[row.OwnerID] = int(row.Count)
 		}
 
 		return counts, nil

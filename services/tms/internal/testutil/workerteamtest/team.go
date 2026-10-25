@@ -4,14 +4,16 @@ import (
 	"context"
 	"testing"
 
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/modules/equipment/domain/fleetcode"
+	"github.com/emoss08/trenova/internal/modules/equipment/domain/fleetcode/fleetcodedb"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker/workerdb"
 	"github.com/emoss08/trenova/internal/testutil/seedtest"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/require"
-	"github.com/uptrace/bun"
 )
 
 type Team struct {
@@ -23,16 +25,14 @@ type Team struct {
 
 func (t *Team) ManagerIDs() []pulid.ID { return []pulid.ID{t.Manager.ID} }
 
-func Seed(t *testing.T, ctx context.Context, db *bun.DB, data *seedtest.TestData) *Team {
+func Seed(t *testing.T, ctx context.Context, db *keel.DB, data *seedtest.TestData) *Team {
 	t.Helper()
 
-	tx, err := db.BeginTx(ctx, nil)
-	require.NoError(t, err)
 	manager := seedtest.NewUser(data.Organization.ID, data.BusinessUnit.ID).
 		WithUsername("team-manager").
 		WithEmail("team-manager@example.com").
-		Build(t, ctx, tx)
-	require.NoError(t, tx.Commit())
+		Build(t, ctx, db)
+	tenantCtx := data.Ctx(ctx)
 
 	fleet := &fleetcode.FleetCode{
 		ID:             pulid.MustNew("fc_"),
@@ -42,8 +42,7 @@ func Seed(t *testing.T, ctx context.Context, db *bun.DB, data *seedtest.TestData
 		Status:         domaintypes.StatusActive,
 		Code:           "TEAM",
 	}
-	_, err = db.NewInsert().Model(fleet).Exec(ctx)
-	require.NoError(t, err)
+	require.NoError(t, fleetcodedb.FleetCodes.Create(tenantCtx, db, fleet))
 
 	newWorker := func(first string, managerID, fleetID pulid.ID) *worker.Worker {
 		wrk := &worker.Worker{
@@ -63,8 +62,7 @@ func Seed(t *testing.T, ctx context.Context, db *bun.DB, data *seedtest.TestData
 			ManagerID:      managerID,
 			FleetCodeID:    fleetID,
 		}
-		_, insertErr := db.NewInsert().Model(wrk).Exec(ctx)
-		require.NoError(t, insertErr)
+		require.NoError(t, workerdb.Workers.Create(tenantCtx, db, wrk))
 		return wrk
 	}
 

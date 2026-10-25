@@ -7,10 +7,11 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/testutil/seedtest"
+	"github.com/jackc/pgx/v5"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"github.com/uptrace/bun"
 )
 
 const rlsGuidance = "Every table in public holds tenant data unless trenova_rls.global_tables " +
@@ -23,8 +24,7 @@ func TestEveryTenantTableIsForcedUnderRowLevelSecurity(t *testing.T) {
 	ctx, db, cleanup := seedtest.SetupTestDB(t)
 	t.Cleanup(cleanup)
 
-	var unprotected []string
-	err := db.NewRaw(`
+	unprotected, err := keel.QueryAll(ctx, db, pgx.RowTo[string], `
 		SELECT c.relname
 		FROM pg_class c
 		JOIN pg_namespace n ON n.oid = c.relnamespace
@@ -32,7 +32,7 @@ func TestEveryTenantTableIsForcedUnderRowLevelSecurity(t *testing.T) {
 			AND c.relkind IN ('r', 'p')
 			AND NOT (c.relrowsecurity AND c.relforcerowsecurity)
 			AND NOT EXISTS (SELECT 1 FROM trenova_rls.global_tables g WHERE g.table_name = c.relname)
-		ORDER BY c.relname`).Scan(ctx, &unprotected)
+		ORDER BY c.relname`)
 	require.NoError(t, err)
 
 	assert.Empty(t, unprotected, "tables without forced row-level security: %s\n%s",
@@ -43,8 +43,7 @@ func TestEveryProtectedTableHasTenantAndBypassPolicies(t *testing.T) {
 	ctx, db, cleanup := seedtest.SetupTestDB(t)
 	t.Cleanup(cleanup)
 
-	var missing []string
-	err := db.NewRaw(`
+	missing, err := keel.QueryAll(ctx, db, pgx.RowTo[string], `
 		SELECT c.relname || ' (' ||
 			CASE
 				WHEN NOT EXISTS (
@@ -83,7 +82,7 @@ func TestEveryProtectedTableHasTenantAndBypassPolicies(t *testing.T) {
 					)
 				)
 			)
-		ORDER BY c.relname`).Scan(ctx, &missing)
+		ORDER BY c.relname`)
 	require.NoError(t, err)
 
 	assert.Empty(t, missing, "tables with incomplete policies: %s\n%s", strings.Join(missing, "; "), rlsGuidance)
@@ -93,8 +92,7 @@ func TestTenantPoliciesNeverAdmitEveryRow(t *testing.T) {
 	ctx, db, cleanup := seedtest.SetupTestDB(t)
 	t.Cleanup(cleanup)
 
-	var permissive []string
-	err := db.NewRaw(`
+	permissive, err := keel.QueryAll(ctx, db, pgx.RowTo[string], `
 		SELECT tablename || '.' || policyname
 		FROM pg_policies
 		WHERE schemaname = 'public'
@@ -105,7 +103,7 @@ func TestTenantPoliciesNeverAdmitEveryRow(t *testing.T) {
 				OR (qual IS NOT NULL AND qual NOT LIKE '%trenova_rls.%')
 				OR (with_check IS NOT NULL AND with_check NOT LIKE '%trenova_rls.%')
 			)
-		ORDER BY 1`).Scan(ctx, &permissive)
+		ORDER BY 1`)
 	require.NoError(t, err)
 
 	assert.Empty(t, permissive, "tenant policies that do not consult the signed scope: %s",
@@ -116,8 +114,7 @@ func TestGlobalTablesHoldNoTenantColumns(t *testing.T) {
 	ctx, db, cleanup := seedtest.SetupTestDB(t)
 	t.Cleanup(cleanup)
 
-	var tenanted []string
-	err := db.NewRaw(`
+	tenanted, err := keel.QueryAll(ctx, db, pgx.RowTo[string], `
 		SELECT g.table_name || '.' || a.attname
 		FROM trenova_rls.global_tables g
 		JOIN pg_class c ON c.relname = g.table_name
@@ -125,7 +122,7 @@ func TestGlobalTablesHoldNoTenantColumns(t *testing.T) {
 		JOIN pg_attribute a ON a.attrelid = c.oid AND NOT a.attisdropped AND a.attnum > 0
 		WHERE a.attname IN ('organization_id', 'business_unit_id')
 			AND g.table_name <> 'business_units'
-		ORDER BY 1`).Scan(ctx, &tenanted)
+		ORDER BY 1`)
 	require.NoError(t, err)
 
 	assert.Empty(t, tenanted, "tables registered as global carry tenant columns: %s",
@@ -136,8 +133,7 @@ func TestViewsRunAsTheQueryingRole(t *testing.T) {
 	ctx, db, cleanup := seedtest.SetupTestDB(t)
 	t.Cleanup(cleanup)
 
-	var definerViews []string
-	err := db.NewRaw(`
+	definerViews, err := keel.QueryAll(ctx, db, pgx.RowTo[string], `
 		SELECT c.relname
 		FROM pg_class c
 		JOIN pg_namespace n ON n.oid = c.relnamespace
@@ -148,7 +144,7 @@ func TestViewsRunAsTheQueryingRole(t *testing.T) {
 				WHERE d.objid = c.oid AND d.deptype = 'e'
 			)
 			AND NOT coalesce('security_invoker=true' = ANY (c.reloptions), false)
-		ORDER BY c.relname`).Scan(ctx, &definerViews)
+		ORDER BY c.relname`)
 	require.NoError(t, err)
 
 	assert.Empty(t, definerViews, "views that would read tenant tables as their owner and bypass "+
@@ -166,11 +162,10 @@ func TestNoFunctionRunsAsItsOwnerOutsideTheScopeSchema(t *testing.T) {
 		"calls them: %s", strings.Join(definers, ", "))
 }
 
-func securityDefinerFunctions(t *testing.T, ctx context.Context, db *bun.DB) []string {
+func securityDefinerFunctions(t *testing.T, ctx context.Context, db *keel.DB) []string {
 	t.Helper()
 
-	var definers []string
-	err := db.NewRaw(`
+	definers, err := keel.QueryAll(ctx, db, pgx.RowTo[string], `
 		SELECT n.nspname || '.' || p.proname
 		FROM pg_proc p
 		JOIN pg_namespace n ON n.oid = p.pronamespace
@@ -181,7 +176,7 @@ func securityDefinerFunctions(t *testing.T, ctx context.Context, db *bun.DB) []s
 				SELECT 1 FROM pg_depend d
 				WHERE d.objid = p.oid AND d.deptype = 'e'
 			)
-		ORDER BY 1`).Scan(ctx, &definers)
+		ORDER BY 1`)
 	require.NoError(t, err)
 
 	return definers

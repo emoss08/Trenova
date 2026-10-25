@@ -6,12 +6,12 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/glaccount"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/glaccount/glaccountdb"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/glaccountports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/reference/ports/accessorialchargeports"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/auditservice"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
-	"github.com/emoss08/trenova/pkg/dbhelper"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -274,19 +274,18 @@ func (s *Service) validateDelete(
 		)
 	}
 
-	childCount, err := dbtx.Read(ctx, s.db, func(ctx context.Context) (int, error) {
-		return dbhelper.Count(ctx, s.db.DBForContext(ctx).NewSelect().
-			TableExpr("gl_accounts").
-			Where("parent_id = ?", entity.ID).
-			Where("organization_id = ?", entity.OrganizationID).
-			Where("business_unit_id = ?", entity.BusinessUnitID).
-			Where("status = ?", domaintypes.StatusActive))
+	hasActiveChild, err := dbtx.Read(ctx, s.db, func(ctx context.Context) (bool, error) {
+		gla := glaccountdb.GLAccounts
+		return gla.Where(
+			gla.ParentID.Eq(entity.ID),
+			gla.Status.Eq(domaintypes.StatusActive),
+		).Exists(ctx, s.db.Keel(ctx))
 	})
 	if err != nil {
 		return nil //nolint:nilerr // validation callbacks collect field errors and intentionally continue
 	}
 
-	if childCount > 0 {
+	if hasActiveChild {
 		multiErr.Add("children", errortypes.ErrInvalid, "Cannot delete account with child accounts")
 	}
 

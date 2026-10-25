@@ -279,6 +279,21 @@ jobs:
         uses: ./.github/actions/setup-go
         with:
           cache-key: lint
+          save-build-cache: "false"
+
+      # golangci-lint-action keys its analysis cache by go.mod and a 7-day
+      # interval and skips the save on a primary-key hit, so the first run of
+      # an interval fixes the cache for a week: on this repository a 6 KB stub
+      # that held no analysis. The analysis cache lives beside the build cache
+      # here, restored from the newest run and saved by every run, failed or
+      # not, so a run that times out still leaves the next one warm.
+      - name: Restore golangci-lint analysis cache
+        uses: actions/cache/restore@v4
+        with:
+          path: ~/.cache/golangci-lint
+          key: golangci-lint-${{ runner.os }}-${{ github.sha }}
+          restore-keys: |
+            golangci-lint-${{ runner.os }}-
 
       - name: Determine lint base
         id: lint-base
@@ -296,9 +311,27 @@ jobs:
           version: v2.12.2
           working-directory: ./services/tms
           verify: false
+          skip-cache: true
           # Typechecking the whole module is unavoidable even with
-          # --new-from-rev, so the timeout has to cover a cold analysis cache.
-          args: --timeout=20m --new-from-rev=${{ steps.lint-base.outputs.value }}
+          # --new-from-rev. With both caches warm a run takes about 5 minutes
+          # (the analyzers about 1.5 of them); cold, compiling the module alone
+          # takes about 14 minutes on four cores, so 20 minutes left no room
+          # for the analysis. 40 covers a cold run with margin.
+          args: --timeout=40m --new-from-rev=${{ steps.lint-base.outputs.value }}
+
+      - name: Save Go build output
+        if: always()
+        uses: actions/cache/save@v4
+        with:
+          path: ~/.cache/go-build
+          key: gobuild-${{ runner.os }}-1.26-lint-${{ github.sha }}
+
+      - name: Save golangci-lint analysis cache
+        if: always()
+        uses: actions/cache/save@v4
+        with:
+          path: ~/.cache/golangci-lint
+          key: golangci-lint-${{ runner.os }}-${{ github.sha }}
 
       - name: Run go-arch-lint
         working-directory: ./services/tms
@@ -365,14 +398,36 @@ jobs:
           fi
           exit 1
 
-      - name: Seed IDs
+
+      - name: Schema version stamp
         working-directory: ./services/tms
         run: |
           set -euo pipefail
-          go generate ./internal/infrastructure/database/seeder/...
-          if ! git diff --quiet pkg/seedhelpers/seed_ids_gen.go; then
-            echo "::error::Seed IDs are stale - run 'task generate-seeds' and commit"
-            git diff --stat pkg/seedhelpers/seed_ids_gen.go
+          # The API and worker refuse a database behind schema.Version, so the
+          # stamp must name the newest migration.
+          if ! go run ./cmd/db migrate stamp -check -plain; then
+            echo "::error::services/tms/schema/version_gen.go is stale - run 'task db-stamp' and commit"
+            exit 1
+          fi
+
+      - name: Migrations against the base branch
+        if: github.event_name == 'pull_request'
+        working-directory: ./services/tms
+        env:
+          BASE_REF: ${{ github.base_ref }}
+        run: |
+          set -euo pipefail
+          git fetch --no-tags --depth=1 origin "refs/heads/$BASE_REF:refs/remotes/origin/$BASE_REF"
+          if ! git cat-file -e "origin/$BASE_REF:services/tms/schema/migrations" 2>/dev/null; then
+            echo "::notice::The base branch has no keel migrations yet; nothing to compare"
+            exit 0
+          fi
+          BASE_DIR="$(mktemp -d)"
+          git archive "origin/$BASE_REF" schema/migrations | tar -x -C "$BASE_DIR"
+          # Fails on a migration older than the newest one on the base branch,
+          # and on an edited or deleted migration the base branch already has.
+          if ! go run ./cmd/db migrate check -plain -base-dir "core=$BASE_DIR/schema/migrations"; then
+            echo "::error::Give a new migration a version newer than every migration on $BASE_REF, and fix an applied one with a new migration rather than an edit"
             exit 1
           fi
 
@@ -387,14 +442,12 @@ jobs:
             exit 1
           fi
 
-      - name: Report catalog
+      - name: keel tables
         working-directory: ./services/tms
         run: |
           set -euo pipefail
-          go generate ./internal/infrastructure/database/reportcatalog/...
-          if ! git diff --quiet -- pkg/reportcatalog/catalog_gen.go; then
-            echo "::error::Report catalog is stale - run 'go generate ./internal/infrastructure/database/reportcatalog/...' and commit"
-            git diff --stat -- pkg/reportcatalog/catalog_gen.go
+          if ! go tool keel gen -check -acronyms ID,URL,API,JSON,UUID,GL,IFTA,BOL,EDI,PRO,DOT,MC,PDF,VIN,CDL,TWIC,MVR,PTO,YTD,SCAC,ETA,CSV,UN,FX,ELD,SFTP,NOA,ACH,EIN,FLSA -kinds pkg/keelkinds -tables internal/keeltables ./internal/modules/.../domain/...; then
+            echo "::error::keel table packages are stale - run 'task keel-gen' in services/tms and commit"
             exit 1
           fi
 

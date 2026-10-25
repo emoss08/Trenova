@@ -6575,7 +6575,7 @@ enum AIRetrievalIndexStatus {
 enum AIRetrievalUnavailableReason {
   "The database has no pgvector extension."
   ExtensionMissing
-  "pgvector is installed but the retrieval tables are not; run trenova db enable-vector."
+  "pgvector is installed but the retrieval tables are not; run trenova-db enable-vector."
   SchemaMissing
   "pgvector is older than 0.8."
   TooOld
@@ -24791,14 +24791,20 @@ type ReportCatalogEnumValue {
 }
 
 type ReportCatalogField {
+  "The field's key in a definition path, such as customer.name."
   key: String!
   label: String!
   description: String
+  "The value type: string, int, decimal, float, bool, date, timestamp, epoch, enum or json."
   type: String!
+  "The display kind the field carries, such as money, weight or percent."
   format: String
-  nullable: Boolean!
+  "Whether reports aggregate the field by default rather than group by it."
+  measure: Boolean!
   enumValues: [ReportCatalogEnumValue!]!
   aggregations: [String!]!
+  "The filter operators a condition on the field can use, in builder order."
+  operators: [String!]!
   filterable: Boolean!
   groupable: Boolean!
   "Whether the caller may use the field in a report and, when not, what they lack."
@@ -24815,7 +24821,7 @@ type ReportCatalogField {
 
 """
 Whether a caller may use a catalog field or edge in a report, decided by the
-rule the report compiler applies, so a field marked Available compiles and
+policy the report engine applies, so a field marked Available compiles and
 any other is refused.
 """
 enum ReportFieldAccess {
@@ -24839,11 +24845,16 @@ type ReportFieldProtection {
 }
 
 type ReportCatalogEdge {
+  "The edge's name in a definition path."
   name: String!
   label: String!
+  description: String
+  "The key of the entity the edge leads to."
   target: String!
-  cardinality: String!
-  traversable: Boolean!
+  "Whether the edge leads to many records, so its fields are aggregated."
+  toMany: Boolean!
+  "Whether the edge picks one record of a list, such as a shipment's first stop."
+  pick: Boolean!
   "Whether the caller may follow the edge in a report and, when not, what they lack."
   access: ReportFieldAccess!
   "Whether the edge is in its source kind's reference view."
@@ -24889,6 +24900,13 @@ only its reference-view fields available.
 """
 type ReportCatalog {
   version: String!
+  """
+  The engine's rules a builder offers: operators per value type with their
+  operands, having operators, aggregations, date buckets, transforms, bands,
+  window functions, chart types, the display vocabulary, formula functions and
+  operators, column naming and definition limits.
+  """
+  rules: JSON!
   entities: [ReportCatalogEntity!]!
 }
 
@@ -25084,163 +25102,38 @@ type ReportColumnDisplay {
   nullText: String!
   rules: [ReportDisplayRule!]!
   band: ReportBand
+  "Labels for enum values, by value."
+  labels: JSON
 }
 
 type ReportPreviewColumn {
   id: String!
   label: String!
   type: String!
-  format: String
   display: ReportColumnDisplay!
+  "The highest sensitivity of the fields the column reads."
+  sensitivity: String
 }
 
 type ReportPreview {
   columns: [ReportPreviewColumn!]!
+  "Detail and subtotal rows, each an array of values in column order."
   rows: Any!
+  """
+  Each row's grouping level: 0 for a detail row, and n for a subtotal that
+  rolls up the n innermost grouping columns.
+  """
+  levels: [Int!]!
+  "The grand total row, when the report asks for one."
   totals: Any
   truncated: Boolean!
+  "The cursor of the next page when the preview was paged and more rows follow."
+  cursor: String
   timezone: String!
-}
-
-# --- IR inputs ---------------------------------------------------------------
-
-input ReportFieldRefInput {
-  path: [String!]
-  field: String!
-}
-
-input ReportComputedInput {
-  op: String!
-  leftId: String
-  rightId: String
-  leftValue: Float
-  rightValue: Float
-  format: String
-}
-
-input ReportTransformInput {
-  op: String!
-  precision: Int
-  factor: Float
-}
-
-input ReportDisplayRuleInput {
-  op: String!
-  value: Float!
-  upper: Float
-  tone: String!
-}
-
-input ReportDisplayInput {
-  style: String
-  decimals: Int
-  grouping: Boolean
-  currency: String
-  negative: String
-  notation: String
-  prefix: String
-  suffix: String
-  dateStyle: String
-  boolStyle: String
-  durationUnit: String
-  durationStyle: String
-  nullText: String
-  rules: [ReportDisplayRuleInput!]
-}
-
-input ReportBandInput {
-  width: Float
-  edges: [Float!]
-}
-
-input ReportColumnInput {
-  id: String!
-  ref: ReportFieldRefInput
-  kind: String!
-  agg: String
-  bucket: String
-  band: ReportBandInput
-  label: String
-  computed: ReportComputedInput
-  transform: ReportTransformInput
-  display: ReportDisplayInput
-  filter: ReportFilterGroupInput
-}
-
-input ReportChartGoalInput {
-  value: Float
-  columnId: String
-  label: String
-}
-
-input ReportChartInput {
-  id: String!
-  type: String!
-  title: String
-  xColumnId: String
-  seriesIds: [String!]
-  stacked: Boolean
-  hideLegend: Boolean
-  showValues: Boolean
-  curved: Boolean
-  limit: Int
-  compareId: String
-  goal: ReportChartGoalInput
-  latColumnId: String
-  lngColumnId: String
-  labelColumnId: String
-}
-
-input ReportFilterInput {
-  ref: ReportFieldRefInput!
-  operator: String!
-  value: Any
-  param: String
-  agg: String
-  transform: ReportTransformInput
-}
-
-input ReportFilterGroupInput {
-  op: String!
-  filters: [ReportFilterInput!]
-  groups: [ReportFilterGroupInput!]
-}
-
-input ReportSortInput {
-  columnId: String!
-  direction: String!
-}
-
-input ReportPivotInput {
-  ref: ReportFieldRefInput!
-  values: [String!]!
-  labels: [String!]
-  measureIds: [String!]!
-  includeOther: Boolean
-}
-
-input ReportParameterDefInput {
-  name: String!
-  label: String
-  type: String!
-  required: Boolean
-  default: Any
-  multi: Boolean
-  allowedValues: [String!]
-  refEntity: String
-}
-
-input ReportIRInput {
-  entity: String!
-  columns: [ReportColumnInput!]!
-  filters: ReportFilterGroupInput
-  having: ReportFilterGroupInput
-  sort: [ReportSortInput!]
-  limit: Int
-  pivot: ReportPivotInput
-  parameters: [ReportParameterDefInput!]
-  totals: Boolean
-  charts: [ReportChartInput!]
+  "The rollup that answered the report instead of the base tables, when one did."
+  rollup: String
+  "Whether the rows came from the result cache."
+  cached: Boolean!
 }
 
 input ReportDrillValueInput {
@@ -25249,10 +25142,13 @@ input ReportDrillValueInput {
 }
 
 input ReportDrillInput {
-  definition: ReportIRInput!
+  "A report definition in keel analytics IR version 2."
+  definition: JSON!
   params: JSON
   dimensions: [ReportDrillValueInput!]!
   columnId: String
+  "The pivot values of the cell drilled into, when the report pivots."
+  pivotValues: [String!]
   limit: Int
 }
 
@@ -25264,7 +25160,8 @@ input SaveReportDefinitionInput {
   visibility: String
   status: String
   defaultFormat: String
-  definition: ReportIRInput!
+  "A report definition in keel analytics IR version 2."
+  definition: JSON!
 }
 
 input UpdateReportDefinitionInput {
@@ -25277,7 +25174,8 @@ input UpdateReportDefinitionInput {
   visibility: String
   status: String
   defaultFormat: String
-  definition: ReportIRInput!
+  "A report definition in keel analytics IR version 2."
+  definition: JSON!
 }
 
 input RunReportInput {
@@ -25393,18 +25291,35 @@ input ReportDashboardTileInput {
   paramBindings: JSON
 }
 
+"A dashboard filter applied to every tile whose report starts from its entity."
 input ReportDashboardFilterInput {
   id: String!
   label: String
   entity: String!
-  ref: ReportFieldRefInput!
-  operator: String!
+  "The filtered field's path from the entity."
+  field: String!
+  op: String!
   default: Any
+}
+
+"A parameter a dashboard asks for once and binds to its tiles' report parameters."
+input ReportParameterInput {
+  name: String!
+  label: String
+  "The value type: string, int, decimal, float, bool, date, timestamp, epoch or enum."
+  type: String!
+  required: Boolean
+  multi: Boolean
+  default: Any
+  "The values the parameter may take, when it is limited to a list."
+  allowed: [Any!]
+  "The entity whose records the parameter picks, for a record picker."
+  entity: String
 }
 
 input ReportDashboardLayoutInput {
   tiles: [ReportDashboardTileInput!]!
-  parameters: [ReportParameterDefInput!]
+  parameters: [ReportParameterInput!]
   filters: [ReportDashboardFilterInput!]
 }
 
@@ -25442,9 +25357,14 @@ extend type Query {
     filter: ReportRunsFilterInput
   ): ReportRunConnection!
   previewReport(
-    definition: ReportIRInput!
+    "A report definition in keel analytics IR version 2."
+    definition: JSON!
     params: JSON
     supersede: Boolean
+    "The cursor of the page to read, from the previous page's cursor."
+    cursor: String
+    "Rows per page; the preview is paged when set."
+    pageSize: Int
   ): ReportPreview!
   drillThroughReport(input: ReportDrillInput!): ReportPreview!
   reportSchedules(

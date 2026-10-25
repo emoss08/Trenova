@@ -10,16 +10,15 @@ import (
 	"sort"
 	"time"
 
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/domainvalidation"
 	"github.com/emoss08/trenova/pkg/errortypes"
-	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/validationframework"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
-	"github.com/uptrace/bun"
 )
 
 var (
@@ -137,35 +136,32 @@ func (s RandomEntryStatus) IsOutstanding() bool {
 }
 
 var (
-	_ bun.BeforeAppendModelHook          = (*DOTRandomPool)(nil)
 	_ validationframework.TenantedEntity = (*DOTRandomPool)(nil)
 	_ domaintypes.PostgresSearchable     = (*DOTRandomPool)(nil)
 )
 
 type DOTRandomPool struct {
-	bun.BaseModel             `bun:"table:dot_random_pools,alias:drpool" json:"-"`
-	pagination.CursorValueSet `bun:",embed"                              json:"-"`
+	keel.Table     `keel:"dot_random_pools"`
+	ID             pulid.ID `keel:"id,pk,autoid:drpool_"       json:"id"`
+	BusinessUnitID pulid.ID `keel:"business_unit_id,pk,tenant" json:"businessUnitId"`
+	OrganizationID pulid.ID `keel:"organization_id,pk,tenant"  json:"organizationId"`
 
-	ID             pulid.ID `json:"id"             bun:"id,pk,type:VARCHAR(100),notnull"`
-	BusinessUnitID pulid.ID `json:"businessUnitId" bun:"business_unit_id,pk,type:VARCHAR(100),notnull"`
-	OrganizationID pulid.ID `json:"organizationId" bun:"organization_id,pk,type:VARCHAR(100),notnull"`
+	Code        string             `json:"code"        keel:"code"`
+	Name        string             `json:"name"        keel:"name"`
+	Description string             `json:"description" keel:"description,nullzero"`
+	Status      domaintypes.Status `json:"status"      keel:"status"`
 
-	Code        string             `json:"code"        bun:"code,type:VARCHAR(50),notnull"`
-	Name        string             `json:"name"        bun:"name,type:VARCHAR(100),notnull"`
-	Description string             `json:"description" bun:"description,type:TEXT,nullzero"`
-	Status      domaintypes.Status `json:"status"      bun:"status,type:status_enum,notnull,default:'Active'"`
+	Period              RandomPeriod `json:"period"              keel:"period"`
+	DrugRatePercent     int16        `json:"drugRatePercent"     keel:"drug_rate_percent"`
+	AlcoholRatePercent  int16        `json:"alcoholRatePercent"  keel:"alcohol_rate_percent"`
+	IncludedDriverTypes []string     `json:"includedDriverTypes" keel:"included_driver_types,jsonb"`
+	IsDefault           bool         `json:"isDefault"           keel:"is_default"`
 
-	Period              RandomPeriod `json:"period"              bun:"period,type:dot_random_period_enum,notnull,default:'Quarterly'"`
-	DrugRatePercent     int16        `json:"drugRatePercent"     bun:"drug_rate_percent,type:SMALLINT,notnull"`
-	AlcoholRatePercent  int16        `json:"alcoholRatePercent"  bun:"alcohol_rate_percent,type:SMALLINT,notnull"`
-	IncludedDriverTypes []string     `json:"includedDriverTypes" bun:"included_driver_types,type:JSONB,notnull,default:'[]'"`
-	IsDefault           bool         `json:"isDefault"           bun:"is_default,type:BOOLEAN,notnull"`
-
-	SearchVector string `json:"-"         bun:"search_vector,type:TSVECTOR,scanonly"`
-	Rank         string `json:"-"         bun:"rank,type:VARCHAR(100),scanonly"`
-	Version      int64  `json:"version"   bun:"version,type:BIGINT"`
-	CreatedAt    int64  `json:"createdAt" bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
-	UpdatedAt    int64  `json:"updatedAt" bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
+	SearchVector string `json:"-"         keel:"search_vector,tsvector,readonly,noselect"`
+	Rank         string `json:"-"         keel:"rank,computed"`
+	Version      int64  `json:"version"   keel:"version,version"`
+	CreatedAt    int64  `json:"createdAt" keel:"created_at,autocreate"`
+	UpdatedAt    int64  `json:"updatedAt" keel:"updated_at,autoupdate"`
 }
 
 func (p *DOTRandomPool) Validate(multiErr *errortypes.MultiError) {
@@ -285,73 +281,65 @@ func (p *DOTRandomPool) GetPostgresSearchConfig() domaintypes.PostgresSearchConf
 	}
 }
 
-func (p *DOTRandomPool) BeforeAppendModel(_ context.Context, query bun.Query) error {
-	now := timeutils.NowUnix()
+func (p *DOTRandomPool) BeforeCreate(_ context.Context) error {
+	if p.Status == "" {
+		p.Status = domaintypes.StatusActive
+	}
+	if p.Period == "" {
+		p.Period = RandomPeriodQuarterly
+	}
+	if p.IncludedDriverTypes == nil {
+		p.IncludedDriverTypes = []string{}
+	}
 
-	switch query.(type) {
-	case *bun.InsertQuery:
-		if p.ID.IsNil() {
-			p.ID = pulid.MustNew("drpool_")
-		}
-		if p.Status == "" {
-			p.Status = domaintypes.StatusActive
-		}
-		if p.Period == "" {
-			p.Period = RandomPeriodQuarterly
-		}
-		if p.IncludedDriverTypes == nil {
-			p.IncludedDriverTypes = []string{}
-		}
-		p.CreatedAt = now
-		p.UpdatedAt = now
-	case *bun.UpdateQuery:
-		if p.IncludedDriverTypes == nil {
-			p.IncludedDriverTypes = []string{}
-		}
-		p.UpdatedAt = now
+	return nil
+}
+
+func (p *DOTRandomPool) BeforeUpdate(_ context.Context) error {
+	if p.IncludedDriverTypes == nil {
+		p.IncludedDriverTypes = []string{}
 	}
 
 	return nil
 }
 
 var (
-	_ bun.BeforeAppendModelHook          = (*DOTRandomDraw)(nil)
 	_ validationframework.TenantedEntity = (*DOTRandomDraw)(nil)
 )
 
 type DOTRandomDraw struct {
-	bun.BaseModel `bun:"table:dot_random_draws,alias:drdraw" json:"-"`
+	keel.Table `keel:"dot_random_draws"`
 
-	ID             pulid.ID `json:"id"             bun:"id,pk,type:VARCHAR(100),notnull"`
-	BusinessUnitID pulid.ID `json:"businessUnitId" bun:"business_unit_id,pk,type:VARCHAR(100),notnull"`
-	OrganizationID pulid.ID `json:"organizationId" bun:"organization_id,pk,type:VARCHAR(100),notnull"`
-	PoolID         pulid.ID `json:"poolId"         bun:"pool_id,type:VARCHAR(100),notnull"`
+	ID             pulid.ID `json:"id"             keel:"id,pk,autoid:drdraw_"`
+	BusinessUnitID pulid.ID `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
+	OrganizationID pulid.ID `json:"organizationId" keel:"organization_id,pk,tenant"`
+	PoolID         pulid.ID `json:"poolId"         keel:"pool_id"`
 
-	PeriodKey   string           `json:"periodKey"   bun:"period_key,type:VARCHAR(20),notnull"`
-	PeriodStart int64            `json:"periodStart" bun:"period_start,type:BIGINT,notnull"`
-	PeriodEnd   int64            `json:"periodEnd"   bun:"period_end,type:BIGINT,notnull"`
-	Status      RandomDrawStatus `json:"status"      bun:"status,type:dot_random_draw_status_enum,notnull,default:'Draft'"`
+	PeriodKey   string           `json:"periodKey"   keel:"period_key"`
+	PeriodStart int64            `json:"periodStart" keel:"period_start"`
+	PeriodEnd   int64            `json:"periodEnd"   keel:"period_end"`
+	Status      RandomDrawStatus `json:"status"      keel:"status"`
 
-	PoolSize        int32 `json:"poolSize"        bun:"pool_size,type:INTEGER,notnull"`
-	DrugTarget      int32 `json:"drugTarget"      bun:"drug_target,type:INTEGER,notnull"`
-	AlcoholTarget   int32 `json:"alcoholTarget"   bun:"alcohol_target,type:INTEGER,notnull"`
-	DrugSelected    int32 `json:"drugSelected"    bun:"drug_selected,type:INTEGER,notnull"`
-	AlcoholSelected int32 `json:"alcoholSelected" bun:"alcohol_selected,type:INTEGER,notnull"`
+	PoolSize        int32 `json:"poolSize"        keel:"pool_size"`
+	DrugTarget      int32 `json:"drugTarget"      keel:"drug_target"`
+	AlcoholTarget   int32 `json:"alcoholTarget"   keel:"alcohol_target"`
+	DrugSelected    int32 `json:"drugSelected"    keel:"drug_selected"`
+	AlcoholSelected int32 `json:"alcoholSelected" keel:"alcohol_selected"`
 
-	Seed        string   `json:"seed"        bun:"seed,type:VARCHAR(64),notnull"`
-	Method      string   `json:"method"      bun:"method,type:VARCHAR(60),notnull"`
-	Notes       string   `json:"notes"       bun:"notes,type:TEXT,nullzero"`
-	DrawnAt     int64    `json:"drawnAt"     bun:"drawn_at,type:BIGINT,notnull"`
-	DrawnByID   pulid.ID `json:"drawnById"   bun:"drawn_by_id,type:VARCHAR(100),nullzero"`
-	FinalizedAt *int64   `json:"finalizedAt" bun:"finalized_at,type:BIGINT,nullzero"`
+	Seed        string   `json:"seed"        keel:"seed"`
+	Method      string   `json:"method"      keel:"method"`
+	Notes       string   `json:"notes"       keel:"notes,nullzero"`
+	DrawnAt     int64    `json:"drawnAt"     keel:"drawn_at"`
+	DrawnByID   pulid.ID `json:"drawnById"   keel:"drawn_by_id,nullzero"`
+	FinalizedAt *int64   `json:"finalizedAt" keel:"finalized_at"`
 
-	Version   int64 `json:"version"   bun:"version,type:BIGINT"`
-	CreatedAt int64 `json:"createdAt" bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
-	UpdatedAt int64 `json:"updatedAt" bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
+	Version   int64 `json:"version"   keel:"version,version"`
+	CreatedAt int64 `json:"createdAt" keel:"created_at,autocreate"`
+	UpdatedAt int64 `json:"updatedAt" keel:"updated_at,autoupdate"`
 
-	Pool    *DOTRandomPool        `json:"pool,omitempty"    bun:"rel:belongs-to,join:pool_id=id,join:organization_id=organization_id,join:business_unit_id=business_unit_id"`
-	DrawnBy *tenant.User          `json:"drawnBy,omitempty" bun:"rel:belongs-to,join:drawn_by_id=id"`
-	Entries []*DOTRandomDrawEntry `json:"entries,omitempty" bun:"rel:has-many,join:id=draw_id,join:organization_id=organization_id,join:business_unit_id=business_unit_id"`
+	Pool    *DOTRandomPool        `json:"pool,omitempty"    keel:"belongs:pool_id"`
+	DrawnBy *tenant.User          `json:"drawnBy,omitempty" keel:"belongs:drawn_by_id"`
+	Entries []*DOTRandomDrawEntry `json:"entries,omitempty" keel:"many:draw_id"`
 }
 
 func (d *DOTRandomDraw) Validate(multiErr *errortypes.MultiError) {
@@ -407,60 +395,48 @@ func (d *DOTRandomDraw) GetResourceType() string { return "dot_random_draw" }
 
 func (d *DOTRandomDraw) GetResourceID() string { return d.ID.String() }
 
-func (d *DOTRandomDraw) BeforeAppendModel(_ context.Context, query bun.Query) error {
+func (d *DOTRandomDraw) BeforeCreate(_ context.Context) error {
 	now := timeutils.NowUnix()
-
-	switch query.(type) {
-	case *bun.InsertQuery:
-		if d.ID.IsNil() {
-			d.ID = pulid.MustNew("drdraw_")
-		}
-		if d.Status == "" {
-			d.Status = RandomDrawStatusDraft
-		}
-		if d.Method == "" {
-			d.Method = RandomSelectionMethod
-		}
-		if d.DrawnAt == 0 {
-			d.DrawnAt = now
-		}
-		d.CreatedAt = now
-		d.UpdatedAt = now
-	case *bun.UpdateQuery:
-		d.UpdatedAt = now
+	if d.Status == "" {
+		d.Status = RandomDrawStatusDraft
+	}
+	if d.Method == "" {
+		d.Method = RandomSelectionMethod
+	}
+	if d.DrawnAt == 0 {
+		d.DrawnAt = now
 	}
 
 	return nil
 }
 
 var (
-	_ bun.BeforeAppendModelHook          = (*DOTRandomDrawEntry)(nil)
 	_ validationframework.TenantedEntity = (*DOTRandomDrawEntry)(nil)
 )
 
 type DOTRandomDrawEntry struct {
-	bun.BaseModel `bun:"table:dot_random_draw_entries,alias:drde" json:"-"`
+	keel.Table `keel:"dot_random_draw_entries"`
 
-	ID             pulid.ID `json:"id"             bun:"id,pk,type:VARCHAR(100),notnull"`
-	BusinessUnitID pulid.ID `json:"businessUnitId" bun:"business_unit_id,pk,type:VARCHAR(100),notnull"`
-	OrganizationID pulid.ID `json:"organizationId" bun:"organization_id,pk,type:VARCHAR(100),notnull"`
-	DrawID         pulid.ID `json:"drawId"         bun:"draw_id,type:VARCHAR(100),notnull"`
-	WorkerID       pulid.ID `json:"workerId"       bun:"worker_id,type:VARCHAR(100),notnull"`
+	ID             pulid.ID `json:"id"             keel:"id,pk,autoid:drde_"`
+	BusinessUnitID pulid.ID `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
+	OrganizationID pulid.ID `json:"organizationId" keel:"organization_id,pk,tenant"`
+	DrawID         pulid.ID `json:"drawId"         keel:"draw_id"`
+	WorkerID       pulid.ID `json:"workerId"       keel:"worker_id"`
 
-	Substance    DOTTestSubstance  `json:"substance"    bun:"substance,type:dot_test_substance_enum,notnull"`
-	Rank         int32             `json:"rank"         bun:"rank,type:INTEGER,notnull"`
-	Status       RandomEntryStatus `json:"status"       bun:"status,type:dot_random_entry_status_enum,notnull,default:'Selected'"`
-	NotifiedAt   *int64            `json:"notifiedAt"   bun:"notified_at,type:BIGINT,nullzero"`
-	CompletedAt  *int64            `json:"completedAt"  bun:"completed_at,type:BIGINT,nullzero"`
-	TestID       pulid.ID          `json:"testId"       bun:"test_id,type:VARCHAR(100),nullzero"`
-	ExcuseReason string            `json:"excuseReason" bun:"excuse_reason,type:VARCHAR(255),nullzero"`
+	Substance    DOTTestSubstance  `json:"substance"    keel:"substance"`
+	Rank         int32             `json:"rank"         keel:"rank"`
+	Status       RandomEntryStatus `json:"status"       keel:"status"`
+	NotifiedAt   *int64            `json:"notifiedAt"   keel:"notified_at"`
+	CompletedAt  *int64            `json:"completedAt"  keel:"completed_at"`
+	TestID       pulid.ID          `json:"testId"       keel:"test_id,nullzero"`
+	ExcuseReason string            `json:"excuseReason" keel:"excuse_reason,nullzero"`
 
-	Version   int64 `json:"version"   bun:"version,type:BIGINT"`
-	CreatedAt int64 `json:"createdAt" bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
-	UpdatedAt int64 `json:"updatedAt" bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
+	Version   int64 `json:"version"   keel:"version,version"`
+	CreatedAt int64 `json:"createdAt" keel:"created_at,autocreate"`
+	UpdatedAt int64 `json:"updatedAt" keel:"updated_at,autoupdate"`
 
-	Draw   *DOTRandomDraw `json:"draw,omitempty"   bun:"rel:belongs-to,join:draw_id=id,join:organization_id=organization_id,join:business_unit_id=business_unit_id"`
-	Worker *Worker        `json:"worker,omitempty" bun:"rel:belongs-to,join:worker_id=id,join:organization_id=organization_id,join:business_unit_id=business_unit_id"`
+	Draw   *DOTRandomDraw `json:"draw,omitempty"   keel:"belongs:draw_id"`
+	Worker *Worker        `json:"worker,omitempty" keel:"belongs:worker_id"`
 }
 
 func (e *DOTRandomDrawEntry) Validate(multiErr *errortypes.MultiError) {
@@ -507,21 +483,9 @@ func (e *DOTRandomDrawEntry) GetResourceType() string { return "dot_random_draw_
 
 func (e *DOTRandomDrawEntry) GetResourceID() string { return e.ID.String() }
 
-func (e *DOTRandomDrawEntry) BeforeAppendModel(_ context.Context, query bun.Query) error {
-	now := timeutils.NowUnix()
-
-	switch query.(type) {
-	case *bun.InsertQuery:
-		if e.ID.IsNil() {
-			e.ID = pulid.MustNew("drde_")
-		}
-		if e.Status == "" {
-			e.Status = RandomEntrySelected
-		}
-		e.CreatedAt = now
-		e.UpdatedAt = now
-	case *bun.UpdateQuery:
-		e.UpdatedAt = now
+func (e *DOTRandomDrawEntry) BeforeCreate(_ context.Context) error {
+	if e.Status == "" {
+		e.Status = RandomEntrySelected
 	}
 
 	return nil

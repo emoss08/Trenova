@@ -5,15 +5,12 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/emoss08/trenova/pkg/buncolgen/conversationcol"
-
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation/conversationdb"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/pagination"
-	"github.com/emoss08/trenova/shared/timeutils"
-	"github.com/uptrace/bun"
 	"go.uber.org/zap"
 )
 
@@ -42,20 +39,14 @@ func (r *repository) GetPageThread(
 			return nil, errNotPageThread
 		}
 
-		cols := conversationcol.ThreadColumns
-		entity := new(conversation.Thread)
-		err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(entity).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return conversationcol.ThreadScopeTenant(sq, key.TenantInfo).
-					Where(cols.UserID.Eq(), key.UserID).
-					Where(cols.Origin.Eq(), key.Origin).
-					Where(cols.SubjectType.Eq(), key.SubjectType).
-					Where(cols.SubjectID.Eq(), key.SubjectID).
-					Where(cols.Status.Eq(), conversation.ThreadStatusActive)
-			}).
-			Scan(ctx)
+		th := conversationdb.Threads
+		entity, err := th.Where(
+			th.UserID.Eq(key.UserID),
+			th.Origin.Eq(key.Origin),
+			th.SubjectType.Eq(key.SubjectType),
+			th.SubjectID.Eq(key.SubjectID),
+			th.Status.Eq(conversation.ThreadStatusActive),
+		).One(ctx, r.db.Keel(ctx))
 		if err != nil {
 			return nil, dberror.HandleNotFoundError(err, "Thread")
 		}
@@ -83,11 +74,11 @@ func (r *repository) ClaimPageThread(
 			return nil, errNotPageThread
 		}
 
-		if _, err := r.db.DBForContext(ctx).
-			NewInsert().
-			Model(thread).
-			On("CONFLICT DO NOTHING").
-			Exec(ctx); err != nil {
+		if _, err := conversationdb.Threads.CreateOrSkip(
+			ctx,
+			r.db.Keel(ctx),
+			[]*conversation.Thread{thread},
+		); err != nil {
 			r.l.Error("failed to claim a page conversation", zap.Error(err))
 
 			return nil, fmt.Errorf("open the page's conversation: %w", err)
@@ -111,32 +102,19 @@ func (r *repository) ArchiveSubjectThreads(
 			return 0, errNotPageThread
 		}
 
-		cols := conversationcol.ThreadColumns
-		res, err := r.db.DBForContext(ctx).
-			NewUpdate().
-			Model((*conversation.Thread)(nil)).
-			Set(cols.Status.Set(), conversation.ThreadStatusArchived).
-			Set(cols.UpdatedAt.Set(), timeutils.NowUnix()).
-			Set(cols.Version.Inc(1)).
-			WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-				return conversationcol.ThreadScopeTenantUpdate(uq, req.TenantInfo).
-					Where(cols.Origin.Eq(), req.Origin).
-					Where(cols.SubjectType.Eq(), req.SubjectType).
-					Where(cols.SubjectID.Eq(), req.SubjectID).
-					Where(cols.Status.Eq(), conversation.ThreadStatusActive)
-			}).
-			Exec(ctx)
+		th := conversationdb.Threads
+		n, err := th.Where(
+			th.Origin.Eq(req.Origin),
+			th.SubjectType.Eq(req.SubjectType),
+			th.SubjectID.Eq(req.SubjectID),
+			th.Status.Eq(conversation.ThreadStatusActive),
+		).Update(ctx, r.db.Keel(ctx), th.Status.To(conversation.ThreadStatusArchived))
 		if err != nil {
 			r.l.Error("failed to archive a subject's page conversations", zap.Error(err))
 
 			return 0, fmt.Errorf("close the page's conversations: %w", err)
 		}
 
-		affected, err := res.RowsAffected()
-		if err != nil {
-			return 0, fmt.Errorf("count the closed conversations: %w", err)
-		}
-
-		return int(affected), nil
+		return int(n), nil
 	})
 }

@@ -13,7 +13,6 @@ import (
 	"github.com/emoss08/trenova/shared/money"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
-	"github.com/uptrace/bun"
 	"go.uber.org/zap"
 )
 
@@ -117,7 +116,7 @@ func (s *Service) PollChanges(
 	}
 
 	readAt := now.Unix()
-	err = s.db.WithTx(ctx, kernelports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
+	err = s.db.Transact(ctx, kernelports.TxOptions{}, func(txCtx context.Context) error {
 		refs, refErr := s.applyReferences(txCtx, sess, page.References, readAt)
 		if refErr != nil {
 			return refErr

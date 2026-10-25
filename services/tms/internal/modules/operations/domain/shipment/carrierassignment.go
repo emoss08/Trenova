@@ -3,15 +3,14 @@ package shipment
 import (
 	"context"
 
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/carrier"
 	"github.com/emoss08/trenova/internal/modules/reference/domain/accessorialcharge"
 	"github.com/emoss08/trenova/pkg/domainvalidation"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/emoss08/trenova/shared/timeutils"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
 	"github.com/shopspring/decimal"
-	"github.com/uptrace/bun"
 )
 
 // CarrierBaseAmount extends a buy rate into the base amount: per-mile rates
@@ -33,47 +32,45 @@ func CarrierBaseAmount(
 	return rate
 }
 
-var _ bun.BeforeAppendModelHook = (*CarrierAssignment)(nil)
-
 const CarrierAssignmentIDPrefix = "casn_"
 
 type CarrierAssignment struct {
-	bun.BaseModel `bun:"table:carrier_assignments,alias:casn" json:"-"`
+	keel.Table `keel:"carrier_assignments"`
 
-	ID             pulid.ID `json:"id"             bun:"id,type:VARCHAR(100),pk,notnull"`
-	BusinessUnitID pulid.ID `json:"businessUnitId" bun:"business_unit_id,type:VARCHAR(100),pk,notnull"`
-	OrganizationID pulid.ID `json:"organizationId" bun:"organization_id,type:VARCHAR(100),pk,notnull"`
-	ShipmentMoveID pulid.ID `json:"shipmentMoveId" bun:"shipment_move_id,type:VARCHAR(100),notnull"`
-	CarrierID      pulid.ID `json:"carrierId"      bun:"carrier_id,type:VARCHAR(100),notnull"`
+	ID             pulid.ID `json:"id"             keel:"id,pk,autoid:casn_"`
+	BusinessUnitID pulid.ID `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
+	OrganizationID pulid.ID `json:"organizationId" keel:"organization_id,pk,tenant"`
+	ShipmentMoveID pulid.ID `json:"shipmentMoveId" keel:"shipment_move_id"`
+	CarrierID      pulid.ID `json:"carrierId"      keel:"carrier_id"`
 
-	Status                CarrierAssignmentStatus `json:"status"                bun:"status,type:VARCHAR(50),notnull,default:'Pending'"`
-	RateMethod            CarrierRateMethod       `json:"rateMethod"            bun:"rate_method,type:VARCHAR(50),notnull,default:'Flat'"`
-	BaseRate              decimal.Decimal         `json:"baseRate"              bun:"base_rate,type:NUMERIC(19,4),notnull"`
-	BaseAmount            decimal.Decimal         `json:"baseAmount"            bun:"base_amount,type:NUMERIC(19,4),notnull"`
-	FuelSurcharge         decimal.Decimal         `json:"fuelSurcharge"         bun:"fuel_surcharge,type:NUMERIC(19,4),notnull,default:0"`
-	AccessorialTotal      decimal.Decimal         `json:"accessorialTotal"      bun:"accessorial_total,type:NUMERIC(19,4),notnull,default:0"`
-	TotalCost             decimal.Decimal         `json:"totalCost"             bun:"total_cost,type:NUMERIC(19,4),notnull"`
-	CurrencyCode          string                  `json:"currencyCode"          bun:"currency_code,type:VARCHAR(3),notnull,default:'USD'"`
-	ProNumber             string                  `json:"proNumber"             bun:"pro_number,type:VARCHAR(50),nullzero"`
-	ExternalDriverName    string                  `json:"externalDriverName"    bun:"external_driver_name,type:VARCHAR(255),nullzero"`
-	ExternalDriverPhone   string                  `json:"externalDriverPhone"   bun:"external_driver_phone,type:VARCHAR(20),nullzero"`
-	ExternalTractorNumber string                  `json:"externalTractorNumber" bun:"external_tractor_number,type:VARCHAR(50),nullzero"`
-	ExternalTrailerNumber string                  `json:"externalTrailerNumber" bun:"external_trailer_number,type:VARCHAR(50),nullzero"`
-	AssignedByID          *pulid.ID               `json:"assignedById"          bun:"assigned_by_id,type:VARCHAR(100),nullzero"`
+	Status                CarrierAssignmentStatus `json:"status"                keel:"status"`
+	RateMethod            CarrierRateMethod       `json:"rateMethod"            keel:"rate_method"`
+	BaseRate              decimal.Decimal         `json:"baseRate"              keel:"base_rate"`
+	BaseAmount            decimal.Decimal         `json:"baseAmount"            keel:"base_amount"`
+	FuelSurcharge         decimal.Decimal         `json:"fuelSurcharge"         keel:"fuel_surcharge"`
+	AccessorialTotal      decimal.Decimal         `json:"accessorialTotal"      keel:"accessorial_total"`
+	TotalCost             decimal.Decimal         `json:"totalCost"             keel:"total_cost"`
+	CurrencyCode          string                  `json:"currencyCode"          keel:"currency_code"`
+	ProNumber             string                  `json:"proNumber"             keel:"pro_number,nullzero"`
+	ExternalDriverName    string                  `json:"externalDriverName"    keel:"external_driver_name,nullzero"`
+	ExternalDriverPhone   string                  `json:"externalDriverPhone"   keel:"external_driver_phone,nullzero"`
+	ExternalTractorNumber string                  `json:"externalTractorNumber" keel:"external_tractor_number,nullzero"`
+	ExternalTrailerNumber string                  `json:"externalTrailerNumber" keel:"external_trailer_number,nullzero"`
+	AssignedByID          *pulid.ID               `json:"assignedById"          keel:"assigned_by_id"`
 	// RateQuoteID names the buy side quote that decided what this carrier is
 	// paid. Absent when somebody typed the rate, which stays the ordinary case
 	// until an organization writes carrier contracts.
-	RateQuoteID        *pulid.ID `json:"rateQuoteId"        bun:"rate_quote_id,type:VARCHAR(100),nullzero"`
-	ConfirmedAt        *int64    `json:"confirmedAt"        bun:"confirmed_at,type:BIGINT,nullzero"`
-	CanceledAt         *int64    `json:"canceledAt"         bun:"canceled_at,type:BIGINT,nullzero"`
-	CancellationReason string    `json:"cancellationReason" bun:"cancellation_reason,type:TEXT,nullzero"`
-	Version            int64     `json:"version"            bun:"version,type:BIGINT"`
-	CreatedAt          int64     `json:"createdAt"          bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
-	UpdatedAt          int64     `json:"updatedAt"          bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
+	RateQuoteID        *pulid.ID `json:"rateQuoteId"        keel:"rate_quote_id"`
+	ConfirmedAt        *int64    `json:"confirmedAt"        keel:"confirmed_at"`
+	CanceledAt         *int64    `json:"canceledAt"         keel:"canceled_at"`
+	CancellationReason string    `json:"cancellationReason" keel:"cancellation_reason,nullzero"`
+	Version            int64     `json:"version"            keel:"version,version"`
+	CreatedAt          int64     `json:"createdAt"          keel:"created_at,autocreate"`
+	UpdatedAt          int64     `json:"updatedAt"          keel:"updated_at,autoupdate"`
 
-	ShipmentMove *ShipmentMove                   `json:"shipmentMove,omitempty" bun:"rel:belongs-to,join:shipment_move_id=id"`
-	Carrier      *carrier.Carrier                `json:"carrier,omitempty"      bun:"rel:belongs-to,join:carrier_id=id"`
-	Accessorials []*CarrierAssignmentAccessorial `json:"accessorials,omitempty" bun:"rel:has-many,join:id=carrier_assignment_id"`
+	ShipmentMove *ShipmentMove                   `json:"shipmentMove,omitempty" keel:"belongs:shipment_move_id"`
+	Carrier      *carrier.Carrier                `json:"carrier,omitempty"      keel:"belongs:carrier_id"`
+	Accessorials []*CarrierAssignmentAccessorial `json:"accessorials,omitempty" keel:"many:carrier_assignment_id"`
 }
 
 func (ca *CarrierAssignment) applyDefaults() {
@@ -209,40 +206,37 @@ func (ca *CarrierAssignment) GetBusinessUnitID() pulid.ID {
 	return ca.BusinessUnitID
 }
 
-func (ca *CarrierAssignment) BeforeAppendModel(_ context.Context, query bun.Query) error {
-	now := timeutils.NowUnix()
-
-	switch query.(type) {
-	case *bun.InsertQuery:
-		if ca.ID.IsNil() {
-			ca.ID = pulid.MustNew(CarrierAssignmentIDPrefix)
-		}
-		ca.CreatedAt = now
-	case *bun.UpdateQuery:
-		ca.UpdatedAt = now
+func (ca *CarrierAssignment) BeforeCreate(_ context.Context) error {
+	if ca.Status == "" {
+		ca.Status = CarrierAssignmentStatusPending
 	}
+	if ca.RateMethod == "" {
+		ca.RateMethod = CarrierRateMethodFlat
+	}
+	if ca.CurrencyCode == "" {
+		ca.CurrencyCode = "USD"
+	}
+	ca.applyDefaults()
 
 	return nil
 }
 
-var _ bun.BeforeAppendModelHook = (*CarrierAssignmentAccessorial)(nil)
-
 type CarrierAssignmentAccessorial struct {
-	bun.BaseModel `bun:"table:carrier_assignment_accessorials,alias:casna" json:"-"`
+	keel.Table `keel:"carrier_assignment_accessorials"`
 
-	ID                  pulid.ID        `json:"id"                  bun:"id,type:VARCHAR(100),pk,notnull"`
-	BusinessUnitID      pulid.ID        `json:"businessUnitId"      bun:"business_unit_id,type:VARCHAR(100),pk,notnull"`
-	OrganizationID      pulid.ID        `json:"organizationId"      bun:"organization_id,type:VARCHAR(100),pk,notnull"`
-	CarrierAssignmentID pulid.ID        `json:"carrierAssignmentId" bun:"carrier_assignment_id,type:VARCHAR(100),notnull"`
-	AccessorialChargeID *pulid.ID       `json:"accessorialChargeId" bun:"accessorial_charge_id,type:VARCHAR(100),nullzero"`
-	Description         string          `json:"description"         bun:"description,type:VARCHAR(255),notnull"`
-	Amount              decimal.Decimal `json:"amount"              bun:"amount,type:NUMERIC(19,4),notnull"`
-	Version             int64           `json:"version"             bun:"version,type:BIGINT"`
-	CreatedAt           int64           `json:"createdAt"           bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
-	UpdatedAt           int64           `json:"updatedAt"           bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
+	ID                  pulid.ID        `json:"id"                  keel:"id,pk,autoid:casna_"`
+	BusinessUnitID      pulid.ID        `json:"businessUnitId"      keel:"business_unit_id,pk,tenant"`
+	OrganizationID      pulid.ID        `json:"organizationId"      keel:"organization_id,pk,tenant"`
+	CarrierAssignmentID pulid.ID        `json:"carrierAssignmentId" keel:"carrier_assignment_id"`
+	AccessorialChargeID *pulid.ID       `json:"accessorialChargeId" keel:"accessorial_charge_id"`
+	Description         string          `json:"description"         keel:"description"`
+	Amount              decimal.Decimal `json:"amount"              keel:"amount"`
+	Version             int64           `json:"version"             keel:"version,version"`
+	CreatedAt           int64           `json:"createdAt"           keel:"created_at,autocreate"`
+	UpdatedAt           int64           `json:"updatedAt"           keel:"updated_at,autoupdate"`
 
-	CarrierAssignment *CarrierAssignment                   `json:"carrierAssignment,omitempty" bun:"rel:belongs-to,join:carrier_assignment_id=id"`
-	AccessorialCharge *accessorialcharge.AccessorialCharge `json:"accessorialCharge,omitempty" bun:"rel:belongs-to,join:accessorial_charge_id=id"`
+	CarrierAssignment *CarrierAssignment                   `json:"carrierAssignment,omitempty" keel:"belongs:carrier_assignment_id"`
+	AccessorialCharge *accessorialcharge.AccessorialCharge `json:"accessorialCharge,omitempty" keel:"belongs:accessorial_charge_id"`
 }
 
 func (caa *CarrierAssignmentAccessorial) Validate(multiErr *errortypes.MultiError) {
@@ -274,23 +268,4 @@ func (caa *CarrierAssignmentAccessorial) GetOrganizationID() pulid.ID {
 
 func (caa *CarrierAssignmentAccessorial) GetBusinessUnitID() pulid.ID {
 	return caa.BusinessUnitID
-}
-
-func (caa *CarrierAssignmentAccessorial) BeforeAppendModel(
-	_ context.Context,
-	query bun.Query,
-) error {
-	now := timeutils.NowUnix()
-
-	switch query.(type) {
-	case *bun.InsertQuery:
-		if caa.ID.IsNil() {
-			caa.ID = pulid.MustNew("casna_")
-		}
-		caa.CreatedAt = now
-	case *bun.UpdateQuery:
-		caa.UpdatedAt = now
-	}
-
-	return nil
 }

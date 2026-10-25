@@ -96,10 +96,10 @@ type DeleteAgentDefinitionRequest struct {
 }
 
 type AgentDefinitionStats struct {
-	DefinitionID     pulid.ID `bun:"definition_id"`
-	PendingProposals int      `bun:"pending_proposals"`
-	OpenRuns         int      `bun:"open_runs"`
-	LastRunAt        *int64   `bun:"last_run_at"`
+	DefinitionID     pulid.ID
+	PendingProposals int
+	OpenRuns         int
+	LastRunAt        *int64
 }
 
 type ListAgentDefinitionsByIDsRequest struct {

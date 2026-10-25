@@ -5,6 +5,7 @@ import (
 	"errors"
 	"time"
 
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/document"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/pkg/domaintypes"
@@ -12,9 +13,7 @@ import (
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/validationframework"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/emoss08/trenova/shared/timeutils"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
-	"github.com/uptrace/bun"
 )
 
 var ErrInvalidEmploymentEventKind = errors.New("invalid employment event kind")
@@ -120,36 +119,58 @@ const (
 )
 
 var (
-	_ bun.BeforeAppendModelHook          = (*WorkerEmploymentEvent)(nil)
 	_ validationframework.TenantedEntity = (*WorkerEmploymentEvent)(nil)
 )
 
+// Hires, transfers, leave, suspensions and terminations, with who recorded them
 type WorkerEmploymentEvent struct {
-	bun.BaseModel `bun:"table:worker_employment_events,alias:wee" json:"-"`
+	keel.Table `keel:"worker_employment_events,report=Parties,label=Employment Event"`
 
-	ID             pulid.ID            `json:"id"             bun:"id,pk,type:VARCHAR(100),notnull"`
-	BusinessUnitID pulid.ID            `json:"businessUnitId" bun:"business_unit_id,pk,type:VARCHAR(100),notnull"`
-	OrganizationID pulid.ID            `json:"organizationId" bun:"organization_id,pk,type:VARCHAR(100),notnull"`
-	WorkerID       pulid.ID            `json:"workerId"       bun:"worker_id,type:VARCHAR(100),notnull"`
-	Kind           EmploymentEventKind `json:"kind"           bun:"kind,type:worker_employment_event_kind_enum,notnull"`
-	EffectiveAt    int64               `json:"effectiveAt"    bun:"effective_at,type:BIGINT,notnull"`
-	Reason         string              `json:"reason"         bun:"reason,type:VARCHAR(255),nullzero"`
-	Notes          string              `json:"notes"          bun:"notes,type:TEXT,nullzero"`
-	FromValues     map[string]string   `json:"fromValues"     bun:"from_values,type:JSONB,notnull,default:'{}'"`
-	ToValues       map[string]string   `json:"toValues"       bun:"to_values,type:JSONB,notnull,default:'{}'"`
-	DocumentID     pulid.ID            `json:"documentId"     bun:"document_id,type:VARCHAR(100),nullzero"`
-	RecordedByID   pulid.ID            `json:"recordedById"   bun:"recorded_by_id,type:VARCHAR(100),nullzero"`
-	AmendedByID    pulid.ID            `json:"amendedById"    bun:"amended_by_id,type:VARCHAR(100),nullzero"`
-	AmendedAt      *int64              `json:"amendedAt"      bun:"amended_at,type:BIGINT,nullzero"`
-	AmendmentNote  string              `json:"amendmentNote"  bun:"amendment_note,type:VARCHAR(255),nullzero"`
-	Version        int64               `json:"version"        bun:"version,type:BIGINT"`
-	CreatedAt      int64               `json:"createdAt"      bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
-	UpdatedAt      int64               `json:"updatedAt"      bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
+	ID             pulid.ID            `json:"id"             keel:"id,pk,autoid:wee_"`
+	BusinessUnitID pulid.ID            `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
+	OrganizationID pulid.ID            `json:"organizationId" keel:"organization_id,pk,tenant"`
+	WorkerID       pulid.ID            `json:"workerId"       keel:"worker_id"`
+	Kind           EmploymentEventKind `json:"kind"           keel:"kind,label=Event"`
+	EffectiveAt    int64               `json:"effectiveAt"    keel:"effective_at,label=Effective"`
+	Reason         string              `json:"reason"         keel:"reason,nullzero"`
+	Notes          string              `json:"notes"          keel:"notes,nullzero"`
+	FromValues     map[string]string   `json:"fromValues"     keel:"from_values,jsonb"`
+	ToValues       map[string]string   `json:"toValues"       keel:"to_values,jsonb"`
+	DocumentID     pulid.ID            `json:"documentId"     keel:"document_id,nullzero"`
+	RecordedByID   pulid.ID            `json:"recordedById"   keel:"recorded_by_id,nullzero"`
+	AmendedByID    pulid.ID            `json:"amendedById"    keel:"amended_by_id,nullzero"`
+	AmendedAt      *int64              `json:"amendedAt"      keel:"amended_at"`
+	AmendmentNote  string              `json:"amendmentNote"  keel:"amendment_note,nullzero"`
+	Version        int64               `json:"version"        keel:"version,version"`
+	CreatedAt      int64               `json:"createdAt"      keel:"created_at,autocreate"`
+	UpdatedAt      int64               `json:"updatedAt"      keel:"updated_at,autoupdate"`
 
-	Worker     *Worker            `json:"worker,omitempty"     bun:"rel:belongs-to,join:worker_id=id,join:organization_id=organization_id,join:business_unit_id=business_unit_id"`
-	Document   *document.Document `json:"document,omitempty"   bun:"rel:belongs-to,join:document_id=id,join:organization_id=organization_id,join:business_unit_id=business_unit_id"`
-	RecordedBy *tenant.User       `json:"recordedBy,omitempty" bun:"rel:belongs-to,join:recorded_by_id=id"`
-	AmendedBy  *tenant.User       `json:"amendedBy,omitempty"  bun:"rel:belongs-to,join:amended_by_id=id"`
+	Worker     *Worker            `json:"worker,omitempty"     keel:"belongs:worker_id"`
+	Document   *document.Document `json:"document,omitempty"   keel:"belongs:document_id,noreport"`
+	RecordedBy *tenant.User       `json:"recordedBy,omitempty" keel:"belongs:recorded_by_id,noreport"`
+	AmendedBy  *tenant.User       `json:"amendedBy,omitempty"  keel:"belongs:amended_by_id,noreport"`
+}
+
+func (e *WorkerEmploymentEvent) BeforeUpdate(_ context.Context) error {
+	if e.FromValues == nil {
+		e.FromValues = map[string]string{}
+	}
+	if e.ToValues == nil {
+		e.ToValues = map[string]string{}
+	}
+
+	return nil
+}
+
+func (e *WorkerEmploymentEvent) BeforeCreate(_ context.Context) error {
+	if e.FromValues == nil {
+		e.FromValues = map[string]string{}
+	}
+	if e.ToValues == nil {
+		e.ToValues = map[string]string{}
+	}
+
+	return nil
 }
 
 func (e *WorkerEmploymentEvent) Validate(multiErr *errortypes.MultiError) {
@@ -194,30 +215,12 @@ func (e *WorkerEmploymentEvent) GetResourceType() string { return "worker_employ
 
 func (e *WorkerEmploymentEvent) GetResourceID() string { return e.ID.String() }
 
-func (e *WorkerEmploymentEvent) BeforeAppendModel(_ context.Context, query bun.Query) error {
-	now := timeutils.NowUnix()
-
-	switch query.(type) {
-	case *bun.InsertQuery:
-		if e.ID.IsNil() {
-			e.ID = pulid.MustNew("wee_")
-		}
-		if e.FromValues == nil {
-			e.FromValues = map[string]string{}
-		}
-		if e.ToValues == nil {
-			e.ToValues = map[string]string{}
-		}
-		e.CreatedAt = now
-		e.UpdatedAt = now
-	case *bun.UpdateQuery:
-		if e.FromValues == nil {
-			e.FromValues = map[string]string{}
-		}
-		if e.ToValues == nil {
-			e.ToValues = map[string]string{}
-		}
-		e.UpdatedAt = now
+func (e *WorkerEmploymentEvent) BeforeSave(_ context.Context) error {
+	if e.FromValues == nil {
+		e.FromValues = map[string]string{}
+	}
+	if e.ToValues == nil {
+		e.ToValues = map[string]string{}
 	}
 
 	return nil

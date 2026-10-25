@@ -14,7 +14,6 @@ import (
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/uptrace/bun"
 )
 
 const carrierLinkReferencePrefix = "carrier_tracking_link:"
@@ -35,7 +34,7 @@ func (s *Service) record(
 	in *recordInput,
 ) (*checkcallports.CheckCallResult, error) {
 	var result *checkcallports.CheckCallResult
-	err := s.db.WithTx(ctx, kernelports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
+	err := s.db.Transact(ctx, kernelports.TxOptions{}, func(txCtx context.Context) error {
 		var visit *trackingeventports.StopEventResult
 		if in.details.Kind.IsStopVisit() {
 			var err error

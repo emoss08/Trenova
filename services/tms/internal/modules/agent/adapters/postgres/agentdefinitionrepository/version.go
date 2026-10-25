@@ -2,21 +2,19 @@ package agentdefinitionrepository
 
 import (
 	"context"
-	"database/sql"
-	"errors"
 	"fmt"
-
-	"github.com/emoss08/trenova/pkg/buncolgen/agentdefinitioncol"
 
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition/agentdefinitiondb"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
 	"github.com/emoss08/trenova/pkg/dberror"
-	"github.com/uptrace/bun"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
+
+var versionErrors = dberror.Mapping{Entity: "Agent version"}
 
 type VersionParams struct {
 	fx.In
@@ -42,7 +40,8 @@ func (r *versionRepository) Create(
 	version *agentdefinition.DefinitionVersion,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
-		if _, err := r.db.DBForContext(ctx).NewInsert().Model(version).Exec(ctx); err != nil {
+		err := agentdefinitiondb.DefinitionVersions.Create(ctx, r.db.Keel(ctx), version)
+		if err != nil {
 			return fmt.Errorf("record agent version: %w", err)
 		}
 		return nil
@@ -57,25 +56,18 @@ func (r *versionRepository) List(
 		ctx,
 		r.db,
 		func(ctx context.Context) ([]*agentdefinition.DefinitionVersion, error) {
-			cols := agentdefinitioncol.DefinitionVersionColumns
 			limit := req.Limit
 			if limit <= 0 || limit > agentdefinition.VersionsKept {
 				limit = agentdefinition.VersionsKept
 			}
 
-			versions := make([]*agentdefinition.DefinitionVersion, 0, limit)
-			err := r.db.DBForContext(ctx).
-				NewSelect().
-				Model(&versions).
-				ExcludeColumn(cols.Snapshot.Bare()).
-				Relation(agentdefinitioncol.DefinitionVersionRelations.Author).
-				WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-					return agentdefinitioncol.DefinitionVersionScopeTenant(sq, req.TenantInfo).
-						Where(cols.AgentDefinitionID.Eq(), req.AgentDefinitionID)
-				}).
-				Order(cols.Version.OrderDesc()).
-				Limit(int64(limit)).
-				Scan(ctx)
+			v := agentdefinitiondb.DefinitionVersions
+			versions, err := v.Omit(v.Snapshot).
+				Load(v.Author()).
+				Where(v.AgentDefinitionID.Eq(req.AgentDefinitionID)).
+				Order(v.Version.Desc()).
+				Limit(limit).
+				List(ctx, r.db.Keel(ctx))
 			if err != nil {
 				return nil, fmt.Errorf("list agent versions: %w", err)
 			}
@@ -93,20 +85,12 @@ func (r *versionRepository) Get(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*agentdefinition.DefinitionVersion, error) {
-			cols := agentdefinitioncol.DefinitionVersionColumns
-			version := new(agentdefinition.DefinitionVersion)
-			err := r.db.DBForContext(ctx).
-				NewSelect().
-				Model(version).
-				Relation(agentdefinitioncol.DefinitionVersionRelations.Author).
-				WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-					return agentdefinitioncol.DefinitionVersionScopeTenant(sq, req.TenantInfo).
-						Where(cols.AgentDefinitionID.Eq(), req.AgentDefinitionID).
-						Where(cols.Version.Eq(), req.Version)
-				}).
-				Scan(ctx)
+			v := agentdefinitiondb.DefinitionVersions
+			version, err := v.Load(v.Author()).
+				Where(v.AgentDefinitionID.Eq(req.AgentDefinitionID), v.Version.Eq(req.Version)).
+				One(ctx, r.db.Keel(ctx))
 			if err != nil {
-				return nil, dberror.HandleNotFoundError(err, "Agent version")
+				return nil, versionErrors.Map(err, req.AgentDefinitionID.String())
 			}
 
 			return version, nil
@@ -122,21 +106,12 @@ func (r *versionRepository) LatestAt(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*agentdefinition.DefinitionVersion, error) {
-			cols := agentdefinitioncol.DefinitionVersionColumns
-			version := new(agentdefinition.DefinitionVersion)
-			err := r.db.DBForContext(ctx).
-				NewSelect().
-				Model(version).
-				Relation(agentdefinitioncol.DefinitionVersionRelations.Author).
-				WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-					return agentdefinitioncol.DefinitionVersionScopeTenant(sq, req.TenantInfo).
-						Where(cols.AgentDefinitionID.Eq(), req.AgentDefinitionID).
-						Where(cols.Version.Lte(), req.Version)
-				}).
-				Order(cols.Version.OrderDesc()).
-				Limit(1).
-				Scan(ctx)
-			if errors.Is(err, sql.ErrNoRows) {
+			v := agentdefinitiondb.DefinitionVersions
+			version, err := v.Load(v.Author()).
+				Where(v.AgentDefinitionID.Eq(req.AgentDefinitionID), v.Version.Lte(req.Version)).
+				Order(v.Version.Desc()).
+				First(ctx, r.db.Keel(ctx))
+			if dberror.IsNotFoundError(err) {
 				return nil, nil //nolint:nilnil // an agent saved before versions were kept has none
 			}
 			if err != nil {

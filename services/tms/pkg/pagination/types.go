@@ -16,10 +16,8 @@ func (t TenantInfo) DBTenant() dbscope.Tenant {
 }
 
 type ListResult[T any] struct {
-	Items       []T               `json:"items"`
-	Total       int               `json:"total"`
-	HasNextPage bool              `json:"hasNextPage,omitempty"`
-	CursorSort  []CursorSortField `json:"-"`
+	Items []T `json:"items"`
+	Total int `json:"total"`
 }
 
 type SelectQueryRequest struct {

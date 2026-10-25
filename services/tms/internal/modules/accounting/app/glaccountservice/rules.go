@@ -4,7 +4,9 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/glaccount"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/glaccount/glaccountdb"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/validationframework"
@@ -45,22 +47,18 @@ func createParentAccountActiveRule(
 		WithValidation(func(
 			ctx context.Context,
 			entity *glaccount.GLAccount,
-			valCtx *validationframework.TenantedValidationContext,
+			_ *validationframework.TenantedValidationContext,
 			multiErr *errortypes.MultiError,
 		) error {
-			return db.RunScoped(ctx, true, func(ctx context.Context) error {
+			return dbtx.ReadErr(ctx, db, func(ctx context.Context) error {
 				if entity.ParentID.IsNil() {
 					return nil
 				}
 
-				parent := new(glaccount.GLAccount)
-				err := db.DBForContext(ctx).NewSelect().
-					Model(parent).
-					Column("id", "status").
-					Where("id = ?", entity.ParentID).
-					Where("organization_id = ?", valCtx.OrganizationID).
-					Where("business_unit_id = ?", valCtx.BusinessUnitID).
-					Scan(ctx)
+				gla := glaccountdb.GLAccounts
+				parent, err := gla.Pick(gla.ID, gla.Status).
+					Where(gla.ID.Eq(entity.ParentID)).
+					One(ctx, db.Keel(ctx))
 				if err != nil {
 					multiErr.Add("parentId", errortypes.ErrInvalid, "Parent account not found")
 					return nil //nolint:nilerr // validation callbacks collect field errors and intentionally continue
@@ -87,10 +85,10 @@ func createCircularReferenceRule(
 		WithValidation(func(
 			ctx context.Context,
 			entity *glaccount.GLAccount,
-			valCtx *validationframework.TenantedValidationContext,
+			_ *validationframework.TenantedValidationContext,
 			multiErr *errortypes.MultiError,
 		) error {
-			return db.RunScoped(ctx, true, func(ctx context.Context) error {
+			return dbtx.ReadErr(ctx, db, func(ctx context.Context) error {
 				if entity.ParentID.IsNil() {
 					return nil
 				}
@@ -119,23 +117,19 @@ func createCircularReferenceRule(
 
 					visited[currentParentID] = struct{}{}
 
-					var parentID *string
-					err := db.DBForContext(ctx).NewSelect().
-						TableExpr("gl_accounts").
-						Column("parent_id").
-						Where("id = ?", currentParentID).
-						Where("organization_id = ?", valCtx.OrganizationID).
-						Where("business_unit_id = ?", valCtx.BusinessUnitID).
-						Scan(ctx, &parentID)
+					gla := glaccountdb.GLAccounts
+					ancestor, err := gla.Pick(gla.ID, gla.ParentID).
+						Where(gla.ID.Eq(currentParentID)).
+						One(ctx, db.Keel(ctx))
 					if err != nil {
 						return nil //nolint:nilerr // validation callbacks collect field errors and intentionally continue
 					}
 
-					if parentID == nil || *parentID == "" {
+					if ancestor.ParentID.IsNil() {
 						return nil
 					}
 
-					currentParentID = pulid.ID(*parentID)
+					currentParentID = ancestor.ParentID
 				}
 
 				multiErr.Add(
@@ -189,26 +183,24 @@ func createDeactivationProtectionRule(
 		WithValidation(func(
 			ctx context.Context,
 			entity *glaccount.GLAccount,
-			valCtx *validationframework.TenantedValidationContext,
+			_ *validationframework.TenantedValidationContext,
 			multiErr *errortypes.MultiError,
 		) error {
-			return db.RunScoped(ctx, true, func(ctx context.Context) error {
+			return dbtx.ReadErr(ctx, db, func(ctx context.Context) error {
 				if entity.Status == domaintypes.StatusActive {
 					return nil
 				}
 
-				activeChildCount, err := db.DBForContext(ctx).NewSelect().
-					TableExpr("gl_accounts").
-					Where("parent_id = ?", entity.ID).
-					Where("organization_id = ?", valCtx.OrganizationID).
-					Where("business_unit_id = ?", valCtx.BusinessUnitID).
-					Where("status = ?", domaintypes.StatusActive).
-					Count(ctx)
+				gla := glaccountdb.GLAccounts
+				hasActiveChild, err := gla.Where(
+					gla.ParentID.Eq(entity.ID),
+					gla.Status.Eq(domaintypes.StatusActive),
+				).Exists(ctx, db.Keel(ctx))
 				if err != nil {
 					return err
 				}
 
-				if activeChildCount > 0 {
+				if hasActiveChild {
 					multiErr.Add(
 						"status",
 						errortypes.ErrInvalid,

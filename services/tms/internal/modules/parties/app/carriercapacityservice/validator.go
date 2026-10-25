@@ -4,7 +4,9 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/usstate/usstatedb"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/carriercapacity"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/carriercapacity/carriercapacitydb"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/validationframework"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -29,13 +31,14 @@ func optionalID(id *pulid.ID) pulid.ID {
 }
 
 func NewValidator(p ValidatorParams) *Validator {
-	stateCheck := validationframework.NewUSStateReferenceCheck(p.DB)
+	checker := validationframework.NewKeelChecker(p.DB, carriercapacitydb.PostingsSchema())
+	stateCheck := validationframework.KeelReferenceCheck(p.DB, usstatedb.UsStatesSchema())
 
 	return &Validator{
 		validator: validationframework.
 			NewTenantedValidatorBuilder[*carriercapacity.Posting]().
 			WithModelName("CarrierCapacityPosting").
-			WithReferenceChecker(validationframework.NewBunReferenceCheckerScoped(p.DB)).
+			WithReferenceChecker(checker).
 			WithReferenceCheck(
 				"carrierId",
 				"carriers",

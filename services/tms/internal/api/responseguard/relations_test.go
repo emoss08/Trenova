@@ -27,7 +27,7 @@ const (
 	formulaPackage = modulePath + "/internal/api/formulavisibility"
 )
 
-// relationTarget is a struct type a REST response reaches through a bun
+// relationTarget is a struct type a REST response reaches through a keel
 // relation, and one route path that shows how.
 type relationTarget struct {
 	pkgPath string
@@ -201,7 +201,7 @@ func TestHandlersWriteEveryResponseThroughTheGuard(t *testing.T) {
 }
 
 // relationTargets walks every response type's JSON fields and returns each
-// named struct type reached through a field that carries a bun relation.
+// named struct type reached through a field that carries a keel relation.
 func relationTargets(t *testing.T) map[string]relationTarget {
 	t.Helper()
 
@@ -292,7 +292,7 @@ func walkStruct(
 		if name == "" {
 			name = f.Name()
 		}
-		walkType(f.Type(), via+"."+name, strings.Contains(tag.Get("bun"), "rel:"), seen, out)
+		walkType(f.Type(), via+"."+name, isKeelRelation(tag.Get("keel")), seen, out)
 	}
 }
 
@@ -376,7 +376,7 @@ var carried = map[string]string{
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/email.Attachment":                                         "a file attached to the email message that carries it",
 }
 
-// Every struct a REST response reaches through a bun relation is either a
+// Every struct a REST response reaches through a keel relation is either a
 // kind of record, gated by its reference view where it is linked, or part of
 // the record that carries it. A relation to a type that is neither would be
 // shown whole wherever it appears.
@@ -637,4 +637,16 @@ func TestEveryRESTRootOfADatabaseScopedKindIsWrittenByItsOwnHandler(t *testing.T
 		"these responses return records of a database-scoped kind outside its own handler; "+
 			"return them inside another record (they are then linked) or move the route:\n"+
 			strings.Join(outside, "\n"))
+}
+
+var keelRelationHeads = []string{"belongs:", "one:", "many:", "m2m:", "pick:"}
+
+func isKeelRelation(tag string) bool {
+	for _, head := range keelRelationHeads {
+		if strings.HasPrefix(tag, head) {
+			return true
+		}
+	}
+
+	return false
 }

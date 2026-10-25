@@ -7,14 +7,31 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/customertracking"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/customertracking/customertrackingdb"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/customertrackingports"
-	"github.com/emoss08/trenova/pkg/buncolgen/customertrackingcol"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/uptrace/bun"
 	"go.uber.org/zap"
 )
+
+var profileErrors = dberror.Mapping{
+	Entity: "Customer tracking settings",
+	Unique: []dberror.Constraint{
+		{
+			Name:    "uq_customer_tracking_profiles_customer",
+			Field:   "customerId",
+			Message: "Customer already has tracking settings",
+		},
+	},
+	ForeignKey: []dberror.Constraint{
+		{
+			Name:    "fk_customer_tracking_profiles_customer",
+			Field:   "customerId",
+			Message: "Customer does not exist in your organization",
+		},
+	},
+}
 
 type profileRepository struct {
 	db *postgres.Connection
@@ -30,19 +47,12 @@ func NewProfiles(p Params) customertrackingports.ProfileRepository {
 
 func (r *profileRepository) GetByCustomer(
 	ctx context.Context,
-	tenantInfo pagination.TenantInfo,
+	_ pagination.TenantInfo,
 	customerID pulid.ID,
 ) (*customertracking.Profile, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*customertracking.Profile, error) {
-		cols := customertrackingcol.ProfileColumns
-		entity := new(customertracking.Profile)
-		err := r.db.DBForContext(ctx).NewSelect().
-			Model(entity).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return customertrackingcol.ProfileScopeTenant(sq, tenantInfo).
-					Where(cols.CustomerID.Eq(), customerID)
-			}).
-			Scan(ctx)
+		p := customertrackingdb.Profiles
+		entity, err := p.Where(p.CustomerID.Eq(customerID)).One(ctx, r.db.Keel(ctx))
 		if err != nil {
 			if dberror.IsNotFoundError(err) {
 				return nil, nil
@@ -55,7 +65,7 @@ func (r *profileRepository) GetByCustomer(
 
 func (r *profileRepository) ListByCustomers(
 	ctx context.Context,
-	tenantInfo pagination.TenantInfo,
+	_ pagination.TenantInfo,
 	customerIDs []pulid.ID,
 ) ([]*customertracking.Profile, error) {
 	if len(customerIDs) == 0 {
@@ -65,15 +75,10 @@ func (r *profileRepository) ListByCustomers(
 		customerIDs = customerIDs[:maxCustomerBatch]
 	}
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*customertracking.Profile, error) {
-		cols := customertrackingcol.ProfileColumns
-		entities := make([]*customertracking.Profile, 0, len(customerIDs))
-		err := r.db.DBForContext(ctx).NewSelect().
-			Model(&entities).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return customertrackingcol.ProfileScopeTenant(sq, tenantInfo).
-					Where(cols.CustomerID.In(), bun.List(customerIDs))
-			}).
-			Scan(ctx)
+		p := customertrackingdb.Profiles
+		entities, err := p.Where(p.CustomerID.In(customerIDs...)).
+			Limit(len(customerIDs)).
+			List(ctx, r.db.Keel(ctx))
 		if err != nil {
 			return nil, fmt.Errorf("list customer tracking profiles: %w", err)
 		}
@@ -83,8 +88,11 @@ func (r *profileRepository) ListByCustomers(
 
 func (r *profileRepository) Create(ctx context.Context, entity *customertracking.Profile) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
-		if _, err := r.db.DBForContext(ctx).NewInsert().Model(entity).Exec(ctx); err != nil {
-			return fmt.Errorf("insert customer tracking profile: %w", err)
+		if err := customertrackingdb.Profiles.Create(ctx, r.db.Keel(ctx), entity); err != nil {
+			return fmt.Errorf(
+				"insert customer tracking profile: %w",
+				profileErrors.Map(err, entity.ID.String()),
+			)
 		}
 		return nil
 	})
@@ -92,39 +100,24 @@ func (r *profileRepository) Create(ctx context.Context, entity *customertracking
 
 func (r *profileRepository) Update(ctx context.Context, entity *customertracking.Profile) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
-		cols := customertrackingcol.ProfileColumns
-		previous := entity.Version
-		entity.Version++
-		result, err := r.db.DBForContext(ctx).NewUpdate().
-			Model(entity).
-			Column(
-				cols.LinkEnabled.Bare(),
-				cols.VisibleFields.Bare(),
-				cols.LinkTTLDays.Bare(),
-				cols.NotifyPickedUp.Bare(),
-				cols.NotifyDelayed.Bare(),
-				cols.NotifyDelivered.Bare(),
-				cols.NotifyPodReady.Bare(),
-				cols.IncludeLink.Bare(),
-				cols.Recipients.Bare(),
-				cols.NotificationsEnabledAt.Bare(),
-				cols.Version.Bare(),
-				cols.UpdatedAt.Bare(),
-			).
-			WherePK().
-			Where(cols.Version.Eq(), previous).
-			Exec(ctx)
-		if err != nil {
-			entity.Version = previous
-			return fmt.Errorf("update customer tracking profile: %w", err)
-		}
-		if err = dberror.CheckRowsAffected(
-			result,
-			"Customer tracking settings",
-			entity.ID.String(),
+		p := customertrackingdb.Profiles
+		if err := p.Save(
+			ctx,
+			r.db.Keel(ctx),
+			entity,
+			p.LinkEnabled,
+			p.VisibleFields,
+			p.LinkTTLDays,
+			p.NotifyPickedUp,
+			p.NotifyDelayed,
+			p.NotifyDelivered,
+			p.NotifyPodReady,
+			p.IncludeLink,
+			p.Recipients,
+			p.NotificationsEnabledAt,
+			p.UpdatedAt,
 		); err != nil {
-			entity.Version = previous
-			return err
+			return profileErrors.Map(err, entity.ID.String())
 		}
 		return nil
 	})

@@ -5,8 +5,10 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/jackc/pgx/v5"
 )
 
 const humanizedStatus = `regexp_replace(%s::text, '([a-z])([A-Z])', '\1 \2', 'g')`
@@ -46,71 +48,71 @@ LEFT JOIN LATERAL (
 	ORDER BY m.sequence DESC, sp.sequence DESC
 	LIMIT 1
 ) AS d ON true
-WHERE s.organization_id = ? AND s.business_unit_id = ?
-	AND (s.pro_number ILIKE ? OR s.bol ILIKE ?)
-ORDER BY (s.pro_number ILIKE ?) DESC, s.updated_at DESC
-LIMIT ?`,
+WHERE s.organization_id = $1 AND s.business_unit_id = $2
+	AND (s.pro_number ILIKE $3 OR s.bol ILIKE $3)
+ORDER BY (s.pro_number ILIKE $4) DESC, s.updated_at DESC
+LIMIT $5 OFFSET $6`,
 	"customer": `
 SELECT 'customer' AS type, c.id::text AS id, c.name AS label,
 	concat_ws(' · ', c.code, NULLIF(c.city, '')) AS subtitle
 FROM customers AS c
-WHERE c.organization_id = ? AND c.business_unit_id = ?
-	AND (c.name ILIKE ? OR c.code ILIKE ?)
-ORDER BY (c.name ILIKE ?) DESC, c.name
-LIMIT ?`,
+WHERE c.organization_id = $1 AND c.business_unit_id = $2
+	AND (c.name ILIKE $3 OR c.code ILIKE $3)
+ORDER BY (c.name ILIKE $4) DESC, c.name
+LIMIT $5 OFFSET $6`,
 	"invoice": `
 SELECT 'invoice' AS type, i.id::text AS id, i.number AS label,
 	concat_ws(' · ', NULLIF(i.bill_to_name, ''), ` + humanize("i.status") + `) AS subtitle
 FROM invoices AS i
-WHERE i.organization_id = ? AND i.business_unit_id = ?
-	AND (i.number ILIKE ? OR i.bill_to_name ILIKE ?)
-ORDER BY (i.number ILIKE ?) DESC, i.updated_at DESC
-LIMIT ?`,
+WHERE i.organization_id = $1 AND i.business_unit_id = $2
+	AND (i.number ILIKE $3 OR i.bill_to_name ILIKE $3)
+ORDER BY (i.number ILIKE $4) DESC, i.updated_at DESC
+LIMIT $5 OFFSET $6`,
 	"invoice_dispute": `
 SELECT 'invoice_dispute' AS type, d.id::text AS id, i.number AS label,
 	concat_ws(' · ', NULLIF(i.bill_to_name, ''), ` + humanize("d.reason_code") + `, ` + humanize("d.status") + `) AS subtitle
 FROM invoice_disputes AS d
 JOIN invoices AS i ON i.id = d.invoice_id
 	AND i.organization_id = d.organization_id AND i.business_unit_id = d.business_unit_id
-WHERE d.organization_id = ? AND d.business_unit_id = ?
-	AND (i.number ILIKE ? OR i.bill_to_name ILIKE ?)
-ORDER BY (i.number ILIKE ?) DESC, d.updated_at DESC
-LIMIT ?`,
+WHERE d.organization_id = $1 AND d.business_unit_id = $2
+	AND (i.number ILIKE $3 OR i.bill_to_name ILIKE $3)
+ORDER BY (i.number ILIKE $4) DESC, d.updated_at DESC
+LIMIT $5 OFFSET $6`,
 	"billing_queue_item": `
 SELECT 'billing_queue_item' AS type, q.id::text AS id, q.number AS label,
 	concat_ws(' · ', NULLIF(s.pro_number, ''), ` + humanize("q.status") + `) AS subtitle
 FROM billing_queue_items AS q
 LEFT JOIN shipments AS s ON s.id = q.shipment_id
 	AND s.organization_id = q.organization_id AND s.business_unit_id = q.business_unit_id
-WHERE q.organization_id = ? AND q.business_unit_id = ?
-	AND (q.number ILIKE ? OR s.pro_number ILIKE ?)
-ORDER BY (q.number ILIKE ?) DESC, q.updated_at DESC
-LIMIT ?`,
+WHERE q.organization_id = $1 AND q.business_unit_id = $2
+	AND (q.number ILIKE $3 OR s.pro_number ILIKE $3)
+ORDER BY (q.number ILIKE $4) DESC, q.updated_at DESC
+LIMIT $5 OFFSET $6`,
 	"worker": `
 SELECT 'worker' AS type, w.id::text AS id, concat_ws(' ', w.first_name, w.last_name) AS label,
 	concat_ws(' · ', ` + humanize("w.type") + `, NULLIF(w.city, '')) AS subtitle
 FROM workers AS w
-WHERE w.organization_id = ? AND w.business_unit_id = ?
-	AND (concat_ws(' ', w.first_name, w.last_name) ILIKE ? OR w.last_name ILIKE ?)
-ORDER BY (w.first_name ILIKE ?) DESC, w.first_name, w.last_name
-LIMIT ?`,
+WHERE w.organization_id = $1 AND w.business_unit_id = $2
+	AND (concat_ws(' ', w.first_name, w.last_name) ILIKE $3 OR w.last_name ILIKE $3)
+ORDER BY (w.first_name ILIKE $4) DESC, w.first_name, w.last_name
+LIMIT $5 OFFSET $6`,
 	"carrier": `
 SELECT 'carrier' AS type, c.id::text AS id, c.name AS label,
 	concat_ws(' · ', 'MC ' || NULLIF(c.mc_number, ''), ` + humanize("c.compliance_status") + `) AS subtitle
 FROM carriers AS c
-WHERE c.organization_id = ? AND c.business_unit_id = ?
-	AND (c.name ILIKE ? OR c.code ILIKE ? OR c.mc_number ILIKE ?)
-ORDER BY (c.name ILIKE ?) DESC, c.name
-LIMIT ?`,
+WHERE c.organization_id = $1 AND c.business_unit_id = $2
+	AND (c.name ILIKE $3 OR c.code ILIKE $3 OR c.mc_number ILIKE $3)
+ORDER BY (c.name ILIKE $4) DESC, c.name
+LIMIT $5 OFFSET $6`,
 	"location": `
 SELECT 'location' AS type, l.id::text AS id, l.name AS label,
 	concat_ws(' · ', l.code, NULLIF(concat_ws(', ', NULLIF(l.city, ''), st.abbreviation), '')) AS subtitle
 FROM locations AS l
 LEFT JOIN us_states AS st ON st.id = l.state_id
-WHERE l.organization_id = ? AND l.business_unit_id = ?
-	AND (l.name ILIKE ? OR l.code ILIKE ? OR l.city ILIKE ?)
-ORDER BY (l.name ILIKE ?) DESC, l.name
-LIMIT ?`,
+WHERE l.organization_id = $1 AND l.business_unit_id = $2
+	AND (l.name ILIKE $3 OR l.code ILIKE $3 OR l.city ILIKE $3)
+ORDER BY (l.name ILIKE $4) DESC, l.name
+LIMIT $5 OFFSET $6`,
 }
 
 func likeEscape(value string) string {
@@ -122,7 +124,7 @@ func (r *repository) SearchMentions(
 	req agentports.SearchMentionsRequest,
 ) ([]agentports.MentionRow, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]agentports.MentionRow, error) {
-		db := r.db.DBForContext(ctx)
+		db := r.db.Keel(ctx)
 		term := likeEscape(strings.TrimSpace(req.Query))
 		contains := "%" + term + "%"
 		prefix := term + "%"
@@ -132,13 +134,19 @@ func (r *repository) SearchMentions(
 			if !ok {
 				continue
 			}
-			args := []any{req.TenantInfo.OrgID, req.TenantInfo.BuID, contains, contains}
-			if kind == "carrier" || kind == "location" {
-				args = append(args, contains)
-			}
-			args = append(args, prefix, req.LimitPerKind, max(req.Offset, 0))
-			rows := make([]agentports.MentionRow, 0, req.LimitPerKind)
-			if err := db.NewRaw(query+"\nOFFSET ?", args...).Scan(ctx, &rows); err != nil {
+			rows, err := keel.QueryAll(
+				ctx,
+				db,
+				pgx.RowToStructByName[agentports.MentionRow],
+				query,
+				req.TenantInfo.OrgID.String(),
+				req.TenantInfo.BuID.String(),
+				contains,
+				prefix,
+				req.LimitPerKind,
+				max(req.Offset, 0),
+			)
+			if err != nil {
 				return nil, fmt.Errorf("search %s mentions: %w", kind, err)
 			}
 			out = append(out, rows...)

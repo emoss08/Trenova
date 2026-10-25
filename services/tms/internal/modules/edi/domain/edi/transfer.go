@@ -3,15 +3,14 @@ package edi
 import (
 	"context"
 
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/domainvalidation"
 	"github.com/emoss08/trenova/pkg/errortypes"
-	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
 	"github.com/shopspring/decimal"
-	"github.com/uptrace/bun"
 )
 
 type LoadTenderPayload struct {
@@ -99,63 +98,66 @@ type MappingResolution struct {
 }
 
 type EDITransfer struct {
-	bun.BaseModel             `json:"-" bun:"table:edi_load_tender_transfers,alias:eltt"`
-	pagination.CursorValueSet `json:"-" bun:",embed"`
+	keel.Table `keel:"edi_load_tender_transfers"`
 
-	ID                    pulid.ID            `json:"id"                    bun:"id,pk,type:VARCHAR(100),notnull"`
-	SourceOrganizationID  pulid.ID            `json:"sourceOrganizationId"  bun:"source_organization_id,type:VARCHAR(100),notnull"`
-	SourceBusinessUnitID  pulid.ID            `json:"sourceBusinessUnitId"  bun:"source_business_unit_id,type:VARCHAR(100),notnull"`
-	TargetOrganizationID  pulid.ID            `json:"targetOrganizationId"  bun:"target_organization_id,type:VARCHAR(100),notnull"`
-	TargetBusinessUnitID  pulid.ID            `json:"targetBusinessUnitId"  bun:"target_business_unit_id,type:VARCHAR(100),notnull"`
-	SourcePartnerID       pulid.ID            `json:"sourcePartnerId"       bun:"source_partner_id,type:VARCHAR(100),notnull"`
-	TargetPartnerID       pulid.ID            `json:"targetPartnerId"       bun:"target_partner_id,type:VARCHAR(100),notnull"`
-	SourceShipmentID      pulid.ID            `json:"sourceShipmentId"      bun:"source_shipment_id,type:VARCHAR(100),nullzero"`
-	TargetShipmentID      pulid.ID            `json:"targetShipmentId"      bun:"target_shipment_id,type:VARCHAR(100),nullzero"`
-	InboundMessageID      pulid.ID            `json:"inboundMessageId"      bun:"inbound_message_id,type:VARCHAR(100),nullzero"`
-	Status                TransferStatus      `json:"status"                bun:"status,type:edi_load_tender_transfer_status_enum,notnull"`
-	TenderPayload         LoadTenderPayload   `json:"tenderPayload"         bun:"tender_payload,type:JSONB,notnull"`
-	MappingSnapshot       []MappingResolution `json:"mappingSnapshot"       bun:"mapping_snapshot,type:JSONB,notnull,default:'[]'"`
-	RejectionReason       string              `json:"rejectionReason"       bun:"rejection_reason,type:TEXT,nullzero"`
-	FailureReason         string              `json:"failureReason"         bun:"failure_reason,type:TEXT,nullzero"`
-	ApprovalWorkflowID    string              `json:"approvalWorkflowId"    bun:"approval_workflow_id,type:VARCHAR(255),nullzero"`
-	ApprovalWorkflowRunID string              `json:"approvalWorkflowRunId" bun:"approval_workflow_run_id,type:VARCHAR(255),nullzero"`
-	SubmittedByID         pulid.ID            `json:"submittedById"         bun:"submitted_by_id,type:VARCHAR(100),nullzero"`
-	SubmittedAt           int64               `json:"submittedAt"           bun:"submitted_at,type:BIGINT,notnull"`
-	ApprovedByID          pulid.ID            `json:"approvedById"          bun:"approved_by_id,type:VARCHAR(100),nullzero"`
-	ApprovedAt            *int64              `json:"approvedAt"            bun:"approved_at,type:BIGINT,nullzero"`
-	ProcessingStartedAt   *int64              `json:"processingStartedAt"   bun:"processing_started_at,type:BIGINT,nullzero"`
-	ProcessedAt           *int64              `json:"processedAt"           bun:"processed_at,type:BIGINT,nullzero"`
-	RejectedByID          pulid.ID            `json:"rejectedById"          bun:"rejected_by_id,type:VARCHAR(100),nullzero"`
-	RejectedAt            *int64              `json:"rejectedAt"            bun:"rejected_at,type:BIGINT,nullzero"`
-	CanceledByID          pulid.ID            `json:"canceledById"          bun:"canceled_by_id,type:VARCHAR(100),nullzero"`
-	CanceledAt            *int64              `json:"canceledAt"            bun:"canceled_at,type:BIGINT,nullzero"`
-	Version               int64               `json:"version"               bun:"version,type:BIGINT"`
-	CreatedAt             int64               `json:"createdAt"             bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
-	UpdatedAt             int64               `json:"updatedAt"             bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
+	ID                    pulid.ID            `json:"id"                    keel:"id,pk,autoid:edilt_"`
+	SourceOrganizationID  pulid.ID            `json:"sourceOrganizationId"  keel:"source_organization_id"`
+	SourceBusinessUnitID  pulid.ID            `json:"sourceBusinessUnitId"  keel:"source_business_unit_id"`
+	TargetOrganizationID  pulid.ID            `json:"targetOrganizationId"  keel:"target_organization_id"`
+	TargetBusinessUnitID  pulid.ID            `json:"targetBusinessUnitId"  keel:"target_business_unit_id"`
+	SourcePartnerID       pulid.ID            `json:"sourcePartnerId"       keel:"source_partner_id"`
+	TargetPartnerID       pulid.ID            `json:"targetPartnerId"       keel:"target_partner_id"`
+	SourceShipmentID      pulid.ID            `json:"sourceShipmentId"      keel:"source_shipment_id,nullzero"`
+	TargetShipmentID      pulid.ID            `json:"targetShipmentId"      keel:"target_shipment_id,nullzero"`
+	InboundMessageID      pulid.ID            `json:"inboundMessageId"      keel:"inbound_message_id,nullzero"`
+	Status                TransferStatus      `json:"status"                keel:"status"`
+	TenderPayload         LoadTenderPayload   `json:"tenderPayload"         keel:"tender_payload,jsonb"`
+	MappingSnapshot       []MappingResolution `json:"mappingSnapshot"       keel:"mapping_snapshot,jsonb"`
+	RejectionReason       string              `json:"rejectionReason"       keel:"rejection_reason,nullzero"`
+	FailureReason         string              `json:"failureReason"         keel:"failure_reason,nullzero"`
+	ApprovalWorkflowID    string              `json:"approvalWorkflowId"    keel:"approval_workflow_id,nullzero"`
+	ApprovalWorkflowRunID string              `json:"approvalWorkflowRunId" keel:"approval_workflow_run_id,nullzero"`
+	SubmittedByID         pulid.ID            `json:"submittedById"         keel:"submitted_by_id,nullzero"`
+	SubmittedAt           int64               `json:"submittedAt"           keel:"submitted_at"`
+	ApprovedByID          pulid.ID            `json:"approvedById"          keel:"approved_by_id,nullzero"`
+	ApprovedAt            *int64              `json:"approvedAt"            keel:"approved_at"`
+	ProcessingStartedAt   *int64              `json:"processingStartedAt"   keel:"processing_started_at"`
+	ProcessedAt           *int64              `json:"processedAt"           keel:"processed_at"`
+	RejectedByID          pulid.ID            `json:"rejectedById"          keel:"rejected_by_id,nullzero"`
+	RejectedAt            *int64              `json:"rejectedAt"            keel:"rejected_at"`
+	CanceledByID          pulid.ID            `json:"canceledById"          keel:"canceled_by_id,nullzero"`
+	CanceledAt            *int64              `json:"canceledAt"            keel:"canceled_at"`
+	Version               int64               `json:"version"               keel:"version,version"`
+	CreatedAt             int64               `json:"createdAt"             keel:"created_at,autocreate"`
+	UpdatedAt             int64               `json:"updatedAt"             keel:"updated_at,autoupdate"`
 
-	SourcePartner *EDIPartner `json:"sourcePartner,omitempty" bun:"rel:belongs-to,join:source_partner_id=id"`
-	TargetPartner *EDIPartner `json:"targetPartner,omitempty" bun:"rel:belongs-to,join:target_partner_id=id"`
+	SourcePartner *EDIPartner `json:"sourcePartner,omitempty" keel:"belongs:source_partner_id"`
+	TargetPartner *EDIPartner `json:"targetPartner,omitempty" keel:"belongs:target_partner_id"`
 }
 
-func (t *EDITransfer) BeforeAppendModel(_ context.Context, query bun.Query) error {
-	now := timeutils.NowUnix()
+func (t *EDITransfer) BeforeUpdate(ctx context.Context) error {
+	if err := t.BeforeSave(ctx); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (t *EDITransfer) BeforeCreate(ctx context.Context) error {
+	if err := t.BeforeSave(ctx); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (t *EDITransfer) BeforeSave(_ context.Context) error {
 	if t.MappingSnapshot == nil {
 		t.MappingSnapshot = []MappingResolution{}
 	}
 	if t.SubmittedAt == 0 {
-		t.SubmittedAt = now
+		t.SubmittedAt = timeutils.NowUnix()
 	}
-
-	switch query.(type) {
-	case *bun.InsertQuery:
-		if t.ID.IsNil() {
-			t.ID = pulid.MustNew("edilt_")
-		}
-		t.CreatedAt = now
-	case *bun.UpdateQuery:
-		t.UpdatedAt = now
-	}
-
 	return nil
 }
 

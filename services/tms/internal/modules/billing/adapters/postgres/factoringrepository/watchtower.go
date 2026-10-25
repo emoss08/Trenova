@@ -2,32 +2,27 @@ package factoringrepository
 
 import (
 	"context"
-	"fmt"
 
+	"github.com/emoss08/keel"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/factoring"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/factoring/factoringdb"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice/invoicedb"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/factoringports"
-	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/customer"
-	"github.com/emoss08/trenova/pkg/buncolgen"
-	"github.com/emoss08/trenova/pkg/buncolgen/customercol"
-	"github.com/emoss08/trenova/pkg/buncolgen/factoringcol"
-	"github.com/emoss08/trenova/pkg/buncolgen/factoringcompanycol"
-	"github.com/emoss08/trenova/pkg/buncolgen/invoicecol"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/customer/customerdb"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/factoringcompany/factoringcompanydb"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/uptrace/bun"
 	"go.uber.org/zap"
 )
 
-const (
-	maxAttentionRows = 500
-	coalesceBlank    = "COALESCE({}, '')"
-)
+const maxAttentionRows = 500
 
 type watchtowerReader struct {
-	db kernelports.DBConnection
+	db *postgres.Connection
 	l  *zap.Logger
 }
 
@@ -36,6 +31,24 @@ func NewWatchtowerReader(p Params) factoringports.WatchtowerReader {
 		db: p.DB,
 		l:  p.Logger.Named("repository.factoring-watchtower"),
 	}
+}
+
+func blank(e keel.Expr) keel.Expr {
+	return keel.Raw("COALESCE(?, '')", e)
+}
+
+func intoPointers[R any](ctx context.Context, db *keel.DB, p keel.Projection) ([]*R, error) {
+	rows, err := keel.Into[R](ctx, db, p)
+	if err != nil {
+		return nil, err
+	}
+
+	out := make([]*R, len(rows))
+	for i := range rows {
+		out[i] = &rows[i]
+	}
+
+	return out, nil
 }
 
 func (r *watchtowerReader) ListInvoiceLabels(
@@ -51,36 +64,14 @@ func (r *watchtowerReader) ListInvoiceLabels(
 				return result, nil
 			}
 
-			inv := invoicecol.InvoiceColumns
-			cus := customercol.CustomerColumns
-			cusTable := customercol.CustomerTable
-			fac := factoringcompanycol.FactoringCompanyColumns
-			facTable := factoringcompanycol.FactoringCompanyTable
-
-			rows := make([]*factoringports.InvoiceLabel, 0, len(req.InvoiceIDs))
-			if err := r.db.DBForContext(ctx).NewSelect().
-				Model((*invoice.Invoice)(nil)).
-				ColumnExpr(inv.ID.As("invoice_id")).
-				ColumnExpr(inv.Number.As("number")).
-				ColumnExpr(inv.CurrencyCode.As("currency_code")).
-				ColumnExpr(cus.Name.Expr(coalesceBlank)+" AS customer_name").
-				ColumnExpr(fac.Name.Expr(coalesceBlank)+" AS factor_name").
-				Join("LEFT JOIN "+cusTable.As(cusTable.Alias)).
-				JoinOn(cus.ID.EqColumn(inv.CustomerID)).
-				JoinOn(cus.OrganizationID.EqColumn(inv.OrganizationID)).
-				JoinOn(cus.BusinessUnitID.EqColumn(inv.BusinessUnitID)).
-				Join("LEFT JOIN "+facTable.As(facTable.Alias)).
-				JoinOn(fac.ID.EqColumn(inv.FactoringCompanyID)).
-				JoinOn(fac.OrganizationID.EqColumn(inv.OrganizationID)).
-				JoinOn(fac.BusinessUnitID.EqColumn(inv.BusinessUnitID)).
-				WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-					return invoicecol.InvoiceScopeTenant(sq, req.TenantInfo).
-						Where(inv.ID.In(), bun.List(req.InvoiceIDs))
-				}).
-				Scan(ctx, &rows); err != nil {
-				return nil, fmt.Errorf("list factoring invoice labels: %w", err)
+			rows, err := intoPointers[factoringports.InvoiceLabel](
+				ctx,
+				r.db.Keel(ctx),
+				invoiceLabels(req.InvoiceIDs),
+			)
+			if err != nil {
+				return nil, err
 			}
-
 			for _, row := range rows {
 				result[row.InvoiceID] = row
 			}
@@ -88,6 +79,17 @@ func (r *watchtowerReader) ListInvoiceLabels(
 			return result, nil
 		},
 	)
+}
+
+func invoiceLabels(invoiceIDs []pulid.ID) *keel.Query[invoice.Invoice] {
+	inv := invoicedb.Invoices
+	return inv.Pick(
+		inv.ID,
+		inv.Number,
+		inv.CurrencyCode,
+		blank(inv.Customer().Name),
+		blank(inv.FactoringCompany().Name),
+	).Where(inv.ID.In(invoiceIDs...)).Limit(len(invoiceIDs))
 }
 
 func (r *watchtowerReader) ListCustomersMissingNoa(
@@ -98,63 +100,54 @@ func (r *watchtowerReader) ListCustomersMissingNoa(
 		ctx,
 		r.db,
 		func(ctx context.Context) ([]*factoringports.CustomerMissingNoa, error) {
-			cbp := customercol.CustomerBillingProfileColumns
-			cus := customercol.CustomerColumns
-			cusTable := customercol.CustomerTable
-			fac := factoringcompanycol.FactoringCompanyColumns
-			facTable := factoringcompanycol.FactoringCompanyTable
-			noa := factoringcol.NoaColumns
-			noaTable := factoringcol.NoaTable
-
-			limit := boundedLimit(req.Limit, maxAttentionRows)
-			rows := make([]*factoringports.CustomerMissingNoa, 0, min(limit, 64))
-			if err := r.db.DBForContext(ctx).NewSelect().
-				Model((*customer.CustomerBillingProfile)(nil)).
-				ColumnExpr(cbp.CustomerID.As("customer_id")).
-				ColumnExpr(cus.Code.As("customer_code")).
-				ColumnExpr(cus.Name.As("customer_name")).
-				ColumnExpr(cbp.FactoringCompanyID.As("factoring_company_id")).
-				ColumnExpr(fac.Name.As("factor_name")).
-				ColumnExpr(cbp.UpdatedAt.As("profile_updated_at")).
-				ColumnExpr(noa.ID.As("noa_id")).
-				ColumnExpr(noa.Status.Expr(coalesceBlank)+" AS noa_status").
-				ColumnExpr(noa.SentAt.As("noa_sent_at")).
-				ColumnExpr(noa.ExpiresAt.As("noa_expires_at")).
-				ColumnExpr(noa.CreatedAt.As("noa_created_at")).
-				Join("JOIN "+cusTable.As(cusTable.Alias)).
-				JoinOn(cus.ID.EqColumn(cbp.CustomerID)).
-				JoinOn(cus.OrganizationID.EqColumn(cbp.OrganizationID)).
-				JoinOn(cus.BusinessUnitID.EqColumn(cbp.BusinessUnitID)).
-				Join("JOIN "+facTable.As(facTable.Alias)).
-				JoinOn(fac.ID.EqColumn(cbp.FactoringCompanyID)).
-				JoinOn(fac.OrganizationID.EqColumn(cbp.OrganizationID)).
-				JoinOn(fac.BusinessUnitID.EqColumn(cbp.BusinessUnitID)).
-				Join("LEFT JOIN "+noaTable.As(noaTable.Alias)).
-				JoinOn(noa.CustomerID.EqColumn(cbp.CustomerID)).
-				JoinOn(noa.FactoringCompanyID.EqColumn(cbp.FactoringCompanyID)).
-				JoinOn(noa.OrganizationID.EqColumn(cbp.OrganizationID)).
-				JoinOn(noa.BusinessUnitID.EqColumn(cbp.BusinessUnitID)).
-				JoinOn(noa.Status.Ne(), factoring.NoaStatusReleased).
-				WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-					return customercol.CustomerBillingProfileScopeTenant(sq, req.TenantInfo).
-						Where(cbp.FactoringCompanyID.IsNotNull()).
-						Where(cus.Status.Eq(), domaintypes.StatusActive).
-						WhereGroup(" AND ", func(gq *bun.SelectQuery) *bun.SelectQuery {
-							return gq.
-								Where(noa.ID.IsNull()).
-								WhereOr(noa.Status.Ne(), factoring.NoaStatusAcknowledged).
-								WhereOr(noa.ExpiresAt.Lte(), req.At)
-						})
-				}).
-				Order(cbp.UpdatedAt.OrderAsc(), cbp.CustomerID.OrderAsc()).
-				Limit(int64(limit)).
-				Scan(ctx, &rows); err != nil {
-				return nil, fmt.Errorf("list customers missing a notice of assignment: %w", err)
-			}
-
-			return rows, nil
+			return intoPointers[factoringports.CustomerMissingNoa](
+				ctx,
+				r.db.Keel(ctx),
+				customersMissingNoa(req),
+			)
 		},
 	)
+}
+
+func customersMissingNoa(
+	req *factoringports.ListCustomersMissingNoaRequest,
+) *keel.Query[customer.CustomerBillingProfile] {
+	cbp := customerdb.CustomerBillingProfiles
+	cus := customerdb.Customers
+	fac := factoringcompanydb.FactoringCompanies
+	noa := factoringdb.Noas
+
+	return cbp.Pick(
+		cbp.CustomerID,
+		cus.Code,
+		cus.Name,
+		cbp.FactoringCompanyID,
+		fac.Name,
+		cbp.UpdatedAt,
+		blank(noa.ID),
+		blank(noa.Status),
+		noa.SentAt,
+		noa.ExpiresAt,
+		noa.CreatedAt,
+	).
+		Join(cus, cus.ID.EqCol(cbp.CustomerID)).
+		Join(fac, fac.ID.EqCol(cbp.FactoringCompanyID)).
+		LeftJoin(noa,
+			noa.CustomerID.EqCol(cbp.CustomerID),
+			noa.FactoringCompanyID.EqCol(cbp.FactoringCompanyID),
+			noa.Status.Ne(factoring.NoaStatusReleased),
+		).
+		Where(
+			cbp.FactoringCompanyID.IsNotNull(),
+			cus.Status.Eq(domaintypes.StatusActive),
+			keel.Or(
+				noa.ID.IsNull(),
+				noa.Status.Ne(factoring.NoaStatusAcknowledged),
+				noa.ExpiresAt.Lte(req.At),
+			),
+		).
+		Order(cbp.UpdatedAt.Asc(), cbp.CustomerID.Asc()).
+		Limit(boundedLimit(req.Limit, maxAttentionRows))
 }
 
 func (r *watchtowerReader) ListNoasExpiringSoon(
@@ -162,46 +155,29 @@ func (r *watchtowerReader) ListNoasExpiringSoon(
 	req *factoringports.ListNoasExpiringSoonRequest,
 ) ([]*factoringports.ExpiringNoa, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*factoringports.ExpiringNoa, error) {
-		noa := factoringcol.NoaColumns
-		cus := customercol.CustomerColumns
-		cusTable := customercol.CustomerTable
-		fac := factoringcompanycol.FactoringCompanyColumns
-		facTable := factoringcompanycol.FactoringCompanyTable
-
-		limit := boundedLimit(req.Limit, maxAttentionRows)
-		rows := make([]*factoringports.ExpiringNoa, 0, min(limit, 64))
-		if err := r.db.DBForContext(ctx).NewSelect().
-			Model((*factoring.Noa)(nil)).
-			ColumnExpr(noa.ID.As("noa_id")).
-			ColumnExpr(noa.CustomerID.As("customer_id")).
-			ColumnExpr(cus.Name.Expr(coalesceBlank)+" AS customer_name").
-			ColumnExpr(noa.FactoringCompanyID.As("factoring_company_id")).
-			ColumnExpr(fac.Name.Expr(coalesceBlank)+" AS factor_name").
-			ColumnExpr(noa.AcknowledgedAt.As("acknowledged_at")).
-			ColumnExpr(noa.ExpiresAt.As("expires_at")).
-			Join("LEFT JOIN "+cusTable.As(cusTable.Alias)).
-			JoinOn(cus.ID.EqColumn(noa.CustomerID)).
-			JoinOn(cus.OrganizationID.EqColumn(noa.OrganizationID)).
-			JoinOn(cus.BusinessUnitID.EqColumn(noa.BusinessUnitID)).
-			Join("LEFT JOIN "+facTable.As(facTable.Alias)).
-			JoinOn(fac.ID.EqColumn(noa.FactoringCompanyID)).
-			JoinOn(fac.OrganizationID.EqColumn(noa.OrganizationID)).
-			JoinOn(fac.BusinessUnitID.EqColumn(noa.BusinessUnitID)).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return factoringcol.NoaScopeTenant(sq, req.TenantInfo).
-					Where(noa.Status.Eq(), factoring.NoaStatusAcknowledged).
-					Where(noa.ExpiresAt.IsNotNull()).
-					Where(noa.ExpiresAt.Gt(), req.At).
-					Where(noa.ExpiresAt.Lte(), req.Before)
-			}).
-			Order(noa.ExpiresAt.OrderAsc(), noa.ID.OrderAsc()).
-			Limit(int64(limit)).
-			Scan(ctx, &rows); err != nil {
-			return nil, fmt.Errorf("list notices of assignment expiring soon: %w", err)
-		}
-
-		return rows, nil
+		return intoPointers[factoringports.ExpiringNoa](ctx, r.db.Keel(ctx), noasExpiringSoon(req))
 	})
+}
+
+func noasExpiringSoon(req *factoringports.ListNoasExpiringSoonRequest) *keel.Query[factoring.Noa] {
+	noa := factoringdb.Noas
+	return noa.Pick(
+		noa.ID,
+		noa.CustomerID,
+		blank(noa.Customer().Name),
+		noa.FactoringCompanyID,
+		blank(noa.FactoringCompany().Name),
+		noa.AcknowledgedAt,
+		noa.ExpiresAt,
+	).
+		Where(
+			noa.Status.Eq(factoring.NoaStatusAcknowledged),
+			noa.ExpiresAt.IsNotNull(),
+			noa.ExpiresAt.Gt(req.At),
+			noa.ExpiresAt.Lte(req.Before),
+		).
+		Order(noa.ExpiresAt.Asc(), noa.ID.Asc()).
+		Limit(boundedLimit(req.Limit, maxAttentionRows))
 }
 
 func (r *watchtowerReader) ListFailedSubmissions(
@@ -212,42 +188,32 @@ func (r *watchtowerReader) ListFailedSubmissions(
 		ctx,
 		r.db,
 		func(ctx context.Context) ([]*factoringports.FailedSubmission, error) {
-			sub := factoringcol.SubmissionColumns
-			fac := factoringcompanycol.FactoringCompanyColumns
-			facTable := factoringcompanycol.FactoringCompanyTable
-
-			limit := boundedLimit(req.Limit, maxAttentionRows)
-			rows := make([]*factoringports.FailedSubmission, 0, min(limit, 16))
-			if err := r.db.DBForContext(ctx).NewSelect().
-				Model((*factoring.Submission)(nil)).
-				ColumnExpr(sub.ID.As("submission_id")).
-				ColumnExpr(sub.Number.As("number")).
-				ColumnExpr(sub.FactoringCompanyID.As("factoring_company_id")).
-				ColumnExpr(fac.Name.Expr(coalesceBlank)+" AS factor_name").
-				ColumnExpr(sub.CurrencyCode.As("currency_code")).
-				ColumnExpr(sub.InvoiceCount.As("invoice_count")).
-				ColumnExpr(sub.FaceMinor.As("face_minor")).
-				ColumnExpr(sub.TransportTarget.As("transport_target")).
-				ColumnExpr(sub.LastError.Expr(coalesceBlank)+" AS last_error").
-				ColumnExpr(sub.FailedAt.As("failed_at")).
-				Join("LEFT JOIN "+facTable.As(facTable.Alias)).
-				JoinOn(fac.ID.EqColumn(sub.FactoringCompanyID)).
-				JoinOn(fac.OrganizationID.EqColumn(sub.OrganizationID)).
-				JoinOn(fac.BusinessUnitID.EqColumn(sub.BusinessUnitID)).
-				WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-					return factoringcol.SubmissionScopeTenant(sq, req.TenantInfo).
-						Where(sub.Status.Eq(), factoring.SubmissionStatusFailed).
-						Where(sub.FailedAt.IsNotNull())
-				}).
-				Order(sub.FailedAt.OrderAsc(), sub.ID.OrderAsc()).
-				Limit(int64(limit)).
-				Scan(ctx, &rows); err != nil {
-				return nil, fmt.Errorf("list failed factoring schedules: %w", err)
-			}
-
-			return rows, nil
+			return intoPointers[factoringports.FailedSubmission](
+				ctx,
+				r.db.Keel(ctx),
+				failedSubmissions(req.Limit),
+			)
 		},
 	)
+}
+
+func failedSubmissions(limit int) *keel.Query[factoring.Submission] {
+	sub := factoringdb.Submissions
+	return sub.Pick(
+		sub.ID,
+		sub.Number,
+		sub.FactoringCompanyID,
+		blank(sub.FactoringCompany().Name),
+		sub.CurrencyCode,
+		sub.InvoiceCount,
+		sub.FaceMinor,
+		blank(sub.TransportTarget),
+		blank(sub.LastError),
+		sub.FailedAt,
+	).
+		Where(sub.Status.Eq(factoring.SubmissionStatusFailed), sub.FailedAt.IsNotNull()).
+		Order(sub.FailedAt.Asc(), sub.ID.Asc()).
+		Limit(boundedLimit(limit, maxAttentionRows))
 }
 
 func (r *watchtowerReader) ListUnfundedSubmissions(
@@ -258,63 +224,49 @@ func (r *watchtowerReader) ListUnfundedSubmissions(
 		ctx,
 		r.db,
 		func(ctx context.Context) ([]*factoringports.UnfundedSubmission, error) {
-			sub := factoringcol.SubmissionColumns
-			item := factoringcol.SubmissionItemColumns
-			itemTable := factoringcol.SubmissionItemTable
-			agr := factoringcol.AgreementColumns
-			agrTable := factoringcol.AgreementTable
-			fac := factoringcompanycol.FactoringCompanyColumns
-			facTable := factoringcompanycol.FactoringCompanyTable
-			dueAt := buncolgen.Expr("{0} + {1} * 86400", sub.SentAt, agr.FundingDays)
-
-			limit := boundedLimit(req.Limit, maxAttentionRows)
-			rows := make([]*factoringports.UnfundedSubmission, 0, min(limit, 16))
-			if err := r.db.DBForContext(ctx).NewSelect().
-				Model((*factoring.Submission)(nil)).
-				ColumnExpr(sub.ID.As("submission_id")).
-				ColumnExpr(sub.Number.As("number")).
-				ColumnExpr(sub.Status.As("status")).
-				ColumnExpr(sub.FactoringCompanyID.As("factoring_company_id")).
-				ColumnExpr(fac.Name.Expr(coalesceBlank)+" AS factor_name").
-				ColumnExpr(sub.CurrencyCode.As("currency_code")).
-				ColumnExpr("COUNT(*) AS pending_count").
-				ColumnExpr(item.ExpectedAdvanceMinor.Expr("SUM({})")+" AS expected_advance_minor").
-				ColumnExpr(sub.SentAt.As("sent_at")).
-				ColumnExpr(dueAt+" AS due_at").
-				Join("JOIN "+itemTable.As(itemTable.Alias)).
-				JoinOn(item.SubmissionID.EqColumn(sub.ID)).
-				JoinOn(item.OrganizationID.EqColumn(sub.OrganizationID)).
-				JoinOn(item.BusinessUnitID.EqColumn(sub.BusinessUnitID)).
-				JoinOn(item.Status.Eq(), factoring.SubmissionItemStatusPending).
-				Join("JOIN "+agrTable.As(agrTable.Alias)).
-				JoinOn(agr.ID.EqColumn(sub.AgreementID)).
-				JoinOn(agr.OrganizationID.EqColumn(sub.OrganizationID)).
-				JoinOn(agr.BusinessUnitID.EqColumn(sub.BusinessUnitID)).
-				Join("LEFT JOIN "+facTable.As(facTable.Alias)).
-				JoinOn(fac.ID.EqColumn(sub.FactoringCompanyID)).
-				JoinOn(fac.OrganizationID.EqColumn(sub.OrganizationID)).
-				JoinOn(fac.BusinessUnitID.EqColumn(sub.BusinessUnitID)).
-				WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-					return factoringcol.SubmissionScopeTenant(sq, req.TenantInfo).
-						Where(sub.Status.In(), bun.List(factoring.AwaitingFundingStatuses())).
-						Where(sub.SentAt.IsNotNull()).
-						Where(dueAt+" < ?", req.At)
-				}).
-				GroupExpr(sub.ID.Qualified()).
-				GroupExpr(sub.OrganizationID.Qualified()).
-				GroupExpr(sub.BusinessUnitID.Qualified()).
-				GroupExpr(fac.Name.Qualified()).
-				GroupExpr(agr.FundingDays.Qualified()).
-				OrderExpr(dueAt+" ASC").
-				Order(sub.ID.OrderAsc()).
-				Limit(int64(limit)).
-				Scan(ctx, &rows); err != nil {
-				return nil, fmt.Errorf("list unfunded factoring schedules: %w", err)
-			}
-
-			return rows, nil
+			return intoPointers[factoringports.UnfundedSubmission](
+				ctx,
+				r.db.Keel(ctx),
+				unfundedSubmissions(req),
+			)
 		},
 	)
+}
+
+func unfundedSubmissions(
+	req *factoringports.ListUnfundedSubmissionsRequest,
+) *keel.Query[factoring.Submission] {
+	sub := factoringdb.Submissions
+	item := factoringdb.SubmissionItems
+	agr := factoringdb.Agreements
+	fac := sub.FactoringCompany()
+	dueAt := keel.Raw("? + ? * 86400", sub.SentAt, agr.FundingDays)
+
+	return sub.Pick(
+		sub.ID,
+		sub.Number,
+		sub.Status,
+		sub.FactoringCompanyID,
+		blank(fac.Name),
+		sub.CurrencyCode,
+		keel.Count(),
+		item.ExpectedAdvanceMinor.Sum(),
+		sub.SentAt,
+		dueAt,
+	).
+		Join(item,
+			item.SubmissionID.EqCol(sub.ID),
+			item.Status.Eq(factoring.SubmissionItemStatusPending),
+		).
+		Join(agr, agr.ID.EqCol(sub.AgreementID)).
+		Where(
+			sub.Status.In(factoring.AwaitingFundingStatuses()...),
+			sub.SentAt.IsNotNull(),
+			keel.Raw("? < ?", dueAt, req.At),
+		).
+		Group(sub.ID, sub.OrganizationID, sub.BusinessUnitID, fac.Name, agr.FundingDays).
+		Order(keel.Asc(dueAt), sub.ID.Asc()).
+		Limit(boundedLimit(req.Limit, maxAttentionRows))
 }
 
 func (r *watchtowerReader) ListChargebacksDue(
@@ -325,74 +277,47 @@ func (r *watchtowerReader) ListChargebacksDue(
 		ctx,
 		r.db,
 		func(ctx context.Context) ([]*factoringports.ChargebackDue, error) {
-			item := factoringcol.SubmissionItemColumns
-			sub := factoringcol.SubmissionColumns
-			subTable := factoringcol.SubmissionTable
-			agr := factoringcol.AgreementColumns
-			agrTable := factoringcol.AgreementTable
-			cus := customercol.CustomerColumns
-			cusTable := customercol.CustomerTable
-			fac := factoringcompanycol.FactoringCompanyColumns
-			facTable := factoringcompanycol.FactoringCompanyTable
-			deadline := buncolgen.Expr("{0} + {1} * 86400", item.FundedOn, agr.ChargebackWindowDays)
-
-			limit := boundedLimit(req.Limit, maxAttentionRows)
-			rows := make([]*factoringports.ChargebackDue, 0, min(limit, 16))
-			if err := r.db.DBForContext(ctx).NewSelect().
-				Model((*factoring.SubmissionItem)(nil)).
-				ColumnExpr(item.ID.As("item_id")).
-				ColumnExpr(item.SubmissionID.As("submission_id")).
-				ColumnExpr(sub.Number.As("submission_number")).
-				ColumnExpr(item.InvoiceID.As("invoice_id")).
-				ColumnExpr(item.InvoiceNumber.As("invoice_number")).
-				ColumnExpr(item.CustomerID.As("customer_id")).
-				ColumnExpr(cus.Name.Expr(coalesceBlank)+" AS customer_name").
-				ColumnExpr(sub.FactoringCompanyID.As("factoring_company_id")).
-				ColumnExpr(fac.Name.Expr(coalesceBlank)+" AS factor_name").
-				ColumnExpr(sub.CurrencyCode.As("currency_code")).
-				ColumnExpr(item.FaceMinor.As("face_minor")).
-				ColumnExpr(buncolgen.Expr(
-					"COALESCE({0}, 0) + COALESCE({1}, 0)",
-					item.AdvanceMinor,
-					item.FeeMinor,
-				)+" AS repurchase_minor").
-				ColumnExpr(item.FundedOn.As("funded_on")).
-				ColumnExpr(deadline+" AS deadline_at").
-				Join("JOIN "+subTable.As(subTable.Alias)).
-				JoinOn(sub.ID.EqColumn(item.SubmissionID)).
-				JoinOn(sub.OrganizationID.EqColumn(item.OrganizationID)).
-				JoinOn(sub.BusinessUnitID.EqColumn(item.BusinessUnitID)).
-				Join("JOIN "+agrTable.As(agrTable.Alias)).
-				JoinOn(agr.ID.EqColumn(sub.AgreementID)).
-				JoinOn(agr.OrganizationID.EqColumn(sub.OrganizationID)).
-				JoinOn(agr.BusinessUnitID.EqColumn(sub.BusinessUnitID)).
-				Join("LEFT JOIN "+cusTable.As(cusTable.Alias)).
-				JoinOn(cus.ID.EqColumn(item.CustomerID)).
-				JoinOn(cus.OrganizationID.EqColumn(item.OrganizationID)).
-				JoinOn(cus.BusinessUnitID.EqColumn(item.BusinessUnitID)).
-				Join("LEFT JOIN "+facTable.As(facTable.Alias)).
-				JoinOn(fac.ID.EqColumn(sub.FactoringCompanyID)).
-				JoinOn(fac.OrganizationID.EqColumn(sub.OrganizationID)).
-				JoinOn(fac.BusinessUnitID.EqColumn(sub.BusinessUnitID)).
-				WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-					sq = factoringcol.SubmissionItemScopeTenant(sq, req.TenantInfo).
-						Where(item.Status.Eq(), factoring.SubmissionItemStatusFunded).
-						Where(item.FundedOn.IsNotNull()).
-						Where(agr.Recourse.Eq(), factoring.RecourseFull).
-						Where(deadline+" <= ?", req.Before)
-					if req.UnwarnedOnly {
-						sq = sq.Where(item.ChargebackWarnedAt.IsNull())
-					}
-					return sq
-				}).
-				OrderExpr(deadline+" ASC").
-				Order(item.ID.OrderAsc()).
-				Limit(int64(limit)).
-				Scan(ctx, &rows); err != nil {
-				return nil, fmt.Errorf("list factored invoices nearing chargeback: %w", err)
-			}
-
-			return rows, nil
+			return intoPointers[factoringports.ChargebackDue](
+				ctx,
+				r.db.Keel(ctx),
+				chargebacksDueSoon(req),
+			)
 		},
 	)
+}
+
+func chargebacksDueSoon(
+	req *factoringports.ListChargebacksDueRequest,
+) *keel.Query[factoring.SubmissionItem] {
+	item := factoringdb.SubmissionItems
+	sub := item.Submission()
+	agr := sub.Agreement()
+	deadline := keel.Raw("? + ? * 86400", item.FundedOn, agr.ChargebackWindowDays)
+
+	return item.Pick(
+		item.ID,
+		item.SubmissionID,
+		sub.Number,
+		item.InvoiceID,
+		item.InvoiceNumber,
+		item.CustomerID,
+		blank(item.Customer().Name),
+		sub.FactoringCompanyID,
+		blank(sub.FactoringCompany().Name),
+		sub.CurrencyCode,
+		item.FaceMinor,
+		keel.Raw("COALESCE(?, 0) + COALESCE(?, 0)", item.AdvanceMinor, item.FeeMinor),
+		item.FundedOn,
+		deadline,
+	).
+		Where(
+			sub.ID.IsNotNull(),
+			item.Status.Eq(factoring.SubmissionItemStatusFunded),
+			item.FundedOn.IsNotNull(),
+			agr.Recourse.Eq(factoring.RecourseFull),
+			keel.Raw("? <= ?", deadline, req.Before),
+			keel.When(req.UnwarnedOnly, item.ChargebackWarnedAt.IsNull()),
+		).
+		Order(keel.Asc(deadline), item.ID.Asc()).
+		Limit(boundedLimit(req.Limit, maxAttentionRows))
 }

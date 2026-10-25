@@ -3,47 +3,43 @@
 package edicommunicationprofilerepository
 
 import (
+	"context"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/edi/edidb"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
 	"github.com/emoss08/trenova/internal/testutil/seedtest"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/domaintypes"
-	"github.com/emoss08/trenova/shared/pulid"
+	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"github.com/uptrace/bun"
 	"go.uber.org/zap"
 )
 
 func newAS2Profile(
 	t *testing.T,
-	db *bun.DB,
-	tenant *seedtest.TestData,
+	ctx context.Context,
+	db *keel.DB,
 	code string,
 ) *edi.EDICommunicationProfile {
 	t.Helper()
 
 	partner := &edi.EDIPartner{
-		BusinessUnitID: tenant.BusinessUnit.ID,
-		OrganizationID: tenant.Organization.ID,
-		Kind:           edi.PartnerKindExternal,
-		Code:           code,
-		Name:           "AS2 Partner " + code,
+		Kind: edi.PartnerKindExternal,
+		Code: code,
+		Name: "AS2 Partner " + code,
 	}
-	_, err := db.NewInsert().Model(partner).Exec(t.Context())
-	require.NoError(t, err)
+	require.NoError(t, edidb.EDIPartners.Create(ctx, db, partner))
 
 	return &edi.EDICommunicationProfile{
-		ID:             pulid.MustNew("ecp_"),
-		BusinessUnitID: tenant.BusinessUnit.ID,
-		OrganizationID: tenant.Organization.ID,
-		EDIPartnerID:   partner.ID,
-		Method:         edi.ConnectionMethodAS2,
-		Status:         domaintypes.StatusActive,
-		Name:           "AS2 " + code,
+		EDIPartnerID: partner.ID,
+		Method:       edi.ConnectionMethodAS2,
+		Status:       domaintypes.StatusActive,
+		Name:         "AS2 " + code,
 		Config: map[string]any{
 			"localAS2Id":   "SHIPPER-AS2",
 			"partnerAS2Id": " CARRIER-AS2 ",
@@ -60,13 +56,14 @@ func TestAS2IdentifierPairsAreUniqueAcrossTenants(t *testing.T) {
 
 	tenantA := seedtest.SeedFullTestData(t, ctx, db)
 	tenantB := seedtest.SeedAdditionalTenant(t, ctx, db, "AS")
+	ctxA, ctxB := tenantA.Ctx(ctx), tenantB.Ctx(ctx)
 
 	repo := New(Params{DB: postgres.NewTestConnection(db), Logger: zap.NewNop()})
 
-	owned, err := repo.CreateProfile(ctx, newAS2Profile(t, db, tenantA, "AS2-A"))
+	owned, err := repo.CreateProfile(ctxA, newAS2Profile(t, ctxA, db, "AS2-A"))
 	require.NoError(t, err)
 
-	_, err = repo.CreateProfile(ctx, newAS2Profile(t, db, tenantB, "AS2-B"))
+	_, err = repo.CreateProfile(ctxB, newAS2Profile(t, ctxB, db, "AS2-B"))
 	require.Error(t, err)
 	assert.True(t, dberror.IsUniqueConstraintViolation(err))
 	assert.Equal(
@@ -86,8 +83,58 @@ func TestAS2IdentifierPairsAreUniqueAcrossTenants(t *testing.T) {
 	assert.Equal(t, owned.ID, routed.ID)
 	assert.Equal(t, tenantA.Organization.ID, routed.OrganizationID)
 
-	inactive := newAS2Profile(t, db, tenantB, "AS2-C")
+	inactive := newAS2Profile(t, ctxB, db, "AS2-C")
 	inactive.Status = domaintypes.StatusInactive
-	_, err = repo.CreateProfile(ctx, inactive)
+	_, err = repo.CreateProfile(ctxB, inactive)
 	require.NoError(t, err)
+
+	_, err = repo.GetProfileByID(ctxB, ediports.GetEDICommunicationProfileByIDRequest{ID: owned.ID})
+	require.True(t, errortypes.IsNotFoundError(err))
+}
+
+func TestPollOutcomeKeepsTheProfileVersion(t *testing.T) {
+	ctx, db, cleanup := seedtest.SetupTestDB(t)
+	t.Cleanup(cleanup)
+
+	tenant := seedtest.SeedFullTestData(t, ctx, db)
+	tctx := tenant.Ctx(ctx)
+	repo := New(Params{DB: postgres.NewTestConnection(db), Logger: zap.NewNop()})
+
+	profile := newAS2Profile(t, tctx, db, "AS2-P")
+	profile.Method = edi.ConnectionMethodSFTP
+	profile.Config = map[string]any{"inboundDirectory": "/in"}
+	created, err := repo.CreateProfile(tctx, profile)
+	require.NoError(t, err)
+
+	require.NoError(t, repo.RecordInboundPollOutcome(tctx, ediports.RecordEDIProfilePollOutcomeRequest{
+		ProfileID: created.ID,
+		PolledAt:  100,
+		Error:     "timeout",
+	}))
+	require.NoError(t, repo.RecordInboundPollOutcome(tctx, ediports.RecordEDIProfilePollOutcomeRequest{
+		ProfileID: created.ID,
+		PolledAt:  200,
+		Success:   true,
+	}))
+
+	polled, err := repo.GetProfileByID(tctx, ediports.GetEDICommunicationProfileByIDRequest{ID: created.ID})
+	require.NoError(t, err)
+	assert.Equal(t, created.Version, polled.Version)
+	require.NotNil(t, polled.LastPollSuccessAt)
+	assert.Equal(t, int64(200), *polled.LastPollSuccessAt)
+	assert.Empty(t, polled.LastPollError)
+
+	profiles, err := repo.ListInboundPollingProfiles(ctx)
+	require.NoError(t, err)
+	require.Len(t, profiles, 1)
+	assert.Equal(t, created.ID, profiles[0].ID)
+
+	stale, err := repo.CountStaleInboundPollingProfiles(ctx, 300)
+	require.NoError(t, err)
+	assert.Equal(t, int64(1), stale)
+
+	polled.Name = "Renamed"
+	updated, err := repo.UpdateProfile(tctx, polled)
+	require.NoError(t, err)
+	assert.Equal(t, created.Version+1, updated.Version)
 }

@@ -20,22 +20,20 @@ import (
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"github.com/uptrace/bun"
 	"go.uber.org/zap"
 )
 
 type txDB struct {
-	kernelports.DBConnection
 	transactions int
 }
 
-func (d *txDB) WithTx(
+func (d *txDB) Transact(
 	ctx context.Context,
 	_ kernelports.TxOptions,
-	fn func(context.Context, bun.Tx) error,
+	fn func(context.Context) error,
 ) error {
 	d.transactions++
-	return fn(ctx, bun.Tx{})
+	return fn(ctx)
 }
 
 type fakeDefinitions struct {

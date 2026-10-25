@@ -5,24 +5,56 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/emoss08/trenova/pkg/buncolgen/tendercol"
-
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
-	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/tender"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/tender/tenderdb"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/tenderports"
 	"github.com/emoss08/trenova/pkg/dberror"
-	"github.com/emoss08/trenova/pkg/dbhelper"
 	"github.com/emoss08/trenova/pkg/domaintypes"
+	"github.com/emoss08/trenova/pkg/listquery"
 	"github.com/emoss08/trenova/pkg/pagination"
-	"github.com/emoss08/trenova/pkg/querybuilder"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/emoss08/trenova/shared/timeutils"
-	"github.com/uptrace/bun"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
+
+const rankShift = 10000
+
+var guideErrors = dberror.Mapping{
+	Entity: "Routing guide",
+	ForeignKey: []dberror.Constraint{
+		{
+			Name:    "fk_routing_guides_origin_location",
+			Field:   "originLocationId",
+			Message: "Origin location does not exist in your organization",
+		},
+		{
+			Name:    "fk_routing_guides_destination_location",
+			Field:   "destinationLocationId",
+			Message: "Destination location does not exist in your organization",
+		},
+	},
+}
+
+var entryErrors = dberror.Mapping{
+	Entity: "Routing guide entry",
+	Unique: []dberror.Constraint{
+		{
+			Name:    "uq_routing_guide_entries_rank",
+			Field:   "entries.rank",
+			Message: "Each routing guide entry must have a distinct rank",
+		},
+	},
+	ForeignKey: []dberror.Constraint{
+		{
+			Name:    "fk_routing_guide_entries_carrier",
+			Field:   "entries.carrierId",
+			Message: "Carrier does not exist in your organization",
+		},
+	},
+}
 
 type Params struct {
 	fx.In
@@ -43,18 +75,21 @@ func New(p Params) tenderports.RoutingGuideRepository {
 	}
 }
 
-func (r *repository) addOptions(
-	q *bun.SelectQuery,
-	opts tenderports.RoutingGuideFilterOptions,
-) *bun.SelectQuery {
-	if opts.IncludeEntries {
-		q = q.Relation("Entries", func(sq *bun.SelectQuery) *bun.SelectQuery {
-			return sq.Order(tendercol.RoutingGuideEntryColumns.Rank.OrderAsc())
-		})
-		q = q.Relation("Entries.Carrier")
-	}
+type guideQuery = keel.Query[tender.RoutingGuide]
 
-	return q
+func rankedEntries() keel.Loader {
+	e := tenderdb.RoutingGuides.Entries()
+	return e.Order(e.Rank.Asc()).Load(e.Carrier())
+}
+
+func withOptions(opts tenderports.RoutingGuideFilterOptions) func(*guideQuery) *guideQuery {
+	return func(q *guideQuery) *guideQuery {
+		if opts.IncludeEntries {
+			return q.Load(rankedEntries())
+		}
+
+		return q
+	}
 }
 
 func (r *repository) List(
@@ -65,126 +100,46 @@ func (r *repository) List(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*pagination.ListResult[*tender.RoutingGuide], error) {
-			log := r.l.With(
-				zap.String("operation", "List"),
-				zap.Any("request", req),
+			result, err := listquery.List(
+				ctx,
+				r.db.Keel(ctx),
+				tenderdb.RoutingGuides.Query(),
+				&listquery.Request[tender.RoutingGuide]{
+					Filter: req.Filter,
+					Shape:  withOptions(req.RoutingGuideFilterOptions),
+				},
 			)
-
-			entities := make([]*tender.RoutingGuide, 0, req.Filter.Pagination.SafeLimit())
-			total, err := r.db.DBForContext(ctx).
-				NewSelect().
-				Model(&entities).
-				Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-					sq = querybuilder.ApplyFilters(
-						sq,
-						tendercol.RoutingGuideTable.Alias,
-						req.Filter,
-						(*tender.RoutingGuide)(nil),
-					)
-					return r.addOptions(sq, req.RoutingGuideFilterOptions).
-						Limit(int64(req.Filter.Pagination.SafeLimit())).
-						Offset(int64(req.Filter.Pagination.SafeOffset()))
-				}).
-				ScanAndCount(ctx)
 			if err != nil {
-				log.Error("failed to scan and count routing guides", zap.Error(err))
+				r.l.Error("failed to list routing guides", zap.Error(err))
 				return nil, err
 			}
 
-			return &pagination.ListResult[*tender.RoutingGuide]{
-				Items: entities,
-				Total: int(total),
-			}, nil
+			return result, nil
 		},
 	)
-}
-
-func (r *repository) applyCursorPageFilters(
-	q *bun.SelectQuery,
-	req *tenderports.ListRoutingGuideConnectionRequest,
-) (*bun.SelectQuery, error) {
-	return querybuilder.ApplyCursorFilters(
-		q,
-		tendercol.RoutingGuideTable.Alias,
-		req.Filter,
-		req.Cursor,
-		(*tender.RoutingGuide)(nil),
-	)
-}
-
-func (r *repository) applyTotalCountFilters(
-	q *bun.SelectQuery,
-	req *tenderports.ListRoutingGuideConnectionRequest,
-) *bun.SelectQuery {
-	return querybuilder.ApplyFiltersWithoutSort(
-		q,
-		tendercol.RoutingGuideTable.Alias,
-		req.Filter,
-		(*tender.RoutingGuide)(nil),
-	)
-}
-
-func applyRoutingGuideColumns(q *bun.SelectQuery, columns []string) *bun.SelectQuery {
-	if len(columns) == 0 {
-		return q.ColumnExpr(tendercol.RoutingGuideTable.All())
-	}
-
-	return q.Column(columns...)
 }
 
 func (r *repository) ListConnection(
 	ctx context.Context,
 	req *tenderports.ListRoutingGuideConnectionRequest,
 ) (*pagination.CursorListResult[*tender.RoutingGuide], error) {
-	return dbtx.Write(
+	return dbtx.Read(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*pagination.CursorListResult[*tender.RoutingGuide], error) {
-			log := r.l.With(
-				zap.String("operation", "ListConnection"),
-				zap.Any("request", req),
-			)
-
-			dba := r.db.DBForContext(ctx)
-			var totalCount *int
-			if req.Cursor.IncludeTotalCount {
-				total, err := dba.
-					NewSelect().
-					Model((*tender.RoutingGuide)(nil)).
-					Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-						return r.applyTotalCountFilters(sq, req)
-					}).
-					Count(ctx)
-				if err != nil {
-					log.Error("failed to count routing guides", zap.Error(err))
-					return nil, err
-				}
-				totalCount = new(int(total))
-			}
-
-			result, err := dbhelper.CursorList(
+			result, err := listquery.Connection(
 				ctx,
-				dbhelper.CursorListParams[*tender.RoutingGuide]{
-					Filter:     req.Filter,
-					Cursor:     req.Cursor,
-					TotalCount: totalCount,
-					Query: func(entities *[]*tender.RoutingGuide) *bun.SelectQuery {
-						return dba.
-							NewSelect().
-							Model(entities).
-							Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-								return applyRoutingGuideColumns(sq, req.RoutingGuideColumns)
-							}).
-							Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-								return r.addOptions(sq, req.RoutingGuideFilterOptions)
-							})
-					},
-					Apply: func(sq *bun.SelectQuery) (*bun.SelectQuery, error) {
-						return r.applyCursorPageFilters(sq, req)
-					},
-				})
+				r.db.Keel(ctx),
+				tenderdb.RoutingGuides.Query(),
+				&listquery.Request[tender.RoutingGuide]{
+					Filter:  req.Filter,
+					Cursor:  req.Cursor,
+					Columns: req.RoutingGuideColumns,
+					Shape:   withOptions(req.RoutingGuideFilterOptions),
+				},
+			)
 			if err != nil {
-				log.Error("failed to scan routing guides", zap.Error(err))
+				r.l.Error("failed to list routing guide connection", zap.Error(err))
 				return nil, err
 			}
 
@@ -198,22 +153,12 @@ func (r *repository) GetByID(
 	req tenderports.GetRoutingGuideByIDRequest,
 ) (*tender.RoutingGuide, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*tender.RoutingGuide, error) {
-		cols := tendercol.RoutingGuideColumns
-		entity := new(tender.RoutingGuide)
-		err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(entity).
-			Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return r.addOptions(sq, req.RoutingGuideFilterOptions)
-			}).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return tendercol.RoutingGuideScopeTenant(sq, req.TenantInfo).
-					Where(cols.ID.Eq(), req.ID)
-			}).
-			Scan(ctx)
+		rg := tenderdb.RoutingGuides
+		entity, err := withOptions(req.RoutingGuideFilterOptions)(rg.Where(rg.ID.Eq(req.ID))).
+			One(ctx, r.db.Keel(ctx))
 		if err != nil {
 			r.l.Error("failed to get routing guide", zap.Error(err))
-			return nil, dberror.HandleNotFoundError(err, "Routing guide")
+			return nil, guideErrors.Map(err, req.ID.String())
 		}
 
 		return entity, nil
@@ -225,18 +170,16 @@ func (r *repository) GetByIDs(
 	req tenderports.GetRoutingGuidesByIDsRequest,
 ) ([]*tender.RoutingGuide, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*tender.RoutingGuide, error) {
-		entities := make([]*tender.RoutingGuide, 0, len(req.RoutingGuideIDs))
-		err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(&entities).
-			Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return r.addOptions(sq, req.RoutingGuideFilterOptions)
-			}).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return tendercol.RoutingGuideScopeTenant(sq, req.TenantInfo).
-					Where(tendercol.RoutingGuideColumns.ID.In(), bun.List(req.RoutingGuideIDs))
-			}).
-			Scan(ctx)
+		if len(req.RoutingGuideIDs) == 0 {
+			return []*tender.RoutingGuide{}, nil
+		}
+
+		rg := tenderdb.RoutingGuides
+		entities, err := withOptions(req.RoutingGuideFilterOptions)(
+			rg.Where(rg.ID.In(req.RoutingGuideIDs...)),
+		).
+			Limit(len(req.RoutingGuideIDs)).
+			List(ctx, r.db.Keel(ctx))
 		if err != nil {
 			r.l.Error("failed to get routing guides by ids", zap.Error(err))
 			return nil, fmt.Errorf("get routing guides by ids: %w", err)
@@ -246,29 +189,19 @@ func (r *repository) GetByIDs(
 	})
 }
 
-// stampEntries pins entries to the guide and tenant. IDs are left alone: kept
-// rows retain their identity; BeforeAppendModel mints IDs for new rows only.
-func (r *repository) stampEntries(entity *tender.RoutingGuide) {
+func liveEntries(entity *tender.RoutingGuide) []*tender.RoutingGuideEntry {
+	entries := make([]*tender.RoutingGuideEntry, 0, len(entity.Entries))
 	for _, entry := range entity.Entries {
+		if entry == nil {
+			continue
+		}
 		entry.RoutingGuideID = entity.ID
 		entry.OrganizationID = entity.OrganizationID
 		entry.BusinessUnitID = entity.BusinessUnitID
+		entries = append(entries, entry)
 	}
-}
 
-func (r *repository) insertEntries(ctx context.Context, entity *tender.RoutingGuide) error {
-	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
-		if len(entity.Entries) == 0 {
-			return nil
-		}
-
-		_, err := r.db.DBForContext(ctx).
-			NewInsert().
-			Model(&entity.Entries).
-			Returning("*").
-			Exec(ctx)
-		return err
-	})
+	return entries
 }
 
 func keptEntryIDs(entity *tender.RoutingGuide) []pulid.ID {
@@ -281,80 +214,63 @@ func keptEntryIDs(entity *tender.RoutingGuide) []pulid.ID {
 	return kept
 }
 
-func (r *repository) deleteMissingEntries(ctx context.Context, entity *tender.RoutingGuide) error {
-	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
-		kept := keptEntryIDs(entity)
-
-		_, err := r.db.DBForContext(ctx).
-			NewDelete().
-			Model((*tender.RoutingGuideEntry)(nil)).
-			WhereGroup(" AND ", func(dq *bun.DeleteQuery) *bun.DeleteQuery {
-				dq = tendercol.RoutingGuideEntryScopeTenantDelete(dq, pagination.TenantInfo{
-					OrgID: entity.OrganizationID,
-					BuID:  entity.BusinessUnitID,
-				}).Where(tendercol.RoutingGuideEntryColumns.RoutingGuideID.Eq(), entity.ID)
-				if len(kept) > 0 {
-					dq = dq.Where(tendercol.RoutingGuideEntryColumns.ID.NotIn(), bun.List(kept))
-				}
-				return dq
-			}).
-			Exec(ctx)
-		return err
-	})
-}
-
-// shiftKeptEntryRanks moves kept rows out of the live rank range before the
-// upsert rewrites them: uq_routing_guide_entries_rank is not deferrable, so a
-// rank swap applied row-by-row would collide mid-statement. The +10000 offset
+// syncEntries makes the guide's entries exactly the payload's: rows it no
+// longer carries are deleted, kept rows are updated in place (their identity and
+// created_at survive the edit) and new rows are inserted. Kept rows move out of
+// the live rank range first: uq_routing_guide_entries_rank is not deferrable, so
+// a rank swap applied row by row would collide mid-statement. The +10000 offset
 // stays within smallint bounds and above the rank >= 1 check.
-func (r *repository) shiftKeptEntryRanks(ctx context.Context, entity *tender.RoutingGuide) error {
-	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
-		kept := keptEntryIDs(entity)
-		if len(kept) == 0 {
-			return nil
-		}
+func syncEntries(ctx context.Context, db *keel.DB, entity *tender.RoutingGuide) error {
+	e := tenderdb.RoutingGuideEntries
+	kept := keptEntryIDs(entity)
 
-		cols := tendercol.RoutingGuideEntryColumns
-		_, err := r.db.DBForContext(ctx).
-			NewUpdate().
-			Model((*tender.RoutingGuideEntry)(nil)).
-			Set("rank = rank + 10000").
-			WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-				return tendercol.RoutingGuideEntryScopeTenantUpdate(uq, pagination.TenantInfo{
-					OrgID: entity.OrganizationID,
-					BuID:  entity.BusinessUnitID,
-				}).Where(cols.RoutingGuideID.Eq(), entity.ID).
-					Where(cols.ID.In(), bun.List(kept))
-			}).
-			Exec(ctx)
+	if _, err := e.Where(
+		e.RoutingGuideID.Eq(entity.ID),
+		keel.When(len(kept) > 0, e.ID.NotIn(kept...)),
+	).Delete(ctx, db); err != nil {
 		return err
-	})
-}
+	}
 
-// upsertEntries inserts new (ID-less) rows and updates kept ones in place,
-// preserving row identity across guide edits.
-func (r *repository) upsertEntries(ctx context.Context, entity *tender.RoutingGuide) error {
-	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
-		if len(entity.Entries) == 0 {
-			return nil
+	if len(kept) > 0 {
+		if _, err := e.Where(e.RoutingGuideID.Eq(entity.ID), e.ID.In(kept...)).Update(
+			ctx,
+			db,
+			e.Rank.Add(rankShift),
+			e.Version.ToExpr(e.Version),
+			e.UpdatedAt.ToExpr(e.UpdatedAt),
+		); err != nil {
+			return err
 		}
+	}
 
-		_, err := r.db.DBForContext(ctx).
-			NewInsert().
-			Model(&entity.Entries).
-			On("CONFLICT (id, business_unit_id, organization_id) DO UPDATE").
-			Set("carrier_id = EXCLUDED.carrier_id").
-			Set("rank = EXCLUDED.rank").
-			Set("rate_method = EXCLUDED.rate_method").
-			Set("rate = EXCLUDED.rate").
-			Set("offer_ttl_seconds = EXCLUDED.offer_ttl_seconds").
-			Set("channel = EXCLUDED.channel").
-			Set("version = rge.version + 1").
-			Set("updated_at = ?", timeutils.NowUnix()).
-			Returning("*").
-			Exec(ctx)
+	entries := liveEntries(entity)
+	if len(entries) == 0 {
+		return nil
+	}
+
+	created := make([]int64, len(entries))
+	for i, entry := range entries {
+		created[i] = entry.CreatedAt
+	}
+
+	inserted, err := e.Upsert(
+		ctx,
+		db,
+		entries,
+		keel.OnConflict(e.ID, e.BusinessUnitID, e.OrganizationID).
+			Update(e.CarrierID, e.Rank, e.RateMethod, e.Rate, e.OfferTTLSeconds, e.Channel),
+	)
+	if err != nil {
 		return err
-	})
+	}
+
+	for i, entry := range entries {
+		if !inserted[i] && created[i] != 0 {
+			entry.CreatedAt = created[i]
+		}
+	}
+
+	return nil
 }
 
 func (r *repository) Create(
@@ -362,27 +278,23 @@ func (r *repository) Create(
 	entity *tender.RoutingGuide,
 ) (*tender.RoutingGuide, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*tender.RoutingGuide, error) {
-		log := r.l.With(
-			zap.String("operation", "Create"),
-			zap.String("name", entity.Name),
-		)
+		db := r.db.Keel(ctx)
+		if err := tenderdb.RoutingGuides.Create(ctx, db, entity); err != nil {
+			r.l.Error(
+				"failed to create routing guide",
+				zap.String("name", entity.Name),
+				zap.Error(err),
+			)
+			return nil, guideErrors.Map(err, entity.ID.String())
+		}
 
-		err := r.db.WithTx(ctx, kernelports.TxOptions{}, func(c context.Context, _ bun.Tx) error {
-			if _, iErr := r.db.DBForContext(c).
-				NewInsert().
-				Model(entity).
-				Returning("*").
-				Exec(c); iErr != nil {
-				return iErr
-			}
-
-			r.stampEntries(entity)
-
-			return r.insertEntries(c, entity)
-		})
-		if err != nil {
-			log.Error("failed to create routing guide", zap.Error(err))
-			return nil, err
+		if err := tenderdb.RoutingGuideEntries.CreateMany(
+			ctx,
+			db,
+			liveEntries(entity),
+		); err != nil {
+			r.l.Error("failed to create routing guide entries", zap.Error(err))
+			return nil, entryErrors.Map(err, entity.ID.String())
 		}
 
 		return entity, nil
@@ -399,45 +311,19 @@ func (r *repository) Update(
 			zap.String("id", entity.ID.String()),
 		)
 
-		err := r.db.WithTx(ctx, kernelports.TxOptions{}, func(c context.Context, _ bun.Tx) error {
-			ov := entity.Version
-			entity.Version++
-
-			results, uErr := r.db.DBForContext(c).
-				NewUpdate().
-				Model(entity).
-				WherePK().
-				Where("version = ?", ov).
-				Returning("*").
-				Exec(c)
-			if uErr != nil {
-				return uErr
-			}
-
-			if uErr = dberror.CheckRowsAffected(
-				results,
-				"Routing guide",
-				entity.ID.String(),
-			); uErr != nil {
-				return uErr
-			}
-
-			if dErr := r.deleteMissingEntries(c, entity); dErr != nil {
-				return dErr
-			}
-
-			r.stampEntries(entity)
-
-			if sErr := r.shiftKeptEntryRanks(c, entity); sErr != nil {
-				return sErr
-			}
-
-			return r.upsertEntries(c, entity)
-		})
-		if err != nil {
+		db := r.db.Keel(ctx)
+		if err := tenderdb.RoutingGuides.Save(ctx, db, entity); err != nil {
 			log.Error("failed to update routing guide", zap.Error(err))
 			return nil, dberror.MapRetryableTransactionError(
-				err,
+				guideErrors.Map(err, entity.ID.String()),
+				"Routing guide is busy. Retry the request.",
+			)
+		}
+
+		if err := syncEntries(ctx, db, entity); err != nil {
+			log.Error("failed to update routing guide entries", zap.Error(err))
+			return nil, dberror.MapRetryableTransactionError(
+				entryErrors.Map(err, entity.ID.String()),
 				"Routing guide is busy. Retry the request.",
 			)
 		}
@@ -451,49 +337,32 @@ func (r *repository) Delete(
 	req tenderports.DeleteRoutingGuideRequest,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
-		cols := tendercol.RoutingGuideColumns
-		results, err := r.db.DBForContext(ctx).
-			NewDelete().
-			Model((*tender.RoutingGuide)(nil)).
-			WhereGroup(" AND ", func(dq *bun.DeleteQuery) *bun.DeleteQuery {
-				return tendercol.RoutingGuideScopeTenantDelete(dq, req.TenantInfo).
-					Where(cols.ID.Eq(), req.ID)
-			}).
-			Exec(ctx)
+		rg := tenderdb.RoutingGuides
+		n, err := rg.Where(rg.ID.Eq(req.ID)).Delete(ctx, r.db.Keel(ctx))
 		if err != nil {
 			r.l.Error("failed to delete routing guide", zap.Error(err))
-			return err
+			return guideErrors.Map(err, req.ID.String())
 		}
 
-		return dberror.CheckRowsAffected(results, "Routing guide", req.ID.String())
+		return dberror.CheckAffected(n, "Routing guide", req.ID.String())
 	})
 }
 
 func (r *repository) matchTier(
 	ctx context.Context,
-	req *tenderports.MatchLaneRequest,
 	specificity int16,
-	apply func(*bun.SelectQuery) *bun.SelectQuery,
+	preds ...keel.Pred,
 ) (*tender.RoutingGuide, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*tender.RoutingGuide, error) {
-		cols := tendercol.RoutingGuideColumns
-		entity := new(tender.RoutingGuide)
-		err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(entity).
-			Relation("Entries", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return sq.Order(tendercol.RoutingGuideEntryColumns.Rank.OrderAsc())
-			}).
-			Relation("Entries.Carrier").
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				sq = tendercol.RoutingGuideScopeTenant(sq, req.TenantInfo).
-					Where(cols.Status.Eq(), domaintypes.StatusActive).
-					Where(cols.Specificity.Eq(), specificity)
-				return apply(sq)
-			}).
-			Order(cols.CreatedAt.OrderAsc()).
-			Limit(1).
-			Scan(ctx)
+		rg := tenderdb.RoutingGuides
+		entity, err := rg.Where(
+			rg.Status.Eq(domaintypes.StatusActive),
+			rg.Specificity.Eq(specificity),
+		).
+			Where(preds...).
+			Load(rankedEntries()).
+			Order(rg.CreatedAt.Asc()).
+			First(ctx, r.db.Keel(ctx))
 		if err != nil {
 			if dberror.IsNotFoundError(err) {
 				return nil, nil //nolint:nilnil // nil guide represents an optional absence
@@ -506,19 +375,25 @@ func (r *repository) matchTier(
 	})
 }
 
+func upperEq(col keel.Expr, value string) keel.Pred {
+	return keel.Raw("upper(?) = ?", col, strings.ToUpper(value))
+}
+
+func lowerEq(col keel.Expr, value string) keel.Pred {
+	return keel.Raw("lower(?) = ?", col, strings.ToLower(value))
+}
+
 func (r *repository) MatchLane(
 	ctx context.Context,
 	req *tenderports.MatchLaneRequest,
 ) (*tender.RoutingGuide, error) {
-	cols := tendercol.RoutingGuideColumns
+	rg := tenderdb.RoutingGuides
 
 	if !req.OriginLocationID.IsNil() && !req.DestinationLocationID.IsNil() {
-		guide, err := r.matchTier(ctx, req, tender.SpecificityLocationPair,
-			func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return sq.
-					Where(cols.OriginLocationID.Eq(), req.OriginLocationID).
-					Where(cols.DestinationLocationID.Eq(), req.DestinationLocationID)
-			})
+		guide, err := r.matchTier(ctx, tender.SpecificityLocationPair,
+			rg.OriginLocationID.Eq(req.OriginLocationID),
+			rg.DestinationLocationID.Eq(req.DestinationLocationID),
+		)
 		if err != nil || guide != nil {
 			return guide, err
 		}
@@ -526,32 +401,22 @@ func (r *repository) MatchLane(
 
 	if req.OriginCity != "" && req.OriginState != "" &&
 		req.DestinationCity != "" && req.DestinationState != "" {
-		guide, err := r.matchTier(ctx, req, tender.SpecificityCityPair,
-			func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return sq.
-					Where("LOWER(rgd.origin_city) = ?", strings.ToLower(req.OriginCity)).
-					Where(cols.OriginState.Expr("UPPER({}) = ?"), strings.ToUpper(req.OriginState)).
-					Where("LOWER(rgd.destination_city) = ?", strings.ToLower(req.DestinationCity)).
-					Where(
-						cols.DestinationState.Expr("UPPER({}) = ?"),
-						strings.ToUpper(req.DestinationState),
-					)
-			})
+		guide, err := r.matchTier(ctx, tender.SpecificityCityPair,
+			lowerEq(rg.OriginCity, req.OriginCity),
+			upperEq(rg.OriginState, req.OriginState),
+			lowerEq(rg.DestinationCity, req.DestinationCity),
+			upperEq(rg.DestinationState, req.DestinationState),
+		)
 		if err != nil || guide != nil {
 			return guide, err
 		}
 	}
 
 	if req.OriginState != "" && req.DestinationState != "" {
-		guide, err := r.matchTier(ctx, req, tender.SpecificityStatePair,
-			func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return sq.
-					Where(cols.OriginState.Expr("UPPER({}) = ?"), strings.ToUpper(req.OriginState)).
-					Where(
-						cols.DestinationState.Expr("UPPER({}) = ?"),
-						strings.ToUpper(req.DestinationState),
-					)
-			})
+		guide, err := r.matchTier(ctx, tender.SpecificityStatePair,
+			upperEq(rg.OriginState, req.OriginState),
+			upperEq(rg.DestinationState, req.DestinationState),
+		)
 		if err != nil || guide != nil {
 			return guide, err
 		}

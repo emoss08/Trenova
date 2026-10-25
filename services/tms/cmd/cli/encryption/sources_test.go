@@ -3,6 +3,7 @@ package encryption
 import (
 	"testing"
 
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -20,7 +21,7 @@ func TestEnvelopeSourcesAreComplete(t *testing.T) {
 	for _, object := range sources.Objects {
 		columns = append(columns, object.Column)
 		if object.Version != nil {
-			assert.Contains(t, object.Column.Extra, *object.Version, object.Column.Name)
+			assert.Contains(t, object.Column.Extra, object.Version, object.Column.Name)
 		}
 	}
 
@@ -31,10 +32,11 @@ func TestEnvelopeSourcesAreComplete(t *testing.T) {
 		assert.False(t, duplicate, "duplicate source %q", column.Name)
 		names[column.Name] = struct{}{}
 
-		assert.NotEmpty(t, column.Table.Name, column.Name)
-		assert.NotEmpty(t, column.ID.Name, column.Name)
-		assert.NotEmpty(t, column.OrganizationID.Name, column.Name)
-		assert.NotEmpty(t, column.Value.Name, column.Name)
+		table, _, ok := keel.ColumnOf(column.Value)
+		require.True(t, ok, column.Name)
+		assert.NotEmpty(t, table.Tenant, column.Name)
+		assert.GreaterOrEqual(t, table.Column("id"), int32(0), column.Name)
+		assert.GreaterOrEqual(t, table.Column("organization_id"), int32(0), column.Name)
 		require.NotNil(t, column.Scopes, column.Name)
 
 		row := &kernelports.EnvelopeRow{
@@ -43,7 +45,10 @@ func TestEnvelopeSourcesAreComplete(t *testing.T) {
 			Extra:  map[string]string{},
 		}
 		for _, extra := range column.Extra {
-			row.Extra[extra.Name] = "value"
+			extraTable, _, extraOK := keel.ColumnOf(extra)
+			require.True(t, extraOK, column.Name)
+			assert.Same(t, table, extraTable, column.Name)
+			row.Extra[kernelports.EnvelopeColumnName(extra)] = "value"
 		}
 		scopes := column.Scopes(row, "field")
 		require.NotEmpty(t, scopes, column.Name)

@@ -1,0 +1,122 @@
+{
+  "key": "factoring-days-to-fund",
+  "version": "1.0.0",
+  "name": "Days to Fund by Factor",
+  "description": "How long each factor takes to fund a schedule once it is sent, averaged over the schedules it funded in the window, with how many and how much",
+  "category": "Billing",
+  "tags": [
+    "ar",
+    "factoring",
+    "cash"
+  ],
+  "defaultFormat": "xlsx",
+  "definition": {
+    "version": 2,
+    "entity": "submission",
+    "columns": [
+      {
+        "id": "factor",
+        "label": "Factor",
+        "dimension": {
+          "field": "factoringCompany.name"
+        }
+      },
+      {
+        "id": "schedules",
+        "label": "Schedules Funded",
+        "measure": {
+          "field": "id",
+          "agg": "count"
+        },
+        "display": {
+          "style": "number",
+          "decimals": 0,
+          "grouping": true
+        }
+      },
+      {
+        "id": "face",
+        "label": "Face Amount",
+        "measure": {
+          "field": "faceMinor",
+          "agg": "sum"
+        },
+        "transform": {
+          "op": "scale",
+          "factor": 0.01
+        },
+        "display": {
+          "style": "currency",
+          "decimals": 2,
+          "negative": "parentheses"
+        }
+      },
+      {
+        "id": "average_sent",
+        "label": "Average Sent",
+        "measure": {
+          "field": "sentAt",
+          "agg": "avg"
+        },
+        "display": {
+          "style": "date",
+          "dateStyle": "dateTime"
+        }
+      },
+      {
+        "id": "average_funded",
+        "label": "Average Funded",
+        "measure": {
+          "field": "fundedAt",
+          "agg": "avg"
+        },
+        "display": {
+          "style": "date",
+          "dateStyle": "dateTime"
+        }
+      },
+      {
+        "id": "time_to_fund",
+        "label": "Average Time to Fund",
+        "calc": "[average_funded] - [average_sent]",
+        "display": {
+          "style": "duration",
+          "durationUnit": "seconds",
+          "durationStyle": "compact"
+        }
+      }
+    ],
+    "filters": {
+      "and": [
+        {
+          "field": "fundedAt",
+          "op": "is_not_null"
+        },
+        {
+          "field": "sentAt",
+          "op": "is_not_null"
+        },
+        {
+          "field": "fundedAt",
+          "op": "last_n_days",
+          "param": "windowDays"
+        }
+      ]
+    },
+    "sort": [
+      {
+        "column": "time_to_fund",
+        "desc": true
+      }
+    ],
+    "parameters": [
+      {
+        "name": "windowDays",
+        "label": "Window (days)",
+        "type": "int",
+        "required": true,
+        "default": 180
+      }
+    ]
+  }
+}

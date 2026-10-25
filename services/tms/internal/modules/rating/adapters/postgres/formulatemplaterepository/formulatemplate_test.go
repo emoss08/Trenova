@@ -1,95 +1,17 @@
 package formulatemplaterepository
 
 import (
-	"database/sql"
+	"strings"
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/rating/domain/formulatemplate"
-	"github.com/emoss08/trenova/internal/modules/rating/ports/formulatemplateports"
-	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/internal/modules/rating/domain/formulatemplate/formulatemplatedb"
+	"github.com/emoss08/trenova/internal/testutil/keeltest"
 	"github.com/emoss08/trenova/pkg/tarifftypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"github.com/uptrace/bun"
-	"github.com/uptrace/bun/dialect/pgdialect"
-	"go.uber.org/zap"
 )
-
-func TestUpdateWritesClearedFields(t *testing.T) {
-	t.Parallel()
-
-	db := bun.NewDB(new(sql.DB), pgdialect.New())
-
-	entity := &formulatemplate.FormulaTemplate{
-		ID:             pulid.MustNew("ft_"),
-		OrganizationID: pulid.MustNew("org_"),
-		BusinessUnitID: pulid.MustNew("bu_"),
-		Name:           "Per Mile",
-		Source:         "tariff \"Per Mile\"\n",
-		Description:    "",
-		ReviewComment:  "",
-		TestCount:      0,
-		SubmittedByID:  nil,
-		SubmittedAt:    nil,
-		ApprovedByID:   nil,
-		ApprovedAt:     nil,
-	}
-
-	base := db.NewUpdate().
-		Model(entity).
-		WherePK().
-		Where("version = ?", 1).
-		OmitZero()
-
-	query, err := applyClearableColumns(base, entity).AppendQuery(db.QueryGen(), nil)
-	require.NoError(t, err)
-
-	rendered := string(query)
-	assert.Contains(t, rendered, `"description" = ''`)
-	assert.Contains(t, rendered, `"review_comment" = ''`)
-	assert.Contains(t, rendered, `"test_count" = 0`)
-	assert.Contains(t, rendered, `"submitted_by_id" = NULL`)
-	assert.Contains(t, rendered, `"submitted_at" = NULL`)
-	assert.Contains(t, rendered, `"approved_by_id" = NULL`)
-	assert.Contains(t, rendered, `"approved_at" = NULL`)
-}
-
-func TestUpdateWritesSetValues(t *testing.T) {
-	t.Parallel()
-
-	db := bun.NewDB(new(sql.DB), pgdialect.New())
-
-	submitter := pulid.MustNew("usr_")
-	submittedAt := int64(1_700_000_000)
-
-	entity := &formulatemplate.FormulaTemplate{
-		ID:             pulid.MustNew("ft_"),
-		OrganizationID: pulid.MustNew("org_"),
-		BusinessUnitID: pulid.MustNew("bu_"),
-		Name:           "Per Mile",
-		Source:         "tariff \"Per Mile\"\n",
-		Description:    "Prices by distance",
-		TestCount:      3,
-		SubmittedByID:  &submitter,
-		SubmittedAt:    &submittedAt,
-	}
-
-	base := db.NewUpdate().
-		Model(entity).
-		WherePK().
-		Where("version = ?", 1).
-		OmitZero()
-
-	query, err := applyClearableColumns(base, entity).AppendQuery(db.QueryGen(), nil)
-	require.NoError(t, err)
-
-	rendered := string(query)
-	assert.Contains(t, rendered, `"description" = 'Prices by distance'`)
-	assert.Contains(t, rendered, `"test_count" = 3`)
-	assert.Contains(t, rendered, `"submitted_by_id" = '`+submitter.String()+`'`)
-	assert.Contains(t, rendered, `"submitted_at" = 1700000000`)
-}
 
 func TestBulkDuplicateEntityCarriesFullContentAsDraft(t *testing.T) {
 	t.Parallel()
@@ -130,24 +52,44 @@ func TestBulkDuplicateEntityCarriesFullContentAsDraft(t *testing.T) {
 	assert.Nil(t, duplicate.ApprovedByID)
 }
 
-func TestFilterQueryRendersTypedFilters(t *testing.T) {
+func TestStatusFilterComparesTheStatus(t *testing.T) {
 	t.Parallel()
 
-	db := bun.NewDB(new(sql.DB), pgdialect.New())
-	repo := &repository{l: zap.NewNop()}
-
-	var entities []*formulatemplate.FormulaTemplate
-	req := &formulatemplateports.ListFormulaTemplatesRequest{
-		Filter: &pagination.QueryOptions{Pagination: pagination.Info{Limit: 25}},
-		Status: "Active",
-	}
-
-	query, err := repo.filterQuery(db.NewSelect().Model(&entities), req).
-		AppendQuery(db.QueryGen(), nil)
+	pred, err := statusFilter("Active")
 	require.NoError(t, err)
 
-	rendered := string(query)
-	assert.Contains(t, rendered, `ft.status = 'Active'`)
-	assert.Contains(t, rendered, `ORDER BY "ft"."created_at" DESC`)
-	assert.Contains(t, rendered, `LIMIT 25`)
+	ft := formulatemplatedb.FormulaTemplates
+	sql, args := keeltest.Render(t, ft.Where(pred).Limit(25))
+
+	assert.Contains(t, sql, `ft."status" = $3`)
+	assert.Equal(t, []any{"org_1", "bu_1", "Active"}, args)
+}
+
+func TestStatusFilterRefusesAnUnknownStatus(t *testing.T) {
+	t.Parallel()
+
+	_, err := statusFilter("Nope")
+	require.Error(t, err)
+
+	pred, err := statusFilter("")
+	require.NoError(t, err)
+	assert.Nil(t, pred)
+}
+
+func TestUsageQueryCountsEveryConsumerInOneStatement(t *testing.T) {
+	t.Parallel()
+
+	id := pulid.ID("ft_1")
+	sql, args := keeltest.Render(t, usageQuery(id))
+
+	assert.Contains(
+		t,
+		sql,
+		`(SELECT count(*) FROM shipments sp WHERE sp.formula_template_id = ft."id" `+
+			`AND sp.organization_id = ft."organization_id" AND sp.business_unit_id = ft."business_unit_id")`,
+	)
+	assert.Contains(t, sql, `FROM "rate_agreement_rules"`)
+	assert.Contains(t, sql, `FROM "billing_controls"`)
+	assert.Equal(t, 1, strings.Count(sql, `FROM "formula_templates" ft`))
+	assert.Contains(t, args, "ft_1")
 }

@@ -5,21 +5,18 @@ import (
 	"errors"
 	"strings"
 
-	"github.com/emoss08/trenova/pkg/buncolgen/edicol"
-
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/edi/edidb"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
-	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
-	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dberror"
-	"github.com/emoss08/trenova/pkg/dbhelper"
 	"github.com/emoss08/trenova/pkg/dbscope"
+	"github.com/emoss08/trenova/pkg/listquery"
 	"github.com/emoss08/trenova/pkg/pagination"
-	"github.com/emoss08/trenova/pkg/querybuilder"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/uptrace/bun"
+	"github.com/jackc/pgx/v5"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
@@ -27,7 +24,23 @@ import (
 const (
 	serviceFailure214ReviewedTrigger = "Reviewed"
 	serviceFailure214ResolvedTrigger = "Resolved"
+
+	defaultRecentFailuresLimit = 10
+	defaultBucketSeconds       = 3600
 )
+
+var messageErrors = dberror.Mapping{Entity: "EDIMessage"}
+
+var (
+	errDeliveryRequestRequired = errors.New("EDI message delivery update request is required")
+	errAckRequestRequired      = errors.New("EDI message acknowledgment update request is required")
+)
+
+var pendingDeliveryStatuses = []edi.MessageDeliveryStatus{
+	edi.MessageDeliveryStatusQueued,
+	edi.MessageDeliveryStatusSending,
+	edi.MessageDeliveryStatusFailed,
+}
 
 type Params struct {
 	fx.In
@@ -56,44 +69,72 @@ func (r *repository) ListMessages(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*pagination.ListResult[*edi.EDIMessage], error) {
-			entities := make([]*edi.EDIMessage, 0, req.Filter.Pagination.SafeLimit())
-			cols := edicol.EDIMessageColumns
-			rel := edicol.EDIMessageRelations
-
-			query := r.db.DBForContext(ctx).
-				NewSelect().
-				Model(&entities).
-				ColumnExpr(edicol.EDIMessageTable.All()).
-				ColumnExpr(`(
-			SELECT COUNT(*)
-			FROM edi_message_validation_errors AS emve
-			WHERE emve.message_id = emsg.id
-				AND emve.organization_id = emsg.organization_id
-				AND emve.business_unit_id = emsg.business_unit_id
-		) AS diagnostic_count`).
-				Relation(rel.Partner).
-				Relation(rel.PartnerDocumentProfile).
-				Relation(rel.Template).
-				Apply(edicol.EDIMessageApplyTenant(req.Filter.TenantInfo))
-			query = applyMessageListFilters(query, req)
-			if req.GeneratedFrom > 0 {
-				query = query.Where(cols.GeneratedAt.Gte(), req.GeneratedFrom)
-			}
-			if req.GeneratedTo > 0 {
-				query = query.Where(cols.GeneratedAt.Lte(), req.GeneratedTo)
-			}
-			query = applyMessageArchiveSearch(query, req.Query)
-			total, err := query.
-				Order(cols.GeneratedAt.OrderDesc()).
-				Limit(int64(req.Filter.Pagination.SafeLimit())).
-				Offset(int64(req.Filter.Pagination.SafeOffset())).
-				ScanAndCount(ctx)
-			if err != nil {
-				return nil, err
-			}
-			return &pagination.ListResult[*edi.EDIMessage]{Items: entities, Total: int(total)}, nil
+			return listquery.Offset(ctx, r.db.Keel(ctx), archiveQuery(req), req.Filter.Pagination)
 		},
 	)
+}
+
+func archiveQuery(req *ediports.ListEDIMessagesRequest) *keel.Query[edi.EDIMessage] {
+	m := edidb.EDIMessages
+	ve := edidb.EDIMessageValidationErrors
+	search := strings.TrimSpace(req.Query)
+
+	return m.Where(messageListFilters(req)...).
+		Where(
+			keel.When(req.GeneratedFrom > 0, m.GeneratedAt.Gte(req.GeneratedFrom)),
+			keel.When(req.GeneratedTo > 0, m.GeneratedAt.Lte(req.GeneratedTo)),
+			keel.When(search != "", keel.Or(
+				m.ID.ContainsFold(search),
+				m.ShipmentID.ContainsFold(search),
+				m.TransferID.ContainsFold(search),
+				m.InterchangeControlNumber.ContainsFold(search),
+				m.GroupControlNumber.ContainsFold(search),
+				m.TransactionControlNumber.ContainsFold(search),
+			)),
+		).
+		Compute(m.DiagnosticCount, keel.Scalar(ve.Pick(keel.Count()).Where(ve.MessageID.EqCol(m.ID)))).
+		Load(m.Partner(), m.PartnerDocumentProfile(), m.Template()).
+		Order(m.GeneratedAt.Desc())
+}
+
+func (r *repository) ListMessagesCursor(
+	ctx context.Context,
+	req *ediports.ListEDIMessagesRequest,
+) (*pagination.CursorListResult[*edi.EDIMessage], error) {
+	return dbtx.Read(
+		ctx,
+		r.db,
+		func(ctx context.Context) (*pagination.CursorListResult[*edi.EDIMessage], error) {
+			m := edidb.EDIMessages
+			return listquery.Connection(
+				ctx,
+				r.db.Keel(ctx),
+				m.Omit(m.RawX12, m.PayloadSnapshot).Where(messageListFilters(req)...),
+				&listquery.Request[edi.EDIMessage]{
+					Filter: req.Filter,
+					Cursor: req.Cursor,
+					Shape: func(q *keel.Query[edi.EDIMessage]) *keel.Query[edi.EDIMessage] {
+						return q.Load(m.Partner())
+					},
+				},
+			)
+		},
+	)
+}
+
+func messageListFilters(req *ediports.ListEDIMessagesRequest) []keel.Pred {
+	m := edidb.EDIMessages
+	return []keel.Pred{
+		keel.When(req.TransactionSet != "", m.TransactionSet.Eq(req.TransactionSet)),
+		keel.When(req.Direction != "", m.Direction.Eq(req.Direction)),
+		keel.When(req.PartnerID.IsNotNil(), m.EDIPartnerID.Eq(req.PartnerID)),
+		keel.When(req.Status != "", m.Status.Eq(req.Status)),
+		keel.When(req.AckStatus != "", m.AckStatus.Eq(req.AckStatus)),
+		keel.When(req.ShipmentID.IsNotNil(), m.ShipmentID.Eq(req.ShipmentID)),
+		keel.When(req.InvoiceID.IsNotNil(), m.InvoiceID.Eq(req.InvoiceID)),
+		keel.When(req.CreatedAfter > 0, m.CreatedAt.Gte(req.CreatedAfter)),
+		keel.When(req.CreatedBefore > 0, m.CreatedAt.Lt(req.CreatedBefore)),
+	}
 }
 
 func (r *repository) GetMessageByID(
@@ -101,33 +142,26 @@ func (r *repository) GetMessageByID(
 	req ediports.GetEDIMessageByIDRequest,
 ) (*edi.EDIMessage, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*edi.EDIMessage, error) {
-		entity := new(edi.EDIMessage)
-		cols := edicol.EDIMessageColumns
-		rel := edicol.EDIMessageRelations
+		m := edidb.EDIMessages
+		tv := m.TemplateVersion()
+		libraries := tv.ScriptLibraries()
+		diagnostics := m.ValidationErrors()
 
-		err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(entity).
-			Relation(rel.Partner).
-			Relation(rel.DocumentType).
-			Relation(rel.PartnerDocumentProfile).
-			Relation(rel.Template).
-			Relation(rel.TemplateVersion).
-			Relation(buncolgen.Rel(rel.TemplateVersion, edicol.EDITemplateVersionRelations.ScriptLibraries), func(q *bun.SelectQuery) *bun.SelectQuery {
-				return q.OrderExpr(
-					edicol.EDITemplateScriptLibraryColumns.Name.Expr("lower({}) ASC"),
-				)
-			}).
-			Relation(rel.ValidationErrors, func(q *bun.SelectQuery) *bun.SelectQuery {
-				errCols := edicol.EDIMessageValidationErrorColumns
-				return q.Order(errCols.CreatedAt.OrderAsc(), errCols.ID.OrderAsc())
-			}).
-			Where(cols.ID.Eq(), req.ID).
-			Apply(edicol.EDIMessageApplyTenant(req.TenantInfo)).
-			Scan(ctx)
+		entity, err := m.Where(m.ID.Eq(req.ID)).
+			Load(
+				m.Partner(),
+				m.DocumentType(),
+				m.PartnerDocumentProfile(),
+				m.Template(),
+				tv,
+				libraries.Order(libraries.Name.Lower().Asc()),
+				diagnostics.Order(diagnostics.CreatedAt.Asc(), diagnostics.ID.Asc()),
+			).
+			One(ctx, r.db.Keel(ctx))
 		if err != nil {
-			return nil, dberror.HandleNotFoundError(err, "EDIMessage")
+			return nil, messageErrors.Map(err, req.ID.String())
 		}
+
 		return entity, nil
 	})
 }
@@ -137,16 +171,12 @@ func (r *repository) GetMessageByIdempotencyKey(
 	req ediports.GetEDIMessageByIdempotencyKeyRequest,
 ) (*edi.EDIMessage, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*edi.EDIMessage, error) {
-		entity := new(edi.EDIMessage)
-		err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(entity).
-			Where(edicol.EDIMessageColumns.IdempotencyKey.Eq(), req.IdempotencyKey).
-			Apply(edicol.EDIMessageApplyTenant(req.TenantInfo)).
-			Scan(ctx)
+		m := edidb.EDIMessages
+		entity, err := m.Where(m.IdempotencyKey.Eq(req.IdempotencyKey)).One(ctx, r.db.Keel(ctx))
 		if err != nil {
-			return nil, dberror.HandleNotFoundError(err, "EDIMessage")
+			return nil, messageErrors.Map(err, req.IdempotencyKey)
 		}
+
 		return entity, nil
 	})
 }
@@ -156,32 +186,26 @@ func (r *repository) CreateMessageWithDiagnostics(
 	req ediports.CreateEDIMessageWithDiagnosticsRequest,
 ) (*edi.EDIMessage, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*edi.EDIMessage, error) {
-		err := r.db.WithTx(ctx, kernelports.TxOptions{}, func(c context.Context, _ bun.Tx) error {
-			if _, err := r.db.DBForContext(c).
-				NewInsert().
-				Model(req.Message).
-				Returning("*").
-				Exec(c); err != nil {
-				return err
-			}
-			for _, diagnostic := range req.Diagnostics {
-				diagnostic.MessageID = req.Message.ID
-				diagnostic.BusinessUnitID = req.Message.BusinessUnitID
-				diagnostic.OrganizationID = req.Message.OrganizationID
-			}
-			if len(req.Diagnostics) > 0 {
-				if _, err := r.db.DBForContext(c).
-					NewInsert().
-					Model(&req.Diagnostics).
-					Exec(c); err != nil {
-					return err
-				}
-			}
-			return nil
-		})
-		if err != nil {
-			return nil, err
+		db := r.db.Keel(ctx)
+		if err := edidb.EDIMessages.Create(ctx, db, req.Message); err != nil {
+			return nil, messageErrors.Map(err, req.Message.ID.String())
 		}
+
+		for _, diagnostic := range req.Diagnostics {
+			diagnostic.MessageID = req.Message.ID
+			diagnostic.BusinessUnitID = req.Message.BusinessUnitID
+			diagnostic.OrganizationID = req.Message.OrganizationID
+		}
+		if len(req.Diagnostics) > 0 {
+			if err := edidb.EDIMessageValidationErrors.CreateMany(
+				ctx,
+				db,
+				req.Diagnostics,
+			); err != nil {
+				return nil, messageErrors.Map(err, req.Message.ID.String())
+			}
+		}
+
 		req.Message.ValidationErrors = req.Diagnostics
 		return req.Message, nil
 	})
@@ -192,117 +216,119 @@ func (r *repository) GetServiceFailure214LifecycleMessage(
 	req ediports.GetServiceFailure214LifecycleMessageRequest,
 ) (*edi.EDIMessage, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*edi.EDIMessage, error) {
-		entity := new(edi.EDIMessage)
-		cols := edicol.EDIMessageColumns
-		rel := edicol.EDIMessageRelations
-
-		err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(entity).
-			Relation(rel.Partner).
-			Relation(rel.PartnerDocumentProfile).
-			Where(cols.TransactionSet.Eq(), edi.TransactionSet214).
-			Where(cols.Direction.Eq(), edi.DocumentDirectionOutbound).
-			Where("payload_snapshot->'shipmentStatus'->>'serviceFailureId' = ?", req.ServiceFailureID.String()).
-			Where(
-				"payload_snapshot->'shipmentStatus'->'references'->>'serviceFailureId' = ?",
-				req.ServiceFailureID.String(),
-			).
-			Where(
-				"payload_snapshot->'shipmentStatus'->'references'->>'serviceFailure214Trigger' = ?",
-				req.Trigger,
-			).
-			Apply(edicol.EDIMessageApplyTenant(req.TenantInfo)).
-			Order(cols.GeneratedAt.OrderDesc()).
-			Limit(1).
-			Scan(ctx)
+		entity, err := lifecycleMessageQuery(&req).First(ctx, r.db.Keel(ctx))
 		if err != nil {
-			return nil, dberror.HandleNotFoundError(err, "EDIMessage")
+			return nil, messageErrors.Map(err, req.ServiceFailureID.String())
 		}
+
 		return entity, nil
 	})
 }
+
+func lifecycleMessageQuery(
+	req *ediports.GetServiceFailure214LifecycleMessageRequest,
+) *keel.Query[edi.EDIMessage] {
+	m := edidb.EDIMessages
+	failureID := req.ServiceFailureID.String()
+
+	return m.Where(
+		m.TransactionSet.Eq(edi.TransactionSet214),
+		m.Direction.Eq(edi.DocumentDirectionOutbound),
+		m.PayloadSnapshot.Text("shipmentStatus", "serviceFailureId").Eq(failureID),
+		m.PayloadSnapshot.Text("shipmentStatus", "references", "serviceFailureId").Eq(failureID),
+		m.PayloadSnapshot.Text("shipmentStatus", "references", "serviceFailure214Trigger").
+			Eq(req.Trigger),
+	).
+		Load(m.Partner(), m.PartnerDocumentProfile()).
+		Order(m.GeneratedAt.Desc())
+}
+
+const serviceFailure214StatusSQL = `
+WITH lifecycle_messages AS (
+	SELECT
+		emsg.id,
+		emsg.status,
+		emsg.delivery_status,
+		emsg.ack_status,
+		emsg.generated_at,
+		emsg.payload_snapshot->'shipmentStatus'->'references'->>'serviceFailure214Trigger' AS trigger
+	FROM edi_messages AS emsg
+	WHERE emsg.organization_id = $1
+		AND emsg.business_unit_id = $2
+		AND emsg.transaction_set = $3
+		AND emsg.direction = $4
+		AND emsg.payload_snapshot->'shipmentStatus'->>'serviceFailureId' = $5
+		AND emsg.payload_snapshot->'shipmentStatus'->'references'->>'serviceFailureId' = $5
+),
+last_message AS (
+	SELECT *
+	FROM lifecycle_messages
+	ORDER BY generated_at DESC, id DESC
+	LIMIT 1
+),
+last_diagnostic AS (
+	SELECT emve.message
+	FROM edi_message_validation_errors AS emve
+	JOIN last_message lm ON lm.id = emve.message_id
+	WHERE emve.organization_id = $1
+		AND emve.business_unit_id = $2
+		AND emve.severity = $6
+	ORDER BY emve.created_at DESC, emve.id DESC
+	LIMIT 1
+)
+SELECT
+	$5::text AS service_failure_id,
+	COALESCE((
+		SELECT id FROM lifecycle_messages
+		WHERE trigger = $7
+		ORDER BY generated_at DESC, id DESC
+		LIMIT 1
+	), '') AS reviewed_message_id,
+	COALESCE((
+		SELECT id FROM lifecycle_messages
+		WHERE trigger = $8
+		ORDER BY generated_at DESC, id DESC
+		LIMIT 1
+	), '') AS resolved_message_id,
+	COALESCE((SELECT id FROM last_message), '') AS last_message_id,
+	COALESCE((SELECT status::text FROM last_message), '') AS generated_status,
+	COALESCE((SELECT delivery_status::text FROM last_message), '') AS delivery_status,
+	COALESCE((SELECT ack_status::text FROM last_message), '') AS ack_status,
+	COALESCE((SELECT message FROM last_diagnostic), '') AS last_diagnostic,
+	COALESCE((SELECT generated_at FROM last_message), 0) AS last_generated_at`
 
 func (r *repository) GetServiceFailure214Status(
 	ctx context.Context,
 	req ediports.GetServiceFailure214StatusRequest,
 ) (*ediports.ServiceFailure214StatusRow, error) {
-	return dbtx.Write(
+	return dbtx.Read(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*ediports.ServiceFailure214StatusRow, error) {
-			status := &ediports.ServiceFailure214StatusRow{ServiceFailureID: req.ServiceFailureID}
-			err := r.db.DBForContext(ctx).NewRaw(`
-		WITH lifecycle_messages AS (
-			SELECT
-				emsg.id,
-				emsg.status,
-				emsg.delivery_status,
-				emsg.ack_status,
-				emsg.generated_at,
-				emsg.payload_snapshot->'shipmentStatus'->'references'->>'serviceFailure214Trigger' AS trigger
-			FROM edi_messages AS emsg
-			WHERE emsg.organization_id = ?
-				AND emsg.business_unit_id = ?
-				AND emsg.transaction_set = ?
-				AND emsg.direction = ?
-				AND emsg.payload_snapshot->'shipmentStatus'->>'serviceFailureId' = ?
-				AND emsg.payload_snapshot->'shipmentStatus'->'references'->>'serviceFailureId' = ?
-		),
-		last_message AS (
-			SELECT *
-			FROM lifecycle_messages
-			ORDER BY generated_at DESC, id DESC
-			LIMIT 1
-		),
-		last_diagnostic AS (
-			SELECT emve.message
-			FROM edi_message_validation_errors AS emve
-			JOIN last_message lm ON lm.id = emve.message_id
-			WHERE emve.organization_id = ?
-				AND emve.business_unit_id = ?
-				AND emve.severity = ?
-			ORDER BY emve.created_at DESC, emve.id DESC
-			LIMIT 1
-		)
-		SELECT
-			? AS service_failure_id,
-			COALESCE((
-				SELECT id FROM lifecycle_messages
-				WHERE trigger = ?
-				ORDER BY generated_at DESC, id DESC
-				LIMIT 1
-			), '') AS reviewed_message_id,
-			COALESCE((
-				SELECT id FROM lifecycle_messages
-				WHERE trigger = ?
-				ORDER BY generated_at DESC, id DESC
-				LIMIT 1
-			), '') AS resolved_message_id,
-			COALESCE((SELECT id FROM last_message), '') AS last_message_id,
-			COALESCE((SELECT status FROM last_message), '') AS generated_status,
-			COALESCE((SELECT delivery_status FROM last_message), '') AS delivery_status,
-			COALESCE((SELECT ack_status FROM last_message), '') AS ack_status,
-			COALESCE((SELECT message FROM last_diagnostic), '') AS last_diagnostic,
-			COALESCE((SELECT generated_at FROM last_message), 0) AS last_generated_at
-	`,
-				req.TenantInfo.OrgID,
-				req.TenantInfo.BuID,
-				edi.TransactionSet214,
-				edi.DocumentDirectionOutbound,
+			rows, err := keel.QueryAll(
+				ctx,
+				r.db.Keel(ctx),
+				pgx.RowToStructByPos[ediports.ServiceFailure214StatusRow],
+				serviceFailure214StatusSQL,
+				req.TenantInfo.OrgID.String(),
+				req.TenantInfo.BuID.String(),
+				string(edi.TransactionSet214),
+				string(edi.DocumentDirectionOutbound),
 				req.ServiceFailureID.String(),
-				req.ServiceFailureID.String(),
-				req.TenantInfo.OrgID,
-				req.TenantInfo.BuID,
-				edi.ValidationSeverityError,
-				req.ServiceFailureID,
+				string(edi.ValidationSeverityError),
 				serviceFailure214ReviewedTrigger,
 				serviceFailure214ResolvedTrigger,
-			).Scan(ctx, status)
+			)
 			if err != nil {
 				return nil, err
 			}
-			return status, nil
+			if len(rows) == 0 {
+				return &ediports.ServiceFailure214StatusRow{
+					ServiceFailureID: req.ServiceFailureID,
+				}, nil
+			}
+
+			return &rows[0], nil
 		},
 	)
 }
@@ -313,40 +339,76 @@ func (r *repository) UpdateMessageDelivery(
 ) (*edi.EDIMessage, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*edi.EDIMessage, error) {
 		if req == nil {
-			return nil, errors.New("EDI message delivery update request is required")
+			return nil, errDeliveryRequestRequired
 		}
-		entity := new(edi.EDIMessage)
-		query := r.db.DBForContext(ctx).
-			NewUpdate().
-			Model(entity).
-			Set("delivery_status = ?", req.DeliveryStatus).
-			Set("delivery_remote_path = ?", req.DeliveryRemotePath).
-			Set("delivery_last_attempt_at = ?", req.DeliveryLastAttemptAt).
-			Set("delivery_sent_at = ?", req.DeliverySentAt).
-			Set("delivery_last_error = ?", req.DeliveryLastError).
-			Set("updated_at = "+dbhelper.NowEpoch).
-			Where("id = ?", req.ID).
-			Where("organization_id = ?", req.TenantInfo.OrgID).
-			Where("business_unit_id = ?", req.TenantInfo.BuID).
-			Returning("*")
+
+		m := edidb.EDIMessages
+		sets := []keel.Assignment{
+			m.DeliveryStatus.To(req.DeliveryStatus),
+			m.DeliveryRemotePath.To(req.DeliveryRemotePath),
+			setOptional(m.DeliveryLastAttemptAt, req.DeliveryLastAttemptAt),
+			setOptional(m.DeliverySentAt, req.DeliverySentAt),
+			m.DeliveryLastError.To(req.DeliveryLastError),
+			m.Version.ToExpr(m.Version),
+		}
 		if req.AS2MessageID != "" {
-			query = query.Set("as2_message_id = ?", req.AS2MessageID)
+			sets = append(sets, m.AS2MessageID.To(req.AS2MessageID))
 		}
 		if req.AS2MIC != "" {
-			query = query.Set("as2_mic = ?", req.AS2MIC)
+			sets = append(sets, m.AS2MIC.To(req.AS2MIC))
 		}
 		if req.IncrementAttempts {
-			query = query.Set("delivery_attempts = delivery_attempts + 1")
+			sets = append(sets, m.DeliveryAttempts.Add(1))
 		}
-		results, err := query.Exec(ctx)
-		if err != nil {
-			return nil, err
-		}
-		if err = dberror.CheckRowsAffected(results, "EDIMessage", req.ID.String()); err != nil {
-			return nil, err
-		}
-		return entity, nil
+
+		return updateOne(ctx, r.db.Keel(ctx), req.ID, sets)
 	})
+}
+
+func (r *repository) UpdateMessageAcknowledgment(
+	ctx context.Context,
+	req *ediports.UpdateEDIMessageAcknowledgmentRequest,
+) (*edi.EDIMessage, error) {
+	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*edi.EDIMessage, error) {
+		if req == nil {
+			return nil, errAckRequestRequired
+		}
+
+		m := edidb.EDIMessages
+		return updateOne(ctx, r.db.Keel(ctx), req.ID, []keel.Assignment{
+			m.AckStatus.To(req.AckStatus),
+			m.AckMessageID.To(req.AckMessageID),
+			setOptional(m.AckReceivedAt, req.AckReceivedAt),
+			m.AckLastError.To(req.AckLastError),
+			m.Version.ToExpr(m.Version),
+		})
+	})
+}
+
+func updateOne(
+	ctx context.Context,
+	db *keel.DB,
+	id pulid.ID,
+	sets []keel.Assignment,
+) (*edi.EDIMessage, error) {
+	m := edidb.EDIMessages
+	rows, err := m.Where(m.ID.Eq(id)).UpdateReturning(ctx, db, sets...)
+	if err != nil {
+		return nil, messageErrors.Map(err, id.String())
+	}
+	if err = dberror.CheckAffected(int64(len(rows)), "EDIMessage", id.String()); err != nil {
+		return nil, err
+	}
+
+	return rows[0], nil
+}
+
+func setOptional(col keel.Int64Col, value *int64) keel.Assignment {
+	if value == nil {
+		return col.ToNull()
+	}
+
+	return col.To(*value)
 }
 
 func (r *repository) GetOutboundMessageByAS2MessageID(
@@ -358,20 +420,21 @@ func (r *repository) GetOutboundMessageByAS2MessageID(
 		"resolve the outbound message an inbound AS2 receipt names before its tenant is known",
 	)
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*edi.EDIMessage, error) {
-		entity := new(edi.EDIMessage)
-		cols := edicol.EDIMessageColumns
-		err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(entity).
-			Where(cols.AS2MessageID.Eq(), as2MessageID).
-			Where(cols.Direction.Eq(), edi.DocumentDirectionOutbound).
-			Limit(1).
-			Scan(ctx)
+		m := edidb.EDIMessages
+		entity, err := m.AllTenants().
+			Where(m.AS2MessageID.Eq(as2MessageID), m.Direction.Eq(edi.DocumentDirectionOutbound)).
+			First(ctx, r.db.Keel(ctx))
 		if err != nil {
-			return nil, dberror.HandleNotFoundError(err, "EDIMessage")
+			return nil, messageErrors.Map(err, as2MessageID)
 		}
+
 		return entity, nil
 	})
+}
+
+type deliveryStatusCount struct {
+	Status edi.MessageDeliveryStatus
+	Count  int64
 }
 
 func (r *repository) GetDeliveryStatusCounts(
@@ -382,35 +445,45 @@ func (r *repository) GetDeliveryStatusCounts(
 		ctx,
 		r.db,
 		func(ctx context.Context) (map[edi.MessageDeliveryStatus]int, error) {
-			cols := edicol.EDIMessageColumns
-			var rows []struct {
-				DeliveryStatus edi.MessageDeliveryStatus `bun:"delivery_status"`
-				Count          int                       `bun:"count"`
-			}
-			query := r.db.DBForContext(ctx).
-				NewSelect().
-				Model((*edi.EDIMessage)(nil)).
-				ColumnExpr(cols.DeliveryStatus.Qualified()).
-				ColumnExpr("COUNT(*) AS count").
-				Where(cols.DeliveryStatus.IsNotNull()).
-				Apply(edicol.EDIMessageApplyTenant(req.TenantInfo)).
-				GroupExpr(cols.DeliveryStatus.Qualified())
-			if req.Since > 0 {
-				query = query.Where(cols.GeneratedAt.Gte(), req.Since)
-			}
-			if req.PartnerID.IsNotNil() {
-				query = query.Where(cols.EDIPartnerID.Eq(), req.PartnerID)
-			}
-			if err := query.Scan(ctx, &rows); err != nil {
+			m := edidb.EDIMessages
+			rows, err := keel.Into[deliveryStatusCount](
+				ctx,
+				r.db.Keel(ctx),
+				m.Where(
+					m.DeliveryStatus.IsNotNull(),
+					keel.When(req.Since > 0, m.GeneratedAt.Gte(req.Since)),
+					keel.When(req.PartnerID.IsNotNil(), m.EDIPartnerID.Eq(req.PartnerID)),
+				).
+					Group(m.DeliveryStatus).
+					Pick(m.DeliveryStatus, keel.Count()),
+			)
+			if err != nil {
 				return nil, err
 			}
+
 			counts := make(map[edi.MessageDeliveryStatus]int, len(rows))
 			for _, row := range rows {
-				counts[row.DeliveryStatus] = row.Count
+				counts[row.Status] = int(row.Count)
 			}
+
 			return counts, nil
 		},
 	)
+}
+
+type ackStatusCount struct {
+	Status edi.MessageAcknowledgmentStatus
+	Count  int64
+}
+
+func ackStatusFilters(req *ediports.GetEDIMessageStatusCountsRequest) []keel.Pred {
+	m := edidb.EDIMessages
+	return []keel.Pred{
+		m.AckStatus.IsNotNull(),
+		keel.When(req.Since > 0, m.GeneratedAt.Gte(req.Since)),
+		keel.When(req.PartnerID.IsNotNil(), m.EDIPartnerID.Eq(req.PartnerID)),
+		keel.When(req.TransactionSet != "", m.TransactionSet.Eq(req.TransactionSet)),
+	}
 }
 
 func (r *repository) GetAckStatusCounts(
@@ -421,35 +494,23 @@ func (r *repository) GetAckStatusCounts(
 		ctx,
 		r.db,
 		func(ctx context.Context) (map[edi.MessageAcknowledgmentStatus]int, error) {
-			cols := edicol.EDIMessageColumns
-			var rows []struct {
-				AckStatus edi.MessageAcknowledgmentStatus `bun:"ack_status"`
-				Count     int                             `bun:"count"`
-			}
-			query := r.db.DBForContext(ctx).
-				NewSelect().
-				Model((*edi.EDIMessage)(nil)).
-				ColumnExpr(cols.AckStatus.Qualified()).
-				ColumnExpr("COUNT(*) AS count").
-				Where(cols.AckStatus.IsNotNull()).
-				Apply(edicol.EDIMessageApplyTenant(req.TenantInfo)).
-				GroupExpr(cols.AckStatus.Qualified())
-			if req.Since > 0 {
-				query = query.Where(cols.GeneratedAt.Gte(), req.Since)
-			}
-			if req.PartnerID.IsNotNil() {
-				query = query.Where(cols.EDIPartnerID.Eq(), req.PartnerID)
-			}
-			if req.TransactionSet != "" {
-				query = query.Where(cols.TransactionSet.Eq(), req.TransactionSet)
-			}
-			if err := query.Scan(ctx, &rows); err != nil {
+			m := edidb.EDIMessages
+			rows, err := keel.Into[ackStatusCount](
+				ctx,
+				r.db.Keel(ctx),
+				m.Where(ackStatusFilters(&req)...).
+					Group(m.AckStatus).
+					Pick(m.AckStatus, keel.Count()),
+			)
+			if err != nil {
 				return nil, err
 			}
+
 			counts := make(map[edi.MessageAcknowledgmentStatus]int, len(rows))
 			for _, row := range rows {
-				counts[row.AckStatus] = row.Count
+				counts[row.Status] = int(row.Count)
 			}
+
 			return counts, nil
 		},
 	)
@@ -463,46 +524,24 @@ func (r *repository) GetAckStatusCountsByPartner(
 		ctx,
 		r.db,
 		func(ctx context.Context) ([]*ediports.EDIPartnerAckStatusCount, error) {
-			cols := edicol.EDIMessageColumns
-			partner := edicol.EDIPartnerColumns
-			rows := make([]*ediports.EDIPartnerAckStatusCount, 0)
-			query := r.db.DBForContext(ctx).
-				NewSelect().
-				Model((*edi.EDIMessage)(nil)).
-				ColumnExpr(cols.EDIPartnerID.Qualified()).
-				ColumnExpr(buncolgen.Max(partner.Name, "partner_name")).
-				ColumnExpr(buncolgen.Max(partner.Code, "partner_code")).
-				ColumnExpr(cols.AckStatus.Qualified()).
-				ColumnExpr(buncolgen.Count("count")).
-				Join("JOIN "+edicol.EDIPartnerTable.Name+" AS "+edicol.EDIPartnerTable.Alias).
-				JoinOn(partner.ID.EqColumn(cols.EDIPartnerID)).
-				JoinOn(partner.OrganizationID.EqColumn(cols.OrganizationID)).
-				JoinOn(partner.BusinessUnitID.EqColumn(cols.BusinessUnitID)).
-				Where(cols.AckStatus.IsNotNull()).
-				Apply(edicol.EDIMessageApplyTenant(req.TenantInfo)).
-				GroupExpr(cols.EDIPartnerID.Qualified()).
-				GroupExpr(cols.AckStatus.Qualified()).
-				OrderExpr("partner_name ASC").
-				Order(cols.EDIPartnerID.OrderAsc(), cols.AckStatus.OrderAsc())
-			if req.Since > 0 {
-				query = query.Where(cols.GeneratedAt.Gte(), req.Since)
-			}
-			if req.PartnerID.IsNotNil() {
-				query = query.Where(cols.EDIPartnerID.Eq(), req.PartnerID)
-			}
-			if req.TransactionSet != "" {
-				query = query.Where(cols.TransactionSet.Eq(), req.TransactionSet)
-			}
-			if err := query.Scan(ctx, &rows); err != nil {
+			m := edidb.EDIMessages
+			partner := m.Partner()
+			rows, err := keel.Into[ediports.EDIPartnerAckStatusCount](
+				ctx,
+				r.db.Keel(ctx),
+				m.Where(ackStatusFilters(&req)...).
+					Group(m.EDIPartnerID, m.AckStatus).
+					Pick(m.EDIPartnerID, partner.Name.Max(), partner.Code.Max(), m.AckStatus, keel.Count()).
+					Order(partner.Name.Max().Asc(), m.EDIPartnerID.Asc(), m.AckStatus.Asc()),
+			)
+			if err != nil {
 				return nil, err
 			}
-			return rows, nil
+
+			return pointers(rows), nil
 		},
 	)
 }
-
-const scorecardPendingDeliveryFilter = "emsg.direction = 'Outbound' AND " +
-	"emsg.delivery_status IN ('Queued', 'Sending', 'Failed')"
 
 func (r *repository) GetPartnerScorecards(
 	ctx context.Context,
@@ -512,65 +551,63 @@ func (r *repository) GetPartnerScorecards(
 		ctx,
 		r.db,
 		func(ctx context.Context) ([]*ediports.EDIPartnerScorecardRow, error) {
-			rows := make([]*ediports.EDIPartnerScorecardRow, 0)
-			query := r.db.DBForContext(ctx).
-				NewSelect().
-				Model((*edi.EDIMessage)(nil)).
-				ColumnExpr("emsg.edi_partner_id AS partner_id").
-				ColumnExpr("MAX(ep.name) AS partner_name").
-				ColumnExpr("MAX(ep.code) AS partner_code").
-				ColumnExpr("COUNT(*) FILTER (WHERE emsg.direction = 'Outbound') AS outbound_total").
-				ColumnExpr(
-					"COUNT(*) FILTER (WHERE emsg.direction = 'Outbound' AND emsg.delivery_status = 'Sent') AS sent_count",
-				).
-				ColumnExpr(
-					"COUNT(*) FILTER (WHERE emsg.direction = 'Outbound' AND emsg.delivery_status = 'Failed') AS failed_count",
-				).
-				ColumnExpr(
-					"COUNT(*) FILTER (WHERE emsg.direction = 'Outbound' AND emsg.delivery_status = 'DeadLettered') AS dead_lettered_count",
-				).
-				ColumnExpr("COUNT(*) FILTER (WHERE emsg.direction = 'Inbound') AS received_count").
-				ColumnExpr(
-					"AVG(emsg.ack_received_at - emsg.delivery_sent_at) FILTER (WHERE emsg.ack_received_at IS NOT NULL AND emsg.delivery_sent_at IS NOT NULL) AS avg_ack_seconds",
-				).
-				ColumnExpr(
-					"percentile_cont(0.95) WITHIN GROUP (ORDER BY emsg.ack_received_at - emsg.delivery_sent_at) FILTER (WHERE emsg.ack_received_at IS NOT NULL AND emsg.delivery_sent_at IS NOT NULL) AS p95_ack_seconds",
-				).
-				ColumnExpr(
-					"COUNT(*) FILTER (WHERE emsg.ack_status = 'Pending' AND emsg.generated_at < ?) AS overdue_ack_count",
-					req.OverdueAckPendingSince,
-				).
-				ColumnExpr(
-					"COUNT(*) FILTER (WHERE "+scorecardPendingDeliveryFilter+" AND emsg.generated_at < ?) AS pending_over_4h_count",
-					req.PendingOver4hBefore,
-				).
-				ColumnExpr(
-					"COUNT(*) FILTER (WHERE "+scorecardPendingDeliveryFilter+" AND emsg.generated_at < ?) AS pending_over_24h_count",
-					req.PendingOver24hBefore,
-				).
-				ColumnExpr(
-					"MIN(emsg.generated_at) FILTER (WHERE " + scorecardPendingDeliveryFilter + ") AS oldest_pending_at",
-				).
-				Join("JOIN edi_partners AS ep").
-				JoinOn("ep.id = emsg.edi_partner_id").
-				JoinOn("ep.organization_id = emsg.organization_id").
-				JoinOn("ep.business_unit_id = emsg.business_unit_id").
-				Where("emsg.edi_partner_id IS NOT NULL").
-				Apply(edicol.EDIMessageApplyTenant(req.TenantInfo)).
-				GroupExpr("emsg.edi_partner_id").
-				OrderExpr("MAX(ep.name) ASC")
-			if req.Since > 0 {
-				query = query.Where(edicol.EDIMessageColumns.GeneratedAt.Gte(), req.Since)
-			}
-			if req.PartnerID.IsNotNil() {
-				query = query.Where(edicol.EDIMessageColumns.EDIPartnerID.Eq(), req.PartnerID)
-			}
-			if err := query.Scan(ctx, &rows); err != nil {
+			rows, err := keel.Into[ediports.EDIPartnerScorecardRow](
+				ctx,
+				r.db.Keel(ctx),
+				scorecardQuery(req),
+			)
+			if err != nil {
 				return nil, err
 			}
-			return rows, nil
+
+			return pointers(rows), nil
 		},
 	)
+}
+
+func scorecardQuery(req *ediports.GetEDIPartnerScorecardsRequest) *keel.Query[edi.EDIMessage] {
+	m := edidb.EDIMessages
+	partner := m.Partner()
+	outbound := m.Direction.Eq(edi.DocumentDirectionOutbound)
+	delivered := func(status edi.MessageDeliveryStatus) keel.Pred {
+		return keel.And(outbound, m.DeliveryStatus.Eq(status))
+	}
+	pendingDelivery := keel.And(outbound, m.DeliveryStatus.In(pendingDeliveryStatuses...))
+	acknowledged := keel.And(m.AckReceivedAt.IsNotNull(), m.DeliverySentAt.IsNotNull())
+	latency := keel.Raw("? - ?", m.AckReceivedAt, m.DeliverySentAt)
+
+	return m.Where(
+		m.EDIPartnerID.IsNotNull(),
+		keel.When(req.Since > 0, m.GeneratedAt.Gte(req.Since)),
+		keel.When(req.PartnerID.IsNotNil(), m.EDIPartnerID.Eq(req.PartnerID)),
+	).
+		Group(m.EDIPartnerID).
+		Pick(
+			m.EDIPartnerID,
+			partner.Name.Max(),
+			partner.Code.Max(),
+			keel.Count().Filter(outbound),
+			keel.Count().Filter(delivered(edi.MessageDeliveryStatusSent)),
+			keel.Count().Filter(delivered(edi.MessageDeliveryStatusFailed)),
+			keel.Count().Filter(delivered(edi.MessageDeliveryStatusDeadLettered)),
+			keel.Count().Filter(m.Direction.Eq(edi.DocumentDirectionInbound)),
+			keel.Raw("(?)::float8", keel.Avg(latency).Filter(acknowledged)),
+			keel.Raw(
+				"(percentile_cont(0.95) WITHIN GROUP (ORDER BY ?) FILTER (WHERE ?))::float8",
+				latency,
+				acknowledged,
+			),
+			keel.Count().Filter(keel.And(
+				m.AckStatus.Eq(edi.MessageAcknowledgmentStatusPending),
+				m.GeneratedAt.Lt(req.OverdueAckPendingSince),
+			)),
+			keel.Count().
+				Filter(keel.And(pendingDelivery, m.GeneratedAt.Lt(req.PendingOver4hBefore))),
+			keel.Count().
+				Filter(keel.And(pendingDelivery, m.GeneratedAt.Lt(req.PendingOver24hBefore))),
+			m.GeneratedAt.Min().Filter(pendingDelivery),
+		).
+		Order(partner.Name.Max().Asc())
 }
 
 func (r *repository) GetVolumeSeries(
@@ -578,37 +615,45 @@ func (r *repository) GetVolumeSeries(
 	req ediports.GetEDIVolumeSeriesRequest,
 ) ([]*ediports.EDIVolumePoint, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*ediports.EDIVolumePoint, error) {
-		bucket := req.BucketSeconds
-		if bucket <= 0 {
-			bucket = 3600
-		}
-		points := make([]*ediports.EDIVolumePoint, 0)
-		query := r.db.DBForContext(ctx).
-			NewSelect().
-			Model((*edi.EDIMessage)(nil)).
-			ColumnExpr("(emsg.generated_at / ?) * ? AS bucket_start", bucket, bucket).
-			ColumnExpr("COUNT(*) FILTER (WHERE emsg.direction = 'Outbound') AS outbound_count").
-			ColumnExpr(
-				"COUNT(*) FILTER (WHERE emsg.direction = 'Outbound' AND emsg.delivery_status = 'Sent') AS sent_count",
-			).
-			ColumnExpr(
-				"COUNT(*) FILTER (WHERE emsg.direction = 'Outbound' AND emsg.delivery_status IN ('Failed', 'DeadLettered')) AS failed_count",
-			).
-			ColumnExpr("COUNT(*) FILTER (WHERE emsg.direction = 'Inbound') AS received_count").
-			Apply(edicol.EDIMessageApplyTenant(req.TenantInfo)).
-			GroupExpr("1").
-			OrderExpr("1 ASC")
-		if req.Since > 0 {
-			query = query.Where(edicol.EDIMessageColumns.GeneratedAt.Gte(), req.Since)
-		}
-		if req.PartnerID.IsNotNil() {
-			query = query.Where(edicol.EDIMessageColumns.EDIPartnerID.Eq(), req.PartnerID)
-		}
-		if err := query.Scan(ctx, &points); err != nil {
+		points, err := keel.Into[ediports.EDIVolumePoint](
+			ctx,
+			r.db.Keel(ctx),
+			volumeQuery(&req),
+		)
+		if err != nil {
 			return nil, err
 		}
-		return points, nil
+
+		return pointers(points), nil
 	})
+}
+
+func volumeQuery(req *ediports.GetEDIVolumeSeriesRequest) *keel.Query[edi.EDIMessage] {
+	m := edidb.EDIMessages
+	bucket := req.BucketSeconds
+	if bucket <= 0 {
+		bucket = defaultBucketSeconds
+	}
+	bucketStart := keel.Raw("(? / ?) * ?", m.GeneratedAt, bucket, bucket)
+	outbound := m.Direction.Eq(edi.DocumentDirectionOutbound)
+
+	return m.Where(
+		keel.When(req.Since > 0, m.GeneratedAt.Gte(req.Since)),
+		keel.When(req.PartnerID.IsNotNil(), m.EDIPartnerID.Eq(req.PartnerID)),
+	).
+		Group(bucketStart).
+		Pick(
+			bucketStart,
+			keel.Count().Filter(outbound),
+			keel.Count().
+				Filter(keel.And(outbound, m.DeliveryStatus.Eq(edi.MessageDeliveryStatusSent))),
+			keel.Count().Filter(keel.And(outbound, m.DeliveryStatus.In(
+				edi.MessageDeliveryStatusFailed,
+				edi.MessageDeliveryStatusDeadLettered,
+			))),
+			keel.Count().Filter(m.Direction.Eq(edi.DocumentDirectionInbound)),
+		).
+		Order(keel.Asc(bucketStart))
 }
 
 func (r *repository) GetPartnerSetActivity(
@@ -619,38 +664,55 @@ func (r *repository) GetPartnerSetActivity(
 		ctx,
 		r.db,
 		func(ctx context.Context) ([]*ediports.EDIPartnerSetActivityRow, error) {
-			cols := edicol.EDIMessageColumns
-			outbound := cols.Direction.Expr("{} = '" + string(edi.DocumentDirectionOutbound) + "'")
-			rows := make([]*ediports.EDIPartnerSetActivityRow, 0, 8)
-			query := r.db.DBForContext(ctx).
-				NewSelect().
-				Model((*edi.EDIMessage)(nil)).
-				ColumnExpr(cols.TransactionSet.As("transaction_set")).
-				ColumnExpr(cols.Direction.As("direction")).
-				ColumnExpr(buncolgen.Count("count")).
-				ColumnExpr(
-					buncolgen.CountFilter("failed_count", outbound, cols.DeliveryStatus.Eq()),
-					edi.MessageDeliveryStatusFailed,
+			m := edidb.EDIMessages
+			outbound := m.Direction.Eq(edi.DocumentDirectionOutbound)
+			rows, err := keel.Into[ediports.EDIPartnerSetActivityRow](
+				ctx,
+				r.db.Keel(ctx),
+				m.Where(
+					m.EDIPartnerID.Eq(req.PartnerID),
+					keel.When(req.Since > 0, m.GeneratedAt.Gte(req.Since)),
 				).
-				ColumnExpr(
-					buncolgen.CountFilter("dead_lettered_count", outbound, cols.DeliveryStatus.Eq()),
-					edi.MessageDeliveryStatusDeadLettered,
-				).
-				ColumnExpr(buncolgen.Max(cols.GeneratedAt, "last_at")).
-				Apply(edicol.EDIMessageApplyTenant(req.TenantInfo)).
-				Where(cols.EDIPartnerID.Eq(), req.PartnerID).
-				GroupExpr(cols.TransactionSet.Qualified()).
-				GroupExpr(cols.Direction.Qualified()).
-				Order(cols.Direction.OrderDesc(), cols.TransactionSet.OrderAsc())
-			if req.Since > 0 {
-				query = query.Where(cols.GeneratedAt.Gte(), req.Since)
-			}
-			if err := query.Scan(ctx, &rows); err != nil {
+					Group(m.TransactionSet, m.Direction).
+					Pick(
+						m.TransactionSet,
+						m.Direction,
+						keel.Count(),
+						keel.Count().Filter(keel.And(
+							outbound,
+							m.DeliveryStatus.Eq(edi.MessageDeliveryStatusFailed),
+						)),
+						keel.Count().Filter(keel.And(
+							outbound,
+							m.DeliveryStatus.Eq(edi.MessageDeliveryStatusDeadLettered),
+						)),
+						m.GeneratedAt.Max(),
+					).
+					Order(m.Direction.Desc(), m.TransactionSet.Asc()),
+			)
+			if err != nil {
 				return nil, err
 			}
-			return rows, nil
+
+			return pointers(rows), nil
 		},
 	)
+}
+
+type overdueAckFilter struct {
+	pendingSince   int64
+	partnerID      pulid.ID
+	transactionSet edi.TransactionSet
+}
+
+func (f *overdueAckFilter) where() []keel.Pred {
+	m := edidb.EDIMessages
+	return []keel.Pred{
+		m.AckStatus.Eq(edi.MessageAcknowledgmentStatusPending),
+		m.GeneratedAt.Lt(f.pendingSince),
+		keel.When(f.partnerID.IsNotNil(), m.EDIPartnerID.Eq(f.partnerID)),
+		keel.When(f.transactionSet != "", m.TransactionSet.Eq(f.transactionSet)),
+	}
 }
 
 func (r *repository) GetOverdueAckCount(
@@ -658,13 +720,17 @@ func (r *repository) GetOverdueAckCount(
 	req ediports.GetEDIOverdueAckCountRequest,
 ) (int, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (int, error) {
-		return dbhelper.Count(ctx, whereOverdueAck(
-			r.db.DBForContext(ctx).NewSelect().Model((*edi.EDIMessage)(nil)),
-			req.TenantInfo,
-			req.PendingSince,
-			req.PartnerID,
-			req.TransactionSet,
-		))
+		filter := overdueAckFilter{
+			pendingSince:   req.PendingSince,
+			partnerID:      req.PartnerID,
+			transactionSet: req.TransactionSet,
+		}
+		n, err := edidb.EDIMessages.Where(filter.where()...).Count(ctx, r.db.Keel(ctx))
+		if err != nil {
+			return 0, err
+		}
+
+		return int(n), nil
 	})
 }
 
@@ -673,34 +739,34 @@ func (r *repository) ListOverdueAcks(
 	req *ediports.ListOverdueEDIAcksRequest,
 ) (*ediports.OverdueEDIAcks, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*ediports.OverdueEDIAcks, error) {
-		cols := edicol.EDIMessageColumns
-		dba := r.db.DBForContext(ctx)
+		db := r.db.Keel(ctx)
+		m := edidb.EDIMessages
+		partner := m.Partner()
+		filter := overdueAckFilter{
+			pendingSince:   req.PendingSince,
+			partnerID:      req.PartnerID,
+			transactionSet: req.TransactionSet,
+		}
 
-		partner := edicol.EDIPartnerColumns
-		partners := make([]*ediports.OverdueEDIAckPartner, 0)
-		if err := whereOverdueAck(
-			dba.NewSelect().Model((*edi.EDIMessage)(nil)),
-			req.TenantInfo,
-			req.PendingSince,
-			req.PartnerID,
-			req.TransactionSet,
-		).
-			ColumnExpr(cols.EDIPartnerID.Qualified()).
-			ColumnExpr(buncolgen.Max(partner.Name, "partner_name")).
-			ColumnExpr(buncolgen.Max(partner.Code, "partner_code")).
-			ColumnExpr(buncolgen.Count("count")).
-			ColumnExpr(buncolgen.Min(cols.GeneratedAt, "oldest_generated_at")).
-			Join("JOIN "+edicol.EDIPartnerTable.Name+" AS "+edicol.EDIPartnerTable.Alias).
-			JoinOn(partner.ID.EqColumn(cols.EDIPartnerID)).
-			JoinOn(partner.OrganizationID.EqColumn(cols.OrganizationID)).
-			JoinOn(partner.BusinessUnitID.EqColumn(cols.BusinessUnitID)).
-			GroupExpr(cols.EDIPartnerID.Qualified()).
-			OrderExpr("oldest_generated_at ASC").
-			Order(cols.EDIPartnerID.OrderAsc()).
-			Scan(ctx, &partners); err != nil {
+		groups, err := keel.Into[ediports.OverdueEDIAckPartner](
+			ctx,
+			db,
+			m.Where(filter.where()...).
+				Group(m.EDIPartnerID).
+				Pick(
+					m.EDIPartnerID,
+					partner.Name.Max(),
+					partner.Code.Max(),
+					keel.Count(),
+					m.GeneratedAt.Min(),
+				).
+				Order(m.GeneratedAt.Min().Asc(), m.EDIPartnerID.Asc()),
+		)
+		if err != nil {
 			return nil, err
 		}
 
+		partners := pointers(groups)
 		total := 0
 		for _, group := range partners {
 			total += group.Count
@@ -713,44 +779,19 @@ func (r *repository) ListOverdueAcks(
 			return overdue, nil
 		}
 
-		if err := whereOverdueAck(
-			dba.NewSelect().Model(&overdue.Messages),
-			req.TenantInfo,
-			req.PendingSince,
-			req.PartnerID,
-			req.TransactionSet,
-		).
-			ExcludeColumn(cols.RawX12.String(), cols.PayloadSnapshot.String()).
-			Relation(edicol.EDIMessageRelations.Partner).
-			Order(cols.GeneratedAt.OrderAsc(), cols.ID.OrderAsc()).
-			Limit(int64(req.Limit)).
-			Scan(ctx); err != nil {
+		messages, err := m.Omit(m.RawX12, m.PayloadSnapshot).
+			Where(filter.where()...).
+			Load(m.Partner()).
+			Order(m.GeneratedAt.Asc(), m.ID.Asc()).
+			Limit(req.Limit).
+			List(ctx, db)
+		if err != nil {
 			return nil, err
 		}
+		overdue.Messages = append(overdue.Messages, messages...)
 
 		return overdue, nil
 	})
-}
-
-func whereOverdueAck(
-	q *bun.SelectQuery,
-	tenantInfo pagination.TenantInfo,
-	pendingSince int64,
-	partnerID pulid.ID,
-	set edi.TransactionSet,
-) *bun.SelectQuery {
-	cols := edicol.EDIMessageColumns
-	q = q.Where(cols.AckStatus.Eq(), edi.MessageAcknowledgmentStatusPending).
-		Where(cols.GeneratedAt.Lt(), pendingSince).
-		Apply(edicol.EDIMessageApplyTenant(tenantInfo))
-	if partnerID.IsNotNil() {
-		q = q.Where(cols.EDIPartnerID.Eq(), partnerID)
-	}
-	if set != "" {
-		q = q.Where(cols.TransactionSet.Eq(), set)
-	}
-
-	return q
 }
 
 func (r *repository) ListRecentDeadLettered(
@@ -758,35 +799,23 @@ func (r *repository) ListRecentDeadLettered(
 	req *ediports.ListRecentEDIMessageFailuresRequest,
 ) ([]*edi.EDIMessage, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*edi.EDIMessage, error) {
-		cols := edicol.EDIMessageColumns
 		limit := req.Limit
 		if limit <= 0 {
-			limit = 10
+			limit = defaultRecentFailuresLimit
 		}
-		entities := make([]*edi.EDIMessage, 0, limit)
-		query := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(&entities).
-			ExcludeColumn(cols.RawX12.String(), cols.PayloadSnapshot.String()).
-			Relation(edicol.EDIMessageRelations.Partner).
-			Where(cols.DeliveryStatus.Eq(), edi.MessageDeliveryStatusDeadLettered).
-			Apply(edicol.EDIMessageApplyTenant(req.TenantInfo))
-		if req.PartnerID.IsNotNil() {
-			query = query.Where(cols.EDIPartnerID.Eq(), req.PartnerID)
-		}
-		if req.TransactionSet != "" {
-			query = query.Where(cols.TransactionSet.Eq(), req.TransactionSet)
-		}
-		if req.Since > 0 {
-			query = query.Where(cols.UpdatedAt.Gte(), req.Since)
-		}
-		if err := query.
-			Order(cols.UpdatedAt.OrderDesc()).
-			Limit(int64(limit)).
-			Scan(ctx); err != nil {
-			return nil, err
-		}
-		return entities, nil
+
+		m := edidb.EDIMessages
+		return m.Omit(m.RawX12, m.PayloadSnapshot).
+			Where(
+				m.DeliveryStatus.Eq(edi.MessageDeliveryStatusDeadLettered),
+				keel.When(req.PartnerID.IsNotNil(), m.EDIPartnerID.Eq(req.PartnerID)),
+				keel.When(req.TransactionSet != "", m.TransactionSet.Eq(req.TransactionSet)),
+				keel.When(req.Since > 0, m.UpdatedAt.Gte(req.Since)),
+			).
+			Load(m.Partner()).
+			Order(m.UpdatedAt.Desc()).
+			Limit(limit).
+			List(ctx, r.db.Keel(ctx))
 	})
 }
 
@@ -795,36 +824,28 @@ func (r *repository) PurgeRawX12Before(
 	req ediports.PurgeEDIRawPayloadsRequest,
 ) (int64, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (int64, error) {
-		cols := edicol.EDIMessageColumns
-		subquery := r.db.DBForContext(ctx).
-			NewSelect().
-			Model((*edi.EDIMessage)(nil)).
-			Column("id").
-			Where(cols.OrganizationID.Eq(), req.TenantInfo.OrgID).
-			Where(cols.BusinessUnitID.Eq(), req.TenantInfo.BuID).
-			Where(cols.CreatedAt.Lt(), req.Before).
-			Where("emsg.raw_purged_at IS NULL").
-			WhereGroup(" AND ", func(q *bun.SelectQuery) *bun.SelectQuery {
-				return q.
-					Where(cols.Direction.Eq(), edi.DocumentDirectionInbound).
-					WhereOr(cols.DeliveryStatus.Eq(), edi.MessageDeliveryStatusSent)
-			}).
-			Limit(int64(req.Limit))
+		m := edidb.EDIMessages
+		due := edidb.EDIMessages.As("due")
+		batch := due.Pick(due.ID).
+			Where(
+				due.CreatedAt.Lt(req.Before),
+				due.RawPurgedAt.IsNull(),
+				keel.Or(
+					due.Direction.Eq(edi.DocumentDirectionInbound),
+					due.DeliveryStatus.Eq(edi.MessageDeliveryStatusSent),
+				),
+			).
+			Limit(req.Limit)
 
-		result, err := r.db.DBForContext(ctx).
-			NewUpdate().
-			Model((*edi.EDIMessage)(nil)).
-			Set("raw_x12 = ''").
-			Set("payload_snapshot = '{}'::jsonb").
-			Set("raw_purged_at = ?", req.PurgedAt).
-			Where(cols.OrganizationID.Eq(), req.TenantInfo.OrgID).
-			Where(cols.BusinessUnitID.Eq(), req.TenantInfo.BuID).
-			Where("emsg.id IN (?)", subquery).
-			Exec(ctx)
-		if err != nil {
-			return 0, err
-		}
-		return result.RowsAffected()
+		return m.Where(m.ID.InQuery(batch)).Update(
+			ctx,
+			r.db.Keel(ctx),
+			m.RawX12.To(""),
+			m.PayloadSnapshot.ToExpr(keel.Raw("'{}'::jsonb")),
+			m.RawPurgedAt.To(req.PurgedAt),
+			m.Version.ToExpr(m.Version),
+			m.UpdatedAt.ToExpr(m.UpdatedAt),
+		)
 	})
 }
 
@@ -834,17 +855,13 @@ func (r *repository) CountDeadLetteredSince(ctx context.Context, since int64) (i
 		"count dead-lettered EDI messages instance-wide for the health check",
 	)
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (int64, error) {
-		cols := edicol.EDIMessageColumns
-		count, err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model((*edi.EDIMessage)(nil)).
-			Where(cols.DeliveryStatus.Eq(), edi.MessageDeliveryStatusDeadLettered).
-			Where(cols.UpdatedAt.Gte(), since).
-			Count(ctx)
-		if err != nil {
-			return 0, err
-		}
-		return int64(count), nil
+		m := edidb.EDIMessages
+		return m.AllTenants().
+			Where(
+				m.DeliveryStatus.Eq(edi.MessageDeliveryStatusDeadLettered),
+				m.UpdatedAt.Gte(since),
+			).
+			Count(ctx, r.db.Keel(ctx))
 	})
 }
 
@@ -853,179 +870,33 @@ func (r *repository) GetOutboundMessageForAck(
 	req ediports.GetEDIOutboundMessageForAckRequest,
 ) (*edi.EDIMessage, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*edi.EDIMessage, error) {
-		entity := new(edi.EDIMessage)
-		cols := edicol.EDIMessageColumns
-
-		query := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(entity).
-			Where(cols.EDIPartnerID.Eq(), req.PartnerID).
-			Where(cols.Direction.Eq(), edi.DocumentDirectionOutbound).
-			Where(cols.OrganizationID.Eq(), req.TenantInfo.OrgID).
-			Where(cols.BusinessUnitID.Eq(), req.TenantInfo.BuID).
-			Where(
-				"ltrim(emsg.group_control_number, '0') = ltrim(?, '0')",
-				req.GroupControlNumber,
-			).
-			Where(
-				"ltrim(emsg.transaction_control_number, '0') = ltrim(?, '0')",
+		m := edidb.EDIMessages
+		entity, err := m.Where(
+			m.EDIPartnerID.Eq(req.PartnerID),
+			m.Direction.Eq(edi.DocumentDirectionOutbound),
+			keel.Raw("ltrim(?, '0') = ltrim(?, '0')", m.GroupControlNumber, req.GroupControlNumber),
+			keel.Raw(
+				"ltrim(?, '0') = ltrim(?, '0')",
+				m.TransactionControlNumber,
 				req.TransactionControlNumber,
-			)
-		if req.TransactionSet != "" {
-			query = query.Where(cols.TransactionSet.Eq(), req.TransactionSet)
-		}
-		err := query.
-			Order(cols.GeneratedAt.OrderDesc()).
-			Limit(1).
-			Scan(ctx)
+			),
+			keel.When(req.TransactionSet != "", m.TransactionSet.Eq(req.TransactionSet)),
+		).
+			Order(m.GeneratedAt.Desc()).
+			First(ctx, r.db.Keel(ctx))
 		if err != nil {
-			return nil, dberror.HandleNotFoundError(err, "EDIMessage")
+			return nil, messageErrors.Map(err, req.TransactionControlNumber)
 		}
+
 		return entity, nil
 	})
 }
 
-func (r *repository) UpdateMessageAcknowledgment(
-	ctx context.Context,
-	req *ediports.UpdateEDIMessageAcknowledgmentRequest,
-) (*edi.EDIMessage, error) {
-	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*edi.EDIMessage, error) {
-		if req == nil {
-			return nil, errors.New("EDI message acknowledgment update request is required")
-		}
-		entity := new(edi.EDIMessage)
-		results, err := r.db.DBForContext(ctx).
-			NewUpdate().
-			Model(entity).
-			Set("ack_status = ?", req.AckStatus).
-			Set("ack_message_id = ?", req.AckMessageID).
-			Set("ack_received_at = ?", req.AckReceivedAt).
-			Set("ack_last_error = ?", req.AckLastError).
-			Set("updated_at = "+dbhelper.NowEpoch).
-			Where("id = ?", req.ID).
-			Where("organization_id = ?", req.TenantInfo.OrgID).
-			Where("business_unit_id = ?", req.TenantInfo.BuID).
-			Returning("*").
-			Exec(ctx)
-		if err != nil {
-			return nil, err
-		}
-		if err = dberror.CheckRowsAffected(results, "EDIMessage", req.ID.String()); err != nil {
-			return nil, err
-		}
-		return entity, nil
-	})
-}
-
-func applyMessageArchiveSearch(query *bun.SelectQuery, search string) *bun.SelectQuery {
-	search = strings.TrimSpace(search)
-	if search == "" {
-		return query
+func pointers[T any](rows []T) []*T {
+	out := make([]*T, len(rows))
+	for i := range rows {
+		out[i] = &rows[i]
 	}
 
-	term := "%" + strings.ToLower(search) + "%"
-	cols := edicol.EDIMessageColumns
-
-	return query.WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-		return sq.WhereOr(cols.ID.LowerLike(), term).
-			WhereOr(cols.ShipmentID.LowerLike(), term).
-			WhereOr(cols.TransferID.LowerLike(), term).
-			WhereOr(cols.InterchangeControlNumber.LowerLike(), term).
-			WhereOr(cols.GroupControlNumber.LowerLike(), term).
-			WhereOr(cols.TransactionControlNumber.LowerLike(), term)
-	})
-}
-
-func (r *repository) ListMessagesCursor(
-	ctx context.Context,
-	req *ediports.ListEDIMessagesRequest,
-) (*pagination.CursorListResult[*edi.EDIMessage], error) {
-	return dbtx.Write(
-		ctx,
-		r.db,
-		func(ctx context.Context) (*pagination.CursorListResult[*edi.EDIMessage], error) {
-			dba := r.db.DBForContext(ctx)
-			var totalCount *int
-			if req.Cursor.IncludeTotalCount {
-				total, err := dba.
-					NewSelect().
-					Model((*edi.EDIMessage)(nil)).
-					Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-						sq = querybuilder.ApplyFiltersWithoutSort(
-							sq,
-							"emsg",
-							req.Filter,
-							(*edi.EDIMessage)(nil),
-						)
-						return applyMessageListFilters(sq, req)
-					}).
-					Count(ctx)
-				if err != nil {
-					return nil, err
-				}
-				totalCount = new(int(total))
-			}
-
-			return dbhelper.CursorList(ctx, dbhelper.CursorListParams[*edi.EDIMessage]{
-				Filter:     req.Filter,
-				Cursor:     req.Cursor,
-				TotalCount: totalCount,
-				Query: func(entities *[]*edi.EDIMessage) *bun.SelectQuery {
-					return dba.
-						NewSelect().
-						Model(entities).
-						ExcludeColumn("raw_x12", "payload_snapshot").
-						Relation(edicol.EDIMessageRelations.Partner)
-				},
-				Apply: func(sq *bun.SelectQuery) (*bun.SelectQuery, error) {
-					sq, applyErr := querybuilder.ApplyCursorFilters(
-						sq,
-						"emsg",
-						req.Filter,
-						req.Cursor,
-						(*edi.EDIMessage)(nil),
-					)
-					if applyErr != nil {
-						return sq, applyErr
-					}
-					return applyMessageListFilters(sq, req), nil
-				},
-			})
-		},
-	)
-}
-
-func applyMessageListFilters(
-	q *bun.SelectQuery,
-	req *ediports.ListEDIMessagesRequest,
-) *bun.SelectQuery {
-	cols := edicol.EDIMessageColumns
-	if req.TransactionSet != "" {
-		q = q.Where(cols.TransactionSet.Eq(), req.TransactionSet)
-	}
-	if req.Direction != "" {
-		q = q.Where(cols.Direction.Eq(), req.Direction)
-	}
-	if req.PartnerID.IsNotNil() {
-		q = q.Where(cols.EDIPartnerID.Eq(), req.PartnerID)
-	}
-	if req.Status != "" {
-		q = q.Where(cols.Status.Eq(), req.Status)
-	}
-	if req.AckStatus != "" {
-		q = q.Where(cols.AckStatus.Eq(), req.AckStatus)
-	}
-	if req.ShipmentID.IsNotNil() {
-		q = q.Where(cols.ShipmentID.Eq(), req.ShipmentID)
-	}
-	if req.InvoiceID.IsNotNil() {
-		q = q.Where(cols.InvoiceID.Eq(), req.InvoiceID)
-	}
-	if req.CreatedAfter > 0 {
-		q = q.Where(cols.CreatedAt.Gte(), req.CreatedAfter)
-	}
-	if req.CreatedBefore > 0 {
-		q = q.Where(cols.CreatedAt.Lt(), req.CreatedBefore)
-	}
-	return q
+	return out
 }

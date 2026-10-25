@@ -2,9 +2,10 @@ package invoiceadjustmentservice
 
 import (
 	"context"
+	"testing"
+
 	"github.com/emoss08/trenova/internal/testutil/mocks/documentportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/invoiceadjustmentportsmock"
-	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoiceadjustment"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceadjustmentports"
@@ -15,27 +16,20 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
-	"github.com/uptrace/bun"
 )
 
 type fakeAdjustmentDB struct {
 	transactions int
 }
 
-func (*fakeAdjustmentDB) DB() *bun.DB                          { return nil }
-func (*fakeAdjustmentDB) DBForContext(context.Context) bun.IDB { return nil }
-
-func (f *fakeAdjustmentDB) WithTx(
+func (f *fakeAdjustmentDB) Transact(
 	ctx context.Context,
 	_ kernelports.TxOptions,
-	fn func(context.Context, bun.Tx) error,
+	fn func(context.Context) error,
 ) error {
 	f.transactions++
-	return fn(ctx, bun.Tx{})
+	return fn(ctx)
 }
-func (*fakeAdjustmentDB) HealthCheck(context.Context) error { return nil }
-func (*fakeAdjustmentDB) IsHealthy(context.Context) bool    { return true }
-func (*fakeAdjustmentDB) Close() error                      { return nil }
 
 func TestSaveDraftRefusesARequestWithoutADraftOrAnInvoice(t *testing.T) {
 	t.Parallel()
@@ -47,10 +41,14 @@ func TestSaveDraftRefusesARequestWithoutADraftOrAnInvoice(t *testing.T) {
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), "Name the invoice")
 
-	_, err = svc.PreviewSaveDraft(t.Context(), &invoiceadjustmentports.SaveInvoiceAdjustmentDraftRequest{
-		InvoiceID: pulid.MustNew("inv_"),
-		Kind:      invoiceadjustment.Kind("Refund"),
-	}, nil)
+	_, err = svc.PreviewSaveDraft(
+		t.Context(),
+		&invoiceadjustmentports.SaveInvoiceAdjustmentDraftRequest{
+			InvoiceID: pulid.MustNew("inv_"),
+			Kind:      invoiceadjustment.Kind("Refund"),
+		},
+		nil,
+	)
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), "Adjustment kind is invalid")
 }
@@ -96,11 +94,15 @@ func TestPreviewSaveDraftRefusesAnAdjustmentThatIsNoLongerADraft(t *testing.T) {
 		Once()
 	svc := &Service{db: &fakeAdjustmentDB{}, repo: repo}
 
-	_, err := svc.PreviewSaveDraft(t.Context(), &invoiceadjustmentports.SaveInvoiceAdjustmentDraftRequest{
-		AdjustmentID: executed.ID,
-		Kind:         invoiceadjustment.KindCreditOnly,
-		TenantInfo:   tenantInfo,
-	}, nil)
+	_, err := svc.PreviewSaveDraft(
+		t.Context(),
+		&invoiceadjustmentports.SaveInvoiceAdjustmentDraftRequest{
+			AdjustmentID: executed.ID,
+			Kind:         invoiceadjustment.KindCreditOnly,
+			TenantInfo:   tenantInfo,
+		},
+		nil,
+	)
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), "Only draft adjustments may be updated")
 }
@@ -122,11 +124,14 @@ func TestPreviewDecisionRefusesAnAdjustmentNotPendingApproval(t *testing.T) {
 	documents.EXPECT().GetByResourceID(mock.Anything, mock.Anything).Return(nil, nil).Maybe()
 	svc := &Service{repo: repo, documentRepo: documents}
 
-	_, err := svc.PreviewDecision(t.Context(), &invoiceadjustmentports.InvoiceAdjustmentDecisionRequest{
-		AdjustmentID: rejected.ID,
-		Approve:      true,
-		TenantInfo:   tenantInfo,
-	})
+	_, err := svc.PreviewDecision(
+		t.Context(),
+		&invoiceadjustmentports.InvoiceAdjustmentDecisionRequest{
+			AdjustmentID: rejected.ID,
+			Approve:      true,
+			TenantInfo:   tenantInfo,
+		},
+	)
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), "awaiting approval or whose execution failed")
 }

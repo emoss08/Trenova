@@ -1,0 +1,104 @@
+{
+  "key": "invoices-ready-to-factor",
+  "version": "1.0.0",
+  "name": "Invoices Ready to Factor",
+  "description": "Factored invoices that pass every readiness check and are waiting to be submitted, with their factor, open balance and how long they have been ready, oldest first",
+  "category": "Billing",
+  "tags": [
+    "invoices",
+    "ar",
+    "factoring"
+  ],
+  "defaultFormat": "xlsx",
+  "definition": {
+    "version": 2,
+    "entity": "invoice_state",
+    "columns": [
+      {
+        "id": "invoice_number",
+        "label": "Invoice Number",
+        "dimension": {
+          "field": "invoice.number"
+        }
+      },
+      {
+        "id": "customer",
+        "label": "Customer",
+        "dimension": {
+          "field": "customer.name"
+        }
+      },
+      {
+        "id": "factor",
+        "label": "Factor",
+        "dimension": {
+          "field": "factoringCompany.name"
+        }
+      },
+      {
+        "id": "invoice_date",
+        "label": "Invoice Date",
+        "dimension": {
+          "field": "invoice.invoiceDate"
+        },
+        "display": {
+          "style": "date",
+          "dateStyle": "date"
+        }
+      },
+      {
+        "id": "due_date",
+        "label": "Due Date",
+        "dimension": {
+          "field": "invoice.dueDate"
+        },
+        "display": {
+          "style": "date",
+          "dateStyle": "date"
+        }
+      },
+      {
+        "id": "ready_since",
+        "label": "Ready Since",
+        "dimension": {
+          "field": "readySince"
+        },
+        "display": {
+          "style": "date",
+          "dateStyle": "date"
+        }
+      },
+      {
+        "id": "open_balance",
+        "label": "Open Balance",
+        "measure": {
+          "field": "openBalanceMinor",
+          "agg": "sum"
+        },
+        "transform": {
+          "op": "scale",
+          "factor": 0.01
+        },
+        "display": {
+          "style": "currency",
+          "decimals": 2,
+          "negative": "parentheses"
+        }
+      }
+    ],
+    "filters": {
+      "and": [
+        {
+          "field": "verdict",
+          "op": "eq",
+          "value": "Ready"
+        }
+      ]
+    },
+    "sort": [
+      {
+        "column": "ready_since"
+      }
+    ]
+  }
+}

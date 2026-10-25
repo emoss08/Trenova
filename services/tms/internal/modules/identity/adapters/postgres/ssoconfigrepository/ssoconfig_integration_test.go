@@ -6,7 +6,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/iam"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/iam/iamdb"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/testutil/seedtest"
 	"github.com/stretchr/testify/assert"
@@ -19,6 +19,7 @@ func TestSavingOktaSettingsKeepsTheFederatedMFATrustAnAdministratorChose(t *test
 	t.Cleanup(cleanup)
 
 	data := seedtest.SeedFullTestData(t, ctx, db)
+	ctx = data.Ctx(ctx)
 	repo := New(Params{DB: postgres.NewTestConnection(db), Logger: zap.NewNop()})
 
 	okta := &tenant.SSOConfig{
@@ -38,12 +39,13 @@ func TestSavingOktaSettingsKeepsTheFederatedMFATrustAnAdministratorChose(t *test
 	saved, err := repo.Save(ctx, okta)
 	require.NoError(t, err)
 
-	_, err = db.NewUpdate().
-		Model((*iam.IdentityProvider)(nil)).
-		Set("allow_federated_mfa = FALSE").
-		Set("federated_mfa_acr_values = ARRAY['urn:okta:loa:2fa:any']::text[]").
-		Where("id = ?", saved.ID).
-		Exec(ctx)
+	idp := iamdb.IdentityProviders
+	_, err = idp.Where(idp.ID.Eq(saved.ID)).Update(
+		ctx,
+		db,
+		idp.AllowFederatedMFA.To(false),
+		idp.FederatedMFAACRs.To([]string{"urn:okta:loa:2fa:any"}),
+	)
 	require.NoError(t, err)
 
 	okta.OIDCClientID = "client-rotated"

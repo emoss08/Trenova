@@ -20,7 +20,7 @@ import (
 type Params struct {
 	fx.In
 
-	DB                  kernelports.DBConnection
+	DB                  kernelports.Transactor
 	Logger              *zap.Logger
 	Config              *config.Config
 	Repo                checkcallports.CheckCallRepository
@@ -39,7 +39,7 @@ type Params struct {
 }
 
 type Service struct {
-	db                  kernelports.DBConnection
+	db                  kernelports.Transactor
 	l                   *zap.Logger
 	cfg                 *config.Config
 	repo                checkcallports.CheckCallRepository

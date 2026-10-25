@@ -3,24 +3,22 @@ package agentproposalbaselinerepository
 import (
 	"context"
 	"fmt"
-	"strings"
 
-	"github.com/emoss08/trenova/pkg/buncolgen/agentcol"
-
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agent/agentdb"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
-	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/dbscope"
-	"github.com/emoss08/trenova/pkg/pagination"
-	"github.com/uptrace/bun"
 	"go.uber.org/fx"
 )
 
 // DefaultPurgeLimit bounds one sweep of orphaned baselines.
 const DefaultPurgeLimit = 1000
+
+var baselineErrors = dberror.Mapping{Entity: "ProposalBaseline"}
 
 type Params struct {
 	fx.In
@@ -36,15 +34,17 @@ func New(p Params) agentports.AgentProposalBaselineRepository {
 	return &repository{db: p.DB}
 }
 
-var conflictTarget = "CONFLICT (" +
-	strings.Join(agentcol.ProposalBaselineTable.PrimaryKey, ", ") + ") DO NOTHING"
-
 func (r *repository) Create(ctx context.Context, baseline *agent.ProposalBaseline) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
-		if _, err := r.db.DBForContext(ctx).NewInsert().
-			Model(baseline).
-			On(conflictTarget).
-			Exec(ctx); err != nil {
+		b := agentdb.ProposalBaselines
+		if _, err := b.CreateOrSkip(
+			ctx,
+			r.db.Keel(ctx),
+			[]*agent.ProposalBaseline{baseline},
+			b.ProposalID,
+			b.OrganizationID,
+			b.BusinessUnitID,
+		); err != nil {
 			return fmt.Errorf("keep the proposal baseline: %w", err)
 		}
 
@@ -57,16 +57,9 @@ func (r *repository) GetByProposal(
 	req agentports.GetProposalBaselineRequest,
 ) (*agent.ProposalBaseline, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*agent.ProposalBaseline, error) {
-		baseline := new(agent.ProposalBaseline)
-		if err := r.db.DBForContext(ctx).NewSelect().
-			Model(baseline).
-			WhereGroup(" AND ", func(q *bun.SelectQuery) *bun.SelectQuery {
-				return scope(q, req.TenantInfo).
-					Where(agentcol.ProposalBaselineColumns.ProposalID.Eq(), req.ProposalID)
-			}).
-			Limit(1).
-			Scan(ctx); err != nil {
-			return nil, dberror.HandleNotFoundError(err, "ProposalBaseline")
+		baseline, err := agentdb.ProposalBaselines.Get(ctx, r.db.Keel(ctx), req.ProposalID)
+		if err != nil {
+			return nil, baselineErrors.Map(err, req.ProposalID.String())
 		}
 
 		return baseline, nil
@@ -78,18 +71,15 @@ func (r *repository) ListByProposals(
 	req agentports.ListProposalBaselinesRequest,
 ) ([]*agent.ProposalBaseline, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*agent.ProposalBaseline, error) {
-		rows := make([]*agent.ProposalBaseline, 0, len(req.ProposalIDs))
 		if len(req.ProposalIDs) == 0 {
-			return rows, nil
+			return []*agent.ProposalBaseline{}, nil
 		}
 
-		if err := r.db.DBForContext(ctx).NewSelect().
-			Model(&rows).
-			WhereGroup(" AND ", func(q *bun.SelectQuery) *bun.SelectQuery {
-				return scope(q, req.TenantInfo).
-					Where(agentcol.ProposalBaselineColumns.ProposalID.In(), bun.List(req.ProposalIDs))
-			}).
-			Scan(ctx); err != nil {
+		b := agentdb.ProposalBaselines
+		rows, err := b.Where(b.ProposalID.In(req.ProposalIDs...)).
+			Limit(len(req.ProposalIDs)).
+			List(ctx, r.db.Keel(ctx))
+		if err != nil {
 			return nil, fmt.Errorf("list proposal baselines: %w", err)
 		}
 
@@ -108,52 +98,36 @@ func (r *repository) PurgeOrphans(
 			limit = DefaultPurgeLimit
 		}
 
-		result, err := purgeQuery(r.db.DBForContext(ctx), req.Before, limit).Exec(ctx)
+		b := agentdb.ProposalBaselines
+		purged, err := b.AllTenants().
+			Where(b.ProposalID.InQuery(orphans(req.Before, limit))).
+			Delete(ctx, r.db.Keel(ctx))
 		if err != nil {
 			return 0, fmt.Errorf("purge orphaned proposal baselines: %w", err)
-		}
-
-		purged, err := result.RowsAffected()
-		if err != nil {
-			return 0, fmt.Errorf("count purged proposal baselines: %w", err)
 		}
 
 		return int(purged), nil
 	})
 }
 
-// purgeQuery deletes baselines older than before that no proposal row names.
-// A proposal is filed after its baseline is kept, so only an old baseline
-// can be known to be an orphan: its filing was retried under another id, or
-// never happened.
-func purgeQuery(db bun.IDB, before int64, limit int) *bun.DeleteQuery {
-	cols := agentcol.ProposalBaselineColumns
-	proposal := agentcol.AgentProposalColumns
+// orphans are the oldest baselines older than before that no proposal row
+// names. A proposal is filed after its baseline is kept, so only an old
+// baseline can be known to be an orphan: its filing was retried under
+// another id, or never happened.
+func orphans(before int64, limit int) *keel.Query[agent.ProposalBaseline] {
+	orphan := agentdb.ProposalBaselines.As("orphan")
+	p := agentdb.AgentProposals
 
-	filed := db.NewSelect().
-		Model((*agent.AgentProposal)(nil)).
-		ColumnExpr("1").
-		Where(proposal.ID.EqColumn(cols.ProposalID)).
-		Where(proposal.OrganizationID.EqColumn(cols.OrganizationID)).
-		Where(proposal.BusinessUnitID.EqColumn(cols.BusinessUnitID))
-
-	orphans := db.NewSelect().
-		Model((*agent.ProposalBaseline)(nil)).
-		Column(cols.ProposalID.String(), cols.OrganizationID.String(), cols.BusinessUnitID.String()).
-		Where(cols.CreatedAt.Lt(), before).
-		Where("NOT EXISTS (?)", filed).
-		OrderExpr(cols.CreatedAt.OrderAsc()).
-		Limit(int64(limit))
-
-	return db.NewDelete().
-		Model((*agent.ProposalBaseline)(nil)).
+	return orphan.AllTenants().
+		Pick(orphan.ProposalID).
 		Where(
-			buncolgen.Expr("({0}, {1}, {2}) IN (?)",
-				cols.ProposalID, cols.OrganizationID, cols.BusinessUnitID),
-			orphans,
-		)
-}
-
-func scope(q *bun.SelectQuery, tenant pagination.TenantInfo) *bun.SelectQuery {
-	return agentcol.ProposalBaselineScopeTenant(q, tenant)
+			orphan.CreatedAt.Lt(before),
+			keel.NotExists(p.AllTenants().Where(
+				p.ID.EqCol(orphan.ProposalID),
+				p.OrganizationID.EqCol(orphan.OrganizationID),
+				p.BusinessUnitID.EqCol(orphan.BusinessUnitID),
+			)),
+		).
+		Order(orphan.CreatedAt.Asc()).
+		Limit(limit)
 }

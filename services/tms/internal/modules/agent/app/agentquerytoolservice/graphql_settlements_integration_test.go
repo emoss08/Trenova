@@ -5,6 +5,19 @@ package agentquerytoolservice_test
 import (
 	"slices"
 
+	"github.com/emoss08/keel"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment/shipmentdb"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/carrier/carrierdb"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/customer/customerdb"
+	"github.com/emoss08/trenova/internal/modules/rating/domain/formulatemplate/formulatemplatedb"
+	"github.com/emoss08/trenova/internal/modules/reference/domain/servicetype/servicetypedb"
+	"github.com/emoss08/trenova/internal/modules/reference/domain/shipmenttype/shipmenttypedb"
+	"github.com/emoss08/trenova/internal/modules/settlement/domain/carriersettlement/carriersettlementdb"
+	"github.com/emoss08/trenova/internal/modules/settlement/domain/driverpay/driverpaydb"
+	"github.com/emoss08/trenova/internal/modules/settlement/domain/driversettlement/driversettlementdb"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker/workerdb"
+	"github.com/emoss08/trenova/pkg/dbscope"
+
 	"context"
 	"errors"
 	"sync"
@@ -42,7 +55,6 @@ import (
 	"github.com/shopspring/decimal"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"github.com/uptrace/bun"
 	"go.uber.org/zap"
 )
 
@@ -62,16 +74,14 @@ var (
 // writes the tenant: each row's worker, and one shipment per tenant for the
 // pay events to be earned on.
 type settlementRows struct {
-	admin *bun.DB
+	admin *keel.DB
 
 	mu        sync.Mutex
 	shipments map[pulid.ID]pulid.ID
 }
 
-func (s *settlementRows) insert(ctx context.Context, model any) error {
-	_, err := s.admin.NewInsert().Model(model).Exec(ctx)
-
-	return err
+type creator[T any] interface {
+	Create(ctx context.Context, db *keel.DB, row *T) error
 }
 
 func (s *settlementRows) worker(
@@ -81,7 +91,7 @@ func (s *settlementRows) worker(
 ) (pulid.ID, error) {
 	row := testWorker(tenant, "S"+label, false, pulid.Nil)
 	row.Profile = nil
-	if err := s.insert(ctx, row); err != nil {
+	if err := workerdb.Workers.Create(ctx, s.admin, row); err != nil {
 		return pulid.Nil, err
 	}
 
@@ -118,10 +128,17 @@ func (s *settlementRows) shipment(
 		Source: "tariff \"Pay Template\"\n\ncharge \"Freight\" = $1\n",
 		Status: formulatemplate.StatusActive,
 	}
-	for _, model := range []any{service, kind, buyer, tariff} {
-		if err := s.insert(ctx, model); err != nil {
-			return pulid.Nil, err
-		}
+	if err := servicetypedb.ServiceTypes.Create(ctx, s.admin, service); err != nil {
+		return pulid.Nil, err
+	}
+	if err := shipmenttypedb.ShipmentTypes.Create(ctx, s.admin, kind); err != nil {
+		return pulid.Nil, err
+	}
+	if err := customerdb.Customers.Create(ctx, s.admin, buyer); err != nil {
+		return pulid.Nil, err
+	}
+	if err := formulatemplatedb.FormulaTemplates.Create(ctx, s.admin, tariff); err != nil {
+		return pulid.Nil, err
 	}
 	load := &shipment.Shipment{
 		ID: pulid.MustNew("shp_"), BusinessUnitID: bu, OrganizationID: org,
@@ -129,7 +146,7 @@ func (s *settlementRows) shipment(
 		FormulaTemplateID: tariff.ID, Status: shipment.StatusNew,
 		ProNumber: "PRO" + org.String()[4:12], BOL: "BOL" + org.String()[4:12],
 	}
-	if err := s.insert(ctx, load); err != nil {
+	if err := shipmentdb.Shipments.Create(ctx, s.admin, load); err != nil {
 		return pulid.Nil, err
 	}
 	s.shipments[org] = load.ID
@@ -147,7 +164,7 @@ func (s *settlementRows) payCode(
 		BusinessUnitID: tenant.Actor.BusinessUnitID, OrganizationID: tenant.Actor.OrganizationID,
 		Status: "Active", Direction: direction, Code: "PC" + label, Name: "Pay code " + label,
 	}
-	if err := s.insert(ctx, row); err != nil {
+	if err := driverpaydb.PayCodes.Create(ctx, s.admin, row); err != nil {
 		return pulid.Nil, err
 	}
 
@@ -207,7 +224,7 @@ func settlementServices(conn *postgres.Connection, services *agentread.ResolverP
 //nolint:funlen // one entry per converted list
 func settlementListCases(
 	conn *postgres.Connection,
-	admin *bun.DB,
+	admin *keel.DB,
 	services *agentread.ResolverParams,
 ) []referenceCase {
 	settlementServices(conn, services)
@@ -245,7 +262,7 @@ func settlementListCases(
 					TotalMiles: decimal.NewFromInt(500), CurrencyCode: settlementCurrency,
 					ProNumber: "PRO" + label,
 				}
-				return row.ID, rows.insertWithID(ctx, row, &row.ID)
+				return insertWithID(ctx, rows.admin, driversettlementdb.PayEvents, row, &row.ID)
 			},
 		},
 		{
@@ -271,7 +288,7 @@ func settlementListCases(
 					CurrencyCode: settlementCurrency, Description: "Lumper fee " + label,
 					IncurredDate: now - day, SubmittedByUserID: tenant.Actor.UserID,
 				}
-				return row.ID, rows.insertWithID(ctx, row, &row.ID)
+				return insertWithID(ctx, rows.admin, driverpaydb.Expenses, row, &row.ID)
 			},
 		},
 		{
@@ -297,7 +314,7 @@ func settlementListCases(
 					BalanceMinor: 50_000, AnnualInterestRate: decimal.NewFromFloat(0.02),
 					OpenedDate: now - 30*day, ClosedDate: closedDate, CurrencyCode: settlementCurrency,
 				}
-				return row.ID, rows.insertWithID(ctx, row, &row.ID)
+				return insertWithID(ctx, rows.admin, driverpaydb.EscrowAccounts, row, &row.ID)
 			},
 		},
 		{
@@ -317,7 +334,7 @@ func settlementListCases(
 					Reference: "ADV" + label, IssuedDate: now - day, AmountMinor: 20_000,
 					CurrencyCode: settlementCurrency, CreatedByID: tenant.Actor.UserID,
 				}
-				return row.ID, rows.insertWithID(ctx, row, &row.ID)
+				return insertWithID(ctx, rows.admin, driverpaydb.PayAdvances, row, &row.ID)
 			},
 		},
 		{
@@ -342,7 +359,7 @@ func settlementListCases(
 					Description: "Insurance " + label, AmountMinor: 7_500, StartDate: now - 30*day,
 					CurrencyCode: settlementCurrency, CreatedByID: tenant.Actor.UserID,
 				}
-				return row.ID, rows.insertWithID(ctx, row, &row.ID)
+				return insertWithID(ctx, rows.admin, driverpaydb.RecurringDeductions, row, &row.ID)
 			},
 		},
 		{
@@ -367,22 +384,28 @@ func settlementListCases(
 					Description: "Per diem " + label, AmountMinor: 6_000, StartDate: now - 30*day,
 					CurrencyCode: settlementCurrency, CreatedByID: tenant.Actor.UserID,
 				}
-				return row.ID, rows.insertWithID(ctx, row, &row.ID)
+				return insertWithID(ctx, rows.admin, driverpaydb.RecurringEarnings, row, &row.ID)
 			},
 		},
 	}
 }
 
-// insertWithID writes the row and reads back the id its hook gave it.
-func (s *settlementRows) insertWithID(ctx context.Context, model any, id *pulid.ID) error {
-	if err := s.insert(ctx, model); err != nil {
-		return err
+// insertWithID writes the row and reads back the id keel gave it.
+func insertWithID[T any](
+	ctx context.Context,
+	admin *keel.DB,
+	table creator[T],
+	row *T,
+	id *pulid.ID,
+) (pulid.ID, error) {
+	if err := table.Create(ctx, admin, row); err != nil {
+		return pulid.Nil, err
 	}
 	if id.IsNil() {
-		return errNoID
+		return pulid.Nil, errNoID
 	}
 
-	return nil
+	return *id, nil
 }
 
 func (s *settlementRows) driverSettlement(
@@ -410,7 +433,7 @@ func (s *settlementRows) driverSettlement(
 		TotalMiles: decimal.NewFromInt(1_800), ShipmentCount: 3, CurrencyCode: settlementCurrency,
 	}
 
-	return row.ID, s.insertWithID(ctx, row, &row.ID)
+	return insertWithID(ctx, s.admin, driversettlementdb.Settlements, row, &row.ID)
 }
 
 func (s *settlementRows) carrierSettlement(
@@ -423,7 +446,7 @@ func (s *settlementRows) carrierSettlement(
 		BusinessUnitID: tenant.Actor.BusinessUnitID, OrganizationID: tenant.Actor.OrganizationID,
 		Status: carrier.Status("Active"), Code: "CS" + label, Name: "Carrier " + label,
 	}
-	if err := s.insert(ctx, hauler); err != nil {
+	if err := carrierdb.Carriers.Create(ctx, s.admin, hauler); err != nil {
 		return pulid.Nil, err
 	}
 	now := timeutils.NowUnix()
@@ -440,7 +463,7 @@ func (s *settlementRows) carrierSettlement(
 		CurrencyCode: settlementCurrency,
 	}
 
-	return row.ID, s.insertWithID(ctx, row, &row.ID)
+	return insertWithID(ctx, s.admin, carriersettlementdb.CarrierSettlements, row, &row.ID)
 }
 
 func (s *settlementRows) payProfile(
@@ -456,7 +479,7 @@ func (s *settlementRows) payProfile(
 		CurrencyCode:   settlementCurrency, PerDiemRatePerMile: decimal.Zero,
 	}
 
-	return row.ID, s.insertWithID(ctx, row, &row.ID)
+	return insertWithID(ctx, s.admin, driverpaydb.PayProfiles, row, &row.ID)
 }
 
 // settlementGetsWithheldAtInternal are the fields each settlement get
@@ -584,18 +607,20 @@ func TestConvertedGets_SettlementsReadOneRecordUnderRowLevelSecurity(t *testing.
 			if err != nil {
 				return pulid.Nil, err
 			}
-			var workerID pulid.ID
-			if err = admin.NewSelect().Table("driver_settlements").Column("worker_id").
-				Where("id = ?", settlementID).Scan(ctx, &workerID); err != nil {
+			settlements := driversettlementdb.Settlements
+			settlement, err := settlements.Pick(settlements.WorkerID).
+				Where(settlements.ID.Eq(settlementID)).One(ctx, admin)
+			if err != nil {
 				return pulid.Nil, err
 			}
+			workerID := settlement.WorkerID
 			row := &driversettlement.Dispute{
 				BusinessUnitID: tenant.Actor.BusinessUnitID, OrganizationID: tenant.Actor.OrganizationID,
 				SettlementID: settlementID, WorkerID: workerID,
 				Status: driversettlement.DisputeStatusOpen, Category: driversettlement.DisputeCategoryMissingPay,
 				Description: "The Tuesday load is missing", SubmittedByUserID: tenant.Actor.UserID,
 			}
-			return row.ID, rows.insertWithID(ctx, row, &row.ID)
+			return insertWithID(ctx, rows.admin, driversettlementdb.Disputes, row, &row.ID)
 		},
 	}
 	require.Len(t, gets, 3)
@@ -687,10 +712,12 @@ func TestConvertedGets_DriverEarningsAreReadByTheWorker(t *testing.T) {
 	ours := writeReferenceRows(t, events, mine, "A")
 	other := writeReferenceRows(t, events, theirs, "B")
 	workerOf := func(eventID string) string {
-		var workerID string
-		require.NoError(t, admin.NewSelect().Table("driver_pay_events").Column("worker_id").
-			Where("id = ?", eventID).Scan(t.Context(), &workerID))
-		return workerID
+		payEvents := driversettlementdb.PayEvents
+		event, err := payEvents.Pick(payEvents.WorkerID).
+			Where(payEvents.ID.Eq(pulid.ID(eventID))).AllTenants().
+			One(dbscope.WithSystem(t.Context(), "test"), admin)
+		require.NoError(t, err)
+		return event.WorkerID.String()
 	}
 
 	get, err := agentquerytoolservice.ConvertedGetTool("settlement_get_driver_earnings", reader, engine)

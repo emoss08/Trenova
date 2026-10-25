@@ -2,24 +2,19 @@ package factoringrepository
 
 import (
 	"context"
-	"fmt"
 	"strconv"
 
+	"github.com/bytedance/sonic"
+	"github.com/emoss08/keel"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/factoring"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/factoring/factoringdb"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/factoringports"
-	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
-	"github.com/emoss08/trenova/pkg/buncolgen"
-	"github.com/emoss08/trenova/pkg/buncolgen/factoringcol"
-	"github.com/emoss08/trenova/pkg/buncolgen/factoringcompanycol"
 	"github.com/emoss08/trenova/pkg/dberror"
-	"github.com/emoss08/trenova/pkg/dbhelper"
+	"github.com/emoss08/trenova/pkg/listquery"
 	"github.com/emoss08/trenova/pkg/pagination"
-	"github.com/emoss08/trenova/pkg/querybuilder"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/emoss08/trenova/shared/stringutils"
-	"github.com/uptrace/bun"
-	"github.com/uptrace/bun/dialect/pgdialect"
 	"go.uber.org/zap"
 )
 
@@ -30,8 +25,14 @@ const (
 	minCandidateTolerance   = 100
 )
 
+var (
+	remittanceErrors     = dberror.Mapping{Entity: remittanceEntity}
+	remittanceLineErrors = dberror.Mapping{Entity: "FactoringRemittanceLine"}
+	profileErrors        = dberror.Mapping{Entity: "FactoringRemittanceProfile"}
+)
+
 type remittanceRepository struct {
-	db kernelports.DBConnection
+	db *postgres.Connection
 	l  *zap.Logger
 }
 
@@ -47,12 +48,10 @@ func (r *remittanceRepository) Create(
 	entity *factoring.Remittance,
 ) (*factoring.Remittance, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*factoring.Remittance, error) {
-		if _, err := r.db.DBForContext(ctx).NewInsert().
-			Model(entity).
-			Returning("*").
-			Exec(ctx); err != nil {
-			return nil, fmt.Errorf("create factoring remittance: %w", err)
+		if err := factoringdb.Remittances.Create(ctx, r.db.Keel(ctx), entity); err != nil {
+			return nil, remittanceErrors.Map(err, entity.ID.String())
 		}
+
 		return entity, nil
 	})
 }
@@ -62,32 +61,17 @@ func (r *remittanceRepository) Update(
 	entity *factoring.Remittance,
 ) (*factoring.Remittance, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*factoring.Remittance, error) {
-		cols := factoringcol.RemittanceColumns
-		previousVersion := entity.Version
-		entity.Version++
-
-		res, err := r.db.DBForContext(ctx).
-			NewUpdate().
-			Model(entity).
-			ExcludeColumn(
-				cols.CreatedAt.Bare(),
-				cols.FactoringCompanyID.Bare(),
-				cols.Source.Bare(),
-				cols.InboundMessageID.Bare(),
-				cols.CreatedByID.Bare(),
-			).
-			WherePK().
-			Where(cols.Version.Eq(), previousVersion).
-			Returning("*").
-			Exec(ctx)
+		rem := factoringdb.Remittances
+		err := rem.SaveExcept(ctx, r.db.Keel(ctx), entity,
+			rem.FactoringCompanyID,
+			rem.Source,
+			rem.InboundMessageID,
+			rem.CreatedByID,
+		)
 		if err != nil {
-			entity.Version = previousVersion
-			return nil, fmt.Errorf("update factoring remittance: %w", err)
+			return nil, remittanceErrors.Map(err, entity.ID.String())
 		}
-		if err = dberror.CheckRowsAffected(res, remittanceEntity, entity.ID.String()); err != nil {
-			entity.Version = previousVersion
-			return nil, err
-		}
+
 		return entity, nil
 	})
 }
@@ -96,59 +80,57 @@ func (r *remittanceRepository) Get(
 	ctx context.Context,
 	req factoringports.GetRemittanceRequest,
 ) (*factoring.Remittance, error) {
-	read := dbtx.Read[*factoring.Remittance]
 	if req.ForUpdate {
-		read = dbtx.Write[*factoring.Remittance]
+		return dbtx.Write(ctx, r.db, func(ctx context.Context) (*factoring.Remittance, error) {
+			return r.get(ctx, req)
+		})
 	}
-	return read(ctx, r.db, func(ctx context.Context) (*factoring.Remittance, error) {
-		entity := new(factoring.Remittance)
-		q := r.db.DBForContext(ctx).NewSelect().
-			Model(entity).
-			Relation(factoringcol.RemittanceRelations.FactoringCompany).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return factoringcol.RemittanceScopeTenant(sq, req.TenantInfo).
-					Where(factoringcol.RemittanceColumns.ID.Eq(), req.ID)
-			})
-		if req.ForUpdate {
-			q = q.For("UPDATE OF " + factoringcol.RemittanceTable.Alias)
-		}
-		if err := q.Scan(ctx); err != nil {
-			return nil, dberror.HandleNotFoundError(err, remittanceEntity)
-		}
-		if !req.IncludeLines {
-			return entity, nil
-		}
-		lines, err := r.lines(ctx, req.TenantInfo, entity.ID, req.ForUpdate)
-		if err != nil {
-			return nil, err
-		}
-		entity.Lines = lines
-		return entity, nil
+
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*factoring.Remittance, error) {
+		return r.get(ctx, req)
 	})
 }
 
-func (r *remittanceRepository) lines(
+func (r *remittanceRepository) get(
 	ctx context.Context,
-	tenantInfo pagination.TenantInfo,
-	remittanceID pulid.ID,
-	forUpdate bool,
-) ([]*factoring.RemittanceLine, error) {
-	cols := factoringcol.RemittanceLineColumns
-	lines := make([]*factoring.RemittanceLine, 0, 32)
-	q := r.db.DBForContext(ctx).NewSelect().
-		Model(&lines).
-		ColumnExpr(factoringcol.RemittanceLineTable.All()).
-		Apply(withMatchedItem).
-		Apply(factoringcol.RemittanceLineApplyTenant(tenantInfo)).
-		Where(cols.RemittanceID.Eq(), remittanceID).
-		Order(cols.RowNumber.OrderAsc())
-	if forUpdate {
-		q = q.For("UPDATE OF " + factoringcol.RemittanceLineTable.Alias)
+	req factoringports.GetRemittanceRequest,
+) (*factoring.Remittance, error) {
+	db := r.db.Keel(ctx)
+	rem := factoringdb.Remittances
+	q := rem.Where(rem.ID.Eq(req.ID)).Load(rem.FactoringCompany())
+	if req.ForUpdate {
+		q = q.Lock(keel.ForUpdate)
 	}
-	if err := q.Scan(ctx); err != nil {
-		return nil, fmt.Errorf("load factoring remittance lines: %w", err)
+	entity, err := q.One(ctx, db)
+	if err != nil {
+		return nil, remittanceErrors.Map(err, req.ID.String())
 	}
-	return lines, nil
+	if !req.IncludeLines {
+		return entity, nil
+	}
+
+	lines := withMatchedItem(factoringdb.RemittanceLines.Query()).
+		Where(factoringdb.RemittanceLines.RemittanceID.Eq(entity.ID)).
+		Order(factoringdb.RemittanceLines.RowNumber.Asc())
+	if req.ForUpdate {
+		lines = lines.Lock(keel.ForUpdate)
+	}
+	entity.Lines, err = lines.All(ctx, db)
+	if err != nil {
+		return nil, err
+	}
+
+	return entity, nil
+}
+
+func withMatchedItem(
+	q *keel.Query[factoring.RemittanceLine],
+) *keel.Query[factoring.RemittanceLine] {
+	line := factoringdb.RemittanceLines
+	item := line.SubmissionItem()
+	return q.
+		Compute(line.MatchedInvoice, keel.Raw("COALESCE(?, '')", item.InvoiceNumber)).
+		Compute(line.MatchedSubmission, keel.Raw("COALESCE(?, '')", item.SubmissionID))
 }
 
 func (r *remittanceRepository) FindByInboundDocument(
@@ -156,19 +138,15 @@ func (r *remittanceRepository) FindByInboundDocument(
 	req *factoringports.FindRemittanceByDocumentRequest,
 ) (*factoring.Remittance, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*factoring.Remittance, error) {
-		cols := factoringcol.RemittanceColumns
-		entity := new(factoring.Remittance)
-		if err := r.db.DBForContext(ctx).NewSelect().
-			Model(entity).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return factoringcol.RemittanceScopeTenant(sq, req.TenantInfo).
-					Where(cols.InboundMessageID.Eq(), req.InboundMessageID).
-					Where(cols.DocumentID.Eq(), req.DocumentID)
-			}).
-			Limit(1).
-			Scan(ctx); err != nil {
-			return nil, dberror.HandleNotFoundError(err, remittanceEntity)
+		rem := factoringdb.Remittances
+		entity, err := rem.Where(
+			rem.InboundMessageID.Eq(req.InboundMessageID),
+			rem.DocumentID.Eq(req.DocumentID),
+		).First(ctx, r.db.Keel(ctx))
+		if err != nil {
+			return nil, remittanceErrors.Map(err, "")
 		}
+
 		return entity, nil
 	})
 }
@@ -181,89 +159,33 @@ func (r *remittanceRepository) ListConnection(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*pagination.CursorListResult[*factoring.Remittance], error) {
-			dba := r.db.DBForContext(ctx)
-			alias := factoringcol.RemittanceTable.Alias
 			filter, term := withoutQuery(req.Filter)
-
-			var totalCount *int
-			if req.Cursor.IncludeTotalCount {
-				total, err := dba.NewSelect().
-					Model((*factoring.Remittance)(nil)).
-					Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-						return r.scope(
-							querybuilder.ApplyFiltersWithoutSort(
-								sq,
-								alias,
-								filter,
-								(*factoring.Remittance)(nil),
-							),
-							req,
-							term,
-						)
-					}).
-					Count(ctx)
-				if err != nil {
-					return nil, fmt.Errorf("count factoring remittances: %w", err)
-				}
-				totalCount = new(int(total))
-			}
-
-			result, err := dbhelper.CursorList(
+			rem := factoringdb.Remittances
+			result, err := listquery.Connection(
 				ctx,
-				dbhelper.CursorListParams[*factoring.Remittance]{
-					Filter:     filter,
-					Cursor:     req.Cursor,
-					TotalCount: totalCount,
-					Query: func(entities *[]*factoring.Remittance) *bun.SelectQuery {
-						return dba.NewSelect().
-							Model(entities).
-							ColumnExpr(factoringcol.RemittanceTable.All())
-					},
-					Apply: func(sq *bun.SelectQuery) (*bun.SelectQuery, error) {
-						q, applyErr := querybuilder.ApplyCursorFilters(
-							sq,
-							alias,
-							filter,
-							req.Cursor,
-							(*factoring.Remittance)(nil),
-						)
-						if applyErr != nil {
-							return nil, applyErr
-						}
-						return r.scope(q, req, term), nil
-					},
-				},
+				r.db.Keel(ctx),
+				rem.Where(
+					keel.When(term != "", rem.FileName.ContainsFold(term)),
+					keel.When(
+						req.FactoringCompanyID.IsNotNil(),
+						rem.FactoringCompanyID.Eq(req.FactoringCompanyID),
+					),
+					keel.When(
+						req.InboundMessageID.IsNotNil(),
+						rem.InboundMessageID.Eq(req.InboundMessageID),
+					),
+					keel.When(len(req.Statuses) > 0, rem.Status.In(req.Statuses...)),
+				),
+				&listquery.Request[factoring.Remittance]{Filter: filter, Cursor: req.Cursor},
 			)
 			if err != nil {
-				return nil, fmt.Errorf("list factoring remittances: %w", err)
+				r.l.Error("failed to list factoring remittances", zap.Error(err))
+				return nil, err
 			}
+
 			return result, nil
 		},
 	)
-}
-
-func (r *remittanceRepository) scope(
-	q *bun.SelectQuery,
-	req *factoringports.ListRemittanceConnectionRequest,
-	term string,
-) *bun.SelectQuery {
-	cols := factoringcol.RemittanceColumns
-	if term != "" {
-		q = q.Where(
-			cols.FileName.Qualified()+" ILIKE ?",
-			"%"+stringutils.EscapeLikePattern(term)+"%",
-		)
-	}
-	if !req.FactoringCompanyID.IsNil() {
-		q = q.Where(cols.FactoringCompanyID.Eq(), req.FactoringCompanyID)
-	}
-	if !req.InboundMessageID.IsNil() {
-		q = q.Where(cols.InboundMessageID.Eq(), req.InboundMessageID)
-	}
-	if len(req.Statuses) > 0 {
-		q = q.Where(cols.Status.In(), bun.List(req.Statuses))
-	}
-	return q
 }
 
 func (r *remittanceRepository) ListLineConnection(
@@ -274,67 +196,28 @@ func (r *remittanceRepository) ListLineConnection(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*pagination.CursorListResult[*factoring.RemittanceLine], error) {
-			dba := r.db.DBForContext(ctx)
-			alias := factoringcol.RemittanceLineTable.Alias
-			filter := req.Filter
-			if filter == nil {
-				filter = &pagination.QueryOptions{TenantInfo: req.TenantInfo}
-			}
-
-			scope := func(q *bun.SelectQuery) *bun.SelectQuery {
-				cols := factoringcol.RemittanceLineColumns
-				q = q.Where(cols.RemittanceID.Eq(), req.RemittanceID)
-				if len(req.MatchStatuses) > 0 {
-					q = q.Where(cols.MatchStatus.In(), bun.List(req.MatchStatuses))
-				}
-				return q
-			}
-
-			var totalCount *int
-			if req.Cursor.IncludeTotalCount {
-				total, err := dba.NewSelect().
-					Model((*factoring.RemittanceLine)(nil)).
-					Apply(factoringcol.RemittanceLineApplyTenant(req.TenantInfo)).
-					Apply(scope).
-					Count(ctx)
-				if err != nil {
-					return nil, fmt.Errorf("count factoring remittance lines: %w", err)
-				}
-				totalCount = new(int(total))
-			}
-
-			result, err := dbhelper.CursorList(
+			line := factoringdb.RemittanceLines
+			result, err := listquery.Connection(
 				ctx,
-				dbhelper.CursorListParams[*factoring.RemittanceLine]{
-					Filter:     filter,
-					Cursor:     req.Cursor,
-					TotalCount: totalCount,
-					Query: func(entities *[]*factoring.RemittanceLine) *bun.SelectQuery {
-						return dba.NewSelect().
-							Model(entities).
-							ColumnExpr(factoringcol.RemittanceLineTable.All()).
-							Apply(withMatchedItem)
-					},
-					Apply: func(sq *bun.SelectQuery) (*bun.SelectQuery, error) {
-						q, applyErr := querybuilder.ApplyCursorFilters(
-							sq,
-							alias,
-							filter,
-							req.Cursor,
-							(*factoring.RemittanceLine)(nil),
-						)
-						if applyErr != nil {
-							return nil, applyErr
-						}
-						return scope(
-							q.Apply(factoringcol.RemittanceLineApplyTenant(req.TenantInfo)),
-						), nil
-					},
+				r.db.Keel(ctx),
+				line.Where(
+					line.RemittanceID.Eq(req.RemittanceID),
+					keel.When(
+						len(req.MatchStatuses) > 0,
+						line.MatchStatus.In(req.MatchStatuses...),
+					),
+				),
+				&listquery.Request[factoring.RemittanceLine]{
+					Filter: req.Filter,
+					Cursor: req.Cursor,
+					Shape:  withMatchedItem,
 				},
 			)
 			if err != nil {
-				return nil, fmt.Errorf("list factoring remittance lines: %w", err)
+				r.l.Error("failed to list factoring remittance lines", zap.Error(err))
+				return nil, err
 			}
+
 			return result, nil
 		},
 	)
@@ -345,31 +228,22 @@ func (r *remittanceRepository) ReplaceLines(
 	remittance *factoring.Remittance,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
-		dba := r.db.DBForContext(ctx)
-		cols := factoringcol.RemittanceLineColumns
-		if _, err := dba.NewDelete().
-			Model((*factoring.RemittanceLine)(nil)).
-			Where(cols.OrganizationID.Eq(), remittance.OrganizationID).
-			Where(cols.BusinessUnitID.Eq(), remittance.BusinessUnitID).
-			Where(cols.RemittanceID.Eq(), remittance.ID).
-			Exec(ctx); err != nil {
-			return fmt.Errorf("clear factoring remittance lines: %w", err)
+		db := r.db.Keel(ctx)
+		line := factoringdb.RemittanceLines
+		if _, err := line.Where(line.RemittanceID.Eq(remittance.ID)).Delete(ctx, db); err != nil {
+			return remittanceLineErrors.Map(err, remittance.ID.String())
 		}
 		if len(remittance.Lines) == 0 {
 			return nil
 		}
-		for _, line := range remittance.Lines {
-			line.OrganizationID = remittance.OrganizationID
-			line.BusinessUnitID = remittance.BusinessUnitID
-			line.RemittanceID = remittance.ID
+		for _, l := range remittance.Lines {
+			l.RemittanceID = remittance.ID
 		}
-		if _, err := dba.NewInsert().
-			Model(&remittance.Lines).
-			Returning("*").
-			Exec(ctx); err != nil {
-			return fmt.Errorf("store factoring remittance lines: %w", err)
-		}
-		return nil
+
+		return remittanceLineErrors.Map(
+			line.CreateMany(ctx, db, remittance.Lines),
+			remittance.ID.String(),
+		)
 	})
 }
 
@@ -380,34 +254,76 @@ func (r *remittanceRepository) UpdateLines(
 	if len(lines) == 0 {
 		return nil
 	}
+
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
-		cols := factoringcol.RemittanceLineColumns
-		for _, line := range lines {
-			if line.Suggestions == nil {
-				line.Suggestions = []*factoring.RemittanceSuggestion{}
-			}
+		q, sets, err := lineOutcomes(lines)
+		if err != nil {
+			return err
 		}
-		if _, err := r.db.DBForContext(ctx).
-			NewUpdate().
-			Model(&lines).
-			Column(
-				cols.Kind.Bare(),
-				cols.MatchStatus.Bare(),
-				cols.MatchedBy.Bare(),
-				cols.SubmissionItemID.Bare(),
-				cols.Score.Bare(),
-				cols.Reason.Bare(),
-				cols.Suggestions.Bare(),
-				cols.IgnoredReason.Bare(),
-				cols.ReserveEntryID.Bare(),
-				cols.UpdatedAt.Bare(),
-			).
-			Bulk().
-			Exec(ctx); err != nil {
-			return fmt.Errorf("update factoring remittance lines: %w", err)
-		}
-		return nil
+
+		_, err = q.Update(ctx, r.db.Keel(ctx), sets...)
+		return remittanceLineErrors.Map(err, "")
 	})
+}
+
+func lineOutcomes(
+	lines []*factoring.RemittanceLine,
+) (*keel.Query[factoring.RemittanceLine], []keel.Assignment, error) {
+	n := len(lines)
+	ids := make([]pulid.ID, n)
+	kinds := make([]string, n)
+	statuses := make([]string, n)
+	matchedBy := make([]string, n)
+	items := make([]pulid.ID, n)
+	scores := make([]int64, n)
+	reasons := make([]string, n)
+	suggestions := make([]string, n)
+	ignored := make([]string, n)
+	reserves := make([]pulid.ID, n)
+	for i, l := range lines {
+		if l.Suggestions == nil {
+			l.Suggestions = []*factoring.RemittanceSuggestion{}
+		}
+		encoded, err := sonic.MarshalString(l.Suggestions)
+		if err != nil {
+			return nil, nil, err
+		}
+		ids[i] = l.ID
+		kinds[i] = string(l.Kind)
+		statuses[i] = string(l.MatchStatus)
+		matchedBy[i] = string(l.MatchedBy)
+		items[i] = l.SubmissionItemID
+		scores[i] = int64(l.Score)
+		reasons[i] = string(l.Reason)
+		suggestions[i] = encoded
+		ignored[i] = l.IgnoredReason
+		reserves[i] = l.ReserveEntryID
+	}
+
+	line := factoringdb.RemittanceLines
+	outcome := keel.Unnest("outcome", []string{
+		"id", "kind", "match_status", "matched_by", "submission_item_id", "score",
+		"reason", "suggestions", "ignored_reason", "reserve_entry_id",
+	}, ids, kinds, statuses, matchedBy, items, scores, reasons, suggestions, ignored, reserves)
+	orNull := func(column string) keel.Expr {
+		return keel.Raw("NULLIF(?, '')", outcome.Col(column))
+	}
+
+	q := line.With(outcome).
+		Join(outcome, outcome.Col("id").EqCol(line.ID)).
+		Where(keel.True())
+
+	return q, []keel.Assignment{
+		line.Kind.ToExpr(outcome.Col("kind")),
+		line.MatchStatus.ToExpr(outcome.Col("match_status")),
+		line.MatchedBy.ToExpr(orNull("matched_by")),
+		line.SubmissionItemID.ToExpr(orNull("submission_item_id")),
+		line.Score.ToExpr(outcome.Col("score")),
+		line.Reason.ToExpr(orNull("reason")),
+		line.Suggestions.ToExpr(keel.Raw("?::jsonb", outcome.Col("suggestions"))),
+		line.IgnoredReason.ToExpr(orNull("ignored_reason")),
+		line.ReserveEntryID.ToExpr(orNull("reserve_entry_id")),
+	}, nil
 }
 
 func (r *remittanceRepository) ListCandidates(
@@ -418,79 +334,90 @@ func (r *remittanceRepository) ListCandidates(
 		ctx,
 		r.db,
 		func(ctx context.Context) ([]*factoring.RemittanceCandidate, error) {
-			item := factoringcol.SubmissionItemColumns
-			sub := factoringcol.SubmissionColumns
-			subTable := factoringcol.SubmissionTable
-			agr := factoringcol.AgreementColumns
-			agrTable := factoringcol.AgreementTable
-
-			type row struct {
-				factoring.SubmissionItem `bun:",extend"`
-
-				CandidateSubmissionNumber string             `bun:"candidate_submission_number"`
-				CandidateSentAt           *int64             `bun:"candidate_sent_at"`
-				CandidateRecourse         factoring.Recourse `bun:"candidate_recourse"`
+			items, err := remittanceCandidates(req).List(ctx, r.db.Keel(ctx))
+			if err != nil {
+				return nil, err
 			}
 
-			invoiceMatch, amountMatch := candidateMatchSQL()
-
-			limit := boundedLimit(req.Limit, maxRemittanceCandidates)
-			rows := make([]*row, 0, min(limit, 64))
-			if err := r.db.DBForContext(ctx).NewSelect().
-				Model(&rows).
-				ColumnExpr(factoringcol.SubmissionItemTable.All()).
-				ColumnExpr(sub.Number.As("candidate_submission_number")).
-				ColumnExpr(sub.SentAt.As("candidate_sent_at")).
-				ColumnExpr(agr.Recourse.As("candidate_recourse")).
-				Join("JOIN "+subTable.As(subTable.Alias)).
-				JoinOn(sub.ID.EqColumn(item.SubmissionID)).
-				JoinOn(sub.OrganizationID.EqColumn(item.OrganizationID)).
-				JoinOn(sub.BusinessUnitID.EqColumn(item.BusinessUnitID)).
-				Join("JOIN "+agrTable.As(agrTable.Alias)).
-				JoinOn(agr.ID.EqColumn(sub.AgreementID)).
-				JoinOn(agr.OrganizationID.EqColumn(sub.OrganizationID)).
-				JoinOn(agr.BusinessUnitID.EqColumn(sub.BusinessUnitID)).
-				WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-					return factoringcol.SubmissionItemScopeTenant(sq, req.TenantInfo).
-						Where(sub.FactoringCompanyID.Eq(), req.FactoringCompanyID).
-						Where(sub.Status.In(), bun.List([]factoring.SubmissionStatus{
-							factoring.SubmissionStatusSent,
-							factoring.SubmissionStatusPartially,
-							factoring.SubmissionStatusFunded,
-						})).
-						Where(item.Status.In(), bun.List([]factoring.SubmissionItemStatus{
-							factoring.SubmissionItemStatusPending,
-							factoring.SubmissionItemStatusFunded,
-						}))
-				}).
-				WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-					sq = sq.Where(invoiceMatch, pgdialect.Array(nonNilTexts(req.Invoices))).
-						WhereOr(amountMatch, pgdialect.Array(nonNilAmounts(req.Amounts)))
-					if len(req.ItemIDs) > 0 {
-						sq = sq.WhereOr(item.ID.In(), bun.List(req.ItemIDs))
-					}
-					return sq
-				}).
-				OrderExpr(sub.SentAt.Qualified() + " DESC NULLS LAST").
-				OrderExpr(item.ID.Qualified()).
-				Limit(int64(limit)).
-				Scan(ctx); err != nil {
-				return nil, fmt.Errorf("list factoring remittance candidates: %w", err)
+			out := make([]*factoring.RemittanceCandidate, 0, len(items))
+			for _, item := range items {
+				candidate := &factoring.RemittanceCandidate{Item: item}
+				if sub := item.Submission; sub != nil {
+					candidate.SubmissionNumber = sub.Number
+					candidate.SentAt = sub.SentAt
+					candidate.Recourse = sub.Agreement != nil &&
+						sub.Agreement.Recourse == factoring.RecourseFull
+				}
+				item.Submission = nil
+				out = append(out, candidate)
 			}
 
-			out := make([]*factoring.RemittanceCandidate, 0, len(rows))
-			for _, rw := range rows {
-				it := rw.SubmissionItem
-				out = append(out, &factoring.RemittanceCandidate{
-					Item:             &it,
-					SubmissionNumber: rw.CandidateSubmissionNumber,
-					SentAt:           rw.CandidateSentAt,
-					Recourse:         rw.CandidateRecourse == factoring.RecourseFull,
-				})
-			}
 			return out, nil
 		},
 	)
+}
+
+func remittanceCandidates(
+	req *factoringports.ListRemittanceCandidatesRequest,
+) *keel.Query[factoring.SubmissionItem] {
+	item := factoringdb.SubmissionItems
+	sub := item.Submission()
+	agr := sub.Agreement()
+	invoiceMatch, amountMatch := candidateMatch(
+		nonNilTexts(req.Invoices),
+		nonNilAmounts(req.Amounts),
+	)
+
+	return item.Where(
+		sub.FactoringCompanyID.Eq(req.FactoringCompanyID),
+		sub.Status.In(
+			factoring.SubmissionStatusSent,
+			factoring.SubmissionStatusPartially,
+			factoring.SubmissionStatusFunded,
+		),
+		item.Status.In(factoring.SubmissionItemStatusPending, factoring.SubmissionItemStatusFunded),
+		keel.Or(
+			invoiceMatch,
+			amountMatch,
+			keel.When(len(req.ItemIDs) > 0, item.ID.In(req.ItemIDs...)),
+		),
+	).
+		Load(sub.Pick(sub.Number, sub.SentAt, sub.AgreementID).Load(agr.Pick(agr.Recourse))).
+		Order(sub.SentAt.Desc().NullsLast(), item.ID.Asc()).
+		Limit(boundedLimit(req.Limit, maxRemittanceCandidates))
+}
+
+func candidateMatch(invoices []string, amounts []int64) (invoiceMatch, amountMatch keel.Pred) {
+	item := factoringdb.SubmissionItems
+	normalized := keel.Raw("upper(regexp_replace(?, '[^[:alnum:]]', '', 'g'))", item.InvoiceNumber)
+	tolerance := keel.Raw(
+		"greatest("+strconv.Itoa(minCandidateTolerance)+", ?)",
+		item.ExpectedFeeMinor,
+	)
+	near := func(target keel.Expr) keel.Expr {
+		return keel.Raw("abs(abs(amt.v) - ?) <= ?", target, tolerance)
+	}
+
+	amountMatch = keel.Raw(
+		"EXISTS (SELECT 1 FROM unnest(?::bigint[]) AS amt(v) WHERE ? OR ? OR ? OR ?)",
+		amounts,
+		near(item.ExpectedAdvanceMinor),
+		near(item.FaceMinor),
+		near(keel.Raw("coalesce(?, -1)", item.ReserveMinor)),
+		near(keel.Raw("coalesce(?, 0) + coalesce(?, 0)", item.AdvanceMinor, item.FeeMinor)),
+	)
+	invoiceMatch = keel.Raw(
+		"EXISTS (SELECT 1 FROM unnest(?::text[]) AS ref(v) WHERE ? = ref.v OR "+
+			"(length(ref.v) >= 4 AND length(?) >= 4 AND "+
+			"(? LIKE '%' || ref.v || '%' OR ref.v LIKE '%' || ? || '%')))",
+		invoices,
+		normalized,
+		normalized,
+		normalized,
+		normalized,
+	)
+
+	return invoiceMatch, amountMatch
 }
 
 func (r *remittanceRepository) ListOpen(
@@ -501,45 +428,51 @@ func (r *remittanceRepository) ListOpen(
 		ctx,
 		r.db,
 		func(ctx context.Context) ([]*factoringports.OpenRemittance, error) {
-			rem := factoringcol.RemittanceColumns
-			fac := factoringcompanycol.FactoringCompanyColumns
-			facTable := factoringcompanycol.FactoringCompanyTable
-			limit := boundedLimit(req.Limit, maxOpenRemittances)
-			rows := make([]*factoringports.OpenRemittance, 0, min(limit, 16))
-			if err := r.db.DBForContext(ctx).NewSelect().
-				Model((*factoring.Remittance)(nil)).
-				ColumnExpr(rem.ID.As("remittance_id")).
-				ColumnExpr(rem.FactoringCompanyID.As("factoring_company_id")).
-				ColumnExpr(fac.Name.Expr(coalesceBlank)+" AS factor_name").
-				ColumnExpr(rem.FileName.Expr(coalesceBlank)+" AS file_name").
-				ColumnExpr(rem.Status.As("status")).
-				ColumnExpr(rem.ExceptionCount.As("exception_count")).
-				ColumnExpr(rem.MatchedCount.As("matched_count")).
-				ColumnExpr(rem.CreatedAt.As("created_at")).
-				Join("LEFT JOIN "+facTable.As(facTable.Alias)).
-				JoinOn(fac.ID.EqColumn(rem.FactoringCompanyID)).
-				JoinOn(fac.OrganizationID.EqColumn(rem.OrganizationID)).
-				JoinOn(fac.BusinessUnitID.EqColumn(rem.BusinessUnitID)).
-				WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-					return factoringcol.RemittanceScopeTenant(sq, req.TenantInfo).
-						Where(rem.Status.In(), bun.List([]factoring.RemittanceStatus{
-							factoring.RemittanceStatusNeedsMapping,
-							factoring.RemittanceStatusParsed,
-							factoring.RemittanceStatusPartiallyApplied,
-						})).
-						WhereGroup(" AND ", func(inner *bun.SelectQuery) *bun.SelectQuery {
-							return inner.Where(rem.ExceptionCount.Qualified()+" > 0").
-								WhereOr(rem.Status.Eq(), factoring.RemittanceStatusNeedsMapping)
-						})
-				}).
-				Order(rem.CreatedAt.OrderAsc()).
-				Limit(int64(limit)).
-				Scan(ctx, &rows); err != nil {
-				return nil, fmt.Errorf("list open factoring remittances: %w", err)
+			rows, err := keel.Into[factoringports.OpenRemittance](
+				ctx,
+				r.db.Keel(ctx),
+				openRemittances(req.Limit),
+			)
+			if err != nil {
+				return nil, err
 			}
-			return rows, nil
+
+			out := make([]*factoringports.OpenRemittance, len(rows))
+			for i := range rows {
+				out[i] = &rows[i]
+			}
+
+			return out, nil
 		},
 	)
+}
+
+func openRemittances(limit int) *keel.Query[factoring.Remittance] {
+	rem := factoringdb.Remittances
+	fac := rem.FactoringCompany()
+	return rem.Pick(
+		rem.ID,
+		rem.FactoringCompanyID,
+		keel.Raw("COALESCE(?, '')", fac.Name),
+		keel.Raw("COALESCE(?, '')", rem.FileName),
+		rem.Status,
+		rem.ExceptionCount,
+		rem.MatchedCount,
+		rem.CreatedAt,
+	).
+		Where(
+			rem.Status.In(
+				factoring.RemittanceStatusNeedsMapping,
+				factoring.RemittanceStatusParsed,
+				factoring.RemittanceStatusPartiallyApplied,
+			),
+			keel.Or(
+				rem.ExceptionCount.Gt(0),
+				rem.Status.Eq(factoring.RemittanceStatusNeedsMapping),
+			),
+		).
+		Order(rem.CreatedAt.Asc()).
+		Limit(boundedLimit(limit, maxOpenRemittances))
 }
 
 func (r *remittanceRepository) GetProfile(
@@ -547,16 +480,13 @@ func (r *remittanceRepository) GetProfile(
 	req factoringports.GetRemittanceProfileRequest,
 ) (*factoring.RemittanceProfile, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*factoring.RemittanceProfile, error) {
-		profile := new(factoring.RemittanceProfile)
-		if err := r.db.DBForContext(ctx).NewSelect().
-			Model(profile).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return factoringcol.RemittanceProfileScopeTenant(sq, req.TenantInfo).
-					Where(factoringcol.RemittanceProfileColumns.FactoringCompanyID.Eq(), req.FactoringCompanyID)
-			}).
-			Scan(ctx); err != nil {
-			return nil, dberror.HandleNotFoundError(err, "FactoringRemittanceProfile")
+		p := factoringdb.RemittanceProfiles
+		profile, err := p.Where(p.FactoringCompanyID.Eq(req.FactoringCompanyID)).
+			One(ctx, r.db.Keel(ctx))
+		if err != nil {
+			return nil, profileErrors.Map(err, req.FactoringCompanyID.String())
 		}
+
 		return profile, nil
 	})
 }
@@ -566,18 +496,22 @@ func (r *remittanceRepository) SaveProfile(
 	profile *factoring.RemittanceProfile,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
-		cols := factoringcol.RemittanceProfileColumns
-		if _, err := r.db.DBForContext(ctx).NewInsert().
-			Model(profile).
-			On("CONFLICT (organization_id, business_unit_id, factoring_company_id) DO UPDATE").
-			Set(cols.Mapping.Bare() + " = EXCLUDED." + cols.Mapping.Bare()).
-			Set(cols.HeaderSignature.Bare() + " = EXCLUDED." + cols.HeaderSignature.Bare()).
-			Set(cols.Version.Bare() + " = " + factoringcol.RemittanceProfileTable.Alias + "." + cols.Version.Bare() + " + 1").
-			Set(cols.UpdatedAt.Bare() + " = EXCLUDED." + cols.UpdatedAt.Bare()).
-			Returning("*").
-			Exec(ctx); err != nil {
-			return fmt.Errorf("save factoring remittance profile: %w", err)
+		db := r.db.Keel(ctx)
+		p := factoringdb.RemittanceProfiles
+		_, err := p.Upsert(ctx, db, []*factoring.RemittanceProfile{profile},
+			keel.OnConflict(p.OrganizationID, p.BusinessUnitID, p.FactoringCompanyID).
+				Update(p.Mapping, p.HeaderSignature),
+		)
+		if err != nil {
+			return profileErrors.Map(err, profile.FactoringCompanyID.String())
 		}
+
+		stored, err := p.Where(p.FactoringCompanyID.Eq(profile.FactoringCompanyID)).One(ctx, db)
+		if err != nil {
+			return profileErrors.Map(err, profile.FactoringCompanyID.String())
+		}
+		*profile = *stored
+
 		return nil
 	})
 }
@@ -594,46 +528,4 @@ func nonNilAmounts(values []int64) []int64 {
 		return []int64{}
 	}
 	return values
-}
-
-func candidateMatchSQL() (invoiceMatch, amountMatch string) {
-	item := factoringcol.SubmissionItemColumns
-	normalized := "upper(regexp_replace(" + item.InvoiceNumber.Qualified() +
-		", '[^[:alnum:]]', '', 'g'))"
-	tolerance := buncolgen.Expr(
-		"greatest("+strconv.Itoa(minCandidateTolerance)+", {0})",
-		item.ExpectedFeeMinor,
-	)
-	near := func(target string) string {
-		return "abs(abs(amt.v) - " + target + ") <= " + tolerance
-	}
-	amountMatch = "EXISTS (SELECT 1 FROM unnest(?::bigint[]) AS amt(v) WHERE " +
-		near(item.ExpectedAdvanceMinor.Qualified()) + " OR " +
-		near(item.FaceMinor.Qualified()) + " OR " +
-		near(buncolgen.Expr("coalesce({0}, -1)", item.ReserveMinor)) + " OR " +
-		near(
-			buncolgen.Expr(
-				"coalesce({0}, 0) + coalesce({1}, 0)",
-				item.AdvanceMinor,
-				item.FeeMinor,
-			),
-		) +
-		")"
-	invoiceMatch = "EXISTS (SELECT 1 FROM unnest(?::text[]) AS ref(v) WHERE " +
-		normalized + " = ref.v OR (length(ref.v) >= 4 AND length(" + normalized + ") >= 4 AND (" +
-		normalized + " LIKE '%' || ref.v || '%' OR ref.v LIKE '%' || " + normalized + " || '%')))"
-	return invoiceMatch, amountMatch
-}
-
-func withMatchedItem(q *bun.SelectQuery) *bun.SelectQuery {
-	line := factoringcol.RemittanceLineColumns
-	item := factoringcol.SubmissionItemColumns
-	itemTable := factoringcol.SubmissionItemTable
-	return q.
-		ColumnExpr(item.InvoiceNumber.As("matched_invoice_number")).
-		ColumnExpr(item.SubmissionID.As("matched_submission_id")).
-		Join("LEFT JOIN " + itemTable.As(itemTable.Alias)).
-		JoinOn(item.ID.EqColumn(line.SubmissionItemID)).
-		JoinOn(item.OrganizationID.EqColumn(line.OrganizationID)).
-		JoinOn(item.BusinessUnitID.EqColumn(line.BusinessUnitID))
 }

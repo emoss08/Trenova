@@ -10,7 +10,6 @@ import (
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"github.com/uptrace/bun"
 )
 
 const perMileSource = `tariff "Per Mile"
@@ -157,7 +156,12 @@ func TestFormulaTemplate_ApplyVersionCarriesTheVersionsContent(t *testing.T) {
 		Description:   "Old words",
 		Source:        "tariff \"Old\"\n\ncharge \"Flat\" = $10\n",
 		Inputs: []tarifftypes.InputDecl{
-			{Name: "rate", Type: "Money", Descriptor: rules.RawJSON(`{"kind":"money"}`), Required: true},
+			{
+				Name:       "rate",
+				Type:       "Money",
+				Descriptor: rules.RawJSON(`{"kind":"money"}`),
+				Required:   true,
+			},
 		},
 		Imports:   []tarifftypes.Import{{Path: "org.accessorials", VersionNumber: 1}},
 		TestCount: 4,
@@ -201,21 +205,20 @@ func TestNewVersionFromTemplate_SnapshotsTheContent(t *testing.T) {
 	assert.Equal(t, template.Metadata, version.Metadata)
 }
 
-func TestBeforeAppendModel_StoresEmptyCollectionsNotNull(t *testing.T) {
+func TestWriteHooks_StoreEmptyCollectionsNotNull(t *testing.T) {
 	t.Parallel()
 
 	template := &FormulaTemplate{Name: "Flat", Source: "tariff \"Flat\"\n"}
-	require.NoError(t, template.BeforeAppendModel(t.Context(), (*bun.InsertQuery)(nil)))
-	assert.True(t, template.ID.IsNotNil())
+	require.NoError(t, template.BeforeSave(t.Context()))
 	assert.NotNil(t, template.Inputs)
 	assert.NotNil(t, template.Imports)
-	assert.NotZero(t, template.CreatedAt)
+	assert.NotNil(t, template.Tables)
 
 	version := &FormulaTemplateVersion{}
-	require.NoError(t, version.BeforeAppendModel(t.Context(), (*bun.InsertQuery)(nil)))
-	assert.True(t, version.ID.IsNotNil())
+	require.NoError(t, version.BeforeCreate(t.Context()))
 	assert.NotNil(t, version.Inputs)
 	assert.NotNil(t, version.Imports)
+	assert.NotNil(t, version.Tables)
 }
 
 func TestFormulaTemplateVersion_ValidateRequiresSource(t *testing.T) {

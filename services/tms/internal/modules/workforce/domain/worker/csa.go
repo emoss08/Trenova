@@ -4,13 +4,13 @@ import (
 	"context"
 	"errors"
 
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/pkg/domainvalidation"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/validationframework"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
-	"github.com/uptrace/bun"
 )
 
 var ErrInvalidCSABasic = errors.New("invalid CSA BASIC")
@@ -112,7 +112,6 @@ func CSATimeWeight(occurredAt, now int64) int32 {
 }
 
 var (
-	_ bun.BeforeAppendModelHook          = (*WorkerSafetyViolation)(nil)
 	_ validationframework.TenantedEntity = (*WorkerSafetyViolation)(nil)
 )
 
@@ -120,31 +119,31 @@ var (
 // inspection routinely produces several, in different BASICs, so they are rows
 // rather than a column on the event.
 type WorkerSafetyViolation struct {
-	bun.BaseModel `bun:"table:worker_safety_violations,alias:wsvi" json:"-"`
+	keel.Table `keel:"worker_safety_violations"`
 
-	ID             pulid.ID `json:"id"             bun:"id,pk,type:VARCHAR(100),notnull"`
-	BusinessUnitID pulid.ID `json:"businessUnitId" bun:"business_unit_id,pk,type:VARCHAR(100),notnull"`
-	OrganizationID pulid.ID `json:"organizationId" bun:"organization_id,pk,type:VARCHAR(100),notnull"`
-	SafetyEventID  pulid.ID `json:"safetyEventId"  bun:"safety_event_id,type:VARCHAR(100),notnull"`
+	ID             pulid.ID `json:"id"             keel:"id,pk,autoid:wsvi_"`
+	BusinessUnitID pulid.ID `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
+	OrganizationID pulid.ID `json:"organizationId" keel:"organization_id,pk,tenant"`
+	SafetyEventID  pulid.ID `json:"safetyEventId"  keel:"safety_event_id"`
 	// WorkerID is denormalised from the event so a per-driver violation list
 	// does not need the join. The event owns the date; nothing here does.
-	WorkerID pulid.ID `json:"workerId" bun:"worker_id,type:VARCHAR(100),notnull"`
+	WorkerID pulid.ID `json:"workerId" keel:"worker_id"`
 
-	Basic       CSABasic `json:"basic"       bun:"basic,type:csa_basic_enum,notnull"`
-	Code        string   `json:"code"        bun:"code,type:VARCHAR(20),nullzero"`
-	Description string   `json:"description" bun:"description,type:VARCHAR(255),notnull"`
+	Basic       CSABasic `json:"basic"       keel:"basic"`
+	Code        string   `json:"code"        keel:"code,nullzero"`
+	Description string   `json:"description" keel:"description"`
 	// SeverityWeight is the FMCSA weight, 1 to 10. Out of service adds two more
 	// when the BASIC is scored, which is why the flag stays beside it rather
 	// than being folded in — folding it in would make the weight unreadable
 	// against the published tables.
-	SeverityWeight int16 `json:"severityWeight" bun:"severity_weight,type:SMALLINT,notnull,default:1"`
-	OutOfService   bool  `json:"outOfService"   bun:"out_of_service,type:BOOLEAN,notnull"`
+	SeverityWeight int16 `json:"severityWeight" keel:"severity_weight"`
+	OutOfService   bool  `json:"outOfService"   keel:"out_of_service"`
 
-	Version   int64 `json:"version"   bun:"version,type:BIGINT"`
-	CreatedAt int64 `json:"createdAt" bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
-	UpdatedAt int64 `json:"updatedAt" bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
+	Version   int64 `json:"version"   keel:"version,version"`
+	CreatedAt int64 `json:"createdAt" keel:"created_at,autocreate"`
+	UpdatedAt int64 `json:"updatedAt" keel:"updated_at,autoupdate"`
 
-	SafetyEvent *WorkerSafetyEvent `json:"safetyEvent,omitempty" bun:"rel:belongs-to,join:safety_event_id=id,join:organization_id=organization_id,join:business_unit_id=business_unit_id"`
+	SafetyEvent *WorkerSafetyEvent `json:"safetyEvent,omitempty" keel:"belongs:safety_event_id"`
 }
 
 func (v *WorkerSafetyViolation) Validate(multiErr *errortypes.MultiError) {
@@ -194,21 +193,12 @@ func (v *WorkerSafetyViolation) GetResourceType() string { return "worker_safety
 
 func (v *WorkerSafetyViolation) GetResourceID() string { return v.ID.String() }
 
-func (v *WorkerSafetyViolation) BeforeAppendModel(_ context.Context, query bun.Query) error {
-	now := timeutils.NowUnix()
-
-	switch query.(type) {
-	case *bun.InsertQuery:
-		if v.ID.IsNil() {
-			v.ID = pulid.MustNew("wsvi_")
-		}
-		if v.SeverityWeight <= 0 {
-			v.SeverityWeight = 1
-		}
-		v.CreatedAt = now
-		v.UpdatedAt = now
-	case *bun.UpdateQuery:
-		v.UpdatedAt = now
+func (v *WorkerSafetyViolation) BeforeCreate(_ context.Context) error {
+	if v.SeverityWeight <= 0 {
+		v.SeverityWeight = 1
+	}
+	if v.SeverityWeight == 0 {
+		v.SeverityWeight = 1
 	}
 
 	return nil

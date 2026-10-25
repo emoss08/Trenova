@@ -6,90 +6,49 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/infrastructure/config"
-	"github.com/emoss08/trenova/internal/infrastructure/database/common"
-	"github.com/emoss08/trenova/internal/infrastructure/database/seeder"
-	"github.com/emoss08/trenova/internal/infrastructure/database/seeds"
+	"github.com/emoss08/trenova/internal/testutil/seededtest"
+
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/modules/edi/adapters/postgres/ediinboundfilerepository"
 	"github.com/emoss08/trenova/internal/modules/edi/adapters/postgres/edimessagerepository"
 	"github.com/emoss08/trenova/internal/modules/edi/adapters/postgres/editransferrepository"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
-	"github.com/emoss08/trenova/internal/testutil/seedtest"
-	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/zap"
 )
 
-type seededSummaryOrg struct {
-	ID             pulid.ID `bun:"id"`
-	BusinessUnitID pulid.ID `bun:"business_unit_id"`
-}
-
-type seededSummaryDocumentType struct {
-	ID pulid.ID `bun:"id"`
-}
-
 func TestEDISummaryCounts(t *testing.T) {
-	ctx, db, cleanup := seedtest.SetupTestDB(t)
+	ctx, db, cleanup := seededtest.SetupTestDB(t)
 	defer cleanup()
-	seedRegistry := seeder.NewRegistry()
-	seeds.Register(seedRegistry)
-	engine := seeder.NewEngine(
-		db,
-		seedRegistry,
-		&config.Config{System: config.SystemConfig{SystemUserPassword: "test-system-password"}},
-	)
-	_, err := engine.Execute(ctx, seeder.ExecuteOptions{Environment: common.EnvDevelopment})
-	require.NoError(t, err)
 
 	conn := postgres.NewTestConnection(db)
 
-	var org seededSummaryOrg
-	require.NoError(
-		t,
-		db.NewSelect().
-			Table("organizations").
-			Column("id", "business_unit_id").
-			Where("NOT EXISTS (SELECT 1 FROM edi_partners AS ep WHERE ep.organization_id = organizations.id)").
-			Limit(1).
-			Scan(ctx, &org),
-	)
-	var documentType seededSummaryDocumentType
-	require.NoError(
-		t,
-		db.NewSelect().
-			Table("edi_document_types").
-			Column("id").
-			Where("transaction_set = ?", edi.TransactionSet204).
-			Where("direction = ?", edi.DocumentDirectionOutbound).
-			Limit(1).
-			Scan(ctx, &documentType),
-	)
-	tenantInfo := pagination.TenantInfo{OrgID: org.ID, BuID: org.BusinessUnitID}
+	scope := tenantWithoutPartners(t, ctx, db)
+	ctx = scope.Ctx
+	org := scope.Info
+	documentType := findDocumentType(t, ctx, db, edi.TransactionSet204, edi.DocumentDirectionOutbound)
+	tenantInfo := org
 
 	partner := &edi.EDIPartner{
-		BusinessUnitID: org.BusinessUnitID,
-		OrganizationID: org.ID,
+		BusinessUnitID: org.BuID,
+		OrganizationID: org.OrgID,
 		Kind:           edi.PartnerKindExternal,
 		Code:           "SUMMARY-TEST",
 		Name:           "Summary Test Partner",
 	}
-	_, err = db.NewInsert().Model(partner).Exec(ctx)
-	require.NoError(t, err)
+	require.NoError(t, create(ctx, db, partner))
 
 	profile := &edi.EDICommunicationProfile{
-		BusinessUnitID: org.BusinessUnitID,
-		OrganizationID: org.ID,
+		BusinessUnitID: org.BuID,
+		OrganizationID: org.OrgID,
 		EDIPartnerID:   partner.ID,
 		Method:         edi.ConnectionMethodSFTP,
 		Name:           "Summary Test Profile",
 	}
-	_, err = db.NewInsert().Model(profile).Exec(ctx)
-	require.NoError(t, err)
+	require.NoError(t, create(ctx, db, profile))
 
 	now := timeutils.NowUnix()
 	messageStatuses := []struct {
@@ -105,8 +64,8 @@ func TestEDISummaryCounts(t *testing.T) {
 	}
 	for index, entry := range messageStatuses {
 		message := &edi.EDIMessage{
-			BusinessUnitID:           org.BusinessUnitID,
-			OrganizationID:           org.ID,
+			BusinessUnitID:           org.BuID,
+			OrganizationID:           org.OrgID,
 			EDIPartnerID:             partner.ID,
 			DocumentTypeID:           documentType.ID,
 			Direction:                edi.DocumentDirectionOutbound,
@@ -126,8 +85,7 @@ func TestEDISummaryCounts(t *testing.T) {
 		if entry.delivery == edi.MessageDeliveryStatusDeadLettered {
 			message.DeliveryLastError = "delivery failed"
 		}
-		_, insertErr := db.NewInsert().Model(message).Exec(ctx)
-		require.NoError(t, insertErr, "message %d", index)
+		require.NoError(t, create(ctx, db, message), "message %d", index)
 	}
 
 	messageRepo := edimessagerepository.New(edimessagerepository.Params{
@@ -180,8 +138,8 @@ func TestEDISummaryCounts(t *testing.T) {
 	}
 	for index, status := range fileStatuses {
 		file := &edi.EDIInboundFile{
-			BusinessUnitID:         org.BusinessUnitID,
-			OrganizationID:         org.ID,
+			BusinessUnitID:         org.BuID,
+			OrganizationID:         org.OrgID,
 			CommunicationProfileID: profile.ID,
 			EDIPartnerID:           partner.ID,
 			Method:                 edi.ConnectionMethodSFTP,
@@ -193,8 +151,7 @@ func TestEDISummaryCounts(t *testing.T) {
 			FailureReason:          "processing failed",
 			ReceivedAt:             now - int64(index),
 		}
-		_, insertErr := db.NewInsert().Model(file).Exec(ctx)
-		require.NoError(t, insertErr, "file %d", index)
+		require.NoError(t, create(ctx, db, file), "file %d", index)
 	}
 
 	fileRepo := ediinboundfilerepository.New(ediinboundfilerepository.Params{
@@ -225,18 +182,17 @@ func TestEDISummaryCounts(t *testing.T) {
 	}
 	for index, status := range transferStatuses {
 		transfer := &edi.EDITransfer{
-			SourceOrganizationID: org.ID,
-			SourceBusinessUnitID: org.BusinessUnitID,
-			TargetOrganizationID: org.ID,
-			TargetBusinessUnitID: org.BusinessUnitID,
+			SourceOrganizationID: org.OrgID,
+			SourceBusinessUnitID: org.BuID,
+			TargetOrganizationID: org.OrgID,
+			TargetBusinessUnitID: org.BuID,
 			SourcePartnerID:      partner.ID,
 			TargetPartnerID:      partner.ID,
 			Status:               status,
 			TenderPayload:        edi.LoadTenderPayload{},
 			SubmittedAt:          now - int64(index),
 		}
-		_, insertErr := db.NewInsert().Model(transfer).Exec(ctx)
-		require.NoError(t, insertErr, "transfer %d", index)
+		require.NoError(t, create(ctx, db, transfer), "transfer %d", index)
 	}
 
 	transferRepo := editransferrepository.New(editransferrepository.Params{

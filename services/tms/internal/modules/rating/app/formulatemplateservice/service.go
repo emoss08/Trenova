@@ -26,7 +26,6 @@ import (
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/stringutils"
 	"github.com/emoss08/trenova/shared/timeutils"
-	"github.com/uptrace/bun"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
@@ -84,7 +83,7 @@ type Params struct {
 	fx.In
 
 	Logger          *zap.Logger
-	DB              kernelports.DBConnection
+	DB              kernelports.Transactor
 	Repo            formulatemplateports.FormulaTemplateRepository
 	VersionRepo     formulatemplateports.FormulaTemplateVersionRepository
 	ReviewRepo      formulatemplateports.FormulaTemplateReviewRepository
@@ -102,7 +101,7 @@ type Params struct {
 
 type Service struct {
 	l             *zap.Logger
-	db            kernelports.DBConnection
+	db            kernelports.Transactor
 	repo          formulatemplateports.FormulaTemplateRepository
 	versionRepo   formulatemplateports.FormulaTemplateVersionRepository
 	reviewRepo    formulatemplateports.FormulaTemplateReviewRepository
@@ -158,7 +157,7 @@ func (s *Service) Create(
 	entity.CurrentVersionNumber = 1
 
 	var createdEntity *formulatemplate.FormulaTemplate
-	err := s.db.WithTx(ctx, kernelports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
+	err := s.db.Transact(ctx, kernelports.TxOptions{}, func(txCtx context.Context) error {
 		created, txErr := s.repo.Create(txCtx, entity)
 		if txErr != nil {
 			log.Error("failed to create formula template", zap.Error(txErr))
@@ -247,7 +246,7 @@ func (s *Service) Update(
 	}
 
 	var updatedEntity *formulatemplate.FormulaTemplate
-	err = s.db.WithTx(ctx, kernelports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
+	err = s.db.Transact(ctx, kernelports.TxOptions{}, func(txCtx context.Context) error {
 		updated, txErr := s.repo.Update(txCtx, entity)
 		if txErr != nil {
 			log.Error("failed to update formula template", zap.Error(txErr))
@@ -331,7 +330,7 @@ func (s *Service) Duplicate(
 	}
 
 	var entities []*formulatemplate.FormulaTemplate
-	err = s.db.WithTx(ctx, kernelports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
+	err = s.db.Transact(ctx, kernelports.TxOptions{}, func(txCtx context.Context) error {
 		duplicated, txErr := s.repo.BulkCreate(txCtx, copies)
 		if txErr != nil {
 			log.Error("failed to duplicate formula template", zap.Error(txErr))
@@ -499,7 +498,7 @@ func (s *Service) BulkUpdateStatus(
 
 	var updated []*formulatemplate.FormulaTemplate
 	cleared := make(map[pulid.ID]int64, len(templates))
-	err = s.db.WithTx(ctx, kernelports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
+	err = s.db.Transact(ctx, kernelports.TxOptions{}, func(txCtx context.Context) error {
 		saved, txErr := s.repo.BulkUpdateStatus(txCtx, req)
 		if txErr != nil {
 			return txErr

@@ -1,15 +1,14 @@
 package journalreversal
 
 import (
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/journalentry"
-	"github.com/emoss08/trenova/pkg/dbtype"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/domainvalidation"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
-	"github.com/uptrace/bun"
 )
 
 // IDPrefix is the prefix every reversal's id carries. The service and the
@@ -23,39 +22,37 @@ var (
 )
 
 type Reversal struct {
-	bun.BaseModel `bun:"table:journal_reversals,alias:jr" json:"-"`
+	keel.Table `keel:"journal_reversals"`
 
-	pagination.CursorValueSet `json:"-" bun:",embed"`
+	ID                      pulid.ID `json:"id"                      keel:"id,pk"`
+	OrganizationID          pulid.ID `json:"organizationId"          keel:"organization_id,pk,tenant"`
+	BusinessUnitID          pulid.ID `json:"businessUnitId"          keel:"business_unit_id,pk,tenant"`
+	OriginalJournalEntryID  pulid.ID `json:"originalJournalEntryId"  keel:"original_journal_entry_id"`
+	ReversalJournalEntryID  pulid.ID `json:"reversalJournalEntryId"  keel:"reversal_journal_entry_id,nullzero"`
+	PostedBatchID           pulid.ID `json:"postedBatchId"           keel:"posted_batch_id,nullzero"`
+	Status                  Status   `json:"status"                  keel:"status"`
+	RequestedAccountingDate int64    `json:"requestedAccountingDate" keel:"requested_accounting_date"`
+	ResolvedFiscalYearID    pulid.ID `json:"resolvedFiscalYearId"    keel:"resolved_fiscal_year_id"`
+	ResolvedFiscalPeriodID  pulid.ID `json:"resolvedFiscalPeriodId"  keel:"resolved_fiscal_period_id"`
+	ReasonCode              string   `json:"reasonCode"              keel:"reason_code"`
+	ReasonText              string   `json:"reasonText"              keel:"reason_text"`
+	RequestedByID           pulid.ID `json:"requestedById"           keel:"requested_by_id"`
+	ApprovedByID            pulid.ID `json:"approvedById"            keel:"approved_by_id,nullzero"`
+	ApprovedAt              *int64   `json:"approvedAt"              keel:"approved_at"`
+	RejectedByID            pulid.ID `json:"rejectedById"            keel:"rejected_by_id,nullzero"`
+	RejectedAt              *int64   `json:"rejectedAt"              keel:"rejected_at"`
+	RejectionReason         string   `json:"rejectionReason"         keel:"rejection_reason,nullzero"`
+	CancelledByID           pulid.ID `json:"cancelledById"           keel:"cancelled_by_id,nullzero"`
+	CancelledAt             *int64   `json:"cancelledAt"             keel:"cancelled_at"`
+	CancelReason            string   `json:"cancelReason"            keel:"cancel_reason,nullzero"`
+	PostedByID              pulid.ID `json:"postedById"              keel:"posted_by_id,nullzero"`
+	PostedAt                *int64   `json:"postedAt"                keel:"posted_at"`
+	CreatedAt               int64    `json:"createdAt"               keel:"created_at,autocreate"`
+	UpdatedAt               int64    `json:"updatedAt"               keel:"updated_at,autoupdate"`
+	Version                 int64    `json:"version"                 keel:"version,version"`
 
-	ID                      pulid.ID `json:"id"                      bun:"id,pk,type:VARCHAR(100),notnull"`
-	OrganizationID          pulid.ID `json:"organizationId"          bun:"organization_id,pk,type:VARCHAR(100),notnull"`
-	BusinessUnitID          pulid.ID `json:"businessUnitId"          bun:"business_unit_id,pk,type:VARCHAR(100),notnull"`
-	OriginalJournalEntryID  pulid.ID `json:"originalJournalEntryId"  bun:"original_journal_entry_id,type:VARCHAR(100),notnull"`
-	ReversalJournalEntryID  pulid.ID `json:"reversalJournalEntryId"  bun:"reversal_journal_entry_id,type:VARCHAR(100),nullzero"`
-	PostedBatchID           pulid.ID `json:"postedBatchId"           bun:"posted_batch_id,type:VARCHAR(100),nullzero"`
-	Status                  Status   `json:"status"                  bun:"status,type:journal_reversal_status_enum,notnull"`
-	RequestedAccountingDate int64    `json:"requestedAccountingDate" bun:"requested_accounting_date,type:BIGINT,notnull"`
-	ResolvedFiscalYearID    pulid.ID `json:"resolvedFiscalYearId"    bun:"resolved_fiscal_year_id,type:VARCHAR(100),notnull"`
-	ResolvedFiscalPeriodID  pulid.ID `json:"resolvedFiscalPeriodId"  bun:"resolved_fiscal_period_id,type:VARCHAR(100),notnull"`
-	ReasonCode              string   `json:"reasonCode"              bun:"reason_code,type:VARCHAR(100),notnull"`
-	ReasonText              string   `json:"reasonText"              bun:"reason_text,type:TEXT,notnull"`
-	RequestedByID           pulid.ID `json:"requestedById"           bun:"requested_by_id,type:VARCHAR(100),notnull"`
-	ApprovedByID            pulid.ID `json:"approvedById"            bun:"approved_by_id,type:VARCHAR(100),nullzero"`
-	ApprovedAt              *int64   `json:"approvedAt"              bun:"approved_at,type:BIGINT,nullzero"`
-	RejectedByID            pulid.ID `json:"rejectedById"            bun:"rejected_by_id,type:VARCHAR(100),nullzero"`
-	RejectedAt              *int64   `json:"rejectedAt"              bun:"rejected_at,type:BIGINT,nullzero"`
-	RejectionReason         string   `json:"rejectionReason"         bun:"rejection_reason,type:TEXT,nullzero"`
-	CancelledByID           pulid.ID `json:"cancelledById"           bun:"cancelled_by_id,type:VARCHAR(100),nullzero"`
-	CancelledAt             *int64   `json:"cancelledAt"             bun:"cancelled_at,type:BIGINT,nullzero"`
-	CancelReason            string   `json:"cancelReason"            bun:"cancel_reason,type:TEXT,nullzero"`
-	PostedByID              pulid.ID `json:"postedById"              bun:"posted_by_id,type:VARCHAR(100),nullzero"`
-	PostedAt                *int64   `json:"postedAt"                bun:"posted_at,type:BIGINT,nullzero"`
-	CreatedAt               int64    `json:"createdAt"               bun:"created_at,type:BIGINT,notnull"`
-	UpdatedAt               int64    `json:"updatedAt"               bun:"updated_at,type:BIGINT,notnull"`
-	Version                 int64    `json:"version"                 bun:"version,type:BIGINT,notnull"`
-
-	OriginalJournalEntry *journalentry.JournalEntry `json:"originalJournalEntry,omitempty" bun:"rel:belongs-to,join:original_journal_entry_id=id,join:organization_id=organization_id,join:business_unit_id=business_unit_id"`
-	ReversalJournalEntry *journalentry.JournalEntry `json:"reversalJournalEntry,omitempty" bun:"rel:belongs-to,join:reversal_journal_entry_id=id,join:organization_id=organization_id,join:business_unit_id=business_unit_id"`
+	OriginalJournalEntry *journalentry.JournalEntry `json:"originalJournalEntry,omitempty" keel:"belongs:original_journal_entry_id"`
+	ReversalJournalEntry *journalentry.JournalEntry `json:"reversalJournalEntry,omitempty" keel:"belongs:reversal_journal_entry_id"`
 }
 
 func (r *Reversal) GetID() pulid.ID {
@@ -87,23 +84,7 @@ func (r *Reversal) GetPostgresSearchConfig() domaintypes.PostgresSearchConfig {
 			},
 		},
 		Relationships: []*domaintypes.RelationshipDefintion{
-			{
-				Field:        "originalJournalEntry",
-				Type:         dbtype.RelationshipTypeCustom,
-				TargetEntity: (*journalentry.JournalEntry)(nil),
-				TargetTable:  "journal_entries",
-				TargetField:  "entry_number",
-				Alias:        "orig_je",
-				Queryable:    true,
-				CustomJoinPath: []domaintypes.JoinStep{
-					{
-						Table:     "journal_entries",
-						Alias:     "orig_je",
-						Condition: "jr.original_journal_entry_id = orig_je.id AND jr.organization_id = orig_je.organization_id AND jr.business_unit_id = orig_je.business_unit_id",
-						JoinType:  dbtype.JoinTypeLeft,
-					},
-				},
-			},
+			{Field: "originalJournalEntry", Queryable: true},
 		},
 	}
 }

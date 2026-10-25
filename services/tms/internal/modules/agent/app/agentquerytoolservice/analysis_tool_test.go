@@ -5,6 +5,10 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/emoss08/keel/analytics/export"
+	"github.com/emoss08/keel/analytics/format"
+	"github.com/emoss08/keel/analytics/table"
+	"github.com/emoss08/keel/analytics/value"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentextension"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentextensionports"
@@ -15,9 +19,6 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/report"
 	"github.com/emoss08/trenova/pkg/errortypes"
-	"github.com/emoss08/trenova/pkg/reportcatalog"
-	"github.com/emoss08/trenova/pkg/reportfmt"
-	"github.com/emoss08/trenova/pkg/reportrows"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -56,7 +57,9 @@ func (s *stubAnalyzer) Analyze(
 		Datasets: datasets,
 		Stdout:   "margin 0.18\n",
 		Results:  []string{"0.18"},
-		Charts:   []agentextensionports.AnalysisChartSummary{{Position: 1, Title: "Margin by lane"}},
+		Charts: []agentextensionports.AnalysisChartSummary{
+			{Position: 1, Title: "Margin by lane"},
+		},
 	}, nil
 }
 
@@ -86,7 +89,7 @@ type analysisHarness struct {
 
 func newAnalysisHarness() *analysisHarness {
 	h := &analysisHarness{
-		reports:  &fakeReporting{rows: map[pulid.ID]*reportrows.Envelope{}},
+		reports:  &fakeReporting{rows: map[pulid.ID]*export.Envelope{}},
 		files:    &stubConversationFiles{},
 		analyzer: &stubAnalyzer{},
 		perms:    &fakePermissions{allowed: true},
@@ -98,23 +101,16 @@ func newAnalysisHarness() *analysisHarness {
 	return h
 }
 
-func (h *analysisHarness) seedRun(requestedBy pulid.ID) pulid.ID {
+func (h *analysisHarness) seedRun(t *testing.T, requestedBy pulid.ID) pulid.ID {
+	t.Helper()
 	run := &report.ReportRun{ID: pulid.MustNew("rrun_"), RequestedByID: requestedBy}
 	h.reports.runs = append(h.reports.runs, run)
-	h.reports.rows[run.ID] = &reportrows.Envelope{
-		Meta: reportrows.Meta{Title: "Margin by lane"},
-		Schema: []reportrows.Column{
-			{ID: "lane", Label: "Lane", Type: reportcatalog.FieldString},
-			{
-				ID:      "margin",
-				Label:   "Margin",
-				Type:    reportcatalog.FieldDecimal,
-				Format:  reportcatalog.FormatPercent,
-				Display: reportfmt.Resolved{Currency: "USD"},
-			},
-		},
-		Rows: [][]any{{"DAL-ATL", "0.180000"}, {"HOU-MEM", nil}},
-	}
+	margin := testColumn("margin", "Margin", value.Decimal)
+	margin.Display = format.Resolve(value.Decimal, format.Hint{Kind: format.Percent}, nil)
+	margin.Display.Currency = "USD"
+	h.reports.rows[run.ID] = testEnvelope(t, "Margin by lane",
+		[]table.Column{testColumn("lane", "Lane", value.String), margin},
+		[]any{"DAL-ATL", "0.180000"}, []any{"HOU-MEM", nil})
 
 	return run.ID
 }
@@ -127,7 +123,10 @@ func (h *analysisHarness) attach(name string, thread, owner pulid.ID) pulid.ID {
 		ResourceID:   thread.String(),
 		UploadedByID: owner,
 	}
-	h.files.file = &documentports.ConversationFile{Document: doc, Data: []byte("carrier,invoiced\n")}
+	h.files.file = &documentports.ConversationFile{
+		Document: doc,
+		Data:     []byte("carrier,invoiced\n"),
+	}
 
 	return doc.ID
 }
@@ -159,7 +158,7 @@ func TestAnalyzeDataReadsTheRunsTheCallerRanAsRawCSV(t *testing.T) {
 	t.Parallel()
 
 	h := newAnalysisHarness()
-	runID := h.seedRun(h.params.Actor.UserID)
+	runID := h.seedRun(t, h.params.Actor.UserID)
 
 	answer, err := h.query(t, map[string]any{"name": "lanes", "reportRunId": runID.String()})
 	require.NoError(t, err)
@@ -206,10 +205,12 @@ func TestAnalyzeDataTellsTheAgentTheColumnsAndAShortTable(t *testing.T) {
 		rows = append(rows, []any{float64(idx)})
 	}
 	h.analyzer.outcome = &agentextensionports.AnalysisOutcome{
-		RunID:    pulid.MustNew(agentextension.AnalysisRunIDPrefix),
-		Status:   agentextension.AnalysisRunStatusSucceeded,
-		Title:    "Lane margin",
-		Datasets: []agentextension.AnalysisDataset{{Name: "lanes", Path: "/home/user/data/lanes.csv"}},
+		RunID:  pulid.MustNew(agentextension.AnalysisRunIDPrefix),
+		Status: agentextension.AnalysisRunStatusSucceeded,
+		Title:  "Lane margin",
+		Datasets: []agentextension.AnalysisDataset{
+			{Name: "lanes", Path: "/home/user/data/lanes.csv"},
+		},
 		Loaded: []agentextension.AnalysisDatasetLoad{{
 			Name:    "lanes",
 			Rows:    2,
@@ -254,7 +255,7 @@ func TestAnalyzeDataRefusesARunSomeoneElseRan(t *testing.T) {
 	t.Parallel()
 
 	h := newAnalysisHarness()
-	runID := h.seedRun(pulid.MustNew("usr_"))
+	runID := h.seedRun(t, pulid.MustNew("usr_"))
 
 	_, err := h.query(t, map[string]any{"name": "lanes", "reportRunId": runID.String()})
 	require.Error(t, err)
@@ -267,7 +268,7 @@ func TestAnalyzeDataNeedsPermissionToReadReports(t *testing.T) {
 
 	h := newAnalysisHarness()
 	h.perms.allowed = false
-	runID := h.seedRun(h.params.Actor.UserID)
+	runID := h.seedRun(t, h.params.Actor.UserID)
 
 	_, err := h.query(t, map[string]any{"name": "lanes", "reportRunId": runID.String()})
 	require.ErrorIs(t, err, errAnalysisReportRead)
@@ -306,7 +307,7 @@ func TestAnalyzeDataNeedsExactlyOneSourcePerDataset(t *testing.T) {
 	t.Parallel()
 
 	h := newAnalysisHarness()
-	runID := h.seedRun(h.params.Actor.UserID)
+	runID := h.seedRun(t, h.params.Actor.UserID)
 
 	_, err := h.query(t, map[string]any{"name": "lanes"})
 	require.Error(t, err)
@@ -355,7 +356,11 @@ func TestAnalyzeDataSaysWhyAnAnalysisStopped(t *testing.T) {
 
 	answer, err := h.query(t)
 	require.NoError(t, err)
-	assert.Equal(t, "The code was still running after 90 seconds, so it was stopped.", answer.Failure)
+	assert.Equal(
+		t,
+		"The code was still running after 90 seconds, so it was stopped.",
+		answer.Failure,
+	)
 	assert.True(t, strings.HasPrefix(answer.Note, answer.Failure))
 }
 

@@ -5,24 +5,25 @@ package pageaccessservice_test
 import (
 	"testing"
 
+	"github.com/emoss08/keel"
+
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/modules/identity/adapters/postgres/rolerepository"
 	"github.com/emoss08/trenova/internal/modules/identity/app/pageaccessservice"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission/permissiondb"
 	"github.com/emoss08/trenova/internal/testutil/seedtest"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/emoss08/trenova/shared/timeutils"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"github.com/uptrace/bun"
 	"go.uber.org/zap"
 )
 
 func insertRole(
 	t *testing.T,
-	db *bun.DB,
+	db *keel.DB,
 	tenant *seedtest.TestData,
 	maxSensitivity permission.FieldSensitivity,
 	parents []pulid.ID,
@@ -30,26 +31,19 @@ func insertRole(
 ) *permission.Role {
 	t.Helper()
 
-	now := timeutils.NowUnix()
+	ctx := tenant.Ctx(t.Context())
 	role := &permission.Role{
-		ID:             pulid.MustNew("rol_"),
-		BusinessUnitID: tenant.BusinessUnit.ID,
-		OrganizationID: tenant.Organization.ID,
 		Name:           "Preview " + pulid.MustNew("rol_").String(),
 		MaxSensitivity: maxSensitivity,
 		ParentRoleIDs:  parents,
-		CreatedAt:      now,
-		UpdatedAt:      now,
 	}
-	_, err := db.NewInsert().Model(role).Exec(t.Context())
-	require.NoError(t, err)
+	require.NoError(t, permissiondb.Roles.Create(ctx, db, role))
 	for _, rp := range grants {
-		rp.ID = pulid.MustNew("rp_")
 		rp.RoleID = role.ID
 		rp.DataScope = permission.DataScopeOrganization
-		rp.CreatedAt, rp.UpdatedAt = now, now
-		_, err = db.NewInsert().Model(rp).Exec(t.Context())
-		require.NoError(t, err)
+	}
+	if len(grants) > 0 {
+		require.NoError(t, permissiondb.ResourcePermissions.CreateMany(ctx, db, grants))
 	}
 	return role
 }
@@ -78,6 +72,7 @@ func TestPreview_ReadsASavedRoleAndItsAncestorsFromItsOwnOrganization(t *testing
 		Logger: zap.NewNop(),
 	})
 	svc := newService(t, &engine{}, repo)
+	ctx = tenantA.Ctx(ctx)
 	tenant := pagination.TenantInfo{
 		OrgID:  tenantA.Organization.ID,
 		BuID:   tenantA.BusinessUnit.ID,

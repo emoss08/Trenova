@@ -4,30 +4,29 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
-	"github.com/uptrace/bun"
 )
 
 type dependencyCount struct {
-	label  string
-	model  any
 	target *int
-	scope  func(*bun.SelectQuery) *bun.SelectQuery
+	count  func(total *int64) keel.BatchItem
 }
 
 func (r *repository) countDependencies(ctx context.Context, deps []dependencyCount) error {
 	return dbtx.ReadErr(ctx, r.db, func(ctx context.Context) error {
-		for _, dep := range deps {
-			total, err := r.db.DBForContext(ctx).
-				NewSelect().
-				Model(dep.model).
-				WhereGroup(" AND ", dep.scope).
-				Count(ctx)
-			if err != nil {
-				return fmt.Errorf("count %s: %w", dep.label, err)
-			}
+		totals := make([]int64, len(deps))
+		items := make([]keel.BatchItem, len(deps))
+		for i, dep := range deps {
+			items[i] = dep.count(&totals[i])
+		}
 
-			*dep.target = int(total)
+		if err := keel.Batch(ctx, r.db.Keel(ctx), items...); err != nil {
+			return fmt.Errorf("count organization dependencies: %w", err)
+		}
+
+		for i, dep := range deps {
+			*dep.target = int(totals[i])
 		}
 
 		return nil

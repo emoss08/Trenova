@@ -7,7 +7,6 @@ import (
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"github.com/uptrace/bun"
 )
 
 func TestMoveCoverageType_IsValid(t *testing.T) {
@@ -34,25 +33,23 @@ func TestMoveCoverageType_IsValid(t *testing.T) {
 	}
 }
 
-func TestShipmentMove_BeforeAppendModelDefaultsCoverageToUnassigned(t *testing.T) {
+func TestShipmentMove_BeforeCreateDefaultsCoverageToUnassigned(t *testing.T) {
 	t.Parallel()
 
 	t.Run("insert without coverage is born uncovered", func(t *testing.T) {
 		t.Parallel()
 
 		move := &ShipmentMove{}
-		require.NoError(t, move.BeforeAppendModel(t.Context(), (*bun.InsertQuery)(nil)))
+		require.NoError(t, move.BeforeCreate(t.Context()))
 
 		assert.Equal(t, MoveCoverageTypeUnassigned, move.CoverageType)
-		assert.False(t, move.ID.IsNil())
-		assert.NotZero(t, move.CreatedAt)
 	})
 
 	t.Run("insert keeps an explicit coverage", func(t *testing.T) {
 		t.Parallel()
 
 		move := &ShipmentMove{CoverageType: MoveCoverageTypeCarrier}
-		require.NoError(t, move.BeforeAppendModel(t.Context(), (*bun.InsertQuery)(nil)))
+		require.NoError(t, move.BeforeCreate(t.Context()))
 
 		assert.Equal(t, MoveCoverageTypeCarrier, move.CoverageType)
 	})
@@ -61,10 +58,9 @@ func TestShipmentMove_BeforeAppendModelDefaultsCoverageToUnassigned(t *testing.T
 		t.Parallel()
 
 		move := &ShipmentMove{ID: pulid.MustNew("sm_")}
-		require.NoError(t, move.BeforeAppendModel(t.Context(), (*bun.UpdateQuery)(nil)))
+		require.NoError(t, move.BeforeUpdate(t.Context()))
 
 		assert.Equal(t, MoveCoverageTypeUnassigned, move.CoverageType)
-		assert.NotZero(t, move.UpdatedAt)
 	})
 }
 

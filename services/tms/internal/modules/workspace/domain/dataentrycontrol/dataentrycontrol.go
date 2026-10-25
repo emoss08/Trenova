@@ -3,35 +3,50 @@ package dataentrycontrol
 import (
 	"context"
 
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/pkg/domainvalidation"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/validationframework"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/emoss08/trenova/shared/timeutils"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
-	"github.com/uptrace/bun"
 )
 
 var (
-	_ bun.BeforeAppendModelHook          = (*DataEntryControl)(nil)
 	_ validationframework.TenantedEntity = (*DataEntryControl)(nil)
 )
 
 type DataEntryControl struct {
-	bun.BaseModel `bun:"table:data_entry_controls,alias:dec" json:"-"`
+	keel.Table `keel:"data_entry_controls"`
 
-	ID             pulid.ID `json:"id"             bun:"id,pk,type:VARCHAR(100)"`
-	BusinessUnitID pulid.ID `json:"businessUnitId" bun:"business_unit_id,type:VARCHAR(100),notnull,pk"`
-	OrganizationID pulid.ID `json:"organizationId" bun:"organization_id,type:VARCHAR(100),notnull,pk"`
+	ID             pulid.ID `json:"id"             keel:"id,pk,autoid:dec_"`
+	BusinessUnitID pulid.ID `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
+	OrganizationID pulid.ID `json:"organizationId" keel:"organization_id,pk,tenant"`
 
-	CodeCase  CaseFormat `json:"codeCase"  bun:"code_case,type:case_format_enum,notnull,default:'Upper'"`
-	NameCase  CaseFormat `json:"nameCase"  bun:"name_case,type:case_format_enum,notnull,default:'TitleCase'"`
-	EmailCase CaseFormat `json:"emailCase" bun:"email_case,type:case_format_enum,notnull,default:'Lower'"`
-	CityCase  CaseFormat `json:"cityCase"  bun:"city_case,type:case_format_enum,notnull,default:'TitleCase'"`
+	CodeCase  CaseFormat `json:"codeCase"  keel:"code_case"`
+	NameCase  CaseFormat `json:"nameCase"  keel:"name_case"`
+	EmailCase CaseFormat `json:"emailCase" keel:"email_case"`
+	CityCase  CaseFormat `json:"cityCase"  keel:"city_case"`
 
-	Version   int64 `json:"version"   bun:"version,type:BIGINT"`
-	CreatedAt int64 `json:"createdAt" bun:"created_at,notnull,default:extract(epoch from current_timestamp)::bigint"`
-	UpdatedAt int64 `json:"updatedAt" bun:"updated_at,notnull,default:extract(epoch from current_timestamp)::bigint"`
+	Version   int64 `json:"version"   keel:"version,version"`
+	CreatedAt int64 `json:"createdAt" keel:"created_at,autocreate"`
+	UpdatedAt int64 `json:"updatedAt" keel:"updated_at,autoupdate"`
+}
+
+func (dec *DataEntryControl) BeforeCreate(_ context.Context) error {
+	if dec.CodeCase == "" {
+		dec.CodeCase = CaseFormatUpper
+	}
+	if dec.NameCase == "" {
+		dec.NameCase = CaseFormatTitleCase
+	}
+	if dec.EmailCase == "" {
+		dec.EmailCase = CaseFormatLower
+	}
+	if dec.CityCase == "" {
+		dec.CityCase = CaseFormatTitleCase
+	}
+
+	return nil
 }
 
 func (dec *DataEntryControl) Validate(multiErr *errortypes.MultiError) {
@@ -81,22 +96,6 @@ func (dec *DataEntryControl) GetOrganizationID() pulid.ID {
 
 func (dec *DataEntryControl) GetBusinessUnitID() pulid.ID {
 	return dec.BusinessUnitID
-}
-
-func (dec *DataEntryControl) BeforeAppendModel(_ context.Context, query bun.Query) error {
-	now := timeutils.NowUnix()
-
-	switch query.(type) {
-	case *bun.InsertQuery:
-		if dec.ID.IsNil() {
-			dec.ID = pulid.MustNew("dec_")
-		}
-		dec.CreatedAt = now
-	case *bun.UpdateQuery:
-		dec.UpdatedAt = now
-	}
-
-	return nil
 }
 
 func NewDefaultDataEntryControl(orgID, buID pulid.ID) *DataEntryControl {

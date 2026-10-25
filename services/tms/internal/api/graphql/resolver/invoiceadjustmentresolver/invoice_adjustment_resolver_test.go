@@ -65,7 +65,7 @@ func (f *invoiceAdjustmentResolverFixture) auth(t *testing.T) *authctx.AuthConte
 	}
 }
 
-func TestQueryResolver_InvoiceAdjustmentApprovals_MapsTypedFiltersAndEncodesKeysetCursors(
+func TestQueryResolver_InvoiceAdjustmentApprovals_MapsTypedFiltersAndPassesKeysetCursors(
 	t *testing.T,
 ) {
 	t.Parallel()
@@ -80,6 +80,11 @@ func TestQueryResolver_InvoiceAdjustmentApprovals_MapsTypedFiltersAndEncodesKeys
 		{Field: "sortAt", Direction: "desc"},
 		{Field: "id", Direction: "desc"},
 	}
+	edge := func(keyset string) string {
+		cursor, err := pagination.EncodeKeysetCursor(sort, keyset)
+		require.NoError(t, err)
+		return cursor
+	}
 
 	var captured *invoiceadjustmentports.ListApprovalQueueRequest
 	f.service.EXPECT().
@@ -92,11 +97,7 @@ func TestQueryResolver_InvoiceAdjustmentApprovals_MapsTypedFiltersAndEncodesKeys
 			},
 			HasNextPage: true,
 			TotalCount:  &total,
-			CursorSort:  sort,
-			CursorValues: [][]any{
-				{int64(1_700_000_200), first.String()},
-				{int64(1_700_000_100), second.String()},
-			},
+			EdgeCursors: []string{edge("k1"), edge("k2")},
 		}, nil).
 		Once()
 
@@ -142,10 +143,7 @@ func TestQueryResolver_InvoiceAdjustmentApprovals_MapsTypedFiltersAndEncodesKeys
 	decoded, err := pagination.DecodeCursor(*conn.PageInfo.EndCursor)
 	require.NoError(t, err)
 	assert.Equal(t, sort, decoded.Sort)
-	assert.Equal(t, second, decoded.ID)
-	sortAt, ok := pagination.CursorInt64Value(decoded.Values[0])
-	require.True(t, ok)
-	assert.Equal(t, int64(1_700_000_100), sortAt)
+	assert.Equal(t, "k2", decoded.Keyset)
 }
 
 func TestQueryResolver_InvoiceAdjustmentApprovals_SendsNoFiltersWhenUnfiltered(t *testing.T) {

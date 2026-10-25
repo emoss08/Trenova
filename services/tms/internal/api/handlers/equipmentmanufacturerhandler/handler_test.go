@@ -1,19 +1,20 @@
 package equipmentmanufacturerhandler_test
 
 import (
-	"github.com/emoss08/trenova/internal/testutil/mocks/equipmentmanufacturerportsmock"
 	"context"
 	"errors"
 	"fmt"
 	"net/http"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/testutil/mocks/equipmentmanufacturerportsmock"
+
 	"github.com/emoss08/trenova/internal/api/handlers/equipmentmanufacturerhandler"
 	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/api/middleware"
-	"github.com/emoss08/trenova/internal/modules/equipment/domain/equipmentmanufacturer"
-	"github.com/emoss08/trenova/internal/modules/equipment/app/equipmentmanufacturerservice"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/modules/equipment/app/equipmentmanufacturerservice"
+	"github.com/emoss08/trenova/internal/modules/equipment/domain/equipmentmanufacturer"
 	"github.com/emoss08/trenova/internal/modules/equipment/ports/equipmentmanufacturerports"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/pkg/domaintypes"
@@ -72,8 +73,8 @@ func TestEquipmentManufacturerHandler_List_Success(t *testing.T) {
 
 	emID := pulid.MustNew("em_")
 	repo := equipmentmanufacturerportsmock.NewMockEquipmentManufacturerRepository(t)
-	repo.On("List", mock.Anything, mock.Anything).
-		Return(&pagination.ListResult[*equipmentmanufacturer.EquipmentManufacturer]{
+	repo.On("ListConnection", mock.Anything, mock.Anything).
+		Return(&pagination.CursorListResult[*equipmentmanufacturer.EquipmentManufacturer]{
 			Items: []*equipmentmanufacturer.EquipmentManufacturer{
 				{
 					ID:             emID,
@@ -83,7 +84,7 @@ func TestEquipmentManufacturerHandler_List_Success(t *testing.T) {
 					Status:         domaintypes.StatusActive,
 				},
 			},
-			Total: 1,
+			TotalCount: new(1),
 		}, nil)
 
 	handler := setupEquipManufacturerHandler(t, repo)
@@ -98,7 +99,7 @@ func TestEquipmentManufacturerHandler_List_Success(t *testing.T) {
 
 	assert.Equal(t, http.StatusOK, ginCtx.ResponseCode())
 
-	var resp pagination.Response[[]map[string]any]
+	var resp pagination.CursorResponse[[]map[string]any]
 	require.NoError(t, ginCtx.ResponseJSON(&resp))
 	assert.Equal(t, 1, resp.Count)
 	assert.Len(t, resp.Results, 1)
@@ -122,13 +123,15 @@ func TestEquipmentManufacturerHandler_List_WithPagination(t *testing.T) {
 	}
 
 	repo := equipmentmanufacturerportsmock.NewMockEquipmentManufacturerRepository(t)
-	repo.On("List", mock.Anything, mock.MatchedBy(
-		func(req *equipmentmanufacturerports.ListEquipmentManufacturersRequest) bool {
-			return req.Filter.Pagination.Limit == requestedLimit+1
+	repo.On("ListConnection", mock.Anything, mock.MatchedBy(
+		func(req *equipmentmanufacturerports.ListEquipmentManufacturerConnectionRequest) bool {
+			return req.Cursor.Limit == requestedLimit
 		},
-	)).Return(&pagination.ListResult[*equipmentmanufacturer.EquipmentManufacturer]{
-		Items: items,
-		Total: 75,
+	)).Return(&pagination.CursorListResult[*equipmentmanufacturer.EquipmentManufacturer]{
+		Items:       items[:requestedLimit],
+		HasNextPage: true,
+		TotalCount:  new(75),
+		EdgeCursors: edgeCursors(requestedLimit),
 	}, nil)
 
 	handler := setupEquipManufacturerHandler(t, repo)
@@ -155,7 +158,10 @@ func TestEquipmentManufacturerHandler_List_WithPagination(t *testing.T) {
 func TestEquipmentManufacturerHandler_List_RejectsOffset(t *testing.T) {
 	t.Parallel()
 
-	handler := setupEquipManufacturerHandler(t, equipmentmanufacturerportsmock.NewMockEquipmentManufacturerRepository(t))
+	handler := setupEquipManufacturerHandler(
+		t,
+		equipmentmanufacturerportsmock.NewMockEquipmentManufacturerRepository(t),
+	)
 
 	ginCtx := testutil.NewGinTestContext().
 		WithMethod(http.MethodGet).
@@ -609,4 +615,13 @@ func TestEquipmentManufacturerHandler_BulkUpdateStatus_BadJSON(t *testing.T) {
 	ginCtx.Engine.ServeHTTP(ginCtx.Recorder, ginCtx.Context.Request)
 
 	assert.True(t, ginCtx.ResponseCode() >= 400)
+}
+
+func edgeCursors(n int) []string {
+	cursors := make([]string, n)
+	for i := range cursors {
+		cursors[i] = fmt.Sprintf("edge-%d", i)
+	}
+
+	return cursors
 }

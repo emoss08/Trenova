@@ -3,18 +3,19 @@ package ssoidentitylinkrepository
 import (
 	"context"
 
-	"github.com/emoss08/trenova/pkg/buncolgen/tenantcol"
-
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant/tenantdb"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/pkg/dberror"
-	"github.com/emoss08/trenova/pkg/pagination"
-	"github.com/uptrace/bun"
+	"github.com/emoss08/trenova/pkg/dbscope"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
+
+var linkErrors = dberror.Mapping{Entity: "SSO identity link"}
 
 type Params struct {
 	fx.In
@@ -35,22 +36,29 @@ func New(p Params) tenantports.SSOIdentityLinkRepository {
 	}
 }
 
+func links(ctx context.Context, preds ...keel.Pred) *keel.Query[tenant.SSOIdentityLink] {
+	q := tenantdb.SSOIdentityLinks.Query()
+	if dbscope.IsSystem(ctx) {
+		q = q.AllTenants()
+	}
+
+	return q.Where(preds...)
+}
+
 func (r *repository) GetBySubject(
 	ctx context.Context,
 	req tenantports.GetSSOIdentityLinkBySubjectRequest,
 ) (*tenant.SSOIdentityLink, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*tenant.SSOIdentityLink, error) {
-		cols := tenantcol.SSOIdentityLinkColumns
-		entity := new(tenant.SSOIdentityLink)
-		err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(entity).
-			Where(cols.SSOConfigID.Eq(), req.SSOConfigID).
-			Where(cols.Issuer.Eq(), req.Issuer).
-			Where(cols.Subject.Eq(), req.Subject).
-			Scan(ctx)
+		l := tenantdb.SSOIdentityLinks
+		entity, err := links(
+			ctx,
+			l.SSOConfigID.Eq(req.SSOConfigID),
+			l.Issuer.Eq(req.Issuer),
+			l.Subject.Eq(req.Subject),
+		).One(ctx, r.db.Keel(ctx))
 		if err != nil {
-			return nil, dberror.HandleNotFoundError(err, "SSO identity link")
+			return nil, linkErrors.Map(err, req.Subject)
 		}
 
 		return entity, nil
@@ -62,17 +70,15 @@ func (r *repository) GetByUser(
 	req tenantports.GetSSOIdentityLinkByUserRequest,
 ) (*tenant.SSOIdentityLink, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*tenant.SSOIdentityLink, error) {
-		cols := tenantcol.SSOIdentityLinkColumns
-		entity := new(tenant.SSOIdentityLink)
-		err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(entity).
-			Where(cols.SSOConfigID.Eq(), req.SSOConfigID).
-			Where(cols.Issuer.Eq(), req.Issuer).
-			Where(cols.UserID.Eq(), req.UserID).
-			Scan(ctx)
+		l := tenantdb.SSOIdentityLinks
+		entity, err := links(
+			ctx,
+			l.SSOConfigID.Eq(req.SSOConfigID),
+			l.Issuer.Eq(req.Issuer),
+			l.UserID.Eq(req.UserID),
+		).One(ctx, r.db.Keel(ctx))
 		if err != nil {
-			return nil, dberror.HandleNotFoundError(err, "SSO identity link")
+			return nil, linkErrors.Map(err, req.UserID.String())
 		}
 
 		return entity, nil
@@ -81,13 +87,9 @@ func (r *repository) GetByUser(
 
 func (r *repository) Create(ctx context.Context, link *tenant.SSOIdentityLink) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
-		if _, err := r.db.DBForContext(ctx).
-			NewInsert().
-			Model(link).
-			Returning("*").
-			Exec(ctx); err != nil {
+		if err := tenantdb.SSOIdentityLinks.Create(ctx, r.db.Keel(ctx), link); err != nil {
 			r.l.Error("failed to create sso identity link", zap.Error(err))
-			return err
+			return linkErrors.Map(err, link.ID.String())
 		}
 
 		return nil
@@ -100,23 +102,17 @@ func (r *repository) RecordLogin(
 	at int64,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
-		cols := tenantcol.SSOIdentityLinkColumns
-		result, err := r.db.DBForContext(ctx).
-			NewUpdate().
-			Model((*tenant.SSOIdentityLink)(nil)).
-			Set(cols.LastLoginAt.Set(), at).
-			Set(cols.UpdatedAt.Set(), at).
-			WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-				return tenantcol.SSOIdentityLinkScopeTenantUpdate(uq, pagination.TenantInfo{
-					OrgID: link.OrganizationID,
-					BuID:  link.BusinessUnitID,
-				}).Where(cols.ID.Eq(), link.ID)
-			}).
-			Exec(ctx)
+		l := tenantdb.SSOIdentityLinks
+		affected, err := links(
+			ctx,
+			l.ID.Eq(link.ID),
+			l.OrganizationID.Eq(link.OrganizationID),
+			l.BusinessUnitID.Eq(link.BusinessUnitID),
+		).Update(ctx, r.db.Keel(ctx), l.LastLoginAt.To(at), l.UpdatedAt.To(at))
 		if err != nil {
 			return err
 		}
 
-		return dberror.CheckFound(result, "SSO identity link")
+		return dberror.CheckFoundCount(affected, linkErrors.Entity)
 	})
 }

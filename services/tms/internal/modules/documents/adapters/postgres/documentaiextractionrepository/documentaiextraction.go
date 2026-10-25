@@ -3,17 +3,28 @@ package documentaiextractionrepository
 import (
 	"context"
 
-	"github.com/emoss08/trenova/pkg/buncolgen/documentaiextractioncol"
-
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/documentaiextraction"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/documentaiextraction/documentaiextractiondb"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentaiextractionports"
 	"github.com/emoss08/trenova/pkg/dberror"
-	"github.com/uptrace/bun"
+	"github.com/emoss08/trenova/shared/pulid"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
+
+var extractionErrors = dberror.Mapping{
+	Entity: "DocumentAIExtraction",
+	ForeignKey: []dberror.Constraint{
+		{
+			Name:    "fk_document_ai_extractions_document",
+			Field:   "documentId",
+			Message: "Document does not exist",
+		},
+	},
+}
 
 type Params struct {
 	fx.In
@@ -42,19 +53,10 @@ func (r *repository) GetByDocumentExtractedAt(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*documentaiextraction.Extraction, error) {
-			entity := new(documentaiextraction.Extraction)
-			cols := documentaiextractioncol.ExtractionColumns
-			err := r.db.DBForContext(ctx).
-				NewSelect().
-				Model(entity).
-				WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-					return documentaiextractioncol.ExtractionScopeTenant(sq, req.TenantInfo).
-						Where(cols.DocumentID.Eq(), req.DocumentID).
-						Where(cols.ExtractedAt.Eq(), req.ExtractedAt)
-				}).
-				Scan(ctx)
+			entity, err := byDocumentExtractedAt(req.DocumentID, req.ExtractedAt).
+				One(ctx, r.db.Keel(ctx))
 			if err != nil {
-				return nil, dberror.HandleNotFoundError(err, "DocumentAIExtraction")
+				return nil, extractionErrors.Map(err, req.DocumentID.String())
 			}
 
 			return entity, nil
@@ -70,27 +72,60 @@ func (r *repository) SavePending(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*documentaiextraction.Extraction, error) {
-			cols := documentaiextractioncol.ExtractionColumns
-			if _, err := r.db.DBForContext(ctx).
-				NewInsert().
-				Model(entity).
-				On(`CONFLICT ("document_id", "organization_id", "business_unit_id", "extracted_at") DO UPDATE`).
-				Set(cols.UserID.SetExcluded()).
-				Set(cols.RequestHash.SetExcluded()).
-				Set(cols.WorkflowID.SetExcluded()).
-				Set(cols.WorkflowRunID.SetExcluded()).
-				Set(cols.ActivityID.SetExcluded()).
-				Set(cols.ResponseID.SetExpr("COALESCE(NULLIF(EXCLUDED.response_id, ''), dae.response_id)")).
-				Set(cols.Model.SetExpr("COALESCE(NULLIF(EXCLUDED.model, ''), dae.model)")).
-				Set(cols.Status.SetExpr("CASE WHEN dae.status IN (?, ?) THEN dae.status ELSE EXCLUDED.status END"), documentaiextraction.StatusApplied, documentaiextraction.StatusSkipped).
-				Set(cols.SubmittedAt.SetExpr("COALESCE(EXCLUDED.submitted_at, dae.submitted_at)")).
-				Set(cols.FailureCode.SetExcluded()).
-				Set(cols.FailureMessage.SetExcluded()).
-				Set(cols.UpdatedAt.SetExcluded()).
-				Returning("*").
-				Exec(ctx); err != nil {
-				return nil, err
+			ex := documentaiextractiondb.Extractions
+			db := r.db.Keel(ctx)
+			inserted, err := ex.Upsert(
+				ctx,
+				db,
+				[]*documentaiextraction.Extraction{entity},
+				keel.OnConflict(ex.DocumentID, ex.OrganizationID, ex.BusinessUnitID, ex.ExtractedAt).
+					Update(
+						ex.UserID,
+						ex.RequestHash,
+						ex.WorkflowID,
+						ex.WorkflowRunID,
+						ex.ActivityID,
+						ex.FailureCode,
+						ex.FailureMessage,
+					).
+					Set(
+						ex.ResponseID.ToExpr(keel.Raw(
+							"COALESCE(NULLIF(?, ''), ?)",
+							ex.ResponseID.Excluded(),
+							ex.ResponseID,
+						)),
+						ex.Model.ToExpr(keel.Raw(
+							"COALESCE(NULLIF(?, ''), ?)",
+							ex.Model.Excluded(),
+							ex.Model,
+						)),
+						ex.Status.ToExpr(keel.Raw(
+							"CASE WHEN ? IN (?, ?) THEN ? ELSE ? END",
+							ex.Status,
+							string(documentaiextraction.StatusApplied),
+							string(documentaiextraction.StatusSkipped),
+							ex.Status,
+							ex.Status.Excluded(),
+						)),
+						ex.SubmittedAt.ToExpr(keel.Raw(
+							"COALESCE(?, ?)",
+							ex.SubmittedAt.Excluded(),
+							ex.SubmittedAt,
+						)),
+					),
+			)
+			if err != nil {
+				return nil, extractionErrors.Map(err, entity.ID.String())
 			}
+			if len(inserted) == 1 && inserted[0] {
+				return entity, nil
+			}
+
+			stored, err := byDocumentExtractedAt(entity.DocumentID, entity.ExtractedAt).One(ctx, db)
+			if err != nil {
+				return nil, extractionErrors.Map(err, entity.DocumentID.String())
+			}
+			*entity = *stored
 
 			return entity, nil
 		},
@@ -105,28 +140,20 @@ func (r *repository) Update(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*documentaiextraction.Extraction, error) {
-			ov := entity.Version
-			entity.Version++
-			cols := documentaiextractioncol.ExtractionColumns
-			result, err := r.db.DBForContext(ctx).
-				NewUpdate().
-				Model(entity).
-				WherePK().
-				Where(cols.Version.Eq(), ov).
-				Returning("*").
-				Exec(ctx)
+			err := documentaiextractiondb.Extractions.Save(ctx, r.db.Keel(ctx), entity)
 			if err != nil {
-				return nil, err
-			}
-			if err = dberror.CheckRowsAffected(
-				result,
-				"DocumentAIExtraction",
-				entity.ID.String(),
-			); err != nil {
-				return nil, err
+				return nil, extractionErrors.Map(err, entity.ID.String())
 			}
 
 			return entity, nil
 		},
 	)
+}
+
+func byDocumentExtractedAt(
+	documentID pulid.ID,
+	extractedAt int64,
+) *keel.Query[documentaiextraction.Extraction] {
+	ex := documentaiextractiondb.Extractions
+	return ex.Where(ex.DocumentID.Eq(documentID), ex.ExtractedAt.Eq(extractedAt))
 }

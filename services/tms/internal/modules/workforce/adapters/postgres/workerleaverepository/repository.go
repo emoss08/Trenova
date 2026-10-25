@@ -2,23 +2,20 @@ package workerleaverepository
 
 import (
 	"context"
-	"database/sql"
-	"errors"
 	"fmt"
 
-	"github.com/emoss08/trenova/pkg/buncolgen/workercol"
-
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/workforce/adapters/postgres/workerteam"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker/workerdb"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
 	"github.com/emoss08/trenova/pkg/dberror"
-	"github.com/emoss08/trenova/pkg/errortypes"
+	"github.com/emoss08/trenova/pkg/listquery"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/sliceutils"
-	"github.com/uptrace/bun"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
@@ -27,6 +24,57 @@ const (
 	defaultCasePageSize  = 200
 	defaultEntryPageSize = 1000
 )
+
+var controlErrors = dberror.Mapping{Entity: "LeaveControl"}
+
+var caseErrors = dberror.Mapping{
+	Entity: "WorkerLeaveCase",
+	ForeignKey: []dberror.Constraint{
+		{
+			Name:    "fk_worker_leave_cases_worker",
+			Field:   "workerId",
+			Message: "Worker does not exist or belongs to a different organization",
+		},
+		{
+			Name:    "fk_worker_leave_cases_event",
+			Field:   "employmentEventId",
+			Message: "Employment event does not exist or belongs to a different organization",
+		},
+		{
+			Name:    "fk_worker_leave_cases_document",
+			Field:   "documentId",
+			Message: "Document does not exist or belongs to a different organization",
+		},
+	},
+}
+
+var entryErrors = dberror.Mapping{
+	Entity: "WorkerLeaveEntry",
+	Unique: []dberror.Constraint{
+		{
+			Name:    "uq_worker_leave_entries_day",
+			Field:   "usedOn",
+			Message: "That day is already recorded against this case; edit it instead",
+		},
+	},
+	ForeignKey: []dberror.Constraint{
+		{
+			Name:    "fk_worker_leave_entries_worker",
+			Field:   "workerId",
+			Message: "Worker does not exist or belongs to a different organization",
+		},
+		{
+			Name:    "fk_worker_leave_entries_case",
+			Field:   "leaveCaseId",
+			Message: "Leave case does not exist or belongs to a different organization",
+		},
+		{
+			Name:    "fk_worker_leave_entries_pto",
+			Field:   "ptoId",
+			Message: "Time off request does not exist for this worker",
+		},
+	},
+}
 
 type Params struct {
 	fx.In
@@ -63,19 +111,13 @@ func (r *repository) GetControl(
 	tenantInfo pagination.TenantInfo,
 ) (*worker.LeaveControl, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*worker.LeaveControl, error) {
-		entity := new(worker.LeaveControl)
-		err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(entity).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return workercol.LeaveControlScopeTenant(sq, tenantInfo)
-			}).
-			Limit(1).
-			Scan(ctx)
+		db := r.db.Keel(ctx)
+		lc := workerdb.LeaveControls
+		entity, err := lc.Query().First(ctx, db)
 		if err == nil {
 			return entity, nil
 		}
-		if !errors.Is(err, sql.ErrNoRows) {
+		if !dberror.IsNotFoundError(err) {
 			r.l.Error("failed to read leave control", zap.Error(err))
 			return nil, fmt.Errorf("read leave control: %w", err)
 		}
@@ -83,16 +125,27 @@ func (r *repository) GetControl(
 		created := worker.DefaultLeaveControl()
 		created.OrganizationID = tenantInfo.OrgID
 		created.BusinessUnitID = tenantInfo.BuID
-		if _, iErr := r.db.DBForContext(ctx).
-			NewInsert().
-			Model(created).
-			On("CONFLICT DO NOTHING").
-			Exec(ctx); iErr != nil {
-			r.l.Error("failed to seed leave control", zap.Error(iErr))
-			return nil, fmt.Errorf("seed leave control: %w", iErr)
+		inserted, err := lc.CreateOrSkip(
+			ctx,
+			db,
+			[]*worker.LeaveControl{created},
+			lc.OrganizationID,
+			lc.BusinessUnitID,
+		)
+		if err != nil {
+			r.l.Error("failed to seed leave control", zap.Error(err))
+			return nil, fmt.Errorf("seed leave control: %w", err)
+		}
+		if inserted > 0 {
+			return created, nil
 		}
 
-		return created, nil
+		entity, err = lc.Query().First(ctx, db)
+		if err != nil {
+			return nil, controlErrors.Map(err, "")
+		}
+
+		return entity, nil
 	})
 }
 
@@ -101,26 +154,9 @@ func (r *repository) UpdateControl(
 	entity *worker.LeaveControl,
 ) (*worker.LeaveControl, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*worker.LeaveControl, error) {
-		ov := entity.Version
-		entity.Version++
-
-		results, err := r.db.DBForContext(ctx).
-			NewUpdate().
-			Model(entity).
-			WherePK().
-			Where(workercol.LeaveControlColumns.Version.Eq(), ov).
-			Returning("*").
-			Exec(ctx)
-		if err != nil {
+		if err := workerdb.LeaveControls.Save(ctx, r.db.Keel(ctx), entity); err != nil {
 			r.l.Error("failed to update leave control", zap.Error(err))
-			return nil, fmt.Errorf("update leave control: %w", err)
-		}
-		if err = dberror.CheckRowsAffected(
-			results,
-			"LeaveControl",
-			entity.ID.String(),
-		); err != nil {
-			return nil, err
+			return nil, controlErrors.Map(err, entity.ID.String())
 		}
 
 		return entity, nil
@@ -129,40 +165,32 @@ func (r *repository) UpdateControl(
 
 // caseFilter is the one place the case predicates live, so a count and a list
 // can never disagree about what they are counting.
-func caseFilter(
-	db bun.IDB,
-	req *workerports.ListLeaveCasesRequest,
-) func(*bun.SelectQuery) *bun.SelectQuery {
-	cols := workercol.WorkerLeaveCaseColumns
-	team := workerteam.Where(db, &workerteam.Scope{
-		WorkerID:       cols.WorkerID,
-		OrganizationID: cols.OrganizationID,
-		BusinessUnitID: cols.BusinessUnitID,
-		ManagerIDs:     req.ManagerIDs,
-	})
-	return func(sq *bun.SelectQuery) *bun.SelectQuery {
-		sq = workercol.WorkerLeaveCaseScopeTenant(sq, req.TenantInfo)
-		if !req.WorkerID.IsNil() {
-			sq = sq.Where(cols.WorkerID.Eq(), req.WorkerID)
-		}
-		if req.OpenOnly {
-			sq = sq.Where(cols.Status.In(), bun.In([]worker.LeaveCaseStatus{
-				worker.LeaveCasePending,
-				worker.LeaveCaseApproved,
-			}))
-		}
-		if req.CertificationOutstandingOnly {
-			sq = sq.Where(
-				cols.CertificationStatus.In(),
-				bun.In([]worker.LeaveCertificationStatus{
-					worker.CertificationRequested,
-					worker.CertificationInsufficient,
-					worker.CertificationOverdue,
-				}),
-			)
-		}
-		return team(sq)
+func caseFilter(req *workerports.ListLeaveCasesRequest) []keel.Pred {
+	c := workerdb.WorkerLeaveCases
+
+	return []keel.Pred{
+		keel.When(req.WorkerID.IsNotNil(), c.WorkerID.Eq(req.WorkerID)),
+		keel.When(req.OpenOnly, c.Status.In(worker.LeaveCasePending, worker.LeaveCaseApproved)),
+		keel.When(req.CertificationOutstandingOnly, c.CertificationStatus.In(
+			worker.CertificationRequested,
+			worker.CertificationInsufficient,
+			worker.CertificationOverdue,
+		)),
+		workerteam.Where(c.WorkerID.Col, req.ManagerIDs),
 	}
+}
+
+func casesQuery(req *workerports.ListLeaveCasesRequest) *keel.Query[worker.WorkerLeaveCase] {
+	c := workerdb.WorkerLeaveCases
+	loads := make([]keel.Loader, 0, 3)
+	loads = append(loads, listquery.When(req.IncludeWorker, c.Worker())...)
+	loads = append(loads, listquery.When(req.IncludeDocument, c.Document())...)
+	loads = append(loads, listquery.When(req.IncludeEntries, c.Entries())...)
+
+	return c.Where(caseFilter(req)...).
+		Load(loads...).
+		Order(c.StartsAt.Desc()).
+		Limit(limitOr(req.Limit, defaultCasePageSize))
 }
 
 func (r *repository) ListCases(
@@ -170,27 +198,8 @@ func (r *repository) ListCases(
 	req *workerports.ListLeaveCasesRequest,
 ) ([]*worker.WorkerLeaveCase, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*worker.WorkerLeaveCase, error) {
-		cols := workercol.WorkerLeaveCaseColumns
-		entities := make([]*worker.WorkerLeaveCase, 0, 8)
-
-		q := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(&entities).
-			WhereGroup(" AND ", caseFilter(r.db.DBForContext(ctx), req)).
-			Order(cols.StartsAt.OrderDesc()).
-			Limit(int64(limitOr(req.Limit, defaultCasePageSize)))
-
-		if req.IncludeWorker {
-			q = q.Relation(workercol.WorkerLeaveCaseRelations.Worker)
-		}
-		if req.IncludeDocument {
-			q = q.Relation(workercol.WorkerLeaveCaseRelations.Document)
-		}
-		if req.IncludeEntries {
-			q = q.Relation(workercol.WorkerLeaveCaseRelations.Entries)
-		}
-
-		if err := q.Scan(ctx); err != nil {
+		entities, err := casesQuery(req).List(ctx, r.db.Keel(ctx))
+		if err != nil {
 			r.l.Error("failed to list leave cases", zap.Error(err))
 			return nil, fmt.Errorf("list leave cases: %w", err)
 		}
@@ -204,11 +213,7 @@ func (r *repository) CountCases(
 	req *workerports.ListLeaveCasesRequest,
 ) (int, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (int, error) {
-		total, err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model((*worker.WorkerLeaveCase)(nil)).
-			WhereGroup(" AND ", caseFilter(r.db.DBForContext(ctx), req)).
-			Count(ctx)
+		total, err := workerdb.WorkerLeaveCases.Where(caseFilter(req)...).Count(ctx, r.db.Keel(ctx))
 		if err != nil {
 			r.l.Error("failed to count leave cases", zap.Error(err))
 			return 0, fmt.Errorf("count leave cases: %w", err)
@@ -223,23 +228,15 @@ func (r *repository) GetCaseByID(
 	req *workerports.GetLeaveCaseByIDRequest,
 ) (*worker.WorkerLeaveCase, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*worker.WorkerLeaveCase, error) {
-		entity := new(worker.WorkerLeaveCase)
-		q := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(entity).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return workercol.WorkerLeaveCaseScopeTenant(sq, req.TenantInfo).
-					Where(workercol.WorkerLeaveCaseColumns.ID.Eq(), req.ID)
-			})
-		if req.IncludeDocument {
-			q = q.Relation(workercol.WorkerLeaveCaseRelations.Document)
-		}
-		if req.IncludeEntries {
-			q = q.Relation(workercol.WorkerLeaveCaseRelations.Entries)
-		}
+		c := workerdb.WorkerLeaveCases
+		loads := append(
+			listquery.When(req.IncludeDocument, c.Document()),
+			listquery.When(req.IncludeEntries, c.Entries())...,
+		)
 
-		if err := q.Scan(ctx); err != nil {
-			return nil, dberror.HandleNotFoundError(err, "WorkerLeaveCase")
+		entity, err := c.Where(c.ID.Eq(req.ID)).Load(loads...).One(ctx, r.db.Keel(ctx))
+		if err != nil {
+			return nil, caseErrors.Map(err, req.ID.String())
 		}
 
 		return entity, nil
@@ -251,13 +248,9 @@ func (r *repository) CreateCase(
 	entity *worker.WorkerLeaveCase,
 ) (*worker.WorkerLeaveCase, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*worker.WorkerLeaveCase, error) {
-		if _, err := r.db.DBForContext(ctx).
-			NewInsert().
-			Model(entity).
-			Returning("*").
-			Exec(ctx); err != nil {
+		if err := workerdb.WorkerLeaveCases.Create(ctx, r.db.Keel(ctx), entity); err != nil {
 			r.l.Error("failed to create leave case", zap.Error(err))
-			return nil, fmt.Errorf("create leave case: %w", err)
+			return nil, caseErrors.Map(err, entity.ID.String())
 		}
 
 		return entity, nil
@@ -269,26 +262,9 @@ func (r *repository) UpdateCase(
 	entity *worker.WorkerLeaveCase,
 ) (*worker.WorkerLeaveCase, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*worker.WorkerLeaveCase, error) {
-		ov := entity.Version
-		entity.Version++
-
-		results, err := r.db.DBForContext(ctx).
-			NewUpdate().
-			Model(entity).
-			WherePK().
-			Where(workercol.WorkerLeaveCaseColumns.Version.Eq(), ov).
-			Returning("*").
-			Exec(ctx)
-		if err != nil {
+		if err := workerdb.WorkerLeaveCases.Save(ctx, r.db.Keel(ctx), entity); err != nil {
 			r.l.Error("failed to update leave case", zap.Error(err))
-			return nil, fmt.Errorf("update leave case: %w", err)
-		}
-		if err = dberror.CheckRowsAffected(
-			results,
-			"WorkerLeaveCase",
-			entity.ID.String(),
-		); err != nil {
-			return nil, err
+			return nil, caseErrors.Map(err, entity.ID.String())
 		}
 
 		return entity, nil
@@ -300,28 +276,15 @@ func (r *repository) ListEntries(
 	req *workerports.ListLeaveEntriesRequest,
 ) ([]*worker.WorkerLeaveEntry, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*worker.WorkerLeaveEntry, error) {
-		cols := workercol.WorkerLeaveEntryColumns
-		entities := make([]*worker.WorkerLeaveEntry, 0, 32)
-
-		err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(&entities).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				sq = workercol.WorkerLeaveEntryScopeTenant(sq, req.TenantInfo)
-				if !req.WorkerID.IsNil() {
-					sq = sq.Where(cols.WorkerID.Eq(), req.WorkerID)
-				}
-				if !req.LeaveCaseID.IsNil() {
-					sq = sq.Where(cols.LeaveCaseID.Eq(), req.LeaveCaseID)
-				}
-				if req.Since > 0 {
-					sq = sq.Where(cols.UsedOn.Gte(), req.Since)
-				}
-				return sq
-			}).
-			Order(cols.UsedOn.OrderDesc()).
-			Limit(int64(limitOr(req.Limit, defaultEntryPageSize))).
-			Scan(ctx)
+		e := workerdb.WorkerLeaveEntries
+		entities, err := e.Where(
+			keel.When(req.WorkerID.IsNotNil(), e.WorkerID.Eq(req.WorkerID)),
+			keel.When(req.LeaveCaseID.IsNotNil(), e.LeaveCaseID.Eq(req.LeaveCaseID)),
+			keel.When(req.Since > 0, e.UsedOn.Gte(req.Since)),
+		).
+			Order(e.UsedOn.Desc()).
+			Limit(limitOr(req.Limit, defaultEntryPageSize)).
+			List(ctx, r.db.Keel(ctx))
 		if err != nil {
 			r.l.Error("failed to list leave entries", zap.Error(err))
 			return nil, fmt.Errorf("list leave entries: %w", err)
@@ -339,19 +302,15 @@ func (r *repository) ListEntriesByCaseIDs(
 		ctx,
 		r.db,
 		func(ctx context.Context) (map[pulid.ID][]*worker.WorkerLeaveEntry, error) {
-			cols := workercol.WorkerLeaveEntryColumns
-			entities := make([]*worker.WorkerLeaveEntry, 0, len(req.LeaveCaseIDs)*32)
+			if len(req.LeaveCaseIDs) == 0 {
+				return map[pulid.ID][]*worker.WorkerLeaveEntry{}, nil
+			}
 
-			err := r.db.DBForContext(ctx).
-				NewSelect().
-				Model(&entities).
-				WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-					return workercol.WorkerLeaveEntryScopeTenant(sq, req.TenantInfo).
-						Where(cols.LeaveCaseID.In(), bun.List(req.LeaveCaseIDs))
-				}).
-				Order(cols.UsedOn.OrderDesc()).
-				Limit(int64(len(req.LeaveCaseIDs) * defaultEntryPageSize)).
-				Scan(ctx)
+			e := workerdb.WorkerLeaveEntries
+			entities, err := e.Where(e.LeaveCaseID.In(req.LeaveCaseIDs...)).
+				Order(e.UsedOn.Desc()).
+				Limit(len(req.LeaveCaseIDs)*defaultEntryPageSize).
+				List(ctx, r.db.Keel(ctx))
 			if err != nil {
 				r.l.Error("failed to list leave entries by cases", zap.Error(err))
 				return nil, fmt.Errorf("list leave entries by cases: %w", err)
@@ -369,17 +328,9 @@ func (r *repository) GetEntryByID(
 	req *workerports.GetLeaveEntryByIDRequest,
 ) (*worker.WorkerLeaveEntry, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*worker.WorkerLeaveEntry, error) {
-		entity := new(worker.WorkerLeaveEntry)
-		err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(entity).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return workercol.WorkerLeaveEntryScopeTenant(sq, req.TenantInfo).
-					Where(workercol.WorkerLeaveEntryColumns.ID.Eq(), req.ID)
-			}).
-			Scan(ctx)
+		entity, err := workerdb.WorkerLeaveEntries.Get(ctx, r.db.Keel(ctx), req.ID)
 		if err != nil {
-			return nil, dberror.HandleNotFoundError(err, "WorkerLeaveEntry")
+			return nil, entryErrors.Map(err, req.ID.String())
 		}
 
 		return entity, nil
@@ -391,20 +342,9 @@ func (r *repository) CreateEntry(
 	entity *worker.WorkerLeaveEntry,
 ) (*worker.WorkerLeaveEntry, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*worker.WorkerLeaveEntry, error) {
-		if _, err := r.db.DBForContext(ctx).
-			NewInsert().
-			Model(entity).
-			Returning("*").
-			Exec(ctx); err != nil {
-			if dberror.IsUniqueConstraintViolation(err) {
-				return nil, errortypes.NewValidationError(
-					"usedOn",
-					errortypes.ErrDuplicate,
-					"That day is already recorded against this case; edit it instead",
-				)
-			}
+		if err := workerdb.WorkerLeaveEntries.Create(ctx, r.db.Keel(ctx), entity); err != nil {
 			r.l.Error("failed to create leave entry", zap.Error(err))
-			return nil, fmt.Errorf("create leave entry: %w", err)
+			return nil, entryErrors.Map(err, entity.ID.String())
 		}
 
 		return entity, nil
@@ -416,26 +356,9 @@ func (r *repository) UpdateEntry(
 	entity *worker.WorkerLeaveEntry,
 ) (*worker.WorkerLeaveEntry, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*worker.WorkerLeaveEntry, error) {
-		ov := entity.Version
-		entity.Version++
-
-		results, err := r.db.DBForContext(ctx).
-			NewUpdate().
-			Model(entity).
-			WherePK().
-			Where(workercol.WorkerLeaveEntryColumns.Version.Eq(), ov).
-			Returning("*").
-			Exec(ctx)
-		if err != nil {
+		if err := workerdb.WorkerLeaveEntries.Save(ctx, r.db.Keel(ctx), entity); err != nil {
 			r.l.Error("failed to update leave entry", zap.Error(err))
-			return nil, fmt.Errorf("update leave entry: %w", err)
-		}
-		if err = dberror.CheckRowsAffected(
-			results,
-			"WorkerLeaveEntry",
-			entity.ID.String(),
-		); err != nil {
-			return nil, err
+			return nil, entryErrors.Map(err, entity.ID.String())
 		}
 
 		return entity, nil
@@ -447,19 +370,16 @@ func (r *repository) DeleteEntry(
 	req *workerports.GetLeaveEntryByIDRequest,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
-		results, err := r.db.DBForContext(ctx).
-			NewDelete().
-			Model((*worker.WorkerLeaveEntry)(nil)).
-			Apply(func(dq *bun.DeleteQuery) *bun.DeleteQuery {
-				return workercol.WorkerLeaveEntryScopeTenantDelete(dq, req.TenantInfo).
-					Where(workercol.WorkerLeaveEntryColumns.ID.Eq(), req.ID)
-			}).
-			Exec(ctx)
+		err := workerdb.WorkerLeaveEntries.DeleteRow(
+			ctx,
+			r.db.Keel(ctx),
+			&worker.WorkerLeaveEntry{ID: req.ID},
+		)
 		if err != nil {
 			r.l.Error("failed to delete leave entry", zap.Error(err))
-			return fmt.Errorf("delete leave entry: %w", err)
+			return entryErrors.Map(err, req.ID.String())
 		}
 
-		return dberror.CheckRowsAffected(results, "WorkerLeaveEntry", req.ID.String())
+		return nil
 	})
 }

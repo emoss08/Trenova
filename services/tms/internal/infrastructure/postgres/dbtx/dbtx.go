@@ -3,13 +3,9 @@ package dbtx
 import (
 	"context"
 
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
-	"github.com/uptrace/bun"
 )
-
-type scopedTransactor interface {
-	ScopedTransactions() bool
-}
 
 func Read[T any](
 	ctx context.Context,
@@ -59,26 +55,17 @@ func Write2[A, B any](
 	return run2(ctx, conn, false, fn)
 }
 
-func Required(conn kernelports.DBConnection) bool {
-	scoped, ok := conn.(scopedTransactor)
-	return ok && scoped.ScopedTransactions()
-}
-
 func run[T any](
 	ctx context.Context,
 	conn kernelports.DBConnection,
 	readOnly bool,
 	fn func(context.Context) (T, error),
 ) (T, error) {
-	if !Required(conn) {
-		return fn(ctx)
-	}
-
 	var out T
-	err := conn.WithTx(
+	err := conn.Transact(
 		ctx,
 		kernelports.TxOptions{ReadOnly: readOnly},
-		func(ctx context.Context, _ bun.Tx) error {
+		func(ctx context.Context) error {
 			var err error
 			out, err = fn(ctx)
 			return err
@@ -94,14 +81,10 @@ func run2[A, B any](
 	readOnly bool,
 	fn func(context.Context) (A, B, error),
 ) (first A, second B, err error) {
-	if !Required(conn) {
-		return fn(ctx)
-	}
-
-	err = conn.WithTx(
+	err = conn.Transact(
 		ctx,
 		kernelports.TxOptions{ReadOnly: readOnly},
-		func(ctx context.Context, _ bun.Tx) error {
+		func(ctx context.Context) error {
 			var fnErr error
 			first, second, fnErr = fn(ctx)
 			return fnErr
@@ -117,17 +100,7 @@ func runErr(
 	readOnly bool,
 	fn func(context.Context) error,
 ) error {
-	if !Required(conn) {
-		return fn(ctx)
-	}
-
-	return conn.WithTx(
-		ctx,
-		kernelports.TxOptions{ReadOnly: readOnly},
-		func(ctx context.Context, _ bun.Tx) error {
-			return fn(ctx)
-		},
-	)
+	return conn.Transact(ctx, kernelports.TxOptions{ReadOnly: readOnly}, fn)
 }
 
 func Savepoint(
@@ -135,12 +108,10 @@ func Savepoint(
 	conn kernelports.DBConnection,
 	fn func(context.Context) error,
 ) error {
-	tx, ok := conn.DBForContext(ctx).(bun.Tx)
-	if !ok {
+	db := conn.Keel(ctx)
+	if db == nil || !keel.InTx(ctx, db) {
 		return fn(ctx)
 	}
 
-	return tx.RunInTx(ctx, nil, func(context.Context, bun.Tx) error {
-		return fn(ctx)
-	})
+	return keel.Savepoint(ctx, db, fn)
 }

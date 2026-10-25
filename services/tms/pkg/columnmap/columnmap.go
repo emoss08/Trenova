@@ -1,0 +1,102 @@
+package columnmap
+
+import (
+	"errors"
+	"fmt"
+	"maps"
+	"reflect"
+	"strings"
+
+	"github.com/bytedance/sonic"
+)
+
+//nolint:govet // existing scoped variable reuse is local and behavior-preserving
+func UnmarshalMap(input map[string]any, target any) error {
+	if target == nil {
+		return errors.New("target is required")
+	}
+
+	targetType := reflect.TypeOf(target)
+	if targetType.Kind() != reflect.Pointer || targetType.Elem().Kind() != reflect.Struct {
+		return errors.New("target must be a pointer to struct")
+	}
+
+	translated := translateMap(input, targetType.Elem())
+	payload, err := sonic.Marshal(translated)
+	if err != nil {
+		return fmt.Errorf("marshal translated payload: %w", err)
+	}
+
+	if err := sonic.Unmarshal(payload, target); err != nil {
+		return fmt.Errorf("unmarshal translated payload: %w", err)
+	}
+
+	return nil
+}
+
+func translateMap(input map[string]any, targetType reflect.Type) map[string]any {
+	fields := fieldMappings(targetType)
+	output := make(map[string]any, len(input))
+
+	for key, value := range input {
+		if strings.HasPrefix(key, "_") {
+			continue
+		}
+
+		if name, ok := fields[key]; ok {
+			output[name] = value
+			continue
+		}
+
+		output[key] = value
+	}
+
+	return output
+}
+
+func fieldMappings(targetType reflect.Type) map[string]string {
+	fields := make(map[string]string)
+
+	for field := range targetType.Fields() {
+		if field.PkgPath != "" && !field.Anonymous {
+			continue
+		}
+
+		if field.Anonymous {
+			embeddedType := field.Type
+			if embeddedType.Kind() == reflect.Pointer {
+				embeddedType = embeddedType.Elem()
+			}
+			if embeddedType.Kind() == reflect.Struct {
+				maps.Copy(fields, fieldMappings(embeddedType))
+			}
+			continue
+		}
+
+		column := parseTagName(field.Tag.Get("keel"))
+		jsonName := parseTagName(field.Tag.Get("json"))
+
+		if column == "" || column == "-" || jsonName == "" || jsonName == "-" ||
+			strings.Contains(column, ":") {
+			continue
+		}
+
+		fields[column] = jsonName
+	}
+
+	return fields
+}
+
+func parseTagName(tag string) string {
+	if tag == "" {
+		return ""
+	}
+
+	parts := strings.Split(tag, ",")
+	name := strings.TrimSpace(parts[0])
+	if name == "" {
+		return ""
+	}
+
+	return name
+}

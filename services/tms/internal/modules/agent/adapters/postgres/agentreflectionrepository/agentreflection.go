@@ -4,21 +4,24 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/emoss08/trenova/pkg/buncolgen/agentcol"
-
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agent/agentdb"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/pkg/dberror"
-	"github.com/emoss08/trenova/pkg/dbhelper"
+	"github.com/emoss08/trenova/pkg/keelkinds"
+	"github.com/emoss08/trenova/pkg/listquery"
 	"github.com/emoss08/trenova/pkg/pagination"
-	"github.com/emoss08/trenova/pkg/querybuilder"
-	"github.com/emoss08/trenova/shared/timeutils"
-	"github.com/uptrace/bun"
+	"github.com/emoss08/trenova/shared/pulid"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
+
+const reflectionEntity = "AgentReflection"
+
+var reflectionErrors = dberror.Mapping{Entity: reflectionEntity}
 
 type Params struct {
 	fx.In
@@ -45,13 +48,7 @@ func (r *repository) Claim(
 ) (*agent.Reflection, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*agent.Reflection, error) {
 		err := dbtx.Savepoint(ctx, r.db, func(ctx context.Context) error {
-			_, insertErr := r.db.DBForContext(ctx).
-				NewInsert().
-				Model(entity).
-				Returning("*").
-				Exec(ctx)
-
-			return insertErr
+			return agentdb.Reflections.Create(ctx, r.db.Keel(ctx), entity)
 		})
 		if err == nil {
 			return entity, nil
@@ -66,31 +63,30 @@ func (r *repository) Claim(
 	})
 }
 
+func idIs(col keelkinds.PulidIDCol, id *pulid.ID) keel.Pred {
+	if id == nil {
+		return col.IsNull()
+	}
+
+	return col.Eq(*id)
+}
+
 func (r *repository) claimed(
 	ctx context.Context,
 	entity *agent.Reflection,
 ) (*agent.Reflection, error) {
-	cols := agentcol.ReflectionColumns
-	held := new(agent.Reflection)
-	tenant := pagination.TenantInfo{OrgID: entity.OrganizationID, BuID: entity.BusinessUnitID}
+	rf := agentdb.Reflections
+	subject := keel.And(
+		idIs(rf.ThreadID, entity.ThreadID),
+		rf.ThroughSequence.Eq(int64(entity.ThroughSequence)),
+	)
+	if entity.SubjectType == agent.ReflectionSubjectRun {
+		subject = idIs(rf.RunID, entity.RunID)
+	}
 
-	err := r.db.DBForContext(ctx).
-		NewSelect().
-		Model(held).
-		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-			sq = agentcol.ReflectionScopeTenant(sq, tenant).
-				Where(cols.SubjectType.Eq(), entity.SubjectType)
-			if entity.SubjectType == agent.ReflectionSubjectRun {
-				return sq.Where(cols.RunID.Eq(), entity.RunID)
-			}
-
-			return sq.Where(cols.ThreadID.Eq(), entity.ThreadID).
-				Where(cols.ThroughSequence.Eq(), entity.ThroughSequence)
-		}).
-		Limit(1).
-		Scan(ctx)
+	held, err := rf.Where(rf.SubjectType.Eq(entity.SubjectType), subject).First(ctx, r.db.Keel(ctx))
 	if err != nil {
-		return nil, dberror.HandleNotFoundError(err, "AgentReflection")
+		return nil, reflectionErrors.Map(err, entity.ID.String())
 	}
 
 	return held, nil
@@ -101,18 +97,9 @@ func (r *repository) GetByID(
 	req agentports.GetAgentReflectionRequest,
 ) (*agent.Reflection, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*agent.Reflection, error) {
-		cols := agentcol.ReflectionColumns
-		entity := new(agent.Reflection)
-		err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(entity).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return agentcol.ReflectionScopeTenant(sq, req.TenantInfo).
-					Where(cols.ID.Eq(), req.ID)
-			}).
-			Scan(ctx)
+		entity, err := agentdb.Reflections.Get(ctx, r.db.Keel(ctx), req.ID)
 		if err != nil {
-			return nil, dberror.HandleNotFoundError(err, "AgentReflection")
+			return nil, reflectionErrors.Map(err, req.ID.String())
 		}
 
 		return entity, nil
@@ -124,45 +111,30 @@ func (r *repository) Update(
 	entity *agent.Reflection,
 ) (*agent.Reflection, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*agent.Reflection, error) {
-		cols := agentcol.ReflectionColumns
-		ov := entity.Version
-		entity.Version++
-
-		res, err := r.db.DBForContext(ctx).
-			NewUpdate().
-			Model(entity).
-			WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-				return agentcol.ReflectionScopeTenantUpdate(uq, pagination.TenantInfo{
-					OrgID: entity.OrganizationID,
-					BuID:  entity.BusinessUnitID,
-				}).Where(cols.ID.Eq(), entity.ID).
-					Where(cols.Version.Eq(), ov)
-			}).
-			Set(cols.Status.Set(), entity.Status).
-			Set(cols.SkipReason.Set(), nullableSkip(entity.SkipReason)).
-			Set(cols.Signals.Set(), entity.Signals).
-			Set(cols.Changes.Set(), entity.Changes).
-			Set(cols.Notes.Set(), entity.Notes).
-			Set(cols.Tainted.Set(), entity.Tainted).
-			Set(cols.Model.Set(), entity.Model).
-			Set(cols.ProviderID.Set(), entity.ProviderID).
-			Set(cols.InputTokens.Set(), entity.InputTokens).
-			Set(cols.OutputTokens.Set(), entity.OutputTokens).
-			Set(cols.ErrorMessage.Set(), entity.ErrorMessage).
-			Set(cols.FinishedAt.Set(), entity.FinishedAt).
-			Set(cols.UpdatedAt.Set(), timeutils.NowUnix()).
-			Set(cols.Version.Set(), entity.Version).
-			Exec(ctx)
+		rf := agentdb.Reflections
+		err := rf.Save(
+			ctx,
+			r.db.Keel(ctx),
+			entity,
+			rf.Status,
+			rf.SkipReason,
+			rf.Signals,
+			rf.Changes,
+			rf.Notes,
+			rf.Tainted,
+			rf.Model,
+			rf.ProviderID,
+			rf.InputTokens,
+			rf.OutputTokens,
+			rf.ErrorMessage,
+			rf.FinishedAt,
+		)
 		if err != nil {
+			if dberror.IsVersionConflict(err) {
+				return nil, reflectionErrors.Map(err, entity.ID.String())
+			}
+
 			return nil, fmt.Errorf("update agent reflection: %w", err)
-		}
-
-		rows, err := res.RowsAffected()
-		if err != nil {
-			return nil, fmt.Errorf("update agent reflection rows: %w", err)
-		}
-		if rows == 0 {
-			return nil, dberror.CreateVersionMismatchError("AgentReflection", entity.ID.String())
 		}
 
 		return entity, nil
@@ -174,26 +146,19 @@ func (r *repository) ThreadReflectedThrough(
 	req agentports.ThreadReflectedThroughRequest,
 ) (int, bool, error) {
 	return dbtx.Read2(ctx, r.db, func(ctx context.Context) (int, bool, error) {
-		cols := agentcol.ReflectionColumns
-		latest := new(agent.Reflection)
-		err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(latest).
-			Column(cols.ThroughSequence.Bare()).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return agentcol.ReflectionScopeTenant(sq, req.TenantInfo).
-					Where(cols.SubjectType.Eq(), agent.ReflectionSubjectThread).
-					Where(cols.ThreadID.Eq(), req.ThreadID).
-					Where(cols.Status.NotEq(), agent.ReflectionStatusFailed)
-			}).
-			OrderExpr(cols.ThroughSequence.OrderDesc()).
-			Limit(1).
-			Scan(ctx)
+		rf := agentdb.Reflections
+		latest, err := rf.Pick(rf.ThroughSequence).
+			Where(
+				rf.SubjectType.Eq(agent.ReflectionSubjectThread),
+				rf.ThreadID.Eq(req.ThreadID),
+				rf.Status.Ne(agent.ReflectionStatusFailed),
+			).
+			Order(rf.ThroughSequence.Desc()).
+			First(ctx, r.db.Keel(ctx))
+		if dberror.IsNotFoundError(err) {
+			return 0, false, nil
+		}
 		if err != nil {
-			if dberror.IsNotFoundError(err) {
-				return 0, false, nil
-			}
-
 			return 0, false, fmt.Errorf("read how far a conversation was looked back over: %w", err)
 		}
 
@@ -209,53 +174,16 @@ func (r *repository) ListConnection(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*pagination.CursorListResult[*agent.Reflection], error) {
-			dba := r.db.DBForContext(ctx)
-			var totalCount *int
-			if req.Cursor.IncludeTotalCount {
-				total, err := dba.
-					NewSelect().
-					Model((*agent.Reflection)(nil)).
-					Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-						sq = querybuilder.ApplyFiltersWithoutSort(
-							sq,
-							agentcol.ReflectionTable.Alias,
-							req.Filter,
-							(*agent.Reflection)(nil),
-						)
-
-						return sq.Apply(agentcol.ReflectionApplyTenant(req.Filter.TenantInfo))
-					}).
-					Count(ctx)
-				if err != nil {
-					return nil, fmt.Errorf("count agent reflections: %w", err)
-				}
-				totalCount = new(int(total))
-			}
-
-			result, err := dbhelper.CursorList(
+			result, err := listquery.Connection(
 				ctx,
-				dbhelper.CursorListParams[*agent.Reflection]{
-					Filter:     req.Filter,
-					Cursor:     req.Cursor,
-					TotalCount: totalCount,
-					Query: func(entities *[]*agent.Reflection) *bun.SelectQuery {
-						q := dba.NewSelect().Model(entities)
-						if len(req.Columns) > 0 {
-							q = q.Column(req.Columns...)
-						}
-
-						return q
-					},
-					Apply: func(sq *bun.SelectQuery) (*bun.SelectQuery, error) {
-						return querybuilder.ApplyCursorFilters(
-							sq,
-							agentcol.ReflectionTable.Alias,
-							req.Filter,
-							req.Cursor,
-							(*agent.Reflection)(nil),
-						)
-					},
-				})
+				r.db.Keel(ctx),
+				agentdb.Reflections.Query(),
+				&listquery.Request[agent.Reflection]{
+					Filter:  req.Filter,
+					Cursor:  req.Cursor,
+					Columns: req.Columns,
+				},
+			)
 			if err != nil {
 				return nil, fmt.Errorf("list agent reflections: %w", err)
 			}
@@ -263,12 +191,4 @@ func (r *repository) ListConnection(
 			return result, nil
 		},
 	)
-}
-
-func nullableSkip(reason agent.ReflectionSkip) any {
-	if reason == "" {
-		return nil
-	}
-
-	return reason
 }

@@ -5,14 +5,13 @@ import (
 	"errors"
 	"time"
 
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/pkg/domainvalidation"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/validationframework"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/emoss08/trenova/shared/timeutils"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
-	"github.com/uptrace/bun"
 )
 
 var ErrInvalidSummaryStatus = errors.New("invalid osha summary status")
@@ -39,7 +38,6 @@ func (s OSHASummaryStatus) IsValid() bool {
 }
 
 var (
-	_ bun.BeforeAppendModelHook          = (*OSHAAnnualSummary)(nil)
 	_ validationframework.TenantedEntity = (*OSHAAnnualSummary)(nil)
 )
 
@@ -51,37 +49,37 @@ var (
 // injuries whenever the summary is read, so a case corrected in March — which
 // the rule requires for five years — cannot leave a stale summary behind it.
 type OSHAAnnualSummary struct {
-	bun.BaseModel `bun:"table:osha_annual_summaries,alias:osum" json:"-"`
+	keel.Table `keel:"osha_annual_summaries"`
 
-	ID             pulid.ID `json:"id"             bun:"id,pk,type:VARCHAR(100),notnull"`
-	BusinessUnitID pulid.ID `json:"businessUnitId" bun:"business_unit_id,pk,type:VARCHAR(100),notnull"`
-	OrganizationID pulid.ID `json:"organizationId" bun:"organization_id,pk,type:VARCHAR(100),notnull"`
+	ID             pulid.ID `json:"id"             keel:"id,pk,autoid:osum_"`
+	BusinessUnitID pulid.ID `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
+	OrganizationID pulid.ID `json:"organizationId" keel:"organization_id,pk,tenant"`
 
-	Year   int16             `json:"year"   bun:"year,type:SMALLINT,notnull"`
-	Status OSHASummaryStatus `json:"status" bun:"status,type:osha_summary_status_enum,notnull,default:'Draft'"`
+	Year   int16             `json:"year"   keel:"year"`
+	Status OSHASummaryStatus `json:"status" keel:"status"`
 
-	NAICSCode        string `json:"naicsCode"        bun:"naics_code,type:VARCHAR(10),nullzero"`
-	AverageEmployees int32  `json:"averageEmployees" bun:"average_employees,type:INTEGER,notnull"`
-	TotalHoursWorked int64  `json:"totalHoursWorked" bun:"total_hours_worked,type:BIGINT,notnull"`
+	NAICSCode        string `json:"naicsCode"        keel:"naics_code,nullzero"`
+	AverageEmployees int32  `json:"averageEmployees" keel:"average_employees"`
+	TotalHoursWorked int64  `json:"totalHoursWorked" keel:"total_hours_worked"`
 
-	ExecutiveName  string `json:"executiveName"  bun:"executive_name,type:VARCHAR(100),nullzero"`
-	ExecutiveTitle string `json:"executiveTitle" bun:"executive_title,type:VARCHAR(100),nullzero"`
-	ExecutivePhone string `json:"executivePhone" bun:"executive_phone,type:VARCHAR(30),nullzero"`
+	ExecutiveName  string `json:"executiveName"  keel:"executive_name,nullzero"`
+	ExecutiveTitle string `json:"executiveTitle" keel:"executive_title,nullzero"`
+	ExecutivePhone string `json:"executivePhone" keel:"executive_phone,nullzero"`
 
-	CertifiedAt   *int64   `json:"certifiedAt"   bun:"certified_at,type:BIGINT,nullzero"`
-	CertifiedByID pulid.ID `json:"certifiedById" bun:"certified_by_id,type:VARCHAR(100),nullzero"`
-	PostedFrom    *int64   `json:"postedFrom"    bun:"posted_from,type:BIGINT,nullzero"`
-	PostedThrough *int64   `json:"postedThrough" bun:"posted_through,type:BIGINT,nullzero"`
+	CertifiedAt   *int64   `json:"certifiedAt"   keel:"certified_at"`
+	CertifiedByID pulid.ID `json:"certifiedById" keel:"certified_by_id,nullzero"`
+	PostedFrom    *int64   `json:"postedFrom"    keel:"posted_from"`
+	PostedThrough *int64   `json:"postedThrough" keel:"posted_through"`
 
-	SubmittedAt         *int64 `json:"submittedAt"         bun:"submitted_at,type:BIGINT,nullzero"`
-	SubmissionReference string `json:"submissionReference" bun:"submission_reference,type:VARCHAR(100),nullzero"`
-	Notes               string `json:"notes"               bun:"notes,type:TEXT,nullzero"`
+	SubmittedAt         *int64 `json:"submittedAt"         keel:"submitted_at"`
+	SubmissionReference string `json:"submissionReference" keel:"submission_reference,nullzero"`
+	Notes               string `json:"notes"               keel:"notes,nullzero"`
 
-	Version   int64 `json:"version"   bun:"version,type:BIGINT"`
-	CreatedAt int64 `json:"createdAt" bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
-	UpdatedAt int64 `json:"updatedAt" bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
+	Version   int64 `json:"version"   keel:"version,version"`
+	CreatedAt int64 `json:"createdAt" keel:"created_at,autocreate"`
+	UpdatedAt int64 `json:"updatedAt" keel:"updated_at,autoupdate"`
 
-	CertifiedBy *tenant.User `json:"certifiedBy,omitempty" bun:"rel:belongs-to,join:certified_by_id=id"`
+	CertifiedBy *tenant.User `json:"certifiedBy,omitempty" keel:"belongs:certified_by_id"`
 }
 
 func (s *OSHAAnnualSummary) Validate(multiErr *errortypes.MultiError) {
@@ -171,21 +169,9 @@ func (s *OSHAAnnualSummary) GetResourceType() string { return "osha_annual_summa
 
 func (s *OSHAAnnualSummary) GetResourceID() string { return s.ID.String() }
 
-func (s *OSHAAnnualSummary) BeforeAppendModel(_ context.Context, query bun.Query) error {
-	now := timeutils.NowUnix()
-
-	switch query.(type) {
-	case *bun.InsertQuery:
-		if s.ID.IsNil() {
-			s.ID = pulid.MustNew("osum_")
-		}
-		if s.Status == "" {
-			s.Status = SummaryDraft
-		}
-		s.CreatedAt = now
-		s.UpdatedAt = now
-	case *bun.UpdateQuery:
-		s.UpdatedAt = now
+func (s *OSHAAnnualSummary) BeforeCreate(_ context.Context) error {
+	if s.Status == "" {
+		s.Status = SummaryDraft
 	}
 
 	return nil

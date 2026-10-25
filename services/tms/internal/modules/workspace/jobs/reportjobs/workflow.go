@@ -16,7 +16,10 @@ const (
 	ErrTypeReportValidation    = "REPORT_VALIDATION"
 	ErrTypeReportAuthorization = "REPORT_AUTHORIZATION"
 	ErrTypeReportTooExpensive  = "REPORT_TOO_EXPENSIVE"
+	ErrTypeReportBusy          = "REPORT_BUSY"
 )
+
+const busyRetryDelay = 15 * time.Second
 
 var prepareActivityOptions = workflow.ActivityOptions{
 	StartToCloseTimeout: 1 * time.Minute,
@@ -118,7 +121,7 @@ func RunReportWorkflow(
 		RetryPolicy: &temporal.RetryPolicy{
 			InitialInterval:    5 * time.Second,
 			BackoffCoefficient: 2.0,
-			MaximumAttempts:    2,
+			MaximumAttempts:    4,
 			MaximumInterval:    time.Minute,
 			NonRetryableErrorTypes: []string{
 				ErrTypeReportValidation,

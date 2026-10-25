@@ -1,7 +1,6 @@
 package deskcase
 
 import (
-	"context"
 	"database/sql/driver"
 	"errors"
 	"fmt"
@@ -11,10 +10,9 @@ import (
 	"unicode/utf8"
 
 	"github.com/bytedance/sonic"
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/emoss08/trenova/shared/timeutils"
-	"github.com/uptrace/bun"
 )
 
 // ItemMode is how one step of a checklist counts. A required step blocks the
@@ -175,40 +173,24 @@ func (t *TemplateItems) Scan(src any) error {
 // template replaces the organization's for that customer; with neither, the
 // default applies.
 type ChecklistTemplate struct {
-	bun.BaseModel `bun:"table:case_checklist_templates,alias:cct" json:"-"`
+	keel.Table `keel:"case_checklist_templates"`
 
-	ID             pulid.ID `json:"id"             bun:"id,pk,type:VARCHAR(100),notnull"`
-	OrganizationID pulid.ID `json:"organizationId" bun:"organization_id,pk,type:VARCHAR(100),notnull"`
-	BusinessUnitID pulid.ID `json:"businessUnitId" bun:"business_unit_id,pk,type:VARCHAR(100),notnull"`
+	ID             pulid.ID `json:"id"             keel:"id,pk,autoid:cct_"`
+	OrganizationID pulid.ID `json:"organizationId" keel:"organization_id,pk,tenant"`
+	BusinessUnitID pulid.ID `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
 
-	Kind       ChecklistKind `json:"kind"       bun:"kind,type:VARCHAR(30),notnull"`
-	CustomerID pulid.ID      `json:"customerId" bun:"customer_id,type:VARCHAR(100),nullzero"`
-	Items      TemplateItems `json:"items"      bun:"items,type:JSONB,notnull"`
+	Kind       ChecklistKind `json:"kind"       keel:"kind"`
+	CustomerID pulid.ID      `json:"customerId" keel:"customer_id,nullzero"`
+	Items      TemplateItems `json:"items"      keel:"items,jsonb"`
 
-	UpdatedByID pulid.ID `json:"updatedById" bun:"updated_by_id,type:VARCHAR(100),nullzero"`
-	Version     int64    `json:"version"     bun:"version,type:BIGINT,notnull,default:0"`
-	CreatedAt   int64    `json:"createdAt"   bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
-	UpdatedAt   int64    `json:"updatedAt"   bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
+	UpdatedByID pulid.ID `json:"updatedById" keel:"updated_by_id,nullzero"`
+	Version     int64    `json:"version"     keel:"version,version"`
+	CreatedAt   int64    `json:"createdAt"   keel:"created_at,autocreate"`
+	UpdatedAt   int64    `json:"updatedAt"   keel:"updated_at,autoupdate"`
 
 	// CustomerName is read with the template for the settings list; never
 	// stored.
-	CustomerName string `json:"customerName,omitempty" bun:"customer_name,scanonly"`
-}
-
-func (t *ChecklistTemplate) BeforeAppendModel(_ context.Context, query bun.Query) error {
-	now := timeutils.NowUnix()
-	switch query.(type) {
-	case *bun.InsertQuery:
-		if t.ID.IsNil() {
-			t.ID = pulid.MustNew("cct_")
-		}
-		t.CreatedAt = now
-		t.UpdatedAt = now
-	case *bun.UpdateQuery:
-		t.UpdatedAt = now
-	}
-
-	return nil
+	CustomerName string `json:"customerName,omitempty" keel:"customer_name,computed"`
 }
 
 // DefaultItems is a kind's steps in Trenova's own order, every one
@@ -435,28 +417,20 @@ func (t *ChecklistTemplate) DocumentTypeIDs() []pulid.ID {
 // ChecklistTick is a person's tick on an added step of one record's checklist. It
 // belongs to the record, so everyone working a case about it sees it.
 type ChecklistTick struct {
-	bun.BaseModel `bun:"table:case_checklist_ticks,alias:cctk" json:"-"`
+	keel.Table `keel:"case_checklist_ticks"`
 
-	ID             pulid.ID `json:"id"             bun:"id,pk,type:VARCHAR(100),notnull"`
-	OrganizationID pulid.ID `json:"organizationId" bun:"organization_id,pk,type:VARCHAR(100),notnull"`
-	BusinessUnitID pulid.ID `json:"businessUnitId" bun:"business_unit_id,pk,type:VARCHAR(100),notnull"`
+	ID             pulid.ID `json:"id"             keel:"id,pk,autoid:cctk_"`
+	OrganizationID pulid.ID `json:"organizationId" keel:"organization_id,pk,tenant"`
+	BusinessUnitID pulid.ID `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
 
-	SubjectType string   `json:"subjectType" bun:"subject_type,type:VARCHAR(50),notnull"`
-	SubjectID   pulid.ID `json:"subjectId"   bun:"subject_id,type:VARCHAR(100),notnull"`
-	ItemKey     ItemKey  `json:"itemKey"     bun:"item_key,type:VARCHAR(50),notnull"`
-	TickedByID  pulid.ID `json:"tickedById"  bun:"ticked_by_id,type:VARCHAR(100),notnull"`
-	TickedAt    int64    `json:"tickedAt"    bun:"ticked_at,type:BIGINT,notnull"`
+	SubjectType string   `json:"subjectType" keel:"subject_type"`
+	SubjectID   pulid.ID `json:"subjectId"   keel:"subject_id"`
+	ItemKey     ItemKey  `json:"itemKey"     keel:"item_key"`
+	TickedByID  pulid.ID `json:"tickedById"  keel:"ticked_by_id"`
+	TickedAt    int64    `json:"tickedAt"    keel:"ticked_at"`
 
 	// TickedByName is read with the tick; never stored.
-	TickedByName string `json:"tickedByName,omitempty" bun:"ticked_by_name,scanonly"`
-}
-
-func (t *ChecklistTick) BeforeAppendModel(_ context.Context, query bun.Query) error {
-	if _, ok := query.(*bun.InsertQuery); ok && t.ID.IsNil() {
-		t.ID = pulid.MustNew("cctk_")
-	}
-
-	return nil
+	TickedByName string `json:"tickedByName,omitempty" keel:"ticked_by_name,computed"`
 }
 
 func marshalItems(items TemplateItems) (driver.Value, error) {

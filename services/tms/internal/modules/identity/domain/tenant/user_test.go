@@ -8,7 +8,6 @@ import (
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"github.com/uptrace/bun"
 )
 
 func validUser() *User {
@@ -204,46 +203,6 @@ func TestUser_VerifyCredentials(t *testing.T) {
 	})
 }
 
-func TestUser_BeforeAppendModel(t *testing.T) {
-	t.Parallel()
-
-	t.Run("insert sets ID and CreatedAt", func(t *testing.T) {
-		t.Parallel()
-
-		u := &User{}
-		require.True(t, u.ID.IsNil())
-
-		err := u.BeforeAppendModel(t.Context(), (*bun.InsertQuery)(nil))
-		require.NoError(t, err)
-
-		assert.False(t, u.ID.IsNil())
-		assert.NotZero(t, u.CreatedAt)
-	})
-
-	t.Run("insert does not overwrite existing ID", func(t *testing.T) {
-		t.Parallel()
-
-		existingID := pulid.MustNew("usr_")
-		u := &User{ID: existingID}
-
-		err := u.BeforeAppendModel(t.Context(), (*bun.InsertQuery)(nil))
-		require.NoError(t, err)
-
-		assert.Equal(t, existingID, u.ID)
-	})
-
-	t.Run("update sets UpdatedAt", func(t *testing.T) {
-		t.Parallel()
-
-		u := &User{}
-
-		err := u.BeforeAppendModel(t.Context(), (*bun.UpdateQuery)(nil))
-		require.NoError(t, err)
-
-		assert.NotZero(t, u.UpdatedAt)
-	})
-}
-
 func TestUser_GetID(t *testing.T) {
 	t.Parallel()
 	id := pulid.MustNew("usr_")
@@ -265,26 +224,17 @@ func TestUser_GetBusinessUnitID(t *testing.T) {
 	assert.Equal(t, buID, u.GetBusinessUnitID())
 }
 
-func TestOrganizationMembership_BeforeAppendModel(t *testing.T) {
+func TestOrganizationMembership_BeforeCreate(t *testing.T) {
 	t.Parallel()
 
-	t.Run("insert sets ID and JoinedAt", func(t *testing.T) {
+	t.Run("insert sets JoinedAt", func(t *testing.T) {
 		t.Parallel()
 		om := &OrganizationMembership{}
-		err := om.BeforeAppendModel(t.Context(), (*bun.InsertQuery)(nil))
+		err := om.BeforeCreate(t.Context())
 		require.NoError(t, err)
-		assert.False(t, om.ID.IsNil())
 		assert.NotZero(t, om.JoinedAt)
 	})
 
-	t.Run("insert does not overwrite existing ID", func(t *testing.T) {
-		t.Parallel()
-		existingID := pulid.MustNew("uom_")
-		om := &OrganizationMembership{ID: existingID}
-		err := om.BeforeAppendModel(t.Context(), (*bun.InsertQuery)(nil))
-		require.NoError(t, err)
-		assert.Equal(t, existingID, om.ID)
-	})
 }
 
 func TestUser_IsActive(t *testing.T) {

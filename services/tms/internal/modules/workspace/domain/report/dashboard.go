@@ -4,21 +4,19 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/emoss08/keel/analytics/ir"
+
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
-	"github.com/emoss08/trenova/pkg/dbtype"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/domainvalidation"
 	"github.com/emoss08/trenova/pkg/errortypes"
-	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/validationframework"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/emoss08/trenova/shared/timeutils"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
-	"github.com/uptrace/bun"
 )
 
 var (
-	_ bun.BeforeAppendModelHook          = (*Dashboard)(nil)
 	_ validationframework.TenantedEntity = (*Dashboard)(nil)
 )
 
@@ -90,23 +88,22 @@ func (t *DashboardTile) HasReport() bool {
 	return !t.DefinitionID.IsNil() || t.CannedKey != ""
 }
 
-// DashboardFilter narrows every tile that queries the same entity, without the
-// tile's report having to declare anything. It is the field-level counterpart
-// to Parameters, which stay name-bound for values a report asks for directly
-// (a lookback window has no field to point at).
-type DashboardFilter struct {
-	ID       string          `json:"id"`
-	Label    string          `json:"label,omitempty"`
-	Entity   string          `json:"entity"`
-	Ref      FieldRef        `json:"ref"`
-	Operator dbtype.Operator `json:"operator"`
-	Default  any             `json:"default,omitempty"`
+func (t *DashboardTile) Params(values map[string]any) ir.Params {
+	return ir.Params{Values: values, Bindings: t.ParamBindings}
+}
+
+func FilterValues(filters []ir.DashboardFilter, values map[string]any) []ir.FilterValue {
+	out := make([]ir.FilterValue, 0, len(filters))
+	for i := range filters {
+		out = append(out, ir.FilterValue{Filter: filters[i], Value: values[filters[i].ID]})
+	}
+	return out
 }
 
 type DashboardLayout struct {
-	Tiles      []DashboardTile   `json:"tiles"`
-	Parameters []ParameterDef    `json:"parameters,omitempty"`
-	Filters    []DashboardFilter `json:"filters,omitempty"`
+	Tiles      []DashboardTile      `json:"tiles"`
+	Parameters []ir.Parameter       `json:"parameters,omitempty"`
+	Filters    []ir.DashboardFilter `json:"filters,omitempty"`
 }
 
 func (l *DashboardLayout) Tile(id string) (*DashboardTile, bool) {
@@ -119,26 +116,33 @@ func (l *DashboardLayout) Tile(id string) (*DashboardTile, bool) {
 }
 
 type Dashboard struct {
-	bun.BaseModel             `bun:"table:report_dashboards,alias:rdash" json:"-"`
-	pagination.CursorValueSet `bun:",embed"                              json:"-"`
+	keel.Table `keel:"report_dashboards"`
 
-	ID             pulid.ID         `json:"id"             bun:"id,pk,type:VARCHAR(100)"`
-	BusinessUnitID pulid.ID         `json:"businessUnitId" bun:"business_unit_id,pk,type:VARCHAR(100),notnull"`
-	OrganizationID pulid.ID         `json:"organizationId" bun:"organization_id,pk,type:VARCHAR(100),notnull"`
-	Name           string           `json:"name"           bun:"name,type:VARCHAR(255),notnull"`
-	Description    string           `json:"description"    bun:"description,type:TEXT,nullzero"`
-	Category       string           `json:"category"       bun:"category,type:VARCHAR(100),nullzero"`
-	Tags           []string         `json:"tags"           bun:"tags,type:TEXT[],array,nullzero"`
-	OwnerID        pulid.ID         `json:"ownerId"        bun:"owner_id,type:VARCHAR(100),notnull"`
-	Visibility     Visibility       `json:"visibility"     bun:"visibility,type:VARCHAR(20),notnull,default:'private'"`
-	Layout         *DashboardLayout `json:"layout"         bun:"layout,type:JSONB,notnull"`
-	Version        int64            `json:"version"        bun:"version,type:BIGINT"`
-	CreatedAt      int64            `json:"createdAt"      bun:"created_at,nullzero,notnull,default:extract(epoch from current_timestamp)::bigint"`
-	UpdatedAt      int64            `json:"updatedAt"      bun:"updated_at,nullzero,notnull,default:extract(epoch from current_timestamp)::bigint"`
+	ID             pulid.ID         `json:"id"             keel:"id,pk,autoid:rdb_"`
+	BusinessUnitID pulid.ID         `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
+	OrganizationID pulid.ID         `json:"organizationId" keel:"organization_id,pk,tenant"`
+	Name           string           `json:"name"           keel:"name"`
+	Description    string           `json:"description"    keel:"description,nullzero"`
+	Category       string           `json:"category"       keel:"category,nullzero"`
+	Tags           []string         `json:"tags"           keel:"tags,nullzero"`
+	OwnerID        pulid.ID         `json:"ownerId"        keel:"owner_id"`
+	Visibility     Visibility       `json:"visibility"     keel:"visibility"`
+	Layout         *DashboardLayout `json:"layout"         keel:"layout,jsonb"`
+	Version        int64            `json:"version"        keel:"version,version"`
+	CreatedAt      int64            `json:"createdAt"      keel:"created_at,autocreate"`
+	UpdatedAt      int64            `json:"updatedAt"      keel:"updated_at,autoupdate"`
 
-	Organization *tenant.Organization `json:"organization,omitempty" bun:"rel:belongs-to,join:organization_id=id"`
-	BusinessUnit *tenant.BusinessUnit `json:"businessUnit,omitempty" bun:"rel:belongs-to,join:business_unit_id=id"`
-	Owner        *tenant.User         `json:"owner,omitempty"        bun:"rel:belongs-to,join:owner_id=id"`
+	Organization *tenant.Organization `json:"organization,omitempty"`
+	BusinessUnit *tenant.BusinessUnit `json:"businessUnit,omitempty"`
+	Owner        *tenant.User         `json:"owner,omitempty"        keel:"belongs:owner_id"`
+}
+
+func (d *Dashboard) BeforeCreate(_ context.Context) error {
+	if d.Visibility == "" {
+		d.Visibility = VisibilityPrivate
+	}
+
+	return nil
 }
 
 func (d *Dashboard) Validate(multiErr *errortypes.MultiError) {
@@ -188,7 +192,7 @@ func (d *Dashboard) Validate(multiErr *errortypes.MultiError) {
 // service resolves the field against the catalog.
 func validateDashboardFilterShape(
 	multiErr *errortypes.MultiError,
-	filters []DashboardFilter,
+	filters []ir.DashboardFilter,
 ) {
 	seen := make(map[string]bool, len(filters))
 	for i := range filters {
@@ -209,11 +213,11 @@ func validateDashboardFilterShape(
 			multiErr.Add(fieldPath+".entity", errortypes.ErrRequired,
 				"Choose what this filter applies to")
 		}
-		if filter.Ref.Field == "" {
-			multiErr.Add(fieldPath+".ref", errortypes.ErrRequired, "Choose a field to filter on")
+		if filter.Field == "" {
+			multiErr.Add(fieldPath+".field", errortypes.ErrRequired, "Choose a field to filter on")
 		}
-		if filter.Operator == "" {
-			multiErr.Add(fieldPath+".operator", errortypes.ErrRequired,
+		if filter.Op == "" {
+			multiErr.Add(fieldPath+".op", errortypes.ErrRequired,
 				"Choose how the value is compared")
 		}
 	}
@@ -282,7 +286,7 @@ func validateTileGeometry(
 	}
 }
 
-func validateDashboardParams(multiErr *errortypes.MultiError, params []ParameterDef) {
+func validateDashboardParams(multiErr *errortypes.MultiError, params []ir.Parameter) {
 	seen := make(map[string]bool, len(params))
 	for i := range params {
 		param := &params[i]
@@ -298,27 +302,11 @@ func validateDashboardParams(multiErr *errortypes.MultiError, params []Parameter
 		}
 		seen[param.Name] = true
 
-		if !param.Type.IsValid() {
+		if !param.Type.Valid() {
 			multiErr.Add(fieldPath+".type", errortypes.ErrInvalid,
 				"Unknown parameter type \"{0}\"", param.Type)
 		}
 	}
-}
-
-func (d *Dashboard) BeforeAppendModel(_ context.Context, query bun.Query) error {
-	now := timeutils.NowUnix()
-
-	switch query.(type) {
-	case *bun.InsertQuery:
-		if d.ID.IsNil() {
-			d.ID = pulid.MustNew("rdb_")
-		}
-		d.CreatedAt = now
-	case *bun.UpdateQuery:
-		d.UpdatedAt = now
-	}
-
-	return nil
 }
 
 func (d *Dashboard) GetCreatedAt() int64 { return d.CreatedAt }

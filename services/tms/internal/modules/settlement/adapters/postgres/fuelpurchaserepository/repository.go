@@ -1,8 +1,10 @@
 package fuelpurchaserepository
 
 import (
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/modules/settlement/ports/fuelpurchaseports"
+	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
@@ -11,8 +13,14 @@ import (
 const (
 	defaultActiveCardLimit = 50
 	maxActiveCardLimit     = 200
-	rowInsertBatch         = 500
-	purchaseInsertBatch    = 500
+)
+
+var (
+	cardErrors        = dberror.Mapping{Entity: "FuelCard"}
+	purchaseErrors    = dberror.Mapping{Entity: "FuelPurchase"}
+	importBatchErrors = dberror.Mapping{Entity: "FuelPurchaseImportBatch"}
+	importRowErrors   = dberror.Mapping{Entity: "FuelPurchaseImportRow"}
+	feedStateErrors   = dberror.Mapping{Entity: "FuelCardFeedState"}
 )
 
 type Params struct {
@@ -55,4 +63,12 @@ func duplicateReference() error {
 		errortypes.ErrDuplicate,
 		"A purchase with this transaction reference already exists",
 	)
+}
+
+func when(include bool, p keel.Pred) keel.Pred {
+	if !include {
+		return nil
+	}
+
+	return p
 }

@@ -13,7 +13,6 @@ database:
   name: trenova_test
   user: postgres
   password: postgres
-  maxIdleConns: 5
   maxOpenConns: 10
   statementTimeout: 10s
   lockTimeout: 5s

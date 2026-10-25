@@ -4,7 +4,8 @@ import (
 	"context"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/internal/testutil/dbtest"
+
 	"github.com/emoss08/trenova/internal/modules/rating/app/tariff"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/formulalibrary"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/formulatemplate"
@@ -19,7 +20,6 @@ import (
 	"github.com/emoss08/trenova/pkg/tarifftypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/require"
-	"github.com/uptrace/bun"
 	"go.uber.org/zap"
 )
 
@@ -74,21 +74,6 @@ const brokenSource = `tariff "Per Mile"
 
 charge "Per Mile" (quantity: shipment.distance, rate: ratee)
 `
-
-type testDBConnection struct{}
-
-func (testDBConnection) DB() *bun.DB                          { return nil }
-func (testDBConnection) DBForContext(context.Context) bun.IDB { return nil }
-func (testDBConnection) HealthCheck(context.Context) error    { return nil }
-func (testDBConnection) IsHealthy(context.Context) bool       { return true }
-func (testDBConnection) Close() error                         { return nil }
-func (testDBConnection) WithTx(
-	ctx context.Context,
-	_ kernelports.TxOptions,
-	fn func(context.Context, bun.Tx) error,
-) error {
-	return fn(ctx, bun.Tx{})
-}
 
 type emptyContext struct{}
 
@@ -216,7 +201,7 @@ func setupTest(t *testing.T) *testDeps {
 	}
 	deps.svc = &Service{
 		l:            zap.NewNop(),
-		db:           testDBConnection{},
+		db:           dbtest.NopConnection{},
 		repo:         repo,
 		versionRepo:  versionRepo,
 		reviewRepo:   &stubReviewRepo{},

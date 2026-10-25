@@ -5,83 +5,58 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/fiscalperiod"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/errortypes"
-	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/validationframework"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/emoss08/trenova/shared/timeutils"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
-	"github.com/uptrace/bun"
 )
 
 var (
-	_ bun.BeforeAppendModelHook          = (*FiscalYear)(nil)
 	_ validationframework.TenantedEntity = (*FiscalYear)(nil)
 	_ domaintypes.PostgresSearchable     = (*FiscalYear)(nil)
 )
 
+// Accounting years and their close state
 type FiscalYear struct {
-	bun.BaseModel `bun:"table:fiscal_years,alias:fy" json:"-"`
+	keel.Table `keel:"fiscal_years,report=Accounting"`
 
-	pagination.CursorValueSet `json:"-" bun:",embed"`
-
-	ID             pulid.ID `json:"id"             bun:"id,type:VARCHAR(100),pk,notnull"`
-	BusinessUnitID pulid.ID `json:"businessUnitId" bun:"business_unit_id,type:VARCHAR(100),pk,notnull"`
-	OrganizationID pulid.ID `json:"organizationId" bun:"organization_id,type:VARCHAR(100),pk,notnull"`
+	ID             pulid.ID `json:"id"             keel:"id,pk,autoid:fyr_"`
+	BusinessUnitID pulid.ID `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
+	OrganizationID pulid.ID `json:"organizationId" keel:"organization_id,pk,tenant"`
 
 	// ---------------------------------------------------------------
 	// Core Identity
 	// ---------------------------------------------------------------
 
-	// Status tracks the fiscal year's position in its lifecycle.
-	// Draft → Open → Closed → PermanentlyClosed.
-	// Only Closed can revert to Open (with proper authorization).
-	Status Status `json:"status" bun:"status,type:fiscal_year_status_enum,notnull,default:'Draft'"`
+	Status Status `json:"status" keel:"status"`
 
-	// Year is the fiscal year number (e.g. 2026). For fiscal years that span
-	// calendar years (Oct 2025 – Sep 2026), this is typically the year the
-	// fiscal year ends in, but the carrier can set it to match their convention.
-	Year int `json:"year" bun:"year,type:INT,notnull"`
+	Year int `json:"year" keel:"year,dimension"`
 
-	// Name is the display name (e.g. "FY2026", "Fiscal Year 2025-2026").
-	Name string `json:"name" bun:"name,type:VARCHAR(100),notnull"`
+	Name string `json:"name" keel:"name,label=Fiscal Year"`
 
-	// Description is optional free-text for notes about this fiscal year.
-	Description string `json:"description" bun:"description,type:TEXT,nullzero"`
+	Description string `json:"description" keel:"description,nullzero"`
 
-	// StartDate is the first day of the fiscal year as a Unix epoch timestamp.
-	StartDate int64 `json:"startDate" bun:"start_date,type:BIGINT,notnull"`
+	StartDate int64 `json:"startDate" keel:"start_date,label=Starts"`
 
-	// EndDate is the last day of the fiscal year as a Unix epoch timestamp.
-	EndDate int64 `json:"endDate" bun:"end_date,type:BIGINT,notnull"`
+	EndDate int64 `json:"endDate" keel:"end_date,label=Ends"`
 
 	// ---------------------------------------------------------------
 	// Calendar Flags
 	// ---------------------------------------------------------------
 
-	// IsCurrent indicates this is the active fiscal year for day-to-day operations.
-	// Only one fiscal year per organization+business_unit can be current at a time.
-	// Enforced at the DB level with a partial unique index where is_current = TRUE.
-	IsCurrent bool `json:"isCurrent" bun:"is_current,type:BOOLEAN"`
+	IsCurrent bool `json:"isCurrent" keel:"is_current,label=Current"`
 
-	// IsCalendarYear is a denormalized flag indicating the fiscal year aligns
-	// with Jan 1 – Dec 31. Saves a date comparison on every query that needs
-	// to know whether this is a standard or offset fiscal year.
-	IsCalendarYear bool `json:"isCalendarYear" bun:"is_calendar_year,type:BOOLEAN"`
+	IsCalendarYear bool `json:"isCalendarYear" keel:"is_calendar_year,label=Calendar Year"`
 
 	// ---------------------------------------------------------------
 	// Year-End Controls
 	// ---------------------------------------------------------------
 
-	// AllowAdjustingEntries is the master switch for whether any period in this
-	// fiscal year can accept adjusting journal entries. If false, no period can
-	// accept adjusting entries regardless of its own per-period setting. If true,
-	// it defers to each period's AllowAdjustingEntries flag. This gives the CFO
-	// a single kill-switch to lock down the entire year.
-	AllowAdjustingEntries bool `json:"allowAdjustingEntries" bun:"allow_adjusting_entries,type:BOOLEAN"`
+	AllowAdjustingEntries bool `json:"allowAdjustingEntries" keel:"allow_adjusting_entries,label=Allows Adjusting Entries"`
 
 	// ---------------------------------------------------------------
 	// Close Tracking
@@ -92,10 +67,10 @@ type FiscalYear struct {
 	// - ClosedAt = hard close, nothing gets in
 	// ---------------------------------------------------------------
 
-	ClosedAt   *int64   `json:"closedAt"   bun:"closed_at,type:BIGINT,nullzero"`
-	ClosedByID pulid.ID `json:"closedById" bun:"closed_by_id,type:VARCHAR(100),nullzero"`
-	LockedAt   *int64   `json:"lockedAt"   bun:"locked_at,type:BIGINT,nullzero"`
-	LockedByID pulid.ID `json:"lockedById" bun:"locked_by_id,type:VARCHAR(100),nullzero"`
+	ClosedAt   *int64   `json:"closedAt"   keel:"closed_at"`
+	ClosedByID pulid.ID `json:"closedById" keel:"closed_by_id,nullzero"`
+	LockedAt   *int64   `json:"lockedAt"   keel:"locked_at"`
+	LockedByID pulid.ID `json:"lockedById" keel:"locked_by_id,nullzero"`
 
 	// ---------------------------------------------------------------
 	// Reopen Tracking
@@ -106,30 +81,30 @@ type FiscalYear struct {
 	// These fields are cleared when the year is re-closed.
 	// ---------------------------------------------------------------
 
-	ReopenedAt   *int64   `json:"reopenedAt"   bun:"reopened_at,type:BIGINT,nullzero"`
-	ReopenedByID pulid.ID `json:"reopenedById" bun:"reopened_by_id,type:VARCHAR(100),nullzero"`
-	ReopenReason string   `json:"reopenReason" bun:"reopen_reason,type:TEXT,nullzero"`
+	ReopenedAt   *int64   `json:"reopenedAt"   keel:"reopened_at"`
+	ReopenedByID pulid.ID `json:"reopenedById" keel:"reopened_by_id,nullzero"`
+	ReopenReason string   `json:"reopenReason" keel:"reopen_reason,nullzero"`
 
 	// ---------------------------------------------------------------
 	// System Fields
 	// ---------------------------------------------------------------
 
-	Version      int64  `json:"version"   bun:"version,type:BIGINT"`
-	CreatedAt    int64  `json:"createdAt" bun:"created_at,notnull,default:extract(epoch from current_timestamp)::bigint"`
-	UpdatedAt    int64  `json:"updatedAt" bun:"updated_at,notnull,default:extract(epoch from current_timestamp)::bigint"`
-	SearchVector string `json:"-"         bun:"search_vector,type:TSVECTOR,scanonly"`
-	Rank         string `json:"-"         bun:"rank,type:VARCHAR(100),scanonly"`
+	Version      int64  `json:"version"   keel:"version,version"`
+	CreatedAt    int64  `json:"createdAt" keel:"created_at,autocreate"`
+	UpdatedAt    int64  `json:"updatedAt" keel:"updated_at,autoupdate"`
+	SearchVector string `json:"-"         keel:"search_vector,tsvector,readonly,noselect"`
+	Rank         string `json:"-"         keel:"rank,computed"`
 
 	// ---------------------------------------------------------------
 	// Relationships
 	// ---------------------------------------------------------------
 
-	BusinessUnit *tenant.BusinessUnit         `json:"businessUnit,omitempty" bun:"rel:belongs-to,join:business_unit_id=id"`
-	Organization *tenant.Organization         `json:"organization,omitempty" bun:"rel:belongs-to,join:organization_id=id"`
-	ClosedBy     *tenant.User                 `json:"closedBy,omitempty"     bun:"rel:belongs-to,join:closed_by_id=id"`
-	LockedBy     *tenant.User                 `json:"lockedBy,omitempty"     bun:"rel:belongs-to,join:locked_by_id=id"`
-	ReopenedBy   *tenant.User                 `json:"reopenedBy,omitempty"   bun:"rel:belongs-to,join:reopened_by_id=id"`
-	Periods      []*fiscalperiod.FiscalPeriod `json:"periods,omitempty"      bun:"rel:has-many,join:id=fiscal_year_id"`
+	BusinessUnit *tenant.BusinessUnit         `json:"businessUnit,omitempty"`
+	Organization *tenant.Organization         `json:"organization,omitempty"`
+	ClosedBy     *tenant.User                 `json:"closedBy,omitempty"     keel:"belongs:closed_by_id,noreport"`
+	LockedBy     *tenant.User                 `json:"lockedBy,omitempty"     keel:"belongs:locked_by_id,noreport"`
+	ReopenedBy   *tenant.User                 `json:"reopenedBy,omitempty"   keel:"belongs:reopened_by_id,noreport"`
+	Periods      []*fiscalperiod.FiscalPeriod `json:"periods,omitempty"      keel:"many:fiscal_year_id,label=Fiscal Periods"`
 }
 
 func (fy *FiscalYear) Validate(multiErr *errortypes.MultiError) {
@@ -272,18 +247,9 @@ func appendAdjustingPeriod(
 	})
 }
 
-func (fy *FiscalYear) BeforeAppendModel(_ context.Context, query bun.Query) error {
-	now := timeutils.NowUnix()
-
-	switch query.(type) {
-	case *bun.InsertQuery:
-		if fy.ID.IsNil() {
-			fy.ID = pulid.MustNew("fyr_")
-		}
-
-		fy.CreatedAt = now
-	case *bun.UpdateQuery:
-		fy.UpdatedAt = now
+func (fy *FiscalYear) BeforeCreate(ctx context.Context) error {
+	if fy.Status == "" {
+		fy.Status = StatusDraft
 	}
 
 	return nil

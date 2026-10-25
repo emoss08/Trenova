@@ -3,18 +3,34 @@ package fuelsurchargerepository
 import (
 	"context"
 
-	"github.com/emoss08/trenova/pkg/buncolgen/fuelsurchargecol"
-
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/fuelsurcharge"
+	"github.com/emoss08/trenova/internal/modules/rating/domain/fuelsurcharge/fuelsurchargedb"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/fuelsurchargeports"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/uptrace/bun"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
+
+const (
+	defaultLatestPrices   = 3
+	defaultPricesPerIndex = 2
+	latestPriceCeiling    = "9999-12-31"
+)
+
+var fuelPriceErrors = dberror.Mapping{
+	Entity: "FuelIndexPrice",
+	Unique: []dberror.Constraint{
+		{
+			Name:    "uq_fuel_index_prices_week",
+			Field:   "priceDate",
+			Message: "This fuel index already has a price for that date",
+		},
+	},
+}
 
 type PriceParams struct {
 	fx.In
@@ -35,50 +51,80 @@ func NewPriceRepository(p PriceParams) fuelsurchargeports.FuelIndexPriceReposito
 	}
 }
 
+type priceKey struct {
+	orgID       pulid.ID
+	buID        pulid.ID
+	fuelIndexID pulid.ID
+	priceDate   string
+}
+
+func lastPricePerKey(prices []*fuelsurcharge.FuelIndexPrice) []*fuelsurcharge.FuelIndexPrice {
+	position := make(map[priceKey]int, len(prices))
+	unique := make([]*fuelsurcharge.FuelIndexPrice, 0, len(prices))
+	for _, price := range prices {
+		if price == nil {
+			continue
+		}
+		key := priceKey{
+			price.OrganizationID,
+			price.BusinessUnitID,
+			price.FuelIndexID,
+			price.PriceDate,
+		}
+		if at, ok := position[key]; ok {
+			unique[at] = price
+			continue
+		}
+		position[key] = len(unique)
+		unique = append(unique, price)
+	}
+
+	return unique
+}
+
 func (r *priceRepository) UpsertPrices(
 	ctx context.Context,
 	prices []*fuelsurcharge.FuelIndexPrice,
 ) (int, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (int, error) {
-		if len(prices) == 0 {
+		rows := lastPricePerKey(prices)
+		if len(rows) == 0 {
 			return 0, nil
 		}
 
-		log := r.l.With(
-			zap.String("operation", "UpsertPrices"),
-			zap.Int("count", len(prices)),
-		)
-
-		inserted := 0
-		err := r.db.DBForContext(ctx).
-			RunInTx(ctx, nil, func(txCtx context.Context, tx bun.Tx) error {
-				for idx := range prices {
-					price := prices[idx]
-					var isInsert bool
-					iErr := tx.NewInsert().
-						Model(price).
-						On("CONFLICT (organization_id, business_unit_id, fuel_index_id, price_date) DO UPDATE").
-						Set("price = EXCLUDED.price").
-						Set("source_raw = EXCLUDED.source_raw").
-						Set("fetched_at = EXCLUDED.fetched_at").
-						Returning("(xmax = 0)").
-						Scan(txCtx, &isInsert)
-					if iErr != nil {
-						return iErr
-					}
-					if isInsert {
-						inserted++
-					}
-				}
-				return nil
-			})
+		p := fuelsurchargedb.FuelIndexPrices
+		inserted, err := p.Upsert(ctx, r.db.Keel(ctx), rows,
+			keel.OnConflict(p.OrganizationID, p.BusinessUnitID, p.FuelIndexID, p.PriceDate).
+				Update(p.Price, p.SourceRaw, p.FetchedAt))
 		if err != nil {
-			log.Error("failed to upsert fuel index prices", zap.Error(err))
+			r.l.Error("failed to upsert fuel index prices",
+				zap.Int("count", len(rows)),
+				zap.Error(err),
+			)
 			return 0, err
 		}
 
-		return inserted, nil
+		count := 0
+		for _, isInsert := range inserted {
+			if isInsert {
+				count++
+			}
+		}
+
+		return count, nil
 	})
+}
+
+func pricesByIndexQuery(
+	req *fuelsurchargeports.ListFuelIndexPricesRequest,
+) *keel.Query[fuelsurcharge.FuelIndexPrice] {
+	p := fuelsurchargedb.FuelIndexPrices
+
+	return p.Where(
+		p.FuelIndexID.Eq(req.FuelIndexID),
+		keel.When(req.From != "", p.PriceDate.Gte(req.From)),
+		keel.When(req.To != "", p.PriceDate.Lte(req.To)),
+	).Order(p.PriceDate.Desc())
 }
 
 func (r *priceRepository) ListByIndex(
@@ -86,35 +132,22 @@ func (r *priceRepository) ListByIndex(
 	req *fuelsurchargeports.ListFuelIndexPricesRequest,
 ) ([]*fuelsurcharge.FuelIndexPrice, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*fuelsurcharge.FuelIndexPrice, error) {
-		log := r.l.With(
-			zap.String("operation", "ListByIndex"),
-			zap.String("fuelIndexId", req.FuelIndexID.String()),
+		q := pricesByIndexQuery(req)
+
+		var (
+			entities []*fuelsurcharge.FuelIndexPrice
+			err      error
 		)
-
-		cols := fuelsurchargecol.FuelIndexPriceColumns
-		entities := make([]*fuelsurcharge.FuelIndexPrice, 0)
-		q := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(&entities).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				sq = fuelsurchargecol.FuelIndexPriceScopeTenant(sq, req.TenantInfo).
-					Where(cols.FuelIndexID.Eq(), req.FuelIndexID)
-				if req.From != "" {
-					sq = sq.Where(cols.PriceDate.Gte(), req.From)
-				}
-				if req.To != "" {
-					sq = sq.Where(cols.PriceDate.Lte(), req.To)
-				}
-				return sq
-			}).
-			Order(cols.PriceDate.OrderDesc())
-
 		if req.Limit > 0 {
-			q = q.Limit(int64(req.Limit))
+			entities, err = q.Limit(req.Limit).List(ctx, r.db.Keel(ctx))
+		} else {
+			entities, err = q.All(ctx, r.db.Keel(ctx))
 		}
-
-		if err := q.Scan(ctx); err != nil {
-			log.Error("failed to list fuel index prices", zap.Error(err))
+		if err != nil {
+			r.l.Error("failed to list fuel index prices",
+				zap.String("fuelIndexId", req.FuelIndexID.String()),
+				zap.Error(err),
+			)
 			return nil, err
 		}
 
@@ -127,37 +160,40 @@ func (r *priceRepository) GetLatestOnOrBefore(
 	req *fuelsurchargeports.GetLatestFuelPricesRequest,
 ) ([]*fuelsurcharge.FuelIndexPrice, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*fuelsurcharge.FuelIndexPrice, error) {
-		log := r.l.With(
-			zap.String("operation", "GetLatestOnOrBefore"),
-			zap.String("fuelIndexId", req.FuelIndexID.String()),
-			zap.String("date", req.Date),
-		)
-
 		limit := req.Limit
 		if limit <= 0 {
-			limit = 3
+			limit = defaultLatestPrices
 		}
 
-		cols := fuelsurchargecol.FuelIndexPriceColumns
-		entities := make([]*fuelsurcharge.FuelIndexPrice, 0, limit)
-		err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(&entities).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return fuelsurchargecol.FuelIndexPriceScopeTenant(sq, req.TenantInfo).
-					Where(cols.FuelIndexID.Eq(), req.FuelIndexID).
-					Where(cols.PriceDate.Lte(), req.Date)
-			}).
-			Order(cols.PriceDate.OrderDesc()).
-			Limit(int64(limit)).
-			Scan(ctx)
+		p := fuelsurchargedb.FuelIndexPrices
+		entities, err := p.Where(p.FuelIndexID.Eq(req.FuelIndexID), p.PriceDate.Lte(req.Date)).
+			Order(p.PriceDate.Desc()).
+			Limit(limit).
+			List(ctx, r.db.Keel(ctx))
 		if err != nil {
-			log.Error("failed to get latest fuel index prices", zap.Error(err))
+			r.l.Error("failed to get latest fuel index prices",
+				zap.String("fuelIndexId", req.FuelIndexID.String()),
+				zap.String("date", req.Date),
+				zap.Error(err),
+			)
 			return nil, err
 		}
 
 		return entities, nil
 	})
+}
+
+func latestPerIndexQuery(perIndex int, ceiling string) *keel.Query[fuelsurcharge.FuelIndexPrice] {
+	p := fuelsurchargedb.FuelIndexPrices
+	newer := p.As("newer")
+	newerCount := keel.Scalar(newer.Pick(keel.Count()).Where(
+		newer.FuelIndexID.EqCol(p.FuelIndexID),
+		keel.Raw("? > ?", newer.PriceDate, p.PriceDate),
+		newer.PriceDate.Lte(ceiling),
+	))
+
+	return p.Where(p.PriceDate.Lte(ceiling), keel.Raw("? < ?", newerCount, perIndex)).
+		Order(p.FuelIndexID.Asc(), p.PriceDate.Desc())
 }
 
 func (r *priceRepository) LatestPerIndex(
@@ -168,39 +204,19 @@ func (r *priceRepository) LatestPerIndex(
 		ctx,
 		r.db,
 		func(ctx context.Context) (map[pulid.ID][]*fuelsurcharge.FuelIndexPrice, error) {
-			log := r.l.With(zap.String("operation", "LatestPerIndex"))
-
 			perIndex := req.PerIndex
 			if perIndex <= 0 {
-				perIndex = 2
+				perIndex = defaultPricesPerIndex
 			}
 
-			ceiling := "9999-12-31"
+			ceiling := latestPriceCeiling
 			if req.OnOrBefore != "" {
 				ceiling = req.OnOrBefore
 			}
 
-			entities := make([]*fuelsurcharge.FuelIndexPrice, 0)
-			err := r.db.DBForContext(ctx).
-				NewSelect().
-				Model(&entities).
-				ColumnExpr("fip.*").
-				Where("fip.organization_id = ?", req.TenantInfo.OrgID).
-				Where("fip.business_unit_id = ?", req.TenantInfo.BuID).
-				Where("fip.price_date <= ?", ceiling).
-				Where(`(
-			SELECT COUNT(*)
-			FROM fuel_index_prices newer
-			WHERE newer.fuel_index_id = fip.fuel_index_id
-			  AND newer.organization_id = fip.organization_id
-			  AND newer.business_unit_id = fip.business_unit_id
-			  AND newer.price_date > fip.price_date
-			  AND newer.price_date <= ?
-		) < ?`, ceiling, perIndex).
-				Order("fip.fuel_index_id ASC", "fip.price_date DESC").
-				Scan(ctx)
+			entities, err := latestPerIndexQuery(perIndex, ceiling).All(ctx, r.db.Keel(ctx))
 			if err != nil {
-				log.Error("failed to get latest prices per index", zap.Error(err))
+				r.l.Error("failed to get latest prices per index", zap.Error(err))
 				return nil, err
 			}
 
@@ -219,16 +235,9 @@ func (r *priceRepository) HasPriceForDate(
 	req *fuelsurchargeports.HasFuelPriceForDateRequest,
 ) (bool, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (bool, error) {
-		cols := fuelsurchargecol.FuelIndexPriceColumns
-		exists, err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model((*fuelsurcharge.FuelIndexPrice)(nil)).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return fuelsurchargecol.FuelIndexPriceScopeTenant(sq, req.TenantInfo).
-					Where(cols.FuelIndexID.Eq(), req.FuelIndexID).
-					Where(cols.PriceDate.Eq(), req.Date)
-			}).
-			Exists(ctx)
+		p := fuelsurchargedb.FuelIndexPrices
+		exists, err := p.Where(p.FuelIndexID.Eq(req.FuelIndexID), p.PriceDate.Eq(req.Date)).
+			Exists(ctx, r.db.Keel(ctx))
 		if err != nil {
 			r.l.Error("failed to check fuel price existence", zap.Error(err))
 			return false, err
@@ -243,15 +252,9 @@ func (r *priceRepository) Create(
 	entity *fuelsurcharge.FuelIndexPrice,
 ) (*fuelsurcharge.FuelIndexPrice, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*fuelsurcharge.FuelIndexPrice, error) {
-		log := r.l.With(zap.String("operation", "Create"))
-
-		if _, err := r.db.DBForContext(ctx).
-			NewInsert().
-			Model(entity).
-			Returning("*").
-			Exec(ctx); err != nil {
-			log.Error("failed to create fuel index price", zap.Error(err))
-			return nil, err
+		if err := fuelsurchargedb.FuelIndexPrices.Create(ctx, r.db.Keel(ctx), entity); err != nil {
+			r.l.Error("failed to create fuel index price", zap.Error(err))
+			return nil, fuelPriceErrors.Map(err, entity.ID.String())
 		}
 
 		return entity, nil
@@ -263,29 +266,12 @@ func (r *priceRepository) Update(
 	entity *fuelsurcharge.FuelIndexPrice,
 ) (*fuelsurcharge.FuelIndexPrice, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*fuelsurcharge.FuelIndexPrice, error) {
-		log := r.l.With(
-			zap.String("operation", "Update"),
-			zap.String("id", entity.ID.String()),
-		)
-
-		results, err := r.db.DBForContext(ctx).
-			NewUpdate().
-			Model(entity).
-			WherePK().
-			OmitZero().
-			Returning("*").
-			Exec(ctx)
-		if err != nil {
-			log.Error("failed to update fuel index price", zap.Error(err))
-			return nil, err
-		}
-
-		if err = dberror.CheckRowsAffected(
-			results,
-			"FuelIndexPrice",
-			entity.ID.String(),
-		); err != nil {
-			return nil, err
+		if err := fuelsurchargedb.FuelIndexPrices.Save(ctx, r.db.Keel(ctx), entity); err != nil {
+			r.l.Error("failed to update fuel index price",
+				zap.String("id", entity.ID.String()),
+				zap.Error(err),
+			)
+			return nil, fuelPriceErrors.Map(err, entity.ID.String())
 		}
 
 		return entity, nil
@@ -297,26 +283,20 @@ func (r *priceRepository) Delete(
 	req *fuelsurchargeports.GetFuelIndexPriceByIDRequest,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
-		log := r.l.With(
-			zap.String("operation", "Delete"),
-			zap.String("id", req.PriceID.String()),
+		err := fuelsurchargedb.FuelIndexPrices.DeleteRow(
+			ctx,
+			r.db.Keel(ctx),
+			&fuelsurcharge.FuelIndexPrice{ID: req.PriceID},
 		)
-
-		cols := fuelsurchargecol.FuelIndexPriceColumns
-		results, err := r.db.DBForContext(ctx).
-			NewDelete().
-			Model((*fuelsurcharge.FuelIndexPrice)(nil)).
-			WhereGroup(" AND ", func(dq *bun.DeleteQuery) *bun.DeleteQuery {
-				return fuelsurchargecol.FuelIndexPriceScopeTenantDelete(dq, req.TenantInfo).
-					Where(cols.ID.Eq(), req.PriceID)
-			}).
-			Exec(ctx)
 		if err != nil {
-			log.Error("failed to delete fuel index price", zap.Error(err))
-			return err
+			r.l.Error("failed to delete fuel index price",
+				zap.String("id", req.PriceID.String()),
+				zap.Error(err),
+			)
+			return fuelPriceErrors.Map(err, req.PriceID.String())
 		}
 
-		return dberror.CheckRowsAffected(results, "FuelIndexPrice", req.PriceID.String())
+		return nil
 	})
 }
 
@@ -325,18 +305,9 @@ func (r *priceRepository) GetByID(
 	req *fuelsurchargeports.GetFuelIndexPriceByIDRequest,
 ) (*fuelsurcharge.FuelIndexPrice, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*fuelsurcharge.FuelIndexPrice, error) {
-		cols := fuelsurchargecol.FuelIndexPriceColumns
-		entity := new(fuelsurcharge.FuelIndexPrice)
-		err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(entity).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return fuelsurchargecol.FuelIndexPriceScopeTenant(sq, req.TenantInfo).
-					Where(cols.ID.Eq(), req.PriceID)
-			}).
-			Scan(ctx)
+		entity, err := fuelsurchargedb.FuelIndexPrices.Get(ctx, r.db.Keel(ctx), req.PriceID)
 		if err != nil {
-			return nil, dberror.HandleNotFoundError(err, "FuelIndexPrice")
+			return nil, fuelPriceErrors.Map(err, req.PriceID.String())
 		}
 
 		return entity, nil

@@ -2,21 +2,20 @@ package postgres
 
 import (
 	"context"
-	"database/sql"
 	"errors"
 	"fmt"
 	"strings"
 	"sync"
 	"sync/atomic"
 
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/infrastructure/observability"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/metrics"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbpool"
 	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/uptrace/bun"
-	"github.com/uptrace/bun/dialect/pgdialect"
-	"github.com/uptrace/bun/driver/pgdriver"
+	"github.com/jackc/pgx/v5"
 	"go.uber.org/zap"
 )
 
@@ -82,17 +81,8 @@ func (r *rlsRuntime) enforced() bool {
 	return r != nil && r.mode == config.RLSModeEnforce
 }
 
-func (r *rlsRuntime) connector(
-	dsn string,
-	params map[string]any,
-	pool scopePool,
-	systemFallback bool,
-) *scopedConnector {
-	return newScopedConnector(scopedConnectorConfig{
-		Base: pgdriver.NewConnector(
-			pgdriver.WithDSN(dsn),
-			pgdriver.WithConnParams(params),
-		),
+func (r *rlsRuntime) guard(pool scopePool, systemFallback bool) *scopeGuard {
+	return newScopeGuard(scopeGuardConfig{
 		Pool:           pool,
 		Signer:         r.signer,
 		Enforce:        r.enforced(),
@@ -183,34 +173,26 @@ func (r *scopeLogReporter) firstSighting(event *scopeEvent) bool {
 	return true
 }
 
-func (c *Connection) openSystemDB() *sql.DB {
-	role := c.cfg.Database.System
-	sqldb := sql.OpenDB(c.rls.connector(
-		c.cfg.GetDSNForRole(role),
-		c.settings.connParams,
-		scopePoolSystem,
-		false,
-	))
-	sqldb.SetMaxOpenConns(role.GetMaxOpenConns())
-	sqldb.SetMaxIdleConns(role.GetMaxIdleConns())
-	if c.settings.connMaxLifetime > 0 {
-		sqldb.SetConnMaxLifetime(c.settings.connMaxLifetime)
-	}
-	if c.settings.connMaxIdleTime > 0 {
-		sqldb.SetConnMaxIdleTime(c.settings.connMaxIdleTime)
-	}
-
-	return sqldb
-}
-
 func (c *Connection) connectSystem(ctx context.Context) error {
 	if c.rls == nil || !c.cfg.Database.System.Configured() {
 		return nil
 	}
 
-	c.system = c.withHooks(bun.NewDB(c.openSystemDB(), pgdialect.New()))
-	registerModels(c.system)
-	if err := c.system.PingContext(ctx); err != nil {
+	role := c.cfg.Database.System
+	system, err := c.openPool(ctx, &dbpool.Options{
+		DSN:             c.cfg.GetDSNForRole(role),
+		MaxConns:        role.GetMaxOpenConns(),
+		MaxConnLifetime: c.settings.connMaxLifetime,
+		MaxConnIdleTime: c.settings.connMaxIdleTime,
+		RuntimeParams:   c.settings.connParams,
+		Guard:           c.rls.guard(scopePoolSystem, false),
+	})
+	if err != nil {
+		return err
+	}
+	c.systemKeel = system
+
+	if err = c.systemKeel.Ping(ctx); err != nil {
 		return fmt.Errorf("failed to ping system database pool: %w", err)
 	}
 
@@ -218,12 +200,12 @@ func (c *Connection) connectSystem(ctx context.Context) error {
 }
 
 type roleAttributes struct {
-	Name         string `bun:"name"`
-	Superuser    bool   `bun:"superuser"`
-	BypassRLS    bool   `bun:"bypass_rls"`
-	BypassMember bool   `bun:"bypass_member"`
-	TenantMember bool   `bun:"tenant_member"`
-	OwnsTables   bool   `bun:"owns_tables"`
+	Name         string
+	Superuser    bool
+	BypassRLS    bool
+	BypassMember bool
+	TenantMember bool
+	OwnsTables   bool
 }
 
 const roleAttributesQuery = `
@@ -244,6 +226,22 @@ SELECT
 FROM pg_roles r
 WHERE r.rolname = current_user`
 
+func readRoleAttributes(ctx context.Context, db *keel.DB) (roleAttributes, error) {
+	var attrs roleAttributes
+	err := keel.QueryRows(ctx, db, func(row pgx.CollectableRow) error {
+		return row.Scan(
+			&attrs.Name,
+			&attrs.Superuser,
+			&attrs.BypassRLS,
+			&attrs.BypassMember,
+			&attrs.TenantMember,
+			&attrs.OwnsTables,
+		)
+	}, roleAttributesQuery)
+
+	return attrs, err
+}
+
 func (c *Connection) verifyRLS(ctx context.Context) error {
 	if c.rls == nil {
 		return nil
@@ -255,22 +253,22 @@ func (c *Connection) verifyRLS(ctx context.Context) error {
 	})
 
 	var attrs roleAttributes
-	err := c.db.RunInTx(
-		probe,
-		&sql.TxOptions{ReadOnly: true},
-		func(ctx context.Context, tx bun.Tx) error {
-			if err := tx.NewRaw(roleAttributesQuery).Scan(ctx, &attrs); err != nil {
-				return fmt.Errorf("read application role attributes: %w", err)
-			}
+	err := keel.Read(probe, c.tenantKeel, func(ctx context.Context) error {
+		var err error
+		if attrs, err = readRoleAttributes(ctx, c.tenantKeel); err != nil {
+			return fmt.Errorf("read application role attributes: %w", err)
+		}
 
-			var orgID string
-			if err := tx.NewRaw("SELECT trenova_rls.org_id()").Scan(ctx, &orgID); err != nil {
-				return fmt.Errorf("%w: %w", ErrRLSScopeKeyNotInstalled, err)
-			}
+		if _, err = keel.QueryValue[string](
+			ctx,
+			c.tenantKeel,
+			"SELECT trenova_rls.org_id()",
+		); err != nil {
+			return fmt.Errorf("%w: %w", ErrRLSScopeKeyNotInstalled, err)
+		}
 
-			return nil
-		},
-	)
+		return nil
+	})
 	if err != nil {
 		return c.rlsProblem(ctx, err)
 	}
@@ -297,13 +295,12 @@ func (c *Connection) verifyRLS(ctx context.Context) error {
 }
 
 func (c *Connection) verifySystemRole(ctx context.Context) error {
-	if c.system == nil {
+	if c.systemKeel == nil {
 		return nil
 	}
 
-	var attrs roleAttributes
-	if err := c.system.NewRaw(roleAttributesQuery).
-		Scan(dbscope.WithSystem(ctx, verifyRolesReason), &attrs); err != nil {
+	attrs, err := readRoleAttributes(dbscope.WithSystem(ctx, verifyRolesReason), c.systemKeel)
+	if err != nil {
 		return c.rlsProblem(ctx, fmt.Errorf("read system role attributes: %w", err))
 	}
 

@@ -3,22 +3,31 @@ package accountingsyncrepository
 import (
 	"context"
 
-	"github.com/emoss08/trenova/pkg/buncolgen/accountingsynccol"
-
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync/accountingsyncdb"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/integration"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/uptrace/bun"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
 
 const appCredentialEntity = "Accounting app"
+
+var appCredentialErrors = dberror.Mapping{
+	Entity: appCredentialEntity,
+	Unique: []dberror.Constraint{
+		{
+			Name:    "uq_accounting_app_credentials_tenant_type",
+			Field:   "integrationType",
+			Message: "An accounting app is already registered for this integration",
+		},
+	},
+}
 
 type AppCredentialParams struct {
 	fx.In
@@ -49,16 +58,11 @@ func (r *appCredentialRepository) GetByType(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*accountingsync.AccountingAppCredential, error) {
-			entity := new(accountingsync.AccountingAppCredential)
-			cols := accountingsynccol.AccountingAppCredentialColumns
-
-			if err := r.db.DBForContext(ctx).
-				NewSelect().
-				Model(entity).
-				Where(cols.IntegrationType.Eq(), req.IntegrationType).
-				Apply(accountingsynccol.AccountingAppCredentialApplyTenant(req.TenantInfo)).
-				Scan(ctx); err != nil {
-				return nil, dberror.HandleNotFoundError(err, appCredentialEntity)
+			ac := accountingsyncdb.AccountingAppCredentials
+			entity, err := ac.Where(ac.IntegrationType.Eq(req.IntegrationType)).
+				One(ctx, r.db.Keel(ctx))
+			if err != nil {
+				return nil, appCredentialErrors.Map(err, "")
 			}
 
 			return entity, nil
@@ -79,17 +83,12 @@ func (r *appCredentialRepository) GetForWebhook(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*accountingsync.AccountingAppCredential, error) {
-			entity := new(accountingsync.AccountingAppCredential)
-			cols := accountingsynccol.AccountingAppCredentialColumns
-
-			if err := r.db.DBForContext(ctx).
-				NewSelect().
-				Model(entity).
-				Where(cols.ID.Eq(), id).
-				Where(cols.IntegrationType.Eq(), integrationType).
-				Limit(1).
-				Scan(ctx); err != nil {
-				return nil, dberror.HandleNotFoundError(err, appCredentialEntity)
+			ac := accountingsyncdb.AccountingAppCredentials
+			entity, err := ac.AllTenants().
+				Where(ac.ID.Eq(id), ac.IntegrationType.Eq(integrationType)).
+				First(ctx, r.db.Keel(ctx))
+			if err != nil {
+				return nil, appCredentialErrors.Map(err, id.String())
 			}
 
 			return entity, nil
@@ -105,12 +104,9 @@ func (r *appCredentialRepository) Create(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*accountingsync.AccountingAppCredential, error) {
-			if _, err := r.db.DBForContext(ctx).
-				NewInsert().
-				Model(entity).
-				Returning("*").
-				Exec(ctx); err != nil {
-				return nil, err
+			err := accountingsyncdb.AccountingAppCredentials.Create(ctx, r.db.Keel(ctx), entity)
+			if err != nil {
+				return nil, appCredentialErrors.Map(err, entity.ID.String())
 			}
 
 			return entity, nil
@@ -126,27 +122,11 @@ func (r *appCredentialRepository) Update(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*accountingsync.AccountingAppCredential, error) {
-			cols := accountingsynccol.AccountingAppCredentialColumns
 			ov := entity.Version
-			entity.Version++
-
-			results, err := r.db.DBForContext(ctx).
-				NewUpdate().
-				Model(entity).
-				WherePK().
-				Where(cols.Version.Eq(), ov).
-				Exec(ctx)
+			err := accountingsyncdb.AccountingAppCredentials.Save(ctx, r.db.Keel(ctx), entity)
 			if err != nil {
 				entity.Version = ov
-				return nil, err
-			}
-			if err = dberror.CheckRowsAffected(
-				results,
-				appCredentialEntity,
-				entity.ID.String(),
-			); err != nil {
-				entity.Version = ov
-				return nil, err
+				return nil, appCredentialErrors.Map(err, entity.ID.String())
 			}
 
 			return entity, nil
@@ -159,16 +139,8 @@ func (r *appCredentialRepository) Delete(
 	req accountingsyncports.GetAccountingAppCredentialRequest,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
-		cols := accountingsynccol.AccountingAppCredentialColumns
-
-		_, err := r.db.DBForContext(ctx).
-			NewDelete().
-			Model((*accountingsync.AccountingAppCredential)(nil)).
-			WhereGroup(" AND ", func(q *bun.DeleteQuery) *bun.DeleteQuery {
-				return accountingsynccol.AccountingAppCredentialScopeTenantDelete(q, req.TenantInfo).
-					Where(cols.IntegrationType.Eq(), req.IntegrationType)
-			}).
-			Exec(ctx)
+		ac := accountingsyncdb.AccountingAppCredentials
+		_, err := ac.Where(ac.IntegrationType.Eq(req.IntegrationType)).Delete(ctx, r.db.Keel(ctx))
 		return err
 	})
 }

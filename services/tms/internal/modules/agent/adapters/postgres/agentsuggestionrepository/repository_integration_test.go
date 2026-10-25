@@ -6,10 +6,13 @@ import (
 	"context"
 	"testing"
 
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition/agentdefinitiondb"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentsuggestion"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentsuggestion/agentsuggestiondb"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentsuggestionports"
 	"github.com/emoss08/trenova/internal/testutil/dbtest"
 	"github.com/emoss08/trenova/internal/testutil/seedtest"
@@ -17,9 +20,9 @@ import (
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
+	"github.com/jackc/pgx/v5"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"github.com/uptrace/bun"
 	"go.uber.org/zap"
 )
 
@@ -31,7 +34,7 @@ type tenantFixture struct {
 
 type harness struct {
 	ctx       context.Context
-	admin     *bun.DB
+	admin     *keel.DB
 	conn      *postgres.Connection
 	repo      agentsuggestionports.AgentSuggestionRepository
 	home      tenantFixture
@@ -56,27 +59,23 @@ func newHarness(t *testing.T) *harness {
 		}},
 	}
 
-	require.NoError(t, admin.RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
-		h.colleague = seedtest.NewUser(data.Organization.ID, data.BusinessUnit.ID).
-			WithUsername("suggestion_colleague").
-			WithEmail("suggestion.colleague@example.com").
-			Build(t, ctx, tx).ID
+	h.colleague = seedtest.NewUser(data.Organization.ID, data.BusinessUnit.ID).
+		WithUsername("suggestion_colleague").
+		WithEmail("suggestion.colleague@example.com").
+		Build(t, ctx, admin).ID
 
-		bu := seedtest.NewBusinessUnit().WithCode("OTHERBU").Build(t, ctx, tx)
-		org := seedtest.NewOrganization(bu.ID, data.State.ID).
-			WithName("Other Organization").
-			WithScacCode("OTHR").
-			WithDOTNumber("7654321").
-			WithBucketName("other-organization").
-			Build(t, ctx, tx)
-		user := seedtest.NewUser(org.ID, bu.ID).
-			WithUsername("suggestion_other").
-			WithEmail("suggestion.other@example.com").
-			Build(t, ctx, tx)
-		h.other.info = pagination.TenantInfo{OrgID: org.ID, BuID: bu.ID, UserID: user.ID}
-
-		return nil
-	}))
+	bu := seedtest.NewBusinessUnit().WithCode("OTHERBU").Build(t, ctx, admin)
+	org := seedtest.NewOrganization(bu.ID, data.State.ID).
+		WithName("Other Organization").
+		WithScacCode("OTHR").
+		WithDOTNumber("7654321").
+		WithBucketName("other-organization").
+		Build(t, ctx, admin)
+	user := seedtest.NewUser(org.ID, bu.ID).
+		WithUsername("suggestion_other").
+		WithEmail("suggestion.other@example.com").
+		Build(t, ctx, admin)
+	h.other.info = pagination.TenantInfo{OrgID: org.ID, BuID: bu.ID, UserID: user.ID}
 
 	h.home.suggested = h.agent(t, h.home.info, "Receivables")
 	h.home.current = h.agent(t, h.home.info, "Dispatch")
@@ -98,8 +97,7 @@ func (h *harness) agent(t *testing.T, tenant pagination.TenantInfo, name string)
 		Name:           name,
 		Enabled:        true,
 	}
-	_, err := h.admin.NewInsert().Model(definition).Exec(h.ctx)
-	require.NoError(t, err)
+	require.NoError(t, agentdefinitiondb.Definitions.Create(h.scoped(tenant), h.admin, definition))
 
 	return definition.ID
 }
@@ -131,11 +129,15 @@ func (h *harness) insert(t *testing.T, tenant tenantFixture) *agentsuggestion.Su
 	return inserted
 }
 
-func (h *harness) stored(t *testing.T, id pulid.ID) *agentsuggestion.Suggestion {
+func (h *harness) stored(
+	t *testing.T,
+	tenant tenantFixture,
+	id pulid.ID,
+) *agentsuggestion.Suggestion {
 	t.Helper()
 
-	row := new(agentsuggestion.Suggestion)
-	require.NoError(t, h.admin.NewSelect().Model(row).Where("id = ?", id).Scan(h.ctx))
+	row, err := agentsuggestiondb.Suggestions.Get(h.scoped(tenant.info), h.admin, id)
+	require.NoError(t, err)
 
 	return row
 }
@@ -144,14 +146,12 @@ func (h *harness) visible(t *testing.T, tenant pagination.TenantInfo) []pulid.ID
 	t.Helper()
 
 	ids, err := dbtx.Read(h.scoped(tenant), h.conn, func(ctx context.Context) ([]pulid.ID, error) {
-		var ids []pulid.ID
-		err := h.conn.DBForContext(ctx).
-			NewSelect().
-			Model((*agentsuggestion.Suggestion)(nil)).
-			Column("id").
-			Scan(ctx, &ids)
-
-		return ids, err
+		return keel.QueryAll(
+			ctx,
+			h.conn.Keel(ctx),
+			pgx.RowTo[pulid.ID],
+			"SELECT id FROM agent_suggestions",
+		)
 	})
 	require.NoError(t, err)
 
@@ -163,7 +163,7 @@ func TestInsertThenSettleRecordsWhatThePersonDid(t *testing.T) {
 
 	inserted := h.insert(t, h.home)
 	require.False(t, inserted.ID.IsNil())
-	assert.Equal(t, agentsuggestion.OutcomeShown, h.stored(t, inserted.ID).Outcome)
+	assert.Equal(t, agentsuggestion.OutcomeShown, h.stored(t, h.home, inserted.ID).Outcome)
 
 	settled, err := h.repo.Settle(h.scoped(h.home.info), &agentsuggestionports.SettleAgentSuggestionRow{
 		TenantInfo: h.home.info,
@@ -179,7 +179,7 @@ func TestInsertThenSettleRecordsWhatThePersonDid(t *testing.T) {
 	require.NotNil(t, settled.CurrentAgentID)
 	assert.Equal(t, h.home.current, *settled.CurrentAgentID)
 
-	stored := h.stored(t, inserted.ID)
+	stored := h.stored(t, h.home, inserted.ID)
 	assert.Equal(t, agentsuggestion.OutcomeSwitched, stored.Outcome)
 	assert.Equal(t, int64(1), stored.Version)
 }
@@ -208,7 +208,7 @@ func TestSettleLeavesAnAlreadySettledSuggestionAsItWas(t *testing.T) {
 	assert.Equal(t, first.Version, again.Version)
 	assert.Equal(t, first.UpdatedAt, again.UpdatedAt)
 
-	stored := h.stored(t, inserted.ID)
+	stored := h.stored(t, h.home, inserted.ID)
 	assert.Equal(t, agentsuggestion.OutcomeKept, stored.Outcome)
 	assert.Equal(t, int64(1), stored.Version)
 }
@@ -228,7 +228,7 @@ func TestSettleRefusesASuggestionShownToSomeoneElse(t *testing.T) {
 	require.Error(t, err)
 	assert.True(t, errortypes.IsNotFoundError(err), "got %v", err)
 
-	stored := h.stored(t, inserted.ID)
+	stored := h.stored(t, h.home, inserted.ID)
 	assert.Equal(t, agentsuggestion.OutcomeShown, stored.Outcome)
 	assert.Equal(t, int64(0), stored.Version)
 }
@@ -249,7 +249,7 @@ func TestRowLevelSecurityKeepsEachTenantsSuggestionsApart(t *testing.T) {
 	})
 	require.Error(t, err)
 	assert.True(t, errortypes.IsNotFoundError(err), "got %v", err)
-	assert.Equal(t, agentsuggestion.OutcomeShown, h.stored(t, other.ID).Outcome)
+	assert.Equal(t, agentsuggestion.OutcomeShown, h.stored(t, h.other, other.ID).Outcome)
 
 	_, err = h.repo.Insert(h.scoped(h.home.info), h.shown(h.other))
 	require.Error(t, err, "a row for another tenant is refused by the policy")

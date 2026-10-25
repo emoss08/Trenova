@@ -2,9 +2,10 @@ package invoicedisputeservice
 
 import (
 	"context"
+	"testing"
+
 	"github.com/emoss08/trenova/internal/testutil/mocks/invoiceadjustmentportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/invoiceportsmock"
-	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
@@ -22,25 +23,18 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
-	"github.com/uptrace/bun"
 	"go.uber.org/zap"
 )
 
 type fakeDisputeDB struct{}
 
-func (fakeDisputeDB) DB() *bun.DB                          { return nil }
-func (fakeDisputeDB) DBForContext(context.Context) bun.IDB { return nil }
-
-func (fakeDisputeDB) WithTx(
+func (fakeDisputeDB) Transact(
 	ctx context.Context,
 	_ kernelports.TxOptions,
-	fn func(context.Context, bun.Tx) error,
+	fn func(context.Context) error,
 ) error {
-	return fn(ctx, bun.Tx{})
+	return fn(ctx)
 }
-func (fakeDisputeDB) HealthCheck(context.Context) error { return nil }
-func (fakeDisputeDB) IsHealthy(context.Context) bool    { return true }
-func (fakeDisputeDB) Close() error                      { return nil }
 
 type disputeFixture struct {
 	orgID, buID, userID pulid.ID

@@ -56,9 +56,9 @@ type SumPaymentsReceivedRequest struct {
 // billing in several currencies gets a row per currency rather than a sum
 // that adds dollars to euros.
 type PaymentsReceived struct {
-	CurrencyCode string `bun:"currency_code"`
-	AmountMinor  int64  `bun:"amount_minor"`
-	Count        int    `bun:"count"`
+	CurrencyCode string
+	AmountMinor  int64
+	Count        int
 }
 
 type CustomerPaymentRepository interface {

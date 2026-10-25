@@ -4,18 +4,6 @@ import (
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
-type TestCursorValueProvider struct {
-	Values [][]any
-}
-
-func (p TestCursorValueProvider) CursorValuesAt(index int) ([]any, bool) {
-	if index < 0 || index >= len(p.Values) {
-		return nil, false
-	}
-
-	return p.Values[index], true
-}
-
 type TestConnectionEdge struct {
 	Node   string
 	Cursor string

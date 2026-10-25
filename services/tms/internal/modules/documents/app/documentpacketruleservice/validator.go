@@ -5,6 +5,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/documentpacketrule"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/documentpacketrule/documentpacketruledb"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/validationframework"
 	"go.uber.org/fx"
@@ -25,7 +26,12 @@ func NewValidator(p ValidatorParams) *Validator {
 		validator: validationframework.
 			NewTenantedValidatorBuilder[*documentpacketrule.DocumentPacketRule]().
 			WithModelName("Document Packet Rule").
-			WithReferenceChecker(validationframework.NewBunReferenceCheckerScoped(p.DB)).
+			WithReferenceChecker(
+				validationframework.NewKeelChecker(
+					p.DB,
+					documentpacketruledb.DocumentPacketRulesSchema(),
+				),
+			).
 			Build(),
 	}
 }

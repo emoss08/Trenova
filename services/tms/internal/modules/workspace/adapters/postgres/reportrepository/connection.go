@@ -3,89 +3,41 @@ package reportrepository
 import (
 	"context"
 
-	"github.com/emoss08/trenova/pkg/buncolgen/reportcol"
-
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/report"
+	"github.com/emoss08/trenova/internal/modules/workspace/domain/report/reportdb"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/reportports"
-	"github.com/emoss08/trenova/pkg/dbhelper"
+	"github.com/emoss08/trenova/pkg/listquery"
 	"github.com/emoss08/trenova/pkg/pagination"
-	"github.com/emoss08/trenova/pkg/querybuilder"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/uptrace/bun"
 	"go.uber.org/zap"
 )
 
-func definitionVisibilityScope(q *bun.SelectQuery, viewerID pulid.ID) *bun.SelectQuery {
-	cols := reportcol.ReportDefinitionColumns
-	return q.WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-		return sq.
-			Where(cols.Visibility.Eq(), report.VisibilityShared).
-			WhereOr(cols.OwnerID.Eq(), viewerID)
-	})
+func definitionVisibleTo(viewerID pulid.ID) keel.Pred {
+	d := reportdb.ReportDefinitions
+	return keel.Or(d.Visibility.Eq(report.VisibilityShared), d.OwnerID.Eq(viewerID))
 }
 
 func (r *definitionRepository) ListConnection(
 	ctx context.Context,
 	req *reportports.ListReportDefinitionConnectionRequest,
 ) (*pagination.CursorListResult[*report.ReportDefinition], error) {
-	return dbtx.Write(
+	return dbtx.Read(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*pagination.CursorListResult[*report.ReportDefinition], error) {
-			log := r.l.With(zap.String("operation", "ListConnection"))
-
-			dba := r.db.DBForContext(ctx)
-			var totalCount *int
-			if req.Cursor.IncludeTotalCount {
-				total, err := dba.
-					NewSelect().
-					Model((*report.ReportDefinition)(nil)).
-					Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-						sq = querybuilder.ApplyFiltersWithoutSort(
-							sq,
-							reportcol.ReportDefinitionTable.Alias,
-							req.Filter,
-							(*report.ReportDefinition)(nil),
-						)
-						return definitionVisibilityScope(sq, req.ViewerID)
-					}).
-					Count(ctx)
-				if err != nil {
-					log.Error("failed to count report definitions", zap.Error(err))
-					return nil, err
-				}
-				totalCount = new(int(total))
-			}
-
-			result, err := dbhelper.CursorList(
+			result, err := listquery.Connection(
 				ctx,
-				dbhelper.CursorListParams[*report.ReportDefinition]{
-					Filter:     req.Filter,
-					Cursor:     req.Cursor,
-					TotalCount: totalCount,
-					Query: func(entities *[]*report.ReportDefinition) *bun.SelectQuery {
-						return dba.
-							NewSelect().
-							Model(entities).
-							ColumnExpr(reportcol.ReportDefinitionTable.All())
-					},
-					Apply: func(sq *bun.SelectQuery) (*bun.SelectQuery, error) {
-						sq, applyErr := querybuilder.ApplyCursorFilters(
-							sq,
-							reportcol.ReportDefinitionTable.Alias,
-							req.Filter,
-							req.Cursor,
-							(*report.ReportDefinition)(nil),
-						)
-						if applyErr != nil {
-							return nil, applyErr
-						}
-						return definitionVisibilityScope(sq, req.ViewerID), nil
-					},
-				})
+				r.db.Keel(ctx),
+				reportdb.ReportDefinitions.Where(definitionVisibleTo(req.ViewerID)),
+				&listquery.Request[report.ReportDefinition]{
+					Filter: req.Filter,
+					Cursor: req.Cursor,
+				},
+			)
 			if err != nil {
-				log.Error("failed to list report definitions", zap.Error(err))
+				r.l.Error("failed to list report definitions", zap.Error(err))
 				return nil, err
 			}
 
@@ -94,85 +46,34 @@ func (r *definitionRepository) ListConnection(
 	)
 }
 
-func runConnectionScope(
-	q *bun.SelectQuery,
-	req *reportports.ListReportRunConnectionRequest,
-) *bun.SelectQuery {
-	cols := reportcol.ReportRunColumns
-
-	if !req.DefinitionID.IsNil() {
-		q = q.Where(cols.DefinitionID.Eq(), req.DefinitionID)
+func runConnectionScope(req *reportports.ListReportRunConnectionRequest) []keel.Pred {
+	run := reportdb.ReportRuns
+	return []keel.Pred{
+		keel.When(!req.DefinitionID.IsNil(), run.DefinitionID.Eq(req.DefinitionID)),
+		keel.When(!req.RequestedBy.IsNil(), run.RequestedByID.Eq(req.RequestedBy)),
+		keel.When(len(req.Statuses) > 0, run.Status.In(req.Statuses...)),
 	}
-	if !req.RequestedBy.IsNil() {
-		q = q.Where(cols.RequestedByID.Eq(), req.RequestedBy)
-	}
-	if len(req.Statuses) > 0 {
-		q = q.Where(cols.Status.In(), bun.List(req.Statuses))
-	}
-	return q
 }
 
 func (r *runRepository) ListConnection(
 	ctx context.Context,
 	req *reportports.ListReportRunConnectionRequest,
 ) (*pagination.CursorListResult[*report.ReportRun], error) {
-	return dbtx.Write(
+	return dbtx.Read(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*pagination.CursorListResult[*report.ReportRun], error) {
-			log := r.l.With(zap.String("operation", "ListConnection"))
-
-			dba := r.db.DBForContext(ctx)
-			var totalCount *int
-			if req.Cursor.IncludeTotalCount {
-				total, err := dba.
-					NewSelect().
-					Model((*report.ReportRun)(nil)).
-					Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-						sq = querybuilder.ApplyFiltersWithoutSort(
-							sq,
-							reportcol.ReportRunTable.Alias,
-							req.Filter,
-							(*report.ReportRun)(nil),
-						)
-						return runConnectionScope(sq, req)
-					}).
-					Count(ctx)
-				if err != nil {
-					log.Error("failed to count report runs", zap.Error(err))
-					return nil, err
-				}
-				totalCount = new(int(total))
-			}
-
-			result, err := dbhelper.CursorList(
+			result, err := listquery.Connection(
 				ctx,
-				dbhelper.CursorListParams[*report.ReportRun]{
-					Filter:     req.Filter,
-					Cursor:     req.Cursor,
-					TotalCount: totalCount,
-					Query: func(entities *[]*report.ReportRun) *bun.SelectQuery {
-						return dba.
-							NewSelect().
-							Model(entities).
-							ColumnExpr(reportcol.ReportRunTable.All())
-					},
-					Apply: func(sq *bun.SelectQuery) (*bun.SelectQuery, error) {
-						sq, applyErr := querybuilder.ApplyCursorFilters(
-							sq,
-							reportcol.ReportRunTable.Alias,
-							req.Filter,
-							req.Cursor,
-							(*report.ReportRun)(nil),
-						)
-						if applyErr != nil {
-							return nil, applyErr
-						}
-						return runConnectionScope(sq, req), nil
-					},
-				})
+				r.db.Keel(ctx),
+				reportdb.ReportRuns.Where(runConnectionScope(req)...),
+				&listquery.Request[report.ReportRun]{
+					Filter: req.Filter,
+					Cursor: req.Cursor,
+				},
+			)
 			if err != nil {
-				log.Error("failed to list report runs", zap.Error(err))
+				r.l.Error("failed to list report runs", zap.Error(err))
 				return nil, err
 			}
 

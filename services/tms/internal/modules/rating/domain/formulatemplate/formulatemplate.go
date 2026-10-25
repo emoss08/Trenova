@@ -6,16 +6,14 @@ import (
 
 	"github.com/bytedance/sonic"
 
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/errortypes"
-	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/tarifftypes"
 	"github.com/emoss08/trenova/pkg/validationframework"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/emoss08/trenova/shared/timeutils"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
-	"github.com/uptrace/bun"
 )
 
 const (
@@ -24,7 +22,6 @@ const (
 )
 
 var (
-	_ bun.BeforeAppendModelHook          = (*FormulaTemplate)(nil)
 	_ validationframework.TenantedEntity = (*FormulaTemplate)(nil)
 	_ domaintypes.PostgresSearchable     = (*FormulaTemplate)(nil)
 )
@@ -36,42 +33,46 @@ type BillingVersion struct {
 }
 
 type FormulaTemplate struct {
-	bun.BaseModel `bun:"table:formula_templates,alias:ft" json:"-"`
+	keel.Table `keel:"formula_templates"`
 
-	pagination.CursorValueSet `json:"-" bun:",embed"`
+	ID                   pulid.ID                `json:"id"                   keel:"id,pk,autoid:ft_"`
+	OrganizationID       pulid.ID                `json:"organizationId"       keel:"organization_id,pk,tenant"`
+	BusinessUnitID       pulid.ID                `json:"businessUnitId"       keel:"business_unit_id,pk,tenant"`
+	Name                 string                  `json:"name"                 keel:"name"`
+	Description          string                  `json:"description"          keel:"description,nullzero"`
+	Source               string                  `json:"source"               keel:"source"`
+	Inputs               []tarifftypes.InputDecl `json:"inputs"               keel:"inputs,jsonb"`
+	Imports              []tarifftypes.Import    `json:"imports"              keel:"imports,jsonb"`
+	Tables               []tarifftypes.TablePin  `json:"tables"               keel:"tables,jsonb"`
+	TestCount            int32                   `json:"testCount"            keel:"test_count"`
+	Status               Status                  `json:"status"               keel:"status"`
+	SubmittedByID        *pulid.ID               `json:"submittedById"        keel:"submitted_by_id"`
+	SubmittedAt          *int64                  `json:"submittedAt"          keel:"submitted_at"`
+	ApprovedByID         *pulid.ID               `json:"approvedById"         keel:"approved_by_id"`
+	ApprovedAt           *int64                  `json:"approvedAt"           keel:"approved_at"`
+	ReviewComment        string                  `json:"reviewComment"        keel:"review_comment,nullzero"`
+	SearchVector         string                  `json:"-"                    keel:"search_vector,tsvector,readonly,noselect"`
+	Rank                 string                  `json:"-"                    keel:"rank,computed"`
+	Metadata             map[string]any          `json:"metadata"             keel:"metadata,jsonb"`
+	Version              int64                   `json:"version"              keel:"version,version"`
+	SourceTemplateID     *pulid.ID               `json:"sourceTemplateId"     keel:"source_template_id"`
+	SourceVersionNumber  *int64                  `json:"sourceVersionNumber"  keel:"source_version_number"`
+	CurrentVersionNumber int64                   `json:"currentVersionNumber" keel:"current_version_number"`
+	CreatedAt            int64                   `json:"createdAt"            keel:"created_at,autocreate"`
+	UpdatedAt            int64                   `json:"updatedAt"            keel:"updated_at,autoupdate"`
 
-	ID                   pulid.ID                `json:"id"                   bun:"id,pk,type:VARCHAR(100)"`
-	OrganizationID       pulid.ID                `json:"organizationId"       bun:"organization_id,type:VARCHAR(100),pk,notnull"`
-	BusinessUnitID       pulid.ID                `json:"businessUnitId"       bun:"business_unit_id,type:VARCHAR(100),pk,notnull"`
-	Name                 string                  `json:"name"                 bun:"name,type:VARCHAR(100),notnull"`
-	Description          string                  `json:"description"          bun:"description,type:TEXT"`
-	Source               string                  `json:"source"               bun:"source,type:TEXT,notnull"`
-	Inputs               []tarifftypes.InputDecl `json:"inputs"               bun:"inputs,type:JSONB,notnull,default:'[]'"`
-	Imports              []tarifftypes.Import    `json:"imports"              bun:"imports,type:JSONB,notnull,default:'[]'"`
-	Tables               []tarifftypes.TablePin  `json:"tables"               bun:"tables,type:JSONB,notnull,default:'[]'"`
-	TestCount            int32                   `json:"testCount"            bun:"test_count,type:INTEGER,notnull,default:0"`
-	Status               Status                  `json:"status"               bun:"status,type:formula_template_status_enum,notnull,default:'Draft'"`
-	SubmittedByID        *pulid.ID               `json:"submittedById"        bun:"submitted_by_id,type:VARCHAR(100)"`
-	SubmittedAt          *int64                  `json:"submittedAt"          bun:"submitted_at,type:BIGINT"`
-	ApprovedByID         *pulid.ID               `json:"approvedById"         bun:"approved_by_id,type:VARCHAR(100)"`
-	ApprovedAt           *int64                  `json:"approvedAt"           bun:"approved_at,type:BIGINT"`
-	ReviewComment        string                  `json:"reviewComment"        bun:"review_comment,type:TEXT"`
-	SearchVector         string                  `json:"-"                    bun:"search_vector,type:TSVECTOR,scanonly"`
-	Rank                 string                  `json:"-"                    bun:"rank,type:VARCHAR(100),scanonly"`
-	Metadata             map[string]any          `json:"metadata"             bun:"metadata,type:JSONB"`
-	Version              int64                   `json:"version"              bun:"version,type:BIGINT"`
-	SourceTemplateID     *pulid.ID               `json:"sourceTemplateId"     bun:"source_template_id,type:VARCHAR(100)"`
-	SourceVersionNumber  *int64                  `json:"sourceVersionNumber"  bun:"source_version_number,type:BIGINT"`
-	CurrentVersionNumber int64                   `json:"currentVersionNumber" bun:"current_version_number,type:BIGINT,notnull,default:1"`
-	CreatedAt            int64                   `json:"createdAt"            bun:"created_at,nullzero,notnull,default:extract(epoch from current_timestamp)::bigint"`
-	UpdatedAt            int64                   `json:"updatedAt"            bun:"updated_at,nullzero,notnull,default:extract(epoch from current_timestamp)::bigint"`
+	Billing *BillingVersion `json:"billing,omitempty"`
 
-	Billing *BillingVersion `json:"billing,omitempty" bun:"-"`
+	Organization   *tenant.Organization      `json:"organization,omitempty"`
+	BusinessUnit   *tenant.BusinessUnit      `json:"businessUnit,omitempty"`
+	SourceTemplate *FormulaTemplate          `json:"sourceTemplate,omitempty" keel:"belongs:source_template_id"`
+	Versions       []*FormulaTemplateVersion `json:"versions,omitempty"       keel:"many:template_id"`
+}
 
-	Organization   *tenant.Organization      `json:"organization,omitempty"   bun:"rel:belongs-to,join:organization_id=id"`
-	BusinessUnit   *tenant.BusinessUnit      `json:"businessUnit,omitempty"   bun:"rel:belongs-to,join:business_unit_id=id"`
-	SourceTemplate *FormulaTemplate          `json:"sourceTemplate,omitempty" bun:"rel:belongs-to,join:source_template_id=id"`
-	Versions       []*FormulaTemplateVersion `json:"versions,omitempty"       bun:"rel:has-many,join:id=template_id"`
+func (ft *FormulaTemplate) BeforeUpdate(_ context.Context) error {
+	ft.normalizeCollections()
+
+	return nil
 }
 
 func (ft *FormulaTemplate) Validate(multiErr *errortypes.MultiError) {
@@ -148,21 +149,20 @@ func (ft *FormulaTemplate) HasMaterialChange(other *FormulaTemplate) bool {
 		!tarifftypes.TablePinsEqual(ft.Tables, other.Tables)
 }
 
-func (ft *FormulaTemplate) BeforeAppendModel(_ context.Context, query bun.Query) error {
-	now := timeutils.NowUnix()
-
-	switch query.(type) {
-	case *bun.InsertQuery:
-		if ft.ID.IsNil() {
-			ft.ID = pulid.MustNew("ft_")
-		}
-		ft.normalizeCollections()
-		ft.CreatedAt = now
-	case *bun.UpdateQuery:
-		ft.normalizeCollections()
-		ft.UpdatedAt = now
+func (ft *FormulaTemplate) BeforeCreate(ctx context.Context) error {
+	if ft.Status == "" {
+		ft.Status = StatusDraft
 	}
+	if ft.CurrentVersionNumber == 0 {
+		ft.CurrentVersionNumber = 1
+	}
+	ft.normalizeCollections()
 
+	return nil
+}
+
+func (ft *FormulaTemplate) BeforeSave(_ context.Context) error {
+	ft.normalizeCollections()
 	return nil
 }
 

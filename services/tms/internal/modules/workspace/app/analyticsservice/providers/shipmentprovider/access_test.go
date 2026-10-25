@@ -6,7 +6,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/emoss08/trenova/internal/modules/identity/app/refview"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
@@ -43,7 +42,10 @@ func (e *readerEngine) GetResourcePermissions(
 	if e.ceiling == "" {
 		return nil, nil
 	}
-	return &permissionports.ResourcePermissionDetail{Resource: resource, MaxSensitivity: e.ceiling}, nil
+	return &permissionports.ResourcePermissionDetail{
+		Resource:       resource,
+		MaxSensitivity: e.ceiling,
+	}, nil
 }
 
 func (e *readerEngine) GetResourcePermissionsBatch(
@@ -58,7 +60,10 @@ type groupAccess struct {
 	visible permission.FieldGroupSet
 }
 
-func (g groupAccess) Visible(context.Context, *permissionports.RequestActor) permission.FieldGroupSet {
+func (g groupAccess) Visible(
+	context.Context,
+	*permissionports.RequestActor,
+) permission.FieldGroupSet {
 	return g.visible
 }
 
@@ -169,7 +174,13 @@ func TestDetentionWatchlist_NamesTheCustomerThroughItsView(t *testing.T) {
 	assert.Equal(t, "Acme Foods", *card.Items[0].Customer)
 
 	held := detentionWatchlist()
-	reader{denied: withoutLinkedReads, ceiling: belowInternal}.gate(t, map[string]any{"detentionWatchlist": held})
+	reader{
+		denied:  withoutLinkedReads,
+		ceiling: belowInternal,
+	}.gate(
+		t,
+		map[string]any{"detentionWatchlist": held},
+	)
 	assert.Nil(t, held.Items[0].Customer)
 	assert.Equal(t, "SHP-1001", held.Items[0].ShipmentID)
 
@@ -179,16 +190,19 @@ func TestDetentionWatchlist_NamesTheCustomerThroughItsView(t *testing.T) {
 }
 
 func tomorrowsPickups() *TomorrowsPickupsCard {
-	return buildTomorrowsPickupsCard(time.Date(2026, time.May, 8, 0, 0, 0, 0, time.UTC), []tomorrowPickupRow{{
-		ShipmentID:       "sp_1",
-		ProNumber:        "PRO-1001",
-		Customer:         "Acme Foods",
-		Origin:           "TERM-LA",
-		Destination:      "DC-CHI",
-		Driver:           "M. Alvarez",
-		ShipmentStatus:   shipment.StatusAssigned,
-		HasPrimaryWorker: true,
-	}})
+	return buildTomorrowsPickupsCard(
+		time.Date(2026, time.May, 8, 0, 0, 0, 0, time.UTC),
+		[]tomorrowPickupRow{{
+			ShipmentID:       "sp_1",
+			ProNumber:        "PRO-1001",
+			Customer:         "Acme Foods",
+			Origin:           "TERM-LA",
+			Destination:      "DC-CHI",
+			Driver:           "M. Alvarez",
+			ShipmentStatus:   shipment.StatusAssigned,
+			HasPrimaryWorker: true,
+		}},
+	)
 }
 
 func TestTomorrowsPickups_ShowsLinkedRecordsThroughTheirViews(t *testing.T) {
@@ -258,38 +272,6 @@ func TestProfitability_ShowsTheMarginFiguresOnlyWithTheMarginsGroup(t *testing.T
 	assert.Nil(t, held.UnprofitableCount, "how many loads lost money is a margin figure")
 	assert.True(t, held.HasMargin)
 	assert.InDelta(t, 1.9, held.AvgCPM, 0.001)
-}
-
-func TestGetAnalyticsData_GatesWhatItReturns(t *testing.T) {
-	t.Parallel()
-
-	deps := newTestProvider(t)
-	provider, mockDB := deps.provider, deps.mockDB
-	gated := reader{denied: withoutLinkedReads, ceiling: belowInternal}.provider()
-	provider.views, provider.fieldAccess = gated.views, gated.fieldAccess
-
-	mockDB.ExpectQuery(`(?s)SELECT\s+sp\.id AS shipment_id.*ORDER BY stp\.scheduled_window_start ASC.*LIMIT .*OFFSET`).
-		WillReturnRows(sqlmock.NewRows([]string{
-			"shipment_id", "pro_number", "pickup_window_start", "customer", "origin",
-			"destination", "driver", "shipment_status", "has_primary_worker",
-		}).AddRow("sp_1", "PRO-1001", int64(1), "Acme Foods", "TERM-LA", "DC-CHI", "M. Alvarez",
-			shipment.StatusAssigned, true))
-
-	data, err := provider.GetAnalyticsData(t.Context(), &kernelports.AnalyticsRequestOptions{
-		OrgID:    pulid.MustNew("org_"),
-		BuID:     pulid.MustNew("bu_"),
-		UserID:   pulid.MustNew("usr_"),
-		Timezone: "UTC",
-		Include:  tomorrowsPickupsInclude,
-	})
-	require.NoError(t, err)
-
-	card, ok := data["tomorrowsPickups"].(*TomorrowsPickupsCard)
-	require.True(t, ok)
-	require.Len(t, card.Pickups, 1)
-	assert.Nil(t, card.Pickups[0].Customer)
-	assert.Nil(t, card.Pickups[0].Driver)
-	require.NoError(t, mockDB.ExpectationsWereMet())
 }
 
 func TestGetAnalyticsData_WithholdsEveryLinkedValueWithoutTheViewsPort(t *testing.T) {

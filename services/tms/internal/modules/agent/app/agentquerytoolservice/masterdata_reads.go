@@ -3,13 +3,15 @@ package agentquerytoolservice
 import (
 	"context"
 
+	"github.com/emoss08/trenova/internal/modules/equipment/domain/equipmentmanufacturer/equipmentmanufacturerdb"
+	"github.com/emoss08/trenova/pkg/listquery"
+
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/equipment/domain/equipmentmanufacturer"
 	"github.com/emoss08/trenova/internal/modules/equipment/ports/equipmentmanufacturerports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/pagination"
-	"github.com/emoss08/trenova/pkg/querybuilder"
 )
 
 const (
@@ -56,8 +58,9 @@ func newListEquipmentManufacturersTool(
 		entityPlural: "equipment manufacturers",
 		summary:      equipmentManufacturersSummary,
 		resource:     permission.ResourceEquipmentManufacturer,
-		config: querybuilder.GetFieldConfiguration(
+		config: listquery.Describe(
 			(*equipmentmanufacturer.EquipmentManufacturer)(nil),
+			equipmentmanufacturerdb.EquipmentManufacturersSchema(),
 		),
 		fields: []listField{
 			{Name: paramStatus, Kind: filterEnum, Values: statusValues},

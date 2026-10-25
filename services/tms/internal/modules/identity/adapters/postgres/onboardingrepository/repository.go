@@ -3,21 +3,19 @@ package onboardingrepository
 import (
 	"context"
 
-	"github.com/emoss08/trenova/pkg/buncolgen/onboardingcol"
-
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/onboarding"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/onboarding/onboardingdb"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/onboardingports"
 	"github.com/emoss08/trenova/pkg/dberror"
-	"github.com/emoss08/trenova/pkg/pagination"
-	"github.com/emoss08/trenova/shared/timeutils"
-	"github.com/uptrace/bun"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
 
 const entityName = "Onboarding"
+
+var onboardingErrors = dberror.Mapping{Entity: entityName}
 
 type Params struct {
 	fx.In
@@ -40,18 +38,12 @@ func New(p Params) onboardingports.OnboardingRepository {
 
 func (r *repository) Get(
 	ctx context.Context,
-	req onboardingports.GetOnboardingRequest,
+	_ onboardingports.GetOnboardingRequest,
 ) (*onboarding.Onboarding, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*onboarding.Onboarding, error) {
-		entity := new(onboarding.Onboarding)
-		err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(entity).
-			Apply(onboardingcol.OnboardingApplyTenant(req.TenantInfo)).
-			Limit(1).
-			Scan(ctx)
+		entity, err := onboardingdb.Onboardings.Query().First(ctx, r.db.Keel(ctx))
 		if err != nil {
-			return nil, dberror.HandleNotFoundError(err, entityName)
+			return nil, onboardingErrors.Map(err, "")
 		}
 
 		return entity, nil
@@ -63,16 +55,12 @@ func (r *repository) Create(
 	entity *onboarding.Onboarding,
 ) (*onboarding.Onboarding, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*onboarding.Onboarding, error) {
-		if _, err := r.db.DBForContext(ctx).
-			NewInsert().
-			Model(entity).
-			Returning("*").
-			Exec(ctx); err != nil {
+		if err := onboardingdb.Onboardings.Create(ctx, r.db.Keel(ctx), entity); err != nil {
 			r.l.Error("failed to create onboarding",
 				zap.String("organizationId", entity.OrganizationID.String()),
 				zap.Error(err),
 			)
-			return nil, err
+			return nil, onboardingErrors.Map(err, entity.ID.String())
 		}
 
 		return entity, nil
@@ -84,31 +72,17 @@ func (r *repository) Complete(
 	entity *onboarding.Onboarding,
 ) (*onboarding.Onboarding, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*onboarding.Onboarding, error) {
-		cols := onboardingcol.OnboardingColumns
-		tenantInfo := pagination.TenantInfo{
-			OrgID: entity.OrganizationID,
-			BuID:  entity.BusinessUnitID,
+		o := onboardingdb.Onboardings
+		completedAt := o.CompletedAt.ToNull()
+		if entity.CompletedAt != nil {
+			completedAt = o.CompletedAt.To(*entity.CompletedAt)
 		}
-		updated := new(onboarding.Onboarding)
 
-		result, err := r.db.DBForContext(ctx).
-			NewUpdate().
-			Model(updated).
-			WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-				return onboardingcol.OnboardingScopeTenantUpdate(uq, tenantInfo).
-					Where(cols.ID.Eq(), entity.ID).
-					Where(cols.Version.Eq(), entity.Version).
-					Where(cols.Status.Eq(), onboarding.StatusPending)
-			}).
-			Set(cols.Status.Set(), entity.Status).
-			Set(cols.OperationType.Set(), entity.OperationType).
-			Set(cols.SampleDataLoaded.Set(), entity.SampleDataLoaded).
-			Set(cols.CompletedAt.Set(), entity.CompletedAt).
-			Set(cols.CompletedByID.Set(), entity.CompletedByID).
-			Set(cols.Version.Inc(1)).
-			Set(cols.UpdatedAt.Set(), timeutils.NowUnix()).
-			Returning("*").
-			Exec(ctx)
+		rows, err := o.Where(
+			o.ID.Eq(entity.ID),
+			o.Version.Eq(entity.Version),
+			o.Status.Eq(onboarding.StatusPending),
+		).UpdateReturning(ctx, r.db.Keel(ctx), o.Status.To(entity.Status), o.OperationType.To(entity.OperationType), o.SampleDataLoaded.To(entity.SampleDataLoaded), completedAt, o.CompletedByID.To(entity.CompletedByID))
 		if err != nil {
 			r.l.Error("failed to complete onboarding",
 				zap.String("onboardingId", entity.ID.String()),
@@ -117,10 +91,14 @@ func (r *repository) Complete(
 			return nil, err
 		}
 
-		if err = dberror.CheckRowsAffected(result, entityName, entity.ID.String()); err != nil {
+		if err = dberror.CheckAffected(
+			int64(len(rows)),
+			entityName,
+			entity.ID.String(),
+		); err != nil {
 			return nil, err
 		}
 
-		return updated, nil
+		return rows[0], nil
 	})
 }

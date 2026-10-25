@@ -23,7 +23,6 @@ import (
 	"github.com/emoss08/trenova/shared/i18n"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
-	"github.com/uptrace/bun"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
@@ -32,7 +31,7 @@ type Params struct {
 	fx.In
 
 	Logger           *zap.Logger
-	DB               kernelports.DBConnection
+	DB               kernelports.Transactor
 	Repo             journalentryports.JournalReviewRepository
 	AccountingRepo   tenantports.AccountingControlRepository
 	FiscalPeriodRepo fiscalperiodports.FiscalPeriodRepository
@@ -42,7 +41,7 @@ type Params struct {
 
 type Service struct {
 	l        *zap.Logger
-	db       kernelports.DBConnection
+	db       kernelports.Transactor
 	repo     journalentryports.JournalReviewRepository
 	controls tenantports.AccountingControlRepository
 	periods  fiscalperiodports.FiscalPeriodRepository
@@ -130,7 +129,7 @@ func (s *Service) reviewOne(
 ) (outcome *journalentryports.JournalReviewOutcome, previous, current *journalentry.JournalEntry, err error) {
 	outcome = &journalentryports.JournalReviewOutcome{EntryID: entryID}
 
-	err = s.db.WithTx(ctx, kernelports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
+	err = s.db.Transact(ctx, kernelports.TxOptions{}, func(txCtx context.Context) error {
 		entry, lockErr := s.repo.LockEntry(txCtx, journalentryports.LockJournalEntryRequest{
 			TenantInfo: req.TenantInfo,
 			EntryID:    entryID,

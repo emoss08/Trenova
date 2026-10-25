@@ -44,8 +44,8 @@ type RetrievalKeywordSearchRequest struct {
 }
 
 type RetrievalKeywordHit struct {
-	SourceID pulid.ID `bun:"source_id"`
-	Rank     float64  `bun:"rank"`
+	SourceID pulid.ID
+	Rank     float64
 }
 
 type ListRetrievalModelKeysRequest struct {
@@ -65,8 +65,8 @@ type AverageRetrievalSourceCharsRequest struct {
 }
 
 type RetrievalSourceChars struct {
-	Sampled      int     `bun:"sampled"`
-	AverageChars float64 `bun:"average_chars"`
+	Sampled      int
+	AverageChars float64
 }
 
 type RetrievalSourceRepository interface {

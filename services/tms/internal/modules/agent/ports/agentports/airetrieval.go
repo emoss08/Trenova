@@ -21,8 +21,8 @@ type ListEmbeddingChunkHashesRequest struct {
 }
 
 type EmbeddingChunkHash struct {
-	ChunkIndex  int    `bun:"chunk_index"`
-	ContentHash string `bun:"content_hash"`
+	ChunkIndex  int
+	ContentHash string
 }
 
 type EmbeddingChunk struct {
@@ -61,10 +61,10 @@ type VectorSearchRequest struct {
 }
 
 type VectorSearchHit struct {
-	SourceType airetrieval.SourceType `bun:"source_type"`
-	SourceID   pulid.ID               `bun:"source_id"`
-	ChunkIndex int                    `bun:"chunk_index"`
-	Similarity float64                `bun:"similarity"`
+	SourceType airetrieval.SourceType
+	SourceID   pulid.ID
+	ChunkIndex int
+	Similarity float64
 }
 
 type GetCatalogEmbeddingsRequest struct {
@@ -156,11 +156,11 @@ type CountIndexEntriesRequest struct {
 }
 
 type IndexEntryCount struct {
-	SourceType    airetrieval.SourceType  `bun:"source_type"`
-	Status        airetrieval.IndexStatus `bun:"status"`
-	Count         int                     `bun:"count"`
-	LastIndexedAt *int64                  `bun:"last_indexed_at"`
-	LastAttemptAt *int64                  `bun:"last_attempt_at"`
+	SourceType    airetrieval.SourceType
+	Status        airetrieval.IndexStatus
+	Count         int
+	LastIndexedAt *int64
+	LastAttemptAt *int64
 }
 
 type AverageIndexChunksRequest struct {
@@ -170,8 +170,8 @@ type AverageIndexChunksRequest struct {
 }
 
 type IndexChunkAverage struct {
-	Entries       int     `bun:"entries"`
-	AverageChunks float64 `bun:"average_chunks"`
+	Entries       int
+	AverageChunks float64
 }
 
 type ListErroredIndexEntriesRequest struct {

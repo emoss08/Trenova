@@ -4,6 +4,8 @@ import (
 	"context"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/testutil/pagetest"
+
 	"github.com/emoss08/trenova/internal/modules/documents/domain/inboundmessage"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/inboundmessageports"
 	"github.com/emoss08/trenova/pkg/dbtype"
@@ -27,7 +29,7 @@ func (s *readStubMessageRepo) ListCursor(
 ) (*pagination.CursorListResult[*inboundmessage.InboundMessage], error) {
 	s.listed = req
 
-	return pagination.NewCursorListResultWithTotalCount(
+	return pagetest.OfTotal(
 		[]*inboundmessage.InboundMessage{}, 25, nil,
 	), nil
 }

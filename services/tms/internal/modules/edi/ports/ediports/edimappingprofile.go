@@ -68,9 +68,9 @@ type GetEDIMappingSummaryRequest struct {
 }
 
 type EDIMappingEntityCount struct {
-	EntityType edi.MappingEntityType `bun:"entity_type"`
-	Count      int64                 `bun:"count"`
-	UpdatedAt  int64                 `bun:"updated_at"`
+	EntityType edi.MappingEntityType
+	Count      int64
+	UpdatedAt  int64
 }
 
 type EDIMappingSummary struct {

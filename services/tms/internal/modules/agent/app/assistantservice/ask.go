@@ -11,7 +11,6 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
-	"github.com/emoss08/trenova/pkg/buncolgen/agentdefinitioncol"
 	"github.com/emoss08/trenova/pkg/dbtype"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -21,6 +20,8 @@ import (
 // askAgentPageLimit bounds the general assistants read to pick the one a
 // quick question goes to; an organization has one, or a few.
 const askAgentPageLimit = 100
+
+const definitionTemplateField = "template"
 
 // StartAsk opens the thread a quick question from the palette is answered on.
 // It is the same turn as any other, on a thread created for the question and
@@ -120,10 +121,11 @@ func generalAssistants(
 			TenantInfo: tenant,
 			Pagination: pagination.Info{Limit: limit},
 			FieldFilters: []domaintypes.FieldFilter{
-				agentdefinitioncol.DefinitionFilter.Template(
-					dbtype.OpEqual,
-					string(agentdefinition.TemplateGeneralAssistant),
-				),
+				{
+					Field:    definitionTemplateField,
+					Operator: dbtype.OpEqual,
+					Value:    string(agentdefinition.TemplateGeneralAssistant),
+				},
 			},
 		},
 		EnabledOnly: true,

@@ -22,7 +22,6 @@ import (
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
 	"github.com/shopspring/decimal"
-	"github.com/uptrace/bun"
 	"go.uber.org/zap"
 )
 
@@ -95,7 +94,7 @@ func (s *Service) approveInternal(
 
 	var updated *driversettlement.Settlement
 	var previous driversettlement.Settlement
-	err := s.db.WithTx(ctx, kernelports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
+	err := s.db.Transact(ctx, kernelports.TxOptions{}, func(txCtx context.Context) error {
 		entity, txErr := s.getForUpdate(txCtx, tenantInfo, settlementID)
 		if txErr != nil {
 			return txErr
@@ -194,7 +193,7 @@ func (s *Service) MarkPaid(
 
 	var updated *driversettlement.Settlement
 	var previous driversettlement.Settlement
-	err := s.db.WithTx(ctx, kernelports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
+	err := s.db.Transact(ctx, kernelports.TxOptions{}, func(txCtx context.Context) error {
 		entity, txErr := s.getForUpdate(txCtx, tenantInfo, req.SettlementID)
 		if txErr != nil {
 			return txErr
@@ -290,7 +289,7 @@ func (s *Service) Void(
 
 	var updated *driversettlement.Settlement
 	var previous driversettlement.Settlement
-	err := s.db.WithTx(ctx, kernelports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
+	err := s.db.Transact(ctx, kernelports.TxOptions{}, func(txCtx context.Context) error {
 		entity, txErr := s.getForUpdate(txCtx, tenantInfo, settlementID)
 		if txErr != nil {
 			return txErr
@@ -355,7 +354,7 @@ func (s *Service) Recalculate(
 
 	var updated *driversettlement.Settlement
 	var previous driversettlement.Settlement
-	err := s.db.WithTx(ctx, kernelports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
+	err := s.db.Transact(ctx, kernelports.TxOptions{}, func(txCtx context.Context) error {
 		entity, txErr := s.getForUpdate(txCtx, tenantInfo, settlementID)
 		if txErr != nil {
 			return txErr
@@ -433,7 +432,7 @@ func (s *Service) refreshOpenDraftForWorker(
 	if err != nil || draft == nil {
 		return nil //nolint:nilerr // no open draft means nothing to attach to
 	}
-	return s.db.WithTx(ctx, kernelports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
+	return s.db.Transact(ctx, kernelports.TxOptions{}, func(txCtx context.Context) error {
 		entity, txErr := s.getForUpdate(txCtx, tenantInfo, draft.ID)
 		if txErr != nil {
 			return txErr

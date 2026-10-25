@@ -41,7 +41,7 @@ type Params struct {
 
 	Logger         *zap.Logger
 	Config         *config.Config
-	DB             kernelports.DBConnection
+	DB             kernelports.Transactor
 	Integrations   *integrationservice.Service
 	Connectors     []carrierintelports.CarrierIntelConnector `group:"carrierIntelConnectors"`
 	Limiter        restx.Limiter                             `                               name:"carrierIntelLimiter"`
@@ -73,7 +73,7 @@ type Params struct {
 
 type Service struct {
 	l               *zap.Logger
-	db              kernelports.DBConnection
+	db              kernelports.Transactor
 	integrations    IntegrationConfigReader
 	connectors      map[integration.Type]carrierintelports.CarrierIntelConnector
 	limiter         restx.Limiter

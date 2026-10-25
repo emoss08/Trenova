@@ -3,6 +3,7 @@ package projection
 import (
 	"testing"
 
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/manualjournal/manualjournaldb"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -10,15 +11,11 @@ func TestSelect_MapsScalarSelectionToColumns(t *testing.T) {
 	t.Parallel()
 
 	spec := TypeSpec{
-		TypeName: "Test",
-		FieldMap: map[string]string{
-			"id":   "id",
-			"code": "code",
-		},
+		TypeName:      "Test",
 		AlwaysColumns: []string{"id"},
 		Fields: []FieldSpec{
-			{Name: "id", FieldMapKey: "id"},
-			{Name: "code", FieldMapKey: "code"},
+			{Name: "id", Column: "id"},
+			{Name: "code", Column: "code"},
 		},
 	}
 
@@ -33,15 +30,11 @@ func TestSelect_DedupesAliases(t *testing.T) {
 	t.Parallel()
 
 	spec := TypeSpec{
-		TypeName: "Test",
-		FieldMap: map[string]string{
-			"id":     "id",
-			"status": "status",
-		},
+		TypeName:      "Test",
 		AlwaysColumns: []string{"id"},
 		Fields: []FieldSpec{
-			{Name: "status", FieldMapKey: "status"},
-			{Name: "equipmentStatus", FieldMapKey: "status"},
+			{Name: "status", Column: "status"},
+			{Name: "equipmentStatus", Column: "status"},
 		},
 	}
 
@@ -57,16 +50,14 @@ func TestSelect_SelectsRelationColumns(t *testing.T) {
 
 	child := TypeSpec{
 		TypeName:      "Child",
-		FieldMap:      map[string]string{"id": "id", "name": "name"},
 		AlwaysColumns: []string{"id"},
 		Fields: []FieldSpec{
-			{Name: "id", FieldMapKey: "id"},
-			{Name: "name", FieldMapKey: "name"},
+			{Name: "id", Column: "id"},
+			{Name: "name", Column: "name"},
 		},
 	}
 	parent := TypeSpec{
 		TypeName:      "Parent",
-		FieldMap:      map[string]string{"id": "id"},
 		AlwaysColumns: []string{"id"},
 		Fields: []FieldSpec{
 			{
@@ -91,12 +82,10 @@ func TestSelect_GatesSuppressRelations(t *testing.T) {
 
 	child := TypeSpec{
 		TypeName:      "Child",
-		FieldMap:      map[string]string{"id": "id"},
 		AlwaysColumns: []string{"id"},
 	}
 	parent := TypeSpec{
 		TypeName:      "Parent",
-		FieldMap:      map[string]string{"id": "id"},
 		AlwaysColumns: []string{"id"},
 		Fields: []FieldSpec{
 			{
@@ -124,7 +113,6 @@ func TestSelect_VirtualFieldsSetSpecials(t *testing.T) {
 
 	spec := TypeSpec{
 		TypeName:      "Test",
-		FieldMap:      map[string]string{"id": "id"},
 		AlwaysColumns: []string{"id"},
 		Fields: []FieldSpec{
 			{Name: "customFields", Special: "customFields"},
@@ -137,4 +125,11 @@ func TestSelect_VirtualFieldsSetSpecials(t *testing.T) {
 
 	assert.Equal(t, []string{"id"}, selection.Columns)
 	assert.True(t, selection.HasSpecial("customFields"))
+}
+
+func TestColumnNames_NamesTheGeneratedColumns(t *testing.T) {
+	t.Parallel()
+
+	r := manualjournaldb.Requests
+	assert.Equal(t, []string{"total_debit_minor", "total_credit_minor"}, ColumnNames(r.TotalDebit.Col, r.TotalCredit.Col))
 }

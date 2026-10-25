@@ -2,23 +2,18 @@ package factoringrepository
 
 import (
 	"context"
-	"fmt"
 
+	"github.com/emoss08/keel"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/factoring"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/factoring/factoringdb"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/factoringports"
-	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
-	"github.com/emoss08/trenova/internal/modules/parties/domain/factoringcompany"
-	"github.com/emoss08/trenova/pkg/buncolgen/factoringcol"
-	"github.com/emoss08/trenova/pkg/buncolgen/factoringcompanycol"
 	"github.com/emoss08/trenova/pkg/dberror"
-	"github.com/emoss08/trenova/pkg/dbhelper"
 	"github.com/emoss08/trenova/pkg/errortypes"
+	"github.com/emoss08/trenova/pkg/listquery"
 	"github.com/emoss08/trenova/pkg/pagination"
-	"github.com/emoss08/trenova/pkg/querybuilder"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/emoss08/trenova/shared/stringutils"
-	"github.com/uptrace/bun"
 	"go.uber.org/zap"
 )
 
@@ -30,8 +25,10 @@ const (
 	maxSubmissionIDsPerLookup = 1000
 )
 
+var submissionErrors = dberror.Mapping{Entity: submissionEntity}
+
 type submissionRepository struct {
-	db kernelports.DBConnection
+	db *postgres.Connection
 	l  *zap.Logger
 }
 
@@ -47,27 +44,19 @@ func (r *submissionRepository) Create(
 	entity *factoring.Submission,
 ) (*factoring.Submission, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*factoring.Submission, error) {
-		dba := r.db.DBForContext(ctx)
-		if _, err := dba.NewInsert().
-			Model(entity).
-			Returning("*").
-			Exec(ctx); err != nil {
-			return nil, translateSubmissionError(err, "create factoring submission")
+		db := r.db.Keel(ctx)
+		if err := factoringdb.Submissions.Create(ctx, db, entity); err != nil {
+			return nil, translateSubmissionError(err, entity.ID)
 		}
 		if len(entity.Items) == 0 {
 			return entity, nil
 		}
 		for idx, item := range entity.Items {
-			item.OrganizationID = entity.OrganizationID
-			item.BusinessUnitID = entity.BusinessUnitID
 			item.SubmissionID = entity.ID
 			item.Position = idx + 1
 		}
-		if _, err := dba.NewInsert().
-			Model(&entity.Items).
-			Returning("*").
-			Exec(ctx); err != nil {
-			return nil, translateSubmissionError(err, "create factoring submission items")
+		if err := factoringdb.SubmissionItems.CreateMany(ctx, db, entity.Items); err != nil {
+			return nil, translateSubmissionError(err, entity.ID)
 		}
 
 		return entity, nil
@@ -79,41 +68,24 @@ func (r *submissionRepository) Update(
 	entity *factoring.Submission,
 ) (*factoring.Submission, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*factoring.Submission, error) {
-		cols := factoringcol.SubmissionColumns
-		previousVersion := entity.Version
-		entity.Version++
-
-		res, err := r.db.DBForContext(ctx).
-			NewUpdate().
-			Model(entity).
-			ExcludeColumn(
-				cols.CreatedAt.Bare(),
-				cols.Number.Bare(),
-				cols.FactoringCompanyID.Bare(),
-				cols.AgreementID.Bare(),
-				cols.IdempotencyKey.Bare(),
-				cols.InvoiceCount.Bare(),
-				cols.FaceMinor.Bare(),
-				cols.ExpectedAdvanceMinor.Bare(),
-				cols.ExpectedFeeMinor.Bare(),
-				cols.ExpectedReserveMinor.Bare(),
-				cols.SubmittedByID.Bare(),
-				cols.AgentRunID.Bare(),
-			).
-			WherePK().
-			Where(cols.Version.Eq(), previousVersion).
-			Returning("*").
-			Exec(ctx)
+		s := factoringdb.Submissions
+		err := s.SaveExcept(ctx, r.db.Keel(ctx), entity,
+			s.Number,
+			s.FactoringCompanyID,
+			s.AgreementID,
+			s.IdempotencyKey,
+			s.InvoiceCount,
+			s.FaceMinor,
+			s.ExpectedAdvanceMinor,
+			s.ExpectedFeeMinor,
+			s.ExpectedReserveMinor,
+			s.SubmittedByID,
+			s.AgentRunID,
+		)
 		if err != nil {
-			entity.Version = previousVersion
-			return nil, translateSubmissionError(err, "update factoring submission")
-		}
-		if err = dberror.CheckRowsAffected(res, submissionEntity, entity.ID.String()); err != nil {
-			entity.Version = previousVersion
-			return nil, err
+			return nil, translateSubmissionError(err, entity.ID)
 		}
 		if err = r.updateItemStatuses(ctx, entity); err != nil {
-			entity.Version = previousVersion
 			return nil, err
 		}
 
@@ -125,33 +97,29 @@ func (r *submissionRepository) updateItemStatuses(
 	ctx context.Context,
 	entity *factoring.Submission,
 ) error {
-	cols := factoringcol.SubmissionItemColumns
-	dba := r.db.DBForContext(ctx)
-	for _, item := range entity.Items {
-		if item == nil || item.ID.IsNil() {
+	db := r.db.Keel(ctx)
+	item := factoringdb.SubmissionItems
+	for _, row := range entity.Items {
+		if row == nil || row.ID.IsNil() {
 			continue
 		}
-		if _, err := dba.NewUpdate().
-			Model(item).
-			Column(
-				cols.Status.Bare(),
-				cols.ReleasedAt.Bare(),
-				cols.FundedOn.Bare(),
-				cols.AdvanceMinor.Bare(),
-				cols.FeeMinor.Bare(),
-				cols.ReserveMinor.Bare(),
-				cols.RejectionReason.Bare(),
-				cols.SettledOn.Bare(),
-				cols.ChargedBackOn.Bare(),
-				cols.ChargebackReason.Bare(),
-				cols.UpdatedAt.Bare(),
-			).
-			WherePK().
-			Where(cols.SubmissionID.Eq(), entity.ID).
-			Exec(ctx); err != nil {
-			return translateSubmissionError(err, "update factoring submission item")
+		err := item.Save(ctx, db, row,
+			item.Status,
+			item.ReleasedAt,
+			item.FundedOn,
+			item.AdvanceMinor,
+			item.FeeMinor,
+			item.ReserveMinor,
+			item.RejectionReason,
+			item.SettledOn,
+			item.ChargedBackOn,
+			item.ChargebackReason,
+		)
+		if err != nil {
+			return translateSubmissionError(err, row.ID)
 		}
 	}
+
 	return nil
 }
 
@@ -159,46 +127,50 @@ func (r *submissionRepository) SetDocuments(
 	ctx context.Context,
 	req *factoringports.SetSubmissionDocumentsRequest,
 ) error {
-	_, err := dbtx.Write(ctx, r.db, func(ctx context.Context) (struct{}, error) {
-		dba := r.db.DBForContext(ctx)
-		cols := factoringcol.SubmissionColumns
-		res, err := dba.NewUpdate().
-			Model((*factoring.Submission)(nil)).
-			Set(cols.SchedulePDFDocumentID.Set(), nullableID(req.SchedulePDFDocumentID)).
-			Set(cols.ScheduleCSVDocumentID.Set(), nullableID(req.ScheduleCSVDocumentID)).
-			Apply(func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-				return factoringcol.SubmissionScopeTenantUpdate(uq, req.TenantInfo).
-					Where(cols.ID.Eq(), req.SubmissionID)
-			}).
-			Exec(ctx)
+	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
+		db := r.db.Keel(ctx)
+		s := factoringdb.Submissions
+		n, err := s.Where(s.ID.Eq(req.SubmissionID)).Update(ctx, db,
+			s.SchedulePDFDocumentID.ToExpr(keel.Val(req.SchedulePDFDocumentID)),
+			s.ScheduleCSVDocumentID.ToExpr(keel.Val(req.ScheduleCSVDocumentID)),
+			s.Version.ToExpr(s.Version),
+			s.UpdatedAt.ToExpr(s.UpdatedAt),
+		)
 		if err != nil {
-			return struct{}{}, fmt.Errorf("store factoring schedule documents: %w", err)
+			return submissionErrors.Map(err, req.SubmissionID.String())
 		}
-		if err = dberror.CheckRowsAffected(
-			res,
-			submissionEntity,
-			req.SubmissionID.String(),
-		); err != nil {
-			return struct{}{}, err
+		if err = dberror.CheckAffected(n, submissionEntity, req.SubmissionID.String()); err != nil {
+			return err
+		}
+		if len(req.Packets) == 0 {
+			return nil
 		}
 
-		items := factoringcol.SubmissionItemColumns
+		itemIDs := make([]pulid.ID, 0, len(req.Packets))
+		documentIDs := make([]pulid.ID, 0, len(req.Packets))
 		for itemID, documentID := range req.Packets {
-			if _, err = dba.NewUpdate().
-				Model((*factoring.SubmissionItem)(nil)).
-				Set(items.PacketDocumentID.Set(), nullableID(documentID)).
-				Apply(func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-					return factoringcol.SubmissionItemScopeTenantUpdate(uq, req.TenantInfo).
-						Where(items.ID.Eq(), itemID).
-						Where(items.SubmissionID.Eq(), req.SubmissionID)
-				}).
-				Exec(ctx); err != nil {
-				return struct{}{}, fmt.Errorf("store factoring packet: %w", err)
-			}
+			itemIDs = append(itemIDs, itemID)
+			documentIDs = append(documentIDs, documentID)
 		}
-		return struct{}{}, nil
+
+		item := factoringdb.SubmissionItems
+		packets := keel.Unnest("packets", []string{"id", "document_id"}, itemIDs, documentIDs)
+		_, err = item.With(packets).
+			Join(packets, packets.Col("id").EqCol(item.ID)).
+			Where(item.SubmissionID.Eq(req.SubmissionID)).
+			Update(ctx, db,
+				item.PacketDocumentID.ToExpr(keel.Raw("NULLIF(?, '')", packets.Col("document_id"))),
+				item.UpdatedAt.ToExpr(item.UpdatedAt),
+			)
+
+		return submissionErrors.Map(err, req.SubmissionID.String())
 	})
-	return err
+}
+
+func submissionWithItems() *keel.Query[factoring.Submission] {
+	s := factoringdb.Submissions
+	items := s.Items()
+	return s.Load(items.Order(items.Position.Asc()))
 }
 
 func (r *submissionRepository) GetByID(
@@ -206,23 +178,15 @@ func (r *submissionRepository) GetByID(
 	req factoringports.GetSubmissionRequest,
 ) (*factoring.Submission, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*factoring.Submission, error) {
-		entity := new(factoring.Submission)
-		q := r.db.DBForContext(ctx).NewSelect().
-			Model(entity).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return factoringcol.SubmissionScopeTenant(sq, req.TenantInfo).
-					Where(factoringcol.SubmissionColumns.ID.Eq(), req.ID)
-			})
+		s := factoringdb.Submissions
+		q := s.Query()
 		if req.IncludeItems {
-			q = q.Relation(
-				factoringcol.SubmissionRelations.Items,
-				func(sq *bun.SelectQuery) *bun.SelectQuery {
-					return sq.Order(factoringcol.SubmissionItemColumns.Position.OrderAsc())
-				},
-			)
+			q = submissionWithItems()
 		}
-		if err := q.Scan(ctx); err != nil {
-			return nil, dberror.HandleNotFoundError(err, submissionEntity)
+
+		entity, err := q.Where(s.ID.Eq(req.ID)).One(ctx, r.db.Keel(ctx))
+		if err != nil {
+			return nil, submissionErrors.Map(err, req.ID.String())
 		}
 
 		return entity, nil
@@ -234,21 +198,11 @@ func (r *submissionRepository) GetByIdempotencyKey(
 	req factoringports.GetSubmissionByKeyRequest,
 ) (*factoring.Submission, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*factoring.Submission, error) {
-		entity := new(factoring.Submission)
-		if err := r.db.DBForContext(ctx).NewSelect().
-			Model(entity).
-			Relation(
-				factoringcol.SubmissionRelations.Items,
-				func(sq *bun.SelectQuery) *bun.SelectQuery {
-					return sq.Order(factoringcol.SubmissionItemColumns.Position.OrderAsc())
-				},
-			).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return factoringcol.SubmissionScopeTenant(sq, req.TenantInfo).
-					Where(factoringcol.SubmissionColumns.IdempotencyKey.Eq(), req.IdempotencyKey)
-			}).
-			Scan(ctx); err != nil {
-			return nil, dberror.HandleNotFoundError(err, submissionEntity)
+		entity, err := submissionWithItems().
+			Where(factoringdb.Submissions.IdempotencyKey.Eq(req.IdempotencyKey)).
+			One(ctx, r.db.Keel(ctx))
+		if err != nil {
+			return nil, submissionErrors.Map(err, "")
 		}
 
 		return entity, nil
@@ -263,62 +217,16 @@ func (r *submissionRepository) ListConnection(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*pagination.CursorListResult[*factoring.Submission], error) {
-			dba := r.db.DBForContext(ctx)
-			alias := factoringcol.SubmissionTable.Alias
 			filter, term := withoutQuery(req.Filter)
-
-			var totalCount *int
-			if req.Cursor.IncludeTotalCount {
-				total, err := dba.NewSelect().
-					Model((*factoring.Submission)(nil)).
-					Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-						return r.scope(
-							dba,
-							querybuilder.ApplyFiltersWithoutSort(
-								sq,
-								alias,
-								filter,
-								(*factoring.Submission)(nil),
-							),
-							req,
-							term,
-						)
-					}).
-					Count(ctx)
-				if err != nil {
-					return nil, fmt.Errorf("count factoring submissions: %w", err)
-				}
-				totalCount = new(int(total))
-			}
-
-			result, err := dbhelper.CursorList(
+			result, err := listquery.Connection(
 				ctx,
-				dbhelper.CursorListParams[*factoring.Submission]{
-					Filter:     filter,
-					Cursor:     req.Cursor,
-					TotalCount: totalCount,
-					Query: func(entities *[]*factoring.Submission) *bun.SelectQuery {
-						return dba.NewSelect().
-							Model(entities).
-							ColumnExpr(factoringcol.SubmissionTable.All())
-					},
-					Apply: func(sq *bun.SelectQuery) (*bun.SelectQuery, error) {
-						q, applyErr := querybuilder.ApplyCursorFilters(
-							sq,
-							alias,
-							filter,
-							req.Cursor,
-							(*factoring.Submission)(nil),
-						)
-						if applyErr != nil {
-							return nil, applyErr
-						}
-						return r.scope(dba, q, req, term), nil
-					},
-				},
+				r.db.Keel(ctx),
+				submissionScope(req, term),
+				&listquery.Request[factoring.Submission]{Filter: filter, Cursor: req.Cursor},
 			)
 			if err != nil {
-				return nil, fmt.Errorf("list factoring submissions: %w", err)
+				r.l.Error("failed to list factoring submissions", zap.Error(err))
+				return nil, err
 			}
 
 			return result, nil
@@ -326,51 +234,24 @@ func (r *submissionRepository) ListConnection(
 	)
 }
 
-func (r *submissionRepository) scope(
-	dba bun.IDB,
-	q *bun.SelectQuery,
+func submissionScope(
 	req *factoringports.ListSubmissionConnectionRequest,
 	term string,
-) *bun.SelectQuery {
-	cols := factoringcol.SubmissionColumns
-	if term != "" {
-		q = searchSubmissions(dba, q, term)
-	}
-	if !req.FactoringCompanyID.IsNil() {
-		q = q.Where(cols.FactoringCompanyID.Eq(), req.FactoringCompanyID)
-	}
-	if len(req.Statuses) > 0 {
-		q = q.Where(cols.Status.In(), bun.List(req.Statuses))
-	}
-	return q
-}
-
-func searchSubmissions(dba bun.IDB, q *bun.SelectQuery, term string) *bun.SelectQuery {
-	pattern := "%" + stringutils.EscapeLikePattern(term) + "%"
-	sub := factoringcol.SubmissionColumns
-	item := factoringcol.SubmissionItemColumns
-	fac := factoringcompanycol.FactoringCompanyColumns
-
-	factors := dba.NewSelect().
-		Model((*factoringcompany.FactoringCompany)(nil)).
-		ColumnExpr("1").
-		Where(fac.ID.Qualified()+" = "+sub.FactoringCompanyID.Qualified()).
-		Where(fac.OrganizationID.Qualified()+" = "+sub.OrganizationID.Qualified()).
-		Where(fac.BusinessUnitID.Qualified()+" = "+sub.BusinessUnitID.Qualified()).
-		Where(fac.Name.ILike(), pattern)
-	invoices := dba.NewSelect().
-		Model((*factoring.SubmissionItem)(nil)).
-		ColumnExpr("1").
-		Where(item.SubmissionID.Qualified()+" = "+sub.ID.Qualified()).
-		Where(item.OrganizationID.Qualified()+" = "+sub.OrganizationID.Qualified()).
-		Where(item.BusinessUnitID.Qualified()+" = "+sub.BusinessUnitID.Qualified()).
-		Where(item.InvoiceNumber.ILike(), pattern)
-
-	return q.WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-		return sq.Where(sub.Number.ILike(), pattern).
-			WhereOr("EXISTS (?)", factors).
-			WhereOr("EXISTS (?)", invoices)
-	})
+) *keel.Query[factoring.Submission] {
+	s := factoringdb.Submissions
+	items := s.Items()
+	return s.Where(
+		keel.When(term != "", keel.Or(
+			s.Number.ContainsFold(term),
+			s.FactoringCompany().Name.ContainsFold(term),
+			items.Any(items.InvoiceNumber.ContainsFold(term)),
+		)),
+		keel.When(
+			req.FactoringCompanyID.IsNotNil(),
+			s.FactoringCompanyID.Eq(req.FactoringCompanyID),
+		),
+		keel.When(len(req.Statuses) > 0, s.Status.In(req.Statuses...)),
+	)
 }
 
 func (r *submissionRepository) ListLiveItems(
@@ -385,38 +266,33 @@ func (r *submissionRepository) ListLiveItems(
 			if len(req.InvoiceIDs) == 0 {
 				return result, nil
 			}
-			item := factoringcol.SubmissionItemColumns
-			sub := factoringcol.SubmissionColumns
-			rows := make([]*factoringports.LiveItem, 0, len(req.InvoiceIDs))
-			if err := r.db.DBForContext(ctx).NewSelect().
-				Model((*factoring.SubmissionItem)(nil)).
-				ColumnExpr(item.InvoiceID.As("invoice_id")).
-				ColumnExpr(item.SubmissionID.As("submission_id")).
-				ColumnExpr(sub.Number.As("submission_number")).
-				ColumnExpr(sub.Status.As("submission_status")).
-				ColumnExpr(item.ID.As("item_id")).
-				ColumnExpr(item.Status.As("item_status")).
-				Join("JOIN "+factoringcol.SubmissionTable.As(factoringcol.SubmissionTable.Alias)).
-				JoinOn(sub.ID.EqColumn(item.SubmissionID)).
-				JoinOn(sub.OrganizationID.EqColumn(item.OrganizationID)).
-				JoinOn(sub.BusinessUnitID.EqColumn(item.BusinessUnitID)).
-				WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-					return factoringcol.SubmissionItemScopeTenant(sq, req.TenantInfo).
-						Where(item.InvoiceID.In(), bun.List(req.InvoiceIDs)).
-						Where(item.Status.In(), bun.List(liveItemStatuses(req.IncludeChargedBack)))
-				}).
-				Scan(ctx, &rows); err != nil {
-				return nil, fmt.Errorf("list live factoring submission items: %w", err)
+
+			rows, err := keel.Into[factoringports.LiveItem](ctx, r.db.Keel(ctx), liveItems(req))
+			if err != nil {
+				return nil, err
 			}
-			for _, row := range rows {
+			for i := range rows {
+				row := &rows[i]
 				if existing, ok := result[row.InvoiceID]; ok && existing.IsLive() {
 					continue
 				}
 				result[row.InvoiceID] = row
 			}
+
 			return result, nil
 		},
 	)
+}
+
+func liveItems(req *factoringports.ListLiveItemsRequest) *keel.Query[factoring.SubmissionItem] {
+	item := factoringdb.SubmissionItems
+	sub := factoringdb.Submissions
+	return item.Pick(item.InvoiceID, item.SubmissionID, sub.Number, sub.Status, item.ID, item.Status).
+		Join(sub, sub.ID.EqCol(item.SubmissionID)).
+		Where(
+			item.InvoiceID.In(req.InvoiceIDs...),
+			item.Status.In(liveItemStatuses(req.IncludeChargedBack)...),
+		)
 }
 
 func (r *submissionRepository) ListItemsBySubmissionIDs(
@@ -438,34 +314,24 @@ func (r *submissionRepository) ListItemsBySubmissionIDs(
 					"Too many schedules requested at once",
 				)
 			}
-			cols := factoringcol.SubmissionItemColumns
-			rows := make([]*factoring.SubmissionItem, 0, len(req.SubmissionIDs)*4)
-			if err := r.db.DBForContext(ctx).NewSelect().
-				Model(&rows).
-				WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-					return factoringcol.SubmissionItemScopeTenant(sq, req.TenantInfo).
-						Where(cols.SubmissionID.In(), bun.List(req.SubmissionIDs))
-				}).
-				Order(cols.SubmissionID.OrderAsc(), cols.Position.OrderAsc()).
-				Scan(ctx); err != nil {
-				return nil, fmt.Errorf("list factoring submission items: %w", err)
+
+			item := factoringdb.SubmissionItems
+			rows, err := item.Where(item.SubmissionID.In(req.SubmissionIDs...)).
+				Order(item.SubmissionID.Asc(), item.Position.Asc()).
+				All(ctx, r.db.Keel(ctx))
+			if err != nil {
+				return nil, err
 			}
 			for _, row := range rows {
 				result[row.SubmissionID] = append(result[row.SubmissionID], row)
 			}
+
 			return result, nil
 		},
 	)
 }
 
-func nullableID(id pulid.ID) any {
-	if id.IsNil() {
-		return nil
-	}
-	return id
-}
-
-func translateSubmissionError(err error, action string) error {
+func translateSubmissionError(err error, id pulid.ID) error {
 	if dberror.IsUniqueConstraintViolation(err) {
 		switch dberror.ExtractConstraintName(err) {
 		case liveInvoiceIndex:
@@ -482,7 +348,8 @@ func translateSubmissionError(err error, action string) error {
 			)
 		}
 	}
-	return fmt.Errorf("%s: %w", action, err)
+
+	return submissionErrors.Map(err, id.String())
 }
 
 func liveItemStatuses(includeChargedBack bool) []factoring.SubmissionItemStatus {
@@ -498,25 +365,20 @@ func (r *submissionRepository) ClaimChargebackWarning(
 	req factoringports.ClaimChargebackWarningRequest,
 ) (bool, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (bool, error) {
-		cols := factoringcol.SubmissionItemColumns
-		res, err := r.db.DBForContext(ctx).NewUpdate().
-			Model((*factoring.SubmissionItem)(nil)).
-			Set(cols.ChargebackWarnedAt.Set(), req.At).
-			Apply(func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-				return factoringcol.SubmissionItemScopeTenantUpdate(uq, req.TenantInfo).
-					Where(cols.ID.Eq(), req.ItemID).
-					Where(cols.Status.Eq(), factoring.SubmissionItemStatusFunded).
-					Where(cols.ChargebackWarnedAt.IsNull())
-			}).
-			Exec(ctx)
+		item := factoringdb.SubmissionItems
+		n, err := item.Where(
+			item.ID.Eq(req.ItemID),
+			item.Status.Eq(factoring.SubmissionItemStatusFunded),
+			item.ChargebackWarnedAt.IsNull(),
+		).Update(ctx, r.db.Keel(ctx),
+			item.ChargebackWarnedAt.To(req.At),
+			item.UpdatedAt.ToExpr(item.UpdatedAt),
+		)
 		if err != nil {
-			return false, fmt.Errorf("claim chargeback warning: %w", err)
+			return false, submissionErrors.Map(err, req.ItemID.String())
 		}
-		rows, err := res.RowsAffected()
-		if err != nil {
-			return false, fmt.Errorf("claim chargeback warning: %w", err)
-		}
-		return rows > 0, nil
+
+		return n > 0, nil
 	})
 }
 
@@ -525,9 +387,8 @@ func (r *submissionRepository) GetByIDs(
 	req factoringports.GetSubmissionsByIDsRequest,
 ) ([]*factoring.Submission, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*factoring.Submission, error) {
-		rows := make([]*factoring.Submission, 0, len(req.IDs))
 		if len(req.IDs) == 0 {
-			return rows, nil
+			return []*factoring.Submission{}, nil
 		}
 		if len(req.IDs) > maxSubmissionIDsPerLookup {
 			return nil, errortypes.NewValidationError(
@@ -536,15 +397,13 @@ func (r *submissionRepository) GetByIDs(
 				"Too many schedules were asked for at once",
 			)
 		}
-		cols := factoringcol.SubmissionColumns
-		if err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(&rows).
-			Apply(factoringcol.SubmissionApplyTenant(req.TenantInfo)).
-			Where(cols.ID.In(), bun.List(req.IDs)).
-			Scan(ctx); err != nil {
-			return nil, fmt.Errorf("get factoring submissions by ids: %w", err)
+
+		s := factoringdb.Submissions
+		rows, err := s.Where(s.ID.In(req.IDs...)).Limit(len(req.IDs)).List(ctx, r.db.Keel(ctx))
+		if err != nil {
+			return nil, err
 		}
+
 		return rows, nil
 	})
 }

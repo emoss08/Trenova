@@ -13,6 +13,7 @@ import (
 	apimodule "github.com/emoss08/trenova/internal/bootstrap/modules/api"
 	modulesinfra "github.com/emoss08/trenova/internal/bootstrap/modules/infrastructure"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/schemaversion"
 	"github.com/emoss08/trenova/internal/infrastructure/temporaljobs"
 	"github.com/emoss08/trenova/internal/infrastructure/temporaljobs/registry"
 	"github.com/emoss08/trenova/internal/infrastructure/temporaljobs/schedule"
@@ -85,7 +86,7 @@ type RunParams struct {
 }
 
 func Run(base fx.Option, queues []string) {
-	opts := []fx.Option{base, Options(), fx.Invoke(logLifecycle)}
+	opts := []fx.Option{schemaversion.Module, base, Options(), fx.Invoke(logLifecycle)}
 	if len(queues) > 0 {
 		opts = append(opts, fx.Supply(&registry.QueueFilter{Queues: queues}))
 	}

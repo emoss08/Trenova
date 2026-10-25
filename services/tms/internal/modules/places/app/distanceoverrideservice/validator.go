@@ -4,13 +4,17 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/keelcatalog"
 	"github.com/emoss08/trenova/internal/modules/places/domain/distanceoverride"
+	"github.com/emoss08/trenova/internal/modules/places/domain/distanceoverride/distanceoverridedb"
+	"github.com/emoss08/trenova/internal/modules/places/domain/location/locationdb"
+	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/validationframework"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/uptrace/bun"
 	"go.uber.org/fx"
 )
 
@@ -25,29 +29,35 @@ type Validator struct {
 }
 
 func NewValidator(p ValidatorParams) *Validator {
+	checker := validationframework.NewKeelChecker(
+		p.DB,
+		distanceoverridedb.DistanceOverridesSchema(),
+	)
+	locationCheck := validationframework.KeelReferenceCheck(p.DB, locationdb.LocationsSchema())
+
 	return &Validator{
 		validator: validationframework.
 			NewTenantedValidatorBuilder[*distanceoverride.DistanceOverride]().
 			WithModelName("DistanceOverride").
-			WithUniquenessChecker(validationframework.NewBunUniquenessCheckerScoped(p.DB)).
-			WithReferenceChecker(validationframework.NewBunReferenceCheckerScoped(p.DB)).
+			WithUniquenessChecker(checker).
+			WithReferenceChecker(checker).
 			WithCustomReferenceCheck(
 				"originLocationId",
 				"Origin location does not exist in your organization",
 				func(d *distanceoverride.DistanceOverride) pulid.ID { return d.OriginLocationID },
-				createLocationCheck(p.DB),
+				locationCheck,
 			).
 			WithCustomReferenceCheck(
 				"destinationLocationId",
 				"Destination location does not exist in your organization",
 				func(d *distanceoverride.DistanceOverride) pulid.ID { return d.DestinationLocationID },
-				createLocationCheck(p.DB),
+				locationCheck,
 			).
 			WithOptionalCustomReferenceCheck(
 				"customerId",
 				"Customer does not exist in your organization",
 				func(d *distanceoverride.DistanceOverride) pulid.ID { return d.CustomerID },
-				createCustomerCheck(p.DB),
+				validationframework.KeelReferenceCheck(p.DB, keelcatalog.MustNamed("customers")),
 			).
 			WithCustomRule(
 				validationframework.
@@ -57,57 +67,9 @@ func NewValidator(p ValidatorParams) *Validator {
 					OnBoth().
 					WithValidation(validateOriginNotEqualsDestination),
 			).
-			WithCustomRule(createIntermediateStopsRule(p.DB)).
+			WithCustomRule(createIntermediateStopsRule(locationCheck)).
 			WithCustomRule(createUniqueRouteRule(p.DB)).
 			Build(),
-	}
-}
-
-func createLocationCheck(
-	db *postgres.Connection,
-) validationframework.CustomReferenceCheckFunc {
-	return func(ctx context.Context, orgID, buID pulid.ID, refID pulid.ID) (bool, error) {
-		return dbtx.Read(ctx, db, func(ctx context.Context) (bool, error) {
-			if refID.IsNil() {
-				return true, nil
-			}
-
-			exists, err := db.DBForContext(ctx).NewSelect().
-				TableExpr("locations").
-				ColumnExpr("1").
-				Where("id = ?", refID).
-				Where("organization_id = ?", orgID).
-				Where("business_unit_id = ?", buID).
-				Exists(ctx)
-			if err != nil {
-				return false, err
-			}
-			return exists, nil
-		})
-	}
-}
-
-func createCustomerCheck(
-	db *postgres.Connection,
-) validationframework.CustomReferenceCheckFunc {
-	return func(ctx context.Context, orgID, buID pulid.ID, refID pulid.ID) (bool, error) {
-		return dbtx.Read(ctx, db, func(ctx context.Context) (bool, error) {
-			if refID.IsNil() {
-				return true, nil
-			}
-
-			exists, err := db.DBForContext(ctx).NewSelect().
-				TableExpr("customers").
-				ColumnExpr("1").
-				Where("id = ?", refID).
-				Where("organization_id = ?", orgID).
-				Where("business_unit_id = ?", buID).
-				Exists(ctx)
-			if err != nil {
-				return false, err
-			}
-			return exists, nil
-		})
 	}
 }
 
@@ -129,10 +91,8 @@ func validateOriginNotEqualsDestination(
 }
 
 func createIntermediateStopsRule(
-	db *postgres.Connection,
+	locationCheck validationframework.CustomReferenceCheckFunc,
 ) validationframework.TenantedRule[*distanceoverride.DistanceOverride] {
-	locationCheck := createLocationCheck(db)
-
 	return validationframework.NewTenantedRule[*distanceoverride.DistanceOverride](
 		"intermediate_stops_validation",
 	).
@@ -228,44 +188,53 @@ func createUniqueRouteRule(
 			valCtx *validationframework.TenantedValidationContext,
 			multiErr *errortypes.MultiError,
 		) error {
-			return db.RunScoped(ctx, true, func(ctx context.Context) error {
-				if entity.RouteSignature == "" {
-					entity.RouteSignature = entity.BuildRouteSignature()
-				}
+			if entity.RouteSignature == "" {
+				entity.RouteSignature = entity.BuildRouteSignature()
+			}
 
-				q := db.DBForContext(ctx).NewSelect().
-					Model((*distanceoverride.DistanceOverride)(nil)).
-					WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-						return sq.Where("diso.organization_id = ?", valCtx.OrganizationID).
-							Where("diso.business_unit_id = ?", valCtx.BusinessUnitID).
-							Where("diso.route_signature = ?", entity.RouteSignature)
-					})
+			taken, err := routeTaken(ctx, db, entity, valCtx)
+			if err != nil {
+				multiErr.Add(
+					"__all__",
+					errortypes.ErrSystemError,
+					"Failed to validate distance override route uniqueness",
+				)
+				return nil //nolint:nilerr // validation callbacks collect field errors and intentionally continue
+			}
 
-				if valCtx.IsUpdate() {
-					q = q.Where("diso.id != ?", entity.ID)
-				}
+			if taken {
+				multiErr.Add(
+					"intermediateStops",
+					errortypes.ErrDuplicate,
+					"Distance override with this route already exists",
+				)
+			}
 
-				count, err := q.Count(ctx)
-				if err != nil {
-					multiErr.Add(
-						"__all__",
-						errortypes.ErrSystemError,
-						"Failed to validate distance override route uniqueness",
-					)
-					return nil //nolint:nilerr // validation callbacks collect field errors and intentionally continue
-				}
-
-				if count > 0 {
-					multiErr.Add(
-						"intermediateStops",
-						errortypes.ErrDuplicate,
-						"Distance override with this route already exists",
-					)
-				}
-
-				return nil
-			})
+			return nil
 		})
+}
+
+func routeTaken(
+	ctx context.Context,
+	db *postgres.Connection,
+	entity *distanceoverride.DistanceOverride,
+	valCtx *validationframework.TenantedValidationContext,
+) (bool, error) {
+	return dbtx.Read(ctx, db, func(ctx context.Context) (bool, error) {
+		do := distanceoverridedb.DistanceOverrides
+		q := do.Where(
+			do.RouteSignature.Eq(entity.RouteSignature),
+			keel.When(valCtx.IsUpdate(), do.ID.Ne(entity.ID)),
+		)
+		if dbscope.IsSystem(ctx) {
+			q = q.AllTenants().Where(
+				do.OrganizationID.Eq(valCtx.OrganizationID),
+				do.BusinessUnitID.Eq(valCtx.BusinessUnitID),
+			)
+		}
+
+		return q.Exists(ctx, db.Keel(ctx))
+	})
 }
 
 func (v *Validator) ValidateCreate(

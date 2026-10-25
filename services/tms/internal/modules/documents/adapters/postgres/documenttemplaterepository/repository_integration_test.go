@@ -4,30 +4,27 @@ package documenttemplaterepository_test
 
 import (
 	"context"
-	"os"
-	"path/filepath"
-	"strings"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/documents/domain/documenttemplate"
-	"github.com/emoss08/trenova/internal/infrastructure/config"
-	"github.com/emoss08/trenova/internal/infrastructure/database/common"
-	"github.com/emoss08/trenova/internal/infrastructure/database/seeder"
-	"github.com/emoss08/trenova/internal/infrastructure/database/seeds"
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/modules/documents/adapters/postgres/documenttemplaterepository"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/documenttemplate"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/documenttemplate/documenttemplatedb"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documenttemplateports"
-	"github.com/emoss08/trenova/internal/testutil/seedtest"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant/tenantdb"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/customer/customerdb"
+	"github.com/emoss08/trenova/internal/testutil/seededtest"
+	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/require"
-	"github.com/uptrace/bun"
 	"go.uber.org/zap"
 )
 
 type fixture struct {
 	ctx         context.Context
-	db          *bun.DB
+	db          *keel.DB
 	templates   documenttemplateports.DocumentTemplateRepository
 	versions    documenttemplateports.DocumentTemplateVersionRepository
 	assignments documenttemplateports.DocumentTemplateAssignmentRepository
@@ -35,44 +32,35 @@ type fixture struct {
 	userID      pulid.ID
 }
 
+type orgRow struct {
+	ID             pulid.ID
+	BusinessUnitID pulid.ID
+}
+
 func setup(t *testing.T) *fixture {
 	t.Helper()
 
-	ctx, db, cleanup := seedtest.SetupTestDB(t)
+	ctx, db, cleanup := seededtest.SetupTestDB(t)
 	t.Cleanup(cleanup)
 
-	registry := seeder.NewRegistry()
-	seeds.Register(registry)
-
-	engine := seeder.NewEngine(db, registry, &config.Config{
-		System: config.SystemConfig{
-			SystemUserPassword: "integration-system-password",
-		},
-	})
-	_, err := engine.Execute(ctx, seeder.ExecuteOptions{
-		Environment: common.EnvDevelopment,
-		Force:       true,
-	})
+	o := tenantdb.Organizations
+	org, err := keel.IntoOne[orgRow](
+		dbscope.WithSystem(ctx, "find the first seeded organization"),
+		db,
+		o.AllTenants().Pick(o.ID, o.BusinessUnitID).Order(o.CreatedAt.Asc()).Limit(1),
+	)
 	require.NoError(t, err)
 
-	var org struct {
-		ID             pulid.ID `bun:"id"`
-		BusinessUnitID pulid.ID `bun:"business_unit_id"`
-	}
-	require.NoError(t, db.NewSelect().
-		TableExpr("organizations").
-		Column("id", "business_unit_id").
-		Order("created_at ASC").
-		Limit(1).
-		Scan(ctx, &org))
+	tenantInfo := pagination.TenantInfo{OrgID: org.ID, BuID: org.BusinessUnitID}
+	ctx = dbscope.WithTenant(ctx, tenantInfo.DBTenant())
 
-	var userID pulid.ID
-	require.NoError(t, db.NewSelect().
-		TableExpr("users").
-		Column("id").
-		Where("current_organization_id = ?", org.ID).
-		Limit(1).
-		Scan(ctx, &userID))
+	u := tenantdb.Users
+	userID, err := keel.IntoOne[pulid.ID](
+		ctx,
+		db,
+		u.Pick(u.ID).Where(u.CurrentOrganizationID.Eq(org.ID)).Limit(1),
+	)
+	require.NoError(t, err)
 
 	conn := postgres.NewTestConnection(db)
 	logger := zap.NewNop()
@@ -89,27 +77,24 @@ func setup(t *testing.T) *fixture {
 		assignments: documenttemplaterepository.NewAssignmentRepository(
 			documenttemplaterepository.AssignmentParams{DB: conn, Logger: logger},
 		),
-		tenantInfo: pagination.TenantInfo{OrgID: org.ID, BuID: org.BusinessUnitID},
+		tenantInfo: tenantInfo,
 		userID:     userID,
 	}
 }
 
-// seededTemplate returns the draft the starter seed created for a kind.
 func (f *fixture) seededTemplate(
 	t *testing.T,
 	kind documenttemplate.Kind,
 ) *documenttemplate.DocumentTemplate {
 	t.Helper()
 
-	template := new(documenttemplate.DocumentTemplate)
-	require.NoError(t, f.db.NewSelect().
-		Model(template).
-		Relation("Versions").
-		Where("dtpl.organization_id = ?", f.tenantInfo.OrgID).
-		Where("dtpl.business_unit_id = ?", f.tenantInfo.BuID).
-		Where("dtpl.kind = ?", kind).
+	dt := documenttemplatedb.DocumentTemplates
+	template, err := dt.Where(dt.Kind.Eq(kind)).
+		Load(dt.Versions()).
+		Order(dt.ID.Asc()).
 		Limit(1).
-		Scan(f.ctx))
+		One(f.ctx, f.db)
+	require.NoError(t, err)
 
 	return template
 }
@@ -117,14 +102,9 @@ func (f *fixture) seededTemplate(
 func (f *fixture) customerID(t *testing.T) pulid.ID {
 	t.Helper()
 
-	var id pulid.ID
-	require.NoError(t, f.db.NewSelect().
-		TableExpr("customers").
-		Column("id").
-		Where("organization_id = ?", f.tenantInfo.OrgID).
-		Where("business_unit_id = ?", f.tenantInfo.BuID).
-		Limit(1).
-		Scan(f.ctx, &id))
+	c := customerdb.Customers
+	id, err := keel.IntoOne[pulid.ID](f.ctx, f.db, c.Pick(c.ID).Order(c.ID.Asc()).Limit(1))
+	require.NoError(t, err)
 
 	return id
 }
@@ -132,12 +112,14 @@ func (f *fixture) customerID(t *testing.T) pulid.ID {
 func (f *fixture) makeOrgDefault(t *testing.T, templateID pulid.ID) {
 	t.Helper()
 
-	_, err := f.db.NewUpdate().
-		Model((*documenttemplate.DocumentTemplate)(nil)).
-		Set("is_org_default = TRUE").
-		Where("id = ?", templateID).
-		Exec(f.ctx)
-	require.NoError(t, err)
+	require.NoError(t, f.setOrgDefault(templateID))
+}
+
+func (f *fixture) setOrgDefault(templateID pulid.ID) error {
+	dt := documenttemplatedb.DocumentTemplates
+	_, err := dt.Where(dt.ID.Eq(templateID)).Update(f.ctx, f.db, dt.IsOrgDefault.To(true))
+
+	return err
 }
 
 // Resolution is the load-bearing query: it decides what every customer of an
@@ -286,15 +268,13 @@ func (f *fixture) publishSecondTemplate(
 func (f *fixture) otherCustomerID(t *testing.T, exclude pulid.ID) pulid.ID {
 	t.Helper()
 
-	var id pulid.ID
-	require.NoError(t, f.db.NewSelect().
-		TableExpr("customers").
-		Column("id").
-		Where("organization_id = ?", f.tenantInfo.OrgID).
-		Where("business_unit_id = ?", f.tenantInfo.BuID).
-		Where("id <> ?", exclude).
-		Limit(1).
-		Scan(f.ctx, &id))
+	c := customerdb.Customers
+	id, err := keel.IntoOne[pulid.ID](
+		f.ctx,
+		f.db,
+		c.Pick(c.ID).Where(c.ID.Ne(exclude)).Order(c.ID.Asc()).Limit(1),
+	)
+	require.NoError(t, err)
 
 	return id
 }
@@ -318,11 +298,7 @@ func TestOnlyOneOrgDefaultPerKindIsAccepted(t *testing.T) {
 	})
 	require.NoError(t, err)
 
-	_, err = f.db.NewUpdate().
-		Model((*documenttemplate.DocumentTemplate)(nil)).
-		Set("is_org_default = TRUE").
-		Where("id = ?", second.ID).
-		Exec(f.ctx)
+	err = f.setOrgDefault(second.ID)
 	require.Error(t, err, "a second organization default for one kind must be rejected")
 	require.Contains(t, err.Error(), "uq_document_templates_org_default")
 }
@@ -345,7 +321,7 @@ func TestOnlyOneDraftPerTemplateIsAccepted(t *testing.T) {
 		},
 	})
 	require.Error(t, err, "a second draft on one template must be rejected")
-	require.Contains(t, err.Error(), "uq_document_template_versions_one_draft")
+	require.Contains(t, err.Error(), "This template already has a draft")
 }
 
 // A version that produced a document a customer received must stay readable, or
@@ -368,15 +344,13 @@ func TestAVersionThatProducedADocumentCannotBeDeleted(t *testing.T) {
 		FileName:          "notice.pdf",
 		Status:            documenttemplate.GenerationStatusPending,
 	}
-	_, err := f.db.NewInsert().Model(generated).Exec(f.ctx)
+	err := documenttemplatedb.GeneratedDocuments.Create(f.ctx, f.db, generated)
 	require.NoError(t, err)
 
 	// The repository refuses a non-draft delete, so this drives the constraint
 	// directly to prove the database is the backstop and not just the service.
-	_, err = f.db.NewDelete().
-		Model((*documenttemplate.DocumentTemplateVersion)(nil)).
-		Where("id = ?", version.ID).
-		Exec(f.ctx)
+	dtv := documenttemplatedb.DocumentTemplateVersions
+	_, err = dtv.Where(dtv.ID.Eq(version.ID)).Delete(f.ctx, f.db)
 	require.Error(t, err, "deleting a version with output attributed to it must be refused")
 	require.Contains(t, err.Error(), "fk_generated_documents_template_version")
 }
@@ -396,51 +370,7 @@ func TestACompletedGeneratedDocumentMustRecordWhereItLanded(t *testing.T) {
 		Status:         documenttemplate.GenerationStatusCompleted,
 	}
 
-	_, err := f.db.NewInsert().Model(generated).Exec(f.ctx)
+	err := documenttemplatedb.GeneratedDocuments.Create(f.ctx, f.db, generated)
 	require.Error(t, err)
 	require.Contains(t, err.Error(), "chk_generated_documents_completed")
-}
-
-// The template names its live version and the version names its template, so
-// the schema carries a circular foreign key. A down migration that does not
-// break the cycle first leaves a group rollback unable to re-apply — and the
-// failure only shows up on the next deploy that rolls back.
-func TestTheMigrationRollsBackAndForwardThroughTheCircularForeignKey(t *testing.T) {
-	f := setup(t)
-
-	const stem = "20260902000000_document_templates"
-	runMigrationFile(t, f.ctx, f.db, stem+".tx.down.sql")
-
-	var exists bool
-	require.NoError(t, f.db.NewRaw(
-		`SELECT EXISTS (SELECT 1 FROM information_schema.tables
-		 WHERE table_name = 'document_template_versions')`,
-	).Scan(f.ctx, &exists))
-	require.False(t, exists, "the down migration must remove the versions table")
-
-	runMigrationFile(t, f.ctx, f.db, stem+".tx.up.sql")
-
-	require.NoError(t, f.db.NewRaw(
-		`SELECT EXISTS (SELECT 1 FROM pg_constraint
-		 WHERE conname = 'fk_document_templates_active_version')`,
-	).Scan(f.ctx, &exists))
-	require.True(t, exists, "re-applying must restore the circular foreign key")
-}
-
-// runMigrationFile executes one migration exactly as the migrator would, split
-// on the same marker.
-func runMigrationFile(t *testing.T, ctx context.Context, db *bun.DB, name string) {
-	t.Helper()
-
-	path := filepath.Join("internal", "infrastructure", "postgres", "migrations", name)
-	raw, err := os.ReadFile(path)
-	require.NoError(t, err, "read migration %s", name)
-
-	for _, statement := range strings.Split(string(raw), "--bun:split") {
-		if strings.TrimSpace(statement) == "" {
-			continue
-		}
-		_, err = db.ExecContext(ctx, statement)
-		require.NoError(t, err, "apply statement from %s:\n%s", name, statement)
-	}
 }

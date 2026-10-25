@@ -7,6 +7,14 @@ import (
 	"slices"
 	"strings"
 
+	"github.com/emoss08/trenova/internal/modules/equipment/domain/tractor/tractordb"
+	"github.com/emoss08/trenova/internal/modules/equipment/domain/trailer/trailerdb"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment/shipmentdb"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/customer/customerdb"
+	"github.com/emoss08/trenova/internal/modules/places/domain/location/locationdb"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker/workerdb"
+	"github.com/emoss08/trenova/pkg/listquery"
+
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/equipment/domain/equipmenttype"
 	"github.com/emoss08/trenova/internal/modules/equipment/domain/tractor"
@@ -25,7 +33,6 @@ import (
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
 	"github.com/emoss08/trenova/pkg/filtercatalog"
 	"github.com/emoss08/trenova/pkg/pagination"
-	"github.com/emoss08/trenova/pkg/querybuilder"
 	"github.com/emoss08/trenova/shared/stringutils"
 	"github.com/emoss08/trenova/shared/typeutils"
 )
@@ -110,8 +117,8 @@ func newListWorkersTool(
 		summary:      workersSummary,
 		searchTerms:  workerSearchTerms,
 		queryNote:    workersQueryNote,
-		resource: permission.ResourceWorker,
-		config:   querybuilder.GetFieldConfiguration((*worker.Worker)(nil)),
+		resource:     permission.ResourceWorker,
+		config:       listquery.Describe((*worker.Worker)(nil), workerdb.WorkersSchema()),
 		fields: []listField{
 			{
 				Name:   "status",
@@ -143,14 +150,10 @@ func newListWorkersTool(
 				Kind: filterBool,
 				Note: "false = lapsed or missing",
 			},
-			{
-				Name:     "profile.hazmatExpiry",
-				Kind:     filterDate,
-				Sortable: true,
-			},
-			{Name: "profile.licenseExpiry", Kind: filterDate, Sortable: true},
-			{Name: "profile.medicalCardExpiry", Kind: filterDate, Sortable: true},
-			{Name: "profile.twicExpiry", Kind: filterDate, Sortable: true},
+			{Name: "profile.hazmatExpiry", Kind: filterDate},
+			{Name: "profile.licenseExpiry", Kind: filterDate},
+			{Name: "profile.medicalCardExpiry", Kind: filterDate},
+			{Name: "profile.twicExpiry", Kind: filterDate},
 		},
 		access:        newFieldAccess(permissions),
 		gatedField:    workerGatedField,
@@ -248,7 +251,7 @@ func shipmentListSpec(repo shipmentports.ShipmentRepository) listSpec {
 		summary: "Shipments by status, billing state, dates or charges, such as picking up " +
 			"today.",
 		resource: permission.ResourceShipment,
-		config:   querybuilder.GetFieldConfiguration((*shipment.Shipment)(nil)),
+		config:   listquery.Describe((*shipment.Shipment)(nil), shipmentdb.ShipmentsSchema()),
 		fields: []listField{
 			{
 				Name:   "status",
@@ -420,7 +423,7 @@ func newListTractorsTool(
 			"available tractors",
 		},
 		resource:      permission.ResourceTractor,
-		config:        querybuilder.GetFieldConfiguration((*tractor.Tractor)(nil)),
+		config:        listquery.Describe((*tractor.Tractor)(nil), tractordb.TractorsSchema()),
 		fields:        equipmentFields(),
 		access:        newFieldAccess(permissions),
 		pagesByCursor: true,
@@ -484,7 +487,7 @@ func newListTrailersTool(repo trailerports.TrailerRepository) agentports.AgentQu
 			"find trailer by unit number", "available dry vans",
 		},
 		resource:      permission.ResourceTrailer,
-		config:        querybuilder.GetFieldConfiguration((*trailer.Trailer)(nil)),
+		config:        listquery.Describe((*trailer.Trailer)(nil), trailerdb.TrailersSchema()),
 		fields:        fields,
 		pagesByCursor: true,
 		fetch: func(ctx context.Context, opts *pagination.QueryOptions, cursor pagination.CursorInfo) (listPage, error) {
@@ -538,7 +541,7 @@ func newListCustomersTool(repo customerports.CustomerRepository) agentports.Agen
 		entityPlural: pluralCustomers,
 		summary:      customersSummary,
 		resource:     permission.ResourceCustomer,
-		config:       querybuilder.GetFieldConfiguration((*customer.Customer)(nil)),
+		config:       listquery.Describe((*customer.Customer)(nil), customerdb.CustomersSchema()),
 		fields: []listField{
 			{Name: "status", Kind: filterEnum, Values: statusValues},
 			{Name: "code", Kind: filterText, Sortable: true},
@@ -584,7 +587,7 @@ func newListLocationsTool(repo locationports.LocationRepository) agentports.Agen
 		entityPlural: pluralLocations,
 		summary:      locationsSummary,
 		resource:     permission.ResourceLocation,
-		config:       querybuilder.GetFieldConfiguration((*location.Location)(nil)),
+		config:       listquery.Describe((*location.Location)(nil), locationdb.LocationsSchema()),
 		fields: []listField{
 			{Name: "status", Kind: filterEnum, Values: statusValues},
 			{Name: "code", Kind: filterText, Sortable: true},

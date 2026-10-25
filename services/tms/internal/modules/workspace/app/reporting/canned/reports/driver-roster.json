@@ -1,0 +1,159 @@
+{
+  "key": "driver-roster",
+  "version": "1.0.0",
+  "name": "Driver Roster",
+  "description": "Every driver on the board with fleet, class, dispatch availability, and hire date",
+  "category": "Compliance",
+  "tags": [
+    "drivers",
+    "roster",
+    "operations"
+  ],
+  "defaultFormat": "xlsx",
+  "definition": {
+    "version": 2,
+    "entity": "worker",
+    "columns": [
+      {
+        "id": "first_name",
+        "label": "First Name",
+        "dimension": {
+          "field": "firstName"
+        }
+      },
+      {
+        "id": "last_name",
+        "label": "Last Name",
+        "dimension": {
+          "field": "lastName"
+        }
+      },
+      {
+        "id": "status",
+        "label": "Status",
+        "dimension": {
+          "field": "status"
+        }
+      },
+      {
+        "id": "worker_type",
+        "label": "Worker Type",
+        "dimension": {
+          "field": "type"
+        }
+      },
+      {
+        "id": "driver_type",
+        "label": "Driver Type",
+        "dimension": {
+          "field": "driverType"
+        }
+      },
+      {
+        "id": "fleet_code",
+        "label": "Fleet",
+        "dimension": {
+          "field": "fleetCode.code"
+        }
+      },
+      {
+        "id": "cdl_class",
+        "label": "CDL Class",
+        "dimension": {
+          "field": "profile.cdlClass"
+        }
+      },
+      {
+        "id": "endorsements",
+        "label": "Endorsements",
+        "dimension": {
+          "field": "profile.endorsement"
+        }
+      },
+      {
+        "id": "hire_date",
+        "label": "Hire Date",
+        "dimension": {
+          "field": "profile.hireDate"
+        },
+        "display": {
+          "style": "date",
+          "dateStyle": "date"
+        }
+      },
+      {
+        "id": "qualified",
+        "label": "Qualified",
+        "dimension": {
+          "field": "profile.isQualified"
+        },
+        "display": {
+          "style": "bool",
+          "boolStyle": "yesNo"
+        }
+      },
+      {
+        "id": "can_be_assigned",
+        "label": "Assignable",
+        "dimension": {
+          "field": "canBeAssigned"
+        },
+        "display": {
+          "style": "bool",
+          "boolStyle": "yesNo"
+        }
+      },
+      {
+        "id": "available_for_dispatch",
+        "label": "Available for Dispatch",
+        "dimension": {
+          "field": "availableForDispatch"
+        },
+        "display": {
+          "style": "bool",
+          "boolStyle": "yesNo"
+        }
+      },
+      {
+        "id": "assignment_blocked",
+        "label": "Assignment Blocked Reason",
+        "dimension": {
+          "field": "assignmentBlocked"
+        },
+        "display": {
+          "nullText": "—"
+        }
+      }
+    ],
+    "filters": {
+      "and": [
+        {
+          "field": "status",
+          "op": "in",
+          "param": "statuses"
+        }
+      ]
+    },
+    "sort": [
+      {
+        "column": "last_name"
+      }
+    ],
+    "parameters": [
+      {
+        "name": "statuses",
+        "label": "Statuses",
+        "type": "enum",
+        "required": true,
+        "multi": true,
+        "default": [
+          "Active"
+        ],
+        "allowed": [
+          "Active",
+          "Inactive"
+        ]
+      }
+    ]
+  }
+}

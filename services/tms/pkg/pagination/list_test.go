@@ -536,57 +536,6 @@ func TestList_StructType(t *testing.T) {
 	assert.Contains(t, w.Body.String(), `"name":"First"`)
 }
 
-func TestList_UsesQueryOptionsCursorSortForEndCursor(t *testing.T) {
-	t.Parallel()
-
-	gin.SetMode(gin.TestMode)
-	w := httptest.NewRecorder()
-	c, _ := gin.CreateTestContext(w)
-	c.Request = httptest.NewRequest(
-		http.MethodGet,
-		`http://example.com/api/items?limit=2&sort=[{"field":"name","direction":"asc"}]`,
-		nil,
-	)
-
-	eh := newTestErrorHandler()
-	opts := &QueryOptions{
-		Pagination: Info{Limit: 2, Offset: 0},
-	}
-	lastID := pulid.MustNew("item_")
-
-	List[cursorTestItem](c, opts, eh, func() (*ListResult[cursorTestItem], error) {
-		opts.CursorSort = []CursorSortField{
-			{Field: "name", Direction: "asc"},
-			{Field: "id", Direction: "asc"},
-		}
-
-		return &ListResult[cursorTestItem]{
-			Items: []cursorTestItem{
-				{ID: pulid.MustNew("item_"), CreatedAt: 1710000000000, Name: "Alpha"},
-				{ID: lastID, CreatedAt: 1710000001000, Name: "Beta"},
-			},
-			Total: 2,
-		}, nil
-	})
-
-	require.Equal(t, http.StatusOK, w.Code)
-
-	var response struct {
-		EndCursor string `json:"endCursor"`
-	}
-	require.NoError(t, sonic.Unmarshal(w.Body.Bytes(), &response))
-	require.NotEmpty(t, response.EndCursor)
-
-	cursor, err := DecodeCursor(response.EndCursor)
-	require.NoError(t, err)
-	assert.Equal(t, lastID, cursor.ID)
-	assert.Equal(t, []CursorSortField{
-		{Field: "name", Direction: "asc"},
-		{Field: "id", Direction: "asc"},
-	}, cursor.Sort)
-	assert.Equal(t, []any{"Beta", lastID.String()}, cursor.Values)
-}
-
 func TestList_OverfetchesAndTrimsCursorPage(t *testing.T) {
 	t.Parallel()
 
@@ -704,68 +653,6 @@ func TestCursorList_FallsBackToPageLengthWhenTotalCountIsUnavailable(t *testing.
 	assert.Contains(t, w.Body.String(), `"totalCount":null`)
 }
 
-func TestList_ReturnsCursorValidationError(t *testing.T) {
-	t.Parallel()
-
-	gin.SetMode(gin.TestMode)
-	w := httptest.NewRecorder()
-	c, _ := gin.CreateTestContext(w)
-	c.Request = httptest.NewRequest(http.MethodGet, "/api/items?limit=10", nil)
-
-	eh := newTestErrorHandler()
-	opts := &QueryOptions{
-		Pagination: Info{Limit: 10, Offset: 0},
-	}
-
-	List[cursorTestItem](c, opts, eh, func() (*ListResult[cursorTestItem], error) {
-		opts.CursorError = errors.New("cursor sort does not match request sort")
-
-		return &ListResult[cursorTestItem]{
-			Items: []cursorTestItem{
-				{ID: pulid.MustNew("item_"), CreatedAt: 1710000000000, Name: "Alpha"},
-			},
-			Total: 1,
-		}, nil
-	})
-
-	assert.NotEqual(t, http.StatusOK, w.Code)
-	assert.Contains(t, w.Body.String(), "cursor sort does not match request sort")
-}
-
-func TestList_ReturnsCursorEncodeError(t *testing.T) {
-	t.Parallel()
-
-	gin.SetMode(gin.TestMode)
-	w := httptest.NewRecorder()
-	c, _ := gin.CreateTestContext(w)
-	c.Request = httptest.NewRequest(http.MethodGet, "/api/items?limit=10", nil)
-
-	eh := newTestErrorHandler()
-	opts := &QueryOptions{
-		Pagination: Info{Limit: 10, Offset: 0},
-	}
-
-	List[cursorTestItemWithoutID](
-		c,
-		opts,
-		eh,
-		func() (*ListResult[cursorTestItemWithoutID], error) {
-			opts.CursorSort = []CursorSortField{
-				{Field: "name", Direction: "asc"},
-				{Field: "id", Direction: "asc"},
-			}
-
-			return &ListResult[cursorTestItemWithoutID]{
-				Items: []cursorTestItemWithoutID{{Name: "Alpha"}},
-				Total: 1,
-			}, nil
-		},
-	)
-
-	assert.NotEqual(t, http.StatusOK, w.Code)
-	assert.Contains(t, w.Body.String(), "cursor field")
-}
-
 func TestSelectOptions_StructType(t *testing.T) {
 	t.Parallel()
 
@@ -844,4 +731,55 @@ func TestNormalizeSlice_StringsAndNils(t *testing.T) {
 	strSlice, ok := result.([]string)
 	assert.True(t, ok)
 	assert.Equal(t, []string{"hello", "world"}, strSlice)
+}
+
+func TestList_FollowsItsOffsetCursorToTheNextPage(t *testing.T) {
+	t.Parallel()
+
+	gin.SetMode(gin.TestMode)
+	w := httptest.NewRecorder()
+	c, _ := gin.CreateTestContext(w)
+	after := EncodeOffsetCursor(listCursorScope, 2)
+	c.Request = httptest.NewRequest(
+		http.MethodGet,
+		"http://example.com/api/items?limit=2&after="+after,
+		nil,
+	)
+
+	opts := &QueryOptions{Pagination: Info{Limit: 2}}
+	List[cursorTestItem](c, opts, newTestErrorHandler(), func() (*ListResult[cursorTestItem], error) {
+		assert.Equal(t, 2, opts.Pagination.SafeOffset())
+		assert.Equal(t, 3, opts.Pagination.SafeLimit())
+
+		return &ListResult[cursorTestItem]{
+			Items: []cursorTestItem{
+				{ID: pulid.MustNew("item_"), Name: "Gamma"},
+				{ID: pulid.MustNew("item_"), Name: "Delta"},
+			},
+			Total: 4,
+		}, nil
+	})
+
+	require.Equal(t, http.StatusOK, w.Code)
+	assert.Contains(t, w.Body.String(), `"hasNextPage":false`)
+	assert.Contains(t, w.Body.String(), `"endCursor":""`)
+}
+
+func TestList_RefusesACursorItDidNotIssue(t *testing.T) {
+	t.Parallel()
+
+	gin.SetMode(gin.TestMode)
+	w := httptest.NewRecorder()
+	c, _ := gin.CreateTestContext(w)
+	c.Request = httptest.NewRequest(http.MethodGet, "/api/items?limit=10&after=nonsense", nil)
+
+	called := false
+	List[cursorTestItem](c, &QueryOptions{Pagination: Info{Limit: 10}}, newTestErrorHandler(),
+		func() (*ListResult[cursorTestItem], error) {
+			called = true
+			return &ListResult[cursorTestItem]{}, nil
+		})
+
+	assert.False(t, called)
+	assert.NotEqual(t, http.StatusOK, w.Code)
 }

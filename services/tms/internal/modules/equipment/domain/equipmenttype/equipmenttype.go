@@ -3,6 +3,7 @@ package equipmenttype
 import (
 	"context"
 
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/domainvalidation"
@@ -10,9 +11,7 @@ import (
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/validationframework"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/emoss08/trenova/shared/timeutils"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
-	"github.com/uptrace/bun"
 )
 
 const (
@@ -22,38 +21,45 @@ const (
 )
 
 var (
-	_ bun.BeforeAppendModelHook          = (*EquipmentType)(nil)
 	_ validationframework.TenantedEntity = (*EquipmentType)(nil)
 	_ domaintypes.PostgresSearchable     = (*EquipmentType)(nil)
 	_ pagination.CursorEntity            = (*EquipmentType)(nil)
 )
 
+// Equipment classification
 type EquipmentType struct {
-	bun.BaseModel             `bun:"table:equipment_types,alias:et" json:"-"`
-	pagination.CursorValueSet `bun:",embed"                         json:"-"`
+	keel.Table `keel:"equipment_types,report=Equipment"`
 
-	ID             pulid.ID           `json:"id"             bun:"id,type:VARCHAR(100),pk,notnull"`
-	BusinessUnitID pulid.ID           `json:"businessUnitId" bun:"business_unit_id,type:VARCHAR(100),notnull,pk"`
-	OrganizationID pulid.ID           `json:"organizationId" bun:"organization_id,type:VARCHAR(100),notnull,pk"`
-	Status         domaintypes.Status `json:"status"         bun:"status,type:status_enum,notnull,default:'Active'"`
-	Code           string             `json:"code"           bun:"code,type:VARCHAR(10),notnull"`
-	Description    string             `json:"description"    bun:"description,type:TEXT,nullzero"`
-	Class          Class              `json:"class"          bun:"class,type:equipment_class_enum,notnull"`
-	Color          string             `json:"color"          bun:"color,type:VARCHAR(10),nullzero"`
-	InteriorLength *float64           `json:"interiorLength" bun:"interior_length,type:NUMERIC(10,2),nullzero"`
+	ID             pulid.ID           `json:"id"             keel:"id,pk,autoid:et_"`
+	BusinessUnitID pulid.ID           `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
+	OrganizationID pulid.ID           `json:"organizationId" keel:"organization_id,pk,tenant"`
+	Status         domaintypes.Status `json:"status"         keel:"status"`
+	Code           string             `json:"code"           keel:"code"`
+	Description    string             `json:"description"    keel:"description,nullzero"`
+	Class          Class              `json:"class"          keel:"class"`
+	Color          string             `json:"color"          keel:"color,nullzero"`
+	InteriorLength *float64           `json:"interiorLength" keel:"interior_length"`
 
-	DeckType         DeckType `json:"deckType"         bun:"deck_type,type:equipment_deck_type_enum,nullzero"`
-	DeckHeightInches *float64 `json:"deckHeightInches" bun:"deck_height_inches,type:NUMERIC(10,2),nullzero"`
-	WellLengthFeet   *float64 `json:"wellLengthFeet"   bun:"well_length_feet,type:NUMERIC(10,2),nullzero"`
-	AxleCount        *int16   `json:"axleCount"        bun:"axle_count,type:SMALLINT,nullzero"`
-	SearchVector     string   `json:"-"                bun:"search_vector,type:TSVECTOR,scanonly"`
-	Rank             string   `json:"-"                bun:"rank,type:VARCHAR(100),scanonly"`
-	Version          int64    `json:"version"          bun:"version,type:BIGINT"`
-	CreatedAt        int64    `json:"createdAt"        bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
-	UpdatedAt        int64    `json:"updatedAt"        bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
+	DeckType         DeckType `json:"deckType"         keel:"deck_type,nullzero"`
+	DeckHeightInches *float64 `json:"deckHeightInches" keel:"deck_height_inches"`
+	WellLengthFeet   *float64 `json:"wellLengthFeet"   keel:"well_length_feet"`
+	AxleCount        *int16   `json:"axleCount"        keel:"axle_count,dimension"`
+	SearchVector     string   `json:"-"                keel:"search_vector,tsvector,readonly,noselect"`
+	Rank             string   `json:"-"                keel:"rank,computed"`
+	Version          int64    `json:"version"          keel:"version,version"`
+	CreatedAt        int64    `json:"createdAt"        keel:"created_at,autocreate"`
+	UpdatedAt        int64    `json:"updatedAt"        keel:"updated_at,autoupdate"`
 
-	BusinessUnit *tenant.BusinessUnit `json:"businessUnit,omitempty" bun:"rel:belongs-to,join:business_unit_id=id"`
-	Organization *tenant.Organization `json:"organization,omitempty" bun:"rel:belongs-to,join:organization_id=id"`
+	BusinessUnit *tenant.BusinessUnit `json:"businessUnit,omitempty" keel:"belongs:business_unit_id,noreport"`
+	Organization *tenant.Organization `json:"organization,omitempty" keel:"belongs:organization_id,noreport"`
+}
+
+func (et *EquipmentType) BeforeCreate(_ context.Context) error {
+	if et.Status == "" {
+		et.Status = domaintypes.StatusActive
+	}
+
+	return nil
 }
 
 func (et *EquipmentType) Validate(multiErr *errortypes.MultiError) {
@@ -110,22 +116,6 @@ func (et *EquipmentType) DeckHeightFeet() float64 {
 	}
 
 	return *et.DeckHeightInches / InchesPerFoot
-}
-
-func (et *EquipmentType) BeforeAppendModel(_ context.Context, query bun.Query) error {
-	now := timeutils.NowUnix()
-
-	switch query.(type) {
-	case *bun.InsertQuery:
-		if et.ID.IsNil() {
-			et.ID = pulid.MustNew("et_")
-		}
-		et.CreatedAt = now
-	case *bun.UpdateQuery:
-		et.UpdatedAt = now
-	}
-
-	return nil
 }
 
 func (et *EquipmentType) GetID() pulid.ID {

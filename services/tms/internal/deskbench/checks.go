@@ -2,7 +2,7 @@ package deskbench
 
 import (
 	"context"
-	"database/sql"
+	"database/sql/driver"
 	"errors"
 	"fmt"
 	"math"
@@ -12,17 +12,18 @@ import (
 	"strings"
 	"time"
 
+	"github.com/bytedance/sonic"
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
-	"github.com/emoss08/trenova/pkg/dbhelper"
 	"github.com/emoss08/trenova/shared/intutils"
 	"github.com/emoss08/trenova/shared/numberguard"
 	"github.com/emoss08/trenova/shared/recordids"
 	"github.com/emoss08/trenova/shared/stringutils"
+	"github.com/jackc/pgx/v5"
 	"github.com/shopspring/decimal"
-	"github.com/uptrace/bun"
 )
 
 const (
@@ -815,26 +816,47 @@ func (b *Bench) FactValues(
 	session *Session,
 	statement string,
 ) ([]string, error) {
+	if b.facts != nil {
+		return b.facts(ctx, session, statement)
+	}
+
+	return b.queryFacts(ctx, session, statement)
+}
+
+func (b *Bench) queryFacts(
+	ctx context.Context,
+	session *Session,
+	statement string,
+) ([]string, error) {
 	ctx = session.Context(ctx)
 
 	return dbtx.Read(ctx, b.DB, func(ctx context.Context) ([]string, error) {
-		db := b.DB.DBForContext(ctx)
-		if _, err := db.ExecContext(
-			ctx,
-			"SET LOCAL statement_timeout = '"+factTimeout+"'",
-		); err != nil {
+		db := b.DB.Keel(ctx)
+		if _, err := keel.Exec(ctx, db, boundStatementTimeoutSQL); err != nil {
 			return nil, fmt.Errorf("bound the fact query: %w", err)
 		}
 
-		rows, err := db.QueryContext(ctx, statement)
+		values := make([]string, 0, maxFactRows)
+		err := keel.QueryRows(ctx, db, func(row pgx.CollectableRow) error {
+			if len(values) >= maxFactRows || len(row.FieldDescriptions()) == 0 {
+				return nil
+			}
+			cells, err := row.Values()
+			if err != nil {
+				return err
+			}
+			values = append(values, cellText(cells[0]))
+			return nil
+		}, statement)
 		if err != nil {
 			return nil, err
 		}
-		defer rows.Close()
 
-		return firstColumn(rows)
+		return values, nil
 	})
 }
+
+const boundStatementTimeoutSQL = "SET LOCAL statement_timeout = '" + factTimeout + "'"
 
 // benchLeftovers cancels the shipments earlier bench conversations created and
 // left New, before a run starts. A load a scenario booked and never ran made
@@ -881,12 +903,14 @@ func benchLeftovers() []string {
 		`UPDATE agent_memories SET
 			status = CASE WHEN status = 'Suggested' THEN 'Dismissed' ELSE 'Retired' END,
 			retired_at = CASE WHEN status = 'Suggested' THEN retired_at
-				ELSE ` + dbhelper.NowEpoch + ` END,
+				ELSE ` + nowEpoch + ` END,
 			version = version + 1,
-			updated_at = ` + dbhelper.NowEpoch + `
+			updated_at = ` + nowEpoch + `
 		WHERE id IN (SELECT id FROM bench_lessons)`,
 	}
 }
+
+const nowEpoch = "extract(epoch from current_timestamp)::bigint"
 
 func (b *Bench) runSetup(ctx context.Context, session *Session, statements []string) error {
 	if len(statements) == 0 {
@@ -900,11 +924,8 @@ func (b *Bench) runStatements(ctx context.Context, session *Session, statements 
 	ctx = session.Context(ctx)
 
 	return dbtx.WriteErr(ctx, b.DB, func(ctx context.Context) error {
-		db := b.DB.DBForContext(ctx)
-		if _, err := db.ExecContext(
-			ctx,
-			"SET LOCAL statement_timeout = '"+factTimeout+"'",
-		); err != nil {
+		db := b.DB.Keel(ctx)
+		if _, err := keel.Exec(ctx, db, boundStatementTimeoutSQL); err != nil {
 			return fmt.Errorf("bound the setup: %w", err)
 		}
 		confined, err := readConfinement(ctx, db)
@@ -915,7 +936,7 @@ func (b *Bench) runStatements(ctx context.Context, session *Session, statements 
 			return err
 		}
 		for idx, statement := range statements {
-			if _, err := db.ExecContext(ctx, statement); err != nil {
+			if _, err = keel.Exec(ctx, db, statement); err != nil {
 				return fmt.Errorf("setup %d: %w", idx+1, err)
 			}
 		}
@@ -924,40 +945,28 @@ func (b *Bench) runStatements(ctx context.Context, session *Session, statements 
 	})
 }
 
-func firstColumn(rows *sql.Rows) ([]string, error) {
-	columns, err := rows.Columns()
-	if err != nil {
-		return nil, err
-	}
-	if len(columns) == 0 {
-		return nil, nil
-	}
-
-	values := make([]string, 0, maxFactRows)
-	cells := make([]any, len(columns))
-	targets := make([]any, len(columns))
-	for idx := range cells {
-		targets[idx] = &cells[idx]
-	}
-
-	for rows.Next() && len(values) < maxFactRows {
-		if err = rows.Scan(targets...); err != nil {
-			return nil, err
-		}
-		values = append(values, cellText(cells[0]))
-	}
-
-	return values, rows.Err()
-}
-
 func cellText(cell any) string {
 	switch v := cell.(type) {
 	case nil:
 		return ""
+	case string:
+		return v
 	case []byte:
 		return string(v)
 	case time.Time:
 		return v.Format(time.DateOnly)
+	case driver.Valuer:
+		value, err := v.Value()
+		if err != nil {
+			return fmt.Sprint(v)
+		}
+		return cellText(value)
+	case map[string]any, []any:
+		text, err := sonic.MarshalString(v)
+		if err != nil {
+			return fmt.Sprint(v)
+		}
+		return text
 	default:
 		return fmt.Sprint(v)
 	}
@@ -971,19 +980,26 @@ var ErrSetupUnconfined = errors.New("setup refused: the bench's database role is
 	"the bench user's organization")
 
 type confinement struct {
-	Bypass   bool   `bun:"bypass"`
-	Security string `bun:"security"`
+	Bypass   bool   `db:"bypass"`
+	Security string `db:"security"`
 }
 
-func readConfinement(ctx context.Context, db bun.IDB) (confinement, error) {
-	var row confinement
-	if err := db.NewRaw(`SELECT r.rolsuper OR r.rolbypassrls AS bypass,
-		current_setting('row_security') AS security
-		FROM pg_roles r WHERE r.rolname = current_user`).Scan(ctx, &row); err != nil {
-		return row, fmt.Errorf("read the role's row-level security: %w", err)
+const confinementSQL = `SELECT r.rolsuper OR r.rolbypassrls AS bypass,
+	current_setting('row_security') AS security
+	FROM pg_roles r WHERE r.rolname = current_user`
+
+func readConfinement(ctx context.Context, db *keel.DB) (confinement, error) {
+	rows, err := keel.QueryAll(ctx, db, pgx.RowToStructByName[confinement], confinementSQL)
+	if err != nil {
+		return confinement{}, fmt.Errorf("read the role's row-level security: %w", err)
+	}
+	if len(rows) == 0 {
+		return confinement{}, errors.New(
+			"read the role's row-level security: the role has no pg_roles row",
+		)
 	}
 
-	return row, nil
+	return rows[0], nil
 }
 
 func (c confinement) err() error {

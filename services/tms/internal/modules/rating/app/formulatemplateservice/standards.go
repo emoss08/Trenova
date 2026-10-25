@@ -12,7 +12,6 @@ import (
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/timeutils"
-	"github.com/uptrace/bun"
 	"go.uber.org/zap"
 )
 
@@ -96,7 +95,7 @@ func (s *Service) InstallStandards(
 
 	now := timeutils.NowUnix()
 	var installed []*formulatemplate.FormulaTemplate
-	err = s.db.WithTx(ctx, kernelports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
+	err = s.db.Transact(ctx, kernelports.TxOptions{}, func(txCtx context.Context) error {
 		installed = make([]*formulatemplate.FormulaTemplate, 0, len(pending))
 		for _, entity := range pending {
 			created, txErr := s.repo.Create(txCtx, entity)

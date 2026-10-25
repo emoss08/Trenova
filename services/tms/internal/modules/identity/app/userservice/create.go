@@ -25,7 +25,6 @@ import (
 	"github.com/emoss08/trenova/shared/sliceutils"
 	"github.com/emoss08/trenova/shared/stringutils"
 	"github.com/emoss08/trenova/shared/tokenutils"
-	"github.com/uptrace/bun"
 	"go.uber.org/zap"
 )
 
@@ -72,10 +71,10 @@ func (s *Service) Create(ctx context.Context, req *CreateUserRequest) (*tenant.U
 	roleIDs := sliceutils.Dedupe(req.RoleIDs)
 
 	var created *tenant.User
-	if err = s.db.WithTx(
+	if err = s.db.Transact(
 		ctx,
 		kernelports.TxOptions{},
-		func(txCtx context.Context, _ bun.Tx) error {
+		func(txCtx context.Context) error {
 			created, err = s.repo.Create(txCtx, tenantports.CreateUserRequest{
 				User: entity,
 				Membership: &tenant.OrganizationMembership{

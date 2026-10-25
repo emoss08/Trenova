@@ -7,33 +7,20 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/infrastructure/config"
-	"github.com/emoss08/trenova/internal/infrastructure/database/common"
-	"github.com/emoss08/trenova/internal/infrastructure/database/seeder"
-	"github.com/emoss08/trenova/internal/infrastructure/database/seeds"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
 	"github.com/emoss08/trenova/internal/modules/edi/adapters/postgres/edimessagerepository"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
+	"github.com/emoss08/trenova/internal/modules/edi/editest"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
-	"github.com/emoss08/trenova/internal/testutil/seedtest"
-	"github.com/emoss08/trenova/pkg/buncolgen/edicol"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
 	"github.com/shopspring/decimal"
 	"github.com/stretchr/testify/require"
-	"github.com/uptrace/bun"
 	"go.uber.org/zap"
 )
-
-type seededListShipment struct {
-	ID             pulid.ID `bun:"id"`
-	CustomerID     pulid.ID `bun:"customer_id"`
-	OrganizationID pulid.ID `bun:"organization_id"`
-	BusinessUnitID pulid.ID `bun:"business_unit_id"`
-}
 
 type messageListFixture struct {
 	repo    ediports.EDIMessageRepository
@@ -59,58 +46,50 @@ func seedMessageListFixture(t *testing.T) (context.Context, *messageListFixture)
 
 	ctx, db := seededDevelopmentDB(t)
 
-	var shipment seededListShipment
-	require.NoError(t, db.NewSelect().
-		Table("shipments").
-		Column("id", "customer_id", "organization_id", "business_unit_id").
-		Limit(1).
-		Scan(ctx, &shipment))
-	org := seededSummaryOrg{ID: shipment.OrganizationID, BusinessUnitID: shipment.BusinessUnitID}
-	var documentType seededSummaryDocumentType
-	require.NoError(t, db.NewSelect().
-		Table("edi_document_types").
-		Column("id").
-		Where("transaction_set = ?", edi.TransactionSet204).
-		Where("direction = ?", edi.DocumentDirectionOutbound).
-		Limit(1).
-		Scan(ctx, &documentType))
+	var shipmentID, customerID, orgID, buID string
+	require.NoError(t, db.Pool().QueryRow(ctx,
+		"SELECT id, customer_id, organization_id, business_unit_id FROM shipments ORDER BY id LIMIT 1",
+	).Scan(&shipmentID, &customerID, &orgID, &buID))
+	shipment := struct{ ID, CustomerID pulid.ID }{ID: pulid.ID(shipmentID), CustomerID: pulid.ID(customerID)}
+	scope := editest.TenantOf(ctx, pagination.TenantInfo{OrgID: pulid.ID(orgID), BuID: pulid.ID(buID)})
+	ctx = scope.Ctx
+	org := scope.Info
+	documentType := findDocumentType(t, ctx, db, edi.TransactionSet204, edi.DocumentDirectionOutbound)
 
 	fixture := &messageListFixture{
 		repo: edimessagerepository.New(edimessagerepository.Params{
 			DB:     postgres.NewTestConnection(db),
 			Logger: zap.NewNop(),
 		}),
-		tenant: pagination.TenantInfo{OrgID: org.ID, BuID: org.BusinessUnitID},
+		tenant: org,
 		ids:    make(map[string]pulid.ID),
 		now:    timeutils.NowUnix(),
 		shipID: shipment.ID,
 	}
 
 	partner := &edi.EDIPartner{
-		BusinessUnitID: org.BusinessUnitID,
-		OrganizationID: org.ID,
+		BusinessUnitID: org.BuID,
+		OrganizationID: org.OrgID,
 		Kind:           edi.PartnerKindExternal,
 		Code:           "LIST-FILTERS",
 		Name:           "List Filters Partner",
 	}
-	_, err := db.NewInsert().Model(partner).Exec(ctx)
-	require.NoError(t, err)
+	require.NoError(t, create(ctx, db, partner))
 	fixture.partner = partner.ID
 
 	queue := &billingqueue.BillingQueueItem{
-		OrganizationID:   org.ID,
-		BusinessUnitID:   org.BusinessUnitID,
+		OrganizationID:   org.OrgID,
+		BusinessUnitID:   org.BuID,
 		ShipmentID:       shipment.ID,
 		BillToCustomerID: shipment.CustomerID,
 		Number:           "INV-EDI-LIST-1",
 		Status:           billingqueue.StatusPosted,
 		BillType:         billingqueue.BillTypeInvoice,
 	}
-	_, err = db.NewInsert().Model(queue).Exec(ctx)
-	require.NoError(t, err)
+	require.NoError(t, create(ctx, db, queue))
 	inv := &invoice.Invoice{
-		OrganizationID:     org.ID,
-		BusinessUnitID:     org.BusinessUnitID,
+		OrganizationID:     org.OrgID,
+		BusinessUnitID:     org.BuID,
 		BillingQueueItemID: queue.ID,
 		ShipmentID:         shipment.ID,
 		CustomerID:         shipment.CustomerID,
@@ -128,8 +107,7 @@ func seedMessageListFixture(t *testing.T) (context.Context, *messageListFixture)
 		SettlementStatus:   invoice.SettlementStatusUnpaid,
 		DisputeStatus:      invoice.DisputeStatusNone,
 	}
-	_, err = db.NewInsert().Model(inv).Exec(ctx)
-	require.NoError(t, err)
+	require.NoError(t, create(ctx, db, inv))
 	fixture.invID = inv.ID
 
 	messages := []listedMessage{
@@ -146,8 +124,8 @@ func seedMessageListFixture(t *testing.T) (context.Context, *messageListFixture)
 	}
 	for index, entry := range messages {
 		message := &edi.EDIMessage{
-			BusinessUnitID:           org.BusinessUnitID,
-			OrganizationID:           org.ID,
+			BusinessUnitID:           org.BuID,
+			OrganizationID:           org.OrgID,
 			EDIPartnerID:             partner.ID,
 			DocumentTypeID:           documentType.ID,
 			Direction:                edi.DocumentDirectionOutbound,
@@ -170,36 +148,13 @@ func seedMessageListFixture(t *testing.T) (context.Context, *messageListFixture)
 		if entry.onInvoice {
 			message.InvoiceID = inv.ID
 		}
-		_, err = db.NewInsert().Model(message).Exec(ctx)
-		require.NoError(t, err, entry.name)
-		_, err = db.NewUpdate().
-			Model((*edi.EDIMessage)(nil)).
-			Set(edicol.EDIMessageColumns.CreatedAt.Set(), fixture.now-entry.age).
-			Where(edicol.EDIMessageColumns.ID.Eq(), message.ID).
-			Exec(ctx)
-		require.NoError(t, err, entry.name)
+		require.NoError(t, create(ctx, db, message), entry.name)
+		editest.Exec(t, ctx, db, "UPDATE edi_messages SET created_at = $1 WHERE id = $2",
+			fixture.now-entry.age, message.ID.String())
 		fixture.ids[entry.name] = message.ID
 	}
 
 	return ctx, fixture
-}
-
-func seededDevelopmentDB(t *testing.T) (context.Context, *bun.DB) {
-	t.Helper()
-
-	ctx, db, cleanup := seedtest.SetupTestDB(t)
-	t.Cleanup(cleanup)
-	seedRegistry := seeder.NewRegistry()
-	seeds.Register(seedRegistry)
-	engine := seeder.NewEngine(
-		db,
-		seedRegistry,
-		&config.Config{System: config.SystemConfig{SystemUserPassword: "test-system-password"}},
-	)
-	_, err := engine.Execute(ctx, seeder.ExecuteOptions{Environment: common.EnvDevelopment})
-	require.NoError(t, err)
-
-	return ctx, db
 }
 
 func (f *messageListFixture) list(

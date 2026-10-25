@@ -30,7 +30,6 @@ import (
 	"github.com/emoss08/trenova/shared/tokenutils"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
 	"github.com/go-ozzo/ozzo-validation/v4/is"
-	"github.com/uptrace/bun"
 	"go.uber.org/zap"
 )
 
@@ -105,7 +104,7 @@ func (s *Service) IssueLink(
 		CreatedAt:      now,
 		UpdatedAt:      now,
 	}
-	err = s.db.WithTx(ctx, kernelports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
+	err = s.db.Transact(ctx, kernelports.TxOptions{}, func(txCtx context.Context) error {
 		if _, rErr := s.links.RevokeForMove(txCtx, &checkcallports.RevokeTrackingLinksRequest{
 			TenantInfo: req.TenantInfo,
 			MoveID:     move.ID,

@@ -83,11 +83,11 @@ type ShipmentMilesByIDsRequest struct {
 }
 
 type ShipmentMilesRow struct {
-	ShipmentID      pulid.ID        `bun:"shipment_id"`
-	LoadedMiles     float64         `bun:"loaded_miles"`
-	DeadheadMiles   float64         `bun:"deadhead_miles"`
-	Revenue         decimal.Decimal `bun:"revenue"`
-	MissingDistance bool            `bun:"missing_distance"`
+	ShipmentID      pulid.ID
+	LoadedMiles     float64
+	DeadheadMiles   float64
+	Revenue         decimal.Decimal
+	MissingDistance bool
 }
 
 type CostingActualsRepository interface {

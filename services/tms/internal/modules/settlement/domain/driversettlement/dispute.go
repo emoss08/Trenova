@@ -3,6 +3,7 @@ package driversettlement
 import (
 	"context"
 
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
 	"github.com/emoss08/trenova/pkg/domaintypes"
@@ -10,13 +11,10 @@ import (
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/validationframework"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/emoss08/trenova/shared/timeutils"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
-	"github.com/uptrace/bun"
 )
 
 var (
-	_ bun.BeforeAppendModelHook          = (*Dispute)(nil)
 	_ pagination.CursorEntity            = (*Dispute)(nil)
 	_ validationframework.TenantedEntity = (*Dispute)(nil)
 	_ domaintypes.PostgresSearchable     = (*Dispute)(nil)
@@ -72,31 +70,30 @@ func (c DisputeCategory) IsValid() bool {
 }
 
 type Dispute struct {
-	bun.BaseModel             `bun:"table:settlement_disputes,alias:dsd" json:"-"`
-	pagination.CursorValueSet `bun:",embed"                              json:"-"`
+	keel.Table `keel:"settlement_disputes"`
 
-	ID                pulid.ID        `json:"id"                bun:"id,pk,type:VARCHAR(100),notnull"`
-	BusinessUnitID    pulid.ID        `json:"businessUnitId"    bun:"business_unit_id,pk,type:VARCHAR(100),notnull"`
-	OrganizationID    pulid.ID        `json:"organizationId"    bun:"organization_id,pk,type:VARCHAR(100),notnull"`
-	SettlementID      pulid.ID        `json:"settlementId"      bun:"settlement_id,type:VARCHAR(100),notnull"`
-	SettlementLineID  *pulid.ID       `json:"settlementLineId"  bun:"settlement_line_id,type:VARCHAR(100),nullzero"`
-	WorkerID          pulid.ID        `json:"workerId"          bun:"worker_id,type:VARCHAR(100),notnull"`
-	Status            DisputeStatus   `json:"status"            bun:"status,type:VARCHAR(20),notnull,default:'Open'"`
-	Category          DisputeCategory `json:"category"          bun:"category,type:VARCHAR(30),notnull"`
-	Description       string          `json:"description"       bun:"description,type:TEXT,notnull"`
-	SubmittedByUserID pulid.ID        `json:"submittedByUserId" bun:"submitted_by_user_id,type:VARCHAR(100),notnull"`
-	ResolutionNote    string          `json:"resolutionNote"    bun:"resolution_note,type:TEXT,nullzero"`
-	ResolutionLineID  *pulid.ID       `json:"resolutionLineId"  bun:"resolution_line_id,type:VARCHAR(100),nullzero"`
-	ResolvedByID      *pulid.ID       `json:"resolvedById"      bun:"resolved_by_id,type:VARCHAR(100),nullzero"`
-	ResolvedAt        *int64          `json:"resolvedAt"        bun:"resolved_at,type:BIGINT,nullzero"`
-	Version           int64           `json:"version"           bun:"version,type:BIGINT,notnull"`
-	CreatedAt         int64           `json:"createdAt"         bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
-	UpdatedAt         int64           `json:"updatedAt"         bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
+	ID                pulid.ID        `json:"id"                keel:"id,pk,autoid:dsd_"`
+	BusinessUnitID    pulid.ID        `json:"businessUnitId"    keel:"business_unit_id,pk,tenant"`
+	OrganizationID    pulid.ID        `json:"organizationId"    keel:"organization_id,pk,tenant"`
+	SettlementID      pulid.ID        `json:"settlementId"      keel:"settlement_id"`
+	SettlementLineID  *pulid.ID       `json:"settlementLineId"  keel:"settlement_line_id"`
+	WorkerID          pulid.ID        `json:"workerId"          keel:"worker_id"`
+	Status            DisputeStatus   `json:"status"            keel:"status"`
+	Category          DisputeCategory `json:"category"          keel:"category"`
+	Description       string          `json:"description"       keel:"description"`
+	SubmittedByUserID pulid.ID        `json:"submittedByUserId" keel:"submitted_by_user_id"`
+	ResolutionNote    string          `json:"resolutionNote"    keel:"resolution_note,nullzero"`
+	ResolutionLineID  *pulid.ID       `json:"resolutionLineId"  keel:"resolution_line_id"`
+	ResolvedByID      *pulid.ID       `json:"resolvedById"      keel:"resolved_by_id"`
+	ResolvedAt        *int64          `json:"resolvedAt"        keel:"resolved_at"`
+	Version           int64           `json:"version"           keel:"version,version"`
+	CreatedAt         int64           `json:"createdAt"         keel:"created_at,autocreate"`
+	UpdatedAt         int64           `json:"updatedAt"         keel:"updated_at,autoupdate"`
 
-	Settlement     *Settlement     `json:"settlement,omitempty"     bun:"rel:belongs-to,join:settlement_id=id,join:organization_id=organization_id,join:business_unit_id=business_unit_id"`
-	SettlementLine *SettlementLine `json:"settlementLine,omitempty" bun:"rel:belongs-to,join:settlement_line_id=id,join:organization_id=organization_id,join:business_unit_id=business_unit_id"`
-	Worker         *worker.Worker  `json:"worker,omitempty"         bun:"rel:belongs-to,join:worker_id=id,join:organization_id=organization_id,join:business_unit_id=business_unit_id"`
-	ResolvedBy     *tenant.User    `json:"resolvedBy,omitempty"     bun:"rel:belongs-to,join:resolved_by_id=id"`
+	Settlement     *Settlement     `json:"settlement,omitempty"     keel:"belongs:settlement_id"`
+	SettlementLine *SettlementLine `json:"settlementLine,omitempty" keel:"belongs:settlement_line_id"`
+	Worker         *worker.Worker  `json:"worker,omitempty"         keel:"belongs:worker_id"`
+	ResolvedBy     *tenant.User    `json:"resolvedBy,omitempty"     keel:"belongs:resolved_by_id"`
 }
 
 func (d *Dispute) Validate(multiErr *errortypes.MultiError) {
@@ -161,16 +158,10 @@ func (d *Dispute) GetBusinessUnitID() pulid.ID { return d.BusinessUnitID }
 
 func (d *Dispute) GetTableName() string { return "settlement_disputes" }
 
-func (d *Dispute) BeforeAppendModel(_ context.Context, query bun.Query) error {
-	now := timeutils.NowUnix()
-	switch query.(type) {
-	case *bun.InsertQuery:
-		if d.ID.IsNil() {
-			d.ID = pulid.MustNew("dsd_")
-		}
-		d.CreatedAt = now
-	case *bun.UpdateQuery:
-		d.UpdatedAt = now
+func (d *Dispute) BeforeCreate(ctx context.Context) error {
+	if d.Status == "" {
+		d.Status = DisputeStatusOpen
 	}
+
 	return nil
 }

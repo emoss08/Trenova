@@ -4,21 +4,21 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/emoss08/trenova/pkg/buncolgen/manualjournalcol"
-
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/manualjournal"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/manualjournal/manualjournaldb"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/manualjournalports"
 	"github.com/emoss08/trenova/pkg/dberror"
-	"github.com/emoss08/trenova/pkg/dbhelper"
+	"github.com/emoss08/trenova/pkg/listquery"
 	"github.com/emoss08/trenova/pkg/pagination"
-	"github.com/emoss08/trenova/pkg/querybuilder"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/uptrace/bun"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
+
+var manualJournalErrors = dberror.Mapping{Entity: "ManualJournalRequest"}
 
 type Params struct {
 	fx.In
@@ -44,123 +44,45 @@ func (r *repository) List(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*pagination.ListResult[*manualjournal.Request], error) {
-			limit := req.Filter.Pagination.SafeLimit()
-			items := make([]*manualjournal.Request, 0, limit)
-
-			query := r.db.DBForContext(ctx).
-				NewSelect().
-				Model(&items).
-				Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-					return querybuilder.ApplyFilters(
-						sq,
-						manualjournalcol.RequestTable.Alias,
-						req.Filter,
-						(*manualjournal.Request)(nil),
-					)
-				}).
-				Limit(int64(limit)).
-				Offset(int64(req.Filter.Pagination.SafeOffset()))
-			if len(req.Filter.Sort) == 0 {
-				query = query.Order(manualjournalcol.RequestColumns.CreatedAt.OrderDesc())
-			}
-
-			total, err := query.ScanAndCount(ctx)
+			mjr := manualjournaldb.Requests
+			result, err := listquery.List(
+				ctx,
+				r.db.Keel(ctx),
+				mjr.Query(),
+				&listquery.Request[manualjournal.Request]{
+					Filter: req.Filter,
+					Then:   []keel.Order{mjr.CreatedAt.Desc()},
+				},
+			)
 			if err != nil {
 				return nil, fmt.Errorf("list manual journals: %w", err)
 			}
 
-			return &pagination.ListResult[*manualjournal.Request]{
-				Items: items,
-				Total: int(total),
-			}, nil
+			return result, nil
 		},
 	)
-}
-
-func (r *repository) applyCursorPageFilters(
-	q *bun.SelectQuery,
-	req *manualjournalports.ListManualJournalConnectionRequest,
-) (*bun.SelectQuery, error) {
-	return querybuilder.ApplyCursorFilters(
-		q,
-		manualjournalcol.RequestTable.Alias,
-		req.Filter,
-		req.Cursor,
-		(*manualjournal.Request)(nil),
-	)
-}
-
-func (r *repository) applyTotalCountFilters(
-	q *bun.SelectQuery,
-	req *manualjournalports.ListManualJournalConnectionRequest,
-) *bun.SelectQuery {
-	return querybuilder.ApplyFiltersWithoutSort(
-		q,
-		manualjournalcol.RequestTable.Alias,
-		req.Filter,
-		(*manualjournal.Request)(nil),
-	)
-}
-
-func applyManualJournalColumns(q *bun.SelectQuery, columns []string) *bun.SelectQuery {
-	if len(columns) == 0 {
-		return q.ColumnExpr(manualjournalcol.RequestTable.All())
-	}
-
-	return q.Column(columns...)
 }
 
 func (r *repository) ListConnection(
 	ctx context.Context,
 	req *manualjournalports.ListManualJournalConnectionRequest,
 ) (*pagination.CursorListResult[*manualjournal.Request], error) {
-	return dbtx.Write(
+	return dbtx.Read(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*pagination.CursorListResult[*manualjournal.Request], error) {
-			log := r.l.With(
-				zap.String("operation", "ListConnection"),
-				zap.Any("request", req),
-			)
-
-			dba := r.db.DBForContext(ctx)
-			var totalCount *int
-			if req.Cursor.IncludeTotalCount {
-				total, err := dba.
-					NewSelect().
-					Model((*manualjournal.Request)(nil)).
-					Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-						return r.applyTotalCountFilters(sq, req)
-					}).
-					Count(ctx)
-				if err != nil {
-					log.Error("failed to count manual journals", zap.Error(err))
-					return nil, err
-				}
-				totalCount = new(int(total))
-			}
-
-			result, err := dbhelper.CursorList(
+			result, err := listquery.Connection(
 				ctx,
-				dbhelper.CursorListParams[*manualjournal.Request]{
-					Filter:     req.Filter,
-					Cursor:     req.Cursor,
-					TotalCount: totalCount,
-					Query: func(entities *[]*manualjournal.Request) *bun.SelectQuery {
-						return dba.
-							NewSelect().
-							Model(entities).
-							Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-								return applyManualJournalColumns(sq, req.ManualJournalColumns)
-							})
-					},
-					Apply: func(sq *bun.SelectQuery) (*bun.SelectQuery, error) {
-						return r.applyCursorPageFilters(sq, req)
-					},
+				r.db.Keel(ctx),
+				manualjournaldb.Requests.Query(),
+				&listquery.Request[manualjournal.Request]{
+					Filter:  req.Filter,
+					Cursor:  req.Cursor,
+					Columns: req.ManualJournalColumns,
 				},
 			)
 			if err != nil {
-				log.Error("failed to scan manual journals", zap.Error(err))
+				r.l.Error("failed to list manual journals", zap.Error(err))
 				return nil, err
 			}
 
@@ -174,26 +96,23 @@ func (r *repository) GetByID(
 	req manualjournalports.GetManualJournalByIDRequest,
 ) (*manualjournal.Request, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*manualjournal.Request, error) {
-		entity := new(manualjournal.Request)
-		err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(entity).
-			Where("mjr.id = ?", req.ID).
-			Where("mjr.organization_id = ?", req.TenantInfo.OrgID).
-			Where("mjr.business_unit_id = ?", req.TenantInfo.BuID).
-			Relation("Lines", func(q *bun.SelectQuery) *bun.SelectQuery {
-				return q.Order("mjrl.line_number ASC")
-			}).
-			Relation("Lines.GLAccount", func(q *bun.SelectQuery) *bun.SelectQuery {
-				return q.Column("id", "business_unit_id", "organization_id", "account_code", "name")
-			}).
-			Scan(ctx)
-		if err != nil {
-			return nil, dberror.HandleNotFoundError(err, "ManualJournalRequest")
-		}
-
-		return entity, nil
+		return r.get(ctx, req.ID)
 	})
+}
+
+func (r *repository) get(ctx context.Context, id pulid.ID) (*manualjournal.Request, error) {
+	mjr := manualjournaldb.Requests
+	lines := mjr.Lines()
+	account := lines.GLAccount()
+	entity, err := mjr.Where(mjr.ID.Eq(id)).
+		Load(lines.Order(lines.LineNumber.Asc()).
+			Load(account.Pick(account.ID, account.AccountCode, account.Name))).
+		One(ctx, r.db.Keel(ctx))
+	if err != nil {
+		return nil, manualJournalErrors.Map(err, id.String())
+	}
+
+	return entity, nil
 }
 
 func (r *repository) Create(
@@ -207,26 +126,19 @@ func (r *repository) Create(
 		entity.SyncTotals()
 		assignLineTenantFields(entity)
 
-		if _, err := r.db.DBForContext(ctx).NewInsert().Model(entity).Exec(ctx); err != nil {
-			return nil, fmt.Errorf("create manual journal request: %w", err)
+		db := r.db.Keel(ctx)
+		if err := manualjournaldb.Requests.Create(ctx, db, entity); err != nil {
+			return nil, fmt.Errorf(
+				"create manual journal request: %w",
+				manualJournalErrors.Map(err, entity.ID.String()),
+			)
 		}
 
-		if len(entity.Lines) > 0 {
-			if _, err := r.db.DBForContext(ctx).
-				NewInsert().
-				Model(&entity.Lines).
-				Exec(ctx); err != nil {
-				return nil, fmt.Errorf("create manual journal request lines: %w", err)
-			}
+		if err := manualjournaldb.Lines.CreateMany(ctx, db, entity.Lines); err != nil {
+			return nil, fmt.Errorf("create manual journal request lines: %w", err)
 		}
 
-		return r.GetByID(ctx, manualjournalports.GetManualJournalByIDRequest{
-			ID: entity.ID,
-			TenantInfo: pagination.TenantInfo{
-				OrgID: entity.OrganizationID,
-				BuID:  entity.BusinessUnitID,
-			},
-		})
+		return r.get(ctx, entity.ID)
 	})
 }
 
@@ -240,73 +152,52 @@ func (r *repository) Update(
 			assignLineTenantFields(entity)
 		}
 
-		res, err := r.db.DBForContext(ctx).
-			NewUpdate().
-			Model(entity).
-			Where("id = ?", entity.ID).
-			Where("organization_id = ?", entity.OrganizationID).
-			Where("business_unit_id = ?", entity.BusinessUnitID).
-			Where("version = ?", entity.Version).
-			Set("status = ?", entity.Status).
-			Set("description = ?", entity.Description).
-			Set("reason = ?", entity.Reason).
-			Set("accounting_date = ?", entity.AccountingDate).
-			Set("requested_fiscal_year_id = ?", entity.RequestedFiscalYearID).
-			Set("requested_fiscal_period_id = ?", entity.RequestedFiscalPeriodID).
-			Set("currency_code = ?", entity.CurrencyCode).
-			Set("total_debit_minor = ?", entity.TotalDebit).
-			Set("total_credit_minor = ?", entity.TotalCredit).
-			Set("approved_at = ?", entity.ApprovedAt).
-			Set("approved_by_id = ?", entity.ApprovedByID).
-			Set("rejected_at = ?", entity.RejectedAt).
-			Set("rejected_by_id = ?", entity.RejectedByID).
-			Set("rejection_reason = ?", entity.RejectionReason).
-			Set("cancelled_at = ?", entity.CancelledAt).
-			Set("cancelled_by_id = ?", entity.CancelledByID).
-			Set("cancel_reason = ?", entity.CancelReason).
-			Set("posted_batch_id = ?", entity.PostedBatchID).
-			Set("updated_by_id = ?", entity.UpdatedByID).
-			Set("version = version + 1").
-			Exec(ctx)
+		db := r.db.Keel(ctx)
+		mjr := manualjournaldb.Requests
+		err := mjr.Save(
+			ctx,
+			db,
+			entity,
+			mjr.Status,
+			mjr.Description,
+			mjr.Reason,
+			mjr.AccountingDate,
+			mjr.RequestedFiscalYearID,
+			mjr.RequestedFiscalPeriodID,
+			mjr.CurrencyCode,
+			mjr.TotalDebit,
+			mjr.TotalCredit,
+			mjr.ApprovedAt,
+			mjr.ApprovedByID,
+			mjr.RejectedAt,
+			mjr.RejectedByID,
+			mjr.RejectionReason,
+			mjr.CancelledAt,
+			mjr.CancelledByID,
+			mjr.CancelReason,
+			mjr.PostedBatchID,
+			mjr.UpdatedByID,
+		)
 		if err != nil {
-			return nil, fmt.Errorf("update manual journal request: %w", err)
-		}
-		if err = dberror.CheckRowsAffected(
-			res,
-			"ManualJournalRequest",
-			entity.ID.String(),
-		); err != nil {
-			return nil, err
+			return nil, fmt.Errorf(
+				"update manual journal request: %w",
+				manualJournalErrors.Map(err, entity.ID.String()),
+			)
 		}
 
 		if entity.Lines != nil {
-			if _, err = r.db.DBForContext(ctx).
-				NewDelete().
-				Model((*manualjournal.Line)(nil)).
-				Where("manual_journal_request_id = ?", entity.ID).
-				Where("organization_id = ?", entity.OrganizationID).
-				Where("business_unit_id = ?", entity.BusinessUnitID).
-				Exec(ctx); err != nil {
+			mjrl := manualjournaldb.Lines
+			if _, err = mjrl.Where(mjrl.ManualJournalRequestID.Eq(entity.ID)).
+				Delete(ctx, db); err != nil {
 				return nil, fmt.Errorf("replace manual journal request lines: %w", err)
 			}
 
-			if len(entity.Lines) > 0 {
-				if _, err = r.db.DBForContext(ctx).
-					NewInsert().
-					Model(&entity.Lines).
-					Exec(ctx); err != nil {
-					return nil, fmt.Errorf("insert manual journal request lines: %w", err)
-				}
+			if err = mjrl.CreateMany(ctx, db, entity.Lines); err != nil {
+				return nil, fmt.Errorf("insert manual journal request lines: %w", err)
 			}
 		}
 
-		return r.GetByID(ctx, manualjournalports.GetManualJournalByIDRequest{
-			ID: entity.ID,
-			TenantInfo: pagination.TenantInfo{
-				OrgID: entity.OrganizationID,
-				BuID:  entity.BusinessUnitID,
-			},
-		})
+		return r.get(ctx, entity.ID)
 	})
 }
 

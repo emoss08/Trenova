@@ -5,26 +5,35 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/emoss08/trenova/pkg/buncolgen/fiscalperiodcol"
-
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/fiscalperiod"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/fiscalperiod/fiscalperioddb"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/fiscalperiodports"
-	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dberror"
-	"github.com/emoss08/trenova/pkg/dbhelper"
 	"github.com/emoss08/trenova/pkg/dbtype"
 	"github.com/emoss08/trenova/pkg/domaintypes"
+	"github.com/emoss08/trenova/pkg/listquery"
 	"github.com/emoss08/trenova/pkg/pagination"
-	"github.com/emoss08/trenova/pkg/querybuilder"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/sliceutils"
-	"github.com/emoss08/trenova/shared/timeutils"
-	"github.com/uptrace/bun"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
+
+const maxExpiredUnclosedPeriods = 1000
+
+var fiscalPeriodErrors = dberror.Mapping{
+	Entity: "FiscalPeriod",
+	ForeignKey: []dberror.Constraint{
+		{
+			Name:    "fk_fiscal_periods_fiscal_year",
+			Field:   "fiscalYearId",
+			Message: "Fiscal year does not exist in your organization",
+		},
+	},
+}
 
 type Params struct {
 	fx.In
@@ -45,21 +54,6 @@ func New(p Params) fiscalperiodports.FiscalPeriodRepository {
 	}
 }
 
-func (r *repository) filterQuery(
-	q *bun.SelectQuery,
-	req *fiscalperiodports.ListFiscalPeriodsRequest,
-) *bun.SelectQuery {
-	q = querybuilder.ApplyFilters(
-		q,
-		"fp",
-		req.Filter,
-		(*fiscalperiod.FiscalPeriod)(nil),
-	)
-
-	return q.Limit(int64(req.Filter.Pagination.SafeLimit())).
-		Offset(int64(req.Filter.Pagination.SafeOffset()))
-}
-
 func (r *repository) List(
 	ctx context.Context,
 	req *fiscalperiodports.ListFiscalPeriodsRequest,
@@ -68,40 +62,27 @@ func (r *repository) List(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*pagination.ListResult[*fiscalperiod.FiscalPeriod], error) {
-			log := r.l.With(
-				zap.String("operation", "List"),
-				zap.Any("request", req),
+			fp := fiscalperioddb.FiscalPeriods
+			result, err := listquery.List(
+				ctx,
+				r.db.Keel(ctx),
+				fp.Query(),
+				&listquery.Request[fiscalperiod.FiscalPeriod]{
+					Filter: req.Filter,
+					Then:   []keel.Order{fp.StartDate.Desc()},
+				},
 			)
-
-			entities := make([]*fiscalperiod.FiscalPeriod, 0, req.Filter.Pagination.SafeLimit())
-			total, err := r.db.DBForContext(ctx).
-				NewSelect().
-				Model(&entities).
-				Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-					return r.filterQuery(sq, req)
-				}).ScanAndCount(ctx)
 			if err != nil {
-				log.Error("failed to scan and count fiscal periods", zap.Error(err))
+				r.l.Error("failed to list fiscal periods", zap.Error(err))
 				return nil, err
 			}
 
-			return &pagination.ListResult[*fiscalperiod.FiscalPeriod]{
-				Items: entities,
-				Total: int(total),
-			}, nil
+			return result, nil
 		},
 	)
 }
 
 const latestStart = "startDate"
-
-func applyFiscalPeriodColumns(q *bun.SelectQuery, columns []string) *bun.SelectQuery {
-	if len(columns) == 0 {
-		return q.ColumnExpr(fiscalperiodcol.FiscalPeriodTable.All())
-	}
-
-	return q.Column(columns...)
-}
 
 func (r *repository) ListConnection(
 	ctx context.Context,
@@ -117,49 +98,14 @@ func (r *repository) ListConnection(
 				}
 			}
 
-			dba := r.db.DBForContext(ctx)
-			var totalCount *int
-			if req.Cursor.IncludeTotalCount {
-				total, err := dba.
-					NewSelect().
-					Model((*fiscalperiod.FiscalPeriod)(nil)).
-					Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-						return querybuilder.ApplyFiltersWithoutSort(
-							sq,
-							fiscalperiodcol.FiscalPeriodTable.Alias,
-							req.Filter,
-							(*fiscalperiod.FiscalPeriod)(nil),
-						)
-					}).
-					Count(ctx)
-				if err != nil {
-					return nil, fmt.Errorf("count fiscal periods: %w", err)
-				}
-				totalCount = new(int(total))
-			}
-
-			result, err := dbhelper.CursorList(
+			result, err := listquery.Connection(
 				ctx,
-				dbhelper.CursorListParams[*fiscalperiod.FiscalPeriod]{
-					Filter:     req.Filter,
-					Cursor:     req.Cursor,
-					TotalCount: totalCount,
-					Query: func(items *[]*fiscalperiod.FiscalPeriod) *bun.SelectQuery {
-						return dba.NewSelect().
-							Model(items).
-							Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-								return applyFiscalPeriodColumns(sq, req.FiscalPeriodColumns)
-							})
-					},
-					Apply: func(sq *bun.SelectQuery) (*bun.SelectQuery, error) {
-						return querybuilder.ApplyCursorFilters(
-							sq,
-							fiscalperiodcol.FiscalPeriodTable.Alias,
-							req.Filter,
-							req.Cursor,
-							(*fiscalperiod.FiscalPeriod)(nil),
-						)
-					},
+				r.db.Keel(ctx),
+				fiscalperioddb.FiscalPeriods.Query(),
+				&listquery.Request[fiscalperiod.FiscalPeriod]{
+					Filter:  req.Filter,
+					Cursor:  req.Cursor,
+					Columns: req.FiscalPeriodColumns,
 				},
 			)
 			if err != nil {
@@ -175,39 +121,32 @@ func (r *repository) SelectOptions(
 	ctx context.Context,
 	req *fiscalperiodports.FiscalPeriodSelectOptionsRequest,
 ) (*pagination.ListResult[*fiscalperiod.FiscalPeriod], error) {
-	return dbtx.Write(
+	return dbtx.Read(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*pagination.ListResult[*fiscalperiod.FiscalPeriod], error) {
-			cols := fiscalperiodcol.FiscalPeriodColumns
-			return dbhelper.SelectOptions[*fiscalperiod.FiscalPeriod](
+			fp := fiscalperioddb.FiscalPeriods
+			q := fp.Pick(
+				fp.ID,
+				fp.FiscalYearID,
+				fp.Name,
+				fp.PeriodNumber,
+				fp.PeriodType,
+				fp.Status,
+				fp.StartDate,
+				fp.EndDate,
+				fp.IsAdjusting,
+				fp.CreatedAt,
+			).
+				Where(keel.When(!req.FiscalYearID.IsNil(), fp.FiscalYearID.Eq(req.FiscalYearID))).
+				Order(fp.PeriodNumber.Asc())
+
+			return listquery.SelectOptions(
 				ctx,
-				r.db.DBForContext(ctx),
+				r.db.Keel(ctx),
+				q,
 				req.SelectQueryRequest,
-				&dbhelper.SelectOptionsConfig{
-					ColumnRefs: []buncolgen.Column{
-						cols.ID,
-						cols.FiscalYearID,
-						cols.Name,
-						cols.PeriodNumber,
-						cols.PeriodType,
-						cols.Status,
-						cols.StartDate,
-						cols.EndDate,
-						cols.IsAdjusting,
-						cols.CreatedAt,
-					},
-					OrgColumnRef: &cols.OrganizationID,
-					BuColumnRef:  &cols.BusinessUnitID,
-					QueryModifier: func(q *bun.SelectQuery) *bun.SelectQuery {
-						if !req.FiscalYearID.IsNil() {
-							q = q.Where(cols.FiscalYearID.Eq(), req.FiscalYearID)
-						}
-						return q.Order(cols.PeriodNumber.OrderAsc())
-					},
-					EntityName:       "FiscalPeriod",
-					SearchColumnRefs: []buncolgen.Column{cols.Name},
-				},
+				func(s string) keel.Pred { return fp.Name.ContainsFold(s) },
 			)
 		},
 	)
@@ -217,8 +156,9 @@ func (r *repository) GetByID(
 	ctx context.Context,
 	req fiscalperiodports.GetFiscalPeriodByIDRequest,
 ) (*fiscalperiod.FiscalPeriod, error) {
-	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*fiscalperiod.FiscalPeriod, error) {
-		return r.getByID(ctx, r.db.DBForContext(ctx), req, false)
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*fiscalperiod.FiscalPeriod, error) {
+		fp := fiscalperioddb.FiscalPeriods
+		return r.one(ctx, fp.Where(fp.ID.Eq(req.ID)), req.ID)
 	})
 }
 
@@ -227,41 +167,23 @@ func (r *repository) GetByIDForUpdate(
 	req fiscalperiodports.GetFiscalPeriodByIDRequest,
 ) (*fiscalperiod.FiscalPeriod, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*fiscalperiod.FiscalPeriod, error) {
-		return r.getByID(ctx, r.db.DBForContext(ctx), req, true)
+		fp := fiscalperioddb.FiscalPeriods
+		return r.one(ctx, fp.Where(fp.ID.Eq(req.ID)).Lock(keel.ForUpdate, keel.NoWait), req.ID)
 	})
 }
 
-func (r *repository) getByID(
+func (r *repository) one(
 	ctx context.Context,
-	db bun.IDB,
-	req fiscalperiodports.GetFiscalPeriodByIDRequest,
-	forUpdate bool,
+	q *keel.Query[fiscalperiod.FiscalPeriod],
+	id pulid.ID,
 ) (*fiscalperiod.FiscalPeriod, error) {
-	log := r.l.With(
-		zap.String("operation", "GetByID"),
-		zap.String("id", req.ID.String()),
-	)
-
-	entity := new(fiscalperiod.FiscalPeriod)
-	query := db.
-		NewSelect().
-		Model(entity).
-		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-			return sq.Where("fp.id = ?", req.ID).
-				Where("fp.organization_id = ?", req.TenantInfo.OrgID).
-				Where("fp.business_unit_id = ?", req.TenantInfo.BuID)
-		})
-	if forUpdate {
-		query = query.For("UPDATE NOWAIT")
-	}
-
-	err := query.Scan(ctx)
+	entity, err := q.One(ctx, r.db.Keel(ctx))
 	if err != nil {
-		log.Error("failed to get fiscal period", zap.Error(err))
+		r.l.Error("failed to get fiscal period", zap.String("id", id.String()), zap.Error(err))
 		if dberror.IsRetryableTransactionError(err) {
 			return nil, err
 		}
-		return nil, dberror.HandleNotFoundError(err, "FiscalPeriod")
+		return nil, fiscalPeriodErrors.Map(err, id.String())
 	}
 
 	return entity, nil
@@ -272,18 +194,13 @@ func (r *repository) Create(
 	entity *fiscalperiod.FiscalPeriod,
 ) (*fiscalperiod.FiscalPeriod, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*fiscalperiod.FiscalPeriod, error) {
-		log := r.l.With(
-			zap.String("operation", "Create"),
-			zap.String("fiscalYearId", entity.FiscalYearID.String()),
-		)
-
-		if _, err := r.db.DBForContext(ctx).
-			NewInsert().
-			Model(entity).
-			Returning("*").
-			Exec(ctx); err != nil {
-			log.Error("failed to create fiscal period", zap.Error(err))
-			return nil, err
+		if err := fiscalperioddb.FiscalPeriods.Create(ctx, r.db.Keel(ctx), entity); err != nil {
+			r.l.Error(
+				"failed to create fiscal period",
+				zap.String("fiscalYearId", entity.FiscalYearID.String()),
+				zap.Error(err),
+			)
+			return nil, fiscalPeriodErrors.Map(err, entity.ID.String())
 		}
 
 		return entity, nil
@@ -295,14 +212,17 @@ func (r *repository) BulkCreate(
 	req *fiscalperiodports.BulkCreateFiscalPeriodsRequest,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
-		log := r.l.With(
-			zap.String("operation", "BulkCreate"),
-			zap.Int("count", len(req.Periods)),
-		)
-
-		if _, err := r.db.DBForContext(ctx).NewInsert().Model(&req.Periods).Exec(ctx); err != nil {
-			log.Error("failed to bulk create fiscal periods", zap.Error(err))
-			return err
+		if err := fiscalperioddb.FiscalPeriods.CreateMany(
+			ctx,
+			r.db.Keel(ctx),
+			req.Periods,
+		); err != nil {
+			r.l.Error(
+				"failed to bulk create fiscal periods",
+				zap.Int("count", len(req.Periods)),
+				zap.Error(err),
+			)
+			return fiscalPeriodErrors.Map(err, "")
 		}
 
 		return nil
@@ -314,45 +234,27 @@ func (r *repository) Update(
 	entity *fiscalperiod.FiscalPeriod,
 ) (*fiscalperiod.FiscalPeriod, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*fiscalperiod.FiscalPeriod, error) {
-		log := r.l.With(
-			zap.String("operation", "Update"),
-			zap.String("id", entity.ID.String()),
+		fp := fiscalperioddb.FiscalPeriods
+		err := fp.Save(
+			ctx,
+			r.db.Keel(ctx),
+			entity,
+			fp.Name,
+			fp.PeriodNumber,
+			fp.PeriodType,
+			fp.IsAdjusting,
+			fp.StartDate,
+			fp.EndDate,
+			fp.AllowAdjustingEntries,
+			fp.AdjustmentDeadline,
 		)
-
-		cols := fiscalperiodcol.FiscalPeriodColumns
-		ov := entity.Version
-		entity.Version++
-
-		results, err := r.db.DBForContext(ctx).
-			NewUpdate().
-			Model(entity).
-			Column(
-				cols.Name.String(),
-				cols.PeriodNumber.String(),
-				cols.PeriodType.String(),
-				cols.IsAdjusting.String(),
-				cols.StartDate.String(),
-				cols.EndDate.String(),
-				cols.AllowAdjustingEntries.String(),
-				cols.AdjustmentDeadline.String(),
-				cols.Version.String(),
-				cols.UpdatedAt.String(),
-			).
-			WherePK().
-			Where(cols.Version.Eq(), ov).
-			Returning("*").
-			Exec(ctx)
 		if err != nil {
-			log.Error("failed to update fiscal period", zap.Error(err))
-			return nil, err
-		}
-
-		if err = dberror.CheckRowsAffected(
-			results,
-			"FiscalPeriod",
-			entity.ID.String(),
-		); err != nil {
-			return nil, err
+			r.l.Error(
+				"failed to update fiscal period",
+				zap.String("id", entity.ID.String()),
+				zap.Error(err),
+			)
+			return nil, fiscalPeriodErrors.Map(err, entity.ID.String())
 		}
 
 		return entity, nil
@@ -364,70 +266,48 @@ func (r *repository) Delete(
 	req fiscalperiodports.DeleteFiscalPeriodRequest,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
-		log := r.l.With(
-			zap.String("operation", "Delete"),
-			zap.String("id", req.ID.String()),
+		err := fiscalperioddb.FiscalPeriods.DeleteRow(
+			ctx,
+			r.db.Keel(ctx),
+			&fiscalperiod.FiscalPeriod{ID: req.ID},
 		)
-
-		result, err := r.db.DBForContext(ctx).
-			NewDelete().
-			Model((*fiscalperiod.FiscalPeriod)(nil)).
-			WhereGroup(" AND ", func(dq *bun.DeleteQuery) *bun.DeleteQuery {
-				return dq.Where("fp.id = ?", req.ID).
-					Where("fp.organization_id = ?", req.TenantInfo.OrgID).
-					Where("fp.business_unit_id = ?", req.TenantInfo.BuID)
-			}).
-			Exec(ctx)
 		if err != nil {
-			log.Error("failed to delete fiscal period", zap.Error(err))
-			return err
+			r.l.Error(
+				"failed to delete fiscal period",
+				zap.String("id", req.ID.String()),
+				zap.Error(err),
+			)
+			return fiscalPeriodErrors.Map(err, req.ID.String())
 		}
 
-		return dberror.CheckRowsAffected(result, "FiscalPeriod", req.ID.String())
+		return nil
 	})
-}
-
-type statusTransition struct {
-	operation  string
-	id         pulid.ID
-	tenantInfo pagination.TenantInfo
-	set        func(q *bun.UpdateQuery) *bun.UpdateQuery
 }
 
 func (r *repository) applyTransition(
 	ctx context.Context,
-	t statusTransition,
+	operation string,
+	id pulid.ID,
+	sets ...keel.Assignment,
 ) (*fiscalperiod.FiscalPeriod, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*fiscalperiod.FiscalPeriod, error) {
-		log := r.l.With(
-			zap.String("operation", t.operation),
-			zap.String("id", t.id.String()),
-		)
-
-		cols := fiscalperiodcol.FiscalPeriodColumns
-		entity := new(fiscalperiod.FiscalPeriod)
-		query := r.db.DBForContext(ctx).
-			NewUpdate().
-			Model(entity).
-			Set(cols.Version.Inc(1)).
-			Set(cols.UpdatedAt.Set(), timeutils.NowUnix()).
-			WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-				return fiscalperiodcol.FiscalPeriodScopeTenantUpdate(uq, t.tenantInfo).
-					Where(cols.ID.Eq(), t.id)
-			}).
-			Returning("*")
-
-		result, err := t.set(query).Exec(ctx)
+		fp := fiscalperioddb.FiscalPeriods
+		rows, err := fp.Where(fp.ID.Eq(id)).UpdateReturning(ctx, r.db.Keel(ctx), sets...)
 		if err != nil {
-			log.Error("failed to transition fiscal period", zap.Error(err))
+			r.l.Error(
+				"failed to transition fiscal period",
+				zap.String("operation", operation),
+				zap.String("id", id.String()),
+				zap.Error(err),
+			)
 			return nil, err
 		}
 
-		if err = dberror.CheckRowsAffected(result, "FiscalPeriod", t.id.String()); err != nil {
+		if err = dberror.CheckAffected(int64(len(rows)), "FiscalPeriod", id.String()); err != nil {
 			return nil, err
 		}
 
-		return entity, nil
+		return rows[0], nil
 	})
 }
 
@@ -435,97 +315,66 @@ func (r *repository) Close(
 	ctx context.Context,
 	req fiscalperiodports.CloseFiscalPeriodRequest,
 ) (*fiscalperiod.FiscalPeriod, error) {
-	cols := fiscalperiodcol.FiscalPeriodColumns
+	fp := fiscalperioddb.FiscalPeriods
 
-	return r.applyTransition(ctx, statusTransition{
-		operation:  "Close",
-		id:         req.ID,
-		tenantInfo: req.TenantInfo,
-		set: func(q *bun.UpdateQuery) *bun.UpdateQuery {
-			return q.
-				Set(cols.Status.Set(), fiscalperiod.StatusClosed).
-				Set(cols.ClosedAt.Set(), req.ClosedAt).
-				Set(cols.ClosedByID.Set(), req.ClosedByID)
-		},
-	})
+	return r.applyTransition(ctx, "Close", req.ID,
+		fp.Status.To(fiscalperiod.StatusClosed),
+		fp.ClosedAt.To(req.ClosedAt),
+		fp.ClosedByID.To(req.ClosedByID),
+	)
 }
 
 func (r *repository) Reopen(
 	ctx context.Context,
 	req fiscalperiodports.ReopenFiscalPeriodRequest,
 ) (*fiscalperiod.FiscalPeriod, error) {
-	cols := fiscalperiodcol.FiscalPeriodColumns
+	fp := fiscalperioddb.FiscalPeriods
 
-	return r.applyTransition(ctx, statusTransition{
-		operation:  "Reopen",
-		id:         req.ID,
-		tenantInfo: req.TenantInfo,
-		set: func(q *bun.UpdateQuery) *bun.UpdateQuery {
-			return q.
-				Set(cols.Status.Set(), fiscalperiod.StatusOpen).
-				Set(cols.ClosedAt.SetNull()).
-				Set(cols.ClosedByID.SetNull()).
-				Set(cols.LockedAt.SetNull()).
-				Set(cols.LockedByID.SetNull()).
-				Set(cols.ReopenedAt.Set(), req.ReopenedAt).
-				Set(cols.ReopenedByID.Set(), req.ReopenedByID).
-				Set(cols.ReopenReason.Set(), req.ReopenReason)
-		},
-	})
+	return r.applyTransition(ctx, "Reopen", req.ID,
+		fp.Status.To(fiscalperiod.StatusOpen),
+		fp.ClosedAt.ToNull(),
+		fp.ClosedByID.ToNull(),
+		fp.LockedAt.ToNull(),
+		fp.LockedByID.ToNull(),
+		fp.ReopenedAt.To(req.ReopenedAt),
+		fp.ReopenedByID.To(req.ReopenedByID),
+		fp.ReopenReason.To(req.ReopenReason),
+	)
 }
 
 func (r *repository) Lock(
 	ctx context.Context,
 	req fiscalperiodports.LockFiscalPeriodRequest,
 ) (*fiscalperiod.FiscalPeriod, error) {
-	cols := fiscalperiodcol.FiscalPeriodColumns
+	fp := fiscalperioddb.FiscalPeriods
 
-	return r.applyTransition(ctx, statusTransition{
-		operation:  "Lock",
-		id:         req.ID,
-		tenantInfo: req.TenantInfo,
-		set: func(q *bun.UpdateQuery) *bun.UpdateQuery {
-			return q.
-				Set(cols.Status.Set(), fiscalperiod.StatusLocked).
-				Set(cols.LockedAt.Set(), req.LockedAt).
-				Set(cols.LockedByID.Set(), req.LockedByID)
-		},
-	})
+	return r.applyTransition(ctx, "Lock", req.ID,
+		fp.Status.To(fiscalperiod.StatusLocked),
+		fp.LockedAt.To(req.LockedAt),
+		fp.LockedByID.To(req.LockedByID),
+	)
 }
 
 func (r *repository) Unlock(
 	ctx context.Context,
 	req fiscalperiodports.UnlockFiscalPeriodRequest,
 ) (*fiscalperiod.FiscalPeriod, error) {
-	cols := fiscalperiodcol.FiscalPeriodColumns
+	fp := fiscalperioddb.FiscalPeriods
 
-	return r.applyTransition(ctx, statusTransition{
-		operation:  "Unlock",
-		id:         req.ID,
-		tenantInfo: req.TenantInfo,
-		set: func(q *bun.UpdateQuery) *bun.UpdateQuery {
-			return q.
-				Set(cols.Status.Set(), fiscalperiod.StatusOpen).
-				Set(cols.LockedAt.SetNull()).
-				Set(cols.LockedByID.SetNull())
-		},
-	})
+	return r.applyTransition(ctx, "Unlock", req.ID,
+		fp.Status.To(fiscalperiod.StatusOpen),
+		fp.LockedAt.ToNull(),
+		fp.LockedByID.ToNull(),
+	)
 }
 
 func (r *repository) Activate(
 	ctx context.Context,
 	req fiscalperiodports.ActivateFiscalPeriodRequest,
 ) (*fiscalperiod.FiscalPeriod, error) {
-	cols := fiscalperiodcol.FiscalPeriodColumns
+	fp := fiscalperioddb.FiscalPeriods
 
-	return r.applyTransition(ctx, statusTransition{
-		operation:  "Activate",
-		id:         req.ID,
-		tenantInfo: req.TenantInfo,
-		set: func(q *bun.UpdateQuery) *bun.UpdateQuery {
-			return q.Set(cols.Status.Set(), fiscalperiod.StatusOpen)
-		},
-	})
+	return r.applyTransition(ctx, "Activate", req.ID, fp.Status.To(fiscalperiod.StatusOpen))
 }
 
 func (r *repository) CountUnclosedPeriodsByFiscalYear(
@@ -533,27 +382,17 @@ func (r *repository) CountUnclosedPeriodsByFiscalYear(
 	req fiscalperiodports.CountUnclosedPeriodsByFiscalYearRequest,
 ) (int, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (int, error) {
-		log := r.l.With(
-			zap.String("operation", "CountUnclosedPeriodsByFiscalYear"),
-			zap.String("fiscalYearId", req.FiscalYearID.String()),
-		)
-
-		cols := fiscalperiodcol.FiscalPeriodColumns
-		count, err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model((*fiscalperiod.FiscalPeriod)(nil)).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return sq.Where(cols.FiscalYearID.Eq(), req.FiscalYearID).
-					Where(cols.OrganizationID.Eq(), req.OrgID).
-					Where(cols.BusinessUnitID.Eq(), req.BuID).
-					Where(
-						cols.Status.In(),
-						bun.List(fiscalperiod.UnclosedStatuses()),
-					)
-			}).
-			Count(ctx)
+		fp := fiscalperioddb.FiscalPeriods
+		count, err := fp.Where(
+			fp.FiscalYearID.Eq(req.FiscalYearID),
+			fp.Status.In(fiscalperiod.UnclosedStatuses()...),
+		).Count(ctx, r.db.Keel(ctx))
 		if err != nil {
-			log.Error("failed to count unclosed periods", zap.Error(err))
+			r.l.Error(
+				"failed to count unclosed periods",
+				zap.String("fiscalYearId", req.FiscalYearID.String()),
+				zap.Error(err),
+			)
 			return 0, err
 		}
 
@@ -565,8 +404,8 @@ func (r *repository) ListByFiscalYearID(
 	ctx context.Context,
 	req fiscalperiodports.ListByFiscalYearIDRequest,
 ) ([]*fiscalperiod.FiscalPeriod, error) {
-	return dbtx.Write(ctx, r.db, func(ctx context.Context) ([]*fiscalperiod.FiscalPeriod, error) {
-		return r.listByFiscalYearID(ctx, r.db.DBForContext(ctx), req, false)
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*fiscalperiod.FiscalPeriod, error) {
+		return r.listByFiscalYearID(ctx, req, false)
 	})
 }
 
@@ -575,38 +414,28 @@ func (r *repository) ListByFiscalYearIDForUpdate(
 	req fiscalperiodports.ListByFiscalYearIDRequest,
 ) ([]*fiscalperiod.FiscalPeriod, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) ([]*fiscalperiod.FiscalPeriod, error) {
-		return r.listByFiscalYearID(ctx, r.db.DBForContext(ctx), req, true)
+		return r.listByFiscalYearID(ctx, req, true)
 	})
 }
 
 func (r *repository) listByFiscalYearID(
 	ctx context.Context,
-	db bun.IDB,
 	req fiscalperiodports.ListByFiscalYearIDRequest,
 	forUpdate bool,
 ) ([]*fiscalperiod.FiscalPeriod, error) {
-	log := r.l.With(
-		zap.String("operation", "ListByFiscalYearID"),
-		zap.String("fiscalYearId", req.FiscalYearID.String()),
-	)
-
-	entities := make([]*fiscalperiod.FiscalPeriod, 0)
-	query := db.
-		NewSelect().
-		Model(&entities).
-		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-			return sq.Where("fp.fiscal_year_id = ?", req.FiscalYearID).
-				Where("fp.organization_id = ?", req.OrgID).
-				Where("fp.business_unit_id = ?", req.BuID)
-		}).
-		Order("fp.period_number ASC")
+	fp := fiscalperioddb.FiscalPeriods
+	q := fp.Where(fp.FiscalYearID.Eq(req.FiscalYearID)).Order(fp.PeriodNumber.Asc())
 	if forUpdate {
-		query = query.For("UPDATE NOWAIT")
+		q = q.Lock(keel.ForUpdate, keel.NoWait)
 	}
 
-	err := query.Scan(ctx)
+	entities, err := q.All(ctx, r.db.Keel(ctx))
 	if err != nil {
-		log.Error("failed to list periods by fiscal year", zap.Error(err))
+		r.l.Error(
+			"failed to list periods by fiscal year",
+			zap.String("fiscalYearId", req.FiscalYearID.String()),
+			zap.Error(err),
+		)
 		return nil, err
 	}
 
@@ -621,17 +450,14 @@ func (r *repository) ListByFiscalYearIDs(
 		ctx,
 		r.db,
 		func(ctx context.Context) (map[pulid.ID][]*fiscalperiod.FiscalPeriod, error) {
-			cols := fiscalperiodcol.FiscalPeriodColumns
-			entities := make([]*fiscalperiod.FiscalPeriod, 0, len(req.FiscalYearIDs)*12)
-			err := r.db.DBForContext(ctx).
-				NewSelect().
-				Model(&entities).
-				WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-					return fiscalperiodcol.FiscalPeriodScopeTenant(sq, req.TenantInfo).
-						Where(cols.FiscalYearID.In(), bun.List(req.FiscalYearIDs))
-				}).
-				Order(cols.PeriodNumber.OrderAsc()).
-				Scan(ctx)
+			if len(req.FiscalYearIDs) == 0 {
+				return map[pulid.ID][]*fiscalperiod.FiscalPeriod{}, nil
+			}
+
+			fp := fiscalperioddb.FiscalPeriods
+			entities, err := fp.Where(fp.FiscalYearID.In(req.FiscalYearIDs...)).
+				Order(fp.PeriodNumber.Asc()).
+				All(ctx, r.db.Keel(ctx))
 			if err != nil {
 				r.l.Error("failed to list periods by fiscal years", zap.Error(err))
 				return nil, err
@@ -649,26 +475,21 @@ func (r *repository) GetPeriodByDate(
 	req fiscalperiodports.GetPeriodByDateRequest,
 ) (*fiscalperiod.FiscalPeriod, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*fiscalperiod.FiscalPeriod, error) {
-		log := r.l.With(
-			zap.String("operation", "GetPeriodByDate"),
-			zap.Int64("date", req.Date),
-		)
-
-		entity := new(fiscalperiod.FiscalPeriod)
-		err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(entity).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return sq.Where("fp.organization_id = ?", req.OrgID).
-					Where("fp.business_unit_id = ?", req.BuID).
-					Where("fp.start_date <= ?", req.Date).
-					Where("fp.end_date >= ?", req.Date).
-					Where("fp.is_adjusting = ?", false)
-			}).
-			Scan(ctx)
+		fp := fiscalperioddb.FiscalPeriods
+		entity, err := fp.Where(
+			fp.StartDate.Lte(req.Date),
+			fp.EndDate.Gte(req.Date),
+			fp.IsAdjusting.IsFalse(),
+		).
+			Order(fp.StartDate.Asc()).
+			First(ctx, r.db.Keel(ctx))
 		if err != nil {
-			log.Error("failed to get period by date", zap.Error(err))
-			return nil, dberror.HandleNotFoundError(err, "FiscalPeriod")
+			r.l.Error(
+				"failed to get period by date",
+				zap.Int64("date", req.Date),
+				zap.Error(err),
+			)
+			return nil, fiscalPeriodErrors.Map(err, "")
 		}
 
 		return entity, nil
@@ -680,32 +501,28 @@ func (r *repository) CloseAllByFiscalYear(
 	req fiscalperiodports.CloseAllByFiscalYearRequest,
 ) (int, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (int, error) {
-		log := r.l.With(
-			zap.String("operation", "CloseAllByFiscalYear"),
-			zap.String("fiscalYearId", req.FiscalYearID.String()),
+		fp := fiscalperioddb.FiscalPeriods
+		n, err := fp.Where(
+			fp.FiscalYearID.Eq(req.FiscalYearID),
+			fp.Status.Eq(fiscalperiod.StatusOpen),
+		).Update(
+			ctx,
+			r.db.Keel(ctx),
+			fp.Status.To(fiscalperiod.StatusClosed),
+			fp.ClosedAt.To(req.ClosedAt),
+			fp.ClosedByID.To(req.ClosedByID),
+			fp.Version.ToExpr(fp.Version),
 		)
-
-		result, err := r.db.DBForContext(ctx).
-			NewUpdate().
-			Model((*fiscalperiod.FiscalPeriod)(nil)).
-			Set("status = ?", fiscalperiod.StatusClosed).
-			Set("closed_at = ?", req.ClosedAt).
-			Set("closed_by_id = ?", req.ClosedByID).
-			WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-				return uq.Where("fp.fiscal_year_id = ?", req.FiscalYearID).
-					Where("fp.organization_id = ?", req.OrgID).
-					Where("fp.business_unit_id = ?", req.BuID).
-					Where("fp.status = ?", fiscalperiod.StatusOpen)
-			}).
-			Exec(ctx)
 		if err != nil {
-			log.Error("failed to close all periods by fiscal year", zap.Error(err))
+			r.l.Error(
+				"failed to close all periods by fiscal year",
+				zap.String("fiscalYearId", req.FiscalYearID.String()),
+				zap.Error(err),
+			)
 			return 0, err
 		}
 
-		rowsAffected, _ := result.RowsAffected()
-
-		return int(rowsAffected), nil
+		return int(n), nil
 	})
 }
 
@@ -714,27 +531,16 @@ func (r *repository) GetExpiredUnclosedPeriods(
 	req fiscalperiodports.GetExpiredUnclosedPeriodsRequest,
 ) ([]*fiscalperiod.FiscalPeriod, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*fiscalperiod.FiscalPeriod, error) {
-		log := r.l.With(
-			zap.String("operation", "GetExpiredUnclosedPeriods"),
-		)
-
-		entities := make([]*fiscalperiod.FiscalPeriod, 0)
-		err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(&entities).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return sq.Where("fp.organization_id = ?", req.OrgID).
-					Where("fp.business_unit_id = ?", req.BuID).
-					Where(
-						fiscalperiodcol.FiscalPeriodColumns.Status.In(),
-						bun.List(fiscalperiod.UnclosedStatuses()),
-					).
-					Where("fp.end_date < ?", req.BeforeDate)
-			}).
-			Order("fp.period_number ASC").
-			Scan(ctx)
+		fp := fiscalperioddb.FiscalPeriods
+		entities, err := fp.Where(
+			fp.Status.In(fiscalperiod.UnclosedStatuses()...),
+			fp.EndDate.Lt(req.BeforeDate),
+		).
+			Order(fp.PeriodNumber.Asc()).
+			Limit(maxExpiredUnclosedPeriods).
+			List(ctx, r.db.Keel(ctx))
 		if err != nil {
-			log.Error("failed to get expired unclosed periods", zap.Error(err))
+			r.l.Error("failed to get expired unclosed periods", zap.Error(err))
 			return nil, err
 		}
 

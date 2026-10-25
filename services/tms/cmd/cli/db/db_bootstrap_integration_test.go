@@ -8,28 +8,24 @@ import (
 	"errors"
 	"testing"
 
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/testutil/mocks/auditportsmock"
+	"github.com/emoss08/trenova/shared/pulid"
+	"github.com/jackc/pgx/v5"
 
 	"github.com/emoss08/trenova/internal/infrastructure/config"
-	"github.com/emoss08/trenova/internal/infrastructure/database/common"
-	"github.com/emoss08/trenova/internal/infrastructure/database/seeder"
-	"github.com/emoss08/trenova/internal/infrastructure/database/seeds"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/metrics"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/tenantbootstrap"
 	"github.com/emoss08/trenova/internal/modules/identity/adapters/postgres/userrepository"
 	"github.com/emoss08/trenova/internal/modules/identity/app/instancebootstrapservice"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/instancebootstrap"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/workspace/adapters/postgres/auditrepository"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/auditservice"
-	"github.com/emoss08/trenova/internal/modules/workspace/domain/audit"
 	"github.com/emoss08/trenova/internal/testutil/seedtest"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"github.com/uptrace/bun"
 	"go.uber.org/zap"
 )
 
@@ -43,18 +39,6 @@ func productionSeedConfig() *config.Config {
 		App:    config.AppConfig{Env: config.EnvProduction},
 		System: config.SystemConfig{SystemUserPassword: integrationSystemPassword},
 	}
-}
-
-func runProductionSeeds(t *testing.T, ctx context.Context, db *bun.DB) {
-	t.Helper()
-
-	registry := seeder.NewRegistry()
-	seeds.Register(registry)
-	engine := seeder.NewEngine(db, registry, productionSeedConfig())
-
-	report, err := engine.Execute(ctx, seeder.ExecuteOptions{Environment: common.EnvProduction})
-	require.NoError(t, err)
-	require.True(t, report.Success())
 }
 
 func integrationBootstrapDeps(t *testing.T, conn *postgres.Connection, out *bytes.Buffer) bootstrapDeps {
@@ -102,6 +86,15 @@ func integrationInputs() *instancebootstrap.Inputs {
 	}
 }
 
+func countRows(t *testing.T, ctx context.Context, db *keel.DB, sql string, args ...any) int64 {
+	t.Helper()
+
+	n, err := keel.QueryValue[int64](ctx, db, sql, args...)
+	require.NoError(t, err)
+
+	return n
+}
+
 func fixedPassword(password string) passwordSource {
 	return func() (string, error) { return password, nil }
 }
@@ -117,11 +110,8 @@ func TestBootstrapCreatesAnAdministratorWhoCanSignIn(t *testing.T) {
 	ctx, db, cleanup := seedtest.SetupTestDB(t)
 	defer cleanup()
 
-	runProductionSeeds(t, ctx, db)
-
-	userCount, err := db.NewSelect().Model((*tenant.User)(nil)).Count(ctx)
-	require.NoError(t, err)
-	require.Zero(t, userCount, "production seeds must not create any account")
+	require.Zero(t, countRows(t, ctx, db, "SELECT count(*) FROM users"),
+		"production seeds must not create any account")
 
 	conn := postgres.WrapDB(db)
 	var out bytes.Buffer
@@ -138,60 +128,48 @@ func TestBootstrapCreatesAnAdministratorWhoCanSignIn(t *testing.T) {
 	assert.False(t, admin.MustChangePassword)
 	assert.Equal(t, "Dana Whitfield", admin.Name)
 
-	org := new(tenant.Organization)
-	require.NoError(t, db.NewSelect().Model(org).Where("id = ?", admin.CurrentOrganizationID).Scan(ctx))
+	orgID := admin.CurrentOrganizationID
+	var org struct{ Name, ScacCode, LoginSlug string }
+	require.NoError(t, keel.QueryRows(ctx, db, func(row pgx.CollectableRow) error {
+		return row.Scan(&org.Name, &org.ScacCode, &org.LoginSlug)
+	}, "SELECT name, scac_code, login_slug FROM organizations WHERE id = $1", orgID.String()))
 	assert.Equal(t, "Acme Freight", org.Name)
 	assert.Equal(t, "ACMF", org.ScacCode)
 	assert.Equal(t, "acme-freight", org.LoginSlug)
 
-	role := new(permission.Role)
-	require.NoError(t, db.NewSelect().
-		Model(role).
-		Where("organization_id = ?", org.ID).
-		Where("name = ?", tenantbootstrap.AdministratorRoleName).
-		Scan(ctx))
-	assigned, err := db.NewSelect().
-		Model((*permission.UserRoleAssignment)(nil)).
-		Where("user_id = ?", admin.ID).
-		Where("role_id = ?", role.ID).
-		Where("organization_id = ?", org.ID).
-		Exists(ctx)
+	roleID, err := keel.QueryValue[string](ctx, db,
+		"SELECT id FROM roles WHERE organization_id = $1 AND name = $2",
+		orgID.String(), tenantbootstrap.AdministratorRoleName)
 	require.NoError(t, err)
-	assert.True(t, assigned)
+	assert.Equal(t, int64(1), countRows(t, ctx, db,
+		"SELECT count(*) FROM user_role_assignments WHERE user_id = $1 AND role_id = $2 AND organization_id = $3",
+		admin.ID.String(), roleID, orgID.String()))
 
-	memberships, err := db.NewSelect().
-		Model((*tenant.OrganizationMembership)(nil)).
-		Where("user_id = ?", admin.ID).
-		Where("organization_id = ?", org.ID).
-		Count(ctx)
-	require.NoError(t, err)
-	assert.Equal(t, int64(1), memberships)
+	assert.Equal(t, int64(1), countRows(t, ctx, db,
+		"SELECT count(*) FROM user_organization_memberships WHERE user_id = $1 AND organization_id = $2",
+		admin.ID.String(), orgID.String()))
 
 	systemUser, err := users.GetSystemUser(ctx)
 	require.NoError(t, err)
 	require.NoError(t, systemUser.VerifyCredentials(integrationSystemPassword))
-	assert.Equal(t, org.ID, systemUser.CurrentOrganizationID)
+	assert.Equal(t, orgID, systemUser.CurrentOrganizationID)
 
-	allowlisted, err := db.NewSelect().
-		Table("tca_allowlisted_tables").
-		Where("organization_id = ?", org.ID).
-		Count(ctx)
-	require.NoError(t, err)
-	assert.Positive(t, allowlisted)
+	assert.Positive(t, countRows(t, ctx, db,
+		"SELECT count(*) FROM tca_allowlisted_tables WHERE organization_id = $1", orgID.String()))
+	assert.Equal(t, int64(4), countRows(t, ctx, db,
+		"SELECT count(*) FROM audit_entries WHERE organization_id = $1 AND critical", orgID.String()))
 
-	entries := make([]audit.Entry, 0, 4)
-	require.NoError(t, db.NewSelect().
-		Model(&entries).
-		Where("organization_id = ?", org.ID).
-		Where("critical = ?", true).
-		Scan(ctx))
-	assert.Len(t, entries, 4)
-
-	record := new(instancebootstrap.InstanceBootstrap)
-	require.NoError(t, db.NewSelect().Model(record).Scan(ctx))
-	assert.Equal(t, org.ID, record.OrganizationID)
+	var record struct {
+		OrganizationID pulid.ID
+		AdminUserID    pulid.ID
+		AdminEmail     string
+	}
+	require.NoError(t, keel.QueryRows(ctx, db, func(row pgx.CollectableRow) error {
+		return row.Scan(&record.OrganizationID, &record.AdminUserID, &record.AdminEmail)
+	}, "SELECT organization_id, admin_user_id, inputs->>'adminEmail' FROM instance_bootstraps"))
+	assert.Equal(t, orgID, record.OrganizationID)
 	assert.Equal(t, admin.ID, record.AdminUserID)
-	assert.Equal(t, "dana@acme.example", record.Inputs.AdminEmail)
+	assert.Equal(t, "dana@acme.example", record.AdminEmail)
 
 	out.Reset()
 	again := integrationInputs()
@@ -205,25 +183,20 @@ func TestBootstrapCreatesAnAdministratorWhoCanSignIn(t *testing.T) {
 	err = bootstrapInstance(ctx, deps, different, unusedPassword(t), false)
 	require.ErrorIs(t, err, instancebootstrapservice.ErrInputsDiffer)
 
-	finalUsers, err := db.NewSelect().Model((*tenant.User)(nil)).Count(ctx)
-	require.NoError(t, err)
-	assert.Equal(t, int64(2), finalUsers)
-
-	runProductionSeeds(t, ctx, db)
+	assert.Equal(t, int64(2), countRows(t, ctx, db, "SELECT count(*) FROM users"))
 }
 
 func TestBootstrapRefusesADatabaseThatAlreadyHasUsers(t *testing.T) {
 	ctx, db, cleanup := seedtest.SetupTestDB(t)
 	defer cleanup()
 
-	runProductionSeeds(t, ctx, db)
 	conn := postgres.WrapDB(db)
 	var out bytes.Buffer
 	deps := integrationBootstrapDeps(t, conn, &out)
 
 	require.NoError(t, bootstrapInstance(ctx, deps, integrationInputs(), fixedPassword(integrationAdminPassword), false))
 
-	_, err := db.NewDelete().Model((*instancebootstrap.InstanceBootstrap)(nil)).Where("TRUE").Exec(ctx)
+	_, err := keel.Exec(ctx, db, "DELETE FROM instance_bootstraps")
 	require.NoError(t, err)
 
 	err = bootstrapInstance(ctx, deps, integrationInputs(), unusedPassword(t), false)
@@ -232,16 +205,13 @@ func TestBootstrapRefusesADatabaseThatAlreadyHasUsers(t *testing.T) {
 	err = bootstrapInstance(ctx, deps, integrationInputs(), unusedPassword(t), true)
 	require.ErrorIs(t, err, instancebootstrapservice.ErrAlreadyInitialized)
 
-	organizations, err := db.NewSelect().Model((*tenant.Organization)(nil)).Count(ctx)
-	require.NoError(t, err)
-	assert.Equal(t, int64(1), organizations)
+	assert.Equal(t, int64(1), countRows(t, ctx, db, "SELECT count(*) FROM organizations"))
 }
 
 func TestBootstrapDryRunChangesNothing(t *testing.T) {
 	ctx, db, cleanup := seedtest.SetupTestDB(t)
 	defer cleanup()
 
-	runProductionSeeds(t, ctx, db)
 	conn := postgres.WrapDB(db)
 	var out bytes.Buffer
 	deps := integrationBootstrapDeps(t, conn, &out)
@@ -249,7 +219,5 @@ func TestBootstrapDryRunChangesNothing(t *testing.T) {
 	require.NoError(t, bootstrapInstance(ctx, deps, integrationInputs(), unusedPassword(t), true))
 	assert.Contains(t, out.String(), "Dry run")
 
-	organizations, err := db.NewSelect().Model((*tenant.Organization)(nil)).Count(ctx)
-	require.NoError(t, err)
-	assert.Zero(t, organizations)
+	assert.Zero(t, countRows(t, ctx, db, "SELECT count(*) FROM organizations"))
 }

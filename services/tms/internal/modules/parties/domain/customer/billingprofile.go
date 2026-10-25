@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/glaccount"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/factoringcompany"
@@ -15,10 +16,9 @@ import (
 	"github.com/emoss08/trenova/shared/timeutils"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
 	"github.com/shopspring/decimal"
-	"github.com/uptrace/bun"
 )
 
-var _ bun.BeforeAppendModelHook = (*CustomerBillingProfile)(nil)
+const defaultBillingCycleTimezone = "UTC"
 
 const (
 	maxInvoicePrefixLength   = 20
@@ -27,97 +27,148 @@ const (
 )
 
 type CustomerBillingProfile struct {
-	bun.BaseModel `bun:"table:customer_billing_profiles,alias:cbp" json:"-"`
+	keel.Table `keel:"customer_billing_profiles"`
 
-	ID                         pulid.ID            `json:"id"                         bun:"id,pk,type:VARCHAR(100),notnull"`
-	BusinessUnitID             pulid.ID            `json:"businessUnitId"             bun:"business_unit_id,pk,notnull,type:VARCHAR(100)"`
-	OrganizationID             pulid.ID            `json:"organizationId"             bun:"organization_id,pk,notnull,type:VARCHAR(100)"`
-	CustomerID                 pulid.ID            `json:"customerId"                 bun:"customer_id,pk,notnull,type:VARCHAR(100)"`
-	InvoiceDelivery            InvoiceDelivery     `json:"invoiceDelivery"            bun:"invoice_delivery,type:customer_invoice_delivery_enum,notnull,default:'PerShipment'"`
-	BillingCycle               BillingCycle        `json:"billingCycle"               bun:"billing_cycle,type:customer_billing_cycle_enum,notnull,default:'Immediate'"`
-	BillingCycleAnchorDay      int16               `json:"billingCycleAnchorDay"      bun:"billing_cycle_anchor_day,type:SMALLINT,notnull,default:1"`
-	BillingCycleTimezone       string              `json:"billingCycleTimezone"       bun:"billing_cycle_timezone,type:VARCHAR(64),notnull,default:'UTC'"`
-	LastBilledPeriodEnd        *int64              `json:"lastBilledPeriodEnd"        bun:"last_billed_period_end,type:BIGINT,nullzero"`
-	PaymentTerm                PaymentTerm         `json:"paymentTerm"                bun:"payment_term,type:payment_term_enum,nullzero,default:'Net30'"`
-	HasBillingControlOverrides bool                `json:"hasBillingControlOverrides" bun:"has_billing_control_overrides,type:BOOLEAN,notnull"`
-	CreditLimit                decimal.NullDecimal `json:"creditLimit"                bun:"credit_limit,type:NUMERIC(12,2),nullzero"`
-	CreditBalance              decimal.Decimal     `json:"creditBalance"              bun:"credit_balance,type:NUMERIC(12,2),notnull,default:0"`
-	CreditStatus               CreditStatus        `json:"creditStatus"               bun:"credit_status,type:credit_status_enum,notnull,default:'Active'"`
-	EnforceCreditLimit         bool                `json:"enforceCreditLimit"         bun:"enforce_credit_limit,type:BOOLEAN,notnull"`
-	AutoCreditHold             bool                `json:"autoCreditHold"             bun:"auto_credit_hold,type:BOOLEAN,notnull"`
-	CreditHoldReason           string              `json:"creditHoldReason"           bun:"credit_hold_reason,type:TEXT,nullzero"`
+	ID                         pulid.ID            `json:"id"                         keel:"id,pk,autoid:cbp_"`
+	BusinessUnitID             pulid.ID            `json:"businessUnitId"             keel:"business_unit_id,pk,tenant"`
+	OrganizationID             pulid.ID            `json:"organizationId"             keel:"organization_id,pk,tenant"`
+	CustomerID                 pulid.ID            `json:"customerId"                 keel:"customer_id,pk"`
+	InvoiceDelivery            InvoiceDelivery     `json:"invoiceDelivery"            keel:"invoice_delivery"`
+	BillingCycle               BillingCycle        `json:"billingCycle"               keel:"billing_cycle"`
+	BillingCycleAnchorDay      int16               `json:"billingCycleAnchorDay"      keel:"billing_cycle_anchor_day"`
+	BillingCycleTimezone       string              `json:"billingCycleTimezone"       keel:"billing_cycle_timezone"`
+	LastBilledPeriodEnd        *int64              `json:"lastBilledPeriodEnd"        keel:"last_billed_period_end"`
+	PaymentTerm                PaymentTerm         `json:"paymentTerm"                keel:"payment_term,nullzero"`
+	HasBillingControlOverrides bool                `json:"hasBillingControlOverrides" keel:"has_billing_control_overrides"`
+	CreditLimit                decimal.NullDecimal `json:"creditLimit"                keel:"credit_limit"`
+	CreditBalance              decimal.Decimal     `json:"creditBalance"              keel:"credit_balance"`
+	CreditStatus               CreditStatus        `json:"creditStatus"               keel:"credit_status"`
+	EnforceCreditLimit         bool                `json:"enforceCreditLimit"         keel:"enforce_credit_limit"`
+	AutoCreditHold             bool                `json:"autoCreditHold"             keel:"auto_credit_hold"`
+	CreditHoldReason           string              `json:"creditHoldReason"           keel:"credit_hold_reason,nullzero"`
 	// CreditHoldAutomatic marks a Hold or Warning the credit review placed
 	// against open receivables; only the review lifts it.
-	CreditHoldAutomatic bool `json:"creditHoldAutomatic" bun:"credit_hold_automatic,type:BOOLEAN,notnull,default:false"`
+	CreditHoldAutomatic bool `json:"creditHoldAutomatic" keel:"credit_hold_automatic"`
 	// CreditReviewedAt is when CreditBalance, the open receivables, was last
 	// computed by the credit review.
-	CreditReviewedAt            *int64 `json:"creditReviewedAt"            bun:"credit_reviewed_at,type:BIGINT,nullzero"`
-	AutoSendInvoiceOnGeneration bool   `json:"autoSendInvoiceOnGeneration" bun:"auto_send_invoice_on_generation,type:BOOLEAN,notnull"`
+	CreditReviewedAt            *int64 `json:"creditReviewedAt"            keel:"credit_reviewed_at"`
+	AutoSendInvoiceOnGeneration bool   `json:"autoSendInvoiceOnGeneration" keel:"auto_send_invoice_on_generation"`
 	// SendPaymentReminders lets the organization's payment reminders reach
 	// this customer; off for a customer who must never be dunned by email.
-	SendPaymentReminders bool `json:"sendPaymentReminders" bun:"send_payment_reminders,type:BOOLEAN,notnull"`
+	SendPaymentReminders bool `json:"sendPaymentReminders" keel:"send_payment_reminders"`
 	// SendStatements lets the organization's monthly statements reach this
 	// customer.
-	SendStatements bool `json:"sendStatements" bun:"send_statements,type:BOOLEAN,notnull"`
+	SendStatements bool `json:"sendStatements" keel:"send_statements"`
 	// EmailInvoiceEnabled and EDIInvoiceEnabled are the delivery channels an
 	// invoice may leave through. Auto-send after posting honours both.
-	EmailInvoiceEnabled        bool                `json:"emailInvoiceEnabled"        bun:"email_invoice_enabled,type:BOOLEAN,notnull"`
-	EDIInvoiceEnabled          bool                `json:"ediInvoiceEnabled"          bun:"edi_invoice_enabled,type:BOOLEAN,notnull"`
-	SplitBy                    InvoiceSplitKey     `json:"splitBy"                    bun:"split_by,type:invoice_split_key_enum,notnull,default:'Customer'"`
-	SectionBy                  InvoiceSectionKey   `json:"sectionBy"                  bun:"section_by,type:invoice_section_key_enum,notnull,default:'Shipment'"`
-	InvoiceDetail              InvoiceDetail       `json:"invoiceDetail"              bun:"invoice_detail,type:invoice_detail_enum,notnull,default:'Detailed'"`
-	MinConsolidatedAmount      decimal.NullDecimal `json:"minConsolidatedAmount"      bun:"min_consolidated_amount,type:NUMERIC(19,4),nullzero"`
-	MinConsolidatedAmountMinor *int64              `json:"minConsolidatedAmountMinor" bun:"min_consolidated_amount_minor,type:BIGINT,nullzero"`
-	MaxShipmentsPerInvoice     int16               `json:"maxShipmentsPerInvoice"     bun:"max_shipments_per_invoice,type:SMALLINT,notnull"`
-	InvoiceNumberFormat        InvoiceNumberFormat `json:"invoiceNumberFormat"        bun:"invoice_number_format,type:invoice_number_format_enum,notnull,default:'Default'"`
-	CustomerInvoicePrefix      string              `json:"customerInvoicePrefix"      bun:"customer_invoice_prefix,type:VARCHAR(20),nullzero"`
-	InvoiceCopies              int8                `json:"invoiceCopies"              bun:"invoice_copies,type:SMALLINT,notnull,default:1"`
-	RevenueAccountID           *pulid.ID           `json:"revenueAccountId"           bun:"revenue_account_id,type:VARCHAR(100),nullzero"`
-	ARAccountID                *pulid.ID           `json:"arAccountId"                bun:"ar_account_id,type:VARCHAR(100),nullzero"`
-	ApplyLateCharges           bool                `json:"applyLateCharges"           bun:"apply_late_charges,type:BOOLEAN,notnull"`
-	LateChargeRate             decimal.NullDecimal `json:"lateChargeRate"             bun:"late_charge_rate,type:NUMERIC(5,2),nullzero"`
-	GracePeriodDays            int8                `json:"gracePeriodDays"            bun:"grace_period_days,type:SMALLINT,notnull"`
-	TaxExempt                  bool                `json:"taxExempt"                  bun:"tax_exempt,type:BOOLEAN,notnull"`
-	TaxExemptNumber            string              `json:"taxExemptNumber"            bun:"tax_exempt_number,type:VARCHAR(50),nullzero"`
-	EnforceCustomerBillingReq  bool                `json:"enforceCustomerBillingReq"  bun:"enforce_customer_billing_req,type:BOOLEAN,notnull"`
-	ValidateCustomerRates      bool                `json:"validateCustomerRates"      bun:"validate_customer_rates,type:BOOLEAN,notnull"`
-	AutoTransfer               bool                `json:"autoTransfer"               bun:"auto_transfer,type:BOOLEAN,notnull"`
-	AutoMarkReadyToBill        bool                `json:"autoMarkReadyToBill"        bun:"auto_mark_ready_to_bill,type:BOOLEAN,notnull"`
-	AutoBill                   bool                `json:"autoBill"                   bun:"auto_bill,type:BOOLEAN,notnull"`
+	EmailInvoiceEnabled        bool                `json:"emailInvoiceEnabled"        keel:"email_invoice_enabled"`
+	EDIInvoiceEnabled          bool                `json:"ediInvoiceEnabled"          keel:"edi_invoice_enabled"`
+	SplitBy                    InvoiceSplitKey     `json:"splitBy"                    keel:"split_by"`
+	SectionBy                  InvoiceSectionKey   `json:"sectionBy"                  keel:"section_by"`
+	InvoiceDetail              InvoiceDetail       `json:"invoiceDetail"              keel:"invoice_detail"`
+	MinConsolidatedAmount      decimal.NullDecimal `json:"minConsolidatedAmount"      keel:"min_consolidated_amount"`
+	MinConsolidatedAmountMinor *int64              `json:"minConsolidatedAmountMinor" keel:"min_consolidated_amount_minor"`
+	MaxShipmentsPerInvoice     int16               `json:"maxShipmentsPerInvoice"     keel:"max_shipments_per_invoice"`
+	InvoiceNumberFormat        InvoiceNumberFormat `json:"invoiceNumberFormat"        keel:"invoice_number_format"`
+	CustomerInvoicePrefix      string              `json:"customerInvoicePrefix"      keel:"customer_invoice_prefix,nullzero"`
+	InvoiceCopies              int16               `json:"invoiceCopies"              keel:"invoice_copies"`
+	RevenueAccountID           *pulid.ID           `json:"revenueAccountId"           keel:"revenue_account_id"`
+	ARAccountID                *pulid.ID           `json:"arAccountId"                keel:"ar_account_id"`
+	ApplyLateCharges           bool                `json:"applyLateCharges"           keel:"apply_late_charges"`
+	LateChargeRate             decimal.NullDecimal `json:"lateChargeRate"             keel:"late_charge_rate"`
+	GracePeriodDays            int16               `json:"gracePeriodDays"            keel:"grace_period_days"`
+	TaxExempt                  bool                `json:"taxExempt"                  keel:"tax_exempt"`
+	TaxExemptNumber            string              `json:"taxExemptNumber"            keel:"tax_exempt_number,nullzero"`
+	EnforceCustomerBillingReq  bool                `json:"enforceCustomerBillingReq"  keel:"enforce_customer_billing_req"`
+	ValidateCustomerRates      bool                `json:"validateCustomerRates"      keel:"validate_customer_rates"`
+	AutoTransfer               bool                `json:"autoTransfer"               keel:"auto_transfer"`
+	AutoMarkReadyToBill        bool                `json:"autoMarkReadyToBill"        keel:"auto_mark_ready_to_bill"`
+	AutoBill                   bool                `json:"autoBill"                   keel:"auto_bill"`
 	// AutoApprove lets a shipment that passes every billing requirement clear the
 	// billing queue without a biller clicking Approve, leaving the queue holding
 	// only the freight that actually needs a human.
 	//
 	// It is reachable only on the automatic transfer path, so an organization that
 	// has not enabled automatic queue transfer cannot be auto-approving anything.
-	AutoApprove                     bool              `json:"autoApprove"                     bun:"auto_approve,type:BOOLEAN,notnull"`
-	CountLateOnlyOnAppointmentStops bool              `json:"countLateOnlyOnAppointmentStops" bun:"count_late_only_on_appointment_stops,type:BOOLEAN,notnull"`
-	AutoApplyAccessorials           bool              `json:"autoApplyAccessorials"           bun:"auto_apply_accessorials,type:BOOLEAN,notnull"`
-	BillingCurrency                 string            `json:"billingCurrency"                 bun:"billing_currency,type:VARCHAR(3),notnull,default:'USD'"`
-	RequirePONumber                 bool              `json:"requirePONumber"                 bun:"require_po_number,type:BOOLEAN,notnull"`
-	RequireBOLNumber                bool              `json:"requireBOLNumber"                bun:"require_bol_number,type:BOOLEAN,notnull"`
-	RequireDeliveryNumber           bool              `json:"requireDeliveryNumber"           bun:"require_delivery_number,type:BOOLEAN,notnull"`
-	DefaultBillerID                 *pulid.ID         `json:"defaultBillerId"                 bun:"default_biller_id,type:VARCHAR(100),nullzero"`
-	BillingNotes                    string            `json:"billingNotes"                    bun:"billing_notes,type:TEXT,nullzero"`
-	FuelSurchargeMode               FuelSurchargeMode `json:"fuelSurchargeMode"               bun:"fuel_surcharge_mode,type:customer_fuel_surcharge_mode_enum,notnull,default:'None'"`
-	FuelSurchargeProgramID          *pulid.ID         `json:"fuelSurchargeProgramId"          bun:"fuel_surcharge_program_id,type:VARCHAR(100),nullzero"`
+	AutoApprove                     bool              `json:"autoApprove"                     keel:"auto_approve"`
+	CountLateOnlyOnAppointmentStops bool              `json:"countLateOnlyOnAppointmentStops" keel:"count_late_only_on_appointment_stops"`
+	AutoApplyAccessorials           bool              `json:"autoApplyAccessorials"           keel:"auto_apply_accessorials"`
+	BillingCurrency                 string            `json:"billingCurrency"                 keel:"billing_currency"`
+	RequirePONumber                 bool              `json:"requirePONumber"                 keel:"require_po_number"`
+	RequireBOLNumber                bool              `json:"requireBOLNumber"                keel:"require_bol_number"`
+	RequireDeliveryNumber           bool              `json:"requireDeliveryNumber"           keel:"require_delivery_number"`
+	DefaultBillerID                 *pulid.ID         `json:"defaultBillerId"                 keel:"default_biller_id"`
+	BillingNotes                    string            `json:"billingNotes"                    keel:"billing_notes,nullzero"`
+	FuelSurchargeMode               FuelSurchargeMode `json:"fuelSurchargeMode"               keel:"fuel_surcharge_mode"`
+	FuelSurchargeProgramID          *pulid.ID         `json:"fuelSurchargeProgramId"          keel:"fuel_surcharge_program_id"`
 	// FactoringCompanyID names the factor this customer's invoices are
 	// assigned to: they post remitted to it, with its notice of assignment.
-	FactoringCompanyID *pulid.ID `json:"factoringCompanyId" bun:"factoring_company_id,type:VARCHAR(100),nullzero"`
+	FactoringCompanyID *pulid.ID `json:"factoringCompanyId" keel:"factoring_company_id"`
 
-	Version   int64 `json:"version"   bun:"version,type:BIGINT"`
-	CreatedAt int64 `json:"createdAt" bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
-	UpdatedAt int64 `json:"updatedAt" bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
+	Version   int64 `json:"version"   keel:"version,version"`
+	CreatedAt int64 `json:"createdAt" keel:"created_at,autocreate"`
+	UpdatedAt int64 `json:"updatedAt" keel:"updated_at,autoupdate"`
 
 	// Relationships
-	BusinessUnit         *tenant.BusinessUnit                `json:"-"                              bun:"rel:belongs-to,join:business_unit_id=id"`
-	Organization         *tenant.Organization                `json:"-"                              bun:"rel:belongs-to,join:organization_id=id"`
-	DefaultBiller        *tenant.User                        `json:"defaultBiller"                  bun:"rel:belongs-to,join:default_biller_id=id"`
-	RevenueAccount       *glaccount.GLAccount                `json:"revenueAccount"                 bun:"rel:belongs-to,join:revenue_account_id=id"`
-	ARAccount            *glaccount.GLAccount                `json:"arAccount"                      bun:"rel:belongs-to,join:ar_account_id=id"`
-	DocumentTypes        []*documenttype.DocumentType        `json:"documentTypes"                  bun:"m2m:customer_billing_profile_document_types,join:BillingProfile=DocumentType"`
-	FuelSurchargeProgram *fuelsurcharge.FuelSurchargeProgram `json:"fuelSurchargeProgram,omitempty" bun:"rel:belongs-to,join:fuel_surcharge_program_id=id"`
-	FactoringCompany     *factoringcompany.FactoringCompany  `json:"factoringCompany,omitempty"     bun:"rel:belongs-to,join:factoring_company_id=id,join:organization_id=organization_id,join:business_unit_id=business_unit_id"`
+	BusinessUnit         *tenant.BusinessUnit                `json:"-"`
+	Organization         *tenant.Organization                `json:"-"`
+	DefaultBiller        *tenant.User                        `json:"defaultBiller"                  keel:"belongs:default_biller_id"`
+	RevenueAccount       *glaccount.GLAccount                `json:"revenueAccount"                 keel:"belongs:revenue_account_id"`
+	ARAccount            *glaccount.GLAccount                `json:"arAccount"                      keel:"belongs:ar_account_id"`
+	DocumentTypes        []*documenttype.DocumentType        `json:"documentTypes"                  keel:"m2m:customer_billing_profile_document_types.billing_profile_id.document_type_id"`
+	FuelSurchargeProgram *fuelsurcharge.FuelSurchargeProgram `json:"fuelSurchargeProgram,omitempty" keel:"belongs:fuel_surcharge_program_id"`
+	FactoringCompany     *factoringcompany.FactoringCompany  `json:"factoringCompany,omitempty"     keel:"belongs:factoring_company_id"`
+}
+
+func (b *CustomerBillingProfile) BeforeUpdate(_ context.Context) error {
+	b.applyDefaults()
+
+	return nil
+}
+
+func (b *CustomerBillingProfile) BeforeCreate(_ context.Context) error {
+	b.applyDefaults()
+	if b.InvoiceDelivery == "" {
+		b.InvoiceDelivery = InvoiceDeliveryPerShipment
+	}
+	if b.BillingCycle == "" {
+		b.BillingCycle = BillingCycleImmediate
+	}
+	if b.BillingCycleAnchorDay == 0 {
+		b.BillingCycleAnchorDay = 1
+	}
+	if b.BillingCycleTimezone == "" {
+		b.BillingCycleTimezone = defaultBillingCycleTimezone
+	}
+	if b.PaymentTerm == "" {
+		b.PaymentTerm = PaymentTermNet30
+	}
+	if b.CreditStatus == "" {
+		b.CreditStatus = CreditStatusActive
+	}
+	if b.SplitBy == "" {
+		b.SplitBy = InvoiceSplitKeyCustomer
+	}
+	if b.SectionBy == "" {
+		b.SectionBy = InvoiceSectionKeyShipment
+	}
+	if b.InvoiceDetail == "" {
+		b.InvoiceDetail = InvoiceDetailDetailed
+	}
+	if b.InvoiceNumberFormat == "" {
+		b.InvoiceNumberFormat = InvoiceNumberFormatDefault
+	}
+	if b.InvoiceCopies == 0 {
+		b.InvoiceCopies = 1
+	}
+	if b.BillingCurrency == "" {
+		b.BillingCurrency = "USD"
+	}
+	if b.FuelSurchargeMode == "" {
+		b.FuelSurchargeMode = FuelSurchargeModeNone
+	}
+
+	return nil
 }
 
 func (b *CustomerBillingProfile) GetID() string {
@@ -275,10 +326,6 @@ func (b *CustomerBillingProfile) AppliesFuelSurcharge() bool {
 		b.FuelSurchargeProgramID != nil && !b.FuelSurchargeProgramID.IsNil()
 }
 
-// NewDefaultBillingProfile is the profile a customer gets when one is not
-// supplied. Every billing automation it turns on is named here rather than left
-// to a column default: the fields below carry no bun default, so what this
-// constructor omits is stored false.
 func NewDefaultBillingProfile(orgID, buID, customerID pulid.ID) *CustomerBillingProfile {
 	return &CustomerBillingProfile{
 		OrganizationID:              orgID,
@@ -298,10 +345,15 @@ func NewDefaultBillingProfile(orgID, buID, customerID pulid.ID) *CustomerBilling
 		InvoiceDelivery:             InvoiceDeliveryPerShipment,
 		BillingCycle:                BillingCycleImmediate,
 		BillingCycleAnchorDay:       1,
-		BillingCycleTimezone:        "UTC",
+		BillingCycleTimezone:        defaultBillingCycleTimezone,
 		SplitBy:                     InvoiceSplitKeyCustomer,
 		SectionBy:                   InvoiceSectionKeyShipment,
 		InvoiceDetail:               InvoiceDetailDetailed,
+		PaymentTerm:                 PaymentTermNet30,
+		CreditStatus:                CreditStatusActive,
+		InvoiceNumberFormat:         InvoiceNumberFormatDefault,
+		InvoiceCopies:               1,
+		BillingCurrency:             "USD",
 	}
 }
 
@@ -317,8 +369,13 @@ func (b *CustomerBillingProfile) GetBusinessUnitID() pulid.ID {
 	return b.BusinessUnitID
 }
 
-func (b *CustomerBillingProfile) BeforeAppendModel(_ context.Context, query bun.Query) error {
-	now := timeutils.NowUnix()
+func (b *CustomerBillingProfile) BeforeSave(context.Context) error {
+	b.applyDefaults()
+
+	return nil
+}
+
+func (b *CustomerBillingProfile) applyDefaults() {
 	if b.FuelSurchargeMode == "" {
 		b.FuelSurchargeMode = FuelSurchargeModeNone
 	}
@@ -329,7 +386,7 @@ func (b *CustomerBillingProfile) BeforeAppendModel(_ context.Context, query bun.
 		b.BillingCycle = BillingCycleImmediate
 	}
 	if b.BillingCycleTimezone == "" {
-		b.BillingCycleTimezone = "UTC"
+		b.BillingCycleTimezone = defaultBillingCycleTimezone
 	}
 	if b.SplitBy == "" {
 		b.SplitBy = InvoiceSplitKeyCustomer
@@ -343,16 +400,4 @@ func (b *CustomerBillingProfile) BeforeAppendModel(_ context.Context, query bun.
 	if b.FuelSurchargeMode != FuelSurchargeModeProgram {
 		b.FuelSurchargeProgramID = nil
 	}
-
-	switch query.(type) {
-	case *bun.InsertQuery:
-		if b.ID.IsNil() {
-			b.ID = pulid.MustNew("cbp_")
-		}
-		b.CreatedAt = now
-	case *bun.UpdateQuery:
-		b.UpdatedAt = now
-	}
-
-	return nil
 }

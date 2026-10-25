@@ -3,6 +3,20 @@ package agentquerytoolservice
 import (
 	"context"
 
+	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice/invoicedb"
+	"github.com/emoss08/trenova/internal/modules/equipment/domain/equipmenttype/equipmenttypedb"
+	"github.com/emoss08/trenova/internal/modules/equipment/domain/fleetcode/fleetcodedb"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/carrier/carrierdb"
+	"github.com/emoss08/trenova/internal/modules/places/domain/locationcategory/locationcategorydb"
+	"github.com/emoss08/trenova/internal/modules/reference/domain/accessorialcharge/accessorialchargedb"
+	"github.com/emoss08/trenova/internal/modules/reference/domain/commodity/commoditydb"
+	"github.com/emoss08/trenova/internal/modules/reference/domain/documenttype/documenttypedb"
+	"github.com/emoss08/trenova/internal/modules/reference/domain/hazardousmaterial/hazardousmaterialdb"
+	"github.com/emoss08/trenova/internal/modules/reference/domain/holdreason/holdreasondb"
+	"github.com/emoss08/trenova/internal/modules/reference/domain/servicetype/servicetypedb"
+	"github.com/emoss08/trenova/internal/modules/reference/domain/shipmenttype/shipmenttypedb"
+	"github.com/emoss08/trenova/pkg/listquery"
+
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
@@ -31,7 +45,6 @@ import (
 	"github.com/emoss08/trenova/internal/modules/reference/ports/servicetypeports"
 	"github.com/emoss08/trenova/internal/modules/reference/ports/shipmenttypeports"
 	"github.com/emoss08/trenova/pkg/pagination"
-	"github.com/emoss08/trenova/pkg/querybuilder"
 )
 
 /*
@@ -78,11 +91,14 @@ func newListEquipmentTypesTool(
 	})
 
 	return newListTool(listSpec{
-		name:          toolListEquipmentTypes,
-		entityPlural:  "equipment types",
-		summary:       equipmentTypesSummary,
-		resource:      permission.ResourceEquipmentType,
-		config:        querybuilder.GetFieldConfiguration((*equipmenttype.EquipmentType)(nil)),
+		name:         toolListEquipmentTypes,
+		entityPlural: "equipment types",
+		summary:      equipmentTypesSummary,
+		resource:     permission.ResourceEquipmentType,
+		config: listquery.Describe(
+			(*equipmenttype.EquipmentType)(nil),
+			equipmenttypedb.EquipmentTypesSchema(),
+		),
 		fields:        fields,
 		pagesByCursor: true,
 		fetch: func(ctx context.Context, opts *pagination.QueryOptions, cursor pagination.CursorInfo) (listPage, error) {
@@ -113,8 +129,11 @@ func newListFleetCodesTool(repo fleetcodeports.FleetCodeRepository) agentports.A
 		entityPlural: "fleet codes",
 		summary:      fleetCodesSummary,
 		resource:     permission.ResourceFleetCode,
-		config:       querybuilder.GetFieldConfiguration((*fleetcode.FleetCode)(nil)),
-		fields:       codedFields(),
+		config: listquery.Describe(
+			(*fleetcode.FleetCode)(nil),
+			fleetcodedb.FleetCodesSchema(),
+		),
+		fields: codedFields(),
 		fetch: func(ctx context.Context, opts *pagination.QueryOptions, _ pagination.CursorInfo) (listPage, error) {
 			result, err := repo.List(ctx, &fleetcodeports.ListFleetCodesRequest{Filter: opts})
 			if err != nil {
@@ -141,8 +160,11 @@ func newListServiceTypesTool(
 		entityPlural: "service types",
 		summary:      serviceTypesSummary,
 		resource:     permission.ResourceServiceType,
-		config:       querybuilder.GetFieldConfiguration((*servicetype.ServiceType)(nil)),
-		fields:       codedFields(),
+		config: listquery.Describe(
+			(*servicetype.ServiceType)(nil),
+			servicetypedb.ServiceTypesSchema(),
+		),
+		fields: codedFields(),
 		fetch: func(ctx context.Context, opts *pagination.QueryOptions, _ pagination.CursorInfo) (listPage, error) {
 			result, err := repo.List(ctx, &servicetypeports.ListServiceTypesRequest{Filter: opts})
 			if err != nil {
@@ -169,8 +191,11 @@ func newListShipmentTypesTool(
 		entityPlural: "shipment types",
 		summary:      shipmentTypesSummary,
 		resource:     permission.ResourceShipmentType,
-		config:       querybuilder.GetFieldConfiguration((*shipmenttype.ShipmentType)(nil)),
-		fields:       codedFields(),
+		config: listquery.Describe(
+			(*shipmenttype.ShipmentType)(nil),
+			shipmenttypedb.ShipmentTypesSchema(),
+		),
+		fields: codedFields(),
 		fetch: func(ctx context.Context, opts *pagination.QueryOptions, _ pagination.CursorInfo) (listPage, error) {
 			result, err := repo.List(ctx, &shipmenttypeports.ListShipmentTypesRequest{Filter: opts})
 			if err != nil {
@@ -206,7 +231,10 @@ func newListCommoditiesTool(repo commodityports.CommodityRepository) agentports.
 		entityPlural: pluralCommodities,
 		summary:      commoditiesSummary,
 		resource:     permission.ResourceCommodity,
-		config:       querybuilder.GetFieldConfiguration((*commodity.Commodity)(nil)),
+		config: listquery.Describe(
+			(*commodity.Commodity)(nil),
+			commoditydb.CommoditiesSchema(),
+		),
 		fields: []listField{
 			{Name: "status", Kind: filterEnum, Values: statusValues},
 			{Name: "name", Kind: filterText, Sortable: true},
@@ -263,8 +291,9 @@ func newListHazardousMaterialsTool(
 		entityPlural: "hazardous materials",
 		summary:      hazardousMaterialsSummary,
 		resource:     permission.ResourceHazardousMaterial,
-		config: querybuilder.GetFieldConfiguration(
+		config: listquery.Describe(
 			(*hazardousmaterial.HazardousMaterial)(nil),
+			hazardousmaterialdb.HazardousMaterialsSchema(),
 		),
 		fields: []listField{
 			{Name: "status", Kind: filterEnum, Values: statusValues},
@@ -320,8 +349,9 @@ func newListAccessorialChargesTool(
 		entityPlural: "accessorial charges",
 		summary:      accessorialChargesSummary,
 		resource:     permission.ResourceAccessorialCharge,
-		config: querybuilder.GetFieldConfiguration(
+		config: listquery.Describe(
 			(*accessorialcharge.AccessorialCharge)(nil),
+			accessorialchargedb.AccessorialChargesSchema(),
 		),
 		fields: []listField{
 			{Name: "status", Kind: filterEnum, Values: statusValues},
@@ -363,7 +393,10 @@ func newListDocumentTypesTool(
 		entityPlural: "document types",
 		summary:      documentTypesSummary,
 		resource:     permission.ResourceDocumentType,
-		config:       querybuilder.GetFieldConfiguration((*documenttype.DocumentType)(nil)),
+		config: listquery.Describe(
+			(*documenttype.DocumentType)(nil),
+			documenttypedb.DocumentTypesSchema(),
+		),
 		fields: []listField{
 			{Name: "code", Kind: filterText, Sortable: true},
 			{Name: "name", Kind: filterText, Sortable: true},
@@ -401,7 +434,10 @@ func newListLocationCategoriesTool(
 		entityPlural: "location categories",
 		summary:      locationCategoriesSummary,
 		resource:     permission.ResourceLocationCategory,
-		config:       querybuilder.GetFieldConfiguration((*locationcategory.LocationCategory)(nil)),
+		config: listquery.Describe(
+			(*locationcategory.LocationCategory)(nil),
+			locationcategorydb.LocationCategoriesSchema(),
+		),
 		fields: []listField{
 			{Name: "name", Kind: filterText, Sortable: true},
 			{Name: "description", Kind: filterText},
@@ -459,7 +495,7 @@ func newListInvoicesTool(
 			"overdue or in dispute.",
 		searchTerms: []string{"last invoice", "latest invoice"},
 		resource:    permission.ResourceInvoice,
-		config:      querybuilder.GetFieldConfiguration((*invoice.Invoice)(nil)),
+		config:      listquery.Describe((*invoice.Invoice)(nil), invoicedb.InvoicesSchema()),
 		fields: []listField{
 			{
 				Name:   "status",
@@ -553,7 +589,7 @@ func newListCarriersTool(repo carrierports.CarrierRepository) agentports.AgentQu
 		entityPlural: pluralCarriers,
 		summary:      carriersSummary,
 		resource:     permission.ResourceCarrier,
-		config:       querybuilder.GetFieldConfiguration((*carrier.Carrier)(nil)),
+		config:       listquery.Describe((*carrier.Carrier)(nil), carrierdb.CarriersSchema()),
 		fields: []listField{
 			{Name: "status", Kind: filterEnum, Values: statusValues},
 			{
@@ -621,7 +657,10 @@ func newListHoldReasonsTool(
 		entityPlural: "hold reasons",
 		summary:      holdReasonsSummary,
 		resource:     permission.ResourceHoldReason,
-		config:       querybuilder.GetFieldConfiguration((*holdreason.HoldReason)(nil)),
+		config: listquery.Describe(
+			(*holdreason.HoldReason)(nil),
+			holdreasondb.HoldReasonsSchema(),
+		),
 		fields: []listField{
 			{
 				Name: "type",

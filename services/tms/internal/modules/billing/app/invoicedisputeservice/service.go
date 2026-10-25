@@ -21,7 +21,6 @@ import (
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
 	"github.com/shopspring/decimal"
-	"github.com/uptrace/bun"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
@@ -32,7 +31,7 @@ type Params struct {
 	fx.In
 
 	Logger         *zap.Logger
-	DB             kernelports.DBConnection
+	DB             kernelports.Transactor
 	Repo           invoiceports.InvoiceDisputeRepository
 	InvoiceRepo    invoiceports.InvoiceRepository
 	AdjustmentRepo invoiceadjustmentports.InvoiceAdjustmentRepository
@@ -45,7 +44,7 @@ type Params struct {
 // changed together under the invoice row lock.
 type Service struct {
 	l              *zap.Logger
-	db             kernelports.DBConnection
+	db             kernelports.Transactor
 	repo           invoiceports.InvoiceDisputeRepository
 	invoiceRepo    invoiceports.InvoiceRepository
 	adjustmentRepo invoiceadjustmentports.InvoiceAdjustmentRepository
@@ -87,7 +86,7 @@ func (s *Service) Open(
 	}
 
 	var created *invoice.InvoiceDispute
-	err := s.db.WithTx(ctx, kernelports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
+	err := s.db.Transact(ctx, kernelports.TxOptions{}, func(txCtx context.Context) error {
 		inv, txErr := s.invoiceRepo.LockForUpdate(txCtx, invoiceports.GetInvoiceByIDRequest{
 			ID:         req.InvoiceID,
 			TenantInfo: req.TenantInfo,
@@ -138,7 +137,7 @@ func (s *Service) Resolve(
 	}
 
 	var previous, updated *invoice.InvoiceDispute
-	err := s.db.WithTx(ctx, kernelports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
+	err := s.db.Transact(ctx, kernelports.TxOptions{}, func(txCtx context.Context) error {
 		entity, inv, txErr := s.loadCase(txCtx, req.DisputeID, req.TenantInfo, true, verbResolved)
 		if txErr != nil {
 			return txErr
@@ -195,7 +194,7 @@ func (s *Service) Withdraw(
 	}
 
 	var previous, updated *invoice.InvoiceDispute
-	err := s.db.WithTx(ctx, kernelports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
+	err := s.db.Transact(ctx, kernelports.TxOptions{}, func(txCtx context.Context) error {
 		entity, inv, txErr := s.loadCase(txCtx, req.DisputeID, req.TenantInfo, true, verbWithdrawn)
 		if txErr != nil {
 			return txErr

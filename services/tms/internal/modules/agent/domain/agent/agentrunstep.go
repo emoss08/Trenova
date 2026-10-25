@@ -3,18 +3,16 @@ package agent
 import (
 	"context"
 
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/pkg/domainvalidation"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/validationframework"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/emoss08/trenova/shared/timeutils"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
-	"github.com/uptrace/bun"
 )
 
 var (
-	_ bun.BeforeAppendModelHook          = (*AgentRunStep)(nil)
 	_ validationframework.TenantedEntity = (*AgentRunStep)(nil)
 )
 
@@ -47,47 +45,55 @@ func AllRunOwnerKinds() []RunOwnerKind {
 // so a row left Started names a write whose outcome nobody recorded — the one
 // case the run has to report rather than repeat.
 type AgentRunStep struct {
-	bun.BaseModel `bun:"table:agent_run_steps,alias:ars" json:"-"`
+	keel.Table `keel:"agent_run_steps"`
 
-	ID             pulid.ID `json:"id"             bun:"id,pk,type:VARCHAR(100),notnull"`
-	BusinessUnitID pulid.ID `json:"businessUnitId" bun:"business_unit_id,pk,notnull,type:VARCHAR(100)"`
-	OrganizationID pulid.ID `json:"organizationId" bun:"organization_id,pk,notnull,type:VARCHAR(100)"`
+	ID             pulid.ID `json:"id"             keel:"id,pk,autoid:ars_"`
+	BusinessUnitID pulid.ID `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
+	OrganizationID pulid.ID `json:"organizationId" keel:"organization_id,pk,tenant"`
 
 	// OwnerKind and OwnerID name the run or conversation turn this belongs to.
 	// There is no foreign key, because one column cannot point at two tables;
 	// the rows are swept on a retention schedule instead of cascaded.
-	OwnerKind string   `json:"ownerKind" bun:"owner_kind,type:VARCHAR(20),notnull"`
-	OwnerID   pulid.ID `json:"ownerId"   bun:"owner_id,type:VARCHAR(100),notnull"`
+	OwnerKind string   `json:"ownerKind" keel:"owner_kind"`
+	OwnerID   pulid.ID `json:"ownerId"   keel:"owner_id"`
 
-	Attempt  int    `json:"attempt"  bun:"attempt,type:INTEGER,notnull,default:1"`
-	Kind     string `json:"kind"     bun:"kind,type:VARCHAR(20),notnull"`
-	Status   string `json:"status"   bun:"status,type:VARCHAR(20),notnull"`
-	StepKey  string `json:"stepKey"  bun:"step_key,type:VARCHAR(120),notnull"`
-	ToolName string `json:"toolName" bun:"tool_name,type:VARCHAR(200),notnull,default:''"`
-	CallID   string `json:"callId"   bun:"call_id,type:VARCHAR(200),notnull,default:''"`
+	Attempt  int    `json:"attempt"  keel:"attempt"`
+	Kind     string `json:"kind"     keel:"kind"`
+	Status   string `json:"status"   keel:"status"`
+	StepKey  string `json:"stepKey"  keel:"step_key"`
+	ToolName string `json:"toolName" keel:"tool_name"`
+	CallID   string `json:"callId"   keel:"call_id"`
 
-	Arguments map[string]any `json:"arguments" bun:"arguments,type:JSONB,notnull,default:'{}'::jsonb"`
-	Outcome   map[string]any `json:"outcome"   bun:"outcome,type:JSONB,notnull,default:'{}'::jsonb"`
+	Arguments map[string]any `json:"arguments" keel:"arguments,jsonb"`
+	Outcome   map[string]any `json:"outcome"   keel:"outcome,jsonb"`
 
 	// TraceID and SpanID are the span the step ran in. AgentDefinitionID and
 	// AgentDefinitionVersion are the agent that made the call as it was then,
 	// which for a delegate's step is not the agent the run belongs to, and
 	// DelegateCallID the task it was working on.
-	TraceID                string   `json:"traceId"                bun:"trace_id,type:VARCHAR(32),nullzero"`
-	SpanID                 string   `json:"spanId"                 bun:"span_id,type:VARCHAR(16),nullzero"`
-	AgentDefinitionID      pulid.ID `json:"agentDefinitionId"      bun:"agent_definition_id,type:VARCHAR(100),nullzero"`
-	AgentDefinitionVersion *int64   `json:"agentDefinitionVersion" bun:"agent_definition_version,type:BIGINT,nullzero"`
-	DelegateCallID         string   `json:"delegateCallId"         bun:"delegate_call_id,type:VARCHAR(200),nullzero"`
+	TraceID                string   `json:"traceId"                keel:"trace_id,nullzero"`
+	SpanID                 string   `json:"spanId"                 keel:"span_id,nullzero"`
+	AgentDefinitionID      pulid.ID `json:"agentDefinitionId"      keel:"agent_definition_id,nullzero"`
+	AgentDefinitionVersion *int64   `json:"agentDefinitionVersion" keel:"agent_definition_version"`
+	DelegateCallID         string   `json:"delegateCallId"         keel:"delegate_call_id,nullzero"`
 
-	StartedAtMs *int64 `json:"startedAtMs" bun:"started_at_ms,type:BIGINT,scanonly"`
-	SettledAtMs *int64 `json:"settledAtMs" bun:"settled_at_ms,type:BIGINT,nullzero"`
+	StartedAtMs *int64 `json:"startedAtMs" keel:"started_at_ms,readonly"`
+	SettledAtMs *int64 `json:"settledAtMs" keel:"settled_at_ms"`
 
-	Version   int64 `json:"version"   bun:"version,type:BIGINT"`
-	CreatedAt int64 `json:"createdAt" bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
-	UpdatedAt int64 `json:"updatedAt" bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
+	Version   int64 `json:"version"   keel:"version,version"`
+	CreatedAt int64 `json:"createdAt" keel:"created_at,autocreate"`
+	UpdatedAt int64 `json:"updatedAt" keel:"updated_at,autoupdate"`
 
-	BusinessUnit *tenant.BusinessUnit `bun:"rel:belongs-to,join:business_unit_id=id" json:"-"`
-	Organization *tenant.Organization `bun:"rel:belongs-to,join:organization_id=id"  json:"-"`
+	BusinessUnit *tenant.BusinessUnit `json:"-"`
+	Organization *tenant.Organization `json:"-"`
+}
+
+func (s *AgentRunStep) BeforeCreate(_ context.Context) error {
+	if s.Attempt == 0 {
+		s.Attempt = 1
+	}
+
+	return nil
 }
 
 func (s *AgentRunStep) Validate(multiErr *errortypes.MultiError) {
@@ -129,21 +135,4 @@ func (s *AgentRunStep) GetBusinessUnitID() pulid.ID {
 
 func (s *AgentRunStep) GetTableName() string {
 	return "agent_run_steps"
-}
-
-func (s *AgentRunStep) BeforeAppendModel(_ context.Context, query bun.Query) error {
-	now := timeutils.NowUnix()
-
-	switch query.(type) {
-	case *bun.InsertQuery:
-		if s.ID.IsNil() {
-			s.ID = pulid.MustNew("ars_")
-		}
-		s.CreatedAt = now
-		s.UpdatedAt = now
-	case *bun.UpdateQuery:
-		s.UpdatedAt = now
-	}
-
-	return nil
 }

@@ -7,7 +7,6 @@ import (
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
-	"github.com/uptrace/bun"
 )
 
 type ListDetentionPoliciesRequest struct {
@@ -239,7 +238,6 @@ type DetentionOccurrenceRepository interface {
 
 	LinkCharges(
 		ctx context.Context,
-		tx bun.IDB,
 		req *LinkOccurrenceChargesRequest,
 	) error
 }
@@ -321,19 +319,19 @@ type DetentionNoticeRepository interface {
 
 // StopFact is the settled dwell history a backtest re-prices.
 type StopFact struct {
-	StopID                 pulid.ID `bun:"stop_id"`
-	ShipmentID             pulid.ID `bun:"shipment_id"`
-	CustomerID             pulid.ID `bun:"customer_id"`
-	LocationID             pulid.ID `bun:"location_id"`
-	ShipmentTypeID         pulid.ID `bun:"shipment_type_id"`
-	ServiceTypeID          pulid.ID `bun:"service_type_id"`
-	StopType               string   `bun:"stop_type"`
-	ScheduleType           string   `bun:"schedule_type"`
-	ScheduledWindowStart   int64    `bun:"scheduled_window_start"`
-	ScheduledWindowEnd     *int64   `bun:"scheduled_window_end"`
-	ActualArrival          *int64   `bun:"actual_arrival"`
-	ActualDeparture        *int64   `bun:"actual_departure"`
-	CountDetentionOverride *bool    `bun:"count_detention_override"`
+	StopID                 pulid.ID
+	ShipmentID             pulid.ID
+	CustomerID             pulid.ID
+	LocationID             pulid.ID
+	ShipmentTypeID         pulid.ID
+	ServiceTypeID          pulid.ID
+	StopType               string
+	ScheduleType           string
+	ScheduledWindowStart   int64
+	ScheduledWindowEnd     *int64
+	ActualArrival          *int64
+	ActualDeparture        *int64
+	CountDetentionOverride *bool
 }
 
 type ListStopFactsRequest struct {
@@ -354,45 +352,45 @@ type DetentionStatsRequest struct {
 }
 
 type FacilityDetentionStat struct {
-	LocationID         pulid.ID            `bun:"location_id"          json:"locationId"`
-	LocationName       string              `bun:"location_name"        json:"locationName"`
-	StopCount          int                 `bun:"stop_count"           json:"stopCount"`
-	BreachCount        int                 `bun:"breach_count"         json:"breachCount"`
-	AvgDwellMinutes    int                 `bun:"avg_dwell_minutes"    json:"avgDwellMinutes"`
-	MedianDwellMinutes float64             `bun:"median_dwell_minutes" json:"medianDwellMinutes"`
-	P90DwellMinutes    float64             `bun:"p90_dwell_minutes"    json:"p90DwellMinutes"`
-	BilledAmount       decimal.Decimal     `bun:"billed_amount"        json:"billedAmount"`
-	DriverPayAmount    decimal.NullDecimal `bun:"driver_pay_amount"    json:"driverPayAmount"`
-	NetMargin          decimal.NullDecimal `bun:"net_margin"           json:"netMargin"`
-	WaivedAmount       decimal.Decimal     `bun:"waived_amount"        json:"waivedAmount"`
-	DisputeCount       int                 `bun:"dispute_count"        json:"disputeCount"`
-	SuppressedCount    int                 `bun:"suppressed_count"     json:"suppressedCount"`
+	LocationID         pulid.ID            `json:"locationId"`
+	LocationName       string              `json:"locationName"`
+	StopCount          int                 `json:"stopCount"`
+	BreachCount        int                 `json:"breachCount"`
+	AvgDwellMinutes    int                 `json:"avgDwellMinutes"`
+	MedianDwellMinutes float64             `json:"medianDwellMinutes"`
+	P90DwellMinutes    float64             `json:"p90DwellMinutes"`
+	BilledAmount       decimal.Decimal     `json:"billedAmount"`
+	DriverPayAmount    decimal.NullDecimal `json:"driverPayAmount"`
+	NetMargin          decimal.NullDecimal `json:"netMargin"`
+	WaivedAmount       decimal.Decimal     `json:"waivedAmount"`
+	DisputeCount       int                 `json:"disputeCount"`
+	SuppressedCount    int                 `json:"suppressedCount"`
 }
 
 type CustomerDetentionStat struct {
-	CustomerID      pulid.ID            `bun:"customer_id"       json:"customerId"`
-	CustomerName    string              `bun:"customer_name"     json:"customerName"`
-	StopCount       int                 `bun:"stop_count"        json:"stopCount"`
-	BreachCount     int                 `bun:"breach_count"      json:"breachCount"`
-	BilledAmount    decimal.Decimal     `bun:"billed_amount"     json:"billedAmount"`
-	DriverPayAmount decimal.NullDecimal `bun:"driver_pay_amount" json:"driverPayAmount"`
-	NetMargin       decimal.NullDecimal `bun:"net_margin"        json:"netMargin"`
-	WaivedAmount    decimal.Decimal     `bun:"waived_amount"     json:"waivedAmount"`
-	DisputeCount    int                 `bun:"dispute_count"     json:"disputeCount"`
-	SuppressedCount int                 `bun:"suppressed_count"  json:"suppressedCount"`
+	CustomerID      pulid.ID            `json:"customerId"`
+	CustomerName    string              `json:"customerName"`
+	StopCount       int                 `json:"stopCount"`
+	BreachCount     int                 `json:"breachCount"`
+	BilledAmount    decimal.Decimal     `json:"billedAmount"`
+	DriverPayAmount decimal.NullDecimal `json:"driverPayAmount"`
+	NetMargin       decimal.NullDecimal `json:"netMargin"`
+	WaivedAmount    decimal.Decimal     `json:"waivedAmount"`
+	DisputeCount    int                 `json:"disputeCount"`
+	SuppressedCount int                 `json:"suppressedCount"`
 }
 
 type WaiverLeakageStat struct {
-	Reason        string          `bun:"reason"         json:"reason"`
-	WaiverCount   int             `bun:"waiver_count"   json:"waiverCount"`
-	ApproverCount int             `bun:"approver_count" json:"approverCount"`
-	WaivedAmount  decimal.Decimal `bun:"waived_amount"  json:"waivedAmount"`
+	Reason        string          `json:"reason"`
+	WaiverCount   int             `json:"waiverCount"`
+	ApproverCount int             `json:"approverCount"`
+	WaivedAmount  decimal.Decimal `json:"waivedAmount"`
 }
 
 // StopBaseline is what a stop actually billed, keyed for backtest comparison.
 type StopBaseline struct {
-	StopID         pulid.ID        `bun:"stop_id"`
-	BillableAmount decimal.Decimal `bun:"billable_amount"`
+	StopID         pulid.ID
+	BillableAmount decimal.Decimal
 }
 
 type DetentionAnalyticsRepository interface {

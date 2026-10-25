@@ -4,9 +4,10 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission/permissiondb"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/uptrace/bun"
 )
 
 const (
@@ -22,7 +23,7 @@ type AdminRoleParams struct {
 
 func CreateAdminRole(
 	ctx context.Context,
-	db bun.IDB,
+	db *keel.DB,
 	params AdminRoleParams,
 ) (*permission.Role, error) {
 	now := params.Scope.now()
@@ -39,11 +40,8 @@ func CreateAdminRole(
 		UpdatedAt:      now,
 	}
 
-	if _, err := db.NewInsert().Model(role).Exec(ctx); err != nil {
+	if err := permissiondb.Roles.Create(ctx, db, role); err != nil {
 		return nil, fmt.Errorf("create admin role: %w", err)
-	}
-	if err := params.Scope.record(ctx, "roles", role.ID); err != nil {
-		return nil, err
 	}
 
 	registry := params.Registry
@@ -51,47 +49,12 @@ func CreateAdminRole(
 		registry = permission.NewRegistry()
 	}
 
-	if err := createAdminPermissions(ctx, db, params.Scope, role.ID, registry); err != nil {
-		return nil, err
+	grants := planAdminGrants(registry, role.ID, nil, now).add
+	if err := permissiondb.ResourcePermissions.CreateMany(ctx, db, grants); err != nil {
+		return nil, fmt.Errorf("grant the admin role every resource: %w", err)
 	}
 
 	return role, nil
-}
-
-func createAdminPermissions(
-	ctx context.Context,
-	db bun.IDB,
-	scope Scope,
-	roleID pulid.ID,
-	registry *permission.Registry,
-) error {
-	now := scope.now()
-
-	for _, res := range registry.All() {
-		ops := make([]permission.Operation, 0, len(res.Operations))
-		for _, op := range res.Operations {
-			ops = append(ops, op.Operation)
-		}
-
-		perm := &permission.ResourcePermission{
-			ID:         pulid.MustNew("rp_"),
-			RoleID:     roleID,
-			Resource:   res.Resource,
-			Operations: ops,
-			DataScope:  permission.DataScopeOrganization,
-			CreatedAt:  now,
-			UpdatedAt:  now,
-		}
-
-		if _, err := db.NewInsert().Model(perm).Exec(ctx); err != nil {
-			return fmt.Errorf("create permission for resource %s: %w", res.Resource, err)
-		}
-		if err := scope.record(ctx, "resource_permissions", perm.ID); err != nil {
-			return err
-		}
-	}
-
-	return nil
 }
 
 type RoleAssignmentParams struct {
@@ -100,10 +63,9 @@ type RoleAssignmentParams struct {
 	RoleID         pulid.ID
 	AssignedBy     pulid.ID
 	AssignedAt     int64
-	Record         Recorder
 }
 
-func AssignRole(ctx context.Context, db bun.IDB, params RoleAssignmentParams) error {
+func AssignRole(ctx context.Context, db *keel.DB, params RoleAssignmentParams) error {
 	assignment := &permission.UserRoleAssignment{
 		ID:             pulid.MustNew("ura_"),
 		UserID:         params.UserID,
@@ -113,13 +75,9 @@ func AssignRole(ctx context.Context, db bun.IDB, params RoleAssignmentParams) er
 		AssignedAt:     params.AssignedAt,
 	}
 
-	if _, err := db.NewInsert().Model(assignment).Exec(ctx); err != nil {
+	if err := permissiondb.UserRoleAssignments.Create(ctx, db, assignment); err != nil {
 		return fmt.Errorf("assign role %s to user %s: %w", params.RoleID, params.UserID, err)
 	}
 
-	if params.Record == nil {
-		return nil
-	}
-
-	return params.Record(ctx, "user_role_assignments", assignment.ID)
+	return nil
 }

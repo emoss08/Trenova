@@ -2,19 +2,16 @@ package workerinjuryrepository
 
 import (
 	"context"
-	"database/sql"
-	"errors"
 	"fmt"
 
-	"github.com/emoss08/trenova/pkg/buncolgen/workercol"
-
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker/workerdb"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
 	"github.com/emoss08/trenova/pkg/dberror"
-	"github.com/emoss08/trenova/pkg/errortypes"
-	"github.com/uptrace/bun"
+	"github.com/emoss08/trenova/pkg/listquery"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
@@ -23,6 +20,52 @@ const (
 	defaultInjuryPageSize  = 500
 	defaultSummaryPageSize = 20
 )
+
+var injuryErrors = dberror.Mapping{
+	Entity: "WorkerInjury",
+	Unique: []dberror.Constraint{
+		{
+			Name:    "uq_worker_injuries_case",
+			Field:   "caseNumber",
+			Message: "That case number is already used for this year; try again",
+		},
+	},
+	ForeignKey: []dberror.Constraint{
+		{
+			Name:    "fk_worker_injuries_worker",
+			Field:   "workerId",
+			Message: "Worker does not exist or belongs to a different organization",
+		},
+		{
+			Name:    "fk_worker_injuries_safety_event",
+			Field:   "safetyEventId",
+			Message: "Safety event does not exist or belongs to a different organization",
+		},
+		{
+			Name:    "fk_worker_injuries_document",
+			Field:   "documentId",
+			Message: "Document does not exist or belongs to a different organization",
+		},
+	},
+}
+
+var summaryErrors = dberror.Mapping{
+	Entity: "OSHAAnnualSummary",
+	Unique: []dberror.Constraint{
+		{
+			Name:    "uq_osha_annual_summaries_year",
+			Field:   "year",
+			Message: "A summary already exists for that year",
+		},
+	},
+}
+
+var recordableClassifications = []worker.OSHACaseClassification{
+	worker.CaseOtherRecordable,
+	worker.CaseJobTransferOrRestriction,
+	worker.CaseDaysAway,
+	worker.CaseDeath,
+}
 
 type Params struct {
 	fx.In
@@ -50,56 +93,36 @@ func limitOr(requested, fallback int) int {
 	return fallback
 }
 
+func injuryLoads(includeWorker, includeDocument, includeEvent bool) []keel.Loader {
+	i := workerdb.WorkerInjuries
+	loads := make([]keel.Loader, 0, 3)
+	loads = append(loads, listquery.When(includeWorker, i.Worker())...)
+	loads = append(loads, listquery.When(includeDocument, i.Document())...)
+
+	return append(loads, listquery.When(includeEvent, i.SafetyEvent())...)
+}
+
+func injuriesQuery(req *workerports.ListWorkerInjuriesRequest) *keel.Query[worker.WorkerInjury] {
+	i := workerdb.WorkerInjuries
+
+	return i.Where(
+		keel.When(req.WorkerID.IsNotNil(), i.WorkerID.Eq(req.WorkerID)),
+		keel.When(req.CaseYear > 0, i.CaseYear.Eq(req.CaseYear)),
+		keel.When(req.RecordableOnly, i.Classification.In(recordableClassifications...)),
+		keel.When(req.OpenOnly, i.Status.Eq(worker.InjuryCaseOpen)),
+	).
+		Load(injuryLoads(req.IncludeWorker, req.IncludeDocument, req.IncludeEvent)...).
+		Order(i.CaseYear.Desc(), i.CaseNumber.Desc()).
+		Limit(limitOr(req.Limit, defaultInjuryPageSize))
+}
+
 func (r *repository) ListInjuries(
 	ctx context.Context,
 	req *workerports.ListWorkerInjuriesRequest,
 ) ([]*worker.WorkerInjury, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*worker.WorkerInjury, error) {
-		cols := workercol.WorkerInjuryColumns
-		entities := make([]*worker.WorkerInjury, 0, 16)
-
-		q := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(&entities).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				sq = workercol.WorkerInjuryScopeTenant(sq, req.TenantInfo)
-				if !req.WorkerID.IsNil() {
-					sq = sq.Where(cols.WorkerID.Eq(), req.WorkerID)
-				}
-				if req.CaseYear > 0 {
-					sq = sq.Where(cols.CaseYear.Eq(), req.CaseYear)
-				}
-				if req.RecordableOnly {
-					sq = sq.Where(
-						cols.Classification.In(),
-						bun.In([]worker.OSHACaseClassification{
-							worker.CaseOtherRecordable,
-							worker.CaseJobTransferOrRestriction,
-							worker.CaseDaysAway,
-							worker.CaseDeath,
-						}),
-					)
-				}
-				if req.OpenOnly {
-					sq = sq.Where(cols.Status.Eq(), worker.InjuryCaseOpen)
-				}
-				return sq
-			}).
-			Order(cols.CaseYear.OrderDesc()).
-			Order(cols.CaseNumber.OrderDesc()).
-			Limit(int64(limitOr(req.Limit, defaultInjuryPageSize)))
-
-		if req.IncludeWorker {
-			q = q.Relation(workercol.WorkerInjuryRelations.Worker)
-		}
-		if req.IncludeDocument {
-			q = q.Relation(workercol.WorkerInjuryRelations.Document)
-		}
-		if req.IncludeEvent {
-			q = q.Relation(workercol.WorkerInjuryRelations.SafetyEvent)
-		}
-
-		if err := q.Scan(ctx); err != nil {
+		entities, err := injuriesQuery(req).List(ctx, r.db.Keel(ctx))
+		if err != nil {
 			r.l.Error("failed to list injuries", zap.Error(err))
 			return nil, fmt.Errorf("list injuries: %w", err)
 		}
@@ -113,27 +136,12 @@ func (r *repository) GetInjuryByID(
 	req *workerports.GetWorkerInjuryByIDRequest,
 ) (*worker.WorkerInjury, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*worker.WorkerInjury, error) {
-		entity := new(worker.WorkerInjury)
-		q := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(entity).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return workercol.WorkerInjuryScopeTenant(sq, req.TenantInfo).
-					Where(workercol.WorkerInjuryColumns.ID.Eq(), req.ID)
-			})
-
-		if req.IncludeWorker {
-			q = q.Relation(workercol.WorkerInjuryRelations.Worker)
-		}
-		if req.IncludeDocument {
-			q = q.Relation(workercol.WorkerInjuryRelations.Document)
-		}
-		if req.IncludeEvent {
-			q = q.Relation(workercol.WorkerInjuryRelations.SafetyEvent)
-		}
-
-		if err := q.Scan(ctx); err != nil {
-			return nil, dberror.HandleNotFoundError(err, "WorkerInjury")
+		i := workerdb.WorkerInjuries
+		entity, err := i.Where(i.ID.Eq(req.ID)).
+			Load(injuryLoads(req.IncludeWorker, req.IncludeDocument, req.IncludeEvent)...).
+			One(ctx, r.db.Keel(ctx))
+		if err != nil {
+			return nil, injuryErrors.Map(err, req.ID.String())
 		}
 
 		return entity, nil
@@ -145,22 +153,9 @@ func (r *repository) CreateInjury(
 	entity *worker.WorkerInjury,
 ) (*worker.WorkerInjury, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*worker.WorkerInjury, error) {
-		if _, err := r.db.DBForContext(ctx).
-			NewInsert().
-			Model(entity).
-			Returning("*").
-			Exec(ctx); err != nil {
-			if dberror.IsUniqueConstraintViolation(err) {
-				// Two cases racing for the same line on the log. The caller reads
-				// the next number and inserts; on a clash the number is stale.
-				return nil, errortypes.NewValidationError(
-					"caseNumber",
-					errortypes.ErrDuplicate,
-					"That case number is already used for this year; try again",
-				)
-			}
+		if err := workerdb.WorkerInjuries.Create(ctx, r.db.Keel(ctx), entity); err != nil {
 			r.l.Error("failed to create injury", zap.Error(err))
-			return nil, fmt.Errorf("create injury: %w", err)
+			return nil, injuryErrors.Map(err, entity.ID.String())
 		}
 
 		return entity, nil
@@ -172,26 +167,9 @@ func (r *repository) UpdateInjury(
 	entity *worker.WorkerInjury,
 ) (*worker.WorkerInjury, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*worker.WorkerInjury, error) {
-		ov := entity.Version
-		entity.Version++
-
-		results, err := r.db.DBForContext(ctx).
-			NewUpdate().
-			Model(entity).
-			WherePK().
-			Where(workercol.WorkerInjuryColumns.Version.Eq(), ov).
-			Returning("*").
-			Exec(ctx)
-		if err != nil {
+		if err := workerdb.WorkerInjuries.Save(ctx, r.db.Keel(ctx), entity); err != nil {
 			r.l.Error("failed to update injury", zap.Error(err))
-			return nil, fmt.Errorf("update injury: %w", err)
-		}
-		if err = dberror.CheckRowsAffected(
-			results,
-			"WorkerInjury",
-			entity.ID.String(),
-		); err != nil {
-			return nil, err
+			return nil, injuryErrors.Map(err, entity.ID.String())
 		}
 
 		return entity, nil
@@ -203,20 +181,17 @@ func (r *repository) DeleteInjury(
 	req *workerports.GetWorkerInjuryByIDRequest,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
-		results, err := r.db.DBForContext(ctx).
-			NewDelete().
-			Model((*worker.WorkerInjury)(nil)).
-			Apply(func(dq *bun.DeleteQuery) *bun.DeleteQuery {
-				return workercol.WorkerInjuryScopeTenantDelete(dq, req.TenantInfo).
-					Where(workercol.WorkerInjuryColumns.ID.Eq(), req.ID)
-			}).
-			Exec(ctx)
+		err := workerdb.WorkerInjuries.DeleteRow(
+			ctx,
+			r.db.Keel(ctx),
+			&worker.WorkerInjury{ID: req.ID},
+		)
 		if err != nil {
 			r.l.Error("failed to delete injury", zap.Error(err))
-			return fmt.Errorf("delete injury: %w", err)
+			return injuryErrors.Map(err, req.ID.String())
 		}
 
-		return dberror.CheckRowsAffected(results, "WorkerInjury", req.ID.String())
+		return nil
 	})
 }
 
@@ -229,18 +204,10 @@ func (r *repository) NextCaseNumber(
 	req *workerports.NextCaseNumberRequest,
 ) (int32, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (int32, error) {
-		cols := workercol.WorkerInjuryColumns
-
-		var highest int32
-		err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model((*worker.WorkerInjury)(nil)).
-			ColumnExpr("COALESCE(MAX("+cols.CaseNumber.Qualified()+"), 0)").
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return workercol.WorkerInjuryScopeTenant(sq, req.TenantInfo).
-					Where(cols.CaseYear.Eq(), req.CaseYear)
-			}).
-			Scan(ctx, &highest)
+		i := workerdb.WorkerInjuries
+		highest, err := keel.IntoOne[int32](ctx, r.db.Keel(ctx), i.
+			Pick(keel.Raw("COALESCE(MAX(?), 0)::int", i.CaseNumber)).
+			Where(i.CaseYear.Eq(req.CaseYear)))
 		if err != nil {
 			r.l.Error("failed to read the next case number", zap.Error(err))
 			return 0, fmt.Errorf("read next case number: %w", err)
@@ -255,19 +222,12 @@ func (r *repository) GetSummary(
 	req *workerports.GetOSHASummaryRequest,
 ) (*worker.OSHAAnnualSummary, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*worker.OSHAAnnualSummary, error) {
-		entity := new(worker.OSHAAnnualSummary)
-		err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(entity).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return workercol.OSHAAnnualSummaryScopeTenant(sq, req.TenantInfo).
-					Where(workercol.OSHAAnnualSummaryColumns.Year.Eq(), req.Year)
-			}).
-			Relation(workercol.OSHAAnnualSummaryRelations.CertifiedBy).
-			Limit(1).
-			Scan(ctx)
+		s := workerdb.OSHAAnnualSummaries
+		entity, err := s.Where(s.Year.Eq(req.Year)).
+			Load(s.CertifiedBy()).
+			One(ctx, r.db.Keel(ctx))
 		if err != nil {
-			if errors.Is(err, sql.ErrNoRows) {
+			if dberror.IsNotFoundError(err) {
 				return nil, nil
 			}
 			r.l.Error("failed to read the osha summary", zap.Error(err))
@@ -283,16 +243,11 @@ func (r *repository) ListSummaries(
 	req *workerports.ListOSHASummariesRequest,
 ) ([]*worker.OSHAAnnualSummary, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*worker.OSHAAnnualSummary, error) {
-		entities := make([]*worker.OSHAAnnualSummary, 0, 8)
-		err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(&entities).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return workercol.OSHAAnnualSummaryScopeTenant(sq, req.TenantInfo)
-			}).
-			Order(workercol.OSHAAnnualSummaryColumns.Year.OrderDesc()).
-			Limit(int64(limitOr(req.Limit, defaultSummaryPageSize))).
-			Scan(ctx)
+		s := workerdb.OSHAAnnualSummaries
+		entities, err := s.Query().
+			Order(s.Year.Desc()).
+			Limit(limitOr(req.Limit, defaultSummaryPageSize)).
+			List(ctx, r.db.Keel(ctx))
 		if err != nil {
 			r.l.Error("failed to list osha summaries", zap.Error(err))
 			return nil, fmt.Errorf("list osha summaries: %w", err)
@@ -307,20 +262,9 @@ func (r *repository) CreateSummary(
 	entity *worker.OSHAAnnualSummary,
 ) (*worker.OSHAAnnualSummary, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*worker.OSHAAnnualSummary, error) {
-		if _, err := r.db.DBForContext(ctx).
-			NewInsert().
-			Model(entity).
-			Returning("*").
-			Exec(ctx); err != nil {
-			if dberror.IsUniqueConstraintViolation(err) {
-				return nil, errortypes.NewValidationError(
-					"year",
-					errortypes.ErrDuplicate,
-					"A summary already exists for that year",
-				)
-			}
+		if err := workerdb.OSHAAnnualSummaries.Create(ctx, r.db.Keel(ctx), entity); err != nil {
 			r.l.Error("failed to create osha summary", zap.Error(err))
-			return nil, fmt.Errorf("create osha summary: %w", err)
+			return nil, summaryErrors.Map(err, entity.ID.String())
 		}
 
 		return entity, nil
@@ -332,26 +276,9 @@ func (r *repository) UpdateSummary(
 	entity *worker.OSHAAnnualSummary,
 ) (*worker.OSHAAnnualSummary, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*worker.OSHAAnnualSummary, error) {
-		ov := entity.Version
-		entity.Version++
-
-		results, err := r.db.DBForContext(ctx).
-			NewUpdate().
-			Model(entity).
-			WherePK().
-			Where(workercol.OSHAAnnualSummaryColumns.Version.Eq(), ov).
-			Returning("*").
-			Exec(ctx)
-		if err != nil {
+		if err := workerdb.OSHAAnnualSummaries.Save(ctx, r.db.Keel(ctx), entity); err != nil {
 			r.l.Error("failed to update osha summary", zap.Error(err))
-			return nil, fmt.Errorf("update osha summary: %w", err)
-		}
-		if err = dberror.CheckRowsAffected(
-			results,
-			"OSHAAnnualSummary",
-			entity.ID.String(),
-		); err != nil {
-			return nil, err
+			return nil, summaryErrors.Map(err, entity.ID.String())
 		}
 
 		return entity, nil

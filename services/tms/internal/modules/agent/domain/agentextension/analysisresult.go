@@ -307,7 +307,7 @@ func AnalysisKindOf(fieldType, format, dateStyle string) AnalysisValueKind {
 	}
 
 	switch fieldType {
-	case "int", "decimal":
+	case "int", "decimal", "float":
 		return AnalysisValueNumber
 	case "epoch":
 		if dateStyle == "date" {

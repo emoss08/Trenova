@@ -1,0 +1,96 @@
+{
+  "key": "workforce-turnover",
+  "version": "1.0.0",
+  "name": "Workforce Turnover",
+  "description": "Hires, terminations and rehires by month, read from the employment timeline rather than the current roster",
+  "category": "Compliance",
+  "tags": [
+    "workforce",
+    "turnover",
+    "headcount"
+  ],
+  "defaultFormat": "xlsx",
+  "definition": {
+    "version": 2,
+    "entity": "worker_employment_event",
+    "columns": [
+      {
+        "id": "month",
+        "label": "Month",
+        "dimension": {
+          "field": "effectiveAt",
+          "bucket": "month"
+        }
+      },
+      {
+        "id": "event_kind",
+        "label": "Event",
+        "dimension": {
+          "field": "kind"
+        }
+      },
+      {
+        "id": "event_count",
+        "label": "Events",
+        "measure": {
+          "field": "id",
+          "agg": "count"
+        },
+        "display": {
+          "style": "number",
+          "decimals": 0,
+          "grouping": true
+        }
+      },
+      {
+        "id": "worker_count",
+        "label": "Workers",
+        "measure": {
+          "field": "worker.id",
+          "agg": "count_distinct"
+        },
+        "display": {
+          "style": "number",
+          "decimals": 0,
+          "grouping": true
+        }
+      }
+    ],
+    "filters": {
+      "and": [
+        {
+          "field": "effectiveAt",
+          "op": "last_n_days",
+          "param": "windowDays"
+        },
+        {
+          "field": "kind",
+          "op": "in",
+          "value": [
+            "Hired",
+            "Rehired",
+            "Terminated"
+          ]
+        }
+      ]
+    },
+    "sort": [
+      {
+        "column": "month",
+        "desc": true
+      },
+      {
+        "column": "event_kind"
+      }
+    ],
+    "parameters": [
+      {
+        "name": "windowDays",
+        "label": "Window (days)",
+        "type": "int",
+        "required": true,
+        "default": 365
+      }
+    ]
+  }
+}

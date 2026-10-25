@@ -1,41 +1,33 @@
 package inboundmessageservice
 
 import (
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/inboundmessage"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/inboundmessage/inboundmessagedb"
 	"github.com/emoss08/trenova/internal/modules/kernel/app/encryptionservice"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
-	"github.com/emoss08/trenova/pkg/buncolgen"
-	"github.com/emoss08/trenova/pkg/buncolgen/inboundmessagecol"
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
 func EnvelopeColumns() []kernelports.EnvelopeColumn {
-	cols := inboundmessagecol.MailboxColumns
-	mailboxColumn := func(
-		name string,
-		value buncolgen.Column,
-		field string,
-	) kernelports.EnvelopeColumn {
+	m := inboundmessagedb.Mailboxes
+	mailboxColumn := func(name string, value keel.Expr, field string) kernelports.EnvelopeColumn {
 		return kernelports.EnvelopeColumn{
-			Name:           name,
-			Table:          inboundmessagecol.MailboxTable,
-			ID:             cols.ID,
-			OrganizationID: cols.OrganizationID,
-			BusinessUnitID: cols.BusinessUnitID,
-			Value:          value,
-			Rebind:         true,
-			Scopes:         mailboxSecretScopes(field),
+			Name:   name,
+			Value:  value,
+			Rebind: true,
+			Scopes: mailboxSecretScopes(field),
 		}
 	}
 	return []kernelports.EnvelopeColumn{
 		mailboxColumn(
 			"inbound mailbox signing secret",
-			cols.SigningSecret,
+			m.SigningSecret,
 			inboundmessage.SigningSecretField,
 		),
 		mailboxColumn(
 			"inbound mailbox provider API key",
-			cols.ProviderAPIKey,
+			m.ProviderAPIKey,
 			inboundmessage.ProviderAPIKeyField,
 		),
 	}

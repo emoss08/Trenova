@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/emoss08/keel/analytics/ir"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/common"
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
@@ -56,13 +57,13 @@ func reportViewOf(entity *report.ReportDefinition) *reportDefinitionView {
 	}
 
 	view.Source = definition.Entity
-	view.RowLimit = definition.Limit
+	view.RowLimit = definition.Limit.Value
 	view.Columns = make([]string, 0, len(definition.Columns))
 	for idx := range definition.Columns {
 		column := &definition.Columns[idx]
 		view.Columns = append(
 			view.Columns,
-			stringutils.FirstNonEmpty(column.Label, column.Ref.String(), column.ID),
+			stringutils.FirstNonEmpty(column.Label, columnSubject(column), column.ID),
 		)
 	}
 	view.Charts = make([]string, 0, len(definition.Charts))
@@ -78,14 +79,35 @@ func reportViewOf(entity *report.ReportDefinition) *reportDefinitionView {
 	return view
 }
 
-func countFilters(group *report.FilterGroup) int {
-	if group == nil {
+func columnSubject(column *ir.Column) string {
+	switch {
+	case column.Dimension != nil:
+		return column.Dimension.Field
+	case column.Measure != nil:
+		return strings.TrimSpace(string(column.Measure.Agg) + " " + column.Measure.Field)
+	case column.Calc != nil:
+		return column.Calc.String()
+	case column.Window != nil:
+		return string(column.Window.Fn) + " " + column.Window.Of
+	default:
+		return ""
+	}
+}
+
+func countFilters(filter *ir.Filter) int {
+	if filter == nil {
 		return 0
 	}
+	if filter.And == nil && filter.Or == nil {
+		return 1
+	}
 
-	count := len(group.Filters)
-	for idx := range group.Groups {
-		count += countFilters(&group.Groups[idx])
+	count := 0
+	for idx := range filter.And {
+		count += countFilters(&filter.And[idx])
+	}
+	for idx := range filter.Or {
+		count += countFilters(&filter.Or[idx])
 	}
 
 	return count
@@ -117,7 +139,7 @@ func (t *CreateReportTool) Preview(
 		return nil, err
 	}
 
-	planned := reporting.NewDefinition(save)
+	planned := t.reports.NewDefinition(save)
 	change, err := toolpreview.Create(toolpreview.Record{
 		Resource: permission.ResourceReport,
 		Label:    planned.Name,
@@ -158,7 +180,7 @@ func (t *UpdateReportTool) Preview(
 	}
 
 	updated := *existing
-	reporting.ApplyDefinitionSave(&updated, save)
+	t.reports.ApplyDefinitionSave(&updated, save)
 	change, err := toolpreview.Changed(
 		reportRecord(existing),
 		reportViewOf(existing),
@@ -215,7 +237,7 @@ func (t *ForkReportTool) Preview(
 		return nil, err
 	}
 
-	planned := reporting.NewCannedFork(entry, request)
+	planned := t.reports.NewCannedFork(entry, request)
 	change, err := toolpreview.Create(toolpreview.Record{
 		Resource: permission.ResourceReport,
 		Label:    planned.Name,

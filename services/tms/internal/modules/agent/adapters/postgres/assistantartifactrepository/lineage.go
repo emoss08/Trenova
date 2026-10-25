@@ -8,22 +8,33 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/emoss08/trenova/pkg/buncolgen/assistantartifactcol"
-
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/assistantartifact"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/assistantartifact/assistantartifactdb"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation/conversationdb"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantartifactports"
-	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/uptrace/bun"
 	"go.uber.org/zap"
 )
 
+var lineageColumns = []string{"root", "pinned", "last", "family"}
+
 // rootExpr is the lineage an artifact belongs to: the first version's id,
 // which is its own id for the first version.
-const rootExpr = "COALESCE(aart.lineage_id, aart.id)"
+func rootExpr() keel.Expr {
+	a := assistantartifactdb.Artifacts
+
+	return keel.Raw("COALESCE(?, ?)", a.LineageID, a.ID)
+}
+
+func rootIs(root string) keel.Pred {
+	a := assistantartifactdb.Artifacts
+
+	return keel.Raw("COALESCE(?, ?) = ?", a.LineageID, a.ID, root)
+}
 
 // ErrBadCursor is a cursor this repository did not hand out.
 var ErrBadCursor = errors.New("artifact cursor is not one a previous page returned")
@@ -63,9 +74,14 @@ func decodeCursor(raw string) (lineageCursor, error) {
 }
 
 // familyExpr is the family of the row's kind, written out from the domain's
-// own table so the server filters on the families the Desk draws.
-func familyExpr() string {
-	var b strings.Builder
+// own table so the server filters on the families the Desk draws. The kinds
+// are the domain's own constants, never input, so they are written in place.
+func familyExpr() keel.Expr {
+	a := assistantartifactdb.Artifacts
+	var (
+		b    strings.Builder
+		args []any
+	)
 	b.WriteString("CASE")
 	for _, family := range assistantartifact.AllFamilies() {
 		kinds, viewPath := assistantartifact.FamilyKinds(family)
@@ -73,7 +89,9 @@ func familyExpr() string {
 			continue
 		}
 		b.WriteString(" WHEN ")
-		b.WriteString(familyCondition(kinds, viewPath))
+		condition, conditionArgs := familyCondition(a, kinds, viewPath)
+		b.WriteString(condition)
+		args = append(args, conditionArgs...)
 		b.WriteString(" THEN '")
 		b.WriteString(string(family))
 		b.WriteString("'")
@@ -82,12 +100,14 @@ func familyExpr() string {
 	b.WriteString(string(assistantartifact.FamilyDoc))
 	b.WriteString("' END")
 
-	return b.String()
+	return keel.Raw(b.String(), args...)
 }
 
-// familyCondition is the SQL that holds for a row in a family. The kinds are
-// the domain's own constants, never input, so they are written in place.
-func familyCondition(kinds []assistantartifact.Kind, viewPath *bool) string {
+func familyCondition(
+	a *assistantartifactdb.ArtifactsTable,
+	kinds []assistantartifact.Kind,
+	viewPath *bool,
+) (condition string, args []any) {
 	quoted := make([]string, 0, len(kinds))
 	for _, kind := range kinds {
 		if kind == assistantartifact.KindTableView && viewPath != nil {
@@ -97,18 +117,19 @@ func familyCondition(kinds []assistantartifact.Kind, viewPath *bool) string {
 	}
 	var clauses []string
 	if len(quoted) > 0 {
-		clauses = append(clauses, "aart.kind IN ("+strings.Join(quoted, ", ")+")")
+		clauses = append(clauses, "? IN ("+strings.Join(quoted, ", ")+")")
+		args = append(args, a.Kind)
 	}
 	if viewPath != nil {
 		opens := "IS NULL"
 		if *viewPath {
 			opens = "IS NOT NULL"
 		}
-		clauses = append(clauses,
-			"(aart.kind = 'table_view' AND aart.payload->'path' "+opens+")")
+		clauses = append(clauses, "(? = 'table_view' AND ?->'path' "+opens+")")
+		args = append(args, a.Kind, a.Payload)
 	}
 
-	return "(" + strings.Join(clauses, " OR ") + ")"
+	return "(" + strings.Join(clauses, " OR ") + ")", args
 }
 
 func escapeLike(text string) string {
@@ -117,33 +138,30 @@ func escapeLike(text string) string {
 
 // matching restricts a read to the thread's artifacts that match the search.
 // A lineage matches when any of its versions does.
-func matching(
-	q *bun.SelectQuery,
-	req *assistantartifactports.ListArtifactsRequest,
-) *bun.SelectQuery {
-	cols := assistantartifactcol.ArtifactColumns
-
-	q = q.WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-		return assistantartifactcol.ArtifactScopeTenant(sq, req.TenantInfo).
-			Where(cols.ThreadID.Eq(), req.ThreadID)
-	})
+func matching(req *assistantartifactports.ListArtifactsRequest) []keel.Pred {
+	a := assistantartifactdb.Artifacts
+	preds := []keel.Pred{a.ThreadID.Eq(req.ThreadID)}
 	if needle := strings.TrimSpace(req.Query); needle != "" {
 		pattern := "%" + escapeLike(needle) + "%"
-		q = q.WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-			return sq.Where("aart.title ILIKE ?", pattern).
-				WhereOr("aart.payload->>'tool' ILIKE ?", pattern)
-		})
+		preds = append(preds, keel.Or(
+			keel.Raw("? ILIKE ?", a.Title, pattern),
+			keel.Raw("?->>'tool' ILIKE ?", a.Payload, pattern),
+		))
 	}
 
-	return q
+	return preds
+}
+
+type familyCount struct {
+	Family string
+	Pinned bool
+	Count  int
 }
 
 type lineageRow struct {
-	Root   string `bun:"root"`
-	Pinned bool   `bun:"pinned"`
-	Last   int64  `bun:"last"`
-	Family string `bun:"family"`
-	Count  int    `bun:"count"`
+	Root   string
+	Pinned bool
+	Last   int64
 }
 
 func (r *repository) ListPage(
@@ -169,23 +187,30 @@ func (r *repository) ListPage(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*assistantartifactports.ArtifactPage, error) {
-			db := r.db.DBForContext(ctx)
 			page := &assistantartifactports.ArtifactPage{
 				Counts: assistantartifactports.ArtifactCounts{
 					Families: map[assistantartifact.Family]int{},
 				},
 			}
 
-			lineages := lineageQuery(db, &req)
+			lineages := lineageQuery(&req)
+			var (
+				counted []familyCount
+				rows    []lineageRow
+			)
+			err := keel.Batch(ctx, r.db.Keel(ctx),
+				keel.IntoSlice(lineages.Query().
+					With(lineages).
+					Group(lineages.Col("family"), lineages.Col("pinned")).
+					Pick(lineages.Col("family"), lineages.Col("pinned"), keel.Count()), &counted),
+				keel.IntoSlice(pageQuery(lineages, &req, cursor, limit), &rows),
+			)
+			if err != nil {
+				r.l.Error("failed to page assistant artifacts",
+					zap.String("threadId", req.ThreadID.String()),
+					zap.Error(err))
 
-			var counted []lineageRow
-			if err := db.NewSelect().
-				TableExpr("(?) AS lineages", lineages).
-				ColumnExpr("lineages.family, lineages.pinned").
-				ColumnExpr("count(*) AS count").
-				GroupExpr("lineages.family, lineages.pinned").
-				Scan(ctx, &counted); err != nil {
-				return nil, fmt.Errorf("count assistant artifacts: %w", err)
+				return nil, fmt.Errorf("page assistant artifacts: %w", err)
 			}
 			for _, row := range counted {
 				family := assistantartifact.Family(row.Family)
@@ -199,14 +224,6 @@ func (r *repository) ListPage(
 				}
 			}
 
-			var rows []lineageRow
-			if err := pageQuery(db, lineages, &req, cursor, limit).Scan(ctx, &rows); err != nil {
-				r.l.Error("failed to page assistant artifacts",
-					zap.String("threadId", req.ThreadID.String()),
-					zap.Error(err))
-
-				return nil, fmt.Errorf("page assistant artifacts: %w", err)
-			}
 			if len(rows) > limit {
 				last := rows[limit-1]
 				page.NextCursor = lineageCursor{
@@ -224,7 +241,6 @@ func (r *repository) ListPage(
 				roots = append(roots, row.Root)
 			}
 			artifacts, err := r.versionsOf(ctx, versionsRequest{
-				tenant:   req.TenantInfo,
 				threadID: req.ThreadID,
 				roots:    roots,
 				summary:  req.Summary,
@@ -241,46 +257,49 @@ func (r *repository) ListPage(
 
 // lineageQuery is one row per lineage that matches the search: its root,
 // whether any version is pinned, when it was last added to, and its family.
-func lineageQuery(db bun.IDB, req *assistantartifactports.ListArtifactsRequest) *bun.SelectQuery {
-	lineages := db.NewSelect().
-		Model((*assistantartifact.Artifact)(nil)).
-		ColumnExpr(rootExpr + " AS root").
-		ColumnExpr("bool_or(aart.pinned) AS pinned").
-		ColumnExpr("max(aart.created_at) AS last").
-		ColumnExpr("max(" + familyExpr() + ") AS family")
+func lineageQuery(req *assistantartifactports.ListArtifactsRequest) *keel.CTETable {
+	a := assistantartifactdb.Artifacts
 
-	return matching(lineages, req).GroupExpr(rootExpr)
+	return keel.CTE("lineages", lineageColumns, a.
+		Where(matching(req)...).
+		Group(rootExpr()).
+		Pick(
+			rootExpr(),
+			keel.Raw("bool_or(?)", a.Pinned),
+			a.CreatedAt.Max(),
+			keel.Raw("max(?)", familyExpr()),
+		))
 }
 
 // pageQuery is one page of lineages after the cursor, in the pane's order:
 // pinned first, then most recently added to. It reads one more than the page
 // to know whether another follows.
 func pageQuery(
-	db bun.IDB,
-	lineages *bun.SelectQuery,
+	lineages *keel.CTETable,
 	req *assistantartifactports.ListArtifactsRequest,
 	cursor *lineageCursor,
 	limit int,
-) *bun.SelectQuery {
-	window := db.NewSelect().
-		TableExpr("(?) AS lineages", lineages).
-		ColumnExpr("lineages.root, lineages.pinned, lineages.last")
+) *keel.Query[keel.Row] {
+	root, pinned, last := lineages.Col("root"), lineages.Col("pinned"), lineages.Col("last")
+	window := lineages.Query().With(lineages)
 	if req.Family != "" {
-		window = window.Where("lineages.family = ?", string(req.Family))
+		window.Where(keel.Raw("? = ?", lineages.Col("family"), string(req.Family)))
 	}
 	if req.PinnedOnly {
-		window = window.Where("lineages.pinned")
+		window.Where(keel.Raw("?", pinned))
 	}
 	if cursor != nil {
-		window = window.Where(
-			"(lineages.pinned::int, lineages.last, lineages.root) < (?, ?, ?)",
+		window.Where(keel.Raw(
+			"(?::int, ?, ?) < (?, ?, ?)",
+			pinned, last, root,
 			boolInt(cursor.pinned), cursor.last, cursor.root,
-		)
+		))
 	}
 
 	return window.
-		OrderExpr("lineages.pinned DESC, lineages.last DESC, lineages.root DESC").
-		Limit(int64(limit + 1))
+		Pick(root, pinned, last).
+		Order(pinned.Desc(), last.Desc(), root.Desc()).
+		Limit(limit + 1)
 }
 
 func boolInt(value bool) int {
@@ -292,71 +311,83 @@ func boolInt(value bool) int {
 }
 
 type versionsRequest struct {
-	tenant   pagination.TenantInfo
 	threadID pulid.ID
 	roots    []string
 	summary  bool
+}
+
+type summaryPayload struct {
+	ID      pulid.ID
+	Payload map[string]any
 }
 
 func (r *repository) versionsOf(
 	ctx context.Context,
 	req versionsRequest,
 ) ([]*assistantartifact.Artifact, error) {
-	artifacts := make([]*assistantartifact.Artifact, 0, len(req.roots))
-	if err := versionsQuery(r.db.DBForContext(ctx), &artifacts, &req).Scan(ctx); err != nil {
+	a := assistantartifactdb.Artifacts
+	db := r.db.Keel(ctx)
+	if !req.summary {
+		artifacts, err := versionsQuery(&req).All(ctx, db)
+		if err != nil {
+			return nil, fmt.Errorf("read artifact versions: %w", err)
+		}
+
+		return artifacts, nil
+	}
+
+	var (
+		artifacts []*assistantartifact.Artifact
+		payloads  []summaryPayload
+	)
+	err := keel.Batch(ctx, db,
+		keel.ListInto(versionsQuery(&req).Omit(a.Payload), &artifacts),
+		keel.IntoSlice(summaryQuery(&req), &payloads),
+	)
+	if err != nil {
 		return nil, fmt.Errorf("read artifact versions: %w", err)
+	}
+
+	byID := make(map[pulid.ID]map[string]any, len(payloads))
+	for _, row := range payloads {
+		byID[row.ID] = row.Payload
+	}
+	for _, artifact := range artifacts {
+		artifact.Payload = byID[artifact.ID]
 	}
 
 	return artifacts, nil
 }
 
-func versionsQuery(
-	db bun.IDB,
-	dest *[]*assistantartifact.Artifact,
-	req *versionsRequest,
-) *bun.SelectQuery {
-	cols := assistantartifactcol.ArtifactColumns
-	query := db.NewSelect().Model(dest)
-	if req.summary {
-		query = query.
-			ExcludeColumn(cols.Payload.String()).
-			ColumnExpr(
-				cols.Payload.Expr(
-					"COALESCE((SELECT jsonb_object_agg(e.key, e.value) FROM jsonb_each({}) AS e WHERE e.key IN (?)), jsonb_build_object()) AS payload",
-				),
-				bun.List(assistantartifact.SummaryPayloadKeys()),
-			)
-	}
+func summaryQuery(req *versionsRequest) *keel.Query[assistantartifact.Artifact] {
+	a := assistantartifactdb.Artifacts
 
-	return query.
-		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-			return assistantartifactcol.ArtifactScopeTenant(sq, req.tenant).
-				Where(cols.ThreadID.Eq(), req.threadID).
-				Where(rootExpr+" IN (?)", bun.List(req.roots))
-		}).
-		Order(cols.LineageSeq.OrderAsc(), cols.CreatedAt.OrderAsc(), cols.ID.OrderAsc())
+	return versionsQuery(req).Pick(a.ID, keel.Raw(
+		"COALESCE((SELECT jsonb_object_agg(e.key, e.value) FROM jsonb_each(?) AS e "+
+			"WHERE e.key = ANY(?)), jsonb_build_object())",
+		a.Payload,
+		assistantartifact.SummaryPayloadKeys(),
+	))
+}
+
+func versionsQuery(req *versionsRequest) *keel.Query[assistantartifact.Artifact] {
+	a := assistantartifactdb.Artifacts
+
+	return a.Where(
+		a.ThreadID.Eq(req.threadID),
+		keel.Raw("COALESCE(?, ?) = ANY(?)", a.LineageID, a.ID, req.roots),
+	).
+		Order(a.LineageSeq.Asc(), a.CreatedAt.Asc(), a.ID.Asc())
 }
 
 // rootOf is the lineage an artifact belongs to, read from the artifact.
-func (r *repository) rootOf(
-	ctx context.Context,
-	tenant pagination.TenantInfo,
-	threadID, id pulid.ID,
-) (string, error) {
-	cols := assistantartifactcol.ArtifactColumns
-	var root string
-	err := r.db.DBForContext(ctx).
-		NewSelect().
-		Model((*assistantartifact.Artifact)(nil)).
-		ColumnExpr(rootExpr).
-		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-			return assistantartifactcol.ArtifactScopeTenant(sq, tenant).
-				Where(cols.ThreadID.Eq(), threadID).
-				Where(cols.ID.Eq(), id)
-		}).
-		Scan(ctx, &root)
+func rootOf(ctx context.Context, db *keel.DB, threadID, id pulid.ID) (string, error) {
+	a := assistantartifactdb.Artifacts
+	root, err := keel.IntoOne[string](ctx, db, a.
+		Where(a.ThreadID.Eq(threadID), a.ID.Eq(id)).
+		Pick(rootExpr()))
 	if err != nil {
-		return "", dberror.HandleNotFoundError(err, "AssistantArtifact")
+		return "", artifactErrors.Map(err, id.String())
 	}
 
 	return root, nil
@@ -367,13 +398,12 @@ func (r *repository) ListLineage(
 	req assistantartifactports.LineageRequest,
 ) ([]*assistantartifact.Artifact, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*assistantartifact.Artifact, error) {
-		root, err := r.rootOf(ctx, req.TenantInfo, req.ThreadID, req.ID)
+		root, err := rootOf(ctx, r.db.Keel(ctx), req.ThreadID, req.ID)
 		if err != nil {
 			return nil, err
 		}
 
 		return r.versionsOf(ctx, versionsRequest{
-			tenant:   req.TenantInfo,
 			threadID: req.ThreadID,
 			roots:    []string{root},
 		})
@@ -385,21 +415,12 @@ func (r *repository) FindBySlug(
 	req assistantartifactports.SlugRequest,
 ) (*assistantartifact.Artifact, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*assistantartifact.Artifact, error) {
-		cols := assistantartifactcol.ArtifactColumns
-		entity := new(assistantartifact.Artifact)
-		err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(entity).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return assistantartifactcol.ArtifactScopeTenant(sq, req.TenantInfo).
-					Where(cols.ThreadID.Eq(), req.ThreadID).
-					Where(cols.Slug.Eq(), req.Slug)
-			}).
-			Order(cols.LineageSeq.OrderAsc()).
-			Limit(1).
-			Scan(ctx)
+		a := assistantartifactdb.Artifacts
+		entity, err := a.Where(a.ThreadID.Eq(req.ThreadID), a.Slug.Eq(req.Slug)).
+			Order(a.LineageSeq.Asc()).
+			First(ctx, r.db.Keel(ctx))
 		if err != nil {
-			return nil, dberror.HandleNotFoundError(err, "AssistantArtifact")
+			return nil, artifactErrors.Map(err, req.Slug)
 		}
 
 		return entity, nil
@@ -409,23 +430,18 @@ func (r *repository) FindBySlug(
 func (r *repository) TakenSlugs(
 	ctx context.Context,
 	threadID pulid.ID,
-	tenant pagination.TenantInfo,
+	_ pagination.TenantInfo,
 	base string,
 ) (map[string]bool, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (map[string]bool, error) {
-		cols := assistantartifactcol.ArtifactColumns
-		var slugs []string
-		err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model((*assistantartifact.Artifact)(nil)).
-			ColumnExpr(cols.Slug.Qualified()).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return assistantartifactcol.ArtifactScopeTenant(sq, tenant).
-					Where(cols.ThreadID.Eq(), threadID).
-					Where(cols.LineageID.IsNull()).
-					Where(cols.Slug.Qualified()+" LIKE ?", escapeLike(base)+"%")
-			}).
-			Scan(ctx, &slugs)
+		a := assistantartifactdb.Artifacts
+		slugs, err := keel.Into[string](ctx, r.db.Keel(ctx), a.
+			Where(
+				a.ThreadID.Eq(threadID),
+				a.LineageID.IsNull(),
+				keel.Raw("? LIKE ?", a.Slug, escapeLike(base)+"%"),
+			).
+			Pick(a.Slug))
 		if err != nil {
 			return nil, fmt.Errorf("read taken artifact slugs: %w", err)
 		}
@@ -444,11 +460,7 @@ func (r *repository) InsertVersion(
 	artifact *assistantartifact.Artifact,
 ) (*assistantartifact.Artifact, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*assistantartifact.Artifact, error) {
-		if _, err := r.db.DBForContext(ctx).
-			NewInsert().
-			Model(artifact).
-			Returning("*").
-			Exec(ctx); err != nil {
+		if err := assistantartifactdb.Artifacts.Create(ctx, r.db.Keel(ctx), artifact); err != nil {
 			r.l.Error("failed to insert assistant artifact version",
 				zap.String("threadId", artifact.ThreadID.String()),
 				zap.Error(err))
@@ -461,14 +473,14 @@ func (r *repository) InsertVersion(
 }
 
 type turnQuestion struct {
-	ID       pulid.ID `bun:"id"`
-	Question string   `bun:"question"`
+	ID       pulid.ID
+	Question string
 }
 
 func (r *repository) TurnQuestions(
 	ctx context.Context,
 	threadID pulid.ID,
-	tenant pagination.TenantInfo,
+	_ pagination.TenantInfo,
 	messageIDs []pulid.ID,
 ) (map[pulid.ID]string, error) {
 	if len(messageIDs) == 0 {
@@ -476,26 +488,19 @@ func (r *repository) TurnQuestions(
 	}
 
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (map[pulid.ID]string, error) {
-		var rows []turnQuestion
-		err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model((*conversation.Message)(nil)).
-			ColumnExpr("amsg.id").
-			ColumnExpr(`(
-				SELECT asked.content FROM assistant_messages AS asked
-				WHERE asked.organization_id = amsg.organization_id
-					AND asked.business_unit_id = amsg.business_unit_id
-					AND asked.thread_id = amsg.thread_id
-					AND asked.role = ?
-					AND asked.sequence < amsg.sequence
-				ORDER BY asked.sequence DESC
-				LIMIT 1
-			) AS question`, conversation.RoleUser).
-			Where("amsg.organization_id = ?", tenant.OrgID).
-			Where("amsg.business_unit_id = ?", tenant.BuID).
-			Where("amsg.thread_id = ?", threadID).
-			Where("amsg.id IN (?)", bun.List(messageIDs)).
-			Scan(ctx, &rows)
+		m := conversationdb.Messages
+		asked := conversationdb.Messages.As("asked")
+		rows, err := keel.Into[turnQuestion](ctx, r.db.Keel(ctx), m.
+			Where(m.ThreadID.Eq(threadID), m.ID.In(messageIDs...)).
+			Pick(m.ID, keel.Raw("COALESCE(?, '')", keel.Scalar(asked.
+				Where(
+					asked.ThreadID.EqCol(m.ThreadID),
+					asked.Role.Eq(conversation.RoleUser),
+					keel.Raw("? < ?", asked.Sequence, m.Sequence),
+				).
+				Pick(asked.Content).
+				Order(asked.Sequence.Desc()).
+				Limit(1)))))
 		if err != nil {
 			return nil, fmt.Errorf("read turn questions: %w", err)
 		}

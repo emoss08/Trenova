@@ -25,8 +25,8 @@ type <Entity>DeskCardReader interface {
 }
 ```
 
-Implement it in `adapters/postgres/<entity>repository/deskcard.go` with buncolgen helpers,
-each method's body inside `dbtx.Read` and querying through `DBForContext(ctx)`. Every list
+Implement it in `adapters/postgres/<entity>repository/deskcard.go` on the generated keel
+tables, each method's body inside `dbtx.Read` and passing `r.db.Keel(ctx)` to every terminal. Every list
 takes a `Limit`. Add `deskcard_integration_test.go` (`//go:build integration`) next to it.
 
 ### The card service

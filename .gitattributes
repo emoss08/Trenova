@@ -6,3 +6,4 @@
 *.conf text eol=lf
 Caddyfile text eol=lf
 Dockerfile* text eol=lf
+services/tms/**/keel_gen.go linguist-generated=true

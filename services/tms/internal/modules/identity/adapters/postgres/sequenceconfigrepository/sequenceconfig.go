@@ -5,19 +5,20 @@ import (
 	"fmt"
 	"sort"
 
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant/tenantdb"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
-	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/emoss08/trenova/shared/timeutils"
-	"github.com/uptrace/bun"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
+
+const busyMessage = "Sequence configuration is busy. Retry the request."
 
 type Params struct {
 	fx.In
@@ -47,14 +48,12 @@ func (r *repository) GetByTenant(
 			return nil, err
 		}
 
-		configs := make([]*tenant.SequenceConfig, 0, len(tenant.RequiredSequenceTypes()))
+		sc := tenantdb.SequenceConfigs
 		requiredTypes := tenant.RequiredSequenceTypes()
-		if err := r.db.DBForContext(ctx).NewSelect().
-			Model(&configs).
-			Where("organization_id = ?", req.TenantInfo.OrgID).
-			Where("business_unit_id = ?", req.TenantInfo.BuID).
-			Where("sequence_type IN (?)", bun.List(requiredTypes)).
-			Scan(ctx); err != nil {
+		configs, err := sc.Where(sc.SequenceType.In(requiredTypes...)).
+			Limit(len(requiredTypes)).
+			List(ctx, r.db.Keel(ctx))
+		if err != nil {
 			return nil, err
 		}
 
@@ -90,60 +89,48 @@ func (r *repository) UpdateByTenant(
 	doc *tenant.SequenceConfigDocument,
 ) (*tenant.SequenceConfigDocument, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*tenant.SequenceConfigDocument, error) {
-		now := timeutils.NowUnix()
-
-		err := r.db.WithTx(ctx, kernelports.TxOptions{}, func(c context.Context, tx bun.Tx) error {
-			for _, cfg := range doc.Configs {
-				if cfg == nil {
-					continue
-				}
-
-				cfg.OrganizationID = doc.OrganizationID
-				cfg.BusinessUnitID = doc.BusinessUnitID
-				if cfg.ID.IsNil() {
-					cfg.ID = pulid.MustNew("sqcfg_")
-				}
-				if cfg.CreatedAt == 0 {
-					cfg.CreatedAt = now
-				}
-				cfg.UpdatedAt = now
-
-				_, err := r.db.DBForContext(c).NewInsert().
-					Model(cfg).
-					On(`CONFLICT (sequence_type, organization_id, business_unit_id) DO UPDATE`).
-					Set("prefix = EXCLUDED.prefix").
-					Set("include_year = EXCLUDED.include_year").
-					Set("year_digits = EXCLUDED.year_digits").
-					Set("include_month = EXCLUDED.include_month").
-					Set("include_week_number = EXCLUDED.include_week_number").
-					Set("include_day = EXCLUDED.include_day").
-					Set("sequence_digits = EXCLUDED.sequence_digits").
-					Set("include_location_code = EXCLUDED.include_location_code").
-					Set("include_random_digits = EXCLUDED.include_random_digits").
-					Set("random_digits_count = EXCLUDED.random_digits_count").
-					Set("include_check_digit = EXCLUDED.include_check_digit").
-					Set("include_business_unit_code = EXCLUDED.include_business_unit_code").
-					Set("use_separators = EXCLUDED.use_separators").
-					Set("separator_char = EXCLUDED.separator_char").
-					Set("allow_custom_format = EXCLUDED.allow_custom_format").
-					Set("custom_format = EXCLUDED.custom_format").
-					Set("location_code_strategy = EXCLUDED.location_code_strategy").
-					Set("version = sqcfg.version + 1").
-					Set("updated_at = EXCLUDED.updated_at").
-					Returning("*").
-					Exec(c)
-				if err != nil {
-					return fmt.Errorf("upsert sequence config %s: %w", cfg.SequenceType, err)
-				}
+		configs := make([]*tenant.SequenceConfig, 0, len(doc.Configs))
+		for _, cfg := range doc.Configs {
+			if cfg == nil {
+				continue
 			}
 
-			return nil
-		})
-		if err != nil {
-			return nil, dberror.MapRetryableTransactionError(
-				err,
-				"Sequence configuration is busy. Retry the request.",
-			)
+			cfg.OrganizationID = doc.OrganizationID
+			cfg.BusinessUnitID = doc.BusinessUnitID
+			configs = append(configs, cfg)
+		}
+
+		if len(configs) > 0 {
+			sc := tenantdb.SequenceConfigs
+			if _, err := sc.Upsert(
+				ctx,
+				r.db.Keel(ctx),
+				configs,
+				keel.OnConflict(sc.SequenceType, sc.OrganizationID, sc.BusinessUnitID).Update(
+					sc.Prefix,
+					sc.IncludeYear,
+					sc.YearDigits,
+					sc.IncludeMonth,
+					sc.IncludeWeekNumber,
+					sc.IncludeDay,
+					sc.SequenceDigits,
+					sc.IncludeLocationCode,
+					sc.IncludeRandomDigits,
+					sc.RandomDigitsCount,
+					sc.IncludeCheckDigit,
+					sc.IncludeBusinessUnitCode,
+					sc.UseSeparators,
+					sc.SeparatorChar,
+					sc.AllowCustomFormat,
+					sc.CustomFormat,
+					sc.LocationCodeStrategy,
+				),
+			); err != nil {
+				return nil, dberror.MapRetryableTransactionError(
+					fmt.Errorf("upsert sequence configs: %w", err),
+					busyMessage,
+				)
+			}
 		}
 
 		return r.GetByTenant(ctx, tenantports.GetSequenceConfigRequest{
@@ -156,30 +143,27 @@ func (r *repository) UpdateByTenant(
 }
 
 func (r *repository) ensureDefaults(ctx context.Context, orgID, buID pulid.ID) error {
-	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
-		now := timeutils.NowUnix()
-		defaults := make([]*tenant.SequenceConfig, 0, len(tenant.RequiredSequenceTypes()))
-		for _, sequenceType := range tenant.RequiredSequenceTypes() {
-			cfg := tenant.DefaultSequenceConfig(orgID, buID, sequenceType)
-			if cfg == nil {
-				continue
-			}
-
+	defaults := make([]*tenant.SequenceConfig, 0, len(tenant.RequiredSequenceTypes()))
+	for _, sequenceType := range tenant.RequiredSequenceTypes() {
+		if cfg := tenant.DefaultSequenceConfig(orgID, buID, sequenceType); cfg != nil {
 			defaults = append(defaults, cfg)
 		}
-
-		for _, cfg := range defaults {
-			cfg.CreatedAt = now
-			cfg.UpdatedAt = now
-			_, err := r.db.DBForContext(ctx).NewInsert().
-				Model(cfg).
-				On("CONFLICT (sequence_type, organization_id, business_unit_id) DO NOTHING").
-				Exec(ctx)
-			if err != nil {
-				return fmt.Errorf("seed default sequence config: %w", err)
-			}
-		}
-
+	}
+	if len(defaults) == 0 {
 		return nil
-	})
+	}
+
+	sc := tenantdb.SequenceConfigs
+	if _, err := sc.CreateOrSkip(
+		ctx,
+		r.db.Keel(ctx),
+		defaults,
+		sc.SequenceType,
+		sc.OrganizationID,
+		sc.BusinessUnitID,
+	); err != nil {
+		return fmt.Errorf("seed default sequence config: %w", err)
+	}
+
+	return nil
 }

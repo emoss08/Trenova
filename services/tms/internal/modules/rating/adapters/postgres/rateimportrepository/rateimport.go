@@ -3,25 +3,19 @@ package rateimportrepository
 import (
 	"context"
 
-	"github.com/emoss08/trenova/pkg/buncolgen/rateimportcol"
-
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
-	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/rateimport"
+	"github.com/emoss08/trenova/internal/modules/rating/domain/rateimport/rateimportdb"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/rateimportports"
-	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/pagination"
-	"github.com/uptrace/bun"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
 
-// rowInsertBatch bounds how many staged rows go in one statement. A class
-// tariff runs to thousands, and one insert that size holds locks far longer
-// than the work deserves.
-const rowInsertBatch = 500
+var batchErrors = dberror.Mapping{Entity: "RateImportBatch"}
 
 type Params struct {
 	fx.In
@@ -42,38 +36,43 @@ func New(p Params) rateimportports.RateImportRepository {
 	}
 }
 
+func batchQuery(
+	req *rateimportports.GetRateImportBatchByIDRequest,
+) *keel.Query[rateimport.RateImportBatch] {
+	b := rateimportdb.RateImportBatches
+	q := b.Where(b.ID.Eq(req.RateImportBatchID))
+	if req.IncludeRows {
+		rows := b.Rows()
+		q = q.Load(rows.Order(rows.RowNumber.Asc()))
+	}
+
+	return q
+}
+
 func (r *repository) GetByID(
 	ctx context.Context,
 	req *rateimportports.GetRateImportBatchByIDRequest,
 ) (*rateimport.RateImportBatch, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*rateimport.RateImportBatch, error) {
-		entity := new(rateimport.RateImportBatch)
-		cols := rateimportcol.RateImportBatchColumns
-
-		q := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(entity).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return rateimportcol.RateImportBatchScopeTenant(sq, req.TenantInfo).
-					Where(cols.ID.Eq(), req.RateImportBatchID)
-			})
-
-		if req.IncludeRows {
-			q = q.Relation(
-				buncolgen.Rel(rateimportcol.RateImportBatchRelations.Rows),
-				func(sq *bun.SelectQuery) *bun.SelectQuery {
-					return sq.Order(rateimportcol.RateImportRowColumns.RowNumber.OrderAsc())
-				},
-			)
-		}
-
-		if err := q.Scan(ctx); err != nil {
+		entity, err := batchQuery(req).One(ctx, r.db.Keel(ctx))
+		if err != nil {
 			r.l.Error("failed to get rate import batch", zap.Error(err))
-			return nil, dberror.HandleNotFoundError(err, "RateImportBatch")
+			return nil, batchErrors.Map(err, req.RateImportBatchID.String())
 		}
 
 		return entity, nil
 	})
+}
+
+func batchesQuery(
+	req *rateimportports.ListRateImportBatchesRequest,
+) *keel.Query[rateimport.RateImportBatch] {
+	b := rateimportdb.RateImportBatches
+	if req.RateAgreementID != nil && !req.RateAgreementID.IsNil() {
+		return b.Where(b.RateAgreementID.Eq(*req.RateAgreementID))
+	}
+
+	return b.Query()
 }
 
 func (r *repository) List(
@@ -84,34 +83,41 @@ func (r *repository) List(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*pagination.ListResult[*rateimport.RateImportBatch], error) {
-			cols := rateimportcol.RateImportBatchColumns
-			entities := make([]*rateimport.RateImportBatch, 0, req.Filter.Pagination.SafeLimit())
+			b := rateimportdb.RateImportBatches
+			page := req.Filter.Pagination
+			rows := batchesQuery(req).
+				Order(b.CreatedAt.Desc()).
+				Limit(page.SafeLimit()).
+				Offset(page.SafeOffset())
 
-			q := r.db.DBForContext(ctx).
-				NewSelect().
-				Model(&entities).
-				Apply(rateimportcol.RateImportBatchApplyTenant(req.Filter.TenantInfo))
-
-			if req.RateAgreementID != nil && !req.RateAgreementID.IsNil() {
-				q = q.Where(cols.RateAgreementID.Eq(), *req.RateAgreementID)
-			}
-
-			// Newest first: an import is reviewed while it is fresh.
-			q = q.Order(cols.CreatedAt.OrderDesc()).
-				Limit(int64(req.Filter.Pagination.SafeLimit())).
-				Offset(int64(req.Filter.Pagination.SafeOffset()))
-
-			total, err := q.ScanAndCount(ctx)
-			if err != nil {
+			var items []*rateimport.RateImportBatch
+			var total int64
+			if err := keel.Batch(
+				ctx,
+				r.db.Keel(ctx),
+				keel.ListInto(rows, &items),
+				keel.CountInto(batchesQuery(req), &total),
+			); err != nil {
 				r.l.Error("failed to list rate import batches", zap.Error(err))
 				return nil, err
 			}
 
 			return &pagination.ListResult[*rateimport.RateImportBatch]{
-				Items: entities,
+				Items: items,
 				Total: int(total),
 			}, nil
 		},
+	)
+}
+
+func importRowsQuery(
+	req *rateimportports.ListRateImportRowsRequest,
+) *keel.Query[rateimport.RateImportRow] {
+	row := rateimportdb.RateImportRows
+
+	return row.Where(
+		row.RateImportBatchID.Eq(req.RateImportBatchID),
+		keel.When(req.FailedOnly, row.Error.IsNotNull()),
 	)
 }
 
@@ -123,38 +129,28 @@ func (r *repository) ListRows(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*pagination.ListResult[*rateimport.RateImportRow], error) {
-			cols := rateimportcol.RateImportRowColumns
-			entities := make([]*rateimport.RateImportRow, 0)
+			row := rateimportdb.RateImportRows
+			rows := importRowsQuery(req).Order(row.RowNumber.Asc())
 
-			q := r.db.DBForContext(ctx).
-				NewSelect().
-				Model(&entities).
-				WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-					return rateimportcol.RateImportRowScopeTenant(sq, req.TenantInfo).
-						Where(cols.RateImportBatchID.Eq(), req.RateImportBatchID)
-				})
-
-			// The rows that would not read are what somebody opened the import to fix,
-			// and on a good sheet there are none of them among thousands.
-			if req.FailedOnly {
-				q = q.Where(cols.Error.IsNotNull())
-			}
-
-			q = q.Order(cols.RowNumber.OrderAsc())
-
+			var items []*rateimport.RateImportRow
+			var total int64
+			read := keel.AllInto(rows, &items)
 			if req.Filter != nil {
-				q = q.Limit(int64(req.Filter.Pagination.SafeLimit())).
-					Offset(int64(req.Filter.Pagination.SafeOffset()))
+				page := req.Filter.Pagination
+				read = keel.ListInto(rows.Limit(page.SafeLimit()).Offset(page.SafeOffset()), &items)
 			}
-
-			total, err := q.ScanAndCount(ctx)
-			if err != nil {
+			if err := keel.Batch(
+				ctx,
+				r.db.Keel(ctx),
+				read,
+				keel.CountInto(importRowsQuery(req), &total),
+			); err != nil {
 				r.l.Error("failed to list rate import rows", zap.Error(err))
 				return nil, err
 			}
 
 			return &pagination.ListResult[*rateimport.RateImportRow]{
-				Items: entities,
+				Items: items,
 				Total: int(total),
 			}, nil
 		},
@@ -170,35 +166,17 @@ func (r *repository) Create(
 	rows []*rateimport.RateImportRow,
 ) (*rateimport.RateImportBatch, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*rateimport.RateImportBatch, error) {
-		err := r.db.WithTx(ctx, kernelports.TxOptions{}, func(c context.Context, _ bun.Tx) error {
-			if _, iErr := r.db.DBForContext(c).
-				NewInsert().
-				Model(entity).
-				Returning("*").
-				Exec(c); iErr != nil {
-				return iErr
-			}
-
+		db := r.db.Keel(ctx)
+		err := rateimportdb.RateImportBatches.Create(ctx, db, entity)
+		if err == nil && len(rows) > 0 {
 			for _, row := range rows {
 				row.RateImportBatchID = entity.ID
 			}
-
-			for start := 0; start < len(rows); start += rowInsertBatch {
-				batch := rows[start:min(start+rowInsertBatch, len(rows))]
-
-				if _, iErr := r.db.DBForContext(c).
-					NewInsert().
-					Model(&batch).
-					Exec(c); iErr != nil {
-					return iErr
-				}
-			}
-
-			return nil
-		})
+			err = rateimportdb.RateImportRows.CreateMany(ctx, db, rows)
+		}
 		if err != nil {
 			r.l.Error("failed to stage a rate import", zap.Error(err))
-			return nil, err
+			return nil, batchErrors.Map(err, entity.ID.String())
 		}
 
 		entity.Rows = rows
@@ -212,28 +190,9 @@ func (r *repository) Update(
 	entity *rateimport.RateImportBatch,
 ) (*rateimport.RateImportBatch, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*rateimport.RateImportBatch, error) {
-		ov := entity.Version
-		entity.Version++
-
-		cols := rateimportcol.RateImportBatchColumns
-
-		results, err := r.db.DBForContext(ctx).
-			NewUpdate().
-			Model(entity).
-			WherePK().
-			Where(cols.Version.Eq(), ov).
-			ExcludeColumn("rows").
-			Returning("*").
-			Exec(ctx)
-		if err != nil {
+		if err := rateimportdb.RateImportBatches.Save(ctx, r.db.Keel(ctx), entity); err != nil {
 			r.l.Error("failed to update rate import batch", zap.Error(err))
-			return nil, err
-		}
-
-		if err = dberror.CheckRowsAffected(
-			results, "RateImportBatch", entity.ID.String(),
-		); err != nil {
-			return nil, err
+			return nil, batchErrors.Map(err, entity.ID.String())
 		}
 
 		return entity, nil

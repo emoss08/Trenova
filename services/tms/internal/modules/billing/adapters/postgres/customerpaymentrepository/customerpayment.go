@@ -5,23 +5,29 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/emoss08/trenova/pkg/buncolgen/customerpaymentcol"
-
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/bankreceipt"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/bankreceipt/bankreceiptdb"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/customerpayment"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/customerpayment/customerpaymentdb"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/customerpaymentports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/pkg/dberror"
-	"github.com/emoss08/trenova/pkg/dbhelper"
+	"github.com/emoss08/trenova/pkg/listquery"
 	"github.com/emoss08/trenova/pkg/pagination"
-	"github.com/emoss08/trenova/pkg/querybuilder"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/emoss08/trenova/shared/timeutils"
-	"github.com/uptrace/bun"
+	"github.com/shopspring/decimal"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
+
+const defaultMatchCandidateLimit = 10
+
+var paymentErrors = dberror.Mapping{Entity: "CustomerPayment"}
+
+var creditMemoApplicationErrors = dberror.Mapping{Entity: "CreditMemoApplication"}
 
 type Params struct {
 	fx.In
@@ -39,6 +45,11 @@ func New(p Params) customerpaymentports.CustomerPaymentRepository {
 	return &repository{db: p.DB, l: p.Logger.Named("postgres.customer-payment-repository")}
 }
 
+func orderedApplications() keel.Loader {
+	apps := customerpaymentdb.Payments.Applications()
+	return apps.Order(apps.LineNumber.Asc())
+}
+
 func (r *repository) List(
 	ctx context.Context,
 	req *customerpaymentports.ListCustomerPaymentsRequest,
@@ -47,37 +58,29 @@ func (r *repository) List(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*pagination.ListResult[*customerpayment.Payment], error) {
-			limit := req.Filter.Pagination.SafeLimit()
-			items := make([]*customerpayment.Payment, 0, limit)
+			cp := customerpaymentdb.Payments
+			q := cp.Where(
+				keel.When(req.Filter.Query != "", keel.Or(
+					cp.ReferenceNumber.ContainsFold(req.Filter.Query),
+					cp.Memo.ContainsFold(req.Filter.Query),
+				)),
+				keel.When(req.CustomerID.IsNotNil(), cp.CustomerID.Eq(req.CustomerID)),
+				keel.When(req.Status != "", cp.Status.Eq(req.Status)),
+			)
+			counted := q.Clone()
+			rows := q.Load(orderedApplications()).
+				Order(cp.CreatedAt.Desc()).
+				Limit(req.Filter.Pagination.SafeLimit()).
+				Offset(req.Filter.Pagination.SafeOffset())
 
-			query := r.db.DBForContext(ctx).
-				NewSelect().
-				Model(&items).
-				Where("cp.organization_id = ?", req.Filter.TenantInfo.OrgID).
-				Where("cp.business_unit_id = ?", req.Filter.TenantInfo.BuID).
-				Relation("Applications", func(q *bun.SelectQuery) *bun.SelectQuery {
-					return q.Order("cpa.line_number ASC")
-				}).
-				Order("cp.created_at DESC").
-				Limit(int64(limit)).
-				Offset(int64(req.Filter.Pagination.SafeOffset()))
-
-			if req.Filter.Query != "" {
-				query = query.Where(
-					"(cp.reference_number ILIKE ? OR cp.memo ILIKE ?)",
-					"%"+req.Filter.Query+"%",
-					"%"+req.Filter.Query+"%",
-				)
-			}
-			if !req.CustomerID.IsNil() {
-				query = query.Where("cp.customer_id = ?", req.CustomerID)
-			}
-			if req.Status != "" {
-				query = query.Where("cp.status = ?", req.Status)
-			}
-
-			total, err := query.ScanAndCount(ctx)
-			if err != nil {
+			var items []*customerpayment.Payment
+			var total int64
+			if err := keel.Batch(
+				ctx,
+				r.db.Keel(ctx),
+				keel.ListInto(rows, &items),
+				keel.CountInto(counted, &total),
+			); err != nil {
 				return nil, fmt.Errorf("list customer payments: %w", err)
 			}
 
@@ -89,82 +92,30 @@ func (r *repository) List(
 	)
 }
 
-func (r *repository) applyCursorPageFilters(
-	q *bun.SelectQuery,
-	req *customerpaymentports.ListCustomerPaymentConnectionRequest,
-) (*bun.SelectQuery, error) {
-	return querybuilder.ApplyCursorFilters(
-		q,
-		"cp",
-		req.Filter,
-		req.Cursor,
-		(*customerpayment.Payment)(nil),
-	)
-}
-
-func (r *repository) applyTotalCountFilters(
-	q *bun.SelectQuery,
-	req *customerpaymentports.ListCustomerPaymentConnectionRequest,
-) *bun.SelectQuery {
-	return querybuilder.ApplyFiltersWithoutSort(
-		q,
-		"cp",
-		req.Filter,
-		(*customerpayment.Payment)(nil),
-	)
-}
-
 func (r *repository) ListConnection(
 	ctx context.Context,
 	req *customerpaymentports.ListCustomerPaymentConnectionRequest,
 ) (*pagination.CursorListResult[*customerpayment.Payment], error) {
-	return dbtx.Write(
+	return dbtx.Read(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*pagination.CursorListResult[*customerpayment.Payment], error) {
-			log := r.l.With(
-				zap.String("operation", "ListConnection"),
-				zap.Any("request", req),
-			)
-
-			dba := r.db.DBForContext(ctx)
-			var totalCount *int
-			if req.Cursor.IncludeTotalCount {
-				total, err := dba.
-					NewSelect().
-					Model((*customerpayment.Payment)(nil)).
-					Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-						return r.applyTotalCountFilters(sq, req)
-					}).
-					Count(ctx)
-				if err != nil {
-					log.Error("failed to count customer payments", zap.Error(err))
-					return nil, err
-				}
-				totalCount = new(int(total))
-			}
-
-			result, err := dbhelper.CursorList(
+			result, err := listquery.Connection(
 				ctx,
-				dbhelper.CursorListParams[*customerpayment.Payment]{
-					Filter:     req.Filter,
-					Cursor:     req.Cursor,
-					TotalCount: totalCount,
-					Query: func(entities *[]*customerpayment.Payment) *bun.SelectQuery {
-						return dba.NewSelect().
-							Model(entities).
-							ColumnExpr(customerpaymentcol.PaymentTable.All()).
-							Relation("Applications", func(q *bun.SelectQuery) *bun.SelectQuery {
-								return q.Order("cpa.line_number ASC")
-							})
-					},
-					Apply: func(sq *bun.SelectQuery) (*bun.SelectQuery, error) {
-						return r.applyCursorPageFilters(sq, req)
+				r.db.Keel(ctx),
+				customerpaymentdb.Payments.Query(),
+				&listquery.Request[customerpayment.Payment]{
+					Filter: req.Filter,
+					Cursor: req.Cursor,
+					Shape: func(
+						q *keel.Query[customerpayment.Payment],
+					) *keel.Query[customerpayment.Payment] {
+						return q.Load(orderedApplications())
 					},
 				},
 			)
 			if err != nil {
-				log.Error("failed to scan customer payments", zap.Error(err))
+				r.l.Error("failed to list customer payments", zap.Error(err))
 				return nil, err
 			}
 
@@ -178,20 +129,23 @@ func (r *repository) GetByID(
 	req customerpaymentports.GetCustomerPaymentByIDRequest,
 ) (*customerpayment.Payment, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*customerpayment.Payment, error) {
-		entity := new(customerpayment.Payment)
-		err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(entity).
-			Where("cp.id = ?", req.ID).
-			Where("cp.organization_id = ?", req.TenantInfo.OrgID).
-			Where("cp.business_unit_id = ?", req.TenantInfo.BuID).
-			Relation("Applications", func(q *bun.SelectQuery) *bun.SelectQuery { return q.Order("cpa.line_number ASC") }).
-			Scan(ctx)
+		cp := customerpaymentdb.Payments
+		entity, err := cp.Where(cp.ID.Eq(req.ID)).
+			Load(orderedApplications()).
+			One(ctx, r.db.Keel(ctx))
 		if err != nil {
-			return nil, dberror.HandleNotFoundError(err, "CustomerPayment")
+			return nil, paymentErrors.Map(err, req.ID.String())
 		}
 		return entity, nil
 	})
+}
+
+func unmatchedPayment(cp *customerpaymentdb.PaymentsTable) keel.Pred {
+	br := bankreceiptdb.BankReceipts.As("br")
+	return keel.NotExists(br.Pick(keel.Raw("1")).Where(
+		br.MatchedCustomerPaymentID.EqCol(cp.ID),
+		br.Status.Eq(bankreceipt.StatusMatched),
+	))
 }
 
 func (r *repository) FindMatchCandidates(
@@ -199,18 +153,15 @@ func (r *repository) FindMatchCandidates(
 	req customerpaymentports.FindCustomerPaymentMatchCandidatesRequest,
 ) ([]*customerpayment.Payment, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*customerpayment.Payment, error) {
-		items := make([]*customerpayment.Payment, 0)
-		err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(&items).
-			Where("cp.organization_id = ?", req.TenantInfo.OrgID).
-			Where("cp.business_unit_id = ?", req.TenantInfo.BuID).
-			Where("cp.status = ?", customerpayment.StatusPosted).
-			Where("cp.reference_number = ?", req.ReferenceNumber).
-			Where("cp.amount_minor = ?", req.AmountMinor).
-			Where("NOT EXISTS (SELECT 1 FROM bank_receipts br WHERE br.organization_id = cp.organization_id AND br.business_unit_id = cp.business_unit_id AND br.matched_customer_payment_id = cp.id AND br.status = 'Matched')").
-			Order("cp.created_at DESC").
-			Scan(ctx)
+		cp := customerpaymentdb.Payments
+		items, err := cp.Where(
+			cp.Status.Eq(customerpayment.StatusPosted),
+			cp.ReferenceNumber.Eq(req.ReferenceNumber),
+			cp.AmountMinor.Eq(req.AmountMinor),
+			unmatchedPayment(cp),
+		).
+			Order(cp.CreatedAt.Desc()).
+			All(ctx, r.db.Keel(ctx))
 		if err != nil {
 			return nil, fmt.Errorf("find customer payment match candidates: %w", err)
 		}
@@ -218,42 +169,35 @@ func (r *repository) FindMatchCandidates(
 	})
 }
 
-const defaultMatchCandidateLimit = 10
-
 func (r *repository) FindSuggestedMatchCandidates(
 	ctx context.Context,
 	req customerpaymentports.FindCustomerPaymentMatchCandidatesRequest,
 ) ([]*customerpayment.Payment, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*customerpayment.Payment, error) {
-		items := make([]*customerpayment.Payment, 0)
-		query := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(&items).
-			Where("cp.organization_id = ?", req.TenantInfo.OrgID).
-			Where("cp.business_unit_id = ?", req.TenantInfo.BuID).
-			Where("cp.status = ?", customerpayment.StatusPosted).
-			Where("NOT EXISTS (SELECT 1 FROM bank_receipts br WHERE br.organization_id = cp.organization_id AND br.business_unit_id = cp.business_unit_id AND br.matched_customer_payment_id = cp.id AND br.status = 'Matched')")
-		if req.ReferenceNumber != "" {
-			query = query.Where(
-				"cp.reference_number = ? OR cp.reference_number ILIKE ?",
-				req.ReferenceNumber,
-				"%"+req.ReferenceNumber+"%",
-			)
-		}
-		if req.AmountMinor > 0 {
-			query = query.WhereGroup(" AND ", func(q *bun.SelectQuery) *bun.SelectQuery {
-				return q.Where("cp.amount_minor = ?", req.AmountMinor).
-					WhereOr("ABS(cp.amount_minor - ?) <= 100", req.AmountMinor)
-			})
-		}
-		if req.ReceiptDate > 0 {
-			query = query.Where("ABS(cp.payment_date - ?) <= 604800", req.ReceiptDate)
-		}
+		cp := customerpaymentdb.Payments
 		limit := req.Limit
 		if limit <= 0 {
 			limit = defaultMatchCandidateLimit
 		}
-		err := query.Order("cp.created_at DESC").Limit(int64(limit)).Scan(ctx)
+		items, err := cp.Where(
+			cp.Status.Eq(customerpayment.StatusPosted),
+			unmatchedPayment(cp),
+			keel.When(req.ReferenceNumber != "", keel.Or(
+				cp.ReferenceNumber.Eq(req.ReferenceNumber),
+				cp.ReferenceNumber.ContainsFold(req.ReferenceNumber),
+			)),
+			keel.When(req.AmountMinor > 0, keel.Or(
+				cp.AmountMinor.Eq(req.AmountMinor),
+				keel.Raw("ABS(? - ?) <= 100", cp.AmountMinor, req.AmountMinor),
+			)),
+			keel.When(
+				req.ReceiptDate > 0,
+				keel.Raw("ABS(? - ?) <= 604800", cp.PaymentDate, req.ReceiptDate),
+			),
+		).
+			Order(cp.CreatedAt.Desc()).
+			Limit(limit).
+			List(ctx, r.db.Keel(ctx))
 		if err != nil {
 			return nil, fmt.Errorf("find suggested customer payment matches: %w", err)
 		}
@@ -271,28 +215,41 @@ func (r *repository) Create(
 		}
 		entity.SyncAmounts()
 		assignApplicationFields(entity)
-		if _, err := r.db.DBForContext(ctx).NewInsert().Model(entity).Exec(ctx); err != nil {
-			return nil, fmt.Errorf("create customer payment: %w", err)
+		db := r.db.Keel(ctx)
+		if err := customerpaymentdb.Payments.Create(ctx, db, entity); err != nil {
+			return nil, paymentErrors.Map(err, entity.ID.String())
 		}
-		if len(entity.Applications) > 0 {
-			if _, err := r.db.DBForContext(ctx).
-				NewInsert().
-				Model(&entity.Applications).
-				Exec(ctx); err != nil {
-				return nil, fmt.Errorf("create customer payment applications: %w", err)
-			}
+		if err := r.insertApplications(ctx, db, entity); err != nil {
+			return nil, err
 		}
-		return r.GetByID(
-			ctx,
-			customerpaymentports.GetCustomerPaymentByIDRequest{
-				ID: entity.ID,
-				TenantInfo: pagination.TenantInfo{
-					OrgID: entity.OrganizationID,
-					BuID:  entity.BusinessUnitID,
-				},
+		return r.GetByID(ctx, customerpaymentports.GetCustomerPaymentByIDRequest{
+			ID: entity.ID,
+			TenantInfo: pagination.TenantInfo{
+				OrgID: entity.OrganizationID,
+				BuID:  entity.BusinessUnitID,
 			},
-		)
+		})
 	})
+}
+
+func (r *repository) insertApplications(
+	ctx context.Context,
+	db *keel.DB,
+	entity *customerpayment.Payment,
+) error {
+	apps := make([]*customerpayment.Application, 0, len(entity.Applications))
+	for _, app := range entity.Applications {
+		if app != nil {
+			apps = append(apps, app)
+		}
+	}
+	if len(apps) == 0 {
+		return nil
+	}
+	if err := customerpaymentdb.Applications.CreateMany(ctx, db, apps); err != nil {
+		return fmt.Errorf("create customer payment applications: %w", err)
+	}
+	return nil
 }
 
 func (r *repository) Update(
@@ -302,59 +259,41 @@ func (r *repository) Update(
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*customerpayment.Payment, error) {
 		entity.SyncAmounts()
 		assignApplicationFields(entity)
-		res, err := r.db.DBForContext(ctx).
-			NewUpdate().
-			Model(entity).
-			Where("id = ?", entity.ID).
-			Where("organization_id = ?", entity.OrganizationID).
-			Where("business_unit_id = ?", entity.BusinessUnitID).
-			Where("version = ?", entity.Version).
-			Set("applied_amount_minor = ?", entity.AppliedAmountMinor).
-			Set("unapplied_amount_minor = ?", entity.UnappliedAmountMinor).
-			Set("status = ?", entity.Status).
-			Set("posted_batch_id = ?", entity.PostedBatchID).
-			Set("reversal_batch_id = ?", entity.ReversalBatchID).
-			Set("reversed_by_id = ?", entity.ReversedByID).
-			Set("reversed_at = ?", entity.ReversedAt).
-			Set("reversal_reason = ?", entity.ReversalReason).
-			Set("updated_by_id = ?", entity.UpdatedByID).
-			Set("version = version + 1").
-			Exec(ctx)
-		if err != nil {
-			return nil, fmt.Errorf("update customer payment: %w", err)
-		}
-		if err = dberror.CheckRowsAffected(res, "CustomerPayment", entity.ID.String()); err != nil {
-			return nil, err
+		cp := customerpaymentdb.Payments
+		db := r.db.Keel(ctx)
+		if err := cp.Save(
+			ctx,
+			db,
+			entity,
+			cp.AppliedAmountMinor,
+			cp.UnappliedAmountMinor,
+			cp.Status,
+			cp.PostedBatchID,
+			cp.ReversalBatchID,
+			cp.ReversedByID,
+			cp.ReversedAt,
+			cp.ReversalReason,
+			cp.UpdatedByID,
+		); err != nil {
+			return nil, paymentErrors.Map(err, entity.ID.String())
 		}
 		if entity.Applications != nil {
-			if _, err = r.db.DBForContext(ctx).
-				NewDelete().
-				Model((*customerpayment.Application)(nil)).
-				Where("customer_payment_id = ?", entity.ID).
-				Where("organization_id = ?", entity.OrganizationID).
-				Where("business_unit_id = ?", entity.BusinessUnitID).
-				Exec(ctx); err != nil {
+			cpa := customerpaymentdb.Applications
+			if _, err := cpa.Where(cpa.CustomerPaymentID.Eq(entity.ID)).
+				Delete(ctx, db); err != nil {
 				return nil, fmt.Errorf("replace customer payment applications: %w", err)
 			}
-			if len(entity.Applications) > 0 {
-				if _, err = r.db.DBForContext(ctx).
-					NewInsert().
-					Model(&entity.Applications).
-					Exec(ctx); err != nil {
-					return nil, fmt.Errorf("insert customer payment applications: %w", err)
-				}
+			if err := r.insertApplications(ctx, db, entity); err != nil {
+				return nil, err
 			}
 		}
-		return r.GetByID(
-			ctx,
-			customerpaymentports.GetCustomerPaymentByIDRequest{
-				ID: entity.ID,
-				TenantInfo: pagination.TenantInfo{
-					OrgID: entity.OrganizationID,
-					BuID:  entity.BusinessUnitID,
-				},
+		return r.GetByID(ctx, customerpaymentports.GetCustomerPaymentByIDRequest{
+			ID: entity.ID,
+			TenantInfo: pagination.TenantInfo{
+				OrgID: entity.OrganizationID,
+				BuID:  entity.BusinessUnitID,
 			},
-		)
+		})
 	})
 }
 
@@ -370,10 +309,6 @@ func assignApplicationFields(entity *customerpayment.Payment) {
 	}
 }
 
-// SumReceived totals posted payments by currency over a span, by payment
-// date. Reversed payments are excluded by their status: money that came
-// back is not money received, and counting it would overstate a morning
-// briefing's cash line.
 func (r *repository) SumReceived(
 	ctx context.Context,
 	req customerpaymentports.SumPaymentsReceivedRequest,
@@ -382,30 +317,29 @@ func (r *repository) SumReceived(
 		ctx,
 		r.db,
 		func(ctx context.Context) ([]*customerpaymentports.PaymentsReceived, error) {
-			cols := customerpaymentcol.PaymentColumns
-			rows := make([]*customerpaymentports.PaymentsReceived, 0, 4)
-
-			err := r.db.DBForContext(ctx).
-				NewSelect().
-				Model((*customerpayment.Payment)(nil)).
-				ColumnExpr(cols.CurrencyCode.Qualified()+" AS currency_code").
-				ColumnExpr("COALESCE(SUM("+cols.AmountMinor.Qualified()+"), 0) AS amount_minor").
-				ColumnExpr("COUNT(*) AS count").
-				WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-					return customerpaymentcol.PaymentScopeTenant(sq, req.TenantInfo).
-						Where(cols.Status.Eq(), customerpayment.StatusPosted).
-						Where(cols.PaymentDate.Gte(), req.From).
-						Where(cols.PaymentDate.Lte(), req.To)
-				}).
-				GroupExpr(cols.CurrencyCode.Qualified()).
-				Scan(ctx, &rows)
+			cp := customerpaymentdb.Payments
+			rows, err := keel.Into[customerpaymentports.PaymentsReceived](ctx, r.db.Keel(ctx), cp.
+				Pick(
+					cp.CurrencyCode,
+					keel.Raw("COALESCE(?, 0)", cp.AmountMinor.Sum()),
+					keel.Count(),
+				).
+				Where(
+					cp.Status.Eq(customerpayment.StatusPosted),
+					cp.PaymentDate.Gte(req.From),
+					cp.PaymentDate.Lte(req.To),
+				).
+				Group(cp.CurrencyCode))
 			if err != nil {
 				r.l.Error("failed to sum payments received", zap.Error(err))
-
 				return nil, fmt.Errorf("sum payments received: %w", err)
 			}
 
-			return rows, nil
+			received := make([]*customerpaymentports.PaymentsReceived, 0, len(rows))
+			for i := range rows {
+				received = append(received, &rows[i])
+			}
+			return received, nil
 		},
 	)
 }
@@ -415,21 +349,17 @@ func (r *repository) StampExchangeRate(
 	req *kernelports.StampExchangeRateRequest,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
-		cols := customerpaymentcol.PaymentColumns
-		result, err := r.db.DBForContext(ctx).NewUpdate().
-			Model((*customerpayment.Payment)(nil)).
-			Set(cols.ExchangeRate.Set(), req.Rate).
-			Set(cols.ExchangeRateDate.Set(), req.Date).
-			Set(cols.UpdatedAt.Set(), timeutils.NowUnix()).
-			WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-				return customerpaymentcol.PaymentScopeTenantUpdate(uq, req.TenantInfo).
-					Where(cols.ID.Eq(), req.ID)
-			}).
-			Exec(ctx)
+		cp := customerpaymentdb.Payments
+		n, err := cp.Where(cp.ID.Eq(req.ID)).Update(
+			ctx,
+			r.db.Keel(ctx),
+			cp.ExchangeRate.To(decimal.NewNullDecimal(req.Rate)),
+			cp.ExchangeRateDate.To(req.Date),
+		)
 		if err != nil {
 			return fmt.Errorf("stamp customer payment exchange rate: %w", err)
 		}
 
-		return dberror.CheckFound(result, "Customer payment")
+		return dberror.CheckFoundCount(n, "Customer payment")
 	})
 }

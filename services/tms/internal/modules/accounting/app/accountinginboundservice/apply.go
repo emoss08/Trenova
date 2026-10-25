@@ -20,7 +20,6 @@ import (
 	"github.com/emoss08/trenova/shared/jsonutils"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/stringutils"
-	"github.com/uptrace/bun"
 	"go.uber.org/zap"
 )
 
@@ -135,7 +134,7 @@ func (s *Service) evaluateOne(
 ) (accountingsync.InboundChangeStatus, error) {
 	autoApply := false
 	var outcome accountingsync.InboundChangeStatus
-	err := s.db.WithTx(ctx, kernelports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
+	err := s.db.Transact(ctx, kernelports.TxOptions{}, func(txCtx context.Context) error {
 		change, err := s.changes.GetByID(txCtx, accountingsyncports.GetAccountingInboundChangeQuery{
 			TenantInfo: tenantOf(conn),
 			ID:         id,
@@ -222,7 +221,7 @@ func (s *Service) proposeAfterFailure(
 	}
 
 	var updated *accountingsync.AccountingInboundChange
-	err := s.db.WithTx(ctx, kernelports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
+	err := s.db.Transact(ctx, kernelports.TxOptions{}, func(txCtx context.Context) error {
 		change, err := s.changes.GetByID(txCtx, accountingsyncports.GetAccountingInboundChangeQuery{
 			TenantInfo: tenantOf(conn),
 			ID:         id,
@@ -359,7 +358,7 @@ func (s *Service) applyChange(
 
 	var updated *accountingsync.AccountingInboundChange
 	var previous map[string]any
-	err := s.db.WithTx(ctx, kernelports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
+	err := s.db.Transact(ctx, kernelports.TxOptions{}, func(txCtx context.Context) error {
 		change, err := s.changes.GetByID(txCtx, accountingsyncports.GetAccountingInboundChangeQuery{
 			TenantInfo: tenantOf(conn),
 			ID:         id,

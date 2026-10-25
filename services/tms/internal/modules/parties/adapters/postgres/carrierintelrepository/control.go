@@ -4,18 +4,16 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/emoss08/trenova/pkg/buncolgen/carrierintelcol"
-
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintel"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintel/carrierinteldb"
 	"github.com/emoss08/trenova/internal/modules/parties/ports/carrierintelports"
-	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/intutils"
-	"github.com/uptrace/bun"
 	"go.uber.org/zap"
 )
 
@@ -24,6 +22,8 @@ const (
 	maxConfiguredTenantLimit     = 1000
 	controlEntityName            = "CarrierIntelControl"
 )
+
+var controlErrors = dberror.Mapping{Entity: controlEntityName}
 
 type controlRepository struct {
 	db *postgres.Connection
@@ -37,12 +37,6 @@ func NewControlRepository(p Params) carrierintelports.CarrierIntelControlReposit
 	}
 }
 
-func buildDefaultControlInsert(db bun.IDB, tenantInfo pagination.TenantInfo) *bun.InsertQuery {
-	return db.NewInsert().
-		Model(carrierintel.NewDefaultControl(tenantInfo.OrgID, tenantInfo.BuID)).
-		On("CONFLICT (organization_id, business_unit_id) DO NOTHING")
-}
-
 func (r *controlRepository) GetOrCreate(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
@@ -51,7 +45,9 @@ func (r *controlRepository) GetOrCreate(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*carrierintel.CarrierIntelControl, error) {
-			entity, err := r.selectControl(ctx, tenantInfo)
+			c := carrierinteldb.CarrierIntelControls
+			db := r.db.Keel(ctx)
+			entity, err := c.Query().One(ctx, db)
 			if err == nil {
 				return entity, nil
 			}
@@ -60,42 +56,22 @@ func (r *controlRepository) GetOrCreate(
 				return nil, fmt.Errorf("get carrier intel control: %w", err)
 			}
 
-			if _, err = buildDefaultControlInsert(
-				r.db.DBForContext(ctx),
-				tenantInfo,
-			).Exec(ctx); err != nil {
+			if _, err = c.CreateOrSkip(
+				ctx,
+				db,
+				[]*carrierintel.CarrierIntelControl{
+					carrierintel.NewDefaultControl(tenantInfo.OrgID, tenantInfo.BuID),
+				},
+				c.OrganizationID,
+				c.BusinessUnitID,
+			); err != nil {
 				r.l.Error("failed to create default carrier intel control", zap.Error(err))
 				return nil, fmt.Errorf("create default carrier intel control: %w", err)
 			}
 
-			entity, err = r.selectControl(ctx, tenantInfo)
+			entity, err = c.Query().One(ctx, db)
 			if err != nil {
-				return nil, dberror.HandleNotFoundError(err, controlEntityName)
-			}
-
-			return entity, nil
-		},
-	)
-}
-
-func (r *controlRepository) selectControl(
-	ctx context.Context,
-	tenantInfo pagination.TenantInfo,
-) (*carrierintel.CarrierIntelControl, error) {
-	return dbtx.Read(
-		ctx,
-		r.db,
-		func(ctx context.Context) (*carrierintel.CarrierIntelControl, error) {
-			entity := new(carrierintel.CarrierIntelControl)
-			err := r.db.DBForContext(ctx).
-				NewSelect().
-				Model(entity).
-				WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-					return carrierintelcol.CarrierIntelControlScopeTenant(sq, tenantInfo)
-				}).
-				Scan(ctx)
-			if err != nil {
-				return nil, err
+				return nil, controlErrors.Map(err, tenantInfo.OrgID.String())
 			}
 
 			return entity, nil
@@ -111,26 +87,15 @@ func (r *controlRepository) Update(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*carrierintel.CarrierIntelControl, error) {
-			ov := entity.Version
-			entity.Version++
-
-			results, err := r.db.DBForContext(ctx).
-				NewUpdate().
-				Model(entity).
-				WherePK().
-				Where(carrierintelcol.CarrierIntelControlColumns.Version.Eq(), ov).
-				Returning("*").
-				Exec(ctx)
+			err := carrierinteldb.CarrierIntelControls.Save(ctx, r.db.Keel(ctx), entity)
 			if err != nil {
 				r.l.Error("failed to update carrier intel control", zap.Error(err))
-				return nil, fmt.Errorf("update carrier intel control: %w", err)
-			}
-			if err = dberror.CheckRowsAffected(
-				results,
-				controlEntityName,
-				entity.ID.String(),
-			); err != nil {
-				return nil, err
+				return nil, saveError(
+					controlErrors,
+					err,
+					entity.ID.String(),
+					"update carrier intel control",
+				)
 			}
 
 			return entity, nil
@@ -147,29 +112,29 @@ func (r *controlRepository) ListConfigured(
 		ctx,
 		r.db,
 		func(ctx context.Context) ([]*carrierintel.CarrierIntelControl, error) {
-			cols := carrierintelcol.CarrierIntelControlColumns
+			c := carrierinteldb.CarrierIntelControls
 			limit := intutils.Clamp(
 				intutils.WithDefault(max(req.Limit, 0), defaultConfiguredTenantLimit),
 				1,
 				maxConfiguredTenantLimit,
 			)
 
-			entities := make([]*carrierintel.CarrierIntelControl, 0, limit)
-			q := r.db.DBForContext(ctx).
-				NewSelect().
-				Model(&entities).
-				Where(cols.PrimaryProvider.IsNotNull()).
-				Order(cols.OrganizationID.OrderAsc(), cols.BusinessUnitID.OrderAsc()).
-				Limit(int64(limit))
+			q := c.AllTenants().
+				Where(c.PrimaryProvider.IsNotNull()).
+				Order(c.OrganizationID.Asc(), c.BusinessUnitID.Asc()).
+				Limit(limit)
 			if !req.After.OrganizationID.IsNil() {
-				q = q.Where(
-					buncolgen.Expr("({0}, {1}) > (?, ?)", cols.OrganizationID, cols.BusinessUnitID),
-					req.After.OrganizationID,
-					req.After.BusinessUnitID,
-				)
+				q = q.Where(keel.Raw(
+					"(?, ?) > (?, ?)",
+					c.OrganizationID,
+					c.BusinessUnitID,
+					req.After.OrganizationID.String(),
+					req.After.BusinessUnitID.String(),
+				))
 			}
 
-			if err := q.Scan(ctx); err != nil {
+			entities, err := q.List(ctx, r.db.Keel(ctx))
+			if err != nil {
 				r.l.Error("failed to list configured carrier intel controls", zap.Error(err))
 				return nil, fmt.Errorf("list configured carrier intel controls: %w", err)
 			}

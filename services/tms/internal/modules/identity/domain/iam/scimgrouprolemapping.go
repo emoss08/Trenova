@@ -1,43 +1,35 @@
 package iam
 
 import (
-	"context"
-
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
-	"github.com/emoss08/trenova/pkg/dbtype"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/errortypes"
-	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/emoss08/trenova/shared/timeutils"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
-	"github.com/uptrace/bun"
 )
 
 var (
-	_ bun.BeforeAppendModelHook      = (*SCIMGroupRoleMapping)(nil)
 	_ domaintypes.PostgresSearchable = (*SCIMGroupRoleMapping)(nil)
 )
 
 type SCIMGroupRoleMapping struct {
-	bun.BaseModel             `bun:"table:scim_group_role_mappings,alias:sgrm" json:"-"`
-	pagination.CursorValueSet `bun:",embed"                                    json:"-"`
+	keel.Table      `keel:"scim_group_role_mappings"`
+	ID              pulid.ID `keel:"id,pk,autoid:sgr_"          json:"id"`
+	OrganizationID  pulid.ID `keel:"organization_id,pk,tenant"  json:"organizationId"`
+	BusinessUnitID  pulid.ID `keel:"business_unit_id,pk,tenant" json:"businessUnitId"`
+	DirectoryID     pulid.ID `keel:"directory_id"               json:"directoryId"`
+	ExternalGroupID string   `keel:"external_group_id"          json:"externalGroupId"`
+	DisplayName     string   `keel:"display_name"               json:"displayName"`
+	RoleID          pulid.ID `keel:"role_id"                    json:"roleId"`
 
-	ID              pulid.ID `json:"id"              bun:"id,pk,type:VARCHAR(100)"`
-	OrganizationID  pulid.ID `json:"organizationId"  bun:"organization_id,type:VARCHAR(100),notnull,pk"`
-	BusinessUnitID  pulid.ID `json:"businessUnitId"  bun:"business_unit_id,type:VARCHAR(100),notnull,pk"`
-	DirectoryID     pulid.ID `json:"directoryId"     bun:"directory_id,type:VARCHAR(100),notnull"`
-	ExternalGroupID string   `json:"externalGroupId" bun:"external_group_id,type:VARCHAR(255),notnull"`
-	DisplayName     string   `json:"displayName"     bun:"display_name,type:VARCHAR(255),notnull"`
-	RoleID          pulid.ID `json:"roleId"          bun:"role_id,type:VARCHAR(100),notnull"`
+	SearchVector string `json:"-"         keel:"search_vector,tsvector,readonly,noselect"`
+	Rank         string `json:"-"         keel:"rank,computed"`
+	Version      int64  `json:"version"   keel:"version,version"`
+	CreatedAt    int64  `json:"createdAt" keel:"created_at,autocreate"`
+	UpdatedAt    int64  `json:"updatedAt" keel:"updated_at,autoupdate"`
 
-	SearchVector string `json:"-"         bun:"search_vector,type:TSVECTOR,scanonly"`
-	Rank         string `json:"-"         bun:"rank,type:VARCHAR(100),scanonly"`
-	Version      int64  `json:"version"   bun:"version,type:BIGINT"`
-	CreatedAt    int64  `json:"createdAt" bun:"created_at,notnull,default:extract(epoch from current_timestamp)::bigint"`
-	UpdatedAt    int64  `json:"updatedAt" bun:"updated_at,notnull,default:extract(epoch from current_timestamp)::bigint"`
-
-	Role *permission.Role `json:"role,omitempty" bun:"rel:belongs-to,join:role_id=id"`
+	Role *permission.Role `json:"role,omitempty" keel:"belongs:role_id"`
 }
 
 func (m *SCIMGroupRoleMapping) Validate(multiErr *errortypes.MultiError) {
@@ -53,22 +45,6 @@ func (m *SCIMGroupRoleMapping) Validate(multiErr *errortypes.MultiError) {
 			validation.Required.Error("Directory ID is required"),
 		),
 	))
-}
-
-func (m *SCIMGroupRoleMapping) BeforeAppendModel(_ context.Context, q bun.Query) error {
-	now := timeutils.NowUnix()
-
-	switch q.(type) {
-	case *bun.InsertQuery:
-		if m.ID.IsNil() {
-			m.ID = pulid.MustNew("sgr_")
-		}
-		m.CreatedAt = now
-	case *bun.UpdateQuery:
-		m.UpdatedAt = now
-	}
-
-	return nil
 }
 
 func (m *SCIMGroupRoleMapping) GetID() pulid.ID {
@@ -108,16 +84,7 @@ func (m *SCIMGroupRoleMapping) GetPostgresSearchConfig() domaintypes.PostgresSea
 			},
 		},
 		Relationships: []*domaintypes.RelationshipDefintion{
-			{
-				Field:        "role",
-				Type:         dbtype.RelationshipTypeBelongsTo,
-				TargetEntity: (*permission.Role)(nil),
-				TargetTable:  "roles",
-				ForeignKey:   "role_id",
-				ReferenceKey: "id",
-				Alias:        "r",
-				Queryable:    true,
-			},
+			{Field: "role", Queryable: true},
 		},
 	}
 }

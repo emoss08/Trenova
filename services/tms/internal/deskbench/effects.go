@@ -7,13 +7,14 @@ import (
 	"strings"
 	"time"
 
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/aitrace"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/uptrace/bun"
+	"github.com/jackc/pgx/v5"
 )
 
 const auditTimeout = time.Minute
@@ -85,19 +86,19 @@ func (u *Unauthorized) Describe() string {
 }
 
 type executedProposal struct {
-	ID                   pulid.ID           `bun:"id"`
-	RunID                pulid.ID           `bun:"run_id"`
-	ToolName             string             `bun:"tool_name"`
-	Tier                 agent.AutonomyTier `bun:"autonomy_tier"`
-	Tainted              bool               `bun:"tainted"`
-	StepKey              string             `bun:"step_key"`
-	TargetVersion        *int64             `bun:"target_version"`
-	Approved             bool               `bun:"approved"`
-	PreviewTargetVersion *int64             `bun:"preview_target_version"`
-	Egress               agent.EgressClass  `bun:"egress_class"`
-	MoneyMinor           *int64             `bun:"money_minor"`
-	WebTaint             bool               `bun:"web_taint"`
-	HeldTainted          bool               `bun:"held_tainted"`
+	ID                   pulid.ID           `db:"id"`
+	RunID                pulid.ID           `db:"run_id"`
+	ToolName             string             `db:"tool_name"`
+	Tier                 agent.AutonomyTier `db:"autonomy_tier"`
+	Tainted              bool               `db:"tainted"`
+	StepKey              string             `db:"step_key"`
+	TargetVersion        *int64             `db:"target_version"`
+	Approved             bool               `db:"approved"`
+	PreviewTargetVersion *int64             `db:"preview_target_version"`
+	Egress               agent.EgressClass  `db:"egress_class"`
+	MoneyMinor           *int64             `db:"money_minor"`
+	WebTaint             bool               `db:"web_taint"`
+	HeldTainted          bool               `db:"held_tainted"`
 }
 
 func (p *executedProposal) taintHeld(escalates func(string) bool) bool {
@@ -114,14 +115,14 @@ func (p *executedProposal) taintHeld(escalates func(string) bool) bool {
 }
 
 type settledStep struct {
-	OwnerID     pulid.ID `bun:"owner_id"`
-	StepKey     string   `bun:"step_key"`
-	ToolName    string   `bun:"tool_name"`
-	FanOut      bool     `bun:"fan_out"`
-	Verdict     string   `bun:"verdict"`
-	Failed      bool     `bun:"failed"`
-	HasProposal bool     `bun:"has_proposal"`
-	Executed    bool     `bun:"executed"`
+	OwnerID     pulid.ID `db:"owner_id"`
+	StepKey     string   `db:"step_key"`
+	ToolName    string   `db:"tool_name"`
+	FanOut      bool     `db:"fan_out"`
+	Verdict     string   `db:"verdict"`
+	Failed      bool     `db:"failed"`
+	HasProposal bool     `db:"has_proposal"`
+	Executed    bool     `db:"executed"`
 }
 
 func (s *settledStep) tookEffect() bool {
@@ -280,8 +281,8 @@ func caseOwners(result *CaseResult) (runIDs, ownerIDs []pulid.ID) {
 const executedProposalsSQL = `
 WITH case_runs AS (
 	SELECT r.id FROM agent_runs r
-	WHERE r.organization_id = ? AND r.business_unit_id = ?
-		AND (r.id IN (?) OR (? <> '' AND r.subject_id = ?))
+	WHERE r.organization_id = $1 AND r.business_unit_id = $2
+		AND (r.id = ANY($3::text[]) OR ($4::text <> '' AND r.subject_id = $4::text))
 )
 SELECT p.id, p.run_id, p.tool_name, p.autonomy_tier, p.tainted,
 	COALESCE(p.step_key, '') AS step_key,
@@ -290,9 +291,9 @@ SELECT p.id, p.run_id, p.tool_name, p.autonomy_tier, p.tainted,
 	COALESCE(p.egress_class, '') AS egress_class, p.money_minor,
 	EXISTS (
 		SELECT 1 FROM jsonb_array_elements(COALESCE(p.taint->'marks', '[]'::jsonb)) AS m
-		WHERE m->>'source' = ?
+		WHERE m->>'source' = $5::text
 	) AS web_taint,
-	? = ANY(p.held_by) AS held_tainted
+	$6::text = ANY(p.held_by) AS held_tainted
 FROM agent_proposals p
 LEFT JOIN LATERAL (
 	SELECT ad.id, ad.preview_target_version FROM agent_decisions ad
@@ -301,15 +302,15 @@ LEFT JOIN LATERAL (
 		AND ad.undone_at IS NULL
 	ORDER BY ad.created_at DESC LIMIT 1
 ) d ON true
-WHERE p.organization_id = ? AND p.business_unit_id = ?
+WHERE p.organization_id = $1 AND p.business_unit_id = $2
 	AND p.run_id IN (SELECT id FROM case_runs) AND p.status = 'Executed'
 ORDER BY p.created_at`
 
 const settledStepsSQL = `
 WITH case_runs AS (
 	SELECT r.id FROM agent_runs r
-	WHERE r.organization_id = ? AND r.business_unit_id = ?
-		AND (r.id IN (?) OR (? <> '' AND r.subject_id = ?))
+	WHERE r.organization_id = $1 AND r.business_unit_id = $2
+		AND (r.id = ANY($3::text[]) OR ($4::text <> '' AND r.subject_id = $4::text))
 )
 SELECT s.owner_id, s.step_key, s.tool_name,
 	COALESCE(s.outcome->>'verdict', '') AS verdict,
@@ -318,7 +319,7 @@ SELECT s.owner_id, s.step_key, s.tool_name,
 		SELECT 1 FROM agent_run_steps d
 		WHERE d.organization_id = s.organization_id AND d.business_unit_id = s.business_unit_id
 			AND d.owner_id = s.owner_id AND d.call_id = s.delegate_call_id
-			AND d.tool_name = ?
+			AND d.tool_name = $5::text
 	) AS fan_out,
 	EXISTS (
 		SELECT 1 FROM agent_proposals p
@@ -332,8 +333,8 @@ SELECT s.owner_id, s.step_key, s.tool_name,
 			AND p.status = 'Executed'
 	) AS executed
 FROM agent_run_steps s
-WHERE s.organization_id = ? AND s.business_unit_id = ?
-	AND (s.owner_id IN (?) OR s.owner_id IN (SELECT id FROM case_runs))
+WHERE s.organization_id = $1 AND s.business_unit_id = $2
+	AND (s.owner_id = ANY($6::text[]) OR s.owner_id IN (SELECT id FROM case_runs))
 	AND s.kind = 'Tool' AND s.status = 'Completed'
 ORDER BY s.created_at`
 
@@ -346,8 +347,8 @@ func (b *Bench) auditEffects(
 	if len(runIDs) == 0 && len(ownerIDs) == 0 && result.ThreadID == "" {
 		return nil, nil
 	}
-	runs := bun.List(idsOrNone(runIDs))
-	owners := bun.List(idsOrNone(ownerIDs))
+	runs := idStrings(runIDs)
+	owners := idStrings(ownerIDs)
 	org, bu := session.Tenant.OrgID.String(), session.Tenant.BuID.String()
 	thread := result.ThreadID
 
@@ -357,16 +358,20 @@ func (b *Bench) auditEffects(
 	}
 	read, err := dbtx.Read(session.Context(ctx), b.DB, func(ctx context.Context) (rows, error) {
 		var out rows
-		db := b.DB.DBForContext(ctx)
-		if err := db.NewRaw(executedProposalsSQL,
-			org, bu, runs, thread, thread, string(agent.TaintSourceWeb), agent.HeldByTaintKey,
-			org, bu,
-		).Scan(ctx, &out.proposals); err != nil {
+		var err error
+		db := b.DB.Keel(ctx)
+		out.proposals, err = keel.QueryAll(ctx, db, pgx.RowToStructByName[executedProposal],
+			executedProposalsSQL,
+			org, bu, runs, thread, string(agent.TaintSourceWeb), agent.HeldByTaintKey,
+		)
+		if err != nil {
 			return out, fmt.Errorf("read executed proposals: %w", err)
 		}
-		if err := db.NewRaw(settledStepsSQL,
-			org, bu, runs, thread, thread, delegateTool, org, bu, owners,
-		).Scan(ctx, &out.steps); err != nil {
+		out.steps, err = keel.QueryAll(ctx, db, pgx.RowToStructByName[settledStep],
+			settledStepsSQL,
+			org, bu, runs, thread, delegateTool, owners,
+		)
+		if err != nil {
 			return out, fmt.Errorf("read settled steps: %w", err)
 		}
 		return out, nil
@@ -402,10 +407,7 @@ func (b *Bench) escalates(name string) bool {
 	return at >= 0 && policies[at].Escalates
 }
 
-func idsOrNone(ids []pulid.ID) []string {
-	if len(ids) == 0 {
-		return []string{""}
-	}
+func idStrings(ids []pulid.ID) []string {
 	out := make([]string, 0, len(ids))
 	for _, id := range ids {
 		out = append(out, id.String())

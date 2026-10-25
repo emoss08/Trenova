@@ -8,6 +8,14 @@ import (
 	"testing"
 	"time"
 
+	"github.com/emoss08/keel"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/customer/customerdb"
+	"github.com/emoss08/trenova/internal/modules/rating/domain/formulatemplate/formulatemplatedb"
+	"github.com/emoss08/trenova/internal/modules/rating/domain/fuelsurcharge/fuelsurchargedb"
+	"github.com/emoss08/trenova/internal/modules/rating/domain/rateagreement/rateagreementdb"
+	"github.com/emoss08/trenova/internal/modules/rating/domain/ratematrix/ratematrixdb"
+	"github.com/emoss08/trenova/internal/modules/reference/domain/accessorialcharge/accessorialchargedb"
+
 	"github.com/emoss08/trenova/internal/api/graphql/agentread/agentreadtest"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentquerytoolservice"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
@@ -38,7 +46,6 @@ import (
 	"github.com/shopspring/decimal"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"github.com/uptrace/bun"
 	"go.uber.org/zap"
 )
 
@@ -66,14 +73,14 @@ type rateTenant struct {
 }
 
 //nolint:funlen // one tenant's rate records, written straight through the admin connection
-func seedRateTenant(t *testing.T, admin *bun.DB, tenant *agentreadtest.Tenant, label string) *rateTenant {
+func seedRateTenant(t *testing.T, admin *keel.DB, tenant *agentreadtest.Tenant, label string) *rateTenant {
 	t.Helper()
 
 	ctx := t.Context()
 	bu, org := tenant.Actor.BusinessUnitID, tenant.Actor.OrganizationID
-	insert := func(model any) {
+	writeCtx := tenant.Ctx(ctx)
+	must := func(err error) {
 		t.Helper()
-		_, err := admin.NewInsert().Model(model).Exec(ctx)
 		require.NoError(t, err)
 	}
 	out := &rateTenant{
@@ -86,12 +93,12 @@ func seedRateTenant(t *testing.T, admin *bun.DB, tenant *agentreadtest.Tenant, l
 		Code: "RC" + label, Name: "Rated " + label, AddressLine1: "1 Lane Way", City: "Atlanta",
 		PostalCode: "30303",
 	}
-	insert(party)
+	must(customerdb.Customers.Create(writeCtx, admin, party))
 	template := &formulatemplate.FormulaTemplate{
 		ID: pulid.MustNew("ft_"), OrganizationID: org, BusinessUnitID: bu, Name: "Per Mile " + label,
 		Source: perMileTariff, Status: formulatemplate.StatusActive,
 	}
-	insert(template)
+	must(formulatemplatedb.FormulaTemplates.Create(writeCtx, admin, template))
 	for idx := range rateAgreementsPerTenant {
 		status := rateagreement.StatusActive
 		if idx == rateAgreementsPerTenant-1 {
@@ -107,7 +114,7 @@ func seedRateTenant(t *testing.T, admin *bun.DB, tenant *agentreadtest.Tenant, l
 				"rate": rules.QuantityValue(decimal.RequireFromString("2.10"), "$/mi"),
 			},
 		}
-		insert(agreement)
+		must(rateagreementdb.RateAgreements.Create(writeCtx, admin, agreement))
 		out.agreements = append(out.agreements, agreement.ID.String())
 		if status == rateagreement.StatusDraft {
 			out.drafts = append(out.drafts, agreement.ID.String())
@@ -129,7 +136,7 @@ func seedRateTenant(t *testing.T, admin *bun.DB, tenant *agentreadtest.Tenant, l
 				EffectiveFrom: 100,
 			}
 			require.NoError(t, rateagreement.ApplyLanes(ctx, []*rateagreement.RateAgreementRule{rule}))
-			insert(rule)
+			must(rateagreementdb.RateAgreementRules.Create(writeCtx, admin, rule))
 			out.lanes = append(out.lanes, rule.ID.String())
 		}
 	}
@@ -139,7 +146,7 @@ func seedRateTenant(t *testing.T, admin *bun.DB, tenant *agentreadtest.Tenant, l
 		Code: "DSL" + label, Source: fuelsurcharge.IndexSourceCustom, FuelType: fuelsurcharge.FuelTypeDiesel,
 		Currency: "USD", IsActive: true,
 	}
-	insert(index)
+	must(fuelsurchargedb.FuelIndexes.Create(writeCtx, admin, index))
 	out.index = index.ID
 	today := time.Now().UTC()
 	for idx := range fuelPricesPerTenant {
@@ -148,7 +155,7 @@ func seedRateTenant(t *testing.T, admin *bun.DB, tenant *agentreadtest.Tenant, l
 			PriceDate: today.AddDate(0, 0, -7*idx).Format(fuelsurcharge.PriceDateLayout),
 			Price:     decimal.RequireFromString("3.50"), Currency: "USD", IsManual: true,
 		}
-		insert(price)
+		must(fuelsurchargedb.FuelIndexPrices.Create(writeCtx, admin, price))
 		out.prices = append(out.prices, price.ID.String())
 	}
 	charge := &accessorialcharge.AccessorialCharge{
@@ -156,7 +163,7 @@ func seedRateTenant(t *testing.T, admin *bun.DB, tenant *agentreadtest.Tenant, l
 		Description: "Fuel", Method: accessorialcharge.MethodPerUnit,
 		RateUnit: accessorialcharge.RateUnitMile,
 	}
-	insert(charge)
+	must(accessorialchargedb.AccessorialCharges.Create(writeCtx, admin, charge))
 	program := &fuelsurcharge.FuelSurchargeProgram{
 		ID: pulid.MustNew("fsp_"), OrganizationID: org, BusinessUnitID: bu, Name: "Program " + label,
 		Code: "PRG" + label, Status: fuelsurcharge.ProgramStatusActive, FuelIndexID: index.ID,
@@ -165,7 +172,7 @@ func seedRateTenant(t *testing.T, admin *bun.DB, tenant *agentreadtest.Tenant, l
 		Increment:     decimal.NewNullDecimal(decimal.RequireFromString("0.05")),
 		IncrementRate: decimal.NewNullDecimal(decimal.RequireFromString("0.01")),
 	}
-	insert(program)
+	must(fuelsurchargedb.FuelSurchargePrograms.Create(writeCtx, admin, program))
 	out.program = program.ID.String()
 
 	return out
@@ -187,27 +194,25 @@ const seededMatrixCells = 150
 
 // seedRateMatrix writes a matrix of two axes and more cells than one read
 // returns, straight through the admin connection.
-func seedRateMatrix(t *testing.T, admin *bun.DB, tenant *agentreadtest.Tenant, label string) string {
+func seedRateMatrix(t *testing.T, admin *keel.DB, tenant *agentreadtest.Tenant, label string) string {
 	t.Helper()
 
-	ctx := t.Context()
+	ctx := tenant.Ctx(t.Context())
 	bu, org := tenant.Actor.BusinessUnitID, tenant.Actor.OrganizationID
 	matrix := &ratematrix.RateMatrix{
 		ID: pulid.MustNew("rmx_"), OrganizationID: org, BusinessUnitID: bu,
 		Code: "LTL-" + label, Name: "LTL " + label, Status: formulatemplate.StatusActive,
 		ValueType: ratematrix.ValueTypeMoney, DraftCellCount: seededMatrixCells,
 	}
-	_, err := admin.NewInsert().Model(matrix).Exec(ctx)
-	require.NoError(t, err)
+	require.NoError(t, ratematrixdb.RateMatrixes.Create(ctx, admin, matrix))
 	for position, kind := range []ratematrix.DimensionKind{
 		ratematrix.DimensionKindZone, ratematrix.DimensionKindWeightBreak,
 	} {
-		_, err = admin.NewInsert().Model(&ratematrix.RateMatrixDimension{
+		require.NoError(t, ratematrixdb.RateMatrixDimensions.Create(ctx, admin, &ratematrix.RateMatrixDimension{
 			ID: pulid.MustNew("rmd_"), OrganizationID: org, BusinessUnitID: bu,
 			RateMatrixID: matrix.ID, Position: int16(position), Kind: kind,
 			MatchMode: ratematrix.MatchModeExact,
-		}).Exec(ctx)
-		require.NoError(t, err)
+		}))
 	}
 	cells := make([]*ratematrix.RateMatrixCell, 0, seededMatrixCells)
 	for idx := range seededMatrixCells {
@@ -219,8 +224,7 @@ func seedRateMatrix(t *testing.T, admin *bun.DB, tenant *agentreadtest.Tenant, l
 			Value: decimal.RequireFromString("2.15"),
 		})
 	}
-	_, err = admin.NewInsert().Model(&cells).Exec(ctx)
-	require.NoError(t, err)
+	require.NoError(t, ratematrixdb.RateMatrixCells.CreateMany(ctx, admin, cells))
 
 	return matrix.ID.String()
 }

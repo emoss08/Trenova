@@ -15,7 +15,6 @@ import (
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
-	"github.com/uptrace/bun"
 	"go.uber.org/zap"
 )
 
@@ -25,10 +24,10 @@ func (s *Service) Approve(
 	actor *permissionports.RequestActor,
 ) (*invoiceadjustment.InvoiceAdjustment, error) {
 	var result *invoiceadjustment.InvoiceAdjustment
-	err := s.db.WithTx(
+	err := s.db.Transact(
 		ctx,
 		kernelports.TxOptions{LockTimeout: 5 * 1000000000},
-		func(txCtx context.Context, _ bun.Tx) error {
+		func(txCtx context.Context) error {
 			if guardErr := s.refuseSelfApproval(txCtx, req, actor); guardErr != nil {
 				return guardErr
 			}
@@ -73,10 +72,10 @@ func (s *Service) Reject(
 		updated  *invoiceadjustment.InvoiceAdjustment
 		restored *invoice.Invoice
 	)
-	err := s.db.WithTx(
+	err := s.db.Transact(
 		ctx,
 		kernelports.TxOptions{LockTimeout: 5 * time.Second},
-		func(txCtx context.Context, _ bun.Tx) error {
+		func(txCtx context.Context) error {
 			entity, txErr := s.lockForDecision(txCtx, req.AdjustmentID, req.TenantInfo)
 			if txErr != nil {
 				return txErr
@@ -277,7 +276,7 @@ func (s *Service) ListReconciliationExceptions(
 ) (*pagination.ListResult[*invoiceadjustmentports.InvoiceAdjustmentReconciliationQueueItem], error) {
 	return s.repo.ListReconciliationQueue(
 		ctx,
-		invoiceadjustmentports.ListReconciliationQueueRequest{Filter: filter},
+		&invoiceadjustmentports.ListReconciliationQueueRequest{Filter: filter},
 	)
 }
 
@@ -285,7 +284,7 @@ func (s *Service) ListBatches(
 	ctx context.Context,
 	filter pagination.QueryOptions, //nolint:gocritic // stable API shape
 ) (*pagination.ListResult[*invoiceadjustment.InvoiceAdjustmentBatch], error) {
-	return s.repo.ListBatchQueue(ctx, invoiceadjustmentports.ListBatchQueueRequest{Filter: filter})
+	return s.repo.ListBatchQueue(ctx, &invoiceadjustmentports.ListBatchQueueRequest{Filter: filter})
 }
 
 func (s *Service) GetOperationsSummary(

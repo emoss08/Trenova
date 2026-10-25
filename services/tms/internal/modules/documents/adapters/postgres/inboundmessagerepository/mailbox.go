@@ -4,20 +4,21 @@ package inboundmessagerepository
 import (
 	"context"
 
-	"github.com/emoss08/trenova/pkg/buncolgen/inboundmessagecol"
-
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/inboundmessage"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/inboundmessage/inboundmessagedb"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/inboundmessageports"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/dbscope"
+	"github.com/emoss08/trenova/pkg/listquery"
 	"github.com/emoss08/trenova/pkg/pagination"
-	"github.com/emoss08/trenova/pkg/querybuilder"
-	"github.com/uptrace/bun"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
+
+var mailboxErrors = dberror.Mapping{Entity: "Mailbox"}
 
 type MailboxParams struct {
 	fx.In
@@ -46,27 +47,16 @@ func (r *mailboxRepository) List(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*pagination.ListResult[*inboundmessage.Mailbox], error) {
-			entities := make([]*inboundmessage.Mailbox, 0, req.Filter.Pagination.SafeLimit())
-			cols := inboundmessagecol.MailboxColumns
-
-			query := r.db.DBForContext(ctx).NewSelect().Model(&entities)
-			if req.Status != "" {
-				query = query.Where(cols.Status.Eq(), req.Status)
-			}
-
-			total, err := querybuilder.ApplyFilters(query, "imbx", req.Filter, (*inboundmessage.Mailbox)(nil)).
-				Order(cols.CreatedAt.OrderDesc()).
-				Limit(int64(req.Filter.Pagination.SafeLimit())).
-				Offset(int64(req.Filter.Pagination.SafeOffset())).
-				ScanAndCount(ctx)
-			if err != nil {
-				return nil, err
-			}
-
-			return &pagination.ListResult[*inboundmessage.Mailbox]{
-				Items: entities,
-				Total: int(total),
-			}, nil
+			mb := inboundmessagedb.Mailboxes
+			return listquery.List(
+				ctx,
+				r.db.Keel(ctx),
+				mb.Where(keel.When(req.Status != "", mb.Status.Eq(req.Status))),
+				&listquery.Request[inboundmessage.Mailbox]{
+					Filter: req.Filter,
+					Then:   []keel.Order{mb.CreatedAt.Desc()},
+				},
+			)
 		},
 	)
 }
@@ -76,16 +66,9 @@ func (r *mailboxRepository) GetByID(
 	req inboundmessageports.GetMailboxByIDRequest,
 ) (*inboundmessage.Mailbox, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*inboundmessage.Mailbox, error) {
-		entity := new(inboundmessage.Mailbox)
-		cols := inboundmessagecol.MailboxColumns
-
-		if err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(entity).
-			Where(cols.ID.Eq(), req.ID).
-			Apply(inboundmessagecol.MailboxApplyTenant(req.TenantInfo)).
-			Scan(ctx); err != nil {
-			return nil, dberror.HandleNotFoundError(err, "Mailbox")
+		entity, err := inboundmessagedb.Mailboxes.Get(ctx, r.db.Keel(ctx), req.ID)
+		if err != nil {
+			return nil, mailboxErrors.Map(err, req.ID.String())
 		}
 
 		return entity, nil
@@ -108,15 +91,12 @@ func (r *mailboxRepository) GetByTokenHash(
 		"resolve the inbound mailbox a provider delivered to before its tenant is known",
 	)
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*inboundmessage.Mailbox, error) {
-		entity := new(inboundmessage.Mailbox)
-		cols := inboundmessagecol.MailboxColumns
-
-		if err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(entity).
-			Where(cols.TokenHash.Eq(), req.TokenHash).
-			Scan(ctx); err != nil {
-			return nil, dberror.HandleNotFoundError(err, "Mailbox")
+		mb := inboundmessagedb.Mailboxes
+		entity, err := mb.AllTenants().
+			Where(mb.TokenHash.Eq(req.TokenHash)).
+			One(ctx, r.db.Keel(ctx))
+		if err != nil {
+			return nil, mailboxErrors.Map(err, "")
 		}
 
 		return entity, nil
@@ -128,11 +108,7 @@ func (r *mailboxRepository) Create(
 	entity *inboundmessage.Mailbox,
 ) (*inboundmessage.Mailbox, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*inboundmessage.Mailbox, error) {
-		if _, err := r.db.DBForContext(ctx).
-			NewInsert().
-			Model(entity).
-			Returning("*").
-			Exec(ctx); err != nil {
+		if err := inboundmessagedb.Mailboxes.Create(ctx, r.db.Keel(ctx), entity); err != nil {
 			return nil, err
 		}
 
@@ -145,30 +121,17 @@ func (r *mailboxRepository) Update(
 	entity *inboundmessage.Mailbox,
 ) (*inboundmessage.Mailbox, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*inboundmessage.Mailbox, error) {
-		ov := entity.Version
-		entity.Version++
-		cols := inboundmessagecol.MailboxColumns
-
-		results, err := r.db.DBForContext(ctx).
-			NewUpdate().
-			Model(entity).
-			WherePK().
-			Where(cols.Version.Eq(), ov).
-			ExcludeColumn(
-				cols.LastReceivedAt.Bare(),
-				cols.TestToken.Bare(),
-				cols.TestSentAt.Bare(),
-				cols.TestReceivedAt.Bare(),
-			).
-			Returning("*").
-			Exec(ctx)
-		if err != nil {
-			entity.Version = ov
-
-			return nil, err
-		}
-		if err = dberror.CheckRowsAffected(results, "Mailbox", entity.ID.String()); err != nil {
-			return nil, err
+		mb := inboundmessagedb.Mailboxes
+		if err := mb.SaveExcept(
+			ctx,
+			r.db.Keel(ctx),
+			entity,
+			mb.LastReceivedAt,
+			mb.TestToken,
+			mb.TestSentAt,
+			mb.TestReceivedAt,
+		); err != nil {
+			return nil, mailboxErrors.Map(err, entity.ID.String())
 		}
 
 		return entity, nil
@@ -187,25 +150,34 @@ func (r *mailboxRepository) MarkReceived(
 	req inboundmessageports.MailboxReceivedRequest,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
-		_, err := markReceivedQuery(r.db.DBForContext(ctx), req).Exec(ctx)
+		_, err := markReceivedQuery(
+			req,
+		).Update(ctx, r.db.Keel(ctx), markReceivedAssignments(req)...)
 
 		return err
 	})
 }
 
 func markReceivedQuery(
-	db bun.IDB,
 	req inboundmessageports.MailboxReceivedRequest,
-) *bun.UpdateQuery {
-	cols := inboundmessagecol.MailboxColumns
+) *keel.Query[inboundmessage.Mailbox] {
+	mb := inboundmessagedb.Mailboxes
 
-	return db.NewUpdate().
-		Model((*inboundmessage.Mailbox)(nil)).
-		WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-			return inboundmessagecol.MailboxScopeTenantUpdate(uq, req.TenantInfo).
-				Where(cols.ID.Eq(), req.MailboxID)
-		}).
-		Set(cols.LastReceivedAt.SetExpr("GREATEST(COALESCE({}, 0), ?::bigint)"), req.ReceivedAt)
+	return mb.Where(mb.ID.Eq(req.MailboxID))
+}
+
+func markReceivedAssignments(req inboundmessageports.MailboxReceivedRequest) []keel.Assignment {
+	mb := inboundmessagedb.Mailboxes
+
+	return []keel.Assignment{
+		mb.LastReceivedAt.ToExpr(keel.Raw(
+			"GREATEST(COALESCE(?, 0), ?::bigint)",
+			mb.LastReceivedAt,
+			req.ReceivedAt,
+		)),
+		mb.Version.ToExpr(mb.Version),
+		mb.UpdatedAt.ToExpr(mb.UpdatedAt),
+	}
 }
 
 func (r *mailboxRepository) MarkTestSent(
@@ -213,28 +185,27 @@ func (r *mailboxRepository) MarkTestSent(
 	req inboundmessageports.MailboxTestRequest,
 ) (*inboundmessage.Mailbox, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*inboundmessage.Mailbox, error) {
-		entity := new(inboundmessage.Mailbox)
-		cols := inboundmessagecol.MailboxColumns
-
-		results, err := r.db.DBForContext(ctx).
-			NewUpdate().
-			Model(entity).
-			WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-				return inboundmessagecol.MailboxScopeTenantUpdate(uq, req.TenantInfo).
-					Where(cols.ID.Eq(), req.MailboxID)
-			}).
-			Set(cols.TestToken.Set(), req.Token).
-			Set(cols.TestSentAt.Set(), req.At).
-			Returning("*").
-			Exec(ctx)
+		mb := inboundmessagedb.Mailboxes
+		updated, err := mb.Where(mb.ID.Eq(req.MailboxID)).UpdateReturning(
+			ctx,
+			r.db.Keel(ctx),
+			mb.TestToken.To(req.Token),
+			mb.TestSentAt.To(req.At),
+			mb.Version.ToExpr(mb.Version),
+			mb.UpdatedAt.ToExpr(mb.UpdatedAt),
+		)
 		if err != nil {
 			return nil, err
 		}
-		if err = dberror.CheckRowsAffected(results, "Mailbox", req.MailboxID.String()); err != nil {
+		if err = dberror.CheckAffected(
+			int64(len(updated)),
+			"Mailbox",
+			req.MailboxID.String(),
+		); err != nil {
 			return nil, err
 		}
 
-		return entity, nil
+		return updated[0], nil
 	})
 }
 
@@ -243,32 +214,31 @@ func (r *mailboxRepository) MarkTestReceived(
 	req inboundmessageports.MailboxTestRequest,
 ) (bool, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (bool, error) {
-		result, err := markTestReceivedQuery(r.db.DBForContext(ctx), req).Exec(ctx)
-		if err != nil {
-			return false, err
-		}
-		affected, err := result.RowsAffected()
+		n, err := markTestReceivedQuery(req).
+			Update(ctx, r.db.Keel(ctx), markTestReceivedAssignments(req)...)
 		if err != nil {
 			return false, err
 		}
 
-		return affected > 0, nil
+		return n > 0, nil
 	})
 }
 
 func markTestReceivedQuery(
-	db bun.IDB,
 	req inboundmessageports.MailboxTestRequest,
-) *bun.UpdateQuery {
-	cols := inboundmessagecol.MailboxColumns
+) *keel.Query[inboundmessage.Mailbox] {
+	mb := inboundmessagedb.Mailboxes
 
-	return db.NewUpdate().
-		Model((*inboundmessage.Mailbox)(nil)).
-		WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-			return inboundmessagecol.MailboxScopeTenantUpdate(uq, req.TenantInfo).
-				Where(cols.ID.Eq(), req.MailboxID).
-				Where(cols.TestToken.Eq(), req.Token)
-		}).
-		Set(cols.TestReceivedAt.Set(), req.At).
-		Set(cols.TestToken.SetNull())
+	return mb.Where(mb.ID.Eq(req.MailboxID), mb.TestToken.Eq(req.Token))
+}
+
+func markTestReceivedAssignments(req inboundmessageports.MailboxTestRequest) []keel.Assignment {
+	mb := inboundmessagedb.Mailboxes
+
+	return []keel.Assignment{
+		mb.TestReceivedAt.To(req.At),
+		mb.TestToken.ToNull(),
+		mb.Version.ToExpr(mb.Version),
+		mb.UpdatedAt.ToExpr(mb.UpdatedAt),
+	}
 }

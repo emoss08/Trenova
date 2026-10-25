@@ -4,28 +4,92 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/emoss08/trenova/pkg/buncolgen/workercol"
-
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/identity/app/quotaservice"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/platformplanports"
 	"github.com/emoss08/trenova/internal/modules/kernel/domain/platformcatalog"
-	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/driverpay"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker/workerdb"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
-	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dberror"
-	"github.com/emoss08/trenova/pkg/dbhelper"
 	"github.com/emoss08/trenova/pkg/domaintypes"
+	"github.com/emoss08/trenova/pkg/listquery"
 	"github.com/emoss08/trenova/pkg/pagination"
-	"github.com/emoss08/trenova/pkg/querybuilder"
 	"github.com/emoss08/trenova/shared/timeutils"
-	"github.com/uptrace/bun"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
+
+const (
+	workerBusyMessage    = "Worker is busy. Retry the request."
+	syncDriftBusyMessage = "Worker sync state is busy. Retry the request."
+)
+
+const ownerOperatorPaySQL = `EXISTS (
+	SELECT 1
+	FROM worker_pay_assignments wpa
+	JOIN driver_pay_profiles dpp
+		ON dpp.id = wpa.pay_profile_id
+		AND dpp.organization_id = wpa.organization_id
+		AND dpp.business_unit_id = wpa.business_unit_id
+	WHERE wpa.worker_id = ?
+		AND wpa.organization_id = ?
+		AND wpa.business_unit_id = ?
+		AND wpa.effective_from <= ?
+		AND (wpa.effective_to IS NULL OR wpa.effective_to > ?)
+		AND dpp.classification = ?
+)`
+
+var workerErrors = dberror.Mapping{
+	Entity: "Worker",
+	Unique: []dberror.Constraint{
+		{
+			Name:    "uq_workers_org_user",
+			Field:   "userId",
+			Message: "This user is already linked to another worker in your organization",
+		},
+	},
+	ForeignKey: []dberror.Constraint{
+		{
+			Name:    "fk_workers_state",
+			Field:   "stateId",
+			Message: "State does not exist",
+		},
+		{
+			Name:    "fk_workers_manager",
+			Field:   "managerId",
+			Message: "Manager does not exist",
+		},
+		{
+			Name:    "fk_workers_fleet_code",
+			Field:   "fleetCodeId",
+			Message: "Fleet code does not exist or belongs to a different organization",
+		},
+		{
+			Name:    "fk_workers_user",
+			Field:   "userId",
+			Message: "User does not exist",
+		},
+		{
+			Name:    "fk_workers_position",
+			Field:   "positionId",
+			Message: "Job position does not exist or belongs to a different organization",
+		},
+		{
+			Name:    "fk_worker_profiles_license_state",
+			Field:   "profile.licenseStateId",
+			Message: "License state does not exist",
+		},
+	},
+}
+
+var workerProfileErrors = dberror.Mapping{
+	Entity:     "WorkerProfile",
+	ForeignKey: workerErrors.ForeignKey,
+}
 
 type Params struct {
 	fx.In
@@ -49,79 +113,51 @@ func New(p Params) workerports.WorkerRepository {
 	}
 }
 
-func (r *repository) cursorFilterQuery(
-	q *bun.SelectQuery,
-	req *workerports.ListWorkersRequest,
-) (*bun.SelectQuery, error) {
-	q, err := querybuilder.ApplyCursorFilters(
-		q,
-		workercol.WorkerTable.Alias,
-		req.Filter,
-		req.Cursor,
-		(*worker.Worker)(nil),
-	)
-	if err != nil {
-		return q, err
-	}
+func ownerOperatorFilter(now int64) keel.Pred {
+	w := workerdb.Workers
 
-	return q, nil
+	return keel.Or(
+		w.Type.Eq(worker.WorkerTypeContractor),
+		keel.Raw(
+			ownerOperatorPaySQL,
+			w.ID,
+			w.OrganizationID,
+			w.BusinessUnitID,
+			now,
+			now,
+			string(driverpay.PayeeClassificationOwnerOperator),
+		),
+	)
+}
+
+func selectOptionsQuery(ownerOperatorsOnly bool, now int64) *keel.Query[worker.Worker] {
+	w := workerdb.Workers
+
+	return w.Pick(w.ID, w.CreatedAt, w.FirstName, w.LastName, w.FleetCodeID, w.Status).
+		Where(
+			w.Status.Eq(domaintypes.StatusActive),
+			keel.When(ownerOperatorsOnly, ownerOperatorFilter(now)),
+		).
+		Load(w.FleetCode())
 }
 
 func (r *repository) SelectOptions(
 	ctx context.Context,
 	req *workerports.WorkerSelectOptionsRequest,
 ) (*pagination.ListResult[*worker.Worker], error) {
-	return dbtx.Write(
+	return dbtx.Read(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*pagination.ListResult[*worker.Worker], error) {
-			return dbhelper.SelectOptions[*worker.Worker](
+			w := workerdb.Workers
+
+			return listquery.SelectOptions(
 				ctx,
-				r.db.DBForContext(ctx),
+				r.db.Keel(ctx),
+				selectOptionsQuery(req.OwnerOperatorsOnly, timeutils.NowUnix()),
 				req.SelectQueryRequest,
-				&dbhelper.SelectOptionsConfig{
-					ColumnRefs: []buncolgen.Column{
-						workercol.WorkerColumns.ID,
-						workercol.WorkerColumns.CreatedAt,
-						workercol.WorkerColumns.FirstName,
-						workercol.WorkerColumns.LastName,
-						workercol.WorkerColumns.FleetCodeID,
-						workercol.WorkerColumns.Status,
-					},
-					OrgColumnRef: &workercol.WorkerColumns.OrganizationID,
-					BuColumnRef:  &workercol.WorkerColumns.BusinessUnitID,
-					SearchColumnRefs: []buncolgen.Column{
-						workercol.WorkerColumns.FirstName,
-						workercol.WorkerColumns.LastName,
-					},
-					EntityName: "Worker",
-					QueryModifier: func(q *bun.SelectQuery) *bun.SelectQuery {
-						q = q.
-							Where(workercol.WorkerColumns.Status.Eq(), domaintypes.StatusActive).
-							Relation(workercol.WorkerRelations.FleetCode)
-						if req.OwnerOperatorsOnly {
-							now := timeutils.NowUnix()
-							q = q.Where(
-								`(wrk.type = ? OR EXISTS (
-							SELECT 1
-							FROM worker_pay_assignments wpa
-							JOIN driver_pay_profiles dpp
-								ON dpp.id = wpa.pay_profile_id
-								AND dpp.organization_id = wpa.organization_id
-								AND dpp.business_unit_id = wpa.business_unit_id
-							WHERE wpa.worker_id = wrk.id
-								AND wpa.organization_id = wrk.organization_id
-								AND wpa.business_unit_id = wrk.business_unit_id
-								AND wpa.effective_from <= ?
-								AND (wpa.effective_to IS NULL OR wpa.effective_to > ?)
-								AND dpp.classification = ?
-						))`,
-								worker.WorkerTypeContractor, now, now,
-								driverpay.PayeeClassificationOwnerOperator,
-							)
-						}
-						return q
-					},
+				func(s string) keel.Pred {
+					return keel.Or(w.FirstName.ContainsFold(s), w.LastName.ContainsFold(s))
 				},
 			)
 		},
@@ -132,55 +168,21 @@ func (r *repository) List(
 	ctx context.Context,
 	req *workerports.ListWorkersRequest,
 ) (*pagination.CursorListResult[*worker.Worker], error) {
-	return dbtx.Write(
+	return dbtx.Read(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*pagination.CursorListResult[*worker.Worker], error) {
-			log := r.l.With(
-				zap.String("operation", "List"),
-				zap.Any("request", req),
-			)
-
-			var totalCount *int
-			if req.Cursor.IncludeTotalCount {
-				total, err := r.db.DBForContext(ctx).
-					NewSelect().
-					Model((*worker.Worker)(nil)).
-					Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-						return querybuilder.ApplyFiltersWithoutSort(
-							sq,
-							workercol.WorkerTable.Alias,
-							req.Filter,
-							(*worker.Worker)(nil),
-						)
-					}).
-					Count(ctx)
-				if err != nil {
-					log.Error("failed to count workers", zap.Error(err))
-					return nil, err
-				}
-				totalCount = new(int(total))
-			}
-
-			result, err := dbhelper.CursorList(ctx, dbhelper.CursorListParams[*worker.Worker]{
-				Filter:     req.Filter,
-				Cursor:     req.Cursor,
-				TotalCount: totalCount,
-				Query: func(items *[]*worker.Worker) *bun.SelectQuery {
-					return r.db.DBForContext(ctx).
-						NewSelect().
-						Model(items).
-						ColumnExpr(workercol.WorkerTable.All()).
-						Relation(workercol.WorkerRelations.FleetCode).
-						Relation(workercol.WorkerRelations.State).
-						Relation(workercol.WorkerRelations.Profile)
-				},
-				Apply: func(sq *bun.SelectQuery) (*bun.SelectQuery, error) {
-					return r.cursorFilterQuery(sq, req)
-				},
-			})
+			w := workerdb.Workers
+			result, err := listquery.Connection(ctx, r.db.Keel(ctx), w.Query(),
+				&listquery.Request[worker.Worker]{
+					Filter: req.Filter,
+					Cursor: req.Cursor,
+					Shape: func(q *keel.Query[worker.Worker]) *keel.Query[worker.Worker] {
+						return q.Load(w.FleetCode(), w.State(), w.Profile())
+					},
+				})
 			if err != nil {
-				log.Error("failed to scan workers", zap.Error(err))
+				r.l.Error("failed to list workers", zap.Error(err))
 				return nil, err
 			}
 
@@ -189,47 +191,32 @@ func (r *repository) List(
 	)
 }
 
+func workerQuery(req *workerports.GetWorkerByIDRequest) *keel.Query[worker.Worker] {
+	w := workerdb.Workers
+	profile := w.Profile()
+
+	loads := make([]keel.Loader, 0, 5)
+	switch {
+	case req.IncludeProfile && req.IncludeLicenseState:
+		loads = append(loads, profile.LicenseState())
+	case req.IncludeProfile:
+		loads = append(loads, profile)
+	}
+	loads = append(loads, listquery.When(req.IncludeState, w.State())...)
+	loads = append(loads, listquery.When(req.IncludeFleetCode, w.FleetCode())...)
+	loads = append(loads, listquery.When(req.IncludeManager, w.Manager())...)
+
+	return w.Where(w.ID.Eq(req.ID)).Load(loads...)
+}
+
 func (r *repository) GetByID(
 	ctx context.Context,
 	req workerports.GetWorkerByIDRequest,
 ) (*worker.Worker, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*worker.Worker, error) {
-		log := r.l.With(
-			zap.String("operation", "GetByID"),
-			zap.String("id", req.ID.String()),
-		)
-
-		entity := new(worker.Worker)
-		q := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(entity).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return workercol.WorkerScopeTenant(sq, req.TenantInfo).
-					Where(workercol.WorkerColumns.ID.Eq(), req.ID)
-			})
-
-		if req.IncludeProfile {
-			q.Relation(workercol.WorkerRelations.Profile)
-		}
-		if req.IncludeState {
-			q.Relation(workercol.WorkerRelations.State)
-		}
-		if req.IncludeFleetCode {
-			q.Relation(workercol.WorkerRelations.FleetCode)
-		}
-		if req.IncludeManager {
-			q.Relation(workercol.WorkerRelations.Manager)
-		}
-		if req.IncludeProfile && req.IncludeLicenseState {
-			q.Relation(buncolgen.Rel(
-				workercol.WorkerRelations.Profile,
-				workercol.WorkerProfileRelations.LicenseState,
-			))
-		}
-
-		if err := q.Scan(ctx); err != nil {
-			log.Error("failed to get worker", zap.Error(err))
-			return nil, dberror.HandleNotFoundError(err, "Worker")
+		entity, err := workerQuery(&req).One(ctx, r.db.Keel(ctx))
+		if err != nil {
+			return nil, workerErrors.Map(err, req.ID.String())
 		}
 
 		return entity, nil
@@ -241,59 +228,50 @@ func (r *repository) Create(
 	entity *worker.Worker,
 ) (*worker.Worker, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*worker.Worker, error) {
-		log := r.l.With(
-			zap.String("operation", "Create"),
-			zap.String("firstName", entity.FirstName),
-			zap.String("lastName", entity.LastName),
-		)
-
-		err := r.db.WithTx(ctx, kernelports.TxOptions{}, func(c context.Context, tx bun.Tx) error {
-			if quotaErr := quotaservice.EnforceAll(c, r.quota, platformplanports.QuotaRequest{
-				TenantInfo: pagination.TenantInfo{
-					OrgID: entity.OrganizationID,
-					BuID:  entity.BusinessUnitID,
-				},
-				Meter:    platformcatalog.MeterWorkersTotal,
-				Quantity: 1,
-			}); quotaErr != nil {
-				return quotaErr
-			}
-
-			if _, insertErr := r.db.
-				DBForContext(c).
-				NewInsert().
-				Model(entity).
-				Returning("*").
-				Exec(c); insertErr != nil {
-				log.Error("failed to create worker", zap.Error(insertErr))
-				return insertErr
-			}
-
-			if entity.Profile != nil {
-				entity.Profile.WorkerID = entity.ID
-				entity.Profile.OrganizationID = entity.OrganizationID
-				entity.Profile.BusinessUnitID = entity.BusinessUnitID
-
-				if _, profileErr := r.db.DBForContext(c).NewInsert().
-					Model(entity.Profile).
-					Returning("*").
-					Exec(c); profileErr != nil {
-					log.Error("failed to create worker profile", zap.Error(profileErr))
-					return profileErr
-				}
-			}
-
-			return nil
-		})
-		if err != nil {
-			return nil, dberror.MapRetryableTransactionError(
-				err,
-				"Worker is busy. Retry the request.",
+		if err := r.create(ctx, entity); err != nil {
+			r.l.Error(
+				"failed to create worker",
+				zap.String("firstName", entity.FirstName),
+				zap.String("lastName", entity.LastName),
+				zap.Error(err),
 			)
+			return nil, dberror.MapRetryableTransactionError(err, workerBusyMessage)
 		}
 
 		return entity, nil
 	})
+}
+
+func (r *repository) create(ctx context.Context, entity *worker.Worker) error {
+	err := quotaservice.EnforceAll(ctx, r.quota, platformplanports.QuotaRequest{
+		TenantInfo: pagination.TenantInfo{
+			OrgID: entity.OrganizationID,
+			BuID:  entity.BusinessUnitID,
+		},
+		Meter:    platformcatalog.MeterWorkersTotal,
+		Quantity: 1,
+	})
+	if err != nil {
+		return err
+	}
+
+	db := r.db.Keel(ctx)
+	if err = workerdb.Workers.Create(ctx, db, entity); err != nil {
+		return workerErrors.Map(err, entity.ID.String())
+	}
+
+	if entity.Profile == nil {
+		return nil
+	}
+
+	entity.Profile.WorkerID = entity.ID
+	entity.Profile.OrganizationID = entity.OrganizationID
+	entity.Profile.BusinessUnitID = entity.BusinessUnitID
+	if err = workerdb.WorkerProfiles.Create(ctx, db, entity.Profile); err != nil {
+		return workerProfileErrors.Map(err, entity.Profile.ID.String())
+	}
+
+	return nil
 }
 
 func (r *repository) Update(
@@ -301,181 +279,128 @@ func (r *repository) Update(
 	entity *worker.Worker,
 ) (*worker.Worker, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*worker.Worker, error) {
-		log := r.l.With(
-			zap.String("operation", "Update"),
-			zap.String("id", entity.ID.String()),
-		)
-
-		ov := entity.Version
-		entity.Version++
-
-		err := r.db.WithTx(ctx, kernelports.TxOptions{}, func(c context.Context, tx bun.Tx) error {
-			results, updateErr := r.db.DBForContext(c).
-				NewUpdate().
-				Model(entity).
-				WherePK().
-				Where(workercol.WorkerColumns.Version.Eq(), ov).
-				Returning("*").
-				Exec(c)
-			if updateErr != nil {
-				log.Error("failed to update worker", zap.Error(updateErr))
-				return updateErr
-			}
-
-			if checkErr := dberror.CheckRowsAffected(
-				results,
-				"Worker",
-				entity.ID.String(),
-			); checkErr != nil {
-				return checkErr
-			}
-
-			if entity.Profile != nil {
-				entity.Profile.WorkerID = entity.ID
-				entity.Profile.OrganizationID = entity.OrganizationID
-				entity.Profile.BusinessUnitID = entity.BusinessUnitID
-
-				pv := entity.Profile.Version
-				entity.Profile.Version++
-
-				profileResults, profileErr := r.db.DBForContext(c).
-					NewUpdate().
-					Model(entity.Profile).
-					WherePK().
-					Where(workercol.WorkerProfileColumns.Version.Eq(), pv).
-					Returning("*").
-					Exec(c)
-				if profileErr != nil {
-					log.Error("failed to update worker profile", zap.Error(profileErr))
-					return profileErr
-				}
-
-				if checkErr := dberror.CheckRowsAffected(
-					profileResults,
-					"WorkerProfile",
-					entity.Profile.ID.String(),
-				); checkErr != nil {
-					return checkErr
-				}
-			}
-
-			return nil
-		})
-		if err != nil {
-			return nil, dberror.MapRetryableTransactionError(
-				err,
-				"Worker is busy. Retry the request.",
+		if err := r.update(ctx, entity); err != nil {
+			r.l.Error(
+				"failed to update worker",
+				zap.String("id", entity.ID.String()),
+				zap.Error(err),
 			)
+			return nil, dberror.MapRetryableTransactionError(err, workerBusyMessage)
 		}
 
 		return entity, nil
 	})
 }
 
+func (r *repository) update(ctx context.Context, entity *worker.Worker) error {
+	db := r.db.Keel(ctx)
+	if err := workerdb.Workers.Save(ctx, db, entity); err != nil {
+		return workerErrors.Map(err, entity.ID.String())
+	}
+
+	if entity.Profile == nil {
+		return nil
+	}
+
+	entity.Profile.WorkerID = entity.ID
+	entity.Profile.OrganizationID = entity.OrganizationID
+	entity.Profile.BusinessUnitID = entity.BusinessUnitID
+	if err := workerdb.WorkerProfiles.Save(ctx, db, entity.Profile); err != nil {
+		return workerProfileErrors.Map(err, entity.Profile.ID.String())
+	}
+
+	return nil
+}
+
 func (r *repository) GetWorkerSyncReadinessCounts(
 	ctx context.Context,
-	tenantInfo pagination.TenantInfo,
+	_ pagination.TenantInfo,
 ) (*workerports.WorkerSyncReadinessCounts, error) {
 	return dbtx.Read(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*workerports.WorkerSyncReadinessCounts, error) {
-			counts := new(workerports.WorkerSyncReadinessCounts)
-
-			wrk := workercol.WorkerColumns
-
-			err := r.db.DBForContext(ctx).
-				NewSelect().
-				Model((*worker.Worker)(nil)).
-				ColumnExpr(buncolgen.Count("total_workers")).
-				ColumnExpr(buncolgen.CountFilter("active_workers", wrk.Status.Eq()),
-					domaintypes.StatusActive,
-				).
-				ColumnExpr(
-					buncolgen.CountFilter("synced_active_workers",
-						wrk.Status.Eq(),
-						wrk.ExternalID.Expr("NULLIF(BTRIM({}), '') IS NOT NULL"),
-					),
-					domaintypes.StatusActive,
-				).
-				Apply(workercol.WorkerApplyTenant(tenantInfo)).
-				Scan(ctx, counts)
+			w := workerdb.Workers
+			active := w.Status.Eq(domaintypes.StatusActive)
+			counts, err := keel.IntoOne[workerports.WorkerSyncReadinessCounts](
+				ctx,
+				r.db.Keel(ctx),
+				w.Pick(
+					keel.Count(),
+					keel.Count().Filter(active),
+					keel.Count().Filter(keel.And(
+						active,
+						keel.Raw("NULLIF(BTRIM(?), '') IS NOT NULL", w.ExternalID),
+					)),
+				),
+			)
 			if err != nil {
+				r.l.Error("failed to count worker sync readiness", zap.Error(err))
 				return nil, err
 			}
 
-			return counts, nil
+			return &counts, nil
 		},
 	)
 }
 
 func (r *repository) ReplaceWorkerSyncDrifts(
 	ctx context.Context,
-	tenantInfo pagination.TenantInfo,
+	_ pagination.TenantInfo,
 	drifts []workerports.WorkerSyncDriftRecord,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
-		return dberror.MapRetryableTransactionError(
-			r.db.WithTx(ctx, kernelports.TxOptions{}, func(c context.Context, tx bun.Tx) error {
-				if _, err := r.db.DBForContext(c).NewDelete().
-					Model((*worker.WorkerSyncDrift)(nil)).
-					WhereGroup(" AND ", func(dq *bun.DeleteQuery) *bun.DeleteQuery {
-						return workercol.WorkerSyncDriftScopeTenantDelete(dq, tenantInfo).
-							Where(workercol.WorkerSyncDriftColumns.WorkerID.In(), bun.List(drifts))
-					}).
-					Exec(c); err != nil {
-					return err
-				}
+		db := r.db.Keel(ctx)
+		d := workerdb.WorkerSyncDrifts
+		if _, err := d.Where(keel.True()).Delete(ctx, db); err != nil {
+			return dberror.MapRetryableTransactionError(err, syncDriftBusyMessage)
+		}
 
-				if len(drifts) == 0 {
-					return nil
-				}
+		if len(drifts) == 0 {
+			return nil
+		}
 
-				models := make([]*worker.WorkerSyncDrift, 0, len(drifts))
-				for idx := range drifts {
-					drift := drifts[idx]
-					models = append(models, &worker.WorkerSyncDrift{
-						OrganizationID:  tenantInfo.OrgID.String(),
-						BusinessUnitID:  tenantInfo.BuID.String(),
-						WorkerID:        drift.WorkerID,
-						DriftType:       drift.DriftType,
-						WorkerName:      drift.WorkerName,
-						Message:         drift.Message,
-						LocalExternalID: drift.LocalExternalID,
-						RemoteDriverID:  drift.RemoteDriverID,
-						DetectedAt:      drift.DetectedAt,
-					})
-				}
+		models := make([]*worker.WorkerSyncDrift, 0, len(drifts))
+		for idx := range drifts {
+			drift := drifts[idx]
+			models = append(models, &worker.WorkerSyncDrift{
+				WorkerID:        drift.WorkerID,
+				DriftType:       drift.DriftType,
+				WorkerName:      drift.WorkerName,
+				Message:         drift.Message,
+				LocalExternalID: drift.LocalExternalID,
+				RemoteDriverID:  drift.RemoteDriverID,
+				DetectedAt:      drift.DetectedAt,
+			})
+		}
 
-				_, err := r.db.DBForContext(c).NewInsert().Model(&models).Exec(c)
-				return err
-			}),
-			"Worker sync state is busy. Retry the request.",
-		)
+		if err := d.CreateMany(ctx, db, models); err != nil {
+			return dberror.MapRetryableTransactionError(err, syncDriftBusyMessage)
+		}
+
+		return nil
 	})
 }
 
 func (r *repository) ListWorkerSyncDrifts(
 	ctx context.Context,
-	tenantInfo pagination.TenantInfo,
+	_ pagination.TenantInfo,
 ) ([]workerports.WorkerSyncDriftRecord, error) {
 	return dbtx.Read(
 		ctx,
 		r.db,
 		func(ctx context.Context) ([]workerports.WorkerSyncDriftRecord, error) {
-			models := make([]*worker.WorkerSyncDrift, 0)
-
-			if err := r.db.DBForContext(ctx).NewSelect().
-				Model(&models).Apply(workercol.WorkerSyncDriftApplyTenant(tenantInfo)).
-				Order(workercol.WorkerSyncDriftColumns.DetectedAt.OrderDesc()).
-				Order(workercol.WorkerSyncDriftColumns.WorkerName.OrderAsc()).
-				Scan(ctx); err != nil {
+			d := workerdb.WorkerSyncDrifts
+			models, err := d.Query().
+				Order(d.DetectedAt.Desc(), d.WorkerName.Asc()).
+				All(ctx, r.db.Keel(ctx))
+			if err != nil {
+				r.l.Error("failed to list worker sync drifts", zap.Error(err))
 				return nil, err
 			}
 
 			records := make([]workerports.WorkerSyncDriftRecord, 0, len(models))
-			for idx := range models {
-				model := models[idx]
+			for _, model := range models {
 				records = append(records, workerports.WorkerSyncDriftRecord{
 					WorkerID:        model.WorkerID,
 					WorkerName:      model.WorkerName,
@@ -492,55 +417,70 @@ func (r *repository) ListWorkerSyncDrifts(
 	)
 }
 
+func credentialFieldColumn(field worker.CredentialProfileField) (keel.Int64Col, error) {
+	wp := workerdb.WorkerProfiles
+	switch field {
+	case worker.CredentialProfileFieldLicenseExpiry:
+		return wp.LicenseExpiry, nil
+	case worker.CredentialProfileFieldHazmatExpiry:
+		return wp.HazmatExpiry, nil
+	case worker.CredentialProfileFieldMedicalCardExpiry:
+		return wp.MedicalCardExpiry, nil
+	case worker.CredentialProfileFieldTWICExpiry:
+		return wp.TWICExpiry, nil
+	case worker.CredentialProfileFieldPhysicalDueDate:
+		return wp.PhysicalDueDate, nil
+	case worker.CredentialProfileFieldMVRDueDate:
+		return wp.MVRDueDate, nil
+	case worker.CredentialProfileFieldNone:
+	}
+
+	return keel.Int64Col{}, fmt.Errorf("%w: %s", worker.ErrInvalidCredentialProfileField, field)
+}
+
+func credentialFieldAssignments(
+	req *workerports.PatchProfileCredentialFieldRequest,
+	column keel.Int64Col,
+) []keel.Assignment {
+	wp := workerdb.WorkerProfiles
+	sets := []keel.Assignment{wp.Version.Add(0)}
+	hasExpiry := req.ExpiresAt != nil && *req.ExpiresAt > 0
+
+	if req.Field == worker.CredentialProfileFieldLicenseExpiry {
+		if hasExpiry {
+			sets = append(sets, column.To(*req.ExpiresAt))
+		}
+		if req.Number != "" {
+			sets = append(sets, wp.LicenseNumber.To(req.Number))
+		}
+		return sets
+	}
+
+	if hasExpiry {
+		return append(sets, column.To(*req.ExpiresAt))
+	}
+
+	return append(sets, column.ToNull())
+}
+
 func (r *repository) PatchProfileCredentialField(
 	ctx context.Context,
 	req *workerports.PatchProfileCredentialFieldRequest,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
-		cols := workercol.WorkerProfileColumns
-		var column buncolgen.Column
-		switch req.Field {
-		case worker.CredentialProfileFieldLicenseExpiry:
-			column = cols.LicenseExpiry
-		case worker.CredentialProfileFieldHazmatExpiry:
-			column = cols.HazmatExpiry
-		case worker.CredentialProfileFieldMedicalCardExpiry:
-			column = cols.MedicalCardExpiry
-		case worker.CredentialProfileFieldTWICExpiry:
-			column = cols.TWICExpiry
-		case worker.CredentialProfileFieldPhysicalDueDate:
-			column = cols.PhysicalDueDate
-		case worker.CredentialProfileFieldMVRDueDate:
-			column = cols.MVRDueDate
-		case worker.CredentialProfileFieldNone:
+		if req.Field == worker.CredentialProfileFieldNone {
 			return nil
-		default:
-			return fmt.Errorf("%w: %s", worker.ErrInvalidCredentialProfileField, req.Field)
 		}
 
-		q := r.db.DBForContext(ctx).
-			NewUpdate().
-			Model((*worker.WorkerProfile)(nil)).
-			Set(cols.UpdatedAt.Set(), timeutils.NowUnix()).
-			WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-				return workercol.WorkerProfileScopeTenantUpdate(uq, req.TenantInfo).
-					Where(cols.WorkerID.Eq(), req.WorkerID)
-			})
-
-		if req.Field == worker.CredentialProfileFieldLicenseExpiry {
-			if req.ExpiresAt != nil && *req.ExpiresAt > 0 {
-				q = q.Set(column.Set(), *req.ExpiresAt)
-			}
-			if req.Number != "" {
-				q = q.Set(cols.LicenseNumber.Set(), req.Number)
-			}
-		} else if req.ExpiresAt != nil && *req.ExpiresAt > 0 {
-			q = q.Set(column.Set(), *req.ExpiresAt)
-		} else {
-			q = q.Set(column.Set(), nil)
+		column, err := credentialFieldColumn(req.Field)
+		if err != nil {
+			return err
 		}
 
-		if _, err := q.Exec(ctx); err != nil {
+		wp := workerdb.WorkerProfiles
+		_, err = wp.Where(wp.WorkerID.Eq(req.WorkerID)).
+			Update(ctx, r.db.Keel(ctx), credentialFieldAssignments(req, column)...)
+		if err != nil {
 			r.l.Error("failed to patch worker profile credential field",
 				zap.String("workerId", req.WorkerID.String()),
 				zap.String("field", req.Field.String()),
@@ -552,32 +492,41 @@ func (r *repository) PatchProfileCredentialField(
 	})
 }
 
+func setNullable(col keel.Int64Col, value *int64) keel.Assignment {
+	if value == nil {
+		return col.ToNull()
+	}
+
+	return col.To(*value)
+}
+
+func distinctFrom(col keel.Int64Col, value *int64) keel.Pred {
+	if value == nil {
+		return col.IsNotNull()
+	}
+
+	return col.IsDistinctFrom(*value)
+}
+
 func (r *repository) UpdateProfileComplianceStatus(
 	ctx context.Context,
 	req *workerports.UpdateProfileComplianceStatusRequest,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
-		cols := workercol.WorkerProfileColumns
-		_, err := r.db.DBForContext(ctx).
-			NewUpdate().
-			Model((*worker.WorkerProfile)(nil)).
-			Set(cols.ComplianceStatus.Set(), req.Status).
-			Set(cols.NextCredentialExpiry.Set(), req.NextExpiry).
-			Set(cols.UpdatedAt.Set(), timeutils.NowUnix()).
-			WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-				return workercol.WorkerProfileScopeTenantUpdate(uq, req.TenantInfo).
-					Where(cols.WorkerID.Eq(), req.WorkerID).
-					WhereGroup(" AND ", func(iq *bun.UpdateQuery) *bun.UpdateQuery {
-						return iq.
-							Where(cols.ComplianceStatus.Ne(), req.Status).
-							WhereOr(
-								"? IS DISTINCT FROM ?",
-								bun.Ident(cols.NextCredentialExpiry.String()),
-								req.NextExpiry,
-							)
-					})
-			}).
-			Exec(ctx)
+		wp := workerdb.WorkerProfiles
+		_, err := wp.Where(
+			wp.WorkerID.Eq(req.WorkerID),
+			keel.Or(
+				wp.ComplianceStatus.Ne(req.Status),
+				distinctFrom(wp.NextCredentialExpiry, req.NextExpiry),
+			),
+		).Update(
+			ctx,
+			r.db.Keel(ctx),
+			wp.ComplianceStatus.To(req.Status),
+			setNullable(wp.NextCredentialExpiry, req.NextExpiry),
+			wp.Version.Add(0),
+		)
 		if err != nil {
 			r.l.Error("failed to update worker compliance status",
 				zap.String("workerId", req.WorkerID.String()),
@@ -589,35 +538,25 @@ func (r *repository) UpdateProfileComplianceStatus(
 	})
 }
 
-// UpdateProfileTrainingRollup caches the worker's training standing on the
-// profile so the roster can filter and sort on it. The guard skips the write
-// when nothing moved, keeping updated_at meaningful.
 func (r *repository) UpdateProfileTrainingRollup(
 	ctx context.Context,
 	req *workerports.UpdateProfileTrainingRollupRequest,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
-		cols := workercol.WorkerProfileColumns
-		_, err := r.db.DBForContext(ctx).
-			NewUpdate().
-			Model((*worker.WorkerProfile)(nil)).
-			Set(cols.TrainingHealth.Set(), req.Health).
-			Set(cols.NextTrainingDue.Set(), req.NextDue).
-			Set(cols.UpdatedAt.Set(), timeutils.NowUnix()).
-			WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-				return workercol.WorkerProfileScopeTenantUpdate(uq, req.TenantInfo).
-					Where(cols.WorkerID.Eq(), req.WorkerID).
-					WhereGroup(" AND ", func(iq *bun.UpdateQuery) *bun.UpdateQuery {
-						return iq.
-							Where(cols.TrainingHealth.Ne(), req.Health).
-							WhereOr(
-								"? IS DISTINCT FROM ?",
-								bun.Ident(cols.NextTrainingDue.String()),
-								req.NextDue,
-							)
-					})
-			}).
-			Exec(ctx)
+		wp := workerdb.WorkerProfiles
+		_, err := wp.Where(
+			wp.WorkerID.Eq(req.WorkerID),
+			keel.Or(
+				wp.TrainingHealth.Ne(req.Health),
+				distinctFrom(wp.NextTrainingDue, req.NextDue),
+			),
+		).Update(
+			ctx,
+			r.db.Keel(ctx),
+			wp.TrainingHealth.To(req.Health),
+			setNullable(wp.NextTrainingDue, req.NextDue),
+			wp.Version.Add(0),
+		)
 		if err != nil {
 			r.l.Error("failed to update worker training rollup",
 				zap.String("workerId", req.WorkerID.String()),
@@ -636,23 +575,17 @@ func (r *repository) UpdateProfileSafetyRollup(
 	req *workerports.UpdateProfileSafetyRollupRequest,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
-		cols := workercol.WorkerProfileColumns
-		_, err := r.db.DBForContext(ctx).
-			NewUpdate().
-			Model((*worker.WorkerProfile)(nil)).
-			Set(cols.SafetyRating.Set(), req.Rating).
-			Set(cols.SafetyScore.Set(), req.Score).
-			Set(cols.UpdatedAt.Set(), timeutils.NowUnix()).
-			WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-				return workercol.WorkerProfileScopeTenantUpdate(uq, req.TenantInfo).
-					Where(cols.WorkerID.Eq(), req.WorkerID).
-					WhereGroup(" AND ", func(iq *bun.UpdateQuery) *bun.UpdateQuery {
-						return iq.
-							Where(cols.SafetyRating.Ne(), req.Rating).
-							WhereOr(cols.SafetyScore.Ne(), req.Score)
-					})
-			}).
-			Exec(ctx)
+		wp := workerdb.WorkerProfiles
+		_, err := wp.Where(
+			wp.WorkerID.Eq(req.WorkerID),
+			keel.Or(wp.SafetyRating.Ne(req.Rating), wp.SafetyScore.Ne(req.Score)),
+		).Update(
+			ctx,
+			r.db.Keel(ctx),
+			wp.SafetyRating.To(req.Rating),
+			wp.SafetyScore.To(req.Score),
+			wp.Version.Add(0),
+		)
 		if err != nil {
 			r.l.Error("failed to update worker safety rollup",
 				zap.String("workerId", req.WorkerID.String()),
@@ -669,18 +602,11 @@ func (r *repository) UpdateProfileQualification(
 	req *workerports.UpdateProfileQualificationRequest,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
-		cols := workercol.WorkerProfileColumns
-		_, err := r.db.DBForContext(ctx).
-			NewUpdate().
-			Model((*worker.WorkerProfile)(nil)).
-			Set(cols.IsQualified.Set(), req.Qualified).
-			Set(cols.UpdatedAt.Set(), timeutils.NowUnix()).
-			WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-				return workercol.WorkerProfileScopeTenantUpdate(uq, req.TenantInfo).
-					Where(cols.WorkerID.Eq(), req.WorkerID).
-					Where(cols.IsQualified.Ne(), req.Qualified)
-			}).
-			Exec(ctx)
+		wp := workerdb.WorkerProfiles
+		_, err := wp.Where(
+			wp.WorkerID.Eq(req.WorkerID),
+			wp.IsQualified.Eq(!req.Qualified),
+		).Update(ctx, r.db.Keel(ctx), wp.IsQualified.To(req.Qualified), wp.Version.Add(0))
 		if err != nil {
 			r.l.Error("failed to update worker qualification",
 				zap.String("workerId", req.WorkerID.String()),
@@ -701,52 +627,39 @@ func (r *repository) CountRosterAttention(
 	req *workerports.CountRosterAttentionRequest,
 ) (*workerports.RosterAttention, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*workerports.RosterAttention, error) {
-		wcols := workercol.WorkerColumns
-		pcols := workercol.WorkerProfileColumns
-
-		counts := new(workerports.RosterAttention)
-		err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model((*worker.Worker)(nil)).
-			ColumnExpr("COUNT(*) AS active_workers").
-			ColumnExpr(
-				"COUNT(*) FILTER (WHERE ? = ?) AS non_compliant",
-				bun.Ident(pcols.ComplianceStatus.String()),
-				worker.ComplianceStatusNonCompliant,
-			).
-			ColumnExpr(
-				"COUNT(*) FILTER (WHERE ? IN (?)) AS training_overdue",
-				bun.Ident(pcols.TrainingHealth.String()),
-				bun.In([]worker.TrainingHealth{
-					worker.TrainingHealthOverdue,
-					worker.TrainingHealthExpired,
-					worker.TrainingHealthFailed,
-					worker.TrainingHealthMissing,
-				}),
-			).
-			ColumnExpr(
-				"COUNT(*) FILTER (WHERE ? = ?) AS at_risk",
-				bun.Ident(pcols.SafetyRating.String()),
-				worker.SafetyRatingAtRisk,
-			).
-			ColumnExpr(
-				"COUNT(*) FILTER (WHERE ? IS NOT NULL AND ? <= ?) AS expiring_soon",
-				bun.Ident(pcols.NextCredentialExpiry.String()),
-				bun.Ident(pcols.NextCredentialExpiry.String()),
-				req.ExpiryHorizon,
-			).
-			Join(
-				"JOIN worker_profiles AS wrkp ON wrkp.worker_id = wrk.id AND wrkp.organization_id = wrk.organization_id AND wrkp.business_unit_id = wrk.business_unit_id",
-			).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return workercol.WorkerScopeTenant(sq, req.TenantInfo).
-					Where(wcols.Status.Eq(), domaintypes.StatusActive)
-			}).
-			Scan(ctx, counts)
+		counts, err := keel.IntoOne[workerports.RosterAttention](
+			ctx,
+			r.db.Keel(ctx),
+			rosterAttentionQuery(req.ExpiryHorizon),
+		)
 		if err != nil {
 			r.l.Error("failed to count roster attention", zap.Error(err))
 			return nil, fmt.Errorf("count roster attention: %w", err)
 		}
-		return counts, nil
+
+		return &counts, nil
 	})
+}
+
+func rosterAttentionQuery(expiryHorizon int64) *keel.Query[worker.Worker] {
+	w := workerdb.Workers
+	wp := workerdb.WorkerProfiles
+
+	return w.Join(wp, wp.WorkerID.EqCol(w.ID)).
+		Where(w.Status.Eq(domaintypes.StatusActive)).
+		Pick(
+			keel.Count(),
+			keel.Count().Filter(wp.ComplianceStatus.Eq(worker.ComplianceStatusNonCompliant)),
+			keel.Count().Filter(wp.TrainingHealth.In(
+				worker.TrainingHealthOverdue,
+				worker.TrainingHealthExpired,
+				worker.TrainingHealthFailed,
+				worker.TrainingHealthMissing,
+			)),
+			keel.Count().Filter(wp.SafetyRating.Eq(worker.SafetyRatingAtRisk)),
+			keel.Count().Filter(keel.And(
+				wp.NextCredentialExpiry.IsNotNull(),
+				wp.NextCredentialExpiry.Lte(expiryHorizon),
+			)),
+		)
 }

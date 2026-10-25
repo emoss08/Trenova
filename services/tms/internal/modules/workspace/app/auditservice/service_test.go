@@ -5,11 +5,11 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/workspace/domain/audit"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/metrics"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/workspace/domain/audit"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/emoss08/trenova/pkg/dbtype"
 	"github.com/emoss08/trenova/pkg/domaintypes"
@@ -75,28 +75,6 @@ func (m *mockAuditRepository) GetByID(
 		return nil, args.Error(1)
 	}
 	return args.Get(0).(*audit.Entry), args.Error(1)
-}
-
-func (m *mockAuditRepository) GetByResourceAndOperation(
-	ctx context.Context,
-	req *auditports.GetAuditByResourceRequest,
-) ([]*audit.Entry, error) {
-	args := m.Called(ctx, req)
-	if args.Get(0) == nil {
-		return nil, args.Error(1)
-	}
-	return args.Get(0).([]*audit.Entry), args.Error(1)
-}
-
-func (m *mockAuditRepository) GetRecentEntries(
-	ctx context.Context,
-	req *auditports.GetRecentEntriesRequest,
-) ([]*audit.Entry, error) {
-	args := m.Called(ctx, req)
-	if args.Get(0) == nil {
-		return nil, args.Error(1)
-	}
-	return args.Get(0).([]*audit.Entry), args.Error(1)
 }
 
 func (m *mockAuditRepository) DeleteAuditEntries(

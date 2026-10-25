@@ -6,13 +6,13 @@ import (
 	"strings"
 	"time"
 
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/stringutils"
 	"github.com/emoss08/trenova/shared/timeutils"
-	"github.com/uptrace/bun"
 )
 
 const (
@@ -67,42 +67,48 @@ type AppliedObject struct {
 	ID   pulid.ID          `json:"id"`
 }
 
+// Payments recorded in the accounting system against documents Trenova sent, and whether each was applied in Trenova
 type AccountingInboundChange struct {
-	bun.BaseModel             `bun:"table:accounting_inbound_changes,alias:acctic" json:"-"`
-	pagination.CursorValueSet `bun:",embed"                                        json:"-"`
+	keel.Table `keel:"accounting_inbound_changes,report=Accounting,label=Payment From the Books,plural=Payments From the Books"`
 
-	ID                 pulid.ID            `json:"id"                 bun:"id,pk,type:VARCHAR(100)"`
-	BusinessUnitID     pulid.ID            `json:"businessUnitId"     bun:"business_unit_id,pk,type:VARCHAR(100),notnull"`
-	OrganizationID     pulid.ID            `json:"organizationId"     bun:"organization_id,pk,type:VARCHAR(100),notnull"`
-	ConnectionID       pulid.ID            `json:"connectionId"       bun:"connection_id,type:VARCHAR(100),notnull"`
-	Kind               InboundChangeKind   `json:"kind"               bun:"kind,type:VARCHAR(30),notnull"`
-	ExternalID         string              `json:"externalId"         bun:"external_id,type:VARCHAR(100),notnull"`
-	ExternalNumber     string              `json:"externalNumber"     bun:"external_number,type:VARCHAR(100),nullzero"`
-	ExternalURL        string              `json:"externalUrl"        bun:"external_url,type:TEXT,nullzero"`
-	ProviderModifiedAt *int64              `json:"providerModifiedAt" bun:"provider_modified_at,type:BIGINT,nullzero"`
-	ProviderModifiedBy string              `json:"providerModifiedBy" bun:"provider_modified_by,type:VARCHAR(200),nullzero"`
-	TxnDate            int64               `json:"txnDate"            bun:"txn_date,type:BIGINT,notnull"`
-	AmountMinor        int64               `json:"amountMinor"        bun:"amount_minor,type:BIGINT,notnull"`
-	CurrencyCode       string              `json:"currencyCode"       bun:"currency_code,type:VARCHAR(3),notnull"`
-	PartyExternalID    string              `json:"partyExternalId"    bun:"party_external_id,type:VARCHAR(100),nullzero"`
-	PartyName          string              `json:"partyName"          bun:"party_name,type:VARCHAR(200),nullzero"`
-	PartyObjectID      pulid.ID            `json:"partyObjectId"      bun:"party_object_id,type:VARCHAR(100),nullzero"`
-	Document           InboundDocument     `json:"document"           bun:"document,type:JSONB,notnull"`
-	Status             InboundChangeStatus `json:"status"             bun:"status,type:VARCHAR(20),notnull"`
-	Reason             InboundChangeReason `json:"reason"             bun:"reason,type:VARCHAR(30),nullzero"`
-	Resolution         string              `json:"resolution"         bun:"resolution,type:TEXT,nullzero"`
-	AppliedObjects     []AppliedObject     `json:"appliedObjects"     bun:"applied_objects,type:JSONB,notnull"`
-	DecidedByID        pulid.ID            `json:"decidedById"        bun:"decided_by_id,type:VARCHAR(100),nullzero"`
-	DecidedAt          *int64              `json:"decidedAt"          bun:"decided_at,type:BIGINT,nullzero"`
-	Note               string              `json:"note"               bun:"note,type:TEXT,nullzero"`
-	DetectedAt         int64               `json:"detectedAt"         bun:"detected_at,type:BIGINT,notnull"`
-	Version            int64               `json:"version"            bun:"version,type:BIGINT"`
-	CreatedAt          int64               `json:"createdAt"          bun:"created_at,nullzero,notnull,default:extract(epoch from current_timestamp)::bigint"`
-	UpdatedAt          int64               `json:"updatedAt"          bun:"updated_at,nullzero,notnull,default:extract(epoch from current_timestamp)::bigint"`
+	ID                 pulid.ID            `json:"id"                 keel:"id,pk,autoid:acctic_"`
+	BusinessUnitID     pulid.ID            `json:"businessUnitId"     keel:"business_unit_id,pk,tenant"`
+	OrganizationID     pulid.ID            `json:"organizationId"     keel:"organization_id,pk,tenant"`
+	ConnectionID       pulid.ID            `json:"connectionId"       keel:"connection_id"`
+	Kind               InboundChangeKind   `json:"kind"               keel:"kind,label=Payment Kind"`
+	ExternalID         string              `json:"externalId"         keel:"external_id,label=ID in the Books"`
+	ExternalNumber     string              `json:"externalNumber"     keel:"external_number,nullzero,label=Number in the Books"`
+	ExternalURL        string              `json:"externalUrl"        keel:"external_url,nullzero,label=Link in the Books"`
+	ProviderModifiedAt *int64              `json:"providerModifiedAt" keel:"provider_modified_at,label=Changed in the Books At"`
+	ProviderModifiedBy string              `json:"providerModifiedBy" keel:"provider_modified_by,nullzero,label=Changed in the Books By"`
+	TxnDate            int64               `json:"txnDate"            keel:"txn_date,label=Payment Date"`
+	AmountMinor        int64               `json:"amountMinor"        keel:"amount_minor,label=Amount (Minor)"`
+	CurrencyCode       string              `json:"currencyCode"       keel:"currency_code,label=Currency"`
+	PartyExternalID    string              `json:"partyExternalId"    keel:"party_external_id,nullzero,noreport"`
+	PartyName          string              `json:"partyName"          keel:"party_name,nullzero,label=Customer or Vendor"`
+	PartyObjectID      pulid.ID            `json:"partyObjectId"      keel:"party_object_id,nullzero,label=Trenova Party ID"`
+	Document           InboundDocument     `json:"document"           keel:"document,jsonb,noreport"`
+	Status             InboundChangeStatus `json:"status"             keel:"status"`
+	Reason             InboundChangeReason `json:"reason"             keel:"reason,nullzero,label=Held Back Because"`
+	Resolution         string              `json:"resolution"         keel:"resolution,nullzero,label=What to Do"`
+	AppliedObjects     []AppliedObject     `json:"appliedObjects"     keel:"applied_objects,jsonb,noreport"`
+	DecidedByID        pulid.ID            `json:"decidedById"        keel:"decided_by_id,nullzero"`
+	DecidedAt          *int64              `json:"decidedAt"          keel:"decided_at"`
+	Note               string              `json:"note"               keel:"note,nullzero"`
+	DetectedAt         int64               `json:"detectedAt"         keel:"detected_at,label=Read At"`
+	Version            int64               `json:"version"            keel:"version,version"`
+	CreatedAt          int64               `json:"createdAt"          keel:"created_at,autocreate"`
+	UpdatedAt          int64               `json:"updatedAt"          keel:"updated_at,autoupdate"`
 
-	Organization *tenant.Organization `json:"organization,omitempty" bun:"rel:belongs-to,join:organization_id=id"`
-	BusinessUnit *tenant.BusinessUnit `json:"businessUnit,omitempty" bun:"rel:belongs-to,join:business_unit_id=id"`
-	DecidedBy    *tenant.User         `json:"decidedBy,omitempty"    bun:"rel:belongs-to,join:decided_by_id=id"`
+	Organization *tenant.Organization `json:"organization,omitempty"`
+	BusinessUnit *tenant.BusinessUnit `json:"businessUnit,omitempty"`
+	DecidedBy    *tenant.User         `json:"decidedBy,omitempty"    keel:"belongs:decided_by_id,noreport"`
+}
+
+func (c *AccountingInboundChange) BeforeUpdate(_ context.Context) error {
+	c.fillCollections()
+
+	return nil
 }
 
 type InboundObservation struct {
@@ -287,26 +293,25 @@ func (c *AccountingInboundChange) GetPostgresSearchConfig() domaintypes.Postgres
 	}
 }
 
-func (c *AccountingInboundChange) BeforeAppendModel(_ context.Context, query bun.Query) error {
-	now := timeutils.NowUnix()
+func (c *AccountingInboundChange) BeforeCreate(_ context.Context) error {
+	c.fillCollections()
+	if c.DetectedAt == 0 {
+		c.DetectedAt = timeutils.NowUnix()
+	}
+
+	return nil
+}
+
+func (c *AccountingInboundChange) BeforeSave(_ context.Context) error {
+	c.fillCollections()
+	return nil
+}
+
+func (c *AccountingInboundChange) fillCollections() {
 	if c.AppliedObjects == nil {
 		c.AppliedObjects = []AppliedObject{}
 	}
 	if c.Document.Lines == nil {
 		c.Document.Lines = []*InboundLine{}
 	}
-	switch query.(type) {
-	case *bun.InsertQuery:
-		if c.ID.IsNil() {
-			c.ID = pulid.MustNew(inboundChangeIDPrefix)
-		}
-		if c.DetectedAt == 0 {
-			c.DetectedAt = now
-		}
-		c.CreatedAt = now
-		c.UpdatedAt = now
-	case *bun.UpdateQuery:
-		c.UpdatedAt = now
-	}
-	return nil
 }

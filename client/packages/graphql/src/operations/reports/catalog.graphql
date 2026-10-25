@@ -1,6 +1,7 @@
 query ReportCatalog {
   reportCatalog {
     version
+    rules
     entities {
       key
       resource
@@ -17,12 +18,13 @@ query ReportCatalog {
         description
         type
         format
-        nullable
+        measure
         enumValues {
           value
           label
         }
         aggregations
+        operators
         filterable
         groupable
         access
@@ -36,9 +38,10 @@ query ReportCatalog {
       edges {
         name
         label
+        description
         target
-        cardinality
-        traversable
+        toMany
+        pick
         access
         inReferenceView
         needsReadOf {

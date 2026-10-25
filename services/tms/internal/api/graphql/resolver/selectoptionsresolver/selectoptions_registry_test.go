@@ -36,9 +36,9 @@ func TestSelectOptionConnection_UsesOpaqueEntityCursors(t *testing.T) {
 					ID:    id.String(),
 					Label: "John Smith",
 				},
-				cursor: pagination.Cursor{
-					CreatedAt: createdAt,
-					ID:        id,
+				cursor: pagination.PositionCursor{
+					At: createdAt,
+					ID: id,
 				},
 			},
 		},
@@ -52,9 +52,9 @@ func TestSelectOptionConnection_UsesOpaqueEntityCursors(t *testing.T) {
 	require.NotNil(t, result.PageInfo.EndCursor)
 	assert.Equal(t, result.Edges[0].Cursor, *result.PageInfo.EndCursor)
 
-	decoded, err := pagination.DecodeCursor(result.Edges[0].Cursor)
+	decoded, err := pagination.DecodePositionCursor(result.Edges[0].Cursor)
 	require.NoError(t, err)
-	assert.Equal(t, createdAt, decoded.CreatedAt)
+	assert.Equal(t, createdAt, decoded.At)
 	assert.Equal(t, id, decoded.ID)
 }
 
@@ -88,7 +88,7 @@ func TestSelectOptionMappers(t *testing.T) {
 	assert.Equal(
 		t,
 		manufacturer.CreatedAt,
-		equipmentManufacturerSelectOptionItem(manufacturer).cursor.CreatedAt,
+		equipmentManufacturerSelectOptionItem(manufacturer).cursor.At,
 	)
 
 	assert.Equal(t, "TRL-1", trailerSelectOption(&trailer.Trailer{
@@ -161,7 +161,7 @@ func TestSelectOptionMappers(t *testing.T) {
 	assert.Equal(
 		t,
 		shipmentEntity.CreatedAt,
-		shipmentSelectOptionItem(shipmentEntity).cursor.CreatedAt,
+		shipmentSelectOptionItem(shipmentEntity).cursor.At,
 	)
 
 	tenderSender := pulid.MustNew("org_")
@@ -190,7 +190,7 @@ func TestSelectOptionMappers(t *testing.T) {
 	assert.Equal(
 		t,
 		transferEntity.CreatedAt,
-		ediTransferSelectOptionItemFor(tenderReceiver)(transferEntity).cursor.CreatedAt,
+		ediTransferSelectOptionItemFor(tenderReceiver)(transferEntity).cursor.At,
 	)
 
 	fallbackTransfer := &edi.EDITransfer{
@@ -223,7 +223,7 @@ func TestSelectOptionMappers(t *testing.T) {
 	assert.Equal(
 		t,
 		connectionEntity.CreatedAt,
-		ediConnectionSelectOptionItem(connectionEntity).cursor.CreatedAt,
+		ediConnectionSelectOptionItem(connectionEntity).cursor.At,
 	)
 
 	fallbackConnection := &edi.EDIConnection{

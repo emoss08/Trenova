@@ -8,9 +8,9 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/domain/iam"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/session"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant/tenantdb"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/iamports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
-	"github.com/emoss08/trenova/pkg/buncolgen/tenantcol"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -70,8 +70,8 @@ func TestUpdateMyProfileWritesOnlyTheFieldsSentAndCanClearThem(t *testing.T) {
 	})
 
 	require.NoError(t, err)
-	cols := tenantcol.UserColumns
-	assert.ElementsMatch(t, []string{cols.JobTitle.String(), cols.PhoneNumber.String()}, *columns)
+	cols := tenantdb.Users
+	assert.ElementsMatch(t, []string{columnName(cols.JobTitle.Col), columnName(cols.PhoneNumber.Col)}, *columns)
 	assert.Equal(t, "Dispatch lead", user.JobTitle)
 	assert.Empty(t, user.PhoneNumber, "an empty phone must be written, not skipped as a zero value")
 }
@@ -102,7 +102,7 @@ func TestSetMyAssistantHiddenWritesOnlyTheAssistantColumn(t *testing.T) {
 	updated, err := deps.svc.SetMyAssistantHidden(t.Context(), tenantOf(user), true)
 
 	require.NoError(t, err)
-	assert.Equal(t, []string{tenantcol.UserColumns.AssistantHidden.String()}, *columns)
+	assert.Equal(t, []string{columnName(tenantdb.Users.AssistantHidden.Col)}, *columns)
 	assert.True(t, updated.AssistantHidden)
 }
 
@@ -120,7 +120,7 @@ func TestSetMyAssistantHiddenBringsTheAssistantBack(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(
 		t,
-		[]string{tenantcol.UserColumns.AssistantHidden.String()},
+		[]string{columnName(tenantdb.Users.AssistantHidden.Col)},
 		*columns,
 		"showing the assistant again must write false, not skip it as a zero value",
 	)
@@ -214,8 +214,8 @@ func TestDeleteProfilePictureWritesTheEmptiedColumns(t *testing.T) {
 	_, err := deps.svc.DeleteProfilePicture(t.Context(), tenantOf(user))
 
 	require.NoError(t, err)
-	cols := tenantcol.UserColumns
-	assert.ElementsMatch(t, []string{cols.ProfilePicURL.String(), cols.ThumbnailURL.String()}, *columns)
+	cols := tenantdb.Users
+	assert.ElementsMatch(t, []string{columnName(cols.ProfilePicURL.Col), columnName(cols.ThumbnailURL.Col)}, *columns)
 	assert.Empty(t, user.ProfilePicURL)
 }
 

@@ -4,57 +4,74 @@ import (
 	"context"
 	"strings"
 
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/integration"
 	"github.com/emoss08/trenova/pkg/domainvalidation"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/jsonutils"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/emoss08/trenova/shared/timeutils"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
-	"github.com/uptrace/bun"
-)
-
-var (
-	_ bun.BeforeAppendModelHook = (*CarrierIntelSnapshot)(nil)
-	_ bun.BeforeAppendModelHook = (*CarrierIntelRawPayload)(nil)
 )
 
 type CarrierIntelSnapshot struct {
-	bun.BaseModel `bun:"table:carrier_intel_snapshots,alias:cisnap" json:"-"`
+	keel.Table `keel:"carrier_intel_snapshots"`
 
-	ID             pulid.ID         `json:"id"             bun:"id,type:VARCHAR(100),pk,notnull"`
-	BusinessUnitID pulid.ID         `json:"businessUnitId" bun:"business_unit_id,type:VARCHAR(100),pk,notnull"`
-	OrganizationID pulid.ID         `json:"organizationId" bun:"organization_id,type:VARCHAR(100),pk,notnull"`
-	SubjectType    SubjectType      `json:"subjectType"    bun:"subject_type,type:VARCHAR(20),notnull"`
-	SubjectID      string           `json:"subjectId"      bun:"subject_id,type:VARCHAR(100),notnull"`
-	CarrierID      pulid.ID         `json:"carrierId"      bun:"carrier_id,type:VARCHAR(100),nullzero"`
-	DOTNumber      string           `json:"dotNumber"      bun:"dot_number,type:VARCHAR(12),notnull"`
-	DocketNumber   string           `json:"docketNumber"   bun:"docket_number,type:VARCHAR(12),nullzero"`
-	Provider       integration.Type `json:"provider"       bun:"provider,type:integration_type,notnull"`
-	ProviderRef    string           `json:"providerRef"    bun:"provider_ref,type:VARCHAR(64),nullzero"`
-	Depth          LookupDepth      `json:"depth"          bun:"depth,type:VARCHAR(10),notnull"`
-	Source         SnapshotSource   `json:"source"         bun:"source,type:VARCHAR(20),notnull"`
-	IsCurrent      bool             `json:"isCurrent"      bun:"is_current,type:BOOLEAN,notnull"`
-	NotFound       bool             `json:"notFound"       bun:"not_found,type:BOOLEAN,notnull"`
-	Profile        *Profile         `json:"profile"        bun:"profile,type:JSONB,notnull"`
-	Findings       []Finding        `json:"findings"       bun:"findings,type:JSONB,notnull"`
-	BlockingCodes  []string         `json:"blockingCodes"  bun:"blocking_codes,type:TEXT[],array"`
-	AdvisoryCodes  []string         `json:"advisoryCodes"  bun:"advisory_codes,type:TEXT[],array"`
-	RiskLevel      RiskLevel        `json:"riskLevel"      bun:"risk_level,type:VARCHAR(20),notnull"`
-	ReviewState    ReviewState      `json:"reviewState"    bun:"review_state,type:VARCHAR(20),notnull"`
-	ReviewedByID   pulid.ID         `json:"reviewedById"   bun:"reviewed_by_id,type:VARCHAR(100),nullzero"`
-	ReviewedAt     *int64           `json:"reviewedAt"     bun:"reviewed_at,type:BIGINT,nullzero"`
-	ReviewNote     string           `json:"reviewNote"     bun:"review_note,type:TEXT,nullzero"`
-	PolicyVersion  int64            `json:"policyVersion"  bun:"policy_version,type:BIGINT,notnull"`
-	RawPayloadID   pulid.ID         `json:"rawPayloadId"   bun:"raw_payload_id,type:VARCHAR(100),nullzero"`
-	ContentHash    string           `json:"contentHash"    bun:"content_hash,type:VARCHAR(64),notnull"`
-	FetchedAt      int64            `json:"fetchedAt"      bun:"fetched_at,type:BIGINT,notnull"`
-	FetchedDepth   LookupDepth      `json:"fetchedDepth"   bun:"fetched_depth,type:VARCHAR(10),notnull"`
-	DepthFetchedAt int64            `json:"depthFetchedAt" bun:"depth_fetched_at,type:BIGINT,notnull"`
-	SourceAsOf     *int64           `json:"sourceAsOf"     bun:"source_as_of,type:BIGINT,nullzero"`
-	ConfirmedAt    *int64           `json:"confirmedAt"    bun:"confirmed_at,type:BIGINT,nullzero"`
-	CreatedAt      int64            `json:"createdAt"      bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
-	UpdatedAt      int64            `json:"updatedAt"      bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
+	ID             pulid.ID         `json:"id"             keel:"id,pk,autoid:cisnap_"`
+	BusinessUnitID pulid.ID         `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
+	OrganizationID pulid.ID         `json:"organizationId" keel:"organization_id,pk,tenant"`
+	SubjectType    SubjectType      `json:"subjectType"    keel:"subject_type"`
+	SubjectID      string           `json:"subjectId"      keel:"subject_id"`
+	CarrierID      pulid.ID         `json:"carrierId"      keel:"carrier_id,nullzero"`
+	DOTNumber      string           `json:"dotNumber"      keel:"dot_number"`
+	DocketNumber   string           `json:"docketNumber"   keel:"docket_number,nullzero"`
+	Provider       integration.Type `json:"provider"       keel:"provider"`
+	ProviderRef    string           `json:"providerRef"    keel:"provider_ref,nullzero"`
+	Depth          LookupDepth      `json:"depth"          keel:"depth"`
+	Source         SnapshotSource   `json:"source"         keel:"source"`
+	IsCurrent      bool             `json:"isCurrent"      keel:"is_current"`
+	NotFound       bool             `json:"notFound"       keel:"not_found"`
+	Profile        *Profile         `json:"profile"        keel:"profile,jsonb"`
+	Findings       []Finding        `json:"findings"       keel:"findings,jsonb"`
+	BlockingCodes  []string         `json:"blockingCodes"  keel:"blocking_codes"`
+	AdvisoryCodes  []string         `json:"advisoryCodes"  keel:"advisory_codes"`
+	RiskLevel      RiskLevel        `json:"riskLevel"      keel:"risk_level"`
+	ReviewState    ReviewState      `json:"reviewState"    keel:"review_state"`
+	ReviewedByID   pulid.ID         `json:"reviewedById"   keel:"reviewed_by_id,nullzero"`
+	ReviewedAt     *int64           `json:"reviewedAt"     keel:"reviewed_at"`
+	ReviewNote     string           `json:"reviewNote"     keel:"review_note,nullzero"`
+	PolicyVersion  int64            `json:"policyVersion"  keel:"policy_version"`
+	RawPayloadID   pulid.ID         `json:"rawPayloadId"   keel:"raw_payload_id,nullzero"`
+	ContentHash    string           `json:"contentHash"    keel:"content_hash"`
+	FetchedAt      int64            `json:"fetchedAt"      keel:"fetched_at"`
+	FetchedDepth   LookupDepth      `json:"fetchedDepth"   keel:"fetched_depth"`
+	DepthFetchedAt int64            `json:"depthFetchedAt" keel:"depth_fetched_at"`
+	SourceAsOf     *int64           `json:"sourceAsOf"     keel:"source_as_of"`
+	ConfirmedAt    *int64           `json:"confirmedAt"    keel:"confirmed_at"`
+	CreatedAt      int64            `json:"createdAt"      keel:"created_at,autocreate"`
+	UpdatedAt      int64            `json:"updatedAt"      keel:"updated_at,autoupdate"`
+}
+
+func (s *CarrierIntelSnapshot) BeforeCreate(_ context.Context) error {
+	if s.Findings == nil {
+		s.Findings = []Finding{}
+	}
+	if s.Profile == nil {
+		s.Profile = &Profile{Coverage: []Section{}}
+	}
+	if s.RiskLevel == "" {
+		s.RiskLevel = RiskLevelUnknown
+	}
+	if s.ReviewState == "" {
+		s.ReviewState = ReviewStateNone
+	}
+	if !s.FetchedDepth.IsValid() {
+		s.FetchedDepth = s.Depth
+	}
+	if s.DepthFetchedAt <= 0 {
+		s.DepthFetchedAt = s.FetchedAt
+	}
+
+	return nil
 }
 
 func (s *CarrierIntelSnapshot) Validate(multiErr *errortypes.MultiError) {
@@ -151,65 +168,25 @@ func (s *CarrierIntelSnapshot) GetBusinessUnitID() pulid.ID { return s.BusinessU
 
 func (s *CarrierIntelSnapshot) GetTableName() string { return "carrier_intel_snapshots" }
 
-func (s *CarrierIntelSnapshot) BeforeAppendModel(_ context.Context, query bun.Query) error {
-	now := timeutils.NowUnix()
-
-	switch query.(type) {
-	case *bun.InsertQuery:
-		if s.ID.IsNil() {
-			s.ID = pulid.MustNew("cisnap_")
-		}
-		if s.Findings == nil {
-			s.Findings = []Finding{}
-		}
-		if s.Profile == nil {
-			s.Profile = &Profile{Coverage: []Section{}}
-		}
-		if s.RiskLevel == "" {
-			s.RiskLevel = RiskLevelUnknown
-		}
-		if s.ReviewState == "" {
-			s.ReviewState = ReviewStateNone
-		}
-		if !s.FetchedDepth.IsValid() {
-			s.FetchedDepth = s.Depth
-		}
-		if s.DepthFetchedAt <= 0 {
-			s.DepthFetchedAt = s.FetchedAt
-		}
-		s.CreatedAt = now
-		s.UpdatedAt = now
-	case *bun.UpdateQuery:
-		s.UpdatedAt = now
-	}
-
-	return nil
-}
-
 type CarrierIntelRawPayload struct {
-	bun.BaseModel `bun:"table:carrier_intel_raw_payloads,alias:ciraw" json:"-"`
+	keel.Table `keel:"carrier_intel_raw_payloads"`
 
-	ID             pulid.ID          `json:"id"             bun:"id,type:VARCHAR(100),pk,notnull"`
-	BusinessUnitID pulid.ID          `json:"businessUnitId" bun:"business_unit_id,type:VARCHAR(100),pk,notnull"`
-	OrganizationID pulid.ID          `json:"organizationId" bun:"organization_id,type:VARCHAR(100),pk,notnull"`
-	Provider       integration.Type  `json:"provider"       bun:"provider,type:integration_type,notnull"`
-	Endpoint       string            `json:"endpoint"       bun:"endpoint,type:VARCHAR(64),notnull"`
-	DOTNumber      string            `json:"dotNumber"      bun:"dot_number,type:VARCHAR(12),nullzero"`
-	Payload        jsonutils.RawJSON `json:"-"              bun:"payload,type:JSONB,notnull"`
-	ByteSize       int               `json:"byteSize"       bun:"byte_size,type:INTEGER,notnull"`
-	FetchedAt      int64             `json:"fetchedAt"      bun:"fetched_at,type:BIGINT,notnull"`
-	ExpiresAt      int64             `json:"expiresAt"      bun:"expires_at,type:BIGINT,notnull"`
-	CreatedAt      int64             `json:"createdAt"      bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
+	ID             pulid.ID          `json:"id"             keel:"id,pk,autoid:ciraw_"`
+	BusinessUnitID pulid.ID          `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
+	OrganizationID pulid.ID          `json:"organizationId" keel:"organization_id,pk,tenant"`
+	Provider       integration.Type  `json:"provider"       keel:"provider"`
+	Endpoint       string            `json:"endpoint"       keel:"endpoint"`
+	DOTNumber      string            `json:"dotNumber"      keel:"dot_number,nullzero"`
+	Payload        jsonutils.RawJSON `json:"-"              keel:"payload,jsonb"`
+	ByteSize       int               `json:"byteSize"       keel:"byte_size"`
+	FetchedAt      int64             `json:"fetchedAt"      keel:"fetched_at"`
+	ExpiresAt      int64             `json:"expiresAt"      keel:"expires_at"`
+	CreatedAt      int64             `json:"createdAt"      keel:"created_at,autocreate"`
 }
 
-func (r *CarrierIntelRawPayload) BeforeAppendModel(_ context.Context, query bun.Query) error {
-	if _, ok := query.(*bun.InsertQuery); ok {
-		if r.ID.IsNil() {
-			r.ID = pulid.MustNew("ciraw_")
-		}
-		r.ByteSize = len(r.Payload)
-		r.CreatedAt = timeutils.NowUnix()
-	}
+func (r *CarrierIntelRawPayload) BeforeCreate(_ context.Context) error {
+	r.ByteSize = len(r.Payload)
+
 	return nil
 }
 

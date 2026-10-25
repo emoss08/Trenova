@@ -3,6 +3,7 @@ package documenttemplateports
 import (
 	"context"
 	"html/template"
+	"strings"
 
 	"github.com/emoss08/trenova/internal/modules/documents/domain/documenttemplate"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -36,6 +37,17 @@ type TemplateContent struct {
 	PageSize    documenttemplate.PageSize
 	Orientation documenttemplate.Orientation
 	Margins     documenttemplate.Margins
+}
+
+func (c *TemplateContent) Hash() string {
+	return templateengine.ContentHash(strings.Join([]string{
+		c.Subject,
+		c.BodyHTML,
+		c.BodyText,
+		c.CSSContent,
+		c.HeaderHTML,
+		c.FooterHTML,
+	}, "\x00"))
 }
 
 // Channel returns the source stored for one channel.

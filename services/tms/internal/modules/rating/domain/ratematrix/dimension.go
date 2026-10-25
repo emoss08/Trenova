@@ -3,15 +3,12 @@ package ratematrix
 import (
 	"context"
 
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/pkg/domainvalidation"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/emoss08/trenova/shared/timeutils"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
-	"github.com/uptrace/bun"
 )
-
-var _ bun.BeforeAppendModelHook = (*RateMatrixDimension)(nil)
 
 // RateMatrixDimension is one axis of a matrix.
 //
@@ -20,26 +17,32 @@ var _ bun.BeforeAppendModelHook = (*RateMatrixDimension)(nil)
 // columns. That is why position is validated to be dense and unique rather than
 // merely present.
 type RateMatrixDimension struct {
-	bun.BaseModel `bun:"table:rate_matrix_dimensions,alias:rmd" json:"-"`
+	keel.Table `keel:"rate_matrix_dimensions"`
 
-	ID             pulid.ID `json:"id"             bun:"id,pk,type:VARCHAR(100),notnull"`
-	BusinessUnitID pulid.ID `json:"businessUnitId" bun:"business_unit_id,pk,type:VARCHAR(100),notnull"`
-	OrganizationID pulid.ID `json:"organizationId" bun:"organization_id,pk,type:VARCHAR(100),notnull"`
-	RateMatrixID   pulid.ID `json:"rateMatrixId"   bun:"rate_matrix_id,type:VARCHAR(100),notnull"`
-	VersionNumber  int64    `json:"versionNumber"  bun:"version_number,type:BIGINT,notnull,default:0"`
+	ID             pulid.ID `json:"id"             keel:"id,pk,autoid:rmd_"`
+	BusinessUnitID pulid.ID `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
+	OrganizationID pulid.ID `json:"organizationId" keel:"organization_id,pk,tenant"`
+	RateMatrixID   pulid.ID `json:"rateMatrixId"   keel:"rate_matrix_id"`
+	VersionNumber  int64    `json:"versionNumber"  keel:"version_number"`
 
-	Position  int16         `json:"position"  bun:"position,type:SMALLINT,notnull"`
-	Kind      DimensionKind `json:"kind"      bun:"kind,type:rate_matrix_dimension_kind_enum,notnull"`
-	MatchMode MatchMode     `json:"matchMode" bun:"match_mode,type:rate_matrix_match_mode_enum,notnull"`
-	Label     string        `json:"label"     bun:"label,type:VARCHAR(100),nullzero"`
+	Position  int16         `json:"position"  keel:"position"`
+	Kind      DimensionKind `json:"kind"      keel:"kind"`
+	MatchMode MatchMode     `json:"matchMode" keel:"match_mode"`
+	Label     string        `json:"label"     keel:"label,nullzero"`
 
-	KeyNormalization KeyNormalization `json:"keyNormalization" bun:"key_normalization,type:rate_matrix_key_normalization_enum,notnull,default:'None'"`
-	RangeOverflow    RangeOverflow    `json:"rangeOverflow"    bun:"range_overflow,type:rate_matrix_range_overflow_enum,notnull,default:'Error'"`
+	KeyNormalization KeyNormalization `json:"keyNormalization" keel:"key_normalization"`
+	RangeOverflow    RangeOverflow    `json:"rangeOverflow"    keel:"range_overflow"`
 
-	CreatedAt int64 `json:"createdAt" bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
-	UpdatedAt int64 `json:"updatedAt" bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
+	CreatedAt int64 `json:"createdAt" keel:"created_at,autocreate"`
+	UpdatedAt int64 `json:"updatedAt" keel:"updated_at,autoupdate"`
 
-	RateMatrix *RateMatrix `json:"-" bun:"rel:belongs-to,join:rate_matrix_id=id"`
+	RateMatrix *RateMatrix `json:"-" keel:"belongs:rate_matrix_id"`
+}
+
+func (rmd *RateMatrixDimension) BeforeUpdate(_ context.Context) error {
+	rmd.applyModeDefaults()
+
+	return nil
 }
 
 func (rmd *RateMatrixDimension) Validate(multiErr *errortypes.MultiError) {
@@ -154,21 +157,14 @@ func (rmd *RateMatrixDimension) DisplayLabel() string {
 	return rmd.Kind.String()
 }
 
-func (rmd *RateMatrixDimension) BeforeAppendModel(_ context.Context, query bun.Query) error {
-	now := timeutils.NowUnix()
-
-	rmd.applyModeDefaults()
-
-	switch query.(type) {
-	case *bun.InsertQuery:
-		if rmd.ID.IsNil() {
-			rmd.ID = pulid.MustNew("rmd_")
-		}
-		rmd.CreatedAt = now
-		rmd.UpdatedAt = now
-	case *bun.UpdateQuery:
-		rmd.UpdatedAt = now
+func (rmd *RateMatrixDimension) BeforeCreate(ctx context.Context) error {
+	if rmd.KeyNormalization == "" {
+		rmd.KeyNormalization = KeyNormalizationNone
 	}
+	if rmd.RangeOverflow == "" {
+		rmd.RangeOverflow = RangeOverflowError
+	}
+	rmd.applyModeDefaults()
 
 	return nil
 }

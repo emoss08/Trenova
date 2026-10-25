@@ -6,13 +6,17 @@ import (
 	"context"
 	"testing"
 
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/document"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/document/documentdb"
 	"github.com/emoss08/trenova/internal/modules/operations/adapters/postgres/customertrackingrepository"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/customertracking"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment/shipmentdb"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/customertrackingports"
 	"github.com/emoss08/trenova/internal/modules/reference/domain/documenttype"
+	"github.com/emoss08/trenova/internal/modules/reference/domain/documenttype/documenttypedb"
 	"github.com/emoss08/trenova/internal/modules/reference/domain/holdreason"
 	"github.com/emoss08/trenova/internal/testutil"
 	"github.com/emoss08/trenova/internal/testutil/seedtest"
@@ -23,13 +27,12 @@ import (
 	"github.com/emoss08/trenova/shared/tokenutils"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"github.com/uptrace/bun"
 	"go.uber.org/zap"
 )
 
 type harness struct {
 	ctx           context.Context
-	db            *bun.DB
+	db            *keel.DB
 	tenant        pagination.TenantInfo
 	data          *seedtest.TestData
 	fixture       *testutil.ShipmentIntegrationFixture
@@ -48,7 +51,10 @@ func newHarness(t *testing.T) *harness {
 
 	data := seedtest.SeedFullTestData(t, ctx, db)
 	tenant := pagination.TenantInfo{OrgID: data.Organization.ID, BuID: data.BusinessUnit.ID}
-	params := customertrackingrepository.Params{DB: postgres.NewTestConnection(db), Logger: zap.NewNop()}
+	params := customertrackingrepository.Params{
+		DB:     postgres.NewTestConnection(db),
+		Logger: zap.NewNop(),
+	}
 	return &harness{
 		ctx:           dbscope.WithTenant(ctx, tenant.DBTenant()),
 		db:            db,
@@ -63,25 +69,36 @@ func newHarness(t *testing.T) *harness {
 	}
 }
 
-func (h *harness) shipment(t *testing.T, code string, status shipment.Status) *testutil.ShipmentGraph {
+func (h *harness) shipment(
+	t *testing.T,
+	code string,
+	status shipment.Status,
+) *testutil.ShipmentGraph {
 	t.Helper()
-	graph := testutil.CreateShipmentGraph(t, h.ctx, h.db, h.fixture, h.tenant, testutil.ShipmentGraphParams{
-		BOL:          "BOL-" + code,
-		ProNumber:    "PRO-" + code,
-		ShipmentID:   pulid.MustNew("shp_"),
-		MoveStatuses: []shipment.MoveStatus{shipment.MoveStatusNew},
-	})
-	h.exec(t, `UPDATE shipments SET status = ? WHERE id = ?`, status, graph.Shipment.ID)
+	graph := testutil.CreateShipmentGraph(
+		t,
+		h.ctx,
+		h.db,
+		h.fixture,
+		h.tenant,
+		testutil.ShipmentGraphParams{
+			BOL:          "BOL-" + code,
+			ProNumber:    "PRO-" + code,
+			ShipmentID:   pulid.MustNew("shp_"),
+			MoveStatuses: []shipment.MoveStatus{shipment.MoveStatusNew},
+		},
+	)
+	sp := shipmentdb.Shipments
+	_, err := sp.Where(sp.ID.Eq(graph.Shipment.ID)).Update(h.ctx, h.db, sp.Status.To(status))
+	require.NoError(t, err)
 	return graph
 }
 
-func (h *harness) exec(t *testing.T, query string, args ...any) {
-	t.Helper()
-	_, err := h.db.NewRaw(query, args...).Exec(h.ctx)
-	require.NoError(t, err)
-}
-
-func (h *harness) profile(t *testing.T, customerID pulid.ID, notify bool) *customertracking.Profile {
+func (h *harness) profile(
+	t *testing.T,
+	customerID pulid.ID,
+	notify bool,
+) *customertracking.Profile {
 	t.Helper()
 	profile := customertracking.DefaultProfile(h.tenant.OrgID, h.tenant.BuID, customerID)
 	profile.ID = customertracking.NewProfileID()
@@ -135,7 +152,11 @@ func TestAProfileCreatedWithLinksOffStoresFalse(t *testing.T) {
 	h := newHarness(t)
 	graph := h.shipment(t, "PR-OFF", shipment.StatusInTransit)
 
-	profile := customertracking.DefaultProfile(h.tenant.OrgID, h.tenant.BuID, graph.Shipment.CustomerID)
+	profile := customertracking.DefaultProfile(
+		h.tenant.OrgID,
+		h.tenant.BuID,
+		graph.Shipment.CustomerID,
+	)
 	profile.ID = customertracking.NewProfileID()
 	profile.CreatedAt, profile.UpdatedAt = h.now, h.now
 	profile.LinkEnabled = false
@@ -152,7 +173,11 @@ func TestAProfileCreatedWithLinksOffStoresFalse(t *testing.T) {
 func TestTheDatabaseRefusesAProfileWithRulesButNoStartTime(t *testing.T) {
 	h := newHarness(t)
 	graph := h.shipment(t, "PR-2", shipment.StatusInTransit)
-	profile := customertracking.DefaultProfile(h.tenant.OrgID, h.tenant.BuID, graph.Shipment.CustomerID)
+	profile := customertracking.DefaultProfile(
+		h.tenant.OrgID,
+		h.tenant.BuID,
+		graph.Shipment.CustomerID,
+	)
 	profile.ID = customertracking.NewProfileID()
 	profile.CreatedAt, profile.UpdatedAt = h.now, h.now
 	profile.NotifyDelivered = true
@@ -295,10 +320,13 @@ func TestCandidatesAreLiveShipmentsOfNotifyingCustomers(t *testing.T) {
 	require.NoError(t, err)
 	assert.Contains(t, tenants, h.tenant)
 
-	ids, err := h.facts.ListCandidateShipments(h.ctx, &customertrackingports.CandidateShipmentsRequest{
-		TenantInfo: h.tenant,
-		Since:      h.now - 3600,
-	})
+	ids, err := h.facts.ListCandidateShipments(
+		h.ctx,
+		&customertrackingports.CandidateShipmentsRequest{
+			TenantInfo: h.tenant,
+			Since:      h.now - 3600,
+		},
+	)
 	require.NoError(t, err)
 	assert.Contains(t, ids, moving.Shipment.ID)
 	assert.NotContains(t, ids, canceled.Shipment.ID)
@@ -314,8 +342,7 @@ func TestLatestPodsIsTheFirstCurrentPodOnFile(t *testing.T) {
 		Code:           documenttype.CodePOD,
 		Name:           "Proof of delivery",
 	}
-	_, err := h.db.NewInsert().Model(docType).Exec(h.ctx)
-	require.NoError(t, err)
+	require.NoError(t, documenttypedb.DocumentTypes.Create(h.ctx, h.db, docType))
 	attach := func(name string, createdAt int64, status document.Status) pulid.ID {
 		typeID := docType.ID
 		entity := &document.Document{
@@ -340,9 +367,11 @@ func TestLatestPodsIsTheFirstCurrentPodOnFile(t *testing.T) {
 			entity.RejectedAt = &createdAt
 			entity.RejectionReason = "Illegible"
 		}
-		_, insertErr := h.db.NewInsert().Model(entity).Exec(h.ctx)
-		require.NoError(t, insertErr)
-		h.exec(t, `UPDATE documents SET created_at = ? WHERE id = ?`, createdAt, entity.ID)
+		docs := documentdb.Documents
+		require.NoError(t, docs.Create(h.ctx, h.db, entity))
+		_, err := docs.Where(docs.ID.Eq(entity.ID)).
+			Update(h.ctx, h.db, docs.CreatedAt.To(createdAt))
+		require.NoError(t, err)
 		return entity.ID
 	}
 	attach("rejected.pdf", h.now-900, document.StatusRejected)
@@ -378,8 +407,7 @@ func TestOnlyCustomerVisibleHoldsAndNotesAreShown(t *testing.T) {
 			at := h.now
 			entity.ReleasedAt = &at
 		}
-		_, err := h.db.NewInsert().Model(entity).Exec(h.ctx)
-		require.NoError(t, err)
+		require.NoError(t, shipmentdb.ShipmentHolds.Create(h.ctx, h.db, entity))
 	}
 	hold(holdreason.HoldTypeCustomer, true, false)
 	hold(holdreason.HoldTypeOperational, false, false)
@@ -395,8 +423,7 @@ func TestOnlyCustomerVisibleHoldsAndNotesAreShown(t *testing.T) {
 			Comment:        text,
 			Visibility:     visibility,
 		}
-		_, err := h.db.NewInsert().Model(entity).Exec(h.ctx)
-		require.NoError(t, err)
+		require.NoError(t, shipmentdb.ShipmentComments.Create(h.ctx, h.db, entity))
 	}
 	comment(shipment.CommentVisibilityCustomer, "Appointment moved to 14:00")
 	comment(shipment.CommentVisibilityInternal, "Driver is grumpy")

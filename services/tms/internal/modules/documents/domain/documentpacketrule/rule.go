@@ -3,16 +3,12 @@ package documentpacketrule
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/modules/reference/domain/documenttype"
-	"github.com/emoss08/trenova/pkg/dbtype"
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/errortypes"
-	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/validationframework"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/emoss08/trenova/shared/timeutils"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
-	"github.com/uptrace/bun"
 )
 
 type PacketItemSummary struct {
@@ -43,29 +39,28 @@ type PacketSummary struct {
 }
 
 var (
-	_ bun.BeforeAppendModelHook          = (*DocumentPacketRule)(nil)
 	_ domaintypes.PostgresSearchable     = (*DocumentPacketRule)(nil)
 	_ validationframework.TenantedEntity = (*DocumentPacketRule)(nil)
 )
 
+const defaultExpirationWarningDays = 30
+
 type DocumentPacketRule struct {
-	bun.BaseModel `bun:"table:document_packet_rules,alias:dpr" json:"-"`
+	keel.Table `keel:"document_packet_rules"`
 
-	pagination.CursorValueSet `json:"-" bun:",embed"`
-
-	ID                    pulid.ID `json:"id"                    bun:"id,type:VARCHAR(100),pk,notnull"`
-	OrganizationID        pulid.ID `json:"organizationId"        bun:"organization_id,type:VARCHAR(100),pk,notnull"`
-	BusinessUnitID        pulid.ID `json:"businessUnitId"        bun:"business_unit_id,type:VARCHAR(100),pk,notnull"`
-	ResourceType          string   `json:"resourceType"          bun:"resource_type,type:VARCHAR(100),notnull"`
-	DocumentTypeID        pulid.ID `json:"documentTypeId"        bun:"document_type_id,type:VARCHAR(100),notnull"`
-	Required              bool     `json:"required"              bun:"required,type:BOOLEAN,notnull"`
-	AllowMultiple         bool     `json:"allowMultiple"         bun:"allow_multiple,type:BOOLEAN,notnull"`
-	DisplayOrder          int      `json:"displayOrder"          bun:"display_order,type:INTEGER,notnull"`
-	ExpirationRequired    bool     `json:"expirationRequired"    bun:"expiration_required,type:BOOLEAN,notnull"`
-	ExpirationWarningDays int      `json:"expirationWarningDays" bun:"expiration_warning_days,type:INTEGER,notnull,default:30"`
-	Version               int64    `json:"version"               bun:"version,type:BIGINT"`
-	CreatedAt             int64    `json:"createdAt"             bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
-	UpdatedAt             int64    `json:"updatedAt"             bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
+	ID                    pulid.ID `json:"id"                    keel:"id,pk,autoid:dpr_"`
+	OrganizationID        pulid.ID `json:"organizationId"        keel:"organization_id,pk,tenant"`
+	BusinessUnitID        pulid.ID `json:"businessUnitId"        keel:"business_unit_id,pk,tenant"`
+	ResourceType          string   `json:"resourceType"          keel:"resource_type"`
+	DocumentTypeID        pulid.ID `json:"documentTypeId"        keel:"document_type_id"`
+	Required              bool     `json:"required"              keel:"required"`
+	AllowMultiple         bool     `json:"allowMultiple"         keel:"allow_multiple"`
+	DisplayOrder          int      `json:"displayOrder"          keel:"display_order"`
+	ExpirationRequired    bool     `json:"expirationRequired"    keel:"expiration_required"`
+	ExpirationWarningDays int      `json:"expirationWarningDays" keel:"expiration_warning_days"`
+	Version               int64    `json:"version"               keel:"version,version"`
+	CreatedAt             int64    `json:"createdAt"             keel:"created_at,autocreate"`
+	UpdatedAt             int64    `json:"updatedAt"             keel:"updated_at,autoupdate"`
 }
 
 func (r *DocumentPacketRule) Validate(multiErr *errortypes.MultiError) {
@@ -104,28 +99,6 @@ func (r *DocumentPacketRule) GetTableName() string {
 	return "document_packet_rules"
 }
 
-func (r *DocumentPacketRule) BeforeAppendModel(_ context.Context, query bun.Query) error {
-	now := timeutils.NowUnix()
-
-	switch query.(type) {
-	case *bun.InsertQuery:
-		if r.ID.IsNil() {
-			r.ID = pulid.MustNew("dpr_")
-		}
-
-		if r.ExpirationWarningDays == 0 {
-			r.ExpirationWarningDays = 30
-		}
-
-		r.CreatedAt = now
-		r.UpdatedAt = now
-	case *bun.UpdateQuery:
-		r.UpdatedAt = now
-	}
-
-	return nil
-}
-
 func (r *DocumentPacketRule) GetPostgresSearchConfig() domaintypes.PostgresSearchConfig {
 	return domaintypes.PostgresSearchConfig{
 		TableAlias:      "dpr",
@@ -138,16 +111,23 @@ func (r *DocumentPacketRule) GetPostgresSearchConfig() domaintypes.PostgresSearc
 			},
 		},
 		Relationships: []*domaintypes.RelationshipDefintion{
-			{
-				Field:        "DocumentType",
-				Type:         dbtype.RelationshipTypeBelongsTo,
-				TargetEntity: (*documenttype.DocumentType)(nil),
-				TargetTable:  "document_types",
-				ForeignKey:   "document_type_id",
-				ReferenceKey: "id",
-				Alias:        "dt",
-				Queryable:    true,
-			},
+			{Field: "DocumentType", Queryable: true},
 		},
+	}
+}
+
+func (r *DocumentPacketRule) BeforeCreate(_ context.Context) error {
+	r.applyDefaults()
+	if r.ExpirationWarningDays == 0 {
+		r.ExpirationWarningDays = 30
+	}
+	r.applyDefaults()
+
+	return nil
+}
+
+func (r *DocumentPacketRule) applyDefaults() {
+	if r.ExpirationWarningDays == 0 {
+		r.ExpirationWarningDays = defaultExpirationWarningDays
 	}
 }

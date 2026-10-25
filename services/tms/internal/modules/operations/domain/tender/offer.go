@@ -3,63 +3,60 @@ package tender
 import (
 	"context"
 
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/carrier"
 	"github.com/emoss08/trenova/pkg/domainvalidation"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/emoss08/trenova/shared/timeutils"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
 	"github.com/go-ozzo/ozzo-validation/v4/is"
 	"github.com/shopspring/decimal"
-	"github.com/uptrace/bun"
 )
 
-var _ bun.BeforeAppendModelHook = (*TenderOffer)(nil)
-
 type TenderOffer struct {
-	bun.BaseModel `bun:"table:tender_offers,alias:tof" json:"-"`
+	keel.Table `keel:"tender_offers"`
 
-	ID             pulid.ID `json:"id"             bun:"id,type:VARCHAR(100),pk,notnull"`
-	BusinessUnitID pulid.ID `json:"businessUnitId" bun:"business_unit_id,type:VARCHAR(100),pk,notnull"`
-	OrganizationID pulid.ID `json:"organizationId" bun:"organization_id,type:VARCHAR(100),pk,notnull"`
-	TenderID       pulid.ID `json:"tenderId"       bun:"tender_id,type:VARCHAR(100),notnull"`
-	CarrierID      pulid.ID `json:"carrierId"      bun:"carrier_id,type:VARCHAR(100),notnull"`
+	ID             pulid.ID `json:"id"             keel:"id,pk,autoid:tof_"`
+	BusinessUnitID pulid.ID `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
+	OrganizationID pulid.ID `json:"organizationId" keel:"organization_id,pk,tenant"`
+	TenderID       pulid.ID `json:"tenderId"       keel:"tender_id"`
+	CarrierID      pulid.ID `json:"carrierId"      keel:"carrier_id"`
 
-	Rank                 int16                      `json:"rank"                 bun:"rank,type:SMALLINT,notnull"`
-	RateMethod           shipment.CarrierRateMethod `json:"rateMethod"           bun:"rate_method,type:VARCHAR(50),notnull,default:'Flat'"`
-	Rate                 decimal.Decimal            `json:"rate"                 bun:"rate,type:NUMERIC(19,4),notnull"`
-	OfferTTLSeconds      int32                      `json:"offerTtlSeconds"      bun:"offer_ttl_seconds,type:INTEGER,notnull"`
-	Channel              Channel                    `json:"channel"              bun:"channel,type:VARCHAR(50),notnull"`
-	Status               OfferStatus                `json:"status"               bun:"status,type:VARCHAR(50),notnull,default:'Pending'"`
-	RecipientEmail       string                     `json:"recipientEmail"       bun:"recipient_email,type:VARCHAR(255),nullzero"`
-	SentAt               *int64                     `json:"sentAt"               bun:"sent_at,type:BIGINT,nullzero"`
-	ExpiresAt            *int64                     `json:"expiresAt"            bun:"expires_at,type:BIGINT,nullzero"`
-	RespondedAt          *int64                     `json:"respondedAt"          bun:"responded_at,type:BIGINT,nullzero"`
-	ResponseSource       ResponseSource             `json:"responseSource"       bun:"response_source,type:VARCHAR(50),nullzero"`
-	DeclineReason        string                     `json:"declineReason"        bun:"decline_reason,type:TEXT,nullzero"`
-	DeliveryError        string                     `json:"deliveryError"        bun:"delivery_error,type:TEXT,nullzero"`
-	EDIPartnerID         *pulid.ID                  `json:"ediPartnerId"         bun:"edi_partner_id,type:VARCHAR(100),nullzero"`
-	EDIMessageID         *pulid.ID                  `json:"ediMessageId"         bun:"edi_message_id,type:VARCHAR(100),nullzero"`
-	LateResponseAction   string                     `json:"lateResponseAction"   bun:"late_response_action,type:VARCHAR(50),nullzero"`
-	LateResponseAt       *int64                     `json:"lateResponseAt"       bun:"late_response_at,type:BIGINT,nullzero"`
-	CounterRate          decimal.NullDecimal        `json:"counterRate"          bun:"counter_rate,type:NUMERIC(19,4),nullzero"`
-	CounterNote          string                     `json:"counterNote"          bun:"counter_note,type:TEXT,nullzero"`
-	CounteredAt          *int64                     `json:"counteredAt"          bun:"countered_at,type:BIGINT,nullzero"`
-	CounterMargin        decimal.NullDecimal        `json:"counterMargin"        bun:"counter_margin_percent,type:NUMERIC(9,4),nullzero"`
-	CounterNeedsApproval bool                       `json:"counterNeedsApproval" bun:"counter_needs_approval,type:BOOLEAN,notnull"`
-	CounterDecidedAt     *int64                     `json:"counterDecidedAt"     bun:"counter_decided_at,type:BIGINT,nullzero"`
-	CounterDecidedByID   *pulid.ID                  `json:"counterDecidedById"   bun:"counter_decided_by_id,type:VARCHAR(100),nullzero"`
-	RevokedAt            *int64                     `json:"revokedAt"            bun:"revoked_at,type:BIGINT,nullzero"`
-	RevokeReason         string                     `json:"revokeReason"         bun:"revoke_reason,type:TEXT,nullzero"`
-	RevokedByID          *pulid.ID                  `json:"revokedById"          bun:"revoked_by_id,type:VARCHAR(100),nullzero"`
-	ReofferedFromID      *pulid.ID                  `json:"reofferedFromId"      bun:"reoffered_from_id,type:VARCHAR(100),nullzero"`
-	Version              int64                      `json:"version"              bun:"version,type:BIGINT"`
-	CreatedAt            int64                      `json:"createdAt"            bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
-	UpdatedAt            int64                      `json:"updatedAt"            bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
+	Rank                 int16                      `json:"rank"                 keel:"rank"`
+	RateMethod           shipment.CarrierRateMethod `json:"rateMethod"           keel:"rate_method"`
+	Rate                 decimal.Decimal            `json:"rate"                 keel:"rate"`
+	OfferTTLSeconds      int32                      `json:"offerTtlSeconds"      keel:"offer_ttl_seconds"`
+	Channel              Channel                    `json:"channel"              keel:"channel"`
+	Status               OfferStatus                `json:"status"               keel:"status"`
+	RecipientEmail       string                     `json:"recipientEmail"       keel:"recipient_email,nullzero"`
+	SentAt               *int64                     `json:"sentAt"               keel:"sent_at"`
+	ExpiresAt            *int64                     `json:"expiresAt"            keel:"expires_at"`
+	RespondedAt          *int64                     `json:"respondedAt"          keel:"responded_at"`
+	ResponseSource       ResponseSource             `json:"responseSource"       keel:"response_source,nullzero"`
+	DeclineReason        string                     `json:"declineReason"        keel:"decline_reason,nullzero"`
+	DeliveryError        string                     `json:"deliveryError"        keel:"delivery_error,nullzero"`
+	EDIPartnerID         *pulid.ID                  `json:"ediPartnerId"         keel:"edi_partner_id"`
+	EDIMessageID         *pulid.ID                  `json:"ediMessageId"         keel:"edi_message_id"`
+	LateResponseAction   string                     `json:"lateResponseAction"   keel:"late_response_action,nullzero"`
+	LateResponseAt       *int64                     `json:"lateResponseAt"       keel:"late_response_at"`
+	CounterRate          decimal.NullDecimal        `json:"counterRate"          keel:"counter_rate"`
+	CounterNote          string                     `json:"counterNote"          keel:"counter_note,nullzero"`
+	CounteredAt          *int64                     `json:"counteredAt"          keel:"countered_at"`
+	CounterMargin        decimal.NullDecimal        `json:"counterMargin"        keel:"counter_margin_percent"`
+	CounterNeedsApproval bool                       `json:"counterNeedsApproval" keel:"counter_needs_approval"`
+	CounterDecidedAt     *int64                     `json:"counterDecidedAt"     keel:"counter_decided_at"`
+	CounterDecidedByID   *pulid.ID                  `json:"counterDecidedById"   keel:"counter_decided_by_id"`
+	RevokedAt            *int64                     `json:"revokedAt"            keel:"revoked_at"`
+	RevokeReason         string                     `json:"revokeReason"         keel:"revoke_reason,nullzero"`
+	RevokedByID          *pulid.ID                  `json:"revokedById"          keel:"revoked_by_id"`
+	ReofferedFromID      *pulid.ID                  `json:"reofferedFromId"      keel:"reoffered_from_id"`
+	Version              int64                      `json:"version"              keel:"version,version"`
+	CreatedAt            int64                      `json:"createdAt"            keel:"created_at,autocreate"`
+	UpdatedAt            int64                      `json:"updatedAt"            keel:"updated_at,autoupdate"`
 
-	Tender  *Tender          `json:"tender,omitempty"  bun:"rel:belongs-to,join:tender_id=id"`
-	Carrier *carrier.Carrier `json:"carrier,omitempty" bun:"rel:belongs-to,join:carrier_id=id"`
+	Tender  *Tender          `json:"tender,omitempty"  keel:"belongs:tender_id"`
+	Carrier *carrier.Carrier `json:"carrier,omitempty" keel:"belongs:carrier_id"`
 }
 
 func (to *TenderOffer) applyDefaults() {
@@ -158,17 +155,12 @@ func (to *TenderOffer) GetBusinessUnitID() pulid.ID {
 	return to.BusinessUnitID
 }
 
-func (to *TenderOffer) BeforeAppendModel(_ context.Context, query bun.Query) error {
-	now := timeutils.NowUnix()
-
-	switch query.(type) {
-	case *bun.InsertQuery:
-		if to.ID.IsNil() {
-			to.ID = pulid.MustNew("tof_")
-		}
-		to.CreatedAt = now
-	case *bun.UpdateQuery:
-		to.UpdatedAt = now
+func (to *TenderOffer) BeforeCreate(_ context.Context) error {
+	if to.RateMethod == "" {
+		to.RateMethod = shipment.CarrierRateMethodFlat
+	}
+	if to.Status == "" {
+		to.Status = OfferStatusPending
 	}
 
 	return nil

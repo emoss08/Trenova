@@ -1,11 +1,11 @@
 package fuelpurchase
 
 import (
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/pkg/domainvalidation"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
-	"github.com/uptrace/bun"
 )
 
 const maxFeedErrorLength = 2000
@@ -39,17 +39,17 @@ func (t FeedType) Label() string {
 // transaction late; the transaction reference unique index is what actually stops
 // a purchase landing twice.
 type CardFeedState struct {
-	bun.BaseModel `bun:"table:fuel_card_feed_states,alias:fcfs" json:"-"`
+	keel.Table `keel:"fuel_card_feed_states"`
 
-	OrganizationID pulid.ID     `json:"organizationId" bun:"organization_id,pk,type:VARCHAR(100),notnull"`
-	BusinessUnitID pulid.ID     `json:"businessUnitId" bun:"business_unit_id,pk,type:VARCHAR(100),notnull"`
-	Provider       CardProvider `json:"provider"       bun:"provider,pk,type:fuel_card_provider_enum,notnull"`
-	FeedType       FeedType     `json:"feedType"       bun:"feed_type,pk,type:VARCHAR(32),notnull"`
-	Cursor         string       `json:"cursor"         bun:"cursor,type:TEXT,nullzero"`
-	LastPolledAt   int64        `json:"lastPolledAt"   bun:"last_polled_at,type:BIGINT,nullzero"`
-	LastSuccessAt  int64        `json:"lastSuccessAt"  bun:"last_success_at,type:BIGINT,nullzero"`
-	FailureCount   int          `json:"failureCount"   bun:"failure_count,type:INTEGER,notnull"`
-	LastError      string       `json:"lastError"      bun:"last_error,type:TEXT,nullzero"`
+	OrganizationID pulid.ID     `json:"organizationId" keel:"organization_id,pk,tenant"`
+	BusinessUnitID pulid.ID     `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
+	Provider       CardProvider `json:"provider"       keel:"provider,pk"`
+	FeedType       FeedType     `json:"feedType"       keel:"feed_type,pk"`
+	Cursor         string       `json:"cursor"         keel:"cursor,nullzero"`
+	LastPolledAt   int64        `json:"lastPolledAt"   keel:"last_polled_at,nullzero"`
+	LastSuccessAt  int64        `json:"lastSuccessAt"  keel:"last_success_at,nullzero"`
+	FailureCount   int          `json:"failureCount"   keel:"failure_count"`
+	LastError      string       `json:"lastError"      keel:"last_error,nullzero"`
 }
 
 func (f *CardFeedState) Validate(multiErr *errortypes.MultiError) {

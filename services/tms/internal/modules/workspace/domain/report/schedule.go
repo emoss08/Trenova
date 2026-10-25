@@ -1,22 +1,19 @@
 package report
 
 import (
-	"context"
 	"fmt"
 
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/pkg/dbtype"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/validationframework"
 	"github.com/emoss08/trenova/shared/floatutils"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/emoss08/trenova/shared/timeutils"
 	"github.com/go-ozzo/ozzo-validation/v4/is"
-	"github.com/uptrace/bun"
 )
 
 var (
-	_ bun.BeforeAppendModelHook          = (*ReportSchedule)(nil)
 	_ validationframework.TenantedEntity = (*ReportSchedule)(nil)
 )
 
@@ -205,31 +202,31 @@ func alertOperatorIsValid(op dbtype.Operator) bool {
 }
 
 type ReportSchedule struct {
-	bun.BaseModel `bun:"table:report_schedules,alias:rsch" json:"-"`
+	keel.Table `keel:"report_schedules"`
 
-	ID                  pulid.ID          `json:"id"                  bun:"id,pk,type:VARCHAR(100)"`
-	BusinessUnitID      pulid.ID          `json:"businessUnitId"      bun:"business_unit_id,pk,type:VARCHAR(100),notnull"`
-	OrganizationID      pulid.ID          `json:"organizationId"      bun:"organization_id,pk,type:VARCHAR(100),notnull"`
-	DefinitionID        pulid.ID          `json:"definitionId"        bun:"definition_id,type:VARCHAR(100),notnull"`
-	CronExpression      string            `json:"cronExpression"      bun:"cron_expression,type:VARCHAR(100),notnull"`
-	Timezone            string            `json:"timezone"            bun:"timezone,type:VARCHAR(64),notnull"`
-	Formats             []string          `json:"formats"             bun:"formats,type:TEXT[],array,notnull"`
-	Delivery            *ScheduleDelivery `json:"delivery"            bun:"delivery,type:JSONB,nullzero"`
-	Alert               *ScheduleAlert    `json:"alert"               bun:"alert,type:JSONB,nullzero"`
-	AlertFiring         bool              `json:"alertFiring"         bun:"alert_firing,type:BOOLEAN,notnull"`
-	Enabled             bool              `json:"enabled"             bun:"enabled,type:BOOLEAN,notnull"`
-	RunAsID             pulid.ID          `json:"runAsId"             bun:"run_as_id,type:VARCHAR(100),notnull"`
-	LastRunID           pulid.ID          `json:"lastRunId"           bun:"last_run_id,type:VARCHAR(100),nullzero"`
-	NextRunAt           int64             `json:"nextRunAt"           bun:"next_run_at,type:BIGINT,nullzero"`
-	ConsecutiveFailures int               `json:"consecutiveFailures" bun:"consecutive_failures,type:INTEGER,notnull"`
-	Version             int64             `json:"version"             bun:"version,type:BIGINT"`
-	CreatedAt           int64             `json:"createdAt"           bun:"created_at,nullzero,notnull,default:extract(epoch from current_timestamp)::bigint"`
-	UpdatedAt           int64             `json:"updatedAt"           bun:"updated_at,nullzero,notnull,default:extract(epoch from current_timestamp)::bigint"`
+	ID                  pulid.ID          `json:"id"                  keel:"id,pk,autoid:rsch_"`
+	BusinessUnitID      pulid.ID          `json:"businessUnitId"      keel:"business_unit_id,pk,tenant"`
+	OrganizationID      pulid.ID          `json:"organizationId"      keel:"organization_id,pk,tenant"`
+	DefinitionID        pulid.ID          `json:"definitionId"        keel:"definition_id"`
+	CronExpression      string            `json:"cronExpression"      keel:"cron_expression"`
+	Timezone            string            `json:"timezone"            keel:"timezone"`
+	Formats             []string          `json:"formats"             keel:"formats"`
+	Delivery            *ScheduleDelivery `json:"delivery"            keel:"delivery,jsonb"`
+	Alert               *ScheduleAlert    `json:"alert"               keel:"alert,jsonb"`
+	AlertFiring         bool              `json:"alertFiring"         keel:"alert_firing"`
+	Enabled             bool              `json:"enabled"             keel:"enabled"`
+	RunAsID             pulid.ID          `json:"runAsId"             keel:"run_as_id"`
+	LastRunID           pulid.ID          `json:"lastRunId"           keel:"last_run_id,nullzero"`
+	NextRunAt           int64             `json:"nextRunAt"           keel:"next_run_at,nullzero"`
+	ConsecutiveFailures int               `json:"consecutiveFailures" keel:"consecutive_failures"`
+	Version             int64             `json:"version"             keel:"version,version"`
+	CreatedAt           int64             `json:"createdAt"           keel:"created_at,autocreate"`
+	UpdatedAt           int64             `json:"updatedAt"           keel:"updated_at,autoupdate"`
 
-	Organization     *tenant.Organization `json:"organization,omitempty"     bun:"rel:belongs-to,join:organization_id=id"`
-	BusinessUnit     *tenant.BusinessUnit `json:"businessUnit,omitempty"     bun:"rel:belongs-to,join:business_unit_id=id"`
-	RunAs            *tenant.User         `json:"runAs,omitempty"            bun:"rel:belongs-to,join:run_as_id=id"`
-	ReportDefinition *ReportDefinition    `json:"reportDefinition,omitempty" bun:"rel:belongs-to,join:definition_id=id,join:organization_id=organization_id,join:business_unit_id=business_unit_id"`
+	Organization     *tenant.Organization `json:"organization,omitempty"`
+	BusinessUnit     *tenant.BusinessUnit `json:"businessUnit,omitempty"`
+	RunAs            *tenant.User         `json:"runAs,omitempty"            keel:"belongs:run_as_id"`
+	ReportDefinition *ReportDefinition    `json:"reportDefinition,omitempty" keel:"belongs:definition_id"`
 }
 
 func (rs *ReportSchedule) Validate(multiErr *errortypes.MultiError) {
@@ -252,22 +249,6 @@ func (rs *ReportSchedule) Validate(multiErr *errortypes.MultiError) {
 	}
 	rs.Delivery.Validate(multiErr)
 	rs.Alert.Validate(multiErr)
-}
-
-func (rs *ReportSchedule) BeforeAppendModel(_ context.Context, query bun.Query) error {
-	now := timeutils.NowUnix()
-
-	switch query.(type) {
-	case *bun.InsertQuery:
-		if rs.ID.IsNil() {
-			rs.ID = pulid.MustNew("rsch_")
-		}
-		rs.CreatedAt = now
-	case *bun.UpdateQuery:
-		rs.UpdatedAt = now
-	}
-
-	return nil
 }
 
 func (rs *ReportSchedule) GetID() pulid.ID { return rs.ID }

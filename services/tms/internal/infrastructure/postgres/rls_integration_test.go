@@ -12,22 +12,22 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/testutil/seedtest"
 	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/readscope"
 	"github.com/emoss08/trenova/shared/pulid"
+	"github.com/jackc/pgx/v5"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"github.com/uptrace/bun"
-	"github.com/uptrace/bun/dialect/pgdialect"
 	"go.uber.org/fx/fxtest"
 	"go.uber.org/zap/zaptest"
 )
 
 type rlsFixture struct {
-	admin   *bun.DB
+	admin   *keel.DB
 	cfg     *config.Config
 	key     []byte
 	tenantA dbscope.Tenant
@@ -52,7 +52,7 @@ func newRLSFixture(t *testing.T, mode string) *rlsFixture {
 	require.NoError(t, err)
 	t.Cleanup(func() {
 		for _, role := range []string{appRole, systemRole} {
-			_, _ = admin.ExecContext(context.Background(), fmt.Sprintf("DROP ROLE IF EXISTS %q", role))
+			_, _ = keel.Exec(context.Background(), admin, fmt.Sprintf("DROP ROLE IF EXISTS %q", role))
 		}
 	})
 
@@ -127,35 +127,35 @@ func (f *rlsFixture) seedTenant(t *testing.T, tenant dbscope.Tenant, label strin
 		args  []any
 	}{
 		{
-			"INSERT INTO us_states (id, name, abbreviation) VALUES (?, ?, ?)",
+			"INSERT INTO us_states (id, name, abbreviation) VALUES ($1, $2, $3)",
 			[]any{stateID, "State " + label, label + "X"},
 		},
 		{
-			"INSERT INTO business_units (id, name, code) VALUES (?, ?, ?)",
+			"INSERT INTO business_units (id, name, code) VALUES ($1, $2, $3)",
 			[]any{tenant.BusinessUnitID, "BU " + label, "BU" + label + tenant.BusinessUnitID.String()[3:9]},
 		},
 		{
 			`INSERT INTO organizations (id, state_id, business_unit_id, name, scac_code, dot_number, bucket_name, address_line1, city, postal_code)
-			VALUES (?, ?, ?, ?, ?, ?, ?, 'Line 1', 'City', '75001')`,
+			VALUES ($1, $2, $3, $4, $5, $6, $7, 'Line 1', 'City', '75001')`,
 			[]any{tenant.OrganizationID, stateID, tenant.BusinessUnitID, "Org " + label, "SC" + label + "X", "10" + label, "bucket-" + strings.ToLower(label)},
 		},
 		{
 			`INSERT INTO users (id, business_unit_id, current_organization_id, name, username, password, email_address, timezone)
-			VALUES (?, ?, ?, ?, ?, 'x', ?, 'UTC')`,
+			VALUES ($1, $2, $3, $4, $5, 'x', $6, 'UTC')`,
 			[]any{tenant.UserID, tenant.BusinessUnitID, tenant.OrganizationID, "User " + label, "u" + strings.ToLower(tenant.UserID.String()[len(tenant.UserID.String())-12:]), tenant.UserID.String() + "@example.com"},
 		},
 		{
-			"INSERT INTO user_organization_memberships (id, user_id, business_unit_id, organization_id) VALUES (?, ?, ?, ?)",
+			"INSERT INTO user_organization_memberships (id, user_id, business_unit_id, organization_id) VALUES ($1, $2, $3, $4)",
 			[]any{pulid.MustNew("uom_"), tenant.UserID, tenant.BusinessUnitID, tenant.OrganizationID},
 		},
 		{
-			"INSERT INTO fleet_codes (id, code, organization_id, business_unit_id, manager_id) VALUES (?, ?, ?, ?, ?)",
+			"INSERT INTO fleet_codes (id, code, organization_id, business_unit_id, manager_id) VALUES ($1, $2, $3, $4, $5)",
 			[]any{pulid.MustNew("fc_"), "FC" + label, tenant.OrganizationID, tenant.BusinessUnitID, tenant.UserID},
 		},
 	}
 
 	for _, stmt := range statements {
-		_, err := f.admin.NewRaw(stmt.query, stmt.args...).Exec(ctx)
+		_, err := keel.Exec(ctx, f.admin, stmt.query, stmt.args...)
 		require.NoError(t, err, stmt.query)
 	}
 }
@@ -175,10 +175,16 @@ func (f *rlsFixture) connect(t *testing.T) *Connection {
 	return conn
 }
 
+func queryStrings(ctx context.Context, db *keel.DB, sql string, args ...any) ([]string, error) {
+	return keel.QueryAll(ctx, db, pgx.RowTo[string], sql, args...)
+}
+
 func fleetCodes(ctx context.Context, conn *Connection) ([]string, error) {
 	var codes []string
-	err := conn.WithTx(ctx, kernelports.TxOptions{ReadOnly: true}, func(ctx context.Context, tx bun.Tx) error {
-		return tx.NewRaw("SELECT code FROM fleet_codes ORDER BY code").Scan(ctx, &codes)
+	err := conn.Transact(ctx, kernelports.TxOptions{ReadOnly: true}, func(ctx context.Context) error {
+		var err error
+		codes, err = queryStrings(ctx, conn.Keel(ctx), "SELECT code FROM fleet_codes ORDER BY code")
+		return err
 	})
 
 	return codes, err
@@ -197,14 +203,17 @@ func TestRLS_TenantTransactionSeesOnlyItsOwnRows(t *testing.T) {
 	assert.Equal(t, []string{"FCB"}, codes)
 }
 
-func TestRLS_EnforceRefusesStatementsOutsideAScopedTransaction(t *testing.T) {
+func TestRLS_EnforceScopesAStatementOutsideATransactionAndRefusesAnUnscopedOne(t *testing.T) {
 	f := newRLSFixture(t, config.RLSModeEnforce)
 	conn := f.connect(t)
 	ctx := dbscope.WithTenant(t.Context(), f.tenantA)
 
-	var count int
-	err := conn.DBForContext(ctx).NewRaw("SELECT count(*) FROM fleet_codes").Scan(ctx, &count)
-	require.ErrorIs(t, err, ErrStatementOutsideTransaction)
+	count, err := keel.QueryValue[int64](ctx, conn.Keel(ctx), "SELECT count(*) FROM fleet_codes")
+	require.NoError(t, err)
+	assert.EqualValues(t, 1, count, "the implicit transaction carries the tenant's scope")
+
+	_, err = keel.QueryValue[int64](t.Context(), conn.Keel(t.Context()), "SELECT count(*) FROM fleet_codes")
+	require.ErrorIs(t, err, ErrNoTenantScope)
 
 	_, err = fleetCodes(t.Context(), conn)
 	require.ErrorIs(t, err, ErrNoTenantScope)
@@ -215,28 +224,31 @@ func TestRLS_WritesIntoAnotherTenantAreRejected(t *testing.T) {
 	conn := f.connect(t)
 	ctx := dbscope.WithTenant(t.Context(), f.tenantA)
 
-	err := conn.WithTx(ctx, kernelports.TxOptions{}, func(ctx context.Context, tx bun.Tx) error {
-		_, err := tx.NewRaw(
-			"INSERT INTO fleet_codes (id, code, organization_id, business_unit_id, manager_id) VALUES (?, 'X', ?, ?, ?)",
-			pulid.MustNew("fc_"), f.tenantB.OrganizationID, f.tenantB.BusinessUnitID, f.tenantB.UserID,
-		).Exec(ctx)
+	err := conn.Transact(ctx, kernelports.TxOptions{}, func(ctx context.Context) error {
+		_, err := keel.Exec(ctx, conn.Keel(ctx),
+			"INSERT INTO fleet_codes (id, code, organization_id, business_unit_id, manager_id) VALUES ($1, 'X', $2, $3, $4)",
+			pulid.MustNew("fc_").String(), f.tenantB.OrganizationID.String(),
+			f.tenantB.BusinessUnitID.String(), f.tenantB.UserID.String(),
+		)
 		return err
 	})
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), "row-level security")
 
 	var affected int64
-	err = conn.WithTx(ctx, kernelports.TxOptions{}, func(ctx context.Context, tx bun.Tx) error {
-		res, err := tx.NewRaw("UPDATE fleet_codes SET code = 'STOLEN' WHERE organization_id = ?", f.tenantB.OrganizationID).Exec(ctx)
-		if err != nil {
-			return err
-		}
-		affected, err = res.RowsAffected()
+	err = conn.Transact(ctx, kernelports.TxOptions{}, func(ctx context.Context) error {
+		var err error
+		affected, err = keel.Exec(ctx, conn.Keel(ctx),
+			"UPDATE fleet_codes SET code = 'STOLEN' WHERE organization_id = $1",
+			f.tenantB.OrganizationID.String(),
+		)
 		return err
 	})
 	require.NoError(t, err)
 	assert.Zero(t, affected)
 }
+
+const setScopeForTestSQL = "SELECT set_config('trenova.scope', $1, true)"
 
 func TestRLS_ForgedOrReplayedScopeIsRefused(t *testing.T) {
 	f := newRLSFixture(t, config.RLSModeEnforce)
@@ -251,13 +263,17 @@ func TestRLS_ForgedOrReplayedScopeIsRefused(t *testing.T) {
 	forged, err := forger.token(f.tenantB)
 	require.NoError(t, err)
 
-	err = conn.WithTx(ctx, kernelports.TxOptions{}, func(ctx context.Context, tx bun.Tx) error {
-		if _, err := tx.ExecContext(ctx, "SET LOCAL trenova.scope = '"+forged+"'"); err != nil {
+	readWithScope := func(token string) error {
+		return conn.Transact(ctx, kernelports.TxOptions{}, func(ctx context.Context) error {
+			if _, err := keel.Exec(ctx, conn.Keel(ctx), setScopeForTestSQL, token); err != nil {
+				return err
+			}
+			_, err := queryStrings(ctx, conn.Keel(ctx), "SELECT code FROM fleet_codes")
 			return err
-		}
-		var codes []string
-		return tx.NewRaw("SELECT code FROM fleet_codes").Scan(ctx, &codes)
-	})
+		})
+	}
+
+	err = readWithScope(forged)
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), "signature does not verify")
 
@@ -267,13 +283,7 @@ func TestRLS_ForgedOrReplayedScopeIsRefused(t *testing.T) {
 	expired, err := expiredSigner.token(f.tenantB)
 	require.NoError(t, err)
 
-	err = conn.WithTx(ctx, kernelports.TxOptions{}, func(ctx context.Context, tx bun.Tx) error {
-		if _, err := tx.ExecContext(ctx, "SET LOCAL trenova.scope = '"+expired+"'"); err != nil {
-			return err
-		}
-		var codes []string
-		return tx.NewRaw("SELECT code FROM fleet_codes").Scan(ctx, &codes)
-	})
+	err = readWithScope(expired)
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), "expired")
 }
@@ -281,23 +291,24 @@ func TestRLS_ForgedOrReplayedScopeIsRefused(t *testing.T) {
 func TestRLS_SystemScopeUsesTheBypassPool(t *testing.T) {
 	f := newRLSFixture(t, config.RLSModeEnforce)
 	conn := f.connect(t)
-	require.NotNil(t, conn.system)
+	require.NotNil(t, conn.systemKeel)
 
 	ctx := dbscope.WithSystem(t.Context(), "integration test sweep")
 
-	var codes []string
-	err := conn.DBForContext(ctx).NewRaw("SELECT code FROM fleet_codes ORDER BY code").Scan(ctx, &codes)
+	codes, err := queryStrings(ctx, conn.Keel(ctx), "SELECT code FROM fleet_codes ORDER BY code")
 	require.NoError(t, err)
 	assert.Equal(t, []string{"FCA", "FCB"}, codes)
 
 	codes = nil
-	err = conn.WithTx(ctx, kernelports.TxOptions{ReadOnly: true}, func(ctx context.Context, tx bun.Tx) error {
-		return tx.NewRaw("SELECT code FROM fleet_codes ORDER BY code").Scan(ctx, &codes)
+	err = conn.Transact(ctx, kernelports.TxOptions{ReadOnly: true}, func(ctx context.Context) error {
+		var err error
+		codes, err = queryStrings(ctx, conn.Keel(ctx), "SELECT code FROM fleet_codes ORDER BY code")
+		return err
 	})
 	require.NoError(t, err)
 	assert.Equal(t, []string{"FCA", "FCB"}, codes)
 
-	err = conn.system.NewRaw("SELECT 1").Scan(dbscope.WithTenant(t.Context(), f.tenantA), new(int))
+	_, err = keel.QueryValue[int](dbscope.WithTenant(t.Context(), f.tenantA), conn.systemKeel, "SELECT 1")
 	require.ErrorIs(t, err, ErrSystemScopeRequired)
 }
 
@@ -305,15 +316,15 @@ func TestRLS_ChangingScopeInsideATransactionOpensANewOne(t *testing.T) {
 	f := newRLSFixture(t, config.RLSModeEnforce)
 	conn := f.connect(t)
 
-	err := conn.WithTx(dbscope.WithTenant(t.Context(), f.tenantA), kernelports.TxOptions{}, func(ctx context.Context, _ bun.Tx) error {
+	err := conn.Transact(dbscope.WithTenant(t.Context(), f.tenantA), kernelports.TxOptions{}, func(ctx context.Context) error {
 		codes, err := fleetCodes(dbscope.WithTenant(ctx, f.tenantB), conn)
 		if err != nil {
 			return err
 		}
 		assert.Equal(t, []string{"FCB"}, codes)
 
-		var outer []string
-		if err = conn.DBForContext(ctx).NewRaw("SELECT code FROM fleet_codes").Scan(ctx, &outer); err != nil {
+		outer, err := queryStrings(ctx, conn.Keel(ctx), "SELECT code FROM fleet_codes")
+		if err != nil {
 			return err
 		}
 		assert.Equal(t, []string{"FCA"}, outer)
@@ -329,11 +340,13 @@ func TestRLS_MembershipPoliciesForUsersAndOrganizations(t *testing.T) {
 	ctx := dbscope.WithTenant(t.Context(), f.tenantA)
 
 	var users, orgs []string
-	err := conn.WithTx(ctx, kernelports.TxOptions{ReadOnly: true}, func(ctx context.Context, tx bun.Tx) error {
-		if err := tx.NewRaw("SELECT id FROM users").Scan(ctx, &users); err != nil {
+	err := conn.Transact(ctx, kernelports.TxOptions{ReadOnly: true}, func(ctx context.Context) error {
+		var err error
+		if users, err = queryStrings(ctx, conn.Keel(ctx), "SELECT id FROM users"); err != nil {
 			return err
 		}
-		return tx.NewRaw("SELECT id FROM organizations").Scan(ctx, &orgs)
+		orgs, err = queryStrings(ctx, conn.Keel(ctx), "SELECT id FROM organizations")
+		return err
 	})
 	require.NoError(t, err)
 	assert.Equal(t, []string{f.tenantA.UserID.String()}, users)
@@ -343,7 +356,7 @@ func TestRLS_MembershipPoliciesForUsersAndOrganizations(t *testing.T) {
 func TestRLS_StartupRefusesAnApplicationRoleThatCanBypass(t *testing.T) {
 	f := newRLSFixture(t, config.RLSModeEnforce)
 
-	_, err := f.admin.ExecContext(t.Context(), fmt.Sprintf("GRANT trenova_rls_bypass TO %q", f.cfg.Database.User))
+	_, err := keel.Exec(t.Context(), f.admin, fmt.Sprintf("GRANT trenova_rls_bypass TO %q", f.cfg.Database.User))
 	require.NoError(t, err)
 
 	conn, err := newConnection(ConnectionParams{
@@ -360,22 +373,29 @@ func TestRLS_StartupRefusesAnApplicationRoleThatCanBypass(t *testing.T) {
 func TestRLS_ObserveModeAllowsButReportsUnscopedAccess(t *testing.T) {
 	f := newRLSFixture(t, config.RLSModeObserve)
 	conn := f.connect(t)
+	ctx := t.Context()
 
-	var count int
-	err := conn.DBForContext(t.Context()).NewRaw("SELECT count(*) FROM us_states").Scan(t.Context(), &count)
+	count, err := keel.QueryValue[int64](ctx, conn.Keel(ctx), "SELECT count(*) FROM us_states")
 	require.NoError(t, err)
 	assert.Positive(t, count)
 
-	err = conn.DBForContext(t.Context()).NewRaw("SELECT count(*) FROM fleet_codes").Scan(t.Context(), &count)
+	_, err = keel.QueryValue[int64](ctx, conn.Keel(ctx), "SELECT count(*) FROM fleet_codes")
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), "no tenant scope")
 }
 
 func readScopeSettings(ctx context.Context, conn *Connection) (scope string, team []string, err error) {
-	err = conn.WithTx(ctx, kernelports.TxOptions{ReadOnly: true}, func(ctx context.Context, tx bun.Tx) error {
-		return tx.NewRaw(
-			"SELECT trenova_rls.read_scope('worker'), trenova_rls.read_scope_ids('worker')",
-		).Scan(ctx, &scope, pgdialect.Array(&team))
+	err = conn.Transact(ctx, kernelports.TxOptions{ReadOnly: true}, func(ctx context.Context) error {
+		return keel.QueryRows(ctx, conn.Keel(ctx), func(row pgx.CollectableRow) error {
+			var value *string
+			if scanErr := row.Scan(&value, &team); scanErr != nil {
+				return scanErr
+			}
+			if value != nil {
+				scope = *value
+			}
+			return nil
+		}, "SELECT trenova_rls.read_scope('worker'), trenova_rls.read_scope_ids('worker')")
 	})
 
 	return scope, team, err
@@ -409,13 +429,13 @@ func TestRLS_ReadScopeTravelsWithTheTenantScope(t *testing.T) {
 func TestRLS_ReadScopePoliciesAreRestrictive(t *testing.T) {
 	f := newRLSFixture(t, config.RLSModeEnforce)
 
-	var policies []string
-	require.NoError(t, f.admin.NewRaw(`
+	policies, err := queryStrings(t.Context(), f.admin, `
 		SELECT c.relname || ':' || p.polcmd::text || ':' || p.polpermissive::text
 		FROM pg_policy p
 		JOIN pg_class c ON c.oid = p.polrelid
 		WHERE p.polname = 'read_scope'
-		ORDER BY c.relname`).Scan(t.Context(), &policies))
+		ORDER BY c.relname`)
+	require.NoError(t, err)
 
 	assert.Equal(t, []string{
 		"invoices:r:false",
@@ -425,6 +445,11 @@ func TestRLS_ReadScopePoliciesAreRestrictive(t *testing.T) {
 	}, policies)
 }
 
+type readScopePolicy struct {
+	Table string `db:"relname"`
+	Qual  string `db:"qual"`
+}
+
 // A kind the principal cannot read is left out of the read scope, so no
 // read_scope policy narrows by anything but "own" or "team": a row of a kind
 // the person cannot read stays visible to the record that links to it, and
@@ -432,16 +457,13 @@ func TestRLS_ReadScopePoliciesAreRestrictive(t *testing.T) {
 func TestRLS_ReadScopePoliciesNarrowOnlyByOwnOrTeam(t *testing.T) {
 	f := newRLSFixture(t, config.RLSModeEnforce)
 
-	var policies []struct {
-		Table string `bun:"relname"`
-		Qual  string `bun:"qual"`
-	}
-	require.NoError(t, f.admin.NewRaw(`
+	policies, err := keel.QueryAll(t.Context(), f.admin, pgx.RowToStructByName[readScopePolicy], `
 		SELECT c.relname, pg_get_expr(p.polqual, p.polrelid) AS qual
 		FROM pg_policy p
 		JOIN pg_class c ON c.oid = p.polrelid
 		WHERE p.polname = 'read_scope'
-		ORDER BY c.relname`).Scan(t.Context(), &policies))
+		ORDER BY c.relname`)
+	require.NoError(t, err)
 
 	require.Len(t, policies, 4)
 	for _, policy := range policies {

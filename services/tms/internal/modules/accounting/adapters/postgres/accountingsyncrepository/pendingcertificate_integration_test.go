@@ -5,6 +5,10 @@ package accountingsyncrepository
 import (
 	"testing"
 
+	"github.com/emoss08/keel"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync/accountingsyncdb"
+	"github.com/emoss08/trenova/pkg/dbscope"
+
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
@@ -43,6 +47,7 @@ func TestPendingCertificateRepository_ReplaceKeepsOnePerTenantAndSystem(t *testi
 	t.Cleanup(cleanup)
 
 	data := seedtest.SeedFullTestData(t, ctx, db)
+	ctx = data.Ctx(ctx)
 	repo := NewPendingCertificateRepository(PendingCertificateParams{
 		DB:     postgres.NewTestConnection(db),
 		Logger: zap.NewNop(),
@@ -70,10 +75,7 @@ func TestPendingCertificateRepository_ReplaceKeepsOnePerTenantAndSystem(t *testi
 	assert.Equal(t, "sealed-2", read.PrivateKeyCiphertext)
 	assert.Equal(t, now+5, read.PreparedAt)
 
-	count, err := db.NewSelect().
-		Model((*accountingsync.AccountingPendingCertificate)(nil)).
-		Where("organization_id = ? AND business_unit_id = ?", tenant.OrgID, tenant.BuID).
-		Count(ctx)
+	count, err := accountingsyncdb.AccountingPendingCertificates.Where(keel.True()).Count(ctx, db)
 	require.NoError(t, err)
 	assert.EqualValues(t, 1, count)
 
@@ -87,6 +89,7 @@ func TestPendingCertificateRepository_IsTenantScoped(t *testing.T) {
 	t.Cleanup(cleanup)
 
 	data := seedtest.SeedFullTestData(t, ctx, db)
+	ctx = data.Ctx(ctx)
 	other := seedtest.SeedAdditionalTenant(t, ctx, db, "pc")
 	repo := NewPendingCertificateRepository(PendingCertificateParams{
 		DB:     postgres.NewTestConnection(db),
@@ -99,13 +102,13 @@ func TestPendingCertificateRepository_IsTenantScoped(t *testing.T) {
 	_, err := repo.Replace(ctx, newPendingCertificate(tenant, data.User.ID, "sealed-1", now))
 	require.NoError(t, err)
 
-	_, err = repo.GetByType(ctx, accountingsyncports.GetAccountingConnectionRequest{
+	_, err = repo.GetByType(dbscope.WithTenant(ctx, otherTenant.DBTenant()), accountingsyncports.GetAccountingConnectionRequest{
 		TenantInfo:      otherTenant,
 		IntegrationType: integration.TypeNetSuite,
 	})
 	assert.True(t, errortypes.IsNotFoundError(err))
 
-	require.NoError(t, repo.Delete(ctx, accountingsyncports.GetAccountingConnectionRequest{
+	require.NoError(t, repo.Delete(dbscope.WithTenant(ctx, otherTenant.DBTenant()), accountingsyncports.GetAccountingConnectionRequest{
 		TenantInfo:      otherTenant,
 		IntegrationType: integration.TypeNetSuite,
 	}))
@@ -121,6 +124,7 @@ func TestConnectionRepository_CertificateKeyIsATokenColumn(t *testing.T) {
 	t.Cleanup(cleanup)
 
 	data := seedtest.SeedFullTestData(t, ctx, db)
+	ctx = data.Ctx(ctx)
 	repo := NewConnectionRepository(ConnectionParams{DB: postgres.NewTestConnection(db), Logger: zap.NewNop()})
 	tenant := pagination.TenantInfo{OrgID: data.Organization.ID, BuID: data.BusinessUnit.ID}
 	now := timeutils.NowUnix()
@@ -190,6 +194,7 @@ func TestConnectionRepository_CertificateConnectionMustNameItsCertificate(t *tes
 	t.Cleanup(cleanup)
 
 	data := seedtest.SeedFullTestData(t, ctx, db)
+	ctx = data.Ctx(ctx)
 	repo := NewConnectionRepository(ConnectionParams{DB: postgres.NewTestConnection(db), Logger: zap.NewNop()})
 	tenant := pagination.TenantInfo{OrgID: data.Organization.ID, BuID: data.BusinessUnit.ID}
 	now := timeutils.NowUnix()

@@ -3,75 +3,71 @@ package manualjournal
 import (
 	"context"
 
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/glaccount"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/errortypes"
-	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/emoss08/trenova/shared/timeutils"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
-	"github.com/uptrace/bun"
 )
 
 var _ domaintypes.PostgresSearchable = (*Request)(nil)
 
 type Request struct {
-	bun.BaseModel             `bun:"table:manual_journal_requests,alias:mjr" json:"-"`
-	pagination.CursorValueSet `bun:",embed"                                  json:"-"`
+	keel.Table `keel:"manual_journal_requests"`
 
-	ID                      pulid.ID `json:"id"                      bun:"id,pk,type:VARCHAR(100),notnull"`
-	OrganizationID          pulid.ID `json:"organizationId"          bun:"organization_id,pk,type:VARCHAR(100),notnull"`
-	BusinessUnitID          pulid.ID `json:"businessUnitId"          bun:"business_unit_id,pk,type:VARCHAR(100),notnull"`
-	RequestNumber           string   `json:"requestNumber"           bun:"request_number,type:VARCHAR(50),notnull"`
-	Status                  Status   `json:"status"                  bun:"status,type:manual_journal_request_status_enum,notnull,default:'Draft'"`
-	Description             string   `json:"description"             bun:"description,type:TEXT,notnull"`
-	Reason                  string   `json:"reason"                  bun:"reason,type:TEXT,nullzero"`
-	AccountingDate          int64    `json:"accountingDate"          bun:"accounting_date,type:BIGINT,notnull"`
-	RequestedFiscalYearID   pulid.ID `json:"requestedFiscalYearId"   bun:"requested_fiscal_year_id,type:VARCHAR(100),notnull"`
-	RequestedFiscalPeriodID pulid.ID `json:"requestedFiscalPeriodId" bun:"requested_fiscal_period_id,type:VARCHAR(100),notnull"`
-	CurrencyCode            string   `json:"currencyCode"            bun:"currency_code,type:VARCHAR(3),notnull,default:'USD'"`
-	TotalDebit              int64    `json:"totalDebit"              bun:"total_debit_minor,type:BIGINT,notnull"`
-	TotalCredit             int64    `json:"totalCredit"             bun:"total_credit_minor,type:BIGINT,notnull"`
-	ApprovedAt              *int64   `json:"approvedAt"              bun:"approved_at,type:BIGINT,nullzero"`
-	ApprovedByID            pulid.ID `json:"approvedById"            bun:"approved_by_id,type:VARCHAR(100),nullzero"`
-	RejectedAt              *int64   `json:"rejectedAt"              bun:"rejected_at,type:BIGINT,nullzero"`
-	RejectedByID            pulid.ID `json:"rejectedById"            bun:"rejected_by_id,type:VARCHAR(100),nullzero"`
-	RejectionReason         string   `json:"rejectionReason"         bun:"rejection_reason,type:TEXT,nullzero"`
-	CancelledAt             *int64   `json:"cancelledAt"             bun:"cancelled_at,type:BIGINT,nullzero"`
-	CancelledByID           pulid.ID `json:"cancelledById"           bun:"cancelled_by_id,type:VARCHAR(100),nullzero"`
-	CancelReason            string   `json:"cancelReason"            bun:"cancel_reason,type:TEXT,nullzero"`
-	PostedBatchID           pulid.ID `json:"postedBatchId"           bun:"posted_batch_id,type:VARCHAR(100),nullzero"`
-	CreatedByID             pulid.ID `json:"createdById"             bun:"created_by_id,type:VARCHAR(100),notnull"`
-	UpdatedByID             pulid.ID `json:"updatedById"             bun:"updated_by_id,type:VARCHAR(100),nullzero"`
+	ID                      pulid.ID `json:"id"                      keel:"id,pk,autoid:mjr_"`
+	OrganizationID          pulid.ID `json:"organizationId"          keel:"organization_id,pk,tenant"`
+	BusinessUnitID          pulid.ID `json:"businessUnitId"          keel:"business_unit_id,pk,tenant"`
+	RequestNumber           string   `json:"requestNumber"           keel:"request_number"`
+	Status                  Status   `json:"status"                  keel:"status"`
+	Description             string   `json:"description"             keel:"description"`
+	Reason                  string   `json:"reason"                  keel:"reason,nullzero"`
+	AccountingDate          int64    `json:"accountingDate"          keel:"accounting_date"`
+	RequestedFiscalYearID   pulid.ID `json:"requestedFiscalYearId"   keel:"requested_fiscal_year_id"`
+	RequestedFiscalPeriodID pulid.ID `json:"requestedFiscalPeriodId" keel:"requested_fiscal_period_id"`
+	CurrencyCode            string   `json:"currencyCode"            keel:"currency_code"`
+	TotalDebit              int64    `json:"totalDebit"              keel:"total_debit_minor"`
+	TotalCredit             int64    `json:"totalCredit"             keel:"total_credit_minor"`
+	ApprovedAt              *int64   `json:"approvedAt"              keel:"approved_at"`
+	ApprovedByID            pulid.ID `json:"approvedById"            keel:"approved_by_id,nullzero"`
+	RejectedAt              *int64   `json:"rejectedAt"              keel:"rejected_at"`
+	RejectedByID            pulid.ID `json:"rejectedById"            keel:"rejected_by_id,nullzero"`
+	RejectionReason         string   `json:"rejectionReason"         keel:"rejection_reason,nullzero"`
+	CancelledAt             *int64   `json:"cancelledAt"             keel:"cancelled_at"`
+	CancelledByID           pulid.ID `json:"cancelledById"           keel:"cancelled_by_id,nullzero"`
+	CancelReason            string   `json:"cancelReason"            keel:"cancel_reason,nullzero"`
+	PostedBatchID           pulid.ID `json:"postedBatchId"           keel:"posted_batch_id,nullzero"`
+	CreatedByID             pulid.ID `json:"createdById"             keel:"created_by_id"`
+	UpdatedByID             pulid.ID `json:"updatedById"             keel:"updated_by_id,nullzero"`
 
-	SearchVector string `json:"-"         bun:"search_vector,type:TSVECTOR,scanonly"`
-	Rank         string `json:"-"         bun:"rank,type:VARCHAR(100),scanonly"`
-	Version      int64  `json:"version"   bun:"version,type:BIGINT,notnull"`
-	CreatedAt    int64  `json:"createdAt" bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
-	UpdatedAt    int64  `json:"updatedAt" bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
+	SearchVector string `json:"-"`
+	Rank         string `json:"-"         keel:"rank,computed"`
+	Version      int64  `json:"version"   keel:"version,version"`
+	CreatedAt    int64  `json:"createdAt" keel:"created_at,autocreate"`
+	UpdatedAt    int64  `json:"updatedAt" keel:"updated_at,autoupdate"`
 
-	Lines []*Line `json:"lines,omitempty" bun:"rel:has-many,join:id=manual_journal_request_id"`
+	Lines []*Line `json:"lines,omitempty" keel:"many:manual_journal_request_id"`
 }
 
 type Line struct {
-	bun.BaseModel             `bun:"table:manual_journal_request_lines,alias:mjrl" json:"-"`
-	pagination.CursorValueSet `bun:",embed"                                        json:"-"`
+	keel.Table `keel:"manual_journal_request_lines"`
 
-	ID                     pulid.ID `json:"id"                     bun:"id,pk,type:VARCHAR(100),notnull"`
-	OrganizationID         pulid.ID `json:"organizationId"         bun:"organization_id,pk,type:VARCHAR(100),notnull"`
-	BusinessUnitID         pulid.ID `json:"businessUnitId"         bun:"business_unit_id,pk,type:VARCHAR(100),notnull"`
-	ManualJournalRequestID pulid.ID `json:"manualJournalRequestId" bun:"manual_journal_request_id,type:VARCHAR(100),notnull"`
-	LineNumber             int      `json:"lineNumber"             bun:"line_number,type:INTEGER,notnull"`
-	GLAccountID            pulid.ID `json:"glAccountId"            bun:"gl_account_id,type:VARCHAR(100),notnull"`
-	Description            string   `json:"description"            bun:"description,type:TEXT,notnull"`
-	DebitAmount            int64    `json:"debitAmount"            bun:"debit_amount_minor,type:BIGINT,notnull"`
-	CreditAmount           int64    `json:"creditAmount"           bun:"credit_amount_minor,type:BIGINT,notnull"`
-	CustomerID             pulid.ID `json:"customerId"             bun:"customer_id,type:VARCHAR(100),nullzero"`
-	LocationID             pulid.ID `json:"locationId"             bun:"location_id,type:VARCHAR(100),nullzero"`
-	CreatedAt              int64    `json:"createdAt"              bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
-	UpdatedAt              int64    `json:"updatedAt"              bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
+	ID                     pulid.ID `json:"id"                     keel:"id,pk,autoid:mjrl_"`
+	OrganizationID         pulid.ID `json:"organizationId"         keel:"organization_id,pk,tenant"`
+	BusinessUnitID         pulid.ID `json:"businessUnitId"         keel:"business_unit_id,pk,tenant"`
+	ManualJournalRequestID pulid.ID `json:"manualJournalRequestId" keel:"manual_journal_request_id"`
+	LineNumber             int      `json:"lineNumber"             keel:"line_number"`
+	GLAccountID            pulid.ID `json:"glAccountId"            keel:"gl_account_id"`
+	Description            string   `json:"description"            keel:"description"`
+	DebitAmount            int64    `json:"debitAmount"            keel:"debit_amount_minor"`
+	CreditAmount           int64    `json:"creditAmount"           keel:"credit_amount_minor"`
+	CustomerID             pulid.ID `json:"customerId"             keel:"customer_id,nullzero"`
+	LocationID             pulid.ID `json:"locationId"             keel:"location_id,nullzero"`
+	CreatedAt              int64    `json:"createdAt"              keel:"created_at,autocreate"`
+	UpdatedAt              int64    `json:"updatedAt"              keel:"updated_at,autoupdate"`
 
-	GLAccount *glaccount.GLAccount `json:"glAccount,omitempty" bun:"rel:belongs-to,join:gl_account_id=id"`
+	GLAccount *glaccount.GLAccount `json:"glAccount,omitempty" keel:"belongs:gl_account_id"`
 }
 
 func (r *Request) Validate(multiErr *errortypes.MultiError) {
@@ -171,33 +167,12 @@ func (r *Request) IsBalanced() bool {
 	return r.TotalDebit > 0 && r.TotalDebit == r.TotalCredit
 }
 
-func (r *Request) BeforeAppendModel(_ context.Context, query bun.Query) error {
-	now := timeutils.NowUnix()
-
-	switch query.(type) {
-	case *bun.InsertQuery:
-		if r.ID.IsNil() {
-			r.ID = pulid.MustNew("mjr_")
-		}
-		r.CreatedAt = now
-	case *bun.UpdateQuery:
-		r.UpdatedAt = now
+func (r *Request) BeforeCreate(ctx context.Context) error {
+	if r.Status == "" {
+		r.Status = StatusDraft
 	}
-
-	return nil
-}
-
-func (l *Line) BeforeAppendModel(_ context.Context, query bun.Query) error {
-	now := timeutils.NowUnix()
-
-	switch query.(type) {
-	case *bun.InsertQuery:
-		if l.ID.IsNil() {
-			l.ID = pulid.MustNew("mjrl_")
-		}
-		l.CreatedAt = now
-	case *bun.UpdateQuery:
-		l.UpdatedAt = now
+	if r.CurrencyCode == "" {
+		r.CurrencyCode = "USD"
 	}
 
 	return nil

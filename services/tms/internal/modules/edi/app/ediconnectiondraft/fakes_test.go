@@ -5,16 +5,16 @@ import (
 	"slices"
 	"strings"
 
+	"github.com/emoss08/trenova/internal/testutil/dbtest"
+
 	"github.com/emoss08/trenova/internal/modules/edi/app/ediservice"
 	"github.com/emoss08/trenova/internal/modules/edi/app/edix12"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
-	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/uptrace/bun"
 	"go.uber.org/zap"
 )
 
@@ -268,28 +268,8 @@ func newHarness() *harness {
 		documentTypes: fakeDocumentTypes{},
 		setup:         h.setup,
 		validator:     ediservice.NewValidator(),
-		db:            passthroughDB{},
+		db:            dbtest.NopConnection{},
 		l:             zap.NewNop(),
 	}
 	return h
 }
-
-type passthroughDB struct{}
-
-func (passthroughDB) DB() *bun.DB { return nil }
-
-func (passthroughDB) DBForContext(context.Context) bun.IDB { return nil }
-
-func (passthroughDB) WithTx(
-	ctx context.Context,
-	_ kernelports.TxOptions,
-	fn func(context.Context, bun.Tx) error,
-) error {
-	return fn(ctx, bun.Tx{})
-}
-
-func (passthroughDB) HealthCheck(context.Context) error { return nil }
-
-func (passthroughDB) IsHealthy(context.Context) bool { return true }
-
-func (passthroughDB) Close() error { return nil }

@@ -439,11 +439,15 @@ func startServices(version string) error {
 }
 
 func runMigrations(version string) error {
-	cmd := exec.Command("docker", "compose", "-f", composeFile, "run", "--rm", "tms-migrate")
+	cmd := exec.Command("docker", "compose", "-f", composeFile, "run", "--rm", "trenova-db")
 	cmd.Env = append(os.Environ(), fmt.Sprintf("TRENOVA_VERSION=%s", version))
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
-	return cmd.Run()
+	if err := cmd.Run(); err != nil {
+		return fmt.Errorf("run trenova-db: %w", err)
+	}
+
+	return nil
 }
 
 func waitForHealthy() error {

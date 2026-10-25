@@ -3,16 +3,18 @@
 package journalpostingrepository
 
 import (
+	"context"
 	"testing"
 	"time"
 
-	"github.com/emoss08/trenova/internal/infrastructure/config"
-	"github.com/emoss08/trenova/internal/infrastructure/database/common"
-	"github.com/emoss08/trenova/internal/infrastructure/database/seeder"
-	"github.com/emoss08/trenova/internal/infrastructure/database/seeds"
-	"github.com/emoss08/trenova/internal/infrastructure/postgres"
+	"github.com/emoss08/trenova/internal/modules/accounting/accountingtest"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/glaccount/glaccountdb"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/glbalance/glbalancedb"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/journalentry"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/journalentry/journalentrydb"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/journalsource/journalsourcedb"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/journalentryports"
-	"github.com/emoss08/trenova/internal/testutil/seedtest"
+	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -22,34 +24,18 @@ import (
 )
 
 func TestReviewApprovesAndPostsAPendingEntryIntoTheLedger(t *testing.T) {
-	ctx, db, cleanup := seedtest.SetupTestDB(t)
-	defer cleanup()
-
-	seedRegistry := seeder.NewRegistry()
-	seeds.Register(seedRegistry)
-	engine := seeder.NewEngine(
-		db,
-		seedRegistry,
-		&config.Config{System: config.SystemConfig{SystemUserPassword: "test-system-password"}},
-	)
-	_, err := engine.Execute(ctx, seeder.ExecuteOptions{Environment: common.EnvDevelopment})
-	require.NoError(t, err)
-
-	conn := postgres.NewTestConnection(db)
+	db := accountingtest.NewDevelopmentDatabase(t)
+	ctx := db.A.Ctx
+	kdb := db.Admin
+	conn := db.Conn
 	postings := New(Params{DB: conn, Logger: zap.NewNop()})
 	review := NewReview(Params{DB: conn, Logger: zap.NewNop()})
-	orgID, buID, userID, fiscalYearID, periodID, accountIDs := setupPostingFixture(t, ctx, conn)
+	orgID, buID, userID, fiscalYearID, periodID, accountIDs := setupPostingFixture(t, db)
 	tenantInfo := pagination.TenantInfo{OrgID: orgID, BuID: buID}
 	accountingDate := time.Date(2027, time.January, 15, 0, 0, 0, 0, time.UTC).Unix()
 
-	var before struct {
-		Current int64 `bun:"current_balance"`
-	}
-	require.NoError(t, db.NewSelect().
-		Table("gl_accounts").
-		Column("current_balance").
-		Where("id = ?", accountIDs[0]).
-		Scan(ctx, &before))
+	before, err := glaccountdb.GLAccounts.Get(ctx, kdb, accountIDs[0])
+	require.NoError(t, err)
 
 	batchID, entryID, sourceID := pulid.MustNew("jb_"), pulid.MustNew("je_"), pulid.MustNew("jsrc_")
 	require.NoError(t, postings.CreatePosting(ctx, journalentryports.CreateJournalPostingParams{
@@ -94,7 +80,7 @@ func TestReviewApprovesAndPostsAPendingEntryIntoTheLedger(t *testing.T) {
 	require.NoError(t, err)
 	assert.GreaterOrEqual(t, summary.AwaitingApproval, 1)
 	require.NotNil(t, summary.OldestAccountingDate)
-	assert.True(t, queueHolds(t, review, tenantInfo, entryID), "the pending entry waits for review")
+	assert.True(t, queueHolds(t, ctx, review, tenantInfo, entryID), "the pending entry waits for review")
 
 	locked, err := review.LockEntry(ctx, journalentryports.LockJournalEntryRequest{TenantInfo: tenantInfo, EntryID: entryID})
 	require.NoError(t, err)
@@ -137,65 +123,37 @@ func TestReviewApprovesAndPostsAPendingEntryIntoTheLedger(t *testing.T) {
 		},
 	}))
 
-	var entry struct {
-		Status   string `bun:"status"`
-		IsPosted bool   `bun:"is_posted"`
-		PostedAt *int64 `bun:"posted_at"`
-	}
-	require.NoError(t, db.NewSelect().
-		Table("journal_entries").
-		Column("status", "is_posted", "posted_at").
-		Where("id = ?", entryID).
-		Scan(ctx, &entry))
-	assert.Equal(t, "Posted", entry.Status)
+	entry, err := journalentrydb.JournalEntries.Get(ctx, kdb, entryID)
+	require.NoError(t, err)
+	assert.Equal(t, journalentry.StatusPosted, entry.Status)
 	assert.True(t, entry.IsPosted)
 	require.NotNil(t, entry.PostedAt)
 	assert.Equal(t, postedAt, *entry.PostedAt)
 
-	var batch struct {
-		Status   string `bun:"status"`
-		PostedAt *int64 `bun:"posted_at"`
-	}
-	require.NoError(t, db.NewSelect().
-		Table("journal_batches").
-		Column("status", "posted_at").
-		Where("id = ?", batchID).
-		Scan(ctx, &batch))
+	batch, err := journalentrydb.JournalBatches.Get(ctx, kdb, batchID)
+	require.NoError(t, err)
 	assert.Equal(t, "Posted", batch.Status)
 	require.NotNil(t, batch.PostedAt)
 
-	var sourceStatus string
-	require.NoError(t, db.NewSelect().
-		Table("journal_sources").
-		Column("status").
-		Where("id = ?", sourceID).
-		Scan(ctx, &sourceStatus))
-	assert.Equal(t, "Posted", sourceStatus)
+	source, err := journalsourcedb.Sources.Get(ctx, kdb, sourceID)
+	require.NoError(t, err)
+	assert.Equal(t, "Posted", source.Status)
 
-	var balance struct {
-		Debit int64 `bun:"period_debit_minor"`
-		Net   int64 `bun:"net_change_minor"`
-	}
-	require.NoError(t, db.NewSelect().
-		Table("gl_account_balances_by_period").
-		Column("period_debit_minor", "net_change_minor").
-		Where("gl_account_id = ?", accountIDs[0]).
-		Where("fiscal_period_id = ?", periodID).
-		Scan(ctx, &balance))
-	assert.Equal(t, int64(2500), balance.Debit)
-	assert.Equal(t, int64(2500), balance.Net)
+	gb := glbalancedb.GLAccountPeriodBalances
+	balance, err := gb.Where(
+		gb.GLAccountID.Eq(accountIDs[0]),
+		gb.FiscalPeriodID.Eq(periodID),
+	).One(ctx, kdb)
+	require.NoError(t, err)
+	assert.Equal(t, int64(2500), balance.PeriodDebitMinor)
+	assert.Equal(t, int64(2500), balance.NetChangeMinor)
 
-	var after struct {
-		Current int64 `bun:"current_balance"`
-	}
-	require.NoError(t, db.NewSelect().
-		Table("gl_accounts").
-		Column("current_balance").
-		Where("id = ?", accountIDs[0]).
-		Scan(ctx, &after))
-	assert.Equal(t, before.Current+2500, after.Current)
+	after, err := glaccountdb.GLAccounts.Get(ctx, kdb, accountIDs[0])
+	require.NoError(t, err)
+	assert.Equal(t, before.CurrentBalance+2500, after.CurrentBalance)
+	assert.Equal(t, before.Version, after.Version)
 
-	assert.False(t, queueHolds(t, review, tenantInfo, entryID), "a posted entry leaves the queue")
+	assert.False(t, queueHolds(t, ctx, review, tenantInfo, entryID), "a posted entry leaves the queue")
 
 	err = review.PostEntry(ctx, &journalentryports.PostJournalEntryParams{
 		TenantInfo: tenantInfo, EntryID: entryID, BatchID: batchID, Version: approved.Version + 1,
@@ -205,8 +163,9 @@ func TestReviewApprovesAndPostsAPendingEntryIntoTheLedger(t *testing.T) {
 	require.Error(t, err)
 	assert.True(t, errortypes.IsConflictError(err), "a posted entry must not post twice")
 
-	_, err = review.LockEntry(ctx, journalentryports.LockJournalEntryRequest{
-		TenantInfo: pagination.TenantInfo{OrgID: pulid.MustNew("org_"), BuID: buID},
+	stranger := pagination.TenantInfo{OrgID: pulid.MustNew("org_"), BuID: buID}
+	_, err = review.LockEntry(dbscope.WithTenant(t.Context(), stranger.DBTenant()), journalentryports.LockJournalEntryRequest{
+		TenantInfo: stranger,
 		EntryID:    entryID,
 	})
 	require.Error(t, err)
@@ -215,12 +174,13 @@ func TestReviewApprovesAndPostsAPendingEntryIntoTheLedger(t *testing.T) {
 
 func queueHolds(
 	t *testing.T,
+	ctx context.Context,
 	review journalentryports.JournalReviewRepository,
 	tenantInfo pagination.TenantInfo,
 	entryID pulid.ID,
 ) bool {
 	t.Helper()
-	result, err := review.ListConnection(t.Context(), &journalentryports.ListJournalReviewQuery{
+	result, err := review.ListConnection(ctx, &journalentryports.ListJournalReviewQuery{
 		Filter: &pagination.QueryOptions{TenantInfo: tenantInfo},
 		Cursor: pagination.CursorInfo{Limit: 100},
 	})

@@ -3,27 +3,25 @@ package ratesimulationrepository
 import (
 	"context"
 
-	"github.com/emoss08/trenova/pkg/buncolgen/ratesimulationcol"
-	"github.com/emoss08/trenova/pkg/buncolgen/shipmentcol"
-
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment/shipmentdb"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/ratesimulation"
+	"github.com/emoss08/trenova/internal/modules/rating/domain/ratesimulation/ratesimulationdb"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/ratesimulationports"
-	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/uptrace/bun"
+	"github.com/shopspring/decimal"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
 
-// resultInsertBatch bounds how many result rows go in one statement. A run
-// carries up to a hundred thousand, and one insert that size holds locks far
-// longer than the work deserves.
-const resultInsertBatch = 500
+const shipDateSQL = "COALESCE(?, ?)"
+
+var simulationErrors = dberror.Mapping{Entity: "RateSimulation"}
 
 type Params struct {
 	fx.In
@@ -49,33 +47,34 @@ func (r *repository) GetByID(
 	req *ratesimulationports.GetRateSimulationByIDRequest,
 ) (*ratesimulation.RateSimulation, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*ratesimulation.RateSimulation, error) {
-		log := r.l.With(
-			zap.String("operation", "GetByID"),
-			zap.String("id", req.RateSimulationID.String()),
-		)
-
-		entity := new(ratesimulation.RateSimulation)
-		cols := ratesimulationcol.RateSimulationColumns
-
-		q := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(entity).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return ratesimulationcol.RateSimulationScopeTenant(sq, req.TenantInfo).
-					Where(cols.ID.Eq(), req.RateSimulationID)
-			})
-
+		rs := ratesimulationdb.RateSimulations
+		q := rs.Where(rs.ID.Eq(req.RateSimulationID))
 		if req.IncludeResults {
-			q = q.Relation(buncolgen.Rel(ratesimulationcol.RateSimulationRelations.Results))
+			q = q.Load(rs.Results())
 		}
 
-		if err := q.Scan(ctx); err != nil {
-			log.Error("failed to get rate simulation", zap.Error(err))
-			return nil, dberror.HandleNotFoundError(err, "RateSimulation")
+		entity, err := q.One(ctx, r.db.Keel(ctx))
+		if err != nil {
+			r.l.Error("failed to get rate simulation",
+				zap.String("id", req.RateSimulationID.String()),
+				zap.Error(err),
+			)
+			return nil, simulationErrors.Map(err, req.RateSimulationID.String())
 		}
 
 		return entity, nil
 	})
+}
+
+func simulationsQuery(
+	req *ratesimulationports.ListRateSimulationsRequest,
+) *keel.Query[ratesimulation.RateSimulation] {
+	rs := ratesimulationdb.RateSimulations
+	if req.RateAgreementID != nil && !req.RateAgreementID.IsNil() {
+		return rs.Where(rs.RateAgreementID.Eq(*req.RateAgreementID))
+	}
+
+	return rs.Query()
 }
 
 func (r *repository) List(
@@ -86,35 +85,41 @@ func (r *repository) List(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*pagination.ListResult[*ratesimulation.RateSimulation], error) {
-			cols := ratesimulationcol.RateSimulationColumns
-			entities := make([]*ratesimulation.RateSimulation, 0, req.Filter.Pagination.SafeLimit())
+			rs := ratesimulationdb.RateSimulations
+			page := req.Filter.Pagination
+			rows := simulationsQuery(req).
+				Order(rs.CreatedAt.Desc()).
+				Limit(page.SafeLimit()).
+				Offset(page.SafeOffset())
 
-			q := r.db.DBForContext(ctx).
-				NewSelect().
-				Model(&entities).
-				Apply(ratesimulationcol.RateSimulationApplyTenant(req.Filter.TenantInfo))
-
-			if req.RateAgreementID != nil && !req.RateAgreementID.IsNil() {
-				q = q.Where(cols.RateAgreementID.Eq(), *req.RateAgreementID)
-			}
-
-			// Newest first: a simulation is looked at while it is fresh, and the older
-			// ones are history.
-			q = q.Order(cols.CreatedAt.OrderDesc()).
-				Limit(int64(req.Filter.Pagination.SafeLimit())).
-				Offset(int64(req.Filter.Pagination.SafeOffset()))
-
-			total, err := q.ScanAndCount(ctx)
-			if err != nil {
+			var items []*ratesimulation.RateSimulation
+			var total int64
+			if err := keel.Batch(
+				ctx,
+				r.db.Keel(ctx),
+				keel.ListInto(rows, &items),
+				keel.CountInto(simulationsQuery(req), &total),
+			); err != nil {
 				r.l.Error("failed to list rate simulations", zap.Error(err))
 				return nil, err
 			}
 
 			return &pagination.ListResult[*ratesimulation.RateSimulation]{
-				Items: entities,
+				Items: items,
 				Total: int(total),
 			}, nil
 		},
+	)
+}
+
+func resultsQuery(
+	req *ratesimulationports.ListRateSimulationResultsRequest,
+) *keel.Query[ratesimulation.RateSimulationResult] {
+	res := ratesimulationdb.RateSimulationResults
+
+	return res.Where(
+		res.RateSimulationID.Eq(req.RateSimulationID),
+		keel.When(req.ChangedOnly, res.Delta.Ne(decimal.Zero)),
 	)
 }
 
@@ -126,36 +131,28 @@ func (r *repository) ListResults(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*pagination.ListResult[*ratesimulation.RateSimulationResult], error) {
-			entities := make([]*ratesimulation.RateSimulationResult, 0)
-			cols := ratesimulationcol.RateSimulationResultColumns
+			res := ratesimulationdb.RateSimulationResults
+			rows := resultsQuery(req).Order(res.Delta.Desc())
 
-			q := r.db.DBForContext(ctx).
-				NewSelect().
-				Model(&entities).
-				WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-					return ratesimulationcol.RateSimulationResultScopeTenant(sq, req.TenantInfo).
-						Where(cols.RateSimulationID.Eq(), req.RateSimulationID)
-				})
-
-			if req.ChangedOnly {
-				q = q.Where(cols.Delta.NotEq(), 0)
-			}
-
-			q = q.Order(cols.Delta.OrderDesc())
-
+			var items []*ratesimulation.RateSimulationResult
+			var total int64
+			read := keel.AllInto(rows, &items)
 			if req.Filter != nil {
-				q = q.Limit(int64(req.Filter.Pagination.SafeLimit())).
-					Offset(int64(req.Filter.Pagination.SafeOffset()))
+				page := req.Filter.Pagination
+				read = keel.ListInto(rows.Limit(page.SafeLimit()).Offset(page.SafeOffset()), &items)
 			}
-
-			total, err := q.ScanAndCount(ctx)
-			if err != nil {
+			if err := keel.Batch(
+				ctx,
+				r.db.Keel(ctx),
+				read,
+				keel.CountInto(resultsQuery(req), &total),
+			); err != nil {
 				r.l.Error("failed to list rate simulation results", zap.Error(err))
 				return nil, err
 			}
 
 			return &pagination.ListResult[*ratesimulation.RateSimulationResult]{
-				Items: entities,
+				Items: items,
 				Total: int(total),
 			}, nil
 		},
@@ -167,13 +164,9 @@ func (r *repository) Create(
 	entity *ratesimulation.RateSimulation,
 ) (*ratesimulation.RateSimulation, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*ratesimulation.RateSimulation, error) {
-		if _, err := r.db.DBForContext(ctx).
-			NewInsert().
-			Model(entity).
-			Returning("*").
-			Exec(ctx); err != nil {
+		if err := ratesimulationdb.RateSimulations.Create(ctx, r.db.Keel(ctx), entity); err != nil {
 			r.l.Error("failed to create rate simulation", zap.Error(err))
-			return nil, err
+			return nil, simulationErrors.Map(err, entity.ID.String())
 		}
 
 		return entity, nil
@@ -185,29 +178,9 @@ func (r *repository) Update(
 	entity *ratesimulation.RateSimulation,
 ) (*ratesimulation.RateSimulation, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*ratesimulation.RateSimulation, error) {
-		ov := entity.Version
-		entity.Version++
-
-		cols := ratesimulationcol.RateSimulationColumns
-
-		results, err := r.db.DBForContext(ctx).
-			NewUpdate().
-			Model(entity).
-			WherePK().
-			Where(cols.Version.Eq(), ov).
-			Returning("*").
-			Exec(ctx)
-		if err != nil {
+		if err := ratesimulationdb.RateSimulations.Save(ctx, r.db.Keel(ctx), entity); err != nil {
 			r.l.Error("failed to update rate simulation", zap.Error(err))
-			return nil, err
-		}
-
-		if err = dberror.CheckRowsAffected(
-			results,
-			"RateSimulation",
-			entity.ID.String(),
-		); err != nil {
-			return nil, err
+			return nil, simulationErrors.Map(err, entity.ID.String())
 		}
 
 		return entity, nil
@@ -227,21 +200,30 @@ func (r *repository) AppendResults(
 			return nil
 		}
 
-		for start := 0; start < len(results); start += resultInsertBatch {
-			batch := results[start:min(start+resultInsertBatch, len(results))]
-
-			if _, err := r.db.DBForContext(ctx).
-				NewInsert().
-				Model(&batch).
-				Exec(ctx); err != nil {
-				r.l.Error("failed to append rate simulation results", zap.Error(err))
-
-				return err
-			}
+		err := ratesimulationdb.RateSimulationResults.CreateMany(ctx, r.db.Keel(ctx), results)
+		if err != nil {
+			r.l.Error("failed to append rate simulation results", zap.Error(err))
+			return err
 		}
 
 		return nil
 	})
+}
+
+func simulationShipmentsQuery(
+	req *ratesimulationports.ListSimulationShipmentsRequest,
+) *keel.Query[shipment.Shipment] {
+	sp := shipmentdb.Shipments
+	shipDate := keel.Raw(shipDateSQL, sp.ActualShipDate, sp.CreatedAt)
+
+	return sp.Pick(sp.ID).
+		Where(
+			keel.Raw("? >= ?", shipDate, req.From),
+			keel.Raw("? < ?", shipDate, req.To),
+			keel.When(!req.AfterID.IsNil(), sp.ID.Gt(req.AfterID)),
+		).
+		Order(sp.ID.Asc()).
+		Limit(req.Limit)
 }
 
 // ListShipments walks the shipments a simulation replays, a page at a time.
@@ -258,53 +240,18 @@ func (r *repository) ListShipments(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*ratesimulationports.SimulationShipmentPage, error) {
-			cols := shipmentcol.ShipmentColumns
-
-			entities := make([]*shipment.Shipment, 0, req.Limit)
-
-			q := r.db.DBForContext(ctx).
-				NewSelect().
-				Model(&entities).
-				Column("id").
-				WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-					sq = shipmentcol.ShipmentScopeTenant(sq, req.TenantInfo)
-
-					// The window is read against the day the freight actually moved,
-					// falling back to when the shipment was created for one that never
-					// recorded a ship date. Rating already picks its date this way, so
-					// a simulation covers the same shipments a re-rate would.
-					shipDate := bun.Ident(cols.ActualShipDate.Qualified())
-					createdAt := bun.Ident(cols.CreatedAt.Qualified())
-
-					sq = sq.
-						Where("COALESCE(?, ?) >= ?", shipDate, createdAt, req.From).
-						Where("COALESCE(?, ?) < ?", shipDate, createdAt, req.To)
-
-					if !req.AfterID.IsNil() {
-						sq = sq.Where(cols.ID.Gt(), req.AfterID)
-					}
-
-					return sq
-				}).
-				Order(cols.ID.OrderAsc()).
-				Limit(int64(req.Limit))
-
-			if err := q.Scan(ctx); err != nil {
+			ids, err := keel.Into[pulid.ID](ctx, r.db.Keel(ctx), simulationShipmentsQuery(req))
+			if err != nil {
 				r.l.Error("failed to list shipments for a simulation", zap.Error(err))
 				return nil, err
-			}
-
-			ids := make([]pulid.ID, 0, len(entities))
-			for _, entity := range entities {
-				ids = append(ids, entity.ID)
 			}
 
 			result := &ratesimulationports.SimulationShipmentPage{ShipmentIDs: ids}
 
 			// A full page means there is probably another. A short one is the end, and
 			// saying so saves a round trip that would return nothing.
-			if len(entities) == req.Limit && len(entities) > 0 {
-				result.NextAfterID = entities[len(entities)-1].ID
+			if len(ids) == req.Limit && len(ids) > 0 {
+				result.NextAfterID = ids[len(ids)-1]
 			}
 
 			return result, nil

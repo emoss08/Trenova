@@ -7,7 +7,6 @@ import (
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"github.com/uptrace/bun"
 )
 
 func TestIdentityProviderValidate(t *testing.T) {
@@ -30,21 +29,17 @@ func TestIdentityProviderValidate(t *testing.T) {
 	assert.True(t, multiErr.HasErrors())
 }
 
-func TestIdentityProviderBeforeAppendModel(t *testing.T) {
+func TestIdentityProviderBeforeCreate(t *testing.T) {
 	t.Parallel()
 
 	provider := &IdentityProvider{}
-	err := provider.BeforeAppendModel(t.Context(), (*bun.InsertQuery)(nil))
+	err := provider.BeforeCreate(t.Context())
 	require.NoError(t, err)
-	assert.True(t, provider.ID.IsNotNil())
-	assert.NotZero(t, provider.CreatedAt)
 	assert.NotNil(t, provider.AllowedDomains)
 	assert.NotNil(t, provider.AttributeMap)
 	assert.Equal(t, []string{"openid", "email", "profile"}, provider.OIDCScopes)
 
-	err = provider.BeforeAppendModel(t.Context(), (*bun.UpdateQuery)(nil))
-	require.NoError(t, err)
-	assert.NotZero(t, provider.UpdatedAt)
+	require.NoError(t, provider.BeforeUpdate(t.Context()))
 }
 
 func TestAccessPolicyValidate(t *testing.T) {
@@ -68,26 +63,26 @@ func TestAccessPolicyValidate(t *testing.T) {
 	assert.True(t, multiErr.HasErrors())
 }
 
-func TestIAMBeforeAppendModelInitializesCollections(t *testing.T) {
+func TestIAMBeforeCreateInitializesCollections(t *testing.T) {
 	t.Parallel()
 
 	externalIdentity := &ExternalIdentity{}
-	err := externalIdentity.BeforeAppendModel(t.Context(), (*bun.InsertQuery)(nil))
+	err := externalIdentity.BeforeCreate(t.Context())
 	require.NoError(t, err)
 	assert.NotNil(t, externalIdentity.RawClaims)
 
 	authEvent := &AuthEvent{}
-	err = authEvent.BeforeAppendModel(t.Context(), (*bun.InsertQuery)(nil))
+	err = authEvent.BeforeCreate(t.Context())
 	require.NoError(t, err)
 	assert.NotNil(t, authEvent.RiskSignals)
 
 	riskDecision := &RiskDecision{}
-	err = riskDecision.BeforeAppendModel(t.Context(), (*bun.InsertQuery)(nil))
+	err = riskDecision.BeforeCreate(t.Context())
 	require.NoError(t, err)
 	assert.NotNil(t, riskDecision.Signals)
 
 	accessPolicy := &AccessPolicy{}
-	err = accessPolicy.BeforeAppendModel(t.Context(), (*bun.InsertQuery)(nil))
+	err = accessPolicy.BeforeCreate(t.Context())
 	require.NoError(t, err)
 	assert.NotNil(t, accessPolicy.Conditions)
 }

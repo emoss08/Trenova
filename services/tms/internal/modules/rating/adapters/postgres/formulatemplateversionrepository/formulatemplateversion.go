@@ -3,22 +3,24 @@ package formulatemplateversionrepository
 import (
 	"context"
 
-	"github.com/emoss08/trenova/pkg/buncolgen/formulatemplatecol"
-
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/formulatemplate"
+	"github.com/emoss08/trenova/internal/modules/rating/domain/formulatemplate/formulatemplatedb"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/formulatemplateports"
 	"github.com/emoss08/trenova/pkg/dberror"
+	"github.com/emoss08/trenova/pkg/listquery"
 	"github.com/emoss08/trenova/pkg/pagination"
-	"github.com/emoss08/trenova/pkg/querybuilder"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
-	"github.com/uptrace/bun"
-	"github.com/uptrace/bun/dialect/pgdialect"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
+
+const defaultLibraryUsageLimit = 200
+
+var versionErrors = dberror.Mapping{Entity: "FormulaTemplateVersion"}
 
 type Params struct {
 	fx.In
@@ -53,21 +55,25 @@ func (r *repository) Create(
 				zap.Int64("versionNumber", version.VersionNumber),
 			)
 
-			dba := r.db.DBForContext(ctx)
-			if _, err := dba.NewInsert().Model(version).Exec(ctx); err != nil {
+			db := r.db.Keel(ctx)
+			if err := formulatemplatedb.FormulaTemplateVersions.Create(
+				ctx,
+				db,
+				version,
+			); err != nil {
 				log.Error("failed to create formula template version", zap.Error(err))
-				return nil, err
+				return nil, versionErrors.Map(err, version.ID.String())
 			}
 
 			if rows := version.ImportRows(); len(rows) > 0 {
-				if _, err := dba.NewInsert().Model(&rows).Exec(ctx); err != nil {
+				if err := formulatemplatedb.VersionImports.CreateMany(ctx, db, rows); err != nil {
 					log.Error("failed to record formula template version imports", zap.Error(err))
 					return nil, err
 				}
 			}
 
 			if rows := version.TableRows(); len(rows) > 0 {
-				if _, err := dba.NewInsert().Model(&rows).Exec(ctx); err != nil {
+				if err := formulatemplatedb.VersionTables.CreateMany(ctx, db, rows); err != nil {
 					log.Error("failed to record formula template version tables", zap.Error(err))
 					return nil, err
 				}
@@ -86,53 +92,26 @@ func (r *repository) GetByTemplateAndVersion(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*formulatemplate.FormulaTemplateVersion, error) {
-			log := r.l.With(
-				zap.String("operation", "GetByTemplateAndVersion"),
-				zap.String("templateID", req.TemplateID.String()),
-				zap.Int64("versionNumber", req.VersionNumber),
-			)
-
-			entity := new(formulatemplate.FormulaTemplateVersion)
-			err := r.db.DBForContext(ctx).
-				NewSelect().
-				Model(entity).
-				WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-					return sq.
-						Where(formulatemplatecol.FormulaTemplateVersionColumns.TemplateID.Eq(), req.TemplateID).
-						Where(formulatemplatecol.FormulaTemplateVersionColumns.OrganizationID.Eq(), req.TenantInfo.OrgID).
-						Where(formulatemplatecol.FormulaTemplateVersionColumns.BusinessUnitID.Eq(), req.TenantInfo.BuID).
-						Where(formulatemplatecol.FormulaTemplateVersionColumns.VersionNumber.Eq(), req.VersionNumber)
-				}).
-				Scan(ctx)
+			v := formulatemplatedb.FormulaTemplateVersions
+			entity, err := v.Where(
+				v.TemplateID.Eq(req.TemplateID),
+				v.VersionNumber.Eq(req.VersionNumber),
+			).One(ctx, r.db.Keel(ctx))
 			if err != nil {
-				if dberror.IsNotFoundError(err) {
-					return nil, dberror.HandleNotFoundError(err, "FormulaTemplateVersion")
+				if !dberror.IsNotFoundError(err) {
+					r.l.Error(
+						"failed to get formula template version",
+						zap.String("templateID", req.TemplateID.String()),
+						zap.Int64("versionNumber", req.VersionNumber),
+						zap.Error(err),
+					)
 				}
-				log.Error("failed to get formula template version", zap.Error(err))
-				return nil, err
+				return nil, versionErrors.Map(err, req.TemplateID.String())
 			}
 
 			return entity, nil
 		},
 	)
-}
-
-func (r *repository) filterQuery(
-	q *bun.SelectQuery,
-	req *formulatemplateports.ListVersionsRequest,
-) *bun.SelectQuery {
-	q = querybuilder.ApplyFilters(
-		q,
-		"ftv",
-		req.Filter,
-		(*formulatemplate.FormulaTemplateVersion)(nil),
-	)
-
-	q = q.Where(formulatemplatecol.FormulaTemplateVersionColumns.TemplateID.Eq(), req.TemplateID).
-		Relation("CreatedBy")
-
-	return q.Limit(int64(req.Filter.Pagination.SafeLimit())).
-		Offset(int64(req.Filter.Pagination.SafeOffset()))
 }
 
 func (r *repository) List(
@@ -143,33 +122,31 @@ func (r *repository) List(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*pagination.ListResult[*formulatemplate.FormulaTemplateVersion], error) {
-			log := r.l.With(
-				zap.String("operation", "List"),
-				zap.String("templateID", req.TemplateID.String()),
+			v := formulatemplatedb.FormulaTemplateVersions
+			result, err := listquery.List(
+				ctx,
+				r.db.Keel(ctx),
+				v.Where(v.TemplateID.Eq(req.TemplateID)),
+				&listquery.Request[formulatemplate.FormulaTemplateVersion]{
+					Filter: req.Filter,
+					Shape: func(
+						q *keel.Query[formulatemplate.FormulaTemplateVersion],
+					) *keel.Query[formulatemplate.FormulaTemplateVersion] {
+						return q.Load(v.CreatedBy())
+					},
+					Then: []keel.Order{v.VersionNumber.Desc()},
+				},
 			)
-
-			entities := make(
-				[]*formulatemplate.FormulaTemplateVersion,
-				0,
-				req.Filter.Pagination.SafeLimit(),
-			)
-			total, err := r.db.DBForContext(ctx).
-				NewSelect().
-				Model(&entities).
-				Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-					return r.filterQuery(sq, req)
-				}).
-				Order(formulatemplatecol.FormulaTemplateVersionColumns.VersionNumber.OrderDesc()).
-				ScanAndCount(ctx)
 			if err != nil {
-				log.Error("failed to list formula template versions", zap.Error(err))
+				r.l.Error(
+					"failed to list formula template versions",
+					zap.String("templateID", req.TemplateID.String()),
+					zap.Error(err),
+				)
 				return nil, err
 			}
 
-			return &pagination.ListResult[*formulatemplate.FormulaTemplateVersion]{
-				Items: entities,
-				Total: int(total),
-			}, nil
+			return result, nil
 		},
 	)
 }
@@ -182,28 +159,19 @@ func (r *repository) GetVersionRange(
 		ctx,
 		r.db,
 		func(ctx context.Context) ([]*formulatemplate.FormulaTemplateVersion, error) {
-			log := r.l.With(
-				zap.String("operation", "GetVersionRange"),
-				zap.String("templateID", req.TemplateID.String()),
-				zap.Int64("fromVersion", req.FromVersion),
-				zap.Int64("toVersion", req.ToVersion),
-			)
-
-			entities := make([]*formulatemplate.FormulaTemplateVersion, 0, 2)
-			err := r.db.DBForContext(ctx).
-				NewSelect().
-				Model(&entities).
-				WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-					return sq.
-						Where(formulatemplatecol.FormulaTemplateVersionColumns.TemplateID.Eq(), req.TemplateID).
-						Where(formulatemplatecol.FormulaTemplateVersionColumns.OrganizationID.Eq(), req.TenantInfo.OrgID).
-						Where(formulatemplatecol.FormulaTemplateVersionColumns.BusinessUnitID.Eq(), req.TenantInfo.BuID).
-						Where(formulatemplatecol.FormulaTemplateVersionColumns.VersionNumber.In(), bun.List([]int64{req.FromVersion, req.ToVersion}))
-				}).
-				Order(formulatemplatecol.FormulaTemplateVersionColumns.VersionNumber.OrderAsc()).
-				Scan(ctx)
+			v := formulatemplatedb.FormulaTemplateVersions
+			entities, err := v.Where(
+				v.TemplateID.Eq(req.TemplateID),
+				v.VersionNumber.In(req.FromVersion, req.ToVersion),
+			).Order(v.VersionNumber.Asc()).Limit(2).List(ctx, r.db.Keel(ctx))
 			if err != nil {
-				log.Error("failed to get version range", zap.Error(err))
+				r.l.Error(
+					"failed to get version range",
+					zap.String("templateID", req.TemplateID.String()),
+					zap.Int64("fromVersion", req.FromVersion),
+					zap.Int64("toVersion", req.ToVersion),
+					zap.Error(err),
+				)
 				return nil, err
 			}
 
@@ -215,33 +183,23 @@ func (r *repository) GetVersionRange(
 func (r *repository) GetLatestVersion(
 	ctx context.Context,
 	templateID pulid.ID,
-	tenantInfo pagination.TenantInfo,
+	_ pagination.TenantInfo,
 ) (*formulatemplate.FormulaTemplateVersion, error) {
 	return dbtx.Read(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*formulatemplate.FormulaTemplateVersion, error) {
-			log := r.l.With(
-				zap.String("operation", "GetLatestVersion"),
-				zap.String("templateID", templateID.String()),
-			)
-
-			entity := new(formulatemplate.FormulaTemplateVersion)
-			err := r.db.DBForContext(ctx).
-				NewSelect().
-				Model(entity).
-				WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-					return sq.
-						Where(formulatemplatecol.FormulaTemplateVersionColumns.TemplateID.Eq(), templateID).
-						Where(formulatemplatecol.FormulaTemplateVersionColumns.OrganizationID.Eq(), tenantInfo.OrgID).
-						Where(formulatemplatecol.FormulaTemplateVersionColumns.BusinessUnitID.Eq(), tenantInfo.BuID)
-				}).
-				Order(formulatemplatecol.FormulaTemplateVersionColumns.VersionNumber.OrderDesc()).
-				Limit(1).
-				Scan(ctx)
+			v := formulatemplatedb.FormulaTemplateVersions
+			entity, err := v.Where(v.TemplateID.Eq(templateID)).
+				Order(v.VersionNumber.Desc()).
+				First(ctx, r.db.Keel(ctx))
 			if err != nil {
-				log.Error("failed to get latest version", zap.Error(err))
-				return nil, dberror.HandleNotFoundError(err, "FormulaTemplateVersion")
+				r.l.Error(
+					"failed to get latest version",
+					zap.String("templateID", templateID.String()),
+					zap.Error(err),
+				)
+				return nil, versionErrors.Map(err, templateID.String())
 			}
 
 			return entity, nil
@@ -257,28 +215,42 @@ func (r *repository) GetForkedTemplates(
 		ctx,
 		r.db,
 		func(ctx context.Context) ([]*formulatemplate.FormulaTemplate, error) {
-			log := r.l.With(
-				zap.String("operation", "GetForkedTemplates"),
-				zap.String("sourceTemplateID", req.SourceTemplateID.String()),
-			)
-
-			entities := make([]*formulatemplate.FormulaTemplate, 0)
-			err := r.db.DBForContext(ctx).
-				NewSelect().
-				Model(&entities).
-				WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-					return formulatemplatecol.FormulaTemplateScopeTenant(sq, req.TenantInfo).
-						Where(formulatemplatecol.FormulaTemplateColumns.SourceTemplateID.Eq(), req.SourceTemplateID)
-				}).
-				Scan(ctx)
+			ft := formulatemplatedb.FormulaTemplates
+			entities, err := ft.Where(ft.SourceTemplateID.Eq(req.SourceTemplateID)).
+				All(ctx, r.db.Keel(ctx))
 			if err != nil {
-				log.Error("failed to get forked templates", zap.Error(err))
+				r.l.Error(
+					"failed to get forked templates",
+					zap.String("sourceTemplateID", req.SourceTemplateID.String()),
+					zap.Error(err),
+				)
 				return nil, err
 			}
 
 			return entities, nil
 		},
 	)
+}
+
+func (r *repository) updateVersion(
+	ctx context.Context,
+	templateID pulid.ID,
+	versionNumber int64,
+	set keel.Assignment,
+) (*formulatemplate.FormulaTemplateVersion, error) {
+	v := formulatemplatedb.FormulaTemplateVersions
+	rows, err := v.Where(
+		v.TemplateID.Eq(templateID),
+		v.VersionNumber.Eq(versionNumber),
+	).UpdateReturning(ctx, r.db.Keel(ctx), set)
+	if err != nil {
+		return nil, err
+	}
+	if len(rows) == 0 {
+		return nil, versionErrors.Map(keel.ErrNotFound, templateID.String())
+	}
+
+	return rows[0], nil
 }
 
 func (r *repository) UpdateTags(
@@ -289,40 +261,27 @@ func (r *repository) UpdateTags(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*formulatemplate.FormulaTemplateVersion, error) {
-			log := r.l.With(
-				zap.String("operation", "UpdateTags"),
-				zap.String("templateID", req.TemplateID.String()),
-				zap.Int64("versionNumber", req.VersionNumber),
+			tags := req.Tags
+			if tags == nil {
+				tags = []string{}
+			}
+
+			entity, err := r.updateVersion(
+				ctx,
+				req.TemplateID,
+				req.VersionNumber,
+				formulatemplatedb.FormulaTemplateVersions.Tags.To(tags),
 			)
-
-			tags := make([]formulatemplate.VersionTag, len(req.Tags))
-			for i, t := range req.Tags {
-				tags[i] = formulatemplate.VersionTag(t)
+			if err != nil && !dberror.IsNotFoundError(err) {
+				r.l.Error(
+					"failed to update version tags",
+					zap.String("templateID", req.TemplateID.String()),
+					zap.Int64("versionNumber", req.VersionNumber),
+					zap.Error(err),
+				)
 			}
 
-			entity := new(formulatemplate.FormulaTemplateVersion)
-			err := r.db.DBForContext(ctx).
-				NewUpdate().
-				Model(entity).
-				Set("tags = ?", pgdialect.Array(tags)).
-				WhereGroup(" AND ", func(sq *bun.UpdateQuery) *bun.UpdateQuery {
-					return sq.
-						Where(formulatemplatecol.FormulaTemplateVersionColumns.TemplateID.Eq(), req.TemplateID).
-						Where(formulatemplatecol.FormulaTemplateVersionColumns.OrganizationID.Eq(), req.TenantInfo.OrgID).
-						Where(formulatemplatecol.FormulaTemplateVersionColumns.BusinessUnitID.Eq(), req.TenantInfo.BuID).
-						Where(formulatemplatecol.FormulaTemplateVersionColumns.VersionNumber.Eq(), req.VersionNumber)
-				}).
-				Returning("*").
-				Scan(ctx)
-			if err != nil {
-				if dberror.IsNotFoundError(err) {
-					return nil, dberror.HandleNotFoundError(err, "FormulaTemplateVersion")
-				}
-				log.Error("failed to update version tags", zap.Error(err))
-				return nil, err
-			}
-
-			return entity, nil
+			return entity, err
 		},
 	)
 }
@@ -335,33 +294,22 @@ func (r *repository) GetEffectiveVersion(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*formulatemplate.FormulaTemplateVersion, error) {
-			log := r.l.With(
-				zap.String("operation", "GetEffectiveVersion"),
-				zap.String("templateID", req.TemplateID.String()),
-				zap.Int64("asOf", req.AsOf),
-			)
-
-			entity := new(formulatemplate.FormulaTemplateVersion)
-			err := r.db.DBForContext(ctx).
-				NewSelect().
-				Model(entity).
-				WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-					return sq.
-						Where(formulatemplatecol.FormulaTemplateVersionColumns.TemplateID.Eq(), req.TemplateID).
-						Where(formulatemplatecol.FormulaTemplateVersionColumns.OrganizationID.Eq(), req.TenantInfo.OrgID).
-						Where(formulatemplatecol.FormulaTemplateVersionColumns.BusinessUnitID.Eq(), req.TenantInfo.BuID).
-						Where(formulatemplatecol.FormulaTemplateVersionColumns.EffectiveFrom.IsNotNull()).
-						Where(formulatemplatecol.FormulaTemplateVersionColumns.EffectiveFrom.Lte(), req.AsOf)
-				}).
-				OrderExpr("ftv.effective_from DESC").
-				OrderExpr("ftv.version_number DESC").
-				Limit(1).
-				Scan(ctx)
+			v := formulatemplatedb.FormulaTemplateVersions
+			entity, err := v.Where(
+				v.TemplateID.Eq(req.TemplateID),
+				v.EffectiveFrom.IsNotNull(),
+				v.EffectiveFrom.Lte(req.AsOf),
+			).Order(v.EffectiveFrom.Desc(), v.VersionNumber.Desc()).First(ctx, r.db.Keel(ctx))
 			if err != nil {
 				if dberror.IsNotFoundError(err) {
 					return nil, nil //nolint:nilnil // nil version means no scheduled version is in effect
 				}
-				log.Error("failed to get effective formula template version", zap.Error(err))
+				r.l.Error(
+					"failed to get effective formula template version",
+					zap.String("templateID", req.TemplateID.String()),
+					zap.Int64("asOf", req.AsOf),
+					zap.Error(err),
+				)
 				return nil, err
 			}
 
@@ -378,35 +326,23 @@ func (r *repository) UpdateEffectiveDate(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*formulatemplate.FormulaTemplateVersion, error) {
-			log := r.l.With(
-				zap.String("operation", "UpdateEffectiveDate"),
-				zap.String("templateID", req.TemplateID.String()),
-				zap.Int64("versionNumber", req.VersionNumber),
-			)
-
-			entity := new(formulatemplate.FormulaTemplateVersion)
-			err := r.db.DBForContext(ctx).
-				NewUpdate().
-				Model(entity).
-				Set("effective_from = ?", req.EffectiveFrom).
-				WhereGroup(" AND ", func(sq *bun.UpdateQuery) *bun.UpdateQuery {
-					return sq.
-						Where(formulatemplatecol.FormulaTemplateVersionColumns.TemplateID.Eq(), req.TemplateID).
-						Where(formulatemplatecol.FormulaTemplateVersionColumns.OrganizationID.Eq(), req.TenantInfo.OrgID).
-						Where(formulatemplatecol.FormulaTemplateVersionColumns.BusinessUnitID.Eq(), req.TenantInfo.BuID).
-						Where(formulatemplatecol.FormulaTemplateVersionColumns.VersionNumber.Eq(), req.VersionNumber)
-				}).
-				Returning("*").
-				Scan(ctx)
-			if err != nil {
-				if dberror.IsNotFoundError(err) {
-					return nil, dberror.HandleNotFoundError(err, "FormulaTemplateVersion")
-				}
-				log.Error("failed to update version effective date", zap.Error(err))
-				return nil, err
+			v := formulatemplatedb.FormulaTemplateVersions
+			set := v.EffectiveFrom.ToNull()
+			if req.EffectiveFrom != nil {
+				set = v.EffectiveFrom.To(*req.EffectiveFrom)
 			}
 
-			return entity, nil
+			entity, err := r.updateVersion(ctx, req.TemplateID, req.VersionNumber, set)
+			if err != nil && !dberror.IsNotFoundError(err) {
+				r.l.Error(
+					"failed to update version effective date",
+					zap.String("templateID", req.TemplateID.String()),
+					zap.Int64("versionNumber", req.VersionNumber),
+					zap.Error(err),
+				)
+			}
+
+			return entity, err
 		},
 	)
 }
@@ -419,27 +355,18 @@ func (r *repository) ListScheduled(
 		ctx,
 		r.db,
 		func(ctx context.Context) ([]*formulatemplate.FormulaTemplateVersion, error) {
-			log := r.l.With(
-				zap.String("operation", "ListScheduled"),
-				zap.String("templateID", req.TemplateID.String()),
-			)
-
-			versions := make([]*formulatemplate.FormulaTemplateVersion, 0)
-			err := r.db.DBForContext(ctx).
-				NewSelect().
-				Model(&versions).
-				WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-					return sq.
-						Where(formulatemplatecol.FormulaTemplateVersionColumns.TemplateID.Eq(), req.TemplateID).
-						Where(formulatemplatecol.FormulaTemplateVersionColumns.OrganizationID.Eq(), req.TenantInfo.OrgID).
-						Where(formulatemplatecol.FormulaTemplateVersionColumns.BusinessUnitID.Eq(), req.TenantInfo.BuID).
-						Where(formulatemplatecol.FormulaTemplateVersionColumns.Status.Eq(), formulatemplate.StatusActive).
-						Where(formulatemplatecol.FormulaTemplateVersionColumns.EffectiveFrom.Gt(), timeutils.NowUnix())
-				}).
-				Order(formulatemplatecol.FormulaTemplateVersionColumns.EffectiveFrom.OrderAsc()).
-				Scan(ctx)
+			v := formulatemplatedb.FormulaTemplateVersions
+			versions, err := v.Where(
+				v.TemplateID.Eq(req.TemplateID),
+				v.Status.Eq(formulatemplate.StatusActive),
+				v.EffectiveFrom.Gt(timeutils.NowUnix()),
+			).Order(v.EffectiveFrom.Asc()).All(ctx, r.db.Keel(ctx))
 			if err != nil {
-				log.Error("failed to list scheduled versions", zap.Error(err))
+				r.l.Error(
+					"failed to list scheduled versions",
+					zap.String("templateID", req.TemplateID.String()),
+					zap.Error(err),
+				)
 				return nil, err
 			}
 
@@ -456,24 +383,17 @@ func (r *repository) ListApproved(
 		ctx,
 		r.db,
 		func(ctx context.Context) ([]*formulatemplate.FormulaTemplateVersion, error) {
-			ftv := formulatemplatecol.FormulaTemplateVersionColumns
-
-			versions := make([]*formulatemplate.FormulaTemplateVersion, 0)
-			err := r.db.DBForContext(ctx).
-				NewSelect().
-				Model(&versions).
-				WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-					return formulatemplatecol.FormulaTemplateVersionScopeTenant(sq, req.TenantInfo).
-						Where(ftv.TemplateID.Eq(), req.TemplateID).
-						Where(ftv.Status.Eq(), formulatemplate.StatusActive)
-				}).
-				Order(ftv.VersionNumber.OrderAsc()).
-				Scan(ctx)
+			v := formulatemplatedb.FormulaTemplateVersions
+			versions, err := v.Where(
+				v.TemplateID.Eq(req.TemplateID),
+				v.Status.Eq(formulatemplate.StatusActive),
+			).Order(v.VersionNumber.Asc()).All(ctx, r.db.Keel(ctx))
 			if err != nil {
-				r.l.With(
-					zap.String("operation", "ListApproved"),
+				r.l.Error(
+					"failed to list approved versions",
 					zap.String("templateID", req.TemplateID.String()),
-				).Error("failed to list approved versions", zap.Error(err))
+					zap.Error(err),
+				)
 				return nil, err
 			}
 
@@ -487,25 +407,16 @@ func (r *repository) ListAuthorIDsSince(
 	req *formulatemplateports.ListVersionAuthorsRequest,
 ) ([]pulid.ID, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]pulid.ID, error) {
-		ftv := formulatemplatecol.FormulaTemplateVersionColumns
-
-		authors := make([]pulid.ID, 0, 2)
-		err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model((*formulatemplate.FormulaTemplateVersion)(nil)).
-			Distinct().
-			Column(ftv.CreatedByID.Bare()).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return formulatemplatecol.FormulaTemplateVersionScopeTenant(sq, req.TenantInfo).
-					Where(ftv.TemplateID.Eq(), req.TemplateID).
-					Where(ftv.VersionNumber.Gt(), req.AfterVersion)
-			}).
-			Scan(ctx, &authors)
+		v := formulatemplatedb.FormulaTemplateVersions
+		authors, err := keel.Into[pulid.ID](ctx, r.db.Keel(ctx), v.Group(v.CreatedByID).
+			Pick(v.CreatedByID).
+			Where(v.TemplateID.Eq(req.TemplateID), v.VersionNumber.Gt(req.AfterVersion)))
 		if err != nil {
-			r.l.With(
-				zap.String("operation", "ListAuthorIDsSince"),
+			r.l.Error(
+				"failed to list version authors",
 				zap.String("templateID", req.TemplateID.String()),
-			).Error("failed to list version authors", zap.Error(err))
+				zap.Error(err),
+			)
 			return nil, err
 		}
 
@@ -521,31 +432,20 @@ func (r *repository) GetLatestByStatus(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*formulatemplate.FormulaTemplateVersion, error) {
-			log := r.l.With(
-				zap.String("operation", "GetLatestByStatus"),
-				zap.String("templateID", req.TemplateID.String()),
-				zap.String("status", req.Status.String()),
-			)
-
-			ftv := formulatemplatecol.FormulaTemplateVersionColumns
-
-			entity := new(formulatemplate.FormulaTemplateVersion)
-			err := r.db.DBForContext(ctx).
-				NewSelect().
-				Model(entity).
-				WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-					return formulatemplatecol.FormulaTemplateVersionScopeTenant(sq, req.TenantInfo).
-						Where(ftv.TemplateID.Eq(), req.TemplateID).
-						Where(ftv.Status.Eq(), req.Status)
-				}).
-				Order(ftv.VersionNumber.OrderDesc()).
-				Limit(1).
-				Scan(ctx)
+			v := formulatemplatedb.FormulaTemplateVersions
+			entity, err := v.Where(v.TemplateID.Eq(req.TemplateID), v.Status.Eq(req.Status)).
+				Order(v.VersionNumber.Desc()).
+				First(ctx, r.db.Keel(ctx))
 			if err != nil {
 				if dberror.IsNotFoundError(err) {
 					return nil, nil //nolint:nilnil // nil version means the template never held that status
 				}
-				log.Error("failed to get latest formula template version by status", zap.Error(err))
+				r.l.Error(
+					"failed to get latest formula template version by status",
+					zap.String("templateID", req.TemplateID.String()),
+					zap.String("status", req.Status.String()),
+					zap.Error(err),
+				)
 				return nil, err
 			}
 
@@ -559,32 +459,18 @@ func (r *repository) ClearScheduled(
 	req *formulatemplateports.ListScheduledVersionsRequest,
 ) (int64, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (int64, error) {
-		log := r.l.With(
-			zap.String("operation", "ClearScheduled"),
-			zap.String("templateID", req.TemplateID.String()),
-		)
-
-		ftv := formulatemplatecol.FormulaTemplateVersionColumns
-
-		result, err := r.db.DBForContext(ctx).
-			NewUpdate().
-			Model((*formulatemplate.FormulaTemplateVersion)(nil)).
-			Set(ftv.Status.Set(), formulatemplate.StatusInactive).
-			WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-				return formulatemplatecol.FormulaTemplateVersionScopeTenantUpdate(uq, req.TenantInfo).
-					Where(ftv.TemplateID.Eq(), req.TemplateID).
-					Where(ftv.Status.Eq(), formulatemplate.StatusActive).
-					Where(ftv.EffectiveFrom.Gt(), timeutils.NowUnix())
-			}).
-			Exec(ctx)
+		v := formulatemplatedb.FormulaTemplateVersions
+		cleared, err := v.Where(
+			v.TemplateID.Eq(req.TemplateID),
+			v.Status.Eq(formulatemplate.StatusActive),
+			v.EffectiveFrom.Gt(timeutils.NowUnix()),
+		).Update(ctx, r.db.Keel(ctx), v.Status.To(formulatemplate.StatusInactive))
 		if err != nil {
-			log.Error("failed to clear scheduled versions", zap.Error(err))
-			return 0, err
-		}
-
-		cleared, err := result.RowsAffected()
-		if err != nil {
-			log.Error("failed to read cleared version count", zap.Error(err))
+			r.l.Error(
+				"failed to clear scheduled versions",
+				zap.String("templateID", req.TemplateID.String()),
+				zap.Error(err),
+			)
 			return 0, err
 		}
 
@@ -592,7 +478,41 @@ func (r *repository) ClearScheduled(
 	})
 }
 
-const defaultLibraryUsageLimit = 200
+func usageLimit(limit int) int {
+	if limit <= 0 || limit > defaultLibraryUsageLimit {
+		return defaultLibraryUsageLimit
+	}
+
+	return limit
+}
+
+type matrixUsageRow struct {
+	TemplateID          pulid.ID
+	TemplateName        string
+	TemplateStatus      formulatemplate.Status
+	TemplateVersion     int64
+	VersionStatus       formulatemplate.Status
+	MatrixVersionNumber int64
+}
+
+func matrixUsageQuery(
+	req *formulatemplateports.ListMatrixUsagesRequest,
+) *keel.Query[formulatemplate.VersionTable] {
+	vt := formulatemplatedb.VersionTables
+	v := formulatemplatedb.FormulaTemplateVersions
+	ft := formulatemplatedb.FormulaTemplates
+
+	q := vt.Join(v, v.ID.EqCol(vt.TemplateVersionID)).
+		Join(ft, ft.ID.EqCol(vt.TemplateID)).
+		Pick(vt.TemplateID, ft.Name, ft.Status, vt.TemplateVersion, v.Status, vt.MatrixVersionNumber).
+		Where(vt.RateMatrixID.Eq(req.RateMatrixID))
+	if req.VersionNumber != nil {
+		q = q.Where(vt.MatrixVersionNumber.Eq(*req.VersionNumber))
+	}
+
+	return q.Order(vt.MatrixVersionNumber.Desc(), vt.TemplateID.Asc(), vt.TemplateVersion.Desc()).
+		Limit(usageLimit(req.Limit))
+}
 
 func (r *repository) ListMatrixUsages(
 	ctx context.Context,
@@ -602,65 +522,7 @@ func (r *repository) ListMatrixUsages(
 		ctx,
 		r.db,
 		func(ctx context.Context) ([]*formulatemplateports.MatrixUsage, error) {
-			tables := formulatemplatecol.VersionTableColumns
-			versions := formulatemplatecol.FormulaTemplateVersionColumns
-			templates := formulatemplatecol.FormulaTemplateColumns
-			limit := req.Limit
-			if limit <= 0 || limit > defaultLibraryUsageLimit {
-				limit = defaultLibraryUsageLimit
-			}
-
-			type usageRow struct {
-				TemplateID          pulid.ID               `bun:"template_id"`
-				TemplateName        string                 `bun:"template_name"`
-				TemplateStatus      formulatemplate.Status `bun:"template_status"`
-				TemplateVersion     int64                  `bun:"template_version"`
-				VersionStatus       formulatemplate.Status `bun:"version_status"`
-				MatrixVersionNumber int64                  `bun:"matrix_version_number"`
-			}
-
-			rows := make([]usageRow, 0, 16)
-			query := r.db.DBForContext(ctx).
-				NewSelect().
-				TableExpr(
-					"? AS ?",
-					bun.Ident(formulatemplatecol.VersionTableTable.Name),
-					bun.Ident(formulatemplatecol.VersionTableTable.Alias),
-				).
-				Join(
-					"JOIN ? AS ? ON ? AND ? AND ?",
-					bun.Ident(formulatemplatecol.FormulaTemplateVersionTable.Name),
-					bun.Ident(formulatemplatecol.FormulaTemplateVersionTable.Alias),
-					bun.Safe(versions.ID.EqColumn(tables.TemplateVersionID)),
-					bun.Safe(versions.OrganizationID.EqColumn(tables.OrganizationID)),
-					bun.Safe(versions.BusinessUnitID.EqColumn(tables.BusinessUnitID)),
-				).
-				Join(
-					"JOIN ? AS ? ON ? AND ? AND ?",
-					bun.Ident(formulatemplatecol.FormulaTemplateTable.Name),
-					bun.Ident(formulatemplatecol.FormulaTemplateTable.Alias),
-					bun.Safe(templates.ID.EqColumn(tables.TemplateID)),
-					bun.Safe(templates.OrganizationID.EqColumn(tables.OrganizationID)),
-					bun.Safe(templates.BusinessUnitID.EqColumn(tables.BusinessUnitID)),
-				).
-				ColumnExpr(tables.TemplateID.As("template_id")).
-				ColumnExpr(templates.Name.As("template_name")).
-				ColumnExpr(templates.Status.As("template_status")).
-				ColumnExpr(tables.TemplateVersion.As("template_version")).
-				ColumnExpr(versions.Status.As("version_status")).
-				ColumnExpr(tables.MatrixVersionNumber.As("matrix_version_number")).
-				Where(tables.OrganizationID.Eq(), req.TenantInfo.OrgID).
-				Where(tables.BusinessUnitID.Eq(), req.TenantInfo.BuID).
-				Where(tables.RateMatrixID.Eq(), req.RateMatrixID)
-			if req.VersionNumber != nil {
-				query = query.Where(tables.MatrixVersionNumber.Eq(), *req.VersionNumber)
-			}
-			err := query.
-				OrderExpr(tables.MatrixVersionNumber.OrderDesc()).
-				OrderExpr(tables.TemplateID.OrderAsc()).
-				OrderExpr(tables.TemplateVersion.OrderDesc()).
-				Limit(int64(limit)).
-				Scan(ctx, &rows)
+			rows, err := keel.Into[matrixUsageRow](ctx, r.db.Keel(ctx), matrixUsageQuery(req))
 			if err != nil {
 				r.l.Error("failed to list rate matrix usages", zap.Error(err))
 				return nil, err
@@ -678,9 +540,38 @@ func (r *repository) ListMatrixUsages(
 					MatrixVersionNumber: row.MatrixVersionNumber,
 				})
 			}
+
 			return usages, nil
 		},
 	)
+}
+
+type libraryUsageRow struct {
+	TemplateID           pulid.ID
+	TemplateName         string
+	TemplateStatus       formulatemplate.Status
+	TemplateVersion      int64
+	VersionStatus        formulatemplate.Status
+	LibraryVersionNumber int64
+}
+
+func libraryUsageQuery(
+	req *formulatemplateports.ListLibraryUsagesRequest,
+) *keel.Query[formulatemplate.VersionImport] {
+	vi := formulatemplatedb.VersionImports
+	v := formulatemplatedb.FormulaTemplateVersions
+	ft := formulatemplatedb.FormulaTemplates
+
+	q := vi.Join(v, v.ID.EqCol(vi.TemplateVersionID)).
+		Join(ft, ft.ID.EqCol(vi.TemplateID)).
+		Pick(vi.TemplateID, ft.Name, ft.Status, vi.TemplateVersion, v.Status, vi.LibraryVersionNumber).
+		Where(vi.LibraryID.Eq(req.LibraryID))
+	if req.VersionNumber != nil {
+		q = q.Where(vi.LibraryVersionNumber.Eq(*req.VersionNumber))
+	}
+
+	return q.Order(vi.LibraryVersionNumber.Desc(), vi.TemplateID.Asc(), vi.TemplateVersion.Desc()).
+		Limit(usageLimit(req.Limit))
 }
 
 func (r *repository) ListLibraryUsages(
@@ -691,65 +582,7 @@ func (r *repository) ListLibraryUsages(
 		ctx,
 		r.db,
 		func(ctx context.Context) ([]*formulatemplateports.LibraryUsage, error) {
-			imports := formulatemplatecol.VersionImportColumns
-			versions := formulatemplatecol.FormulaTemplateVersionColumns
-			templates := formulatemplatecol.FormulaTemplateColumns
-			limit := req.Limit
-			if limit <= 0 || limit > defaultLibraryUsageLimit {
-				limit = defaultLibraryUsageLimit
-			}
-
-			type usageRow struct {
-				TemplateID           pulid.ID               `bun:"template_id"`
-				TemplateName         string                 `bun:"template_name"`
-				TemplateStatus       formulatemplate.Status `bun:"template_status"`
-				TemplateVersion      int64                  `bun:"template_version"`
-				VersionStatus        formulatemplate.Status `bun:"version_status"`
-				LibraryVersionNumber int64                  `bun:"library_version_number"`
-			}
-
-			rows := make([]usageRow, 0, 16)
-			query := r.db.DBForContext(ctx).
-				NewSelect().
-				TableExpr(
-					"? AS ?",
-					bun.Ident(formulatemplatecol.VersionImportTable.Name),
-					bun.Ident(formulatemplatecol.VersionImportTable.Alias),
-				).
-				Join(
-					"JOIN ? AS ? ON ? AND ? AND ?",
-					bun.Ident(formulatemplatecol.FormulaTemplateVersionTable.Name),
-					bun.Ident(formulatemplatecol.FormulaTemplateVersionTable.Alias),
-					bun.Safe(versions.ID.EqColumn(imports.TemplateVersionID)),
-					bun.Safe(versions.OrganizationID.EqColumn(imports.OrganizationID)),
-					bun.Safe(versions.BusinessUnitID.EqColumn(imports.BusinessUnitID)),
-				).
-				Join(
-					"JOIN ? AS ? ON ? AND ? AND ?",
-					bun.Ident(formulatemplatecol.FormulaTemplateTable.Name),
-					bun.Ident(formulatemplatecol.FormulaTemplateTable.Alias),
-					bun.Safe(templates.ID.EqColumn(imports.TemplateID)),
-					bun.Safe(templates.OrganizationID.EqColumn(imports.OrganizationID)),
-					bun.Safe(templates.BusinessUnitID.EqColumn(imports.BusinessUnitID)),
-				).
-				ColumnExpr(imports.TemplateID.As("template_id")).
-				ColumnExpr(templates.Name.As("template_name")).
-				ColumnExpr(templates.Status.As("template_status")).
-				ColumnExpr(imports.TemplateVersion.As("template_version")).
-				ColumnExpr(versions.Status.As("version_status")).
-				ColumnExpr(imports.LibraryVersionNumber.As("library_version_number")).
-				Where(imports.OrganizationID.Eq(), req.TenantInfo.OrgID).
-				Where(imports.BusinessUnitID.Eq(), req.TenantInfo.BuID).
-				Where(imports.LibraryID.Eq(), req.LibraryID)
-			if req.VersionNumber != nil {
-				query = query.Where(imports.LibraryVersionNumber.Eq(), *req.VersionNumber)
-			}
-			err := query.
-				OrderExpr(imports.LibraryVersionNumber.OrderDesc()).
-				OrderExpr(imports.TemplateID.OrderAsc()).
-				OrderExpr(imports.TemplateVersion.OrderDesc()).
-				Limit(int64(limit)).
-				Scan(ctx, &rows)
+			rows, err := keel.Into[libraryUsageRow](ctx, r.db.Keel(ctx), libraryUsageQuery(req))
 			if err != nil {
 				r.l.Error("failed to list formula library usages", zap.Error(err))
 				return nil, err
@@ -767,6 +600,7 @@ func (r *repository) ListLibraryUsages(
 					LibraryVersionNumber: row.LibraryVersionNumber,
 				})
 			}
+
 			return usages, nil
 		},
 	)

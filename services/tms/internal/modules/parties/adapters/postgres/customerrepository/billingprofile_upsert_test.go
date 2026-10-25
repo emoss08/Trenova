@@ -1,80 +1,52 @@
 package customerrepository
 
 import (
-	"os"
-	"reflect"
-	"strings"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/parties/domain/customer"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/customer/customerdb"
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 )
 
-// notUpdatedOnConflict are the billing profile columns the upsert deliberately
-// leaves alone. Anything not listed here must appear in the ON CONFLICT set.
 var notUpdatedOnConflict = map[string]string{
 	"id":                     "primary key",
 	"business_unit_id":       "tenant key",
 	"organization_id":        "tenant key",
 	"customer_id":            "conflict target",
-	"version":                "incremented by expression, not taken from the row",
+	"version":                "incremented by keel on every upsert",
 	"created_at":             "set once on insert",
+	"updated_at":             "stamped by keel on every upsert",
 	"last_billed_period_end": "billing watermark; advanced only inside the commit transaction",
 	"credit_balance":         "open receivables; written only by the credit review",
 	"credit_reviewed_at":     "written only by the credit review",
 	"credit_hold_automatic":  "kept unless the status changes, by expression rather than taken from the row",
 }
 
-// Every column a customer can edit has to be in the upsert's ON CONFLICT set, or
-// saving the form silently keeps the old value. This has already shipped three
-// times: default_biller_id and count_late_only_on_appointment_stops never
-// persisted on update, and auto_approve was added without it. Adding a column to
-// the model now fails here until the upsert is updated or the omission is
-// recorded above with a reason.
 func TestBillingProfileUpsertUpdatesEveryEditableColumn(t *testing.T) {
 	t.Parallel()
 
-	source, err := os.ReadFile("customer.go")
-	require.NoError(t, err)
-	upsert := string(source)
+	table := customerdb.CustomerBillingProfilesSchema()
+	updated := make(map[string]bool)
+	for _, col := range billingProfileFormColumns() {
+		updated[table.Columns[col.Index].Name] = true
+	}
 
-	profileType := reflect.TypeFor[customer.CustomerBillingProfile]()
 	missing := make([]string, 0)
-
-	for field := range profileType.Fields() {
-		tag := field.Tag.Get("bun")
-		if !isColumnTag(tag) {
+	for _, col := range table.Columns {
+		if _, skipped := notUpdatedOnConflict[col.Name]; skipped {
+			assert.False(
+				t,
+				updated[col.Name],
+				"%s is updated on conflict but listed as skipped",
+				col.Name,
+			)
 			continue
 		}
-
-		column, _, _ := strings.Cut(tag, ",")
-		if _, skipped := notUpdatedOnConflict[column]; skipped {
-			continue
-		}
-
-		if !strings.Contains(upsert, "cbp."+field.Name+".SetExcluded()") {
-			missing = append(missing, field.Name+" ("+column+")")
+		if !updated[col.Name] {
+			missing = append(missing, col.Name)
 		}
 	}
 
 	assert.Empty(t, missing,
-		"billing profile columns missing from the ON CONFLICT set; add them to the upsert "+
-			"or record why they are excluded in notUpdatedOnConflict")
-}
-
-// isColumnTag reports whether a bun tag names a real column on this table.
-// Relations are written through their own paths — document types are synced by
-// syncBillingProfileDocumentTypes — so they are not the upsert's concern.
-func isColumnTag(tag string) bool {
-	if tag == "" || tag == "-" || strings.HasPrefix(tag, ",") {
-		return false
-	}
-	for _, prefix := range []string{"rel:", "m2m:", "table:"} {
-		if strings.HasPrefix(tag, prefix) {
-			return false
-		}
-	}
-
-	return true
+		"billing profile columns missing from the ON CONFLICT set; add them to "+
+			"billingProfileFormColumns or record why they are excluded in notUpdatedOnConflict")
 }

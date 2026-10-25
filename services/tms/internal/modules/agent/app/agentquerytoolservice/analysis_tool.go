@@ -8,6 +8,9 @@ import (
 	"path"
 	"strings"
 
+	"github.com/emoss08/keel/analytics/export"
+	"github.com/emoss08/keel/analytics/format"
+	"github.com/emoss08/keel/analytics/table"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
@@ -270,7 +273,10 @@ func datasetsFrom(raw any) ([]datasetRequest, error) {
 			return nil, fmt.Errorf(
 				"dataset %s needs exactly one of reportRunId or documentId", name)
 		}
-		requests = append(requests, datasetRequest{name: name, reportRun: run, documentID: document})
+		requests = append(
+			requests,
+			datasetRequest{name: name, reportRun: run, documentID: document},
+		)
 	}
 
 	return requests, nil
@@ -436,21 +442,22 @@ func (t *analyzeDataTool) reportDataset(
 		return nil, err
 	}
 	var content bytes.Buffer
-	if err = envelope.WriteCSV(&content); err != nil {
+	stats, err := export.CSV(ctx, &content, envelope.Table.Reader(), export.CSVOptions{Raw: true})
+	if err != nil {
 		return nil, fmt.Errorf("the rows of report run %s could not be written as CSV: %w",
 			request.reportRun, err)
 	}
 
-	columns := make([]agentextension.AnalysisColumnSpec, 0, len(envelope.Schema))
-	for idx := range envelope.Schema {
-		column := &envelope.Schema[idx]
+	columns := make([]agentextension.AnalysisColumnSpec, 0, len(envelope.Table.Columns))
+	for idx := range envelope.Table.Columns {
+		column := &envelope.Table.Columns[idx]
 		kind := agentextension.AnalysisKindOf(
-			string(column.Type), string(column.Format), string(column.Display.DateStyle),
+			column.Type.String(), analysisFormat(column), string(column.Display.DateStyle),
 		)
 		columns = append(columns, agentextension.AnalysisColumnSpec{
 			ID:       column.ID,
 			Label:    column.Label,
-			Type:     string(column.Type),
+			Type:     column.Type.String(),
 			Kind:     kind,
 			Currency: agentextension.AnalysisCurrency(kind, column.Display.Currency),
 		})
@@ -463,9 +470,23 @@ func (t *analyzeDataTool) reportDataset(
 		Label:     envelope.Meta.Title,
 		Extension: "csv",
 		Content:   content.Bytes(),
-		Rows:      len(envelope.Rows),
+		Rows:      int(stats.Rows),
 		Columns:   columns,
 	}, nil
+}
+
+func analysisFormat(column *table.Column) string {
+	switch column.Display.Style {
+	case format.StyleCurrency:
+		return "money"
+	case format.StylePercent:
+		return fieldPercent
+	case format.StyleAuto, format.StyleNumber, format.StyleDuration, format.StyleDate,
+		format.StyleBool, format.StyleText:
+		return ""
+	}
+
+	return ""
 }
 
 func (t *analyzeDataTool) fileDataset(
@@ -546,9 +567,12 @@ func answerOf(
 	}
 	if outcome.Error != nil {
 		answer.Error = &analysisErrorAnswer{
-			Name:      outcome.Error.Name,
-			Value:     outcome.Error.Value,
-			Traceback: stringutils.TruncateRunes(outcome.Error.Traceback, maxAnalysisTracebackRunes),
+			Name:  outcome.Error.Name,
+			Value: outcome.Error.Value,
+			Traceback: stringutils.TruncateRunes(
+				outcome.Error.Traceback,
+				maxAnalysisTracebackRunes,
+			),
 		}
 	}
 

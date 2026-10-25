@@ -2,42 +2,39 @@ package factoringrepository
 
 import (
 	"context"
-	"fmt"
+
 	"strings"
 
+	"github.com/emoss08/keel"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/factoring"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/factoring/factoringdb"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice/invoicedb"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/factoringports"
-	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
-	"github.com/emoss08/trenova/internal/modules/parties/domain/customer"
-	"github.com/emoss08/trenova/internal/modules/parties/domain/factoringcompany"
-	"github.com/emoss08/trenova/pkg/buncolgen"
-	"github.com/emoss08/trenova/pkg/buncolgen/customercol"
-	"github.com/emoss08/trenova/pkg/buncolgen/factoringcol"
-	"github.com/emoss08/trenova/pkg/buncolgen/factoringcompanycol"
-	"github.com/emoss08/trenova/pkg/buncolgen/invoicecol"
 	"github.com/emoss08/trenova/pkg/dberror"
-	"github.com/emoss08/trenova/pkg/dbhelper"
+	"github.com/emoss08/trenova/pkg/listquery"
 	"github.com/emoss08/trenova/pkg/pagination"
-	"github.com/emoss08/trenova/pkg/querybuilder"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/stringutils"
-	"github.com/emoss08/trenova/shared/timeutils"
-	"github.com/uptrace/bun"
 	"go.uber.org/zap"
 )
 
 const (
-	invoiceStateEntity  = "FactoringInvoiceState"
-	maxStateBatch       = 500
-	maxCandidateBatch   = 1000
-	invoiceStateUpsertC = "CONFLICT (invoice_id, organization_id, business_unit_id) DO UPDATE"
+	invoiceStateEntity = "FactoringInvoiceState"
+	maxStateBatch      = 500
+	maxCandidateBatch  = 1000
+)
+
+var (
+	invoiceStateErrors = dberror.Mapping{Entity: invoiceStateEntity}
+	invoiceErrors      = dberror.Mapping{Entity: "Invoice"}
 )
 
 type invoiceStateRepository struct {
-	db kernelports.DBConnection
+	db *postgres.Connection
 	l  *zap.Logger
 }
 
@@ -52,27 +49,20 @@ func (r *invoiceStateRepository) SetInvoiceOverride(
 	ctx context.Context,
 	req *factoringports.SetInvoiceOverrideRequest,
 ) error {
-	_, err := dbtx.Write(ctx, r.db, func(ctx context.Context) (struct{}, error) {
-		inv := invoicecol.InvoiceColumns
-		res, err := r.db.DBForContext(ctx).NewUpdate().
-			Model((*invoice.Invoice)(nil)).
-			Set(inv.FactoringOverride.Set(), req.Override).
-			Set(inv.FactoringOverrideReason.Set(), bun.NullZero(req.Reason)).
-			Set(inv.FactoringCompanyID.Set(), req.FactoringCompanyID).
-			Set(inv.FactoringAgreementID.Set(), req.FactoringAgreementID).
-			Set(inv.Version.Inc(1)).
-			Set(inv.UpdatedAt.Set(), timeutils.NowUnix()).
-			Apply(func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-				return invoicecol.InvoiceScopeTenantUpdate(uq, req.TenantInfo).
-					Where(inv.ID.Eq(), req.InvoiceID)
-			}).
-			Exec(ctx)
+	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
+		inv := invoicedb.Invoices
+		n, err := inv.Where(inv.ID.Eq(req.InvoiceID)).Update(ctx, r.db.Keel(ctx),
+			inv.FactoringOverride.To(req.Override),
+			inv.FactoringOverrideReason.ToExpr(keel.Val(stringutils.NilIfEmpty(req.Reason))),
+			inv.FactoringCompanyID.ToExpr(keel.Val(req.FactoringCompanyID)),
+			inv.FactoringAgreementID.ToExpr(keel.Val(req.FactoringAgreementID)),
+		)
 		if err != nil {
-			return struct{}{}, fmt.Errorf("set invoice factoring override: %w", err)
+			return invoiceErrors.Map(err, req.InvoiceID.String())
 		}
-		return struct{}{}, dberror.CheckFound(res, "Invoice")
+
+		return dberror.CheckFoundCount(n, "Invoice")
 	})
-	return err
 }
 
 func (r *invoiceStateRepository) Get(
@@ -80,15 +70,10 @@ func (r *invoiceStateRepository) Get(
 	req factoringports.GetInvoiceStateRequest,
 ) (*factoring.InvoiceState, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*factoring.InvoiceState, error) {
-		entity := new(factoring.InvoiceState)
-		if err := r.db.DBForContext(ctx).NewSelect().
-			Model(entity).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return factoringcol.InvoiceStateScopeTenant(sq, req.TenantInfo).
-					Where(factoringcol.InvoiceStateColumns.InvoiceID.Eq(), req.InvoiceID)
-			}).
-			Scan(ctx); err != nil {
-			return nil, dberror.HandleNotFoundError(err, invoiceStateEntity)
+		st := factoringdb.InvoiceStates
+		entity, err := st.Where(st.InvoiceID.Eq(req.InvoiceID)).One(ctx, r.db.Keel(ctx))
+		if err != nil {
+			return nil, invoiceStateErrors.Map(err, req.InvoiceID.String())
 		}
 
 		return entity, nil
@@ -108,15 +93,12 @@ func (r *invoiceStateRepository) ListByInvoiceIDs(
 				return result, nil
 			}
 
-			rows := make([]*factoring.InvoiceState, 0, len(req.InvoiceIDs))
-			if err := r.db.DBForContext(ctx).NewSelect().
-				Model(&rows).
-				WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-					return factoringcol.InvoiceStateScopeTenant(sq, req.TenantInfo).
-						Where(factoringcol.InvoiceStateColumns.InvoiceID.In(), bun.List(req.InvoiceIDs))
-				}).
-				Scan(ctx); err != nil {
-				return nil, fmt.Errorf("list factoring invoice states: %w", err)
+			st := factoringdb.InvoiceStates
+			rows, err := st.Where(st.InvoiceID.In(req.InvoiceIDs...)).
+				Limit(len(req.InvoiceIDs)).
+				List(ctx, r.db.Keel(ctx))
+			if err != nil {
+				return nil, err
 			}
 
 			for _, row := range rows {
@@ -132,38 +114,50 @@ func (r *invoiceStateRepository) Upsert(
 	ctx context.Context,
 	entity *factoring.InvoiceState,
 ) error {
-	_, err := dbtx.Write(ctx, r.db, func(ctx context.Context) (struct{}, error) {
-		cols := factoringcol.InvoiceStateColumns
-		alias := factoringcol.InvoiceStateTable.Alias
-		stillReady := "EXCLUDED.verdict = '" + string(factoring.VerdictReady) + "' AND " +
-			alias + ".verdict = '" + string(factoring.VerdictReady) + "'"
-
-		if _, err := r.db.DBForContext(ctx).NewInsert().
-			Model(entity).
-			On(invoiceStateUpsertC).
-			Set(cols.FactoringCompanyID.SetExcluded()).
-			Set(cols.CustomerID.SetExcluded()).
-			Set(cols.Verdict.SetExcluded()).
-			Set(cols.Checks.SetExcluded()).
-			Set(cols.FailedChecks.SetExcluded()).
-			Set(cols.OpenBalanceMinor.SetExcluded()).
-			Set(cols.EvaluatedAt.SetExcluded()).
-			Set(cols.ReadySince.SetExpr(
-				"CASE WHEN " + stillReady + " THEN " + cols.ReadySince.Qualified() +
-					" ELSE EXCLUDED.ready_since END",
-			)).
-			Set(cols.ReadyAnnouncedAt.SetExpr(
-				"CASE WHEN " + stillReady + " THEN " + cols.ReadyAnnouncedAt.Qualified() +
-					" ELSE EXCLUDED.ready_announced_at END",
-			)).
-			Returning("*").
-			Exec(ctx); err != nil {
-			return struct{}{}, fmt.Errorf("upsert factoring invoice state: %w", err)
+	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
+		db := r.db.Keel(ctx)
+		st := factoringdb.InvoiceStates
+		ready := factoring.VerdictReady
+		stillReady := func(col keel.Col) keel.Expr {
+			return keel.Raw(
+				"CASE WHEN ? = ? AND ? = ? THEN ? ELSE ? END",
+				st.Verdict.Excluded(),
+				string(ready),
+				st.Verdict,
+				string(ready),
+				col,
+				col.Excluded(),
+			)
 		}
 
-		return struct{}{}, nil
+		_, err := st.Upsert(ctx, db, []*factoring.InvoiceState{entity},
+			keel.OnConflict(st.InvoiceID, st.OrganizationID, st.BusinessUnitID).
+				Update(
+					st.FactoringCompanyID,
+					st.CustomerID,
+					st.Verdict,
+					st.Checks,
+					st.FailedChecks,
+					st.OpenBalanceMinor,
+					st.EvaluatedAt,
+				).
+				Set(
+					st.ReadySince.ToExpr(stillReady(st.ReadySince.Col)),
+					st.ReadyAnnouncedAt.ToExpr(stillReady(st.ReadyAnnouncedAt.Col)),
+				),
+		)
+		if err != nil {
+			return invoiceStateErrors.Map(err, entity.InvoiceID.String())
+		}
+
+		stored, err := st.Where(st.InvoiceID.Eq(entity.InvoiceID)).One(ctx, db)
+		if err != nil {
+			return invoiceStateErrors.Map(err, entity.InvoiceID.String())
+		}
+		*entity = *stored
+
+		return nil
 	})
-	return err
 }
 
 func (r *invoiceStateRepository) ListConnection(
@@ -174,62 +168,19 @@ func (r *invoiceStateRepository) ListConnection(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*pagination.CursorListResult[*factoring.InvoiceState], error) {
-			dba := r.db.DBForContext(ctx)
-			alias := factoringcol.InvoiceStateTable.Alias
 			filter, term := withoutQuery(req.Filter)
-
-			var totalCount *int
-			if req.Cursor.IncludeTotalCount {
-				total, err := dba.NewSelect().
-					Model((*factoring.InvoiceState)(nil)).
-					Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-						return r.scope(
-							dba,
-							querybuilder.ApplyFiltersWithoutSort(
-								sq,
-								alias,
-								filter,
-								(*factoring.InvoiceState)(nil),
-							),
-							req,
-							term,
-						)
-					}).
-					Count(ctx)
-				if err != nil {
-					return nil, fmt.Errorf("count factoring invoice states: %w", err)
-				}
-				totalCount = new(int(total))
-			}
-
-			result, err := dbhelper.CursorList(
+			result, err := listquery.Connection(
 				ctx,
-				dbhelper.CursorListParams[*factoring.InvoiceState]{
-					Filter:     filter,
-					Cursor:     req.Cursor,
-					TotalCount: totalCount,
-					Query: func(entities *[]*factoring.InvoiceState) *bun.SelectQuery {
-						return dba.NewSelect().
-							Model(entities).
-							ColumnExpr(factoringcol.InvoiceStateTable.All())
-					},
-					Apply: func(sq *bun.SelectQuery) (*bun.SelectQuery, error) {
-						q, applyErr := querybuilder.ApplyCursorFilters(
-							sq,
-							alias,
-							filter,
-							req.Cursor,
-							(*factoring.InvoiceState)(nil),
-						)
-						if applyErr != nil {
-							return nil, applyErr
-						}
-						return r.scope(dba, q, req, term), nil
-					},
+				r.db.Keel(ctx),
+				stateScope(req, term),
+				&listquery.Request[factoring.InvoiceState]{
+					Filter: filter,
+					Cursor: req.Cursor,
 				},
 			)
 			if err != nil {
-				return nil, fmt.Errorf("list factoring invoice states: %w", err)
+				r.l.Error("failed to list factoring invoice states", zap.Error(err))
+				return nil, err
 			}
 
 			return result, nil
@@ -237,26 +188,31 @@ func (r *invoiceStateRepository) ListConnection(
 	)
 }
 
-func (r *invoiceStateRepository) scope(
-	dba bun.IDB,
-	q *bun.SelectQuery,
+func stateScope(
 	req *factoringports.ListInvoiceStateConnectionRequest,
 	term string,
-) *bun.SelectQuery {
-	cols := factoringcol.InvoiceStateColumns
-	if term != "" {
-		q = searchStates(dba, q, term)
-	}
-	if len(req.Verdicts) > 0 {
-		q = q.Where(cols.Verdict.In(), bun.List(req.Verdicts))
-	}
-	if !req.FactoringCompanyID.IsNil() {
-		q = q.Where(cols.FactoringCompanyID.Eq(), req.FactoringCompanyID)
-	}
-	if !req.CustomerID.IsNil() {
-		q = q.Where(cols.CustomerID.Eq(), req.CustomerID)
-	}
-	return q
+) *keel.Query[factoring.InvoiceState] {
+	st := factoringdb.InvoiceStates
+	return st.Where(
+		keel.When(term != "", searchStates(term)),
+		keel.When(len(req.Verdicts) > 0, st.Verdict.In(req.Verdicts...)),
+		keel.When(
+			req.FactoringCompanyID.IsNotNil(),
+			st.FactoringCompanyID.Eq(req.FactoringCompanyID),
+		),
+		keel.When(req.CustomerID.IsNotNil(), st.CustomerID.Eq(req.CustomerID)),
+	)
+}
+
+func searchStates(term string) keel.Pred {
+	st := factoringdb.InvoiceStates
+	cus := st.Customer()
+	return keel.Or(
+		st.Invoice().Number.ContainsFold(term),
+		cus.Name.ContainsFold(term),
+		cus.Code.ContainsFold(term),
+		st.FactoringCompany().Name.ContainsFold(term),
+	)
 }
 
 func (r *invoiceStateRepository) ClaimReadyAnnouncement(
@@ -264,27 +220,18 @@ func (r *invoiceStateRepository) ClaimReadyAnnouncement(
 	req *factoringports.ClaimReadyAnnouncementRequest,
 ) (bool, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (bool, error) {
-		cols := factoringcol.InvoiceStateColumns
-		res, err := r.db.DBForContext(ctx).NewUpdate().
-			Model((*factoring.InvoiceState)(nil)).
-			Set(cols.ReadyAnnouncedAt.Set(), req.At).
-			Apply(func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-				return factoringcol.InvoiceStateScopeTenantUpdate(uq, req.TenantInfo).
-					Where(cols.InvoiceID.Eq(), req.InvoiceID).
-					Where(cols.Verdict.Eq(), factoring.VerdictReady).
-					Where(cols.ReadySince.Eq(), req.ReadySince).
-					Where(cols.ReadyAnnouncedAt.IsNull())
-			}).
-			Exec(ctx)
+		st := factoringdb.InvoiceStates
+		n, err := st.Where(
+			st.InvoiceID.Eq(req.InvoiceID),
+			st.Verdict.Eq(factoring.VerdictReady),
+			st.ReadySince.Eq(req.ReadySince),
+			st.ReadyAnnouncedAt.IsNull(),
+		).Update(ctx, r.db.Keel(ctx), st.ReadyAnnouncedAt.To(req.At))
 		if err != nil {
-			return false, fmt.Errorf("claim factoring ready announcement: %w", err)
-		}
-		rows, err := res.RowsAffected()
-		if err != nil {
-			return false, fmt.Errorf("claim factoring ready announcement: %w", err)
+			return false, invoiceStateErrors.Map(err, req.InvoiceID.String())
 		}
 
-		return rows > 0, nil
+		return n > 0, nil
 	})
 }
 
@@ -293,25 +240,32 @@ func (r *invoiceStateRepository) ListReadyUnsubmitted(
 	req factoringports.ListReadyUnsubmittedRequest,
 ) ([]*factoring.InvoiceState, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*factoring.InvoiceState, error) {
-		cols := factoringcol.InvoiceStateColumns
-		limit := boundedLimit(req.Limit, maxStateBatch)
-
-		rows := make([]*factoring.InvoiceState, 0, limit)
-		if err := r.db.DBForContext(ctx).NewSelect().
-			Model(&rows).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return factoringcol.InvoiceStateScopeTenant(sq, req.TenantInfo).
-					Where(cols.Verdict.Eq(), factoring.VerdictReady).
-					Where(cols.ReadySince.Lte(), req.ReadyBefore)
-			}).
-			Order(cols.ReadySince.OrderAsc(), cols.InvoiceID.OrderAsc()).
-			Limit(int64(limit)).
-			Scan(ctx); err != nil {
-			return nil, fmt.Errorf("list ready factoring invoices: %w", err)
+		st := factoringdb.InvoiceStates
+		rows, err := st.Where(
+			st.Verdict.Eq(factoring.VerdictReady),
+			st.ReadySince.Lte(req.ReadyBefore),
+		).
+			Order(st.ReadySince.Asc(), st.InvoiceID.Asc()).
+			Limit(boundedLimit(req.Limit, maxStateBatch)).
+			List(ctx, r.db.Keel(ctx))
+		if err != nil {
+			return nil, err
+		}
+		if rows == nil {
+			return []*factoring.InvoiceState{}, nil
 		}
 
 		return rows, nil
 	})
+}
+
+func openFactoredInvoices(inv *invoicedb.InvoicesTable) keel.Pred {
+	return keel.And(
+		inv.Status.Eq(invoice.StatusPosted),
+		inv.FactoringCompanyID.IsNotNull(),
+		inv.BillType.Ne(billingqueue.BillTypeCreditMemo),
+		keel.Raw("? > ?", inv.TotalAmountMinor, inv.AppliedAmountMinor),
+	)
 }
 
 func (r *invoiceStateRepository) ListCandidateInvoiceIDs(
@@ -319,45 +273,43 @@ func (r *invoiceStateRepository) ListCandidateInvoiceIDs(
 	req factoringports.ListCandidateInvoicesRequest,
 ) ([]pulid.ID, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]pulid.ID, error) {
-		dba := r.db.DBForContext(ctx)
-		limit := boundedLimit(req.Limit, maxCandidateBatch)
-		inv := invoicecol.InvoiceColumns
-		st := factoringcol.InvoiceStateColumns
-
-		factored := dba.NewSelect().
-			Model((*invoice.Invoice)(nil)).
-			ColumnExpr(inv.ID.As("id")).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				q := openFactoredInvoices(invoicecol.InvoiceScopeTenant(sq, req.TenantInfo))
-				if !req.AfterInvoiceID.IsNil() {
-					q = q.Where(inv.ID.Gt(), req.AfterInvoiceID)
-				}
-				return q
-			})
-		tracked := dba.NewSelect().
-			Model((*factoring.InvoiceState)(nil)).
-			ColumnExpr(st.InvoiceID.As("id")).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				q := factoringcol.InvoiceStateScopeTenant(sq, req.TenantInfo).
-					Where(st.Verdict.Ne(), factoring.VerdictExcluded)
-				if !req.AfterInvoiceID.IsNil() {
-					q = q.Where(st.InvoiceID.Gt(), req.AfterInvoiceID)
-				}
-				return q
-			})
-
-		ids := make([]pulid.ID, 0, limit)
-		if err := dba.NewSelect().
-			TableExpr("(?) AS candidates", factored.Union(tracked)).
-			ColumnExpr("candidates.id").
-			OrderExpr("candidates.id ASC").
-			Limit(int64(limit)).
-			Scan(ctx, &ids); err != nil {
-			return nil, fmt.Errorf("list factoring candidate invoices: %w", err)
+		ids, err := keel.Into[pulid.ID](ctx, r.db.Keel(ctx), candidateInvoices(&req))
+		if err != nil {
+			return nil, err
+		}
+		if ids == nil {
+			return []pulid.ID{}, nil
 		}
 
 		return ids, nil
 	})
+}
+
+func candidateInvoices(req *factoringports.ListCandidateInvoicesRequest) keel.Projection {
+	limit := boundedLimit(req.Limit, maxCandidateBatch)
+	inv := invoicedb.Invoices
+	st := factoringdb.InvoiceStates
+	after := req.AfterInvoiceID.IsNotNil()
+
+	candidates := keel.CTE("candidates", []string{"id"}, keel.Union(
+		inv.Pick(inv.ID).
+			Where(openFactoredInvoices(inv), keel.When(after, inv.ID.Gt(req.AfterInvoiceID))).
+			Order(inv.ID.Asc()).
+			Limit(limit),
+		st.Pick(st.InvoiceID).
+			Where(
+				st.Verdict.Ne(factoring.VerdictExcluded),
+				keel.When(after, st.InvoiceID.Gt(req.AfterInvoiceID)),
+			).
+			Order(st.InvoiceID.Asc()).
+			Limit(limit),
+	))
+
+	return candidates.Query().
+		With(candidates).
+		Pick(candidates.Col("id")).
+		Order(candidates.Col("id").Asc()).
+		Limit(limit)
 }
 
 func (r *invoiceStateRepository) ListCustomerInvoiceIDs(
@@ -369,30 +321,43 @@ func (r *invoiceStateRepository) ListCustomerInvoiceIDs(
 			return nil, nil
 		}
 
-		inv := invoicecol.InvoiceColumns
-		limit := boundedLimit(req.Limit, maxCandidateBatch)
-		ids := make([]pulid.ID, 0, limit)
-		if err := r.db.DBForContext(ctx).NewSelect().
-			Model((*invoice.Invoice)(nil)).
-			Column(inv.ID.Bare()).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				q := openFactoredInvoices(invoicecol.InvoiceScopeTenant(sq, req.TenantInfo))
-				if len(req.CustomerIDs) > 0 {
-					q = q.Where(inv.CustomerID.In(), bun.List(req.CustomerIDs))
-				}
-				if !req.FactoringCompanyID.IsNil() {
-					q = q.Where(inv.FactoringCompanyID.Eq(), req.FactoringCompanyID)
-				}
-				return q
-			}).
-			Order(inv.ID.OrderAsc()).
-			Limit(int64(limit)).
-			Scan(ctx, &ids); err != nil {
-			return nil, fmt.Errorf("list customer factoring invoices: %w", err)
+		inv := invoicedb.Invoices
+		ids, err := keel.Into[pulid.ID](ctx, r.db.Keel(ctx), inv.
+			Pick(inv.ID).
+			Where(
+				openFactoredInvoices(inv),
+				keel.When(len(req.CustomerIDs) > 0, inv.CustomerID.In(req.CustomerIDs...)),
+				keel.When(
+					req.FactoringCompanyID.IsNotNil(),
+					inv.FactoringCompanyID.Eq(req.FactoringCompanyID),
+				),
+			).
+			Order(inv.ID.Asc()).
+			Limit(boundedLimit(req.Limit, maxCandidateBatch)))
+		if err != nil {
+			return nil, err
+		}
+		if ids == nil {
+			return []pulid.ID{}, nil
 		}
 
 		return ids, nil
 	})
+}
+
+type verdictRow struct {
+	Verdict     factoring.Verdict
+	Count       int
+	AmountMinor int64
+	LateCount   int
+	LateMinor   int64
+}
+
+type fundedRow struct {
+	Count        int
+	AmountMinor  int64
+	ReserveCount int
+	ReserveMinor int64
 }
 
 func (r *invoiceStateRepository) GetSummary(
@@ -400,41 +365,32 @@ func (r *invoiceStateRepository) GetSummary(
 	req factoringports.GetSummaryRequest,
 ) (*factoringports.Summary, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*factoringports.Summary, error) {
-		cols := factoringcol.InvoiceStateColumns
-		type row struct {
-			Verdict     factoring.Verdict `bun:"verdict"`
-			Count       int               `bun:"count"`
-			AmountMinor int64             `bun:"amount_minor"`
-			LateCount   int               `bun:"late_count"`
-			LateMinor   int64             `bun:"late_minor"`
+		var (
+			verdicts []verdictRow
+			funded   fundedRow
+			due      factoringports.VerdictTotals
+		)
+		err := keel.Batch(ctx, r.db.Keel(ctx),
+			keel.IntoSlice(verdictTotals(req.ReadyBefore), &verdicts),
+			keel.IntoValue(fundedTotals(), &funded),
+			keel.IntoValue(chargebacksDue(req.ChargebackBefore), &due),
+		)
+		if err != nil {
+			return nil, err
 		}
 
-		late := cols.ReadySince.Qualified() + " <= ?"
-		rows := make([]row, 0, 4)
-		if err := r.db.DBForContext(ctx).NewSelect().
-			Model((*factoring.InvoiceState)(nil)).
-			Column(cols.Verdict.Bare()).
-			ColumnExpr("COUNT(*) AS count").
-			ColumnExpr("COALESCE(SUM(?), 0) AS amount_minor", bun.Safe(cols.OpenBalanceMinor.Qualified())).
-			ColumnExpr("COUNT(*) FILTER (WHERE "+late+") AS late_count", req.ReadyBefore).
-			ColumnExpr(
-				"COALESCE(SUM(?) FILTER (WHERE "+late+"), 0) AS late_minor",
-				bun.Safe(cols.OpenBalanceMinor.Qualified()),
-				req.ReadyBefore,
-			).
-			Apply(factoringcol.InvoiceStateApplyTenant(req.TenantInfo)).
-			Where(cols.Verdict.In(), bun.List([]factoring.Verdict{
-				factoring.VerdictReady,
-				factoring.VerdictNotReady,
-				factoring.VerdictSubmitted,
-			})).
-			Group(cols.Verdict.Bare()).
-			Scan(ctx, &rows); err != nil {
-			return nil, fmt.Errorf("summarize factoring invoices: %w", err)
+		summary := &factoringports.Summary{
+			Funded: factoringports.VerdictTotals{
+				Count:       funded.Count,
+				AmountMinor: funded.AmountMinor,
+			},
+			ReserveHeld: factoringports.VerdictTotals{
+				Count:       funded.ReserveCount,
+				AmountMinor: funded.ReserveMinor,
+			},
+			ChargebacksDue: due,
 		}
-
-		summary := new(factoringports.Summary)
-		for _, rw := range rows {
+		for _, rw := range verdicts {
 			totals := factoringports.VerdictTotals{Count: rw.Count, AmountMinor: rw.AmountMinor}
 			switch rw.Verdict {
 			case factoring.VerdictReady:
@@ -451,91 +407,58 @@ func (r *invoiceStateRepository) GetSummary(
 			}
 		}
 
-		if err := r.fundedTotals(ctx, req, summary); err != nil {
-			return nil, err
-		}
-		due, err := r.chargebacksDue(ctx, req)
-		if err != nil {
-			return nil, err
-		}
-		summary.ChargebacksDue = due
 		return summary, nil
 	})
 }
 
-func (r *invoiceStateRepository) fundedTotals(
-	ctx context.Context,
-	req factoringports.GetSummaryRequest,
-	summary *factoringports.Summary,
-) error {
-	item := factoringcol.SubmissionItemColumns
-	if err := r.db.DBForContext(ctx).NewSelect().
-		Model((*factoring.SubmissionItem)(nil)).
-		ColumnExpr("COUNT(*) AS count").
-		ColumnExpr(item.FaceMinor.Expr("COALESCE(SUM({}), 0)")+" AS amount_minor").
-		ColumnExpr(item.ReserveMinor.Expr("COUNT(*) FILTER (WHERE COALESCE({}, 0) > 0)")+
-			" AS reserve_count").
-		ColumnExpr(item.ReserveMinor.Expr("COALESCE(SUM({}), 0)")+" AS reserve_minor").
-		Apply(factoringcol.SubmissionItemApplyTenant(req.TenantInfo)).
-		Where(item.Status.Eq(), factoring.SubmissionItemStatusFunded).
-		Scan(
-			ctx,
-			&summary.Funded.Count,
-			&summary.Funded.AmountMinor,
-			&summary.ReserveHeld.Count,
-			&summary.ReserveHeld.AmountMinor,
-		); err != nil {
-		return fmt.Errorf("summarize funded factoring invoices: %w", err)
-	}
-	return nil
+func verdictTotals(readyBefore int64) *keel.Query[factoring.InvoiceState] {
+	st := factoringdb.InvoiceStates
+	late := st.ReadySince.Lte(readyBefore)
+	return st.Group(st.Verdict).
+		Pick(
+			st.Verdict,
+			keel.Count(),
+			keel.Raw("COALESCE(?, 0)", st.OpenBalanceMinor.Sum()),
+			keel.Count().Filter(late),
+			keel.Raw("COALESCE(?, 0)", st.OpenBalanceMinor.Sum().Filter(late)),
+		).
+		Where(st.Verdict.In(
+			factoring.VerdictReady,
+			factoring.VerdictNotReady,
+			factoring.VerdictSubmitted,
+		))
 }
 
-func (r *invoiceStateRepository) chargebacksDue(
-	ctx context.Context,
-	req factoringports.GetSummaryRequest,
-) (factoringports.VerdictTotals, error) {
-	item := factoringcol.SubmissionItemColumns
-	sub := factoringcol.SubmissionColumns
-	subTable := factoringcol.SubmissionTable
-	agr := factoringcol.AgreementColumns
-	agrTable := factoringcol.AgreementTable
-	deadline := buncolgen.Expr("{0} + {1} * 86400", item.FundedOn, agr.ChargebackWindowDays)
+func fundedTotals() *keel.Query[factoring.SubmissionItem] {
+	item := factoringdb.SubmissionItems
+	return item.Pick(
+		keel.Count(),
+		keel.Raw("COALESCE(?, 0)", item.FaceMinor.Sum()),
+		keel.Count().Filter(keel.Raw("COALESCE(?, 0) > 0", item.ReserveMinor)),
+		keel.Raw("COALESCE(?, 0)", item.ReserveMinor.Sum()),
+	).Where(item.Status.Eq(factoring.SubmissionItemStatusFunded))
+}
 
-	var totals factoringports.VerdictTotals
-	if err := r.db.DBForContext(ctx).NewSelect().
-		Model((*factoring.SubmissionItem)(nil)).
-		ColumnExpr("COUNT(*) AS count").
-		ColumnExpr(buncolgen.Expr(
-			"COALESCE(SUM(COALESCE({0}, 0) + COALESCE({1}, 0)), 0)",
+func chargebacksDue(before int64) *keel.Query[factoring.SubmissionItem] {
+	item := factoringdb.SubmissionItems
+	sub := factoringdb.Submissions
+	agr := factoringdb.Agreements
+	return item.Pick(
+		keel.Count(),
+		keel.Raw(
+			"COALESCE(SUM(COALESCE(?, 0) + COALESCE(?, 0)), 0)",
 			item.AdvanceMinor,
 			item.FeeMinor,
-		)+" AS amount_minor").
-		Join("JOIN "+subTable.As(subTable.Alias)).
-		JoinOn(sub.ID.EqColumn(item.SubmissionID)).
-		JoinOn(sub.OrganizationID.EqColumn(item.OrganizationID)).
-		JoinOn(sub.BusinessUnitID.EqColumn(item.BusinessUnitID)).
-		Join("JOIN "+agrTable.As(agrTable.Alias)).
-		JoinOn(agr.ID.EqColumn(sub.AgreementID)).
-		JoinOn(agr.OrganizationID.EqColumn(sub.OrganizationID)).
-		JoinOn(agr.BusinessUnitID.EqColumn(sub.BusinessUnitID)).
-		Apply(factoringcol.SubmissionItemApplyTenant(req.TenantInfo)).
-		Where(item.Status.Eq(), factoring.SubmissionItemStatusFunded).
-		Where(item.FundedOn.IsNotNull()).
-		Where(agr.Recourse.Eq(), factoring.RecourseFull).
-		Where(deadline+" <= ?", req.ChargebackBefore).
-		Scan(ctx, &totals.Count, &totals.AmountMinor); err != nil {
-		return totals, fmt.Errorf("summarize factoring chargebacks due: %w", err)
-	}
-	return totals, nil
-}
-
-func openFactoredInvoices(q *bun.SelectQuery) *bun.SelectQuery {
-	inv := invoicecol.InvoiceColumns
-	return q.
-		Where(inv.Status.Eq(), invoice.StatusPosted).
-		Where(inv.FactoringCompanyID.IsNotNull()).
-		Where(inv.BillType.Ne(), billingqueue.BillTypeCreditMemo).
-		Where(inv.TotalAmountMinor.Qualified() + " > " + inv.AppliedAmountMinor.Qualified())
+		),
+	).
+		Join(sub, sub.ID.EqCol(item.SubmissionID)).
+		Join(agr, agr.ID.EqCol(sub.AgreementID)).
+		Where(
+			item.Status.Eq(factoring.SubmissionItemStatusFunded),
+			item.FundedOn.IsNotNull(),
+			agr.Recourse.Eq(factoring.RecourseFull),
+			keel.Raw("? + ? * 86400 <= ?", item.FundedOn, agr.ChargebackWindowDays, before),
+		)
 }
 
 func boundedLimit(limit, ceiling int) int {
@@ -558,42 +481,4 @@ func withoutQuery(
 	copied := *filter
 	copied.Query = ""
 	return &copied, term
-}
-
-func searchStates(dba bun.IDB, q *bun.SelectQuery, term string) *bun.SelectQuery {
-	pattern := "%" + stringutils.EscapeLikePattern(term) + "%"
-	st := factoringcol.InvoiceStateColumns
-	inv := invoicecol.InvoiceColumns
-	cus := customercol.CustomerColumns
-	fac := factoringcompanycol.FactoringCompanyColumns
-
-	invoices := dba.NewSelect().
-		Model((*invoice.Invoice)(nil)).
-		ColumnExpr("1").
-		Where(inv.ID.Qualified()+" = "+st.InvoiceID.Qualified()).
-		Where(inv.OrganizationID.Qualified()+" = "+st.OrganizationID.Qualified()).
-		Where(inv.BusinessUnitID.Qualified()+" = "+st.BusinessUnitID.Qualified()).
-		Where(inv.Number.ILike(), pattern)
-	customers := dba.NewSelect().
-		Model((*customer.Customer)(nil)).
-		ColumnExpr("1").
-		Where(cus.ID.Qualified()+" = "+st.CustomerID.Qualified()).
-		Where(cus.OrganizationID.Qualified()+" = "+st.OrganizationID.Qualified()).
-		Where(cus.BusinessUnitID.Qualified()+" = "+st.BusinessUnitID.Qualified()).
-		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-			return sq.Where(cus.Name.ILike(), pattern).WhereOr(cus.Code.ILike(), pattern)
-		})
-	factors := dba.NewSelect().
-		Model((*factoringcompany.FactoringCompany)(nil)).
-		ColumnExpr("1").
-		Where(fac.ID.Qualified()+" = "+st.FactoringCompanyID.Qualified()).
-		Where(fac.OrganizationID.Qualified()+" = "+st.OrganizationID.Qualified()).
-		Where(fac.BusinessUnitID.Qualified()+" = "+st.BusinessUnitID.Qualified()).
-		Where(fac.Name.ILike(), pattern)
-
-	return q.WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-		return sq.Where("EXISTS (?)", invoices).
-			WhereOr("EXISTS (?)", customers).
-			WhereOr("EXISTS (?)", factors)
-	})
 }

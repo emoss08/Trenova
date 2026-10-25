@@ -111,7 +111,7 @@ type Params struct {
 	// Billing provides it; without it those messages wait in the inbox.
 	Remittances inboundmessageports.RemittanceIntake `optional:"true"`
 
-	DB            kernelports.DBConnection
+	DB            kernelports.Transactor
 	QueueRepo     inboundmessageports.TriageQueueRepository
 	MailboxState  inboundmessageports.TriageMailboxStateRepository
 	ActivityRepo  inboundmessageports.TriageActivityRepository
@@ -159,7 +159,7 @@ type Service struct {
 	fetcher     inboundmessageports.InboundContentFetcher
 	remittances inboundmessageports.RemittanceIntake
 
-	db            kernelports.DBConnection
+	db            kernelports.Transactor
 	queueRepo     inboundmessageports.TriageQueueRepository
 	mailboxState  inboundmessageports.TriageMailboxStateRepository
 	activityRepo  inboundmessageports.TriageActivityRepository

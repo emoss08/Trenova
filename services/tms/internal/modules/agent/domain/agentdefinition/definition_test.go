@@ -524,7 +524,7 @@ func TestTemplates_StarterToolsAreWellFormed(t *testing.T) {
 /*
 No per-tool cap is an empty map, not an absent one.
 
-tool_daily_limits was added as NOT NULL DEFAULT '{}' while its bun tag said
+tool_daily_limits was added as NOT NULL DEFAULT '{}' while its tag said
 nullzero, and nullzero writes SQL NULL for a nil map. So every insert of an
 agent with no per-tool cap — which is every system agent — was rejected by the
 constraint. The full seed run had been red on master since, and a fresh

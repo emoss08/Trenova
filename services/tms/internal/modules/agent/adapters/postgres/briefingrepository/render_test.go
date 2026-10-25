@@ -4,33 +4,59 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/briefing"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/briefing/briefingdb"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/briefingports"
+	"github.com/emoss08/trenova/internal/testutil/keeltest"
+	"github.com/emoss08/trenova/pkg/dbscope"
+	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
-	"github.com/uptrace/bun"
-	"github.com/uptrace/bun/dialect/pgdialect"
 )
 
-/*
-A rerun of the day's briefing replaces the stored one and bumps its version.
-
-The version has to be read from the stored row by its alias: beside EXCLUDED a
-bare column is ambiguous, and Postgres rejects the whole statement.
-*/
-func TestUpsertBumpsTheStoredRowsVersion(t *testing.T) {
+func TestForDayReadsTheSharedBriefingWhenThereIsNoReader(t *testing.T) {
 	t.Parallel()
 
-	sql := buildUpsert(bun.NewDB(nil, pgdialect.New()), &briefing.Briefing{}).String()
+	sql, args := keeltest.Render(t, forDay(briefing.RoleKey("dispatch"), "2026-01-01", nil))
 
-	assert.Contains(t, sql, "version = abrf.version + 1", sql)
-	assert.NotContains(t, sql, "version = version + 1", sql)
-	assert.Contains(t, sql, "COALESCE(user_id, '')) DO UPDATE", sql)
+	assert.Contains(t, sql, `"user_id" IS NULL`, sql)
+	assert.Contains(t, args, "2026-01-01")
 }
 
-func TestDeleteBeforeSelectsTheOldestBatchByID(t *testing.T) {
+func TestForDayReadsOnePersonsBriefing(t *testing.T) {
 	t.Parallel()
 
-	sql := buildDeleteBefore(bun.NewDB(nil, pgdialect.New()), "2026-01-01", 500).String()
+	userID := pulid.ID("usr_1")
+	sql, args := keeltest.Render(t, forDay(briefing.RoleKey("dispatch"), "2026-01-01", &userID))
 
-	assert.Contains(t, sql, "abrf.id IN (SELECT abrf.id FROM", sql)
-	assert.Contains(t, sql, "abrf.briefing_date < '2026-01-01' ORDER BY abrf.briefing_date LIMIT 500)", sql)
-	assert.NotContains(t, sql, "IN (?)", sql)
+	assert.Contains(t, sql, `"user_id" = $`, sql)
+	assert.NotContains(t, sql, "IS NULL", sql)
+	assert.Contains(t, args, userID.String())
+}
+
+func TestListCapsTheLimitAndOrdersNewestDayFirst(t *testing.T) {
+	t.Parallel()
+
+	sql, _ := keeltest.Render(t, listQuery(&briefingports.ListBriefingsQuery{Limit: 500}))
+
+	assert.Contains(t, sql, `"briefing_date" DESC`, sql)
+	assert.Contains(t, sql, "LIMIT 90", sql)
+	assert.NotContains(t, sql, `"role_key"`+" = ", sql)
+}
+
+func TestStaleBatchSelectsTheOldestDaysAcrossTenants(t *testing.T) {
+	t.Parallel()
+
+	b := briefingdb.Briefings
+	sql, args := keeltest.RenderIn(
+		t,
+		dbscope.WithSystem(t.Context(), "test"),
+		b.AllTenants().Where(staleBatch("2026-01-01", 500)),
+	)
+
+	assert.Contains(
+		t,
+		sql,
+		`."id" IN (SELECT stale."id" FROM "assistant_briefings" stale WHERE stale."briefing_date" < $1 ORDER BY stale."briefing_date" ASC LIMIT 500)`,
+		sql,
+	)
+	assert.Equal(t, []any{"2026-01-01"}, args)
 }

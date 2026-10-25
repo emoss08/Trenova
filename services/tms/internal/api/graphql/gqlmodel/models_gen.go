@@ -7418,25 +7418,30 @@ type ReportBand struct {
 	Edges []float64 `json:"edges"`
 }
 
-type ReportBandInput struct {
-	Width *float64  `json:"width,omitempty"`
-	Edges []float64 `json:"edges,omitempty"`
-}
-
 // The report catalog as the caller may use it: every kind they can read, and
 // every kind they cannot read that they can still reach through a join, with
 // only its reference-view fields available.
 type ReportCatalog struct {
-	Version  string                 `json:"version"`
+	Version string `json:"version"`
+	// The engine's rules a builder offers: operators per value type with their
+	// operands, having operators, aggregations, date buckets, transforms, bands,
+	// window functions, chart types, the display vocabulary, formula functions and
+	// operators, column naming and definition limits.
+	Rules    map[string]any         `json:"rules"`
 	Entities []*ReportCatalogEntity `json:"entities"`
 }
 
 type ReportCatalogEdge struct {
-	Name        string `json:"name"`
-	Label       string `json:"label"`
-	Target      string `json:"target"`
-	Cardinality string `json:"cardinality"`
-	Traversable bool   `json:"traversable"`
+	// The edge's name in a definition path.
+	Name        string  `json:"name"`
+	Label       string  `json:"label"`
+	Description *string `json:"description,omitempty"`
+	// The key of the entity the edge leads to.
+	Target string `json:"target"`
+	// Whether the edge leads to many records, so its fields are aggregated.
+	ToMany bool `json:"toMany"`
+	// Whether the edge picks one record of a list, such as a shipment's first stop.
+	Pick bool `json:"pick"`
 	// Whether the caller may follow the edge in a report and, when not, what they lack.
 	Access ReportFieldAccess `json:"access"`
 	// Whether the edge is in its source kind's reference view.
@@ -7470,16 +7475,22 @@ type ReportCatalogEnumValue struct {
 }
 
 type ReportCatalogField struct {
-	Key          string                    `json:"key"`
-	Label        string                    `json:"label"`
-	Description  *string                   `json:"description,omitempty"`
-	Type         string                    `json:"type"`
-	Format       *string                   `json:"format,omitempty"`
-	Nullable     bool                      `json:"nullable"`
+	// The field's key in a definition path, such as customer.name.
+	Key         string  `json:"key"`
+	Label       string  `json:"label"`
+	Description *string `json:"description,omitempty"`
+	// The value type: string, int, decimal, float, bool, date, timestamp, epoch, enum or json.
+	Type string `json:"type"`
+	// The display kind the field carries, such as money, weight or percent.
+	Format *string `json:"format,omitempty"`
+	// Whether reports aggregate the field by default rather than group by it.
+	Measure      bool                      `json:"measure"`
 	EnumValues   []*ReportCatalogEnumValue `json:"enumValues"`
 	Aggregations []string                  `json:"aggregations"`
-	Filterable   bool                      `json:"filterable"`
-	Groupable    bool                      `json:"groupable"`
+	// The filter operators a condition on the field can use, in builder order.
+	Operators  []string `json:"operators"`
+	Filterable bool     `json:"filterable"`
+	Groupable  bool     `json:"groupable"`
 	// Whether the caller may use the field in a report and, when not, what they lack.
 	Access ReportFieldAccess `json:"access"`
 	// Whether the field is in its kind's reference view, so a report can show it
@@ -7495,30 +7506,6 @@ type ReportCatalogKind struct {
 	Resource string `json:"resource"`
 	// The kind's plural label, such as Customers.
 	Label string `json:"label"`
-}
-
-type ReportChartGoalInput struct {
-	Value    *float64 `json:"value,omitempty"`
-	ColumnID *string  `json:"columnId,omitempty"`
-	Label    *string  `json:"label,omitempty"`
-}
-
-type ReportChartInput struct {
-	ID            string                `json:"id"`
-	Type          string                `json:"type"`
-	Title         *string               `json:"title,omitempty"`
-	XColumnID     *string               `json:"xColumnId,omitempty"`
-	SeriesIds     []string              `json:"seriesIds,omitempty"`
-	Stacked       *bool                 `json:"stacked,omitempty"`
-	HideLegend    *bool                 `json:"hideLegend,omitempty"`
-	ShowValues    *bool                 `json:"showValues,omitempty"`
-	Curved        *bool                 `json:"curved,omitempty"`
-	Limit         *int                  `json:"limit,omitempty"`
-	CompareID     *string               `json:"compareId,omitempty"`
-	Goal          *ReportChartGoalInput `json:"goal,omitempty"`
-	LatColumnID   *string               `json:"latColumnId,omitempty"`
-	LngColumnID   *string               `json:"lngColumnId,omitempty"`
-	LabelColumnID *string               `json:"labelColumnId,omitempty"`
 }
 
 type ReportColumnDisplay struct {
@@ -7537,29 +7524,8 @@ type ReportColumnDisplay struct {
 	NullText      string               `json:"nullText"`
 	Rules         []*ReportDisplayRule `json:"rules"`
 	Band          *ReportBand          `json:"band,omitempty"`
-}
-
-type ReportColumnInput struct {
-	ID        string                  `json:"id"`
-	Ref       *ReportFieldRefInput    `json:"ref,omitempty"`
-	Kind      string                  `json:"kind"`
-	Agg       *string                 `json:"agg,omitempty"`
-	Bucket    *string                 `json:"bucket,omitempty"`
-	Band      *ReportBandInput        `json:"band,omitempty"`
-	Label     *string                 `json:"label,omitempty"`
-	Computed  *ReportComputedInput    `json:"computed,omitempty"`
-	Transform *ReportTransformInput   `json:"transform,omitempty"`
-	Display   *ReportDisplayInput     `json:"display,omitempty"`
-	Filter    *ReportFilterGroupInput `json:"filter,omitempty"`
-}
-
-type ReportComputedInput struct {
-	Op         string   `json:"op"`
-	LeftID     *string  `json:"leftId,omitempty"`
-	RightID    *string  `json:"rightId,omitempty"`
-	LeftValue  *float64 `json:"leftValue,omitempty"`
-	RightValue *float64 `json:"rightValue,omitempty"`
-	Format     *string  `json:"format,omitempty"`
+	// Labels for enum values, by value.
+	Labels map[string]any `json:"labels,omitempty"`
 }
 
 type ReportDashboard struct {
@@ -7576,18 +7542,20 @@ type ReportDashboard struct {
 	UpdatedAt   int            `json:"updatedAt"`
 }
 
+// A dashboard filter applied to every tile whose report starts from its entity.
 type ReportDashboardFilterInput struct {
-	ID       string               `json:"id"`
-	Label    *string              `json:"label,omitempty"`
-	Entity   string               `json:"entity"`
-	Ref      *ReportFieldRefInput `json:"ref"`
-	Operator string               `json:"operator"`
-	Default  any                  `json:"default,omitempty"`
+	ID     string  `json:"id"`
+	Label  *string `json:"label,omitempty"`
+	Entity string  `json:"entity"`
+	// The filtered field's path from the entity.
+	Field   string `json:"field"`
+	Op      string `json:"op"`
+	Default any    `json:"default,omitempty"`
 }
 
 type ReportDashboardLayoutInput struct {
 	Tiles      []*ReportDashboardTileInput   `json:"tiles"`
-	Parameters []*ReportParameterDefInput    `json:"parameters,omitempty"`
+	Parameters []*ReportParameterInput       `json:"parameters,omitempty"`
 	Filters    []*ReportDashboardFilterInput `json:"filters,omitempty"`
 }
 
@@ -7652,23 +7620,6 @@ type ReportDefinitionRevision struct {
 	CreatedAt      int            `json:"createdAt"`
 }
 
-type ReportDisplayInput struct {
-	Style         *string                   `json:"style,omitempty"`
-	Decimals      *int                      `json:"decimals,omitempty"`
-	Grouping      *bool                     `json:"grouping,omitempty"`
-	Currency      *string                   `json:"currency,omitempty"`
-	Negative      *string                   `json:"negative,omitempty"`
-	Notation      *string                   `json:"notation,omitempty"`
-	Prefix        *string                   `json:"prefix,omitempty"`
-	Suffix        *string                   `json:"suffix,omitempty"`
-	DateStyle     *string                   `json:"dateStyle,omitempty"`
-	BoolStyle     *string                   `json:"boolStyle,omitempty"`
-	DurationUnit  *string                   `json:"durationUnit,omitempty"`
-	DurationStyle *string                   `json:"durationStyle,omitempty"`
-	NullText      *string                   `json:"nullText,omitempty"`
-	Rules         []*ReportDisplayRuleInput `json:"rules,omitempty"`
-}
-
 type ReportDisplayRule struct {
 	Op    string  `json:"op"`
 	Value float64 `json:"value"`
@@ -7676,19 +7627,15 @@ type ReportDisplayRule struct {
 	Tone  string  `json:"tone"`
 }
 
-type ReportDisplayRuleInput struct {
-	Op    string   `json:"op"`
-	Value float64  `json:"value"`
-	Upper *float64 `json:"upper,omitempty"`
-	Tone  string   `json:"tone"`
-}
-
 type ReportDrillInput struct {
-	Definition *ReportIRInput           `json:"definition"`
+	// A report definition in keel analytics IR version 2.
+	Definition map[string]any           `json:"definition"`
 	Params     map[string]any           `json:"params,omitempty"`
 	Dimensions []*ReportDrillValueInput `json:"dimensions"`
 	ColumnID   *string                  `json:"columnId,omitempty"`
-	Limit      *int                     `json:"limit,omitempty"`
+	// The pivot values of the cell drilled into, when the report pivots.
+	PivotValues []string `json:"pivotValues,omitempty"`
+	Limit       *int     `json:"limit,omitempty"`
 }
 
 type ReportDrillValueInput struct {
@@ -7702,72 +7649,47 @@ type ReportFieldProtection struct {
 	Held bool `json:"held"`
 }
 
-type ReportFieldRefInput struct {
-	Path  []string `json:"path,omitempty"`
-	Field string   `json:"field"`
-}
-
-type ReportFilterGroupInput struct {
-	Op      string                    `json:"op"`
-	Filters []*ReportFilterInput      `json:"filters,omitempty"`
-	Groups  []*ReportFilterGroupInput `json:"groups,omitempty"`
-}
-
-type ReportFilterInput struct {
-	Ref       *ReportFieldRefInput  `json:"ref"`
-	Operator  string                `json:"operator"`
-	Value     any                   `json:"value,omitempty"`
-	Param     *string               `json:"param,omitempty"`
-	Agg       *string               `json:"agg,omitempty"`
-	Transform *ReportTransformInput `json:"transform,omitempty"`
-}
-
-type ReportIRInput struct {
-	Entity     string                     `json:"entity"`
-	Columns    []*ReportColumnInput       `json:"columns"`
-	Filters    *ReportFilterGroupInput    `json:"filters,omitempty"`
-	Having     *ReportFilterGroupInput    `json:"having,omitempty"`
-	Sort       []*ReportSortInput         `json:"sort,omitempty"`
-	Limit      *int                       `json:"limit,omitempty"`
-	Pivot      *ReportPivotInput          `json:"pivot,omitempty"`
-	Parameters []*ReportParameterDefInput `json:"parameters,omitempty"`
-	Totals     *bool                      `json:"totals,omitempty"`
-	Charts     []*ReportChartInput        `json:"charts,omitempty"`
-}
-
-type ReportParameterDefInput struct {
-	Name          string   `json:"name"`
-	Label         *string  `json:"label,omitempty"`
-	Type          string   `json:"type"`
-	Required      *bool    `json:"required,omitempty"`
-	Default       any      `json:"default,omitempty"`
-	Multi         *bool    `json:"multi,omitempty"`
-	AllowedValues []string `json:"allowedValues,omitempty"`
-	RefEntity     *string  `json:"refEntity,omitempty"`
-}
-
-type ReportPivotInput struct {
-	Ref          *ReportFieldRefInput `json:"ref"`
-	Values       []string             `json:"values"`
-	Labels       []string             `json:"labels,omitempty"`
-	MeasureIds   []string             `json:"measureIds"`
-	IncludeOther *bool                `json:"includeOther,omitempty"`
+// A parameter a dashboard asks for once and binds to its tiles' report parameters.
+type ReportParameterInput struct {
+	Name  string  `json:"name"`
+	Label *string `json:"label,omitempty"`
+	// The value type: string, int, decimal, float, bool, date, timestamp, epoch or enum.
+	Type     string `json:"type"`
+	Required *bool  `json:"required,omitempty"`
+	Multi    *bool  `json:"multi,omitempty"`
+	Default  any    `json:"default,omitempty"`
+	// The values the parameter may take, when it is limited to a list.
+	Allowed []any `json:"allowed,omitempty"`
+	// The entity whose records the parameter picks, for a record picker.
+	Entity *string `json:"entity,omitempty"`
 }
 
 type ReportPreview struct {
-	Columns   []*ReportPreviewColumn `json:"columns"`
-	Rows      any                    `json:"rows"`
-	Totals    any                    `json:"totals,omitempty"`
-	Truncated bool                   `json:"truncated"`
-	Timezone  string                 `json:"timezone"`
+	Columns []*ReportPreviewColumn `json:"columns"`
+	// Detail and subtotal rows, each an array of values in column order.
+	Rows any `json:"rows"`
+	// Each row's grouping level: 0 for a detail row, and n for a subtotal that
+	// rolls up the n innermost grouping columns.
+	Levels []int `json:"levels"`
+	// The grand total row, when the report asks for one.
+	Totals    any  `json:"totals,omitempty"`
+	Truncated bool `json:"truncated"`
+	// The cursor of the next page when the preview was paged and more rows follow.
+	Cursor   *string `json:"cursor,omitempty"`
+	Timezone string  `json:"timezone"`
+	// The rollup that answered the report instead of the base tables, when one did.
+	Rollup *string `json:"rollup,omitempty"`
+	// Whether the rows came from the result cache.
+	Cached bool `json:"cached"`
 }
 
 type ReportPreviewColumn struct {
 	ID      string               `json:"id"`
 	Label   string               `json:"label"`
 	Type    string               `json:"type"`
-	Format  *string              `json:"format,omitempty"`
 	Display *ReportColumnDisplay `json:"display"`
+	// The highest sensitivity of the fields the column reads.
+	Sensitivity *string `json:"sensitivity,omitempty"`
 }
 
 type ReportRun struct {
@@ -7857,17 +7779,6 @@ type ReportScheduleAlertInput struct {
 	ColumnID            *string  `json:"columnId,omitempty"`
 	Value               *float64 `json:"value,omitempty"`
 	SuppressWhileFiring *bool    `json:"suppressWhileFiring,omitempty"`
-}
-
-type ReportSortInput struct {
-	ColumnID  string `json:"columnId"`
-	Direction string `json:"direction"`
-}
-
-type ReportTransformInput struct {
-	Op        string   `json:"op"`
-	Precision *int     `json:"precision,omitempty"`
-	Factor    *float64 `json:"factor,omitempty"`
 }
 
 type ReportView struct {
@@ -8287,14 +8198,15 @@ type SaveReportDashboardInput struct {
 }
 
 type SaveReportDefinitionInput struct {
-	Name          string         `json:"name"`
-	Description   *string        `json:"description,omitempty"`
-	Category      *string        `json:"category,omitempty"`
-	Tags          []string       `json:"tags,omitempty"`
-	Visibility    *string        `json:"visibility,omitempty"`
-	Status        *string        `json:"status,omitempty"`
-	DefaultFormat *string        `json:"defaultFormat,omitempty"`
-	Definition    *ReportIRInput `json:"definition"`
+	Name          string   `json:"name"`
+	Description   *string  `json:"description,omitempty"`
+	Category      *string  `json:"category,omitempty"`
+	Tags          []string `json:"tags,omitempty"`
+	Visibility    *string  `json:"visibility,omitempty"`
+	Status        *string  `json:"status,omitempty"`
+	DefaultFormat *string  `json:"defaultFormat,omitempty"`
+	// A report definition in keel analytics IR version 2.
+	Definition map[string]any `json:"definition"`
 }
 
 type SaveTelematicsFormMappingInput struct {
@@ -11467,16 +11379,17 @@ type UpdateReportDashboardInput struct {
 }
 
 type UpdateReportDefinitionInput struct {
-	ID            string         `json:"id"`
-	Version       int            `json:"version"`
-	Name          string         `json:"name"`
-	Description   *string        `json:"description,omitempty"`
-	Category      *string        `json:"category,omitempty"`
-	Tags          []string       `json:"tags,omitempty"`
-	Visibility    *string        `json:"visibility,omitempty"`
-	Status        *string        `json:"status,omitempty"`
-	DefaultFormat *string        `json:"defaultFormat,omitempty"`
-	Definition    *ReportIRInput `json:"definition"`
+	ID            string   `json:"id"`
+	Version       int      `json:"version"`
+	Name          string   `json:"name"`
+	Description   *string  `json:"description,omitempty"`
+	Category      *string  `json:"category,omitempty"`
+	Tags          []string `json:"tags,omitempty"`
+	Visibility    *string  `json:"visibility,omitempty"`
+	Status        *string  `json:"status,omitempty"`
+	DefaultFormat *string  `json:"defaultFormat,omitempty"`
+	// A report definition in keel analytics IR version 2.
+	Definition map[string]any `json:"definition"`
 }
 
 type UpdateReportScheduleInput struct {
@@ -14077,7 +13990,7 @@ func (e RateQuotePurpose) MarshalJSON() ([]byte, error) {
 }
 
 // Whether a caller may use a catalog field or edge in a report, decided by the
-// rule the report compiler applies, so a field marked Available compiles and
+// policy the report engine applies, so a field marked Available compiles and
 // any other is refused.
 type ReportFieldAccess string
 

@@ -6,81 +6,90 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/modules/equipment/domain/fleetcode"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/kernel/domain/usstate"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/customfield"
-	"github.com/emoss08/trenova/pkg/dbtype"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/domainvalidation"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/validationframework"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/emoss08/trenova/shared/timeutils"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
 	"github.com/go-ozzo/ozzo-validation/v4/is"
-	"github.com/uptrace/bun"
 )
 
 var (
-	_ bun.BeforeAppendModelHook          = (*Worker)(nil)
-	_ bun.AfterScanRowHook               = (*Worker)(nil)
 	_ domaintypes.PostgresSearchable     = (*Worker)(nil)
 	_ validationframework.TenantedEntity = (*Worker)(nil)
 	_ customfield.CustomFieldsSupporter  = (*Worker)(nil)
 	_ pagination.CursorEntity            = (*Worker)(nil)
 )
 
+// Drivers and operational workers
 type Worker struct {
-	bun.BaseModel             `bun:"table:workers,alias:wrk" json:"-"`
-	pagination.CursorValueSet `bun:",embed"                  json:"-"`
+	keel.Table            `keel:"workers,report=Parties"`
+	ID                    pulid.ID           `keel:"id,pk,autoid:wrk_"                        json:"id"`
+	BusinessUnitID        pulid.ID           `keel:"business_unit_id,pk,tenant"               json:"businessUnitId"`
+	OrganizationID        pulid.ID           `keel:"organization_id,pk,tenant"                json:"organizationId"`
+	StateID               pulid.ID           `keel:"state_id"                                 json:"stateId"`
+	FleetCodeID           pulid.ID           `keel:"fleet_code_id,nullzero"                   json:"fleetCodeId"`
+	ManagerID             pulid.ID           `keel:"manager_id,nullzero"                      json:"managerId"`
+	PositionID            pulid.ID           `keel:"position_id,nullzero"                     json:"positionId"`
+	UserID                pulid.ID           `keel:"user_id,nullzero"                         json:"userId"`
+	Status                domaintypes.Status `keel:"status"                                   json:"status"`
+	Type                  WorkerType         `keel:"type"                                     json:"type"`
+	DriverType            DriverType         `keel:"driver_type"                              json:"driverType"`
+	LeaveType             LeaveType          `keel:"leave_type,nullzero"                      json:"leaveType"`
+	ProfilePicURL         string             `keel:"profile_pic_url,nullzero"                 json:"profilePicUrl"`
+	FirstName             string             `keel:"first_name"                               json:"firstName"`
+	LastName              string             `keel:"last_name"                                json:"lastName"`
+	WholeName             string             `keel:"whole_name,readonly,label=Full Name"      json:"wholeName"`
+	AddressLine1          string             `keel:"address_line1"                            json:"addressLine1"`
+	AddressLine2          string             `keel:"address_line2,nullzero"                   json:"addressLine2"`
+	City                  string             `keel:"city"                                     json:"city"`
+	PostalCode            string             `keel:"postal_code"                              json:"postalCode"`
+	Email                 string             `keel:"email,nullzero"                           json:"email"`
+	PhoneNumber           string             `keel:"phone_number,nullzero"                    json:"phoneNumber"`
+	EmergencyContactName  string             `keel:"emergency_contact_name,nullzero"          json:"emergencyContactName"`
+	EmergencyContactPhone string             `keel:"emergency_contact_phone,nullzero"         json:"emergencyContactPhone"`
+	ExternalID            string             `keel:"external_id,nullzero"                     json:"externalId"`
+	SearchVector          string             `keel:"search_vector,tsvector,readonly,noselect" json:"-"`
+	Rank                  string             `keel:"rank,computed"                            json:"-"`
+	AssignmentBlocked     string             `keel:"assignment_blocked,nullzero"              json:"assignmentBlocked,omitempty"`
+	Gender                Gender             `keel:"gender"                                   json:"gender"`
+	CanBeAssigned         bool               `keel:"can_be_assigned"                          json:"canBeAssigned"`
+	AvailableForDispatch  bool               `keel:"available_for_dispatch"                   json:"availableForDispatch"`
+	Version               int64              `keel:"version,version"                          json:"version"`
+	CreatedAt             int64              `keel:"created_at,autocreate"                    json:"createdAt"`
+	UpdatedAt             int64              `keel:"updated_at,autoupdate"                    json:"updatedAt"`
+	CustomFields          map[string]any     `                                                json:"customFields,omitempty"`
 
-	ID                    pulid.ID           `json:"id"                          bun:"id,pk,type:VARCHAR(100)"`
-	BusinessUnitID        pulid.ID           `json:"businessUnitId"              bun:"business_unit_id,type:VARCHAR(100),notnull,pk"`
-	OrganizationID        pulid.ID           `json:"organizationId"              bun:"organization_id,type:VARCHAR(100),notnull,pk"`
-	StateID               pulid.ID           `json:"stateId"                     bun:"state_id,type:VARCHAR(100),notnull"`
-	FleetCodeID           pulid.ID           `json:"fleetCodeId"                 bun:"fleet_code_id,type:VARCHAR(100),nullzero"`
-	ManagerID             pulid.ID           `json:"managerId"                   bun:"manager_id,type:VARCHAR(100),nullzero"`
-	PositionID            pulid.ID           `json:"positionId"                  bun:"position_id,type:VARCHAR(100),nullzero"`
-	UserID                pulid.ID           `json:"userId"                      bun:"user_id,type:VARCHAR(100),nullzero"`
-	Status                domaintypes.Status `json:"status"                      bun:"status,type:status_enum,notnull,default:'Active'"`
-	Type                  WorkerType         `json:"type"                        bun:"type,type:worker_type_enum,notnull,default:'Employee'"`
-	DriverType            DriverType         `json:"driverType"                  bun:"driver_type,type:driver_type_enum,notnull,default:'OTR'"`
-	LeaveType             LeaveType          `json:"leaveType"                   bun:"leave_type,type:worker_leave_type_enum,nullzero"`
-	ProfilePicURL         string             `json:"profilePicUrl"               bun:"profile_pic_url,type:VARCHAR(255),nullzero"`
-	FirstName             string             `json:"firstName"                   bun:"first_name,type:VARCHAR(100),notnull"`
-	LastName              string             `json:"lastName"                    bun:"last_name,type:VARCHAR(100),notnull"`
-	WholeName             string             `json:"wholeName"                   bun:"whole_name,type:VARCHAR(201),scanonly"`
-	AddressLine1          string             `json:"addressLine1"                bun:"address_line1,type:VARCHAR(150),notnull"`
-	AddressLine2          string             `json:"addressLine2"                bun:"address_line2,type:VARCHAR(150),nullzero"`
-	City                  string             `json:"city"                        bun:"city,type:VARCHAR(100),notnull"`
-	PostalCode            string             `json:"postalCode"                  bun:"postal_code,type:us_postal_code,notnull"`
-	Email                 string             `json:"email"                       bun:"email,type:VARCHAR(255),nullzero"`
-	PhoneNumber           string             `json:"phoneNumber"                 bun:"phone_number,type:VARCHAR(20),nullzero"`
-	EmergencyContactName  string             `json:"emergencyContactName"        bun:"emergency_contact_name,type:VARCHAR(100),nullzero"`
-	EmergencyContactPhone string             `json:"emergencyContactPhone"       bun:"emergency_contact_phone,type:VARCHAR(20),nullzero"`
-	ExternalID            string             `json:"externalId"                  bun:"external_id,type:TEXT,nullzero"`
-	SearchVector          string             `json:"-"                           bun:"search_vector,type:TSVECTOR,scanonly"`
-	Rank                  string             `json:"-"                           bun:"rank,type:VARCHAR(100),scanonly"`
-	AssignmentBlocked     string             `json:"assignmentBlocked,omitempty" bun:"assignment_blocked,type:VARCHAR(255),nullzero"`
-	Gender                Gender             `json:"gender"                      bun:"gender,type:gender_enum,notnull"`
-	CanBeAssigned         bool               `json:"canBeAssigned"               bun:"can_be_assigned,type:BOOLEAN,notnull"`
-	AvailableForDispatch  bool               `json:"availableForDispatch"        bun:"available_for_dispatch,type:BOOLEAN,notnull"`
-	Version               int64              `json:"version"                     bun:"version,type:BIGINT"`
-	CreatedAt             int64              `json:"createdAt"                   bun:"created_at,notnull,default:extract(epoch from current_timestamp)::bigint"`
-	UpdatedAt             int64              `json:"updatedAt"                   bun:"updated_at,notnull,default:extract(epoch from current_timestamp)::bigint"`
-	CustomFields          map[string]any     `json:"customFields,omitempty"      bun:"-"`
+	BusinessUnit *tenant.BusinessUnit `json:"businessUnit,omitempty" keel:"belongs:business_unit_id,noreport"`
+	Organization *tenant.Organization `json:"organization,omitempty" keel:"belongs:organization_id,noreport"`
+	State        *usstate.UsState     `json:"state,omitempty"        keel:"belongs:state_id,noreport"`
+	FleetCode    *fleetcode.FleetCode `json:"fleetCode,omitempty"    keel:"belongs:fleet_code_id"`
+	Manager      *tenant.User         `json:"manager,omitempty"      keel:"belongs:manager_id,noreport"`
+	Position     *JobPosition         `json:"position,omitempty"     keel:"belongs:position_id"`
+	PortalUser   *tenant.User         `json:"portalUser,omitempty"   keel:"belongs:user_id,noreport"`
+	Profile      *WorkerProfile       `json:"profile,omitempty"      keel:"one:worker_id"`
+	PTO          []*WorkerPTO         `json:"pto,omitempty"          keel:"many:worker_id,label=Time Off"`
+}
 
-	BusinessUnit *tenant.BusinessUnit `json:"businessUnit,omitempty" bun:"rel:belongs-to,join:business_unit_id=id"`
-	Organization *tenant.Organization `json:"organization,omitempty" bun:"rel:belongs-to,join:organization_id=id"`
-	State        *usstate.UsState     `json:"state,omitempty"        bun:"rel:belongs-to,join:state_id=id"`
-	FleetCode    *fleetcode.FleetCode `json:"fleetCode,omitempty"    bun:"rel:belongs-to,join:fleet_code_id=id"`
-	Manager      *tenant.User         `json:"manager,omitempty"      bun:"rel:belongs-to,join:manager_id=id"`
-	Position     *JobPosition         `json:"position,omitempty"     bun:"rel:belongs-to,join:position_id=id,join:organization_id=organization_id,join:business_unit_id=business_unit_id"`
-	PortalUser   *tenant.User         `json:"portalUser,omitempty"   bun:"rel:belongs-to,join:user_id=id"`
-	Profile      *WorkerProfile       `json:"profile,omitempty"      bun:"rel:has-one,join:id=worker_id,join:organization_id=organization_id,join:business_unit_id=business_unit_id"`
-	PTO          []*WorkerPTO         `json:"pto,omitempty"          bun:"rel:has-many,join:id=worker_id,join:organization_id=organization_id,join:business_unit_id=business_unit_id"`
+func (w *Worker) BeforeCreate(_ context.Context) error {
+	if w.Status == "" {
+		w.Status = domaintypes.StatusActive
+	}
+	if w.Type == "" {
+		w.Type = WorkerTypeEmployee
+	}
+	if w.DriverType == "" {
+		w.DriverType = DriverTypeOTR
+	}
+
+	return nil
 }
 
 func (w *Worker) Validate(multiErr *errortypes.MultiError) {
@@ -187,27 +196,8 @@ func (w *Worker) GetPostgresSearchConfig() domaintypes.PostgresSearchConfig {
 				Weight: domaintypes.SearchWeightB,
 			},
 		},
-		// Declaring the profile queryable is what lets the roster filter and
-		// sort on the HR roll-ups — compliance status, training health, safety
-		// rating, what expires next — through the same generic field/operator
-		// machinery every other list uses. Without it those columns can be
-		// displayed but never filtered, because the field map only ever
-		// carries the root table's own columns.
-		//
-		// The alias is deliberately not the model's own "wrkp": bun already
-		// joins worker_profiles when it eager-loads the relation, and giving
-		// the filter join its own name keeps the two from colliding.
 		Relationships: []*domaintypes.RelationshipDefintion{
-			{
-				Field:        "Profile",
-				Type:         dbtype.RelationshipTypeHasOne,
-				TargetEntity: (*WorkerProfile)(nil),
-				TargetTable:  "worker_profiles",
-				ForeignKey:   "worker_id",
-				ReferenceKey: "id",
-				Alias:        "wprof",
-				Queryable:    true,
-			},
+			{Field: "Profile", Queryable: true},
 		},
 	}
 }
@@ -224,29 +214,9 @@ func (w *Worker) GetResourceID() string {
 	return w.ID.String()
 }
 
-// AfterScanRow backfills WholeName when a query loads workers without the
-// whole_name generated column — bun omits scanonly fields from the column
-// lists it builds, so relation loads (e.g. assignment → primary worker) never
-// fetch it. Mirrors the column's generation expression.
-func (w *Worker) AfterScanRow(_ context.Context) error {
+func (w *Worker) AfterLoad(_ context.Context) error {
 	if w.WholeName == "" && (w.FirstName != "" || w.LastName != "") {
 		w.WholeName = strings.TrimSpace(w.FirstName + " " + w.LastName)
-	}
-
-	return nil
-}
-
-func (w *Worker) BeforeAppendModel(_ context.Context, query bun.Query) error {
-	now := timeutils.NowUnix()
-
-	switch query.(type) {
-	case *bun.InsertQuery:
-		if w.ID.IsNil() {
-			w.ID = pulid.MustNew("wrk_")
-		}
-		w.CreatedAt = now
-	case *bun.UpdateQuery:
-		w.UpdatedAt = now
 	}
 
 	return nil

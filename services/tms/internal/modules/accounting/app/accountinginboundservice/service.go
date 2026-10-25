@@ -27,7 +27,6 @@ import (
 	"github.com/emoss08/trenova/pkg/realtimeinvalidation"
 	"github.com/emoss08/trenova/shared/jsonutils"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/uptrace/bun"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
@@ -44,7 +43,7 @@ type Params struct {
 	fx.In
 
 	Logger            *zap.Logger
-	DB                kernelports.DBConnection
+	DB                kernelports.Transactor
 	Connections       accountingsyncports.AccountingConnectionRepository
 	ConnectionService accountingsyncports.AccountingConnectionService
 	Records           accountingsyncports.AccountingSyncRecordRepository
@@ -70,7 +69,7 @@ type Params struct {
 
 type Service struct {
 	l                *zap.Logger
-	db               kernelports.DBConnection
+	db               kernelports.Transactor
 	connections      accountingsyncports.AccountingConnectionRepository
 	connService      accountingsyncports.AccountingConnectionService
 	records          accountingsyncports.AccountingSyncRecordRepository
@@ -232,7 +231,7 @@ func (s *Service) Ignore(
 
 	var updated *accountingsync.AccountingInboundChange
 	var previous map[string]any
-	err := s.db.WithTx(ctx, kernelports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
+	err := s.db.Transact(ctx, kernelports.TxOptions{}, func(txCtx context.Context) error {
 		change, err := s.changes.GetByID(txCtx, accountingsyncports.GetAccountingInboundChangeQuery{
 			TenantInfo: req.TenantInfo,
 			ID:         req.ID,

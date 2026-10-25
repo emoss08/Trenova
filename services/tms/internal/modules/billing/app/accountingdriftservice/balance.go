@@ -9,7 +9,6 @@ import (
 	"github.com/emoss08/trenova/shared/intutils"
 	"github.com/emoss08/trenova/shared/money"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/uptrace/bun"
 )
 
 type customerBalance struct {
@@ -151,7 +150,7 @@ func (s *Service) compareBalances(
 		return tally, nil
 	}
 
-	err = s.db.WithTx(ctx, kernelports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
+	err = s.db.Transact(ctx, kernelports.TxOptions{}, func(txCtx context.Context) error {
 		return s.applyObservations(txCtx, sess, compared, observed, at, tally)
 	})
 	if err != nil {

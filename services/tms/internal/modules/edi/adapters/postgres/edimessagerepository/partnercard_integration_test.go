@@ -6,10 +6,8 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/infrastructure/config"
-	"github.com/emoss08/trenova/internal/infrastructure/database/common"
-	"github.com/emoss08/trenova/internal/infrastructure/database/seeder"
-	"github.com/emoss08/trenova/internal/infrastructure/database/seeds"
+	"github.com/emoss08/trenova/internal/testutil/seededtest"
+
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/modules/edi/adapters/postgres/edicommunicationprofilerepository"
 	"github.com/emoss08/trenova/internal/modules/edi/adapters/postgres/ediinboundfilerepository"
@@ -17,14 +15,16 @@ import (
 	"github.com/emoss08/trenova/internal/modules/edi/adapters/postgres/edimessagerepository"
 	"github.com/emoss08/trenova/internal/modules/edi/adapters/postgres/edipartnerrepository"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
+	"github.com/emoss08/trenova/internal/modules/edi/editest"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
 	"github.com/emoss08/trenova/internal/modules/parties/adapters/postgres/carrierrepository"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/carrier"
 	"github.com/emoss08/trenova/internal/modules/parties/ports/carrierports"
-	"github.com/emoss08/trenova/internal/testutil/seedtest"
+	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
+	"github.com/jackc/pgx/v5"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/zap"
@@ -40,52 +40,32 @@ type partnerCardMessage struct {
 }
 
 func TestPartnerCardReadsKeepToOnePartner(t *testing.T) {
-	ctx, db, cleanup := seedtest.SetupTestDB(t)
+	ctx, db, cleanup := seededtest.SetupTestDB(t)
 	defer cleanup()
-	seedRegistry := seeder.NewRegistry()
-	seeds.Register(seedRegistry)
-	engine := seeder.NewEngine(
-		db,
-		seedRegistry,
-		&config.Config{System: config.SystemConfig{SystemUserPassword: "test-system-password"}},
-	)
-	_, err := engine.Execute(ctx, seeder.ExecuteOptions{Environment: common.EnvDevelopment})
-	require.NoError(t, err)
+
+	var err error
 
 	conn := postgres.NewTestConnection(db)
 
-	var org seededSummaryOrg
-	require.NoError(t, db.NewSelect().
-		Table("organizations").
-		Column("id", "business_unit_id").
-		Where("NOT EXISTS (SELECT 1 FROM edi_partners AS ep WHERE ep.organization_id = organizations.id)").
-		Limit(1).
-		Scan(ctx, &org))
+	scope := tenantWithoutPartners(t, ctx, db)
+	ctx = scope.Ctx
+	org := scope.Info
 	documentType := func(set edi.TransactionSet, direction edi.DocumentDirection) pulid.ID {
-		var found seededSummaryDocumentType
-		require.NoError(t, db.NewSelect().
-			Table("edi_document_types").
-			Column("id").
-			Where("transaction_set = ?", set).
-			Where("direction = ?", direction).
-			Limit(1).
-			Scan(ctx, &found), "document type %s %s", set, direction)
-		return found.ID
+		return findDocumentType(t, ctx, db, set, direction).ID
 	}
 	outbound214 := documentType(edi.TransactionSet214, edi.DocumentDirectionOutbound)
 	inbound204 := documentType(edi.TransactionSet204, edi.DocumentDirectionInbound)
-	tenantInfo := pagination.TenantInfo{OrgID: org.ID, BuID: org.BusinessUnitID}
+	tenantInfo := org
 
 	newPartner := func(code string) *edi.EDIPartner {
 		partner := &edi.EDIPartner{
-			BusinessUnitID: org.BusinessUnitID,
-			OrganizationID: org.ID,
+			BusinessUnitID: org.BuID,
+			OrganizationID: org.OrgID,
 			Kind:           edi.PartnerKindExternal,
 			Code:           code,
 			Name:           code + " Partner",
 		}
-		_, insertErr := db.NewInsert().Model(partner).Exec(ctx)
-		require.NoError(t, insertErr)
+		require.NoError(t, create(ctx, db, partner))
 		return partner
 	}
 	tyson := newPartner("CARD-TYSON")
@@ -93,21 +73,16 @@ func TestPartnerCardReadsKeepToOnePartner(t *testing.T) {
 
 	newProfile := func(partner *edi.EDIPartner, name string, status string) *edi.EDICommunicationProfile {
 		profile := &edi.EDICommunicationProfile{
-			BusinessUnitID: org.BusinessUnitID,
-			OrganizationID: org.ID,
+			BusinessUnitID: org.BuID,
+			OrganizationID: org.OrgID,
 			EDIPartnerID:   partner.ID,
 			Method:         edi.ConnectionMethodSFTP,
 			Name:           name,
 		}
-		_, insertErr := db.NewInsert().Model(profile).Exec(ctx)
-		require.NoError(t, insertErr)
+		require.NoError(t, create(ctx, db, profile))
 		if status != "" {
-			_, updateErr := db.NewUpdate().
-				Table("edi_communication_profiles").
-				Set("status = ?", status).
-				Where("id = ?", profile.ID).
-				Exec(ctx)
-			require.NoError(t, updateErr)
+			editest.Exec(t, ctx, db, "UPDATE edi_communication_profiles SET status = $1 WHERE id = $2",
+				status, profile.ID.String())
 		}
 		return profile
 	}
@@ -130,8 +105,8 @@ func TestPartnerCardReadsKeepToOnePartner(t *testing.T) {
 	}
 	for index, entry := range messages {
 		message := &edi.EDIMessage{
-			BusinessUnitID:           org.BusinessUnitID,
-			OrganizationID:           org.ID,
+			BusinessUnitID:           org.BuID,
+			OrganizationID:           org.OrgID,
 			EDIPartnerID:             entry.partner,
 			DocumentTypeID:           entry.docType,
 			Direction:                entry.dir,
@@ -148,15 +123,10 @@ func TestPartnerCardReadsKeepToOnePartner(t *testing.T) {
 			AckStatus:                edi.MessageAcknowledgmentStatusNotExpected,
 			GeneratedAt:              now - entry.age,
 		}
-		_, insertErr := db.NewInsert().Model(message).Exec(ctx)
-		require.NoError(t, insertErr, "message %d", index)
+		require.NoError(t, create(ctx, db, message), "message %d", index)
 	}
-	_, err = db.NewUpdate().
-		Table("edi_messages").
-		Set("updated_at = generated_at").
-		Where("organization_id = ?", org.ID).
-		Exec(ctx)
-	require.NoError(t, err)
+	editest.Exec(t, ctx, db, "UPDATE edi_messages SET updated_at = generated_at WHERE organization_id = $1",
+		org.OrgID.String())
 
 	messageRepo := edimessagerepository.New(edimessagerepository.Params{DB: conn, Logger: zap.NewNop()})
 	weekAgo := now - 7*day
@@ -240,8 +210,8 @@ func TestPartnerCardReadsKeepToOnePartner(t *testing.T) {
 		{other, otherMailbox, 60},
 	} {
 		file := &edi.EDIInboundFile{
-			BusinessUnitID:         org.BusinessUnitID,
-			OrganizationID:         org.ID,
+			BusinessUnitID:         org.BuID,
+			OrganizationID:         org.OrgID,
 			CommunicationProfileID: entry.profile.ID,
 			EDIPartnerID:           entry.partner.ID,
 			Method:                 edi.ConnectionMethodSFTP,
@@ -253,8 +223,7 @@ func TestPartnerCardReadsKeepToOnePartner(t *testing.T) {
 			FailureReason:          "not an interchange",
 			ReceivedAt:             now - entry.age,
 		}
-		_, insertErr := db.NewInsert().Model(file).Exec(ctx)
-		require.NoError(t, insertErr, "file %d", index)
+		require.NoError(t, create(ctx, db, file), "file %d", index)
 	}
 	fileRepo := ediinboundfilerepository.New(ediinboundfilerepository.Params{DB: conn, Logger: zap.NewNop()})
 	quarantined, err := fileRepo.ListRecentQuarantined(ctx, ediports.ListRecentQuarantinedEDIInboundFilesRequest{
@@ -333,38 +302,28 @@ func TestPartnerCardReadsKeepToOnePartner(t *testing.T) {
 }
 
 type seededCarrier struct {
-	ID             pulid.ID `bun:"id"`
-	OrganizationID pulid.ID `bun:"organization_id"`
-	BusinessUnitID pulid.ID `bun:"business_unit_id"`
-	Name           string   `bun:"name"`
+	ID             pulid.ID
+	OrganizationID pulid.ID
+	BusinessUnitID pulid.ID
+	Name           string
 }
 
 func TestCarrierEDIChannelsByPartner(t *testing.T) {
-	ctx, db, cleanup := seedtest.SetupTestDB(t)
+	ctx, db, cleanup := seededtest.SetupTestDB(t)
 	defer cleanup()
-	seedRegistry := seeder.NewRegistry()
-	seeds.Register(seedRegistry)
-	engine := seeder.NewEngine(
-		db,
-		seedRegistry,
-		&config.Config{System: config.SystemConfig{SystemUserPassword: "test-system-password"}},
-	)
-	_, err := engine.Execute(ctx, seeder.ExecuteOptions{Environment: common.EnvDevelopment})
-	require.NoError(t, err)
 
 	conn := postgres.NewTestConnection(db)
 
-	var carriers []seededCarrier
-	require.NoError(t, db.NewSelect().
-		Table("carriers").
-		Column("id", "organization_id", "business_unit_id", "name").
-		Where("organization_id = (SELECT organization_id FROM carriers GROUP BY organization_id HAVING COUNT(*) >= 2 LIMIT 1)").
-		Order("name ASC").
-		Limit(2).
-		Scan(ctx, &carriers))
+	rows, err := db.Pool().Query(ctx, `SELECT id, organization_id, business_unit_id, name FROM carriers
+		WHERE organization_id = (SELECT organization_id FROM carriers GROUP BY organization_id HAVING COUNT(*) >= 2 ORDER BY organization_id LIMIT 1)
+		ORDER BY name ASC LIMIT 2`)
+	require.NoError(t, err)
+	carriers, err := pgx.CollectRows(rows, pgx.RowToStructByPos[seededCarrier])
+	require.NoError(t, err)
 	require.Len(t, carriers, 2, "the seeds give one organization two carriers")
 	org := carriers[0]
 	tenantInfo := pagination.TenantInfo{OrgID: org.OrganizationID, BuID: org.BusinessUnitID}
+	ctx = dbscope.WithTenant(ctx, tenantInfo.DBTenant())
 
 	newPartner := func(code string) *edi.EDIPartner {
 		partner := &edi.EDIPartner{
@@ -374,8 +333,7 @@ func TestCarrierEDIChannelsByPartner(t *testing.T) {
 			Code:           code,
 			Name:           code + " Partner",
 		}
-		_, insertErr := db.NewInsert().Model(partner).Exec(ctx)
-		require.NoError(t, insertErr)
+		require.NoError(t, create(ctx, db, partner))
 		return partner
 	}
 	van := newPartner("CARD-VAN")
@@ -397,8 +355,7 @@ func TestCarrierEDIChannelsByPartner(t *testing.T) {
 			EDIPartnerID:   entry.partner.ID,
 			IsDefault:      entry.isDefault,
 		}
-		_, insertErr := db.NewInsert().Model(channel).Exec(ctx)
-		require.NoError(t, insertErr)
+		require.NoError(t, create(ctx, db, channel))
 	}
 
 	repo := carrierrepository.New(carrierrepository.Params{DB: conn, Logger: zap.NewNop()})

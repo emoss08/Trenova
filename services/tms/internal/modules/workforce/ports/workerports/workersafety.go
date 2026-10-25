@@ -92,82 +92,82 @@ type FleetSafetyRequest struct {
 
 // FleetSafetyRatingRow counts the roster in one safety rating.
 type FleetSafetyRatingRow struct {
-	Rating     worker.SafetyRating `bun:"rating"`
-	Workers    int                 `bun:"workers"`
-	TotalScore int                 `bun:"total_score"`
+	Rating     worker.SafetyRating
+	Workers    int
+	TotalScore int
 }
 
 // FleetSafetyTerminalRow is one terminal's standing, read from the roster
 // cache rather than recomputed: the cache is what the roster itself shows, so
 // the fleet view and the list behind it cannot disagree.
 type FleetSafetyTerminalRow struct {
-	FleetCodeID          pulid.ID `bun:"fleet_code_id"`
-	FleetCodeCode        string   `bun:"fleet_code_code"`
-	FleetCodeDescription string   `bun:"fleet_code_description"`
-	FleetCodeColor       string   `bun:"fleet_code_color"`
-	Workers              int      `bun:"workers"`
-	AtRisk               int      `bun:"at_risk"`
-	Watch                int      `bun:"watch"`
-	TotalScore           int      `bun:"total_score"`
+	FleetCodeID          pulid.ID
+	FleetCodeCode        string
+	FleetCodeDescription string
+	FleetCodeColor       string
+	Workers              int
+	AtRisk               int
+	Watch                int
+	TotalScore           int
 }
 
 // FleetSafetyKindRow counts events of one kind inside the window.
 type FleetSafetyKindRow struct {
-	Kind         worker.SafetyEventKind `bun:"kind"`
-	Events       int                    `bun:"events"`
-	Points       int                    `bun:"points"`
-	Preventable  int                    `bun:"preventable"`
-	OutOfService int                    `bun:"out_of_service"`
-	Open         int                    `bun:"open_events"`
+	Kind         worker.SafetyEventKind
+	Events       int
+	Points       int
+	Preventable  int
+	OutOfService int
+	Open         int
 }
 
 // FleetSafetyBasicRow is one BASIC's violations in one recency bucket. The
 // bucket rather than the weighted total comes back from SQL so the weights
 // stay in the domain, where they can be tested without a database.
 type FleetSafetyBasicRow struct {
-	Basic        worker.CSABasic `bun:"basic"`
-	Bucket       int             `bun:"bucket"`
-	Violations   int             `bun:"violations"`
-	SeveritySum  int             `bun:"severity_sum"`
-	OutOfService int             `bun:"out_of_service"`
+	Basic        worker.CSABasic
+	Bucket       int
+	Violations   int
+	SeveritySum  int
+	OutOfService int
 }
 
 // FleetSafetyEventBasicRow is the fallback for events nobody keyed violations
 // into: the event's own points, grouped by the BASIC its kind suggests.
 type FleetSafetyEventBasicRow struct {
-	Kind             worker.SafetyEventKind  `bun:"kind"`
-	InspectionResult worker.InspectionResult `bun:"inspection_result"`
-	Bucket           int                     `bun:"bucket"`
-	Events           int                     `bun:"events"`
-	Points           int                     `bun:"points"`
-	OutOfService     int                     `bun:"out_of_service"`
+	Kind             worker.SafetyEventKind
+	InspectionResult worker.InspectionResult
+	Bucket           int
+	Events           int
+	Points           int
+	OutOfService     int
 }
 
 // FleetSafetyTrendRow is one month of the trend line.
 type FleetSafetyTrendRow struct {
-	PeriodStart  int64 `bun:"period_start"`
-	Events       int   `bun:"events"`
-	Accidents    int   `bun:"accidents"`
-	Preventable  int   `bun:"preventable"`
-	Citations    int   `bun:"citations"`
-	Inspections  int   `bun:"inspections"`
-	OutOfService int   `bun:"out_of_service"`
-	Points       int   `bun:"points"`
+	PeriodStart  int64
+	Events       int
+	Accidents    int
+	Preventable  int
+	Citations    int
+	Inspections  int
+	OutOfService int
+	Points       int
 }
 
 // FleetSafetyRankRow is one driver's line in the ranking.
 type FleetSafetyRankRow struct {
-	WorkerID       pulid.ID            `bun:"worker_id"`
-	FirstName      string              `bun:"first_name"`
-	LastName       string              `bun:"last_name"`
-	FleetCodeID    pulid.ID            `bun:"fleet_code_id"`
-	FleetCodeCode  string              `bun:"fleet_code_code"`
-	FleetCodeColor string              `bun:"fleet_code_color"`
-	Rating         worker.SafetyRating `bun:"rating"`
-	Score          int                 `bun:"score"`
-	ActivePoints   int                 `bun:"active_points"`
-	Events         int                 `bun:"events"`
-	LastEventAt    *int64              `bun:"last_event_at"`
+	WorkerID       pulid.ID
+	FirstName      string
+	LastName       string
+	FleetCodeID    pulid.ID
+	FleetCodeCode  string
+	FleetCodeColor string
+	Rating         worker.SafetyRating
+	Score          int
+	ActivePoints   int
+	Events         int
+	LastEventAt    *int64
 }
 
 type WorkerSafetyRepository interface {
@@ -260,9 +260,9 @@ type WorkerSafetyRepository interface {
 // WorkerTenantRef names a worker and the tenant they belong to, for sweeps
 // that work across tenants.
 type WorkerTenantRef struct {
-	WorkerID       pulid.ID `bun:"worker_id"`
-	OrganizationID pulid.ID `bun:"organization_id"`
-	BusinessUnitID pulid.ID `bun:"business_unit_id"`
+	WorkerID       pulid.ID
+	OrganizationID pulid.ID
+	BusinessUnitID pulid.ID
 }
 
 // ListWorkersWithLapsedPointsRequest finds the workers whose safety standing

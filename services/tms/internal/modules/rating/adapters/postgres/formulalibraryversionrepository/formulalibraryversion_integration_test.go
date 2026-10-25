@@ -6,7 +6,6 @@ import (
 	"context"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/modules/rating/adapters/postgres/formulalibraryrepository"
 	"github.com/emoss08/trenova/internal/modules/rating/adapters/postgres/formulalibraryversionrepository"
 	"github.com/emoss08/trenova/internal/modules/rating/adapters/postgres/formulatemplaterepository"
@@ -15,7 +14,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/rating/domain/formulatemplate"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/formulalibraryports"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/formulatemplateports"
-	"github.com/emoss08/trenova/internal/testutil/seedtest"
+	"github.com/emoss08/trenova/internal/modules/rating/ratingtest/ratingdb"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/tarifftypes"
 	"github.com/stretchr/testify/assert"
@@ -24,6 +23,7 @@ import (
 )
 
 type libraryFixture struct {
+	db        *ratingdb.Database
 	ctx       context.Context
 	libraries formulalibraryports.FormulaLibraryRepository
 	versions  formulalibraryports.FormulaLibraryVersionRepository
@@ -36,15 +36,12 @@ type libraryFixture struct {
 func setup(t *testing.T) *libraryFixture {
 	t.Helper()
 
-	ctx, db, cleanup := seedtest.SetupTestDB(t)
-	t.Cleanup(cleanup)
-
-	data := seedtest.SeedFullTestData(t, ctx, db)
-	other := seedtest.SeedAdditionalTenant(t, ctx, db, "LB")
-	conn := postgres.NewTestConnection(db)
+	db := ratingdb.NewDatabase(t)
+	conn := db.Conn
 
 	return &libraryFixture{
-		ctx: ctx,
+		db:  db,
+		ctx: db.A.Ctx,
 		libraries: formulalibraryrepository.New(formulalibraryrepository.Params{
 			DB: conn, Logger: zap.NewNop(),
 		}),
@@ -57,17 +54,16 @@ func setup(t *testing.T) *libraryFixture {
 		tversions: formulatemplateversionrepository.New(formulatemplateversionrepository.Params{
 			DB: conn, Logger: zap.NewNop(),
 		}),
-		tenant: pagination.TenantInfo{
-			OrgID:  data.Organization.ID,
-			BuID:   data.BusinessUnit.ID,
-			UserID: data.User.ID,
-		},
-		other: pagination.TenantInfo{
-			OrgID:  other.Organization.ID,
-			BuID:   other.BusinessUnit.ID,
-			UserID: other.User.ID,
-		},
+		tenant: db.A.Info,
+		other:  db.B.Info,
 	}
+}
+
+func (f *libraryFixture) ctxOf(tenant pagination.TenantInfo) context.Context {
+	if tenant.OrgID == f.other.OrgID {
+		return f.db.B.Ctx
+	}
+	return f.db.A.Ctx
 }
 
 func (f *libraryFixture) library(
@@ -78,7 +74,7 @@ func (f *libraryFixture) library(
 ) *formulalibrary.FormulaLibrary {
 	t.Helper()
 
-	created, err := f.libraries.Create(f.ctx, &formulalibrary.FormulaLibrary{
+	created, err := f.libraries.Create(f.ctxOf(tenant), &formulalibrary.FormulaLibrary{
 		OrganizationID:       tenant.OrgID,
 		BusinessUnitID:       tenant.BuID,
 		Name:                 name,
@@ -102,7 +98,7 @@ func (f *libraryFixture) version(
 	library.Source = source
 	library.Status = status
 	created, err := f.versions.Create(
-		f.ctx,
+		f.ctxOf(f.userOf(library)),
 		formulalibrary.NewVersionFromLibrary(library, number, f.userOf(library).UserID, "", nil),
 	)
 	require.NoError(t, err)
@@ -146,18 +142,24 @@ func TestLatestApprovedByNamesPicksTheNewestApprovedVersionOfLiveLibraries(t *te
 	theirs := f.library(t, f.other, "zones", formulatemplate.StatusActive)
 	f.version(t, theirs, 1, formulatemplate.StatusActive, "library \"theirs\"\n")
 
-	found, err := f.versions.LatestApprovedByNames(f.ctx, &formulalibraryports.LatestApprovedByNamesRequest{
-		TenantInfo: f.tenant,
-		Names:      []string{"ACCESSORIALS", "archived", "zones"},
-	})
+	found, err := f.versions.LatestApprovedByNames(
+		f.ctx,
+		&formulalibraryports.LatestApprovedByNamesRequest{
+			TenantInfo: f.tenant,
+			Names:      []string{"ACCESSORIALS", "archived", "zones"},
+		},
+	)
 	require.NoError(t, err)
 	require.Len(t, found, 1, "archived libraries and other tenants' libraries are not importable")
 	assert.EqualValues(t, 2, found[0].VersionNumber)
 	assert.Equal(t, "library \"v2 approved\"\n", found[0].Source)
 
-	listed, err := f.versions.ListLatestApproved(f.ctx, &formulalibraryports.ListApprovedLibrariesRequest{
-		TenantInfo: f.tenant,
-	})
+	listed, err := f.versions.ListLatestApproved(
+		f.ctx,
+		&formulalibraryports.ListApprovedLibrariesRequest{
+			TenantInfo: f.tenant,
+		},
+	)
 	require.NoError(t, err)
 	require.Len(t, listed, 1)
 	assert.Equal(t, accessorials.ID, listed[0].LibraryID)
@@ -182,10 +184,13 @@ func TestGetByPinsLoadsExactlyThePinnedVersionsInOneQuery(t *testing.T) {
 	assert.ElementsMatch(t, []string{"library \"v1\"\n", "library \"m1\"\n"}, sources,
 		"a newer approved version never replaces the pinned one")
 
-	theirs, err := f.versions.GetByPins(f.ctx, &formulalibraryports.GetVersionsByPinsRequest{
-		TenantInfo: f.other,
-		Pins:       []tarifftypes.Import{v1.Pin()},
-	})
+	theirs, err := f.versions.GetByPins(
+		f.ctxOf(f.other),
+		&formulalibraryports.GetVersionsByPinsRequest{
+			TenantInfo: f.other,
+			Pins:       []tarifftypes.Import{v1.Pin()},
+		},
+	)
 	require.NoError(t, err)
 	assert.Empty(t, theirs)
 }
@@ -217,10 +222,13 @@ func TestTemplateVersionImportsAnswerWhoUsesALibrary(t *testing.T) {
 	_, err = f.tversions.Create(f.ctx, second)
 	require.NoError(t, err)
 
-	usages, err := f.tversions.ListLibraryUsages(f.ctx, &formulatemplateports.ListLibraryUsagesRequest{
-		TenantInfo: f.tenant,
-		LibraryID:  accessorials.ID,
-	})
+	usages, err := f.tversions.ListLibraryUsages(
+		f.ctx,
+		&formulatemplateports.ListLibraryUsagesRequest{
+			TenantInfo: f.tenant,
+			LibraryID:  accessorials.ID,
+		},
+	)
 	require.NoError(t, err)
 	require.Len(t, usages, 2)
 	assert.EqualValues(t, 2, usages[0].LibraryVersionNumber, "newest library version first")
@@ -230,19 +238,25 @@ func TestTemplateVersionImportsAnswerWhoUsesALibrary(t *testing.T) {
 	assert.Equal(t, formulatemplate.StatusActive, usages[1].VersionStatus)
 
 	pinnedToV1 := int64(1)
-	onlyV1, err := f.tversions.ListLibraryUsages(f.ctx, &formulatemplateports.ListLibraryUsagesRequest{
-		TenantInfo:    f.tenant,
-		LibraryID:     accessorials.ID,
-		VersionNumber: &pinnedToV1,
-	})
+	onlyV1, err := f.tversions.ListLibraryUsages(
+		f.ctx,
+		&formulatemplateports.ListLibraryUsagesRequest{
+			TenantInfo:    f.tenant,
+			LibraryID:     accessorials.ID,
+			VersionNumber: &pinnedToV1,
+		},
+	)
 	require.NoError(t, err)
 	require.Len(t, onlyV1, 1)
 	assert.EqualValues(t, 1, onlyV1[0].TemplateVersion)
 
-	theirs, err := f.tversions.ListLibraryUsages(f.ctx, &formulatemplateports.ListLibraryUsagesRequest{
-		TenantInfo: f.other,
-		LibraryID:  accessorials.ID,
-	})
+	theirs, err := f.tversions.ListLibraryUsages(
+		f.ctxOf(f.other),
+		&formulatemplateports.ListLibraryUsagesRequest{
+			TenantInfo: f.other,
+			LibraryID:  accessorials.ID,
+		},
+	)
 	require.NoError(t, err)
 	assert.Empty(t, theirs)
 }

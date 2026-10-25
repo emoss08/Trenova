@@ -4,20 +4,17 @@ import (
 	"context"
 	"strings"
 
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/domainvalidation"
 	"github.com/emoss08/trenova/pkg/errortypes"
-	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/validationframework"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/emoss08/trenova/shared/timeutils"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
-	"github.com/uptrace/bun"
 )
 
 var (
-	_ bun.BeforeAppendModelHook          = (*Guidance)(nil)
 	_ validationframework.TenantedEntity = (*Guidance)(nil)
 )
 
@@ -86,31 +83,29 @@ func AllGuidanceSources() []GuidanceSource {
 }
 
 type Guidance struct {
-	bun.BaseModel `bun:"table:agent_profile_guidance,alias:aprg" json:"-"`
+	keel.Table `keel:"agent_profile_guidance"`
 
-	pagination.CursorValueSet `json:"-" bun:",embed"`
+	ID             pulid.ID `json:"id"             keel:"id,pk,autoid:aprg_"`
+	BusinessUnitID pulid.ID `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
+	OrganizationID pulid.ID `json:"organizationId" keel:"organization_id,pk,tenant"`
 
-	ID             pulid.ID `json:"id"             bun:"id,pk,type:VARCHAR(100),notnull"`
-	BusinessUnitID pulid.ID `json:"businessUnitId" bun:"business_unit_id,pk,notnull,type:VARCHAR(100)"`
-	OrganizationID pulid.ID `json:"organizationId" bun:"organization_id,pk,notnull,type:VARCHAR(100)"`
+	Subject     Subject        `json:"subject"     keel:"subject"`
+	UserID      *pulid.ID      `json:"userId"      keel:"user_id"`
+	Content     string         `json:"content"     keel:"content"`
+	Status      GuidanceStatus `json:"status"      keel:"status"`
+	Source      GuidanceSource `json:"source"      keel:"source"`
+	CreatedByID pulid.ID       `json:"createdById" keel:"created_by_id"`
+	ThreadID    *pulid.ID      `json:"threadId"    keel:"thread_id"`
+	RetiredByID *pulid.ID      `json:"retiredById" keel:"retired_by_id"`
+	RetiredAt   *int64         `json:"retiredAt"   keel:"retired_at"`
 
-	Subject     Subject        `json:"subject"     bun:"subject,type:VARCHAR(20),notnull"`
-	UserID      *pulid.ID      `json:"userId"      bun:"user_id,type:VARCHAR(100),nullzero"`
-	Content     string         `json:"content"     bun:"content,type:TEXT,notnull"`
-	Status      GuidanceStatus `json:"status"      bun:"status,type:VARCHAR(20),notnull,default:'Active'"`
-	Source      GuidanceSource `json:"source"      bun:"source,type:VARCHAR(20),notnull"`
-	CreatedByID pulid.ID       `json:"createdById" bun:"created_by_id,type:VARCHAR(100),notnull"`
-	ThreadID    *pulid.ID      `json:"threadId"    bun:"thread_id,type:VARCHAR(100),nullzero"`
-	RetiredByID *pulid.ID      `json:"retiredById" bun:"retired_by_id,type:VARCHAR(100),nullzero"`
-	RetiredAt   *int64         `json:"retiredAt"   bun:"retired_at,type:BIGINT,nullzero"`
+	Version   int64 `json:"version"   keel:"version,version"`
+	CreatedAt int64 `json:"createdAt" keel:"created_at,autocreate"`
+	UpdatedAt int64 `json:"updatedAt" keel:"updated_at,autoupdate"`
 
-	Version   int64 `json:"version"   bun:"version,type:BIGINT,notnull,default:0"`
-	CreatedAt int64 `json:"createdAt" bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
-	UpdatedAt int64 `json:"updatedAt" bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
-
-	BusinessUnit *tenant.BusinessUnit `bun:"rel:belongs-to,join:business_unit_id=id" json:"-"`
-	Organization *tenant.Organization `bun:"rel:belongs-to,join:organization_id=id"  json:"-"`
-	CreatedBy    *tenant.User         `bun:"rel:belongs-to,join:created_by_id=id"    json:"createdBy,omitempty"`
+	BusinessUnit *tenant.BusinessUnit `json:"-"`
+	Organization *tenant.Organization `json:"-"`
+	CreatedBy    *tenant.User         `json:"createdBy,omitempty" keel:"belongs:created_by_id"`
 }
 
 func (g *Guidance) Validate(multiErr *errortypes.MultiError) {
@@ -193,21 +188,9 @@ func (g *Guidance) GetPostgresSearchConfig() domaintypes.PostgresSearchConfig {
 	}
 }
 
-func (g *Guidance) BeforeAppendModel(_ context.Context, query bun.Query) error {
-	now := timeutils.NowUnix()
-
-	switch query.(type) {
-	case *bun.InsertQuery:
-		if g.ID.IsNil() {
-			g.ID = pulid.MustNew("aprg_")
-		}
-		if g.Status == "" {
-			g.Status = GuidanceStatusActive
-		}
-		g.CreatedAt = now
-		g.UpdatedAt = now
-	case *bun.UpdateQuery:
-		g.UpdatedAt = now
+func (g *Guidance) BeforeCreate(_ context.Context) error {
+	if g.Status == "" {
+		g.Status = GuidanceStatusActive
 	}
 
 	return nil

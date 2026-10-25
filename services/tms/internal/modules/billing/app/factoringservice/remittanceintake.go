@@ -13,7 +13,6 @@ import (
 	"github.com/emoss08/trenova/pkg/factoringremit"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/uptrace/bun"
 	"go.uber.org/zap"
 )
 
@@ -171,7 +170,7 @@ func (s *RemittanceService) stageEmailed(
 		}
 		prepared = &preparedStage{problem: problemOf(err)}
 	}
-	return s.db.WithTx(ctx, kernelports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
+	return s.db.Transact(ctx, kernelports.TxOptions{}, func(txCtx context.Context) error {
 		rem, lockErr := s.lock(txCtx, tenantInfo, created.ID, created.Version)
 		if lockErr != nil {
 			return lockErr

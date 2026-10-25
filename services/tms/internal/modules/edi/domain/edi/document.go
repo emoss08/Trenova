@@ -3,12 +3,11 @@ package edi
 import (
 	"context"
 
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/pkg/domainvalidation"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/emoss08/trenova/shared/timeutils"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
-	"github.com/uptrace/bun"
 )
 
 const DefaultX12204Version = "004010"
@@ -110,88 +109,60 @@ type TemplateElement struct {
 }
 
 type EDIDocumentType struct {
-	bun.BaseModel `json:"-" bun:"table:edi_document_types,alias:edt"`
+	keel.Table `keel:"edi_document_types"`
 
-	ID               pulid.ID          `json:"id"               bun:"id,pk,type:VARCHAR(100),notnull"`
-	Code             string            `json:"code"             bun:"code,type:VARCHAR(20),notnull"`
-	Name             string            `json:"name"             bun:"name,type:VARCHAR(200),notnull"`
-	Standard         EDIStandard       `json:"standard"         bun:"standard,type:edi_standard_enum,notnull"`
-	TransactionSet   TransactionSet    `json:"transactionSet"   bun:"transaction_set,type:edi_transaction_set_enum,notnull"`
-	TransactionSetID pulid.ID          `json:"transactionSetId" bun:"transaction_set_id,type:VARCHAR(100),notnull"`
-	Direction        DocumentDirection `json:"direction"        bun:"direction,type:edi_document_direction_enum,notnull"`
-	DefaultVersion   string            `json:"defaultVersion"   bun:"default_version,type:VARCHAR(20),notnull"`
-	Status           DocumentStatus    `json:"status"           bun:"status,type:edi_document_status_enum,notnull"`
-	CreatedAt        int64             `json:"createdAt"        bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
-	UpdatedAt        int64             `json:"updatedAt"        bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
+	ID               pulid.ID          `json:"id"               keel:"id,pk,autoid:edidt_"`
+	Code             string            `json:"code"             keel:"code"`
+	Name             string            `json:"name"             keel:"name"`
+	Standard         EDIStandard       `json:"standard"         keel:"standard"`
+	TransactionSet   TransactionSet    `json:"transactionSet"   keel:"transaction_set"`
+	TransactionSetID pulid.ID          `json:"transactionSetId" keel:"transaction_set_id"`
+	Direction        DocumentDirection `json:"direction"        keel:"direction"`
+	DefaultVersion   string            `json:"defaultVersion"   keel:"default_version"`
+	Status           DocumentStatus    `json:"status"           keel:"status"`
+	CreatedAt        int64             `json:"createdAt"        keel:"created_at,autocreate"`
+	UpdatedAt        int64             `json:"updatedAt"        keel:"updated_at,autoupdate"`
 
-	TransactionSetRef *EDITransactionSet `json:"transactionSetRef,omitempty" bun:"rel:belongs-to,join:transaction_set_id=id"`
-}
-
-func (d *EDIDocumentType) BeforeAppendModel(_ context.Context, query bun.Query) error {
-	now := timeutils.NowUnix()
-	switch query.(type) {
-	case *bun.InsertQuery:
-		if d.ID.IsNil() {
-			d.ID = pulid.MustNew("edidt_")
-		}
-		d.CreatedAt = now
-	case *bun.UpdateQuery:
-		d.UpdatedAt = now
-	}
-	return nil
+	TransactionSetRef *EDITransactionSet `json:"transactionSetRef,omitempty" keel:"belongs:transaction_set_id"`
 }
 
 type EDITemplateVersion struct {
-	bun.BaseModel `json:"-" bun:"table:edi_template_versions,alias:etv"`
+	keel.Table `keel:"edi_template_versions"`
 
-	ID                 pulid.ID       `json:"id"                 bun:"id,pk,type:VARCHAR(100),notnull"`
-	BusinessUnitID     pulid.ID       `json:"businessUnitId"     bun:"business_unit_id,type:VARCHAR(100),pk,notnull"`
-	OrganizationID     pulid.ID       `json:"organizationId"     bun:"organization_id,type:VARCHAR(100),pk,notnull"`
-	TemplateID         pulid.ID       `json:"templateId"         bun:"template_id,type:VARCHAR(100),notnull"`
-	SourceVersionID    pulid.ID       `json:"sourceVersionId"    bun:"source_version_id,type:VARCHAR(100),nullzero"`
-	VersionNumber      int64          `json:"versionNumber"      bun:"version_number,type:BIGINT,notnull"`
-	X12Version         string         `json:"x12Version"         bun:"x12_version,type:VARCHAR(20),notnull"`
-	FunctionalGroupID  string         `json:"functionalGroupId"  bun:"functional_group_id,type:VARCHAR(2),notnull"`
-	Status             TemplateStatus `json:"status"             bun:"status,type:edi_template_status_enum,notnull"`
-	IsActive           bool           `json:"isActive"           bun:"is_active,type:BOOLEAN,notnull"`
-	Notes              string         `json:"notes"              bun:"notes,type:TEXT,nullzero"`
-	CertificationNotes string         `json:"certificationNotes" bun:"certification_notes,type:TEXT,nullzero"`
-	ActivationNotes    string         `json:"activationNotes"    bun:"activation_notes,type:TEXT,nullzero"`
-	ArchiveNotes       string         `json:"archiveNotes"       bun:"archive_notes,type:TEXT,nullzero"`
-	DeprecatedNotes    string         `json:"deprecatedNotes"    bun:"deprecated_notes,type:TEXT,nullzero"`
-	SupersededNotes    string         `json:"supersededNotes"    bun:"superseded_notes,type:TEXT,nullzero"`
-	CertifiedByID      pulid.ID       `json:"certifiedById"      bun:"certified_by_id,type:VARCHAR(100),nullzero"`
-	ActivatedByID      pulid.ID       `json:"activatedById"      bun:"activated_by_id,type:VARCHAR(100),nullzero"`
-	ArchivedByID       pulid.ID       `json:"archivedById"       bun:"archived_by_id,type:VARCHAR(100),nullzero"`
-	DeprecatedByID     pulid.ID       `json:"deprecatedById"     bun:"deprecated_by_id,type:VARCHAR(100),nullzero"`
-	SupersededByID     pulid.ID       `json:"supersededById"     bun:"superseded_by_id,type:VARCHAR(100),nullzero"`
-	CertifiedAt        *int64         `json:"certifiedAt"        bun:"certified_at,type:BIGINT,nullzero"`
-	ActivatedAt        *int64         `json:"activatedAt"        bun:"activated_at,type:BIGINT,nullzero"`
-	ArchivedAt         *int64         `json:"archivedAt"         bun:"archived_at,type:BIGINT,nullzero"`
-	DeprecatedAt       *int64         `json:"deprecatedAt"       bun:"deprecated_at,type:BIGINT,nullzero"`
-	SupersededAt       *int64         `json:"supersededAt"       bun:"superseded_at,type:BIGINT,nullzero"`
-	Version            int64          `json:"version"            bun:"version,type:BIGINT,notnull"`
-	CreatedAt          int64          `json:"createdAt"          bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
-	UpdatedAt          int64          `json:"updatedAt"          bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
+	ID                 pulid.ID       `json:"id"                 keel:"id,pk,autoid:editv_"`
+	BusinessUnitID     pulid.ID       `json:"businessUnitId"     keel:"business_unit_id,pk,tenant"`
+	OrganizationID     pulid.ID       `json:"organizationId"     keel:"organization_id,pk,tenant"`
+	TemplateID         pulid.ID       `json:"templateId"         keel:"template_id"`
+	SourceVersionID    pulid.ID       `json:"sourceVersionId"    keel:"source_version_id,nullzero"`
+	VersionNumber      int64          `json:"versionNumber"      keel:"version_number"`
+	X12Version         string         `json:"x12Version"         keel:"x12_version"`
+	FunctionalGroupID  string         `json:"functionalGroupId"  keel:"functional_group_id"`
+	Status             TemplateStatus `json:"status"             keel:"status"`
+	IsActive           bool           `json:"isActive"           keel:"is_active"`
+	Notes              string         `json:"notes"              keel:"notes,nullzero"`
+	CertificationNotes string         `json:"certificationNotes" keel:"certification_notes,nullzero"`
+	ActivationNotes    string         `json:"activationNotes"    keel:"activation_notes,nullzero"`
+	ArchiveNotes       string         `json:"archiveNotes"       keel:"archive_notes,nullzero"`
+	DeprecatedNotes    string         `json:"deprecatedNotes"    keel:"deprecated_notes,nullzero"`
+	SupersededNotes    string         `json:"supersededNotes"    keel:"superseded_notes,nullzero"`
+	CertifiedByID      pulid.ID       `json:"certifiedById"      keel:"certified_by_id,nullzero"`
+	ActivatedByID      pulid.ID       `json:"activatedById"      keel:"activated_by_id,nullzero"`
+	ArchivedByID       pulid.ID       `json:"archivedById"       keel:"archived_by_id,nullzero"`
+	DeprecatedByID     pulid.ID       `json:"deprecatedById"     keel:"deprecated_by_id,nullzero"`
+	SupersededByID     pulid.ID       `json:"supersededById"     keel:"superseded_by_id,nullzero"`
+	CertifiedAt        *int64         `json:"certifiedAt"        keel:"certified_at"`
+	ActivatedAt        *int64         `json:"activatedAt"        keel:"activated_at"`
+	ArchivedAt         *int64         `json:"archivedAt"         keel:"archived_at"`
+	DeprecatedAt       *int64         `json:"deprecatedAt"       keel:"deprecated_at"`
+	SupersededAt       *int64         `json:"supersededAt"       keel:"superseded_at"`
+	Version            int64          `json:"version"            keel:"version,version"`
+	CreatedAt          int64          `json:"createdAt"          keel:"created_at,autocreate"`
+	UpdatedAt          int64          `json:"updatedAt"          keel:"updated_at,autoupdate"`
 
-	Template        *EDITemplate                `json:"template,omitempty"        bun:"rel:belongs-to,join:template_id=id"`
-	SourceVersion   *EDITemplateVersion         `json:"sourceVersion,omitempty"   bun:"rel:belongs-to,join:source_version_id=id"`
-	Segments        []*EDITemplateSegment       `json:"segments,omitempty"        bun:"rel:has-many,join:id=template_version_id"`
-	ScriptLibraries []*EDITemplateScriptLibrary `json:"scriptLibraries,omitempty" bun:"rel:has-many,join:id=template_version_id"`
-}
-
-func (v *EDITemplateVersion) BeforeAppendModel(_ context.Context, query bun.Query) error {
-	now := timeutils.NowUnix()
-	switch query.(type) {
-	case *bun.InsertQuery:
-		if v.ID.IsNil() {
-			v.ID = pulid.MustNew("editv_")
-		}
-		v.CreatedAt = now
-	case *bun.UpdateQuery:
-		v.UpdatedAt = now
-	}
-	return nil
+	Template        *EDITemplate                `json:"template,omitempty"        keel:"belongs:template_id"`
+	SourceVersion   *EDITemplateVersion         `json:"sourceVersion,omitempty"   keel:"belongs:source_version_id"`
+	Segments        []*EDITemplateSegment       `json:"segments,omitempty"        keel:"many:template_version_id"`
+	ScriptLibraries []*EDITemplateScriptLibrary `json:"scriptLibraries,omitempty" keel:"many:template_version_id"`
 }
 
 func (v *EDITemplateVersion) GetID() pulid.ID {
@@ -207,75 +178,70 @@ func (v *EDITemplateVersion) GetBusinessUnitID() pulid.ID {
 }
 
 type EDITemplateSegment struct {
-	bun.BaseModel `json:"-" bun:"table:edi_template_segments,alias:ets"`
+	keel.Table `keel:"edi_template_segments"`
 
-	ID                pulid.ID          `json:"id"                bun:"id,pk,type:VARCHAR(100),notnull"`
-	BusinessUnitID    pulid.ID          `json:"businessUnitId"    bun:"business_unit_id,type:VARCHAR(100),pk,notnull"`
-	OrganizationID    pulid.ID          `json:"organizationId"    bun:"organization_id,type:VARCHAR(100),pk,notnull"`
-	TemplateVersionID pulid.ID          `json:"templateVersionId" bun:"template_version_id,type:VARCHAR(100),notnull"`
-	SegmentID         string            `json:"segmentId"         bun:"segment_id,type:VARCHAR(10),notnull"`
-	Name              string            `json:"name"              bun:"name,type:VARCHAR(200),notnull"`
-	Sequence          int64             `json:"sequence"          bun:"sequence,type:BIGINT,notnull"`
-	LoopID            string            `json:"loopId"            bun:"loop_id,type:VARCHAR(50),nullzero"`
-	RepeatPath        string            `json:"repeatPath"        bun:"repeat_path,type:TEXT,nullzero"`
-	Condition         string            `json:"condition"         bun:"condition,type:TEXT,nullzero"`
-	Required          bool              `json:"required"          bun:"required,type:BOOLEAN,notnull"`
-	MaxUse            int64             `json:"maxUse"            bun:"max_use,type:BIGINT,notnull,default:1"`
-	Elements          []TemplateElement `json:"elements"          bun:"elements,type:JSONB,notnull,default:'[]'"`
-	UsageNotes        string            `json:"usageNotes"        bun:"usage_notes,type:TEXT,nullzero"`
-	CreatedAt         int64             `json:"createdAt"         bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
-	UpdatedAt         int64             `json:"updatedAt"         bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
+	ID                pulid.ID          `json:"id"                keel:"id,pk,autoid:edisg_"`
+	BusinessUnitID    pulid.ID          `json:"businessUnitId"    keel:"business_unit_id,pk,tenant"`
+	OrganizationID    pulid.ID          `json:"organizationId"    keel:"organization_id,pk,tenant"`
+	TemplateVersionID pulid.ID          `json:"templateVersionId" keel:"template_version_id"`
+	SegmentID         string            `json:"segmentId"         keel:"segment_id"`
+	Name              string            `json:"name"              keel:"name"`
+	Sequence          int64             `json:"sequence"          keel:"sequence"`
+	LoopID            string            `json:"loopId"            keel:"loop_id,nullzero"`
+	RepeatPath        string            `json:"repeatPath"        keel:"repeat_path,nullzero"`
+	Condition         string            `json:"condition"         keel:"condition,nullzero"`
+	Required          bool              `json:"required"          keel:"required"`
+	MaxUse            int64             `json:"maxUse"            keel:"max_use"`
+	Elements          []TemplateElement `json:"elements"          keel:"elements,jsonb"`
+	UsageNotes        string            `json:"usageNotes"        keel:"usage_notes,nullzero"`
+	CreatedAt         int64             `json:"createdAt"         keel:"created_at,autocreate"`
+	UpdatedAt         int64             `json:"updatedAt"         keel:"updated_at,autoupdate"`
 }
 
-func (s *EDITemplateSegment) BeforeAppendModel(_ context.Context, query bun.Query) error {
-	now := timeutils.NowUnix()
+func (s *EDITemplateSegment) BeforeUpdate(ctx context.Context) error {
+	if err := s.BeforeSave(ctx); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (s *EDITemplateSegment) BeforeCreate(ctx context.Context) error {
+	if err := s.BeforeSave(ctx); err != nil {
+		return err
+	}
+	if s.MaxUse == 0 {
+		s.MaxUse = 1
+	}
+
+	return nil
+}
+
+func (s *EDITemplateSegment) BeforeSave(_ context.Context) error {
 	if s.Elements == nil {
 		s.Elements = []TemplateElement{}
-	}
-	switch query.(type) {
-	case *bun.InsertQuery:
-		if s.ID.IsNil() {
-			s.ID = pulid.MustNew("edisg_")
-		}
-		s.CreatedAt = now
-	case *bun.UpdateQuery:
-		s.UpdatedAt = now
 	}
 	return nil
 }
 
 type EDITemplateScriptLibrary struct {
-	bun.BaseModel `json:"-" bun:"table:edi_template_script_libraries,alias:etsl"`
+	keel.Table `keel:"edi_template_script_libraries"`
 
-	ID                pulid.ID       `json:"id"                bun:"id,pk,type:VARCHAR(100),notnull"`
-	BusinessUnitID    pulid.ID       `json:"businessUnitId"    bun:"business_unit_id,type:VARCHAR(100),pk,notnull"`
-	OrganizationID    pulid.ID       `json:"organizationId"    bun:"organization_id,type:VARCHAR(100),pk,notnull"`
-	TemplateVersionID pulid.ID       `json:"templateVersionId" bun:"template_version_id,type:VARCHAR(100),notnull"`
-	Name              string         `json:"name"              bun:"name,type:VARCHAR(200),notnull"`
-	Description       string         `json:"description"       bun:"description,type:TEXT,nullzero"`
-	Language          ScriptLanguage `json:"language"          bun:"language,type:edi_script_language_enum,notnull"`
-	Script            string         `json:"script"            bun:"script,type:TEXT,notnull"`
-	Status            TemplateStatus `json:"status"            bun:"status,type:edi_template_status_enum,notnull"`
-	Version           int64          `json:"version"           bun:"version,type:BIGINT,notnull"`
-	CreatedAt         int64          `json:"createdAt"         bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
-	UpdatedAt         int64          `json:"updatedAt"         bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
+	ID                pulid.ID       `json:"id"                keel:"id,pk,autoid:edisl_"`
+	BusinessUnitID    pulid.ID       `json:"businessUnitId"    keel:"business_unit_id,pk,tenant"`
+	OrganizationID    pulid.ID       `json:"organizationId"    keel:"organization_id,pk,tenant"`
+	TemplateVersionID pulid.ID       `json:"templateVersionId" keel:"template_version_id"`
+	Name              string         `json:"name"              keel:"name"`
+	Description       string         `json:"description"       keel:"description,nullzero"`
+	Language          ScriptLanguage `json:"language"          keel:"language"`
+	Script            string         `json:"script"            keel:"script"`
+	Status            TemplateStatus `json:"status"            keel:"status"`
+	Version           int64          `json:"version"           keel:"version,version"`
+	CreatedAt         int64          `json:"createdAt"         keel:"created_at,autocreate"`
+	UpdatedAt         int64          `json:"updatedAt"         keel:"updated_at,autoupdate"`
 
-	FunctionNames   []string            `json:"functionNames"             bun:"-"`
-	TemplateVersion *EDITemplateVersion `json:"templateVersion,omitempty" bun:"rel:belongs-to,join:template_version_id=id"`
-}
-
-func (l *EDITemplateScriptLibrary) BeforeAppendModel(_ context.Context, query bun.Query) error {
-	now := timeutils.NowUnix()
-	switch query.(type) {
-	case *bun.InsertQuery:
-		if l.ID.IsNil() {
-			l.ID = pulid.MustNew("edisl_")
-		}
-		l.CreatedAt = now
-	case *bun.UpdateQuery:
-		l.UpdatedAt = now
-	}
-	return nil
+	FunctionNames   []string            `json:"functionNames"`
+	TemplateVersion *EDITemplateVersion `json:"templateVersion,omitempty" keel:"belongs:template_version_id"`
 }
 
 func (t *EDIDocumentType) Validate(multiErr *errortypes.MultiError) {

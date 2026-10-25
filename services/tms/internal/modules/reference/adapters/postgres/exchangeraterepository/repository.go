@@ -4,15 +4,21 @@ import (
 	"context"
 	"time"
 
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/reference/domain/exchangerate"
+	"github.com/emoss08/trenova/internal/modules/reference/domain/exchangerate/exchangeratedb"
 	"github.com/emoss08/trenova/internal/modules/reference/ports/exchangerateports"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/pagination"
-	"github.com/uptrace/bun"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
+)
+
+var (
+	exchangeRateErrors    = dberror.Mapping{Entity: "ExchangeRate"}
+	settlementQuoteErrors = dberror.Mapping{Entity: "SettlementQuote"}
 )
 
 type Params struct {
@@ -39,21 +45,18 @@ func (r *repository) GetRate(
 	req *exchangerateports.GetExchangeRateRequest,
 ) (*exchangerate.ExchangeRate, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*exchangerate.ExchangeRate, error) {
-		entity := new(exchangerate.ExchangeRate)
-		err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(entity).
-			Where("er.organization_id = ?", req.TenantInfo.OrgID).
-			Where("er.business_unit_id = ?", req.TenantInfo.BuID).
-			Where("er.provider = ?", req.Provider).
-			Where("er.from_currency = ?", req.FromCurrency).
-			Where("er.to_currency = ?", req.ToCurrency).
-			Where("er.rate_type = ?", req.RateType).
-			Where("er.date = ?", req.Date.Format("2006-01-02")).
-			Scan(ctx)
+		er := exchangeratedb.ExchangeRates
+		entity, err := er.Where(
+			er.Provider.Eq(req.Provider),
+			er.FromCurrency.Eq(req.FromCurrency),
+			er.ToCurrency.Eq(req.ToCurrency),
+			er.RateType.Eq(req.RateType),
+			er.Date.Eq(req.Date.Format(time.DateOnly)),
+		).One(ctx, r.db.Keel(ctx))
 		if err != nil {
-			return nil, dberror.HandleNotFoundError(err, "ExchangeRate")
+			return nil, exchangeRateErrors.Map(err, "")
 		}
+
 		return entity, nil
 	})
 }
@@ -63,27 +66,35 @@ func (r *repository) UpsertRates(
 	req *exchangerateports.UpsertExchangeRatesRequest,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
-		return r.db.DBForContext(ctx).
-			RunInTx(ctx, nil, func(txCtx context.Context, tx bun.Tx) error {
-				for idx := range req.Rates {
-					rate := req.Rates[idx]
-					_, err := tx.NewInsert().
-						Model(rate).
-						On("CONFLICT (organization_id, business_unit_id, provider, from_currency, to_currency, rate_type, date) DO UPDATE").
-						Set("bid = EXCLUDED.bid").
-						Set("ask = EXCLUDED.ask").
-						Set("mid = EXCLUDED.mid").
-						Set("selected_rate = EXCLUDED.selected_rate").
-						Set("source_timestamp = EXCLUDED.source_timestamp").
-						Set("fetched_at = EXCLUDED.fetched_at").
-						Set("settlement_eligible = EXCLUDED.settlement_eligible").
-						Exec(txCtx)
-					if err != nil {
-						return err
-					}
-				}
-				return nil
-			})
+		if len(req.Rates) == 0 {
+			return nil
+		}
+
+		er := exchangeratedb.ExchangeRates
+		_, err := er.Upsert(ctx, r.db.Keel(ctx), req.Rates,
+			keel.OnConflict(
+				er.OrganizationID,
+				er.BusinessUnitID,
+				er.Provider,
+				er.FromCurrency,
+				er.ToCurrency,
+				er.RateType,
+				er.Date,
+			).Update(
+				er.Bid,
+				er.Ask,
+				er.Mid,
+				er.SelectedRate,
+				er.SourceTimestamp,
+				er.FetchedAt,
+				er.SettlementEligible,
+			))
+		if err != nil {
+			r.l.Error("failed to upsert exchange rates", zap.Error(err))
+			return exchangeRateErrors.Map(err, "")
+		}
+
+		return nil
 	})
 }
 
@@ -95,12 +106,13 @@ func (r *repository) CreateSettlementQuote(
 		req.Quote.OrganizationID = req.TenantInfo.OrgID
 		req.Quote.BusinessUnitID = req.TenantInfo.BuID
 
-		if _, err := r.db.DBForContext(ctx).
-			NewInsert().
-			Model(req.Quote).
-			Returning("*").
-			Exec(ctx); err != nil {
-			return nil, err
+		if err := exchangeratedb.SettlementQuotes.Create(
+			ctx,
+			r.db.Keel(ctx),
+			req.Quote,
+		); err != nil {
+			r.l.Error("failed to create settlement quote", zap.Error(err))
+			return nil, settlementQuoteErrors.Map(err, req.Quote.ID.String())
 		}
 
 		return req.Quote, nil
@@ -109,22 +121,16 @@ func (r *repository) CreateSettlementQuote(
 
 func (r *repository) GetLatestDate(
 	ctx context.Context,
-	tenantInfo pagination.TenantInfo,
+	_ pagination.TenantInfo,
 ) (*time.Time, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*time.Time, error) {
-		var latestDate time.Time
-		err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model((*exchangerate.ExchangeRate)(nil)).
-			ColumnExpr("er.date").
-			Where("er.organization_id = ?", tenantInfo.OrgID).
-			Where("er.business_unit_id = ?", tenantInfo.BuID).
-			Order("er.date DESC").
-			Limit(1).
-			Scan(ctx, &latestDate)
+		er := exchangeratedb.ExchangeRates
+		latest, err := keel.IntoOne[time.Time](ctx, r.db.Keel(ctx),
+			er.Pick(er.Date).Order(er.Date.Desc()).Limit(1))
 		if err != nil {
-			return nil, err
+			return nil, exchangeRateErrors.Map(err, "")
 		}
-		return &latestDate, nil
+
+		return &latest, nil
 	})
 }

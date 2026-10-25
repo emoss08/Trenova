@@ -215,8 +215,8 @@ is PL/pgSQL, `SECURITY DEFINER`, with `SET search_path`. Each call:
 `(SELECT trenova_rls.org_id())`, so they run once per statement per occurrence, not per row. But
 nothing caches the result: the standard policy (`standard_expr`, lines 256-267) verifies twice per
 table reference, read-scope policies add more, and policies that reference other tables pull in theirs.
-A five-table join verifies the same token about ten times. Bun sends simple queries with
-client-interpolated parameters, so nothing is reused across statements. Estimated at 10–30 µs per call
+A five-table join verifies the same token about ten times, and nothing is reused across
+statements. Estimated at 10–30 µs per call
 (unmeasured), that adds roughly 0.1–0.4 ms to a typical statement.
 
 **With Rust.** A pgrx `claims()` that verifies once per transaction (keyed by the token and the local

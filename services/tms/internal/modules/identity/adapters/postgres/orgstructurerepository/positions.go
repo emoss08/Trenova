@@ -4,15 +4,24 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
-	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant/tenantdb"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker/workerdb"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
+	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/emoss08/trenova/shared/timeutils"
 	"go.uber.org/zap"
+)
+
+const (
+	textSQL        = "?::text"
+	isActiveSQL    = "? = 'Active'"
+	orEmptySQL     = "COALESCE(?, '')"
+	workerNameSQL  = "? || ' ' || ?"
+	positionsAlias = "jpos"
 )
 
 // Two rosters hold positions. Drivers are workers and carry position_id on
@@ -23,29 +32,18 @@ import (
 
 func (r *repository) StaffByPosition(
 	ctx context.Context,
-	tenantInfo pagination.TenantInfo,
+	_ pagination.TenantInfo,
 ) ([]workerports.StaffCountRow, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]workerports.StaffCountRow, error) {
-		rows := make([]workerports.StaffCountRow, 0, 16)
-		if err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model((*tenant.OrganizationMembership)(nil)).
-			Join("JOIN users AS usr").
-			JoinOn("usr.id = uom.user_id").
-			Join("JOIN job_positions AS jpos").
-			JoinOn("jpos.id = uom.position_id").
-			JoinOn("jpos.organization_id = uom.organization_id").
-			JoinOn("jpos.business_unit_id = uom.business_unit_id").
-			Where("uom.organization_id = ?", tenantInfo.OrgID).
-			Where("uom.business_unit_id = ?", tenantInfo.BuID).
-			Where("usr.status = 'Active'").
-			ColumnExpr("uom.position_id AS position_id").
-			ColumnExpr("jpos.title AS title").
-			ColumnExpr("jpos.code AS code").
-			ColumnExpr("jpos.department::text AS department").
-			ColumnExpr("COUNT(*) AS staff").
-			GroupExpr("uom.position_id, jpos.title, jpos.code, jpos.department").
-			Scan(ctx, &rows); err != nil {
+		m := tenantdb.OrganizationMemberships
+		u := m.User()
+		jp := workerdb.JobPositions
+		rows, err := keel.Into[workerports.StaffCountRow](ctx, r.db.Keel(ctx), m.
+			Join(jp, jp.ID.EqCol(m.PositionID)).
+			Where(u.Status.Eq(domaintypes.StatusActive)).
+			Group(m.PositionID, jp.Title, jp.Code, jp.Department).
+			Pick(m.PositionID, jp.Title, jp.Code, keel.Raw(textSQL, jp.Department), keel.Count()))
+		if err != nil {
 			r.l.Error("failed to count staff by position", zap.Error(err))
 			return nil, fmt.Errorf("count staff by position: %w", err)
 		}
@@ -55,48 +53,41 @@ func (r *repository) StaffByPosition(
 
 func (r *repository) ListPositionHolders(
 	ctx context.Context,
-	tenantInfo pagination.TenantInfo,
+	_ pagination.TenantInfo,
 	positionID pulid.ID,
 ) ([]workerports.PositionHolderRow, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]workerports.PositionHolderRow, error) {
-		workers := make([]workerports.PositionHolderRow, 0, 16)
-		if err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model((*worker.Worker)(nil)).
-			Join("LEFT JOIN fleet_codes AS fc").
-			JoinOn("fc.id = wrk.fleet_code_id").
-			JoinOn("fc.organization_id = wrk.organization_id").
-			JoinOn("fc.business_unit_id = wrk.business_unit_id").
-			Where("wrk.organization_id = ?", tenantInfo.OrgID).
-			Where("wrk.business_unit_id = ?", tenantInfo.BuID).
-			Where("wrk.position_id = ?", positionID).
-			ColumnExpr("? AS kind", string(workerports.PositionHolderWorker)).
-			ColumnExpr("wrk.id AS id").
-			ColumnExpr("wrk.first_name || ' ' || wrk.last_name AS name").
-			ColumnExpr("wrk.status::text AS status").
-			ColumnExpr("COALESCE(fc.code, '') AS detail").
-			OrderExpr("wrk.status = 'Active' DESC, wrk.last_name, wrk.first_name").
-			Scan(ctx, &workers); err != nil {
+		db := r.db.Keel(ctx)
+		w := workerdb.Workers
+		fc := w.FleetCode()
+		workers, err := keel.Into[workerports.PositionHolderRow](ctx, db, w.
+			Where(w.PositionID.Eq(positionID)).
+			Pick(
+				keel.Raw(textSQL, string(workerports.PositionHolderWorker)),
+				w.ID,
+				keel.Raw(workerNameSQL, w.FirstName, w.LastName),
+				keel.Raw(textSQL, w.Status),
+				keel.Raw(orEmptySQL, fc.Code),
+			).
+			Order(keel.Desc(keel.Raw(isActiveSQL, w.Status)), w.LastName.Asc(), w.FirstName.Asc()))
+		if err != nil {
 			r.l.Error("failed to list workers in position", zap.Error(err))
 			return nil, fmt.Errorf("list workers in position: %w", err)
 		}
 
-		users := make([]workerports.PositionHolderRow, 0, 8)
-		if err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model((*tenant.OrganizationMembership)(nil)).
-			Join("JOIN users AS usr").
-			JoinOn("usr.id = uom.user_id").
-			Where("uom.organization_id = ?", tenantInfo.OrgID).
-			Where("uom.business_unit_id = ?", tenantInfo.BuID).
-			Where("uom.position_id = ?", positionID).
-			ColumnExpr("? AS kind", string(workerports.PositionHolderUser)).
-			ColumnExpr("usr.id AS id").
-			ColumnExpr("usr.name AS name").
-			ColumnExpr("usr.status::text AS status").
-			ColumnExpr("usr.email_address AS detail").
-			OrderExpr("usr.status = 'Active' DESC, usr.name").
-			Scan(ctx, &users); err != nil {
+		m := tenantdb.OrganizationMemberships
+		u := m.User()
+		users, err := keel.Into[workerports.PositionHolderRow](ctx, db, m.
+			Where(m.PositionID.Eq(positionID), u.ID.IsNotNull()).
+			Pick(
+				keel.Raw(textSQL, string(workerports.PositionHolderUser)),
+				u.ID,
+				u.Name,
+				keel.Raw(textSQL, u.Status),
+				u.EmailAddress,
+			).
+			Order(keel.Desc(keel.Raw(isActiveSQL, u.Status)), u.Name.Asc()))
+		if err != nil {
 			r.l.Error("failed to list users in position", zap.Error(err))
 			return nil, fmt.Errorf("list users in position: %w", err)
 		}
@@ -110,20 +101,14 @@ func (r *repository) SetWorkerPosition(
 	req *workerports.SetWorkerPositionRequest,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
-		result, err := r.db.DBForContext(ctx).
-			NewUpdate().
-			Model((*worker.Worker)(nil)).
-			Set("position_id = ?", nullableID(req.PositionID)).
-			Set("updated_at = ?", timeutils.NowUnix()).
-			Where("id = ?", req.WorkerID).
-			Where("organization_id = ?", req.TenantInfo.OrgID).
-			Where("business_unit_id = ?", req.TenantInfo.BuID).
-			Exec(ctx)
+		w := workerdb.Workers
+		affected, err := w.Where(w.ID.Eq(req.WorkerID)).
+			Update(ctx, r.db.Keel(ctx), w.PositionID.To(req.PositionID))
 		if err != nil {
 			r.l.Error("failed to set worker position", zap.Error(err))
 			return fmt.Errorf("set worker position: %w", err)
 		}
-		if affected, _ := result.RowsAffected(); affected == 0 {
+		if affected == 0 {
 			return errortypes.NewNotFoundError("Worker not found")
 		}
 		return nil
@@ -135,30 +120,16 @@ func (r *repository) SetUserPosition(
 	req *workerports.SetUserPositionRequest,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
-		result, err := r.db.DBForContext(ctx).
-			NewUpdate().
-			Model((*tenant.OrganizationMembership)(nil)).
-			Set("position_id = ?", nullableID(req.PositionID)).
-			Where("user_id = ?", req.UserID).
-			Where("organization_id = ?", req.TenantInfo.OrgID).
-			Where("business_unit_id = ?", req.TenantInfo.BuID).
-			Exec(ctx)
+		m := tenantdb.OrganizationMemberships
+		affected, err := m.Where(m.UserID.Eq(req.UserID)).
+			Update(ctx, r.db.Keel(ctx), m.PositionID.To(req.PositionID))
 		if err != nil {
 			r.l.Error("failed to set user position", zap.Error(err))
 			return fmt.Errorf("set user position: %w", err)
 		}
-		if affected, _ := result.RowsAffected(); affected == 0 {
+		if affected == 0 {
 			return errortypes.NewNotFoundError("That user is not a member of this organisation")
 		}
 		return nil
 	})
-}
-
-// nullableID writes an empty id as NULL rather than as an empty string, which
-// a foreign key would refuse.
-func nullableID(id pulid.ID) any {
-	if id.IsNil() {
-		return nil
-	}
-	return id
 }

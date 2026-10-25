@@ -27,10 +27,10 @@ import (
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/audit"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/notification"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
+	"github.com/emoss08/trenova/internal/testutil/dbtest"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/uptrace/bun"
 	"go.uber.org/zap"
 )
 
@@ -94,7 +94,7 @@ func (w *world) service() *Service {
 	return &Service{
 		l:             zap.NewNop(),
 		cfg:           &config.Config{App: config.AppConfig{WebBaseURL: "https://app.trenova.test"}},
-		db:            fakeDB{},
+		db:            dbtest.NopConnection{},
 		devices:       &fakeDevices{w},
 		pairings:      &fakePairings{w},
 		profiles:      &fakeProfiles{w},
@@ -154,17 +154,6 @@ func clone[T any](v *T) *T {
 	c := *v
 
 	return &c
-}
-
-type fakeDB struct{}
-
-func (fakeDB) DB() *bun.DB                          { return nil }
-func (fakeDB) DBForContext(context.Context) bun.IDB { return nil }
-func (fakeDB) HealthCheck(context.Context) error    { return nil }
-func (fakeDB) IsHealthy(context.Context) bool       { return true }
-func (fakeDB) Close() error                         { return nil }
-func (fakeDB) WithTx(ctx context.Context, _ kernelports.TxOptions, fn func(context.Context, bun.Tx) error) error {
-	return fn(ctx, bun.Tx{})
 }
 
 type fakeDevices struct{ w *world }

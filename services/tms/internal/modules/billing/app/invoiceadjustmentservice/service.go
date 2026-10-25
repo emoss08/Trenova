@@ -41,7 +41,7 @@ type Params struct {
 	fx.In
 
 	Logger             *zap.Logger
-	DB                 kernelports.DBConnection
+	DB                 kernelports.Transactor
 	Repo               invoiceadjustmentports.InvoiceAdjustmentRepository
 	InvoiceRepo        invoiceports.InvoiceRepository
 	CustomerRepo       customerports.CustomerRepository
@@ -76,7 +76,7 @@ type Params struct {
 
 type Service struct {
 	l                  *zap.Logger
-	db                 kernelports.DBConnection
+	db                 kernelports.Transactor
 	repo               invoiceadjustmentports.InvoiceAdjustmentRepository
 	invoiceRepo        invoiceports.InvoiceRepository
 	customerRepo       customerports.CustomerRepository

@@ -7,6 +7,7 @@ import (
 	"context"
 	"strings"
 
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/kernel/domain/usstate"
 	"github.com/emoss08/trenova/pkg/domaintypes"
@@ -16,10 +17,8 @@ import (
 	"github.com/emoss08/trenova/shared/addressutils"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/stringutils"
-	"github.com/emoss08/trenova/shared/timeutils"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
 	"github.com/go-ozzo/ozzo-validation/v4/is"
-	"github.com/uptrace/bun"
 )
 
 const (
@@ -28,52 +27,57 @@ const (
 )
 
 var (
-	_ bun.BeforeAppendModelHook          = (*FactoringCompany)(nil)
 	_ validationframework.TenantedEntity = (*FactoringCompany)(nil)
 	_ domaintypes.PostgresSearchable     = (*FactoringCompany)(nil)
 	_ pagination.CursorEntity            = (*FactoringCompany)(nil)
 )
 
-// FactoringCompany is a factor customers' invoices can be assigned to.
+// Factors that buy customer invoices and the remittance details invoices carry to them
 type FactoringCompany struct {
-	bun.BaseModel             `bun:"table:factoring_companies,alias:fac" json:"-"`
-	pagination.CursorValueSet `bun:",embed"                              json:"-"`
+	keel.Table `keel:"factoring_companies,report=Parties"`
 
-	ID             pulid.ID           `json:"id"             bun:"id,type:VARCHAR(100),pk,notnull"`
-	BusinessUnitID pulid.ID           `json:"businessUnitId" bun:"business_unit_id,type:VARCHAR(100),pk,notnull"`
-	OrganizationID pulid.ID           `json:"organizationId" bun:"organization_id,type:VARCHAR(100),pk,notnull"`
-	Status         domaintypes.Status `json:"status"         bun:"status,type:status_enum,notnull,default:'Active'"`
-	Code           string             `json:"code"           bun:"code,type:VARCHAR(10),notnull"`
-	Name           string             `json:"name"           bun:"name,type:VARCHAR(255),notnull"`
-	AddressLine1   string             `json:"addressLine1"   bun:"address_line_1,type:VARCHAR(150),notnull"`
-	AddressLine2   string             `json:"addressLine2"   bun:"address_line_2,type:VARCHAR(150),nullzero"`
-	City           string             `json:"city"           bun:"city,type:VARCHAR(100),notnull"`
-	StateID        pulid.ID           `json:"stateId"        bun:"state_id,type:VARCHAR(100),notnull"`
-	PostalCode     string             `json:"postalCode"     bun:"postal_code,type:us_postal_code,notnull"`
-	Email          string             `json:"email"          bun:"email,type:VARCHAR(255),nullzero"`
-	PhoneNumber    string             `json:"phoneNumber"    bun:"phone_number,type:VARCHAR(30),nullzero"`
-	// RemittanceInstructions say how the factor is paid: its bank, lockbox
-	// or ACH details. They print under its address wherever an invoice
-	// assigned to it says where to pay.
-	RemittanceInstructions string `json:"remittanceInstructions" bun:"remittance_instructions,type:TEXT,nullzero"`
-	// NoticeOfAssignment is the notice printed on every invoice assigned to
-	// the factor. Blank prints the standard notice.
-	NoticeOfAssignment string `json:"noticeOfAssignment" bun:"notice_of_assignment,type:TEXT,nullzero"`
-	// NonRecourse is true when the factor buys invoices outright and carries
-	// the credit risk. Its invoices then belong to the factor: they leave the
-	// collections worklist and stop counting toward the customer's credit
-	// exposure. With recourse, the default, an unpaid invoice comes back, so
-	// it is still collected and still counts.
-	NonRecourse  bool   `json:"nonRecourse" bun:"non_recourse,type:BOOLEAN,notnull"`
-	Notes        string `json:"notes"       bun:"notes,type:TEXT,nullzero"`
-	SearchVector string `json:"-"           bun:"search_vector,type:TSVECTOR,scanonly"`
-	Version      int64  `json:"version"     bun:"version,type:BIGINT"`
-	CreatedAt    int64  `json:"createdAt"   bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
-	UpdatedAt    int64  `json:"updatedAt"   bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
+	ID                     pulid.ID           `json:"id"                     keel:"id,pk,autoid:fac_"`
+	BusinessUnitID         pulid.ID           `json:"businessUnitId"         keel:"business_unit_id,pk,tenant"`
+	OrganizationID         pulid.ID           `json:"organizationId"         keel:"organization_id,pk,tenant"`
+	Status                 domaintypes.Status `json:"status"                 keel:"status"`
+	Code                   string             `json:"code"                   keel:"code"`
+	Name                   string             `json:"name"                   keel:"name"`
+	AddressLine1           string             `json:"addressLine1"           keel:"address_line_1"`
+	AddressLine2           string             `json:"addressLine2"           keel:"address_line_2,nullzero"`
+	City                   string             `json:"city"                   keel:"city"`
+	StateID                pulid.ID           `json:"stateId"                keel:"state_id"`
+	PostalCode             string             `json:"postalCode"             keel:"postal_code"`
+	Email                  string             `json:"email"                  keel:"email,nullzero"`
+	PhoneNumber            string             `json:"phoneNumber"            keel:"phone_number,nullzero"`
+	RemittanceInstructions string             `json:"remittanceInstructions" keel:"remittance_instructions,nullzero,noreport"`
+	NoticeOfAssignment     string             `json:"noticeOfAssignment"     keel:"notice_of_assignment,nullzero,noreport"`
+	NonRecourse            bool               `json:"nonRecourse"            keel:"non_recourse,label=Non-Recourse"`
+	Notes                  string             `json:"notes"                  keel:"notes,nullzero,noreport"`
+	SearchVector           string             `json:"-"                      keel:"search_vector,tsvector,readonly,noselect"`
+	Version                int64              `json:"version"                keel:"version,version"`
+	CreatedAt              int64              `json:"createdAt"              keel:"created_at,autocreate"`
+	UpdatedAt              int64              `json:"updatedAt"              keel:"updated_at,autoupdate"`
 
-	BusinessUnit *tenant.BusinessUnit `json:"-"               bun:"rel:belongs-to,join:business_unit_id=id"`
-	Organization *tenant.Organization `json:"-"               bun:"rel:belongs-to,join:organization_id=id"`
-	State        *usstate.UsState     `json:"state,omitempty" bun:"rel:belongs-to,join:state_id=id"`
+	BusinessUnit *tenant.BusinessUnit `json:"-"`
+	Organization *tenant.Organization `json:"-"`
+	State        *usstate.UsState     `json:"state,omitempty" keel:"belongs:state_id,noreport"`
+}
+
+func (f *FactoringCompany) BeforeUpdate(_ context.Context) error {
+	f.Code = strings.ToUpper(strings.TrimSpace(f.Code))
+	f.Email = strings.TrimSpace(f.Email)
+
+	return nil
+}
+
+func (f *FactoringCompany) BeforeCreate(_ context.Context) error {
+	f.Code = strings.ToUpper(strings.TrimSpace(f.Code))
+	f.Email = strings.TrimSpace(f.Email)
+	if f.Status == "" {
+		f.Status = domaintypes.StatusActive
+	}
+
+	return nil
 }
 
 func (f *FactoringCompany) Validate(multiErr *errortypes.MultiError) {
@@ -231,20 +235,9 @@ func (f *FactoringCompany) GetPostgresSearchConfig() domaintypes.PostgresSearchC
 	}
 }
 
-func (f *FactoringCompany) BeforeAppendModel(_ context.Context, query bun.Query) error {
-	now := timeutils.NowUnix()
+func (f *FactoringCompany) BeforeSave(context.Context) error {
 	f.Code = strings.ToUpper(strings.TrimSpace(f.Code))
 	f.Email = strings.TrimSpace(f.Email)
-
-	switch query.(type) {
-	case *bun.InsertQuery:
-		if f.ID.IsNil() {
-			f.ID = pulid.MustNew("fac_")
-		}
-		f.CreatedAt = now
-	case *bun.UpdateQuery:
-		f.UpdatedAt = now
-	}
 
 	return nil
 }

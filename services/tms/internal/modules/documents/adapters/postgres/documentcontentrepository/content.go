@@ -2,25 +2,59 @@ package documentcontentrepository
 
 import (
 	"context"
-	"fmt"
 	"strings"
 
-	"github.com/emoss08/trenova/pkg/buncolgen/documentcol"
-	"github.com/emoss08/trenova/pkg/buncolgen/documentcontentcol"
-
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/document"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/document/documentdb"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/documentcontent"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/documentcontent/documentcontentdb"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentcontentports"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/uptrace/bun"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
+
+const defaultPendingLimit = 100
+
+var contentErrors = dberror.Mapping{
+	Entity: "Document content",
+	ForeignKey: []dberror.Constraint{
+		{
+			Name:    "fk_document_contents_document",
+			Field:   "documentId",
+			Message: "Document does not exist",
+		},
+	},
+}
+
+var pageErrors = dberror.Mapping{
+	Entity: "Document content page",
+	Unique: []dberror.Constraint{
+		{
+			Name:    "uq_document_content_pages_page",
+			Field:   "pageNumber",
+			Message: "Each page number may appear only once in a document's content",
+		},
+	},
+	ForeignKey: []dberror.Constraint{
+		{
+			Name:    "fk_document_content_pages_content",
+			Field:   "documentContentId",
+			Message: "Document content does not exist",
+		},
+		{
+			Name:    "fk_document_content_pages_document",
+			Field:   "documentId",
+			Message: "Document does not exist",
+		},
+	},
+}
 
 type Params struct {
 	fx.In
@@ -44,21 +78,13 @@ func New(p Params) documentcontentports.DocumentContentRepository {
 func (r *repository) GetByDocumentID(
 	ctx context.Context,
 	documentID pulid.ID,
-	tenantInfo pagination.TenantInfo,
+	_ pagination.TenantInfo,
 ) (*documentcontent.Content, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*documentcontent.Content, error) {
-		entity := new(documentcontent.Content)
-		cols := documentcontentcol.ContentColumns
-		err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(entity).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return documentcontentcol.ContentScopeTenant(sq, tenantInfo).
-					Where(cols.DocumentID.Eq(), documentID)
-			}).
-			Scan(ctx)
+		dc := documentcontentdb.Contents
+		entity, err := dc.Where(dc.DocumentID.Eq(documentID)).One(ctx, r.db.Keel(ctx))
 		if err != nil {
-			return nil, dberror.HandleNotFoundError(err, "Document content")
+			return nil, contentErrors.Map(err, documentID.String())
 		}
 
 		return entity, nil
@@ -68,21 +94,18 @@ func (r *repository) GetByDocumentID(
 func (r *repository) ListPagesByDocumentID(
 	ctx context.Context,
 	documentID pulid.ID,
-	tenantInfo pagination.TenantInfo,
+	_ pagination.TenantInfo,
 ) ([]*documentcontent.Page, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*documentcontent.Page, error) {
-		items := make([]*documentcontent.Page, 0)
-		err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(&items).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return sq.Where("business_unit_id = ? AND organization_id = ?", tenantInfo.BuID, tenantInfo.OrgID).
-					Where("document_id = ?", documentID)
-			}).
-			Order("page_number ASC").
-			Scan(ctx)
+		p := documentcontentdb.Pages
+		items, err := p.Where(p.DocumentID.Eq(documentID)).
+			Order(p.PageNumber.Asc()).
+			All(ctx, r.db.Keel(ctx))
 		if err != nil {
 			return nil, err
+		}
+		if items == nil {
+			items = make([]*documentcontent.Page, 0)
 		}
 
 		return items, nil
@@ -94,29 +117,40 @@ func (r *repository) Upsert(
 	entity *documentcontent.Content,
 ) (*documentcontent.Content, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*documentcontent.Content, error) {
-		cols := documentcontentcol.ContentColumns
-		if _, err := r.db.DBForContext(ctx).
-			NewInsert().
-			Model(entity).
-			On(`CONFLICT ("document_id", "organization_id", "business_unit_id") DO UPDATE`).
-			Set(cols.Status.SetExcluded()).
-			Set(cols.ContentText.SetExcluded()).
-			Set(cols.PageCount.SetExcluded()).
-			Set(cols.SourceKind.SetExcluded()).
-			Set(cols.DetectedLanguage.SetExcluded()).
-			Set(cols.DetectedDocumentKind.SetExcluded()).
-			Set(cols.ClassificationConfidence.SetExcluded()).
-			Set(cols.StructuredData.SetExcluded()).
-			Set(cols.FailureCode.SetExcluded()).
-			Set(cols.FailureMessage.SetExcluded()).
-			Set(cols.LastExtractedAt.SetExcluded()).
-			Set(cols.ConverterVersion.SetExcluded()).
-			Set(cols.RawObjectKey.SetExcluded()).
-			Set(cols.UpdatedAt.SetExcluded()).
-			Returning("*").
-			Exec(ctx); err != nil {
-			return nil, err
+		dc := documentcontentdb.Contents
+		db := r.db.Keel(ctx)
+		inserted, err := dc.Upsert(
+			ctx,
+			db,
+			[]*documentcontent.Content{entity},
+			keel.OnConflict(dc.DocumentID, dc.OrganizationID, dc.BusinessUnitID).Update(
+				dc.Status,
+				dc.ContentText,
+				dc.PageCount,
+				dc.SourceKind,
+				dc.DetectedLanguage,
+				dc.DetectedDocumentKind,
+				dc.ClassificationConfidence,
+				dc.StructuredData,
+				dc.FailureCode,
+				dc.FailureMessage,
+				dc.LastExtractedAt,
+				dc.ConverterVersion,
+				dc.RawObjectKey,
+			),
+		)
+		if err != nil {
+			return nil, contentErrors.Map(err, entity.DocumentID.String())
 		}
+		if len(inserted) == 1 && inserted[0] {
+			return entity, nil
+		}
+
+		stored, err := dc.Where(dc.DocumentID.Eq(entity.DocumentID)).One(ctx, db)
+		if err != nil {
+			return nil, contentErrors.Map(err, entity.DocumentID.String())
+		}
+		*entity = *stored
 
 		return entity, nil
 	})
@@ -128,19 +162,10 @@ func (r *repository) ReplacePages(
 	pages []*documentcontent.Page,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
-		db := r.db.DBForContext(ctx)
-		cols := documentcontentcol.PageColumns
+		db := r.db.Keel(ctx)
+		p := documentcontentdb.Pages
 
-		if _, err := db.NewDelete().
-			TableExpr(fmt.Sprintf("%s AS %s", documentcontentcol.PageTable.Name, documentcontentcol.PageTable.Alias)).
-			WhereGroup(" AND ", func(sq *bun.DeleteQuery) *bun.DeleteQuery {
-				return documentcontentcol.PageScopeTenantDelete(sq, pagination.TenantInfo{
-					OrgID: content.OrganizationID,
-					BuID:  content.BusinessUnitID,
-				}).
-					Where(cols.DocumentContentID.Eq(), content.ID)
-			}).
-			Exec(ctx); err != nil {
+		if _, err := p.Where(p.DocumentContentID.Eq(content.ID)).Delete(ctx, db); err != nil {
 			return err
 		}
 
@@ -155,10 +180,11 @@ func (r *repository) ReplacePages(
 			page.BusinessUnitID = content.BusinessUnitID
 		}
 
-		_, err := db.NewInsert().
-			Model(&pages).
-			Exec(ctx)
-		return err
+		if err := p.CreateMany(ctx, db, pages); err != nil {
+			return pageErrors.Map(err, content.ID.String())
+		}
+
+		return nil
 	})
 }
 
@@ -167,28 +193,7 @@ func (r *repository) ListPendingExtraction(
 	req *documentcontentports.ListPendingDocumentExtractionRequest,
 ) ([]*document.Document, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*document.Document, error) {
-		limit := req.Limit
-		if limit <= 0 {
-			limit = 100
-		}
-
-		items := make([]*document.Document, 0, limit)
-		docCols := documentcol.DocumentColumns
-		err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(&items).
-			ColumnExpr(documentcol.DocumentTable.Alias+".*").
-			Join(`LEFT JOIN document_contents AS dc
-			ON dc.document_id = doc.id
-			AND dc.organization_id = doc.organization_id
-			AND dc.business_unit_id = doc.business_unit_id`).
-			Apply(applyPendingDocumentExtractionFilters).
-			Where(docCols.UpdatedAt.Lte(), req.OlderThan).
-			Where(docCols.OrganizationID.Eq(), req.TenantInfo.OrgID).
-			Where(docCols.BusinessUnitID.Eq(), req.TenantInfo.BuID).
-			Order(docCols.UpdatedAt.OrderAsc()).
-			Limit(int64(limit)).
-			Scan(ctx)
+		items, err := pendingExtractionQuery(req).List(ctx, r.db.Keel(ctx))
 		if err != nil {
 			return nil, err
 		}
@@ -203,35 +208,12 @@ func (r *repository) ListPendingExtractionTenants(
 ) ([]pagination.TenantInfo, error) {
 	ctx = dbscope.WithSystem(ctx, "list organizations with documents awaiting extraction")
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]pagination.TenantInfo, error) {
-		limit := req.Limit
-		if limit <= 0 {
-			limit = 100
-		}
-
 		type tenantRow struct {
-			OrganizationID pulid.ID `bun:"organization_id"`
-			BusinessUnitID pulid.ID `bun:"business_unit_id"`
+			OrganizationID pulid.ID
+			BusinessUnitID pulid.ID
 		}
 
-		rows := make([]tenantRow, 0, limit)
-		docCols := documentcol.DocumentColumns
-		err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model((*document.Document)(nil)).
-			ColumnExpr(docCols.OrganizationID.Qualified()+" AS organization_id").
-			ColumnExpr(docCols.BusinessUnitID.Qualified()+" AS business_unit_id").
-			Join(`LEFT JOIN document_contents AS dc
-			ON dc.document_id = doc.id
-			AND dc.organization_id = doc.organization_id
-			AND dc.business_unit_id = doc.business_unit_id`).
-			Apply(applyPendingDocumentExtractionFilters).
-			Where(docCols.UpdatedAt.Lte(), req.OlderThan).
-			GroupExpr(docCols.OrganizationID.Qualified()).
-			GroupExpr(docCols.BusinessUnitID.Qualified()).
-			Order(docCols.OrganizationID.OrderAsc()).
-			Order(docCols.BusinessUnitID.OrderAsc()).
-			Limit(int64(limit)).
-			Scan(ctx, &rows)
+		rows, err := keel.Into[tenantRow](ctx, r.db.Keel(ctx), pendingTenantsQuery(req))
 		if err != nil {
 			return nil, err
 		}
@@ -248,32 +230,61 @@ func (r *repository) ListPendingExtractionTenants(
 	})
 }
 
-func applyPendingDocumentExtractionFilters(q *bun.SelectQuery) *bun.SelectQuery {
-	docCols := documentcol.DocumentColumns
-	contentCols := documentcontentcol.ContentColumns
+func pendingExtractionQuery(
+	req *documentcontentports.ListPendingDocumentExtractionRequest,
+) *keel.Query[document.Document] {
+	d := documentdb.Documents
+	dc := documentcontentdb.Contents
 
-	// The profile is the whole gate on whether a document is ever read, and
-	// EnqueueExtraction is the only place it was being checked. The reconcile
-	// starts the workflow directly, so without this it re-drove every active
-	// document with no content row — running OCR and a model over files whose
-	// profile says plainly not to, ten minutes after they landed.
-	return q.
-		Where(docCols.Status.Eq(), document.StatusActive).
-		Where(docCols.ProcessingProfile.In(), bun.In(document.IntelligenceProcessingProfiles())).
-		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-			return sq.WhereGroup(" OR ", func(orq *bun.SelectQuery) *bun.SelectQuery {
-				return orq.
-					Where(contentCols.DocumentID.IsNull()).
-					WhereOr(contentCols.Status.In(), bun.List([]documentcontent.Status{
-						documentcontent.StatusPending,
-						documentcontent.StatusExtracting,
-					})).
-					WhereOr(docCols.ContentStatus.In(), bun.List([]document.ContentStatus{
-						document.ContentStatusPending,
-						document.ContentStatusExtracting,
-					}))
-			})
-		})
+	return d.LeftJoin(dc, dc.DocumentID.EqCol(d.ID)).
+		Where(pendingExtraction(d, dc)...).
+		Where(d.UpdatedAt.Lte(req.OlderThan)).
+		Order(d.UpdatedAt.Asc()).
+		Limit(pendingLimit(req.Limit))
+}
+
+func pendingTenantsQuery(
+	req *documentcontentports.ListPendingDocumentExtractionRequest,
+) *keel.Query[document.Document] {
+	d := documentdb.Documents
+	dc := documentcontentdb.Contents
+
+	return d.AllTenants().
+		LeftJoin(
+			dc,
+			dc.DocumentID.EqCol(d.ID),
+			dc.OrganizationID.EqCol(d.OrganizationID),
+			dc.BusinessUnitID.EqCol(d.BusinessUnitID),
+		).
+		Where(pendingExtraction(d, dc)...).
+		Where(d.UpdatedAt.Lte(req.OlderThan)).
+		Group(d.OrganizationID, d.BusinessUnitID).
+		Pick(d.OrganizationID, d.BusinessUnitID).
+		Order(d.OrganizationID.Asc(), d.BusinessUnitID.Asc()).
+		Limit(pendingLimit(req.Limit))
+}
+
+func pendingLimit(limit int) int {
+	if limit <= 0 {
+		return defaultPendingLimit
+	}
+
+	return limit
+}
+
+func pendingExtraction(
+	d *documentdb.DocumentsTable,
+	dc *documentcontentdb.ContentsTable,
+) []keel.Pred {
+	return []keel.Pred{
+		d.Status.Eq(document.StatusActive),
+		d.ProcessingProfile.In(document.IntelligenceProcessingProfiles()...),
+		keel.Or(
+			dc.DocumentID.IsNull(),
+			dc.Status.In(documentcontent.StatusPending, documentcontent.StatusExtracting),
+			d.ContentStatus.In(document.ContentStatusPending, document.ContentStatusExtracting),
+		),
+	}
 }
 
 func (r *repository) SearchByResource(
@@ -281,56 +292,45 @@ func (r *repository) SearchByResource(
 	req *documentcontentports.DocumentContentSearchRequest,
 ) ([]*document.Document, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*document.Document, error) {
-		items := make([]*document.Document, 0)
 		query := strings.TrimSpace(req.Query)
-		docCols := documentcol.DocumentColumns
-		contentCols := documentcontentcol.ContentColumns
+		d := documentdb.Documents
+		dc := documentcontentdb.Contents
 
-		selectQuery := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(&items).
-			ColumnExpr(documentcol.DocumentTable.All()).
-			Join("LEFT JOIN "+documentcontentcol.ContentTable.As(documentcontentcol.ContentTable.Alias)).
-			JoinOn(contentCols.DocumentID.EqColumn(docCols.ID)).
-			JoinOn(contentCols.OrganizationID.EqColumn(docCols.OrganizationID)).
-			JoinOn(contentCols.BusinessUnitID.EqColumn(docCols.BusinessUnitID)).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return documentcol.DocumentScopeTenant(sq, req.TenantInfo).
-					Where(docCols.IsCurrentVersion.Eq(), true).
-					Where(docCols.ResourceID.Eq(), req.ResourceID).
-					Where(docCols.ResourceType.Eq(), req.ResourceType)
-			})
+		q := d.LeftJoin(dc, dc.DocumentID.EqCol(d.ID)).
+			Where(
+				d.IsCurrentVersion.IsTrue(),
+				d.ResourceID.Eq(req.ResourceID),
+				d.ResourceType.Eq(req.ResourceType),
+			)
 
 		if query == "" {
-			selectQuery = selectQuery.Order(docCols.CreatedAt.OrderDesc())
+			q = q.Order(d.CreatedAt.Desc())
 		} else {
-			selectQuery = selectQuery.
-				WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-					return sq.
-						Where(docCols.SearchVector.Expr(websearchMatch), query, query).
-						WhereOr(contentCols.SearchVector.Expr(websearchMatch), query, query)
-				}).
-				OrderExpr(
-					"GREATEST("+docCols.SearchVector.Expr(websearchRank)+", COALESCE("+
-						contentCols.SearchVector.Expr(websearchRank)+", 0)) DESC",
-					query, query,
-					query, query,
-				)
+			search := keel.SearchConfig("simple", "english")
+			q = q.Where(keel.Or(d.SearchVector.Match(query, search), dc.SearchVector.Match(query, search))).
+				Order(keel.Desc(keel.Raw(
+					"GREATEST(?, COALESCE(?, 0))",
+					d.SearchVector.RankCD(query, search),
+					dc.SearchVector.RankCD(query, search),
+				)))
 		}
 
+		var (
+			items []*document.Document
+			err   error
+		)
 		if req.Limit > 0 {
-			selectQuery = selectQuery.Limit(int64(req.Limit))
+			items, err = q.Limit(req.Limit).List(ctx, r.db.Keel(ctx))
+		} else {
+			items, err = q.All(ctx, r.db.Keel(ctx))
 		}
-
-		if err := selectQuery.Scan(ctx); err != nil {
+		if err != nil {
 			return nil, err
+		}
+		if items == nil {
+			items = make([]*document.Document, 0)
 		}
 
 		return items, nil
 	})
 }
-
-const (
-	websearchMatch = "{} @@ (websearch_to_tsquery('simple', ?) || websearch_to_tsquery('english', ?))"
-	websearchRank  = "ts_rank_cd({}, websearch_to_tsquery('simple', ?) || websearch_to_tsquery('english', ?))"
-)

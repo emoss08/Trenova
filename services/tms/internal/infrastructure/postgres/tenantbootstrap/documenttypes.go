@@ -3,29 +3,46 @@ package tenantbootstrap
 import (
 	"context"
 	"fmt"
+	"strings"
 
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/modules/reference/domain/documenttype"
+	"github.com/emoss08/trenova/internal/modules/reference/domain/documenttype/documenttypedb"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/uptrace/bun"
 )
 
-func HasSystemDocumentTypes(ctx context.Context, db bun.IDB, orgID, buID pulid.ID) (bool, error) {
-	count, err := db.NewSelect().
-		Model((*documenttype.DocumentType)(nil)).
-		Where("organization_id = ?", orgID).
-		Where("business_unit_id = ?", buID).
-		Where("is_system = true").
-		Count(ctx)
+func CreateDocumentTypes(ctx context.Context, db *keel.DB, scope Scope) (int, error) {
+	d := documenttypedb.DocumentTypes
+	held, err := scoped(ctx, d.Pick(d.Code).Where(
+		d.OrganizationID.Eq(scope.OrganizationID),
+		d.BusinessUnitID.Eq(scope.BusinessUnitID),
+	)).All(ctx, db)
 	if err != nil {
-		return false, fmt.Errorf("check existing system document types: %w", err)
+		return 0, fmt.Errorf("check existing document types: %w", err)
 	}
 
-	return count > 0, nil
+	taken := make(map[string]struct{}, len(held))
+	for _, row := range held {
+		taken[strings.ToLower(row.Code)] = struct{}{}
+	}
+
+	missing := make([]*documenttype.DocumentType, 0)
+	for _, docType := range systemDocumentTypes(scope) {
+		if _, ok := taken[strings.ToLower(docType.Code)]; !ok {
+			missing = append(missing, docType)
+		}
+	}
+
+	if err = d.CreateMany(ctx, db, missing); err != nil {
+		return 0, fmt.Errorf("insert system document types: %w", err)
+	}
+
+	return len(missing), nil
 }
 
-func CreateDocumentTypes(ctx context.Context, tx bun.IDB, scope Scope) (int, error) {
+func systemDocumentTypes(scope Scope) []*documenttype.DocumentType {
 	orgID, buID := scope.OrganizationID, scope.BusinessUnitID
-	docTypes := []documenttype.DocumentType{
+	return []*documenttype.DocumentType{
 		{
 			ID:                     pulid.MustNew("dt_"),
 			BusinessUnitID:         buID,
@@ -117,19 +134,4 @@ func CreateDocumentTypes(ctx context.Context, tx bun.IDB, scope Scope) (int, err
 			IsSystem:               true,
 		},
 	}
-
-	_, err := tx.NewInsert().
-		Model(&docTypes).
-		Exec(ctx)
-	if err != nil {
-		return 0, fmt.Errorf("insert system document types: %w", err)
-	}
-
-	for i := range docTypes {
-		if err = scope.record(ctx, "document_types", docTypes[i].ID); err != nil {
-			return 0, fmt.Errorf("track document type: %w", err)
-		}
-	}
-
-	return len(docTypes), nil
 }

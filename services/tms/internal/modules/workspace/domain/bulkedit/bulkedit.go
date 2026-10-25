@@ -1,18 +1,16 @@
 package bulkedit
 
 import (
-	"context"
 	"fmt"
 	"strings"
 
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/validationframework"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/emoss08/trenova/shared/timeutils"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
-	"github.com/uptrace/bun"
 )
 
 const (
@@ -60,36 +58,35 @@ type Target struct {
 }
 
 type BulkEdit struct {
-	bun.BaseModel `bun:"table:bulk_edits,alias:bke" json:"-"`
+	keel.Table `keel:"bulk_edits"`
 
-	ID             pulid.ID  `json:"id"             bun:"id,pk,type:VARCHAR(100)"`
-	OrganizationID pulid.ID  `json:"organizationId" bun:"organization_id,type:VARCHAR(100),pk,notnull"`
-	BusinessUnitID pulid.ID  `json:"businessUnitId" bun:"business_unit_id,type:VARCHAR(100),pk,notnull"`
-	UserID         pulid.ID  `json:"userId"         bun:"user_id,type:VARCHAR(100),notnull"`
-	Resource       string    `json:"resource"       bun:"resource,type:VARCHAR(100),notnull"`
-	Field          string    `json:"field"          bun:"field,type:VARCHAR(100),notnull"`
-	Value          string    `json:"value"          bun:"value,type:VARCHAR(200),notnull"`
-	Selection      Selection `json:"selection"      bun:"selection,type:JSONB,notnull"`
-	Targets        []Target  `json:"targets"        bun:"targets,type:JSONB,notnull"`
-	Status         Status    `json:"status"         bun:"status,type:VARCHAR(20),notnull"`
-	TotalCount     int       `json:"totalCount"     bun:"total_count,type:INTEGER,notnull"`
-	ChangedCount   int       `json:"changedCount"   bun:"changed_count,type:INTEGER,notnull"`
-	FailedCount    int       `json:"failedCount"    bun:"failed_count,type:INTEGER,notnull"`
-	ProcessedCount int       `json:"processedCount" bun:"processed_count,type:INTEGER,notnull"`
-	FailureMessage string    `json:"failureMessage" bun:"failure_message,type:TEXT,notnull"`
-	CompletedAt    *int64    `json:"completedAt"    bun:"completed_at,type:BIGINT,nullzero"`
-	UndoneAt       *int64    `json:"undoneAt"       bun:"undone_at,type:BIGINT,nullzero"`
-	Version        int64     `json:"version"        bun:"version,type:BIGINT"`
-	CreatedAt      int64     `json:"createdAt"      bun:"created_at,nullzero,notnull,default:extract(epoch from current_timestamp)::bigint"`
-	UpdatedAt      int64     `json:"updatedAt"      bun:"updated_at,nullzero,notnull,default:extract(epoch from current_timestamp)::bigint"`
+	ID             pulid.ID  `json:"id"             keel:"id,pk,autoid:bke_"`
+	OrganizationID pulid.ID  `json:"organizationId" keel:"organization_id,pk,tenant"`
+	BusinessUnitID pulid.ID  `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
+	UserID         pulid.ID  `json:"userId"         keel:"user_id"`
+	Resource       string    `json:"resource"       keel:"resource"`
+	Field          string    `json:"field"          keel:"field"`
+	Value          string    `json:"value"          keel:"value"`
+	Selection      Selection `json:"selection"      keel:"selection,jsonb"`
+	Targets        []Target  `json:"targets"        keel:"targets,jsonb"`
+	Status         Status    `json:"status"         keel:"status"`
+	TotalCount     int       `json:"totalCount"     keel:"total_count"`
+	ChangedCount   int       `json:"changedCount"   keel:"changed_count"`
+	FailedCount    int       `json:"failedCount"    keel:"failed_count"`
+	ProcessedCount int       `json:"processedCount" keel:"processed_count"`
+	FailureMessage string    `json:"failureMessage" keel:"failure_message"`
+	CompletedAt    *int64    `json:"completedAt"    keel:"completed_at"`
+	UndoneAt       *int64    `json:"undoneAt"       keel:"undone_at"`
+	Version        int64     `json:"version"        keel:"version,version"`
+	CreatedAt      int64     `json:"createdAt"      keel:"created_at,autocreate"`
+	UpdatedAt      int64     `json:"updatedAt"      keel:"updated_at,autoupdate"`
 
-	Organization *tenant.Organization `json:"organization,omitempty" bun:"rel:belongs-to,join:organization_id=id"`
-	BusinessUnit *tenant.BusinessUnit `json:"businessUnit,omitempty" bun:"rel:belongs-to,join:business_unit_id=id"`
-	User         *tenant.User         `json:"user,omitempty"         bun:"rel:belongs-to,join:user_id=id"`
+	Organization *tenant.Organization `json:"organization,omitempty"`
+	BusinessUnit *tenant.BusinessUnit `json:"businessUnit,omitempty"`
+	User         *tenant.User         `json:"user,omitempty"         keel:"belongs:user_id"`
 }
 
 var (
-	_ bun.BeforeAppendModelHook          = (*BulkEdit)(nil)
 	_ validationframework.TenantedEntity = (*BulkEdit)(nil)
 )
 
@@ -137,23 +134,6 @@ func (b *BulkEdit) CanUndo(now int64) bool {
 		b.ChangedCount > 0 &&
 		b.CompletedAt != nil &&
 		now-*b.CompletedAt <= UndoWindowSeconds
-}
-
-func (b *BulkEdit) BeforeAppendModel(_ context.Context, query bun.Query) error {
-	now := timeutils.NowUnix()
-
-	switch query.(type) {
-	case *bun.InsertQuery:
-		if b.ID.IsNil() {
-			b.ID = pulid.MustNew("bke_")
-		}
-		b.CreatedAt = now
-		b.UpdatedAt = now
-	case *bun.UpdateQuery:
-		b.UpdatedAt = now
-	}
-
-	return nil
 }
 
 func (b *BulkEdit) GetID() pulid.ID {

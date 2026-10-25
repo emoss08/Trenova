@@ -3,50 +3,47 @@ package tender
 import (
 	"context"
 
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/pkg/domainvalidation"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/emoss08/trenova/shared/timeutils"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
-	"github.com/uptrace/bun"
 )
 
-var _ bun.BeforeAppendModelHook = (*Tender)(nil)
-
 type Tender struct {
-	bun.BaseModel `bun:"table:tenders,alias:tnd" json:"-"`
+	keel.Table `keel:"tenders"`
 
-	ID             pulid.ID `json:"id"             bun:"id,type:VARCHAR(100),pk,notnull"`
-	BusinessUnitID pulid.ID `json:"businessUnitId" bun:"business_unit_id,type:VARCHAR(100),pk,notnull"`
-	OrganizationID pulid.ID `json:"organizationId" bun:"organization_id,type:VARCHAR(100),pk,notnull"`
-	ShipmentID     pulid.ID `json:"shipmentId"     bun:"shipment_id,type:VARCHAR(100),notnull"`
-	ShipmentMoveID pulid.ID `json:"shipmentMoveId" bun:"shipment_move_id,type:VARCHAR(100),notnull"`
+	ID             pulid.ID `json:"id"             keel:"id,pk,autoid:tnd_"`
+	BusinessUnitID pulid.ID `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
+	OrganizationID pulid.ID `json:"organizationId" keel:"organization_id,pk,tenant"`
+	ShipmentID     pulid.ID `json:"shipmentId"     keel:"shipment_id"`
+	ShipmentMoveID pulid.ID `json:"shipmentMoveId" keel:"shipment_move_id"`
 
-	RoutingGuideID     *pulid.ID `json:"routingGuideId"     bun:"routing_guide_id,type:VARCHAR(100),nullzero"`
-	Mode               Mode      `json:"mode"               bun:"mode,type:VARCHAR(50),notnull"`
-	Status             Status    `json:"status"             bun:"status,type:VARCHAR(50),notnull,default:'Active'"`
-	CurrentRank        int16     `json:"currentRank"        bun:"current_rank,type:SMALLINT,notnull,default:0"`
-	WorkflowID         string    `json:"workflowId"         bun:"workflow_id,type:VARCHAR(255),nullzero"`
-	CreatedByID        *pulid.ID `json:"createdById"        bun:"created_by_id,type:VARCHAR(100),nullzero"`
-	CanceledByID       *pulid.ID `json:"canceledById"       bun:"canceled_by_id,type:VARCHAR(100),nullzero"`
-	CancellationReason string    `json:"cancellationReason" bun:"cancellation_reason,type:TEXT,nullzero"`
-	AcceptedOfferID    *pulid.ID `json:"acceptedOfferId"    bun:"accepted_offer_id,type:VARCHAR(100),nullzero"`
-	AcceptedAt         *int64    `json:"acceptedAt"         bun:"accepted_at,type:BIGINT,nullzero"`
-	ExhaustedAt        *int64    `json:"exhaustedAt"        bun:"exhausted_at,type:BIGINT,nullzero"`
-	CanceledAt         *int64    `json:"canceledAt"         bun:"canceled_at,type:BIGINT,nullzero"`
-	BounceCount        int16     `json:"bounceCount"        bun:"bounce_count,type:SMALLINT,notnull,default:0"`
-	LastBouncedAt      *int64    `json:"lastBouncedAt"      bun:"last_bounced_at,type:BIGINT,nullzero"`
-	EscalatedFromID    *pulid.ID `json:"escalatedFromId"    bun:"escalated_from_tender_id,type:VARCHAR(100),nullzero"`
-	EscalationRound    int16     `json:"escalationRound"    bun:"escalation_round,type:SMALLINT,notnull,default:0"`
-	Version            int64     `json:"version"            bun:"version,type:BIGINT"`
-	CreatedAt          int64     `json:"createdAt"          bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
-	UpdatedAt          int64     `json:"updatedAt"          bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
+	RoutingGuideID     *pulid.ID `json:"routingGuideId"     keel:"routing_guide_id"`
+	Mode               Mode      `json:"mode"               keel:"mode"`
+	Status             Status    `json:"status"             keel:"status"`
+	CurrentRank        int16     `json:"currentRank"        keel:"current_rank"`
+	WorkflowID         string    `json:"workflowId"         keel:"workflow_id,nullzero"`
+	CreatedByID        *pulid.ID `json:"createdById"        keel:"created_by_id"`
+	CanceledByID       *pulid.ID `json:"canceledById"       keel:"canceled_by_id"`
+	CancellationReason string    `json:"cancellationReason" keel:"cancellation_reason,nullzero"`
+	AcceptedOfferID    *pulid.ID `json:"acceptedOfferId"    keel:"accepted_offer_id"`
+	AcceptedAt         *int64    `json:"acceptedAt"         keel:"accepted_at"`
+	ExhaustedAt        *int64    `json:"exhaustedAt"        keel:"exhausted_at"`
+	CanceledAt         *int64    `json:"canceledAt"         keel:"canceled_at"`
+	BounceCount        int16     `json:"bounceCount"        keel:"bounce_count"`
+	LastBouncedAt      *int64    `json:"lastBouncedAt"      keel:"last_bounced_at"`
+	EscalatedFromID    *pulid.ID `json:"escalatedFromId"    keel:"escalated_from_tender_id"`
+	EscalationRound    int16     `json:"escalationRound"    keel:"escalation_round"`
+	Version            int64     `json:"version"            keel:"version,version"`
+	CreatedAt          int64     `json:"createdAt"          keel:"created_at,autocreate"`
+	UpdatedAt          int64     `json:"updatedAt"          keel:"updated_at,autoupdate"`
 
-	Shipment     *shipment.Shipment     `json:"shipment,omitempty"     bun:"rel:belongs-to,join:shipment_id=id"`
-	ShipmentMove *shipment.ShipmentMove `json:"shipmentMove,omitempty" bun:"rel:belongs-to,join:shipment_move_id=id"`
-	RoutingGuide *RoutingGuide          `json:"routingGuide,omitempty" bun:"rel:belongs-to,join:routing_guide_id=id"`
-	Offers       []*TenderOffer         `json:"offers,omitempty"       bun:"rel:has-many,join:id=tender_id"`
+	Shipment     *shipment.Shipment     `json:"shipment,omitempty"     keel:"belongs:shipment_id"`
+	ShipmentMove *shipment.ShipmentMove `json:"shipmentMove,omitempty" keel:"belongs:shipment_move_id"`
+	RoutingGuide *RoutingGuide          `json:"routingGuide,omitempty" keel:"belongs:routing_guide_id"`
+	Offers       []*TenderOffer         `json:"offers,omitempty"       keel:"many:tender_id"`
 }
 
 func (t *Tender) applyDefaults() {
@@ -141,17 +138,9 @@ func (t *Tender) GetVersion() int64 {
 	return t.Version
 }
 
-func (t *Tender) BeforeAppendModel(_ context.Context, query bun.Query) error {
-	now := timeutils.NowUnix()
-
-	switch query.(type) {
-	case *bun.InsertQuery:
-		if t.ID.IsNil() {
-			t.ID = pulid.MustNew("tnd_")
-		}
-		t.CreatedAt = now
-	case *bun.UpdateQuery:
-		t.UpdatedAt = now
+func (t *Tender) BeforeCreate(_ context.Context) error {
+	if t.Status == "" {
+		t.Status = StatusActive
 	}
 
 	return nil

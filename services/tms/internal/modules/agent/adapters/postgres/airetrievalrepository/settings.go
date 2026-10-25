@@ -2,24 +2,25 @@ package airetrievalrepository
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
-	"github.com/emoss08/trenova/pkg/buncolgen/airetrievalcol"
-
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/airetrieval"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/airetrieval/airetrievaldb"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
-	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/intutils"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
-	"github.com/uptrace/bun"
 	"go.uber.org/zap"
 )
+
+var settingsErrors = dberror.Mapping{Entity: "AIRetrievalSettings"}
 
 const (
 	settingsEntity = "AIRetrievalSettings"
@@ -30,25 +31,21 @@ const (
 	maxIndexedTenantPage = 1000
 )
 
-func (r *repository) findSettings(
+func findSettings(
 	ctx context.Context,
-	dba bun.IDB,
-	tenantInfo pagination.TenantInfo,
+	db *keel.DB,
 	forUpdate bool,
 ) (*airetrieval.Settings, bool, error) {
-	entity := new(airetrieval.Settings)
-	q := dba.NewSelect().
-		Model(entity).
-		Apply(airetrievalcol.SettingsApplyTenant(tenantInfo)).
-		Limit(1)
+	q := airetrievaldb.Settingses.Query()
 	if forUpdate {
-		q = q.For("UPDATE")
+		q.Lock(keel.ForUpdate)
 	}
 
-	if err := q.Scan(ctx); err != nil {
-		if dberror.IsNotFoundError(err) {
-			return nil, false, nil
-		}
+	entity, err := q.First(ctx, db)
+	if errors.Is(err, keel.ErrNotFound) {
+		return nil, false, nil
+	}
+	if err != nil {
 		return nil, false, fmt.Errorf("read retrieval settings: %w", err)
 	}
 
@@ -64,7 +61,7 @@ func (r *repository) GetSettings(
 			return nil, err
 		}
 
-		entity, found, err := r.findSettings(ctx, r.db.DBForContext(ctx), tenantInfo, false)
+		entity, found, err := findSettings(ctx, r.db.Keel(ctx), false)
 		switch {
 		case err != nil:
 			return nil, err
@@ -93,29 +90,29 @@ func (r *repository) UpdateSettings(
 			return nil, err
 		}
 
-		dba := r.db.DBForContext(ctx)
-		existing, found, err := r.findSettings(ctx, dba, tenantInfo, false)
+		db := r.db.Keel(ctx)
+		existing, found, err := findSettings(ctx, db, false)
 		if err != nil {
 			return nil, err
 		}
 
 		if !found {
-			return r.insertSettings(ctx, dba, entity)
+			return r.insertSettings(ctx, db, entity)
 		}
 
-		return r.updateSettings(ctx, dba, entity, existing)
+		return updateSettings(ctx, db, entity, existing)
 	})
 }
 
 func (r *repository) insertSettings(
 	ctx context.Context,
-	dba bun.IDB,
+	db *keel.DB,
 	entity *airetrieval.Settings,
 ) (*airetrieval.Settings, error) {
 	entity.ID = pulid.Nil
 	entity.Version = 0
 
-	if _, err := dba.NewInsert().Model(entity).Returning("*").Exec(ctx); err != nil {
+	if err := airetrievaldb.Settingses.Create(ctx, db, entity); err != nil {
 		if dberror.IsUniqueConstraintViolation(err) {
 			return nil, dberror.CreateVersionMismatchError(settingsEntity, "")
 		}
@@ -127,53 +124,30 @@ func (r *repository) insertSettings(
 	return entity, nil
 }
 
-func (r *repository) updateSettings(
+func updateSettings(
 	ctx context.Context,
-	dba bun.IDB,
+	db *keel.DB,
 	entity *airetrieval.Settings,
 	existing *airetrieval.Settings,
 ) (*airetrieval.Settings, error) {
-	cols := airetrievalcol.SettingsColumns
-	ov := entity.Version
+	s := airetrievaldb.Settingses
 	entity.ID = existing.ID
 	entity.CreatedAt = existing.CreatedAt
-	entity.Version = ov + 1
-	entity.UpdatedAt = timeutils.NowUnix()
 
-	res, err := dba.NewUpdate().
-		Model(entity).
-		WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-			return airetrievalcol.SettingsScopeTenantUpdate(uq, pagination.TenantInfo{
-				OrgID: entity.OrganizationID,
-				BuID:  entity.BusinessUnitID,
-			}).
-				Where(cols.ID.Eq(), existing.ID).
-				Where(cols.Version.Eq(), ov)
-		}).
-		Set(cols.MemoryEnabled.Set(), entity.MemoryEnabled).
-		Set(cols.DocumentsEnabled.Set(), entity.DocumentsEnabled).
-		Set(cols.InboundMessagesEnabled.Set(), entity.InboundMessagesEnabled).
-		Set(cols.MonthlyIndexingBudgetUSD.Set(), entity.MonthlyIndexingBudgetUSD).
-		Set(cols.Paused.Set(), entity.Paused).
-		Set(cols.PausedReason.Set(), bun.NullZero(entity.PausedReason)).
-		Set(cols.PausedAt.Set(), entity.PausedAt).
-		Set(cols.ActiveModelKey.Set(), bun.NullZero(entity.ActiveModelKey)).
-		Set(cols.Dimensions.Set(), bun.NullZero(entity.Dimensions)).
-		Set(cols.PendingModelKey.Set(), bun.NullZero(entity.PendingModelKey)).
-		Set(cols.PendingDimensions.Set(), bun.NullZero(entity.PendingDimensions)).
-		Set(cols.UpdatedAt.Set(), entity.UpdatedAt).
-		Set(cols.Version.Set(), entity.Version).
-		Exec(ctx)
-	if err != nil {
-		return nil, fmt.Errorf("update retrieval settings: %w", err)
-	}
-
-	rows, err := rowsAffected(res)
-	if err != nil {
-		return nil, err
-	}
-	if rows == 0 {
-		return nil, dberror.CreateVersionMismatchError(settingsEntity, existing.ID.String())
+	if err := s.Save(ctx, db, entity,
+		s.MemoryEnabled,
+		s.DocumentsEnabled,
+		s.InboundMessagesEnabled,
+		s.MonthlyIndexingBudgetUSD,
+		s.Paused,
+		s.PausedReason,
+		s.PausedAt,
+		s.ActiveModelKey,
+		s.Dimensions,
+		s.PendingModelKey,
+		s.PendingDimensions,
+	); err != nil {
+		return nil, settingsErrors.Map(err, existing.ID.String())
 	}
 
 	return entity, nil
@@ -200,11 +174,12 @@ func (r *repository) SetPaused(
 		}
 
 		var updated *airetrieval.Settings
-		err := r.db.WithTx(
+		err := r.db.Transact(
 			ctx,
 			kernelports.TxOptions{},
-			func(ctx context.Context, tx bun.Tx) error {
-				current, found, err := r.findSettings(ctx, tx, req.TenantInfo, true)
+			func(ctx context.Context) error {
+				db := r.db.Keel(ctx)
+				current, found, err := findSettings(ctx, db, true)
 				if err != nil {
 					return err
 				}
@@ -220,11 +195,11 @@ func (r *repository) SetPaused(
 				applyPause(current, req, now)
 
 				if current.ID.IsNil() {
-					updated, err = r.insertSettings(ctx, tx, current)
+					updated, err = r.insertSettings(ctx, db, current)
 					return err
 				}
 
-				updated, err = r.writePause(ctx, tx, current)
+				updated, err = writePause(ctx, db, current)
 				return err
 			},
 		)
@@ -256,30 +231,17 @@ func applyPause(
 	settings.PausedReason = req.Reason
 }
 
-func (r *repository) writePause(
+func writePause(
 	ctx context.Context,
-	tx bun.Tx,
+	db *keel.DB,
 	settings *airetrieval.Settings,
 ) (*airetrieval.Settings, error) {
-	cols := airetrievalcol.SettingsColumns
-	settings.Version++
-	settings.UpdatedAt = timeutils.NowUnix()
-
-	if _, err := tx.NewUpdate().
-		Model(settings).
-		WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-			return airetrievalcol.SettingsScopeTenantUpdate(uq, pagination.TenantInfo{
-				OrgID: settings.OrganizationID,
-				BuID:  settings.BusinessUnitID,
-			}).Where(cols.ID.Eq(), settings.ID)
-		}).
-		Set(cols.Paused.Set(), settings.Paused).
-		Set(cols.PausedReason.Set(), bun.NullZero(settings.PausedReason)).
-		Set(cols.PausedAt.Set(), settings.PausedAt).
-		Set(cols.UpdatedAt.Set(), settings.UpdatedAt).
-		Set(cols.Version.Set(), settings.Version).
-		Exec(ctx); err != nil {
-		return nil, fmt.Errorf("pause retrieval indexing: %w", err)
+	s := airetrievaldb.Settingses
+	if err := s.Save(ctx, db, settings, s.Paused, s.PausedReason, s.PausedAt); err != nil {
+		return nil, fmt.Errorf(
+			"pause retrieval indexing: %w",
+			settingsErrors.Map(err, settings.ID.String()),
+		)
 	}
 
 	return settings, nil
@@ -301,11 +263,12 @@ func (r *repository) SwapModel(
 			}
 
 			var result *agentports.SwapAIRetrievalModelResult
-			err := r.db.WithTx(
+			err := r.db.Transact(
 				ctx,
 				kernelports.TxOptions{},
-				func(ctx context.Context, tx bun.Tx) error {
-					current, found, err := r.findSettings(ctx, tx, req.TenantInfo, true)
+				func(ctx context.Context) error {
+					db := r.db.Keel(ctx)
+					current, found, err := findSettings(ctx, db, true)
 					switch {
 					case err != nil:
 						return err
@@ -325,24 +288,18 @@ func (r *repository) SwapModel(
 					current.Dimensions = current.PendingDimensions
 					current.PendingModelKey = ""
 					current.PendingDimensions = 0
-					current.Version++
-					current.UpdatedAt = timeutils.NowUnix()
 
-					cols := airetrievalcol.SettingsColumns
-					if _, err = tx.NewUpdate().
-						Model(current).
-						WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-							return airetrievalcol.SettingsScopeTenantUpdate(uq, req.TenantInfo).
-								Where(cols.ID.Eq(), current.ID)
-						}).
-						Set(cols.ActiveModelKey.Set(), current.ActiveModelKey).
-						Set(cols.Dimensions.Set(), current.Dimensions).
-						Set(cols.PendingModelKey.SetNull()).
-						Set(cols.PendingDimensions.SetNull()).
-						Set(cols.UpdatedAt.Set(), current.UpdatedAt).
-						Set(cols.Version.Set(), current.Version).
-						Exec(ctx); err != nil {
-						return fmt.Errorf("swap retrieval embedding model: %w", err)
+					s := airetrievaldb.Settingses
+					if err = s.Save(ctx, db, current,
+						s.ActiveModelKey,
+						s.Dimensions,
+						s.PendingModelKey,
+						s.PendingDimensions,
+					); err != nil {
+						return fmt.Errorf(
+							"swap retrieval embedding model: %w",
+							settingsErrors.Map(err, current.ID.String()),
+						)
 					}
 
 					result = &agentports.SwapAIRetrievalModelResult{
@@ -390,11 +347,12 @@ func (r *repository) PurgeModel(
 				return result, err
 			}
 
-			err = r.db.WithTx(
+			err = r.db.Transact(
 				ctx,
 				kernelports.TxOptions{},
-				func(ctx context.Context, tx bun.Tx) error {
-					current, found, txErr := r.findSettings(ctx, tx, req.TenantInfo, true)
+				func(ctx context.Context) error {
+					db := r.db.Keel(ctx)
+					current, found, txErr := findSettings(ctx, db, true)
 					if txErr != nil {
 						return txErr
 					}
@@ -405,7 +363,7 @@ func (r *repository) PurgeModel(
 
 					if result.IndexEntries, txErr = purgeIndexEntries(
 						ctx,
-						tx,
+						db,
 						req,
 						batch,
 					); txErr != nil {
@@ -415,7 +373,7 @@ func (r *repository) PurgeModel(
 						return nil
 					}
 
-					result.Embeddings, txErr = purgeEmbeddings(ctx, tx, req, batch)
+					result.Embeddings, txErr = purgeEmbeddings(ctx, db, req, batch)
 					return txErr
 				},
 			)
@@ -430,76 +388,62 @@ func (r *repository) PurgeModel(
 
 func purgeIndexEntries(
 	ctx context.Context,
-	tx bun.Tx,
+	db *keel.DB,
 	req agentports.PurgeAIRetrievalModelRequest,
 	batch int,
 ) (int, error) {
-	cols := airetrievalcol.IndexEntryColumns
-	victims := tx.NewSelect().
-		Model((*airetrieval.IndexEntry)(nil)).
-		Column(airetrievalcol.IndexEntryTable.PrimaryKey...).
-		Apply(airetrievalcol.IndexEntryApplyTenant(req.TenantInfo)).
-		Where(cols.ModelKey.Eq(), req.ModelKey).
-		Limit(int64(batch))
+	e := airetrievaldb.IndexEntries
+	victim := airetrievaldb.IndexEntries.As("victim_entry")
+	victims := keel.CTE("victims", []string{colSourceType, colSourceID}, victim.
+		Where(victim.ModelKey.Eq(req.ModelKey)).
+		Pick(victim.SourceType, victim.SourceID).
+		Limit(batch))
 
-	res, err := tx.NewDelete().
-		Model((*airetrieval.IndexEntry)(nil)).
-		WhereGroup(" AND ", func(dq *bun.DeleteQuery) *bun.DeleteQuery {
-			return airetrievalcol.IndexEntryScopeTenantDelete(dq, req.TenantInfo).
-				Where(indexEntryKeyTuple()+" IN (?)", victims)
-		}).
-		Exec(ctx)
+	removed, err := e.With(victims).
+		Join(victims,
+			victims.Col(colSourceType).EqCol(e.SourceType),
+			victims.Col(colSourceID).EqCol(e.SourceID),
+		).
+		Where(e.ModelKey.Eq(req.ModelKey)).
+		Delete(ctx, db)
 	if err != nil {
 		return 0, fmt.Errorf("purge retired model index entries: %w", err)
 	}
 
-	return rowsAffected(res)
+	return int(removed), nil
 }
 
 func purgeEmbeddings(
 	ctx context.Context,
-	tx bun.Tx,
+	db *keel.DB,
 	req agentports.PurgeAIRetrievalModelRequest,
 	batch int,
 ) (int, error) {
-	cols := airetrievalcol.EmbeddingColumns
-	victims := tx.NewSelect().
-		Model((*airetrieval.Embedding)(nil)).
-		Column(airetrievalcol.EmbeddingTable.PrimaryKey...).
-		Apply(airetrievalcol.EmbeddingApplyTenant(req.TenantInfo)).
-		Where(cols.ModelKey.Eq(), req.ModelKey).
-		Limit(int64(batch))
+	e := airetrievaldb.Embeddings
+	victim := airetrievaldb.Embeddings.As("victim_embedding")
+	victims := keel.CTE("victims", []string{colSourceType, colSourceID, "chunk_index"}, victim.
+		Where(victim.ModelKey.Eq(req.ModelKey)).
+		Pick(victim.SourceType, victim.SourceID, victim.ChunkIndex).
+		Limit(batch))
 
-	res, err := tx.NewDelete().
-		Model((*airetrieval.Embedding)(nil)).
-		WhereGroup(" AND ", func(dq *bun.DeleteQuery) *bun.DeleteQuery {
-			return airetrievalcol.EmbeddingScopeTenantDelete(dq, req.TenantInfo).
-				Where(embeddingKeyTuple()+" IN (?)", victims)
-		}).
-		Exec(ctx)
+	removed, err := e.With(victims).
+		Join(victims,
+			victims.Col(colSourceType).EqCol(e.SourceType),
+			victims.Col(colSourceID).EqCol(e.SourceID),
+			victims.Col("chunk_index").EqCol(e.ChunkIndex),
+		).
+		Where(e.ModelKey.Eq(req.ModelKey)).
+		Delete(ctx, db)
 	if err != nil {
 		return 0, fmt.Errorf("purge retired model embeddings: %w", err)
 	}
 
-	return rowsAffected(res)
-}
-
-func embeddingKeyTuple() string {
-	cols := airetrievalcol.EmbeddingColumns
-
-	return buncolgen.Expr("({0}, {1}, {2}, {3}, {4}, {5})",
-		cols.OrganizationID,
-		cols.BusinessUnitID,
-		cols.SourceType,
-		cols.SourceID,
-		cols.ChunkIndex,
-		cols.ModelKey,
-	)
+	return int(removed), nil
 }
 
 type indexedTenantRow struct {
-	OrganizationID pulid.ID `bun:"organization_id"`
-	BusinessUnitID pulid.ID `bun:"business_unit_id"`
+	OrganizationID pulid.ID
+	BusinessUnitID pulid.ID
 }
 
 func (r *repository) ListIndexedTenants(
@@ -508,26 +452,26 @@ func (r *repository) ListIndexedTenants(
 ) ([]pagination.TenantInfo, error) {
 	ctx = dbscope.WithSystem(ctx, "list organizations that index sources for retrieval")
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]pagination.TenantInfo, error) {
-		cols := airetrievalcol.SettingsColumns
+		s := airetrievaldb.Settingses
 		limit := intutils.Clamp(req.Limit, 1, maxIndexedTenantPage)
 
-		q := r.db.DBForContext(ctx).
-			NewSelect().
-			Model((*airetrieval.Settings)(nil)).
-			Column(cols.OrganizationID.Bare(), cols.BusinessUnitID.Bare()).
-			Where(cols.ActiveModelKey.Ne(), "").
-			Order(cols.OrganizationID.OrderAsc(), cols.BusinessUnitID.OrderAsc()).
-			Limit(int64(limit))
+		q := s.AllTenants().
+			Where(s.ActiveModelKey.Ne("")).
+			Pick(s.OrganizationID, s.BusinessUnitID).
+			Order(s.OrganizationID.Asc(), s.BusinessUnitID.Asc()).
+			Limit(limit)
 		if req.After != nil {
-			q = q.Where(
-				buncolgen.Expr("({0}, {1}) > (?, ?)", cols.OrganizationID, cols.BusinessUnitID),
+			q.Where(keel.Raw(
+				"(?, ?) > (?, ?)",
+				s.OrganizationID,
+				s.BusinessUnitID,
 				req.After.OrgID,
 				req.After.BuID,
-			)
+			))
 		}
 
-		rows := make([]indexedTenantRow, 0, limit)
-		if err := q.Scan(ctx, &rows); err != nil {
+		rows, err := keel.Into[indexedTenantRow](ctx, r.db.Keel(ctx), q)
+		if err != nil {
 			return nil, fmt.Errorf("list organizations that index sources for retrieval: %w", err)
 		}
 

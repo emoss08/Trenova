@@ -30,7 +30,6 @@ import (
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
-	"github.com/uptrace/bun"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
@@ -41,7 +40,7 @@ type Params struct {
 	fx.In
 
 	Logger                *zap.Logger
-	DB                    kernelports.DBConnection
+	DB                    kernelports.Transactor
 	Repo                  rateconfirmationports.RateConfirmationRepository
 	CarrierAssignmentRepo shipmentports.CarrierAssignmentRepository
 	CarrierRepo           carrierports.CarrierRepository
@@ -58,7 +57,7 @@ type Params struct {
 
 type Service struct {
 	l                     *zap.Logger
-	db                    kernelports.DBConnection
+	db                    kernelports.Transactor
 	repo                  rateconfirmationports.RateConfirmationRepository
 	carrierAssignmentRepo shipmentports.CarrierAssignmentRepository
 	carrierRepo           carrierports.CarrierRepository
@@ -157,7 +156,7 @@ func (s *Service) generate(
 	// the unique index and surfaces as a retryable business error.
 	var created *rateconfirmation.RateConfirmation
 	var rendered *documenttemplateports.RenderedDocument
-	err = s.db.WithTx(ctx, kernelports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
+	err = s.db.Transact(ctx, kernelports.TxOptions{}, func(txCtx context.Context) error {
 		maxRevision, txErr := s.repo.MaxRevisionForAssignment(txCtx, tenantInfo, assignment.ID)
 		if txErr != nil {
 			return txErr
@@ -307,7 +306,7 @@ func (s *Service) Send(
 	// transition (e.g. a void) is kept rather than clobbered — and never turned
 	// into an error that would invite a duplicate send on retry.
 	var updated *rateconfirmation.RateConfirmation
-	err = s.db.WithTx(ctx, kernelports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
+	err = s.db.Transact(ctx, kernelports.TxOptions{}, func(txCtx context.Context) error {
 		fresh, txErr := s.repo.GetByID(txCtx, &rateconfirmationports.GetRateConfirmationByIDRequest{
 			TenantInfo:         tenantInfo,
 			RateConfirmationID: rateConfirmationID,
@@ -393,7 +392,7 @@ func (s *Service) markConfirmed(
 	entity.Confirm(p)
 
 	var updated *rateconfirmation.RateConfirmation
-	err := s.db.WithTx(ctx, kernelports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
+	err := s.db.Transact(ctx, kernelports.TxOptions{}, func(txCtx context.Context) error {
 		var txErr error
 		updated, txErr = s.repo.Update(txCtx, entity)
 		if txErr != nil {
@@ -430,7 +429,7 @@ func (s *Service) Void(
 	entity.Void(timeutils.NowUnix(), reason)
 
 	var updated *rateconfirmation.RateConfirmation
-	err = s.db.WithTx(ctx, kernelports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
+	err = s.db.Transact(ctx, kernelports.TxOptions{}, func(txCtx context.Context) error {
 		var txErr error
 		updated, txErr = s.repo.Update(txCtx, entity)
 		if txErr != nil {

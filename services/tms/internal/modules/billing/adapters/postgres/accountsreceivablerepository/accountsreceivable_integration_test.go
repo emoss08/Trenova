@@ -3,15 +3,16 @@
 package accountsreceivablerepository
 
 import (
-	"context"
 	"slices"
 	"testing"
 	"time"
 
-	"github.com/emoss08/trenova/internal/infrastructure/config"
-	"github.com/emoss08/trenova/internal/infrastructure/database/common"
-	"github.com/emoss08/trenova/internal/infrastructure/database/seeder"
-	"github.com/emoss08/trenova/internal/infrastructure/database/seeds"
+	"github.com/emoss08/trenova/internal/modules/billing/billingtest"
+
+	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue/billingqueuedb"
+
+	"github.com/emoss08/trenova/internal/testutil/seededtest"
+
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/modules/accounting/adapters/postgres/fiscalperiodrepository"
 	"github.com/emoss08/trenova/internal/modules/accounting/adapters/postgres/journalpostingrepository"
@@ -30,43 +31,18 @@ import (
 	"github.com/emoss08/trenova/internal/testutil"
 	"github.com/emoss08/trenova/internal/testutil/fiscaltest"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
-	"github.com/emoss08/trenova/internal/testutil/seedtest"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/seqgen"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"github.com/uptrace/bun"
 	"go.uber.org/zap"
 )
 
-type seededAROrg struct {
-	ID             pulid.ID `bun:"id"`
-	BusinessUnitID pulid.ID `bun:"business_unit_id"`
-}
-type seededARUser struct {
-	ID pulid.ID `bun:"id"`
-}
-type seededARShipment struct {
-	ID         pulid.ID `bun:"id"`
-	CustomerID pulid.ID `bun:"customer_id"`
-	ProNumber  string   `bun:"pro_number"`
-	BOL        string   `bun:"bol"`
-}
-
 func TestAccountsReceivableRepositoryReturnsLedgerAndAging(t *testing.T) {
-	ctx, db, cleanup := seedtest.SetupTestDB(t)
+	ctx, db, cleanup := seededtest.SetupTestDB(t)
 	defer cleanup()
-	seedRegistry := seeder.NewRegistry()
-	seeds.Register(seedRegistry)
-	engine := seeder.NewEngine(
-		db,
-		seedRegistry,
-		&config.Config{System: config.SystemConfig{SystemUserPassword: "test-system-password"}},
-	)
-	_, err := engine.Execute(ctx, seeder.ExecuteOptions{Environment: common.EnvDevelopment})
-	require.NoError(t, err)
 
 	conn := postgres.NewTestConnection(db)
 	logger := zap.NewNop()
@@ -93,51 +69,14 @@ func TestAccountsReceivableRepositoryReturnsLedgerAndAging(t *testing.T) {
 		seqgen.GeneratorParams{Store: store, Provider: provider, Logger: logger},
 	)
 
-	var org seededAROrg
-	require.NoError(
-		t,
-		db.NewSelect().
-			Table("organizations").
-			Column("id", "business_unit_id").
-			Limit(1).
-			Scan(ctx, &org),
-	)
-	var user seededARUser
-	require.NoError(
-		t,
-		db.NewSelect().
-			Table("users").
-			Column("id").
-			Where("current_organization_id = ?", org.ID).
-			Where("business_unit_id = ?", org.BusinessUnitID).
-			Limit(1).
-			Scan(ctx, &user),
-	)
-	var shp seededARShipment
-	require.NoError(
-		t,
-		db.NewSelect().
-			Table("shipments").
-			Column("id", "customer_id", "pro_number", "bol").
-			Where("organization_id = ?", org.ID).
-			Where("business_unit_id = ?", org.BusinessUnitID).
-			Apply(seedtest.ShipmentsWithoutReceivables).
-			Limit(1).
-			Scan(ctx, &shp),
-	)
+	seeded := billingtest.SeededTenant(t, ctx, db)
+	ctx, org, user, shp := seeded.Ctx, seeded.Org, seeded.User, seeded.Shipment
 
 	control, err := accountingRepo.GetByOrgID(ctx, org.ID)
 	require.NoError(t, err)
-	control.DefaultCashAccountID = lookupARGLAccount(t, ctx, db, org.ID, org.BusinessUnitID, "1010")
-	control.DefaultUnappliedCashAccountID = lookupARGLAccount(
-		t,
-		ctx,
-		db,
-		org.ID,
-		org.BusinessUnitID,
-		"2200",
-	)
-	control.DefaultARAccountID = lookupARGLAccount(t, ctx, db, org.ID, org.BusinessUnitID, "1110")
+	control.DefaultCashAccountID = billingtest.GLAccountID(t, ctx, db, "1010")
+	control.DefaultUnappliedCashAccountID = billingtest.GLAccountID(t, ctx, db, "2200")
+	control.DefaultARAccountID = billingtest.GLAccountID(t, ctx, db, "1110")
 	_, err = accountingRepo.Update(ctx, control)
 	require.NoError(t, err)
 
@@ -158,7 +97,7 @@ func TestAccountsReceivableRepositoryReturnsLedgerAndAging(t *testing.T) {
 		Status:           billingqueue.StatusPosted,
 		BillType:         billingqueue.BillTypeInvoice,
 	}
-	_, err = db.NewInsert().Model(queue).Exec(ctx)
+	err = billingqueuedb.BillingQueueItems.Create(ctx, db, queue)
 	require.NoError(t, err)
 	postedAt := now.Unix()
 	inv, err := invoiceRepo.Create(
@@ -295,17 +234,8 @@ func TestAccountsReceivableRepositoryReturnsLedgerAndAging(t *testing.T) {
 }
 
 func TestAccountsReceivableRepositoryReturnsOpenItems(t *testing.T) {
-	ctx, db, cleanup := seedtest.SetupTestDB(t)
+	ctx, db, cleanup := seededtest.SetupTestDB(t)
 	defer cleanup()
-	seedRegistry := seeder.NewRegistry()
-	seeds.Register(seedRegistry)
-	engine := seeder.NewEngine(
-		db,
-		seedRegistry,
-		&config.Config{System: config.SystemConfig{SystemUserPassword: "test-system-password"}},
-	)
-	_, err := engine.Execute(ctx, seeder.ExecuteOptions{Environment: common.EnvDevelopment})
-	require.NoError(t, err)
 
 	conn := postgres.NewTestConnection(db)
 	logger := zap.NewNop()
@@ -329,51 +259,14 @@ func TestAccountsReceivableRepositoryReturnsOpenItems(t *testing.T) {
 		seqgen.GeneratorParams{Store: store, Provider: provider, Logger: logger},
 	)
 
-	var org seededAROrg
-	require.NoError(
-		t,
-		db.NewSelect().
-			Table("organizations").
-			Column("id", "business_unit_id").
-			Limit(1).
-			Scan(ctx, &org),
-	)
-	var user seededARUser
-	require.NoError(
-		t,
-		db.NewSelect().
-			Table("users").
-			Column("id").
-			Where("current_organization_id = ?", org.ID).
-			Where("business_unit_id = ?", org.BusinessUnitID).
-			Limit(1).
-			Scan(ctx, &user),
-	)
-	var shp seededARShipment
-	require.NoError(
-		t,
-		db.NewSelect().
-			Table("shipments").
-			Column("id", "customer_id", "pro_number", "bol").
-			Where("organization_id = ?", org.ID).
-			Where("business_unit_id = ?", org.BusinessUnitID).
-			Apply(seedtest.ShipmentsWithoutReceivables).
-			Limit(1).
-			Scan(ctx, &shp),
-	)
+	seeded := billingtest.SeededTenant(t, ctx, db)
+	ctx, org, user, shp := seeded.Ctx, seeded.Org, seeded.User, seeded.Shipment
 
 	control, err := accountingRepo.GetByOrgID(ctx, org.ID)
 	require.NoError(t, err)
-	control.DefaultCashAccountID = lookupARGLAccount(t, ctx, db, org.ID, org.BusinessUnitID, "1010")
-	control.DefaultUnappliedCashAccountID = lookupARGLAccount(
-		t,
-		ctx,
-		db,
-		org.ID,
-		org.BusinessUnitID,
-		"2200",
-	)
-	control.DefaultARAccountID = lookupARGLAccount(t, ctx, db, org.ID, org.BusinessUnitID, "1110")
+	control.DefaultCashAccountID = billingtest.GLAccountID(t, ctx, db, "1010")
+	control.DefaultUnappliedCashAccountID = billingtest.GLAccountID(t, ctx, db, "2200")
+	control.DefaultARAccountID = billingtest.GLAccountID(t, ctx, db, "1110")
 	_, err = accountingRepo.Update(ctx, control)
 	require.NoError(t, err)
 
@@ -394,7 +287,7 @@ func TestAccountsReceivableRepositoryReturnsOpenItems(t *testing.T) {
 		Status:           billingqueue.StatusPosted,
 		BillType:         billingqueue.BillTypeInvoice,
 	}
-	_, err = db.NewInsert().Model(queue).Exec(ctx)
+	err = billingqueuedb.BillingQueueItems.Create(ctx, db, queue)
 	require.NoError(t, err)
 	postedAt := now.Unix()
 	inv, err := invoiceRepo.Create(
@@ -495,17 +388,8 @@ func TestAccountsReceivableRepositoryReturnsOpenItems(t *testing.T) {
 }
 
 func TestAccountsReceivableRepositoryReturnsCustomerNameAndAging(t *testing.T) {
-	ctx, db, cleanup := seedtest.SetupTestDB(t)
+	ctx, db, cleanup := seededtest.SetupTestDB(t)
 	defer cleanup()
-	seedRegistry := seeder.NewRegistry()
-	seeds.Register(seedRegistry)
-	engine := seeder.NewEngine(
-		db,
-		seedRegistry,
-		&config.Config{System: config.SystemConfig{SystemUserPassword: "test-system-password"}},
-	)
-	_, err := engine.Execute(ctx, seeder.ExecuteOptions{Environment: common.EnvDevelopment})
-	require.NoError(t, err)
 
 	conn := postgres.NewTestConnection(db)
 	logger := zap.NewNop()
@@ -529,51 +413,14 @@ func TestAccountsReceivableRepositoryReturnsCustomerNameAndAging(t *testing.T) {
 		seqgen.GeneratorParams{Store: store, Provider: provider, Logger: logger},
 	)
 
-	var org seededAROrg
-	require.NoError(
-		t,
-		db.NewSelect().
-			Table("organizations").
-			Column("id", "business_unit_id").
-			Limit(1).
-			Scan(ctx, &org),
-	)
-	var user seededARUser
-	require.NoError(
-		t,
-		db.NewSelect().
-			Table("users").
-			Column("id").
-			Where("current_organization_id = ?", org.ID).
-			Where("business_unit_id = ?", org.BusinessUnitID).
-			Limit(1).
-			Scan(ctx, &user),
-	)
-	var shp seededARShipment
-	require.NoError(
-		t,
-		db.NewSelect().
-			Table("shipments").
-			Column("id", "customer_id", "pro_number", "bol").
-			Where("organization_id = ?", org.ID).
-			Where("business_unit_id = ?", org.BusinessUnitID).
-			Apply(seedtest.ShipmentsWithoutReceivables).
-			Limit(1).
-			Scan(ctx, &shp),
-	)
+	seeded := billingtest.SeededTenant(t, ctx, db)
+	ctx, org, user, shp := seeded.Ctx, seeded.Org, seeded.User, seeded.Shipment
 
 	control, err := accountingRepo.GetByOrgID(ctx, org.ID)
 	require.NoError(t, err)
-	control.DefaultCashAccountID = lookupARGLAccount(t, ctx, db, org.ID, org.BusinessUnitID, "1010")
-	control.DefaultUnappliedCashAccountID = lookupARGLAccount(
-		t,
-		ctx,
-		db,
-		org.ID,
-		org.BusinessUnitID,
-		"2200",
-	)
-	control.DefaultARAccountID = lookupARGLAccount(t, ctx, db, org.ID, org.BusinessUnitID, "1110")
+	control.DefaultCashAccountID = billingtest.GLAccountID(t, ctx, db, "1010")
+	control.DefaultUnappliedCashAccountID = billingtest.GLAccountID(t, ctx, db, "2200")
+	control.DefaultARAccountID = billingtest.GLAccountID(t, ctx, db, "1110")
 	_, err = accountingRepo.Update(ctx, control)
 	require.NoError(t, err)
 
@@ -594,7 +441,7 @@ func TestAccountsReceivableRepositoryReturnsCustomerNameAndAging(t *testing.T) {
 		Status:           billingqueue.StatusPosted,
 		BillType:         billingqueue.BillTypeInvoice,
 	}
-	_, err = db.NewInsert().Model(queue).Exec(ctx)
+	err = billingqueuedb.BillingQueueItems.Create(ctx, db, queue)
 	require.NoError(t, err)
 	postedAt := now.Unix()
 	inv, err := invoiceRepo.Create(
@@ -699,31 +546,6 @@ func TestAccountsReceivableRepositoryReturnsCustomerNameAndAging(t *testing.T) {
 	require.NotNil(t, aging)
 	assert.Equal(t, shp.CustomerID, aging.CustomerID)
 	assert.Equal(t, int64(7500), aging.Buckets.TotalOpenMinor)
-}
-
-func lookupARGLAccount(
-	t *testing.T,
-	ctx context.Context,
-	db *bun.DB,
-	orgID, buID pulid.ID,
-	accountCode string,
-) pulid.ID {
-	t.Helper()
-	var row struct {
-		ID pulid.ID `bun:"id"`
-	}
-	require.NoError(
-		t,
-		db.NewSelect().
-			Table("gl_accounts").
-			Column("id").
-			Where("organization_id = ?", orgID).
-			Where("business_unit_id = ?", buID).
-			Where("account_code = ?", accountCode).
-			Limit(1).
-			Scan(ctx, &row),
-	)
-	return row.ID
 }
 
 func int64PtrAR(v int64) *int64 { return &v }

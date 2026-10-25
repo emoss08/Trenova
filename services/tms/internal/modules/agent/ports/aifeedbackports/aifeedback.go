@@ -57,25 +57,25 @@ type AIFeedbackAgentTotalsRequest struct {
 }
 
 type AIFeedbackAgentTotals struct {
-	AgentDefinitionID pulid.ID `bun:"agent_definition_id"`
-	Positive          int      `bun:"positive"`
-	Negative          int      `bun:"negative"`
+	AgentDefinitionID pulid.ID
+	Positive          int
+	Negative          int
 }
 
 type AIFeedbackDay struct {
-	Day      string `bun:"day"`
-	Positive int    `bun:"positive"`
-	Negative int    `bun:"negative"`
+	Day      string
+	Positive int
+	Negative int
 }
 
 type AIFeedbackTargetScore struct {
-	TargetType  aifeedback.TargetType `bun:"target_type"`
-	TargetID    pulid.ID              `bun:"target_id"`
-	TargetPart  string                `bun:"target_part"`
-	Positive    int                   `bun:"positive"`
-	Negative    int                   `bun:"negative"`
-	LastRatedAt int64                 `bun:"last_rated_at"`
-	SampleID    pulid.ID              `bun:"sample_id"`
+	TargetType  aifeedback.TargetType
+	TargetID    pulid.ID
+	TargetPart  string
+	Positive    int
+	Negative    int
+	LastRatedAt int64
+	SampleID    pulid.ID
 }
 
 type ListNegativeAIFeedbackRequest struct {

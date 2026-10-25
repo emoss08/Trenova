@@ -7,6 +7,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
@@ -31,10 +32,10 @@ import (
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
+	"github.com/jackc/pgx/v5"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
-	"github.com/uptrace/bun"
 	"go.uber.org/zap"
 )
 
@@ -56,7 +57,7 @@ type checkCallHarness struct {
 	links      checkcallports.TrackingLinkRepository
 	controls   dispatchcontrolports.DispatchControlRepository
 	moveRepo   shipmentports.ShipmentMoveRepository
-	db         *bun.DB
+	db         *keel.DB
 	tenantInfo pagination.TenantInfo
 	move       *shipment.ShipmentMove
 	customerID pulid.ID
@@ -68,7 +69,7 @@ func newCheckCallHarness(t *testing.T) (context.Context, *checkCallHarness) {
 	ctx, db, cleanup := seedtest.SetupTestDB(t)
 	t.Cleanup(cleanup)
 
-	moveSvc, shipmentRepo, moveRepo, tenantInfo, fixture, controlRepo := newIntegrationService(
+	ctx, moveSvc, shipmentRepo, moveRepo, tenantInfo, fixture, controlRepo := newIntegrationService(
 		t,
 		ctx,
 		db,
@@ -86,25 +87,16 @@ func newCheckCallHarness(t *testing.T) (context.Context, *checkCallHarness) {
 	move := graph.Moves[0]
 
 	carrierID := pulid.MustNew("car_")
-	_, err := db.NewRaw(
-		`INSERT INTO carriers (id, business_unit_id, organization_id, code, name)
-		VALUES (?, ?, ?, 'REDLINE', 'Redline Freight')`,
-		carrierID, tenantInfo.BuID, tenantInfo.OrgID,
-	).Exec(ctx)
+	_, err := keel.Exec(ctx, db, `INSERT INTO carriers (id, business_unit_id, organization_id, code, name)
+		VALUES ($1, $2, $3, 'REDLINE', 'Redline Freight')`, carrierID, tenantInfo.BuID, tenantInfo.OrgID)
 	require.NoError(t, err)
-	_, err = db.NewRaw(
-		`INSERT INTO carrier_assignments (
+	_, err = keel.Exec(ctx, db, `INSERT INTO carrier_assignments (
 			id, business_unit_id, organization_id, shipment_move_id, carrier_id, status,
 			base_rate, base_amount, total_cost, confirmed_at
-		) VALUES (?, ?, ?, ?, ?, 'Confirmed', 1000, 1000, 1000, ?)`,
-		pulid.MustNew("casn_"), tenantInfo.BuID, tenantInfo.OrgID, move.ID, carrierID,
-		timeutils.NowUnix()-10*secondsPerHourTest,
-	).Exec(ctx)
+		) VALUES ($1, $2, $3, $4, $5, 'Confirmed', 1000, 1000, 1000, $6)`, pulid.MustNew("casn_"), tenantInfo.BuID, tenantInfo.OrgID, move.ID, carrierID,
+		timeutils.NowUnix()-10*secondsPerHourTest)
 	require.NoError(t, err)
-	_, err = db.NewRaw(
-		`UPDATE shipment_moves SET coverage_type = 'carrier' WHERE id = ?`,
-		move.ID,
-	).Exec(ctx)
+	_, err = keel.Exec(ctx, db, `UPDATE shipment_moves SET coverage_type = 'carrier' WHERE id = $1`, move.ID)
 	require.NoError(t, err)
 
 	conn := postgres.NewTestConnection(db)
@@ -223,14 +215,18 @@ func TestCheckCallIntegrationCarrierPostSettlesTheStop(t *testing.T) {
 	assert.Equal(t, arrivedAt, *stop.ActualArrival)
 	assert.Equal(t, shipment.MoveStatusInTransit, move.Status)
 
-	var events []struct {
-		Source       string `bun:"source"`
-		RawReference string `bun:"raw_reference"`
+	type trackingEventRow struct {
+		Source       string
+		RawReference string
 	}
-	require.NoError(t, h.db.NewRaw(
-		`SELECT source, raw_reference FROM tracking_events WHERE shipment_move_id = ?`,
-		h.move.ID,
-	).Scan(dbscope.WithTenant(ctx, h.tenantInfo.DBTenant()), &events))
+	events, err := keel.QueryAll(
+		dbscope.WithTenant(ctx, h.tenantInfo.DBTenant()),
+		h.db,
+		pgx.RowToStructByPos[trackingEventRow],
+		`SELECT source, raw_reference FROM tracking_events WHERE shipment_move_id = $1`,
+		h.move.ID.String(),
+	)
+	require.NoError(t, err)
 	require.Len(t, events, 1)
 	assert.Equal(t, string(trackingevent.SourceCarrier), events[0].Source)
 	assert.True(t, strings.HasPrefix(events[0].RawReference, "carrier_tracking_link:"))
@@ -304,10 +300,12 @@ func TestCheckCallIntegrationAQuietLoadGoesOverdue(t *testing.T) {
 	assert.Equal(t, int16(1), overdue[0].IntervalHours)
 	assert.Positive(t, overdue[0].OverdueBy)
 
-	_, err = h.db.NewRaw(
-		`UPDATE customers SET check_call_interval_hours = 4 WHERE id = ?`,
-		h.customerID,
-	).Exec(dbscope.WithTenant(ctx, h.tenantInfo.DBTenant()))
+	_, err = keel.Exec(
+		dbscope.WithTenant(ctx, h.tenantInfo.DBTenant()),
+		h.db,
+		`UPDATE customers SET check_call_interval_hours = 4 WHERE id = $1`,
+		h.customerID.String(),
+	)
 	require.NoError(t, err)
 
 	overdue, err = h.svc.ListOverdue(ctx, h.tenantInfo, now+2*secondsPerHourTest)

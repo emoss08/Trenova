@@ -50,7 +50,7 @@ type Params struct {
 	fx.In
 
 	Logger        *zap.Logger
-	DB            kernelports.DBConnection
+	DB            kernelports.Transactor
 	SuiteRuns     agentqualityports.AgentSuiteRunRepository
 	Controls      agentqualityports.AgentQualityControlRepository
 	Definitions   agentdefinitionports.AgentDefinitionRepository
@@ -71,7 +71,7 @@ type Params struct {
 
 type Service struct {
 	l             *zap.Logger
-	db            kernelports.DBConnection
+	db            kernelports.Transactor
 	suiteRuns     agentqualityports.AgentSuiteRunRepository
 	controls      agentqualityports.AgentQualityControlRepository
 	definitions   agentdefinitionports.AgentDefinitionRepository

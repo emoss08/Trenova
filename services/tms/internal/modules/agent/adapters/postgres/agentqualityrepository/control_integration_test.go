@@ -20,6 +20,7 @@ func TestControlUpsertCreatesTheFirstControl(t *testing.T) {
 	t.Cleanup(cleanup)
 
 	data := seedtest.SeedFullTestData(t, ctx, db)
+	ctx = data.Ctx(ctx)
 	repo := NewControls(ControlParams{DB: postgres.NewTestConnection(db), Logger: zap.NewNop()})
 	tenant := pagination.TenantInfo{OrgID: data.Organization.ID, BuID: data.BusinessUnit.ID}
 

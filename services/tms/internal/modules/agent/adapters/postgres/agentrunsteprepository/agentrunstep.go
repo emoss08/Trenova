@@ -4,11 +4,10 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/emoss08/trenova/pkg/buncolgen/agentcol"
-
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agent/agentdb"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/shared/timeutils"
@@ -54,8 +53,7 @@ func (r *repository) Claim(
 		)
 
 		err := dbtx.Savepoint(ctx, r.db, func(ctx context.Context) error {
-			_, insertErr := r.db.DBForContext(ctx).NewInsert().Model(step).Exec(ctx)
-			return insertErr
+			return agentdb.AgentRunSteps.Create(ctx, r.db.Keel(ctx), step)
 		})
 		if err == nil {
 			return step, nil
@@ -87,15 +85,9 @@ func (r *repository) byKey(
 	step *agent.AgentRunStep,
 ) (*agent.AgentRunStep, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*agent.AgentRunStep, error) {
-		cols := agentcol.AgentRunStepColumns
-		held := new(agent.AgentRunStep)
-
-		err := r.db.DBForContext(ctx).NewSelect().
-			Model(held).
-			Where(cols.OrganizationID.Eq(), step.OrganizationID).
-			Where(cols.OwnerID.Eq(), step.OwnerID).
-			Where(cols.StepKey.Eq(), step.StepKey).
-			Scan(ctx)
+		s := agentdb.AgentRunSteps
+		held, err := s.Where(s.OwnerID.Eq(step.OwnerID), s.StepKey.Eq(step.StepKey)).
+			One(ctx, r.db.Keel(ctx))
 		if err != nil {
 			return nil, dberror.HandleNotFoundError(err, "AgentRunStep")
 		}
@@ -120,24 +112,20 @@ func (r *repository) Settle(
 	req agentports.SettleAgentRunStepRequest,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
-		cols := agentcol.AgentRunStepColumns
-
+		s := agentdb.AgentRunSteps
 		outcome := req.Outcome
 		if outcome == nil {
 			outcome = map[string]any{}
 		}
 
-		_, err := r.db.DBForContext(ctx).NewUpdate().
-			Model((*agent.AgentRunStep)(nil)).
-			Set(cols.Status.Set(), req.Status).
-			Set(cols.Outcome.Set(), outcome).
-			Set(cols.UpdatedAt.Set(), timeutils.NowUnix()).
-			Set(cols.SettledAtMs.Set(), timeutils.NowUnixMilli()).
-			Where(cols.OrganizationID.Eq(), req.TenantInfo.OrgID).
-			Where(cols.BusinessUnitID.Eq(), req.TenantInfo.BuID).
-			Where(cols.OwnerID.Eq(), req.OwnerID).
-			Where(cols.StepKey.Eq(), req.StepKey).
-			Exec(ctx)
+		_, err := s.Where(s.OwnerID.Eq(req.OwnerID), s.StepKey.Eq(req.StepKey)).Update(
+			ctx,
+			r.db.Keel(ctx),
+			s.Status.To(req.Status),
+			s.Outcome.To(outcome),
+			s.SettledAtMs.To(timeutils.NowUnixMilli()),
+			s.Version.ToExpr(s.Version),
+		)
 		if err != nil {
 			r.l.Error("failed to settle an agent run step",
 				zap.String("owner", req.OwnerID.String()),
@@ -154,7 +142,7 @@ func (r *repository) Settle(
 
 func (r *repository) Record(ctx context.Context, step *agent.AgentRunStep) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
-		if _, err := r.db.DBForContext(ctx).NewInsert().Model(step).Exec(ctx); err != nil {
+		if err := agentdb.AgentRunSteps.Create(ctx, r.db.Keel(ctx), step); err != nil {
 			r.l.Error("failed to record an agent run step",
 				zap.String("owner", step.OwnerID.String()),
 				zap.String("kind", step.Kind),
@@ -173,16 +161,10 @@ func (r *repository) List(
 	req agentports.ListAgentRunStepsRequest,
 ) ([]*agent.AgentRunStep, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*agent.AgentRunStep, error) {
-		cols := agentcol.AgentRunStepColumns
-		steps := make([]*agent.AgentRunStep, 0, 8)
-
-		err := r.db.DBForContext(ctx).NewSelect().
-			Model(&steps).
-			Apply(agentcol.AgentRunStepApplyTenant(req.TenantInfo)).
-			Where(cols.OwnerKind.Eq(), req.OwnerKind).
-			Where(cols.OwnerID.Eq(), req.OwnerID).
-			Order(cols.CreatedAt.OrderAsc()).
-			Scan(ctx)
+		s := agentdb.AgentRunSteps
+		steps, err := s.Where(s.OwnerKind.Eq(req.OwnerKind), s.OwnerID.Eq(req.OwnerID)).
+			Order(s.CreatedAt.Asc()).
+			All(ctx, r.db.Keel(ctx))
 		if err != nil {
 			r.l.Error("failed to list agent run steps",
 				zap.String("owner", req.OwnerID.String()),
@@ -196,38 +178,26 @@ func (r *repository) List(
 	})
 }
 
-// Prune drops a batch of old steps. It is deliberately not tenant-scoped: the
-// sweep runs for the whole installation, and a step's only reason to exist is
-// a retry that can no longer happen.
+// Prune drops a batch of the old steps of the tenant on the context: a step's
+// only reason to exist is a retry that can no longer happen.
 func (r *repository) Prune(
 	ctx context.Context,
 	req agentports.PruneAgentRunStepsRequest,
 ) (int, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (int, error) {
-		cols := agentcol.AgentRunStepColumns
-
-		dba := r.db.DBForContext(ctx)
-		doomed := dba.NewSelect().
-			Model((*agent.AgentRunStep)(nil)).
-			Column(cols.ID.String()).
-			Where(cols.CreatedAt.Lt(), req.Before).
-			Limit(int64(req.Limit))
-
-		result, err := dba.NewDelete().
-			Model((*agent.AgentRunStep)(nil)).
-			Where(cols.ID.In(), doomed).
-			Exec(ctx)
+		s := agentdb.AgentRunSteps
+		doomed := agentdb.AgentRunSteps.As("doomed")
+		n, err := s.Where(s.ID.InQuery(doomed.
+			Pick(doomed.ID).
+			Where(doomed.CreatedAt.Lt(req.Before)).
+			Limit(req.Limit))).
+			Delete(ctx, r.db.Keel(ctx))
 		if err != nil {
 			r.l.Error("failed to prune agent run steps", zap.Error(err))
 
 			return 0, fmt.Errorf("prune agent run steps: %w", err)
 		}
 
-		affected, err := result.RowsAffected()
-		if err != nil {
-			return 0, fmt.Errorf("prune agent run steps: %w", err)
-		}
-
-		return int(affected), nil
+		return int(n), nil
 	})
 }

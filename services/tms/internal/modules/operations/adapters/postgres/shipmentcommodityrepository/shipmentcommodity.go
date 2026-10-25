@@ -4,19 +4,35 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/emoss08/trenova/pkg/buncolgen/shipmentcol"
-
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment/shipmentdb"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
-	"github.com/uptrace/bun"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
+
+var commodityErrors = dberror.Mapping{
+	Entity: "Shipment commodity",
+	ForeignKey: []dberror.Constraint{
+		{
+			Name:    "fk_shipment_commodities_commodity",
+			Field:   "commodityId",
+			Message: "Commodity does not exist in your organization",
+		},
+		{
+			Name:    "fk_shipment_commodities_shipment",
+			Field:   "shipmentId",
+			Message: "Shipment does not exist in your organization",
+		},
+	},
+}
 
 type Params struct {
 	fx.In
@@ -37,52 +53,61 @@ func New(p Params) shipmentports.ShipmentCommodityRepository {
 	}
 }
 
-func (r *repository) SyncForShipment(
-	ctx context.Context,
-	tx bun.IDB,
-	entity *shipment.Shipment,
-) error {
-	existingCommodities, err := r.getExistingCommodities(ctx, tx, entity)
+func (r *repository) SyncForShipment(ctx context.Context, entity *shipment.Shipment) error {
+	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
+		return r.syncForShipment(ctx, entity)
+	})
+}
+
+func (r *repository) syncForShipment(ctx context.Context, entity *shipment.Shipment) error {
+	existing, err := r.getExistingCommodities(ctx, entity)
 	if err != nil {
 		return err
 	}
 
-	updatedCommodityIDs := make(map[pulid.ID]struct{}, len(entity.Commodities))
-	for _, shipmentCommodity := range entity.Commodities {
-		if shipmentCommodity == nil {
+	kept := make(map[pulid.ID]struct{}, len(entity.Commodities))
+	inserts := make([]*shipment.ShipmentCommodity, 0, len(entity.Commodities))
+	for _, commodity := range entity.Commodities {
+		if commodity == nil {
 			continue
 		}
 
-		r.normalizeCommodity(entity, shipmentCommodity)
+		normalizeCommodity(entity, commodity)
 
 		switch {
-		case shipmentCommodity.ID.IsNil():
-			shipmentCommodity.ID = pulid.MustNew("sc_")
-			if err = r.insertCommodity(ctx, tx, shipmentCommodity); err != nil {
+		case commodity.ID.IsNil():
+			commodity.ID = pulid.MustNew("sc_")
+			inserts = append(inserts, commodity)
+		case existing[commodity.ID] != nil:
+			if err = r.updateCommodity(ctx, commodity, existing[commodity.ID]); err != nil {
 				return err
 			}
-		case existingCommodities[shipmentCommodity.ID] != nil:
-			if err = r.updateCommodity(
-				ctx,
-				tx,
-				shipmentCommodity,
-				existingCommodities[shipmentCommodity.ID],
-			); err != nil {
-				return err
-			}
-			updatedCommodityIDs[shipmentCommodity.ID] = struct{}{}
+			kept[commodity.ID] = struct{}{}
 		default:
 			return errortypes.NewBusinessError("Shipment contains an unknown commodity").
-				WithParam("shipmentCommodityId", shipmentCommodity.ID.String())
+				WithParam("shipmentCommodityId", commodity.ID.String())
 		}
 	}
 
-	deleteIDs := make([]pulid.ID, 0, len(existingCommodities))
-	for id := range existingCommodities {
-		if _, ok := updatedCommodityIDs[id]; ok {
+	if len(inserts) > 0 {
+		if err = shipmentdb.ShipmentCommodities.CreateMany(
+			ctx,
+			r.db.Keel(ctx),
+			inserts,
+		); err != nil {
+			return fmt.Errorf(
+				"insert shipment commodities: %w",
+				commodityErrors.Map(err, inserts[0].ID.String()),
+			)
+		}
+	}
+
+	deleteIDs := make([]pulid.ID, 0, len(existing))
+	for id := range existing {
+		if _, ok := kept[id]; ok {
 			continue
 		}
-		if _, ok := r.findCommodityInPayload(entity, id); ok {
+		if inPayload(entity, id) {
 			continue
 		}
 		deleteIDs = append(deleteIDs, id)
@@ -92,14 +117,9 @@ func (r *repository) SyncForShipment(
 		return nil
 	}
 
-	_, err = tx.NewDelete().
-		Model((*shipment.ShipmentCommodity)(nil)).
-		Where("id IN (?)", bun.List(deleteIDs)).
-		Where("shipment_id = ?", entity.ID).
-		Where("organization_id = ?", entity.OrganizationID).
-		Where("business_unit_id = ?", entity.BusinessUnitID).
-		Exec(ctx)
-	if err != nil {
+	sc := shipmentdb.ShipmentCommodities
+	if _, err = sc.Where(sc.ID.In(deleteIDs...), sc.ShipmentID.Eq(entity.ID)).
+		Delete(ctx, r.db.Keel(ctx)); err != nil {
 		return fmt.Errorf("delete shipment commodities: %w", err)
 	}
 
@@ -108,16 +128,11 @@ func (r *repository) SyncForShipment(
 
 func (r *repository) getExistingCommodities(
 	ctx context.Context,
-	tx bun.IDB,
 	entity *shipment.Shipment,
 ) (map[pulid.ID]*shipment.ShipmentCommodity, error) {
-	commodities := make([]*shipment.ShipmentCommodity, 0)
-	if err := tx.NewSelect().
-		Model(&commodities).
-		Where("shipment_id = ?", entity.ID).
-		Where("organization_id = ?", entity.OrganizationID).
-		Where("business_unit_id = ?", entity.BusinessUnitID).
-		Scan(ctx); err != nil {
+	sc := shipmentdb.ShipmentCommodities
+	commodities, err := sc.Where(sc.ShipmentID.Eq(entity.ID)).All(ctx, r.db.Keel(ctx))
+	if err != nil {
 		return nil, fmt.Errorf("get existing shipment commodities: %w", err)
 	}
 
@@ -129,71 +144,57 @@ func (r *repository) getExistingCommodities(
 	return result, nil
 }
 
-func (r *repository) normalizeCommodity(
-	entity *shipment.Shipment,
-	shipmentCommodity *shipment.ShipmentCommodity,
-) {
-	shipmentCommodity.ShipmentID = entity.ID
-	shipmentCommodity.OrganizationID = entity.OrganizationID
-	shipmentCommodity.BusinessUnitID = entity.BusinessUnitID
-}
-
-func (r *repository) insertCommodity(
-	ctx context.Context,
-	tx bun.IDB,
-	shipmentCommodity *shipment.ShipmentCommodity,
-) error {
-	_, err := tx.NewInsert().Model(shipmentCommodity).Returning("*").Exec(ctx)
-	if err != nil {
-		return fmt.Errorf("insert shipment commodity %s: %w", shipmentCommodity.ID, err)
-	}
-
-	return nil
+func normalizeCommodity(entity *shipment.Shipment, commodity *shipment.ShipmentCommodity) {
+	commodity.ShipmentID = entity.ID
+	commodity.OrganizationID = entity.OrganizationID
+	commodity.BusinessUnitID = entity.BusinessUnitID
 }
 
 func (r *repository) updateCommodity(
 	ctx context.Context,
-	tx bun.IDB,
-	shipmentCommodity *shipment.ShipmentCommodity,
+	commodity *shipment.ShipmentCommodity,
 	existing *shipment.ShipmentCommodity,
 ) error {
-	ov := existing.Version
-	shipmentCommodity.Version = ov + 1
-	shipmentCommodity.UpdatedAt = timeutils.NowUnix()
-
-	cols := shipmentcol.ShipmentCommodityColumns
-	results, err := tx.NewUpdate().
-		Model((*shipment.ShipmentCommodity)(nil)).
-		Set(cols.CommodityID.Set(), shipmentCommodity.CommodityID).
-		Set(cols.Weight.Set(), shipmentCommodity.Weight).
-		Set(cols.Pieces.Set(), shipmentCommodity.Pieces).
-		Set(cols.LengthFeet.Set(), shipmentCommodity.LengthFeet).
-		Set(cols.WidthFeet.Set(), shipmentCommodity.WidthFeet).
-		Set(cols.HeightFeet.Set(), shipmentCommodity.HeightFeet).
-		Set(cols.Version.Set(), shipmentCommodity.Version).
-		Set(cols.UpdatedAt.Set(), shipmentCommodity.UpdatedAt).
-		Where(cols.ID.Eq(), shipmentCommodity.ID).
-		Where(cols.ShipmentID.Eq(), shipmentCommodity.ShipmentID).
-		Where(cols.OrganizationID.Eq(), shipmentCommodity.OrganizationID).
-		Where(cols.BusinessUnitID.Eq(), shipmentCommodity.BusinessUnitID).
-		Where(cols.Version.Eq(), ov).
-		Exec(ctx)
+	sc := shipmentdb.ShipmentCommodities
+	n, err := sc.Where(
+		sc.ID.Eq(commodity.ID),
+		sc.ShipmentID.Eq(commodity.ShipmentID),
+		sc.Version.Eq(existing.Version),
+	).Update(
+		ctx,
+		r.db.Keel(ctx),
+		sc.CommodityID.To(commodity.CommodityID),
+		sc.Weight.To(commodity.Weight),
+		sc.Pieces.To(commodity.Pieces),
+		sc.LengthFeet.ToExpr(keel.Val(commodity.LengthFeet)),
+		sc.WidthFeet.ToExpr(keel.Val(commodity.WidthFeet)),
+		sc.HeightFeet.ToExpr(keel.Val(commodity.HeightFeet)),
+	)
 	if err != nil {
-		return fmt.Errorf("update shipment commodity %s: %w", shipmentCommodity.ID, err)
+		return fmt.Errorf(
+			"update shipment commodity %s: %w",
+			commodity.ID,
+			commodityErrors.Map(err, commodity.ID.String()),
+		)
 	}
 
-	return dberror.CheckRowsAffected(results, "Shipment commodity", shipmentCommodity.ID.String())
+	if err = dberror.CheckAffected(n, "Shipment commodity", commodity.ID.String()); err != nil {
+		return err
+	}
+
+	commodity.Version = existing.Version + 1
+	commodity.CreatedAt = existing.CreatedAt
+	commodity.UpdatedAt = timeutils.NowUnix()
+
+	return nil
 }
 
-func (r *repository) findCommodityInPayload(
-	entity *shipment.Shipment,
-	id pulid.ID,
-) (*shipment.ShipmentCommodity, bool) {
-	for _, shipmentCommodity := range entity.Commodities {
-		if shipmentCommodity != nil && shipmentCommodity.ID == id {
-			return shipmentCommodity, true
+func inPayload(entity *shipment.Shipment, id pulid.ID) bool {
+	for _, commodity := range entity.Commodities {
+		if commodity != nil && commodity.ID == id {
+			return true
 		}
 	}
 
-	return nil, false
+	return false
 }

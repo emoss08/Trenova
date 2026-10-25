@@ -3,49 +3,49 @@ package driverpay
 import (
 	"context"
 
+	"github.com/emoss08/trenova/shared/money"
+
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/validationframework"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/emoss08/trenova/shared/timeutils"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
-	"github.com/uptrace/bun"
 )
 
 var (
-	_ bun.BeforeAppendModelHook          = (*RecurringEarning)(nil)
 	_ pagination.CursorEntity            = (*RecurringEarning)(nil)
 	_ validationframework.TenantedEntity = (*RecurringEarning)(nil)
 )
 
+// Standing earnings such as per diem and retention bonuses
 type RecurringEarning struct {
-	bun.BaseModel             `bun:"table:recurring_earnings,alias:rern" json:"-"`
-	pagination.CursorValueSet `bun:",embed"                              json:"-"`
+	keel.Table `keel:"recurring_earnings,report=Payroll"`
 
-	ID              pulid.ID         `json:"id"              bun:"id,pk,type:VARCHAR(100),notnull"`
-	BusinessUnitID  pulid.ID         `json:"businessUnitId"  bun:"business_unit_id,pk,type:VARCHAR(100),notnull"`
-	OrganizationID  pulid.ID         `json:"organizationId"  bun:"organization_id,pk,type:VARCHAR(100),notnull"`
-	WorkerID        pulid.ID         `json:"workerId"        bun:"worker_id,type:VARCHAR(100),notnull"`
-	PayCodeID       pulid.ID         `json:"payCodeId"       bun:"pay_code_id,type:VARCHAR(100),notnull"`
-	Status          EarningStatus    `json:"status"          bun:"status,type:VARCHAR(50),notnull,default:'Active'"`
-	Kind            EarningKind      `json:"kind"            bun:"kind,type:VARCHAR(50),notnull,default:'Standard'"`
-	Frequency       EarningFrequency `json:"frequency"       bun:"frequency,type:VARCHAR(50),notnull,default:'EverySettlement'"`
-	Description     string           `json:"description"     bun:"description,type:VARCHAR(255),notnull"`
-	AmountMinor     int64            `json:"amountMinor"     bun:"amount_minor,type:BIGINT,notnull"`
-	TotalCapMinor   *int64           `json:"totalCapMinor"   bun:"total_cap_minor,type:BIGINT,nullzero"`
-	PaidToDateMinor int64            `json:"paidToDateMinor" bun:"paid_to_date_minor,type:BIGINT,notnull"`
-	StartDate       int64            `json:"startDate"       bun:"start_date,type:BIGINT,notnull"`
-	EndDate         *int64           `json:"endDate"         bun:"end_date,type:BIGINT,nullzero"`
-	CurrencyCode    string           `json:"currencyCode"    bun:"currency_code,type:VARCHAR(3),notnull,default:'USD'"`
-	CreatedByID     pulid.ID         `json:"createdById"     bun:"created_by_id,type:VARCHAR(100),nullzero"`
-	Version         int64            `json:"version"         bun:"version,type:BIGINT,notnull"`
-	CreatedAt       int64            `json:"createdAt"       bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
-	UpdatedAt       int64            `json:"updatedAt"       bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
+	ID              pulid.ID         `json:"id"              keel:"id,pk,autoid:rern_"`
+	BusinessUnitID  pulid.ID         `json:"businessUnitId"  keel:"business_unit_id,pk,tenant"`
+	OrganizationID  pulid.ID         `json:"organizationId"  keel:"organization_id,pk,tenant"`
+	WorkerID        pulid.ID         `json:"workerId"        keel:"worker_id"`
+	PayCodeID       pulid.ID         `json:"payCodeId"       keel:"pay_code_id"`
+	Status          EarningStatus    `json:"status"          keel:"status"`
+	Kind            EarningKind      `json:"kind"            keel:"kind"`
+	Frequency       EarningFrequency `json:"frequency"       keel:"frequency"`
+	Description     string           `json:"description"     keel:"description"`
+	AmountMinor     int64            `json:"amountMinor"     keel:"amount_minor,label=Amount (Minor)"`
+	TotalCapMinor   *int64           `json:"totalCapMinor"   keel:"total_cap_minor,label=Total Cap (Minor)"`
+	PaidToDateMinor int64            `json:"paidToDateMinor" keel:"paid_to_date_minor,label=Paid to Date (Minor)"`
+	StartDate       int64            `json:"startDate"       keel:"start_date,label=Starts"`
+	EndDate         *int64           `json:"endDate"         keel:"end_date,label=Ends"`
+	CurrencyCode    string           `json:"currencyCode"    keel:"currency_code,label=Currency"`
+	CreatedByID     pulid.ID         `json:"createdById"     keel:"created_by_id,nullzero"`
+	Version         int64            `json:"version"         keel:"version,version"`
+	CreatedAt       int64            `json:"createdAt"       keel:"created_at,autocreate"`
+	UpdatedAt       int64            `json:"updatedAt"       keel:"updated_at,autoupdate"`
 
-	Worker  *worker.Worker `json:"worker,omitempty"  bun:"rel:belongs-to,join:worker_id=id,join:organization_id=organization_id,join:business_unit_id=business_unit_id"`
-	PayCode *PayCode       `json:"payCode,omitempty" bun:"rel:belongs-to,join:pay_code_id=id,join:organization_id=organization_id,join:business_unit_id=business_unit_id"`
+	Worker  *worker.Worker `json:"worker,omitempty"  keel:"belongs:worker_id,label=Driver"`
+	PayCode *PayCode       `json:"payCode,omitempty" keel:"belongs:pay_code_id"`
 }
 
 func (r *RecurringEarning) Validate(multiErr *errortypes.MultiError) {
@@ -134,16 +134,19 @@ func (r *RecurringEarning) GetBusinessUnitID() pulid.ID { return r.BusinessUnitI
 
 func (r *RecurringEarning) GetTableName() string { return "recurring_earnings" }
 
-func (r *RecurringEarning) BeforeAppendModel(_ context.Context, query bun.Query) error {
-	now := timeutils.NowUnix()
-	switch query.(type) {
-	case *bun.InsertQuery:
-		if r.ID.IsNil() {
-			r.ID = pulid.MustNew("rern_")
-		}
-		r.CreatedAt = now
-	case *bun.UpdateQuery:
-		r.UpdatedAt = now
+func (r *RecurringEarning) BeforeCreate(ctx context.Context) error {
+	if r.Status == "" {
+		r.Status = EarningStatusActive
 	}
+	if r.Kind == "" {
+		r.Kind = EarningKindStandard
+	}
+	if r.Frequency == "" {
+		r.Frequency = EarningFrequencyEverySettlement
+	}
+	if r.CurrencyCode == "" {
+		r.CurrencyCode = money.DefaultCurrencyCode
+	}
+
 	return nil
 }

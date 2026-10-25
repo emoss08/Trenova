@@ -3,45 +3,25 @@ package agentproposalbaselinerepository
 import (
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/shared/pulid"
+	"github.com/emoss08/trenova/internal/testutil/keeltest"
+	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/stretchr/testify/assert"
-	"github.com/uptrace/bun"
-	"github.com/uptrace/bun/dialect/pgdialect"
 )
 
-func TestPurgeQuery_DeletesOnlyOldBaselinesNoProposalNames(t *testing.T) {
+func TestOrphans_AreOnlyOldBaselinesNoProposalNames(t *testing.T) {
 	t.Parallel()
 
-	sql := purgeQuery(bun.NewDB(nil, pgdialect.New()), 1767225600, 250).String()
+	ctx := dbscope.WithSystem(t.Context(), "test")
+	sql, args := keeltest.RenderIn(t, ctx, orphans(1767225600, 250))
 
-	assert.Contains(t, sql, `DELETE FROM "agent_proposal_baselines" AS "apb"`)
-	assert.Contains(t, sql,
-		"(apb.proposal_id, apb.organization_id, apb.business_unit_id) IN (SELECT")
-	assert.Contains(t, sql, "apb.created_at < 1767225600")
-	assert.Contains(t, sql, `NOT EXISTS (SELECT 1 FROM "agent_proposals" AS "ap"`)
-	assert.Contains(t, sql, "ap.id = apb.proposal_id")
-	assert.Contains(t, sql, "ap.organization_id = apb.organization_id")
-	assert.Contains(t, sql, "ap.business_unit_id = apb.business_unit_id")
-	assert.Contains(t, sql, "LIMIT 250")
-}
-
-func TestCreate_KeepsTheFirstBaselineForAProposal(t *testing.T) {
-	t.Parallel()
-
-	baseline := &agent.ProposalBaseline{
-		ProposalID:     pulid.MustNew("ap_"),
-		OrganizationID: pulid.MustNew("org_"),
-		BusinessUnitID: pulid.MustNew("bu_"),
-		ToolName:       "shipment_cancel",
-		Preview:        &agent.ToolPreview{Summary: "Would cancel."},
-	}
-
-	sql := bun.NewDB(nil, pgdialect.New()).NewInsert().
-		Model(baseline).
-		On(conflictTarget).
-		String()
-
-	assert.Contains(t, sql,
-		"ON CONFLICT (proposal_id, organization_id, business_unit_id) DO NOTHING")
+	assert.Contains(t, sql, `SELECT orphan."proposal_id"`)
+	assert.Contains(t, sql, `FROM "agent_proposal_baselines" orphan`)
+	assert.Contains(t, sql, `orphan."created_at" < $1`)
+	assert.Contains(t, sql, `NOT EXISTS (SELECT`)
+	assert.Contains(t, sql, `"agent_proposals" ap`)
+	assert.Contains(t, sql, `ap."id" = orphan."proposal_id"`)
+	assert.Contains(t, sql, `ap."organization_id" = orphan."organization_id"`)
+	assert.Contains(t, sql, `ap."business_unit_id" = orphan."business_unit_id"`)
+	assert.Contains(t, sql, `ORDER BY orphan."created_at" ASC LIMIT 250`)
+	assert.Equal(t, []any{int64(1767225600)}, args)
 }

@@ -23,7 +23,7 @@ import {
   type CronParts,
 } from "@/lib/cron";
 import type { ReportDefinition, ReportSchedule } from "@/lib/graphql/reports";
-import { REPORT_FORMAT_CHOICES, type ReportIR } from "@/types/report";
+import { REPORT_FORMAT_CHOICES, parseReportIR, type ReportIR } from "@/types/report";
 import { Badge } from "@trenova/shared/components/ui/badge";
 import { Button } from "@trenova/shared/components/ui/button";
 import {
@@ -892,8 +892,8 @@ export function ReportSchedulesDialog({
   // Only aggregate columns have a grand total to watch, so a dimension is
   // never offered as an alert target.
   const measures = useMemo(() => {
-    const ir = definition?.definition as ReportIR | undefined;
-    if (!ir?.columns) return [];
+    const ir = parseReportIR(definition?.definition);
+    if (!ir) return [];
     return ir.columns
       .filter((column: ReportIR["columns"][number]) => column.kind !== "dimension")
       .map((column: ReportIR["columns"][number]) => ({

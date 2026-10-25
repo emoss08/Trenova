@@ -4,18 +4,15 @@ import (
 	"context"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/infrastructure/config"
-
+	"github.com/emoss08/keel/analytics/ir"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/reporting/canned"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/report"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/reportports"
-	"github.com/emoss08/trenova/pkg/dbtype"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"go.uber.org/zap"
 )
 
 type stubDashboardRepo struct {
@@ -124,16 +121,38 @@ var (
 )
 
 func tileTestService(
+	t *testing.T,
 	dashboard *report.Dashboard,
 	definitions map[pulid.ID]*report.ReportDefinition,
 ) *Service {
-	return &Service{
-		l:             zap.NewNop(),
-		dashboardRepo: &stubDashboardRepo{dashboard: dashboard},
-		defRepo:       &stubDefinitionRepo{definitions: definitions},
-		canned:        canned.Default(),
-		cfg:           &config.ReportingConfig{},
+	t.Helper()
+	library, err := canned.Default()
+	require.NoError(t, err)
+	svc, _ := engineService(t, engineOptions{})
+	svc.dashboardRepo = &stubDashboardRepo{dashboard: dashboard}
+	svc.defRepo = &stubDefinitionRepo{definitions: definitions}
+	svc.canned = library
+	return svc
+}
+
+func filterValue(filter *ir.Filter, field string) (any, bool) {
+	if filter == nil {
+		return nil, false
 	}
+	if filter.Field == field && filter.And == nil && filter.Or == nil {
+		return filter.Value, true
+	}
+	for i := range filter.And {
+		if value, ok := filterValue(&filter.And[i], field); ok {
+			return value, true
+		}
+	}
+	for i := range filter.Or {
+		if value, ok := filterValue(&filter.Or[i], field); ok {
+			return value, true
+		}
+	}
+	return nil, false
 }
 
 func tileRequest() Request {
@@ -142,17 +161,18 @@ func tileRequest() Request {
 	}
 }
 
-func sharedDefinition(entity string, filters *report.FilterGroup) *report.ReportDefinition {
+func sharedDefinition(entity string, filters *ir.Filter) *report.ReportDefinition {
 	return &report.ReportDefinition{
 		ID:         tileDefID,
 		Name:       "Shipment Volume",
 		Visibility: report.VisibilityShared,
-		Definition: &report.Definition{
-			IRVersion: report.CurrentIRVersion,
-			Entity:    entity,
-			Filters:   filters,
-			Parameters: []report.ParameterDef{
-				{Name: "windowDays"},
+		Definition: &ir.Definition{
+			Version: ir.Version,
+			Entity:  entity,
+			Columns: []ir.Column{{ID: "status", Dimension: &ir.Dimension{Field: "status"}}},
+			Filters: filters,
+			Parameters: []ir.Parameter{
+				{Name: "windowDays", Type: "int"},
 			},
 		},
 	}
@@ -160,7 +180,7 @@ func sharedDefinition(entity string, filters *report.FilterGroup) *report.Report
 
 func dashboardWith(
 	tiles []report.DashboardTile,
-	filters []report.DashboardFilter,
+	filters []ir.DashboardFilter,
 ) *report.Dashboard {
 	return &report.Dashboard{
 		OwnerID:    tileViewerID,
@@ -181,14 +201,14 @@ func TestResolveDashboardTilesFoldsFiltersAndParams(t *testing.T) {
 			Kind:         report.TileKindTable,
 			DefinitionID: tileDefID,
 		}},
-		[]report.DashboardFilter{{
-			ID:       "f1",
-			Entity:   "shipment",
-			Ref:      report.FieldRef{Field: "status"},
-			Operator: dbtype.OpEqual,
+		[]ir.DashboardFilter{{
+			ID:     "f1",
+			Entity: "shipment",
+			Field:  "status",
+			Op:     ir.OpEq,
 		}},
 	)
-	service := tileTestService(dashboard, map[pulid.ID]*report.ReportDefinition{
+	service := tileTestService(t, dashboard, map[pulid.ID]*report.ReportDefinition{
 		tileDefID: sharedDefinition("shipment", nil),
 	})
 
@@ -203,8 +223,9 @@ func TestResolveDashboardTilesFoldsFiltersAndParams(t *testing.T) {
 
 	require.NoError(t, err)
 	require.Len(t, resolved, 1)
-	require.NotNil(t, resolved[0].Definition.Filters)
-	assert.Equal(t, "Completed", resolved[0].Definition.Filters.Filters[0].Value)
+	value, found := filterValue(resolved[0].Definition.Filters, "status")
+	require.True(t, found)
+	assert.Equal(t, "Completed", value)
 	assert.Equal(t, map[string]any{"windowDays": 90}, resolved[0].Params)
 	assert.Equal(
 		t,
@@ -220,7 +241,7 @@ func TestResolveDashboardTilesSkipsTilesWithoutReports(t *testing.T) {
 		{ID: "note", Kind: report.TileKindText, Text: "Weekly review"},
 		{ID: "t1", Kind: report.TileKindTable, DefinitionID: tileDefID, Title: "Volume"},
 	}, nil)
-	service := tileTestService(dashboard, map[pulid.ID]*report.ReportDefinition{
+	service := tileTestService(t, dashboard, map[pulid.ID]*report.ReportDefinition{
 		tileDefID: sharedDefinition("shipment", nil),
 	})
 
@@ -237,22 +258,18 @@ func TestResolveDashboardTilesSkipsTilesWithoutReports(t *testing.T) {
 // The stored report is shared by every tile and by the report library, so
 // resolving one tile must never write through to it.
 func TestResolveDashboardTilesNeverMutatesTheStoredReport(t *testing.T) {
-	stored := sharedDefinition("shipment", &report.FilterGroup{
-		Op: report.BoolOpAnd,
-		Filters: []report.FieldFilter{
-			{Ref: report.FieldRef{Field: "status"}, Operator: dbtype.OpEqual, Value: "New"},
-		},
-	})
+	stored := sharedDefinition("shipment", ir.And(
+		ir.Filter{Field: "status", Op: ir.OpEq, Value: "New"},
+	))
 	dashboard := dashboardWith(
 		[]report.DashboardTile{{
 			ID: "t1", Kind: report.TileKindTable, DefinitionID: tileDefID, Limit: 25,
 		}},
-		[]report.DashboardFilter{{
-			ID: "f1", Entity: "shipment",
-			Ref: report.FieldRef{Field: "status"}, Operator: dbtype.OpEqual,
+		[]ir.DashboardFilter{{
+			ID: "f1", Entity: "shipment", Field: "status", Op: ir.OpEq,
 		}},
 	)
-	service := tileTestService(dashboard, map[pulid.ID]*report.ReportDefinition{
+	service := tileTestService(t, dashboard, map[pulid.ID]*report.ReportDefinition{
 		tileDefID: stored,
 	})
 
@@ -262,9 +279,17 @@ func TestResolveDashboardTilesNeverMutatesTheStoredReport(t *testing.T) {
 	})
 
 	require.NoError(t, err)
-	assert.Equal(t, 25, resolved[0].Definition.Limit)
-	assert.Equal(t, "Completed", resolved[0].Definition.Filters.Filters[0].Value)
-	assert.Equal(t, "New", stored.Definition.Filters.Filters[0].Value, "stored report untouched")
+	assert.Equal(t, ir.N(25), resolved[0].Definition.Limit)
+	assert.NotSame(t, stored.Definition, resolved[0].Definition)
+	stillNew, found := filterValue(stored.Definition.Filters, "status")
+	require.True(t, found)
+	assert.Equal(t, "New", stillNew, "stored report untouched")
+	assert.Equal(
+		t,
+		1,
+		countLeaves(stored.Definition.Filters),
+		"no filter is added to the stored report",
+	)
 	assert.Zero(t, stored.Definition.Limit, "the tile's limit never leaks into the report")
 }
 
@@ -275,7 +300,7 @@ func TestResolveDashboardTilesAppliesLimitWithoutFilters(t *testing.T) {
 	dashboard := dashboardWith([]report.DashboardTile{{
 		ID: "t1", Kind: report.TileKindChart, DefinitionID: tileDefID, Limit: 10,
 	}}, nil)
-	service := tileTestService(dashboard, map[pulid.ID]*report.ReportDefinition{
+	service := tileTestService(t, dashboard, map[pulid.ID]*report.ReportDefinition{
 		tileDefID: stored,
 	})
 
@@ -284,7 +309,7 @@ func TestResolveDashboardTilesAppliesLimitWithoutFilters(t *testing.T) {
 	})
 
 	require.NoError(t, err)
-	assert.Equal(t, 10, resolved[0].Definition.Limit)
+	assert.Equal(t, ir.N(10), resolved[0].Definition.Limit)
 	assert.Zero(t, stored.Definition.Limit, "stored report untouched")
 }
 
@@ -298,7 +323,7 @@ func TestResolveDashboardTilesEnforcesReportVisibility(t *testing.T) {
 	dashboard := dashboardWith([]report.DashboardTile{{
 		ID: "t1", Kind: report.TileKindTable, DefinitionID: tileDefID,
 	}}, nil)
-	service := tileTestService(dashboard, map[pulid.ID]*report.ReportDefinition{
+	service := tileTestService(t, dashboard, map[pulid.ID]*report.ReportDefinition{
 		tileDefID: private,
 	})
 
@@ -313,7 +338,7 @@ func TestResolveDashboardTilesRejectsUnknownCannedKey(t *testing.T) {
 	dashboard := dashboardWith([]report.DashboardTile{{
 		ID: "t1", Kind: report.TileKindTable, CannedKey: "not_a_real_report",
 	}}, nil)
-	service := tileTestService(dashboard, nil)
+	service := tileTestService(t, dashboard, nil)
 
 	_, err := service.ResolveDashboardTiles(t.Context(), &ResolveDashboardTilesRequest{
 		Request: tileRequest(),
@@ -328,12 +353,11 @@ func TestResolveDashboardTilesRejectsUnknownCannedKey(t *testing.T) {
 func TestResolveDashboardTilesLeavesUnrelatedEntitiesAlone(t *testing.T) {
 	dashboard := dashboardWith(
 		[]report.DashboardTile{{ID: "t1", Kind: report.TileKindTable, DefinitionID: tileDefID}},
-		[]report.DashboardFilter{{
-			ID: "f1", Entity: "invoice",
-			Ref: report.FieldRef{Field: "status"}, Operator: dbtype.OpEqual,
+		[]ir.DashboardFilter{{
+			ID: "f1", Entity: "invoice", Field: "status", Op: ir.OpEq,
 		}},
 	)
-	service := tileTestService(dashboard, map[pulid.ID]*report.ReportDefinition{
+	service := tileTestService(t, dashboard, map[pulid.ID]*report.ReportDefinition{
 		tileDefID: sharedDefinition("shipment", nil),
 	})
 
@@ -344,4 +368,21 @@ func TestResolveDashboardTilesLeavesUnrelatedEntitiesAlone(t *testing.T) {
 
 	require.NoError(t, err)
 	assert.Nil(t, resolved[0].Definition.Filters)
+}
+
+func countLeaves(filter *ir.Filter) int {
+	if filter == nil {
+		return 0
+	}
+	if filter.And == nil && filter.Or == nil {
+		return 1
+	}
+	count := 0
+	for i := range filter.And {
+		count += countLeaves(&filter.And[i])
+	}
+	for i := range filter.Or {
+		count += countLeaves(&filter.Or[i])
+	}
+	return count
 }

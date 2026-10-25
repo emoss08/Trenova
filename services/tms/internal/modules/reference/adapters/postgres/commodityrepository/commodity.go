@@ -3,22 +3,38 @@ package commodityrepository
 import (
 	"context"
 
-	"github.com/emoss08/trenova/pkg/buncolgen/commoditycol"
-
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/reference/domain/commodity"
+	"github.com/emoss08/trenova/internal/modules/reference/domain/commodity/commoditydb"
 	"github.com/emoss08/trenova/internal/modules/reference/ports/commodityports"
-	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dberror"
-	"github.com/emoss08/trenova/pkg/dbhelper"
 	"github.com/emoss08/trenova/pkg/domaintypes"
+	"github.com/emoss08/trenova/pkg/listquery"
 	"github.com/emoss08/trenova/pkg/pagination"
-	"github.com/emoss08/trenova/pkg/querybuilder"
-	"github.com/uptrace/bun"
+	"github.com/emoss08/trenova/shared/pulid"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
+
+var commodityErrors = dberror.Mapping{
+	Entity: "Commodity",
+	Unique: []dberror.Constraint{
+		{
+			Name:    "idx_commodities_name",
+			Field:   "name",
+			Message: "Commodity with this name already exists in your organization",
+		},
+	},
+	ForeignKey: []dberror.Constraint{
+		{
+			Name:    "fk_commodities_hazardous_material",
+			Field:   "hazardousMaterialId",
+			Message: "Hazardous material does not exist or belongs to a different organization",
+		},
+	},
+}
 
 type Params struct {
 	fx.In
@@ -39,24 +55,6 @@ func New(p Params) commodityports.CommodityRepository {
 	}
 }
 
-func (r *repository) filterQuery(
-	q *bun.SelectQuery,
-	req *commodityports.ListCommodityRequest,
-) *bun.SelectQuery {
-	cols := commoditycol.CommodityColumns
-	q = querybuilder.ApplyFilters(
-		q,
-		commoditycol.CommodityTable.Alias,
-		req.Filter,
-		(*commodity.Commodity)(nil),
-	)
-
-	return q.Apply(commoditycol.CommodityApplyTenant(req.Filter.TenantInfo)).
-		Limit(int64(req.Filter.Pagination.SafeLimit())).
-		Offset(int64(req.Filter.Pagination.SafeOffset())).
-		Order(cols.CreatedAt.OrderDesc())
-}
-
 func (r *repository) List(
 	ctx context.Context,
 	req *commodityports.ListCommodityRequest,
@@ -65,27 +63,18 @@ func (r *repository) List(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*pagination.ListResult[*commodity.Commodity], error) {
-			log := r.l.With(
-				zap.String("operation", "List"),
-				zap.Any("request", req),
-			)
-
-			entities := make([]*commodity.Commodity, 0, req.Filter.Pagination.SafeLimit())
-			total, err := r.db.DBForContext(ctx).
-				NewSelect().
-				Model(&entities).
-				Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-					return r.filterQuery(sq, req)
-				}).ScanAndCount(ctx)
+			c := commoditydb.Commodities
+			result, err := listquery.List(ctx, r.db.Keel(ctx), c.Query(),
+				&listquery.Request[commodity.Commodity]{
+					Filter: req.Filter,
+					Then:   []keel.Order{c.CreatedAt.Desc()},
+				})
 			if err != nil {
-				log.Error("failed to scan and count commodities", zap.Error(err))
+				r.l.Error("failed to list commodities", zap.Error(err))
 				return nil, err
 			}
 
-			return &pagination.ListResult[*commodity.Commodity]{
-				Items: entities,
-				Total: int(total),
-			}, nil
+			return result, nil
 		},
 	)
 }
@@ -95,113 +84,35 @@ func (r *repository) GetByID(
 	req commodityports.GetCommodityByIDRequest,
 ) (*commodity.Commodity, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*commodity.Commodity, error) {
-		log := r.l.With(
-			zap.String("operation", "GetByID"),
-			zap.String("id", req.ID.String()),
-		)
-
-		entity := new(commodity.Commodity)
-		cols := commoditycol.CommodityColumns
-		err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(entity).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return commoditycol.CommodityScopeTenant(sq, req.TenantInfo).
-					Where(cols.ID.Eq(), req.ID)
-			}).
-			Scan(ctx)
+		entity, err := commoditydb.Commodities.Get(ctx, r.db.Keel(ctx), req.ID)
 		if err != nil {
-			log.Error("failed to get commodity", zap.Error(err))
-			return nil, dberror.HandleNotFoundError(err, "Commodity")
+			return nil, commodityErrors.Map(err, req.ID.String())
 		}
 
 		return entity, nil
 	})
 }
 
-func (r *repository) applyCursorPageFilters(
-	q *bun.SelectQuery,
-	req *commodityports.ListCommodityConnectionRequest,
-) (*bun.SelectQuery, error) {
-	return querybuilder.ApplyCursorFilters(
-		q,
-		commoditycol.CommodityTable.Alias,
-		req.Filter,
-		req.Cursor,
-		(*commodity.Commodity)(nil),
-	)
-}
-
-func (r *repository) applyTotalCountFilters(
-	q *bun.SelectQuery,
-	req *commodityports.ListCommodityConnectionRequest,
-) *bun.SelectQuery {
-	return querybuilder.ApplyFiltersWithoutSort(
-		q,
-		commoditycol.CommodityTable.Alias,
-		req.Filter,
-		(*commodity.Commodity)(nil),
-	)
-}
-
-func applyCommodityColumns(q *bun.SelectQuery, columns []string) *bun.SelectQuery {
-	if len(columns) == 0 {
-		return q.ColumnExpr(commoditycol.CommodityTable.All())
-	}
-
-	return q.Column(columns...)
-}
-
 func (r *repository) ListConnection(
 	ctx context.Context,
 	req *commodityports.ListCommodityConnectionRequest,
 ) (*pagination.CursorListResult[*commodity.Commodity], error) {
-	return dbtx.Write(
+	return dbtx.Read(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*pagination.CursorListResult[*commodity.Commodity], error) {
-			log := r.l.With(
-				zap.String("operation", "ListConnection"),
-				zap.Any("request", req),
-			)
-
-			dba := r.db.DBForContext(ctx)
-			var totalCount *int
-			if req.Cursor.IncludeTotalCount {
-				total, err := dba.
-					NewSelect().
-					Model((*commodity.Commodity)(nil)).
-					Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-						return r.applyTotalCountFilters(sq, req)
-					}).
-					Count(ctx)
-				if err != nil {
-					log.Error("failed to count commodities", zap.Error(err))
-					return nil, err
-				}
-				totalCount = new(int(total))
-			}
-
-			result, err := dbhelper.CursorList(
+			result, err := listquery.Connection(
 				ctx,
-				dbhelper.CursorListParams[*commodity.Commodity]{
-					Filter:     req.Filter,
-					Cursor:     req.Cursor,
-					TotalCount: totalCount,
-					Query: func(entities *[]*commodity.Commodity) *bun.SelectQuery {
-						return dba.
-							NewSelect().
-							Model(entities).
-							Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-								return applyCommodityColumns(sq, req.CommodityColumns)
-							})
-					},
-					Apply: func(sq *bun.SelectQuery) (*bun.SelectQuery, error) {
-						return r.applyCursorPageFilters(sq, req)
-					},
-				})
+				r.db.Keel(ctx),
+				commoditydb.Commodities.Query(),
+				&listquery.Request[commodity.Commodity]{
+					Filter:  req.Filter,
+					Cursor:  req.Cursor,
+					Columns: req.CommodityColumns,
+				},
+			)
 			if err != nil {
-				log.Error("failed to scan commodities", zap.Error(err))
+				r.l.Error("failed to list commodities", zap.Error(err))
 				return nil, err
 			}
 
@@ -215,18 +126,13 @@ func (r *repository) Create(
 	entity *commodity.Commodity,
 ) (*commodity.Commodity, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*commodity.Commodity, error) {
-		log := r.l.With(
-			zap.String("operation", "Create"),
-			zap.String("name", entity.Name),
-		)
-
-		if _, err := r.db.DBForContext(ctx).
-			NewInsert().
-			Model(entity).
-			Returning("*").
-			Exec(ctx); err != nil {
-			log.Error("failed to create commodity", zap.Error(err))
-			return nil, err
+		if err := commoditydb.Commodities.Create(ctx, r.db.Keel(ctx), entity); err != nil {
+			r.l.Error(
+				"failed to create commodity",
+				zap.String("name", entity.Name),
+				zap.Error(err),
+			)
+			return nil, commodityErrors.Map(err, entity.ID.String())
 		}
 
 		return entity, nil
@@ -238,30 +144,13 @@ func (r *repository) Update(
 	entity *commodity.Commodity,
 ) (*commodity.Commodity, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*commodity.Commodity, error) {
-		log := r.l.With(
-			zap.String("operation", "Update"),
-			zap.String("id", entity.ID.String()),
-		)
-
-		ov := entity.Version
-		entity.Version++
-		cols := commoditycol.CommodityColumns
-
-		results, err := r.db.DBForContext(ctx).
-			NewUpdate().
-			Model(entity).
-			WherePK().
-			Where(cols.Version.Eq(), ov).
-			OmitZero().
-			Returning("*").
-			Exec(ctx)
-		if err != nil {
-			log.Error("failed to update commodity", zap.Error(err))
-			return nil, err
-		}
-
-		if err = dberror.CheckRowsAffected(results, "Commodity", entity.ID.String()); err != nil {
-			return nil, err
+		if err := commoditydb.Commodities.Save(ctx, r.db.Keel(ctx), entity); err != nil {
+			r.l.Error(
+				"failed to update commodity",
+				zap.String("id", entity.ID.String()),
+				zap.Error(err),
+			)
+			return nil, commodityErrors.Map(err, entity.ID.String())
 		}
 
 		return entity, nil
@@ -273,29 +162,16 @@ func (r *repository) BulkUpdateStatus(
 	req *commodityports.BulkUpdateCommodityStatusRequest,
 ) ([]*commodity.Commodity, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) ([]*commodity.Commodity, error) {
-		log := r.l.With(
-			zap.String("operation", "BulkUpdateStatus"),
-			zap.Any("request", req),
-		)
-
-		entities := make([]*commodity.Commodity, 0, len(req.CommodityIDs))
-		cols := commoditycol.CommodityColumns
-		results, err := r.db.DBForContext(ctx).
-			NewUpdate().
-			Model(&entities).
-			WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-				return commoditycol.CommodityScopeTenantUpdate(uq, req.TenantInfo).
-					Where(cols.ID.In(), bun.List(req.CommodityIDs))
-			}).
-			Set(cols.Status.Set(), req.Status).
-			Returning("*").
-			Exec(ctx)
+		c := commoditydb.Commodities
+		entities, err := c.Where(c.ID.In(req.CommodityIDs...)).
+			UpdateReturning(ctx, r.db.Keel(ctx), c.Status.To(req.Status))
 		if err != nil {
-			log.Error("failed to bulk update commodity status", zap.Error(err))
+			r.l.Error("failed to bulk update commodity status", zap.Error(err))
 			return nil, err
 		}
 
-		if err = dberror.CheckBulkRowsAffected(results, "Commodity", req.CommodityIDs); err != nil {
+		err = dberror.CheckBulkAffected(int64(len(entities)), "Commodity", req.CommodityIDs)
+		if err != nil {
 			return nil, err
 		}
 
@@ -308,59 +184,45 @@ func (r *repository) GetByIDs(
 	req commodityports.GetCommoditiesByIDsRequest,
 ) ([]*commodity.Commodity, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*commodity.Commodity, error) {
-		log := r.l.With(
-			zap.String("operation", "GetByIDs"),
-			zap.Any("request", req),
-		)
+		if len(req.CommodityIDs) == 0 {
+			return []*commodity.Commodity{}, nil
+		}
 
-		entities := make([]*commodity.Commodity, 0, len(req.CommodityIDs))
-		cols := commoditycol.CommodityColumns
-		err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(&entities).
-			Relation(commoditycol.CommodityRelations.HazardousMaterial).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return commoditycol.CommodityScopeTenant(sq, req.TenantInfo).
-					Where(cols.ID.In(), bun.List(req.CommodityIDs))
-			}).
-			Scan(ctx)
+		entities, err := commoditiesByIDs(req.CommodityIDs).List(ctx, r.db.Keel(ctx))
 		if err != nil {
-			log.Error("failed to get commodities", zap.Error(err))
-			return nil, dberror.HandleNotFoundError(err, "Commodity")
+			r.l.Error("failed to get commodities", zap.Error(err))
+			return nil, err
 		}
 
 		return entities, nil
 	})
 }
 
+func commoditiesByIDs(ids []pulid.ID) *keel.Query[commodity.Commodity] {
+	c := commoditydb.Commodities
+
+	return c.Where(c.ID.In(ids...)).Load(c.HazardousMaterial()).Limit(len(ids))
+}
+
 func (r *repository) SelectOptions(
 	ctx context.Context,
 	req *commodityports.CommoditySelectOptionsRequest,
 ) (*pagination.ListResult[*commodity.Commodity], error) {
-	return dbtx.Write(
+	return dbtx.Read(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*pagination.ListResult[*commodity.Commodity], error) {
-			cols := commoditycol.CommodityColumns
+			c := commoditydb.Commodities
+			q := c.Pick(c.ID, c.Name, c.HazardousMaterialID, c.FreightClass).
+				Where(c.Status.Eq(domaintypes.StatusActive))
 
-			return dbhelper.SelectOptions[*commodity.Commodity](
+			return listquery.SelectOptions(
 				ctx,
-				r.db.DBForContext(ctx),
+				r.db.Keel(ctx),
+				q,
 				req.SelectQueryRequest,
-				&dbhelper.SelectOptionsConfig{
-					ColumnRefs: []buncolgen.Column{
-						cols.ID,
-						cols.Name,
-						cols.HazardousMaterialID,
-						cols.FreightClass,
-					},
-					OrgColumnRef: &cols.OrganizationID,
-					BuColumnRef:  &cols.BusinessUnitID,
-					QueryModifier: func(q *bun.SelectQuery) *bun.SelectQuery {
-						return q.Where(cols.Status.Eq(), domaintypes.StatusActive)
-					},
-					EntityName:       "Commodity",
-					SearchColumnRefs: []buncolgen.Column{cols.Name, cols.Description},
+				func(s string) keel.Pred {
+					return keel.Or(c.Name.ContainsFold(s), c.Description.ContainsFold(s))
 				},
 			)
 		},

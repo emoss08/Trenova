@@ -6,9 +6,9 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentevent"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentevent/shipmenteventdb"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmenteventports"
 	"github.com/emoss08/trenova/pkg/dberror"
-	"github.com/uptrace/bun"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
@@ -17,6 +17,8 @@ const (
 	defaultListLimit = 25
 	maxListLimit     = 200
 )
+
+var eventErrors = dberror.Mapping{Entity: "Shipment event"}
 
 type Params struct {
 	fx.In
@@ -39,9 +41,9 @@ func New(p Params) shipmenteventports.ShipmentEventRepository {
 
 func (r *repository) Insert(ctx context.Context, entity *shipmentevent.Event) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
-		if _, err := r.db.DBForContext(ctx).NewInsert().Model(entity).Exec(ctx); err != nil {
+		if err := shipmenteventdb.Events.Create(ctx, r.db.Keel(ctx), entity); err != nil {
 			r.l.Error("failed to insert shipment event", zap.Error(err))
-			return err
+			return eventErrors.Map(err, entity.ID.String())
 		}
 		return nil
 	})
@@ -52,17 +54,10 @@ func (r *repository) GetByID(
 	req shipmenteventports.GetShipmentEventByIDRequest,
 ) (*shipmentevent.Event, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*shipmentevent.Event, error) {
-		entity := new(shipmentevent.Event)
-		err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(entity).
-			Where("se.id = ?", req.ID).
-			Where("se.organization_id = ?", req.TenantInfo.OrgID).
-			Where("se.business_unit_id = ?", req.TenantInfo.BuID).
-			Relation("Shipment").
-			Scan(ctx)
+		se := shipmenteventdb.Events
+		entity, err := se.Where(se.ID.Eq(req.ID)).Load(se.Shipment()).One(ctx, r.db.Keel(ctx))
 		if err != nil {
-			return nil, dberror.HandleNotFoundError(err, "Shipment event")
+			return nil, eventErrors.Map(err, req.ID.String())
 		}
 		return entity, nil
 	})
@@ -81,28 +76,20 @@ func (r *repository) List(
 			limit = maxListLimit
 		}
 
-		entities := make([]*shipmentevent.Event, 0, limit)
-
-		q := r.db.DBForContext(ctx).NewSelect().
-			Model(&entities).
-			Where("se.organization_id = ?", req.TenantInfo.OrgID).
-			Where("se.business_unit_id = ?", req.TenantInfo.BuID).
-			Order("se.occurred_at DESC").
-			Limit(int64(limit)).
-			Relation("Actor").
-			Relation("Shipment")
-
+		se := shipmenteventdb.Events
+		q := se.Load(se.Actor(), se.Shipment()).Order(se.OccurredAt.Desc()).Limit(limit)
 		if req.ShipmentID.IsNotNil() {
-			q = q.Where("se.shipment_id = ?", req.ShipmentID)
+			q = q.Where(se.ShipmentID.Eq(req.ShipmentID))
 		}
 		if len(req.Types) > 0 {
-			q = q.Where("se.type IN (?)", bun.List(req.Types))
+			q = q.Where(se.Type.In(req.Types...))
 		}
 		if req.Before > 0 {
-			q = q.Where("se.occurred_at < ?", req.Before)
+			q = q.Where(se.OccurredAt.Lt(req.Before))
 		}
 
-		if err := q.Scan(ctx); err != nil {
+		entities, err := q.List(ctx, r.db.Keel(ctx))
+		if err != nil {
 			r.l.Error("failed to list shipment events", zap.Error(err))
 			return nil, err
 		}

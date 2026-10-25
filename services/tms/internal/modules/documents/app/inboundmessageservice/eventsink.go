@@ -11,7 +11,6 @@ import (
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
-	"github.com/uptrace/bun"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
@@ -22,7 +21,7 @@ type EventSinkParams struct {
 	fx.In
 
 	Logger       *zap.Logger
-	DB           kernelports.DBConnection
+	DB           kernelports.Transactor
 	QueueRepo    inboundmessageports.TriageQueueRepository
 	ActivityRepo inboundmessageports.TriageActivityRepository
 	Notifier     *Notifier
@@ -30,7 +29,7 @@ type EventSinkParams struct {
 
 type EventSink struct {
 	l            *zap.Logger
-	db           kernelports.DBConnection
+	db           kernelports.Transactor
 	queueRepo    inboundmessageports.TriageQueueRepository
 	activityRepo inboundmessageports.TriageActivityRepository
 	notifier     *Notifier
@@ -102,7 +101,7 @@ func (e *EventSink) wake(ctx context.Context, req *inboundmessageports.WakeByEve
 	req.Now = e.now()
 
 	var woken []*inboundmessageports.QueueState
-	err := e.db.WithTx(ctx, kernelports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
+	err := e.db.Transact(ctx, kernelports.TxOptions{}, func(txCtx context.Context) error {
 		var wErr error
 		woken, wErr = e.queueRepo.WakeByEvent(txCtx, *req)
 		if wErr != nil || len(woken) == 0 {

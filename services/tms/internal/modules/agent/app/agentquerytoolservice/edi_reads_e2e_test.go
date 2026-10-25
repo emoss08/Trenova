@@ -84,14 +84,14 @@ func (f *fakeEDIPartnerRepo) ListCursor(
 	defer f.mu.Unlock()
 	f.partners = req
 
-	return &pagination.CursorListResult[*edi.EDIPartner]{
+	return withEdges(&pagination.CursorListResult[*edi.EDIPartner]{
 		Items: []*edi.EDIPartner{{
 			ID: ediPartnerFixture, Code: "ACME", Name: "Acme Foods",
 			Kind: edi.PartnerKindExternal, Status: "Active", Country: "US",
 			ContactEmail: "edi@acme.example", EnabledForInbound: true,
 		}},
 		HasNextPage: true,
-	}, nil
+	}), nil
 }
 
 func (f *fakeEDIInboundFileRepo) ListInboundFilesCursor(
@@ -102,9 +102,9 @@ func (f *fakeEDIInboundFileRepo) ListInboundFilesCursor(
 	defer f.mu.Unlock()
 	f.files = req
 
-	return &pagination.CursorListResult[*edi.EDIInboundFile]{
+	return withEdges(&pagination.CursorListResult[*edi.EDIInboundFile]{
 		Items: []*edi.EDIInboundFile{inboundFileFixture("ISA*00~")},
-	}, nil
+	}), nil
 }
 
 func (f *fakeEDIInboundFileRepo) GetInboundFileByID(
@@ -150,9 +150,9 @@ func (f *fakeEDIMessageRepo) ListMessagesCursor(
 	defer f.mu.Unlock()
 	f.messages = req
 
-	return &pagination.CursorListResult[*edi.EDIMessage]{
+	return withEdges(&pagination.CursorListResult[*edi.EDIMessage]{
 		Items: []*edi.EDIMessage{messageFixture()},
-	}, nil
+	}), nil
 }
 
 func (f *fakeEDIMessageRepo) GetMessageByID(
@@ -253,9 +253,9 @@ func (f *ediFakes) listTransfers(
 	defer f.mu.Unlock()
 	f.transfers, f.outbound = req, outbound
 
-	return &pagination.CursorListResult[*edi.EDITransfer]{
+	return withEdges(&pagination.CursorListResult[*edi.EDITransfer]{
 		Items: []*edi.EDITransfer{tenderFixture(f.org)},
-	}
+	})
 }
 
 func (f *fakeEDITransferRepo) ListInboundCursor(

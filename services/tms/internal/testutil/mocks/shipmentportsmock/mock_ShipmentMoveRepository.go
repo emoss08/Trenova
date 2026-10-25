@@ -11,7 +11,6 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	mock "github.com/stretchr/testify/mock"
-	"github.com/uptrace/bun"
 )
 
 // NewMockShipmentMoveRepository creates a new instance of MockShipmentMoveRepository. It also registers a testing interface on the mock and a cleanup function to assert the mocks expectations.
@@ -76,7 +75,7 @@ type MockShipmentMoveRepository_BulkUpdateStatus_Call struct {
 
 // BulkUpdateStatus is a helper method to define mock.On call
 //   - ctx context.Context
-//   - req *repositories.BulkUpdateMoveStatusRequest
+//   - req *shipmentports.BulkUpdateMoveStatusRequest
 func (_e *MockShipmentMoveRepository_Expecter) BulkUpdateStatus(ctx any, req any) *MockShipmentMoveRepository_BulkUpdateStatus_Call {
 	return &MockShipmentMoveRepository_BulkUpdateStatus_Call{Call: _e.mock.On("BulkUpdateStatus", ctx, req)}
 }
@@ -144,7 +143,7 @@ type MockShipmentMoveRepository_GetByID_Call struct {
 
 // GetByID is a helper method to define mock.On call
 //   - ctx context.Context
-//   - req *repositories.GetMoveByIDRequest
+//   - req *shipmentports.GetMoveByIDRequest
 func (_e *MockShipmentMoveRepository_Expecter) GetByID(ctx any, req any) *MockShipmentMoveRepository_GetByID_Call {
 	return &MockShipmentMoveRepository_GetByID_Call{Call: _e.mock.On("GetByID", ctx, req)}
 }
@@ -212,7 +211,7 @@ type MockShipmentMoveRepository_GetMovesByShipmentID_Call struct {
 
 // GetMovesByShipmentID is a helper method to define mock.On call
 //   - ctx context.Context
-//   - req *repositories.GetMovesByShipmentIDRequest
+//   - req *shipmentports.GetMovesByShipmentIDRequest
 func (_e *MockShipmentMoveRepository_Expecter) GetMovesByShipmentID(ctx any, req any) *MockShipmentMoveRepository_GetMovesByShipmentID_Call {
 	return &MockShipmentMoveRepository_GetMovesByShipmentID_Call{Call: _e.mock.On("GetMovesByShipmentID", ctx, req)}
 }
@@ -280,7 +279,7 @@ type MockShipmentMoveRepository_SplitMove_Call struct {
 
 // SplitMove is a helper method to define mock.On call
 //   - ctx context.Context
-//   - req *repositories.SplitMoveRequest
+//   - req *shipmentports.SplitMoveRequest
 func (_e *MockShipmentMoveRepository_Expecter) SplitMove(ctx any, req any) *MockShipmentMoveRepository_SplitMove_Call {
 	return &MockShipmentMoveRepository_SplitMove_Call{Call: _e.mock.On("SplitMove", ctx, req)}
 }
@@ -314,16 +313,16 @@ func (_c *MockShipmentMoveRepository_SplitMove_Call) RunAndReturn(run func(ctx c
 }
 
 // SyncForShipment provides a mock function for the type MockShipmentMoveRepository
-func (_mock *MockShipmentMoveRepository) SyncForShipment(ctx context.Context, tx bun.IDB, entity *shipment.Shipment) error {
-	ret := _mock.Called(ctx, tx, entity)
+func (_mock *MockShipmentMoveRepository) SyncForShipment(ctx context.Context, entity *shipment.Shipment) error {
+	ret := _mock.Called(ctx, entity)
 
 	if len(ret) == 0 {
 		panic("no return value specified for SyncForShipment")
 	}
 
 	var r0 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, bun.IDB, *shipment.Shipment) error); ok {
-		r0 = returnFunc(ctx, tx, entity)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *shipment.Shipment) error); ok {
+		r0 = returnFunc(ctx, entity)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -337,30 +336,24 @@ type MockShipmentMoveRepository_SyncForShipment_Call struct {
 
 // SyncForShipment is a helper method to define mock.On call
 //   - ctx context.Context
-//   - tx bun.IDB
 //   - entity *shipment.Shipment
-func (_e *MockShipmentMoveRepository_Expecter) SyncForShipment(ctx any, tx any, entity any) *MockShipmentMoveRepository_SyncForShipment_Call {
-	return &MockShipmentMoveRepository_SyncForShipment_Call{Call: _e.mock.On("SyncForShipment", ctx, tx, entity)}
+func (_e *MockShipmentMoveRepository_Expecter) SyncForShipment(ctx any, entity any) *MockShipmentMoveRepository_SyncForShipment_Call {
+	return &MockShipmentMoveRepository_SyncForShipment_Call{Call: _e.mock.On("SyncForShipment", ctx, entity)}
 }
 
-func (_c *MockShipmentMoveRepository_SyncForShipment_Call) Run(run func(ctx context.Context, tx bun.IDB, entity *shipment.Shipment)) *MockShipmentMoveRepository_SyncForShipment_Call {
+func (_c *MockShipmentMoveRepository_SyncForShipment_Call) Run(run func(ctx context.Context, entity *shipment.Shipment)) *MockShipmentMoveRepository_SyncForShipment_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
 			arg0 = args[0].(context.Context)
 		}
-		var arg1 bun.IDB
+		var arg1 *shipment.Shipment
 		if args[1] != nil {
-			arg1 = args[1].(bun.IDB)
-		}
-		var arg2 *shipment.Shipment
-		if args[2] != nil {
-			arg2 = args[2].(*shipment.Shipment)
+			arg1 = args[1].(*shipment.Shipment)
 		}
 		run(
 			arg0,
 			arg1,
-			arg2,
 		)
 	})
 	return _c
@@ -371,7 +364,7 @@ func (_c *MockShipmentMoveRepository_SyncForShipment_Call) Return(err error) *Mo
 	return _c
 }
 
-func (_c *MockShipmentMoveRepository_SyncForShipment_Call) RunAndReturn(run func(ctx context.Context, tx bun.IDB, entity *shipment.Shipment) error) *MockShipmentMoveRepository_SyncForShipment_Call {
+func (_c *MockShipmentMoveRepository_SyncForShipment_Call) RunAndReturn(run func(ctx context.Context, entity *shipment.Shipment) error) *MockShipmentMoveRepository_SyncForShipment_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -402,6 +395,46 @@ func (_mock *MockShipmentMoveRepository) UpdateStatus(ctx context.Context, req *
 		r1 = ret.Error(1)
 	}
 	return r0, r1
+}
+
+// MockShipmentMoveRepository_UpdateStatus_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'UpdateStatus'
+type MockShipmentMoveRepository_UpdateStatus_Call struct {
+	*mock.Call
+}
+
+// UpdateStatus is a helper method to define mock.On call
+//   - ctx context.Context
+//   - req *shipmentports.UpdateMoveStatusRequest
+func (_e *MockShipmentMoveRepository_Expecter) UpdateStatus(ctx any, req any) *MockShipmentMoveRepository_UpdateStatus_Call {
+	return &MockShipmentMoveRepository_UpdateStatus_Call{Call: _e.mock.On("UpdateStatus", ctx, req)}
+}
+
+func (_c *MockShipmentMoveRepository_UpdateStatus_Call) Run(run func(ctx context.Context, req *shipmentports.UpdateMoveStatusRequest)) *MockShipmentMoveRepository_UpdateStatus_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 *shipmentports.UpdateMoveStatusRequest
+		if args[1] != nil {
+			arg1 = args[1].(*shipmentports.UpdateMoveStatusRequest)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockShipmentMoveRepository_UpdateStatus_Call) Return(shipmentMove *shipment.ShipmentMove, err error) *MockShipmentMoveRepository_UpdateStatus_Call {
+	_c.Call.Return(shipmentMove, err)
+	return _c
+}
+
+func (_c *MockShipmentMoveRepository_UpdateStatus_Call) RunAndReturn(run func(ctx context.Context, req *shipmentports.UpdateMoveStatusRequest) (*shipment.ShipmentMove, error)) *MockShipmentMoveRepository_UpdateStatus_Call {
+	_c.Call.Return(run)
+	return _c
 }
 
 // UpdateStopActuals provides a mock function for the type MockShipmentMoveRepository
@@ -468,52 +501,12 @@ func (_c *MockShipmentMoveRepository_UpdateStopActuals_Call) Run(run func(ctx co
 	return _c
 }
 
-func (_c *MockShipmentMoveRepository_UpdateStopActuals_Call) Return(stop *shipment.Stop, err error) *MockShipmentMoveRepository_UpdateStopActuals_Call {
-	_c.Call.Return(stop, err)
+func (_c *MockShipmentMoveRepository_UpdateStopActuals_Call) Return(stop1 *shipment.Stop, err error) *MockShipmentMoveRepository_UpdateStopActuals_Call {
+	_c.Call.Return(stop1, err)
 	return _c
 }
 
 func (_c *MockShipmentMoveRepository_UpdateStopActuals_Call) RunAndReturn(run func(ctx context.Context, tenantInfo pagination.TenantInfo, stop *shipment.Stop) (*shipment.Stop, error)) *MockShipmentMoveRepository_UpdateStopActuals_Call {
-	_c.Call.Return(run)
-	return _c
-}
-
-// MockShipmentMoveRepository_UpdateStatus_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'UpdateStatus'
-type MockShipmentMoveRepository_UpdateStatus_Call struct {
-	*mock.Call
-}
-
-// UpdateStatus is a helper method to define mock.On call
-//   - ctx context.Context
-//   - req *repositories.UpdateMoveStatusRequest
-func (_e *MockShipmentMoveRepository_Expecter) UpdateStatus(ctx any, req any) *MockShipmentMoveRepository_UpdateStatus_Call {
-	return &MockShipmentMoveRepository_UpdateStatus_Call{Call: _e.mock.On("UpdateStatus", ctx, req)}
-}
-
-func (_c *MockShipmentMoveRepository_UpdateStatus_Call) Run(run func(ctx context.Context, req *shipmentports.UpdateMoveStatusRequest)) *MockShipmentMoveRepository_UpdateStatus_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		var arg0 context.Context
-		if args[0] != nil {
-			arg0 = args[0].(context.Context)
-		}
-		var arg1 *shipmentports.UpdateMoveStatusRequest
-		if args[1] != nil {
-			arg1 = args[1].(*shipmentports.UpdateMoveStatusRequest)
-		}
-		run(
-			arg0,
-			arg1,
-		)
-	})
-	return _c
-}
-
-func (_c *MockShipmentMoveRepository_UpdateStatus_Call) Return(shipmentMove *shipment.ShipmentMove, err error) *MockShipmentMoveRepository_UpdateStatus_Call {
-	_c.Call.Return(shipmentMove, err)
-	return _c
-}
-
-func (_c *MockShipmentMoveRepository_UpdateStatus_Call) RunAndReturn(run func(ctx context.Context, req *shipmentports.UpdateMoveStatusRequest) (*shipment.ShipmentMove, error)) *MockShipmentMoveRepository_UpdateStatus_Call {
 	_c.Call.Return(run)
 	return _c
 }

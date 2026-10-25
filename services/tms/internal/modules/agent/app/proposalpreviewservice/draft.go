@@ -21,7 +21,6 @@ import (
 	"github.com/emoss08/trenova/pkg/productguide"
 	"github.com/emoss08/trenova/pkg/toolschema"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/uptrace/bun"
 	"go.uber.org/zap"
 )
 
@@ -274,10 +273,10 @@ func (r *snapshotResult) staleness(proposal *agent.AgentProposal) *agent.Preview
 // still leaves the staleness known.
 func (s *Service) snapshot(ctx context.Context, in *snapshotInput) (*snapshotResult, error) {
 	result := &snapshotResult{}
-	err := s.db.WithTx(ctx, kernelports.TxOptions{
+	err := s.db.Transact(ctx, kernelports.TxOptions{
 		ReadOnly:  true,
 		Isolation: sql.LevelRepeatableRead,
-	}, func(txCtx context.Context, _ bun.Tx) error {
+	}, func(txCtx context.Context) error {
 		if err := s.readPin(txCtx, in, result); err != nil {
 			return err
 		}

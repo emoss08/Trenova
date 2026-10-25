@@ -34,6 +34,7 @@ func TestWorkerList_PagesARealCursorRepositoryWithoutRepeats(t *testing.T) {
 	ctx, db, cleanup := seedtest.SetupTestDB(t)
 	t.Cleanup(cleanup)
 	data := seedtest.SeedFullTestData(t, ctx, db)
+	ctx = data.Ctx(ctx)
 
 	repo := workerrepository.New(workerrepository.Params{
 		DB:     postgres.NewTestConnection(db),

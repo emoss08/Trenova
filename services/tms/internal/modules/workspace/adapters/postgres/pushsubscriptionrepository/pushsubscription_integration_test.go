@@ -19,13 +19,11 @@ func TestSaveNeverReassignsAnotherUsersSubscription(t *testing.T) {
 	t.Cleanup(cleanup)
 
 	data := seedtest.SeedFullTestData(t, ctx, db)
-	tx, err := db.BeginTx(ctx, nil)
-	require.NoError(t, err)
 	other := seedtest.NewUser(data.Organization.ID, data.BusinessUnit.ID).
 		WithUsername("push_other_user").
 		WithEmail("push-other@example.com").
-		Build(t, ctx, tx)
-	require.NoError(t, tx.Commit())
+		Build(t, ctx, db)
+	ctx = data.Ctx(ctx)
 	repo := New(Params{DB: postgres.NewTestConnection(db), Logger: zap.NewNop()})
 
 	owner := pagination.TenantInfo{

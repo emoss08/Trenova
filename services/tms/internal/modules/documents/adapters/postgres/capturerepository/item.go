@@ -3,17 +3,16 @@ package capturerepository
 import (
 	"context"
 
-	"github.com/emoss08/trenova/pkg/buncolgen/capturecol"
-
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/capture"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/capture/capturedb"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/captureports"
-	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/pkg/dberror"
-	"github.com/uptrace/bun"
 	"go.uber.org/zap"
 )
+
+var itemErrors = dberror.Mapping{Entity: "Capture item"}
 
 type itemRepository struct {
 	db *postgres.Connection
@@ -34,11 +33,7 @@ func (r *itemRepository) Create(
 	entity *capture.CaptureItem,
 ) (*capture.CaptureItem, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*capture.CaptureItem, error) {
-		if _, err := r.db.DBForContext(ctx).
-			NewInsert().
-			Model(entity).
-			Returning("*").
-			Exec(ctx); err != nil {
+		if err := capturedb.CaptureItems.Create(ctx, r.db.Keel(ctx), entity); err != nil {
 			return nil, err
 		}
 
@@ -51,29 +46,8 @@ func (r *itemRepository) Update(
 	entity *capture.CaptureItem,
 ) (*capture.CaptureItem, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*capture.CaptureItem, error) {
-		ov := entity.Version
-		entity.Version++
-
-		results, err := r.db.DBForContext(ctx).
-			NewUpdate().
-			Model(entity).
-			WherePK().
-			Where(capturecol.CaptureItemColumns.Version.Eq(), ov).
-			Returning("*").
-			Exec(ctx)
-		if err != nil {
-			entity.Version = ov
-
-			return nil, err
-		}
-		if err = dberror.CheckRowsAffected(
-			results,
-			"Capture item",
-			entity.ID.String(),
-		); err != nil {
-			entity.Version = ov
-
-			return nil, err
+		if err := capturedb.CaptureItems.Save(ctx, r.db.Keel(ctx), entity); err != nil {
+			return nil, itemErrors.Map(err, entity.ID.String())
 		}
 
 		return entity, nil
@@ -85,15 +59,9 @@ func (r *itemRepository) GetByID(
 	req captureports.GetCaptureItemByIDRequest,
 ) (*capture.CaptureItem, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*capture.CaptureItem, error) {
-		entity := new(capture.CaptureItem)
-
-		if err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(entity).
-			Apply(capturecol.CaptureItemApplyTenant(req.TenantInfo)).
-			Where(capturecol.CaptureItemColumns.ID.Eq(), req.ID).
-			Scan(ctx); err != nil {
-			return nil, dberror.HandleNotFoundError(err, "Capture item")
+		entity, err := capturedb.CaptureItems.Get(ctx, r.db.Keel(ctx), req.ID)
+		if err != nil {
+			return nil, itemErrors.Map(err, req.ID.String())
 		}
 
 		return entity, nil
@@ -105,17 +73,15 @@ func (r *itemRepository) ListByBatch(
 	req captureports.ListCaptureItemsRequest,
 ) ([]*capture.CaptureItem, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*capture.CaptureItem, error) {
-		entities := make([]*capture.CaptureItem, 0)
-		cols := capturecol.CaptureItemColumns
-
-		if err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(&entities).
-			Apply(capturecol.CaptureItemApplyTenant(req.TenantInfo)).
-			Where(cols.BatchID.Eq(), req.BatchID).
-			Order(cols.Position.OrderAsc()).
-			Scan(ctx); err != nil {
+		i := capturedb.CaptureItems
+		entities, err := i.Where(i.BatchID.Eq(req.BatchID)).
+			Order(i.Position.Asc()).
+			All(ctx, r.db.Keel(ctx))
+		if err != nil {
 			return nil, err
+		}
+		if entities == nil {
+			entities = []*capture.CaptureItem{}
 		}
 
 		return entities, nil
@@ -127,31 +93,17 @@ func (r *itemRepository) ReplaceOpen(
 	req *captureports.ReplaceOpenCaptureItemsRequest,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
-		cols := capturecol.CaptureItemColumns
+		db := r.db.Keel(ctx)
+		i := capturedb.CaptureItems
+		if _, err := i.Where(i.BatchID.Eq(req.BatchID), i.Status.In(openItemStatuses...)).
+			Delete(ctx, db); err != nil {
+			return err
+		}
 
-		return r.db.WithTx(
-			ctx,
-			kernelports.TxOptions{},
-			func(txCtx context.Context, tx bun.Tx) error {
-				if _, err := tx.NewDelete().
-					Model((*capture.CaptureItem)(nil)).
-					WhereGroup(" AND ", func(dq *bun.DeleteQuery) *bun.DeleteQuery {
-						return capturecol.CaptureItemScopeTenantDelete(dq, req.TenantInfo).
-							Where(cols.BatchID.Eq(), req.BatchID).
-							Where(cols.Status.In(), bun.List(openItemStatuses))
-					}).
-					Exec(txCtx); err != nil {
-					return err
-				}
+		if len(req.Items) == 0 {
+			return nil
+		}
 
-				if len(req.Items) == 0 {
-					return nil
-				}
-
-				_, err := tx.NewInsert().Model(&req.Items).Returning("*").Exec(txCtx)
-
-				return err
-			},
-		)
+		return i.CreateMany(ctx, db, req.Items)
 	})
 }

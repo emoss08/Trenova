@@ -3,14 +3,12 @@ package shipmentrepository
 import (
 	"context"
 
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment/shipmentdb"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
-	"github.com/emoss08/trenova/pkg/buncolgen/shipmentcol"
-	"github.com/emoss08/trenova/pkg/dberror"
-	"github.com/emoss08/trenova/pkg/pagination"
-	"github.com/uptrace/bun"
 	"go.uber.org/fx"
 )
 
@@ -34,18 +32,12 @@ func (r *ratingReviewRepository) GetForRatingReview(
 	req *shipmentports.ApproveRatingReviewRequest,
 ) (*shipment.Shipment, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*shipment.Shipment, error) {
-		entity := new(shipment.Shipment)
-		err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(entity).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return shipmentcol.ShipmentScopeTenant(sq, req.TenantInfo).
-					Where(shipmentcol.ShipmentColumns.ID.Eq(), req.ShipmentID)
-			}).
-			For("UPDATE").
-			Scan(ctx)
+		sp := shipmentdb.Shipments
+		entity, err := sp.Where(sp.ID.Eq(req.ShipmentID)).
+			Lock(keel.ForUpdate).
+			One(ctx, r.db.Keel(ctx))
 		if err != nil {
-			return nil, dberror.HandleNotFoundError(err, "Shipment")
+			return nil, shipmentErrors.Map(err, req.ShipmentID.String())
 		}
 		return entity, nil
 	})
@@ -56,29 +48,9 @@ func (r *ratingReviewRepository) SaveRatingReview(
 	entity *shipment.Shipment,
 ) (*shipment.Shipment, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*shipment.Shipment, error) {
-		sp := shipmentcol.ShipmentColumns
-		ov := entity.Version
-		entity.Version++
-
-		results, err := r.db.DBForContext(ctx).
-			NewUpdate().
-			Model(entity).
-			Column(sp.RatingDetail.Bare(), sp.Version.Bare(), sp.UpdatedAt.Bare()).
-			WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-				return shipmentcol.ShipmentScopeTenantUpdate(uq, pagination.TenantInfo{
-					OrgID: entity.OrganizationID,
-					BuID:  entity.BusinessUnitID,
-				}).
-					Where(sp.ID.Eq(), entity.ID).
-					Where(sp.Version.Eq(), ov)
-			}).
-			Returning("*").
-			Exec(ctx)
-		if err != nil {
-			return nil, err
-		}
-		if err = dberror.CheckRowsAffected(results, "Shipment", entity.ID.String()); err != nil {
-			return nil, err
+		sp := shipmentdb.Shipments
+		if err := sp.Save(ctx, r.db.Keel(ctx), entity, sp.RatingDetail); err != nil {
+			return nil, shipmentErrors.Map(err, entity.ID.String())
 		}
 		return entity, nil
 	})

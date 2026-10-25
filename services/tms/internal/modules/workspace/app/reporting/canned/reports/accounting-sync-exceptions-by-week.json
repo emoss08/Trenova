@@ -1,0 +1,156 @@
+{
+  "key": "accounting-sync-exceptions-by-week",
+  "version": "1.1.0",
+  "name": "Sync Exceptions by Week",
+  "description": "Documents held, failed or skipped on their way to the accounting system, by the week they were queued, the reason and the kind of document; choose document types to see receivables or payables alone",
+  "category": "Accounting",
+  "tags": [
+    "accounting",
+    "accounting-sync",
+    "exceptions"
+  ],
+  "defaultFormat": "xlsx",
+  "definition": {
+    "version": 2,
+    "entity": "accounting_sync_record",
+    "columns": [
+      {
+        "id": "week",
+        "label": "Week Queued",
+        "dimension": {
+          "field": "queuedAt",
+          "bucket": "week"
+        }
+      },
+      {
+        "id": "status",
+        "label": "Status",
+        "dimension": {
+          "field": "status"
+        }
+      },
+      {
+        "id": "error_category",
+        "label": "Error Category",
+        "dimension": {
+          "field": "errorCategory"
+        }
+      },
+      {
+        "id": "document_type",
+        "label": "Document Type",
+        "dimension": {
+          "field": "objectType"
+        }
+      },
+      {
+        "id": "documents",
+        "label": "Documents",
+        "measure": {
+          "field": "id",
+          "agg": "count"
+        },
+        "display": {
+          "style": "number",
+          "decimals": 0,
+          "grouping": true
+        }
+      }
+    ],
+    "filters": {
+      "and": [
+        {
+          "field": "status",
+          "op": "in",
+          "param": "syncStatuses"
+        },
+        {
+          "field": "objectType",
+          "op": "in",
+          "param": "syncDocumentTypes"
+        },
+        {
+          "field": "queuedAt",
+          "op": "last_n_days",
+          "param": "windowDays"
+        }
+      ]
+    },
+    "sort": [
+      {
+        "column": "week",
+        "desc": true
+      },
+      {
+        "column": "documents",
+        "desc": true
+      }
+    ],
+    "parameters": [
+      {
+        "name": "syncStatuses",
+        "label": "Statuses",
+        "type": "enum",
+        "required": true,
+        "multi": true,
+        "default": [
+          "Blocked",
+          "DeadLettered",
+          "Skipped"
+        ],
+        "allowed": [
+          "Blocked",
+          "DeadLettered",
+          "Skipped",
+          "Retrying"
+        ]
+      },
+      {
+        "name": "syncDocumentTypes",
+        "label": "Document types",
+        "type": "enum",
+        "required": true,
+        "multi": true,
+        "default": [
+          "Customer",
+          "Invoice",
+          "CreditMemo",
+          "DebitMemo",
+          "CustomerPayment",
+          "CreditApplication",
+          "CarrierVendor",
+          "DriverVendor",
+          "CarrierBill",
+          "CarrierBillPayment",
+          "DriverBill",
+          "DriverBillPayment",
+          "JournalEntry",
+          "JournalSummary"
+        ],
+        "allowed": [
+          "Customer",
+          "Invoice",
+          "CreditMemo",
+          "DebitMemo",
+          "CustomerPayment",
+          "CreditApplication",
+          "CarrierVendor",
+          "DriverVendor",
+          "CarrierBill",
+          "CarrierBillPayment",
+          "DriverBill",
+          "DriverBillPayment",
+          "JournalEntry",
+          "JournalSummary"
+        ]
+      },
+      {
+        "name": "windowDays",
+        "label": "Window (days)",
+        "type": "int",
+        "required": true,
+        "default": 90
+      }
+    ]
+  }
+}

@@ -6,11 +6,11 @@ import (
 	"io"
 	"net/http"
 
+	"github.com/emoss08/keel/analytics/ir"
 	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/api/middleware"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	reportingservice "github.com/emoss08/trenova/internal/modules/workspace/app/reporting"
-	"github.com/emoss08/trenova/internal/modules/workspace/domain/report"
 	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -47,9 +47,6 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 		h.pm.RequirePermission(permission.ResourceReport.String(), permission.OpExport),
 		h.downloadRun,
 	)
-	// A dashboard export is streamed back directly rather than presigned: it
-	// is generated per request from the caller's filter choices, so there is
-	// no stored artifact to point at.
 	api.POST(
 		"/dashboards/:dashboardID/export/",
 		h.pm.RequirePermission(permission.ResourceReport.String(), permission.OpExport),
@@ -64,13 +61,10 @@ type exportDashboardBody struct {
 }
 
 type exportTileFilterBody struct {
-	Filters []report.DashboardFilter `json:"filters"`
-	Values  map[string]any           `json:"values"`
+	Filters []ir.DashboardFilter `json:"filters"`
+	Values  map[string]any       `json:"values"`
 }
 
-// exportDashboard runs every tile with the caller's own permissions and
-// returns one workbook. Tile reports are re-authorized during resolution, so a
-// shared dashboard never widens what the caller may read.
 func (h *Handler) exportDashboard(c *gin.Context) {
 	authCtx := authctx.GetAuthContext(c)
 
@@ -123,9 +117,6 @@ func exportTileFilters(
 	return overrides
 }
 
-// downloadRun re-authorizes at download time, audits the access, and redirects
-// to a short-lived presigned URL with a forced attachment disposition.
-// Presigned URLs are never stored or returned through any other surface.
 func (h *Handler) downloadRun(c *gin.Context) {
 	authCtx := authctx.GetAuthContext(c)
 

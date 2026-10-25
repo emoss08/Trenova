@@ -56,15 +56,15 @@ func runRepairEDITenderReferences(_ *cobra.Command, _ []string) error {
 		orgID = parsed
 	}
 
-	manager, err := createManager()
+	maint, err := openDB(context.Background())
 	if err != nil {
-		return fmt.Errorf("failed to create database manager: %w", err)
+		return fmt.Errorf("open the database: %w", err)
 	}
-	defer manager.Close()
+	defer maint.Close()
 
 	report, err := repairEDITenderReferences(
 		ctx,
-		postgres.WrapDB(manager.GetDB()),
+		postgres.WrapDB(maint),
 		&editenderrepairservice.Request{
 			OrganizationID: orgID,
 			DryRun:         dryRun,

@@ -107,12 +107,12 @@ type AccumulateFuelRequest struct {
 }
 
 type FuelAccumulationRow struct {
-	TractorID      pulid.ID                 `json:"tractorId"      bun:"tractor_id"`
-	JurisdictionID pulid.ID                 `json:"jurisdictionId" bun:"jurisdiction_id"`
-	FuelType       domaintypes.IFTAFuelType `json:"fuelType"       bun:"fuel_type"`
-	Gallons        decimal.Decimal          `json:"gallons"        bun:"gallons"`
-	TaxPaidGallons decimal.Decimal          `json:"taxPaidGallons" bun:"tax_paid_gallons"`
-	PurchaseCount  int                      `json:"purchaseCount"  bun:"purchase_count"`
+	TractorID      pulid.ID                 `json:"tractorId"`
+	JurisdictionID pulid.ID                 `json:"jurisdictionId"`
+	FuelType       domaintypes.IFTAFuelType `json:"fuelType"`
+	Gallons        decimal.Decimal          `json:"gallons"`
+	TaxPaidGallons decimal.Decimal          `json:"taxPaidGallons"`
+	PurchaseCount  int                      `json:"purchaseCount"`
 }
 
 type GetImportBatchByIDRequest struct {

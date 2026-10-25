@@ -9,24 +9,26 @@ import (
 	"testing"
 	"time"
 
-	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
+	"github.com/emoss08/keel"
+
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/testutil/seedtest"
+	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"github.com/uptrace/bun"
 	"go.uber.org/zap"
 )
 
 type syncFixture struct {
 	ctx        context.Context
-	db         *bun.DB
+	db         *keel.DB
 	conn       *postgres.Connection
 	tenant     pagination.TenantInfo
 	connection *accountingsync.AccountingConnection
@@ -42,6 +44,7 @@ func setupSyncFixture(t *testing.T) *syncFixture {
 	t.Cleanup(cleanup)
 
 	data := seedtest.SeedFullTestData(t, ctx, db)
+	ctx = data.Ctx(ctx)
 	conn := postgres.NewTestConnection(db)
 	tenant := pagination.TenantInfo{OrgID: data.Organization.ID, BuID: data.BusinessUnit.ID}
 	now := timeutils.NowUnix()
@@ -165,7 +168,7 @@ func TestSyncRecordRepository_EnqueueInARolledBackTransactionLeavesNothing(t *te
 
 	record := f.record(accountingsync.SyncObjectInvoice, "INV-9", f.now)
 	rollback := errors.New("posting failed")
-	err := f.conn.WithTx(f.ctx, kernelports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
+	err := f.conn.Transact(f.ctx, kernelports.TxOptions{}, func(txCtx context.Context) error {
 		if _, enqueueErr := f.records.Enqueue(txCtx, []*accountingsync.AccountingSyncRecord{record}); enqueueErr != nil {
 			return enqueueErr
 		}
@@ -471,13 +474,13 @@ func TestSyncRecordRepository_IsTenantScoped(t *testing.T) {
 	f.enqueue(t, record)
 	stranger := pagination.TenantInfo{OrgID: pulid.MustNew("org_"), BuID: f.tenant.BuID}
 
-	_, err := f.records.GetByID(f.ctx, accountingsyncports.GetAccountingSyncRecordRequest{
+	_, err := f.records.GetByID(dbscope.WithTenant(f.ctx, stranger.DBTenant()), accountingsyncports.GetAccountingSyncRecordRequest{
 		TenantInfo: stranger,
 		ID:         record.ID,
 	})
 	assert.True(t, errortypes.IsNotFoundError(err))
 
-	claimed, err := f.records.Claim(f.ctx, &accountingsyncports.ClaimAccountingSyncRecordsRequest{
+	claimed, err := f.records.Claim(dbscope.WithTenant(f.ctx, stranger.DBTenant()), &accountingsyncports.ClaimAccountingSyncRecordsRequest{
 		TenantInfo:   stranger,
 		ConnectionID: f.connection.ID,
 		Now:          f.now,
@@ -485,7 +488,7 @@ func TestSyncRecordRepository_IsTenantScoped(t *testing.T) {
 	require.NoError(t, err)
 	assert.Empty(t, claimed)
 
-	requeued, err := f.records.Requeue(f.ctx, &accountingsyncports.RequeueAccountingSyncRecordsRequest{
+	requeued, err := f.records.Requeue(dbscope.WithTenant(f.ctx, stranger.DBTenant()), &accountingsyncports.RequeueAccountingSyncRecordsRequest{
 		TenantInfo:   stranger,
 		ConnectionID: f.connection.ID,
 		IDs:          []pulid.ID{record.ID},

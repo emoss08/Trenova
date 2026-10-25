@@ -16,7 +16,6 @@ import (
 	"github.com/emoss08/trenova/pkg/tarifftypes"
 	"github.com/emoss08/trenova/shared/jsonutils"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/uptrace/bun"
 )
 
 var versionDiffIgnoreFields = []string{
@@ -140,7 +139,7 @@ func (s *Service) Rollback(
 	}
 
 	var updated *formulalibrary.FormulaLibrary
-	err = s.db.WithTx(ctx, kernelports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
+	err = s.db.Transact(ctx, kernelports.TxOptions{}, func(txCtx context.Context) error {
 		saved, txErr := s.repo.Update(txCtx, resolved)
 		if txErr != nil {
 			return txErr

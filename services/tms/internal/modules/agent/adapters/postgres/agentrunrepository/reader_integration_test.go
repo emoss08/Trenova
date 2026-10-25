@@ -9,6 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation/conversationdb"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/testutil/seedtest"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -34,6 +35,7 @@ func TestRunReads_KeepAConversationsRunsToItsOwner(t *testing.T) {
 	t.Cleanup(cleanup)
 
 	data := seedtest.SeedFullTestData(t, ctx, db)
+	ctx = data.Ctx(ctx)
 	repo := New(Params{DB: postgres.NewTestConnection(db), Logger: zap.NewNop()})
 	tenant := pagination.TenantInfo{OrgID: data.Organization.ID, BuID: data.BusinessUnit.ID}
 	owner := data.User.ID
@@ -46,8 +48,7 @@ func TestRunReads_KeepAConversationsRunsToItsOwner(t *testing.T) {
 		AgentDefinitionID: pulid.MustNew("agd_"),
 		Title:             "Private conversation",
 	}
-	_, err := db.NewInsert().Model(thread).Exec(ctx)
-	require.NoError(t, err)
+	require.NoError(t, conversationdb.Threads.Create(ctx, db, thread))
 
 	newRun := func(subject agent.SubjectType, subjectID pulid.ID, startedAt int64) *agent.AgentRun {
 		t.Helper()
@@ -155,7 +156,7 @@ func TestRunReads_KeepAConversationsRunsToItsOwner(t *testing.T) {
 		}
 	}
 
-	_, err = repo.GetByID(ctx, agentports.GetAgentRunByIDRequest{
+	_, err := repo.GetByID(ctx, agentports.GetAgentRunByIDRequest{
 		ID:         pulid.MustNew("ar_"),
 		TenantInfo: &tenant,
 		Reader:     agentports.PersonRunRead(owner),

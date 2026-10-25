@@ -8,7 +8,7 @@ writing it, then check the subsystem's own doc in the [index](../README.md).
 | File | Covers |
 |---|---|
 | [scale.md](scale.md) | the checklist every read, write, job and integration passes |
-| [data-access.md](data-access.md) | entities, repositories, pagination, locking, migrations, caching, seeding |
+| [data-access.md](data-access.md) | keel entities, repositories, lists (`pkg/listquery`), error mapping, pools and transactions, locking, migrations, caching, seeding |
 | [services.md](services.md) | application services, validation, errors, authorization, audit, after-commit work |
 | [api.md](api.md) | GraphQL schema, resolvers, dataloaders, limits, REST handlers |
 | [jobs.md](jobs.md) | Temporal workflows, activities, schedules, sweeps |
@@ -23,7 +23,7 @@ Temporal. Each business area is a module, `internal/modules/<module>/`:
 
 | Layer | Package | Holds |
 |---|---|---|
-| Domain | `domain/<entity>/` | Bun models, value objects, enums, entity rules; no I/O |
+| Domain | `domain/<entity>/` | keel models, value objects, enums, entity rules; no I/O |
 | Ports | `ports/<entity>ports/` | repository and service interfaces, request and result types |
 | Application | `app/<name>service/` | use cases, validators, plans |
 | Adapters | `adapters/postgres/<name>repository/` | repositories |
@@ -31,7 +31,7 @@ Temporal. Each business area is a module, `internal/modules/<module>/`:
 | Edge | `internal/api/{graphql,handlers}` | resolvers and handlers: authorize, map, call a service |
 | Wiring | `module.go`, `jobs/jobs.go` | fx options for shared, API and worker graphs |
 | Technical adapters | `internal/infrastructure/*` | Postgres, Redis, Temporal, imaging, config, observability |
-| Cross-module types | `pkg/*` | `errortypes`, `validationframework`, `pagination`, `querybuilder`, `dbhelper`, … |
+| Cross-module types | `pkg/*` | `errortypes`, `validationframework`, `pagination`, `listquery`, `dberror`, … |
 | Domain-free utilities | `shared/*` | string, slice, map, time, money, pulid, vendor clients |
 
 A module imports only strictly lower modules' `domain`, `ports` and `<name>contract`; an upward
@@ -39,8 +39,8 @@ need is a port declared low and provided by the higher module.
 
 ## Adding an entity end to end
 
-1. Domain model and enums (`data-access.md#entities`), migration with indexes and
-   `trenova_rls.reconcile()`, then regenerate column helpers (`buncolgen.md`).
+1. Domain model and enums (`data-access.md#entities`), migration with indexes
+   (`data-access.md#migrations`), then regenerate the keel tables (`task keel-gen`).
 2. Ports: repository interface with `GetByID`, `GetByIDs`, `ListConnection`, writes.
 3. Repository (`data-access.md#repositories`) with an integration test that includes a second
    tenant.
@@ -56,4 +56,5 @@ need is a port declared low and provided by the higher module.
 
 `task docker-up` starts `dev/compose.yml`: PostgreSQL with PostGIS (5432), Redis 8 (6379), Redis
 Insight (5540), Meilisearch (7700), MinIO (9000/9001), the imaging worker (gRPC 50051) and GTC.
-`task db-reset` drops, migrates and seeds.
+`task db-reset` recreates the database from `trenova-devdb`'s migrated template, then reconciles
+and seeds it.

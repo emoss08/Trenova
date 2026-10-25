@@ -493,8 +493,6 @@ func (r *QueryResolver) CaptureBatches(ctx context.Context, input gqlmodel.Captu
 		TenantInfo: tenant,
 		Filter: &pagination.QueryOptions{
 			TenantInfo: tenant,
-			Cursor:     cursor,
-			UseCursor:  true,
 			Sort:       captureBatchSort(input.Sort),
 		},
 		Cursor:       cursor,

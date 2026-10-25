@@ -5,22 +5,18 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/emoss08/trenova/pkg/buncolgen/accountingsynccol"
-
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync/accountingsyncdb"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
-	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dberror"
-	"github.com/emoss08/trenova/pkg/dbhelper"
 	"github.com/emoss08/trenova/pkg/dbtype"
 	"github.com/emoss08/trenova/pkg/domaintypes"
+	"github.com/emoss08/trenova/pkg/listquery"
 	"github.com/emoss08/trenova/pkg/pagination"
-	"github.com/emoss08/trenova/pkg/querybuilder"
 	"github.com/emoss08/trenova/shared/intutils"
-	"github.com/emoss08/trenova/shared/stringutils"
-	"github.com/uptrace/bun"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
@@ -31,6 +27,8 @@ const (
 	defaultInboundBatch       = 100
 	maxInboundBatch           = 500
 )
+
+var inboundChangeErrors = dberror.Mapping{Entity: inboundChangeEntity}
 
 type InboundChangeParams struct {
 	fx.In
@@ -61,11 +59,8 @@ func (r *inboundChangeRepository) Create(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*accountingsync.AccountingInboundChange, error) {
-			if _, err := r.db.DBForContext(ctx).
-				NewInsert().
-				Model(entity).
-				Returning("*").
-				Exec(ctx); err != nil {
+			err := accountingsyncdb.AccountingInboundChanges.Create(ctx, r.db.Keel(ctx), entity)
+			if err != nil {
 				return nil, fmt.Errorf("create accounting inbound change: %w", err)
 			}
 
@@ -82,28 +77,11 @@ func (r *inboundChangeRepository) Update(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*accountingsync.AccountingInboundChange, error) {
-			cols := accountingsynccol.AccountingInboundChangeColumns
 			ov := entity.Version
-			entity.Version++
-
-			results, err := r.db.DBForContext(ctx).
-				NewUpdate().
-				Model(entity).
-				ExcludeColumn(cols.CreatedAt.Bare()).
-				WherePK().
-				Where(cols.Version.Eq(), ov).
-				Exec(ctx)
+			err := accountingsyncdb.AccountingInboundChanges.Save(ctx, r.db.Keel(ctx), entity)
 			if err != nil {
 				entity.Version = ov
-				return nil, err
-			}
-			if err = dberror.CheckRowsAffected(
-				results,
-				inboundChangeEntity,
-				entity.ID.String(),
-			); err != nil {
-				entity.Version = ov
-				return nil, err
+				return nil, inboundChangeErrors.Map(err, entity.ID.String())
 			}
 
 			return entity, nil
@@ -119,19 +97,15 @@ func (r *inboundChangeRepository) GetByID(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*accountingsync.AccountingInboundChange, error) {
-			entity := new(accountingsync.AccountingInboundChange)
-			cols := accountingsynccol.AccountingInboundChangeColumns
-
-			query := r.db.DBForContext(ctx).
-				NewSelect().
-				Model(entity).
-				Apply(accountingsynccol.AccountingInboundChangeApplyTenant(req.TenantInfo)).
-				Where(cols.ID.Eq(), req.ID)
+			ic := accountingsyncdb.AccountingInboundChanges
+			q := ic.Where(ic.ID.Eq(req.ID))
 			if req.ForUpdate {
-				query = query.For("UPDATE")
+				q = q.Lock(keel.ForUpdate)
 			}
-			if err := query.Scan(ctx); err != nil {
-				return nil, dberror.HandleNotFoundError(err, inboundChangeEntity)
+
+			entity, err := q.One(ctx, r.db.Keel(ctx))
+			if err != nil {
+				return nil, inboundChangeErrors.Map(err, req.ID.String())
 			}
 
 			return entity, nil
@@ -147,24 +121,16 @@ func (r *inboundChangeRepository) ListByExternalIDs(
 		ctx,
 		r.db,
 		func(ctx context.Context) ([]*accountingsync.AccountingInboundChange, error) {
-			entities := make([]*accountingsync.AccountingInboundChange, 0, len(req.ExternalIDs))
 			if len(req.ExternalIDs) == 0 {
-				return entities, nil
+				return []*accountingsync.AccountingInboundChange{}, nil
 			}
 
-			cols := accountingsynccol.AccountingInboundChangeColumns
-			if err := r.db.DBForContext(ctx).
-				NewSelect().
-				Model(&entities).
-				Apply(accountingsynccol.AccountingInboundChangeApplyTenant(req.TenantInfo)).
-				Where(cols.ConnectionID.Eq(), req.ConnectionID).
-				Where(cols.Kind.Eq(), req.Kind).
-				Where(cols.ExternalID.In(), bun.List(req.ExternalIDs)).
-				Scan(ctx); err != nil {
-				return nil, err
-			}
-
-			return entities, nil
+			ic := accountingsyncdb.AccountingInboundChanges
+			return ic.Where(
+				ic.ConnectionID.Eq(req.ConnectionID),
+				ic.Kind.Eq(req.Kind),
+				ic.ExternalID.In(req.ExternalIDs...),
+			).All(ctx, r.db.Keel(ctx))
 		},
 	)
 }
@@ -183,122 +149,62 @@ func (r *inboundChangeRepository) ListDetected(
 			}
 			limit = intutils.Clamp(limit, 1, maxInboundBatch)
 
-			cols := accountingsynccol.AccountingInboundChangeColumns
-			entities := make([]*accountingsync.AccountingInboundChange, 0, limit)
-			if err := r.db.DBForContext(ctx).
-				NewSelect().
-				Model(&entities).
-				Apply(accountingsynccol.AccountingInboundChangeApplyTenant(req.TenantInfo)).
-				Where(cols.ConnectionID.Eq(), req.ConnectionID).
-				Where(cols.Status.Eq(), accountingsync.InboundStatusDetected).
-				Where(cols.DetectedAt.Lte(), req.DetectedBefore).
-				Order(cols.DetectedAt.OrderAsc(), cols.ID.OrderAsc()).
-				Limit(int64(limit)).
-				Scan(ctx); err != nil {
-				return nil, err
-			}
-
-			return entities, nil
+			ic := accountingsyncdb.AccountingInboundChanges
+			return ic.Where(
+				ic.ConnectionID.Eq(req.ConnectionID),
+				ic.Status.Eq(accountingsync.InboundStatusDetected),
+				ic.DetectedAt.Lte(req.DetectedBefore),
+			).
+				Order(ic.DetectedAt.Asc(), ic.ID.Asc()).
+				Limit(limit).
+				List(ctx, r.db.Keel(ctx))
 		},
 	)
 }
 
-func (r *inboundChangeRepository) applyListFilters(
-	q *bun.SelectQuery,
+func inboundListFilters(
 	req *accountingsyncports.ListAccountingInboundChangesConnectionRequest,
-) *bun.SelectQuery {
-	cols := accountingsynccol.AccountingInboundChangeColumns
-	if req.Filter != nil {
-		q = q.Apply(accountingsynccol.AccountingInboundChangeApplyTenant(req.Filter.TenantInfo))
+) []keel.Pred {
+	ic := accountingsyncdb.AccountingInboundChanges
+	term := strings.TrimSpace(req.Search)
+
+	return []keel.Pred{
+		ic.ConnectionID.Eq(req.ConnectionID),
+		keel.When(len(req.Statuses) > 0, ic.Status.In(req.Statuses...)),
+		keel.When(len(req.Kinds) > 0, ic.Kind.In(req.Kinds...)),
+		keel.When(len(req.Reasons) > 0, ic.Reason.In(req.Reasons...)),
+		keel.When(term != "", keel.Or(
+			ic.ExternalNumber.ContainsFold(term),
+			ic.PartyName.ContainsFold(term),
+		)),
 	}
-	q = q.Where(cols.ConnectionID.Eq(), req.ConnectionID)
-	if len(req.Statuses) > 0 {
-		q = q.Where(cols.Status.In(), bun.List(req.Statuses))
-	}
-	if len(req.Kinds) > 0 {
-		q = q.Where(cols.Kind.In(), bun.List(req.Kinds))
-	}
-	if len(req.Reasons) > 0 {
-		q = q.Where(cols.Reason.In(), bun.List(req.Reasons))
-	}
-	if term := strings.TrimSpace(req.Search); term != "" {
-		pattern := "%" + stringutils.EscapeLikePattern(term) + "%"
-		q = q.WhereGroup(" AND ", func(q *bun.SelectQuery) *bun.SelectQuery {
-			return q.
-				Where(cols.ExternalNumber.ILike(), pattern).
-				WhereOr(cols.PartyName.ILike(), pattern)
-		})
-	}
-	return q
 }
 
 func (r *inboundChangeRepository) ListConnection(
 	ctx context.Context,
 	req *accountingsyncports.ListAccountingInboundChangesConnectionRequest,
 ) (*pagination.CursorListResult[*accountingsync.AccountingInboundChange], error) {
-	return dbtx.Write(
+	return dbtx.Read(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*pagination.CursorListResult[*accountingsync.AccountingInboundChange], error) {
-			log := r.l.With(zap.String("operation", "ListConnection"))
-
 			if req.Filter != nil && len(req.Filter.Sort) == 0 {
 				req.Filter.Sort = []domaintypes.SortField{
 					{Field: inboundChangeDetectedSort, Direction: dbtype.SortDirectionDesc},
 				}
 			}
 
-			dba := r.db.DBForContext(ctx)
-			var totalCount *int
-			if req.Cursor.IncludeTotalCount {
-				total, err := dba.
-					NewSelect().
-					Model((*accountingsync.AccountingInboundChange)(nil)).
-					Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-						sq = querybuilder.ApplyFiltersWithoutSort(
-							sq,
-							accountingsynccol.AccountingInboundChangeTable.Alias,
-							req.Filter,
-							(*accountingsync.AccountingInboundChange)(nil),
-						)
-						return r.applyListFilters(sq, req)
-					}).
-					Count(ctx)
-				if err != nil {
-					log.Error("failed to count accounting inbound changes", zap.Error(err))
-					return nil, err
-				}
-				totalCount = new(int(total))
-			}
-
-			result, err := dbhelper.CursorList(
+			result, err := listquery.Connection(
 				ctx,
-				dbhelper.CursorListParams[*accountingsync.AccountingInboundChange]{
-					Filter:     req.Filter,
-					Cursor:     req.Cursor,
-					TotalCount: totalCount,
-					Query: func(items *[]*accountingsync.AccountingInboundChange) *bun.SelectQuery {
-						return dba.NewSelect().
-							Model(items).
-							ColumnExpr(accountingsynccol.AccountingInboundChangeTable.All())
-					},
-					Apply: func(sq *bun.SelectQuery) (*bun.SelectQuery, error) {
-						sq, applyErr := querybuilder.ApplyCursorFilters(
-							sq,
-							accountingsynccol.AccountingInboundChangeTable.Alias,
-							req.Filter,
-							req.Cursor,
-							(*accountingsync.AccountingInboundChange)(nil),
-						)
-						if applyErr != nil {
-							return sq, applyErr
-						}
-						return r.applyListFilters(sq, req), nil
-					},
+				r.db.Keel(ctx),
+				accountingsyncdb.AccountingInboundChanges.Where(inboundListFilters(req)...),
+				&listquery.Request[accountingsync.AccountingInboundChange]{
+					Filter: req.Filter,
+					Cursor: req.Cursor,
 				},
 			)
 			if err != nil {
-				log.Error("failed to list accounting inbound changes", zap.Error(err))
+				r.l.Error("failed to list accounting inbound changes", zap.Error(err))
 				return nil, err
 			}
 
@@ -315,31 +221,28 @@ func (r *inboundChangeRepository) Summarize(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*accountingsyncports.AccountingInboundSummary, error) {
-			cols := accountingsynccol.AccountingInboundChangeColumns
-			summary := new(accountingsyncports.AccountingInboundSummary)
-
-			if err := r.db.DBForContext(ctx).
-				NewSelect().
-				Model((*accountingsync.AccountingInboundChange)(nil)).
-				ColumnExpr(buncolgen.CountFilter("detected", cols.Status.Eq()), accountingsync.InboundStatusDetected).
-				ColumnExpr(buncolgen.CountFilter("proposed", cols.Status.Eq()), accountingsync.InboundStatusProposed).
-				ColumnExpr(
-					buncolgen.CountFilter("applied_since", cols.Status.Eq(), cols.DecidedAt.Gte()),
-					accountingsync.InboundStatusApplied,
-					req.DecidedSince,
-				).
-				ColumnExpr(
-					buncolgen.CountFilter("ignored_since", cols.Status.Eq(), cols.DecidedAt.Gte()),
-					accountingsync.InboundStatusIgnored,
-					req.DecidedSince,
-				).
-				Apply(accountingsynccol.AccountingInboundChangeApplyTenant(req.TenantInfo)).
-				Where(cols.ConnectionID.Eq(), req.ConnectionID).
-				Scan(ctx, summary); err != nil {
+			ic := accountingsyncdb.AccountingInboundChanges
+			summary, err := keel.IntoOne[accountingsyncports.AccountingInboundSummary](
+				ctx,
+				r.db.Keel(ctx),
+				ic.Pick(
+					keel.Count().Filter(ic.Status.Eq(accountingsync.InboundStatusDetected)),
+					keel.Count().Filter(ic.Status.Eq(accountingsync.InboundStatusProposed)),
+					keel.Count().Filter(keel.And(
+						ic.Status.Eq(accountingsync.InboundStatusApplied),
+						ic.DecidedAt.Gte(req.DecidedSince),
+					)),
+					keel.Count().Filter(keel.And(
+						ic.Status.Eq(accountingsync.InboundStatusIgnored),
+						ic.DecidedAt.Gte(req.DecidedSince),
+					)),
+				).Where(ic.ConnectionID.Eq(req.ConnectionID)),
+			)
+			if err != nil {
 				return nil, err
 			}
 
-			return summary, nil
+			return &summary, nil
 		},
 	)
 }
@@ -352,29 +255,29 @@ func (r *inboundChangeRepository) ListAttention(
 		ctx,
 		r.db,
 		func(ctx context.Context) ([]accountingsyncports.AccountingInboundAttentionGroup, error) {
-			cols := accountingsynccol.AccountingInboundChangeColumns
-			groups := make(
-				[]accountingsyncports.AccountingInboundAttentionGroup,
-				0,
-				len(accountingsync.AllInboundChangeReasons()),
+			ic := accountingsyncdb.AccountingInboundChanges
+			groups, err := keel.Into[accountingsyncports.AccountingInboundAttentionGroup](
+				ctx,
+				r.db.Keel(ctx),
+				ic.Group(ic.Reason).
+					Pick(
+						keel.Raw("COALESCE(?::text, '')", ic.Reason),
+						keel.Count(),
+						ic.DetectedAt.Min(),
+						ic.ID.Min(),
+					).
+					Where(
+						ic.ConnectionID.Eq(req.ConnectionID),
+						ic.Status.Eq(accountingsync.InboundStatusProposed),
+						ic.DetectedAt.Lte(req.DetectedBefore),
+					).
+					Order(keel.Count().Desc(), ic.DetectedAt.Min().Asc()),
 			)
-
-			if err := r.db.DBForContext(ctx).
-				NewSelect().
-				Model((*accountingsync.AccountingInboundChange)(nil)).
-				ColumnExpr(cols.Reason.As("reason")).
-				ColumnExpr(buncolgen.Count("count")).
-				ColumnExpr(buncolgen.Min(cols.DetectedAt, "oldest_detected_at")).
-				ColumnExpr(buncolgen.Min(cols.ID, "sample_id")).
-				Apply(accountingsynccol.AccountingInboundChangeApplyTenant(req.TenantInfo)).
-				Where(cols.ConnectionID.Eq(), req.ConnectionID).
-				Where(cols.Status.Eq(), accountingsync.InboundStatusProposed).
-				Where(cols.DetectedAt.Lte(), req.DetectedBefore).
-				GroupExpr(cols.Reason.Qualified()).
-				OrderExpr("count DESC").
-				OrderExpr("oldest_detected_at ASC").
-				Scan(ctx, &groups); err != nil {
+			if err != nil {
 				return nil, err
+			}
+			if groups == nil {
+				groups = []accountingsyncports.AccountingInboundAttentionGroup{}
 			}
 
 			return groups, nil

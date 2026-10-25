@@ -5,7 +5,12 @@ import (
 	"errors"
 
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/fiscalperiod"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/fiscalperiod/fiscalperioddb"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/journalsource/journalsourcedb"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/manualjournal"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/manualjournal/manualjournaldb"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
@@ -31,12 +36,13 @@ type Validator struct {
 }
 
 func NewValidator(p ValidatorParams) *Validator {
+	checker := validationframework.NewKeelChecker(p.DB, fiscalperioddb.FiscalPeriodsSchema())
 	return &Validator{
 		validator: validationframework.
 			NewTenantedValidatorBuilder[*fiscalperiod.FiscalPeriod]().
 			WithModelName("FiscalPeriod").
-			WithUniquenessChecker(validationframework.NewBunUniquenessCheckerScoped(p.DB)).
-			WithReferenceChecker(validationframework.NewBunReferenceCheckerScoped(p.DB)).
+			WithUniquenessChecker(checker).
+			WithReferenceChecker(checker).
 			WithReferenceCheck(
 				"fiscalYearId",
 				"fiscal_years",
@@ -150,32 +156,27 @@ func (v *Validator) validateAccountingCloseBlockers(
 	}
 
 	var pendingManualCount, pendingSourceCount int
-	err := v.db.RunScoped(ctx, true, func(ctx context.Context) error {
-		if err := v.db.DBForContext(ctx).NewRaw(`
-		SELECT COUNT(*)
-		FROM manual_journal_requests
-		WHERE organization_id = ?
-		  AND business_unit_id = ?
-		  AND requested_fiscal_period_id = ?
-		  AND status IN ('PendingApproval', 'Approved')
-	`, entity.OrganizationID, entity.BusinessUnitID, entity.ID).Scan(ctx, &pendingManualCount); err != nil {
+	err := dbtx.ReadErr(ctx, v.db, func(ctx context.Context) error {
+		db := v.db.Keel(ctx)
+		mjr := manualjournaldb.Requests
+		manual, err := mjr.Where(
+			mjr.RequestedFiscalPeriodID.Eq(entity.ID),
+			mjr.Status.In(manualjournal.StatusPendingApproval, manualjournal.StatusApproved),
+		).Count(ctx, db)
+		if err != nil {
 			return errManualJournalBlockers
 		}
+		pendingManualCount = int(manual)
 
-		if err := v.db.DBForContext(ctx).NewRaw(`
-		SELECT COUNT(*)
-		FROM journal_sources js
-		JOIN journal_batches jb
-		  ON jb.id = js.journal_batch_id
-		 AND jb.organization_id = js.organization_id
-		 AND jb.business_unit_id = js.business_unit_id
-		WHERE js.organization_id = ?
-		  AND js.business_unit_id = ?
-		  AND jb.fiscal_period_id = ?
-		  AND js.status <> 'Posted'
-	`, entity.OrganizationID, entity.BusinessUnitID, entity.ID).Scan(ctx, &pendingSourceCount); err != nil {
+		js := journalsourcedb.Sources
+		sources, err := js.Where(
+			js.JournalBatch().FiscalPeriodID.Eq(entity.ID),
+			js.Status.Ne("Posted"),
+		).Count(ctx, db)
+		if err != nil {
 			return errJournalSourceBlockers
 		}
+		pendingSourceCount = int(sources)
 
 		return nil
 	})

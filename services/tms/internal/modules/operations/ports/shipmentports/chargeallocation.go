@@ -6,7 +6,6 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/uptrace/bun"
 )
 
 type ListChargeAllocationsByShipmentIDsRequest struct {
@@ -49,12 +48,10 @@ type ChargeAllocationRepository interface {
 	// refreshed.
 	SyncForShipment(
 		ctx context.Context,
-		tx bun.IDB,
 		entity *shipment.Shipment,
 	) error
 	SyncForOrderCharge(
 		ctx context.Context,
-		tx bun.IDB,
 		req *SyncOrderChargeAllocationsRequest,
 	) error
 	ListByShipmentIDs(
@@ -84,7 +81,6 @@ type ChargeAllocationRepository interface {
 	// queue item of the shipment from its current charges and allocations.
 	RefreshQueueSnapshots(
 		ctx context.Context,
-		tx bun.IDB,
 		tenantInfo pagination.TenantInfo,
 		shipmentID pulid.ID,
 	) error

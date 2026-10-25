@@ -36,7 +36,6 @@ import (
 	"github.com/emoss08/trenova/shared/money"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
-	"github.com/uptrace/bun"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
@@ -65,7 +64,7 @@ type statementSource interface {
 type Params struct {
 	fx.In
 
-	DB              kernelports.DBConnection
+	DB              kernelports.Transactor
 	Repo            customerstatementports.Repository
 	Receivables     *accountsreceivableservice.Service
 	Customers       customerports.CustomerRepository
@@ -81,7 +80,7 @@ type Params struct {
 }
 
 type Service struct {
-	db              kernelports.DBConnection
+	db              kernelports.Transactor
 	repo            customerstatementports.Repository
 	statements      statementSource
 	customers       customerports.CustomerRepository
@@ -540,7 +539,7 @@ func (s *Service) deliver(
 		SentAt:             d.sentAt,
 	}
 	inserted := false
-	err = s.db.WithTx(ctx, kernelports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
+	err = s.db.Transact(ctx, kernelports.TxOptions{}, func(txCtx context.Context) error {
 		var txErr error
 		if inserted, txErr = s.repo.Insert(txCtx, record); txErr != nil || !inserted {
 			return txErr

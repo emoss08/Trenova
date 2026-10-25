@@ -4,48 +4,29 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/emoss08/trenova/pkg/buncolgen/accountingsynccol"
-	"github.com/emoss08/trenova/pkg/buncolgen/bankreceiptcol"
-	"github.com/emoss08/trenova/pkg/buncolgen/billingqueuecol"
-	"github.com/emoss08/trenova/pkg/buncolgen/carrierintelcol"
-	"github.com/emoss08/trenova/pkg/buncolgen/conversationcol"
-	"github.com/emoss08/trenova/pkg/buncolgen/detentioncol"
-	"github.com/emoss08/trenova/pkg/buncolgen/documentcol"
-	"github.com/emoss08/trenova/pkg/buncolgen/edicol"
-	"github.com/emoss08/trenova/pkg/buncolgen/factoringcol"
-	"github.com/emoss08/trenova/pkg/buncolgen/formulalibrarycol"
-	"github.com/emoss08/trenova/pkg/buncolgen/formulatemplatecol"
-	"github.com/emoss08/trenova/pkg/buncolgen/inboundmessagecol"
-	"github.com/emoss08/trenova/pkg/buncolgen/insightcol"
-	"github.com/emoss08/trenova/pkg/buncolgen/invoicecol"
-	"github.com/emoss08/trenova/pkg/buncolgen/reportcol"
-	"github.com/emoss08/trenova/pkg/buncolgen/shipmentcol"
-	"github.com/emoss08/trenova/pkg/buncolgen/workercol"
-
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
-	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync/accountingsyncdb"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/insight"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation/conversationdb"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/insight/insightdb"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
-	"github.com/emoss08/trenova/internal/modules/billing/domain/bankreceipt"
-	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
-	"github.com/emoss08/trenova/internal/modules/billing/domain/factoring"
-	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
-	"github.com/emoss08/trenova/internal/modules/documents/domain/document"
-	"github.com/emoss08/trenova/internal/modules/documents/domain/inboundmessage"
-	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
-	"github.com/emoss08/trenova/internal/modules/operations/domain/detention"
-	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
-	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintel"
-	"github.com/emoss08/trenova/internal/modules/rating/domain/formulalibrary"
-	"github.com/emoss08/trenova/internal/modules/rating/domain/formulatemplate"
-	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
-	"github.com/emoss08/trenova/internal/modules/workspace/domain/report"
-	"github.com/emoss08/trenova/pkg/buncolgen"
-	"github.com/emoss08/trenova/pkg/pagination"
-	"github.com/uptrace/bun"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/bankreceipt/bankreceiptdb"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue/billingqueuedb"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/factoring/factoringdb"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice/invoicedb"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/document/documentdb"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/inboundmessage/inboundmessagedb"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/edi/edidb"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/detention/detentiondb"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment/shipmentdb"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintel/carrierinteldb"
+	"github.com/emoss08/trenova/internal/modules/rating/domain/formulalibrary/formulalibrarydb"
+	"github.com/emoss08/trenova/internal/modules/rating/domain/formulatemplate/formulatemplatedb"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker/workerdb"
+	"github.com/emoss08/trenova/internal/modules/workspace/domain/report/reportdb"
+	"github.com/emoss08/trenova/shared/pulid"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
@@ -69,137 +50,111 @@ func New(p Params) agentports.AgentSubjectRepository {
 	}
 }
 
-type subjectTable struct {
-	model  func() any
-	tenant func(pagination.TenantInfo) func(*bun.SelectQuery) *bun.SelectQuery
-	id     buncolgen.Column
-}
+// subjectExists asks whether the subject's record exists in the tenant on the
+// context; each table answers through its own generated handle.
+type subjectExists func(id pulid.ID, found *bool) keel.BatchItem
 
-var subjectTables = map[agent.SubjectType]subjectTable{
-	agent.SubjectBillingQueueItem: {
-		model:  func() any { return (*billingqueue.BillingQueueItem)(nil) },
-		tenant: billingqueuecol.BillingQueueItemApplyTenant,
-		id:     billingqueuecol.BillingQueueItemColumns.ID,
+//nolint:exhaustive // an organization subject is checked against the caller's tenant, not a table
+var subjectTables = map[agent.SubjectType]subjectExists{
+	agent.SubjectBillingQueueItem: func(id pulid.ID, found *bool) keel.BatchItem {
+		t := billingqueuedb.BillingQueueItems
+		return keel.ExistsInto(t.Where(t.ID.Eq(id)), found)
 	},
-	agent.SubjectShipmentMove: {
-		model:  func() any { return (*shipment.ShipmentMove)(nil) },
-		tenant: shipmentcol.ShipmentMoveApplyTenant,
-		id:     shipmentcol.ShipmentMoveColumns.ID,
+	agent.SubjectShipmentMove: func(id pulid.ID, found *bool) keel.BatchItem {
+		t := shipmentdb.ShipmentMoves
+		return keel.ExistsInto(t.Where(t.ID.Eq(id)), found)
 	},
-	agent.SubjectAssistantThread: {
-		model:  func() any { return (*conversation.Thread)(nil) },
-		tenant: conversationcol.ThreadApplyTenant,
-		id:     conversationcol.ThreadColumns.ID,
+	agent.SubjectAssistantThread: func(id pulid.ID, found *bool) keel.BatchItem {
+		t := conversationdb.Threads
+		return keel.ExistsInto(t.Where(t.ID.Eq(id)), found)
 	},
-	agent.SubjectShipment: {
-		model:  func() any { return (*shipment.Shipment)(nil) },
-		tenant: shipmentcol.ShipmentApplyTenant,
-		id:     shipmentcol.ShipmentColumns.ID,
+	agent.SubjectShipment: func(id pulid.ID, found *bool) keel.BatchItem {
+		t := shipmentdb.Shipments
+		return keel.ExistsInto(t.Where(t.ID.Eq(id)), found)
 	},
-	agent.SubjectDocument: {
-		model:  func() any { return (*document.Document)(nil) },
-		tenant: documentcol.DocumentApplyTenant,
-		id:     documentcol.DocumentColumns.ID,
+	agent.SubjectDocument: func(id pulid.ID, found *bool) keel.BatchItem {
+		t := documentdb.Documents
+		return keel.ExistsInto(t.Where(t.ID.Eq(id)), found)
 	},
-	agent.SubjectInsight: {
-		model:  func() any { return (*insight.Insight)(nil) },
-		tenant: insightcol.InsightApplyTenant,
-		id:     insightcol.InsightColumns.ID,
+	agent.SubjectInsight: func(id pulid.ID, found *bool) keel.BatchItem {
+		t := insightdb.Insights
+		return keel.ExistsInto(t.Where(t.ID.Eq(id)), found)
 	},
-	agent.SubjectBankReceipt: {
-		model:  func() any { return (*bankreceipt.BankReceipt)(nil) },
-		tenant: bankreceiptcol.BankReceiptApplyTenant,
-		id:     bankreceiptcol.BankReceiptColumns.ID,
+	agent.SubjectBankReceipt: func(id pulid.ID, found *bool) keel.BatchItem {
+		t := bankreceiptdb.BankReceipts
+		return keel.ExistsInto(t.Where(t.ID.Eq(id)), found)
 	},
-	agent.SubjectDetentionOccurrence: {
-		model:  func() any { return (*detention.DetentionOccurrence)(nil) },
-		tenant: detentioncol.DetentionOccurrenceApplyTenant,
-		id:     detentioncol.DetentionOccurrenceColumns.ID,
+	agent.SubjectDetentionOccurrence: func(id pulid.ID, found *bool) keel.BatchItem {
+		t := detentiondb.DetentionOccurrences
+		return keel.ExistsInto(t.Where(t.ID.Eq(id)), found)
 	},
-	agent.SubjectWorker: {
-		model:  func() any { return (*worker.Worker)(nil) },
-		tenant: workercol.WorkerApplyTenant,
-		id:     workercol.WorkerColumns.ID,
+	agent.SubjectWorker: func(id pulid.ID, found *bool) keel.BatchItem {
+		t := workerdb.Workers
+		return keel.ExistsInto(t.Where(t.ID.Eq(id)), found)
 	},
-	agent.SubjectCarrierIntelEvent: {
-		model:  func() any { return (*carrierintel.CarrierIntelEvent)(nil) },
-		tenant: carrierintelcol.CarrierIntelEventApplyTenant,
-		id:     carrierintelcol.CarrierIntelEventColumns.ID,
+	agent.SubjectCarrierIntelEvent: func(id pulid.ID, found *bool) keel.BatchItem {
+		t := carrierinteldb.CarrierIntelEvents
+		return keel.ExistsInto(t.Where(t.ID.Eq(id)), found)
 	},
-	agent.SubjectEDIInboundFile: {
-		model:  func() any { return (*edi.EDIInboundFile)(nil) },
-		tenant: edicol.EDIInboundFileApplyTenant,
-		id:     edicol.EDIInboundFileColumns.ID,
+	agent.SubjectEDIInboundFile: func(id pulid.ID, found *bool) keel.BatchItem {
+		t := edidb.EDIInboundFiles
+		return keel.ExistsInto(t.Where(t.ID.Eq(id)), found)
 	},
-	agent.SubjectInboundMessage: {
-		model:  func() any { return (*inboundmessage.InboundMessage)(nil) },
-		tenant: inboundmessagecol.InboundMessageApplyTenant,
-		id:     inboundmessagecol.InboundMessageColumns.ID,
+	agent.SubjectInboundMessage: func(id pulid.ID, found *bool) keel.BatchItem {
+		t := inboundmessagedb.InboundMessages
+		return keel.ExistsInto(t.Where(t.ID.Eq(id)), found)
 	},
-	agent.SubjectReport: {
-		model:  func() any { return (*report.ReportDefinition)(nil) },
-		tenant: reportcol.ReportDefinitionApplyTenant,
-		id:     reportcol.ReportDefinitionColumns.ID,
+	agent.SubjectReport: func(id pulid.ID, found *bool) keel.BatchItem {
+		t := reportdb.ReportDefinitions
+		return keel.ExistsInto(t.Where(t.ID.Eq(id)), found)
 	},
-	agent.SubjectDashboard: {
-		model:  func() any { return (*report.Dashboard)(nil) },
-		tenant: reportcol.DashboardApplyTenant,
-		id:     reportcol.DashboardColumns.ID,
+	agent.SubjectDashboard: func(id pulid.ID, found *bool) keel.BatchItem {
+		t := reportdb.Dashboards
+		return keel.ExistsInto(t.Where(t.ID.Eq(id)), found)
 	},
-	agent.SubjectAccountingConnection: {
-		model:  func() any { return (*accountingsync.AccountingConnection)(nil) },
-		tenant: accountingsynccol.AccountingConnectionApplyTenant,
-		id:     accountingsynccol.AccountingConnectionColumns.ID,
+	agent.SubjectAccountingConnection: func(id pulid.ID, found *bool) keel.BatchItem {
+		t := accountingsyncdb.AccountingConnections
+		return keel.ExistsInto(t.Where(t.ID.Eq(id)), found)
 	},
-	agent.SubjectAccountingSyncRecord: {
-		model:  func() any { return (*accountingsync.AccountingSyncRecord)(nil) },
-		tenant: accountingsynccol.AccountingSyncRecordApplyTenant,
-		id:     accountingsynccol.AccountingSyncRecordColumns.ID,
+	agent.SubjectAccountingSyncRecord: func(id pulid.ID, found *bool) keel.BatchItem {
+		t := accountingsyncdb.AccountingSyncRecords
+		return keel.ExistsInto(t.Where(t.ID.Eq(id)), found)
 	},
-	agent.SubjectAccountingInbound: {
-		model:  func() any { return (*accountingsync.AccountingInboundChange)(nil) },
-		tenant: accountingsynccol.AccountingInboundChangeApplyTenant,
-		id:     accountingsynccol.AccountingInboundChangeColumns.ID,
+	agent.SubjectAccountingInbound: func(id pulid.ID, found *bool) keel.BatchItem {
+		t := accountingsyncdb.AccountingInboundChanges
+		return keel.ExistsInto(t.Where(t.ID.Eq(id)), found)
 	},
-	agent.SubjectAccountingDrift: {
-		model:  func() any { return (*accountingsync.AccountingDriftFinding)(nil) },
-		tenant: accountingsynccol.AccountingDriftFindingApplyTenant,
-		id:     accountingsynccol.AccountingDriftFindingColumns.ID,
+	agent.SubjectAccountingDrift: func(id pulid.ID, found *bool) keel.BatchItem {
+		t := accountingsyncdb.AccountingDriftFindings
+		return keel.ExistsInto(t.Where(t.ID.Eq(id)), found)
 	},
-	agent.SubjectFormulaTemplate: {
-		model:  func() any { return (*formulatemplate.FormulaTemplate)(nil) },
-		tenant: formulatemplatecol.FormulaTemplateApplyTenant,
-		id:     formulatemplatecol.FormulaTemplateColumns.ID,
+	agent.SubjectFormulaTemplate: func(id pulid.ID, found *bool) keel.BatchItem {
+		t := formulatemplatedb.FormulaTemplates
+		return keel.ExistsInto(t.Where(t.ID.Eq(id)), found)
 	},
-	agent.SubjectFormulaLibrary: {
-		model:  func() any { return (*formulalibrary.FormulaLibrary)(nil) },
-		tenant: formulalibrarycol.FormulaLibraryApplyTenant,
-		id:     formulalibrarycol.FormulaLibraryColumns.ID,
+	agent.SubjectFormulaLibrary: func(id pulid.ID, found *bool) keel.BatchItem {
+		t := formulalibrarydb.FormulaLibraries
+		return keel.ExistsInto(t.Where(t.ID.Eq(id)), found)
 	},
-	agent.SubjectInvoice: {
-		model:  func() any { return (*invoice.Invoice)(nil) },
-		tenant: invoicecol.InvoiceApplyTenant,
-		id:     invoicecol.InvoiceColumns.ID,
+	agent.SubjectInvoice: func(id pulid.ID, found *bool) keel.BatchItem {
+		t := invoicedb.Invoices
+		return keel.ExistsInto(t.Where(t.ID.Eq(id)), found)
 	},
-	agent.SubjectInvoiceDispute: {
-		model:  func() any { return (*invoice.InvoiceDispute)(nil) },
-		tenant: invoicecol.InvoiceDisputeApplyTenant,
-		id:     invoicecol.InvoiceDisputeColumns.ID,
+	agent.SubjectInvoiceDispute: func(id pulid.ID, found *bool) keel.BatchItem {
+		t := invoicedb.InvoiceDisputes
+		return keel.ExistsInto(t.Where(t.ID.Eq(id)), found)
 	},
-	agent.SubjectFactoringNoa: {
-		model:  func() any { return (*factoring.Noa)(nil) },
-		tenant: factoringcol.NoaApplyTenant,
-		id:     factoringcol.NoaColumns.ID,
+	agent.SubjectFactoringNoa: func(id pulid.ID, found *bool) keel.BatchItem {
+		t := factoringdb.Noas
+		return keel.ExistsInto(t.Where(t.ID.Eq(id)), found)
 	},
-	agent.SubjectFactoringSubmission: {
-		model:  func() any { return (*factoring.Submission)(nil) },
-		tenant: factoringcol.SubmissionApplyTenant,
-		id:     factoringcol.SubmissionColumns.ID,
+	agent.SubjectFactoringSubmission: func(id pulid.ID, found *bool) keel.BatchItem {
+		t := factoringdb.Submissions
+		return keel.ExistsInto(t.Where(t.ID.Eq(id)), found)
 	},
-	agent.SubjectFactoringRemittance: {
-		model:  func() any { return (*factoring.Remittance)(nil) },
-		tenant: factoringcol.RemittanceApplyTenant,
-		id:     factoringcol.RemittanceColumns.ID,
+	agent.SubjectFactoringRemittance: func(id pulid.ID, found *bool) keel.BatchItem {
+		t := factoringdb.Remittances
+		return keel.ExistsInto(t.Where(t.ID.Eq(id)), found)
 	},
 }
 
@@ -215,18 +170,13 @@ func (r *repository) Exists(
 			return req.SubjectID == req.TenantInfo.OrgID, nil
 		}
 
-		table, ok := subjectTables[req.SubjectType]
+		exists, ok := subjectTables[req.SubjectType]
 		if !ok {
 			return false, fmt.Errorf("no table holds subject type %q", req.SubjectType)
 		}
 
-		exists, err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(table.model()).
-			Apply(table.tenant(req.TenantInfo)).
-			Where(table.id.Eq(), req.SubjectID).
-			Exists(ctx)
-		if err != nil {
+		var found bool
+		if err := keel.Batch(ctx, r.db.Keel(ctx), exists(req.SubjectID, &found)); err != nil {
 			r.l.Error(
 				"failed to check agent subject",
 				zap.String("subjectType", string(req.SubjectType)),
@@ -235,6 +185,6 @@ func (r *repository) Exists(
 			return false, err
 		}
 
-		return exists, nil
+		return found, nil
 	})
 }

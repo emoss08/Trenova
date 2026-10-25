@@ -8,7 +8,6 @@ import (
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"github.com/uptrace/bun"
 )
 
 const (
@@ -228,18 +227,4 @@ func TestAgentRun_Validate_DelegateRunNamesItsParent(t *testing.T) {
 			assert.ElementsMatch(t, tt.fields, fieldsOf(multiErr))
 		})
 	}
-}
-
-func TestInsertStampsUpdatedAtForTheAuditProjector(t *testing.T) {
-	t.Parallel()
-
-	run := baseRun()
-	require.NoError(t, run.BeforeAppendModel(t.Context(), (*bun.InsertQuery)(nil)))
-	assert.NotZero(t, run.UpdatedAt)
-	assert.Equal(t, run.CreatedAt, run.UpdatedAt)
-
-	proposal := baseProposal()
-	require.NoError(t, proposal.BeforeAppendModel(t.Context(), (*bun.InsertQuery)(nil)))
-	assert.NotZero(t, proposal.UpdatedAt)
-	assert.Equal(t, proposal.CreatedAt, proposal.UpdatedAt)
 }

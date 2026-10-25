@@ -6,13 +6,15 @@ import (
 	"testing"
 	"time"
 
-	"github.com/emoss08/trenova/internal/infrastructure/config"
-	"github.com/emoss08/trenova/internal/infrastructure/database/common"
-	"github.com/emoss08/trenova/internal/infrastructure/database/seeder"
-	"github.com/emoss08/trenova/internal/infrastructure/database/seeds"
+	"github.com/emoss08/trenova/internal/modules/billing/billingtest"
+
+	"github.com/emoss08/keel"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/customer/customerdb"
+
+	"github.com/emoss08/trenova/internal/testutil/seededtest"
+
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/customerledgerports"
-	"github.com/emoss08/trenova/internal/testutil/seedtest"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -21,30 +23,14 @@ import (
 )
 
 func TestARAnalyticsRepositoryQueriesExecute(t *testing.T) {
-	ctx, db, cleanup := seedtest.SetupTestDB(t)
+	ctx, db, cleanup := seededtest.SetupTestDB(t)
 	defer cleanup()
-	seedRegistry := seeder.NewRegistry()
-	seeds.Register(seedRegistry)
-	engine := seeder.NewEngine(
-		db,
-		seedRegistry,
-		&config.Config{System: config.SystemConfig{SystemUserPassword: "test-system-password"}},
-	)
-	_, err := engine.Execute(ctx, seeder.ExecuteOptions{Environment: common.EnvDevelopment})
-	require.NoError(t, err)
 
 	conn := postgres.NewTestConnection(db)
 	repo := NewAnalytics(Params{DB: conn, Logger: zap.NewNop()})
 
-	var org seededAROrg
-	require.NoError(
-		t,
-		db.NewSelect().
-			Table("organizations").
-			Column("id", "business_unit_id").
-			Limit(1).
-			Scan(ctx, &org),
-	)
+	seeded := billingtest.SeededTenant(t, ctx, db)
+	ctx, org := seeded.Ctx, seeded.Org
 
 	tenantInfo := pagination.TenantInfo{OrgID: org.ID, BuID: org.BusinessUnitID}
 	asOf := time.Now().UTC().Unix()
@@ -150,25 +136,15 @@ func TestARAnalyticsRepositoryQueriesExecute(t *testing.T) {
 	require.NoError(t, err)
 	assert.LessOrEqual(t, len(worklist), 25)
 
-	var customer struct {
-		ID pulid.ID `bun:"id"`
-	}
-	require.NoError(
-		t,
-		db.NewSelect().
-			Table("customers").
-			Column("id").
-			Where("organization_id = ?", org.ID).
-			Where("business_unit_id = ?", org.BusinessUnitID).
-			Limit(1).
-			Scan(ctx, &customer),
-	)
+	cus := customerdb.Customers
+	customerID, err := keel.IntoOne[pulid.ID](ctx, db, cus.Pick(cus.ID).Order(cus.ID.Asc()).Limit(1))
+	require.NoError(t, err)
 
 	snapshot, err := repo.GetCustomerSnapshot(
 		ctx,
 		customerledgerports.GetARCustomerSnapshotRequest{
 			TenantInfo: tenantInfo,
-			CustomerID: customer.ID,
+			CustomerID: customerID,
 			AsOfDate:   asOf,
 		},
 	)

@@ -6,8 +6,6 @@ import (
 	"fmt"
 
 	"github.com/emoss08/trenova/internal/infrastructure/config"
-	"github.com/emoss08/trenova/internal/infrastructure/database/seeder"
-	"github.com/emoss08/trenova/internal/infrastructure/database/seeds"
 	"github.com/emoss08/trenova/internal/infrastructure/minio"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/modules/kernel/adapters/postgres/enveloperepository"
@@ -74,7 +72,8 @@ Examples:
 }
 
 func init() {
-	rewrapCmd.Flags().BoolVar(&rewrapDryRun, "dry-run", false, "Report what would move without writing")
+	rewrapCmd.Flags().
+		BoolVar(&rewrapDryRun, "dry-run", false, "Report what would move without writing")
 	rewrapCmd.Flags().StringVar(&rewrapOrg, "org", "", "Rewrap only this organization")
 	rewrapCmd.Flags().IntVar(&rewrapBatchSize, "batch-size", 200, "Rows read per query")
 	rewrapCmd.Flags().BoolVar(
@@ -115,13 +114,11 @@ func runRewrap(cmd *cobra.Command, _ []string) error {
 		return fmt.Errorf("load the encryption keys: %w", err)
 	}
 
-	registry := seeder.NewRegistry()
-	seeds.Register(registry)
-	manager, err := seeder.NewManagerFromConfig(seeder.ManagerConfig{Config: cfg, Registry: registry})
+	maint, err := postgres.OpenMaintenanceDB(context.Background(), cfg)
 	if err != nil {
-		return fmt.Errorf("failed to create database manager: %w", err)
+		return fmt.Errorf("open the database: %w", err)
 	}
-	defer manager.Close()
+	defer maint.Close()
 
 	var storage kernelports.Client
 	if !rewrapSkipObjects {
@@ -133,18 +130,22 @@ func runRewrap(cmd *cobra.Command, _ []string) error {
 
 	service := enveloperewrapservice.New(enveloperewrapservice.Deps{
 		Repository: enveloperepository.New(
-			enveloperepository.Params{DB: postgres.WrapDB(manager.GetDB())},
+			enveloperepository.Params{DB: postgres.WrapDB(maint)},
 		),
 		Rewrapper: encryptionservice.NewEnvelopeRewrapper(encryption),
 		Storage:   storage,
 		Logger:    logger.Named("encryption.rewrap"),
 	})
 
-	report, err := service.Run(ctx, envelopeSources(!rewrapSkipObjects), enveloperewrapservice.Options{
-		DryRun:         rewrapDryRun,
-		BatchSize:      rewrapBatchSize,
-		OrganizationID: orgID,
-	})
+	report, err := service.Run(
+		ctx,
+		envelopeSources(!rewrapSkipObjects),
+		enveloperewrapservice.Options{
+			DryRun:         rewrapDryRun,
+			BatchSize:      rewrapBatchSize,
+			OrganizationID: orgID,
+		},
+	)
 	if err != nil {
 		return err
 	}

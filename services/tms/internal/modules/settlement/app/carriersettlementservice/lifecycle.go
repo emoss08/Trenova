@@ -15,7 +15,6 @@ import (
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
-	"github.com/uptrace/bun"
 	"go.uber.org/zap"
 )
 
@@ -88,7 +87,7 @@ func (s *Service) approveInternal(
 
 	var updated *carriersettlement.CarrierSettlement
 	var previous carriersettlement.CarrierSettlement
-	err := s.db.WithTx(ctx, kernelports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
+	err := s.db.Transact(ctx, kernelports.TxOptions{}, func(txCtx context.Context) error {
 		entity, txErr := s.getForUpdate(txCtx, tenantInfo, settlementID)
 		if txErr != nil {
 			return txErr
@@ -194,7 +193,7 @@ func (s *Service) MarkPaid(
 
 	var updated *carriersettlement.CarrierSettlement
 	var previous carriersettlement.CarrierSettlement
-	err := s.db.WithTx(ctx, kernelports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
+	err := s.db.Transact(ctx, kernelports.TxOptions{}, func(txCtx context.Context) error {
 		entity, txErr := s.getForUpdate(txCtx, req.TenantInfo, req.SettlementID)
 		if txErr != nil {
 			return txErr
@@ -283,7 +282,7 @@ func (s *Service) Void(
 
 	var updated *carriersettlement.CarrierSettlement
 	var previous carriersettlement.CarrierSettlement
-	err := s.db.WithTx(ctx, kernelports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
+	err := s.db.Transact(ctx, kernelports.TxOptions{}, func(txCtx context.Context) error {
 		entity, txErr := s.getForUpdate(txCtx, tenantInfo, settlementID)
 		if txErr != nil {
 			return txErr
@@ -341,7 +340,7 @@ func (s *Service) Recalculate(
 
 	var updated *carriersettlement.CarrierSettlement
 	var previous carriersettlement.CarrierSettlement
-	err := s.db.WithTx(ctx, kernelports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
+	err := s.db.Transact(ctx, kernelports.TxOptions{}, func(txCtx context.Context) error {
 		entity, txErr := s.getForUpdate(txCtx, tenantInfo, settlementID)
 		if txErr != nil {
 			return txErr
@@ -432,7 +431,7 @@ func (s *Service) AddAdjustmentLine(
 	}
 
 	var updated *carriersettlement.CarrierSettlement
-	err = s.db.WithTx(ctx, kernelports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
+	err = s.db.Transact(ctx, kernelports.TxOptions{}, func(txCtx context.Context) error {
 		if txErr := s.settlementRepo.ReplaceLines(txCtx, entity); txErr != nil {
 			return txErr
 		}
@@ -467,7 +466,7 @@ func (s *Service) RemoveAdjustmentLine(
 	}
 
 	var updated *carriersettlement.CarrierSettlement
-	err = s.db.WithTx(ctx, kernelports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
+	err = s.db.Transact(ctx, kernelports.TxOptions{}, func(txCtx context.Context) error {
 		if txErr := s.settlementRepo.ReplaceLines(txCtx, entity); txErr != nil {
 			return txErr
 		}

@@ -17,16 +17,16 @@ type ListMissedStopsRequest struct {
 }
 
 type MissedStop struct {
-	StopID       pulid.ID          `bun:"stop_id"`
-	MoveID       pulid.ID          `bun:"move_id"`
-	ShipmentID   pulid.ID          `bun:"shipment_id"`
-	ProNumber    string            `bun:"pro_number"`
-	OwnerID      pulid.ID          `bun:"owner_id"`
-	StopType     shipment.StopType `bun:"stop_type"`
-	Cutoff       int64             `bun:"cutoff"`
-	LocationName string            `bun:"location_name"`
-	City         string            `bun:"city"`
-	StateCode    string            `bun:"state_code"`
+	StopID       pulid.ID
+	MoveID       pulid.ID
+	ShipmentID   pulid.ID
+	ProNumber    string
+	OwnerID      pulid.ID
+	StopType     shipment.StopType
+	Cutoff       int64
+	LocationName string
+	City         string
+	StateCode    string
 }
 
 type ListMissingPODsRequest struct {
@@ -38,11 +38,11 @@ type ListMissingPODsRequest struct {
 }
 
 type MissingPOD struct {
-	ShipmentID   pulid.ID `bun:"shipment_id"`
-	ProNumber    string   `bun:"pro_number"`
-	OwnerID      pulid.ID `bun:"owner_id"`
-	CustomerName string   `bun:"customer_name"`
-	DeliveredAt  int64    `bun:"delivered_at"`
+	ShipmentID   pulid.ID
+	ProNumber    string
+	OwnerID      pulid.ID
+	CustomerName string
+	DeliveredAt  int64
 }
 
 type ListExhaustedTendersRequest struct {
@@ -52,12 +52,12 @@ type ListExhaustedTendersRequest struct {
 }
 
 type ExhaustedTender struct {
-	TenderID    pulid.ID `bun:"tender_id"`
-	MoveID      pulid.ID `bun:"move_id"`
-	ShipmentID  pulid.ID `bun:"shipment_id"`
-	ProNumber   string   `bun:"pro_number"`
-	OwnerID     pulid.ID `bun:"owner_id"`
-	ExhaustedAt int64    `bun:"exhausted_at"`
+	TenderID    pulid.ID
+	MoveID      pulid.ID
+	ShipmentID  pulid.ID
+	ProNumber   string
+	OwnerID     pulid.ID
+	ExhaustedAt int64
 }
 
 type ExceptionSourceReader interface {

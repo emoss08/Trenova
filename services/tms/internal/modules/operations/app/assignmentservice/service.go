@@ -36,7 +36,6 @@ import (
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/uptrace/bun"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
@@ -45,7 +44,7 @@ type Params struct {
 	fx.In
 
 	Logger              *zap.Logger
-	DB                  kernelports.DBConnection
+	DB                  kernelports.Transactor
 	Repo                shipmentports.AssignmentRepository
 	ShipmentRepo        shipmentports.ShipmentRepository
 	OrgRepo             tenantports.OrganizationRepository
@@ -72,7 +71,7 @@ type Params struct {
 
 type service struct {
 	l                   *zap.Logger
-	db                  kernelports.DBConnection
+	db                  kernelports.Transactor
 	repo                shipmentports.AssignmentRepository
 	shipmentRepo        shipmentports.ShipmentRepository
 	orgRepo             tenantports.OrganizationRepository
@@ -419,7 +418,7 @@ func (s *service) unassignWithinTx(
 	var ref *shipmenteventservice.AssignmentRef
 	var previousWorkers []pulid.ID
 
-	err := s.db.WithTx(ctx, kernelports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
+	err := s.db.Transact(ctx, kernelports.TxOptions{}, func(txCtx context.Context) error {
 		plan, err := s.planUnassign(txCtx, req)
 		if err != nil {
 			return err
@@ -597,7 +596,7 @@ func (s *service) upsertAssignment( //nolint:gocognit // legacy workflow
 ) (*shipment.Assignment, error) {
 	var result *shipment.Assignment
 
-	err := s.db.WithTx(ctx, kernelports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
+	err := s.db.Transact(ctx, kernelports.TxOptions{}, func(txCtx context.Context) error {
 		plan, err := s.planAssignment(
 			txCtx, tenantInfo, moveID, tenantports.CapabilityLockShare, build,
 		)

@@ -6,14 +6,15 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/infrastructure/config"
-	"github.com/emoss08/trenova/internal/infrastructure/database/common"
-	"github.com/emoss08/trenova/internal/infrastructure/database/seeder"
-	"github.com/emoss08/trenova/internal/infrastructure/database/seeds"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue/billingqueuedb"
+	"github.com/emoss08/trenova/pkg/dbscope"
+	"github.com/jackc/pgx/v5"
+
+	"github.com/emoss08/trenova/internal/testutil/seededtest"
+
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/billingqueueports"
-	"github.com/emoss08/trenova/internal/testutil/seedtest"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/require"
@@ -21,8 +22,8 @@ import (
 )
 
 type neighborShipment struct {
-	ID      pulid.ID `bun:"id"`
-	PayerID pulid.ID `bun:"payer_id"`
+	ID      pulid.ID
+	PayerID pulid.ID
 }
 
 // The queue reads newest first. Stepping from the middle item lands on the
@@ -30,35 +31,24 @@ type neighborShipment struct {
 // position counts from the top, and a filter that drops posted items drops
 // them from the count and the steps alike.
 func TestGetNeighborsWalksTheQueueInItsOwnOrder(t *testing.T) {
-	ctx, db, cleanup := seedtest.SetupTestDB(t)
+	ctx, db, cleanup := seededtest.SetupTestDB(t)
 	t.Cleanup(cleanup)
 
-	registry := seeder.NewRegistry()
-	seeds.Register(registry)
-	_, err := seeder.NewEngine(
-		db, registry,
-		&config.Config{System: config.SystemConfig{SystemUserPassword: "test-system-password"}},
-	).Execute(ctx, seeder.ExecuteOptions{Environment: common.EnvDevelopment})
+	var orgID, buID pulid.ID
+	require.NoError(t, db.Pool().QueryRow(ctx,
+		"SELECT id, business_unit_id FROM organizations ORDER BY id LIMIT 1",
+	).Scan(&orgID, &buID))
+	tenant := pagination.TenantInfo{OrgID: orgID, BuID: buID}
+	ctx = dbscope.WithTenant(ctx, tenant.DBTenant())
+
+	rows, err := db.Pool().Query(ctx,
+		`SELECT id, COALESCE(bill_to_customer_id, customer_id) FROM shipments
+		WHERE organization_id = $1 AND business_unit_id = $2 ORDER BY created_at ASC LIMIT 4`,
+		orgID, buID,
+	)
 	require.NoError(t, err)
-
-	var org struct {
-		ID             pulid.ID `bun:"id"`
-		BusinessUnitID pulid.ID `bun:"business_unit_id"`
-	}
-	require.NoError(t, db.NewSelect().
-		Table("organizations").Column("id", "business_unit_id").Limit(1).Scan(ctx, &org))
-	tenant := pagination.TenantInfo{OrgID: org.ID, BuID: org.BusinessUnitID}
-
-	var shipments []neighborShipment
-	require.NoError(t, db.NewSelect().
-		Table("shipments").
-		Column("id").
-		ColumnExpr("COALESCE(bill_to_customer_id, customer_id) AS payer_id").
-		Where("organization_id = ?", org.ID).
-		Where("business_unit_id = ?", org.BusinessUnitID).
-		Order("created_at ASC").
-		Limit(4).
-		Scan(ctx, &shipments))
+	shipments, err := pgx.CollectRows(rows, pgx.RowToStructByPos[neighborShipment])
+	require.NoError(t, err)
 	require.Len(t, shipments, 4)
 
 	statuses := []billingqueue.Status{
@@ -70,21 +60,18 @@ func TestGetNeighborsWalksTheQueueInItsOwnOrder(t *testing.T) {
 	ids := make([]pulid.ID, len(shipments))
 	for i, shp := range shipments {
 		item := &billingqueue.BillingQueueItem{
-			OrganizationID:   org.ID,
-			BusinessUnitID:   org.BusinessUnitID,
+			OrganizationID:   orgID,
+			BusinessUnitID:   buID,
 			ShipmentID:       shp.ID,
 			BillToCustomerID: shp.PayerID,
 			Status:           statuses[i],
 			BillType:         billingqueue.BillTypeInvoice,
 			Number:           fmt.Sprintf("BQ-NB-%d", i),
 		}
-		_, err = db.NewInsert().Model(item).Exec(ctx)
-		require.NoError(t, err)
-		// Oldest first: item 0 was queued first, item 3 last, and all of
-		// them after anything the seed queued.
-		_, err = db.NewUpdate().Table("billing_queue_items").
-			Set("created_at = ?", 4_000_000_000+int64(i)*60).
-			Where("id = ?", item.ID).Exec(ctx)
+		require.NoError(t, billingqueuedb.BillingQueueItems.Create(ctx, db, item))
+		_, err = db.Pool().Exec(ctx,
+			"UPDATE billing_queue_items SET created_at = $1 WHERE id = $2",
+			4_000_000_000+int64(i)*60, item.ID)
 		require.NoError(t, err)
 		ids[i] = item.ID
 	}
