@@ -84,7 +84,7 @@ func unitConflict() keel.Conflict {
 	return keel.OnConflict(w.ID, w.BusinessUnitID, w.OrganizationID).
 		Update(updated...).
 		Set(w.ModelKey.ToExpr(keel.DynCase().
-			When(keel.DynOf(w.Model).Eq(w.Model.Excluded()), w.ModelKey).
+			When(w.Model.EqCol(w.Model.Excluded()), w.ModelKey).
 			Else(""))).
 		UpdateWhere(keel.DynRow(stored...).IsDistinctFrom(keel.DynRow(proposed...)))
 }
@@ -106,9 +106,9 @@ func unitInsertColumns(w *aianalyticsdb.WorkUnitsTable, withDecisionRun bool) []
 
 func stepCause(s *agentdb.AgentRunStepsTable) keel.DynExpr {
 	cause := s.Outcome.Text("cause")
-	verdict := keel.DynOf(s.Outcome.Text("verdict"))
-	reason := keel.DynOf(s.Outcome.Text("reason"))
-	lowered := keel.DynFunc("lower", keel.DynOf(s.Outcome.Text("reason")).Coalesce(""))
+	verdict := s.Outcome.Text("verdict")
+	reason := s.Outcome.Text("reason")
+	lowered := s.Outcome.Text("reason").Coalesce("").Lower()
 	timedOut := make([]keel.Pred, 0, len(timeoutPhrases))
 	for _, phrase := range timeoutPhrases {
 		timedOut = append(timedOut, lowered.Contains(phrase))
@@ -117,7 +117,7 @@ func stepCause(s *agentdb.AgentRunStepsTable) keel.DynExpr {
 	return keel.DynCase().
 		When(s.Status.Ne(string(agentports.RunStepFailed)), "").
 		When(
-			keel.DynOf(cause).Coalesce("").In(sliceutils.Strings(aianalytics.AllCauses())),
+			cause.Coalesce("").In(sliceutils.Strings(aianalytics.AllCauses())...),
 			cause,
 		).
 		When(
@@ -134,7 +134,7 @@ func stepCause(s *agentdb.AgentRunStepsTable) keel.DynExpr {
 			string(aianalytics.CauseToolNotHeld),
 		).
 		When(
-			verdict.In([]string{aianalytics.VerdictDenied, aianalytics.VerdictOverBudget}),
+			verdict.In(aianalytics.VerdictDenied, aianalytics.VerdictOverBudget),
 			string(aianalytics.CauseBlockedByRule),
 		).
 		When(keel.Or(timedOut...), string(aianalytics.CauseToolTimedOut)).
@@ -172,8 +172,8 @@ func providerError(u *aiusagedb.AIUsageRecordsTable) keel.DynExpr {
 }
 
 func callAggregates(u *aiusagedb.AIUsageRecordsTable) []keel.Expr {
-	callEnd := keel.DynOf(u.RecordedAtMs).Coalesce(keel.DynOf(u.CreatedAt).Mul(1000))
-	callStart := callEnd.Sub(u.LatencyMs)
+	callEnd := u.RecordedAtMs.Coalesce(keel.DynOf(u.CreatedAt).Mul(1000))
+	callStart := keel.DynOf(callEnd).Sub(u.LatencyMs)
 	latestFirst := []keel.Order{u.Succeeded.Desc(), callEnd.Desc()}
 	first := func(agg keel.Agg) keel.DynExpr { return keel.DynOf(agg).At(1) }
 
@@ -209,7 +209,7 @@ func callAggregates(u *aiusagedb.AIUsageRecordsTable) []keel.Expr {
 		first(keel.ArrayAgg(u.AgentDefinitionID).
 			OrderBy(callEnd.Asc()).
 			Filter(u.AgentDefinitionID.IsNotNull())),
-		keel.DynFunc("bool_or", u.Succeeded),
+		keel.BoolOr(keel.BoolOf(u.Succeeded)),
 		u.CreatedAt.Max(),
 	}
 }
@@ -233,12 +233,12 @@ var ownerColumns = []string{
 	"started_ms", "finished_at",
 }
 
-func providerHint(fingerprint keel.JSONBCol) keel.DynExpr {
-	return keel.DynOf(fingerprint.Text("providerId")).NullIf("")
+func providerHint(fingerprint keel.JSONBCol) keel.StringExpr {
+	return fingerprint.Text("providerId").NullIf("")
 }
 
-func modelHint(fingerprint keel.JSONBCol) keel.DynExpr {
-	return keel.DynOf(fingerprint.Text("model")).NullIf("")
+func modelHint(fingerprint keel.JSONBCol) keel.StringExpr {
+	return fingerprint.Text("model").NullIf("")
 }
 
 func stoppedAtLimit(fingerprint keel.JSONBCol) keel.DynExpr {
@@ -246,7 +246,7 @@ func stoppedAtLimit(fingerprint keel.JSONBCol) keel.DynExpr {
 }
 
 func ownerStartedMs(startedAt, createdAt keel.Int64Col) keel.DynExpr {
-	return keel.DynOf(startedAt).NullIf(0).Coalesce(createdAt).Mul(1000)
+	return keel.DynOf(startedAt.NullIf(0).Coalesce(createdAt)).Mul(1000)
 }
 
 func runOwners(req *unitRefresh) *keel.CTETable {
@@ -257,7 +257,7 @@ func runOwners(req *unitRefresh) *keel.CTETable {
 			o.ID,
 			o.ID,
 			providerHint(o.Fingerprint),
-			modelHint(o.Fingerprint).Coalesce(keel.DynOf(o.ModelIdentifier).NullIf("")),
+			modelHint(o.Fingerprint).Coalesce(o.ModelIdentifier.NullIf("")),
 			keel.DynCase().
 				When(o.AgentType.Eq(agent.TypeBillingException),
 					string(aiprovider.TaskBillingDiagnosis)).
@@ -266,7 +266,7 @@ func runOwners(req *unitRefresh) *keel.CTETable {
 			o.Status,
 			stoppedAtLimit(o.Fingerprint),
 			ownerStartedMs(o.StartedAt, o.CreatedAt),
-			keel.DynOf(o.CompletedAt).Coalesce(o.UpdatedAt),
+			o.CompletedAt.Coalesce(o.UpdatedAt),
 			o.AgentDefinitionID,
 		).
 		Where(
@@ -291,11 +291,11 @@ func turnOwners(req *unitRefresh) *keel.CTETable {
 			o.RunID,
 			providerHint(o.Fingerprint),
 			modelHint(o.Fingerprint),
-			keel.DynLit(string(aiprovider.TaskAssistantChat)),
+			keel.Text(string(aiprovider.TaskAssistantChat)),
 			o.Status,
 			stoppedAtLimit(o.Fingerprint),
 			ownerStartedMs(o.StartedAt, o.CreatedAt),
-			keel.DynOf(o.CompletedAt).Coalesce(o.UpdatedAt),
+			o.CompletedAt.Coalesce(o.UpdatedAt),
 		).
 		Where(
 			o.UpdatedAt.Gte(req.from),
@@ -315,15 +315,14 @@ var runSource = ownedSource{
 	ownerKind: agent.RunOwnerAgentRun,
 	owners:    runOwners,
 	agent: func(owners, calls *keel.CTETable) keel.Expr {
-		return keel.DynOf(owners.Col("agent_definition_id")).
-			Coalesce(calls.Col("agent_definition_id"))
+		return owners.Col("agent_definition_id").Coalesce(calls.Col("agent_definition_id"))
 	},
 	outcome: func(owners, handed *keel.CTETable) keel.Expr {
 		return keel.DynCase().
 			When(owners.Col("status").Eq(string(agent.RunStatusFailed)),
 				string(aianalytics.OutcomeFailed)).
 			When(handed.Col("run_id").IsNotNull(), string(aianalytics.OutcomeHandedOff)).
-			When(keel.DynOf(owners.Col("at_limit")).IsTrue(), string(aianalytics.OutcomeStopped)).
+			When(keel.BoolOf(owners.Col("at_limit")).IsTrue(), string(aianalytics.OutcomeStopped)).
 			Else(string(aianalytics.OutcomeCompleted))
 	},
 }
@@ -341,14 +340,14 @@ var turnSource = ownedSource{
 				string(aianalytics.OutcomeFailed)).
 			When(owners.Col("status").Eq(string(conversation.AssistantTurnStatusStopped)),
 				string(aianalytics.OutcomeStopped)).
-			When(keel.DynOf(owners.Col("at_limit")).IsTrue(), string(aianalytics.OutcomeStopped)).
+			When(keel.BoolOf(owners.Col("at_limit")).IsTrue(), string(aianalytics.OutcomeStopped)).
 			When(handed.Col("run_id").IsNotNull(), string(aianalytics.OutcomeHandedOff)).
 			Else(string(aianalytics.OutcomeCompleted))
 	},
 }
 
-func zeroed(col keel.Expr) keel.DynExpr {
-	return keel.DynOf(col).Coalesce(0)
+func zeroed(col keel.AnyCol) keel.NumericExpr {
+	return keel.NumericOf(col).Coalesce(0)
 }
 
 func ownedUnitsSource(src *ownedSource, req *unitRefresh) *keel.Query[*keel.Row] {
@@ -362,7 +361,7 @@ func ownedUnitsSource(src *ownedSource, req *unitRefresh) *keel.Query[*keel.Row]
 
 	s := agentdb.AgentRunSteps
 	stepCauses := keel.Rows("c", []string{"cause"}, stepCause(s))
-	cause := keel.DynOf(stepCauses.Col("cause"))
+	cause := stepCauses.Col("cause")
 	modelCauses := sliceutils.Strings(aianalytics.ModelCauses())
 	steps := keel.CTE("steps", stepColumns, s.
 		JoinLateral(stepCauses).
@@ -371,8 +370,7 @@ func ownedUnitsSource(src *ownedSource, req *unitRefresh) *keel.Query[*keel.Row]
 			keel.Count(),
 			keel.Count().Filter(cause.In(modelCauses)),
 			keel.Count().Filter(keel.And(cause.Ne(""), cause.NotIn(modelCauses))),
-			keel.Max(keel.DynOf(s.SettledAtMs).
-				Coalesce(s.StartedAtMs, keel.DynOf(s.UpdatedAt).Mul(1000))),
+			keel.Max(s.SettledAtMs.Coalesce(s.StartedAtMs.Coalesce(keel.DynOf(s.UpdatedAt).Mul(1000)))),
 		).
 		Where(
 			s.OwnerKind.Eq(string(src.ownerKind)),
@@ -391,9 +389,9 @@ func ownedUnitsSource(src *ownedSource, req *unitRefresh) *keel.Query[*keel.Row]
 
 	callEnd := calls.Col("last_end_ms")
 	stepEnd := steps.Col("last_end_ms")
-	startedAt := keel.DynOf(calls.Col("first_start_ms")).Coalesce(owners.Col("started_ms"))
+	startedAt := calls.Col("first_start_ms").Coalesce(owners.Col("started_ms"))
 	finishedAt := owners.Col("finished_at")
-	model := keel.DynOf(calls.Col("model")).Coalesce(owners.Col("model_hint"))
+	model := keel.StringOf(calls.Col("model")).Coalesce(owners.Col("model_hint"))
 	duration := keel.DynFunc("greatest", keel.DynConst(0), keel.DynFunc(
 		"greatest",
 		zeroed(callEnd),
@@ -405,12 +403,12 @@ func ownedUnitsSource(src *ownedSource, req *unitRefresh) *keel.Query[*keel.Row]
 
 	picks := []keel.Expr{
 		owners.Col("id"),
-		keel.DynLit(string(src.source)),
+		keel.Text(string(src.source)),
 		src.agent(owners, calls),
-		keel.DynOf(calls.Col("provider_id")).Coalesce(owners.Col("provider_hint")),
+		calls.Col("provider_id").Coalesce(owners.Col("provider_hint")),
 		model,
-		keel.DynLit(""),
-		keel.DynOf(calls.Col("task")).Coalesce(owners.Col("task_hint")),
+		keel.Text(""),
+		calls.Col("task").Coalesce(owners.Col("task_hint")),
 		src.outcome(owners, handed),
 		decisionRun,
 		startedAt,
@@ -430,7 +428,7 @@ func ownedUnitsSource(src *ownedSource, req *unitRefresh) *keel.Query[*keel.Row]
 		zeroed(steps.Col("tool_calls")),
 		zeroed(steps.Col("tool_failures_model")),
 		zeroed(steps.Col("tool_failures_tool")),
-		keel.DynLit(req.stamp),
+		keel.Int64(req.stamp),
 	)
 
 	return owners.Query().
@@ -444,14 +442,13 @@ func ownedUnitsSource(src *ownedSource, req *unitRefresh) *keel.Query[*keel.Row]
 
 func callUnitKey(u *aiusagedb.AIUsageRecordsTable) keel.DynExpr {
 	return keel.DynCase().
-		When(u.TraceID.IsNotNull(), keel.DynLit(callUnitPrefix).Concat(keel.DynFunc(
-			"md5",
+		When(u.TraceID.IsNotNull(), keel.DynLit(callUnitPrefix).Concat(keel.StringOf(
 			keel.DynOf(u.TraceID).
 				Concat(":").
 				Concat(u.Task).
 				Concat(":").
-				Concat(keel.DynOf(u.SubjectID).Coalesce("")),
-		))).
+				Concat(u.SubjectID.Coalesce("")),
+		).MD5())).
 		Else(u.ID)
 }
 
@@ -465,7 +462,7 @@ func standaloneCalls(u *aiusagedb.AIUsageRecordsTable) []keel.Pred {
 			aiusage.SurfaceIndexing,
 			aiusage.SurfaceRetrieval,
 		),
-		keel.DynOf(u.Feature).Coalesce("").Ne(string(aiusage.FeatureAgentEvaluation)),
+		u.Feature.Coalesce("").Ne(string(aiusage.FeatureAgentEvaluation)),
 	}
 }
 
@@ -482,21 +479,21 @@ func callUnitsSource(req *unitRefresh) *keel.Query[*keel.Row] {
 		Where(append(standaloneCalls(u),
 			u.CreatedAt.Gte(req.from-lookbackSeconds),
 			u.CreatedAt.Lt(req.to),
-			keel.Exists(touched.Query().Pick(touchedID).Where(keel.DynOf(touchedID).Eq(key))),
+			keel.Exists(touched.Query().Pick(touchedID).Where(touchedID.EqCol(key))),
 		)...).
 		Group(key))
 	col := calls.Col
 
 	picks := []keel.Expr{
 		col(colUnitID),
-		keel.DynLit(string(aianalytics.SourceCall)),
+		keel.Text(string(aianalytics.SourceCall)),
 		col("agent_definition_id"),
 		col("provider_id"),
 		col("model"),
-		keel.DynLit(""),
+		keel.Text(""),
 		col("task"),
 		keel.DynCase().
-			When(keel.DynOf(col("answered")).IsTrue(), string(aianalytics.OutcomeCompleted)).
+			When(keel.BoolOf(col("answered")).IsTrue(), string(aianalytics.OutcomeCompleted)).
 			Else(string(aianalytics.OutcomeFailed)),
 		col("first_start_ms"),
 		col("last_call_at"),
@@ -516,7 +513,7 @@ func callUnitsSource(req *unitRefresh) *keel.Query[*keel.Row] {
 		keel.DynConst(0),
 		keel.DynConst(0),
 		keel.DynConst(0),
-		keel.DynLit(req.stamp),
+		keel.Int64(req.stamp),
 	)
 
 	return calls.Query().
@@ -547,8 +544,8 @@ func unitToolsSource(stamp int64) *keel.Query[*aianalytics.WorkUnit] {
 			cause,
 			w.FinishedAt,
 			w.ModelKey,
-			keel.DynOf(w.ProviderID).Coalesce(""),
-			keel.DynOf(w.AgentDefinitionID).Coalesce(""),
+			w.ProviderID.Coalesce(""),
+			w.AgentDefinitionID.Coalesce(""),
 			w.Task,
 			keel.Count(),
 		).
@@ -615,10 +612,10 @@ func providerHoursSource(fromHour, toHour int64) *keel.Query[*keel.Row] {
 		"error_class", "succeeded", "first_token_ms", "trace_id"), u.
 		Pick(
 			keel.DynOf(u.CreatedAt).Div(3600).Mul(3600),
-			keel.DynOf(u.ProviderID).Coalesce(""),
+			u.ProviderID.Coalesce(""),
 			u.Model,
 			u.Task,
-			keel.DynOf(u.AgentDefinitionID).Coalesce(""),
+			u.AgentDefinitionID.Coalesce(""),
 			providerError(u),
 			u.Succeeded,
 			u.FirstTokenMs,
@@ -633,7 +630,7 @@ func providerHoursSource(fromHour, toHour int64) *keel.Query[*keel.Row] {
 
 	rescued := keel.CTE("rescued", []string{"trace_id", "providers"}, calls.Query().
 		Pick(call("trace_id"), keel.ArrayAgg(call("provider_id")).Distinct()).
-		Where(keel.DynOf(call("succeeded")).IsTrue(), call("trace_id").IsNotNull()).
+		Where(keel.BoolOf(call("succeeded")).IsTrue(), call("trace_id").IsNotNull()).
 		Group(call("trace_id")))
 
 	groupKeys := cteColumns(calls, append(append([]string{}, hourKeyColumns...), "error_class")...)
@@ -643,7 +640,7 @@ func providerHoursSource(fromHour, toHour int64) *keel.Query[*keel.Row] {
 		Pick(append(append([]keel.Expr{}, groupKeys...),
 			keel.Count(),
 			keel.Count().Filter(keel.And(
-				keel.DynOf(call("succeeded")).Eq(false),
+				call("succeeded").Eq(false),
 				rescued.Col("providers").IsNotNull(),
 				keel.Not(keel.DynOf(rescued.Col("providers")).
 					CoveredBy(keel.DynArray(call("provider_id")))),
@@ -656,7 +653,7 @@ func providerHoursSource(fromHour, toHour int64) *keel.Query[*keel.Row] {
 	hist := keel.CTE("hist", append(append([]string{}, hourKeyColumns...), "bucket", "n"),
 		calls.Query().
 			Pick(append(append([]keel.Expr{}, hourKeys...), bucket, keel.Count())...).
-			Where(keel.DynOf(call("succeeded")).IsTrue(), call("first_token_ms").IsNotNull()).
+			Where(keel.BoolOf(call("succeeded")).IsTrue(), call("first_token_ms").IsNotNull()).
 			Group(append(append([]keel.Expr{}, hourKeys...), bucket)...))
 
 	histKeys := keel.CTE("hist_keys", hourKeyColumns, hist.Query().
@@ -674,7 +671,7 @@ func providerHoursSource(fromHour, toHour int64) *keel.Query[*keel.Row] {
 			LeftJoin(hist, append(sameHourKey(hist, histKeys),
 				hist.Col("bucket").EqCol(series.Col("i")))...).
 			Pick(append(append([]keel.Expr{}, keyColumns...),
-				keel.ArrayAgg(keel.DynOf(hist.Col("n")).Coalesce(0)).
+				keel.ArrayAgg(hist.Col("n").Coalesce(0)).
 					OrderBy(series.Col("i").Asc()),
 			)...).
 			Group(keyColumns...))
@@ -687,7 +684,7 @@ func providerHoursSource(fromHour, toHour int64) *keel.Query[*keel.Row] {
 			group("hour"),
 			group("provider_id"),
 			group("model"),
-			keel.DynLit(""),
+			keel.Text(""),
 			group("task"),
 			group("agent_definition_id"),
 			group("error_class"),

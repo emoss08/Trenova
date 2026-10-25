@@ -104,18 +104,16 @@ func (r *repository) ProviderFailures(
 		r.db,
 		func(ctx context.Context) ([]agentrosterports.ProviderFailureCount, error) {
 			u := aiusagedb.AIUsageRecords
-			lastFailure := keel.DynOf(u.CreatedAt).
-				Max().
-				Filter(keel.DynOf(u.Succeeded).Not()).
+			lastFailure := keel.Int64Of(u.CreatedAt.Max().
+				Filter(keel.Not(keel.BoolOf(u.Succeeded)))).
 				Coalesce(0)
-			lastSuccess := keel.DynOf(u.CreatedAt).
-				Max().
-				Filter(keel.DynOf(u.Succeeded)).
+			lastSuccess := keel.Int64Of(u.CreatedAt.Max().
+				Filter(keel.BoolOf(u.Succeeded))).
 				Coalesce(0)
 			rows, err := keel.Into[failureRow](ctx, r.db.Keel(ctx), u.
 				Where(u.CreatedAt.Gte(req.Since), u.ProviderID.IsNotNull()).
 				Group(u.ProviderID).
-				Having(lastFailure.Gt(lastSuccess)).
+				Having(lastFailure.GtExpr(lastSuccess)).
 				Pick(u.ProviderID, keel.Count().Filter(u.Succeeded.IsFalse()), lastFailure))
 			if err != nil {
 				return nil, fmt.Errorf("list failing providers: %w", err)
@@ -161,8 +159,9 @@ func (r *repository) AgentRoster(
 		run := agentdb.AgentRuns
 		p := agentdb.AgentProposals
 		decidedRun := agentdb.AgentRuns.As("decided_run")
-		day := keel.DynFunc("floor", keel.DynOf(run.CreatedAt).Sub(req.RunsSince).Div(86400)).
-			Cast(keel.TypeInt64)
+		day := keel.CastInt64(
+			keel.Float64Of(keel.DynOf(run.CreatedAt).Sub(req.RunsSince).Div(86400)).Floor(),
+		)
 
 		var (
 			runs      []rosterRunRow

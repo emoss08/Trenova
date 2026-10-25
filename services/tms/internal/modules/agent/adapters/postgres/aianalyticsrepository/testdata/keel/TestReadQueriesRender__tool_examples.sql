@@ -5,7 +5,7 @@ WITH candidates (unit_id, finished_at) AS (
   GROUP BY awut.unit_id
   ORDER BY max(awut.finished_at) DESC LIMIT 125
 )
-SELECT awu.id, awu.source, ars.tool_name, left(coalesce(nullif((ars.outcome #>> $4), $5), (ars.outcome #>> $6), $7), $8), coalesce(awu.agent_definition_id, $9), coalesce((ars.settled_at_ms / $10::bigint), ars.updated_at)
+SELECT awu.id, awu.source, ars.tool_name, left(coalesce(nullif((ars.outcome #>> $4), $5), coalesce((ars.outcome #>> $6), $7)), $8), coalesce(awu.agent_definition_id, $9), coalesce((ars.settled_at_ms / $10::bigint), ars.updated_at)
 FROM candidates c
 JOIN ai_work_units awu ON awu.business_unit_id = $11 AND awu.organization_id = $12 AND awu.id = c.unit_id
 JOIN agent_run_steps ars ON ars.business_unit_id = $11 AND ars.organization_id = $12 AND ars.owner_id = c.unit_id

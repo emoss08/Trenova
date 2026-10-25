@@ -168,7 +168,7 @@ func automaticMoneyQuery(
 		status, at = agent.ProposalStatusSimulated, p.SimulatedAt
 	}
 
-	return p.Pick(keel.Count(), keel.DynFunc("abs", p.MoneyMinor).Sum().Coalesce(0)).
+	return p.Pick(keel.Count(), keel.NumericOf(p.MoneyMinor.Abs().Sum()).Coalesce(0)).
 		Where(
 			p.AutonomyTier.Eq(agent.TierAutoExecute),
 			p.Status.Eq(status),

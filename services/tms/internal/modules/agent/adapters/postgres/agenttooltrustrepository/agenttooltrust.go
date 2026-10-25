@@ -51,8 +51,8 @@ func recordConflict() keel.Conflict {
 	return keel.OnConflict(t.OrganizationID, t.BusinessUnitID, t.AgentDefinitionID, t.ToolName).
 		Set(
 			t.Streak.ToExpr(keel.DynCase().
-				When(keel.DynOf(t.Streak.Excluded()).Gt(0), keel.DynOf(t.Streak).Add(1)).
-				Else(keel.DynLit(0).Cast(keel.TypeInt64))),
+				When(keel.Int64Of(t.Streak.Excluded()).Gt(0), keel.DynOf(t.Streak).Add(1)).
+				Else(keel.Int64(0))),
 			sum(t.Approvals),
 			sum(t.Modifications),
 			sum(t.Rejections),

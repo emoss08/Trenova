@@ -76,7 +76,7 @@ func missedStopsQuery(req *watchtowerports.ListMissedStopsRequest) *keel.Query[*
 	sp := shipmentdb.Shipments
 	loc := locationdb.Locations
 	ust := loc.State()
-	cutoff := keel.DynOf(stp.ScheduledWindowEnd).Coalesce(stp.ScheduledWindowStart)
+	cutoff := stp.ScheduledWindowEnd.Coalesce(stp.ScheduledWindowStart)
 
 	return stp.Join(sm, sm.ID.EqCol(stp.ShipmentMoveID)).
 		Join(sp, sp.ID.EqCol(sm.ShipmentID)).
@@ -89,9 +89,9 @@ func missedStopsQuery(req *watchtowerports.ListMissedStopsRequest) *keel.Query[*
 			sp.OwnerID,
 			stp.Type,
 			cutoff,
-			keel.DynOf(loc.Name).Coalesce(""),
-			keel.DynOf(loc.City).Coalesce(""),
-			keel.DynOf(ust.Abbreviation).Coalesce(""),
+			loc.Name.Coalesce(""),
+			loc.City.Coalesce(""),
+			ust.Abbreviation.Coalesce(""),
 		).
 		Where(
 			stp.Type.In(req.StopTypes...),
@@ -99,10 +99,10 @@ func missedStopsQuery(req *watchtowerports.ListMissedStopsRequest) *keel.Query[*
 			stp.Status.NotIn(shipment.StopStatusCompleted, shipment.StopStatusCanceled),
 			sm.Status.Ne(shipment.MoveStatusCanceled),
 			sp.Status.In(openShipmentStatuses()...),
-			keel.DynOf(cutoff).Lt(req.ClosedBefore),
+			cutoff.Lt(req.ClosedBefore),
 			keel.When(len(req.ShipmentIDs) > 0, sp.ID.In(req.ShipmentIDs...)),
 		).
-		Order(keel.Asc(cutoff), stp.ID.Asc()).
+		Order(cutoff.Asc(), stp.ID.Asc()).
 		Limit(boundedLimit(req.Limit))
 }
 
@@ -144,7 +144,7 @@ func missingPODsQuery(req *watchtowerports.ListMissingPODsRequest) *keel.Query[*
 			sp.ID,
 			sp.ProNumber,
 			sp.OwnerID,
-			keel.DynOf(sp.Customer().Name).Coalesce(""),
+			sp.Customer().Name.Coalesce(""),
 			delivered,
 		).
 		Where(
@@ -184,7 +184,7 @@ func exhaustedTendersQuery(
 			sp.ID,
 			sp.ProNumber,
 			sp.OwnerID,
-			keel.DynOf(tc.ExhaustedAt).Coalesce(tc.UpdatedAt),
+			tc.ExhaustedAt.Coalesce(tc.UpdatedAt),
 		).
 		Where(
 			tc.Status.Eq(tender.StatusExhausted),

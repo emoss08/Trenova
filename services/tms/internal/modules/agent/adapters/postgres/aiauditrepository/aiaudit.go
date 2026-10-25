@@ -404,8 +404,8 @@ func (r *repository) Summarize(
 				r.db.Keel(ctx),
 				scoped(scope).Pick(
 					keel.Count(),
-					keel.DynOf(e.Seq).Min().Coalesce(0),
-					keel.DynOf(e.Seq).Max().Coalesce(0),
+					keel.Int64Of(e.Seq.Min()).Coalesce(0),
+					keel.Int64Of(e.Seq.Max()).Coalesce(0),
 				),
 			)
 			if err != nil && !errors.Is(err, keel.ErrNotFound) {

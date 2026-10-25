@@ -45,7 +45,7 @@ func New(p Params) insightports.InsightRepository {
 
 func severityRank() keel.Expr {
 	severity := insightdb.Insights.Severity
-	rank := func(n int64) keel.DynExpr { return keel.DynLit(n).Cast(keel.TypeInt64) }
+	rank := keel.Int64
 
 	return keel.DynCase().
 		When(severity.Eq(insight.SeverityCritical), rank(3)).

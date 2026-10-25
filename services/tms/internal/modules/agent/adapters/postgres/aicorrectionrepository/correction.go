@@ -212,7 +212,7 @@ func (r *repository) TotalsByProvider(
 		r.db,
 		func(ctx context.Context) ([]aicorrectionports.AICorrectionProviderTotal, error) {
 			c := aicorrectiondb.Corrections
-			isProvider := keel.DynOf(c.ExtractionProviderID).Eq(req.ProviderID)
+			isProvider := c.ExtractionProviderID.Eq(req.ProviderID)
 			totals, err := keel.Into[aicorrectionports.AICorrectionProviderTotal](
 				ctx,
 				r.db.Keel(ctx),
@@ -224,8 +224,8 @@ func (r *repository) TotalsByProvider(
 					Group(isProvider).
 					Pick(
 						isProvider,
-						keel.DynOf(c.ScoredCount).Sum().Coalesce(0),
-						keel.DynOf(c.CorrectCount).Sum().Coalesce(0),
+						keel.NumericOf(c.ScoredCount.Sum()).Coalesce(0),
+						keel.NumericOf(c.CorrectCount.Sum()).Coalesce(0),
 					),
 			)
 			if err != nil {
@@ -287,8 +287,8 @@ func (r *repository) weeklyTotals(
 				c.ExtractionProviderID,
 				week,
 				keel.Count(),
-				keel.DynOf(c.ScoredCount).Sum().Coalesce(0),
-				keel.DynOf(c.CorrectCount).Sum().Coalesce(0),
+				keel.NumericOf(c.ScoredCount.Sum()).Coalesce(0),
+				keel.NumericOf(c.CorrectCount.Sum()).Coalesce(0),
 			))
 		if err != nil {
 			r.l.Error("failed to total ai corrections by week and provider", zap.Error(err))
@@ -356,10 +356,10 @@ func (r *repository) CountTrainable(
 
 		total, err := keel.IntoOne[int](ctx, r.db.Keel(ctx), perOrganization.Query().
 			With(perOrganization).
-			Pick(keel.DynFunc("least", perOrganization.Col("examples"), capPerOrganization).
-				Sum().
-				Coalesce(0).
-				Cast(keel.TypeInt64)))
+			Pick(keel.CastInt64(keel.NumericOf(keel.Int64Of(perOrganization.Col("examples")).
+				Least(keel.Int64(int64(capPerOrganization))).
+				Sum()).
+				Coalesce(0))))
 		if err != nil && !errors.Is(err, keel.ErrNotFound) {
 			r.l.Error("failed to count trainable ai corrections", zap.Error(err))
 

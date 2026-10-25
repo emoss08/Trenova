@@ -433,17 +433,10 @@ func (r *repository) SetToolTier(
 		).Update(
 			ctx,
 			r.db.Keel(ctx),
-			d.ToolTiers.ToExpr(keel.DynCase().
-				When(
-					keel.DynFunc("jsonb_typeof", d.ToolTiers).Eq(keel.DynConst("object")),
-					d.ToolTiers,
-				).
-				Else(keel.DynFunc("jsonb_build_object")).
-				Concat(keel.DynFunc(
-					"jsonb_build_object",
-					keel.DynLit(req.ToolName).Cast(keel.TypeString),
-					keel.DynLit(string(req.Tier)),
-				))),
+			d.ToolTiers.ToExpr(keel.JSONBOf(keel.DynCase().
+				When(d.ToolTiers.TypeOf().Eq("object"), d.ToolTiers).
+				Else(keel.JSONBuildObject())).
+				Concat(keel.JSONBuildObject(keel.Pair(req.ToolName, string(req.Tier))))),
 		)
 		if err != nil {
 			return fmt.Errorf("set agent definition tool tier: %w", err)
@@ -601,7 +594,7 @@ func (r *repository) StatsByIDs(
 					Group(run.AgentDefinitionID).
 					Pick(
 						run.AgentDefinitionID,
-						keel.DynLit(0),
+						keel.Int64(0),
 						keel.Count().Filter(run.Status.In(openRunStatuses()...)),
 						run.StartedAt.Max(),
 					).

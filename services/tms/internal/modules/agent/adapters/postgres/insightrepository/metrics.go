@@ -55,8 +55,8 @@ func customerOnTimeQuery(
 		stp.ActualArrival.Lt(req.WindowEnd),
 	)
 	prior := keel.And(stp.ActualArrival.Gte(priorStart), stp.ActualArrival.Lt(req.WindowStart))
-	onTime := keel.DynOf(stp.ActualArrival).
-		Lte(keel.DynOf(stp.ScheduledWindowEnd).Coalesce(stp.ScheduledWindowStart))
+	onTime := keel.Int64Of(stp.ActualArrival).
+		LteExpr(stp.ScheduledWindowEnd.Coalesce(stp.ScheduledWindowStart))
 	currentTotal := keel.Count().Filter(current)
 
 	return stp.Join(smv, smv.ID.EqCol(stp.ShipmentMoveID)).
@@ -121,7 +121,7 @@ func unbilledShipmentsQuery(
 			cus.ID,
 			cus.Name,
 			keel.Count(),
-			keel.DynOf(sp.TotalChargeAmount.Sum()).Coalesce(0).Cast(keel.TypeString),
+			keel.CastText(keel.NumericOf(sp.TotalChargeAmount.Sum()).Coalesce(0)),
 			sp.ActualDeliveryDate.Min(),
 		).
 		Where(
@@ -171,8 +171,8 @@ func unbilledDetentionQuery(
 			loc.ID,
 			loc.Name,
 			keel.Count(),
-			keel.DynOf(dto.BillableAmount.Sum()).Coalesce(0).Cast(keel.TypeString),
-			keel.DynOf(dto.RawDwellMinutes.Sum()).Coalesce(0).Cast(keel.TypeInt64),
+			keel.CastText(keel.NumericOf(dto.BillableAmount.Sum()).Coalesce(0)),
+			keel.CastInt64(keel.NumericOf(dto.RawDwellMinutes.Sum()).Coalesce(0)),
 		).
 		Where(
 			dto.ClockStartAt.Gte(req.WindowStart),
@@ -184,7 +184,7 @@ func unbilledDetentionQuery(
 				detention.OccurrenceStatusApproved,
 			),
 			dto.IsOpen.Eq(false),
-			keel.DynOf(dto.BillableAmount).Gt(0),
+			keel.NumericOf(dto.BillableAmount).Gt(0),
 		)
 }
 
@@ -221,8 +221,8 @@ func customerEmptyMilesQuery(
 	sp := shipmentdb.Shipments
 	cus := customerdb.Customers
 
-	emptyMiles := keel.DynOf(smv.Distance.Sum().Filter(smv.Loaded.Eq(false))).Coalesce(0)
-	totalMiles := keel.DynOf(smv.Distance.Sum()).Coalesce(0)
+	emptyMiles := keel.Float64Of(smv.Distance.Sum().Filter(smv.Loaded.Eq(false))).Coalesce(0)
+	totalMiles := keel.Float64Of(smv.Distance.Sum()).Coalesce(0)
 
 	return smv.Join(sp, sp.ID.EqCol(smv.ShipmentID)).
 		Join(cus, cus.ID.EqCol(sp.CustomerID)).
@@ -230,11 +230,11 @@ func customerEmptyMilesQuery(
 		Pick(
 			cus.ID,
 			cus.Name,
-			emptyMiles.Cast(keel.TypeString),
-			totalMiles.Cast(keel.TypeString),
+			keel.CastText(emptyMiles),
+			keel.CastText(totalMiles),
 			keel.Count(),
-			keel.DynOf(keel.Sum(emptyMiles).OverWindow(keel.Window{})).Cast(keel.TypeString),
-			keel.DynOf(keel.Sum(totalMiles).OverWindow(keel.Window{})).Cast(keel.TypeString),
+			keel.CastText(keel.Sum(emptyMiles).OverWindow(keel.Window{})),
+			keel.CastText(keel.Sum(totalMiles).OverWindow(keel.Window{})),
 		).
 		Where(
 			smv.Status.Eq(shipment.MoveStatusCompleted),
@@ -284,7 +284,7 @@ func expiringCredentialsQuery(
 		Pick(
 			wct.ID,
 			wct.Name,
-			keel.DynFunc("bool_or", wct.IsRequired),
+			keel.BoolOr(keel.BoolOf(wct.IsRequired)),
 			wcred.WorkerID.CountDistinct(),
 			wcred.ExpiresAt.Min(),
 			wcred.WorkerID.CountDistinct().Filter(wcred.ExpiresAt.Lt(req.From)),

@@ -24,16 +24,16 @@ var lineageColumns = []string{"root", "pinned", "last", "family"}
 
 // rootExpr is the lineage an artifact belongs to: the first version's id,
 // which is its own id for the first version.
-func rootExpr() keel.Expr {
+func rootExpr() keel.StringExpr {
 	a := assistantartifactdb.Artifacts
 
-	return keel.DynOf(a.LineageID).Coalesce(a.ID)
+	return a.LineageID.Coalesce(a.ID)
 }
 
 func rootIs(root string) keel.Pred {
 	a := assistantartifactdb.Artifacts
 
-	return keel.DynOf(a.LineageID).Coalesce(a.ID).Eq(root)
+	return rootExpr().Eq(root)
 }
 
 // ErrBadCursor is a cursor this repository did not hand out.
@@ -85,11 +85,11 @@ func familyExpr() keel.Expr {
 		}
 		family = family.When(
 			familyCondition(a, kinds, viewPath),
-			keel.DynLit(string(f)).Cast(keel.TypeString),
+			keel.Text(string(f)),
 		)
 	}
 
-	return family.Else(keel.DynLit(string(assistantartifact.FamilyDoc)).Cast(keel.TypeString))
+	return family.Else(keel.Text(string(assistantartifact.FamilyDoc)))
 }
 
 func familyCondition(
@@ -132,7 +132,7 @@ func matching(req *assistantartifactports.ListArtifactsRequest) []keel.Pred {
 		pattern := "%" + escapeLike(needle) + "%"
 		preds = append(preds, keel.Or(
 			a.Title.ILike(pattern),
-			keel.DynOf(a.Payload.Text("tool")).ILike(pattern),
+			a.Payload.Text("tool").ILike(pattern),
 		))
 	}
 
@@ -252,9 +252,9 @@ func lineageQuery(req *assistantartifactports.ListArtifactsRequest) *keel.CTETab
 		Group(rootExpr()).
 		Pick(
 			rootExpr(),
-			keel.DynFunc("bool_or", a.Pinned),
+			keel.BoolOr(keel.BoolOf(a.Pinned)),
 			a.CreatedAt.Max(),
-			keel.DynOf(familyExpr()).Max(),
+			keel.Max(familyExpr()),
 		))
 }
 
@@ -270,10 +270,10 @@ func pageQuery(
 	root, pinned, last := lineages.Col("root"), lineages.Col("pinned"), lineages.Col("last")
 	window := lineages.Query().With(lineages)
 	if req.Family != "" {
-		window.Where(keel.DynOf(lineages.Col("family")).Eq(string(req.Family)))
+		window.Where(lineages.Col("family").Eq(string(req.Family)))
 	}
 	if req.PinnedOnly {
-		window.Where(keel.DynOf(pinned))
+		window.Where(keel.BoolOf(pinned))
 	}
 	if cursor != nil {
 		window.Where(keel.DynRow(pinned, last, root).Lt(
@@ -342,12 +342,12 @@ func summaryQuery(req *versionsRequest) *keel.Query[*assistantartifact.Artifact]
 	return versionsQuery(req).Pick(a.ID, summaryPayloadOf(a.Payload))
 }
 
-func summaryPayloadOf(payload keel.JSONBCol) keel.DynExpr {
-	summary := keel.DynFunc("jsonb_build_object")
+func summaryPayloadOf(payload keel.JSONBCol) keel.JSONBExpr {
+	summary := keel.JSONBuildObject()
 	for _, key := range assistantartifact.SummaryPayloadKeys() {
-		summary = summary.Concat(keel.DynCase().
-			When(payload.HasKey(key), keel.DynFunc("jsonb_build_object", key, payload.Path(key))).
-			Else(keel.DynFunc("jsonb_build_object")))
+		summary = summary.Concat(keel.JSONBOf(keel.DynCase().
+			When(payload.HasKey(key), keel.JSONBuildObject(keel.Pair(key, payload.Path(key)))).
+			Else(keel.JSONBuildObject())))
 	}
 
 	return summary
@@ -358,7 +358,7 @@ func versionsQuery(req *versionsRequest) *keel.Query[*assistantartifact.Artifact
 
 	return a.Where(
 		a.ThreadID.Eq(req.threadID),
-		keel.DynOf(rootExpr()).In(req.roots),
+		rootExpr().In(req.roots...),
 	).
 		Order(a.LineageSeq.Asc(), a.CreatedAt.Asc(), a.ID.Asc())
 }
@@ -422,7 +422,7 @@ func (r *repository) TakenSlugs(
 			Where(
 				a.ThreadID.Eq(threadID),
 				a.LineageID.IsNull(),
-				keel.DynOf(a.Slug).Like(escapeLike(base)+"%"),
+				a.Slug.Like(escapeLike(base)+"%"),
 			).
 			Pick(a.Slug))
 		if err != nil {
@@ -475,11 +475,11 @@ func (r *repository) TurnQuestions(
 		asked := conversationdb.Messages.As("asked")
 		rows, err := keel.Into[turnQuestion](ctx, r.db.Keel(ctx), m.
 			Where(m.ThreadID.Eq(threadID), m.ID.In(messageIDs...)).
-			Pick(m.ID, keel.DynOf(keel.Scalar(asked.
+			Pick(m.ID, keel.StringOf(keel.Scalar(asked.
 				Where(
 					asked.ThreadID.EqCol(m.ThreadID),
 					asked.Role.Eq(conversation.RoleUser),
-					keel.DynOf(asked.Sequence).Lt(m.Sequence),
+					keel.Int64Of(asked.Sequence).LtExpr(m.Sequence),
 				).
 				Pick(asked.Content).
 				Order(asked.Sequence.Desc()).

@@ -171,10 +171,10 @@ func threadWindowOf(req *agentports.ListThreadsRequest) (threadWindow, error) {
 	return window, nil
 }
 
-func threadTouchedAt() keel.Expr {
+func threadTouchedAt() keel.Int64Expr {
 	th := conversationdb.Threads
 
-	return keel.DynFunc("greatest", th.LastMessageAt, th.CreatedAt)
+	return th.LastMessageAt.Greatest(th.CreatedAt)
 }
 
 func threadListScope(userID pulid.ID, includeUnlisted bool) keel.Pred {
@@ -218,8 +218,8 @@ func threadPageQuery(
 	return th.Where(
 		threadListScope(req.UserID, req.IncludeUnlisted),
 		pinned,
-		keel.When(req.TouchedFrom > 0, keel.DynOf(touchedAt).Gte(req.TouchedFrom)),
-		keel.When(req.TouchedBefore > 0, keel.DynOf(touchedAt).Lt(req.TouchedBefore)),
+		keel.When(req.TouchedFrom > 0, touchedAt.Gte(req.TouchedFrom)),
+		keel.When(req.TouchedBefore > 0, touchedAt.Lt(req.TouchedBefore)),
 		threadPositionPred(touchedAt, keel.DynExpr.Lt, window.after),
 		threadPositionPred(touchedAt, keel.DynExpr.Gte, window.until),
 	).
@@ -235,12 +235,12 @@ type threadShelfBand struct {
 func threadShelfBandExpr(edges []int64) keel.Expr {
 	th := conversationdb.Threads
 	touchedAt := threadTouchedAt()
-	band := keel.DynCase().When(keel.DynOf(th.Pinned), keel.DynLit(-1).Cast(keel.TypeInt64))
+	band := keel.DynCase().When(keel.BoolOf(th.Pinned), keel.Int64(-1))
 	for index, edge := range edges {
-		band = band.When(keel.DynOf(touchedAt).Gte(edge), keel.DynLit(index).Cast(keel.TypeInt64))
+		band = band.When(touchedAt.Gte(edge), keel.Int64(int64(index)))
 	}
 
-	return band.Else(keel.DynLit(len(edges)).Cast(keel.TypeInt64))
+	return band.Else(keel.Int64(int64(len(edges))))
 }
 
 func threadShelfCountQuery(
@@ -345,7 +345,7 @@ func (r *repository) MarkThreadTainted(
 		th := conversationdb.Threads
 		n, err := th.Where(th.ID.Eq(req.ThreadID)).Update(ctx, r.db.Keel(ctx),
 			th.Taint.To(req.Taint),
-			th.TaintedAt.ToExpr(keel.DynOf(th.TaintedAt).Coalesce(req.TaintedAt)),
+			th.TaintedAt.ToExpr(th.TaintedAt.Coalesce(req.TaintedAt)),
 			keepThreadVersion(),
 			keepThreadUpdatedAt(),
 		)
@@ -473,7 +473,7 @@ func afterLatestCompaction(threadID pulid.ID) keel.Pred {
 		Order(c.Sequence.Desc()).
 		Limit(1)
 
-	return keel.DynOf(m.Sequence).Gt(keel.DynOf(keel.Scalar(through)).Coalesce(-1))
+	return keel.Int64Of(m.Sequence).GtExpr(keel.Int64Of(keel.Scalar(through)).Coalesce(-1))
 }
 
 func (r *repository) ListMessages(

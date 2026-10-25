@@ -177,17 +177,17 @@ func verdictsQuery(req *agentports.ScorecardRequest) *keel.Query[*keel.Row] {
 	labelled := keel.CTE("labelled", []string{"tool_name", "verdict", "reason"}, step.
 		Pick(
 			step.ToolName,
-			keel.DynOf(step.Outcome.Text("verdict")).NullIf("").Coalesce(keel.DynCase().
+			step.Outcome.Text("verdict").NullIf("").Coalesce(keel.DynCase().
 				When(
-					keel.DynOf(step.Status).Eq(string(agentports.RunStepStarted)),
-					keel.DynLit(string(aitrace.OutcomeUnknown)),
+					step.Status.Eq(string(agentports.RunStepStarted)),
+					string(aitrace.OutcomeUnknown),
 				).
 				When(
-					keel.DynOf(step.Status).Eq(string(agentports.RunStepFailed)),
-					keel.DynLit(string(aitrace.OutcomeFailed)),
+					step.Status.Eq(string(agentports.RunStepFailed)),
+					string(aitrace.OutcomeFailed),
 				).
-				Else(keel.DynLit(string(aitrace.OutcomeRan)))),
-			keel.DynOf(step.Outcome.Text("reason")).Coalesce(""),
+				Else(string(aitrace.OutcomeRan))),
+			step.Outcome.Text("reason").Coalesce(""),
 		).
 		Where(
 			step.Kind.Eq(string(agentports.RunStepTool)),
@@ -213,10 +213,10 @@ func verdictsQuery(req *agentports.ScorecardRequest) *keel.Query[*keel.Row] {
 				verdict,
 				reason,
 				keel.Count(),
-				keel.DynOf(keel.Sum(keel.Count()).Over(partition)).Cast(keel.TypeInt64),
+				keel.CastInt64(keel.NumericOf(keel.Sum(keel.Count()).Over(partition))),
 				keel.RowNumber().Over(
 					partition,
-					keel.Asc(keel.DynOf(reason).Eq("")),
+					keel.Asc(reason.Eq("")),
 					keel.Count().Desc(),
 					reason.Asc(),
 				),
@@ -278,8 +278,8 @@ func usageQuery(req *agentports.ScorecardRequest) *keel.Query[*aiusage.AIUsageRe
 	u := aiusagedb.AIUsageRecords
 
 	return u.Pick(
-		keel.DynOf(u.InputTokens).Sum().Coalesce(0),
-		keel.DynOf(u.OutputTokens).Sum().Coalesce(0),
-		keel.DynOf(u.CostUSD).Sum().Coalesce(0),
+		keel.NumericOf(u.InputTokens.Sum()).Coalesce(0),
+		keel.NumericOf(u.OutputTokens.Sum()).Coalesce(0),
+		keel.NumericOf(u.CostUSD.Sum()).Coalesce(0),
 	).Where(u.AgentDefinitionID.Eq(req.AgentDefinitionID), u.CreatedAt.Gte(req.Since))
 }

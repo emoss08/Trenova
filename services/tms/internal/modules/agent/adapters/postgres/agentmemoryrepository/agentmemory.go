@@ -351,7 +351,7 @@ func (r *repository) FindActive(
 
 		entity, err := m.Where(
 			keptOnly(req.Now, req.IncludeSuggested),
-			foldedContent(m.Content).Eq(foldedContent(req.Content)),
+			foldedContent(m.Content).EqExpr(foldedContent(keel.Text(req.Content))),
 			sameReaders(&req),
 			keel.When(!req.Tainted, keel.Or(m.Tainted.IsFalse(), m.ReviewedAt.IsNotNull())),
 			subject,
@@ -608,7 +608,7 @@ func activation(req *agentports.ResolveAgentMemorySuggestionRequest) []keel.Assi
 	}
 	if req.ByUserID.IsNotNil() {
 		sets = append(sets, m.CreatedByUserID.ToExpr(
-			keel.DynOf(m.CreatedByUserID).Coalesce(req.ByUserID.String()),
+			m.CreatedByUserID.Coalesce(req.ByUserID.String()),
 		))
 	}
 
@@ -707,7 +707,7 @@ func taintsLast() keel.Order {
 	m := agentdb.Memories
 
 	return keel.DynCase().
-		When(keel.And(keel.DynOf(m.Tainted), m.ReviewedAt.IsNull()), orderRank(1)).
+		When(keel.And(keel.BoolOf(m.Tainted), m.ReviewedAt.IsNull()), orderRank(1)).
 		Else(orderRank(0)).
 		Asc()
 }
@@ -743,8 +743,8 @@ func candidateOrder() keel.Order {
 		Asc()
 }
 
-func orderRank(n int64) keel.DynExpr {
-	return keel.DynLit(n).Cast(keel.TypeInt64)
+func orderRank(n int64) keel.Int64Expr {
+	return keel.Int64(n)
 }
 
 func boundedCandidateLimit(limit int) int {
@@ -771,12 +771,6 @@ func setID(col keelkinds.PulidIDCol, id pulid.ID) keel.Assignment {
 	return col.To(id)
 }
 
-func foldedContent(v any) keel.DynExpr {
-	return keel.DynFunc("btrim", keel.DynFunc(
-		"regexp_replace",
-		keel.DynFunc("lower", v),
-		keel.DynConst("[^[:alnum:]]+"),
-		keel.DynConst(" "),
-		keel.DynConst("g"),
-	))
+func foldedContent(v keel.StringValue) keel.StringExpr {
+	return keel.StringOf(v).Lower().RegexpReplace("[^[:alnum:]]+", " ", "g").Trim()
 }

@@ -225,15 +225,9 @@ func (r *repository) DailySatisfaction(
 		r.db,
 		func(ctx context.Context) ([]*aifeedbackports.AIFeedbackDay, error) {
 			f := aifeedbackdb.Feedbacks
-			day := keel.DynFunc(
-				"to_char",
-				keel.DynFunc(
-					"timezone",
-					keel.DynLit(timezoneOf(req.Timezone)).Cast(keel.TypeString),
-					keel.DynFunc("to_timestamp", f.CreatedAt),
-				),
-				keel.DynLit("YYYY-MM-DD").Cast(keel.TypeString),
-			)
+			day := keel.ToTimestamp(f.CreatedAt).
+				AtTimeZone(keel.Text(timezoneOf(req.Timezone))).
+				ToChar("YYYY-MM-DD")
 			days, err := keel.Into[aifeedbackports.AIFeedbackDay](ctx, r.db.Keel(ctx),
 				f.Where(windowScope(&req)...).
 					Group(day).
@@ -279,7 +273,7 @@ func (r *repository) WorstRated(
 			scores, err := keel.Into[aifeedbackports.AIFeedbackTargetScore](ctx, r.db.Keel(ctx),
 				f.Where(windowScope(&req)...).
 					Group(f.TargetType, f.TargetID, f.TargetPart).
-					Having(keel.DynOf(negative).Gt(0)).
+					Having(negative.Gt(0)).
 					Pick(
 						f.TargetType,
 						f.TargetID,

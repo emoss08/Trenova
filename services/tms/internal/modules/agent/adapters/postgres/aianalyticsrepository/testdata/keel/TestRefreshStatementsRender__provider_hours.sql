@@ -8,17 +8,17 @@ FROM (
   ), rescued (trace_id, providers) AS (
     SELECT c.trace_id, array_agg(DISTINCT c.provider_id)
     FROM calls c
-    WHERE (c.succeeded IS TRUE) AND c.trace_id IS NOT NULL
+    WHERE c.succeeded IS TRUE AND c.trace_id IS NOT NULL
     GROUP BY c.trace_id
   ), grouped (hour, provider_id, model, task, agent_definition_id, error_class, calls, fell_to_next) AS (
-    SELECT c2.hour, c2.provider_id, c2.model, c2.task, c2.agent_definition_id, c2.error_class, count(*), count(*) FILTER (WHERE ((c2.succeeded = $27) AND r.providers IS NOT NULL AND NOT ((r.providers <@ ARRAY[c2.provider_id]))))
+    SELECT c2.hour, c2.provider_id, c2.model, c2.task, c2.agent_definition_id, c2.error_class, count(*), count(*) FILTER (WHERE (c2.succeeded = $27 AND r.providers IS NOT NULL AND NOT ((r.providers <@ ARRAY[c2.provider_id]))))
     FROM calls c2
     LEFT JOIN rescued r ON r.trace_id = c2.trace_id
     GROUP BY c2.hour, c2.provider_id, c2.model, c2.task, c2.agent_definition_id, c2.error_class
   ), hist (hour, provider_id, model, task, agent_definition_id, bucket, n) AS (
     SELECT c3.hour, c3.provider_id, c3.model, c3.task, c3.agent_definition_id, CASE WHEN (c3.first_token_ms < 16) THEN 0 ELSE least(63, (CAST(floor(((4 * ln((CAST(c3.first_token_ms AS double precision) / 16))) / ln(2))) AS bigint) + 1)) END, count(*)
     FROM calls c3
-    WHERE (c3.succeeded IS TRUE) AND c3.first_token_ms IS NOT NULL
+    WHERE c3.succeeded IS TRUE AND c3.first_token_ms IS NOT NULL
     GROUP BY c3.hour, c3.provider_id, c3.model, c3.task, c3.agent_definition_id, 6
   ), hist_keys (hour, provider_id, model, task, agent_definition_id) AS (
     SELECT DISTINCT h.hour, h.provider_id, h.model, h.task, h.agent_definition_id

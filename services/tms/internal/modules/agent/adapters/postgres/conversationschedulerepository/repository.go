@@ -113,8 +113,8 @@ func (r *repository) create(
 		th.LastMessageAt.To(now),
 		th.Title.ToExpr(keel.DynCase().
 			When(
-				keel.DynFunc("btrim", th.Title).NullIf("").IsNull(),
-				keel.DynLit(threadTitle).Cast(keel.TypeString).NullIf(""),
+				th.Title.Trim().NullIf("").IsNull(),
+				keel.Text(threadTitle).NullIf(""),
 			).
 			Else(th.Title)),
 		th.Version.ToExpr(th.Version),
@@ -219,7 +219,7 @@ func threadTitlesQuery(
 	s := conversationscheduledb.Schedules
 	th := conversationdb.Threads
 
-	return th.Pick(th.ID, keel.DynOf(th.Title).Coalesce("")).
+	return th.Pick(th.ID, th.Title.Coalesce("")).
 		Where(th.ID.InQuery(page.Clone().Pick(s.ThreadID)))
 }
 

@@ -119,11 +119,10 @@ func organizationItems(w agentprofileports.FactsWindow, reads *organizationReads
 	ep := edidb.EDIPartners
 	live := sp.Status.Ne(shipment.StatusCanceled)
 
-	pickupName := keel.DynFunc(
-		"concat_ws",
+	pickupName := keel.ConcatWS(
 		", ",
 		loc.Name,
-		keel.DynFunc("concat_ws", " ", loc.City, ust.Abbreviation).NullIf(""),
+		keel.ConcatWS(" ", loc.City, ust.Abbreviation).NullIf(""),
 	)
 	activeWorkers := wrk.Status.Eq(domaintypes.StatusActive)
 
@@ -172,9 +171,9 @@ func organizationItems(w agentprofileports.FactsWindow, reads *organizationReads
 			Where(activeWorkers), &reads.workers),
 		keel.IntoSlice(wrk.
 			Group(wrk.DriverType).
-			Pick(keel.DynOf(wrk.DriverType).Cast(keel.TypeString), keel.Count()).
+			Pick(keel.CastText(wrk.DriverType), keel.Count()).
 			Where(activeWorkers, wrk.DriverType.IsNotNull()).
-			Order(countDesc(), keel.Asc(keel.DynOf(wrk.DriverType).Cast(keel.TypeString))),
+			Order(countDesc(), keel.CastText(wrk.DriverType).Asc()),
 			&out.Workers.ByDriverType),
 		keel.IntoValue(ca.
 			Pick(ca.CarrierID.CountDistinct()).
@@ -182,11 +181,11 @@ func organizationItems(w agentprofileports.FactsWindow, reads *organizationReads
 			Join(sp, sp.ID.EqCol(sm.ShipmentID)).
 			Where(live, inWindow(w)), &out.CarriersUsed),
 		keel.IntoSlice(integ.
-			Pick(keel.DynOf(integ.Type).Cast(keel.TypeString)).
+			Pick(keel.CastText(integ.Type)).
 			Where(integ.Enabled.IsTrue()).
 			Order(integ.Type.Asc()), &out.Integrations),
 		keel.IntoSlice(ac.
-			Pick(keel.DynOf(ac.IntegrationType).Cast(keel.TypeString), keel.DynOf(ac.Status).Cast(keel.TypeString)).
+			Pick(keel.CastText(ac.IntegrationType), keel.CastText(ac.Status)).
 			Where(ac.Status.Ne(accountingsync.ConnectionStatusDisconnected)).
 			Order(ac.IntegrationType.Asc()), &out.AccountingConnections),
 		keel.CountInto(ep.Where(ep.Status.Eq(domaintypes.StatusActive)), &out.EDIPartners),
@@ -205,7 +204,7 @@ type fleet struct {
 func tractorFleet() fleet {
 	t := tractordb.Tractors
 	et := equipmenttypedb.EquipmentTypes
-	name := keel.DynOf(et.Description).NullIf("").Coalesce(et.Code)
+	name := et.Description.NullIf("").Coalesce(et.Code)
 
 	return fleet{
 		counts: t.Pick(
@@ -224,7 +223,7 @@ func tractorFleet() fleet {
 func trailerFleet() fleet {
 	t := trailerdb.Trailers
 	et := equipmenttypedb.EquipmentTypes
-	name := keel.DynOf(et.Description).NullIf("").Coalesce(et.Code)
+	name := et.Description.NullIf("").Coalesce(et.Code)
 
 	return fleet{
 		counts: t.Pick(
@@ -336,12 +335,12 @@ func userItems(req *agentprofileports.UserFactsRequest, reads *userReads) []keel
 	msg := conversationdb.Messages
 	msgThread := conversationdb.Threads.As("message_thread")
 	pf := pagefavoritedb.PageFavorites
-	statusName := keel.DynOf(sp.Status).Cast(keel.TypeString)
-	aboutName := keel.DynOf(th.SubjectType).Cast(keel.TypeString)
+	statusName := keel.CastText(sp.Status)
+	aboutName := keel.CastText(th.SubjectType)
 
 	return []keel.BatchItem{
 		keel.IntoSlice(usr.
-			Pick(keel.DynOf(usr.JobTitle).Coalesce("")).
+			Pick(usr.JobTitle.Coalesce("")).
 			Where(usr.ID.Eq(req.UserID)).
 			Limit(1), &reads.titles),
 		keel.ExistsInto(wrk.Where(wrk.UserID.Eq(req.UserID)), &out.Driver),
@@ -367,7 +366,7 @@ func userItems(req *agentprofileports.UserFactsRequest, reads *userReads) []keel
 			Limit(agentprofileports.TopRows), &out.Customers),
 		keel.IntoSlice(ae.
 			Group(ae.Resource).
-			Pick(keel.DynOf(ae.Resource).Cast(keel.TypeString), keel.Count()).
+			Pick(keel.CastText(ae.Resource), keel.Count()).
 			Where(
 				ae.UserID.Eq(req.UserID),
 				ae.PrincipalType.Eq(authctx.PrincipalTypeUser),
@@ -387,7 +386,7 @@ func userItems(req *agentprofileports.UserFactsRequest, reads *userReads) []keel
 				th.UserID.Eq(req.UserID),
 				th.LastMessageAt.Gte(w.Start),
 				th.SubjectType.IsNotNull(),
-				keel.DynOf(th.SubjectType).Ne(""),
+				th.SubjectType.Ne(""),
 			).
 			Order(countDesc(), keel.Asc(aboutName)).
 			Limit(agentprofileports.TopRows), &out.ConversationAbout),

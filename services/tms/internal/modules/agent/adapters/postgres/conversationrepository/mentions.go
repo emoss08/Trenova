@@ -27,18 +27,12 @@ type mentionTerms struct {
 
 type mentionQuery func(terms mentionTerms) keel.Projection
 
-func humanize(e keel.Expr) keel.DynExpr {
-	return keel.DynFunc(
-		"regexp_replace",
-		keel.DynOf(e).Cast(keel.TypeString),
-		"([a-z])([A-Z])",
-		`\1 \2`,
-		"g",
-	)
+func humanize(e keel.Expr) keel.StringExpr {
+	return keel.CastText(e).RegexpReplace("([a-z])([A-Z])", `\1 \2`, "g")
 }
 
-func mentionID(e keel.Expr) keel.DynExpr {
-	return keel.DynOf(e).Cast(keel.TypeString)
+func mentionID(e keel.Expr) keel.StringExpr {
+	return keel.CastText(e)
 }
 
 func shipmentEndPlace(s *shipmentdb.ShipmentsTable, last bool) keel.Expr {
@@ -54,7 +48,7 @@ func shipmentEndPlace(s *shipmentdb.ShipmentsTable, last bool) keel.Expr {
 	return keel.Scalar(m.Join(sp, sp.ShipmentMoveID.EqCol(m.ID)).
 		Join(l, l.ID.EqCol(sp.LocationID)).
 		LeftJoin(st, st.ID.EqCol(l.StateID)).
-		Pick(keel.DynFunc("concat_ws", ", ", l.City, st.Abbreviation)).
+		Pick(keel.ConcatWS(", ", l.City, st.Abbreviation)).
 		Where(m.ShipmentID.EqCol(s.ID)).
 		Order(order...).
 		Limit(1))
@@ -62,21 +56,16 @@ func shipmentEndPlace(s *shipmentdb.ShipmentsTable, last bool) keel.Expr {
 
 func shipmentMentions(terms mentionTerms) keel.Projection {
 	s := shipmentdb.Shipments
-	route := keel.DynFunc(
-		"concat_ws",
-		" → ",
-		shipmentEndPlace(s, false),
-		shipmentEndPlace(s, true),
-	).NullIf("")
+	route := keel.ConcatWS(" → ", shipmentEndPlace(s, false), shipmentEndPlace(s, true)).NullIf("")
 
 	return s.Pick(
-		keel.DynLit("shipment"),
+		keel.Text("shipment"),
 		mentionID(s.ID),
 		s.ProNumber,
-		keel.DynFunc("concat_ws", " · ", route, humanize(s.Status)),
+		keel.ConcatWS(" · ", route, humanize(s.Status)),
 	).
 		Where(keel.Or(s.ProNumber.ILike(terms.contains), s.BOL.ILike(terms.contains))).
-		Order(keel.DynOf(s.ProNumber).ILike(terms.prefix).Desc(), s.UpdatedAt.Desc()).
+		Order(keel.Desc(s.ProNumber.ILike(terms.prefix)), s.UpdatedAt.Desc()).
 		Limit(terms.limit).
 		Offset(terms.offset)
 }
@@ -85,13 +74,13 @@ func customerMentions(terms mentionTerms) keel.Projection {
 	c := customerdb.Customers
 
 	return c.Pick(
-		keel.DynLit("customer"),
+		keel.Text("customer"),
 		mentionID(c.ID),
 		c.Name,
-		keel.DynFunc("concat_ws", " · ", c.Code, keel.DynOf(c.City).NullIf("")),
+		keel.ConcatWS(" · ", c.Code, c.City.NullIf("")),
 	).
 		Where(keel.Or(c.Name.ILike(terms.contains), c.Code.ILike(terms.contains))).
-		Order(keel.DynOf(c.Name).ILike(terms.prefix).Desc(), c.Name.Asc()).
+		Order(keel.Desc(c.Name.ILike(terms.prefix)), c.Name.Asc()).
 		Limit(terms.limit).
 		Offset(terms.offset)
 }
@@ -100,18 +89,13 @@ func invoiceMentions(terms mentionTerms) keel.Projection {
 	i := invoicedb.Invoices
 
 	return i.Pick(
-		keel.DynLit("invoice"),
+		keel.Text("invoice"),
 		mentionID(i.ID),
 		i.Number,
-		keel.DynFunc(
-			"concat_ws",
-			" · ",
-			keel.DynOf(i.BillToName).NullIf(""),
-			humanize(i.Status),
-		),
+		keel.ConcatWS(" · ", i.BillToName.NullIf(""), humanize(i.Status)),
 	).
 		Where(keel.Or(i.Number.ILike(terms.contains), i.BillToName.ILike(terms.contains))).
-		Order(keel.DynOf(i.Number).ILike(terms.prefix).Desc(), i.UpdatedAt.Desc()).
+		Order(keel.Desc(i.Number.ILike(terms.prefix)), i.UpdatedAt.Desc()).
 		Limit(terms.limit).
 		Offset(terms.offset)
 }
@@ -122,19 +106,13 @@ func invoiceDisputeMentions(terms mentionTerms) keel.Projection {
 
 	return d.Join(i, i.ID.EqCol(d.InvoiceID)).
 		Pick(
-			keel.DynLit("invoice_dispute"),
+			keel.Text("invoice_dispute"),
 			mentionID(d.ID),
 			i.Number,
-			keel.DynFunc(
-				"concat_ws",
-				" · ",
-				keel.DynOf(i.BillToName).NullIf(""),
-				humanize(d.ReasonCode),
-				humanize(d.Status),
-			),
+			keel.ConcatWS(" · ", i.BillToName.NullIf(""), humanize(d.ReasonCode), humanize(d.Status)),
 		).
 		Where(keel.Or(i.Number.ILike(terms.contains), i.BillToName.ILike(terms.contains))).
-		Order(keel.DynOf(i.Number).ILike(terms.prefix).Desc(), d.UpdatedAt.Desc()).
+		Order(keel.Desc(i.Number.ILike(terms.prefix)), d.UpdatedAt.Desc()).
 		Limit(terms.limit).
 		Offset(terms.offset)
 }
@@ -145,35 +123,30 @@ func billingQueueMentions(terms mentionTerms) keel.Projection {
 
 	return q.LeftJoin(s, s.ID.EqCol(q.ShipmentID)).
 		Pick(
-			keel.DynLit("billing_queue_item"),
+			keel.Text("billing_queue_item"),
 			mentionID(q.ID),
 			q.Number,
-			keel.DynFunc(
-				"concat_ws",
-				" · ",
-				keel.DynOf(s.ProNumber).NullIf(""),
-				humanize(q.Status),
-			),
+			keel.ConcatWS(" · ", s.ProNumber.NullIf(""), humanize(q.Status)),
 		).
 		Where(keel.Or(q.Number.ILike(terms.contains), s.ProNumber.ILike(terms.contains))).
-		Order(keel.DynOf(q.Number).ILike(terms.prefix).Desc(), q.UpdatedAt.Desc()).
+		Order(keel.Desc(q.Number.ILike(terms.prefix)), q.UpdatedAt.Desc()).
 		Limit(terms.limit).
 		Offset(terms.offset)
 }
 
 func workerMentions(terms mentionTerms) keel.Projection {
 	w := workerdb.Workers
-	fullName := keel.DynFunc("concat_ws", " ", w.FirstName, w.LastName)
+	fullName := keel.ConcatWS(" ", w.FirstName, w.LastName)
 
 	return w.Pick(
-		keel.DynLit("worker"),
+		keel.Text("worker"),
 		mentionID(w.ID),
 		fullName,
-		keel.DynFunc("concat_ws", " · ", humanize(w.Type), keel.DynOf(w.City).NullIf("")),
+		keel.ConcatWS(" · ", humanize(w.Type), w.City.NullIf("")),
 	).
 		Where(keel.Or(fullName.ILike(terms.contains), w.LastName.ILike(terms.contains))).
 		Order(
-			keel.DynOf(w.FirstName).ILike(terms.prefix).Desc(),
+			keel.Desc(w.FirstName.ILike(terms.prefix)),
 			w.FirstName.Asc(),
 			w.LastName.Asc(),
 		).
@@ -185,13 +158,12 @@ func carrierMentions(terms mentionTerms) keel.Projection {
 	c := carrierdb.Carriers
 
 	return c.Pick(
-		keel.DynLit("carrier"),
+		keel.Text("carrier"),
 		mentionID(c.ID),
 		c.Name,
-		keel.DynFunc(
-			"concat_ws",
+		keel.ConcatWS(
 			" · ",
-			keel.DynLit("MC ").Concat(keel.DynOf(c.MCNumber).NullIf("")),
+			keel.DynLit("MC ").Concat(c.MCNumber.NullIf("")),
 			humanize(c.ComplianceStatus),
 		),
 	).
@@ -200,7 +172,7 @@ func carrierMentions(terms mentionTerms) keel.Projection {
 			c.Code.ILike(terms.contains),
 			c.MCNumber.ILike(terms.contains),
 		)).
-		Order(keel.DynOf(c.Name).ILike(terms.prefix).Desc(), c.Name.Asc()).
+		Order(keel.Desc(c.Name.ILike(terms.prefix)), c.Name.Asc()).
 		Limit(terms.limit).
 		Offset(terms.offset)
 }
@@ -211,19 +183,13 @@ func locationMentions(terms mentionTerms) keel.Projection {
 
 	return l.LeftJoin(st, st.ID.EqCol(l.StateID)).
 		Pick(
-			keel.DynLit("location"),
+			keel.Text("location"),
 			mentionID(l.ID),
 			l.Name,
-			keel.DynFunc(
-				"concat_ws",
+			keel.ConcatWS(
 				" · ",
 				l.Code,
-				keel.DynFunc(
-					"concat_ws",
-					", ",
-					keel.DynOf(l.City).NullIf(""),
-					st.Abbreviation,
-				).NullIf(""),
+				keel.ConcatWS(", ", l.City.NullIf(""), st.Abbreviation).NullIf(""),
 			),
 		).
 		Where(keel.Or(
@@ -231,7 +197,7 @@ func locationMentions(terms mentionTerms) keel.Projection {
 			l.Code.ILike(terms.contains),
 			l.City.ILike(terms.contains),
 		)).
-		Order(keel.DynOf(l.Name).ILike(terms.prefix).Desc(), l.Name.Asc()).
+		Order(keel.Desc(l.Name.ILike(terms.prefix)), l.Name.Asc()).
 		Limit(terms.limit).
 		Offset(terms.offset)
 }
