@@ -6,6 +6,8 @@ import (
 	"context"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/bootstrap/crossref"
+
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant/tenantdb"
@@ -37,8 +39,12 @@ func newFixture(t *testing.T) *fixture {
 	db := ratingdb.NewDatabase(t)
 
 	return &fixture{
-		db:   db,
-		repo: New(Params{DB: db.Conn, Logger: zap.NewNop()}),
+		db: db,
+		repo: New(Params{
+			DB:        db.Conn,
+			Logger:    zap.NewNop(),
+			Consumers: crossref.TemplateConsumers(),
+		}),
 		a:    db.A,
 		b:    db.B,
 		ctxA: db.A.Ctx,

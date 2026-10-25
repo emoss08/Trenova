@@ -6,6 +6,7 @@ import (
 	"context"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/bootstrap/crossref"
 	"github.com/emoss08/trenova/internal/modules/rating/adapters/postgres/formulatemplaterepository"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/formulatemplate"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/formulatemplateports"
@@ -36,8 +37,9 @@ func setupVersions(t *testing.T) *versionFixture {
 	tenantInfo := db.A.Info
 
 	templates := formulatemplaterepository.New(formulatemplaterepository.Params{
-		DB:     db.Conn,
-		Logger: zap.NewNop(),
+		DB:        db.Conn,
+		Logger:    zap.NewNop(),
+		Consumers: crossref.TemplateConsumers(),
 	})
 	template, err := templates.Create(ctx, formulatemplate.Seed{
 		OrganizationID: tenantInfo.OrgID,

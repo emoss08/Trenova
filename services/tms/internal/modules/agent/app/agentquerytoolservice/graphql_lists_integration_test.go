@@ -11,6 +11,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/keel"
+	"github.com/emoss08/trenova/internal/bootstrap/crossref"
 
 	"github.com/emoss08/trenova/internal/api/graphql/agentread"
 	"github.com/emoss08/trenova/internal/api/graphql/agentread/agentreadtest"
@@ -195,15 +196,36 @@ func convertedListCases(
 	admin *keel.DB,
 ) ([]referenceCase, agentread.ResolverParams) {
 	logger := zap.NewNop()
-	equipmentTypes := equipmenttyperepository.New(equipmenttyperepository.Params{DB: conn, Logger: logger})
+	equipmentTypes := equipmenttyperepository.New(equipmenttyperepository.Params{
+		DB:     conn,
+		Logger: logger,
+	})
 	fleetCodes := fleetcoderepository.New(fleetcoderepository.Params{DB: conn, Logger: logger})
-	serviceTypes := servicetyperepository.New(servicetyperepository.Params{DB: conn, Logger: logger})
-	shipmentTypes := shipmenttyperepository.New(shipmenttyperepository.Params{DB: conn, Logger: logger})
+	serviceTypes := servicetyperepository.New(servicetyperepository.Params{
+		DB:     conn,
+		Logger: logger,
+	})
+	shipmentTypes := shipmenttyperepository.New(shipmenttyperepository.Params{
+		DB:     conn,
+		Logger: logger,
+	})
 	commodities := commodityrepository.New(commodityrepository.Params{DB: conn, Logger: logger})
-	hazmat := hazardousmaterialrepository.New(hazardousmaterialrepository.Params{DB: conn, Logger: logger})
-	accessorials := accessorialchargerepository.New(accessorialchargerepository.Params{DB: conn, Logger: logger})
-	documentTypes := documenttyperepository.New(documenttyperepository.Params{DB: conn, Logger: logger})
-	categories := locationcategoryrepository.New(locationcategoryrepository.Params{DB: conn, Logger: logger})
+	hazmat := hazardousmaterialrepository.New(hazardousmaterialrepository.Params{
+		DB:     conn,
+		Logger: logger,
+	})
+	accessorials := accessorialchargerepository.New(accessorialchargerepository.Params{
+		DB:     conn,
+		Logger: logger,
+	})
+	documentTypes := documenttyperepository.New(documenttyperepository.Params{
+		DB:     conn,
+		Logger: logger,
+	})
+	categories := locationcategoryrepository.New(locationcategoryrepository.Params{
+		DB:     conn,
+		Logger: logger,
+	})
 	holdReasons := holdreasonrepository.New(holdreasonrepository.Params{DB: conn, Logger: logger})
 	customers := customerrepository.New(customerrepository.Params{
 		DB: conn, Logger: logger,
@@ -211,12 +233,23 @@ func convertedListCases(
 	locations := locationrepository.New(locationrepository.Params{DB: conn, Logger: logger})
 	carriers := carrierrepository.New(carrierrepository.Params{DB: conn, Logger: logger})
 	workers := workerrepository.New(workerrepository.Params{DB: conn, Logger: logger})
-	training := workertrainingrepository.New(workertrainingrepository.Params{DB: conn, Logger: logger})
+	training := workertrainingrepository.New(workertrainingrepository.Params{
+		DB:     conn,
+		Logger: logger,
+	})
 	timeOff := workerptorepository.New(workerptorepository.Params{DB: conn, Logger: logger})
 	manufacturers := equipmentmanufacturerrepository.New(
 		equipmentmanufacturerrepository.Params{DB: conn, Logger: logger})
-	tractors := tractorrepository.New(tractorrepository.Params{DB: conn, Logger: logger})
-	trailers := trailerrepository.New(trailerrepository.Params{DB: conn, Logger: logger})
+	tractors := tractorrepository.New(tractorrepository.Params{
+		DB:        conn,
+		Logger:    logger,
+		Locations: crossref.LocationColumns(),
+	})
+	trailers := trailerrepository.New(trailerrepository.Params{
+		DB:        conn,
+		Logger:    logger,
+		Locations: crossref.LocationColumns(),
+	})
 	customFields := customfieldservice.NewValuesService(customfieldservice.ValuesServiceParams{
 		Logger: logger,
 		ValueRepo: customfieldvaluerepository.New(
@@ -229,7 +262,10 @@ func convertedListCases(
 	}
 
 	formulaTemplates := formulatemplaterepository.New(
-		formulatemplaterepository.Params{DB: conn, Logger: logger})
+		formulatemplaterepository.Params{
+			DB: conn, Logger: logger,
+			Consumers: crossref.TemplateConsumers(),
+		})
 	formulaVersions := formulatemplateversionrepository.New(
 		formulatemplateversionrepository.Params{DB: conn, Logger: logger})
 	libraries := formulalibraryrepository.New(
@@ -245,12 +281,18 @@ func convertedListCases(
 	services := agentread.ResolverParams{
 		EquipmentTypeService: equipmenttypeservice.New(
 			equipmenttypeservice.Params{Logger: logger, Repo: equipmentTypes}),
-		FleetCodeService: fleetcodeservice.New(fleetcodeservice.Params{Logger: logger, Repo: fleetCodes}),
+		FleetCodeService: fleetcodeservice.New(fleetcodeservice.Params{
+			Logger: logger,
+			Repo:   fleetCodes,
+		}),
 		ServiceTypeService: servicetypeservice.New(
 			servicetypeservice.Params{Logger: logger, Repo: serviceTypes}),
 		ShipmentTypeService: shipmenttypeservice.New(
 			shipmenttypeservice.Params{Logger: logger, Repo: shipmentTypes}),
-		CommodityService: commodityservice.New(commodityservice.Params{Logger: logger, Repo: commodities}),
+		CommodityService: commodityservice.New(commodityservice.Params{
+			Logger: logger,
+			Repo:   commodities,
+		}),
 		HazardousMaterialService: hazardousmaterialservice.New(
 			hazardousmaterialservice.Params{Logger: logger, Repo: hazmat}),
 		AccessorialChargeService: accessorialchargeservice.New(
@@ -259,12 +301,18 @@ func convertedListCases(
 			documenttypeservice.Params{Logger: logger, Repo: documentTypes}),
 		LocationCategoryService: locationcategoryservice.New(
 			locationcategoryservice.Params{Logger: logger, Repo: categories}),
-		HoldReasonService: holdreasonservice.New(holdreasonservice.Params{Logger: logger, Repo: holdReasons}),
+		HoldReasonService: holdreasonservice.New(holdreasonservice.Params{
+			Logger: logger,
+			Repo:   holdReasons,
+		}),
 		CustomerService: customerservice.New(customerservice.Params{
 			Logger: logger, Repo: customers, CacheRepo: customerCacheMiss{},
 		}),
-		LocationService: locationservice.New(locationservice.Params{Logger: logger, Repo: locations}),
-		CarrierService:  carrierservice.New(carrierservice.Params{Logger: logger, Repo: carriers}),
+		LocationService: locationservice.New(locationservice.Params{
+			Logger: logger,
+			Repo:   locations,
+		}),
+		CarrierService: carrierservice.New(carrierservice.Params{Logger: logger, Repo: carriers}),
 		TractorService: tractorservice.New(tractorservice.Params{
 			Logger: logger, Repo: tractors, CustomFieldsValuesService: customFields,
 		}),
@@ -294,7 +342,11 @@ func convertedListCases(
 		FuelPurchaseService: fuelpurchaseservice.New(fuelpurchaseservice.Params{
 			Logger: logger, Repo: fuel, IFTARepo: iftaRepo,
 		}),
-		IFTAService: iftaservice.New(iftaservice.Params{Logger: logger, Repo: iftaRepo, Fuel: fuel}),
+		IFTAService: iftaservice.New(iftaservice.Params{
+			Logger: logger,
+			Repo:   iftaRepo,
+			Fuel:   fuel,
+		}),
 	}
 
 	formulaStats := loaders.NewFormulaTemplateStatsLoaderFactory(

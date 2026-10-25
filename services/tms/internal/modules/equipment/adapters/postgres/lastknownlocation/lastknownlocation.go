@@ -4,20 +4,13 @@ import (
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/modules/equipment/domain/equipmentcontinuity"
 	"github.com/emoss08/trenova/internal/modules/equipment/domain/equipmentcontinuity/equipmentcontinuitydb"
+	"github.com/emoss08/trenova/internal/modules/equipment/ports/equipmentcontinuityports"
 )
 
 const (
-	alias        = "lkc"
-	filterAlias  = "lkf"
-	nameSQL      = "(SELECT l.name FROM locations l WHERE l.id = ? AND l.organization_id = ? AND l.business_unit_id = ?)"
-	latitudeSQL  = "(SELECT l.latitude FROM locations l WHERE l.id = ? AND l.organization_id = ? AND l.business_unit_id = ?)"
-	longitudeSQL = "(SELECT l.longitude FROM locations l WHERE l.id = ? AND l.organization_id = ? AND l.business_unit_id = ?)"
+	alias       = "lkc"
+	filterAlias = "lkf"
 )
-
-type Tenant struct {
-	OrganizationID keel.Expr
-	BusinessUnitID keel.Expr
-}
 
 type Fields struct {
 	LocationID keel.Expr
@@ -42,13 +35,23 @@ func Current(
 	}
 }
 
-func Of(ec *equipmentcontinuitydb.EquipmentContinuitiesTable, tenant Tenant) Fields {
+func Of(
+	ec *equipmentcontinuitydb.EquipmentContinuitiesTable,
+	locations equipmentcontinuityports.LocationColumns,
+) Fields {
 	current := ec.CurrentLocationID
+	lookup := func(column keel.Expr) keel.Expr {
+		return keel.Scalar(
+			keel.Handle[*keel.Row]{Ref: locations.ID.Ref}.
+				Pick(column).
+				Where(locations.ID.EqCol(current)),
+		)
+	}
 	return Fields{
 		LocationID: current,
-		Name:       keel.Raw(nameSQL, current, tenant.OrganizationID, tenant.BusinessUnitID),
-		Latitude:   keel.Raw(latitudeSQL, current, tenant.OrganizationID, tenant.BusinessUnitID),
-		Longitude:  keel.Raw(longitudeSQL, current, tenant.OrganizationID, tenant.BusinessUnitID),
+		Name:       lookup(locations.Name),
+		Latitude:   lookup(locations.Latitude),
+		Longitude:  lookup(locations.Longitude),
 	}
 }
 

@@ -5,6 +5,7 @@ package trailerrepository_test
 import (
 	"testing"
 
+	"github.com/emoss08/trenova/internal/bootstrap/crossref"
 	"github.com/emoss08/trenova/internal/modules/equipment/adapters/postgres/trailerrepository"
 	"github.com/emoss08/trenova/internal/modules/equipment/domain/trailer"
 	"github.com/emoss08/trenova/internal/modules/equipment/equipmenttest"
@@ -22,7 +23,11 @@ import (
 func TestTrailerRepository(t *testing.T) {
 	db := equipmenttest.NewDevelopmentDatabase(t)
 	a := db.A
-	repo := trailerrepository.New(trailerrepository.Params{DB: db.Conn, Logger: zap.NewNop()})
+	repo := trailerrepository.New(trailerrepository.Params{
+		DB:        db.Conn,
+		Logger:    zap.NewNop(),
+		Locations: crossref.LocationColumns(),
+	})
 
 	trailerID := pulid.ID(equipmenttest.Value[string](
 		t,

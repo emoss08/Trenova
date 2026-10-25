@@ -8,6 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/infrastructure/minio"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
+	"github.com/emoss08/trenova/internal/modules/identity/adapters/postgres/tenantsyncrepository"
 	"github.com/emoss08/trenova/internal/modules/kernel/adapters/postgres/enveloperepository"
 	"github.com/emoss08/trenova/internal/modules/kernel/app/encryptionservice"
 	"github.com/emoss08/trenova/internal/modules/kernel/app/enveloperewrapservice"
@@ -128,13 +129,13 @@ func runRewrap(cmd *cobra.Command, _ []string) error {
 		}
 	}
 
+	db := postgres.WrapDB(maint)
 	service := enveloperewrapservice.New(enveloperewrapservice.Deps{
-		Repository: enveloperepository.New(
-			enveloperepository.Params{DB: postgres.WrapDB(maint)},
-		),
-		Rewrapper: encryptionservice.NewEnvelopeRewrapper(encryption),
-		Storage:   storage,
-		Logger:    logger.Named("encryption.rewrap"),
+		Repository: enveloperepository.New(enveloperepository.Params{DB: db}),
+		Tenants:    tenantsyncrepository.NewTenantLister(tenantsyncrepository.Params{DB: db}),
+		Rewrapper:  encryptionservice.NewEnvelopeRewrapper(encryption),
+		Storage:    storage,
+		Logger:     logger.Named("encryption.rewrap"),
 	})
 
 	report, err := service.Run(

@@ -6,6 +6,7 @@ import (
 	"context"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/bootstrap/crossref"
 	"github.com/emoss08/trenova/internal/modules/rating/adapters/postgres/formulalibraryrepository"
 	"github.com/emoss08/trenova/internal/modules/rating/adapters/postgres/formulalibraryversionrepository"
 	"github.com/emoss08/trenova/internal/modules/rating/adapters/postgres/formulatemplaterepository"
@@ -50,6 +51,7 @@ func setup(t *testing.T) *libraryFixture {
 		}),
 		templates: formulatemplaterepository.New(formulatemplaterepository.Params{
 			DB: conn, Logger: zap.NewNop(),
+			Consumers: crossref.TemplateConsumers(),
 		}),
 		tversions: formulatemplateversionrepository.New(formulatemplateversionrepository.Params{
 			DB: conn, Logger: zap.NewNop(),

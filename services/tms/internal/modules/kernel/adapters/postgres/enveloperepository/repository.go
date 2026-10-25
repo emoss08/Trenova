@@ -10,18 +10,12 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
-	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/jackc/pgx/v5"
 	"go.uber.org/fx"
 )
 
 const (
-	listTenantsScopeReason = "list every organization to rewrap its sealed values to the active key"
-
-	listTenantsSQL = "SELECT id, business_unit_id FROM organizations ORDER BY id"
-
 	idColumn             = "id"
 	organizationIDColumn = "organization_id"
 	businessUnitIDColumn = "business_unit_id"
@@ -48,11 +42,6 @@ func New(p Params) kernelports.EnvelopeRepository {
 	return &repository{db: p.DB}
 }
 
-type tenantRow struct {
-	ID             pulid.ID
-	BusinessUnitID pulid.ID
-}
-
 type envelopeRecord struct {
 	ID             string
 	OrganizationID string
@@ -71,30 +60,6 @@ type source struct {
 	extra      []keel.Col
 	extraNames []string
 	untouched  []keel.Assignment
-}
-
-func (r *repository) ListTenants(ctx context.Context) ([]pagination.TenantInfo, error) {
-	ctx = dbscope.WithSystem(ctx, listTenantsScopeReason)
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]pagination.TenantInfo, error) {
-		rows, err := keel.QueryAll(
-			ctx,
-			r.db.Keel(ctx),
-			pgx.RowToStructByPos[tenantRow],
-			listTenantsSQL,
-		)
-		if err != nil {
-			return nil, fmt.Errorf("list organizations: %w", err)
-		}
-
-		tenants := make([]pagination.TenantInfo, 0, len(rows))
-		for _, row := range rows {
-			tenants = append(
-				tenants,
-				pagination.TenantInfo{OrgID: row.ID, BuID: row.BusinessUnitID},
-			)
-		}
-		return tenants, nil
-	})
 }
 
 func (r *repository) ListRows(

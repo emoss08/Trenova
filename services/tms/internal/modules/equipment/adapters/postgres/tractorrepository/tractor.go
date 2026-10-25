@@ -12,6 +12,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/equipment/domain/equipmentcontinuity"
 	"github.com/emoss08/trenova/internal/modules/equipment/domain/tractor"
 	"github.com/emoss08/trenova/internal/modules/equipment/domain/tractor/tractordb"
+	"github.com/emoss08/trenova/internal/modules/equipment/ports/equipmentcontinuityports"
 	"github.com/emoss08/trenova/internal/modules/equipment/ports/tractorports"
 	"github.com/emoss08/trenova/internal/modules/identity/app/quotaservice"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/platformplanports"
@@ -29,22 +30,25 @@ var tractorErrors = dberror.Mapping{Entity: "Tractor"}
 type Params struct {
 	fx.In
 
-	DB     *postgres.Connection
-	Logger *zap.Logger
-	Quota  platformplanports.QuotaGuard `optional:"true"`
+	DB        *postgres.Connection
+	Logger    *zap.Logger
+	Quota     platformplanports.QuotaGuard `optional:"true"`
+	Locations equipmentcontinuityports.LocationColumns
 }
 
 type repository struct {
-	db    *postgres.Connection
-	l     *zap.Logger
-	quota platformplanports.QuotaGuard
+	db        *postgres.Connection
+	l         *zap.Logger
+	quota     platformplanports.QuotaGuard
+	locations equipmentcontinuityports.LocationColumns
 }
 
 func New(p Params) tractorports.TractorRepository {
 	return &repository{
-		db:    p.DB,
-		l:     p.Logger.Named("postgres.tractor-repository"),
-		quota: quotaservice.OrUnlimited(p.Quota),
+		db:        p.DB,
+		l:         p.Logger.Named("postgres.tractor-repository"),
+		quota:     quotaservice.OrUnlimited(p.Quota),
+		locations: p.Locations,
 	}
 }
 
@@ -90,7 +94,10 @@ func (r *repository) List(
 						),
 					},
 					Shape: func(q *keel.Query[*tractor.Tractor]) *keel.Query[*tractor.Tractor] {
-						return withLastKnownLocation(q.Load(loads...), &req.TractorRelationIncludes)
+						return r.withLastKnownLocation(
+							q.Load(loads...),
+							&req.TractorRelationIncludes,
+						)
 					},
 				},
 			)
@@ -152,7 +159,7 @@ func (r *repository) GetByID(
 ) (*tractor.Tractor, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*tractor.Tractor, error) {
 		t := tractordb.Tractors
-		q, err := tractorQuery(&req.TractorRelationIncludes)
+		q, err := r.tractorQuery(&req.TractorRelationIncludes)
 		if err != nil {
 			return nil, err
 		}
@@ -176,7 +183,7 @@ func (r *repository) GetByIDs(
 		}
 
 		t := tractordb.Tractors
-		q, err := tractorQuery(&req.TractorRelationIncludes)
+		q, err := r.tractorQuery(&req.TractorRelationIncludes)
 		if err != nil {
 			return nil, err
 		}
@@ -239,7 +246,7 @@ func (r *repository) SelectOptions(
 	)
 }
 
-func tractorQuery(
+func (r *repository) tractorQuery(
 	includes *tractorports.TractorRelationIncludes,
 ) (*keel.Query[*tractor.Tractor], error) {
 	loads, err := tractorLoads(includes)
@@ -252,7 +259,7 @@ func tractorQuery(
 		return nil, err
 	}
 
-	return withLastKnownLocation(q.Load(loads...), includes), nil
+	return r.withLastKnownLocation(q.Load(loads...), includes), nil
 }
 
 func tractorLoads(includes *tractorports.TractorRelationIncludes) ([]keel.Loader, error) {
@@ -330,7 +337,7 @@ func tractorLoads(includes *tractorports.TractorRelationIncludes) ([]keel.Loader
 
 const lastKnownLocationFilter = "lastKnownLocationId"
 
-func withLastKnownLocation(
+func (r *repository) withLastKnownLocation(
 	q *keel.Query[*tractor.Tractor],
 	includes *tractorports.TractorRelationIncludes,
 ) *keel.Query[*tractor.Tractor] {
@@ -340,10 +347,7 @@ func withLastKnownLocation(
 
 	t := tractordb.Tractors
 	ec := lastknownlocation.Continuity()
-	location := lastknownlocation.Of(ec, lastknownlocation.Tenant{
-		OrganizationID: t.OrganizationID,
-		BusinessUnitID: t.BusinessUnitID,
-	})
+	location := lastknownlocation.Of(ec, r.locations)
 	current := ec.Pick(ec.CurrentLocationID).
 		Where(lastknownlocation.Current(ec, t.ID, equipmentcontinuity.EquipmentTypeTractor)...).
 		Limit(1)

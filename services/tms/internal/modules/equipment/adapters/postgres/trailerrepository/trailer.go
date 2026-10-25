@@ -12,6 +12,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/equipment/domain/equipmentcontinuity"
 	"github.com/emoss08/trenova/internal/modules/equipment/domain/trailer"
 	"github.com/emoss08/trenova/internal/modules/equipment/domain/trailer/trailerdb"
+	"github.com/emoss08/trenova/internal/modules/equipment/ports/equipmentcontinuityports"
 	"github.com/emoss08/trenova/internal/modules/equipment/ports/trailerports"
 	"github.com/emoss08/trenova/internal/modules/identity/app/quotaservice"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/platformplanports"
@@ -29,22 +30,25 @@ var trailerErrors = dberror.Mapping{Entity: "Trailer"}
 type Params struct {
 	fx.In
 
-	DB     *postgres.Connection
-	Logger *zap.Logger
-	Quota  platformplanports.QuotaGuard `optional:"true"`
+	DB        *postgres.Connection
+	Logger    *zap.Logger
+	Quota     platformplanports.QuotaGuard `optional:"true"`
+	Locations equipmentcontinuityports.LocationColumns
 }
 
 type repository struct {
-	db    *postgres.Connection
-	l     *zap.Logger
-	quota platformplanports.QuotaGuard
+	db        *postgres.Connection
+	l         *zap.Logger
+	quota     platformplanports.QuotaGuard
+	locations equipmentcontinuityports.LocationColumns
 }
 
 func New(p Params) trailerports.TrailerRepository {
 	return &repository{
-		db:    p.DB,
-		l:     p.Logger.Named("postgres.trailer-repository"),
-		quota: quotaservice.OrUnlimited(p.Quota),
+		db:        p.DB,
+		l:         p.Logger.Named("postgres.trailer-repository"),
+		quota:     quotaservice.OrUnlimited(p.Quota),
+		locations: p.Locations,
 	}
 }
 
@@ -90,7 +94,10 @@ func (r *repository) List(
 						),
 					},
 					Shape: func(q *keel.Query[*trailer.Trailer]) *keel.Query[*trailer.Trailer] {
-						return withLastKnownLocation(q.Load(loads...), &req.TrailerRelationIncludes)
+						return r.withLastKnownLocation(
+							q.Load(loads...),
+							&req.TrailerRelationIncludes,
+						)
 					},
 				},
 			)
@@ -158,7 +165,7 @@ func (r *repository) GetByID(
 ) (*trailer.Trailer, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*trailer.Trailer, error) {
 		tr := trailerdb.Trailers
-		q, err := trailerQuery(&req.TrailerRelationIncludes)
+		q, err := r.trailerQuery(&req.TrailerRelationIncludes)
 		if err != nil {
 			return nil, err
 		}
@@ -201,7 +208,7 @@ func (r *repository) GetByIDs(
 		}
 
 		tr := trailerdb.Trailers
-		q, err := trailerQuery(&req.TrailerRelationIncludes)
+		q, err := r.trailerQuery(&req.TrailerRelationIncludes)
 		if err != nil {
 			return nil, err
 		}
@@ -240,7 +247,7 @@ func (r *repository) BulkUpdateStatus(
 	})
 }
 
-func trailerQuery(
+func (r *repository) trailerQuery(
 	includes *trailerports.TrailerRelationIncludes,
 ) (*keel.Query[*trailer.Trailer], error) {
 	loads, err := trailerLoads(includes)
@@ -253,7 +260,7 @@ func trailerQuery(
 		return nil, err
 	}
 
-	return withLastKnownLocation(q.Load(loads...), includes), nil
+	return r.withLastKnownLocation(q.Load(loads...), includes), nil
 }
 
 func trailerLoads(includes *trailerports.TrailerRelationIncludes) ([]keel.Loader, error) {
@@ -311,7 +318,7 @@ func trailerLoads(includes *trailerports.TrailerRelationIncludes) ([]keel.Loader
 
 const lastKnownLocationFilter = "lastKnownLocationId"
 
-func withLastKnownLocation(
+func (r *repository) withLastKnownLocation(
 	q *keel.Query[*trailer.Trailer],
 	includes *trailerports.TrailerRelationIncludes,
 ) *keel.Query[*trailer.Trailer] {
@@ -321,10 +328,7 @@ func withLastKnownLocation(
 
 	tr := trailerdb.Trailers
 	ec := lastknownlocation.Continuity()
-	location := lastknownlocation.Of(ec, lastknownlocation.Tenant{
-		OrganizationID: tr.OrganizationID,
-		BusinessUnitID: tr.BusinessUnitID,
-	})
+	location := lastknownlocation.Of(ec, r.locations)
 	current := ec.Pick(ec.CurrentLocationID).
 		Where(lastknownlocation.Current(ec, tr.ID, equipmentcontinuity.EquipmentTypeTrailer)...).
 		Limit(1)

@@ -18,12 +18,14 @@ type statsRow struct {
 	UsageCount int64
 }
 
-func statsQuery(templateIDs []pulid.ID) *keel.Query[*formulatemplate.FormulaTemplate] {
+func (r *repository) statsQuery(
+	templateIDs []pulid.ID,
+) *keel.Query[*formulatemplate.FormulaTemplate] {
 	ft := formulatemplatedb.FormulaTemplates
 	rr := rateagreementdb.RateAgreementRules
 	rules := keel.Scalar(rr.Pick(keel.Count()).Where(rr.FormulaTemplateID.EqCol(ft.ID)))
 
-	return ft.Pick(ft.ID, keel.DynOf(shipmentUsage(ft)).Add(rules)).
+	return ft.Pick(ft.ID, keel.DynOf(r.shipmentUsage(ft)).Add(rules)).
 		Where(ft.ID.In(templateIDs...)).
 		Limit(len(templateIDs))
 }
@@ -41,7 +43,7 @@ func (r *repository) CountStatsByIDs(
 				return stats, nil
 			}
 
-			rows, err := keel.Into[statsRow](ctx, r.db.Keel(ctx), statsQuery(req.TemplateIDs))
+			rows, err := keel.Into[statsRow](ctx, r.db.Keel(ctx), r.statsQuery(req.TemplateIDs))
 			if err != nil {
 				r.l.Error(
 					"failed to count formula template stats",

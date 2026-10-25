@@ -9,6 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider/aiproviderdb"
+	"github.com/emoss08/trenova/internal/modules/identity/adapters/postgres/tenantsyncrepository"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/iam"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/iam/iamdb"
 	"github.com/emoss08/trenova/internal/modules/kernel/adapters/postgres/enveloperepository"
@@ -130,6 +131,7 @@ func TestRewrapMovesStoredSecretsToTheActiveKey(t *testing.T) {
 	conn := postgres.NewTestConnection(db)
 	service := enveloperewrapservice.New(enveloperewrapservice.Deps{
 		Repository: enveloperepository.New(enveloperepository.Params{DB: conn}),
+		Tenants:    tenantsyncrepository.NewTenantLister(tenantsyncrepository.Params{DB: conn}),
 		Rewrapper:  encryptionservice.NewEnvelopeRewrapper(keyring(t, newKey, oldKey)),
 	})
 	opts := enveloperewrapservice.Options{OrganizationID: tenant.OrgID, BatchSize: 1}

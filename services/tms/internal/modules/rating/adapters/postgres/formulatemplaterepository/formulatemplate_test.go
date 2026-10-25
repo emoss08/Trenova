@@ -4,6 +4,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/bootstrap/crossref"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/formulatemplate"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/formulatemplate/formulatemplatedb"
 	"github.com/emoss08/trenova/internal/testutil/keeltest"
@@ -80,16 +81,16 @@ func TestUsageQueryCountsEveryConsumerInOneStatement(t *testing.T) {
 	t.Parallel()
 
 	id := pulid.ID("ft_1")
-	sql, args := keeltest.Render(t, usageQuery(id))
+	sql, args := keeltest.Render(t, testRepository().usageQuery(id))
 
-	assert.Contains(
-		t,
-		sql,
-		`(SELECT count(*) FROM shipments sp WHERE sp.formula_template_id = ft."id" `+
-			`AND sp.organization_id = ft."organization_id" AND sp.business_unit_id = ft."business_unit_id")`,
-	)
+	assert.Contains(t, sql, `FROM "shipments" s`)
+	assert.Contains(t, sql, `s."formula_template_id" = ft."id"`)
 	assert.Contains(t, sql, `FROM "rate_agreement_rules"`)
 	assert.Contains(t, sql, `FROM "billing_controls"`)
 	assert.Equal(t, 1, strings.Count(sql, `FROM "formula_templates" ft`))
 	assert.Contains(t, args, "ft_1")
+}
+
+func testRepository() *repository {
+	return &repository{consumers: crossref.TemplateConsumers()}
 }

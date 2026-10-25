@@ -148,8 +148,10 @@ current := ec.Pick(ec.CurrentLocationID).Where(ec.EquipmentID.EqCol(t.ID), ec.Is
 q = q.LeftJoinLateral(current).Compute(t.LastKnownLocationID, ec.CurrentLocationID)
 ```
 
-A table of a module this one may not import is reached with `keel.Raw` scalar subqueries
-(`lastknownlocation.Of`). Aggregates use `keel.Into` over `Group(col).Pick(col, keel.Count())`;
+A table of a module this one may not import is reached through a column port (see "Column
+ports" in [module-architecture.md](../module-architecture.md#column-ports)): the port carries
+that table's generated columns, and the query starts from `keel.Handle[*keel.Row]{Ref: col.Ref}`
+(`lastknownlocation.Of`). Never `keel.Raw` for it. Aggregates use `keel.Into` over `Group(col).Pick(col, keel.Count())`;
 `Count`, `CountUpTo` and `Exists` are terminals; `keel.Into[row]` decodes a `Pick` into a small
 struct.
 

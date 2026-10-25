@@ -3,6 +3,7 @@ package trailerrepository
 import (
 	"testing"
 
+	"github.com/emoss08/trenova/internal/bootstrap/crossref"
 	"github.com/emoss08/trenova/internal/modules/equipment/domain/trailer/trailerdb"
 	"github.com/emoss08/trenova/internal/modules/equipment/ports/trailerports"
 	"github.com/emoss08/trenova/internal/testutil/keeltest"
@@ -15,7 +16,7 @@ import (
 func renderTrailers(t *testing.T, includes trailerports.TrailerRelationIncludes) (string, []any) {
 	t.Helper()
 
-	q, err := trailerQuery(&includes)
+	q, err := testRepository().trailerQuery(&includes)
 	require.NoError(t, err)
 
 	return keeltest.Render(t, q.Limit(10))
@@ -43,8 +44,8 @@ func TestTrailerQuery_ReadsTheLocationsCoordinates(t *testing.T) {
 		trailerports.TrailerRelationIncludes{IncludeLastKnownLocation: true},
 	)
 
-	assert.Contains(t, sql, "SELECT l.latitude FROM locations l")
-	assert.Contains(t, sql, "SELECT l.longitude FROM locations l")
+	assert.Contains(t, sql, `SELECT l2."latitude" FROM "locations" l2`)
+	assert.Contains(t, sql, `SELECT l3."longitude" FROM "locations" l3`)
 	assert.Contains(
 		t,
 		sql,
@@ -92,4 +93,8 @@ func TestTrailerStatusFilter(t *testing.T) {
 	sql, _ := keeltest.Render(t, trailerdb.Trailers.
 		Where(repo.statusFilter(string(domaintypes.EquipmentStatusAvailable))).Limit(1))
 	assert.Contains(t, sql, `AND t."status" = 'Available' LIMIT 1`)
+}
+
+func testRepository() *repository {
+	return &repository{locations: crossref.LocationColumns()}
 }

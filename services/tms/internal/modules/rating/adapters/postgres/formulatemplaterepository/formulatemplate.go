@@ -22,27 +22,27 @@ import (
 	"go.uber.org/zap"
 )
 
-const shipmentUsageSQL = "(SELECT count(*) FROM shipments sp WHERE sp.formula_template_id = ? " +
-	"AND sp.organization_id = ? AND sp.business_unit_id = ?)"
-
 var formulaTemplateErrors = dberror.Mapping{Entity: "FormulaTemplate"}
 
 type Params struct {
 	fx.In
 
-	DB     *postgres.Connection
-	Logger *zap.Logger
+	DB        *postgres.Connection
+	Logger    *zap.Logger
+	Consumers formulatemplateports.TemplateConsumers
 }
 
 type repository struct {
-	db *postgres.Connection
-	l  *zap.Logger
+	db        *postgres.Connection
+	l         *zap.Logger
+	consumers formulatemplateports.TemplateConsumers
 }
 
 func New(p Params) formulatemplateports.FormulaTemplateRepository {
 	return &repository{
-		db: p.DB,
-		l:  p.Logger.Named("postgres.formula-template-repository"),
+		db:        p.DB,
+		l:         p.Logger.Named("postgres.formula-template-repository"),
+		consumers: p.Consumers,
 	}
 }
 
@@ -358,20 +358,25 @@ type usageRow struct {
 	Fallbacks int64
 }
 
-func usageQuery(templateID pulid.ID) *keel.Query[*formulatemplate.FormulaTemplate] {
+func (r *repository) usageQuery(
+	templateID pulid.ID,
+) *keel.Query[*formulatemplate.FormulaTemplate] {
 	ft := formulatemplatedb.FormulaTemplates
 	rr := rateagreementdb.RateAgreementRules
 	bc := tenantdb.BillingControls
 
 	return ft.Pick(
-		shipmentUsage(ft),
+		r.shipmentUsage(ft),
 		keel.Scalar(rr.Pick(keel.Count()).Where(rr.FormulaTemplateID.EqCol(ft.ID))),
 		keel.Scalar(bc.Pick(keel.Count()).Where(bc.FallbackFormulaTemplateID.EqCol(ft.ID))),
 	).Where(ft.ID.Eq(templateID))
 }
 
-func shipmentUsage(ft *formulatemplatedb.FormulaTemplatesTable) keel.Expr {
-	return keel.Raw(shipmentUsageSQL, ft.ID, ft.OrganizationID, ft.BusinessUnitID)
+func (r *repository) shipmentUsage(ft *formulatemplatedb.FormulaTemplatesTable) keel.Expr {
+	sp := r.consumers.Shipments
+	return keel.Scalar(
+		keel.Handle[*keel.Row]{Ref: sp.Ref}.Pick(keel.Count()).Where(sp.EqCol(ft.ID)),
+	)
 }
 
 func (r *repository) CountUsages(
@@ -382,7 +387,7 @@ func (r *repository) CountUsages(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*formulatemplateports.GetTemplateUsageResponse, error) {
-			row, err := keel.IntoOne[usageRow](ctx, r.db.Keel(ctx), usageQuery(req.TemplateID))
+			row, err := keel.IntoOne[usageRow](ctx, r.db.Keel(ctx), r.usageQuery(req.TemplateID))
 			if err != nil && !dberror.IsNotFoundError(err) {
 				r.l.Error(
 					"failed to count usages",
