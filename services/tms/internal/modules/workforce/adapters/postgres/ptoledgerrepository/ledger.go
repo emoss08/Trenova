@@ -39,8 +39,8 @@ func New(p Params) workerports.PTOLedgerRepository {
 	}
 }
 
-func sumOrZero(e keel.Expr) keel.Expr {
-	return keel.DynOf(e).Coalesce(0)
+func sumOrZero(e keel.Expr) keel.NumericExpr {
+	return keel.NumericOf(e).Coalesce(0)
 }
 
 func balanceQuery(key *workerports.PTOBalanceKey) *keel.Query[*worker.WorkerPTOBalance] {

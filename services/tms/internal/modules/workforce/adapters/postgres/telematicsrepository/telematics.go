@@ -63,7 +63,7 @@ func newerPosition(col keel.Col, excluded keel.Expr) keel.Expr {
 	vp := telematicsdb.VehiclePositions
 
 	return keel.DynCase().
-		When(keel.DynOf(vp.RecordedAt).Lte(vp.RecordedAt.Excluded()), excluded).
+		When(keel.Int64Of(vp.RecordedAt).LteExpr(keel.Int64Of(vp.RecordedAt.Excluded())), excluded).
 		Else(col)
 }
 
@@ -86,7 +86,7 @@ func positionConflict() keel.Conflict {
 			newerPosition(vp.FormattedLocation.Col, vp.FormattedLocation.Excluded()),
 		),
 		vp.ReceivedAt.ToExpr(newerPosition(vp.ReceivedAt.Col, vp.ReceivedAt.Excluded())),
-		vp.RecordedAt.ToExpr(keel.DynFunc("greatest", vp.RecordedAt, vp.RecordedAt.Excluded())),
+		vp.RecordedAt.ToExpr(vp.RecordedAt.Greatest(keel.Int64Of(vp.RecordedAt.Excluded()))),
 	)
 }
 
@@ -607,7 +607,7 @@ func (r *repository) ListWorkerMappings(
 			w := workerdb.Workers
 			rows, err := keel.Into[telematicsports.WorkerTelematicsMapping](ctx, r.db.Keel(ctx), w.
 				Pick(w.ID, w.ExternalID, w.FirstName, w.LastName).
-				Where(keel.DynFunc("btrim", w.ExternalID).NullIf("").IsNotNull()))
+				Where(w.ExternalID.Trim().NullIf("").IsNotNull()))
 			if err != nil {
 				return nil, fmt.Errorf("list worker telematics mappings: %w", err)
 			}
