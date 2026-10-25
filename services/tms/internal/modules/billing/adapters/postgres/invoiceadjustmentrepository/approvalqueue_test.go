@@ -33,7 +33,8 @@ func TestApprovalQueue_PagesBySubmissionTimeThenID(t *testing.T) {
 	assert.Contains(t, sql, `"submitted_at", `)
 	assert.Contains(t, sql, `"created_at") DESC, `)
 	assert.Contains(t, sql, `"id" DESC LIMIT 3`)
-	assert.Contains(t, args, string(invoiceadjustment.StatusPendingApproval))
+	assert.Contains(t, sql, `ia."status" = 'PendingApproval'`)
+	assert.Equal(t, []any{"org_1", "bu_1"}, args)
 }
 
 func TestApprovalQueue_ReadsTheNamesItShowsThroughJoins(t *testing.T) {
@@ -72,8 +73,7 @@ func TestApprovalQueue_AppliesItsOwnFieldFilters(t *testing.T) {
 		},
 	})
 
-	assert.Contains(t, sql, `"kind" = $`)
-	assert.Contains(t, args, string(invoiceadjustment.KindWriteOff))
+	assert.Contains(t, sql, `ia."kind" = 'WriteOff'`)
 	assert.NotContains(t, args, "x")
 }
 

@@ -52,8 +52,8 @@ func TestRecordOutcomeAddsToTheTenantsDay(t *testing.T) {
 	sql, args := keeltest.Render(t, q.Limit(1))
 
 	assert.Contains(t, sql, `aeud."organization_id" = $1 AND aeud."business_unit_id" = $2`)
-	assert.Contains(t, sql, `aeud."extension_type" = $3 AND aeud."day" = $4`)
-	assert.Equal(t, []any{"org_1", "bu_1", "Exa", int64(20260923)}, args)
+	assert.Contains(t, sql, `aeud."extension_type" = 'Exa' AND aeud."day" = $3`)
+	assert.Equal(t, []any{"org_1", "bu_1", int64(20260923)}, args)
 	assert.Len(t, sets, 3)
 }
 

@@ -18,6 +18,6 @@ func TestLockedAllocations_QualifiesTheAllocationIDAgainstTheInvoiceJoin(t *test
 	assert.Contains(t, sql, `FROM "charge_allocations" ca JOIN "invoices" i ON`)
 	assert.Contains(t, sql, `i."id" = ca."invoice_id"`)
 	assert.Contains(t, sql, `ca."id" = ANY(`)
-	assert.Contains(t, sql, `i."status" = $`)
-	assert.Contains(t, args, "Posted")
+	assert.Contains(t, sql, `i."status" = 'Posted'`)
+	assert.Equal(t, []any{"bu_1", "org_1", []string{"chal_1"}}, args)
 }

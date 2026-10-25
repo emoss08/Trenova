@@ -86,17 +86,15 @@ func TestFamilyExprMatchesTheDomainsFamilies(t *testing.T) {
 	sql, args := keeltest.Render(t, a.Pick(familyExpr()))
 
 	assert.Regexp(t,
-		`WHEN \(\(aa\."kind" = \$3 AND NOT \(aa\."payload" \? \$4\)\)\) THEN \$5::text `, sql)
+		`WHEN \(\(aa\."kind" = 'table_view' AND NOT \(aa\."payload" \? \$3\)\)\) THEN \$4::text `, sql)
 	assert.Regexp(t,
-		`\(aa\."kind" = \$3 AND aa\."payload" \? \$4\)\) THEN \$21::text `, sql)
-	assert.Regexp(t, `WHEN \(aa\."kind" = ANY\(\$24\)\) THEN \$25::text `, sql)
-	assert.Regexp(t, `WHEN \(aa\."kind" = ANY\(\$14\)\) THEN \$15::text `, sql)
-	assert.Equal(t, "table_view", args[2])
-	assert.Equal(t, "path", args[3])
-	assert.Equal(t, "table", args[4])
-	assert.Equal(t, "view", args[20])
-	assert.Equal(t, []string{"extraction", "edi_connection_draft"}, args[23])
-	assert.Equal(t, "extract", args[24])
-	assert.Equal(t, []string{"report_preview", "report_run", "analysis", "portal_task"}, args[13])
-	assert.Equal(t, "report", args[14])
+		`\(aa\."kind" = 'table_view' AND aa\."payload" \? \$3\)\) THEN \$12::text `, sql)
+	assert.Contains(t, sql, `WHEN (aa."kind" IN ('extraction', 'edi_connection_draft')) THEN $14::text `)
+	assert.Contains(t, sql,
+		`WHEN (aa."kind" IN ('report_preview', 'report_run', 'analysis', 'portal_task')) THEN $9::text `)
+	assert.Equal(t, "path", args[2])
+	assert.Equal(t, "table", args[3])
+	assert.Equal(t, "view", args[11])
+	assert.Equal(t, "extract", args[13])
+	assert.Equal(t, "report", args[8])
 }

@@ -20,9 +20,8 @@ func TestExpirePendingByDefinitionExpiresOnlyThePendingProposalsOfTheAgentsRuns(
 	)))
 
 	assert.Contains(t, sql, `FROM "agent_proposals" ap WHERE`)
-	assert.Contains(t, sql, `ap."status" = `)
+	assert.Contains(t, sql, `ap."status" = 'Pending'`)
 	assert.Contains(t, sql, `ap."run_id" IN (SELECT ar."id" FROM "agent_runs" ar WHERE`)
 	assert.Contains(t, sql, `ar."agent_definition_id" = `)
-	assert.Contains(t, args, "Pending")
 	assert.Contains(t, args, agentID.String())
 }

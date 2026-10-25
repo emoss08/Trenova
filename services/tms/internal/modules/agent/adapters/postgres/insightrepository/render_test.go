@@ -17,17 +17,14 @@ func TestActiveInsightsReadTheMostUrgentFirst(t *testing.T) {
 		Limit:               500,
 	}))
 
-	assert.Contains(t, sql, `ORDER BY CASE WHEN i."severity" = $5 THEN $6::bigint`, sql)
-	assert.Contains(t, sql, `ELSE $11::bigint END DESC, i."detected_at" DESC LIMIT 50`, sql)
-	assert.Equal(t, []any{
-		string(insight.SeverityCritical), int64(3),
-		string(insight.SeverityWarning), int64(2),
-		string(insight.SeverityInfo), int64(1),
-		int64(0),
-	}, args[4:11])
+	assert.Contains(t, sql, `ORDER BY CASE WHEN i."severity" = 'Critical' THEN $4::bigint`+
+		` WHEN i."severity" = 'Warning' THEN $5::bigint`+
+		` WHEN i."severity" = 'Info' THEN $6::bigint`, sql)
+	assert.Contains(t, sql, `ELSE $7::bigint END DESC, i."detected_at" DESC LIMIT 50`, sql)
+	assert.Equal(t, []any{int64(3), int64(2), int64(1), int64(0)}, args[3:7])
 	assert.Contains(t, sql, `i."detector_key" = ANY($`, sql)
 	assert.NotContains(t, sql, `"category"`+" = ANY", sql)
-	assert.Contains(t, args, string(insight.StatusActive))
+	assert.Contains(t, sql, `i."status" = 'Active'`, sql)
 }
 
 func TestListDefaultsToWhatNeedsAttentionNow(t *testing.T) {
@@ -36,14 +33,14 @@ func TestListDefaultsToWhatNeedsAttentionNow(t *testing.T) {
 	sql, args := keeltest.Render(t, listFilter(&insightports.ListInsightsQuery{
 		AllowedDetectorKeys: insightports.AllowedDetectorKeys{"ontime"},
 	}))
-	assert.Contains(t, sql, `i."status" = $`, sql)
-	assert.Contains(t, args, string(insight.StatusActive))
+	assert.Contains(t, sql, `i."status" = 'Active'`, sql)
+	assert.NotContains(t, args, string(insight.StatusActive))
 
 	sql, _ = keeltest.Render(t, listFilter(&insightports.ListInsightsQuery{
 		AllowedDetectorKeys: insightports.AllowedDetectorKeys{"ontime"},
 		Statuses:            []insight.Status{insight.StatusDismissed, insight.StatusResolved},
 	}))
-	assert.Contains(t, sql, `i."status" = ANY($`, sql)
+	assert.Contains(t, sql, `i."status" IN ('Dismissed', 'Resolved')`, sql)
 }
 
 func TestCloseActiveSupersedesNothingWhenARunFoundNothing(t *testing.T) {

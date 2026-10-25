@@ -31,7 +31,7 @@ func TestRunEventReads_KeepAConversationRunsEventsToItsOwnerForAPerson(t *testin
 		assert.Contains(t, query, `EXISTS (SELECT`, query)
 		assert.Contains(t, query, `"agent_runs" event_run`, query)
 		assert.Contains(t, query, `event_run."id" = are."owner_id"`, query)
-		assert.Contains(t, query, `event_run."subject_type" <> $`, query)
+		assert.Contains(t, query, `event_run."subject_type" <> 'AssistantThread'`, query)
 		assert.Contains(t, query, `"assistant_threads" readable_thread`, query)
 		assert.Contains(t, query, `readable_thread."id" = event_run."subject_id"`, query)
 		assert.Contains(t, query, `readable_thread."user_id" = $`, query)
@@ -42,7 +42,7 @@ func TestRunEventReads_ShowNoConversationRunsEventsToAReaderWhoIsNoPerson(t *tes
 	t.Parallel()
 
 	for _, query := range readEventsEveryWay(t, agentports.PersonRunRead(pulid.Nil)) {
-		assert.Contains(t, query, `event_run."subject_type" <> $`, query)
+		assert.Contains(t, query, `event_run."subject_type" <> 'AssistantThread'`, query)
 		assert.NotContains(t, query, "assistant_threads", query)
 	}
 }

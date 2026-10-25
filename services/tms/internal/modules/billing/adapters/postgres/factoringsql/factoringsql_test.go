@@ -16,6 +16,6 @@ func TestLiveInvoicePred_CorrelatesTheItemsWithTheInvoice(t *testing.T) {
 
 	assert.Contains(t, sql, `EXISTS (SELECT 1 FROM "factoring_submission_items" fsi WHERE `)
 	assert.Contains(t, sql, `fsi."invoice_id" = i."id"`)
-	assert.Contains(t, sql, `fsi."status" = ANY($`)
-	assert.Contains(t, args, []string{"Pending", "Funded"})
+	assert.Contains(t, sql, `fsi."status" IN ('Pending', 'Funded')`)
+	assert.Equal(t, []any{"org_1", "bu_1"}, args)
 }
