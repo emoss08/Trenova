@@ -88,16 +88,16 @@ func joinEdge[T any](q *keel.Query[*T], e stopEdge, moveID keel.Expr) *keel.Quer
 		LeftJoin(e.state, e.state.ID.EqCol(e.loc.StateID))
 }
 
-func text(e keel.Expr) keel.Expr {
-	return keel.DynOf(e).Coalesce("")
+func text(e keel.Expr) keel.StringExpr {
+	return keel.StringOf(e).Coalesce("")
 }
 
-func enumText(e keel.Expr) keel.Expr {
-	return keel.DynOf(e).Cast(keel.TypeString).Coalesce("")
+func enumText(e keel.Expr) keel.StringExpr {
+	return keel.CastText(e).Coalesce("")
 }
 
-func zero(e keel.Expr) keel.Expr {
-	return keel.DynOf(e).Coalesce(0)
+func zero(e keel.Expr) keel.Int64Expr {
+	return keel.Int64Of(e).Coalesce(0)
 }
 
 // boardMoves is the move board's FROM clause: the move, its shipment and customer, its
@@ -142,15 +142,19 @@ func moveFilters(filter *shipmentports.DispatchBoardFilter) []keel.Pred {
 	// still the dispatcher's problem, and would otherwise vanish from the board entirely.
 	if filter.WindowStart > 0 {
 		preds = append(preds, keel.Or(
-			keel.DynOf(destination.stop.ScheduledWindowEnd).
-				Coalesce(destination.stop.ScheduledWindowStart, origin.stop.ScheduledWindowStart).
+			destination.stop.ScheduledWindowEnd.
+				Coalesce(
+					destination.stop.ScheduledWindowStart.Coalesce(
+						origin.stop.ScheduledWindowStart,
+					),
+				).
 				Gte(filter.WindowStart),
 			sm.Status.In(openBoardStatuses...),
 		))
 	}
 	if filter.WindowEnd > 0 {
 		preds = append(preds,
-			keel.DynOf(origin.stop.ScheduledWindowStart).Coalesce(0).Lte(filter.WindowEnd))
+			origin.stop.ScheduledWindowStart.Coalesce(0).Lte(filter.WindowEnd))
 	}
 	if filter.Query != "" {
 		preds = append(preds, keel.Or(

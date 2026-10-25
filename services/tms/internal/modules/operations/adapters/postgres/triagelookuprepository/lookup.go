@@ -39,12 +39,12 @@ func New(p Params) shipmentports.TriageLookupRepository {
 	return &repository{db: p.DB}
 }
 
-func text(e keel.Expr) keel.Expr {
-	return keel.DynOf(e).Coalesce("")
+func text(e keel.Expr) keel.StringExpr {
+	return keel.StringOf(e).Coalesce("")
 }
 
-func lowerEq(col keel.Expr, value string) keel.Pred {
-	return keel.DynFunc("lower", col).Eq(keel.DynFunc("lower", value))
+func lowerEq(col keel.StringCol, value string) keel.Pred {
+	return col.Lower().EqExpr(keel.Text(value).Lower())
 }
 
 func (r *repository) PeekDetails(
@@ -71,7 +71,7 @@ func (r *repository) PeekDetails(
 					sp.ID,
 					sp.Status,
 					text(cus.Name),
-					keel.DynOf(et.Description).NullIf("").Coalesce(et.Code, ""),
+					et.Description.NullIf("").Coalesce(et.Code.Coalesce("")),
 					sp.ActualDeliveryDate,
 				).
 				Where(sp.ID.In(shipmentIDs...)))
@@ -218,7 +218,7 @@ func (r *repository) FindLocations(
 			var stateMatch keel.Pred
 			if state != "" {
 				stateMatch = keel.Or(
-					keel.DynFunc("upper", us.Abbreviation).Eq(keel.DynFunc("upper", state)),
+					us.Abbreviation.Upper().EqExpr(keel.Text(state).Upper()),
 					lowerEq(us.Name, state),
 				)
 			}
@@ -227,12 +227,7 @@ func (r *repository) FindLocations(
 				LeftJoin(us, us.ID.EqCol(loc.StateID)).
 				Pick(
 					loc.ID,
-					keel.DynFunc(
-						"concat_ws",
-						" · ",
-						loc.Name,
-						keel.DynFunc("concat_ws", ", ", loc.City, us.Abbreviation),
-					),
+					keel.ConcatWS(" · ", loc.Name, keel.ConcatWS(", ", loc.City, us.Abbreviation)),
 					text(loc.Timezone),
 					exact,
 				).
@@ -261,7 +256,7 @@ func (r *repository) FindTrailerTypes(
 			et := equipmenttypedb.EquipmentTypes
 			exact := keel.Or(lowerEq(et.Code, query), lowerEq(et.Description, query))
 			return keel.Into[shipmentports.TriageRecordMatch](ctx, r.db.Keel(ctx), et.
-				Pick(et.ID, keel.DynOf(et.Description).NullIf("").Coalesce(et.Code), exact).
+				Pick(et.ID, et.Description.NullIf("").Coalesce(et.Code), exact).
 				Where(
 					et.Status.Eq(domaintypes.StatusActive),
 					et.Class.In(equipmenttype.ClassTrailer, equipmenttype.ClassContainer),
@@ -306,7 +301,7 @@ func (r *repository) HoldReasonByCode(
 		hr := holdreasondb.HoldReasons
 		id, err := keel.IntoOne[pulid.ID](ctx, r.db.Keel(ctx), hr.
 			Pick(hr.ID).
-			Where(keel.DynFunc("upper", hr.Code).Eq(keel.DynFunc("upper", code)), hr.Active.IsTrue()).
+			Where(hr.Code.Upper().EqExpr(keel.Text(code).Upper()), hr.Active.IsTrue()).
 			Limit(1))
 		if dberror.IsNotFoundError(err) {
 			return pulid.Nil, nil

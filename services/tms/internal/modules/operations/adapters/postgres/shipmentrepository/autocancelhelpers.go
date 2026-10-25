@@ -170,13 +170,13 @@ func controlledAutoCancelIDs(currentTime int64, t tenancy) *keel.Query[*shipment
 		Where(
 			sc.AutoCancelShipments.IsTrue(),
 			sp.Status.Eq(shipment.StatusNew),
-			keel.DynOf(sp.CreatedAt).Lte(
+			keel.Int64Of(sp.CreatedAt).LteExpr(keel.Int64Of(
 				keel.DynLit(currentTime).Sub(
 					keel.DynOf(sc.AutoCancelShipmentsThreshold).
 						Coalesce(shipmentstate.DefaultAutoCancelThresholdDays).
-						Mul(keel.DynLit(secondsPerDay).Cast(keel.TypeInt64)),
+						Mul(keel.Int64(secondsPerDay)),
 				),
-			),
+			)),
 		).
 		Order(sp.ID.Asc())
 

@@ -44,8 +44,8 @@ const (
 	pickLastDelivery
 )
 
-func DeliveryAt(st *shipmentdb.StopsTable) keel.Expr {
-	return keel.DynOf(st.ActualArrival).Coalesce(st.ScheduledWindowStart)
+func DeliveryAt(st *shipmentdb.StopsTable) keel.Int64Expr {
+	return st.ActualArrival.Coalesce(st.ScheduledWindowStart)
 }
 
 func FirstPickupStop(
@@ -193,7 +193,8 @@ func deliveryWithin(start, end int64) keel.Pred {
 
 	return keel.And(
 		sp.Status.Ne(shipment.StatusCanceled),
-		keel.DynFunc("int8range", start, end).Covers(keel.Scalar(delivery)),
+		keel.Int8Range(keel.Int64(start), keel.Int64(end)).
+			Covers(keel.Int64Of(keel.Scalar(delivery))),
 	)
 }
 
@@ -214,11 +215,10 @@ func pickupWindowCondition(now int64, spec shipment.QuickFilterSpec) keel.Pred {
 
 	return keel.And(
 		StageCondition(shipment.StageNeedsCoverage),
-		keel.DynFunc(
-			"int8range",
-			keel.DynLit(lower).Cast(keel.TypeInt64),
-			keel.DynLit(upper).Cast(keel.TypeInt64),
-		).Covers(keel.Scalar(pickup)),
+		keel.Int8Range(
+			keel.Int64Of(keel.DynLit(lower).Cast(keel.TypeInt64)),
+			keel.Int64Of(keel.DynLit(upper).Cast(keel.TypeInt64)),
+		).Covers(keel.Int64Of(keel.Scalar(pickup))),
 	)
 }
 
@@ -229,7 +229,7 @@ func reeferCondition() keel.Pred {
 	profiles := mpf.Where(
 		mpf.Status.Eq(modeprofile.ProfileStatusActive),
 		mpf.EquipmentClass.Eq(modeprofile.EquipmentClassRefrigerated),
-		mpf.EquipmentTypeIDs.Contains(keel.DynFunc("jsonb_build_array", sp.TrailerTypeID)),
+		mpf.EquipmentTypeIDs.Contains(keel.JSONBuildArray(sp.TrailerTypeID)),
 	)
 
 	return keel.Or(
@@ -239,12 +239,12 @@ func reeferCondition() keel.Pred {
 	)
 }
 
-func costMiles(sm *shipmentdb.ShipmentMovesTable, includeDeadhead bool) keel.Expr {
+func costMiles(sm *shipmentdb.ShipmentMovesTable, includeDeadhead bool) keel.Float64Expr {
 	if includeDeadhead {
-		return keel.DynOf(sm.Distance).Sum().Coalesce(0)
+		return keel.Float64Of(sm.Distance.Sum()).Coalesce(0)
 	}
 
-	return keel.DynOf(sm.Distance).Sum().Filter(keel.DynOf(sm.Loaded)).Coalesce(0)
+	return keel.Float64Of(sm.Distance.Sum().Filter(keel.BoolOf(sm.Loaded))).Coalesce(0)
 }
 
 func lowMarginCondition(margin *shipmentports.ShipmentMarginBasis) keel.Pred {
@@ -252,19 +252,19 @@ func lowMarginCondition(margin *shipmentports.ShipmentMarginBasis) keel.Pred {
 	sm := shipmentdb.ShipmentMoves.As(quickMilesAlias)
 	revenue := sp.TotalChargeAmount
 
-	cost := keel.DynFunc(
-		"round",
-		keel.DynLit(margin.CostPerMile).Cast(keel.TypeNumeric).
-			Mul(keel.DynOf(costMiles(sm, margin.IncludeDeadheadMiles)).Cast(keel.TypeNumeric)),
-		2,
-	)
+	cost := keel.NumericOf(
+		keel.DynOf(keel.Numeric(margin.CostPerMile)).
+			Mul(keel.CastNumeric(costMiles(sm, margin.IncludeDeadheadMiles))),
+	).RoundTo(2)
 
 	miles := sm.
 		Where(sm.ShipmentID.EqCol(sp.ID), sm.Status.Ne(shipment.MoveStatusCanceled)).
 		Having(
-			keel.DynOf(sm.Distance).Sum().Coalesce(0).Gt(0),
-			keel.DynOf(revenue).Lte(0).Or(
-				keel.DynFunc("round", keel.DynOf(revenue).Sub(cost).Mul(100).Div(revenue), 2).
+			keel.Float64Of(sm.Distance.Sum()).Coalesce(0).Gt(0),
+			keel.Or(
+				revenue.AnyCol.Lte(0),
+				keel.NumericOf(keel.DynOf(revenue).Sub(cost).Mul(100).Div(revenue)).
+					RoundTo(2).
 					Lt(margin.TargetMarginPercent),
 			),
 		)
@@ -304,9 +304,9 @@ func DwellingStops(
 		sm.ShipmentID.EqCol(sp.ID),
 		sm.Status.Ne(shipment.MoveStatusCanceled),
 		st.Status.Ne(shipment.StopStatusCanceled),
-		keel.DynOf(st.ActualArrival).Coalesce(0).Gt(0),
-		keel.DynOf(st.ActualDeparture).Coalesce(0).Eq(0),
-		keel.DynOf(st.CountDetentionOverride).Coalesce(true),
+		st.ActualArrival.Coalesce(0).Gt(0),
+		st.ActualDeparture.Coalesce(0).Eq(0),
+		st.CountDetentionOverride.Coalesce(true),
 		st.ActualArrival.Lte(now-thresholdMinutes*secondsPerMinute),
 	)
 }

@@ -117,12 +117,12 @@ func (p stopPlace) join(q *keel.Query[*shipment.Shipment]) *keel.Query[*shipment
 		LeftJoin(p.state, p.state.ID.EqCol(p.loc.StateID))
 }
 
-func (p stopPlace) city() keel.Expr {
-	return keel.DynOf(p.loc.City).Coalesce("")
+func (p stopPlace) city() keel.StringExpr {
+	return p.loc.City.Coalesce("")
 }
 
-func (p stopPlace) stateCode() keel.Expr {
-	return keel.DynOf(p.state.Abbreviation).Coalesce("")
+func (p stopPlace) stateCode() keel.StringExpr {
+	return p.state.Abbreviation.Coalesce("")
 }
 
 func (r *searchCardReader) ListSearchCards(
@@ -161,19 +161,19 @@ func (r *searchCardReader) ListSearchCards(
 				LeftJoin(drv, drv.ID.EqCol(asg.PrimaryWorkerID)).
 				Pick(
 					sp.ID,
-					keel.DynOf(sp.ProNumber).Coalesce(""),
-					keel.DynOf(sp.BOL).Coalesce(""),
+					sp.ProNumber.Coalesce(""),
+					sp.BOL.Coalesce(""),
 					sp.Status,
-					keel.DynOf(sp.CustomerID).Coalesce(""),
-					keel.DynOf(sp.Customer().Name).Coalesce(""),
-					keel.DynOf(sp.Customer().Code).Coalesce(""),
-					keel.DynOf(sp.ServiceType().Code).Coalesce(""),
+					sp.CustomerID.Coalesce(""),
+					sp.Customer().Name.Coalesce(""),
+					sp.Customer().Code.Coalesce(""),
+					sp.ServiceType().Code.Coalesce(""),
 					origin.city(),
 					origin.stateCode(),
 					dest.city(),
 					dest.stateCode(),
-					keel.DynOf(drv.ID).Coalesce(""),
-					keel.DynFunc("concat_ws", " ", drv.FirstName, drv.LastName).Coalesce(""),
+					drv.ID.Coalesce(""),
+					keel.ConcatWS(" ", drv.FirstName, drv.LastName).Coalesce(""),
 				).
 				Where(sp.ID.In(req.ShipmentIDs...))
 
@@ -225,7 +225,7 @@ func (r *searchCardReader) customerLinks(
 ) ([]*shipmentports.ShipmentPartyLink, error) {
 	sp := shipmentdb.Shipments
 	links, err := keel.Into[shipmentports.ShipmentPartyLink](ctx, r.db.Keel(ctx), sp.
-		Pick(sp.ID, sp.CustomerID, keel.DynLit("")).
+		Pick(sp.ID, sp.CustomerID, keel.Text("")).
 		Where(
 			sp.CustomerID.In(req.CustomerIDs...),
 			sp.Status.Ne(shipment.StatusCanceled),
@@ -259,7 +259,7 @@ func (r *searchCardReader) workerLinks(
 		Join(sp, sp.ID.EqCol(sm.ShipmentID)).
 		JoinLateral(seat).
 		DistinctOn(workerID).
-		Pick(sp.ID, keel.DynLit(""), workerID).
+		Pick(sp.ID, keel.Text(""), workerID).
 		Where(
 			asg.ArchivedAt.IsNull(),
 			asg.Status.Ne(shipment.AssignmentStatusCanceled),

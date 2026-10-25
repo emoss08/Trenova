@@ -345,12 +345,12 @@ func (r *repository) matchTier(
 	})
 }
 
-func upperEq(col keel.Expr, value string) keel.Pred {
-	return keel.DynFunc("upper", col).Eq(strings.ToUpper(value))
+func upperEq(col keel.StringCol, value string) keel.Pred {
+	return col.Upper().Eq(strings.ToUpper(value))
 }
 
-func lowerEq(col keel.Expr, value string) keel.Pred {
-	return keel.DynFunc("lower", col).Eq(strings.ToLower(value))
+func lowerEq(col keel.StringCol, value string) keel.Pred {
+	return col.Lower().Eq(strings.ToLower(value))
 }
 
 func (r *repository) MatchLane(

@@ -234,7 +234,7 @@ func (r *repository) findActiveAssignment(
 		entity, err := a.Join(sm, sm.ID.EqCol(a.ShipmentMoveID)).
 			Where(a.ArchivedAt.IsNull(), subject, sm.Status.In(activeMoveStatuses...)).
 			Order(
-				keel.DynOf(sm.Status).Eq(string(shipment.MoveStatusInTransit)).Desc(),
+				keel.Desc(sm.Status.Eq(shipment.MoveStatusInTransit)),
 				sm.CreatedAt.Desc(),
 			).
 			First(ctx, r.db.Keel(ctx))
@@ -399,11 +399,11 @@ func actualTimelineEvents(column keelkinds.PulidIDCol, resourceID pulid.ID) *kee
 			LeftJoin(loc, loc.ID.EqCol(st.LocationID)).
 			Pick(
 				at(st),
-				keel.DynLit(string(kind)),
+				keel.Text(string(kind)),
 				st.ID,
 				st.ShipmentMoveID,
 				sm.ShipmentID,
-				keel.DynOf(loc.Name).Coalesce(""),
+				loc.Name.Coalesce(""),
 			).
 			Where(
 				a.ArchivedAt.IsNull(),

@@ -187,7 +187,7 @@ func (r *factRepository) CustomerVisibleHolds(
 				LeftJoin(hr, hr.ID.EqCol(hc.HoldReasonID)).
 				Pick(
 					hc.Type,
-					keel.DynOf(hr.Label).Coalesce(hc.ReasonCode, ""),
+					hr.Label.Coalesce(hc.ReasonCode.Coalesce("")),
 					hc.StartedAt,
 				).
 				Where(
@@ -302,14 +302,14 @@ func (r *factRepository) Descriptors(
 				Limit(1)
 
 			equipment := et.
-				Pick(keel.DynOf(et.Description).NullIf("").Coalesce(et.Code)).
+				Pick(et.Description.NullIf("").Coalesce(et.Code)).
 				Where(et.ID.EqCol(sp.TrailerTypeID)).
 				Limit(1)
 
 			row, err := keel.IntoOne[descriptorRow](ctx, r.db.Keel(ctx), sp.
 				Pick(
-					keel.DynOf(keel.Scalar(carrierName)).Coalesce(""),
-					keel.DynOf(keel.Scalar(equipment)).Coalesce(""),
+					keel.StringOf(keel.Scalar(carrierName)).Coalesce(""),
+					keel.StringOf(keel.Scalar(equipment)).Coalesce(""),
 				).
 				Where(sp.ID.Eq(shipmentID)))
 			if err != nil {

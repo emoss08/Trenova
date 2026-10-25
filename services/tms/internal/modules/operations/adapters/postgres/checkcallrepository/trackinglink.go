@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/checkcall"
@@ -128,7 +127,7 @@ func (r *linkRepository) PurgeDead(ctx context.Context, before int64, limit int)
 			Where(tl.ID.InQuery(
 				dead.AllTenants().
 					Pick(dead.ID).
-					Where(keel.DynOf(dead.RevokedAt).Coalesce(dead.ExpiresAt).Lt(before)).
+					Where(dead.RevokedAt.Coalesce(dead.ExpiresAt).Lt(before)).
 					Limit(limit),
 			)).
 			Delete(ctx, r.db.Keel(ctx))

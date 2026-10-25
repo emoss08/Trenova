@@ -342,8 +342,8 @@ func (r *repository) DetectLanePattern(
 				r.db.Keel(ctx),
 				sp.Pick(
 					keel.Count(),
-					keel.DynOf(sp.CreatedAt).Min().Coalesce(0),
-					keel.DynOf(sp.CreatedAt).Max().Coalesce(0),
+					keel.Int64Of(sp.CreatedAt.Min()).Coalesce(0),
+					keel.Int64Of(sp.CreatedAt.Max()).Coalesce(0),
 				).Where(
 					sp.CustomerID.Eq(req.CustomerID),
 					sp.Status.Ne(shipment.StatusCanceled),

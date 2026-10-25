@@ -42,13 +42,13 @@ func TestMoveFiltersKeepPastDueOpenMoves(t *testing.T) {
 
 	require.Regexp(
 		t,
-		`\(\(coalesce\([a-z_]+\."scheduled_window_end", [a-z_]+\."scheduled_window_start", [a-z_]+\."scheduled_window_start"\) >= \$\d+\) OR [a-z_]+\."status" IN \('New', 'Assigned', 'InTransit'\)\)`,
+		`\(coalesce\([a-z_]+\."scheduled_window_end", coalesce\([a-z_]+\."scheduled_window_start", [a-z_]+\."scheduled_window_start"\)\) >= \$\d+ OR [a-z_]+\."status" IN \('New', 'Assigned', 'InTransit'\)\)`,
 		sql,
 		"open moves must be exempt from the window lower bound",
 	)
 	require.Regexp(
 		t,
-		`\(coalesce\([a-z_]+\."scheduled_window_start", \$\d+\) <= \$\d+\)`,
+		`coalesce\([a-z_]+\."scheduled_window_start", \$\d+\) <= \$\d+`,
 		sql,
 		"window upper bound must still bound the planning horizon",
 	)

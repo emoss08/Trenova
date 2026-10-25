@@ -93,7 +93,7 @@ func moveSummaryQuery(
 
 	uncovered := keel.And(asn.ID.IsNull(), ca.ID.IsNull())
 	covered := keel.Or(asn.ID.IsNotNull(), ca.ID.IsNotNull())
-	scheduled := keel.DynOf(windowStart).Coalesce(0).Gt(0)
+	scheduled := windowStart.Coalesce(0).Gt(0)
 
 	return boardMoves().
 		LeftJoin(pos,
@@ -103,16 +103,16 @@ func moveSummaryQuery(
 		Pick(
 			countIf(uncovered),
 			countIf(covered),
-			countIf(uncovered, scheduled, keel.DynOf(windowStart).Lt(now)),
+			countIf(uncovered, scheduled, windowStart.Lt(now)),
 			countIf(
 				uncovered,
 				scheduled,
-				keel.DynOf(windowStart).Gte(now),
-				keel.DynOf(windowStart).Lte(now+atRiskLeadSeconds),
+				windowStart.Gte(now),
+				windowStart.Lte(now+atRiskLeadSeconds),
 			),
 			countIf(
 				covered,
-				keel.DynOf(asn.CreatedAt).Coalesce(ca.CreatedAt).Gte(dayStart),
+				asn.CreatedAt.Coalesce(ca.CreatedAt).Gte(dayStart),
 			),
 			postgis.DistanceSphere(
 				postgis.Pt(pos.Longitude, pos.Latitude),
@@ -137,7 +137,7 @@ func driverSummaryQuery(filter *shipmentports.DispatchBoardFilter) *keel.Query[*
 	return w.
 		Pick(
 			keel.Count(),
-			countIf(keel.DynOf(openAssignments(w)).Coalesce(0).Eq(0)),
+			countIf(zero(openAssignments(w)).Eq(0)),
 		).
 		Where(driverFilters(filter)...).
 		Where(w.AvailableForDispatch.IsTrue())

@@ -22,7 +22,7 @@ func TestShipmentOptionPredicates_ActivityWindowAddsOverlapPredicate(t *testing.
 
 	assert.Contains(t, sql, "EXISTS (SELECT 1 FROM \"shipment_moves\"")
 	assert.Contains(t, sql, `"scheduled_window_start" > $`)
-	assert.Contains(t, sql, `(coalesce(s2."scheduled_window_end", s2."scheduled_window_start") >= $`)
+	assert.Contains(t, sql, `coalesce(s2."scheduled_window_end", s2."scheduled_window_start") >= $`)
 	assert.Contains(t, args, int64(1_700_086_400))
 	assert.Contains(t, args, int64(1_700_000_000))
 	assert.Contains(t, sql, `"status" <> 'Canceled'`)
@@ -163,7 +163,7 @@ func TestControlledAutoCancelIDs_JoinsTheShipmentControl(t *testing.T) {
 	assert.Contains(
 		t,
 		sql,
-		`(cancel_sp."created_at" <= ($3 - (coalesce(cancel_sc."auto_cancel_shipments_threshold", $4) * $5::bigint)))`,
+		`cancel_sp."created_at" <= ($3 - (coalesce(cancel_sc."auto_cancel_shipments_threshold", $4) * $5::bigint))`,
 		"the day length is bigint so the threshold and the clock are not read as smallint",
 	)
 	assert.Contains(t, sql, `cancel_sp."status" = 'New'`)

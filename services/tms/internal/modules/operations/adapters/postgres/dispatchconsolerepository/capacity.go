@@ -31,13 +31,12 @@ func (r *repository) ListBoardDrivers(
 		fc := fleetcodedb.FleetCodes
 		us := usstatedb.UsStates
 		wt := tractordb.Tractors.As("wtrac")
-		available := string(domaintypes.EquipmentStatusAvailable)
-		isAvailable := keel.DynOf(wt.Status).Eq(available)
+		isAvailable := wt.Status.Eq(domaintypes.EquipmentStatusAvailable)
 
 		tractorOf := wt.
 			Pick(wt.ID, wt.Code, wt.EquipmentTypeID, wt.FleetCodeID, wt.Status).
 			Where(wt.PrimaryWorkerID.EqCol(w.ID)).
-			Order(isAvailable.Desc(), wt.Code.Asc()).
+			Order(keel.Desc(isAvailable), wt.Code.Asc()).
 			Limit(1)
 
 		preds := driverFilters(filter)
@@ -116,9 +115,7 @@ func (r *repository) ListWorkerCommitments(
 			windowStart := keel.Scalar(st.Pick(st.ScheduledWindowStart.Min()).Where(live...))
 			windowEnd := keel.Scalar(st.
 				Pick(
-					keel.Max(
-						keel.DynOf(st.ScheduledWindowEnd).Coalesce(st.ScheduledWindowStart),
-					),
+					st.ScheduledWindowEnd.Coalesce(st.ScheduledWindowStart).Max(),
 				).
 				Where(live...))
 
@@ -145,10 +142,10 @@ func (r *repository) ListWorkerCommitments(
 					asn.PrimaryWorkerID.In(req.WorkerIDs...),
 					sm.Status.In(openMoveStatuses...),
 					keel.When(req.WindowEnd > 0,
-						keel.DynOf(windowStart).Coalesce(0).Lte(req.WindowEnd)),
+						zero(windowStart).Lte(req.WindowEnd)),
 					keel.When(
 						req.WindowStart > 0,
-						keel.DynOf(windowEnd).Coalesce(windowStart, 0).Gte(req.WindowStart),
+						keel.Int64Of(windowEnd).Coalesce(zero(windowStart)).Gte(req.WindowStart),
 					),
 				).
 				Order(keel.Asc(windowStart))
@@ -219,9 +216,9 @@ func (r *repository) ListWorkerWorkload(
 				Pick(
 					asn.PrimaryWorkerID,
 					keel.Count(),
-					keel.DynOf(sm.Distance).Sum().Coalesce(0).Cast(keel.TypeFloat64),
-					keel.DynOf(sp.TotalChargeAmount).Max().Coalesce(0).Cast(keel.TypeFloat64),
-					keel.DynOf(departure).Coalesce(asn.CreatedAt).Max(),
+					keel.CastFloat64(keel.Float64Of(sm.Distance.Sum()).Coalesce(0)),
+					keel.CastFloat64(keel.NumericOf(sp.TotalChargeAmount.Max()).Coalesce(0)),
+					keel.Int64Of(departure).Coalesce(asn.CreatedAt).Max(),
 				).
 				Where(
 					asn.PrimaryWorkerID.In(req.WorkerIDs...),
@@ -237,10 +234,10 @@ func (r *repository) ListWorkerWorkload(
 			Group(workerID).
 			Pick(
 				workerID,
-				keel.DynOf(perShipment.Col("move_count")).Sum().Cast(keel.TypeInt64),
-				keel.DynOf(perShipment.Col("total_miles")).Sum().Cast(keel.TypeFloat64),
-				keel.DynOf(perShipment.Col("shipment_revenue")).Sum().Cast(keel.TypeFloat64),
-				keel.DynOf(perShipment.Col("last_ended_at")).Max(),
+				keel.CastInt64(keel.NumericOf(perShipment.Col("move_count").Sum())),
+				keel.CastFloat64(keel.Float64Of(perShipment.Col("total_miles").Sum())),
+				keel.CastFloat64(keel.Float64Of(perShipment.Col("shipment_revenue").Sum())),
+				perShipment.Col("last_ended_at").Max(),
 			))
 		if err != nil {
 			return nil, fmt.Errorf("list worker workload: %w", err)
