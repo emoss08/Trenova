@@ -112,6 +112,7 @@ var graphQLExtensionModule = fx.Module("api-graphql-extensions", fx.Provide(
 	gqlext.NewCostBudgetExtension,
 	gqlext.NewReadOnlyExtension,
 	gqlext.NewFieldGuardExtension,
+	gqlext.NewQueryBudgetExtension,
 ))
 
 var graphQLServerModule = fx.Module("api-graphql-server", fx.Provide(
