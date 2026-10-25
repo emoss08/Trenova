@@ -437,57 +437,25 @@ A new column, relation or table needs `task keel-gen` in the same change, and
 
 ### Result cache
 
-keel's result cache (`database.cache`, on by default) serves a repository read that asks for it
-without a round trip while no table it read has changed for the organization. It is built on data
-versions, which `dbpool` keeps on: every keel write bumps its (tenant, table) pairs after commit,
-and the versions reach every process over `LISTEN keel_data_versions`.
+keel's result cache (`Query.Cache`, configured in
+`internal/infrastructure/postgres/resultcache.go` from `database.cache`, on by default) serves a
+read from memory while no table it read has changed for the tenant: an entry is checked against
+keel's data versions on every hit, which `dbpool` keeps on and every process follows over
+`LISTEN keel_data_versions`, so a write of the same process invalidates it at once and one of
+another process within the versions' flush interval (1s) and the notification. Ask for it with a
+TTL class from `pkg/resultcache` (`Cache(resultcache.Settings()...)`); the TTL only bounds how long
+an unused entry stays. A row read as it is from Postgres is cached this way, never in a
+hand-rolled map: this one is invalidated by every process's writes and bounded.
 
-```go
-dt := documenttypedb.DocumentTypes
-return dt.Where(dt.IsSystem.IsTrue()).Order(dt.Code.Asc()).Limit(500).
-	Cache(keel.TTL(10*time.Minute)).List(ctx, r.db.Keel(ctx))
-```
-
-- **Where.** Reads far more frequent than writes to their tables: reference and settings tables,
-  option lists, controls, small catalogs. Not a table written on every request, not a read whose
-  rows are read once.
-- **Key.** An entry is keyed by the statements and their values, the tenant, and
-  `postgres.readScopeCacheKey`: the encoded read scope and, when it narrows anything, the user, so
-  two people of one organization whose permissions show them different rows never share one. A
-  read scope that cannot be resolved never matches a resolved one.
-- **Never on a user-owned table.** A query on a table whose row-level security policy reads
-  `trenova_rls.user_id()` outside a read scope (`users`, `user_organization_memberships`,
-  `organizations` through memberships, `mfa_authenticators`, `mfa_recovery_codes`; see
-  `20261231007040_row_level_security.sql` and `20261231008410_mfa_totp.sql`) returns rows that
-  depend on the person, and the key does not hold the person when nothing is narrowed: never
-  `.Cache` it.
-- **Invisible writes.** `keel.Exec`, `QueryValue`, triggers and statements through `db.Pool()` do
-  not bump versions: call `keel.MarkChanged(ctx, db, tables...)` beside them, or do not cache
-  reads of what they write. A table only a `keel.Raw` fragment reads is named with
-  `keel.AlsoReads`.
-- **Bypasses.** Inside a `dbtx.Write`, inside a `dbtx.Read` after its first statement (its
-  snapshot is taken: put the cached read first, or in its own `dbtx.Read`), under a system scope, for
-  a `Lock`, and while the listener reconnects, the read goes to the database.
-- **Freshness.** This process's writes invalidate its entries at once; another process's after
-  `DataVersions.Interval` (1s) and the notification.
+- **The key** is the statements and their values, the tenant, and `postgres.readScopeCacheKey`:
+  the encoded read scope and, when it narrows anything, the user. A read scope that cannot be
+  resolved never matches a resolved one.
 - **Sizing and tiers.** `database.cache.localBytes` (256 MiB) per process. The Redis tier
   (`database.cache.shared.enabled`, off by default) copies tenant rows into Redis; turn it on only
   where Redis is protected like PostgreSQL. The listener needs a session connection: behind a
   transaction-mode pooler, `database.cache.listenHost`/`listenPort` point it at PostgreSQL.
-- `trenova_db_cache_{hits,misses,bypasses,errors}_total`, `_bytes`, `_versions` and `_listening`;
-  store and listener errors log at most once per 10 seconds. A row read as it is from
-  Postgres is cached with the result cache below, never a hand-rolled map: that one is
-  invalidated by every process's writes and bounded.
-
-### Result cache
-
-keel's result cache (`Query.Cache`, configured in
-`internal/infrastructure/postgres/resultcache.go`) serves a read from memory while no table it
-read has changed for the tenant: an entry is checked against keel's data versions on every hit,
-so a write anywhere invalidates it within the versions' flush interval (a write of the same
-process at once). Ask for it with a TTL class from `pkg/resultcache`
-(`Cache(resultcache.Settings()...)`); the TTL only bounds how long an unused entry stays.
-
+- **Watch it** with `trenova_db_cache_{hits,misses,bypasses,errors}_total`, `_bytes`, `_versions`
+  and `_listening`; store and listener errors log at most once per 10 seconds.
 - **What to cache.** Reads on most requests whose tables change rarely: a tenant's settings rows,
   role resolution, reference lookups by id or code, small whole-table catalogs and the
   no-search select options of a dropdown. Never a list a person filters or scrolls, a table
@@ -496,8 +464,9 @@ process at once). Ask for it with a TTL class from `pkg/resultcache`
 - **Never cache a table whose row-level security policy reads `trenova_rls.user_id()`**:
   `users`, `user_organization_memberships`, `organizations`, `mfa_authenticators`,
   `mfa_recovery_codes`, and `shipments`, `orders`, `invoices`, `workers` (their read-scope
-  policies), nor a query that joins or loads one. The entry is keyed by the tenant and the read
-  scope, not the user, so one user's rows would be served to another.
+  policies), nor a query that joins or loads one. The key holds the user only when the read
+  scope narrows something, and these policies read the user without one (a principal sent
+  `<kind>:none` still sees their own rows), so one user's rows would be served to another.
 - **The cached terminal is the first statement of its `dbtx.Read`.** A repeatable-read
   transaction that has sent a statement has its snapshot and bypasses the cache, as do writes,
   joined transactions, system scopes and `Lock`. A get-or-create reads in `dbtx.Read` before
