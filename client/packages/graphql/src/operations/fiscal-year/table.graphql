@@ -44,6 +44,7 @@ query FiscalYearTable($input: DataTableConnectionInput!, $includeTotalCount: Boo
       }
     }
     totalCount @include(if: $includeTotalCount)
+    totalCountExact @include(if: $includeTotalCount)
     pageInfo {
       ...DataTablePageInfoFields
     }

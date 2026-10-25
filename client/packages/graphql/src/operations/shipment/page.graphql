@@ -704,6 +704,7 @@ query ShipmentBoardTable($input: ShipmentsInput!, $includeTotalCount: Boolean = 
       }
     }
     totalCount @include(if: $includeTotalCount)
+    totalCountExact @include(if: $includeTotalCount)
     pageInfo {
       ...ShipmentPageInfoFields
     }
@@ -855,6 +856,7 @@ query UnassignedShipments($first: Int!, $after: String) {
       }
     }
     totalCount
+    totalCountExact
     pageInfo {
       ...ShipmentPageInfoFields
     }
@@ -869,6 +871,7 @@ query ExceptionShipments($input: ShipmentsInput!) {
       }
     }
     totalCount
+    totalCountExact
     pageInfo {
       ...ShipmentPageInfoFields
     }
@@ -883,6 +886,7 @@ query MapShipments($input: ShipmentsInput!) {
       }
     }
     totalCount
+    totalCountExact
     pageInfo {
       ...ShipmentPageInfoFields
     }
@@ -902,6 +906,7 @@ query ShipmentComments(
       }
     }
     totalCount
+    totalCountExact
     pageInfo {
       ...ShipmentPageInfoFields
     }
@@ -921,6 +926,7 @@ query ShipmentCommentReplies($shipmentId: ID!, $commentId: ID!, $first: Int!, $a
       }
     }
     totalCount
+    totalCountExact
     pageInfo {
       ...ShipmentPageInfoFields
     }

@@ -16,6 +16,7 @@ const list = vi.hoisted(() => ({
   withheld: [] as string[],
   failures: [] as unknown[],
   reads: [] as ArtifactRowsRequest[],
+  estimatedTotal: null as number | null,
 }));
 
 vi.mock("@/services/api", () => ({
@@ -47,7 +48,8 @@ vi.mock("@/services/api", () => ({
           hasMore: end < all.length,
           nextCursor: end < all.length ? `c-${end}` : "",
           nextOffset: null,
-          total: read.total ? all.length : null,
+          total: read.total ? (list.estimatedTotal ?? all.length) : null,
+          totalEstimated: read.total ? list.estimatedTotal !== null : false,
           withheld: list.withheld,
           searchable: list.searchable,
           sortable: list.sortable,
@@ -139,6 +141,7 @@ beforeEach(() => {
   list.withheld = [];
   list.failures = [];
   list.reads = [];
+  list.estimatedTotal = null;
 });
 
 afterEach(() => {
@@ -180,6 +183,15 @@ describe("DeskTableBody paging a list", () => {
     fireEvent.click(screen.getByRole("button", { name: "First page" }));
     expect(screen.getByText("Commodity 1")).toBeInTheDocument();
     expect(list.reads).toHaveLength(2);
+  });
+
+  it("shows an estimated total as approximate and pages only as far as it has read", async () => {
+    list.estimatedTotal = 1_250_000;
+    renderTable(agentRead());
+
+    expect(await within(pager()).findByText("1–25 of about 1.3M")).toBeInTheDocument();
+    expect(screen.getByText("about 1.3M")).toBeInTheDocument();
+    expect(within(pager()).getByText("Page 1 of 3+")).toBeInTheDocument();
   });
 
   it("pages on from an offset when the list is read by offset", async () => {

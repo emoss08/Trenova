@@ -29,6 +29,7 @@ query IftaTaxRateTable($input: IFTATaxRatesInput!, $includeTotalCount: Boolean =
       }
     }
     totalCount @include(if: $includeTotalCount)
+    totalCountExact @include(if: $includeTotalCount)
     pageInfo {
       hasNextPage
       endCursor

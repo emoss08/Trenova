@@ -28,6 +28,7 @@ query DeskIftaReturns($input: IFTAReturnsInput!, $includeTotalCount: Boolean = f
       }
     }
     totalCount @include(if: $includeTotalCount)
+    totalCountExact @include(if: $includeTotalCount)
     pageInfo {
       endCursor
       hasNextPage

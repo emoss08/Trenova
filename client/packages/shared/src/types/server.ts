@@ -5,6 +5,7 @@ export type GenericLimitOffsetResponse<T> = {
   results: T[];
   count: number;
   totalCount?: number | null;
+  totalCountExact?: boolean;
   next: string | null;
   prev: string | null;
   pageInfo?: {
@@ -12,6 +13,7 @@ export type GenericLimitOffsetResponse<T> = {
     hasNextPage: boolean;
     endCursor: string | null;
     totalCount: number | null;
+    totalCountExact?: boolean;
   };
 };
 
@@ -20,6 +22,7 @@ export function createLimitOffsetResponse<ItemType extends z.ZodType>(itemSchema
     results: z.array(itemSchema),
     count: z.number(),
     totalCount: z.number().nullable().optional(),
+    totalCountExact: z.boolean().optional(),
     next: z.string().nullable().default(null),
     prev: z.string().nullable().default(null),
     pageInfo: z
@@ -28,6 +31,7 @@ export function createLimitOffsetResponse<ItemType extends z.ZodType>(itemSchema
         hasNextPage: z.boolean(),
         endCursor: z.string().nullable(),
         totalCount: z.number().nullable(),
+        totalCountExact: z.boolean().optional(),
       })
       .optional(),
   });

@@ -48,6 +48,7 @@ query DeskCarrierCapacityPostings(
       }
     }
     totalCount @include(if: $includeTotalCount)
+    totalCountExact @include(if: $includeTotalCount)
     pageInfo {
       hasNextPage
       endCursor

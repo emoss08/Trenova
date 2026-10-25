@@ -1,4 +1,5 @@
 import { useT } from "@trenova/shared/i18n/use-t";
+import { formatRowTotal } from "@trenova/shared/lib/row-total";
 import { EventTimeline } from "@/components/carrier-intelligence/event-timeline";
 import { IntelInlineError } from "@/components/carrier-intelligence/intel-inline-error";
 import {
@@ -49,6 +50,7 @@ export function IntelligenceEvents({ carrierId, canUpdate, onChanged }: Intellig
     [eventsQuery.data],
   );
   const totalCount = eventsQuery.data?.pages[0]?.totalCount ?? null;
+  const totalCountExact = eventsQuery.data?.pages[0]?.totalCountExact !== false;
 
   const { refetch } = eventsQuery;
   const handleChanged = useCallback(() => {
@@ -71,7 +73,9 @@ export function IntelligenceEvents({ carrierId, canUpdate, onChanged }: Intellig
         <div className="flex items-center gap-2">
           {totalCount !== null ? (
             <span className="text-muted-foreground text-xs tabular-nums">
-              {t("{0, plural, one {# change} other {# changes}}", totalCount)}
+              {totalCountExact
+                ? t("{0, plural, one {# change} other {# changes}}", totalCount)
+                : t("About {0} changes", formatRowTotal(totalCount, false))}
             </span>
           ) : null}
           <Button

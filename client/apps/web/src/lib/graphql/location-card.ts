@@ -17,7 +17,7 @@ export type LocationPolicy =
 export type TimeWindow = { from: number; to: number };
 
 /** The policies the card reads for a location, and how many there are in all. */
-export type LocationPolicies = { rows: LocationPolicy[]; total: number };
+export type LocationPolicies = { rows: LocationPolicy[]; total: number; totalExact?: boolean };
 
 /**
  * One location as the Desk's card reads it. A location the server does not
@@ -77,5 +77,10 @@ export async function fetchLocationPolicies(
     signal: options?.signal,
   });
   const rows = data.detentionPolicies.edges.map((edge) => edge.node);
-  return { rows, total: data.detentionPolicies.totalCount ?? rows.length };
+  return {
+    rows,
+    total: data.detentionPolicies.totalCount ?? rows.length,
+    totalExact:
+      data.detentionPolicies.totalCount == null || data.detentionPolicies.totalCountExact !== false,
+  };
 }

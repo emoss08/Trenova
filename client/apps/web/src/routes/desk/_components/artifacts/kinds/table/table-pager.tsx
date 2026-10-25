@@ -1,6 +1,7 @@
 import { resolveAgentIdentity } from "@/components/agent-identity/agent-identity";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { cn } from "@trenova/shared/lib/utils";
+import { formatRowTotal } from "@trenova/shared/lib/row-total";
 import type { CSSProperties } from "react";
 import type { TableReader } from "../../artifact-payloads";
 import { ArtIcon } from "../../desk-art-kinds";
@@ -35,9 +36,11 @@ export function TablePager({ pages, reader }: { pages: TablePages; reader: Table
   return (
     <div className="dk-tv-pager">
       <span className="dk-tv-range">
-        {pages.exact
-          ? t("{0}–{1} of {2}", from, to, totalText)
-          : t("{0}–{1} of {2}+", from, to, totalText)}
+        {pages.totalEstimated && pages.total !== null
+          ? t("{0}–{1} of about {2}", from, to, formatRowTotal(pages.total, false))
+          : pages.exact
+            ? t("{0}–{1} of {2}", from, to, totalText)
+            : t("{0}–{1} of {2}+", from, to, totalText)}
       </span>
       {rail.length > 1 && (
         <ol

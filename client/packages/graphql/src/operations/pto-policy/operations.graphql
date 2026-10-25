@@ -132,6 +132,7 @@ query PtoPolicyTable($input: PTOPoliciesInput!, $includeTotalCount: Boolean = tr
       }
     }
     totalCount @include(if: $includeTotalCount)
+    totalCountExact @include(if: $includeTotalCount)
     pageInfo {
       hasNextPage
       endCursor
@@ -165,6 +166,7 @@ query WorkerPtoLedger($input: WorkerPTOLedgerInput!) {
       }
     }
     totalCount
+    totalCountExact
     pageInfo {
       hasNextPage
       endCursor

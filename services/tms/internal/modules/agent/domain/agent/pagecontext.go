@@ -59,7 +59,8 @@ type PageView struct {
 	VisibleColumns []string                  `json:"visibleColumns,omitempty"`
 	// RowCount is how many rows the table reported in total; nil when the
 	// table had not counted yet.
-	RowCount *int `json:"rowCount,omitempty"`
+	RowCount          *int `json:"rowCount,omitempty"`
+	RowCountEstimated bool `json:"rowCountEstimated,omitempty"`
 }
 
 // PageSelection is the rows the person had checked: how many, and the first
@@ -376,6 +377,9 @@ func (v *PageView) normalized() *PageView {
 		Sort:           v.Sort,
 		VisibleColumns: v.VisibleColumns,
 		RowCount:       v.RowCount,
+	}
+	if v.RowCount != nil {
+		out.RowCountEstimated = v.RowCountEstimated
 	}
 	if v.Selection != nil && (v.Selection.Count > 0 || len(v.Selection.IDs) > 0) {
 		out.Selection = &PageSelection{Count: v.Selection.Count, IDs: v.Selection.IDs}

@@ -77,6 +77,7 @@ query FactoringRemittances($input: FactoringRemittanceListInput!) {
       }
     }
     totalCount
+    totalCountExact
   }
 }
 
@@ -94,6 +95,7 @@ query FactoringRemittanceLines($input: FactoringRemittanceLineListInput!) {
       }
     }
     totalCount
+    totalCountExact
   }
 }
 
@@ -195,6 +197,7 @@ query FactoringRemittanceTable(
       }
     }
     totalCount @include(if: $includeTotalCount)
+    totalCountExact @include(if: $includeTotalCount)
     pageInfo {
       ...DataTablePageInfoFields
     }

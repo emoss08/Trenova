@@ -81,6 +81,7 @@ query AIUsageFeatures(
 ) {
   aiUsageFeatures(input: $input, days: $days) {
     totalCount @include(if: $includeTotalCount)
+    totalCountExact @include(if: $includeTotalCount)
     pageInfo {
       ...DataTablePageInfoFields
     }

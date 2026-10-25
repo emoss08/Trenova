@@ -1,4 +1,5 @@
 import { useT } from "@trenova/shared/i18n/use-t";
+import { formatRowTotal } from "@trenova/shared/lib/row-total";
 import {
   IMPORT_ROW_FILTER_LABELS,
   IMPORT_ROW_FILTER_STATUSES,
@@ -95,6 +96,7 @@ export function ImportReviewTable({
     [query.data],
   );
   const total = query.data?.pages[0]?.totalCount ?? null;
+  const totalExact = query.data?.pages[0]?.totalCountExact !== false;
 
   return (
     <div className="flex flex-col gap-2">
@@ -229,9 +231,11 @@ export function ImportReviewTable({
 
       <div className="flex items-center justify-between">
         <p className="text-muted-foreground text-xs">
-          {total !== null
-            ? t("Showing {0} of {1, plural, one {# row} other {# rows}}", rows.length, total)
-            : t("Showing {0, plural, one {# row} other {# rows}}", rows.length)}
+          {total === null
+            ? t("Showing {0, plural, one {# row} other {# rows}}", rows.length)
+            : totalExact
+              ? t("Showing {0} of {1, plural, one {# row} other {# rows}}", rows.length, total)
+              : t("Showing {0} of about {1} rows", rows.length, formatRowTotal(total, false))}
         </p>
         {query.hasNextPage ? (
           <Button

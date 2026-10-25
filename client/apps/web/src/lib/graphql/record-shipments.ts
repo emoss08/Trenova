@@ -31,6 +31,8 @@ export type ShipmentScope =
 export type RecordShipmentsPage = {
   rows: RecordShipment[];
   total: number | null;
+  /** False when total is the server's estimate of a list too large to count. */
+  totalExact?: boolean;
   endCursor: string | null;
   hasNextPage: boolean;
 };
@@ -116,6 +118,7 @@ export async function fetchRecordShipments(
   return {
     rows,
     total: firstPage ? (data.shipments.totalCount ?? rows.length) : null,
+    totalExact: data.shipments.totalCount == null || data.shipments.totalCountExact !== false,
     endCursor: data.shipments.pageInfo.endCursor ?? null,
     hasNextPage: data.shipments.pageInfo.hasNextPage,
   };

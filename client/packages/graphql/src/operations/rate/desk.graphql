@@ -9,6 +9,7 @@ query DeskRateAgreementPricing($input: DataTableConnectionInput!) {
       }
     }
     totalCount
+    totalCountExact
   }
 }
 
@@ -35,6 +36,7 @@ query DeskRateAgreements($input: DataTableConnectionInput!, $includeTotalCount: 
       }
     }
     totalCount @include(if: $includeTotalCount)
+    totalCountExact @include(if: $includeTotalCount)
     pageInfo {
       ...DataTablePageInfoFields
     }

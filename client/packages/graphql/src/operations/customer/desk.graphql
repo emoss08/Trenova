@@ -65,6 +65,7 @@ query DeskCustomerRateAgreements($input: DataTableConnectionInput!) {
       }
     }
     totalCount
+    totalCountExact
   }
 }
 

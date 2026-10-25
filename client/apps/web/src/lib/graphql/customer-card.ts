@@ -12,7 +12,7 @@ export type DeskCustomerRateAgreement =
   DeskCustomerRateAgreementsQuery["rateAgreements"]["edges"][number]["node"];
 
 /** A customer's latest records of one kind, newest first, with how many there are in all. */
-export type CustomerRecent<T> = { rows: T[]; total: number };
+export type CustomerRecent<T> = { rows: T[]; total: number; totalExact?: boolean };
 
 /**
  * One customer as the Desk's card reads it. A customer the server does not
@@ -54,5 +54,10 @@ export async function fetchCustomerRateAgreements(
     signal: options?.signal,
   });
   const rows = (data.rateAgreements.edges ?? []).map((edge) => edge.node);
-  return { rows, total: data.rateAgreements.totalCount ?? rows.length };
+  return {
+    rows,
+    total: data.rateAgreements.totalCount ?? rows.length,
+    totalExact:
+      data.rateAgreements.totalCount == null || data.rateAgreements.totalCountExact !== false,
+  };
 }

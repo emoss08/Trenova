@@ -96,12 +96,16 @@ describe("fetchLocationDwell", () => {
 describe("fetchLocationPolicies", () => {
   it("filters the policies to the location, highest priority first, with how many in all", async () => {
     requestGraphQLMock.mockResolvedValue({
-      detentionPolicies: { totalCount: 7, edges: [{ node: { id: "dp_1" } }] },
+      detentionPolicies: {
+        totalCount: 7,
+        totalCountExact: true,
+        edges: [{ node: { id: "dp_1" } }],
+      },
     } as never);
 
     const policies = await fetchLocationPolicies("loc_1", 3);
 
-    expect(policies).toEqual({ rows: [{ id: "dp_1" }], total: 7 });
+    expect(policies).toEqual({ rows: [{ id: "dp_1" }], total: 7, totalExact: true });
     expect(lastCall()).toMatchObject({
       document: DeskLocationPoliciesDocument,
       variables: {

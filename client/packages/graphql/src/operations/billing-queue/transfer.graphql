@@ -17,6 +17,7 @@ query BillingTransferCandidates($input: ShipmentsInput!, $includeTotalCount: Boo
       }
     }
     totalCount @include(if: $includeTotalCount)
+    totalCountExact @include(if: $includeTotalCount)
     pageInfo {
       hasNextPage
       endCursor
@@ -114,6 +115,7 @@ query BillingTransferRunItems(
       }
     }
     totalCount @include(if: $includeTotalCount)
+    totalCountExact @include(if: $includeTotalCount)
     pageInfo {
       hasNextPage
       endCursor
