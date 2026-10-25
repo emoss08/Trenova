@@ -174,12 +174,12 @@ func delayedShipments(
 	st := shipmentdb.Stops.As("late_stp")
 	sm := shipmentdb.ShipmentMoves.As("late_sm")
 	sp := shipmentdb.Shipments
-	windowEnd := keel.Raw("COALESCE(?, ?)", st.ScheduledWindowEnd, st.ScheduledWindowStart)
+	windowEnd := keel.DynOf(st.ScheduledWindowEnd).Coalesce(st.ScheduledWindowStart)
 
 	lateStops := st.Pick(st.ShipmentMoveID).Where(
 		st.Status.NotIn(shipmentstate.DelayedExcludedStopStatuses()...),
 		st.ActualDeparture.IsNull(),
-		keel.Raw("? > 0", windowEnd),
+		keel.DynOf(windowEnd).Gt(0),
 		keel.Raw("? + ? < ?", windowEnd, thresholdSeconds, currentTime),
 	)
 	lateMoves := sm.Pick(sm.ShipmentID).Where(
@@ -198,7 +198,7 @@ func autoDelayedShipmentIDs(currentTime int64, t tenancy) *keel.Query[shipment.S
 	sm := shipmentdb.ShipmentMoves.As("auto_sm")
 	sp := shipmentdb.Shipments.As("auto_sp")
 	sc := tenantdb.ShipmentControls.As("auto_sc")
-	windowEnd := keel.Raw("COALESCE(?, ?)", st.ScheduledWindowEnd, st.ScheduledWindowStart)
+	windowEnd := keel.DynOf(st.ScheduledWindowEnd).Coalesce(st.ScheduledWindowStart)
 
 	q := st.Pick(sm.ShipmentID).
 		Join(sm, sm.ID.EqCol(st.ShipmentMoveID), sm.OrganizationID.EqCol(st.OrganizationID),
@@ -210,7 +210,7 @@ func autoDelayedShipmentIDs(currentTime int64, t tenancy) *keel.Query[shipment.S
 			sc.AutoDelayShipments.IsTrue(),
 			st.Status.NotIn(shipmentstate.DelayedExcludedStopStatuses()...),
 			st.ActualDeparture.IsNull(),
-			keel.Raw("? > 0", windowEnd),
+			keel.DynOf(windowEnd).Gt(0),
 			keel.Raw(
 				"? + (COALESCE(?, ?) * 60) < ?",
 				windowEnd,

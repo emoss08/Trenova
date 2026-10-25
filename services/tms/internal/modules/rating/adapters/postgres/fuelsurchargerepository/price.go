@@ -188,11 +188,11 @@ func latestPerIndexQuery(perIndex int, ceiling string) *keel.Query[fuelsurcharge
 	newer := p.As("newer")
 	newerCount := keel.Scalar(newer.Pick(keel.Count()).Where(
 		newer.FuelIndexID.EqCol(p.FuelIndexID),
-		keel.Raw("? > ?", newer.PriceDate, p.PriceDate),
+		keel.DynOf(newer.PriceDate).Gt(p.PriceDate),
 		newer.PriceDate.Lte(ceiling),
 	))
 
-	return p.Where(p.PriceDate.Lte(ceiling), keel.Raw("? < ?", newerCount, perIndex)).
+	return p.Where(p.PriceDate.Lte(ceiling), keel.DynOf(newerCount).Lt(perIndex)).
 		Order(p.FuelIndexID.Asc(), p.PriceDate.Desc())
 }
 

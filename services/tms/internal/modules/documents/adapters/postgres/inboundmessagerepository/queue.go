@@ -280,7 +280,7 @@ func reviewAssignments(review *inboundmessageports.ReviewPatch, now int64) []kee
 	return []keel.Assignment{
 		m.ReviewedBy.To(review.ReviewerID),
 		m.ReviewedAt.To(now),
-		m.ReviewNote.ToExpr(keel.Raw("COALESCE(NULLIF(?, ''), ?)", review.Note, m.ReviewNote)),
+		m.ReviewNote.ToExpr(keel.DynOf(review.Note).NullIf("").Coalesce(m.ReviewNote)),
 	}
 }
 
@@ -656,7 +656,7 @@ func handOffCandidatesQuery(
 		Where(
 			m.Status.In(needsReviewStatuses...),
 			m.Parked.IsNull(),
-			keel.Raw("? IS DISTINCT FROM ?", m.OwnerID, req.To.String()),
+			keel.DynOf(m.OwnerID).IsDistinctFrom(req.To.String()),
 		).
 		Order(m.DueAt.Asc().NullsLast(), m.ID.Asc()).
 		Limit(req.Limit)

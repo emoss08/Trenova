@@ -219,7 +219,7 @@ func threadTitlesQuery(
 	s := conversationscheduledb.Schedules
 	th := conversationdb.Threads
 
-	return th.Pick(th.ID, keel.Raw("COALESCE(?, '')", th.Title)).
+	return th.Pick(th.ID, keel.DynOf(th.Title).Coalesce("")).
 		Where(th.ID.InQuery(page.Clone().Pick(s.ThreadID)))
 }
 

@@ -296,7 +296,7 @@ func pendingPreview(d *documentdb.DocumentsTable) keel.Pred {
 	return keel.And(
 		d.IsCurrentVersion.IsTrue(),
 		d.PreviewStatus.Eq(document.PreviewStatusPending),
-		keel.Or(d.PreviewStoragePath.IsNull(), keel.Raw("? = ''", d.PreviewStoragePath)),
+		keel.Or(d.PreviewStoragePath.IsNull(), keel.DynOf(d.PreviewStoragePath).Eq("")),
 	)
 }
 

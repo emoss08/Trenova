@@ -574,7 +574,7 @@ func scorecardQuery(req *ediports.GetEDIPartnerScorecardsRequest) *keel.Query[ed
 	}
 	pendingDelivery := keel.And(outbound, m.DeliveryStatus.In(pendingDeliveryStatuses...))
 	acknowledged := keel.And(m.AckReceivedAt.IsNotNull(), m.DeliverySentAt.IsNotNull())
-	latency := keel.Raw("? - ?", m.AckReceivedAt, m.DeliverySentAt)
+	latency := keel.DynOf(m.AckReceivedAt).Sub(m.DeliverySentAt)
 
 	return m.Where(
 		m.EDIPartnerID.IsNotNull(),

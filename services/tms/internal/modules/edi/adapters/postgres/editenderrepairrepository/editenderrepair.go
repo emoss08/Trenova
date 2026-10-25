@@ -76,7 +76,7 @@ func inboundTenders(orgID pulid.ID) []keel.Pred {
 
 func ratingDetailText(key string) keel.Expr {
 	m := edidb.EDIMessages
-	return keel.Raw("COALESCE(?, '')", m.PayloadSnapshot.Text("loadTender", "ratingDetail", key))
+	return keel.DynOf(m.PayloadSnapshot.Text("loadTender", "ratingDetail", key)).Coalesce("")
 }
 
 func candidatesQuery(
@@ -104,7 +104,7 @@ func candidatesQuery(
 		).
 		Where(inboundTenders(req.OrganizationID)...).
 		Where(
-			keel.Raw("NULLIF(BTRIM(?), '') IS NOT NULL", m.RawX12),
+			keel.DynFunc("btrim", m.RawX12).NullIf("").IsNotNull(),
 			keel.When(req.AfterID.IsNotNil(), m.ID.Gt(req.AfterID)),
 		).
 		Order(m.ID.Asc()).
@@ -155,8 +155,8 @@ func (r *repository) CountUnreadableTenders(
 		count, err := m.AllTenants().
 			Where(inboundTenders(req.OrganizationID)...).
 			Where(
-				keel.Raw("NULLIF(BTRIM(?), '') IS NULL", m.RawX12),
-				keel.Raw("? <> ''", ratingDetailText(shipmentIDKey)),
+				keel.DynFunc("btrim", m.RawX12).NullIf("").IsNull(),
+				keel.DynOf(ratingDetailText(shipmentIDKey)).Ne(""),
 			).
 			Count(ctx, r.db.Keel(ctx))
 		if err != nil {
@@ -238,11 +238,7 @@ func transferMatch(req *ediports.RepairTenderReferenceRequest) keel.Pred {
 			t.InboundMessageID.Eq(candidate.MessageID),
 			keel.When(candidate.TransferID.IsNotNil(), t.ID.Eq(candidate.TransferID)),
 		),
-		keel.Raw(
-			"COALESCE(?, '') = ?",
-			t.TenderPayload.Text("ratingDetail", shipmentIDKey),
-			candidate.ShipmentID,
-		),
+		keel.DynOf(t.TenderPayload.Text("ratingDetail", shipmentIDKey)).Coalesce("").Eq(candidate.ShipmentID),
 	)
 }
 

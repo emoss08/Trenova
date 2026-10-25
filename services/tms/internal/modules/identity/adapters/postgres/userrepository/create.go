@@ -85,8 +85,8 @@ func (ur *repository) FindIdentityConflicts(
 			}
 
 			u := tenantdb.Users
-			emailMatch := keel.Raw("lower(?) = lower(?::text)", u.EmailAddress, req.EmailAddress)
-			usernameMatch := keel.Raw("lower(?) = lower(?::text)", u.Username, req.Username)
+			emailMatch := keel.DynFunc("lower", u.EmailAddress).Eq(keel.DynFunc("lower", keel.DynLit(req.EmailAddress).Cast(keel.TypeString)))
+			usernameMatch := keel.DynFunc("lower", u.Username).Eq(keel.DynFunc("lower", keel.DynLit(req.Username).Cast(keel.TypeString)))
 
 			row, err := keel.IntoOne[identityMatches](
 				ctx,

@@ -282,7 +282,7 @@ func (r *repository) GetUsersWithRole(
 			u.Name,
 			ura.OrganizationID,
 			o.Name,
-			keel.Raw("?::text", directAssignment),
+			keel.DynOf(directAssignment).Cast(keel.TypeString),
 		))
 		if err != nil {
 			r.l.Error(

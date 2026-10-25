@@ -85,7 +85,7 @@ func kindOf[T any](table recordTable[T], shape recordShape) recordKind {
 }
 
 func orBlank(e keel.Expr) keel.Expr {
-	return keel.Raw("COALESCE(?, '')", e)
+	return keel.DynOf(e).Coalesce("")
 }
 
 var noSubtitle = keel.Raw("''")
@@ -98,11 +98,7 @@ var recordKinds = map[string]recordKind{
 	}),
 	permission.ResourceWorker.String(): kindOf(workerdb.Workers, recordShape{
 		id: workerdb.Workers.ID,
-		title: keel.Raw(
-			"CONCAT_WS(' ', ?, ?)",
-			workerdb.Workers.FirstName,
-			workerdb.Workers.LastName,
-		),
+		title: keel.DynFunc("concat_ws", " ", workerdb.Workers.FirstName, workerdb.Workers.LastName),
 		subtitle: noSubtitle,
 	}),
 	permission.ResourceTractor.String(): kindOf(tractordb.Tractors, recordShape{

@@ -76,7 +76,7 @@ func missedStopsQuery(req *watchtowerports.ListMissedStopsRequest) *keel.Query[s
 	sp := shipmentdb.Shipments
 	loc := locationdb.Locations
 	ust := loc.State()
-	cutoff := keel.Raw("COALESCE(?, ?)", stp.ScheduledWindowEnd, stp.ScheduledWindowStart)
+	cutoff := keel.DynOf(stp.ScheduledWindowEnd).Coalesce(stp.ScheduledWindowStart)
 
 	return stp.Join(sm, sm.ID.EqCol(stp.ShipmentMoveID)).
 		Join(sp, sp.ID.EqCol(sm.ShipmentID)).
@@ -89,9 +89,9 @@ func missedStopsQuery(req *watchtowerports.ListMissedStopsRequest) *keel.Query[s
 			sp.OwnerID,
 			stp.Type,
 			cutoff,
-			keel.Raw("COALESCE(?, '')", loc.Name),
-			keel.Raw("COALESCE(?, '')", loc.City),
-			keel.Raw("COALESCE(?, '')", ust.Abbreviation),
+			keel.DynOf(loc.Name).Coalesce(""),
+			keel.DynOf(loc.City).Coalesce(""),
+			keel.DynOf(ust.Abbreviation).Coalesce(""),
 		).
 		Where(
 			stp.Type.In(req.StopTypes...),
@@ -99,7 +99,7 @@ func missedStopsQuery(req *watchtowerports.ListMissedStopsRequest) *keel.Query[s
 			stp.Status.NotIn(shipment.StopStatusCompleted, shipment.StopStatusCanceled),
 			sm.Status.Ne(shipment.MoveStatusCanceled),
 			sp.Status.In(openShipmentStatuses()...),
-			keel.Raw("? < ?", cutoff, req.ClosedBefore),
+			keel.DynOf(cutoff).Lt(req.ClosedBefore),
 			keel.When(len(req.ShipmentIDs) > 0, sp.ID.In(req.ShipmentIDs...)),
 		).
 		Order(keel.Asc(cutoff), stp.ID.Asc()).
@@ -144,7 +144,7 @@ func missingPODsQuery(req *watchtowerports.ListMissingPODsRequest) *keel.Query[s
 			sp.ID,
 			sp.ProNumber,
 			sp.OwnerID,
-			keel.Raw("COALESCE(?, '')", sp.Customer().Name),
+			keel.DynOf(sp.Customer().Name).Coalesce(""),
 			delivered,
 		).
 		Where(
@@ -169,7 +169,7 @@ func exhaustedTendersQuery(
 
 	newerTender := newer.Where(
 		newer.ShipmentMoveID.EqCol(tc.ShipmentMoveID),
-		keel.Raw("(?, ?) > (?, ?)", newer.CreatedAt, newer.ID, tc.CreatedAt, tc.ID),
+		keel.DynRow(newer.CreatedAt, newer.ID).Gt(keel.DynRow(tc.CreatedAt, tc.ID)),
 	)
 	covered := ca.Where(
 		ca.ShipmentMoveID.EqCol(sm.ID),
@@ -184,7 +184,7 @@ func exhaustedTendersQuery(
 			sp.ID,
 			sp.ProNumber,
 			sp.OwnerID,
-			keel.Raw("COALESCE(?, ?)", tc.ExhaustedAt, tc.UpdatedAt),
+			keel.DynOf(tc.ExhaustedAt).Coalesce(tc.UpdatedAt),
 		).
 		Where(
 			tc.Status.Eq(tender.StatusExhausted),

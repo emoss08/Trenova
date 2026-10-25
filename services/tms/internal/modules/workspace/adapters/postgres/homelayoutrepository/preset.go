@@ -197,7 +197,7 @@ func (r *repository) ListRoleUserAssignments(
 			assignments, err := keel.Into[homelayoutports.HomeRoleUserAssignment](
 				ctx,
 				r.db.Keel(ctx),
-				a.Pick(a.RoleID, a.UserID, keel.Raw("coalesce(?, '')", role.CoreResponsibility)).
+				a.Pick(a.RoleID, a.UserID, keel.DynOf(role.CoreResponsibility).Coalesce("")).
 					Where(
 						role.ID.IsNotNull(),
 						keel.Or(a.ExpiresAt.IsNull(), a.ExpiresAt.Gt(timeutils.NowUnix())),

@@ -201,7 +201,7 @@ func (r *repository) ListCumulativeBalancesThroughPeriod(
 					).
 					Where(
 						target.ID.Eq(req.FiscalPeriodID),
-						keel.Raw("? <= ?", fp.PeriodNumber, target.PeriodNumber),
+						keel.DynOf(fp.PeriodNumber).Lte(target.PeriodNumber),
 					).
 					Group(
 						gb.OrganizationID,

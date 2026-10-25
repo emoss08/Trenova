@@ -120,8 +120,8 @@ func (r *actualsRepository) ShipmentMilesByIDs(
 						sm.Distance.Sum().
 							Filter(keel.And(sm.Loaded.IsFalse(), sm.Distance.IsNotNull())),
 					),
-					keel.Raw("COALESCE(?, 0)", sp.TotalChargeAmount),
-					keel.Raw("? > 0", keel.Count().Filter(keel.And(sm.ID.IsNotNull(), sm.Distance.IsNull()))),
+					keel.DynOf(sp.TotalChargeAmount).Coalesce(0),
+					keel.DynOf(keel.Count().Filter(keel.And(sm.ID.IsNotNull(), sm.Distance.IsNull()))).Gt(0),
 				).
 				Where(sp.ID.In(req.ShipmentIDs...)).
 				Group(sp.ID, sp.TotalChargeAmount))

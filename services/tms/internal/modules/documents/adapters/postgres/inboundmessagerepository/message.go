@@ -394,8 +394,8 @@ func openCensusQuery(
 	statuses []inboundmessage.Status,
 ) *keel.Query[inboundmessage.InboundMessage] {
 	m := inboundmessagedb.InboundMessages
-	classification := keel.Raw("COALESCE(?, '')", m.Classification)
-	parked := keel.Raw("COALESCE(?, '')", m.Parked)
+	classification := keel.DynOf(m.Classification).Coalesce("")
+	parked := keel.DynOf(m.Parked).Coalesce("")
 	mine := keel.Raw("COALESCE(? = ?, FALSE)", m.OwnerID, req.ViewerID.String())
 	overdue := keel.Raw("COALESCE(? < ?, FALSE)", m.DueAt, req.Now)
 
@@ -413,7 +413,7 @@ func settledCensusQuery(
 	return censusBase(req, statuses).
 		Pick(
 			m.Status,
-			keel.Raw("COALESCE(?, '')", m.Classification),
+			keel.DynOf(m.Classification).Coalesce(""),
 			m.MailboxID,
 			keel.Raw("''"),
 			keel.Raw("FALSE"),

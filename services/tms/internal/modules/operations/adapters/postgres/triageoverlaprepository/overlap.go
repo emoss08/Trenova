@@ -141,7 +141,7 @@ func stopAt(
 			stop.Type.In(req.types...),
 			stop.Status.Ne(shipment.StopStatusCanceled),
 			keel.Raw("lower(btrim(?)) = ?", loc.City, strings.ToLower(strings.TrimSpace(req.city))),
-			keel.Raw("upper(?) = ?", state.Abbreviation, strings.ToUpper(req.state)),
+			keel.DynFunc("upper", state.Abbreviation).Eq(strings.ToUpper(req.state)),
 			keel.When(req.from > 0 && req.to > req.from, stop.ScheduledWindowStart.Gte(req.from)),
 			keel.When(req.from > 0 && req.to > req.from, stop.ScheduledWindowStart.Lt(req.to)),
 		)

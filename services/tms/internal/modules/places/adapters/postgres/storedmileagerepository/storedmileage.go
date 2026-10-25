@@ -174,11 +174,7 @@ func (r *repository) BulkUpsert(
 					sm.ProviderMetadata,
 					sm.LastCalculatedAt,
 				).
-				Set(sm.JurisdictionDistances.ToExpr(keel.Raw(
-					"COALESCE(?, ?)",
-					sm.JurisdictionDistances.Excluded(),
-					sm.JurisdictionDistances,
-				))),
+				Set(sm.JurisdictionDistances.ToExpr(keel.DynOf(sm.JurisdictionDistances.Excluded()).Coalesce(sm.JurisdictionDistances))),
 		)
 		return err
 	})

@@ -176,7 +176,7 @@ func (r *repository) MarkRunning(
 				),
 				run.TemporalRunID.ToExpr(keel.Val(stringutils.NilIfEmpty(req.TemporalRunID))),
 				run.StartedAt.ToExpr(
-					keel.Raw("COALESCE(?, ?)", run.StartedAt, timeutils.NowUnix()),
+					keel.DynOf(run.StartedAt).Coalesce(timeutils.NowUnix()),
 				),
 			)
 		},
@@ -194,10 +194,10 @@ func (r *repository) RequestCancel(
 			run := billingtransferdb.BillingTransferRuns
 			return r.advanceRun(ctx, req.RunID,
 				run.CancelRequestedAt.ToExpr(
-					keel.Raw("COALESCE(?, ?)", run.CancelRequestedAt, timeutils.NowUnix()),
+					keel.DynOf(run.CancelRequestedAt).Coalesce(timeutils.NowUnix()),
 				),
 				run.CancelRequestedByID.ToExpr(
-					keel.Raw("COALESCE(?, ?)", run.CancelRequestedByID, req.RequestedByID.String()),
+					keel.DynOf(run.CancelRequestedByID).Coalesce(req.RequestedByID.String()),
 				),
 			)
 		},

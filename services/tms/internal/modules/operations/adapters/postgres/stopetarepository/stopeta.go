@@ -111,7 +111,7 @@ type excludable interface {
 
 func newerETA() keel.Conflict {
 	e := stopetadb.StopETAs
-	newer := keel.Raw("? <= ?", e.ComputedAt, e.ComputedAt.Excluded())
+	newer := keel.DynOf(e.ComputedAt).Lte(e.ComputedAt.Excluded())
 	cols := []excludable{
 		e.ShipmentID, e.ShipmentMoveID, e.MoveSequence, e.StopSequence, e.Arrived,
 		e.EstimatedArrival, e.EstimatedDeparture, e.WindowEnd, e.SlackMinutes, e.Verdict,
@@ -245,10 +245,10 @@ func (r *repository) stopMeta(
 			st.ID,
 			st.Type,
 			sp.ProNumber,
-			keel.Raw("COALESCE(?, '')", sp.OwnerID),
-			keel.Raw("COALESCE(?, '')", loc.Name),
-			keel.Raw("COALESCE(?, '')", loc.City),
-			keel.Raw("COALESCE(?, '')", ust.Abbreviation),
+			keel.DynOf(sp.OwnerID).Coalesce(""),
+			keel.DynOf(loc.Name).Coalesce(""),
+			keel.DynOf(loc.City).Coalesce(""),
+			keel.DynOf(ust.Abbreviation).Coalesce(""),
 		).
 		Where(st.ID.In(stopIDs...)).
 		Limit(len(stopIDs)))

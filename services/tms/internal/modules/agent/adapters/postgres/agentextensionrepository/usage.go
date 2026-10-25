@@ -111,10 +111,10 @@ func summarize(
 	return u.Group(u.ExtensionType).
 		Pick(
 			u.ExtensionType,
-			keel.Raw("COALESCE(?, 0)", u.Requests.Sum().Filter(u.Day.Eq(int64(params.Today)))),
-			keel.Raw("COALESCE(?, 0)", u.Requests.Sum()),
-			keel.Raw("COALESCE(?, 0)", u.Failures.Sum()),
-			keel.Raw("COALESCE(?, 0)", u.CostUSD.Sum()),
+			keel.DynOf(u.Requests.Sum().Filter(u.Day.Eq(int64(params.Today)))).Coalesce(0),
+			keel.DynOf(u.Requests.Sum()).Coalesce(0),
+			keel.DynOf(u.Failures.Sum()).Coalesce(0),
+			keel.DynOf(u.CostUSD.Sum()).Coalesce(0),
 		).
 		Where(u.Day.Gte(int64(params.FromDay)), u.Day.Lte(int64(params.Today)))
 }

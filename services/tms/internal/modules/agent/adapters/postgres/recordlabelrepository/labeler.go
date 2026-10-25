@@ -126,7 +126,7 @@ var sources = map[permission.Resource]source{
 	},
 	permission.ResourceWorker: func(ids []pulid.ID) projection {
 		t := workerdb.Workers
-		return t.Pick(t.ID, labelText(keel.Raw("CONCAT_WS(' ', ?, ?)", t.FirstName, t.LastName))).
+		return t.Pick(t.ID, labelText(keel.DynFunc("concat_ws", " ", t.FirstName, t.LastName))).
 			Where(t.ID.In(ids...))
 	},
 	permission.ResourceTractor: func(ids []pulid.ID) projection {
@@ -171,7 +171,7 @@ var sources = map[permission.Resource]source{
 	},
 	permission.ResourceDocument: func(ids []pulid.ID) projection {
 		t := documentdb.Documents
-		return t.Pick(t.ID, labelText(keel.Raw("COALESCE(NULLIF(?, ''), ?)", t.OriginalName, t.FileName))).
+		return t.Pick(t.ID, labelText(keel.DynOf(t.OriginalName).NullIf("").Coalesce(t.FileName))).
 			Where(t.ID.In(ids...))
 	},
 	permission.ResourceDashboard: func(ids []pulid.ID) projection {
@@ -237,7 +237,7 @@ var sources = map[permission.Resource]source{
 	},
 	permission.ResourceGeneralLedgerAccount: func(ids []pulid.ID) projection {
 		t := glaccountdb.GLAccounts
-		return t.Pick(t.ID, labelText(keel.Raw("CONCAT_WS(' ', ?, ?)", t.AccountCode, t.Name))).
+		return t.Pick(t.ID, labelText(keel.DynFunc("concat_ws", " ", t.AccountCode, t.Name))).
 			Where(t.ID.In(ids...))
 	},
 	permission.ResourceHazardousMaterial: func(ids []pulid.ID) projection {

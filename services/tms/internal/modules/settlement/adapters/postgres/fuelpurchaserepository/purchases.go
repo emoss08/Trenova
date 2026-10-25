@@ -258,7 +258,7 @@ func (r *repository) AccumulateFuel(
 					fp.JurisdictionID,
 					fp.FuelType,
 					fp.Gallons.Sum(),
-					keel.Raw("coalesce(?, 0)", fp.Gallons.Sum().Filter(fp.TaxPaid.IsTrue())),
+					keel.DynOf(fp.Gallons.Sum().Filter(fp.TaxPaid.IsTrue())).Coalesce(0),
 					keel.Count(),
 				).
 					Where(

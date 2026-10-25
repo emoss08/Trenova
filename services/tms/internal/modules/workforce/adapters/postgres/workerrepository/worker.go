@@ -330,7 +330,7 @@ func (r *repository) GetWorkerSyncReadinessCounts(
 					keel.Count().Filter(active),
 					keel.Count().Filter(keel.And(
 						active,
-						keel.Raw("NULLIF(BTRIM(?), '') IS NOT NULL", w.ExternalID),
+						keel.DynFunc("btrim", w.ExternalID).NullIf("").IsNotNull(),
 					)),
 				),
 			)

@@ -73,7 +73,7 @@ func getQuery(req *agentports.QueuedMessageRequest) *keel.Query[conversation.Que
 func tallyQuery(threadID pulid.ID) *keel.Query[conversation.QueuedMessage] {
 	q := conversationdb.QueuedMessages
 
-	return q.Pick(keel.Count(), keel.Raw("COALESCE(MAX(?), 0)", q.Position)).
+	return q.Pick(keel.Count(), keel.DynOf(q.Position).Max().Coalesce(0)).
 		Where(inScope(&agentports.AssistantQueueScope{ThreadID: threadID}))
 }
 

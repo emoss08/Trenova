@@ -195,7 +195,7 @@ func (g *generator) usersByID(ctx context.Context) (map[pulid.ID]*tenant.User, e
 }
 
 func nullIfEmpty(e keel.Expr) keel.Expr {
-	return keel.Raw("NULLIF(?, '')", e)
+	return keel.DynOf(e).NullIf("")
 }
 
 func postBalances(
@@ -215,11 +215,11 @@ func postBalances(
 		b.FiscalYearID,
 		b.FiscalPeriodID,
 	).Set(
-		b.PeriodDebitMinor.ToExpr(keel.Raw("? + ?", b.PeriodDebitMinor, b.PeriodDebitMinor.Excluded())),
+		b.PeriodDebitMinor.ToExpr(keel.DynOf(b.PeriodDebitMinor).Add(b.PeriodDebitMinor.Excluded())),
 		b.PeriodCreditMinor.ToExpr(
-			keel.Raw("? + ?", b.PeriodCreditMinor, b.PeriodCreditMinor.Excluded()),
+			keel.DynOf(b.PeriodCreditMinor).Add(b.PeriodCreditMinor.Excluded()),
 		),
-		b.NetChangeMinor.ToExpr(keel.Raw("? + ?", b.NetChangeMinor, b.NetChangeMinor.Excluded())),
+		b.NetChangeMinor.ToExpr(keel.DynOf(b.NetChangeMinor).Add(b.NetChangeMinor.Excluded())),
 		b.LastJournalEntryID.ToExpr(b.LastJournalEntryID.Excluded()),
 	),
 	); err != nil {
@@ -277,9 +277,9 @@ func moveAccountBalances(ctx context.Context, db *keel.DB, m accountMoves) error
 	if _, err := ga.With(d).Join(d, d.Col("id").EqCol(ga.ID)).Where(keel.True()).Update(
 		ctx,
 		db,
-		ga.CurrentBalance.ToExpr(keel.Raw("? + ?", ga.CurrentBalance, d.Col("net"))),
-		ga.DebitBalance.ToExpr(keel.Raw("? + ?", ga.DebitBalance, d.Col("debit"))),
-		ga.CreditBalance.ToExpr(keel.Raw("? + ?", ga.CreditBalance, d.Col("credit"))),
+		ga.CurrentBalance.ToExpr(keel.DynOf(ga.CurrentBalance).Add(d.Col("net"))),
+		ga.DebitBalance.ToExpr(keel.DynOf(ga.DebitBalance).Add(d.Col("debit"))),
+		ga.CreditBalance.ToExpr(keel.DynOf(ga.CreditBalance).Add(d.Col("credit"))),
 	); err != nil {
 		return fmt.Errorf("update gl account running balances: %w", err)
 	}
@@ -355,9 +355,9 @@ func rollBackBalances(
 	).Where(keel.True()).Update(
 		ctx,
 		db,
-		b.PeriodDebitMinor.ToExpr(keel.Raw("? + ?", b.PeriodDebitMinor, d.Col("debit"))),
-		b.PeriodCreditMinor.ToExpr(keel.Raw("? + ?", b.PeriodCreditMinor, d.Col("credit"))),
-		b.NetChangeMinor.ToExpr(keel.Raw("? + ?", b.NetChangeMinor, d.Col("net"))),
+		b.PeriodDebitMinor.ToExpr(keel.DynOf(b.PeriodDebitMinor).Add(d.Col("debit"))),
+		b.PeriodCreditMinor.ToExpr(keel.DynOf(b.PeriodCreditMinor).Add(d.Col("credit"))),
+		b.NetChangeMinor.ToExpr(keel.DynOf(b.NetChangeMinor).Add(d.Col("net"))),
 	); err != nil {
 		return fmt.Errorf("roll back period balances: %w", err)
 	}

@@ -27,7 +27,7 @@ var lineageColumns = []string{"root", "pinned", "last", "family"}
 func rootExpr() keel.Expr {
 	a := assistantartifactdb.Artifacts
 
-	return keel.Raw("COALESCE(?, ?)", a.LineageID, a.ID)
+	return keel.DynOf(a.LineageID).Coalesce(a.ID)
 }
 
 func rootIs(root string) keel.Pred {
@@ -267,7 +267,7 @@ func lineageQuery(req *assistantartifactports.ListArtifactsRequest) *keel.CTETab
 			rootExpr(),
 			keel.Raw("bool_or(?)", a.Pinned),
 			a.CreatedAt.Max(),
-			keel.Raw("max(?)", familyExpr()),
+			keel.DynOf(familyExpr()).Max(),
 		))
 }
 
@@ -283,7 +283,7 @@ func pageQuery(
 	root, pinned, last := lineages.Col("root"), lineages.Col("pinned"), lineages.Col("last")
 	window := lineages.Query().With(lineages)
 	if req.Family != "" {
-		window.Where(keel.Raw("? = ?", lineages.Col("family"), string(req.Family)))
+		window.Where(keel.DynOf(lineages.Col("family")).Eq(string(req.Family)))
 	}
 	if req.PinnedOnly {
 		window.Where(keel.Raw("?", pinned))
@@ -439,7 +439,7 @@ func (r *repository) TakenSlugs(
 			Where(
 				a.ThreadID.Eq(threadID),
 				a.LineageID.IsNull(),
-				keel.Raw("? LIKE ?", a.Slug, escapeLike(base)+"%"),
+				keel.DynOf(a.Slug).Like(escapeLike(base)+"%"),
 			).
 			Pick(a.Slug))
 		if err != nil {
@@ -492,15 +492,15 @@ func (r *repository) TurnQuestions(
 		asked := conversationdb.Messages.As("asked")
 		rows, err := keel.Into[turnQuestion](ctx, r.db.Keel(ctx), m.
 			Where(m.ThreadID.Eq(threadID), m.ID.In(messageIDs...)).
-			Pick(m.ID, keel.Raw("COALESCE(?, '')", keel.Scalar(asked.
+			Pick(m.ID, keel.DynOf(keel.Scalar(asked.
 				Where(
 					asked.ThreadID.EqCol(m.ThreadID),
 					asked.Role.Eq(conversation.RoleUser),
-					keel.Raw("? < ?", asked.Sequence, m.Sequence),
+					keel.DynOf(asked.Sequence).Lt(m.Sequence),
 				).
 				Pick(asked.Content).
 				Order(asked.Sequence.Desc()).
-				Limit(1)))))
+				Limit(1))).Coalesce("")))
 		if err != nil {
 			return nil, fmt.Errorf("read turn questions: %w", err)
 		}

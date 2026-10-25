@@ -119,14 +119,14 @@ func dayGroups(
 	return q.LeftJoin(gs, gs.ID.EqCol(endStopID(types, last))).
 		Pick(key, keel.Raw("''"), keel.Count(), revenueSum()).
 		Group(key).
-		Order(keel.Asc(keel.Raw("MIN(?)", gs.ScheduledWindowStart)).NullsLast())
+		Order(keel.Asc(keel.DynOf(gs.ScheduledWindowStart).Min()).NullsLast())
 }
 
 func customerGroups(q *keel.Query[shipment.Shipment]) *keel.Query[shipment.Shipment] {
 	sp := shipmentdb.Shipments
 	cus := sp.Customer()
 
-	return q.Pick(sp.CustomerID, keel.Raw("COALESCE(?, '')", cus.Name), keel.Count(), revenueSum()).
+	return q.Pick(sp.CustomerID, keel.DynOf(cus.Name).Coalesce(""), keel.Count(), revenueSum()).
 		Group(sp.CustomerID, cus.Name).
 		Order(cus.Name.Asc().NullsLast(), sp.CustomerID.Asc())
 }
@@ -136,8 +136,8 @@ func ownerGroups(q *keel.Query[shipment.Shipment]) *keel.Query[shipment.Shipment
 	owner := sp.Owner()
 
 	return q.Pick(
-		keel.Raw("COALESCE(?, '')", sp.OwnerID),
-		keel.Raw("COALESCE(?, '')", owner.Name),
+		keel.DynOf(sp.OwnerID).Coalesce(""),
+		keel.DynOf(owner.Name).Coalesce(""),
 		keel.Count(),
 		revenueSum(),
 	).

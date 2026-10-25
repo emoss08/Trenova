@@ -89,7 +89,7 @@ func joinEdge[T any](q *keel.Query[T], e stopEdge, moveID keel.Expr) *keel.Query
 }
 
 func text(e keel.Expr) keel.Expr {
-	return keel.Raw("coalesce(?, '')", e)
+	return keel.DynOf(e).Coalesce("")
 }
 
 func enumText(e keel.Expr) keel.Expr {
@@ -97,7 +97,7 @@ func enumText(e keel.Expr) keel.Expr {
 }
 
 func zero(e keel.Expr) keel.Expr {
-	return keel.Raw("coalesce(?, 0)", e)
+	return keel.DynOf(e).Coalesce(0)
 }
 
 // boardMoves is the move board's FROM clause: the move, its shipment and customer, its
@@ -154,7 +154,7 @@ func moveFilters(filter *shipmentports.DispatchBoardFilter) []keel.Pred {
 	}
 	if filter.WindowEnd > 0 {
 		preds = append(preds,
-			keel.Raw("coalesce(?, 0) <= ?", origin.stop.ScheduledWindowStart, filter.WindowEnd))
+			keel.DynOf(origin.stop.ScheduledWindowStart).Coalesce(0).Lte(filter.WindowEnd))
 	}
 	if filter.Query != "" {
 		preds = append(preds, keel.Or(

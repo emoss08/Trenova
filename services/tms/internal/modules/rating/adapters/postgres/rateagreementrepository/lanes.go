@@ -122,8 +122,8 @@ func laneSummaryQuery(
 		Group(rr.FormulaTemplateID, ft.Name, rr.Currency).
 		Pick(
 			rr.FormulaTemplateID,
-			keel.Raw("COALESCE(?, '')", ft.Name),
-			keel.Raw("COALESCE(?, '')", rr.Currency),
+			keel.DynOf(ft.Name).Coalesce(""),
+			keel.DynOf(rr.Currency).Coalesce(""),
 			keel.Count(),
 			keel.Min(rate),
 			keel.Max(rate),

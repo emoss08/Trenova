@@ -218,8 +218,8 @@ func simulationShipmentsQuery(
 
 	return sp.Pick(sp.ID).
 		Where(
-			keel.Raw("? >= ?", shipDate, req.From),
-			keel.Raw("? < ?", shipDate, req.To),
+			keel.DynOf(shipDate).Gte(req.From),
+			keel.DynOf(shipDate).Lt(req.To),
 			keel.When(!req.AfterID.IsNil(), sp.ID.Gt(req.AfterID)),
 		).
 		Order(sp.ID.Asc()).

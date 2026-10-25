@@ -47,7 +47,7 @@ func pointers[T any](rows []T) []*T {
 }
 
 func sumOrZero(e keel.Expr) keel.Expr {
-	return keel.Raw("coalesce(sum(?), 0)", e)
+	return keel.DynOf(e).Sum().Coalesce(0)
 }
 
 // ListStopFacts pulls the raw dwell history a backtest replays against. Only
@@ -172,7 +172,7 @@ func (r *analyticsRepository) FacilityStats(
 
 			picks := append([]keel.Expr{
 				o.LocationID,
-				keel.Raw("coalesce(?, '')", loc.Name),
+				keel.DynOf(loc.Name).Coalesce(""),
 				keel.Count(),
 				keel.Count().Filter(o.RoundedMinutes.Gt(0)),
 				keel.Raw("coalesce(round(avg(?)), 0)::bigint", o.RawDwellMinutes),
@@ -221,7 +221,7 @@ func (r *analyticsRepository) CustomerStats(
 
 			picks := append([]keel.Expr{
 				o.CustomerID,
-				keel.Raw("coalesce(?, '')", cus.Name),
+				keel.DynOf(cus.Name).Coalesce(""),
 				keel.Count(),
 				keel.Count().Filter(o.RoundedMinutes.Gt(0)),
 			}, outcomeColumns()...)

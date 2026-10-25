@@ -153,7 +153,7 @@ func (r *repository) Swap(ctx context.Context, req *kernelports.SwapEnvelopeRequ
 
 		replacement := keel.Raw("?", req.Replacement)
 		if req.Column.JSONMap {
-			replacement = keel.Raw("?::jsonb", req.Replacement)
+			replacement = keel.DynOf(req.Replacement).Cast(keel.TypeJSON)
 		}
 
 		sets := slices.Concat(src.untouched, []keel.Assignment{src.value.ToExpr(replacement)})
@@ -274,16 +274,16 @@ func (s *source) column(e keel.Expr) (keel.Col, error) {
 }
 
 func (s *source) listQuery(req *kernelports.ListEnvelopeRowsRequest) *keel.Query[keel.Row] {
-	bu := keel.Expr(keel.Raw("?::text", req.Tenant.BuID.String()))
+	bu := keel.Expr(keel.DynOf(req.Tenant.BuID.String()).Cast(keel.TypeString))
 	if s.bu != nil {
-		bu = keel.Raw("?::text", *s.bu)
+		bu = keel.DynOf(*s.bu).Cast(keel.TypeString)
 	}
 
 	return s.table.Pick(
-		keel.Raw("?::text", s.id),
-		keel.Raw("?::text", s.org),
+		keel.DynOf(s.id).Cast(keel.TypeString),
+		keel.DynOf(s.org).Cast(keel.TypeString),
 		bu,
-		keel.Raw("?::text", s.value),
+		keel.DynOf(s.value).Cast(keel.TypeString),
 		s.extraArray(),
 	).
 		Where(

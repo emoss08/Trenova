@@ -398,9 +398,9 @@ func (r *repository) ListSamplingCases(
 				c.Source,
 				c.Version,
 				c.Trigger,
-				keel.Raw("COALESCE(?, '')", c.SubjectType),
+				keel.DynOf(c.SubjectType).Coalesce(""),
 				c.SubjectID,
-				keel.Raw("COALESCE(?, 0)", lastFailure),
+				keel.DynOf(lastFailure).Coalesce(0),
 			).
 			Where(
 				c.AgentDefinitionID.Eq(req.AgentDefinitionID),

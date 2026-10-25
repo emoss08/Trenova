@@ -45,7 +45,7 @@ const (
 )
 
 func DeliveryAt(st *shipmentdb.StopsTable) keel.Expr {
-	return keel.Raw("COALESCE(?, ?)", st.ActualArrival, st.ScheduledWindowStart)
+	return keel.DynOf(st.ActualArrival).Coalesce(st.ScheduledWindowStart)
 }
 
 func FirstPickupStop(
@@ -237,7 +237,7 @@ func reeferCondition() keel.Pred {
 
 func costMiles(sm *shipmentdb.ShipmentMovesTable, includeDeadhead bool) keel.Expr {
 	if includeDeadhead {
-		return keel.Raw("COALESCE(SUM(?), 0)", sm.Distance)
+		return keel.DynOf(sm.Distance).Sum().Coalesce(0)
 	}
 
 	return keel.Raw("COALESCE(SUM(?) FILTER (WHERE ?), 0)", sm.Distance, sm.Loaded)
@@ -298,9 +298,9 @@ func DwellingStops(
 		sm.ShipmentID.EqCol(sp.ID),
 		sm.Status.Ne(shipment.MoveStatusCanceled),
 		st.Status.Ne(shipment.StopStatusCanceled),
-		keel.Raw("COALESCE(?, 0) > 0", st.ActualArrival),
-		keel.Raw("COALESCE(?, 0) = 0", st.ActualDeparture),
-		keel.Raw("COALESCE(?, TRUE)", st.CountDetentionOverride),
+		keel.DynOf(st.ActualArrival).Coalesce(0).Gt(0),
+		keel.DynOf(st.ActualDeparture).Coalesce(0).Eq(0),
+		keel.DynOf(st.CountDetentionOverride).Coalesce(true),
 		st.ActualArrival.Lte(now-thresholdMinutes*secondsPerMinute),
 	)
 }

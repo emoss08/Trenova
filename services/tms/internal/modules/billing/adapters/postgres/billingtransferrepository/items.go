@@ -239,7 +239,7 @@ func outcomeUpdate(
 	}, shipments, proNumbers, statuses, failureCodes, errorMessages, markedReady,
 		queueItems, queueNumbers, queueStatuses, missing, failures, processed)
 	orNull := func(column string) keel.Expr {
-		return keel.Raw("NULLIF(?, '')", outcome.Col(column))
+		return keel.DynOf(outcome.Col(column)).NullIf("")
 	}
 
 	q := item.With(outcome).
@@ -257,8 +257,8 @@ func outcomeUpdate(
 		item.BillingQueueStatus.ToExpr(
 			keel.Raw("NULLIF(?, '')::billing_queue_status", outcome.Col("billing_queue_status")),
 		),
-		item.MissingRequirements.ToExpr(keel.Raw("?::jsonb", outcome.Col("missing_requirements"))),
-		item.ValidationFailures.ToExpr(keel.Raw("?::jsonb", outcome.Col("validation_failures"))),
+		item.MissingRequirements.ToExpr(keel.DynOf(outcome.Col("missing_requirements")).Cast(keel.TypeJSON)),
+		item.ValidationFailures.ToExpr(keel.DynOf(outcome.Col("validation_failures")).Cast(keel.TypeJSON)),
 		item.ProcessedAt.ToExpr(outcome.Col("processed_at")),
 	}, nil
 }
@@ -327,7 +327,7 @@ func (r *repository) Finalize(
 			rows, err := run.Where(run.ID.Eq(req.RunID)).UpdateReturning(ctx, db,
 				run.Status.To(req.Status),
 				run.FailureMessage.ToExpr(keel.Val(stringutils.NilIfEmpty(req.FailureMessage))),
-				run.CompletedAt.ToExpr(keel.Raw("COALESCE(?, ?)", run.CompletedAt, now)),
+				run.CompletedAt.ToExpr(keel.DynOf(run.CompletedAt).Coalesce(now)),
 			)
 			if err != nil {
 				r.l.Error("failed to finalize billing transfer run", zap.Error(err))

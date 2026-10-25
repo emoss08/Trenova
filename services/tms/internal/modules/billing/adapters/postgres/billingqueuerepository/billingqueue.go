@@ -85,7 +85,7 @@ func itemDetail() *keel.Query[billingqueue.BillingQueueItem] {
 	sh := bq.Shipment()
 	po := keel.Scalar(ord.Pick(ord.PONumber).Where(ord.ID.EqCol(bq.OrderID)).Limit(1))
 
-	return bq.Compute(bq.PONumber, keel.Raw("COALESCE(?, '')", po)).
+	return bq.Compute(bq.PONumber, keel.DynOf(po).Coalesce("")).
 		Load(
 			sh.Customer(),
 			sh.AdditionalCharges(),
@@ -288,7 +288,7 @@ func shipmentTransferSync(
 		Where(sh.ID.In(shipmentIDs...))
 
 	return q, []keel.Assignment{
-		sh.BillingTransferStatus.ToExpr(keel.Raw("?::text", latest.Col("status"))),
+		sh.BillingTransferStatus.ToExpr(keel.DynOf(latest.Col("status")).Cast(keel.TypeString)),
 		sh.TransferredToBillingAt.ToExpr(latest.Col("created_at")),
 		sh.Version.ToExpr(sh.Version),
 		sh.UpdatedAt.ToExpr(sh.UpdatedAt),

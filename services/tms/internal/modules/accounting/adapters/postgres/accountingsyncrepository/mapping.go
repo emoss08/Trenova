@@ -209,8 +209,8 @@ func (r *mappingRepository) CreateMissing(
 			am.BusinessUnitID,
 			am.ConnectionID,
 			am.TargetType,
-			keel.Raw("COALESCE(?, '')", am.TrenovaObjectID),
-			keel.Raw("COALESCE(?, '')", am.TrenovaKey),
+			keel.DynOf(am.TrenovaObjectID).Coalesce(""),
+			keel.DynOf(am.TrenovaKey).Coalesce(""),
 		)
 		if err != nil {
 			return created, fmt.Errorf("create accounting mappings: %w", err)

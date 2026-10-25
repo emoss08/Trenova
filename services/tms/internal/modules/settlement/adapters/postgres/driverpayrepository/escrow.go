@@ -168,7 +168,7 @@ func (r *escrowAccountRepository) ListDueForInterest(
 		items, err := ea.Where(
 			ea.Status.Eq(driverpay.EscrowAccountStatusActive),
 			ea.BalanceMinor.Gt(0),
-			keel.Raw("? > 0", ea.AnnualInterestRate),
+			keel.DynOf(ea.AnnualInterestRate).Gt(0),
 			keel.Raw(
 				"coalesce(?, ?) <= ?",
 				ea.LastInterestAccrualDate,

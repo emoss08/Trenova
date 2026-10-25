@@ -311,7 +311,7 @@ func (r *repository) GetShipmentAttachRefs(
 
 		sp := shipmentdb.Shipments
 		refs, err := keel.Into[orderports.ShipmentAttachRef](ctx, r.db.Keel(ctx), sp.
-			Pick(sp.ID, keel.Raw("COALESCE(?, '')", sp.OrderID), sp.CustomerID, sp.Status).
+			Pick(sp.ID, keel.DynOf(sp.OrderID).Coalesce(""), sp.CustomerID, sp.Status).
 			Where(sp.ID.In(shipmentIDs...)).
 			Limit(len(shipmentIDs)))
 		if err != nil {
@@ -545,7 +545,7 @@ func (r *repository) MarkChargesFullyInvoicedWhereComplete(
 			ctx,
 			r.db.Keel(ctx),
 			oc.InvoicedAt.To(req.InvoicedAt),
-			oc.InvoiceID.ToExpr(keel.Raw("COALESCE(?, ?)", oc.InvoiceID, req.InvoiceID.String())),
+			oc.InvoiceID.ToExpr(keel.DynOf(oc.InvoiceID).Coalesce(req.InvoiceID.String())),
 			unchangedChargeVersion(),
 		)
 		if err != nil {
@@ -601,9 +601,9 @@ func (r *repository) RecalculateTotal(
 		sp := shipmentdb.Shipments.As("leg")
 		oc := orderdb.OrderCharges.As("leg_charge")
 
-		legTotal := keel.Scalar(sp.Pick(keel.Raw("COALESCE(SUM(?), 0)", sp.TotalChargeAmount)).
+		legTotal := keel.Scalar(sp.Pick(keel.DynOf(sp.TotalChargeAmount).Sum().Coalesce(0)).
 			Where(sp.OrderID.Eq(orderID), sp.Status.Ne(shipment.StatusCanceled)))
-		chargeTotal := keel.Scalar(oc.Pick(keel.Raw("COALESCE(SUM(?), 0)", oc.Amount)).
+		chargeTotal := keel.Scalar(oc.Pick(keel.DynOf(oc.Amount).Sum().Coalesce(0)).
 			Where(oc.OrderID.Eq(orderID)))
 
 		if _, err := o.Where(o.ID.Eq(orderID)).Update(

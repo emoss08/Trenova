@@ -264,7 +264,7 @@ func openFactoredInvoices(inv *invoicedb.InvoicesTable) keel.Pred {
 		inv.Status.Eq(invoice.StatusPosted),
 		inv.FactoringCompanyID.IsNotNull(),
 		inv.BillType.Ne(billingqueue.BillTypeCreditMemo),
-		keel.Raw("? > ?", inv.TotalAmountMinor, inv.AppliedAmountMinor),
+		keel.DynOf(inv.TotalAmountMinor).Gt(inv.AppliedAmountMinor),
 	)
 }
 
@@ -418,9 +418,9 @@ func verdictTotals(readyBefore int64) *keel.Query[factoring.InvoiceState] {
 		Pick(
 			st.Verdict,
 			keel.Count(),
-			keel.Raw("COALESCE(?, 0)", st.OpenBalanceMinor.Sum()),
+			keel.DynOf(st.OpenBalanceMinor.Sum()).Coalesce(0),
 			keel.Count().Filter(late),
-			keel.Raw("COALESCE(?, 0)", st.OpenBalanceMinor.Sum().Filter(late)),
+			keel.DynOf(st.OpenBalanceMinor.Sum().Filter(late)).Coalesce(0),
 		).
 		Where(st.Verdict.In(
 			factoring.VerdictReady,
@@ -433,9 +433,9 @@ func fundedTotals() *keel.Query[factoring.SubmissionItem] {
 	item := factoringdb.SubmissionItems
 	return item.Pick(
 		keel.Count(),
-		keel.Raw("COALESCE(?, 0)", item.FaceMinor.Sum()),
-		keel.Count().Filter(keel.Raw("COALESCE(?, 0) > 0", item.ReserveMinor)),
-		keel.Raw("COALESCE(?, 0)", item.ReserveMinor.Sum()),
+		keel.DynOf(item.FaceMinor.Sum()).Coalesce(0),
+		keel.Count().Filter(keel.DynOf(item.ReserveMinor).Coalesce(0).Gt(0)),
+		keel.DynOf(item.ReserveMinor.Sum()).Coalesce(0),
 	).Where(item.Status.Eq(factoring.SubmissionItemStatusFunded))
 }
 

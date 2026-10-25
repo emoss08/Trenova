@@ -68,7 +68,7 @@ func activeTOTP(ctx context.Context) keel.Pred {
 		mfa.UserID.EqCol(u.ID),
 		mfa.Type.Eq(iam.MFAAuthenticatorTypeTOTP),
 		mfa.Enabled.IsTrue(),
-		keel.Raw("COALESCE(?, 0) > 0", mfa.VerifiedAt),
+		keel.DynOf(mfa.VerifiedAt).Coalesce(0).Gt(0),
 	))
 }
 
@@ -85,7 +85,7 @@ func (r *securityBriefingRepository) MemberSummary(
 			memberQuery(ctx, memberScope{TenantInfo: req.TenantInfo, Now: req.Now}).Pick(
 				keel.Count(),
 				keel.Count().Filter(u.IsLocked.IsTrue()),
-				keel.Count().Filter(keel.Raw("COALESCE(?, 0) = 0", u.LastLoginAt)),
+				keel.Count().Filter(keel.DynOf(u.LastLoginAt).Coalesce(0).Eq(0)),
 				keel.Count().Filter(keel.Raw(
 					"COALESCE(NULLIF(?, 0), ?) < ?",
 					u.LastLoginAt,
@@ -236,7 +236,7 @@ func (r *securityBriefingRepository) APIKeySummary(
 			keel.Raw("(COALESCE(?, 0) = 0 OR ? > ?)", k.ExpiresAt, k.ExpiresAt, req.Now),
 		).Pick(
 			keel.Count(),
-			keel.Count().Filter(keel.Raw("COALESCE(?, 0) = 0", k.ExpiresAt)),
+			keel.Count().Filter(keel.DynOf(k.ExpiresAt).Coalesce(0).Eq(0)),
 			keel.Count().Filter(keel.Raw(
 				"COALESCE(NULLIF(?, 0), ?) < ?",
 				k.LastUsedAt,

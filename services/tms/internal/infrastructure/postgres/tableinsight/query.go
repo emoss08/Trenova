@@ -84,7 +84,7 @@ func (b *typedBase[T]) facet(
 	}
 	limit = min(limit, MaxFacetLimit)
 
-	value := keel.Raw("?::text", column.Col)
+	value := keel.DynOf(column.Col).Cast(keel.TypeString)
 	total := keel.Raw("(?)::bigint", keel.Sum(keel.Count()).OverWindow(keel.Window{}))
 	rows, err := keel.Into[facetRow](ctx, db, b.q.Clone().
 		Pick(value, keel.Count(), total).
@@ -233,7 +233,7 @@ func seriesColumns(
 			fmt.Sprintf("This table cannot total %q", req.ValueField),
 		)
 	}
-	exprs.value = keel.Raw("coalesce(?, 0)", keel.Sum(value.Col))
+	exprs.value = keel.DynOf(keel.Sum(value.Col)).Coalesce(0)
 
 	return exprs, nil
 }
@@ -276,14 +276,14 @@ func (b *typedBase[T]) series(
 		return nil, err
 	}
 
-	group := keel.Raw("?::text", exprs.group)
+	group := keel.DynOf(exprs.group).Cast(keel.TypeString)
 	bucket := keel.Raw("width_bucket(?, ?::bigint[])", exprs.date, req.Bounds)
 	rows, err := keel.Into[seriesRow](ctx, db, b.q.Clone().
 		Pick(group, bucket, keel.Raw("(?)::text", exprs.value)).
 		Where(
 			keel.Raw("? = ANY(?)", exprs.group, req.GroupValues),
-			keel.Raw("? >= ?", exprs.date, req.Bounds[0]),
-			keel.Raw("? < ?", exprs.date, req.Bounds[periods]),
+			keel.DynOf(exprs.date).Gte(req.Bounds[0]),
+			keel.DynOf(exprs.date).Lt(req.Bounds[periods]),
 		).
 		Group(group, bucket))
 	if err != nil {
@@ -359,7 +359,7 @@ func (b *typedBase[T]) matchingIDs(
 	}
 
 	rows, err := keel.Into[matchRow](ctx, db, b.q.Clone().
-		Pick(keel.Raw("?::text", id), keel.Count().OverWindow(keel.Window{})).
+		Pick(keel.DynOf(id).Cast(keel.TypeString), keel.Count().OverWindow(keel.Window{})).
 		Order(id.Asc()).
 		Limit(limit))
 	if err != nil {

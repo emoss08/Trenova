@@ -116,7 +116,7 @@ func (r *repository) ListWorkerCommitments(
 			windowEnd := keel.Scalar(st.
 				Pick(
 					keel.Max(
-						keel.Raw("coalesce(?, ?)", st.ScheduledWindowEnd, st.ScheduledWindowStart),
+						keel.DynOf(st.ScheduledWindowEnd).Coalesce(st.ScheduledWindowStart),
 					),
 				).
 				Where(live...))
@@ -144,7 +144,7 @@ func (r *repository) ListWorkerCommitments(
 					asn.PrimaryWorkerID.In(req.WorkerIDs...),
 					sm.Status.In(openMoveStatuses...),
 					keel.When(req.WindowEnd > 0,
-						keel.Raw("coalesce(?, 0) <= ?", windowStart, req.WindowEnd)),
+						keel.DynOf(windowStart).Coalesce(0).Lte(req.WindowEnd)),
 					keel.When(
 						req.WindowStart > 0,
 						keel.Raw(
@@ -223,8 +223,8 @@ func (r *repository) ListWorkerWorkload(
 				Pick(
 					asn.PrimaryWorkerID,
 					keel.Raw("count(*)::int"),
-					keel.Raw("coalesce(sum(?), 0)::float8", sm.Distance),
-					keel.Raw("coalesce(max(?), 0)::float8", sp.TotalChargeAmount),
+					keel.DynOf(sm.Distance).Sum().Coalesce(0).Cast(keel.TypeFloat64),
+					keel.DynOf(sp.TotalChargeAmount).Max().Coalesce(0).Cast(keel.TypeFloat64),
 					keel.Raw("max(coalesce(?, ?))", departure, asn.CreatedAt),
 				).
 				Where(
@@ -244,7 +244,7 @@ func (r *repository) ListWorkerWorkload(
 				keel.Raw("sum(?)::int", perShipment.Col("move_count")),
 				keel.Raw("sum(?)::float8", perShipment.Col("total_miles")),
 				keel.Raw("sum(?)::float8", perShipment.Col("shipment_revenue")),
-				keel.Raw("max(?)", perShipment.Col("last_ended_at")),
+				keel.DynOf(perShipment.Col("last_ended_at")).Max(),
 			))
 		if err != nil {
 			return nil, fmt.Errorf("list worker workload: %w", err)

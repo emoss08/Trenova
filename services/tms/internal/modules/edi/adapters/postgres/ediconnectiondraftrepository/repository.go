@@ -356,14 +356,14 @@ func (r *repository) GetInterchangeIdentity(
 ) (*ediports.InterchangeIdentity, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*ediports.InterchangeIdentity, error) {
 		dp := edidb.EDIPartnerDocumentProfiles
-		qualifier := keel.Raw("COALESCE(?, '')", dp.Envelope.Text(envelopeSenderQualifier))
+		qualifier := keel.DynOf(dp.Envelope.Text(envelopeSenderQualifier)).Coalesce("")
 		senderID := dp.Envelope.Text(envelopeSenderID)
-		applicationID := keel.Raw("COALESCE(?, '')", dp.Envelope.Text(envelopeApplicationSender))
+		applicationID := keel.DynOf(dp.Envelope.Text(envelopeApplicationSender)).Coalesce("")
 
 		identity, err := keel.IntoOne[ediports.InterchangeIdentity](ctx, r.db.Keel(ctx), dp.
 			Where(
 				dp.Direction.Eq(edi.DocumentDirectionOutbound),
-				keel.Raw("NULLIF(BTRIM(?), '') IS NOT NULL", senderID),
+				keel.DynFunc("btrim", senderID).NullIf("").IsNotNull(),
 			).
 			Group(qualifier, senderID, applicationID).
 			Pick(qualifier, senderID, applicationID, keel.Count()).

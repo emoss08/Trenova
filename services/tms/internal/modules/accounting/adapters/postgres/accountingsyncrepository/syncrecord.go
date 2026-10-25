@@ -90,17 +90,11 @@ func dueRecords(sr *accountingsyncdb.AccountingSyncRecordsTable, now int64) keel
 }
 
 func dispatchRankOrder(sr *accountingsyncdb.AccountingSyncRecordsTable) keel.Order {
-	types := accountingsync.AllSyncObjectTypes()
-	var b strings.Builder
-	args := make([]any, 0, len(types)*2+1)
-	b.WriteString("CASE ?")
-	args = append(args, sr.ObjectType)
-	for _, typ := range types {
-		b.WriteString(" WHEN ? THEN ?::int")
-		args = append(args, string(typ), typ.DispatchRank())
+	rank := keel.DynCase()
+	for _, typ := range accountingsync.AllSyncObjectTypes() {
+		rank = rank.When(sr.ObjectType.Eq(typ), keel.DynLit(typ.DispatchRank()).Cast(keel.TypeInt64))
 	}
-	b.WriteString(" ELSE 9 END")
-	return keel.Asc(keel.Raw(b.String(), args...))
+	return rank.Else(keel.DynLit(9).Cast(keel.TypeInt64)).Asc()
 }
 
 func (r *syncRecordRepository) Enqueue(
@@ -515,8 +509,8 @@ func (r *syncRecordRepository) ListAttention(
 			limit = intutils.Clamp(limit, 1, maxSyncListLimit)
 
 			sr := accountingsyncdb.AccountingSyncRecords
-			category := keel.Raw("COALESCE(?, '')", sr.ErrorCategory)
-			resolution := keel.Raw("COALESCE(?, '')", sr.Resolution)
+			category := keel.DynOf(sr.ErrorCategory).Coalesce("")
+			resolution := keel.DynOf(sr.Resolution).Coalesce("")
 			groups, err := keel.Into[accountingsyncports.AccountingSyncAttentionGroup](
 				ctx,
 				r.db.Keel(ctx),

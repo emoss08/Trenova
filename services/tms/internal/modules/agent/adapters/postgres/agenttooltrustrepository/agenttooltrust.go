@@ -45,7 +45,7 @@ func New(p Params) agentports.AgentToolTrustRepository {
 func recordConflict() keel.Conflict {
 	t := agentdb.ToolTrusts
 	sum := func(col keel.Int64Col) keel.Assignment {
-		return col.ToExpr(keel.Raw("? + ?", col, col.Excluded()))
+		return col.ToExpr(keel.DynOf(col).Add(col.Excluded()))
 	}
 
 	return keel.OnConflict(t.OrganizationID, t.BusinessUnitID, t.AgentDefinitionID, t.ToolName).

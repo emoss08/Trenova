@@ -302,14 +302,14 @@ func (r *factRepository) Descriptors(
 				Limit(1)
 
 			equipment := et.
-				Pick(keel.Raw("coalesce(nullif(?, ''), ?)", et.Description, et.Code)).
+				Pick(keel.DynOf(et.Description).NullIf("").Coalesce(et.Code)).
 				Where(et.ID.EqCol(sp.TrailerTypeID)).
 				Limit(1)
 
 			row, err := keel.IntoOne[descriptorRow](ctx, r.db.Keel(ctx), sp.
 				Pick(
-					keel.Raw("coalesce(?, '')", keel.Scalar(carrierName)),
-					keel.Raw("coalesce(?, '')", keel.Scalar(equipment)),
+					keel.DynOf(keel.Scalar(carrierName)).Coalesce(""),
+					keel.DynOf(keel.Scalar(equipment)).Coalesce(""),
 				).
 				Where(sp.ID.Eq(shipmentID)))
 			if err != nil {

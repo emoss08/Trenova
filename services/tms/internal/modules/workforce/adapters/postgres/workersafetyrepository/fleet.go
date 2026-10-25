@@ -31,7 +31,7 @@ func outOfServiceCount() keel.Agg {
 }
 
 func sumOrZero(e keel.Expr) keel.Expr {
-	return keel.Raw("COALESCE(?, 0)", e)
+	return keel.DynOf(e).Coalesce(0)
 }
 
 // rosterScope is the roster half of every fleet query: active workers, their

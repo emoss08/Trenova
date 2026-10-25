@@ -264,7 +264,7 @@ func (r *policyRepository) CodeExists(
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (bool, error) {
 		p := detentiondb.DetentionPolicies
 		exists, err := p.Where(
-			keel.Raw("lower(?) = lower(?)", p.Code, req.Code),
+			keel.DynFunc("lower", p.Code).Eq(keel.DynFunc("lower", req.Code)),
 			excludeID(p.ID, req.ExcludeID),
 		).Exists(ctx, r.db.Keel(ctx))
 		if err != nil {

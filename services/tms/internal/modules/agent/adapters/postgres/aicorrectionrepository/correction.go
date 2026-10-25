@@ -222,9 +222,9 @@ func (r *repository) TotalsByProvider(
 				).
 					Group(keel.Raw("1")).
 					Pick(
-						keel.Raw("? = ?", c.ExtractionProviderID, req.ProviderID),
-						keel.Raw("COALESCE(SUM(?), 0)", c.ScoredCount),
-						keel.Raw("COALESCE(SUM(?), 0)", c.CorrectCount),
+						keel.DynOf(c.ExtractionProviderID).Eq(req.ProviderID),
+						keel.DynOf(c.ScoredCount).Sum().Coalesce(0),
+						keel.DynOf(c.CorrectCount).Sum().Coalesce(0),
 					),
 			)
 			if err != nil {
@@ -284,8 +284,8 @@ func (r *repository) weeklyTotals(
 				keel.Raw("? - ((? - ?) % ?)", c.CapturedAt, c.CapturedAt,
 					int64(firstMondayEpoch), int64(secondsPerWeek)),
 				keel.Count(),
-				keel.Raw("COALESCE(SUM(?), 0)", c.ScoredCount),
-				keel.Raw("COALESCE(SUM(?), 0)", c.CorrectCount),
+				keel.DynOf(c.ScoredCount).Sum().Coalesce(0),
+				keel.DynOf(c.CorrectCount).Sum().Coalesce(0),
 			))
 		if err != nil {
 			r.l.Error("failed to total ai corrections by week and provider", zap.Error(err))

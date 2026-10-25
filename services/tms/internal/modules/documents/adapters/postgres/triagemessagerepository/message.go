@@ -111,14 +111,14 @@ func (r *repository) SaveTriageFields(
 			if err != nil {
 				return fmt.Errorf("encode facts: %w", err)
 			}
-			sets = append(sets, m.Facts.ToExpr(keel.Raw("?::jsonb", encoded)))
+			sets = append(sets, m.Facts.ToExpr(keel.DynOf(encoded).Cast(keel.TypeJSON)))
 		}
 		if req.Conflicts != nil {
 			encoded, err := jsonOrNull(*req.Conflicts)
 			if err != nil {
 				return fmt.Errorf("encode conflicts: %w", err)
 			}
-			sets = append(sets, m.Conflicts.ToExpr(keel.Raw("?::jsonb", encoded)))
+			sets = append(sets, m.Conflicts.ToExpr(keel.DynOf(encoded).Cast(keel.TypeJSON)))
 		}
 
 		if len(sets) == 0 {

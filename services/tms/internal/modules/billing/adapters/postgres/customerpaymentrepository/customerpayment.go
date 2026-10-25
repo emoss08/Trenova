@@ -321,7 +321,7 @@ func (r *repository) SumReceived(
 			rows, err := keel.Into[customerpaymentports.PaymentsReceived](ctx, r.db.Keel(ctx), cp.
 				Pick(
 					cp.CurrencyCode,
-					keel.Raw("COALESCE(?, 0)", cp.AmountMinor.Sum()),
+					keel.DynOf(cp.AmountMinor.Sum()).Coalesce(0),
 					keel.Count(),
 				).
 				Where(

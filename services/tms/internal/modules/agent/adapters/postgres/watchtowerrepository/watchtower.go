@@ -646,15 +646,9 @@ func listQuery(req *watchtowerports.ListWatchtowerItemsQuery) *keel.Query[watcht
 	switch {
 	case req.BeforeID.IsNil():
 	case req.OrderByDue:
-		before = keel.Raw("(?, ?) > (?, ?)", dueSort, it.ID, req.BeforeDueAt, req.BeforeID.String())
+		before = keel.DynRow(dueSort, it.ID).Gt(keel.DynRow(req.BeforeDueAt, req.BeforeID.String()))
 	case req.BeforeOccurredAt > 0:
-		before = keel.Raw(
-			"(?, ?) < (?, ?)",
-			it.OccurredAt,
-			it.ID,
-			req.BeforeOccurredAt,
-			req.BeforeID.String(),
-		)
+		before = keel.DynRow(it.OccurredAt, it.ID).Lt(keel.DynRow(req.BeforeOccurredAt, req.BeforeID.String()))
 	}
 
 	q := it.Where(
@@ -821,7 +815,7 @@ func (r *repository) SetCursor(
 		c := watchtowerdb.Cursors
 		if _, err := c.Upsert(ctx, db, []*watchtower.Cursor{cursor},
 			keel.OnConflict(c.UserID, c.BusinessUnitID, c.OrganizationID).Set(
-				c.SeenAt.ToExpr(keel.Raw("GREATEST(?, ?)", c.SeenAt, c.SeenAt.Excluded())),
+				c.SeenAt.ToExpr(keel.DynFunc("greatest", c.SeenAt, c.SeenAt.Excluded())),
 			),
 		); err != nil {
 			return nil, fmt.Errorf("set watchtower cursor: %w", err)

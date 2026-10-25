@@ -90,7 +90,7 @@ func positionConflict() keel.Conflict {
 			newerPosition(vp.FormattedLocation.Col, vp.FormattedLocation.Excluded()),
 		),
 		vp.ReceivedAt.ToExpr(newerPosition(vp.ReceivedAt.Col, vp.ReceivedAt.Excluded())),
-		vp.RecordedAt.ToExpr(keel.Raw("GREATEST(?, ?)", vp.RecordedAt, vp.RecordedAt.Excluded())),
+		vp.RecordedAt.ToExpr(keel.DynFunc("greatest", vp.RecordedAt, vp.RecordedAt.Excluded())),
 	)
 }
 
@@ -611,7 +611,7 @@ func (r *repository) ListWorkerMappings(
 			w := workerdb.Workers
 			rows, err := keel.Into[telematicsports.WorkerTelematicsMapping](ctx, r.db.Keel(ctx), w.
 				Pick(w.ID, w.ExternalID, w.FirstName, w.LastName).
-				Where(keel.Raw("NULLIF(BTRIM(?), '') IS NOT NULL", w.ExternalID)))
+				Where(keel.DynFunc("btrim", w.ExternalID).NullIf("").IsNotNull()))
 			if err != nil {
 				return nil, fmt.Errorf("list worker telematics mappings: %w", err)
 			}

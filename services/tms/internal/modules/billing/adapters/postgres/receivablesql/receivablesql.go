@@ -26,12 +26,12 @@ func Receivable(inv *invoicedb.InvoicesTable) keel.Pred {
 func Open(inv *invoicedb.InvoicesTable) keel.Pred {
 	return keel.And(
 		Receivable(inv),
-		keel.Raw("? > ?", inv.TotalAmountMinor, inv.AppliedAmountMinor),
+		keel.DynOf(inv.TotalAmountMinor).Gt(inv.AppliedAmountMinor),
 	)
 }
 
 func OpenMinor(inv *invoicedb.InvoicesTable) keel.Expr {
-	return keel.Raw("? - ?", inv.TotalAmountMinor, inv.AppliedAmountMinor)
+	return keel.DynOf(inv.TotalAmountMinor).Sub(inv.AppliedAmountMinor)
 }
 
 func SoldWithoutRecourse(inv *invoicedb.InvoicesTable) keel.Pred {

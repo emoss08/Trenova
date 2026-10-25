@@ -274,7 +274,7 @@ func (r *repository) WorstRated(
 			scores, err := keel.Into[aifeedbackports.AIFeedbackTargetScore](ctx, r.db.Keel(ctx),
 				f.Where(windowScope(&req)...).
 					Group(f.TargetType, f.TargetID, f.TargetPart).
-					Having(keel.Raw("? > 0", negative)).
+					Having(keel.DynOf(negative).Gt(0)).
 					Pick(
 						f.TargetType,
 						f.TargetID,
@@ -290,7 +290,7 @@ func (r *repository) WorstRated(
 						),
 					).
 					Order(
-						keel.Desc(keel.Raw("? - ?", negative, positive)),
+						keel.Desc(keel.DynOf(negative).Sub(positive)),
 						keel.Desc(negative),
 						keel.Desc(f.CreatedAt.Max()),
 						f.TargetType.Asc(),

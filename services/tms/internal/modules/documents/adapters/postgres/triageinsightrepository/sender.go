@@ -221,14 +221,10 @@ func driverParty(
 	exists, err := w.Where(
 		w.Status.Eq(domaintypes.StatusActive),
 		keel.Or(
-			keel.When(address != "", keel.Raw("? = ?", email, address)),
+			keel.When(address != "", keel.DynOf(email).Eq(address)),
 			keel.When(
 				req.SenderDomain != "",
-				keel.Raw(
-					"? LIKE ?",
-					email,
-					"%@"+stringutils.EscapeLikePattern(strings.ToLower(req.SenderDomain)),
-				),
+				keel.DynOf(email).Like("%@"+stringutils.EscapeLikePattern(strings.ToLower(req.SenderDomain))),
 			),
 		),
 	).Exists(ctx, db)

@@ -16,13 +16,11 @@ import (
 	"go.uber.org/zap"
 )
 
-const (
-	textSQL        = "?::text"
-	isActiveSQL    = "? = 'Active'"
-	orEmptySQL     = "COALESCE(?, '')"
-	workerNameSQL  = "? || ' ' || ?"
-	positionsAlias = "jpos"
-)
+const positionsAlias = "jpos"
+
+func asText(v any) keel.DynExpr { return keel.DynLit(v).Cast(keel.TypeString) }
+
+func orEmpty(e keel.Expr) keel.DynExpr { return keel.DynOf(e).Coalesce("") }
 
 // Two rosters hold positions. Drivers are workers and carry position_id on
 // their own row; the front office is made of people who log in, and their
@@ -42,7 +40,7 @@ func (r *repository) StaffByPosition(
 			Join(jp, jp.ID.EqCol(m.PositionID)).
 			Where(u.Status.Eq(domaintypes.StatusActive)).
 			Group(m.PositionID, jp.Title, jp.Code, jp.Department).
-			Pick(m.PositionID, jp.Title, jp.Code, keel.Raw(textSQL, jp.Department), keel.Count()))
+			Pick(m.PositionID, jp.Title, jp.Code, asText(jp.Department), keel.Count()))
 		if err != nil {
 			r.l.Error("failed to count staff by position", zap.Error(err))
 			return nil, fmt.Errorf("count staff by position: %w", err)
@@ -63,13 +61,13 @@ func (r *repository) ListPositionHolders(
 		workers, err := keel.Into[workerports.PositionHolderRow](ctx, db, w.
 			Where(w.PositionID.Eq(positionID)).
 			Pick(
-				keel.Raw(textSQL, string(workerports.PositionHolderWorker)),
+				asText(string(workerports.PositionHolderWorker)),
 				w.ID,
-				keel.Raw(workerNameSQL, w.FirstName, w.LastName),
-				keel.Raw(textSQL, w.Status),
-				keel.Raw(orEmptySQL, fc.Code),
+				keel.DynOf(w.FirstName).Concat(" ").Concat(w.LastName),
+				asText(w.Status),
+				orEmpty(fc.Code),
 			).
-			Order(keel.Desc(keel.Raw(isActiveSQL, w.Status)), w.LastName.Asc(), w.FirstName.Asc()))
+			Order(keel.Desc(w.Status.Eq(domaintypes.StatusActive)), w.LastName.Asc(), w.FirstName.Asc()))
 		if err != nil {
 			r.l.Error("failed to list workers in position", zap.Error(err))
 			return nil, fmt.Errorf("list workers in position: %w", err)
@@ -80,13 +78,13 @@ func (r *repository) ListPositionHolders(
 		users, err := keel.Into[workerports.PositionHolderRow](ctx, db, m.
 			Where(m.PositionID.Eq(positionID), u.ID.IsNotNull()).
 			Pick(
-				keel.Raw(textSQL, string(workerports.PositionHolderUser)),
+				asText(string(workerports.PositionHolderUser)),
 				u.ID,
 				u.Name,
-				keel.Raw(textSQL, u.Status),
+				asText(u.Status),
 				u.EmailAddress,
 			).
-			Order(keel.Desc(keel.Raw(isActiveSQL, u.Status)), u.Name.Asc()))
+			Order(keel.Desc(u.Status.Eq(domaintypes.StatusActive)), u.Name.Asc()))
 		if err != nil {
 			r.l.Error("failed to list users in position", zap.Error(err))
 			return nil, fmt.Errorf("list users in position: %w", err)

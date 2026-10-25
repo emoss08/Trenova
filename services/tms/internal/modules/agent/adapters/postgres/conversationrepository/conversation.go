@@ -176,7 +176,7 @@ func threadWindowOf(req *agentports.ListThreadsRequest) (threadWindow, error) {
 func threadTouchedAt() keel.Expr {
 	th := conversationdb.Threads
 
-	return keel.Raw("greatest(?, ?)", th.LastMessageAt, th.CreatedAt)
+	return keel.DynFunc("greatest", th.LastMessageAt, th.CreatedAt)
 }
 
 func threadListScope(userID pulid.ID, includeUnlisted bool) keel.Pred {
@@ -221,8 +221,8 @@ func threadPageQuery(
 	return th.Where(
 		threadListScope(req.UserID, req.IncludeUnlisted),
 		pinned,
-		keel.When(req.TouchedFrom > 0, keel.Raw("? >= ?", touchedAt, req.TouchedFrom)),
-		keel.When(req.TouchedBefore > 0, keel.Raw("? < ?", touchedAt, req.TouchedBefore)),
+		keel.When(req.TouchedFrom > 0, keel.DynOf(touchedAt).Gte(req.TouchedFrom)),
+		keel.When(req.TouchedBefore > 0, keel.DynOf(touchedAt).Lt(req.TouchedBefore)),
 		threadPositionPred(touchedAt, "<", window.after),
 		threadPositionPred(touchedAt, ">=", window.until),
 	).
@@ -357,7 +357,7 @@ func (r *repository) MarkThreadTainted(
 		th := conversationdb.Threads
 		n, err := th.Where(th.ID.Eq(req.ThreadID)).Update(ctx, r.db.Keel(ctx),
 			th.Taint.To(req.Taint),
-			th.TaintedAt.ToExpr(keel.Raw("COALESCE(?, ?)", th.TaintedAt, req.TaintedAt)),
+			th.TaintedAt.ToExpr(keel.DynOf(th.TaintedAt).Coalesce(req.TaintedAt)),
 			keepThreadVersion(),
 			keepThreadUpdatedAt(),
 		)

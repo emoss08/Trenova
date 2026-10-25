@@ -166,15 +166,15 @@ func reserveBalance(
 	}
 
 	return re.Pick(
-		keel.Raw("COALESCE(?, 0)", re.ReserveMinor.Sum()),
-		keel.Raw("COALESCE(?, 0)", re.LiabilityMinor.Sum()),
-		keel.Raw("COALESCE(?, 0)", cash(factoring.ReserveEntryFunding)),
-		keel.Raw("COALESCE(?, 0)", cash(factoring.ReserveEntryRelease)),
+		keel.DynOf(re.ReserveMinor.Sum()).Coalesce(0),
+		keel.DynOf(re.LiabilityMinor.Sum()).Coalesce(0),
+		keel.DynOf(cash(factoring.ReserveEntryFunding)).Coalesce(0),
+		keel.DynOf(cash(factoring.ReserveEntryRelease)).Coalesce(0),
 		keel.Raw("COALESCE(-?, 0)", cash(
 			factoring.ReserveEntryChargeback,
 			factoring.ReserveEntryChargebackReversal,
 		)),
-		keel.Raw("COALESCE(?, 0)", re.FeeMinor.Sum()),
+		keel.DynOf(re.FeeMinor.Sum()).Coalesce(0),
 		keel.Count(),
 		re.OccurredOn.Max(),
 	).Where(re.FactoringCompanyID.Eq(req.FactoringCompanyID))

@@ -99,7 +99,7 @@ func (f *RecordFinder) FindCustomerByEmail(
 
 		c := customerdb.Customers
 		customers, err := keel.Into[customerRecipients](ctx, db, c.
-			Pick(c.ID, keel.Raw("COALESCE(?, '')", c.StatusUpdateRecipients)).
+			Pick(c.ID, keel.DynOf(c.StatusUpdateRecipients).Coalesce("")).
 			Where(lowerLike(c.StatusUpdateRecipients, pattern)).
 			Limit(maxPartyCandidates))
 		if err != nil {
@@ -121,8 +121,8 @@ func (f *RecordFinder) FindCustomerByEmail(
 		profiles, err := keel.Into[profileRecipients](ctx, db, p.
 			Pick(
 				p.CustomerID,
-				keel.Raw("COALESCE(?, '')", p.ToRecipients),
-				keel.Raw("COALESCE(?, '')", p.CCRecipients),
+				keel.DynOf(p.ToRecipients).Coalesce(""),
+				keel.DynOf(p.CCRecipients).Coalesce(""),
 			).
 			Where(keel.Or(lowerLike(p.ToRecipients, pattern), lowerLike(p.CCRecipients, pattern))).
 			Limit(maxPartyCandidates))

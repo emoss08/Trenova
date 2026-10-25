@@ -613,7 +613,7 @@ func activation(req *agentports.ResolveAgentMemorySuggestionRequest) []keel.Assi
 	}
 	if req.ByUserID.IsNotNil() {
 		sets = append(sets, m.CreatedByUserID.ToExpr(
-			keel.Raw("COALESCE(?, ?)", m.CreatedByUserID, req.ByUserID.String()),
+			keel.DynOf(m.CreatedByUserID).Coalesce(req.ByUserID.String()),
 		))
 	}
 

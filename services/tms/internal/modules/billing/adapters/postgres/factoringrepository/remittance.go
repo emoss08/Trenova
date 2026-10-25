@@ -129,8 +129,8 @@ func withMatchedItem(
 	line := factoringdb.RemittanceLines
 	item := line.SubmissionItem()
 	return q.
-		Compute(line.MatchedInvoice, keel.Raw("COALESCE(?, '')", item.InvoiceNumber)).
-		Compute(line.MatchedSubmission, keel.Raw("COALESCE(?, '')", item.SubmissionID))
+		Compute(line.MatchedInvoice, keel.DynOf(item.InvoiceNumber).Coalesce("")).
+		Compute(line.MatchedSubmission, keel.DynOf(item.SubmissionID).Coalesce(""))
 }
 
 func (r *remittanceRepository) FindByInboundDocument(
@@ -306,7 +306,7 @@ func lineOutcomes(
 		"reason", "suggestions", "ignored_reason", "reserve_entry_id",
 	}, ids, kinds, statuses, matchedBy, items, scores, reasons, suggestions, ignored, reserves)
 	orNull := func(column string) keel.Expr {
-		return keel.Raw("NULLIF(?, '')", outcome.Col(column))
+		return keel.DynOf(outcome.Col(column)).NullIf("")
 	}
 
 	q := line.With(outcome).
@@ -320,7 +320,7 @@ func lineOutcomes(
 		line.SubmissionItemID.ToExpr(orNull("submission_item_id")),
 		line.Score.ToExpr(outcome.Col("score")),
 		line.Reason.ToExpr(orNull("reason")),
-		line.Suggestions.ToExpr(keel.Raw("?::jsonb", outcome.Col("suggestions"))),
+		line.Suggestions.ToExpr(keel.DynOf(outcome.Col("suggestions")).Cast(keel.TypeJSON)),
 		line.IgnoredReason.ToExpr(orNull("ignored_reason")),
 		line.ReserveEntryID.ToExpr(orNull("reserve_entry_id")),
 	}, nil
@@ -453,8 +453,8 @@ func openRemittances(limit int) *keel.Query[factoring.Remittance] {
 	return rem.Pick(
 		rem.ID,
 		rem.FactoringCompanyID,
-		keel.Raw("COALESCE(?, '')", fac.Name),
-		keel.Raw("COALESCE(?, '')", rem.FileName),
+		keel.DynOf(fac.Name).Coalesce(""),
+		keel.DynOf(rem.FileName).Coalesce(""),
 		rem.Status,
 		rem.ExceptionCount,
 		rem.MatchedCount,

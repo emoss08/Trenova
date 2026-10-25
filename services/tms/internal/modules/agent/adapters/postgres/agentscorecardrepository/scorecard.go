@@ -216,7 +216,7 @@ func verdictsQuery(req *agentports.ScorecardRequest) *keel.Query[keel.Row] {
 				keel.Raw("(?)::bigint", keel.Sum(keel.Count()).Over(partition)),
 				keel.RowNumber().Over(
 					partition,
-					keel.Asc(keel.Raw("? = ''", reason)),
+					keel.Asc(keel.DynOf(reason).Eq("")),
 					keel.Count().Desc(),
 					reason.Asc(),
 				),
@@ -278,8 +278,8 @@ func usageQuery(req *agentports.ScorecardRequest) *keel.Query[aiusage.AIUsageRec
 	u := aiusagedb.AIUsageRecords
 
 	return u.Pick(
-		keel.Raw("COALESCE(SUM(?), 0)", u.InputTokens),
-		keel.Raw("COALESCE(SUM(?), 0)", u.OutputTokens),
-		keel.Raw("COALESCE(SUM(?), 0)", u.CostUSD),
+		keel.DynOf(u.InputTokens).Sum().Coalesce(0),
+		keel.DynOf(u.OutputTokens).Sum().Coalesce(0),
+		keel.DynOf(u.CostUSD).Sum().Coalesce(0),
 	).Where(u.AgentDefinitionID.Eq(req.AgentDefinitionID), u.CreatedAt.Gte(req.Since))
 }

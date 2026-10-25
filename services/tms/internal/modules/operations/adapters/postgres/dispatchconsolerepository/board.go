@@ -88,7 +88,7 @@ func (r *repository) ListBoardMoves(
 				sp.TemperatureMax,
 				hasHazmat(sm),
 				hasActiveHold(sm),
-				keel.Raw("?::float8", sp.TotalChargeAmount),
+				keel.DynOf(sp.TotalChargeAmount).Cast(keel.TypeFloat64),
 				text(orig.stop.ID),
 				text(orig.stop.LocationID),
 				text(orig.loc.Name),
@@ -126,7 +126,7 @@ func (r *repository) ListBoardMoves(
 				text(ca.ID),
 				text(ca.CarrierID),
 				text(assignedCarriers.Name),
-				keel.Raw("?::float8", ca.TotalCost),
+				keel.DynOf(ca.TotalCost).Cast(keel.TypeFloat64),
 			).
 			Where(moveFilters(filter)...).
 			Where(
@@ -193,7 +193,7 @@ func previousTrailer(sm *shipmentdb.ShipmentMovesTable) keel.Expr {
 		Pick(pa.TrailerID).
 		Where(
 			pm.ShipmentID.EqCol(sm.ShipmentID),
-			keel.Raw("? < ?", pm.Sequence, sm.Sequence),
+			keel.DynOf(pm.Sequence).Lt(sm.Sequence),
 			pa.TrailerID.IsNotNull(),
 		).
 		Order(pm.Sequence.Desc()).

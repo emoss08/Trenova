@@ -292,5 +292,5 @@ func (r *repository) CountMisfitCells(
 }
 
 func versionNumber(n int64) keel.Expr {
-	return keel.Raw("?::bigint", n)
+	return keel.DynOf(n).Cast(keel.TypeInt64)
 }

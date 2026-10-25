@@ -179,7 +179,7 @@ func (r *repository) FindByIdentity(
 
 		c := carrierdb.Carriers
 		entity, err := c.Where(keel.Or(
-			keel.When(req.SCAC != "", keel.Raw("upper(?) = ?", c.SCAC, strings.ToUpper(req.SCAC))),
+			keel.When(req.SCAC != "", keel.DynFunc("upper", c.SCAC).Eq(strings.ToUpper(req.SCAC))),
 			keel.When(req.DOTNumber != "", c.DOTNumber.Eq(req.DOTNumber)),
 		)).
 			Order(c.CreatedAt.Asc()).

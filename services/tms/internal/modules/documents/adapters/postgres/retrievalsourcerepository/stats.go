@@ -159,7 +159,7 @@ func (r *repository) AverageSourceChars(
 			r.db.Keel(ctx),
 			newest.Query().
 				With(newest).
-				Pick(keel.Count(), keel.Raw("COALESCE(AVG(?), 0)::float8", newest.Col("chars"))),
+				Pick(keel.Count(), keel.DynOf(newest.Col("chars")).Avg().Coalesce(0).Cast(keel.TypeFloat64)),
 		)
 		if err != nil {
 			return agentports.RetrievalSourceChars{}, fmt.Errorf(

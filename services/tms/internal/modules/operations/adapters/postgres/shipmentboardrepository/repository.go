@@ -49,7 +49,7 @@ func scoped(scope *shipmentports.ShipmentBoardScope) (*keel.Query[shipment.Shipm
 }
 
 func revenueSum() keel.Expr {
-	return keel.Raw("COALESCE(SUM(?), 0)", shipmentdb.Shipments.TotalChargeAmount)
+	return keel.DynOf(shipmentdb.Shipments.TotalChargeAmount).Sum().Coalesce(0)
 }
 
 func (r *Repository) StageSummary(

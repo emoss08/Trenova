@@ -40,11 +40,11 @@ func New(p Params) shipmentports.TriageLookupRepository {
 }
 
 func text(e keel.Expr) keel.Expr {
-	return keel.Raw("coalesce(?, '')", e)
+	return keel.DynOf(e).Coalesce("")
 }
 
 func lowerEq(col keel.Expr, value string) keel.Pred {
-	return keel.Raw("lower(?) = lower(?)", col, value)
+	return keel.DynFunc("lower", col).Eq(keel.DynFunc("lower", value))
 }
 
 func (r *repository) PeekDetails(
@@ -256,7 +256,7 @@ func (r *repository) FindTrailerTypes(
 			et := equipmenttypedb.EquipmentTypes
 			exact := keel.Or(lowerEq(et.Code, query), lowerEq(et.Description, query))
 			return keel.Into[shipmentports.TriageRecordMatch](ctx, r.db.Keel(ctx), et.
-				Pick(et.ID, keel.Raw("coalesce(nullif(?, ''), ?)", et.Description, et.Code), exact).
+				Pick(et.ID, keel.DynOf(et.Description).NullIf("").Coalesce(et.Code), exact).
 				Where(
 					et.Status.Eq(domaintypes.StatusActive),
 					et.Class.In(equipmenttype.ClassTrailer, equipmenttype.ClassContainer),

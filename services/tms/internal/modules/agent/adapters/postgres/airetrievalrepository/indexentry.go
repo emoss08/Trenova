@@ -414,7 +414,7 @@ func applyOutcome(
 	sets := []keel.Assignment{
 		e.LeaseExpiresAt.ToNull(),
 		e.UpdatedAt.To(now),
-		e.LastError.ToExpr(keel.Raw("NULLIF(?, '')", outcome.Col("last_error"))),
+		e.LastError.ToExpr(keel.DynOf(outcome.Col("last_error")).NullIf("")),
 	}
 	if status == airetrieval.IndexStatusFailed {
 		sets = append(sets,
@@ -424,7 +424,7 @@ func applyOutcome(
 				string(airetrieval.IndexStatusFailed),
 				string(airetrieval.IndexStatusPending),
 			)),
-			e.NextAttemptAt.ToExpr(keel.Raw("NULLIF(?, 0)", outcome.Col("next_attempt_at"))),
+			e.NextAttemptAt.ToExpr(keel.DynOf(outcome.Col("next_attempt_at")).NullIf(0)),
 		)
 	} else {
 		sets = append(sets,
@@ -630,7 +630,7 @@ func (r *repository) AverageIndexChunks(
 				e.Status.Eq(airetrieval.IndexStatusIndexed),
 				e.ChunkCount.Gt(0),
 			).
-			Pick(keel.Count(), keel.Raw("COALESCE(AVG(?), 0)::float8", e.ChunkCount)))
+			Pick(keel.Count(), keel.DynOf(e.ChunkCount).Avg().Coalesce(0).Cast(keel.TypeFloat64)))
 		if err != nil {
 			return agentports.IndexChunkAverage{}, fmt.Errorf(
 				"average %s chunks per source: %w",

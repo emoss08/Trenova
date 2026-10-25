@@ -52,10 +52,10 @@ func (r *repository) rosterCount(
 			workers,
 			keel.Count().Filter(keel.And(
 				active,
-				keel.Raw("COALESCE(?, TRUE)", jp.IsDrivingPosition),
+				keel.DynOf(jp.IsDrivingPosition).Coalesce(true),
 			)),
 			keel.Count().Filter(w.Status.Ne(domaintypes.StatusActive)),
-			keel.Raw("0"),
+			keel.DynLit(0).Cast(keel.TypeInt64),
 		).
 		Order(workers.Desc(), keel.Asc(g.label)))
 	if err != nil {
@@ -74,10 +74,10 @@ func (r *repository) HeadcountByFleet(
 		w := workerdb.Workers
 		fc := w.FleetCode()
 		return r.rosterCount(ctx, "fleet", &headcountGroup{
-			key:   keel.Raw(orEmptySQL, w.FleetCodeID),
-			label: keel.Raw("COALESCE(?, ?, 'No terminal')", fc.Description, fc.Code),
-			code:  keel.Raw(orEmptySQL, fc.Code),
-			color: keel.Raw(orEmptySQL, fc.Color),
+			key:   orEmpty(w.FleetCodeID),
+			label: keel.DynOf(fc.Description).Coalesce(fc.Code, "No terminal"),
+			code:  orEmpty(fc.Code),
+			color: orEmpty(fc.Color),
 			group: []keel.Expr{w.FleetCodeID, fc.Code, fc.Description, fc.Color},
 		})
 	})
@@ -91,10 +91,10 @@ func (r *repository) HeadcountByPosition(
 		w := workerdb.Workers
 		jp := w.Position()
 		return r.rosterCount(ctx, "position", &headcountGroup{
-			key:   keel.Raw(orEmptySQL, w.PositionID),
-			label: keel.Raw("COALESCE(?, 'No position')", jp.Title),
-			code:  keel.Raw(orEmptySQL, jp.Code),
-			color: keel.Raw("''"),
+			key:   orEmpty(w.PositionID),
+			label: keel.DynOf(jp.Title).Coalesce("No position"),
+			code:  orEmpty(jp.Code),
+			color: keel.DynLit(""),
 			group: []keel.Expr{w.PositionID, jp.Title, jp.Code},
 		})
 	})
@@ -107,10 +107,10 @@ func (r *repository) HeadcountByDepartment(
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]workerports.HeadcountRow, error) {
 		jp := workerdb.Workers.Position()
 		return r.rosterCount(ctx, "department", &headcountGroup{
-			key:   keel.Raw("COALESCE(?::text, '')", jp.Department),
-			label: keel.Raw("COALESCE(?::text, 'Unassigned')", jp.Department),
-			code:  keel.Raw("''"),
-			color: keel.Raw("''"),
+			key:   asText(jp.Department).Coalesce(""),
+			label: asText(jp.Department).Coalesce("Unassigned"),
+			code:  keel.DynLit(""),
+			color: keel.DynLit(""),
 			group: []keel.Expr{jp.Department},
 		})
 	})
@@ -138,7 +138,7 @@ func (r *repository) TeamMembers(
 		fc := w.FleetCode()
 		jp := w.Position()
 		p := w.Profile()
-		direct := keel.Raw("(?)", w.ManagerID.In(req.ManagerIDs...))
+		direct := keel.DynOf(w.ManagerID.In(req.ManagerIDs...))
 
 		rows, err := keel.Into[workerports.TeamMemberRow](ctx, r.db.Keel(ctx), w.
 			Where(
@@ -150,17 +150,17 @@ func (r *repository) TeamMembers(
 				w.ID,
 				w.FirstName,
 				w.LastName,
-				keel.Raw(textSQL, w.Status),
-				keel.Raw(orEmptySQL, w.FleetCodeID),
-				keel.Raw(orEmptySQL, fc.Code),
-				keel.Raw(orEmptySQL, fc.Color),
-				keel.Raw(orEmptySQL, w.PositionID),
-				keel.Raw(orEmptySQL, jp.Title),
-				keel.Raw(orEmptySQL, w.ManagerID),
+				asText(w.Status),
+				orEmpty(w.FleetCodeID),
+				orEmpty(fc.Code),
+				orEmpty(fc.Color),
+				orEmpty(w.PositionID),
+				orEmpty(jp.Title),
+				orEmpty(w.ManagerID),
 				direct,
-				keel.Raw(textSQL, p.ComplianceStatus),
-				keel.Raw(textSQL, p.TrainingHealth),
-				keel.Raw(textSQL, p.SafetyRating),
+				asText(p.ComplianceStatus),
+				asText(p.TrainingHealth),
+				asText(p.SafetyRating),
 				p.HireDate,
 				p.TerminationDate,
 			).

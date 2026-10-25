@@ -117,7 +117,7 @@ func (r *repository) ProviderFailures(
 			rows, err := keel.Into[failureRow](ctx, r.db.Keel(ctx), u.
 				Where(u.CreatedAt.Gte(req.Since), u.ProviderID.IsNotNull()).
 				Group(u.ProviderID).
-				Having(keel.Raw("? > ?", lastFailure, lastSuccess)).
+				Having(keel.DynOf(lastFailure).Gt(lastSuccess)).
 				Pick(u.ProviderID, keel.Count().Filter(u.Succeeded.IsFalse()), lastFailure))
 			if err != nil {
 				return nil, fmt.Errorf("list failing providers: %w", err)

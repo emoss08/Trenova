@@ -256,9 +256,9 @@ func listMonitoredRows(ctx context.Context, db *keel.DB, limit int) ([]monitored
 			sm.ID,
 			sm.ShipmentID,
 			sp.ProNumber,
-			keel.Raw("coalesce(?, '')", sp.OwnerID),
+			keel.DynOf(sp.OwnerID).Coalesce(""),
 			ca.CarrierID,
-			keel.Raw("coalesce(?, '')", car.Name),
+			keel.DynOf(car.Name).Coalesce(""),
 			cus.CheckCallIntervalHours,
 			ca.ConfirmedAt,
 		).
