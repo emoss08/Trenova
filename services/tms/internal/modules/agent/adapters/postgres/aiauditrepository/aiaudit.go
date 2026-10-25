@@ -68,84 +68,95 @@ func (r *repository) Append(
 		return nil, errors.New("an AI audit append needs a signer")
 	}
 
-	err := dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
-		db := r.db.Keel(ctx)
-		head, err := lockHead(ctx, db, req.TenantInfo, req.Now)
-		if err != nil {
-			return err
-		}
+	return dbtx.Write(
+		ctx,
+		r.db,
+		func(ctx context.Context) (*aiauditports.AppendAIAuditEventsResult, error) {
+			if err := r.appendChain(ctx, req, result); err != nil {
+				r.l.Error("failed to append AI audit events",
+					zap.String("organizationId", req.TenantInfo.OrgID.String()),
+					zap.Int("events", len(req.Events)),
+					zap.Error(err),
+				)
 
-		fresh, err := dropExisting(ctx, db, req.TenantInfo, req.Events)
-		if err != nil || len(fresh) == 0 {
-			return err
-		}
-
-		prev := head.LastHash
-		if head.LastSeq == 0 || prev == "" {
-			prev = aiaudit.GenesisHash
-		}
-		seq := head.LastSeq
-		for _, event := range fresh {
-			seq++
-			event.Seq = seq
-			event.OrganizationID = req.TenantInfo.OrgID
-			event.BusinessUnitID = req.TenantInfo.BuID
-			if event.ID.IsNil() {
-				event.ID = pulid.MustNew(aiaudit.EventIDPrefix)
+				return nil, err
 			}
-			if event.RecordedAt == 0 {
-				event.RecordedAt = req.Now
-			}
-			if err = req.Sign(event, prev); err != nil {
-				return fmt.Errorf("sign AI audit event %s: %w", event.SourceKey, err)
-			}
-			prev = event.Hash
-		}
 
-		inserted, err := aiauditdb.AIAuditEvents.CreateOrSkip(ctx, db, fresh)
-		if err != nil {
-			return fmt.Errorf("insert AI audit events: %w", err)
-		}
-		if int(inserted) != len(fresh) {
-			return ErrChainRace
-		}
+			return result, nil
+		},
+	)
+}
 
-		fromSeq := head.LastSeq + 1
-		if err = advanceHead(ctx, db, head, seq, prev, req.KeyID); err != nil {
-			return err
-		}
-
-		if err = aiauditdb.AIAuditSeals.Create(ctx, db, &aiaudit.AIAuditSeal{
-			OrganizationID: req.TenantInfo.OrgID,
-			BusinessUnitID: req.TenantInfo.BuID,
-			FromSeq:        fromSeq,
-			ToSeq:          seq,
-			HeadHash:       prev,
-			HashKeyID:      req.KeyID,
-			RowCount:       len(fresh),
-			SealedAt:       req.Now,
-		}); err != nil {
-			return fmt.Errorf("seal AI audit batch: %w", err)
-		}
-
-		result.Inserted = len(fresh)
-		result.FromSeq = fromSeq
-		result.ToSeq = seq
-		result.HeadHash = prev
-
-		return nil
-	})
+func (r *repository) appendChain(
+	ctx context.Context,
+	req *aiauditports.AppendAIAuditEventsRequest,
+	result *aiauditports.AppendAIAuditEventsResult,
+) error {
+	db := r.db.Keel(ctx)
+	head, err := lockHead(ctx, db, req.TenantInfo, req.Now)
 	if err != nil {
-		r.l.Error("failed to append AI audit events",
-			zap.String("organizationId", req.TenantInfo.OrgID.String()),
-			zap.Int("events", len(req.Events)),
-			zap.Error(err),
-		)
-
-		return nil, err
+		return err
 	}
 
-	return result, nil
+	fresh, err := dropExisting(ctx, db, req.TenantInfo, req.Events)
+	if err != nil || len(fresh) == 0 {
+		return err
+	}
+
+	prev := head.LastHash
+	if head.LastSeq == 0 || prev == "" {
+		prev = aiaudit.GenesisHash
+	}
+	seq := head.LastSeq
+	for _, event := range fresh {
+		seq++
+		event.Seq = seq
+		event.OrganizationID = req.TenantInfo.OrgID
+		event.BusinessUnitID = req.TenantInfo.BuID
+		if event.ID.IsNil() {
+			event.ID = pulid.MustNew(aiaudit.EventIDPrefix)
+		}
+		if event.RecordedAt == 0 {
+			event.RecordedAt = req.Now
+		}
+		if err = req.Sign(event, prev); err != nil {
+			return fmt.Errorf("sign AI audit event %s: %w", event.SourceKey, err)
+		}
+		prev = event.Hash
+	}
+
+	inserted, err := aiauditdb.AIAuditEvents.CreateOrSkip(ctx, db, fresh)
+	if err != nil {
+		return fmt.Errorf("insert AI audit events: %w", err)
+	}
+	if int(inserted) != len(fresh) {
+		return ErrChainRace
+	}
+
+	fromSeq := head.LastSeq + 1
+	if err = advanceHead(ctx, db, head, seq, prev, req.KeyID); err != nil {
+		return err
+	}
+
+	if err = aiauditdb.AIAuditSeals.Create(ctx, db, &aiaudit.AIAuditSeal{
+		OrganizationID: req.TenantInfo.OrgID,
+		BusinessUnitID: req.TenantInfo.BuID,
+		FromSeq:        fromSeq,
+		ToSeq:          seq,
+		HeadHash:       prev,
+		HashKeyID:      req.KeyID,
+		RowCount:       len(fresh),
+		SealedAt:       req.Now,
+	}); err != nil {
+		return fmt.Errorf("seal AI audit batch: %w", err)
+	}
+
+	result.Inserted = len(fresh)
+	result.FromSeq = fromSeq
+	result.ToSeq = seq
+	result.HeadHash = prev
+
+	return nil
 }
 
 func lockHead(

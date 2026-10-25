@@ -21,10 +21,10 @@ import (
 type RateAgreementFuelBinding struct {
 	keel.Table `keel:"rate_agreement_fuel_bindings"`
 
-	ID                     pulid.ID `json:"id" keel:"id,pk,autoid:ragf_"`
-	BusinessUnitID         pulid.ID `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
-	OrganizationID         pulid.ID `json:"organizationId" keel:"organization_id,pk,tenant"`
-	RateAgreementID        pulid.ID `json:"rateAgreementId" keel:"rate_agreement_id"`
+	ID                     pulid.ID `json:"id"                     keel:"id,pk,autoid:ragf_"`
+	BusinessUnitID         pulid.ID `json:"businessUnitId"         keel:"business_unit_id,pk,tenant"`
+	OrganizationID         pulid.ID `json:"organizationId"         keel:"organization_id,pk,tenant"`
+	RateAgreementID        pulid.ID `json:"rateAgreementId"        keel:"rate_agreement_id"`
 	FuelSurchargeProgramID pulid.ID `json:"fuelSurchargeProgramId" keel:"fuel_surcharge_program_id"`
 
 	// Waived suppresses fuel entirely for this contract. All-in rates are
@@ -32,15 +32,15 @@ type RateAgreementFuelBinding struct {
 	// somebody has to notice.
 	Waived bool `json:"waived" keel:"waived"`
 
-	PegPriceOverride      decimal.NullDecimal `json:"pegPriceOverride" keel:"peg_price_override"`
+	PegPriceOverride      decimal.NullDecimal `json:"pegPriceOverride"      keel:"peg_price_override"`
 	IncrementRateOverride decimal.NullDecimal `json:"incrementRateOverride" keel:"increment_rate_override"`
-	CapAmount             decimal.NullDecimal `json:"capAmount" keel:"cap_amount"`
+	CapAmount             decimal.NullDecimal `json:"capAmount"             keel:"cap_amount"`
 
-	Version   int64 `json:"version" keel:"version,version"`
+	Version   int64 `json:"version"   keel:"version,version"`
 	CreatedAt int64 `json:"createdAt" keel:"created_at,autocreate"`
 	UpdatedAt int64 `json:"updatedAt" keel:"updated_at,autoupdate"`
 
-	Agreement *RateAgreement                      `json:"-" keel:"belongs:rate_agreement_id"`
+	Agreement *RateAgreement                      `json:"-"                 keel:"belongs:rate_agreement_id"`
 	Program   *fuelsurcharge.FuelSurchargeProgram `json:"program,omitempty" keel:"belongs:fuel_surcharge_program_id"`
 }
 

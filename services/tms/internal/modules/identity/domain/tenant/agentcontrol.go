@@ -17,7 +17,7 @@ var (
 type AgentControl struct {
 	keel.Table `keel:"agent_controls"`
 
-	ID             pulid.ID `json:"id" keel:"id,pk,autoid:agc_"`
+	ID             pulid.ID `json:"id"             keel:"id,pk,autoid:agc_"`
 	BusinessUnitID pulid.ID `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
 	OrganizationID pulid.ID `json:"organizationId" keel:"organization_id,pk,tenant"`
 
@@ -27,7 +27,7 @@ type AgentControl struct {
 	// on an agent, and PromotionThreshold is how long that streak must be.
 	// Off by default: an agent widening its own reach is something an
 	// organization opts into.
-	EarnedAutonomy     bool `json:"earnedAutonomy" keel:"earned_autonomy"`
+	EarnedAutonomy     bool `json:"earnedAutonomy"     keel:"earned_autonomy"`
 	PromotionThreshold int  `json:"promotionThreshold" keel:"promotion_threshold"`
 
 	// BriefingEnabled turns the morning briefing on, and BriefingHourLocal
@@ -35,11 +35,11 @@ type AgentControl struct {
 	// hour is local rather than UTC because a briefing is read at the
 	// start of a working day, and a company with offices in two timezones
 	// would otherwise get one of them yesterday's page.
-	BriefingEnabled   bool `json:"briefingEnabled" keel:"briefing_enabled"`
+	BriefingEnabled   bool `json:"briefingEnabled"   keel:"briefing_enabled"`
 	BriefingHourLocal int  `json:"briefingHourLocal" keel:"briefing_hour_local"`
 
-	AITrainingConsent            bool      `json:"aiTrainingConsent" keel:"ai_training_consent"`
-	AITrainingConsentChangedAt   *int64    `json:"aiTrainingConsentChangedAt" keel:"ai_training_consent_changed_at"`
+	AITrainingConsent            bool      `json:"aiTrainingConsent"            keel:"ai_training_consent"`
+	AITrainingConsentChangedAt   *int64    `json:"aiTrainingConsentChangedAt"   keel:"ai_training_consent_changed_at"`
 	AITrainingConsentChangedByID *pulid.ID `json:"aiTrainingConsentChangedById" keel:"ai_training_consent_changed_by_id"`
 
 	// PersonMonthlyMessages is how many questions one person may ask the
@@ -49,12 +49,12 @@ type AgentControl struct {
 	LearningOff bool `json:"learningOff" keel:"learning_off"`
 
 	AgentMoneyCallCeilingMinor int64 `json:"agentMoneyCallCeilingMinor" keel:"agent_money_call_ceiling_minor"`
-	AgentMoneyRunCalls         int   `json:"agentMoneyRunCalls" keel:"agent_money_run_calls"`
-	AgentMoneyRunAmountMinor   int64 `json:"agentMoneyRunAmountMinor" keel:"agent_money_run_amount_minor"`
-	AgentMoneyDayCalls         int   `json:"agentMoneyDayCalls" keel:"agent_money_day_calls"`
-	AgentMoneyDayAmountMinor   int64 `json:"agentMoneyDayAmountMinor" keel:"agent_money_day_amount_minor"`
+	AgentMoneyRunCalls         int   `json:"agentMoneyRunCalls"         keel:"agent_money_run_calls"`
+	AgentMoneyRunAmountMinor   int64 `json:"agentMoneyRunAmountMinor"   keel:"agent_money_run_amount_minor"`
+	AgentMoneyDayCalls         int   `json:"agentMoneyDayCalls"         keel:"agent_money_day_calls"`
+	AgentMoneyDayAmountMinor   int64 `json:"agentMoneyDayAmountMinor"   keel:"agent_money_day_amount_minor"`
 
-	Version   int64 `json:"version" keel:"version,version"`
+	Version   int64 `json:"version"   keel:"version,version"`
 	CreatedAt int64 `json:"createdAt" keel:"created_at,autocreate"`
 	UpdatedAt int64 `json:"updatedAt" keel:"updated_at,autoupdate"`
 

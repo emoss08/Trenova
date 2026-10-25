@@ -350,7 +350,7 @@ func (r *repository) findNearestActualEvent(
 				return nil, err
 			}
 			if len(events) == 0 {
-				return nil, nil //nolint:nilnil // nil result represents an optional absence in this API
+				return nil, nil
 			}
 
 			return &events[0], nil
@@ -387,7 +387,7 @@ func (r *repository) findOverlappingActualWindow(
 				return nil, err
 			}
 			if len(windows) == 0 {
-				return nil, nil //nolint:nilnil // nil result represents an optional absence in this API
+				return nil, nil
 			}
 
 			return &windows[0], nil

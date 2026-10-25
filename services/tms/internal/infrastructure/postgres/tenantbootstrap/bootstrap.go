@@ -216,7 +216,10 @@ func AvailableUsername(ctx context.Context, db *keel.DB, base string) (string, e
 
 	return firstAvailable(ctx, base, maxUsernameLength, func(candidate string) (bool, error) {
 		u := tenantdb.Users
-		return scoped(ctx, u.Where(u.Username.Lower().Eq(strings.ToLower(candidate)))).Exists(ctx, db)
+		return scoped(
+			ctx,
+			u.Where(u.Username.Lower().Eq(strings.ToLower(candidate))),
+		).Exists(ctx, db)
 	})
 }
 

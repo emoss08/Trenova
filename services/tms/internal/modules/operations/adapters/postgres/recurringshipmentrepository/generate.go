@@ -729,7 +729,11 @@ func (r *repository) materializeOccurrence(
 	if err = shipmentdb.Stops.CreateMany(ctx, db, stops); err != nil {
 		return nil, err
 	}
-	if err = shipmentdb.AdditionalCharges.CreateMany(ctx, db, generated.AdditionalCharges); err != nil {
+	if err = shipmentdb.AdditionalCharges.CreateMany(
+		ctx,
+		db,
+		generated.AdditionalCharges,
+	); err != nil {
 		return nil, err
 	}
 	if err = shipmentdb.ShipmentCommodities.CreateMany(ctx, db, generated.Commodities); err != nil {

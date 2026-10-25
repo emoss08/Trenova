@@ -79,7 +79,9 @@ func ratingDetailText(key string) keel.Expr {
 	return keel.Raw("COALESCE(?, '')", m.PayloadSnapshot.Text("loadTender", "ratingDetail", key))
 }
 
-func candidatesQuery(req *ediports.ListTenderReferenceCandidatesRequest) *keel.Query[edi.EDIMessage] {
+func candidatesQuery(
+	req *ediports.ListTenderReferenceCandidatesRequest,
+) *keel.Query[edi.EDIMessage] {
 	m := edidb.EDIMessages
 	f := edidb.EDIInboundFiles
 
@@ -236,7 +238,11 @@ func transferMatch(req *ediports.RepairTenderReferenceRequest) keel.Pred {
 			t.InboundMessageID.Eq(candidate.MessageID),
 			keel.When(candidate.TransferID.IsNotNil(), t.ID.Eq(candidate.TransferID)),
 		),
-		keel.Raw("COALESCE(?, '') = ?", t.TenderPayload.Text("ratingDetail", shipmentIDKey), candidate.ShipmentID),
+		keel.Raw(
+			"COALESCE(?, '') = ?",
+			t.TenderPayload.Text("ratingDetail", shipmentIDKey),
+			candidate.ShipmentID,
+		),
 	)
 }
 

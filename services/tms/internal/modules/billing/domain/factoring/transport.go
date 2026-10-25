@@ -26,25 +26,25 @@ const (
 type Transport struct {
 	keel.Table `keel:"factoring_transports"`
 
-	ID                 pulid.ID        `json:"id" keel:"id,pk,autoid:factrn_"`
-	OrganizationID     pulid.ID        `json:"organizationId" keel:"organization_id,pk,tenant"`
-	BusinessUnitID     pulid.ID        `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
+	ID                 pulid.ID        `json:"id"                 keel:"id,pk,autoid:factrn_"`
+	OrganizationID     pulid.ID        `json:"organizationId"     keel:"organization_id,pk,tenant"`
+	BusinessUnitID     pulid.ID        `json:"businessUnitId"     keel:"business_unit_id,pk,tenant"`
 	FactoringCompanyID pulid.ID        `json:"factoringCompanyId" keel:"factoring_company_id"`
-	Method             TransportMethod `json:"method" keel:"method"`
-	EmailRecipients    []string        `json:"emailRecipients" keel:"email_recipients,nullzero"`
-	AttachPackets      bool            `json:"attachPackets" keel:"attach_packets"`
-	SftpHost           string          `json:"sftpHost" keel:"sftp_host,nullzero"`
-	SftpPort           int             `json:"sftpPort" keel:"sftp_port,nullzero"`
-	SftpUsername       string          `json:"sftpUsername" keel:"sftp_username,nullzero"`
-	SftpAuthMethod     SftpAuthMethod  `json:"sftpAuthMethod" keel:"sftp_auth_method,nullzero"`
-	SftpSecret         string          `json:"-" keel:"sftp_secret,nullzero"`
-	SftpKnownHostKey   string          `json:"sftpKnownHostKey" keel:"sftp_known_host_key,nullzero"`
-	SftpDirectory      string          `json:"sftpDirectory" keel:"sftp_directory,nullzero"`
-	LastTestedAt       *int64          `json:"lastTestedAt" keel:"last_tested_at"`
-	LastTestError      string          `json:"lastTestError" keel:"last_test_error,nullzero"`
-	Version            int64           `json:"version" keel:"version,version"`
-	CreatedAt          int64           `json:"createdAt" keel:"created_at,autocreate"`
-	UpdatedAt          int64           `json:"updatedAt" keel:"updated_at,autoupdate"`
+	Method             TransportMethod `json:"method"             keel:"method"`
+	EmailRecipients    []string        `json:"emailRecipients"    keel:"email_recipients,nullzero"`
+	AttachPackets      bool            `json:"attachPackets"      keel:"attach_packets"`
+	SftpHost           string          `json:"sftpHost"           keel:"sftp_host,nullzero"`
+	SftpPort           int             `json:"sftpPort"           keel:"sftp_port,nullzero"`
+	SftpUsername       string          `json:"sftpUsername"       keel:"sftp_username,nullzero"`
+	SftpAuthMethod     SftpAuthMethod  `json:"sftpAuthMethod"     keel:"sftp_auth_method,nullzero"`
+	SftpSecret         string          `json:"-"                  keel:"sftp_secret,nullzero"`
+	SftpKnownHostKey   string          `json:"sftpKnownHostKey"   keel:"sftp_known_host_key,nullzero"`
+	SftpDirectory      string          `json:"sftpDirectory"      keel:"sftp_directory,nullzero"`
+	LastTestedAt       *int64          `json:"lastTestedAt"       keel:"last_tested_at"`
+	LastTestError      string          `json:"lastTestError"      keel:"last_test_error,nullzero"`
+	Version            int64           `json:"version"            keel:"version,version"`
+	CreatedAt          int64           `json:"createdAt"          keel:"created_at,autocreate"`
+	UpdatedAt          int64           `json:"updatedAt"          keel:"updated_at,autoupdate"`
 }
 
 func (t *Transport) Validate(multiErr *errortypes.MultiError) {

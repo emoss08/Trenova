@@ -32,24 +32,24 @@ func (s CreditApplicationStatus) IsValid() bool {
 type CreditMemoApplication struct {
 	keel.Table `keel:"credit_memo_applications"`
 
-	ID                  pulid.ID                `json:"id" keel:"id,pk,autoid:cma_"`
-	OrganizationID      pulid.ID                `json:"organizationId" keel:"organization_id,pk,tenant"`
-	BusinessUnitID      pulid.ID                `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
+	ID                  pulid.ID                `json:"id"                  keel:"id,pk,autoid:cma_"`
+	OrganizationID      pulid.ID                `json:"organizationId"      keel:"organization_id,pk,tenant"`
+	BusinessUnitID      pulid.ID                `json:"businessUnitId"      keel:"business_unit_id,pk,tenant"`
 	CreditMemoInvoiceID pulid.ID                `json:"creditMemoInvoiceId" keel:"credit_memo_invoice_id"`
-	InvoiceID           pulid.ID                `json:"invoiceId" keel:"invoice_id"`
-	AppliedAmountMinor  int64                   `json:"appliedAmountMinor" keel:"applied_amount_minor"`
-	AccountingDate      int64                   `json:"accountingDate" keel:"accounting_date"`
-	LineNumber          int                     `json:"lineNumber" keel:"line_number"`
-	Status              CreditApplicationStatus `json:"status" keel:"status"`
-	UnappliedAt         *int64                  `json:"unappliedAt" keel:"unapplied_at"`
-	UnappliedByID       pulid.ID                `json:"unappliedById" keel:"unapplied_by_id,nullzero"`
-	UnappliedReason     string                  `json:"unappliedReason" keel:"unapplied_reason,nullzero"`
-	CreatedByID         pulid.ID                `json:"createdById" keel:"created_by_id"`
-	CreatedAt           int64                   `json:"createdAt" keel:"created_at,autocreate"`
-	UpdatedAt           int64                   `json:"updatedAt" keel:"updated_at,autoupdate"`
+	InvoiceID           pulid.ID                `json:"invoiceId"           keel:"invoice_id"`
+	AppliedAmountMinor  int64                   `json:"appliedAmountMinor"  keel:"applied_amount_minor"`
+	AccountingDate      int64                   `json:"accountingDate"      keel:"accounting_date"`
+	LineNumber          int                     `json:"lineNumber"          keel:"line_number"`
+	Status              CreditApplicationStatus `json:"status"              keel:"status"`
+	UnappliedAt         *int64                  `json:"unappliedAt"         keel:"unapplied_at"`
+	UnappliedByID       pulid.ID                `json:"unappliedById"       keel:"unapplied_by_id,nullzero"`
+	UnappliedReason     string                  `json:"unappliedReason"     keel:"unapplied_reason,nullzero"`
+	CreatedByID         pulid.ID                `json:"createdById"         keel:"created_by_id"`
+	CreatedAt           int64                   `json:"createdAt"           keel:"created_at,autocreate"`
+	UpdatedAt           int64                   `json:"updatedAt"           keel:"updated_at,autoupdate"`
 
 	CreditMemo *invoice.Invoice `json:"creditMemo,omitempty" keel:"belongs:credit_memo_invoice_id"`
-	Invoice    *invoice.Invoice `json:"invoice,omitempty" keel:"belongs:invoice_id"`
+	Invoice    *invoice.Invoice `json:"invoice,omitempty"    keel:"belongs:invoice_id"`
 }
 
 func (a *CreditMemoApplication) Validate(multiErr *errortypes.MultiError) {

@@ -24,32 +24,32 @@ var (
 type Reversal struct {
 	keel.Table `keel:"journal_reversals"`
 
-	ID                      pulid.ID `json:"id" keel:"id,pk"`
-	OrganizationID          pulid.ID `json:"organizationId" keel:"organization_id,pk,tenant"`
-	BusinessUnitID          pulid.ID `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
-	OriginalJournalEntryID  pulid.ID `json:"originalJournalEntryId" keel:"original_journal_entry_id"`
-	ReversalJournalEntryID  pulid.ID `json:"reversalJournalEntryId" keel:"reversal_journal_entry_id,nullzero"`
-	PostedBatchID           pulid.ID `json:"postedBatchId" keel:"posted_batch_id,nullzero"`
-	Status                  Status   `json:"status" keel:"status"`
+	ID                      pulid.ID `json:"id"                      keel:"id,pk"`
+	OrganizationID          pulid.ID `json:"organizationId"          keel:"organization_id,pk,tenant"`
+	BusinessUnitID          pulid.ID `json:"businessUnitId"          keel:"business_unit_id,pk,tenant"`
+	OriginalJournalEntryID  pulid.ID `json:"originalJournalEntryId"  keel:"original_journal_entry_id"`
+	ReversalJournalEntryID  pulid.ID `json:"reversalJournalEntryId"  keel:"reversal_journal_entry_id,nullzero"`
+	PostedBatchID           pulid.ID `json:"postedBatchId"           keel:"posted_batch_id,nullzero"`
+	Status                  Status   `json:"status"                  keel:"status"`
 	RequestedAccountingDate int64    `json:"requestedAccountingDate" keel:"requested_accounting_date"`
-	ResolvedFiscalYearID    pulid.ID `json:"resolvedFiscalYearId" keel:"resolved_fiscal_year_id"`
-	ResolvedFiscalPeriodID  pulid.ID `json:"resolvedFiscalPeriodId" keel:"resolved_fiscal_period_id"`
-	ReasonCode              string   `json:"reasonCode" keel:"reason_code"`
-	ReasonText              string   `json:"reasonText" keel:"reason_text"`
-	RequestedByID           pulid.ID `json:"requestedById" keel:"requested_by_id"`
-	ApprovedByID            pulid.ID `json:"approvedById" keel:"approved_by_id,nullzero"`
-	ApprovedAt              *int64   `json:"approvedAt" keel:"approved_at"`
-	RejectedByID            pulid.ID `json:"rejectedById" keel:"rejected_by_id,nullzero"`
-	RejectedAt              *int64   `json:"rejectedAt" keel:"rejected_at"`
-	RejectionReason         string   `json:"rejectionReason" keel:"rejection_reason,nullzero"`
-	CancelledByID           pulid.ID `json:"cancelledById" keel:"cancelled_by_id,nullzero"`
-	CancelledAt             *int64   `json:"cancelledAt" keel:"cancelled_at"`
-	CancelReason            string   `json:"cancelReason" keel:"cancel_reason,nullzero"`
-	PostedByID              pulid.ID `json:"postedById" keel:"posted_by_id,nullzero"`
-	PostedAt                *int64   `json:"postedAt" keel:"posted_at"`
-	CreatedAt               int64    `json:"createdAt" keel:"created_at,autocreate"`
-	UpdatedAt               int64    `json:"updatedAt" keel:"updated_at,autoupdate"`
-	Version                 int64    `json:"version" keel:"version,version"`
+	ResolvedFiscalYearID    pulid.ID `json:"resolvedFiscalYearId"    keel:"resolved_fiscal_year_id"`
+	ResolvedFiscalPeriodID  pulid.ID `json:"resolvedFiscalPeriodId"  keel:"resolved_fiscal_period_id"`
+	ReasonCode              string   `json:"reasonCode"              keel:"reason_code"`
+	ReasonText              string   `json:"reasonText"              keel:"reason_text"`
+	RequestedByID           pulid.ID `json:"requestedById"           keel:"requested_by_id"`
+	ApprovedByID            pulid.ID `json:"approvedById"            keel:"approved_by_id,nullzero"`
+	ApprovedAt              *int64   `json:"approvedAt"              keel:"approved_at"`
+	RejectedByID            pulid.ID `json:"rejectedById"            keel:"rejected_by_id,nullzero"`
+	RejectedAt              *int64   `json:"rejectedAt"              keel:"rejected_at"`
+	RejectionReason         string   `json:"rejectionReason"         keel:"rejection_reason,nullzero"`
+	CancelledByID           pulid.ID `json:"cancelledById"           keel:"cancelled_by_id,nullzero"`
+	CancelledAt             *int64   `json:"cancelledAt"             keel:"cancelled_at"`
+	CancelReason            string   `json:"cancelReason"            keel:"cancel_reason,nullzero"`
+	PostedByID              pulid.ID `json:"postedById"              keel:"posted_by_id,nullzero"`
+	PostedAt                *int64   `json:"postedAt"                keel:"posted_at"`
+	CreatedAt               int64    `json:"createdAt"               keel:"created_at,autocreate"`
+	UpdatedAt               int64    `json:"updatedAt"               keel:"updated_at,autoupdate"`
+	Version                 int64    `json:"version"                 keel:"version,version"`
 
 	OriginalJournalEntry *journalentry.JournalEntry `json:"originalJournalEntry,omitempty" keel:"belongs:original_journal_entry_id"`
 	ReversalJournalEntry *journalentry.JournalEntry `json:"reversalJournalEntry,omitempty" keel:"belongs:reversal_journal_entry_id"`

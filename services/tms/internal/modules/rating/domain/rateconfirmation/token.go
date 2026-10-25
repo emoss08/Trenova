@@ -8,15 +8,15 @@ import (
 type RateConfirmationToken struct {
 	keel.Table `keel:"rate_confirmation_tokens"`
 
-	ID                 pulid.ID `json:"id" keel:"id,pk,autoid:rct_"`
-	BusinessUnitID     pulid.ID `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
-	OrganizationID     pulid.ID `json:"organizationId" keel:"organization_id,pk,tenant"`
+	ID                 pulid.ID `json:"id"                 keel:"id,pk,autoid:rct_"`
+	BusinessUnitID     pulid.ID `json:"businessUnitId"     keel:"business_unit_id,pk,tenant"`
+	OrganizationID     pulid.ID `json:"organizationId"     keel:"organization_id,pk,tenant"`
 	RateConfirmationID pulid.ID `json:"rateConfirmationId" keel:"rate_confirmation_id"`
 
-	TokenHash string `json:"-" keel:"token_hash"`
-	Email     string `json:"email" keel:"email"`
+	TokenHash string `json:"-"         keel:"token_hash"`
+	Email     string `json:"email"     keel:"email"`
 	ExpiresAt int64  `json:"expiresAt" keel:"expires_at"`
-	UsedAt    *int64 `json:"usedAt" keel:"used_at"`
+	UsedAt    *int64 `json:"usedAt"    keel:"used_at"`
 	RevokedAt *int64 `json:"revokedAt" keel:"revoked_at"`
 	CreatedAt int64  `json:"createdAt" keel:"created_at,autocreate"`
 	UpdatedAt int64  `json:"updatedAt" keel:"updated_at,autoupdate"`

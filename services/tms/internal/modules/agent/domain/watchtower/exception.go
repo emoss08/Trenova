@@ -208,16 +208,16 @@ const (
 type Event struct {
 	keel.Table `keel:"watchtower_item_events"`
 
-	ID             pulid.ID  `json:"id" keel:"id,pk,autoid:wte_"`
+	ID             pulid.ID  `json:"id"             keel:"id,pk,autoid:wte_"`
 	BusinessUnitID pulid.ID  `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
 	OrganizationID pulid.ID  `json:"organizationId" keel:"organization_id,pk,tenant"`
-	ItemID         pulid.ID  `json:"itemId" keel:"item_id"`
-	Kind           EventKind `json:"kind" keel:"kind"`
-	ActorID        pulid.ID  `json:"actorId" keel:"actor_id,nullzero"`
-	FromValue      string    `json:"fromValue" keel:"from_value,nullzero"`
-	ToValue        string    `json:"toValue" keel:"to_value,nullzero"`
-	Note           string    `json:"note" keel:"note,nullzero"`
-	CreatedAt      int64     `json:"createdAt" keel:"created_at,autocreate"`
+	ItemID         pulid.ID  `json:"itemId"         keel:"item_id"`
+	Kind           EventKind `json:"kind"           keel:"kind"`
+	ActorID        pulid.ID  `json:"actorId"        keel:"actor_id,nullzero"`
+	FromValue      string    `json:"fromValue"      keel:"from_value,nullzero"`
+	ToValue        string    `json:"toValue"        keel:"to_value,nullzero"`
+	Note           string    `json:"note"           keel:"note,nullzero"`
+	CreatedAt      int64     `json:"createdAt"      keel:"created_at,autocreate"`
 }
 
 func NewEvent(item *Item, kind EventKind, actorID pulid.ID) *Event {

@@ -20,18 +20,18 @@ var (
 type Subscription struct {
 	keel.Table `keel:"organization_subscriptions"`
 
-	ID                   pulid.ID `json:"id" keel:"id,pk,autoid:osub_"`
-	BusinessUnitID       pulid.ID `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
-	OrganizationID       pulid.ID `json:"organizationId" keel:"organization_id,pk,tenant"`
-	PlanKey              string   `json:"planKey" keel:"plan_key"`
-	Status               Status   `json:"status" keel:"status"`
-	TrialEndsAt          int64    `json:"trialEndsAt" keel:"trial_ends_at"`
-	ReadOnlyUntil        int64    `json:"readOnlyUntil" keel:"read_only_until"`
-	StripeCustomerID     string   `json:"stripeCustomerId,omitempty" keel:"stripe_customer_id,nullzero"`
+	ID                   pulid.ID `json:"id"                             keel:"id,pk,autoid:osub_"`
+	BusinessUnitID       pulid.ID `json:"businessUnitId"                 keel:"business_unit_id,pk,tenant"`
+	OrganizationID       pulid.ID `json:"organizationId"                 keel:"organization_id,pk,tenant"`
+	PlanKey              string   `json:"planKey"                        keel:"plan_key"`
+	Status               Status   `json:"status"                         keel:"status"`
+	TrialEndsAt          int64    `json:"trialEndsAt"                    keel:"trial_ends_at"`
+	ReadOnlyUntil        int64    `json:"readOnlyUntil"                  keel:"read_only_until"`
+	StripeCustomerID     string   `json:"stripeCustomerId,omitempty"     keel:"stripe_customer_id,nullzero"`
 	StripeSubscriptionID string   `json:"stripeSubscriptionId,omitempty" keel:"stripe_subscription_id,nullzero"`
-	Version              int64    `json:"version" keel:"version,version"`
-	CreatedAt            int64    `json:"createdAt" keel:"created_at,autocreate"`
-	UpdatedAt            int64    `json:"updatedAt" keel:"updated_at,autoupdate"`
+	Version              int64    `json:"version"                        keel:"version,version"`
+	CreatedAt            int64    `json:"createdAt"                      keel:"created_at,autocreate"`
+	UpdatedAt            int64    `json:"updatedAt"                      keel:"updated_at,autoupdate"`
 }
 
 func (s *Subscription) Validate(multiErr *errortypes.MultiError) {

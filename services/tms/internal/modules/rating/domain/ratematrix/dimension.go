@@ -19,19 +19,19 @@ import (
 type RateMatrixDimension struct {
 	keel.Table `keel:"rate_matrix_dimensions"`
 
-	ID             pulid.ID `json:"id" keel:"id,pk,autoid:rmd_"`
+	ID             pulid.ID `json:"id"             keel:"id,pk,autoid:rmd_"`
 	BusinessUnitID pulid.ID `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
 	OrganizationID pulid.ID `json:"organizationId" keel:"organization_id,pk,tenant"`
-	RateMatrixID   pulid.ID `json:"rateMatrixId" keel:"rate_matrix_id"`
-	VersionNumber  int64    `json:"versionNumber" keel:"version_number"`
+	RateMatrixID   pulid.ID `json:"rateMatrixId"   keel:"rate_matrix_id"`
+	VersionNumber  int64    `json:"versionNumber"  keel:"version_number"`
 
-	Position  int16         `json:"position" keel:"position"`
-	Kind      DimensionKind `json:"kind" keel:"kind"`
+	Position  int16         `json:"position"  keel:"position"`
+	Kind      DimensionKind `json:"kind"      keel:"kind"`
 	MatchMode MatchMode     `json:"matchMode" keel:"match_mode"`
-	Label     string        `json:"label" keel:"label,nullzero"`
+	Label     string        `json:"label"     keel:"label,nullzero"`
 
 	KeyNormalization KeyNormalization `json:"keyNormalization" keel:"key_normalization"`
-	RangeOverflow    RangeOverflow    `json:"rangeOverflow" keel:"range_overflow"`
+	RangeOverflow    RangeOverflow    `json:"rangeOverflow"    keel:"range_overflow"`
 
 	CreatedAt int64 `json:"createdAt" keel:"created_at,autocreate"`
 	UpdatedAt int64 `json:"updatedAt" keel:"updated_at,autoupdate"`

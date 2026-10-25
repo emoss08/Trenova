@@ -70,7 +70,7 @@ func definitionsQuery(ids []pulid.ID) *keel.Query[agentdefinition.Definition] {
 	return d.Where(d.ID.In(ids...)).Order(d.Name.Asc())
 }
 
-func currentGrantsQuery(p replaceParams) *keel.Query[permission.RoleAgentGrant] {
+func currentGrantsQuery(p *replaceParams) *keel.Query[permission.RoleAgentGrant] {
 	rag := permissiondb.RoleAgentGrants
 
 	return rag.Pick(p.varying).Where(p.fixed.Eq(p.fixedID)).Lock(keel.ForUpdate)
@@ -245,7 +245,7 @@ func (r *repository) replace(
 		db := r.db.Keel(ctx)
 		rag := permissiondb.RoleAgentGrants
 
-		previous, err := keel.Into[pulid.ID](ctx, db, currentGrantsQuery(p))
+		previous, err := keel.Into[pulid.ID](ctx, db, currentGrantsQuery(&p))
 		if err != nil {
 			return permissionports.GrantChange{}, fmt.Errorf("read the current grants: %w", err)
 		}
@@ -270,7 +270,13 @@ func (r *repository) replace(
 			for _, id := range change.Added {
 				rows = append(rows, p.grant(id))
 			}
-			if _, err = rag.CreateOrSkip(ctx, db, rows, rag.RoleID, rag.AgentDefinitionID); err != nil {
+			if _, err = rag.CreateOrSkip(
+				ctx,
+				db,
+				rows,
+				rag.RoleID,
+				rag.AgentDefinitionID,
+			); err != nil {
 				return permissionports.GrantChange{}, fmt.Errorf("add grants: %w", err)
 			}
 		}

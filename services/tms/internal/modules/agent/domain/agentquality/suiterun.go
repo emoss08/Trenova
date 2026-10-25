@@ -79,41 +79,41 @@ func (t SuiteRunTrigger) IsValid() bool {
 
 type SuiteRun struct {
 	keel.Table     `keel:"agent_suite_runs"`
-	ID             pulid.ID `json:"id" keel:"id,pk"`
-	BusinessUnitID pulid.ID `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
-	OrganizationID pulid.ID `json:"organizationId" keel:"organization_id,pk,tenant"`
+	ID             pulid.ID `keel:"id,pk"                      json:"id"`
+	BusinessUnitID pulid.ID `keel:"business_unit_id,pk,tenant" json:"businessUnitId"`
+	OrganizationID pulid.ID `keel:"organization_id,pk,tenant"  json:"organizationId"`
 
-	AgentDefinitionID  pulid.ID                  `json:"agentDefinitionId" keel:"agent_definition_id"`
-	Trigger            SuiteRunTrigger           `json:"trigger" keel:"trigger"`
-	SweepKey           string                    `json:"sweepKey" keel:"sweep_key,nullzero"`
-	Fingerprint        *agent.Fingerprint        `json:"fingerprint" keel:"fingerprint,jsonb"`
-	FingerprintHash    string                    `json:"fingerprintHash" keel:"fingerprint_hash"`
+	AgentDefinitionID  pulid.ID                  `json:"agentDefinitionId"  keel:"agent_definition_id"`
+	Trigger            SuiteRunTrigger           `json:"trigger"            keel:"trigger"`
+	SweepKey           string                    `json:"sweepKey"           keel:"sweep_key,nullzero"`
+	Fingerprint        *agent.Fingerprint        `json:"fingerprint"        keel:"fingerprint,jsonb"`
+	FingerprintHash    string                    `json:"fingerprintHash"    keel:"fingerprint_hash"`
 	FingerprintChanges []agent.FingerprintChange `json:"fingerprintChanges" keel:"fingerprint_changes,jsonb"`
-	SuiteRevision      string                    `json:"suiteRevision" keel:"suite_revision"`
-	SampleSeed         int64                     `json:"sampleSeed" keel:"sample_seed"`
-	Status             SuiteRunStatus            `json:"status" keel:"status"`
+	SuiteRevision      string                    `json:"suiteRevision"      keel:"suite_revision"`
+	SampleSeed         int64                     `json:"sampleSeed"         keel:"sample_seed"`
+	Status             SuiteRunStatus            `json:"status"             keel:"status"`
 
-	CasesTotal   int `json:"casesTotal" keel:"cases_total"`
-	CasesPassed  int `json:"casesPassed" keel:"cases_passed"`
-	CasesFailed  int `json:"casesFailed" keel:"cases_failed"`
+	CasesTotal   int `json:"casesTotal"   keel:"cases_total"`
+	CasesPassed  int `json:"casesPassed"  keel:"cases_passed"`
+	CasesFailed  int `json:"casesFailed"  keel:"cases_failed"`
 	CasesSkipped int `json:"casesSkipped" keel:"cases_skipped"`
 	HardFailures int `json:"hardFailures" keel:"hard_failures"`
 
 	DeterministicScore *float64  `json:"deterministicScore" keel:"deterministic_score"`
-	JudgeScore         *float64  `json:"judgeScore" keel:"judge_score"`
-	QualityScore       *float64  `json:"qualityScore" keel:"quality_score"`
-	BaselineScore      *float64  `json:"baselineScore" keel:"baseline_score"`
-	BaselineRunID      *pulid.ID `json:"baselineRunId" keel:"baseline_run_id"`
-	Regression         bool      `json:"regression" keel:"regression"`
+	JudgeScore         *float64  `json:"judgeScore"         keel:"judge_score"`
+	QualityScore       *float64  `json:"qualityScore"       keel:"quality_score"`
+	BaselineScore      *float64  `json:"baselineScore"      keel:"baseline_score"`
+	BaselineRunID      *pulid.ID `json:"baselineRunId"      keel:"baseline_run_id"`
+	Regression         bool      `json:"regression"         keel:"regression"`
 
-	CostUSD           decimal.Decimal `json:"costUsd" keel:"cost_usd"`
-	StartedAt         int64           `json:"startedAt" keel:"started_at"`
-	FinishedAt        *int64          `json:"finishedAt" keel:"finished_at"`
-	Comments          string          `json:"comments" keel:"comments,nullzero"`
-	WorkflowID        string          `json:"workflowId" keel:"workflow_id,nullzero"`
+	CostUSD           decimal.Decimal `json:"costUsd"           keel:"cost_usd"`
+	StartedAt         int64           `json:"startedAt"         keel:"started_at"`
+	FinishedAt        *int64          `json:"finishedAt"        keel:"finished_at"`
+	Comments          string          `json:"comments"          keel:"comments,nullzero"`
+	WorkflowID        string          `json:"workflowId"        keel:"workflow_id,nullzero"`
 	RequestedByUserID *pulid.ID       `json:"requestedByUserId" keel:"requested_by_user_id"`
 
-	Version   int64 `json:"version" keel:"version,version"`
+	Version   int64 `json:"version"   keel:"version,version"`
 	CreatedAt int64 `json:"createdAt" keel:"created_at,autocreate"`
 	UpdatedAt int64 `json:"updatedAt" keel:"updated_at,autoupdate"`
 

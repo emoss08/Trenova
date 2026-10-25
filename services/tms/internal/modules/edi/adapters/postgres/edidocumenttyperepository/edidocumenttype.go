@@ -95,7 +95,11 @@ func documentTypeOptionsQuery(
 
 func documentTypeSearch(s string) keel.Pred {
 	dt := edidb.EDIDocumentTypes
-	return keel.Or(dt.Code.ContainsFold(s), dt.Name.ContainsFold(s), dt.DefaultVersion.ContainsFold(s))
+	return keel.Or(
+		dt.Code.ContainsFold(s),
+		dt.Name.ContainsFold(s),
+		dt.DefaultVersion.ContainsFold(s),
+	)
 }
 
 func documentTypeFilters(req *ediports.ListEDIDocumentTypesRequest) []keel.Pred {

@@ -10,23 +10,23 @@ import (
 type DotHazmatReference struct {
 	keel.Table `keel:"dot_hazmat_references"`
 
-	ID                  pulid.ID `json:"id" keel:"id,pk,autoid:dhr_"`
-	UnNumber            string   `json:"unNumber" keel:"un_number"`
-	ProperShippingName  string   `json:"properShippingName" keel:"proper_shipping_name"`
-	HazardClass         string   `json:"hazardClass" keel:"hazard_class"`
-	SubsidiaryHazard    string   `json:"subsidiaryHazard" keel:"subsidiary_hazard,nullzero"`
-	PackingGroup        string   `json:"packingGroup" keel:"packing_group,nullzero"`
-	SpecialProvisions   string   `json:"specialProvisions" keel:"special_provisions,nullzero"`
+	ID                  pulid.ID `json:"id"                  keel:"id,pk,autoid:dhr_"`
+	UnNumber            string   `json:"unNumber"            keel:"un_number"`
+	ProperShippingName  string   `json:"properShippingName"  keel:"proper_shipping_name"`
+	HazardClass         string   `json:"hazardClass"         keel:"hazard_class"`
+	SubsidiaryHazard    string   `json:"subsidiaryHazard"    keel:"subsidiary_hazard,nullzero"`
+	PackingGroup        string   `json:"packingGroup"        keel:"packing_group,nullzero"`
+	SpecialProvisions   string   `json:"specialProvisions"   keel:"special_provisions,nullzero"`
 	PackagingExceptions string   `json:"packagingExceptions" keel:"packaging_exceptions,nullzero"`
-	PackagingNonBulk    string   `json:"packagingNonBulk" keel:"packaging_non_bulk,nullzero"`
-	PackagingBulk       string   `json:"packagingBulk" keel:"packaging_bulk,nullzero"`
-	QuantityPassenger   string   `json:"quantityPassenger" keel:"quantity_passenger,nullzero"`
-	QuantityCargo       string   `json:"quantityCargo" keel:"quantity_cargo,nullzero"`
-	VesselStowage       string   `json:"vesselStowage" keel:"vessel_stowage,nullzero"`
-	ErgGuide            string   `json:"ergGuide" keel:"erg_guide,nullzero"`
-	Symbols             string   `json:"symbols" keel:"symbols,nullzero"`
-	CreatedAt           int64    `json:"createdAt" keel:"created_at,autocreate"`
-	UpdatedAt           int64    `json:"updatedAt" keel:"updated_at,autoupdate"`
+	PackagingNonBulk    string   `json:"packagingNonBulk"    keel:"packaging_non_bulk,nullzero"`
+	PackagingBulk       string   `json:"packagingBulk"       keel:"packaging_bulk,nullzero"`
+	QuantityPassenger   string   `json:"quantityPassenger"   keel:"quantity_passenger,nullzero"`
+	QuantityCargo       string   `json:"quantityCargo"       keel:"quantity_cargo,nullzero"`
+	VesselStowage       string   `json:"vesselStowage"       keel:"vessel_stowage,nullzero"`
+	ErgGuide            string   `json:"ergGuide"            keel:"erg_guide,nullzero"`
+	Symbols             string   `json:"symbols"             keel:"symbols,nullzero"`
+	CreatedAt           int64    `json:"createdAt"           keel:"created_at,autocreate"`
+	UpdatedAt           int64    `json:"updatedAt"           keel:"updated_at,autoupdate"`
 }
 
 func (r *DotHazmatReference) Validate(multiErr *errortypes.MultiError) {

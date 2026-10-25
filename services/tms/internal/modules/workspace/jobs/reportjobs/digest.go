@@ -19,7 +19,7 @@ import (
 
 func readDigest(digest *reportports.ReportDigest) (*export.Envelope, error) {
 	if digest.IsEmpty() {
-		return nil, nil
+		return nil, nil //nolint:nilnil // an empty digest has no envelope to read
 	}
 	return export.ReadJSON(bytes.NewReader(digest.Envelope))
 }

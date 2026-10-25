@@ -272,7 +272,10 @@ func pendingLimit(limit int) int {
 	return limit
 }
 
-func pendingExtraction(d *documentdb.DocumentsTable, dc *documentcontentdb.ContentsTable) []keel.Pred {
+func pendingExtraction(
+	d *documentdb.DocumentsTable,
+	dc *documentcontentdb.ContentsTable,
+) []keel.Pred {
 	return []keel.Pred{
 		d.Status.Eq(document.StatusActive),
 		d.ProcessingProfile.In(document.IntelligenceProcessingProfiles()...),

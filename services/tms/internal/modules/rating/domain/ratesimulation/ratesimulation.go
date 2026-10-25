@@ -42,7 +42,7 @@ const (
 type RateSimulation struct {
 	keel.Table `keel:"rate_simulations"`
 
-	ID             pulid.ID `json:"id" keel:"id,pk,autoid:rsim_"`
+	ID             pulid.ID `json:"id"             keel:"id,pk,autoid:rsim_"`
 	BusinessUnitID pulid.ID `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
 	OrganizationID pulid.ID `json:"organizationId" keel:"organization_id,pk,tenant"`
 
@@ -50,7 +50,7 @@ type RateSimulation struct {
 	// the point is to see what it would do before anybody signs it.
 	RateAgreementID pulid.ID `json:"rateAgreementId" keel:"rate_agreement_id"`
 
-	Name        string `json:"name" keel:"name"`
+	Name        string `json:"name"        keel:"name"`
 	Description string `json:"description" keel:"description,nullzero"`
 
 	Status Status `json:"status" keel:"status"`
@@ -64,7 +64,7 @@ type RateSimulation struct {
 	// dates. Half open, matching every other window in the rating system: a
 	// shipment on SampleTo belongs to the next period.
 	SampleFrom int64 `json:"sampleFrom" keel:"sample_from"`
-	SampleTo   int64 `json:"sampleTo" keel:"sample_to"`
+	SampleTo   int64 `json:"sampleTo"   keel:"sample_to"`
 
 	// SampleLimit caps how many shipments are replayed. Zero means every
 	// shipment in the window.
@@ -80,7 +80,7 @@ type RateSimulation struct {
 
 	Error string `json:"error" keel:"error,nullzero"`
 
-	StartedAt   *int64    `json:"startedAt" keel:"started_at"`
+	StartedAt   *int64    `json:"startedAt"   keel:"started_at"`
 	CompletedAt *int64    `json:"completedAt" keel:"completed_at"`
 	RequestedBy *pulid.ID `json:"requestedBy" keel:"requested_by_id"`
 
@@ -88,14 +88,14 @@ type RateSimulation struct {
 	// be found and cancelled.
 	WorkflowID string `json:"workflowId" keel:"workflow_id,nullzero"`
 
-	Version   int64 `json:"version" keel:"version,version"`
+	Version   int64 `json:"version"   keel:"version,version"`
 	CreatedAt int64 `json:"createdAt" keel:"created_at,autocreate"`
 	UpdatedAt int64 `json:"updatedAt" keel:"updated_at,autoupdate"`
 
 	BusinessUnit *tenant.BusinessUnit         `json:"-"`
 	Organization *tenant.Organization         `json:"-"`
 	Agreement    *rateagreement.RateAgreement `json:"agreement,omitempty" keel:"belongs:rate_agreement_id"`
-	Results      []*RateSimulationResult      `json:"results,omitempty" keel:"many:rate_simulation_id"`
+	Results      []*RateSimulationResult      `json:"results,omitempty"   keel:"many:rate_simulation_id"`
 }
 
 func (rs *RateSimulation) BeforeCreate(_ context.Context) error {

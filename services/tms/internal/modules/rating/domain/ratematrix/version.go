@@ -19,20 +19,20 @@ func (v *RateMatrixVersion) Key() VersionKey {
 type RateMatrixVersion struct {
 	keel.Table `keel:"rate_matrix_versions"`
 
-	ID             pulid.ID  `json:"id" keel:"id,pk,autoid:rmv_"`
+	ID             pulid.ID  `json:"id"             keel:"id,pk,autoid:rmv_"`
 	OrganizationID pulid.ID  `json:"organizationId" keel:"organization_id,pk,tenant"`
 	BusinessUnitID pulid.ID  `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
-	RateMatrixID   pulid.ID  `json:"rateMatrixId" keel:"rate_matrix_id"`
-	VersionNumber  int64     `json:"versionNumber" keel:"version_number"`
-	Code           string    `json:"code" keel:"code"`
-	Name           string    `json:"name" keel:"name"`
-	Description    string    `json:"description" keel:"description,nullzero"`
-	ValueType      string    `json:"valueType" keel:"value_type"`
-	CellCount      int64     `json:"cellCount" keel:"cell_count"`
-	ChangeMessage  string    `json:"changeMessage" keel:"change_message,nullzero"`
-	SubmittedByID  *pulid.ID `json:"submittedById" keel:"submitted_by_id"`
-	PublishedByID  *pulid.ID `json:"publishedById" keel:"published_by_id"`
-	CreatedAt      int64     `json:"createdAt" keel:"created_at,autocreate"`
+	RateMatrixID   pulid.ID  `json:"rateMatrixId"   keel:"rate_matrix_id"`
+	VersionNumber  int64     `json:"versionNumber"  keel:"version_number"`
+	Code           string    `json:"code"           keel:"code"`
+	Name           string    `json:"name"           keel:"name"`
+	Description    string    `json:"description"    keel:"description,nullzero"`
+	ValueType      string    `json:"valueType"      keel:"value_type"`
+	CellCount      int64     `json:"cellCount"      keel:"cell_count"`
+	ChangeMessage  string    `json:"changeMessage"  keel:"change_message,nullzero"`
+	SubmittedByID  *pulid.ID `json:"submittedById"  keel:"submitted_by_id"`
+	PublishedByID  *pulid.ID `json:"publishedById"  keel:"published_by_id"`
+	CreatedAt      int64     `json:"createdAt"      keel:"created_at,autocreate"`
 
 	PublishedBy *tenant.User           `json:"publishedBy,omitempty" keel:"belongs:published_by_id"`
 	Dimensions  []*RateMatrixDimension `json:"dimensions,omitempty"`

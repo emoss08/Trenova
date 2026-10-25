@@ -34,29 +34,29 @@ var (
 
 // Factors that buy customer invoices and the remittance details invoices carry to them
 type FactoringCompany struct {
-	keel.Table `                                                   keel:"factoring_companies,report=Parties"`
+	keel.Table `keel:"factoring_companies,report=Parties"`
 
-	ID                     pulid.ID           `json:"id" keel:"id,pk,autoid:fac_"`
-	BusinessUnitID         pulid.ID           `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
-	OrganizationID         pulid.ID           `json:"organizationId" keel:"organization_id,pk,tenant"`
-	Status                 domaintypes.Status `json:"status" keel:"status"`
-	Code                   string             `json:"code" keel:"code"`
-	Name                   string             `json:"name" keel:"name"`
-	AddressLine1           string             `json:"addressLine1" keel:"address_line_1"`
-	AddressLine2           string             `json:"addressLine2" keel:"address_line_2,nullzero"`
-	City                   string             `json:"city" keel:"city"`
-	StateID                pulid.ID           `json:"stateId" keel:"state_id"`
-	PostalCode             string             `json:"postalCode" keel:"postal_code"`
-	Email                  string             `json:"email" keel:"email,nullzero"`
-	PhoneNumber            string             `json:"phoneNumber" keel:"phone_number,nullzero"`
+	ID                     pulid.ID           `json:"id"                     keel:"id,pk,autoid:fac_"`
+	BusinessUnitID         pulid.ID           `json:"businessUnitId"         keel:"business_unit_id,pk,tenant"`
+	OrganizationID         pulid.ID           `json:"organizationId"         keel:"organization_id,pk,tenant"`
+	Status                 domaintypes.Status `json:"status"                 keel:"status"`
+	Code                   string             `json:"code"                   keel:"code"`
+	Name                   string             `json:"name"                   keel:"name"`
+	AddressLine1           string             `json:"addressLine1"           keel:"address_line_1"`
+	AddressLine2           string             `json:"addressLine2"           keel:"address_line_2,nullzero"`
+	City                   string             `json:"city"                   keel:"city"`
+	StateID                pulid.ID           `json:"stateId"                keel:"state_id"`
+	PostalCode             string             `json:"postalCode"             keel:"postal_code"`
+	Email                  string             `json:"email"                  keel:"email,nullzero"`
+	PhoneNumber            string             `json:"phoneNumber"            keel:"phone_number,nullzero"`
 	RemittanceInstructions string             `json:"remittanceInstructions" keel:"remittance_instructions,nullzero,noreport"`
-	NoticeOfAssignment     string             `json:"noticeOfAssignment" keel:"notice_of_assignment,nullzero,noreport"`
-	NonRecourse            bool               `json:"nonRecourse" keel:"non_recourse,label=Non-Recourse"`
-	Notes                  string             `json:"notes" keel:"notes,nullzero,noreport"`
-	SearchVector           string             `json:"-" keel:"search_vector,tsvector,readonly,noselect"`
-	Version                int64              `json:"version" keel:"version,version"`
-	CreatedAt              int64              `json:"createdAt" keel:"created_at,autocreate"`
-	UpdatedAt              int64              `json:"updatedAt" keel:"updated_at,autoupdate"`
+	NoticeOfAssignment     string             `json:"noticeOfAssignment"     keel:"notice_of_assignment,nullzero,noreport"`
+	NonRecourse            bool               `json:"nonRecourse"            keel:"non_recourse,label=Non-Recourse"`
+	Notes                  string             `json:"notes"                  keel:"notes,nullzero,noreport"`
+	SearchVector           string             `json:"-"                      keel:"search_vector,tsvector,readonly,noselect"`
+	Version                int64              `json:"version"                keel:"version,version"`
+	CreatedAt              int64              `json:"createdAt"              keel:"created_at,autocreate"`
+	UpdatedAt              int64              `json:"updatedAt"              keel:"updated_at,autoupdate"`
 
 	BusinessUnit *tenant.BusinessUnit `json:"-"`
 	Organization *tenant.Organization `json:"-"`

@@ -491,7 +491,7 @@ func (r *repository) Totals(
 	ctx context.Context,
 	filter aianalyticsports.Filter,
 ) (*aianalyticsports.TotalsRow, error) {
-	rows, err := scanRaw[totalsScan](ctx, r, "totals", totalsSQL, filterArgs(filter))
+	rows, err := scanRaw[totalsScan](ctx, r, "totals", totalsSQL, filterArgs(&filter))
 	if err != nil {
 		return nil, err
 	}
@@ -516,7 +516,7 @@ func (r *repository) Deployments(
 	ctx context.Context,
 	filter aianalyticsports.Filter,
 ) ([]aianalyticsports.DeploymentRow, error) {
-	return scanMapped(ctx, r, "deployments", deploymentsSQL, filterArgs(filter),
+	return scanMapped(ctx, r, "deployments", deploymentsSQL, filterArgs(&filter),
 		func(row *deploymentCountsScan) aianalyticsports.DeploymentRow {
 			return aianalyticsports.DeploymentRow{DeploymentKey: row.key(), Counts: row.counts()}
 		})
@@ -539,7 +539,7 @@ func (r *repository) OutcomeDurations(
 		r,
 		"outcome durations",
 		outcomeDurationsSQL(grouping),
-		filterArgs(filter),
+		filterArgs(&filter),
 		func(row *outcomeDurationScan) aianalyticsports.OutcomeDurationRow {
 			return aianalyticsports.OutcomeDurationRow{
 				DeploymentKey: row.key(),
@@ -567,7 +567,7 @@ func (r *repository) Trend(
 	if len(req.BucketStarts) == 0 {
 		return []aianalyticsports.TrendRow{}, nil
 	}
-	args := filterArgs(req.Filter)
+	args := filterArgs(&req.Filter)
 	args.Starts = req.BucketStarts
 
 	return scanMapped(ctx, r, "trend", trendSQL(req.Grouping), args,
@@ -596,7 +596,7 @@ func (r *repository) ToolCells(
 	ctx context.Context,
 	filter aianalyticsports.Filter,
 ) ([]aianalyticsports.ToolCellRow, error) {
-	return scanMapped(ctx, r, "tool cells", toolCellsSQL, filterArgs(filter),
+	return scanMapped(ctx, r, "tool cells", toolCellsSQL, filterArgs(&filter),
 		func(row *toolCellScan) aianalyticsports.ToolCellRow {
 			return aianalyticsports.ToolCellRow{
 				DeploymentKey: row.key(),
@@ -618,7 +618,7 @@ func (r *repository) TaskCells(
 	ctx context.Context,
 	filter aianalyticsports.Filter,
 ) ([]aianalyticsports.TaskCellRow, error) {
-	return scanMapped(ctx, r, "task cells", taskCellsSQL, filterArgs(filter),
+	return scanMapped(ctx, r, "task cells", taskCellsSQL, filterArgs(&filter),
 		func(row *taskCellScan) aianalyticsports.TaskCellRow {
 			return aianalyticsports.TaskCellRow{
 				DeploymentKey: row.key(),
@@ -640,7 +640,7 @@ func (r *repository) Decisions(
 	ctx context.Context,
 	filter aianalyticsports.Filter,
 ) ([]aianalyticsports.DecisionRow, error) {
-	return scanMapped(ctx, r, "decisions", decisionsSQL, filterArgs(filter),
+	return scanMapped(ctx, r, "decisions", decisionsSQL, filterArgs(&filter),
 		func(row *decisionScan) aianalyticsports.DecisionRow {
 			return aianalyticsports.DecisionRow{
 				DeploymentKey: row.key(),
@@ -661,7 +661,7 @@ func (r *repository) Ratings(
 	ctx context.Context,
 	filter aianalyticsports.Filter,
 ) ([]aianalyticsports.RatingRow, error) {
-	return scanMapped(ctx, r, "ratings", ratingsSQL, filterArgs(filter),
+	return scanMapped(ctx, r, "ratings", ratingsSQL, filterArgs(&filter),
 		func(row *ratingScan) aianalyticsports.RatingRow {
 			return aianalyticsports.RatingRow{
 				DeploymentKey: row.key(),
@@ -685,7 +685,7 @@ func (r *repository) Suggestions(
 	ctx context.Context,
 	req *aianalyticsports.SuggestionRequest,
 ) ([]aianalyticsports.SuggestionRow, error) {
-	args := filterArgs(req.Filter)
+	args := filterArgs(&req.Filter)
 	args.Pending = req.PendingSince
 
 	return scanMapped(ctx, r, "suggestions", suggestionsSQL, args,
@@ -716,7 +716,7 @@ func (r *repository) ProviderCalls(
 	ctx context.Context,
 	filter aianalyticsports.Filter,
 ) ([]aianalyticsports.ProviderCallRow, error) {
-	return scanMapped(ctx, r, "provider calls", providerCallsSQL, filterArgs(filter),
+	return scanMapped(ctx, r, "provider calls", providerCallsSQL, filterArgs(&filter),
 		func(row *providerCallScan) aianalyticsports.ProviderCallRow {
 			return aianalyticsports.ProviderCallRow{
 				DeploymentKey: row.key(),
@@ -738,7 +738,7 @@ func (r *repository) FirstTokenHistograms(
 	ctx context.Context,
 	filter aianalyticsports.Filter,
 ) ([]aianalyticsports.HistogramRow, error) {
-	return scanMapped(ctx, r, "first token histograms", firstTokenSQL, filterArgs(filter),
+	return scanMapped(ctx, r, "first token histograms", firstTokenSQL, filterArgs(&filter),
 		func(row *histogramScan) aianalyticsports.HistogramRow {
 			return aianalyticsports.HistogramRow{
 				DeploymentKey: row.key(),
@@ -760,7 +760,7 @@ func (r *repository) ProviderHours(
 	ctx context.Context,
 	filter aianalyticsports.Filter,
 ) ([]aianalyticsports.ProviderHourRow, error) {
-	return scanMapped(ctx, r, "provider hours", providerHoursSQL, filterArgs(filter),
+	return scanMapped(ctx, r, "provider hours", providerHoursSQL, filterArgs(&filter),
 		func(row *providerHourScan) aianalyticsports.ProviderHourRow {
 			return aianalyticsports.ProviderHourRow{
 				ProviderID: row.ProviderID,
@@ -785,7 +785,7 @@ func (r *repository) ProviderVersions(
 	ctx context.Context,
 	filter aianalyticsports.Filter,
 ) ([]aianalyticsports.ProviderVersionRow, error) {
-	return scanMapped(ctx, r, "provider versions", providerVersionsSQL, filterArgs(filter),
+	return scanMapped(ctx, r, "provider versions", providerVersionsSQL, filterArgs(&filter),
 		func(row *providerVersionScan) aianalyticsports.ProviderVersionRow {
 			return aianalyticsports.ProviderVersionRow{
 				ProviderID: row.ProviderID,
@@ -817,7 +817,7 @@ func (r *repository) ToolFailures(
 	ctx context.Context,
 	req aianalyticsports.ToolFailureRequest,
 ) (*aianalyticsports.ToolFailureRows, error) {
-	args := filterArgs(req.Filter)
+	args := filterArgs(&req.Filter)
 	args.SeriesKey = req.SeriesKey
 	args.ToolName = req.ToolName
 	args.Limit = req.Limit

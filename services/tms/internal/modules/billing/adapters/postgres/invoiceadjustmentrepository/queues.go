@@ -186,7 +186,7 @@ func approvalQueueItem(a *invoiceadjustment.InvoiceAdjustment) *approvalItem {
 
 func (r *repository) ListReconciliationQueue(
 	ctx context.Context,
-	req invoiceadjustmentports.ListReconciliationQueueRequest,
+	req *invoiceadjustmentports.ListReconciliationQueueRequest,
 ) (*pagination.ListResult[*reconciliationItem], error) {
 	return dbtx.Read(
 		ctx,
@@ -309,7 +309,7 @@ func reconciliationQueueItem(
 
 func (r *repository) ListBatchQueue(
 	ctx context.Context,
-	req invoiceadjustmentports.ListBatchQueueRequest,
+	req *invoiceadjustmentports.ListBatchQueueRequest,
 ) (*pagination.ListResult[*invoiceadjustment.InvoiceAdjustmentBatch], error) {
 	return dbtx.Read(
 		ctx,

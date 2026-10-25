@@ -35,20 +35,20 @@ const (
 type ExchangeRate struct {
 	keel.Table `keel:"exchange_rates"`
 
-	ID                 pulid.ID        `json:"id" keel:"id,pk,autoid:fxr_"`
-	BusinessUnitID     pulid.ID        `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
-	OrganizationID     pulid.ID        `json:"organizationId" keel:"organization_id,pk,tenant"`
-	Provider           Provider        `json:"provider" keel:"provider"`
-	FromCurrency       string          `json:"fromCurrency" keel:"from_currency"`
-	ToCurrency         string          `json:"toCurrency" keel:"to_currency"`
-	RateType           RateType        `json:"rateType" keel:"rate_type"`
-	Bid                decimal.Decimal `json:"bid" keel:"bid"`
-	Ask                decimal.Decimal `json:"ask" keel:"ask"`
-	Mid                decimal.Decimal `json:"mid" keel:"mid"`
-	SelectedRate       decimal.Decimal `json:"selectedRate" keel:"selected_rate"`
-	Date               string          `json:"date" keel:"date"`
-	SourceTimestamp    time.Time       `json:"sourceTimestamp" keel:"source_timestamp"`
-	FetchedAt          time.Time       `json:"fetchedAt" keel:"fetched_at"`
+	ID                 pulid.ID        `json:"id"                 keel:"id,pk,autoid:fxr_"`
+	BusinessUnitID     pulid.ID        `json:"businessUnitId"     keel:"business_unit_id,pk,tenant"`
+	OrganizationID     pulid.ID        `json:"organizationId"     keel:"organization_id,pk,tenant"`
+	Provider           Provider        `json:"provider"           keel:"provider"`
+	FromCurrency       string          `json:"fromCurrency"       keel:"from_currency"`
+	ToCurrency         string          `json:"toCurrency"         keel:"to_currency"`
+	RateType           RateType        `json:"rateType"           keel:"rate_type"`
+	Bid                decimal.Decimal `json:"bid"                keel:"bid"`
+	Ask                decimal.Decimal `json:"ask"                keel:"ask"`
+	Mid                decimal.Decimal `json:"mid"                keel:"mid"`
+	SelectedRate       decimal.Decimal `json:"selectedRate"       keel:"selected_rate"`
+	Date               string          `json:"date"               keel:"date"`
+	SourceTimestamp    time.Time       `json:"sourceTimestamp"    keel:"source_timestamp"`
+	FetchedAt          time.Time       `json:"fetchedAt"          keel:"fetched_at"`
 	SettlementEligible bool            `json:"settlementEligible" keel:"settlement_eligible"`
 
 	BusinessUnit *tenant.BusinessUnit `json:"businessUnit,omitempty"`
@@ -126,24 +126,23 @@ func (e *ExchangeRate) GetBusinessUnitID() pulid.ID {
 type SettlementQuote struct {
 	keel.Table `keel:"exchange_rate_settlement_quotes"`
 
-	ID              pulid.ID        `json:"id" keel:"id,pk,autoid:fxq_"`
-	BusinessUnitID  pulid.ID        `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
-	OrganizationID  pulid.ID        `json:"organizationId" keel:"organization_id,pk,tenant"`
-	Provider        Provider        `json:"provider" keel:"provider"`
-	FromCurrency    string          `json:"fromCurrency" keel:"from_currency"`
-	ToCurrency      string          `json:"toCurrency" keel:"to_currency"`
-	Amount          decimal.Decimal `json:"amount" keel:"amount"`
-	Rate            decimal.Decimal `json:"rate" keel:"rate"`
+	ID              pulid.ID        `json:"id"              keel:"id,pk,autoid:fxq_"`
+	BusinessUnitID  pulid.ID        `json:"businessUnitId"  keel:"business_unit_id,pk,tenant"`
+	OrganizationID  pulid.ID        `json:"organizationId"  keel:"organization_id,pk,tenant"`
+	Provider        Provider        `json:"provider"        keel:"provider"`
+	FromCurrency    string          `json:"fromCurrency"    keel:"from_currency"`
+	ToCurrency      string          `json:"toCurrency"      keel:"to_currency"`
+	Amount          decimal.Decimal `json:"amount"          keel:"amount"`
+	Rate            decimal.Decimal `json:"rate"            keel:"rate"`
 	ConvertedAmount decimal.Decimal `json:"convertedAmount" keel:"converted_amount"`
-	RateType        RateType        `json:"rateType" keel:"rate_type"`
+	RateType        RateType        `json:"rateType"        keel:"rate_type"`
 	SourceTimestamp time.Time       `json:"sourceTimestamp" keel:"source_timestamp"`
-	FetchedAt       time.Time       `json:"fetchedAt" keel:"fetched_at"`
-	ExpiresAt       time.Time       `json:"expiresAt" keel:"expires_at"`
+	FetchedAt       time.Time       `json:"fetchedAt"       keel:"fetched_at"`
+	ExpiresAt       time.Time       `json:"expiresAt"       keel:"expires_at"`
 
 	BusinessUnit *tenant.BusinessUnit `json:"businessUnit,omitempty"`
 	Organization *tenant.Organization `json:"organization,omitempty"`
 }
-
 
 func (q *SettlementQuote) BeforeCreate(_ context.Context) error {
 	now := time.Now().UTC()

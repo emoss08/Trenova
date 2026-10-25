@@ -60,30 +60,30 @@ type Target struct {
 type BulkEdit struct {
 	keel.Table `keel:"bulk_edits"`
 
-	ID             pulid.ID  `json:"id" keel:"id,pk,autoid:bke_"`
+	ID             pulid.ID  `json:"id"             keel:"id,pk,autoid:bke_"`
 	OrganizationID pulid.ID  `json:"organizationId" keel:"organization_id,pk,tenant"`
 	BusinessUnitID pulid.ID  `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
-	UserID         pulid.ID  `json:"userId" keel:"user_id"`
-	Resource       string    `json:"resource" keel:"resource"`
-	Field          string    `json:"field" keel:"field"`
-	Value          string    `json:"value" keel:"value"`
-	Selection      Selection `json:"selection" keel:"selection,jsonb"`
-	Targets        []Target  `json:"targets" keel:"targets,jsonb"`
-	Status         Status    `json:"status" keel:"status"`
-	TotalCount     int       `json:"totalCount" keel:"total_count"`
-	ChangedCount   int       `json:"changedCount" keel:"changed_count"`
-	FailedCount    int       `json:"failedCount" keel:"failed_count"`
+	UserID         pulid.ID  `json:"userId"         keel:"user_id"`
+	Resource       string    `json:"resource"       keel:"resource"`
+	Field          string    `json:"field"          keel:"field"`
+	Value          string    `json:"value"          keel:"value"`
+	Selection      Selection `json:"selection"      keel:"selection,jsonb"`
+	Targets        []Target  `json:"targets"        keel:"targets,jsonb"`
+	Status         Status    `json:"status"         keel:"status"`
+	TotalCount     int       `json:"totalCount"     keel:"total_count"`
+	ChangedCount   int       `json:"changedCount"   keel:"changed_count"`
+	FailedCount    int       `json:"failedCount"    keel:"failed_count"`
 	ProcessedCount int       `json:"processedCount" keel:"processed_count"`
 	FailureMessage string    `json:"failureMessage" keel:"failure_message"`
-	CompletedAt    *int64    `json:"completedAt" keel:"completed_at"`
-	UndoneAt       *int64    `json:"undoneAt" keel:"undone_at"`
-	Version        int64     `json:"version" keel:"version,version"`
-	CreatedAt      int64     `json:"createdAt" keel:"created_at,autocreate"`
-	UpdatedAt      int64     `json:"updatedAt" keel:"updated_at,autoupdate"`
+	CompletedAt    *int64    `json:"completedAt"    keel:"completed_at"`
+	UndoneAt       *int64    `json:"undoneAt"       keel:"undone_at"`
+	Version        int64     `json:"version"        keel:"version,version"`
+	CreatedAt      int64     `json:"createdAt"      keel:"created_at,autocreate"`
+	UpdatedAt      int64     `json:"updatedAt"      keel:"updated_at,autoupdate"`
 
 	Organization *tenant.Organization `json:"organization,omitempty"`
 	BusinessUnit *tenant.BusinessUnit `json:"businessUnit,omitempty"`
-	User         *tenant.User         `json:"user,omitempty" keel:"belongs:user_id"`
+	User         *tenant.User         `json:"user,omitempty"         keel:"belongs:user_id"`
 }
 
 var (

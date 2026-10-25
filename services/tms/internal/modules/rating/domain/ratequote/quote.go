@@ -32,46 +32,46 @@ var (
 
 // How each shipment was priced, what it cost, and what an override gave away
 type RateQuote struct {
-	keel.Table `                                           keel:"rate_quotes,report=Billing"`
+	keel.Table `keel:"rate_quotes,report=Billing"`
 
-	ID             pulid.ID `json:"id" keel:"id,pk,autoid:rqt_"`
+	ID             pulid.ID `json:"id"             keel:"id,pk,autoid:rqt_"`
 	BusinessUnitID pulid.ID `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
 	OrganizationID pulid.ID `json:"organizationId" keel:"organization_id,pk,tenant"`
 
-	ShipmentID     *pulid.ID `json:"shipmentId" keel:"shipment_id"`
+	ShipmentID     *pulid.ID `json:"shipmentId"     keel:"shipment_id"`
 	ShipmentMoveID *pulid.ID `json:"shipmentMoveId" keel:"shipment_move_id"`
 
 	PartyType rateagreement.PartyType `json:"partyType" keel:"party_type"`
-	PartyID   pulid.ID                `json:"partyId" keel:"party_id"`
+	PartyID   pulid.ID                `json:"partyId"   keel:"party_id"`
 
 	Purpose Purpose `json:"purpose" keel:"purpose"`
 	Outcome Outcome `json:"outcome" keel:"outcome"`
-	Status  Status  `json:"status" keel:"status"`
+	Status  Status  `json:"status"  keel:"status"`
 
-	RateAgreementID              *pulid.ID `json:"rateAgreementId" keel:"rate_agreement_id"`
-	RateAgreementRuleID          *pulid.ID `json:"rateAgreementRuleId" keel:"rate_agreement_rule_id"`
-	AgreementVersionNumber       *int64    `json:"agreementVersionNumber" keel:"agreement_version_number,label=Agreement Version,dimension"`
-	FormulaTemplateID            *pulid.ID `json:"formulaTemplateId" keel:"formula_template_id"`
+	RateAgreementID              *pulid.ID `json:"rateAgreementId"              keel:"rate_agreement_id"`
+	RateAgreementRuleID          *pulid.ID `json:"rateAgreementRuleId"          keel:"rate_agreement_rule_id"`
+	AgreementVersionNumber       *int64    `json:"agreementVersionNumber"       keel:"agreement_version_number,label=Agreement Version,dimension"`
+	FormulaTemplateID            *pulid.ID `json:"formulaTemplateId"            keel:"formula_template_id"`
 	FormulaTemplateVersionNumber *int64    `json:"formulaTemplateVersionNumber" keel:"formula_template_version_number,dimension"`
-	SpecificityScore             int32     `json:"specificityScore" keel:"specificity_score,dimension"`
+	SpecificityScore             int32     `json:"specificityScore"             keel:"specificity_score,dimension"`
 
-	Currency          string              `json:"currency" keel:"currency"`
-	LinehaulAmount    decimal.Decimal     `json:"linehaulAmount" keel:"linehaul_amount,label=Linehaul,format=money"`
-	FuelAmount        decimal.Decimal     `json:"fuelAmount" keel:"fuel_amount,label=Fuel,format=money"`
+	Currency          string              `json:"currency"          keel:"currency"`
+	LinehaulAmount    decimal.Decimal     `json:"linehaulAmount"    keel:"linehaul_amount,label=Linehaul,format=money"`
+	FuelAmount        decimal.Decimal     `json:"fuelAmount"        keel:"fuel_amount,label=Fuel,format=money"`
 	AccessorialAmount decimal.Decimal     `json:"accessorialAmount" keel:"accessorial_amount,label=Accessorials,format=money"`
-	TotalAmount       decimal.Decimal     `json:"totalAmount" keel:"total_amount,label=Total,format=money"`
-	CostAmount        decimal.NullDecimal `json:"costAmount" keel:"cost_amount,label=Cost,format=money"`
-	MarginAmount      decimal.NullDecimal `json:"marginAmount" keel:"margin_amount,label=Margin,format=money"`
-	MarginPercent     decimal.NullDecimal `json:"marginPercent" keel:"margin_percent,label=Margin (%)"`
+	TotalAmount       decimal.Decimal     `json:"totalAmount"       keel:"total_amount,label=Total,format=money"`
+	CostAmount        decimal.NullDecimal `json:"costAmount"        keel:"cost_amount,label=Cost,format=money"`
+	MarginAmount      decimal.NullDecimal `json:"marginAmount"      keel:"margin_amount,label=Margin,format=money"`
+	MarginPercent     decimal.NullDecimal `json:"marginPercent"     keel:"margin_percent,label=Margin (%)"`
 
 	BillingCurrency string              `json:"billingCurrency" keel:"billing_currency"`
-	BillingAmount   decimal.Decimal     `json:"billingAmount" keel:"billing_amount,format=money"`
-	FxRate          decimal.NullDecimal `json:"fxRate" keel:"fx_rate"`
-	ExchangeRateID  *pulid.ID           `json:"exchangeRateId" keel:"exchange_rate_id"`
+	BillingAmount   decimal.Decimal     `json:"billingAmount"   keel:"billing_amount,format=money"`
+	FxRate          decimal.NullDecimal `json:"fxRate"          keel:"fx_rate"`
+	ExchangeRateID  *pulid.ID           `json:"exchangeRateId"  keel:"exchange_rate_id"`
 
-	AsOf          int64     `json:"asOf" keel:"as_of,type=epoch"`
-	RatedAt       int64     `json:"ratedAt" keel:"rated_at"`
-	RatedByID     *pulid.ID `json:"ratedById" keel:"rated_by_id"`
+	AsOf          int64     `json:"asOf"          keel:"as_of,type=epoch"`
+	RatedAt       int64     `json:"ratedAt"       keel:"rated_at"`
+	RatedByID     *pulid.ID `json:"ratedById"     keel:"rated_by_id"`
 	EngineVersion string    `json:"engineVersion" keel:"engine_version"`
 
 	ContextHash string `json:"contextHash" keel:"context_hash,noreport"`
@@ -86,7 +86,7 @@ type RateQuote struct {
 	BusinessUnit *tenant.BusinessUnit         `json:"-"`
 	Organization *tenant.Organization         `json:"-"`
 	Agreement    *rateagreement.RateAgreement `json:"agreement,omitempty" keel:"belongs:rate_agreement_id,label=Rate Agreement"`
-	RatedBy      *tenant.User                 `json:"ratedBy,omitempty" keel:"belongs:rated_by_id,noreport"`
+	RatedBy      *tenant.User                 `json:"ratedBy,omitempty"   keel:"belongs:rated_by_id,noreport"`
 }
 
 func (rq *RateQuote) BeforeUpdate(_ context.Context) error {

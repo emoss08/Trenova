@@ -3,6 +3,8 @@ package driverpay
 import (
 	"context"
 
+	"github.com/emoss08/trenova/shared/money"
+
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
 	"github.com/emoss08/trenova/pkg/domaintypes"
@@ -21,45 +23,45 @@ var (
 
 // Owner-operator escrow balances against their target
 type EscrowAccount struct {
-	keel.Table `                                                keel:"escrow_accounts,report=Payroll"`
+	keel.Table `keel:"escrow_accounts,report=Payroll"`
 
-	ID                      pulid.ID            `json:"id" keel:"id,pk,autoid:escr_"`
-	BusinessUnitID          pulid.ID            `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
-	OrganizationID          pulid.ID            `json:"organizationId" keel:"organization_id,pk,tenant"`
-	WorkerID                pulid.ID            `json:"workerId" keel:"worker_id"`
-	Status                  EscrowAccountStatus `json:"status" keel:"status"`
-	TargetAmountMinor       int64               `json:"targetAmountMinor" keel:"target_amount_minor,label=Target (Minor)"`
-	BalanceMinor            int64               `json:"balanceMinor" keel:"balance_minor,label=Balance (Minor)"`
-	AnnualInterestRate      decimal.Decimal     `json:"annualInterestRate" keel:"annual_interest_rate,label=Annual Interest Rate (%)"`
+	ID                      pulid.ID            `json:"id"                      keel:"id,pk,autoid:escr_"`
+	BusinessUnitID          pulid.ID            `json:"businessUnitId"          keel:"business_unit_id,pk,tenant"`
+	OrganizationID          pulid.ID            `json:"organizationId"          keel:"organization_id,pk,tenant"`
+	WorkerID                pulid.ID            `json:"workerId"                keel:"worker_id"`
+	Status                  EscrowAccountStatus `json:"status"                  keel:"status"`
+	TargetAmountMinor       int64               `json:"targetAmountMinor"       keel:"target_amount_minor,label=Target (Minor)"`
+	BalanceMinor            int64               `json:"balanceMinor"            keel:"balance_minor,label=Balance (Minor)"`
+	AnnualInterestRate      decimal.Decimal     `json:"annualInterestRate"      keel:"annual_interest_rate,label=Annual Interest Rate (%)"`
 	LastInterestAccrualDate *int64              `json:"lastInterestAccrualDate" keel:"last_interest_accrual_date,label=Last Interest Accrual"`
-	OpenedDate              int64               `json:"openedDate" keel:"opened_date,label=Opened"`
-	ClosedDate              *int64              `json:"closedDate" keel:"closed_date,label=Closed"`
-	CurrencyCode            string              `json:"currencyCode" keel:"currency_code,label=Currency"`
-	Version                 int64               `json:"version" keel:"version,version"`
-	CreatedAt               int64               `json:"createdAt" keel:"created_at,autocreate"`
-	UpdatedAt               int64               `json:"updatedAt" keel:"updated_at,autoupdate"`
+	OpenedDate              int64               `json:"openedDate"              keel:"opened_date,label=Opened"`
+	ClosedDate              *int64              `json:"closedDate"              keel:"closed_date,label=Closed"`
+	CurrencyCode            string              `json:"currencyCode"            keel:"currency_code,label=Currency"`
+	Version                 int64               `json:"version"                 keel:"version,version"`
+	CreatedAt               int64               `json:"createdAt"               keel:"created_at,autocreate"`
+	UpdatedAt               int64               `json:"updatedAt"               keel:"updated_at,autoupdate"`
 
-	Worker            *worker.Worker       `json:"worker,omitempty" keel:"belongs:worker_id,label=Driver"`
-	Transactions      []*EscrowTransaction `json:"transactions,omitempty" keel:"many:escrow_account_id,label=Escrow Transactions"`
+	Worker            *worker.Worker       `json:"worker,omitempty"            keel:"belongs:worker_id,label=Driver"`
+	Transactions      []*EscrowTransaction `json:"transactions,omitempty"      keel:"many:escrow_account_id,label=Escrow Transactions"`
 	LatestTransaction *EscrowTransaction   `json:"latestTransaction,omitempty" keel:"pick:transactions,last=transactions.occurred_date|transactions.created_at"`
 }
 
 // Contributions, interest, refunds and deductions against escrow
 type EscrowTransaction struct {
-	keel.Table `                                                     keel:"escrow_transactions,report=Payroll"`
+	keel.Table `keel:"escrow_transactions,report=Payroll"`
 
-	ID                pulid.ID              `json:"id" keel:"id,pk,autoid:esctx_"`
-	BusinessUnitID    pulid.ID              `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
-	OrganizationID    pulid.ID              `json:"organizationId" keel:"organization_id,pk,tenant"`
-	EscrowAccountID   pulid.ID              `json:"escrowAccountId" keel:"escrow_account_id"`
-	Type              EscrowTransactionType `json:"type" keel:"type,label=Transaction Type"`
-	AmountMinor       int64                 `json:"amountMinor" keel:"amount_minor,label=Amount (Minor)"`
+	ID                pulid.ID              `json:"id"                keel:"id,pk,autoid:esctx_"`
+	BusinessUnitID    pulid.ID              `json:"businessUnitId"    keel:"business_unit_id,pk,tenant"`
+	OrganizationID    pulid.ID              `json:"organizationId"    keel:"organization_id,pk,tenant"`
+	EscrowAccountID   pulid.ID              `json:"escrowAccountId"   keel:"escrow_account_id"`
+	Type              EscrowTransactionType `json:"type"              keel:"type,label=Transaction Type"`
+	AmountMinor       int64                 `json:"amountMinor"       keel:"amount_minor,label=Amount (Minor)"`
 	BalanceAfterMinor int64                 `json:"balanceAfterMinor" keel:"balance_after_minor,label=Balance After (Minor)"`
-	OccurredDate      int64                 `json:"occurredDate" keel:"occurred_date,label=Occurred"`
-	Description       string                `json:"description" keel:"description,nullzero"`
-	SettlementID      *pulid.ID             `json:"settlementId" keel:"settlement_id"`
-	CreatedByID       pulid.ID              `json:"createdById" keel:"created_by_id,nullzero"`
-	CreatedAt         int64                 `json:"createdAt" keel:"created_at,autocreate"`
+	OccurredDate      int64                 `json:"occurredDate"      keel:"occurred_date,label=Occurred"`
+	Description       string                `json:"description"       keel:"description,nullzero"`
+	SettlementID      *pulid.ID             `json:"settlementId"      keel:"settlement_id"`
+	CreatedByID       pulid.ID              `json:"createdById"       keel:"created_by_id,nullzero"`
+	CreatedAt         int64                 `json:"createdAt"         keel:"created_at,autocreate"`
 
 	EscrowAccount *EscrowAccount `json:"escrowAccount,omitempty" keel:"belongs:escrow_account_id"`
 }
@@ -184,7 +186,7 @@ func (e *EscrowAccount) BeforeCreate(ctx context.Context) error {
 		e.Status = EscrowAccountStatusActive
 	}
 	if e.CurrencyCode == "" {
-		e.CurrencyCode = "USD"
+		e.CurrencyCode = money.DefaultCurrencyCode
 	}
 
 	return nil

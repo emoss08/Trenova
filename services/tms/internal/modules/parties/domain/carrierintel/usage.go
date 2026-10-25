@@ -68,28 +68,28 @@ func BillingDedupeKey(endpoint Endpoint, price EndpointPrice, dotNumber string, 
 }
 
 type CarrierIntelUsageRecord struct {
-	keel.Table `                                                            keel:"carrier_intel_usage_ledger"`
+	keel.Table `keel:"carrier_intel_usage_ledger"`
 
-	ID              pulid.ID         `json:"id" keel:"id,pk,autoid:ciuse_"`
-	BusinessUnitID  pulid.ID         `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
-	OrganizationID  pulid.ID         `json:"organizationId" keel:"organization_id,pk,tenant"`
-	Provider        integration.Type `json:"provider" keel:"provider"`
-	Endpoint        Endpoint         `json:"endpoint" keel:"endpoint"`
-	Purpose         Purpose          `json:"purpose" keel:"purpose"`
-	DOTNumber       string           `json:"dotNumber" keel:"dot_number,nullzero"`
-	CarrierID       pulid.ID         `json:"carrierId" keel:"carrier_id,nullzero"`
-	Billable        bool             `json:"billable" keel:"billable"`
-	BillableUnits   int              `json:"billableUnits" keel:"billable_units"`
-	EstimatedCost   decimal.Decimal  `json:"estimatedCost" keel:"estimated_cost"`
-	Currency        string           `json:"currency" keel:"currency"`
-	DedupeKey       string           `json:"dedupeKey" keel:"dedupe_key,nullzero"`
-	StatusCode      int              `json:"statusCode" keel:"status_code"`
-	Outcome         UsageOutcome     `json:"outcome" keel:"outcome"`
-	LatencyMS       int              `json:"latencyMs" keel:"latency_ms"`
+	ID              pulid.ID         `json:"id"              keel:"id,pk,autoid:ciuse_"`
+	BusinessUnitID  pulid.ID         `json:"businessUnitId"  keel:"business_unit_id,pk,tenant"`
+	OrganizationID  pulid.ID         `json:"organizationId"  keel:"organization_id,pk,tenant"`
+	Provider        integration.Type `json:"provider"        keel:"provider"`
+	Endpoint        Endpoint         `json:"endpoint"        keel:"endpoint"`
+	Purpose         Purpose          `json:"purpose"         keel:"purpose"`
+	DOTNumber       string           `json:"dotNumber"       keel:"dot_number,nullzero"`
+	CarrierID       pulid.ID         `json:"carrierId"       keel:"carrier_id,nullzero"`
+	Billable        bool             `json:"billable"        keel:"billable"`
+	BillableUnits   int              `json:"billableUnits"   keel:"billable_units"`
+	EstimatedCost   decimal.Decimal  `json:"estimatedCost"   keel:"estimated_cost"`
+	Currency        string           `json:"currency"        keel:"currency"`
+	DedupeKey       string           `json:"dedupeKey"       keel:"dedupe_key,nullzero"`
+	StatusCode      int              `json:"statusCode"      keel:"status_code"`
+	Outcome         UsageOutcome     `json:"outcome"         keel:"outcome"`
+	LatencyMS       int              `json:"latencyMs"       keel:"latency_ms"`
 	InitiatedByType string           `json:"initiatedByType" keel:"initiated_by_type"`
-	InitiatedByID   pulid.ID         `json:"initiatedById" keel:"initiated_by_id,nullzero"`
-	WorkflowID      string           `json:"workflowId" keel:"workflow_id,nullzero"`
-	CreatedAt       int64            `json:"createdAt" keel:"created_at,autocreate"`
+	InitiatedByID   pulid.ID         `json:"initiatedById"   keel:"initiated_by_id,nullzero"`
+	WorkflowID      string           `json:"workflowId"      keel:"workflow_id,nullzero"`
+	CreatedAt       int64            `json:"createdAt"       keel:"created_at,autocreate"`
 }
 
 func (u *CarrierIntelUsageRecord) BeforeCreate(_ context.Context) error {
@@ -104,14 +104,14 @@ func (u *CarrierIntelUsageRecord) BeforeCreate(_ context.Context) error {
 }
 
 type CarrierIntelUsageDaily struct {
-	keel.Table `                                                           keel:"carrier_intel_usage_daily"`
+	keel.Table `keel:"carrier_intel_usage_daily"`
 
 	OrganizationID pulid.ID         `json:"organizationId" keel:"organization_id,pk,tenant"`
 	BusinessUnitID pulid.ID         `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
-	Provider       integration.Type `json:"provider" keel:"provider,pk"`
-	Endpoint       Endpoint         `json:"endpoint" keel:"endpoint,pk"`
-	Day            int              `json:"day" keel:"day,pk"`
-	Calls          int              `json:"calls" keel:"calls"`
-	BillableUnits  int              `json:"billableUnits" keel:"billable_units"`
-	EstimatedCost  decimal.Decimal  `json:"estimatedCost" keel:"estimated_cost"`
+	Provider       integration.Type `json:"provider"       keel:"provider,pk"`
+	Endpoint       Endpoint         `json:"endpoint"       keel:"endpoint,pk"`
+	Day            int              `json:"day"            keel:"day,pk"`
+	Calls          int              `json:"calls"          keel:"calls"`
+	BillableUnits  int              `json:"billableUnits"  keel:"billable_units"`
+	EstimatedCost  decimal.Decimal  `json:"estimatedCost"  keel:"estimated_cost"`
 }

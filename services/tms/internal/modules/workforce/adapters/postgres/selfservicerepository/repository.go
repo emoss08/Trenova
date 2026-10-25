@@ -19,6 +19,8 @@ import (
 	"go.uber.org/zap"
 )
 
+const fieldWorkerID = "workerId"
+
 const (
 	defaultPolicyPageSize     = 200
 	defaultAckPageSize        = 500
@@ -61,7 +63,7 @@ var acknowledgementErrors = dberror.Mapping{
 		},
 		{
 			Name:    "fk_worker_policy_acknowledgements_worker",
-			Field:   "workerId",
+			Field:   fieldWorkerID,
 			Message: "Worker does not exist or belongs to a different organization",
 		},
 	},
@@ -72,14 +74,14 @@ var changeRequestErrors = dberror.Mapping{
 	Unique: []dberror.Constraint{
 		{
 			Name:    "uq_worker_profile_change_requests_open",
-			Field:   "workerId",
+			Field:   fieldWorkerID,
 			Message: "Worker already has a pending profile change request",
 		},
 	},
 	ForeignKey: []dberror.Constraint{
 		{
 			Name:    "fk_worker_profile_change_requests_worker",
-			Field:   "workerId",
+			Field:   fieldWorkerID,
 			Message: "Worker does not exist or belongs to a different organization",
 		},
 	},
@@ -284,6 +286,8 @@ func audienceFilter(audience worker.PolicyAudience) keel.Pred {
 		return w.Type.Eq(worker.WorkerTypeEmployee)
 	case worker.PolicyAudienceContractors:
 		return w.Type.Eq(worker.WorkerTypeContractor)
+	case worker.PolicyAudienceAll:
+		fallthrough
 	default:
 		return nil
 	}

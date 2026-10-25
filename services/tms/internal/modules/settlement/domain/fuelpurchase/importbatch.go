@@ -42,49 +42,49 @@ type ImportSummary struct {
 type ImportBatch struct {
 	keel.Table `keel:"fuel_purchase_import_batches"`
 
-	ID             pulid.ID `json:"id" keel:"id,pk,autoid:fpib_"`
+	ID             pulid.ID `json:"id"             keel:"id,pk,autoid:fpib_"`
 	BusinessUnitID pulid.ID `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
 	OrganizationID pulid.ID `json:"organizationId" keel:"organization_id,pk,tenant"`
 
-	Provider      CardProvider `json:"provider" keel:"provider"`
-	Origin        ImportOrigin `json:"origin" keel:"origin"`
+	Provider      CardProvider `json:"provider"      keel:"provider"`
+	Origin        ImportOrigin `json:"origin"        keel:"origin"`
 	FeedReference string       `json:"feedReference" keel:"feed_reference,nullzero"`
-	DocumentID    *pulid.ID    `json:"documentId" keel:"document_id"`
-	FileName      string       `json:"fileName" keel:"file_name,nullzero"`
-	SourceFormat  SourceFormat `json:"sourceFormat" keel:"source_format,nullzero"`
-	Status        ImportStatus `json:"status" keel:"status"`
+	DocumentID    *pulid.ID    `json:"documentId"    keel:"document_id"`
+	FileName      string       `json:"fileName"      keel:"file_name,nullzero"`
+	SourceFormat  SourceFormat `json:"sourceFormat"  keel:"source_format,nullzero"`
+	Status        ImportStatus `json:"status"        keel:"status"`
 
-	DefaultFuelType   domaintypes.IFTAFuelType `json:"defaultFuelType" keel:"default_fuel_type,nullzero"`
+	DefaultFuelType   domaintypes.IFTAFuelType `json:"defaultFuelType"   keel:"default_fuel_type,nullzero"`
 	DefaultFuelCardID *pulid.ID                `json:"defaultFuelCardId" keel:"default_fuel_card_id"`
-	DefaultCurrency   string                   `json:"defaultCurrency" keel:"default_currency"`
+	DefaultCurrency   string                   `json:"defaultCurrency"   keel:"default_currency"`
 
-	Mapping         map[string]int `json:"mapping" keel:"mapping,jsonb,nullzero"`
+	Mapping         map[string]int `json:"mapping"         keel:"mapping,jsonb,nullzero"`
 	UnmappedHeaders []string       `json:"unmappedHeaders" keel:"unmapped_headers,jsonb,nullzero"`
-	Summary         *ImportSummary `json:"summary" keel:"summary,jsonb"`
+	Summary         *ImportSummary `json:"summary"         keel:"summary,jsonb"`
 
-	RowCount       int `json:"rowCount" keel:"row_count"`
-	ErrorCount     int `json:"errorCount" keel:"error_count"`
+	RowCount       int `json:"rowCount"       keel:"row_count"`
+	ErrorCount     int `json:"errorCount"     keel:"error_count"`
 	CommittedCount int `json:"committedCount" keel:"committed_count"`
 
 	Error string `json:"error" keel:"error,nullzero"`
 
-	UploadedByID  pulid.ID `json:"uploadedById" keel:"uploaded_by_id,nullzero"`
-	StagedAt      *int64   `json:"stagedAt" keel:"staged_at"`
-	CommittedAt   *int64   `json:"committedAt" keel:"committed_at"`
+	UploadedByID  pulid.ID `json:"uploadedById"  keel:"uploaded_by_id,nullzero"`
+	StagedAt      *int64   `json:"stagedAt"      keel:"staged_at"`
+	CommittedAt   *int64   `json:"committedAt"   keel:"committed_at"`
 	CommittedByID pulid.ID `json:"committedById" keel:"committed_by_id,nullzero"`
 
 	SearchVector string `json:"-" keel:"search_vector,tsvector,readonly,noselect"`
 	Rank         string `json:"-" keel:"rank,computed"`
 
-	Version   int64 `json:"version" keel:"version,version"`
+	Version   int64 `json:"version"   keel:"version,version"`
 	CreatedAt int64 `json:"createdAt" keel:"created_at,autocreate"`
 	UpdatedAt int64 `json:"updatedAt" keel:"updated_at,autoupdate"`
 
-	Document        *document.Document `json:"document,omitempty" keel:"belongs:document_id"`
+	Document        *document.Document `json:"document,omitempty"        keel:"belongs:document_id"`
 	DefaultFuelCard *FuelCard          `json:"defaultFuelCard,omitempty" keel:"belongs:default_fuel_card_id"`
-	UploadedBy      *tenant.User       `json:"uploadedBy,omitempty" keel:"belongs:uploaded_by_id"`
-	CommittedBy     *tenant.User       `json:"committedBy,omitempty" keel:"belongs:committed_by_id"`
-	Rows            []*ImportRow       `json:"rows,omitempty" keel:"many:import_batch_id"`
+	UploadedBy      *tenant.User       `json:"uploadedBy,omitempty"      keel:"belongs:uploaded_by_id"`
+	CommittedBy     *tenant.User       `json:"committedBy,omitempty"     keel:"belongs:committed_by_id"`
+	Rows            []*ImportRow       `json:"rows,omitempty"            keel:"many:import_batch_id"`
 }
 
 func (b *ImportBatch) Normalize() {

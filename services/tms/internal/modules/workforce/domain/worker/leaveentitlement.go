@@ -73,26 +73,26 @@ var (
 // per organisation because the measurement method has to be applied
 // consistently (29 CFR 825.200(e)).
 type LeaveControl struct {
-	keel.Table `                                               keel:"leave_controls"`
+	keel.Table `keel:"leave_controls"`
 
-	ID             pulid.ID `json:"id" keel:"id,pk,autoid:lctl_"`
+	ID             pulid.ID `json:"id"             keel:"id,pk,autoid:lctl_"`
 	BusinessUnitID pulid.ID `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
 	OrganizationID pulid.ID `json:"organizationId" keel:"organization_id,pk,tenant"`
 
 	MeasurementMethod LeaveMeasurementMethod `json:"measurementMethod" keel:"measurement_method"`
 
-	EntitlementWeeks       decimal.Decimal `json:"entitlementWeeks" keel:"entitlement_weeks"`
+	EntitlementWeeks       decimal.Decimal `json:"entitlementWeeks"       keel:"entitlement_weeks"`
 	MilitaryCaregiverWeeks decimal.Decimal `json:"militaryCaregiverWeeks" keel:"military_caregiver_weeks"`
 	// WorkweekHours is what a week of entitlement is worth. Intermittent leave
 	// is taken in hours (29 CFR 825.205), so weeks only become a usable balance
 	// once there is a week's length to convert them with.
 	WorkweekHours decimal.Decimal `json:"workweekHours" keel:"workweek_hours"`
 
-	EligibilityMonths    int32 `json:"eligibilityMonths" keel:"eligibility_months"`
-	EligibilityHours     int32 `json:"eligibilityHours" keel:"eligibility_hours"`
+	EligibilityMonths    int32 `json:"eligibilityMonths"    keel:"eligibility_months"`
+	EligibilityHours     int32 `json:"eligibilityHours"     keel:"eligibility_hours"`
 	CertificationDueDays int32 `json:"certificationDueDays" keel:"certification_due_days"`
 
-	Version   int64 `json:"version" keel:"version,version"`
+	Version   int64 `json:"version"   keel:"version,version"`
 	CreatedAt int64 `json:"createdAt" keel:"created_at,autocreate"`
 	UpdatedAt int64 `json:"updatedAt" keel:"updated_at,autoupdate"`
 }

@@ -124,31 +124,31 @@ var (
 
 // Hires, transfers, leave, suspensions and terminations, with who recorded them
 type WorkerEmploymentEvent struct {
-	keel.Table `                                                        keel:"worker_employment_events,report=Parties,label=Employment Event"`
+	keel.Table `keel:"worker_employment_events,report=Parties,label=Employment Event"`
 
-	ID             pulid.ID            `json:"id" keel:"id,pk,autoid:wee_"`
+	ID             pulid.ID            `json:"id"             keel:"id,pk,autoid:wee_"`
 	BusinessUnitID pulid.ID            `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
 	OrganizationID pulid.ID            `json:"organizationId" keel:"organization_id,pk,tenant"`
-	WorkerID       pulid.ID            `json:"workerId" keel:"worker_id"`
-	Kind           EmploymentEventKind `json:"kind" keel:"kind,label=Event"`
-	EffectiveAt    int64               `json:"effectiveAt" keel:"effective_at,label=Effective"`
-	Reason         string              `json:"reason" keel:"reason,nullzero"`
-	Notes          string              `json:"notes" keel:"notes,nullzero"`
-	FromValues     map[string]string   `json:"fromValues" keel:"from_values,jsonb"`
-	ToValues       map[string]string   `json:"toValues" keel:"to_values,jsonb"`
-	DocumentID     pulid.ID            `json:"documentId" keel:"document_id,nullzero"`
-	RecordedByID   pulid.ID            `json:"recordedById" keel:"recorded_by_id,nullzero"`
-	AmendedByID    pulid.ID            `json:"amendedById" keel:"amended_by_id,nullzero"`
-	AmendedAt      *int64              `json:"amendedAt" keel:"amended_at"`
-	AmendmentNote  string              `json:"amendmentNote" keel:"amendment_note,nullzero"`
-	Version        int64               `json:"version" keel:"version,version"`
-	CreatedAt      int64               `json:"createdAt" keel:"created_at,autocreate"`
-	UpdatedAt      int64               `json:"updatedAt" keel:"updated_at,autoupdate"`
+	WorkerID       pulid.ID            `json:"workerId"       keel:"worker_id"`
+	Kind           EmploymentEventKind `json:"kind"           keel:"kind,label=Event"`
+	EffectiveAt    int64               `json:"effectiveAt"    keel:"effective_at,label=Effective"`
+	Reason         string              `json:"reason"         keel:"reason,nullzero"`
+	Notes          string              `json:"notes"          keel:"notes,nullzero"`
+	FromValues     map[string]string   `json:"fromValues"     keel:"from_values,jsonb"`
+	ToValues       map[string]string   `json:"toValues"       keel:"to_values,jsonb"`
+	DocumentID     pulid.ID            `json:"documentId"     keel:"document_id,nullzero"`
+	RecordedByID   pulid.ID            `json:"recordedById"   keel:"recorded_by_id,nullzero"`
+	AmendedByID    pulid.ID            `json:"amendedById"    keel:"amended_by_id,nullzero"`
+	AmendedAt      *int64              `json:"amendedAt"      keel:"amended_at"`
+	AmendmentNote  string              `json:"amendmentNote"  keel:"amendment_note,nullzero"`
+	Version        int64               `json:"version"        keel:"version,version"`
+	CreatedAt      int64               `json:"createdAt"      keel:"created_at,autocreate"`
+	UpdatedAt      int64               `json:"updatedAt"      keel:"updated_at,autoupdate"`
 
-	Worker     *Worker            `json:"worker,omitempty" keel:"belongs:worker_id"`
-	Document   *document.Document `json:"document,omitempty" keel:"belongs:document_id,noreport"`
+	Worker     *Worker            `json:"worker,omitempty"     keel:"belongs:worker_id"`
+	Document   *document.Document `json:"document,omitempty"   keel:"belongs:document_id,noreport"`
 	RecordedBy *tenant.User       `json:"recordedBy,omitempty" keel:"belongs:recorded_by_id,noreport"`
-	AmendedBy  *tenant.User       `json:"amendedBy,omitempty" keel:"belongs:amended_by_id,noreport"`
+	AmendedBy  *tenant.User       `json:"amendedBy,omitempty"  keel:"belongs:amended_by_id,noreport"`
 }
 
 func (e *WorkerEmploymentEvent) BeforeUpdate(_ context.Context) error {

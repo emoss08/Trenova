@@ -17,38 +17,40 @@ import (
 	validation "github.com/go-ozzo/ozzo-validation/v4"
 )
 
+const principalSessionUser = "session_user"
+
 var (
 	_ domaintypes.PostgresSearchable = (*Entry)(nil)
 	_ pagination.CursorEntity        = (*Entry)(nil)
 )
 
 type Entry struct {
-	keel.Table `                                   keel:"audit_entries"`
+	keel.Table `keel:"audit_entries"`
 
-	ID             pulid.ID             `json:"id" keel:"id,pk,autoid:ae_"`
-	UserID         pulid.ID             `json:"userId,omitempty" keel:"user_id,nullzero"`
-	PrincipalType  string               `json:"principalType" keel:"principal_type"`
-	PrincipalID    pulid.ID             `json:"principalId" keel:"principal_id"`
-	APIKeyID       pulid.ID             `json:"apiKeyId,omitempty" keel:"api_key_id,nullzero"`
-	BusinessUnitID pulid.ID             `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
-	OrganizationID pulid.ID             `json:"organizationId" keel:"organization_id,pk,tenant"`
-	Timestamp      int64                `json:"timestamp" keel:"timestamp"`
-	Changes        map[string]any       `json:"changes,omitempty" keel:"changes,jsonb"`
+	ID             pulid.ID             `json:"id"                      keel:"id,pk,autoid:ae_"`
+	UserID         pulid.ID             `json:"userId,omitempty"        keel:"user_id,nullzero"`
+	PrincipalType  string               `json:"principalType"           keel:"principal_type"`
+	PrincipalID    pulid.ID             `json:"principalId"             keel:"principal_id"`
+	APIKeyID       pulid.ID             `json:"apiKeyId,omitempty"      keel:"api_key_id,nullzero"`
+	BusinessUnitID pulid.ID             `json:"businessUnitId"          keel:"business_unit_id,pk,tenant"`
+	OrganizationID pulid.ID             `json:"organizationId"          keel:"organization_id,pk,tenant"`
+	Timestamp      int64                `json:"timestamp"               keel:"timestamp"`
+	Changes        map[string]any       `json:"changes,omitempty"       keel:"changes,jsonb"`
 	PreviousState  map[string]any       `json:"previousState,omitempty" keel:"previous_state,jsonb"`
-	CurrentState   map[string]any       `json:"currentState,omitempty" keel:"current_state,jsonb"`
-	Metadata       map[string]any       `json:"metadata,omitempty" keel:"metadata,jsonb"`
-	Resource       permission.Resource  `json:"resource" keel:"resource"`   // Should be the same as the resource in the permission service
-	Operation      permission.Operation `json:"operation" keel:"operation"` // Should be the same as the operation in the permission service
-	ResourceID     string               `json:"resourceId" keel:"resource_id"`
+	CurrentState   map[string]any       `json:"currentState,omitempty"  keel:"current_state,jsonb"`
+	Metadata       map[string]any       `json:"metadata,omitempty"      keel:"metadata,jsonb"`
+	Resource       permission.Resource  `json:"resource"                keel:"resource"`  // Should be the same as the resource in the permission service
+	Operation      permission.Operation `json:"operation"               keel:"operation"` // Should be the same as the operation in the permission service
+	ResourceID     string               `json:"resourceId"              keel:"resource_id"`
 	CorrelationID  string               `json:"correlationId,omitempty" keel:"correlation_id,nullzero"`
-	UserAgent      string               `json:"userAgent,omitempty" keel:"user_agent,nullzero"`
-	Comment        string               `json:"comment,omitempty" keel:"comment,nullzero"`
-	IPAddress      string               `json:"ipAddress,omitempty" keel:"ip_address,nullzero"` // IPv6 addresses need space
-	Category       Category             `json:"category" keel:"category"`
-	SensitiveData  bool                 `json:"sensitiveData" keel:"sensitive_data"`
-	Critical       bool                 `json:"critical" keel:"critical"`
-	User           *tenant.User         `json:"user,omitempty" keel:"belongs:user_id"`
-	APIKey         *apikey.Key          `json:"apiKey,omitempty" keel:"belongs:api_key_id"`
+	UserAgent      string               `json:"userAgent,omitempty"     keel:"user_agent,nullzero"`
+	Comment        string               `json:"comment,omitempty"       keel:"comment,nullzero"`
+	IPAddress      string               `json:"ipAddress,omitempty"     keel:"ip_address,nullzero"` // IPv6 addresses need space
+	Category       Category             `json:"category"                keel:"category"`
+	SensitiveData  bool                 `json:"sensitiveData"           keel:"sensitive_data"`
+	Critical       bool                 `json:"critical"                keel:"critical"`
+	User           *tenant.User         `json:"user,omitempty"          keel:"belongs:user_id"`
+	APIKey         *apikey.Key          `json:"apiKey,omitempty"        keel:"belongs:api_key_id"`
 	Organization   *tenant.Organization `json:"-"`
 	BusinessUnit   *tenant.BusinessUnit `json:"-"`
 }
@@ -58,7 +60,7 @@ func (e *Entry) BeforeCreate(_ context.Context) error {
 		e.Category = CategorySystem
 	}
 	if e.PrincipalType == "" {
-		e.PrincipalType = "session_user"
+		e.PrincipalType = principalSessionUser
 	}
 	if e.Timestamp == 0 {
 		e.Timestamp = timeutils.NowUnix()
@@ -69,7 +71,7 @@ func (e *Entry) BeforeCreate(_ context.Context) error {
 
 func (e *Entry) Validate() error {
 	if e.PrincipalType == "" && e.UserID.IsNotNil() {
-		e.PrincipalType = "session_user" //nolint:goconst // local repeated literal is clearer than widening API constants
+		e.PrincipalType = principalSessionUser
 	}
 
 	if e.PrincipalID.IsNil() && e.UserID.IsNotNil() {
@@ -83,7 +85,7 @@ func (e *Entry) Validate() error {
 		e.UserID = pulid.Nil
 	}
 
-	if e.PrincipalType == "session_user" {
+	if e.PrincipalType == principalSessionUser {
 		e.APIKeyID = pulid.Nil
 		if e.UserID.IsNil() {
 			e.UserID = e.PrincipalID
@@ -111,7 +113,7 @@ func (e *Entry) Validate() error {
 	}
 
 	switch e.PrincipalType {
-	case "session_user":
+	case principalSessionUser:
 		if e.UserID.IsNil() {
 			return errors.New("user audit entries require a user ID")
 		}

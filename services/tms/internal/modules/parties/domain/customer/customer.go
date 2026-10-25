@@ -27,46 +27,46 @@ var (
 
 // Customers who tender freight
 type Customer struct {
-	keel.Table `                                         keel:"customers,report=Parties"`
+	keel.Table `keel:"customers,report=Parties"`
 
-	ID                      pulid.ID               `json:"id" keel:"id,pk,autoid:cus_"`
-	BusinessUnitID          pulid.ID               `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
-	OrganizationID          pulid.ID               `json:"organizationId" keel:"organization_id,pk,tenant"`
-	StateID                 pulid.ID               `json:"stateId" keel:"state_id"`
-	Status                  domaintypes.Status     `json:"status" keel:"status"`
-	Code                    string                 `json:"code" keel:"code"`
-	Name                    string                 `json:"name" keel:"name,nullzero"`
-	AddressLine1            string                 `json:"addressLine1" keel:"address_line_1,nullzero"`
-	AddressLine2            string                 `json:"addressLine2" keel:"address_line_2,nullzero"`
-	City                    string                 `json:"city" keel:"city,nullzero"`
-	PostalCode              string                 `json:"postalCode" keel:"postal_code"`
-	IsGeocoded              bool                   `json:"isGeocoded" keel:"is_geocoded"`
-	Longitude               *float64               `json:"longitude" keel:"longitude,dimension"`
-	Latitude                *float64               `json:"latitude" keel:"latitude,dimension"`
-	PlaceID                 string                 `json:"placeId" keel:"place_id,nullzero"`
-	ExternalID              string                 `json:"externalId" keel:"external_id,nullzero"`
-	DOTNumber               string                 `json:"dotNumber" keel:"dot_number,nullzero"`
-	MCNumber                string                 `json:"mcNumber" keel:"mc_number,nullzero"`
-	StatusUpdatePreference  StatusUpdatePreference `json:"statusUpdatePreference" keel:"status_update_preference"`
-	StatusUpdateRecipients  string                 `json:"statusUpdateRecipients" keel:"status_update_recipients,nullzero"`
-	BrokerVettingEnabled    bool                   `json:"brokerVettingEnabled" keel:"broker_vetting_enabled"`
-	CheckCallIntervalHours  *int16                 `json:"checkCallIntervalHours" keel:"check_call_interval_hours,dimension"`
+	ID                      pulid.ID               `json:"id"                      keel:"id,pk,autoid:cus_"`
+	BusinessUnitID          pulid.ID               `json:"businessUnitId"          keel:"business_unit_id,pk,tenant"`
+	OrganizationID          pulid.ID               `json:"organizationId"          keel:"organization_id,pk,tenant"`
+	StateID                 pulid.ID               `json:"stateId"                 keel:"state_id"`
+	Status                  domaintypes.Status     `json:"status"                  keel:"status"`
+	Code                    string                 `json:"code"                    keel:"code"`
+	Name                    string                 `json:"name"                    keel:"name,nullzero"`
+	AddressLine1            string                 `json:"addressLine1"            keel:"address_line_1,nullzero"`
+	AddressLine2            string                 `json:"addressLine2"            keel:"address_line_2,nullzero"`
+	City                    string                 `json:"city"                    keel:"city,nullzero"`
+	PostalCode              string                 `json:"postalCode"              keel:"postal_code"`
+	IsGeocoded              bool                   `json:"isGeocoded"              keel:"is_geocoded"`
+	Longitude               *float64               `json:"longitude"               keel:"longitude,dimension"`
+	Latitude                *float64               `json:"latitude"                keel:"latitude,dimension"`
+	PlaceID                 string                 `json:"placeId"                 keel:"place_id,nullzero"`
+	ExternalID              string                 `json:"externalId"              keel:"external_id,nullzero"`
+	DOTNumber               string                 `json:"dotNumber"               keel:"dot_number,nullzero"`
+	MCNumber                string                 `json:"mcNumber"                keel:"mc_number,nullzero"`
+	StatusUpdatePreference  StatusUpdatePreference `json:"statusUpdatePreference"  keel:"status_update_preference"`
+	StatusUpdateRecipients  string                 `json:"statusUpdateRecipients"  keel:"status_update_recipients,nullzero"`
+	BrokerVettingEnabled    bool                   `json:"brokerVettingEnabled"    keel:"broker_vetting_enabled"`
+	CheckCallIntervalHours  *int16                 `json:"checkCallIntervalHours"  keel:"check_call_interval_hours,dimension"`
 	EtaRiskThresholdMinutes *int16                 `json:"etaRiskThresholdMinutes" keel:"eta_risk_threshold_minutes,dimension"`
-	Geom                    *postgis.Point         `json:"-" keel:"geom,readonly"`
-	AllowConsolidation      bool                   `json:"allowConsolidation" keel:"allow_consolidation"`
-	ExclusiveConsolidation  bool                   `json:"exclusiveConsolidation" keel:"exclusive_consolidation"`
-	ConsolidationPriority   int                    `json:"consolidationPriority" keel:"consolidation_priority,dimension"`
-	SearchVector            string                 `json:"-" keel:"search_vector,tsvector,readonly,noselect"`
-	Rank                    string                 `json:"-" keel:"rank,computed"`
-	Version                 int64                  `json:"version" keel:"version,version"`
-	CreatedAt               int64                  `json:"createdAt" keel:"created_at,autocreate"`
-	UpdatedAt               int64                  `json:"updatedAt" keel:"updated_at,autoupdate"`
+	Geom                    *postgis.Point         `json:"-"                       keel:"geom,readonly"`
+	AllowConsolidation      bool                   `json:"allowConsolidation"      keel:"allow_consolidation"`
+	ExclusiveConsolidation  bool                   `json:"exclusiveConsolidation"  keel:"exclusive_consolidation"`
+	ConsolidationPriority   int                    `json:"consolidationPriority"   keel:"consolidation_priority,dimension"`
+	SearchVector            string                 `json:"-"                       keel:"search_vector,tsvector,readonly,noselect"`
+	Rank                    string                 `json:"-"                       keel:"rank,computed"`
+	Version                 int64                  `json:"version"                 keel:"version,version"`
+	CreatedAt               int64                  `json:"createdAt"               keel:"created_at,autocreate"`
+	UpdatedAt               int64                  `json:"updatedAt"               keel:"updated_at,autoupdate"`
 
 	BusinessUnit   *tenant.BusinessUnit    `json:"businessUnit,omitempty"`
 	Organization   *tenant.Organization    `json:"organization,omitempty"`
 	BillingProfile *CustomerBillingProfile `json:"billingProfile,omitempty" keel:"one:customer_id,noreport"`
-	EmailProfile   *CustomerEmailProfile   `json:"emailProfile,omitempty" keel:"one:customer_id,noreport"`
-	State          *usstate.UsState        `json:"state,omitempty" keel:"belongs:state_id,noreport"`
+	EmailProfile   *CustomerEmailProfile   `json:"emailProfile,omitempty"   keel:"one:customer_id,noreport"`
+	State          *usstate.UsState        `json:"state,omitempty"          keel:"belongs:state_id,noreport"`
 }
 
 func (c *Customer) BeforeUpdate(_ context.Context) error {

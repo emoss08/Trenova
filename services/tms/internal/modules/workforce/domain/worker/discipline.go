@@ -124,36 +124,36 @@ var (
 )
 
 type WorkerDisciplinaryAction struct {
-	keel.Table `                                                            keel:"worker_disciplinary_actions"`
+	keel.Table `keel:"worker_disciplinary_actions"`
 
-	ID             pulid.ID           `json:"id" keel:"id,pk,autoid:wdac_"`
+	ID             pulid.ID           `json:"id"             keel:"id,pk,autoid:wdac_"`
 	BusinessUnitID pulid.ID           `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
 	OrganizationID pulid.ID           `json:"organizationId" keel:"organization_id,pk,tenant"`
-	WorkerID       pulid.ID           `json:"workerId" keel:"worker_id"`
-	Level          DisciplinaryLevel  `json:"level" keel:"level"`
-	Status         DisciplinaryStatus `json:"status" keel:"status"`
-	Reason         string             `json:"reason" keel:"reason"`
-	Details        string             `json:"details" keel:"details,nullzero"`
-	OccurredAt     *int64             `json:"occurredAt" keel:"occurred_at"`
-	IssuedAt       int64              `json:"issuedAt" keel:"issued_at"`
-	ExpiresAt      *int64             `json:"expiresAt" keel:"expires_at"`
+	WorkerID       pulid.ID           `json:"workerId"       keel:"worker_id"`
+	Level          DisciplinaryLevel  `json:"level"          keel:"level"`
+	Status         DisciplinaryStatus `json:"status"         keel:"status"`
+	Reason         string             `json:"reason"         keel:"reason"`
+	Details        string             `json:"details"        keel:"details,nullzero"`
+	OccurredAt     *int64             `json:"occurredAt"     keel:"occurred_at"`
+	IssuedAt       int64              `json:"issuedAt"       keel:"issued_at"`
+	ExpiresAt      *int64             `json:"expiresAt"      keel:"expires_at"`
 	SuspensionDays *int32             `json:"suspensionDays" keel:"suspension_days"`
-	SafetyEventID  pulid.ID           `json:"safetyEventId" keel:"safety_event_id,nullzero"`
-	DocumentID     pulid.ID           `json:"documentId" keel:"document_id,nullzero"`
-	IssuedByID     pulid.ID           `json:"issuedById" keel:"issued_by_id,nullzero"`
+	SafetyEventID  pulid.ID           `json:"safetyEventId"  keel:"safety_event_id,nullzero"`
+	DocumentID     pulid.ID           `json:"documentId"     keel:"document_id,nullzero"`
+	IssuedByID     pulid.ID           `json:"issuedById"     keel:"issued_by_id,nullzero"`
 	AcknowledgedAt *int64             `json:"acknowledgedAt" keel:"acknowledged_at"`
-	WorkerComment  string             `json:"workerComment" keel:"worker_comment,nullzero"`
-	RescindedAt    *int64             `json:"rescindedAt" keel:"rescinded_at"`
-	RescindedByID  pulid.ID           `json:"rescindedById" keel:"rescinded_by_id,nullzero"`
-	RescindReason  string             `json:"rescindReason" keel:"rescind_reason,nullzero"`
-	Version        int64              `json:"version" keel:"version,version"`
-	CreatedAt      int64              `json:"createdAt" keel:"created_at,autocreate"`
-	UpdatedAt      int64              `json:"updatedAt" keel:"updated_at,autoupdate"`
+	WorkerComment  string             `json:"workerComment"  keel:"worker_comment,nullzero"`
+	RescindedAt    *int64             `json:"rescindedAt"    keel:"rescinded_at"`
+	RescindedByID  pulid.ID           `json:"rescindedById"  keel:"rescinded_by_id,nullzero"`
+	RescindReason  string             `json:"rescindReason"  keel:"rescind_reason,nullzero"`
+	Version        int64              `json:"version"        keel:"version,version"`
+	CreatedAt      int64              `json:"createdAt"      keel:"created_at,autocreate"`
+	UpdatedAt      int64              `json:"updatedAt"      keel:"updated_at,autoupdate"`
 
-	Worker      *Worker            `json:"worker,omitempty" keel:"belongs:worker_id"`
+	Worker      *Worker            `json:"worker,omitempty"      keel:"belongs:worker_id"`
 	SafetyEvent *WorkerSafetyEvent `json:"safetyEvent,omitempty" keel:"belongs:safety_event_id"`
-	Document    *document.Document `json:"document,omitempty" keel:"belongs:document_id"`
-	IssuedBy    *tenant.User       `json:"issuedBy,omitempty" keel:"belongs:issued_by_id"`
+	Document    *document.Document `json:"document,omitempty"    keel:"belongs:document_id"`
+	IssuedBy    *tenant.User       `json:"issuedBy,omitempty"    keel:"belongs:issued_by_id"`
 }
 
 func (a *WorkerDisciplinaryAction) Validate(multiErr *errortypes.MultiError) {
@@ -319,23 +319,23 @@ var (
 )
 
 type WorkerRecognition struct {
-	keel.Table `                                                    keel:"worker_recognitions"`
+	keel.Table `keel:"worker_recognitions"`
 
-	ID              pulid.ID        `json:"id" keel:"id,pk,autoid:wrec_"`
-	BusinessUnitID  pulid.ID        `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
-	OrganizationID  pulid.ID        `json:"organizationId" keel:"organization_id,pk,tenant"`
-	WorkerID        pulid.ID        `json:"workerId" keel:"worker_id"`
-	Kind            RecognitionKind `json:"kind" keel:"kind"`
-	Title           string          `json:"title" keel:"title"`
-	Message         string          `json:"message" keel:"message,nullzero"`
-	OccurredAt      int64           `json:"occurredAt" keel:"occurred_at"`
-	AwardedByID     pulid.ID        `json:"awardedById" keel:"awarded_by_id,nullzero"`
+	ID              pulid.ID        `json:"id"              keel:"id,pk,autoid:wrec_"`
+	BusinessUnitID  pulid.ID        `json:"businessUnitId"  keel:"business_unit_id,pk,tenant"`
+	OrganizationID  pulid.ID        `json:"organizationId"  keel:"organization_id,pk,tenant"`
+	WorkerID        pulid.ID        `json:"workerId"        keel:"worker_id"`
+	Kind            RecognitionKind `json:"kind"            keel:"kind"`
+	Title           string          `json:"title"           keel:"title"`
+	Message         string          `json:"message"         keel:"message,nullzero"`
+	OccurredAt      int64           `json:"occurredAt"      keel:"occurred_at"`
+	AwardedByID     pulid.ID        `json:"awardedById"     keel:"awarded_by_id,nullzero"`
 	VisibleToWorker bool            `json:"visibleToWorker" keel:"visible_to_worker"`
-	Version         int64           `json:"version" keel:"version,version"`
-	CreatedAt       int64           `json:"createdAt" keel:"created_at,autocreate"`
-	UpdatedAt       int64           `json:"updatedAt" keel:"updated_at,autoupdate"`
+	Version         int64           `json:"version"         keel:"version,version"`
+	CreatedAt       int64           `json:"createdAt"       keel:"created_at,autocreate"`
+	UpdatedAt       int64           `json:"updatedAt"       keel:"updated_at,autoupdate"`
 
-	Worker    *Worker      `json:"worker,omitempty" keel:"belongs:worker_id"`
+	Worker    *Worker      `json:"worker,omitempty"    keel:"belongs:worker_id"`
 	AwardedBy *tenant.User `json:"awardedBy,omitempty" keel:"belongs:awarded_by_id"`
 }
 

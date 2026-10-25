@@ -34,54 +34,54 @@ func WorkflowID(resultID pulid.ID) string {
 type ShadowResult struct {
 	keel.Table `keel:"extraction_shadow_results"`
 
-	ID             pulid.ID `json:"id" keel:"id,pk,autoid:exsr_"`
+	ID             pulid.ID `json:"id"             keel:"id,pk,autoid:exsr_"`
 	BusinessUnitID pulid.ID `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
 	OrganizationID pulid.ID `json:"organizationId" keel:"organization_id,pk,tenant"`
 
-	DocumentID   pulid.ID     `json:"documentId" keel:"document_id"`
-	ExtractedAt  int64        `json:"extractedAt" keel:"extracted_at"`
-	Status       ResultStatus `json:"status" keel:"status"`
+	DocumentID   pulid.ID     `json:"documentId"   keel:"document_id"`
+	ExtractedAt  int64        `json:"extractedAt"  keel:"extracted_at"`
+	Status       ResultStatus `json:"status"       keel:"status"`
 	StatusReason string       `json:"statusReason" keel:"status_reason,nullzero"`
 
-	ProviderID           pulid.ID  `json:"providerId" keel:"provider_id"`
-	ProviderName         string    `json:"providerName" keel:"provider_name"`
-	ServedModel          string    `json:"servedModel" keel:"served_model,nullzero"`
+	ProviderID           pulid.ID  `json:"providerId"           keel:"provider_id"`
+	ProviderName         string    `json:"providerName"         keel:"provider_name"`
+	ServedModel          string    `json:"servedModel"          keel:"served_model,nullzero"`
 	ProductionProviderID *pulid.ID `json:"productionProviderId" keel:"production_provider_id"`
-	ProductionModel      string    `json:"productionModel" keel:"production_model,nullzero"`
+	ProductionModel      string    `json:"productionModel"      keel:"production_model,nullzero"`
 
-	Accepted        bool                   `json:"accepted" keel:"accepted"`
+	Accepted        bool                   `json:"accepted"        keel:"accepted"`
 	RejectionReason string                 `json:"rejectionReason" keel:"rejection_reason,nullzero"`
-	DraftData       map[string]any         `json:"-" keel:"draft_data,jsonb,nullzero"`
-	Predicted       *aicorrection.Snapshot `json:"predicted" keel:"predicted,jsonb"`
+	DraftData       map[string]any         `json:"-"               keel:"draft_data,jsonb,nullzero"`
+	Predicted       *aicorrection.Snapshot `json:"predicted"       keel:"predicted,jsonb"`
 
 	CorrectionID *pulid.ID                  `json:"correctionId" keel:"correction_id"`
-	ScoredAt     *int64                     `json:"scoredAt" keel:"scored_at"`
-	Verdict      Verdict                    `json:"verdict" keel:"verdict,nullzero"`
+	ScoredAt     *int64                     `json:"scoredAt"     keel:"scored_at"`
+	Verdict      Verdict                    `json:"verdict"      keel:"verdict,nullzero"`
 	FieldResults []aicorrection.FieldResult `json:"fieldResults" keel:"field_results,jsonb"`
 
-	ScoredCount    int     `json:"scoredCount" keel:"scored_count"`
-	CorrectCount   int     `json:"correctCount" keel:"correct_count"`
+	ScoredCount    int     `json:"scoredCount"    keel:"scored_count"`
+	CorrectCount   int     `json:"correctCount"   keel:"correct_count"`
 	CorrectedCount int     `json:"correctedCount" keel:"corrected_count"`
-	MissedCount    int     `json:"missedCount" keel:"missed_count"`
-	Accuracy       float64 `json:"accuracy" keel:"accuracy"`
+	MissedCount    int     `json:"missedCount"    keel:"missed_count"`
+	Accuracy       float64 `json:"accuracy"       keel:"accuracy"`
 
-	BaselineFieldResults   []aicorrection.FieldResult `json:"baselineFieldResults" keel:"baseline_field_results,jsonb"`
-	BaselineScoredCount    int                        `json:"baselineScoredCount" keel:"baseline_scored_count"`
-	BaselineCorrectCount   int                        `json:"baselineCorrectCount" keel:"baseline_correct_count"`
+	BaselineFieldResults   []aicorrection.FieldResult `json:"baselineFieldResults"   keel:"baseline_field_results,jsonb"`
+	BaselineScoredCount    int                        `json:"baselineScoredCount"    keel:"baseline_scored_count"`
+	BaselineCorrectCount   int                        `json:"baselineCorrectCount"   keel:"baseline_correct_count"`
 	BaselineCorrectedCount int                        `json:"baselineCorrectedCount" keel:"baseline_corrected_count"`
-	BaselineMissedCount    int                        `json:"baselineMissedCount" keel:"baseline_missed_count"`
-	BaselineAccuracy       float64                    `json:"baselineAccuracy" keel:"baseline_accuracy"`
+	BaselineMissedCount    int                        `json:"baselineMissedCount"    keel:"baseline_missed_count"`
+	BaselineAccuracy       float64                    `json:"baselineAccuracy"       keel:"baseline_accuracy"`
 
-	LatencyMs    int64           `json:"latencyMs" keel:"latency_ms"`
-	InputTokens  int64           `json:"inputTokens" keel:"input_tokens"`
+	LatencyMs    int64           `json:"latencyMs"    keel:"latency_ms"`
+	InputTokens  int64           `json:"inputTokens"  keel:"input_tokens"`
 	OutputTokens int64           `json:"outputTokens" keel:"output_tokens"`
-	CostUSD      decimal.Decimal `json:"costUsd" keel:"cost_usd"`
+	CostUSD      decimal.Decimal `json:"costUsd"      keel:"cost_usd"`
 
-	WorkflowID  string `json:"workflowId" keel:"workflow_id,nullzero"`
-	StartedAt   *int64 `json:"startedAt" keel:"started_at"`
+	WorkflowID  string `json:"workflowId"  keel:"workflow_id,nullzero"`
+	StartedAt   *int64 `json:"startedAt"   keel:"started_at"`
 	CompletedAt *int64 `json:"completedAt" keel:"completed_at"`
 
-	Version   int64 `json:"version" keel:"version,version"`
+	Version   int64 `json:"version"   keel:"version,version"`
 	CreatedAt int64 `json:"createdAt" keel:"created_at,autocreate"`
 	UpdatedAt int64 `json:"updatedAt" keel:"updated_at,autoupdate"`
 

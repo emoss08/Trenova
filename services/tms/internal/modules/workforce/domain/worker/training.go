@@ -162,30 +162,30 @@ var (
 )
 
 type TrainingCourse struct {
-	keel.Table              `                                                 keel:"training_courses"`
-	ID                      pulid.ID            `json:"id" keel:"id,pk,autoid:trnc_"`
-	BusinessUnitID          pulid.ID            `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
-	OrganizationID          pulid.ID            `json:"organizationId" keel:"organization_id,pk,tenant"`
-	Code                    string              `json:"code" keel:"code"`
-	Name                    string              `json:"name" keel:"name"`
-	Description             string              `json:"description" keel:"description,nullzero"`
-	Category                TrainingCategory    `json:"category" keel:"category"`
-	Status                  domaintypes.Status  `json:"status" keel:"status"`
-	Delivery                TrainingDelivery    `json:"delivery" keel:"delivery"`
-	ContentURL              string              `json:"contentUrl" keel:"content_url,nullzero"`
-	DurationMinutes         int32               `json:"durationMinutes" keel:"duration_minutes"`
-	PassingScore            decimal.NullDecimal `json:"passingScore" keel:"passing_score"`
-	ValidityMonths          *int32              `json:"validityMonths" keel:"validity_months"`
-	RenewalWindowDays       int32               `json:"renewalWindowDays" keel:"renewal_window_days"`
-	IsRequired              bool                `json:"isRequired" keel:"is_required"`
-	RequiredForDriverTypes  []DriverType        `json:"requiredForDriverTypes" keel:"required_for_driver_types,jsonb"`
-	DueDaysAfterAssignment  int32               `json:"dueDaysAfterAssignment" keel:"due_days_after_assignment"`
-	RequiresAcknowledgement bool                `json:"requiresAcknowledgement" keel:"requires_acknowledgement"`
-	SortOrder               int32               `json:"sortOrder" keel:"sort_order"`
-	Version                 int64               `json:"version" keel:"version,version"`
-	CreatedAt               int64               `json:"createdAt" keel:"created_at,autocreate"`
-	UpdatedAt               int64               `json:"updatedAt" keel:"updated_at,autoupdate"`
-	SearchVector            string              `json:"-" keel:"search_vector,tsvector,readonly,noselect"`
+	keel.Table              `keel:"training_courses"`
+	ID                      pulid.ID            `keel:"id,pk,autoid:trnc_"                       json:"id"`
+	BusinessUnitID          pulid.ID            `keel:"business_unit_id,pk,tenant"               json:"businessUnitId"`
+	OrganizationID          pulid.ID            `keel:"organization_id,pk,tenant"                json:"organizationId"`
+	Code                    string              `keel:"code"                                     json:"code"`
+	Name                    string              `keel:"name"                                     json:"name"`
+	Description             string              `keel:"description,nullzero"                     json:"description"`
+	Category                TrainingCategory    `keel:"category"                                 json:"category"`
+	Status                  domaintypes.Status  `keel:"status"                                   json:"status"`
+	Delivery                TrainingDelivery    `keel:"delivery"                                 json:"delivery"`
+	ContentURL              string              `keel:"content_url,nullzero"                     json:"contentUrl"`
+	DurationMinutes         int32               `keel:"duration_minutes"                         json:"durationMinutes"`
+	PassingScore            decimal.NullDecimal `keel:"passing_score"                            json:"passingScore"`
+	ValidityMonths          *int32              `keel:"validity_months"                          json:"validityMonths"`
+	RenewalWindowDays       int32               `keel:"renewal_window_days"                      json:"renewalWindowDays"`
+	IsRequired              bool                `keel:"is_required"                              json:"isRequired"`
+	RequiredForDriverTypes  []DriverType        `keel:"required_for_driver_types,jsonb"          json:"requiredForDriverTypes"`
+	DueDaysAfterAssignment  int32               `keel:"due_days_after_assignment"                json:"dueDaysAfterAssignment"`
+	RequiresAcknowledgement bool                `keel:"requires_acknowledgement"                 json:"requiresAcknowledgement"`
+	SortOrder               int32               `keel:"sort_order"                               json:"sortOrder"`
+	Version                 int64               `keel:"version,version"                          json:"version"`
+	CreatedAt               int64               `keel:"created_at,autocreate"                    json:"createdAt"`
+	UpdatedAt               int64               `keel:"updated_at,autoupdate"                    json:"updatedAt"`
+	SearchVector            string              `keel:"search_vector,tsvector,readonly,noselect" json:"-"`
 }
 
 func (c *TrainingCourse) BeforeUpdate(_ context.Context) error {
@@ -403,34 +403,34 @@ var (
 )
 
 type WorkerTrainingRecord struct {
-	keel.Table `                                                        keel:"worker_training_records"`
+	keel.Table `keel:"worker_training_records"`
 
-	ID             pulid.ID            `json:"id" keel:"id,pk,autoid:wtrn_"`
+	ID             pulid.ID            `json:"id"             keel:"id,pk,autoid:wtrn_"`
 	BusinessUnitID pulid.ID            `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
 	OrganizationID pulid.ID            `json:"organizationId" keel:"organization_id,pk,tenant"`
-	WorkerID       pulid.ID            `json:"workerId" keel:"worker_id"`
-	CourseID       pulid.ID            `json:"courseId" keel:"course_id"`
-	Status         TrainingStatus      `json:"status" keel:"status"`
-	AssignedAt     int64               `json:"assignedAt" keel:"assigned_at"`
-	DueAt          *int64              `json:"dueAt" keel:"due_at"`
-	StartedAt      *int64              `json:"startedAt" keel:"started_at"`
-	CompletedAt    *int64              `json:"completedAt" keel:"completed_at"`
-	ExpiresAt      *int64              `json:"expiresAt" keel:"expires_at"`
-	Score          decimal.NullDecimal `json:"score" keel:"score"`
-	Passed         *bool               `json:"passed" keel:"passed"`
+	WorkerID       pulid.ID            `json:"workerId"       keel:"worker_id"`
+	CourseID       pulid.ID            `json:"courseId"       keel:"course_id"`
+	Status         TrainingStatus      `json:"status"         keel:"status"`
+	AssignedAt     int64               `json:"assignedAt"     keel:"assigned_at"`
+	DueAt          *int64              `json:"dueAt"          keel:"due_at"`
+	StartedAt      *int64              `json:"startedAt"      keel:"started_at"`
+	CompletedAt    *int64              `json:"completedAt"    keel:"completed_at"`
+	ExpiresAt      *int64              `json:"expiresAt"      keel:"expires_at"`
+	Score          decimal.NullDecimal `json:"score"          keel:"score"`
+	Passed         *bool               `json:"passed"         keel:"passed"`
 	AcknowledgedAt *int64              `json:"acknowledgedAt" keel:"acknowledged_at"`
-	DocumentID     pulid.ID            `json:"documentId" keel:"document_id,nullzero"`
-	AssignedByID   pulid.ID            `json:"assignedById" keel:"assigned_by_id,nullzero"`
-	RecordedByID   pulid.ID            `json:"recordedById" keel:"recorded_by_id,nullzero"`
-	Notes          string              `json:"notes" keel:"notes,nullzero"`
-	WaivedReason   string              `json:"waivedReason" keel:"waived_reason,nullzero"`
-	Version        int64               `json:"version" keel:"version,version"`
-	CreatedAt      int64               `json:"createdAt" keel:"created_at,autocreate"`
-	UpdatedAt      int64               `json:"updatedAt" keel:"updated_at,autoupdate"`
+	DocumentID     pulid.ID            `json:"documentId"     keel:"document_id,nullzero"`
+	AssignedByID   pulid.ID            `json:"assignedById"   keel:"assigned_by_id,nullzero"`
+	RecordedByID   pulid.ID            `json:"recordedById"   keel:"recorded_by_id,nullzero"`
+	Notes          string              `json:"notes"          keel:"notes,nullzero"`
+	WaivedReason   string              `json:"waivedReason"   keel:"waived_reason,nullzero"`
+	Version        int64               `json:"version"        keel:"version,version"`
+	CreatedAt      int64               `json:"createdAt"      keel:"created_at,autocreate"`
+	UpdatedAt      int64               `json:"updatedAt"      keel:"updated_at,autoupdate"`
 
-	Course     *TrainingCourse    `json:"course,omitempty" keel:"belongs:course_id"`
-	Worker     *Worker            `json:"worker,omitempty" keel:"belongs:worker_id"`
-	Document   *document.Document `json:"document,omitempty" keel:"belongs:document_id"`
+	Course     *TrainingCourse    `json:"course,omitempty"     keel:"belongs:course_id"`
+	Worker     *Worker            `json:"worker,omitempty"     keel:"belongs:worker_id"`
+	Document   *document.Document `json:"document,omitempty"   keel:"belongs:document_id"`
 	AssignedBy *tenant.User       `json:"assignedBy,omitempty" keel:"belongs:assigned_by_id"`
 	RecordedBy *tenant.User       `json:"recordedBy,omitempty" keel:"belongs:recorded_by_id"`
 }

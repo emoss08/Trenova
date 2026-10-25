@@ -18,6 +18,8 @@ import (
 	"go.uber.org/zap"
 )
 
+const fieldWorkerID = "workerId"
+
 const (
 	defaultEntryPageSize     = 500
 	defaultTimesheetPageSize = 200
@@ -29,14 +31,14 @@ var entryErrors = dberror.Mapping{
 	Unique: []dberror.Constraint{
 		{
 			Name:    "uq_time_clock_entries_open",
-			Field:   "workerId",
+			Field:   fieldWorkerID,
 			Message: "Worker is already on the clock",
 		},
 	},
 	ForeignKey: []dberror.Constraint{
 		{
 			Name:    "fk_time_clock_entries_worker",
-			Field:   "workerId",
+			Field:   fieldWorkerID,
 			Message: "Worker does not exist or belongs to a different organization",
 		},
 		{
@@ -64,7 +66,7 @@ var timesheetErrors = dberror.Mapping{
 	ForeignKey: []dberror.Constraint{
 		{
 			Name:    "fk_timesheets_worker",
-			Field:   "workerId",
+			Field:   fieldWorkerID,
 			Message: "Worker does not exist or belongs to a different organization",
 		},
 		{

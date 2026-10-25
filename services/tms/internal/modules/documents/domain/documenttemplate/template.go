@@ -43,7 +43,7 @@ var (
 type DocumentTemplate struct {
 	keel.Table `keel:"document_templates"`
 
-	ID             pulid.ID `json:"id" keel:"id,pk,autoid:dtpl_"`
+	ID             pulid.ID `json:"id"             keel:"id,pk,autoid:dtpl_"`
 	BusinessUnitID pulid.ID `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
 	OrganizationID pulid.ID `json:"organizationId" keel:"organization_id,pk,tenant"`
 
@@ -51,8 +51,8 @@ type DocumentTemplate struct {
 	// so adding a kind never needs a migration.
 	Kind Kind `json:"kind" keel:"kind"`
 
-	Code        string `json:"code" keel:"code"`
-	Name        string `json:"name" keel:"name"`
+	Code        string `json:"code"        keel:"code"`
+	Name        string `json:"name"        keel:"name"`
 	Description string `json:"description" keel:"description,nullzero"`
 
 	// IsOrgDefault marks the template every customer without an assignment gets.
@@ -63,9 +63,9 @@ type DocumentTemplate struct {
 	// resolution therefore falls through to the built-in.
 	ActiveVersionID *pulid.ID `json:"activeVersionId" keel:"active_version_id"`
 
-	Version     int64     `json:"version" keel:"version,version"`
-	CreatedAt   int64     `json:"createdAt" keel:"created_at,autocreate"`
-	UpdatedAt   int64     `json:"updatedAt" keel:"updated_at,autoupdate"`
+	Version     int64     `json:"version"     keel:"version,version"`
+	CreatedAt   int64     `json:"createdAt"   keel:"created_at,autocreate"`
+	UpdatedAt   int64     `json:"updatedAt"   keel:"updated_at,autoupdate"`
 	CreatedByID *pulid.ID `json:"createdById" keel:"created_by_id"`
 	UpdatedByID *pulid.ID `json:"updatedById" keel:"updated_by_id"`
 
@@ -75,8 +75,8 @@ type DocumentTemplate struct {
 	BusinessUnit  *tenant.BusinessUnit          `json:"-"`
 	Organization  *tenant.Organization          `json:"-"`
 	ActiveVersion *DocumentTemplateVersion      `json:"activeVersion,omitempty" keel:"belongs:active_version_id"`
-	Versions      []*DocumentTemplateVersion    `json:"versions,omitempty" keel:"many:template_id"`
-	Assignments   []*DocumentTemplateAssignment `json:"assignments,omitempty" keel:"many:template_id"`
+	Versions      []*DocumentTemplateVersion    `json:"versions,omitempty"      keel:"many:template_id"`
+	Assignments   []*DocumentTemplateAssignment `json:"assignments,omitempty"   keel:"many:template_id"`
 }
 
 func (t *DocumentTemplate) GetID() pulid.ID { return t.ID }

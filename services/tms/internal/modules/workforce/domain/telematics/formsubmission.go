@@ -18,28 +18,28 @@ type FormFieldValue struct {
 type FormSubmission struct {
 	keel.Table `keel:"telematics_form_submissions"`
 
-	ID                   pulid.ID         `json:"id" keel:"id,pk"`
-	OrganizationID       pulid.ID         `json:"organizationId" keel:"organization_id,pk,tenant"`
-	BusinessUnitID       pulid.ID         `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
-	Provider             string           `json:"provider" keel:"provider"`
+	ID                   pulid.ID         `json:"id"                   keel:"id,pk"`
+	OrganizationID       pulid.ID         `json:"organizationId"       keel:"organization_id,pk,tenant"`
+	BusinessUnitID       pulid.ID         `json:"businessUnitId"       keel:"business_unit_id,pk,tenant"`
+	Provider             string           `json:"provider"             keel:"provider"`
 	ProviderSubmissionID string           `json:"providerSubmissionId" keel:"provider_submission_id"`
-	TemplateID           string           `json:"templateId" keel:"template_id"`
-	TemplateName         string           `json:"templateName" keel:"template_name,nullzero"`
-	WorkerID             pulid.ID         `json:"workerId" keel:"worker_id,nullzero"`
-	ShipmentID           pulid.ID         `json:"shipmentId" keel:"shipment_id,nullzero"`
-	ShipmentMoveID       pulid.ID         `json:"shipmentMoveId" keel:"shipment_move_id,nullzero"`
-	StopID               pulid.ID         `json:"stopId" keel:"stop_id,nullzero"`
-	SubmittedAt          int64            `json:"submittedAt" keel:"submitted_at"`
-	Fields               []FormFieldValue `json:"fields" keel:"fields,jsonb,nullzero"`
-	Applied              bool             `json:"applied" keel:"applied"`
-	AppliedFields        int              `json:"appliedFields" keel:"applied_fields"`
-	AppliedAt            *int64           `json:"appliedAt" keel:"applied_at"`
-	CreatedAt            int64            `json:"createdAt" keel:"created_at"`
+	TemplateID           string           `json:"templateId"           keel:"template_id"`
+	TemplateName         string           `json:"templateName"         keel:"template_name,nullzero"`
+	WorkerID             pulid.ID         `json:"workerId"             keel:"worker_id,nullzero"`
+	ShipmentID           pulid.ID         `json:"shipmentId"           keel:"shipment_id,nullzero"`
+	ShipmentMoveID       pulid.ID         `json:"shipmentMoveId"       keel:"shipment_move_id,nullzero"`
+	StopID               pulid.ID         `json:"stopId"               keel:"stop_id,nullzero"`
+	SubmittedAt          int64            `json:"submittedAt"          keel:"submitted_at"`
+	Fields               []FormFieldValue `json:"fields"               keel:"fields,jsonb,nullzero"`
+	Applied              bool             `json:"applied"              keel:"applied"`
+	AppliedFields        int              `json:"appliedFields"        keel:"applied_fields"`
+	AppliedAt            *int64           `json:"appliedAt"            keel:"applied_at"`
+	CreatedAt            int64            `json:"createdAt"            keel:"created_at"`
 }
 
 func (s *FormSubmission) BeforeCreate(_ context.Context) error {
 	if s.Provider == "" {
-		s.Provider = "Samsara"
+		s.Provider = defaultProvider
 	}
 
 	return nil

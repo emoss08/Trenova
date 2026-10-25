@@ -92,7 +92,9 @@ func (r *mailboxRepository) GetByTokenHash(
 	)
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*inboundmessage.Mailbox, error) {
 		mb := inboundmessagedb.Mailboxes
-		entity, err := mb.AllTenants().Where(mb.TokenHash.Eq(req.TokenHash)).One(ctx, r.db.Keel(ctx))
+		entity, err := mb.AllTenants().
+			Where(mb.TokenHash.Eq(req.TokenHash)).
+			One(ctx, r.db.Keel(ctx))
 		if err != nil {
 			return nil, mailboxErrors.Map(err, "")
 		}
@@ -148,7 +150,9 @@ func (r *mailboxRepository) MarkReceived(
 	req inboundmessageports.MailboxReceivedRequest,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
-		_, err := markReceivedQuery(req).Update(ctx, r.db.Keel(ctx), markReceivedAssignments(req)...)
+		_, err := markReceivedQuery(
+			req,
+		).Update(ctx, r.db.Keel(ctx), markReceivedAssignments(req)...)
 
 		return err
 	})

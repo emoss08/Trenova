@@ -473,7 +473,9 @@ func decisionErrorMessage(err error) string {
 }
 
 func encodeCursor(entry agentports.PendingDecisionEntry) (string, error) {
-	return pagination.EncodePositionCursor(pagination.PositionCursor{At: entry.CreatedAt, ID: entry.ID})
+	return pagination.EncodePositionCursor(
+		pagination.PositionCursor{At: entry.CreatedAt, ID: entry.ID},
+	)
 }
 
 func decodeCursor(encoded string) (agentports.PendingDecisionCursor, error) {

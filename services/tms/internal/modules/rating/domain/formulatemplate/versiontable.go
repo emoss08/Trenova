@@ -8,14 +8,14 @@ import (
 type VersionTable struct {
 	keel.Table `keel:"formula_template_version_tables"`
 
-	TemplateVersionID   pulid.ID `json:"templateVersionId" keel:"template_version_id,pk"`
-	RateMatrixID        pulid.ID `json:"rateMatrixId" keel:"rate_matrix_id,pk"`
-	OrganizationID      pulid.ID `json:"organizationId" keel:"organization_id,pk,tenant"`
-	BusinessUnitID      pulid.ID `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
-	TemplateID          pulid.ID `json:"templateId" keel:"template_id"`
-	TemplateVersion     int64    `json:"templateVersion" keel:"template_version"`
+	TemplateVersionID   pulid.ID `json:"templateVersionId"   keel:"template_version_id,pk"`
+	RateMatrixID        pulid.ID `json:"rateMatrixId"        keel:"rate_matrix_id,pk"`
+	OrganizationID      pulid.ID `json:"organizationId"      keel:"organization_id,pk,tenant"`
+	BusinessUnitID      pulid.ID `json:"businessUnitId"      keel:"business_unit_id,pk,tenant"`
+	TemplateID          pulid.ID `json:"templateId"          keel:"template_id"`
+	TemplateVersion     int64    `json:"templateVersion"     keel:"template_version"`
 	MatrixVersionNumber int64    `json:"matrixVersionNumber" keel:"matrix_version_number"`
-	Code                string   `json:"code" keel:"code"`
+	Code                string   `json:"code"                keel:"code"`
 }
 
 func (v *FormulaTemplateVersion) TableRows() []*VersionTable {

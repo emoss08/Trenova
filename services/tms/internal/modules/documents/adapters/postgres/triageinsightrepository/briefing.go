@@ -48,7 +48,9 @@ func (r *repository) BriefingCounts(
 	})
 }
 
-func briefingCountsQuery(req triageports.BriefingWindow) *keel.Query[inboundmessage.InboundMessage] {
+func briefingCountsQuery(
+	req triageports.BriefingWindow,
+) *keel.Query[inboundmessage.InboundMessage] {
 	m := inboundmessagedb.InboundMessages
 	anyMessage := inboundmessagedb.InboundMessages.As("any_message")
 
@@ -101,13 +103,16 @@ func handledQuery(req triageports.BriefingWindow) *keel.Query[keel.Row] {
 	m := inboundmessagedb.InboundMessages
 	partition := []keel.Expr{m.HandledAction, m.Classification}
 
-	ranked := keel.CTE(rankedCTE, append(slices.Clone(messageRowNames), "group_count", "sample_rank"),
+	ranked := keel.CTE(
+		rankedCTE,
+		append(slices.Clone(messageRowNames), "group_count", "sample_rank"),
 		withReference(messages()).
 			Pick(messageRowColumns(
 				keel.Count().Over(partition),
 				keel.RowNumber().Over(partition, m.ReceivedAt.Desc(), m.ID.Desc()),
 			)...).
-			Where(m.HandledByRuleID.IsNotNull(), m.ReceivedAt.Gte(req.DayStart)))
+			Where(m.HandledByRuleID.IsNotNull(), m.ReceivedAt.Gte(req.DayStart)),
+	)
 
 	return ranked.Query().
 		With(ranked).
@@ -265,7 +270,9 @@ func (r *repository) CorrectionTotals(
 	})
 }
 
-func correctionTotalsQuery(req triageports.CorrectionTotalsRequest) *keel.Query[inboundmessage.InboundMessage] {
+func correctionTotalsQuery(
+	req triageports.CorrectionTotalsRequest,
+) *keel.Query[inboundmessage.InboundMessage] {
 	m := inboundmessagedb.InboundMessages
 	act := triagedb.Activities
 

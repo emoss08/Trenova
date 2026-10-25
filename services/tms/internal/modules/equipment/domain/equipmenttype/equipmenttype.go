@@ -28,27 +28,27 @@ var (
 
 // Equipment classification
 type EquipmentType struct {
-	keel.Table `                                              keel:"equipment_types,report=Equipment"`
+	keel.Table `keel:"equipment_types,report=Equipment"`
 
-	ID             pulid.ID           `json:"id" keel:"id,pk,autoid:et_"`
+	ID             pulid.ID           `json:"id"             keel:"id,pk,autoid:et_"`
 	BusinessUnitID pulid.ID           `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
 	OrganizationID pulid.ID           `json:"organizationId" keel:"organization_id,pk,tenant"`
-	Status         domaintypes.Status `json:"status" keel:"status"`
-	Code           string             `json:"code" keel:"code"`
-	Description    string             `json:"description" keel:"description,nullzero"`
-	Class          Class              `json:"class" keel:"class"`
-	Color          string             `json:"color" keel:"color,nullzero"`
+	Status         domaintypes.Status `json:"status"         keel:"status"`
+	Code           string             `json:"code"           keel:"code"`
+	Description    string             `json:"description"    keel:"description,nullzero"`
+	Class          Class              `json:"class"          keel:"class"`
+	Color          string             `json:"color"          keel:"color,nullzero"`
 	InteriorLength *float64           `json:"interiorLength" keel:"interior_length"`
 
-	DeckType         DeckType `json:"deckType" keel:"deck_type,nullzero"`
+	DeckType         DeckType `json:"deckType"         keel:"deck_type,nullzero"`
 	DeckHeightInches *float64 `json:"deckHeightInches" keel:"deck_height_inches"`
-	WellLengthFeet   *float64 `json:"wellLengthFeet" keel:"well_length_feet"`
-	AxleCount        *int16   `json:"axleCount" keel:"axle_count,dimension"`
-	SearchVector     string   `json:"-" keel:"search_vector,tsvector,readonly,noselect"`
-	Rank             string   `json:"-" keel:"rank,computed"`
-	Version          int64    `json:"version" keel:"version,version"`
-	CreatedAt        int64    `json:"createdAt" keel:"created_at,autocreate"`
-	UpdatedAt        int64    `json:"updatedAt" keel:"updated_at,autoupdate"`
+	WellLengthFeet   *float64 `json:"wellLengthFeet"   keel:"well_length_feet"`
+	AxleCount        *int16   `json:"axleCount"        keel:"axle_count,dimension"`
+	SearchVector     string   `json:"-"                keel:"search_vector,tsvector,readonly,noselect"`
+	Rank             string   `json:"-"                keel:"rank,computed"`
+	Version          int64    `json:"version"          keel:"version,version"`
+	CreatedAt        int64    `json:"createdAt"        keel:"created_at,autocreate"`
+	UpdatedAt        int64    `json:"updatedAt"        keel:"updated_at,autoupdate"`
 
 	BusinessUnit *tenant.BusinessUnit `json:"businessUnit,omitempty" keel:"belongs:business_unit_id,noreport"`
 	Organization *tenant.Organization `json:"organization,omitempty" keel:"belongs:organization_id,noreport"`

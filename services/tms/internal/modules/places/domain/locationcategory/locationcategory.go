@@ -21,24 +21,24 @@ var (
 
 // Classification of locations
 type LocationCategory struct {
-	keel.Table          `                                                  keel:"location_categories,report=Parties"`
-	ID                  pulid.ID     `json:"id" keel:"id,pk,autoid:lc_"`
-	BusinessUnitID      pulid.ID     `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
-	OrganizationID      pulid.ID     `json:"organizationId" keel:"organization_id,pk,tenant"`
-	Name                string       `json:"name" keel:"name"`
-	Description         string       `json:"description" keel:"description,nullzero"`
-	Type                Category     `json:"type" keel:"type"`
-	FacilityType        FacilityType `json:"facilityType" keel:"facility_type,nullzero"`
-	Color               string       `json:"color" keel:"color,nullzero"`
-	HasSecureParking    bool         `json:"hasSecureParking" keel:"has_secure_parking"`
-	RequiresAppointment bool         `json:"requiresAppointment" keel:"requires_appointment"`
-	AllowsOvernight     bool         `json:"allowsOvernight" keel:"allows_overnight"`
-	HasRestroom         bool         `json:"hasRestroom" keel:"has_restroom"`
-	Version             int64        `json:"version" keel:"version,version"`
-	CreatedAt           int64        `json:"createdAt" keel:"created_at,autocreate"`
-	UpdatedAt           int64        `json:"updatedAt" keel:"updated_at,autoupdate"`
-	SearchVector        string       `json:"-" keel:"search_vector,tsvector,readonly,noselect"`
-	Rank                string       `json:"-" keel:"rank,computed"`
+	keel.Table          `keel:"location_categories,report=Parties"`
+	ID                  pulid.ID     `keel:"id,pk,autoid:lc_"                         json:"id"`
+	BusinessUnitID      pulid.ID     `keel:"business_unit_id,pk,tenant"               json:"businessUnitId"`
+	OrganizationID      pulid.ID     `keel:"organization_id,pk,tenant"                json:"organizationId"`
+	Name                string       `keel:"name"                                     json:"name"`
+	Description         string       `keel:"description,nullzero"                     json:"description"`
+	Type                Category     `keel:"type"                                     json:"type"`
+	FacilityType        FacilityType `keel:"facility_type,nullzero"                   json:"facilityType"`
+	Color               string       `keel:"color,nullzero"                           json:"color"`
+	HasSecureParking    bool         `keel:"has_secure_parking"                       json:"hasSecureParking"`
+	RequiresAppointment bool         `keel:"requires_appointment"                     json:"requiresAppointment"`
+	AllowsOvernight     bool         `keel:"allows_overnight"                         json:"allowsOvernight"`
+	HasRestroom         bool         `keel:"has_restroom"                             json:"hasRestroom"`
+	Version             int64        `keel:"version,version"                          json:"version"`
+	CreatedAt           int64        `keel:"created_at,autocreate"                    json:"createdAt"`
+	UpdatedAt           int64        `keel:"updated_at,autoupdate"                    json:"updatedAt"`
+	SearchVector        string       `keel:"search_vector,tsvector,readonly,noselect" json:"-"`
+	Rank                string       `keel:"rank,computed"                            json:"-"`
 
 	BusinessUnit *tenant.BusinessUnit `json:"businessUnit,omitempty"`
 	Organization *tenant.Organization `json:"organization,omitempty"`

@@ -13,34 +13,34 @@ import (
 )
 
 type CarrierMonitoringEnrollment struct {
-	keel.Table `                                                                keel:"carrier_monitoring_enrollments"`
+	keel.Table `keel:"carrier_monitoring_enrollments"`
 
-	ID              pulid.ID         `json:"id" keel:"id,pk,autoid:cienr_"`
-	BusinessUnitID  pulid.ID         `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
-	OrganizationID  pulid.ID         `json:"organizationId" keel:"organization_id,pk,tenant"`
-	SubjectType     SubjectType      `json:"subjectType" keel:"subject_type"`
-	SubjectID       string           `json:"subjectId" keel:"subject_id"`
-	CarrierID       pulid.ID         `json:"carrierId" keel:"carrier_id,nullzero"`
-	SubjectName     string           `json:"subjectName" keel:"subject_name,nullzero"`
-	DOTNumber       string           `json:"dotNumber" keel:"dot_number"`
-	DocketNumber    string           `json:"docketNumber" keel:"docket_number,nullzero"`
-	Provider        integration.Type `json:"provider" keel:"provider"`
-	ProviderRef     string           `json:"providerRef" keel:"provider_ref,nullzero"`
-	Mode            EnrollmentMode   `json:"mode" keel:"mode"`
-	DesiredState    DesiredState     `json:"desiredState" keel:"desired_state"`
-	VendorState     VendorState      `json:"vendorState" keel:"vendor_state"`
-	Reason          EnrollmentReason `json:"reason" keel:"reason"`
-	OwnedByTrenova  bool             `json:"ownedByTrenova" keel:"owned_by_trenova"`
-	EnrolledAt      *int64           `json:"enrolledAt" keel:"enrolled_at"`
-	UnenrolledAt    *int64           `json:"unenrolledAt" keel:"unenrolled_at"`
-	LastSyncedAt    *int64           `json:"lastSyncedAt" keel:"last_synced_at"`
+	ID              pulid.ID         `json:"id"              keel:"id,pk,autoid:cienr_"`
+	BusinessUnitID  pulid.ID         `json:"businessUnitId"  keel:"business_unit_id,pk,tenant"`
+	OrganizationID  pulid.ID         `json:"organizationId"  keel:"organization_id,pk,tenant"`
+	SubjectType     SubjectType      `json:"subjectType"     keel:"subject_type"`
+	SubjectID       string           `json:"subjectId"       keel:"subject_id"`
+	CarrierID       pulid.ID         `json:"carrierId"       keel:"carrier_id,nullzero"`
+	SubjectName     string           `json:"subjectName"     keel:"subject_name,nullzero"`
+	DOTNumber       string           `json:"dotNumber"       keel:"dot_number"`
+	DocketNumber    string           `json:"docketNumber"    keel:"docket_number,nullzero"`
+	Provider        integration.Type `json:"provider"        keel:"provider"`
+	ProviderRef     string           `json:"providerRef"     keel:"provider_ref,nullzero"`
+	Mode            EnrollmentMode   `json:"mode"            keel:"mode"`
+	DesiredState    DesiredState     `json:"desiredState"    keel:"desired_state"`
+	VendorState     VendorState      `json:"vendorState"     keel:"vendor_state"`
+	Reason          EnrollmentReason `json:"reason"          keel:"reason"`
+	OwnedByTrenova  bool             `json:"ownedByTrenova"  keel:"owned_by_trenova"`
+	EnrolledAt      *int64           `json:"enrolledAt"      keel:"enrolled_at"`
+	UnenrolledAt    *int64           `json:"unenrolledAt"    keel:"unenrolled_at"`
+	LastSyncedAt    *int64           `json:"lastSyncedAt"    keel:"last_synced_at"`
 	LastConfirmedAt *int64           `json:"lastConfirmedAt" keel:"last_confirmed_at"`
-	LastUsedAt      *int64           `json:"lastUsedAt" keel:"last_used_at"`
-	FailureCount    int              `json:"failureCount" keel:"failure_count"`
-	LastError       string           `json:"lastError" keel:"last_error,nullzero"`
-	Version         int64            `json:"version" keel:"version,version"`
-	CreatedAt       int64            `json:"createdAt" keel:"created_at,autocreate"`
-	UpdatedAt       int64            `json:"updatedAt" keel:"updated_at,autoupdate"`
+	LastUsedAt      *int64           `json:"lastUsedAt"      keel:"last_used_at"`
+	FailureCount    int              `json:"failureCount"    keel:"failure_count"`
+	LastError       string           `json:"lastError"       keel:"last_error,nullzero"`
+	Version         int64            `json:"version"         keel:"version,version"`
+	CreatedAt       int64            `json:"createdAt"       keel:"created_at,autocreate"`
+	UpdatedAt       int64            `json:"updatedAt"       keel:"updated_at,autoupdate"`
 }
 
 func (e *CarrierMonitoringEnrollment) BeforeCreate(_ context.Context) error {
@@ -188,20 +188,20 @@ type FeedCursor struct {
 }
 
 type CarrierIntelFeedState struct {
-	keel.Table `                                                            keel:"carrier_intel_feed_states"`
+	keel.Table `keel:"carrier_intel_feed_states"`
 
 	OrganizationID pulid.ID         `json:"organizationId" keel:"organization_id,pk,tenant"`
 	BusinessUnitID pulid.ID         `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
-	Provider       integration.Type `json:"provider" keel:"provider,pk"`
-	FeedType       FeedType         `json:"feedType" keel:"feed_type,pk"`
-	Cursor         FeedCursor       `json:"cursor" keel:"cursor,jsonb"`
-	LastPolledAt   *int64           `json:"lastPolledAt" keel:"last_polled_at"`
-	LastSuccessAt  *int64           `json:"lastSuccessAt" keel:"last_success_at"`
-	NextPollAfter  *int64           `json:"nextPollAfter" keel:"next_poll_after"`
-	PausedReason   FeedPauseReason  `json:"pausedReason" keel:"paused_reason,nullzero"`
-	PausedAt       *int64           `json:"pausedAt" keel:"paused_at"`
-	FailureCount   int              `json:"failureCount" keel:"failure_count"`
-	LastError      string           `json:"lastError" keel:"last_error,nullzero"`
+	Provider       integration.Type `json:"provider"       keel:"provider,pk"`
+	FeedType       FeedType         `json:"feedType"       keel:"feed_type,pk"`
+	Cursor         FeedCursor       `json:"cursor"         keel:"cursor,jsonb"`
+	LastPolledAt   *int64           `json:"lastPolledAt"   keel:"last_polled_at"`
+	LastSuccessAt  *int64           `json:"lastSuccessAt"  keel:"last_success_at"`
+	NextPollAfter  *int64           `json:"nextPollAfter"  keel:"next_poll_after"`
+	PausedReason   FeedPauseReason  `json:"pausedReason"   keel:"paused_reason,nullzero"`
+	PausedAt       *int64           `json:"pausedAt"       keel:"paused_at"`
+	FailureCount   int              `json:"failureCount"   keel:"failure_count"`
+	LastError      string           `json:"lastError"      keel:"last_error,nullzero"`
 }
 
 func (f *CarrierIntelFeedState) IsPaused() bool {

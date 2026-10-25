@@ -17,22 +17,22 @@ var (
 )
 
 type CapabilityRule struct {
-	keel.Table `                                                             keel:"mode_profile_capability_rules"`
+	keel.Table `keel:"mode_profile_capability_rules"`
 
-	ID             pulid.ID `json:"id" keel:"id,pk,autoid:mpr_"`
+	ID             pulid.ID `json:"id"             keel:"id,pk,autoid:mpr_"`
 	BusinessUnitID pulid.ID `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
 	OrganizationID pulid.ID `json:"organizationId" keel:"organization_id,pk,tenant"`
-	ModeProfileID  pulid.ID `json:"modeProfileId" keel:"mode_profile_id"`
+	ModeProfileID  pulid.ID `json:"modeProfileId"  keel:"mode_profile_id"`
 
-	RuleKey     RuleKey                 `json:"ruleKey" keel:"rule_key"`
-	Capability  Capability              `json:"capability" keel:"capability"`
+	RuleKey     RuleKey                 `json:"ruleKey"     keel:"rule_key"`
+	Capability  Capability              `json:"capability"  keel:"capability"`
 	Enforcement tenant.EnforcementLevel `json:"enforcement" keel:"enforcement"`
-	Enabled     bool                    `json:"enabled" keel:"enabled"`
-	Parameters  map[string]any          `json:"parameters" keel:"parameters,jsonb,nullzero"`
+	Enabled     bool                    `json:"enabled"     keel:"enabled"`
+	Parameters  map[string]any          `json:"parameters"  keel:"parameters,jsonb,nullzero"`
 
 	OverrideReason string `json:"overrideReason" keel:"override_reason,nullzero"`
 
-	Version   int64 `json:"version" keel:"version,version"`
+	Version   int64 `json:"version"   keel:"version,version"`
 	CreatedAt int64 `json:"createdAt" keel:"created_at,autocreate"`
 	UpdatedAt int64 `json:"updatedAt" keel:"updated_at,autoupdate"`
 

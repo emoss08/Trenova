@@ -344,7 +344,11 @@ func (r *repository) Create(ctx context.Context, role *permission.Role) error {
 		for _, rp := range role.Permissions {
 			rp.RoleID = role.ID
 		}
-		if err := permissiondb.ResourcePermissions.CreateMany(ctx, db, role.Permissions); err != nil {
+		if err := permissiondb.ResourcePermissions.CreateMany(
+			ctx,
+			db,
+			role.Permissions,
+		); err != nil {
 			r.l.Error("failed to create resource permissions", zap.Error(err))
 			return rolePermissionErrors.Map(err, role.ID.String())
 		}
@@ -537,7 +541,11 @@ func (r *repository) DeleteAssignment(
 			return nil, assignmentErrors.Map(err, req.AssignmentID.String())
 		}
 
-		if _, err = forTenant(ctx, ura.Query(), ura.ID.Eq(assignment.ID)).Delete(ctx, db); err != nil {
+		if _, err = forTenant(
+			ctx,
+			ura.Query(),
+			ura.ID.Eq(assignment.ID),
+		).Delete(ctx, db); err != nil {
 			r.l.Error(
 				"failed to delete role assignment",
 				zap.String("id", req.AssignmentID.String()),
@@ -653,7 +661,10 @@ func (r *repository) UpdateResourcePermission(
 			sets = append(sets, p.Resource.To(rp.Resource))
 		}
 		if len(rp.Operations) > 0 {
-			sets = append(sets, p.Operations.To(operationNames(permission.Normalize(rp.Operations))))
+			sets = append(
+				sets,
+				p.Operations.To(operationNames(permission.Normalize(rp.Operations))),
+			)
 		}
 		if rp.DataScope != "" {
 			sets = append(sets, p.DataScope.To(rp.DataScope))
@@ -662,7 +673,8 @@ func (r *repository) UpdateResourcePermission(
 			sets = append(sets, p.UpdatedAt.To(timeutils.NowUnix()))
 		}
 
-		rows, err := p.Where(p.ID.Eq(rp.ID), p.RoleID.Eq(rp.RoleID)).UpdateReturning(ctx, r.db.Keel(ctx), sets...)
+		rows, err := p.Where(p.ID.Eq(rp.ID), p.RoleID.Eq(rp.RoleID)).
+			UpdateReturning(ctx, r.db.Keel(ctx), sets...)
 		if err != nil {
 			r.l.Error(
 				"failed to update resource permission",
@@ -671,7 +683,10 @@ func (r *repository) UpdateResourcePermission(
 			)
 			return rolePermissionErrors.Map(err, rp.ID.String())
 		}
-		if err = dberror.CheckFoundCount(int64(len(rows)), rolePermissionErrors.Entity); err != nil {
+		if err = dberror.CheckFoundCount(
+			int64(len(rows)),
+			rolePermissionErrors.Entity,
+		); err != nil {
 			return err
 		}
 

@@ -72,28 +72,28 @@ func (c DisputeCategory) IsValid() bool {
 type Dispute struct {
 	keel.Table `keel:"settlement_disputes"`
 
-	ID                pulid.ID        `json:"id" keel:"id,pk,autoid:dsd_"`
-	BusinessUnitID    pulid.ID        `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
-	OrganizationID    pulid.ID        `json:"organizationId" keel:"organization_id,pk,tenant"`
-	SettlementID      pulid.ID        `json:"settlementId" keel:"settlement_id"`
-	SettlementLineID  *pulid.ID       `json:"settlementLineId" keel:"settlement_line_id"`
-	WorkerID          pulid.ID        `json:"workerId" keel:"worker_id"`
-	Status            DisputeStatus   `json:"status" keel:"status"`
-	Category          DisputeCategory `json:"category" keel:"category"`
-	Description       string          `json:"description" keel:"description"`
+	ID                pulid.ID        `json:"id"                keel:"id,pk,autoid:dsd_"`
+	BusinessUnitID    pulid.ID        `json:"businessUnitId"    keel:"business_unit_id,pk,tenant"`
+	OrganizationID    pulid.ID        `json:"organizationId"    keel:"organization_id,pk,tenant"`
+	SettlementID      pulid.ID        `json:"settlementId"      keel:"settlement_id"`
+	SettlementLineID  *pulid.ID       `json:"settlementLineId"  keel:"settlement_line_id"`
+	WorkerID          pulid.ID        `json:"workerId"          keel:"worker_id"`
+	Status            DisputeStatus   `json:"status"            keel:"status"`
+	Category          DisputeCategory `json:"category"          keel:"category"`
+	Description       string          `json:"description"       keel:"description"`
 	SubmittedByUserID pulid.ID        `json:"submittedByUserId" keel:"submitted_by_user_id"`
-	ResolutionNote    string          `json:"resolutionNote" keel:"resolution_note,nullzero"`
-	ResolutionLineID  *pulid.ID       `json:"resolutionLineId" keel:"resolution_line_id"`
-	ResolvedByID      *pulid.ID       `json:"resolvedById" keel:"resolved_by_id"`
-	ResolvedAt        *int64          `json:"resolvedAt" keel:"resolved_at"`
-	Version           int64           `json:"version" keel:"version,version"`
-	CreatedAt         int64           `json:"createdAt" keel:"created_at,autocreate"`
-	UpdatedAt         int64           `json:"updatedAt" keel:"updated_at,autoupdate"`
+	ResolutionNote    string          `json:"resolutionNote"    keel:"resolution_note,nullzero"`
+	ResolutionLineID  *pulid.ID       `json:"resolutionLineId"  keel:"resolution_line_id"`
+	ResolvedByID      *pulid.ID       `json:"resolvedById"      keel:"resolved_by_id"`
+	ResolvedAt        *int64          `json:"resolvedAt"        keel:"resolved_at"`
+	Version           int64           `json:"version"           keel:"version,version"`
+	CreatedAt         int64           `json:"createdAt"         keel:"created_at,autocreate"`
+	UpdatedAt         int64           `json:"updatedAt"         keel:"updated_at,autoupdate"`
 
-	Settlement     *Settlement     `json:"settlement,omitempty" keel:"belongs:settlement_id"`
+	Settlement     *Settlement     `json:"settlement,omitempty"     keel:"belongs:settlement_id"`
 	SettlementLine *SettlementLine `json:"settlementLine,omitempty" keel:"belongs:settlement_line_id"`
-	Worker         *worker.Worker  `json:"worker,omitempty" keel:"belongs:worker_id"`
-	ResolvedBy     *tenant.User    `json:"resolvedBy,omitempty" keel:"belongs:resolved_by_id"`
+	Worker         *worker.Worker  `json:"worker,omitempty"         keel:"belongs:worker_id"`
+	ResolvedBy     *tenant.User    `json:"resolvedBy,omitempty"     keel:"belongs:resolved_by_id"`
 }
 
 func (d *Dispute) Validate(multiErr *errortypes.MultiError) {

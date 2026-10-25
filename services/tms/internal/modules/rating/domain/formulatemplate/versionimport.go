@@ -8,14 +8,14 @@ import (
 type VersionImport struct {
 	keel.Table `keel:"formula_template_version_imports"`
 
-	TemplateVersionID    pulid.ID `json:"templateVersionId" keel:"template_version_id,pk"`
-	LibraryID            pulid.ID `json:"libraryId" keel:"library_id,pk"`
-	OrganizationID       pulid.ID `json:"organizationId" keel:"organization_id,pk,tenant"`
-	BusinessUnitID       pulid.ID `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
-	TemplateID           pulid.ID `json:"templateId" keel:"template_id"`
-	TemplateVersion      int64    `json:"templateVersion" keel:"template_version"`
+	TemplateVersionID    pulid.ID `json:"templateVersionId"    keel:"template_version_id,pk"`
+	LibraryID            pulid.ID `json:"libraryId"            keel:"library_id,pk"`
+	OrganizationID       pulid.ID `json:"organizationId"       keel:"organization_id,pk,tenant"`
+	BusinessUnitID       pulid.ID `json:"businessUnitId"       keel:"business_unit_id,pk,tenant"`
+	TemplateID           pulid.ID `json:"templateId"           keel:"template_id"`
+	TemplateVersion      int64    `json:"templateVersion"      keel:"template_version"`
 	LibraryVersionNumber int64    `json:"libraryVersionNumber" keel:"library_version_number"`
-	Path                 string   `json:"path" keel:"path"`
+	Path                 string   `json:"path"                 keel:"path"`
 }
 
 func (v *FormulaTemplateVersion) ImportRows() []*VersionImport {

@@ -19,11 +19,7 @@ import (
 var assignmentErrors = dberror.Mapping{
 	Entity: "DocumentTemplateAssignment",
 	ForeignKey: []dberror.Constraint{
-		{
-			Name:    "fk_document_template_assignments_template",
-			Field:   "templateId",
-			Message: "Document template does not exist",
-		},
+		templateForeignKey("fk_document_template_assignments_template"),
 		{
 			Name:    "fk_document_template_assignments_customer",
 			Field:   "customerId",

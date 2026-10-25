@@ -116,25 +116,25 @@ func (l *DashboardLayout) Tile(id string) (*DashboardTile, bool) {
 }
 
 type Dashboard struct {
-	keel.Table `                                                   keel:"report_dashboards"`
+	keel.Table `keel:"report_dashboards"`
 
-	ID             pulid.ID         `json:"id" keel:"id,pk,autoid:rdb_"`
+	ID             pulid.ID         `json:"id"             keel:"id,pk,autoid:rdb_"`
 	BusinessUnitID pulid.ID         `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
 	OrganizationID pulid.ID         `json:"organizationId" keel:"organization_id,pk,tenant"`
-	Name           string           `json:"name" keel:"name"`
-	Description    string           `json:"description" keel:"description,nullzero"`
-	Category       string           `json:"category" keel:"category,nullzero"`
-	Tags           []string         `json:"tags" keel:"tags,nullzero"`
-	OwnerID        pulid.ID         `json:"ownerId" keel:"owner_id"`
-	Visibility     Visibility       `json:"visibility" keel:"visibility"`
-	Layout         *DashboardLayout `json:"layout" keel:"layout,jsonb"`
-	Version        int64            `json:"version" keel:"version,version"`
-	CreatedAt      int64            `json:"createdAt" keel:"created_at,autocreate"`
-	UpdatedAt      int64            `json:"updatedAt" keel:"updated_at,autoupdate"`
+	Name           string           `json:"name"           keel:"name"`
+	Description    string           `json:"description"    keel:"description,nullzero"`
+	Category       string           `json:"category"       keel:"category,nullzero"`
+	Tags           []string         `json:"tags"           keel:"tags,nullzero"`
+	OwnerID        pulid.ID         `json:"ownerId"        keel:"owner_id"`
+	Visibility     Visibility       `json:"visibility"     keel:"visibility"`
+	Layout         *DashboardLayout `json:"layout"         keel:"layout,jsonb"`
+	Version        int64            `json:"version"        keel:"version,version"`
+	CreatedAt      int64            `json:"createdAt"      keel:"created_at,autocreate"`
+	UpdatedAt      int64            `json:"updatedAt"      keel:"updated_at,autoupdate"`
 
 	Organization *tenant.Organization `json:"organization,omitempty"`
 	BusinessUnit *tenant.BusinessUnit `json:"businessUnit,omitempty"`
-	Owner        *tenant.User         `json:"owner,omitempty" keel:"belongs:owner_id"`
+	Owner        *tenant.User         `json:"owner,omitempty"        keel:"belongs:owner_id"`
 }
 
 func (d *Dashboard) BeforeCreate(_ context.Context) error {

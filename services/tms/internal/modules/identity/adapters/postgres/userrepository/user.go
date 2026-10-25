@@ -27,16 +27,12 @@ import (
 )
 
 const (
-	membershipScopeReason = "read the memberships row-level security shows a person: their own in " +
-		"every organization and everyone's in the organization they are working in"
-	emailScopeReason = "resolve a sign-in email before any tenant is known"
-	loginScopeReason = "load the user an identity provider subject is linked to " +
-		"before a session exists"
-	systemUserScopeReason = "resolve the instance system user, which belongs to the default " +
-		"organization, as the actor for any tenant"
-	listMembershipsReason    = "list a user's memberships across the organizations of one business unit"
-	replaceMembershipsReason = "replace a user's memberships across the organizations of one " +
-		"business unit in one transaction"
+	membershipScopeReason     = "read the memberships row-level security shows a person: their own in every organization and everyone's in the organization they are working in"
+	emailScopeReason          = "resolve a sign-in email before any tenant is known"
+	loginScopeReason          = "load the user an identity provider subject is linked to before a session exists"
+	systemUserScopeReason     = "resolve the instance system user, which belongs to the default organization, as the actor for any tenant"
+	listMembershipsReason     = "list a user's memberships across the organizations of one business unit"
+	replaceMembershipsReason  = "replace a user's memberships across the organizations of one business unit in one transaction"
 	membershipLockTimeout     = 250 * time.Millisecond
 	membershipsBusyMessage    = "The user's organization memberships are busy. Retry the request."
 	organizationsOutsideScope = "organizations must belong to the current business unit"

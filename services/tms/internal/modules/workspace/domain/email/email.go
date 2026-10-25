@@ -19,24 +19,24 @@ var (
 )
 
 type Profile struct {
-	keel.Table `                                             keel:"email_profiles"`
+	keel.Table `keel:"email_profiles"`
 
-	ID             pulid.ID      `json:"id" keel:"id,pk,autoid:emlprof_"`
+	ID             pulid.ID      `json:"id"             keel:"id,pk,autoid:emlprof_"`
 	BusinessUnitID pulid.ID      `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
 	OrganizationID pulid.ID      `json:"organizationId" keel:"organization_id,pk,tenant"`
-	Name           string        `json:"name" keel:"name"`
-	Description    string        `json:"description" keel:"description,nullzero"`
-	SenderName     string        `json:"senderName" keel:"from_name,nullzero"`
-	SenderEmail    string        `json:"senderEmail" keel:"from_address"`
-	ReplyToEmail   string        `json:"replyToEmail" keel:"reply_to,nullzero"`
-	Provider       Provider      `json:"provider" keel:"provider_type"`
-	AuthType       AuthType      `json:"-" keel:"auth_type"`
-	EncryptionType Encryption    `json:"-" keel:"encryption_type"`
-	Status         ProfileStatus `json:"status" keel:"status,nullzero"`
-	Version        int64         `json:"version" keel:"version,version"`
-	CreatedAt      int64         `json:"createdAt" keel:"created_at,autocreate"`
-	UpdatedAt      int64         `json:"updatedAt" keel:"updated_at,autoupdate"`
-	SearchVector   string        `json:"-" keel:"search_vector,tsvector,readonly,noselect"`
+	Name           string        `json:"name"           keel:"name"`
+	Description    string        `json:"description"    keel:"description,nullzero"`
+	SenderName     string        `json:"senderName"     keel:"from_name,nullzero"`
+	SenderEmail    string        `json:"senderEmail"    keel:"from_address"`
+	ReplyToEmail   string        `json:"replyToEmail"   keel:"reply_to,nullzero"`
+	Provider       Provider      `json:"provider"       keel:"provider_type"`
+	AuthType       AuthType      `json:"-"              keel:"auth_type"`
+	EncryptionType Encryption    `json:"-"              keel:"encryption_type"`
+	Status         ProfileStatus `json:"status"         keel:"status,nullzero"`
+	Version        int64         `json:"version"        keel:"version,version"`
+	CreatedAt      int64         `json:"createdAt"      keel:"created_at,autocreate"`
+	UpdatedAt      int64         `json:"updatedAt"      keel:"updated_at,autoupdate"`
+	SearchVector   string        `json:"-"              keel:"search_vector,tsvector,readonly,noselect"`
 
 	BusinessUnit *tenant.BusinessUnit `json:"-"`
 	Organization *tenant.Organization `json:"-"`
@@ -131,15 +131,15 @@ func (p *Profile) GetPostgresSearchConfig() domaintypes.PostgresSearchConfig {
 }
 
 type ProfileAssignment struct {
-	keel.Table `                                                         keel:"email_profile_assignments"`
+	keel.Table `keel:"email_profile_assignments"`
 
-	ID             pulid.ID `json:"id" keel:"id,pk,autoid:emlassn_"`
+	ID             pulid.ID `json:"id"             keel:"id,pk,autoid:emlassn_"`
 	BusinessUnitID pulid.ID `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
 	OrganizationID pulid.ID `json:"organizationId" keel:"organization_id,pk,tenant"`
-	Purpose        Purpose  `json:"purpose" keel:"purpose"`
-	ProfileID      pulid.ID `json:"profileId" keel:"profile_id"`
-	CreatedAt      int64    `json:"createdAt" keel:"created_at,autocreate"`
-	UpdatedAt      int64    `json:"updatedAt" keel:"updated_at,autoupdate"`
+	Purpose        Purpose  `json:"purpose"        keel:"purpose"`
+	ProfileID      pulid.ID `json:"profileId"      keel:"profile_id"`
+	CreatedAt      int64    `json:"createdAt"      keel:"created_at,autocreate"`
+	UpdatedAt      int64    `json:"updatedAt"      keel:"updated_at,autoupdate"`
 
 	Profile *Profile `json:"profile,omitempty" keel:"belongs:profile_id"`
 }

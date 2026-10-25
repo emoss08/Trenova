@@ -22,11 +22,7 @@ var violationErrors = dberror.Mapping{
 			Field:   "safetyEventId",
 			Message: "Safety event does not exist or belongs to a different organization",
 		},
-		{
-			Name:    "fk_worker_safety_violations_worker",
-			Field:   "workerId",
-			Message: "Worker does not exist or belongs to a different organization",
-		},
+		workerForeignKey("fk_worker_safety_violations_worker"),
 	},
 }
 

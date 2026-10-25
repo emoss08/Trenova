@@ -28,22 +28,22 @@ const (
 type Item struct {
 	keel.Table `keel:"watchtower_items"`
 
-	ID             pulid.ID `json:"id" keel:"id,pk,autoid:wt_"`
+	ID             pulid.ID `json:"id"             keel:"id,pk,autoid:wt_"`
 	BusinessUnitID pulid.ID `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
 	OrganizationID pulid.ID `json:"organizationId" keel:"organization_id,pk,tenant"`
 
 	SourceKind SourceKind `json:"sourceKind" keel:"source_kind"`
-	SourceID   string     `json:"sourceId" keel:"source_id"`
-	Severity   Severity   `json:"severity" keel:"severity"`
-	Title      string     `json:"title" keel:"title"`
-	Summary    string     `json:"summary" keel:"summary,nullzero"`
+	SourceID   string     `json:"sourceId"   keel:"source_id"`
+	Severity   Severity   `json:"severity"   keel:"severity"`
+	Title      string     `json:"title"      keel:"title"`
+	Summary    string     `json:"summary"    keel:"summary,nullzero"`
 
 	// SubjectType and SubjectID name the record an agent would work on if
 	// the item is handed to one; EventKind is the event that hand-off
 	// publishes. Empty when the source has no agent subject.
 	SubjectType agent.SubjectType `json:"subjectType" keel:"subject_type,nullzero"`
-	SubjectID   pulid.ID          `json:"subjectId" keel:"subject_id,nullzero"`
-	EventKind   agent.EventKind   `json:"eventKind" keel:"event_kind,nullzero"`
+	SubjectID   pulid.ID          `json:"subjectId"   keel:"subject_id,nullzero"`
+	EventKind   agent.EventKind   `json:"eventKind"   keel:"event_kind,nullzero"`
 
 	// Path opens the source record. It is built by the server and validated
 	// like an insight's link, so a stored path can only be an application path.
@@ -52,33 +52,33 @@ type Item struct {
 	OccurredAt int64  `json:"occurredAt" keel:"occurred_at"`
 	ResolvedAt *int64 `json:"resolvedAt" keel:"resolved_at"`
 
-	Status          Status         `json:"status" keel:"status"`
-	AssigneeID      pulid.ID       `json:"assigneeId" keel:"assignee_id,nullzero"`
-	DueAt           *int64         `json:"dueAt" keel:"due_at"`
-	SnoozedUntil    *int64         `json:"snoozedUntil" keel:"snoozed_until"`
-	AcknowledgedAt  *int64         `json:"acknowledgedAt" keel:"acknowledged_at"`
-	ResolutionCode  ResolutionCode `json:"resolutionCode" keel:"resolution_code,nullzero"`
-	ResolutionNote  string         `json:"resolutionNote" keel:"resolution_note,nullzero"`
-	ResolvedByID    pulid.ID       `json:"resolvedById" keel:"resolved_by_id,nullzero"`
+	Status          Status         `json:"status"          keel:"status"`
+	AssigneeID      pulid.ID       `json:"assigneeId"      keel:"assignee_id,nullzero"`
+	DueAt           *int64         `json:"dueAt"           keel:"due_at"`
+	SnoozedUntil    *int64         `json:"snoozedUntil"    keel:"snoozed_until"`
+	AcknowledgedAt  *int64         `json:"acknowledgedAt"  keel:"acknowledged_at"`
+	ResolutionCode  ResolutionCode `json:"resolutionCode"  keel:"resolution_code,nullzero"`
+	ResolutionNote  string         `json:"resolutionNote"  keel:"resolution_note,nullzero"`
+	ResolvedByID    pulid.ID       `json:"resolvedById"    keel:"resolved_by_id,nullzero"`
 	SourceClearedAt *int64         `json:"sourceClearedAt" keel:"source_cleared_at"`
 	EscalationLevel int16          `json:"escalationLevel" keel:"escalation_level"`
 	LastEscalatedAt *int64         `json:"lastEscalatedAt" keel:"last_escalated_at"`
 
-	DueLabel  string    `json:"dueLabel" keel:"due_label,nullzero"`
+	DueLabel  string    `json:"dueLabel"  keel:"due_label,nullzero"`
 	DueSource DueSource `json:"dueSource" keel:"due_source,nullzero"`
 
-	RecordKind  permission.RecordKind `json:"recordKind" keel:"record_kind,nullzero"`
+	RecordKind  permission.RecordKind `json:"recordKind"  keel:"record_kind,nullzero"`
 	RecordLabel string                `json:"recordLabel" keel:"record_label,nullzero"`
-	Facts       []Fact                `json:"facts" keel:"facts,jsonb"`
-	Impact      []string              `json:"impact" keel:"impact,jsonb"`
-	Trail       []TrailEvent          `json:"trail" keel:"trail,jsonb"`
+	Facts       []Fact                `json:"facts"       keel:"facts,jsonb"`
+	Impact      []string              `json:"impact"      keel:"impact,jsonb"`
+	Trail       []TrailEvent          `json:"trail"       keel:"trail,jsonb"`
 
 	AgentDefinitionID pulid.ID `json:"agentDefinitionId" keel:"agent_definition_id,nullzero"`
-	AgentRunID        pulid.ID `json:"agentRunId" keel:"agent_run_id,nullzero"`
-	AgentHandedAt     *int64   `json:"agentHandedAt" keel:"agent_handed_at"`
-	AgentHandedByID   pulid.ID `json:"agentHandedById" keel:"agent_handed_by_id,nullzero"`
+	AgentRunID        pulid.ID `json:"agentRunId"        keel:"agent_run_id,nullzero"`
+	AgentHandedAt     *int64   `json:"agentHandedAt"     keel:"agent_handed_at"`
+	AgentHandedByID   pulid.ID `json:"agentHandedById"   keel:"agent_handed_by_id,nullzero"`
 
-	Version   int64 `json:"version" keel:"version,version"`
+	Version   int64 `json:"version"   keel:"version,version"`
 	CreatedAt int64 `json:"createdAt" keel:"created_at,autocreate"`
 	UpdatedAt int64 `json:"updatedAt" keel:"updated_at,autoupdate"`
 
@@ -233,19 +233,19 @@ func (i *Item) Validate(multiErr *errortypes.MultiError) {
 type Cursor struct {
 	keel.Table `keel:"watchtower_cursors"`
 
-	UserID         pulid.ID `json:"userId" keel:"user_id,pk"`
+	UserID         pulid.ID `json:"userId"         keel:"user_id,pk"`
 	BusinessUnitID pulid.ID `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
 	OrganizationID pulid.ID `json:"organizationId" keel:"organization_id,pk,tenant"`
-	SeenAt         int64    `json:"seenAt" keel:"seen_at"`
-	UpdatedAt      int64    `json:"updatedAt" keel:"updated_at,autoupdate"`
+	SeenAt         int64    `json:"seenAt"         keel:"seen_at"`
+	UpdatedAt      int64    `json:"updatedAt"      keel:"updated_at,autoupdate"`
 }
 
 type Read struct {
 	keel.Table `keel:"watchtower_item_reads"`
 
-	ItemID         pulid.ID `json:"itemId" keel:"item_id,pk"`
-	UserID         pulid.ID `json:"userId" keel:"user_id,pk"`
+	ItemID         pulid.ID `json:"itemId"         keel:"item_id,pk"`
+	UserID         pulid.ID `json:"userId"         keel:"user_id,pk"`
 	BusinessUnitID pulid.ID `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
 	OrganizationID pulid.ID `json:"organizationId" keel:"organization_id,pk,tenant"`
-	SeenAt         int64    `json:"seenAt" keel:"seen_at"`
+	SeenAt         int64    `json:"seenAt"         keel:"seen_at"`
 }

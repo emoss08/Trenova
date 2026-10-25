@@ -30,58 +30,58 @@ const (
 
 // The terms each factor buys invoices on, with their advance, reserve and effective dates
 type Agreement struct {
-	keel.Table `                                                       keel:"factoring_agreements,report=Billing,label=Factoring Agreement"`
+	keel.Table `keel:"factoring_agreements,report=Billing,label=Factoring Agreement"`
 
-	ID                     pulid.ID            `json:"id" keel:"id,pk,autoid:facagr_"`
-	OrganizationID         pulid.ID            `json:"organizationId" keel:"organization_id,pk,tenant"`
-	BusinessUnitID         pulid.ID            `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
-	FactoringCompanyID     pulid.ID            `json:"factoringCompanyId" keel:"factoring_company_id"`
-	Status                 AgreementStatus     `json:"status" keel:"status"`
-	EffectiveFrom          int64               `json:"effectiveFrom" keel:"effective_from,type=epoch"`
-	EffectiveTo            *int64              `json:"effectiveTo" keel:"effective_to,type=epoch"`
-	AdvanceRateBP          int                 `json:"advanceRateBp" keel:"advance_rate_bp,label=Advance Rate (bp),dimension"`
-	ReserveRateBP          int                 `json:"reserveRateBp" keel:"reserve_rate_bp,label=Reserve Rate (bp),dimension"`
-	MinimumFeeMinor        int64               `json:"minimumFeeMinor" keel:"minimum_fee_minor,label=Minimum Fee (Minor)"`
-	ChargebackWindowDays   int                 `json:"chargebackWindowDays" keel:"chargeback_window_days,label=Chargeback Window (Days),dimension"`
-	Recourse               Recourse            `json:"recourse" keel:"recourse"`
-	AccountingTreatment    AccountingTreatment `json:"accountingTreatment" keel:"accounting_treatment"`
-	FundingDays            int                 `json:"fundingDays" keel:"funding_days,dimension"`
-	SubmissionTime         int                 `json:"submissionTime" keel:"submission_time,noreport"`
-	Notes                  string              `json:"notes" keel:"notes,nullzero"`
+	ID                     pulid.ID            `json:"id"                     keel:"id,pk,autoid:facagr_"`
+	OrganizationID         pulid.ID            `json:"organizationId"         keel:"organization_id,pk,tenant"`
+	BusinessUnitID         pulid.ID            `json:"businessUnitId"         keel:"business_unit_id,pk,tenant"`
+	FactoringCompanyID     pulid.ID            `json:"factoringCompanyId"     keel:"factoring_company_id"`
+	Status                 AgreementStatus     `json:"status"                 keel:"status"`
+	EffectiveFrom          int64               `json:"effectiveFrom"          keel:"effective_from,type=epoch"`
+	EffectiveTo            *int64              `json:"effectiveTo"            keel:"effective_to,type=epoch"`
+	AdvanceRateBP          int                 `json:"advanceRateBp"          keel:"advance_rate_bp,label=Advance Rate (bp),dimension"`
+	ReserveRateBP          int                 `json:"reserveRateBp"          keel:"reserve_rate_bp,label=Reserve Rate (bp),dimension"`
+	MinimumFeeMinor        int64               `json:"minimumFeeMinor"        keel:"minimum_fee_minor,label=Minimum Fee (Minor)"`
+	ChargebackWindowDays   int                 `json:"chargebackWindowDays"   keel:"chargeback_window_days,label=Chargeback Window (Days),dimension"`
+	Recourse               Recourse            `json:"recourse"               keel:"recourse"`
+	AccountingTreatment    AccountingTreatment `json:"accountingTreatment"    keel:"accounting_treatment"`
+	FundingDays            int                 `json:"fundingDays"            keel:"funding_days,dimension"`
+	SubmissionTime         int                 `json:"submissionTime"         keel:"submission_time,noreport"`
+	Notes                  string              `json:"notes"                  keel:"notes,nullzero"`
 	DueFromFactorAccountID pulid.ID            `json:"dueFromFactorAccountId" keel:"due_from_factor_account_id,nullzero"`
-	FeeExpenseAccountID    pulid.ID            `json:"feeExpenseAccountId" keel:"fee_expense_account_id,nullzero,label=Factoring Fee Account ID"`
-	LiabilityAccountID     pulid.ID            `json:"liabilityAccountId" keel:"factoring_liability_account_id,nullzero,label=Factoring Liability Account ID"`
-	CashAccountID          pulid.ID            `json:"cashAccountId" keel:"cash_account_id,nullzero"`
-	ActivatedAt            *int64              `json:"activatedAt" keel:"activated_at"`
-	EndedAt                *int64              `json:"endedAt" keel:"ended_at"`
-	Version                int64               `json:"version" keel:"version,version"`
-	CreatedAt              int64               `json:"createdAt" keel:"created_at,autocreate"`
-	UpdatedAt              int64               `json:"updatedAt" keel:"updated_at,autoupdate"`
+	FeeExpenseAccountID    pulid.ID            `json:"feeExpenseAccountId"    keel:"fee_expense_account_id,nullzero,label=Factoring Fee Account ID"`
+	LiabilityAccountID     pulid.ID            `json:"liabilityAccountId"     keel:"factoring_liability_account_id,nullzero,label=Factoring Liability Account ID"`
+	CashAccountID          pulid.ID            `json:"cashAccountId"          keel:"cash_account_id,nullzero"`
+	ActivatedAt            *int64              `json:"activatedAt"            keel:"activated_at"`
+	EndedAt                *int64              `json:"endedAt"                keel:"ended_at"`
+	Version                int64               `json:"version"                keel:"version,version"`
+	CreatedAt              int64               `json:"createdAt"              keel:"created_at,autocreate"`
+	UpdatedAt              int64               `json:"updatedAt"              keel:"updated_at,autoupdate"`
 
 	FactoringCompany *factoringcompany.FactoringCompany `json:"factoringCompany,omitempty" keel:"belongs:factoring_company_id"`
-	FeeTiers         []*FeeTier                         `json:"feeTiers" keel:"many:agreement_id,noreport"`
-	DocumentTypes    []*documenttype.DocumentType       `json:"documentTypes" keel:"m2m:factoring_agreement_document_types.agreement_id.document_type_id,noreport"`
+	FeeTiers         []*FeeTier                         `json:"feeTiers"                   keel:"many:agreement_id,noreport"`
+	DocumentTypes    []*documenttype.DocumentType       `json:"documentTypes"              keel:"m2m:factoring_agreement_document_types.agreement_id.document_type_id,noreport"`
 }
 
 type FeeTier struct {
-	keel.Table `                                                      keel:"factoring_fee_tiers"`
+	keel.Table `keel:"factoring_fee_tiers"`
 
-	ID             pulid.ID `json:"id" keel:"id,pk,autoid:facfee_"`
+	ID             pulid.ID `json:"id"             keel:"id,pk,autoid:facfee_"`
 	OrganizationID pulid.ID `json:"organizationId" keel:"organization_id,pk,tenant"`
 	BusinessUnitID pulid.ID `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
-	AgreementID    pulid.ID `json:"agreementId" keel:"agreement_id"`
-	DaysFrom       int      `json:"daysFrom" keel:"days_from"`
-	DaysTo         *int     `json:"daysTo" keel:"days_to"`
-	RateBP         int      `json:"rateBp" keel:"rate_bp"`
-	FlatMinor      int64    `json:"flatMinor" keel:"flat_minor"`
+	AgreementID    pulid.ID `json:"agreementId"    keel:"agreement_id"`
+	DaysFrom       int      `json:"daysFrom"       keel:"days_from"`
+	DaysTo         *int     `json:"daysTo"         keel:"days_to"`
+	RateBP         int      `json:"rateBp"         keel:"rate_bp"`
+	FlatMinor      int64    `json:"flatMinor"      keel:"flat_minor"`
 }
 
 type AgreementDocumentType struct {
-	keel.Table `                                                                     keel:"factoring_agreement_document_types"`
+	keel.Table `keel:"factoring_agreement_document_types"`
 
 	OrganizationID pulid.ID `json:"organizationId" keel:"organization_id,pk,tenant"`
 	BusinessUnitID pulid.ID `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
-	AgreementID    pulid.ID `json:"agreementId" keel:"agreement_id,pk"`
+	AgreementID    pulid.ID `json:"agreementId"    keel:"agreement_id,pk"`
 	DocumentTypeID pulid.ID `json:"documentTypeId" keel:"document_type_id,pk"`
 
 	Agreement    *Agreement                 `json:"-" keel:"belongs:agreement_id"`

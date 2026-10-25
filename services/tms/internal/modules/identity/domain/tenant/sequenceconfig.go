@@ -33,30 +33,30 @@ type LocationCodeCasing string
 type SequenceConfig struct {
 	keel.Table `keel:"sequence_configs"`
 
-	ID                      pulid.ID              `json:"id" keel:"id,pk,autoid:sc_"`
-	OrganizationID          pulid.ID              `json:"organizationId" keel:"organization_id,tenant"`
-	BusinessUnitID          pulid.ID              `json:"businessUnitId" keel:"business_unit_id,tenant"`
-	SequenceType            SequenceType          `json:"sequenceType" keel:"sequence_type"`
-	Prefix                  string                `json:"prefix" keel:"prefix"`
-	IncludeYear             bool                  `json:"includeYear" keel:"include_year"`
-	YearDigits              int16                 `json:"yearDigits" keel:"year_digits"`
-	IncludeMonth            bool                  `json:"includeMonth" keel:"include_month"`
-	IncludeWeekNumber       bool                  `json:"includeWeekNumber" keel:"include_week_number"`
-	IncludeDay              bool                  `json:"includeDay" keel:"include_day"`
-	SequenceDigits          int16                 `json:"sequenceDigits" keel:"sequence_digits"`
-	IncludeLocationCode     bool                  `json:"includeLocationCode" keel:"include_location_code"`
-	IncludeRandomDigits     bool                  `json:"includeRandomDigits" keel:"include_random_digits"`
-	RandomDigitsCount       int16                 `json:"randomDigitsCount" keel:"random_digits_count"`
-	IncludeCheckDigit       bool                  `json:"includeCheckDigit" keel:"include_check_digit"`
-	IncludeBusinessUnitCode bool                  `json:"includeBusinessUnitCode" keel:"include_business_unit_code"`
-	UseSeparators           bool                  `json:"useSeparators" keel:"use_separators"`
-	SeparatorChar           string                `json:"separatorChar" keel:"separator_char"`
-	AllowCustomFormat       bool                  `json:"allowCustomFormat" keel:"allow_custom_format"`
-	CustomFormat            string                `json:"customFormat" keel:"custom_format"`
+	ID                      pulid.ID              `json:"id"                             keel:"id,pk,autoid:sc_"`
+	OrganizationID          pulid.ID              `json:"organizationId"                 keel:"organization_id,tenant"`
+	BusinessUnitID          pulid.ID              `json:"businessUnitId"                 keel:"business_unit_id,tenant"`
+	SequenceType            SequenceType          `json:"sequenceType"                   keel:"sequence_type"`
+	Prefix                  string                `json:"prefix"                         keel:"prefix"`
+	IncludeYear             bool                  `json:"includeYear"                    keel:"include_year"`
+	YearDigits              int16                 `json:"yearDigits"                     keel:"year_digits"`
+	IncludeMonth            bool                  `json:"includeMonth"                   keel:"include_month"`
+	IncludeWeekNumber       bool                  `json:"includeWeekNumber"              keel:"include_week_number"`
+	IncludeDay              bool                  `json:"includeDay"                     keel:"include_day"`
+	SequenceDigits          int16                 `json:"sequenceDigits"                 keel:"sequence_digits"`
+	IncludeLocationCode     bool                  `json:"includeLocationCode"            keel:"include_location_code"`
+	IncludeRandomDigits     bool                  `json:"includeRandomDigits"            keel:"include_random_digits"`
+	RandomDigitsCount       int16                 `json:"randomDigitsCount"              keel:"random_digits_count"`
+	IncludeCheckDigit       bool                  `json:"includeCheckDigit"              keel:"include_check_digit"`
+	IncludeBusinessUnitCode bool                  `json:"includeBusinessUnitCode"        keel:"include_business_unit_code"`
+	UseSeparators           bool                  `json:"useSeparators"                  keel:"use_separators"`
+	SeparatorChar           string                `json:"separatorChar"                  keel:"separator_char"`
+	AllowCustomFormat       bool                  `json:"allowCustomFormat"              keel:"allow_custom_format"`
+	CustomFormat            string                `json:"customFormat"                   keel:"custom_format"`
 	LocationCodeStrategy    *LocationCodeStrategy `json:"locationCodeStrategy,omitempty" keel:"location_code_strategy,jsonb"`
-	Version                 int64                 `json:"version" keel:"version,version"`
-	CreatedAt               int64                 `json:"createdAt" keel:"created_at,autocreate"`
-	UpdatedAt               int64                 `json:"updatedAt" keel:"updated_at,autoupdate"`
+	Version                 int64                 `json:"version"                        keel:"version,version"`
+	CreatedAt               int64                 `json:"createdAt"                      keel:"created_at,autocreate"`
+	UpdatedAt               int64                 `json:"updatedAt"                      keel:"updated_at,autoupdate"`
 }
 
 type LocationCodeStrategy struct {

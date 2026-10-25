@@ -50,20 +50,24 @@ func (r *repository) List(
 	ctx context.Context,
 	req *apikeyports.ListAPIKeysRequest,
 ) (*pagination.ListResult[*apikey.Key], error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*pagination.ListResult[*apikey.Key], error) {
-		result, err := listquery.List(
-			ctx,
-			r.db.Keel(ctx),
-			apikeydb.Keys.Query(),
-			&listquery.Request[apikey.Key]{Filter: req.Filter, Shape: withPermissions},
-		)
-		if err != nil {
-			r.l.Error("failed to list api keys", zap.Error(err))
-			return nil, err
-		}
+	return dbtx.Read(
+		ctx,
+		r.db,
+		func(ctx context.Context) (*pagination.ListResult[*apikey.Key], error) {
+			result, err := listquery.List(
+				ctx,
+				r.db.Keel(ctx),
+				apikeydb.Keys.Query(),
+				&listquery.Request[apikey.Key]{Filter: req.Filter, Shape: withPermissions},
+			)
+			if err != nil {
+				r.l.Error("failed to list api keys", zap.Error(err))
+				return nil, err
+			}
 
-		return result, nil
-	})
+			return result, nil
+		},
+	)
 }
 
 func (r *repository) ListConnection(

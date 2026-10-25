@@ -279,7 +279,8 @@ func (r *repository) Update(
 		}
 		if entity.Applications != nil {
 			cpa := customerpaymentdb.Applications
-			if _, err := cpa.Where(cpa.CustomerPaymentID.Eq(entity.ID)).Delete(ctx, db); err != nil {
+			if _, err := cpa.Where(cpa.CustomerPaymentID.Eq(entity.ID)).
+				Delete(ctx, db); err != nil {
 				return nil, fmt.Errorf("replace customer payment applications: %w", err)
 			}
 			if err := r.insertApplications(ctx, db, entity); err != nil {

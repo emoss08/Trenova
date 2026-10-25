@@ -15,16 +15,16 @@ import (
 type PushSubscription struct {
 	keel.Table `keel:"user_push_subscriptions"`
 
-	ID             pulid.ID `json:"id" keel:"id,pk,autoid:ups_"`
+	ID             pulid.ID `json:"id"             keel:"id,pk,autoid:ups_"`
 	BusinessUnitID pulid.ID `json:"businessUnitId" keel:"business_unit_id,tenant"`
 	OrganizationID pulid.ID `json:"organizationId" keel:"organization_id,tenant"`
-	UserID         pulid.ID `json:"userId" keel:"user_id"`
-	Endpoint       string   `json:"endpoint" keel:"endpoint"`
-	P256dh         string   `json:"p256dh" keel:"p256dh"`
-	Auth           string   `json:"auth" keel:"auth"`
-	UserAgent      string   `json:"userAgent" keel:"user_agent,nullzero"`
-	CreatedAt      int64    `json:"createdAt" keel:"created_at,autocreate"`
-	UpdatedAt      int64    `json:"updatedAt" keel:"updated_at,autoupdate"`
+	UserID         pulid.ID `json:"userId"         keel:"user_id"`
+	Endpoint       string   `json:"endpoint"       keel:"endpoint"`
+	P256dh         string   `json:"p256dh"         keel:"p256dh"`
+	Auth           string   `json:"auth"           keel:"auth"`
+	UserAgent      string   `json:"userAgent"      keel:"user_agent,nullzero"`
+	CreatedAt      int64    `json:"createdAt"      keel:"created_at,autocreate"`
+	UpdatedAt      int64    `json:"updatedAt"      keel:"updated_at,autoupdate"`
 }
 
 func (s *PushSubscription) Validate(multiErr *errortypes.MultiError) {

@@ -77,7 +77,10 @@ func newListCarrierCapacityPostingsTool(
 			"after today for offers still open.",
 		searchTerms: []string{"carrier capacity", "available trucks", "truck postings"},
 		resource:    permission.ResourceCarrierCapacityPosting,
-		config:      listquery.Describe((*carriercapacity.Posting)(nil), carriercapacitydb.PostingsSchema()),
+		config: listquery.Describe(
+			(*carriercapacity.Posting)(nil),
+			carriercapacitydb.PostingsSchema(),
+		),
 		fields: []listField{
 			{Name: "carrierId", Kind: filterText},
 			{Name: "originLocationId", Kind: filterText},

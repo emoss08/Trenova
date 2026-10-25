@@ -202,19 +202,19 @@ func validateColumnID(multiErr *errortypes.MultiError, field, id string) {
 type TableLayout struct {
 	keel.Table `keel:"table_layouts"`
 
-	ID             pulid.ID `json:"id" keel:"id,pk,autoid:tl_"`
+	ID             pulid.ID `json:"id"             keel:"id,pk,autoid:tl_"`
 	OrganizationID pulid.ID `json:"organizationId" keel:"organization_id,pk,tenant"`
 	BusinessUnitID pulid.ID `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
-	UserID         pulid.ID `json:"userId" keel:"user_id"`
-	Resource       string   `json:"resource" keel:"resource"`
-	Layout         *Layout  `json:"layout" keel:"layout,jsonb"`
-	Version        int64    `json:"version" keel:"version,version"`
-	CreatedAt      int64    `json:"createdAt" keel:"created_at,autocreate"`
-	UpdatedAt      int64    `json:"updatedAt" keel:"updated_at,autoupdate"`
+	UserID         pulid.ID `json:"userId"         keel:"user_id"`
+	Resource       string   `json:"resource"       keel:"resource"`
+	Layout         *Layout  `json:"layout"         keel:"layout,jsonb"`
+	Version        int64    `json:"version"        keel:"version,version"`
+	CreatedAt      int64    `json:"createdAt"      keel:"created_at,autocreate"`
+	UpdatedAt      int64    `json:"updatedAt"      keel:"updated_at,autoupdate"`
 
 	Organization *tenant.Organization `json:"organization,omitempty"`
 	BusinessUnit *tenant.BusinessUnit `json:"businessUnit,omitempty"`
-	User         *tenant.User         `json:"user,omitempty" keel:"belongs:user_id"`
+	User         *tenant.User         `json:"user,omitempty"         keel:"belongs:user_id"`
 }
 
 func (tl *TableLayout) Validate(multiErr *errortypes.MultiError) {

@@ -11,24 +11,24 @@ import (
 
 // The AR subledger — every document that moved a customer's balance
 type CustomerLedgerEntry struct {
-	keel.Table `                                                       keel:"customer_ledger_entries,report=Accounting"`
+	keel.Table `keel:"customer_ledger_entries,report=Accounting"`
 
-	ID               pulid.ID `json:"id" keel:"id,pk,autoid:cle_"`
-	OrganizationID   pulid.ID `json:"organizationId" keel:"organization_id,pk,tenant"`
-	BusinessUnitID   pulid.ID `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
-	CustomerID       pulid.ID `json:"customerId" keel:"customer_id"`
+	ID               pulid.ID `json:"id"               keel:"id,pk,autoid:cle_"`
+	OrganizationID   pulid.ID `json:"organizationId"   keel:"organization_id,pk,tenant"`
+	BusinessUnitID   pulid.ID `json:"businessUnitId"   keel:"business_unit_id,pk,tenant"`
+	CustomerID       pulid.ID `json:"customerId"       keel:"customer_id"`
 	SourceObjectType string   `json:"sourceObjectType" keel:"source_object_type,label=Source Object"`
-	SourceObjectID   string   `json:"sourceObjectId" keel:"source_object_id"`
-	SourceEventType  string   `json:"sourceEventType" keel:"source_event_type,label=Source Event"`
+	SourceObjectID   string   `json:"sourceObjectId"   keel:"source_object_id"`
+	SourceEventType  string   `json:"sourceEventType"  keel:"source_event_type,label=Source Event"`
 	RelatedInvoiceID pulid.ID `json:"relatedInvoiceId" keel:"related_invoice_id,nullzero"`
-	DocumentNumber   string   `json:"documentNumber" keel:"document_number,nullzero"`
-	TransactionDate  int64    `json:"transactionDate" keel:"transaction_date"`
-	LineNumber       int      `json:"lineNumber" keel:"line_number,label=Line,dimension"`
-	AmountMinor      int64    `json:"amountMinor" keel:"amount_minor,label=Amount (Minor)"`
-	CreatedByID      pulid.ID `json:"createdById" keel:"created_by_id"`
-	CreatedAt        int64    `json:"createdAt" keel:"created_at,autocreate"`
+	DocumentNumber   string   `json:"documentNumber"   keel:"document_number,nullzero"`
+	TransactionDate  int64    `json:"transactionDate"  keel:"transaction_date"`
+	LineNumber       int      `json:"lineNumber"       keel:"line_number,label=Line,dimension"`
+	AmountMinor      int64    `json:"amountMinor"      keel:"amount_minor,label=Amount (Minor)"`
+	CreatedByID      pulid.ID `json:"createdById"      keel:"created_by_id"`
+	CreatedAt        int64    `json:"createdAt"        keel:"created_at,autocreate"`
 
-	Customer       *customer.Customer `json:"customer,omitempty" keel:"belongs:customer_id"`
+	Customer       *customer.Customer `json:"customer,omitempty"       keel:"belongs:customer_id"`
 	RelatedInvoice *invoice.Invoice   `json:"relatedInvoice,omitempty" keel:"belongs:related_invoice_id,label=Invoice"`
 }
 

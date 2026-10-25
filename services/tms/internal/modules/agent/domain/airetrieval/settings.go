@@ -27,26 +27,26 @@ var indexingBudgetRule = domainvalidation.BudgetUSD(MaxMonthlyIndexingBudgetUSD,
 type Settings struct {
 	keel.Table `keel:"ai_retrieval_settings"`
 
-	ID             pulid.ID `json:"id" keel:"id,pk,autoid:airs_"`
+	ID             pulid.ID `json:"id"             keel:"id,pk,autoid:airs_"`
 	BusinessUnitID pulid.ID `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
 	OrganizationID pulid.ID `json:"organizationId" keel:"organization_id,pk,tenant"`
 
-	MemoryEnabled          bool `json:"memoryEnabled" keel:"memory_enabled"`
-	DocumentsEnabled       bool `json:"documentsEnabled" keel:"documents_enabled"`
+	MemoryEnabled          bool `json:"memoryEnabled"          keel:"memory_enabled"`
+	DocumentsEnabled       bool `json:"documentsEnabled"       keel:"documents_enabled"`
 	InboundMessagesEnabled bool `json:"inboundMessagesEnabled" keel:"inbound_messages_enabled"`
 
 	MonthlyIndexingBudgetUSD decimal.Decimal `json:"monthlyIndexingBudgetUsd" keel:"monthly_indexing_budget_usd"`
 
-	Paused       bool        `json:"paused" keel:"paused"`
+	Paused       bool        `json:"paused"       keel:"paused"`
 	PausedReason PauseReason `json:"pausedReason" keel:"paused_reason,nullzero"`
-	PausedAt     *int64      `json:"pausedAt" keel:"paused_at"`
+	PausedAt     *int64      `json:"pausedAt"     keel:"paused_at"`
 
-	ActiveModelKey    string `json:"activeModelKey" keel:"active_model_key,nullzero"`
-	Dimensions        int    `json:"dimensions" keel:"dimensions,nullzero"`
-	PendingModelKey   string `json:"pendingModelKey" keel:"pending_model_key,nullzero"`
+	ActiveModelKey    string `json:"activeModelKey"    keel:"active_model_key,nullzero"`
+	Dimensions        int    `json:"dimensions"        keel:"dimensions,nullzero"`
+	PendingModelKey   string `json:"pendingModelKey"   keel:"pending_model_key,nullzero"`
 	PendingDimensions int    `json:"pendingDimensions" keel:"pending_dimensions,nullzero"`
 
-	Version   int64 `json:"version" keel:"version,version"`
+	Version   int64 `json:"version"   keel:"version,version"`
 	CreatedAt int64 `json:"createdAt" keel:"created_at,autocreate"`
 	UpdatedAt int64 `json:"updatedAt" keel:"updated_at,autoupdate"`
 

@@ -135,7 +135,11 @@ func runDotHazmatReferences(ctx context.Context, r *seed.Run) error {
 	for i := range file.References {
 		row := &file.References[i]
 		if row.ID == "" {
-			return fmt.Errorf("hazmat reference %s (%s) has no id", row.UnNumber, row.ProperShippingName)
+			return fmt.Errorf(
+				"hazmat reference %s (%s) has no id",
+				row.UnNumber,
+				row.ProperShippingName,
+			)
 		}
 		refs = append(refs, &dothazmatreference.DotHazmatReference{
 			ID:                  pulid.ID(row.ID),
@@ -185,8 +189,12 @@ func runIFTAJurisdictions(ctx context.Context, r *seed.Run) error {
 	}
 
 	j := iftadb.Jurisdictions
-	if _, err = j.Upsert(ctx, r.DB, jurisdictions,
-		keel.OnConflict(j.CountryCode, j.Code).Update(j.Name, j.SortOrder, j.HasSurcharge, j.UsStateID),
+	if _, err = j.Upsert(
+		ctx,
+		r.DB,
+		jurisdictions,
+		keel.OnConflict(j.CountryCode, j.Code).
+			Update(j.Name, j.SortOrder, j.HasSurcharge, j.UsStateID),
 	); err != nil {
 		return fmt.Errorf("upsert ifta jurisdictions: %w", err)
 	}

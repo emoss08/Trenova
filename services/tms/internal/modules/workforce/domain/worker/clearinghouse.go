@@ -102,33 +102,33 @@ var (
 )
 
 type WorkerClearinghouseQuery struct {
-	keel.Table `                                                             keel:"worker_clearinghouse_queries"`
+	keel.Table `keel:"worker_clearinghouse_queries"`
 
-	ID             pulid.ID `json:"id" keel:"id,pk,autoid:wchq_"`
+	ID             pulid.ID `json:"id"             keel:"id,pk,autoid:wchq_"`
 	BusinessUnitID pulid.ID `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
 	OrganizationID pulid.ID `json:"organizationId" keel:"organization_id,pk,tenant"`
-	WorkerID       pulid.ID `json:"workerId" keel:"worker_id"`
+	WorkerID       pulid.ID `json:"workerId"       keel:"worker_id"`
 
 	QueryType ClearinghouseQueryType `json:"queryType" keel:"query_type"`
-	Result    ClearinghouseResult    `json:"result" keel:"result"`
+	Result    ClearinghouseResult    `json:"result"    keel:"result"`
 
 	ConsentObtainedAt *int64 `json:"consentObtainedAt" keel:"consent_obtained_at"`
-	ConsentExpiresAt  *int64 `json:"consentExpiresAt" keel:"consent_expires_at"`
-	RequestedAt       int64  `json:"requestedAt" keel:"requested_at"`
-	CompletedAt       *int64 `json:"completedAt" keel:"completed_at"`
+	ConsentExpiresAt  *int64 `json:"consentExpiresAt"  keel:"consent_expires_at"`
+	RequestedAt       int64  `json:"requestedAt"       keel:"requested_at"`
+	CompletedAt       *int64 `json:"completedAt"       keel:"completed_at"`
 
 	ViolationCount int32    `json:"violationCount" keel:"violation_count"`
-	Reference      string   `json:"reference" keel:"reference,nullzero"`
-	DocumentID     pulid.ID `json:"documentId" keel:"document_id,nullzero"`
-	Notes          string   `json:"notes" keel:"notes,nullzero"`
-	PerformedByID  pulid.ID `json:"performedById" keel:"performed_by_id,nullzero"`
+	Reference      string   `json:"reference"      keel:"reference,nullzero"`
+	DocumentID     pulid.ID `json:"documentId"     keel:"document_id,nullzero"`
+	Notes          string   `json:"notes"          keel:"notes,nullzero"`
+	PerformedByID  pulid.ID `json:"performedById"  keel:"performed_by_id,nullzero"`
 
-	Version   int64 `json:"version" keel:"version,version"`
+	Version   int64 `json:"version"   keel:"version,version"`
 	CreatedAt int64 `json:"createdAt" keel:"created_at,autocreate"`
 	UpdatedAt int64 `json:"updatedAt" keel:"updated_at,autoupdate"`
 
-	Worker      *Worker            `json:"worker,omitempty" keel:"belongs:worker_id"`
-	Document    *document.Document `json:"document,omitempty" keel:"belongs:document_id"`
+	Worker      *Worker            `json:"worker,omitempty"      keel:"belongs:worker_id"`
+	Document    *document.Document `json:"document,omitempty"    keel:"belongs:document_id"`
 	PerformedBy *tenant.User       `json:"performedBy,omitempty" keel:"belongs:performed_by_id"`
 }
 

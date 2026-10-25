@@ -212,7 +212,11 @@ func (r *repository) BulkCreate(
 	req *fiscalperiodports.BulkCreateFiscalPeriodsRequest,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
-		if err := fiscalperioddb.FiscalPeriods.CreateMany(ctx, r.db.Keel(ctx), req.Periods); err != nil {
+		if err := fiscalperioddb.FiscalPeriods.CreateMany(
+			ctx,
+			r.db.Keel(ctx),
+			req.Periods,
+		); err != nil {
 			r.l.Error(
 				"failed to bulk create fiscal periods",
 				zap.Int("count", len(req.Periods)),

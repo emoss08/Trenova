@@ -12,23 +12,23 @@ import (
 
 type ReportEngine interface {
 	Catalog() *analytics.Catalog
-	Preview(ctx context.Context, req analytics.Request) (*analytics.Result, error)
+	Preview(ctx context.Context, req *analytics.Request) (*analytics.Result, error)
 	Page(
 		ctx context.Context,
-		req analytics.Request,
+		req *analytics.Request,
 		cursor string,
 		size int,
 	) (*analytics.Result, error)
-	Count(ctx context.Context, req analytics.Request) (int64, error)
+	Count(ctx context.Context, req *analytics.Request) (int64, error)
 	Drill(
 		ctx context.Context,
-		req analytics.Request,
+		req *analytics.Request,
 		row []ir.DrillValue,
 		column string,
-		opts analytics.DrillOptions,
+		opts *analytics.DrillOptions,
 	) (*analytics.Result, error)
-	Compile(ctx context.Context, req analytics.Request) (*analytics.Compiled, error)
-	Run(ctx context.Context, req analytics.Request) (*analytics.Stream, error)
+	Compile(ctx context.Context, req *analytics.Request) (*analytics.Compiled, error)
+	Run(ctx context.Context, req *analytics.Request) (*analytics.Stream, error)
 }
 
 type ReportParam struct {

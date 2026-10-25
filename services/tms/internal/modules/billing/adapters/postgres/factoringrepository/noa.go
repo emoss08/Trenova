@@ -50,7 +50,13 @@ func (r *noaRepository) Create(ctx context.Context, entity *factoring.Noa) (*fac
 func (r *noaRepository) Update(ctx context.Context, entity *factoring.Noa) (*factoring.Noa, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*factoring.Noa, error) {
 		n := factoringdb.Noas
-		if err := n.SaveExcept(ctx, r.db.Keel(ctx), entity, n.CustomerID, n.FactoringCompanyID); err != nil {
+		if err := n.SaveExcept(
+			ctx,
+			r.db.Keel(ctx),
+			entity,
+			n.CustomerID,
+			n.FactoringCompanyID,
+		); err != nil {
 			return nil, translateNoaError(err, entity.ID)
 		}
 

@@ -10,6 +10,8 @@ import (
 	"github.com/emoss08/keel/analytics/ir"
 )
 
+const schemaDescription = "description"
+
 var errNoDefinition = errors.New("a report definition is required")
 
 func DecodeDefinition(value any) (*ir.Definition, error) {
@@ -54,8 +56,8 @@ func DefinitionJSONSchema() map[string]any {
 	schema, err := definitionSchema()
 	if err != nil {
 		return map[string]any{
-			"type":        "object",
-			"description": "A keel analytics report definition.",
+			"type":            "object",
+			schemaDescription: "A keel analytics report definition.",
 		}
 	}
 	return maps.Clone(schema)
@@ -68,7 +70,7 @@ const definitionToolNote = "A report in keel analytics IR version 2, whole: its 
 
 func DefinitionToolSchema() map[string]any {
 	schema := DefinitionJSONSchema()
-	schema["description"] = definitionToolNote
+	schema[schemaDescription] = definitionToolNote
 	return schema
 }
 

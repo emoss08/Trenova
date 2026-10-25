@@ -35,7 +35,7 @@ func (s *Service) StreamCSV(
 		return nil, err
 	}
 
-	stream, err := s.engine.Run(prepared.Context, prepared.Request)
+	stream, err := s.engine.Run(prepared.Context, &prepared.Request)
 	if err != nil {
 		return nil, EngineError(prepared.Context, prepared.Access, err)
 	}

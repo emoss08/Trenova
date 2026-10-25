@@ -936,7 +936,7 @@ func (b *Bench) runStatements(ctx context.Context, session *Session, statements 
 			return err
 		}
 		for idx, statement := range statements {
-			if _, err := keel.Exec(ctx, db, statement); err != nil {
+			if _, err = keel.Exec(ctx, db, statement); err != nil {
 				return fmt.Errorf("setup %d: %w", idx+1, err)
 			}
 		}
@@ -994,7 +994,9 @@ func readConfinement(ctx context.Context, db *keel.DB) (confinement, error) {
 		return confinement{}, fmt.Errorf("read the role's row-level security: %w", err)
 	}
 	if len(rows) == 0 {
-		return confinement{}, errors.New("read the role's row-level security: the role has no pg_roles row")
+		return confinement{}, errors.New(
+			"read the role's row-level security: the role has no pg_roles row",
+		)
 	}
 
 	return rows[0], nil

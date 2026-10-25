@@ -18,41 +18,41 @@ import (
 )
 
 type CarrierIntelEvent struct {
-	keel.Table `                                                      keel:"carrier_intel_events"`
+	keel.Table `keel:"carrier_intel_events"`
 
-	ID               pulid.ID         `json:"id" keel:"id,pk,autoid:cievt_"`
-	BusinessUnitID   pulid.ID         `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
-	OrganizationID   pulid.ID         `json:"organizationId" keel:"organization_id,pk,tenant"`
-	SubjectType      SubjectType      `json:"subjectType" keel:"subject_type"`
-	SubjectID        string           `json:"subjectId" keel:"subject_id"`
-	CarrierID        pulid.ID         `json:"carrierId" keel:"carrier_id,nullzero"`
-	DOTNumber        string           `json:"dotNumber" keel:"dot_number"`
-	SubjectName      string           `json:"subjectName" keel:"subject_name,nullzero"`
-	Provider         integration.Type `json:"provider" keel:"provider"`
-	Source           EventSource      `json:"source" keel:"source"`
-	Category         Section          `json:"category" keel:"category"`
-	FieldPath        string           `json:"fieldPath" keel:"field_path,nullzero"`
-	RuleCode         RuleCode         `json:"ruleCode" keel:"rule_code,nullzero"`
-	Severity         Severity         `json:"severity" keel:"severity"`
-	Action           RuleAction       `json:"action" keel:"action,nullzero"`
-	PriorValue       any              `json:"priorValue" keel:"prior_value,jsonb,nullzero"`
-	CurrentValue     any              `json:"currentValue" keel:"current_value,jsonb,nullzero"`
-	Summary          string           `json:"summary" keel:"summary"`
-	VendorChangedAt  *int64           `json:"vendorChangedAt" keel:"vendor_changed_at"`
-	DetectedAt       int64            `json:"detectedAt" keel:"detected_at"`
-	Fingerprint      string           `json:"fingerprint" keel:"fingerprint"`
-	Status           EventStatus      `json:"status" keel:"status"`
+	ID               pulid.ID         `json:"id"               keel:"id,pk,autoid:cievt_"`
+	BusinessUnitID   pulid.ID         `json:"businessUnitId"   keel:"business_unit_id,pk,tenant"`
+	OrganizationID   pulid.ID         `json:"organizationId"   keel:"organization_id,pk,tenant"`
+	SubjectType      SubjectType      `json:"subjectType"      keel:"subject_type"`
+	SubjectID        string           `json:"subjectId"        keel:"subject_id"`
+	CarrierID        pulid.ID         `json:"carrierId"        keel:"carrier_id,nullzero"`
+	DOTNumber        string           `json:"dotNumber"        keel:"dot_number"`
+	SubjectName      string           `json:"subjectName"      keel:"subject_name,nullzero"`
+	Provider         integration.Type `json:"provider"         keel:"provider"`
+	Source           EventSource      `json:"source"           keel:"source"`
+	Category         Section          `json:"category"         keel:"category"`
+	FieldPath        string           `json:"fieldPath"        keel:"field_path,nullzero"`
+	RuleCode         RuleCode         `json:"ruleCode"         keel:"rule_code,nullzero"`
+	Severity         Severity         `json:"severity"         keel:"severity"`
+	Action           RuleAction       `json:"action"           keel:"action,nullzero"`
+	PriorValue       any              `json:"priorValue"       keel:"prior_value,jsonb,nullzero"`
+	CurrentValue     any              `json:"currentValue"     keel:"current_value,jsonb,nullzero"`
+	Summary          string           `json:"summary"          keel:"summary"`
+	VendorChangedAt  *int64           `json:"vendorChangedAt"  keel:"vendor_changed_at"`
+	DetectedAt       int64            `json:"detectedAt"       keel:"detected_at"`
+	Fingerprint      string           `json:"fingerprint"      keel:"fingerprint"`
+	Status           EventStatus      `json:"status"           keel:"status"`
 	AcknowledgedByID pulid.ID         `json:"acknowledgedById" keel:"acknowledged_by_id,nullzero"`
-	AcknowledgedAt   *int64           `json:"acknowledgedAt" keel:"acknowledged_at"`
-	ResolvedByID     pulid.ID         `json:"resolvedById" keel:"resolved_by_id,nullzero"`
-	ResolvedAt       *int64           `json:"resolvedAt" keel:"resolved_at"`
-	Resolution       EventResolution  `json:"resolution" keel:"resolution,nullzero"`
-	ResolutionNote   string           `json:"resolutionNote" keel:"resolution_note,nullzero"`
-	SnapshotID       pulid.ID         `json:"snapshotId" keel:"snapshot_id,nullzero"`
-	NotifiedAt       *int64           `json:"notifiedAt" keel:"notified_at"`
-	Version          int64            `json:"version" keel:"version,version"`
-	CreatedAt        int64            `json:"createdAt" keel:"created_at,autocreate"`
-	UpdatedAt        int64            `json:"updatedAt" keel:"updated_at,autoupdate"`
+	AcknowledgedAt   *int64           `json:"acknowledgedAt"   keel:"acknowledged_at"`
+	ResolvedByID     pulid.ID         `json:"resolvedById"     keel:"resolved_by_id,nullzero"`
+	ResolvedAt       *int64           `json:"resolvedAt"       keel:"resolved_at"`
+	Resolution       EventResolution  `json:"resolution"       keel:"resolution,nullzero"`
+	ResolutionNote   string           `json:"resolutionNote"   keel:"resolution_note,nullzero"`
+	SnapshotID       pulid.ID         `json:"snapshotId"       keel:"snapshot_id,nullzero"`
+	NotifiedAt       *int64           `json:"notifiedAt"       keel:"notified_at"`
+	Version          int64            `json:"version"          keel:"version,version"`
+	CreatedAt        int64            `json:"createdAt"        keel:"created_at,autocreate"`
+	UpdatedAt        int64            `json:"updatedAt"        keel:"updated_at,autoupdate"`
 }
 
 func (e *CarrierIntelEvent) BeforeCreate(_ context.Context) error {

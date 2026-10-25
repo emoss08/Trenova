@@ -46,7 +46,12 @@ func (r *repository) ListTaxRates(
 				r.db.Keel(ctx),
 				tr.Where(taxRateFilters(req)...),
 				&listquery.Request[ifta.TaxRate]{
-					Filter: withDefaultSort(req.Filter, desc("year"), desc("quarter"), asc("fuelType")),
+					Filter: withDefaultSort(
+						req.Filter,
+						desc("year"),
+						desc("quarter"),
+						asc("fuelType"),
+					),
 					Cursor: req.Cursor,
 					Shape: func(q *keel.Query[ifta.TaxRate]) *keel.Query[ifta.TaxRate] {
 						if req.IncludeJurisdiction {

@@ -24,7 +24,7 @@ import (
 type Message struct {
 	keel.Table `keel:"assistant_messages"`
 
-	ID             pulid.ID `json:"id" keel:"id,pk,autoid:amsg_"`
+	ID             pulid.ID `json:"id"             keel:"id,pk,autoid:amsg_"`
 	BusinessUnitID pulid.ID `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
 	OrganizationID pulid.ID `json:"organizationId" keel:"organization_id,pk,tenant"`
 
@@ -32,7 +32,7 @@ type Message struct {
 	// Sequence orders messages within a thread without relying on a timestamp,
 	// which can collide inside a single fast tool loop.
 	Sequence int  `json:"sequence" keel:"sequence"`
-	Role     Role `json:"role" keel:"role"`
+	Role     Role `json:"role"     keel:"role"`
 	// Kind is Message for everything but the note that starts the turn after
 	// a decision and the steps of another agent the turn handed work to; see
 	// MessageKind.
@@ -42,7 +42,7 @@ type Message struct {
 	// delegate_task call it answers. Both are empty on the conversation's own
 	// messages. AgentName, AgentIcon and AgentAccent are the agent's name
 	// and mark as the thread is served.
-	AgentDefinitionID pulid.ID `json:"agentId,omitempty" keel:"agent_definition_id,nullzero"`
+	AgentDefinitionID pulid.ID `json:"agentId,omitempty"        keel:"agent_definition_id,nullzero"`
 	DelegateCallID    string   `json:"delegateCallId,omitempty" keel:"delegate_call_id,nullzero"`
 	AgentName         string   `json:"agentName,omitempty"`
 	AgentIcon         string   `json:"agentIcon,omitempty"`
@@ -76,13 +76,13 @@ type Message struct {
 	// shape rather than any one provider's wire format.
 	ToolCalls []ToolCallRecord `json:"toolCalls" keel:"tool_calls,jsonb,nullzero"`
 	// ToolCallID and ToolName tie a Tool-role message to the call it answers.
-	ToolCallID  string           `json:"toolCallId" keel:"tool_call_id,nullzero"`
-	ToolName    string           `json:"toolName" keel:"tool_name,nullzero"`
-	ToolFailed  bool             `json:"toolFailed" keel:"tool_failed"`
+	ToolCallID  string           `json:"toolCallId"            keel:"tool_call_id,nullzero"`
+	ToolName    string           `json:"toolName"              keel:"tool_name,nullzero"`
+	ToolFailed  bool             `json:"toolFailed"            keel:"tool_failed"`
 	ToolVerdict string           `json:"toolVerdict,omitempty" keel:"tool_verdict,nullzero"`
 	ToolEffect  agent.ToolEffect `json:"effect,omitempty"`
-	ToolSummary string           `json:"summary,omitempty" keel:"tool_summary,nullzero"`
-	FoundTools  []string         `json:"foundTools,omitempty" keel:"found_tools,jsonb,nullzero"`
+	ToolSummary string           `json:"summary,omitempty"     keel:"tool_summary,nullzero"`
+	FoundTools  []string         `json:"foundTools,omitempty"  keel:"found_tools,jsonb,nullzero"`
 	// HandOffAgents are the person's other agents a find_tools answer named
 	// as holding what this agent could not call, set only on that call's
 	// result, so the Desk's hand-off menu offers them first.
@@ -90,10 +90,10 @@ type Message struct {
 
 	// ScopeStage, ScopeCategory and ScopeReason record the guard's verdict on a
 	// user turn, or on an assistant turn the output guard refused.
-	ScopeStage    string `json:"scopeStage" keel:"scope_stage,nullzero"`
+	ScopeStage    string `json:"scopeStage"    keel:"scope_stage,nullzero"`
 	ScopeCategory string `json:"scopeCategory" keel:"scope_category,nullzero"`
-	ScopeReason   string `json:"scopeReason" keel:"scope_reason,nullzero"`
-	Refused       bool   `json:"refused" keel:"refused"`
+	ScopeReason   string `json:"scopeReason"   keel:"scope_reason,nullzero"`
+	Refused       bool   `json:"refused"       keel:"refused"`
 
 	// PageContext is what the person was looking at when they sent a user
 	// turn, kept so an answer can be reviewed against the page it was about.
@@ -103,7 +103,7 @@ type Message struct {
 	// Mentions the records they named. Both are kept on the turn so an
 	// answer can be read against what it was given.
 	Attachments []MessageAttachment `json:"attachments" keel:"attachments,jsonb,nullzero"`
-	Mentions    []agent.EntityRef   `json:"mentions" keel:"mentions,jsonb,nullzero"`
+	Mentions    []agent.EntityRef   `json:"mentions"    keel:"mentions,jsonb,nullzero"`
 
 	// Reasoning is what the model thought before it answered, as much as the
 	// provider lets through, plus whatever the provider needs handed back to
@@ -114,14 +114,14 @@ type Message struct {
 	Model string `json:"model" keel:"model,nullzero"`
 	// Truncated says the provider stopped partway through this reply, and
 	// FallbackFrom names the provider asked first when another one answered.
-	Truncated    bool              `json:"truncated,omitempty" keel:"truncated"`
+	Truncated    bool              `json:"truncated,omitempty"    keel:"truncated"`
 	FallbackFrom *ProviderFallback `json:"fallbackFrom,omitempty" keel:"fallback_from,jsonb"`
 	// Failure says why the reply did not finish, for a reply that is only a
 	// closing note: the models that were asked, or that it was stopped.
 	Failure      *ReplyFailure `json:"failure,omitempty" keel:"failure,jsonb"`
-	ProviderID   pulid.ID      `json:"providerId" keel:"provider_id,nullzero"`
-	InputTokens  int           `json:"inputTokens" keel:"input_tokens"`
-	OutputTokens int           `json:"outputTokens" keel:"output_tokens"`
+	ProviderID   pulid.ID      `json:"providerId"        keel:"provider_id,nullzero"`
+	InputTokens  int           `json:"inputTokens"       keel:"input_tokens"`
+	OutputTokens int           `json:"outputTokens"      keel:"output_tokens"`
 	// ProviderMessageID is the provider's own id for this reply, which the
 	// next call to the same provider names when it asks the Claude API why
 	// its prompt cache missed.
@@ -129,7 +129,7 @@ type Message struct {
 	// LatencyMs is how long the model took to answer this turn; CostUSD is
 	// what it cost at the provider's price, nil where no price is configured.
 	LatencyMs int64            `json:"latencyMs" keel:"latency_ms,nullzero"`
-	CostUSD   *decimal.Decimal `json:"costUsd" keel:"cost_usd"`
+	CostUSD   *decimal.Decimal `json:"costUsd"   keel:"cost_usd"`
 
 	// UsedMemoryIDs are the memories the turn this reply ends used, and
 	// SavedMemories what it kept or offered to keep; both only on a turn's

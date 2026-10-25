@@ -18,32 +18,32 @@ const maxSuggestionReasonLength = 500
 type CaptureItem struct {
 	keel.Table `keel:"capture_items"`
 
-	ID                   pulid.ID         `json:"id" keel:"id,pk,autoid:citm_"`
-	BusinessUnitID       pulid.ID         `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
-	OrganizationID       pulid.ID         `json:"organizationId" keel:"organization_id,pk,tenant"`
-	BatchID              pulid.ID         `json:"batchId" keel:"batch_id"`
-	Position             int              `json:"position" keel:"position"`
-	Status               ItemStatus       `json:"status" keel:"status"`
-	PageIDs              []pulid.ID       `json:"pageIds" keel:"page_ids"`
-	SuggestedType        string           `json:"suggestedType" keel:"suggested_type,nullzero"`
-	SuggestedID          *pulid.ID        `json:"suggestedId" keel:"suggested_id"`
-	SuggestedDocTypeID   *pulid.ID        `json:"suggestedDocTypeId" keel:"suggested_doc_type_id"`
-	SuggestionSource     SuggestionSource `json:"suggestionSource" keel:"suggestion_source,nullzero"`
+	ID                   pulid.ID         `json:"id"                   keel:"id,pk,autoid:citm_"`
+	BusinessUnitID       pulid.ID         `json:"businessUnitId"       keel:"business_unit_id,pk,tenant"`
+	OrganizationID       pulid.ID         `json:"organizationId"       keel:"organization_id,pk,tenant"`
+	BatchID              pulid.ID         `json:"batchId"              keel:"batch_id"`
+	Position             int              `json:"position"             keel:"position"`
+	Status               ItemStatus       `json:"status"               keel:"status"`
+	PageIDs              []pulid.ID       `json:"pageIds"              keel:"page_ids"`
+	SuggestedType        string           `json:"suggestedType"        keel:"suggested_type,nullzero"`
+	SuggestedID          *pulid.ID        `json:"suggestedId"          keel:"suggested_id"`
+	SuggestedDocTypeID   *pulid.ID        `json:"suggestedDocTypeId"   keel:"suggested_doc_type_id"`
+	SuggestionSource     SuggestionSource `json:"suggestionSource"     keel:"suggestion_source,nullzero"`
 	SuggestionConfidence *float64         `json:"suggestionConfidence" keel:"suggestion_confidence"`
-	SuggestionReason     string           `json:"suggestionReason" keel:"suggestion_reason,nullzero"`
-	CoverSheetID         *pulid.ID        `json:"coverSheetId" keel:"cover_sheet_id"`
-	DetectedKind         string           `json:"detectedKind" keel:"detected_kind,nullzero"`
-	FiledType            string           `json:"filedType" keel:"filed_type,nullzero"`
-	FiledID              *pulid.ID        `json:"filedId" keel:"filed_id"`
-	FiledDocTypeID       *pulid.ID        `json:"filedDocTypeId" keel:"filed_doc_type_id"`
-	DocumentID           *pulid.ID        `json:"documentId" keel:"document_id"`
-	UploadSessionID      *pulid.ID        `json:"-" keel:"upload_session_id"`
-	FiledByID            *pulid.ID        `json:"filedById" keel:"filed_by_id"`
-	FiledAt              *int64           `json:"filedAt" keel:"filed_at"`
-	FailureMessage       string           `json:"failureMessage" keel:"failure_message,nullzero"`
-	Version              int64            `json:"version" keel:"version,version"`
-	CreatedAt            int64            `json:"createdAt" keel:"created_at,autocreate"`
-	UpdatedAt            int64            `json:"updatedAt" keel:"updated_at,autoupdate"`
+	SuggestionReason     string           `json:"suggestionReason"     keel:"suggestion_reason,nullzero"`
+	CoverSheetID         *pulid.ID        `json:"coverSheetId"         keel:"cover_sheet_id"`
+	DetectedKind         string           `json:"detectedKind"         keel:"detected_kind,nullzero"`
+	FiledType            string           `json:"filedType"            keel:"filed_type,nullzero"`
+	FiledID              *pulid.ID        `json:"filedId"              keel:"filed_id"`
+	FiledDocTypeID       *pulid.ID        `json:"filedDocTypeId"       keel:"filed_doc_type_id"`
+	DocumentID           *pulid.ID        `json:"documentId"           keel:"document_id"`
+	UploadSessionID      *pulid.ID        `json:"-"                    keel:"upload_session_id"`
+	FiledByID            *pulid.ID        `json:"filedById"            keel:"filed_by_id"`
+	FiledAt              *int64           `json:"filedAt"              keel:"filed_at"`
+	FailureMessage       string           `json:"failureMessage"       keel:"failure_message,nullzero"`
+	Version              int64            `json:"version"              keel:"version,version"`
+	CreatedAt            int64            `json:"createdAt"            keel:"created_at,autocreate"`
+	UpdatedAt            int64            `json:"updatedAt"            keel:"updated_at,autoupdate"`
 }
 
 func (i *CaptureItem) Validate(multiErr *errortypes.MultiError) {

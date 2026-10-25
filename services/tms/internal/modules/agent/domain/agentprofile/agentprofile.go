@@ -120,28 +120,28 @@ func (f Facts) Normalized() Facts {
 type Profile struct {
 	keel.Table `keel:"agent_profiles"`
 
-	ID             pulid.ID `json:"id" keel:"id,pk,autoid:aprf_"`
+	ID             pulid.ID `json:"id"             keel:"id,pk,autoid:aprf_"`
 	BusinessUnitID pulid.ID `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
 	OrganizationID pulid.ID `json:"organizationId" keel:"organization_id,pk,tenant"`
 
-	Subject       Subject    `json:"subject" keel:"subject"`
-	UserID        *pulid.ID  `json:"userId" keel:"user_id"`
-	Status        Status     `json:"status" keel:"status"`
-	Trigger       Trigger    `json:"trigger" keel:"trigger"`
+	Subject       Subject    `json:"subject"       keel:"subject"`
+	UserID        *pulid.ID  `json:"userId"        keel:"user_id"`
+	Status        Status     `json:"status"        keel:"status"`
+	Trigger       Trigger    `json:"trigger"       keel:"trigger"`
 	RequestedByID *pulid.ID  `json:"requestedById" keel:"requested_by_id"`
-	Content       string     `json:"content" keel:"content,nullzero"`
-	Facts         Facts      `json:"facts" keel:"facts,jsonb"`
-	GuidanceIDs   []pulid.ID `json:"guidanceIds" keel:"guidance_ids,jsonb"`
-	Digest        string     `json:"digest" keel:"digest"`
+	Content       string     `json:"content"       keel:"content,nullzero"`
+	Facts         Facts      `json:"facts"         keel:"facts,jsonb"`
+	GuidanceIDs   []pulid.ID `json:"guidanceIds"   keel:"guidance_ids,jsonb"`
+	Digest        string     `json:"digest"        keel:"digest"`
 
-	Model        string   `json:"model" keel:"model,nullzero"`
-	ProviderID   pulid.ID `json:"providerId" keel:"provider_id,nullzero"`
-	InputTokens  int      `json:"inputTokens" keel:"input_tokens"`
+	Model        string   `json:"model"        keel:"model,nullzero"`
+	ProviderID   pulid.ID `json:"providerId"   keel:"provider_id,nullzero"`
+	InputTokens  int      `json:"inputTokens"  keel:"input_tokens"`
 	OutputTokens int      `json:"outputTokens" keel:"output_tokens"`
 	ErrorMessage string   `json:"errorMessage" keel:"error_message,nullzero"`
-	CheckedAt    int64    `json:"checkedAt" keel:"checked_at"`
+	CheckedAt    int64    `json:"checkedAt"    keel:"checked_at"`
 
-	Version   int64 `json:"version" keel:"version,version"`
+	Version   int64 `json:"version"   keel:"version,version"`
 	CreatedAt int64 `json:"createdAt" keel:"created_at,autocreate"`
 	UpdatedAt int64 `json:"updatedAt" keel:"updated_at,autoupdate"`
 

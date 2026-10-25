@@ -27,34 +27,34 @@ var (
 
 // Saved report definitions
 type ReportDefinition struct {
-	keel.Table `                                                   keel:"report_definitions,report=Reporting,label=Report"`
+	keel.Table `keel:"report_definitions,report=Reporting,label=Report"`
 
-	ID              pulid.ID         `json:"id" keel:"id,pk,autoid:rd_"`
-	BusinessUnitID  pulid.ID         `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
-	OrganizationID  pulid.ID         `json:"organizationId" keel:"organization_id,pk,tenant"`
-	Name            string           `json:"name" keel:"name"`
-	Description     string           `json:"description" keel:"description,nullzero"`
-	Category        string           `json:"category" keel:"category,nullzero"`
-	Tags            []string         `json:"tags" keel:"tags,nullzero,noreport"`
-	Kind            DefinitionKind   `json:"kind" keel:"kind"`
-	CannedKey       string           `json:"cannedKey" keel:"canned_key,nullzero,label=Canned Report Key"`
-	CannedVersion   string           `json:"cannedVersion" keel:"canned_version,nullzero,noreport"`
-	OwnerID         pulid.ID         `json:"ownerId" keel:"owner_id"`
-	Visibility      Visibility       `json:"visibility" keel:"visibility"`
-	Status          DefinitionStatus `json:"status" keel:"status"`
-	Diagnostics     []string         `json:"diagnostics" keel:"diagnostics,nullzero,noreport"`
-	CatalogVersion  string           `json:"catalogVersion" keel:"catalog_version,noreport"`
-	Definition      *ir.Definition   `json:"definition" keel:"definition,jsonb,noreport"`
-	DefaultFormat   Format           `json:"defaultFormat" keel:"default_format"`
+	ID              pulid.ID         `json:"id"              keel:"id,pk,autoid:rd_"`
+	BusinessUnitID  pulid.ID         `json:"businessUnitId"  keel:"business_unit_id,pk,tenant"`
+	OrganizationID  pulid.ID         `json:"organizationId"  keel:"organization_id,pk,tenant"`
+	Name            string           `json:"name"            keel:"name"`
+	Description     string           `json:"description"     keel:"description,nullzero"`
+	Category        string           `json:"category"        keel:"category,nullzero"`
+	Tags            []string         `json:"tags"            keel:"tags,nullzero,noreport"`
+	Kind            DefinitionKind   `json:"kind"            keel:"kind"`
+	CannedKey       string           `json:"cannedKey"       keel:"canned_key,nullzero,label=Canned Report Key"`
+	CannedVersion   string           `json:"cannedVersion"   keel:"canned_version,nullzero,noreport"`
+	OwnerID         pulid.ID         `json:"ownerId"         keel:"owner_id"`
+	Visibility      Visibility       `json:"visibility"      keel:"visibility"`
+	Status          DefinitionStatus `json:"status"          keel:"status"`
+	Diagnostics     []string         `json:"diagnostics"     keel:"diagnostics,nullzero,noreport"`
+	CatalogVersion  string           `json:"catalogVersion"  keel:"catalog_version,noreport"`
+	Definition      *ir.Definition   `json:"definition"      keel:"definition,jsonb,noreport"`
+	DefaultFormat   Format           `json:"defaultFormat"   keel:"default_format"`
 	CurrentRevision int64            `json:"currentRevision" keel:"current_revision,label=Revision,format=count,dimension"`
-	LastRunAt       int64            `json:"lastRunAt" keel:"last_run_at,nullzero"`
-	Version         int64            `json:"version" keel:"version,version,noreport"`
-	CreatedAt       int64            `json:"createdAt" keel:"created_at,autocreate"`
-	UpdatedAt       int64            `json:"updatedAt" keel:"updated_at,autoupdate,noreport"`
+	LastRunAt       int64            `json:"lastRunAt"       keel:"last_run_at,nullzero"`
+	Version         int64            `json:"version"         keel:"version,version,noreport"`
+	CreatedAt       int64            `json:"createdAt"       keel:"created_at,autocreate"`
+	UpdatedAt       int64            `json:"updatedAt"       keel:"updated_at,autoupdate,noreport"`
 
 	Organization *tenant.Organization `json:"organization,omitempty"`
 	BusinessUnit *tenant.BusinessUnit `json:"businessUnit,omitempty"`
-	Owner        *tenant.User         `json:"owner,omitempty" keel:"belongs:owner_id,noreport"`
+	Owner        *tenant.User         `json:"owner,omitempty"        keel:"belongs:owner_id,noreport"`
 }
 
 func (rd *ReportDefinition) BeforeCreate(_ context.Context) error {

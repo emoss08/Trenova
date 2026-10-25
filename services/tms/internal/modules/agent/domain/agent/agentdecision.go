@@ -22,26 +22,26 @@ var (
 type AgentDecision struct {
 	keel.Table `keel:"agent_decisions"`
 
-	ID             pulid.ID `json:"id" keel:"id,pk,autoid:ad_"`
+	ID             pulid.ID `json:"id"             keel:"id,pk,autoid:ad_"`
 	BusinessUnitID pulid.ID `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
 	OrganizationID pulid.ID `json:"organizationId" keel:"organization_id,pk,tenant"`
 
-	ProposalID      *pulid.ID      `json:"proposalId" keel:"proposal_id"`
-	ExceptionID     *pulid.ID      `json:"exceptionId" keel:"exception_id"`
+	ProposalID      *pulid.ID      `json:"proposalId"      keel:"proposal_id"`
+	ExceptionID     *pulid.ID      `json:"exceptionId"     keel:"exception_id"`
 	DecidedByUserID pulid.ID       `json:"decidedByUserId" keel:"decided_by_user_id"`
-	Decision        DecisionType   `json:"decision" keel:"decision"`
-	Modifications   map[string]any `json:"modifications" keel:"modifications,jsonb,nullzero"`
-	ReasonCode      string         `json:"reasonCode" keel:"reason_code"`
-	Note            string         `json:"note" keel:"note,nullzero"`
+	Decision        DecisionType   `json:"decision"        keel:"decision"`
+	Modifications   map[string]any `json:"modifications"   keel:"modifications,jsonb,nullzero"`
+	ReasonCode      string         `json:"reasonCode"      keel:"reason_code"`
+	Note            string         `json:"note"            keel:"note,nullzero"`
 	// TraceID is the trace the decision was made in.
 	TraceID string `json:"traceId" keel:"trace_id,nullzero"`
 	// Preview is what the decider was shown of the write, filtered for them,
 	// and PreviewDigest its digest. PreviewReviewed says the decision named
 	// that digest, so the person approved what they saw. PreviewTargetVersion
 	// is the target record's version the preview was read at.
-	Preview              *ProposalPreview `json:"preview" keel:"preview,jsonb"`
-	PreviewDigest        string           `json:"previewDigest" keel:"preview_digest,nullzero"`
-	PreviewReviewed      bool             `json:"previewReviewed" keel:"preview_reviewed"`
+	Preview              *ProposalPreview `json:"preview"              keel:"preview,jsonb"`
+	PreviewDigest        string           `json:"previewDigest"        keel:"preview_digest,nullzero"`
+	PreviewReviewed      bool             `json:"previewReviewed"      keel:"preview_reviewed"`
 	PreviewTargetVersion *int64           `json:"previewTargetVersion" keel:"preview_target_version"`
 
 	// CommitsAt is when an approval made from the person's own conversation
@@ -51,13 +51,13 @@ type AgentDecision struct {
 	// CommitWorkflowID names the workflow that commits it, which every
 	// decision of one batch shares. All are empty for a decision that took
 	// effect when it was made.
-	CommitsAt        *int64    `json:"commitsAt" keel:"commits_at"`
-	CommittedAt      *int64    `json:"committedAt" keel:"committed_at"`
-	UndoneAt         *int64    `json:"undoneAt" keel:"undone_at"`
-	UndoneByUserID   *pulid.ID `json:"undoneByUserId" keel:"undone_by_user_id"`
+	CommitsAt        *int64    `json:"commitsAt"        keel:"commits_at"`
+	CommittedAt      *int64    `json:"committedAt"      keel:"committed_at"`
+	UndoneAt         *int64    `json:"undoneAt"         keel:"undone_at"`
+	UndoneByUserID   *pulid.ID `json:"undoneByUserId"   keel:"undone_by_user_id"`
 	CommitWorkflowID string    `json:"commitWorkflowId" keel:"commit_workflow_id,nullzero"`
 
-	Version   int64 `json:"version" keel:"version,version"`
+	Version   int64 `json:"version"   keel:"version,version"`
 	CreatedAt int64 `json:"createdAt" keel:"created_at,autocreate"`
 	UpdatedAt int64 `json:"updatedAt" keel:"updated_at,autoupdate"`
 

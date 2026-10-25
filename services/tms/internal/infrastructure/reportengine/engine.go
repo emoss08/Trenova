@@ -52,7 +52,6 @@ type Engine struct {
 	cached      *analytics.Runner
 }
 
-//nolint:gocritic // fx.In parameter structs must be passed by value
 func New(p Params) *Engine {
 	e := &Engine{
 		catalog: p.Catalog,
@@ -131,7 +130,7 @@ func (e *Engine) report(err error) {
 	e.l.Warn("report engine", zap.Error(err))
 }
 
-func (e *Engine) runners() (*analytics.Runner, *analytics.Runner, error) {
+func (e *Engine) runners() (interactive, cached *analytics.Runner, err error) {
 	e.mu.RLock()
 	defer e.mu.RUnlock()
 	if e.interactive == nil {
@@ -142,17 +141,17 @@ func (e *Engine) runners() (*analytics.Runner, *analytics.Runner, error) {
 
 func (e *Engine) Catalog() *analytics.Catalog { return e.catalog }
 
-func (e *Engine) Preview(ctx context.Context, req analytics.Request) (*analytics.Result, error) {
+func (e *Engine) Preview(ctx context.Context, req *analytics.Request) (*analytics.Result, error) {
 	interactive, _, err := e.runners()
 	if err != nil {
 		return nil, err
 	}
-	return interactive.Preview(ctx, req)
+	return interactive.Preview(ctx, *req)
 }
 
 func (e *Engine) Page(
 	ctx context.Context,
-	req analytics.Request,
+	req *analytics.Request,
 	cursor string,
 	size int,
 ) (*analytics.Result, error) {
@@ -160,40 +159,40 @@ func (e *Engine) Page(
 	if err != nil {
 		return nil, err
 	}
-	return interactive.Page(ctx, req, cursor, size)
+	return interactive.Page(ctx, *req, cursor, size)
 }
 
-func (e *Engine) Count(ctx context.Context, req analytics.Request) (int64, error) {
+func (e *Engine) Count(ctx context.Context, req *analytics.Request) (int64, error) {
 	interactive, _, err := e.runners()
 	if err != nil {
 		return 0, err
 	}
-	return interactive.Count(ctx, req)
+	return interactive.Count(ctx, *req)
 }
 
 func (e *Engine) Drill(
 	ctx context.Context,
-	req analytics.Request,
+	req *analytics.Request,
 	row []ir.DrillValue,
 	column string,
-	opts analytics.DrillOptions,
+	opts *analytics.DrillOptions,
 ) (*analytics.Result, error) {
 	interactive, _, err := e.runners()
 	if err != nil {
 		return nil, err
 	}
-	return interactive.Drill(ctx, req, row, column, opts)
+	return interactive.Drill(ctx, *req, row, column, *opts)
 }
 
-func (e *Engine) Compile(ctx context.Context, req analytics.Request) (*analytics.Compiled, error) {
+func (e *Engine) Compile(ctx context.Context, req *analytics.Request) (*analytics.Compiled, error) {
 	interactive, _, err := e.runners()
 	if err != nil {
 		return nil, err
 	}
-	return interactive.Compile(ctx, req)
+	return interactive.Compile(ctx, *req)
 }
 
-func (e *Engine) Run(ctx context.Context, req analytics.Request) (*analytics.Stream, error) {
+func (e *Engine) Run(ctx context.Context, req *analytics.Request) (*analytics.Stream, error) {
 	interactive, cached, err := e.runners()
 	if err != nil {
 		return nil, err
@@ -203,17 +202,17 @@ func (e *Engine) Run(ctx context.Context, req analytics.Request) (*analytics.Str
 		return nil, err
 	}
 	if scope != "" {
-		return interactive.Run(ctx, req)
+		return interactive.Run(ctx, *req)
 	}
-	return cached.Run(ctx, req)
+	return cached.Run(ctx, *req)
 }
 
 type redisClient struct {
 	client *redis.Client
 }
 
-func (c redisClient) Get(ctx context.Context, key string) ([]byte, bool, error) {
-	value, err := c.client.Get(ctx, key).Bytes()
+func (c redisClient) Get(ctx context.Context, key string) (value []byte, found bool, err error) {
+	value, err = c.client.Get(ctx, key).Bytes()
 	if errors.Is(err, redis.Nil) {
 		return nil, false, nil
 	}

@@ -49,33 +49,33 @@ var (
 // injuries whenever the summary is read, so a case corrected in March — which
 // the rule requires for five years — cannot leave a stale summary behind it.
 type OSHAAnnualSummary struct {
-	keel.Table `                                                      keel:"osha_annual_summaries"`
+	keel.Table `keel:"osha_annual_summaries"`
 
-	ID             pulid.ID `json:"id" keel:"id,pk,autoid:osum_"`
+	ID             pulid.ID `json:"id"             keel:"id,pk,autoid:osum_"`
 	BusinessUnitID pulid.ID `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
 	OrganizationID pulid.ID `json:"organizationId" keel:"organization_id,pk,tenant"`
 
-	Year   int16             `json:"year" keel:"year"`
+	Year   int16             `json:"year"   keel:"year"`
 	Status OSHASummaryStatus `json:"status" keel:"status"`
 
-	NAICSCode        string `json:"naicsCode" keel:"naics_code,nullzero"`
+	NAICSCode        string `json:"naicsCode"        keel:"naics_code,nullzero"`
 	AverageEmployees int32  `json:"averageEmployees" keel:"average_employees"`
 	TotalHoursWorked int64  `json:"totalHoursWorked" keel:"total_hours_worked"`
 
-	ExecutiveName  string `json:"executiveName" keel:"executive_name,nullzero"`
+	ExecutiveName  string `json:"executiveName"  keel:"executive_name,nullzero"`
 	ExecutiveTitle string `json:"executiveTitle" keel:"executive_title,nullzero"`
 	ExecutivePhone string `json:"executivePhone" keel:"executive_phone,nullzero"`
 
-	CertifiedAt   *int64   `json:"certifiedAt" keel:"certified_at"`
+	CertifiedAt   *int64   `json:"certifiedAt"   keel:"certified_at"`
 	CertifiedByID pulid.ID `json:"certifiedById" keel:"certified_by_id,nullzero"`
-	PostedFrom    *int64   `json:"postedFrom" keel:"posted_from"`
+	PostedFrom    *int64   `json:"postedFrom"    keel:"posted_from"`
 	PostedThrough *int64   `json:"postedThrough" keel:"posted_through"`
 
-	SubmittedAt         *int64 `json:"submittedAt" keel:"submitted_at"`
+	SubmittedAt         *int64 `json:"submittedAt"         keel:"submitted_at"`
 	SubmissionReference string `json:"submissionReference" keel:"submission_reference,nullzero"`
-	Notes               string `json:"notes" keel:"notes,nullzero"`
+	Notes               string `json:"notes"               keel:"notes,nullzero"`
 
-	Version   int64 `json:"version" keel:"version,version"`
+	Version   int64 `json:"version"   keel:"version,version"`
 	CreatedAt int64 `json:"createdAt" keel:"created_at,autocreate"`
 	UpdatedAt int64 `json:"updatedAt" keel:"updated_at,autoupdate"`
 

@@ -41,18 +41,18 @@ const (
 type ItemEvent struct {
 	keel.Table `keel:"billing_queue_events"`
 
-	ID             pulid.ID       `json:"id" keel:"id,pk,autoid:bqe_"`
+	ID             pulid.ID       `json:"id"             keel:"id,pk,autoid:bqe_"`
 	BusinessUnitID pulid.ID       `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
 	OrganizationID pulid.ID       `json:"organizationId" keel:"organization_id,pk,tenant"`
-	ItemID         pulid.ID       `json:"itemId" keel:"item_id"`
-	Kind           EventKind      `json:"kind" keel:"kind"`
-	Text           string         `json:"text" keel:"text"`
-	ActorType      EventActorType `json:"actorType" keel:"actor_type"`
-	ActorID        *pulid.ID      `json:"actorId" keel:"actor_id"`
-	ActorName      string         `json:"actorName" keel:"actor_name,nullzero"`
-	Payload        map[string]any `json:"payload" keel:"payload,jsonb"`
-	At             int64          `json:"at" keel:"at"`
-	CreatedAt      int64          `json:"createdAt" keel:"created_at,autocreate"`
+	ItemID         pulid.ID       `json:"itemId"         keel:"item_id"`
+	Kind           EventKind      `json:"kind"           keel:"kind"`
+	Text           string         `json:"text"           keel:"text"`
+	ActorType      EventActorType `json:"actorType"      keel:"actor_type"`
+	ActorID        *pulid.ID      `json:"actorId"        keel:"actor_id"`
+	ActorName      string         `json:"actorName"      keel:"actor_name,nullzero"`
+	Payload        map[string]any `json:"payload"        keel:"payload,jsonb"`
+	At             int64          `json:"at"             keel:"at"`
+	CreatedAt      int64          `json:"createdAt"      keel:"created_at,autocreate"`
 }
 
 func (e *ItemEvent) BeforeCreate(ctx context.Context) error {

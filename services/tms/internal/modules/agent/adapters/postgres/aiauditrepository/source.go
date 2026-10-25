@@ -325,7 +325,13 @@ func (r *sourceRepository) EvaluationsByIDs(
 
 		ev := agentdb.Evaluations
 		rows, err := ev.
-			Pick(ev.ID, ev.OrganizationID, ev.BusinessUnitID, ev.AgentDefinitionID, ev.DefinitionVersion).
+			Pick(
+				ev.ID,
+				ev.OrganizationID,
+				ev.BusinessUnitID,
+				ev.AgentDefinitionID,
+				ev.DefinitionVersion,
+			).
 			Where(ev.ID.In(ids...)).
 			Limit(len(ids)).
 			List(ctx, r.db.Keel(ctx))

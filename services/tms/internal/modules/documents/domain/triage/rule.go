@@ -37,23 +37,23 @@ func (s SenderScope) IsValid() bool {
 type Rule struct {
 	keel.Table `keel:"triage_rules"`
 
-	ID             pulid.ID                      `json:"id" keel:"id,pk,autoid:trule_"`
+	ID             pulid.ID                      `json:"id"             keel:"id,pk,autoid:trule_"`
 	BusinessUnitID pulid.ID                      `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
 	OrganizationID pulid.ID                      `json:"organizationId" keel:"organization_id,pk,tenant"`
 	Classification inboundmessage.Classification `json:"classification" keel:"classification"`
-	SenderScope    SenderScope                   `json:"senderScope" keel:"sender_scope"`
-	Sender         string                        `json:"sender" keel:"sender,nullzero"`
-	MailboxID      pulid.ID                      `json:"mailboxId" keel:"mailbox_id,nullzero"`
-	Action         inboundmessage.NovaAction     `json:"action" keel:"action"`
-	AssigneeID     pulid.ID                      `json:"assigneeId" keel:"assignee_id,nullzero"`
-	Enabled        bool                          `json:"enabled" keel:"enabled"`
-	CreatedByID    pulid.ID                      `json:"createdById" keel:"created_by_id,nullzero"`
-	MatchCount     int64                         `json:"matchCount" keel:"match_count"`
-	LastMatchedAt  int64                         `json:"lastMatchedAt" keel:"last_matched_at,nullzero"`
-	LastMessageID  pulid.ID                      `json:"lastMessageId" keel:"last_message_id,nullzero"`
-	Version        int64                         `json:"version" keel:"version,version"`
-	CreatedAt      int64                         `json:"createdAt" keel:"created_at,autocreate"`
-	UpdatedAt      int64                         `json:"updatedAt" keel:"updated_at,autoupdate"`
+	SenderScope    SenderScope                   `json:"senderScope"    keel:"sender_scope"`
+	Sender         string                        `json:"sender"         keel:"sender,nullzero"`
+	MailboxID      pulid.ID                      `json:"mailboxId"      keel:"mailbox_id,nullzero"`
+	Action         inboundmessage.NovaAction     `json:"action"         keel:"action"`
+	AssigneeID     pulid.ID                      `json:"assigneeId"     keel:"assignee_id,nullzero"`
+	Enabled        bool                          `json:"enabled"        keel:"enabled"`
+	CreatedByID    pulid.ID                      `json:"createdById"    keel:"created_by_id,nullzero"`
+	MatchCount     int64                         `json:"matchCount"     keel:"match_count"`
+	LastMatchedAt  int64                         `json:"lastMatchedAt"  keel:"last_matched_at,nullzero"`
+	LastMessageID  pulid.ID                      `json:"lastMessageId"  keel:"last_message_id,nullzero"`
+	Version        int64                         `json:"version"        keel:"version,version"`
+	CreatedAt      int64                         `json:"createdAt"      keel:"created_at,autocreate"`
+	UpdatedAt      int64                         `json:"updatedAt"      keel:"updated_at,autoupdate"`
 }
 
 func (r *Rule) Validate(multiErr *errortypes.MultiError) {

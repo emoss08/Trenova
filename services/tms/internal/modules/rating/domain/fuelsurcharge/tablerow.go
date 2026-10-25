@@ -14,16 +14,16 @@ import (
 type FuelSurchargeTableRow struct {
 	keel.Table `keel:"fuel_surcharge_table_rows"`
 
-	ID                     pulid.ID            `json:"id" keel:"id,pk,autoid:fsr_"`
-	BusinessUnitID         pulid.ID            `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
-	OrganizationID         pulid.ID            `json:"organizationId" keel:"organization_id,pk,tenant"`
+	ID                     pulid.ID            `json:"id"                     keel:"id,pk,autoid:fsr_"`
+	BusinessUnitID         pulid.ID            `json:"businessUnitId"         keel:"business_unit_id,pk,tenant"`
+	OrganizationID         pulid.ID            `json:"organizationId"         keel:"organization_id,pk,tenant"`
 	FuelSurchargeProgramID pulid.ID            `json:"fuelSurchargeProgramId" keel:"fuel_surcharge_program_id"`
-	PriceMin               decimal.NullDecimal `json:"priceMin" keel:"price_min"`
-	PriceMax               decimal.NullDecimal `json:"priceMax" keel:"price_max"`
-	Value                  decimal.Decimal     `json:"value" keel:"value"`
-	SortOrder              int32               `json:"sortOrder" keel:"sort_order"`
-	CreatedAt              int64               `json:"createdAt" keel:"created_at,autocreate"`
-	UpdatedAt              int64               `json:"updatedAt" keel:"updated_at,autoupdate"`
+	PriceMin               decimal.NullDecimal `json:"priceMin"               keel:"price_min"`
+	PriceMax               decimal.NullDecimal `json:"priceMax"               keel:"price_max"`
+	Value                  decimal.Decimal     `json:"value"                  keel:"value"`
+	SortOrder              int32               `json:"sortOrder"              keel:"sort_order"`
+	CreatedAt              int64               `json:"createdAt"              keel:"created_at,autocreate"`
+	UpdatedAt              int64               `json:"updatedAt"              keel:"updated_at,autoupdate"`
 }
 
 func (fr *FuelSurchargeTableRow) Matches(price decimal.Decimal) bool {

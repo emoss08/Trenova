@@ -39,34 +39,34 @@ const (
 )
 
 type RateMatrix struct {
-	keel.Table `                                             keel:"rate_matrices"`
+	keel.Table `keel:"rate_matrices"`
 
-	ID             pulid.ID `json:"id" keel:"id,pk,autoid:rmx_"`
+	ID             pulid.ID `json:"id"             keel:"id,pk,autoid:rmx_"`
 	BusinessUnitID pulid.ID `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
 	OrganizationID pulid.ID `json:"organizationId" keel:"organization_id,pk,tenant"`
 
-	Code        string                 `json:"code" keel:"code"`
-	Name        string                 `json:"name" keel:"name"`
+	Code        string                 `json:"code"        keel:"code"`
+	Name        string                 `json:"name"        keel:"name"`
 	Description string                 `json:"description" keel:"description,nullzero"`
-	ValueType   string                 `json:"valueType" keel:"value_type"`
-	Status      formulatemplate.Status `json:"status" keel:"status"`
+	ValueType   string                 `json:"valueType"   keel:"value_type"`
+	Status      formulatemplate.Status `json:"status"      keel:"status"`
 
-	SubmittedByID          *pulid.ID  `json:"submittedById" keel:"submitted_by_id"`
-	SubmittedAt            *int64     `json:"submittedAt" keel:"submitted_at"`
-	ApprovedByID           *pulid.ID  `json:"approvedById" keel:"approved_by_id"`
-	ApprovedAt             *int64     `json:"approvedAt" keel:"approved_at"`
-	ReviewComment          string     `json:"reviewComment" keel:"review_comment,nullzero"`
+	SubmittedByID          *pulid.ID  `json:"submittedById"          keel:"submitted_by_id"`
+	SubmittedAt            *int64     `json:"submittedAt"            keel:"submitted_at"`
+	ApprovedByID           *pulid.ID  `json:"approvedById"           keel:"approved_by_id"`
+	ApprovedAt             *int64     `json:"approvedAt"             keel:"approved_at"`
+	ReviewComment          string     `json:"reviewComment"          keel:"review_comment,nullzero"`
 	PublishedVersionNumber int64      `json:"publishedVersionNumber" keel:"published_version_number"`
-	PublishedAt            *int64     `json:"publishedAt" keel:"published_at"`
-	HasDraftChanges        bool       `json:"hasDraftChanges" keel:"has_draft_changes"`
-	DraftCellCount         int64      `json:"draftCellCount" keel:"draft_cell_count"`
-	DraftEditorIDs         []pulid.ID `json:"draftEditorIds" keel:"draft_editor_ids,jsonb"`
+	PublishedAt            *int64     `json:"publishedAt"            keel:"published_at"`
+	HasDraftChanges        bool       `json:"hasDraftChanges"        keel:"has_draft_changes"`
+	DraftCellCount         int64      `json:"draftCellCount"         keel:"draft_cell_count"`
+	DraftEditorIDs         []pulid.ID `json:"draftEditorIds"         keel:"draft_editor_ids,jsonb"`
 
-	Version      int64  `json:"version" keel:"version,version"`
+	Version      int64  `json:"version"   keel:"version,version"`
 	CreatedAt    int64  `json:"createdAt" keel:"created_at,autocreate"`
 	UpdatedAt    int64  `json:"updatedAt" keel:"updated_at,autoupdate"`
-	SearchVector string `json:"-" keel:"search_vector,tsvector,readonly,noselect"`
-	Rank         string `json:"-" keel:"rank,computed"`
+	SearchVector string `json:"-"         keel:"search_vector,tsvector,readonly,noselect"`
+	Rank         string `json:"-"         keel:"rank,computed"`
 
 	BusinessUnit *tenant.BusinessUnit   `json:"-"`
 	Organization *tenant.Organization   `json:"-"`

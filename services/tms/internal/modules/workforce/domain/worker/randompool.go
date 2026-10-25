@@ -141,25 +141,25 @@ var (
 )
 
 type DOTRandomPool struct {
-	keel.Table     `                                                   keel:"dot_random_pools"`
-	ID             pulid.ID `json:"id" keel:"id,pk,autoid:drpool_"`
-	BusinessUnitID pulid.ID `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
-	OrganizationID pulid.ID `json:"organizationId" keel:"organization_id,pk,tenant"`
+	keel.Table     `keel:"dot_random_pools"`
+	ID             pulid.ID `keel:"id,pk,autoid:drpool_"       json:"id"`
+	BusinessUnitID pulid.ID `keel:"business_unit_id,pk,tenant" json:"businessUnitId"`
+	OrganizationID pulid.ID `keel:"organization_id,pk,tenant"  json:"organizationId"`
 
-	Code        string             `json:"code" keel:"code"`
-	Name        string             `json:"name" keel:"name"`
+	Code        string             `json:"code"        keel:"code"`
+	Name        string             `json:"name"        keel:"name"`
 	Description string             `json:"description" keel:"description,nullzero"`
-	Status      domaintypes.Status `json:"status" keel:"status"`
+	Status      domaintypes.Status `json:"status"      keel:"status"`
 
-	Period              RandomPeriod `json:"period" keel:"period"`
-	DrugRatePercent     int16        `json:"drugRatePercent" keel:"drug_rate_percent"`
-	AlcoholRatePercent  int16        `json:"alcoholRatePercent" keel:"alcohol_rate_percent"`
+	Period              RandomPeriod `json:"period"              keel:"period"`
+	DrugRatePercent     int16        `json:"drugRatePercent"     keel:"drug_rate_percent"`
+	AlcoholRatePercent  int16        `json:"alcoholRatePercent"  keel:"alcohol_rate_percent"`
 	IncludedDriverTypes []string     `json:"includedDriverTypes" keel:"included_driver_types,jsonb"`
-	IsDefault           bool         `json:"isDefault" keel:"is_default"`
+	IsDefault           bool         `json:"isDefault"           keel:"is_default"`
 
-	SearchVector string `json:"-" keel:"search_vector,tsvector,readonly,noselect"`
-	Rank         string `json:"-" keel:"rank,computed"`
-	Version      int64  `json:"version" keel:"version,version"`
+	SearchVector string `json:"-"         keel:"search_vector,tsvector,readonly,noselect"`
+	Rank         string `json:"-"         keel:"rank,computed"`
+	Version      int64  `json:"version"   keel:"version,version"`
 	CreatedAt    int64  `json:"createdAt" keel:"created_at,autocreate"`
 	UpdatedAt    int64  `json:"updatedAt" keel:"updated_at,autoupdate"`
 }
@@ -308,36 +308,36 @@ var (
 )
 
 type DOTRandomDraw struct {
-	keel.Table `                                                   keel:"dot_random_draws"`
+	keel.Table `keel:"dot_random_draws"`
 
-	ID             pulid.ID `json:"id" keel:"id,pk,autoid:drdraw_"`
+	ID             pulid.ID `json:"id"             keel:"id,pk,autoid:drdraw_"`
 	BusinessUnitID pulid.ID `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
 	OrganizationID pulid.ID `json:"organizationId" keel:"organization_id,pk,tenant"`
-	PoolID         pulid.ID `json:"poolId" keel:"pool_id"`
+	PoolID         pulid.ID `json:"poolId"         keel:"pool_id"`
 
-	PeriodKey   string           `json:"periodKey" keel:"period_key"`
+	PeriodKey   string           `json:"periodKey"   keel:"period_key"`
 	PeriodStart int64            `json:"periodStart" keel:"period_start"`
-	PeriodEnd   int64            `json:"periodEnd" keel:"period_end"`
-	Status      RandomDrawStatus `json:"status" keel:"status"`
+	PeriodEnd   int64            `json:"periodEnd"   keel:"period_end"`
+	Status      RandomDrawStatus `json:"status"      keel:"status"`
 
-	PoolSize        int32 `json:"poolSize" keel:"pool_size"`
-	DrugTarget      int32 `json:"drugTarget" keel:"drug_target"`
-	AlcoholTarget   int32 `json:"alcoholTarget" keel:"alcohol_target"`
-	DrugSelected    int32 `json:"drugSelected" keel:"drug_selected"`
+	PoolSize        int32 `json:"poolSize"        keel:"pool_size"`
+	DrugTarget      int32 `json:"drugTarget"      keel:"drug_target"`
+	AlcoholTarget   int32 `json:"alcoholTarget"   keel:"alcohol_target"`
+	DrugSelected    int32 `json:"drugSelected"    keel:"drug_selected"`
 	AlcoholSelected int32 `json:"alcoholSelected" keel:"alcohol_selected"`
 
-	Seed        string   `json:"seed" keel:"seed"`
-	Method      string   `json:"method" keel:"method"`
-	Notes       string   `json:"notes" keel:"notes,nullzero"`
-	DrawnAt     int64    `json:"drawnAt" keel:"drawn_at"`
-	DrawnByID   pulid.ID `json:"drawnById" keel:"drawn_by_id,nullzero"`
+	Seed        string   `json:"seed"        keel:"seed"`
+	Method      string   `json:"method"      keel:"method"`
+	Notes       string   `json:"notes"       keel:"notes,nullzero"`
+	DrawnAt     int64    `json:"drawnAt"     keel:"drawn_at"`
+	DrawnByID   pulid.ID `json:"drawnById"   keel:"drawn_by_id,nullzero"`
 	FinalizedAt *int64   `json:"finalizedAt" keel:"finalized_at"`
 
-	Version   int64 `json:"version" keel:"version,version"`
+	Version   int64 `json:"version"   keel:"version,version"`
 	CreatedAt int64 `json:"createdAt" keel:"created_at,autocreate"`
 	UpdatedAt int64 `json:"updatedAt" keel:"updated_at,autoupdate"`
 
-	Pool    *DOTRandomPool        `json:"pool,omitempty" keel:"belongs:pool_id"`
+	Pool    *DOTRandomPool        `json:"pool,omitempty"    keel:"belongs:pool_id"`
 	DrawnBy *tenant.User          `json:"drawnBy,omitempty" keel:"belongs:drawn_by_id"`
 	Entries []*DOTRandomDrawEntry `json:"entries,omitempty" keel:"many:draw_id"`
 }
@@ -415,27 +415,27 @@ var (
 )
 
 type DOTRandomDrawEntry struct {
-	keel.Table `                                                        keel:"dot_random_draw_entries"`
+	keel.Table `keel:"dot_random_draw_entries"`
 
-	ID             pulid.ID `json:"id" keel:"id,pk,autoid:drde_"`
+	ID             pulid.ID `json:"id"             keel:"id,pk,autoid:drde_"`
 	BusinessUnitID pulid.ID `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
 	OrganizationID pulid.ID `json:"organizationId" keel:"organization_id,pk,tenant"`
-	DrawID         pulid.ID `json:"drawId" keel:"draw_id"`
-	WorkerID       pulid.ID `json:"workerId" keel:"worker_id"`
+	DrawID         pulid.ID `json:"drawId"         keel:"draw_id"`
+	WorkerID       pulid.ID `json:"workerId"       keel:"worker_id"`
 
-	Substance    DOTTestSubstance  `json:"substance" keel:"substance"`
-	Rank         int32             `json:"rank" keel:"rank"`
-	Status       RandomEntryStatus `json:"status" keel:"status"`
-	NotifiedAt   *int64            `json:"notifiedAt" keel:"notified_at"`
-	CompletedAt  *int64            `json:"completedAt" keel:"completed_at"`
-	TestID       pulid.ID          `json:"testId" keel:"test_id,nullzero"`
+	Substance    DOTTestSubstance  `json:"substance"    keel:"substance"`
+	Rank         int32             `json:"rank"         keel:"rank"`
+	Status       RandomEntryStatus `json:"status"       keel:"status"`
+	NotifiedAt   *int64            `json:"notifiedAt"   keel:"notified_at"`
+	CompletedAt  *int64            `json:"completedAt"  keel:"completed_at"`
+	TestID       pulid.ID          `json:"testId"       keel:"test_id,nullzero"`
 	ExcuseReason string            `json:"excuseReason" keel:"excuse_reason,nullzero"`
 
-	Version   int64 `json:"version" keel:"version,version"`
+	Version   int64 `json:"version"   keel:"version,version"`
 	CreatedAt int64 `json:"createdAt" keel:"created_at,autocreate"`
 	UpdatedAt int64 `json:"updatedAt" keel:"updated_at,autoupdate"`
 
-	Draw   *DOTRandomDraw `json:"draw,omitempty" keel:"belongs:draw_id"`
+	Draw   *DOTRandomDraw `json:"draw,omitempty"   keel:"belongs:draw_id"`
 	Worker *Worker        `json:"worker,omitempty" keel:"belongs:worker_id"`
 }
 

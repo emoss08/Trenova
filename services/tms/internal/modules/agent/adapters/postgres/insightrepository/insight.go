@@ -288,7 +288,7 @@ func (r *repository) ReplaceDetectorFindings(
 		ctx,
 		r.db,
 		func(ctx context.Context) (insightports.ReplaceDetectorFindingsResult, error) {
-			result, err := r.replace(ctx, req)
+			result, err := r.replace(ctx, &req)
 			if err != nil {
 				r.l.Error("failed to replace detector findings",
 					zap.String("operation", "ReplaceDetectorFindings"),
@@ -305,7 +305,7 @@ func (r *repository) ReplaceDetectorFindings(
 
 func (r *repository) replace(
 	ctx context.Context,
-	req insightports.ReplaceDetectorFindingsRequest,
+	req *insightports.ReplaceDetectorFindingsRequest,
 ) (insightports.ReplaceDetectorFindingsResult, error) {
 	var result insightports.ReplaceDetectorFindingsResult
 	db := r.db.Keel(ctx)
@@ -340,7 +340,7 @@ func (r *repository) replace(
 func suppressedKeys(
 	ctx context.Context,
 	db *keel.DB,
-	req insightports.ReplaceDetectorFindingsRequest,
+	req *insightports.ReplaceDetectorFindingsRequest,
 ) (map[string]struct{}, error) {
 	in := insightdb.Insights
 	keys, err := keel.Into[string](ctx, db, in.Pick(in.DedupeKey).Where(
@@ -363,7 +363,7 @@ func suppressedKeys(
 func applyReplacement(
 	ctx context.Context,
 	db *keel.DB,
-	req insightports.ReplaceDetectorFindingsRequest,
+	req *insightports.ReplaceDetectorFindingsRequest,
 	keep []*insight.Insight,
 ) (insightports.ReplaceDetectorFindingsResult, error) {
 	var result insightports.ReplaceDetectorFindingsResult

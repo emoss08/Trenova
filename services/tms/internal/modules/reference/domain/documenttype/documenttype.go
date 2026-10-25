@@ -24,25 +24,25 @@ var (
 )
 
 type DocumentType struct {
-	keel.Table             `                                             keel:"document_types"`
-	ID                     pulid.ID               `json:"id" keel:"id,pk,autoid:dt_"`
-	BusinessUnitID         pulid.ID               `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
-	OrganizationID         pulid.ID               `json:"organizationId" keel:"organization_id,pk,tenant"`
-	Code                   string                 `json:"code" keel:"code"`
-	Name                   string                 `json:"name" keel:"name"`
-	Description            string                 `json:"description" keel:"description,nullzero"`
-	Color                  string                 `json:"color" keel:"color,nullzero"`
-	DocumentClassification DocumentClassification `json:"documentClassification" keel:"document_classification"`
-	DocumentCategory       DocumentCategory       `json:"documentCategory" keel:"document_category"`
-	IsSystem               bool                   `json:"isSystem" keel:"is_system"`
+	keel.Table             `keel:"document_types"`
+	ID                     pulid.ID               `keel:"id,pk,autoid:dt_"           json:"id"`
+	BusinessUnitID         pulid.ID               `keel:"business_unit_id,pk,tenant" json:"businessUnitId"`
+	OrganizationID         pulid.ID               `keel:"organization_id,pk,tenant"  json:"organizationId"`
+	Code                   string                 `keel:"code"                       json:"code"`
+	Name                   string                 `keel:"name"                       json:"name"`
+	Description            string                 `keel:"description,nullzero"       json:"description"`
+	Color                  string                 `keel:"color,nullzero"             json:"color"`
+	DocumentClassification DocumentClassification `keel:"document_classification"    json:"documentClassification"`
+	DocumentCategory       DocumentCategory       `keel:"document_category"          json:"documentCategory"`
+	IsSystem               bool                   `keel:"is_system"                  json:"isSystem"`
 	// RequiresSignature makes a document of this type count only once it is
 	// signed, the way a proof of delivery is proof only with the receiver's name.
 	RequiresSignature bool   `json:"requiresSignature" keel:"requires_signature"`
-	Version           int64  `json:"version" keel:"version,version"`
-	CreatedAt         int64  `json:"createdAt" keel:"created_at,autocreate"`
-	UpdatedAt         int64  `json:"updatedAt" keel:"updated_at,autoupdate"`
-	SearchVector      string `json:"-" keel:"search_vector,tsvector,readonly,noselect"`
-	Rank              string `json:"-" keel:"rank,computed"`
+	Version           int64  `json:"version"           keel:"version,version"`
+	CreatedAt         int64  `json:"createdAt"         keel:"created_at,autocreate"`
+	UpdatedAt         int64  `json:"updatedAt"         keel:"updated_at,autoupdate"`
+	SearchVector      string `json:"-"                 keel:"search_vector,tsvector,readonly,noselect"`
+	Rank              string `json:"-"                 keel:"rank,computed"`
 
 	BusinessUnit *tenant.BusinessUnit `json:"businessUnit,omitempty"`
 	Organization *tenant.Organization `json:"organization,omitempty"`

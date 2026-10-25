@@ -322,7 +322,8 @@ func (r *repository) BulkUpdateStatus(
 ) ([]*customer.Customer, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) ([]*customer.Customer, error) {
 		c := customerdb.Customers
-		entities, err := c.Where(c.ID.In(req.CustomerIDs...)).UpdateReturning(ctx, r.db.Keel(ctx), c.Status.To(req.Status))
+		entities, err := c.Where(c.ID.In(req.CustomerIDs...)).
+			UpdateReturning(ctx, r.db.Keel(ctx), c.Status.To(req.Status))
 		if err != nil {
 			r.l.Error("failed to bulk update customer status", zap.Error(err))
 			return nil, err

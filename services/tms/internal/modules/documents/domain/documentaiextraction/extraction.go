@@ -22,28 +22,28 @@ const (
 type Extraction struct {
 	keel.Table `keel:"document_ai_extractions"`
 
-	ID             pulid.ID `json:"id" keel:"id,pk,autoid:dax_"`
-	DocumentID     pulid.ID `json:"documentId" keel:"document_id"`
+	ID             pulid.ID `json:"id"             keel:"id,pk,autoid:dax_"`
+	DocumentID     pulid.ID `json:"documentId"     keel:"document_id"`
 	OrganizationID pulid.ID `json:"organizationId" keel:"organization_id,pk,tenant"`
 	BusinessUnitID pulid.ID `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
-	UserID         pulid.ID `json:"userId" keel:"user_id"`
-	ExtractedAt    int64    `json:"extractedAt" keel:"extracted_at"`
-	RequestHash    string   `json:"requestHash" keel:"request_hash"`
-	WorkflowID     string   `json:"workflowId" keel:"workflow_id"`
-	WorkflowRunID  string   `json:"workflowRunId" keel:"workflow_run_id"`
-	ActivityID     string   `json:"activityId" keel:"activity_id"`
-	ResponseID     string   `json:"responseId" keel:"response_id,nullzero"`
-	ProviderID     pulid.ID `json:"providerId" keel:"provider_id,nullzero"`
-	Model          string   `json:"model" keel:"model,nullzero"`
-	Status         Status   `json:"status" keel:"status"`
-	FailureCode    string   `json:"failureCode" keel:"failure_code,nullzero"`
+	UserID         pulid.ID `json:"userId"         keel:"user_id"`
+	ExtractedAt    int64    `json:"extractedAt"    keel:"extracted_at"`
+	RequestHash    string   `json:"requestHash"    keel:"request_hash"`
+	WorkflowID     string   `json:"workflowId"     keel:"workflow_id"`
+	WorkflowRunID  string   `json:"workflowRunId"  keel:"workflow_run_id"`
+	ActivityID     string   `json:"activityId"     keel:"activity_id"`
+	ResponseID     string   `json:"responseId"     keel:"response_id,nullzero"`
+	ProviderID     pulid.ID `json:"providerId"     keel:"provider_id,nullzero"`
+	Model          string   `json:"model"          keel:"model,nullzero"`
+	Status         Status   `json:"status"         keel:"status"`
+	FailureCode    string   `json:"failureCode"    keel:"failure_code,nullzero"`
 	FailureMessage string   `json:"failureMessage" keel:"failure_message,nullzero"`
-	SubmittedAt    *int64   `json:"submittedAt" keel:"submitted_at"`
-	LastPolledAt   *int64   `json:"lastPolledAt" keel:"last_polled_at"`
-	CompletedAt    *int64   `json:"completedAt" keel:"completed_at"`
-	Version        int64    `json:"version" keel:"version,version"`
-	CreatedAt      int64    `json:"createdAt" keel:"created_at,autocreate"`
-	UpdatedAt      int64    `json:"updatedAt" keel:"updated_at,autoupdate"`
+	SubmittedAt    *int64   `json:"submittedAt"    keel:"submitted_at"`
+	LastPolledAt   *int64   `json:"lastPolledAt"   keel:"last_polled_at"`
+	CompletedAt    *int64   `json:"completedAt"    keel:"completed_at"`
+	Version        int64    `json:"version"        keel:"version,version"`
+	CreatedAt      int64    `json:"createdAt"      keel:"created_at,autocreate"`
+	UpdatedAt      int64    `json:"updatedAt"      keel:"updated_at,autoupdate"`
 }
 
 func (e *Extraction) BeforeCreate(ctx context.Context) error {

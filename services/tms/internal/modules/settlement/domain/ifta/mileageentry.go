@@ -30,33 +30,33 @@ var (
 
 // Miles by state or province recorded outside routed shipment moves
 type JurisdictionMileageEntry struct {
-	keel.Table `                                                                  keel:"ifta_jurisdiction_mileage_entries,report=Equipment"`
+	keel.Table `keel:"ifta_jurisdiction_mileage_entries,report=Equipment"`
 
-	ID             pulid.ID `json:"id" keel:"id,pk,autoid:ifme_"`
+	ID             pulid.ID `json:"id"             keel:"id,pk,autoid:ifme_"`
 	BusinessUnitID pulid.ID `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
 	OrganizationID pulid.ID `json:"organizationId" keel:"organization_id,pk,tenant"`
 
-	TractorID      pulid.ID `json:"tractorId" keel:"tractor_id"`
+	TractorID      pulid.ID `json:"tractorId"      keel:"tractor_id"`
 	JurisdictionID pulid.ID `json:"jurisdictionId" keel:"jurisdiction_id"`
 
 	TraveledAt int64 `json:"traveledAt" keel:"traveled_at"`
-	Year       int   `json:"year" keel:"year,dimension"`
-	Quarter    int   `json:"quarter" keel:"quarter,dimension"`
+	Year       int   `json:"year"       keel:"year,dimension"`
+	Quarter    int   `json:"quarter"    keel:"quarter,dimension"`
 
-	Miles          decimal.Decimal `json:"miles" keel:"miles,format=distance"`
-	Loaded         bool            `json:"loaded" keel:"loaded"`
-	Source         MileageSource   `json:"source" keel:"source"`
+	Miles          decimal.Decimal `json:"miles"          keel:"miles,format=distance"`
+	Loaded         bool            `json:"loaded"         keel:"loaded"`
+	Source         MileageSource   `json:"source"         keel:"source"`
 	ShipmentMoveID *pulid.ID       `json:"shipmentMoveId" keel:"shipment_move_id"`
-	Notes          string          `json:"notes" keel:"notes,nullzero"`
-	CreatedByID    pulid.ID        `json:"createdById" keel:"created_by_id,nullzero"`
+	Notes          string          `json:"notes"          keel:"notes,nullzero"`
+	CreatedByID    pulid.ID        `json:"createdById"    keel:"created_by_id,nullzero"`
 
-	Version   int64 `json:"version" keel:"version,version"`
+	Version   int64 `json:"version"   keel:"version,version"`
 	CreatedAt int64 `json:"createdAt" keel:"created_at,autocreate"`
 	UpdatedAt int64 `json:"updatedAt" keel:"updated_at,autoupdate"`
 
-	Tractor      *tractor.Tractor `json:"tractor,omitempty" keel:"belongs:tractor_id"`
+	Tractor      *tractor.Tractor `json:"tractor,omitempty"      keel:"belongs:tractor_id"`
 	Jurisdiction *Jurisdiction    `json:"jurisdiction,omitempty" keel:"belongs:jurisdiction_id,noreport"`
-	CreatedBy    *tenant.User     `json:"createdBy,omitempty" keel:"belongs:created_by_id,noreport"`
+	CreatedBy    *tenant.User     `json:"createdBy,omitempty"    keel:"belongs:created_by_id,noreport"`
 }
 
 func (e *JurisdictionMileageEntry) Normalize() {

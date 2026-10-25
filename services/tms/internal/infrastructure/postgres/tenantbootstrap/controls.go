@@ -35,11 +35,19 @@ func CreateControls(ctx context.Context, db *keel.DB, scope Scope) error {
 
 	invoiceAdjustmentControl := tenant.NewDefaultInvoiceAdjustmentControl(org, bu)
 	invoiceAdjustmentControl.ID = pulid.MustNew("iac_")
-	if err := tenantdb.InvoiceAdjustmentControls.Create(ctx, db, invoiceAdjustmentControl); err != nil {
+	if err := tenantdb.InvoiceAdjustmentControls.Create(
+		ctx,
+		db,
+		invoiceAdjustmentControl,
+	); err != nil {
 		return fmt.Errorf("create invoice adjustment control: %w", err)
 	}
 
-	if err := dispatchcontroldb.DispatchControls.Create(ctx, db, newDispatchControl(scope)); err != nil {
+	if err := dispatchcontroldb.DispatchControls.Create(
+		ctx,
+		db,
+		newDispatchControl(scope),
+	); err != nil {
 		return fmt.Errorf("create dispatch control: %w", err)
 	}
 

@@ -23,6 +23,8 @@ import (
 	"go.uber.org/zap"
 )
 
+const fieldCredentialTypeID = "credentialTypeId"
+
 const (
 	defaultExpiringPageSize = 500
 	secondsPerDay           = int64(86400)
@@ -56,7 +58,7 @@ var credentialForeignKeys = []dberror.Constraint{
 	},
 	{
 		Name:    "fk_worker_credentials_type",
-		Field:   "credentialTypeId",
+		Field:   fieldCredentialTypeID,
 		Message: "Credential type does not exist or belongs to a different organization",
 	},
 	{
@@ -71,7 +73,7 @@ var credentialErrors = dberror.Mapping{
 	Unique: []dberror.Constraint{
 		{
 			Name:    "uq_worker_credentials_active_type",
-			Field:   "credentialTypeId",
+			Field:   fieldCredentialTypeID,
 			Message: "This worker already holds an active credential of this type",
 		},
 	},
@@ -83,7 +85,7 @@ var credentialCreateErrors = dberror.Mapping{
 	Unique: []dberror.Constraint{
 		{
 			Name:    "uq_worker_credentials_active_type",
-			Field:   "credentialTypeId",
+			Field:   fieldCredentialTypeID,
 			Message: "This worker already holds an active credential of this type. Renew it instead.",
 		},
 	},
@@ -465,10 +467,12 @@ func (r *repository) Update(
 	})
 }
 
-func expiryWindow(req *workerports.ListExpiringWorkerCredentialsRequest) (int64, int64) {
+func expiryWindow(
+	req *workerports.ListExpiringWorkerCredentialsRequest,
+) (grace, horizon int64) {
 	now := timeutils.NowUnix()
-	horizon := now + int64(req.HorizonDays)*secondsPerDay
-	grace := now - int64(req.GraceDays)*secondsPerDay
+	horizon = now + int64(req.HorizonDays)*secondsPerDay
+	grace = now - int64(req.GraceDays)*secondsPerDay
 	if req.AsOf > 0 {
 		horizon = req.AsOf + int64(req.HorizonDays+1)*secondsPerDay - 1
 		grace = req.AsOf - int64(req.GraceDays)*secondsPerDay

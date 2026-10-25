@@ -36,12 +36,12 @@ const (
 // endpoint being a probe for which addresses exist.
 type Mailbox struct {
 	keel.Table     `keel:"inbound_mailboxes"`
-	ID             pulid.ID `json:"id" keel:"id,pk,autoid:imbx_"`
-	BusinessUnitID pulid.ID `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
-	OrganizationID pulid.ID `json:"organizationId" keel:"organization_id,pk,tenant"`
-	Name           string   `json:"name" keel:"name"`
-	Address        string   `json:"address" keel:"address"`
-	Provider       Provider `json:"provider" keel:"provider"`
+	ID             pulid.ID `keel:"id,pk,autoid:imbx_"         json:"id"`
+	BusinessUnitID pulid.ID `keel:"business_unit_id,pk,tenant" json:"businessUnitId"`
+	OrganizationID pulid.ID `keel:"organization_id,pk,tenant"  json:"organizationId"`
+	Name           string   `keel:"name"                       json:"name"`
+	Address        string   `keel:"address"                    json:"address"`
+	Provider       Provider `keel:"provider"                   json:"provider"`
 	// TokenHash is the webhook token as stored. The token itself is shown once,
 	// when the mailbox is created or rotated, and never again.
 	TokenHash string `json:"-" keel:"token_hash"`
@@ -55,19 +55,19 @@ type Mailbox struct {
 	// ProviderAPIKey is the key the mailbox reads message content with,
 	// encrypted at rest. Resend posts only a message's metadata to the
 	// webhook, so its body, headers and attachments are fetched afterwards.
-	ProviderAPIKey string        `json:"-" keel:"provider_api_key,nullzero"`
-	Purpose        string        `json:"purpose" keel:"purpose,nullzero"`
-	ReviewPolicy   ReviewPolicy  `json:"reviewPolicy" keel:"review_policy"`
-	MinConfidence  float64       `json:"minConfidence" keel:"min_confidence"`
-	Status         MailboxStatus `json:"status" keel:"status"`
+	ProviderAPIKey string        `json:"-"              keel:"provider_api_key,nullzero"`
+	Purpose        string        `json:"purpose"        keel:"purpose,nullzero"`
+	ReviewPolicy   ReviewPolicy  `json:"reviewPolicy"   keel:"review_policy"`
+	MinConfidence  float64       `json:"minConfidence"  keel:"min_confidence"`
+	Status         MailboxStatus `json:"status"         keel:"status"`
 	LastReceivedAt int64         `json:"lastReceivedAt" keel:"last_received_at,nullzero"`
-	TestToken      string        `json:"-" keel:"test_token,nullzero"`
-	TestSentAt     int64         `json:"testSentAt" keel:"test_sent_at,nullzero"`
+	TestToken      string        `json:"-"              keel:"test_token,nullzero"`
+	TestSentAt     int64         `json:"testSentAt"     keel:"test_sent_at,nullzero"`
 	TestReceivedAt int64         `json:"testReceivedAt" keel:"test_received_at,nullzero"`
 	BlockedSenders []string      `json:"blockedSenders" keel:"blocked_senders,jsonb,nullzero"`
-	Version        int64         `json:"version" keel:"version,version"`
-	CreatedAt      int64         `json:"createdAt" keel:"created_at,autocreate"`
-	UpdatedAt      int64         `json:"updatedAt" keel:"updated_at,autoupdate"`
+	Version        int64         `json:"version"        keel:"version,version"`
+	CreatedAt      int64         `json:"createdAt"      keel:"created_at,autocreate"`
+	UpdatedAt      int64         `json:"updatedAt"      keel:"updated_at,autoupdate"`
 
 	Organization *tenant.Organization `json:"organization,omitempty"`
 	BusinessUnit *tenant.BusinessUnit `json:"businessUnit,omitempty"`

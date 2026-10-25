@@ -14,36 +14,36 @@ import (
 type Tender struct {
 	keel.Table `keel:"tenders"`
 
-	ID             pulid.ID `json:"id" keel:"id,pk,autoid:tnd_"`
+	ID             pulid.ID `json:"id"             keel:"id,pk,autoid:tnd_"`
 	BusinessUnitID pulid.ID `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
 	OrganizationID pulid.ID `json:"organizationId" keel:"organization_id,pk,tenant"`
-	ShipmentID     pulid.ID `json:"shipmentId" keel:"shipment_id"`
+	ShipmentID     pulid.ID `json:"shipmentId"     keel:"shipment_id"`
 	ShipmentMoveID pulid.ID `json:"shipmentMoveId" keel:"shipment_move_id"`
 
-	RoutingGuideID     *pulid.ID `json:"routingGuideId" keel:"routing_guide_id"`
-	Mode               Mode      `json:"mode" keel:"mode"`
-	Status             Status    `json:"status" keel:"status"`
-	CurrentRank        int16     `json:"currentRank" keel:"current_rank"`
-	WorkflowID         string    `json:"workflowId" keel:"workflow_id,nullzero"`
-	CreatedByID        *pulid.ID `json:"createdById" keel:"created_by_id"`
-	CanceledByID       *pulid.ID `json:"canceledById" keel:"canceled_by_id"`
+	RoutingGuideID     *pulid.ID `json:"routingGuideId"     keel:"routing_guide_id"`
+	Mode               Mode      `json:"mode"               keel:"mode"`
+	Status             Status    `json:"status"             keel:"status"`
+	CurrentRank        int16     `json:"currentRank"        keel:"current_rank"`
+	WorkflowID         string    `json:"workflowId"         keel:"workflow_id,nullzero"`
+	CreatedByID        *pulid.ID `json:"createdById"        keel:"created_by_id"`
+	CanceledByID       *pulid.ID `json:"canceledById"       keel:"canceled_by_id"`
 	CancellationReason string    `json:"cancellationReason" keel:"cancellation_reason,nullzero"`
-	AcceptedOfferID    *pulid.ID `json:"acceptedOfferId" keel:"accepted_offer_id"`
-	AcceptedAt         *int64    `json:"acceptedAt" keel:"accepted_at"`
-	ExhaustedAt        *int64    `json:"exhaustedAt" keel:"exhausted_at"`
-	CanceledAt         *int64    `json:"canceledAt" keel:"canceled_at"`
-	BounceCount        int16     `json:"bounceCount" keel:"bounce_count"`
-	LastBouncedAt      *int64    `json:"lastBouncedAt" keel:"last_bounced_at"`
-	EscalatedFromID    *pulid.ID `json:"escalatedFromId" keel:"escalated_from_tender_id"`
-	EscalationRound    int16     `json:"escalationRound" keel:"escalation_round"`
-	Version            int64     `json:"version" keel:"version,version"`
-	CreatedAt          int64     `json:"createdAt" keel:"created_at,autocreate"`
-	UpdatedAt          int64     `json:"updatedAt" keel:"updated_at,autoupdate"`
+	AcceptedOfferID    *pulid.ID `json:"acceptedOfferId"    keel:"accepted_offer_id"`
+	AcceptedAt         *int64    `json:"acceptedAt"         keel:"accepted_at"`
+	ExhaustedAt        *int64    `json:"exhaustedAt"        keel:"exhausted_at"`
+	CanceledAt         *int64    `json:"canceledAt"         keel:"canceled_at"`
+	BounceCount        int16     `json:"bounceCount"        keel:"bounce_count"`
+	LastBouncedAt      *int64    `json:"lastBouncedAt"      keel:"last_bounced_at"`
+	EscalatedFromID    *pulid.ID `json:"escalatedFromId"    keel:"escalated_from_tender_id"`
+	EscalationRound    int16     `json:"escalationRound"    keel:"escalation_round"`
+	Version            int64     `json:"version"            keel:"version,version"`
+	CreatedAt          int64     `json:"createdAt"          keel:"created_at,autocreate"`
+	UpdatedAt          int64     `json:"updatedAt"          keel:"updated_at,autoupdate"`
 
-	Shipment     *shipment.Shipment     `json:"shipment,omitempty" keel:"belongs:shipment_id"`
+	Shipment     *shipment.Shipment     `json:"shipment,omitempty"     keel:"belongs:shipment_id"`
 	ShipmentMove *shipment.ShipmentMove `json:"shipmentMove,omitempty" keel:"belongs:shipment_move_id"`
 	RoutingGuide *RoutingGuide          `json:"routingGuide,omitempty" keel:"belongs:routing_guide_id"`
-	Offers       []*TenderOffer         `json:"offers,omitempty" keel:"many:tender_id"`
+	Offers       []*TenderOffer         `json:"offers,omitempty"       keel:"many:tender_id"`
 }
 
 func (t *Tender) applyDefaults() {

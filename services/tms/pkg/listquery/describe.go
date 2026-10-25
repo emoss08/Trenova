@@ -63,9 +63,8 @@ func describeColumn(
 	if !col.MayBeNull() {
 		out.NonNullableFields[name] = true
 	}
-	switch col.Kind {
-	case schema.KindInt16, schema.KindInt32, schema.KindInt64:
+	if col.Kind == schema.KindInt16 || col.Kind == schema.KindInt32 ||
+		col.Kind == schema.KindInt64 {
 		out.IntegerFields[name] = true
-	default:
 	}
 }

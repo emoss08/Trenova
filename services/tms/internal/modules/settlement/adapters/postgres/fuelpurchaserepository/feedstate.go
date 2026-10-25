@@ -52,7 +52,10 @@ func (r *repository) SaveFeedState(ctx context.Context, state *fuelpurchase.Card
 		)
 		if err != nil {
 			r.l.Error("failed to save fuel feed state", zap.Error(err))
-			return fmt.Errorf("save fuel feed state: %w", feedStateErrors.Map(err, string(state.Provider)))
+			return fmt.Errorf(
+				"save fuel feed state: %w",
+				feedStateErrors.Map(err, string(state.Provider)),
+			)
 		}
 
 		return nil

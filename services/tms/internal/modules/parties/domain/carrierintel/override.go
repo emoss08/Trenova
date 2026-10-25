@@ -12,21 +12,21 @@ import (
 type CarrierIntelOverride struct {
 	keel.Table `keel:"carrier_intel_overrides"`
 
-	ID             pulid.ID `json:"id" keel:"id,pk,autoid:ciovr_"`
+	ID             pulid.ID `json:"id"             keel:"id,pk,autoid:ciovr_"`
 	BusinessUnitID pulid.ID `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
 	OrganizationID pulid.ID `json:"organizationId" keel:"organization_id,pk,tenant"`
-	CarrierID      pulid.ID `json:"carrierId" keel:"carrier_id"`
-	RuleCode       RuleCode `json:"ruleCode" keel:"rule_code"`
-	Reason         string   `json:"reason" keel:"reason"`
-	GrantedByID    pulid.ID `json:"grantedById" keel:"granted_by_id"`
-	GrantedAt      int64    `json:"grantedAt" keel:"granted_at"`
-	ExpiresAt      int64    `json:"expiresAt" keel:"expires_at"`
-	RevokedByID    pulid.ID `json:"revokedById" keel:"revoked_by_id,nullzero"`
-	RevokedAt      *int64   `json:"revokedAt" keel:"revoked_at"`
-	RevokeReason   string   `json:"revokeReason" keel:"revoke_reason,nullzero"`
-	Version        int64    `json:"version" keel:"version,version"`
-	CreatedAt      int64    `json:"createdAt" keel:"created_at,autocreate"`
-	UpdatedAt      int64    `json:"updatedAt" keel:"updated_at,autoupdate"`
+	CarrierID      pulid.ID `json:"carrierId"      keel:"carrier_id"`
+	RuleCode       RuleCode `json:"ruleCode"       keel:"rule_code"`
+	Reason         string   `json:"reason"         keel:"reason"`
+	GrantedByID    pulid.ID `json:"grantedById"    keel:"granted_by_id"`
+	GrantedAt      int64    `json:"grantedAt"      keel:"granted_at"`
+	ExpiresAt      int64    `json:"expiresAt"      keel:"expires_at"`
+	RevokedByID    pulid.ID `json:"revokedById"    keel:"revoked_by_id,nullzero"`
+	RevokedAt      *int64   `json:"revokedAt"      keel:"revoked_at"`
+	RevokeReason   string   `json:"revokeReason"   keel:"revoke_reason,nullzero"`
+	Version        int64    `json:"version"        keel:"version,version"`
+	CreatedAt      int64    `json:"createdAt"      keel:"created_at,autocreate"`
+	UpdatedAt      int64    `json:"updatedAt"      keel:"updated_at,autoupdate"`
 }
 
 func (o *CarrierIntelOverride) Validate(multiErr *errortypes.MultiError) {

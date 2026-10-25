@@ -38,50 +38,50 @@ var (
 
 // Fuel bought at the pump or on a fuel card
 type FuelPurchase struct {
-	keel.Table `                                               keel:"fuel_purchases,report=Equipment"`
+	keel.Table `keel:"fuel_purchases,report=Equipment"`
 
-	ID             pulid.ID `json:"id" keel:"id,pk,autoid:fpur_"`
+	ID             pulid.ID `json:"id"             keel:"id,pk,autoid:fpur_"`
 	BusinessUnitID pulid.ID `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
 	OrganizationID pulid.ID `json:"organizationId" keel:"organization_id,pk,tenant"`
 
-	TractorID      pulid.ID  `json:"tractorId" keel:"tractor_id"`
-	WorkerID       *pulid.ID `json:"workerId" keel:"worker_id"`
+	TractorID      pulid.ID  `json:"tractorId"      keel:"tractor_id"`
+	WorkerID       *pulid.ID `json:"workerId"       keel:"worker_id"`
 	JurisdictionID pulid.ID  `json:"jurisdictionId" keel:"jurisdiction_id"`
-	FuelCardID     *pulid.ID `json:"fuelCardId" keel:"fuel_card_id"`
-	CardLastFour   string    `json:"cardLastFour" keel:"card_last_four,nullzero"`
+	FuelCardID     *pulid.ID `json:"fuelCardId"     keel:"fuel_card_id"`
+	CardLastFour   string    `json:"cardLastFour"   keel:"card_last_four,nullzero"`
 
 	PurchasedAt int64  `json:"purchasedAt" keel:"purchased_at"`
-	Vendor      string `json:"vendor" keel:"vendor,nullzero"`
-	VendorCity  string `json:"vendorCity" keel:"vendor_city,nullzero"`
+	Vendor      string `json:"vendor"      keel:"vendor,nullzero"`
+	VendorCity  string `json:"vendorCity"  keel:"vendor_city,nullzero"`
 
-	FuelType     domaintypes.IFTAFuelType `json:"fuelType" keel:"fuel_type"`
-	Quantity     decimal.Decimal          `json:"quantity" keel:"quantity"`
+	FuelType     domaintypes.IFTAFuelType `json:"fuelType"     keel:"fuel_type"`
+	Quantity     decimal.Decimal          `json:"quantity"     keel:"quantity"`
 	QuantityUnit QuantityUnit             `json:"quantityUnit" keel:"quantity_unit"`
-	Gallons      decimal.Decimal          `json:"gallons" keel:"gallons"`
-	UnitPrice    decimal.NullDecimal      `json:"unitPrice" keel:"unit_price"`
+	Gallons      decimal.Decimal          `json:"gallons"      keel:"gallons"`
+	UnitPrice    decimal.NullDecimal      `json:"unitPrice"    keel:"unit_price"`
 
 	TotalAmountMinor int64  `json:"totalAmountMinor" keel:"total_amount_minor,label=Total Amount (Minor)"`
-	CurrencyCode     string `json:"currencyCode" keel:"currency_code,label=Currency"`
-	Odometer         *int64 `json:"odometer" keel:"odometer,format=distance"`
+	CurrencyCode     string `json:"currencyCode"     keel:"currency_code,label=Currency"`
+	Odometer         *int64 `json:"odometer"         keel:"odometer,format=distance"`
 
 	TransactionReference string         `json:"transactionReference" keel:"transaction_reference,nullzero"`
-	Source               PurchaseSource `json:"source" keel:"source"`
-	ImportBatchID        *pulid.ID      `json:"importBatchId" keel:"import_batch_id"`
-	TaxPaid              bool           `json:"taxPaid" keel:"tax_paid"`
-	Notes                string         `json:"notes" keel:"notes,nullzero"`
-	CreatedByID          pulid.ID       `json:"createdById" keel:"created_by_id,nullzero"`
+	Source               PurchaseSource `json:"source"               keel:"source"`
+	ImportBatchID        *pulid.ID      `json:"importBatchId"        keel:"import_batch_id"`
+	TaxPaid              bool           `json:"taxPaid"              keel:"tax_paid"`
+	Notes                string         `json:"notes"                keel:"notes,nullzero"`
+	CreatedByID          pulid.ID       `json:"createdById"          keel:"created_by_id,nullzero"`
 
-	SearchVector string `json:"-" keel:"search_vector,tsvector,readonly,noselect"`
-	Rank         string `json:"-" keel:"rank,computed"`
-	Version      int64  `json:"version" keel:"version,version"`
+	SearchVector string `json:"-"         keel:"search_vector,tsvector,readonly,noselect"`
+	Rank         string `json:"-"         keel:"rank,computed"`
+	Version      int64  `json:"version"   keel:"version,version"`
 	CreatedAt    int64  `json:"createdAt" keel:"created_at,autocreate"`
 	UpdatedAt    int64  `json:"updatedAt" keel:"updated_at,autoupdate"`
 
-	Tractor      *tractor.Tractor   `json:"tractor,omitempty" keel:"belongs:tractor_id"`
-	Worker       *worker.Worker     `json:"worker,omitempty" keel:"belongs:worker_id,label=Driver"`
-	FuelCard     *FuelCard          `json:"fuelCard,omitempty" keel:"belongs:fuel_card_id"`
+	Tractor      *tractor.Tractor   `json:"tractor,omitempty"      keel:"belongs:tractor_id"`
+	Worker       *worker.Worker     `json:"worker,omitempty"       keel:"belongs:worker_id,label=Driver"`
+	FuelCard     *FuelCard          `json:"fuelCard,omitempty"     keel:"belongs:fuel_card_id"`
 	Jurisdiction *ifta.Jurisdiction `json:"jurisdiction,omitempty" keel:"belongs:jurisdiction_id,noreport"`
-	ImportBatch  *ImportBatch       `json:"importBatch,omitempty" keel:"belongs:import_batch_id,noreport"`
+	ImportBatch  *ImportBatch       `json:"importBatch,omitempty"  keel:"belongs:import_batch_id,noreport"`
 }
 
 func (p *FuelPurchase) Normalize() {

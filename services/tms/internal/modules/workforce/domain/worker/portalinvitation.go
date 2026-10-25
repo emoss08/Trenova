@@ -40,22 +40,22 @@ func (s PortalInvitationStatus) IsValid() bool {
 
 type PortalInvitation struct {
 	keel.Table     `keel:"worker_portal_invitations"`
-	ID             pulid.ID               `json:"id" keel:"id,pk,autoid:wpi_"`
-	BusinessUnitID pulid.ID               `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
-	OrganizationID pulid.ID               `json:"organizationId" keel:"organization_id,pk,tenant"`
-	WorkerID       pulid.ID               `json:"workerId" keel:"worker_id"`
-	Email          string                 `json:"email" keel:"email"`
-	TokenHash      string                 `json:"-" keel:"token_hash"`
-	Status         PortalInvitationStatus `json:"status" keel:"status"`
-	ExpiresAt      int64                  `json:"expiresAt" keel:"expires_at"`
-	InvitedByID    pulid.ID               `json:"invitedById" keel:"invited_by_id"`
-	AcceptedAt     *int64                 `json:"acceptedAt" keel:"accepted_at"`
-	AcceptedUserID *pulid.ID              `json:"acceptedUserId" keel:"accepted_user_id"`
-	Version        int64                  `json:"version" keel:"version,version"`
-	CreatedAt      int64                  `json:"createdAt" keel:"created_at,autocreate"`
-	UpdatedAt      int64                  `json:"updatedAt" keel:"updated_at,autoupdate"`
+	ID             pulid.ID               `keel:"id,pk,autoid:wpi_"          json:"id"`
+	BusinessUnitID pulid.ID               `keel:"business_unit_id,pk,tenant" json:"businessUnitId"`
+	OrganizationID pulid.ID               `keel:"organization_id,pk,tenant"  json:"organizationId"`
+	WorkerID       pulid.ID               `keel:"worker_id"                  json:"workerId"`
+	Email          string                 `keel:"email"                      json:"email"`
+	TokenHash      string                 `keel:"token_hash"                 json:"-"`
+	Status         PortalInvitationStatus `keel:"status"                     json:"status"`
+	ExpiresAt      int64                  `keel:"expires_at"                 json:"expiresAt"`
+	InvitedByID    pulid.ID               `keel:"invited_by_id"              json:"invitedById"`
+	AcceptedAt     *int64                 `keel:"accepted_at"                json:"acceptedAt"`
+	AcceptedUserID *pulid.ID              `keel:"accepted_user_id"           json:"acceptedUserId"`
+	Version        int64                  `keel:"version,version"            json:"version"`
+	CreatedAt      int64                  `keel:"created_at,autocreate"      json:"createdAt"`
+	UpdatedAt      int64                  `keel:"updated_at,autoupdate"      json:"updatedAt"`
 
-	Worker    *Worker      `json:"worker,omitempty" keel:"belongs:worker_id"`
+	Worker    *Worker      `json:"worker,omitempty"    keel:"belongs:worker_id"`
 	InvitedBy *tenant.User `json:"invitedBy,omitempty" keel:"belongs:invited_by_id"`
 }
 

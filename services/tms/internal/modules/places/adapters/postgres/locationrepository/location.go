@@ -317,7 +317,8 @@ func (r *repository) BulkUpdateStatus(
 ) ([]*location.Location, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) ([]*location.Location, error) {
 		l := locationdb.Locations
-		entities, err := l.Where(l.ID.In(req.LocationIDs...)).UpdateReturning(ctx, r.db.Keel(ctx), l.Status.To(req.Status))
+		entities, err := l.Where(l.ID.In(req.LocationIDs...)).
+			UpdateReturning(ctx, r.db.Keel(ctx), l.Status.To(req.Status))
 		if err != nil {
 			r.l.Error("failed to bulk update location status", zap.Error(err))
 			return nil, err

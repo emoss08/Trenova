@@ -908,7 +908,10 @@ func newListFiscalPeriodsTool(
 			"close by, with their dates and whether each is open, locked or closed. " +
 			"ledger_get_fiscal_close_blockers says what stops one from closing.",
 		resource: permission.ResourceFiscalPeriod,
-		config:   listquery.Describe((*fiscalperiod.FiscalPeriod)(nil), fiscalperioddb.FiscalPeriodsSchema()),
+		config: listquery.Describe(
+			(*fiscalperiod.FiscalPeriod)(nil),
+			fiscalperioddb.FiscalPeriodsSchema(),
+		),
 		fields: []listField{
 			{
 				Name: paramStatus,

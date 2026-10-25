@@ -52,38 +52,38 @@ func (f *ExportFilter) Unfiltered() bool {
 type AIAuditExport struct {
 	keel.Table `keel:"ai_audit_exports"`
 
-	ID             pulid.ID `json:"id" keel:"id,pk,autoid:aiax_"`
+	ID             pulid.ID `json:"id"             keel:"id,pk,autoid:aiax_"`
 	BusinessUnitID pulid.ID `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
 	OrganizationID pulid.ID `json:"organizationId" keel:"organization_id,pk,tenant"`
 
 	RequestedByUserID pulid.ID      `json:"requestedByUserId" keel:"requested_by_user_id"`
-	Format            ExportFormat  `json:"format" keel:"format"`
-	Filters           *ExportFilter `json:"filters" keel:"filters,jsonb"`
-	RangeFrom         int64         `json:"rangeFrom" keel:"range_from"`
-	RangeTo           int64         `json:"rangeTo" keel:"range_to"`
+	Format            ExportFormat  `json:"format"            keel:"format"`
+	Filters           *ExportFilter `json:"filters"           keel:"filters,jsonb"`
+	RangeFrom         int64         `json:"rangeFrom"         keel:"range_from"`
+	RangeTo           int64         `json:"rangeTo"           keel:"range_to"`
 	// SnapshotSeq is the end of the tenant's chain when the export was asked
 	// for. The file holds nothing recorded after it, so a count taken first
 	// and the rows written later agree.
 	SnapshotSeq int64        `json:"snapshotSeq" keel:"snapshot_seq"`
-	Status      ExportStatus `json:"status" keel:"status"`
+	Status      ExportStatus `json:"status"      keel:"status"`
 
-	RowCount          int64  `json:"rowCount" keel:"row_count"`
-	ByteSize          int64  `json:"byteSize" keel:"byte_size"`
-	SHA256            string `json:"sha256" keel:"sha256,nullzero"`
-	ArtifactKey       string `json:"artifactKey" keel:"artifact_key,nullzero"`
+	RowCount          int64  `json:"rowCount"          keel:"row_count"`
+	ByteSize          int64  `json:"byteSize"          keel:"byte_size"`
+	SHA256            string `json:"sha256"            keel:"sha256,nullzero"`
+	ArtifactKey       string `json:"artifactKey"       keel:"artifact_key,nullzero"`
 	ArtifactExpiresAt *int64 `json:"artifactExpiresAt" keel:"artifact_expires_at"`
 
-	ChainKeyID    string `json:"chainKeyId" keel:"chain_key_id,nullzero"`
+	ChainKeyID    string `json:"chainKeyId"    keel:"chain_key_id,nullzero"`
 	ChainFirstSeq *int64 `json:"chainFirstSeq" keel:"chain_first_seq"`
-	ChainLastSeq  *int64 `json:"chainLastSeq" keel:"chain_last_seq"`
+	ChainLastSeq  *int64 `json:"chainLastSeq"  keel:"chain_last_seq"`
 	ChainComplete bool   `json:"chainComplete" keel:"chain_complete"`
 
-	WorkflowID   string `json:"workflowId" keel:"workflow_id,nullzero"`
+	WorkflowID   string `json:"workflowId"   keel:"workflow_id,nullzero"`
 	ErrorMessage string `json:"errorMessage" keel:"error_message,nullzero"`
-	StartedAt    *int64 `json:"startedAt" keel:"started_at"`
-	CompletedAt  *int64 `json:"completedAt" keel:"completed_at"`
+	StartedAt    *int64 `json:"startedAt"    keel:"started_at"`
+	CompletedAt  *int64 `json:"completedAt"  keel:"completed_at"`
 
-	Version   int64 `json:"version" keel:"version,version"`
+	Version   int64 `json:"version"   keel:"version,version"`
 	CreatedAt int64 `json:"createdAt" keel:"created_at,autocreate"`
 	UpdatedAt int64 `json:"updatedAt" keel:"updated_at,autoupdate"`
 

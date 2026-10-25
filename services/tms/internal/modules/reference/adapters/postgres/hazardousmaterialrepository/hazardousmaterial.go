@@ -121,7 +121,11 @@ func (r *repository) Create(
 				entity.Code = code
 			}
 
-			if err := hazardousmaterialdb.HazardousMaterials.Create(ctx, r.db.Keel(ctx), entity); err != nil {
+			if err := hazardousmaterialdb.HazardousMaterials.Create(
+				ctx,
+				r.db.Keel(ctx),
+				entity,
+			); err != nil {
 				r.l.Error(
 					"failed to create hazardous material",
 					zap.String("name", entity.Name),
@@ -143,7 +147,11 @@ func (r *repository) Update(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*hazardousmaterial.HazardousMaterial, error) {
-			if err := hazardousmaterialdb.HazardousMaterials.Save(ctx, r.db.Keel(ctx), entity); err != nil {
+			if err := hazardousmaterialdb.HazardousMaterials.Save(
+				ctx,
+				r.db.Keel(ctx),
+				entity,
+			); err != nil {
 				r.l.Error(
 					"failed to update hazardous material",
 					zap.String("id", entity.ID.String()),
@@ -210,7 +218,8 @@ func (r *repository) BulkUpdateStatus(
 		r.db,
 		func(ctx context.Context) ([]*hazardousmaterial.HazardousMaterial, error) {
 			hm := hazardousmaterialdb.HazardousMaterials
-			entities, err := hm.Where(hm.ID.In(req.HazardousMaterialIDs...)).UpdateReturning(ctx, r.db.Keel(ctx), hm.Status.To(req.Status))
+			entities, err := hm.Where(hm.ID.In(req.HazardousMaterialIDs...)).
+				UpdateReturning(ctx, r.db.Keel(ctx), hm.Status.To(req.Status))
 			if err != nil {
 				r.l.Error("failed to bulk update hazardous material status", zap.Error(err))
 				return nil, err

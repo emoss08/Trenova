@@ -63,31 +63,31 @@ var (
 type DocumentTemplateVersion struct {
 	keel.Table `keel:"document_template_versions"`
 
-	ID             pulid.ID `json:"id" keel:"id,pk,autoid:dtv_"`
+	ID             pulid.ID `json:"id"             keel:"id,pk,autoid:dtv_"`
 	BusinessUnitID pulid.ID `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
 	OrganizationID pulid.ID `json:"organizationId" keel:"organization_id,pk,tenant"`
-	TemplateID     pulid.ID `json:"templateId" keel:"template_id"`
+	TemplateID     pulid.ID `json:"templateId"     keel:"template_id"`
 
 	// SourceVersionID records what this was copied from, which is what makes a
 	// rollback auditable rather than a mystery edit.
 	SourceVersionID *pulid.ID `json:"sourceVersionId" keel:"source_version_id"`
 
 	VersionNumber int64         `json:"versionNumber" keel:"version_number"`
-	Status        VersionStatus `json:"status" keel:"status"`
+	Status        VersionStatus `json:"status"        keel:"status"`
 
-	Subject    string `json:"subject" keel:"subject,nullzero"`
-	BodyHTML   string `json:"bodyHtml" keel:"body_html,nullzero"`
-	BodyText   string `json:"bodyText" keel:"body_text,nullzero"`
+	Subject    string `json:"subject"    keel:"subject,nullzero"`
+	BodyHTML   string `json:"bodyHtml"   keel:"body_html,nullzero"`
+	BodyText   string `json:"bodyText"   keel:"body_text,nullzero"`
 	CSSContent string `json:"cssContent" keel:"css_content,nullzero"`
 	HeaderHTML string `json:"headerHtml" keel:"header_html,nullzero"`
 	FooterHTML string `json:"footerHtml" keel:"footer_html,nullzero"`
 
-	PageSize     PageSize    `json:"pageSize" keel:"page_size,nullzero"`
-	Orientation  Orientation `json:"orientation" keel:"orientation,nullzero"`
-	MarginTop    *float64    `json:"marginTop" keel:"margin_top"`
+	PageSize     PageSize    `json:"pageSize"     keel:"page_size,nullzero"`
+	Orientation  Orientation `json:"orientation"  keel:"orientation,nullzero"`
+	MarginTop    *float64    `json:"marginTop"    keel:"margin_top"`
 	MarginBottom *float64    `json:"marginBottom" keel:"margin_bottom"`
-	MarginLeft   *float64    `json:"marginLeft" keel:"margin_left"`
-	MarginRight  *float64    `json:"marginRight" keel:"margin_right"`
+	MarginLeft   *float64    `json:"marginLeft"   keel:"margin_left"`
+	MarginRight  *float64    `json:"marginRight"  keel:"margin_right"`
 
 	// ContentHash identifies these bytes. A generated document records it alongside
 	// the version id so a mismatch is detectable even if a row were tampered with.
@@ -97,15 +97,15 @@ type DocumentTemplateVersion struct {
 	// it, so the editor can say "the built-in has changed since you started".
 	StarterHash string `json:"starterHash" keel:"starter_hash,nullzero"`
 
-	PublishNotes  string    `json:"publishNotes" keel:"publish_notes,nullzero"`
+	PublishNotes  string    `json:"publishNotes"  keel:"publish_notes,nullzero"`
 	PublishedByID *pulid.ID `json:"publishedById" keel:"published_by_id"`
-	PublishedAt   *int64    `json:"publishedAt" keel:"published_at"`
-	ArchivedByID  *pulid.ID `json:"archivedById" keel:"archived_by_id"`
-	ArchivedAt    *int64    `json:"archivedAt" keel:"archived_at"`
+	PublishedAt   *int64    `json:"publishedAt"   keel:"published_at"`
+	ArchivedByID  *pulid.ID `json:"archivedById"  keel:"archived_by_id"`
+	ArchivedAt    *int64    `json:"archivedAt"    keel:"archived_at"`
 
-	Version     int64     `json:"version" keel:"version,version"`
-	CreatedAt   int64     `json:"createdAt" keel:"created_at,autocreate"`
-	UpdatedAt   int64     `json:"updatedAt" keel:"updated_at,autoupdate"`
+	Version     int64     `json:"version"     keel:"version,version"`
+	CreatedAt   int64     `json:"createdAt"   keel:"created_at,autocreate"`
+	UpdatedAt   int64     `json:"updatedAt"   keel:"updated_at,autoupdate"`
 	CreatedByID *pulid.ID `json:"createdById" keel:"created_by_id"`
 	UpdatedByID *pulid.ID `json:"updatedById" keel:"updated_by_id"`
 

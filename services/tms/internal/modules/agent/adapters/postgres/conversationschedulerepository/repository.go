@@ -301,7 +301,11 @@ func (r *repository) UpdateState(
 			return nil, err
 		}
 
-		if err = dberror.CheckAffected(int64(len(rows)), "Schedule", schedule.ID.String()); err != nil {
+		if err = dberror.CheckAffected(
+			int64(len(rows)),
+			"Schedule",
+			schedule.ID.String(),
+		); err != nil {
 			return nil, err
 		}
 

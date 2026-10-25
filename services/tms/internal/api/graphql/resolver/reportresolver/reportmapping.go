@@ -471,7 +471,7 @@ func reportCatalogToModel(
 	ctx context.Context,
 	catalog *reportingservice.Catalog,
 ) (*gqlmodel.ReportCatalog, error) {
-	rules, err := reportRulesAsJSON(catalog.Rules)
+	rules, err := reportRulesAsJSON(&catalog.Rules)
 	if err != nil {
 		return nil, err
 	}
@@ -491,7 +491,7 @@ func reportCatalogToModel(
 	}, nil
 }
 
-func reportRulesAsJSON(rules analytics.RuleSet) (map[string]any, error) {
+func reportRulesAsJSON(rules *analytics.RuleSet) (map[string]any, error) {
 	raw, err := sonic.Marshal(rules)
 	if err != nil {
 		return nil, fmt.Errorf("serialize report rules: %w", err)

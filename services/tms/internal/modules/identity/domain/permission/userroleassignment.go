@@ -13,13 +13,13 @@ import (
 type UserRoleAssignment struct {
 	keel.Table `keel:"user_role_assignments"`
 
-	ID             pulid.ID `json:"id" keel:"id,pk,autoid:ura_"`
-	UserID         pulid.ID `json:"userId" keel:"user_id"`
+	ID             pulid.ID `json:"id"             keel:"id,pk,autoid:ura_"`
+	UserID         pulid.ID `json:"userId"         keel:"user_id"`
 	OrganizationID pulid.ID `json:"organizationId" keel:"organization_id,tenant"`
-	RoleID         pulid.ID `json:"roleId" keel:"role_id"`
-	ExpiresAt      *int64   `json:"expiresAt" keel:"expires_at"`
-	AssignedBy     pulid.ID `json:"assignedBy" keel:"assigned_by,nullzero"`
-	AssignedAt     int64    `json:"assignedAt" keel:"assigned_at"`
+	RoleID         pulid.ID `json:"roleId"         keel:"role_id"`
+	ExpiresAt      *int64   `json:"expiresAt"      keel:"expires_at"`
+	AssignedBy     pulid.ID `json:"assignedBy"     keel:"assigned_by,nullzero"`
+	AssignedAt     int64    `json:"assignedAt"     keel:"assigned_at"`
 
 	Role *Role `json:"role,omitempty" keel:"belongs:role_id"`
 }

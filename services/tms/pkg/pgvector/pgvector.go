@@ -73,7 +73,9 @@ func ProbeVector(ctx context.Context, db *keel.DB) (VectorSupport, error) {
 
 func ProbeVectorPgx(ctx context.Context, q RowQuerier) (VectorSupport, error) {
 	var row vectorProbeRow
-	if err := row.scan(q.QueryRow(ctx, vectorProbeQuery, VectorSchemaTable, VectorExtensionName)); err != nil {
+	if err := row.scan(
+		q.QueryRow(ctx, vectorProbeQuery, VectorSchemaTable, VectorExtensionName),
+	); err != nil {
 		return VectorSupport{}, fmt.Errorf("probe pgvector: %w", err)
 	}
 

@@ -160,7 +160,9 @@ func (r *repository) GetTransferByID(
 ) (*edi.EDITransfer, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*edi.EDITransfer, error) {
 		t := edidb.EDITransfers
-		entity, err := withPartners(t.Where(t.ID.Eq(req.ID), tenantFilter(req.TenantInfo, req.Direction))).
+		entity, err := withPartners(
+			t.Where(t.ID.Eq(req.ID), tenantFilter(req.TenantInfo, req.Direction)),
+		).
 			One(ctx, r.db.Keel(ctx))
 		if err != nil {
 			return nil, transferErrors.Map(err, req.ID.String())
@@ -283,7 +285,8 @@ func (r *repository) SetApprovalWorkflowRunID(
 ) (*edi.EDITransfer, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*edi.EDITransfer, error) {
 		t := edidb.EDITransfers
-		rows, err := t.Where(t.ID.Eq(req.ID), tenantFilter(req.TenantInfo, directionInbound)).UpdateReturning(ctx, r.db.Keel(ctx), t.ApprovalWorkflowRunID.To(req.RunID), t.Version.ToExpr(t.Version))
+		rows, err := t.Where(t.ID.Eq(req.ID), tenantFilter(req.TenantInfo, directionInbound)).
+			UpdateReturning(ctx, r.db.Keel(ctx), t.ApprovalWorkflowRunID.To(req.RunID), t.Version.ToExpr(t.Version))
 		if err != nil {
 			return nil, transferErrors.Map(err, req.ID.String())
 		}

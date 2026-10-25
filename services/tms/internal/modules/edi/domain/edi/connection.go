@@ -37,37 +37,37 @@ type ConnectionPartnerConfig struct {
 type EDIConnection struct {
 	keel.Table `keel:"edi_connections"`
 
-	ID                   pulid.ID                `json:"id" keel:"id,pk,autoid:edic_"`
-	BusinessUnitID       pulid.ID                `json:"businessUnitId" keel:"business_unit_id,tenant"`
+	ID                   pulid.ID                `json:"id"                   keel:"id,pk,autoid:edic_"`
+	BusinessUnitID       pulid.ID                `json:"businessUnitId"       keel:"business_unit_id,tenant"`
 	SourceOrganizationID pulid.ID                `json:"sourceOrganizationId" keel:"source_organization_id"`
 	TargetOrganizationID pulid.ID                `json:"targetOrganizationId" keel:"target_organization_id"`
-	SourcePartnerID      pulid.ID                `json:"sourcePartnerId" keel:"source_partner_id,nullzero"`
-	TargetPartnerID      pulid.ID                `json:"targetPartnerId" keel:"target_partner_id,nullzero"`
-	Method               ConnectionMethod        `json:"method" keel:"method"`
-	Status               ConnectionStatus        `json:"status" keel:"status"`
-	Capabilities         ConnectionCapabilities  `json:"capabilities" keel:"capabilities,jsonb"`
-	SourcePartnerConfig  ConnectionPartnerConfig `json:"sourcePartnerConfig" keel:"source_partner_config,jsonb"`
-	TargetPartnerConfig  ConnectionPartnerConfig `json:"targetPartnerConfig" keel:"target_partner_config,jsonb"`
-	RequestedByID        pulid.ID                `json:"requestedById" keel:"requested_by_id,nullzero"`
-	RequestedAt          int64                   `json:"requestedAt" keel:"requested_at"`
-	AcceptedByID         pulid.ID                `json:"acceptedById" keel:"accepted_by_id,nullzero"`
-	AcceptedAt           *int64                  `json:"acceptedAt" keel:"accepted_at"`
-	RejectedByID         pulid.ID                `json:"rejectedById" keel:"rejected_by_id,nullzero"`
-	RejectedAt           *int64                  `json:"rejectedAt" keel:"rejected_at"`
-	RejectionReason      string                  `json:"rejectionReason" keel:"rejection_reason,nullzero"`
-	SuspendedByID        pulid.ID                `json:"suspendedById" keel:"suspended_by_id,nullzero"`
-	SuspendedAt          *int64                  `json:"suspendedAt" keel:"suspended_at"`
-	RevokedByID          pulid.ID                `json:"revokedById" keel:"revoked_by_id,nullzero"`
-	RevokedAt            *int64                  `json:"revokedAt" keel:"revoked_at"`
-	Version              int64                   `json:"version" keel:"version,version"`
-	CreatedAt            int64                   `json:"createdAt" keel:"created_at,autocreate"`
-	UpdatedAt            int64                   `json:"updatedAt" keel:"updated_at,autoupdate"`
+	SourcePartnerID      pulid.ID                `json:"sourcePartnerId"      keel:"source_partner_id,nullzero"`
+	TargetPartnerID      pulid.ID                `json:"targetPartnerId"      keel:"target_partner_id,nullzero"`
+	Method               ConnectionMethod        `json:"method"               keel:"method"`
+	Status               ConnectionStatus        `json:"status"               keel:"status"`
+	Capabilities         ConnectionCapabilities  `json:"capabilities"         keel:"capabilities,jsonb"`
+	SourcePartnerConfig  ConnectionPartnerConfig `json:"sourcePartnerConfig"  keel:"source_partner_config,jsonb"`
+	TargetPartnerConfig  ConnectionPartnerConfig `json:"targetPartnerConfig"  keel:"target_partner_config,jsonb"`
+	RequestedByID        pulid.ID                `json:"requestedById"        keel:"requested_by_id,nullzero"`
+	RequestedAt          int64                   `json:"requestedAt"          keel:"requested_at"`
+	AcceptedByID         pulid.ID                `json:"acceptedById"         keel:"accepted_by_id,nullzero"`
+	AcceptedAt           *int64                  `json:"acceptedAt"           keel:"accepted_at"`
+	RejectedByID         pulid.ID                `json:"rejectedById"         keel:"rejected_by_id,nullzero"`
+	RejectedAt           *int64                  `json:"rejectedAt"           keel:"rejected_at"`
+	RejectionReason      string                  `json:"rejectionReason"      keel:"rejection_reason,nullzero"`
+	SuspendedByID        pulid.ID                `json:"suspendedById"        keel:"suspended_by_id,nullzero"`
+	SuspendedAt          *int64                  `json:"suspendedAt"          keel:"suspended_at"`
+	RevokedByID          pulid.ID                `json:"revokedById"          keel:"revoked_by_id,nullzero"`
+	RevokedAt            *int64                  `json:"revokedAt"            keel:"revoked_at"`
+	Version              int64                   `json:"version"              keel:"version,version"`
+	CreatedAt            int64                   `json:"createdAt"            keel:"created_at,autocreate"`
+	UpdatedAt            int64                   `json:"updatedAt"            keel:"updated_at,autoupdate"`
 
 	BusinessUnit       *tenant.BusinessUnit `json:"businessUnit,omitempty"`
 	SourceOrganization *tenant.Organization `json:"sourceOrganization,omitempty" keel:"belongs:source_organization_id"`
 	TargetOrganization *tenant.Organization `json:"targetOrganization,omitempty" keel:"belongs:target_organization_id"`
-	SourcePartner      *EDIPartner          `json:"sourcePartner,omitempty" keel:"belongs:source_partner_id"`
-	TargetPartner      *EDIPartner          `json:"targetPartner,omitempty" keel:"belongs:target_partner_id"`
+	SourcePartner      *EDIPartner          `json:"sourcePartner,omitempty"      keel:"belongs:source_partner_id"`
+	TargetPartner      *EDIPartner          `json:"targetPartner,omitempty"      keel:"belongs:target_partner_id"`
 }
 
 func (c *EDIConnection) BeforeUpdate(ctx context.Context) error {

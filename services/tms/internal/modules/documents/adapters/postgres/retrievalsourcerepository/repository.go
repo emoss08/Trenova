@@ -250,9 +250,13 @@ func (r *repository) ListModelKeys(
 
 		if req.IncludeEmbeddings {
 			emb := airetrievaldb.Embeddings
-			embedded, err := keel.Into[string](ctx, db, emb.Pick(emb.ModelKey).Group(emb.ModelKey))
-			if err != nil {
-				return nil, fmt.Errorf("list retrieval model keys: %w", err)
+			embedded, keysErr := keel.Into[string](
+				ctx,
+				db,
+				emb.Pick(emb.ModelKey).Group(emb.ModelKey),
+			)
+			if keysErr != nil {
+				return nil, fmt.Errorf("list retrieval model keys: %w", keysErr)
 			}
 			keys = append(keys, embedded...)
 		}

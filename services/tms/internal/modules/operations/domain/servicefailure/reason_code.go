@@ -24,33 +24,33 @@ var (
 type ReasonCode struct {
 	keel.Table `keel:"service_failure_reason_codes"`
 
-	ID                   pulid.ID            `json:"id" keel:"id,pk,autoid:sfrc_"`
-	BusinessUnitID       pulid.ID            `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
-	OrganizationID       pulid.ID            `json:"organizationId" keel:"organization_id,pk,tenant"`
-	Code                 string              `json:"code" keel:"code"`
-	Label                string              `json:"label" keel:"label"`
-	Description          string              `json:"description" keel:"description,nullzero"`
-	Category             ReasonCategory      `json:"category" keel:"category"`
-	AppliesTo            ReasonCodeAppliesTo `json:"appliesTo" keel:"applies_to"`
-	DefaultStatusCode    string              `json:"defaultStatusCode" keel:"default_status_code,nullzero"`
-	DefaultReasonCode    string              `json:"defaultReasonCode" keel:"default_reason_code,nullzero"`
-	DefaultExceptionCode string              `json:"defaultExceptionCode" keel:"default_exception_code,nullzero"`
-	DefaultNote          string              `json:"defaultNote" keel:"default_note,nullzero"`
-	Active               bool                `json:"active" keel:"active"`
-	SortOrder            int32               `json:"sortOrder" keel:"sort_order"`
+	ID                   pulid.ID            `json:"id"                    keel:"id,pk,autoid:sfrc_"`
+	BusinessUnitID       pulid.ID            `json:"businessUnitId"        keel:"business_unit_id,pk,tenant"`
+	OrganizationID       pulid.ID            `json:"organizationId"        keel:"organization_id,pk,tenant"`
+	Code                 string              `json:"code"                  keel:"code"`
+	Label                string              `json:"label"                 keel:"label"`
+	Description          string              `json:"description"           keel:"description,nullzero"`
+	Category             ReasonCategory      `json:"category"              keel:"category"`
+	AppliesTo            ReasonCodeAppliesTo `json:"appliesTo"             keel:"applies_to"`
+	DefaultStatusCode    string              `json:"defaultStatusCode"     keel:"default_status_code,nullzero"`
+	DefaultReasonCode    string              `json:"defaultReasonCode"     keel:"default_reason_code,nullzero"`
+	DefaultExceptionCode string              `json:"defaultExceptionCode"  keel:"default_exception_code,nullzero"`
+	DefaultNote          string              `json:"defaultNote"           keel:"default_note,nullzero"`
+	Active               bool                `json:"active"                keel:"active"`
+	SortOrder            int32               `json:"sortOrder"             keel:"sort_order"`
 	ExternalMap          map[string]any      `json:"externalMap,omitempty" keel:"external_map,jsonb,nullzero"`
-	ArchivedAt           *int64              `json:"archivedAt" keel:"archived_at"`
-	ArchivedByID         *pulid.ID           `json:"archivedById" keel:"archived_by_id"`
-	ActivatedAt          *int64              `json:"activatedAt" keel:"activated_at"`
-	ActivatedByID        *pulid.ID           `json:"activatedById" keel:"activated_by_id"`
-	Version              int64               `json:"version" keel:"version,version"`
-	CreatedAt            int64               `json:"createdAt" keel:"created_at,autocreate"`
-	UpdatedAt            int64               `json:"updatedAt" keel:"updated_at,autoupdate"`
-	SearchVector         string              `json:"-" keel:"search_vector,tsvector,readonly,noselect"`
+	ArchivedAt           *int64              `json:"archivedAt"            keel:"archived_at"`
+	ArchivedByID         *pulid.ID           `json:"archivedById"          keel:"archived_by_id"`
+	ActivatedAt          *int64              `json:"activatedAt"           keel:"activated_at"`
+	ActivatedByID        *pulid.ID           `json:"activatedById"         keel:"activated_by_id"`
+	Version              int64               `json:"version"               keel:"version,version"`
+	CreatedAt            int64               `json:"createdAt"             keel:"created_at,autocreate"`
+	UpdatedAt            int64               `json:"updatedAt"             keel:"updated_at,autoupdate"`
+	SearchVector         string              `json:"-"                     keel:"search_vector,tsvector,readonly,noselect"`
 
 	BusinessUnit *tenant.BusinessUnit `json:"-"`
 	Organization *tenant.Organization `json:"-"`
-	ArchivedBy   *tenant.User         `json:"archivedBy,omitempty" keel:"belongs:archived_by_id"`
+	ArchivedBy   *tenant.User         `json:"archivedBy,omitempty"  keel:"belongs:archived_by_id"`
 	ActivatedBy  *tenant.User         `json:"activatedBy,omitempty" keel:"belongs:activated_by_id"`
 }
 

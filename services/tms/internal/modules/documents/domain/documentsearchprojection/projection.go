@@ -18,22 +18,22 @@ const maxIndexedContentChars = 100000
 type Projection struct {
 	keel.Table `keel:"document_search_projections"`
 
-	ID                  pulid.ID `json:"id" keel:"id,pk"`
-	OrganizationID      pulid.ID `json:"organizationId" keel:"organization_id,pk,tenant"`
-	BusinessUnitID      pulid.ID `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
-	ResourceID          string   `json:"resourceId" keel:"resource_id"`
-	ResourceType        string   `json:"resourceType" keel:"resource_type"`
-	FileName            string   `json:"fileName" keel:"file_name"`
-	OriginalName        string   `json:"originalName" keel:"original_name"`
-	Description         string   `json:"description" keel:"description,nullzero"`
-	Tags                []string `json:"tags" keel:"tags"`
-	Status              string   `json:"status" keel:"status"`
-	ContentStatus       string   `json:"contentStatus" keel:"content_status"`
-	DetectedKind        string   `json:"detectedKind" keel:"detected_kind,nullzero"`
+	ID                  pulid.ID `json:"id"                  keel:"id,pk"`
+	OrganizationID      pulid.ID `json:"organizationId"      keel:"organization_id,pk,tenant"`
+	BusinessUnitID      pulid.ID `json:"businessUnitId"      keel:"business_unit_id,pk,tenant"`
+	ResourceID          string   `json:"resourceId"          keel:"resource_id"`
+	ResourceType        string   `json:"resourceType"        keel:"resource_type"`
+	FileName            string   `json:"fileName"            keel:"file_name"`
+	OriginalName        string   `json:"originalName"        keel:"original_name"`
+	Description         string   `json:"description"         keel:"description,nullzero"`
+	Tags                []string `json:"tags"                keel:"tags"`
+	Status              string   `json:"status"              keel:"status"`
+	ContentStatus       string   `json:"contentStatus"       keel:"content_status"`
+	DetectedKind        string   `json:"detectedKind"        keel:"detected_kind,nullzero"`
 	ShipmentDraftStatus string   `json:"shipmentDraftStatus" keel:"shipment_draft_status"`
-	ContentText         string   `json:"contentText" keel:"content_text,nullzero"`
-	CreatedAt           int64    `json:"createdAt" keel:"created_at,autocreate"`
-	UpdatedAt           int64    `json:"updatedAt" keel:"updated_at,autoupdate"`
+	ContentText         string   `json:"contentText"         keel:"content_text,nullzero"`
+	CreatedAt           int64    `json:"createdAt"           keel:"created_at,autocreate"`
+	UpdatedAt           int64    `json:"updatedAt"           keel:"updated_at,autoupdate"`
 }
 
 func (p *Projection) BeforeUpdate(_ context.Context) error {

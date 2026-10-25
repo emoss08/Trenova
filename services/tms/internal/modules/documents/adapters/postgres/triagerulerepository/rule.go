@@ -92,7 +92,7 @@ func (r *repository) FindBySentence(
 			return nil, err
 		}
 		if len(rules) == 0 {
-			return nil, nil //nolint:nilnil // no rule says this sentence yet
+			return nil, nil
 		}
 
 		return rules[0], nil
@@ -180,7 +180,11 @@ func (r *repository) SetEnabled(
 		if err != nil {
 			return nil, ruleErrors.Map(err, req.ID.String())
 		}
-		if err = dberror.CheckAffected(int64(len(rules)), "TriageRule", req.ID.String()); err != nil {
+		if err = dberror.CheckAffected(
+			int64(len(rules)),
+			"TriageRule",
+			req.ID.String(),
+		); err != nil {
 			return nil, err
 		}
 

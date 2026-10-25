@@ -58,7 +58,10 @@ func newListEquipmentManufacturersTool(
 		entityPlural: "equipment manufacturers",
 		summary:      equipmentManufacturersSummary,
 		resource:     permission.ResourceEquipmentManufacturer,
-		config:       listquery.Describe((*equipmentmanufacturer.EquipmentManufacturer)(nil), equipmentmanufacturerdb.EquipmentManufacturersSchema()),
+		config: listquery.Describe(
+			(*equipmentmanufacturer.EquipmentManufacturer)(nil),
+			equipmentmanufacturerdb.EquipmentManufacturersSchema(),
+		),
 		fields: []listField{
 			{Name: paramStatus, Kind: filterEnum, Values: statusValues},
 			{Name: listFieldName, Kind: filterText, Sortable: true},

@@ -23,31 +23,31 @@ const OrganizationIDPrefix = "org_"
 type Organization struct {
 	keel.Table `keel:"organizations"`
 
-	ID                     pulid.ID  `json:"id" keel:"id,pk,autoid:org_"`
-	StateID                pulid.ID  `json:"stateId" keel:"state_id"`
-	BusinessUnitID         pulid.ID  `json:"businessUnitId" keel:"business_unit_id,tenant"`
-	Name                   string    `json:"name" keel:"name"`
-	LoginSlug              string    `json:"loginSlug" keel:"login_slug,nullzero"`
-	ScacCode               string    `json:"scacCode" keel:"scac_code"`
-	DOTNumber              string    `json:"dotNumber" keel:"dot_number"`
-	LogoURL                string    `json:"logoUrl" keel:"logo_url,nullzero"`
-	BucketName             string    `json:"bucketName" keel:"bucket_name"`
-	AddressLine1           string    `json:"addressLine1" keel:"address_line1"`
-	AddressLine2           string    `json:"addressLine2" keel:"address_line2,nullzero"`
-	City                   string    `json:"city" keel:"city"`
-	PostalCode             string    `json:"postalCode" keel:"postal_code"`
-	Timezone               string    `json:"timezone" keel:"timezone"`
-	Locale                 string    `json:"locale" keel:"locale"`
-	TaxID                  string    `json:"taxId" keel:"tax_id,nullzero"`
-	BrokerageEnabled       bool      `json:"brokerageEnabled" keel:"brokerage_enabled"`
+	ID                     pulid.ID  `json:"id"                     keel:"id,pk,autoid:org_"`
+	StateID                pulid.ID  `json:"stateId"                keel:"state_id"`
+	BusinessUnitID         pulid.ID  `json:"businessUnitId"         keel:"business_unit_id,tenant"`
+	Name                   string    `json:"name"                   keel:"name"`
+	LoginSlug              string    `json:"loginSlug"              keel:"login_slug,nullzero"`
+	ScacCode               string    `json:"scacCode"               keel:"scac_code"`
+	DOTNumber              string    `json:"dotNumber"              keel:"dot_number"`
+	LogoURL                string    `json:"logoUrl"                keel:"logo_url,nullzero"`
+	BucketName             string    `json:"bucketName"             keel:"bucket_name"`
+	AddressLine1           string    `json:"addressLine1"           keel:"address_line1"`
+	AddressLine2           string    `json:"addressLine2"           keel:"address_line2,nullzero"`
+	City                   string    `json:"city"                   keel:"city"`
+	PostalCode             string    `json:"postalCode"             keel:"postal_code"`
+	Timezone               string    `json:"timezone"               keel:"timezone"`
+	Locale                 string    `json:"locale"                 keel:"locale"`
+	TaxID                  string    `json:"taxId"                  keel:"tax_id,nullzero"`
+	BrokerageEnabled       bool      `json:"brokerageEnabled"       keel:"brokerage_enabled"`
 	AssetOperationsEnabled bool      `json:"assetOperationsEnabled" keel:"asset_operations_enabled"`
-	Metadata               *Metadata `json:"-" keel:"metadata,jsonb"`
-	Version                int64     `json:"version" keel:"version,version"`
-	CreatedAt              int64     `json:"createdAt" keel:"created_at,autocreate"`
-	UpdatedAt              int64     `json:"updatedAt" keel:"updated_at,autoupdate"`
+	Metadata               *Metadata `json:"-"                      keel:"metadata,jsonb"`
+	Version                int64     `json:"version"                keel:"version,version"`
+	CreatedAt              int64     `json:"createdAt"              keel:"created_at,autocreate"`
+	UpdatedAt              int64     `json:"updatedAt"              keel:"updated_at,autoupdate"`
 
 	// Relationships
-	State        *usstate.UsState `json:"state" keel:"belongs:state_id"`
+	State        *usstate.UsState `json:"state"        keel:"belongs:state_id"`
 	BusinessUnit *BusinessUnit    `json:"businessUnit" keel:"belongs:business_unit_id"`
 }
 

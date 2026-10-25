@@ -260,7 +260,8 @@ func applySeedJournalBalances(
 		),
 		b.NetChangeMinor.ToExpr(keel.Raw("? + ?", b.NetChangeMinor, b.NetChangeMinor.Excluded())),
 		b.LastJournalEntryID.ToExpr(b.LastJournalEntryID.Excluded()),
-	)); err != nil {
+	),
+	); err != nil {
 		return fmt.Errorf("upsert gl balance by period: %w", err)
 	}
 

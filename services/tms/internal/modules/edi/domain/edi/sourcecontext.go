@@ -11,20 +11,20 @@ import (
 type EDISourceContextSchema struct {
 	keel.Table `keel:"edi_source_context_schemas"`
 
-	ID             pulid.ID                 `json:"id" keel:"id,pk,autoid:edisc_"`
+	ID             pulid.ID                 `json:"id"             keel:"id,pk,autoid:edisc_"`
 	BusinessUnitID pulid.ID                 `json:"businessUnitId" keel:"business_unit_id,nullzero"`
 	OrganizationID pulid.ID                 `json:"organizationId" keel:"organization_id,nullzero"`
-	Standard       EDIStandard              `json:"standard" keel:"standard"`
+	Standard       EDIStandard              `json:"standard"       keel:"standard"`
 	TransactionSet TransactionSet           `json:"transactionSet" keel:"transaction_set"`
-	Direction      DocumentDirection        `json:"direction" keel:"direction"`
-	X12Version     string                   `json:"x12Version" keel:"x12_version"`
-	ContextKey     string                   `json:"contextKey" keel:"context_key"`
-	SchemaVersion  int64                    `json:"schemaVersion" keel:"schema_version"`
-	Name           string                   `json:"name" keel:"name"`
-	Description    string                   `json:"description" keel:"description,nullzero"`
-	Status         SourceContextFieldStatus `json:"status" keel:"status"`
-	CreatedAt      int64                    `json:"createdAt" keel:"created_at,autocreate"`
-	UpdatedAt      int64                    `json:"updatedAt" keel:"updated_at,autoupdate"`
+	Direction      DocumentDirection        `json:"direction"      keel:"direction"`
+	X12Version     string                   `json:"x12Version"     keel:"x12_version"`
+	ContextKey     string                   `json:"contextKey"     keel:"context_key"`
+	SchemaVersion  int64                    `json:"schemaVersion"  keel:"schema_version"`
+	Name           string                   `json:"name"           keel:"name"`
+	Description    string                   `json:"description"    keel:"description,nullzero"`
+	Status         SourceContextFieldStatus `json:"status"         keel:"status"`
+	CreatedAt      int64                    `json:"createdAt"      keel:"created_at,autocreate"`
+	UpdatedAt      int64                    `json:"updatedAt"      keel:"updated_at,autoupdate"`
 
 	Fields []*EDISourceContextField `json:"fields,omitempty" keel:"many:schema_id"`
 }
@@ -32,19 +32,19 @@ type EDISourceContextSchema struct {
 type EDISourceContextField struct {
 	keel.Table `keel:"edi_source_context_fields"`
 
-	ID          pulid.ID                 `json:"id" keel:"id,pk,autoid:ediscf_"`
-	SchemaID    pulid.ID                 `json:"schemaId" keel:"schema_id"`
-	Path        string                   `json:"path" keel:"path"`
-	SourceKind  SourceContextKind        `json:"sourceKind" keel:"source_kind"`
-	DataType    SourceContextDataType    `json:"dataType" keel:"data_type"`
-	Repeated    bool                     `json:"repeated" keel:"repeated"`
-	RepeatPath  string                   `json:"repeatPath" keel:"repeat_path,nullzero"`
-	ParentPath  string                   `json:"parentPath" keel:"parent_path,nullzero"`
+	ID          pulid.ID                 `json:"id"          keel:"id,pk,autoid:ediscf_"`
+	SchemaID    pulid.ID                 `json:"schemaId"    keel:"schema_id"`
+	Path        string                   `json:"path"        keel:"path"`
+	SourceKind  SourceContextKind        `json:"sourceKind"  keel:"source_kind"`
+	DataType    SourceContextDataType    `json:"dataType"    keel:"data_type"`
+	Repeated    bool                     `json:"repeated"    keel:"repeated"`
+	RepeatPath  string                   `json:"repeatPath"  keel:"repeat_path,nullzero"`
+	ParentPath  string                   `json:"parentPath"  keel:"parent_path,nullzero"`
 	DisplayName string                   `json:"displayName" keel:"display_name"`
 	Description string                   `json:"description" keel:"description,nullzero"`
-	Status      SourceContextFieldStatus `json:"status" keel:"status"`
-	CreatedAt   int64                    `json:"createdAt" keel:"created_at,autocreate"`
-	UpdatedAt   int64                    `json:"updatedAt" keel:"updated_at,autoupdate"`
+	Status      SourceContextFieldStatus `json:"status"      keel:"status"`
+	CreatedAt   int64                    `json:"createdAt"   keel:"created_at,autocreate"`
+	UpdatedAt   int64                    `json:"updatedAt"   keel:"updated_at,autoupdate"`
 
 	Schema *EDISourceContextSchema `json:"schema,omitempty" keel:"belongs:schema_id"`
 }

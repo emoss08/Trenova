@@ -41,27 +41,27 @@ type Page struct {
 type ExtractionCase struct {
 	keel.Table `keel:"extraction_eval_cases"`
 
-	ID             pulid.ID `json:"id" keel:"id,pk,autoid:eec_"`
+	ID             pulid.ID `json:"id"             keel:"id,pk,autoid:eec_"`
 	BusinessUnitID pulid.ID `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
 	OrganizationID pulid.ID `json:"organizationId" keel:"organization_id,pk,tenant"`
 
-	Task                aicorrection.Task      `json:"task" keel:"task"`
-	Status              CaseStatus             `json:"status" keel:"status"`
-	Title               string                 `json:"title" keel:"title"`
-	DocumentKind        string                 `json:"documentKind" keel:"document_kind,nullzero"`
+	Task                aicorrection.Task      `json:"task"                keel:"task"`
+	Status              CaseStatus             `json:"status"              keel:"status"`
+	Title               string                 `json:"title"               keel:"title"`
+	DocumentKind        string                 `json:"documentKind"        keel:"document_kind,nullzero"`
 	DocumentFingerprint string                 `json:"documentFingerprint" keel:"document_fingerprint,nullzero"`
-	FileName            string                 `json:"fileName" keel:"file_name,nullzero"`
-	Pages               []Page                 `json:"pages" keel:"pages,jsonb"`
-	PageCount           int                    `json:"pageCount" keel:"page_count"`
-	InputHash           string                 `json:"inputHash" keel:"input_hash"`
-	Expected            *aicorrection.Snapshot `json:"expected" keel:"expected,jsonb"`
-	ExpectedFieldCount  int                    `json:"expectedFieldCount" keel:"expected_field_count"`
-	SourceCorrectionID  *pulid.ID              `json:"sourceCorrectionId" keel:"source_correction_id"`
-	SourceDocumentID    *pulid.ID              `json:"sourceDocumentId" keel:"source_document_id"`
-	Notes               string                 `json:"notes" keel:"notes,nullzero"`
-	CreatedByID         pulid.ID               `json:"createdById" keel:"created_by_id"`
+	FileName            string                 `json:"fileName"            keel:"file_name,nullzero"`
+	Pages               []Page                 `json:"pages"               keel:"pages,jsonb"`
+	PageCount           int                    `json:"pageCount"           keel:"page_count"`
+	InputHash           string                 `json:"inputHash"           keel:"input_hash"`
+	Expected            *aicorrection.Snapshot `json:"expected"            keel:"expected,jsonb"`
+	ExpectedFieldCount  int                    `json:"expectedFieldCount"  keel:"expected_field_count"`
+	SourceCorrectionID  *pulid.ID              `json:"sourceCorrectionId"  keel:"source_correction_id"`
+	SourceDocumentID    *pulid.ID              `json:"sourceDocumentId"    keel:"source_document_id"`
+	Notes               string                 `json:"notes"               keel:"notes,nullzero"`
+	CreatedByID         pulid.ID               `json:"createdById"         keel:"created_by_id"`
 
-	Version   int64 `json:"version" keel:"version,version"`
+	Version   int64 `json:"version"   keel:"version,version"`
 	CreatedAt int64 `json:"createdAt" keel:"created_at,autocreate"`
 	UpdatedAt int64 `json:"updatedAt" keel:"updated_at,autoupdate"`
 

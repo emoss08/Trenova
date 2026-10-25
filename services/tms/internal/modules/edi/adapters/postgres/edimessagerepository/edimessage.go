@@ -197,7 +197,11 @@ func (r *repository) CreateMessageWithDiagnostics(
 			diagnostic.OrganizationID = req.Message.OrganizationID
 		}
 		if len(req.Diagnostics) > 0 {
-			if err := edidb.EDIMessageValidationErrors.CreateMany(ctx, db, req.Diagnostics); err != nil {
+			if err := edidb.EDIMessageValidationErrors.CreateMany(
+				ctx,
+				db,
+				req.Diagnostics,
+			); err != nil {
 				return nil, messageErrors.Map(err, req.Message.ID.String())
 			}
 		}
@@ -319,7 +323,9 @@ func (r *repository) GetServiceFailure214Status(
 				return nil, err
 			}
 			if len(rows) == 0 {
-				return &ediports.ServiceFailure214StatusRow{ServiceFailureID: req.ServiceFailureID}, nil
+				return &ediports.ServiceFailure214StatusRow{
+					ServiceFailureID: req.ServiceFailureID,
+				}, nil
 			}
 
 			return &rows[0], nil
@@ -595,8 +601,10 @@ func scorecardQuery(req *ediports.GetEDIPartnerScorecardsRequest) *keel.Query[ed
 				m.AckStatus.Eq(edi.MessageAcknowledgmentStatusPending),
 				m.GeneratedAt.Lt(req.OverdueAckPendingSince),
 			)),
-			keel.Count().Filter(keel.And(pendingDelivery, m.GeneratedAt.Lt(req.PendingOver4hBefore))),
-			keel.Count().Filter(keel.And(pendingDelivery, m.GeneratedAt.Lt(req.PendingOver24hBefore))),
+			keel.Count().
+				Filter(keel.And(pendingDelivery, m.GeneratedAt.Lt(req.PendingOver4hBefore))),
+			keel.Count().
+				Filter(keel.And(pendingDelivery, m.GeneratedAt.Lt(req.PendingOver24hBefore))),
 			m.GeneratedAt.Min().Filter(pendingDelivery),
 		).
 		Order(partner.Name.Max().Asc())
@@ -637,7 +645,8 @@ func volumeQuery(req *ediports.GetEDIVolumeSeriesRequest) *keel.Query[edi.EDIMes
 		Pick(
 			bucketStart,
 			keel.Count().Filter(outbound),
-			keel.Count().Filter(keel.And(outbound, m.DeliveryStatus.Eq(edi.MessageDeliveryStatusSent))),
+			keel.Count().
+				Filter(keel.And(outbound, m.DeliveryStatus.Eq(edi.MessageDeliveryStatusSent))),
 			keel.Count().Filter(keel.And(outbound, m.DeliveryStatus.In(
 				edi.MessageDeliveryStatusFailed,
 				edi.MessageDeliveryStatusDeadLettered,

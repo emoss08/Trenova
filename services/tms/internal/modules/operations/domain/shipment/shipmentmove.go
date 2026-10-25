@@ -14,32 +14,32 @@ const maxDistanceFieldLength = 50
 
 // Movement legs within a shipment
 type ShipmentMove struct {
-	keel.Table `                                             keel:"shipment_moves,report=Operations"`
+	keel.Table `keel:"shipment_moves,report=Operations"`
 
-	ID                     pulid.ID           `json:"id" keel:"id,pk,autoid:sm_"`
-	BusinessUnitID         pulid.ID           `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
-	OrganizationID         pulid.ID           `json:"organizationId" keel:"organization_id,pk,tenant"`
-	ShipmentID             pulid.ID           `json:"shipmentId" keel:"shipment_id"`
-	Status                 MoveStatus         `json:"status" keel:"status"`
-	CoverageType           MoveCoverageType   `json:"coverageType" keel:"coverage_type"`
-	Loaded                 bool               `json:"loaded" keel:"loaded"`
-	Sequence               int64              `json:"sequence" keel:"sequence,dimension"`
-	Distance               *float64           `json:"distance" keel:"distance,label=Miles,format=distance"`
-	DistanceSource         string             `json:"distanceSource" keel:"distance_source,nullzero"`
-	DistanceProvider       string             `json:"distanceProvider" keel:"distance_provider,nullzero"`
-	DistanceCalculatedAt   *int64             `json:"distanceCalculatedAt" keel:"distance_calculated_at"`
-	DistanceRouteSignature string             `json:"distanceRouteSignature" keel:"distance_route_signature,nullzero"`
-	DistanceDataVersion    string             `json:"distanceDataVersion" keel:"distance_data_version,nullzero"`
-	DistanceRoutingType    string             `json:"distanceRoutingType" keel:"distance_routing_type,nullzero"`
-	DistanceUnits          string             `json:"distanceUnits" keel:"distance_units,nullzero"`
-	DistanceMetadata       map[string]any     `json:"distanceMetadata,omitempty" keel:"distance_metadata,jsonb,nullzero"`
-	Version                int64              `json:"version" keel:"version,version"`
-	CreatedAt              int64              `json:"createdAt" keel:"created_at,autocreate"`
-	UpdatedAt              int64              `json:"updatedAt" keel:"updated_at,autoupdate"`
-	Stops                  []*Stop            `json:"stops,omitempty" keel:"many:shipment_move_id"`
-	Assignment             *Assignment        `json:"assignment,omitempty" keel:"one:shipment_move_id"`
+	ID                     pulid.ID           `json:"id"                          keel:"id,pk,autoid:sm_"`
+	BusinessUnitID         pulid.ID           `json:"businessUnitId"              keel:"business_unit_id,pk,tenant"`
+	OrganizationID         pulid.ID           `json:"organizationId"              keel:"organization_id,pk,tenant"`
+	ShipmentID             pulid.ID           `json:"shipmentId"                  keel:"shipment_id"`
+	Status                 MoveStatus         `json:"status"                      keel:"status"`
+	CoverageType           MoveCoverageType   `json:"coverageType"                keel:"coverage_type"`
+	Loaded                 bool               `json:"loaded"                      keel:"loaded"`
+	Sequence               int64              `json:"sequence"                    keel:"sequence,dimension"`
+	Distance               *float64           `json:"distance"                    keel:"distance,label=Miles,format=distance"`
+	DistanceSource         string             `json:"distanceSource"              keel:"distance_source,nullzero"`
+	DistanceProvider       string             `json:"distanceProvider"            keel:"distance_provider,nullzero"`
+	DistanceCalculatedAt   *int64             `json:"distanceCalculatedAt"        keel:"distance_calculated_at"`
+	DistanceRouteSignature string             `json:"distanceRouteSignature"      keel:"distance_route_signature,nullzero"`
+	DistanceDataVersion    string             `json:"distanceDataVersion"         keel:"distance_data_version,nullzero"`
+	DistanceRoutingType    string             `json:"distanceRoutingType"         keel:"distance_routing_type,nullzero"`
+	DistanceUnits          string             `json:"distanceUnits"               keel:"distance_units,nullzero"`
+	DistanceMetadata       map[string]any     `json:"distanceMetadata,omitempty"  keel:"distance_metadata,jsonb,nullzero"`
+	Version                int64              `json:"version"                     keel:"version,version"`
+	CreatedAt              int64              `json:"createdAt"                   keel:"created_at,autocreate"`
+	UpdatedAt              int64              `json:"updatedAt"                   keel:"updated_at,autoupdate"`
+	Stops                  []*Stop            `json:"stops,omitempty"             keel:"many:shipment_move_id"`
+	Assignment             *Assignment        `json:"assignment,omitempty"        keel:"one:shipment_move_id"`
 	CarrierAssignment      *CarrierAssignment `json:"carrierAssignment,omitempty" keel:"one:shipment_move_id,noreport"`
-	Shipment               *Shipment          `json:"shipment,omitempty" keel:"belongs:shipment_id"`
+	Shipment               *Shipment          `json:"shipment,omitempty"          keel:"belongs:shipment_id"`
 
 	JurisdictionMiles      []*ShipmentMoveJurisdictionMile `json:"jurisdictionMiles,omitempty" keel:"many:shipment_move_id,noreport"`
 	JurisdictionMilesDirty bool                            `json:"-"`

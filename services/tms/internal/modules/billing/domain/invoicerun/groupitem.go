@@ -17,28 +17,28 @@ import (
 type InvoiceRunGroupItem struct {
 	keel.Table `keel:"invoice_run_group_items"`
 
-	ID             pulid.ID `json:"id" keel:"id,pk,autoid:invrgi_"`
+	ID             pulid.ID `json:"id"             keel:"id,pk,autoid:invrgi_"`
 	BusinessUnitID pulid.ID `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
 	OrganizationID pulid.ID `json:"organizationId" keel:"organization_id,pk,tenant"`
-	RunID          pulid.ID `json:"runId" keel:"run_id"`
-	GroupID        pulid.ID `json:"groupId" keel:"group_id"`
+	RunID          pulid.ID `json:"runId"          keel:"run_id"`
+	GroupID        pulid.ID `json:"groupId"        keel:"group_id"`
 
 	BillingQueueItemID pulid.ID `json:"billingQueueItemId" keel:"billing_queue_item_id"`
-	ShipmentID         pulid.ID `json:"shipmentId" keel:"shipment_id"`
-	OrderID            pulid.ID `json:"orderId" keel:"order_id,nullzero"`
-	ProNumber          string   `json:"proNumber" keel:"pro_number,nullzero"`
-	BOL                string   `json:"bol" keel:"bol,nullzero"`
-	PONumber           string   `json:"poNumber" keel:"po_number,nullzero"`
-	ServiceDate        *int64   `json:"serviceDate" keel:"service_date"`
-	SortKey            int      `json:"sortKey" keel:"sort_key"`
+	ShipmentID         pulid.ID `json:"shipmentId"         keel:"shipment_id"`
+	OrderID            pulid.ID `json:"orderId"            keel:"order_id,nullzero"`
+	ProNumber          string   `json:"proNumber"          keel:"pro_number,nullzero"`
+	BOL                string   `json:"bol"                keel:"bol,nullzero"`
+	PONumber           string   `json:"poNumber"           keel:"po_number,nullzero"`
+	ServiceDate        *int64   `json:"serviceDate"        keel:"service_date"`
+	SortKey            int      `json:"sortKey"            keel:"sort_key"`
 
-	Amount      decimal.Decimal `json:"amount" keel:"amount"`
+	Amount      decimal.Decimal `json:"amount"      keel:"amount"`
 	AmountMinor int64           `json:"amountMinor" keel:"amount_minor"`
 
-	Excluded        bool   `json:"excluded" keel:"excluded"`
+	Excluded        bool   `json:"excluded"        keel:"excluded"`
 	ExclusionReason string `json:"exclusionReason" keel:"exclusion_reason,nullzero"`
 
-	Version   int64 `json:"version" keel:"version,version"`
+	Version   int64 `json:"version"   keel:"version,version"`
 	CreatedAt int64 `json:"createdAt" keel:"created_at,autocreate"`
 	UpdatedAt int64 `json:"updatedAt" keel:"updated_at,autoupdate"`
 

@@ -125,7 +125,10 @@ func shipmentOptionPredicates(opts *shipmentports.ShipmentOptions) []keel.Pred {
 	if len(opts.WorkerIDs) > 0 {
 		a := sp.Moves().Assignment()
 		preds = append(preds, liveAssignmentPredicate(
-			keel.Or(a.PrimaryWorkerID.In(opts.WorkerIDs...), a.SecondaryWorkerID.In(opts.WorkerIDs...)),
+			keel.Or(
+				a.PrimaryWorkerID.In(opts.WorkerIDs...),
+				a.SecondaryWorkerID.In(opts.WorkerIDs...),
+			),
 		))
 	}
 	if len(opts.TractorIDs) > 0 {

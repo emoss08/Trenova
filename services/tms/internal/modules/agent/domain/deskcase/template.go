@@ -175,18 +175,18 @@ func (t *TemplateItems) Scan(src any) error {
 type ChecklistTemplate struct {
 	keel.Table `keel:"case_checklist_templates"`
 
-	ID             pulid.ID `json:"id" keel:"id,pk,autoid:cct_"`
+	ID             pulid.ID `json:"id"             keel:"id,pk,autoid:cct_"`
 	OrganizationID pulid.ID `json:"organizationId" keel:"organization_id,pk,tenant"`
 	BusinessUnitID pulid.ID `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
 
-	Kind       ChecklistKind `json:"kind" keel:"kind"`
+	Kind       ChecklistKind `json:"kind"       keel:"kind"`
 	CustomerID pulid.ID      `json:"customerId" keel:"customer_id,nullzero"`
-	Items      TemplateItems `json:"items" keel:"items,jsonb"`
+	Items      TemplateItems `json:"items"      keel:"items,jsonb"`
 
 	UpdatedByID pulid.ID `json:"updatedById" keel:"updated_by_id,nullzero"`
-	Version     int64    `json:"version" keel:"version,version"`
-	CreatedAt   int64    `json:"createdAt" keel:"created_at,autocreate"`
-	UpdatedAt   int64    `json:"updatedAt" keel:"updated_at,autoupdate"`
+	Version     int64    `json:"version"     keel:"version,version"`
+	CreatedAt   int64    `json:"createdAt"   keel:"created_at,autocreate"`
+	UpdatedAt   int64    `json:"updatedAt"   keel:"updated_at,autoupdate"`
 
 	// CustomerName is read with the template for the settings list; never
 	// stored.
@@ -419,15 +419,15 @@ func (t *ChecklistTemplate) DocumentTypeIDs() []pulid.ID {
 type ChecklistTick struct {
 	keel.Table `keel:"case_checklist_ticks"`
 
-	ID             pulid.ID `json:"id" keel:"id,pk,autoid:cctk_"`
+	ID             pulid.ID `json:"id"             keel:"id,pk,autoid:cctk_"`
 	OrganizationID pulid.ID `json:"organizationId" keel:"organization_id,pk,tenant"`
 	BusinessUnitID pulid.ID `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
 
 	SubjectType string   `json:"subjectType" keel:"subject_type"`
-	SubjectID   pulid.ID `json:"subjectId" keel:"subject_id"`
-	ItemKey     ItemKey  `json:"itemKey" keel:"item_key"`
-	TickedByID  pulid.ID `json:"tickedById" keel:"ticked_by_id"`
-	TickedAt    int64    `json:"tickedAt" keel:"ticked_at"`
+	SubjectID   pulid.ID `json:"subjectId"   keel:"subject_id"`
+	ItemKey     ItemKey  `json:"itemKey"     keel:"item_key"`
+	TickedByID  pulid.ID `json:"tickedById"  keel:"ticked_by_id"`
+	TickedAt    int64    `json:"tickedAt"    keel:"ticked_at"`
 
 	// TickedByName is read with the tick; never stored.
 	TickedByName string `json:"tickedByName,omitempty" keel:"ticked_by_name,computed"`

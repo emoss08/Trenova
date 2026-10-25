@@ -480,7 +480,10 @@ func analysisFormat(column *table.Column) string {
 	case format.StyleCurrency:
 		return "money"
 	case format.StylePercent:
-		return "percent"
+		return fieldPercent
+	case format.StyleAuto, format.StyleNumber, format.StyleDuration, format.StyleDate,
+		format.StyleBool, format.StyleText:
+		fallthrough
 	default:
 		return ""
 	}

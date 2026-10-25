@@ -109,7 +109,11 @@ func (r *Repository) QuickFilterTotals(
 				return nil, err
 			}
 
-			totalsQuery, err := quickFilterTotalsQuery(q, req.Scope.Options.QuickFilterBasis, req.Filters)
+			totalsQuery, err := quickFilterTotalsQuery(
+				q,
+				req.Scope.Options.QuickFilterBasis,
+				req.Filters,
+			)
 			if err != nil {
 				return nil, err
 			}

@@ -238,7 +238,10 @@ func writePause(
 ) (*airetrieval.Settings, error) {
 	s := airetrievaldb.Settingses
 	if err := s.Save(ctx, db, settings, s.Paused, s.PausedReason, s.PausedAt); err != nil {
-		return nil, fmt.Errorf("pause retrieval indexing: %w", settingsErrors.Map(err, settings.ID.String()))
+		return nil, fmt.Errorf(
+			"pause retrieval indexing: %w",
+			settingsErrors.Map(err, settings.ID.String()),
+		)
 	}
 
 	return settings, nil
@@ -391,15 +394,15 @@ func purgeIndexEntries(
 ) (int, error) {
 	e := airetrievaldb.IndexEntries
 	victim := airetrievaldb.IndexEntries.As("victim_entry")
-	victims := keel.CTE("victims", []string{"source_type", "source_id"}, victim.
+	victims := keel.CTE("victims", []string{colSourceType, colSourceID}, victim.
 		Where(victim.ModelKey.Eq(req.ModelKey)).
 		Pick(victim.SourceType, victim.SourceID).
 		Limit(batch))
 
 	removed, err := e.With(victims).
 		Join(victims,
-			victims.Col("source_type").EqCol(e.SourceType),
-			victims.Col("source_id").EqCol(e.SourceID),
+			victims.Col(colSourceType).EqCol(e.SourceType),
+			victims.Col(colSourceID).EqCol(e.SourceID),
 		).
 		Where(e.ModelKey.Eq(req.ModelKey)).
 		Delete(ctx, db)
@@ -418,15 +421,15 @@ func purgeEmbeddings(
 ) (int, error) {
 	e := airetrievaldb.Embeddings
 	victim := airetrievaldb.Embeddings.As("victim_embedding")
-	victims := keel.CTE("victims", []string{"source_type", "source_id", "chunk_index"}, victim.
+	victims := keel.CTE("victims", []string{colSourceType, colSourceID, "chunk_index"}, victim.
 		Where(victim.ModelKey.Eq(req.ModelKey)).
 		Pick(victim.SourceType, victim.SourceID, victim.ChunkIndex).
 		Limit(batch))
 
 	removed, err := e.With(victims).
 		Join(victims,
-			victims.Col("source_type").EqCol(e.SourceType),
-			victims.Col("source_id").EqCol(e.SourceID),
+			victims.Col(colSourceType).EqCol(e.SourceType),
+			victims.Col(colSourceID).EqCol(e.SourceID),
 			victims.Col("chunk_index").EqCol(e.ChunkIndex),
 		).
 		Where(e.ModelKey.Eq(req.ModelKey)).

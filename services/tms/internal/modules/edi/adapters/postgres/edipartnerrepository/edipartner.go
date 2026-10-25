@@ -54,11 +54,16 @@ func (r *repository) List(
 		r.db,
 		func(ctx context.Context) (*pagination.ListResult[*edi.EDIPartner], error) {
 			ep := edidb.EDIPartners
-			return listquery.List(ctx, r.db.Keel(ctx), listedPartners(req), &listquery.Request[edi.EDIPartner]{
-				Filter: req.Filter,
-				Shape:  withLinks,
-				Then:   []keel.Order{ep.CreatedAt.Desc()},
-			})
+			return listquery.List(
+				ctx,
+				r.db.Keel(ctx),
+				listedPartners(req),
+				&listquery.Request[edi.EDIPartner]{
+					Filter: req.Filter,
+					Shape:  withLinks,
+					Then:   []keel.Order{ep.CreatedAt.Desc()},
+				},
+			)
 		},
 	)
 }

@@ -14,28 +14,28 @@ import (
 type VehiclePosition struct {
 	keel.Table `keel:"telematics_vehicle_positions"`
 
-	OrganizationID    pulid.ID    `json:"organizationId" keel:"organization_id,pk,tenant"`
-	BusinessUnitID    pulid.ID    `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
-	TractorID         pulid.ID    `json:"tractorId" keel:"tractor_id,pk"`
-	Provider          string      `json:"provider" keel:"provider"`
+	OrganizationID    pulid.ID    `json:"organizationId"    keel:"organization_id,pk,tenant"`
+	BusinessUnitID    pulid.ID    `json:"businessUnitId"    keel:"business_unit_id,pk,tenant"`
+	TractorID         pulid.ID    `json:"tractorId"         keel:"tractor_id,pk"`
+	Provider          string      `json:"provider"          keel:"provider"`
 	ProviderVehicleID string      `json:"providerVehicleId" keel:"provider_vehicle_id"`
-	Latitude          float64     `json:"latitude" keel:"latitude"`
-	Longitude         float64     `json:"longitude" keel:"longitude"`
-	HeadingDegrees    float64     `json:"headingDegrees" keel:"heading_degrees"`
-	SpeedMph          float64     `json:"speedMph" keel:"speed_mph"`
-	EngineState       EngineState `json:"engineState" keel:"engine_state,nullzero"`
-	FuelPercent       *float64    `json:"fuelPercent" keel:"fuel_percent"`
-	OdometerMeters    *int64      `json:"odometerMeters" keel:"odometer_meters"`
+	Latitude          float64     `json:"latitude"          keel:"latitude"`
+	Longitude         float64     `json:"longitude"         keel:"longitude"`
+	HeadingDegrees    float64     `json:"headingDegrees"    keel:"heading_degrees"`
+	SpeedMph          float64     `json:"speedMph"          keel:"speed_mph"`
+	EngineState       EngineState `json:"engineState"       keel:"engine_state,nullzero"`
+	FuelPercent       *float64    `json:"fuelPercent"       keel:"fuel_percent"`
+	OdometerMeters    *int64      `json:"odometerMeters"    keel:"odometer_meters"`
 	FormattedLocation string      `json:"formattedLocation" keel:"formatted_location,nullzero"`
-	RecordedAt        int64       `json:"recordedAt" keel:"recorded_at"`
-	ReceivedAt        int64       `json:"receivedAt" keel:"received_at"`
+	RecordedAt        int64       `json:"recordedAt"        keel:"recorded_at"`
+	ReceivedAt        int64       `json:"receivedAt"        keel:"received_at"`
 
 	Tractor *tractor.Tractor `json:"tractor,omitempty" keel:"belongs:tractor_id"`
 }
 
 func (p *VehiclePosition) BeforeCreate(_ context.Context) error {
 	if p.Provider == "" {
-		p.Provider = "Samsara"
+		p.Provider = defaultProvider
 	}
 
 	return nil

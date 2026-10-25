@@ -38,19 +38,19 @@ const (
 type Conversation struct {
 	keel.Table `keel:"shipment_import_chat_conversations"`
 
-	ID                     pulid.ID                 `json:"id" keel:"id,pk,autoid:sic_"`
-	OrganizationID         pulid.ID                 `json:"organizationId" keel:"organization_id,pk,tenant"`
-	BusinessUnitID         pulid.ID                 `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
-	DocumentID             pulid.ID                 `json:"documentId" keel:"document_id"`
-	UserID                 pulid.ID                 `json:"userId" keel:"user_id"`
+	ID                     pulid.ID                 `json:"id"                     keel:"id,pk,autoid:sic_"`
+	OrganizationID         pulid.ID                 `json:"organizationId"         keel:"organization_id,pk,tenant"`
+	BusinessUnitID         pulid.ID                 `json:"businessUnitId"         keel:"business_unit_id,pk,tenant"`
+	DocumentID             pulid.ID                 `json:"documentId"             keel:"document_id"`
+	UserID                 pulid.ID                 `json:"userId"                 keel:"user_id"`
 	ExternalConversationID string                   `json:"externalConversationId" keel:"external_conversation_id,nullzero"`
-	Status                 ConversationStatus       `json:"status" keel:"status"`
-	StatusReason           ConversationStatusReason `json:"statusReason" keel:"status_reason,nullzero"`
-	TurnCount              int                      `json:"turnCount" keel:"turn_count"`
-	LastMessageAt          *int64                   `json:"lastMessageAt" keel:"last_message_at"`
-	Version                int64                    `json:"version" keel:"version,version"`
-	CreatedAt              int64                    `json:"createdAt" keel:"created_at,autocreate"`
-	UpdatedAt              int64                    `json:"updatedAt" keel:"updated_at,autoupdate"`
+	Status                 ConversationStatus       `json:"status"                 keel:"status"`
+	StatusReason           ConversationStatusReason `json:"statusReason"           keel:"status_reason,nullzero"`
+	TurnCount              int                      `json:"turnCount"              keel:"turn_count"`
+	LastMessageAt          *int64                   `json:"lastMessageAt"          keel:"last_message_at"`
+	Version                int64                    `json:"version"                keel:"version,version"`
+	CreatedAt              int64                    `json:"createdAt"              keel:"created_at,autocreate"`
+	UpdatedAt              int64                    `json:"updatedAt"              keel:"updated_at,autoupdate"`
 }
 
 func (c *Conversation) BeforeUpdate(_ context.Context) error {
@@ -75,25 +75,25 @@ func (c *Conversation) BeforeCreate(_ context.Context) error {
 type Turn struct {
 	keel.Table `keel:"shipment_import_chat_turns"`
 
-	ID                     pulid.ID         `json:"id" keel:"id,pk,autoid:sit_"`
-	ConversationID         pulid.ID         `json:"conversationId" keel:"conversation_id"`
-	OrganizationID         pulid.ID         `json:"organizationId" keel:"organization_id,pk,tenant"`
-	BusinessUnitID         pulid.ID         `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
-	DocumentID             pulid.ID         `json:"documentId" keel:"document_id"`
-	UserID                 pulid.ID         `json:"userId" keel:"user_id"`
-	TurnIndex              int              `json:"turnIndex" keel:"turn_index"`
-	UserMessage            string           `json:"userMessage" keel:"user_message"`
-	AssistantMessage       string           `json:"assistantMessage" keel:"assistant_message"`
-	RequestConversationID  string           `json:"requestConversationId" keel:"request_conversation_id,nullzero"`
+	ID                     pulid.ID         `json:"id"                     keel:"id,pk,autoid:sit_"`
+	ConversationID         pulid.ID         `json:"conversationId"         keel:"conversation_id"`
+	OrganizationID         pulid.ID         `json:"organizationId"         keel:"organization_id,pk,tenant"`
+	BusinessUnitID         pulid.ID         `json:"businessUnitId"         keel:"business_unit_id,pk,tenant"`
+	DocumentID             pulid.ID         `json:"documentId"             keel:"document_id"`
+	UserID                 pulid.ID         `json:"userId"                 keel:"user_id"`
+	TurnIndex              int              `json:"turnIndex"              keel:"turn_index"`
+	UserMessage            string           `json:"userMessage"            keel:"user_message"`
+	AssistantMessage       string           `json:"assistantMessage"       keel:"assistant_message"`
+	RequestConversationID  string           `json:"requestConversationId"  keel:"request_conversation_id,nullzero"`
 	ResponseConversationID string           `json:"responseConversationId" keel:"response_conversation_id,nullzero"`
-	Model                  string           `json:"model" keel:"model,nullzero"`
-	ResultStatus           TurnResultStatus `json:"resultStatus" keel:"result_status"`
-	ErrorMessage           string           `json:"errorMessage" keel:"error_message,nullzero"`
-	ContextJSON            rawJSON          `json:"contextJson" keel:"context_json,jsonb"`
-	SuggestionsJSON        rawJSON          `json:"suggestionsJson" keel:"suggestions_json,jsonb"`
-	ToolCallsJSON          rawJSON          `json:"toolCallsJson" keel:"tool_calls_json,jsonb"`
-	ActionsJSON            rawJSON          `json:"actionsJson" keel:"actions_json,jsonb"`
-	CreatedAt              int64            `json:"createdAt" keel:"created_at,autocreate"`
+	Model                  string           `json:"model"                  keel:"model,nullzero"`
+	ResultStatus           TurnResultStatus `json:"resultStatus"           keel:"result_status"`
+	ErrorMessage           string           `json:"errorMessage"           keel:"error_message,nullzero"`
+	ContextJSON            rawJSON          `json:"contextJson"            keel:"context_json,jsonb"`
+	SuggestionsJSON        rawJSON          `json:"suggestionsJson"        keel:"suggestions_json,jsonb"`
+	ToolCallsJSON          rawJSON          `json:"toolCallsJson"          keel:"tool_calls_json,jsonb"`
+	ActionsJSON            rawJSON          `json:"actionsJson"            keel:"actions_json,jsonb"`
+	CreatedAt              int64            `json:"createdAt"              keel:"created_at,autocreate"`
 }
 
 func (t *Turn) BeforeCreate(_ context.Context) error {

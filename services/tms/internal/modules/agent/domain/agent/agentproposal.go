@@ -28,25 +28,25 @@ var (
 type AgentProposal struct {
 	keel.Table `keel:"agent_proposals"`
 
-	ID             pulid.ID `json:"id" keel:"id,pk,autoid:ap_"`
+	ID             pulid.ID `json:"id"             keel:"id,pk,autoid:ap_"`
 	BusinessUnitID pulid.ID `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
 	OrganizationID pulid.ID `json:"organizationId" keel:"organization_id,pk,tenant"`
 
-	RunID        pulid.ID        `json:"runId" keel:"run_id"`
-	ToolName     string          `json:"toolName" keel:"tool_name"`
-	ToolParams   map[string]any  `json:"toolParams" keel:"tool_params,jsonb"`
-	Confidence   decimal.Decimal `json:"confidence" keel:"confidence"`
-	Rationale    string          `json:"rationale" keel:"rationale"`
-	Evidence     []EvidenceRef   `json:"evidence" keel:"evidence,jsonb"`
+	RunID        pulid.ID        `json:"runId"        keel:"run_id"`
+	ToolName     string          `json:"toolName"     keel:"tool_name"`
+	ToolParams   map[string]any  `json:"toolParams"   keel:"tool_params,jsonb"`
+	Confidence   decimal.Decimal `json:"confidence"   keel:"confidence"`
+	Rationale    string          `json:"rationale"    keel:"rationale"`
+	Evidence     []EvidenceRef   `json:"evidence"     keel:"evidence,jsonb"`
 	AutonomyTier AutonomyTier    `json:"autonomyTier" keel:"autonomy_tier"`
-	Status       ProposalStatus  `json:"status" keel:"status"`
+	Status       ProposalStatus  `json:"status"       keel:"status"`
 
 	// ExecutedAt and ExecutionError record what happened after approval. An
 	// accepted proposal with neither set has been approved but has not run.
 	// ExecutionResult is what a successful run made, when the tool says: the
 	// record and its id, so later turns refer to it and not to the proposal.
-	ExecutedAt      *int64               `json:"executedAt" keel:"executed_at"`
-	ExecutionError  string               `json:"executionError" keel:"execution_error,nullzero"`
+	ExecutedAt      *int64               `json:"executedAt"      keel:"executed_at"`
+	ExecutionError  string               `json:"executionError"  keel:"execution_error,nullzero"`
 	ExecutionResult *ToolExecutionResult `json:"executionResult" keel:"execution_result,jsonb"`
 	SourceMessageID pulid.ID             `json:"sourceMessageId" keel:"source_message_id,nullzero"`
 
@@ -59,11 +59,11 @@ type AgentProposal struct {
 	// agent was in simulation: what the write would have changed, and when
 	// that was worked out.
 	SimulatedAt *int64          `json:"simulatedAt" keel:"simulated_at"`
-	Simulation  *ToolSimulation `json:"simulation" keel:"simulation,jsonb"`
+	Simulation  *ToolSimulation `json:"simulation"  keel:"simulation,jsonb"`
 
 	// PlanID and PlanStep tie a proposal to the plan it is a step of and say
 	// where in the order it sits. A proposal decided on its own has neither.
-	PlanID   *pulid.ID `json:"planId" keel:"plan_id"`
+	PlanID   *pulid.ID `json:"planId"   keel:"plan_id"`
 	PlanStep int       `json:"planStep" keel:"plan_step"`
 
 	// RemindedAt is when the people who could decide this proposal were told,
@@ -75,24 +75,24 @@ type AgentProposal struct {
 	// against a different version: a hold proposed on a shipment that has
 	// since been delivered is not the change anyone approved.
 	TargetResource string   `json:"targetResource" keel:"target_resource,nullzero"`
-	TargetID       pulid.ID `json:"targetId" keel:"target_id,nullzero"`
-	TargetVersion  int64    `json:"targetVersion" keel:"target_version,nullzero"`
+	TargetID       pulid.ID `json:"targetId"       keel:"target_id,nullzero"`
+	TargetVersion  int64    `json:"targetVersion"  keel:"target_version,nullzero"`
 
-	Tainted       bool        `json:"tainted" keel:"tainted"`
-	Taint         *RunTaint   `json:"taint" keel:"taint,jsonb"`
-	EgressClass   EgressClass `json:"egressClass" keel:"egress_class,nullzero"`
-	HeldBy        []string    `json:"heldBy" keel:"held_by"`
-	MoneyMinor    *int64      `json:"moneyMinor" keel:"money_minor"`
+	Tainted       bool        `json:"tainted"       keel:"tainted"`
+	Taint         *RunTaint   `json:"taint"         keel:"taint,jsonb"`
+	EgressClass   EgressClass `json:"egressClass"   keel:"egress_class,nullzero"`
+	HeldBy        []string    `json:"heldBy"        keel:"held_by"`
+	MoneyMinor    *int64      `json:"moneyMinor"    keel:"money_minor"`
 	MoneyCurrency string      `json:"moneyCurrency" keel:"money_currency,nullzero"`
 
 	// TraceID and SpanID are the tool span the write was decided in, so a
 	// decision made later links back to it; StepKey is the ledger step that
 	// raised it. ExecutedByUserID and ExecutedTargetVersion say who the write
 	// ran as and what version it left the record at.
-	TraceID               string   `json:"traceId" keel:"trace_id,nullzero"`
-	SpanID                string   `json:"spanId" keel:"span_id,nullzero"`
-	StepKey               string   `json:"stepKey" keel:"step_key,nullzero"`
-	ExecutedByUserID      pulid.ID `json:"executedByUserId" keel:"executed_by_user_id,nullzero"`
+	TraceID               string   `json:"traceId"               keel:"trace_id,nullzero"`
+	SpanID                string   `json:"spanId"                keel:"span_id,nullzero"`
+	StepKey               string   `json:"stepKey"               keel:"step_key,nullzero"`
+	ExecutedByUserID      pulid.ID `json:"executedByUserId"      keel:"executed_by_user_id,nullzero"`
 	ExecutedTargetVersion *int64   `json:"executedTargetVersion" keel:"executed_target_version"`
 
 	// ScriptStepKey is the ledger step of the script that wrote this proposal
@@ -105,7 +105,7 @@ type AgentProposal struct {
 	// clears it, and the decision keeps what was approved.
 	PendingModifications map[string]any `json:"pendingModifications" keel:"pending_modifications,jsonb,nullzero"`
 
-	Version   int64 `json:"version" keel:"version,version"`
+	Version   int64 `json:"version"   keel:"version,version"`
 	CreatedAt int64 `json:"createdAt" keel:"created_at,autocreate"`
 	UpdatedAt int64 `json:"updatedAt" keel:"updated_at,autoupdate"`
 

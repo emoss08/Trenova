@@ -58,7 +58,7 @@ func (r *mfaRepository) GetTOTP(
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*iam.MFAAuthenticator, error) {
 		entity, err := userTOTP(ctx, userID).First(ctx, r.db.Keel(ctx))
 		if dberror.IsNotFoundError(err) {
-			return nil, nil //nolint:nilnil // a user without an authenticator has none to return
+			return nil, nil
 		}
 		if err != nil {
 			return nil, fmt.Errorf("get totp authenticator: %w", err)

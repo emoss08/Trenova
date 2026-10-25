@@ -19,21 +19,21 @@ import (
 type OrderCharge struct {
 	keel.Table `keel:"order_charges"`
 
-	ID             pulid.ID        `json:"id" keel:"id,pk,autoid:ordchg_"`
+	ID             pulid.ID        `json:"id"             keel:"id,pk,autoid:ordchg_"`
 	BusinessUnitID pulid.ID        `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
 	OrganizationID pulid.ID        `json:"organizationId" keel:"organization_id,pk,tenant"`
-	OrderID        pulid.ID        `json:"orderId" keel:"order_id"`
-	Description    string          `json:"description" keel:"description"`
-	Amount         decimal.Decimal `json:"amount" keel:"amount"`
-	InvoiceID      pulid.ID        `json:"invoiceId" keel:"invoice_id,nullzero"`
-	InvoicedAt     int64           `json:"invoicedAt" keel:"invoiced_at,nullzero"`
-	Version        int64           `json:"version" keel:"version,version"`
-	CreatedAt      int64           `json:"createdAt" keel:"created_at,autocreate"`
-	UpdatedAt      int64           `json:"updatedAt" keel:"updated_at,autoupdate"`
+	OrderID        pulid.ID        `json:"orderId"        keel:"order_id"`
+	Description    string          `json:"description"    keel:"description"`
+	Amount         decimal.Decimal `json:"amount"         keel:"amount"`
+	InvoiceID      pulid.ID        `json:"invoiceId"      keel:"invoice_id,nullzero"`
+	InvoicedAt     int64           `json:"invoicedAt"     keel:"invoiced_at,nullzero"`
+	Version        int64           `json:"version"        keel:"version,version"`
+	CreatedAt      int64           `json:"createdAt"      keel:"created_at,autocreate"`
+	UpdatedAt      int64           `json:"updatedAt"      keel:"updated_at,autoupdate"`
 
 	BusinessUnit *tenant.BusinessUnit `json:"businessUnit,omitempty"`
 	Organization *tenant.Organization `json:"organization,omitempty"`
-	Order        *Order               `json:"order,omitempty" keel:"belongs:order_id"`
+	Order        *Order               `json:"order,omitempty"        keel:"belongs:order_id"`
 
 	Allocations []*shipment.ChargeAllocation `json:"allocations,omitempty" keel:"many:order_charge_id"`
 }

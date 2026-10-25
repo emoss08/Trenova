@@ -260,7 +260,11 @@ func (r *repository) updateCharge(
 		)
 	}
 
-	if err = dberror.CheckAffected(n, "Shipment additional charge", charge.ID.String()); err != nil {
+	if err = dberror.CheckAffected(
+		n,
+		"Shipment additional charge",
+		charge.ID.String(),
+	); err != nil {
 		return err
 	}
 

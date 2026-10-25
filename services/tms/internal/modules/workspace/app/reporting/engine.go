@@ -80,7 +80,7 @@ func (s *Service) Check(ctx context.Context, p *PrepareParams) error {
 	if err != nil {
 		return err
 	}
-	if _, err = s.engine.Compile(prepared.Context, prepared.Request); err != nil {
+	if _, err = s.engine.Compile(prepared.Context, &prepared.Request); err != nil {
 		return EngineError(prepared.Context, prepared.Access, err)
 	}
 	return nil

@@ -49,18 +49,18 @@ const (
 type Definition struct {
 	keel.Table `keel:"agent_definitions"`
 
-	ID             pulid.ID `json:"id" keel:"id,pk,autoid:agdef_"`
+	ID             pulid.ID `json:"id"             keel:"id,pk,autoid:agdef_"`
 	BusinessUnitID pulid.ID `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
 	OrganizationID pulid.ID `json:"organizationId" keel:"organization_id,pk,tenant"`
 
-	Name         string   `json:"name" keel:"name"`
-	Description  string   `json:"description" keel:"description,nullzero"`
-	Template     Template `json:"template" keel:"template,nullzero"`
+	Name         string   `json:"name"         keel:"name"`
+	Description  string   `json:"description"  keel:"description,nullzero"`
+	Template     Template `json:"template"     keel:"template,nullzero"`
 	Instructions string   `json:"instructions" keel:"instructions,nullzero"`
-	Guardrails   []string `json:"guardrails" keel:"guardrails,nullzero"`
+	Guardrails   []string `json:"guardrails"   keel:"guardrails,nullzero"`
 
-	ToolNames       []string                      `json:"toolNames" keel:"tool_names,nullzero"`
-	ToolTiers       map[string]agent.AutonomyTier `json:"toolTiers" keel:"tool_tiers,jsonb,nullzero"`
+	ToolNames       []string                      `json:"toolNames"       keel:"tool_names,nullzero"`
+	ToolTiers       map[string]agent.AutonomyTier `json:"toolTiers"       keel:"tool_tiers,jsonb,nullzero"`
 	AutonomyCeiling agent.AutonomyTier            `json:"autonomyCeiling" keel:"autonomy_ceiling"`
 
 	DataAccessCeiling DataAccessCeiling `json:"dataAccessCeiling" keel:"data_access_ceiling"`
@@ -70,20 +70,20 @@ type Definition struct {
 	Enabled bool `json:"enabled" keel:"enabled"`
 	// DisabledAt and DisabledByID say when the agent was last turned off and
 	// by whom; both are cleared when it is turned back on.
-	DisabledAt             *int64    `json:"disabledAt,omitempty" keel:"disabled_at"`
+	DisabledAt             *int64    `json:"disabledAt,omitempty"   keel:"disabled_at"`
 	DisabledByID           *pulid.ID `json:"disabledById,omitempty" keel:"disabled_by_id"`
-	ShadowMode             bool      `json:"shadowMode" keel:"shadow_mode"`
+	ShadowMode             bool      `json:"shadowMode"             keel:"shadow_mode"`
 	DecisionTimeoutSeconds int       `json:"decisionTimeoutSeconds" keel:"decision_timeout_seconds"`
 
-	TriggerMode       TriggerMode       `json:"triggerMode" keel:"trigger_mode"`
-	CronExpression    string            `json:"cronExpression" keel:"cron_expression,nullzero"`
-	CronTimezone      string            `json:"cronTimezone" keel:"cron_timezone,nullzero"`
-	EventKinds        []agent.EventKind `json:"eventKinds" keel:"event_kinds,nullzero"`
-	IntervalSeconds   int               `json:"intervalSeconds" keel:"interval_seconds,nullzero"`
-	EndsAt            *int64            `json:"endsAt" keel:"ends_at"`
+	TriggerMode       TriggerMode       `json:"triggerMode"       keel:"trigger_mode"`
+	CronExpression    string            `json:"cronExpression"    keel:"cron_expression,nullzero"`
+	CronTimezone      string            `json:"cronTimezone"      keel:"cron_timezone,nullzero"`
+	EventKinds        []agent.EventKind `json:"eventKinds"        keel:"event_kinds,nullzero"`
+	IntervalSeconds   int               `json:"intervalSeconds"   keel:"interval_seconds,nullzero"`
+	EndsAt            *int64            `json:"endsAt"            keel:"ends_at"`
 	MaxConcurrentRuns int               `json:"maxConcurrentRuns" keel:"max_concurrent_runs"`
 	RunTimeoutSeconds int               `json:"runTimeoutSeconds" keel:"run_timeout_seconds"`
-	MaxToolCalls      int               `json:"maxToolCalls" keel:"max_tool_calls"`
+	MaxToolCalls      int               `json:"maxToolCalls"      keel:"max_tool_calls"`
 
 	// MonthlyBudgetUSD caps what the agent's runs may cost in a calendar
 	// month; nil is no cap. DailyRunLimit caps how many runs it may start in
@@ -91,25 +91,25 @@ type Definition struct {
 	// day; zero is no cap. SimulationMode keeps its writes from happening at
 	// all: each is previewed and recorded as what it would have changed.
 	MonthlyBudgetUSD *decimal.Decimal `json:"monthlyBudgetUsd" keel:"monthly_budget_usd"`
-	DailyRunLimit    int              `json:"dailyRunLimit" keel:"daily_run_limit"`
+	DailyRunLimit    int              `json:"dailyRunLimit"    keel:"daily_run_limit"`
 	// ToolDailyLimits is notnull because its column is: it was added as
 	// NOT NULL DEFAULT '{}' while its tag said nullzero, and nullzero writes
 	// SQL NULL for a nil map. Every insert of an agent with no per-tool cap —
 	// which is every system agent — was therefore rejected by the constraint.
 	// Its older sibling tool_tiers is nullable, which is why that one worked.
 	ToolDailyLimits map[string]int `json:"toolDailyLimits" keel:"tool_daily_limits,jsonb"`
-	SimulationMode  bool           `json:"simulationMode" keel:"simulation_mode"`
+	SimulationMode  bool           `json:"simulationMode"  keel:"simulation_mode"`
 
 	MemoryTokenBudget *int `json:"memoryTokenBudget" keel:"memory_token_budget"`
-	LearningOff       bool `json:"learningOff" keel:"learning_off"`
+	LearningOff       bool `json:"learningOff"       keel:"learning_off"`
 
-	Icon   string `json:"icon" keel:"icon,nullzero"`
+	Icon   string `json:"icon"   keel:"icon,nullzero"`
 	Accent string `json:"accent" keel:"accent,nullzero"`
 
-	ContextProviders    []ContextProvider `json:"contextProviders" keel:"context_providers,nullzero"`
-	OutputMode          OutputMode        `json:"outputMode" keel:"output_mode"`
+	ContextProviders    []ContextProvider `json:"contextProviders"    keel:"context_providers,nullzero"`
+	OutputMode          OutputMode        `json:"outputMode"          keel:"output_mode"`
 	PreferredProviderID pulid.ID          `json:"preferredProviderId" keel:"preferred_provider_id,nullzero"`
-	SystemKey           string            `json:"systemKey" keel:"system_key,nullzero"`
+	SystemKey           string            `json:"systemKey"           keel:"system_key,nullzero"`
 
 	// DelegateIDs are the agents this one may hand a task to when a person is
 	// talking to it: the ones it asks when the work needs tools it does not
@@ -137,9 +137,9 @@ type Definition struct {
 	// after midnight) in BusinessHoursTimezone, or the organization's zone
 	// when that is empty. Outside the window a change is held as a proposal
 	// for a person instead of running.
-	BusinessHoursOnly     bool   `json:"businessHoursOnly" keel:"business_hours_only"`
-	BusinessHoursStart    int    `json:"businessHoursStart" keel:"business_hours_start"`
-	BusinessHoursEnd      int    `json:"businessHoursEnd" keel:"business_hours_end"`
+	BusinessHoursOnly     bool   `json:"businessHoursOnly"     keel:"business_hours_only"`
+	BusinessHoursStart    int    `json:"businessHoursStart"    keel:"business_hours_start"`
+	BusinessHoursEnd      int    `json:"businessHoursEnd"      keel:"business_hours_end"`
 	BusinessHoursTimezone string `json:"businessHoursTimezone" keel:"business_hours_timezone,nullzero"`
 
 	// CreatedByID is the person who set the agent up; nil for the agents the
@@ -154,7 +154,7 @@ type Definition struct {
 	LastRunAt *int64 `json:"lastRunAt" keel:"last_run_at"`
 	NextRunAt *int64 `json:"nextRunAt" keel:"next_run_at"`
 
-	Version   int64 `json:"version" keel:"version,version"`
+	Version   int64 `json:"version"   keel:"version,version"`
 	CreatedAt int64 `json:"createdAt" keel:"created_at,autocreate"`
 	UpdatedAt int64 `json:"updatedAt" keel:"updated_at,autoupdate"`
 

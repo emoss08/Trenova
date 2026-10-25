@@ -13,28 +13,28 @@ import (
 type Integration struct {
 	keel.Table `keel:"integrations"`
 
-	ID             pulid.ID       `json:"id" keel:"id,pk,autoid:intg_"`
+	ID             pulid.ID       `json:"id"             keel:"id,pk,autoid:intg_"`
 	BusinessUnitID pulid.ID       `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
 	OrganizationID pulid.ID       `json:"organizationId" keel:"organization_id,pk,tenant"`
-	Type           Type           `json:"type" keel:"type"`
-	Name           string         `json:"name" keel:"name"`
-	Description    string         `json:"description" keel:"description,nullzero"`
-	Enabled        bool           `json:"enabled" keel:"enabled"`
-	BuiltBy        string         `json:"builtBy" keel:"built_by,nullzero"`
-	Category       Category       `json:"category" keel:"category"`
-	Configuration  map[string]any `json:"configuration" keel:"configuration,jsonb,nullzero"`
-	DocsURL        string         `json:"docsUrl" keel:"docs_url,nullzero"`
-	Featured       bool           `json:"featured" keel:"featured"`
-	LogoURL        string         `json:"logoUrl" keel:"logo_url,nullzero"`
-	WebsiteURL     string         `json:"websiteUrl" keel:"website_url,nullzero"`
-	EnabledByID    pulid.ID       `json:"enabledById" keel:"enabled_by_id,nullzero"`
-	Version        int64          `json:"version" keel:"version,version"`
-	CreatedAt      int64          `json:"createdAt" keel:"created_at,autocreate"`
-	UpdatedAt      int64          `json:"updatedAt" keel:"updated_at,autoupdate"`
+	Type           Type           `json:"type"           keel:"type"`
+	Name           string         `json:"name"           keel:"name"`
+	Description    string         `json:"description"    keel:"description,nullzero"`
+	Enabled        bool           `json:"enabled"        keel:"enabled"`
+	BuiltBy        string         `json:"builtBy"        keel:"built_by,nullzero"`
+	Category       Category       `json:"category"       keel:"category"`
+	Configuration  map[string]any `json:"configuration"  keel:"configuration,jsonb,nullzero"`
+	DocsURL        string         `json:"docsUrl"        keel:"docs_url,nullzero"`
+	Featured       bool           `json:"featured"       keel:"featured"`
+	LogoURL        string         `json:"logoUrl"        keel:"logo_url,nullzero"`
+	WebsiteURL     string         `json:"websiteUrl"     keel:"website_url,nullzero"`
+	EnabledByID    pulid.ID       `json:"enabledById"    keel:"enabled_by_id,nullzero"`
+	Version        int64          `json:"version"        keel:"version,version"`
+	CreatedAt      int64          `json:"createdAt"      keel:"created_at,autocreate"`
+	UpdatedAt      int64          `json:"updatedAt"      keel:"updated_at,autoupdate"`
 
 	BusinessUnit *tenant.BusinessUnit `json:"businessUnit,omitempty"`
 	Organization *tenant.Organization `json:"organization,omitempty"`
-	EnabledBy    *tenant.User         `json:"enabledBy,omitempty" keel:"belongs:enabled_by_id"`
+	EnabledBy    *tenant.User         `json:"enabledBy,omitempty"    keel:"belongs:enabled_by_id"`
 }
 
 func (i *Integration) Validate(multiErr *errortypes.MultiError) {

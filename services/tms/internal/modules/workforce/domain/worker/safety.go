@@ -199,41 +199,41 @@ var (
 )
 
 type WorkerSafetyEvent struct {
-	keel.Table `                                                     keel:"worker_safety_events"`
+	keel.Table `keel:"worker_safety_events"`
 
-	ID               pulid.ID            `json:"id" keel:"id,pk,autoid:wsev_"`
-	BusinessUnitID   pulid.ID            `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
-	OrganizationID   pulid.ID            `json:"organizationId" keel:"organization_id,pk,tenant"`
-	WorkerID         pulid.ID            `json:"workerId" keel:"worker_id"`
-	Kind             SafetyEventKind     `json:"kind" keel:"kind"`
-	Severity         SafetySeverity      `json:"severity" keel:"severity"`
-	Status           SafetyEventStatus   `json:"status" keel:"status"`
-	OccurredAt       int64               `json:"occurredAt" keel:"occurred_at"`
-	Location         string              `json:"location" keel:"location,nullzero"`
-	Description      string              `json:"description" keel:"description"`
-	Preventable      bool                `json:"preventable" keel:"preventable"`
-	Points           int32               `json:"points" keel:"points"`
-	PointsExpireAt   *int64              `json:"pointsExpireAt" keel:"points_expire_at"`
-	ReferenceNumber  string              `json:"referenceNumber" keel:"reference_number,nullzero"`
-	ShipmentID       pulid.ID            `json:"shipmentId" keel:"shipment_id,nullzero"`
-	InspectionLevel  *int16              `json:"inspectionLevel" keel:"inspection_level"`
+	ID               pulid.ID            `json:"id"               keel:"id,pk,autoid:wsev_"`
+	BusinessUnitID   pulid.ID            `json:"businessUnitId"   keel:"business_unit_id,pk,tenant"`
+	OrganizationID   pulid.ID            `json:"organizationId"   keel:"organization_id,pk,tenant"`
+	WorkerID         pulid.ID            `json:"workerId"         keel:"worker_id"`
+	Kind             SafetyEventKind     `json:"kind"             keel:"kind"`
+	Severity         SafetySeverity      `json:"severity"         keel:"severity"`
+	Status           SafetyEventStatus   `json:"status"           keel:"status"`
+	OccurredAt       int64               `json:"occurredAt"       keel:"occurred_at"`
+	Location         string              `json:"location"         keel:"location,nullzero"`
+	Description      string              `json:"description"      keel:"description"`
+	Preventable      bool                `json:"preventable"      keel:"preventable"`
+	Points           int32               `json:"points"           keel:"points"`
+	PointsExpireAt   *int64              `json:"pointsExpireAt"   keel:"points_expire_at"`
+	ReferenceNumber  string              `json:"referenceNumber"  keel:"reference_number,nullzero"`
+	ShipmentID       pulid.ID            `json:"shipmentId"       keel:"shipment_id,nullzero"`
+	InspectionLevel  *int16              `json:"inspectionLevel"  keel:"inspection_level"`
 	InspectionResult InspectionResult    `json:"inspectionResult" keel:"inspection_result,nullzero"`
-	OutOfService     bool                `json:"outOfService" keel:"out_of_service"`
-	FineAmount       decimal.NullDecimal `json:"fineAmount" keel:"fine_amount"`
-	CostAmount       decimal.NullDecimal `json:"costAmount" keel:"cost_amount"`
-	DocumentID       pulid.ID            `json:"documentId" keel:"document_id,nullzero"`
-	RecordedByID     pulid.ID            `json:"recordedById" keel:"recorded_by_id,nullzero"`
-	ClosedByID       pulid.ID            `json:"closedById" keel:"closed_by_id,nullzero"`
-	ClosedAt         *int64              `json:"closedAt" keel:"closed_at"`
-	Resolution       string              `json:"resolution" keel:"resolution,nullzero"`
-	Version          int64               `json:"version" keel:"version,version"`
-	CreatedAt        int64               `json:"createdAt" keel:"created_at,autocreate"`
-	UpdatedAt        int64               `json:"updatedAt" keel:"updated_at,autoupdate"`
+	OutOfService     bool                `json:"outOfService"     keel:"out_of_service"`
+	FineAmount       decimal.NullDecimal `json:"fineAmount"       keel:"fine_amount"`
+	CostAmount       decimal.NullDecimal `json:"costAmount"       keel:"cost_amount"`
+	DocumentID       pulid.ID            `json:"documentId"       keel:"document_id,nullzero"`
+	RecordedByID     pulid.ID            `json:"recordedById"     keel:"recorded_by_id,nullzero"`
+	ClosedByID       pulid.ID            `json:"closedById"       keel:"closed_by_id,nullzero"`
+	ClosedAt         *int64              `json:"closedAt"         keel:"closed_at"`
+	Resolution       string              `json:"resolution"       keel:"resolution,nullzero"`
+	Version          int64               `json:"version"          keel:"version,version"`
+	CreatedAt        int64               `json:"createdAt"        keel:"created_at,autocreate"`
+	UpdatedAt        int64               `json:"updatedAt"        keel:"updated_at,autoupdate"`
 
-	Worker     *Worker            `json:"worker,omitempty" keel:"belongs:worker_id"`
-	Document   *document.Document `json:"document,omitempty" keel:"belongs:document_id"`
+	Worker     *Worker            `json:"worker,omitempty"     keel:"belongs:worker_id"`
+	Document   *document.Document `json:"document,omitempty"   keel:"belongs:document_id"`
 	RecordedBy *tenant.User       `json:"recordedBy,omitempty" keel:"belongs:recorded_by_id"`
-	ClosedBy   *tenant.User       `json:"closedBy,omitempty" keel:"belongs:closed_by_id"`
+	ClosedBy   *tenant.User       `json:"closedBy,omitempty"   keel:"belongs:closed_by_id"`
 }
 
 func (e *WorkerSafetyEvent) Validate(multiErr *errortypes.MultiError) {

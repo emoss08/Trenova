@@ -88,28 +88,28 @@ var (
 )
 
 type WorkerPTOLedgerEntry struct {
-	keel.Table `                                                 keel:"worker_pto_ledger"`
+	keel.Table `keel:"worker_pto_ledger"`
 
-	ID               pulid.ID           `json:"id" keel:"id,pk,autoid:wpl_"`
-	BusinessUnitID   pulid.ID           `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
-	OrganizationID   pulid.ID           `json:"organizationId" keel:"organization_id,pk,tenant"`
-	WorkerID         pulid.ID           `json:"workerId" keel:"worker_id"`
-	PTOType          PTOType            `json:"ptoType" keel:"pto_type"`
-	EntryType        PTOLedgerEntryType `json:"entryType" keel:"entry_type"`
-	AmountDays       decimal.Decimal    `json:"amountDays" keel:"amount_days"`
+	ID               pulid.ID           `json:"id"               keel:"id,pk,autoid:wpl_"`
+	BusinessUnitID   pulid.ID           `json:"businessUnitId"   keel:"business_unit_id,pk,tenant"`
+	OrganizationID   pulid.ID           `json:"organizationId"   keel:"organization_id,pk,tenant"`
+	WorkerID         pulid.ID           `json:"workerId"         keel:"worker_id"`
+	PTOType          PTOType            `json:"ptoType"          keel:"pto_type"`
+	EntryType        PTOLedgerEntryType `json:"entryType"        keel:"entry_type"`
+	AmountDays       decimal.Decimal    `json:"amountDays"       keel:"amount_days"`
 	BalanceAfterDays decimal.Decimal    `json:"balanceAfterDays" keel:"balance_after_days"`
-	Sequence         int64              `json:"sequence" keel:"sequence"`
-	EffectiveAt      int64              `json:"effectiveAt" keel:"effective_at"`
-	PeriodKey        string             `json:"periodKey" keel:"period_key,nullzero"`
-	SourcePTOID      pulid.ID           `json:"sourcePtoId" keel:"source_pto_id,nullzero"`
-	AssignmentID     pulid.ID           `json:"assignmentId" keel:"assignment_id,nullzero"`
-	PTOPolicyID      pulid.ID           `json:"ptoPolicyId" keel:"pto_policy_id,nullzero"`
-	ActorType        PTOLedgerActorType `json:"actorType" keel:"actor_type"`
-	CreatedByID      pulid.ID           `json:"createdById" keel:"created_by_id,nullzero"`
-	Note             string             `json:"note" keel:"note,nullzero"`
-	CreatedAt        int64              `json:"createdAt" keel:"created_at,autocreate"`
+	Sequence         int64              `json:"sequence"         keel:"sequence"`
+	EffectiveAt      int64              `json:"effectiveAt"      keel:"effective_at"`
+	PeriodKey        string             `json:"periodKey"        keel:"period_key,nullzero"`
+	SourcePTOID      pulid.ID           `json:"sourcePtoId"      keel:"source_pto_id,nullzero"`
+	AssignmentID     pulid.ID           `json:"assignmentId"     keel:"assignment_id,nullzero"`
+	PTOPolicyID      pulid.ID           `json:"ptoPolicyId"      keel:"pto_policy_id,nullzero"`
+	ActorType        PTOLedgerActorType `json:"actorType"        keel:"actor_type"`
+	CreatedByID      pulid.ID           `json:"createdById"      keel:"created_by_id,nullzero"`
+	Note             string             `json:"note"             keel:"note,nullzero"`
+	CreatedAt        int64              `json:"createdAt"        keel:"created_at,autocreate"`
 
-	Worker    *Worker    `json:"worker,omitempty" keel:"belongs:worker_id"`
+	Worker    *Worker    `json:"worker,omitempty"    keel:"belongs:worker_id"`
 	SourcePTO *WorkerPTO `json:"sourcePto,omitempty" keel:"belongs:source_pto_id|worker_id"`
 }
 

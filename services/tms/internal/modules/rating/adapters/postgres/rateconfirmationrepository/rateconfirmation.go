@@ -20,7 +20,7 @@ import (
 
 const (
 	defaultTokenPurgeLimit = 500
-	deadTokenSQL           = "COALESCE(?, ?, ?) < ?"
+	deadTokenSQL           = "COALESCE(?, ?, ?) < ?" //nolint:gosec // G101: a SQL fragment about expired tokens, not a token
 )
 
 var (

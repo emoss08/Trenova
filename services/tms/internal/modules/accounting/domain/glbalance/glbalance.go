@@ -13,23 +13,23 @@ import (
 
 // Debits, credits and net change per GL account per fiscal period
 type GLAccountPeriodBalance struct {
-	keel.Table `                                                            keel:"gl_account_balances_by_period,report=Accounting,label=Account Period Balance"`
+	keel.Table `keel:"gl_account_balances_by_period,report=Accounting,label=Account Period Balance"`
 
-	OrganizationID     pulid.ID `json:"organizationId" keel:"organization_id,pk,tenant"`
-	BusinessUnitID     pulid.ID `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
-	GLAccountID        pulid.ID `json:"glAccountId" keel:"gl_account_id,pk"`
-	FiscalYearID       pulid.ID `json:"fiscalYearId" keel:"fiscal_year_id,pk"`
-	FiscalPeriodID     pulid.ID `json:"fiscalPeriodId" keel:"fiscal_period_id,pk"`
-	PeriodDebitMinor   int64    `json:"periodDebitMinor" keel:"period_debit_minor,label=Period Debit (Minor)"`
-	PeriodCreditMinor  int64    `json:"periodCreditMinor" keel:"period_credit_minor,label=Period Credit (Minor)"`
-	NetChangeMinor     int64    `json:"netChangeMinor" keel:"net_change_minor,label=Net Change (Minor)"`
+	OrganizationID     pulid.ID `json:"organizationId"     keel:"organization_id,pk,tenant"`
+	BusinessUnitID     pulid.ID `json:"businessUnitId"     keel:"business_unit_id,pk,tenant"`
+	GLAccountID        pulid.ID `json:"glAccountId"        keel:"gl_account_id,pk"`
+	FiscalYearID       pulid.ID `json:"fiscalYearId"       keel:"fiscal_year_id,pk"`
+	FiscalPeriodID     pulid.ID `json:"fiscalPeriodId"     keel:"fiscal_period_id,pk"`
+	PeriodDebitMinor   int64    `json:"periodDebitMinor"   keel:"period_debit_minor,label=Period Debit (Minor)"`
+	PeriodCreditMinor  int64    `json:"periodCreditMinor"  keel:"period_credit_minor,label=Period Credit (Minor)"`
+	NetChangeMinor     int64    `json:"netChangeMinor"     keel:"net_change_minor,label=Net Change (Minor)"`
 	LastJournalEntryID pulid.ID `json:"lastJournalEntryId" keel:"last_journal_entry_id,nullzero"`
-	CreatedAt          int64    `json:"createdAt" keel:"created_at,autocreate"`
-	UpdatedAt          int64    `json:"updatedAt" keel:"updated_at,autoupdate"`
+	CreatedAt          int64    `json:"createdAt"          keel:"created_at,autocreate"`
+	UpdatedAt          int64    `json:"updatedAt"          keel:"updated_at,autoupdate"`
 
-	GLAccount        *glaccount.GLAccount       `json:"glAccount,omitempty" keel:"belongs:gl_account_id"`
-	FiscalYear       *fiscalyear.FiscalYear     `json:"fiscalYear,omitempty" keel:"belongs:fiscal_year_id"`
-	FiscalPeriod     *fiscalperiod.FiscalPeriod `json:"fiscalPeriod,omitempty" keel:"belongs:fiscal_period_id"`
+	GLAccount        *glaccount.GLAccount       `json:"glAccount,omitempty"        keel:"belongs:gl_account_id"`
+	FiscalYear       *fiscalyear.FiscalYear     `json:"fiscalYear,omitempty"       keel:"belongs:fiscal_year_id"`
+	FiscalPeriod     *fiscalperiod.FiscalPeriod `json:"fiscalPeriod,omitempty"     keel:"belongs:fiscal_period_id"`
 	LastJournalEntry *journalentry.JournalEntry `json:"lastJournalEntry,omitempty" keel:"belongs:last_journal_entry_id"`
 }
 

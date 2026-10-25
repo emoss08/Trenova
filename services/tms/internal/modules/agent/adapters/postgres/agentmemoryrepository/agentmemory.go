@@ -593,6 +593,7 @@ func activation(req *agentports.ResolveAgentMemorySuggestionRequest) []keel.Assi
 		owner = req.OwnerUserID
 	case agent.MemoryScopeRole:
 		role = req.RoleID
+	case agent.MemoryScopeOrganization, agent.MemoryScopeAgent:
 	}
 	reviewedAt := m.ReviewedAt.ToNull()
 	if req.ByUserID.IsNotNil() {

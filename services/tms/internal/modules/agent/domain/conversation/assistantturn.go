@@ -112,12 +112,12 @@ func (s AssistantTurnStatus) Terminal() bool {
 type AssistantTurn struct {
 	keel.Table `keel:"assistant_turns"`
 
-	ID             pulid.ID `json:"id" keel:"id,pk,autoid:atrn_"`
+	ID             pulid.ID `json:"id"             keel:"id,pk,autoid:atrn_"`
 	BusinessUnitID pulid.ID `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
 	OrganizationID pulid.ID `json:"organizationId" keel:"organization_id,pk,tenant"`
 
 	ThreadID pulid.ID `json:"threadId" keel:"thread_id"`
-	UserID   pulid.ID `json:"userId" keel:"user_id"`
+	UserID   pulid.ID `json:"userId"   keel:"user_id"`
 	// RunID points at the agent run opened for this turn, which happens only
 	// when it proposed a change somebody has to decide on.
 	RunID pulid.ID `json:"runId" keel:"run_id,nullzero"`
@@ -129,17 +129,17 @@ type AssistantTurn struct {
 	// reply already being written can show it under the right heading: the
 	// person's question, or the decision it follows up.
 	Origin AssistantTurnOrigin `json:"origin" keel:"origin"`
-	Input  string              `json:"input" keel:"input,nullzero"`
+	Input  string              `json:"input"  keel:"input,nullzero"`
 
-	Status       AssistantTurnStatus `json:"status" keel:"status"`
+	Status       AssistantTurnStatus `json:"status"       keel:"status"`
 	ErrorMessage string              `json:"errorMessage" keel:"error_message,nullzero"`
-	StartedAt    int64               `json:"startedAt" keel:"started_at,nullzero"`
-	CompletedAt  *int64              `json:"completedAt" keel:"completed_at"`
-	Fingerprint  *agent.Fingerprint  `json:"fingerprint" keel:"fingerprint,jsonb"`
+	StartedAt    int64               `json:"startedAt"    keel:"started_at,nullzero"`
+	CompletedAt  *int64              `json:"completedAt"  keel:"completed_at"`
+	Fingerprint  *agent.Fingerprint  `json:"fingerprint"  keel:"fingerprint,jsonb"`
 	// TraceID is the turn's trace.
 	TraceID string `json:"traceId" keel:"trace_id,nullzero"`
 
-	Version   int64 `json:"version" keel:"version,version"`
+	Version   int64 `json:"version"   keel:"version,version"`
 	CreatedAt int64 `json:"createdAt" keel:"created_at,autocreate"`
 	UpdatedAt int64 `json:"updatedAt" keel:"updated_at,autoupdate"`
 

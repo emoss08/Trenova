@@ -54,6 +54,7 @@ func New(p Params) agentports.AgentSubjectRepository {
 // context; each table answers through its own generated handle.
 type subjectExists func(id pulid.ID, found *bool) keel.BatchItem
 
+//nolint:exhaustive // an organization subject is checked against the caller's tenant, not a table
 var subjectTables = map[agent.SubjectType]subjectExists{
 	agent.SubjectBillingQueueItem: func(id pulid.ID, found *bool) keel.BatchItem {
 		t := billingqueuedb.BillingQueueItems

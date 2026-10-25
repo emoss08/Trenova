@@ -16,38 +16,38 @@ import (
 type DocumentUploadSession struct {
 	keel.Table `keel:"document_upload_sessions"`
 
-	ID                      pulid.ID                   `json:"id" keel:"id,pk,autoid:dus_"`
-	OrganizationID          pulid.ID                   `json:"organizationId" keel:"organization_id,pk,tenant"`
-	BusinessUnitID          pulid.ID                   `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
-	DocumentID              *pulid.ID                  `json:"documentId" keel:"document_id"`
-	LineageID               *pulid.ID                  `json:"lineageId" keel:"lineage_id"`
-	ResourceID              string                     `json:"resourceId" keel:"resource_id"`
-	ResourceType            string                     `json:"resourceType" keel:"resource_type"`
-	ProcessingProfile       document.ProcessingProfile `json:"processingProfile" keel:"processing_profile"`
-	DocumentTypeID          *pulid.ID                  `json:"documentTypeId" keel:"document_type_id"`
-	OriginalName            string                     `json:"originalName" keel:"original_name"`
-	ContentType             string                     `json:"contentType" keel:"content_type"`
-	FileSize                int64                      `json:"fileSize" keel:"file_size"`
-	StoragePath             string                     `json:"storagePath" keel:"storage_path"`
+	ID                      pulid.ID                   `json:"id"                      keel:"id,pk,autoid:dus_"`
+	OrganizationID          pulid.ID                   `json:"organizationId"          keel:"organization_id,pk,tenant"`
+	BusinessUnitID          pulid.ID                   `json:"businessUnitId"          keel:"business_unit_id,pk,tenant"`
+	DocumentID              *pulid.ID                  `json:"documentId"              keel:"document_id"`
+	LineageID               *pulid.ID                  `json:"lineageId"               keel:"lineage_id"`
+	ResourceID              string                     `json:"resourceId"              keel:"resource_id"`
+	ResourceType            string                     `json:"resourceType"            keel:"resource_type"`
+	ProcessingProfile       document.ProcessingProfile `json:"processingProfile"       keel:"processing_profile"`
+	DocumentTypeID          *pulid.ID                  `json:"documentTypeId"          keel:"document_type_id"`
+	OriginalName            string                     `json:"originalName"            keel:"original_name"`
+	ContentType             string                     `json:"contentType"             keel:"content_type"`
+	FileSize                int64                      `json:"fileSize"                keel:"file_size"`
+	StoragePath             string                     `json:"storagePath"             keel:"storage_path"`
 	StorageProviderUploadID string                     `json:"storageProviderUploadId" keel:"storage_provider_upload_id,nullzero"`
-	ChecksumSHA256          string                     `json:"checksumSha256" keel:"checksum_sha256,nullzero"`
-	CryptoMode              string                     `json:"cryptoMode" keel:"crypto_mode"`
-	CryptoVersion           int16                      `json:"cryptoVersion" keel:"crypto_version"`
-	MalwareScan             bool                       `json:"malwareScan" keel:"malware_scan"`
-	Strategy                Strategy                   `json:"strategy" keel:"strategy"`
-	Status                  Status                     `json:"status" keel:"status"`
-	Description             string                     `json:"description" keel:"description,nullzero"`
-	Tags                    []string                   `json:"tags" keel:"tags"`
-	UploadedParts           []kernelports.UploadedPart `json:"uploadedParts" keel:"uploaded_parts,jsonb"`
-	PartSize                int64                      `json:"partSize" keel:"part_size"`
-	FailureCode             string                     `json:"failureCode" keel:"failure_code,nullzero"`
-	FailureMessage          string                     `json:"failureMessage" keel:"failure_message,nullzero"`
-	ThreatName              string                     `json:"threatName" keel:"threat_name,nullzero"`
-	ExpiresAt               int64                      `json:"expiresAt" keel:"expires_at"`
-	LastActivityAt          int64                      `json:"lastActivityAt" keel:"last_activity_at"`
-	Version                 int64                      `json:"version" keel:"version,version"`
-	CreatedAt               int64                      `json:"createdAt" keel:"created_at,autocreate"`
-	UpdatedAt               int64                      `json:"updatedAt" keel:"updated_at,autoupdate"`
+	ChecksumSHA256          string                     `json:"checksumSha256"          keel:"checksum_sha256,nullzero"`
+	CryptoMode              string                     `json:"cryptoMode"              keel:"crypto_mode"`
+	CryptoVersion           int16                      `json:"cryptoVersion"           keel:"crypto_version"`
+	MalwareScan             bool                       `json:"malwareScan"             keel:"malware_scan"`
+	Strategy                Strategy                   `json:"strategy"                keel:"strategy"`
+	Status                  Status                     `json:"status"                  keel:"status"`
+	Description             string                     `json:"description"             keel:"description,nullzero"`
+	Tags                    []string                   `json:"tags"                    keel:"tags"`
+	UploadedParts           []kernelports.UploadedPart `json:"uploadedParts"           keel:"uploaded_parts,jsonb"`
+	PartSize                int64                      `json:"partSize"                keel:"part_size"`
+	FailureCode             string                     `json:"failureCode"             keel:"failure_code,nullzero"`
+	FailureMessage          string                     `json:"failureMessage"          keel:"failure_message,nullzero"`
+	ThreatName              string                     `json:"threatName"              keel:"threat_name,nullzero"`
+	ExpiresAt               int64                      `json:"expiresAt"               keel:"expires_at"`
+	LastActivityAt          int64                      `json:"lastActivityAt"          keel:"last_activity_at"`
+	Version                 int64                      `json:"version"                 keel:"version,version"`
+	CreatedAt               int64                      `json:"createdAt"               keel:"created_at,autocreate"`
+	UpdatedAt               int64                      `json:"updatedAt"               keel:"updated_at,autoupdate"`
 }
 
 func (s *DocumentUploadSession) BeforeCreate(_ context.Context) error {

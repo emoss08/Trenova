@@ -118,7 +118,11 @@ func (r *analysisRunRepository) SaveCharts(
 	}
 
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
-		if err := agentextensiondb.AnalysisCharts.CreateMany(ctx, r.db.Keel(ctx), charts); err != nil {
+		if err := agentextensiondb.AnalysisCharts.CreateMany(
+			ctx,
+			r.db.Keel(ctx),
+			charts,
+		); err != nil {
 			r.l.Error("failed to save analysis charts", zap.Error(err))
 			return fmt.Errorf("save analysis charts: %w", err)
 		}

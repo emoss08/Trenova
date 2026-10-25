@@ -56,7 +56,11 @@ func (r *repository) Create(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*billingtransfer.BillingTransferRun, error) {
-			if err := billingtransferdb.BillingTransferRuns.Create(ctx, r.db.Keel(ctx), entity); err != nil {
+			if err := billingtransferdb.BillingTransferRuns.Create(
+				ctx,
+				r.db.Keel(ctx),
+				entity,
+			); err != nil {
 				r.l.Error("failed to create billing transfer run", zap.Error(err))
 				return nil, runErrors.Map(err, entity.ID.String())
 			}
@@ -74,7 +78,11 @@ func (r *repository) Update(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*billingtransfer.BillingTransferRun, error) {
-			if err := billingtransferdb.BillingTransferRuns.Save(ctx, r.db.Keel(ctx), entity); err != nil {
+			if err := billingtransferdb.BillingTransferRuns.Save(
+				ctx,
+				r.db.Keel(ctx),
+				entity,
+			); err != nil {
 				r.l.Error("failed to update billing transfer run", zap.Error(err))
 				return nil, runErrors.Map(err, entity.ID.String())
 			}
@@ -136,7 +144,7 @@ func (r *repository) GetActive(
 				run.Status.In(nonTerminalRunStatuses...),
 			).Order(run.CreatedAt.Desc()).First(ctx, r.db.Keel(ctx))
 			if errors.Is(err, keel.ErrNotFound) {
-				return nil, nil //nolint:nilnil // no run in flight is an answer, not a failure
+				return nil, nil
 			}
 			if err != nil {
 				r.l.Error("failed to get active billing transfer run", zap.Error(err))
@@ -208,7 +216,11 @@ func (r *repository) advanceRun(
 		r.l.Error("failed to advance billing transfer run", zap.Error(err))
 		return nil, runErrors.Map(err, runID.String())
 	}
-	if err = dberror.CheckAffected(int64(len(rows)), "BillingTransferRun", runID.String()); err != nil {
+	if err = dberror.CheckAffected(
+		int64(len(rows)),
+		"BillingTransferRun",
+		runID.String(),
+	); err != nil {
 		return nil, err
 	}
 

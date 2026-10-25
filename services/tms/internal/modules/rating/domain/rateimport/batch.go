@@ -31,15 +31,15 @@ const maxFileNameLength = 255
 type RateImportBatch struct {
 	keel.Table `keel:"rate_import_batches"`
 
-	ID             pulid.ID `json:"id" keel:"id,pk,autoid:rib_"`
+	ID             pulid.ID `json:"id"             keel:"id,pk,autoid:rib_"`
 	BusinessUnitID pulid.ID `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
 	OrganizationID pulid.ID `json:"organizationId" keel:"organization_id,pk,tenant"`
 
 	RateAgreementID pulid.ID `json:"rateAgreementId" keel:"rate_agreement_id"`
 
-	FileName     string       `json:"fileName" keel:"file_name"`
+	FileName     string       `json:"fileName"     keel:"file_name"`
 	SourceFormat SourceFormat `json:"sourceFormat" keel:"source_format"`
-	Status       Status       `json:"status" keel:"status"`
+	Status       Status       `json:"status"       keel:"status"`
 
 	// EffectiveFrom is the day the imported rules start pricing. It is the
 	// caller's decision rather than the sheet's: a tariff is negotiated to take
@@ -61,23 +61,23 @@ type RateImportBatch struct {
 
 	Summary *pkgrateimport.Summary `json:"summary" keel:"summary,jsonb"`
 
-	RowCount   int `json:"rowCount" keel:"row_count"`
+	RowCount   int `json:"rowCount"   keel:"row_count"`
 	ErrorCount int `json:"errorCount" keel:"error_count"`
 
 	Error string `json:"error" keel:"error,nullzero"`
 
 	UploadedByID *pulid.ID `json:"uploadedById" keel:"uploaded_by_id"`
-	CommittedAt  *int64    `json:"committedAt" keel:"committed_at"`
-	CommittedBy  *pulid.ID `json:"committedBy" keel:"committed_by_id"`
+	CommittedAt  *int64    `json:"committedAt"  keel:"committed_at"`
+	CommittedBy  *pulid.ID `json:"committedBy"  keel:"committed_by_id"`
 
-	Version   int64 `json:"version" keel:"version,version"`
+	Version   int64 `json:"version"   keel:"version,version"`
 	CreatedAt int64 `json:"createdAt" keel:"created_at,autocreate"`
 	UpdatedAt int64 `json:"updatedAt" keel:"updated_at,autoupdate"`
 
 	BusinessUnit *tenant.BusinessUnit         `json:"-"`
 	Organization *tenant.Organization         `json:"-"`
 	Agreement    *rateagreement.RateAgreement `json:"agreement,omitempty" keel:"belongs:rate_agreement_id"`
-	Rows         []*RateImportRow             `json:"rows,omitempty" keel:"many:rate_import_batch_id"`
+	Rows         []*RateImportRow             `json:"rows,omitempty"      keel:"many:rate_import_batch_id"`
 }
 
 func (b *RateImportBatch) BeforeCreate(_ context.Context) error {

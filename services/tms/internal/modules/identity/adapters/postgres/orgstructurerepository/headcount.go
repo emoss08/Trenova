@@ -35,7 +35,7 @@ type headcountGroup struct {
 func (r *repository) rosterCount(
 	ctx context.Context,
 	operation string,
-	g headcountGroup,
+	g *headcountGroup,
 ) ([]workerports.HeadcountRow, error) {
 	w := workerdb.Workers
 	jp := w.Position()
@@ -73,7 +73,7 @@ func (r *repository) HeadcountByFleet(
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]workerports.HeadcountRow, error) {
 		w := workerdb.Workers
 		fc := w.FleetCode()
-		return r.rosterCount(ctx, "fleet", headcountGroup{
+		return r.rosterCount(ctx, "fleet", &headcountGroup{
 			key:   keel.Raw(orEmptySQL, w.FleetCodeID),
 			label: keel.Raw("COALESCE(?, ?, 'No terminal')", fc.Description, fc.Code),
 			code:  keel.Raw(orEmptySQL, fc.Code),
@@ -90,7 +90,7 @@ func (r *repository) HeadcountByPosition(
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]workerports.HeadcountRow, error) {
 		w := workerdb.Workers
 		jp := w.Position()
-		return r.rosterCount(ctx, "position", headcountGroup{
+		return r.rosterCount(ctx, "position", &headcountGroup{
 			key:   keel.Raw(orEmptySQL, w.PositionID),
 			label: keel.Raw("COALESCE(?, 'No position')", jp.Title),
 			code:  keel.Raw(orEmptySQL, jp.Code),
@@ -106,7 +106,7 @@ func (r *repository) HeadcountByDepartment(
 ) ([]workerports.HeadcountRow, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]workerports.HeadcountRow, error) {
 		jp := workerdb.Workers.Position()
-		return r.rosterCount(ctx, "department", headcountGroup{
+		return r.rosterCount(ctx, "department", &headcountGroup{
 			key:   keel.Raw("COALESCE(?::text, '')", jp.Department),
 			label: keel.Raw("COALESCE(?::text, 'Unassigned')", jp.Department),
 			code:  keel.Raw("''"),

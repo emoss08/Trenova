@@ -18,29 +18,29 @@ var (
 type ImportRow struct {
 	keel.Table `keel:"fuel_purchase_import_rows"`
 
-	ID             pulid.ID `json:"id" keel:"id,pk,autoid:fpir_"`
+	ID             pulid.ID `json:"id"             keel:"id,pk,autoid:fpir_"`
 	BusinessUnitID pulid.ID `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
 	OrganizationID pulid.ID `json:"organizationId" keel:"organization_id,pk,tenant"`
-	ImportBatchID  pulid.ID `json:"importBatchId" keel:"import_batch_id"`
+	ImportBatchID  pulid.ID `json:"importBatchId"  keel:"import_batch_id"`
 
 	RowNumber int           `json:"rowNumber" keel:"row_number"`
-	Cells     []string      `json:"cells" keel:"cells,jsonb,nullzero"`
-	Parsed    *FuelPurchase `json:"parsed" keel:"parsed,jsonb"`
+	Cells     []string      `json:"cells"     keel:"cells,jsonb,nullzero"`
+	Parsed    *FuelPurchase `json:"parsed"    keel:"parsed,jsonb"`
 
 	TransactionReference string          `json:"transactionReference" keel:"transaction_reference,nullzero"`
-	Status               ImportRowStatus `json:"status" keel:"status"`
-	Error                string          `json:"error" keel:"error,nullzero"`
+	Status               ImportRowStatus `json:"status"               keel:"status"`
+	Error                string          `json:"error"                keel:"error,nullzero"`
 
-	ResolvedTractorID      *pulid.ID `json:"resolvedTractorId" keel:"resolved_tractor_id"`
-	ResolvedFuelCardID     *pulid.ID `json:"resolvedFuelCardId" keel:"resolved_fuel_card_id"`
+	ResolvedTractorID      *pulid.ID `json:"resolvedTractorId"      keel:"resolved_tractor_id"`
+	ResolvedFuelCardID     *pulid.ID `json:"resolvedFuelCardId"     keel:"resolved_fuel_card_id"`
 	ResolvedJurisdictionID *pulid.ID `json:"resolvedJurisdictionId" keel:"resolved_jurisdiction_id"`
-	ResolutionNotes        []string  `json:"resolutionNotes" keel:"resolution_notes,jsonb,nullzero"`
+	ResolutionNotes        []string  `json:"resolutionNotes"        keel:"resolution_notes,jsonb,nullzero"`
 
 	FuelPurchaseID *pulid.ID `json:"fuelPurchaseId" keel:"fuel_purchase_id"`
 
 	CreatedAt int64 `json:"createdAt" keel:"created_at,autocreate"`
 
-	Batch        *ImportBatch  `json:"-" keel:"belongs:import_batch_id"`
+	Batch        *ImportBatch  `json:"-"                      keel:"belongs:import_batch_id"`
 	FuelPurchase *FuelPurchase `json:"fuelPurchase,omitempty" keel:"belongs:fuel_purchase_id"`
 }
 

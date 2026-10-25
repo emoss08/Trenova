@@ -29,17 +29,17 @@ var (
 type Jurisdiction struct {
 	keel.Table `keel:"ifta_jurisdictions"`
 
-	ID           pulid.ID           `json:"id" keel:"id,pk,autoid:ifj_"`
-	CountryCode  string             `json:"countryCode" keel:"country_code"`
-	Code         string             `json:"code" keel:"code"`
-	Name         string             `json:"name" keel:"name"`
-	UsStateID    *pulid.ID          `json:"usStateId" keel:"us_state_id"`
+	ID           pulid.ID           `json:"id"           keel:"id,pk,autoid:ifj_"`
+	CountryCode  string             `json:"countryCode"  keel:"country_code"`
+	Code         string             `json:"code"         keel:"code"`
+	Name         string             `json:"name"         keel:"name"`
+	UsStateID    *pulid.ID          `json:"usStateId"    keel:"us_state_id"`
 	IsIftaMember bool               `json:"isIftaMember" keel:"is_ifta_member"`
 	HasSurcharge bool               `json:"hasSurcharge" keel:"has_surcharge"`
-	SortOrder    int                `json:"sortOrder" keel:"sort_order"`
-	Status       JurisdictionStatus `json:"status" keel:"status"`
-	CreatedAt    int64              `json:"createdAt" keel:"created_at,autocreate"`
-	UpdatedAt    int64              `json:"updatedAt" keel:"updated_at,autoupdate"`
+	SortOrder    int                `json:"sortOrder"    keel:"sort_order"`
+	Status       JurisdictionStatus `json:"status"       keel:"status"`
+	CreatedAt    int64              `json:"createdAt"    keel:"created_at,autocreate"`
+	UpdatedAt    int64              `json:"updatedAt"    keel:"updated_at,autoupdate"`
 
 	UsState *usstate.UsState `json:"usState,omitempty" keel:"belongs:us_state_id"`
 }

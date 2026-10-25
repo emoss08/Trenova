@@ -19,6 +19,8 @@ import (
 	"go.uber.org/zap"
 )
 
+const fieldWorkerID = "workerId"
+
 const (
 	defaultTemplatePageSize   = 200
 	defaultAssignmentPageSize = 200
@@ -41,14 +43,14 @@ var assignmentErrors = dberror.Mapping{
 	Unique: []dberror.Constraint{
 		{
 			Name:    "uq_worker_shift_assignments_open",
-			Field:   "workerId",
+			Field:   fieldWorkerID,
 			Message: "Worker already has an open shift assignment",
 		},
 	},
 	ForeignKey: []dberror.Constraint{
 		{
 			Name:    "fk_worker_shift_assignments_worker",
-			Field:   "workerId",
+			Field:   fieldWorkerID,
 			Message: "Worker does not exist or belongs to a different organization",
 		},
 		{
@@ -64,7 +66,7 @@ var preferenceErrors = dberror.Mapping{
 	ForeignKey: []dberror.Constraint{
 		{
 			Name:    "fk_worker_availability_preferences_worker",
-			Field:   "workerId",
+			Field:   fieldWorkerID,
 			Message: "Worker does not exist or belongs to a different organization",
 		},
 	},

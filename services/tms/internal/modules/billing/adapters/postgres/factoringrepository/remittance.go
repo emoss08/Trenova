@@ -80,38 +80,47 @@ func (r *remittanceRepository) Get(
 	ctx context.Context,
 	req factoringports.GetRemittanceRequest,
 ) (*factoring.Remittance, error) {
-	read := dbtx.Read[*factoring.Remittance]
 	if req.ForUpdate {
-		read = dbtx.Write[*factoring.Remittance]
+		return dbtx.Write(ctx, r.db, func(ctx context.Context) (*factoring.Remittance, error) {
+			return r.get(ctx, req)
+		})
 	}
-	return read(ctx, r.db, func(ctx context.Context) (*factoring.Remittance, error) {
-		db := r.db.Keel(ctx)
-		rem := factoringdb.Remittances
-		q := rem.Where(rem.ID.Eq(req.ID)).Load(rem.FactoringCompany())
-		if req.ForUpdate {
-			q = q.Lock(keel.ForUpdate)
-		}
-		entity, err := q.One(ctx, db)
-		if err != nil {
-			return nil, remittanceErrors.Map(err, req.ID.String())
-		}
-		if !req.IncludeLines {
-			return entity, nil
-		}
 
-		lines := withMatchedItem(factoringdb.RemittanceLines.Query()).
-			Where(factoringdb.RemittanceLines.RemittanceID.Eq(entity.ID)).
-			Order(factoringdb.RemittanceLines.RowNumber.Asc())
-		if req.ForUpdate {
-			lines = lines.Lock(keel.ForUpdate)
-		}
-		entity.Lines, err = lines.All(ctx, db)
-		if err != nil {
-			return nil, err
-		}
-
-		return entity, nil
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*factoring.Remittance, error) {
+		return r.get(ctx, req)
 	})
+}
+
+func (r *remittanceRepository) get(
+	ctx context.Context,
+	req factoringports.GetRemittanceRequest,
+) (*factoring.Remittance, error) {
+	db := r.db.Keel(ctx)
+	rem := factoringdb.Remittances
+	q := rem.Where(rem.ID.Eq(req.ID)).Load(rem.FactoringCompany())
+	if req.ForUpdate {
+		q = q.Lock(keel.ForUpdate)
+	}
+	entity, err := q.One(ctx, db)
+	if err != nil {
+		return nil, remittanceErrors.Map(err, req.ID.String())
+	}
+	if !req.IncludeLines {
+		return entity, nil
+	}
+
+	lines := withMatchedItem(factoringdb.RemittanceLines.Query()).
+		Where(factoringdb.RemittanceLines.RemittanceID.Eq(entity.ID)).
+		Order(factoringdb.RemittanceLines.RowNumber.Asc())
+	if req.ForUpdate {
+		lines = lines.Lock(keel.ForUpdate)
+	}
+	entity.Lines, err = lines.All(ctx, db)
+	if err != nil {
+		return nil, err
+	}
+
+	return entity, nil
 }
 
 func withMatchedItem(

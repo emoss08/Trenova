@@ -24,7 +24,10 @@ func Receivable(inv *invoicedb.InvoicesTable) keel.Pred {
 }
 
 func Open(inv *invoicedb.InvoicesTable) keel.Pred {
-	return keel.And(Receivable(inv), keel.Raw("? > ?", inv.TotalAmountMinor, inv.AppliedAmountMinor))
+	return keel.And(
+		Receivable(inv),
+		keel.Raw("? > ?", inv.TotalAmountMinor, inv.AppliedAmountMinor),
+	)
 }
 
 func OpenMinor(inv *invoicedb.InvoicesTable) keel.Expr {

@@ -71,7 +71,12 @@ func (r *repository) FindRedeemableByHash(
 	ctx = dbscope.WithSystem(ctx, resolveTokenScopeReason)
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*tenant.PasswordResetToken, error) {
 		prt := tenantdb.PasswordResetTokens
-		token, err := tokens(ctx, prt.TokenHash.Eq(tokenHash), outstanding(), prt.ExpiresAt.Gt(now)).
+		token, err := tokens(
+			ctx,
+			prt.TokenHash.Eq(tokenHash),
+			outstanding(),
+			prt.ExpiresAt.Gt(now),
+		).
 			Load(prt.User()).
 			One(ctx, r.db.Keel(ctx))
 		if err != nil {

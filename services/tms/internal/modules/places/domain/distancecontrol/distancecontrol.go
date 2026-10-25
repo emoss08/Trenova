@@ -32,25 +32,25 @@ const (
 type DistanceControl struct {
 	keel.Table `keel:"distance_controls"`
 
-	ID                                           pulid.ID `json:"id" keel:"id,pk,autoid:dc_"`
-	BusinessUnitID                               pulid.ID `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
-	OrganizationID                               pulid.ID `json:"organizationId" keel:"organization_id,pk,tenant"`
-	StoreMileage                                 bool     `json:"storeMileage" keel:"store_mileage"`
-	StoredDistanceUnits                          string   `json:"storedDistanceUnits" keel:"stored_distance_units"`
-	PostalCodeFallbackToCity                     bool     `json:"postalCodeFallbackToCity" keel:"postal_code_fallback_to_city"`
-	AutoCreateStoredMileage                      bool     `json:"autoCreateStoredMileage" keel:"auto_create_stored_mileage"`
-	LoadedMoveDistanceProfileID                  pulid.ID `json:"loadedMoveDistanceProfileId" keel:"loaded_move_distance_profile_id"`
-	EmptyMoveDistanceProfileID                   pulid.ID `json:"emptyMoveDistanceProfileId" keel:"empty_move_distance_profile_id"`
-	PayDistanceProfileID                         pulid.ID `json:"payDistanceProfileId" keel:"pay_distance_profile_id"`
-	BillingDistanceProfileID                     pulid.ID `json:"billingDistanceProfileId" keel:"billing_distance_profile_id"`
-	FuelDistanceProfileID                        pulid.ID `json:"fuelDistanceProfileId" keel:"fuel_distance_profile_id"`
-	EtaOutOfRouteDistanceProfileID               pulid.ID `json:"etaOutOfRouteDistanceProfileId" keel:"eta_out_of_route_distance_profile_id"`
-	DistanceCalculatorShortestDistanceProfileID  pulid.ID `json:"distanceCalculatorShortestDistanceProfileId" keel:"distance_calculator_shortest_distance_profile_id"`
+	ID                                           pulid.ID `json:"id"                                           keel:"id,pk,autoid:dc_"`
+	BusinessUnitID                               pulid.ID `json:"businessUnitId"                               keel:"business_unit_id,pk,tenant"`
+	OrganizationID                               pulid.ID `json:"organizationId"                               keel:"organization_id,pk,tenant"`
+	StoreMileage                                 bool     `json:"storeMileage"                                 keel:"store_mileage"`
+	StoredDistanceUnits                          string   `json:"storedDistanceUnits"                          keel:"stored_distance_units"`
+	PostalCodeFallbackToCity                     bool     `json:"postalCodeFallbackToCity"                     keel:"postal_code_fallback_to_city"`
+	AutoCreateStoredMileage                      bool     `json:"autoCreateStoredMileage"                      keel:"auto_create_stored_mileage"`
+	LoadedMoveDistanceProfileID                  pulid.ID `json:"loadedMoveDistanceProfileId"                  keel:"loaded_move_distance_profile_id"`
+	EmptyMoveDistanceProfileID                   pulid.ID `json:"emptyMoveDistanceProfileId"                   keel:"empty_move_distance_profile_id"`
+	PayDistanceProfileID                         pulid.ID `json:"payDistanceProfileId"                         keel:"pay_distance_profile_id"`
+	BillingDistanceProfileID                     pulid.ID `json:"billingDistanceProfileId"                     keel:"billing_distance_profile_id"`
+	FuelDistanceProfileID                        pulid.ID `json:"fuelDistanceProfileId"                        keel:"fuel_distance_profile_id"`
+	EtaOutOfRouteDistanceProfileID               pulid.ID `json:"etaOutOfRouteDistanceProfileId"               keel:"eta_out_of_route_distance_profile_id"`
+	DistanceCalculatorShortestDistanceProfileID  pulid.ID `json:"distanceCalculatorShortestDistanceProfileId"  keel:"distance_calculator_shortest_distance_profile_id"`
 	DistanceCalculatorPracticalDistanceProfileID pulid.ID `json:"distanceCalculatorPracticalDistanceProfileId" keel:"distance_calculator_practical_distance_profile_id"`
-	CaptureJurisdictionMiles                     bool     `json:"captureJurisdictionMiles" keel:"capture_jurisdiction_miles"`
-	Version                                      int64    `json:"version" keel:"version,version"`
-	CreatedAt                                    int64    `json:"createdAt" keel:"created_at,autocreate"`
-	UpdatedAt                                    int64    `json:"updatedAt" keel:"updated_at,autoupdate"`
+	CaptureJurisdictionMiles                     bool     `json:"captureJurisdictionMiles"                     keel:"capture_jurisdiction_miles"`
+	Version                                      int64    `json:"version"                                      keel:"version,version"`
+	CreatedAt                                    int64    `json:"createdAt"                                    keel:"created_at,autocreate"`
+	UpdatedAt                                    int64    `json:"updatedAt"                                    keel:"updated_at,autoupdate"`
 	SearchVector                                 string   `json:"-"`
 
 	BusinessUnit *tenant.BusinessUnit `json:"-"`

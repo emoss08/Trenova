@@ -12,11 +12,11 @@ import (
 type UsageDaily struct {
 	keel.Table `keel:"api_key_usage_daily"`
 
-	APIKeyID       pulid.ID  `json:"apiKeyId" keel:"api_key_id,pk"`
+	APIKeyID       pulid.ID  `json:"apiKeyId"       keel:"api_key_id,pk"`
 	OrganizationID pulid.ID  `json:"organizationId" keel:"organization_id,tenant"`
 	BusinessUnitID pulid.ID  `json:"businessUnitId" keel:"business_unit_id,tenant"`
-	UsageDate      time.Time `json:"usageDate" keel:"usage_date,pk"`
-	RequestCount   int64     `json:"requestCount" keel:"request_count"`
+	UsageDate      time.Time `json:"usageDate"      keel:"usage_date,pk"`
+	RequestCount   int64     `json:"requestCount"   keel:"request_count"`
 }
 
 func (u *UsageDaily) Validate(multiErr *errortypes.MultiError) {

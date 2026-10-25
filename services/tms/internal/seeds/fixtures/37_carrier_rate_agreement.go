@@ -93,14 +93,21 @@ func (s *CarrierRateAgreementSeed) perMileTemplate(
 	db *keel.DB,
 	orgID, buID pulid.ID,
 ) (pulid.ID, error) {
-	template, err := formulatemplatedb.FormulaTemplates.AllTenants().Pick(formulatemplatedb.FormulaTemplates.ID).Where(
-		formulatemplatedb.FormulaTemplates.OrganizationID.Eq(orgID),
-		formulatemplatedb.FormulaTemplates.BusinessUnitID.Eq(buID),
-		formulatemplatedb.FormulaTemplates.Name.Eq(formulatemplate.StandardPerMile),
-		formulatemplatedb.FormulaTemplates.Status.Eq(formulatemplate.StatusActive),
-	).First(ctx, db)
+	template, err := formulatemplatedb.FormulaTemplates.AllTenants().
+		Pick(formulatemplatedb.FormulaTemplates.ID).
+		Where(
+			formulatemplatedb.FormulaTemplates.OrganizationID.Eq(orgID),
+			formulatemplatedb.FormulaTemplates.BusinessUnitID.Eq(buID),
+			formulatemplatedb.FormulaTemplates.Name.Eq(formulatemplate.StandardPerMile),
+			formulatemplatedb.FormulaTemplates.Status.Eq(formulatemplate.StatusActive),
+		).
+		First(ctx, db)
 	if err != nil {
-		return pulid.Nil, fmt.Errorf("load the %s template: %w", formulatemplate.StandardPerMile, err)
+		return pulid.Nil, fmt.Errorf(
+			"load the %s template: %w",
+			formulatemplate.StandardPerMile,
+			err,
+		)
 	}
 
 	return template.ID, nil

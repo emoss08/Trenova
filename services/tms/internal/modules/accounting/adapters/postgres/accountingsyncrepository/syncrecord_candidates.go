@@ -218,7 +218,10 @@ func (s *candidateSource) build(
 		preds = append(preds, s.at.Lt(*req.PostedBefore))
 	}
 	if req.AfterAt > 0 || !req.AfterID.IsNil() {
-		preds = append(preds, keel.Raw("(?, ?) > (?, ?)", s.at, s.id, req.AfterAt, req.AfterID.String()))
+		preds = append(
+			preds,
+			keel.Raw("(?, ?) > (?, ?)", s.at, s.id, req.AfterAt, req.AfterID.String()),
+		)
 	}
 
 	return s.query(

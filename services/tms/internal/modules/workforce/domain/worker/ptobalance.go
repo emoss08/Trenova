@@ -15,24 +15,24 @@ var (
 
 // What each worker has accrued, used and carried, per time-off type
 type WorkerPTOBalance struct {
-	keel.Table `                                                   keel:"worker_pto_balances,report=Parties,label=PTO Balance"`
+	keel.Table `keel:"worker_pto_balances,report=Parties,label=PTO Balance"`
 
-	ID                   pulid.ID        `json:"id" keel:"id,pk,autoid:wpb_"`
-	BusinessUnitID       pulid.ID        `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
-	OrganizationID       pulid.ID        `json:"organizationId" keel:"organization_id,pk,tenant"`
-	WorkerID             pulid.ID        `json:"workerId" keel:"worker_id"`
-	PTOType              PTOType         `json:"ptoType" keel:"pto_type,label=Time Off Type"`
-	BalanceDays          decimal.Decimal `json:"balanceDays" keel:"balance_days,label=Balance (days)"`
-	AccruedYTDDays       decimal.Decimal `json:"accruedYtdDays" keel:"accrued_ytd_days,label=Accrued YTD (days)"`
-	UsedYTDDays          decimal.Decimal `json:"usedYtdDays" keel:"used_ytd_days,label=Used YTD (days)"`
-	CarriedDays          decimal.Decimal `json:"carriedDays" keel:"carried_days,label=Carried (days)"`
-	EntryCount           int64           `json:"entryCount" keel:"entry_count"`
+	ID                   pulid.ID        `json:"id"                   keel:"id,pk,autoid:wpb_"`
+	BusinessUnitID       pulid.ID        `json:"businessUnitId"       keel:"business_unit_id,pk,tenant"`
+	OrganizationID       pulid.ID        `json:"organizationId"       keel:"organization_id,pk,tenant"`
+	WorkerID             pulid.ID        `json:"workerId"             keel:"worker_id"`
+	PTOType              PTOType         `json:"ptoType"              keel:"pto_type,label=Time Off Type"`
+	BalanceDays          decimal.Decimal `json:"balanceDays"          keel:"balance_days,label=Balance (days)"`
+	AccruedYTDDays       decimal.Decimal `json:"accruedYtdDays"       keel:"accrued_ytd_days,label=Accrued YTD (days)"`
+	UsedYTDDays          decimal.Decimal `json:"usedYtdDays"          keel:"used_ytd_days,label=Used YTD (days)"`
+	CarriedDays          decimal.Decimal `json:"carriedDays"          keel:"carried_days,label=Carried (days)"`
+	EntryCount           int64           `json:"entryCount"           keel:"entry_count"`
 	LastAccrualPeriodKey string          `json:"lastAccrualPeriodKey" keel:"last_accrual_period_key,nullzero"`
-	LastRolloverKey      string          `json:"lastRolloverKey" keel:"last_rollover_key,nullzero"`
-	YearStartedAt        *int64          `json:"yearStartedAt" keel:"year_started_at"`
-	Version              int64           `json:"version" keel:"version,version"`
-	CreatedAt            int64           `json:"createdAt" keel:"created_at,autocreate"`
-	UpdatedAt            int64           `json:"updatedAt" keel:"updated_at,autoupdate"`
+	LastRolloverKey      string          `json:"lastRolloverKey"      keel:"last_rollover_key,nullzero"`
+	YearStartedAt        *int64          `json:"yearStartedAt"        keel:"year_started_at"`
+	Version              int64           `json:"version"              keel:"version,version"`
+	CreatedAt            int64           `json:"createdAt"            keel:"created_at,autocreate"`
+	UpdatedAt            int64           `json:"updatedAt"            keel:"updated_at,autoupdate"`
 
 	Worker *Worker `json:"worker,omitempty" keel:"belongs:worker_id"`
 }

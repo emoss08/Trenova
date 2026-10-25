@@ -55,27 +55,27 @@ const (
 type ApprovalRun struct {
 	keel.Table `keel:"billingqueue_approval_runs"`
 
-	ID                  pulid.ID          `json:"id" keel:"id,pk,autoid:bqar_"`
-	BusinessUnitID      pulid.ID          `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
-	OrganizationID      pulid.ID          `json:"organizationId" keel:"organization_id,pk,tenant"`
-	RequestedByID       pulid.ID          `json:"requestedById" keel:"requested_by_id"`
-	IdempotencyKey      string            `json:"idempotencyKey" keel:"idempotency_key"`
-	Status              ApprovalRunStatus `json:"status" keel:"status"`
-	TotalCount          int               `json:"totalCount" keel:"total_count"`
-	ApprovedCount       int               `json:"approvedCount" keel:"approved_count"`
-	FailedCount         int               `json:"failedCount" keel:"failed_count"`
-	SkippedCount        int               `json:"skippedCount" keel:"skipped_count"`
-	CommitAt            int64             `json:"commitAt" keel:"commit_at"`
-	FailureMessage      string            `json:"failureMessage" keel:"failure_message,nullzero"`
-	CancelRequestedAt   *int64            `json:"cancelRequestedAt" keel:"cancel_requested_at"`
+	ID                  pulid.ID          `json:"id"                  keel:"id,pk,autoid:bqar_"`
+	BusinessUnitID      pulid.ID          `json:"businessUnitId"      keel:"business_unit_id,pk,tenant"`
+	OrganizationID      pulid.ID          `json:"organizationId"      keel:"organization_id,pk,tenant"`
+	RequestedByID       pulid.ID          `json:"requestedById"       keel:"requested_by_id"`
+	IdempotencyKey      string            `json:"idempotencyKey"      keel:"idempotency_key"`
+	Status              ApprovalRunStatus `json:"status"              keel:"status"`
+	TotalCount          int               `json:"totalCount"          keel:"total_count"`
+	ApprovedCount       int               `json:"approvedCount"       keel:"approved_count"`
+	FailedCount         int               `json:"failedCount"         keel:"failed_count"`
+	SkippedCount        int               `json:"skippedCount"        keel:"skipped_count"`
+	CommitAt            int64             `json:"commitAt"            keel:"commit_at"`
+	FailureMessage      string            `json:"failureMessage"      keel:"failure_message,nullzero"`
+	CancelRequestedAt   *int64            `json:"cancelRequestedAt"   keel:"cancel_requested_at"`
 	CancelRequestedByID *pulid.ID         `json:"cancelRequestedById" keel:"cancel_requested_by_id"`
-	TemporalWorkflowID  string            `json:"-" keel:"temporal_workflow_id,nullzero"`
-	TemporalRunID       string            `json:"-" keel:"temporal_run_id,nullzero"`
-	StartedAt           *int64            `json:"startedAt" keel:"started_at"`
-	CompletedAt         *int64            `json:"completedAt" keel:"completed_at"`
-	Version             int64             `json:"version" keel:"version,version"`
-	CreatedAt           int64             `json:"createdAt" keel:"created_at,autocreate"`
-	UpdatedAt           int64             `json:"updatedAt" keel:"updated_at,autoupdate"`
+	TemporalWorkflowID  string            `json:"-"                   keel:"temporal_workflow_id,nullzero"`
+	TemporalRunID       string            `json:"-"                   keel:"temporal_run_id,nullzero"`
+	StartedAt           *int64            `json:"startedAt"           keel:"started_at"`
+	CompletedAt         *int64            `json:"completedAt"         keel:"completed_at"`
+	Version             int64             `json:"version"             keel:"version,version"`
+	CreatedAt           int64             `json:"createdAt"           keel:"created_at,autocreate"`
+	UpdatedAt           int64             `json:"updatedAt"           keel:"updated_at,autoupdate"`
 
 	Items []*ApprovalRunItem `json:"items,omitempty" keel:"many:run_id"`
 }
@@ -92,20 +92,20 @@ func (r *ApprovalRun) GetPostgresSearchConfig() domaintypes.PostgresSearchConfig
 type ApprovalRunItem struct {
 	keel.Table `keel:"billingqueue_approval_run_items"`
 
-	ID             pulid.ID            `json:"id" keel:"id,pk,autoid:bqari_"`
+	ID             pulid.ID            `json:"id"             keel:"id,pk,autoid:bqari_"`
 	BusinessUnitID pulid.ID            `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
 	OrganizationID pulid.ID            `json:"organizationId" keel:"organization_id,pk,tenant"`
-	RunID          pulid.ID            `json:"runId" keel:"run_id"`
-	ItemID         pulid.ID            `json:"itemId" keel:"item_id"`
-	Sequence       int                 `json:"sequence" keel:"sequence"`
-	Status         ApprovalItemStatus  `json:"status" keel:"status"`
-	FailureCode    ApprovalFailureCode `json:"failureCode" keel:"failure_code,nullzero"`
-	ErrorMessage   string              `json:"errorMessage" keel:"error_message,nullzero"`
-	InvoiceID      *pulid.ID           `json:"invoiceId" keel:"invoice_id"`
-	InvoiceNumber  string              `json:"invoiceNumber" keel:"invoice_number,nullzero"`
-	ProcessedAt    *int64              `json:"processedAt" keel:"processed_at"`
-	CreatedAt      int64               `json:"createdAt" keel:"created_at,autocreate"`
-	UpdatedAt      int64               `json:"updatedAt" keel:"updated_at,autoupdate"`
+	RunID          pulid.ID            `json:"runId"          keel:"run_id"`
+	ItemID         pulid.ID            `json:"itemId"         keel:"item_id"`
+	Sequence       int                 `json:"sequence"       keel:"sequence"`
+	Status         ApprovalItemStatus  `json:"status"         keel:"status"`
+	FailureCode    ApprovalFailureCode `json:"failureCode"    keel:"failure_code,nullzero"`
+	ErrorMessage   string              `json:"errorMessage"   keel:"error_message,nullzero"`
+	InvoiceID      *pulid.ID           `json:"invoiceId"      keel:"invoice_id"`
+	InvoiceNumber  string              `json:"invoiceNumber"  keel:"invoice_number,nullzero"`
+	ProcessedAt    *int64              `json:"processedAt"    keel:"processed_at"`
+	CreatedAt      int64               `json:"createdAt"      keel:"created_at,autocreate"`
+	UpdatedAt      int64               `json:"updatedAt"      keel:"updated_at,autoupdate"`
 }
 
 func (i *ApprovalRunItem) GetID() pulid.ID             { return i.ID }

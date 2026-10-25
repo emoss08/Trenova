@@ -53,23 +53,23 @@ func WebhookSubscriptionSystems() []integration.Type {
 type AccountingWebhookSubscription struct {
 	keel.Table `keel:"accounting_webhook_subscriptions"`
 
-	ID                     pulid.ID                  `json:"id" keel:"id,pk,autoid:acctwhs_"`
-	BusinessUnitID         pulid.ID                  `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
-	OrganizationID         pulid.ID                  `json:"organizationId" keel:"organization_id,pk,tenant"`
-	ConnectionID           pulid.ID                  `json:"connectionId" keel:"connection_id"`
-	IntegrationType        integration.Type          `json:"integrationType" keel:"integration_type"`
-	Resource               string                    `json:"resource" keel:"resource"`
+	ID                     pulid.ID                  `json:"id"                     keel:"id,pk,autoid:acctwhs_"`
+	BusinessUnitID         pulid.ID                  `json:"businessUnitId"         keel:"business_unit_id,pk,tenant"`
+	OrganizationID         pulid.ID                  `json:"organizationId"         keel:"organization_id,pk,tenant"`
+	ConnectionID           pulid.ID                  `json:"connectionId"           keel:"connection_id"`
+	IntegrationType        integration.Type          `json:"integrationType"        keel:"integration_type"`
+	Resource               string                    `json:"resource"               keel:"resource"`
 	ExternalSubscriptionID string                    `json:"externalSubscriptionId" keel:"external_subscription_id,nullzero"`
-	NotificationURL        string                    `json:"notificationUrl" keel:"notification_url,nullzero"`
-	ClientStateCiphertext  string                    `json:"-" keel:"client_state_ciphertext,nullzero"`
-	ETag                   string                    `json:"-" keel:"etag,nullzero"`
-	Status                 WebhookSubscriptionStatus `json:"status" keel:"status"`
-	ExpiresAt              *int64                    `json:"expiresAt" keel:"expires_at"`
-	LastAttemptAt          *int64                    `json:"lastAttemptAt" keel:"last_attempt_at"`
-	LastError              string                    `json:"lastError" keel:"last_error,nullzero"`
-	Version                int64                     `json:"version" keel:"version,version"`
-	CreatedAt              int64                     `json:"createdAt" keel:"created_at,autocreate"`
-	UpdatedAt              int64                     `json:"updatedAt" keel:"updated_at,autoupdate"`
+	NotificationURL        string                    `json:"notificationUrl"        keel:"notification_url,nullzero"`
+	ClientStateCiphertext  string                    `json:"-"                      keel:"client_state_ciphertext,nullzero"`
+	ETag                   string                    `json:"-"                      keel:"etag,nullzero"`
+	Status                 WebhookSubscriptionStatus `json:"status"                 keel:"status"`
+	ExpiresAt              *int64                    `json:"expiresAt"              keel:"expires_at"`
+	LastAttemptAt          *int64                    `json:"lastAttemptAt"          keel:"last_attempt_at"`
+	LastError              string                    `json:"lastError"              keel:"last_error,nullzero"`
+	Version                int64                     `json:"version"                keel:"version,version"`
+	CreatedAt              int64                     `json:"createdAt"              keel:"created_at,autocreate"`
+	UpdatedAt              int64                     `json:"updatedAt"              keel:"updated_at,autoupdate"`
 
 	Organization *tenant.Organization `json:"organization,omitempty"`
 	BusinessUnit *tenant.BusinessUnit `json:"businessUnit,omitempty"`

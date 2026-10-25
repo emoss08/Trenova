@@ -165,44 +165,44 @@ var (
 )
 
 type WorkerDOTViolation struct {
-	keel.Table `                                                       keel:"worker_dot_violations"`
+	keel.Table `keel:"worker_dot_violations"`
 
-	ID             pulid.ID `json:"id" keel:"id,pk,autoid:wdotv_"`
+	ID             pulid.ID `json:"id"             keel:"id,pk,autoid:wdotv_"`
 	BusinessUnitID pulid.ID `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
 	OrganizationID pulid.ID `json:"organizationId" keel:"organization_id,pk,tenant"`
-	WorkerID       pulid.ID `json:"workerId" keel:"worker_id"`
+	WorkerID       pulid.ID `json:"workerId"       keel:"worker_id"`
 
 	ViolationType DOTViolationType   `json:"violationType" keel:"violation_type"`
-	Status        DOTViolationStatus `json:"status" keel:"status"`
-	OccurredAt    int64              `json:"occurredAt" keel:"occurred_at"`
+	Status        DOTViolationStatus `json:"status"        keel:"status"`
+	OccurredAt    int64              `json:"occurredAt"    keel:"occurred_at"`
 
-	SourceTestID              pulid.ID `json:"sourceTestId" keel:"source_test_id,nullzero"`
+	SourceTestID              pulid.ID `json:"sourceTestId"              keel:"source_test_id,nullzero"`
 	ReportedToClearinghouseAt *int64   `json:"reportedToClearinghouseAt" keel:"reported_to_clearinghouse_at"`
 
-	SAPName                  string `json:"sapName" keel:"sap_name,nullzero"`
-	SAPReferredAt            *int64 `json:"sapReferredAt" keel:"sap_referred_at"`
+	SAPName                  string `json:"sapName"                  keel:"sap_name,nullzero"`
+	SAPReferredAt            *int64 `json:"sapReferredAt"            keel:"sap_referred_at"`
 	SAPEvaluationCompletedAt *int64 `json:"sapEvaluationCompletedAt" keel:"sap_evaluation_completed_at"`
 
-	RTDTestID      pulid.ID `json:"rtdTestId" keel:"rtd_test_id,nullzero"`
+	RTDTestID      pulid.ID `json:"rtdTestId"      keel:"rtd_test_id,nullzero"`
 	RTDCompletedAt *int64   `json:"rtdCompletedAt" keel:"rtd_completed_at"`
 
-	FollowUpTestCount      int32  `json:"followUpTestCount" keel:"follow_up_test_count"`
+	FollowUpTestCount      int32  `json:"followUpTestCount"      keel:"follow_up_test_count"`
 	FollowUpTestsCompleted int32  `json:"followUpTestsCompleted" keel:"follow_up_tests_completed"`
-	FollowUpEndsAt         *int64 `json:"followUpEndsAt" keel:"follow_up_ends_at"`
+	FollowUpEndsAt         *int64 `json:"followUpEndsAt"         keel:"follow_up_ends_at"`
 
-	ResolvedAt   *int64   `json:"resolvedAt" keel:"resolved_at"`
-	DocumentID   pulid.ID `json:"documentId" keel:"document_id,nullzero"`
-	Notes        string   `json:"notes" keel:"notes,nullzero"`
+	ResolvedAt   *int64   `json:"resolvedAt"   keel:"resolved_at"`
+	DocumentID   pulid.ID `json:"documentId"   keel:"document_id,nullzero"`
+	Notes        string   `json:"notes"        keel:"notes,nullzero"`
 	RecordedByID pulid.ID `json:"recordedById" keel:"recorded_by_id,nullzero"`
 
-	Version   int64 `json:"version" keel:"version,version"`
+	Version   int64 `json:"version"   keel:"version,version"`
 	CreatedAt int64 `json:"createdAt" keel:"created_at,autocreate"`
 	UpdatedAt int64 `json:"updatedAt" keel:"updated_at,autoupdate"`
 
-	Worker     *Worker            `json:"worker,omitempty" keel:"belongs:worker_id"`
+	Worker     *Worker            `json:"worker,omitempty"     keel:"belongs:worker_id"`
 	SourceTest *WorkerDOTTest     `json:"sourceTest,omitempty" keel:"belongs:source_test_id"`
-	RTDTest    *WorkerDOTTest     `json:"rtdTest,omitempty" keel:"belongs:rtd_test_id"`
-	Document   *document.Document `json:"document,omitempty" keel:"belongs:document_id"`
+	RTDTest    *WorkerDOTTest     `json:"rtdTest,omitempty"    keel:"belongs:rtd_test_id"`
+	Document   *document.Document `json:"document,omitempty"   keel:"belongs:document_id"`
 	RecordedBy *tenant.User       `json:"recordedBy,omitempty" keel:"belongs:recorded_by_id"`
 }
 

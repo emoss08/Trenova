@@ -22,6 +22,27 @@ import (
 )
 
 const (
+	fieldWorkerID   = "workerId"
+	fieldDocumentID = "documentId"
+)
+
+func workerForeignKey(name string) dberror.Constraint {
+	return dberror.Constraint{
+		Name:    name,
+		Field:   fieldWorkerID,
+		Message: "Worker does not exist or belongs to a different organization",
+	}
+}
+
+func documentForeignKey(name string) dberror.Constraint {
+	return dberror.Constraint{
+		Name:    name,
+		Field:   fieldDocumentID,
+		Message: "Document does not exist or belongs to a different organization",
+	}
+}
+
+const (
 	defaultTestPageSize  = 200
 	defaultDrawPageSize  = 50
 	defaultSweepPageSize = 500
@@ -37,11 +58,7 @@ var testErrors = dberror.Mapping{
 		},
 	},
 	ForeignKey: []dberror.Constraint{
-		{
-			Name:    "fk_worker_dot_tests_worker",
-			Field:   "workerId",
-			Message: "Worker does not exist or belongs to a different organization",
-		},
+		workerForeignKey("fk_worker_dot_tests_worker"),
 		{
 			Name:    "fk_worker_dot_tests_safety_event",
 			Field:   "safetyEventId",
@@ -52,11 +69,7 @@ var testErrors = dberror.Mapping{
 			Field:   "drawEntryId",
 			Message: "Random selection does not exist or belongs to a different organization",
 		},
-		{
-			Name:    "fk_worker_dot_tests_document",
-			Field:   "documentId",
-			Message: "Document does not exist or belongs to a different organization",
-		},
+		documentForeignKey("fk_worker_dot_tests_document"),
 	},
 }
 
@@ -65,16 +78,12 @@ var violationErrors = dberror.Mapping{
 	Unique: []dberror.Constraint{
 		{
 			Name:    "uq_worker_dot_violations_open",
-			Field:   "workerId",
+			Field:   fieldWorkerID,
 			Message: "This worker already has an unresolved violation; record the new one against it",
 		},
 	},
 	ForeignKey: []dberror.Constraint{
-		{
-			Name:    "fk_worker_dot_violations_worker",
-			Field:   "workerId",
-			Message: "Worker does not exist or belongs to a different organization",
-		},
+		workerForeignKey("fk_worker_dot_violations_worker"),
 		{
 			Name:    "fk_worker_dot_violations_source_test",
 			Field:   "sourceTestId",
@@ -85,27 +94,15 @@ var violationErrors = dberror.Mapping{
 			Field:   "rtdTestId",
 			Message: "Return-to-duty test does not exist or belongs to a different organization",
 		},
-		{
-			Name:    "fk_worker_dot_violations_document",
-			Field:   "documentId",
-			Message: "Document does not exist or belongs to a different organization",
-		},
+		documentForeignKey("fk_worker_dot_violations_document"),
 	},
 }
 
 var queryErrors = dberror.Mapping{
 	Entity: "WorkerClearinghouseQuery",
 	ForeignKey: []dberror.Constraint{
-		{
-			Name:    "fk_worker_clearinghouse_queries_worker",
-			Field:   "workerId",
-			Message: "Worker does not exist or belongs to a different organization",
-		},
-		{
-			Name:    "fk_worker_clearinghouse_queries_document",
-			Field:   "documentId",
-			Message: "Document does not exist or belongs to a different organization",
-		},
+		workerForeignKey("fk_worker_clearinghouse_queries_worker"),
+		documentForeignKey("fk_worker_clearinghouse_queries_document"),
 	},
 }
 
@@ -158,7 +155,7 @@ var drawEntryErrors = dberror.Mapping{
 	Unique: []dberror.Constraint{
 		{
 			Name:    "uq_dot_random_draw_entries_worker",
-			Field:   "workerId",
+			Field:   fieldWorkerID,
 			Message: "A worker can be selected only once per substance in a draw",
 		},
 	},

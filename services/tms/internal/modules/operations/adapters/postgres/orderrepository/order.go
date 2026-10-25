@@ -90,10 +90,15 @@ func (r *repository) List(
 		r.db,
 		func(ctx context.Context) (*pagination.ListResult[*order.Order], error) {
 			o := orderdb.Orders
-			result, err := listquery.List(ctx, r.db.Keel(ctx), o.Query(), &listquery.Request[order.Order]{
-				Filter: req.Filter,
-				Then:   []keel.Order{o.CreatedAt.Desc()},
-			})
+			result, err := listquery.List(
+				ctx,
+				r.db.Keel(ctx),
+				o.Query(),
+				&listquery.Request[order.Order]{
+					Filter: req.Filter,
+					Then:   []keel.Order{o.CreatedAt.Desc()},
+				},
+			)
 			if err != nil {
 				r.l.Error("failed to list orders", zap.Error(err))
 				return nil, err
@@ -197,7 +202,11 @@ func (r *repository) UpdateStatus(
 			return nil, orderErrors.Map(err, req.OrderID.String())
 		}
 
-		if err = dberror.CheckAffected(int64(len(rows)), "Order", req.OrderID.String()); err != nil {
+		if err = dberror.CheckAffected(
+			int64(len(rows)),
+			"Order",
+			req.OrderID.String(),
+		); err != nil {
 			return nil, err
 		}
 
@@ -670,7 +679,9 @@ func (r *repository) SelectOptions(
 			o := orderdb.Orders
 			q := o.Pick(o.ID, o.OrderNumber, o.Status)
 			if req.AttachableOnly {
-				q = q.Where(o.Status.NotIn(order.StatusBilled, order.StatusClosed, order.StatusCanceled))
+				q = q.Where(
+					o.Status.NotIn(order.StatusBilled, order.StatusClosed, order.StatusCanceled),
+				)
 			}
 			if !req.CustomerID.IsNil() {
 				q = q.Where(o.CustomerID.Eq(req.CustomerID))

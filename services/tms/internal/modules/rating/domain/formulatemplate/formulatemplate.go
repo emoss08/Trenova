@@ -33,40 +33,40 @@ type BillingVersion struct {
 }
 
 type FormulaTemplate struct {
-	keel.Table `                                                keel:"formula_templates"`
+	keel.Table `keel:"formula_templates"`
 
-	ID                   pulid.ID                `json:"id" keel:"id,pk,autoid:ft_"`
-	OrganizationID       pulid.ID                `json:"organizationId" keel:"organization_id,pk,tenant"`
-	BusinessUnitID       pulid.ID                `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
-	Name                 string                  `json:"name" keel:"name"`
-	Description          string                  `json:"description" keel:"description,nullzero"`
-	Source               string                  `json:"source" keel:"source"`
-	Inputs               []tarifftypes.InputDecl `json:"inputs" keel:"inputs,jsonb"`
-	Imports              []tarifftypes.Import    `json:"imports" keel:"imports,jsonb"`
-	Tables               []tarifftypes.TablePin  `json:"tables" keel:"tables,jsonb"`
-	TestCount            int32                   `json:"testCount" keel:"test_count"`
-	Status               Status                  `json:"status" keel:"status"`
-	SubmittedByID        *pulid.ID               `json:"submittedById" keel:"submitted_by_id"`
-	SubmittedAt          *int64                  `json:"submittedAt" keel:"submitted_at"`
-	ApprovedByID         *pulid.ID               `json:"approvedById" keel:"approved_by_id"`
-	ApprovedAt           *int64                  `json:"approvedAt" keel:"approved_at"`
-	ReviewComment        string                  `json:"reviewComment" keel:"review_comment,nullzero"`
-	SearchVector         string                  `json:"-" keel:"search_vector,tsvector,readonly,noselect"`
-	Rank                 string                  `json:"-" keel:"rank,computed"`
-	Metadata             map[string]any          `json:"metadata" keel:"metadata,jsonb"`
-	Version              int64                   `json:"version" keel:"version,version"`
-	SourceTemplateID     *pulid.ID               `json:"sourceTemplateId" keel:"source_template_id"`
-	SourceVersionNumber  *int64                  `json:"sourceVersionNumber" keel:"source_version_number"`
+	ID                   pulid.ID                `json:"id"                   keel:"id,pk,autoid:ft_"`
+	OrganizationID       pulid.ID                `json:"organizationId"       keel:"organization_id,pk,tenant"`
+	BusinessUnitID       pulid.ID                `json:"businessUnitId"       keel:"business_unit_id,pk,tenant"`
+	Name                 string                  `json:"name"                 keel:"name"`
+	Description          string                  `json:"description"          keel:"description,nullzero"`
+	Source               string                  `json:"source"               keel:"source"`
+	Inputs               []tarifftypes.InputDecl `json:"inputs"               keel:"inputs,jsonb"`
+	Imports              []tarifftypes.Import    `json:"imports"              keel:"imports,jsonb"`
+	Tables               []tarifftypes.TablePin  `json:"tables"               keel:"tables,jsonb"`
+	TestCount            int32                   `json:"testCount"            keel:"test_count"`
+	Status               Status                  `json:"status"               keel:"status"`
+	SubmittedByID        *pulid.ID               `json:"submittedById"        keel:"submitted_by_id"`
+	SubmittedAt          *int64                  `json:"submittedAt"          keel:"submitted_at"`
+	ApprovedByID         *pulid.ID               `json:"approvedById"         keel:"approved_by_id"`
+	ApprovedAt           *int64                  `json:"approvedAt"           keel:"approved_at"`
+	ReviewComment        string                  `json:"reviewComment"        keel:"review_comment,nullzero"`
+	SearchVector         string                  `json:"-"                    keel:"search_vector,tsvector,readonly,noselect"`
+	Rank                 string                  `json:"-"                    keel:"rank,computed"`
+	Metadata             map[string]any          `json:"metadata"             keel:"metadata,jsonb"`
+	Version              int64                   `json:"version"              keel:"version,version"`
+	SourceTemplateID     *pulid.ID               `json:"sourceTemplateId"     keel:"source_template_id"`
+	SourceVersionNumber  *int64                  `json:"sourceVersionNumber"  keel:"source_version_number"`
 	CurrentVersionNumber int64                   `json:"currentVersionNumber" keel:"current_version_number"`
-	CreatedAt            int64                   `json:"createdAt" keel:"created_at,autocreate"`
-	UpdatedAt            int64                   `json:"updatedAt" keel:"updated_at,autoupdate"`
+	CreatedAt            int64                   `json:"createdAt"            keel:"created_at,autocreate"`
+	UpdatedAt            int64                   `json:"updatedAt"            keel:"updated_at,autoupdate"`
 
 	Billing *BillingVersion `json:"billing,omitempty"`
 
 	Organization   *tenant.Organization      `json:"organization,omitempty"`
 	BusinessUnit   *tenant.BusinessUnit      `json:"businessUnit,omitempty"`
 	SourceTemplate *FormulaTemplate          `json:"sourceTemplate,omitempty" keel:"belongs:source_template_id"`
-	Versions       []*FormulaTemplateVersion `json:"versions,omitempty" keel:"many:template_id"`
+	Versions       []*FormulaTemplateVersion `json:"versions,omitempty"       keel:"many:template_id"`
 }
 
 func (ft *FormulaTemplate) BeforeUpdate(_ context.Context) error {

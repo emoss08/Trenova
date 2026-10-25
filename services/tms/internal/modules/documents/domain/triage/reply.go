@@ -37,32 +37,32 @@ func (s ReplyStatus) IsValid() bool {
 type Reply struct {
 	keel.Table `keel:"inbound_replies"`
 
-	ID                pulid.ID          `json:"id" keel:"id,pk,autoid:irpl_"`
-	BusinessUnitID    pulid.ID          `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
-	OrganizationID    pulid.ID          `json:"organizationId" keel:"organization_id,pk,tenant"`
-	MessageID         pulid.ID          `json:"messageId" keel:"message_id"`
-	MailboxID         pulid.ID          `json:"mailboxId" keel:"mailbox_id"`
-	ThreadKey         string            `json:"threadKey" keel:"thread_key"`
-	Status            ReplyStatus       `json:"status" keel:"status"`
-	FromAddress       string            `json:"fromAddress" keel:"from_address"`
-	ToAddress         string            `json:"toAddress" keel:"to_address"`
-	CcAddresses       []string          `json:"ccAddresses" keel:"cc_addresses,jsonb,nullzero"`
-	Subject           string            `json:"subject" keel:"subject"`
-	Body              string            `json:"body" keel:"body"`
-	DraftedByNova     bool              `json:"draftedByNova" keel:"drafted_by_nova"`
-	TemplateID        pulid.ID          `json:"templateId" keel:"template_id,nullzero"`
-	MessageKey        string            `json:"messageKey" keel:"message_key,nullzero"`
+	ID                pulid.ID          `json:"id"                keel:"id,pk,autoid:irpl_"`
+	BusinessUnitID    pulid.ID          `json:"businessUnitId"    keel:"business_unit_id,pk,tenant"`
+	OrganizationID    pulid.ID          `json:"organizationId"    keel:"organization_id,pk,tenant"`
+	MessageID         pulid.ID          `json:"messageId"         keel:"message_id"`
+	MailboxID         pulid.ID          `json:"mailboxId"         keel:"mailbox_id"`
+	ThreadKey         string            `json:"threadKey"         keel:"thread_key"`
+	Status            ReplyStatus       `json:"status"            keel:"status"`
+	FromAddress       string            `json:"fromAddress"       keel:"from_address"`
+	ToAddress         string            `json:"toAddress"         keel:"to_address"`
+	CcAddresses       []string          `json:"ccAddresses"       keel:"cc_addresses,jsonb,nullzero"`
+	Subject           string            `json:"subject"           keel:"subject"`
+	Body              string            `json:"body"              keel:"body"`
+	DraftedByNova     bool              `json:"draftedByNova"     keel:"drafted_by_nova"`
+	TemplateID        pulid.ID          `json:"templateId"        keel:"template_id,nullzero"`
+	MessageKey        string            `json:"messageKey"        keel:"message_key,nullzero"`
 	ProviderMessageID string            `json:"providerMessageId" keel:"provider_message_id,nullzero"`
-	FailureText       string            `json:"failureText" keel:"failure_text,nullzero"`
-	SuggestedAddress  string            `json:"suggestedAddress" keel:"suggested_address,nullzero"`
-	Attachments       []ReplyAttachment `json:"attachments" keel:"attachments,jsonb,nullzero"`
-	IdempotencyKey    string            `json:"-" keel:"idempotency_key,nullzero"`
-	CreatedByID       pulid.ID          `json:"createdById" keel:"created_by_id,nullzero"`
-	SentByID          pulid.ID          `json:"sentById" keel:"sent_by_id,nullzero"`
-	SentAt            int64             `json:"sentAt" keel:"sent_at,nullzero"`
-	Version           int64             `json:"version" keel:"version,version"`
-	CreatedAt         int64             `json:"createdAt" keel:"created_at,autocreate"`
-	UpdatedAt         int64             `json:"updatedAt" keel:"updated_at,autoupdate"`
+	FailureText       string            `json:"failureText"       keel:"failure_text,nullzero"`
+	SuggestedAddress  string            `json:"suggestedAddress"  keel:"suggested_address,nullzero"`
+	Attachments       []ReplyAttachment `json:"attachments"       keel:"attachments,jsonb,nullzero"`
+	IdempotencyKey    string            `json:"-"                 keel:"idempotency_key,nullzero"`
+	CreatedByID       pulid.ID          `json:"createdById"       keel:"created_by_id,nullzero"`
+	SentByID          pulid.ID          `json:"sentById"          keel:"sent_by_id,nullzero"`
+	SentAt            int64             `json:"sentAt"            keel:"sent_at,nullzero"`
+	Version           int64             `json:"version"           keel:"version,version"`
+	CreatedAt         int64             `json:"createdAt"         keel:"created_at,autocreate"`
+	UpdatedAt         int64             `json:"updatedAt"         keel:"updated_at,autoupdate"`
 }
 
 func (r *Reply) Validate(multiErr *errortypes.MultiError) {

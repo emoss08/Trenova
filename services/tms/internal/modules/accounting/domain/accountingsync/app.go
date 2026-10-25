@@ -36,23 +36,23 @@ func AppFingerprint(environment AppEnvironment, clientID string) string {
 type AccountingAppCredential struct {
 	keel.Table `keel:"accounting_app_credentials"`
 
-	ID                        pulid.ID         `json:"id" keel:"id,pk,autoid:acctapp_"`
-	BusinessUnitID            pulid.ID         `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
-	OrganizationID            pulid.ID         `json:"organizationId" keel:"organization_id,pk,tenant"`
+	ID                        pulid.ID         `json:"id"              keel:"id,pk,autoid:acctapp_"`
+	BusinessUnitID            pulid.ID         `json:"businessUnitId"  keel:"business_unit_id,pk,tenant"`
+	OrganizationID            pulid.ID         `json:"organizationId"  keel:"organization_id,pk,tenant"`
 	IntegrationType           integration.Type `json:"integrationType" keel:"integration_type"`
-	Environment               AppEnvironment   `json:"environment" keel:"environment"`
-	ClientID                  string           `json:"clientId" keel:"client_id"`
-	ClientSecretCiphertext    string           `json:"-" keel:"client_secret_ciphertext"`
-	WebhookVerifierCiphertext string           `json:"-" keel:"webhook_verifier_ciphertext,nullzero"`
-	Fingerprint               string           `json:"fingerprint" keel:"fingerprint"`
-	UpdatedByID               pulid.ID         `json:"updatedById" keel:"updated_by_id,nullzero"`
-	Version                   int64            `json:"version" keel:"version,version"`
-	CreatedAt                 int64            `json:"createdAt" keel:"created_at,autocreate"`
-	UpdatedAt                 int64            `json:"updatedAt" keel:"updated_at,autoupdate"`
+	Environment               AppEnvironment   `json:"environment"     keel:"environment"`
+	ClientID                  string           `json:"clientId"        keel:"client_id"`
+	ClientSecretCiphertext    string           `json:"-"               keel:"client_secret_ciphertext"`
+	WebhookVerifierCiphertext string           `json:"-"               keel:"webhook_verifier_ciphertext,nullzero"`
+	Fingerprint               string           `json:"fingerprint"     keel:"fingerprint"`
+	UpdatedByID               pulid.ID         `json:"updatedById"     keel:"updated_by_id,nullzero"`
+	Version                   int64            `json:"version"         keel:"version,version"`
+	CreatedAt                 int64            `json:"createdAt"       keel:"created_at,autocreate"`
+	UpdatedAt                 int64            `json:"updatedAt"       keel:"updated_at,autoupdate"`
 
 	Organization *tenant.Organization `json:"organization,omitempty"`
 	BusinessUnit *tenant.BusinessUnit `json:"businessUnit,omitempty"`
-	UpdatedBy    *tenant.User         `json:"updatedBy,omitempty" keel:"belongs:updated_by_id"`
+	UpdatedBy    *tenant.User         `json:"updatedBy,omitempty"    keel:"belongs:updated_by_id"`
 }
 
 func (a *AccountingAppCredential) HasWebhookVerifier() bool {

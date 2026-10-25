@@ -27,36 +27,36 @@ var (
 )
 
 type Profile struct {
-	keel.Table     `                                             keel:"mode_profiles"`
-	ID             pulid.ID      `json:"id" keel:"id,pk,autoid:mpf_"`
-	BusinessUnitID pulid.ID      `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
-	OrganizationID pulid.ID      `json:"organizationId" keel:"organization_id,pk,tenant"`
-	Name           string        `json:"name" keel:"name"`
-	Code           string        `json:"code" keel:"code"`
-	Description    string        `json:"description" keel:"description,nullzero"`
-	Status         ProfileStatus `json:"status" keel:"status"`
+	keel.Table     `keel:"mode_profiles"`
+	ID             pulid.ID      `keel:"id,pk,autoid:mpf_"          json:"id"`
+	BusinessUnitID pulid.ID      `keel:"business_unit_id,pk,tenant" json:"businessUnitId"`
+	OrganizationID pulid.ID      `keel:"organization_id,pk,tenant"  json:"organizationId"`
+	Name           string        `keel:"name"                       json:"name"`
+	Code           string        `keel:"code"                       json:"code"`
+	Description    string        `keel:"description,nullzero"       json:"description"`
+	Status         ProfileStatus `keel:"status"                     json:"status"`
 
-	ServiceModel   ServiceModel   `json:"serviceModel" keel:"service_model"`
+	ServiceModel   ServiceModel   `json:"serviceModel"   keel:"service_model"`
 	EquipmentClass EquipmentClass `json:"equipmentClass" keel:"equipment_class"`
 	ExecutionParty ExecutionParty `json:"executionParty" keel:"execution_party"`
-	Capabilities   []Capability   `json:"capabilities" keel:"capabilities,jsonb,nullzero"`
+	Capabilities   []Capability   `json:"capabilities"   keel:"capabilities,jsonb,nullzero"`
 
-	IsOrgDefault     bool       `json:"isOrgDefault" keel:"is_org_default"`
-	Priority         int16      `json:"priority" keel:"priority"`
+	IsOrgDefault     bool       `json:"isOrgDefault"     keel:"is_org_default"`
+	Priority         int16      `json:"priority"         keel:"priority"`
 	SpecificityScore int32      `json:"specificityScore" keel:"specificity_score"`
-	CustomerID       *pulid.ID  `json:"customerId" keel:"customer_id"`
-	ShipmentTypeIDs  []pulid.ID `json:"shipmentTypeIds" keel:"shipment_type_ids,jsonb,nullzero"`
-	ServiceTypeIDs   []pulid.ID `json:"serviceTypeIds" keel:"service_type_ids,jsonb,nullzero"`
+	CustomerID       *pulid.ID  `json:"customerId"       keel:"customer_id"`
+	ShipmentTypeIDs  []pulid.ID `json:"shipmentTypeIds"  keel:"shipment_type_ids,jsonb,nullzero"`
+	ServiceTypeIDs   []pulid.ID `json:"serviceTypeIds"   keel:"service_type_ids,jsonb,nullzero"`
 	EquipmentTypeIDs []pulid.ID `json:"equipmentTypeIds" keel:"equipment_type_ids,jsonb,nullzero"`
 
 	EffectiveStartDate *int64 `json:"effectiveStartDate" keel:"effective_start_date"`
-	EffectiveEndDate   *int64 `json:"effectiveEndDate" keel:"effective_end_date"`
+	EffectiveEndDate   *int64 `json:"effectiveEndDate"   keel:"effective_end_date"`
 
-	Version      int64  `json:"version" keel:"version,version"`
+	Version      int64  `json:"version"   keel:"version,version"`
 	CreatedAt    int64  `json:"createdAt" keel:"created_at,autocreate"`
 	UpdatedAt    int64  `json:"updatedAt" keel:"updated_at,autoupdate"`
-	SearchVector string `json:"-" keel:"search_vector,tsvector,readonly,noselect"`
-	Rank         string `json:"-" keel:"rank,computed"`
+	SearchVector string `json:"-"         keel:"search_vector,tsvector,readonly,noselect"`
+	Rank         string `json:"-"         keel:"rank,computed"`
 
 	BusinessUnit *tenant.BusinessUnit `json:"-"`
 	Organization *tenant.Organization `json:"-"`

@@ -16,6 +16,8 @@ import (
 	"go.uber.org/zap"
 )
 
+const fieldIntermediateStops = "intermediateStops"
+
 const busyMessage = "Distance override is busy. Retry the request."
 
 var distanceOverrideErrors = dberror.Mapping{
@@ -23,12 +25,12 @@ var distanceOverrideErrors = dberror.Mapping{
 	Unique: []dberror.Constraint{
 		{
 			Name:    "uq_distance_overrides_route_signature",
-			Field:   "intermediateStops",
+			Field:   fieldIntermediateStops,
 			Message: "Distance override with this route already exists",
 		},
 		{
 			Name:    "uq_distance_override_stops_location",
-			Field:   "intermediateStops",
+			Field:   fieldIntermediateStops,
 			Message: "Intermediate stop location must be unique within the route",
 		},
 	},
@@ -50,7 +52,7 @@ var distanceOverrideErrors = dberror.Mapping{
 		},
 		{
 			Name:    "fk_distance_override_stops_location",
-			Field:   "intermediateStops",
+			Field:   fieldIntermediateStops,
 			Message: "Intermediate stop location does not exist in your organization",
 		},
 	},

@@ -30,52 +30,52 @@ var (
 
 // Drivers and operational workers
 type Worker struct {
-	keel.Table            `                                       keel:"workers,report=Parties"`
-	ID                    pulid.ID           `json:"id" keel:"id,pk,autoid:wrk_"`
-	BusinessUnitID        pulid.ID           `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
-	OrganizationID        pulid.ID           `json:"organizationId" keel:"organization_id,pk,tenant"`
-	StateID               pulid.ID           `json:"stateId" keel:"state_id"`
-	FleetCodeID           pulid.ID           `json:"fleetCodeId" keel:"fleet_code_id,nullzero"`
-	ManagerID             pulid.ID           `json:"managerId" keel:"manager_id,nullzero"`
-	PositionID            pulid.ID           `json:"positionId" keel:"position_id,nullzero"`
-	UserID                pulid.ID           `json:"userId" keel:"user_id,nullzero"`
-	Status                domaintypes.Status `json:"status" keel:"status"`
-	Type                  WorkerType         `json:"type" keel:"type"`
-	DriverType            DriverType         `json:"driverType" keel:"driver_type"`
-	LeaveType             LeaveType          `json:"leaveType" keel:"leave_type,nullzero"`
-	ProfilePicURL         string             `json:"profilePicUrl" keel:"profile_pic_url,nullzero"`
-	FirstName             string             `json:"firstName" keel:"first_name"`
-	LastName              string             `json:"lastName" keel:"last_name"`
-	WholeName             string             `json:"wholeName" keel:"whole_name,readonly,label=Full Name"`
-	AddressLine1          string             `json:"addressLine1" keel:"address_line1"`
-	AddressLine2          string             `json:"addressLine2" keel:"address_line2,nullzero"`
-	City                  string             `json:"city" keel:"city"`
-	PostalCode            string             `json:"postalCode" keel:"postal_code"`
-	Email                 string             `json:"email" keel:"email,nullzero"`
-	PhoneNumber           string             `json:"phoneNumber" keel:"phone_number,nullzero"`
-	EmergencyContactName  string             `json:"emergencyContactName" keel:"emergency_contact_name,nullzero"`
-	EmergencyContactPhone string             `json:"emergencyContactPhone" keel:"emergency_contact_phone,nullzero"`
-	ExternalID            string             `json:"externalId" keel:"external_id,nullzero"`
-	SearchVector          string             `json:"-" keel:"search_vector,tsvector,readonly,noselect"`
-	Rank                  string             `json:"-" keel:"rank,computed"`
-	AssignmentBlocked     string             `json:"assignmentBlocked,omitempty" keel:"assignment_blocked,nullzero"`
-	Gender                Gender             `json:"gender" keel:"gender"`
-	CanBeAssigned         bool               `json:"canBeAssigned" keel:"can_be_assigned"`
-	AvailableForDispatch  bool               `json:"availableForDispatch" keel:"available_for_dispatch"`
-	Version               int64              `json:"version" keel:"version,version"`
-	CreatedAt             int64              `json:"createdAt" keel:"created_at,autocreate"`
-	UpdatedAt             int64              `json:"updatedAt" keel:"updated_at,autoupdate"`
-	CustomFields          map[string]any     `json:"customFields,omitempty"`
+	keel.Table            `keel:"workers,report=Parties"`
+	ID                    pulid.ID           `keel:"id,pk,autoid:wrk_"                        json:"id"`
+	BusinessUnitID        pulid.ID           `keel:"business_unit_id,pk,tenant"               json:"businessUnitId"`
+	OrganizationID        pulid.ID           `keel:"organization_id,pk,tenant"                json:"organizationId"`
+	StateID               pulid.ID           `keel:"state_id"                                 json:"stateId"`
+	FleetCodeID           pulid.ID           `keel:"fleet_code_id,nullzero"                   json:"fleetCodeId"`
+	ManagerID             pulid.ID           `keel:"manager_id,nullzero"                      json:"managerId"`
+	PositionID            pulid.ID           `keel:"position_id,nullzero"                     json:"positionId"`
+	UserID                pulid.ID           `keel:"user_id,nullzero"                         json:"userId"`
+	Status                domaintypes.Status `keel:"status"                                   json:"status"`
+	Type                  WorkerType         `keel:"type"                                     json:"type"`
+	DriverType            DriverType         `keel:"driver_type"                              json:"driverType"`
+	LeaveType             LeaveType          `keel:"leave_type,nullzero"                      json:"leaveType"`
+	ProfilePicURL         string             `keel:"profile_pic_url,nullzero"                 json:"profilePicUrl"`
+	FirstName             string             `keel:"first_name"                               json:"firstName"`
+	LastName              string             `keel:"last_name"                                json:"lastName"`
+	WholeName             string             `keel:"whole_name,readonly,label=Full Name"      json:"wholeName"`
+	AddressLine1          string             `keel:"address_line1"                            json:"addressLine1"`
+	AddressLine2          string             `keel:"address_line2,nullzero"                   json:"addressLine2"`
+	City                  string             `keel:"city"                                     json:"city"`
+	PostalCode            string             `keel:"postal_code"                              json:"postalCode"`
+	Email                 string             `keel:"email,nullzero"                           json:"email"`
+	PhoneNumber           string             `keel:"phone_number,nullzero"                    json:"phoneNumber"`
+	EmergencyContactName  string             `keel:"emergency_contact_name,nullzero"          json:"emergencyContactName"`
+	EmergencyContactPhone string             `keel:"emergency_contact_phone,nullzero"         json:"emergencyContactPhone"`
+	ExternalID            string             `keel:"external_id,nullzero"                     json:"externalId"`
+	SearchVector          string             `keel:"search_vector,tsvector,readonly,noselect" json:"-"`
+	Rank                  string             `keel:"rank,computed"                            json:"-"`
+	AssignmentBlocked     string             `keel:"assignment_blocked,nullzero"              json:"assignmentBlocked,omitempty"`
+	Gender                Gender             `keel:"gender"                                   json:"gender"`
+	CanBeAssigned         bool               `keel:"can_be_assigned"                          json:"canBeAssigned"`
+	AvailableForDispatch  bool               `keel:"available_for_dispatch"                   json:"availableForDispatch"`
+	Version               int64              `keel:"version,version"                          json:"version"`
+	CreatedAt             int64              `keel:"created_at,autocreate"                    json:"createdAt"`
+	UpdatedAt             int64              `keel:"updated_at,autoupdate"                    json:"updatedAt"`
+	CustomFields          map[string]any     `                                                json:"customFields,omitempty"`
 
 	BusinessUnit *tenant.BusinessUnit `json:"businessUnit,omitempty" keel:"belongs:business_unit_id,noreport"`
 	Organization *tenant.Organization `json:"organization,omitempty" keel:"belongs:organization_id,noreport"`
-	State        *usstate.UsState     `json:"state,omitempty" keel:"belongs:state_id,noreport"`
-	FleetCode    *fleetcode.FleetCode `json:"fleetCode,omitempty" keel:"belongs:fleet_code_id"`
-	Manager      *tenant.User         `json:"manager,omitempty" keel:"belongs:manager_id,noreport"`
-	Position     *JobPosition         `json:"position,omitempty" keel:"belongs:position_id"`
-	PortalUser   *tenant.User         `json:"portalUser,omitempty" keel:"belongs:user_id,noreport"`
-	Profile      *WorkerProfile       `json:"profile,omitempty" keel:"one:worker_id"`
-	PTO          []*WorkerPTO         `json:"pto,omitempty" keel:"many:worker_id,label=Time Off"`
+	State        *usstate.UsState     `json:"state,omitempty"        keel:"belongs:state_id,noreport"`
+	FleetCode    *fleetcode.FleetCode `json:"fleetCode,omitempty"    keel:"belongs:fleet_code_id"`
+	Manager      *tenant.User         `json:"manager,omitempty"      keel:"belongs:manager_id,noreport"`
+	Position     *JobPosition         `json:"position,omitempty"     keel:"belongs:position_id"`
+	PortalUser   *tenant.User         `json:"portalUser,omitempty"   keel:"belongs:user_id,noreport"`
+	Profile      *WorkerProfile       `json:"profile,omitempty"      keel:"one:worker_id"`
+	PTO          []*WorkerPTO         `json:"pto,omitempty"          keel:"many:worker_id,label=Time Off"`
 }
 
 func (w *Worker) BeforeCreate(_ context.Context) error {

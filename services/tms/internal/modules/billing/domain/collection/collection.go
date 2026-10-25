@@ -54,21 +54,21 @@ const MaxSummaryLength = 4000
 type Activity struct {
 	keel.Table `keel:"collection_activities"`
 
-	ID                  pulid.ID     `json:"id" keel:"id,pk,autoid:cact_"`
-	OrganizationID      pulid.ID     `json:"organizationId" keel:"organization_id,pk,tenant"`
-	BusinessUnitID      pulid.ID     `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
-	CustomerID          pulid.ID     `json:"customerId" keel:"customer_id"`
-	Kind                ActivityKind `json:"kind" keel:"kind"`
-	Summary             string       `json:"summary" keel:"summary,nullzero"`
-	ContactName         string       `json:"contactName" keel:"contact_name,nullzero"`
-	InvoiceID           pulid.ID     `json:"invoiceId" keel:"invoice_id,nullzero"`
+	ID                  pulid.ID     `json:"id"                  keel:"id,pk,autoid:cact_"`
+	OrganizationID      pulid.ID     `json:"organizationId"      keel:"organization_id,pk,tenant"`
+	BusinessUnitID      pulid.ID     `json:"businessUnitId"      keel:"business_unit_id,pk,tenant"`
+	CustomerID          pulid.ID     `json:"customerId"          keel:"customer_id"`
+	Kind                ActivityKind `json:"kind"                keel:"kind"`
+	Summary             string       `json:"summary"             keel:"summary,nullzero"`
+	ContactName         string       `json:"contactName"         keel:"contact_name,nullzero"`
+	InvoiceID           pulid.ID     `json:"invoiceId"           keel:"invoice_id,nullzero"`
 	PromisedAmountMinor *int64       `json:"promisedAmountMinor" keel:"promised_amount_minor"`
-	PromisedOn          *int64       `json:"promisedOn" keel:"promised_on"`
-	CurrencyCode        string       `json:"currencyCode" keel:"currency_code"`
-	FollowUpOn          *int64       `json:"followUpOn" keel:"follow_up_on"`
-	CollectorID         pulid.ID     `json:"collectorId" keel:"collector_id,nullzero"`
-	CreatedByID         pulid.ID     `json:"createdById" keel:"created_by_id"`
-	CreatedAt           int64        `json:"createdAt" keel:"created_at,autocreate"`
+	PromisedOn          *int64       `json:"promisedOn"          keel:"promised_on"`
+	CurrencyCode        string       `json:"currencyCode"        keel:"currency_code"`
+	FollowUpOn          *int64       `json:"followUpOn"          keel:"follow_up_on"`
+	CollectorID         pulid.ID     `json:"collectorId"         keel:"collector_id,nullzero"`
+	CreatedByID         pulid.ID     `json:"createdById"         keel:"created_by_id"`
+	CreatedAt           int64        `json:"createdAt"           keel:"created_at,autocreate"`
 }
 
 func (a *Activity) GetID() pulid.ID             { return a.ID }
@@ -139,14 +139,14 @@ func (a *Activity) BeforeCreate(ctx context.Context) error {
 type Account struct {
 	keel.Table `keel:"collection_accounts"`
 
-	ID                pulid.ID `json:"id" keel:"id,pk,autoid:cacc_"`
-	OrganizationID    pulid.ID `json:"organizationId" keel:"organization_id,pk,tenant"`
-	BusinessUnitID    pulid.ID `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
-	CustomerID        pulid.ID `json:"customerId" keel:"customer_id"`
-	CollectorID       pulid.ID `json:"collectorId" keel:"collector_id,nullzero"`
-	NextFollowUpOn    *int64   `json:"nextFollowUpOn" keel:"next_follow_up_on"`
+	ID                pulid.ID `json:"id"                keel:"id,pk,autoid:cacc_"`
+	OrganizationID    pulid.ID `json:"organizationId"    keel:"organization_id,pk,tenant"`
+	BusinessUnitID    pulid.ID `json:"businessUnitId"    keel:"business_unit_id,pk,tenant"`
+	CustomerID        pulid.ID `json:"customerId"        keel:"customer_id"`
+	CollectorID       pulid.ID `json:"collectorId"       keel:"collector_id,nullzero"`
+	NextFollowUpOn    *int64   `json:"nextFollowUpOn"    keel:"next_follow_up_on"`
 	PromiseActivityID pulid.ID `json:"promiseActivityId" keel:"promise_activity_id,nullzero"`
-	Version           int64    `json:"version" keel:"version,version"`
-	CreatedAt         int64    `json:"createdAt" keel:"created_at,autocreate"`
-	UpdatedAt         int64    `json:"updatedAt" keel:"updated_at,autoupdate"`
+	Version           int64    `json:"version"           keel:"version,version"`
+	CreatedAt         int64    `json:"createdAt"         keel:"created_at,autocreate"`
+	UpdatedAt         int64    `json:"updatedAt"         keel:"updated_at,autoupdate"`
 }

@@ -321,7 +321,7 @@ func parameterRows(definition *ir.Definition) []reportParameterRow {
 			Name:          parameter.Name,
 			Label:         parameter.Label,
 			Required:      parameter.Required,
-			Shape:         describeParameterShape(parameter),
+			Shape:         describeParameterShape(&parameter),
 			AllowedValues: allowedValueText(parameter.Allowed),
 		})
 	}
@@ -644,7 +644,7 @@ func requireReportParameters(
 		if parameter.Default != nil {
 			continue
 		}
-		missing = append(missing, describeMissingParameter(parameter))
+		missing = append(missing, describeMissingParameter(&parameter))
 	}
 
 	if len(missing) == 0 {
@@ -661,7 +661,7 @@ func requireReportParameters(
 }
 
 // describeMissingParameter names one parameter and what it will accept.
-func describeMissingParameter(parameter ir.Parameter) string {
+func describeMissingParameter(parameter *ir.Parameter) string {
 	label := parameter.Label
 	if label == "" {
 		label = parameter.Name

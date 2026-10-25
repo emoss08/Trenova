@@ -216,7 +216,8 @@ func (r *repository) BulkUpdateStatus(
 		r.db,
 		func(ctx context.Context) ([]*equipmentmanufacturer.EquipmentManufacturer, error) {
 			em := equipmentmanufacturerdb.EquipmentManufacturers
-			entities, err := em.Where(em.ID.In(req.EquipmentManufacturerIDs...)).UpdateReturning(ctx, r.db.Keel(ctx), em.Status.To(req.Status))
+			entities, err := em.Where(em.ID.In(req.EquipmentManufacturerIDs...)).
+				UpdateReturning(ctx, r.db.Keel(ctx), em.Status.To(req.Status))
 			if err != nil {
 				r.l.Error("failed to bulk update equipment manufacturer status", zap.Error(err))
 				return nil, err

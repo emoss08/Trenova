@@ -81,25 +81,25 @@ func IsUrgent(eventType string, priority Priority) bool {
 type Preference struct {
 	keel.Table `keel:"user_notification_preferences"`
 
-	ID                    pulid.ID     `json:"id" keel:"id,pk,autoid:unp_"`
-	OrganizationID        pulid.ID     `json:"organizationId" keel:"organization_id,pk,tenant"`
-	BusinessUnitID        pulid.ID     `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
-	UserID                pulid.ID     `json:"userId" keel:"user_id"`
-	DisabledEventTypes    []string     `json:"disabledEventTypes" keel:"disabled_event_types"`
-	DesktopMode           DeliveryMode `json:"desktopMode" keel:"desktop_mode"`
-	EmailMode             DeliveryMode `json:"emailMode" keel:"email_mode"`
-	EmailDigest           bool         `json:"emailDigest" keel:"email_digest"`
-	Sound                 bool         `json:"sound" keel:"sound"`
-	QuietHoursEnabled     bool         `json:"quietHoursEnabled" keel:"quiet_hours_enabled"`
-	QuietHoursStart       string       `json:"quietHoursStart" keel:"quiet_hours_start"`
-	QuietHoursEnd         string       `json:"quietHoursEnd" keel:"quiet_hours_end"`
-	QuietHoursDays        []int        `json:"quietHoursDays" keel:"quiet_hours_days"`
+	ID                    pulid.ID     `json:"id"                    keel:"id,pk,autoid:unp_"`
+	OrganizationID        pulid.ID     `json:"organizationId"        keel:"organization_id,pk,tenant"`
+	BusinessUnitID        pulid.ID     `json:"businessUnitId"        keel:"business_unit_id,pk,tenant"`
+	UserID                pulid.ID     `json:"userId"                keel:"user_id"`
+	DisabledEventTypes    []string     `json:"disabledEventTypes"    keel:"disabled_event_types"`
+	DesktopMode           DeliveryMode `json:"desktopMode"           keel:"desktop_mode"`
+	EmailMode             DeliveryMode `json:"emailMode"             keel:"email_mode"`
+	EmailDigest           bool         `json:"emailDigest"           keel:"email_digest"`
+	Sound                 bool         `json:"sound"                 keel:"sound"`
+	QuietHoursEnabled     bool         `json:"quietHoursEnabled"     keel:"quiet_hours_enabled"`
+	QuietHoursStart       string       `json:"quietHoursStart"       keel:"quiet_hours_start"`
+	QuietHoursEnd         string       `json:"quietHoursEnd"         keel:"quiet_hours_end"`
+	QuietHoursDays        []int        `json:"quietHoursDays"        keel:"quiet_hours_days"`
 	QuietHoursAllowUrgent bool         `json:"quietHoursAllowUrgent" keel:"quiet_hours_allow_urgent"`
-	PausedUntil           *int64       `json:"pausedUntil" keel:"paused_until"`
-	LastDigestAt          *int64       `json:"lastDigestAt" keel:"last_digest_at"`
-	Version               int64        `json:"version" keel:"version,version"`
-	CreatedAt             int64        `json:"createdAt" keel:"created_at,autocreate"`
-	UpdatedAt             int64        `json:"updatedAt" keel:"updated_at,autoupdate"`
+	PausedUntil           *int64       `json:"pausedUntil"           keel:"paused_until"`
+	LastDigestAt          *int64       `json:"lastDigestAt"          keel:"last_digest_at"`
+	Version               int64        `json:"version"               keel:"version,version"`
+	CreatedAt             int64        `json:"createdAt"             keel:"created_at,autocreate"`
+	UpdatedAt             int64        `json:"updatedAt"             keel:"updated_at,autoupdate"`
 }
 
 func DefaultPreference(orgID, buID, userID pulid.ID) *Preference {
@@ -156,16 +156,28 @@ func (p *Preference) Validate(multiErr *errortypes.MultiError) {
 		multiErr.Add("emailMode", errortypes.ErrInvalid, "Email must be off, urgent or all")
 	}
 	if !clockPattern.MatchString(p.QuietHoursStart) {
-		multiErr.Add("quietHoursStart", errortypes.ErrInvalidFormat, "Start must be a time like 19:00")
+		multiErr.Add(
+			"quietHoursStart",
+			errortypes.ErrInvalidFormat,
+			"Start must be a time like 19:00",
+		)
 	}
 	if !clockPattern.MatchString(p.QuietHoursEnd) {
 		multiErr.Add("quietHoursEnd", errortypes.ErrInvalidFormat, "End must be a time like 07:00")
 	}
 	if p.QuietHoursEnabled && p.QuietHoursStart == p.QuietHoursEnd {
-		multiErr.Add("quietHoursEnd", errortypes.ErrInvalid, "Quiet hours must end at a different time than they start")
+		multiErr.Add(
+			"quietHoursEnd",
+			errortypes.ErrInvalid,
+			"Quiet hours must end at a different time than they start",
+		)
 	}
 	if p.QuietHoursEnabled && len(p.QuietHoursDays) == 0 {
-		multiErr.Add("quietHoursDays", errortypes.ErrRequired, "Pick at least one day for quiet hours")
+		multiErr.Add(
+			"quietHoursDays",
+			errortypes.ErrRequired,
+			"Pick at least one day for quiet hours",
+		)
 	}
 	for index, day := range p.QuietHoursDays {
 		if day < 0 || day > 6 {
@@ -183,9 +195,17 @@ func (p *Preference) Validate(multiErr *errortypes.MultiError) {
 		field := fmt.Sprintf("disabledEventTypes[%d]", index)
 		switch {
 		case len(eventType) > maxEventTypeLength || !eventTypePattern.MatchString(eventType):
-			multiErr.Add(field, errortypes.ErrInvalidFormat, "Not a notification type Trenova sends")
+			multiErr.Add(
+				field,
+				errortypes.ErrInvalidFormat,
+				"Not a notification type Trenova sends",
+			)
 		case IsRequiredEventType(eventType):
-			multiErr.Add(field, errortypes.ErrInvalid, "Your organization requires this notification")
+			multiErr.Add(
+				field,
+				errortypes.ErrInvalid,
+				"Your organization requires this notification",
+			)
 		}
 	}
 }

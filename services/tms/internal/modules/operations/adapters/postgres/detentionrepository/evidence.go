@@ -90,7 +90,7 @@ func latestLink(
 	db *keel.DB,
 	occurrenceID pulid.ID,
 	lock ...keel.LockStrength,
-) (string, int32, error) {
+) (prevHash string, sequence int32, err error) {
 	e := detentiondb.DetentionEvidences
 	q := e.Pick(e.Hash, e.Sequence).
 		Where(e.DetentionOccurrenceID.Eq(occurrenceID)).

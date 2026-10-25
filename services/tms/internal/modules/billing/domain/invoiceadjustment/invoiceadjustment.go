@@ -24,53 +24,53 @@ var (
 
 // Credit memos and rebills against an issued invoice
 type InvoiceAdjustment struct {
-	keel.Table `                                                  keel:"invoice_adjustments,report=Billing"`
+	keel.Table `keel:"invoice_adjustments,report=Billing"`
 
-	ID                              pulid.ID                `json:"id" keel:"id,pk,autoid:iadj_"`
-	OrganizationID                  pulid.ID                `json:"organizationId" keel:"organization_id,pk,tenant"`
-	BusinessUnitID                  pulid.ID                `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
-	CorrectionGroupID               pulid.ID                `json:"correctionGroupId" keel:"correction_group_id"`
-	OriginalInvoiceID               pulid.ID                `json:"originalInvoiceId" keel:"original_invoice_id"`
-	CreditMemoInvoiceID             pulid.ID                `json:"creditMemoInvoiceId" keel:"credit_memo_invoice_id,nullzero"`
-	ReplacementInvoiceID            pulid.ID                `json:"replacementInvoiceId" keel:"replacement_invoice_id,nullzero"`
-	RebillQueueItemID               pulid.ID                `json:"rebillQueueItemId" keel:"rebill_queue_item_id,nullzero"`
-	BatchID                         pulid.ID                `json:"batchId" keel:"batch_id,nullzero"`
-	Kind                            Kind                    `json:"kind" keel:"kind"`
-	Status                          Status                  `json:"status" keel:"status"`
-	ApprovalStatus                  ApprovalStatus          `json:"approvalStatus" keel:"approval_status"`
-	ReplacementReviewStatus         ReplacementReviewStatus `json:"replacementReviewStatus" keel:"replacement_review_status,label=Replacement Review"`
-	RebillStrategy                  RebillStrategy          `json:"rebillStrategy" keel:"rebill_strategy,nullzero"`
-	Reason                          string                  `json:"reason" keel:"reason,nullzero"`
-	PolicyReason                    string                  `json:"policyReason" keel:"policy_reason,nullzero"`
-	IdempotencyKey                  string                  `json:"idempotencyKey" keel:"idempotency_key,noreport"`
-	AccountingDate                  int64                   `json:"accountingDate" keel:"accounting_date"`
-	CreditTotalAmount               decimal.Decimal         `json:"creditTotalAmount" keel:"credit_total_amount,label=Credit Total,format=money"`
-	CreditTotalAmountMinor          int64                   `json:"creditTotalAmountMinor" keel:"credit_total_amount_minor,label=Credit Total (Minor)"`
-	RebillTotalAmount               decimal.Decimal         `json:"rebillTotalAmount" keel:"rebill_total_amount,label=Rebill Total,format=money"`
-	RebillTotalAmountMinor          int64                   `json:"rebillTotalAmountMinor" keel:"rebill_total_amount_minor,label=Rebill Total (Minor)"`
-	NetDeltaAmount                  decimal.Decimal         `json:"netDeltaAmount" keel:"net_delta_amount,label=Net Delta,format=money"`
-	NetDeltaAmountMinor             int64                   `json:"netDeltaAmountMinor" keel:"net_delta_amount_minor,label=Net Delta (Minor)"`
-	RerateVariancePercent           decimal.Decimal         `json:"rerateVariancePercent" keel:"rerate_variance_percent,label=Rerate Variance (%)"`
-	WouldCreateUnappliedCredit      bool                    `json:"wouldCreateUnappliedCredit" keel:"would_create_unapplied_credit,label=Creates Unapplied Credit"`
+	ID                              pulid.ID                `json:"id"                              keel:"id,pk,autoid:iadj_"`
+	OrganizationID                  pulid.ID                `json:"organizationId"                  keel:"organization_id,pk,tenant"`
+	BusinessUnitID                  pulid.ID                `json:"businessUnitId"                  keel:"business_unit_id,pk,tenant"`
+	CorrectionGroupID               pulid.ID                `json:"correctionGroupId"               keel:"correction_group_id"`
+	OriginalInvoiceID               pulid.ID                `json:"originalInvoiceId"               keel:"original_invoice_id"`
+	CreditMemoInvoiceID             pulid.ID                `json:"creditMemoInvoiceId"             keel:"credit_memo_invoice_id,nullzero"`
+	ReplacementInvoiceID            pulid.ID                `json:"replacementInvoiceId"            keel:"replacement_invoice_id,nullzero"`
+	RebillQueueItemID               pulid.ID                `json:"rebillQueueItemId"               keel:"rebill_queue_item_id,nullzero"`
+	BatchID                         pulid.ID                `json:"batchId"                         keel:"batch_id,nullzero"`
+	Kind                            Kind                    `json:"kind"                            keel:"kind"`
+	Status                          Status                  `json:"status"                          keel:"status"`
+	ApprovalStatus                  ApprovalStatus          `json:"approvalStatus"                  keel:"approval_status"`
+	ReplacementReviewStatus         ReplacementReviewStatus `json:"replacementReviewStatus"         keel:"replacement_review_status,label=Replacement Review"`
+	RebillStrategy                  RebillStrategy          `json:"rebillStrategy"                  keel:"rebill_strategy,nullzero"`
+	Reason                          string                  `json:"reason"                          keel:"reason,nullzero"`
+	PolicyReason                    string                  `json:"policyReason"                    keel:"policy_reason,nullzero"`
+	IdempotencyKey                  string                  `json:"idempotencyKey"                  keel:"idempotency_key,noreport"`
+	AccountingDate                  int64                   `json:"accountingDate"                  keel:"accounting_date"`
+	CreditTotalAmount               decimal.Decimal         `json:"creditTotalAmount"               keel:"credit_total_amount,label=Credit Total,format=money"`
+	CreditTotalAmountMinor          int64                   `json:"creditTotalAmountMinor"          keel:"credit_total_amount_minor,label=Credit Total (Minor)"`
+	RebillTotalAmount               decimal.Decimal         `json:"rebillTotalAmount"               keel:"rebill_total_amount,label=Rebill Total,format=money"`
+	RebillTotalAmountMinor          int64                   `json:"rebillTotalAmountMinor"          keel:"rebill_total_amount_minor,label=Rebill Total (Minor)"`
+	NetDeltaAmount                  decimal.Decimal         `json:"netDeltaAmount"                  keel:"net_delta_amount,label=Net Delta,format=money"`
+	NetDeltaAmountMinor             int64                   `json:"netDeltaAmountMinor"             keel:"net_delta_amount_minor,label=Net Delta (Minor)"`
+	RerateVariancePercent           decimal.Decimal         `json:"rerateVariancePercent"           keel:"rerate_variance_percent,label=Rerate Variance (%)"`
+	WouldCreateUnappliedCredit      bool                    `json:"wouldCreateUnappliedCredit"      keel:"would_create_unapplied_credit,label=Creates Unapplied Credit"`
 	RequiresReconciliationException bool                    `json:"requiresReconciliationException" keel:"requires_reconciliation_exception,label=Needs Reconciliation Exception"`
-	ApprovalRequired                bool                    `json:"approvalRequired" keel:"approval_required"`
-	SubmittedByID                   pulid.ID                `json:"submittedById" keel:"submitted_by_id,nullzero"`
-	SubmittedAt                     *int64                  `json:"submittedAt" keel:"submitted_at"`
-	ApprovedByID                    pulid.ID                `json:"approvedById" keel:"approved_by_id,nullzero"`
-	ApprovedAt                      *int64                  `json:"approvedAt" keel:"approved_at"`
-	RejectedByID                    pulid.ID                `json:"rejectedById" keel:"rejected_by_id,nullzero"`
-	RejectedAt                      *int64                  `json:"rejectedAt" keel:"rejected_at"`
-	RejectionReason                 string                  `json:"rejectionReason" keel:"rejection_reason,nullzero"`
-	ExecutionError                  string                  `json:"executionError" keel:"execution_error,nullzero,noreport"`
-	Metadata                        map[string]any          `json:"metadata" keel:"metadata,jsonb,noreport"`
-	Version                         int64                   `json:"version" keel:"version,version"`
-	CreatedAt                       int64                   `json:"createdAt" keel:"created_at,autocreate"`
-	UpdatedAt                       int64                   `json:"updatedAt" keel:"updated_at,autoupdate"`
+	ApprovalRequired                bool                    `json:"approvalRequired"                keel:"approval_required"`
+	SubmittedByID                   pulid.ID                `json:"submittedById"                   keel:"submitted_by_id,nullzero"`
+	SubmittedAt                     *int64                  `json:"submittedAt"                     keel:"submitted_at"`
+	ApprovedByID                    pulid.ID                `json:"approvedById"                    keel:"approved_by_id,nullzero"`
+	ApprovedAt                      *int64                  `json:"approvedAt"                      keel:"approved_at"`
+	RejectedByID                    pulid.ID                `json:"rejectedById"                    keel:"rejected_by_id,nullzero"`
+	RejectedAt                      *int64                  `json:"rejectedAt"                      keel:"rejected_at"`
+	RejectionReason                 string                  `json:"rejectionReason"                 keel:"rejection_reason,nullzero"`
+	ExecutionError                  string                  `json:"executionError"                  keel:"execution_error,nullzero,noreport"`
+	Metadata                        map[string]any          `json:"metadata"                        keel:"metadata,jsonb,noreport"`
+	Version                         int64                   `json:"version"                         keel:"version,version"`
+	CreatedAt                       int64                   `json:"createdAt"                       keel:"created_at,autocreate"`
+	UpdatedAt                       int64                   `json:"updatedAt"                       keel:"updated_at,autoupdate"`
 
-	Lines                    []*InvoiceAdjustmentLine                    `json:"lines,omitempty" keel:"many:adjustment_id,label=Adjustment Lines"`
-	Snapshots                []*InvoiceAdjustmentSnapshot                `json:"snapshots,omitempty" keel:"many:adjustment_id,noreport"`
+	Lines                    []*InvoiceAdjustmentLine                    `json:"lines,omitempty"                    keel:"many:adjustment_id,label=Adjustment Lines"`
+	Snapshots                []*InvoiceAdjustmentSnapshot                `json:"snapshots,omitempty"                keel:"many:adjustment_id,noreport"`
 	ReconciliationExceptions []*InvoiceAdjustmentReconciliationException `json:"reconciliationExceptions,omitempty" keel:"many:adjustment_id,noreport"`
-	DocumentReferences       []*InvoiceAdjustmentDocumentReference       `json:"referencedDocuments,omitempty" keel:"many:adjustment_id,noreport"`
+	DocumentReferences       []*InvoiceAdjustmentDocumentReference       `json:"referencedDocuments,omitempty"      keel:"many:adjustment_id,noreport"`
 	AdjustmentDocuments      []*document.Document                        `json:"adjustmentDocuments,omitempty"`
 
 	OriginalInvoice    *invoice.Invoice               `json:"-" keel:"belongs:original_invoice_id,noreport"`
@@ -83,95 +83,95 @@ type InvoiceAdjustment struct {
 }
 
 type InvoiceAdjustmentDocumentReference struct {
-	keel.Table `                                                                       keel:"invoice_adjustment_document_references"`
+	keel.Table `keel:"invoice_adjustment_document_references"`
 
-	ID                   pulid.ID `json:"id" keel:"id,pk,autoid:iadjr_"`
-	OrganizationID       pulid.ID `json:"organizationId" keel:"organization_id,pk,tenant"`
-	BusinessUnitID       pulid.ID `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
-	AdjustmentID         pulid.ID `json:"adjustmentId" keel:"adjustment_id"`
-	DocumentID           pulid.ID `json:"documentId" keel:"document_id"`
-	SelectedByID         pulid.ID `json:"selectedById" keel:"selected_by_id,nullzero"`
-	SelectedAt           *int64   `json:"selectedAt" keel:"selected_at"`
-	SnapshotFileName     string   `json:"snapshotFileName" keel:"snapshot_file_name"`
+	ID                   pulid.ID `json:"id"                   keel:"id,pk,autoid:iadjr_"`
+	OrganizationID       pulid.ID `json:"organizationId"       keel:"organization_id,pk,tenant"`
+	BusinessUnitID       pulid.ID `json:"businessUnitId"       keel:"business_unit_id,pk,tenant"`
+	AdjustmentID         pulid.ID `json:"adjustmentId"         keel:"adjustment_id"`
+	DocumentID           pulid.ID `json:"documentId"           keel:"document_id"`
+	SelectedByID         pulid.ID `json:"selectedById"         keel:"selected_by_id,nullzero"`
+	SelectedAt           *int64   `json:"selectedAt"           keel:"selected_at"`
+	SnapshotFileName     string   `json:"snapshotFileName"     keel:"snapshot_file_name"`
 	SnapshotOriginalName string   `json:"snapshotOriginalName" keel:"snapshot_original_name"`
-	SnapshotFileType     string   `json:"snapshotFileType" keel:"snapshot_file_type"`
+	SnapshotFileType     string   `json:"snapshotFileType"     keel:"snapshot_file_type"`
 	SnapshotResourceType string   `json:"snapshotResourceType" keel:"snapshot_resource_type"`
-	SnapshotResourceID   string   `json:"snapshotResourceId" keel:"snapshot_resource_id"`
-	Version              int64    `json:"version" keel:"version,version"`
-	CreatedAt            int64    `json:"createdAt" keel:"created_at,autocreate"`
-	UpdatedAt            int64    `json:"updatedAt" keel:"updated_at,autoupdate"`
+	SnapshotResourceID   string   `json:"snapshotResourceId"   keel:"snapshot_resource_id"`
+	Version              int64    `json:"version"              keel:"version,version"`
+	CreatedAt            int64    `json:"createdAt"            keel:"created_at,autocreate"`
+	UpdatedAt            int64    `json:"updatedAt"            keel:"updated_at,autoupdate"`
 
 	Document *document.Document `json:"document,omitempty" keel:"belongs:document_id"`
 }
 
 // Per-charge credit and rebill detail behind an adjustment
 type InvoiceAdjustmentLine struct {
-	keel.Table `                                                        keel:"invoice_adjustment_lines,report=Billing"`
+	keel.Table `keel:"invoice_adjustment_lines,report=Billing"`
 
-	ID                      pulid.ID        `json:"id" keel:"id,pk,autoid:iadjl_"`
-	OrganizationID          pulid.ID        `json:"organizationId" keel:"organization_id,pk,tenant"`
-	BusinessUnitID          pulid.ID        `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
-	AdjustmentID            pulid.ID        `json:"adjustmentId" keel:"adjustment_id"`
-	OriginalInvoiceID       pulid.ID        `json:"originalInvoiceId" keel:"original_invoice_id"`
-	OriginalLineID          pulid.ID        `json:"originalLineId" keel:"original_line_id"`
-	CreditMemoLineID        pulid.ID        `json:"creditMemoLineId" keel:"credit_memo_line_id,nullzero"`
-	ReplacementLineID       pulid.ID        `json:"replacementLineId" keel:"replacement_line_id,nullzero"`
-	LineNumber              int             `json:"lineNumber" keel:"line_number,label=Line,dimension"`
-	Description             string          `json:"description" keel:"description"`
-	CreditQuantity          decimal.Decimal `json:"creditQuantity" keel:"credit_quantity"`
-	CreditAmount            decimal.Decimal `json:"creditAmount" keel:"credit_amount,format=money"`
-	CreditAmountMinor       int64           `json:"creditAmountMinor" keel:"credit_amount_minor,label=Credit Amount (Minor)"`
+	ID                      pulid.ID        `json:"id"                      keel:"id,pk,autoid:iadjl_"`
+	OrganizationID          pulid.ID        `json:"organizationId"          keel:"organization_id,pk,tenant"`
+	BusinessUnitID          pulid.ID        `json:"businessUnitId"          keel:"business_unit_id,pk,tenant"`
+	AdjustmentID            pulid.ID        `json:"adjustmentId"            keel:"adjustment_id"`
+	OriginalInvoiceID       pulid.ID        `json:"originalInvoiceId"       keel:"original_invoice_id"`
+	OriginalLineID          pulid.ID        `json:"originalLineId"          keel:"original_line_id"`
+	CreditMemoLineID        pulid.ID        `json:"creditMemoLineId"        keel:"credit_memo_line_id,nullzero"`
+	ReplacementLineID       pulid.ID        `json:"replacementLineId"       keel:"replacement_line_id,nullzero"`
+	LineNumber              int             `json:"lineNumber"              keel:"line_number,label=Line,dimension"`
+	Description             string          `json:"description"             keel:"description"`
+	CreditQuantity          decimal.Decimal `json:"creditQuantity"          keel:"credit_quantity"`
+	CreditAmount            decimal.Decimal `json:"creditAmount"            keel:"credit_amount,format=money"`
+	CreditAmountMinor       int64           `json:"creditAmountMinor"       keel:"credit_amount_minor,label=Credit Amount (Minor)"`
 	RemainingEligibleAmount decimal.Decimal `json:"remainingEligibleAmount" keel:"remaining_eligible_amount,label=Remaining Eligible,format=money"`
-	RebillQuantity          decimal.Decimal `json:"rebillQuantity" keel:"rebill_quantity"`
-	RebillAmount            decimal.Decimal `json:"rebillAmount" keel:"rebill_amount,format=money"`
-	RebillAmountMinor       int64           `json:"rebillAmountMinor" keel:"rebill_amount_minor,label=Rebill Amount (Minor)"`
-	ReplacementPayload      map[string]any  `json:"replacementPayload" keel:"replacement_payload,jsonb,noreport"`
-	CreatedAt               int64           `json:"createdAt" keel:"created_at,autocreate"`
-	UpdatedAt               int64           `json:"updatedAt" keel:"updated_at,autoupdate"`
+	RebillQuantity          decimal.Decimal `json:"rebillQuantity"          keel:"rebill_quantity"`
+	RebillAmount            decimal.Decimal `json:"rebillAmount"            keel:"rebill_amount,format=money"`
+	RebillAmountMinor       int64           `json:"rebillAmountMinor"       keel:"rebill_amount_minor,label=Rebill Amount (Minor)"`
+	ReplacementPayload      map[string]any  `json:"replacementPayload"      keel:"replacement_payload,jsonb,noreport"`
+	CreatedAt               int64           `json:"createdAt"               keel:"created_at,autocreate"`
+	UpdatedAt               int64           `json:"updatedAt"               keel:"updated_at,autoupdate"`
 }
 
 type InvoiceAdjustmentSnapshot struct {
-	keel.Table `                                                            keel:"invoice_adjustment_snapshots"`
+	keel.Table `keel:"invoice_adjustment_snapshots"`
 
-	ID             pulid.ID       `json:"id" keel:"id,pk,autoid:iadjs_"`
+	ID             pulid.ID       `json:"id"             keel:"id,pk,autoid:iadjs_"`
 	OrganizationID pulid.ID       `json:"organizationId" keel:"organization_id,pk,tenant"`
 	BusinessUnitID pulid.ID       `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
-	AdjustmentID   pulid.ID       `json:"adjustmentId" keel:"adjustment_id"`
-	InvoiceID      pulid.ID       `json:"invoiceId" keel:"invoice_id"`
-	Kind           SnapshotKind   `json:"kind" keel:"kind"`
-	Payload        map[string]any `json:"payload" keel:"payload,jsonb"`
-	CreatedByID    pulid.ID       `json:"createdById" keel:"created_by_id,nullzero"`
-	CreatedAt      int64          `json:"createdAt" keel:"created_at,autocreate"`
+	AdjustmentID   pulid.ID       `json:"adjustmentId"   keel:"adjustment_id"`
+	InvoiceID      pulid.ID       `json:"invoiceId"      keel:"invoice_id"`
+	Kind           SnapshotKind   `json:"kind"           keel:"kind"`
+	Payload        map[string]any `json:"payload"        keel:"payload,jsonb"`
+	CreatedByID    pulid.ID       `json:"createdById"    keel:"created_by_id,nullzero"`
+	CreatedAt      int64          `json:"createdAt"      keel:"created_at,autocreate"`
 }
 
 type InvoiceAdjustmentCorrectionGroup struct {
-	keel.Table `                                                         keel:"invoice_correction_groups"`
+	keel.Table `keel:"invoice_correction_groups"`
 
-	ID               pulid.ID       `json:"id" keel:"id,pk,autoid:icg_"`
-	OrganizationID   pulid.ID       `json:"organizationId" keel:"organization_id,pk,tenant"`
-	BusinessUnitID   pulid.ID       `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
-	RootInvoiceID    pulid.ID       `json:"rootInvoiceId" keel:"root_invoice_id"`
+	ID               pulid.ID       `json:"id"               keel:"id,pk,autoid:icg_"`
+	OrganizationID   pulid.ID       `json:"organizationId"   keel:"organization_id,pk,tenant"`
+	BusinessUnitID   pulid.ID       `json:"businessUnitId"   keel:"business_unit_id,pk,tenant"`
+	RootInvoiceID    pulid.ID       `json:"rootInvoiceId"    keel:"root_invoice_id"`
 	CurrentInvoiceID pulid.ID       `json:"currentInvoiceId" keel:"current_invoice_id,nullzero"`
-	Metadata         map[string]any `json:"metadata" keel:"metadata,jsonb"`
-	CreatedAt        int64          `json:"createdAt" keel:"created_at,autocreate"`
-	UpdatedAt        int64          `json:"updatedAt" keel:"updated_at,autoupdate"`
+	Metadata         map[string]any `json:"metadata"         keel:"metadata,jsonb"`
+	CreatedAt        int64          `json:"createdAt"        keel:"created_at,autocreate"`
+	UpdatedAt        int64          `json:"updatedAt"        keel:"updated_at,autoupdate"`
 }
 
 type InvoiceAdjustmentReconciliationException struct {
-	keel.Table `                                                                 keel:"invoice_reconciliation_exceptions"`
+	keel.Table `keel:"invoice_reconciliation_exceptions"`
 
-	ID                  pulid.ID        `json:"id" keel:"id,pk,autoid:irex_"`
-	OrganizationID      pulid.ID        `json:"organizationId" keel:"organization_id,pk,tenant"`
-	BusinessUnitID      pulid.ID        `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
-	AdjustmentID        pulid.ID        `json:"adjustmentId" keel:"adjustment_id"`
-	InvoiceID           pulid.ID        `json:"invoiceId" keel:"invoice_id"`
+	ID                  pulid.ID        `json:"id"                  keel:"id,pk,autoid:irex_"`
+	OrganizationID      pulid.ID        `json:"organizationId"      keel:"organization_id,pk,tenant"`
+	BusinessUnitID      pulid.ID        `json:"businessUnitId"      keel:"business_unit_id,pk,tenant"`
+	AdjustmentID        pulid.ID        `json:"adjustmentId"        keel:"adjustment_id"`
+	InvoiceID           pulid.ID        `json:"invoiceId"           keel:"invoice_id"`
 	CreditMemoInvoiceID pulid.ID        `json:"creditMemoInvoiceId" keel:"credit_memo_invoice_id,nullzero"`
-	Status              ExceptionStatus `json:"status" keel:"status"`
-	Reason              string          `json:"reason" keel:"reason"`
-	Amount              decimal.Decimal `json:"amount" keel:"amount"`
-	Metadata            map[string]any  `json:"metadata" keel:"metadata,jsonb"`
-	CreatedAt           int64           `json:"createdAt" keel:"created_at,autocreate"`
-	UpdatedAt           int64           `json:"updatedAt" keel:"updated_at,autoupdate"`
+	Status              ExceptionStatus `json:"status"              keel:"status"`
+	Reason              string          `json:"reason"              keel:"reason"`
+	Amount              decimal.Decimal `json:"amount"              keel:"amount"`
+	Metadata            map[string]any  `json:"metadata"            keel:"metadata,jsonb"`
+	CreatedAt           int64           `json:"createdAt"           keel:"created_at,autocreate"`
+	UpdatedAt           int64           `json:"updatedAt"           keel:"updated_at,autoupdate"`
 
 	Adjustment        *InvoiceAdjustment `json:"-" keel:"belongs:adjustment_id"`
 	CreditMemoInvoice *invoice.Invoice   `json:"-" keel:"belongs:credit_memo_invoice_id"`

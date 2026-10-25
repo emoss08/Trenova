@@ -60,38 +60,38 @@ func (v Via) IsValid() bool {
 type RateConfirmation struct {
 	keel.Table `keel:"rate_confirmations"`
 
-	ID                  pulid.ID `json:"id" keel:"id,pk,autoid:ratecon_"`
-	BusinessUnitID      pulid.ID `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
-	OrganizationID      pulid.ID `json:"organizationId" keel:"organization_id,pk,tenant"`
+	ID                  pulid.ID `json:"id"                  keel:"id,pk,autoid:ratecon_"`
+	BusinessUnitID      pulid.ID `json:"businessUnitId"      keel:"business_unit_id,pk,tenant"`
+	OrganizationID      pulid.ID `json:"organizationId"      keel:"organization_id,pk,tenant"`
 	CarrierAssignmentID pulid.ID `json:"carrierAssignmentId" keel:"carrier_assignment_id"`
-	CarrierID           pulid.ID `json:"carrierId" keel:"carrier_id"`
-	ShipmentID          pulid.ID `json:"shipmentId" keel:"shipment_id"`
-	ShipmentMoveID      pulid.ID `json:"shipmentMoveId" keel:"shipment_move_id"`
+	CarrierID           pulid.ID `json:"carrierId"           keel:"carrier_id"`
+	ShipmentID          pulid.ID `json:"shipmentId"          keel:"shipment_id"`
+	ShipmentMoveID      pulid.ID `json:"shipmentMoveId"      keel:"shipment_move_id"`
 
-	Revision        int64          `json:"revision" keel:"revision"`
-	Status          Status         `json:"status" keel:"status"`
-	DocumentID      *pulid.ID      `json:"documentId" keel:"document_id"`
-	SentAt          *int64         `json:"sentAt" keel:"sent_at"`
-	SentToEmails    string         `json:"sentToEmails" keel:"sent_to_emails,nullzero"`
-	ConfirmedAt     *int64         `json:"confirmedAt" keel:"confirmed_at"`
+	Revision        int64          `json:"revision"        keel:"revision"`
+	Status          Status         `json:"status"          keel:"status"`
+	DocumentID      *pulid.ID      `json:"documentId"      keel:"document_id"`
+	SentAt          *int64         `json:"sentAt"          keel:"sent_at"`
+	SentToEmails    string         `json:"sentToEmails"    keel:"sent_to_emails,nullzero"`
+	ConfirmedAt     *int64         `json:"confirmedAt"     keel:"confirmed_at"`
 	ConfirmedByName string         `json:"confirmedByName" keel:"confirmed_by_name,nullzero"`
-	VoidedAt        *int64         `json:"voidedAt" keel:"voided_at"`
-	VoidReason      string         `json:"voidReason" keel:"void_reason,nullzero"`
+	VoidedAt        *int64         `json:"voidedAt"        keel:"voided_at"`
+	VoidReason      string         `json:"voidReason"      keel:"void_reason,nullzero"`
 	PayloadSnapshot map[string]any `json:"payloadSnapshot" keel:"payload_snapshot,jsonb,nullzero"`
-	GeneratedByID   *pulid.ID      `json:"generatedById" keel:"generated_by_id"`
+	GeneratedByID   *pulid.ID      `json:"generatedById"   keel:"generated_by_id"`
 
-	GeneratedVia        Via       `json:"generatedVia" keel:"generated_via"`
+	GeneratedVia        Via       `json:"generatedVia"        keel:"generated_via"`
 	SourceTenderOfferID *pulid.ID `json:"sourceTenderOfferId" keel:"source_tender_offer_id"`
-	ConfirmedVia        Via       `json:"confirmedVia" keel:"confirmed_via,nullzero"`
-	ConfirmedByTitle    string    `json:"confirmedByTitle" keel:"confirmed_by_title,nullzero"`
+	ConfirmedVia        Via       `json:"confirmedVia"        keel:"confirmed_via,nullzero"`
+	ConfirmedByTitle    string    `json:"confirmedByTitle"    keel:"confirmed_by_title,nullzero"`
 
-	Version   int64 `json:"version" keel:"version,version"`
+	Version   int64 `json:"version"   keel:"version,version"`
 	CreatedAt int64 `json:"createdAt" keel:"created_at,autocreate"`
 	UpdatedAt int64 `json:"updatedAt" keel:"updated_at,autoupdate"`
 
-	Carrier           *carrier.Carrier            `json:"carrier,omitempty" keel:"belongs:carrier_id"`
+	Carrier           *carrier.Carrier            `json:"carrier,omitempty"           keel:"belongs:carrier_id"`
 	CarrierAssignment *shipment.CarrierAssignment `json:"carrierAssignment,omitempty" keel:"belongs:carrier_assignment_id"`
-	Shipment          *shipment.Shipment          `json:"shipment,omitempty" keel:"belongs:shipment_id"`
+	Shipment          *shipment.Shipment          `json:"shipment,omitempty"          keel:"belongs:shipment_id"`
 }
 
 func (rc *RateConfirmation) applyDefaults() {

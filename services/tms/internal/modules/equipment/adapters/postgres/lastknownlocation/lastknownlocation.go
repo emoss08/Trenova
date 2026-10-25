@@ -54,5 +54,7 @@ func Of(ec *equipmentcontinuitydb.EquipmentContinuitiesTable, tenant Tenant) Fie
 
 func LocationID(equipmentID keel.Expr, kind equipmentcontinuity.EquipmentType) keel.Expr {
 	ec := equipmentcontinuitydb.EquipmentContinuities.As(filterAlias)
-	return keel.Scalar(ec.Pick(ec.CurrentLocationID).Where(Current(ec, equipmentID, kind)...).Limit(1))
+	return keel.Scalar(
+		ec.Pick(ec.CurrentLocationID).Where(Current(ec, equipmentID, kind)...).Limit(1),
+	)
 }

@@ -19,19 +19,19 @@ var (
 
 // Equipment manufacturers
 type EquipmentManufacturer struct {
-	keel.Table `                                                      keel:"equipment_manufacturers,report=Equipment"`
+	keel.Table `keel:"equipment_manufacturers,report=Equipment"`
 
-	ID             pulid.ID           `json:"id" keel:"id,pk,autoid:em_"`
+	ID             pulid.ID           `json:"id"             keel:"id,pk,autoid:em_"`
 	BusinessUnitID pulid.ID           `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
 	OrganizationID pulid.ID           `json:"organizationId" keel:"organization_id,pk,tenant"`
-	Status         domaintypes.Status `json:"status" keel:"status"`
-	Name           string             `json:"name" keel:"name"`
-	Description    string             `json:"description" keel:"description,nullzero"`
+	Status         domaintypes.Status `json:"status"         keel:"status"`
+	Name           string             `json:"name"           keel:"name"`
+	Description    string             `json:"description"    keel:"description,nullzero"`
 	SearchVector   string             `json:"-"`
-	Rank           string             `json:"-" keel:"rank,computed"`
-	Version        int64              `json:"version" keel:"version,version"`
-	CreatedAt      int64              `json:"createdAt" keel:"created_at,autocreate"`
-	UpdatedAt      int64              `json:"updatedAt" keel:"updated_at,autoupdate"`
+	Rank           string             `json:"-"              keel:"rank,computed"`
+	Version        int64              `json:"version"        keel:"version,version"`
+	CreatedAt      int64              `json:"createdAt"      keel:"created_at,autocreate"`
+	UpdatedAt      int64              `json:"updatedAt"      keel:"updated_at,autoupdate"`
 
 	// Relationships
 	BusinessUnit *tenant.BusinessUnit `json:"businessUnit,omitempty" keel:"belongs:business_unit_id,noreport"`

@@ -56,9 +56,9 @@ func (r *repository) SenderStats(
 		stats.CarrierID = summary.CarrierID
 
 		if req.RecentLimit > 0 {
-			recent, err := keel.Into[scannedRow[bool]](ctx, db, senderRecentQuery(req))
-			if err != nil {
-				return nil, err
+			recent, recentErr := keel.Into[scannedRow[bool]](ctx, db, senderRecentQuery(req))
+			if recentErr != nil {
+				return nil, recentErr
 			}
 			stats.Recent = messageRows(recent, false)
 		}
@@ -84,7 +84,9 @@ func fromSender(req *triageports.SenderStatsRequest) []keel.Pred {
 	return []keel.Pred{m.SenderDomain.Eq(req.SenderDomain), m.ReceivedAt.Gte(req.Since)}
 }
 
-func senderKindsQuery(req *triageports.SenderStatsRequest) *keel.Query[inboundmessage.InboundMessage] {
+func senderKindsQuery(
+	req *triageports.SenderStatsRequest,
+) *keel.Query[inboundmessage.InboundMessage] {
 	m := inboundmessagedb.InboundMessages
 	classification := text(m.Classification)
 
@@ -95,7 +97,9 @@ func senderKindsQuery(req *triageports.SenderStatsRequest) *keel.Query[inboundme
 		Order(keel.Count().Desc(), keel.Asc(classification))
 }
 
-func senderSummaryQuery(req *triageports.SenderStatsRequest) *keel.Query[inboundmessage.InboundMessage] {
+func senderSummaryQuery(
+	req *triageports.SenderStatsRequest,
+) *keel.Query[inboundmessage.InboundMessage] {
 	m := inboundmessagedb.InboundMessages
 
 	return messages().
@@ -110,7 +114,9 @@ func senderSummaryQuery(req *triageports.SenderStatsRequest) *keel.Query[inbound
 		Where(fromSender(req)...)
 }
 
-func senderRecentQuery(req *triageports.SenderStatsRequest) *keel.Query[inboundmessage.InboundMessage] {
+func senderRecentQuery(
+	req *triageports.SenderStatsRequest,
+) *keel.Query[inboundmessage.InboundMessage] {
 	m := inboundmessagedb.InboundMessages
 
 	return withReference(messages()).
@@ -181,7 +187,11 @@ func carrierParty(
 	req *triageports.SenderPartyRequest,
 ) (*triageports.SenderParty, bool, error) {
 	c := carrierdb.Carriers
-	since, err := keel.Into[int64](ctx, db, c.Pick(c.CreatedAt).Where(c.ID.Eq(req.CarrierID)).Limit(1))
+	since, err := keel.Into[int64](
+		ctx,
+		db,
+		c.Pick(c.CreatedAt).Where(c.ID.Eq(req.CarrierID)).Limit(1),
+	)
 	if err != nil {
 		return nil, false, err
 	}

@@ -22,9 +22,9 @@ var (
 
 // Accounting years and their close state
 type FiscalYear struct {
-	keel.Table `                                           keel:"fiscal_years,report=Accounting"`
+	keel.Table `keel:"fiscal_years,report=Accounting"`
 
-	ID             pulid.ID `json:"id" keel:"id,pk,autoid:fyr_"`
+	ID             pulid.ID `json:"id"             keel:"id,pk,autoid:fyr_"`
 	BusinessUnitID pulid.ID `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
 	OrganizationID pulid.ID `json:"organizationId" keel:"organization_id,pk,tenant"`
 
@@ -67,9 +67,9 @@ type FiscalYear struct {
 	// - ClosedAt = hard close, nothing gets in
 	// ---------------------------------------------------------------
 
-	ClosedAt   *int64   `json:"closedAt" keel:"closed_at"`
+	ClosedAt   *int64   `json:"closedAt"   keel:"closed_at"`
 	ClosedByID pulid.ID `json:"closedById" keel:"closed_by_id,nullzero"`
-	LockedAt   *int64   `json:"lockedAt" keel:"locked_at"`
+	LockedAt   *int64   `json:"lockedAt"   keel:"locked_at"`
 	LockedByID pulid.ID `json:"lockedById" keel:"locked_by_id,nullzero"`
 
 	// ---------------------------------------------------------------
@@ -81,7 +81,7 @@ type FiscalYear struct {
 	// These fields are cleared when the year is re-closed.
 	// ---------------------------------------------------------------
 
-	ReopenedAt   *int64   `json:"reopenedAt" keel:"reopened_at"`
+	ReopenedAt   *int64   `json:"reopenedAt"   keel:"reopened_at"`
 	ReopenedByID pulid.ID `json:"reopenedById" keel:"reopened_by_id,nullzero"`
 	ReopenReason string   `json:"reopenReason" keel:"reopen_reason,nullzero"`
 
@@ -89,11 +89,11 @@ type FiscalYear struct {
 	// System Fields
 	// ---------------------------------------------------------------
 
-	Version      int64  `json:"version" keel:"version,version"`
+	Version      int64  `json:"version"   keel:"version,version"`
 	CreatedAt    int64  `json:"createdAt" keel:"created_at,autocreate"`
 	UpdatedAt    int64  `json:"updatedAt" keel:"updated_at,autoupdate"`
-	SearchVector string `json:"-" keel:"search_vector,tsvector,readonly,noselect"`
-	Rank         string `json:"-" keel:"rank,computed"`
+	SearchVector string `json:"-"         keel:"search_vector,tsvector,readonly,noselect"`
+	Rank         string `json:"-"         keel:"rank,computed"`
 
 	// ---------------------------------------------------------------
 	// Relationships
@@ -101,10 +101,10 @@ type FiscalYear struct {
 
 	BusinessUnit *tenant.BusinessUnit         `json:"businessUnit,omitempty"`
 	Organization *tenant.Organization         `json:"organization,omitempty"`
-	ClosedBy     *tenant.User                 `json:"closedBy,omitempty" keel:"belongs:closed_by_id,noreport"`
-	LockedBy     *tenant.User                 `json:"lockedBy,omitempty" keel:"belongs:locked_by_id,noreport"`
-	ReopenedBy   *tenant.User                 `json:"reopenedBy,omitempty" keel:"belongs:reopened_by_id,noreport"`
-	Periods      []*fiscalperiod.FiscalPeriod `json:"periods,omitempty" keel:"many:fiscal_year_id,label=Fiscal Periods"`
+	ClosedBy     *tenant.User                 `json:"closedBy,omitempty"     keel:"belongs:closed_by_id,noreport"`
+	LockedBy     *tenant.User                 `json:"lockedBy,omitempty"     keel:"belongs:locked_by_id,noreport"`
+	ReopenedBy   *tenant.User                 `json:"reopenedBy,omitempty"   keel:"belongs:reopened_by_id,noreport"`
+	Periods      []*fiscalperiod.FiscalPeriod `json:"periods,omitempty"      keel:"many:fiscal_year_id,label=Fiscal Periods"`
 }
 
 func (fy *FiscalYear) Validate(multiErr *errortypes.MultiError) {

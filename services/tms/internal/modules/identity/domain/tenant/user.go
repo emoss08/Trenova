@@ -22,22 +22,22 @@ import (
 type OrganizationMembership struct {
 	keel.Table `keel:"user_organization_memberships"`
 
-	ID             pulid.ID `json:"id" keel:"id,pk,autoid:uom_"`
-	IsDefault      bool     `json:"isDefault" keel:"is_default"`
+	ID             pulid.ID `json:"id"             keel:"id,pk,autoid:uom_"`
+	IsDefault      bool     `json:"isDefault"      keel:"is_default"`
 	BusinessUnitID pulid.ID `json:"businessUnitId" keel:"business_unit_id,tenant"`
-	UserID         pulid.ID `json:"userId" keel:"user_id"`
+	UserID         pulid.ID `json:"userId"         keel:"user_id"`
 	OrganizationID pulid.ID `json:"organizationId" keel:"organization_id,tenant"`
-	JoinedAt       int64    `json:"joinedAt" keel:"joined_at,nullzero"`
-	GrantedByID    pulid.ID `json:"grantedByID" keel:"granted_by_id,nullzero"`
-	ExpiresAt      *int64   `json:"expiresAt" keel:"expires_at"`
+	JoinedAt       int64    `json:"joinedAt"       keel:"joined_at,nullzero"`
+	GrantedByID    pulid.ID `json:"grantedByID"    keel:"granted_by_id,nullzero"`
+	ExpiresAt      *int64   `json:"expiresAt"      keel:"expires_at"`
 	// PositionID is the title the user holds in this organisation. It sits on
 	// the membership rather than the user because a position belongs to one
 	// organisation and the same person may hold different titles in two.
 	PositionID pulid.ID `json:"positionId" keel:"position_id,nullzero"`
 
 	// Relationships
-	User         *User         `json:"user,omitempty" keel:"belongs:user_id"`
-	GrantedBy    *User         `json:"grantedBy,omitempty" keel:"belongs:granted_by_id"`
+	User         *User         `json:"user,omitempty"         keel:"belongs:user_id"`
+	GrantedBy    *User         `json:"grantedBy,omitempty"    keel:"belongs:granted_by_id"`
 	BusinessUnit *BusinessUnit `json:"businessUnit,omitempty"`
 	Organization *Organization `json:"organization,omitempty" keel:"belongs:organization_id"`
 }
@@ -63,38 +63,38 @@ const (
 type User struct {
 	keel.Table `keel:"users"`
 
-	ID                    pulid.ID               `json:"id" keel:"id,pk,autoid:usr_"`
-	BusinessUnitID        pulid.ID               `json:"businessUnitId" keel:"business_unit_id,tenant"`
+	ID                    pulid.ID               `json:"id"                    keel:"id,pk,autoid:usr_"`
+	BusinessUnitID        pulid.ID               `json:"businessUnitId"        keel:"business_unit_id,tenant"`
 	CurrentOrganizationID pulid.ID               `json:"currentOrganizationId" keel:"current_organization_id"`
-	Status                domaintypes.Status     `json:"status" keel:"status"`
-	Name                  string                 `json:"name" keel:"name"`
-	Username              string                 `json:"username" keel:"username"`
-	TimeFormat            domaintypes.TimeFormat `json:"timeFormat" keel:"time_format"`
-	Password              string                 `json:"-" keel:"password"` // Hidden in responses
-	EmailAddress          string                 `json:"emailAddress" keel:"email_address"`
-	ProfilePicURL         string                 `json:"profilePicUrl" keel:"profile_pic_url,nullzero"`
-	ThumbnailURL          string                 `json:"thumbnailUrl" keel:"thumbnail_url,nullzero"`
-	Timezone              string                 `json:"timezone" keel:"timezone"`
-	Locale                string                 `json:"locale" keel:"locale"`
-	IsLocked              bool                   `json:"isLocked" keel:"is_locked"`
-	MustChangePassword    bool                   `json:"mustChangePassword" keel:"must_change_password"`
-	Version               int64                  `json:"version" keel:"version,version"`
-	CreatedAt             int64                  `json:"createdAt" keel:"created_at,autocreate"`
-	UpdatedAt             int64                  `json:"updatedAt" keel:"updated_at,autoupdate"`
-	LastLoginAt           *int64                 `json:"lastLoginAt,omitzero" keel:"last_login_at"`
-	JobTitle              string                 `json:"jobTitle" keel:"job_title"`
-	PhoneNumber           string                 `json:"phoneNumber" keel:"phone_number"`
-	AvatarStyle           AvatarStyle            `json:"avatarStyle" keel:"avatar_style"`
-	AvailabilityStatus    AvailabilityStatus     `json:"availabilityStatus" keel:"availability_status"`
-	FocusUntil            *int64                 `json:"focusUntil" keel:"focus_until"`
-	AwayBackOn            *int64                 `json:"awayBackOn" keel:"away_back_on"`
-	AwayDelegateUserID    *pulid.ID              `json:"awayDelegateUserId" keel:"away_delegate_user_id"`
-	AwayNote              string                 `json:"awayNote" keel:"away_note"`
-	PasswordChangedAt     *int64                 `json:"passwordChangedAt" keel:"password_changed_at"`
-	AssistantHidden       bool                   `json:"assistantHidden" keel:"assistant_hidden"`
+	Status                domaintypes.Status     `json:"status"                keel:"status"`
+	Name                  string                 `json:"name"                  keel:"name"`
+	Username              string                 `json:"username"              keel:"username"`
+	TimeFormat            domaintypes.TimeFormat `json:"timeFormat"            keel:"time_format"`
+	Password              string                 `json:"-"                     keel:"password"` // Hidden in responses
+	EmailAddress          string                 `json:"emailAddress"          keel:"email_address"`
+	ProfilePicURL         string                 `json:"profilePicUrl"         keel:"profile_pic_url,nullzero"`
+	ThumbnailURL          string                 `json:"thumbnailUrl"          keel:"thumbnail_url,nullzero"`
+	Timezone              string                 `json:"timezone"              keel:"timezone"`
+	Locale                string                 `json:"locale"                keel:"locale"`
+	IsLocked              bool                   `json:"isLocked"              keel:"is_locked"`
+	MustChangePassword    bool                   `json:"mustChangePassword"    keel:"must_change_password"`
+	Version               int64                  `json:"version"               keel:"version,version"`
+	CreatedAt             int64                  `json:"createdAt"             keel:"created_at,autocreate"`
+	UpdatedAt             int64                  `json:"updatedAt"             keel:"updated_at,autoupdate"`
+	LastLoginAt           *int64                 `json:"lastLoginAt,omitzero"  keel:"last_login_at"`
+	JobTitle              string                 `json:"jobTitle"              keel:"job_title"`
+	PhoneNumber           string                 `json:"phoneNumber"           keel:"phone_number"`
+	AvatarStyle           AvatarStyle            `json:"avatarStyle"           keel:"avatar_style"`
+	AvailabilityStatus    AvailabilityStatus     `json:"availabilityStatus"    keel:"availability_status"`
+	FocusUntil            *int64                 `json:"focusUntil"            keel:"focus_until"`
+	AwayBackOn            *int64                 `json:"awayBackOn"            keel:"away_back_on"`
+	AwayDelegateUserID    *pulid.ID              `json:"awayDelegateUserId"    keel:"away_delegate_user_id"`
+	AwayNote              string                 `json:"awayNote"              keel:"away_note"`
+	PasswordChangedAt     *int64                 `json:"passwordChangedAt"     keel:"password_changed_at"`
+	AssistantHidden       bool                   `json:"assistantHidden"       keel:"assistant_hidden"`
 
 	BusinessUnit        *BusinessUnit                    `json:"-"`
-	CurrentOrganization *Organization                    `json:"-" keel:"belongs:current_organization_id"`
+	CurrentOrganization *Organization                    `json:"-"                     keel:"belongs:current_organization_id"`
 	Memberships         []*OrganizationMembership        `json:"memberships,omitempty" keel:"many:user_id"`
 	Assignments         []*permission.UserRoleAssignment `json:"assignments,omitempty" keel:"many:user_id"`
 }

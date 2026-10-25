@@ -87,21 +87,21 @@ func (f Facts) OpenIssues() int {
 type Brief struct {
 	keel.Table `keel:"shipment_board_briefs"`
 
-	ID              pulid.ID           `json:"id" keel:"id,pk,autoid:sbb_"`
-	BusinessUnitID  pulid.ID           `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
-	OrganizationID  pulid.ID           `json:"organizationId" keel:"organization_id,pk,tenant"`
-	BriefDate       string             `json:"briefDate" keel:"brief_date"`
-	Generation      int                `json:"generation" keel:"generation"`
-	Trigger         Trigger            `json:"trigger" keel:"trigger"`
-	Segments        []Segment          `json:"segments" keel:"segments,jsonb"`
-	Wording         map[string]Wording `json:"wording" keel:"wording,jsonb"`
-	Facts           Facts              `json:"facts" keel:"facts,jsonb"`
-	OpenIssues      int                `json:"openIssues" keel:"open_issues"`
-	Narrated        bool               `json:"narrated" keel:"narrated"`
+	ID              pulid.ID           `json:"id"              keel:"id,pk,autoid:sbb_"`
+	BusinessUnitID  pulid.ID           `json:"businessUnitId"  keel:"business_unit_id,pk,tenant"`
+	OrganizationID  pulid.ID           `json:"organizationId"  keel:"organization_id,pk,tenant"`
+	BriefDate       string             `json:"briefDate"       keel:"brief_date"`
+	Generation      int                `json:"generation"      keel:"generation"`
+	Trigger         Trigger            `json:"trigger"         keel:"trigger"`
+	Segments        []Segment          `json:"segments"        keel:"segments,jsonb"`
+	Wording         map[string]Wording `json:"wording"         keel:"wording,jsonb"`
+	Facts           Facts              `json:"facts"           keel:"facts,jsonb"`
+	OpenIssues      int                `json:"openIssues"      keel:"open_issues"`
+	Narrated        bool               `json:"narrated"        keel:"narrated"`
 	ModelIdentifier string             `json:"modelIdentifier" keel:"model_identifier,nullzero"`
-	GeneratedAt     int64              `json:"generatedAt" keel:"generated_at"`
-	CreatedAt       int64              `json:"createdAt" keel:"created_at,autocreate"`
-	UpdatedAt       int64              `json:"updatedAt" keel:"updated_at,autoupdate"`
+	GeneratedAt     int64              `json:"generatedAt"     keel:"generated_at"`
+	CreatedAt       int64              `json:"createdAt"       keel:"created_at,autocreate"`
+	UpdatedAt       int64              `json:"updatedAt"       keel:"updated_at,autoupdate"`
 }
 
 func (b *Brief) Normalize() {

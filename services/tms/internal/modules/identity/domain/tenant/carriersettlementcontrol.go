@@ -17,24 +17,24 @@ var (
 type CarrierSettlementControl struct {
 	keel.Table `keel:"carrier_settlement_controls"`
 
-	ID             pulid.ID `json:"id" keel:"id,pk,autoid:carstlc_"`
+	ID             pulid.ID `json:"id"             keel:"id,pk,autoid:carstlc_"`
 	BusinessUnitID pulid.ID `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
 	OrganizationID pulid.ID `json:"organizationId" keel:"organization_id,pk,tenant"`
 
-	PayTrigger                              PayTrigger         `json:"payTrigger" keel:"pay_trigger"`
-	PayPeriodFrequency                      PayPeriodFrequency `json:"payPeriodFrequency" keel:"pay_period_frequency"`
-	PeriodEndDayOfWeek                      int                `json:"periodEndDayOfWeek" keel:"period_end_day_of_week"`
-	PayDelayDays                            int                `json:"payDelayDays" keel:"pay_delay_days"`
-	AutoGenerateBatches                     bool               `json:"autoGenerateBatches" keel:"auto_generate_batches"`
-	AutoPostOnApprove                       bool               `json:"autoPostOnApprove" keel:"auto_post_on_approve"`
-	VarianceToleranceMinor                  int64              `json:"varianceToleranceMinor" keel:"variance_tolerance_minor"`
-	AutoMatchInboundInvoices                bool               `json:"autoMatchInboundInvoices" keel:"auto_match_inbound_invoices"`
-	AutoAcceptWithinTolerance               bool               `json:"autoAcceptWithinTolerance" keel:"auto_accept_within_tolerance"`
-	HoldUntilInvoiceMatched                 bool               `json:"holdUntilInvoiceMatched" keel:"hold_until_invoice_matched"`
-	DefaultAPAccountID                      *pulid.ID          `json:"defaultApAccountId" keel:"default_ap_account_id"`
+	PayTrigger                              PayTrigger         `json:"payTrigger"                              keel:"pay_trigger"`
+	PayPeriodFrequency                      PayPeriodFrequency `json:"payPeriodFrequency"                      keel:"pay_period_frequency"`
+	PeriodEndDayOfWeek                      int                `json:"periodEndDayOfWeek"                      keel:"period_end_day_of_week"`
+	PayDelayDays                            int                `json:"payDelayDays"                            keel:"pay_delay_days"`
+	AutoGenerateBatches                     bool               `json:"autoGenerateBatches"                     keel:"auto_generate_batches"`
+	AutoPostOnApprove                       bool               `json:"autoPostOnApprove"                       keel:"auto_post_on_approve"`
+	VarianceToleranceMinor                  int64              `json:"varianceToleranceMinor"                  keel:"variance_tolerance_minor"`
+	AutoMatchInboundInvoices                bool               `json:"autoMatchInboundInvoices"                keel:"auto_match_inbound_invoices"`
+	AutoAcceptWithinTolerance               bool               `json:"autoAcceptWithinTolerance"               keel:"auto_accept_within_tolerance"`
+	HoldUntilInvoiceMatched                 bool               `json:"holdUntilInvoiceMatched"                 keel:"hold_until_invoice_matched"`
+	DefaultAPAccountID                      *pulid.ID          `json:"defaultApAccountId"                      keel:"default_ap_account_id"`
 	DefaultPurchasedTransportationAccountID *pulid.ID          `json:"defaultPurchasedTransportationAccountId" keel:"default_purchased_transportation_account_id"`
 
-	Version   int64 `json:"version" keel:"version,version"`
+	Version   int64 `json:"version"   keel:"version,version"`
 	CreatedAt int64 `json:"createdAt" keel:"created_at,autocreate"`
 	UpdatedAt int64 `json:"updatedAt" keel:"updated_at,autoupdate"`
 

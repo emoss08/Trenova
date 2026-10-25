@@ -3,6 +3,8 @@ package carriersettlement
 import (
 	"context"
 
+	"github.com/emoss08/trenova/shared/money"
+
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
 
 	"github.com/emoss08/keel"
@@ -23,33 +25,33 @@ var (
 type InvoiceMatch struct {
 	keel.Table `keel:"carrier_invoice_matches"`
 
-	ID                     pulid.ID           `json:"id" keel:"id,pk,autoid:cim_"`
-	BusinessUnitID         pulid.ID           `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
-	OrganizationID         pulid.ID           `json:"organizationId" keel:"organization_id,pk,tenant"`
-	EDICarrierInvoiceID    *pulid.ID          `json:"ediCarrierInvoiceId" keel:"edi_carrier_invoice_id"`
+	ID                     pulid.ID           `json:"id"                     keel:"id,pk,autoid:cim_"`
+	BusinessUnitID         pulid.ID           `json:"businessUnitId"         keel:"business_unit_id,pk,tenant"`
+	OrganizationID         pulid.ID           `json:"organizationId"         keel:"organization_id,pk,tenant"`
+	EDICarrierInvoiceID    *pulid.ID          `json:"ediCarrierInvoiceId"    keel:"edi_carrier_invoice_id"`
 	DocumentAIExtractionID *pulid.ID          `json:"documentAiExtractionId" keel:"document_ai_extraction_id"`
-	CarrierID              pulid.ID           `json:"carrierId" keel:"carrier_id"`
-	CarrierAssignmentID    pulid.ID           `json:"carrierAssignmentId" keel:"carrier_assignment_id"`
-	CarrierSettlementID    *pulid.ID          `json:"carrierSettlementId" keel:"carrier_settlement_id"`
-	AdjustmentCostEventID  *pulid.ID          `json:"adjustmentCostEventId" keel:"adjustment_cost_event_id"`
-	Status                 InvoiceMatchStatus `json:"status" keel:"status"`
-	MatchedVia             MatchVia           `json:"matchedVia" keel:"matched_via"`
-	InvoiceNumber          string             `json:"invoiceNumber" keel:"invoice_number,nullzero"`
-	InvoiceNumberKey       string             `json:"-" keel:"invoice_number_key,nullzero"`
-	DuplicateOfMatchID     *pulid.ID          `json:"duplicateOfMatchId" keel:"duplicate_of_match_id"`
-	PossibleDuplicateOfID  *pulid.ID          `json:"possibleDuplicateOfId" keel:"possible_duplicate_of_id"`
-	InvoiceTotalMinor      int64              `json:"invoiceTotalMinor" keel:"invoice_total_minor"`
-	ExpectedTotalMinor     int64              `json:"expectedTotalMinor" keel:"expected_total_minor"`
-	VarianceMinor          int64              `json:"varianceMinor" keel:"variance_minor"`
-	CurrencyCode           string             `json:"currencyCode" keel:"currency_code"`
-	ResolutionNote         string             `json:"resolutionNote" keel:"resolution_note,nullzero"`
-	ResolvedByID           pulid.ID           `json:"resolvedById" keel:"resolved_by_id,nullzero"`
-	ResolvedAt             *int64             `json:"resolvedAt" keel:"resolved_at"`
-	Version                int64              `json:"version" keel:"version,version"`
-	CreatedAt              int64              `json:"createdAt" keel:"created_at,autocreate"`
-	UpdatedAt              int64              `json:"updatedAt" keel:"updated_at,autoupdate"`
+	CarrierID              pulid.ID           `json:"carrierId"              keel:"carrier_id"`
+	CarrierAssignmentID    pulid.ID           `json:"carrierAssignmentId"    keel:"carrier_assignment_id"`
+	CarrierSettlementID    *pulid.ID          `json:"carrierSettlementId"    keel:"carrier_settlement_id"`
+	AdjustmentCostEventID  *pulid.ID          `json:"adjustmentCostEventId"  keel:"adjustment_cost_event_id"`
+	Status                 InvoiceMatchStatus `json:"status"                 keel:"status"`
+	MatchedVia             MatchVia           `json:"matchedVia"             keel:"matched_via"`
+	InvoiceNumber          string             `json:"invoiceNumber"          keel:"invoice_number,nullzero"`
+	InvoiceNumberKey       string             `json:"-"                      keel:"invoice_number_key,nullzero"`
+	DuplicateOfMatchID     *pulid.ID          `json:"duplicateOfMatchId"     keel:"duplicate_of_match_id"`
+	PossibleDuplicateOfID  *pulid.ID          `json:"possibleDuplicateOfId"  keel:"possible_duplicate_of_id"`
+	InvoiceTotalMinor      int64              `json:"invoiceTotalMinor"      keel:"invoice_total_minor"`
+	ExpectedTotalMinor     int64              `json:"expectedTotalMinor"     keel:"expected_total_minor"`
+	VarianceMinor          int64              `json:"varianceMinor"          keel:"variance_minor"`
+	CurrencyCode           string             `json:"currencyCode"           keel:"currency_code"`
+	ResolutionNote         string             `json:"resolutionNote"         keel:"resolution_note,nullzero"`
+	ResolvedByID           pulid.ID           `json:"resolvedById"           keel:"resolved_by_id,nullzero"`
+	ResolvedAt             *int64             `json:"resolvedAt"             keel:"resolved_at"`
+	Version                int64              `json:"version"                keel:"version,version"`
+	CreatedAt              int64              `json:"createdAt"              keel:"created_at,autocreate"`
+	UpdatedAt              int64              `json:"updatedAt"              keel:"updated_at,autoupdate"`
 
-	Carrier           *carrier.Carrier            `json:"carrier,omitempty" keel:"belongs:carrier_id"`
+	Carrier           *carrier.Carrier            `json:"carrier,omitempty"           keel:"belongs:carrier_id"`
 	CarrierAssignment *shipment.CarrierAssignment `json:"carrierAssignment,omitempty" keel:"belongs:carrier_assignment_id"`
 }
 
@@ -120,7 +122,7 @@ func (m *InvoiceMatch) BeforeCreate(ctx context.Context) error {
 		m.MatchedVia = MatchViaManual
 	}
 	if m.CurrencyCode == "" {
-		m.CurrencyCode = "USD"
+		m.CurrencyCode = money.DefaultCurrencyCode
 	}
 	m.InvoiceNumberKey = edi.InvoiceNumberKey(m.InvoiceNumber)
 

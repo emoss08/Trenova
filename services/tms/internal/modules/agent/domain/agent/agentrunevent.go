@@ -40,7 +40,7 @@ var (
 type AgentRunEvent struct {
 	keel.Table `keel:"agent_run_events"`
 
-	ID             pulid.ID `json:"id" keel:"id,pk,autoid:are_"`
+	ID             pulid.ID `json:"id"             keel:"id,pk,autoid:are_"`
 	BusinessUnitID pulid.ID `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
 	OrganizationID pulid.ID `json:"organizationId" keel:"organization_id,pk,tenant"`
 
@@ -48,7 +48,7 @@ type AgentRunEvent struct {
 	// exactly as the step ledger does. There is no foreign key for the same
 	// reason: one column cannot point at two tables.
 	OwnerKind string   `json:"ownerKind" keel:"owner_kind"`
-	OwnerID   pulid.ID `json:"ownerId" keel:"owner_id"`
+	OwnerID   pulid.ID `json:"ownerId"   keel:"owner_id"`
 
 	// Sequence is the event's place in its owner's account of itself.
 	//
@@ -66,7 +66,7 @@ type AgentRunEvent struct {
 	// StepKey joins a tool event to the ledger row that claimed it. Empty for
 	// everything that is not a tool call.
 	StepKey string `json:"stepKey" keel:"step_key"`
-	CallID  string `json:"callId" keel:"call_id"`
+	CallID  string `json:"callId"  keel:"call_id"`
 
 	Payload map[string]any `json:"payload" keel:"payload,jsonb"`
 
@@ -77,7 +77,7 @@ type AgentRunEvent struct {
 
 	OccurredAt int64 `json:"occurredAt" keel:"occurred_at"`
 
-	Version   int64 `json:"version" keel:"version,version"`
+	Version   int64 `json:"version"   keel:"version,version"`
 	CreatedAt int64 `json:"createdAt" keel:"created_at,autocreate"`
 	UpdatedAt int64 `json:"updatedAt" keel:"updated_at,autoupdate"`
 

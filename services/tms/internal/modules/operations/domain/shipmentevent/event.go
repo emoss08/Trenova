@@ -16,28 +16,28 @@ import (
 type Event struct {
 	keel.Table `keel:"shipment_events"`
 
-	ID             pulid.ID `json:"id" keel:"id,pk,autoid:se_"`
-	BusinessUnitID pulid.ID `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
-	OrganizationID pulid.ID `json:"organizationId" keel:"organization_id,pk,tenant"`
-	ShipmentID     pulid.ID `json:"shipmentId" keel:"shipment_id"`
-	MoveID         pulid.ID `json:"moveId,omitempty" keel:"move_id,nullzero"`
-	StopID         pulid.ID `json:"stopId,omitempty" keel:"stop_id,nullzero"`
+	ID             pulid.ID `json:"id"                     keel:"id,pk,autoid:se_"`
+	BusinessUnitID pulid.ID `json:"businessUnitId"         keel:"business_unit_id,pk,tenant"`
+	OrganizationID pulid.ID `json:"organizationId"         keel:"organization_id,pk,tenant"`
+	ShipmentID     pulid.ID `json:"shipmentId"             keel:"shipment_id"`
+	MoveID         pulid.ID `json:"moveId,omitempty"       keel:"move_id,nullzero"`
+	StopID         pulid.ID `json:"stopId,omitempty"       keel:"stop_id,nullzero"`
 	AssignmentID   pulid.ID `json:"assignmentId,omitempty" keel:"assignment_id,nullzero"`
-	CommentID      pulid.ID `json:"commentId,omitempty" keel:"comment_id,nullzero"`
-	HoldID         pulid.ID `json:"holdId,omitempty" keel:"hold_id,nullzero"`
+	CommentID      pulid.ID `json:"commentId,omitempty"    keel:"comment_id,nullzero"`
+	HoldID         pulid.ID `json:"holdId,omitempty"       keel:"hold_id,nullzero"`
 
-	Type       Type      `json:"type" keel:"type"`
-	Severity   Severity  `json:"severity" keel:"severity"`
-	ActorType  ActorType `json:"actorType" keel:"actor_type"`
+	Type       Type      `json:"type"              keel:"type"`
+	Severity   Severity  `json:"severity"          keel:"severity"`
+	ActorType  ActorType `json:"actorType"         keel:"actor_type"`
 	ActorID    pulid.ID  `json:"actorId,omitempty" keel:"actor_id,nullzero"`
-	ActorLabel string    `json:"actorLabel" keel:"actor_label,nullzero"`
-	Summary    string    `json:"summary" keel:"summary"`
+	ActorLabel string    `json:"actorLabel"        keel:"actor_label,nullzero"`
+	Summary    string    `json:"summary"           keel:"summary"`
 
-	Metadata      map[string]any `json:"metadata,omitempty" keel:"metadata,jsonb"`
-	OccurredAt    int64          `json:"occurredAt" keel:"occurred_at"`
+	Metadata      map[string]any `json:"metadata,omitempty"      keel:"metadata,jsonb"`
+	OccurredAt    int64          `json:"occurredAt"              keel:"occurred_at"`
 	CorrelationID string         `json:"correlationId,omitempty" keel:"correlation_id,nullzero"`
 
-	Actor    *tenant.User       `json:"actor,omitempty" keel:"belongs:actor_id"`
+	Actor    *tenant.User       `json:"actor,omitempty"    keel:"belongs:actor_id"`
 	Shipment *shipment.Shipment `json:"shipment,omitempty" keel:"belongs:shipment_id"`
 }
 

@@ -18,23 +18,23 @@ var (
 // roles that should see it. Users with similar jobs get the same starting
 // point, and a locked preset stays exactly as authored.
 type Preset struct {
-	keel.Table `                                                   keel:"home_layout_presets"`
+	keel.Table `keel:"home_layout_presets"`
 
-	ID                 pulid.ID                      `json:"id" keel:"id,pk,autoid:hlp_"`
-	BusinessUnitID     pulid.ID                      `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
-	OrganizationID     pulid.ID                      `json:"organizationId" keel:"organization_id,pk,tenant"`
-	Name               string                        `json:"name" keel:"name"`
-	Description        string                        `json:"description" keel:"description,nullzero"`
-	Layout             *Layout                       `json:"layout" keel:"layout,jsonb"`
-	RoleIDs            []pulid.ID                    `json:"roleIds" keel:"role_ids,nullzero"`
+	ID                 pulid.ID                      `json:"id"                 keel:"id,pk,autoid:hlp_"`
+	BusinessUnitID     pulid.ID                      `json:"businessUnitId"     keel:"business_unit_id,pk,tenant"`
+	OrganizationID     pulid.ID                      `json:"organizationId"     keel:"organization_id,pk,tenant"`
+	Name               string                        `json:"name"               keel:"name"`
+	Description        string                        `json:"description"        keel:"description,nullzero"`
+	Layout             *Layout                       `json:"layout"             keel:"layout,jsonb"`
+	RoleIDs            []pulid.ID                    `json:"roleIds"            keel:"role_ids,nullzero"`
 	CoreResponsibility permission.CoreResponsibility `json:"coreResponsibility" keel:"core_responsibility,nullzero"`
-	IsOrgDefault       bool                          `json:"isOrgDefault" keel:"is_org_default"`
-	Locked             bool                          `json:"locked" keel:"locked"`
-	Priority           int                           `json:"priority" keel:"priority"`
-	CreatedBy          pulid.ID                      `json:"createdBy" keel:"created_by,nullzero"`
-	Version            int64                         `json:"version" keel:"version,version"`
-	CreatedAt          int64                         `json:"createdAt" keel:"created_at,autocreate"`
-	UpdatedAt          int64                         `json:"updatedAt" keel:"updated_at,autoupdate"`
+	IsOrgDefault       bool                          `json:"isOrgDefault"       keel:"is_org_default"`
+	Locked             bool                          `json:"locked"             keel:"locked"`
+	Priority           int                           `json:"priority"           keel:"priority"`
+	CreatedBy          pulid.ID                      `json:"createdBy"          keel:"created_by,nullzero"`
+	Version            int64                         `json:"version"            keel:"version,version"`
+	CreatedAt          int64                         `json:"createdAt"          keel:"created_at,autocreate"`
+	UpdatedAt          int64                         `json:"updatedAt"          keel:"updated_at,autoupdate"`
 
 	Organization *tenant.Organization `json:"organization,omitempty"`
 	BusinessUnit *tenant.BusinessUnit `json:"businessUnit,omitempty"`

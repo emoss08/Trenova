@@ -28,28 +28,28 @@ const (
 type SSOConfig struct {
 	keel.Table `keel:"sso_configs"`
 
-	ID                pulid.ID          `json:"id" keel:"id,pk,autoid:sso_"`
-	OrganizationID    pulid.ID          `json:"organizationId" keel:"organization_id,pk,tenant"`
-	BusinessUnitID    pulid.ID          `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
-	Name              string            `json:"name" keel:"name"`
-	Provider          SSOProvider       `json:"provider" keel:"provider"`
-	Protocol          SSOProtocol       `json:"protocol" keel:"protocol"`
-	Enabled           bool              `json:"enabled" keel:"enabled"`
-	EnforceSSO        bool              `json:"enforceSso" keel:"enforce_sso"`
-	AutoProvision     bool              `json:"autoProvision" keel:"auto_provision"`
-	DefaultRole       string            `json:"defaultRole" keel:"default_role,nullzero"`
-	AllowedDomains    []string          `json:"allowedDomains" keel:"allowed_domains"`
-	AttributeMap      map[string]string `json:"attributeMap" keel:"attribute_map,jsonb"`
-	OIDCIssuerURL     string            `json:"oidcIssuerUrl" keel:"oidc_issuer_url"`
-	OIDCClientID      string            `json:"oidcClientId" keel:"oidc_client_id"`
-	OIDCClientSecret  string            `json:"-" keel:"oidc_client_secret"`
+	ID                pulid.ID          `json:"id"              keel:"id,pk,autoid:sso_"`
+	OrganizationID    pulid.ID          `json:"organizationId"  keel:"organization_id,pk,tenant"`
+	BusinessUnitID    pulid.ID          `json:"businessUnitId"  keel:"business_unit_id,pk,tenant"`
+	Name              string            `json:"name"            keel:"name"`
+	Provider          SSOProvider       `json:"provider"        keel:"provider"`
+	Protocol          SSOProtocol       `json:"protocol"        keel:"protocol"`
+	Enabled           bool              `json:"enabled"         keel:"enabled"`
+	EnforceSSO        bool              `json:"enforceSso"      keel:"enforce_sso"`
+	AutoProvision     bool              `json:"autoProvision"   keel:"auto_provision"`
+	DefaultRole       string            `json:"defaultRole"     keel:"default_role,nullzero"`
+	AllowedDomains    []string          `json:"allowedDomains"  keel:"allowed_domains"`
+	AttributeMap      map[string]string `json:"attributeMap"    keel:"attribute_map,jsonb"`
+	OIDCIssuerURL     string            `json:"oidcIssuerUrl"   keel:"oidc_issuer_url"`
+	OIDCClientID      string            `json:"oidcClientId"    keel:"oidc_client_id"`
+	OIDCClientSecret  string            `json:"-"               keel:"oidc_client_secret"`
 	OIDCRedirectURL   string            `json:"oidcRedirectUrl" keel:"oidc_redirect_url"`
-	OIDCScopes        []string          `json:"oidcScopes" keel:"oidc_scopes"`
+	OIDCScopes        []string          `json:"oidcScopes"      keel:"oidc_scopes"`
 	AllowFederatedMFA bool              `json:"-"`
 	FederatedMFAACRs  []string          `json:"-"`
-	Version           int64             `json:"version" keel:"version,version"`
-	CreatedAt         int64             `json:"createdAt" keel:"created_at,autocreate"`
-	UpdatedAt         int64             `json:"updatedAt" keel:"updated_at,autoupdate"`
+	Version           int64             `json:"version"         keel:"version,version"`
+	CreatedAt         int64             `json:"createdAt"       keel:"created_at,autocreate"`
+	UpdatedAt         int64             `json:"updatedAt"       keel:"updated_at,autoupdate"`
 }
 
 func (v SSOProtocol) IsValid() bool {

@@ -21,22 +21,22 @@ const (
 type DocumentShipmentDraft struct {
 	keel.Table `keel:"document_shipment_drafts"`
 
-	ID                 pulid.ID       `json:"id" keel:"id,pk,autoid:dsd_"`
-	DocumentID         pulid.ID       `json:"documentId" keel:"document_id"`
-	OrganizationID     pulid.ID       `json:"organizationId" keel:"organization_id,pk,tenant"`
-	BusinessUnitID     pulid.ID       `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
-	Status             Status         `json:"status" keel:"status"`
-	DocumentKind       string         `json:"documentKind" keel:"document_kind,nullzero"`
-	Confidence         float64        `json:"confidence" keel:"confidence"`
-	DraftData          map[string]any `json:"draftData" keel:"draft_data,jsonb"`
-	FailureCode        string         `json:"failureCode" keel:"failure_code,nullzero"`
-	FailureMessage     string         `json:"failureMessage" keel:"failure_message,nullzero"`
+	ID                 pulid.ID       `json:"id"                 keel:"id,pk,autoid:dsd_"`
+	DocumentID         pulid.ID       `json:"documentId"         keel:"document_id"`
+	OrganizationID     pulid.ID       `json:"organizationId"     keel:"organization_id,pk,tenant"`
+	BusinessUnitID     pulid.ID       `json:"businessUnitId"     keel:"business_unit_id,pk,tenant"`
+	Status             Status         `json:"status"             keel:"status"`
+	DocumentKind       string         `json:"documentKind"       keel:"document_kind,nullzero"`
+	Confidence         float64        `json:"confidence"         keel:"confidence"`
+	DraftData          map[string]any `json:"draftData"          keel:"draft_data,jsonb"`
+	FailureCode        string         `json:"failureCode"        keel:"failure_code,nullzero"`
+	FailureMessage     string         `json:"failureMessage"     keel:"failure_message,nullzero"`
 	AttachedShipmentID *pulid.ID      `json:"attachedShipmentId" keel:"attached_shipment_id"`
-	AttachedAt         *int64         `json:"attachedAt" keel:"attached_at"`
-	AttachedByID       *pulid.ID      `json:"attachedById" keel:"attached_by_id"`
-	Version            int64          `json:"version" keel:"version,version"`
-	CreatedAt          int64          `json:"createdAt" keel:"created_at,autocreate"`
-	UpdatedAt          int64          `json:"updatedAt" keel:"updated_at,autoupdate"`
+	AttachedAt         *int64         `json:"attachedAt"         keel:"attached_at"`
+	AttachedByID       *pulid.ID      `json:"attachedById"       keel:"attached_by_id"`
+	Version            int64          `json:"version"            keel:"version,version"`
+	CreatedAt          int64          `json:"createdAt"          keel:"created_at,autocreate"`
+	UpdatedAt          int64          `json:"updatedAt"          keel:"updated_at,autoupdate"`
 }
 
 func (d *DocumentShipmentDraft) BeforeCreate(ctx context.Context) error {

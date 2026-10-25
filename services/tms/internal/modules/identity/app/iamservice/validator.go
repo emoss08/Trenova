@@ -27,7 +27,10 @@ type Validator struct {
 }
 
 func NewValidator(p ValidatorParams) *Validator {
-	return newValidator(p.Repo, validationframework.NewKeelChecker(p.DB, iamdb.AccessPoliciesSchema()))
+	return newValidator(
+		p.Repo,
+		validationframework.NewKeelChecker(p.DB, iamdb.AccessPoliciesSchema()),
+	)
 }
 
 func newValidator(

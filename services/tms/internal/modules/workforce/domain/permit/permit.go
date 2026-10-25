@@ -22,27 +22,27 @@ var (
 )
 
 type Permit struct {
-	keel.Table     `                                       keel:"permits"`
-	ID             pulid.ID `json:"id" keel:"id,pk,autoid:pmt_"`
-	BusinessUnitID pulid.ID `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
-	OrganizationID pulid.ID `json:"organizationId" keel:"organization_id,pk,tenant"`
-	ShipmentID     pulid.ID `json:"shipmentId" keel:"shipment_id"`
-	StateID        pulid.ID `json:"stateId" keel:"state_id"`
+	keel.Table     `keel:"permits"`
+	ID             pulid.ID `keel:"id,pk,autoid:pmt_"          json:"id"`
+	BusinessUnitID pulid.ID `keel:"business_unit_id,pk,tenant" json:"businessUnitId"`
+	OrganizationID pulid.ID `keel:"organization_id,pk,tenant"  json:"organizationId"`
+	ShipmentID     pulid.ID `keel:"shipment_id"                json:"shipmentId"`
+	StateID        pulid.ID `keel:"state_id"                   json:"stateId"`
 
 	PermitNumber string `json:"permitNumber" keel:"permit_number"`
-	Status       Status `json:"status" keel:"status"`
+	Status       Status `json:"status"       keel:"status"`
 
-	IssuedAt  *int64 `json:"issuedAt" keel:"issued_at"`
+	IssuedAt  *int64 `json:"issuedAt"  keel:"issued_at"`
 	ExpiresAt *int64 `json:"expiresAt" keel:"expires_at"`
 
-	Cost  decimal.NullDecimal `json:"cost" keel:"cost"`
+	Cost  decimal.NullDecimal `json:"cost"  keel:"cost"`
 	Notes string              `json:"notes" keel:"notes,nullzero"`
 
-	Version      int64  `json:"version" keel:"version,version"`
+	Version      int64  `json:"version"   keel:"version,version"`
 	CreatedAt    int64  `json:"createdAt" keel:"created_at,autocreate"`
 	UpdatedAt    int64  `json:"updatedAt" keel:"updated_at,autoupdate"`
-	SearchVector string `json:"-" keel:"search_vector,tsvector,readonly,noselect"`
-	Rank         string `json:"-" keel:"rank,computed"`
+	SearchVector string `json:"-"         keel:"search_vector,tsvector,readonly,noselect"`
+	Rank         string `json:"-"         keel:"rank,computed"`
 
 	BusinessUnit *tenant.BusinessUnit `json:"-"`
 	Organization *tenant.Organization `json:"-"`

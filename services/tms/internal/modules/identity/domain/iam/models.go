@@ -27,31 +27,31 @@ var (
 type IdentityProvider struct {
 	keel.Table `keel:"identity_providers"`
 
-	ID                  pulid.ID                 `json:"id" keel:"id,pk,autoid:idp_"`
-	OrganizationID      pulid.ID                 `json:"organizationId" keel:"organization_id,tenant"`
-	BusinessUnitID      pulid.ID                 `json:"businessUnitId" keel:"business_unit_id,tenant"`
-	Name                string                   `json:"name" keel:"name"`
-	Slug                string                   `json:"slug" keel:"slug"`
-	Protocol            IdentityProviderProtocol `json:"protocol" keel:"protocol"`
-	Enabled             bool                     `json:"enabled" keel:"enabled"`
-	EnforceSSO          bool                     `json:"enforceSso" keel:"enforce_sso"`
-	AutoProvision       bool                     `json:"autoProvision" keel:"auto_provision"`
-	AllowFederatedMFA   bool                     `json:"allowFederatedMfa" keel:"allow_federated_mfa"`
+	ID                  pulid.ID                 `json:"id"                    keel:"id,pk,autoid:idp_"`
+	OrganizationID      pulid.ID                 `json:"organizationId"        keel:"organization_id,tenant"`
+	BusinessUnitID      pulid.ID                 `json:"businessUnitId"        keel:"business_unit_id,tenant"`
+	Name                string                   `json:"name"                  keel:"name"`
+	Slug                string                   `json:"slug"                  keel:"slug"`
+	Protocol            IdentityProviderProtocol `json:"protocol"              keel:"protocol"`
+	Enabled             bool                     `json:"enabled"               keel:"enabled"`
+	EnforceSSO          bool                     `json:"enforceSso"            keel:"enforce_sso"`
+	AutoProvision       bool                     `json:"autoProvision"         keel:"auto_provision"`
+	AllowFederatedMFA   bool                     `json:"allowFederatedMfa"     keel:"allow_federated_mfa"`
 	FederatedMFAACRs    []string                 `json:"federatedMfaAcrValues" keel:"federated_mfa_acr_values"`
-	AllowedDomains      []string                 `json:"allowedDomains" keel:"allowed_domains"`
-	AttributeMap        map[string]string        `json:"attributeMap" keel:"attribute_map,jsonb"`
-	OIDCIssuerURL       string                   `json:"oidcIssuerUrl" keel:"oidc_issuer_url,nullzero"`
-	OIDCClientID        string                   `json:"oidcClientId" keel:"oidc_client_id,nullzero"`
-	OIDCClientSecret    string                   `json:"-" keel:"oidc_client_secret,nullzero"`
-	OIDCRedirectURL     string                   `json:"oidcRedirectUrl" keel:"oidc_redirect_url,nullzero"`
-	OIDCScopes          []string                 `json:"oidcScopes" keel:"oidc_scopes"`
-	SAMLEntityID        string                   `json:"samlEntityId" keel:"saml_entity_id,nullzero"`
-	SAMLSSOURL          string                   `json:"samlSsoUrl" keel:"saml_sso_url,nullzero"`
-	SAMLX509Certificate string                   `json:"-" keel:"saml_x509_certificate,nullzero"`
-	SAMLMetadataXML     string                   `json:"-" keel:"saml_metadata_xml,nullzero"`
-	Version             int64                    `json:"version" keel:"version,version"`
-	CreatedAt           int64                    `json:"createdAt" keel:"created_at,autocreate"`
-	UpdatedAt           int64                    `json:"updatedAt" keel:"updated_at,autoupdate"`
+	AllowedDomains      []string                 `json:"allowedDomains"        keel:"allowed_domains"`
+	AttributeMap        map[string]string        `json:"attributeMap"          keel:"attribute_map,jsonb"`
+	OIDCIssuerURL       string                   `json:"oidcIssuerUrl"         keel:"oidc_issuer_url,nullzero"`
+	OIDCClientID        string                   `json:"oidcClientId"          keel:"oidc_client_id,nullzero"`
+	OIDCClientSecret    string                   `json:"-"                     keel:"oidc_client_secret,nullzero"`
+	OIDCRedirectURL     string                   `json:"oidcRedirectUrl"       keel:"oidc_redirect_url,nullzero"`
+	OIDCScopes          []string                 `json:"oidcScopes"            keel:"oidc_scopes"`
+	SAMLEntityID        string                   `json:"samlEntityId"          keel:"saml_entity_id,nullzero"`
+	SAMLSSOURL          string                   `json:"samlSsoUrl"            keel:"saml_sso_url,nullzero"`
+	SAMLX509Certificate string                   `json:"-"                     keel:"saml_x509_certificate,nullzero"`
+	SAMLMetadataXML     string                   `json:"-"                     keel:"saml_metadata_xml,nullzero"`
+	Version             int64                    `json:"version"               keel:"version,version"`
+	CreatedAt           int64                    `json:"createdAt"             keel:"created_at,autocreate"`
+	UpdatedAt           int64                    `json:"updatedAt"             keel:"updated_at,autoupdate"`
 }
 
 func (p *IdentityProvider) BeforeUpdate(_ context.Context) error {
@@ -132,18 +132,18 @@ func defaultIdentityProviderOIDCScopes() []string {
 type ExternalIdentity struct {
 	keel.Table `keel:"external_identities"`
 
-	ID                 pulid.ID          `json:"id" keel:"id,pk,autoid:ext_"`
-	UserID             pulid.ID          `json:"userId" keel:"user_id"`
-	OrganizationID     pulid.ID          `json:"organizationId" keel:"organization_id,tenant"`
-	BusinessUnitID     pulid.ID          `json:"businessUnitId" keel:"business_unit_id,tenant"`
+	ID                 pulid.ID          `json:"id"                 keel:"id,pk,autoid:ext_"`
+	UserID             pulid.ID          `json:"userId"             keel:"user_id"`
+	OrganizationID     pulid.ID          `json:"organizationId"     keel:"organization_id,tenant"`
+	BusinessUnitID     pulid.ID          `json:"businessUnitId"     keel:"business_unit_id,tenant"`
 	IdentityProviderID pulid.ID          `json:"identityProviderId" keel:"identity_provider_id"`
-	ExternalSubject    string            `json:"externalSubject" keel:"external_subject"`
-	ExternalUsername   string            `json:"externalUsername" keel:"external_username,nullzero"`
-	ExternalEmail      string            `json:"externalEmail" keel:"external_email,nullzero"`
-	RawClaims          map[string]string `json:"rawClaims" keel:"raw_claims,jsonb"`
-	LastLoginAt        int64             `json:"lastLoginAt" keel:"last_login_at,nullzero"`
-	CreatedAt          int64             `json:"createdAt" keel:"created_at,autocreate"`
-	UpdatedAt          int64             `json:"updatedAt" keel:"updated_at,autoupdate"`
+	ExternalSubject    string            `json:"externalSubject"    keel:"external_subject"`
+	ExternalUsername   string            `json:"externalUsername"   keel:"external_username,nullzero"`
+	ExternalEmail      string            `json:"externalEmail"      keel:"external_email,nullzero"`
+	RawClaims          map[string]string `json:"rawClaims"          keel:"raw_claims,jsonb"`
+	LastLoginAt        int64             `json:"lastLoginAt"        keel:"last_login_at,nullzero"`
+	CreatedAt          int64             `json:"createdAt"          keel:"created_at,autocreate"`
+	UpdatedAt          int64             `json:"updatedAt"          keel:"updated_at,autoupdate"`
 }
 
 func (e *ExternalIdentity) BeforeUpdate(_ context.Context) error {
@@ -165,41 +165,41 @@ func (e *ExternalIdentity) BeforeCreate(_ context.Context) error {
 type MFAAuthenticator struct {
 	keel.Table `keel:"mfa_authenticators"`
 
-	ID             pulid.ID             `json:"id" keel:"id,pk,autoid:mfa_"`
-	UserID         pulid.ID             `json:"userId" keel:"user_id"`
+	ID             pulid.ID             `json:"id"             keel:"id,pk,autoid:mfa_"`
+	UserID         pulid.ID             `json:"userId"         keel:"user_id"`
 	OrganizationID pulid.ID             `json:"organizationId" keel:"organization_id,tenant"`
-	Type           MFAAuthenticatorType `json:"type" keel:"type"`
-	Name           string               `json:"name" keel:"name"`
-	CredentialID   string               `json:"credentialId" keel:"credential_id,nullzero"`
-	SecretCipher   string               `json:"-" keel:"secret_cipher,nullzero"`
-	Enabled        bool                 `json:"enabled" keel:"enabled"`
-	VerifiedAt     int64                `json:"verifiedAt" keel:"verified_at,nullzero"`
-	LastUsedAt     int64                `json:"lastUsedAt" keel:"last_used_at,nullzero"`
-	LastUsedStep   int64                `json:"-" keel:"last_used_step"`
-	CreatedAt      int64                `json:"createdAt" keel:"created_at,autocreate"`
-	UpdatedAt      int64                `json:"updatedAt" keel:"updated_at,autoupdate"`
+	Type           MFAAuthenticatorType `json:"type"           keel:"type"`
+	Name           string               `json:"name"           keel:"name"`
+	CredentialID   string               `json:"credentialId"   keel:"credential_id,nullzero"`
+	SecretCipher   string               `json:"-"              keel:"secret_cipher,nullzero"`
+	Enabled        bool                 `json:"enabled"        keel:"enabled"`
+	VerifiedAt     int64                `json:"verifiedAt"     keel:"verified_at,nullzero"`
+	LastUsedAt     int64                `json:"lastUsedAt"     keel:"last_used_at,nullzero"`
+	LastUsedStep   int64                `json:"-"              keel:"last_used_step"`
+	CreatedAt      int64                `json:"createdAt"      keel:"created_at,autocreate"`
+	UpdatedAt      int64                `json:"updatedAt"      keel:"updated_at,autoupdate"`
 }
 
 type AuthEvent struct {
 	keel.Table `keel:"auth_events"`
 
-	ID                 pulid.ID         `json:"id" keel:"id,pk,autoid:aue_"`
-	UserID             pulid.ID         `json:"userId" keel:"user_id,nullzero"`
-	OrganizationID     pulid.ID         `json:"organizationId" keel:"organization_id,nullzero"`
-	BusinessUnitID     pulid.ID         `json:"businessUnitId" keel:"business_unit_id,nullzero"`
+	ID                 pulid.ID         `json:"id"                 keel:"id,pk,autoid:aue_"`
+	UserID             pulid.ID         `json:"userId"             keel:"user_id,nullzero"`
+	OrganizationID     pulid.ID         `json:"organizationId"     keel:"organization_id,nullzero"`
+	BusinessUnitID     pulid.ID         `json:"businessUnitId"     keel:"business_unit_id,nullzero"`
 	IdentityProviderID pulid.ID         `json:"identityProviderId" keel:"identity_provider_id,nullzero"`
-	Provider           string           `json:"provider" keel:"provider"`
-	Outcome            AuthEventOutcome `json:"outcome" keel:"outcome"`
-	IPAddress          string           `json:"ipAddress" keel:"ip_address,nullzero"`
-	UserAgent          string           `json:"userAgent" keel:"user_agent,nullzero"`
-	AuthenticatorAAL   int              `json:"authenticatorAal" keel:"authenticator_aal"`
-	FederationFAL      int              `json:"federationFal" keel:"federation_fal"`
-	MFAState           string           `json:"mfaState" keel:"mfa_state,nullzero"`
-	RiskOutcome        RiskOutcome      `json:"riskOutcome" keel:"risk_outcome"`
-	RiskSignals        []string         `json:"riskSignals" keel:"risk_signals"`
-	ErrorCode          string           `json:"errorCode" keel:"error_code,nullzero"`
-	OccurredAt         int64            `json:"occurredAt" keel:"occurred_at"`
-	CreatedAt          int64            `json:"createdAt" keel:"created_at,autocreate"`
+	Provider           string           `json:"provider"           keel:"provider"`
+	Outcome            AuthEventOutcome `json:"outcome"            keel:"outcome"`
+	IPAddress          string           `json:"ipAddress"          keel:"ip_address,nullzero"`
+	UserAgent          string           `json:"userAgent"          keel:"user_agent,nullzero"`
+	AuthenticatorAAL   int              `json:"authenticatorAal"   keel:"authenticator_aal"`
+	FederationFAL      int              `json:"federationFal"      keel:"federation_fal"`
+	MFAState           string           `json:"mfaState"           keel:"mfa_state,nullzero"`
+	RiskOutcome        RiskOutcome      `json:"riskOutcome"        keel:"risk_outcome"`
+	RiskSignals        []string         `json:"riskSignals"        keel:"risk_signals"`
+	ErrorCode          string           `json:"errorCode"          keel:"error_code,nullzero"`
+	OccurredAt         int64            `json:"occurredAt"         keel:"occurred_at"`
+	CreatedAt          int64            `json:"createdAt"          keel:"created_at,autocreate"`
 }
 
 func (e *AuthEvent) BeforeUpdate(_ context.Context) error {
@@ -236,14 +236,14 @@ func (e *AuthEvent) BeforeCreate(_ context.Context) error {
 type RiskDecision struct {
 	keel.Table `keel:"risk_decisions"`
 
-	ID             pulid.ID    `json:"id" keel:"id,pk,autoid:rsk_"`
-	UserID         pulid.ID    `json:"userId" keel:"user_id,nullzero"`
+	ID             pulid.ID    `json:"id"             keel:"id,pk,autoid:rsk_"`
+	UserID         pulid.ID    `json:"userId"         keel:"user_id,nullzero"`
 	OrganizationID pulid.ID    `json:"organizationId" keel:"organization_id,nullzero"`
 	BusinessUnitID pulid.ID    `json:"businessUnitId" keel:"business_unit_id,nullzero"`
-	Outcome        RiskOutcome `json:"outcome" keel:"outcome"`
-	Signals        []string    `json:"signals" keel:"signals"`
-	Reason         string      `json:"reason" keel:"reason,nullzero"`
-	CreatedAt      int64       `json:"createdAt" keel:"created_at,autocreate"`
+	Outcome        RiskOutcome `json:"outcome"        keel:"outcome"`
+	Signals        []string    `json:"signals"        keel:"signals"`
+	Reason         string      `json:"reason"         keel:"reason,nullzero"`
+	CreatedAt      int64       `json:"createdAt"      keel:"created_at,autocreate"`
 }
 
 func (d *RiskDecision) BeforeUpdate(_ context.Context) error {
@@ -265,61 +265,61 @@ func (d *RiskDecision) BeforeCreate(_ context.Context) error {
 type SCIMDirectory struct {
 	keel.Table `keel:"scim_directories"`
 
-	ID             pulid.ID `json:"id" keel:"id,pk,autoid:scd_"`
+	ID             pulid.ID `json:"id"             keel:"id,pk,autoid:scd_"`
 	OrganizationID pulid.ID `json:"organizationId" keel:"organization_id,tenant"`
 	BusinessUnitID pulid.ID `json:"businessUnitId" keel:"business_unit_id,tenant"`
-	TenantSlug     string   `json:"tenantSlug" keel:"tenant_slug"`
-	Enabled        bool     `json:"enabled" keel:"enabled"`
-	CreatedAt      int64    `json:"createdAt" keel:"created_at,autocreate"`
-	UpdatedAt      int64    `json:"updatedAt" keel:"updated_at,autoupdate"`
+	TenantSlug     string   `json:"tenantSlug"     keel:"tenant_slug"`
+	Enabled        bool     `json:"enabled"        keel:"enabled"`
+	CreatedAt      int64    `json:"createdAt"      keel:"created_at,autocreate"`
+	UpdatedAt      int64    `json:"updatedAt"      keel:"updated_at,autoupdate"`
 }
 
 type SCIMToken struct {
 	keel.Table `keel:"scim_tokens"`
 
-	ID             pulid.ID        `json:"id" keel:"id,pk,autoid:sct_"`
+	ID             pulid.ID        `json:"id"             keel:"id,pk,autoid:sct_"`
 	OrganizationID pulid.ID        `json:"organizationId" keel:"organization_id,tenant"`
-	DirectoryID    pulid.ID        `json:"directoryId" keel:"directory_id"`
-	Name           string          `json:"name" keel:"name"`
-	Prefix         string          `json:"prefix" keel:"prefix"`
-	TokenHash      string          `json:"-" keel:"token_hash"`
-	Status         SCIMTokenStatus `json:"status" keel:"status"`
-	LastUsedAt     int64           `json:"lastUsedAt" keel:"last_used_at,nullzero"`
-	ExpiresAt      int64           `json:"expiresAt" keel:"expires_at,nullzero"`
-	CreatedAt      int64           `json:"createdAt" keel:"created_at,autocreate"`
-	UpdatedAt      int64           `json:"updatedAt" keel:"updated_at,autoupdate"`
+	DirectoryID    pulid.ID        `json:"directoryId"    keel:"directory_id"`
+	Name           string          `json:"name"           keel:"name"`
+	Prefix         string          `json:"prefix"         keel:"prefix"`
+	TokenHash      string          `json:"-"              keel:"token_hash"`
+	Status         SCIMTokenStatus `json:"status"         keel:"status"`
+	LastUsedAt     int64           `json:"lastUsedAt"     keel:"last_used_at,nullzero"`
+	ExpiresAt      int64           `json:"expiresAt"      keel:"expires_at,nullzero"`
+	CreatedAt      int64           `json:"createdAt"      keel:"created_at,autocreate"`
+	UpdatedAt      int64           `json:"updatedAt"      keel:"updated_at,autoupdate"`
 }
 
 type ProvisioningAuditRecord struct {
 	keel.Table `keel:"provisioning_audit_records"`
 
-	ID             pulid.ID           `json:"id" keel:"id,pk,autoid:par_"`
+	ID             pulid.ID           `json:"id"             keel:"id,pk,autoid:par_"`
 	OrganizationID pulid.ID           `json:"organizationId" keel:"organization_id,tenant"`
-	DirectoryID    pulid.ID           `json:"directoryId" keel:"directory_id"`
-	Action         ProvisioningAction `json:"action" keel:"action"`
-	ResourceType   string             `json:"resourceType" keel:"resource_type"`
-	ExternalID     string             `json:"externalId" keel:"external_id,nullzero"`
-	ResourceID     pulid.ID           `json:"resourceId" keel:"resource_id,nullzero"`
-	Status         string             `json:"status" keel:"status"`
-	ErrorMessage   string             `json:"errorMessage" keel:"error_message,nullzero"`
-	CreatedAt      int64              `json:"createdAt" keel:"created_at,autocreate"`
+	DirectoryID    pulid.ID           `json:"directoryId"    keel:"directory_id"`
+	Action         ProvisioningAction `json:"action"         keel:"action"`
+	ResourceType   string             `json:"resourceType"   keel:"resource_type"`
+	ExternalID     string             `json:"externalId"     keel:"external_id,nullzero"`
+	ResourceID     pulid.ID           `json:"resourceId"     keel:"resource_id,nullzero"`
+	Status         string             `json:"status"         keel:"status"`
+	ErrorMessage   string             `json:"errorMessage"   keel:"error_message,nullzero"`
+	CreatedAt      int64              `json:"createdAt"      keel:"created_at,autocreate"`
 }
 
 type AccessPolicy struct {
 	keel.Table `keel:"access_policies"`
 
-	ID             pulid.ID          `json:"id" keel:"id,pk,autoid:pol_"`
+	ID             pulid.ID          `json:"id"             keel:"id,pk,autoid:pol_"`
 	OrganizationID pulid.ID          `json:"organizationId" keel:"organization_id,tenant"`
 	BusinessUnitID pulid.ID          `json:"businessUnitId" keel:"business_unit_id,tenant"`
-	Name           string            `json:"name" keel:"name"`
-	Resource       string            `json:"resource" keel:"resource"`
-	Operation      string            `json:"operation" keel:"operation"`
-	Effect         PolicyEffect      `json:"effect" keel:"effect"`
-	Priority       int               `json:"priority" keel:"priority"`
-	Conditions     map[string]string `json:"conditions" keel:"conditions,jsonb"`
-	Enabled        bool              `json:"enabled" keel:"enabled"`
-	CreatedAt      int64             `json:"createdAt" keel:"created_at,autocreate"`
-	UpdatedAt      int64             `json:"updatedAt" keel:"updated_at,autoupdate"`
+	Name           string            `json:"name"           keel:"name"`
+	Resource       string            `json:"resource"       keel:"resource"`
+	Operation      string            `json:"operation"      keel:"operation"`
+	Effect         PolicyEffect      `json:"effect"         keel:"effect"`
+	Priority       int               `json:"priority"       keel:"priority"`
+	Conditions     map[string]string `json:"conditions"     keel:"conditions,jsonb"`
+	Enabled        bool              `json:"enabled"        keel:"enabled"`
+	CreatedAt      int64             `json:"createdAt"      keel:"created_at,autocreate"`
+	UpdatedAt      int64             `json:"updatedAt"      keel:"updated_at,autoupdate"`
 }
 
 func (p *AccessPolicy) BeforeUpdate(_ context.Context) error {

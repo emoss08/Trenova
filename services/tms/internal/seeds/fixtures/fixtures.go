@@ -133,7 +133,11 @@ func defaultOrganization(ctx context.Context, r *seed.Run) (*tenant.Organization
 	return org, nil
 }
 
-func organizationByScac(ctx context.Context, db *keel.DB, scac string) (*tenant.Organization, error) {
+func organizationByScac(
+	ctx context.Context,
+	db *keel.DB,
+	scac string,
+) (*tenant.Organization, error) {
 	o := tenantdb.Organizations
 	org, err := o.AllTenants().Where(o.ScacCode.Eq(scac)).First(ctx, db)
 	if err != nil {
@@ -157,7 +161,11 @@ func adminUser(ctx context.Context, db *keel.DB) (*tenant.User, error) {
 	return userByUsername(ctx, db, adminUsername)
 }
 
-func stateByAbbreviation(ctx context.Context, db *keel.DB, abbreviation string) (*usstate.UsState, error) {
+func stateByAbbreviation(
+	ctx context.Context,
+	db *keel.DB,
+	abbreviation string,
+) (*usstate.UsState, error) {
 	s := usstatedb.UsStates
 	state, err := s.Where(s.Abbreviation.Eq(abbreviation)).First(ctx, db)
 	if err != nil {

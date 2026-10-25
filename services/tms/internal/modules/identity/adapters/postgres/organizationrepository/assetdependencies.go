@@ -51,7 +51,10 @@ func assetDependencyCounts(counts *tenantports.AssetDependencyCounts) []dependen
 			target: &counts.UnpaidDriverSettlements,
 			count: func(total *int64) keel.BatchItem {
 				s := driversettlementdb.Settlements
-				return keel.CountInto(s.Where(s.Status.In(unpaidDriverSettlementStatuses...)), total)
+				return keel.CountInto(
+					s.Where(s.Status.In(unpaidDriverSettlementStatuses...)),
+					total,
+				)
 			},
 		},
 		{

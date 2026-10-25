@@ -38,27 +38,27 @@ func (s Status) Settled() bool {
 type Content struct {
 	keel.Table `keel:"document_contents"`
 
-	ID                       pulid.ID       `json:"id" keel:"id,pk,autoid:dc_"`
-	DocumentID               pulid.ID       `json:"documentId" keel:"document_id"`
-	OrganizationID           pulid.ID       `json:"organizationId" keel:"organization_id,pk,tenant"`
-	BusinessUnitID           pulid.ID       `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
-	Status                   Status         `json:"status" keel:"status"`
-	ContentText              string         `json:"contentText" keel:"content_text,nullzero"`
-	PageCount                int            `json:"pageCount" keel:"page_count"`
-	SourceKind               SourceKind     `json:"sourceKind" keel:"source_kind,nullzero"`
-	DetectedLanguage         string         `json:"detectedLanguage" keel:"detected_language,nullzero"`
-	DetectedDocumentKind     string         `json:"detectedDocumentKind" keel:"detected_document_kind,nullzero"`
+	ID                       pulid.ID       `json:"id"                       keel:"id,pk,autoid:dc_"`
+	DocumentID               pulid.ID       `json:"documentId"               keel:"document_id"`
+	OrganizationID           pulid.ID       `json:"organizationId"           keel:"organization_id,pk,tenant"`
+	BusinessUnitID           pulid.ID       `json:"businessUnitId"           keel:"business_unit_id,pk,tenant"`
+	Status                   Status         `json:"status"                   keel:"status"`
+	ContentText              string         `json:"contentText"              keel:"content_text,nullzero"`
+	PageCount                int            `json:"pageCount"                keel:"page_count"`
+	SourceKind               SourceKind     `json:"sourceKind"               keel:"source_kind,nullzero"`
+	DetectedLanguage         string         `json:"detectedLanguage"         keel:"detected_language,nullzero"`
+	DetectedDocumentKind     string         `json:"detectedDocumentKind"     keel:"detected_document_kind,nullzero"`
 	ClassificationConfidence float64        `json:"classificationConfidence" keel:"classification_confidence"`
-	StructuredData           map[string]any `json:"structuredData" keel:"structured_data,jsonb"`
-	FailureCode              string         `json:"failureCode" keel:"failure_code,nullzero"`
-	FailureMessage           string         `json:"failureMessage" keel:"failure_message,nullzero"`
-	SearchVector             string         `json:"-" keel:"search_vector,tsvector,readonly,noselect"`
-	Version                  int64          `json:"version" keel:"version,version"`
-	CreatedAt                int64          `json:"createdAt" keel:"created_at,autocreate"`
-	UpdatedAt                int64          `json:"updatedAt" keel:"updated_at,autoupdate"`
-	LastExtractedAt          *int64         `json:"lastExtractedAt" keel:"last_extracted_at"`
-	ConverterVersion         string         `json:"converterVersion" keel:"converter_version,nullzero"`
-	RawObjectKey             string         `json:"-" keel:"raw_object_key,nullzero"`
+	StructuredData           map[string]any `json:"structuredData"           keel:"structured_data,jsonb"`
+	FailureCode              string         `json:"failureCode"              keel:"failure_code,nullzero"`
+	FailureMessage           string         `json:"failureMessage"           keel:"failure_message,nullzero"`
+	SearchVector             string         `json:"-"                        keel:"search_vector,tsvector,readonly,noselect"`
+	Version                  int64          `json:"version"                  keel:"version,version"`
+	CreatedAt                int64          `json:"createdAt"                keel:"created_at,autocreate"`
+	UpdatedAt                int64          `json:"updatedAt"                keel:"updated_at,autoupdate"`
+	LastExtractedAt          *int64         `json:"lastExtractedAt"          keel:"last_extracted_at"`
+	ConverterVersion         string         `json:"converterVersion"         keel:"converter_version,nullzero"`
+	RawObjectKey             string         `json:"-"                        keel:"raw_object_key,nullzero"`
 	Pages                    []*Page        `json:"pages,omitempty"`
 }
 

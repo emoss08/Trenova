@@ -16,34 +16,34 @@ var (
 )
 
 type Notification struct {
-	keel.Table `                                               keel:"notifications"`
+	keel.Table `keel:"notifications"`
 
-	ID              pulid.ID       `json:"id" keel:"id,pk,autoid:notif_"`
-	OrganizationID  pulid.ID       `json:"organizationId" keel:"organization_id,tenant"`
-	BusinessUnitID  *pulid.ID      `json:"businessUnitId" keel:"business_unit_id"`
-	TargetUserID    *pulid.ID      `json:"targetUserId" keel:"target_user_id"`
-	EventType       string         `json:"eventType" keel:"event_type"`
-	Priority        Priority       `json:"priority" keel:"priority"`
-	Channel         Channel        `json:"channel" keel:"channel"`
-	Title           string         `json:"title" keel:"title"`
-	Message         string         `json:"message" keel:"message"`
-	Data            map[string]any `json:"data" keel:"data,jsonb"`
+	ID              pulid.ID       `json:"id"              keel:"id,pk,autoid:notif_"`
+	OrganizationID  pulid.ID       `json:"organizationId"  keel:"organization_id,tenant"`
+	BusinessUnitID  *pulid.ID      `json:"businessUnitId"  keel:"business_unit_id"`
+	TargetUserID    *pulid.ID      `json:"targetUserId"    keel:"target_user_id"`
+	EventType       string         `json:"eventType"       keel:"event_type"`
+	Priority        Priority       `json:"priority"        keel:"priority"`
+	Channel         Channel        `json:"channel"         keel:"channel"`
+	Title           string         `json:"title"           keel:"title"`
+	Message         string         `json:"message"         keel:"message"`
+	Data            map[string]any `json:"data"            keel:"data,jsonb"`
 	RelatedEntities map[string]any `json:"relatedEntities" keel:"related_entities,jsonb"`
-	Actions         map[string]any `json:"actions" keel:"actions,jsonb"`
-	ExpiresAt       *int64         `json:"expiresAt" keel:"expires_at"`
-	DeliveredAt     *int64         `json:"deliveredAt" keel:"delivered_at"`
-	ReadAt          *int64         `json:"readAt" keel:"read_at"`
-	DismissedAt     *int64         `json:"dismissedAt" keel:"dismissed_at"`
-	CreatedAt       int64          `json:"createdAt" keel:"created_at,autocreate"`
-	UpdatedAt       int64          `json:"updatedAt" keel:"updated_at,autoupdate"`
-	DeliveryStatus  DeliveryStatus `json:"deliveryStatus" keel:"delivery_status"`
-	RetryCount      int            `json:"retryCount" keel:"retry_count"`
-	MaxRetries      int            `json:"maxRetries" keel:"max_retries"`
-	Source          string         `json:"source" keel:"source"`
-	JobID           *string        `json:"jobId" keel:"job_id"`
-	CorrelationID   *string        `json:"correlationId" keel:"correlation_id"`
-	Tags            []string       `json:"tags" keel:"tags"`
-	Version         int64          `json:"version" keel:"version,version"`
+	Actions         map[string]any `json:"actions"         keel:"actions,jsonb"`
+	ExpiresAt       *int64         `json:"expiresAt"       keel:"expires_at"`
+	DeliveredAt     *int64         `json:"deliveredAt"     keel:"delivered_at"`
+	ReadAt          *int64         `json:"readAt"          keel:"read_at"`
+	DismissedAt     *int64         `json:"dismissedAt"     keel:"dismissed_at"`
+	CreatedAt       int64          `json:"createdAt"       keel:"created_at,autocreate"`
+	UpdatedAt       int64          `json:"updatedAt"       keel:"updated_at,autoupdate"`
+	DeliveryStatus  DeliveryStatus `json:"deliveryStatus"  keel:"delivery_status"`
+	RetryCount      int            `json:"retryCount"      keel:"retry_count"`
+	MaxRetries      int            `json:"maxRetries"      keel:"max_retries"`
+	Source          string         `json:"source"          keel:"source"`
+	JobID           *string        `json:"jobId"           keel:"job_id"`
+	CorrelationID   *string        `json:"correlationId"   keel:"correlation_id"`
+	Tags            []string       `json:"tags"            keel:"tags"`
+	Version         int64          `json:"version"         keel:"version,version"`
 }
 
 func (n *Notification) BeforeCreate(_ context.Context) error {

@@ -13,24 +13,24 @@ const ReadyUnsubmittedSeconds = 24 * 60 * 60
 
 // Whether each factored invoice is ready to submit to its factor, what is holding it back, and since when
 type InvoiceState struct {
-	keel.Table `                                                          keel:"factoring_invoice_states,report=Billing,label=Invoice Factoring State"`
+	keel.Table `keel:"factoring_invoice_states,report=Billing,label=Invoice Factoring State"`
 
-	InvoiceID          pulid.ID  `json:"id" keel:"invoice_id,pk"`
-	OrganizationID     pulid.ID  `json:"organizationId" keel:"organization_id,pk,tenant"`
-	BusinessUnitID     pulid.ID  `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
+	InvoiceID          pulid.ID  `json:"id"                 keel:"invoice_id,pk"`
+	OrganizationID     pulid.ID  `json:"organizationId"     keel:"organization_id,pk,tenant"`
+	BusinessUnitID     pulid.ID  `json:"businessUnitId"     keel:"business_unit_id,pk,tenant"`
 	FactoringCompanyID *pulid.ID `json:"factoringCompanyId" keel:"factoring_company_id"`
-	CustomerID         pulid.ID  `json:"customerId" keel:"customer_id"`
-	Verdict            Verdict   `json:"verdict" keel:"verdict"`
-	Checks             []Check   `json:"checks" keel:"checks,jsonb,noreport"`
-	FailedChecks       int       `json:"failedChecks" keel:"failed_checks,format=count"`
-	OpenBalanceMinor   int64     `json:"openBalanceMinor" keel:"open_balance_minor,label=Open Balance (Minor)"`
-	ReadySince         *int64    `json:"readySince" keel:"ready_since,type=epoch"`
-	ReadyAnnouncedAt   *int64    `json:"readyAnnouncedAt" keel:"ready_announced_at"`
-	EvaluatedAt        int64     `json:"evaluatedAt" keel:"evaluated_at"`
-	CreatedAt          int64     `json:"createdAt" keel:"created_at"`
+	CustomerID         pulid.ID  `json:"customerId"         keel:"customer_id"`
+	Verdict            Verdict   `json:"verdict"            keel:"verdict"`
+	Checks             []Check   `json:"checks"             keel:"checks,jsonb,noreport"`
+	FailedChecks       int       `json:"failedChecks"       keel:"failed_checks,format=count"`
+	OpenBalanceMinor   int64     `json:"openBalanceMinor"   keel:"open_balance_minor,label=Open Balance (Minor)"`
+	ReadySince         *int64    `json:"readySince"         keel:"ready_since,type=epoch"`
+	ReadyAnnouncedAt   *int64    `json:"readyAnnouncedAt"   keel:"ready_announced_at"`
+	EvaluatedAt        int64     `json:"evaluatedAt"        keel:"evaluated_at"`
+	CreatedAt          int64     `json:"createdAt"          keel:"created_at"`
 
-	Invoice          *invoice.Invoice                   `json:"invoice,omitempty" keel:"belongs:invoice_id"`
-	Customer         *customer.Customer                 `json:"customer,omitempty" keel:"belongs:customer_id"`
+	Invoice          *invoice.Invoice                   `json:"invoice,omitempty"          keel:"belongs:invoice_id"`
+	Customer         *customer.Customer                 `json:"customer,omitempty"         keel:"belongs:customer_id"`
 	FactoringCompany *factoringcompany.FactoringCompany `json:"factoringCompany,omitempty" keel:"belongs:factoring_company_id"`
 }
 

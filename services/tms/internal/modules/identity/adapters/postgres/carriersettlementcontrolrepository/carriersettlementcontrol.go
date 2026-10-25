@@ -78,9 +78,13 @@ func (r *repository) GetOrCreate(
 }
 
 func (r *repository) selectControl(ctx context.Context) (*tenant.CarrierSettlementControl, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*tenant.CarrierSettlementControl, error) {
-		return tenantdb.CarrierSettlementControls.Query().One(ctx, r.db.Keel(ctx))
-	})
+	return dbtx.Read(
+		ctx,
+		r.db,
+		func(ctx context.Context) (*tenant.CarrierSettlementControl, error) {
+			return tenantdb.CarrierSettlementControls.Query().One(ctx, r.db.Keel(ctx))
+		},
+	)
 }
 
 func (r *repository) ListAutoGenerate(

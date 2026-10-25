@@ -28,26 +28,26 @@ var (
 )
 
 type HoldReason struct {
-	keel.Table               `                                           keel:"hold_reasons"`
-	ID                       pulid.ID       `json:"id" keel:"id,pk,autoid:hr_"`
-	BusinessUnitID           pulid.ID       `json:"businessUnitId" keel:"business_unit_id,tenant"`
-	OrganizationID           pulid.ID       `json:"organizationId" keel:"organization_id,pk,tenant"`
-	Type                     HoldType       `json:"type" keel:"type"`
-	Code                     string         `json:"code" keel:"code"`
-	Label                    string         `json:"label" keel:"label"`
-	Description              string         `json:"description" keel:"description,nullzero"`
-	Active                   bool           `json:"active" keel:"active"`
-	DefaultSeverity          HoldSeverity   `json:"defaultSeverity" keel:"default_severity"`
-	DefaultBlocksDispatch    bool           `json:"defaultBlocksDispatch" keel:"default_blocks_dispatch"`
-	DefaultBlocksDelivery    bool           `json:"defaultBlocksDelivery" keel:"default_blocks_delivery"`
-	DefaultBlocksBilling     bool           `json:"defaultBlocksBilling" keel:"default_blocks_billing"`
-	DefaultVisibleToCustomer bool           `json:"defaultVisibleToCustomer" keel:"default_visible_to_customer"`
-	SortOrder                int32          `json:"sortOrder" keel:"sort_order"`
-	ExternalMap              map[string]any `json:"externalMap" keel:"external_map,jsonb,nullzero"`
-	Version                  int64          `json:"version" keel:"version,version"`
-	CreatedAt                int64          `json:"createdAt" keel:"created_at,autocreate"`
-	UpdatedAt                int64          `json:"updatedAt" keel:"updated_at,autoupdate"`
-	SearchVector             string         `json:"-" keel:"search_vector,tsvector,readonly,noselect"`
+	keel.Table               `keel:"hold_reasons"`
+	ID                       pulid.ID       `keel:"id,pk,autoid:hr_"                         json:"id"`
+	BusinessUnitID           pulid.ID       `keel:"business_unit_id,tenant"                  json:"businessUnitId"`
+	OrganizationID           pulid.ID       `keel:"organization_id,pk,tenant"                json:"organizationId"`
+	Type                     HoldType       `keel:"type"                                     json:"type"`
+	Code                     string         `keel:"code"                                     json:"code"`
+	Label                    string         `keel:"label"                                    json:"label"`
+	Description              string         `keel:"description,nullzero"                     json:"description"`
+	Active                   bool           `keel:"active"                                   json:"active"`
+	DefaultSeverity          HoldSeverity   `keel:"default_severity"                         json:"defaultSeverity"`
+	DefaultBlocksDispatch    bool           `keel:"default_blocks_dispatch"                  json:"defaultBlocksDispatch"`
+	DefaultBlocksDelivery    bool           `keel:"default_blocks_delivery"                  json:"defaultBlocksDelivery"`
+	DefaultBlocksBilling     bool           `keel:"default_blocks_billing"                   json:"defaultBlocksBilling"`
+	DefaultVisibleToCustomer bool           `keel:"default_visible_to_customer"              json:"defaultVisibleToCustomer"`
+	SortOrder                int32          `keel:"sort_order"                               json:"sortOrder"`
+	ExternalMap              map[string]any `keel:"external_map,jsonb,nullzero"              json:"externalMap"`
+	Version                  int64          `keel:"version,version"                          json:"version"`
+	CreatedAt                int64          `keel:"created_at,autocreate"                    json:"createdAt"`
+	UpdatedAt                int64          `keel:"updated_at,autoupdate"                    json:"updatedAt"`
+	SearchVector             string         `keel:"search_vector,tsvector,readonly,noselect" json:"-"`
 
 	// Relationships
 	BusinessUnit *tenant.BusinessUnit `json:"-"`

@@ -112,7 +112,8 @@ func (r *repository) ResetControlNumber(
 			documentTypeID: req.DocumentTypeID,
 			kind:           req.Kind,
 		}
-		rows, err := es.Where(key.where()...).UpdateReturning(ctx, r.db.Keel(ctx), es.NextValue.To(req.NextValue))
+		rows, err := es.Where(key.where()...).
+			UpdateReturning(ctx, r.db.Keel(ctx), es.NextValue.To(req.NextValue))
 		if err != nil {
 			return nil, sequenceErrors.Map(err, string(req.Kind))
 		}
@@ -162,7 +163,11 @@ func (r *repository) StartControlNumber(
 	})
 }
 
-func createIfMissing(ctx context.Context, db *keel.DB, sequence *edi.EDIControlNumberSequence) error {
+func createIfMissing(
+	ctx context.Context,
+	db *keel.DB,
+	sequence *edi.EDIControlNumberSequence,
+) error {
 	es := edidb.EDIControlNumberSequences
 	_, err := es.CreateOrSkip(
 		ctx,

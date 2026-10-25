@@ -36,6 +36,9 @@ const (
 	homeWidgetDTO       = "GraphQL home widget catalog DTO"
 	deskMemoryDTO       = "GraphQL Desk memory DTO built by its resolver"
 	shipmentWorkflowDTO = "GraphQL shipment workflow DTO"
+	journalDTO          = "GraphQL journal DTO without column projection metadata"
+	costingDTO          = "GraphQL costing DTO without column projection metadata"
+	telematicsFormDTO   = "GraphQL telematics form DTO without column projection metadata"
 )
 
 var nonProjectionObjects = map[string]string{
@@ -105,17 +108,17 @@ var nonProjectionObjects = map[string]string{
 	// Assembled in Go from the documents table rather than stored; the parent
 	// field is keel:"-", so there is no column to project.
 	"ShipmentCommentAttachment": "GraphQL shipment comment DTO without column projection metadata",
-	"JournalEntry":              "GraphQL journal DTO without column projection metadata",
-	"JournalEntryLine":          "GraphQL journal DTO without column projection metadata",
-	"JournalBatch":              "GraphQL journal DTO without column projection metadata",
-	"ResolvedCategoryRate":      "GraphQL costing DTO without column projection metadata",
-	"FuelCostResolution":        "GraphQL costing DTO without column projection metadata",
-	"ResolvedCostProfile":       "GraphQL costing DTO without column projection metadata",
-	"CostCategoryGLAccountLink": "GraphQL costing DTO without column projection metadata",
-	"TelematicsFormFieldValue":  "GraphQL telematics form DTO without column projection metadata",
-	"TelematicsFormSubmission":  "GraphQL telematics form DTO without column projection metadata",
-	"TelematicsFormMapping":     "GraphQL telematics form DTO without column projection metadata",
-	"TelematicsFormMappingItem": "GraphQL telematics form DTO without column projection metadata",
+	"JournalEntry":              journalDTO,
+	"JournalEntryLine":          journalDTO,
+	"JournalBatch":              journalDTO,
+	"ResolvedCategoryRate":      costingDTO,
+	"FuelCostResolution":        costingDTO,
+	"ResolvedCostProfile":       costingDTO,
+	"CostCategoryGLAccountLink": costingDTO,
+	"TelematicsFormFieldValue":  telematicsFormDTO,
+	"TelematicsFormSubmission":  telematicsFormDTO,
+	"TelematicsFormMapping":     telematicsFormDTO,
+	"TelematicsFormMappingItem": telematicsFormDTO,
 	// Assembled in Go by unioning the worker and user rosters, so it maps to no
 	// single table and fuzzy matching would otherwise bind it to an unrelated one.
 	"PositionHolder": "GraphQL org structure DTO without column projection metadata",
@@ -521,7 +524,7 @@ func selectionForModelOverride(
 		return typeSelection{}, fmt.Errorf("model %q was not found in parsed Go structs", model)
 	}
 
-	columns, ok := tableColumns(st)
+	columns, ok := tableColumns(&st)
 	if !ok {
 		return typeSelection{}, fmt.Errorf("model %q is not a keel table model with columns", model)
 	}
@@ -533,7 +536,7 @@ func selectionForModelOverride(
 	}, nil
 }
 
-func tableColumns(st goStruct) (tableColumnMap, bool) {
+func tableColumns(st *goStruct) (tableColumnMap, bool) {
 	if !st.IsEntity {
 		return tableColumnMap{}, false
 	}
@@ -561,7 +564,7 @@ func exactStructSelection(typeName string, data discovery) (typeSelection, bool,
 		if st.Name != typeName {
 			continue
 		}
-		columns, ok := tableColumns(st)
+		columns, ok := tableColumns(&st)
 		if !ok {
 			continue
 		}
@@ -602,7 +605,7 @@ func coverageStructSelection(typeName string, data discovery) (typeSelection, er
 	def := data.Schema.Types[typeName]
 	candidates := []candidate{}
 	for _, st := range data.Structs {
-		columns, ok := tableColumns(st)
+		columns, ok := tableColumns(&st)
 		if !ok {
 			continue
 		}

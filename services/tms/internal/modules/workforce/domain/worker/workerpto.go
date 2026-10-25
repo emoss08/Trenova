@@ -24,32 +24,32 @@ var (
 
 // Time-off requests and the days booked against them
 type WorkerPTO struct {
-	keel.Table         `                                           keel:"worker_pto,report=Parties,label=Time Off Request"`
-	ID                 pulid.ID            `json:"id" keel:"id,pk,autoid:wrkpto_"`
-	WorkerID           pulid.ID            `json:"workerId" keel:"worker_id,pk"`
-	BusinessUnitID     pulid.ID            `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
-	OrganizationID     pulid.ID            `json:"organizationId" keel:"organization_id,pk,tenant"`
-	ApproverID         pulid.ID            `json:"approverId" keel:"approver_id,nullzero"`
-	RejectorID         pulid.ID            `json:"rejectorId" keel:"rejector_id,nullzero"`
-	CancelledByID      pulid.ID            `json:"cancelledById" keel:"cancelled_by_id,nullzero"`
-	Status             PTOStatus           `json:"status" keel:"status"`
-	Type               PTOType             `json:"type" keel:"type"`
-	StartDate          int64               `json:"startDate" keel:"start_date,label=Starts"`
-	EndDate            int64               `json:"endDate" keel:"end_date,label=Ends"`
-	Reason             string              `json:"reason" keel:"reason"`
-	RejectionReason    string              `json:"rejectionReason" keel:"rejection_reason,nullzero"`
-	CancellationReason string              `json:"cancellationReason" keel:"cancellation_reason,nullzero"`
-	Days               decimal.Decimal     `json:"days" keel:"days"`
-	BalanceAfterDays   decimal.NullDecimal `json:"balanceAfterDays" keel:"balance_after_days"`
-	AutoApproved       bool                `json:"autoApproved" keel:"auto_approved"`
-	SearchVector       string              `json:"-" keel:"search_vector,tsvector,readonly,noselect"`
-	Version            int64               `json:"version" keel:"version,version"`
-	CreatedAt          int64               `json:"createdAt" keel:"created_at,autocreate"`
-	UpdatedAt          int64               `json:"updatedAt" keel:"updated_at,autoupdate"`
+	keel.Table         `keel:"worker_pto,report=Parties,label=Time Off Request"`
+	ID                 pulid.ID            `keel:"id,pk,autoid:wrkpto_"                             json:"id"`
+	WorkerID           pulid.ID            `keel:"worker_id,pk"                                     json:"workerId"`
+	BusinessUnitID     pulid.ID            `keel:"business_unit_id,pk,tenant"                       json:"businessUnitId"`
+	OrganizationID     pulid.ID            `keel:"organization_id,pk,tenant"                        json:"organizationId"`
+	ApproverID         pulid.ID            `keel:"approver_id,nullzero"                             json:"approverId"`
+	RejectorID         pulid.ID            `keel:"rejector_id,nullzero"                             json:"rejectorId"`
+	CancelledByID      pulid.ID            `keel:"cancelled_by_id,nullzero"                         json:"cancelledById"`
+	Status             PTOStatus           `keel:"status"                                           json:"status"`
+	Type               PTOType             `keel:"type"                                             json:"type"`
+	StartDate          int64               `keel:"start_date,label=Starts"                          json:"startDate"`
+	EndDate            int64               `keel:"end_date,label=Ends"                              json:"endDate"`
+	Reason             string              `keel:"reason"                                           json:"reason"`
+	RejectionReason    string              `keel:"rejection_reason,nullzero"                        json:"rejectionReason"`
+	CancellationReason string              `keel:"cancellation_reason,nullzero"                     json:"cancellationReason"`
+	Days               decimal.Decimal     `keel:"days"                                             json:"days"`
+	BalanceAfterDays   decimal.NullDecimal `keel:"balance_after_days"                               json:"balanceAfterDays"`
+	AutoApproved       bool                `keel:"auto_approved"                                    json:"autoApproved"`
+	SearchVector       string              `keel:"search_vector,tsvector,readonly,noselect"         json:"-"`
+	Version            int64               `keel:"version,version"                                  json:"version"`
+	CreatedAt          int64               `keel:"created_at,autocreate"                            json:"createdAt"`
+	UpdatedAt          int64               `keel:"updated_at,autoupdate"                            json:"updatedAt"`
 
-	Worker      *Worker      `json:"worker,omitempty" keel:"belongs:worker_id"`
-	Approver    *tenant.User `json:"approver,omitempty" keel:"belongs:approver_id,noreport"`
-	Rejector    *tenant.User `json:"rejector,omitempty" keel:"belongs:rejector_id,noreport"`
+	Worker      *Worker      `json:"worker,omitempty"      keel:"belongs:worker_id"`
+	Approver    *tenant.User `json:"approver,omitempty"    keel:"belongs:approver_id,noreport"`
+	Rejector    *tenant.User `json:"rejector,omitempty"    keel:"belongs:rejector_id,noreport"`
 	CancelledBy *tenant.User `json:"cancelledBy,omitempty" keel:"belongs:cancelled_by_id,noreport"`
 }
 

@@ -15,17 +15,17 @@ var (
 
 type SCIMGroupRoleMapping struct {
 	keel.Table      `keel:"scim_group_role_mappings"`
-	ID              pulid.ID `json:"id" keel:"id,pk,autoid:sgr_"`
-	OrganizationID  pulid.ID `json:"organizationId" keel:"organization_id,pk,tenant"`
-	BusinessUnitID  pulid.ID `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
-	DirectoryID     pulid.ID `json:"directoryId" keel:"directory_id"`
-	ExternalGroupID string   `json:"externalGroupId" keel:"external_group_id"`
-	DisplayName     string   `json:"displayName" keel:"display_name"`
-	RoleID          pulid.ID `json:"roleId" keel:"role_id"`
+	ID              pulid.ID `keel:"id,pk,autoid:sgr_"          json:"id"`
+	OrganizationID  pulid.ID `keel:"organization_id,pk,tenant"  json:"organizationId"`
+	BusinessUnitID  pulid.ID `keel:"business_unit_id,pk,tenant" json:"businessUnitId"`
+	DirectoryID     pulid.ID `keel:"directory_id"               json:"directoryId"`
+	ExternalGroupID string   `keel:"external_group_id"          json:"externalGroupId"`
+	DisplayName     string   `keel:"display_name"               json:"displayName"`
+	RoleID          pulid.ID `keel:"role_id"                    json:"roleId"`
 
-	SearchVector string `json:"-" keel:"search_vector,tsvector,readonly,noselect"`
-	Rank         string `json:"-" keel:"rank,computed"`
-	Version      int64  `json:"version" keel:"version,version"`
+	SearchVector string `json:"-"         keel:"search_vector,tsvector,readonly,noselect"`
+	Rank         string `json:"-"         keel:"rank,computed"`
+	Version      int64  `json:"version"   keel:"version,version"`
 	CreatedAt    int64  `json:"createdAt" keel:"created_at,autocreate"`
 	UpdatedAt    int64  `json:"updatedAt" keel:"updated_at,autoupdate"`
 

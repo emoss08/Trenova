@@ -11,10 +11,10 @@ import (
 type DistanceOverrideStop struct {
 	keel.Table `keel:"distance_override_stops"`
 
-	DistanceOverrideID pulid.ID `json:"-" keel:"distance_override_id,pk"`
-	BusinessUnitID     pulid.ID `json:"-" keel:"business_unit_id,pk,tenant"`
-	OrganizationID     pulid.ID `json:"-" keel:"organization_id,pk,tenant"`
-	StopOrder          int      `json:"-" keel:"stop_order,pk"`
+	DistanceOverrideID pulid.ID `json:"-"          keel:"distance_override_id,pk"`
+	BusinessUnitID     pulid.ID `json:"-"          keel:"business_unit_id,pk,tenant"`
+	OrganizationID     pulid.ID `json:"-"          keel:"organization_id,pk,tenant"`
+	StopOrder          int      `json:"-"          keel:"stop_order,pk"`
 	LocationID         pulid.ID `json:"locationId" keel:"location_id"`
 
 	Location *location.Location `json:"location,omitempty" keel:"belongs:location_id"`

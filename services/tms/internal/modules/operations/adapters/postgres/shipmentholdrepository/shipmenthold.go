@@ -130,7 +130,10 @@ func (r *repository) Create(
 				return nil, errortypes.NewBusinessError("Shipment already has an active hold of this type").
 					WithParam("shipmentId", entity.ShipmentID.String())
 			}
-			return nil, fmt.Errorf("insert shipment hold: %w", holdErrors.Map(err, entity.ID.String()))
+			return nil, fmt.Errorf(
+				"insert shipment hold: %w",
+				holdErrors.Map(err, entity.ID.String()),
+			)
 		}
 
 		return r.GetByID(ctx, &shipmentports.GetShipmentHoldByIDRequest{

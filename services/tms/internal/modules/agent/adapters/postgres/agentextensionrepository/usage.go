@@ -33,7 +33,7 @@ func NewUsageRepository(p Params) agentextensionports.AgentExtensionUsageReposit
 	}
 }
 
-func reserveArgs(params agentextensionports.ReserveExtensionRequestParams) []any {
+func reserveArgs(params *agentextensionports.ReserveExtensionRequestParams) []any {
 	return []any{
 		params.TenantInfo.OrgID.String(),
 		params.TenantInfo.BuID.String(),
@@ -49,7 +49,7 @@ func (r *usageRepository) Reserve(
 	params agentextensionports.ReserveExtensionRequestParams,
 ) (bool, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (bool, error) {
-		affected, err := keel.Exec(ctx, r.db.Keel(ctx), reserveSQL, reserveArgs(params)...)
+		affected, err := keel.Exec(ctx, r.db.Keel(ctx), reserveSQL, reserveArgs(&params)...)
 		if err != nil {
 			r.l.Error("failed to reserve agent extension request", zap.Error(err))
 			return false, fmt.Errorf("reserve agent extension request: %w", err)

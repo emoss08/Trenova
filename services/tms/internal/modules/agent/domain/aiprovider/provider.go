@@ -58,13 +58,13 @@ var maxMonthlyCap = decimal.RequireFromString("9999999999.99")
 type Provider struct {
 	keel.Table `keel:"ai_providers"`
 
-	ID             pulid.ID `json:"id" keel:"id,pk,autoid:aiprv_"`
+	ID             pulid.ID `json:"id"             keel:"id,pk,autoid:aiprv_"`
 	BusinessUnitID pulid.ID `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
 	OrganizationID pulid.ID `json:"organizationId" keel:"organization_id,pk,tenant"`
 
-	Name        string `json:"name" keel:"name"`
+	Name        string `json:"name"        keel:"name"`
 	Description string `json:"description" keel:"description,nullzero"`
-	Kind        Kind   `json:"kind" keel:"kind"`
+	Kind        Kind   `json:"kind"        keel:"kind"`
 
 	// BaseURL is the endpoint root, without the protocol-specific path. Empty
 	// falls back to Kind.DefaultBaseURL.
@@ -84,7 +84,7 @@ type Provider struct {
 	AllowPrivateNetwork bool `json:"allowPrivateNetwork" keel:"allow_private_network"`
 
 	StructuredOutputMode StructuredOutputMode `json:"structuredOutputMode" keel:"structured_output_mode"`
-	MaxTokens            int                  `json:"maxTokens" keel:"max_tokens"`
+	MaxTokens            int                  `json:"maxTokens"            keel:"max_tokens"`
 	// ContextWindowTokens is the model's context window, in tokens, when the
 	// operator knows it better than the model id does: a self-hosted model
 	// served with a shorter context than its family's, or an id nothing here
@@ -99,7 +99,7 @@ type Provider struct {
 	// Platform is the service an Anthropic Messages provider reaches Claude
 	// through, and PlatformSettings what that service needs besides the
 	// credential. Every other kind is called directly.
-	Platform         Platform          `json:"platform" keel:"platform,nullzero"`
+	Platform         Platform          `json:"platform"         keel:"platform,nullzero"`
 	PlatformSettings *PlatformSettings `json:"platformSettings" keel:"platform_settings,jsonb"`
 
 	// AdvisorEnabled has every chat call routed to this provider declare
@@ -107,7 +107,7 @@ type Provider struct {
 	// DefaultAdvisorModel) mid-reply. Off by default: each consultation is
 	// billed at the advisor's price.
 	AdvisorEnabled bool   `json:"advisorEnabled" keel:"advisor_enabled"`
-	AdvisorModel   string `json:"advisorModel" keel:"advisor_model,nullzero"`
+	AdvisorModel   string `json:"advisorModel"   keel:"advisor_model,nullzero"`
 	// AdvisorRefusal is the API's refusal of that advisor for this model,
 	// recorded by the router on the first call it refused. It is cleared when
 	// the advisor, the model or the platform changes.
@@ -117,7 +117,7 @@ type Provider struct {
 	// as one batch for a person. Both are off by default, and both still need
 	// the organization's own opt-in: the plan capability, the E2B extension's
 	// "Read-only scripts" setting and the code_mode permission.
-	Scripts      bool `json:"scripts" keel:"code_mode_scripts"`
+	Scripts      bool `json:"scripts"      keel:"code_mode_scripts"`
 	ScriptWrites bool `json:"scriptWrites" keel:"code_mode_writes"`
 
 	// ExtraBody is merged into the request an OpenAI-compatible endpoint
@@ -143,7 +143,7 @@ type Provider struct {
 	// charges, in USD per million tokens, entered by the operator from the
 	// provider's price list. Both nil means the cost of a call is unknown and
 	// is reported as such, never as zero.
-	InputCostPerMillion  *decimal.Decimal `json:"inputCostPerMillion" keel:"input_cost_per_million"`
+	InputCostPerMillion  *decimal.Decimal `json:"inputCostPerMillion"  keel:"input_cost_per_million"`
 	OutputCostPerMillion *decimal.Decimal `json:"outputCostPerMillion" keel:"output_cost_per_million"`
 
 	// CacheReadCostPerMillion and CacheWriteCostPerMillion price the prompt
@@ -152,13 +152,13 @@ type Provider struct {
 	// CacheReadMultiple and CacheWriteMultiple): most of a Desk turn's prompt is
 	// read from the cache, so pricing it as fresh input overstated an OpenAI
 	// call and leaving it out understated an Anthropic one.
-	CacheReadCostPerMillion  *decimal.Decimal `json:"cacheReadCostPerMillion" keel:"cache_read_cost_per_million"`
+	CacheReadCostPerMillion  *decimal.Decimal `json:"cacheReadCostPerMillion"  keel:"cache_read_cost_per_million"`
 	CacheWriteCostPerMillion *decimal.Decimal `json:"cacheWriteCostPerMillion" keel:"cache_write_cost_per_million"`
 
 	// Tasks are the units of work this provider may serve. Priority orders the
 	// candidates for a task, lowest first, which gives fallback chains without a
 	// second table.
-	Tasks    []Task `json:"tasks" keel:"tasks,nullzero"`
+	Tasks    []Task `json:"tasks"    keel:"tasks,nullzero"`
 	Priority int    `json:"priority" keel:"priority"`
 
 	EmbeddingDimensions *int                `json:"embeddingDimensions" keel:"embedding_dimensions"`
@@ -183,26 +183,26 @@ type Provider struct {
 	// MonthlyCapUSD is the most this provider may spend in a UTC calendar
 	// month, over the calls that carried a price. Nil means no cap.
 	MonthlyCapUSD *decimal.Decimal `json:"monthlyCapUsd" keel:"monthly_cap_usd"`
-	OnCap         CapAction        `json:"onCap" keel:"on_cap,nullzero"`
+	OnCap         CapAction        `json:"onCap"         keel:"on_cap,nullzero"`
 
 	// APIKeyPrefix and APIKeyLastFour are the only parts of the key kept in
 	// the clear: enough to tell two keys apart, never enough to use one.
-	APIKeyPrefix     string   `json:"apiKeyPrefix" keel:"api_key_prefix,nullzero"`
-	APIKeyLastFour   string   `json:"apiKeyLastFour" keel:"api_key_last_four,nullzero"`
-	APIKeyAddedAt    *int64   `json:"apiKeyAddedAt" keel:"api_key_added_at"`
-	APIKeyAddedByID  pulid.ID `json:"apiKeyAddedById" keel:"api_key_added_by_id,nullzero"`
+	APIKeyPrefix     string   `json:"apiKeyPrefix"     keel:"api_key_prefix,nullzero"`
+	APIKeyLastFour   string   `json:"apiKeyLastFour"   keel:"api_key_last_four,nullzero"`
+	APIKeyAddedAt    *int64   `json:"apiKeyAddedAt"    keel:"api_key_added_at"`
+	APIKeyAddedByID  pulid.ID `json:"apiKeyAddedById"  keel:"api_key_added_by_id,nullzero"`
 	APIKeyLastUsedAt *int64   `json:"apiKeyLastUsedAt" keel:"api_key_last_used_at"`
 	// PreviousAPIKey is the key a rotation replaced, encrypted like APIKey,
 	// kept until RotationExpiresAt so calls refused with the new key can
 	// still be served while the change reaches the vendor.
-	PreviousAPIKey    string `json:"-" keel:"previous_api_key,nullzero"`
+	PreviousAPIKey    string `json:"-"                 keel:"previous_api_key,nullzero"`
 	RotationExpiresAt *int64 `json:"rotationExpiresAt" keel:"rotation_expires_at"`
 
 	// HasAPIKey is set on the redacted copy so a client can tell a credential is
 	// stored without the secret making the trip.
 	HasAPIKey bool `json:"hasApiKey"`
 
-	Version   int64 `json:"version" keel:"version,version"`
+	Version   int64 `json:"version"   keel:"version,version"`
 	CreatedAt int64 `json:"createdAt" keel:"created_at,autocreate"`
 	UpdatedAt int64 `json:"updatedAt" keel:"updated_at,autoupdate"`
 

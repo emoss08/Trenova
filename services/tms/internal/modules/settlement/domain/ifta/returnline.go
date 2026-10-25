@@ -18,43 +18,43 @@ var (
 
 // One return line per jurisdiction and fuel type
 type ReturnLine struct {
-	keel.Table `                                                  keel:"ifta_return_lines,report=Equipment,label=IFTA Return Line"`
+	keel.Table `keel:"ifta_return_lines,report=Equipment,label=IFTA Return Line"`
 
-	ID             pulid.ID `json:"id" keel:"id,pk,autoid:ifrl_"`
+	ID             pulid.ID `json:"id"             keel:"id,pk,autoid:ifrl_"`
 	BusinessUnitID pulid.ID `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
 	OrganizationID pulid.ID `json:"organizationId" keel:"organization_id,pk,tenant"`
-	ReturnID       pulid.ID `json:"returnId" keel:"return_id"`
+	ReturnID       pulid.ID `json:"returnId"       keel:"return_id"`
 	JurisdictionID pulid.ID `json:"jurisdictionId" keel:"jurisdiction_id"`
 
-	FuelType     domaintypes.IFTAFuelType `json:"fuelType" keel:"fuel_type"`
+	FuelType     domaintypes.IFTAFuelType `json:"fuelType"     keel:"fuel_type"`
 	IsIftaMember bool                     `json:"isIftaMember" keel:"is_ifta_member,label=IFTA Member"`
 
-	TotalMiles   decimal.Decimal `json:"totalMiles" keel:"total_miles,format=distance"`
+	TotalMiles   decimal.Decimal `json:"totalMiles"   keel:"total_miles,format=distance"`
 	TaxableMiles decimal.Decimal `json:"taxableMiles" keel:"taxable_miles,format=distance"`
-	RouteMiles   decimal.Decimal `json:"routeMiles" keel:"route_miles"`
-	ManualMiles  decimal.Decimal `json:"manualMiles" keel:"manual_miles"`
-	LoadedMiles  decimal.Decimal `json:"loadedMiles" keel:"loaded_miles"`
-	EmptyMiles   decimal.Decimal `json:"emptyMiles" keel:"empty_miles"`
+	RouteMiles   decimal.Decimal `json:"routeMiles"   keel:"route_miles"`
+	ManualMiles  decimal.Decimal `json:"manualMiles"  keel:"manual_miles"`
+	LoadedMiles  decimal.Decimal `json:"loadedMiles"  keel:"loaded_miles"`
+	EmptyMiles   decimal.Decimal `json:"emptyMiles"   keel:"empty_miles"`
 
-	TaxPaidGallons    decimal.Decimal `json:"taxPaidGallons" keel:"tax_paid_gallons,label=Tax-Paid Gallons"`
+	TaxPaidGallons    decimal.Decimal `json:"taxPaidGallons"    keel:"tax_paid_gallons,label=Tax-Paid Gallons"`
 	TaxPaidGallonsRaw decimal.Decimal `json:"taxPaidGallonsRaw" keel:"tax_paid_gallons_raw"`
-	PurchaseCount     int             `json:"purchaseCount" keel:"purchase_count"`
-	TaxableGallons    decimal.Decimal `json:"taxableGallons" keel:"taxable_gallons"`
+	PurchaseCount     int             `json:"purchaseCount"     keel:"purchase_count"`
+	TaxableGallons    decimal.Decimal `json:"taxableGallons"    keel:"taxable_gallons"`
 	NetTaxableGallons decimal.Decimal `json:"netTaxableGallons" keel:"net_taxable_gallons"`
 
-	RatePerGallon          decimal.NullDecimal `json:"ratePerGallon" keel:"rate_per_gallon,label=Rate per Gallon"`
+	RatePerGallon          decimal.NullDecimal `json:"ratePerGallon"          keel:"rate_per_gallon,label=Rate per Gallon"`
 	SurchargeRatePerGallon decimal.NullDecimal `json:"surchargeRatePerGallon" keel:"surcharge_rate_per_gallon,label=Surcharge Rate per Gallon"`
-	RateMissing            bool                `json:"rateMissing" keel:"rate_missing"`
+	RateMissing            bool                `json:"rateMissing"            keel:"rate_missing"`
 
-	TaxDueMinor       int64 `json:"taxDueMinor" keel:"tax_due_minor,label=Tax Due (Minor)"`
+	TaxDueMinor       int64 `json:"taxDueMinor"       keel:"tax_due_minor,label=Tax Due (Minor)"`
 	SurchargeDueMinor int64 `json:"surchargeDueMinor" keel:"surcharge_due_minor,label=Surcharge Due (Minor)"`
-	LineTotalMinor    int64 `json:"lineTotalMinor" keel:"line_total_minor,label=Line Total (Minor)"`
-	SortOrder         int   `json:"sortOrder" keel:"sort_order,dimension"`
+	LineTotalMinor    int64 `json:"lineTotalMinor"    keel:"line_total_minor,label=Line Total (Minor)"`
+	SortOrder         int   `json:"sortOrder"         keel:"sort_order,dimension"`
 
 	CreatedAt int64 `json:"createdAt" keel:"created_at,autocreate"`
 	UpdatedAt int64 `json:"updatedAt" keel:"updated_at,autoupdate"`
 
-	Return       *Return       `json:"-" keel:"belongs:return_id"`
+	Return       *Return       `json:"-"                      keel:"belongs:return_id"`
 	Jurisdiction *Jurisdiction `json:"jurisdiction,omitempty" keel:"belongs:jurisdiction_id,noreport"`
 }
 

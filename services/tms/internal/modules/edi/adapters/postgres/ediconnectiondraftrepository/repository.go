@@ -198,7 +198,10 @@ func (r *repository) partnerIDsByInterchange(
 			keel.And(
 				dp.Direction.Eq(edi.DocumentDirectionOutbound),
 				dp.Envelope.Text(envelopeReceiverID).Eq(isaID),
-				keel.When(qualifier != "", dp.Envelope.Text(envelopeReceiverQualifier).Eq(qualifier)),
+				keel.When(
+					qualifier != "",
+					dp.Envelope.Text(envelopeReceiverQualifier).Eq(qualifier),
+				),
 			),
 			keel.And(
 				dp.Direction.Eq(edi.DocumentDirectionInbound),

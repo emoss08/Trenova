@@ -33,7 +33,10 @@ func newNumberer(db *keel.DB) *numberer {
 	}
 }
 
-func (s *sequenceStore) GetNextSequence(ctx context.Context, req *seqgen.SequenceRequest) (int64, error) {
+func (s *sequenceStore) GetNextSequence(
+	ctx context.Context,
+	req *seqgen.SequenceRequest,
+) (int64, error) {
 	next, err := s.GetNextSequenceBatch(ctx, &seqgen.SequenceRequest{
 		Type:  req.Type,
 		OrgID: req.OrgID,
@@ -105,7 +108,10 @@ func (s *sequenceStore) GetNextSequenceBatch(
 	return out, nil
 }
 
-func (s *sequenceStore) UpdateLastGenerated(ctx context.Context, req *seqgen.LastGeneratedRequest) error {
+func (s *sequenceStore) UpdateLastGenerated(
+	ctx context.Context,
+	req *seqgen.LastGeneratedRequest,
+) error {
 	sq := tenantdb.Sequences
 	if _, err := sq.Where(
 		sq.SequenceType.Eq(req.Type),

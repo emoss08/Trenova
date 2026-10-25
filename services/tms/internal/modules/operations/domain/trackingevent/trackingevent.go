@@ -12,27 +12,27 @@ import (
 type TrackingEvent struct {
 	keel.Table `keel:"tracking_events"`
 
-	ID             pulid.ID           `json:"id" keel:"id,pk"`
+	ID             pulid.ID           `json:"id"             keel:"id,pk"`
 	OrganizationID pulid.ID           `json:"organizationId" keel:"organization_id,pk,tenant"`
 	BusinessUnitID pulid.ID           `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
-	ShipmentID     pulid.ID           `json:"shipmentId" keel:"shipment_id"`
+	ShipmentID     pulid.ID           `json:"shipmentId"     keel:"shipment_id"`
 	ShipmentMoveID pulid.ID           `json:"shipmentMoveId" keel:"shipment_move_id"`
-	StopID         pulid.ID           `json:"stopId" keel:"stop_id"`
-	Source         Source             `json:"source" keel:"source"`
-	SourceKey      string             `json:"sourceKey" keel:"source_key"`
-	Kind           shipment.VisitKind `json:"kind" keel:"kind"`
-	MatchMethod    MatchMethod        `json:"matchMethod" keel:"match_method"`
-	EventAt        int64              `json:"eventAt" keel:"event_at"`
-	ReceivedAt     int64              `json:"receivedAt" keel:"received_at"`
-	Latitude       *float64           `json:"latitude" keel:"latitude"`
-	Longitude      *float64           `json:"longitude" keel:"longitude"`
-	SourceStatus   string             `json:"sourceStatus" keel:"source_status,nullzero"`
-	RawReference   string             `json:"rawReference" keel:"raw_reference,nullzero"`
-	ReportedByID   pulid.ID           `json:"reportedById" keel:"reported_by_id,nullzero"`
-	Outcome        Outcome            `json:"outcome" keel:"outcome"`
-	OutcomeReason  string             `json:"outcomeReason" keel:"outcome_reason,nullzero"`
-	CreatedAt      int64              `json:"createdAt" keel:"created_at"`
-	UpdatedAt      int64              `json:"updatedAt" keel:"updated_at"`
+	StopID         pulid.ID           `json:"stopId"         keel:"stop_id"`
+	Source         Source             `json:"source"         keel:"source"`
+	SourceKey      string             `json:"sourceKey"      keel:"source_key"`
+	Kind           shipment.VisitKind `json:"kind"           keel:"kind"`
+	MatchMethod    MatchMethod        `json:"matchMethod"    keel:"match_method"`
+	EventAt        int64              `json:"eventAt"        keel:"event_at"`
+	ReceivedAt     int64              `json:"receivedAt"     keel:"received_at"`
+	Latitude       *float64           `json:"latitude"       keel:"latitude"`
+	Longitude      *float64           `json:"longitude"      keel:"longitude"`
+	SourceStatus   string             `json:"sourceStatus"   keel:"source_status,nullzero"`
+	RawReference   string             `json:"rawReference"   keel:"raw_reference,nullzero"`
+	ReportedByID   pulid.ID           `json:"reportedById"   keel:"reported_by_id,nullzero"`
+	Outcome        Outcome            `json:"outcome"        keel:"outcome"`
+	OutcomeReason  string             `json:"outcomeReason"  keel:"outcome_reason,nullzero"`
+	CreatedAt      int64              `json:"createdAt"      keel:"created_at"`
+	UpdatedAt      int64              `json:"updatedAt"      keel:"updated_at"`
 }
 
 func NewID() pulid.ID {

@@ -17,14 +17,14 @@ const (
 type RoleHierarchyEdge struct {
 	keel.Table `keel:"role_hierarchy_edges"`
 
-	ID             pulid.ID `json:"id" keel:"id,pk,autoid:rhe_"`
-	SeniorRoleID   pulid.ID `json:"seniorRoleId" keel:"senior_role_id"`
-	JuniorRoleID   pulid.ID `json:"juniorRoleId" keel:"junior_role_id"`
+	ID             pulid.ID `json:"id"             keel:"id,pk,autoid:rhe_"`
+	SeniorRoleID   pulid.ID `json:"seniorRoleId"   keel:"senior_role_id"`
+	JuniorRoleID   pulid.ID `json:"juniorRoleId"   keel:"junior_role_id"`
 	OrganizationID pulid.ID `json:"organizationId" keel:"organization_id,tenant"`
 	BusinessUnitID pulid.ID `json:"businessUnitId" keel:"business_unit_id,tenant"`
-	CreatedBy      pulid.ID `json:"createdBy" keel:"created_by,nullzero"`
-	CreatedAt      int64    `json:"createdAt" keel:"created_at,autocreate"`
-	UpdatedAt      int64    `json:"updatedAt" keel:"updated_at,autoupdate"`
+	CreatedBy      pulid.ID `json:"createdBy"      keel:"created_by,nullzero"`
+	CreatedAt      int64    `json:"createdAt"      keel:"created_at,autocreate"`
+	UpdatedAt      int64    `json:"updatedAt"      keel:"updated_at,autoupdate"`
 
 	SeniorRole *Role `json:"seniorRole,omitempty" keel:"belongs:senior_role_id"`
 	JuniorRole *Role `json:"juniorRole,omitempty" keel:"belongs:junior_role_id"`
@@ -33,17 +33,17 @@ type RoleHierarchyEdge struct {
 type RoleConstraint struct {
 	keel.Table `keel:"role_constraints"`
 
-	ID             pulid.ID           `json:"id" keel:"id,pk,autoid:rco_"`
+	ID             pulid.ID           `json:"id"             keel:"id,pk,autoid:rco_"`
 	OrganizationID pulid.ID           `json:"organizationId" keel:"organization_id,tenant"`
 	BusinessUnitID pulid.ID           `json:"businessUnitId" keel:"business_unit_id,tenant"`
-	Name           string             `json:"name" keel:"name"`
-	Description    string             `json:"description" keel:"description,nullzero"`
-	Type           RoleConstraintType `json:"type" keel:"type"`
-	MaxRoles       int                `json:"maxRoles" keel:"max_roles"`
-	Enabled        bool               `json:"enabled" keel:"enabled"`
-	CreatedBy      pulid.ID           `json:"createdBy" keel:"created_by,nullzero"`
-	CreatedAt      int64              `json:"createdAt" keel:"created_at,autocreate"`
-	UpdatedAt      int64              `json:"updatedAt" keel:"updated_at,autoupdate"`
+	Name           string             `json:"name"           keel:"name"`
+	Description    string             `json:"description"    keel:"description,nullzero"`
+	Type           RoleConstraintType `json:"type"           keel:"type"`
+	MaxRoles       int                `json:"maxRoles"       keel:"max_roles"`
+	Enabled        bool               `json:"enabled"        keel:"enabled"`
+	CreatedBy      pulid.ID           `json:"createdBy"      keel:"created_by,nullzero"`
+	CreatedAt      int64              `json:"createdAt"      keel:"created_at,autocreate"`
+	UpdatedAt      int64              `json:"updatedAt"      keel:"updated_at,autoupdate"`
 
 	Roles []*Role `json:"roles,omitempty" keel:"m2m:role_constraint_roles.role_constraint_id.role_id"`
 }
@@ -51,14 +51,14 @@ type RoleConstraint struct {
 type RoleConstraintRole struct {
 	keel.Table `keel:"role_constraint_roles"`
 
-	ID               pulid.ID        `json:"id" keel:"id,pk,autoid:rcr_"`
+	ID               pulid.ID        `json:"id"               keel:"id,pk,autoid:rcr_"`
 	RoleConstraintID pulid.ID        `json:"roleConstraintId" keel:"role_constraint_id"`
-	RoleID           pulid.ID        `json:"roleId" keel:"role_id"`
-	OrganizationID   pulid.ID        `json:"organizationId" keel:"organization_id,tenant"`
-	BusinessUnitID   pulid.ID        `json:"businessUnitId" keel:"business_unit_id,tenant"`
-	CreatedAt        int64           `json:"createdAt" keel:"created_at,autocreate"`
-	RoleConstraint   *RoleConstraint `json:"-" keel:"belongs:role_constraint_id"`
-	Role             *Role           `json:"-" keel:"belongs:role_id"`
+	RoleID           pulid.ID        `json:"roleId"           keel:"role_id"`
+	OrganizationID   pulid.ID        `json:"organizationId"   keel:"organization_id,tenant"`
+	BusinessUnitID   pulid.ID        `json:"businessUnitId"   keel:"business_unit_id,tenant"`
+	CreatedAt        int64           `json:"createdAt"        keel:"created_at,autocreate"`
+	RoleConstraint   *RoleConstraint `json:"-"                keel:"belongs:role_constraint_id"`
+	Role             *Role           `json:"-"                keel:"belongs:role_id"`
 }
 
 func (e *RoleHierarchyEdge) Validate(multiErr *errortypes.MultiError) {

@@ -16,18 +16,18 @@ var (
 )
 
 type DataEntryControl struct {
-	keel.Table `                                                   keel:"data_entry_controls"`
+	keel.Table `keel:"data_entry_controls"`
 
-	ID             pulid.ID `json:"id" keel:"id,pk,autoid:dec_"`
+	ID             pulid.ID `json:"id"             keel:"id,pk,autoid:dec_"`
 	BusinessUnitID pulid.ID `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
 	OrganizationID pulid.ID `json:"organizationId" keel:"organization_id,pk,tenant"`
 
-	CodeCase  CaseFormat `json:"codeCase" keel:"code_case"`
-	NameCase  CaseFormat `json:"nameCase" keel:"name_case"`
+	CodeCase  CaseFormat `json:"codeCase"  keel:"code_case"`
+	NameCase  CaseFormat `json:"nameCase"  keel:"name_case"`
 	EmailCase CaseFormat `json:"emailCase" keel:"email_case"`
-	CityCase  CaseFormat `json:"cityCase" keel:"city_case"`
+	CityCase  CaseFormat `json:"cityCase"  keel:"city_case"`
 
-	Version   int64 `json:"version" keel:"version,version"`
+	Version   int64 `json:"version"   keel:"version,version"`
 	CreatedAt int64 `json:"createdAt" keel:"created_at,autocreate"`
 	UpdatedAt int64 `json:"updatedAt" keel:"updated_at,autoupdate"`
 }

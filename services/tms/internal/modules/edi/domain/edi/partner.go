@@ -21,41 +21,41 @@ var (
 type EDIPartner struct {
 	keel.Table `keel:"edi_partners"`
 
-	ID                      pulid.ID           `json:"id" keel:"id,pk,autoid:edip_"`
-	BusinessUnitID          pulid.ID           `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
-	OrganizationID          pulid.ID           `json:"organizationId" keel:"organization_id,pk,tenant"`
-	Kind                    PartnerKind        `json:"kind" keel:"kind"`
-	Status                  domaintypes.Status `json:"status" keel:"status"`
-	Code                    string             `json:"code" keel:"code"`
-	Name                    string             `json:"name" keel:"name"`
-	Description             string             `json:"description" keel:"description,nullzero"`
-	InternalOrganizationID  pulid.ID           `json:"internalOrganizationId" keel:"internal_organization_id,nullzero"`
-	EDIConnectionID         pulid.ID           `json:"ediConnectionId" keel:"edi_connection_id,nullzero"`
-	CustomerID              pulid.ID           `json:"customerId" keel:"customer_id,nullzero"`
-	DefaultTransportID      pulid.ID           `json:"defaultTransportId" keel:"default_transport_id,nullzero"`
+	ID                      pulid.ID           `json:"id"                      keel:"id,pk,autoid:edip_"`
+	BusinessUnitID          pulid.ID           `json:"businessUnitId"          keel:"business_unit_id,pk,tenant"`
+	OrganizationID          pulid.ID           `json:"organizationId"          keel:"organization_id,pk,tenant"`
+	Kind                    PartnerKind        `json:"kind"                    keel:"kind"`
+	Status                  domaintypes.Status `json:"status"                  keel:"status"`
+	Code                    string             `json:"code"                    keel:"code"`
+	Name                    string             `json:"name"                    keel:"name"`
+	Description             string             `json:"description"             keel:"description,nullzero"`
+	InternalOrganizationID  pulid.ID           `json:"internalOrganizationId"  keel:"internal_organization_id,nullzero"`
+	EDIConnectionID         pulid.ID           `json:"ediConnectionId"         keel:"edi_connection_id,nullzero"`
+	CustomerID              pulid.ID           `json:"customerId"              keel:"customer_id,nullzero"`
+	DefaultTransportID      pulid.ID           `json:"defaultTransportId"      keel:"default_transport_id,nullzero"`
 	DefaultMappingProfileID pulid.ID           `json:"defaultMappingProfileId" keel:"default_mapping_profile_id,nullzero"`
-	Timezone                string             `json:"timezone" keel:"timezone,nullzero"`
-	Country                 string             `json:"country" keel:"country"`
-	ContactName             string             `json:"contactName" keel:"contact_name,nullzero"`
-	ContactEmail            string             `json:"contactEmail" keel:"contact_email,nullzero"`
-	ContactPhone            string             `json:"contactPhone" keel:"contact_phone,nullzero"`
-	EnabledForInbound       bool               `json:"enabledForInbound" keel:"enabled_for_inbound"`
-	EnabledForOutbound      bool               `json:"enabledForOutbound" keel:"enabled_for_outbound"`
-	Settings                map[string]any     `json:"settings" keel:"settings,jsonb"`
-	SearchVector            string             `json:"-" keel:"search_vector,tsvector,readonly,noselect"`
-	Rank                    string             `json:"-" keel:"rank,computed"`
-	Version                 int64              `json:"version" keel:"version,version"`
-	CreatedAt               int64              `json:"createdAt" keel:"created_at,autocreate"`
-	UpdatedAt               int64              `json:"updatedAt" keel:"updated_at,autoupdate"`
+	Timezone                string             `json:"timezone"                keel:"timezone,nullzero"`
+	Country                 string             `json:"country"                 keel:"country"`
+	ContactName             string             `json:"contactName"             keel:"contact_name,nullzero"`
+	ContactEmail            string             `json:"contactEmail"            keel:"contact_email,nullzero"`
+	ContactPhone            string             `json:"contactPhone"            keel:"contact_phone,nullzero"`
+	EnabledForInbound       bool               `json:"enabledForInbound"       keel:"enabled_for_inbound"`
+	EnabledForOutbound      bool               `json:"enabledForOutbound"      keel:"enabled_for_outbound"`
+	Settings                map[string]any     `json:"settings"                keel:"settings,jsonb"`
+	SearchVector            string             `json:"-"                       keel:"search_vector,tsvector,readonly,noselect"`
+	Rank                    string             `json:"-"                       keel:"rank,computed"`
+	Version                 int64              `json:"version"                 keel:"version,version"`
+	CreatedAt               int64              `json:"createdAt"               keel:"created_at,autocreate"`
+	UpdatedAt               int64              `json:"updatedAt"               keel:"updated_at,autoupdate"`
 
 	BusinessUnit         *tenant.BusinessUnit     `json:"businessUnit,omitempty"`
 	Organization         *tenant.Organization     `json:"organization,omitempty"`
 	InternalOrganization *tenant.Organization     `json:"internalOrganization,omitempty" keel:"belongs:internal_organization_id"`
-	Customer             *customer.Customer       `json:"customer,omitempty" keel:"belongs:customer_id"`
-	Connection           *EDIConnection           `json:"connection,omitempty" keel:"belongs:edi_connection_id"`
-	DefaultTransport     *EDICommunicationProfile `json:"defaultTransport,omitempty" keel:"belongs:default_transport_id"`
-	MappingProfile       *EDIMappingProfile       `json:"mappingProfile,omitempty" keel:"one:edi_partner_id"`
-	MappingEntries       []*EDIMappingProfileItem `json:"mappingEntries,omitempty" keel:"many:edi_partner_id"`
+	Customer             *customer.Customer       `json:"customer,omitempty"             keel:"belongs:customer_id"`
+	Connection           *EDIConnection           `json:"connection,omitempty"           keel:"belongs:edi_connection_id"`
+	DefaultTransport     *EDICommunicationProfile `json:"defaultTransport,omitempty"     keel:"belongs:default_transport_id"`
+	MappingProfile       *EDIMappingProfile       `json:"mappingProfile,omitempty"       keel:"one:edi_partner_id"`
+	MappingEntries       []*EDIMappingProfileItem `json:"mappingEntries,omitempty"       keel:"many:edi_partner_id"`
 }
 
 func (p *EDIPartner) BeforeUpdate(ctx context.Context) error {

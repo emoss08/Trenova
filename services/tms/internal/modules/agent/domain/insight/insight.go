@@ -94,7 +94,7 @@ func (l Link) IsSafe() bool {
 type Insight struct {
 	keel.Table `keel:"insights"`
 
-	ID             pulid.ID `json:"id" keel:"id,pk,autoid:inst_"`
+	ID             pulid.ID `json:"id"             keel:"id,pk,autoid:inst_"`
 	BusinessUnitID pulid.ID `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
 	OrganizationID pulid.ID `json:"organizationId" keel:"organization_id,pk,tenant"`
 
@@ -102,9 +102,9 @@ type Insight struct {
 	// code that computed the numbers. It is stable across releases so a detector
 	// can be turned off without orphaning what it already found.
 	DetectorKey string   `json:"detectorKey" keel:"detector_key"`
-	Category    Category `json:"category" keel:"category"`
-	Severity    Severity `json:"severity" keel:"severity"`
-	Status      Status   `json:"status" keel:"status"`
+	Category    Category `json:"category"    keel:"category"`
+	Severity    Severity `json:"severity"    keel:"severity"`
+	Status      Status   `json:"status"      keel:"status"`
 
 	// DedupeKey identifies the same finding across refreshes. Detention at one
 	// location is the same finding this week as last week with different numbers,
@@ -117,26 +117,26 @@ type Insight struct {
 	// Headline, Narrative and Recommendation are generated prose. Narrated says
 	// whether a model actually wrote them: when it is false these hold the
 	// detector's own deterministic wording, which is plainer but never wrong.
-	Headline       string `json:"headline" keel:"headline"`
-	Narrative      string `json:"narrative" keel:"narrative,nullzero"`
+	Headline       string `json:"headline"       keel:"headline"`
+	Narrative      string `json:"narrative"      keel:"narrative,nullzero"`
 	Recommendation string `json:"recommendation" keel:"recommendation,nullzero"`
-	Narrated       bool   `json:"narrated" keel:"narrated"`
+	Narrated       bool   `json:"narrated"       keel:"narrated"`
 
 	// Metrics and Links are the detector's output and are authoritative.
 	Metrics []Metric `json:"metrics" keel:"metrics,jsonb"`
-	Links   []Link   `json:"links" keel:"links,jsonb"`
+	Links   []Link   `json:"links"   keel:"links,jsonb"`
 
 	// WindowStart and WindowEnd are the period the numbers describe. Showing a
 	// figure without its window invites someone to read a month's total as a day's.
 	WindowStart int64 `json:"windowStart" keel:"window_start"`
-	WindowEnd   int64 `json:"windowEnd" keel:"window_end"`
-	DetectedAt  int64 `json:"detectedAt" keel:"detected_at"`
+	WindowEnd   int64 `json:"windowEnd"   keel:"window_end"`
+	DetectedAt  int64 `json:"detectedAt"  keel:"detected_at"`
 	// StaleAt is when these numbers stop being worth trusting. The client says so
 	// rather than hiding the insight, because a stale finding is still evidence
 	// that something was wrong.
 	StaleAt int64 `json:"staleAt" keel:"stale_at"`
 
-	DismissedAt   *int64   `json:"dismissedAt" keel:"dismissed_at"`
+	DismissedAt   *int64   `json:"dismissedAt"   keel:"dismissed_at"`
 	DismissedByID pulid.ID `json:"dismissedById" keel:"dismissed_by_id,nullzero"`
 	DismissReason string   `json:"dismissReason" keel:"dismiss_reason,nullzero"`
 
@@ -144,9 +144,9 @@ type Insight struct {
 	// insight that was never narrated, which is exactly the signal that its
 	// wording came from the detector.
 	ModelIdentifier string   `json:"modelIdentifier" keel:"model_identifier,nullzero"`
-	ProviderID      pulid.ID `json:"providerId" keel:"provider_id,nullzero"`
+	ProviderID      pulid.ID `json:"providerId"      keel:"provider_id,nullzero"`
 
-	Version   int64 `json:"version" keel:"version,version"`
+	Version   int64 `json:"version"   keel:"version,version"`
 	CreatedAt int64 `json:"createdAt" keel:"created_at,autocreate"`
 	UpdatedAt int64 `json:"updatedAt" keel:"updated_at,autoupdate"`
 

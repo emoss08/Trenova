@@ -77,7 +77,11 @@ func (r *pendingCertificateRepository) Replace(
 				return nil, err
 			}
 
-			err := accountingsyncdb.AccountingPendingCertificates.Create(ctx, r.db.Keel(ctx), entity)
+			err := accountingsyncdb.AccountingPendingCertificates.Create(
+				ctx,
+				r.db.Keel(ctx),
+				entity,
+			)
 			if err != nil {
 				return nil, pendingCertificateErrors.Map(err, entity.ID.String())
 			}

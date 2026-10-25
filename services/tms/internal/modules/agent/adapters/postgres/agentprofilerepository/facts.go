@@ -174,7 +174,8 @@ func organizationItems(w agentprofileports.FactsWindow, reads *organizationReads
 			Group(wrk.DriverType).
 			Pick(keel.Raw("?::text", wrk.DriverType), keel.Count()).
 			Where(activeWorkers, wrk.DriverType.IsNotNull()).
-			Order(countDesc(), keel.Asc(keel.Raw("?::text", wrk.DriverType))), &out.Workers.ByDriverType),
+			Order(countDesc(), keel.Asc(keel.Raw("?::text", wrk.DriverType))),
+			&out.Workers.ByDriverType),
 		keel.IntoValue(ca.
 			Pick(ca.CarrierID.CountDistinct()).
 			Join(sm, sm.ID.EqCol(ca.ShipmentMoveID)).
@@ -259,7 +260,10 @@ func (r *factsRepository) OrganizationActivity(
 		r.db,
 		func(ctx context.Context) (*agentprofileports.OrganizationActivity, error) {
 			reads := &organizationReads{activity: new(agentprofileports.OrganizationActivity)}
-			if err := keel.Batch(ctx, r.db.Keel(ctx), organizationItems(window, reads)...); err != nil {
+			if err := keel.Batch(
+				ctx,
+				r.db.Keel(ctx),
+				organizationItems(window, reads)...); err != nil {
 				r.l.Error("failed to read organization profile facts",
 					zap.String("organization", window.TenantInfo.OrgID.String()),
 					zap.Error(err))

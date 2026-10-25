@@ -45,27 +45,27 @@ var (
 type ShipmentMoveJurisdictionMile struct {
 	keel.Table `keel:"shipment_move_jurisdiction_miles"`
 
-	ID                pulid.ID               `json:"id" keel:"id,pk,autoid:smjm_"`
-	BusinessUnitID    pulid.ID               `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
-	OrganizationID    pulid.ID               `json:"organizationId" keel:"organization_id,pk,tenant"`
-	ShipmentMoveID    pulid.ID               `json:"shipmentMoveId" keel:"shipment_move_id"`
-	ShipmentID        pulid.ID               `json:"shipmentId" keel:"shipment_id"`
-	CountryCode       string                 `json:"countryCode" keel:"country_code"`
-	JurisdictionCode  string                 `json:"jurisdictionCode" keel:"jurisdiction_code"`
-	Sequence          int                    `json:"sequence" keel:"sequence"`
-	Distance          float64                `json:"distance" keel:"distance"`
-	DistanceUnits     string                 `json:"distanceUnits" keel:"distance_units"`
-	TollDistance      *float64               `json:"tollDistance" keel:"toll_distance"`
-	FerryDistance     *float64               `json:"ferryDistance" keel:"ferry_distance"`
-	Loaded            bool                   `json:"loaded" keel:"loaded"`
-	Source            JurisdictionMileSource `json:"source" keel:"source"`
-	Provider          string                 `json:"provider" keel:"provider,nullzero"`
-	DataVersion       string                 `json:"dataVersion" keel:"data_version,nullzero"`
+	ID                pulid.ID               `json:"id"                keel:"id,pk,autoid:smjm_"`
+	BusinessUnitID    pulid.ID               `json:"businessUnitId"    keel:"business_unit_id,pk,tenant"`
+	OrganizationID    pulid.ID               `json:"organizationId"    keel:"organization_id,pk,tenant"`
+	ShipmentMoveID    pulid.ID               `json:"shipmentMoveId"    keel:"shipment_move_id"`
+	ShipmentID        pulid.ID               `json:"shipmentId"        keel:"shipment_id"`
+	CountryCode       string                 `json:"countryCode"       keel:"country_code"`
+	JurisdictionCode  string                 `json:"jurisdictionCode"  keel:"jurisdiction_code"`
+	Sequence          int                    `json:"sequence"          keel:"sequence"`
+	Distance          float64                `json:"distance"          keel:"distance"`
+	DistanceUnits     string                 `json:"distanceUnits"     keel:"distance_units"`
+	TollDistance      *float64               `json:"tollDistance"      keel:"toll_distance"`
+	FerryDistance     *float64               `json:"ferryDistance"     keel:"ferry_distance"`
+	Loaded            bool                   `json:"loaded"            keel:"loaded"`
+	Source            JurisdictionMileSource `json:"source"            keel:"source"`
+	Provider          string                 `json:"provider"          keel:"provider,nullzero"`
+	DataVersion       string                 `json:"dataVersion"       keel:"data_version,nullzero"`
 	DistanceProfileID pulid.ID               `json:"distanceProfileId" keel:"distance_profile_id,nullzero"`
-	CalculatedAt      int64                  `json:"calculatedAt" keel:"calculated_at"`
-	Version           int64                  `json:"version" keel:"version,version"`
-	CreatedAt         int64                  `json:"createdAt" keel:"created_at,autocreate"`
-	UpdatedAt         int64                  `json:"updatedAt" keel:"updated_at,autoupdate"`
+	CalculatedAt      int64                  `json:"calculatedAt"      keel:"calculated_at"`
+	Version           int64                  `json:"version"           keel:"version,version"`
+	CreatedAt         int64                  `json:"createdAt"         keel:"created_at,autocreate"`
+	UpdatedAt         int64                  `json:"updatedAt"         keel:"updated_at,autoupdate"`
 }
 
 func (m *ShipmentMoveJurisdictionMile) Validate(multiErr *errortypes.MultiError) {

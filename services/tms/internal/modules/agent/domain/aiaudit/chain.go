@@ -18,17 +18,17 @@ type AIAuditChainHead struct {
 	OrganizationID pulid.ID `json:"organizationId" keel:"organization_id,pk,tenant"`
 	BusinessUnitID pulid.ID `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
 
-	LastSeq   int64  `json:"lastSeq" keel:"last_seq"`
-	LastHash  string `json:"lastHash" keel:"last_hash"`
+	LastSeq   int64  `json:"lastSeq"   keel:"last_seq"`
+	LastHash  string `json:"lastHash"  keel:"last_hash"`
 	HashKeyID string `json:"hashKeyId" keel:"hash_key_id,nullzero"`
 
-	LastVerifiedSeq           int64              `json:"lastVerifiedSeq" keel:"last_verified_seq"`
-	LastVerifiedAt            *int64             `json:"lastVerifiedAt" keel:"last_verified_at"`
-	LastVerificationStatus    VerificationStatus `json:"lastVerificationStatus" keel:"last_verification_status,nullzero"`
+	LastVerifiedSeq           int64              `json:"lastVerifiedSeq"           keel:"last_verified_seq"`
+	LastVerifiedAt            *int64             `json:"lastVerifiedAt"            keel:"last_verified_at"`
+	LastVerificationStatus    VerificationStatus `json:"lastVerificationStatus"    keel:"last_verification_status,nullzero"`
 	LastVerificationFailedSeq *int64             `json:"lastVerificationFailedSeq" keel:"last_verification_failed_seq"`
-	LastVerificationDetail    string             `json:"lastVerificationDetail" keel:"last_verification_detail,nullzero"`
+	LastVerificationDetail    string             `json:"lastVerificationDetail"    keel:"last_verification_detail,nullzero"`
 
-	Version   int64 `json:"version" keel:"version,version"`
+	Version   int64 `json:"version"   keel:"version,version"`
 	CreatedAt int64 `json:"createdAt" keel:"created_at,autocreate"`
 	UpdatedAt int64 `json:"updatedAt" keel:"updated_at,autoupdate"`
 
@@ -49,13 +49,13 @@ type AIAuditSeal struct {
 
 	OrganizationID pulid.ID `json:"organizationId" keel:"organization_id,pk,tenant"`
 	BusinessUnitID pulid.ID `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
-	ToSeq          int64    `json:"toSeq" keel:"to_seq,pk"`
+	ToSeq          int64    `json:"toSeq"          keel:"to_seq,pk"`
 
-	FromSeq   int64  `json:"fromSeq" keel:"from_seq"`
-	HeadHash  string `json:"headHash" keel:"head_hash"`
+	FromSeq   int64  `json:"fromSeq"   keel:"from_seq"`
+	HeadHash  string `json:"headHash"  keel:"head_hash"`
 	HashKeyID string `json:"hashKeyId" keel:"hash_key_id,nullzero"`
-	RowCount  int    `json:"rowCount" keel:"row_count"`
-	SealedAt  int64  `json:"sealedAt" keel:"sealed_at"`
+	RowCount  int    `json:"rowCount"  keel:"row_count"`
+	SealedAt  int64  `json:"sealedAt"  keel:"sealed_at"`
 
 	BusinessUnit *tenant.BusinessUnit `json:"-"`
 	Organization *tenant.Organization `json:"-"`
@@ -71,10 +71,10 @@ func (s *AIAuditSeal) GetTableName() string {
 type AIAuditProjectorState struct {
 	keel.Table `keel:"ai_audit_projector_state"`
 
-	Source      Source `json:"source" keel:"source,pk"`
+	Source      Source `json:"source"      keel:"source,pk"`
 	WatermarkTS int64  `json:"watermarkTs" keel:"watermark_ts"`
 	WatermarkID string `json:"watermarkId" keel:"watermark_id"`
-	UpdatedAt   int64  `json:"updatedAt" keel:"updated_at,autoupdate"`
+	UpdatedAt   int64  `json:"updatedAt"   keel:"updated_at,autoupdate"`
 }
 
 func (s *AIAuditProjectorState) GetTableName() string {

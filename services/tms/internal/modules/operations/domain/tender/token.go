@@ -8,15 +8,15 @@ import (
 type TenderOfferToken struct {
 	keel.Table `keel:"tender_offer_tokens"`
 
-	ID             pulid.ID `json:"id" keel:"id,pk,autoid:tot_"`
+	ID             pulid.ID `json:"id"             keel:"id,pk,autoid:tot_"`
 	BusinessUnitID pulid.ID `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
 	OrganizationID pulid.ID `json:"organizationId" keel:"organization_id,pk,tenant"`
-	TenderOfferID  pulid.ID `json:"tenderOfferId" keel:"tender_offer_id"`
+	TenderOfferID  pulid.ID `json:"tenderOfferId"  keel:"tender_offer_id"`
 
-	TokenHash string `json:"-" keel:"token_hash"`
-	Email     string `json:"email" keel:"email"`
+	TokenHash string `json:"-"         keel:"token_hash"`
+	Email     string `json:"email"     keel:"email"`
 	ExpiresAt int64  `json:"expiresAt" keel:"expires_at"`
-	UsedAt    *int64 `json:"usedAt" keel:"used_at"`
+	UsedAt    *int64 `json:"usedAt"    keel:"used_at"`
 	RevokedAt *int64 `json:"revokedAt" keel:"revoked_at"`
 	CreatedAt int64  `json:"createdAt" keel:"created_at,autocreate"`
 	UpdatedAt int64  `json:"updatedAt" keel:"updated_at,autoupdate"`

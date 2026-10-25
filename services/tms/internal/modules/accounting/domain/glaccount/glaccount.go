@@ -21,34 +21,34 @@ var (
 
 // The chart of accounts and its running balances
 type GLAccount struct {
-	keel.Table `                                           keel:"gl_accounts,report=Accounting"`
+	keel.Table `keel:"gl_accounts,report=Accounting"`
 
-	ID             pulid.ID           `json:"id" keel:"id,pk,autoid:gla_"`
+	ID             pulid.ID           `json:"id"             keel:"id,pk,autoid:gla_"`
 	BusinessUnitID pulid.ID           `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
 	OrganizationID pulid.ID           `json:"organizationId" keel:"organization_id,pk,tenant"`
-	Status         domaintypes.Status `json:"status" keel:"status"`
-	AccountTypeID  pulid.ID           `json:"accountTypeId" keel:"account_type_id"`
-	ParentID       pulid.ID           `json:"parentId" keel:"parent_id,nullzero"`
-	AccountCode    string             `json:"accountCode" keel:"account_code"`
-	Name           string             `json:"name" keel:"name,label=Account Name"`
-	Description    string             `json:"description" keel:"description,nullzero"`
-	IsSystem       bool               `json:"isSystem" keel:"is_system,label=System Account"`
-	AllowManualJE  bool               `json:"allowManualJe" keel:"allow_manual_je,label=Allows Manual Journals"`
+	Status         domaintypes.Status `json:"status"         keel:"status"`
+	AccountTypeID  pulid.ID           `json:"accountTypeId"  keel:"account_type_id"`
+	ParentID       pulid.ID           `json:"parentId"       keel:"parent_id,nullzero"`
+	AccountCode    string             `json:"accountCode"    keel:"account_code"`
+	Name           string             `json:"name"           keel:"name,label=Account Name"`
+	Description    string             `json:"description"    keel:"description,nullzero"`
+	IsSystem       bool               `json:"isSystem"       keel:"is_system,label=System Account"`
+	AllowManualJE  bool               `json:"allowManualJe"  keel:"allow_manual_je,label=Allows Manual Journals"`
 	RequireProject bool               `json:"requireProject" keel:"require_project,label=Requires Project"`
 	CurrentBalance int64              `json:"currentBalance" keel:"current_balance,label=Current Balance (Minor)"`
-	DebitBalance   int64              `json:"debitBalance" keel:"debit_balance,label=Debit Balance (Minor)"`
-	CreditBalance  int64              `json:"creditBalance" keel:"credit_balance,label=Credit Balance (Minor)"`
-	Version        int64              `json:"version" keel:"version,version"`
-	CreatedAt      int64              `json:"createdAt" keel:"created_at,autocreate"`
-	UpdatedAt      int64              `json:"updatedAt" keel:"updated_at,autoupdate"`
-	SearchVector   string             `json:"-" keel:"search_vector,tsvector,readonly,noselect"`
-	Rank           string             `json:"-" keel:"rank,computed"`
+	DebitBalance   int64              `json:"debitBalance"   keel:"debit_balance,label=Debit Balance (Minor)"`
+	CreditBalance  int64              `json:"creditBalance"  keel:"credit_balance,label=Credit Balance (Minor)"`
+	Version        int64              `json:"version"        keel:"version,version"`
+	CreatedAt      int64              `json:"createdAt"      keel:"created_at,autocreate"`
+	UpdatedAt      int64              `json:"updatedAt"      keel:"updated_at,autoupdate"`
+	SearchVector   string             `json:"-"              keel:"search_vector,tsvector,readonly,noselect"`
+	Rank           string             `json:"-"              keel:"rank,computed"`
 
 	BusinessUnit *tenant.BusinessUnit     `json:"businessUnit,omitempty"`
 	Organization *tenant.Organization     `json:"organization,omitempty"`
-	AccountType  *accounttype.AccountType `json:"accountType,omitempty" keel:"belongs:account_type_id"`
-	Parent       *GLAccount               `json:"parent,omitempty" keel:"belongs:parent_id,label=Parent Account"`
-	Children     []*GLAccount             `json:"children,omitempty" keel:"many:parent_id,label=Child Accounts"`
+	AccountType  *accounttype.AccountType `json:"accountType,omitempty"  keel:"belongs:account_type_id"`
+	Parent       *GLAccount               `json:"parent,omitempty"       keel:"belongs:parent_id,label=Parent Account"`
+	Children     []*GLAccount             `json:"children,omitempty"     keel:"many:parent_id,label=Child Accounts"`
 }
 
 func (g *GLAccount) Validate(multiErr *errortypes.MultiError) {

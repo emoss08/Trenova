@@ -126,7 +126,8 @@ var sources = map[permission.Resource]source{
 	},
 	permission.ResourceWorker: func(ids []pulid.ID) projection {
 		t := workerdb.Workers
-		return t.Pick(t.ID, labelText(keel.Raw("CONCAT_WS(' ', ?, ?)", t.FirstName, t.LastName))).Where(t.ID.In(ids...))
+		return t.Pick(t.ID, labelText(keel.Raw("CONCAT_WS(' ', ?, ?)", t.FirstName, t.LastName))).
+			Where(t.ID.In(ids...))
 	},
 	permission.ResourceTractor: func(ids []pulid.ID) projection {
 		t := tractordb.Tractors
@@ -170,7 +171,8 @@ var sources = map[permission.Resource]source{
 	},
 	permission.ResourceDocument: func(ids []pulid.ID) projection {
 		t := documentdb.Documents
-		return t.Pick(t.ID, labelText(keel.Raw("COALESCE(NULLIF(?, ''), ?)", t.OriginalName, t.FileName))).Where(t.ID.In(ids...))
+		return t.Pick(t.ID, labelText(keel.Raw("COALESCE(NULLIF(?, ''), ?)", t.OriginalName, t.FileName))).
+			Where(t.ID.In(ids...))
 	},
 	permission.ResourceDashboard: func(ids []pulid.ID) projection {
 		t := reportdb.Dashboards
@@ -214,7 +216,8 @@ var sources = map[permission.Resource]source{
 	},
 	permission.ResourceCustomerPayment: func(ids []pulid.ID) projection {
 		t := customerpaymentdb.Payments
-		return t.Pick(t.ID, labelText(keel.Raw("COALESCE(NULLIF(?, ''), 'Payment of ' || TO_CHAR(TO_TIMESTAMP(?) AT TIME ZONE 'UTC', 'YYYY-MM-DD'))", t.ReferenceNumber, t.PaymentDate))).Where(t.ID.In(ids...))
+		return t.Pick(t.ID, labelText(keel.Raw("COALESCE(NULLIF(?, ''), 'Payment of ' || TO_CHAR(TO_TIMESTAMP(?) AT TIME ZONE 'UTC', 'YYYY-MM-DD'))", t.ReferenceNumber, t.PaymentDate))).
+			Where(t.ID.In(ids...))
 	},
 	permission.ResourceDocumentType: func(ids []pulid.ID) projection {
 		t := documenttypedb.DocumentTypes
@@ -234,7 +237,8 @@ var sources = map[permission.Resource]source{
 	},
 	permission.ResourceGeneralLedgerAccount: func(ids []pulid.ID) projection {
 		t := glaccountdb.GLAccounts
-		return t.Pick(t.ID, labelText(keel.Raw("CONCAT_WS(' ', ?, ?)", t.AccountCode, t.Name))).Where(t.ID.In(ids...))
+		return t.Pick(t.ID, labelText(keel.Raw("CONCAT_WS(' ', ?, ?)", t.AccountCode, t.Name))).
+			Where(t.ID.In(ids...))
 	},
 	permission.ResourceHazardousMaterial: func(ids []pulid.ID) projection {
 		t := hazardousmaterialdb.HazardousMaterials

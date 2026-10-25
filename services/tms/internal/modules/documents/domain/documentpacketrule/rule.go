@@ -48,19 +48,19 @@ const defaultExpirationWarningDays = 30
 type DocumentPacketRule struct {
 	keel.Table `keel:"document_packet_rules"`
 
-	ID                    pulid.ID `json:"id" keel:"id,pk,autoid:dpr_"`
-	OrganizationID        pulid.ID `json:"organizationId" keel:"organization_id,pk,tenant"`
-	BusinessUnitID        pulid.ID `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
-	ResourceType          string   `json:"resourceType" keel:"resource_type"`
-	DocumentTypeID        pulid.ID `json:"documentTypeId" keel:"document_type_id"`
-	Required              bool     `json:"required" keel:"required"`
-	AllowMultiple         bool     `json:"allowMultiple" keel:"allow_multiple"`
-	DisplayOrder          int      `json:"displayOrder" keel:"display_order"`
-	ExpirationRequired    bool     `json:"expirationRequired" keel:"expiration_required"`
+	ID                    pulid.ID `json:"id"                    keel:"id,pk,autoid:dpr_"`
+	OrganizationID        pulid.ID `json:"organizationId"        keel:"organization_id,pk,tenant"`
+	BusinessUnitID        pulid.ID `json:"businessUnitId"        keel:"business_unit_id,pk,tenant"`
+	ResourceType          string   `json:"resourceType"          keel:"resource_type"`
+	DocumentTypeID        pulid.ID `json:"documentTypeId"        keel:"document_type_id"`
+	Required              bool     `json:"required"              keel:"required"`
+	AllowMultiple         bool     `json:"allowMultiple"         keel:"allow_multiple"`
+	DisplayOrder          int      `json:"displayOrder"          keel:"display_order"`
+	ExpirationRequired    bool     `json:"expirationRequired"    keel:"expiration_required"`
 	ExpirationWarningDays int      `json:"expirationWarningDays" keel:"expiration_warning_days"`
-	Version               int64    `json:"version" keel:"version,version"`
-	CreatedAt             int64    `json:"createdAt" keel:"created_at,autocreate"`
-	UpdatedAt             int64    `json:"updatedAt" keel:"updated_at,autoupdate"`
+	Version               int64    `json:"version"               keel:"version,version"`
+	CreatedAt             int64    `json:"createdAt"             keel:"created_at,autocreate"`
+	UpdatedAt             int64    `json:"updatedAt"             keel:"updated_at,autoupdate"`
 }
 
 func (r *DocumentPacketRule) Validate(multiErr *errortypes.MultiError) {

@@ -15,18 +15,18 @@ type FeedState struct {
 
 	OrganizationID pulid.ID `json:"organizationId" keel:"organization_id,pk,tenant"`
 	BusinessUnitID pulid.ID `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
-	Provider       string   `json:"provider" keel:"provider,pk"`
-	FeedType       FeedType `json:"feedType" keel:"feed_type,pk"`
-	Cursor         string   `json:"cursor" keel:"cursor,nullzero"`
-	LastPolledAt   int64    `json:"lastPolledAt" keel:"last_polled_at,nullzero"`
-	LastSuccessAt  int64    `json:"lastSuccessAt" keel:"last_success_at,nullzero"`
-	FailureCount   int      `json:"failureCount" keel:"failure_count"`
-	LastError      string   `json:"lastError" keel:"last_error,nullzero"`
+	Provider       string   `json:"provider"       keel:"provider,pk"`
+	FeedType       FeedType `json:"feedType"       keel:"feed_type,pk"`
+	Cursor         string   `json:"cursor"         keel:"cursor,nullzero"`
+	LastPolledAt   int64    `json:"lastPolledAt"   keel:"last_polled_at,nullzero"`
+	LastSuccessAt  int64    `json:"lastSuccessAt"  keel:"last_success_at,nullzero"`
+	FailureCount   int      `json:"failureCount"   keel:"failure_count"`
+	LastError      string   `json:"lastError"      keel:"last_error,nullzero"`
 }
 
 func (f *FeedState) BeforeCreate(_ context.Context) error {
 	if f.Provider == "" {
-		f.Provider = "Samsara"
+		f.Provider = defaultProvider
 	}
 
 	return nil

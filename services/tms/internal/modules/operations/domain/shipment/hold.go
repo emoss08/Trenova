@@ -15,32 +15,32 @@ import (
 type ShipmentHold struct {
 	keel.Table `keel:"shipment_holds"`
 
-	ID                pulid.ID                `json:"id" keel:"id,pk,autoid:shh_"`
-	ShipmentID        pulid.ID                `json:"shipmentId" keel:"shipment_id"`
-	BusinessUnitID    pulid.ID                `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
-	OrganizationID    pulid.ID                `json:"organizationId" keel:"organization_id,pk,tenant"`
-	HoldReasonID      *pulid.ID               `json:"holdReasonId" keel:"hold_reason_id"`
-	Type              holdreason.HoldType     `json:"type" keel:"type"`
-	Severity          holdreason.HoldSeverity `json:"severity" keel:"severity"`
-	ReasonCode        string                  `json:"reasonCode" keel:"reason_code,nullzero"`
-	Notes             string                  `json:"notes" keel:"notes,nullzero"`
-	Source            HoldSource              `json:"source" keel:"source"`
-	BlocksDispatch    bool                    `json:"blocksDispatch" keel:"blocks_dispatch"`
-	BlocksDelivery    bool                    `json:"blocksDelivery" keel:"blocks_delivery"`
-	BlocksBilling     bool                    `json:"blocksBilling" keel:"blocks_billing"`
+	ID                pulid.ID                `json:"id"                keel:"id,pk,autoid:shh_"`
+	ShipmentID        pulid.ID                `json:"shipmentId"        keel:"shipment_id"`
+	BusinessUnitID    pulid.ID                `json:"businessUnitId"    keel:"business_unit_id,pk,tenant"`
+	OrganizationID    pulid.ID                `json:"organizationId"    keel:"organization_id,pk,tenant"`
+	HoldReasonID      *pulid.ID               `json:"holdReasonId"      keel:"hold_reason_id"`
+	Type              holdreason.HoldType     `json:"type"              keel:"type"`
+	Severity          holdreason.HoldSeverity `json:"severity"          keel:"severity"`
+	ReasonCode        string                  `json:"reasonCode"        keel:"reason_code,nullzero"`
+	Notes             string                  `json:"notes"             keel:"notes,nullzero"`
+	Source            HoldSource              `json:"source"            keel:"source"`
+	BlocksDispatch    bool                    `json:"blocksDispatch"    keel:"blocks_dispatch"`
+	BlocksDelivery    bool                    `json:"blocksDelivery"    keel:"blocks_delivery"`
+	BlocksBilling     bool                    `json:"blocksBilling"     keel:"blocks_billing"`
 	VisibleToCustomer bool                    `json:"visibleToCustomer" keel:"visible_to_customer"`
-	StartedAt         int64                   `json:"startedAt" keel:"started_at"`
-	CreatedAt         int64                   `json:"createdAt" keel:"created_at,autocreate"`
-	UpdatedAt         int64                   `json:"updatedAt" keel:"updated_at,autoupdate"`
-	Version           int64                   `json:"version" keel:"version,version"`
-	ReleasedAt        *int64                  `json:"releasedAt" keel:"released_at"`
-	CreatedByID       *pulid.ID               `json:"createdById" keel:"created_by_id"`
-	ReleasedByID      *pulid.ID               `json:"releasedById" keel:"released_by_id"`
+	StartedAt         int64                   `json:"startedAt"         keel:"started_at"`
+	CreatedAt         int64                   `json:"createdAt"         keel:"created_at,autocreate"`
+	UpdatedAt         int64                   `json:"updatedAt"         keel:"updated_at,autoupdate"`
+	Version           int64                   `json:"version"           keel:"version,version"`
+	ReleasedAt        *int64                  `json:"releasedAt"        keel:"released_at"`
+	CreatedByID       *pulid.ID               `json:"createdById"       keel:"created_by_id"`
+	ReleasedByID      *pulid.ID               `json:"releasedById"      keel:"released_by_id"`
 
 	HoldReason   *holdreason.HoldReason `json:"holdReason,omitempty" keel:"belongs:hold_reason_id"`
-	CreatedBy    *tenant.User           `json:"createdBy,omitempty" keel:"belongs:created_by_id"`
+	CreatedBy    *tenant.User           `json:"createdBy,omitempty"  keel:"belongs:created_by_id"`
 	ReleasedBy   *tenant.User           `json:"releasedBy,omitempty" keel:"belongs:released_by_id"`
-	Shipment     *Shipment              `json:"-" keel:"belongs:shipment_id"`
+	Shipment     *Shipment              `json:"-"                    keel:"belongs:shipment_id"`
 	BusinessUnit *tenant.BusinessUnit   `json:"-"`
 	Organization *tenant.Organization   `json:"-"`
 }

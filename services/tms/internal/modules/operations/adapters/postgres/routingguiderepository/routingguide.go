@@ -288,7 +288,11 @@ func (r *repository) Create(
 			return nil, guideErrors.Map(err, entity.ID.String())
 		}
 
-		if err := tenderdb.RoutingGuideEntries.CreateMany(ctx, db, liveEntries(entity)); err != nil {
+		if err := tenderdb.RoutingGuideEntries.CreateMany(
+			ctx,
+			db,
+			liveEntries(entity),
+		); err != nil {
 			r.l.Error("failed to create routing guide entries", zap.Error(err))
 			return nil, entryErrors.Map(err, entity.ID.String())
 		}

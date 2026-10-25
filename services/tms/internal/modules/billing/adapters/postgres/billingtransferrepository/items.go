@@ -193,7 +193,8 @@ func outcomeUpdate(
 	missing := make([]string, n)
 	failures := make([]string, n)
 	processed := make([]int64, n)
-	for i, outcome := range outcomes {
+	for i := range outcomes {
+		outcome := &outcomes[i]
 		requirements := outcome.MissingRequirements
 		if requirements == nil {
 			requirements = []billingtransfer.MissingRequirement{}
@@ -392,7 +393,11 @@ func (r *repository) refreshRunCounters(
 	if err != nil {
 		return runErrors.Map(err, runID.String())
 	}
-	if err = dberror.CheckAffected(int64(len(rows)), "BillingTransferRun", runID.String()); err != nil {
+	if err = dberror.CheckAffected(
+		int64(len(rows)),
+		"BillingTransferRun",
+		runID.String(),
+	); err != nil {
 		return err
 	}
 

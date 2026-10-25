@@ -20,19 +20,19 @@ const ManualStep = 0
 type Reminder struct {
 	keel.Table `keel:"invoice_payment_reminders"`
 
-	ID              pulid.ID `json:"id" keel:"id,pk,autoid:ipr_"`
-	OrganizationID  pulid.ID `json:"organizationId" keel:"organization_id,pk,tenant"`
-	BusinessUnitID  pulid.ID `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
-	InvoiceID       pulid.ID `json:"invoiceId" keel:"invoice_id"`
-	CustomerID      pulid.ID `json:"customerId" keel:"customer_id"`
-	Step            int16    `json:"step" keel:"step"`
-	DaysPastDue     int      `json:"daysPastDue" keel:"days_past_due"`
+	ID              pulid.ID `json:"id"              keel:"id,pk,autoid:ipr_"`
+	OrganizationID  pulid.ID `json:"organizationId"  keel:"organization_id,pk,tenant"`
+	BusinessUnitID  pulid.ID `json:"businessUnitId"  keel:"business_unit_id,pk,tenant"`
+	InvoiceID       pulid.ID `json:"invoiceId"       keel:"invoice_id"`
+	CustomerID      pulid.ID `json:"customerId"      keel:"customer_id"`
+	Step            int16    `json:"step"            keel:"step"`
+	DaysPastDue     int      `json:"daysPastDue"     keel:"days_past_due"`
 	OpenAmountMinor int64    `json:"openAmountMinor" keel:"open_amount_minor"`
-	CurrencyCode    string   `json:"currencyCode" keel:"currency_code"`
-	SentTo          string   `json:"sentTo" keel:"sent_to"`
-	Manual          bool     `json:"manual" keel:"manual"`
-	SentByID        pulid.ID `json:"sentById" keel:"sent_by_id,nullzero"`
-	SentAt          int64    `json:"sentAt" keel:"sent_at"`
+	CurrencyCode    string   `json:"currencyCode"    keel:"currency_code"`
+	SentTo          string   `json:"sentTo"          keel:"sent_to"`
+	Manual          bool     `json:"manual"          keel:"manual"`
+	SentByID        pulid.ID `json:"sentById"        keel:"sent_by_id,nullzero"`
+	SentAt          int64    `json:"sentAt"          keel:"sent_at"`
 }
 
 func (r *Reminder) BeforeCreate(ctx context.Context) error {

@@ -477,7 +477,10 @@ func newListInvoiceRunsTool(
 			"billing period, by status, number or period. Open one with invoice_get_run to " +
 			"see its groups and items.",
 		resource: permission.ResourceInvoiceRun,
-		config:   listquery.Describe((*invoicerun.InvoiceRun)(nil), invoicerundb.InvoiceRunsSchema()),
+		config: listquery.Describe(
+			(*invoicerun.InvoiceRun)(nil),
+			invoicerundb.InvoiceRunsSchema(),
+		),
 		fields: []listField{
 			{
 				Name: paramStatus,

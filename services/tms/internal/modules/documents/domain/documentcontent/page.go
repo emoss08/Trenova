@@ -14,23 +14,23 @@ import (
 type Page struct {
 	keel.Table `keel:"document_content_pages"`
 
-	ID                   pulid.ID       `json:"id" keel:"id,pk,autoid:dcp_"`
-	DocumentContentID    pulid.ID       `json:"documentContentId" keel:"document_content_id"`
-	DocumentID           pulid.ID       `json:"documentId" keel:"document_id"`
-	OrganizationID       pulid.ID       `json:"organizationId" keel:"organization_id,tenant"`
-	BusinessUnitID       pulid.ID       `json:"businessUnitId" keel:"business_unit_id,tenant"`
-	PageNumber           int            `json:"pageNumber" keel:"page_number"`
-	SourceKind           SourceKind     `json:"sourceKind" keel:"source_kind"`
-	ExtractedText        string         `json:"extractedText" keel:"extracted_text,nullzero"`
-	Markdown             string         `json:"markdown" keel:"markdown,nullzero"`
-	OCRConfidence        float64        `json:"ocrConfidence" keel:"ocr_confidence"`
+	ID                   pulid.ID       `json:"id"                   keel:"id,pk,autoid:dcp_"`
+	DocumentContentID    pulid.ID       `json:"documentContentId"    keel:"document_content_id"`
+	DocumentID           pulid.ID       `json:"documentId"           keel:"document_id"`
+	OrganizationID       pulid.ID       `json:"organizationId"       keel:"organization_id,tenant"`
+	BusinessUnitID       pulid.ID       `json:"businessUnitId"       keel:"business_unit_id,tenant"`
+	PageNumber           int            `json:"pageNumber"           keel:"page_number"`
+	SourceKind           SourceKind     `json:"sourceKind"           keel:"source_kind"`
+	ExtractedText        string         `json:"extractedText"        keel:"extracted_text,nullzero"`
+	Markdown             string         `json:"markdown"             keel:"markdown,nullzero"`
+	OCRConfidence        float64        `json:"ocrConfidence"        keel:"ocr_confidence"`
 	PreprocessingApplied bool           `json:"preprocessingApplied" keel:"preprocessing_applied"`
-	Width                int            `json:"width" keel:"width"`
-	Height               int            `json:"height" keel:"height"`
-	Metadata             map[string]any `json:"metadata" keel:"metadata,jsonb"`
-	Version              int64          `json:"version" keel:"version,version"`
-	CreatedAt            int64          `json:"createdAt" keel:"created_at,autocreate"`
-	UpdatedAt            int64          `json:"updatedAt" keel:"updated_at,autoupdate"`
+	Width                int            `json:"width"                keel:"width"`
+	Height               int            `json:"height"               keel:"height"`
+	Metadata             map[string]any `json:"metadata"             keel:"metadata,jsonb"`
+	Version              int64          `json:"version"              keel:"version,version"`
+	CreatedAt            int64          `json:"createdAt"            keel:"created_at,autocreate"`
+	UpdatedAt            int64          `json:"updatedAt"            keel:"updated_at,autoupdate"`
 }
 
 func (p *Page) BeforeUpdate(_ context.Context) error {

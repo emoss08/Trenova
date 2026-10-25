@@ -21,26 +21,26 @@ var (
 type CostingControl struct {
 	keel.Table `keel:"costing_controls"`
 
-	ID                   pulid.ID            `json:"id" keel:"id,pk,autoid:cstc_"`
-	BusinessUnitID       pulid.ID            `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
-	OrganizationID       pulid.ID            `json:"organizationId" keel:"organization_id,pk,tenant"`
-	FuelIndexID          *pulid.ID           `json:"fuelIndexId" keel:"fuel_index_id"`
-	UseLiveFuelPrice     bool                `json:"useLiveFuelPrice" keel:"use_live_fuel_price"`
-	MilesPerGallon       decimal.Decimal     `json:"milesPerGallon" keel:"miles_per_gallon"`
+	ID                   pulid.ID            `json:"id"                   keel:"id,pk,autoid:cstc_"`
+	BusinessUnitID       pulid.ID            `json:"businessUnitId"       keel:"business_unit_id,pk,tenant"`
+	OrganizationID       pulid.ID            `json:"organizationId"       keel:"organization_id,pk,tenant"`
+	FuelIndexID          *pulid.ID           `json:"fuelIndexId"          keel:"fuel_index_id"`
+	UseLiveFuelPrice     bool                `json:"useLiveFuelPrice"     keel:"use_live_fuel_price"`
+	MilesPerGallon       decimal.Decimal     `json:"milesPerGallon"       keel:"miles_per_gallon"`
 	IncludeDeadheadMiles bool                `json:"includeDeadheadMiles" keel:"include_deadhead_miles"`
-	GLActualsEnabled     bool                `json:"glActualsEnabled" keel:"gl_actuals_enabled"`
-	GLRollingMonths      int16               `json:"glRollingMonths" keel:"gl_rolling_months"`
-	PlannedMonthlyMiles  *int64              `json:"plannedMonthlyMiles" keel:"planned_monthly_miles"`
-	TargetMarginPercent  decimal.NullDecimal `json:"targetMarginPercent" keel:"target_margin_percent"`
-	Version              int64               `json:"version" keel:"version,version"`
-	CreatedAt            int64               `json:"createdAt" keel:"created_at,autocreate"`
-	UpdatedAt            int64               `json:"updatedAt" keel:"updated_at,autoupdate"`
+	GLActualsEnabled     bool                `json:"glActualsEnabled"     keel:"gl_actuals_enabled"`
+	GLRollingMonths      int16               `json:"glRollingMonths"      keel:"gl_rolling_months"`
+	PlannedMonthlyMiles  *int64              `json:"plannedMonthlyMiles"  keel:"planned_monthly_miles"`
+	TargetMarginPercent  decimal.NullDecimal `json:"targetMarginPercent"  keel:"target_margin_percent"`
+	Version              int64               `json:"version"              keel:"version,version"`
+	CreatedAt            int64               `json:"createdAt"            keel:"created_at,autocreate"`
+	UpdatedAt            int64               `json:"updatedAt"            keel:"updated_at,autoupdate"`
 
 	// Relationships
-	FuelIndex    *fuelsurcharge.FuelIndex `json:"fuelIndex,omitempty" keel:"belongs:fuel_index_id"`
+	FuelIndex    *fuelsurcharge.FuelIndex `json:"fuelIndex,omitempty"    keel:"belongs:fuel_index_id"`
 	BusinessUnit *tenant.BusinessUnit     `json:"businessUnit,omitempty"`
 	Organization *tenant.Organization     `json:"organization,omitempty"`
-	Categories   []*CostCategory          `json:"categories,omitempty" keel:"many:costing_control_id"`
+	Categories   []*CostCategory          `json:"categories,omitempty"   keel:"many:costing_control_id"`
 }
 
 func (cc *CostingControl) Validate(multiErr *errortypes.MultiError) {

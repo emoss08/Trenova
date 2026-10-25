@@ -226,7 +226,7 @@ func (r *repository) DailySatisfaction(
 		func(ctx context.Context) ([]*aifeedbackports.AIFeedbackDay, error) {
 			f := aifeedbackdb.Feedbacks
 			days, err := keel.Into[aifeedbackports.AIFeedbackDay](ctx, r.db.Keel(ctx),
-				f.Where(windowScope(req)...).
+				f.Where(windowScope(&req)...).
 					Group(keel.Raw("1")).
 					Pick(
 						keel.Raw(
@@ -272,7 +272,7 @@ func (r *repository) WorstRated(
 			negative := ratingCount(aifeedback.RatingNegative)
 			positive := ratingCount(aifeedback.RatingPositive)
 			scores, err := keel.Into[aifeedbackports.AIFeedbackTargetScore](ctx, r.db.Keel(ctx),
-				f.Where(windowScope(req)...).
+				f.Where(windowScope(&req)...).
 					Group(f.TargetType, f.TargetID, f.TargetPart).
 					Having(keel.Raw("? > 0", negative)).
 					Pick(
@@ -315,7 +315,7 @@ func (r *repository) WorstRated(
 	)
 }
 
-func windowScope(req aifeedbackports.AIFeedbackWindowRequest) []keel.Pred {
+func windowScope(req *aifeedbackports.AIFeedbackWindowRequest) []keel.Pred {
 	f := aifeedbackdb.Feedbacks
 	preds := []keel.Pred{f.CreatedAt.Gte(req.Since)}
 	if req.AgentDefinitionID.IsNotNil() {

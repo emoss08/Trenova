@@ -20,23 +20,23 @@ var (
 
 // Asset, liability, equity, revenue and expense classification
 type AccountType struct {
-	keel.Table `                                            keel:"account_types,report=Accounting"`
+	keel.Table `keel:"account_types,report=Accounting"`
 
-	ID             pulid.ID           `json:"id" keel:"id,pk,autoid:at_"`
+	ID             pulid.ID           `json:"id"             keel:"id,pk,autoid:at_"`
 	BusinessUnitID pulid.ID           `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
 	OrganizationID pulid.ID           `json:"organizationId" keel:"organization_id,pk,tenant"`
-	Status         domaintypes.Status `json:"status" keel:"status"`
-	Code           string             `json:"code" keel:"code"`
-	Name           string             `json:"name" keel:"name"`
-	Description    string             `json:"description" keel:"description,nullzero"`
-	Category       Category           `json:"category" keel:"category,label=Account Category"`
-	Color          string             `json:"color" keel:"color,nullzero"`
-	IsSystem       bool               `json:"isSystem" keel:"is_system,label=System Type"`
-	Version        int64              `json:"version" keel:"version,version"`
-	CreatedAt      int64              `json:"createdAt" keel:"created_at,autocreate"`
-	UpdatedAt      int64              `json:"updatedAt" keel:"updated_at,autoupdate"`
-	SearchVector   string             `json:"-" keel:"search_vector,tsvector,readonly,noselect"`
-	Rank           string             `json:"-" keel:"rank,computed"`
+	Status         domaintypes.Status `json:"status"         keel:"status"`
+	Code           string             `json:"code"           keel:"code"`
+	Name           string             `json:"name"           keel:"name"`
+	Description    string             `json:"description"    keel:"description,nullzero"`
+	Category       Category           `json:"category"       keel:"category,label=Account Category"`
+	Color          string             `json:"color"          keel:"color,nullzero"`
+	IsSystem       bool               `json:"isSystem"       keel:"is_system,label=System Type"`
+	Version        int64              `json:"version"        keel:"version,version"`
+	CreatedAt      int64              `json:"createdAt"      keel:"created_at,autocreate"`
+	UpdatedAt      int64              `json:"updatedAt"      keel:"updated_at,autoupdate"`
+	SearchVector   string             `json:"-"              keel:"search_vector,tsvector,readonly,noselect"`
+	Rank           string             `json:"-"              keel:"rank,computed"`
 
 	BusinessUnit *tenant.BusinessUnit `json:"businessUnit,omitempty"`
 	Organization *tenant.Organization `json:"organization,omitempty"`

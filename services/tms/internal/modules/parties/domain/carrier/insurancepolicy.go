@@ -10,23 +10,23 @@ import (
 )
 
 type CarrierInsurancePolicy struct {
-	keel.Table `                                                             keel:"carrier_insurance_policies"`
+	keel.Table `keel:"carrier_insurance_policies"`
 
-	ID             pulid.ID `json:"id" keel:"id,pk,autoid:carins_"`
+	ID             pulid.ID `json:"id"             keel:"id,pk,autoid:carins_"`
 	BusinessUnitID pulid.ID `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
 	OrganizationID pulid.ID `json:"organizationId" keel:"organization_id,pk,tenant"`
-	CarrierID      pulid.ID `json:"carrierId" keel:"carrier_id"`
+	CarrierID      pulid.ID `json:"carrierId"      keel:"carrier_id"`
 
-	PolicyType     InsurancePolicyType `json:"policyType" keel:"policy_type"`
-	PolicyNumber   string              `json:"policyNumber" keel:"policy_number"`
-	ProviderName   string              `json:"providerName" keel:"provider_name"`
+	PolicyType     InsurancePolicyType `json:"policyType"     keel:"policy_type"`
+	PolicyNumber   string              `json:"policyNumber"   keel:"policy_number"`
+	ProviderName   string              `json:"providerName"   keel:"provider_name"`
 	CoverageAmount decimal.Decimal     `json:"coverageAmount" keel:"coverage_amount"`
-	EffectiveDate  int64               `json:"effectiveDate" keel:"effective_date"`
+	EffectiveDate  int64               `json:"effectiveDate"  keel:"effective_date"`
 	ExpirationDate int64               `json:"expirationDate" keel:"expiration_date"`
-	IsVerified     bool                `json:"isVerified" keel:"is_verified"`
-	Version        int64               `json:"version" keel:"version,version"`
-	CreatedAt      int64               `json:"createdAt" keel:"created_at,autocreate"`
-	UpdatedAt      int64               `json:"updatedAt" keel:"updated_at,autoupdate"`
+	IsVerified     bool                `json:"isVerified"     keel:"is_verified"`
+	Version        int64               `json:"version"        keel:"version,version"`
+	CreatedAt      int64               `json:"createdAt"      keel:"created_at,autocreate"`
+	UpdatedAt      int64               `json:"updatedAt"      keel:"updated_at,autoupdate"`
 
 	Carrier *Carrier `json:"carrier,omitempty" keel:"belongs:carrier_id"`
 }

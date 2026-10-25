@@ -101,29 +101,29 @@ type EffectSnapshot struct {
 type Issue struct {
 	keel.Table `keel:"billing_queue_issues"`
 
-	ID              pulid.ID        `json:"id" keel:"id,pk,autoid:bqis_"`
-	BusinessUnitID  pulid.ID        `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
-	OrganizationID  pulid.ID        `json:"organizationId" keel:"organization_id,pk,tenant"`
-	ItemID          pulid.ID        `json:"itemId" keel:"item_id"`
-	CheckKey        CheckKey        `json:"checkKey" keel:"check_key"`
-	Code            IssueCode       `json:"code" keel:"code"`
-	SubjectKey      string          `json:"subjectKey" keel:"subject_key"`
-	Summary         string          `json:"summary" keel:"summary"`
-	Reasoning       string          `json:"reasoning" keel:"reasoning,nullzero"`
-	Source          IssueSource     `json:"source" keel:"source"`
-	AgentRunID      *pulid.ID       `json:"agentRunId" keel:"agent_run_id"`
+	ID              pulid.ID        `json:"id"              keel:"id,pk,autoid:bqis_"`
+	BusinessUnitID  pulid.ID        `json:"businessUnitId"  keel:"business_unit_id,pk,tenant"`
+	OrganizationID  pulid.ID        `json:"organizationId"  keel:"organization_id,pk,tenant"`
+	ItemID          pulid.ID        `json:"itemId"          keel:"item_id"`
+	CheckKey        CheckKey        `json:"checkKey"        keel:"check_key"`
+	Code            IssueCode       `json:"code"            keel:"code"`
+	SubjectKey      string          `json:"subjectKey"      keel:"subject_key"`
+	Summary         string          `json:"summary"         keel:"summary"`
+	Reasoning       string          `json:"reasoning"       keel:"reasoning,nullzero"`
+	Source          IssueSource     `json:"source"          keel:"source"`
+	AgentRunID      *pulid.ID       `json:"agentRunId"      keel:"agent_run_id"`
 	FlaggedChargeID *pulid.ID       `json:"flaggedChargeId" keel:"flagged_charge_id"`
-	Options         []IssueOption   `json:"options" keel:"options,jsonb"`
-	ResolutionKey   *string         `json:"resolutionKey" keel:"resolution_key"`
-	ResolutionText  string          `json:"resolutionText" keel:"resolution_text,nullzero"`
-	EffectSnapshot  *EffectSnapshot `json:"-" keel:"effect_snapshot,jsonb"`
-	ResolvedByID    *pulid.ID       `json:"resolvedById" keel:"resolved_by_id"`
-	ResolvedAt      *int64          `json:"resolvedAt" keel:"resolved_at"`
-	RequestedAt     *int64          `json:"requestedAt" keel:"requested_at"`
-	RequestedByID   *pulid.ID       `json:"requestedById" keel:"requested_by_id"`
-	Version         int64           `json:"version" keel:"version,version"`
-	CreatedAt       int64           `json:"createdAt" keel:"created_at,autocreate"`
-	UpdatedAt       int64           `json:"updatedAt" keel:"updated_at,autoupdate"`
+	Options         []IssueOption   `json:"options"         keel:"options,jsonb"`
+	ResolutionKey   *string         `json:"resolutionKey"   keel:"resolution_key"`
+	ResolutionText  string          `json:"resolutionText"  keel:"resolution_text,nullzero"`
+	EffectSnapshot  *EffectSnapshot `json:"-"               keel:"effect_snapshot,jsonb"`
+	ResolvedByID    *pulid.ID       `json:"resolvedById"    keel:"resolved_by_id"`
+	ResolvedAt      *int64          `json:"resolvedAt"      keel:"resolved_at"`
+	RequestedAt     *int64          `json:"requestedAt"     keel:"requested_at"`
+	RequestedByID   *pulid.ID       `json:"requestedById"   keel:"requested_by_id"`
+	Version         int64           `json:"version"         keel:"version,version"`
+	CreatedAt       int64           `json:"createdAt"       keel:"created_at,autocreate"`
+	UpdatedAt       int64           `json:"updatedAt"       keel:"updated_at,autoupdate"`
 
 	// Undoable is whether the person can take the settlement back from the
 	// item. It is decided when the item is read.

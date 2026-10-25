@@ -26,17 +26,17 @@ func MappingSourceID(value string) pulid.ID {
 type EDIMappingProfile struct {
 	keel.Table `keel:"edi_mapping_profiles"`
 
-	ID             pulid.ID `json:"id" keel:"id,pk,autoid:edimp_"`
+	ID             pulid.ID `json:"id"             keel:"id,pk,autoid:edimp_"`
 	BusinessUnitID pulid.ID `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
 	OrganizationID pulid.ID `json:"organizationId" keel:"organization_id,pk,tenant"`
-	EDIPartnerID   pulid.ID `json:"ediPartnerId" keel:"edi_partner_id"`
-	Name           string   `json:"name" keel:"name"`
-	Description    string   `json:"description" keel:"description,nullzero"`
-	SearchVector   string   `json:"-" keel:"search_vector,tsvector,readonly,noselect"`
-	Rank           string   `json:"-" keel:"rank,computed"`
-	Version        int64    `json:"version" keel:"version,version"`
-	CreatedAt      int64    `json:"createdAt" keel:"created_at,autocreate"`
-	UpdatedAt      int64    `json:"updatedAt" keel:"updated_at,autoupdate"`
+	EDIPartnerID   pulid.ID `json:"ediPartnerId"   keel:"edi_partner_id"`
+	Name           string   `json:"name"           keel:"name"`
+	Description    string   `json:"description"    keel:"description,nullzero"`
+	SearchVector   string   `json:"-"              keel:"search_vector,tsvector,readonly,noselect"`
+	Rank           string   `json:"-"              keel:"rank,computed"`
+	Version        int64    `json:"version"        keel:"version,version"`
+	CreatedAt      int64    `json:"createdAt"      keel:"created_at,autocreate"`
+	UpdatedAt      int64    `json:"updatedAt"      keel:"updated_at,autoupdate"`
 
 	Partner *EDIPartner              `json:"partner,omitempty" keel:"belongs:edi_partner_id"`
 	Entries []*EDIMappingProfileItem `json:"entries,omitempty" keel:"many:mapping_profile_id"`
@@ -68,21 +68,21 @@ func (p *EDIMappingProfile) GetPostgresSearchConfig() domaintypes.PostgresSearch
 type EDIMappingProfileItem struct {
 	keel.Table `keel:"edi_mapping_profile_items"`
 
-	ID               pulid.ID          `json:"id" keel:"id,pk,autoid:edimi_"`
-	BusinessUnitID   pulid.ID          `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
-	OrganizationID   pulid.ID          `json:"organizationId" keel:"organization_id,pk,tenant"`
-	EDIPartnerID     pulid.ID          `json:"ediPartnerId" keel:"edi_partner_id"`
+	ID               pulid.ID          `json:"id"               keel:"id,pk,autoid:edimi_"`
+	BusinessUnitID   pulid.ID          `json:"businessUnitId"   keel:"business_unit_id,pk,tenant"`
+	OrganizationID   pulid.ID          `json:"organizationId"   keel:"organization_id,pk,tenant"`
+	EDIPartnerID     pulid.ID          `json:"ediPartnerId"     keel:"edi_partner_id"`
 	MappingProfileID pulid.ID          `json:"mappingProfileId" keel:"mapping_profile_id"`
-	EntityType       MappingEntityType `json:"entityType" keel:"entity_type"`
-	SourceID         pulid.ID          `json:"sourceId" keel:"source_id"`
-	SourceLabel      string            `json:"sourceLabel" keel:"source_label,nullzero"`
-	TargetID         pulid.ID          `json:"targetId" keel:"target_id"`
-	TargetLabel      string            `json:"targetLabel" keel:"target_label,nullzero"`
-	CreatedByID      pulid.ID          `json:"createdById" keel:"created_by_id,nullzero"`
-	UpdatedByID      pulid.ID          `json:"updatedById" keel:"updated_by_id,nullzero"`
-	Version          int64             `json:"version" keel:"version,version"`
-	CreatedAt        int64             `json:"createdAt" keel:"created_at,autocreate"`
-	UpdatedAt        int64             `json:"updatedAt" keel:"updated_at,autoupdate"`
+	EntityType       MappingEntityType `json:"entityType"       keel:"entity_type"`
+	SourceID         pulid.ID          `json:"sourceId"         keel:"source_id"`
+	SourceLabel      string            `json:"sourceLabel"      keel:"source_label,nullzero"`
+	TargetID         pulid.ID          `json:"targetId"         keel:"target_id"`
+	TargetLabel      string            `json:"targetLabel"      keel:"target_label,nullzero"`
+	CreatedByID      pulid.ID          `json:"createdById"      keel:"created_by_id,nullzero"`
+	UpdatedByID      pulid.ID          `json:"updatedById"      keel:"updated_by_id,nullzero"`
+	Version          int64             `json:"version"          keel:"version,version"`
+	CreatedAt        int64             `json:"createdAt"        keel:"created_at,autocreate"`
+	UpdatedAt        int64             `json:"updatedAt"        keel:"updated_at,autoupdate"`
 
 	Partner *EDIPartner        `json:"partner,omitempty" keel:"belongs:edi_partner_id"`
 	Profile *EDIMappingProfile `json:"profile,omitempty" keel:"belongs:mapping_profile_id"`

@@ -177,7 +177,8 @@ func (r *repository) ReplaceCategoryGLAccounts(
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
 		ccga := costingcontroldb.CostCategoryGLAccounts
 		db := r.db.Keel(ctx)
-		if _, err := ccga.Where(ccga.CostCategoryID.Eq(req.CostCategoryID)).Delete(ctx, db); err != nil {
+		if _, err := ccga.Where(ccga.CostCategoryID.Eq(req.CostCategoryID)).
+			Delete(ctx, db); err != nil {
 			r.l.Error("failed to clear cost category GL accounts", zap.Error(err))
 			return err
 		}

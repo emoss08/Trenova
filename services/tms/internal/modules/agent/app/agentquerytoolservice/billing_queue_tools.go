@@ -102,7 +102,10 @@ func buildBillingQueueList(
 		summary: "List billing queue items, the shipments waiting on a biller. Open one with " +
 			"billing_get_queue_item before deciding it; Posted items need status Posted.",
 		resource: permission.ResourceBillingQueue,
-		config:   listquery.Describe((*billingqueue.BillingQueueItem)(nil), billingqueuedb.BillingQueueItemsSchema()),
+		config: listquery.Describe(
+			(*billingqueue.BillingQueueItem)(nil),
+			billingqueuedb.BillingQueueItemsSchema(),
+		),
 		fields: []listField{
 			{
 				Name:   paramStatus,

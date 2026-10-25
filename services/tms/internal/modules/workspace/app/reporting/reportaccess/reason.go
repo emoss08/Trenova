@@ -12,7 +12,7 @@ import (
 	"github.com/emoss08/trenova/shared/i18n"
 )
 
-func (r *Resolver) Reason(ctx context.Context, d Denial) string {
+func (r *Resolver) Reason(ctx context.Context, d *Denial) string {
 	locale := i18n.FromContext(ctx)
 	entity := r.catalog.Label(ctx, d.Entity.Key, d.Entity.Label)
 	plural := r.catalog.Label(ctx, d.Entity.Key+"@plural", d.Entity.Plural)
@@ -112,8 +112,13 @@ func (a *Access) Refusal(ctx context.Context, err error) error {
 		return err
 	}
 	reasons := make([]string, 0, len(a.denials))
-	for _, d := range a.Denials() {
-		if reason := a.resolver.Reason(ctx, d); reason != "" && !slices.Contains(reasons, reason) {
+	denials := a.Denials()
+	for i := range denials {
+		if reason := a.resolver.Reason(
+			ctx,
+			&denials[i],
+		); reason != "" &&
+			!slices.Contains(reasons, reason) {
 			reasons = append(reasons, reason)
 		}
 	}

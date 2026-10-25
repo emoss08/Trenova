@@ -94,39 +94,39 @@ func TallyResults(results []FieldResult) Tally {
 type Correction struct {
 	keel.Table `keel:"ai_corrections"`
 
-	ID             pulid.ID `json:"id" keel:"id,pk,autoid:aicr_"`
+	ID             pulid.ID `json:"id"             keel:"id,pk,autoid:aicr_"`
 	BusinessUnitID pulid.ID `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
 	OrganizationID pulid.ID `json:"organizationId" keel:"organization_id,pk,tenant"`
 
-	Task         Task        `json:"task" keel:"task"`
-	SourceType   SourceType  `json:"sourceType" keel:"source_type"`
-	SourceID     pulid.ID    `json:"sourceId" keel:"source_id"`
-	DocumentID   *pulid.ID   `json:"documentId" keel:"document_id"`
-	SubjectType  SubjectType `json:"subjectType" keel:"subject_type"`
-	SubjectID    pulid.ID    `json:"subjectId" keel:"subject_id"`
+	Task         Task        `json:"task"         keel:"task"`
+	SourceType   SourceType  `json:"sourceType"   keel:"source_type"`
+	SourceID     pulid.ID    `json:"sourceId"     keel:"source_id"`
+	DocumentID   *pulid.ID   `json:"documentId"   keel:"document_id"`
+	SubjectType  SubjectType `json:"subjectType"  keel:"subject_type"`
+	SubjectID    pulid.ID    `json:"subjectId"    keel:"subject_id"`
 	CapturedByID pulid.ID    `json:"capturedById" keel:"captured_by_id"`
 
-	DocumentKind         string    `json:"documentKind" keel:"document_kind,nullzero"`
-	DocumentFingerprint  string    `json:"documentFingerprint" keel:"document_fingerprint,nullzero"`
-	ExtractionModel      string    `json:"extractionModel" keel:"extraction_model,nullzero"`
+	DocumentKind         string    `json:"documentKind"         keel:"document_kind,nullzero"`
+	DocumentFingerprint  string    `json:"documentFingerprint"  keel:"document_fingerprint,nullzero"`
+	ExtractionModel      string    `json:"extractionModel"      keel:"extraction_model,nullzero"`
 	ExtractionProviderID *pulid.ID `json:"extractionProviderId" keel:"extraction_provider_id"`
-	PredictedConfidence  float64   `json:"predictedConfidence" keel:"predicted_confidence"`
+	PredictedConfidence  float64   `json:"predictedConfidence"  keel:"predicted_confidence"`
 
-	Predicted    *Snapshot     `json:"predicted" keel:"predicted,jsonb"`
-	Confirmed    *Snapshot     `json:"confirmed" keel:"confirmed,jsonb"`
+	Predicted    *Snapshot     `json:"predicted"    keel:"predicted,jsonb"`
+	Confirmed    *Snapshot     `json:"confirmed"    keel:"confirmed,jsonb"`
 	FieldResults []FieldResult `json:"fieldResults" keel:"field_results,jsonb"`
 
-	ScoredCount      int `json:"scoredCount" keel:"scored_count"`
-	CorrectCount     int `json:"correctCount" keel:"correct_count"`
-	CorrectedCount   int `json:"correctedCount" keel:"corrected_count"`
-	MissedCount      int `json:"missedCount" keel:"missed_count"`
+	ScoredCount      int `json:"scoredCount"      keel:"scored_count"`
+	CorrectCount     int `json:"correctCount"     keel:"correct_count"`
+	CorrectedCount   int `json:"correctedCount"   keel:"corrected_count"`
+	MissedCount      int `json:"missedCount"      keel:"missed_count"`
 	UnconfirmedCount int `json:"unconfirmedCount" keel:"unconfirmed_count"`
-	UnscoredCount    int `json:"unscoredCount" keel:"unscored_count"`
+	UnscoredCount    int `json:"unscoredCount"    keel:"unscored_count"`
 
 	CapturedAt int64 `json:"capturedAt" keel:"captured_at"`
-	Version    int64 `json:"version" keel:"version,version"`
-	CreatedAt  int64 `json:"createdAt" keel:"created_at,autocreate"`
-	UpdatedAt  int64 `json:"updatedAt" keel:"updated_at,autoupdate"`
+	Version    int64 `json:"version"    keel:"version,version"`
+	CreatedAt  int64 `json:"createdAt"  keel:"created_at,autocreate"`
+	UpdatedAt  int64 `json:"updatedAt"  keel:"updated_at,autoupdate"`
 
 	BusinessUnit *tenant.BusinessUnit `json:"-"`
 	Organization *tenant.Organization `json:"-"`

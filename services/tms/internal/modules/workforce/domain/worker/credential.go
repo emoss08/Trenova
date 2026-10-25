@@ -110,33 +110,33 @@ var (
 
 // Licences and certificates a worker holds, with their expiry and verification
 type WorkerCredential struct {
-	keel.Table `                                                    keel:"worker_credentials,report=Parties"`
+	keel.Table `keel:"worker_credentials,report=Parties"`
 
-	ID               pulid.ID         `json:"id" keel:"id,pk,autoid:wcred_"`
-	BusinessUnitID   pulid.ID         `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
-	OrganizationID   pulid.ID         `json:"organizationId" keel:"organization_id,pk,tenant"`
-	WorkerID         pulid.ID         `json:"workerId" keel:"worker_id"`
+	ID               pulid.ID         `json:"id"               keel:"id,pk,autoid:wcred_"`
+	BusinessUnitID   pulid.ID         `json:"businessUnitId"   keel:"business_unit_id,pk,tenant"`
+	OrganizationID   pulid.ID         `json:"organizationId"   keel:"organization_id,pk,tenant"`
+	WorkerID         pulid.ID         `json:"workerId"         keel:"worker_id"`
 	CredentialTypeID pulid.ID         `json:"credentialTypeId" keel:"credential_type_id"`
-	Status           CredentialStatus `json:"status" keel:"status"`
-	Number           string           `json:"number" keel:"number,nullzero"`
+	Status           CredentialStatus `json:"status"           keel:"status"`
+	Number           string           `json:"number"           keel:"number,nullzero"`
 	IssuingAuthority string           `json:"issuingAuthority" keel:"issuing_authority,nullzero"`
-	IssuedAt         *int64           `json:"issuedAt" keel:"issued_at,label=Issued"`
-	ExpiresAt        *int64           `json:"expiresAt" keel:"expires_at,label=Expires"`
-	DocumentID       pulid.ID         `json:"documentId" keel:"document_id,nullzero"`
-	Notes            string           `json:"notes" keel:"notes,nullzero"`
-	VerifiedByID     pulid.ID         `json:"verifiedById" keel:"verified_by_id,nullzero"`
-	VerifiedAt       *int64           `json:"verifiedAt" keel:"verified_at,label=Verified"`
-	ArchivedByID     pulid.ID         `json:"archivedById" keel:"archived_by_id,nullzero"`
-	ArchivedAt       *int64           `json:"archivedAt" keel:"archived_at"`
-	ArchiveReason    string           `json:"archiveReason" keel:"archive_reason,nullzero"`
-	Version          int64            `json:"version" keel:"version,version"`
-	CreatedAt        int64            `json:"createdAt" keel:"created_at,autocreate"`
-	UpdatedAt        int64            `json:"updatedAt" keel:"updated_at,autoupdate"`
+	IssuedAt         *int64           `json:"issuedAt"         keel:"issued_at,label=Issued"`
+	ExpiresAt        *int64           `json:"expiresAt"        keel:"expires_at,label=Expires"`
+	DocumentID       pulid.ID         `json:"documentId"       keel:"document_id,nullzero"`
+	Notes            string           `json:"notes"            keel:"notes,nullzero"`
+	VerifiedByID     pulid.ID         `json:"verifiedById"     keel:"verified_by_id,nullzero"`
+	VerifiedAt       *int64           `json:"verifiedAt"       keel:"verified_at,label=Verified"`
+	ArchivedByID     pulid.ID         `json:"archivedById"     keel:"archived_by_id,nullzero"`
+	ArchivedAt       *int64           `json:"archivedAt"       keel:"archived_at"`
+	ArchiveReason    string           `json:"archiveReason"    keel:"archive_reason,nullzero"`
+	Version          int64            `json:"version"          keel:"version,version"`
+	CreatedAt        int64            `json:"createdAt"        keel:"created_at,autocreate"`
+	UpdatedAt        int64            `json:"updatedAt"        keel:"updated_at,autoupdate"`
 
 	CredentialType *WorkerCredentialType `json:"credentialType,omitempty" keel:"belongs:credential_type_id"`
-	Worker         *Worker               `json:"worker,omitempty" keel:"belongs:worker_id"`
-	Document       *document.Document    `json:"document,omitempty" keel:"belongs:document_id,noreport"`
-	VerifiedBy     *tenant.User          `json:"verifiedBy,omitempty" keel:"belongs:verified_by_id,noreport"`
+	Worker         *Worker               `json:"worker,omitempty"         keel:"belongs:worker_id"`
+	Document       *document.Document    `json:"document,omitempty"       keel:"belongs:document_id,noreport"`
+	VerifiedBy     *tenant.User          `json:"verifiedBy,omitempty"     keel:"belongs:verified_by_id,noreport"`
 }
 
 func (c *WorkerCredential) Validate(multiErr *errortypes.MultiError) {

@@ -31,16 +31,16 @@ func (p PasswordResetPurpose) IsInvite() bool {
 type PasswordResetToken struct {
 	keel.Table `keel:"password_reset_tokens"`
 
-	ID             pulid.ID             `json:"id" keel:"id,pk,autoid:prt_"`
-	UserID         pulid.ID             `json:"userId" keel:"user_id"`
+	ID             pulid.ID             `json:"id"             keel:"id,pk,autoid:prt_"`
+	UserID         pulid.ID             `json:"userId"         keel:"user_id"`
 	BusinessUnitID pulid.ID             `json:"businessUnitId" keel:"business_unit_id,tenant"`
 	OrganizationID pulid.ID             `json:"organizationId" keel:"organization_id,tenant"`
-	TokenHash      string               `json:"-" keel:"token_hash"`
-	Purpose        PasswordResetPurpose `json:"purpose" keel:"purpose"`
-	ExpiresAt      int64                `json:"expiresAt" keel:"expires_at"`
-	UsedAt         *int64               `json:"usedAt" keel:"used_at"`
-	InvalidatedAt  *int64               `json:"invalidatedAt" keel:"invalidated_at"`
-	CreatedAt      int64                `json:"createdAt" keel:"created_at,autocreate"`
+	TokenHash      string               `json:"-"              keel:"token_hash"`
+	Purpose        PasswordResetPurpose `json:"purpose"        keel:"purpose"`
+	ExpiresAt      int64                `json:"expiresAt"      keel:"expires_at"`
+	UsedAt         *int64               `json:"usedAt"         keel:"used_at"`
+	InvalidatedAt  *int64               `json:"invalidatedAt"  keel:"invalidated_at"`
+	CreatedAt      int64                `json:"createdAt"      keel:"created_at,autocreate"`
 
 	User *User `json:"user,omitempty" keel:"belongs:user_id"`
 }

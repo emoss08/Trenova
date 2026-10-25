@@ -28,25 +28,25 @@ const (
 type CaptureProfile struct {
 	keel.Table `keel:"capture_profiles"`
 
-	ID                  pulid.ID            `json:"id" keel:"id,pk,autoid:cprf_"`
-	BusinessUnitID      pulid.ID            `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
-	OrganizationID      pulid.ID            `json:"organizationId" keel:"organization_id,pk,tenant"`
-	Name                string              `json:"name" keel:"name"`
-	Description         string              `json:"description" keel:"description,nullzero"`
-	Status              ProfileStatus       `json:"status" keel:"status"`
-	IsDefault           bool                `json:"isDefault" keel:"is_default"`
-	DPI                 int                 `json:"dpi" keel:"dpi"`
-	PixelType           PixelType           `json:"pixelType" keel:"pixel_type"`
-	Duplex              bool                `json:"duplex" keel:"duplex"`
-	UseFeeder           bool                `json:"useFeeder" keel:"use_feeder"`
-	DiscardBlankPages   bool                `json:"discardBlankPages" keel:"discard_blank_pages"`
-	JPEGQuality         int                 `json:"jpegQuality" keel:"jpeg_quality"`
-	ShowDriverUI        bool                `json:"showDriverUi" keel:"show_driver_ui"`
+	ID                  pulid.ID            `json:"id"                  keel:"id,pk,autoid:cprf_"`
+	BusinessUnitID      pulid.ID            `json:"businessUnitId"      keel:"business_unit_id,pk,tenant"`
+	OrganizationID      pulid.ID            `json:"organizationId"      keel:"organization_id,pk,tenant"`
+	Name                string              `json:"name"                keel:"name"`
+	Description         string              `json:"description"         keel:"description,nullzero"`
+	Status              ProfileStatus       `json:"status"              keel:"status"`
+	IsDefault           bool                `json:"isDefault"           keel:"is_default"`
+	DPI                 int                 `json:"dpi"                 keel:"dpi"`
+	PixelType           PixelType           `json:"pixelType"           keel:"pixel_type"`
+	Duplex              bool                `json:"duplex"              keel:"duplex"`
+	UseFeeder           bool                `json:"useFeeder"           keel:"use_feeder"`
+	DiscardBlankPages   bool                `json:"discardBlankPages"   keel:"discard_blank_pages"`
+	JPEGQuality         int                 `json:"jpegQuality"         keel:"jpeg_quality"`
+	ShowDriverUI        bool                `json:"showDriverUi"        keel:"show_driver_ui"`
 	SeparatorStrategies []SeparatorStrategy `json:"separatorStrategies" keel:"separator_strategies"`
-	FixedPageCount      int                 `json:"fixedPageCount" keel:"fixed_page_count"`
-	Version             int64               `json:"version" keel:"version,version"`
-	CreatedAt           int64               `json:"createdAt" keel:"created_at,autocreate"`
-	UpdatedAt           int64               `json:"updatedAt" keel:"updated_at,autoupdate"`
+	FixedPageCount      int                 `json:"fixedPageCount"      keel:"fixed_page_count"`
+	Version             int64               `json:"version"             keel:"version,version"`
+	CreatedAt           int64               `json:"createdAt"           keel:"created_at,autocreate"`
+	UpdatedAt           int64               `json:"updatedAt"           keel:"updated_at,autoupdate"`
 
 	Organization *tenant.Organization `json:"organization,omitempty"`
 	BusinessUnit *tenant.BusinessUnit `json:"businessUnit,omitempty"`

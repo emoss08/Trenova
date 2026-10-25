@@ -90,7 +90,9 @@ func editQuery(
 	)
 }
 
-func reorderQuery(req *agentports.ReorderQueuedMessagesRequest) *keel.Query[conversation.QueuedMessage] {
+func reorderQuery(
+	req *agentports.ReorderQueuedMessagesRequest,
+) *keel.Query[conversation.QueuedMessage] {
 	q := conversationdb.QueuedMessages
 
 	return q.Where(inScope(&req.Scope), q.ID.In(req.IDs...))

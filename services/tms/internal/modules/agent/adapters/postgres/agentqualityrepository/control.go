@@ -203,10 +203,14 @@ func (r *controlRepository) ListScheduleTargets(
 			org := tenantdb.Organizations
 			limit := clampLimit(req.Limit, defaultScheduleTargetCap, maxScheduleTargetCap)
 
-			rows, err := keel.Into[scheduleTargetRow](ctx, r.db.Keel(ctx), scheduleTargetQuery(true).
-				Where(keel.When(req.AfterOrganizationID.IsNotNil(), org.ID.Gt(req.AfterOrganizationID))).
-				Order(org.ID.Asc()).
-				Limit(limit))
+			rows, err := keel.Into[scheduleTargetRow](
+				ctx,
+				r.db.Keel(ctx),
+				scheduleTargetQuery(true).
+					Where(keel.When(req.AfterOrganizationID.IsNotNil(), org.ID.Gt(req.AfterOrganizationID))).
+					Order(org.ID.Asc()).
+					Limit(limit),
+			)
 			if err != nil {
 				return nil, fmt.Errorf("list organizations to schedule: %w", err)
 			}
@@ -222,7 +226,9 @@ func (r *controlRepository) ListScheduleTargets(
 			}
 
 			c := agentqualitydb.Controls
-			controls, err := c.AllTenants().Where(c.OrganizationID.In(orgIDs...)).All(ctx, r.db.Keel(ctx))
+			controls, err := c.AllTenants().
+				Where(c.OrganizationID.In(orgIDs...)).
+				All(ctx, r.db.Keel(ctx))
 			if err != nil {
 				return nil, fmt.Errorf("read quality controls to schedule: %w", err)
 			}

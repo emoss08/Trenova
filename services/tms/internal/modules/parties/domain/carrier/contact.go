@@ -9,22 +9,22 @@ import (
 )
 
 type CarrierContact struct {
-	keel.Table `                                                 keel:"carrier_contacts"`
+	keel.Table `keel:"carrier_contacts"`
 
-	ID             pulid.ID `json:"id" keel:"id,pk,autoid:carc_"`
+	ID             pulid.ID `json:"id"             keel:"id,pk,autoid:carc_"`
 	BusinessUnitID pulid.ID `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
 	OrganizationID pulid.ID `json:"organizationId" keel:"organization_id,pk,tenant"`
-	CarrierID      pulid.ID `json:"carrierId" keel:"carrier_id"`
+	CarrierID      pulid.ID `json:"carrierId"      keel:"carrier_id"`
 
-	Name                      string `json:"name" keel:"name"`
-	Title                     string `json:"title" keel:"title,nullzero"`
-	Email                     string `json:"email" keel:"email,nullzero"`
-	Phone                     string `json:"phone" keel:"phone,nullzero"`
-	IsPrimary                 bool   `json:"isPrimary" keel:"is_primary"`
+	Name                      string `json:"name"                      keel:"name"`
+	Title                     string `json:"title"                     keel:"title,nullzero"`
+	Email                     string `json:"email"                     keel:"email,nullzero"`
+	Phone                     string `json:"phone"                     keel:"phone,nullzero"`
+	IsPrimary                 bool   `json:"isPrimary"                 keel:"is_primary"`
 	ReceivesRateConfirmations bool   `json:"receivesRateConfirmations" keel:"receives_rate_confirmations"`
-	Version                   int64  `json:"version" keel:"version,version"`
-	CreatedAt                 int64  `json:"createdAt" keel:"created_at,autocreate"`
-	UpdatedAt                 int64  `json:"updatedAt" keel:"updated_at,autoupdate"`
+	Version                   int64  `json:"version"                   keel:"version,version"`
+	CreatedAt                 int64  `json:"createdAt"                 keel:"created_at,autocreate"`
+	UpdatedAt                 int64  `json:"updatedAt"                 keel:"updated_at,autoupdate"`
 
 	Carrier *Carrier `json:"carrier,omitempty" keel:"belongs:carrier_id"`
 }

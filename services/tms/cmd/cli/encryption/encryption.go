@@ -72,7 +72,8 @@ Examples:
 }
 
 func init() {
-	rewrapCmd.Flags().BoolVar(&rewrapDryRun, "dry-run", false, "Report what would move without writing")
+	rewrapCmd.Flags().
+		BoolVar(&rewrapDryRun, "dry-run", false, "Report what would move without writing")
 	rewrapCmd.Flags().StringVar(&rewrapOrg, "org", "", "Rewrap only this organization")
 	rewrapCmd.Flags().IntVar(&rewrapBatchSize, "batch-size", 200, "Rows read per query")
 	rewrapCmd.Flags().BoolVar(
@@ -136,11 +137,15 @@ func runRewrap(cmd *cobra.Command, _ []string) error {
 		Logger:    logger.Named("encryption.rewrap"),
 	})
 
-	report, err := service.Run(ctx, envelopeSources(!rewrapSkipObjects), enveloperewrapservice.Options{
-		DryRun:         rewrapDryRun,
-		BatchSize:      rewrapBatchSize,
-		OrganizationID: orgID,
-	})
+	report, err := service.Run(
+		ctx,
+		envelopeSources(!rewrapSkipObjects),
+		enveloperewrapservice.Options{
+			DryRun:         rewrapDryRun,
+			BatchSize:      rewrapBatchSize,
+			OrganizationID: orgID,
+		},
+	)
 	if err != nil {
 		return err
 	}

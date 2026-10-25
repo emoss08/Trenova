@@ -42,28 +42,28 @@ func (vt VersionTag) IsValid() bool {
 }
 
 type FormulaTemplateVersion struct {
-	keel.Table `                                                         keel:"formula_template_versions"`
+	keel.Table `keel:"formula_template_versions"`
 
-	ID             pulid.ID                         `json:"id" keel:"id,pk,autoid:ftv_"`
-	TemplateID     pulid.ID                         `json:"templateId" keel:"template_id"`
+	ID             pulid.ID                         `json:"id"             keel:"id,pk,autoid:ftv_"`
+	TemplateID     pulid.ID                         `json:"templateId"     keel:"template_id"`
 	OrganizationID pulid.ID                         `json:"organizationId" keel:"organization_id,tenant"`
 	BusinessUnitID pulid.ID                         `json:"businessUnitId" keel:"business_unit_id,tenant"`
-	VersionNumber  int64                            `json:"versionNumber" keel:"version_number"`
-	Name           string                           `json:"name" keel:"name"`
-	Description    string                           `json:"description" keel:"description,nullzero"`
-	Source         string                           `json:"source" keel:"source"`
-	Inputs         []tarifftypes.InputDecl          `json:"inputs" keel:"inputs,jsonb"`
-	Imports        []tarifftypes.Import             `json:"imports" keel:"imports,jsonb"`
-	Tables         []tarifftypes.TablePin           `json:"tables" keel:"tables,jsonb"`
-	TestCount      int32                            `json:"testCount" keel:"test_count"`
-	Status         Status                           `json:"status" keel:"status"`
-	EffectiveFrom  *int64                           `json:"effectiveFrom" keel:"effective_from"`
-	Metadata       map[string]any                   `json:"metadata" keel:"metadata,jsonb"`
-	ChangeMessage  string                           `json:"changeMessage" keel:"change_message,nullzero"`
-	ChangeSummary  map[string]jsonutils.FieldChange `json:"changeSummary" keel:"change_summary,jsonb"`
-	Tags           []VersionTag                     `json:"tags" keel:"tags"`
-	CreatedByID    pulid.ID                         `json:"createdById" keel:"created_by_id"`
-	CreatedAt      int64                            `json:"createdAt" keel:"created_at,autocreate"`
+	VersionNumber  int64                            `json:"versionNumber"  keel:"version_number"`
+	Name           string                           `json:"name"           keel:"name"`
+	Description    string                           `json:"description"    keel:"description,nullzero"`
+	Source         string                           `json:"source"         keel:"source"`
+	Inputs         []tarifftypes.InputDecl          `json:"inputs"         keel:"inputs,jsonb"`
+	Imports        []tarifftypes.Import             `json:"imports"        keel:"imports,jsonb"`
+	Tables         []tarifftypes.TablePin           `json:"tables"         keel:"tables,jsonb"`
+	TestCount      int32                            `json:"testCount"      keel:"test_count"`
+	Status         Status                           `json:"status"         keel:"status"`
+	EffectiveFrom  *int64                           `json:"effectiveFrom"  keel:"effective_from"`
+	Metadata       map[string]any                   `json:"metadata"       keel:"metadata,jsonb"`
+	ChangeMessage  string                           `json:"changeMessage"  keel:"change_message,nullzero"`
+	ChangeSummary  map[string]jsonutils.FieldChange `json:"changeSummary"  keel:"change_summary,jsonb"`
+	Tags           []VersionTag                     `json:"tags"           keel:"tags"`
+	CreatedByID    pulid.ID                         `json:"createdById"    keel:"created_by_id"`
+	CreatedAt      int64                            `json:"createdAt"      keel:"created_at,autocreate"`
 
 	CreatedBy *tenant.User `json:"createdBy,omitempty" keel:"belongs:created_by_id"`
 }

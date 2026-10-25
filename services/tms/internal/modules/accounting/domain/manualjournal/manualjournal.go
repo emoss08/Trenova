@@ -16,34 +16,34 @@ var _ domaintypes.PostgresSearchable = (*Request)(nil)
 type Request struct {
 	keel.Table `keel:"manual_journal_requests"`
 
-	ID                      pulid.ID `json:"id" keel:"id,pk,autoid:mjr_"`
-	OrganizationID          pulid.ID `json:"organizationId" keel:"organization_id,pk,tenant"`
-	BusinessUnitID          pulid.ID `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
-	RequestNumber           string   `json:"requestNumber" keel:"request_number"`
-	Status                  Status   `json:"status" keel:"status"`
-	Description             string   `json:"description" keel:"description"`
-	Reason                  string   `json:"reason" keel:"reason,nullzero"`
-	AccountingDate          int64    `json:"accountingDate" keel:"accounting_date"`
-	RequestedFiscalYearID   pulid.ID `json:"requestedFiscalYearId" keel:"requested_fiscal_year_id"`
+	ID                      pulid.ID `json:"id"                      keel:"id,pk,autoid:mjr_"`
+	OrganizationID          pulid.ID `json:"organizationId"          keel:"organization_id,pk,tenant"`
+	BusinessUnitID          pulid.ID `json:"businessUnitId"          keel:"business_unit_id,pk,tenant"`
+	RequestNumber           string   `json:"requestNumber"           keel:"request_number"`
+	Status                  Status   `json:"status"                  keel:"status"`
+	Description             string   `json:"description"             keel:"description"`
+	Reason                  string   `json:"reason"                  keel:"reason,nullzero"`
+	AccountingDate          int64    `json:"accountingDate"          keel:"accounting_date"`
+	RequestedFiscalYearID   pulid.ID `json:"requestedFiscalYearId"   keel:"requested_fiscal_year_id"`
 	RequestedFiscalPeriodID pulid.ID `json:"requestedFiscalPeriodId" keel:"requested_fiscal_period_id"`
-	CurrencyCode            string   `json:"currencyCode" keel:"currency_code"`
-	TotalDebit              int64    `json:"totalDebit" keel:"total_debit_minor"`
-	TotalCredit             int64    `json:"totalCredit" keel:"total_credit_minor"`
-	ApprovedAt              *int64   `json:"approvedAt" keel:"approved_at"`
-	ApprovedByID            pulid.ID `json:"approvedById" keel:"approved_by_id,nullzero"`
-	RejectedAt              *int64   `json:"rejectedAt" keel:"rejected_at"`
-	RejectedByID            pulid.ID `json:"rejectedById" keel:"rejected_by_id,nullzero"`
-	RejectionReason         string   `json:"rejectionReason" keel:"rejection_reason,nullzero"`
-	CancelledAt             *int64   `json:"cancelledAt" keel:"cancelled_at"`
-	CancelledByID           pulid.ID `json:"cancelledById" keel:"cancelled_by_id,nullzero"`
-	CancelReason            string   `json:"cancelReason" keel:"cancel_reason,nullzero"`
-	PostedBatchID           pulid.ID `json:"postedBatchId" keel:"posted_batch_id,nullzero"`
-	CreatedByID             pulid.ID `json:"createdById" keel:"created_by_id"`
-	UpdatedByID             pulid.ID `json:"updatedById" keel:"updated_by_id,nullzero"`
+	CurrencyCode            string   `json:"currencyCode"            keel:"currency_code"`
+	TotalDebit              int64    `json:"totalDebit"              keel:"total_debit_minor"`
+	TotalCredit             int64    `json:"totalCredit"             keel:"total_credit_minor"`
+	ApprovedAt              *int64   `json:"approvedAt"              keel:"approved_at"`
+	ApprovedByID            pulid.ID `json:"approvedById"            keel:"approved_by_id,nullzero"`
+	RejectedAt              *int64   `json:"rejectedAt"              keel:"rejected_at"`
+	RejectedByID            pulid.ID `json:"rejectedById"            keel:"rejected_by_id,nullzero"`
+	RejectionReason         string   `json:"rejectionReason"         keel:"rejection_reason,nullzero"`
+	CancelledAt             *int64   `json:"cancelledAt"             keel:"cancelled_at"`
+	CancelledByID           pulid.ID `json:"cancelledById"           keel:"cancelled_by_id,nullzero"`
+	CancelReason            string   `json:"cancelReason"            keel:"cancel_reason,nullzero"`
+	PostedBatchID           pulid.ID `json:"postedBatchId"           keel:"posted_batch_id,nullzero"`
+	CreatedByID             pulid.ID `json:"createdById"             keel:"created_by_id"`
+	UpdatedByID             pulid.ID `json:"updatedById"             keel:"updated_by_id,nullzero"`
 
 	SearchVector string `json:"-"`
-	Rank         string `json:"-" keel:"rank,computed"`
-	Version      int64  `json:"version" keel:"version,version"`
+	Rank         string `json:"-"         keel:"rank,computed"`
+	Version      int64  `json:"version"   keel:"version,version"`
 	CreatedAt    int64  `json:"createdAt" keel:"created_at,autocreate"`
 	UpdatedAt    int64  `json:"updatedAt" keel:"updated_at,autoupdate"`
 
@@ -53,19 +53,19 @@ type Request struct {
 type Line struct {
 	keel.Table `keel:"manual_journal_request_lines"`
 
-	ID                     pulid.ID `json:"id" keel:"id,pk,autoid:mjrl_"`
-	OrganizationID         pulid.ID `json:"organizationId" keel:"organization_id,pk,tenant"`
-	BusinessUnitID         pulid.ID `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
+	ID                     pulid.ID `json:"id"                     keel:"id,pk,autoid:mjrl_"`
+	OrganizationID         pulid.ID `json:"organizationId"         keel:"organization_id,pk,tenant"`
+	BusinessUnitID         pulid.ID `json:"businessUnitId"         keel:"business_unit_id,pk,tenant"`
 	ManualJournalRequestID pulid.ID `json:"manualJournalRequestId" keel:"manual_journal_request_id"`
-	LineNumber             int      `json:"lineNumber" keel:"line_number"`
-	GLAccountID            pulid.ID `json:"glAccountId" keel:"gl_account_id"`
-	Description            string   `json:"description" keel:"description"`
-	DebitAmount            int64    `json:"debitAmount" keel:"debit_amount_minor"`
-	CreditAmount           int64    `json:"creditAmount" keel:"credit_amount_minor"`
-	CustomerID             pulid.ID `json:"customerId" keel:"customer_id,nullzero"`
-	LocationID             pulid.ID `json:"locationId" keel:"location_id,nullzero"`
-	CreatedAt              int64    `json:"createdAt" keel:"created_at,autocreate"`
-	UpdatedAt              int64    `json:"updatedAt" keel:"updated_at,autoupdate"`
+	LineNumber             int      `json:"lineNumber"             keel:"line_number"`
+	GLAccountID            pulid.ID `json:"glAccountId"            keel:"gl_account_id"`
+	Description            string   `json:"description"            keel:"description"`
+	DebitAmount            int64    `json:"debitAmount"            keel:"debit_amount_minor"`
+	CreditAmount           int64    `json:"creditAmount"           keel:"credit_amount_minor"`
+	CustomerID             pulid.ID `json:"customerId"             keel:"customer_id,nullzero"`
+	LocationID             pulid.ID `json:"locationId"             keel:"location_id,nullzero"`
+	CreatedAt              int64    `json:"createdAt"              keel:"created_at,autocreate"`
+	UpdatedAt              int64    `json:"updatedAt"              keel:"updated_at,autoupdate"`
 
 	GLAccount *glaccount.GLAccount `json:"glAccount,omitempty" keel:"belongs:gl_account_id"`
 }

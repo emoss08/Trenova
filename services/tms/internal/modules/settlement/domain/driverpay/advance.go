@@ -3,6 +3,8 @@ package driverpay
 import (
 	"context"
 
+	"github.com/emoss08/trenova/shared/money"
+
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
 	"github.com/emoss08/trenova/pkg/domaintypes"
@@ -20,28 +22,28 @@ var (
 
 // Cash and money-code advances, what has been recovered, and what was written off
 type PayAdvance struct {
-	keel.Table `                                             keel:"pay_advances,report=Payroll"`
+	keel.Table `keel:"pay_advances,report=Payroll"`
 
-	ID              pulid.ID      `json:"id" keel:"id,pk,autoid:padv_"`
-	BusinessUnitID  pulid.ID      `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
-	OrganizationID  pulid.ID      `json:"organizationId" keel:"organization_id,pk,tenant"`
-	WorkerID        pulid.ID      `json:"workerId" keel:"worker_id"`
-	Status          AdvanceStatus `json:"status" keel:"status"`
-	Source          AdvanceSource `json:"source" keel:"source"`
-	Reference       string        `json:"reference" keel:"reference,nullzero"`
-	IssuedDate      int64         `json:"issuedDate" keel:"issued_date,label=Issued"`
-	AmountMinor     int64         `json:"amountMinor" keel:"amount_minor,label=Amount (Minor)"`
-	RecoveredMinor  int64         `json:"recoveredMinor" keel:"recovered_minor,label=Recovered (Minor)"`
+	ID              pulid.ID      `json:"id"              keel:"id,pk,autoid:padv_"`
+	BusinessUnitID  pulid.ID      `json:"businessUnitId"  keel:"business_unit_id,pk,tenant"`
+	OrganizationID  pulid.ID      `json:"organizationId"  keel:"organization_id,pk,tenant"`
+	WorkerID        pulid.ID      `json:"workerId"        keel:"worker_id"`
+	Status          AdvanceStatus `json:"status"          keel:"status"`
+	Source          AdvanceSource `json:"source"          keel:"source"`
+	Reference       string        `json:"reference"       keel:"reference,nullzero"`
+	IssuedDate      int64         `json:"issuedDate"      keel:"issued_date,label=Issued"`
+	AmountMinor     int64         `json:"amountMinor"     keel:"amount_minor,label=Amount (Minor)"`
+	RecoveredMinor  int64         `json:"recoveredMinor"  keel:"recovered_minor,label=Recovered (Minor)"`
 	WrittenOffMinor int64         `json:"writtenOffMinor" keel:"written_off_minor,label=Written Off (Minor)"`
-	WriteOffReason  string        `json:"writeOffReason" keel:"write_off_reason,nullzero,label=Write-Off Reason"`
-	Notes           string        `json:"notes" keel:"notes,nullzero"`
-	CurrencyCode    string        `json:"currencyCode" keel:"currency_code,label=Currency"`
-	CreatedByID     pulid.ID      `json:"createdById" keel:"created_by_id,nullzero"`
-	WrittenOffByID  pulid.ID      `json:"writtenOffById" keel:"written_off_by_id,nullzero"`
-	WrittenOffAt    *int64        `json:"writtenOffAt" keel:"written_off_at"`
-	Version         int64         `json:"version" keel:"version,version"`
-	CreatedAt       int64         `json:"createdAt" keel:"created_at,autocreate"`
-	UpdatedAt       int64         `json:"updatedAt" keel:"updated_at,autoupdate"`
+	WriteOffReason  string        `json:"writeOffReason"  keel:"write_off_reason,nullzero,label=Write-Off Reason"`
+	Notes           string        `json:"notes"           keel:"notes,nullzero"`
+	CurrencyCode    string        `json:"currencyCode"    keel:"currency_code,label=Currency"`
+	CreatedByID     pulid.ID      `json:"createdById"     keel:"created_by_id,nullzero"`
+	WrittenOffByID  pulid.ID      `json:"writtenOffById"  keel:"written_off_by_id,nullzero"`
+	WrittenOffAt    *int64        `json:"writtenOffAt"    keel:"written_off_at"`
+	Version         int64         `json:"version"         keel:"version,version"`
+	CreatedAt       int64         `json:"createdAt"       keel:"created_at,autocreate"`
+	UpdatedAt       int64         `json:"updatedAt"       keel:"updated_at,autoupdate"`
 
 	Worker *worker.Worker `json:"worker,omitempty" keel:"belongs:worker_id,label=Driver"`
 }
@@ -139,7 +141,7 @@ func (a *PayAdvance) BeforeCreate(ctx context.Context) error {
 		a.Status = AdvanceStatusOutstanding
 	}
 	if a.CurrencyCode == "" {
-		a.CurrencyCode = "USD"
+		a.CurrencyCode = money.DefaultCurrencyCode
 	}
 
 	return nil

@@ -22,14 +22,14 @@ var (
 type MemoryPreference struct {
 	keel.Table `keel:"agent_memory_preferences"`
 
-	ID             pulid.ID         `json:"id" keel:"id,pk,autoid:ampf_"`
+	ID             pulid.ID         `json:"id"             keel:"id,pk,autoid:ampf_"`
 	OrganizationID pulid.ID         `json:"organizationId" keel:"organization_id,pk,tenant"`
 	BusinessUnitID pulid.ID         `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
-	UserID         pulid.ID         `json:"userId" keel:"user_id"`
-	SavingMode     MemorySavingMode `json:"savingMode" keel:"saving_mode"`
-	Version        int64            `json:"version" keel:"version,version"`
-	CreatedAt      int64            `json:"createdAt" keel:"created_at,autocreate"`
-	UpdatedAt      int64            `json:"updatedAt" keel:"updated_at,autoupdate"`
+	UserID         pulid.ID         `json:"userId"         keel:"user_id"`
+	SavingMode     MemorySavingMode `json:"savingMode"     keel:"saving_mode"`
+	Version        int64            `json:"version"        keel:"version,version"`
+	CreatedAt      int64            `json:"createdAt"      keel:"created_at,autocreate"`
+	UpdatedAt      int64            `json:"updatedAt"      keel:"updated_at,autoupdate"`
 
 	BusinessUnit *tenant.BusinessUnit `json:"-"`
 	Organization *tenant.Organization `json:"-"`

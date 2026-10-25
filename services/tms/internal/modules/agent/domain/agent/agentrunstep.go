@@ -47,7 +47,7 @@ func AllRunOwnerKinds() []RunOwnerKind {
 type AgentRunStep struct {
 	keel.Table `keel:"agent_run_steps"`
 
-	ID             pulid.ID `json:"id" keel:"id,pk,autoid:ars_"`
+	ID             pulid.ID `json:"id"             keel:"id,pk,autoid:ars_"`
 	BusinessUnitID pulid.ID `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
 	OrganizationID pulid.ID `json:"organizationId" keel:"organization_id,pk,tenant"`
 
@@ -55,32 +55,32 @@ type AgentRunStep struct {
 	// There is no foreign key, because one column cannot point at two tables;
 	// the rows are swept on a retention schedule instead of cascaded.
 	OwnerKind string   `json:"ownerKind" keel:"owner_kind"`
-	OwnerID   pulid.ID `json:"ownerId" keel:"owner_id"`
+	OwnerID   pulid.ID `json:"ownerId"   keel:"owner_id"`
 
-	Attempt  int    `json:"attempt" keel:"attempt"`
-	Kind     string `json:"kind" keel:"kind"`
-	Status   string `json:"status" keel:"status"`
-	StepKey  string `json:"stepKey" keel:"step_key"`
+	Attempt  int    `json:"attempt"  keel:"attempt"`
+	Kind     string `json:"kind"     keel:"kind"`
+	Status   string `json:"status"   keel:"status"`
+	StepKey  string `json:"stepKey"  keel:"step_key"`
 	ToolName string `json:"toolName" keel:"tool_name"`
-	CallID   string `json:"callId" keel:"call_id"`
+	CallID   string `json:"callId"   keel:"call_id"`
 
 	Arguments map[string]any `json:"arguments" keel:"arguments,jsonb"`
-	Outcome   map[string]any `json:"outcome" keel:"outcome,jsonb"`
+	Outcome   map[string]any `json:"outcome"   keel:"outcome,jsonb"`
 
 	// TraceID and SpanID are the span the step ran in. AgentDefinitionID and
 	// AgentDefinitionVersion are the agent that made the call as it was then,
 	// which for a delegate's step is not the agent the run belongs to, and
 	// DelegateCallID the task it was working on.
-	TraceID                string   `json:"traceId" keel:"trace_id,nullzero"`
-	SpanID                 string   `json:"spanId" keel:"span_id,nullzero"`
-	AgentDefinitionID      pulid.ID `json:"agentDefinitionId" keel:"agent_definition_id,nullzero"`
+	TraceID                string   `json:"traceId"                keel:"trace_id,nullzero"`
+	SpanID                 string   `json:"spanId"                 keel:"span_id,nullzero"`
+	AgentDefinitionID      pulid.ID `json:"agentDefinitionId"      keel:"agent_definition_id,nullzero"`
 	AgentDefinitionVersion *int64   `json:"agentDefinitionVersion" keel:"agent_definition_version"`
-	DelegateCallID         string   `json:"delegateCallId" keel:"delegate_call_id,nullzero"`
+	DelegateCallID         string   `json:"delegateCallId"         keel:"delegate_call_id,nullzero"`
 
 	StartedAtMs *int64 `json:"startedAtMs" keel:"started_at_ms,readonly"`
 	SettledAtMs *int64 `json:"settledAtMs" keel:"settled_at_ms"`
 
-	Version   int64 `json:"version" keel:"version,version"`
+	Version   int64 `json:"version"   keel:"version,version"`
 	CreatedAt int64 `json:"createdAt" keel:"created_at,autocreate"`
 	UpdatedAt int64 `json:"updatedAt" keel:"updated_at,autoupdate"`
 

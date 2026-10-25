@@ -27,28 +27,28 @@ const (
 
 // Notices telling each customer to pay a factor, from draft to signed acknowledgement, expiry and release
 type Noa struct {
-	keel.Table `                                                 keel:"factoring_noas,report=Billing,label=Notice of Assignment,plural=Notices of Assignment"`
+	keel.Table `keel:"factoring_noas,report=Billing,label=Notice of Assignment,plural=Notices of Assignment"`
 
-	ID                 pulid.ID  `json:"id" keel:"id,pk,autoid:facnoa_"`
-	OrganizationID     pulid.ID  `json:"organizationId" keel:"organization_id,pk,tenant"`
-	BusinessUnitID     pulid.ID  `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
-	CustomerID         pulid.ID  `json:"customerId" keel:"customer_id"`
+	ID                 pulid.ID  `json:"id"                 keel:"id,pk,autoid:facnoa_"`
+	OrganizationID     pulid.ID  `json:"organizationId"     keel:"organization_id,pk,tenant"`
+	BusinessUnitID     pulid.ID  `json:"businessUnitId"     keel:"business_unit_id,pk,tenant"`
+	CustomerID         pulid.ID  `json:"customerId"         keel:"customer_id"`
 	FactoringCompanyID pulid.ID  `json:"factoringCompanyId" keel:"factoring_company_id"`
-	Status             NoaStatus `json:"status" keel:"status"`
-	SentAt             *int64    `json:"sentAt" keel:"sent_at"`
-	SentTo             string    `json:"sentTo" keel:"sent_to,nullzero"`
-	AcknowledgedAt     *int64    `json:"acknowledgedAt" keel:"acknowledged_at"`
-	SignedDocumentID   pulid.ID  `json:"signedDocumentId" keel:"signed_document_id,nullzero,label=Signed Copy Document ID"`
-	ExpiresAt          *int64    `json:"expiresAt" keel:"expires_at"`
-	ExpiryWarnedAt     *int64    `json:"expiryWarnedAt" keel:"expiry_warned_at"`
-	ReleasedAt         *int64    `json:"releasedAt" keel:"released_at"`
-	ReleaseReason      string    `json:"releaseReason" keel:"release_reason,nullzero"`
-	Notes              string    `json:"notes" keel:"notes,nullzero"`
-	Version            int64     `json:"version" keel:"version,version"`
-	CreatedAt          int64     `json:"createdAt" keel:"created_at,autocreate"`
-	UpdatedAt          int64     `json:"updatedAt" keel:"updated_at,autoupdate"`
+	Status             NoaStatus `json:"status"             keel:"status"`
+	SentAt             *int64    `json:"sentAt"             keel:"sent_at"`
+	SentTo             string    `json:"sentTo"             keel:"sent_to,nullzero"`
+	AcknowledgedAt     *int64    `json:"acknowledgedAt"     keel:"acknowledged_at"`
+	SignedDocumentID   pulid.ID  `json:"signedDocumentId"   keel:"signed_document_id,nullzero,label=Signed Copy Document ID"`
+	ExpiresAt          *int64    `json:"expiresAt"          keel:"expires_at"`
+	ExpiryWarnedAt     *int64    `json:"expiryWarnedAt"     keel:"expiry_warned_at"`
+	ReleasedAt         *int64    `json:"releasedAt"         keel:"released_at"`
+	ReleaseReason      string    `json:"releaseReason"      keel:"release_reason,nullzero"`
+	Notes              string    `json:"notes"              keel:"notes,nullzero"`
+	Version            int64     `json:"version"            keel:"version,version"`
+	CreatedAt          int64     `json:"createdAt"          keel:"created_at,autocreate"`
+	UpdatedAt          int64     `json:"updatedAt"          keel:"updated_at,autoupdate"`
 
-	Customer         *customer.Customer                 `json:"customer,omitempty" keel:"belongs:customer_id"`
+	Customer         *customer.Customer                 `json:"customer,omitempty"         keel:"belongs:customer_id"`
 	FactoringCompany *factoringcompany.FactoringCompany `json:"factoringCompany,omitempty" keel:"belongs:factoring_company_id"`
 }
 

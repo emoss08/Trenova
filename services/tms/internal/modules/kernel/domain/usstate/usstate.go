@@ -21,13 +21,13 @@ const (
 type UsState struct {
 	keel.Table `keel:"us_states"`
 
-	ID           pulid.ID `json:"id" keel:"id,pk,autoid:us_"`
-	Name         string   `json:"name" keel:"name"`
+	ID           pulid.ID `json:"id"           keel:"id,pk,autoid:us_"`
+	Name         string   `json:"name"         keel:"name"`
 	Abbreviation string   `json:"abbreviation" keel:"abbreviation"`
-	CountryName  string   `json:"countryName" keel:"country_name"`
-	CountryIso3  string   `json:"countryIso3" keel:"country_iso3"`
-	CreatedAt    int64    `json:"createdAt" keel:"created_at,autocreate"`
-	UpdatedAt    int64    `json:"updatedAt" keel:"updated_at,autoupdate"`
+	CountryName  string   `json:"countryName"  keel:"country_name"`
+	CountryIso3  string   `json:"countryIso3"  keel:"country_iso3"`
+	CreatedAt    int64    `json:"createdAt"    keel:"created_at,autocreate"`
+	UpdatedAt    int64    `json:"updatedAt"    keel:"updated_at,autoupdate"`
 }
 
 func RegionForStateAbbreviation(abbreviation string) (Region, bool) {

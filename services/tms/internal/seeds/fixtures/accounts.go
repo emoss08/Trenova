@@ -48,7 +48,12 @@ type devOrganization struct {
 
 var devOrganizations = []devOrganization{
 	{name: defaultOrgName, scac: "TRNV", dotNumber: "1234567", bucketName: "trenova-logistics"},
-	{name: "Trenova Transportation", scac: secondOrgScac, dotNumber: "0000000", bucketName: "trenova-transportation"},
+	{
+		name:       "Trenova Transportation",
+		scac:       secondOrgScac,
+		dotNumber:  "0000000",
+		bucketName: "trenova-transportation",
+	},
 }
 
 func runAdminAccount(ctx context.Context, r *seed.Run) error {

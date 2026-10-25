@@ -60,20 +60,20 @@ const (
 type Activity struct {
 	keel.Table `keel:"inbound_message_activities"`
 
-	ID                 pulid.ID                      `json:"id" keel:"id,pk,autoid:iact_"`
-	BusinessUnitID     pulid.ID                      `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
-	OrganizationID     pulid.ID                      `json:"organizationId" keel:"organization_id,pk,tenant"`
-	MessageID          pulid.ID                      `json:"messageId" keel:"message_id"`
-	Kind               ActivityKind                  `json:"kind" keel:"kind"`
-	ActorKind          ActorKind                     `json:"actorKind" keel:"actor_kind"`
-	ActorID            pulid.ID                      `json:"actorId" keel:"actor_id,nullzero"`
-	Subject            string                        `json:"subject" keel:"subject,nullzero"`
-	Detail             string                        `json:"detail" keel:"detail,nullzero"`
-	Until              int64                         `json:"until" keel:"until,nullzero"`
+	ID                 pulid.ID                      `json:"id"                 keel:"id,pk,autoid:iact_"`
+	BusinessUnitID     pulid.ID                      `json:"businessUnitId"     keel:"business_unit_id,pk,tenant"`
+	OrganizationID     pulid.ID                      `json:"organizationId"     keel:"organization_id,pk,tenant"`
+	MessageID          pulid.ID                      `json:"messageId"          keel:"message_id"`
+	Kind               ActivityKind                  `json:"kind"               keel:"kind"`
+	ActorKind          ActorKind                     `json:"actorKind"          keel:"actor_kind"`
+	ActorID            pulid.ID                      `json:"actorId"            keel:"actor_id,nullzero"`
+	Subject            string                        `json:"subject"            keel:"subject,nullzero"`
+	Detail             string                        `json:"detail"             keel:"detail,nullzero"`
+	Until              int64                         `json:"until"              keel:"until,nullzero"`
 	FromClassification inboundmessage.Classification `json:"fromClassification" keel:"from_classification,nullzero"`
-	ToClassification   inboundmessage.Classification `json:"toClassification" keel:"to_classification,nullzero"`
-	RecordID           pulid.ID                      `json:"recordId" keel:"record_id,nullzero"`
-	CreatedAt          int64                         `json:"createdAt" keel:"created_at,autocreate"`
+	ToClassification   inboundmessage.Classification `json:"toClassification"   keel:"to_classification,nullzero"`
+	RecordID           pulid.ID                      `json:"recordId"           keel:"record_id,nullzero"`
+	CreatedAt          int64                         `json:"createdAt"          keel:"created_at,autocreate"`
 }
 
 func (a *Activity) BeforeCreate(ctx context.Context) error {

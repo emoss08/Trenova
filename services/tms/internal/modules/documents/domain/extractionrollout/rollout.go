@@ -27,27 +27,27 @@ const (
 type ExtractionRollout struct {
 	keel.Table `keel:"extraction_rollouts"`
 
-	ID             pulid.ID `json:"id" keel:"id,pk,autoid:exro_"`
+	ID             pulid.ID `json:"id"             keel:"id,pk,autoid:exro_"`
 	BusinessUnitID pulid.ID `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
 	OrganizationID pulid.ID `json:"organizationId" keel:"organization_id,pk,tenant"`
 
-	Enabled    bool      `json:"enabled" keel:"enabled"`
+	Enabled    bool      `json:"enabled"    keel:"enabled"`
 	ProviderID *pulid.ID `json:"providerId" keel:"provider_id"`
-	Percent    int       `json:"percent" keel:"percent"`
+	Percent    int       `json:"percent"    keel:"percent"`
 
-	MaxAccuracyDropPoints      int `json:"maxAccuracyDropPoints" keel:"max_accuracy_drop_points"`
+	MaxAccuracyDropPoints      int `json:"maxAccuracyDropPoints"      keel:"max_accuracy_drop_points"`
 	MaxRejectionIncreasePoints int `json:"maxRejectionIncreasePoints" keel:"max_rejection_increase_points"`
 
-	StartedAt         *int64     `json:"startedAt" keel:"started_at"`
-	HaltedAt          *int64     `json:"haltedAt" keel:"halted_at"`
-	HaltReason        HaltReason `json:"haltReason" keel:"halt_reason,nullzero"`
+	StartedAt         *int64     `json:"startedAt"         keel:"started_at"`
+	HaltedAt          *int64     `json:"haltedAt"          keel:"halted_at"`
+	HaltReason        HaltReason `json:"haltReason"        keel:"halt_reason,nullzero"`
 	HaltCandidateRate float64    `json:"haltCandidateRate" keel:"halt_candidate_rate"`
-	HaltBaselineRate  float64    `json:"haltBaselineRate" keel:"halt_baseline_rate"`
+	HaltBaselineRate  float64    `json:"haltBaselineRate"  keel:"halt_baseline_rate"`
 
 	UpdatedByID *pulid.ID `json:"updatedById" keel:"updated_by_id"`
-	Version     int64     `json:"version" keel:"version,version"`
-	CreatedAt   int64     `json:"createdAt" keel:"created_at,autocreate"`
-	UpdatedAt   int64     `json:"updatedAt" keel:"updated_at,autoupdate"`
+	Version     int64     `json:"version"     keel:"version,version"`
+	CreatedAt   int64     `json:"createdAt"   keel:"created_at,autocreate"`
+	UpdatedAt   int64     `json:"updatedAt"   keel:"updated_at,autoupdate"`
 
 	BusinessUnit *tenant.BusinessUnit `json:"-"`
 	Organization *tenant.Organization `json:"-"`

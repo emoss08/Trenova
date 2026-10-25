@@ -162,7 +162,10 @@ func (r *repository) UpsertDraft(ctx context.Context, entity *triage.Reply) (*tr
 
 func lockMessage(ctx context.Context, db *keel.DB, messageID pulid.ID) error {
 	m := inboundmessagedb.InboundMessages
-	if _, err := m.Pick(m.ID).Where(m.ID.Eq(messageID)).Lock(keel.ForUpdate).One(ctx, db); err != nil {
+	if _, err := m.Pick(m.ID).
+		Where(m.ID.Eq(messageID)).
+		Lock(keel.ForUpdate).
+		One(ctx, db); err != nil {
 		return messageErrors.Map(err, messageID.String())
 	}
 

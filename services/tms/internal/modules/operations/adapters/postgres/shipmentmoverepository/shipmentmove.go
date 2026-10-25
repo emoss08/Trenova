@@ -517,7 +517,11 @@ func (r *repository) insertMove(ctx context.Context, move *shipment.ShipmentMove
 		Version:        move.Version,
 	}
 	if err := shipmentdb.ShipmentMoves.Create(ctx, r.db.Keel(ctx), row); err != nil {
-		return fmt.Errorf("insert shipment move %s: %w", move.ID, moveErrors.Map(err, move.ID.String()))
+		return fmt.Errorf(
+			"insert shipment move %s: %w",
+			move.ID,
+			moveErrors.Map(err, move.ID.String()),
+		)
 	}
 
 	move.CoverageType = row.CoverageType
@@ -551,7 +555,11 @@ func (r *repository) updateMove(
 		sm.Sequence,
 		sm.Distance,
 	); err != nil {
-		return fmt.Errorf("update shipment move %s: %w", move.ID, moveErrors.Map(err, move.ID.String()))
+		return fmt.Errorf(
+			"update shipment move %s: %w",
+			move.ID,
+			moveErrors.Map(err, move.ID.String()),
+		)
 	}
 
 	return nil
@@ -692,7 +700,11 @@ func (r *repository) updateStop(
 		st.CountDetentionOverride,
 		st.AddressLine,
 	); err != nil {
-		return fmt.Errorf("update shipment stop %s: %w", stop.ID, stopErrors.Map(err, stop.ID.String()))
+		return fmt.Errorf(
+			"update shipment stop %s: %w",
+			stop.ID,
+			stopErrors.Map(err, stop.ID.String()),
+		)
 	}
 
 	return nil

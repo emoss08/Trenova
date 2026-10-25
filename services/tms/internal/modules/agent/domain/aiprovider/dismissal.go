@@ -13,11 +13,11 @@ const FailureDismissalIDPrefix = "aipfd_"
 type FailureDismissal struct {
 	keel.Table `keel:"ai_provider_failure_dismissals"`
 
-	ID             pulid.ID `json:"id" keel:"id,pk,autoid:aipfd_"`
+	ID             pulid.ID `json:"id"             keel:"id,pk,autoid:aipfd_"`
 	BusinessUnitID pulid.ID `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
 	OrganizationID pulid.ID `json:"organizationId" keel:"organization_id,pk,tenant"`
-	UserID         pulid.ID `json:"userId" keel:"user_id"`
-	ProviderID     pulid.ID `json:"providerId" keel:"provider_id"`
+	UserID         pulid.ID `json:"userId"         keel:"user_id"`
+	ProviderID     pulid.ID `json:"providerId"     keel:"provider_id"`
 	// FailureAt is the last failure the person saw when they dismissed it.
 	FailureAt int64 `json:"failureAt" keel:"failure_at"`
 	CreatedAt int64 `json:"createdAt" keel:"created_at,autocreate"`

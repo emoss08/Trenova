@@ -22,41 +22,41 @@ var (
 )
 
 type Deviation struct {
-	keel.Table       `                                                       keel:"mode_profile_deviations"`
-	ID               pulid.ID  `json:"id" keel:"id,pk,autoid:mpd_"`
-	BusinessUnitID   pulid.ID  `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
-	OrganizationID   pulid.ID  `json:"organizationId" keel:"organization_id,pk,tenant"`
-	ModeProfileID    pulid.ID  `json:"modeProfileId" keel:"mode_profile_id"`
-	CapabilityRuleID *pulid.ID `json:"capabilityRuleId" keel:"capability_rule_id"`
+	keel.Table       `keel:"mode_profile_deviations"`
+	ID               pulid.ID  `keel:"id,pk,autoid:mpd_"          json:"id"`
+	BusinessUnitID   pulid.ID  `keel:"business_unit_id,pk,tenant" json:"businessUnitId"`
+	OrganizationID   pulid.ID  `keel:"organization_id,pk,tenant"  json:"organizationId"`
+	ModeProfileID    pulid.ID  `keel:"mode_profile_id"            json:"modeProfileId"`
+	CapabilityRuleID *pulid.ID `keel:"capability_rule_id"         json:"capabilityRuleId"`
 
-	RuleKey     RuleKey                 `json:"ruleKey" keel:"rule_key"`
-	Capability  Capability              `json:"capability" keel:"capability"`
+	RuleKey     RuleKey                 `json:"ruleKey"     keel:"rule_key"`
+	Capability  Capability              `json:"capability"  keel:"capability"`
 	Enforcement tenant.EnforcementLevel `json:"enforcement" keel:"enforcement"`
 
 	ResourceType string   `json:"resourceType" keel:"resource_type"`
-	ResourceID   pulid.ID `json:"resourceId" keel:"resource_id"`
+	ResourceID   pulid.ID `json:"resourceId"   keel:"resource_id"`
 
-	Field   string `json:"field" keel:"field,nullzero"`
+	Field   string `json:"field"   keel:"field,nullzero"`
 	Message string `json:"message" keel:"message"`
 
-	State      DeviationState `json:"state" keel:"state"`
+	State      DeviationState `json:"state"      keel:"state"`
 	OccurredAt int64          `json:"occurredAt" keel:"occurred_at"`
 
-	AcknowledgedByID      *pulid.ID `json:"acknowledgedById" keel:"acknowledged_by_id"`
-	AcknowledgedAt        *int64    `json:"acknowledgedAt" keel:"acknowledged_at"`
+	AcknowledgedByID      *pulid.ID `json:"acknowledgedById"      keel:"acknowledged_by_id"`
+	AcknowledgedAt        *int64    `json:"acknowledgedAt"        keel:"acknowledged_at"`
 	AcknowledgementReason string    `json:"acknowledgementReason" keel:"acknowledgement_reason,nullzero"`
 
 	Provenance *Provenance `json:"provenance" keel:"provenance,jsonb"`
 
-	Version      int64  `json:"version" keel:"version,version"`
+	Version      int64  `json:"version"   keel:"version,version"`
 	CreatedAt    int64  `json:"createdAt" keel:"created_at,autocreate"`
 	UpdatedAt    int64  `json:"updatedAt" keel:"updated_at,autoupdate"`
-	SearchVector string `json:"-" keel:"search_vector,tsvector,readonly,noselect"`
-	Rank         string `json:"-" keel:"rank,computed"`
+	SearchVector string `json:"-"         keel:"search_vector,tsvector,readonly,noselect"`
+	Rank         string `json:"-"         keel:"rank,computed"`
 
 	BusinessUnit   *tenant.BusinessUnit `json:"-"`
 	Organization   *tenant.Organization `json:"-"`
-	Profile        *Profile             `json:"profile,omitempty" keel:"belongs:mode_profile_id"`
+	Profile        *Profile             `json:"profile,omitempty"        keel:"belongs:mode_profile_id"`
 	AcknowledgedBy *tenant.User         `json:"acknowledgedBy,omitempty" keel:"belongs:acknowledged_by_id"`
 }
 

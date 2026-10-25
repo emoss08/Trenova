@@ -45,21 +45,21 @@ var (
 )
 
 type PerformanceReviewTemplate struct {
-	keel.Table     `                                                            keel:"performance_review_templates"`
-	ID             pulid.ID           `json:"id" keel:"id,pk,autoid:prt_"`
-	BusinessUnitID pulid.ID           `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
-	OrganizationID pulid.ID           `json:"organizationId" keel:"organization_id,pk,tenant"`
-	Code           string             `json:"code" keel:"code"`
-	Name           string             `json:"name" keel:"name"`
-	Description    string             `json:"description" keel:"description,nullzero"`
-	Status         domaintypes.Status `json:"status" keel:"status"`
-	IsDefault      bool               `json:"isDefault" keel:"is_default"`
-	CadenceMonths  *int32             `json:"cadenceMonths" keel:"cadence_months"`
-	Items          []ReviewItem       `json:"items" keel:"items,jsonb"`
-	Version        int64              `json:"version" keel:"version,version"`
-	CreatedAt      int64              `json:"createdAt" keel:"created_at,autocreate"`
-	UpdatedAt      int64              `json:"updatedAt" keel:"updated_at,autoupdate"`
-	SearchVector   string             `json:"-" keel:"search_vector,tsvector,readonly,noselect"`
+	keel.Table     `keel:"performance_review_templates"`
+	ID             pulid.ID           `keel:"id,pk,autoid:prt_"                        json:"id"`
+	BusinessUnitID pulid.ID           `keel:"business_unit_id,pk,tenant"               json:"businessUnitId"`
+	OrganizationID pulid.ID           `keel:"organization_id,pk,tenant"                json:"organizationId"`
+	Code           string             `keel:"code"                                     json:"code"`
+	Name           string             `keel:"name"                                     json:"name"`
+	Description    string             `keel:"description,nullzero"                     json:"description"`
+	Status         domaintypes.Status `keel:"status"                                   json:"status"`
+	IsDefault      bool               `keel:"is_default"                               json:"isDefault"`
+	CadenceMonths  *int32             `keel:"cadence_months"                           json:"cadenceMonths"`
+	Items          []ReviewItem       `keel:"items,jsonb"                              json:"items"`
+	Version        int64              `keel:"version,version"                          json:"version"`
+	CreatedAt      int64              `keel:"created_at,autocreate"                    json:"createdAt"`
+	UpdatedAt      int64              `keel:"updated_at,autoupdate"                    json:"updatedAt"`
+	SearchVector   string             `keel:"search_vector,tsvector,readonly,noselect" json:"-"`
 }
 
 func (t *PerformanceReviewTemplate) BeforeUpdate(_ context.Context) error {
@@ -247,35 +247,35 @@ var (
 )
 
 type PerformanceReview struct {
-	keel.Table `                                                    keel:"performance_reviews"`
+	keel.Table `keel:"performance_reviews"`
 
-	ID             pulid.ID            `json:"id" keel:"id,pk,autoid:prev_"`
+	ID             pulid.ID            `json:"id"             keel:"id,pk,autoid:prev_"`
 	BusinessUnitID pulid.ID            `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
 	OrganizationID pulid.ID            `json:"organizationId" keel:"organization_id,pk,tenant"`
-	WorkerID       pulid.ID            `json:"workerId" keel:"worker_id"`
-	TemplateID     pulid.ID            `json:"templateId" keel:"template_id"`
-	ReviewerID     pulid.ID            `json:"reviewerId" keel:"reviewer_id,nullzero"`
-	Status         ReviewStatus        `json:"status" keel:"status"`
-	Title          string              `json:"title" keel:"title"`
-	PeriodStart    int64               `json:"periodStart" keel:"period_start"`
-	PeriodEnd      int64               `json:"periodEnd" keel:"period_end"`
-	Ratings        []ReviewRating      `json:"ratings" keel:"ratings,jsonb"`
-	OverallScore   decimal.NullDecimal `json:"overallScore" keel:"overall_score"`
-	Summary        string              `json:"summary" keel:"summary,nullzero"`
-	Strengths      string              `json:"strengths" keel:"strengths,nullzero"`
-	Improvements   string              `json:"improvements" keel:"improvements,nullzero"`
-	Goals          []ReviewGoal        `json:"goals" keel:"goals,jsonb"`
-	SubmittedAt    *int64              `json:"submittedAt" keel:"submitted_at"`
+	WorkerID       pulid.ID            `json:"workerId"       keel:"worker_id"`
+	TemplateID     pulid.ID            `json:"templateId"     keel:"template_id"`
+	ReviewerID     pulid.ID            `json:"reviewerId"     keel:"reviewer_id,nullzero"`
+	Status         ReviewStatus        `json:"status"         keel:"status"`
+	Title          string              `json:"title"          keel:"title"`
+	PeriodStart    int64               `json:"periodStart"    keel:"period_start"`
+	PeriodEnd      int64               `json:"periodEnd"      keel:"period_end"`
+	Ratings        []ReviewRating      `json:"ratings"        keel:"ratings,jsonb"`
+	OverallScore   decimal.NullDecimal `json:"overallScore"   keel:"overall_score"`
+	Summary        string              `json:"summary"        keel:"summary,nullzero"`
+	Strengths      string              `json:"strengths"      keel:"strengths,nullzero"`
+	Improvements   string              `json:"improvements"   keel:"improvements,nullzero"`
+	Goals          []ReviewGoal        `json:"goals"          keel:"goals,jsonb"`
+	SubmittedAt    *int64              `json:"submittedAt"    keel:"submitted_at"`
 	AcknowledgedAt *int64              `json:"acknowledgedAt" keel:"acknowledged_at"`
-	WorkerComment  string              `json:"workerComment" keel:"worker_comment,nullzero"`
-	ClosedAt       *int64              `json:"closedAt" keel:"closed_at"`
-	ClosedByID     pulid.ID            `json:"closedById" keel:"closed_by_id,nullzero"`
-	NextReviewAt   *int64              `json:"nextReviewAt" keel:"next_review_at"`
-	Version        int64               `json:"version" keel:"version,version"`
-	CreatedAt      int64               `json:"createdAt" keel:"created_at,autocreate"`
-	UpdatedAt      int64               `json:"updatedAt" keel:"updated_at,autoupdate"`
+	WorkerComment  string              `json:"workerComment"  keel:"worker_comment,nullzero"`
+	ClosedAt       *int64              `json:"closedAt"       keel:"closed_at"`
+	ClosedByID     pulid.ID            `json:"closedById"     keel:"closed_by_id,nullzero"`
+	NextReviewAt   *int64              `json:"nextReviewAt"   keel:"next_review_at"`
+	Version        int64               `json:"version"        keel:"version,version"`
+	CreatedAt      int64               `json:"createdAt"      keel:"created_at,autocreate"`
+	UpdatedAt      int64               `json:"updatedAt"      keel:"updated_at,autoupdate"`
 
-	Worker   *Worker                    `json:"worker,omitempty" keel:"belongs:worker_id"`
+	Worker   *Worker                    `json:"worker,omitempty"   keel:"belongs:worker_id"`
 	Template *PerformanceReviewTemplate `json:"template,omitempty" keel:"belongs:template_id"`
 	Reviewer *tenant.User               `json:"reviewer,omitempty" keel:"belongs:reviewer_id"`
 }

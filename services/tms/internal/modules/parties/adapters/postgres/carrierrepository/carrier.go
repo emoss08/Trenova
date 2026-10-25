@@ -351,9 +351,13 @@ func (r *repository) upsertChildren(ctx context.Context, entity *carrier.Carrier
 		if err != nil {
 			return err
 		}
-		if err = restoreStored(entity.Contacts, inserted, func(ids []pulid.ID) ([]*carrier.CarrierContact, error) {
-			return cc.Where(cc.ID.In(ids...)).All(ctx, db)
-		}); err != nil {
+		if err = restoreStored(
+			entity.Contacts,
+			inserted,
+			func(ids []pulid.ID) ([]*carrier.CarrierContact, error) {
+				return cc.Where(cc.ID.In(ids...)).All(ctx, db)
+			},
+		); err != nil {
 			return err
 		}
 	}
@@ -373,9 +377,13 @@ func (r *repository) upsertChildren(ctx context.Context, entity *carrier.Carrier
 		if err != nil {
 			return err
 		}
-		if err = restoreStored(entity.InsurancePolicies, inserted, func(ids []pulid.ID) ([]*carrier.CarrierInsurancePolicy, error) {
-			return cip.Where(cip.ID.In(ids...)).All(ctx, db)
-		}); err != nil {
+		if err = restoreStored(
+			entity.InsurancePolicies,
+			inserted,
+			func(ids []pulid.ID) ([]*carrier.CarrierInsurancePolicy, error) {
+				return cip.Where(cip.ID.In(ids...)).All(ctx, db)
+			},
+		); err != nil {
 			return err
 		}
 	}
@@ -397,9 +405,13 @@ func (r *repository) upsertChildren(ctx context.Context, entity *carrier.Carrier
 		if err != nil {
 			return err
 		}
-		if err = restoreStored(entity.EDIChannels, inserted, func(ids []pulid.ID) ([]*carrier.CarrierEDIChannel, error) {
-			return cec.Where(cec.ID.In(ids...)).All(ctx, db)
-		}); err != nil {
+		if err = restoreStored(
+			entity.EDIChannels,
+			inserted,
+			func(ids []pulid.ID) ([]*carrier.CarrierEDIChannel, error) {
+				return cec.Where(cec.ID.In(ids...)).All(ctx, db)
+			},
+		); err != nil {
 			return err
 		}
 	}
@@ -502,7 +514,8 @@ func (r *repository) BulkUpdateStatus(
 ) ([]*carrier.Carrier, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) ([]*carrier.Carrier, error) {
 		c := carrierdb.Carriers
-		entities, err := c.Where(c.ID.In(req.CarrierIDs...)).UpdateReturning(ctx, r.db.Keel(ctx), c.Status.To(req.Status))
+		entities, err := c.Where(c.ID.In(req.CarrierIDs...)).
+			UpdateReturning(ctx, r.db.Keel(ctx), c.Status.To(req.Status))
 		if err != nil {
 			r.l.Error("failed to bulk update carrier status", zap.Error(err))
 			return nil, err

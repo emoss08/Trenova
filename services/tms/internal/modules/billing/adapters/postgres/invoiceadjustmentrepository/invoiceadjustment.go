@@ -20,12 +20,14 @@ import (
 	"go.uber.org/zap"
 )
 
+const fieldIdempotencyKey = "idempotencyKey"
+
 var adjustmentErrors = dberror.Mapping{
 	Entity: "InvoiceAdjustment",
 	Unique: []dberror.Constraint{
 		{
 			Name:    "uq_invoice_adjustments_idempotency",
-			Field:   "idempotencyKey",
+			Field:   fieldIdempotencyKey,
 			Message: "An invoice adjustment with this idempotency key already exists",
 		},
 	},
@@ -55,7 +57,7 @@ var batchErrors = dberror.Mapping{
 	Unique: []dberror.Constraint{
 		{
 			Name:    "uq_invoice_adjustment_batches_idempotency",
-			Field:   "idempotencyKey",
+			Field:   fieldIdempotencyKey,
 			Message: "An adjustment batch with this idempotency key already exists",
 		},
 	},
@@ -66,7 +68,7 @@ var batchItemErrors = dberror.Mapping{
 	Unique: []dberror.Constraint{
 		{
 			Name:    "uq_invoice_adjustment_batch_items_idempotency",
-			Field:   "idempotencyKey",
+			Field:   fieldIdempotencyKey,
 			Message: "An adjustment batch item with this idempotency key already exists",
 		},
 	},
@@ -516,7 +518,8 @@ func (r *repository) ReplaceDocumentReferences(
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
 		db := r.db.Keel(ctx)
 		refs := invoiceadjustmentdb.InvoiceAdjustmentDocumentReferences
-		if _, err := refs.Where(refs.AdjustmentID.Eq(req.AdjustmentID)).Delete(ctx, db); err != nil {
+		if _, err := refs.Where(refs.AdjustmentID.Eq(req.AdjustmentID)).
+			Delete(ctx, db); err != nil {
 			return documentReferenceErrors.Map(err, req.AdjustmentID.String())
 		}
 
@@ -541,7 +544,11 @@ func (r *repository) CreateBatch(
 		r.db,
 		func(ctx context.Context) (*invoiceadjustment.InvoiceAdjustmentBatch, error) {
 			db := r.db.Keel(ctx)
-			if err := invoiceadjustmentdb.InvoiceAdjustmentBatches.Create(ctx, db, batch); err != nil {
+			if err := invoiceadjustmentdb.InvoiceAdjustmentBatches.Create(
+				ctx,
+				db,
+				batch,
+			); err != nil {
 				return nil, batchErrors.Map(err, batch.ID.String())
 			}
 			if len(items) > 0 {

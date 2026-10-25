@@ -21,19 +21,19 @@ var (
 const PriceDateLayout = "2006-01-02"
 
 type FuelIndexPrice struct {
-	keel.Table `                                                 keel:"fuel_index_prices"`
+	keel.Table `keel:"fuel_index_prices"`
 
-	ID             pulid.ID        `json:"id" keel:"id,pk,autoid:fip_"`
+	ID             pulid.ID        `json:"id"             keel:"id,pk,autoid:fip_"`
 	BusinessUnitID pulid.ID        `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
 	OrganizationID pulid.ID        `json:"organizationId" keel:"organization_id,pk,tenant"`
-	FuelIndexID    pulid.ID        `json:"fuelIndexId" keel:"fuel_index_id"`
-	PriceDate      string          `json:"priceDate" keel:"price_date"`
-	Price          decimal.Decimal `json:"price" keel:"price"`
-	Currency       string          `json:"currency" keel:"currency"`
-	IsManual       bool            `json:"isManual" keel:"is_manual"`
-	EnteredByID    *pulid.ID       `json:"enteredById" keel:"entered_by_id"`
-	SourceRaw      string          `json:"sourceRaw" keel:"source_raw,nullzero"`
-	FetchedAt      time.Time       `json:"fetchedAt" keel:"fetched_at"`
+	FuelIndexID    pulid.ID        `json:"fuelIndexId"    keel:"fuel_index_id"`
+	PriceDate      string          `json:"priceDate"      keel:"price_date"`
+	Price          decimal.Decimal `json:"price"          keel:"price"`
+	Currency       string          `json:"currency"       keel:"currency"`
+	IsManual       bool            `json:"isManual"       keel:"is_manual"`
+	EnteredByID    *pulid.ID       `json:"enteredById"    keel:"entered_by_id"`
+	SourceRaw      string          `json:"sourceRaw"      keel:"source_raw,nullzero"`
+	FetchedAt      time.Time       `json:"fetchedAt"      keel:"fetched_at"`
 
 	FuelIndex    *FuelIndex           `json:"fuelIndex,omitempty" keel:"belongs:fuel_index_id"`
 	BusinessUnit *tenant.BusinessUnit `json:"-"`

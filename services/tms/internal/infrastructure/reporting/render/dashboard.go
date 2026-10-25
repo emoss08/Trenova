@@ -53,7 +53,7 @@ func RenderDashboard(ctx context.Context, req *DashboardRenderRequest) error {
 	loc := Location(req.Timezone)
 	text := Text(ctx)
 	infoSheet := i18n.Translate(locale, "Dashboard")
-	if err := writeDashboardInfo(file, req, infoSheet, text, loc); err != nil {
+	if err := writeDashboardInfo(file, req, infoSheet, &text, loc); err != nil {
 		return err
 	}
 
@@ -90,7 +90,7 @@ func writeDashboardInfo(
 	file *excelize.File,
 	req *DashboardRenderRequest,
 	sheet string,
-	text export.Text,
+	text *export.Text,
 	loc *time.Location,
 ) error {
 	if err := file.SetSheetName("Sheet1", sheet); err != nil {
@@ -318,13 +318,13 @@ func uniqueSheetName(title string, index int, used map[string]int) string {
 	}
 }
 
-func truncateRunes(value string, limit int) string {
+func truncateRunes(text string, limit int) string {
 	if limit <= 0 {
 		return ""
 	}
-	if utf8.RuneCountInString(value) <= limit {
-		return value
+	if utf8.RuneCountInString(text) <= limit {
+		return text
 	}
-	runes := []rune(value)
+	runes := []rune(text)
 	return strings.TrimSpace(string(runes[:limit]))
 }

@@ -41,23 +41,23 @@ var (
 type Control struct {
 	keel.Table `keel:"agent_quality_controls"`
 
-	ID             pulid.ID `json:"id" keel:"id,pk,autoid:aqc_"`
+	ID             pulid.ID `json:"id"             keel:"id,pk,autoid:aqc_"`
 	BusinessUnitID pulid.ID `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
 	OrganizationID pulid.ID `json:"organizationId" keel:"organization_id,pk,tenant"`
 
-	Enabled             bool            `json:"enabled" keel:"enabled"`
-	RunHourLocal        int             `json:"runHourLocal" keel:"run_hour_local"`
-	Timezone            string          `json:"timezone" keel:"timezone,nullzero"`
-	MaxCasesPerAgent    int             `json:"maxCasesPerAgent" keel:"max_cases_per_agent"`
-	NightlyBudgetUSD    decimal.Decimal `json:"nightlyBudgetUsd" keel:"nightly_budget_usd"`
-	MonthlyBudgetUSD    decimal.Decimal `json:"monthlyBudgetUsd" keel:"monthly_budget_usd"`
-	JudgeEnabled        bool            `json:"judgeEnabled" keel:"judge_enabled"`
-	JudgeSampleRate     float64         `json:"judgeSampleRate" keel:"judge_sample_rate"`
+	Enabled             bool            `json:"enabled"             keel:"enabled"`
+	RunHourLocal        int             `json:"runHourLocal"        keel:"run_hour_local"`
+	Timezone            string          `json:"timezone"            keel:"timezone,nullzero"`
+	MaxCasesPerAgent    int             `json:"maxCasesPerAgent"    keel:"max_cases_per_agent"`
+	NightlyBudgetUSD    decimal.Decimal `json:"nightlyBudgetUsd"    keel:"nightly_budget_usd"`
+	MonthlyBudgetUSD    decimal.Decimal `json:"monthlyBudgetUsd"    keel:"monthly_budget_usd"`
+	JudgeEnabled        bool            `json:"judgeEnabled"        keel:"judge_enabled"`
+	JudgeSampleRate     float64         `json:"judgeSampleRate"     keel:"judge_sample_rate"`
 	RegressionThreshold float64         `json:"regressionThreshold" keel:"regression_threshold"`
-	MinCases            int             `json:"minCases" keel:"min_cases"`
-	ForceRerunDays      int             `json:"forceRerunDays" keel:"force_rerun_days"`
+	MinCases            int             `json:"minCases"            keel:"min_cases"`
+	ForceRerunDays      int             `json:"forceRerunDays"      keel:"force_rerun_days"`
 
-	Version   int64 `json:"version" keel:"version,version"`
+	Version   int64 `json:"version"   keel:"version,version"`
 	CreatedAt int64 `json:"createdAt" keel:"created_at,autocreate"`
 	UpdatedAt int64 `json:"updatedAt" keel:"updated_at,autoupdate"`
 

@@ -66,22 +66,22 @@ var (
 
 // Job titles the roster is counted by, and the reporting lines between them
 type JobPosition struct {
-	keel.Table `                                              keel:"job_positions,report=Parties"`
+	keel.Table `keel:"job_positions,report=Parties"`
 
-	ID             pulid.ID `json:"id" keel:"id,pk,autoid:jpos_"`
+	ID             pulid.ID `json:"id"             keel:"id,pk,autoid:jpos_"`
 	BusinessUnitID pulid.ID `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
 	OrganizationID pulid.ID `json:"organizationId" keel:"organization_id,pk,tenant"`
 
-	Status              domaintypes.Status `json:"status" keel:"status"`
-	Code                string             `json:"code" keel:"code"`
-	Title               string             `json:"title" keel:"title"`
-	Description         string             `json:"description" keel:"description,nullzero"`
-	Department          JobDepartment      `json:"department" keel:"department"`
-	FLSAExempt          bool               `json:"flsaExempt" keel:"flsa_exempt,label=Exempt from Overtime"`
-	IsDrivingPosition   bool               `json:"isDrivingPosition" keel:"is_driving_position,label=Driving Position"`
+	Status              domaintypes.Status `json:"status"              keel:"status"`
+	Code                string             `json:"code"                keel:"code"`
+	Title               string             `json:"title"               keel:"title"`
+	Description         string             `json:"description"         keel:"description,nullzero"`
+	Department          JobDepartment      `json:"department"          keel:"department"`
+	FLSAExempt          bool               `json:"flsaExempt"          keel:"flsa_exempt,label=Exempt from Overtime"`
+	IsDrivingPosition   bool               `json:"isDrivingPosition"   keel:"is_driving_position,label=Driving Position"`
 	ReportsToPositionID pulid.ID           `json:"reportsToPositionId" keel:"reports_to_position_id,nullzero"`
 
-	Version   int64 `json:"version" keel:"version,version"`
+	Version   int64 `json:"version"   keel:"version,version"`
 	CreatedAt int64 `json:"createdAt" keel:"created_at,autocreate"`
 	UpdatedAt int64 `json:"updatedAt" keel:"updated_at,autoupdate"`
 

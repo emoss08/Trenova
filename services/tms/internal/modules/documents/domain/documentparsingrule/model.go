@@ -25,17 +25,17 @@ var (
 type RuleSet struct {
 	keel.Table `keel:"document_parsing_rule_sets"`
 
-	ID                 pulid.ID     `json:"id" keel:"id,pk,autoid:dprs_"`
-	OrganizationID     pulid.ID     `json:"organizationId" keel:"organization_id,pk,tenant"`
-	BusinessUnitID     pulid.ID     `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
-	Name               string       `json:"name" keel:"name"`
-	Description        string       `json:"description" keel:"description,nullzero"`
-	DocumentKind       DocumentKind `json:"documentKind" keel:"document_kind"`
-	Priority           int          `json:"priority" keel:"priority"`
+	ID                 pulid.ID     `json:"id"                 keel:"id,pk,autoid:dprs_"`
+	OrganizationID     pulid.ID     `json:"organizationId"     keel:"organization_id,pk,tenant"`
+	BusinessUnitID     pulid.ID     `json:"businessUnitId"     keel:"business_unit_id,pk,tenant"`
+	Name               string       `json:"name"               keel:"name"`
+	Description        string       `json:"description"        keel:"description,nullzero"`
+	DocumentKind       DocumentKind `json:"documentKind"       keel:"document_kind"`
+	Priority           int          `json:"priority"           keel:"priority"`
 	PublishedVersionID *pulid.ID    `json:"publishedVersionId" keel:"published_version_id"`
-	Version            int64        `json:"version" keel:"version,version"`
-	CreatedAt          int64        `json:"createdAt" keel:"created_at,autocreate"`
-	UpdatedAt          int64        `json:"updatedAt" keel:"updated_at,autoupdate"`
+	Version            int64        `json:"version"            keel:"version,version"`
+	CreatedAt          int64        `json:"createdAt"          keel:"created_at,autocreate"`
+	UpdatedAt          int64        `json:"updatedAt"          keel:"updated_at,autoupdate"`
 }
 
 func (r *RuleSet) Validate(multiErr *errortypes.MultiError) {
@@ -74,22 +74,22 @@ func (r *RuleSet) BeforeCreate(ctx context.Context) error {
 type RuleVersion struct {
 	keel.Table `keel:"document_parsing_rule_versions"`
 
-	ID                pulid.ID       `json:"id" keel:"id,pk,autoid:dprv_"`
-	RuleSetID         pulid.ID       `json:"ruleSetId" keel:"rule_set_id"`
-	OrganizationID    pulid.ID       `json:"organizationId" keel:"organization_id,pk,tenant"`
-	BusinessUnitID    pulid.ID       `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
-	VersionNumber     int            `json:"versionNumber" keel:"version_number"`
-	Status            VersionStatus  `json:"status" keel:"status"`
-	Label             string         `json:"label" keel:"label,nullzero"`
-	ParserMode        ParserMode     `json:"parserMode" keel:"parser_mode"`
-	MatchConfig       MatchConfig    `json:"matchConfig" keel:"match_config,jsonb"`
-	RuleDocument      RuleDocument   `json:"ruleDocument" keel:"rule_document,jsonb"`
+	ID                pulid.ID       `json:"id"                keel:"id,pk,autoid:dprv_"`
+	RuleSetID         pulid.ID       `json:"ruleSetId"         keel:"rule_set_id"`
+	OrganizationID    pulid.ID       `json:"organizationId"    keel:"organization_id,pk,tenant"`
+	BusinessUnitID    pulid.ID       `json:"businessUnitId"    keel:"business_unit_id,pk,tenant"`
+	VersionNumber     int            `json:"versionNumber"     keel:"version_number"`
+	Status            VersionStatus  `json:"status"            keel:"status"`
+	Label             string         `json:"label"             keel:"label,nullzero"`
+	ParserMode        ParserMode     `json:"parserMode"        keel:"parser_mode"`
+	MatchConfig       MatchConfig    `json:"matchConfig"       keel:"match_config,jsonb"`
+	RuleDocument      RuleDocument   `json:"ruleDocument"      keel:"rule_document,jsonb"`
 	ValidationSummary map[string]any `json:"validationSummary" keel:"validation_summary,jsonb"`
-	PublishedAt       *int64         `json:"publishedAt" keel:"published_at"`
-	PublishedByID     *pulid.ID      `json:"publishedById" keel:"published_by_id"`
-	Version           int64          `json:"version" keel:"version,version"`
-	CreatedAt         int64          `json:"createdAt" keel:"created_at,autocreate"`
-	UpdatedAt         int64          `json:"updatedAt" keel:"updated_at,autoupdate"`
+	PublishedAt       *int64         `json:"publishedAt"       keel:"published_at"`
+	PublishedByID     *pulid.ID      `json:"publishedById"     keel:"published_by_id"`
+	Version           int64          `json:"version"           keel:"version,version"`
+	CreatedAt         int64          `json:"createdAt"         keel:"created_at,autocreate"`
+	UpdatedAt         int64          `json:"updatedAt"         keel:"updated_at,autoupdate"`
 	RuleSet           *RuleSet       `json:"ruleSet,omitempty" keel:"belongs:rule_set_id"`
 }
 
@@ -156,20 +156,20 @@ func (r *RuleVersion) BeforeCreate(ctx context.Context) error {
 type Fixture struct {
 	keel.Table `keel:"document_parsing_rule_fixtures"`
 
-	ID                  pulid.ID          `json:"id" keel:"id,pk,autoid:dprf_"`
-	RuleSetID           pulid.ID          `json:"ruleSetId" keel:"rule_set_id"`
-	OrganizationID      pulid.ID          `json:"organizationId" keel:"organization_id,pk,tenant"`
-	BusinessUnitID      pulid.ID          `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
-	Name                string            `json:"name" keel:"name"`
-	Description         string            `json:"description" keel:"description,nullzero"`
-	FileName            string            `json:"fileName" keel:"file_name,nullzero"`
+	ID                  pulid.ID          `json:"id"                  keel:"id,pk,autoid:dprf_"`
+	RuleSetID           pulid.ID          `json:"ruleSetId"           keel:"rule_set_id"`
+	OrganizationID      pulid.ID          `json:"organizationId"      keel:"organization_id,pk,tenant"`
+	BusinessUnitID      pulid.ID          `json:"businessUnitId"      keel:"business_unit_id,pk,tenant"`
+	Name                string            `json:"name"                keel:"name"`
+	Description         string            `json:"description"         keel:"description,nullzero"`
+	FileName            string            `json:"fileName"            keel:"file_name,nullzero"`
 	ProviderFingerprint string            `json:"providerFingerprint" keel:"provider_fingerprint,nullzero"`
-	TextSnapshot        string            `json:"textSnapshot" keel:"text_snapshot"`
-	PageSnapshots       []PageSnapshot    `json:"pageSnapshots" keel:"page_snapshots,jsonb"`
-	Assertions          FixtureAssertions `json:"assertions" keel:"assertions,jsonb"`
-	Version             int64             `json:"version" keel:"version,version"`
-	CreatedAt           int64             `json:"createdAt" keel:"created_at,autocreate"`
-	UpdatedAt           int64             `json:"updatedAt" keel:"updated_at,autoupdate"`
+	TextSnapshot        string            `json:"textSnapshot"        keel:"text_snapshot"`
+	PageSnapshots       []PageSnapshot    `json:"pageSnapshots"       keel:"page_snapshots,jsonb"`
+	Assertions          FixtureAssertions `json:"assertions"          keel:"assertions,jsonb"`
+	Version             int64             `json:"version"             keel:"version,version"`
+	CreatedAt           int64             `json:"createdAt"           keel:"created_at,autocreate"`
+	UpdatedAt           int64             `json:"updatedAt"           keel:"updated_at,autoupdate"`
 }
 
 func (f *Fixture) Validate(multiErr *errortypes.MultiError) {

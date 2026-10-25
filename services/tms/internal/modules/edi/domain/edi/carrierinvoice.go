@@ -39,36 +39,36 @@ func (s CarrierInvoiceReconciliationStatus) NeedsAttention() bool {
 type CarrierInvoice struct {
 	keel.Table `keel:"edi_carrier_invoices"`
 
-	ID                   pulid.ID                           `json:"id" keel:"id,pk,autoid:edici_"`
-	BusinessUnitID       pulid.ID                           `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
-	OrganizationID       pulid.ID                           `json:"organizationId" keel:"organization_id,pk,tenant"`
-	EDIPartnerID         pulid.ID                           `json:"ediPartnerId" keel:"edi_partner_id"`
-	InboundMessageID     pulid.ID                           `json:"inboundMessageId" keel:"inbound_message_id"`
-	ShipmentID           pulid.ID                           `json:"shipmentId" keel:"shipment_id,nullzero"`
-	TenderRecipientID    pulid.ID                           `json:"tenderRecipientId" keel:"tender_recipient_id,nullzero"`
-	CustomerID           pulid.ID                           `json:"customerId" keel:"customer_id,nullzero"`
-	CarrierID            pulid.ID                           `json:"carrierId" keel:"carrier_id,nullzero"`
-	InvoiceNumber        string                             `json:"invoiceNumber" keel:"invoice_number"`
-	InvoiceNumberKey     string                             `json:"-" keel:"invoice_number_key"`
-	DuplicateOfID        pulid.ID                           `json:"duplicateOfId" keel:"duplicate_of_id,nullzero"`
-	InvoiceDate          *int64                             `json:"invoiceDate" keel:"invoice_date"`
-	DeliveryDate         *int64                             `json:"deliveryDate" keel:"delivery_date"`
-	ShipmentReference    string                             `json:"shipmentReference" keel:"shipment_reference,nullzero"`
-	BOL                  string                             `json:"bol" keel:"bol,nullzero"`
-	ProNumber            string                             `json:"proNumber" keel:"pro_number,nullzero"`
-	BillToName           string                             `json:"billToName" keel:"bill_to_name,nullzero"`
-	BillToSourceID       pulid.ID                           `json:"billToSourceId" keel:"bill_to_source_id,nullzero"`
-	CurrencyCode         string                             `json:"currencyCode" keel:"currency_code,nullzero"`
-	TotalAmount          decimal.NullDecimal                `json:"totalAmount" keel:"total_amount"`
-	ExpectedAmount       decimal.NullDecimal                `json:"expectedAmount" keel:"expected_amount"`
-	VarianceAmount       decimal.NullDecimal                `json:"varianceAmount" keel:"variance_amount"`
-	LineCharges          []FreightInvoiceCharge             `json:"lineCharges" keel:"line_charges,jsonb"`
-	ReferenceNumbers     map[string]string                  `json:"referenceNumbers" keel:"reference_numbers,jsonb"`
+	ID                   pulid.ID                           `json:"id"                   keel:"id,pk,autoid:edici_"`
+	BusinessUnitID       pulid.ID                           `json:"businessUnitId"       keel:"business_unit_id,pk,tenant"`
+	OrganizationID       pulid.ID                           `json:"organizationId"       keel:"organization_id,pk,tenant"`
+	EDIPartnerID         pulid.ID                           `json:"ediPartnerId"         keel:"edi_partner_id"`
+	InboundMessageID     pulid.ID                           `json:"inboundMessageId"     keel:"inbound_message_id"`
+	ShipmentID           pulid.ID                           `json:"shipmentId"           keel:"shipment_id,nullzero"`
+	TenderRecipientID    pulid.ID                           `json:"tenderRecipientId"    keel:"tender_recipient_id,nullzero"`
+	CustomerID           pulid.ID                           `json:"customerId"           keel:"customer_id,nullzero"`
+	CarrierID            pulid.ID                           `json:"carrierId"            keel:"carrier_id,nullzero"`
+	InvoiceNumber        string                             `json:"invoiceNumber"        keel:"invoice_number"`
+	InvoiceNumberKey     string                             `json:"-"                    keel:"invoice_number_key"`
+	DuplicateOfID        pulid.ID                           `json:"duplicateOfId"        keel:"duplicate_of_id,nullzero"`
+	InvoiceDate          *int64                             `json:"invoiceDate"          keel:"invoice_date"`
+	DeliveryDate         *int64                             `json:"deliveryDate"         keel:"delivery_date"`
+	ShipmentReference    string                             `json:"shipmentReference"    keel:"shipment_reference,nullzero"`
+	BOL                  string                             `json:"bol"                  keel:"bol,nullzero"`
+	ProNumber            string                             `json:"proNumber"            keel:"pro_number,nullzero"`
+	BillToName           string                             `json:"billToName"           keel:"bill_to_name,nullzero"`
+	BillToSourceID       pulid.ID                           `json:"billToSourceId"       keel:"bill_to_source_id,nullzero"`
+	CurrencyCode         string                             `json:"currencyCode"         keel:"currency_code,nullzero"`
+	TotalAmount          decimal.NullDecimal                `json:"totalAmount"          keel:"total_amount"`
+	ExpectedAmount       decimal.NullDecimal                `json:"expectedAmount"       keel:"expected_amount"`
+	VarianceAmount       decimal.NullDecimal                `json:"varianceAmount"       keel:"variance_amount"`
+	LineCharges          []FreightInvoiceCharge             `json:"lineCharges"          keel:"line_charges,jsonb"`
+	ReferenceNumbers     map[string]string                  `json:"referenceNumbers"     keel:"reference_numbers,jsonb"`
 	ReconciliationStatus CarrierInvoiceReconciliationStatus `json:"reconciliationStatus" keel:"reconciliation_status"`
-	ReconciliationNotes  string                             `json:"reconciliationNotes" keel:"reconciliation_notes,nullzero"`
-	Version              int64                              `json:"version" keel:"version,version"`
-	CreatedAt            int64                              `json:"createdAt" keel:"created_at,autocreate"`
-	UpdatedAt            int64                              `json:"updatedAt" keel:"updated_at,autoupdate"`
+	ReconciliationNotes  string                             `json:"reconciliationNotes"  keel:"reconciliation_notes,nullzero"`
+	Version              int64                              `json:"version"              keel:"version,version"`
+	CreatedAt            int64                              `json:"createdAt"            keel:"created_at,autocreate"`
+	UpdatedAt            int64                              `json:"updatedAt"            keel:"updated_at,autoupdate"`
 
 	Partner *EDIPartner `json:"partner,omitempty" keel:"belongs:edi_partner_id"`
 }

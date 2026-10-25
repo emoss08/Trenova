@@ -11,16 +11,16 @@ import (
 )
 
 type TCAAllowlistedTable struct {
-	keel.Table `                                                       keel:"tca_allowlisted_tables"`
+	keel.Table `keel:"tca_allowlisted_tables"`
 
-	ID             pulid.ID `json:"id" keel:"id,pk,autoid:tcaw_"`
+	ID             pulid.ID `json:"id"             keel:"id,pk,autoid:tcaw_"`
 	OrganizationID pulid.ID `json:"organizationId" keel:"organization_id,pk,tenant"`
 	BusinessUnitID pulid.ID `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
-	TableName      string   `json:"tableName" keel:"table_name"`
-	DisplayName    string   `json:"displayName" keel:"display_name"`
-	Enabled        bool     `json:"enabled" keel:"enabled"`
-	CreatedAt      int64    `json:"createdAt" keel:"created_at,autocreate"`
-	UpdatedAt      int64    `json:"updatedAt" keel:"updated_at,autoupdate"`
+	TableName      string   `json:"tableName"      keel:"table_name"`
+	DisplayName    string   `json:"displayName"    keel:"display_name"`
+	Enabled        bool     `json:"enabled"        keel:"enabled"`
+	CreatedAt      int64    `json:"createdAt"      keel:"created_at,autocreate"`
+	UpdatedAt      int64    `json:"updatedAt"      keel:"updated_at,autoupdate"`
 
 	Organization *tenant.Organization `json:"organization,omitempty"`
 	BusinessUnit *tenant.BusinessUnit `json:"businessUnit,omitempty"`

@@ -255,7 +255,7 @@ func lockBySource(
 		One(ctx, db)
 	if err != nil {
 		if dberror.IsNotFoundError(err) {
-			return nil, nil
+			return nil, nil //nolint:nilnil // no item watches this source yet
 		}
 		return nil, fmt.Errorf("lock watchtower item: %w", err)
 	}
@@ -360,7 +360,10 @@ func (r *repository) ResolveMissing(
 		}
 		events := make([]*watchtower.Event, 0, len(rows))
 		for _, row := range rows {
-			events = append(events, watchtower.NewEvent(row, watchtower.EventSourceResolved, pulid.Nil))
+			events = append(
+				events,
+				watchtower.NewEvent(row, watchtower.EventSourceResolved, pulid.Nil),
+			)
 		}
 		if err = r.insertEvents(ctx, db, events); err != nil {
 			return 0, err
@@ -939,7 +942,9 @@ func (r *repository) DeleteResolvedBefore(
 		}
 
 		it := watchtowerdb.Items
-		n, err := it.AllTenants().Where(resolvedBefore(req.Before, limit)).Delete(ctx, r.db.Keel(ctx))
+		n, err := it.AllTenants().
+			Where(resolvedBefore(req.Before, limit)).
+			Delete(ctx, r.db.Keel(ctx))
 		if err != nil {
 			return 0, fmt.Errorf("delete resolved watchtower items: %w", err)
 		}

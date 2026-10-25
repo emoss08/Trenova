@@ -11,29 +11,29 @@ import (
 
 // The unit journal entries are posted in
 type JournalBatch struct {
-	keel.Table `                                              keel:"journal_batches,report=Accounting"`
+	keel.Table `keel:"journal_batches,report=Accounting"`
 
-	ID             pulid.ID `json:"id" keel:"id,pk,autoid:jb_"`
+	ID             pulid.ID `json:"id"             keel:"id,pk,autoid:jb_"`
 	BusinessUnitID pulid.ID `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
 	OrganizationID pulid.ID `json:"organizationId" keel:"organization_id,pk,tenant"`
-	BatchNumber    string   `json:"batchNumber" keel:"batch_number"`
-	BatchType      string   `json:"batchType" keel:"batch_type"`
-	Status         string   `json:"status" keel:"status"`
-	Description    string   `json:"description" keel:"description"`
+	BatchNumber    string   `json:"batchNumber"    keel:"batch_number"`
+	BatchType      string   `json:"batchType"      keel:"batch_type"`
+	Status         string   `json:"status"         keel:"status"`
+	Description    string   `json:"description"    keel:"description"`
 	AccountingDate int64    `json:"accountingDate" keel:"accounting_date"`
-	FiscalYearID   pulid.ID `json:"fiscalYearId" keel:"fiscal_year_id"`
+	FiscalYearID   pulid.ID `json:"fiscalYearId"   keel:"fiscal_year_id"`
 	FiscalPeriodID pulid.ID `json:"fiscalPeriodId" keel:"fiscal_period_id"`
-	EntryCount     int      `json:"entryCount" keel:"entry_count,label=Entries,format=count"`
-	PostedAt       *int64   `json:"postedAt" keel:"posted_at"`
-	PostedByID     pulid.ID `json:"postedById" keel:"posted_by_id,nullzero"`
-	CreatedByID    pulid.ID `json:"createdById" keel:"created_by_id"`
-	UpdatedByID    pulid.ID `json:"updatedById" keel:"updated_by_id,nullzero"`
-	CreatedAt      int64    `json:"createdAt" keel:"created_at,autocreate"`
-	UpdatedAt      int64    `json:"updatedAt" keel:"updated_at,autoupdate"`
+	EntryCount     int      `json:"entryCount"     keel:"entry_count,label=Entries,format=count"`
+	PostedAt       *int64   `json:"postedAt"       keel:"posted_at"`
+	PostedByID     pulid.ID `json:"postedById"     keel:"posted_by_id,nullzero"`
+	CreatedByID    pulid.ID `json:"createdById"    keel:"created_by_id"`
+	UpdatedByID    pulid.ID `json:"updatedById"    keel:"updated_by_id,nullzero"`
+	CreatedAt      int64    `json:"createdAt"      keel:"created_at,autocreate"`
+	UpdatedAt      int64    `json:"updatedAt"      keel:"updated_at,autoupdate"`
 
-	FiscalYear   *fiscalyear.FiscalYear     `json:"fiscalYear,omitempty" keel:"belongs:fiscal_year_id"`
+	FiscalYear   *fiscalyear.FiscalYear     `json:"fiscalYear,omitempty"   keel:"belongs:fiscal_year_id"`
 	FiscalPeriod *fiscalperiod.FiscalPeriod `json:"fiscalPeriod,omitempty" keel:"belongs:fiscal_period_id"`
-	Entries      []*JournalEntry            `json:"entries,omitempty" keel:"many:batch_id,label=Journal Entries"`
+	Entries      []*JournalEntry            `json:"entries,omitempty"      keel:"many:batch_id,label=Journal Entries"`
 }
 
 func (b *JournalBatch) Validate(multiErr *errortypes.MultiError) {

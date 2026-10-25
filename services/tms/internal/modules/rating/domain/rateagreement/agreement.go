@@ -43,60 +43,60 @@ const (
 
 // Negotiated customer and carrier contracts
 type RateAgreement struct {
-	keel.Table `                                               keel:"rate_agreements,report=Billing"`
+	keel.Table `keel:"rate_agreements,report=Billing"`
 
-	ID             pulid.ID `json:"id" keel:"id,pk,autoid:rag_"`
+	ID             pulid.ID `json:"id"             keel:"id,pk,autoid:rag_"`
 	BusinessUnitID pulid.ID `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
 	OrganizationID pulid.ID `json:"organizationId" keel:"organization_id,pk,tenant"`
 
-	PartyType  PartyType `json:"partyType" keel:"party_type"`
+	PartyType  PartyType `json:"partyType"  keel:"party_type"`
 	CustomerID *pulid.ID `json:"customerId" keel:"customer_id"`
-	CarrierID  *pulid.ID `json:"carrierId" keel:"carrier_id"`
+	CarrierID  *pulid.ID `json:"carrierId"  keel:"carrier_id"`
 
-	Code          string        `json:"code" keel:"code,label=Agreement Code"`
-	Name          string        `json:"name" keel:"name,label=Agreement Name"`
-	Description   string        `json:"description" keel:"description,nullzero"`
+	Code          string        `json:"code"          keel:"code,label=Agreement Code"`
+	Name          string        `json:"name"          keel:"name,label=Agreement Name"`
+	Description   string        `json:"description"   keel:"description,nullzero"`
 	AgreementType AgreementType `json:"agreementType" keel:"agreement_type"`
-	Status        Status        `json:"status" keel:"status"`
-	ContractRef   string        `json:"contractRef" keel:"contract_ref,nullzero,label=Contract Reference"`
-	DocumentID    *pulid.ID     `json:"documentId" keel:"document_id"`
+	Status        Status        `json:"status"        keel:"status"`
+	ContractRef   string        `json:"contractRef"   keel:"contract_ref,nullzero,label=Contract Reference"`
+	DocumentID    *pulid.ID     `json:"documentId"    keel:"document_id"`
 
-	Priority          int16  `json:"priority" keel:"priority,dimension"`
-	EffectiveFrom     int64  `json:"effectiveFrom" keel:"effective_from,type=epoch"`
-	EffectiveTo       *int64 `json:"effectiveTo" keel:"effective_to,type=epoch"`
-	AutoRenew         bool   `json:"autoRenew" keel:"auto_renew"`
+	Priority          int16  `json:"priority"          keel:"priority,dimension"`
+	EffectiveFrom     int64  `json:"effectiveFrom"     keel:"effective_from,type=epoch"`
+	EffectiveTo       *int64 `json:"effectiveTo"       keel:"effective_to,type=epoch"`
+	AutoRenew         bool   `json:"autoRenew"         keel:"auto_renew"`
 	RenewalNoticeDays int16  `json:"renewalNoticeDays" keel:"renewal_notice_days,label=Renewal Notice (days),format=count,dimension"`
 
 	Currency string             `json:"currency" keel:"currency"`
-	Inputs   tarifftypes.Inputs `json:"inputs" keel:"inputs,jsonb"`
+	Inputs   tarifftypes.Inputs `json:"inputs"   keel:"inputs,jsonb"`
 
 	BillToCustomerID *pulid.ID `json:"billToCustomerId" keel:"bill_to_customer_id"`
 
-	MarginFloorPercent  decimal.NullDecimal `json:"marginFloorPercent" keel:"margin_floor_percent,label=Margin Floor (%)"`
+	MarginFloorPercent  decimal.NullDecimal `json:"marginFloorPercent"  keel:"margin_floor_percent,label=Margin Floor (%)"`
 	MaxPayPercentOfSell decimal.NullDecimal `json:"maxPayPercentOfSell" keel:"max_pay_percent_of_sell,label=Max Pay % of Sell"`
 
 	SubmittedByID *pulid.ID `json:"submittedById" keel:"submitted_by_id"`
-	SubmittedAt   *int64    `json:"submittedAt" keel:"submitted_at"`
-	ApprovedByID  *pulid.ID `json:"approvedById" keel:"approved_by_id"`
-	ApprovedAt    *int64    `json:"approvedAt" keel:"approved_at"`
+	SubmittedAt   *int64    `json:"submittedAt"   keel:"submitted_at"`
+	ApprovedByID  *pulid.ID `json:"approvedById"  keel:"approved_by_id"`
+	ApprovedAt    *int64    `json:"approvedAt"    keel:"approved_at"`
 	ReviewComment string    `json:"reviewComment" keel:"review_comment,nullzero"`
 
 	CurrentVersionNumber int64  `json:"currentVersionNumber" keel:"current_version_number,label=Current Version,dimension"`
-	Version              int64  `json:"version" keel:"version,version"`
-	CreatedAt            int64  `json:"createdAt" keel:"created_at,autocreate"`
-	UpdatedAt            int64  `json:"updatedAt" keel:"updated_at,autoupdate"`
-	SearchVector         string `json:"-" keel:"search_vector,tsvector,readonly,noselect"`
-	Rank                 string `json:"-" keel:"rank,computed"`
+	Version              int64  `json:"version"              keel:"version,version"`
+	CreatedAt            int64  `json:"createdAt"            keel:"created_at,autocreate"`
+	UpdatedAt            int64  `json:"updatedAt"            keel:"updated_at,autoupdate"`
+	SearchVector         string `json:"-"                    keel:"search_vector,tsvector,readonly,noselect"`
+	Rank                 string `json:"-"                    keel:"rank,computed"`
 
 	BusinessUnit *tenant.BusinessUnit `json:"-"`
 	Organization *tenant.Organization `json:"-"`
 	Customer     *customer.Customer   `json:"customer,omitempty" keel:"belongs:customer_id"`
-	Carrier      *carrier.Carrier     `json:"carrier,omitempty" keel:"belongs:carrier_id"`
+	Carrier      *carrier.Carrier     `json:"carrier,omitempty"  keel:"belongs:carrier_id"`
 
-	Rules          []*RateAgreementRule        `json:"rules,omitempty" keel:"many:rate_agreement_id,label=Lane Rules"`
-	Accessorials   []*RateAgreementAccessorial `json:"accessorials,omitempty" keel:"many:rate_agreement_id,label=Accessorial Schedule"`
-	Versions       []*RateAgreementVersion     `json:"versions,omitempty" keel:"many:rate_agreement_id"`
-	FuelBinding    *RateAgreementFuelBinding   `json:"fuelBinding,omitempty" keel:"one:rate_agreement_id,noreport"`
+	Rules          []*RateAgreementRule        `json:"rules,omitempty"          keel:"many:rate_agreement_id,label=Lane Rules"`
+	Accessorials   []*RateAgreementAccessorial `json:"accessorials,omitempty"   keel:"many:rate_agreement_id,label=Accessorial Schedule"`
+	Versions       []*RateAgreementVersion     `json:"versions,omitempty"       keel:"many:rate_agreement_id"`
+	FuelBinding    *RateAgreementFuelBinding   `json:"fuelBinding,omitempty"    keel:"one:rate_agreement_id,noreport"`
 	CurrentVersion *RateAgreementVersion       `json:"currentVersion,omitempty" keel:"pick:versions,last=versions.version_number"`
 }
 

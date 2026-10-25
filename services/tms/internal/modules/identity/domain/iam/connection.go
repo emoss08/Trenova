@@ -27,7 +27,11 @@ func (e *AuthEvent) GetPostgresSearchConfig() domaintypes.PostgresSearchConfig {
 		UseSearchVector: false,
 		SearchableFields: []domaintypes.SearchableField{
 			{Name: "provider", Type: domaintypes.FieldTypeText, Weight: domaintypes.SearchWeightA},
-			{Name: "error_code", Type: domaintypes.FieldTypeText, Weight: domaintypes.SearchWeightB},
+			{
+				Name:   "error_code",
+				Type:   domaintypes.FieldTypeText,
+				Weight: domaintypes.SearchWeightB,
+			},
 		},
 	}
 }
@@ -129,7 +133,11 @@ func (d *SCIMDirectory) GetPostgresSearchConfig() domaintypes.PostgresSearchConf
 		TableAlias:      "sd",
 		UseSearchVector: false,
 		SearchableFields: []domaintypes.SearchableField{
-			{Name: "tenant_slug", Type: domaintypes.FieldTypeText, Weight: domaintypes.SearchWeightA},
+			{
+				Name:   "tenant_slug",
+				Type:   domaintypes.FieldTypeText,
+				Weight: domaintypes.SearchWeightA,
+			},
 		},
 	}
 }

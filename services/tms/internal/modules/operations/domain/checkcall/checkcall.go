@@ -11,30 +11,30 @@ import (
 type CheckCall struct {
 	keel.Table `keel:"check_calls"`
 
-	ID               pulid.ID `json:"id" keel:"id,pk"`
-	OrganizationID   pulid.ID `json:"organizationId" keel:"organization_id,pk,tenant"`
-	BusinessUnitID   pulid.ID `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
-	ShipmentID       pulid.ID `json:"shipmentId" keel:"shipment_id"`
-	ShipmentMoveID   pulid.ID `json:"shipmentMoveId" keel:"shipment_move_id"`
-	StopID           pulid.ID `json:"stopId" keel:"stop_id,nullzero"`
-	Source           Source   `json:"source" keel:"source"`
-	SourceKey        string   `json:"sourceKey" keel:"source_key"`
-	Kind             Kind     `json:"kind" keel:"kind"`
-	ReportedAt       int64    `json:"reportedAt" keel:"reported_at"`
-	ReceivedAt       int64    `json:"receivedAt" keel:"received_at"`
-	Latitude         *float64 `json:"latitude" keel:"latitude"`
-	Longitude        *float64 `json:"longitude" keel:"longitude"`
-	City             string   `json:"city" keel:"city,nullzero"`
-	StateCode        string   `json:"stateCode" keel:"state_code,nullzero"`
-	Delayed          bool     `json:"delayed" keel:"delayed"`
-	DelayReason      string   `json:"delayReason" keel:"delay_reason,nullzero"`
+	ID               pulid.ID `json:"id"               keel:"id,pk"`
+	OrganizationID   pulid.ID `json:"organizationId"   keel:"organization_id,pk,tenant"`
+	BusinessUnitID   pulid.ID `json:"businessUnitId"   keel:"business_unit_id,pk,tenant"`
+	ShipmentID       pulid.ID `json:"shipmentId"       keel:"shipment_id"`
+	ShipmentMoveID   pulid.ID `json:"shipmentMoveId"   keel:"shipment_move_id"`
+	StopID           pulid.ID `json:"stopId"           keel:"stop_id,nullzero"`
+	Source           Source   `json:"source"           keel:"source"`
+	SourceKey        string   `json:"sourceKey"        keel:"source_key"`
+	Kind             Kind     `json:"kind"             keel:"kind"`
+	ReportedAt       int64    `json:"reportedAt"       keel:"reported_at"`
+	ReceivedAt       int64    `json:"receivedAt"       keel:"received_at"`
+	Latitude         *float64 `json:"latitude"         keel:"latitude"`
+	Longitude        *float64 `json:"longitude"        keel:"longitude"`
+	City             string   `json:"city"             keel:"city,nullzero"`
+	StateCode        string   `json:"stateCode"        keel:"state_code,nullzero"`
+	Delayed          bool     `json:"delayed"          keel:"delayed"`
+	DelayReason      string   `json:"delayReason"      keel:"delay_reason,nullzero"`
 	EstimatedArrival *int64   `json:"estimatedArrival" keel:"estimated_arrival"`
-	Note             string   `json:"note" keel:"note,nullzero"`
-	ContactName      string   `json:"contactName" keel:"contact_name,nullzero"`
-	ReportedByID     pulid.ID `json:"reportedById" keel:"reported_by_id,nullzero"`
-	TrackingLinkID   pulid.ID `json:"trackingLinkId" keel:"tracking_link_id,nullzero"`
-	TrackingEventID  pulid.ID `json:"trackingEventId" keel:"tracking_event_id,nullzero"`
-	CreatedAt        int64    `json:"createdAt" keel:"created_at"`
+	Note             string   `json:"note"             keel:"note,nullzero"`
+	ContactName      string   `json:"contactName"      keel:"contact_name,nullzero"`
+	ReportedByID     pulid.ID `json:"reportedById"     keel:"reported_by_id,nullzero"`
+	TrackingLinkID   pulid.ID `json:"trackingLinkId"   keel:"tracking_link_id,nullzero"`
+	TrackingEventID  pulid.ID `json:"trackingEventId"  keel:"tracking_event_id,nullzero"`
+	CreatedAt        int64    `json:"createdAt"        keel:"created_at"`
 }
 
 func NewID() pulid.ID {

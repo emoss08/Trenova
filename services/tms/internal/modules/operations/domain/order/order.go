@@ -24,35 +24,35 @@ var (
 
 // Commercial orders grouping one or more shipments
 type Order struct {
-	keel.Table `                                      keel:"orders,report=Operations"`
+	keel.Table `keel:"orders,report=Operations"`
 
-	ID             pulid.ID            `json:"id" keel:"id,pk,autoid:ord_"`
+	ID             pulid.ID            `json:"id"             keel:"id,pk,autoid:ord_"`
 	BusinessUnitID pulid.ID            `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
 	OrganizationID pulid.ID            `json:"organizationId" keel:"organization_id,pk,tenant"`
-	CustomerID     pulid.ID            `json:"customerId" keel:"customer_id"`
-	OwnerID        pulid.ID            `json:"ownerId" keel:"owner_id,nullzero"`
-	EnteredByID    pulid.ID            `json:"enteredById" keel:"entered_by_id,nullzero"`
-	Status         Status              `json:"status" keel:"status"`
-	OrderNumber    string              `json:"orderNumber" keel:"order_number"`
-	PONumber       string              `json:"poNumber" keel:"po_number,nullzero"`
-	BOL            string              `json:"bol" keel:"bol,nullzero"`
-	CurrencyCode   string              `json:"currencyCode" keel:"currency_code"`
-	QuotedAmount   decimal.NullDecimal `json:"quotedAmount" keel:"quoted_amount,format=money"`
-	BaseAmount     decimal.NullDecimal `json:"baseAmount" keel:"base_amount,format=money"`
-	TotalAmount    decimal.NullDecimal `json:"totalAmount" keel:"total_amount,format=money"`
-	SearchVector   string              `json:"-" keel:"search_vector,tsvector,readonly,noselect"`
-	Rank           string              `json:"-" keel:"rank,computed"`
-	Version        int64               `json:"version" keel:"version,version"`
-	CreatedAt      int64               `json:"createdAt" keel:"created_at,autocreate"`
-	UpdatedAt      int64               `json:"updatedAt" keel:"updated_at,autoupdate"`
+	CustomerID     pulid.ID            `json:"customerId"     keel:"customer_id"`
+	OwnerID        pulid.ID            `json:"ownerId"        keel:"owner_id,nullzero"`
+	EnteredByID    pulid.ID            `json:"enteredById"    keel:"entered_by_id,nullzero"`
+	Status         Status              `json:"status"         keel:"status"`
+	OrderNumber    string              `json:"orderNumber"    keel:"order_number"`
+	PONumber       string              `json:"poNumber"       keel:"po_number,nullzero"`
+	BOL            string              `json:"bol"            keel:"bol,nullzero"`
+	CurrencyCode   string              `json:"currencyCode"   keel:"currency_code"`
+	QuotedAmount   decimal.NullDecimal `json:"quotedAmount"   keel:"quoted_amount,format=money"`
+	BaseAmount     decimal.NullDecimal `json:"baseAmount"     keel:"base_amount,format=money"`
+	TotalAmount    decimal.NullDecimal `json:"totalAmount"    keel:"total_amount,format=money"`
+	SearchVector   string              `json:"-"              keel:"search_vector,tsvector,readonly,noselect"`
+	Rank           string              `json:"-"              keel:"rank,computed"`
+	Version        int64               `json:"version"        keel:"version,version"`
+	CreatedAt      int64               `json:"createdAt"      keel:"created_at,autocreate"`
+	UpdatedAt      int64               `json:"updatedAt"      keel:"updated_at,autoupdate"`
 
 	BusinessUnit *tenant.BusinessUnit `json:"businessUnit,omitempty"`
 	Organization *tenant.Organization `json:"organization,omitempty"`
-	Customer     *customer.Customer   `json:"customer,omitempty" keel:"belongs:customer_id"`
-	Owner        *tenant.User         `json:"owner,omitempty" keel:"belongs:owner_id,noreport"`
-	EnteredBy    *tenant.User         `json:"enteredBy,omitempty" keel:"belongs:entered_by_id,noreport"`
-	Shipments    []*shipment.Shipment `json:"shipments,omitempty" keel:"many:order_id"`
-	Charges      []*OrderCharge       `json:"charges,omitempty" keel:"many:order_id,noreport"`
+	Customer     *customer.Customer   `json:"customer,omitempty"     keel:"belongs:customer_id"`
+	Owner        *tenant.User         `json:"owner,omitempty"        keel:"belongs:owner_id,noreport"`
+	EnteredBy    *tenant.User         `json:"enteredBy,omitempty"    keel:"belongs:entered_by_id,noreport"`
+	Shipments    []*shipment.Shipment `json:"shipments,omitempty"    keel:"many:order_id"`
+	Charges      []*OrderCharge       `json:"charges,omitempty"      keel:"many:order_id,noreport"`
 }
 
 func (o *Order) Validate(multiErr *errortypes.MultiError) {

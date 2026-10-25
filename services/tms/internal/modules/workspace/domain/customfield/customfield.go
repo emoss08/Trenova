@@ -21,29 +21,29 @@ var (
 var namePattern = regexp.MustCompile(`^[a-z][a-z0-9_]*$`)
 
 type CustomFieldDefinition struct {
-	keel.Table `                                                        keel:"custom_field_definitions"`
+	keel.Table `keel:"custom_field_definitions"`
 
-	ID             pulid.ID `json:"id" keel:"id,pk,autoid:cfd_"`
+	ID             pulid.ID `json:"id"             keel:"id,pk,autoid:cfd_"`
 	BusinessUnitID pulid.ID `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
 	OrganizationID pulid.ID `json:"organizationId" keel:"organization_id,pk,tenant"`
 
-	ResourceType    string           `json:"resourceType" keel:"resource_type"`
-	Name            string           `json:"name" keel:"name"`
-	Label           string           `json:"label" keel:"label"`
-	Description     string           `json:"description" keel:"description,nullzero"`
-	FieldType       FieldType        `json:"fieldType" keel:"field_type"`
-	IsRequired      bool             `json:"isRequired" keel:"is_required"`
-	IsActive        bool             `json:"isActive" keel:"is_active"`
-	DisplayOrder    int              `json:"displayOrder" keel:"display_order"`
-	Color           string           `json:"color" keel:"color,nullzero"`
-	Options         []SelectOption   `json:"options" keel:"options,jsonb"`
+	ResourceType    string           `json:"resourceType"    keel:"resource_type"`
+	Name            string           `json:"name"            keel:"name"`
+	Label           string           `json:"label"           keel:"label"`
+	Description     string           `json:"description"     keel:"description,nullzero"`
+	FieldType       FieldType        `json:"fieldType"       keel:"field_type"`
+	IsRequired      bool             `json:"isRequired"      keel:"is_required"`
+	IsActive        bool             `json:"isActive"        keel:"is_active"`
+	DisplayOrder    int              `json:"displayOrder"    keel:"display_order"`
+	Color           string           `json:"color"           keel:"color,nullzero"`
+	Options         []SelectOption   `json:"options"         keel:"options,jsonb"`
 	ValidationRules *ValidationRules `json:"validationRules" keel:"validation_rules,jsonb"`
-	DefaultValue    any              `json:"defaultValue" keel:"default_value,jsonb"`
-	UIAttributes    *UIAttributes    `json:"uiAttributes" keel:"ui_attributes,jsonb"`
+	DefaultValue    any              `json:"defaultValue"    keel:"default_value,jsonb"`
+	UIAttributes    *UIAttributes    `json:"uiAttributes"    keel:"ui_attributes,jsonb"`
 
 	SearchVector string `json:"-"`
-	Rank         string `json:"-" keel:"rank,computed"`
-	Version      int64  `json:"version" keel:"version,version"`
+	Rank         string `json:"-"         keel:"rank,computed"`
+	Version      int64  `json:"version"   keel:"version,version"`
 	CreatedAt    int64  `json:"createdAt" keel:"created_at,autocreate"`
 	UpdatedAt    int64  `json:"updatedAt" keel:"updated_at,autoupdate"`
 }

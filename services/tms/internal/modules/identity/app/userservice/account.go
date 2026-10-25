@@ -342,7 +342,10 @@ func (s *Service) ListAvatars(
 	return out, nil
 }
 
-func (s *Service) ListMySessions(ctx context.Context, scope SessionScope) ([]SessionSummary, error) {
+func (s *Service) ListMySessions(
+	ctx context.Context,
+	scope SessionScope,
+) ([]SessionSummary, error) {
 	sessions, err := s.sr.ListForUser(ctx, scope.TenantInfo.UserID)
 	if err != nil {
 		return nil, err
@@ -446,7 +449,11 @@ func (s *Service) RevokeMyOtherSessions(ctx context.Context, scope SessionScope)
 	return revoked, nil
 }
 
-func (s *Service) recordRevocation(ctx context.Context, tenantInfo pagination.TenantInfo, count int) {
+func (s *Service) recordRevocation(
+	ctx context.Context,
+	tenantInfo pagination.TenantInfo,
+	count int,
+) {
 	if s.authEvents == nil {
 		return
 	}

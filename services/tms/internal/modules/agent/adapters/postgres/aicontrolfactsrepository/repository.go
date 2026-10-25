@@ -104,8 +104,16 @@ func (r *repository) ProviderFailures(
 		r.db,
 		func(ctx context.Context) ([]agentrosterports.ProviderFailureCount, error) {
 			u := aiusagedb.AIUsageRecords
-			lastFailure := keel.Raw("COALESCE(MAX(?) FILTER (WHERE NOT ?), 0)", u.CreatedAt, u.Succeeded)
-			lastSuccess := keel.Raw("COALESCE(MAX(?) FILTER (WHERE ?), 0)", u.CreatedAt, u.Succeeded)
+			lastFailure := keel.Raw(
+				"COALESCE(MAX(?) FILTER (WHERE NOT ?), 0)",
+				u.CreatedAt,
+				u.Succeeded,
+			)
+			lastSuccess := keel.Raw(
+				"COALESCE(MAX(?) FILTER (WHERE ?), 0)",
+				u.CreatedAt,
+				u.Succeeded,
+			)
 			rows, err := keel.Into[failureRow](ctx, r.db.Keel(ctx), u.
 				Where(u.CreatedAt.Gte(req.Since), u.ProviderID.IsNotNull()).
 				Group(u.ProviderID).

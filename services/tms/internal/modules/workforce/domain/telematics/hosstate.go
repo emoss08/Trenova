@@ -14,36 +14,36 @@ import (
 type WorkerHOSState struct {
 	keel.Table `keel:"worker_hos_states"`
 
-	OrganizationID          pulid.ID   `json:"organizationId" keel:"organization_id,pk,tenant"`
-	BusinessUnitID          pulid.ID   `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
-	WorkerID                pulid.ID   `json:"workerId" keel:"worker_id,pk"`
-	Provider                string     `json:"provider" keel:"provider"`
-	ProviderDriverID        string     `json:"providerDriverId" keel:"provider_driver_id"`
-	DutyStatus              DutyStatus `json:"dutyStatus" keel:"duty_status,nullzero"`
-	DriveRemainingMs        int64      `json:"driveRemainingMs" keel:"drive_remaining_ms"`
-	ShiftRemainingMs        int64      `json:"shiftRemainingMs" keel:"shift_remaining_ms"`
-	CycleRemainingMs        int64      `json:"cycleRemainingMs" keel:"cycle_remaining_ms"`
-	CycleTomorrowMs         int64      `json:"cycleTomorrowMs" keel:"cycle_tomorrow_ms"`
-	BreakRemainingMs        int64      `json:"breakRemainingMs" keel:"break_remaining_ms"`
-	CycleStartedAt          *int64     `json:"cycleStartedAt" keel:"cycle_started_at"`
+	OrganizationID          pulid.ID   `json:"organizationId"          keel:"organization_id,pk,tenant"`
+	BusinessUnitID          pulid.ID   `json:"businessUnitId"          keel:"business_unit_id,pk,tenant"`
+	WorkerID                pulid.ID   `json:"workerId"                keel:"worker_id,pk"`
+	Provider                string     `json:"provider"                keel:"provider"`
+	ProviderDriverID        string     `json:"providerDriverId"        keel:"provider_driver_id"`
+	DutyStatus              DutyStatus `json:"dutyStatus"              keel:"duty_status,nullzero"`
+	DriveRemainingMs        int64      `json:"driveRemainingMs"        keel:"drive_remaining_ms"`
+	ShiftRemainingMs        int64      `json:"shiftRemainingMs"        keel:"shift_remaining_ms"`
+	CycleRemainingMs        int64      `json:"cycleRemainingMs"        keel:"cycle_remaining_ms"`
+	CycleTomorrowMs         int64      `json:"cycleTomorrowMs"         keel:"cycle_tomorrow_ms"`
+	BreakRemainingMs        int64      `json:"breakRemainingMs"        keel:"break_remaining_ms"`
+	CycleStartedAt          *int64     `json:"cycleStartedAt"          keel:"cycle_started_at"`
 	ShiftDrivingViolationMs int64      `json:"shiftDrivingViolationMs" keel:"shift_driving_violation_ms"`
-	CycleViolationMs        int64      `json:"cycleViolationMs" keel:"cycle_violation_ms"`
-	CurrentVehicleID        string     `json:"currentVehicleId" keel:"current_vehicle_id,nullzero"`
-	RulesetCycle            string     `json:"rulesetCycle" keel:"ruleset_cycle,nullzero"`
-	RulesetShift            string     `json:"rulesetShift" keel:"ruleset_shift,nullzero"`
-	RulesetRestart          string     `json:"rulesetRestart" keel:"ruleset_restart,nullzero"`
-	RulesetBreak            string     `json:"rulesetBreak" keel:"ruleset_break,nullzero"`
-	RulesetJurisdiction     string     `json:"rulesetJurisdiction" keel:"ruleset_jurisdiction,nullzero"`
-	CurrentTractorID        pulid.ID   `json:"currentTractorId" keel:"current_tractor_id,nullzero"`
-	RecordedAt              int64      `json:"recordedAt" keel:"recorded_at"`
-	ReceivedAt              int64      `json:"receivedAt" keel:"received_at"`
+	CycleViolationMs        int64      `json:"cycleViolationMs"        keel:"cycle_violation_ms"`
+	CurrentVehicleID        string     `json:"currentVehicleId"        keel:"current_vehicle_id,nullzero"`
+	RulesetCycle            string     `json:"rulesetCycle"            keel:"ruleset_cycle,nullzero"`
+	RulesetShift            string     `json:"rulesetShift"            keel:"ruleset_shift,nullzero"`
+	RulesetRestart          string     `json:"rulesetRestart"          keel:"ruleset_restart,nullzero"`
+	RulesetBreak            string     `json:"rulesetBreak"            keel:"ruleset_break,nullzero"`
+	RulesetJurisdiction     string     `json:"rulesetJurisdiction"     keel:"ruleset_jurisdiction,nullzero"`
+	CurrentTractorID        pulid.ID   `json:"currentTractorId"        keel:"current_tractor_id,nullzero"`
+	RecordedAt              int64      `json:"recordedAt"              keel:"recorded_at"`
+	ReceivedAt              int64      `json:"receivedAt"              keel:"received_at"`
 
 	Worker *worker.Worker `json:"worker,omitempty" keel:"belongs:worker_id"`
 }
 
 func (s *WorkerHOSState) BeforeCreate(_ context.Context) error {
 	if s.Provider == "" {
-		s.Provider = "Samsara"
+		s.Provider = defaultProvider
 	}
 
 	return nil

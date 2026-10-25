@@ -29,18 +29,18 @@ const (
 type CaptureCoverSheet struct {
 	keel.Table `keel:"capture_cover_sheets"`
 
-	ID             pulid.ID  `json:"id" keel:"id,pk,autoid:ccs_"`
+	ID             pulid.ID  `json:"id"             keel:"id,pk,autoid:ccs_"`
 	BusinessUnitID pulid.ID  `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
 	OrganizationID pulid.ID  `json:"organizationId" keel:"organization_id,pk,tenant"`
-	TokenHash      string    `json:"-" keel:"token_hash"`
-	TargetType     string    `json:"targetType" keel:"target_type,nullzero"`
-	TargetID       *pulid.ID `json:"targetId" keel:"target_id"`
+	TokenHash      string    `json:"-"              keel:"token_hash"`
+	TargetType     string    `json:"targetType"     keel:"target_type,nullzero"`
+	TargetID       *pulid.ID `json:"targetId"       keel:"target_id"`
 	DocumentTypeID *pulid.ID `json:"documentTypeId" keel:"document_type_id"`
-	IssuedByID     pulid.ID  `json:"issuedById" keel:"issued_by_id"`
-	ExpiresAt      int64     `json:"expiresAt" keel:"expires_at"`
-	LastUsedAt     *int64    `json:"lastUsedAt" keel:"last_used_at"`
-	UseCount       int       `json:"useCount" keel:"use_count"`
-	CreatedAt      int64     `json:"createdAt" keel:"created_at,autocreate"`
+	IssuedByID     pulid.ID  `json:"issuedById"     keel:"issued_by_id"`
+	ExpiresAt      int64     `json:"expiresAt"      keel:"expires_at"`
+	LastUsedAt     *int64    `json:"lastUsedAt"     keel:"last_used_at"`
+	UseCount       int       `json:"useCount"       keel:"use_count"`
+	CreatedAt      int64     `json:"createdAt"      keel:"created_at,autocreate"`
 }
 
 func (c *CaptureCoverSheet) Validate(multiErr *errortypes.MultiError) {

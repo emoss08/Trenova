@@ -136,33 +136,33 @@ func (s WebWatchStatus) IsValid() bool {
 type WebWatch struct {
 	keel.Table `keel:"agent_web_watches"`
 
-	ID                pulid.ID        `json:"id" keel:"id,pk,autoid:awwt_"`
-	BusinessUnitID    pulid.ID        `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
-	OrganizationID    pulid.ID        `json:"organizationId" keel:"organization_id,pk,tenant"`
-	ExtensionType     Type            `json:"extensionType" keel:"extension_type"`
-	VendorMonitorID   string          `json:"-" keel:"vendor_monitor_id"`
-	Query             string          `json:"query" keel:"query"`
-	Purpose           string          `json:"purpose" keel:"purpose"`
-	IncludeDomains    []string        `json:"includeDomains" keel:"include_domains,jsonb"`
-	Cadence           WebWatchCadence `json:"cadence" keel:"cadence"`
-	Status            WebWatchStatus  `json:"status" keel:"status"`
-	Secrets           map[string]any  `json:"-" keel:"secrets,jsonb"`
-	EndsAt            int64           `json:"endsAt" keel:"ends_at"`
-	LastCheckedAt     *int64          `json:"lastCheckedAt" keel:"last_checked_at"`
-	LastRunAt         *int64          `json:"lastRunAt" keel:"last_run_at"`
-	RunCount          int             `json:"runCount" keel:"run_count"`
-	FindingCount      int             `json:"findingCount" keel:"finding_count"`
-	CostUSD           decimal.Decimal `json:"costUsd" keel:"cost_usd"`
-	Failure           string          `json:"failure" keel:"failure"`
+	ID                pulid.ID        `json:"id"                keel:"id,pk,autoid:awwt_"`
+	BusinessUnitID    pulid.ID        `json:"businessUnitId"    keel:"business_unit_id,pk,tenant"`
+	OrganizationID    pulid.ID        `json:"organizationId"    keel:"organization_id,pk,tenant"`
+	ExtensionType     Type            `json:"extensionType"     keel:"extension_type"`
+	VendorMonitorID   string          `json:"-"                 keel:"vendor_monitor_id"`
+	Query             string          `json:"query"             keel:"query"`
+	Purpose           string          `json:"purpose"           keel:"purpose"`
+	IncludeDomains    []string        `json:"includeDomains"    keel:"include_domains,jsonb"`
+	Cadence           WebWatchCadence `json:"cadence"           keel:"cadence"`
+	Status            WebWatchStatus  `json:"status"            keel:"status"`
+	Secrets           map[string]any  `json:"-"                 keel:"secrets,jsonb"`
+	EndsAt            int64           `json:"endsAt"            keel:"ends_at"`
+	LastCheckedAt     *int64          `json:"lastCheckedAt"     keel:"last_checked_at"`
+	LastRunAt         *int64          `json:"lastRunAt"         keel:"last_run_at"`
+	RunCount          int             `json:"runCount"          keel:"run_count"`
+	FindingCount      int             `json:"findingCount"      keel:"finding_count"`
+	CostUSD           decimal.Decimal `json:"costUsd"           keel:"cost_usd"`
+	Failure           string          `json:"failure"           keel:"failure"`
 	AgentDefinitionID pulid.ID        `json:"agentDefinitionId" keel:"agent_definition_id,nullzero"`
-	AgentRunID        pulid.ID        `json:"agentRunId" keel:"agent_run_id,nullzero"`
-	ThreadID          pulid.ID        `json:"threadId" keel:"thread_id,nullzero"`
-	RequestedByID     pulid.ID        `json:"requestedById" keel:"requested_by_id,nullzero"`
-	StoppedByID       pulid.ID        `json:"stoppedById" keel:"stopped_by_id,nullzero"`
-	FinishedAt        *int64          `json:"finishedAt" keel:"finished_at"`
-	Version           int64           `json:"version" keel:"version,version"`
-	CreatedAt         int64           `json:"createdAt" keel:"created_at,autocreate"`
-	UpdatedAt         int64           `json:"updatedAt" keel:"updated_at,autoupdate"`
+	AgentRunID        pulid.ID        `json:"agentRunId"        keel:"agent_run_id,nullzero"`
+	ThreadID          pulid.ID        `json:"threadId"          keel:"thread_id,nullzero"`
+	RequestedByID     pulid.ID        `json:"requestedById"     keel:"requested_by_id,nullzero"`
+	StoppedByID       pulid.ID        `json:"stoppedById"       keel:"stopped_by_id,nullzero"`
+	FinishedAt        *int64          `json:"finishedAt"        keel:"finished_at"`
+	Version           int64           `json:"version"           keel:"version,version"`
+	CreatedAt         int64           `json:"createdAt"         keel:"created_at,autocreate"`
+	UpdatedAt         int64           `json:"updatedAt"         keel:"updated_at,autoupdate"`
 }
 
 func (w *WebWatch) Normalize() {
@@ -281,16 +281,16 @@ type WebWatchResult struct {
 type WebWatchFinding struct {
 	keel.Table `keel:"agent_web_watch_findings"`
 
-	ID             pulid.ID         `json:"id" keel:"id,pk,autoid:awwf_"`
+	ID             pulid.ID         `json:"id"             keel:"id,pk,autoid:awwf_"`
 	BusinessUnitID pulid.ID         `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
 	OrganizationID pulid.ID         `json:"organizationId" keel:"organization_id,pk,tenant"`
-	WatchID        pulid.ID         `json:"watchId" keel:"watch_id"`
-	VendorRunID    string           `json:"-" keel:"vendor_run_id"`
-	Summary        string           `json:"summary" keel:"summary"`
-	Results        []WebWatchResult `json:"results" keel:"results,jsonb"`
-	FoundAt        int64            `json:"foundAt" keel:"found_at"`
-	DeliveredAt    *int64           `json:"deliveredAt" keel:"delivered_at"`
-	CreatedAt      int64            `json:"createdAt" keel:"created_at,autocreate"`
+	WatchID        pulid.ID         `json:"watchId"        keel:"watch_id"`
+	VendorRunID    string           `json:"-"              keel:"vendor_run_id"`
+	Summary        string           `json:"summary"        keel:"summary"`
+	Results        []WebWatchResult `json:"results"        keel:"results,jsonb"`
+	FoundAt        int64            `json:"foundAt"        keel:"found_at"`
+	DeliveredAt    *int64           `json:"deliveredAt"    keel:"delivered_at"`
+	CreatedAt      int64            `json:"createdAt"      keel:"created_at,autocreate"`
 }
 
 // BoundedResults keeps a run's results to what is stored and handed on: at

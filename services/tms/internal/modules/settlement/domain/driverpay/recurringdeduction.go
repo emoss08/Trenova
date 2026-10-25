@@ -4,6 +4,8 @@ import (
 	"context"
 	"strings"
 
+	"github.com/emoss08/trenova/shared/money"
+
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
 	"github.com/emoss08/trenova/pkg/domaintypes"
@@ -21,35 +23,35 @@ var (
 
 // Standing deductions, including garnishments and escrow contributions
 type RecurringDeduction struct {
-	keel.Table `                                                     keel:"recurring_deductions,report=Payroll"`
+	keel.Table `keel:"recurring_deductions,report=Payroll"`
 
-	ID                  pulid.ID           `json:"id" keel:"id,pk,autoid:rded_"`
-	BusinessUnitID      pulid.ID           `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
-	OrganizationID      pulid.ID           `json:"organizationId" keel:"organization_id,pk,tenant"`
-	WorkerID            pulid.ID           `json:"workerId" keel:"worker_id"`
-	PayCodeID           pulid.ID           `json:"payCodeId" keel:"pay_code_id"`
-	EscrowAccountID     *pulid.ID          `json:"escrowAccountId" keel:"escrow_account_id"`
-	Status              DeductionStatus    `json:"status" keel:"status"`
-	Kind                DeductionKind      `json:"kind" keel:"kind"`
-	CourtOrderNumber    string             `json:"courtOrderNumber" keel:"court_order_number,nullzero"`
-	CaseNumber          string             `json:"caseNumber" keel:"case_number,nullzero"`
-	IssuingAgency       string             `json:"issuingAgency" keel:"issuing_agency,nullzero"`
-	Priority            int16              `json:"priority" keel:"priority,dimension"`
-	Frequency           DeductionFrequency `json:"frequency" keel:"frequency"`
-	Description         string             `json:"description" keel:"description"`
-	AmountMinor         int64              `json:"amountMinor" keel:"amount_minor,label=Amount (Minor)"`
-	TotalCapMinor       *int64             `json:"totalCapMinor" keel:"total_cap_minor,label=Total Cap (Minor)"`
+	ID                  pulid.ID           `json:"id"                  keel:"id,pk,autoid:rded_"`
+	BusinessUnitID      pulid.ID           `json:"businessUnitId"      keel:"business_unit_id,pk,tenant"`
+	OrganizationID      pulid.ID           `json:"organizationId"      keel:"organization_id,pk,tenant"`
+	WorkerID            pulid.ID           `json:"workerId"            keel:"worker_id"`
+	PayCodeID           pulid.ID           `json:"payCodeId"           keel:"pay_code_id"`
+	EscrowAccountID     *pulid.ID          `json:"escrowAccountId"     keel:"escrow_account_id"`
+	Status              DeductionStatus    `json:"status"              keel:"status"`
+	Kind                DeductionKind      `json:"kind"                keel:"kind"`
+	CourtOrderNumber    string             `json:"courtOrderNumber"    keel:"court_order_number,nullzero"`
+	CaseNumber          string             `json:"caseNumber"          keel:"case_number,nullzero"`
+	IssuingAgency       string             `json:"issuingAgency"       keel:"issuing_agency,nullzero"`
+	Priority            int16              `json:"priority"            keel:"priority,dimension"`
+	Frequency           DeductionFrequency `json:"frequency"           keel:"frequency"`
+	Description         string             `json:"description"         keel:"description"`
+	AmountMinor         int64              `json:"amountMinor"         keel:"amount_minor,label=Amount (Minor)"`
+	TotalCapMinor       *int64             `json:"totalCapMinor"       keel:"total_cap_minor,label=Total Cap (Minor)"`
 	DeductedToDateMinor int64              `json:"deductedToDateMinor" keel:"deducted_to_date_minor,label=Deducted to Date (Minor)"`
-	StartDate           int64              `json:"startDate" keel:"start_date,label=Starts"`
-	EndDate             *int64             `json:"endDate" keel:"end_date,label=Ends"`
-	CurrencyCode        string             `json:"currencyCode" keel:"currency_code,label=Currency"`
-	CreatedByID         pulid.ID           `json:"createdById" keel:"created_by_id,nullzero"`
-	Version             int64              `json:"version" keel:"version,version"`
-	CreatedAt           int64              `json:"createdAt" keel:"created_at,autocreate"`
-	UpdatedAt           int64              `json:"updatedAt" keel:"updated_at,autoupdate"`
+	StartDate           int64              `json:"startDate"           keel:"start_date,label=Starts"`
+	EndDate             *int64             `json:"endDate"             keel:"end_date,label=Ends"`
+	CurrencyCode        string             `json:"currencyCode"        keel:"currency_code,label=Currency"`
+	CreatedByID         pulid.ID           `json:"createdById"         keel:"created_by_id,nullzero"`
+	Version             int64              `json:"version"             keel:"version,version"`
+	CreatedAt           int64              `json:"createdAt"           keel:"created_at,autocreate"`
+	UpdatedAt           int64              `json:"updatedAt"           keel:"updated_at,autoupdate"`
 
-	Worker        *worker.Worker `json:"worker,omitempty" keel:"belongs:worker_id,label=Driver"`
-	PayCode       *PayCode       `json:"payCode,omitempty" keel:"belongs:pay_code_id"`
+	Worker        *worker.Worker `json:"worker,omitempty"        keel:"belongs:worker_id,label=Driver"`
+	PayCode       *PayCode       `json:"payCode,omitempty"       keel:"belongs:pay_code_id"`
 	EscrowAccount *EscrowAccount `json:"escrowAccount,omitempty" keel:"belongs:escrow_account_id"`
 }
 
@@ -175,7 +177,7 @@ func (r *RecurringDeduction) BeforeCreate(ctx context.Context) error {
 		r.Frequency = DeductionFrequencyEverySettlement
 	}
 	if r.CurrencyCode == "" {
-		r.CurrencyCode = "USD"
+		r.CurrencyCode = money.DefaultCurrencyCode
 	}
 	if r.Priority <= 0 {
 		r.Priority = r.Kind.DefaultPriority()

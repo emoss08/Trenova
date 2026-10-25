@@ -175,7 +175,11 @@ func ProvisionRLSRoles(
 
 const loginRoleAttributes = "LOGIN NOSUPERUSER NOCREATEDB NOCREATEROLE NOREPLICATION NOBYPASSRLS INHERIT"
 
-func provisionLoginRole(ctx context.Context, db *keel.DB, name, verifier, member, excluded string) error {
+func provisionLoginRole(
+	ctx context.Context,
+	db *keel.DB,
+	name, verifier, member, excluded string,
+) error {
 	exists, err := keel.QueryValue[bool](ctx, db,
 		"SELECT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = $1)", name)
 	if err != nil {
@@ -204,7 +208,13 @@ func provisionLoginRole(ctx context.Context, db *keel.DB, name, verifier, member
 		}
 	}
 
-	isMember, err := keel.QueryValue[bool](ctx, db, "SELECT pg_has_role($1, $2, 'MEMBER')", name, member)
+	isMember, err := keel.QueryValue[bool](
+		ctx,
+		db,
+		"SELECT pg_has_role($1, $2, 'MEMBER')",
+		name,
+		member,
+	)
 	if err != nil {
 		return err
 	}
@@ -212,7 +222,13 @@ func provisionLoginRole(ctx context.Context, db *keel.DB, name, verifier, member
 		return nil
 	}
 
-	return execFormatted(ctx, db, "SELECT format('GRANT %I TO %I', $1::text, $2::text)", member, name)
+	return execFormatted(
+		ctx,
+		db,
+		"SELECT format('GRANT %I TO %I', $1::text, $2::text)",
+		member,
+		name,
+	)
 }
 
 func execFormatted(ctx context.Context, db *keel.DB, format string, args ...any) error {

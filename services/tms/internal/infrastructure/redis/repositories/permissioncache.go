@@ -150,13 +150,21 @@ func (r *permissionCacheRepository) Epoch(ctx context.Context, orgID pulid.ID) (
 		return epoch, nil
 	}
 	if !errors.Is(err, redis.Nil) {
-		r.l.Error("failed to read permission epoch", zap.String("orgID", orgID.String()), zap.Error(err))
+		r.l.Error(
+			"failed to read permission epoch",
+			zap.String("orgID", orgID.String()),
+			zap.Error(err),
+		)
 		return 0, err
 	}
 
 	seed := time.Now().UnixNano()
 	if err = r.client.SetNX(ctx, key, seed, 0).Err(); err != nil {
-		r.l.Error("failed to seed permission epoch", zap.String("orgID", orgID.String()), zap.Error(err))
+		r.l.Error(
+			"failed to seed permission epoch",
+			zap.String("orgID", orgID.String()),
+			zap.Error(err),
+		)
 		return 0, err
 	}
 

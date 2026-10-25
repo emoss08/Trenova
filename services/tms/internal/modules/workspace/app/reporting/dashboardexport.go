@@ -85,7 +85,7 @@ func (s *Service) ExportDashboard(
 		}
 		timezone = prepared.Location.String()
 
-		result, previewErr := s.engine.Preview(prepared.Context, prepared.Request)
+		result, previewErr := s.engine.Preview(prepared.Context, &prepared.Request)
 		if previewErr != nil {
 			s.l.Error("dashboard tile failed to export",
 				zap.String("dashboardId", req.DashboardID.String()),

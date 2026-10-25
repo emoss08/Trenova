@@ -14,24 +14,24 @@ var _ validationframework.TenantedEntity = (*ShipmentCommodity)(nil)
 
 // Commodity line items on a shipment
 type ShipmentCommodity struct {
-	keel.Table `                                                   keel:"shipment_commodities,report=Operations"`
+	keel.Table `keel:"shipment_commodities,report=Operations"`
 
-	ID             pulid.ID `json:"id" keel:"id,pk,autoid:sc_"`
+	ID             pulid.ID `json:"id"             keel:"id,pk,autoid:sc_"`
 	BusinessUnitID pulid.ID `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
 	OrganizationID pulid.ID `json:"organizationId" keel:"organization_id,pk,tenant"`
-	ShipmentID     pulid.ID `json:"shipmentId" keel:"shipment_id,pk"`
-	CommodityID    pulid.ID `json:"commodityId" keel:"commodity_id,pk"`
-	Weight         int64    `json:"weight" keel:"weight,format=weight"`
-	Pieces         int64    `json:"pieces" keel:"pieces,format=count"`
-	LengthFeet     *float64 `json:"lengthFeet" keel:"length_feet"`
-	WidthFeet      *float64 `json:"widthFeet" keel:"width_feet"`
-	HeightFeet     *float64 `json:"heightFeet" keel:"height_feet"`
-	Version        int64    `json:"version" keel:"version,version"`
-	CreatedAt      int64    `json:"createdAt" keel:"created_at,autocreate"`
-	UpdatedAt      int64    `json:"updatedAt" keel:"updated_at,autoupdate"`
+	ShipmentID     pulid.ID `json:"shipmentId"     keel:"shipment_id,pk"`
+	CommodityID    pulid.ID `json:"commodityId"    keel:"commodity_id,pk"`
+	Weight         int64    `json:"weight"         keel:"weight,format=weight"`
+	Pieces         int64    `json:"pieces"         keel:"pieces,format=count"`
+	LengthFeet     *float64 `json:"lengthFeet"     keel:"length_feet"`
+	WidthFeet      *float64 `json:"widthFeet"      keel:"width_feet"`
+	HeightFeet     *float64 `json:"heightFeet"     keel:"height_feet"`
+	Version        int64    `json:"version"        keel:"version,version"`
+	CreatedAt      int64    `json:"createdAt"      keel:"created_at,autocreate"`
+	UpdatedAt      int64    `json:"updatedAt"      keel:"updated_at,autoupdate"`
 
-	Shipment     *Shipment            `json:"shipment,omitempty" keel:"belongs:shipment_id"`
-	Commodity    *commodity.Commodity `json:"commodity,omitempty" keel:"belongs:commodity_id"`
+	Shipment     *Shipment            `json:"shipment,omitempty"     keel:"belongs:shipment_id"`
+	Commodity    *commodity.Commodity `json:"commodity,omitempty"    keel:"belongs:commodity_id"`
 	BusinessUnit *tenant.BusinessUnit `json:"businessUnit,omitempty"`
 	Organization *tenant.Organization `json:"organization,omitempty"`
 }

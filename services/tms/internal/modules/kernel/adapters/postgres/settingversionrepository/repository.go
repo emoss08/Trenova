@@ -32,7 +32,11 @@ func New(p Params) settingversionports.SettingVersionRepository {
 
 func (r *repository) Create(ctx context.Context, version *settingversion.SettingVersion) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
-		if err := settingversiondb.SettingVersions.Create(ctx, r.db.Keel(ctx), version); err != nil {
+		if err := settingversiondb.SettingVersions.Create(
+			ctx,
+			r.db.Keel(ctx),
+			version,
+		); err != nil {
 			return fmt.Errorf("record setting version: %w", err)
 		}
 		return nil

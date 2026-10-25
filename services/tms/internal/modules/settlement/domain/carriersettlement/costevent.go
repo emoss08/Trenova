@@ -3,6 +3,8 @@ package carriersettlement
 import (
 	"context"
 
+	"github.com/emoss08/trenova/shared/money"
+
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/carrier"
 	"github.com/emoss08/trenova/pkg/domaintypes"
@@ -20,30 +22,30 @@ var (
 
 // Purchased transportation cost accruals from carrier assignments
 type CostEvent struct {
-	keel.Table `                                                    keel:"carrier_cost_events,report=Billing,label=Carrier Cost Event"`
+	keel.Table `keel:"carrier_cost_events,report=Billing,label=Carrier Cost Event"`
 
-	ID                  pulid.ID        `json:"id" keel:"id,pk,autoid:cacc_"`
-	BusinessUnitID      pulid.ID        `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
-	OrganizationID      pulid.ID        `json:"organizationId" keel:"organization_id,pk,tenant"`
-	CarrierID           pulid.ID        `json:"carrierId" keel:"carrier_id"`
+	ID                  pulid.ID        `json:"id"                  keel:"id,pk,autoid:cacc_"`
+	BusinessUnitID      pulid.ID        `json:"businessUnitId"      keel:"business_unit_id,pk,tenant"`
+	OrganizationID      pulid.ID        `json:"organizationId"      keel:"organization_id,pk,tenant"`
+	CarrierID           pulid.ID        `json:"carrierId"           keel:"carrier_id"`
 	CarrierAssignmentID *pulid.ID       `json:"carrierAssignmentId" keel:"carrier_assignment_id"`
-	ShipmentID          *pulid.ID       `json:"shipmentId" keel:"shipment_id"`
-	MoveID              *pulid.ID       `json:"moveId" keel:"move_id"`
-	SettlementID        *pulid.ID       `json:"settlementId" keel:"settlement_id"`
-	EventType           CostEventType   `json:"eventType" keel:"event_type"`
-	Status              CostEventStatus `json:"status" keel:"status"`
-	IdempotencyKey      string          `json:"idempotencyKey" keel:"idempotency_key"`
-	EventDate           int64           `json:"eventDate" keel:"event_date"`
-	AmountMinor         int64           `json:"amountMinor" keel:"amount_minor,label=Amount (Minor)"`
-	CurrencyCode        string          `json:"currencyCode" keel:"currency_code"`
-	Description         string          `json:"description" keel:"description,nullzero"`
-	ProNumber           string          `json:"proNumber" keel:"pro_number,nullzero"`
-	AssignmentVersion   int64           `json:"assignmentVersion" keel:"assignment_version,dimension"`
-	VoidedAt            *int64          `json:"voidedAt" keel:"voided_at"`
-	VoidReason          string          `json:"voidReason" keel:"void_reason,nullzero"`
-	Version             int64           `json:"version" keel:"version,version"`
-	CreatedAt           int64           `json:"createdAt" keel:"created_at,autocreate"`
-	UpdatedAt           int64           `json:"updatedAt" keel:"updated_at,autoupdate"`
+	ShipmentID          *pulid.ID       `json:"shipmentId"          keel:"shipment_id"`
+	MoveID              *pulid.ID       `json:"moveId"              keel:"move_id"`
+	SettlementID        *pulid.ID       `json:"settlementId"        keel:"settlement_id"`
+	EventType           CostEventType   `json:"eventType"           keel:"event_type"`
+	Status              CostEventStatus `json:"status"              keel:"status"`
+	IdempotencyKey      string          `json:"idempotencyKey"      keel:"idempotency_key"`
+	EventDate           int64           `json:"eventDate"           keel:"event_date"`
+	AmountMinor         int64           `json:"amountMinor"         keel:"amount_minor,label=Amount (Minor)"`
+	CurrencyCode        string          `json:"currencyCode"        keel:"currency_code"`
+	Description         string          `json:"description"         keel:"description,nullzero"`
+	ProNumber           string          `json:"proNumber"           keel:"pro_number,nullzero"`
+	AssignmentVersion   int64           `json:"assignmentVersion"   keel:"assignment_version,dimension"`
+	VoidedAt            *int64          `json:"voidedAt"            keel:"voided_at"`
+	VoidReason          string          `json:"voidReason"          keel:"void_reason,nullzero"`
+	Version             int64           `json:"version"             keel:"version,version"`
+	CreatedAt           int64           `json:"createdAt"           keel:"created_at,autocreate"`
+	UpdatedAt           int64           `json:"updatedAt"           keel:"updated_at,autoupdate"`
 
 	Carrier *carrier.Carrier `json:"carrier,omitempty" keel:"belongs:carrier_id"`
 }
@@ -107,7 +109,7 @@ func (c *CostEvent) BeforeCreate(ctx context.Context) error {
 		c.Status = CostEventStatusPending
 	}
 	if c.CurrencyCode == "" {
-		c.CurrencyCode = "USD"
+		c.CurrencyCode = money.DefaultCurrencyCode
 	}
 
 	return nil

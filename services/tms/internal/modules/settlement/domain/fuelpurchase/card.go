@@ -30,32 +30,32 @@ var (
 
 // Fuel cards issued to drivers and units
 type FuelCard struct {
-	keel.Table `                                            keel:"fuel_cards,report=Equipment"`
+	keel.Table `keel:"fuel_cards,report=Equipment"`
 
-	ID             pulid.ID `json:"id" keel:"id,pk,autoid:fcard_"`
+	ID             pulid.ID `json:"id"             keel:"id,pk,autoid:fcard_"`
 	BusinessUnitID pulid.ID `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
 	OrganizationID pulid.ID `json:"organizationId" keel:"organization_id,pk,tenant"`
 
-	Provider          CardProvider `json:"provider" keel:"provider"`
-	LastFour          string       `json:"lastFour" keel:"last_four"`
-	Label             string       `json:"label" keel:"label,label=Card Label"`
-	ExternalCardID    string       `json:"externalCardId" keel:"external_card_id,nullzero"`
-	AssignedWorkerID  *pulid.ID    `json:"assignedWorkerId" keel:"assigned_worker_id"`
+	Provider          CardProvider `json:"provider"          keel:"provider"`
+	LastFour          string       `json:"lastFour"          keel:"last_four"`
+	Label             string       `json:"label"             keel:"label,label=Card Label"`
+	ExternalCardID    string       `json:"externalCardId"    keel:"external_card_id,nullzero"`
+	AssignedWorkerID  *pulid.ID    `json:"assignedWorkerId"  keel:"assigned_worker_id"`
 	AssignedTractorID *pulid.ID    `json:"assignedTractorId" keel:"assigned_tractor_id"`
-	Status            CardStatus   `json:"status" keel:"status"`
-	ExpiresAt         *int64       `json:"expiresAt" keel:"expires_at"`
-	CancelledAt       *int64       `json:"cancelledAt" keel:"cancelled_at"`
-	CancelReason      string       `json:"cancelReason" keel:"cancel_reason,nullzero"`
-	DiscoveredAt      *int64       `json:"discoveredAt" keel:"discovered_at"`
-	Notes             string       `json:"notes" keel:"notes,nullzero"`
+	Status            CardStatus   `json:"status"            keel:"status"`
+	ExpiresAt         *int64       `json:"expiresAt"         keel:"expires_at"`
+	CancelledAt       *int64       `json:"cancelledAt"       keel:"cancelled_at"`
+	CancelReason      string       `json:"cancelReason"      keel:"cancel_reason,nullzero"`
+	DiscoveredAt      *int64       `json:"discoveredAt"      keel:"discovered_at"`
+	Notes             string       `json:"notes"             keel:"notes,nullzero"`
 
-	SearchVector string `json:"-" keel:"search_vector,tsvector,readonly,noselect"`
-	Rank         string `json:"-" keel:"rank,computed"`
-	Version      int64  `json:"version" keel:"version,version"`
+	SearchVector string `json:"-"         keel:"search_vector,tsvector,readonly,noselect"`
+	Rank         string `json:"-"         keel:"rank,computed"`
+	Version      int64  `json:"version"   keel:"version,version"`
 	CreatedAt    int64  `json:"createdAt" keel:"created_at,autocreate"`
 	UpdatedAt    int64  `json:"updatedAt" keel:"updated_at,autoupdate"`
 
-	AssignedWorker  *worker.Worker   `json:"assignedWorker,omitempty" keel:"belongs:assigned_worker_id,label=Assigned Driver"`
+	AssignedWorker  *worker.Worker   `json:"assignedWorker,omitempty"  keel:"belongs:assigned_worker_id,label=Assigned Driver"`
 	AssignedTractor *tractor.Tractor `json:"assignedTractor,omitempty" keel:"belongs:assigned_tractor_id"`
 }
 

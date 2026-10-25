@@ -13,51 +13,51 @@ import (
 type EDITransactionSet struct {
 	keel.Table `keel:"edi_transaction_sets"`
 
-	ID             pulid.ID       `json:"id" keel:"id,pk,autoid:edits_"`
-	Standard       EDIStandard    `json:"standard" keel:"standard"`
-	Code           TransactionSet `json:"code" keel:"code"`
-	Name           string         `json:"name" keel:"name"`
-	Description    string         `json:"description" keel:"description,nullzero"`
+	ID             pulid.ID       `json:"id"             keel:"id,pk,autoid:edits_"`
+	Standard       EDIStandard    `json:"standard"       keel:"standard"`
+	Code           TransactionSet `json:"code"           keel:"code"`
+	Name           string         `json:"name"           keel:"name"`
+	Description    string         `json:"description"    keel:"description,nullzero"`
 	DefaultVersion string         `json:"defaultVersion" keel:"default_version"`
-	Status         DocumentStatus `json:"status" keel:"status"`
-	CreatedAt      int64          `json:"createdAt" keel:"created_at,autocreate"`
-	UpdatedAt      int64          `json:"updatedAt" keel:"updated_at,autoupdate"`
+	Status         DocumentStatus `json:"status"         keel:"status"`
+	CreatedAt      int64          `json:"createdAt"      keel:"created_at,autocreate"`
+	UpdatedAt      int64          `json:"updatedAt"      keel:"updated_at,autoupdate"`
 }
 
 type EDITransactionLoopDefinition struct {
 	keel.Table `keel:"edi_transaction_loop_definitions"`
 
-	ID               pulid.ID          `json:"id" keel:"id,pk,autoid:ediloop_"`
+	ID               pulid.ID          `json:"id"               keel:"id,pk,autoid:ediloop_"`
 	TransactionSetID pulid.ID          `json:"transactionSetId" keel:"transaction_set_id"`
-	Direction        DocumentDirection `json:"direction" keel:"direction"`
-	X12Version       string            `json:"x12Version" keel:"x12_version"`
-	LoopID           string            `json:"loopId" keel:"loop_id"`
-	Name             string            `json:"name" keel:"name"`
-	ParentLoopID     string            `json:"parentLoopId" keel:"parent_loop_id,nullzero"`
-	Sequence         int64             `json:"sequence" keel:"sequence"`
-	RepeatPath       string            `json:"repeatPath" keel:"repeat_path,nullzero"`
-	UsageNotes       string            `json:"usageNotes" keel:"usage_notes,nullzero"`
-	CreatedAt        int64             `json:"createdAt" keel:"created_at,autocreate"`
-	UpdatedAt        int64             `json:"updatedAt" keel:"updated_at,autoupdate"`
+	Direction        DocumentDirection `json:"direction"        keel:"direction"`
+	X12Version       string            `json:"x12Version"       keel:"x12_version"`
+	LoopID           string            `json:"loopId"           keel:"loop_id"`
+	Name             string            `json:"name"             keel:"name"`
+	ParentLoopID     string            `json:"parentLoopId"     keel:"parent_loop_id,nullzero"`
+	Sequence         int64             `json:"sequence"         keel:"sequence"`
+	RepeatPath       string            `json:"repeatPath"       keel:"repeat_path,nullzero"`
+	UsageNotes       string            `json:"usageNotes"       keel:"usage_notes,nullzero"`
+	CreatedAt        int64             `json:"createdAt"        keel:"created_at,autocreate"`
+	UpdatedAt        int64             `json:"updatedAt"        keel:"updated_at,autoupdate"`
 }
 
 type EDITransactionSegmentDefinition struct {
 	keel.Table `keel:"edi_transaction_segment_definitions"`
 
-	ID               pulid.ID          `json:"id" keel:"id,pk,autoid:edisegd_"`
+	ID               pulid.ID          `json:"id"               keel:"id,pk,autoid:edisegd_"`
 	TransactionSetID pulid.ID          `json:"transactionSetId" keel:"transaction_set_id"`
-	Direction        DocumentDirection `json:"direction" keel:"direction"`
-	X12Version       string            `json:"x12Version" keel:"x12_version"`
-	SegmentID        string            `json:"segmentId" keel:"segment_id"`
-	Name             string            `json:"name" keel:"name"`
-	LoopID           string            `json:"loopId" keel:"loop_id,nullzero"`
-	Sequence         int64             `json:"sequence" keel:"sequence"`
-	Required         bool              `json:"required" keel:"required"`
-	MaxUse           int64             `json:"maxUse" keel:"max_use"`
-	RepeatPath       string            `json:"repeatPath" keel:"repeat_path,nullzero"`
-	UsageNotes       string            `json:"usageNotes" keel:"usage_notes,nullzero"`
-	CreatedAt        int64             `json:"createdAt" keel:"created_at,autocreate"`
-	UpdatedAt        int64             `json:"updatedAt" keel:"updated_at,autoupdate"`
+	Direction        DocumentDirection `json:"direction"        keel:"direction"`
+	X12Version       string            `json:"x12Version"       keel:"x12_version"`
+	SegmentID        string            `json:"segmentId"        keel:"segment_id"`
+	Name             string            `json:"name"             keel:"name"`
+	LoopID           string            `json:"loopId"           keel:"loop_id,nullzero"`
+	Sequence         int64             `json:"sequence"         keel:"sequence"`
+	Required         bool              `json:"required"         keel:"required"`
+	MaxUse           int64             `json:"maxUse"           keel:"max_use"`
+	RepeatPath       string            `json:"repeatPath"       keel:"repeat_path,nullzero"`
+	UsageNotes       string            `json:"usageNotes"       keel:"usage_notes,nullzero"`
+	CreatedAt        int64             `json:"createdAt"        keel:"created_at,autocreate"`
+	UpdatedAt        int64             `json:"updatedAt"        keel:"updated_at,autoupdate"`
 }
 
 func (d *EDITransactionSegmentDefinition) BeforeCreate(_ context.Context) error {
@@ -71,35 +71,35 @@ func (d *EDITransactionSegmentDefinition) BeforeCreate(_ context.Context) error 
 type EDITransactionElementDefinition struct {
 	keel.Table `keel:"edi_transaction_element_definitions"`
 
-	ID               pulid.ID          `json:"id" keel:"id,pk,autoid:edielemd_"`
+	ID               pulid.ID          `json:"id"               keel:"id,pk,autoid:edielemd_"`
 	TransactionSetID pulid.ID          `json:"transactionSetId" keel:"transaction_set_id"`
-	Direction        DocumentDirection `json:"direction" keel:"direction"`
-	X12Version       string            `json:"x12Version" keel:"x12_version"`
-	SegmentID        string            `json:"segmentId" keel:"segment_id"`
-	Position         int               `json:"position" keel:"position"`
-	ElementID        string            `json:"elementId" keel:"element_id,nullzero"`
-	Name             string            `json:"name" keel:"name"`
-	Required         bool              `json:"required" keel:"required"`
-	MinLength        int               `json:"minLength" keel:"min_length"`
-	MaxLength        int               `json:"maxLength" keel:"max_length"`
-	CodeListID       pulid.ID          `json:"codeListId" keel:"code_list_id,nullzero"`
-	UsageNotes       string            `json:"usageNotes" keel:"usage_notes,nullzero"`
-	CreatedAt        int64             `json:"createdAt" keel:"created_at,autocreate"`
-	UpdatedAt        int64             `json:"updatedAt" keel:"updated_at,autoupdate"`
+	Direction        DocumentDirection `json:"direction"        keel:"direction"`
+	X12Version       string            `json:"x12Version"       keel:"x12_version"`
+	SegmentID        string            `json:"segmentId"        keel:"segment_id"`
+	Position         int               `json:"position"         keel:"position"`
+	ElementID        string            `json:"elementId"        keel:"element_id,nullzero"`
+	Name             string            `json:"name"             keel:"name"`
+	Required         bool              `json:"required"         keel:"required"`
+	MinLength        int               `json:"minLength"        keel:"min_length"`
+	MaxLength        int               `json:"maxLength"        keel:"max_length"`
+	CodeListID       pulid.ID          `json:"codeListId"       keel:"code_list_id,nullzero"`
+	UsageNotes       string            `json:"usageNotes"       keel:"usage_notes,nullzero"`
+	CreatedAt        int64             `json:"createdAt"        keel:"created_at,autocreate"`
+	UpdatedAt        int64             `json:"updatedAt"        keel:"updated_at,autoupdate"`
 }
 
 type EDICodeListDefinition struct {
 	keel.Table `keel:"edi_code_list_definitions"`
 
-	ID               pulid.ID          `json:"id" keel:"id,pk,autoid:edicodel_"`
+	ID               pulid.ID          `json:"id"               keel:"id,pk,autoid:edicodel_"`
 	TransactionSetID pulid.ID          `json:"transactionSetId" keel:"transaction_set_id"`
-	Direction        DocumentDirection `json:"direction" keel:"direction"`
-	X12Version       string            `json:"x12Version" keel:"x12_version"`
-	ElementID        string            `json:"elementId" keel:"element_id"`
-	Code             string            `json:"code" keel:"code"`
-	Description      string            `json:"description" keel:"description"`
-	CreatedAt        int64             `json:"createdAt" keel:"created_at,autocreate"`
-	UpdatedAt        int64             `json:"updatedAt" keel:"updated_at,autoupdate"`
+	Direction        DocumentDirection `json:"direction"        keel:"direction"`
+	X12Version       string            `json:"x12Version"       keel:"x12_version"`
+	ElementID        string            `json:"elementId"        keel:"element_id"`
+	Code             string            `json:"code"             keel:"code"`
+	Description      string            `json:"description"      keel:"description"`
+	CreatedAt        int64             `json:"createdAt"        keel:"created_at,autocreate"`
+	UpdatedAt        int64             `json:"updatedAt"        keel:"updated_at,autoupdate"`
 }
 
 func (s *EDITransactionSet) Validate(multiErr *errortypes.MultiError) {

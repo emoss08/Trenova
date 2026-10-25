@@ -37,39 +37,39 @@ const CarrierAssignmentIDPrefix = "casn_"
 type CarrierAssignment struct {
 	keel.Table `keel:"carrier_assignments"`
 
-	ID             pulid.ID `json:"id" keel:"id,pk,autoid:casn_"`
+	ID             pulid.ID `json:"id"             keel:"id,pk,autoid:casn_"`
 	BusinessUnitID pulid.ID `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
 	OrganizationID pulid.ID `json:"organizationId" keel:"organization_id,pk,tenant"`
 	ShipmentMoveID pulid.ID `json:"shipmentMoveId" keel:"shipment_move_id"`
-	CarrierID      pulid.ID `json:"carrierId" keel:"carrier_id"`
+	CarrierID      pulid.ID `json:"carrierId"      keel:"carrier_id"`
 
-	Status                CarrierAssignmentStatus `json:"status" keel:"status"`
-	RateMethod            CarrierRateMethod       `json:"rateMethod" keel:"rate_method"`
-	BaseRate              decimal.Decimal         `json:"baseRate" keel:"base_rate"`
-	BaseAmount            decimal.Decimal         `json:"baseAmount" keel:"base_amount"`
-	FuelSurcharge         decimal.Decimal         `json:"fuelSurcharge" keel:"fuel_surcharge"`
-	AccessorialTotal      decimal.Decimal         `json:"accessorialTotal" keel:"accessorial_total"`
-	TotalCost             decimal.Decimal         `json:"totalCost" keel:"total_cost"`
-	CurrencyCode          string                  `json:"currencyCode" keel:"currency_code"`
-	ProNumber             string                  `json:"proNumber" keel:"pro_number,nullzero"`
-	ExternalDriverName    string                  `json:"externalDriverName" keel:"external_driver_name,nullzero"`
-	ExternalDriverPhone   string                  `json:"externalDriverPhone" keel:"external_driver_phone,nullzero"`
+	Status                CarrierAssignmentStatus `json:"status"                keel:"status"`
+	RateMethod            CarrierRateMethod       `json:"rateMethod"            keel:"rate_method"`
+	BaseRate              decimal.Decimal         `json:"baseRate"              keel:"base_rate"`
+	BaseAmount            decimal.Decimal         `json:"baseAmount"            keel:"base_amount"`
+	FuelSurcharge         decimal.Decimal         `json:"fuelSurcharge"         keel:"fuel_surcharge"`
+	AccessorialTotal      decimal.Decimal         `json:"accessorialTotal"      keel:"accessorial_total"`
+	TotalCost             decimal.Decimal         `json:"totalCost"             keel:"total_cost"`
+	CurrencyCode          string                  `json:"currencyCode"          keel:"currency_code"`
+	ProNumber             string                  `json:"proNumber"             keel:"pro_number,nullzero"`
+	ExternalDriverName    string                  `json:"externalDriverName"    keel:"external_driver_name,nullzero"`
+	ExternalDriverPhone   string                  `json:"externalDriverPhone"   keel:"external_driver_phone,nullzero"`
 	ExternalTractorNumber string                  `json:"externalTractorNumber" keel:"external_tractor_number,nullzero"`
 	ExternalTrailerNumber string                  `json:"externalTrailerNumber" keel:"external_trailer_number,nullzero"`
-	AssignedByID          *pulid.ID               `json:"assignedById" keel:"assigned_by_id"`
+	AssignedByID          *pulid.ID               `json:"assignedById"          keel:"assigned_by_id"`
 	// RateQuoteID names the buy side quote that decided what this carrier is
 	// paid. Absent when somebody typed the rate, which stays the ordinary case
 	// until an organization writes carrier contracts.
-	RateQuoteID        *pulid.ID `json:"rateQuoteId" keel:"rate_quote_id"`
-	ConfirmedAt        *int64    `json:"confirmedAt" keel:"confirmed_at"`
-	CanceledAt         *int64    `json:"canceledAt" keel:"canceled_at"`
+	RateQuoteID        *pulid.ID `json:"rateQuoteId"        keel:"rate_quote_id"`
+	ConfirmedAt        *int64    `json:"confirmedAt"        keel:"confirmed_at"`
+	CanceledAt         *int64    `json:"canceledAt"         keel:"canceled_at"`
 	CancellationReason string    `json:"cancellationReason" keel:"cancellation_reason,nullzero"`
-	Version            int64     `json:"version" keel:"version,version"`
-	CreatedAt          int64     `json:"createdAt" keel:"created_at,autocreate"`
-	UpdatedAt          int64     `json:"updatedAt" keel:"updated_at,autoupdate"`
+	Version            int64     `json:"version"            keel:"version,version"`
+	CreatedAt          int64     `json:"createdAt"          keel:"created_at,autocreate"`
+	UpdatedAt          int64     `json:"updatedAt"          keel:"updated_at,autoupdate"`
 
 	ShipmentMove *ShipmentMove                   `json:"shipmentMove,omitempty" keel:"belongs:shipment_move_id"`
-	Carrier      *carrier.Carrier                `json:"carrier,omitempty" keel:"belongs:carrier_id"`
+	Carrier      *carrier.Carrier                `json:"carrier,omitempty"      keel:"belongs:carrier_id"`
 	Accessorials []*CarrierAssignmentAccessorial `json:"accessorials,omitempty" keel:"many:carrier_assignment_id"`
 }
 
@@ -224,16 +224,16 @@ func (ca *CarrierAssignment) BeforeCreate(_ context.Context) error {
 type CarrierAssignmentAccessorial struct {
 	keel.Table `keel:"carrier_assignment_accessorials"`
 
-	ID                  pulid.ID        `json:"id" keel:"id,pk,autoid:casna_"`
-	BusinessUnitID      pulid.ID        `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
-	OrganizationID      pulid.ID        `json:"organizationId" keel:"organization_id,pk,tenant"`
+	ID                  pulid.ID        `json:"id"                  keel:"id,pk,autoid:casna_"`
+	BusinessUnitID      pulid.ID        `json:"businessUnitId"      keel:"business_unit_id,pk,tenant"`
+	OrganizationID      pulid.ID        `json:"organizationId"      keel:"organization_id,pk,tenant"`
 	CarrierAssignmentID pulid.ID        `json:"carrierAssignmentId" keel:"carrier_assignment_id"`
 	AccessorialChargeID *pulid.ID       `json:"accessorialChargeId" keel:"accessorial_charge_id"`
-	Description         string          `json:"description" keel:"description"`
-	Amount              decimal.Decimal `json:"amount" keel:"amount"`
-	Version             int64           `json:"version" keel:"version,version"`
-	CreatedAt           int64           `json:"createdAt" keel:"created_at,autocreate"`
-	UpdatedAt           int64           `json:"updatedAt" keel:"updated_at,autoupdate"`
+	Description         string          `json:"description"         keel:"description"`
+	Amount              decimal.Decimal `json:"amount"              keel:"amount"`
+	Version             int64           `json:"version"             keel:"version,version"`
+	CreatedAt           int64           `json:"createdAt"           keel:"created_at,autocreate"`
+	UpdatedAt           int64           `json:"updatedAt"           keel:"updated_at,autoupdate"`
 
 	CarrierAssignment *CarrierAssignment                   `json:"carrierAssignment,omitempty" keel:"belongs:carrier_assignment_id"`
 	AccessorialCharge *accessorialcharge.AccessorialCharge `json:"accessorialCharge,omitempty" keel:"belongs:accessorial_charge_id"`

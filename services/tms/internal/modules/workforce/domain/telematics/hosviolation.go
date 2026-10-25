@@ -11,16 +11,16 @@ import (
 type WorkerHOSViolation struct {
 	keel.Table `keel:"worker_hos_violations"`
 
-	OrganizationID   pulid.ID `json:"organizationId" keel:"organization_id,pk,tenant"`
-	BusinessUnitID   pulid.ID `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
-	WorkerID         pulid.ID `json:"workerId" keel:"worker_id,pk"`
-	ViolationType    string   `json:"violationType" keel:"violation_type,pk"`
+	OrganizationID   pulid.ID `json:"organizationId"   keel:"organization_id,pk,tenant"`
+	BusinessUnitID   pulid.ID `json:"businessUnitId"   keel:"business_unit_id,pk,tenant"`
+	WorkerID         pulid.ID `json:"workerId"         keel:"worker_id,pk"`
+	ViolationType    string   `json:"violationType"    keel:"violation_type,pk"`
 	ViolationStartAt int64    `json:"violationStartAt" keel:"violation_start_at,pk"`
-	Description      string   `json:"description" keel:"description,nullzero"`
-	DurationMs       int64    `json:"durationMs" keel:"duration_ms"`
-	DayStartAt       *int64   `json:"dayStartAt" keel:"day_start_at"`
-	DayEndAt         *int64   `json:"dayEndAt" keel:"day_end_at"`
-	DetectedAt       int64    `json:"detectedAt" keel:"detected_at"`
+	Description      string   `json:"description"      keel:"description,nullzero"`
+	DurationMs       int64    `json:"durationMs"       keel:"duration_ms"`
+	DayStartAt       *int64   `json:"dayStartAt"       keel:"day_start_at"`
+	DayEndAt         *int64   `json:"dayEndAt"         keel:"day_end_at"`
+	DetectedAt       int64    `json:"detectedAt"       keel:"detected_at"`
 
 	Worker *worker.Worker `json:"worker,omitempty" keel:"belongs:worker_id"`
 }

@@ -62,7 +62,7 @@ func prepareTurn(turn *conversation.AssistantTurn) {
 	}
 }
 
-func getByIDQuery(req agentports.GetAssistantTurnRequest) *keel.Query[conversation.AssistantTurn] {
+func getByIDQuery(req *agentports.GetAssistantTurnRequest) *keel.Query[conversation.AssistantTurn] {
 	at := conversationdb.AssistantTurns
 
 	return at.Where(
@@ -71,7 +71,9 @@ func getByIDQuery(req agentports.GetAssistantTurnRequest) *keel.Query[conversati
 	)
 }
 
-func activeQuery(req agentports.ActiveAssistantTurnRequest) *keel.Query[conversation.AssistantTurn] {
+func activeQuery(
+	req *agentports.ActiveAssistantTurnRequest,
+) *keel.Query[conversation.AssistantTurn] {
 	at := conversationdb.AssistantTurns
 
 	return at.Where(
@@ -82,7 +84,7 @@ func activeQuery(req agentports.ActiveAssistantTurnRequest) *keel.Query[conversa
 }
 
 func liveTurnsQuery(
-	req agentports.ListLiveAssistantTurnsRequest,
+	req *agentports.ListLiveAssistantTurnsRequest,
 ) *keel.Query[conversation.AssistantTurn] {
 	at := conversationdb.AssistantTurns
 	th := conversationdb.Threads.As("live_thread")
@@ -97,7 +99,7 @@ func liveTurnsQuery(
 }
 
 func liveThreadTitlesQuery(
-	req agentports.ListLiveAssistantTurnsRequest,
+	req *agentports.ListLiveAssistantTurnsRequest,
 ) *keel.Query[conversation.Thread] {
 	th := conversationdb.Threads
 
@@ -134,7 +136,7 @@ func (r *repository) GetByID(
 	req agentports.GetAssistantTurnRequest,
 ) (*conversation.AssistantTurn, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*conversation.AssistantTurn, error) {
-		turn, err := getByIDQuery(req).One(ctx, r.db.Keel(ctx))
+		turn, err := getByIDQuery(&req).One(ctx, r.db.Keel(ctx))
 		if err != nil {
 			return nil, turnErrors.Map(err, req.ID.String())
 		}
@@ -148,7 +150,7 @@ func (r *repository) Active(
 	req agentports.ActiveAssistantTurnRequest,
 ) (*conversation.AssistantTurn, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*conversation.AssistantTurn, error) {
-		turn, err := activeQuery(req).First(ctx, r.db.Keel(ctx))
+		turn, err := activeQuery(&req).First(ctx, r.db.Keel(ctx))
 		if err != nil {
 			if errors.Is(err, keel.ErrNotFound) {
 				return nil, nil
@@ -174,8 +176,8 @@ func (r *repository) ListLive(
 		err := keel.Batch(
 			ctx,
 			r.db.Keel(ctx),
-			keel.AllInto(liveTurnsQuery(req).Order(at.StartedAt.Asc()), &turns),
-			keel.IntoSlice(liveThreadTitlesQuery(req), &titles),
+			keel.AllInto(liveTurnsQuery(&req).Order(at.StartedAt.Asc()), &turns),
+			keel.IntoSlice(liveThreadTitlesQuery(&req), &titles),
 		)
 		if err != nil {
 			r.l.Error("failed to list live assistant turns",

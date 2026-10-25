@@ -23,23 +23,23 @@ var (
 
 type RoutingGuide struct {
 	keel.Table     `keel:"routing_guides"`
-	ID             pulid.ID `json:"id" keel:"id,pk,autoid:rg_"`
-	BusinessUnitID pulid.ID `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
-	OrganizationID pulid.ID `json:"organizationId" keel:"organization_id,pk,tenant"`
+	ID             pulid.ID `keel:"id,pk,autoid:rg_"           json:"id"`
+	BusinessUnitID pulid.ID `keel:"business_unit_id,pk,tenant" json:"businessUnitId"`
+	OrganizationID pulid.ID `keel:"organization_id,pk,tenant"  json:"organizationId"`
 
-	Name                  string             `json:"name" keel:"name"`
-	Description           string             `json:"description" keel:"description,nullzero"`
-	Status                domaintypes.Status `json:"status" keel:"status"`
-	OriginLocationID      *pulid.ID          `json:"originLocationId" keel:"origin_location_id"`
+	Name                  string             `json:"name"                  keel:"name"`
+	Description           string             `json:"description"           keel:"description,nullzero"`
+	Status                domaintypes.Status `json:"status"                keel:"status"`
+	OriginLocationID      *pulid.ID          `json:"originLocationId"      keel:"origin_location_id"`
 	DestinationLocationID *pulid.ID          `json:"destinationLocationId" keel:"destination_location_id"`
-	OriginCity            string             `json:"originCity" keel:"origin_city,nullzero"`
-	OriginState           string             `json:"originState" keel:"origin_state,nullzero"`
-	DestinationCity       string             `json:"destinationCity" keel:"destination_city,nullzero"`
-	DestinationState      string             `json:"destinationState" keel:"destination_state,nullzero"`
-	Specificity           int16              `json:"specificity" keel:"specificity"`
-	Version               int64              `json:"version" keel:"version,version"`
-	CreatedAt             int64              `json:"createdAt" keel:"created_at,autocreate"`
-	UpdatedAt             int64              `json:"updatedAt" keel:"updated_at,autoupdate"`
+	OriginCity            string             `json:"originCity"            keel:"origin_city,nullzero"`
+	OriginState           string             `json:"originState"           keel:"origin_state,nullzero"`
+	DestinationCity       string             `json:"destinationCity"       keel:"destination_city,nullzero"`
+	DestinationState      string             `json:"destinationState"      keel:"destination_state,nullzero"`
+	Specificity           int16              `json:"specificity"           keel:"specificity"`
+	Version               int64              `json:"version"               keel:"version,version"`
+	CreatedAt             int64              `json:"createdAt"             keel:"created_at,autocreate"`
+	UpdatedAt             int64              `json:"updatedAt"             keel:"updated_at,autoupdate"`
 
 	Entries []*RoutingGuideEntry `json:"entries,omitempty" keel:"many:routing_guide_id"`
 }

@@ -139,7 +139,12 @@ func (r *repository) AccumulateMiles(
 			return nil, fmt.Errorf("accumulate route miles: %w", err)
 		}
 
-		noTractor, err := keel.QueryAll(ctx, db, pgx.RowToStructByPos[moveMiles], noTractorSQL, args...)
+		noTractor, err := keel.QueryAll(
+			ctx,
+			db,
+			pgx.RowToStructByPos[moveMiles],
+			noTractorSQL,
+			args...)
 		if err != nil {
 			r.l.Error("failed to accumulate no-tractor miles", zap.Error(err))
 			return nil, fmt.Errorf("accumulate no-tractor miles: %w", err)

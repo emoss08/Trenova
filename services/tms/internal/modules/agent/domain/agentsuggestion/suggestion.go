@@ -17,17 +17,17 @@ var (
 type Suggestion struct {
 	keel.Table `keel:"agent_suggestions"`
 
-	ID             pulid.ID `json:"id" keel:"id,pk,autoid:agsg_"`
+	ID             pulid.ID `json:"id"             keel:"id,pk,autoid:agsg_"`
 	BusinessUnitID pulid.ID `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
 	OrganizationID pulid.ID `json:"organizationId" keel:"organization_id,pk,tenant"`
 
-	UserID           pulid.ID  `json:"userId" keel:"user_id"`
+	UserID           pulid.ID  `json:"userId"           keel:"user_id"`
 	SuggestedAgentID pulid.ID  `json:"suggestedAgentId" keel:"suggested_agent_id"`
-	CurrentAgentID   *pulid.ID `json:"currentAgentId" keel:"current_agent_id"`
-	Surface          Surface   `json:"surface" keel:"surface"`
-	Outcome          Outcome   `json:"outcome" keel:"outcome"`
+	CurrentAgentID   *pulid.ID `json:"currentAgentId"   keel:"current_agent_id"`
+	Surface          Surface   `json:"surface"          keel:"surface"`
+	Outcome          Outcome   `json:"outcome"          keel:"outcome"`
 
-	Version   int64 `json:"version" keel:"version,version"`
+	Version   int64 `json:"version"   keel:"version,version"`
 	CreatedAt int64 `json:"createdAt" keel:"created_at,autocreate"`
 	UpdatedAt int64 `json:"updatedAt" keel:"updated_at,autoupdate"`
 

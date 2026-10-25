@@ -58,25 +58,25 @@ func (p PayTrigger) IsValid() bool {
 type SettlementControl struct {
 	keel.Table `keel:"settlement_controls"`
 
-	ID             pulid.ID `json:"id" keel:"id,pk,autoid:stlc_"`
+	ID             pulid.ID `json:"id"             keel:"id,pk,autoid:stlc_"`
 	BusinessUnitID pulid.ID `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
 	OrganizationID pulid.ID `json:"organizationId" keel:"organization_id,pk,tenant"`
 
-	PayPeriodFrequency            PayPeriodFrequency `json:"payPeriodFrequency" keel:"pay_period_frequency"`
-	PeriodEndDayOfWeek            int                `json:"periodEndDayOfWeek" keel:"period_end_day_of_week"`
-	PayDelayDays                  int                `json:"payDelayDays" keel:"pay_delay_days"`
-	PayTrigger                    PayTrigger         `json:"payTrigger" keel:"pay_trigger"`
-	AutoGenerateBatches           bool               `json:"autoGenerateBatches" keel:"auto_generate_batches"`
-	AutoApproveClean              bool               `json:"autoApproveClean" keel:"auto_approve_clean"`
-	AutoAttachAccruals            bool               `json:"autoAttachAccruals" keel:"auto_attach_accruals"`
-	AutoPostOnApprove             bool               `json:"autoPostOnApprove" keel:"auto_post_on_approve"`
-	AllowNegativeNet              bool               `json:"allowNegativeNet" keel:"allow_negative_net"`
-	VarianceThresholdPct          decimal.Decimal    `json:"varianceThresholdPct" keel:"variance_threshold_pct"`
-	VarianceLookbackWeeks         int                `json:"varianceLookbackWeeks" keel:"variance_lookback_weeks"`
-	DefaultEscrowInterestRate     decimal.Decimal    `json:"defaultEscrowInterestRate" keel:"default_escrow_interest_rate"`
+	PayPeriodFrequency            PayPeriodFrequency `json:"payPeriodFrequency"            keel:"pay_period_frequency"`
+	PeriodEndDayOfWeek            int                `json:"periodEndDayOfWeek"            keel:"period_end_day_of_week"`
+	PayDelayDays                  int                `json:"payDelayDays"                  keel:"pay_delay_days"`
+	PayTrigger                    PayTrigger         `json:"payTrigger"                    keel:"pay_trigger"`
+	AutoGenerateBatches           bool               `json:"autoGenerateBatches"           keel:"auto_generate_batches"`
+	AutoApproveClean              bool               `json:"autoApproveClean"              keel:"auto_approve_clean"`
+	AutoAttachAccruals            bool               `json:"autoAttachAccruals"            keel:"auto_attach_accruals"`
+	AutoPostOnApprove             bool               `json:"autoPostOnApprove"             keel:"auto_post_on_approve"`
+	AllowNegativeNet              bool               `json:"allowNegativeNet"              keel:"allow_negative_net"`
+	VarianceThresholdPct          decimal.Decimal    `json:"varianceThresholdPct"          keel:"variance_threshold_pct"`
+	VarianceLookbackWeeks         int                `json:"varianceLookbackWeeks"         keel:"variance_lookback_weeks"`
+	DefaultEscrowInterestRate     decimal.Decimal    `json:"defaultEscrowInterestRate"     keel:"default_escrow_interest_rate"`
 	EscrowInterestFrequencyMonths int                `json:"escrowInterestFrequencyMonths" keel:"escrow_interest_frequency_months"`
 
-	Version   int64 `json:"version" keel:"version,version"`
+	Version   int64 `json:"version"   keel:"version,version"`
 	CreatedAt int64 `json:"createdAt" keel:"created_at,autocreate"`
 	UpdatedAt int64 `json:"updatedAt" keel:"updated_at,autoupdate"`
 

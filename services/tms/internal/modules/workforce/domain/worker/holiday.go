@@ -41,19 +41,19 @@ var (
 // is stored as midnight UTC of the calendar day so it compares the same way
 // regardless of the organisation's timezone.
 type OrgHoliday struct {
-	keel.Table `                                             keel:"org_holidays"`
+	keel.Table `keel:"org_holidays"`
 
-	ID             pulid.ID    `json:"id" keel:"id,pk,autoid:ohol_"`
+	ID             pulid.ID    `json:"id"             keel:"id,pk,autoid:ohol_"`
 	BusinessUnitID pulid.ID    `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
 	OrganizationID pulid.ID    `json:"organizationId" keel:"organization_id,pk,tenant"`
-	Name           string      `json:"name" keel:"name"`
-	HolidayDate    int64       `json:"holidayDate" keel:"holiday_date"`
-	Kind           HolidayKind `json:"kind" keel:"kind"`
+	Name           string      `json:"name"           keel:"name"`
+	HolidayDate    int64       `json:"holidayDate"    keel:"holiday_date"`
+	Kind           HolidayKind `json:"kind"           keel:"kind"`
 	RecursAnnually bool        `json:"recursAnnually" keel:"recurs_annually"`
-	Description    string      `json:"description" keel:"description,nullzero"`
-	Version        int64       `json:"version" keel:"version,version"`
-	CreatedAt      int64       `json:"createdAt" keel:"created_at,autocreate"`
-	UpdatedAt      int64       `json:"updatedAt" keel:"updated_at,autoupdate"`
+	Description    string      `json:"description"    keel:"description,nullzero"`
+	Version        int64       `json:"version"        keel:"version,version"`
+	CreatedAt      int64       `json:"createdAt"      keel:"created_at,autocreate"`
+	UpdatedAt      int64       `json:"updatedAt"      keel:"updated_at,autoupdate"`
 }
 
 func (h *OrgHoliday) BeforeCreate(_ context.Context) error {

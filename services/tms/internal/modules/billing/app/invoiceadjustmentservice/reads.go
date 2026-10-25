@@ -276,7 +276,7 @@ func (s *Service) ListReconciliationExceptions(
 ) (*pagination.ListResult[*invoiceadjustmentports.InvoiceAdjustmentReconciliationQueueItem], error) {
 	return s.repo.ListReconciliationQueue(
 		ctx,
-		invoiceadjustmentports.ListReconciliationQueueRequest{Filter: filter},
+		&invoiceadjustmentports.ListReconciliationQueueRequest{Filter: filter},
 	)
 }
 
@@ -284,7 +284,7 @@ func (s *Service) ListBatches(
 	ctx context.Context,
 	filter pagination.QueryOptions, //nolint:gocritic // stable API shape
 ) (*pagination.ListResult[*invoiceadjustment.InvoiceAdjustmentBatch], error) {
-	return s.repo.ListBatchQueue(ctx, invoiceadjustmentports.ListBatchQueueRequest{Filter: filter})
+	return s.repo.ListBatchQueue(ctx, &invoiceadjustmentports.ListBatchQueueRequest{Filter: filter})
 }
 
 func (s *Service) GetOperationsSummary(

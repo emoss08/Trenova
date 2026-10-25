@@ -4,6 +4,8 @@ import (
 	"context"
 	"strings"
 
+	"github.com/emoss08/trenova/shared/money"
+
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/factoringcompany"
 	"github.com/emoss08/trenova/pkg/domaintypes"
@@ -28,42 +30,42 @@ const (
 
 // The funding and reserve reports factors sent, how far each was read, matched and booked
 type Remittance struct {
-	keel.Table `                                                        keel:"factoring_remittances,report=Billing,label=Factoring Remittance"`
+	keel.Table `keel:"factoring_remittances,report=Billing,label=Factoring Remittance"`
 
-	ID                 pulid.ID           `json:"id" keel:"id,pk,autoid:facrem_"`
-	OrganizationID     pulid.ID           `json:"organizationId" keel:"organization_id,pk,tenant"`
-	BusinessUnitID     pulid.ID           `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
+	ID                 pulid.ID           `json:"id"                 keel:"id,pk,autoid:facrem_"`
+	OrganizationID     pulid.ID           `json:"organizationId"     keel:"organization_id,pk,tenant"`
+	BusinessUnitID     pulid.ID           `json:"businessUnitId"     keel:"business_unit_id,pk,tenant"`
 	FactoringCompanyID pulid.ID           `json:"factoringCompanyId" keel:"factoring_company_id"`
-	DocumentID         pulid.ID           `json:"documentId" keel:"document_id,nullzero"`
-	FileName           string             `json:"fileName" keel:"file_name,nullzero"`
-	Source             RemittanceSource   `json:"source" keel:"source"`
-	InboundMessageID   pulid.ID           `json:"inboundMessageId" keel:"inbound_message_id,nullzero"`
-	SourceFormat       RemittanceFormat   `json:"sourceFormat" keel:"source_format,nullzero,label=Format"`
-	Status             RemittanceStatus   `json:"status" keel:"status"`
-	DefaultKind        RemittanceLineKind `json:"defaultKind" keel:"default_kind,label=Report Of"`
-	RemittedOn         *int64             `json:"remittedOn" keel:"remitted_on,type=epoch"`
-	CurrencyCode       string             `json:"currencyCode" keel:"currency_code,label=Currency"`
-	Mapping            map[string]int     `json:"mapping" keel:"mapping,jsonb"`
-	Headers            []string           `json:"headers" keel:"headers,jsonb"`
-	UnmappedHeaders    []string           `json:"unmappedHeaders" keel:"unmapped_headers,jsonb"`
-	LineCount          int                `json:"lineCount" keel:"line_count,label=Lines,format=count"`
-	MatchedCount       int                `json:"matchedCount" keel:"matched_count,label=Matched Lines,format=count"`
-	ExceptionCount     int                `json:"exceptionCount" keel:"exception_count,label=Lines to Resolve,format=count"`
-	AppliedCount       int                `json:"appliedCount" keel:"applied_count,label=Booked Lines,format=count"`
-	TotalCashMinor     int64              `json:"totalCashMinor" keel:"total_cash_minor,label=Total Cash (Minor)"`
-	Error              string             `json:"error" keel:"error,nullzero"`
-	StagedAt           *int64             `json:"stagedAt" keel:"staged_at,label=Read At"`
-	AppliedAt          *int64             `json:"appliedAt" keel:"applied_at"`
-	AppliedByID        pulid.ID           `json:"appliedById" keel:"applied_by_id,nullzero"`
-	DiscardedAt        *int64             `json:"discardedAt" keel:"discarded_at"`
-	DiscardReason      string             `json:"discardReason" keel:"discard_reason,nullzero"`
-	CreatedByID        pulid.ID           `json:"createdById" keel:"created_by_id,nullzero"`
-	Version            int64              `json:"version" keel:"version,version"`
-	CreatedAt          int64              `json:"createdAt" keel:"created_at,autocreate"`
-	UpdatedAt          int64              `json:"updatedAt" keel:"updated_at,autoupdate"`
+	DocumentID         pulid.ID           `json:"documentId"         keel:"document_id,nullzero"`
+	FileName           string             `json:"fileName"           keel:"file_name,nullzero"`
+	Source             RemittanceSource   `json:"source"             keel:"source"`
+	InboundMessageID   pulid.ID           `json:"inboundMessageId"   keel:"inbound_message_id,nullzero"`
+	SourceFormat       RemittanceFormat   `json:"sourceFormat"       keel:"source_format,nullzero,label=Format"`
+	Status             RemittanceStatus   `json:"status"             keel:"status"`
+	DefaultKind        RemittanceLineKind `json:"defaultKind"        keel:"default_kind,label=Report Of"`
+	RemittedOn         *int64             `json:"remittedOn"         keel:"remitted_on,type=epoch"`
+	CurrencyCode       string             `json:"currencyCode"       keel:"currency_code,label=Currency"`
+	Mapping            map[string]int     `json:"mapping"            keel:"mapping,jsonb"`
+	Headers            []string           `json:"headers"            keel:"headers,jsonb"`
+	UnmappedHeaders    []string           `json:"unmappedHeaders"    keel:"unmapped_headers,jsonb"`
+	LineCount          int                `json:"lineCount"          keel:"line_count,label=Lines,format=count"`
+	MatchedCount       int                `json:"matchedCount"       keel:"matched_count,label=Matched Lines,format=count"`
+	ExceptionCount     int                `json:"exceptionCount"     keel:"exception_count,label=Lines to Resolve,format=count"`
+	AppliedCount       int                `json:"appliedCount"       keel:"applied_count,label=Booked Lines,format=count"`
+	TotalCashMinor     int64              `json:"totalCashMinor"     keel:"total_cash_minor,label=Total Cash (Minor)"`
+	Error              string             `json:"error"              keel:"error,nullzero"`
+	StagedAt           *int64             `json:"stagedAt"           keel:"staged_at,label=Read At"`
+	AppliedAt          *int64             `json:"appliedAt"          keel:"applied_at"`
+	AppliedByID        pulid.ID           `json:"appliedById"        keel:"applied_by_id,nullzero"`
+	DiscardedAt        *int64             `json:"discardedAt"        keel:"discarded_at"`
+	DiscardReason      string             `json:"discardReason"      keel:"discard_reason,nullzero"`
+	CreatedByID        pulid.ID           `json:"createdById"        keel:"created_by_id,nullzero"`
+	Version            int64              `json:"version"            keel:"version,version"`
+	CreatedAt          int64              `json:"createdAt"          keel:"created_at,autocreate"`
+	UpdatedAt          int64              `json:"updatedAt"          keel:"updated_at,autoupdate"`
 
 	FactoringCompany *factoringcompany.FactoringCompany `json:"factoringCompany,omitempty" keel:"belongs:factoring_company_id"`
-	Lines            []*RemittanceLine                  `json:"lines,omitempty" keel:"many:remittance_id"`
+	Lines            []*RemittanceLine                  `json:"lines,omitempty"            keel:"many:remittance_id"`
 }
 
 type RemittanceSuggestion struct {
@@ -76,38 +78,38 @@ type RemittanceSuggestion struct {
 
 // Each row of a factor's remittance, its amounts as printed and the schedule item it was matched to
 type RemittanceLine struct {
-	keel.Table `                                                             keel:"factoring_remittance_lines,report=Billing,label=Factoring Remittance Line"`
+	keel.Table `keel:"factoring_remittance_lines,report=Billing,label=Factoring Remittance Line"`
 
-	ID                pulid.ID                `json:"id" keel:"id,pk,autoid:facrml_"`
-	OrganizationID    pulid.ID                `json:"organizationId" keel:"organization_id,pk,tenant"`
-	BusinessUnitID    pulid.ID                `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
-	RemittanceID      pulid.ID                `json:"remittanceId" keel:"remittance_id"`
-	RowNumber         int                     `json:"rowNumber" keel:"row_number,label=Row,dimension"`
-	Cells             []string                `json:"cells" keel:"cells,jsonb"`
-	Kind              RemittanceLineKind      `json:"kind" keel:"kind"`
-	InvoiceNumber     string                  `json:"invoiceNumber" keel:"invoice_number,nullzero"`
-	NormalizedInvoice string                  `json:"-" keel:"normalized_invoice,nullzero"`
-	FactorReference   string                  `json:"factorReference" keel:"factor_reference,nullzero"`
-	DebtorName        string                  `json:"debtorName" keel:"debtor_name,nullzero,label=Debtor"`
-	FaceMinor         *int64                  `json:"faceMinor" keel:"face_minor,label=Invoice Amount (Minor)"`
-	AdvanceMinor      *int64                  `json:"advanceMinor" keel:"advance_minor,label=Advance (Minor)"`
-	FeeMinor          *int64                  `json:"feeMinor" keel:"fee_minor,label=Fee (Minor)"`
-	ReserveMinor      *int64                  `json:"reserveMinor" keel:"reserve_minor,label=Reserve (Minor)"`
-	CashMinor         *int64                  `json:"cashMinor" keel:"cash_minor,label=Cash (Minor)"`
-	OccurredOn        *int64                  `json:"occurredOn" keel:"occurred_on,type=epoch"`
-	MatchStatus       RemittanceMatchStatus   `json:"matchStatus" keel:"match_status"`
-	MatchedBy         RemittanceMatchedBy     `json:"matchedBy" keel:"matched_by,nullzero"`
+	ID                pulid.ID                `json:"id"               keel:"id,pk,autoid:facrml_"`
+	OrganizationID    pulid.ID                `json:"organizationId"   keel:"organization_id,pk,tenant"`
+	BusinessUnitID    pulid.ID                `json:"businessUnitId"   keel:"business_unit_id,pk,tenant"`
+	RemittanceID      pulid.ID                `json:"remittanceId"     keel:"remittance_id"`
+	RowNumber         int                     `json:"rowNumber"        keel:"row_number,label=Row,dimension"`
+	Cells             []string                `json:"cells"            keel:"cells,jsonb"`
+	Kind              RemittanceLineKind      `json:"kind"             keel:"kind"`
+	InvoiceNumber     string                  `json:"invoiceNumber"    keel:"invoice_number,nullzero"`
+	NormalizedInvoice string                  `json:"-"                keel:"normalized_invoice,nullzero"`
+	FactorReference   string                  `json:"factorReference"  keel:"factor_reference,nullzero"`
+	DebtorName        string                  `json:"debtorName"       keel:"debtor_name,nullzero,label=Debtor"`
+	FaceMinor         *int64                  `json:"faceMinor"        keel:"face_minor,label=Invoice Amount (Minor)"`
+	AdvanceMinor      *int64                  `json:"advanceMinor"     keel:"advance_minor,label=Advance (Minor)"`
+	FeeMinor          *int64                  `json:"feeMinor"         keel:"fee_minor,label=Fee (Minor)"`
+	ReserveMinor      *int64                  `json:"reserveMinor"     keel:"reserve_minor,label=Reserve (Minor)"`
+	CashMinor         *int64                  `json:"cashMinor"        keel:"cash_minor,label=Cash (Minor)"`
+	OccurredOn        *int64                  `json:"occurredOn"       keel:"occurred_on,type=epoch"`
+	MatchStatus       RemittanceMatchStatus   `json:"matchStatus"      keel:"match_status"`
+	MatchedBy         RemittanceMatchedBy     `json:"matchedBy"        keel:"matched_by,nullzero"`
 	SubmissionItemID  pulid.ID                `json:"submissionItemId" keel:"submission_item_id,nullzero,label=Schedule Invoice ID"`
-	Score             int                     `json:"score" keel:"score,label=Match Score,dimension"`
-	Reason            RemittanceMatchReason   `json:"reason" keel:"reason,nullzero,label=Match Reason"`
-	Suggestions       []*RemittanceSuggestion `json:"suggestions" keel:"suggestions,jsonb"`
-	Error             string                  `json:"error" keel:"error,nullzero"`
-	IgnoredReason     string                  `json:"ignoredReason" keel:"ignored_reason,nullzero"`
-	ReserveEntryID    pulid.ID                `json:"reserveEntryId" keel:"reserve_entry_id,nullzero"`
-	MatchedInvoice    string                  `json:"matchedInvoice" keel:"matched_invoice_number,computed"`
-	MatchedSubmission pulid.ID                `json:"-" keel:"matched_submission_id,computed"`
-	CreatedAt         int64                   `json:"createdAt" keel:"created_at,autocreate"`
-	UpdatedAt         int64                   `json:"updatedAt" keel:"updated_at,autoupdate"`
+	Score             int                     `json:"score"            keel:"score,label=Match Score,dimension"`
+	Reason            RemittanceMatchReason   `json:"reason"           keel:"reason,nullzero,label=Match Reason"`
+	Suggestions       []*RemittanceSuggestion `json:"suggestions"      keel:"suggestions,jsonb"`
+	Error             string                  `json:"error"            keel:"error,nullzero"`
+	IgnoredReason     string                  `json:"ignoredReason"    keel:"ignored_reason,nullzero"`
+	ReserveEntryID    pulid.ID                `json:"reserveEntryId"   keel:"reserve_entry_id,nullzero"`
+	MatchedInvoice    string                  `json:"matchedInvoice"   keel:"matched_invoice_number,computed"`
+	MatchedSubmission pulid.ID                `json:"-"                keel:"matched_submission_id,computed"`
+	CreatedAt         int64                   `json:"createdAt"        keel:"created_at,autocreate"`
+	UpdatedAt         int64                   `json:"updatedAt"        keel:"updated_at,autoupdate"`
 
 	SubmissionItem *SubmissionItem `json:"submissionItem,omitempty" keel:"belongs:submission_item_id"`
 }
@@ -121,17 +123,17 @@ func (l *RemittanceLine) BeforeUpdate(_ context.Context) error {
 }
 
 type RemittanceProfile struct {
-	keel.Table `                                                                keel:"factoring_remittance_profiles"`
+	keel.Table `keel:"factoring_remittance_profiles"`
 
-	ID                 pulid.ID       `json:"id" keel:"id,pk,autoid:facrmp_"`
-	OrganizationID     pulid.ID       `json:"organizationId" keel:"organization_id,pk,tenant"`
-	BusinessUnitID     pulid.ID       `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
+	ID                 pulid.ID       `json:"id"                 keel:"id,pk,autoid:facrmp_"`
+	OrganizationID     pulid.ID       `json:"organizationId"     keel:"organization_id,pk,tenant"`
+	BusinessUnitID     pulid.ID       `json:"businessUnitId"     keel:"business_unit_id,pk,tenant"`
 	FactoringCompanyID pulid.ID       `json:"factoringCompanyId" keel:"factoring_company_id"`
-	Mapping            map[string]int `json:"mapping" keel:"mapping,jsonb"`
-	HeaderSignature    string         `json:"headerSignature" keel:"header_signature"`
-	Version            int64          `json:"version" keel:"version,version"`
-	CreatedAt          int64          `json:"createdAt" keel:"created_at,autocreate"`
-	UpdatedAt          int64          `json:"updatedAt" keel:"updated_at,autoupdate"`
+	Mapping            map[string]int `json:"mapping"            keel:"mapping,jsonb"`
+	HeaderSignature    string         `json:"headerSignature"    keel:"header_signature"`
+	Version            int64          `json:"version"            keel:"version,version"`
+	CreatedAt          int64          `json:"createdAt"          keel:"created_at,autocreate"`
+	UpdatedAt          int64          `json:"updatedAt"          keel:"updated_at,autoupdate"`
 }
 
 func (r *Remittance) Validate(multiErr *errortypes.MultiError) {
@@ -440,7 +442,7 @@ func (r *Remittance) BeforeCreate(ctx context.Context) error {
 		r.DefaultKind = RemittanceLineFunding
 	}
 	if r.CurrencyCode == "" {
-		r.CurrencyCode = "USD"
+		r.CurrencyCode = money.DefaultCurrencyCode
 	}
 	r.Mapping = nonNilMapping(r.Mapping)
 	r.Headers = nonNilStrings(r.Headers)

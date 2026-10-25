@@ -19,31 +19,31 @@ var (
 )
 
 type TCASubscription struct {
-	keel.Table `                                                  keel:"tca_subscriptions"`
+	keel.Table `keel:"tca_subscriptions"`
 
-	ID             pulid.ID           `json:"id" keel:"id,pk,autoid:tcas_"`
+	ID             pulid.ID           `json:"id"             keel:"id,pk,autoid:tcas_"`
 	OrganizationID pulid.ID           `json:"organizationId" keel:"organization_id,pk,tenant"`
 	BusinessUnitID pulid.ID           `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
-	UserID         pulid.ID           `json:"userId" keel:"user_id"`
-	Name           string             `json:"name" keel:"name"`
-	TableName      string             `json:"tableName" keel:"table_name"`
-	RecordID       *string            `json:"recordId" keel:"record_id"`
-	EventTypes     []string           `json:"eventTypes" keel:"event_types,jsonb"`
-	Conditions     []Condition        `json:"conditions" keel:"conditions,jsonb"`
+	UserID         pulid.ID           `json:"userId"         keel:"user_id"`
+	Name           string             `json:"name"           keel:"name"`
+	TableName      string             `json:"tableName"      keel:"table_name"`
+	RecordID       *string            `json:"recordId"       keel:"record_id"`
+	EventTypes     []string           `json:"eventTypes"     keel:"event_types,jsonb"`
+	Conditions     []Condition        `json:"conditions"     keel:"conditions,jsonb"`
 	ConditionMatch string             `json:"conditionMatch" keel:"condition_match"`
 	WatchedColumns []string           `json:"watchedColumns" keel:"watched_columns,jsonb"`
-	CustomTitle    string             `json:"customTitle" keel:"custom_title"`
-	CustomMessage  string             `json:"customMessage" keel:"custom_message"`
-	Topic          string             `json:"topic" keel:"topic"`
-	Priority       string             `json:"priority" keel:"priority"`
-	Status         SubscriptionStatus `json:"status" keel:"status"`
-	Version        int64              `json:"version" keel:"version,version"`
-	CreatedAt      int64              `json:"createdAt" keel:"created_at,autocreate"`
-	UpdatedAt      int64              `json:"updatedAt" keel:"updated_at,autoupdate"`
+	CustomTitle    string             `json:"customTitle"    keel:"custom_title"`
+	CustomMessage  string             `json:"customMessage"  keel:"custom_message"`
+	Topic          string             `json:"topic"          keel:"topic"`
+	Priority       string             `json:"priority"       keel:"priority"`
+	Status         SubscriptionStatus `json:"status"         keel:"status"`
+	Version        int64              `json:"version"        keel:"version,version"`
+	CreatedAt      int64              `json:"createdAt"      keel:"created_at,autocreate"`
+	UpdatedAt      int64              `json:"updatedAt"      keel:"updated_at,autoupdate"`
 
 	Organization *tenant.Organization `json:"organization,omitempty"`
 	BusinessUnit *tenant.BusinessUnit `json:"businessUnit,omitempty"`
-	User         *tenant.User         `json:"user,omitempty" keel:"belongs:user_id"`
+	User         *tenant.User         `json:"user,omitempty"         keel:"belongs:user_id"`
 }
 
 func (s *TCASubscription) BeforeCreate(_ context.Context) error {

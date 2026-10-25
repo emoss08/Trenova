@@ -26,31 +26,31 @@ const MaxViewNameLength = 120
 type ReportView struct {
 	keel.Table `keel:"report_views"`
 
-	ID             pulid.ID       `json:"id" keel:"id,pk,autoid:rview_"`
+	ID             pulid.ID       `json:"id"             keel:"id,pk,autoid:rview_"`
 	BusinessUnitID pulid.ID       `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
 	OrganizationID pulid.ID       `json:"organizationId" keel:"organization_id,pk,tenant"`
-	DefinitionID   pulid.ID       `json:"definitionId" keel:"definition_id"`
-	OwnerID        pulid.ID       `json:"ownerId" keel:"owner_id"`
-	Name           string         `json:"name" keel:"name"`
-	Description    string         `json:"description" keel:"description,nullzero"`
-	Params         map[string]any `json:"params" keel:"params,jsonb,nullzero"`
+	DefinitionID   pulid.ID       `json:"definitionId"   keel:"definition_id"`
+	OwnerID        pulid.ID       `json:"ownerId"        keel:"owner_id"`
+	Name           string         `json:"name"           keel:"name"`
+	Description    string         `json:"description"    keel:"description,nullzero"`
+	Params         map[string]any `json:"params"         keel:"params,jsonb,nullzero"`
 	// Shared publishes the view to everyone who can read the report. A private
 	// view stays with its owner, which is what keeps one person's working set
 	// out of everybody else's list.
 	Shared bool `json:"shared" keel:"shared"`
 	// Pinned is per-owner ordering intent: a pinned view sorts to the front of
 	// the picker so the one someone opens daily is never buried.
-	Pinned    bool   `json:"pinned" keel:"pinned"`
-	Format    Format `json:"format" keel:"format,nullzero"`
+	Pinned    bool   `json:"pinned"    keel:"pinned"`
+	Format    Format `json:"format"    keel:"format,nullzero"`
 	LastRunAt int64  `json:"lastRunAt" keel:"last_run_at,nullzero"`
-	RunCount  int64  `json:"runCount" keel:"run_count"`
-	Version   int64  `json:"version" keel:"version,version"`
+	RunCount  int64  `json:"runCount"  keel:"run_count"`
+	Version   int64  `json:"version"   keel:"version,version"`
 	CreatedAt int64  `json:"createdAt" keel:"created_at,autocreate"`
 	UpdatedAt int64  `json:"updatedAt" keel:"updated_at,autoupdate"`
 
 	Organization     *tenant.Organization `json:"organization,omitempty"`
 	BusinessUnit     *tenant.BusinessUnit `json:"businessUnit,omitempty"`
-	Owner            *tenant.User         `json:"owner,omitempty" keel:"belongs:owner_id"`
+	Owner            *tenant.User         `json:"owner,omitempty"            keel:"belongs:owner_id"`
 	ReportDefinition *ReportDefinition    `json:"reportDefinition,omitempty" keel:"belongs:definition_id"`
 }
 

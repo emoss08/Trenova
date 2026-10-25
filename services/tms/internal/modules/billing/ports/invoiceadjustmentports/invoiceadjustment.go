@@ -269,11 +269,11 @@ type InvoiceAdjustmentRepository interface {
 	) (*pagination.CursorListResult[*InvoiceAdjustmentApprovalQueueItem], error)
 	ListReconciliationQueue(
 		ctx context.Context,
-		req ListReconciliationQueueRequest,
+		req *ListReconciliationQueueRequest,
 	) (*pagination.ListResult[*InvoiceAdjustmentReconciliationQueueItem], error)
 	ListBatchQueue(
 		ctx context.Context,
-		req ListBatchQueueRequest,
+		req *ListBatchQueueRequest,
 	) (*pagination.ListResult[*invoiceadjustment.InvoiceAdjustmentBatch], error)
 	GetOperationsSummary(
 		ctx context.Context,

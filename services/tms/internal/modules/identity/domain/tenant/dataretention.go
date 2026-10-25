@@ -27,25 +27,25 @@ const (
 type DataRetention struct {
 	keel.Table `keel:"data_retention"`
 
-	ID                            pulid.ID `json:"id" keel:"id,pk,autoid:dr_"`
-	BusinessUnitID                pulid.ID `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
-	OrganizationID                pulid.ID `json:"organizationId" keel:"organization_id,pk,tenant"`
-	AuditRetentionPeriod          int      `json:"auditRetentionPeriod" keel:"audit_retention_period"`                     // In days
+	ID                            pulid.ID `json:"id"                            keel:"id,pk,autoid:dr_"`
+	BusinessUnitID                pulid.ID `json:"businessUnitId"                keel:"business_unit_id,pk,tenant"`
+	OrganizationID                pulid.ID `json:"organizationId"                keel:"organization_id,pk,tenant"`
+	AuditRetentionPeriod          int      `json:"auditRetentionPeriod"          keel:"audit_retention_period"`            // In days
 	EDIInboundFileRetentionPeriod int      `json:"ediInboundFileRetentionPeriod" keel:"edi_inbound_file_retention_period"` // In days, 0 disables purging
-	EDIMessageRetentionPeriod     int      `json:"ediMessageRetentionPeriod" keel:"edi_message_retention_period"`          // In days, 0 disables purging
+	EDIMessageRetentionPeriod     int      `json:"ediMessageRetentionPeriod"     keel:"edi_message_retention_period"`      // In days, 0 disables purging
 	// DriverQualificationRetentionPeriod is how long a driver qualification
 	// file is held past termination before it is eligible for purge, in days.
 	// 1095 is the three years 49 CFR 391.51(d) requires; zero means the reader
 	// falls back to that, so an unset value can never make every terminated
 	// file look purgeable. Files are only ever flagged; nothing deletes one.
 	DriverQualificationRetentionPeriod int   `json:"driverQualificationRetentionPeriod" keel:"driver_qualification_retention_period"`
-	AgentEvalCaseRetentionPeriod       int   `json:"agentEvalCaseRetentionPeriod" keel:"agent_eval_case_retention_period"`
-	AIFeedbackRetentionPeriod          int   `json:"aiFeedbackRetentionPeriod" keel:"ai_feedback_retention_period"`
-	AIAuditRetentionPeriod             int   `json:"aiAuditRetentionPeriod" keel:"ai_audit_retention_period"` // In days, at least MinAIAuditRetentionDays
-	AICorrectionRetentionPeriod        int   `json:"aiCorrectionRetentionPeriod" keel:"ai_correction_retention_period"`
-	Version                            int64 `json:"version" keel:"version,version"`
-	CreatedAt                          int64 `json:"createdAt" keel:"created_at,autocreate"`
-	UpdatedAt                          int64 `json:"updatedAt" keel:"updated_at,autoupdate"`
+	AgentEvalCaseRetentionPeriod       int   `json:"agentEvalCaseRetentionPeriod"       keel:"agent_eval_case_retention_period"`
+	AIFeedbackRetentionPeriod          int   `json:"aiFeedbackRetentionPeriod"          keel:"ai_feedback_retention_period"`
+	AIAuditRetentionPeriod             int   `json:"aiAuditRetentionPeriod"             keel:"ai_audit_retention_period"` // In days, at least MinAIAuditRetentionDays
+	AICorrectionRetentionPeriod        int   `json:"aiCorrectionRetentionPeriod"        keel:"ai_correction_retention_period"`
+	Version                            int64 `json:"version"                            keel:"version,version"`
+	CreatedAt                          int64 `json:"createdAt"                          keel:"created_at,autocreate"`
+	UpdatedAt                          int64 `json:"updatedAt"                          keel:"updated_at,autoupdate"`
 
 	// Relationships
 	BusinessUnit *BusinessUnit `json:"businessUnit,omitempty"`

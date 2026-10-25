@@ -100,36 +100,36 @@ type MappingResolution struct {
 type EDITransfer struct {
 	keel.Table `keel:"edi_load_tender_transfers"`
 
-	ID                    pulid.ID            `json:"id" keel:"id,pk,autoid:edilt_"`
-	SourceOrganizationID  pulid.ID            `json:"sourceOrganizationId" keel:"source_organization_id"`
-	SourceBusinessUnitID  pulid.ID            `json:"sourceBusinessUnitId" keel:"source_business_unit_id"`
-	TargetOrganizationID  pulid.ID            `json:"targetOrganizationId" keel:"target_organization_id"`
-	TargetBusinessUnitID  pulid.ID            `json:"targetBusinessUnitId" keel:"target_business_unit_id"`
-	SourcePartnerID       pulid.ID            `json:"sourcePartnerId" keel:"source_partner_id"`
-	TargetPartnerID       pulid.ID            `json:"targetPartnerId" keel:"target_partner_id"`
-	SourceShipmentID      pulid.ID            `json:"sourceShipmentId" keel:"source_shipment_id,nullzero"`
-	TargetShipmentID      pulid.ID            `json:"targetShipmentId" keel:"target_shipment_id,nullzero"`
-	InboundMessageID      pulid.ID            `json:"inboundMessageId" keel:"inbound_message_id,nullzero"`
-	Status                TransferStatus      `json:"status" keel:"status"`
-	TenderPayload         LoadTenderPayload   `json:"tenderPayload" keel:"tender_payload,jsonb"`
-	MappingSnapshot       []MappingResolution `json:"mappingSnapshot" keel:"mapping_snapshot,jsonb"`
-	RejectionReason       string              `json:"rejectionReason" keel:"rejection_reason,nullzero"`
-	FailureReason         string              `json:"failureReason" keel:"failure_reason,nullzero"`
-	ApprovalWorkflowID    string              `json:"approvalWorkflowId" keel:"approval_workflow_id,nullzero"`
+	ID                    pulid.ID            `json:"id"                    keel:"id,pk,autoid:edilt_"`
+	SourceOrganizationID  pulid.ID            `json:"sourceOrganizationId"  keel:"source_organization_id"`
+	SourceBusinessUnitID  pulid.ID            `json:"sourceBusinessUnitId"  keel:"source_business_unit_id"`
+	TargetOrganizationID  pulid.ID            `json:"targetOrganizationId"  keel:"target_organization_id"`
+	TargetBusinessUnitID  pulid.ID            `json:"targetBusinessUnitId"  keel:"target_business_unit_id"`
+	SourcePartnerID       pulid.ID            `json:"sourcePartnerId"       keel:"source_partner_id"`
+	TargetPartnerID       pulid.ID            `json:"targetPartnerId"       keel:"target_partner_id"`
+	SourceShipmentID      pulid.ID            `json:"sourceShipmentId"      keel:"source_shipment_id,nullzero"`
+	TargetShipmentID      pulid.ID            `json:"targetShipmentId"      keel:"target_shipment_id,nullzero"`
+	InboundMessageID      pulid.ID            `json:"inboundMessageId"      keel:"inbound_message_id,nullzero"`
+	Status                TransferStatus      `json:"status"                keel:"status"`
+	TenderPayload         LoadTenderPayload   `json:"tenderPayload"         keel:"tender_payload,jsonb"`
+	MappingSnapshot       []MappingResolution `json:"mappingSnapshot"       keel:"mapping_snapshot,jsonb"`
+	RejectionReason       string              `json:"rejectionReason"       keel:"rejection_reason,nullzero"`
+	FailureReason         string              `json:"failureReason"         keel:"failure_reason,nullzero"`
+	ApprovalWorkflowID    string              `json:"approvalWorkflowId"    keel:"approval_workflow_id,nullzero"`
 	ApprovalWorkflowRunID string              `json:"approvalWorkflowRunId" keel:"approval_workflow_run_id,nullzero"`
-	SubmittedByID         pulid.ID            `json:"submittedById" keel:"submitted_by_id,nullzero"`
-	SubmittedAt           int64               `json:"submittedAt" keel:"submitted_at"`
-	ApprovedByID          pulid.ID            `json:"approvedById" keel:"approved_by_id,nullzero"`
-	ApprovedAt            *int64              `json:"approvedAt" keel:"approved_at"`
-	ProcessingStartedAt   *int64              `json:"processingStartedAt" keel:"processing_started_at"`
-	ProcessedAt           *int64              `json:"processedAt" keel:"processed_at"`
-	RejectedByID          pulid.ID            `json:"rejectedById" keel:"rejected_by_id,nullzero"`
-	RejectedAt            *int64              `json:"rejectedAt" keel:"rejected_at"`
-	CanceledByID          pulid.ID            `json:"canceledById" keel:"canceled_by_id,nullzero"`
-	CanceledAt            *int64              `json:"canceledAt" keel:"canceled_at"`
-	Version               int64               `json:"version" keel:"version,version"`
-	CreatedAt             int64               `json:"createdAt" keel:"created_at,autocreate"`
-	UpdatedAt             int64               `json:"updatedAt" keel:"updated_at,autoupdate"`
+	SubmittedByID         pulid.ID            `json:"submittedById"         keel:"submitted_by_id,nullzero"`
+	SubmittedAt           int64               `json:"submittedAt"           keel:"submitted_at"`
+	ApprovedByID          pulid.ID            `json:"approvedById"          keel:"approved_by_id,nullzero"`
+	ApprovedAt            *int64              `json:"approvedAt"            keel:"approved_at"`
+	ProcessingStartedAt   *int64              `json:"processingStartedAt"   keel:"processing_started_at"`
+	ProcessedAt           *int64              `json:"processedAt"           keel:"processed_at"`
+	RejectedByID          pulid.ID            `json:"rejectedById"          keel:"rejected_by_id,nullzero"`
+	RejectedAt            *int64              `json:"rejectedAt"            keel:"rejected_at"`
+	CanceledByID          pulid.ID            `json:"canceledById"          keel:"canceled_by_id,nullzero"`
+	CanceledAt            *int64              `json:"canceledAt"            keel:"canceled_at"`
+	Version               int64               `json:"version"               keel:"version,version"`
+	CreatedAt             int64               `json:"createdAt"             keel:"created_at,autocreate"`
+	UpdatedAt             int64               `json:"updatedAt"             keel:"updated_at,autoupdate"`
 
 	SourcePartner *EDIPartner `json:"sourcePartner,omitempty" keel:"belongs:source_partner_id"`
 	TargetPartner *EDIPartner `json:"targetPartner,omitempty" keel:"belongs:target_partner_id"`

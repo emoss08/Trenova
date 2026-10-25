@@ -112,8 +112,14 @@ func (r *actualsRepository) ShipmentMilesByIDs(
 				).
 				Pick(
 					sp.ID,
-					floatSum(sm.Distance.Sum().Filter(keel.And(sm.Loaded.IsTrue(), sm.Distance.IsNotNull()))),
-					floatSum(sm.Distance.Sum().Filter(keel.And(sm.Loaded.IsFalse(), sm.Distance.IsNotNull()))),
+					floatSum(
+						sm.Distance.Sum().
+							Filter(keel.And(sm.Loaded.IsTrue(), sm.Distance.IsNotNull())),
+					),
+					floatSum(
+						sm.Distance.Sum().
+							Filter(keel.And(sm.Loaded.IsFalse(), sm.Distance.IsNotNull())),
+					),
 					keel.Raw("COALESCE(?, 0)", sp.TotalChargeAmount),
 					keel.Raw("? > 0", keel.Count().Filter(keel.And(sm.ID.IsNotNull(), sm.Distance.IsNull()))),
 				).
@@ -147,21 +153,25 @@ func (r *actualsRepository) FleetMiles(
 		func(ctx context.Context) (*costingcontrolports.FleetMilesResult, error) {
 			sm := shipmentdb.ShipmentMoves
 			sp := shipmentdb.Shipments.As("sp")
-			result, err := keel.IntoOne[costingcontrolports.FleetMilesResult](ctx, r.db.Keel(ctx), sm.
-				Join(sp, sp.ID.EqCol(sm.ShipmentID)).
-				Pick(
-					floatSum(sm.Distance.Sum().Filter(sm.Loaded.IsTrue())),
-					floatSum(sm.Distance.Sum().Filter(sm.Loaded.IsFalse())),
-					floatSum(sm.Distance.Sum()),
-				).
-				Where(
-					sm.Distance.IsNotNull(),
-					sm.Distance.Gt(0),
-					sm.Status.Ne(shipment.MoveStatusCanceled),
-					sp.Status.Ne(shipment.StatusCanceled),
-					sm.CreatedAt.Gte(req.FromDate),
-					sm.CreatedAt.Lte(req.ToDate),
-				))
+			result, err := keel.IntoOne[costingcontrolports.FleetMilesResult](
+				ctx,
+				r.db.Keel(ctx),
+				sm.
+					Join(sp, sp.ID.EqCol(sm.ShipmentID)).
+					Pick(
+						floatSum(sm.Distance.Sum().Filter(sm.Loaded.IsTrue())),
+						floatSum(sm.Distance.Sum().Filter(sm.Loaded.IsFalse())),
+						floatSum(sm.Distance.Sum()),
+					).
+					Where(
+						sm.Distance.IsNotNull(),
+						sm.Distance.Gt(0),
+						sm.Status.Ne(shipment.MoveStatusCanceled),
+						sp.Status.Ne(shipment.StatusCanceled),
+						sm.CreatedAt.Gte(req.FromDate),
+						sm.CreatedAt.Lte(req.ToDate),
+					),
+			)
 			if err != nil {
 				r.l.Error(
 					"failed to aggregate fleet miles",
@@ -226,7 +236,8 @@ func (r *actualsRepository) FleetCostAggregates(
 					keel.Raw("(?)::int", keel.Count().Filter(keel.And(
 						moving,
 						keel.Raw("? < ?::numeric * ?", totals.Col("revenue"), req.CostPerMile, costMiles),
-					))),
+					),
+					)),
 					keel.Raw("COALESCE(?, 0)::numeric", keel.Sum(totals.Col("revenue")).Filter(moving)),
 					floatSum(keel.Sum(totals.Col("total_miles"))),
 					floatSum(keel.Sum(totals.Col("loaded_miles"))),

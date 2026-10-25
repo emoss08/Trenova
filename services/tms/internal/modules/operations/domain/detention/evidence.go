@@ -32,22 +32,22 @@ const (
 type DetentionEvidence struct {
 	keel.Table `keel:"detention_evidence"`
 
-	ID                    pulid.ID       `json:"id" keel:"id,pk,autoid:dte_"`
-	BusinessUnitID        pulid.ID       `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
-	OrganizationID        pulid.ID       `json:"organizationId" keel:"organization_id,pk,tenant"`
+	ID                    pulid.ID       `json:"id"                    keel:"id,pk,autoid:dte_"`
+	BusinessUnitID        pulid.ID       `json:"businessUnitId"        keel:"business_unit_id,pk,tenant"`
+	OrganizationID        pulid.ID       `json:"organizationId"        keel:"organization_id,pk,tenant"`
 	DetentionOccurrenceID pulid.ID       `json:"detentionOccurrenceId" keel:"detention_occurrence_id"`
-	Sequence              int32          `json:"sequence" keel:"sequence"`
-	Kind                  EvidenceKind   `json:"kind" keel:"kind"`
-	Source                EvidenceSource `json:"source" keel:"source"`
-	Summary               string         `json:"summary" keel:"summary"`
-	ObservedAt            int64          `json:"observedAt" keel:"observed_at"`
-	RecordedAt            int64          `json:"recordedAt" keel:"recorded_at"`
-	RecordedByID          *pulid.ID      `json:"recordedById" keel:"recorded_by_id"`
-	DocumentID            *pulid.ID      `json:"documentId" keel:"document_id"`
-	Payload               map[string]any `json:"payload" keel:"payload,jsonb,nullzero"`
-	PrevHash              string         `json:"prevHash" keel:"prev_hash"`
-	Hash                  string         `json:"hash" keel:"hash"`
-	CreatedAt             int64          `json:"createdAt" keel:"created_at,autocreate"`
+	Sequence              int32          `json:"sequence"              keel:"sequence"`
+	Kind                  EvidenceKind   `json:"kind"                  keel:"kind"`
+	Source                EvidenceSource `json:"source"                keel:"source"`
+	Summary               string         `json:"summary"               keel:"summary"`
+	ObservedAt            int64          `json:"observedAt"            keel:"observed_at"`
+	RecordedAt            int64          `json:"recordedAt"            keel:"recorded_at"`
+	RecordedByID          *pulid.ID      `json:"recordedById"          keel:"recorded_by_id"`
+	DocumentID            *pulid.ID      `json:"documentId"            keel:"document_id"`
+	Payload               map[string]any `json:"payload"               keel:"payload,jsonb,nullzero"`
+	PrevHash              string         `json:"prevHash"              keel:"prev_hash"`
+	Hash                  string         `json:"hash"                  keel:"hash"`
+	CreatedAt             int64          `json:"createdAt"             keel:"created_at,autocreate"`
 }
 
 // ComputeHash derives the chain link from the immutable fields of this record.

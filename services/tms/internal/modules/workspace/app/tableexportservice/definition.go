@@ -34,6 +34,7 @@ type Built struct {
 	Skipped    []string
 }
 
+//nolint:exhaustive // count operators filter relations, which a report export cannot express
 var tableOperators = map[dbtype.Operator]ir.Op{
 	dbtype.OpEqual:              ir.OpEq,
 	dbtype.OpNotEqual:           ir.OpNe,

@@ -21,27 +21,27 @@ var (
 type DocumentControl struct {
 	keel.Table `keel:"document_controls"`
 
-	ID                              pulid.ID `json:"id" keel:"id,pk,autoid:docc_"`
-	BusinessUnitID                  pulid.ID `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
-	OrganizationID                  pulid.ID `json:"organizationId" keel:"organization_id,pk,tenant"`
-	EnableDocumentIntelligence      bool     `json:"enableDocumentIntelligence" keel:"enable_document_intelligence"`
-	EnableOCR                       bool     `json:"enableOcr" keel:"enable_ocr"`
-	EnableAutoClassification        bool     `json:"enableAutoClassification" keel:"enable_auto_classification"`
+	ID                              pulid.ID `json:"id"                              keel:"id,pk,autoid:docc_"`
+	BusinessUnitID                  pulid.ID `json:"businessUnitId"                  keel:"business_unit_id,pk,tenant"`
+	OrganizationID                  pulid.ID `json:"organizationId"                  keel:"organization_id,pk,tenant"`
+	EnableDocumentIntelligence      bool     `json:"enableDocumentIntelligence"      keel:"enable_document_intelligence"`
+	EnableOCR                       bool     `json:"enableOcr"                       keel:"enable_ocr"`
+	EnableAutoClassification        bool     `json:"enableAutoClassification"        keel:"enable_auto_classification"`
 	EnableAutoDocumentTypeAssociate bool     `json:"enableAutoDocumentTypeAssociate" keel:"enable_auto_document_type_associate"`
-	EnableAutoCreateDocumentTypes   bool     `json:"enableAutoCreateDocumentTypes" keel:"enable_auto_create_document_types"`
-	EnableShipmentDraftExtraction   bool     `json:"enableShipmentDraftExtraction" keel:"enable_shipment_draft_extraction"`
-	EnableAIAssistedClassification  bool     `json:"enableAiAssistedClassification" keel:"enable_ai_assisted_classification"`
-	EnableAIAssistedExtraction      bool     `json:"enableAiAssistedExtraction" keel:"enable_ai_assisted_extraction"`
-	ShipmentDraftAllowedResources   []string `json:"shipmentDraftAllowedResources" keel:"shipment_draft_allowed_resources"`
-	EnableFullTextIndexing          bool     `json:"enableFullTextIndexing" keel:"enable_full_text_indexing"`
-	EnableCapture                   bool     `json:"enableCapture" keel:"enable_capture"`
-	CaptureAutoFileCoverSheets      bool     `json:"captureAutoFileCoverSheets" keel:"capture_auto_file_cover_sheets"`
-	CaptureRetentionDays            int      `json:"captureRetentionDays" keel:"capture_retention_days"`
-	CaptureMinAgentVersion          string   `json:"captureMinAgentVersion" keel:"capture_min_agent_version,nullzero"`
-	CaptureAllowAutoUpdate          bool     `json:"captureAllowAutoUpdate" keel:"capture_allow_auto_update"`
-	Version                         int64    `json:"version" keel:"version,version"`
-	CreatedAt                       int64    `json:"createdAt" keel:"created_at,autocreate"`
-	UpdatedAt                       int64    `json:"updatedAt" keel:"updated_at,autoupdate"`
+	EnableAutoCreateDocumentTypes   bool     `json:"enableAutoCreateDocumentTypes"   keel:"enable_auto_create_document_types"`
+	EnableShipmentDraftExtraction   bool     `json:"enableShipmentDraftExtraction"   keel:"enable_shipment_draft_extraction"`
+	EnableAIAssistedClassification  bool     `json:"enableAiAssistedClassification"  keel:"enable_ai_assisted_classification"`
+	EnableAIAssistedExtraction      bool     `json:"enableAiAssistedExtraction"      keel:"enable_ai_assisted_extraction"`
+	ShipmentDraftAllowedResources   []string `json:"shipmentDraftAllowedResources"   keel:"shipment_draft_allowed_resources"`
+	EnableFullTextIndexing          bool     `json:"enableFullTextIndexing"          keel:"enable_full_text_indexing"`
+	EnableCapture                   bool     `json:"enableCapture"                   keel:"enable_capture"`
+	CaptureAutoFileCoverSheets      bool     `json:"captureAutoFileCoverSheets"      keel:"capture_auto_file_cover_sheets"`
+	CaptureRetentionDays            int      `json:"captureRetentionDays"            keel:"capture_retention_days"`
+	CaptureMinAgentVersion          string   `json:"captureMinAgentVersion"          keel:"capture_min_agent_version,nullzero"`
+	CaptureAllowAutoUpdate          bool     `json:"captureAllowAutoUpdate"          keel:"capture_allow_auto_update"`
+	Version                         int64    `json:"version"                         keel:"version,version"`
+	CreatedAt                       int64    `json:"createdAt"                       keel:"created_at,autocreate"`
+	UpdatedAt                       int64    `json:"updatedAt"                       keel:"updated_at,autoupdate"`
 }
 
 func NewDefaultDocumentControl(orgID, buID pulid.ID) *DocumentControl {

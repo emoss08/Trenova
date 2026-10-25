@@ -13,20 +13,20 @@ var (
 )
 
 type WorkerPTOPolicyAssignment struct {
-	keel.Table `                                                              keel:"worker_pto_policy_assignments"`
+	keel.Table `keel:"worker_pto_policy_assignments"`
 
-	ID             pulid.ID `json:"id" keel:"id,pk,autoid:wppa_"`
+	ID             pulid.ID `json:"id"             keel:"id,pk,autoid:wppa_"`
 	BusinessUnitID pulid.ID `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
 	OrganizationID pulid.ID `json:"organizationId" keel:"organization_id,pk,tenant"`
-	WorkerID       pulid.ID `json:"workerId" keel:"worker_id"`
-	PTOPolicyID    pulid.ID `json:"ptoPolicyId" keel:"pto_policy_id"`
-	EffectiveFrom  int64    `json:"effectiveFrom" keel:"effective_from"`
-	EffectiveTo    *int64   `json:"effectiveTo" keel:"effective_to"`
-	AssignedByID   pulid.ID `json:"assignedById" keel:"assigned_by_id,nullzero"`
-	Note           string   `json:"note" keel:"note,nullzero"`
-	Version        int64    `json:"version" keel:"version,version"`
-	CreatedAt      int64    `json:"createdAt" keel:"created_at,autocreate"`
-	UpdatedAt      int64    `json:"updatedAt" keel:"updated_at,autoupdate"`
+	WorkerID       pulid.ID `json:"workerId"       keel:"worker_id"`
+	PTOPolicyID    pulid.ID `json:"ptoPolicyId"    keel:"pto_policy_id"`
+	EffectiveFrom  int64    `json:"effectiveFrom"  keel:"effective_from"`
+	EffectiveTo    *int64   `json:"effectiveTo"    keel:"effective_to"`
+	AssignedByID   pulid.ID `json:"assignedById"   keel:"assigned_by_id,nullzero"`
+	Note           string   `json:"note"           keel:"note,nullzero"`
+	Version        int64    `json:"version"        keel:"version,version"`
+	CreatedAt      int64    `json:"createdAt"      keel:"created_at,autocreate"`
+	UpdatedAt      int64    `json:"updatedAt"      keel:"updated_at,autoupdate"`
 
 	Policy *PTOPolicy `json:"policy,omitempty" keel:"belongs:pto_policy_id"`
 	Worker *Worker    `json:"worker,omitempty" keel:"belongs:worker_id"`

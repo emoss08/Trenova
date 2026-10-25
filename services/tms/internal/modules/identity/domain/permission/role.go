@@ -26,18 +26,18 @@ const (
 type Role struct {
 	keel.Table `keel:"roles"`
 
-	ID                 pulid.ID           `json:"id" keel:"id,pk,autoid:rol_"`
-	BusinessUnitID     pulid.ID           `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
-	OrganizationID     pulid.ID           `json:"organizationId" keel:"organization_id,pk,tenant"`
-	Name               string             `json:"name" keel:"name"`
-	Description        string             `json:"description" keel:"description,nullzero"`
+	ID                 pulid.ID           `json:"id"                 keel:"id,pk,autoid:rol_"`
+	BusinessUnitID     pulid.ID           `json:"businessUnitId"     keel:"business_unit_id,pk,tenant"`
+	OrganizationID     pulid.ID           `json:"organizationId"     keel:"organization_id,pk,tenant"`
+	Name               string             `json:"name"               keel:"name"`
+	Description        string             `json:"description"        keel:"description,nullzero"`
 	CoreResponsibility CoreResponsibility `json:"coreResponsibility" keel:"core_responsibility,nullzero"`
-	ParentRoleIDs      []pulid.ID         `json:"parentRoleIds" keel:"parent_role_ids"`
-	MaxSensitivity     FieldSensitivity   `json:"maxSensitivity" keel:"max_sensitivity"`
-	IsSystem           bool               `json:"isSystem" keel:"is_system"`
-	CreatedBy          pulid.ID           `json:"createdBy" keel:"created_by,nullzero"`
-	CreatedAt          int64              `json:"createdAt" keel:"created_at,autocreate"`
-	UpdatedAt          int64              `json:"updatedAt" keel:"updated_at,autoupdate"`
+	ParentRoleIDs      []pulid.ID         `json:"parentRoleIds"      keel:"parent_role_ids"`
+	MaxSensitivity     FieldSensitivity   `json:"maxSensitivity"     keel:"max_sensitivity"`
+	IsSystem           bool               `json:"isSystem"           keel:"is_system"`
+	CreatedBy          pulid.ID           `json:"createdBy"          keel:"created_by,nullzero"`
+	CreatedAt          int64              `json:"createdAt"          keel:"created_at,autocreate"`
+	UpdatedAt          int64              `json:"updatedAt"          keel:"updated_at,autoupdate"`
 
 	Permissions []*ResourcePermission `json:"permissions,omitempty" keel:"many:role_id"`
 }

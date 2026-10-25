@@ -25,71 +25,71 @@ const (
 
 // The lane, applicability and price of one line of a contract
 type RateAgreementRule struct {
-	keel.Table `                                                     keel:"rate_agreement_rules,report=Billing,label=Lane Rule"`
+	keel.Table `keel:"rate_agreement_rules,report=Billing,label=Lane Rule"`
 
-	ID              pulid.ID `json:"id" keel:"id,pk,autoid:ragr_"`
-	BusinessUnitID  pulid.ID `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
-	OrganizationID  pulid.ID `json:"organizationId" keel:"organization_id,pk,tenant"`
+	ID              pulid.ID `json:"id"              keel:"id,pk,autoid:ragr_"`
+	BusinessUnitID  pulid.ID `json:"businessUnitId"  keel:"business_unit_id,pk,tenant"`
+	OrganizationID  pulid.ID `json:"organizationId"  keel:"organization_id,pk,tenant"`
 	RateAgreementID pulid.ID `json:"rateAgreementId" keel:"rate_agreement_id"`
 
 	PartyType PartyType  `json:"partyType" keel:"party_type"`
-	PartyID   pulid.ID   `json:"partyId" keel:"party_id"`
-	Label     string     `json:"label" keel:"label,nullzero"`
-	Status    RuleStatus `json:"status" keel:"status"`
+	PartyID   pulid.ID   `json:"partyId"   keel:"party_id"`
+	Label     string     `json:"label"     keel:"label,nullzero"`
+	Status    RuleStatus `json:"status"    keel:"status"`
 
-	OriginScopeType  rategeo.ScopeType `json:"originScopeType" keel:"origin_scope_type,label=Origin Scope"`
+	OriginScopeType  rategeo.ScopeType `json:"originScopeType"  keel:"origin_scope_type,label=Origin Scope"`
 	OriginScopeValue string            `json:"originScopeValue" keel:"origin_scope_value,nullzero"`
-	OriginCity       string            `json:"originCity" keel:"origin_city,nullzero"`
+	OriginCity       string            `json:"originCity"       keel:"origin_city,nullzero"`
 
-	DestinationScopeType  rategeo.ScopeType `json:"destinationScopeType" keel:"destination_scope_type,label=Destination Scope"`
+	DestinationScopeType  rategeo.ScopeType `json:"destinationScopeType"  keel:"destination_scope_type,label=Destination Scope"`
 	DestinationScopeValue string            `json:"destinationScopeValue" keel:"destination_scope_value,nullzero"`
-	DestinationCity       string            `json:"destinationCity" keel:"destination_city,nullzero"`
+	DestinationCity       string            `json:"destinationCity"       keel:"destination_city,nullzero"`
 
-	LaneKey   string    `json:"laneKey" keel:"lane_key"`
+	LaneKey   string    `json:"laneKey"   keel:"lane_key"`
 	Direction Direction `json:"direction" keel:"direction"`
 
-	OriginRadiusMeters      *float64       `json:"originRadiusMeters" keel:"origin_radius_meters"`
+	OriginRadiusMeters      *float64       `json:"originRadiusMeters"      keel:"origin_radius_meters"`
 	DestinationRadiusMeters *float64       `json:"destinationRadiusMeters" keel:"destination_radius_meters"`
-	OriginLatitude          *float64       `json:"originLatitude" keel:"origin_latitude"`
-	OriginLongitude         *float64       `json:"originLongitude" keel:"origin_longitude"`
-	DestinationLatitude     *float64       `json:"destinationLatitude" keel:"destination_latitude"`
-	DestinationLongitude    *float64       `json:"destinationLongitude" keel:"destination_longitude"`
-	OriginCenter            *postgis.Point `json:"-" keel:"origin_center,readonly"`
-	DestinationCenter       *postgis.Point `json:"-" keel:"destination_center,readonly"`
+	OriginLatitude          *float64       `json:"originLatitude"          keel:"origin_latitude"`
+	OriginLongitude         *float64       `json:"originLongitude"         keel:"origin_longitude"`
+	DestinationLatitude     *float64       `json:"destinationLatitude"     keel:"destination_latitude"`
+	DestinationLongitude    *float64       `json:"destinationLongitude"    keel:"destination_longitude"`
+	OriginCenter            *postgis.Point `json:"-"                       keel:"origin_center,readonly"`
+	DestinationCenter       *postgis.Point `json:"-"                       keel:"destination_center,readonly"`
 
-	ServiceTypeIDs   []pulid.ID                   `json:"serviceTypeIds" keel:"service_type_ids,jsonb,nullzero"`
-	ShipmentTypeIDs  []pulid.ID                   `json:"shipmentTypeIds" keel:"shipment_type_ids,jsonb,nullzero"`
-	TractorTypeIDs   []pulid.ID                   `json:"tractorTypeIds" keel:"tractor_type_ids,jsonb,nullzero"`
-	TrailerTypeIDs   []pulid.ID                   `json:"trailerTypeIds" keel:"trailer_type_ids,jsonb,nullzero"`
-	CommodityIDs     []pulid.ID                   `json:"commodityIds" keel:"commodity_ids,jsonb,nullzero"`
-	FreightClasses   []commodity.FreightClass     `json:"freightClasses" keel:"freight_classes,jsonb,nullzero"`
-	ServiceModels    []modeprofile.ServiceModel   `json:"serviceModels" keel:"service_models,jsonb,nullzero"`
+	ServiceTypeIDs   []pulid.ID                   `json:"serviceTypeIds"   keel:"service_type_ids,jsonb,nullzero"`
+	ShipmentTypeIDs  []pulid.ID                   `json:"shipmentTypeIds"  keel:"shipment_type_ids,jsonb,nullzero"`
+	TractorTypeIDs   []pulid.ID                   `json:"tractorTypeIds"   keel:"tractor_type_ids,jsonb,nullzero"`
+	TrailerTypeIDs   []pulid.ID                   `json:"trailerTypeIds"   keel:"trailer_type_ids,jsonb,nullzero"`
+	CommodityIDs     []pulid.ID                   `json:"commodityIds"     keel:"commodity_ids,jsonb,nullzero"`
+	FreightClasses   []commodity.FreightClass     `json:"freightClasses"   keel:"freight_classes,jsonb,nullzero"`
+	ServiceModels    []modeprofile.ServiceModel   `json:"serviceModels"    keel:"service_models,jsonb,nullzero"`
 	EquipmentClasses []modeprofile.EquipmentClass `json:"equipmentClasses" keel:"equipment_classes,jsonb,nullzero"`
 
-	MinWeight   decimal.NullDecimal `json:"minWeight" keel:"min_weight"`
-	MaxWeight   decimal.NullDecimal `json:"maxWeight" keel:"max_weight"`
+	MinWeight   decimal.NullDecimal `json:"minWeight"   keel:"min_weight"`
+	MaxWeight   decimal.NullDecimal `json:"maxWeight"   keel:"max_weight"`
 	MinDistance decimal.NullDecimal `json:"minDistance" keel:"min_distance"`
 	MaxDistance decimal.NullDecimal `json:"maxDistance" keel:"max_distance"`
-	MinStops    *int16              `json:"minStops" keel:"min_stops,dimension"`
-	MaxStops    *int16              `json:"maxStops" keel:"max_stops,dimension"`
+	MinStops    *int16              `json:"minStops"    keel:"min_stops,dimension"`
+	MaxStops    *int16              `json:"maxStops"    keel:"max_stops,dimension"`
 
-	DaysOfWeek      int16 `json:"daysOfWeek" keel:"days_of_week,dimension"`
-	HazmatOnly      bool  `json:"hazmatOnly" keel:"hazmat_only"`
+	DaysOfWeek      int16 `json:"daysOfWeek"      keel:"days_of_week,dimension"`
+	HazmatOnly      bool  `json:"hazmatOnly"      keel:"hazmat_only"`
 	TempControlOnly bool  `json:"tempControlOnly" keel:"temp_control_only"`
 
 	FormulaTemplateID pulid.ID           `json:"formulaTemplateId" keel:"formula_template_id"`
-	Inputs            tarifftypes.Inputs `json:"inputs" keel:"inputs,jsonb"`
-	Currency          string             `json:"currency" keel:"currency,nullzero"`
+	Inputs            tarifftypes.Inputs `json:"inputs"            keel:"inputs,jsonb"`
+	Currency          string             `json:"currency"          keel:"currency,nullzero"`
 
-	Priority         int16 `json:"priority" keel:"priority,dimension"`
+	Priority         int16 `json:"priority"         keel:"priority,dimension"`
 	SpecificityScore int32 `json:"specificityScore" keel:"specificity_score,dimension"`
 
-	EffectiveFrom     int64     `json:"effectiveFrom" keel:"effective_from,type=epoch"`
-	EffectiveTo       *int64    `json:"effectiveTo" keel:"effective_to,type=epoch"`
-	SupersedesRuleID  *pulid.ID `json:"supersedesRuleId" keel:"supersedes_rule_id"`
+	EffectiveFrom     int64     `json:"effectiveFrom"     keel:"effective_from,type=epoch"`
+	EffectiveTo       *int64    `json:"effectiveTo"       keel:"effective_to,type=epoch"`
+	SupersedesRuleID  *pulid.ID `json:"supersedesRuleId"  keel:"supersedes_rule_id"`
 	SourceImportRowID *pulid.ID `json:"sourceImportRowId" keel:"source_import_row_id"`
 
-	Version   int64 `json:"version" keel:"version,version"`
+	Version   int64 `json:"version"   keel:"version,version"`
 	CreatedAt int64 `json:"createdAt" keel:"created_at,autocreate"`
 	UpdatedAt int64 `json:"updatedAt" keel:"updated_at,autoupdate"`
 

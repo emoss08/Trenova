@@ -16,36 +16,36 @@ import (
 )
 
 type Message struct {
-	keel.Table `                                             keel:"email_messages"`
+	keel.Table `keel:"email_messages"`
 
-	ID                pulid.ID      `json:"id" keel:"id,pk,autoid:emlmsg_"`
-	BusinessUnitID    pulid.ID      `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
-	OrganizationID    pulid.ID      `json:"organizationId" keel:"organization_id,pk,tenant"`
-	ProfileID         pulid.ID      `json:"profileId" keel:"profile_id"`
-	Purpose           Purpose       `json:"purpose" keel:"purpose"`
-	Provider          Provider      `json:"provider" keel:"provider"`
-	IdempotencyKey    string        `json:"idempotencyKey" keel:"idempotency_key"`
+	ID                pulid.ID      `json:"id"                keel:"id,pk,autoid:emlmsg_"`
+	BusinessUnitID    pulid.ID      `json:"businessUnitId"    keel:"business_unit_id,pk,tenant"`
+	OrganizationID    pulid.ID      `json:"organizationId"    keel:"organization_id,pk,tenant"`
+	ProfileID         pulid.ID      `json:"profileId"         keel:"profile_id"`
+	Purpose           Purpose       `json:"purpose"           keel:"purpose"`
+	Provider          Provider      `json:"provider"          keel:"provider"`
+	IdempotencyKey    string        `json:"idempotencyKey"    keel:"idempotency_key"`
 	ProviderMessageID string        `json:"providerMessageId" keel:"provider_message_id,nullzero"`
-	Status            MessageStatus `json:"status" keel:"status"`
-	Attempts          int32         `json:"attempts" keel:"attempts"`
-	FromEmail         string        `json:"fromEmail" keel:"from_email"`
-	FromName          string        `json:"fromName" keel:"from_name"`
-	ReplyToEmail      string        `json:"replyToEmail" keel:"reply_to_email,nullzero"`
-	ToRecipients      []string      `json:"toRecipients" keel:"to_recipients"`
-	CCRecipients      []string      `json:"ccRecipients" keel:"cc_recipients,nullzero"`
-	BCCRecipients     []string      `json:"bccRecipients" keel:"bcc_recipients,nullzero"`
-	Subject           string        `json:"subject" keel:"subject"`
-	BodyTextSize      int64         `json:"bodyTextSize" keel:"body_text_size"`
-	BodyHTMLSize      int64         `json:"bodyHtmlSize" keel:"body_html_size"`
-	LastError         string        `json:"lastError" keel:"last_error,nullzero"`
-	SentAt            int64         `json:"sentAt" keel:"sent_at,nullzero"`
-	DeliveredAt       int64         `json:"deliveredAt" keel:"delivered_at,nullzero"`
-	FailedAt          int64         `json:"failedAt" keel:"failed_at,nullzero"`
-	CreatedAt         int64         `json:"createdAt" keel:"created_at,autocreate"`
-	UpdatedAt         int64         `json:"updatedAt" keel:"updated_at,autoupdate"`
-	SearchVector      string        `json:"-" keel:"search_vector,tsvector,readonly,noselect"`
+	Status            MessageStatus `json:"status"            keel:"status"`
+	Attempts          int32         `json:"attempts"          keel:"attempts"`
+	FromEmail         string        `json:"fromEmail"         keel:"from_email"`
+	FromName          string        `json:"fromName"          keel:"from_name"`
+	ReplyToEmail      string        `json:"replyToEmail"      keel:"reply_to_email,nullzero"`
+	ToRecipients      []string      `json:"toRecipients"      keel:"to_recipients"`
+	CCRecipients      []string      `json:"ccRecipients"      keel:"cc_recipients,nullzero"`
+	BCCRecipients     []string      `json:"bccRecipients"     keel:"bcc_recipients,nullzero"`
+	Subject           string        `json:"subject"           keel:"subject"`
+	BodyTextSize      int64         `json:"bodyTextSize"      keel:"body_text_size"`
+	BodyHTMLSize      int64         `json:"bodyHtmlSize"      keel:"body_html_size"`
+	LastError         string        `json:"lastError"         keel:"last_error,nullzero"`
+	SentAt            int64         `json:"sentAt"            keel:"sent_at,nullzero"`
+	DeliveredAt       int64         `json:"deliveredAt"       keel:"delivered_at,nullzero"`
+	FailedAt          int64         `json:"failedAt"          keel:"failed_at,nullzero"`
+	CreatedAt         int64         `json:"createdAt"         keel:"created_at,autocreate"`
+	UpdatedAt         int64         `json:"updatedAt"         keel:"updated_at,autoupdate"`
+	SearchVector      string        `json:"-"                 keel:"search_vector,tsvector,readonly,noselect"`
 
-	Profile      *Profile             `json:"profile,omitempty" keel:"belongs:profile_id"`
+	Profile      *Profile             `json:"profile,omitempty"     keel:"belongs:profile_id"`
 	BusinessUnit *tenant.BusinessUnit `json:"-"`
 	Organization *tenant.Organization `json:"-"`
 	Attachments  []*Attachment        `json:"attachments,omitempty" keel:"many:message_id"`
@@ -85,49 +85,49 @@ func (m *Message) GetPostgresSearchConfig() domaintypes.PostgresSearchConfig {
 }
 
 type Attachment struct {
-	keel.Table `                                                         keel:"email_message_attachments"`
+	keel.Table `keel:"email_message_attachments"`
 
-	ID             pulid.ID       `json:"id" keel:"id,pk,autoid:emlatt_"`
+	ID             pulid.ID       `json:"id"             keel:"id,pk,autoid:emlatt_"`
 	BusinessUnitID pulid.ID       `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
 	OrganizationID pulid.ID       `json:"organizationId" keel:"organization_id,pk,tenant"`
-	MessageID      pulid.ID       `json:"messageId" keel:"message_id"`
-	FileName       string         `json:"fileName" keel:"file_name"`
-	ContentType    string         `json:"contentType" keel:"content_type"`
-	ObjectKey      string         `json:"objectKey" keel:"object_key"`
-	SizeBytes      int64          `json:"sizeBytes" keel:"size_bytes"`
-	Seal           AttachmentSeal `json:"seal" keel:"seal,nullzero"`
-	CreatedAt      int64          `json:"createdAt" keel:"created_at,autocreate"`
+	MessageID      pulid.ID       `json:"messageId"      keel:"message_id"`
+	FileName       string         `json:"fileName"       keel:"file_name"`
+	ContentType    string         `json:"contentType"    keel:"content_type"`
+	ObjectKey      string         `json:"objectKey"      keel:"object_key"`
+	SizeBytes      int64          `json:"sizeBytes"      keel:"size_bytes"`
+	Seal           AttachmentSeal `json:"seal"           keel:"seal,nullzero"`
+	CreatedAt      int64          `json:"createdAt"      keel:"created_at,autocreate"`
 }
 
 type Event struct {
-	keel.Table `                                           keel:"email_events"`
+	keel.Table `keel:"email_events"`
 
-	ID              pulid.ID       `json:"id" keel:"id,pk,autoid:emlevt_"`
-	BusinessUnitID  pulid.ID       `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
-	OrganizationID  pulid.ID       `json:"organizationId" keel:"organization_id,pk,tenant"`
-	MessageID       pulid.ID       `json:"messageId" keel:"message_id,nullzero"`
-	Provider        Provider       `json:"provider" keel:"provider"`
+	ID              pulid.ID       `json:"id"              keel:"id,pk,autoid:emlevt_"`
+	BusinessUnitID  pulid.ID       `json:"businessUnitId"  keel:"business_unit_id,pk,tenant"`
+	OrganizationID  pulid.ID       `json:"organizationId"  keel:"organization_id,pk,tenant"`
+	MessageID       pulid.ID       `json:"messageId"       keel:"message_id,nullzero"`
+	Provider        Provider       `json:"provider"        keel:"provider"`
 	ProviderEventID string         `json:"providerEventId" keel:"provider_event_id"`
-	Type            EventType      `json:"type" keel:"type"`
-	Recipient       string         `json:"recipient" keel:"recipient,nullzero"`
-	OccurredAt      int64          `json:"occurredAt" keel:"occurred_at"`
-	Raw             map[string]any `json:"raw" keel:"raw,jsonb,nullzero"`
-	CreatedAt       int64          `json:"createdAt" keel:"created_at,autocreate"`
+	Type            EventType      `json:"type"            keel:"type"`
+	Recipient       string         `json:"recipient"       keel:"recipient,nullzero"`
+	OccurredAt      int64          `json:"occurredAt"      keel:"occurred_at"`
+	Raw             map[string]any `json:"raw"             keel:"raw,jsonb,nullzero"`
+	CreatedAt       int64          `json:"createdAt"       keel:"created_at,autocreate"`
 }
 
 type Suppression struct {
-	keel.Table `                                                 keel:"email_suppressions"`
+	keel.Table `keel:"email_suppressions"`
 
-	ID             pulid.ID          `json:"id" keel:"id,pk,autoid:emlsup_"`
+	ID             pulid.ID          `json:"id"             keel:"id,pk,autoid:emlsup_"`
 	BusinessUnitID pulid.ID          `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
 	OrganizationID pulid.ID          `json:"organizationId" keel:"organization_id,pk,tenant"`
-	EmailAddress   string            `json:"emailAddress" keel:"email_address"`
-	Reason         SuppressionReason `json:"reason" keel:"reason"`
-	Provider       Provider          `json:"provider" keel:"provider,nullzero"`
-	SourceEventID  string            `json:"sourceEventId" keel:"source_event_id,nullzero"`
-	Notes          string            `json:"notes" keel:"notes,nullzero"`
-	CreatedByID    pulid.ID          `json:"createdById" keel:"created_by_id,nullzero"`
-	CreatedAt      int64             `json:"createdAt" keel:"created_at,autocreate"`
+	EmailAddress   string            `json:"emailAddress"   keel:"email_address"`
+	Reason         SuppressionReason `json:"reason"         keel:"reason"`
+	Provider       Provider          `json:"provider"       keel:"provider,nullzero"`
+	SourceEventID  string            `json:"sourceEventId"  keel:"source_event_id,nullzero"`
+	Notes          string            `json:"notes"          keel:"notes,nullzero"`
+	CreatedByID    pulid.ID          `json:"createdById"    keel:"created_by_id,nullzero"`
+	CreatedAt      int64             `json:"createdAt"      keel:"created_at,autocreate"`
 }
 
 func (s *Suppression) BeforeCreate(_ context.Context) error {

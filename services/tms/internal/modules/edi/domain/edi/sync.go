@@ -67,20 +67,20 @@ const (
 type ShipmentLink struct {
 	keel.Table `keel:"edi_shipment_links"`
 
-	ID                   pulid.ID           `json:"id" keel:"id,pk,autoid:edislink_"`
-	BusinessUnitID       pulid.ID           `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
+	ID                   pulid.ID           `json:"id"                   keel:"id,pk,autoid:edislink_"`
+	BusinessUnitID       pulid.ID           `json:"businessUnitId"       keel:"business_unit_id,pk,tenant"`
 	SourceOrganizationID pulid.ID           `json:"sourceOrganizationId" keel:"source_organization_id"`
 	TargetOrganizationID pulid.ID           `json:"targetOrganizationId" keel:"target_organization_id"`
-	SourceShipmentID     pulid.ID           `json:"sourceShipmentId" keel:"source_shipment_id"`
-	TargetShipmentID     pulid.ID           `json:"targetShipmentId" keel:"target_shipment_id"`
-	TenderTransferID     pulid.ID           `json:"tenderTransferId" keel:"tender_transfer_id"`
+	SourceShipmentID     pulid.ID           `json:"sourceShipmentId"     keel:"source_shipment_id"`
+	TargetShipmentID     pulid.ID           `json:"targetShipmentId"     keel:"target_shipment_id"`
+	TenderTransferID     pulid.ID           `json:"tenderTransferId"     keel:"tender_transfer_id"`
 	OriginatingMessageID pulid.ID           `json:"originatingMessageId" keel:"originating_message_id,nullzero"`
-	SyncPolicy           ShipmentSyncPolicy `json:"syncPolicy" keel:"sync_policy"`
-	FieldOwnership       map[string]string  `json:"fieldOwnership" keel:"field_ownership,jsonb"`
-	Status               ShipmentLinkStatus `json:"status" keel:"status"`
-	Version              int64              `json:"version" keel:"version,version"`
-	CreatedAt            int64              `json:"createdAt" keel:"created_at,autocreate"`
-	UpdatedAt            int64              `json:"updatedAt" keel:"updated_at,autoupdate"`
+	SyncPolicy           ShipmentSyncPolicy `json:"syncPolicy"           keel:"sync_policy"`
+	FieldOwnership       map[string]string  `json:"fieldOwnership"       keel:"field_ownership,jsonb"`
+	Status               ShipmentLinkStatus `json:"status"               keel:"status"`
+	Version              int64              `json:"version"              keel:"version,version"`
+	CreatedAt            int64              `json:"createdAt"            keel:"created_at,autocreate"`
+	UpdatedAt            int64              `json:"updatedAt"            keel:"updated_at,autoupdate"`
 }
 
 func (l *ShipmentLink) BeforeUpdate(ctx context.Context) error {
@@ -108,29 +108,29 @@ func (l *ShipmentLink) BeforeCreate(ctx context.Context) error {
 type TransferChange struct {
 	keel.Table `keel:"edi_transfer_changes"`
 
-	ID                    pulid.ID                     `json:"id" keel:"id,pk,autoid:editc_"`
-	BusinessUnitID        pulid.ID                     `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
-	ShipmentLinkID        pulid.ID                     `json:"shipmentLinkId" keel:"shipment_link_id"`
-	Direction             TransferChangeDirection      `json:"direction" keel:"direction"`
-	ChangeType            string                       `json:"changeType" keel:"change_type"`
-	Status                TransferChangeStatus         `json:"status" keel:"status"`
-	ConflictStatus        TransferChangeConflictStatus `json:"conflictStatus" keel:"conflict_status"`
-	ConflictReason        string                       `json:"conflictReason" keel:"conflict_reason,nullzero"`
-	IdempotencyKey        string                       `json:"idempotencyKey" keel:"idempotency_key"`
+	ID                    pulid.ID                     `json:"id"                    keel:"id,pk,autoid:editc_"`
+	BusinessUnitID        pulid.ID                     `json:"businessUnitId"        keel:"business_unit_id,pk,tenant"`
+	ShipmentLinkID        pulid.ID                     `json:"shipmentLinkId"        keel:"shipment_link_id"`
+	Direction             TransferChangeDirection      `json:"direction"             keel:"direction"`
+	ChangeType            string                       `json:"changeType"            keel:"change_type"`
+	Status                TransferChangeStatus         `json:"status"                keel:"status"`
+	ConflictStatus        TransferChangeConflictStatus `json:"conflictStatus"        keel:"conflict_status"`
+	ConflictReason        string                       `json:"conflictReason"        keel:"conflict_reason,nullzero"`
+	IdempotencyKey        string                       `json:"idempotencyKey"        keel:"idempotency_key"`
 	SourceShipmentVersion int64                        `json:"sourceShipmentVersion" keel:"source_shipment_version"`
 	TargetShipmentVersion int64                        `json:"targetShipmentVersion" keel:"target_shipment_version"`
-	Payload               map[string]any               `json:"payload" keel:"payload,jsonb"`
-	Diff                  map[string]any               `json:"diff" keel:"diff,jsonb"`
-	ReviewedByID          pulid.ID                     `json:"reviewedById" keel:"reviewed_by_id,nullzero"`
-	ReviewedAt            *int64                       `json:"reviewedAt" keel:"reviewed_at"`
-	AppliedByID           pulid.ID                     `json:"appliedById" keel:"applied_by_id,nullzero"`
-	AppliedAt             *int64                       `json:"appliedAt" keel:"applied_at"`
-	FailureReason         string                       `json:"failureReason" keel:"failure_reason,nullzero"`
-	SearchVector          string                       `json:"-" keel:"search_vector,tsvector,readonly,noselect"`
-	Rank                  string                       `json:"-" keel:"rank,computed"`
-	Version               int64                        `json:"version" keel:"version,version"`
-	CreatedAt             int64                        `json:"createdAt" keel:"created_at,autocreate"`
-	UpdatedAt             int64                        `json:"updatedAt" keel:"updated_at,autoupdate"`
+	Payload               map[string]any               `json:"payload"               keel:"payload,jsonb"`
+	Diff                  map[string]any               `json:"diff"                  keel:"diff,jsonb"`
+	ReviewedByID          pulid.ID                     `json:"reviewedById"          keel:"reviewed_by_id,nullzero"`
+	ReviewedAt            *int64                       `json:"reviewedAt"            keel:"reviewed_at"`
+	AppliedByID           pulid.ID                     `json:"appliedById"           keel:"applied_by_id,nullzero"`
+	AppliedAt             *int64                       `json:"appliedAt"             keel:"applied_at"`
+	FailureReason         string                       `json:"failureReason"         keel:"failure_reason,nullzero"`
+	SearchVector          string                       `json:"-"                     keel:"search_vector,tsvector,readonly,noselect"`
+	Rank                  string                       `json:"-"                     keel:"rank,computed"`
+	Version               int64                        `json:"version"               keel:"version,version"`
+	CreatedAt             int64                        `json:"createdAt"             keel:"created_at,autocreate"`
+	UpdatedAt             int64                        `json:"updatedAt"             keel:"updated_at,autoupdate"`
 }
 
 func (c *TransferChange) BeforeUpdate(ctx context.Context) error {

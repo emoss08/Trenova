@@ -25,15 +25,15 @@ var ErrMatchKeyNotApplied = errors.New(
 type RateZoneMember struct {
 	keel.Table `keel:"rate_zone_members"`
 
-	ID             pulid.ID `json:"id" keel:"id,pk,autoid:rzm_"`
+	ID             pulid.ID `json:"id"             keel:"id,pk,autoid:rzm_"`
 	BusinessUnitID pulid.ID `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
 	OrganizationID pulid.ID `json:"organizationId" keel:"organization_id,pk,tenant"`
-	RateZoneID     pulid.ID `json:"rateZoneId" keel:"rate_zone_id"`
+	RateZoneID     pulid.ID `json:"rateZoneId"     keel:"rate_zone_id"`
 
-	ScopeType  rategeo.ScopeType `json:"scopeType" keel:"scope_type"`
+	ScopeType  rategeo.ScopeType `json:"scopeType"  keel:"scope_type"`
 	ScopeValue string            `json:"scopeValue" keel:"scope_value,nullzero"`
-	City       string            `json:"city" keel:"city,nullzero"`
-	MatchKey   string            `json:"matchKey" keel:"match_key"`
+	City       string            `json:"city"       keel:"city,nullzero"`
+	MatchKey   string            `json:"matchKey"   keel:"match_key"`
 
 	CreatedAt int64 `json:"createdAt" keel:"created_at,autocreate"`
 	UpdatedAt int64 `json:"updatedAt" keel:"updated_at,autoupdate"`

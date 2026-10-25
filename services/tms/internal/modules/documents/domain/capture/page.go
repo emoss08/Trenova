@@ -26,27 +26,27 @@ const (
 type CapturePage struct {
 	keel.Table `keel:"capture_pages"`
 
-	ID             pulid.ID    `json:"id" keel:"id,pk,autoid:cpg_"`
+	ID             pulid.ID    `json:"id"             keel:"id,pk,autoid:cpg_"`
 	BusinessUnitID pulid.ID    `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
 	OrganizationID pulid.ID    `json:"organizationId" keel:"organization_id,pk,tenant"`
-	BatchID        pulid.ID    `json:"batchId" keel:"batch_id"`
-	Sequence       int         `json:"sequence" keel:"sequence"`
-	Status         PageStatus  `json:"status" keel:"status"`
-	StoragePath    string      `json:"-" keel:"storage_path"`
+	BatchID        pulid.ID    `json:"batchId"        keel:"batch_id"`
+	Sequence       int         `json:"sequence"       keel:"sequence"`
+	Status         PageStatus  `json:"status"         keel:"status"`
+	StoragePath    string      `json:"-"              keel:"storage_path"`
 	ChecksumSHA256 string      `json:"checksumSha256" keel:"checksum_sha256"`
-	ByteSize       int64       `json:"byteSize" keel:"byte_size"`
-	ContentType    string      `json:"contentType" keel:"content_type"`
-	WidthPx        int         `json:"widthPx" keel:"width_px"`
-	HeightPx       int         `json:"heightPx" keel:"height_px"`
-	DPI            int         `json:"dpi" keel:"dpi"`
-	Rotation       int         `json:"rotation" keel:"rotation"`
-	ThumbnailPath  string      `json:"-" keel:"thumbnail_path,nullzero"`
-	BlankScore     *float64    `json:"blankScore" keel:"blank_score"`
-	IsSeparator    bool        `json:"isSeparator" keel:"is_separator"`
-	Markers        PageMarkers `json:"markers" keel:"markers,jsonb"`
+	ByteSize       int64       `json:"byteSize"       keel:"byte_size"`
+	ContentType    string      `json:"contentType"    keel:"content_type"`
+	WidthPx        int         `json:"widthPx"        keel:"width_px"`
+	HeightPx       int         `json:"heightPx"       keel:"height_px"`
+	DPI            int         `json:"dpi"            keel:"dpi"`
+	Rotation       int         `json:"rotation"       keel:"rotation"`
+	ThumbnailPath  string      `json:"-"              keel:"thumbnail_path,nullzero"`
+	BlankScore     *float64    `json:"blankScore"     keel:"blank_score"`
+	IsSeparator    bool        `json:"isSeparator"    keel:"is_separator"`
+	Markers        PageMarkers `json:"markers"        keel:"markers,jsonb"`
 	FailureMessage string      `json:"failureMessage" keel:"failure_message,nullzero"`
-	CreatedAt      int64       `json:"createdAt" keel:"created_at,autocreate"`
-	UpdatedAt      int64       `json:"updatedAt" keel:"updated_at,autoupdate"`
+	CreatedAt      int64       `json:"createdAt"      keel:"created_at,autocreate"`
+	UpdatedAt      int64       `json:"updatedAt"      keel:"updated_at,autoupdate"`
 }
 
 // PageMarkers are what a page says about where the stack divides.

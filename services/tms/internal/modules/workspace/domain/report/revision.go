@@ -10,17 +10,17 @@ import (
 )
 
 type ReportDefinitionRevision struct {
-	keel.Table `                                                           keel:"report_definition_revisions"`
+	keel.Table `keel:"report_definition_revisions"`
 
-	ID             pulid.ID       `json:"id" keel:"id,pk,autoid:rdr_"`
+	ID             pulid.ID       `json:"id"             keel:"id,pk,autoid:rdr_"`
 	BusinessUnitID pulid.ID       `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
 	OrganizationID pulid.ID       `json:"organizationId" keel:"organization_id,pk,tenant"`
-	DefinitionID   pulid.ID       `json:"definitionId" keel:"definition_id"`
+	DefinitionID   pulid.ID       `json:"definitionId"   keel:"definition_id"`
 	RevisionNumber int64          `json:"revisionNumber" keel:"revision_number"`
 	CatalogVersion string         `json:"catalogVersion" keel:"catalog_version"`
-	Definition     *ir.Definition `json:"definition" keel:"definition,jsonb"`
-	CreatedByID    pulid.ID       `json:"createdById" keel:"created_by_id"`
-	CreatedAt      int64          `json:"createdAt" keel:"created_at,autocreate"`
+	Definition     *ir.Definition `json:"definition"     keel:"definition,jsonb"`
+	CreatedByID    pulid.ID       `json:"createdById"    keel:"created_by_id"`
+	CreatedAt      int64          `json:"createdAt"      keel:"created_at,autocreate"`
 
 	ReportDefinition *ReportDefinition `json:"reportDefinition,omitempty" keel:"belongs:definition_id"`
 }

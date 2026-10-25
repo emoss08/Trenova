@@ -35,7 +35,7 @@ func tenantArgs(tenant pagination.TenantInfo) sqlArgs {
 	return sqlArgs{Org: tenant.OrgID.String(), Bu: tenant.BuID.String()}
 }
 
-func filterArgs(filter aianalyticsports.Filter) sqlArgs {
+func filterArgs(filter *aianalyticsports.Filter) sqlArgs {
 	args := tenantArgs(filter.TenantInfo)
 	args.Since = filter.Since
 	args.SinceHour = ceilHour(filter.Since)
@@ -45,56 +45,52 @@ func filterArgs(filter aianalyticsports.Filter) sqlArgs {
 	return args
 }
 
+const (
+	castText   = "text"
+	castBigint = "bigint"
+)
+
+type sqlParam struct {
+	cast  string
+	value func(*sqlArgs) any
+}
+
+var sqlParams = map[string]sqlParam{
+	"org":           {cast: castText, value: func(a *sqlArgs) any { return a.Org }},
+	"bu":            {cast: castText, value: func(a *sqlArgs) any { return a.Bu }},
+	"agent":         {cast: castText, value: func(a *sqlArgs) any { return a.Agent }},
+	"task":          {cast: castText, value: func(a *sqlArgs) any { return a.Task }},
+	"series_key":    {cast: castText, value: func(a *sqlArgs) any { return a.SeriesKey }},
+	"tool_name":     {cast: castText, value: func(a *sqlArgs) any { return a.ToolName }},
+	"from":          {cast: castBigint, value: func(a *sqlArgs) any { return a.From }},
+	"to":            {cast: castBigint, value: func(a *sqlArgs) any { return a.To }},
+	"from_hour":     {cast: castBigint, value: func(a *sqlArgs) any { return a.FromHour }},
+	"to_hour":       {cast: castBigint, value: func(a *sqlArgs) any { return a.ToHour }},
+	"stamp":         {cast: castBigint, value: func(a *sqlArgs) any { return a.Stamp }},
+	"since":         {cast: castBigint, value: func(a *sqlArgs) any { return a.Since }},
+	"since_hour":    {cast: castBigint, value: func(a *sqlArgs) any { return a.SinceHour }},
+	"pending_since": {cast: castBigint, value: func(a *sqlArgs) any { return a.Pending }},
+	"before":        {cast: castBigint, value: func(a *sqlArgs) any { return a.Before }},
+	"before_hour":   {cast: castBigint, value: func(a *sqlArgs) any { return a.BeforeHour }},
+	"limit":         {cast: castBigint, value: func(a *sqlArgs) any { return int64(a.Limit) }},
+	"candidates":    {cast: castBigint, value: func(a *sqlArgs) any { return int64(a.Candidates) }},
+	"starts":        {cast: "bigint[]", value: func(a *sqlArgs) any { return a.Starts }},
+}
+
 func (a *sqlArgs) lookup(name string) (value any, cast string, ok bool) {
-	switch name {
-	case "org":
-		return a.Org, "text", true
-	case "bu":
-		return a.Bu, "text", true
-	case "agent":
-		return a.Agent, "text", true
-	case "task":
-		return a.Task, "text", true
-	case "series_key":
-		return a.SeriesKey, "text", true
-	case "tool_name":
-		return a.ToolName, "text", true
-	case "from":
-		return a.From, "bigint", true
-	case "to":
-		return a.To, "bigint", true
-	case "from_hour":
-		return a.FromHour, "bigint", true
-	case "to_hour":
-		return a.ToHour, "bigint", true
-	case "stamp":
-		return a.Stamp, "bigint", true
-	case "since":
-		return a.Since, "bigint", true
-	case "since_hour":
-		return a.SinceHour, "bigint", true
-	case "pending_since":
-		return a.Pending, "bigint", true
-	case "before":
-		return a.Before, "bigint", true
-	case "before_hour":
-		return a.BeforeHour, "bigint", true
-	case "limit":
-		return int64(a.Limit), "bigint", true
-	case "candidates":
-		return int64(a.Candidates), "bigint", true
-	case "starts":
-		return a.Starts, "bigint[]", true
-	default:
+	param, known := sqlParams[name]
+	if !known {
 		return nil, "", false
 	}
+
+	return param.value(a), param.cast, true
 }
 
 func isNameByte(c byte) bool {
 	return c == '_' || (c >= 'a' && c <= 'z')
 }
 
-func bind(query string, args *sqlArgs) (string, []any, error) {
+func bind(query string, args *sqlArgs) (sql string, bound []any, err error) {
 	var out strings.Builder
 	out.Grow(len(query) + len(query)/8)
 	positions := make(map[string]int, 8)

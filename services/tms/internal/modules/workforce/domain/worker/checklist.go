@@ -198,21 +198,21 @@ var (
 )
 
 type WorkerChecklistTemplate struct {
-	keel.Table     `                                                           keel:"worker_checklist_templates"`
-	ID             pulid.ID           `json:"id" keel:"id,pk,autoid:wclt_"`
-	BusinessUnitID pulid.ID           `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
-	OrganizationID pulid.ID           `json:"organizationId" keel:"organization_id,pk,tenant"`
-	Code           string             `json:"code" keel:"code"`
-	Name           string             `json:"name" keel:"name"`
-	Description    string             `json:"description" keel:"description,nullzero"`
-	Kind           ChecklistKind      `json:"kind" keel:"kind"`
-	Trigger        ChecklistTrigger   `json:"trigger" keel:"trigger"`
-	Status         domaintypes.Status `json:"status" keel:"status"`
-	IsDefault      bool               `json:"isDefault" keel:"is_default"`
-	Version        int64              `json:"version" keel:"version,version"`
-	CreatedAt      int64              `json:"createdAt" keel:"created_at,autocreate"`
-	UpdatedAt      int64              `json:"updatedAt" keel:"updated_at,autoupdate"`
-	SearchVector   string             `json:"-" keel:"search_vector,tsvector,readonly,noselect"`
+	keel.Table     `keel:"worker_checklist_templates"`
+	ID             pulid.ID           `keel:"id,pk,autoid:wclt_"                       json:"id"`
+	BusinessUnitID pulid.ID           `keel:"business_unit_id,pk,tenant"               json:"businessUnitId"`
+	OrganizationID pulid.ID           `keel:"organization_id,pk,tenant"                json:"organizationId"`
+	Code           string             `keel:"code"                                     json:"code"`
+	Name           string             `keel:"name"                                     json:"name"`
+	Description    string             `keel:"description,nullzero"                     json:"description"`
+	Kind           ChecklistKind      `keel:"kind"                                     json:"kind"`
+	Trigger        ChecklistTrigger   `keel:"trigger"                                  json:"trigger"`
+	Status         domaintypes.Status `keel:"status"                                   json:"status"`
+	IsDefault      bool               `keel:"is_default"                               json:"isDefault"`
+	Version        int64              `keel:"version,version"                          json:"version"`
+	CreatedAt      int64              `keel:"created_at,autocreate"                    json:"createdAt"`
+	UpdatedAt      int64              `keel:"updated_at,autoupdate"                    json:"updatedAt"`
+	SearchVector   string             `keel:"search_vector,tsvector,readonly,noselect" json:"-"`
 
 	Items []*WorkerChecklistTemplateItem `json:"items,omitempty" keel:"many:template_id"`
 }
@@ -322,26 +322,26 @@ func (t *WorkerChecklistTemplate) GetPostgresSearchConfig() domaintypes.Postgres
 }
 
 type WorkerChecklistTemplateItem struct {
-	keel.Table `                                                                 keel:"worker_checklist_template_items"`
+	keel.Table `keel:"worker_checklist_template_items"`
 
-	ID               pulid.ID          `json:"id" keel:"id,pk,autoid:wclti_"`
-	BusinessUnitID   pulid.ID          `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
-	OrganizationID   pulid.ID          `json:"organizationId" keel:"organization_id,pk,tenant"`
-	TemplateID       pulid.ID          `json:"templateId" keel:"template_id"`
-	Label            string            `json:"label" keel:"label"`
-	Description      string            `json:"description" keel:"description,nullzero"`
-	Kind             ChecklistItemKind `json:"kind" keel:"kind"`
-	Required         bool              `json:"required" keel:"required"`
-	DueOffsetDays    int32             `json:"dueOffsetDays" keel:"due_offset_days"`
-	Owner            ChecklistOwner    `json:"owner" keel:"owner"`
+	ID               pulid.ID          `json:"id"               keel:"id,pk,autoid:wclti_"`
+	BusinessUnitID   pulid.ID          `json:"businessUnitId"   keel:"business_unit_id,pk,tenant"`
+	OrganizationID   pulid.ID          `json:"organizationId"   keel:"organization_id,pk,tenant"`
+	TemplateID       pulid.ID          `json:"templateId"       keel:"template_id"`
+	Label            string            `json:"label"            keel:"label"`
+	Description      string            `json:"description"      keel:"description,nullzero"`
+	Kind             ChecklistItemKind `json:"kind"             keel:"kind"`
+	Required         bool              `json:"required"         keel:"required"`
+	DueOffsetDays    int32             `json:"dueOffsetDays"    keel:"due_offset_days"`
+	Owner            ChecklistOwner    `json:"owner"            keel:"owner"`
 	CredentialTypeID pulid.ID          `json:"credentialTypeId" keel:"credential_type_id,nullzero"`
-	DocumentTypeID   pulid.ID          `json:"documentTypeId" keel:"document_type_id,nullzero"`
-	SortOrder        int32             `json:"sortOrder" keel:"sort_order"`
-	CreatedAt        int64             `json:"createdAt" keel:"created_at,autocreate"`
-	UpdatedAt        int64             `json:"updatedAt" keel:"updated_at,autoupdate"`
+	DocumentTypeID   pulid.ID          `json:"documentTypeId"   keel:"document_type_id,nullzero"`
+	SortOrder        int32             `json:"sortOrder"        keel:"sort_order"`
+	CreatedAt        int64             `json:"createdAt"        keel:"created_at,autocreate"`
+	UpdatedAt        int64             `json:"updatedAt"        keel:"updated_at,autoupdate"`
 
 	CredentialType *WorkerCredentialType      `json:"credentialType,omitempty" keel:"belongs:credential_type_id"`
-	DocumentType   *documenttype.DocumentType `json:"documentType,omitempty" keel:"belongs:document_type_id"`
+	DocumentType   *documenttype.DocumentType `json:"documentType,omitempty"   keel:"belongs:document_type_id"`
 }
 
 func (i *WorkerChecklistTemplateItem) BeforeCreate(_ context.Context) error {
@@ -396,30 +396,30 @@ func (i *WorkerChecklistTemplateItem) Validate(multiErr *errortypes.MultiError) 
 }
 
 type WorkerChecklist struct {
-	keel.Table `                                                 keel:"worker_checklists"`
+	keel.Table `keel:"worker_checklists"`
 
-	ID             pulid.ID        `json:"id" keel:"id,pk,autoid:wcl_"`
+	ID             pulid.ID        `json:"id"             keel:"id,pk,autoid:wcl_"`
 	BusinessUnitID pulid.ID        `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
 	OrganizationID pulid.ID        `json:"organizationId" keel:"organization_id,pk,tenant"`
-	WorkerID       pulid.ID        `json:"workerId" keel:"worker_id"`
-	TemplateID     pulid.ID        `json:"templateId" keel:"template_id,nullzero"`
-	Name           string          `json:"name" keel:"name"`
-	Kind           ChecklistKind   `json:"kind" keel:"kind"`
-	Status         ChecklistStatus `json:"status" keel:"status"`
-	StartedAt      int64           `json:"startedAt" keel:"started_at"`
-	DueAt          *int64          `json:"dueAt" keel:"due_at"`
-	CompletedAt    *int64          `json:"completedAt" keel:"completed_at"`
-	CancelledAt    *int64          `json:"cancelledAt" keel:"cancelled_at"`
-	CancelReason   string          `json:"cancelReason" keel:"cancel_reason,nullzero"`
-	SourceEventID  pulid.ID        `json:"sourceEventId" keel:"source_event_id,nullzero"`
-	StartedByID    pulid.ID        `json:"startedById" keel:"started_by_id,nullzero"`
-	Version        int64           `json:"version" keel:"version,version"`
-	CreatedAt      int64           `json:"createdAt" keel:"created_at,autocreate"`
-	UpdatedAt      int64           `json:"updatedAt" keel:"updated_at,autoupdate"`
+	WorkerID       pulid.ID        `json:"workerId"       keel:"worker_id"`
+	TemplateID     pulid.ID        `json:"templateId"     keel:"template_id,nullzero"`
+	Name           string          `json:"name"           keel:"name"`
+	Kind           ChecklistKind   `json:"kind"           keel:"kind"`
+	Status         ChecklistStatus `json:"status"         keel:"status"`
+	StartedAt      int64           `json:"startedAt"      keel:"started_at"`
+	DueAt          *int64          `json:"dueAt"          keel:"due_at"`
+	CompletedAt    *int64          `json:"completedAt"    keel:"completed_at"`
+	CancelledAt    *int64          `json:"cancelledAt"    keel:"cancelled_at"`
+	CancelReason   string          `json:"cancelReason"   keel:"cancel_reason,nullzero"`
+	SourceEventID  pulid.ID        `json:"sourceEventId"  keel:"source_event_id,nullzero"`
+	StartedByID    pulid.ID        `json:"startedById"    keel:"started_by_id,nullzero"`
+	Version        int64           `json:"version"        keel:"version,version"`
+	CreatedAt      int64           `json:"createdAt"      keel:"created_at,autocreate"`
+	UpdatedAt      int64           `json:"updatedAt"      keel:"updated_at,autoupdate"`
 
-	Items     []*WorkerChecklistItem   `json:"items,omitempty" keel:"many:checklist_id"`
-	Worker    *Worker                  `json:"worker,omitempty" keel:"belongs:worker_id"`
-	Template  *WorkerChecklistTemplate `json:"template,omitempty" keel:"belongs:template_id"`
+	Items     []*WorkerChecklistItem   `json:"items,omitempty"     keel:"many:checklist_id"`
+	Worker    *Worker                  `json:"worker,omitempty"    keel:"belongs:worker_id"`
+	Template  *WorkerChecklistTemplate `json:"template,omitempty"  keel:"belongs:template_id"`
 	StartedBy *tenant.User             `json:"startedBy,omitempty" keel:"belongs:started_by_id"`
 }
 
@@ -472,37 +472,37 @@ func (c *WorkerChecklist) BeforeCreate(_ context.Context) error {
 }
 
 type WorkerChecklistItem struct {
-	keel.Table `                                                       keel:"worker_checklist_items"`
+	keel.Table `keel:"worker_checklist_items"`
 
-	ID                   pulid.ID            `json:"id" keel:"id,pk,autoid:wcli_"`
-	BusinessUnitID       pulid.ID            `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
-	OrganizationID       pulid.ID            `json:"organizationId" keel:"organization_id,pk,tenant"`
-	ChecklistID          pulid.ID            `json:"checklistId" keel:"checklist_id"`
-	TemplateItemID       pulid.ID            `json:"templateItemId" keel:"template_item_id,nullzero"`
-	Label                string              `json:"label" keel:"label"`
-	Description          string              `json:"description" keel:"description,nullzero"`
-	Kind                 ChecklistItemKind   `json:"kind" keel:"kind"`
-	Required             bool                `json:"required" keel:"required"`
-	Owner                ChecklistOwner      `json:"owner" keel:"owner"`
-	DueAt                *int64              `json:"dueAt" keel:"due_at"`
-	CredentialTypeID     pulid.ID            `json:"credentialTypeId" keel:"credential_type_id,nullzero"`
-	DocumentTypeID       pulid.ID            `json:"documentTypeId" keel:"document_type_id,nullzero"`
-	Status               ChecklistItemStatus `json:"status" keel:"status"`
-	CompletedByID        pulid.ID            `json:"completedById" keel:"completed_by_id,nullzero"`
-	CompletedAt          *int64              `json:"completedAt" keel:"completed_at"`
-	AutoCompleted        bool                `json:"autoCompleted" keel:"auto_completed"`
-	Note                 string              `json:"note" keel:"note,nullzero"`
-	EvidenceDocumentID   pulid.ID            `json:"evidenceDocumentId" keel:"evidence_document_id,nullzero"`
+	ID                   pulid.ID            `json:"id"                   keel:"id,pk,autoid:wcli_"`
+	BusinessUnitID       pulid.ID            `json:"businessUnitId"       keel:"business_unit_id,pk,tenant"`
+	OrganizationID       pulid.ID            `json:"organizationId"       keel:"organization_id,pk,tenant"`
+	ChecklistID          pulid.ID            `json:"checklistId"          keel:"checklist_id"`
+	TemplateItemID       pulid.ID            `json:"templateItemId"       keel:"template_item_id,nullzero"`
+	Label                string              `json:"label"                keel:"label"`
+	Description          string              `json:"description"          keel:"description,nullzero"`
+	Kind                 ChecklistItemKind   `json:"kind"                 keel:"kind"`
+	Required             bool                `json:"required"             keel:"required"`
+	Owner                ChecklistOwner      `json:"owner"                keel:"owner"`
+	DueAt                *int64              `json:"dueAt"                keel:"due_at"`
+	CredentialTypeID     pulid.ID            `json:"credentialTypeId"     keel:"credential_type_id,nullzero"`
+	DocumentTypeID       pulid.ID            `json:"documentTypeId"       keel:"document_type_id,nullzero"`
+	Status               ChecklistItemStatus `json:"status"               keel:"status"`
+	CompletedByID        pulid.ID            `json:"completedById"        keel:"completed_by_id,nullzero"`
+	CompletedAt          *int64              `json:"completedAt"          keel:"completed_at"`
+	AutoCompleted        bool                `json:"autoCompleted"        keel:"auto_completed"`
+	Note                 string              `json:"note"                 keel:"note,nullzero"`
+	EvidenceDocumentID   pulid.ID            `json:"evidenceDocumentId"   keel:"evidence_document_id,nullzero"`
 	EvidenceCredentialID pulid.ID            `json:"evidenceCredentialId" keel:"evidence_credential_id,nullzero"`
-	SortOrder            int32               `json:"sortOrder" keel:"sort_order"`
-	Version              int64               `json:"version" keel:"version,version"`
-	CreatedAt            int64               `json:"createdAt" keel:"created_at,autocreate"`
-	UpdatedAt            int64               `json:"updatedAt" keel:"updated_at,autoupdate"`
+	SortOrder            int32               `json:"sortOrder"            keel:"sort_order"`
+	Version              int64               `json:"version"              keel:"version,version"`
+	CreatedAt            int64               `json:"createdAt"            keel:"created_at,autocreate"`
+	UpdatedAt            int64               `json:"updatedAt"            keel:"updated_at,autoupdate"`
 
-	CompletedBy        *tenant.User          `json:"completedBy,omitempty" keel:"belongs:completed_by_id"`
-	EvidenceDocument   *document.Document    `json:"evidenceDocument,omitempty" keel:"belongs:evidence_document_id"`
+	CompletedBy        *tenant.User          `json:"completedBy,omitempty"        keel:"belongs:completed_by_id"`
+	EvidenceDocument   *document.Document    `json:"evidenceDocument,omitempty"   keel:"belongs:evidence_document_id"`
 	EvidenceCredential *WorkerCredential     `json:"evidenceCredential,omitempty" keel:"belongs:evidence_credential_id"`
-	CredentialType     *WorkerCredentialType `json:"credentialType,omitempty" keel:"belongs:credential_type_id"`
+	CredentialType     *WorkerCredentialType `json:"credentialType,omitempty"     keel:"belongs:credential_type_id"`
 }
 
 func (i *WorkerChecklistItem) IsOverdue(now int64) bool {

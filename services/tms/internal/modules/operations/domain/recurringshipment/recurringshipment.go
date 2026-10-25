@@ -33,45 +33,45 @@ const (
 type RecurringShipment struct {
 	keel.Table `keel:"recurring_shipments"`
 
-	ID                      pulid.ID        `json:"id" keel:"id,pk,autoid:rsh_"`
-	BusinessUnitID          pulid.ID        `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
-	OrganizationID          pulid.ID        `json:"organizationId" keel:"organization_id,pk,tenant"`
-	SourceShipmentID        pulid.ID        `json:"sourceShipmentId" keel:"source_shipment_id"`
-	CustomerID              pulid.ID        `json:"customerId" keel:"customer_id,nullzero"`
-	OriginLocationID        pulid.ID        `json:"originLocationId" keel:"origin_location_id,nullzero"`
-	DestinationLocationID   pulid.ID        `json:"destinationLocationId" keel:"destination_location_id,nullzero"`
-	EnteredByID             pulid.ID        `json:"enteredById" keel:"entered_by_id,nullzero"`
+	ID                      pulid.ID        `json:"id"                      keel:"id,pk,autoid:rsh_"`
+	BusinessUnitID          pulid.ID        `json:"businessUnitId"          keel:"business_unit_id,pk,tenant"`
+	OrganizationID          pulid.ID        `json:"organizationId"          keel:"organization_id,pk,tenant"`
+	SourceShipmentID        pulid.ID        `json:"sourceShipmentId"        keel:"source_shipment_id"`
+	CustomerID              pulid.ID        `json:"customerId"              keel:"customer_id,nullzero"`
+	OriginLocationID        pulid.ID        `json:"originLocationId"        keel:"origin_location_id,nullzero"`
+	DestinationLocationID   pulid.ID        `json:"destinationLocationId"   keel:"destination_location_id,nullzero"`
+	EnteredByID             pulid.ID        `json:"enteredById"             keel:"entered_by_id,nullzero"`
 	LastGeneratedShipmentID pulid.ID        `json:"lastGeneratedShipmentId" keel:"last_generated_shipment_id,nullzero"`
-	Name                    string          `json:"name" keel:"name"`
-	Description             string          `json:"description" keel:"description,nullzero"`
-	Status                  Status          `json:"status" keel:"status"`
-	CronExpression          string          `json:"cronExpression" keel:"cron_expression"`
-	Timezone                string          `json:"timezone" keel:"timezone"`
-	StartDate               int64           `json:"startDate" keel:"start_date,nullzero"`
-	EndDate                 *int64          `json:"endDate" keel:"end_date"`
-	MaxOccurrences          *int32          `json:"maxOccurrences" keel:"max_occurrences"`
-	LeadTimeDays            int16           `json:"leadTimeDays" keel:"lead_time_days"`
-	SkipWeekends            bool            `json:"skipWeekends" keel:"skip_weekends"`
-	ExceptionPolicy         ExceptionPolicy `json:"exceptionPolicy" keel:"exception_policy"`
-	BlackoutDates           []string        `json:"blackoutDates" keel:"blackout_dates,nullzero"`
-	AutoGenerate            bool            `json:"autoGenerate" keel:"auto_generate"`
-	NextOccurrenceAt        *int64          `json:"nextOccurrenceAt" keel:"next_occurrence_at"`
-	NextOccurrenceSourceAt  *int64          `json:"nextOccurrenceSourceAt" keel:"next_occurrence_source_at"`
-	LastOccurrenceAt        *int64          `json:"lastOccurrenceAt" keel:"last_occurrence_at"`
-	LastRunAt               *int64          `json:"lastRunAt" keel:"last_run_at"`
-	GenerationCount         int64           `json:"generationCount" keel:"generation_count"`
-	ConsecutiveFailures     int32           `json:"consecutiveFailures" keel:"consecutive_failures"`
-	Version                 int64           `json:"version" keel:"version,version"`
-	CreatedAt               int64           `json:"createdAt" keel:"created_at,autocreate"`
-	UpdatedAt               int64           `json:"updatedAt" keel:"updated_at,autoupdate"`
+	Name                    string          `json:"name"                    keel:"name"`
+	Description             string          `json:"description"             keel:"description,nullzero"`
+	Status                  Status          `json:"status"                  keel:"status"`
+	CronExpression          string          `json:"cronExpression"          keel:"cron_expression"`
+	Timezone                string          `json:"timezone"                keel:"timezone"`
+	StartDate               int64           `json:"startDate"               keel:"start_date,nullzero"`
+	EndDate                 *int64          `json:"endDate"                 keel:"end_date"`
+	MaxOccurrences          *int32          `json:"maxOccurrences"          keel:"max_occurrences"`
+	LeadTimeDays            int16           `json:"leadTimeDays"            keel:"lead_time_days"`
+	SkipWeekends            bool            `json:"skipWeekends"            keel:"skip_weekends"`
+	ExceptionPolicy         ExceptionPolicy `json:"exceptionPolicy"         keel:"exception_policy"`
+	BlackoutDates           []string        `json:"blackoutDates"           keel:"blackout_dates,nullzero"`
+	AutoGenerate            bool            `json:"autoGenerate"            keel:"auto_generate"`
+	NextOccurrenceAt        *int64          `json:"nextOccurrenceAt"        keel:"next_occurrence_at"`
+	NextOccurrenceSourceAt  *int64          `json:"nextOccurrenceSourceAt"  keel:"next_occurrence_source_at"`
+	LastOccurrenceAt        *int64          `json:"lastOccurrenceAt"        keel:"last_occurrence_at"`
+	LastRunAt               *int64          `json:"lastRunAt"               keel:"last_run_at"`
+	GenerationCount         int64           `json:"generationCount"         keel:"generation_count"`
+	ConsecutiveFailures     int32           `json:"consecutiveFailures"     keel:"consecutive_failures"`
+	Version                 int64           `json:"version"                 keel:"version,version"`
+	CreatedAt               int64           `json:"createdAt"               keel:"created_at,autocreate"`
+	UpdatedAt               int64           `json:"updatedAt"               keel:"updated_at,autoupdate"`
 
 	BusinessUnit        *tenant.BusinessUnit `json:"businessUnit,omitempty"`
 	Organization        *tenant.Organization `json:"organization,omitempty"`
-	SourceShipment      *shipment.Shipment   `json:"sourceShipment,omitempty" keel:"belongs:source_shipment_id"`
-	Customer            *customer.Customer   `json:"customer,omitempty" keel:"belongs:customer_id"`
-	OriginLocation      *location.Location   `json:"originLocation,omitempty" keel:"belongs:origin_location_id"`
+	SourceShipment      *shipment.Shipment   `json:"sourceShipment,omitempty"      keel:"belongs:source_shipment_id"`
+	Customer            *customer.Customer   `json:"customer,omitempty"            keel:"belongs:customer_id"`
+	OriginLocation      *location.Location   `json:"originLocation,omitempty"      keel:"belongs:origin_location_id"`
 	DestinationLocation *location.Location   `json:"destinationLocation,omitempty" keel:"belongs:destination_location_id"`
-	EnteredBy           *tenant.User         `json:"enteredBy,omitempty" keel:"belongs:entered_by_id"`
+	EnteredBy           *tenant.User         `json:"enteredBy,omitempty"           keel:"belongs:entered_by_id"`
 }
 
 func (rs *RecurringShipment) Validate(multiErr *errortypes.MultiError) {

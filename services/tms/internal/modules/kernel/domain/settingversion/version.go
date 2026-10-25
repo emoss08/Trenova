@@ -34,15 +34,15 @@ func (k Kind) IsValid() bool {
 type SettingVersion struct {
 	keel.Table `keel:"ai_setting_versions"`
 
-	ID             pulid.ID       `json:"id" keel:"id,pk,autoid:aisv_"`
+	ID             pulid.ID       `json:"id"             keel:"id,pk,autoid:aisv_"`
 	BusinessUnitID pulid.ID       `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
 	OrganizationID pulid.ID       `json:"organizationId" keel:"organization_id,pk,tenant"`
-	Kind           Kind           `json:"kind" keel:"kind"`
-	SubjectID      pulid.ID       `json:"subjectId" keel:"subject_id"`
-	Version        int64          `json:"version" keel:"version,version"`
-	Snapshot       map[string]any `json:"snapshot" keel:"snapshot,jsonb"`
-	AuthorID       *pulid.ID      `json:"authorId" keel:"author_id"`
-	CreatedAt      int64          `json:"createdAt" keel:"created_at,autocreate"`
+	Kind           Kind           `json:"kind"           keel:"kind"`
+	SubjectID      pulid.ID       `json:"subjectId"      keel:"subject_id"`
+	Version        int64          `json:"version"        keel:"version,version"`
+	Snapshot       map[string]any `json:"snapshot"       keel:"snapshot,jsonb"`
+	AuthorID       *pulid.ID      `json:"authorId"       keel:"author_id"`
+	CreatedAt      int64          `json:"createdAt"      keel:"created_at,autocreate"`
 
 	Author *tenant.User `json:"author,omitempty" keel:"belongs:author_id"`
 }

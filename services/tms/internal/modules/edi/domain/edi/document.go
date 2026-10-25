@@ -111,17 +111,17 @@ type TemplateElement struct {
 type EDIDocumentType struct {
 	keel.Table `keel:"edi_document_types"`
 
-	ID               pulid.ID          `json:"id" keel:"id,pk,autoid:edidt_"`
-	Code             string            `json:"code" keel:"code"`
-	Name             string            `json:"name" keel:"name"`
-	Standard         EDIStandard       `json:"standard" keel:"standard"`
-	TransactionSet   TransactionSet    `json:"transactionSet" keel:"transaction_set"`
+	ID               pulid.ID          `json:"id"               keel:"id,pk,autoid:edidt_"`
+	Code             string            `json:"code"             keel:"code"`
+	Name             string            `json:"name"             keel:"name"`
+	Standard         EDIStandard       `json:"standard"         keel:"standard"`
+	TransactionSet   TransactionSet    `json:"transactionSet"   keel:"transaction_set"`
 	TransactionSetID pulid.ID          `json:"transactionSetId" keel:"transaction_set_id"`
-	Direction        DocumentDirection `json:"direction" keel:"direction"`
-	DefaultVersion   string            `json:"defaultVersion" keel:"default_version"`
-	Status           DocumentStatus    `json:"status" keel:"status"`
-	CreatedAt        int64             `json:"createdAt" keel:"created_at,autocreate"`
-	UpdatedAt        int64             `json:"updatedAt" keel:"updated_at,autoupdate"`
+	Direction        DocumentDirection `json:"direction"        keel:"direction"`
+	DefaultVersion   string            `json:"defaultVersion"   keel:"default_version"`
+	Status           DocumentStatus    `json:"status"           keel:"status"`
+	CreatedAt        int64             `json:"createdAt"        keel:"created_at,autocreate"`
+	UpdatedAt        int64             `json:"updatedAt"        keel:"updated_at,autoupdate"`
 
 	TransactionSetRef *EDITransactionSet `json:"transactionSetRef,omitempty" keel:"belongs:transaction_set_id"`
 }
@@ -129,39 +129,39 @@ type EDIDocumentType struct {
 type EDITemplateVersion struct {
 	keel.Table `keel:"edi_template_versions"`
 
-	ID                 pulid.ID       `json:"id" keel:"id,pk,autoid:editv_"`
-	BusinessUnitID     pulid.ID       `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
-	OrganizationID     pulid.ID       `json:"organizationId" keel:"organization_id,pk,tenant"`
-	TemplateID         pulid.ID       `json:"templateId" keel:"template_id"`
-	SourceVersionID    pulid.ID       `json:"sourceVersionId" keel:"source_version_id,nullzero"`
-	VersionNumber      int64          `json:"versionNumber" keel:"version_number"`
-	X12Version         string         `json:"x12Version" keel:"x12_version"`
-	FunctionalGroupID  string         `json:"functionalGroupId" keel:"functional_group_id"`
-	Status             TemplateStatus `json:"status" keel:"status"`
-	IsActive           bool           `json:"isActive" keel:"is_active"`
-	Notes              string         `json:"notes" keel:"notes,nullzero"`
+	ID                 pulid.ID       `json:"id"                 keel:"id,pk,autoid:editv_"`
+	BusinessUnitID     pulid.ID       `json:"businessUnitId"     keel:"business_unit_id,pk,tenant"`
+	OrganizationID     pulid.ID       `json:"organizationId"     keel:"organization_id,pk,tenant"`
+	TemplateID         pulid.ID       `json:"templateId"         keel:"template_id"`
+	SourceVersionID    pulid.ID       `json:"sourceVersionId"    keel:"source_version_id,nullzero"`
+	VersionNumber      int64          `json:"versionNumber"      keel:"version_number"`
+	X12Version         string         `json:"x12Version"         keel:"x12_version"`
+	FunctionalGroupID  string         `json:"functionalGroupId"  keel:"functional_group_id"`
+	Status             TemplateStatus `json:"status"             keel:"status"`
+	IsActive           bool           `json:"isActive"           keel:"is_active"`
+	Notes              string         `json:"notes"              keel:"notes,nullzero"`
 	CertificationNotes string         `json:"certificationNotes" keel:"certification_notes,nullzero"`
-	ActivationNotes    string         `json:"activationNotes" keel:"activation_notes,nullzero"`
-	ArchiveNotes       string         `json:"archiveNotes" keel:"archive_notes,nullzero"`
-	DeprecatedNotes    string         `json:"deprecatedNotes" keel:"deprecated_notes,nullzero"`
-	SupersededNotes    string         `json:"supersededNotes" keel:"superseded_notes,nullzero"`
-	CertifiedByID      pulid.ID       `json:"certifiedById" keel:"certified_by_id,nullzero"`
-	ActivatedByID      pulid.ID       `json:"activatedById" keel:"activated_by_id,nullzero"`
-	ArchivedByID       pulid.ID       `json:"archivedById" keel:"archived_by_id,nullzero"`
-	DeprecatedByID     pulid.ID       `json:"deprecatedById" keel:"deprecated_by_id,nullzero"`
-	SupersededByID     pulid.ID       `json:"supersededById" keel:"superseded_by_id,nullzero"`
-	CertifiedAt        *int64         `json:"certifiedAt" keel:"certified_at"`
-	ActivatedAt        *int64         `json:"activatedAt" keel:"activated_at"`
-	ArchivedAt         *int64         `json:"archivedAt" keel:"archived_at"`
-	DeprecatedAt       *int64         `json:"deprecatedAt" keel:"deprecated_at"`
-	SupersededAt       *int64         `json:"supersededAt" keel:"superseded_at"`
-	Version            int64          `json:"version" keel:"version,version"`
-	CreatedAt          int64          `json:"createdAt" keel:"created_at,autocreate"`
-	UpdatedAt          int64          `json:"updatedAt" keel:"updated_at,autoupdate"`
+	ActivationNotes    string         `json:"activationNotes"    keel:"activation_notes,nullzero"`
+	ArchiveNotes       string         `json:"archiveNotes"       keel:"archive_notes,nullzero"`
+	DeprecatedNotes    string         `json:"deprecatedNotes"    keel:"deprecated_notes,nullzero"`
+	SupersededNotes    string         `json:"supersededNotes"    keel:"superseded_notes,nullzero"`
+	CertifiedByID      pulid.ID       `json:"certifiedById"      keel:"certified_by_id,nullzero"`
+	ActivatedByID      pulid.ID       `json:"activatedById"      keel:"activated_by_id,nullzero"`
+	ArchivedByID       pulid.ID       `json:"archivedById"       keel:"archived_by_id,nullzero"`
+	DeprecatedByID     pulid.ID       `json:"deprecatedById"     keel:"deprecated_by_id,nullzero"`
+	SupersededByID     pulid.ID       `json:"supersededById"     keel:"superseded_by_id,nullzero"`
+	CertifiedAt        *int64         `json:"certifiedAt"        keel:"certified_at"`
+	ActivatedAt        *int64         `json:"activatedAt"        keel:"activated_at"`
+	ArchivedAt         *int64         `json:"archivedAt"         keel:"archived_at"`
+	DeprecatedAt       *int64         `json:"deprecatedAt"       keel:"deprecated_at"`
+	SupersededAt       *int64         `json:"supersededAt"       keel:"superseded_at"`
+	Version            int64          `json:"version"            keel:"version,version"`
+	CreatedAt          int64          `json:"createdAt"          keel:"created_at,autocreate"`
+	UpdatedAt          int64          `json:"updatedAt"          keel:"updated_at,autoupdate"`
 
-	Template        *EDITemplate                `json:"template,omitempty" keel:"belongs:template_id"`
-	SourceVersion   *EDITemplateVersion         `json:"sourceVersion,omitempty" keel:"belongs:source_version_id"`
-	Segments        []*EDITemplateSegment       `json:"segments,omitempty" keel:"many:template_version_id"`
+	Template        *EDITemplate                `json:"template,omitempty"        keel:"belongs:template_id"`
+	SourceVersion   *EDITemplateVersion         `json:"sourceVersion,omitempty"   keel:"belongs:source_version_id"`
+	Segments        []*EDITemplateSegment       `json:"segments,omitempty"        keel:"many:template_version_id"`
 	ScriptLibraries []*EDITemplateScriptLibrary `json:"scriptLibraries,omitempty" keel:"many:template_version_id"`
 }
 
@@ -180,22 +180,22 @@ func (v *EDITemplateVersion) GetBusinessUnitID() pulid.ID {
 type EDITemplateSegment struct {
 	keel.Table `keel:"edi_template_segments"`
 
-	ID                pulid.ID          `json:"id" keel:"id,pk,autoid:edisg_"`
-	BusinessUnitID    pulid.ID          `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
-	OrganizationID    pulid.ID          `json:"organizationId" keel:"organization_id,pk,tenant"`
+	ID                pulid.ID          `json:"id"                keel:"id,pk,autoid:edisg_"`
+	BusinessUnitID    pulid.ID          `json:"businessUnitId"    keel:"business_unit_id,pk,tenant"`
+	OrganizationID    pulid.ID          `json:"organizationId"    keel:"organization_id,pk,tenant"`
 	TemplateVersionID pulid.ID          `json:"templateVersionId" keel:"template_version_id"`
-	SegmentID         string            `json:"segmentId" keel:"segment_id"`
-	Name              string            `json:"name" keel:"name"`
-	Sequence          int64             `json:"sequence" keel:"sequence"`
-	LoopID            string            `json:"loopId" keel:"loop_id,nullzero"`
-	RepeatPath        string            `json:"repeatPath" keel:"repeat_path,nullzero"`
-	Condition         string            `json:"condition" keel:"condition,nullzero"`
-	Required          bool              `json:"required" keel:"required"`
-	MaxUse            int64             `json:"maxUse" keel:"max_use"`
-	Elements          []TemplateElement `json:"elements" keel:"elements,jsonb"`
-	UsageNotes        string            `json:"usageNotes" keel:"usage_notes,nullzero"`
-	CreatedAt         int64             `json:"createdAt" keel:"created_at,autocreate"`
-	UpdatedAt         int64             `json:"updatedAt" keel:"updated_at,autoupdate"`
+	SegmentID         string            `json:"segmentId"         keel:"segment_id"`
+	Name              string            `json:"name"              keel:"name"`
+	Sequence          int64             `json:"sequence"          keel:"sequence"`
+	LoopID            string            `json:"loopId"            keel:"loop_id,nullzero"`
+	RepeatPath        string            `json:"repeatPath"        keel:"repeat_path,nullzero"`
+	Condition         string            `json:"condition"         keel:"condition,nullzero"`
+	Required          bool              `json:"required"          keel:"required"`
+	MaxUse            int64             `json:"maxUse"            keel:"max_use"`
+	Elements          []TemplateElement `json:"elements"          keel:"elements,jsonb"`
+	UsageNotes        string            `json:"usageNotes"        keel:"usage_notes,nullzero"`
+	CreatedAt         int64             `json:"createdAt"         keel:"created_at,autocreate"`
+	UpdatedAt         int64             `json:"updatedAt"         keel:"updated_at,autoupdate"`
 }
 
 func (s *EDITemplateSegment) BeforeUpdate(ctx context.Context) error {
@@ -227,18 +227,18 @@ func (s *EDITemplateSegment) BeforeSave(_ context.Context) error {
 type EDITemplateScriptLibrary struct {
 	keel.Table `keel:"edi_template_script_libraries"`
 
-	ID                pulid.ID       `json:"id" keel:"id,pk,autoid:edisl_"`
-	BusinessUnitID    pulid.ID       `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
-	OrganizationID    pulid.ID       `json:"organizationId" keel:"organization_id,pk,tenant"`
+	ID                pulid.ID       `json:"id"                keel:"id,pk,autoid:edisl_"`
+	BusinessUnitID    pulid.ID       `json:"businessUnitId"    keel:"business_unit_id,pk,tenant"`
+	OrganizationID    pulid.ID       `json:"organizationId"    keel:"organization_id,pk,tenant"`
 	TemplateVersionID pulid.ID       `json:"templateVersionId" keel:"template_version_id"`
-	Name              string         `json:"name" keel:"name"`
-	Description       string         `json:"description" keel:"description,nullzero"`
-	Language          ScriptLanguage `json:"language" keel:"language"`
-	Script            string         `json:"script" keel:"script"`
-	Status            TemplateStatus `json:"status" keel:"status"`
-	Version           int64          `json:"version" keel:"version,version"`
-	CreatedAt         int64          `json:"createdAt" keel:"created_at,autocreate"`
-	UpdatedAt         int64          `json:"updatedAt" keel:"updated_at,autoupdate"`
+	Name              string         `json:"name"              keel:"name"`
+	Description       string         `json:"description"       keel:"description,nullzero"`
+	Language          ScriptLanguage `json:"language"          keel:"language"`
+	Script            string         `json:"script"            keel:"script"`
+	Status            TemplateStatus `json:"status"            keel:"status"`
+	Version           int64          `json:"version"           keel:"version,version"`
+	CreatedAt         int64          `json:"createdAt"         keel:"created_at,autocreate"`
+	UpdatedAt         int64          `json:"updatedAt"         keel:"updated_at,autoupdate"`
 
 	FunctionNames   []string            `json:"functionNames"`
 	TemplateVersion *EDITemplateVersion `json:"templateVersion,omitempty" keel:"belongs:template_version_id"`

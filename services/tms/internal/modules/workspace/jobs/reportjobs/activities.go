@@ -393,7 +393,7 @@ func (a *Activities) ExecuteAndRenderActivity(
 		)
 	}
 
-	stream, err := a.engine.Run(run.Context, run.Request)
+	stream, err := a.engine.Run(run.Context, &run.Request)
 	if err != nil {
 		return nil, classifyEngineError(reporting.EngineError(run.Context, run.Access, err))
 	}

@@ -45,39 +45,39 @@ func (p *RuleProvenance) IsTrusted() bool {
 }
 
 type Requirement struct {
-	keel.Table     `                                                   keel:"permit_requirements"`
-	ID             pulid.ID `json:"id" keel:"id,pk,autoid:pmr_"`
-	BusinessUnitID pulid.ID `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
-	OrganizationID pulid.ID `json:"organizationId" keel:"organization_id,pk,tenant"`
-	ShipmentID     pulid.ID `json:"shipmentId" keel:"shipment_id"`
-	StateID        pulid.ID `json:"stateId" keel:"state_id"`
+	keel.Table     `keel:"permit_requirements"`
+	ID             pulid.ID `keel:"id,pk,autoid:pmr_"          json:"id"`
+	BusinessUnitID pulid.ID `keel:"business_unit_id,pk,tenant" json:"businessUnitId"`
+	OrganizationID pulid.ID `keel:"organization_id,pk,tenant"  json:"organizationId"`
+	ShipmentID     pulid.ID `keel:"shipment_id"                json:"shipmentId"`
+	StateID        pulid.ID `keel:"state_id"                   json:"stateId"`
 
-	Status        RequirementStatus `json:"status" keel:"status"`
+	Status        RequirementStatus `json:"status"        keel:"status"`
 	RouteSequence int16             `json:"routeSequence" keel:"route_sequence"`
 
-	Exceedances  []jurisdictionrule.Exceedance        `json:"exceedances" keel:"exceedances,jsonb,nullzero"`
-	Escorts      []jurisdictionrule.EscortRequirement `json:"escorts" keel:"escorts,jsonb,nullzero"`
+	Exceedances  []jurisdictionrule.Exceedance        `json:"exceedances"  keel:"exceedances,jsonb,nullzero"`
+	Escorts      []jurisdictionrule.EscortRequirement `json:"escorts"      keel:"escorts,jsonb,nullzero"`
 	Restrictions []jurisdictionrule.RestrictionKind   `json:"restrictions" keel:"restrictions,jsonb,nullzero"`
 
 	LeadTimeDays int16               `json:"leadTimeDays" keel:"lead_time_days"`
 	ValidityDays int16               `json:"validityDays" keel:"validity_days"`
 	EstimatedFee decimal.NullDecimal `json:"estimatedFee" keel:"estimated_fee"`
-	IsSuperload  bool                `json:"isSuperload" keel:"is_superload"`
+	IsSuperload  bool                `json:"isSuperload"  keel:"is_superload"`
 
 	SatisfiedByPermitID *pulid.ID `json:"satisfiedByPermitId" keel:"satisfied_by_permit_id"`
-	WaivedByID          *pulid.ID `json:"waivedById" keel:"waived_by_id"`
-	WaiverReason        string    `json:"waiverReason" keel:"waiver_reason,nullzero"`
+	WaivedByID          *pulid.ID `json:"waivedById"          keel:"waived_by_id"`
+	WaiverReason        string    `json:"waiverReason"        keel:"waiver_reason,nullzero"`
 
 	Provenance *RuleProvenance `json:"provenance" keel:"provenance,jsonb"`
 
 	DerivedAt int64 `json:"derivedAt" keel:"derived_at"`
-	Version   int64 `json:"version" keel:"version,version"`
+	Version   int64 `json:"version"   keel:"version,version"`
 	CreatedAt int64 `json:"createdAt" keel:"created_at,autocreate"`
 	UpdatedAt int64 `json:"updatedAt" keel:"updated_at,autoupdate"`
 
 	BusinessUnit      *tenant.BusinessUnit `json:"-"`
 	Organization      *tenant.Organization `json:"-"`
-	State             *usstate.UsState     `json:"state,omitempty" keel:"belongs:state_id"`
+	State             *usstate.UsState     `json:"state,omitempty"             keel:"belongs:state_id"`
 	SatisfiedByPermit *Permit              `json:"satisfiedByPermit,omitempty" keel:"belongs:satisfied_by_permit_id"`
 }
 

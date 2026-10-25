@@ -169,7 +169,7 @@ func (r *PDFRenderer) Render(
 				detail++
 			}
 			data.Rows = append(data.Rows, pdfRow{
-				Cells:   FormatRow(formatters, batch, i, levelLabel(opts.Text, level)),
+				Cells:   FormatRow(formatters, batch, i, levelLabel(&opts.Text, level)),
 				Summary: level != table.Detail,
 			})
 		}

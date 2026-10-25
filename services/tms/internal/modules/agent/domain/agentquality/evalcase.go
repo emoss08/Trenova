@@ -173,41 +173,41 @@ func RestrictedPlaceholder(field string) string {
 type EvalCase struct {
 	keel.Table `keel:"agent_eval_cases"`
 
-	ID             pulid.ID `json:"id" keel:"id,pk,autoid:aec_"`
+	ID             pulid.ID `json:"id"             keel:"id,pk,autoid:aec_"`
 	BusinessUnitID pulid.ID `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
 	OrganizationID pulid.ID `json:"organizationId" keel:"organization_id,pk,tenant"`
 
 	AgentDefinitionID pulid.ID         `json:"agentDefinitionId" keel:"agent_definition_id"`
-	Title             string           `json:"title" keel:"title,nullzero"`
-	Source            CaseSource       `json:"source" keel:"source"`
-	Status            CaseStatus       `json:"status" keel:"status"`
-	Trigger           agent.RunTrigger `json:"trigger" keel:"trigger"`
+	Title             string           `json:"title"             keel:"title,nullzero"`
+	Source            CaseSource       `json:"source"            keel:"source"`
+	Status            CaseStatus       `json:"status"            keel:"status"`
+	Trigger           agent.RunTrigger `json:"trigger"           keel:"trigger"`
 
-	SourceRunID      *pulid.ID `json:"sourceRunId" keel:"source_run_id"`
-	SourceTurnID     *pulid.ID `json:"sourceTurnId" keel:"source_turn_id"`
-	SourceThreadID   *pulid.ID `json:"sourceThreadId" keel:"source_thread_id"`
-	SourceMessageID  *pulid.ID `json:"sourceMessageId" keel:"source_message_id"`
+	SourceRunID      *pulid.ID `json:"sourceRunId"      keel:"source_run_id"`
+	SourceTurnID     *pulid.ID `json:"sourceTurnId"     keel:"source_turn_id"`
+	SourceThreadID   *pulid.ID `json:"sourceThreadId"   keel:"source_thread_id"`
+	SourceMessageID  *pulid.ID `json:"sourceMessageId"  keel:"source_message_id"`
 	SourceProposalID *pulid.ID `json:"sourceProposalId" keel:"source_proposal_id"`
 	SourceFeedbackID *pulid.ID `json:"sourceFeedbackId" keel:"source_feedback_id"`
 
-	Input        string             `json:"input" keel:"input"`
-	History      []HistoryMessage   `json:"history" keel:"history,jsonb"`
-	PageContext  *agent.PageContext `json:"pageContext" keel:"page_context,jsonb"`
-	Mentions     []agent.EntityRef  `json:"mentions" keel:"mentions,jsonb"`
-	SubjectType  agent.SubjectType  `json:"subjectType" keel:"subject_type,nullzero"`
-	SubjectID    pulid.ID           `json:"subjectId" keel:"subject_id,nullzero"`
-	HeldTools    []string           `json:"heldTools" keel:"held_tools"`
+	Input        string             `json:"input"        keel:"input"`
+	History      []HistoryMessage   `json:"history"      keel:"history,jsonb"`
+	PageContext  *agent.PageContext `json:"pageContext"  keel:"page_context,jsonb"`
+	Mentions     []agent.EntityRef  `json:"mentions"     keel:"mentions,jsonb"`
+	SubjectType  agent.SubjectType  `json:"subjectType"  keel:"subject_type,nullzero"`
+	SubjectID    pulid.ID           `json:"subjectId"    keel:"subject_id,nullzero"`
+	HeldTools    []string           `json:"heldTools"    keel:"held_tools"`
 	ToolFixtures []ToolFixture      `json:"toolFixtures" keel:"tool_fixtures,jsonb"`
 
-	Expected            Expected           `json:"expected" keel:"expected,jsonb"`
-	Rubric              string             `json:"rubric" keel:"rubric,nullzero"`
-	Redaction           *Redaction         `json:"redaction" keel:"redaction,jsonb"`
-	ContentHash         string             `json:"contentHash" keel:"content_hash"`
+	Expected            Expected           `json:"expected"            keel:"expected,jsonb"`
+	Rubric              string             `json:"rubric"              keel:"rubric,nullzero"`
+	Redaction           *Redaction         `json:"redaction"           keel:"redaction,jsonb"`
+	ContentHash         string             `json:"contentHash"         keel:"content_hash"`
 	CapturedFingerprint *agent.Fingerprint `json:"capturedFingerprint" keel:"captured_fingerprint,jsonb"`
-	ExpiresAt           *int64             `json:"expiresAt" keel:"expires_at"`
-	CreatedByUserID     *pulid.ID          `json:"createdByUserId" keel:"created_by_user_id"`
+	ExpiresAt           *int64             `json:"expiresAt"           keel:"expires_at"`
+	CreatedByUserID     *pulid.ID          `json:"createdByUserId"     keel:"created_by_user_id"`
 
-	Version   int64 `json:"version" keel:"version,version"`
+	Version   int64 `json:"version"   keel:"version,version"`
 	CreatedAt int64 `json:"createdAt" keel:"created_at,autocreate"`
 	UpdatedAt int64 `json:"updatedAt" keel:"updated_at,autoupdate"`
 

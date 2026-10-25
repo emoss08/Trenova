@@ -3,6 +3,8 @@ package driverpay
 import (
 	"context"
 
+	"github.com/emoss08/trenova/shared/money"
+
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/pkg/domaintypes"
@@ -23,24 +25,24 @@ var (
 type PayProfile struct {
 	keel.Table `keel:"driver_pay_profiles"`
 
-	ID                           pulid.ID            `json:"id" keel:"id,pk,autoid:dpp_"`
-	BusinessUnitID               pulid.ID            `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
-	OrganizationID               pulid.ID            `json:"organizationId" keel:"organization_id,pk,tenant"`
-	Status                       domaintypes.Status  `json:"status" keel:"status"`
-	Name                         string              `json:"name" keel:"name"`
-	Description                  string              `json:"description" keel:"description,nullzero"`
-	Classification               PayeeClassification `json:"classification" keel:"classification"`
-	CurrencyCode                 string              `json:"currencyCode" keel:"currency_code"`
+	ID                           pulid.ID            `json:"id"                           keel:"id,pk,autoid:dpp_"`
+	BusinessUnitID               pulid.ID            `json:"businessUnitId"               keel:"business_unit_id,pk,tenant"`
+	OrganizationID               pulid.ID            `json:"organizationId"               keel:"organization_id,pk,tenant"`
+	Status                       domaintypes.Status  `json:"status"                       keel:"status"`
+	Name                         string              `json:"name"                         keel:"name"`
+	Description                  string              `json:"description"                  keel:"description,nullzero"`
+	Classification               PayeeClassification `json:"classification"               keel:"classification"`
+	CurrencyCode                 string              `json:"currencyCode"                 keel:"currency_code"`
 	GuaranteedPeriodMinimumMinor int64               `json:"guaranteedPeriodMinimumMinor" keel:"guaranteed_period_minimum_minor"`
-	PerDiemRatePerMile           decimal.Decimal     `json:"perDiemRatePerMile" keel:"per_diem_rate_per_mile"`
-	PerDiemDailyCapMinor         int64               `json:"perDiemDailyCapMinor" keel:"per_diem_daily_cap_minor"`
-	Version                      int64               `json:"version" keel:"version,version"`
-	CreatedAt                    int64               `json:"createdAt" keel:"created_at,autocreate"`
-	UpdatedAt                    int64               `json:"updatedAt" keel:"updated_at,autoupdate"`
+	PerDiemRatePerMile           decimal.Decimal     `json:"perDiemRatePerMile"           keel:"per_diem_rate_per_mile"`
+	PerDiemDailyCapMinor         int64               `json:"perDiemDailyCapMinor"         keel:"per_diem_daily_cap_minor"`
+	Version                      int64               `json:"version"                      keel:"version,version"`
+	CreatedAt                    int64               `json:"createdAt"                    keel:"created_at,autocreate"`
+	UpdatedAt                    int64               `json:"updatedAt"                    keel:"updated_at,autoupdate"`
 
 	BusinessUnit *tenant.BusinessUnit   `json:"businessUnit,omitempty"`
 	Organization *tenant.Organization   `json:"organization,omitempty"`
-	Components   []*PayProfileComponent `json:"components,omitempty" keel:"many:pay_profile_id"`
+	Components   []*PayProfileComponent `json:"components,omitempty"   keel:"many:pay_profile_id"`
 }
 
 type MileageBand struct {
@@ -52,23 +54,23 @@ type MileageBand struct {
 type PayProfileComponent struct {
 	keel.Table `keel:"driver_pay_profile_components"`
 
-	ID              pulid.ID        `json:"id" keel:"id,pk,autoid:dppc_"`
-	BusinessUnitID  pulid.ID        `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
-	OrganizationID  pulid.ID        `json:"organizationId" keel:"organization_id,pk,tenant"`
-	PayProfileID    pulid.ID        `json:"payProfileId" keel:"pay_profile_id"`
-	Kind            ComponentKind   `json:"kind" keel:"kind"`
-	Method          CalcMethod      `json:"method" keel:"method"`
-	Description     string          `json:"description" keel:"description,nullzero"`
-	Rate            decimal.Decimal `json:"rate" keel:"rate"`
-	RevenueBasis    RevenueBasis    `json:"revenueBasis" keel:"revenue_basis,nullzero"`
-	Bands           []MileageBand   `json:"bands" keel:"bands,jsonb,nullzero"`
+	ID              pulid.ID        `json:"id"              keel:"id,pk,autoid:dppc_"`
+	BusinessUnitID  pulid.ID        `json:"businessUnitId"  keel:"business_unit_id,pk,tenant"`
+	OrganizationID  pulid.ID        `json:"organizationId"  keel:"organization_id,pk,tenant"`
+	PayProfileID    pulid.ID        `json:"payProfileId"    keel:"pay_profile_id"`
+	Kind            ComponentKind   `json:"kind"            keel:"kind"`
+	Method          CalcMethod      `json:"method"          keel:"method"`
+	Description     string          `json:"description"     keel:"description,nullzero"`
+	Rate            decimal.Decimal `json:"rate"            keel:"rate"`
+	RevenueBasis    RevenueBasis    `json:"revenueBasis"    keel:"revenue_basis,nullzero"`
+	Bands           []MileageBand   `json:"bands"           keel:"bands,jsonb,nullzero"`
 	FreeTimeMinutes int             `json:"freeTimeMinutes" keel:"free_time_minutes"`
-	MinAmountMinor  *int64          `json:"minAmountMinor" keel:"min_amount_minor"`
-	MaxAmountMinor  *int64          `json:"maxAmountMinor" keel:"max_amount_minor"`
-	Sequence        int             `json:"sequence" keel:"sequence"`
-	IsActive        bool            `json:"isActive" keel:"is_active"`
-	CreatedAt       int64           `json:"createdAt" keel:"created_at,autocreate"`
-	UpdatedAt       int64           `json:"updatedAt" keel:"updated_at,autoupdate"`
+	MinAmountMinor  *int64          `json:"minAmountMinor"  keel:"min_amount_minor"`
+	MaxAmountMinor  *int64          `json:"maxAmountMinor"  keel:"max_amount_minor"`
+	Sequence        int             `json:"sequence"        keel:"sequence"`
+	IsActive        bool            `json:"isActive"        keel:"is_active"`
+	CreatedAt       int64           `json:"createdAt"       keel:"created_at,autocreate"`
+	UpdatedAt       int64           `json:"updatedAt"       keel:"updated_at,autoupdate"`
 }
 
 const searchFieldDescription = "description"
@@ -307,7 +309,7 @@ func (p *PayProfile) BeforeCreate(ctx context.Context) error {
 		p.Classification = PayeeClassificationCompanyDriver
 	}
 	if p.CurrencyCode == "" {
-		p.CurrencyCode = "USD"
+		p.CurrencyCode = money.DefaultCurrencyCode
 	}
 
 	return nil

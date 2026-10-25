@@ -18,20 +18,20 @@ const (
 )
 
 type DLQEntry struct {
-	keel.Table `                                         keel:"audit_dlq_entries"`
+	keel.Table `keel:"audit_dlq_entries"`
 
-	ID              pulid.ID       `json:"id" keel:"id,pk,autoid:dlq_"`
+	ID              pulid.ID       `json:"id"              keel:"id,pk,autoid:dlq_"`
 	OriginalEntryID pulid.ID       `json:"originalEntryId" keel:"original_entry_id"`
-	EntryData       map[string]any `json:"entryData" keel:"entry_data,jsonb"`
-	FailureTime     int64          `json:"failureTime" keel:"failure_time"`
-	RetryCount      int            `json:"retryCount" keel:"retry_count"`
-	LastError       string         `json:"lastError" keel:"last_error,nullzero"`
-	NextRetryAt     int64          `json:"nextRetryAt" keel:"next_retry_at,nullzero"`
-	Status          DLQStatus      `json:"status" keel:"status"`
-	OrganizationID  pulid.ID       `json:"organizationId" keel:"organization_id,tenant"`
-	BusinessUnitID  pulid.ID       `json:"businessUnitId" keel:"business_unit_id,tenant"`
-	CreatedAt       int64          `json:"createdAt" keel:"created_at,autocreate"`
-	UpdatedAt       int64          `json:"updatedAt" keel:"updated_at,autoupdate"`
+	EntryData       map[string]any `json:"entryData"       keel:"entry_data,jsonb"`
+	FailureTime     int64          `json:"failureTime"     keel:"failure_time"`
+	RetryCount      int            `json:"retryCount"      keel:"retry_count"`
+	LastError       string         `json:"lastError"       keel:"last_error,nullzero"`
+	NextRetryAt     int64          `json:"nextRetryAt"     keel:"next_retry_at,nullzero"`
+	Status          DLQStatus      `json:"status"          keel:"status"`
+	OrganizationID  pulid.ID       `json:"organizationId"  keel:"organization_id,tenant"`
+	BusinessUnitID  pulid.ID       `json:"businessUnitId"  keel:"business_unit_id,tenant"`
+	CreatedAt       int64          `json:"createdAt"       keel:"created_at,autocreate"`
+	UpdatedAt       int64          `json:"updatedAt"       keel:"updated_at,autoupdate"`
 }
 
 func (e *DLQEntry) BeforeCreate(_ context.Context) error {

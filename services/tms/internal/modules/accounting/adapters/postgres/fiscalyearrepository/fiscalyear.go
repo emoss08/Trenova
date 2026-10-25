@@ -302,7 +302,11 @@ func (r *repository) Close(
 			fy.ClosedByID.To(req.ClosedByID),
 		)
 		if err != nil {
-			r.l.Error("failed to close fiscal year", zap.String("id", req.ID.String()), zap.Error(err))
+			r.l.Error(
+				"failed to close fiscal year",
+				zap.String("id", req.ID.String()),
+				zap.Error(err),
+			)
 			return nil, err
 		}
 
@@ -328,7 +332,11 @@ func (r *repository) Reopen(
 			fy.ReopenReason.To(req.ReopenReason),
 		)
 		if err != nil {
-			r.l.Error("failed to reopen fiscal year", zap.String("id", req.ID.String()), zap.Error(err))
+			r.l.Error(
+				"failed to reopen fiscal year",
+				zap.String("id", req.ID.String()),
+				zap.Error(err),
+			)
 			return nil, err
 		}
 

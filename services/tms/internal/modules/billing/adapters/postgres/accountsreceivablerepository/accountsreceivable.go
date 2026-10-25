@@ -150,7 +150,7 @@ func (rec *agingRowRecord) row() *customerledgerports.ARCustomerAgingRow {
 	}
 }
 
-func tenantArgs(tenantInfo pagination.TenantInfo) (string, string) {
+func tenantArgs(tenantInfo pagination.TenantInfo) (orgID, buID string) {
 	return tenantInfo.OrgID.String(), tenantInfo.BuID.String()
 }
 

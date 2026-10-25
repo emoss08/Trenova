@@ -195,9 +195,17 @@ func verdictsQuery(req *agentports.ScorecardRequest) *keel.Query[keel.Row] {
 			step.CreatedAt.Gte(req.Since),
 		))
 
-	tool, verdict, reason := labelled.Col("tool_name"), labelled.Col("verdict"), labelled.Col("reason")
+	tool, verdict, reason := labelled.Col(
+		"tool_name",
+	), labelled.Col(
+		"verdict",
+	), labelled.Col(
+		"reason",
+	)
 	partition := []keel.Expr{tool, verdict}
-	ranked := keel.CTE("ranked", []string{"tool_name", "verdict", "reason", "calls", "total", "reason_rank"},
+	ranked := keel.CTE(
+		"ranked",
+		[]string{"tool_name", "verdict", "reason", "calls", "total", "reason_rank"},
 		labelled.Query().
 			Group(tool, verdict, reason).
 			Pick(
@@ -212,7 +220,8 @@ func verdictsQuery(req *agentports.ScorecardRequest) *keel.Query[keel.Row] {
 					keel.Count().Desc(),
 					reason.Asc(),
 				),
-			))
+			),
+	)
 
 	rank := ranked.Col("reason_rank")
 

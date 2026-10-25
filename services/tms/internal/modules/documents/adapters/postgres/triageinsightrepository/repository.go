@@ -148,7 +148,9 @@ func messages() *keel.Query[inboundmessage.InboundMessage] {
 	return inboundmessagedb.InboundMessages.Query()
 }
 
-func withReference(q *keel.Query[inboundmessage.InboundMessage]) *keel.Query[inboundmessage.InboundMessage] {
+func withReference(
+	q *keel.Query[inboundmessage.InboundMessage],
+) *keel.Query[inboundmessage.InboundMessage] {
 	m := inboundmessagedb.InboundMessages
 	sp := shipmentdb.Shipments
 

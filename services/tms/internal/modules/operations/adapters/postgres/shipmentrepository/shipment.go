@@ -912,10 +912,18 @@ func (r *repository) insertGraph(
 	if err := shipmentdb.Stops.CreateMany(ctx, db, graph.stops); err != nil {
 		return err
 	}
-	if err := shipmentdb.AdditionalCharges.CreateMany(ctx, db, graph.additionalCharges); err != nil {
+	if err := shipmentdb.AdditionalCharges.CreateMany(
+		ctx,
+		db,
+		graph.additionalCharges,
+	); err != nil {
 		return err
 	}
-	if err := shipmentdb.ChargeAllocations.CreateMany(ctx, db, graph.chargeAllocations); err != nil {
+	if err := shipmentdb.ChargeAllocations.CreateMany(
+		ctx,
+		db,
+		graph.chargeAllocations,
+	); err != nil {
 		return err
 	}
 
@@ -926,21 +934,30 @@ func (r *repository) PlanDuplicate(
 	ctx context.Context,
 	req *shipmentports.BulkDuplicateShipmentRequest,
 ) (*shipmentports.ShipmentDuplicatePlan, error) {
-	source, err := dbtx.Read(ctx, r.db, func(ctx context.Context) (*shipment.Shipment, error) {
-		return LoadShipmentGraphSource(ctx, r.db.Keel(ctx), req.TenantInfo, req.ShipmentID)
-	})
-	if err != nil {
-		return nil, err
-	}
+	return dbtx.Read(
+		ctx,
+		r.db,
+		func(ctx context.Context) (*shipmentports.ShipmentDuplicatePlan, error) {
+			source, err := LoadShipmentGraphSource(
+				ctx,
+				r.db.Keel(ctx),
+				req.TenantInfo,
+				req.ShipmentID,
+			)
+			if err != nil {
+				return nil, err
+			}
 
-	graph := buildDuplicatedShipmentGraph(
-		source,
-		make([]string, req.Count),
-		req.DateAnchor(timeutils.NowUnix()),
-		req.TenantInfo.UserID,
+			graph := buildDuplicatedShipmentGraph(
+				source,
+				make([]string, req.Count),
+				req.DateAnchor(timeutils.NowUnix()),
+				req.TenantInfo.UserID,
+			)
+
+			return &shipmentports.ShipmentDuplicatePlan{Source: source, Copies: graph.shipments}, nil
+		},
 	)
-
-	return &shipmentports.ShipmentDuplicatePlan{Source: source, Copies: graph.shipments}, nil
 }
 
 // ResolveSequenceCodes resolves the location and business-unit codes feeding

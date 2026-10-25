@@ -137,45 +137,45 @@ type ReplayAction struct {
 type Evaluation struct {
 	keel.Table `keel:"agent_evaluations"`
 
-	ID             pulid.ID `json:"id" keel:"id,pk,autoid:aeval_"`
+	ID             pulid.ID `json:"id"             keel:"id,pk,autoid:aeval_"`
 	BusinessUnitID pulid.ID `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
 	OrganizationID pulid.ID `json:"organizationId" keel:"organization_id,pk,tenant"`
 
 	AgentDefinitionID pulid.ID         `json:"agentDefinitionId" keel:"agent_definition_id"`
-	SourceRunID       pulid.ID         `json:"sourceRunId" keel:"source_run_id,nullzero"`
-	EvalCaseID        *pulid.ID        `json:"evalCaseId" keel:"eval_case_id"`
-	Status            EvaluationStatus `json:"status" keel:"status"`
-	Trigger           RunTrigger       `json:"trigger" keel:"trigger"`
-	SubjectType       SubjectType      `json:"subjectType" keel:"subject_type,nullzero"`
-	SubjectID         pulid.ID         `json:"subjectId" keel:"subject_id,nullzero"`
+	SourceRunID       pulid.ID         `json:"sourceRunId"       keel:"source_run_id,nullzero"`
+	EvalCaseID        *pulid.ID        `json:"evalCaseId"        keel:"eval_case_id"`
+	Status            EvaluationStatus `json:"status"            keel:"status"`
+	Trigger           RunTrigger       `json:"trigger"           keel:"trigger"`
+	SubjectType       SubjectType      `json:"subjectType"       keel:"subject_type,nullzero"`
+	SubjectID         pulid.ID         `json:"subjectId"         keel:"subject_id,nullzero"`
 
-	Input             string   `json:"input" keel:"input,nullzero"`
+	Input             string   `json:"input"             keel:"input,nullzero"`
 	DefinitionVersion int64    `json:"definitionVersion" keel:"definition_version"`
-	PromptVersion     string   `json:"promptVersion" keel:"prompt_version,nullzero"`
-	Model             string   `json:"model" keel:"model,nullzero"`
-	ProviderID        pulid.ID `json:"providerId" keel:"provider_id,nullzero"`
-	Reply             string   `json:"reply" keel:"reply,nullzero"`
+	PromptVersion     string   `json:"promptVersion"     keel:"prompt_version,nullzero"`
+	Model             string   `json:"model"             keel:"model,nullzero"`
+	ProviderID        pulid.ID `json:"providerId"        keel:"provider_id,nullzero"`
+	Reply             string   `json:"reply"             keel:"reply,nullzero"`
 
-	Actions           []ReplayAction    `json:"actions" keel:"actions,jsonb"`
-	Comparison        *ReplayComparison `json:"comparison" keel:"comparison,jsonb"`
+	Actions           []ReplayAction    `json:"actions"           keel:"actions,jsonb"`
+	Comparison        *ReplayComparison `json:"comparison"        keel:"comparison,jsonb"`
 	OriginalProposals int               `json:"originalProposals" keel:"original_proposals"`
-	ToolCallsUsed     int               `json:"toolCallsUsed" keel:"tool_calls_used"`
+	ToolCallsUsed     int               `json:"toolCallsUsed"     keel:"tool_calls_used"`
 
-	Checks      *CaseChecks   `json:"checks" keel:"checks,jsonb"`
-	Judge       *JudgeVerdict `json:"judge" keel:"judge,jsonb"`
-	CaseScore   *float64      `json:"caseScore" keel:"case_score"`
+	Checks      *CaseChecks   `json:"checks"      keel:"checks,jsonb"`
+	Judge       *JudgeVerdict `json:"judge"       keel:"judge,jsonb"`
+	CaseScore   *float64      `json:"caseScore"   keel:"case_score"`
 	Fingerprint *Fingerprint  `json:"fingerprint" keel:"fingerprint,jsonb"`
 
-	SuiteRunID   *pulid.ID `json:"suiteRunId" keel:"suite_run_id"`
+	SuiteRunID   *pulid.ID `json:"suiteRunId"   keel:"suite_run_id"`
 	SuiteOrdinal *int      `json:"suiteOrdinal" keel:"suite_ordinal"`
 
-	WorkflowID        string    `json:"workflowId" keel:"workflow_id,nullzero"`
-	ErrorMessage      string    `json:"errorMessage" keel:"error_message,nullzero"`
+	WorkflowID        string    `json:"workflowId"        keel:"workflow_id,nullzero"`
+	ErrorMessage      string    `json:"errorMessage"      keel:"error_message,nullzero"`
 	RequestedByUserID *pulid.ID `json:"requestedByUserId" keel:"requested_by_user_id"`
-	StartedAt         *int64    `json:"startedAt" keel:"started_at"`
-	CompletedAt       *int64    `json:"completedAt" keel:"completed_at"`
+	StartedAt         *int64    `json:"startedAt"         keel:"started_at"`
+	CompletedAt       *int64    `json:"completedAt"       keel:"completed_at"`
 
-	Version   int64 `json:"version" keel:"version,version"`
+	Version   int64 `json:"version"   keel:"version,version"`
 	CreatedAt int64 `json:"createdAt" keel:"created_at,autocreate"`
 	UpdatedAt int64 `json:"updatedAt" keel:"updated_at,autoupdate"`
 

@@ -36,41 +36,41 @@ const (
 type JurisdictionRule struct {
 	keel.Table `keel:"jurisdiction_rules"`
 
-	ID      pulid.ID `json:"id" keel:"id,pk,autoid:jr_"`
+	ID      pulid.ID `json:"id"      keel:"id,pk,autoid:jr_"`
 	StateID pulid.ID `json:"stateId" keel:"state_id"`
-	Status  Status   `json:"status" keel:"status"`
+	Status  Status   `json:"status"  keel:"status"`
 
-	MaxWidthFeet    float64 `json:"maxWidthFeet" keel:"max_width_feet"`
-	MaxHeightFeet   float64 `json:"maxHeightFeet" keel:"max_height_feet"`
-	MaxLengthFeet   float64 `json:"maxLengthFeet" keel:"max_length_feet"`
+	MaxWidthFeet    float64 `json:"maxWidthFeet"    keel:"max_width_feet"`
+	MaxHeightFeet   float64 `json:"maxHeightFeet"   keel:"max_height_feet"`
+	MaxLengthFeet   float64 `json:"maxLengthFeet"   keel:"max_length_feet"`
 	MaxWeightPounds int64   `json:"maxWeightPounds" keel:"max_weight_pounds"`
 
-	SuperloadWidthFeet    *float64 `json:"superloadWidthFeet" keel:"superload_width_feet"`
+	SuperloadWidthFeet    *float64 `json:"superloadWidthFeet"    keel:"superload_width_feet"`
 	SuperloadWeightPounds *int64   `json:"superloadWeightPounds" keel:"superload_weight_pounds"`
 
-	DaylightOnly       bool `json:"daylightOnly" keel:"daylight_only"`
+	DaylightOnly       bool `json:"daylightOnly"       keel:"daylight_only"`
 	RushHourRestricted bool `json:"rushHourRestricted" keel:"rush_hour_restricted"`
-	WeekendRestricted  bool `json:"weekendRestricted" keel:"weekend_restricted"`
-	HolidayRestricted  bool `json:"holidayRestricted" keel:"holiday_restricted"`
+	WeekendRestricted  bool `json:"weekendRestricted"  keel:"weekend_restricted"`
+	HolidayRestricted  bool `json:"holidayRestricted"  keel:"holiday_restricted"`
 
 	PermitLeadTimeDays int16               `json:"permitLeadTimeDays" keel:"permit_lead_time_days"`
 	PermitValidityDays int16               `json:"permitValidityDays" keel:"permit_validity_days"`
-	PermitBaseFee      decimal.NullDecimal `json:"permitBaseFee" keel:"permit_base_fee"`
-	PermitPerMileFee   decimal.NullDecimal `json:"permitPerMileFee" keel:"permit_per_mile_fee"`
+	PermitBaseFee      decimal.NullDecimal `json:"permitBaseFee"      keel:"permit_base_fee"`
+	PermitPerMileFee   decimal.NullDecimal `json:"permitPerMileFee"   keel:"permit_per_mile_fee"`
 
-	SourceNote        string            `json:"sourceNote" keel:"source_note,nullzero"`
-	SourceURL         string            `json:"sourceUrl" keel:"source_url,nullzero"`
+	SourceNote        string            `json:"sourceNote"        keel:"source_note,nullzero"`
+	SourceURL         string            `json:"sourceUrl"         keel:"source_url,nullzero"`
 	VerificationState VerificationState `json:"verificationState" keel:"verification_state"`
-	VerifiedAt        *int64            `json:"verifiedAt" keel:"verified_at"`
+	VerifiedAt        *int64            `json:"verifiedAt"        keel:"verified_at"`
 
 	EffectiveStartDate *int64 `json:"effectiveStartDate" keel:"effective_start_date"`
-	EffectiveEndDate   *int64 `json:"effectiveEndDate" keel:"effective_end_date"`
+	EffectiveEndDate   *int64 `json:"effectiveEndDate"   keel:"effective_end_date"`
 
-	Version   int64 `json:"version" keel:"version,version"`
+	Version   int64 `json:"version"   keel:"version,version"`
 	CreatedAt int64 `json:"createdAt" keel:"created_at,autocreate"`
 	UpdatedAt int64 `json:"updatedAt" keel:"updated_at,autoupdate"`
 
-	State            *usstate.UsState   `json:"state,omitempty" keel:"belongs:state_id"`
+	State            *usstate.UsState   `json:"state,omitempty"            keel:"belongs:state_id"`
 	EscortThresholds []*EscortThreshold `json:"escortThresholds,omitempty" keel:"many:jurisdiction_rule_id"`
 }
 

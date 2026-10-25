@@ -17,20 +17,20 @@ const (
 type Run struct {
 	keel.Table `keel:"distance_calculation_runs"`
 
-	ID              pulid.ID       `json:"id" keel:"id,pk,autoid:dcr_"`
-	BusinessUnitID  pulid.ID       `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
-	OrganizationID  pulid.ID       `json:"organizationId" keel:"organization_id,pk,tenant"`
-	ShipmentID      pulid.ID       `json:"shipmentId" keel:"shipment_id"`
-	ShipmentMoveID  pulid.ID       `json:"shipmentMoveId" keel:"shipment_move_id"`
-	Provider        string         `json:"provider" keel:"provider,nullzero"`
-	Source          string         `json:"source" keel:"source"`
-	RequestSummary  map[string]any `json:"requestSummary" keel:"request_summary,jsonb,nullzero"`
+	ID              pulid.ID       `json:"id"              keel:"id,pk,autoid:dcr_"`
+	BusinessUnitID  pulid.ID       `json:"businessUnitId"  keel:"business_unit_id,pk,tenant"`
+	OrganizationID  pulid.ID       `json:"organizationId"  keel:"organization_id,pk,tenant"`
+	ShipmentID      pulid.ID       `json:"shipmentId"      keel:"shipment_id"`
+	ShipmentMoveID  pulid.ID       `json:"shipmentMoveId"  keel:"shipment_move_id"`
+	Provider        string         `json:"provider"        keel:"provider,nullzero"`
+	Source          string         `json:"source"          keel:"source"`
+	RequestSummary  map[string]any `json:"requestSummary"  keel:"request_summary,jsonb,nullzero"`
 	ResponseSummary map[string]any `json:"responseSummary" keel:"response_summary,jsonb,nullzero"`
-	Status          string         `json:"status" keel:"status"`
-	ErrorCode       string         `json:"errorCode" keel:"error_code,nullzero"`
-	ErrorMessage    string         `json:"errorMessage" keel:"error_message,nullzero"`
-	LatencyMillis   int64          `json:"latencyMillis" keel:"latency_millis"`
-	CreatedAt       int64          `json:"createdAt" keel:"created_at,autocreate"`
+	Status          string         `json:"status"          keel:"status"`
+	ErrorCode       string         `json:"errorCode"       keel:"error_code,nullzero"`
+	ErrorMessage    string         `json:"errorMessage"    keel:"error_message,nullzero"`
+	LatencyMillis   int64          `json:"latencyMillis"   keel:"latency_millis"`
+	CreatedAt       int64          `json:"createdAt"       keel:"created_at,autocreate"`
 }
 
 func (r *Run) Validate(multiErr *errortypes.MultiError) {

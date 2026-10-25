@@ -15,17 +15,17 @@ import (
 type CasePages struct {
 	keel.Table `keel:"extraction_eval_case_pages"`
 
-	ID             pulid.ID `json:"id" keel:"id,pk,autoid:eecp_"`
+	ID             pulid.ID `json:"id"             keel:"id,pk,autoid:eecp_"`
 	BusinessUnitID pulid.ID `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
 	OrganizationID pulid.ID `json:"organizationId" keel:"organization_id,pk,tenant"`
 
-	CaseID           pulid.ID `json:"caseId" keel:"case_id"`
-	Pages            []Page   `json:"pages" keel:"pages,jsonb"`
-	PageCount        int      `json:"pageCount" keel:"page_count"`
-	InputHash        string   `json:"inputHash" keel:"input_hash"`
+	CaseID           pulid.ID `json:"caseId"           keel:"case_id"`
+	Pages            []Page   `json:"pages"            keel:"pages,jsonb"`
+	PageCount        int      `json:"pageCount"        keel:"page_count"`
+	InputHash        string   `json:"inputHash"        keel:"input_hash"`
 	ConverterVersion string   `json:"converterVersion" keel:"converter_version,nullzero"`
-	FrozenByID       pulid.ID `json:"frozenById" keel:"frozen_by_id"`
-	FrozenAt         int64    `json:"frozenAt" keel:"frozen_at"`
+	FrozenByID       pulid.ID `json:"frozenById"       keel:"frozen_by_id"`
+	FrozenAt         int64    `json:"frozenAt"         keel:"frozen_at"`
 
 	CreatedAt int64 `json:"createdAt" keel:"created_at,autocreate"`
 	UpdatedAt int64 `json:"updatedAt" keel:"updated_at,autoupdate"`

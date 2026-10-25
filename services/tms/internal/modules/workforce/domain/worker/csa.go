@@ -119,27 +119,27 @@ var (
 // inspection routinely produces several, in different BASICs, so they are rows
 // rather than a column on the event.
 type WorkerSafetyViolation struct {
-	keel.Table `                                                         keel:"worker_safety_violations"`
+	keel.Table `keel:"worker_safety_violations"`
 
-	ID             pulid.ID `json:"id" keel:"id,pk,autoid:wsvi_"`
+	ID             pulid.ID `json:"id"             keel:"id,pk,autoid:wsvi_"`
 	BusinessUnitID pulid.ID `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
 	OrganizationID pulid.ID `json:"organizationId" keel:"organization_id,pk,tenant"`
-	SafetyEventID  pulid.ID `json:"safetyEventId" keel:"safety_event_id"`
+	SafetyEventID  pulid.ID `json:"safetyEventId"  keel:"safety_event_id"`
 	// WorkerID is denormalised from the event so a per-driver violation list
 	// does not need the join. The event owns the date; nothing here does.
 	WorkerID pulid.ID `json:"workerId" keel:"worker_id"`
 
-	Basic       CSABasic `json:"basic" keel:"basic"`
-	Code        string   `json:"code" keel:"code,nullzero"`
+	Basic       CSABasic `json:"basic"       keel:"basic"`
+	Code        string   `json:"code"        keel:"code,nullzero"`
 	Description string   `json:"description" keel:"description"`
 	// SeverityWeight is the FMCSA weight, 1 to 10. Out of service adds two more
 	// when the BASIC is scored, which is why the flag stays beside it rather
 	// than being folded in — folding it in would make the weight unreadable
 	// against the published tables.
 	SeverityWeight int16 `json:"severityWeight" keel:"severity_weight"`
-	OutOfService   bool  `json:"outOfService" keel:"out_of_service"`
+	OutOfService   bool  `json:"outOfService"   keel:"out_of_service"`
 
-	Version   int64 `json:"version" keel:"version,version"`
+	Version   int64 `json:"version"   keel:"version,version"`
 	CreatedAt int64 `json:"createdAt" keel:"created_at,autocreate"`
 	UpdatedAt int64 `json:"updatedAt" keel:"updated_at,autoupdate"`
 

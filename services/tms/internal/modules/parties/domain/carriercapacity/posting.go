@@ -33,37 +33,37 @@ var (
 )
 
 type Posting struct {
-	keel.Table `                                                         keel:"carrier_capacity_postings"`
+	keel.Table `keel:"carrier_capacity_postings"`
 
-	ID                 pulid.ID            `json:"id" keel:"id,pk,autoid:ccp_"`
-	BusinessUnitID     pulid.ID            `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
-	OrganizationID     pulid.ID            `json:"organizationId" keel:"organization_id,pk,tenant"`
-	CarrierID          pulid.ID            `json:"carrierId" keel:"carrier_id"`
-	OriginLocationID   *pulid.ID           `json:"originLocationId" keel:"origin_location_id"`
-	OriginStateID      *pulid.ID           `json:"originStateId" keel:"origin_state_id"`
-	OriginRadiusMiles  *int                `json:"originRadiusMiles" keel:"origin_radius_miles"`
+	ID                 pulid.ID            `json:"id"                 keel:"id,pk,autoid:ccp_"`
+	BusinessUnitID     pulid.ID            `json:"businessUnitId"     keel:"business_unit_id,pk,tenant"`
+	OrganizationID     pulid.ID            `json:"organizationId"     keel:"organization_id,pk,tenant"`
+	CarrierID          pulid.ID            `json:"carrierId"          keel:"carrier_id"`
+	OriginLocationID   *pulid.ID           `json:"originLocationId"   keel:"origin_location_id"`
+	OriginStateID      *pulid.ID           `json:"originStateId"      keel:"origin_state_id"`
+	OriginRadiusMiles  *int                `json:"originRadiusMiles"  keel:"origin_radius_miles"`
 	DestinationStateID *pulid.ID           `json:"destinationStateId" keel:"destination_state_id"`
-	EquipmentTypeID    *pulid.ID           `json:"equipmentTypeId" keel:"equipment_type_id"`
-	AvailableFrom      int64               `json:"availableFrom" keel:"available_from"`
-	AvailableTo        int64               `json:"availableTo" keel:"available_to"`
-	TruckCount         int                 `json:"truckCount" keel:"truck_count"`
-	RateMethod         RateMethod          `json:"rateMethod" keel:"rate_method"`
-	Rate               decimal.NullDecimal `json:"rate" keel:"rate"`
-	Source             Source              `json:"source" keel:"source"`
-	Notes              string              `json:"notes" keel:"notes,nullzero"`
-	SearchVector       string              `json:"-" keel:"search_vector,tsvector,readonly,noselect"`
-	Rank               string              `json:"-" keel:"rank,computed"`
-	Version            int64               `json:"version" keel:"version,version"`
-	CreatedAt          int64               `json:"createdAt" keel:"created_at,autocreate"`
-	UpdatedAt          int64               `json:"updatedAt" keel:"updated_at,autoupdate"`
+	EquipmentTypeID    *pulid.ID           `json:"equipmentTypeId"    keel:"equipment_type_id"`
+	AvailableFrom      int64               `json:"availableFrom"      keel:"available_from"`
+	AvailableTo        int64               `json:"availableTo"        keel:"available_to"`
+	TruckCount         int                 `json:"truckCount"         keel:"truck_count"`
+	RateMethod         RateMethod          `json:"rateMethod"         keel:"rate_method"`
+	Rate               decimal.NullDecimal `json:"rate"               keel:"rate"`
+	Source             Source              `json:"source"             keel:"source"`
+	Notes              string              `json:"notes"              keel:"notes,nullzero"`
+	SearchVector       string              `json:"-"                  keel:"search_vector,tsvector,readonly,noselect"`
+	Rank               string              `json:"-"                  keel:"rank,computed"`
+	Version            int64               `json:"version"            keel:"version,version"`
+	CreatedAt          int64               `json:"createdAt"          keel:"created_at,autocreate"`
+	UpdatedAt          int64               `json:"updatedAt"          keel:"updated_at,autoupdate"`
 
 	BusinessUnit     *tenant.BusinessUnit         `json:"businessUnit,omitempty"`
 	Organization     *tenant.Organization         `json:"organization,omitempty"`
-	Carrier          *carrier.Carrier             `json:"carrier,omitempty" keel:"belongs:carrier_id"`
-	OriginLocation   *location.Location           `json:"originLocation,omitempty" keel:"belongs:origin_location_id"`
-	OriginState      *usstate.UsState             `json:"originState,omitempty" keel:"belongs:origin_state_id"`
+	Carrier          *carrier.Carrier             `json:"carrier,omitempty"          keel:"belongs:carrier_id"`
+	OriginLocation   *location.Location           `json:"originLocation,omitempty"   keel:"belongs:origin_location_id"`
+	OriginState      *usstate.UsState             `json:"originState,omitempty"      keel:"belongs:origin_state_id"`
 	DestinationState *usstate.UsState             `json:"destinationState,omitempty" keel:"belongs:destination_state_id"`
-	EquipmentType    *equipmenttype.EquipmentType `json:"equipmentType,omitempty" keel:"belongs:equipment_type_id"`
+	EquipmentType    *equipmenttype.EquipmentType `json:"equipmentType,omitempty"    keel:"belongs:equipment_type_id"`
 }
 
 func (p *Posting) BeforeCreate(_ context.Context) error {

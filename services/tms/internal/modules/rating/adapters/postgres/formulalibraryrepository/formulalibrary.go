@@ -62,7 +62,11 @@ func (r *repository) Create(
 	entity *formulalibrary.FormulaLibrary,
 ) (*formulalibrary.FormulaLibrary, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*formulalibrary.FormulaLibrary, error) {
-		if err := formulalibrarydb.FormulaLibraries.Create(ctx, r.db.Keel(ctx), entity); err != nil {
+		if err := formulalibrarydb.FormulaLibraries.Create(
+			ctx,
+			r.db.Keel(ctx),
+			entity,
+		); err != nil {
 			r.l.Error("failed to create formula library",
 				zap.String("name", entity.Name),
 				zap.Error(err),

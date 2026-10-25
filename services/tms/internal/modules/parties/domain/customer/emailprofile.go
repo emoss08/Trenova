@@ -11,24 +11,24 @@ import (
 )
 
 type CustomerEmailProfile struct {
-	keel.Table `                                                       keel:"customer_email_profiles"`
+	keel.Table `keel:"customer_email_profiles"`
 
-	ID             pulid.ID `json:"id" keel:"id,pk,autoid:cem_"`
+	ID             pulid.ID `json:"id"             keel:"id,pk,autoid:cem_"`
 	BusinessUnitID pulid.ID `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
 	OrganizationID pulid.ID `json:"organizationId" keel:"organization_id,pk,tenant"`
-	CustomerID     pulid.ID `json:"customerId" keel:"customer_id,pk"`
+	CustomerID     pulid.ID `json:"customerId"     keel:"customer_id,pk"`
 
-	Subject               string `json:"subject" keel:"subject,nullzero"`
-	Comment               string `json:"comment" keel:"comment,nullzero"`
-	ToRecipients          string `json:"toRecipients" keel:"to_recipients,nullzero"`
-	CCRecipients          string `json:"ccRecipients" keel:"cc_recipients,nullzero"`
-	BCCRecipients         string `json:"bccRecipients" keel:"bcc_recipients,nullzero"`
-	AttachmentName        string `json:"attachmentName" keel:"attachment_name,nullzero"`
-	ReadReceipt           bool   `json:"readReceipt" keel:"read_receipt"`
+	Subject               string `json:"subject"               keel:"subject,nullzero"`
+	Comment               string `json:"comment"               keel:"comment,nullzero"`
+	ToRecipients          string `json:"toRecipients"          keel:"to_recipients,nullzero"`
+	CCRecipients          string `json:"ccRecipients"          keel:"cc_recipients,nullzero"`
+	BCCRecipients         string `json:"bccRecipients"         keel:"bcc_recipients,nullzero"`
+	AttachmentName        string `json:"attachmentName"        keel:"attachment_name,nullzero"`
+	ReadReceipt           bool   `json:"readReceipt"           keel:"read_receipt"`
 	IncludeShipmentDetail bool   `json:"includeShipmentDetail" keel:"include_shipment_detail"`
-	Version               int64  `json:"version" keel:"version,version"`
-	CreatedAt             int64  `json:"createdAt" keel:"created_at,autocreate"`
-	UpdatedAt             int64  `json:"updatedAt" keel:"updated_at,autoupdate"`
+	Version               int64  `json:"version"               keel:"version,version"`
+	CreatedAt             int64  `json:"createdAt"             keel:"created_at,autocreate"`
+	UpdatedAt             int64  `json:"updatedAt"             keel:"updated_at,autoupdate"`
 
 	// Relationships
 	BusinessUnit *tenant.BusinessUnit `json:"-"`

@@ -140,7 +140,7 @@ func splitList(value string) []any {
 
 // describeParameterShape says what one parameter will accept, in the words a
 // model needs to produce it: the type, and whether it is one value or a list.
-func describeParameterShape(parameter ir.Parameter) string {
+func describeParameterShape(parameter *ir.Parameter) string {
 	kind := string(parameter.Type)
 	if kind == "" {
 		kind = "value"

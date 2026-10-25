@@ -14,13 +14,13 @@ import (
 type ResourcePermission struct {
 	keel.Table `keel:"resource_permissions"`
 
-	ID         pulid.ID    `json:"id" keel:"id,pk,autoid:rp_"`
-	RoleID     pulid.ID    `json:"roleId" keel:"role_id"`
-	Resource   string      `json:"resource" keel:"resource"`
+	ID         pulid.ID    `json:"id"         keel:"id,pk,autoid:rp_"`
+	RoleID     pulid.ID    `json:"roleId"     keel:"role_id"`
+	Resource   string      `json:"resource"   keel:"resource"`
 	Operations []Operation `json:"operations" keel:"operations"`
-	DataScope  DataScope   `json:"dataScope" keel:"data_scope"`
-	CreatedAt  int64       `json:"createdAt" keel:"created_at,autocreate"`
-	UpdatedAt  int64       `json:"updatedAt" keel:"updated_at,autoupdate"`
+	DataScope  DataScope   `json:"dataScope"  keel:"data_scope"`
+	CreatedAt  int64       `json:"createdAt"  keel:"created_at,autocreate"`
+	UpdatedAt  int64       `json:"updatedAt"  keel:"updated_at,autoupdate"`
 }
 
 func (rp *ResourcePermission) BeforeCreate(ctx context.Context) error {

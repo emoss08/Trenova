@@ -78,32 +78,32 @@ func (fc FreightClass) IsValid() bool {
 
 // Freight commodities
 type Commodity struct {
-	keel.Table `                                           keel:"commodities,report=Freight"`
+	keel.Table `keel:"commodities,report=Freight"`
 
-	ID                     pulid.ID           `json:"id" keel:"id,pk,autoid:com_"`
-	BusinessUnitID         pulid.ID           `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
-	OrganizationID         pulid.ID           `json:"organizationId" keel:"organization_id,pk,tenant"`
-	HazardousMaterialID    pulid.ID           `json:"hazardousMaterialId" keel:"hazardous_material_id,nullzero"`
-	Status                 domaintypes.Status `json:"status" keel:"status"`
-	Name                   string             `json:"name" keel:"name"`
-	Description            string             `json:"description" keel:"description"`
-	MinTemperature         *int               `json:"minTemperature" keel:"min_temperature,dimension"`
-	MaxTemperature         *int               `json:"maxTemperature" keel:"max_temperature,dimension"`
-	WeightPerUnit          *float64           `json:"weightPerUnit" keel:"weight_per_unit"`
-	LinearFeetPerUnit      *float64           `json:"linearFeetPerUnit" keel:"linear_feet_per_unit"`
-	LengthPerUnit          *float64           `json:"lengthPerUnit" keel:"length_per_unit"`
-	WidthPerUnit           *float64           `json:"widthPerUnit" keel:"width_per_unit"`
-	HeightPerUnit          *float64           `json:"heightPerUnit" keel:"height_per_unit"`
+	ID                     pulid.ID           `json:"id"                     keel:"id,pk,autoid:com_"`
+	BusinessUnitID         pulid.ID           `json:"businessUnitId"         keel:"business_unit_id,pk,tenant"`
+	OrganizationID         pulid.ID           `json:"organizationId"         keel:"organization_id,pk,tenant"`
+	HazardousMaterialID    pulid.ID           `json:"hazardousMaterialId"    keel:"hazardous_material_id,nullzero"`
+	Status                 domaintypes.Status `json:"status"                 keel:"status"`
+	Name                   string             `json:"name"                   keel:"name"`
+	Description            string             `json:"description"            keel:"description"`
+	MinTemperature         *int               `json:"minTemperature"         keel:"min_temperature,dimension"`
+	MaxTemperature         *int               `json:"maxTemperature"         keel:"max_temperature,dimension"`
+	WeightPerUnit          *float64           `json:"weightPerUnit"          keel:"weight_per_unit"`
+	LinearFeetPerUnit      *float64           `json:"linearFeetPerUnit"      keel:"linear_feet_per_unit"`
+	LengthPerUnit          *float64           `json:"lengthPerUnit"          keel:"length_per_unit"`
+	WidthPerUnit           *float64           `json:"widthPerUnit"           keel:"width_per_unit"`
+	HeightPerUnit          *float64           `json:"heightPerUnit"          keel:"height_per_unit"`
 	MaxQuantityPerShipment *float64           `json:"maxQuantityPerShipment" keel:"max_quantity_per_shipment"`
-	FreightClass           FreightClass       `json:"freightClass" keel:"freight_class,nullzero"`
-	LoadingInstructions    string             `json:"loadingInstructions" keel:"loading_instructions,nullzero"`
-	Stackable              bool               `json:"stackable" keel:"stackable"`
-	Fragile                bool               `json:"fragile" keel:"fragile"`
-	SearchVector           string             `json:"-" keel:"search_vector,tsvector,readonly,noselect"`
-	Rank                   string             `json:"-" keel:"rank,computed"`
-	Version                int64              `json:"version" keel:"version,version"`
-	CreatedAt              int64              `json:"createdAt" keel:"created_at,autocreate"`
-	UpdatedAt              int64              `json:"updatedAt" keel:"updated_at,autoupdate"`
+	FreightClass           FreightClass       `json:"freightClass"           keel:"freight_class,nullzero"`
+	LoadingInstructions    string             `json:"loadingInstructions"    keel:"loading_instructions,nullzero"`
+	Stackable              bool               `json:"stackable"              keel:"stackable"`
+	Fragile                bool               `json:"fragile"                keel:"fragile"`
+	SearchVector           string             `json:"-"                      keel:"search_vector,tsvector,readonly,noselect"`
+	Rank                   string             `json:"-"                      keel:"rank,computed"`
+	Version                int64              `json:"version"                keel:"version,version"`
+	CreatedAt              int64              `json:"createdAt"              keel:"created_at,autocreate"`
+	UpdatedAt              int64              `json:"updatedAt"              keel:"updated_at,autoupdate"`
 
 	BusinessUnit      *tenant.BusinessUnit                 `json:"businessUnit,omitempty"`
 	Organization      *tenant.Organization                 `json:"organization,omitempty"`

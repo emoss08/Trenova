@@ -13,35 +13,35 @@ import (
 type EDIPartnerDocumentProfile struct {
 	keel.Table `keel:"edi_partner_document_profiles"`
 
-	ID                           pulid.ID             `json:"id" keel:"id,pk,autoid:edidp_"`
-	BusinessUnitID               pulid.ID             `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
-	OrganizationID               pulid.ID             `json:"organizationId" keel:"organization_id,pk,tenant"`
-	EDIPartnerID                 pulid.ID             `json:"ediPartnerId" keel:"edi_partner_id"`
-	DocumentTypeID               pulid.ID             `json:"documentTypeId" keel:"document_type_id"`
-	TemplateID                   pulid.ID             `json:"templateId" keel:"template_id"`
-	TemplateVersionID            pulid.ID             `json:"templateVersionId" keel:"template_version_id,nullzero"`
-	Name                         string               `json:"name" keel:"name"`
-	Status                       DocumentStatus       `json:"status" keel:"status"`
-	Direction                    DocumentDirection    `json:"direction" keel:"direction"`
-	Standard                     EDIStandard          `json:"standard" keel:"standard"`
-	TransactionSet               TransactionSet       `json:"transactionSet" keel:"transaction_set"`
-	X12VersionOverride           string               `json:"x12VersionOverride" keel:"x12_version_override,nullzero"`
-	FunctionalGroupID            string               `json:"functionalGroupId" keel:"functional_group_id"`
-	Envelope                     X12EnvelopeSettings  `json:"envelope" keel:"envelope,jsonb"`
-	Acknowledgment               AcknowledgmentConfig `json:"acknowledgment" keel:"acknowledgment,jsonb"`
-	ValidationMode               ValidationMode       `json:"validationMode" keel:"validation_mode"`
-	PartnerSettings              map[string]any       `json:"partnerSettings" keel:"partner_settings,jsonb"`
-	PartnerSettingsSchemaID      pulid.ID             `json:"partnerSettingsSchemaId" keel:"partner_settings_schema_id,nullzero"`
+	ID                           pulid.ID             `json:"id"                           keel:"id,pk,autoid:edidp_"`
+	BusinessUnitID               pulid.ID             `json:"businessUnitId"               keel:"business_unit_id,pk,tenant"`
+	OrganizationID               pulid.ID             `json:"organizationId"               keel:"organization_id,pk,tenant"`
+	EDIPartnerID                 pulid.ID             `json:"ediPartnerId"                 keel:"edi_partner_id"`
+	DocumentTypeID               pulid.ID             `json:"documentTypeId"               keel:"document_type_id"`
+	TemplateID                   pulid.ID             `json:"templateId"                   keel:"template_id"`
+	TemplateVersionID            pulid.ID             `json:"templateVersionId"            keel:"template_version_id,nullzero"`
+	Name                         string               `json:"name"                         keel:"name"`
+	Status                       DocumentStatus       `json:"status"                       keel:"status"`
+	Direction                    DocumentDirection    `json:"direction"                    keel:"direction"`
+	Standard                     EDIStandard          `json:"standard"                     keel:"standard"`
+	TransactionSet               TransactionSet       `json:"transactionSet"               keel:"transaction_set"`
+	X12VersionOverride           string               `json:"x12VersionOverride"           keel:"x12_version_override,nullzero"`
+	FunctionalGroupID            string               `json:"functionalGroupId"            keel:"functional_group_id"`
+	Envelope                     X12EnvelopeSettings  `json:"envelope"                     keel:"envelope,jsonb"`
+	Acknowledgment               AcknowledgmentConfig `json:"acknowledgment"               keel:"acknowledgment,jsonb"`
+	ValidationMode               ValidationMode       `json:"validationMode"               keel:"validation_mode"`
+	PartnerSettings              map[string]any       `json:"partnerSettings"              keel:"partner_settings,jsonb"`
+	PartnerSettingsSchemaID      pulid.ID             `json:"partnerSettingsSchemaId"      keel:"partner_settings_schema_id,nullzero"`
 	PartnerSettingsSchemaVersion int64                `json:"partnerSettingsSchemaVersion" keel:"partner_settings_schema_version,nullzero"`
-	Version                      int64                `json:"version" keel:"version,version"`
-	CreatedAt                    int64                `json:"createdAt" keel:"created_at,autocreate"`
-	UpdatedAt                    int64                `json:"updatedAt" keel:"updated_at,autoupdate"`
+	Version                      int64                `json:"version"                      keel:"version,version"`
+	CreatedAt                    int64                `json:"createdAt"                    keel:"created_at,autocreate"`
+	UpdatedAt                    int64                `json:"updatedAt"                    keel:"updated_at,autoupdate"`
 
-	Partner               *EDIPartner              `json:"partner,omitempty" keel:"belongs:edi_partner_id"`
-	DocumentType          *EDIDocumentType         `json:"documentType,omitempty" keel:"belongs:document_type_id"`
+	Partner               *EDIPartner              `json:"partner,omitempty"               keel:"belongs:edi_partner_id"`
+	DocumentType          *EDIDocumentType         `json:"documentType,omitempty"          keel:"belongs:document_type_id"`
 	PartnerSettingsSchema *EDIPartnerSettingSchema `json:"partnerSettingsSchema,omitempty" keel:"belongs:partner_settings_schema_id"`
-	Template              *EDITemplate             `json:"template,omitempty" keel:"belongs:template_id"`
-	TemplateVersion       *EDITemplateVersion      `json:"templateVersion,omitempty" keel:"belongs:template_version_id"`
+	Template              *EDITemplate             `json:"template,omitempty"              keel:"belongs:template_id"`
+	TemplateVersion       *EDITemplateVersion      `json:"templateVersion,omitempty"       keel:"belongs:template_version_id"`
 }
 
 func (p *EDIPartnerDocumentProfile) BeforeUpdate(ctx context.Context) error {
@@ -108,18 +108,18 @@ func FunctionalGroupDefault(transactionSet TransactionSet) string {
 type EDIControlNumberSequence struct {
 	keel.Table `keel:"edi_control_number_sequences"`
 
-	ID             pulid.ID          `json:"id" keel:"id,pk,autoid:edicn_"`
+	ID             pulid.ID          `json:"id"             keel:"id,pk,autoid:edicn_"`
 	BusinessUnitID pulid.ID          `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
 	OrganizationID pulid.ID          `json:"organizationId" keel:"organization_id,pk,tenant"`
-	EDIPartnerID   pulid.ID          `json:"ediPartnerId" keel:"edi_partner_id"`
+	EDIPartnerID   pulid.ID          `json:"ediPartnerId"   keel:"edi_partner_id"`
 	DocumentTypeID pulid.ID          `json:"documentTypeId" keel:"document_type_id"`
-	Kind           ControlNumberKind `json:"kind" keel:"kind"`
-	NextValue      int64             `json:"nextValue" keel:"next_value"`
-	MinValue       int64             `json:"minValue" keel:"min_value"`
-	MaxValue       int64             `json:"maxValue" keel:"max_value"`
-	Version        int64             `json:"version" keel:"version,version"`
-	CreatedAt      int64             `json:"createdAt" keel:"created_at,autocreate"`
-	UpdatedAt      int64             `json:"updatedAt" keel:"updated_at,autoupdate"`
+	Kind           ControlNumberKind `json:"kind"           keel:"kind"`
+	NextValue      int64             `json:"nextValue"      keel:"next_value"`
+	MinValue       int64             `json:"minValue"       keel:"min_value"`
+	MaxValue       int64             `json:"maxValue"       keel:"max_value"`
+	Version        int64             `json:"version"        keel:"version,version"`
+	CreatedAt      int64             `json:"createdAt"      keel:"created_at,autocreate"`
+	UpdatedAt      int64             `json:"updatedAt"      keel:"updated_at,autoupdate"`
 }
 
 func (s *EDIControlNumberSequence) BeforeUpdate(ctx context.Context) error {

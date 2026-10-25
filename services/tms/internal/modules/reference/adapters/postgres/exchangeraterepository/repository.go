@@ -106,7 +106,11 @@ func (r *repository) CreateSettlementQuote(
 		req.Quote.OrganizationID = req.TenantInfo.OrgID
 		req.Quote.BusinessUnitID = req.TenantInfo.BuID
 
-		if err := exchangeratedb.SettlementQuotes.Create(ctx, r.db.Keel(ctx), req.Quote); err != nil {
+		if err := exchangeratedb.SettlementQuotes.Create(
+			ctx,
+			r.db.Keel(ctx),
+			req.Quote,
+		); err != nil {
 			r.l.Error("failed to create settlement quote", zap.Error(err))
 			return nil, settlementQuoteErrors.Map(err, req.Quote.ID.String())
 		}

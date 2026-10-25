@@ -12,30 +12,30 @@ import (
 )
 
 type InvoiceAdjustmentBatch struct {
-	keel.Table `                                                          keel:"invoice_adjustment_batches"`
+	keel.Table `keel:"invoice_adjustment_batches"`
 
-	ID               pulid.ID       `json:"id" keel:"id,pk,autoid:iadjb_"`
-	OrganizationID   pulid.ID       `json:"organizationId" keel:"organization_id,pk,tenant"`
-	BusinessUnitID   pulid.ID       `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
-	IdempotencyKey   string         `json:"idempotencyKey" keel:"idempotency_key"`
-	Status           BatchStatus    `json:"status" keel:"status"`
-	TotalCount       int            `json:"totalCount" keel:"total_count"`
-	ProcessedCount   int            `json:"processedCount" keel:"processed_count"`
-	SucceededCount   int            `json:"succeededCount" keel:"succeeded_count"`
-	FailedCount      int            `json:"failedCount" keel:"failed_count"`
-	SubmittedByID    pulid.ID       `json:"submittedById" keel:"submitted_by_id,nullzero"`
-	SubmittedAt      *int64         `json:"submittedAt" keel:"submitted_at"`
-	SubmittedByName  string         `json:"submittedByName" keel:"submitted_by_name,computed"`
-	PendingCount     int            `json:"pendingCount" keel:"pending_count,computed"`
-	LastFailure      string         `json:"lastFailure" keel:"last_failure,computed"`
+	ID               pulid.ID       `json:"id"               keel:"id,pk,autoid:iadjb_"`
+	OrganizationID   pulid.ID       `json:"organizationId"   keel:"organization_id,pk,tenant"`
+	BusinessUnitID   pulid.ID       `json:"businessUnitId"   keel:"business_unit_id,pk,tenant"`
+	IdempotencyKey   string         `json:"idempotencyKey"   keel:"idempotency_key"`
+	Status           BatchStatus    `json:"status"           keel:"status"`
+	TotalCount       int            `json:"totalCount"       keel:"total_count"`
+	ProcessedCount   int            `json:"processedCount"   keel:"processed_count"`
+	SucceededCount   int            `json:"succeededCount"   keel:"succeeded_count"`
+	FailedCount      int            `json:"failedCount"      keel:"failed_count"`
+	SubmittedByID    pulid.ID       `json:"submittedById"    keel:"submitted_by_id,nullzero"`
+	SubmittedAt      *int64         `json:"submittedAt"      keel:"submitted_at"`
+	SubmittedByName  string         `json:"submittedByName"  keel:"submitted_by_name,computed"`
+	PendingCount     int            `json:"pendingCount"     keel:"pending_count,computed"`
+	LastFailure      string         `json:"lastFailure"      keel:"last_failure,computed"`
 	LastFailureCount int            `json:"lastFailureCount" keel:"last_failure_count,computed"`
-	Metadata         map[string]any `json:"metadata" keel:"metadata,jsonb"`
-	Version          int64          `json:"version" keel:"version,version"`
-	CreatedAt        int64          `json:"createdAt" keel:"created_at,autocreate"`
-	UpdatedAt        int64          `json:"updatedAt" keel:"updated_at,autoupdate"`
+	Metadata         map[string]any `json:"metadata"         keel:"metadata,jsonb"`
+	Version          int64          `json:"version"          keel:"version,version"`
+	CreatedAt        int64          `json:"createdAt"        keel:"created_at,autocreate"`
+	UpdatedAt        int64          `json:"updatedAt"        keel:"updated_at,autoupdate"`
 
 	Items       []*InvoiceAdjustmentBatchItem `json:"items,omitempty" keel:"many:batch_id"`
-	SubmittedBy *tenant.User                  `json:"-" keel:"belongs:submitted_by_id"`
+	SubmittedBy *tenant.User                  `json:"-"               keel:"belongs:submitted_by_id"`
 }
 
 func (b *InvoiceAdjustmentBatch) BeforeCreate(_ context.Context) error {
@@ -47,21 +47,21 @@ func (b *InvoiceAdjustmentBatch) BeforeCreate(_ context.Context) error {
 }
 
 type InvoiceAdjustmentBatchItem struct {
-	keel.Table `                                                               keel:"invoice_adjustment_batch_items"`
+	keel.Table `keel:"invoice_adjustment_batch_items"`
 
-	ID             pulid.ID        `json:"id" keel:"id,pk,autoid:iadjbi_"`
+	ID             pulid.ID        `json:"id"             keel:"id,pk,autoid:iadjbi_"`
 	OrganizationID pulid.ID        `json:"organizationId" keel:"organization_id,pk,tenant"`
 	BusinessUnitID pulid.ID        `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
-	BatchID        pulid.ID        `json:"batchId" keel:"batch_id"`
-	AdjustmentID   pulid.ID        `json:"adjustmentId" keel:"adjustment_id,nullzero"`
-	InvoiceID      pulid.ID        `json:"invoiceId" keel:"invoice_id"`
+	BatchID        pulid.ID        `json:"batchId"        keel:"batch_id"`
+	AdjustmentID   pulid.ID        `json:"adjustmentId"   keel:"adjustment_id,nullzero"`
+	InvoiceID      pulid.ID        `json:"invoiceId"      keel:"invoice_id"`
 	IdempotencyKey string          `json:"idempotencyKey" keel:"idempotency_key"`
-	Status         BatchItemStatus `json:"status" keel:"status"`
-	ErrorMessage   string          `json:"errorMessage" keel:"error_message,nullzero"`
+	Status         BatchItemStatus `json:"status"         keel:"status"`
+	ErrorMessage   string          `json:"errorMessage"   keel:"error_message,nullzero"`
 	RequestPayload map[string]any  `json:"requestPayload" keel:"request_payload,jsonb"`
-	ResultPayload  map[string]any  `json:"resultPayload" keel:"result_payload,jsonb"`
-	CreatedAt      int64           `json:"createdAt" keel:"created_at,autocreate"`
-	UpdatedAt      int64           `json:"updatedAt" keel:"updated_at,autoupdate"`
+	ResultPayload  map[string]any  `json:"resultPayload"  keel:"result_payload,jsonb"`
+	CreatedAt      int64           `json:"createdAt"      keel:"created_at,autocreate"`
+	UpdatedAt      int64           `json:"updatedAt"      keel:"updated_at,autoupdate"`
 }
 
 func (i *InvoiceAdjustmentBatchItem) BeforeCreate(_ context.Context) error {

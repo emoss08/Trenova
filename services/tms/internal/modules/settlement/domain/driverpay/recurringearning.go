@@ -3,6 +3,8 @@ package driverpay
 import (
 	"context"
 
+	"github.com/emoss08/trenova/shared/money"
+
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
 	"github.com/emoss08/trenova/pkg/domaintypes"
@@ -20,29 +22,29 @@ var (
 
 // Standing earnings such as per diem and retention bonuses
 type RecurringEarning struct {
-	keel.Table `                                                   keel:"recurring_earnings,report=Payroll"`
+	keel.Table `keel:"recurring_earnings,report=Payroll"`
 
-	ID              pulid.ID         `json:"id" keel:"id,pk,autoid:rern_"`
-	BusinessUnitID  pulid.ID         `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
-	OrganizationID  pulid.ID         `json:"organizationId" keel:"organization_id,pk,tenant"`
-	WorkerID        pulid.ID         `json:"workerId" keel:"worker_id"`
-	PayCodeID       pulid.ID         `json:"payCodeId" keel:"pay_code_id"`
-	Status          EarningStatus    `json:"status" keel:"status"`
-	Kind            EarningKind      `json:"kind" keel:"kind"`
-	Frequency       EarningFrequency `json:"frequency" keel:"frequency"`
-	Description     string           `json:"description" keel:"description"`
-	AmountMinor     int64            `json:"amountMinor" keel:"amount_minor,label=Amount (Minor)"`
-	TotalCapMinor   *int64           `json:"totalCapMinor" keel:"total_cap_minor,label=Total Cap (Minor)"`
+	ID              pulid.ID         `json:"id"              keel:"id,pk,autoid:rern_"`
+	BusinessUnitID  pulid.ID         `json:"businessUnitId"  keel:"business_unit_id,pk,tenant"`
+	OrganizationID  pulid.ID         `json:"organizationId"  keel:"organization_id,pk,tenant"`
+	WorkerID        pulid.ID         `json:"workerId"        keel:"worker_id"`
+	PayCodeID       pulid.ID         `json:"payCodeId"       keel:"pay_code_id"`
+	Status          EarningStatus    `json:"status"          keel:"status"`
+	Kind            EarningKind      `json:"kind"            keel:"kind"`
+	Frequency       EarningFrequency `json:"frequency"       keel:"frequency"`
+	Description     string           `json:"description"     keel:"description"`
+	AmountMinor     int64            `json:"amountMinor"     keel:"amount_minor,label=Amount (Minor)"`
+	TotalCapMinor   *int64           `json:"totalCapMinor"   keel:"total_cap_minor,label=Total Cap (Minor)"`
 	PaidToDateMinor int64            `json:"paidToDateMinor" keel:"paid_to_date_minor,label=Paid to Date (Minor)"`
-	StartDate       int64            `json:"startDate" keel:"start_date,label=Starts"`
-	EndDate         *int64           `json:"endDate" keel:"end_date,label=Ends"`
-	CurrencyCode    string           `json:"currencyCode" keel:"currency_code,label=Currency"`
-	CreatedByID     pulid.ID         `json:"createdById" keel:"created_by_id,nullzero"`
-	Version         int64            `json:"version" keel:"version,version"`
-	CreatedAt       int64            `json:"createdAt" keel:"created_at,autocreate"`
-	UpdatedAt       int64            `json:"updatedAt" keel:"updated_at,autoupdate"`
+	StartDate       int64            `json:"startDate"       keel:"start_date,label=Starts"`
+	EndDate         *int64           `json:"endDate"         keel:"end_date,label=Ends"`
+	CurrencyCode    string           `json:"currencyCode"    keel:"currency_code,label=Currency"`
+	CreatedByID     pulid.ID         `json:"createdById"     keel:"created_by_id,nullzero"`
+	Version         int64            `json:"version"         keel:"version,version"`
+	CreatedAt       int64            `json:"createdAt"       keel:"created_at,autocreate"`
+	UpdatedAt       int64            `json:"updatedAt"       keel:"updated_at,autoupdate"`
 
-	Worker  *worker.Worker `json:"worker,omitempty" keel:"belongs:worker_id,label=Driver"`
+	Worker  *worker.Worker `json:"worker,omitempty"  keel:"belongs:worker_id,label=Driver"`
 	PayCode *PayCode       `json:"payCode,omitempty" keel:"belongs:pay_code_id"`
 }
 
@@ -143,7 +145,7 @@ func (r *RecurringEarning) BeforeCreate(ctx context.Context) error {
 		r.Frequency = EarningFrequencyEverySettlement
 	}
 	if r.CurrencyCode == "" {
-		r.CurrencyCode = "USD"
+		r.CurrencyCode = money.DefaultCurrencyCode
 	}
 
 	return nil

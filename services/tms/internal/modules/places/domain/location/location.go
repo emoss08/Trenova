@@ -26,39 +26,39 @@ var (
 
 // Physical pickup, delivery, and facility locations
 type Location struct {
-	keel.Table           `                                         keel:"locations,report=Parties"`
-	ID                   pulid.ID           `json:"id" keel:"id,pk,autoid:loc_"`
-	BusinessUnitID       pulid.ID           `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
-	OrganizationID       pulid.ID           `json:"organizationId" keel:"organization_id,pk,tenant"`
-	LocationCategoryID   pulid.ID           `json:"locationCategoryId" keel:"location_category_id"`
-	StateID              pulid.ID           `json:"stateId" keel:"state_id"`
-	Status               domaintypes.Status `json:"status" keel:"status"`
-	Code                 string             `json:"code" keel:"code"`
-	Name                 string             `json:"name" keel:"name,nullzero"`
-	Description          string             `json:"description" keel:"description,nullzero"`
-	AddressLine1         string             `json:"addressLine1" keel:"address_line_1,nullzero"`
-	AddressLine2         string             `json:"addressLine2" keel:"address_line_2,nullzero"`
-	City                 string             `json:"city" keel:"city,nullzero"`
-	PostalCode           string             `json:"postalCode" keel:"postal_code,nullzero"`
-	Timezone             string             `json:"timezone" keel:"timezone,nullzero"`
-	PlaceID              string             `json:"placeId" keel:"place_id,nullzero"`
-	IsGeocoded           bool               `json:"isGeocoded" keel:"is_geocoded"`
-	Longitude            *float64           `json:"longitude" keel:"longitude,dimension"`
-	Latitude             *float64           `json:"latitude" keel:"latitude,dimension"`
-	Geom                 *postgis.Point     `json:"-" keel:"geom,readonly"`
-	GeofenceType         geofence.Type      `json:"geofenceType" keel:"geofence_type"`
-	GeofenceRadiusMeters *float64           `json:"geofenceRadiusMeters" keel:"geofence_radius_meters"`
-	GeofenceVertices     []geofence.Vertex  `json:"geofenceVertices"`
-	GeofenceGeometry     *postgis.Geometry  `json:"-" keel:"geofence_geometry,readonly"`
-	Version              int64              `json:"version" keel:"version,version"`
-	CreatedAt            int64              `json:"createdAt" keel:"created_at,autocreate"`
-	UpdatedAt            int64              `json:"updatedAt" keel:"updated_at,autoupdate"`
-	SearchVector         string             `json:"-" keel:"search_vector,tsvector,readonly,noselect"`
-	Rank                 string             `json:"-" keel:"rank,computed"`
+	keel.Table           `keel:"locations,report=Parties"`
+	ID                   pulid.ID           `keel:"id,pk,autoid:loc_"                        json:"id"`
+	BusinessUnitID       pulid.ID           `keel:"business_unit_id,pk,tenant"               json:"businessUnitId"`
+	OrganizationID       pulid.ID           `keel:"organization_id,pk,tenant"                json:"organizationId"`
+	LocationCategoryID   pulid.ID           `keel:"location_category_id"                     json:"locationCategoryId"`
+	StateID              pulid.ID           `keel:"state_id"                                 json:"stateId"`
+	Status               domaintypes.Status `keel:"status"                                   json:"status"`
+	Code                 string             `keel:"code"                                     json:"code"`
+	Name                 string             `keel:"name,nullzero"                            json:"name"`
+	Description          string             `keel:"description,nullzero"                     json:"description"`
+	AddressLine1         string             `keel:"address_line_1,nullzero"                  json:"addressLine1"`
+	AddressLine2         string             `keel:"address_line_2,nullzero"                  json:"addressLine2"`
+	City                 string             `keel:"city,nullzero"                            json:"city"`
+	PostalCode           string             `keel:"postal_code,nullzero"                     json:"postalCode"`
+	Timezone             string             `keel:"timezone,nullzero"                        json:"timezone"`
+	PlaceID              string             `keel:"place_id,nullzero"                        json:"placeId"`
+	IsGeocoded           bool               `keel:"is_geocoded"                              json:"isGeocoded"`
+	Longitude            *float64           `keel:"longitude,dimension"                      json:"longitude"`
+	Latitude             *float64           `keel:"latitude,dimension"                       json:"latitude"`
+	Geom                 *postgis.Point     `keel:"geom,readonly"                            json:"-"`
+	GeofenceType         geofence.Type      `keel:"geofence_type"                            json:"geofenceType"`
+	GeofenceRadiusMeters *float64           `keel:"geofence_radius_meters"                   json:"geofenceRadiusMeters"`
+	GeofenceVertices     []geofence.Vertex  `                                                json:"geofenceVertices"`
+	GeofenceGeometry     *postgis.Geometry  `keel:"geofence_geometry,readonly"               json:"-"`
+	Version              int64              `keel:"version,version"                          json:"version"`
+	CreatedAt            int64              `keel:"created_at,autocreate"                    json:"createdAt"`
+	UpdatedAt            int64              `keel:"updated_at,autoupdate"                    json:"updatedAt"`
+	SearchVector         string             `keel:"search_vector,tsvector,readonly,noselect" json:"-"`
+	Rank                 string             `keel:"rank,computed"                            json:"-"`
 
 	BusinessUnit     *tenant.BusinessUnit               `json:"-"`
 	Organization     *tenant.Organization               `json:"-"`
-	State            *usstate.UsState                   `json:"state,omitempty" keel:"belongs:state_id,noreport"`
+	State            *usstate.UsState                   `json:"state,omitempty"            keel:"belongs:state_id,noreport"`
 	LocationCategory *locationcategory.LocationCategory `json:"locationCategory,omitempty" keel:"belongs:location_category_id,label=Category"`
 }
 

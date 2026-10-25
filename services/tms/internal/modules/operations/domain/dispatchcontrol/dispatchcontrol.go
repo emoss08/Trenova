@@ -84,58 +84,58 @@ const DefaultServiceFailureGracePeriod = 30
 type DispatchControl struct {
 	keel.Table `keel:"dispatch_controls"`
 
-	ID                                   pulid.ID                   `json:"id" keel:"id,pk,autoid:dc_"`
-	BusinessUnitID                       pulid.ID                   `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
-	OrganizationID                       pulid.ID                   `json:"organizationId" keel:"organization_id,pk,tenant"`
-	EnableAutoAssignment                 bool                       `json:"enableAutoAssignment" keel:"enable_auto_assignment"`
-	AutoAssignmentStrategy               AutoAssignmentStrategy     `json:"autoAssignmentStrategy" keel:"auto_assignment_strategy"`
-	EnforceWorkerAssign                  bool                       `json:"enforceWorkerAssign" keel:"enforce_worker_assign"`
-	EnforceTrailerContinuity             bool                       `json:"enforceTrailerContinuity" keel:"enforce_trailer_continuity"`
-	EnforceHOSCompliance                 bool                       `json:"enforceHosCompliance" keel:"enforce_hos_compliance"`
-	EnforceWorkerPTARestrictions         bool                       `json:"enforceWorkerPtaRestrictions" keel:"enforce_worker_pta_restrictions"`
-	EnforceWorkerTractorFleetContinuity  bool                       `json:"enforceWorkerTractorFleetContinuity" keel:"enforce_worker_tractor_fleet_continuity"`
+	ID                                   pulid.ID                   `json:"id"                                   keel:"id,pk,autoid:dc_"`
+	BusinessUnitID                       pulid.ID                   `json:"businessUnitId"                       keel:"business_unit_id,pk,tenant"`
+	OrganizationID                       pulid.ID                   `json:"organizationId"                       keel:"organization_id,pk,tenant"`
+	EnableAutoAssignment                 bool                       `json:"enableAutoAssignment"                 keel:"enable_auto_assignment"`
+	AutoAssignmentStrategy               AutoAssignmentStrategy     `json:"autoAssignmentStrategy"               keel:"auto_assignment_strategy"`
+	EnforceWorkerAssign                  bool                       `json:"enforceWorkerAssign"                  keel:"enforce_worker_assign"`
+	EnforceTrailerContinuity             bool                       `json:"enforceTrailerContinuity"             keel:"enforce_trailer_continuity"`
+	EnforceHOSCompliance                 bool                       `json:"enforceHosCompliance"                 keel:"enforce_hos_compliance"`
+	EnforceWorkerPTARestrictions         bool                       `json:"enforceWorkerPtaRestrictions"         keel:"enforce_worker_pta_restrictions"`
+	EnforceWorkerTractorFleetContinuity  bool                       `json:"enforceWorkerTractorFleetContinuity"  keel:"enforce_worker_tractor_fleet_continuity"`
 	EnforceDriverQualificationCompliance bool                       `json:"enforceDriverQualificationCompliance" keel:"enforce_driver_qualification_compliance"`
-	EnforceMedicalCertCompliance         bool                       `json:"enforceMedicalCertCompliance" keel:"enforce_medical_cert_compliance"`
-	EnforceHazmatCompliance              bool                       `json:"enforceHazmatCompliance" keel:"enforce_hazmat_compliance"`
-	EnforceDrugAndAlcoholCompliance      bool                       `json:"enforceDrugAndAlcoholCompliance" keel:"enforce_drug_and_alcohol_compliance"`
-	EnableAutoStopActuals                bool                       `json:"enableAutoStopActuals" keel:"enable_auto_stop_actuals"`
-	ScoringWeights                       ScoringWeights             `json:"scoringWeights" keel:"scoring_weights,jsonb"`
-	AutoAssignConfidenceThreshold        decimal.Decimal            `json:"autoAssignConfidenceThreshold" keel:"auto_assign_confidence_threshold"`
-	AutoAssignMaxDeadheadMiles           *int32                     `json:"autoAssignMaxDeadheadMiles" keel:"auto_assign_max_deadhead_miles"`
-	AutoAssignPlanningHorizonHours       int16                      `json:"autoAssignPlanningHorizonHours" keel:"auto_assign_planning_horizon_hours"`
-	PlanningMode                         PlanningMode               `json:"planningMode" keel:"planning_mode"`
-	HorizonMaxMovesPerDriver             int16                      `json:"horizonMaxMovesPerDriver" keel:"horizon_max_moves_per_driver"`
-	HorizonSearchIterations              *int16                     `json:"horizonSearchIterations" keel:"horizon_search_iterations"`
-	CoverageRiskWindowHours              int16                      `json:"coverageRiskWindowHours" keel:"coverage_risk_window_hours"`
-	EnableCheckCallMonitoring            bool                       `json:"enableCheckCallMonitoring" keel:"enable_check_call_monitoring"`
-	CheckCallIntervalHours               int16                      `json:"checkCallIntervalHours" keel:"check_call_interval_hours"`
-	EnableEtaAlerts                      bool                       `json:"enableEtaAlerts" keel:"enable_eta_alerts"`
-	EtaRiskThresholdMinutes              int16                      `json:"etaRiskThresholdMinutes" keel:"eta_risk_threshold_minutes"`
-	EtaDwellMinutes                      int16                      `json:"etaDwellMinutes" keel:"eta_dwell_minutes"`
-	ExceptionDueInfoMinutes              int32                      `json:"exceptionDueInfoMinutes" keel:"exception_due_info_minutes"`
-	ExceptionDueWarningMinutes           int32                      `json:"exceptionDueWarningMinutes" keel:"exception_due_warning_minutes"`
-	ExceptionDueCriticalMinutes          int32                      `json:"exceptionDueCriticalMinutes" keel:"exception_due_critical_minutes"`
-	ExceptionEscalationMinutes           int32                      `json:"exceptionEscalationMinutes" keel:"exception_escalation_minutes"`
-	ExceptionMaxEscalations              int16                      `json:"exceptionMaxEscalations" keel:"exception_max_escalations"`
-	ExceptionDefaultAssigneeID           pulid.ID                   `json:"exceptionDefaultAssigneeId" keel:"exception_default_assignee_id,nullzero"`
-	ExceptionEscalationContactID         pulid.ID                   `json:"exceptionEscalationContactId" keel:"exception_escalation_contact_id,nullzero"`
-	ExceptionMissedStopGraceMinutes      int16                      `json:"exceptionMissedStopGraceMinutes" keel:"exception_missed_stop_grace_minutes"`
-	ExceptionPODGraceHours               int16                      `json:"exceptionPodGraceHours" keel:"exception_pod_grace_hours"`
-	TenderCounterOffersEnabled           bool                       `json:"tenderCounterOffersEnabled" keel:"tender_counter_offers_enabled"`
-	TenderCounterMarginFloorPercent      decimal.NullDecimal        `json:"tenderCounterMarginFloorPercent" keel:"tender_counter_margin_floor_percent"`
-	TenderAutoAcceptCounters             bool                       `json:"tenderAutoAcceptCounters" keel:"tender_auto_accept_counters"`
-	TenderCounterDecisionMinutes         int32                      `json:"tenderCounterDecisionMinutes" keel:"tender_counter_decision_minutes"`
-	TenderExhaustedAction                TenderExhaustedAction      `json:"tenderExhaustedAction" keel:"tender_exhausted_action"`
-	TenderEscalationRateIncreasePercent  decimal.Decimal            `json:"tenderEscalationRateIncreasePercent" keel:"tender_escalation_rate_increase_percent"`
-	TenderEscalationOfferTTLMinutes      int32                      `json:"tenderEscalationOfferTtlMinutes" keel:"tender_escalation_offer_ttl_minutes"`
-	TenderMaxEscalations                 int16                      `json:"tenderMaxEscalations" keel:"tender_max_escalations"`
-	ComplianceEnforcementLevel           ComplianceEnforcementLevel `json:"complianceEnforcementLevel" keel:"compliance_enforcement_level"`
-	RecordServiceFailures                ServiceIncidentType        `json:"recordServiceFailures" keel:"record_service_failures"`
-	ServiceFailureTarget                 *float64                   `json:"serviceFailureTarget" keel:"service_failure_target"`
-	ServiceFailureGracePeriod            *int                       `json:"serviceFailureGracePeriod" keel:"service_failure_grace_period"`
-	Version                              int64                      `json:"version" keel:"version,version"`
-	CreatedAt                            int64                      `json:"createdAt" keel:"created_at,autocreate"`
-	UpdatedAt                            int64                      `json:"updatedAt" keel:"updated_at,autoupdate"`
+	EnforceMedicalCertCompliance         bool                       `json:"enforceMedicalCertCompliance"         keel:"enforce_medical_cert_compliance"`
+	EnforceHazmatCompliance              bool                       `json:"enforceHazmatCompliance"              keel:"enforce_hazmat_compliance"`
+	EnforceDrugAndAlcoholCompliance      bool                       `json:"enforceDrugAndAlcoholCompliance"      keel:"enforce_drug_and_alcohol_compliance"`
+	EnableAutoStopActuals                bool                       `json:"enableAutoStopActuals"                keel:"enable_auto_stop_actuals"`
+	ScoringWeights                       ScoringWeights             `json:"scoringWeights"                       keel:"scoring_weights,jsonb"`
+	AutoAssignConfidenceThreshold        decimal.Decimal            `json:"autoAssignConfidenceThreshold"        keel:"auto_assign_confidence_threshold"`
+	AutoAssignMaxDeadheadMiles           *int32                     `json:"autoAssignMaxDeadheadMiles"           keel:"auto_assign_max_deadhead_miles"`
+	AutoAssignPlanningHorizonHours       int16                      `json:"autoAssignPlanningHorizonHours"       keel:"auto_assign_planning_horizon_hours"`
+	PlanningMode                         PlanningMode               `json:"planningMode"                         keel:"planning_mode"`
+	HorizonMaxMovesPerDriver             int16                      `json:"horizonMaxMovesPerDriver"             keel:"horizon_max_moves_per_driver"`
+	HorizonSearchIterations              *int16                     `json:"horizonSearchIterations"              keel:"horizon_search_iterations"`
+	CoverageRiskWindowHours              int16                      `json:"coverageRiskWindowHours"              keel:"coverage_risk_window_hours"`
+	EnableCheckCallMonitoring            bool                       `json:"enableCheckCallMonitoring"            keel:"enable_check_call_monitoring"`
+	CheckCallIntervalHours               int16                      `json:"checkCallIntervalHours"               keel:"check_call_interval_hours"`
+	EnableEtaAlerts                      bool                       `json:"enableEtaAlerts"                      keel:"enable_eta_alerts"`
+	EtaRiskThresholdMinutes              int16                      `json:"etaRiskThresholdMinutes"              keel:"eta_risk_threshold_minutes"`
+	EtaDwellMinutes                      int16                      `json:"etaDwellMinutes"                      keel:"eta_dwell_minutes"`
+	ExceptionDueInfoMinutes              int32                      `json:"exceptionDueInfoMinutes"              keel:"exception_due_info_minutes"`
+	ExceptionDueWarningMinutes           int32                      `json:"exceptionDueWarningMinutes"           keel:"exception_due_warning_minutes"`
+	ExceptionDueCriticalMinutes          int32                      `json:"exceptionDueCriticalMinutes"          keel:"exception_due_critical_minutes"`
+	ExceptionEscalationMinutes           int32                      `json:"exceptionEscalationMinutes"           keel:"exception_escalation_minutes"`
+	ExceptionMaxEscalations              int16                      `json:"exceptionMaxEscalations"              keel:"exception_max_escalations"`
+	ExceptionDefaultAssigneeID           pulid.ID                   `json:"exceptionDefaultAssigneeId"           keel:"exception_default_assignee_id,nullzero"`
+	ExceptionEscalationContactID         pulid.ID                   `json:"exceptionEscalationContactId"         keel:"exception_escalation_contact_id,nullzero"`
+	ExceptionMissedStopGraceMinutes      int16                      `json:"exceptionMissedStopGraceMinutes"      keel:"exception_missed_stop_grace_minutes"`
+	ExceptionPODGraceHours               int16                      `json:"exceptionPodGraceHours"               keel:"exception_pod_grace_hours"`
+	TenderCounterOffersEnabled           bool                       `json:"tenderCounterOffersEnabled"           keel:"tender_counter_offers_enabled"`
+	TenderCounterMarginFloorPercent      decimal.NullDecimal        `json:"tenderCounterMarginFloorPercent"      keel:"tender_counter_margin_floor_percent"`
+	TenderAutoAcceptCounters             bool                       `json:"tenderAutoAcceptCounters"             keel:"tender_auto_accept_counters"`
+	TenderCounterDecisionMinutes         int32                      `json:"tenderCounterDecisionMinutes"         keel:"tender_counter_decision_minutes"`
+	TenderExhaustedAction                TenderExhaustedAction      `json:"tenderExhaustedAction"                keel:"tender_exhausted_action"`
+	TenderEscalationRateIncreasePercent  decimal.Decimal            `json:"tenderEscalationRateIncreasePercent"  keel:"tender_escalation_rate_increase_percent"`
+	TenderEscalationOfferTTLMinutes      int32                      `json:"tenderEscalationOfferTtlMinutes"      keel:"tender_escalation_offer_ttl_minutes"`
+	TenderMaxEscalations                 int16                      `json:"tenderMaxEscalations"                 keel:"tender_max_escalations"`
+	ComplianceEnforcementLevel           ComplianceEnforcementLevel `json:"complianceEnforcementLevel"           keel:"compliance_enforcement_level"`
+	RecordServiceFailures                ServiceIncidentType        `json:"recordServiceFailures"                keel:"record_service_failures"`
+	ServiceFailureTarget                 *float64                   `json:"serviceFailureTarget"                 keel:"service_failure_target"`
+	ServiceFailureGracePeriod            *int                       `json:"serviceFailureGracePeriod"            keel:"service_failure_grace_period"`
+	Version                              int64                      `json:"version"                              keel:"version,version"`
+	CreatedAt                            int64                      `json:"createdAt"                            keel:"created_at,autocreate"`
+	UpdatedAt                            int64                      `json:"updatedAt"                            keel:"updated_at,autoupdate"`
 }
 
 func (dc *DispatchControl) ResolvedScoringWeights() map[ScoringFactor]float64 {
@@ -719,59 +719,17 @@ func (dc *DispatchControl) BeforeCreate(ctx context.Context) error {
 	if dc.AutoAssignmentStrategy == "" {
 		dc.AutoAssignmentStrategy = AutoAssignmentStrategyProximity
 	}
-	if dc.AutoAssignConfidenceThreshold.IsZero() {
-		dc.AutoAssignConfidenceThreshold = decimal.RequireFromString("0.85")
-	}
-	if dc.AutoAssignPlanningHorizonHours == 0 {
-		dc.AutoAssignPlanningHorizonHours = 48
-	}
-	if dc.PlanningMode == "" {
-		dc.PlanningMode = PlanningModeImmediate
-	}
-	if dc.HorizonMaxMovesPerDriver == 0 {
-		dc.HorizonMaxMovesPerDriver = 3
-	}
-	if dc.CoverageRiskWindowHours == 0 {
-		dc.CoverageRiskWindowHours = 12
-	}
-	if dc.CheckCallIntervalHours == 0 {
-		dc.CheckCallIntervalHours = 4
-	}
 	if dc.EtaRiskThresholdMinutes == 0 {
 		dc.EtaRiskThresholdMinutes = 60
 	}
 	if dc.EtaDwellMinutes == 0 {
 		dc.EtaDwellMinutes = 60
 	}
-	if dc.ExceptionDueInfoMinutes == 0 {
-		dc.ExceptionDueInfoMinutes = 1440
-	}
-	if dc.ExceptionDueWarningMinutes == 0 {
-		dc.ExceptionDueWarningMinutes = 240
-	}
-	if dc.ExceptionDueCriticalMinutes == 0 {
-		dc.ExceptionDueCriticalMinutes = 60
-	}
-	if dc.ExceptionEscalationMinutes == 0 {
-		dc.ExceptionEscalationMinutes = 60
-	}
 	if dc.ExceptionMaxEscalations == 0 {
 		dc.ExceptionMaxEscalations = 3
 	}
 	if dc.ExceptionMissedStopGraceMinutes == 0 {
 		dc.ExceptionMissedStopGraceMinutes = 30
-	}
-	if dc.ExceptionPODGraceHours == 0 {
-		dc.ExceptionPODGraceHours = 24
-	}
-	if dc.TenderCounterDecisionMinutes == 0 {
-		dc.TenderCounterDecisionMinutes = 60
-	}
-	if dc.TenderExhaustedAction == "" {
-		dc.TenderExhaustedAction = TenderExhaustedActionNotify
-	}
-	if dc.TenderEscalationOfferTTLMinutes == 0 {
-		dc.TenderEscalationOfferTTLMinutes = 60
 	}
 	if dc.ComplianceEnforcementLevel == "" {
 		dc.ComplianceEnforcementLevel = ComplianceEnforcementLevelWarning
@@ -780,9 +738,11 @@ func (dc *DispatchControl) BeforeCreate(ctx context.Context) error {
 		dc.RecordServiceFailures = ServiceIncidentTypeNever
 	}
 	if dc.ServiceFailureGracePeriod == nil {
-		defaultServiceFailureGracePeriod := int(30)
-		dc.ServiceFailureGracePeriod = &defaultServiceFailureGracePeriod
+		defaultGracePeriod := DefaultServiceFailureGracePeriod
+		dc.ServiceFailureGracePeriod = &defaultGracePeriod
 	}
+	dc.NormalizeAutoAssignmentSettings()
+	dc.NormalizeExceptionSettings()
 	dc.NormalizeTenderSettings()
 
 	return nil

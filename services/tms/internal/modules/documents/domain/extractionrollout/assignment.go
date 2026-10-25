@@ -15,20 +15,20 @@ const MaxModelRunes = 255
 type RolloutAssignment struct {
 	keel.Table `keel:"extraction_rollout_assignments"`
 
-	ID             pulid.ID `json:"id" keel:"id,pk,autoid:exra_"`
+	ID             pulid.ID `json:"id"             keel:"id,pk,autoid:exra_"`
 	BusinessUnitID pulid.ID `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
 	OrganizationID pulid.ID `json:"organizationId" keel:"organization_id,pk,tenant"`
 
-	DocumentID          pulid.ID  `json:"documentId" keel:"document_id"`
-	ExtractedAt         int64     `json:"extractedAt" keel:"extracted_at"`
-	Arm                 Arm       `json:"arm" keel:"arm"`
+	DocumentID          pulid.ID  `json:"documentId"          keel:"document_id"`
+	ExtractedAt         int64     `json:"extractedAt"         keel:"extracted_at"`
+	Arm                 Arm       `json:"arm"                 keel:"arm"`
 	CandidateProviderID pulid.ID  `json:"candidateProviderId" keel:"candidate_provider_id"`
-	ServedProviderID    *pulid.ID `json:"servedProviderId" keel:"served_provider_id"`
-	ServedModel         string    `json:"servedModel" keel:"served_model,nullzero"`
-	Outcome             Outcome   `json:"outcome" keel:"outcome"`
-	SettledAt           *int64    `json:"settledAt" keel:"settled_at"`
+	ServedProviderID    *pulid.ID `json:"servedProviderId"    keel:"served_provider_id"`
+	ServedModel         string    `json:"servedModel"         keel:"served_model,nullzero"`
+	Outcome             Outcome   `json:"outcome"             keel:"outcome"`
+	SettledAt           *int64    `json:"settledAt"           keel:"settled_at"`
 
-	Version   int64 `json:"version" keel:"version,version"`
+	Version   int64 `json:"version"   keel:"version,version"`
 	CreatedAt int64 `json:"createdAt" keel:"created_at,autocreate"`
 	UpdatedAt int64 `json:"updatedAt" keel:"updated_at,autoupdate"`
 

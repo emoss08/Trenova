@@ -21,19 +21,19 @@ const MaxMonthlyDay = 28
 type Statement struct {
 	keel.Table `keel:"customer_statements"`
 
-	ID                 pulid.ID `json:"id" keel:"id,pk,autoid:cst_"`
-	OrganizationID     pulid.ID `json:"organizationId" keel:"organization_id,pk,tenant"`
-	BusinessUnitID     pulid.ID `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
-	CustomerID         pulid.ID `json:"customerId" keel:"customer_id"`
-	PeriodStart        int64    `json:"periodStart" keel:"period_start"`
-	PeriodEnd          int64    `json:"periodEnd" keel:"period_end"`
+	ID                 pulid.ID `json:"id"                 keel:"id,pk,autoid:cst_"`
+	OrganizationID     pulid.ID `json:"organizationId"     keel:"organization_id,pk,tenant"`
+	BusinessUnitID     pulid.ID `json:"businessUnitId"     keel:"business_unit_id,pk,tenant"`
+	CustomerID         pulid.ID `json:"customerId"         keel:"customer_id"`
+	PeriodStart        int64    `json:"periodStart"        keel:"period_start"`
+	PeriodEnd          int64    `json:"periodEnd"          keel:"period_end"`
 	EndingBalanceMinor int64    `json:"endingBalanceMinor" keel:"ending_balance_minor"`
-	PastDueMinor       int64    `json:"pastDueMinor" keel:"past_due_minor"`
-	CurrencyCode       string   `json:"currencyCode" keel:"currency_code"`
-	SentTo             string   `json:"sentTo" keel:"sent_to"`
-	Monthly            bool     `json:"monthly" keel:"monthly"`
-	SentByID           pulid.ID `json:"sentById" keel:"sent_by_id,nullzero"`
-	SentAt             int64    `json:"sentAt" keel:"sent_at"`
+	PastDueMinor       int64    `json:"pastDueMinor"       keel:"past_due_minor"`
+	CurrencyCode       string   `json:"currencyCode"       keel:"currency_code"`
+	SentTo             string   `json:"sentTo"             keel:"sent_to"`
+	Monthly            bool     `json:"monthly"            keel:"monthly"`
+	SentByID           pulid.ID `json:"sentById"           keel:"sent_by_id,nullzero"`
+	SentAt             int64    `json:"sentAt"             keel:"sent_at"`
 }
 
 func (s *Statement) BeforeCreate(ctx context.Context) error {

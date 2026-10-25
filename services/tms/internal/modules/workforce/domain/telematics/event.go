@@ -11,34 +11,36 @@ import (
 	validation "github.com/go-ozzo/ozzo-validation/v4"
 )
 
-type TelematicsEvent struct {
-	keel.Table `                                                  keel:"telematics_events"`
+const defaultProvider = "Samsara"
 
-	ID             pulid.ID       `json:"id" keel:"id,pk"`
+type TelematicsEvent struct {
+	keel.Table `keel:"telematics_events"`
+
+	ID             pulid.ID       `json:"id"             keel:"id,pk"`
 	OrganizationID pulid.ID       `json:"organizationId" keel:"organization_id,pk,tenant"`
 	BusinessUnitID pulid.ID       `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
-	Provider       string         `json:"provider" keel:"provider"`
-	EventID        string         `json:"eventId" keel:"event_id"`
-	EventType      EventType      `json:"eventType" keel:"event_type"`
-	OccurredAt     int64          `json:"occurredAt" keel:"occurred_at"`
-	TractorID      pulid.ID       `json:"tractorId" keel:"tractor_id,nullzero"`
-	WorkerID       pulid.ID       `json:"workerId" keel:"worker_id,nullzero"`
-	LocationID     pulid.ID       `json:"locationId" keel:"location_id,nullzero"`
-	AddressName    string         `json:"addressName" keel:"address_name,nullzero"`
-	Payload        map[string]any `json:"payload" keel:"payload,jsonb,nullzero"`
-	CreatedAt      int64          `json:"createdAt" keel:"created_at"`
+	Provider       string         `json:"provider"       keel:"provider"`
+	EventID        string         `json:"eventId"        keel:"event_id"`
+	EventType      EventType      `json:"eventType"      keel:"event_type"`
+	OccurredAt     int64          `json:"occurredAt"     keel:"occurred_at"`
+	TractorID      pulid.ID       `json:"tractorId"      keel:"tractor_id,nullzero"`
+	WorkerID       pulid.ID       `json:"workerId"       keel:"worker_id,nullzero"`
+	LocationID     pulid.ID       `json:"locationId"     keel:"location_id,nullzero"`
+	AddressName    string         `json:"addressName"    keel:"address_name,nullzero"`
+	Payload        map[string]any `json:"payload"        keel:"payload,jsonb,nullzero"`
+	CreatedAt      int64          `json:"createdAt"      keel:"created_at"`
 
-	StopOutcome       StopOutcome        `json:"stopOutcome" keel:"stop_outcome,nullzero"`
-	StopVisit         shipment.VisitKind `json:"stopVisit" keel:"stop_visit,nullzero"`
-	ShipmentMoveID    pulid.ID           `json:"shipmentMoveId" keel:"shipment_move_id,nullzero"`
-	StopID            pulid.ID           `json:"stopId" keel:"stop_id,nullzero"`
+	StopOutcome       StopOutcome        `json:"stopOutcome"       keel:"stop_outcome,nullzero"`
+	StopVisit         shipment.VisitKind `json:"stopVisit"         keel:"stop_visit,nullzero"`
+	ShipmentMoveID    pulid.ID           `json:"shipmentMoveId"    keel:"shipment_move_id,nullzero"`
+	StopID            pulid.ID           `json:"stopId"            keel:"stop_id,nullzero"`
 	StopOutcomeReason string             `json:"stopOutcomeReason" keel:"stop_outcome_reason,nullzero"`
-	MoveShipmentID    pulid.ID           `json:"-" keel:"move_shipment_id,computed,nullzero"`
+	MoveShipmentID    pulid.ID           `json:"-"                 keel:"move_shipment_id,computed,nullzero"`
 }
 
 func (e *TelematicsEvent) BeforeCreate(_ context.Context) error {
 	if e.Provider == "" {
-		e.Provider = "Samsara"
+		e.Provider = defaultProvider
 	}
 
 	return nil

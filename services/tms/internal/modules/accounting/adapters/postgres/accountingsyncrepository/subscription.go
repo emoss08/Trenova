@@ -144,7 +144,11 @@ func (r *subscriptionRepository) Create(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*accountingsync.AccountingWebhookSubscription, error) {
-			err := accountingsyncdb.AccountingWebhookSubscriptions.Create(ctx, r.db.Keel(ctx), entity)
+			err := accountingsyncdb.AccountingWebhookSubscriptions.Create(
+				ctx,
+				r.db.Keel(ctx),
+				entity,
+			)
 			if err != nil {
 				return nil, subscriptionErrors.Map(err, entity.ID.String())
 			}

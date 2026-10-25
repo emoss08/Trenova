@@ -27,21 +27,21 @@ type RateKey struct {
 type TaxRate struct {
 	keel.Table `keel:"ifta_tax_rates"`
 
-	ID             pulid.ID `json:"id" keel:"id,pk,autoid:iftr_"`
+	ID             pulid.ID `json:"id"             keel:"id,pk,autoid:iftr_"`
 	JurisdictionID pulid.ID `json:"jurisdictionId" keel:"jurisdiction_id"`
-	Year           int      `json:"year" keel:"year"`
-	Quarter        int      `json:"quarter" keel:"quarter"`
+	Year           int      `json:"year"           keel:"year"`
+	Quarter        int      `json:"quarter"        keel:"quarter"`
 
-	FuelType               domaintypes.IFTAFuelType `json:"fuelType" keel:"fuel_type"`
-	RatePerGallon          decimal.Decimal          `json:"ratePerGallon" keel:"rate_per_gallon"`
+	FuelType               domaintypes.IFTAFuelType `json:"fuelType"               keel:"fuel_type"`
+	RatePerGallon          decimal.Decimal          `json:"ratePerGallon"          keel:"rate_per_gallon"`
 	SurchargeRatePerGallon decimal.NullDecimal      `json:"surchargeRatePerGallon" keel:"surcharge_rate_per_gallon"`
 
 	SourceNote string `json:"sourceNote" keel:"source_note,nullzero"`
-	SourceURL  string `json:"sourceUrl" keel:"source_url,nullzero"`
+	SourceURL  string `json:"sourceUrl"  keel:"source_url,nullzero"`
 
 	SearchVector string `json:"-"`
-	Rank         string `json:"-" keel:"rank,computed"`
-	Version      int64  `json:"version" keel:"version,version"`
+	Rank         string `json:"-"         keel:"rank,computed"`
+	Version      int64  `json:"version"   keel:"version,version"`
 	CreatedAt    int64  `json:"createdAt" keel:"created_at,autocreate"`
 	UpdatedAt    int64  `json:"updatedAt" keel:"updated_at,autoupdate"`
 

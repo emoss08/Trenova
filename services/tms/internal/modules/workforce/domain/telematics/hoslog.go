@@ -14,23 +14,23 @@ import (
 type WorkerHOSLog struct {
 	keel.Table `keel:"worker_hos_logs"`
 
-	OrganizationID    pulid.ID   `json:"organizationId" keel:"organization_id,pk,tenant"`
-	BusinessUnitID    pulid.ID   `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
-	WorkerID          pulid.ID   `json:"workerId" keel:"worker_id,pk"`
-	LogStartAt        int64      `json:"logStartAt" keel:"log_start_at,pk"`
-	DutyStatus        DutyStatus `json:"dutyStatus" keel:"duty_status"`
-	LogEndAt          *int64     `json:"logEndAt" keel:"log_end_at"`
-	Remark            string     `json:"remark" keel:"remark,nullzero"`
-	Provider          string     `json:"provider" keel:"provider"`
+	OrganizationID    pulid.ID   `json:"organizationId"    keel:"organization_id,pk,tenant"`
+	BusinessUnitID    pulid.ID   `json:"businessUnitId"    keel:"business_unit_id,pk,tenant"`
+	WorkerID          pulid.ID   `json:"workerId"          keel:"worker_id,pk"`
+	LogStartAt        int64      `json:"logStartAt"        keel:"log_start_at,pk"`
+	DutyStatus        DutyStatus `json:"dutyStatus"        keel:"duty_status"`
+	LogEndAt          *int64     `json:"logEndAt"          keel:"log_end_at"`
+	Remark            string     `json:"remark"            keel:"remark,nullzero"`
+	Provider          string     `json:"provider"          keel:"provider"`
 	ProviderVehicleID string     `json:"providerVehicleId" keel:"provider_vehicle_id,nullzero"`
-	ReceivedAt        int64      `json:"receivedAt" keel:"received_at"`
+	ReceivedAt        int64      `json:"receivedAt"        keel:"received_at"`
 
 	Worker *worker.Worker `json:"worker,omitempty" keel:"belongs:worker_id"`
 }
 
 func (l *WorkerHOSLog) BeforeCreate(_ context.Context) error {
 	if l.Provider == "" {
-		l.Provider = "Samsara"
+		l.Provider = defaultProvider
 	}
 
 	return nil

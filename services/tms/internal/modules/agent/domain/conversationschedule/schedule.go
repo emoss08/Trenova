@@ -46,20 +46,20 @@ const (
 type Schedule struct {
 	keel.Table `keel:"conversation_schedules"`
 
-	ID             pulid.ID `json:"id" keel:"id,pk,autoid:csch_"`
+	ID             pulid.ID `json:"id"             keel:"id,pk,autoid:csch_"`
 	BusinessUnitID pulid.ID `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
 	OrganizationID pulid.ID `json:"organizationId" keel:"organization_id,pk,tenant"`
 
 	ThreadID pulid.ID `json:"threadId" keel:"thread_id"`
-	UserID   pulid.ID `json:"userId" keel:"user_id"`
+	UserID   pulid.ID `json:"userId"   keel:"user_id"`
 
 	// Prompt is what each run asks, and Cadence when, as the person reads
 	// it: "Every weekday · 7:30 AM". CronExpression is the same cadence for
 	// the scheduler, read on Timezone's clock.
-	Prompt         string `json:"prompt" keel:"prompt"`
-	Cadence        string `json:"cadence" keel:"cadence"`
+	Prompt         string `json:"prompt"         keel:"prompt"`
+	Cadence        string `json:"cadence"        keel:"cadence"`
 	CronExpression string `json:"cronExpression" keel:"cron_expression"`
-	Timezone       string `json:"timezone" keel:"timezone"`
+	Timezone       string `json:"timezone"       keel:"timezone"`
 
 	// Enabled is false while the schedule is paused.
 	Enabled bool `json:"enabled" keel:"enabled"`
@@ -68,11 +68,11 @@ type Schedule struct {
 	// started. NextRunAt is the next slot, worked out whenever the schedule
 	// is saved or runs; it is kept while paused so resuming need not wait on
 	// a read to show it.
-	LastRunAt  *int64   `json:"lastRunAt" keel:"last_run_at"`
-	NextRunAt  *int64   `json:"nextRunAt" keel:"next_run_at"`
+	LastRunAt  *int64   `json:"lastRunAt"  keel:"last_run_at"`
+	NextRunAt  *int64   `json:"nextRunAt"  keel:"next_run_at"`
 	LastTurnID pulid.ID `json:"lastTurnId" keel:"last_turn_id,nullzero"`
 
-	Version   int64 `json:"version" keel:"version,version"`
+	Version   int64 `json:"version"   keel:"version,version"`
 	CreatedAt int64 `json:"createdAt" keel:"created_at,autocreate"`
 	UpdatedAt int64 `json:"updatedAt" keel:"updated_at,autoupdate"`
 

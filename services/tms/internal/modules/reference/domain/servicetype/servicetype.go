@@ -14,20 +14,20 @@ import (
 
 // Service level classification
 type ServiceType struct {
-	keel.Table `                                            keel:"service_types,report=Configuration"`
+	keel.Table `keel:"service_types,report=Configuration"`
 
-	ID             pulid.ID           `json:"id" keel:"id,pk,autoid:st_"`
+	ID             pulid.ID           `json:"id"             keel:"id,pk,autoid:st_"`
 	BusinessUnitID pulid.ID           `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
 	OrganizationID pulid.ID           `json:"organizationId" keel:"organization_id,pk,tenant"`
-	Status         domaintypes.Status `json:"status" keel:"status"`
-	Code           string             `json:"code" keel:"code"`
-	Description    string             `json:"description" keel:"description,nullzero"`
-	Color          string             `json:"color" keel:"color,nullzero"`
-	Version        int64              `json:"version" keel:"version,version"`
-	CreatedAt      int64              `json:"createdAt" keel:"created_at,autocreate"`
-	UpdatedAt      int64              `json:"updatedAt" keel:"updated_at,autoupdate"`
-	SearchVector   string             `json:"-" keel:"search_vector,tsvector,readonly,noselect"`
-	Rank           string             `json:"-" keel:"rank,computed"`
+	Status         domaintypes.Status `json:"status"         keel:"status"`
+	Code           string             `json:"code"           keel:"code"`
+	Description    string             `json:"description"    keel:"description,nullzero"`
+	Color          string             `json:"color"          keel:"color,nullzero"`
+	Version        int64              `json:"version"        keel:"version,version"`
+	CreatedAt      int64              `json:"createdAt"      keel:"created_at,autocreate"`
+	UpdatedAt      int64              `json:"updatedAt"      keel:"updated_at,autoupdate"`
+	SearchVector   string             `json:"-"              keel:"search_vector,tsvector,readonly,noselect"`
+	Rank           string             `json:"-"              keel:"rank,computed"`
 
 	BusinessUnit *tenant.BusinessUnit `json:"businessUnit,omitempty"`
 	Organization *tenant.Organization `json:"organization,omitempty"`

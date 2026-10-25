@@ -30,9 +30,9 @@ func (r *repository) RuleCandidates(
 
 		rows := []*triageports.MessageRow{}
 		if total > 0 && req.Limit > 0 {
-			scanned, err := keel.Into[scannedRow[bool]](ctx, db, ruleCandidatesQuery(req))
-			if err != nil {
-				return nil, err
+			scanned, scanErr := keel.Into[scannedRow[bool]](ctx, db, ruleCandidatesQuery(req))
+			if scanErr != nil {
+				return nil, scanErr
 			}
 			rows = messageRows(scanned, true)
 		}
@@ -41,7 +41,9 @@ func (r *repository) RuleCandidates(
 	})
 }
 
-func ruleCandidatesQuery(req *triageports.RuleCandidatesRequest) *keel.Query[inboundmessage.InboundMessage] {
+func ruleCandidatesQuery(
+	req *triageports.RuleCandidatesRequest,
+) *keel.Query[inboundmessage.InboundMessage] {
 	m := inboundmessagedb.InboundMessages
 	att := inboundmessagedb.InboundAttachments
 
@@ -71,7 +73,10 @@ func ruleCandidates(req *triageports.RuleCandidatesRequest) []keel.Pred {
 	switch req.SenderScope {
 	case triage.SenderDomain:
 		domain := strings.ToLower(req.Sender)
-		preds = append(preds, keel.Or(m.SenderDomain.Eq(domain), m.SenderDomain.HasSuffix("."+domain)))
+		preds = append(
+			preds,
+			keel.Or(m.SenderDomain.Eq(domain), m.SenderDomain.HasSuffix("."+domain)),
+		)
 	case triage.SenderAddress:
 		preds = append(preds,
 			m.SenderDomain.Eq(emailutils.Domain(req.Sender)),
@@ -128,7 +133,9 @@ func (r *repository) ManualOutcomes(
 	})
 }
 
-func manualOutcomesQuery(req *triageports.ManualOutcomesRequest) *keel.Query[inboundmessage.InboundMessage] {
+func manualOutcomesQuery(
+	req *triageports.ManualOutcomesRequest,
+) *keel.Query[inboundmessage.InboundMessage] {
 	m := inboundmessagedb.InboundMessages
 	act := triagedb.Activities
 	arrivedMessages := inboundmessagedb.InboundMessages.As("arrived_messages")
@@ -206,7 +213,9 @@ func (r *repository) MessageRows(
 	})
 }
 
-func messageRowsQuery(req *triageports.MessageRowsRequest) *keel.Query[inboundmessage.InboundMessage] {
+func messageRowsQuery(
+	req *triageports.MessageRowsRequest,
+) *keel.Query[inboundmessage.InboundMessage] {
 	m := inboundmessagedb.InboundMessages
 
 	return withReference(messages()).
@@ -236,7 +245,9 @@ func (r *repository) SenderDomains(
 	})
 }
 
-func senderDomainsQuery(req *triageports.SenderDomainsRequest) *keel.Query[inboundmessage.InboundMessage] {
+func senderDomainsQuery(
+	req *triageports.SenderDomainsRequest,
+) *keel.Query[inboundmessage.InboundMessage] {
 	m := inboundmessagedb.InboundMessages
 	term := strings.ToLower(strings.TrimSpace(req.Query))
 

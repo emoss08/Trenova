@@ -296,7 +296,11 @@ func (r *repository) writeChildren(
 		}
 	}
 	if len(accessorials) > 0 {
-		if err := rateagreementdb.RateAgreementAccessorials.CreateMany(ctx, db, accessorials); err != nil {
+		if err := rateagreementdb.RateAgreementAccessorials.CreateMany(
+			ctx,
+			db,
+			accessorials,
+		); err != nil {
 			return err
 		}
 	}

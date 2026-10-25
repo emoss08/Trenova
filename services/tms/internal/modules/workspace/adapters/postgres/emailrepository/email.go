@@ -242,7 +242,8 @@ func (r *repository) UpsertAssignments(
 					ctx,
 					db,
 					rows,
-					keel.OnConflict(a.OrganizationID, a.BusinessUnitID, a.Purpose).Update(a.ProfileID),
+					keel.OnConflict(a.OrganizationID, a.BusinessUnitID, a.Purpose).
+						Update(a.ProfileID),
 				); err != nil {
 					return err
 				}

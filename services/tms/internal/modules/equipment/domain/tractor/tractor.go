@@ -29,53 +29,53 @@ var (
 
 // Power units
 type Tractor struct {
-	keel.Table `                                         keel:"tractors,report=Equipment"`
+	keel.Table `keel:"tractors,report=Equipment"`
 
-	ID                         pulid.ID                    `json:"id" keel:"id,pk,autoid:trac_"`
-	BusinessUnitID             pulid.ID                    `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
-	OrganizationID             pulid.ID                    `json:"organizationId" keel:"organization_id,pk,tenant"`
-	PrimaryWorkerID            pulid.ID                    `json:"primaryWorkerId" keel:"primary_worker_id"`
-	EquipmentTypeID            pulid.ID                    `json:"equipmentTypeId" keel:"equipment_type_id"`
-	EquipmentManufacturerID    pulid.ID                    `json:"equipmentManufacturerId" keel:"equipment_manufacturer_id"`
-	StateID                    pulid.ID                    `json:"stateId" keel:"state_id,nullzero"`
-	FleetCodeID                pulid.ID                    `json:"fleetCodeId" keel:"fleet_code_id,nullzero"`
-	SecondaryWorkerID          pulid.ID                    `json:"secondaryWorkerId" keel:"secondary_worker_id,nullzero"`
-	Status                     domaintypes.EquipmentStatus `json:"status" keel:"status"`
-	Code                       string                      `json:"code" keel:"code,label=Unit Number"`
-	Model                      string                      `json:"model" keel:"model,nullzero"`
-	Make                       string                      `json:"make" keel:"make,nullzero"`
-	Year                       *int                        `json:"year" keel:"year,dimension"`
-	LicensePlateNumber         string                      `json:"licensePlateNumber" keel:"license_plate_number,nullzero,label=License Plate"`
-	RegistrationNumber         string                      `json:"registrationNumber" keel:"registration_number,nullzero"`
-	RegistrationExpiry         *int64                      `json:"registrationExpiry" keel:"registration_expiry,type=epoch"`
-	FuelType                   domaintypes.IFTAFuelType    `json:"fuelType" keel:"fuel_type"`
-	IFTAQualified              bool                        `json:"iftaQualified" keel:"ifta_qualified"`
-	Vin                        string                      `json:"vin" keel:"vin,nullzero"`
-	ExternalID                 string                      `json:"externalId" keel:"external_id,nullzero"`
-	OwnershipType              domaintypes.OwnershipType   `json:"ownershipType" keel:"ownership_type"`
-	OwnerWorkerID              *pulid.ID                   `json:"ownerWorkerId" keel:"owner_worker_id"`
-	LessorName                 string                      `json:"lessorName" keel:"lessor_name,nullzero"`
-	LeaseReference             string                      `json:"leaseReference" keel:"lease_reference,nullzero"`
-	LeaseEndDate               *int64                      `json:"leaseEndDate" keel:"lease_end_date"`
-	LastKnownLocationID        pulid.ID                    `json:"lastKnownLocationId" keel:"last_known_location_id,computed,nullzero"`
-	LastKnownLocationName      string                      `json:"lastKnownLocationName" keel:"last_known_location_name,computed,nullzero"`
-	LastKnownLocationLatitude  *float64                    `json:"lastKnownLocationLatitude" keel:"last_known_location_latitude,computed"`
+	ID                         pulid.ID                    `json:"id"                         keel:"id,pk,autoid:trac_"`
+	BusinessUnitID             pulid.ID                    `json:"businessUnitId"             keel:"business_unit_id,pk,tenant"`
+	OrganizationID             pulid.ID                    `json:"organizationId"             keel:"organization_id,pk,tenant"`
+	PrimaryWorkerID            pulid.ID                    `json:"primaryWorkerId"            keel:"primary_worker_id"`
+	EquipmentTypeID            pulid.ID                    `json:"equipmentTypeId"            keel:"equipment_type_id"`
+	EquipmentManufacturerID    pulid.ID                    `json:"equipmentManufacturerId"    keel:"equipment_manufacturer_id"`
+	StateID                    pulid.ID                    `json:"stateId"                    keel:"state_id,nullzero"`
+	FleetCodeID                pulid.ID                    `json:"fleetCodeId"                keel:"fleet_code_id,nullzero"`
+	SecondaryWorkerID          pulid.ID                    `json:"secondaryWorkerId"          keel:"secondary_worker_id,nullzero"`
+	Status                     domaintypes.EquipmentStatus `json:"status"                     keel:"status"`
+	Code                       string                      `json:"code"                       keel:"code,label=Unit Number"`
+	Model                      string                      `json:"model"                      keel:"model,nullzero"`
+	Make                       string                      `json:"make"                       keel:"make,nullzero"`
+	Year                       *int                        `json:"year"                       keel:"year,dimension"`
+	LicensePlateNumber         string                      `json:"licensePlateNumber"         keel:"license_plate_number,nullzero,label=License Plate"`
+	RegistrationNumber         string                      `json:"registrationNumber"         keel:"registration_number,nullzero"`
+	RegistrationExpiry         *int64                      `json:"registrationExpiry"         keel:"registration_expiry,type=epoch"`
+	FuelType                   domaintypes.IFTAFuelType    `json:"fuelType"                   keel:"fuel_type"`
+	IFTAQualified              bool                        `json:"iftaQualified"              keel:"ifta_qualified"`
+	Vin                        string                      `json:"vin"                        keel:"vin,nullzero"`
+	ExternalID                 string                      `json:"externalId"                 keel:"external_id,nullzero"`
+	OwnershipType              domaintypes.OwnershipType   `json:"ownershipType"              keel:"ownership_type"`
+	OwnerWorkerID              *pulid.ID                   `json:"ownerWorkerId"              keel:"owner_worker_id"`
+	LessorName                 string                      `json:"lessorName"                 keel:"lessor_name,nullzero"`
+	LeaseReference             string                      `json:"leaseReference"             keel:"lease_reference,nullzero"`
+	LeaseEndDate               *int64                      `json:"leaseEndDate"               keel:"lease_end_date"`
+	LastKnownLocationID        pulid.ID                    `json:"lastKnownLocationId"        keel:"last_known_location_id,computed,nullzero"`
+	LastKnownLocationName      string                      `json:"lastKnownLocationName"      keel:"last_known_location_name,computed,nullzero"`
+	LastKnownLocationLatitude  *float64                    `json:"lastKnownLocationLatitude"  keel:"last_known_location_latitude,computed"`
 	LastKnownLocationLongitude *float64                    `json:"lastKnownLocationLongitude" keel:"last_known_location_longitude,computed"`
-	Version                    int64                       `json:"version" keel:"version,version"`
-	CreatedAt                  int64                       `json:"createdAt" keel:"created_at,autocreate"`
-	UpdatedAt                  int64                       `json:"updatedAt" keel:"updated_at,autoupdate"`
+	Version                    int64                       `json:"version"                    keel:"version,version"`
+	CreatedAt                  int64                       `json:"createdAt"                  keel:"created_at,autocreate"`
+	UpdatedAt                  int64                       `json:"updatedAt"                  keel:"updated_at,autoupdate"`
 
 	CustomFields map[string]any `json:"customFields,omitempty"`
 
-	BusinessUnit          *tenant.BusinessUnit                         `json:"businessUnit,omitempty" keel:"belongs:business_unit_id,noreport"`
-	Organization          *tenant.Organization                         `json:"organization,omitempty" keel:"belongs:organization_id,noreport"`
-	EquipmentType         *equipmenttype.EquipmentType                 `json:"equipmentType,omitempty" keel:"belongs:equipment_type_id"`
+	BusinessUnit          *tenant.BusinessUnit                         `json:"businessUnit,omitempty"          keel:"belongs:business_unit_id,noreport"`
+	Organization          *tenant.Organization                         `json:"organization,omitempty"          keel:"belongs:organization_id,noreport"`
+	EquipmentType         *equipmenttype.EquipmentType                 `json:"equipmentType,omitempty"         keel:"belongs:equipment_type_id"`
 	EquipmentManufacturer *equipmentmanufacturer.EquipmentManufacturer `json:"equipmentManufacturer,omitempty" keel:"belongs:equipment_manufacturer_id,label=Manufacturer"`
-	FleetCode             *fleetcode.FleetCode                         `json:"fleetCode,omitempty" keel:"belongs:fleet_code_id"`
-	State                 *usstate.UsState                             `json:"state,omitempty" keel:"belongs:state_id,noreport"`
-	PrimaryWorker         *worker.Worker                               `json:"primaryWorker,omitempty" keel:"belongs:primary_worker_id"`
-	SecondaryWorker       *worker.Worker                               `json:"secondaryWorker,omitempty" keel:"belongs:secondary_worker_id"`
-	OwnerWorker           *worker.Worker                               `json:"ownerWorker,omitempty" keel:"belongs:owner_worker_id"`
+	FleetCode             *fleetcode.FleetCode                         `json:"fleetCode,omitempty"             keel:"belongs:fleet_code_id"`
+	State                 *usstate.UsState                             `json:"state,omitempty"                 keel:"belongs:state_id,noreport"`
+	PrimaryWorker         *worker.Worker                               `json:"primaryWorker,omitempty"         keel:"belongs:primary_worker_id"`
+	SecondaryWorker       *worker.Worker                               `json:"secondaryWorker,omitempty"       keel:"belongs:secondary_worker_id"`
+	OwnerWorker           *worker.Worker                               `json:"ownerWorker,omitempty"           keel:"belongs:owner_worker_id"`
 }
 
 func (t *Tractor) BeforeUpdate(_ context.Context) error {

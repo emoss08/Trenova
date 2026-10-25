@@ -212,56 +212,56 @@ func SupportsPreview(fileType string) bool {
 type Document struct {
 	keel.Table `keel:"documents"`
 
-	ID                    pulid.ID            `json:"id" keel:"id,pk,autoid:doc_"`
-	OrganizationID        pulid.ID            `json:"organizationId" keel:"organization_id,pk,tenant"`
-	BusinessUnitID        pulid.ID            `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
-	LineageID             pulid.ID            `json:"lineageId" keel:"lineage_id"`
-	VersionNumber         int64               `json:"versionNumber" keel:"version_number"`
-	IsCurrentVersion      bool                `json:"isCurrentVersion" keel:"is_current_version"`
-	FileName              string              `json:"fileName" keel:"file_name"`
-	OriginalName          string              `json:"originalName" keel:"original_name"`
-	FileSize              int64               `json:"fileSize" keel:"file_size"`
-	FileType              string              `json:"fileType" keel:"file_type"`
-	StoragePath           string              `json:"storagePath" keel:"storage_path"`
-	ChecksumSHA256        string              `json:"checksumSha256" keel:"checksum_sha256,nullzero"`
-	StorageVersionID      string              `json:"storageVersionId" keel:"storage_version_id,nullzero"`
-	StorageRetentionMode  string              `json:"storageRetentionMode" keel:"storage_retention_mode,nullzero"`
+	ID                    pulid.ID            `json:"id"                    keel:"id,pk,autoid:doc_"`
+	OrganizationID        pulid.ID            `json:"organizationId"        keel:"organization_id,pk,tenant"`
+	BusinessUnitID        pulid.ID            `json:"businessUnitId"        keel:"business_unit_id,pk,tenant"`
+	LineageID             pulid.ID            `json:"lineageId"             keel:"lineage_id"`
+	VersionNumber         int64               `json:"versionNumber"         keel:"version_number"`
+	IsCurrentVersion      bool                `json:"isCurrentVersion"      keel:"is_current_version"`
+	FileName              string              `json:"fileName"              keel:"file_name"`
+	OriginalName          string              `json:"originalName"          keel:"original_name"`
+	FileSize              int64               `json:"fileSize"              keel:"file_size"`
+	FileType              string              `json:"fileType"              keel:"file_type"`
+	StoragePath           string              `json:"storagePath"           keel:"storage_path"`
+	ChecksumSHA256        string              `json:"checksumSha256"        keel:"checksum_sha256,nullzero"`
+	StorageVersionID      string              `json:"storageVersionId"      keel:"storage_version_id,nullzero"`
+	StorageRetentionMode  string              `json:"storageRetentionMode"  keel:"storage_retention_mode,nullzero"`
 	StorageRetentionUntil *int64              `json:"storageRetentionUntil" keel:"storage_retention_until"`
-	StorageLegalHold      bool                `json:"storageLegalHold" keel:"storage_legal_hold"`
-	CryptoMode            string              `json:"cryptoMode" keel:"crypto_mode"`
-	CryptoVersion         int16               `json:"cryptoVersion" keel:"crypto_version"`
-	Status                Status              `json:"status" keel:"status"`
-	Description           string              `json:"description" keel:"description,nullzero"`
-	ResourceID            string              `json:"resourceId" keel:"resource_id"`
-	ResourceType          string              `json:"resourceType" keel:"resource_type"`
-	ProcessingProfile     ProcessingProfile   `json:"processingProfile" keel:"processing_profile"`
-	ExpirationDate        *int64              `json:"expirationDate" keel:"expiration_date"`
-	Tags                  []string            `json:"tags" keel:"tags"`
-	IsPublic              bool                `json:"isPublic" keel:"is_public"`
-	UploadedByID          pulid.ID            `json:"uploadedById" keel:"uploaded_by_id"`
-	ApprovedByID          pulid.ID            `json:"approvedById" keel:"approved_by_id,nullzero"`
-	ApprovedAt            *int64              `json:"approvedAt" keel:"approved_at"`
-	RejectedByID          pulid.ID            `json:"rejectedById" keel:"rejected_by_id,nullzero"`
-	RejectedAt            *int64              `json:"rejectedAt" keel:"rejected_at"`
-	RejectionReason       string              `json:"rejectionReason" keel:"rejection_reason,nullzero"`
-	PreviewStoragePath    string              `json:"previewStoragePath" keel:"preview_storage_path,nullzero"`
-	PreviewStatus         PreviewStatus       `json:"previewStatus" keel:"preview_status,nullzero"`
-	ContentStatus         ContentStatus       `json:"contentStatus" keel:"content_status,nullzero"`
-	ContentError          string              `json:"contentError" keel:"content_error,nullzero"`
-	DetectedKind          string              `json:"detectedKind" keel:"detected_kind,nullzero"`
-	HasExtractedText      bool                `json:"hasExtractedText" keel:"has_extracted_text"`
-	ShipmentDraftStatus   ShipmentDraftStatus `json:"shipmentDraftStatus" keel:"shipment_draft_status,nullzero"`
-	DocumentTypeID        *pulid.ID           `json:"documentTypeId" keel:"document_type_id"`
-	SignatureStatus       SignatureStatus     `json:"signatureStatus" keel:"signature_status,nullzero"`
-	SignedAt              *int64              `json:"signedAt" keel:"signed_at"`
-	SignatureSource       SignatureSource     `json:"signatureSource" keel:"signature_source,nullzero"`
-	SignatureUpdatedByID  pulid.ID            `json:"signatureUpdatedById" keel:"signature_updated_by_id,nullzero"`
-	SignatureUpdatedAt    *int64              `json:"signatureUpdatedAt" keel:"signature_updated_at"`
-	SearchVector          string              `json:"-" keel:"search_vector,tsvector,readonly,noselect"`
-	Rank                  string              `json:"-" keel:"rank,computed"`
-	Version               int64               `json:"version" keel:"version,version"`
-	CreatedAt             int64               `json:"createdAt" keel:"created_at,autocreate"`
-	UpdatedAt             int64               `json:"updatedAt" keel:"updated_at,autoupdate"`
+	StorageLegalHold      bool                `json:"storageLegalHold"      keel:"storage_legal_hold"`
+	CryptoMode            string              `json:"cryptoMode"            keel:"crypto_mode"`
+	CryptoVersion         int16               `json:"cryptoVersion"         keel:"crypto_version"`
+	Status                Status              `json:"status"                keel:"status"`
+	Description           string              `json:"description"           keel:"description,nullzero"`
+	ResourceID            string              `json:"resourceId"            keel:"resource_id"`
+	ResourceType          string              `json:"resourceType"          keel:"resource_type"`
+	ProcessingProfile     ProcessingProfile   `json:"processingProfile"     keel:"processing_profile"`
+	ExpirationDate        *int64              `json:"expirationDate"        keel:"expiration_date"`
+	Tags                  []string            `json:"tags"                  keel:"tags"`
+	IsPublic              bool                `json:"isPublic"              keel:"is_public"`
+	UploadedByID          pulid.ID            `json:"uploadedById"          keel:"uploaded_by_id"`
+	ApprovedByID          pulid.ID            `json:"approvedById"          keel:"approved_by_id,nullzero"`
+	ApprovedAt            *int64              `json:"approvedAt"            keel:"approved_at"`
+	RejectedByID          pulid.ID            `json:"rejectedById"          keel:"rejected_by_id,nullzero"`
+	RejectedAt            *int64              `json:"rejectedAt"            keel:"rejected_at"`
+	RejectionReason       string              `json:"rejectionReason"       keel:"rejection_reason,nullzero"`
+	PreviewStoragePath    string              `json:"previewStoragePath"    keel:"preview_storage_path,nullzero"`
+	PreviewStatus         PreviewStatus       `json:"previewStatus"         keel:"preview_status,nullzero"`
+	ContentStatus         ContentStatus       `json:"contentStatus"         keel:"content_status,nullzero"`
+	ContentError          string              `json:"contentError"          keel:"content_error,nullzero"`
+	DetectedKind          string              `json:"detectedKind"          keel:"detected_kind,nullzero"`
+	HasExtractedText      bool                `json:"hasExtractedText"      keel:"has_extracted_text"`
+	ShipmentDraftStatus   ShipmentDraftStatus `json:"shipmentDraftStatus"   keel:"shipment_draft_status,nullzero"`
+	DocumentTypeID        *pulid.ID           `json:"documentTypeId"        keel:"document_type_id"`
+	SignatureStatus       SignatureStatus     `json:"signatureStatus"       keel:"signature_status,nullzero"`
+	SignedAt              *int64              `json:"signedAt"              keel:"signed_at"`
+	SignatureSource       SignatureSource     `json:"signatureSource"       keel:"signature_source,nullzero"`
+	SignatureUpdatedByID  pulid.ID            `json:"signatureUpdatedById"  keel:"signature_updated_by_id,nullzero"`
+	SignatureUpdatedAt    *int64              `json:"signatureUpdatedAt"    keel:"signature_updated_at"`
+	SearchVector          string              `json:"-"                     keel:"search_vector,tsvector,readonly,noselect"`
+	Rank                  string              `json:"-"                     keel:"rank,computed"`
+	Version               int64               `json:"version"               keel:"version,version"`
+	CreatedAt             int64               `json:"createdAt"             keel:"created_at,autocreate"`
+	UpdatedAt             int64               `json:"updatedAt"             keel:"updated_at,autoupdate"`
 
 	BusinessUnit *tenant.BusinessUnit       `json:"businessUnit,omitempty"`
 	Organization *tenant.Organization       `json:"organization,omitempty"`
@@ -447,7 +447,9 @@ func (d *Document) Validate(multiErr *errortypes.MultiError) {
 		validation.Field(&d.SignatureUpdatedByID,
 			validation.When(
 				d.SignatureSource == SignatureSourcePerson,
-				validation.Required.Error("A signature a person recorded must name who recorded it"),
+				validation.Required.Error(
+					"A signature a person recorded must name who recorded it",
+				),
 			),
 		),
 		validation.Field(&d.PreviewStoragePath,

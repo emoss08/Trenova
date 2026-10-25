@@ -16,24 +16,24 @@ import (
 // InvoiceRunGroup is one proposed invoice: the shipments that share a split key
 // within a run.
 type InvoiceRunGroup struct {
-	keel.Table `                                                    keel:"invoice_run_groups"`
+	keel.Table `keel:"invoice_run_groups"`
 
-	ID             pulid.ID                 `json:"id" keel:"id,pk,autoid:invrg_"`
+	ID             pulid.ID                 `json:"id"             keel:"id,pk,autoid:invrg_"`
 	BusinessUnitID pulid.ID                 `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
 	OrganizationID pulid.ID                 `json:"organizationId" keel:"organization_id,pk,tenant"`
-	RunID          pulid.ID                 `json:"runId" keel:"run_id"`
-	CustomerID     pulid.ID                 `json:"customerId" keel:"customer_id"`
-	GroupKey       string                   `json:"groupKey" keel:"group_key"`
-	GroupLabel     string                   `json:"groupLabel" keel:"group_label"`
-	SplitBy        customer.InvoiceSplitKey `json:"splitBy" keel:"split_by"`
-	Status         GroupStatus              `json:"status" keel:"status"`
+	RunID          pulid.ID                 `json:"runId"          keel:"run_id"`
+	CustomerID     pulid.ID                 `json:"customerId"     keel:"customer_id"`
+	GroupKey       string                   `json:"groupKey"       keel:"group_key"`
+	GroupLabel     string                   `json:"groupLabel"     keel:"group_label"`
+	SplitBy        customer.InvoiceSplitKey `json:"splitBy"        keel:"split_by"`
+	Status         GroupStatus              `json:"status"         keel:"status"`
 
-	ItemCount           int             `json:"itemCount" keel:"item_count"`
-	SubtotalAmount      decimal.Decimal `json:"subtotalAmount" keel:"subtotal_amount"`
+	ItemCount           int             `json:"itemCount"           keel:"item_count"`
+	SubtotalAmount      decimal.Decimal `json:"subtotalAmount"      keel:"subtotal_amount"`
 	SubtotalAmountMinor int64           `json:"subtotalAmountMinor" keel:"subtotal_amount_minor"`
-	TotalAmount         decimal.Decimal `json:"totalAmount" keel:"total_amount"`
-	TotalAmountMinor    int64           `json:"totalAmountMinor" keel:"total_amount_minor"`
-	CurrencyCode        string          `json:"currencyCode" keel:"currency_code"`
+	TotalAmount         decimal.Decimal `json:"totalAmount"         keel:"total_amount"`
+	TotalAmountMinor    int64           `json:"totalAmountMinor"    keel:"total_amount_minor"`
+	CurrencyCode        string          `json:"currencyCode"        keel:"currency_code"`
 
 	// MinimumAmount is the customer's floor for a statement, copied onto the group
 	// when the run is built. A group below it defers to the next period rather
@@ -43,17 +43,17 @@ type InvoiceRunGroup struct {
 	// scheduled run commits it rather than leaving it for a biller.
 	AutoBill bool `json:"autoBill" keel:"auto_bill"`
 
-	InvoiceID  pulid.ID `json:"invoiceId" keel:"invoice_id,nullzero"`
+	InvoiceID  pulid.ID `json:"invoiceId"  keel:"invoice_id,nullzero"`
 	SkipReason string   `json:"skipReason" keel:"skip_reason,nullzero"`
 
-	Version   int64 `json:"version" keel:"version,version"`
+	Version   int64 `json:"version"   keel:"version,version"`
 	CreatedAt int64 `json:"createdAt" keel:"created_at,autocreate"`
 	UpdatedAt int64 `json:"updatedAt" keel:"updated_at,autoupdate"`
 
-	Run      *InvoiceRun            `json:"-" keel:"belongs:run_id"`
+	Run      *InvoiceRun            `json:"-"                  keel:"belongs:run_id"`
 	Customer *customer.Customer     `json:"customer,omitempty" keel:"belongs:customer_id"`
-	Invoice  *invoice.Invoice       `json:"invoice,omitempty" keel:"belongs:invoice_id"`
-	Items    []*InvoiceRunGroupItem `json:"items,omitempty" keel:"many:group_id"`
+	Invoice  *invoice.Invoice       `json:"invoice,omitempty"  keel:"belongs:invoice_id"`
+	Items    []*InvoiceRunGroupItem `json:"items,omitempty"    keel:"many:group_id"`
 }
 
 func (g *InvoiceRunGroup) Validate(multiErr *errortypes.MultiError) {

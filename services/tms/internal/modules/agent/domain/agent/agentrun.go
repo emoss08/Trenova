@@ -23,28 +23,28 @@ var (
 type AgentRun struct {
 	keel.Table `keel:"agent_runs"`
 
-	ID             pulid.ID `json:"id" keel:"id,pk,autoid:ar_"`
+	ID             pulid.ID `json:"id"             keel:"id,pk,autoid:ar_"`
 	BusinessUnitID pulid.ID `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
 	OrganizationID pulid.ID `json:"organizationId" keel:"organization_id,pk,tenant"`
 
 	AgentDefinitionID pulid.ID     `json:"agentDefinitionId" keel:"agent_definition_id,nullzero"`
-	Trigger           RunTrigger   `json:"trigger" keel:"trigger"`
-	Summary           string       `json:"summary" keel:"summary,nullzero"`
-	AgentType         Type         `json:"agentType" keel:"agent_type"`
-	SubjectType       SubjectType  `json:"subjectType" keel:"subject_type"`
-	SubjectID         pulid.ID     `json:"subjectId" keel:"subject_id"`
-	Status            RunStatus    `json:"status" keel:"status"`
-	WorkflowID        string       `json:"workflowId" keel:"workflow_id,nullzero"`
-	ModelIdentifier   string       `json:"modelIdentifier" keel:"model_identifier,nullzero"`
-	PromptVersion     string       `json:"promptVersion" keel:"prompt_version"`
-	InputContextHash  string       `json:"inputContextHash" keel:"input_context_hash"`
-	StartedAt         int64        `json:"startedAt" keel:"started_at,nullzero"`
-	CompletedAt       *int64       `json:"completedAt" keel:"completed_at"`
-	ErrorMessage      string       `json:"errorMessage" keel:"error_message,nullzero"`
-	Tainted           bool         `json:"tainted" keel:"tainted"`
-	Taint             *RunTaint    `json:"taint" keel:"taint,jsonb"`
-	TaintedAt         *int64       `json:"taintedAt" keel:"tainted_at"`
-	Fingerprint       *Fingerprint `json:"fingerprint" keel:"fingerprint,jsonb"`
+	Trigger           RunTrigger   `json:"trigger"           keel:"trigger"`
+	Summary           string       `json:"summary"           keel:"summary,nullzero"`
+	AgentType         Type         `json:"agentType"         keel:"agent_type"`
+	SubjectType       SubjectType  `json:"subjectType"       keel:"subject_type"`
+	SubjectID         pulid.ID     `json:"subjectId"         keel:"subject_id"`
+	Status            RunStatus    `json:"status"            keel:"status"`
+	WorkflowID        string       `json:"workflowId"        keel:"workflow_id,nullzero"`
+	ModelIdentifier   string       `json:"modelIdentifier"   keel:"model_identifier,nullzero"`
+	PromptVersion     string       `json:"promptVersion"     keel:"prompt_version"`
+	InputContextHash  string       `json:"inputContextHash"  keel:"input_context_hash"`
+	StartedAt         int64        `json:"startedAt"         keel:"started_at,nullzero"`
+	CompletedAt       *int64       `json:"completedAt"       keel:"completed_at"`
+	ErrorMessage      string       `json:"errorMessage"      keel:"error_message,nullzero"`
+	Tainted           bool         `json:"tainted"           keel:"tainted"`
+	Taint             *RunTaint    `json:"taint"             keel:"taint,jsonb"`
+	TaintedAt         *int64       `json:"taintedAt"         keel:"tainted_at"`
+	Fingerprint       *Fingerprint `json:"fingerprint"       keel:"fingerprint,jsonb"`
 
 	Transcript *RunTranscript `json:"-" keel:"transcript,jsonb"`
 
@@ -52,13 +52,13 @@ type AgentRun struct {
 	// opened for. ParentOwnerKind, ParentOwnerID and DelegateCallID are set on
 	// a delegate's run: the run or turn that handed it the task, and the call
 	// that did.
-	TraceID         string       `json:"traceId" keel:"trace_id,nullzero"`
-	TurnID          pulid.ID     `json:"turnId" keel:"turn_id,nullzero"`
+	TraceID         string       `json:"traceId"         keel:"trace_id,nullzero"`
+	TurnID          pulid.ID     `json:"turnId"          keel:"turn_id,nullzero"`
 	ParentOwnerKind RunOwnerKind `json:"parentOwnerKind" keel:"parent_owner_kind,nullzero"`
-	ParentOwnerID   pulid.ID     `json:"parentOwnerId" keel:"parent_owner_id,nullzero"`
-	DelegateCallID  string       `json:"delegateCallId" keel:"delegate_call_id,nullzero"`
+	ParentOwnerID   pulid.ID     `json:"parentOwnerId"   keel:"parent_owner_id,nullzero"`
+	DelegateCallID  string       `json:"delegateCallId"  keel:"delegate_call_id,nullzero"`
 
-	Version   int64 `json:"version" keel:"version,version"`
+	Version   int64 `json:"version"   keel:"version,version"`
 	CreatedAt int64 `json:"createdAt" keel:"created_at,autocreate"`
 	UpdatedAt int64 `json:"updatedAt" keel:"updated_at,autoupdate"`
 

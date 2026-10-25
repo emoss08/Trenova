@@ -72,7 +72,12 @@ func shipmentEndpoints(filter []keel.Pred) *keel.Query[shipment.Shipment] {
 		Pick(
 			keel.Raw("(array_agg(? ORDER BY ?, ?) FILTER (WHERE ?))[1]",
 				st.LocationID, m.Sequence, st.Sequence, st.Type.In(shipment.PickupStopTypes()...)),
-			keel.Raw("(array_agg(? ORDER BY ? DESC, ? DESC) FILTER (WHERE ?))[1]",
-				st.LocationID, m.Sequence, st.Sequence, st.Type.In(shipment.DeliveryStopTypes()...)),
+			keel.Raw(
+				"(array_agg(? ORDER BY ? DESC, ? DESC) FILTER (WHERE ?))[1]",
+				st.LocationID,
+				m.Sequence,
+				st.Sequence,
+				st.Type.In(shipment.DeliveryStopTypes()...),
+			),
 		)
 }

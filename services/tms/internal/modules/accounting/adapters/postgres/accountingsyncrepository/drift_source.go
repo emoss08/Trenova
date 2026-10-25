@@ -431,7 +431,9 @@ func (s *driftSource) ListPendingCustomers(
 	})
 }
 
-func waitingInbound(req *accountingsyncports.ListAccountingDriftPendingCustomersRequest) keel.Projection {
+func waitingInbound(
+	req *accountingsyncports.ListAccountingDriftPendingCustomersRequest,
+) keel.Projection {
 	ic := accountingsyncdb.AccountingInboundChanges
 	return ic.Group(ic.PartyObjectID).
 		Pick(ic.PartyObjectID).
@@ -455,7 +457,9 @@ func unsettledRecords(
 	)
 }
 
-func unsettledSales(req *accountingsyncports.ListAccountingDriftPendingCustomersRequest) keel.Projection {
+func unsettledSales(
+	req *accountingsyncports.ListAccountingDriftPendingCustomersRequest,
+) keel.Projection {
 	sr := accountingsyncdb.AccountingSyncRecords
 	inv := invoicedb.Invoices
 	return unsettledRecords(
@@ -470,7 +474,9 @@ func unsettledSales(req *accountingsyncports.ListAccountingDriftPendingCustomers
 		Where(inv.CustomerID.In(req.CustomerIDs...))
 }
 
-func unsettledPayments(req *accountingsyncports.ListAccountingDriftPendingCustomersRequest) keel.Projection {
+func unsettledPayments(
+	req *accountingsyncports.ListAccountingDriftPendingCustomersRequest,
+) keel.Projection {
 	sr := accountingsyncdb.AccountingSyncRecords
 	cp := customerpaymentdb.Payments
 	return unsettledRecords(req, accountingsync.SyncObjectCustomerPayment).

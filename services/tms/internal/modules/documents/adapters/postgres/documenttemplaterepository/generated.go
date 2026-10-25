@@ -25,11 +25,7 @@ var generatedErrors = dberror.Mapping{
 			Field:   "templateVersionId",
 			Message: "Template version does not exist",
 		},
-		{
-			Name:    "fk_generated_documents_template",
-			Field:   "templateId",
-			Message: "Document template does not exist",
-		},
+		templateForeignKey("fk_generated_documents_template"),
 		{
 			Name:    "fk_generated_documents_document",
 			Field:   "documentId",

@@ -54,9 +54,11 @@ func NewDefaultBillingControl(orgID, buID pulid.ID) *BillingControl {
 		RateVarianceTolerancePercent:          decimal.Zero,
 		RateVarianceAutoResolutionMode:        RateVarianceAutoResolutionMode("Disabled"),
 		RequireRateOverrideReason:             true,
-		UnratedShipmentDisposition:            UnratedShipmentDisposition("FallbackFormulaTemplate"),
-		LateChargeAssessmentMode:              LateChargeAssessmentModeDisabled,
-		MonthlyStatementDay:                   1,
+		UnratedShipmentDisposition: UnratedShipmentDisposition(
+			"FallbackFormulaTemplate",
+		),
+		LateChargeAssessmentMode: LateChargeAssessmentModeDisabled,
+		MonthlyStatementDay:      1,
 	}
 }
 
@@ -76,15 +78,19 @@ func NewDefaultInvoiceAdjustmentControl(orgID, buID pulid.ID) *InvoiceAdjustment
 		AdjustmentReasonRequirement:         RequirementPolicyRequired,
 		StandardAdjustmentApprovalPolicy:    ApprovalPolicyAmountThreshold,
 		StandardAdjustmentApprovalThreshold: decimal.NewFromFloat(0.01),
-		WriteOffApprovalPolicy:              WriteOffApprovalPolicy("RequireApprovalAboveThreshold"),
-		WriteOffApprovalThreshold:           decimal.NewFromFloat(0.01),
-		RerateVarianceTolerancePercent:      decimal.Zero,
+		WriteOffApprovalPolicy: WriteOffApprovalPolicy(
+			"RequireApprovalAboveThreshold",
+		),
+		WriteOffApprovalThreshold:      decimal.NewFromFloat(0.01),
+		RerateVarianceTolerancePercent: decimal.Zero,
 		ReplacementInvoiceReviewPolicy: ReplacementInvoiceReviewPolicy(
 			"RequireReviewWhenEconomicTermsChange",
 		),
-		CustomerCreditBalancePolicy:       CustomerCreditBalancePolicy("AllowUnappliedCredit"),
-		OverCreditPolicy:                  OverCreditPolicyBlock,
-		SupersededInvoiceVisibilityPolicy: SupersededInvoiceVisibilityPolicy("ShowCurrentOnlyExternally"),
+		CustomerCreditBalancePolicy: CustomerCreditBalancePolicy("AllowUnappliedCredit"),
+		OverCreditPolicy:            OverCreditPolicyBlock,
+		SupersededInvoiceVisibilityPolicy: SupersededInvoiceVisibilityPolicy(
+			"ShowCurrentOnlyExternally",
+		),
 	}
 }
 

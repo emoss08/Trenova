@@ -20,44 +20,44 @@ type RunError struct {
 
 // Execution history for reports, schedules, and exports
 type ReportRun struct {
-	keel.Table `                                            keel:"report_runs,report=Reporting"`
+	keel.Table `keel:"report_runs,report=Reporting"`
 
-	ID                 pulid.ID       `json:"id" keel:"id,pk,autoid:rrun_"`
-	BusinessUnitID     pulid.ID       `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
-	OrganizationID     pulid.ID       `json:"organizationId" keel:"organization_id,pk,tenant"`
-	DefinitionID       pulid.ID       `json:"definitionId" keel:"definition_id,nullzero"`
-	RevisionID         pulid.ID       `json:"revisionId" keel:"revision_id,nullzero,noreport"`
-	CannedKey          string         `json:"cannedKey" keel:"canned_key,nullzero,label=Canned Report Key"`
-	CannedVersion      string         `json:"cannedVersion" keel:"canned_version,nullzero,noreport"`
-	ScheduleID         pulid.ID       `json:"scheduleId" keel:"schedule_id,nullzero"`
-	RequestedByID      pulid.ID       `json:"requestedById" keel:"requested_by_id"`
-	Trigger            RunTrigger     `json:"trigger" keel:"trigger"`
-	Params             map[string]any `json:"params" keel:"params,jsonb,nullzero,noreport"`
-	Format             Format         `json:"format" keel:"format"`
-	Status             RunStatus      `json:"status" keel:"status"`
-	RowCount           int64          `json:"rowCount" keel:"row_count,nullzero,label=Rows,format=count"`
-	ByteSize           int64          `json:"byteSize" keel:"byte_size,nullzero,label=Size (bytes),format=count"`
-	DurationMs         int64          `json:"durationMs" keel:"duration_ms,nullzero,label=Duration (ms),format=count"`
-	Truncated          bool           `json:"truncated" keel:"truncated"`
-	Error              *RunError      `json:"error" keel:"error,jsonb,noreport"`
-	ArtifactKey        string         `json:"artifactKey" keel:"artifact_key,nullzero,noreport"`
-	RowsKey            string         `json:"rowsKey" keel:"rows_key,nullzero"`
-	ArtifactExpiresAt  int64          `json:"artifactExpiresAt" keel:"artifact_expires_at,nullzero,noreport"`
-	CacheHit           bool           `json:"cacheHit" keel:"cache_hit"`
+	ID                 pulid.ID       `json:"id"                 keel:"id,pk,autoid:rrun_"`
+	BusinessUnitID     pulid.ID       `json:"businessUnitId"     keel:"business_unit_id,pk,tenant"`
+	OrganizationID     pulid.ID       `json:"organizationId"     keel:"organization_id,pk,tenant"`
+	DefinitionID       pulid.ID       `json:"definitionId"       keel:"definition_id,nullzero"`
+	RevisionID         pulid.ID       `json:"revisionId"         keel:"revision_id,nullzero,noreport"`
+	CannedKey          string         `json:"cannedKey"          keel:"canned_key,nullzero,label=Canned Report Key"`
+	CannedVersion      string         `json:"cannedVersion"      keel:"canned_version,nullzero,noreport"`
+	ScheduleID         pulid.ID       `json:"scheduleId"         keel:"schedule_id,nullzero"`
+	RequestedByID      pulid.ID       `json:"requestedById"      keel:"requested_by_id"`
+	Trigger            RunTrigger     `json:"trigger"            keel:"trigger"`
+	Params             map[string]any `json:"params"             keel:"params,jsonb,nullzero,noreport"`
+	Format             Format         `json:"format"             keel:"format"`
+	Status             RunStatus      `json:"status"             keel:"status"`
+	RowCount           int64          `json:"rowCount"           keel:"row_count,nullzero,label=Rows,format=count"`
+	ByteSize           int64          `json:"byteSize"           keel:"byte_size,nullzero,label=Size (bytes),format=count"`
+	DurationMs         int64          `json:"durationMs"         keel:"duration_ms,nullzero,label=Duration (ms),format=count"`
+	Truncated          bool           `json:"truncated"          keel:"truncated"`
+	Error              *RunError      `json:"error"              keel:"error,jsonb,noreport"`
+	ArtifactKey        string         `json:"artifactKey"        keel:"artifact_key,nullzero,noreport"`
+	RowsKey            string         `json:"rowsKey"            keel:"rows_key,nullzero"`
+	ArtifactExpiresAt  int64          `json:"artifactExpiresAt"  keel:"artifact_expires_at,nullzero,noreport"`
+	CacheHit           bool           `json:"cacheHit"           keel:"cache_hit"`
 	TemporalWorkflowID string         `json:"temporalWorkflowId" keel:"temporal_workflow_id,nullzero,noreport"`
-	TemporalRunID      string         `json:"temporalRunId" keel:"temporal_run_id,nullzero,noreport"`
-	QueuedAt           int64          `json:"queuedAt" keel:"queued_at,nullzero"`
-	StartedAt          int64          `json:"startedAt" keel:"started_at,nullzero"`
-	CompletedAt        int64          `json:"completedAt" keel:"completed_at,nullzero"`
-	Version            int64          `json:"version" keel:"version,version,noreport"`
-	CreatedAt          int64          `json:"createdAt" keel:"created_at,autocreate"`
-	UpdatedAt          int64          `json:"updatedAt" keel:"updated_at,autoupdate,noreport"`
+	TemporalRunID      string         `json:"temporalRunId"      keel:"temporal_run_id,nullzero,noreport"`
+	QueuedAt           int64          `json:"queuedAt"           keel:"queued_at,nullzero"`
+	StartedAt          int64          `json:"startedAt"          keel:"started_at,nullzero"`
+	CompletedAt        int64          `json:"completedAt"        keel:"completed_at,nullzero"`
+	Version            int64          `json:"version"            keel:"version,version,noreport"`
+	CreatedAt          int64          `json:"createdAt"          keel:"created_at,autocreate"`
+	UpdatedAt          int64          `json:"updatedAt"          keel:"updated_at,autoupdate,noreport"`
 
 	Organization     *tenant.Organization      `json:"organization,omitempty"`
 	BusinessUnit     *tenant.BusinessUnit      `json:"businessUnit,omitempty"`
-	RequestedBy      *tenant.User              `json:"requestedBy,omitempty" keel:"belongs:requested_by_id,noreport"`
+	RequestedBy      *tenant.User              `json:"requestedBy,omitempty"      keel:"belongs:requested_by_id,noreport"`
 	ReportDefinition *ReportDefinition         `json:"reportDefinition,omitempty" keel:"belongs:definition_id,label=Report"`
-	Revision         *ReportDefinitionRevision `json:"revision,omitempty" keel:"belongs:revision_id,noreport"`
+	Revision         *ReportDefinitionRevision `json:"revision,omitempty"         keel:"belongs:revision_id,noreport"`
 }
 
 func (rr *ReportRun) BeforeCreate(_ context.Context) error {

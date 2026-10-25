@@ -69,40 +69,40 @@ type AppliedObject struct {
 
 // Payments recorded in the accounting system against documents Trenova sent, and whether each was applied in Trenova
 type AccountingInboundChange struct {
-	keel.Table `                                                             keel:"accounting_inbound_changes,report=Accounting,label=Payment From the Books,plural=Payments From the Books"`
+	keel.Table `keel:"accounting_inbound_changes,report=Accounting,label=Payment From the Books,plural=Payments From the Books"`
 
-	ID                 pulid.ID            `json:"id" keel:"id,pk,autoid:acctic_"`
-	BusinessUnitID     pulid.ID            `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
-	OrganizationID     pulid.ID            `json:"organizationId" keel:"organization_id,pk,tenant"`
-	ConnectionID       pulid.ID            `json:"connectionId" keel:"connection_id"`
-	Kind               InboundChangeKind   `json:"kind" keel:"kind,label=Payment Kind"`
-	ExternalID         string              `json:"externalId" keel:"external_id,label=ID in the Books"`
-	ExternalNumber     string              `json:"externalNumber" keel:"external_number,nullzero,label=Number in the Books"`
-	ExternalURL        string              `json:"externalUrl" keel:"external_url,nullzero,label=Link in the Books"`
+	ID                 pulid.ID            `json:"id"                 keel:"id,pk,autoid:acctic_"`
+	BusinessUnitID     pulid.ID            `json:"businessUnitId"     keel:"business_unit_id,pk,tenant"`
+	OrganizationID     pulid.ID            `json:"organizationId"     keel:"organization_id,pk,tenant"`
+	ConnectionID       pulid.ID            `json:"connectionId"       keel:"connection_id"`
+	Kind               InboundChangeKind   `json:"kind"               keel:"kind,label=Payment Kind"`
+	ExternalID         string              `json:"externalId"         keel:"external_id,label=ID in the Books"`
+	ExternalNumber     string              `json:"externalNumber"     keel:"external_number,nullzero,label=Number in the Books"`
+	ExternalURL        string              `json:"externalUrl"        keel:"external_url,nullzero,label=Link in the Books"`
 	ProviderModifiedAt *int64              `json:"providerModifiedAt" keel:"provider_modified_at,label=Changed in the Books At"`
 	ProviderModifiedBy string              `json:"providerModifiedBy" keel:"provider_modified_by,nullzero,label=Changed in the Books By"`
-	TxnDate            int64               `json:"txnDate" keel:"txn_date,label=Payment Date"`
-	AmountMinor        int64               `json:"amountMinor" keel:"amount_minor,label=Amount (Minor)"`
-	CurrencyCode       string              `json:"currencyCode" keel:"currency_code,label=Currency"`
-	PartyExternalID    string              `json:"partyExternalId" keel:"party_external_id,nullzero,noreport"`
-	PartyName          string              `json:"partyName" keel:"party_name,nullzero,label=Customer or Vendor"`
-	PartyObjectID      pulid.ID            `json:"partyObjectId" keel:"party_object_id,nullzero,label=Trenova Party ID"`
-	Document           InboundDocument     `json:"document" keel:"document,jsonb,noreport"`
-	Status             InboundChangeStatus `json:"status" keel:"status"`
-	Reason             InboundChangeReason `json:"reason" keel:"reason,nullzero,label=Held Back Because"`
-	Resolution         string              `json:"resolution" keel:"resolution,nullzero,label=What to Do"`
-	AppliedObjects     []AppliedObject     `json:"appliedObjects" keel:"applied_objects,jsonb,noreport"`
-	DecidedByID        pulid.ID            `json:"decidedById" keel:"decided_by_id,nullzero"`
-	DecidedAt          *int64              `json:"decidedAt" keel:"decided_at"`
-	Note               string              `json:"note" keel:"note,nullzero"`
-	DetectedAt         int64               `json:"detectedAt" keel:"detected_at,label=Read At"`
-	Version            int64               `json:"version" keel:"version,version"`
-	CreatedAt          int64               `json:"createdAt" keel:"created_at,autocreate"`
-	UpdatedAt          int64               `json:"updatedAt" keel:"updated_at,autoupdate"`
+	TxnDate            int64               `json:"txnDate"            keel:"txn_date,label=Payment Date"`
+	AmountMinor        int64               `json:"amountMinor"        keel:"amount_minor,label=Amount (Minor)"`
+	CurrencyCode       string              `json:"currencyCode"       keel:"currency_code,label=Currency"`
+	PartyExternalID    string              `json:"partyExternalId"    keel:"party_external_id,nullzero,noreport"`
+	PartyName          string              `json:"partyName"          keel:"party_name,nullzero,label=Customer or Vendor"`
+	PartyObjectID      pulid.ID            `json:"partyObjectId"      keel:"party_object_id,nullzero,label=Trenova Party ID"`
+	Document           InboundDocument     `json:"document"           keel:"document,jsonb,noreport"`
+	Status             InboundChangeStatus `json:"status"             keel:"status"`
+	Reason             InboundChangeReason `json:"reason"             keel:"reason,nullzero,label=Held Back Because"`
+	Resolution         string              `json:"resolution"         keel:"resolution,nullzero,label=What to Do"`
+	AppliedObjects     []AppliedObject     `json:"appliedObjects"     keel:"applied_objects,jsonb,noreport"`
+	DecidedByID        pulid.ID            `json:"decidedById"        keel:"decided_by_id,nullzero"`
+	DecidedAt          *int64              `json:"decidedAt"          keel:"decided_at"`
+	Note               string              `json:"note"               keel:"note,nullzero"`
+	DetectedAt         int64               `json:"detectedAt"         keel:"detected_at,label=Read At"`
+	Version            int64               `json:"version"            keel:"version,version"`
+	CreatedAt          int64               `json:"createdAt"          keel:"created_at,autocreate"`
+	UpdatedAt          int64               `json:"updatedAt"          keel:"updated_at,autoupdate"`
 
 	Organization *tenant.Organization `json:"organization,omitempty"`
 	BusinessUnit *tenant.BusinessUnit `json:"businessUnit,omitempty"`
-	DecidedBy    *tenant.User         `json:"decidedBy,omitempty" keel:"belongs:decided_by_id,noreport"`
+	DecidedBy    *tenant.User         `json:"decidedBy,omitempty"    keel:"belongs:decided_by_id,noreport"`
 }
 
 func (c *AccountingInboundChange) BeforeUpdate(_ context.Context) error {

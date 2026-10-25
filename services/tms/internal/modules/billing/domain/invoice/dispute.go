@@ -90,30 +90,30 @@ func (r DisputeResolution) RequiresAdjustment() bool {
 // invoice has at most one open case; resolving or withdrawing it clears the
 // invoice's Disputed flag.
 type InvoiceDispute struct {
-	keel.Table `                                                 keel:"invoice_disputes"`
+	keel.Table `keel:"invoice_disputes"`
 
-	ID                     pulid.ID          `json:"id" keel:"id,pk,autoid:idsp_"`
-	OrganizationID         pulid.ID          `json:"organizationId" keel:"organization_id,pk,tenant"`
-	BusinessUnitID         pulid.ID          `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
-	InvoiceID              pulid.ID          `json:"invoiceId" keel:"invoice_id"`
-	CustomerID             pulid.ID          `json:"customerId" keel:"customer_id"`
-	Status                 DisputeCaseStatus `json:"status" keel:"status"`
-	ReasonCode             DisputeReasonCode `json:"reasonCode" keel:"reason_code"`
-	DisputedAmount         decimal.Decimal   `json:"disputedAmount" keel:"disputed_amount"`
-	DisputedAmountMinor    int64             `json:"disputedAmountMinor" keel:"disputed_amount_minor"`
-	Notes                  string            `json:"notes" keel:"notes,nullzero"`
-	OpenedByID             pulid.ID          `json:"openedById" keel:"opened_by_id"`
-	OpenedAt               int64             `json:"openedAt" keel:"opened_at"`
-	ResolvedByID           pulid.ID          `json:"resolvedById" keel:"resolved_by_id,nullzero"`
-	ResolvedAt             *int64            `json:"resolvedAt" keel:"resolved_at"`
-	Resolution             DisputeResolution `json:"resolution" keel:"resolution,nullzero"`
+	ID                     pulid.ID          `json:"id"                     keel:"id,pk,autoid:idsp_"`
+	OrganizationID         pulid.ID          `json:"organizationId"         keel:"organization_id,pk,tenant"`
+	BusinessUnitID         pulid.ID          `json:"businessUnitId"         keel:"business_unit_id,pk,tenant"`
+	InvoiceID              pulid.ID          `json:"invoiceId"              keel:"invoice_id"`
+	CustomerID             pulid.ID          `json:"customerId"             keel:"customer_id"`
+	Status                 DisputeCaseStatus `json:"status"                 keel:"status"`
+	ReasonCode             DisputeReasonCode `json:"reasonCode"             keel:"reason_code"`
+	DisputedAmount         decimal.Decimal   `json:"disputedAmount"         keel:"disputed_amount"`
+	DisputedAmountMinor    int64             `json:"disputedAmountMinor"    keel:"disputed_amount_minor"`
+	Notes                  string            `json:"notes"                  keel:"notes,nullzero"`
+	OpenedByID             pulid.ID          `json:"openedById"             keel:"opened_by_id"`
+	OpenedAt               int64             `json:"openedAt"               keel:"opened_at"`
+	ResolvedByID           pulid.ID          `json:"resolvedById"           keel:"resolved_by_id,nullzero"`
+	ResolvedAt             *int64            `json:"resolvedAt"             keel:"resolved_at"`
+	Resolution             DisputeResolution `json:"resolution"             keel:"resolution,nullzero"`
 	ResolutionAdjustmentID pulid.ID          `json:"resolutionAdjustmentId" keel:"resolution_adjustment_id,nullzero"`
-	ResolutionNotes        string            `json:"resolutionNotes" keel:"resolution_notes,nullzero"`
-	Version                int64             `json:"version" keel:"version,version"`
-	CreatedAt              int64             `json:"createdAt" keel:"created_at,autocreate"`
-	UpdatedAt              int64             `json:"updatedAt" keel:"updated_at,autoupdate"`
+	ResolutionNotes        string            `json:"resolutionNotes"        keel:"resolution_notes,nullzero"`
+	Version                int64             `json:"version"                keel:"version,version"`
+	CreatedAt              int64             `json:"createdAt"              keel:"created_at,autocreate"`
+	UpdatedAt              int64             `json:"updatedAt"              keel:"updated_at,autoupdate"`
 
-	Invoice  *Invoice           `json:"invoice,omitempty" keel:"belongs:invoice_id"`
+	Invoice  *Invoice           `json:"invoice,omitempty"  keel:"belongs:invoice_id"`
 	Customer *customer.Customer `json:"customer,omitempty" keel:"belongs:customer_id"`
 }
 

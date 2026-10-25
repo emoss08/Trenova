@@ -4,6 +4,8 @@ import (
 	"context"
 	"strings"
 
+	"github.com/emoss08/trenova/shared/money"
+
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/customer"
@@ -27,81 +29,81 @@ const (
 
 // Schedules of accounts sent to each factor, with their invoices' total, expected advance, fee and reserve, and how delivery went
 type Submission struct {
-	keel.Table `                                                        keel:"factoring_submissions,report=Billing,label=Factoring Schedule"`
+	keel.Table `keel:"factoring_submissions,report=Billing,label=Factoring Schedule"`
 
-	ID                    pulid.ID         `json:"id" keel:"id,pk,autoid:facsub_"`
-	OrganizationID        pulid.ID         `json:"organizationId" keel:"organization_id,pk,tenant"`
-	BusinessUnitID        pulid.ID         `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
-	Number                string           `json:"number" keel:"number,label=Schedule Number"`
-	FactoringCompanyID    pulid.ID         `json:"factoringCompanyId" keel:"factoring_company_id"`
-	AgreementID           pulid.ID         `json:"agreementId" keel:"agreement_id"`
-	Status                SubmissionStatus `json:"status" keel:"status"`
-	CurrencyCode          string           `json:"currencyCode" keel:"currency_code,label=Currency"`
-	InvoiceCount          int              `json:"invoiceCount" keel:"invoice_count,label=Invoices,format=count"`
-	FaceMinor             int64            `json:"faceMinor" keel:"face_minor,label=Face Amount (Minor)"`
-	ExpectedAdvanceMinor  int64            `json:"expectedAdvanceMinor" keel:"expected_advance_minor,label=Expected Advance (Minor)"`
-	ExpectedFeeMinor      int64            `json:"expectedFeeMinor" keel:"expected_fee_minor,label=Expected Fee (Minor)"`
-	ExpectedReserveMinor  int64            `json:"expectedReserveMinor" keel:"expected_reserve_minor,label=Expected Reserve (Minor)"`
+	ID                    pulid.ID         `json:"id"                    keel:"id,pk,autoid:facsub_"`
+	OrganizationID        pulid.ID         `json:"organizationId"        keel:"organization_id,pk,tenant"`
+	BusinessUnitID        pulid.ID         `json:"businessUnitId"        keel:"business_unit_id,pk,tenant"`
+	Number                string           `json:"number"                keel:"number,label=Schedule Number"`
+	FactoringCompanyID    pulid.ID         `json:"factoringCompanyId"    keel:"factoring_company_id"`
+	AgreementID           pulid.ID         `json:"agreementId"           keel:"agreement_id"`
+	Status                SubmissionStatus `json:"status"                keel:"status"`
+	CurrencyCode          string           `json:"currencyCode"          keel:"currency_code,label=Currency"`
+	InvoiceCount          int              `json:"invoiceCount"          keel:"invoice_count,label=Invoices,format=count"`
+	FaceMinor             int64            `json:"faceMinor"             keel:"face_minor,label=Face Amount (Minor)"`
+	ExpectedAdvanceMinor  int64            `json:"expectedAdvanceMinor"  keel:"expected_advance_minor,label=Expected Advance (Minor)"`
+	ExpectedFeeMinor      int64            `json:"expectedFeeMinor"      keel:"expected_fee_minor,label=Expected Fee (Minor)"`
+	ExpectedReserveMinor  int64            `json:"expectedReserveMinor"  keel:"expected_reserve_minor,label=Expected Reserve (Minor)"`
 	SchedulePDFDocumentID pulid.ID         `json:"schedulePdfDocumentId" keel:"schedule_pdf_document_id,nullzero"`
 	ScheduleCSVDocumentID pulid.ID         `json:"scheduleCsvDocumentId" keel:"schedule_csv_document_id,nullzero"`
-	TransportMethod       TransportMethod  `json:"transportMethod" keel:"transport_method,label=Sent By"`
-	TransportTarget       string           `json:"transportTarget" keel:"transport_target,label=Sent To"`
-	TransportReference    string           `json:"transportReference" keel:"transport_reference,nullzero,label=Delivery Reference"`
-	SendAttemptGroup      int              `json:"sendAttemptGroup" keel:"send_attempt_group,label=Send Number,dimension"`
-	Attempts              int              `json:"attempts" keel:"attempts,dimension"`
-	LastError             string           `json:"lastError" keel:"last_error,nullzero"`
-	IdempotencyKey        string           `json:"-" keel:"idempotency_key,noreport"`
-	SentAt                *int64           `json:"sentAt" keel:"sent_at"`
-	FailedAt              *int64           `json:"failedAt" keel:"failed_at"`
-	CancelledAt           *int64           `json:"cancelledAt" keel:"cancelled_at"`
-	CancelReason          string           `json:"cancelReason" keel:"cancel_reason,nullzero"`
-	FundedAt              *int64           `json:"fundedAt" keel:"funded_at"`
-	SubmittedByID         pulid.ID         `json:"submittedById" keel:"submitted_by_id,nullzero"`
-	AgentRunID            pulid.ID         `json:"agentRunId" keel:"agent_run_id,nullzero"`
-	Version               int64            `json:"version" keel:"version,version"`
-	CreatedAt             int64            `json:"createdAt" keel:"created_at,autocreate"`
-	UpdatedAt             int64            `json:"updatedAt" keel:"updated_at,autoupdate"`
+	TransportMethod       TransportMethod  `json:"transportMethod"       keel:"transport_method,label=Sent By"`
+	TransportTarget       string           `json:"transportTarget"       keel:"transport_target,label=Sent To"`
+	TransportReference    string           `json:"transportReference"    keel:"transport_reference,nullzero,label=Delivery Reference"`
+	SendAttemptGroup      int              `json:"sendAttemptGroup"      keel:"send_attempt_group,label=Send Number,dimension"`
+	Attempts              int              `json:"attempts"              keel:"attempts,dimension"`
+	LastError             string           `json:"lastError"             keel:"last_error,nullzero"`
+	IdempotencyKey        string           `json:"-"                     keel:"idempotency_key,noreport"`
+	SentAt                *int64           `json:"sentAt"                keel:"sent_at"`
+	FailedAt              *int64           `json:"failedAt"              keel:"failed_at"`
+	CancelledAt           *int64           `json:"cancelledAt"           keel:"cancelled_at"`
+	CancelReason          string           `json:"cancelReason"          keel:"cancel_reason,nullzero"`
+	FundedAt              *int64           `json:"fundedAt"              keel:"funded_at"`
+	SubmittedByID         pulid.ID         `json:"submittedById"         keel:"submitted_by_id,nullzero"`
+	AgentRunID            pulid.ID         `json:"agentRunId"            keel:"agent_run_id,nullzero"`
+	Version               int64            `json:"version"               keel:"version,version"`
+	CreatedAt             int64            `json:"createdAt"             keel:"created_at,autocreate"`
+	UpdatedAt             int64            `json:"updatedAt"             keel:"updated_at,autoupdate"`
 
 	FactoringCompany *factoringcompany.FactoringCompany `json:"factoringCompany,omitempty" keel:"belongs:factoring_company_id"`
-	Agreement        *Agreement                         `json:"agreement,omitempty" keel:"belongs:agreement_id"`
-	Items            []*SubmissionItem                  `json:"items,omitempty" keel:"many:submission_id"`
+	Agreement        *Agreement                         `json:"agreement,omitempty"        keel:"belongs:agreement_id"`
+	Items            []*SubmissionItem                  `json:"items,omitempty"            keel:"many:submission_id"`
 }
 
 // Each invoice on a factoring schedule, with what the factor was expected to advance, charge and hold back on it
 type SubmissionItem struct {
-	keel.Table `                                                             keel:"factoring_submission_items,report=Billing,label=Factoring Schedule Invoice"`
+	keel.Table `keel:"factoring_submission_items,report=Billing,label=Factoring Schedule Invoice"`
 
-	ID                   pulid.ID             `json:"id" keel:"id,pk,autoid:facsit_"`
-	OrganizationID       pulid.ID             `json:"organizationId" keel:"organization_id,pk,tenant"`
-	BusinessUnitID       pulid.ID             `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
-	SubmissionID         pulid.ID             `json:"submissionId" keel:"submission_id,label=Schedule ID"`
-	InvoiceID            pulid.ID             `json:"invoiceId" keel:"invoice_id"`
-	InvoiceNumber        string               `json:"invoiceNumber" keel:"invoice_number"`
-	CustomerID           pulid.ID             `json:"customerId" keel:"customer_id"`
-	Position             int                  `json:"position" keel:"position,label=Line,dimension"`
-	FaceMinor            int64                `json:"faceMinor" keel:"face_minor,label=Face Amount (Minor)"`
+	ID                   pulid.ID             `json:"id"                   keel:"id,pk,autoid:facsit_"`
+	OrganizationID       pulid.ID             `json:"organizationId"       keel:"organization_id,pk,tenant"`
+	BusinessUnitID       pulid.ID             `json:"businessUnitId"       keel:"business_unit_id,pk,tenant"`
+	SubmissionID         pulid.ID             `json:"submissionId"         keel:"submission_id,label=Schedule ID"`
+	InvoiceID            pulid.ID             `json:"invoiceId"            keel:"invoice_id"`
+	InvoiceNumber        string               `json:"invoiceNumber"        keel:"invoice_number"`
+	CustomerID           pulid.ID             `json:"customerId"           keel:"customer_id"`
+	Position             int                  `json:"position"             keel:"position,label=Line,dimension"`
+	FaceMinor            int64                `json:"faceMinor"            keel:"face_minor,label=Face Amount (Minor)"`
 	ExpectedAdvanceMinor int64                `json:"expectedAdvanceMinor" keel:"expected_advance_minor,label=Expected Advance (Minor)"`
-	ExpectedFeeMinor     int64                `json:"expectedFeeMinor" keel:"expected_fee_minor,label=Expected Fee (Minor)"`
+	ExpectedFeeMinor     int64                `json:"expectedFeeMinor"     keel:"expected_fee_minor,label=Expected Fee (Minor)"`
 	ExpectedReserveMinor int64                `json:"expectedReserveMinor" keel:"expected_reserve_minor,label=Expected Reserve (Minor)"`
-	ExpectedDays         int                  `json:"expectedDays" keel:"expected_days,label=Expected Days to Pay,dimension"`
-	PacketDocumentID     pulid.ID             `json:"packetDocumentId" keel:"packet_document_id,nullzero"`
-	Status               SubmissionItemStatus `json:"status" keel:"status"`
-	ReleasedAt           *int64               `json:"releasedAt" keel:"released_at"`
-	FundedOn             *int64               `json:"fundedOn" keel:"funded_on,type=epoch"`
-	AdvanceMinor         *int64               `json:"advanceMinor" keel:"advance_minor,label=Advance (Minor)"`
-	FeeMinor             *int64               `json:"feeMinor" keel:"fee_minor,label=Fee (Minor)"`
-	ReserveMinor         *int64               `json:"reserveMinor" keel:"reserve_minor,label=Reserve (Minor)"`
-	RejectionReason      string               `json:"rejectionReason" keel:"rejection_reason,nullzero"`
-	SettledOn            *int64               `json:"settledOn" keel:"settled_on,type=epoch"`
-	ChargedBackOn        *int64               `json:"chargedBackOn" keel:"charged_back_on,type=epoch"`
-	ChargebackReason     string               `json:"chargebackReason" keel:"chargeback_reason,nullzero"`
-	ChargebackWarnedAt   *int64               `json:"chargebackWarnedAt" keel:"chargeback_warned_at"`
-	CreatedAt            int64                `json:"createdAt" keel:"created_at,autocreate"`
-	UpdatedAt            int64                `json:"updatedAt" keel:"updated_at,autoupdate"`
+	ExpectedDays         int                  `json:"expectedDays"         keel:"expected_days,label=Expected Days to Pay,dimension"`
+	PacketDocumentID     pulid.ID             `json:"packetDocumentId"     keel:"packet_document_id,nullzero"`
+	Status               SubmissionItemStatus `json:"status"               keel:"status"`
+	ReleasedAt           *int64               `json:"releasedAt"           keel:"released_at"`
+	FundedOn             *int64               `json:"fundedOn"             keel:"funded_on,type=epoch"`
+	AdvanceMinor         *int64               `json:"advanceMinor"         keel:"advance_minor,label=Advance (Minor)"`
+	FeeMinor             *int64               `json:"feeMinor"             keel:"fee_minor,label=Fee (Minor)"`
+	ReserveMinor         *int64               `json:"reserveMinor"         keel:"reserve_minor,label=Reserve (Minor)"`
+	RejectionReason      string               `json:"rejectionReason"      keel:"rejection_reason,nullzero"`
+	SettledOn            *int64               `json:"settledOn"            keel:"settled_on,type=epoch"`
+	ChargedBackOn        *int64               `json:"chargedBackOn"        keel:"charged_back_on,type=epoch"`
+	ChargebackReason     string               `json:"chargebackReason"     keel:"chargeback_reason,nullzero"`
+	ChargebackWarnedAt   *int64               `json:"chargebackWarnedAt"   keel:"chargeback_warned_at"`
+	CreatedAt            int64                `json:"createdAt"            keel:"created_at,autocreate"`
+	UpdatedAt            int64                `json:"updatedAt"            keel:"updated_at,autoupdate"`
 
-	Invoice    *invoice.Invoice   `json:"invoice,omitempty" keel:"belongs:invoice_id"`
+	Invoice    *invoice.Invoice   `json:"invoice,omitempty"  keel:"belongs:invoice_id"`
 	Customer   *customer.Customer `json:"customer,omitempty" keel:"belongs:customer_id"`
-	Submission *Submission        `json:"-" keel:"belongs:submission_id,noreport"`
+	Submission *Submission        `json:"-"                  keel:"belongs:submission_id,noreport"`
 }
 
 func (s *Submission) Validate(multiErr *errortypes.MultiError) {
@@ -304,7 +306,7 @@ func (s *Submission) BeforeCreate(ctx context.Context) error {
 		s.Status = SubmissionStatusSending
 	}
 	if s.CurrencyCode == "" {
-		s.CurrencyCode = "USD"
+		s.CurrencyCode = money.DefaultCurrencyCode
 	}
 	if s.SendAttemptGroup == 0 {
 		s.SendAttemptGroup = 1

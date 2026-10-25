@@ -56,7 +56,11 @@ func (r *repository) Create(
 			)
 
 			db := r.db.Keel(ctx)
-			if err := formulatemplatedb.FormulaTemplateVersions.Create(ctx, db, version); err != nil {
+			if err := formulatemplatedb.FormulaTemplateVersions.Create(
+				ctx,
+				db,
+				version,
+			); err != nil {
 				log.Error("failed to create formula template version", zap.Error(err))
 				return nil, versionErrors.Map(err, version.ID.String())
 			}

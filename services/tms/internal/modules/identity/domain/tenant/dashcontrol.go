@@ -51,24 +51,24 @@ var (
 type DashControl struct {
 	keel.Table `keel:"dash_controls"`
 
-	ID             pulid.ID `json:"id" keel:"id,pk,autoid:dashc_"`
+	ID             pulid.ID `json:"id"             keel:"id,pk,autoid:dashc_"`
 	BusinessUnitID pulid.ID `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
 	OrganizationID pulid.ID `json:"organizationId" keel:"organization_id,pk,tenant"`
 
-	RequireLoadAcknowledgment  bool `json:"requireLoadAcknowledgment" keel:"require_load_acknowledgment"`
-	AllowLoadRefusals          bool `json:"allowLoadRefusals" keel:"allow_load_refusals"`
-	AllowStopActions           bool `json:"allowStopActions" keel:"allow_stop_actions"`
-	AllowLoadDocumentUpload    bool `json:"allowLoadDocumentUpload" keel:"allow_load_document_upload"`
-	AllowLoadComments          bool `json:"allowLoadComments" keel:"allow_load_comments"`
-	ShowLoadPay                bool `json:"showLoadPay" keel:"show_load_pay"`
-	ShowPayEstimates           bool `json:"showPayEstimates" keel:"show_pay_estimates"`
-	AllowExpenseSubmission     bool `json:"allowExpenseSubmission" keel:"allow_expense_submission"`
-	RequireExpenseReceipt      bool `json:"requireExpenseReceipt" keel:"require_expense_receipt"`
-	AllowSettlementDisputes    bool `json:"allowSettlementDisputes" keel:"allow_settlement_disputes"`
+	RequireLoadAcknowledgment  bool `json:"requireLoadAcknowledgment"  keel:"require_load_acknowledgment"`
+	AllowLoadRefusals          bool `json:"allowLoadRefusals"          keel:"allow_load_refusals"`
+	AllowStopActions           bool `json:"allowStopActions"           keel:"allow_stop_actions"`
+	AllowLoadDocumentUpload    bool `json:"allowLoadDocumentUpload"    keel:"allow_load_document_upload"`
+	AllowLoadComments          bool `json:"allowLoadComments"          keel:"allow_load_comments"`
+	ShowLoadPay                bool `json:"showLoadPay"                keel:"show_load_pay"`
+	ShowPayEstimates           bool `json:"showPayEstimates"           keel:"show_pay_estimates"`
+	AllowExpenseSubmission     bool `json:"allowExpenseSubmission"     keel:"allow_expense_submission"`
+	RequireExpenseReceipt      bool `json:"requireExpenseReceipt"      keel:"require_expense_receipt"`
+	AllowSettlementDisputes    bool `json:"allowSettlementDisputes"    keel:"allow_settlement_disputes"`
 	AllowProfileDocumentUpload bool `json:"allowProfileDocumentUpload" keel:"allow_profile_document_upload"`
-	AllowContactInfoEdit       bool `json:"allowContactInfoEdit" keel:"allow_contact_info_edit"`
-	AllowPtoRequests           bool `json:"allowPtoRequests" keel:"allow_pto_requests"`
-	SendCredentialReminders    bool `json:"sendCredentialReminders" keel:"send_credential_reminders"`
+	AllowContactInfoEdit       bool `json:"allowContactInfoEdit"       keel:"allow_contact_info_edit"`
+	AllowPtoRequests           bool `json:"allowPtoRequests"           keel:"allow_pto_requests"`
+	SendCredentialReminders    bool `json:"sendCredentialReminders"    keel:"send_credential_reminders"`
 	// RequireContactChangeApproval makes a driver's own contact edits wait on
 	// the office instead of landing straight on the record. Off keeps the
 	// behaviour every existing carrier relies on.
@@ -82,10 +82,10 @@ type DashControl struct {
 	// Ignored unless the cadence is Weekly.
 	DriverDigestWeekday int16 `json:"driverDigestWeekday" keel:"driver_digest_weekday"`
 
-	EnableDetentionAlerts          bool  `json:"enableDetentionAlerts" keel:"enable_detention_alerts"`
+	EnableDetentionAlerts          bool  `json:"enableDetentionAlerts"          keel:"enable_detention_alerts"`
 	DetentionAlertThresholdMinutes int16 `json:"detentionAlertThresholdMinutes" keel:"detention_alert_threshold_minutes"`
 
-	Version   int64 `json:"version" keel:"version,version"`
+	Version   int64 `json:"version"   keel:"version,version"`
 	CreatedAt int64 `json:"createdAt" keel:"created_at,autocreate"`
 	UpdatedAt int64 `json:"updatedAt" keel:"updated_at,autoupdate"`
 

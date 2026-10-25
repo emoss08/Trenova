@@ -41,24 +41,24 @@ func (d PayCodeDirection) IsValid() bool {
 
 // Earning and deduction codes and the GL accounts they post to
 type PayCode struct {
-	keel.Table `                                          keel:"pay_codes,report=Payroll"`
+	keel.Table `keel:"pay_codes,report=Payroll"`
 
-	ID                    pulid.ID           `json:"id" keel:"id,pk,autoid:payc_"`
-	BusinessUnitID        pulid.ID           `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
-	OrganizationID        pulid.ID           `json:"organizationId" keel:"organization_id,pk,tenant"`
-	Status                domaintypes.Status `json:"status" keel:"status"`
-	Direction             PayCodeDirection   `json:"direction" keel:"direction"`
-	Code                  string             `json:"code" keel:"code"`
-	Name                  string             `json:"name" keel:"name"`
-	Description           string             `json:"description" keel:"description,nullzero"`
-	Taxable               bool               `json:"taxable" keel:"taxable"`
+	ID                    pulid.ID           `json:"id"                    keel:"id,pk,autoid:payc_"`
+	BusinessUnitID        pulid.ID           `json:"businessUnitId"        keel:"business_unit_id,pk,tenant"`
+	OrganizationID        pulid.ID           `json:"organizationId"        keel:"organization_id,pk,tenant"`
+	Status                domaintypes.Status `json:"status"                keel:"status"`
+	Direction             PayCodeDirection   `json:"direction"             keel:"direction"`
+	Code                  string             `json:"code"                  keel:"code"`
+	Name                  string             `json:"name"                  keel:"name"`
+	Description           string             `json:"description"           keel:"description,nullzero"`
+	Taxable               bool               `json:"taxable"               keel:"taxable"`
 	CountsTowardGuarantee bool               `json:"countsTowardGuarantee" keel:"counts_toward_guarantee"`
-	GLAccountID           *pulid.ID          `json:"glAccountId" keel:"gl_account_id"`
-	DefaultAmountMinor    *int64             `json:"defaultAmountMinor" keel:"default_amount_minor,label=Default Amount (Minor)"`
-	IsSystem              bool               `json:"isSystem" keel:"is_system,label=System Code"`
-	Version               int64              `json:"version" keel:"version,version"`
-	CreatedAt             int64              `json:"createdAt" keel:"created_at,autocreate"`
-	UpdatedAt             int64              `json:"updatedAt" keel:"updated_at,autoupdate"`
+	GLAccountID           *pulid.ID          `json:"glAccountId"           keel:"gl_account_id"`
+	DefaultAmountMinor    *int64             `json:"defaultAmountMinor"    keel:"default_amount_minor,label=Default Amount (Minor)"`
+	IsSystem              bool               `json:"isSystem"              keel:"is_system,label=System Code"`
+	Version               int64              `json:"version"               keel:"version,version"`
+	CreatedAt             int64              `json:"createdAt"             keel:"created_at,autocreate"`
+	UpdatedAt             int64              `json:"updatedAt"             keel:"updated_at,autoupdate"`
 
 	GLAccount *glaccount.GLAccount `json:"glAccount,omitempty" keel:"belongs:gl_account_id"`
 }

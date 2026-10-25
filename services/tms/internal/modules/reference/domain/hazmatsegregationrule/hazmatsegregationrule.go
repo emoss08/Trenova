@@ -21,28 +21,28 @@ var (
 type HazmatSegregationRule struct {
 	keel.Table `keel:"hazmat_segregation_rules"`
 
-	ID               pulid.ID                         `json:"id" keel:"id,pk,autoid:hsr_"`
-	BusinessUnitID   pulid.ID                         `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
-	OrganizationID   pulid.ID                         `json:"organizationId" keel:"organization_id,pk,tenant"`
-	Status           domaintypes.Status               `json:"status" keel:"status"`
-	Name             string                           `json:"name" keel:"name"`
-	Description      string                           `json:"description" keel:"description,nullzero"`
-	ExceptionNotes   string                           `json:"exceptionNotes" keel:"exception_notes,nullzero"`
-	ReferenceCode    string                           `json:"referenceCode" keel:"reference_code,nullzero"`
+	ID               pulid.ID                         `json:"id"               keel:"id,pk,autoid:hsr_"`
+	BusinessUnitID   pulid.ID                         `json:"businessUnitId"   keel:"business_unit_id,pk,tenant"`
+	OrganizationID   pulid.ID                         `json:"organizationId"   keel:"organization_id,pk,tenant"`
+	Status           domaintypes.Status               `json:"status"           keel:"status"`
+	Name             string                           `json:"name"             keel:"name"`
+	Description      string                           `json:"description"      keel:"description,nullzero"`
+	ExceptionNotes   string                           `json:"exceptionNotes"   keel:"exception_notes,nullzero"`
+	ReferenceCode    string                           `json:"referenceCode"    keel:"reference_code,nullzero"`
 	RegulationSource string                           `json:"regulationSource" keel:"regulation_source,nullzero"`
-	DistanceUnit     string                           `json:"distanceUnit" keel:"distance_unit,nullzero"`
-	ClassA           hazardousmaterial.HazardousClass `json:"classA" keel:"class_a"`
-	ClassB           hazardousmaterial.HazardousClass `json:"classB" keel:"class_b"`
-	SearchVector     string                           `json:"-" keel:"search_vector,tsvector,readonly,noselect"`
-	Rank             string                           `json:"-" keel:"rank,computed"`
-	SegregationType  SegregationType                  `json:"segregationType" keel:"segregation_type"`
-	HasExceptions    bool                             `json:"hasExceptions" keel:"has_exceptions"`
-	Version          int64                            `json:"version" keel:"version,version"`
-	CreatedAt        int64                            `json:"createdAt" keel:"created_at,autocreate"`
-	UpdatedAt        int64                            `json:"updatedAt" keel:"updated_at,autoupdate"`
-	HazmatAID        *pulid.ID                        `json:"hazmatAId" keel:"hazmat_a_id"`
-	HazmatBID        *pulid.ID                        `json:"hazmatBId" keel:"hazmat_b_id"`
-	MinimumDistance  *float64                         `json:"minimumDistance" keel:"minimum_distance"`
+	DistanceUnit     string                           `json:"distanceUnit"     keel:"distance_unit,nullzero"`
+	ClassA           hazardousmaterial.HazardousClass `json:"classA"           keel:"class_a"`
+	ClassB           hazardousmaterial.HazardousClass `json:"classB"           keel:"class_b"`
+	SearchVector     string                           `json:"-"                keel:"search_vector,tsvector,readonly,noselect"`
+	Rank             string                           `json:"-"                keel:"rank,computed"`
+	SegregationType  SegregationType                  `json:"segregationType"  keel:"segregation_type"`
+	HasExceptions    bool                             `json:"hasExceptions"    keel:"has_exceptions"`
+	Version          int64                            `json:"version"          keel:"version,version"`
+	CreatedAt        int64                            `json:"createdAt"        keel:"created_at,autocreate"`
+	UpdatedAt        int64                            `json:"updatedAt"        keel:"updated_at,autoupdate"`
+	HazmatAID        *pulid.ID                        `json:"hazmatAId"        keel:"hazmat_a_id"`
+	HazmatBID        *pulid.ID                        `json:"hazmatBId"        keel:"hazmat_b_id"`
+	MinimumDistance  *float64                         `json:"minimumDistance"  keel:"minimum_distance"`
 
 	BusinessUnit    *tenant.BusinessUnit                 `json:"businessUnit,omitempty"`
 	Organization    *tenant.Organization                 `json:"organization,omitempty"`

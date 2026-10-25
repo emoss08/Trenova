@@ -91,11 +91,14 @@ func newListEquipmentTypesTool(
 	})
 
 	return newListTool(listSpec{
-		name:          toolListEquipmentTypes,
-		entityPlural:  "equipment types",
-		summary:       equipmentTypesSummary,
-		resource:      permission.ResourceEquipmentType,
-		config:        listquery.Describe((*equipmenttype.EquipmentType)(nil), equipmenttypedb.EquipmentTypesSchema()),
+		name:         toolListEquipmentTypes,
+		entityPlural: "equipment types",
+		summary:      equipmentTypesSummary,
+		resource:     permission.ResourceEquipmentType,
+		config: listquery.Describe(
+			(*equipmenttype.EquipmentType)(nil),
+			equipmenttypedb.EquipmentTypesSchema(),
+		),
 		fields:        fields,
 		pagesByCursor: true,
 		fetch: func(ctx context.Context, opts *pagination.QueryOptions, cursor pagination.CursorInfo) (listPage, error) {
@@ -126,8 +129,11 @@ func newListFleetCodesTool(repo fleetcodeports.FleetCodeRepository) agentports.A
 		entityPlural: "fleet codes",
 		summary:      fleetCodesSummary,
 		resource:     permission.ResourceFleetCode,
-		config:       listquery.Describe((*fleetcode.FleetCode)(nil), fleetcodedb.FleetCodesSchema()),
-		fields:       codedFields(),
+		config: listquery.Describe(
+			(*fleetcode.FleetCode)(nil),
+			fleetcodedb.FleetCodesSchema(),
+		),
+		fields: codedFields(),
 		fetch: func(ctx context.Context, opts *pagination.QueryOptions, _ pagination.CursorInfo) (listPage, error) {
 			result, err := repo.List(ctx, &fleetcodeports.ListFleetCodesRequest{Filter: opts})
 			if err != nil {
@@ -154,8 +160,11 @@ func newListServiceTypesTool(
 		entityPlural: "service types",
 		summary:      serviceTypesSummary,
 		resource:     permission.ResourceServiceType,
-		config:       listquery.Describe((*servicetype.ServiceType)(nil), servicetypedb.ServiceTypesSchema()),
-		fields:       codedFields(),
+		config: listquery.Describe(
+			(*servicetype.ServiceType)(nil),
+			servicetypedb.ServiceTypesSchema(),
+		),
+		fields: codedFields(),
 		fetch: func(ctx context.Context, opts *pagination.QueryOptions, _ pagination.CursorInfo) (listPage, error) {
 			result, err := repo.List(ctx, &servicetypeports.ListServiceTypesRequest{Filter: opts})
 			if err != nil {
@@ -182,8 +191,11 @@ func newListShipmentTypesTool(
 		entityPlural: "shipment types",
 		summary:      shipmentTypesSummary,
 		resource:     permission.ResourceShipmentType,
-		config:       listquery.Describe((*shipmenttype.ShipmentType)(nil), shipmenttypedb.ShipmentTypesSchema()),
-		fields:       codedFields(),
+		config: listquery.Describe(
+			(*shipmenttype.ShipmentType)(nil),
+			shipmenttypedb.ShipmentTypesSchema(),
+		),
+		fields: codedFields(),
 		fetch: func(ctx context.Context, opts *pagination.QueryOptions, _ pagination.CursorInfo) (listPage, error) {
 			result, err := repo.List(ctx, &shipmenttypeports.ListShipmentTypesRequest{Filter: opts})
 			if err != nil {
@@ -219,7 +231,10 @@ func newListCommoditiesTool(repo commodityports.CommodityRepository) agentports.
 		entityPlural: pluralCommodities,
 		summary:      commoditiesSummary,
 		resource:     permission.ResourceCommodity,
-		config:       listquery.Describe((*commodity.Commodity)(nil), commoditydb.CommoditiesSchema()),
+		config: listquery.Describe(
+			(*commodity.Commodity)(nil),
+			commoditydb.CommoditiesSchema(),
+		),
 		fields: []listField{
 			{Name: "status", Kind: filterEnum, Values: statusValues},
 			{Name: "name", Kind: filterText, Sortable: true},
@@ -276,7 +291,10 @@ func newListHazardousMaterialsTool(
 		entityPlural: "hazardous materials",
 		summary:      hazardousMaterialsSummary,
 		resource:     permission.ResourceHazardousMaterial,
-		config:       listquery.Describe((*hazardousmaterial.HazardousMaterial)(nil), hazardousmaterialdb.HazardousMaterialsSchema()),
+		config: listquery.Describe(
+			(*hazardousmaterial.HazardousMaterial)(nil),
+			hazardousmaterialdb.HazardousMaterialsSchema(),
+		),
 		fields: []listField{
 			{Name: "status", Kind: filterEnum, Values: statusValues},
 			{Name: "code", Kind: filterText, Sortable: true},
@@ -331,7 +349,10 @@ func newListAccessorialChargesTool(
 		entityPlural: "accessorial charges",
 		summary:      accessorialChargesSummary,
 		resource:     permission.ResourceAccessorialCharge,
-		config:       listquery.Describe((*accessorialcharge.AccessorialCharge)(nil), accessorialchargedb.AccessorialChargesSchema()),
+		config: listquery.Describe(
+			(*accessorialcharge.AccessorialCharge)(nil),
+			accessorialchargedb.AccessorialChargesSchema(),
+		),
 		fields: []listField{
 			{Name: "status", Kind: filterEnum, Values: statusValues},
 			{Name: "code", Kind: filterText, Sortable: true},
@@ -372,7 +393,10 @@ func newListDocumentTypesTool(
 		entityPlural: "document types",
 		summary:      documentTypesSummary,
 		resource:     permission.ResourceDocumentType,
-		config:       listquery.Describe((*documenttype.DocumentType)(nil), documenttypedb.DocumentTypesSchema()),
+		config: listquery.Describe(
+			(*documenttype.DocumentType)(nil),
+			documenttypedb.DocumentTypesSchema(),
+		),
 		fields: []listField{
 			{Name: "code", Kind: filterText, Sortable: true},
 			{Name: "name", Kind: filterText, Sortable: true},
@@ -410,7 +434,10 @@ func newListLocationCategoriesTool(
 		entityPlural: "location categories",
 		summary:      locationCategoriesSummary,
 		resource:     permission.ResourceLocationCategory,
-		config:       listquery.Describe((*locationcategory.LocationCategory)(nil), locationcategorydb.LocationCategoriesSchema()),
+		config: listquery.Describe(
+			(*locationcategory.LocationCategory)(nil),
+			locationcategorydb.LocationCategoriesSchema(),
+		),
 		fields: []listField{
 			{Name: "name", Kind: filterText, Sortable: true},
 			{Name: "description", Kind: filterText},
@@ -630,7 +657,10 @@ func newListHoldReasonsTool(
 		entityPlural: "hold reasons",
 		summary:      holdReasonsSummary,
 		resource:     permission.ResourceHoldReason,
-		config:       listquery.Describe((*holdreason.HoldReason)(nil), holdreasondb.HoldReasonsSchema()),
+		config: listquery.Describe(
+			(*holdreason.HoldReason)(nil),
+			holdreasondb.HoldReasonsSchema(),
+		),
 		fields: []listField{
 			{
 				Name: "type",

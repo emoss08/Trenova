@@ -2,6 +2,8 @@ package reportaccess
 
 import "github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 
+const ownerColumn = "owner_id"
+
 type kind struct {
 	resource     permission.Resource
 	withinRecord bool
@@ -62,7 +64,7 @@ var entityKinds = map[string]kind{
 	"location":                   {resource: permission.ResourceLocation},
 	"location_category":          {resource: permission.ResourceLocationCategory},
 	"noa":                        {resource: permission.ResourceFactoringNoa},
-	"order":                      {resource: permission.ResourceOrder, ownership: "owner_id"},
+	"order":                      {resource: permission.ResourceOrder, ownership: ownerColumn},
 	"pay_advance":                {resource: permission.ResourcePayAdvance},
 	"pay_code":                   {resource: permission.ResourcePayCode},
 	"pay_event": {
@@ -82,7 +84,7 @@ var entityKinds = map[string]kind{
 		resource:     permission.ResourceFactoringRemittance,
 		withinRecord: true,
 	},
-	"report_definition": {resource: permission.ResourceReport, ownership: "owner_id"},
+	"report_definition": {resource: permission.ResourceReport, ownership: ownerColumn},
 	"report_run":        {resource: permission.ResourceReport, withinRecord: true},
 	"reserve_entry":     {resource: permission.ResourceFactoringReserve},
 	"return":            {resource: permission.ResourceIFTAReturn},
@@ -97,7 +99,7 @@ var entityKinds = map[string]kind{
 		resource:     permission.ResourceDriverSettlement,
 		withinRecord: true,
 	},
-	"shipment":           {resource: permission.ResourceShipment, ownership: "owner_id"},
+	"shipment":           {resource: permission.ResourceShipment, ownership: ownerColumn},
 	"shipment_commodity": {resource: permission.ResourceShipment, withinRecord: true},
 	"shipment_move":      {resource: permission.ResourceShipmentMove},
 	"shipment_type":      {resource: permission.ResourceShipmentType},

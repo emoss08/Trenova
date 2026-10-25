@@ -38,17 +38,21 @@ func backdater[T any](h keel.Handle[T]) tableBackdate {
 }
 
 var tableBackdates = map[string]tableBackdate{
-	"additional_charges":                backdater(shipmentdb.AdditionalCharges.Handle),
-	"assignments":                       backdater(shipmentdb.Assignments.Handle),
-	"billing_queue_events":              backdater(billingqueuedb.ItemEvents.Handle),
-	"billing_queue_items":               backdater(billingqueuedb.BillingQueueItems.Handle),
-	"carrier_assignments":               backdater(shipmentdb.CarrierAssignments.Handle),
-	"carrier_cost_events":               backdater(carriersettlementdb.CostEvents.Handle),
-	"carrier_edi_channels":              backdater(carrierdb.CarrierEDIChannels.Handle),
-	"carrier_invoice_matches":           backdater(carriersettlementdb.InvoiceMatches.Handle),
-	"carrier_ledger_entries":            backdater(carriersettlementdb.LedgerEntries.Handle),
-	"carrier_settlement_batches":        backdater(carriersettlementdb.CarrierSettlementBatches.Handle),
-	"carrier_settlement_lines":          backdater(carriersettlementdb.CarrierSettlementLines.Handle),
+	"additional_charges":      backdater(shipmentdb.AdditionalCharges.Handle),
+	"assignments":             backdater(shipmentdb.Assignments.Handle),
+	"billing_queue_events":    backdater(billingqueuedb.ItemEvents.Handle),
+	"billing_queue_items":     backdater(billingqueuedb.BillingQueueItems.Handle),
+	"carrier_assignments":     backdater(shipmentdb.CarrierAssignments.Handle),
+	"carrier_cost_events":     backdater(carriersettlementdb.CostEvents.Handle),
+	"carrier_edi_channels":    backdater(carrierdb.CarrierEDIChannels.Handle),
+	"carrier_invoice_matches": backdater(carriersettlementdb.InvoiceMatches.Handle),
+	"carrier_ledger_entries":  backdater(carriersettlementdb.LedgerEntries.Handle),
+	"carrier_settlement_batches": backdater(
+		carriersettlementdb.CarrierSettlementBatches.Handle,
+	),
+	"carrier_settlement_lines": backdater(
+		carriersettlementdb.CarrierSettlementLines.Handle,
+	),
 	"carrier_settlements":               backdater(carriersettlementdb.CarrierSettlements.Handle),
 	"check_calls":                       backdater(checkcalldb.CheckCalls.Handle),
 	"credit_memo_applications":          backdater(customerpaymentdb.CreditMemoApplications.Handle),
@@ -82,36 +86,50 @@ var tableBackdates = map[string]tableBackdate{
 	"gl_accounts":                       backdater(glaccountdb.GLAccounts.Handle),
 	"ifta_jurisdiction_mileage_entries": backdater(iftadb.JurisdictionMileageEntries.Handle),
 	"ifta_returns":                      backdater(iftadb.Returns.Handle),
-	"invoice_adjustment_batch_items":    backdater(invoiceadjustmentdb.InvoiceAdjustmentBatchItems.Handle),
-	"invoice_adjustment_batches":        backdater(invoiceadjustmentdb.InvoiceAdjustmentBatches.Handle),
-	"invoice_adjustment_lines":          backdater(invoiceadjustmentdb.InvoiceAdjustmentLines.Handle),
-	"invoice_adjustment_snapshots":      backdater(invoiceadjustmentdb.InvoiceAdjustmentSnapshots.Handle),
-	"invoice_adjustments":               backdater(invoiceadjustmentdb.InvoiceAdjustments.Handle),
-	"invoice_correction_groups":         backdater(invoiceadjustmentdb.InvoiceAdjustmentCorrectionGroups.Handle),
-	"invoice_lines":                     backdater(invoicedb.InvoiceLines.Handle),
-	"invoice_reconciliation_exceptions": backdater(invoiceadjustmentdb.InvoiceAdjustmentReconciliationExceptions.Handle),
-	"invoices":                          backdater(invoicedb.Invoices.Handle),
-	"journal_batches":                   backdater(journalentrydb.JournalBatches.Handle),
-	"journal_entries":                   backdater(journalentrydb.JournalEntries.Handle),
-	"journal_entry_lines":               backdater(journalentrydb.JournalEntryLines.Handle),
-	"orders":                            backdater(orderdb.Orders.Handle),
-	"pay_advances":                      backdater(driverpaydb.PayAdvances.Handle),
-	"rate_confirmations":                backdater(rateconfirmationdb.RateConfirmations.Handle),
-	"recurring_deductions":              backdater(driverpaydb.RecurringDeductions.Handle),
-	"recurring_earnings":                backdater(driverpaydb.RecurringEarnings.Handle),
-	"settlement_disputes":               backdater(driversettlementdb.Disputes.Handle),
-	"shipment_comment_acknowledgments":  backdater(shipmentdb.ShipmentCommentAcknowledgments.Handle),
-	"shipment_comment_mentions":         backdater(shipmentdb.ShipmentCommentMentions.Handle),
-	"shipment_comments":                 backdater(shipmentdb.ShipmentComments.Handle),
-	"shipment_commodities":              backdater(shipmentdb.ShipmentCommodities.Handle),
-	"shipment_holds":                    backdater(shipmentdb.ShipmentHolds.Handle),
-	"shipment_moves":                    backdater(shipmentdb.ShipmentMoves.Handle),
-	"shipments":                         backdater(shipmentdb.Shipments.Handle),
-	"stops":                             backdater(shipmentdb.Stops.Handle),
-	"worker_pay_assignments":            backdater(driverpaydb.WorkerPayAssignments.Handle),
-	"worker_profiles":                   backdater(workerdb.WorkerProfiles.Handle),
-	"worker_pto":                        backdater(workerdb.WorkerPTOs.Handle),
-	"workers":                           backdater(workerdb.Workers.Handle),
+	"invoice_adjustment_batch_items": backdater(
+		invoiceadjustmentdb.InvoiceAdjustmentBatchItems.Handle,
+	),
+	"invoice_adjustment_batches": backdater(
+		invoiceadjustmentdb.InvoiceAdjustmentBatches.Handle,
+	),
+	"invoice_adjustment_lines": backdater(
+		invoiceadjustmentdb.InvoiceAdjustmentLines.Handle,
+	),
+	"invoice_adjustment_snapshots": backdater(
+		invoiceadjustmentdb.InvoiceAdjustmentSnapshots.Handle,
+	),
+	"invoice_adjustments": backdater(invoiceadjustmentdb.InvoiceAdjustments.Handle),
+	"invoice_correction_groups": backdater(
+		invoiceadjustmentdb.InvoiceAdjustmentCorrectionGroups.Handle,
+	),
+	"invoice_lines": backdater(invoicedb.InvoiceLines.Handle),
+	"invoice_reconciliation_exceptions": backdater(
+		invoiceadjustmentdb.InvoiceAdjustmentReconciliationExceptions.Handle,
+	),
+	"invoices":             backdater(invoicedb.Invoices.Handle),
+	"journal_batches":      backdater(journalentrydb.JournalBatches.Handle),
+	"journal_entries":      backdater(journalentrydb.JournalEntries.Handle),
+	"journal_entry_lines":  backdater(journalentrydb.JournalEntryLines.Handle),
+	"orders":               backdater(orderdb.Orders.Handle),
+	"pay_advances":         backdater(driverpaydb.PayAdvances.Handle),
+	"rate_confirmations":   backdater(rateconfirmationdb.RateConfirmations.Handle),
+	"recurring_deductions": backdater(driverpaydb.RecurringDeductions.Handle),
+	"recurring_earnings":   backdater(driverpaydb.RecurringEarnings.Handle),
+	"settlement_disputes":  backdater(driversettlementdb.Disputes.Handle),
+	"shipment_comment_acknowledgments": backdater(
+		shipmentdb.ShipmentCommentAcknowledgments.Handle,
+	),
+	"shipment_comment_mentions": backdater(shipmentdb.ShipmentCommentMentions.Handle),
+	"shipment_comments":         backdater(shipmentdb.ShipmentComments.Handle),
+	"shipment_commodities":      backdater(shipmentdb.ShipmentCommodities.Handle),
+	"shipment_holds":            backdater(shipmentdb.ShipmentHolds.Handle),
+	"shipment_moves":            backdater(shipmentdb.ShipmentMoves.Handle),
+	"shipments":                 backdater(shipmentdb.Shipments.Handle),
+	"stops":                     backdater(shipmentdb.Stops.Handle),
+	"worker_pay_assignments":    backdater(driverpaydb.WorkerPayAssignments.Handle),
+	"worker_profiles":           backdater(workerdb.WorkerProfiles.Handle),
+	"worker_pto":                backdater(workerdb.WorkerPTOs.Handle),
+	"workers":                   backdater(workerdb.Workers.Handle),
 }
 
 func backdateTable(ctx context.Context, db *keel.DB, table string, stamps []stamp) error {
@@ -122,7 +140,13 @@ func backdateTableCreated(ctx context.Context, db *keel.DB, table string, stamps
 	return backdateNamed(ctx, db, table, stamps, true)
 }
 
-func backdateNamed(ctx context.Context, db *keel.DB, table string, stamps []stamp, createdOnly bool) error {
+func backdateNamed(
+	ctx context.Context,
+	db *keel.DB,
+	table string,
+	stamps []stamp,
+	createdOnly bool,
+) error {
 	if len(stamps) == 0 {
 		return nil
 	}

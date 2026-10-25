@@ -134,7 +134,9 @@ func (r *driftFindingRepository) ListOpen(
 	)
 }
 
-func driftListFilters(req *accountingsyncports.ListAccountingDriftFindingsConnectionRequest) []keel.Pred {
+func driftListFilters(
+	req *accountingsyncports.ListAccountingDriftFindingsConnectionRequest,
+) []keel.Pred {
 	df := accountingsyncdb.AccountingDriftFindings
 	term := strings.TrimSpace(req.Search)
 
@@ -200,12 +202,14 @@ func (r *driftFindingRepository) Summarize(
 				r.db.Keel(ctx),
 				df.Pick(
 					keel.Count().Filter(open),
-					keel.Count().Filter(keel.And(open, df.Kind.Eq(accountingsync.DriftAmountMismatch))),
+					keel.Count().
+						Filter(keel.And(open, df.Kind.Eq(accountingsync.DriftAmountMismatch))),
 					keel.Count().Filter(keel.And(open, df.Kind.In(
 						accountingsync.DriftDeletedInProvider,
 						accountingsync.DriftVoidedInProvider,
 					))),
-					keel.Count().Filter(keel.And(open, df.Kind.Eq(accountingsync.DriftStatusMismatch))),
+					keel.Count().
+						Filter(keel.And(open, df.Kind.Eq(accountingsync.DriftStatusMismatch))),
 					keel.Count().Filter(keel.And(
 						open,
 						df.Kind.Eq(accountingsync.DriftCustomerBalanceMismatch),

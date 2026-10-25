@@ -54,40 +54,40 @@ func CustomerEmailTools() []string {
 type ShipmentComment struct {
 	keel.Table `keel:"shipment_comments"`
 
-	ID                     pulid.ID             `json:"id" keel:"id,pk,autoid:shc_"`
-	BusinessUnitID         pulid.ID             `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
-	OrganizationID         pulid.ID             `json:"organizationId" keel:"organization_id,pk,tenant"`
-	ShipmentID             pulid.ID             `json:"shipmentId" keel:"shipment_id,pk"`
-	UserID                 pulid.ID             `json:"userId" keel:"user_id,nullzero"`
-	ParentCommentID        *pulid.ID            `json:"parentCommentId" keel:"parent_comment_id"`
-	Comment                string               `json:"comment" keel:"comment"`
-	Body                   map[string]any       `json:"body,omitempty" keel:"body,jsonb,nullzero"`
-	Type                   CommentType          `json:"type" keel:"type"`
-	Visibility             CommentVisibility    `json:"visibility" keel:"visibility"`
-	Priority               CommentPriority      `json:"priority" keel:"priority"`
-	Source                 CommentSource        `json:"source" keel:"source"`
-	Metadata               map[string]any       `json:"metadata,omitempty" keel:"metadata,jsonb"`
-	EditedAt               *int64               `json:"editedAt" keel:"edited_at"`
-	PinnedAt               *int64               `json:"pinnedAt" keel:"pinned_at"`
-	PinnedByID             *pulid.ID            `json:"pinnedById" keel:"pinned_by_id"`
-	ResolvedAt             *int64               `json:"resolvedAt" keel:"resolved_at"`
-	ResolvedByID           *pulid.ID            `json:"resolvedById" keel:"resolved_by_id"`
-	RequiresAcknowledgment bool                 `json:"requiresAcknowledgment" keel:"requires_acknowledgment"`
-	DeletedAt              *int64               `json:"deletedAt" keel:"deleted_at"`
-	DeletedByID            *pulid.ID            `json:"deletedById" keel:"deleted_by_id"`
-	SearchVector           string               `json:"-" keel:"search_vector,tsvector,readonly,noselect"`
-	ReplyCount             int64                `json:"replyCount" keel:"reply_count,computed"`
-	Version                int64                `json:"version" keel:"version,version"`
-	CreatedAt              int64                `json:"createdAt" keel:"created_at,autocreate"`
-	UpdatedAt              int64                `json:"updatedAt" keel:"updated_at,autoupdate"`
+	ID                     pulid.ID             `json:"id"                              keel:"id,pk,autoid:shc_"`
+	BusinessUnitID         pulid.ID             `json:"businessUnitId"                  keel:"business_unit_id,pk,tenant"`
+	OrganizationID         pulid.ID             `json:"organizationId"                  keel:"organization_id,pk,tenant"`
+	ShipmentID             pulid.ID             `json:"shipmentId"                      keel:"shipment_id,pk"`
+	UserID                 pulid.ID             `json:"userId"                          keel:"user_id,nullzero"`
+	ParentCommentID        *pulid.ID            `json:"parentCommentId"                 keel:"parent_comment_id"`
+	Comment                string               `json:"comment"                         keel:"comment"`
+	Body                   map[string]any       `json:"body,omitempty"                  keel:"body,jsonb,nullzero"`
+	Type                   CommentType          `json:"type"                            keel:"type"`
+	Visibility             CommentVisibility    `json:"visibility"                      keel:"visibility"`
+	Priority               CommentPriority      `json:"priority"                        keel:"priority"`
+	Source                 CommentSource        `json:"source"                          keel:"source"`
+	Metadata               map[string]any       `json:"metadata,omitempty"              keel:"metadata,jsonb"`
+	EditedAt               *int64               `json:"editedAt"                        keel:"edited_at"`
+	PinnedAt               *int64               `json:"pinnedAt"                        keel:"pinned_at"`
+	PinnedByID             *pulid.ID            `json:"pinnedById"                      keel:"pinned_by_id"`
+	ResolvedAt             *int64               `json:"resolvedAt"                      keel:"resolved_at"`
+	ResolvedByID           *pulid.ID            `json:"resolvedById"                    keel:"resolved_by_id"`
+	RequiresAcknowledgment bool                 `json:"requiresAcknowledgment"          keel:"requires_acknowledgment"`
+	DeletedAt              *int64               `json:"deletedAt"                       keel:"deleted_at"`
+	DeletedByID            *pulid.ID            `json:"deletedById"                     keel:"deleted_by_id"`
+	SearchVector           string               `json:"-"                               keel:"search_vector,tsvector,readonly,noselect"`
+	ReplyCount             int64                `json:"replyCount"                      keel:"reply_count,computed"`
+	Version                int64                `json:"version"                         keel:"version,version"`
+	CreatedAt              int64                `json:"createdAt"                       keel:"created_at,autocreate"`
+	UpdatedAt              int64                `json:"updatedAt"                       keel:"updated_at,autoupdate"`
 	MentionedUserIDs       []pulid.ID           `json:"mentionedUserIds,omitempty"`
 	AttachmentDocumentIDs  []pulid.ID           `json:"attachmentDocumentIds,omitempty"`
 	Attachments            []*CommentAttachment `json:"attachments,omitempty"`
 
-	User            *tenant.User                     `json:"user,omitempty" keel:"belongs:user_id"`
-	PinnedBy        *tenant.User                     `json:"pinnedBy,omitempty" keel:"belongs:pinned_by_id"`
-	ResolvedBy      *tenant.User                     `json:"resolvedBy,omitempty" keel:"belongs:resolved_by_id"`
-	MentionedUsers  []*ShipmentCommentMention        `json:"mentionedUsers,omitempty" keel:"many:comment_id=id"`
+	User            *tenant.User                     `json:"user,omitempty"            keel:"belongs:user_id"`
+	PinnedBy        *tenant.User                     `json:"pinnedBy,omitempty"        keel:"belongs:pinned_by_id"`
+	ResolvedBy      *tenant.User                     `json:"resolvedBy,omitempty"      keel:"belongs:resolved_by_id"`
+	MentionedUsers  []*ShipmentCommentMention        `json:"mentionedUsers,omitempty"  keel:"many:comment_id=id"`
 	Acknowledgments []*ShipmentCommentAcknowledgment `json:"acknowledgments,omitempty" keel:"many:comment_id=id"`
 }
 
@@ -105,12 +105,12 @@ type CommentAttachment struct {
 type ShipmentCommentAcknowledgment struct {
 	keel.Table `keel:"shipment_comment_acknowledgments"`
 
-	ID             pulid.ID `json:"id" keel:"id,pk,autoid:sck_"`
-	CommentID      pulid.ID `json:"commentId" keel:"comment_id"`
+	ID             pulid.ID `json:"id"             keel:"id,pk,autoid:sck_"`
+	CommentID      pulid.ID `json:"commentId"      keel:"comment_id"`
 	BusinessUnitID pulid.ID `json:"businessUnitId" keel:"business_unit_id,tenant"`
 	OrganizationID pulid.ID `json:"organizationId" keel:"organization_id,tenant"`
-	ShipmentID     pulid.ID `json:"shipmentId" keel:"shipment_id"`
-	UserID         pulid.ID `json:"userId" keel:"user_id"`
+	ShipmentID     pulid.ID `json:"shipmentId"     keel:"shipment_id"`
+	UserID         pulid.ID `json:"userId"         keel:"user_id"`
 	AcknowledgedAt int64    `json:"acknowledgedAt" keel:"acknowledged_at"`
 
 	User *tenant.User `json:"user,omitempty" keel:"belongs:user_id"`
@@ -127,13 +127,13 @@ func (a *ShipmentCommentAcknowledgment) BeforeCreate(_ context.Context) error {
 type ShipmentCommentMention struct {
 	keel.Table `keel:"shipment_comment_mentions"`
 
-	ID              pulid.ID `json:"id" keel:"id,pk,autoid:scm_"`
-	CommentID       pulid.ID `json:"commentId" keel:"comment_id"`
+	ID              pulid.ID `json:"id"              keel:"id,pk,autoid:scm_"`
+	CommentID       pulid.ID `json:"commentId"       keel:"comment_id"`
 	MentionedUserID pulid.ID `json:"mentionedUserId" keel:"mentioned_user_id"`
-	OrganizationID  pulid.ID `json:"organizationId" keel:"organization_id,tenant"`
-	BusinessUnitID  pulid.ID `json:"businessUnitId" keel:"business_unit_id,tenant"`
-	ShipmentID      pulid.ID `json:"shipmentId" keel:"shipment_id"`
-	CreatedAt       int64    `json:"createdAt" keel:"created_at,autocreate"`
+	OrganizationID  pulid.ID `json:"organizationId"  keel:"organization_id,tenant"`
+	BusinessUnitID  pulid.ID `json:"businessUnitId"  keel:"business_unit_id,tenant"`
+	ShipmentID      pulid.ID `json:"shipmentId"      keel:"shipment_id"`
+	CreatedAt       int64    `json:"createdAt"       keel:"created_at,autocreate"`
 
 	MentionedUser *tenant.User `json:"mentionedUser,omitempty" keel:"belongs:mentioned_user_id"`
 }

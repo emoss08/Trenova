@@ -131,48 +131,48 @@ var (
 // separately because 49 CFR 382.413 asks for it specifically and an employer
 // often answers the general request without it.
 type WorkerEmploymentVerification struct {
-	keel.Table `                                                                keel:"worker_employment_verifications"`
+	keel.Table `keel:"worker_employment_verifications"`
 
-	ID             pulid.ID `json:"id" keel:"id,pk,autoid:wemv_"`
+	ID             pulid.ID `json:"id"             keel:"id,pk,autoid:wemv_"`
 	BusinessUnitID pulid.ID `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
 	OrganizationID pulid.ID `json:"organizationId" keel:"organization_id,pk,tenant"`
-	WorkerID       pulid.ID `json:"workerId" keel:"worker_id"`
+	WorkerID       pulid.ID `json:"workerId"       keel:"worker_id"`
 
-	EmployerName      string `json:"employerName" keel:"employer_name"`
+	EmployerName      string `json:"employerName"      keel:"employer_name"`
 	EmployerDOTNumber string `json:"employerDotNumber" keel:"employer_dot_number,nullzero"`
-	EmployerMCNumber  string `json:"employerMcNumber" keel:"employer_mc_number,nullzero"`
-	ContactName       string `json:"contactName" keel:"contact_name,nullzero"`
-	ContactPhone      string `json:"contactPhone" keel:"contact_phone,nullzero"`
-	ContactEmail      string `json:"contactEmail" keel:"contact_email,nullzero"`
+	EmployerMCNumber  string `json:"employerMcNumber"  keel:"employer_mc_number,nullzero"`
+	ContactName       string `json:"contactName"       keel:"contact_name,nullzero"`
+	ContactPhone      string `json:"contactPhone"      keel:"contact_phone,nullzero"`
+	ContactEmail      string `json:"contactEmail"      keel:"contact_email,nullzero"`
 
-	EmployedFrom    *int64 `json:"employedFrom" keel:"employed_from"`
-	EmployedTo      *int64 `json:"employedTo" keel:"employed_to"`
+	EmployedFrom    *int64 `json:"employedFrom"    keel:"employed_from"`
+	EmployedTo      *int64 `json:"employedTo"      keel:"employed_to"`
 	WasDOTRegulated bool   `json:"wasDotRegulated" keel:"was_dot_regulated"`
 
 	Status EmploymentVerificationStatus `json:"status" keel:"status"`
 	Method EmploymentVerificationMethod `json:"method" keel:"method"`
 
-	RequestedAt                   *int64 `json:"requestedAt" keel:"requested_at"`
-	ResponseReceivedAt            *int64 `json:"responseReceivedAt" keel:"response_received_at"`
-	LastFollowUpAt                *int64 `json:"lastFollowUpAt" keel:"last_follow_up_at"`
-	FollowUpCount                 int32  `json:"followUpCount" keel:"follow_up_count"`
+	RequestedAt                   *int64 `json:"requestedAt"                   keel:"requested_at"`
+	ResponseReceivedAt            *int64 `json:"responseReceivedAt"            keel:"response_received_at"`
+	LastFollowUpAt                *int64 `json:"lastFollowUpAt"                keel:"last_follow_up_at"`
+	FollowUpCount                 int32  `json:"followUpCount"                 keel:"follow_up_count"`
 	DrugAlcoholResponseReceivedAt *int64 `json:"drugAlcoholResponseReceivedAt" keel:"drug_alcohol_response_received_at"`
 
-	HadAccidents             bool  `json:"hadAccidents" keel:"had_accidents"`
-	AccidentCount            int32 `json:"accidentCount" keel:"accident_count"`
+	HadAccidents             bool  `json:"hadAccidents"             keel:"had_accidents"`
+	AccidentCount            int32 `json:"accidentCount"            keel:"accident_count"`
 	HadDrugAlcoholViolations bool  `json:"hadDrugAlcoholViolations" keel:"had_drug_alcohol_violations"`
 
-	Findings      string   `json:"findings" keel:"findings,nullzero"`
-	Notes         string   `json:"notes" keel:"notes,nullzero"`
-	DocumentID    pulid.ID `json:"documentId" keel:"document_id,nullzero"`
+	Findings      string   `json:"findings"      keel:"findings,nullzero"`
+	Notes         string   `json:"notes"         keel:"notes,nullzero"`
+	DocumentID    pulid.ID `json:"documentId"    keel:"document_id,nullzero"`
 	RequestedByID pulid.ID `json:"requestedById" keel:"requested_by_id,nullzero"`
 
-	Version   int64 `json:"version" keel:"version,version"`
+	Version   int64 `json:"version"   keel:"version,version"`
 	CreatedAt int64 `json:"createdAt" keel:"created_at,autocreate"`
 	UpdatedAt int64 `json:"updatedAt" keel:"updated_at,autoupdate"`
 
-	Worker      *Worker            `json:"worker,omitempty" keel:"belongs:worker_id"`
-	Document    *document.Document `json:"document,omitempty" keel:"belongs:document_id"`
+	Worker      *Worker            `json:"worker,omitempty"      keel:"belongs:worker_id"`
+	Document    *document.Document `json:"document,omitempty"    keel:"belongs:document_id"`
 	RequestedBy *tenant.User       `json:"requestedBy,omitempty" keel:"belongs:requested_by_id"`
 }
 

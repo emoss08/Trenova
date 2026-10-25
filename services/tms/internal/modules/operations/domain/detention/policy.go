@@ -4,6 +4,8 @@ import (
 	"context"
 	"slices"
 
+	"github.com/emoss08/trenova/shared/money"
+
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
@@ -37,69 +39,69 @@ var (
 
 type DetentionPolicy struct {
 	keel.Table     `keel:"detention_policies"`
-	ID             pulid.ID     `json:"id" keel:"id,pk,autoid:dtp_"`
-	BusinessUnitID pulid.ID     `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
-	OrganizationID pulid.ID     `json:"organizationId" keel:"organization_id,pk,tenant"`
-	Name           string       `json:"name" keel:"name"`
-	Code           string       `json:"code" keel:"code"`
-	Description    string       `json:"description" keel:"description,nullzero"`
-	Status         PolicyStatus `json:"status" keel:"status"`
+	ID             pulid.ID     `keel:"id,pk,autoid:dtp_"          json:"id"`
+	BusinessUnitID pulid.ID     `keel:"business_unit_id,pk,tenant" json:"businessUnitId"`
+	OrganizationID pulid.ID     `keel:"organization_id,pk,tenant"  json:"organizationId"`
+	Name           string       `keel:"name"                       json:"name"`
+	Code           string       `keel:"code"                       json:"code"`
+	Description    string       `keel:"description,nullzero"       json:"description"`
+	Status         PolicyStatus `keel:"status"                     json:"status"`
 
-	IsOrgDefault     bool       `json:"isOrgDefault" keel:"is_org_default"`
-	Priority         int16      `json:"priority" keel:"priority"`
+	IsOrgDefault     bool       `json:"isOrgDefault"     keel:"is_org_default"`
+	Priority         int16      `json:"priority"         keel:"priority"`
 	SpecificityScore int32      `json:"specificityScore" keel:"specificity_score"`
-	CustomerID       *pulid.ID  `json:"customerId" keel:"customer_id"`
-	LocationID       *pulid.ID  `json:"locationId" keel:"location_id"`
-	ShipmentTypeIDs  []pulid.ID `json:"shipmentTypeIds" keel:"shipment_type_ids,jsonb,nullzero"`
-	ServiceTypeIDs   []pulid.ID `json:"serviceTypeIds" keel:"service_type_ids,jsonb,nullzero"`
-	CommodityIDs     []pulid.ID `json:"commodityIds" keel:"commodity_ids,jsonb,nullzero"`
+	CustomerID       *pulid.ID  `json:"customerId"       keel:"customer_id"`
+	LocationID       *pulid.ID  `json:"locationId"       keel:"location_id"`
+	ShipmentTypeIDs  []pulid.ID `json:"shipmentTypeIds"  keel:"shipment_type_ids,jsonb,nullzero"`
+	ServiceTypeIDs   []pulid.ID `json:"serviceTypeIds"   keel:"service_type_ids,jsonb,nullzero"`
+	CommodityIDs     []pulid.ID `json:"commodityIds"     keel:"commodity_ids,jsonb,nullzero"`
 
-	StopTypes                  []shipment.StopType `json:"stopTypes" keel:"stop_types,jsonb,nullzero"`
-	AppointmentStopsOnly       bool                `json:"appointmentStopsOnly" keel:"appointment_stops_only"`
-	EffectiveStartDate         *int64              `json:"effectiveStartDate" keel:"effective_start_date"`
-	EffectiveEndDate           *int64              `json:"effectiveEndDate" keel:"effective_end_date"`
-	ClockStartBasis            ClockStartBasis     `json:"clockStartBasis" keel:"clock_start_basis"`
-	LateArrivalRule            LateArrivalRule     `json:"lateArrivalRule" keel:"late_arrival_rule"`
-	LateArrivalGraceMinutes    int16               `json:"lateArrivalGraceMinutes" keel:"late_arrival_grace_minutes"`
-	BillingFreeMinutes         int32               `json:"billingFreeMinutes" keel:"billing_free_minutes"`
-	PickupFreeMinutes          *int32              `json:"pickupFreeMinutes" keel:"pickup_free_minutes"`
-	DeliveryFreeMinutes        *int32              `json:"deliveryFreeMinutes" keel:"delivery_free_minutes"`
-	PayFreeMinutes             *int32              `json:"payFreeMinutes" keel:"pay_free_minutes"`
-	MinimumBillableMinutes     int32               `json:"minimumBillableMinutes" keel:"minimum_billable_minutes"`
-	BillingIncrementMinutes    int16               `json:"billingIncrementMinutes" keel:"billing_increment_minutes"`
-	RoundingMode               RoundingMode        `json:"roundingMode" keel:"rounding_mode"`
-	RateSource                 RateSource          `json:"rateSource" keel:"rate_source"`
-	AccessorialChargeID        pulid.ID            `json:"accessorialChargeId" keel:"accessorial_charge_id"`
-	MaxBillableMinutesPerStop  *int32              `json:"maxBillableMinutesPerStop" keel:"max_billable_minutes_per_stop"`
-	MaxChargePerStop           decimal.NullDecimal `json:"maxChargePerStop" keel:"max_charge_per_stop"`
-	MaxChargePerDay            decimal.NullDecimal `json:"maxChargePerDay" keel:"max_charge_per_day"`
-	MaxChargePerShipment       decimal.NullDecimal `json:"maxChargePerShipment" keel:"max_charge_per_shipment"`
-	DayBoundaryMode            CapScope            `json:"dayBoundaryMode" keel:"day_boundary_mode"`
-	ConvertToLayoverAtMinutes  *int32              `json:"convertToLayoverAtMinutes" keel:"convert_to_layover_at_minutes"`
+	StopTypes                  []shipment.StopType `json:"stopTypes"                  keel:"stop_types,jsonb,nullzero"`
+	AppointmentStopsOnly       bool                `json:"appointmentStopsOnly"       keel:"appointment_stops_only"`
+	EffectiveStartDate         *int64              `json:"effectiveStartDate"         keel:"effective_start_date"`
+	EffectiveEndDate           *int64              `json:"effectiveEndDate"           keel:"effective_end_date"`
+	ClockStartBasis            ClockStartBasis     `json:"clockStartBasis"            keel:"clock_start_basis"`
+	LateArrivalRule            LateArrivalRule     `json:"lateArrivalRule"            keel:"late_arrival_rule"`
+	LateArrivalGraceMinutes    int16               `json:"lateArrivalGraceMinutes"    keel:"late_arrival_grace_minutes"`
+	BillingFreeMinutes         int32               `json:"billingFreeMinutes"         keel:"billing_free_minutes"`
+	PickupFreeMinutes          *int32              `json:"pickupFreeMinutes"          keel:"pickup_free_minutes"`
+	DeliveryFreeMinutes        *int32              `json:"deliveryFreeMinutes"        keel:"delivery_free_minutes"`
+	PayFreeMinutes             *int32              `json:"payFreeMinutes"             keel:"pay_free_minutes"`
+	MinimumBillableMinutes     int32               `json:"minimumBillableMinutes"     keel:"minimum_billable_minutes"`
+	BillingIncrementMinutes    int16               `json:"billingIncrementMinutes"    keel:"billing_increment_minutes"`
+	RoundingMode               RoundingMode        `json:"roundingMode"               keel:"rounding_mode"`
+	RateSource                 RateSource          `json:"rateSource"                 keel:"rate_source"`
+	AccessorialChargeID        pulid.ID            `json:"accessorialChargeId"        keel:"accessorial_charge_id"`
+	MaxBillableMinutesPerStop  *int32              `json:"maxBillableMinutesPerStop"  keel:"max_billable_minutes_per_stop"`
+	MaxChargePerStop           decimal.NullDecimal `json:"maxChargePerStop"           keel:"max_charge_per_stop"`
+	MaxChargePerDay            decimal.NullDecimal `json:"maxChargePerDay"            keel:"max_charge_per_day"`
+	MaxChargePerShipment       decimal.NullDecimal `json:"maxChargePerShipment"       keel:"max_charge_per_shipment"`
+	DayBoundaryMode            CapScope            `json:"dayBoundaryMode"            keel:"day_boundary_mode"`
+	ConvertToLayoverAtMinutes  *int32              `json:"convertToLayoverAtMinutes"  keel:"convert_to_layover_at_minutes"`
 	LayoverAccessorialChargeID *pulid.ID           `json:"layoverAccessorialChargeId" keel:"layover_accessorial_charge_id"`
 
-	NotificationRequirement     NotificationRequirement `json:"notificationRequirement" keel:"notification_requirement"`
-	NotificationLeadMinutes     int16                   `json:"notificationLeadMinutes" keel:"notification_lead_minutes"`
+	NotificationRequirement     NotificationRequirement `json:"notificationRequirement"     keel:"notification_requirement"`
+	NotificationLeadMinutes     int16                   `json:"notificationLeadMinutes"     keel:"notification_lead_minutes"`
 	NotificationDeadlineMinutes int16                   `json:"notificationDeadlineMinutes" keel:"notification_deadline_minutes"`
-	UnnotifiedBehavior          UnnotifiedBehavior      `json:"unnotifiedBehavior" keel:"unnotified_behavior"`
-	AutoSendNotice              bool                    `json:"autoSendNotice" keel:"auto_send_notice"`
-	AttachNoticePDF             bool                    `json:"attachNoticePdf" keel:"attach_notice_pdf"`
-	SendDepartureSummary        bool                    `json:"sendDepartureSummary" keel:"send_departure_summary"`
-	RequireApprovalOverAmount   decimal.NullDecimal     `json:"requireApprovalOverAmount" keel:"require_approval_over_amount"`
-	AutoApproveUnderAmount      decimal.NullDecimal     `json:"autoApproveUnderAmount" keel:"auto_approve_under_amount"`
-	Currency                    string                  `json:"currency" keel:"currency"`
-	Comments                    string                  `json:"comments" keel:"comments,nullzero"`
+	UnnotifiedBehavior          UnnotifiedBehavior      `json:"unnotifiedBehavior"          keel:"unnotified_behavior"`
+	AutoSendNotice              bool                    `json:"autoSendNotice"              keel:"auto_send_notice"`
+	AttachNoticePDF             bool                    `json:"attachNoticePdf"             keel:"attach_notice_pdf"`
+	SendDepartureSummary        bool                    `json:"sendDepartureSummary"        keel:"send_departure_summary"`
+	RequireApprovalOverAmount   decimal.NullDecimal     `json:"requireApprovalOverAmount"   keel:"require_approval_over_amount"`
+	AutoApproveUnderAmount      decimal.NullDecimal     `json:"autoApproveUnderAmount"      keel:"auto_approve_under_amount"`
+	Currency                    string                  `json:"currency"                    keel:"currency"`
+	Comments                    string                  `json:"comments"                    keel:"comments,nullzero"`
 
-	Version      int64  `json:"version" keel:"version,version"`
+	Version      int64  `json:"version"   keel:"version,version"`
 	CreatedAt    int64  `json:"createdAt" keel:"created_at,autocreate"`
 	UpdatedAt    int64  `json:"updatedAt" keel:"updated_at,autoupdate"`
-	SearchVector string `json:"-" keel:"search_vector,tsvector,readonly,noselect"`
-	Rank         string `json:"-" keel:"rank,computed"`
+	SearchVector string `json:"-"         keel:"search_vector,tsvector,readonly,noselect"`
+	Rank         string `json:"-"         keel:"rank,computed"`
 
 	BusinessUnit      *tenant.BusinessUnit                 `json:"-"`
 	Organization      *tenant.Organization                 `json:"-"`
 	AccessorialCharge *accessorialcharge.AccessorialCharge `json:"accessorialCharge,omitempty" keel:"belongs:accessorial_charge_id"`
-	Tiers             []*DetentionPolicyTier               `json:"tiers,omitempty" keel:"many:detention_policy_id"`
+	Tiers             []*DetentionPolicyTier               `json:"tiers,omitempty"             keel:"many:detention_policy_id"`
 }
 
 func (p *DetentionPolicy) GetID() pulid.ID { return p.ID }
@@ -529,7 +531,7 @@ func (p *DetentionPolicy) BeforeCreate(ctx context.Context) error {
 		p.UnnotifiedBehavior = UnnotifiedBehaviorBill
 	}
 	if p.Currency == "" {
-		p.Currency = "USD"
+		p.Currency = money.DefaultCurrencyCode
 	}
 	if p.RoundingMode == RoundingModeExact {
 		p.BillingIncrementMinutes = 0

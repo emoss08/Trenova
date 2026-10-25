@@ -5,6 +5,8 @@ import (
 	"errors"
 	"strings"
 
+	"github.com/emoss08/trenova/shared/money"
+
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
 	"github.com/emoss08/trenova/pkg/domaintypes"
@@ -133,31 +135,31 @@ var (
 type BenefitPlan struct {
 	keel.Table `keel:"benefit_plans"`
 
-	ID             pulid.ID `json:"id" keel:"id,pk,autoid:bplan_"`
+	ID             pulid.ID `json:"id"             keel:"id,pk,autoid:bplan_"`
 	BusinessUnitID pulid.ID `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
 	OrganizationID pulid.ID `json:"organizationId" keel:"organization_id,pk,tenant"`
 
-	Status       domaintypes.Status `json:"status" keel:"status"`
-	Code         string             `json:"code" keel:"code"`
-	Name         string             `json:"name" keel:"name"`
-	Description  string             `json:"description" keel:"description,nullzero"`
-	PlanType     BenefitPlanType    `json:"planType" keel:"plan_type"`
-	Carrier      string             `json:"carrier" keel:"carrier,nullzero"`
+	Status       domaintypes.Status `json:"status"       keel:"status"`
+	Code         string             `json:"code"         keel:"code"`
+	Name         string             `json:"name"         keel:"name"`
+	Description  string             `json:"description"  keel:"description,nullzero"`
+	PlanType     BenefitPlanType    `json:"planType"     keel:"plan_type"`
+	Carrier      string             `json:"carrier"      keel:"carrier,nullzero"`
 	PolicyNumber string             `json:"policyNumber" keel:"policy_number,nullzero"`
 	// PayCodeID is what a contribution shows up as on a settlement. Required
 	// rather than optional: a deduction nobody can categorise is a deduction
 	// nobody can explain.
 	PayCodeID pulid.ID `json:"payCodeId" keel:"pay_code_id"`
-	PlanYear  int16    `json:"planYear" keel:"plan_year"`
+	PlanYear  int16    `json:"planYear"  keel:"plan_year"`
 
 	EmployeeCostMinor int64 `json:"employeeCostMinor" keel:"employee_cost_minor"`
 	// EmployerCostMinor is never deducted. It is carried so a
 	// total-compensation statement can show what the job is actually worth.
 	EmployerCostMinor int64  `json:"employerCostMinor" keel:"employer_cost_minor"`
-	CurrencyCode      string `json:"currencyCode" keel:"currency_code"`
+	CurrencyCode      string `json:"currencyCode"      keel:"currency_code"`
 	WaitingPeriodDays int32  `json:"waitingPeriodDays" keel:"waiting_period_days"`
 
-	Version   int64 `json:"version" keel:"version,version"`
+	Version   int64 `json:"version"   keel:"version,version"`
 	CreatedAt int64 `json:"createdAt" keel:"created_at,autocreate"`
 	UpdatedAt int64 `json:"updatedAt" keel:"updated_at,autoupdate"`
 
@@ -173,7 +175,7 @@ func (p *BenefitPlan) BeforeCreate(_ context.Context) error {
 		p.PlanType = BenefitPlanMedical
 	}
 	if p.CurrencyCode == "" {
-		p.CurrencyCode = "USD"
+		p.CurrencyCode = money.DefaultCurrencyCode
 	}
 
 	return nil
@@ -281,17 +283,17 @@ var (
 type WorkerBenefitEnrollment struct {
 	keel.Table `keel:"worker_benefit_enrollments"`
 
-	ID             pulid.ID `json:"id" keel:"id,pk,autoid:wben_"`
+	ID             pulid.ID `json:"id"             keel:"id,pk,autoid:wben_"`
 	BusinessUnitID pulid.ID `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
 	OrganizationID pulid.ID `json:"organizationId" keel:"organization_id,pk,tenant"`
-	WorkerID       pulid.ID `json:"workerId" keel:"worker_id"`
-	BenefitPlanID  pulid.ID `json:"benefitPlanId" keel:"benefit_plan_id"`
+	WorkerID       pulid.ID `json:"workerId"       keel:"worker_id"`
+	BenefitPlanID  pulid.ID `json:"benefitPlanId"  keel:"benefit_plan_id"`
 
-	Status       BenefitEnrollmentStatus `json:"status" keel:"status"`
+	Status       BenefitEnrollmentStatus `json:"status"       keel:"status"`
 	CoverageTier CoverageTier            `json:"coverageTier" keel:"coverage_tier"`
 
 	EffectiveFrom int64  `json:"effectiveFrom" keel:"effective_from"`
-	EffectiveTo   *int64 `json:"effectiveTo" keel:"effective_to"`
+	EffectiveTo   *int64 `json:"effectiveTo"   keel:"effective_to"`
 
 	// EmployeeCostMinor and EmployerCostMinor are copied from the plan and the
 	// tier when the enrollment is made, rather than read through. A plan
@@ -301,17 +303,17 @@ type WorkerBenefitEnrollment struct {
 	EmployerCostMinor int64 `json:"employerCostMinor" keel:"employer_cost_minor"`
 
 	RecurringDeductionID pulid.ID `json:"recurringDeductionId" keel:"recurring_deduction_id,nullzero"`
-	WaivedReason         string   `json:"waivedReason" keel:"waived_reason,nullzero"`
-	Notes                string   `json:"notes" keel:"notes,nullzero"`
-	EnrolledByID         pulid.ID `json:"enrolledById" keel:"enrolled_by_id,nullzero"`
+	WaivedReason         string   `json:"waivedReason"         keel:"waived_reason,nullzero"`
+	Notes                string   `json:"notes"                keel:"notes,nullzero"`
+	EnrolledByID         pulid.ID `json:"enrolledById"         keel:"enrolled_by_id,nullzero"`
 
-	Version   int64 `json:"version" keel:"version,version"`
+	Version   int64 `json:"version"   keel:"version,version"`
 	CreatedAt int64 `json:"createdAt" keel:"created_at,autocreate"`
 	UpdatedAt int64 `json:"updatedAt" keel:"updated_at,autoupdate"`
 
-	Worker      *worker.Worker      `json:"worker,omitempty" keel:"belongs:worker_id"`
+	Worker      *worker.Worker      `json:"worker,omitempty"      keel:"belongs:worker_id"`
 	BenefitPlan *BenefitPlan        `json:"benefitPlan,omitempty" keel:"belongs:benefit_plan_id"`
-	Deduction   *RecurringDeduction `json:"deduction,omitempty" keel:"belongs:recurring_deduction_id"`
+	Deduction   *RecurringDeduction `json:"deduction,omitempty"   keel:"belongs:recurring_deduction_id"`
 }
 
 func (e *WorkerBenefitEnrollment) BeforeCreate(_ context.Context) error {

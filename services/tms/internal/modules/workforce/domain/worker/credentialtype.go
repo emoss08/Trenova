@@ -181,28 +181,28 @@ var (
 
 // The catalog of credentials a carrier tracks
 type WorkerCredentialType struct {
-	keel.Table             `                                                       keel:"worker_credential_types,report=Parties,label=Credential Type"`
-	ID                     pulid.ID               `json:"id" keel:"id,pk,autoid:wct_"`
-	BusinessUnitID         pulid.ID               `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
-	OrganizationID         pulid.ID               `json:"organizationId" keel:"organization_id,pk,tenant"`
-	Code                   string                 `json:"code" keel:"code"`
-	Name                   string                 `json:"name" keel:"name"`
-	Description            string                 `json:"description" keel:"description,nullzero"`
-	Category               CredentialCategory     `json:"category" keel:"category"`
-	Status                 domaintypes.Status     `json:"status" keel:"status"`
-	IsRequired             bool                   `json:"isRequired" keel:"is_required,label=Required"`
-	RequiredForDriverTypes []DriverType           `json:"requiredForDriverTypes" keel:"required_for_driver_types,jsonb"`
-	RenewalWindowDays      int32                  `json:"renewalWindowDays" keel:"renewal_window_days,label=Renewal Window (days),format=count,dimension"`
-	ValidityMonths         *int32                 `json:"validityMonths" keel:"validity_months,label=Valid For (months),format=count,dimension"`
-	RequiresNumber         bool                   `json:"requiresNumber" keel:"requires_number"`
-	RequiresDocument       bool                   `json:"requiresDocument" keel:"requires_document"`
-	ProfileField           CredentialProfileField `json:"profileField" keel:"profile_field,nullzero"`
-	IsSystem               bool                   `json:"isSystem" keel:"is_system"`
-	SortOrder              int32                  `json:"sortOrder" keel:"sort_order,dimension"`
-	Version                int64                  `json:"version" keel:"version,version"`
-	CreatedAt              int64                  `json:"createdAt" keel:"created_at,autocreate"`
-	UpdatedAt              int64                  `json:"updatedAt" keel:"updated_at,autoupdate"`
-	SearchVector           string                 `json:"-" keel:"search_vector,tsvector,readonly,noselect"`
+	keel.Table             `keel:"worker_credential_types,report=Parties,label=Credential Type"`
+	ID                     pulid.ID               `keel:"id,pk,autoid:wct_"                                                      json:"id"`
+	BusinessUnitID         pulid.ID               `keel:"business_unit_id,pk,tenant"                                             json:"businessUnitId"`
+	OrganizationID         pulid.ID               `keel:"organization_id,pk,tenant"                                              json:"organizationId"`
+	Code                   string                 `keel:"code"                                                                   json:"code"`
+	Name                   string                 `keel:"name"                                                                   json:"name"`
+	Description            string                 `keel:"description,nullzero"                                                   json:"description"`
+	Category               CredentialCategory     `keel:"category"                                                               json:"category"`
+	Status                 domaintypes.Status     `keel:"status"                                                                 json:"status"`
+	IsRequired             bool                   `keel:"is_required,label=Required"                                             json:"isRequired"`
+	RequiredForDriverTypes []DriverType           `keel:"required_for_driver_types,jsonb"                                        json:"requiredForDriverTypes"`
+	RenewalWindowDays      int32                  `keel:"renewal_window_days,label=Renewal Window (days),format=count,dimension" json:"renewalWindowDays"`
+	ValidityMonths         *int32                 `keel:"validity_months,label=Valid For (months),format=count,dimension"        json:"validityMonths"`
+	RequiresNumber         bool                   `keel:"requires_number"                                                        json:"requiresNumber"`
+	RequiresDocument       bool                   `keel:"requires_document"                                                      json:"requiresDocument"`
+	ProfileField           CredentialProfileField `keel:"profile_field,nullzero"                                                 json:"profileField"`
+	IsSystem               bool                   `keel:"is_system"                                                              json:"isSystem"`
+	SortOrder              int32                  `keel:"sort_order,dimension"                                                   json:"sortOrder"`
+	Version                int64                  `keel:"version,version"                                                        json:"version"`
+	CreatedAt              int64                  `keel:"created_at,autocreate"                                                  json:"createdAt"`
+	UpdatedAt              int64                  `keel:"updated_at,autoupdate"                                                  json:"updatedAt"`
+	SearchVector           string                 `keel:"search_vector,tsvector,readonly,noselect"                               json:"-"`
 }
 
 func (t *WorkerCredentialType) BeforeUpdate(_ context.Context) error {

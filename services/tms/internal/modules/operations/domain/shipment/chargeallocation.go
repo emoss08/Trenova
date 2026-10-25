@@ -56,23 +56,23 @@ func (m ChargeAllocationMethod) IsValid() bool {
 type ChargeAllocation struct {
 	keel.Table `keel:"charge_allocations"`
 
-	ID                 pulid.ID               `json:"id" keel:"id,pk,autoid:chal_"`
-	BusinessUnitID     pulid.ID               `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
-	OrganizationID     pulid.ID               `json:"organizationId" keel:"organization_id,pk,tenant"`
-	ShipmentID         *pulid.ID              `json:"shipmentId" keel:"shipment_id"`
+	ID                 pulid.ID               `json:"id"                 keel:"id,pk,autoid:chal_"`
+	BusinessUnitID     pulid.ID               `json:"businessUnitId"     keel:"business_unit_id,pk,tenant"`
+	OrganizationID     pulid.ID               `json:"organizationId"     keel:"organization_id,pk,tenant"`
+	ShipmentID         *pulid.ID              `json:"shipmentId"         keel:"shipment_id"`
 	AdditionalChargeID *pulid.ID              `json:"additionalChargeId" keel:"additional_charge_id"`
-	OrderChargeID      *pulid.ID              `json:"orderChargeId" keel:"order_charge_id"`
-	ChargeKind         ChargeAllocationKind   `json:"chargeKind" keel:"charge_kind"`
-	BillToCustomerID   pulid.ID               `json:"billToCustomerId" keel:"bill_to_customer_id"`
-	Method             ChargeAllocationMethod `json:"method" keel:"method"`
-	Percent            decimal.NullDecimal    `json:"percent" keel:"percent"`
-	Amount             decimal.NullDecimal    `json:"amount" keel:"amount"`
-	Sequence           int16                  `json:"sequence" keel:"sequence"`
-	InvoiceID          pulid.ID               `json:"invoiceId" keel:"invoice_id,nullzero"`
-	InvoicedAt         *int64                 `json:"invoicedAt" keel:"invoiced_at"`
-	Version            int64                  `json:"version" keel:"version,version"`
-	CreatedAt          int64                  `json:"createdAt" keel:"created_at,autocreate"`
-	UpdatedAt          int64                  `json:"updatedAt" keel:"updated_at,autoupdate"`
+	OrderChargeID      *pulid.ID              `json:"orderChargeId"      keel:"order_charge_id"`
+	ChargeKind         ChargeAllocationKind   `json:"chargeKind"         keel:"charge_kind"`
+	BillToCustomerID   pulid.ID               `json:"billToCustomerId"   keel:"bill_to_customer_id"`
+	Method             ChargeAllocationMethod `json:"method"             keel:"method"`
+	Percent            decimal.NullDecimal    `json:"percent"            keel:"percent"`
+	Amount             decimal.NullDecimal    `json:"amount"             keel:"amount"`
+	Sequence           int16                  `json:"sequence"           keel:"sequence"`
+	InvoiceID          pulid.ID               `json:"invoiceId"          keel:"invoice_id,nullzero"`
+	InvoicedAt         *int64                 `json:"invoicedAt"         keel:"invoiced_at"`
+	Version            int64                  `json:"version"            keel:"version,version"`
+	CreatedAt          int64                  `json:"createdAt"          keel:"created_at,autocreate"`
+	UpdatedAt          int64                  `json:"updatedAt"          keel:"updated_at,autoupdate"`
 
 	// AdditionalChargeIndex points at a charge in the same payload that has no
 	// id yet, so a new charge and its split can arrive in one save.
@@ -80,7 +80,7 @@ type ChargeAllocation struct {
 
 	BusinessUnit   *tenant.BusinessUnit `json:"businessUnit,omitempty"`
 	Organization   *tenant.Organization `json:"organization,omitempty"`
-	Shipment       *Shipment            `json:"-" keel:"belongs:shipment_id"`
+	Shipment       *Shipment            `json:"-"                        keel:"belongs:shipment_id"`
 	BillToCustomer *customer.Customer   `json:"billToCustomer,omitempty" keel:"belongs:bill_to_customer_id"`
 }
 

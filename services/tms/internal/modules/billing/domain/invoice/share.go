@@ -37,22 +37,22 @@ func (t ShareTab) IsValid() bool {
 type InvoiceShare struct {
 	keel.Table `keel:"invoice_shares"`
 
-	ID             pulid.ID `json:"id" keel:"id,pk,autoid:invsh_"`
+	ID             pulid.ID `json:"id"             keel:"id,pk,autoid:invsh_"`
 	BusinessUnitID pulid.ID `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
 	OrganizationID pulid.ID `json:"organizationId" keel:"organization_id,pk,tenant"`
-	InvoiceID      pulid.ID `json:"invoiceId" keel:"invoice_id"`
-	SharedWithID   pulid.ID `json:"sharedWithId" keel:"shared_with_id"`
-	SharedByID     pulid.ID `json:"sharedById" keel:"shared_by_id"`
-	Note           string   `json:"note" keel:"note,nullzero"`
-	Tab            ShareTab `json:"tab" keel:"tab"`
-	ShareCount     int      `json:"shareCount" keel:"share_count"`
-	FirstSharedAt  int64    `json:"firstSharedAt" keel:"first_shared_at"`
-	LastSharedAt   int64    `json:"lastSharedAt" keel:"last_shared_at"`
-	CreatedAt      int64    `json:"createdAt" keel:"created_at,autocreate"`
-	UpdatedAt      int64    `json:"updatedAt" keel:"updated_at,autoupdate"`
+	InvoiceID      pulid.ID `json:"invoiceId"      keel:"invoice_id"`
+	SharedWithID   pulid.ID `json:"sharedWithId"   keel:"shared_with_id"`
+	SharedByID     pulid.ID `json:"sharedById"     keel:"shared_by_id"`
+	Note           string   `json:"note"           keel:"note,nullzero"`
+	Tab            ShareTab `json:"tab"            keel:"tab"`
+	ShareCount     int      `json:"shareCount"     keel:"share_count"`
+	FirstSharedAt  int64    `json:"firstSharedAt"  keel:"first_shared_at"`
+	LastSharedAt   int64    `json:"lastSharedAt"   keel:"last_shared_at"`
+	CreatedAt      int64    `json:"createdAt"      keel:"created_at,autocreate"`
+	UpdatedAt      int64    `json:"updatedAt"      keel:"updated_at,autoupdate"`
 
 	SharedWith *tenant.User `json:"sharedWith,omitempty" keel:"belongs:shared_with_id"`
-	SharedBy   *tenant.User `json:"sharedBy,omitempty" keel:"belongs:shared_by_id"`
+	SharedBy   *tenant.User `json:"sharedBy,omitempty"   keel:"belongs:shared_by_id"`
 }
 
 func (s *InvoiceShare) Validate(multiErr *errortypes.MultiError) {

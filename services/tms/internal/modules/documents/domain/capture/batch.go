@@ -28,41 +28,41 @@ const (
 type CaptureBatch struct {
 	keel.Table `keel:"capture_batches"`
 
-	ID                pulid.ID    `json:"id" keel:"id,pk,autoid:cbat_"`
-	BusinessUnitID    pulid.ID    `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
-	OrganizationID    pulid.ID    `json:"organizationId" keel:"organization_id,pk,tenant"`
-	UserID            pulid.ID    `json:"userId" keel:"user_id"`
-	DeviceID          pulid.ID    `json:"deviceId" keel:"device_id"`
-	RequestID         *pulid.ID   `json:"requestId" keel:"request_id"`
-	ProfileID         *pulid.ID   `json:"profileId" keel:"profile_id"`
-	ClientKey         string      `json:"-" keel:"client_key"`
-	Source            Source      `json:"source" keel:"source"`
-	Status            BatchStatus `json:"status" keel:"status"`
-	SourceName        string      `json:"sourceName" keel:"source_name,nullzero"`
-	JobName           string      `json:"jobName" keel:"job_name,nullzero"`
-	Settings          Settings    `json:"settings" keel:"settings,jsonb"`
-	TargetType        string      `json:"targetType" keel:"target_type,nullzero"`
-	TargetID          *pulid.ID   `json:"targetId" keel:"target_id"`
-	DocumentTypeID    *pulid.ID   `json:"documentTypeId" keel:"document_type_id"`
+	ID                pulid.ID    `json:"id"                keel:"id,pk,autoid:cbat_"`
+	BusinessUnitID    pulid.ID    `json:"businessUnitId"    keel:"business_unit_id,pk,tenant"`
+	OrganizationID    pulid.ID    `json:"organizationId"    keel:"organization_id,pk,tenant"`
+	UserID            pulid.ID    `json:"userId"            keel:"user_id"`
+	DeviceID          pulid.ID    `json:"deviceId"          keel:"device_id"`
+	RequestID         *pulid.ID   `json:"requestId"         keel:"request_id"`
+	ProfileID         *pulid.ID   `json:"profileId"         keel:"profile_id"`
+	ClientKey         string      `json:"-"                 keel:"client_key"`
+	Source            Source      `json:"source"            keel:"source"`
+	Status            BatchStatus `json:"status"            keel:"status"`
+	SourceName        string      `json:"sourceName"        keel:"source_name,nullzero"`
+	JobName           string      `json:"jobName"           keel:"job_name,nullzero"`
+	Settings          Settings    `json:"settings"          keel:"settings,jsonb"`
+	TargetType        string      `json:"targetType"        keel:"target_type,nullzero"`
+	TargetID          *pulid.ID   `json:"targetId"          keel:"target_id"`
+	DocumentTypeID    *pulid.ID   `json:"documentTypeId"    keel:"document_type_id"`
 	ExpectedPageCount int         `json:"expectedPageCount" keel:"expected_page_count"`
 	ReceivedPageCount int         `json:"receivedPageCount" keel:"received_page_count"`
-	ItemCount         int         `json:"itemCount" keel:"item_count"`
-	FiledItemCount    int         `json:"filedItemCount" keel:"filed_item_count"`
-	ManifestDigest    string      `json:"-" keel:"manifest_digest,nullzero"`
-	FailureMessage    string      `json:"failureMessage" keel:"failure_message,nullzero"`
-	SealedAt          *int64      `json:"sealedAt" keel:"sealed_at"`
-	ProcessedAt       *int64      `json:"processedAt" keel:"processed_at"`
-	RetainUntil       int64       `json:"retainUntil" keel:"retain_until"`
+	ItemCount         int         `json:"itemCount"         keel:"item_count"`
+	FiledItemCount    int         `json:"filedItemCount"    keel:"filed_item_count"`
+	ManifestDigest    string      `json:"-"                 keel:"manifest_digest,nullzero"`
+	FailureMessage    string      `json:"failureMessage"    keel:"failure_message,nullzero"`
+	SealedAt          *int64      `json:"sealedAt"          keel:"sealed_at"`
+	ProcessedAt       *int64      `json:"processedAt"       keel:"processed_at"`
+	RetainUntil       int64       `json:"retainUntil"       keel:"retain_until"`
 	// RetentionRemindedAt is when the owner was told the unfiled pages are
 	// about to go. It is set once, by whichever sweep claims the reminder.
-	RetentionRemindedAt *int64         `json:"-" keel:"retention_reminded_at"`
-	Version             int64          `json:"version" keel:"version,version"`
-	CreatedAt           int64          `json:"createdAt" keel:"created_at,autocreate"`
-	UpdatedAt           int64          `json:"updatedAt" keel:"updated_at,autoupdate"`
+	RetentionRemindedAt *int64         `json:"-"               keel:"retention_reminded_at"`
+	Version             int64          `json:"version"         keel:"version,version"`
+	CreatedAt           int64          `json:"createdAt"       keel:"created_at,autocreate"`
+	UpdatedAt           int64          `json:"updatedAt"       keel:"updated_at,autoupdate"`
 	Pages               []*CapturePage `json:"pages,omitempty" keel:"many:batch_id"`
 	Items               []*CaptureItem `json:"items,omitempty" keel:"many:batch_id"`
 
-	CaptureDevice *CaptureDevice       `json:"device,omitempty" keel:"belongs:device_id"`
+	CaptureDevice *CaptureDevice       `json:"device,omitempty"       keel:"belongs:device_id"`
 	Organization  *tenant.Organization `json:"organization,omitempty"`
 	BusinessUnit  *tenant.BusinessUnit `json:"businessUnit,omitempty"`
 }

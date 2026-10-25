@@ -54,7 +54,10 @@ func (r *repository) ListUnjournaledAdjustmentMemos(
 	ctx context.Context,
 	req *driversettlementports.ListJournalRepairRequest,
 ) ([]*driversettlementports.AdjustmentMemoRepair, error) {
-	ctx = dbscope.WithSystem(ctx, "list adjustment credit memos missing a journal across every organization")
+	ctx = dbscope.WithSystem(
+		ctx,
+		"list adjustment credit memos missing a journal across every organization",
+	)
 	return dbtx.Read(
 		ctx,
 		r.db,
@@ -143,7 +146,10 @@ func (r *repository) ListUnjournaledDriverPayments(
 	ctx context.Context,
 	req *driversettlementports.ListJournalRepairRequest,
 ) ([]*driversettlementports.DriverPaymentRepair, error) {
-	ctx = dbscope.WithSystem(ctx, "list paid driver settlements missing a journal across every organization")
+	ctx = dbscope.WithSystem(
+		ctx,
+		"list paid driver settlements missing a journal across every organization",
+	)
 	return dbtx.Read(
 		ctx,
 		r.db,

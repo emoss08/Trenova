@@ -103,7 +103,10 @@ func (r *repository) List(
 					Cursor:  req.Cursor,
 					Columns: req.TractorColumns,
 					Computed: map[string]keel.Expr{
-						lastKnownLocationFilter: lastknownlocation.LocationID(tractordb.Tractors.ID, equipmentcontinuity.EquipmentTypeTractor),
+						lastKnownLocationFilter: lastknownlocation.LocationID(
+							tractordb.Tractors.ID,
+							equipmentcontinuity.EquipmentTypeTractor,
+						),
 					},
 					Shape: func(q *keel.Query[tractor.Tractor]) *keel.Query[tractor.Tractor] {
 						return withLastKnownLocation(q.Load(loads...), &req.TractorRelationIncludes)
@@ -215,7 +218,8 @@ func (r *repository) BulkUpdateStatus(
 ) ([]*tractor.Tractor, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) ([]*tractor.Tractor, error) {
 		t := tractordb.Tractors
-		entities, err := t.Where(t.ID.In(req.TractorIDs...)).UpdateReturning(ctx, r.db.Keel(ctx), t.Status.To(req.Status))
+		entities, err := t.Where(t.ID.In(req.TractorIDs...)).
+			UpdateReturning(ctx, r.db.Keel(ctx), t.Status.To(req.Status))
 		if err != nil {
 			r.l.Error("failed to bulk update tractor status", zap.Error(err))
 			return nil, err

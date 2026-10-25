@@ -123,7 +123,9 @@ func (s *WorkerEmploymentEventSeed) plan(
 			Reason:       "Moved to the regional board",
 			RecordedByID: adminID,
 			FromValues:   map[string]string{worker.EmploymentValueDriverType: "Local"},
-			ToValues:     map[string]string{worker.EmploymentValueDriverType: wrk.DriverType.String()},
+			ToValues: map[string]string{
+				worker.EmploymentValueDriverType: wrk.DriverType.String(),
+			},
 		})
 	}
 	return events

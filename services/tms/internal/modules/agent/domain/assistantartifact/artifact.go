@@ -39,35 +39,35 @@ func SummaryPayloadKeys() []string {
 type Artifact struct {
 	keel.Table `keel:"assistant_artifacts"`
 
-	ID             pulid.ID `json:"id" keel:"id,pk,autoid:art_"`
+	ID             pulid.ID `json:"id"             keel:"id,pk,autoid:art_"`
 	BusinessUnitID pulid.ID `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
 	OrganizationID pulid.ID `json:"organizationId" keel:"organization_id,pk,tenant"`
 
-	ThreadID   pulid.ID `json:"threadId" keel:"thread_id"`
-	MessageID  pulid.ID `json:"messageId" keel:"message_id,nullzero"`
-	RunID      pulid.ID `json:"runId" keel:"run_id,nullzero"`
+	ThreadID   pulid.ID `json:"threadId"   keel:"thread_id"`
+	MessageID  pulid.ID `json:"messageId"  keel:"message_id,nullzero"`
+	RunID      pulid.ID `json:"runId"      keel:"run_id,nullzero"`
 	ProposalID pulid.ID `json:"proposalId" keel:"proposal_id,nullzero"`
-	PlanID     pulid.ID `json:"planId" keel:"plan_id,nullzero"`
+	PlanID     pulid.ID `json:"planId"     keel:"plan_id,nullzero"`
 
-	Kind   Kind   `json:"kind" keel:"kind"`
+	Kind   Kind   `json:"kind"   keel:"kind"`
 	Status Status `json:"status" keel:"status"`
-	Title  string `json:"title" keel:"title"`
+	Title  string `json:"title"  keel:"title"`
 	// Payload is kind-specific and bounded; each kind's shape is declared
 	// with the mapper that produces it.
 	Payload map[string]any `json:"payload" keel:"payload,jsonb"`
 	// SourceToolCallID ties the artifact to the tool call that produced it,
 	// so a retried turn updates the artifact rather than adding a second.
 	SourceToolCallID string `json:"sourceToolCallId" keel:"source_tool_call_id"`
-	Pinned           bool   `json:"pinned" keel:"pinned"`
+	Pinned           bool   `json:"pinned"           keel:"pinned"`
 
 	LineageKey string   `json:"lineageKey" keel:"lineage_key"`
-	LineageID  pulid.ID `json:"lineageId" keel:"lineage_id,nullzero"`
+	LineageID  pulid.ID `json:"lineageId"  keel:"lineage_id,nullzero"`
 	LineageSeq int      `json:"lineageSeq" keel:"lineage_seq"`
 	// Slug names the lineage in a link, the same for every version of it and
 	// unique among the conversation's artifacts.
 	Slug string `json:"slug" keel:"slug"`
 
-	Version   int64 `json:"version" keel:"version,version"`
+	Version   int64 `json:"version"   keel:"version,version"`
 	CreatedAt int64 `json:"createdAt" keel:"created_at,autocreate"`
 	UpdatedAt int64 `json:"updatedAt" keel:"updated_at,autoupdate"`
 

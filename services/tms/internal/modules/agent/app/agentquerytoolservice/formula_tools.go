@@ -147,7 +147,10 @@ func newListFormulaTemplatesTool(
 		entityPlural: pluralFormulaTemplates,
 		summary:      formulaTemplatesSummary,
 		resource:     permission.ResourceFormulaTemplate,
-		config:       listquery.Describe((*formulatemplate.FormulaTemplate)(nil), formulatemplatedb.FormulaTemplatesSchema()),
+		config: listquery.Describe(
+			(*formulatemplate.FormulaTemplate)(nil),
+			formulatemplatedb.FormulaTemplatesSchema(),
+		),
 		fields: []listField{
 			{Name: "name", Kind: filterText, Sortable: true},
 			{

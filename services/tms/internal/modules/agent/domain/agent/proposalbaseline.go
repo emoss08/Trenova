@@ -15,14 +15,14 @@ import (
 type ProposalBaseline struct {
 	keel.Table `keel:"agent_proposal_baselines"`
 
-	ProposalID     pulid.ID `json:"proposalId" keel:"proposal_id,pk"`
+	ProposalID     pulid.ID `json:"proposalId"     keel:"proposal_id,pk"`
 	OrganizationID pulid.ID `json:"organizationId" keel:"organization_id,pk,tenant"`
 	BusinessUnitID pulid.ID `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
 
-	ToolName      string       `json:"toolName" keel:"tool_name"`
-	Preview       *ToolPreview `json:"preview" keel:"preview,jsonb"`
+	ToolName      string       `json:"toolName"      keel:"tool_name"`
+	Preview       *ToolPreview `json:"preview"       keel:"preview,jsonb"`
 	TargetVersion *int64       `json:"targetVersion" keel:"target_version"`
-	CreatedAt     int64        `json:"createdAt" keel:"created_at,autocreate"`
+	CreatedAt     int64        `json:"createdAt"     keel:"created_at,autocreate"`
 }
 
 func (b *ProposalBaseline) Validate(multiErr *errortypes.MultiError) {

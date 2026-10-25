@@ -18,6 +18,8 @@ import (
 	"github.com/shopspring/decimal"
 )
 
+const defaultBillingCycleTimezone = "UTC"
+
 const (
 	maxInvoicePrefixLength   = 20
 	maxTaxExemptNumberLength = 50
@@ -25,31 +27,31 @@ const (
 )
 
 type CustomerBillingProfile struct {
-	keel.Table `                                                         keel:"customer_billing_profiles"`
+	keel.Table `keel:"customer_billing_profiles"`
 
-	ID                         pulid.ID            `json:"id" keel:"id,pk,autoid:cbp_"`
-	BusinessUnitID             pulid.ID            `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
-	OrganizationID             pulid.ID            `json:"organizationId" keel:"organization_id,pk,tenant"`
-	CustomerID                 pulid.ID            `json:"customerId" keel:"customer_id,pk"`
-	InvoiceDelivery            InvoiceDelivery     `json:"invoiceDelivery" keel:"invoice_delivery"`
-	BillingCycle               BillingCycle        `json:"billingCycle" keel:"billing_cycle"`
-	BillingCycleAnchorDay      int16               `json:"billingCycleAnchorDay" keel:"billing_cycle_anchor_day"`
-	BillingCycleTimezone       string              `json:"billingCycleTimezone" keel:"billing_cycle_timezone"`
-	LastBilledPeriodEnd        *int64              `json:"lastBilledPeriodEnd" keel:"last_billed_period_end"`
-	PaymentTerm                PaymentTerm         `json:"paymentTerm" keel:"payment_term,nullzero"`
+	ID                         pulid.ID            `json:"id"                         keel:"id,pk,autoid:cbp_"`
+	BusinessUnitID             pulid.ID            `json:"businessUnitId"             keel:"business_unit_id,pk,tenant"`
+	OrganizationID             pulid.ID            `json:"organizationId"             keel:"organization_id,pk,tenant"`
+	CustomerID                 pulid.ID            `json:"customerId"                 keel:"customer_id,pk"`
+	InvoiceDelivery            InvoiceDelivery     `json:"invoiceDelivery"            keel:"invoice_delivery"`
+	BillingCycle               BillingCycle        `json:"billingCycle"               keel:"billing_cycle"`
+	BillingCycleAnchorDay      int16               `json:"billingCycleAnchorDay"      keel:"billing_cycle_anchor_day"`
+	BillingCycleTimezone       string              `json:"billingCycleTimezone"       keel:"billing_cycle_timezone"`
+	LastBilledPeriodEnd        *int64              `json:"lastBilledPeriodEnd"        keel:"last_billed_period_end"`
+	PaymentTerm                PaymentTerm         `json:"paymentTerm"                keel:"payment_term,nullzero"`
 	HasBillingControlOverrides bool                `json:"hasBillingControlOverrides" keel:"has_billing_control_overrides"`
-	CreditLimit                decimal.NullDecimal `json:"creditLimit" keel:"credit_limit"`
-	CreditBalance              decimal.Decimal     `json:"creditBalance" keel:"credit_balance"`
-	CreditStatus               CreditStatus        `json:"creditStatus" keel:"credit_status"`
-	EnforceCreditLimit         bool                `json:"enforceCreditLimit" keel:"enforce_credit_limit"`
-	AutoCreditHold             bool                `json:"autoCreditHold" keel:"auto_credit_hold"`
-	CreditHoldReason           string              `json:"creditHoldReason" keel:"credit_hold_reason,nullzero"`
+	CreditLimit                decimal.NullDecimal `json:"creditLimit"                keel:"credit_limit"`
+	CreditBalance              decimal.Decimal     `json:"creditBalance"              keel:"credit_balance"`
+	CreditStatus               CreditStatus        `json:"creditStatus"               keel:"credit_status"`
+	EnforceCreditLimit         bool                `json:"enforceCreditLimit"         keel:"enforce_credit_limit"`
+	AutoCreditHold             bool                `json:"autoCreditHold"             keel:"auto_credit_hold"`
+	CreditHoldReason           string              `json:"creditHoldReason"           keel:"credit_hold_reason,nullzero"`
 	// CreditHoldAutomatic marks a Hold or Warning the credit review placed
 	// against open receivables; only the review lifts it.
 	CreditHoldAutomatic bool `json:"creditHoldAutomatic" keel:"credit_hold_automatic"`
 	// CreditReviewedAt is when CreditBalance, the open receivables, was last
 	// computed by the credit review.
-	CreditReviewedAt            *int64 `json:"creditReviewedAt" keel:"credit_reviewed_at"`
+	CreditReviewedAt            *int64 `json:"creditReviewedAt"            keel:"credit_reviewed_at"`
 	AutoSendInvoiceOnGeneration bool   `json:"autoSendInvoiceOnGeneration" keel:"auto_send_invoice_on_generation"`
 	// SendPaymentReminders lets the organization's payment reminders reach
 	// this customer; off for a customer who must never be dunned by email.
@@ -59,63 +61,63 @@ type CustomerBillingProfile struct {
 	SendStatements bool `json:"sendStatements" keel:"send_statements"`
 	// EmailInvoiceEnabled and EDIInvoiceEnabled are the delivery channels an
 	// invoice may leave through. Auto-send after posting honours both.
-	EmailInvoiceEnabled        bool                `json:"emailInvoiceEnabled" keel:"email_invoice_enabled"`
-	EDIInvoiceEnabled          bool                `json:"ediInvoiceEnabled" keel:"edi_invoice_enabled"`
-	SplitBy                    InvoiceSplitKey     `json:"splitBy" keel:"split_by"`
-	SectionBy                  InvoiceSectionKey   `json:"sectionBy" keel:"section_by"`
-	InvoiceDetail              InvoiceDetail       `json:"invoiceDetail" keel:"invoice_detail"`
-	MinConsolidatedAmount      decimal.NullDecimal `json:"minConsolidatedAmount" keel:"min_consolidated_amount"`
+	EmailInvoiceEnabled        bool                `json:"emailInvoiceEnabled"        keel:"email_invoice_enabled"`
+	EDIInvoiceEnabled          bool                `json:"ediInvoiceEnabled"          keel:"edi_invoice_enabled"`
+	SplitBy                    InvoiceSplitKey     `json:"splitBy"                    keel:"split_by"`
+	SectionBy                  InvoiceSectionKey   `json:"sectionBy"                  keel:"section_by"`
+	InvoiceDetail              InvoiceDetail       `json:"invoiceDetail"              keel:"invoice_detail"`
+	MinConsolidatedAmount      decimal.NullDecimal `json:"minConsolidatedAmount"      keel:"min_consolidated_amount"`
 	MinConsolidatedAmountMinor *int64              `json:"minConsolidatedAmountMinor" keel:"min_consolidated_amount_minor"`
-	MaxShipmentsPerInvoice     int16               `json:"maxShipmentsPerInvoice" keel:"max_shipments_per_invoice"`
-	InvoiceNumberFormat        InvoiceNumberFormat `json:"invoiceNumberFormat" keel:"invoice_number_format"`
-	CustomerInvoicePrefix      string              `json:"customerInvoicePrefix" keel:"customer_invoice_prefix,nullzero"`
-	InvoiceCopies              int16               `json:"invoiceCopies" keel:"invoice_copies"`
-	RevenueAccountID           *pulid.ID           `json:"revenueAccountId" keel:"revenue_account_id"`
-	ARAccountID                *pulid.ID           `json:"arAccountId" keel:"ar_account_id"`
-	ApplyLateCharges           bool                `json:"applyLateCharges" keel:"apply_late_charges"`
-	LateChargeRate             decimal.NullDecimal `json:"lateChargeRate" keel:"late_charge_rate"`
-	GracePeriodDays            int16               `json:"gracePeriodDays" keel:"grace_period_days"`
-	TaxExempt                  bool                `json:"taxExempt" keel:"tax_exempt"`
-	TaxExemptNumber            string              `json:"taxExemptNumber" keel:"tax_exempt_number,nullzero"`
-	EnforceCustomerBillingReq  bool                `json:"enforceCustomerBillingReq" keel:"enforce_customer_billing_req"`
-	ValidateCustomerRates      bool                `json:"validateCustomerRates" keel:"validate_customer_rates"`
-	AutoTransfer               bool                `json:"autoTransfer" keel:"auto_transfer"`
-	AutoMarkReadyToBill        bool                `json:"autoMarkReadyToBill" keel:"auto_mark_ready_to_bill"`
-	AutoBill                   bool                `json:"autoBill" keel:"auto_bill"`
+	MaxShipmentsPerInvoice     int16               `json:"maxShipmentsPerInvoice"     keel:"max_shipments_per_invoice"`
+	InvoiceNumberFormat        InvoiceNumberFormat `json:"invoiceNumberFormat"        keel:"invoice_number_format"`
+	CustomerInvoicePrefix      string              `json:"customerInvoicePrefix"      keel:"customer_invoice_prefix,nullzero"`
+	InvoiceCopies              int16               `json:"invoiceCopies"              keel:"invoice_copies"`
+	RevenueAccountID           *pulid.ID           `json:"revenueAccountId"           keel:"revenue_account_id"`
+	ARAccountID                *pulid.ID           `json:"arAccountId"                keel:"ar_account_id"`
+	ApplyLateCharges           bool                `json:"applyLateCharges"           keel:"apply_late_charges"`
+	LateChargeRate             decimal.NullDecimal `json:"lateChargeRate"             keel:"late_charge_rate"`
+	GracePeriodDays            int16               `json:"gracePeriodDays"            keel:"grace_period_days"`
+	TaxExempt                  bool                `json:"taxExempt"                  keel:"tax_exempt"`
+	TaxExemptNumber            string              `json:"taxExemptNumber"            keel:"tax_exempt_number,nullzero"`
+	EnforceCustomerBillingReq  bool                `json:"enforceCustomerBillingReq"  keel:"enforce_customer_billing_req"`
+	ValidateCustomerRates      bool                `json:"validateCustomerRates"      keel:"validate_customer_rates"`
+	AutoTransfer               bool                `json:"autoTransfer"               keel:"auto_transfer"`
+	AutoMarkReadyToBill        bool                `json:"autoMarkReadyToBill"        keel:"auto_mark_ready_to_bill"`
+	AutoBill                   bool                `json:"autoBill"                   keel:"auto_bill"`
 	// AutoApprove lets a shipment that passes every billing requirement clear the
 	// billing queue without a biller clicking Approve, leaving the queue holding
 	// only the freight that actually needs a human.
 	//
 	// It is reachable only on the automatic transfer path, so an organization that
 	// has not enabled automatic queue transfer cannot be auto-approving anything.
-	AutoApprove                     bool              `json:"autoApprove" keel:"auto_approve"`
+	AutoApprove                     bool              `json:"autoApprove"                     keel:"auto_approve"`
 	CountLateOnlyOnAppointmentStops bool              `json:"countLateOnlyOnAppointmentStops" keel:"count_late_only_on_appointment_stops"`
-	AutoApplyAccessorials           bool              `json:"autoApplyAccessorials" keel:"auto_apply_accessorials"`
-	BillingCurrency                 string            `json:"billingCurrency" keel:"billing_currency"`
-	RequirePONumber                 bool              `json:"requirePONumber" keel:"require_po_number"`
-	RequireBOLNumber                bool              `json:"requireBOLNumber" keel:"require_bol_number"`
-	RequireDeliveryNumber           bool              `json:"requireDeliveryNumber" keel:"require_delivery_number"`
-	DefaultBillerID                 *pulid.ID         `json:"defaultBillerId" keel:"default_biller_id"`
-	BillingNotes                    string            `json:"billingNotes" keel:"billing_notes,nullzero"`
-	FuelSurchargeMode               FuelSurchargeMode `json:"fuelSurchargeMode" keel:"fuel_surcharge_mode"`
-	FuelSurchargeProgramID          *pulid.ID         `json:"fuelSurchargeProgramId" keel:"fuel_surcharge_program_id"`
+	AutoApplyAccessorials           bool              `json:"autoApplyAccessorials"           keel:"auto_apply_accessorials"`
+	BillingCurrency                 string            `json:"billingCurrency"                 keel:"billing_currency"`
+	RequirePONumber                 bool              `json:"requirePONumber"                 keel:"require_po_number"`
+	RequireBOLNumber                bool              `json:"requireBOLNumber"                keel:"require_bol_number"`
+	RequireDeliveryNumber           bool              `json:"requireDeliveryNumber"           keel:"require_delivery_number"`
+	DefaultBillerID                 *pulid.ID         `json:"defaultBillerId"                 keel:"default_biller_id"`
+	BillingNotes                    string            `json:"billingNotes"                    keel:"billing_notes,nullzero"`
+	FuelSurchargeMode               FuelSurchargeMode `json:"fuelSurchargeMode"               keel:"fuel_surcharge_mode"`
+	FuelSurchargeProgramID          *pulid.ID         `json:"fuelSurchargeProgramId"          keel:"fuel_surcharge_program_id"`
 	// FactoringCompanyID names the factor this customer's invoices are
 	// assigned to: they post remitted to it, with its notice of assignment.
 	FactoringCompanyID *pulid.ID `json:"factoringCompanyId" keel:"factoring_company_id"`
 
-	Version   int64 `json:"version" keel:"version,version"`
+	Version   int64 `json:"version"   keel:"version,version"`
 	CreatedAt int64 `json:"createdAt" keel:"created_at,autocreate"`
 	UpdatedAt int64 `json:"updatedAt" keel:"updated_at,autoupdate"`
 
 	// Relationships
 	BusinessUnit         *tenant.BusinessUnit                `json:"-"`
 	Organization         *tenant.Organization                `json:"-"`
-	DefaultBiller        *tenant.User                        `json:"defaultBiller" keel:"belongs:default_biller_id"`
-	RevenueAccount       *glaccount.GLAccount                `json:"revenueAccount" keel:"belongs:revenue_account_id"`
-	ARAccount            *glaccount.GLAccount                `json:"arAccount" keel:"belongs:ar_account_id"`
-	DocumentTypes        []*documenttype.DocumentType        `json:"documentTypes" keel:"m2m:customer_billing_profile_document_types.billing_profile_id.document_type_id"`
+	DefaultBiller        *tenant.User                        `json:"defaultBiller"                  keel:"belongs:default_biller_id"`
+	RevenueAccount       *glaccount.GLAccount                `json:"revenueAccount"                 keel:"belongs:revenue_account_id"`
+	ARAccount            *glaccount.GLAccount                `json:"arAccount"                      keel:"belongs:ar_account_id"`
+	DocumentTypes        []*documenttype.DocumentType        `json:"documentTypes"                  keel:"m2m:customer_billing_profile_document_types.billing_profile_id.document_type_id"`
 	FuelSurchargeProgram *fuelsurcharge.FuelSurchargeProgram `json:"fuelSurchargeProgram,omitempty" keel:"belongs:fuel_surcharge_program_id"`
-	FactoringCompany     *factoringcompany.FactoringCompany  `json:"factoringCompany,omitempty" keel:"belongs:factoring_company_id"`
+	FactoringCompany     *factoringcompany.FactoringCompany  `json:"factoringCompany,omitempty"     keel:"belongs:factoring_company_id"`
 }
 
 func (b *CustomerBillingProfile) BeforeUpdate(_ context.Context) error {
@@ -136,7 +138,7 @@ func (b *CustomerBillingProfile) BeforeCreate(_ context.Context) error {
 		b.BillingCycleAnchorDay = 1
 	}
 	if b.BillingCycleTimezone == "" {
-		b.BillingCycleTimezone = "UTC"
+		b.BillingCycleTimezone = defaultBillingCycleTimezone
 	}
 	if b.PaymentTerm == "" {
 		b.PaymentTerm = PaymentTermNet30
@@ -343,7 +345,7 @@ func NewDefaultBillingProfile(orgID, buID, customerID pulid.ID) *CustomerBilling
 		InvoiceDelivery:             InvoiceDeliveryPerShipment,
 		BillingCycle:                BillingCycleImmediate,
 		BillingCycleAnchorDay:       1,
-		BillingCycleTimezone:        "UTC",
+		BillingCycleTimezone:        defaultBillingCycleTimezone,
 		SplitBy:                     InvoiceSplitKeyCustomer,
 		SectionBy:                   InvoiceSectionKeyShipment,
 		InvoiceDetail:               InvoiceDetailDetailed,
@@ -384,7 +386,7 @@ func (b *CustomerBillingProfile) applyDefaults() {
 		b.BillingCycle = BillingCycleImmediate
 	}
 	if b.BillingCycleTimezone == "" {
-		b.BillingCycleTimezone = "UTC"
+		b.BillingCycleTimezone = defaultBillingCycleTimezone
 	}
 	if b.SplitBy == "" {
 		b.SplitBy = InvoiceSplitKeyCustomer

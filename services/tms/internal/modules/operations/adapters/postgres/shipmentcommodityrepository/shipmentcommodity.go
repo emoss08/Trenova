@@ -90,7 +90,11 @@ func (r *repository) syncForShipment(ctx context.Context, entity *shipment.Shipm
 	}
 
 	if len(inserts) > 0 {
-		if err = shipmentdb.ShipmentCommodities.CreateMany(ctx, r.db.Keel(ctx), inserts); err != nil {
+		if err = shipmentdb.ShipmentCommodities.CreateMany(
+			ctx,
+			r.db.Keel(ctx),
+			inserts,
+		); err != nil {
 			return fmt.Errorf(
 				"insert shipment commodities: %w",
 				commodityErrors.Map(err, inserts[0].ID.String()),

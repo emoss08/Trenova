@@ -15,13 +15,13 @@ import (
 type RoleAgentGrant struct {
 	keel.Table `keel:"role_agent_grants"`
 
-	ID                pulid.ID `json:"id" keel:"id,pk,autoid:rag_"`
-	OrganizationID    pulid.ID `json:"organizationId" keel:"organization_id,tenant"`
-	BusinessUnitID    pulid.ID `json:"businessUnitId" keel:"business_unit_id,tenant"`
-	RoleID            pulid.ID `json:"roleId" keel:"role_id"`
+	ID                pulid.ID `json:"id"                keel:"id,pk,autoid:rag_"`
+	OrganizationID    pulid.ID `json:"organizationId"    keel:"organization_id,tenant"`
+	BusinessUnitID    pulid.ID `json:"businessUnitId"    keel:"business_unit_id,tenant"`
+	RoleID            pulid.ID `json:"roleId"            keel:"role_id"`
 	AgentDefinitionID pulid.ID `json:"agentDefinitionId" keel:"agent_definition_id"`
-	GrantedBy         pulid.ID `json:"grantedBy" keel:"granted_by,nullzero"`
-	GrantedAt         int64    `json:"grantedAt" keel:"granted_at"`
+	GrantedBy         pulid.ID `json:"grantedBy"         keel:"granted_by,nullzero"`
+	GrantedAt         int64    `json:"grantedAt"         keel:"granted_at"`
 }
 
 func (g *RoleAgentGrant) BeforeCreate(_ context.Context) error {

@@ -15,29 +15,29 @@ import (
 
 // Equipment and driver assignments for a move
 type Assignment struct {
-	keel.Table `                                         keel:"assignments,report=Operations"`
+	keel.Table `keel:"assignments,report=Operations"`
 
-	ID                pulid.ID         `json:"id" keel:"id,pk,autoid:asn_"`
-	BusinessUnitID    pulid.ID         `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
-	OrganizationID    pulid.ID         `json:"organizationId" keel:"organization_id,pk,tenant"`
-	ShipmentMoveID    pulid.ID         `json:"shipmentMoveId" keel:"shipment_move_id"`
-	PrimaryWorkerID   *pulid.ID        `json:"primaryWorkerId" keel:"primary_worker_id"`
-	TractorID         *pulid.ID        `json:"tractorId" keel:"tractor_id"`
-	TrailerID         *pulid.ID        `json:"trailerId,omitempty" keel:"trailer_id"`
+	ID                pulid.ID         `json:"id"                          keel:"id,pk,autoid:asn_"`
+	BusinessUnitID    pulid.ID         `json:"businessUnitId"              keel:"business_unit_id,pk,tenant"`
+	OrganizationID    pulid.ID         `json:"organizationId"              keel:"organization_id,pk,tenant"`
+	ShipmentMoveID    pulid.ID         `json:"shipmentMoveId"              keel:"shipment_move_id"`
+	PrimaryWorkerID   *pulid.ID        `json:"primaryWorkerId"             keel:"primary_worker_id"`
+	TractorID         *pulid.ID        `json:"tractorId"                   keel:"tractor_id"`
+	TrailerID         *pulid.ID        `json:"trailerId,omitempty"         keel:"trailer_id"`
 	SecondaryWorkerID *pulid.ID        `json:"secondaryWorkerId,omitempty" keel:"secondary_worker_id"`
-	Status            AssignmentStatus `json:"status" keel:"status"`
-	AckStatus         AssignmentAck    `json:"ackStatus" keel:"ack_status"`
-	AckAt             *int64           `json:"ackAt,omitempty" keel:"ack_at"`
-	AckReason         string           `json:"ackReason,omitempty" keel:"ack_reason,nullzero"`
-	ArchivedAt        *int64           `json:"archivedAt,omitempty" keel:"archived_at"`
-	Version           int64            `json:"version" keel:"version,version"`
-	CreatedAt         int64            `json:"createdAt" keel:"created_at,autocreate"`
-	UpdatedAt         int64            `json:"updatedAt" keel:"updated_at,autoupdate"`
+	Status            AssignmentStatus `json:"status"                      keel:"status"`
+	AckStatus         AssignmentAck    `json:"ackStatus"                   keel:"ack_status"`
+	AckAt             *int64           `json:"ackAt,omitempty"             keel:"ack_at"`
+	AckReason         string           `json:"ackReason,omitempty"         keel:"ack_reason,nullzero"`
+	ArchivedAt        *int64           `json:"archivedAt,omitempty"        keel:"archived_at"`
+	Version           int64            `json:"version"                     keel:"version,version"`
+	CreatedAt         int64            `json:"createdAt"                   keel:"created_at,autocreate"`
+	UpdatedAt         int64            `json:"updatedAt"                   keel:"updated_at,autoupdate"`
 
-	ShipmentMove    *ShipmentMove    `json:"shipmentMove,omitempty" keel:"belongs:shipment_move_id"`
-	Tractor         *tractor.Tractor `json:"tractor,omitempty" keel:"belongs:tractor_id"`
-	Trailer         *trailer.Trailer `json:"trailer,omitempty" keel:"belongs:trailer_id"`
-	PrimaryWorker   *worker.Worker   `json:"primaryWorker,omitempty" keel:"belongs:primary_worker_id"`
+	ShipmentMove    *ShipmentMove    `json:"shipmentMove,omitempty"    keel:"belongs:shipment_move_id"`
+	Tractor         *tractor.Tractor `json:"tractor,omitempty"         keel:"belongs:tractor_id"`
+	Trailer         *trailer.Trailer `json:"trailer,omitempty"         keel:"belongs:trailer_id"`
+	PrimaryWorker   *worker.Worker   `json:"primaryWorker,omitempty"   keel:"belongs:primary_worker_id"`
 	SecondaryWorker *worker.Worker   `json:"secondaryWorker,omitempty" keel:"belongs:secondary_worker_id"`
 }
 

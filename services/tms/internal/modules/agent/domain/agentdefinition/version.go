@@ -22,15 +22,15 @@ const (
 type DefinitionVersion struct {
 	keel.Table `keel:"agent_definition_versions"`
 
-	ID                pulid.ID    `json:"id" keel:"id,pk,autoid:agdv_"`
-	BusinessUnitID    pulid.ID    `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
-	OrganizationID    pulid.ID    `json:"organizationId" keel:"organization_id,pk,tenant"`
+	ID                pulid.ID    `json:"id"                keel:"id,pk,autoid:agdv_"`
+	BusinessUnitID    pulid.ID    `json:"businessUnitId"    keel:"business_unit_id,pk,tenant"`
+	OrganizationID    pulid.ID    `json:"organizationId"    keel:"organization_id,pk,tenant"`
 	AgentDefinitionID pulid.ID    `json:"agentDefinitionId" keel:"agent_definition_id"`
-	Version           int64       `json:"version" keel:"version,version"`
-	Snapshot          *Definition `json:"snapshot" keel:"snapshot,jsonb"`
-	AuthorID          *pulid.ID   `json:"authorId" keel:"author_id"`
-	Summary           string      `json:"summary" keel:"summary,nullzero"`
-	CreatedAt         int64       `json:"createdAt" keel:"created_at,autocreate"`
+	Version           int64       `json:"version"           keel:"version,version"`
+	Snapshot          *Definition `json:"snapshot"          keel:"snapshot,jsonb"`
+	AuthorID          *pulid.ID   `json:"authorId"          keel:"author_id"`
+	Summary           string      `json:"summary"           keel:"summary,nullzero"`
+	CreatedAt         int64       `json:"createdAt"         keel:"created_at,autocreate"`
 
 	Author *tenant.User `json:"author,omitempty" keel:"belongs:author_id"`
 }

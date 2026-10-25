@@ -20,29 +20,29 @@ type VehicleInspectionDefect struct {
 type VehicleInspection struct {
 	keel.Table `keel:"vehicle_inspections"`
 
-	ID                    pulid.ID                  `json:"id" keel:"id,pk"`
-	OrganizationID        pulid.ID                  `json:"organizationId" keel:"organization_id,pk,tenant"`
-	BusinessUnitID        pulid.ID                  `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
-	Provider              string                    `json:"provider" keel:"provider"`
-	ProviderDvirID        string                    `json:"providerDvirId" keel:"provider_dvir_id"`
-	TractorID             pulid.ID                  `json:"tractorId" keel:"tractor_id,nullzero"`
-	WorkerID              pulid.ID                  `json:"workerId" keel:"worker_id,nullzero"`
-	InspectionType        string                    `json:"inspectionType" keel:"inspection_type"`
-	SafetyStatus          string                    `json:"safetyStatus" keel:"safety_status"`
-	StartedAt             int64                     `json:"startedAt" keel:"started_at"`
-	EndedAt               int64                     `json:"endedAt" keel:"ended_at"`
-	OdometerMeters        *int64                    `json:"odometerMeters" keel:"odometer_meters"`
-	Location              string                    `json:"location" keel:"location,nullzero"`
-	Signed                bool                      `json:"signed" keel:"signed"`
-	DefectCount           int                       `json:"defectCount" keel:"defect_count"`
+	ID                    pulid.ID                  `json:"id"                    keel:"id,pk"`
+	OrganizationID        pulid.ID                  `json:"organizationId"        keel:"organization_id,pk,tenant"`
+	BusinessUnitID        pulid.ID                  `json:"businessUnitId"        keel:"business_unit_id,pk,tenant"`
+	Provider              string                    `json:"provider"              keel:"provider"`
+	ProviderDvirID        string                    `json:"providerDvirId"        keel:"provider_dvir_id"`
+	TractorID             pulid.ID                  `json:"tractorId"             keel:"tractor_id,nullzero"`
+	WorkerID              pulid.ID                  `json:"workerId"              keel:"worker_id,nullzero"`
+	InspectionType        string                    `json:"inspectionType"        keel:"inspection_type"`
+	SafetyStatus          string                    `json:"safetyStatus"          keel:"safety_status"`
+	StartedAt             int64                     `json:"startedAt"             keel:"started_at"`
+	EndedAt               int64                     `json:"endedAt"               keel:"ended_at"`
+	OdometerMeters        *int64                    `json:"odometerMeters"        keel:"odometer_meters"`
+	Location              string                    `json:"location"              keel:"location,nullzero"`
+	Signed                bool                      `json:"signed"                keel:"signed"`
+	DefectCount           int                       `json:"defectCount"           keel:"defect_count"`
 	UnresolvedDefectCount int                       `json:"unresolvedDefectCount" keel:"unresolved_defect_count"`
-	Defects               []VehicleInspectionDefect `json:"defects" keel:"defects,jsonb,nullzero"`
-	CreatedAt             int64                     `json:"createdAt" keel:"created_at"`
+	Defects               []VehicleInspectionDefect `json:"defects"               keel:"defects,jsonb,nullzero"`
+	CreatedAt             int64                     `json:"createdAt"             keel:"created_at"`
 }
 
 func (i *VehicleInspection) BeforeCreate(_ context.Context) error {
 	if i.Provider == "" {
-		i.Provider = "Samsara"
+		i.Provider = defaultProvider
 	}
 
 	return nil

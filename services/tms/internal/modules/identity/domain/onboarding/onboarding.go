@@ -17,17 +17,17 @@ var (
 type Onboarding struct {
 	keel.Table `keel:"organization_onboarding"`
 
-	ID               pulid.ID             `json:"id" keel:"id,pk,autoid:oonb_"`
-	BusinessUnitID   pulid.ID             `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
-	OrganizationID   pulid.ID             `json:"organizationId" keel:"organization_id,pk,tenant"`
-	Status           Status               `json:"status" keel:"status"`
+	ID               pulid.ID             `json:"id"                      keel:"id,pk,autoid:oonb_"`
+	BusinessUnitID   pulid.ID             `json:"businessUnitId"          keel:"business_unit_id,pk,tenant"`
+	OrganizationID   pulid.ID             `json:"organizationId"          keel:"organization_id,pk,tenant"`
+	Status           Status               `json:"status"                  keel:"status"`
 	OperationType    tenant.OperationType `json:"operationType,omitempty" keel:"operation_type,nullzero"`
-	SampleDataLoaded bool                 `json:"sampleDataLoaded" keel:"sample_data_loaded"`
-	CompletedAt      *int64               `json:"completedAt" keel:"completed_at"`
+	SampleDataLoaded bool                 `json:"sampleDataLoaded"        keel:"sample_data_loaded"`
+	CompletedAt      *int64               `json:"completedAt"             keel:"completed_at"`
 	CompletedByID    pulid.ID             `json:"completedById,omitempty" keel:"completed_by_id,nullzero"`
-	Version          int64                `json:"version" keel:"version,version"`
-	CreatedAt        int64                `json:"createdAt" keel:"created_at,autocreate"`
-	UpdatedAt        int64                `json:"updatedAt" keel:"updated_at,autoupdate"`
+	Version          int64                `json:"version"                 keel:"version,version"`
+	CreatedAt        int64                `json:"createdAt"               keel:"created_at,autocreate"`
+	UpdatedAt        int64                `json:"updatedAt"               keel:"updated_at,autoupdate"`
 }
 
 type CompleteParams struct {

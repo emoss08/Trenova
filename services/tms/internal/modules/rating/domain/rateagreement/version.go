@@ -17,53 +17,53 @@ import (
 
 // What a contract said at each revision, and why it changed
 type RateAgreementVersion struct {
-	keel.Table `                                                        keel:"rate_agreement_versions,report=Billing,label=Agreement Version"`
+	keel.Table `keel:"rate_agreement_versions,report=Billing,label=Agreement Version"`
 
-	ID              pulid.ID `json:"id" keel:"id,pk,autoid:ragv_"`
-	BusinessUnitID  pulid.ID `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
-	OrganizationID  pulid.ID `json:"organizationId" keel:"organization_id,pk,tenant"`
+	ID              pulid.ID `json:"id"              keel:"id,pk,autoid:ragv_"`
+	BusinessUnitID  pulid.ID `json:"businessUnitId"  keel:"business_unit_id,pk,tenant"`
+	OrganizationID  pulid.ID `json:"organizationId"  keel:"organization_id,pk,tenant"`
 	RateAgreementID pulid.ID `json:"rateAgreementId" keel:"rate_agreement_id"`
 
 	VersionNumber int64  `json:"versionNumber" keel:"version_number,label=Version,dimension"`
 	EffectiveFrom int64  `json:"effectiveFrom" keel:"effective_from,type=epoch"`
-	EffectiveTo   *int64 `json:"effectiveTo" keel:"effective_to,type=epoch"`
+	EffectiveTo   *int64 `json:"effectiveTo"   keel:"effective_to,type=epoch"`
 
-	PartyType  PartyType `json:"partyType" keel:"party_type,nullzero"`
+	PartyType  PartyType `json:"partyType"  keel:"party_type,nullzero"`
 	CustomerID *pulid.ID `json:"customerId" keel:"customer_id"`
-	CarrierID  *pulid.ID `json:"carrierId" keel:"carrier_id"`
+	CarrierID  *pulid.ID `json:"carrierId"  keel:"carrier_id"`
 
-	Code          string        `json:"code" keel:"code"`
-	Name          string        `json:"name" keel:"name"`
-	Description   string        `json:"description" keel:"description,nullzero"`
+	Code          string        `json:"code"          keel:"code"`
+	Name          string        `json:"name"          keel:"name"`
+	Description   string        `json:"description"   keel:"description,nullzero"`
 	AgreementType AgreementType `json:"agreementType" keel:"agreement_type"`
-	Status        Status        `json:"status" keel:"status"`
-	ContractRef   string        `json:"contractRef" keel:"contract_ref,nullzero"`
-	DocumentID    *pulid.ID     `json:"documentId" keel:"document_id"`
+	Status        Status        `json:"status"        keel:"status"`
+	ContractRef   string        `json:"contractRef"   keel:"contract_ref,nullzero"`
+	DocumentID    *pulid.ID     `json:"documentId"    keel:"document_id"`
 
-	Priority               int16     `json:"priority" keel:"priority,dimension"`
+	Priority               int16     `json:"priority"               keel:"priority,dimension"`
 	AgreementEffectiveFrom int64     `json:"agreementEffectiveFrom" keel:"agreement_effective_from,type=epoch"`
-	AgreementEffectiveTo   *int64    `json:"agreementEffectiveTo" keel:"agreement_effective_to,type=epoch"`
-	AutoRenew              bool      `json:"autoRenew" keel:"auto_renew"`
-	RenewalNoticeDays      int16     `json:"renewalNoticeDays" keel:"renewal_notice_days,dimension"`
-	BillToCustomerID       *pulid.ID `json:"billToCustomerId" keel:"bill_to_customer_id"`
+	AgreementEffectiveTo   *int64    `json:"agreementEffectiveTo"   keel:"agreement_effective_to,type=epoch"`
+	AutoRenew              bool      `json:"autoRenew"              keel:"auto_renew"`
+	RenewalNoticeDays      int16     `json:"renewalNoticeDays"      keel:"renewal_notice_days,dimension"`
+	BillToCustomerID       *pulid.ID `json:"billToCustomerId"       keel:"bill_to_customer_id"`
 
 	Currency string             `json:"currency" keel:"currency"`
-	Inputs   tarifftypes.Inputs `json:"inputs" keel:"inputs,jsonb"`
+	Inputs   tarifftypes.Inputs `json:"inputs"   keel:"inputs,jsonb"`
 
-	MarginFloorPercent  decimal.NullDecimal `json:"marginFloorPercent" keel:"margin_floor_percent,label=Margin Floor (%)"`
+	MarginFloorPercent  decimal.NullDecimal `json:"marginFloorPercent"  keel:"margin_floor_percent,label=Margin Floor (%)"`
 	MaxPayPercentOfSell decimal.NullDecimal `json:"maxPayPercentOfSell" keel:"max_pay_percent_of_sell,label=Max Pay % of Sell"`
 
 	AccessorialTerms map[string]AccessorialTermSnapshot `json:"accessorialTerms" keel:"accessorial_terms,jsonb,nullzero"`
-	FuelTerms        *FuelTermSnapshot                  `json:"fuelTerms" keel:"fuel_terms,jsonb"`
+	FuelTerms        *FuelTermSnapshot                  `json:"fuelTerms"        keel:"fuel_terms,jsonb"`
 
 	AccessorialNames map[string]string `json:"accessorialNames,omitempty"`
 
 	ChangeMessage string                           `json:"changeMessage" keel:"change_message,nullzero"`
 	ChangeSummary map[string]jsonutils.FieldChange `json:"changeSummary" keel:"change_summary,jsonb,nullzero"`
-	CreatedByID   pulid.ID                         `json:"createdById" keel:"created_by_id"`
-	CreatedAt     int64                            `json:"createdAt" keel:"created_at,autocreate"`
+	CreatedByID   pulid.ID                         `json:"createdById"   keel:"created_by_id"`
+	CreatedAt     int64                            `json:"createdAt"     keel:"created_at,autocreate"`
 
-	Agreement *RateAgreement `json:"-" keel:"belongs:rate_agreement_id"`
+	Agreement *RateAgreement `json:"-"                   keel:"belongs:rate_agreement_id"`
 	CreatedBy *tenant.User   `json:"createdBy,omitempty" keel:"belongs:created_by_id,noreport"`
 }
 

@@ -45,28 +45,28 @@ type TableConfig struct {
 }
 
 type TableConfiguration struct {
-	keel.Table `                                                   keel:"table_configurations"`
+	keel.Table `keel:"table_configurations"`
 
-	ID             pulid.ID     `json:"id" keel:"id,pk,autoid:tc_"`
+	ID             pulid.ID     `json:"id"             keel:"id,pk,autoid:tc_"`
 	OrganizationID pulid.ID     `json:"organizationId" keel:"organization_id,pk,tenant"`
 	BusinessUnitID pulid.ID     `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
-	UserID         pulid.ID     `json:"userId" keel:"user_id"`
-	Name           string       `json:"name" keel:"name"`
-	Description    string       `json:"description" keel:"description,nullzero"`
-	Resource       string       `json:"resource" keel:"resource"`
-	TableConfig    *TableConfig `json:"tableConfig" keel:"table_config,jsonb"`
-	Visibility     Visibility   `json:"visibility" keel:"visibility"`
-	SearchVector   string       `json:"-" keel:"search_vector,tsvector,readonly,noselect"`
-	Rank           string       `json:"-" keel:"rank,computed"`
-	IsDefault      bool         `json:"isDefault" keel:"is_default"`
-	IsOrgDefault   bool         `json:"isOrgDefault" keel:"is_org_default"`
-	Version        int64        `json:"version" keel:"version,version"`
-	CreatedAt      int64        `json:"createdAt" keel:"created_at,autocreate"`
-	UpdatedAt      int64        `json:"updatedAt" keel:"updated_at,autoupdate"`
+	UserID         pulid.ID     `json:"userId"         keel:"user_id"`
+	Name           string       `json:"name"           keel:"name"`
+	Description    string       `json:"description"    keel:"description,nullzero"`
+	Resource       string       `json:"resource"       keel:"resource"`
+	TableConfig    *TableConfig `json:"tableConfig"    keel:"table_config,jsonb"`
+	Visibility     Visibility   `json:"visibility"     keel:"visibility"`
+	SearchVector   string       `json:"-"              keel:"search_vector,tsvector,readonly,noselect"`
+	Rank           string       `json:"-"              keel:"rank,computed"`
+	IsDefault      bool         `json:"isDefault"      keel:"is_default"`
+	IsOrgDefault   bool         `json:"isOrgDefault"   keel:"is_org_default"`
+	Version        int64        `json:"version"        keel:"version,version"`
+	CreatedAt      int64        `json:"createdAt"      keel:"created_at,autocreate"`
+	UpdatedAt      int64        `json:"updatedAt"      keel:"updated_at,autoupdate"`
 
 	Organization *tenant.Organization `json:"organization,omitempty"`
 	BusinessUnit *tenant.BusinessUnit `json:"businessUnit,omitempty"`
-	User         *tenant.User         `json:"user,omitempty" keel:"belongs:user_id"`
+	User         *tenant.User         `json:"user,omitempty"         keel:"belongs:user_id"`
 }
 
 func (tc *TableConfiguration) BeforeCreate(_ context.Context) error {

@@ -19,25 +19,25 @@ var (
 )
 
 type FuelIndex struct {
-	keel.Table `                                             keel:"fuel_indices"`
+	keel.Table `keel:"fuel_indices"`
 
-	ID             pulid.ID    `json:"id" keel:"id,pk,autoid:fidx_"`
+	ID             pulid.ID    `json:"id"             keel:"id,pk,autoid:fidx_"`
 	BusinessUnitID pulid.ID    `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
 	OrganizationID pulid.ID    `json:"organizationId" keel:"organization_id,pk,tenant"`
-	Name           string      `json:"name" keel:"name"`
-	Code           string      `json:"code" keel:"code"`
-	Description    string      `json:"description" keel:"description,nullzero"`
-	Source         IndexSource `json:"source" keel:"source"`
-	FuelType       FuelType    `json:"fuelType" keel:"fuel_type"`
-	Region         string      `json:"region" keel:"region,nullzero"`
-	EIASeriesID    string      `json:"eiaSeriesId" keel:"eia_series_id,nullzero"`
-	Currency       string      `json:"currency" keel:"currency"`
-	IsActive       bool        `json:"isActive" keel:"is_active"`
-	Version        int64       `json:"version" keel:"version,version"`
-	CreatedAt      int64       `json:"createdAt" keel:"created_at,autocreate"`
-	UpdatedAt      int64       `json:"updatedAt" keel:"updated_at,autoupdate"`
-	SearchVector   string      `json:"-" keel:"search_vector,tsvector,readonly,noselect"`
-	Rank           string      `json:"-" keel:"rank,computed"`
+	Name           string      `json:"name"           keel:"name"`
+	Code           string      `json:"code"           keel:"code"`
+	Description    string      `json:"description"    keel:"description,nullzero"`
+	Source         IndexSource `json:"source"         keel:"source"`
+	FuelType       FuelType    `json:"fuelType"       keel:"fuel_type"`
+	Region         string      `json:"region"         keel:"region,nullzero"`
+	EIASeriesID    string      `json:"eiaSeriesId"    keel:"eia_series_id,nullzero"`
+	Currency       string      `json:"currency"       keel:"currency"`
+	IsActive       bool        `json:"isActive"       keel:"is_active"`
+	Version        int64       `json:"version"        keel:"version,version"`
+	CreatedAt      int64       `json:"createdAt"      keel:"created_at,autocreate"`
+	UpdatedAt      int64       `json:"updatedAt"      keel:"updated_at,autoupdate"`
+	SearchVector   string      `json:"-"              keel:"search_vector,tsvector,readonly,noselect"`
+	Rank           string      `json:"-"              keel:"rank,computed"`
 
 	BusinessUnit *tenant.BusinessUnit `json:"-"`
 	Organization *tenant.Organization `json:"-"`

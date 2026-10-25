@@ -273,7 +273,8 @@ func (r *repository) RevokeSCIMToken(
 ) (*iam.SCIMToken, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*iam.SCIMToken, error) {
 		st := iamdb.SCIMTokens
-		rows, err := st.Where(st.ID.Eq(tokenID), st.OrganizationID.Eq(orgID)).UpdateReturning(ctx, r.db.Keel(ctx), st.Status.To(iam.SCIMTokenStatusRevoked))
+		rows, err := st.Where(st.ID.Eq(tokenID), st.OrganizationID.Eq(orgID)).
+			UpdateReturning(ctx, r.db.Keel(ctx), st.Status.To(iam.SCIMTokenStatusRevoked))
 		if err != nil {
 			return nil, scimTokenErrors.Map(err, tokenID.String())
 		}

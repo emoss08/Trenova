@@ -67,25 +67,25 @@ var (
 // changing the version is refused: it would make every existing signature a
 // signature on words nobody saw.
 type WorkerPolicy struct {
-	keel.Table `                                                keel:"worker_policies"`
+	keel.Table `keel:"worker_policies"`
 
-	ID             pulid.ID `json:"id" keel:"id,pk,autoid:wpol_"`
+	ID             pulid.ID `json:"id"             keel:"id,pk,autoid:wpol_"`
 	BusinessUnitID pulid.ID `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
 	OrganizationID pulid.ID `json:"organizationId" keel:"organization_id,pk,tenant"`
 
-	Status            domaintypes.Status `json:"status" keel:"status"`
-	Code              string             `json:"code" keel:"code"`
-	Title             string             `json:"title" keel:"title"`
-	Summary           string             `json:"summary" keel:"summary,nullzero"`
-	Body              string             `json:"body" keel:"body,nullzero"`
-	DocumentID        pulid.ID           `json:"documentId" keel:"document_id,nullzero"`
-	VersionLabel      string             `json:"versionLabel" keel:"version_label"`
+	Status            domaintypes.Status `json:"status"            keel:"status"`
+	Code              string             `json:"code"              keel:"code"`
+	Title             string             `json:"title"             keel:"title"`
+	Summary           string             `json:"summary"           keel:"summary,nullzero"`
+	Body              string             `json:"body"              keel:"body,nullzero"`
+	DocumentID        pulid.ID           `json:"documentId"        keel:"document_id,nullzero"`
+	VersionLabel      string             `json:"versionLabel"      keel:"version_label"`
 	RequiresSignature bool               `json:"requiresSignature" keel:"requires_signature"`
-	AppliesTo         PolicyAudience     `json:"appliesTo" keel:"applies_to"`
-	EffectiveFrom     int64              `json:"effectiveFrom" keel:"effective_from"`
-	CreatedByID       pulid.ID           `json:"createdById" keel:"created_by_id,nullzero"`
+	AppliesTo         PolicyAudience     `json:"appliesTo"         keel:"applies_to"`
+	EffectiveFrom     int64              `json:"effectiveFrom"     keel:"effective_from"`
+	CreatedByID       pulid.ID           `json:"createdById"       keel:"created_by_id,nullzero"`
 
-	Version   int64 `json:"version" keel:"version,version"`
+	Version   int64 `json:"version"   keel:"version,version"`
 	CreatedAt int64 `json:"createdAt" keel:"created_at,autocreate"`
 	UpdatedAt int64 `json:"updatedAt" keel:"updated_at,autoupdate"`
 }
@@ -195,22 +195,22 @@ var (
 // picture of handwriting, but a record that a specific person, from a specific
 // place, at a specific time, agreed to a specific text.
 type WorkerPolicyAcknowledgement struct {
-	keel.Table `                                                               keel:"worker_policy_acknowledgements"`
+	keel.Table `keel:"worker_policy_acknowledgements"`
 
-	ID             pulid.ID `json:"id" keel:"id,pk,autoid:wpak_"`
+	ID             pulid.ID `json:"id"             keel:"id,pk,autoid:wpak_"`
 	BusinessUnitID pulid.ID `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
 	OrganizationID pulid.ID `json:"organizationId" keel:"organization_id,pk,tenant"`
-	PolicyID       pulid.ID `json:"policyId" keel:"policy_id"`
-	WorkerID       pulid.ID `json:"workerId" keel:"worker_id"`
+	PolicyID       pulid.ID `json:"policyId"       keel:"policy_id"`
+	WorkerID       pulid.ID `json:"workerId"       keel:"worker_id"`
 
-	VersionLabel       string `json:"versionLabel" keel:"version_label"`
-	AcknowledgedAt     int64  `json:"acknowledgedAt" keel:"acknowledged_at"`
-	SignatureName      string `json:"signatureName" keel:"signature_name,nullzero"`
-	SignatureIP        string `json:"signatureIp" keel:"signature_ip,nullzero"`
+	VersionLabel       string `json:"versionLabel"       keel:"version_label"`
+	AcknowledgedAt     int64  `json:"acknowledgedAt"     keel:"acknowledged_at"`
+	SignatureName      string `json:"signatureName"      keel:"signature_name,nullzero"`
+	SignatureIP        string `json:"signatureIp"        keel:"signature_ip,nullzero"`
 	SignatureUserAgent string `json:"signatureUserAgent" keel:"signature_user_agent,nullzero"`
-	DocumentChecksum   string `json:"documentChecksum" keel:"document_checksum,nullzero"`
+	DocumentChecksum   string `json:"documentChecksum"   keel:"document_checksum,nullzero"`
 
-	Version   int64 `json:"version" keel:"version,version"`
+	Version   int64 `json:"version"   keel:"version,version"`
 	CreatedAt int64 `json:"createdAt" keel:"created_at,autocreate"`
 	UpdatedAt int64 `json:"updatedAt" keel:"updated_at,autoupdate"`
 

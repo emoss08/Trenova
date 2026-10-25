@@ -23,22 +23,22 @@ var (
 type AgentException struct {
 	keel.Table `keel:"agent_exceptions"`
 
-	ID             pulid.ID `json:"id" keel:"id,pk,autoid:ax_"`
+	ID             pulid.ID `json:"id"             keel:"id,pk,autoid:ax_"`
 	BusinessUnitID pulid.ID `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
 	OrganizationID pulid.ID `json:"organizationId" keel:"organization_id,pk,tenant"`
 
-	RunID           pulid.ID          `json:"runId" keel:"run_id"`
-	Category        ExceptionCategory `json:"category" keel:"category"`
-	Severity        Severity          `json:"severity" keel:"severity"`
-	SubjectType     SubjectType       `json:"subjectType" keel:"subject_type"`
-	SubjectID       pulid.ID          `json:"subjectId" keel:"subject_id"`
-	AttemptSummary  string            `json:"attemptSummary" keel:"attempt_summary"`
-	Evidence        []EvidenceRef     `json:"evidence" keel:"evidence,jsonb"`
-	BlastRadius     int               `json:"blastRadius" keel:"blast_radius"`
+	RunID           pulid.ID          `json:"runId"           keel:"run_id"`
+	Category        ExceptionCategory `json:"category"        keel:"category"`
+	Severity        Severity          `json:"severity"        keel:"severity"`
+	SubjectType     SubjectType       `json:"subjectType"     keel:"subject_type"`
+	SubjectID       pulid.ID          `json:"subjectId"       keel:"subject_id"`
+	AttemptSummary  string            `json:"attemptSummary"  keel:"attempt_summary"`
+	Evidence        []EvidenceRef     `json:"evidence"        keel:"evidence,jsonb"`
+	BlastRadius     int               `json:"blastRadius"     keel:"blast_radius"`
 	ResolutionState ResolutionState   `json:"resolutionState" keel:"resolution_state"`
 	ResolutionNotes string            `json:"resolutionNotes" keel:"resolution_notes,nullzero"`
 
-	Version   int64 `json:"version" keel:"version,version"`
+	Version   int64 `json:"version"   keel:"version,version"`
 	CreatedAt int64 `json:"createdAt" keel:"created_at,autocreate"`
 	UpdatedAt int64 `json:"updatedAt" keel:"updated_at,autoupdate"`
 

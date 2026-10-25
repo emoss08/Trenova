@@ -23,22 +23,22 @@ var (
 
 // The organization's accessorial catalog and default pricing
 type AccessorialCharge struct {
-	keel.Table `                                                   keel:"accessorial_charges,report=Billing"`
+	keel.Table `keel:"accessorial_charges,report=Billing"`
 
-	ID             pulid.ID           `json:"id" keel:"id,pk,autoid:acc_"`
+	ID             pulid.ID           `json:"id"             keel:"id,pk,autoid:acc_"`
 	BusinessUnitID pulid.ID           `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
 	OrganizationID pulid.ID           `json:"organizationId" keel:"organization_id,pk,tenant"`
-	Code           string             `json:"code" keel:"code"`
-	Description    string             `json:"description" keel:"description"`
-	Status         domaintypes.Status `json:"status" keel:"status"`
-	Method         Method             `json:"method" keel:"method"`
-	RateUnit       RateUnit           `json:"rateUnit" keel:"rate_unit,nullzero"`
-	Amount         decimal.Decimal    `json:"amount" keel:"amount,label=Default Amount,format=money"`
-	SearchVector   string             `json:"-" keel:"search_vector,tsvector,readonly,noselect"`
-	Rank           string             `json:"-" keel:"rank,computed"`
-	Version        int64              `json:"version" keel:"version,version"`
-	CreatedAt      int64              `json:"createdAt" keel:"created_at,autocreate"`
-	UpdatedAt      int64              `json:"updatedAt" keel:"updated_at,autoupdate"`
+	Code           string             `json:"code"           keel:"code"`
+	Description    string             `json:"description"    keel:"description"`
+	Status         domaintypes.Status `json:"status"         keel:"status"`
+	Method         Method             `json:"method"         keel:"method"`
+	RateUnit       RateUnit           `json:"rateUnit"       keel:"rate_unit,nullzero"`
+	Amount         decimal.Decimal    `json:"amount"         keel:"amount,label=Default Amount,format=money"`
+	SearchVector   string             `json:"-"              keel:"search_vector,tsvector,readonly,noselect"`
+	Rank           string             `json:"-"              keel:"rank,computed"`
+	Version        int64              `json:"version"        keel:"version,version"`
+	CreatedAt      int64              `json:"createdAt"      keel:"created_at,autocreate"`
+	UpdatedAt      int64              `json:"updatedAt"      keel:"updated_at,autoupdate"`
 
 	BusinessUnit *tenant.BusinessUnit `json:"-"`
 	Organization *tenant.Organization `json:"-"`

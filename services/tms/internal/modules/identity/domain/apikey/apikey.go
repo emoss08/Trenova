@@ -13,24 +13,24 @@ import (
 type Key struct {
 	keel.Table `keel:"api_keys"`
 
-	ID                pulid.ID `json:"id" keel:"id,pk,autoid:ak_"`
-	BusinessUnitID    pulid.ID `json:"businessUnitId" keel:"business_unit_id,tenant"`
-	OrganizationID    pulid.ID `json:"organizationId" keel:"organization_id,tenant"`
-	Name              string   `json:"name" keel:"name"`
-	Description       string   `json:"description" keel:"description,nullzero"`
-	KeyPrefix         string   `json:"keyPrefix" keel:"key_prefix"`
-	SecretHash        string   `json:"-" keel:"secret_hash"`
-	SecretSalt        string   `json:"-" keel:"secret_salt"`
-	Status            Status   `json:"status" keel:"status"`
-	ExpiresAt         int64    `json:"expiresAt" keel:"expires_at,nullzero"`
-	LastUsedAt        int64    `json:"lastUsedAt" keel:"last_used_at,nullzero"`
-	LastUsedIP        string   `json:"lastUsedIp" keel:"last_used_ip,nullzero"`
+	ID                pulid.ID `json:"id"                keel:"id,pk,autoid:ak_"`
+	BusinessUnitID    pulid.ID `json:"businessUnitId"    keel:"business_unit_id,tenant"`
+	OrganizationID    pulid.ID `json:"organizationId"    keel:"organization_id,tenant"`
+	Name              string   `json:"name"              keel:"name"`
+	Description       string   `json:"description"       keel:"description,nullzero"`
+	KeyPrefix         string   `json:"keyPrefix"         keel:"key_prefix"`
+	SecretHash        string   `json:"-"                 keel:"secret_hash"`
+	SecretSalt        string   `json:"-"                 keel:"secret_salt"`
+	Status            Status   `json:"status"            keel:"status"`
+	ExpiresAt         int64    `json:"expiresAt"         keel:"expires_at,nullzero"`
+	LastUsedAt        int64    `json:"lastUsedAt"        keel:"last_used_at,nullzero"`
+	LastUsedIP        string   `json:"lastUsedIp"        keel:"last_used_ip,nullzero"`
 	LastUsedUserAgent string   `json:"lastUsedUserAgent" keel:"last_used_user_agent,nullzero"`
-	CreatedByID       pulid.ID `json:"createdById" keel:"created_by_id"`
-	RevokedByID       pulid.ID `json:"revokedById" keel:"revoked_by_id,nullzero"`
-	RevokedAt         int64    `json:"revokedAt" keel:"revoked_at,nullzero"`
-	CreatedAt         int64    `json:"createdAt" keel:"created_at,autocreate"`
-	UpdatedAt         int64    `json:"updatedAt" keel:"updated_at,autoupdate"`
+	CreatedByID       pulid.ID `json:"createdById"       keel:"created_by_id"`
+	RevokedByID       pulid.ID `json:"revokedById"       keel:"revoked_by_id,nullzero"`
+	RevokedAt         int64    `json:"revokedAt"         keel:"revoked_at,nullzero"`
+	CreatedAt         int64    `json:"createdAt"         keel:"created_at,autocreate"`
+	UpdatedAt         int64    `json:"updatedAt"         keel:"updated_at,autoupdate"`
 
 	Permissions []*Permission `json:"permissions" keel:"many:api_key_id"`
 }

@@ -32,29 +32,29 @@ const (
 type CaptureRequest struct {
 	keel.Table `keel:"capture_requests"`
 
-	ID             pulid.ID           `json:"id" keel:"id,pk,autoid:creq_"`
+	ID             pulid.ID           `json:"id"             keel:"id,pk,autoid:creq_"`
 	BusinessUnitID pulid.ID           `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
 	OrganizationID pulid.ID           `json:"organizationId" keel:"organization_id,pk,tenant"`
-	UserID         pulid.ID           `json:"userId" keel:"user_id"`
-	DeviceID       pulid.ID           `json:"deviceId" keel:"device_id"`
-	Mode           RequestMode        `json:"mode" keel:"mode"`
-	Status         RequestStatus      `json:"status" keel:"status"`
-	TargetType     string             `json:"targetType" keel:"target_type"`
-	TargetID       pulid.ID           `json:"targetId" keel:"target_id"`
+	UserID         pulid.ID           `json:"userId"         keel:"user_id"`
+	DeviceID       pulid.ID           `json:"deviceId"       keel:"device_id"`
+	Mode           RequestMode        `json:"mode"           keel:"mode"`
+	Status         RequestStatus      `json:"status"         keel:"status"`
+	TargetType     string             `json:"targetType"     keel:"target_type"`
+	TargetID       pulid.ID           `json:"targetId"       keel:"target_id"`
 	DocumentTypeID *pulid.ID          `json:"documentTypeId" keel:"document_type_id"`
-	ProfileID      *pulid.ID          `json:"profileId" keel:"profile_id"`
-	SourceName     string             `json:"sourceName" keel:"source_name,nullzero"`
-	BatchID        *pulid.ID          `json:"batchId" keel:"batch_id"`
-	FailureCode    RequestFailureCode `json:"failureCode" keel:"failure_code,nullzero"`
+	ProfileID      *pulid.ID          `json:"profileId"      keel:"profile_id"`
+	SourceName     string             `json:"sourceName"     keel:"source_name,nullzero"`
+	BatchID        *pulid.ID          `json:"batchId"        keel:"batch_id"`
+	FailureCode    RequestFailureCode `json:"failureCode"    keel:"failure_code,nullzero"`
 	FailureMessage string             `json:"failureMessage" keel:"failure_message,nullzero"`
-	ExpiresAt      int64              `json:"expiresAt" keel:"expires_at"`
-	DeliveredAt    *int64             `json:"deliveredAt" keel:"delivered_at"`
-	CompletedAt    *int64             `json:"completedAt" keel:"completed_at"`
-	Version        int64              `json:"version" keel:"version,version"`
-	CreatedAt      int64              `json:"createdAt" keel:"created_at,autocreate"`
-	UpdatedAt      int64              `json:"updatedAt" keel:"updated_at,autoupdate"`
+	ExpiresAt      int64              `json:"expiresAt"      keel:"expires_at"`
+	DeliveredAt    *int64             `json:"deliveredAt"    keel:"delivered_at"`
+	CompletedAt    *int64             `json:"completedAt"    keel:"completed_at"`
+	Version        int64              `json:"version"        keel:"version,version"`
+	CreatedAt      int64              `json:"createdAt"      keel:"created_at,autocreate"`
+	UpdatedAt      int64              `json:"updatedAt"      keel:"updated_at,autoupdate"`
 
-	CaptureProfile *CaptureProfile      `json:"profile,omitempty" keel:"belongs:profile_id"`
+	CaptureProfile *CaptureProfile      `json:"profile,omitempty"      keel:"belongs:profile_id"`
 	Organization   *tenant.Organization `json:"organization,omitempty"`
 	BusinessUnit   *tenant.BusinessUnit `json:"businessUnit,omitempty"`
 }

@@ -14,15 +14,15 @@ import (
 type Permission struct {
 	keel.Table `keel:"api_key_permissions"`
 
-	ID             pulid.ID               `json:"id" keel:"id,pk,autoid:akp_"`
-	APIKeyID       pulid.ID               `json:"apiKeyId" keel:"api_key_id"`
+	ID             pulid.ID               `json:"id"             keel:"id,pk,autoid:akp_"`
+	APIKeyID       pulid.ID               `json:"apiKeyId"       keel:"api_key_id"`
 	BusinessUnitID pulid.ID               `json:"businessUnitId" keel:"business_unit_id,tenant"`
 	OrganizationID pulid.ID               `json:"organizationId" keel:"organization_id,tenant"`
-	Resource       string                 `json:"resource" keel:"resource"`
-	Operations     []permission.Operation `json:"operations" keel:"operations"`
-	DataScope      permission.DataScope   `json:"dataScope" keel:"data_scope"`
-	CreatedAt      int64                  `json:"createdAt" keel:"created_at,autocreate"`
-	UpdatedAt      int64                  `json:"updatedAt" keel:"updated_at,autoupdate"`
+	Resource       string                 `json:"resource"       keel:"resource"`
+	Operations     []permission.Operation `json:"operations"     keel:"operations"`
+	DataScope      permission.DataScope   `json:"dataScope"      keel:"data_scope"`
+	CreatedAt      int64                  `json:"createdAt"      keel:"created_at,autocreate"`
+	UpdatedAt      int64                  `json:"updatedAt"      keel:"updated_at,autoupdate"`
 }
 
 func (p *Permission) BeforeUpdate(_ context.Context) error {

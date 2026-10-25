@@ -110,7 +110,7 @@ var (
 type GeneratedDocument struct {
 	keel.Table `keel:"generated_documents"`
 
-	ID             pulid.ID `json:"id" keel:"id,pk,autoid:gd_"`
+	ID             pulid.ID `json:"id"             keel:"id,pk,autoid:gd_"`
 	BusinessUnitID pulid.ID `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
 	OrganizationID pulid.ID `json:"organizationId" keel:"organization_id,pk,tenant"`
 
@@ -118,7 +118,7 @@ type GeneratedDocument struct {
 
 	// TemplateID and TemplateVersionID are nil when the built-in rendered, since a
 	// built-in has no database row. ContentHash still identifies the exact content.
-	TemplateID        *pulid.ID `json:"templateId" keel:"template_id"`
+	TemplateID        *pulid.ID `json:"templateId"        keel:"template_id"`
 	TemplateVersionID *pulid.ID `json:"templateVersionId" keel:"template_version_id"`
 
 	// DocumentID links to the stored document row the bytes were uploaded as, so a
@@ -126,7 +126,7 @@ type GeneratedDocument struct {
 	DocumentID *pulid.ID `json:"documentId" keel:"document_id"`
 
 	ReferenceType string   `json:"referenceType" keel:"reference_type"`
-	ReferenceID   pulid.ID `json:"referenceId" keel:"reference_id"`
+	ReferenceID   pulid.ID `json:"referenceId"   keel:"reference_id"`
 
 	FileName string `json:"fileName" keel:"file_name"`
 	FilePath string `json:"filePath" keel:"file_path,nullzero"`
@@ -142,16 +142,16 @@ type GeneratedDocument struct {
 	// budget — so an omission is never silent.
 	Warnings []GeneratedDocumentWarning `json:"warnings" keel:"warnings,jsonb,nullzero"`
 
-	Status        GenerationStatus `json:"status" keel:"status"`
-	ErrorMessage  string           `json:"errorMessage" keel:"error_message,nullzero"`
-	GeneratedAt   *int64           `json:"generatedAt" keel:"generated_at"`
+	Status        GenerationStatus `json:"status"        keel:"status"`
+	ErrorMessage  string           `json:"errorMessage"  keel:"error_message,nullzero"`
+	GeneratedAt   *int64           `json:"generatedAt"   keel:"generated_at"`
 	GeneratedByID *pulid.ID        `json:"generatedById" keel:"generated_by_id"`
 
 	DeliveryMethod DeliveryMethod `json:"deliveryMethod" keel:"delivery_method"`
-	DeliveredAt    *int64         `json:"deliveredAt" keel:"delivered_at"`
-	DeliveredTo    string         `json:"deliveredTo" keel:"delivered_to,nullzero"`
+	DeliveredAt    *int64         `json:"deliveredAt"    keel:"delivered_at"`
+	DeliveredTo    string         `json:"deliveredTo"    keel:"delivered_to,nullzero"`
 
-	Version   int64 `json:"version" keel:"version,version"`
+	Version   int64 `json:"version"   keel:"version,version"`
 	CreatedAt int64 `json:"createdAt" keel:"created_at,autocreate"`
 	UpdatedAt int64 `json:"updatedAt" keel:"updated_at,autoupdate"`
 
@@ -160,7 +160,7 @@ type GeneratedDocument struct {
 
 	BusinessUnit    *tenant.BusinessUnit     `json:"-"`
 	Organization    *tenant.Organization     `json:"-"`
-	Template        *DocumentTemplate        `json:"template,omitempty" keel:"belongs:template_id"`
+	Template        *DocumentTemplate        `json:"template,omitempty"        keel:"belongs:template_id"`
 	TemplateVersion *DocumentTemplateVersion `json:"templateVersion,omitempty" keel:"belongs:template_version_id"`
 }
 

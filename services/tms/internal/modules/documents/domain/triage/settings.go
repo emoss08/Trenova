@@ -52,10 +52,10 @@ type ResponseTarget struct {
 	OrganizationID pulid.ID                      `json:"organizationId" keel:"organization_id,pk,tenant"`
 	BusinessUnitID pulid.ID                      `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
 	Classification inboundmessage.Classification `json:"classification" keel:"classification,pk"`
-	Minutes        int                           `json:"minutes" keel:"minutes"`
-	UpdatedByID    pulid.ID                      `json:"updatedById" keel:"updated_by_id,nullzero"`
-	CreatedAt      int64                         `json:"createdAt" keel:"created_at,autocreate"`
-	UpdatedAt      int64                         `json:"updatedAt" keel:"updated_at,autoupdate"`
+	Minutes        int                           `json:"minutes"        keel:"minutes"`
+	UpdatedByID    pulid.ID                      `json:"updatedById"    keel:"updated_by_id,nullzero"`
+	CreatedAt      int64                         `json:"createdAt"      keel:"created_at,autocreate"`
+	UpdatedAt      int64                         `json:"updatedAt"      keel:"updated_at,autoupdate"`
 }
 
 func (t *ResponseTarget) Validate(multiErr *errortypes.MultiError) {
@@ -99,11 +99,11 @@ type Settings struct {
 
 	OrganizationID pulid.ID `json:"organizationId" keel:"organization_id,pk,tenant"`
 	BusinessUnitID pulid.ID `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
-	OnCallUserID   pulid.ID `json:"onCallUserId" keel:"on_call_user_id,nullzero"`
+	OnCallUserID   pulid.ID `json:"onCallUserId"   keel:"on_call_user_id,nullzero"`
 	EndOfDayMinute int      `json:"endOfDayMinute" keel:"end_of_day_minute"`
-	Version        int64    `json:"version" keel:"version,version"`
-	CreatedAt      int64    `json:"createdAt" keel:"created_at,autocreate"`
-	UpdatedAt      int64    `json:"updatedAt" keel:"updated_at,autoupdate"`
+	Version        int64    `json:"version"        keel:"version,version"`
+	CreatedAt      int64    `json:"createdAt"      keel:"created_at,autocreate"`
+	UpdatedAt      int64    `json:"updatedAt"      keel:"updated_at,autoupdate"`
 }
 
 func DefaultSettings(orgID, buID pulid.ID) *Settings {
@@ -134,15 +134,15 @@ func (s *Settings) BeforeCreate(_ context.Context) error {
 type ReplyTemplate struct {
 	keel.Table `keel:"triage_reply_templates"`
 
-	ID             pulid.ID `json:"id" keel:"id,pk,autoid:ttpl_"`
+	ID             pulid.ID `json:"id"             keel:"id,pk,autoid:ttpl_"`
 	BusinessUnitID pulid.ID `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
 	OrganizationID pulid.ID `json:"organizationId" keel:"organization_id,pk,tenant"`
-	Name           string   `json:"name" keel:"name"`
-	Body           string   `json:"body" keel:"body"`
-	CreatedByID    pulid.ID `json:"createdById" keel:"created_by_id,nullzero"`
-	Version        int64    `json:"version" keel:"version,version"`
-	CreatedAt      int64    `json:"createdAt" keel:"created_at,autocreate"`
-	UpdatedAt      int64    `json:"updatedAt" keel:"updated_at,autoupdate"`
+	Name           string   `json:"name"           keel:"name"`
+	Body           string   `json:"body"           keel:"body"`
+	CreatedByID    pulid.ID `json:"createdById"    keel:"created_by_id,nullzero"`
+	Version        int64    `json:"version"        keel:"version,version"`
+	CreatedAt      int64    `json:"createdAt"      keel:"created_at,autocreate"`
+	UpdatedAt      int64    `json:"updatedAt"      keel:"updated_at,autoupdate"`
 }
 
 func (t *ReplyTemplate) Validate(multiErr *errortypes.MultiError) {
@@ -179,15 +179,15 @@ func (t *ReplyTemplate) GetTableName() string { return "triage_reply_templates" 
 type View struct {
 	keel.Table `keel:"triage_views"`
 
-	ID             pulid.ID `json:"id" keel:"id,pk,autoid:tview_"`
+	ID             pulid.ID `json:"id"             keel:"id,pk,autoid:tview_"`
 	BusinessUnitID pulid.ID `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
 	OrganizationID pulid.ID `json:"organizationId" keel:"organization_id,pk,tenant"`
-	UserID         pulid.ID `json:"userId" keel:"user_id"`
-	Name           string   `json:"name" keel:"name"`
-	Query          string   `json:"query" keel:"query"`
-	Position       int      `json:"position" keel:"position"`
-	CreatedAt      int64    `json:"createdAt" keel:"created_at,autocreate"`
-	UpdatedAt      int64    `json:"updatedAt" keel:"updated_at,autoupdate"`
+	UserID         pulid.ID `json:"userId"         keel:"user_id"`
+	Name           string   `json:"name"           keel:"name"`
+	Query          string   `json:"query"          keel:"query"`
+	Position       int      `json:"position"       keel:"position"`
+	CreatedAt      int64    `json:"createdAt"      keel:"created_at,autocreate"`
+	UpdatedAt      int64    `json:"updatedAt"      keel:"updated_at,autoupdate"`
 }
 
 func (v *View) Validate(multiErr *errortypes.MultiError) {
@@ -224,10 +224,10 @@ func (v *View) GetTableName() string { return "triage_views" }
 type SenderHint struct {
 	keel.Table `keel:"inbound_sender_hints"`
 
-	OrganizationID  pulid.ID                      `json:"organizationId" keel:"organization_id,pk,tenant"`
-	BusinessUnitID  pulid.ID                      `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
-	SenderDomain    string                        `json:"senderDomain" keel:"sender_domain,pk"`
-	Classification  inboundmessage.Classification `json:"classification" keel:"classification,pk"`
-	Corrections     int                           `json:"corrections" keel:"corrections"`
+	OrganizationID  pulid.ID                      `json:"organizationId"  keel:"organization_id,pk,tenant"`
+	BusinessUnitID  pulid.ID                      `json:"businessUnitId"  keel:"business_unit_id,pk,tenant"`
+	SenderDomain    string                        `json:"senderDomain"    keel:"sender_domain,pk"`
+	Classification  inboundmessage.Classification `json:"classification"  keel:"classification,pk"`
+	Corrections     int                           `json:"corrections"     keel:"corrections"`
 	LastCorrectedAt int64                         `json:"lastCorrectedAt" keel:"last_corrected_at"`
 }

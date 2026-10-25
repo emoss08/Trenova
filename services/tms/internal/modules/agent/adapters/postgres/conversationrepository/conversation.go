@@ -611,7 +611,11 @@ func (r *repository) AppendTurn(
 		}
 		conversation.StampUnstamped(batch, now)
 
-		if err = conversationdb.Messages.CreateMany(ctx, db, sliceutils.Pointers(batch)); err != nil {
+		if err = conversationdb.Messages.CreateMany(
+			ctx,
+			db,
+			sliceutils.Pointers(batch),
+		); err != nil {
 			return nil, fmt.Errorf("insert turn: %w", err)
 		}
 

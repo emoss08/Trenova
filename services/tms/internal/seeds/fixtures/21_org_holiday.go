@@ -65,12 +65,48 @@ func (s *OrgHolidaySeed) Run(ctx context.Context, sr *seed.Run) error {
 
 func (s *OrgHolidaySeed) calendar() []seededHoliday {
 	return []seededHoliday{
-		{name: "New Year's Day", month: time.January, day: 1, kind: worker.HolidayKindHoliday, recurs: true},
-		{name: "Memorial Day", month: time.May, day: 25, kind: worker.HolidayKindHoliday, recurs: true},
-		{name: "Independence Day", month: time.July, day: 4, kind: worker.HolidayKindHoliday, recurs: true},
-		{name: "Labor Day", month: time.September, day: 7, kind: worker.HolidayKindHoliday, recurs: true},
-		{name: "Thanksgiving", month: time.November, day: 26, kind: worker.HolidayKindHoliday, recurs: true},
-		{name: "Christmas Day", month: time.December, day: 25, kind: worker.HolidayKindHoliday, recurs: true},
+		{
+			name:   "New Year's Day",
+			month:  time.January,
+			day:    1,
+			kind:   worker.HolidayKindHoliday,
+			recurs: true,
+		},
+		{
+			name:   "Memorial Day",
+			month:  time.May,
+			day:    25,
+			kind:   worker.HolidayKindHoliday,
+			recurs: true,
+		},
+		{
+			name:   "Independence Day",
+			month:  time.July,
+			day:    4,
+			kind:   worker.HolidayKindHoliday,
+			recurs: true,
+		},
+		{
+			name:   "Labor Day",
+			month:  time.September,
+			day:    7,
+			kind:   worker.HolidayKindHoliday,
+			recurs: true,
+		},
+		{
+			name:   "Thanksgiving",
+			month:  time.November,
+			day:    26,
+			kind:   worker.HolidayKindHoliday,
+			recurs: true,
+		},
+		{
+			name:   "Christmas Day",
+			month:  time.December,
+			day:    25,
+			kind:   worker.HolidayKindHoliday,
+			recurs: true,
+		},
 		{
 			name:        "Peak season freeze",
 			month:       time.December,

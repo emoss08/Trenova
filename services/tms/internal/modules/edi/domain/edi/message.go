@@ -20,58 +20,58 @@ var (
 type EDIMessage struct {
 	keel.Table `keel:"edi_messages"`
 
-	ID                       pulid.ID                    `json:"id" keel:"id,pk,autoid:edimsg_"`
-	BusinessUnitID           pulid.ID                    `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
-	OrganizationID           pulid.ID                    `json:"organizationId" keel:"organization_id,pk,tenant"`
-	EDIPartnerID             pulid.ID                    `json:"ediPartnerId" keel:"edi_partner_id"`
-	DocumentTypeID           pulid.ID                    `json:"documentTypeId" keel:"document_type_id"`
+	ID                       pulid.ID                    `json:"id"                       keel:"id,pk,autoid:edimsg_"`
+	BusinessUnitID           pulid.ID                    `json:"businessUnitId"           keel:"business_unit_id,pk,tenant"`
+	OrganizationID           pulid.ID                    `json:"organizationId"           keel:"organization_id,pk,tenant"`
+	EDIPartnerID             pulid.ID                    `json:"ediPartnerId"             keel:"edi_partner_id"`
+	DocumentTypeID           pulid.ID                    `json:"documentTypeId"           keel:"document_type_id"`
 	PartnerDocumentProfileID pulid.ID                    `json:"partnerDocumentProfileId" keel:"partner_document_profile_id,nullzero"`
-	TemplateID               pulid.ID                    `json:"templateId" keel:"template_id,nullzero"`
-	TemplateVersionID        pulid.ID                    `json:"templateVersionId" keel:"template_version_id,nullzero"`
-	ShipmentID               pulid.ID                    `json:"shipmentId" keel:"shipment_id,nullzero"`
-	InvoiceID                pulid.ID                    `json:"invoiceId" keel:"invoice_id,nullzero"`
-	TransferID               pulid.ID                    `json:"transferId" keel:"transfer_id,nullzero"`
-	InboundFileID            pulid.ID                    `json:"inboundFileId" keel:"inbound_file_id,nullzero"`
-	Direction                DocumentDirection           `json:"direction" keel:"direction"`
-	Standard                 EDIStandard                 `json:"standard" keel:"standard"`
-	TransactionSet           TransactionSet              `json:"transactionSet" keel:"transaction_set"`
-	X12Version               string                      `json:"x12Version" keel:"x12_version"`
-	Status                   MessageStatus               `json:"status" keel:"status"`
-	ValidationMode           ValidationMode              `json:"validationMode" keel:"validation_mode"`
+	TemplateID               pulid.ID                    `json:"templateId"               keel:"template_id,nullzero"`
+	TemplateVersionID        pulid.ID                    `json:"templateVersionId"        keel:"template_version_id,nullzero"`
+	ShipmentID               pulid.ID                    `json:"shipmentId"               keel:"shipment_id,nullzero"`
+	InvoiceID                pulid.ID                    `json:"invoiceId"                keel:"invoice_id,nullzero"`
+	TransferID               pulid.ID                    `json:"transferId"               keel:"transfer_id,nullzero"`
+	InboundFileID            pulid.ID                    `json:"inboundFileId"            keel:"inbound_file_id,nullzero"`
+	Direction                DocumentDirection           `json:"direction"                keel:"direction"`
+	Standard                 EDIStandard                 `json:"standard"                 keel:"standard"`
+	TransactionSet           TransactionSet              `json:"transactionSet"           keel:"transaction_set"`
+	X12Version               string                      `json:"x12Version"               keel:"x12_version"`
+	Status                   MessageStatus               `json:"status"                   keel:"status"`
+	ValidationMode           ValidationMode              `json:"validationMode"           keel:"validation_mode"`
 	InterchangeControlNumber string                      `json:"interchangeControlNumber" keel:"interchange_control_number"`
-	GroupControlNumber       string                      `json:"groupControlNumber" keel:"group_control_number"`
+	GroupControlNumber       string                      `json:"groupControlNumber"       keel:"group_control_number"`
 	TransactionControlNumber string                      `json:"transactionControlNumber" keel:"transaction_control_number"`
-	SegmentCount             int64                       `json:"segmentCount" keel:"segment_count"`
-	RawX12                   string                      `json:"rawX12" keel:"raw_x12"`
-	PayloadSnapshot          DocumentPayload             `json:"payloadSnapshot" keel:"payload_snapshot,jsonb"`
-	RawPurgedAt              *int64                      `json:"rawPurgedAt" keel:"raw_purged_at"`
-	DeliveryStatus           MessageDeliveryStatus       `json:"deliveryStatus" keel:"delivery_status,nullzero"`
-	DeliveryRemotePath       string                      `json:"deliveryRemotePath" keel:"delivery_remote_path,nullzero"`
-	DeliveryAttempts         int64                       `json:"deliveryAttempts" keel:"delivery_attempts"`
-	DeliveryLastAttemptAt    *int64                      `json:"deliveryLastAttemptAt" keel:"delivery_last_attempt_at"`
-	DeliverySentAt           *int64                      `json:"deliverySentAt" keel:"delivery_sent_at"`
-	DeliveryLastError        string                      `json:"deliveryLastError" keel:"delivery_last_error,nullzero"`
-	AS2MessageID             string                      `json:"as2MessageId" keel:"as2_message_id,nullzero"`
-	AS2MIC                   string                      `json:"as2Mic" keel:"as2_mic,nullzero"`
-	AckStatus                MessageAcknowledgmentStatus `json:"ackStatus" keel:"ack_status,nullzero"`
-	AckMessageID             pulid.ID                    `json:"ackMessageId" keel:"ack_message_id,nullzero"`
-	AckReceivedAt            *int64                      `json:"ackReceivedAt" keel:"ack_received_at"`
-	AckLastError             string                      `json:"ackLastError" keel:"ack_last_error,nullzero"`
-	GeneratedByID            pulid.ID                    `json:"generatedById" keel:"generated_by_id,nullzero"`
-	IdempotencyKey           string                      `json:"-" keel:"idempotency_key,nullzero"`
-	GeneratedAt              int64                       `json:"generatedAt" keel:"generated_at"`
-	Version                  int64                       `json:"version" keel:"version,version"`
-	CreatedAt                int64                       `json:"createdAt" keel:"created_at,autocreate"`
-	UpdatedAt                int64                       `json:"updatedAt" keel:"updated_at,autoupdate"`
+	SegmentCount             int64                       `json:"segmentCount"             keel:"segment_count"`
+	RawX12                   string                      `json:"rawX12"                   keel:"raw_x12"`
+	PayloadSnapshot          DocumentPayload             `json:"payloadSnapshot"          keel:"payload_snapshot,jsonb"`
+	RawPurgedAt              *int64                      `json:"rawPurgedAt"              keel:"raw_purged_at"`
+	DeliveryStatus           MessageDeliveryStatus       `json:"deliveryStatus"           keel:"delivery_status,nullzero"`
+	DeliveryRemotePath       string                      `json:"deliveryRemotePath"       keel:"delivery_remote_path,nullzero"`
+	DeliveryAttempts         int64                       `json:"deliveryAttempts"         keel:"delivery_attempts"`
+	DeliveryLastAttemptAt    *int64                      `json:"deliveryLastAttemptAt"    keel:"delivery_last_attempt_at"`
+	DeliverySentAt           *int64                      `json:"deliverySentAt"           keel:"delivery_sent_at"`
+	DeliveryLastError        string                      `json:"deliveryLastError"        keel:"delivery_last_error,nullzero"`
+	AS2MessageID             string                      `json:"as2MessageId"             keel:"as2_message_id,nullzero"`
+	AS2MIC                   string                      `json:"as2Mic"                   keel:"as2_mic,nullzero"`
+	AckStatus                MessageAcknowledgmentStatus `json:"ackStatus"                keel:"ack_status,nullzero"`
+	AckMessageID             pulid.ID                    `json:"ackMessageId"             keel:"ack_message_id,nullzero"`
+	AckReceivedAt            *int64                      `json:"ackReceivedAt"            keel:"ack_received_at"`
+	AckLastError             string                      `json:"ackLastError"             keel:"ack_last_error,nullzero"`
+	GeneratedByID            pulid.ID                    `json:"generatedById"            keel:"generated_by_id,nullzero"`
+	IdempotencyKey           string                      `json:"-"                        keel:"idempotency_key,nullzero"`
+	GeneratedAt              int64                       `json:"generatedAt"              keel:"generated_at"`
+	Version                  int64                       `json:"version"                  keel:"version,version"`
+	CreatedAt                int64                       `json:"createdAt"                keel:"created_at,autocreate"`
+	UpdatedAt                int64                       `json:"updatedAt"                keel:"updated_at,autoupdate"`
 
 	DiagnosticCount int64 `json:"diagnosticCount" keel:"diagnostic_count,computed"`
 
-	Partner                *EDIPartner                  `json:"partner,omitempty" keel:"belongs:edi_partner_id"`
-	DocumentType           *EDIDocumentType             `json:"documentType,omitempty" keel:"belongs:document_type_id"`
+	Partner                *EDIPartner                  `json:"partner,omitempty"                keel:"belongs:edi_partner_id"`
+	DocumentType           *EDIDocumentType             `json:"documentType,omitempty"           keel:"belongs:document_type_id"`
 	PartnerDocumentProfile *EDIPartnerDocumentProfile   `json:"partnerDocumentProfile,omitempty" keel:"belongs:partner_document_profile_id"`
-	Template               *EDITemplate                 `json:"template,omitempty" keel:"belongs:template_id"`
-	TemplateVersion        *EDITemplateVersion          `json:"templateVersion,omitempty" keel:"belongs:template_version_id"`
-	ValidationErrors       []*EDIMessageValidationError `json:"validationErrors,omitempty" keel:"many:message_id"`
+	Template               *EDITemplate                 `json:"template,omitempty"               keel:"belongs:template_id"`
+	TemplateVersion        *EDITemplateVersion          `json:"templateVersion,omitempty"        keel:"belongs:template_version_id"`
+	ValidationErrors       []*EDIMessageValidationError `json:"validationErrors,omitempty"       keel:"many:message_id"`
 }
 
 func (m *EDIMessage) BeforeUpdate(ctx context.Context) error {
@@ -100,41 +100,41 @@ func (m *EDIMessage) BeforeSave(_ context.Context) error {
 type EDIMessageValidationError struct {
 	keel.Table `keel:"edi_message_validation_errors"`
 
-	ID              pulid.ID           `json:"id" keel:"id,pk,autoid:edive_"`
-	BusinessUnitID  pulid.ID           `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
-	OrganizationID  pulid.ID           `json:"organizationId" keel:"organization_id,pk,tenant"`
-	MessageID       pulid.ID           `json:"messageId" keel:"message_id"`
-	Severity        ValidationSeverity `json:"severity" keel:"severity"`
-	Code            string             `json:"code" keel:"code"`
-	SegmentID       string             `json:"segmentId" keel:"segment_id,nullzero"`
+	ID              pulid.ID           `json:"id"              keel:"id,pk,autoid:edive_"`
+	BusinessUnitID  pulid.ID           `json:"businessUnitId"  keel:"business_unit_id,pk,tenant"`
+	OrganizationID  pulid.ID           `json:"organizationId"  keel:"organization_id,pk,tenant"`
+	MessageID       pulid.ID           `json:"messageId"       keel:"message_id"`
+	Severity        ValidationSeverity `json:"severity"        keel:"severity"`
+	Code            string             `json:"code"            keel:"code"`
+	SegmentID       string             `json:"segmentId"       keel:"segment_id,nullzero"`
 	ElementPosition int                `json:"elementPosition" keel:"element_position"`
-	Path            string             `json:"path" keel:"path,nullzero"`
-	Message         string             `json:"message" keel:"message"`
-	SuggestedFix    string             `json:"suggestedFix" keel:"suggested_fix,nullzero"`
-	CreatedAt       int64              `json:"createdAt" keel:"created_at,autocreate"`
+	Path            string             `json:"path"            keel:"path,nullzero"`
+	Message         string             `json:"message"         keel:"message"`
+	SuggestedFix    string             `json:"suggestedFix"    keel:"suggested_fix,nullzero"`
+	CreatedAt       int64              `json:"createdAt"       keel:"created_at,autocreate"`
 }
 
 type EDITestCase struct {
 	keel.Table `keel:"edi_test_cases"`
 
-	ID                       pulid.ID        `json:"id" keel:"id,pk,autoid:editc_"`
-	BusinessUnitID           pulid.ID        `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
-	OrganizationID           pulid.ID        `json:"organizationId" keel:"organization_id,pk,tenant"`
+	ID                       pulid.ID        `json:"id"                       keel:"id,pk,autoid:editc_"`
+	BusinessUnitID           pulid.ID        `json:"businessUnitId"           keel:"business_unit_id,pk,tenant"`
+	OrganizationID           pulid.ID        `json:"organizationId"           keel:"organization_id,pk,tenant"`
 	PartnerDocumentProfileID pulid.ID        `json:"partnerDocumentProfileId" keel:"partner_document_profile_id"`
-	Name                     string          `json:"name" keel:"name"`
-	Description              string          `json:"description" keel:"description,nullzero"`
-	Payload                  DocumentPayload `json:"payload" keel:"payload,jsonb"`
-	ExpectedWarnings         int             `json:"expectedWarnings" keel:"expected_warnings"`
-	ExpectedErrors           int             `json:"expectedErrors" keel:"expected_errors"`
-	ExpectedWarningCodes     []string        `json:"expectedWarningCodes" keel:"expected_warning_codes,jsonb"`
-	ExpectedErrorCodes       []string        `json:"expectedErrorCodes" keel:"expected_error_codes,jsonb"`
-	LastRunAt                *int64          `json:"lastRunAt" keel:"last_run_at"`
-	LastRunPassed            *bool           `json:"lastRunPassed" keel:"last_run_passed"`
-	LastRunWarnings          int             `json:"lastRunWarnings" keel:"last_run_warnings"`
-	LastRunErrors            int             `json:"lastRunErrors" keel:"last_run_errors"`
-	Version                  int64           `json:"version" keel:"version,version"`
-	CreatedAt                int64           `json:"createdAt" keel:"created_at,autocreate"`
-	UpdatedAt                int64           `json:"updatedAt" keel:"updated_at,autoupdate"`
+	Name                     string          `json:"name"                     keel:"name"`
+	Description              string          `json:"description"              keel:"description,nullzero"`
+	Payload                  DocumentPayload `json:"payload"                  keel:"payload,jsonb"`
+	ExpectedWarnings         int             `json:"expectedWarnings"         keel:"expected_warnings"`
+	ExpectedErrors           int             `json:"expectedErrors"           keel:"expected_errors"`
+	ExpectedWarningCodes     []string        `json:"expectedWarningCodes"     keel:"expected_warning_codes,jsonb"`
+	ExpectedErrorCodes       []string        `json:"expectedErrorCodes"       keel:"expected_error_codes,jsonb"`
+	LastRunAt                *int64          `json:"lastRunAt"                keel:"last_run_at"`
+	LastRunPassed            *bool           `json:"lastRunPassed"            keel:"last_run_passed"`
+	LastRunWarnings          int             `json:"lastRunWarnings"          keel:"last_run_warnings"`
+	LastRunErrors            int             `json:"lastRunErrors"            keel:"last_run_errors"`
+	Version                  int64           `json:"version"                  keel:"version,version"`
+	CreatedAt                int64           `json:"createdAt"                keel:"created_at,autocreate"`
+	UpdatedAt                int64           `json:"updatedAt"                keel:"updated_at,autoupdate"`
 
 	DocumentProfile *EDIPartnerDocumentProfile `json:"documentProfile,omitempty" keel:"belongs:partner_document_profile_id"`
 }

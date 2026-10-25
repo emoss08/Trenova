@@ -160,34 +160,34 @@ var (
 type Wait struct {
 	keel.Table `keel:"agent_waits"`
 
-	ID                pulid.ID          `json:"id" keel:"id,pk,autoid:awt_"`
-	OrganizationID    pulid.ID          `json:"organizationId" keel:"organization_id,pk,tenant"`
-	BusinessUnitID    pulid.ID          `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
-	Kind              Kind              `json:"kind" keel:"kind"`
-	Condition         *Condition        `json:"condition" keel:"condition,jsonb"`
-	WatchID           pulid.ID          `json:"watchId,omitempty" keel:"watch_id,nullzero"`
-	Description       string            `json:"description" keel:"description"`
-	Then              string            `json:"nextStep,omitempty" keel:"then_note,nullzero"`
-	AgentDefinitionID pulid.ID          `json:"agentDefinitionId" keel:"agent_definition_id"`
-	ThreadID          pulid.ID          `json:"threadId,omitempty" keel:"thread_id,nullzero"`
-	UserID            pulid.ID          `json:"userId,omitempty" keel:"user_id,nullzero"`
-	RunID             pulid.ID          `json:"runId,omitempty" keel:"run_id,nullzero"`
+	ID                pulid.ID          `json:"id"                    keel:"id,pk,autoid:awt_"`
+	OrganizationID    pulid.ID          `json:"organizationId"        keel:"organization_id,pk,tenant"`
+	BusinessUnitID    pulid.ID          `json:"businessUnitId"        keel:"business_unit_id,pk,tenant"`
+	Kind              Kind              `json:"kind"                  keel:"kind"`
+	Condition         *Condition        `json:"condition"             keel:"condition,jsonb"`
+	WatchID           pulid.ID          `json:"watchId,omitempty"     keel:"watch_id,nullzero"`
+	Description       string            `json:"description"           keel:"description"`
+	Then              string            `json:"nextStep,omitempty"    keel:"then_note,nullzero"`
+	AgentDefinitionID pulid.ID          `json:"agentDefinitionId"     keel:"agent_definition_id"`
+	ThreadID          pulid.ID          `json:"threadId,omitempty"    keel:"thread_id,nullzero"`
+	UserID            pulid.ID          `json:"userId,omitempty"      keel:"user_id,nullzero"`
+	RunID             pulid.ID          `json:"runId,omitempty"       keel:"run_id,nullzero"`
 	SubjectType       agent.SubjectType `json:"subjectType,omitempty" keel:"subject_type,nullzero"`
-	SubjectID         pulid.ID          `json:"subjectId,omitempty" keel:"subject_id,nullzero"`
+	SubjectID         pulid.ID          `json:"subjectId,omitempty"   keel:"subject_id,nullzero"`
 	// Taint is the outside content the work had read when it set the wait.
 	// The work picks up with it, so a wait never launders what was read.
-	Taint         *agent.RunTaint `json:"-" keel:"taint,jsonb"`
-	Status        Status          `json:"status" keel:"status"`
-	DueAt         *int64          `json:"dueAt,omitempty" keel:"due_at"`
-	ExpiresAt     int64           `json:"expiresAt" keel:"expires_at"`
-	ResolvedAt    *int64          `json:"resolvedAt,omitempty" keel:"resolved_at"`
-	Outcome       string          `json:"outcome,omitempty" keel:"outcome,nullzero"`
+	Taint         *agent.RunTaint `json:"-"                       keel:"taint,jsonb"`
+	Status        Status          `json:"status"                  keel:"status"`
+	DueAt         *int64          `json:"dueAt,omitempty"         keel:"due_at"`
+	ExpiresAt     int64           `json:"expiresAt"               keel:"expires_at"`
+	ResolvedAt    *int64          `json:"resolvedAt,omitempty"    keel:"resolved_at"`
+	Outcome       string          `json:"outcome,omitempty"       keel:"outcome,nullzero"`
 	ResumedTurnID pulid.ID        `json:"resumedTurnId,omitempty" keel:"resumed_turn_id,nullzero"`
-	ResumedRunID  pulid.ID        `json:"resumedRunId,omitempty" keel:"resumed_run_id,nullzero"`
-	WorkflowID    string          `json:"-" keel:"workflow_id,nullzero"`
-	Version       int64           `json:"version" keel:"version,version"`
-	CreatedAt     int64           `json:"createdAt" keel:"created_at,autocreate"`
-	UpdatedAt     int64           `json:"updatedAt" keel:"updated_at,autoupdate"`
+	ResumedRunID  pulid.ID        `json:"resumedRunId,omitempty"  keel:"resumed_run_id,nullzero"`
+	WorkflowID    string          `json:"-"                       keel:"workflow_id,nullzero"`
+	Version       int64           `json:"version"                 keel:"version,version"`
+	CreatedAt     int64           `json:"createdAt"               keel:"created_at,autocreate"`
+	UpdatedAt     int64           `json:"updatedAt"               keel:"updated_at,autoupdate"`
 
 	Organization *tenant.Organization `json:"-"`
 	BusinessUnit *tenant.BusinessUnit `json:"-"`

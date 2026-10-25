@@ -18,11 +18,11 @@ import (
 type RateMatrixCell struct {
 	keel.Table `keel:"rate_matrix_cells"`
 
-	ID             pulid.ID `json:"id" keel:"id,pk,autoid:rmc_"`
+	ID             pulid.ID `json:"id"             keel:"id,pk,autoid:rmc_"`
 	BusinessUnitID pulid.ID `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
 	OrganizationID pulid.ID `json:"organizationId" keel:"organization_id,pk,tenant"`
-	RateMatrixID   pulid.ID `json:"rateMatrixId" keel:"rate_matrix_id"`
-	VersionNumber  int64    `json:"versionNumber" keel:"version_number"`
+	RateMatrixID   pulid.ID `json:"rateMatrixId"   keel:"rate_matrix_id"`
+	VersionNumber  int64    `json:"versionNumber"  keel:"version_number"`
 
 	D0Key string `json:"d0Key" keel:"d0_key"`
 	D1Key string `json:"d1Key" keel:"d1_key"`
@@ -43,8 +43,8 @@ type RateMatrixCell struct {
 	D3Min decimal.NullDecimal `json:"d3Min" keel:"d3_min"`
 	D3Max decimal.NullDecimal `json:"d3Max" keel:"d3_max"`
 
-	Value           decimal.Decimal     `json:"value" keel:"value"`
-	MinCharge       decimal.NullDecimal `json:"minCharge" keel:"min_charge"`
+	Value           decimal.Decimal     `json:"value"           keel:"value"`
+	MinCharge       decimal.NullDecimal `json:"minCharge"       keel:"min_charge"`
 	DeficitEligible bool                `json:"deficitEligible" keel:"deficit_eligible"`
 
 	CreatedAt int64 `json:"createdAt" keel:"created_at,autocreate"`

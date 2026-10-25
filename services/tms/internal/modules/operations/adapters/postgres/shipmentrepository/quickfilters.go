@@ -91,7 +91,10 @@ func BillingTransferCandidateCondition() keel.Pred {
 
 	return keel.And(
 		sp.Status.In(shipment.BillingTransferCandidateStatuses()...),
-		sp.BillingTransferStatus.In(shipment.BillingTransferNone, shipment.BillingTransferSentBackToOps),
+		sp.BillingTransferStatus.In(
+			shipment.BillingTransferNone,
+			shipment.BillingTransferSentBackToOps,
+		),
 	)
 }
 
@@ -183,7 +186,10 @@ func QuickFilterCondition(
 func deliveryWithin(start, end int64) keel.Pred {
 	sp := shipmentdb.Shipments
 	st := shipmentdb.Stops.As(quickStopAlias)
-	delivery := LastDeliveryStop(st, shipmentdb.ShipmentMoves.As(quickMoveAlias)).Pick(DeliveryAt(st))
+	delivery := LastDeliveryStop(
+		st,
+		shipmentdb.ShipmentMoves.As(quickMoveAlias),
+	).Pick(DeliveryAt(st))
 
 	return keel.And(
 		sp.Status.Ne(shipment.StatusCanceled),

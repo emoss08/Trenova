@@ -46,7 +46,12 @@ func backdate[T any](ctx context.Context, db *keel.DB, h keel.Handle[T], stamps 
 	return backdateColumns(ctx, db, h, stamps, false)
 }
 
-func backdateCreated[T any](ctx context.Context, db *keel.DB, h keel.Handle[T], stamps []stamp) error {
+func backdateCreated[T any](
+	ctx context.Context,
+	db *keel.DB,
+	h keel.Handle[T],
+	stamps []stamp,
+) error {
 	return backdateColumns(ctx, db, h, stamps, true)
 }
 
@@ -80,10 +85,16 @@ func backdateColumns[T any](
 		d := keel.Unnest("d", []string{"id", "created_at", "updated_at"}, ids, created, updated)
 		sets := make([]keel.Assignment, 0, 2)
 		if t.AutoCreate >= 0 {
-			sets = append(sets, keel.Col{Ref: h.Ref, Index: t.AutoCreate}.ToExpr(d.Col("created_at")))
+			sets = append(
+				sets,
+				keel.Col{Ref: h.Ref, Index: t.AutoCreate}.ToExpr(d.Col("created_at")),
+			)
 		}
 		if !createdOnly && t.AutoUpdate >= 0 {
-			sets = append(sets, keel.Col{Ref: h.Ref, Index: t.AutoUpdate}.ToExpr(d.Col("updated_at")))
+			sets = append(
+				sets,
+				keel.Col{Ref: h.Ref, Index: t.AutoUpdate}.ToExpr(d.Col("updated_at")),
+			)
 		}
 		if len(sets) == 0 {
 			return nil
@@ -150,9 +161,14 @@ func (g *generator) accountingControl(ctx context.Context) (*tenant.AccountingCo
 	return control, nil
 }
 
-func (g *generator) glAccountsByCode(ctx context.Context, codes ...string) (map[string]pulid.ID, error) {
+func (g *generator) glAccountsByCode(
+	ctx context.Context,
+	codes ...string,
+) (map[string]pulid.ID, error) {
 	ga := glaccountdb.GLAccounts
-	accounts, err := ga.Pick(ga.ID, ga.AccountCode).Where(ga.AccountCode.In(codes...)).All(ctx, g.db)
+	accounts, err := ga.Pick(ga.ID, ga.AccountCode).
+		Where(ga.AccountCode.In(codes...)).
+		All(ctx, g.db)
 	if err != nil {
 		return nil, fmt.Errorf("load gl accounts: %w", err)
 	}
@@ -182,7 +198,11 @@ func nullIfEmpty(e keel.Expr) keel.Expr {
 	return keel.Raw("NULLIF(?, '')", e)
 }
 
-func postBalances(ctx context.Context, db *keel.DB, rows []*glbalance.GLAccountPeriodBalance) error {
+func postBalances(
+	ctx context.Context,
+	db *keel.DB,
+	rows []*glbalance.GLAccountPeriodBalance,
+) error {
 	if len(rows) == 0 {
 		return nil
 	}
@@ -201,7 +221,8 @@ func postBalances(ctx context.Context, db *keel.DB, rows []*glbalance.GLAccountP
 		),
 		b.NetChangeMinor.ToExpr(keel.Raw("? + ?", b.NetChangeMinor, b.NetChangeMinor.Excluded())),
 		b.LastJournalEntryID.ToExpr(b.LastJournalEntryID.Excluded()),
-	)); err != nil {
+	),
+	); err != nil {
 		return fmt.Errorf("upsert gl balances by period: %w", err)
 	}
 
@@ -225,7 +246,11 @@ func postBalances(ctx context.Context, db *keel.DB, rows []*glbalance.GLAccountP
 		nets[i] += row.NetChangeMinor
 	}
 
-	return moveAccountBalances(ctx, db, accountMoves{ids: ids, debits: debits, credits: credits, nets: nets})
+	return moveAccountBalances(
+		ctx,
+		db,
+		accountMoves{ids: ids, debits: debits, credits: credits, nets: nets},
+	)
 }
 
 type accountMoves struct {
@@ -241,7 +266,14 @@ func moveAccountBalances(ctx context.Context, db *keel.DB, m accountMoves) error
 	}
 
 	ga := glaccountdb.GLAccounts
-	d := keel.Unnest("d", []string{"id", "debit", "credit", "net"}, m.ids, m.debits, m.credits, m.nets)
+	d := keel.Unnest(
+		"d",
+		[]string{"id", "debit", "credit", "net"},
+		m.ids,
+		m.debits,
+		m.credits,
+		m.nets,
+	)
 	if _, err := ga.With(d).Join(d, d.Col("id").EqCol(ga.ID)).Where(keel.True()).Update(
 		ctx,
 		db,
@@ -281,7 +313,11 @@ func rollBackBalances(
 		if entry == nil {
 			continue
 		}
-		key := balanceKey{account: line.GLAccountID, year: entry.FiscalYearID, period: entry.FiscalPeriodID}
+		key := balanceKey{
+			account: line.GLAccountID,
+			year:    entry.FiscalYearID,
+			period:  entry.FiscalPeriodID,
+		}
 		i, ok := periodIndex[key]
 		if !ok {
 			i = len(accounts)

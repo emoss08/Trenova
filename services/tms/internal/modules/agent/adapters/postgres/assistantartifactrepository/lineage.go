@@ -107,7 +107,7 @@ func familyCondition(
 	a *assistantartifactdb.ArtifactsTable,
 	kinds []assistantartifact.Kind,
 	viewPath *bool,
-) (string, []any) {
+) (condition string, args []any) {
 	quoted := make([]string, 0, len(kinds))
 	for _, kind := range kinds {
 		if kind == assistantartifact.KindTableView && viewPath != nil {
@@ -115,10 +115,7 @@ func familyCondition(
 		}
 		quoted = append(quoted, "'"+string(kind)+"'")
 	}
-	var (
-		clauses []string
-		args    []any
-	)
+	var clauses []string
 	if len(quoted) > 0 {
 		clauses = append(clauses, "? IN ("+strings.Join(quoted, ", ")+")")
 		args = append(args, a.Kind)

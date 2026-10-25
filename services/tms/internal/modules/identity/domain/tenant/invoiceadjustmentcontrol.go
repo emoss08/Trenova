@@ -18,33 +18,33 @@ var (
 type InvoiceAdjustmentControl struct {
 	keel.Table `keel:"invoice_adjustment_controls"`
 
-	ID             pulid.ID `json:"id" keel:"id,pk,autoid:iac_"`
+	ID             pulid.ID `json:"id"             keel:"id,pk,autoid:iac_"`
 	BusinessUnitID pulid.ID `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
 	OrganizationID pulid.ID `json:"organizationId" keel:"organization_id,pk,tenant"`
 
 	PartiallyPaidInvoiceAdjustmentPolicy AdjustmentEligibilityPolicy `json:"partiallyPaidInvoiceAdjustmentPolicy" keel:"partially_paid_invoice_adjustment_policy"`
-	PaidInvoiceAdjustmentPolicy          AdjustmentEligibilityPolicy `json:"paidInvoiceAdjustmentPolicy" keel:"paid_invoice_adjustment_policy"`
-	DisputedInvoiceAdjustmentPolicy      AdjustmentEligibilityPolicy `json:"disputedInvoiceAdjustmentPolicy" keel:"disputed_invoice_adjustment_policy"`
+	PaidInvoiceAdjustmentPolicy          AdjustmentEligibilityPolicy `json:"paidInvoiceAdjustmentPolicy"          keel:"paid_invoice_adjustment_policy"`
+	DisputedInvoiceAdjustmentPolicy      AdjustmentEligibilityPolicy `json:"disputedInvoiceAdjustmentPolicy"      keel:"disputed_invoice_adjustment_policy"`
 
 	AdjustmentAccountingDatePolicy AdjustmentAccountingDatePolicy `json:"adjustmentAccountingDatePolicy" keel:"adjustment_accounting_date_policy"`
-	ClosedPeriodAdjustmentPolicy   ClosedPeriodAdjustmentPolicy   `json:"closedPeriodAdjustmentPolicy" keel:"closed_period_adjustment_policy"`
+	ClosedPeriodAdjustmentPolicy   ClosedPeriodAdjustmentPolicy   `json:"closedPeriodAdjustmentPolicy"   keel:"closed_period_adjustment_policy"`
 
 	AdjustmentReasonRequirement RequirementPolicy `json:"adjustmentReasonRequirement" keel:"adjustment_reason_requirement"`
 
-	StandardAdjustmentApprovalPolicy    ApprovalPolicy         `json:"standardAdjustmentApprovalPolicy" keel:"standard_adjustment_approval_policy"`
+	StandardAdjustmentApprovalPolicy    ApprovalPolicy         `json:"standardAdjustmentApprovalPolicy"    keel:"standard_adjustment_approval_policy"`
 	StandardAdjustmentApprovalThreshold decimal.Decimal        `json:"standardAdjustmentApprovalThreshold" keel:"standard_adjustment_approval_threshold,nullzero"`
-	WriteOffApprovalPolicy              WriteOffApprovalPolicy `json:"writeOffApprovalPolicy" keel:"write_off_approval_policy"`
-	WriteOffApprovalThreshold           decimal.Decimal        `json:"writeOffApprovalThreshold" keel:"write_off_approval_threshold,nullzero"`
-	RequireSeparateApprover             bool                   `json:"requireSeparateApprover" keel:"require_separate_approver"`
+	WriteOffApprovalPolicy              WriteOffApprovalPolicy `json:"writeOffApprovalPolicy"              keel:"write_off_approval_policy"`
+	WriteOffApprovalThreshold           decimal.Decimal        `json:"writeOffApprovalThreshold"           keel:"write_off_approval_threshold,nullzero"`
+	RequireSeparateApprover             bool                   `json:"requireSeparateApprover"             keel:"require_separate_approver"`
 
 	RerateVarianceTolerancePercent decimal.Decimal                `json:"rerateVarianceTolerancePercent" keel:"rerate_variance_tolerance_percent"`
 	ReplacementInvoiceReviewPolicy ReplacementInvoiceReviewPolicy `json:"replacementInvoiceReviewPolicy" keel:"replacement_invoice_review_policy"`
 
-	CustomerCreditBalancePolicy       CustomerCreditBalancePolicy       `json:"customerCreditBalancePolicy" keel:"customer_credit_balance_policy"`
-	OverCreditPolicy                  OverCreditPolicy                  `json:"overCreditPolicy" keel:"over_credit_policy"`
+	CustomerCreditBalancePolicy       CustomerCreditBalancePolicy       `json:"customerCreditBalancePolicy"       keel:"customer_credit_balance_policy"`
+	OverCreditPolicy                  OverCreditPolicy                  `json:"overCreditPolicy"                  keel:"over_credit_policy"`
 	SupersededInvoiceVisibilityPolicy SupersededInvoiceVisibilityPolicy `json:"supersededInvoiceVisibilityPolicy" keel:"superseded_invoice_visibility_policy"`
 
-	Version   int64 `json:"version" keel:"version,version"`
+	Version   int64 `json:"version"   keel:"version,version"`
 	CreatedAt int64 `json:"createdAt" keel:"created_at,autocreate"`
 	UpdatedAt int64 `json:"updatedAt" keel:"updated_at,autoupdate"`
 

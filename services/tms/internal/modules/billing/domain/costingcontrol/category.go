@@ -21,21 +21,21 @@ var maxRatePerMile = decimal.NewFromInt(100)
 type CostCategory struct {
 	keel.Table `keel:"cost_categories"`
 
-	ID                   pulid.ID            `json:"id" keel:"id,pk,autoid:ccat_"`
-	BusinessUnitID       pulid.ID            `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
-	OrganizationID       pulid.ID            `json:"organizationId" keel:"organization_id,pk,tenant"`
-	CostingControlID     pulid.ID            `json:"costingControlId" keel:"costing_control_id"`
-	Category             CategoryType        `json:"category" keel:"category"`
-	Name                 string              `json:"name" keel:"name"`
-	CostBehavior         CostBehavior        `json:"costBehavior" keel:"cost_behavior"`
-	RateSource           RateSource          `json:"rateSource" keel:"rate_source"`
+	ID                   pulid.ID            `json:"id"                   keel:"id,pk,autoid:ccat_"`
+	BusinessUnitID       pulid.ID            `json:"businessUnitId"       keel:"business_unit_id,pk,tenant"`
+	OrganizationID       pulid.ID            `json:"organizationId"       keel:"organization_id,pk,tenant"`
+	CostingControlID     pulid.ID            `json:"costingControlId"     keel:"costing_control_id"`
+	Category             CategoryType        `json:"category"             keel:"category"`
+	Name                 string              `json:"name"                 keel:"name"`
+	CostBehavior         CostBehavior        `json:"costBehavior"         keel:"cost_behavior"`
+	RateSource           RateSource          `json:"rateSource"           keel:"rate_source"`
 	BenchmarkRatePerMile decimal.Decimal     `json:"benchmarkRatePerMile" keel:"benchmark_rate_per_mile"`
-	OverrideRatePerMile  decimal.NullDecimal `json:"overrideRatePerMile" keel:"override_rate_per_mile"`
-	IsActive             bool                `json:"isActive" keel:"is_active"`
-	SortOrder            int16               `json:"sortOrder" keel:"sort_order"`
-	Version              int64               `json:"version" keel:"version,version"`
-	CreatedAt            int64               `json:"createdAt" keel:"created_at,autocreate"`
-	UpdatedAt            int64               `json:"updatedAt" keel:"updated_at,autoupdate"`
+	OverrideRatePerMile  decimal.NullDecimal `json:"overrideRatePerMile"  keel:"override_rate_per_mile"`
+	IsActive             bool                `json:"isActive"             keel:"is_active"`
+	SortOrder            int16               `json:"sortOrder"            keel:"sort_order"`
+	Version              int64               `json:"version"              keel:"version,version"`
+	CreatedAt            int64               `json:"createdAt"            keel:"created_at,autocreate"`
+	UpdatedAt            int64               `json:"updatedAt"            keel:"updated_at,autoupdate"`
 
 	// Relationships
 	GLAccounts []*CostCategoryGLAccount `json:"glAccounts,omitempty" keel:"many:cost_category_id"`

@@ -96,7 +96,14 @@ func (r *repository) SaveAccount(
 			return account, nil
 		}
 
-		err := acc.Save(ctx, db, account, acc.CollectorID, acc.NextFollowUpOn, acc.PromiseActivityID)
+		err := acc.Save(
+			ctx,
+			db,
+			account,
+			acc.CollectorID,
+			acc.NextFollowUpOn,
+			acc.PromiseActivityID,
+		)
 		if dberror.IsVersionConflict(err) {
 			return nil, errortypes.NewValidationError(
 				"version",
@@ -186,7 +193,13 @@ func (r *repository) ListActivities(
 
 		var before keel.Pred
 		if req.Before != nil {
-			before = keel.Raw("(?, ?) < (?, ?)", cact.CreatedAt, cact.ID, req.Before.CreatedAt, req.Before.ID)
+			before = keel.Raw(
+				"(?, ?) < (?, ?)",
+				cact.CreatedAt,
+				cact.ID,
+				req.Before.CreatedAt,
+				req.Before.ID,
+			)
 		}
 
 		records, err := keel.Into[activityRecord](ctx, r.db.Keel(ctx), cact.

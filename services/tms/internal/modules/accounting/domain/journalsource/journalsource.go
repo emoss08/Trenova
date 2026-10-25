@@ -10,20 +10,20 @@ import (
 
 // What operational event produced each journal entry
 type Source struct {
-	keel.Table `                                              keel:"journal_sources,report=Accounting,label=Journal Source"`
+	keel.Table `keel:"journal_sources,report=Accounting,label=Journal Source"`
 
-	ID                   pulid.ID `json:"id" keel:"id,pk,autoid:jsrc_"`
-	BusinessUnitID       pulid.ID `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
-	OrganizationID       pulid.ID `json:"organizationId" keel:"organization_id,pk,tenant"`
-	SourceObjectType     string   `json:"sourceObjectType" keel:"source_object_type,label=Source Object"`
-	SourceObjectID       string   `json:"sourceObjectId" keel:"source_object_id"`
-	SourceEventType      string   `json:"sourceEventType" keel:"source_event_type,label=Source Event"`
+	ID                   pulid.ID `json:"id"                   keel:"id,pk,autoid:jsrc_"`
+	BusinessUnitID       pulid.ID `json:"businessUnitId"       keel:"business_unit_id,pk,tenant"`
+	OrganizationID       pulid.ID `json:"organizationId"       keel:"organization_id,pk,tenant"`
+	SourceObjectType     string   `json:"sourceObjectType"     keel:"source_object_type,label=Source Object"`
+	SourceObjectID       string   `json:"sourceObjectId"       keel:"source_object_id"`
+	SourceEventType      string   `json:"sourceEventType"      keel:"source_event_type,label=Source Event"`
 	SourceDocumentNumber string   `json:"sourceDocumentNumber" keel:"source_document_number,nullzero,label=Source Document"`
-	Status               string   `json:"status" keel:"status"`
-	IdempotencyKey       string   `json:"idempotencyKey" keel:"idempotency_key,nullzero,noreport"`
-	JournalBatchID       pulid.ID `json:"journalBatchId" keel:"journal_batch_id"`
-	JournalEntryID       pulid.ID `json:"journalEntryId" keel:"journal_entry_id"`
-	CreatedAt            int64    `json:"createdAt" keel:"created_at,autocreate"`
+	Status               string   `json:"status"               keel:"status"`
+	IdempotencyKey       string   `json:"idempotencyKey"       keel:"idempotency_key,nullzero,noreport"`
+	JournalBatchID       pulid.ID `json:"journalBatchId"       keel:"journal_batch_id"`
+	JournalEntryID       pulid.ID `json:"journalEntryId"       keel:"journal_entry_id"`
+	CreatedAt            int64    `json:"createdAt"            keel:"created_at,autocreate"`
 
 	JournalBatch *journalentry.JournalBatch `json:"journalBatch,omitempty" keel:"belongs:journal_batch_id"`
 	JournalEntry *journalentry.JournalEntry `json:"journalEntry,omitempty" keel:"belongs:journal_entry_id"`

@@ -16,23 +16,23 @@ import (
 type Profile struct {
 	keel.Table `keel:"customer_tracking_profiles"`
 
-	ID                     pulid.ID `json:"id" keel:"id,pk"`
-	OrganizationID         pulid.ID `json:"organizationId" keel:"organization_id,pk,tenant"`
-	BusinessUnitID         pulid.ID `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
-	CustomerID             pulid.ID `json:"customerId" keel:"customer_id"`
-	LinkEnabled            bool     `json:"linkEnabled" keel:"link_enabled"`
-	VisibleFields          []Field  `json:"visibleFields" keel:"visible_fields"`
-	LinkTTLDays            int16    `json:"linkTtlDays" keel:"link_ttl_days"`
-	NotifyPickedUp         bool     `json:"notifyPickedUp" keel:"notify_picked_up"`
-	NotifyDelayed          bool     `json:"notifyDelayed" keel:"notify_delayed"`
-	NotifyDelivered        bool     `json:"notifyDelivered" keel:"notify_delivered"`
-	NotifyPodReady         bool     `json:"notifyPodReady" keel:"notify_pod_ready"`
-	IncludeLink            bool     `json:"includeLink" keel:"include_link"`
-	Recipients             string   `json:"recipients" keel:"recipients,nullzero"`
+	ID                     pulid.ID `json:"id"                     keel:"id,pk"`
+	OrganizationID         pulid.ID `json:"organizationId"         keel:"organization_id,pk,tenant"`
+	BusinessUnitID         pulid.ID `json:"businessUnitId"         keel:"business_unit_id,pk,tenant"`
+	CustomerID             pulid.ID `json:"customerId"             keel:"customer_id"`
+	LinkEnabled            bool     `json:"linkEnabled"            keel:"link_enabled"`
+	VisibleFields          []Field  `json:"visibleFields"          keel:"visible_fields"`
+	LinkTTLDays            int16    `json:"linkTtlDays"            keel:"link_ttl_days"`
+	NotifyPickedUp         bool     `json:"notifyPickedUp"         keel:"notify_picked_up"`
+	NotifyDelayed          bool     `json:"notifyDelayed"          keel:"notify_delayed"`
+	NotifyDelivered        bool     `json:"notifyDelivered"        keel:"notify_delivered"`
+	NotifyPodReady         bool     `json:"notifyPodReady"         keel:"notify_pod_ready"`
+	IncludeLink            bool     `json:"includeLink"            keel:"include_link"`
+	Recipients             string   `json:"recipients"             keel:"recipients,nullzero"`
 	NotificationsEnabledAt *int64   `json:"notificationsEnabledAt" keel:"notifications_enabled_at"`
-	Version                int64    `json:"version" keel:"version,version"`
-	CreatedAt              int64    `json:"createdAt" keel:"created_at"`
-	UpdatedAt              int64    `json:"updatedAt" keel:"updated_at"`
+	Version                int64    `json:"version"                keel:"version,version"`
+	CreatedAt              int64    `json:"createdAt"              keel:"created_at"`
+	UpdatedAt              int64    `json:"updatedAt"              keel:"updated_at"`
 }
 
 func (p *Profile) BeforeCreate(_ context.Context) error {

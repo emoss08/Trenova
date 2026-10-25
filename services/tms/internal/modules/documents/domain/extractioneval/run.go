@@ -37,47 +37,47 @@ func RunWorkflowID(runID pulid.ID) string {
 type ExtractionRun struct {
 	keel.Table `keel:"extraction_eval_runs"`
 
-	ID             pulid.ID `json:"id" keel:"id,pk,autoid:eer_"`
+	ID             pulid.ID `json:"id"             keel:"id,pk,autoid:eer_"`
 	BusinessUnitID pulid.ID `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
 	OrganizationID pulid.ID `json:"organizationId" keel:"organization_id,pk,tenant"`
 
-	Task          aicorrection.Task `json:"task" keel:"task"`
-	Status        RunStatus         `json:"status" keel:"status"`
-	ProviderID    pulid.ID          `json:"providerId" keel:"provider_id"`
-	ProviderName  string            `json:"providerName" keel:"provider_name"`
+	Task          aicorrection.Task `json:"task"          keel:"task"`
+	Status        RunStatus         `json:"status"        keel:"status"`
+	ProviderID    pulid.ID          `json:"providerId"    keel:"provider_id"`
+	ProviderName  string            `json:"providerName"  keel:"provider_name"`
 	ProviderModel string            `json:"providerModel" keel:"provider_model,nullzero"`
-	ServedModel   string            `json:"servedModel" keel:"served_model,nullzero"`
-	CaseLimit     int               `json:"caseLimit" keel:"case_limit"`
+	ServedModel   string            `json:"servedModel"   keel:"served_model,nullzero"`
+	CaseLimit     int               `json:"caseLimit"     keel:"case_limit"`
 
-	CasesTotal     int `json:"casesTotal" keel:"cases_total"`
+	CasesTotal     int `json:"casesTotal"     keel:"cases_total"`
 	CasesCompleted int `json:"casesCompleted" keel:"cases_completed"`
-	CasesFailed    int `json:"casesFailed" keel:"cases_failed"`
-	CasesSkipped   int `json:"casesSkipped" keel:"cases_skipped"`
+	CasesFailed    int `json:"casesFailed"    keel:"cases_failed"`
+	CasesSkipped   int `json:"casesSkipped"   keel:"cases_skipped"`
 
-	ScoredCount      int     `json:"scoredCount" keel:"scored_count"`
-	CorrectCount     int     `json:"correctCount" keel:"correct_count"`
-	CorrectedCount   int     `json:"correctedCount" keel:"corrected_count"`
-	MissedCount      int     `json:"missedCount" keel:"missed_count"`
+	ScoredCount      int     `json:"scoredCount"      keel:"scored_count"`
+	CorrectCount     int     `json:"correctCount"     keel:"correct_count"`
+	CorrectedCount   int     `json:"correctedCount"   keel:"corrected_count"`
+	MissedCount      int     `json:"missedCount"      keel:"missed_count"`
 	UnconfirmedCount int     `json:"unconfirmedCount" keel:"unconfirmed_count"`
-	UnscoredCount    int     `json:"unscoredCount" keel:"unscored_count"`
-	Accuracy         float64 `json:"accuracy" keel:"accuracy"`
+	UnscoredCount    int     `json:"unscoredCount"    keel:"unscored_count"`
+	Accuracy         float64 `json:"accuracy"         keel:"accuracy"`
 
 	FieldAccuracy []aicorrection.FieldAccuracy `json:"fieldAccuracy" keel:"field_accuracy,jsonb"`
 
-	CostUSD      decimal.Decimal `json:"costUsd" keel:"cost_usd"`
-	InputTokens  int64           `json:"inputTokens" keel:"input_tokens"`
+	CostUSD      decimal.Decimal `json:"costUsd"      keel:"cost_usd"`
+	InputTokens  int64           `json:"inputTokens"  keel:"input_tokens"`
 	OutputTokens int64           `json:"outputTokens" keel:"output_tokens"`
 	AvgLatencyMs int64           `json:"avgLatencyMs" keel:"avg_latency_ms"`
 
-	StopReason     string `json:"stopReason" keel:"stop_reason,nullzero"`
+	StopReason     string `json:"stopReason"     keel:"stop_reason,nullzero"`
 	FailureMessage string `json:"failureMessage" keel:"failure_message,nullzero"`
 
 	RequestedByID pulid.ID `json:"requestedById" keel:"requested_by_id"`
-	WorkflowID    string   `json:"workflowId" keel:"workflow_id,nullzero"`
-	StartedAt     *int64   `json:"startedAt" keel:"started_at"`
-	FinishedAt    *int64   `json:"finishedAt" keel:"finished_at"`
+	WorkflowID    string   `json:"workflowId"    keel:"workflow_id,nullzero"`
+	StartedAt     *int64   `json:"startedAt"     keel:"started_at"`
+	FinishedAt    *int64   `json:"finishedAt"    keel:"finished_at"`
 
-	Version   int64 `json:"version" keel:"version,version"`
+	Version   int64 `json:"version"   keel:"version,version"`
 	CreatedAt int64 `json:"createdAt" keel:"created_at,autocreate"`
 	UpdatedAt int64 `json:"updatedAt" keel:"updated_at,autoupdate"`
 

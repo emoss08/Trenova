@@ -4,6 +4,8 @@ import (
 	"context"
 	"errors"
 
+	"github.com/emoss08/trenova/shared/money"
+
 	"github.com/emoss08/trenova/shared/intutils"
 
 	"github.com/emoss08/keel"
@@ -23,79 +25,79 @@ import (
 // silently rewrite a number a customer has already been shown.
 type DetentionOccurrence struct {
 	keel.Table     `keel:"detention_occurrences"`
-	ID             pulid.ID `json:"id" keel:"id,pk,autoid:dto_"`
-	BusinessUnitID pulid.ID `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
-	OrganizationID pulid.ID `json:"organizationId" keel:"organization_id,pk,tenant"`
-	ShipmentID     pulid.ID `json:"shipmentId" keel:"shipment_id"`
-	ShipmentMoveID pulid.ID `json:"shipmentMoveId" keel:"shipment_move_id"`
-	StopID         pulid.ID `json:"stopId" keel:"stop_id"`
-	CustomerID     pulid.ID `json:"customerId" keel:"customer_id"`
-	LocationID     pulid.ID `json:"locationId" keel:"location_id"`
+	ID             pulid.ID `keel:"id,pk,autoid:dto_"          json:"id"`
+	BusinessUnitID pulid.ID `keel:"business_unit_id,pk,tenant" json:"businessUnitId"`
+	OrganizationID pulid.ID `keel:"organization_id,pk,tenant"  json:"organizationId"`
+	ShipmentID     pulid.ID `keel:"shipment_id"                json:"shipmentId"`
+	ShipmentMoveID pulid.ID `keel:"shipment_move_id"           json:"shipmentMoveId"`
+	StopID         pulid.ID `keel:"stop_id"                    json:"stopId"`
+	CustomerID     pulid.ID `keel:"customer_id"                json:"customerId"`
+	LocationID     pulid.ID `keel:"location_id"                json:"locationId"`
 
 	DetentionPolicyID *pulid.ID         `json:"detentionPolicyId" keel:"detention_policy_id"`
-	PolicySnapshot    *PolicySnapshot   `json:"policySnapshot" keel:"policy_snapshot,jsonb"`
-	CalculationTrace  *CalculationTrace `json:"calculationTrace" keel:"calculation_trace,jsonb"`
+	PolicySnapshot    *PolicySnapshot   `json:"policySnapshot"    keel:"policy_snapshot,jsonb"`
+	CalculationTrace  *CalculationTrace `json:"calculationTrace"  keel:"calculation_trace,jsonb"`
 
-	StopType           shipment.StopType         `json:"stopType" keel:"stop_type"`
-	ScheduleType       shipment.StopScheduleType `json:"scheduleType" keel:"schedule_type"`
-	AppointmentStart   *int64                    `json:"appointmentStart" keel:"appointment_start"`
-	AppointmentEnd     *int64                    `json:"appointmentEnd" keel:"appointment_end"`
-	ArrivedAt          *int64                    `json:"arrivedAt" keel:"arrived_at"`
-	DepartedAt         *int64                    `json:"departedAt" keel:"departed_at"`
-	ClockStartAt       int64                     `json:"clockStartAt" keel:"clock_start_at"`
-	ClockStopAt        *int64                    `json:"clockStopAt" keel:"clock_stop_at"`
-	FreeTimeExpiresAt  int64                     `json:"freeTimeExpiresAt" keel:"free_time_expires_at"`
-	NoticeDueAt        *int64                    `json:"noticeDueAt" keel:"notice_due_at"`
-	NoticeDeadlineAt   *int64                    `json:"noticeDeadlineAt" keel:"notice_deadline_at"`
-	IsOpen             bool                      `json:"isOpen" keel:"is_open"`
-	ArrivedLate        bool                      `json:"arrivedLate" keel:"arrived_late"`
-	LateByMinutes      int32                     `json:"lateByMinutes" keel:"late_by_minutes"`
+	StopType           shipment.StopType         `json:"stopType"           keel:"stop_type"`
+	ScheduleType       shipment.StopScheduleType `json:"scheduleType"       keel:"schedule_type"`
+	AppointmentStart   *int64                    `json:"appointmentStart"   keel:"appointment_start"`
+	AppointmentEnd     *int64                    `json:"appointmentEnd"     keel:"appointment_end"`
+	ArrivedAt          *int64                    `json:"arrivedAt"          keel:"arrived_at"`
+	DepartedAt         *int64                    `json:"departedAt"         keel:"departed_at"`
+	ClockStartAt       int64                     `json:"clockStartAt"       keel:"clock_start_at"`
+	ClockStopAt        *int64                    `json:"clockStopAt"        keel:"clock_stop_at"`
+	FreeTimeExpiresAt  int64                     `json:"freeTimeExpiresAt"  keel:"free_time_expires_at"`
+	NoticeDueAt        *int64                    `json:"noticeDueAt"        keel:"notice_due_at"`
+	NoticeDeadlineAt   *int64                    `json:"noticeDeadlineAt"   keel:"notice_deadline_at"`
+	IsOpen             bool                      `json:"isOpen"             keel:"is_open"`
+	ArrivedLate        bool                      `json:"arrivedLate"        keel:"arrived_late"`
+	LateByMinutes      int32                     `json:"lateByMinutes"      keel:"late_by_minutes"`
 	FreeMinutesGranted int32                     `json:"freeMinutesGranted" keel:"free_minutes_granted"`
-	RawDwellMinutes    int32                     `json:"rawDwellMinutes" keel:"raw_dwell_minutes"`
-	BillableMinutes    int32                     `json:"billableMinutes" keel:"billable_minutes"`
-	RoundedMinutes     int32                     `json:"roundedMinutes" keel:"rounded_minutes"`
-	BillableUnits      decimal.Decimal           `json:"billableUnits" keel:"billable_units"`
-	GrossAmount        decimal.Decimal           `json:"grossAmount" keel:"gross_amount"`
-	BillableAmount     decimal.Decimal           `json:"billableAmount" keel:"billable_amount"`
-	DriverPayMinutes   int32                     `json:"driverPayMinutes" keel:"driver_pay_minutes"`
-	DriverPayAmount    decimal.NullDecimal       `json:"driverPayAmount" keel:"driver_pay_amount"`
-	NetMargin          decimal.NullDecimal       `json:"netMargin" keel:"net_margin"`
-	CapApplied         CapKind                   `json:"capApplied" keel:"cap_applied"`
+	RawDwellMinutes    int32                     `json:"rawDwellMinutes"    keel:"raw_dwell_minutes"`
+	BillableMinutes    int32                     `json:"billableMinutes"    keel:"billable_minutes"`
+	RoundedMinutes     int32                     `json:"roundedMinutes"     keel:"rounded_minutes"`
+	BillableUnits      decimal.Decimal           `json:"billableUnits"      keel:"billable_units"`
+	GrossAmount        decimal.Decimal           `json:"grossAmount"        keel:"gross_amount"`
+	BillableAmount     decimal.Decimal           `json:"billableAmount"     keel:"billable_amount"`
+	DriverPayMinutes   int32                     `json:"driverPayMinutes"   keel:"driver_pay_minutes"`
+	DriverPayAmount    decimal.NullDecimal       `json:"driverPayAmount"    keel:"driver_pay_amount"`
+	NetMargin          decimal.NullDecimal       `json:"netMargin"          keel:"net_margin"`
+	CapApplied         CapKind                   `json:"capApplied"         keel:"cap_applied"`
 	ConvertedToLayover bool                      `json:"convertedToLayover" keel:"converted_to_layover"`
-	Currency           string                    `json:"currency" keel:"currency"`
+	Currency           string                    `json:"currency"           keel:"currency"`
 
-	Status             OccurrenceStatus   `json:"status" keel:"status"`
+	Status             OccurrenceStatus   `json:"status"             keel:"status"`
 	NotificationStatus NotificationStatus `json:"notificationStatus" keel:"notification_status"`
-	NoticeSentAt       *int64             `json:"noticeSentAt" keel:"notice_sent_at"`
-	SuppressedByGate   bool               `json:"suppressedByGate" keel:"suppressed_by_gate"`
-	RequiresApproval   bool               `json:"requiresApproval" keel:"requires_approval"`
-	ApprovedByID       *pulid.ID          `json:"approvedById" keel:"approved_by_id"`
-	ApprovedAt         *int64             `json:"approvedAt" keel:"approved_at"`
-	WaiverReason       *WaiverReason      `json:"waiverReason" keel:"waiver_reason"`
-	WaiverNote         string             `json:"waiverNote" keel:"waiver_note,nullzero"`
-	WaivedByID         *pulid.ID          `json:"waivedById" keel:"waived_by_id"`
-	WaivedAt           *int64             `json:"waivedAt" keel:"waived_at"`
-	WaivedAmount       decimal.Decimal    `json:"waivedAmount" keel:"waived_amount"`
-	DisputeNote        string             `json:"disputeNote" keel:"dispute_note,nullzero"`
-	DisputedAt         *int64             `json:"disputedAt" keel:"disputed_at"`
+	NoticeSentAt       *int64             `json:"noticeSentAt"       keel:"notice_sent_at"`
+	SuppressedByGate   bool               `json:"suppressedByGate"   keel:"suppressed_by_gate"`
+	RequiresApproval   bool               `json:"requiresApproval"   keel:"requires_approval"`
+	ApprovedByID       *pulid.ID          `json:"approvedById"       keel:"approved_by_id"`
+	ApprovedAt         *int64             `json:"approvedAt"         keel:"approved_at"`
+	WaiverReason       *WaiverReason      `json:"waiverReason"       keel:"waiver_reason"`
+	WaiverNote         string             `json:"waiverNote"         keel:"waiver_note,nullzero"`
+	WaivedByID         *pulid.ID          `json:"waivedById"         keel:"waived_by_id"`
+	WaivedAt           *int64             `json:"waivedAt"           keel:"waived_at"`
+	WaivedAmount       decimal.Decimal    `json:"waivedAmount"       keel:"waived_amount"`
+	DisputeNote        string             `json:"disputeNote"        keel:"dispute_note,nullzero"`
+	DisputedAt         *int64             `json:"disputedAt"         keel:"disputed_at"`
 
 	CollectabilityScore int16     `json:"collectabilityScore" keel:"collectability_score"`
-	EvidenceHead        string    `json:"evidenceHead" keel:"evidence_head,nullzero"`
-	AdditionalChargeID  *pulid.ID `json:"additionalChargeId" keel:"additional_charge_id"`
+	EvidenceHead        string    `json:"evidenceHead"        keel:"evidence_head,nullzero"`
+	AdditionalChargeID  *pulid.ID `json:"additionalChargeId"  keel:"additional_charge_id"`
 
-	Version   int64 `json:"version" keel:"version,version"`
+	Version   int64 `json:"version"   keel:"version,version"`
 	CreatedAt int64 `json:"createdAt" keel:"created_at,autocreate"`
 	UpdatedAt int64 `json:"updatedAt" keel:"updated_at,autoupdate"`
 
-	LocationName      string `json:"locationName,omitempty" keel:"location_name,computed"`
-	CustomerName      string `json:"customerName,omitempty" keel:"customer_name,computed"`
+	LocationName      string `json:"locationName,omitempty"      keel:"location_name,computed"`
+	CustomerName      string `json:"customerName,omitempty"      keel:"customer_name,computed"`
 	ShipmentProNumber string `json:"shipmentProNumber,omitempty" keel:"shipment_pro_number,computed"`
 
 	BusinessUnit    *tenant.BusinessUnit `json:"-"`
 	Organization    *tenant.Organization `json:"-"`
 	DetentionPolicy *DetentionPolicy     `json:"detentionPolicy,omitempty" keel:"belongs:detention_policy_id"`
-	Evidence        []*DetentionEvidence `json:"evidence,omitempty" keel:"many:detention_occurrence_id"`
-	Notices         []*DetentionNotice   `json:"notices,omitempty" keel:"many:detention_occurrence_id"`
+	Evidence        []*DetentionEvidence `json:"evidence,omitempty"        keel:"many:detention_occurrence_id"`
+	Notices         []*DetentionNotice   `json:"notices,omitempty"         keel:"many:detention_occurrence_id"`
 }
 
 func (o *DetentionOccurrence) GetID() pulid.ID { return o.ID }
@@ -392,7 +394,7 @@ func (o *DetentionOccurrence) BeforeCreate(ctx context.Context) error {
 		o.CapApplied = CapKindNone
 	}
 	if o.Currency == "" {
-		o.Currency = "USD"
+		o.Currency = money.DefaultCurrencyCode
 	}
 	if o.Status == "" {
 		o.Status = OccurrenceStatusAccruing

@@ -3,6 +3,8 @@ package driverpay
 import (
 	"context"
 
+	"github.com/emoss08/trenova/shared/money"
+
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
@@ -50,29 +52,29 @@ func (s ExpenseStatus) IsTerminal() bool {
 type Expense struct {
 	keel.Table `keel:"driver_expenses"`
 
-	ID                pulid.ID      `json:"id" keel:"id,pk,autoid:dexp_"`
-	BusinessUnitID    pulid.ID      `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
-	OrganizationID    pulid.ID      `json:"organizationId" keel:"organization_id,pk,tenant"`
-	WorkerID          pulid.ID      `json:"workerId" keel:"worker_id"`
-	ShipmentID        *pulid.ID     `json:"shipmentId" keel:"shipment_id"`
-	PayCodeID         *pulid.ID     `json:"payCodeId" keel:"pay_code_id"`
-	Status            ExpenseStatus `json:"status" keel:"status"`
-	AmountMinor       int64         `json:"amountMinor" keel:"amount_minor"`
-	CurrencyCode      string        `json:"currencyCode" keel:"currency_code"`
-	Description       string        `json:"description" keel:"description"`
-	IncurredDate      int64         `json:"incurredDate" keel:"incurred_date"`
+	ID                pulid.ID      `json:"id"                keel:"id,pk,autoid:dexp_"`
+	BusinessUnitID    pulid.ID      `json:"businessUnitId"    keel:"business_unit_id,pk,tenant"`
+	OrganizationID    pulid.ID      `json:"organizationId"    keel:"organization_id,pk,tenant"`
+	WorkerID          pulid.ID      `json:"workerId"          keel:"worker_id"`
+	ShipmentID        *pulid.ID     `json:"shipmentId"        keel:"shipment_id"`
+	PayCodeID         *pulid.ID     `json:"payCodeId"         keel:"pay_code_id"`
+	Status            ExpenseStatus `json:"status"            keel:"status"`
+	AmountMinor       int64         `json:"amountMinor"       keel:"amount_minor"`
+	CurrencyCode      string        `json:"currencyCode"      keel:"currency_code"`
+	Description       string        `json:"description"       keel:"description"`
+	IncurredDate      int64         `json:"incurredDate"      keel:"incurred_date"`
 	ReceiptDocumentID *pulid.ID     `json:"receiptDocumentId" keel:"receipt_document_id"`
 	SubmittedByUserID pulid.ID      `json:"submittedByUserId" keel:"submitted_by_user_id"`
-	ReviewNote        string        `json:"reviewNote" keel:"review_note,nullzero"`
-	ReviewedByID      *pulid.ID     `json:"reviewedById" keel:"reviewed_by_id"`
-	ReviewedAt        *int64        `json:"reviewedAt" keel:"reviewed_at"`
-	SettlementLineID  *pulid.ID     `json:"settlementLineId" keel:"settlement_line_id"`
-	Version           int64         `json:"version" keel:"version,version"`
-	CreatedAt         int64         `json:"createdAt" keel:"created_at,autocreate"`
-	UpdatedAt         int64         `json:"updatedAt" keel:"updated_at,autoupdate"`
+	ReviewNote        string        `json:"reviewNote"        keel:"review_note,nullzero"`
+	ReviewedByID      *pulid.ID     `json:"reviewedById"      keel:"reviewed_by_id"`
+	ReviewedAt        *int64        `json:"reviewedAt"        keel:"reviewed_at"`
+	SettlementLineID  *pulid.ID     `json:"settlementLineId"  keel:"settlement_line_id"`
+	Version           int64         `json:"version"           keel:"version,version"`
+	CreatedAt         int64         `json:"createdAt"         keel:"created_at,autocreate"`
+	UpdatedAt         int64         `json:"updatedAt"         keel:"updated_at,autoupdate"`
 
-	Worker     *worker.Worker `json:"worker,omitempty" keel:"belongs:worker_id"`
-	PayCode    *PayCode       `json:"payCode,omitempty" keel:"belongs:pay_code_id"`
+	Worker     *worker.Worker `json:"worker,omitempty"     keel:"belongs:worker_id"`
+	PayCode    *PayCode       `json:"payCode,omitempty"    keel:"belongs:pay_code_id"`
 	ReviewedBy *tenant.User   `json:"reviewedBy,omitempty" keel:"belongs:reviewed_by_id"`
 }
 
@@ -134,7 +136,7 @@ func (e *Expense) BeforeCreate(ctx context.Context) error {
 		e.Status = ExpenseStatusPending
 	}
 	if e.CurrencyCode == "" {
-		e.CurrencyCode = "USD"
+		e.CurrencyCode = money.DefaultCurrencyCode
 	}
 
 	return nil

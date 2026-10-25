@@ -19,38 +19,38 @@ var (
 type ExtractionResult struct {
 	keel.Table `keel:"extraction_eval_results"`
 
-	ID             pulid.ID `json:"id" keel:"id,pk,autoid:eeres_"`
+	ID             pulid.ID `json:"id"             keel:"id,pk,autoid:eeres_"`
 	BusinessUnitID pulid.ID `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
 	OrganizationID pulid.ID `json:"organizationId" keel:"organization_id,pk,tenant"`
 
-	RunID     pulid.ID     `json:"runId" keel:"run_id"`
-	CaseID    pulid.ID     `json:"caseId" keel:"case_id"`
+	RunID     pulid.ID     `json:"runId"     keel:"run_id"`
+	CaseID    pulid.ID     `json:"caseId"    keel:"case_id"`
 	CaseTitle string       `json:"caseTitle" keel:"case_title"`
-	Ordinal   int          `json:"ordinal" keel:"ordinal"`
-	Status    ResultStatus `json:"status" keel:"status"`
+	Ordinal   int          `json:"ordinal"   keel:"ordinal"`
+	Status    ResultStatus `json:"status"    keel:"status"`
 
-	Model        string                     `json:"model" keel:"model,nullzero"`
-	ProviderID   *pulid.ID                  `json:"providerId" keel:"provider_id"`
-	Predicted    *aicorrection.Snapshot     `json:"predicted" keel:"predicted,jsonb"`
+	Model        string                     `json:"model"        keel:"model,nullzero"`
+	ProviderID   *pulid.ID                  `json:"providerId"   keel:"provider_id"`
+	Predicted    *aicorrection.Snapshot     `json:"predicted"    keel:"predicted,jsonb"`
 	FieldResults []aicorrection.FieldResult `json:"fieldResults" keel:"field_results,jsonb"`
 
-	ScoredCount      int     `json:"scoredCount" keel:"scored_count"`
-	CorrectCount     int     `json:"correctCount" keel:"correct_count"`
-	CorrectedCount   int     `json:"correctedCount" keel:"corrected_count"`
-	MissedCount      int     `json:"missedCount" keel:"missed_count"`
+	ScoredCount      int     `json:"scoredCount"      keel:"scored_count"`
+	CorrectCount     int     `json:"correctCount"     keel:"correct_count"`
+	CorrectedCount   int     `json:"correctedCount"   keel:"corrected_count"`
+	MissedCount      int     `json:"missedCount"      keel:"missed_count"`
 	UnconfirmedCount int     `json:"unconfirmedCount" keel:"unconfirmed_count"`
-	UnscoredCount    int     `json:"unscoredCount" keel:"unscored_count"`
-	Accuracy         float64 `json:"accuracy" keel:"accuracy"`
+	UnscoredCount    int     `json:"unscoredCount"    keel:"unscored_count"`
+	Accuracy         float64 `json:"accuracy"         keel:"accuracy"`
 
-	LatencyMs    int64           `json:"latencyMs" keel:"latency_ms"`
-	InputTokens  int64           `json:"inputTokens" keel:"input_tokens"`
+	LatencyMs    int64           `json:"latencyMs"    keel:"latency_ms"`
+	InputTokens  int64           `json:"inputTokens"  keel:"input_tokens"`
 	OutputTokens int64           `json:"outputTokens" keel:"output_tokens"`
-	CostUSD      decimal.Decimal `json:"costUsd" keel:"cost_usd"`
+	CostUSD      decimal.Decimal `json:"costUsd"      keel:"cost_usd"`
 	ErrorMessage string          `json:"errorMessage" keel:"error_message,nullzero"`
-	StartedAt    *int64          `json:"startedAt" keel:"started_at"`
-	CompletedAt  *int64          `json:"completedAt" keel:"completed_at"`
+	StartedAt    *int64          `json:"startedAt"    keel:"started_at"`
+	CompletedAt  *int64          `json:"completedAt"  keel:"completed_at"`
 
-	Version   int64 `json:"version" keel:"version,version"`
+	Version   int64 `json:"version"   keel:"version,version"`
 	CreatedAt int64 `json:"createdAt" keel:"created_at,autocreate"`
 	UpdatedAt int64 `json:"updatedAt" keel:"updated_at,autoupdate"`
 }

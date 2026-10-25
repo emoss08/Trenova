@@ -15,17 +15,17 @@ const maxConditionLength = 20000
 
 // The negotiated price of each accessorial under a contract
 type RateAgreementAccessorial struct {
-	keel.Table `                                                            keel:"rate_agreement_accessorials,report=Billing,label=Contract Accessorial"`
+	keel.Table `keel:"rate_agreement_accessorials,report=Billing,label=Contract Accessorial"`
 
-	ID                  pulid.ID `json:"id" keel:"id,pk,autoid:raga_"`
-	BusinessUnitID      pulid.ID `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
-	OrganizationID      pulid.ID `json:"organizationId" keel:"organization_id,pk,tenant"`
-	RateAgreementID     pulid.ID `json:"rateAgreementId" keel:"rate_agreement_id"`
+	ID                  pulid.ID `json:"id"                  keel:"id,pk,autoid:raga_"`
+	BusinessUnitID      pulid.ID `json:"businessUnitId"      keel:"business_unit_id,pk,tenant"`
+	OrganizationID      pulid.ID `json:"organizationId"      keel:"organization_id,pk,tenant"`
+	RateAgreementID     pulid.ID `json:"rateAgreementId"     keel:"rate_agreement_id"`
 	AccessorialChargeID pulid.ID `json:"accessorialChargeId" keel:"accessorial_charge_id"`
 
-	Method   accessorialcharge.Method   `json:"method" keel:"method"`
+	Method   accessorialcharge.Method   `json:"method"   keel:"method"`
 	RateUnit accessorialcharge.RateUnit `json:"rateUnit" keel:"rate_unit,nullzero"`
-	Amount   decimal.Decimal            `json:"amount" keel:"amount,format=money"`
+	Amount   decimal.Decimal            `json:"amount"   keel:"amount,format=money"`
 
 	Waived bool `json:"waived" keel:"waived"`
 
@@ -36,17 +36,17 @@ type RateAgreementAccessorial struct {
 	FreeUnits *int16              `json:"freeUnits" keel:"free_units,format=count"`
 	MaxAmount decimal.NullDecimal `json:"maxAmount" keel:"max_amount,label=Maximum Amount,format=money"`
 
-	ServiceTypeIDs  []pulid.ID `json:"serviceTypeIds" keel:"service_type_ids,jsonb,nullzero"`
+	ServiceTypeIDs  []pulid.ID `json:"serviceTypeIds"  keel:"service_type_ids,jsonb,nullzero"`
 	ShipmentTypeIDs []pulid.ID `json:"shipmentTypeIds" keel:"shipment_type_ids,jsonb,nullzero"`
 
 	EffectiveFrom *int64 `json:"effectiveFrom" keel:"effective_from,type=epoch"`
-	EffectiveTo   *int64 `json:"effectiveTo" keel:"effective_to,type=epoch"`
+	EffectiveTo   *int64 `json:"effectiveTo"   keel:"effective_to,type=epoch"`
 
-	Version   int64 `json:"version" keel:"version,version"`
+	Version   int64 `json:"version"   keel:"version,version"`
 	CreatedAt int64 `json:"createdAt" keel:"created_at,autocreate"`
 	UpdatedAt int64 `json:"updatedAt" keel:"updated_at,autoupdate"`
 
-	Agreement         *RateAgreement                       `json:"-" keel:"belongs:rate_agreement_id"`
+	Agreement         *RateAgreement                       `json:"-"                           keel:"belongs:rate_agreement_id"`
 	AccessorialCharge *accessorialcharge.AccessorialCharge `json:"accessorialCharge,omitempty" keel:"belongs:accessorial_charge_id"`
 }
 

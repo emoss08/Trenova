@@ -24,22 +24,22 @@ type RateOverride struct {
 type WorkerPayAssignment struct {
 	keel.Table `keel:"worker_pay_assignments"`
 
-	ID             pulid.ID        `json:"id" keel:"id,pk,autoid:wpa_"`
+	ID             pulid.ID        `json:"id"             keel:"id,pk,autoid:wpa_"`
 	BusinessUnitID pulid.ID        `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
 	OrganizationID pulid.ID        `json:"organizationId" keel:"organization_id,pk,tenant"`
-	WorkerID       pulid.ID        `json:"workerId" keel:"worker_id"`
-	PayProfileID   pulid.ID        `json:"payProfileId" keel:"pay_profile_id"`
-	EffectiveFrom  int64           `json:"effectiveFrom" keel:"effective_from"`
-	EffectiveTo    *int64          `json:"effectiveTo" keel:"effective_to"`
-	SplitPercent   decimal.Decimal `json:"splitPercent" keel:"split_percent"`
-	RateOverrides  []RateOverride  `json:"rateOverrides" keel:"rate_overrides,jsonb,nullzero"`
-	Notes          string          `json:"notes" keel:"notes,nullzero"`
-	CreatedByID    pulid.ID        `json:"createdById" keel:"created_by_id,nullzero"`
-	Version        int64           `json:"version" keel:"version,version"`
-	CreatedAt      int64           `json:"createdAt" keel:"created_at,autocreate"`
-	UpdatedAt      int64           `json:"updatedAt" keel:"updated_at,autoupdate"`
+	WorkerID       pulid.ID        `json:"workerId"       keel:"worker_id"`
+	PayProfileID   pulid.ID        `json:"payProfileId"   keel:"pay_profile_id"`
+	EffectiveFrom  int64           `json:"effectiveFrom"  keel:"effective_from"`
+	EffectiveTo    *int64          `json:"effectiveTo"    keel:"effective_to"`
+	SplitPercent   decimal.Decimal `json:"splitPercent"   keel:"split_percent"`
+	RateOverrides  []RateOverride  `json:"rateOverrides"  keel:"rate_overrides,jsonb,nullzero"`
+	Notes          string          `json:"notes"          keel:"notes,nullzero"`
+	CreatedByID    pulid.ID        `json:"createdById"    keel:"created_by_id,nullzero"`
+	Version        int64           `json:"version"        keel:"version,version"`
+	CreatedAt      int64           `json:"createdAt"      keel:"created_at,autocreate"`
+	UpdatedAt      int64           `json:"updatedAt"      keel:"updated_at,autoupdate"`
 
-	Worker     *worker.Worker `json:"worker,omitempty" keel:"belongs:worker_id"`
+	Worker     *worker.Worker `json:"worker,omitempty"     keel:"belongs:worker_id"`
 	PayProfile *PayProfile    `json:"payProfile,omitempty" keel:"belongs:pay_profile_id"`
 }
 

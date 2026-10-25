@@ -127,26 +127,26 @@ var (
 )
 
 type PTOPolicy struct {
-	keel.Table        `                                             keel:"pto_policies"`
-	ID                pulid.ID        `json:"id" keel:"id,pk,autoid:ptop_"`
-	BusinessUnitID    pulid.ID        `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
-	OrganizationID    pulid.ID        `json:"organizationId" keel:"organization_id,pk,tenant"`
-	Name              string          `json:"name" keel:"name"`
-	Code              string          `json:"code" keel:"code"`
-	Description       string          `json:"description" keel:"description,nullzero"`
-	Status            PTOPolicyStatus `json:"status" keel:"status"`
-	IsDefault         bool            `json:"isDefault" keel:"is_default"`
-	YearBasis         PTOYearBasis    `json:"yearBasis" keel:"year_basis"`
-	CountWeekends     bool            `json:"countWeekends" keel:"count_weekends"`
-	WaitingPeriodDays int32           `json:"waitingPeriodDays" keel:"waiting_period_days"`
-	RequiresApproval  bool            `json:"requiresApproval" keel:"requires_approval"`
-	EnforceBalance    bool            `json:"enforceBalance" keel:"enforce_balance"`
-	AllowNegative     bool            `json:"allowNegative" keel:"allow_negative"`
-	NegativeFloorDays decimal.Decimal `json:"negativeFloorDays" keel:"negative_floor_days"`
-	Version           int64           `json:"version" keel:"version,version"`
-	CreatedAt         int64           `json:"createdAt" keel:"created_at,autocreate"`
-	UpdatedAt         int64           `json:"updatedAt" keel:"updated_at,autoupdate"`
-	SearchVector      string          `json:"-" keel:"search_vector,tsvector,readonly,noselect"`
+	keel.Table        `keel:"pto_policies"`
+	ID                pulid.ID        `keel:"id,pk,autoid:ptop_"                       json:"id"`
+	BusinessUnitID    pulid.ID        `keel:"business_unit_id,pk,tenant"               json:"businessUnitId"`
+	OrganizationID    pulid.ID        `keel:"organization_id,pk,tenant"                json:"organizationId"`
+	Name              string          `keel:"name"                                     json:"name"`
+	Code              string          `keel:"code"                                     json:"code"`
+	Description       string          `keel:"description,nullzero"                     json:"description"`
+	Status            PTOPolicyStatus `keel:"status"                                   json:"status"`
+	IsDefault         bool            `keel:"is_default"                               json:"isDefault"`
+	YearBasis         PTOYearBasis    `keel:"year_basis"                               json:"yearBasis"`
+	CountWeekends     bool            `keel:"count_weekends"                           json:"countWeekends"`
+	WaitingPeriodDays int32           `keel:"waiting_period_days"                      json:"waitingPeriodDays"`
+	RequiresApproval  bool            `keel:"requires_approval"                        json:"requiresApproval"`
+	EnforceBalance    bool            `keel:"enforce_balance"                          json:"enforceBalance"`
+	AllowNegative     bool            `keel:"allow_negative"                           json:"allowNegative"`
+	NegativeFloorDays decimal.Decimal `keel:"negative_floor_days"                      json:"negativeFloorDays"`
+	Version           int64           `keel:"version,version"                          json:"version"`
+	CreatedAt         int64           `keel:"created_at,autocreate"                    json:"createdAt"`
+	UpdatedAt         int64           `keel:"updated_at,autoupdate"                    json:"updatedAt"`
+	SearchVector      string          `keel:"search_vector,tsvector,readonly,noselect" json:"-"`
 
 	Rules []*PTOPolicyRule `json:"rules,omitempty" keel:"many:pto_policy_id"`
 }
@@ -273,23 +273,23 @@ func (p *PTOPolicy) GetPostgresSearchConfig() domaintypes.PostgresSearchConfig {
 }
 
 type PTOPolicyRule struct {
-	keel.Table `                                                 keel:"pto_policy_rules"`
+	keel.Table `keel:"pto_policy_rules"`
 
-	ID                  pulid.ID             `json:"id" keel:"id,pk,autoid:ptpr_"`
-	BusinessUnitID      pulid.ID             `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
-	OrganizationID      pulid.ID             `json:"organizationId" keel:"organization_id,pk,tenant"`
-	PTOPolicyID         pulid.ID             `json:"ptoPolicyId" keel:"pto_policy_id"`
-	PTOType             PTOType              `json:"ptoType" keel:"pto_type"`
-	AccrualMethod       PTOAccrualMethod     `json:"accrualMethod" keel:"accrual_method"`
-	AccrualAmountDays   decimal.Decimal      `json:"accrualAmountDays" keel:"accrual_amount_days"`
-	MaxBalanceDays      decimal.NullDecimal  `json:"maxBalanceDays" keel:"max_balance_days"`
-	CarryoverCapDays    decimal.NullDecimal  `json:"carryoverCapDays" keel:"carryover_cap_days"`
+	ID                  pulid.ID             `json:"id"                  keel:"id,pk,autoid:ptpr_"`
+	BusinessUnitID      pulid.ID             `json:"businessUnitId"      keel:"business_unit_id,pk,tenant"`
+	OrganizationID      pulid.ID             `json:"organizationId"      keel:"organization_id,pk,tenant"`
+	PTOPolicyID         pulid.ID             `json:"ptoPolicyId"         keel:"pto_policy_id"`
+	PTOType             PTOType              `json:"ptoType"             keel:"pto_type"`
+	AccrualMethod       PTOAccrualMethod     `json:"accrualMethod"       keel:"accrual_method"`
+	AccrualAmountDays   decimal.Decimal      `json:"accrualAmountDays"   keel:"accrual_amount_days"`
+	MaxBalanceDays      decimal.NullDecimal  `json:"maxBalanceDays"      keel:"max_balance_days"`
+	CarryoverCapDays    decimal.NullDecimal  `json:"carryoverCapDays"    keel:"carryover_cap_days"`
 	CarryoverExpiryDays int32                `json:"carryoverExpiryDays" keel:"carryover_expiry_days"`
-	Tiers               []PTOAccrualTier     `json:"tiers" keel:"tiers,jsonb"`
-	OnTermination       PTOTerminationAction `json:"onTermination" keel:"on_termination"`
-	SortOrder           int32                `json:"sortOrder" keel:"sort_order"`
-	CreatedAt           int64                `json:"createdAt" keel:"created_at,autocreate"`
-	UpdatedAt           int64                `json:"updatedAt" keel:"updated_at,autoupdate"`
+	Tiers               []PTOAccrualTier     `json:"tiers"               keel:"tiers,jsonb"`
+	OnTermination       PTOTerminationAction `json:"onTermination"       keel:"on_termination"`
+	SortOrder           int32                `json:"sortOrder"           keel:"sort_order"`
+	CreatedAt           int64                `json:"createdAt"           keel:"created_at,autocreate"`
+	UpdatedAt           int64                `json:"updatedAt"           keel:"updated_at,autoupdate"`
 }
 
 func (r *PTOPolicyRule) Validate(multiErr *errortypes.MultiError) {

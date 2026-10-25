@@ -87,7 +87,7 @@ type WithheldSection struct {
 type Briefing struct {
 	keel.Table `keel:"assistant_briefings"`
 
-	ID             pulid.ID `json:"id" keel:"id,pk,autoid:brf_"`
+	ID             pulid.ID `json:"id"             keel:"id,pk,autoid:brf_"`
 	BusinessUnitID pulid.ID `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
 	OrganizationID pulid.ID `json:"organizationId" keel:"organization_id,pk,tenant"`
 
@@ -99,20 +99,20 @@ type Briefing struct {
 	// date rather than an instant because "today's briefing" means the
 	// reader's today, not the server's.
 	BriefingDate string   `json:"briefingDate" keel:"briefing_date"`
-	RunID        pulid.ID `json:"runId" keel:"run_id,nullzero"`
+	RunID        pulid.ID `json:"runId"        keel:"run_id,nullzero"`
 
-	Status   Status `json:"status" keel:"status"`
+	Status   Status `json:"status"   keel:"status"`
 	Headline string `json:"headline" keel:"headline,nullzero"`
 	// Sections is the page. Facts is what the figures were drawn from, kept
 	// so the guard can be re-run and a reader can be shown the working.
 	Sections []Section      `json:"sections" keel:"sections,jsonb"`
-	Facts    map[string]any `json:"facts" keel:"facts,jsonb"`
+	Facts    map[string]any `json:"facts"    keel:"facts,jsonb"`
 	// Narrated says whether the model's wording was accepted. False means
 	// the page is the deterministic one, which is a complete briefing.
 	Narrated bool `json:"narrated" keel:"narrated"`
 
 	ModelIdentifier string   `json:"modelIdentifier" keel:"model_identifier,nullzero"`
-	ProviderID      pulid.ID `json:"providerId" keel:"provider_id,nullzero"`
+	ProviderID      pulid.ID `json:"providerId"      keel:"provider_id,nullzero"`
 	// FailureReason says why the facts could not be gathered, for a failed
 	// briefing.
 	FailureReason string `json:"failureReason" keel:"failure_reason,nullzero"`
@@ -122,9 +122,9 @@ type Briefing struct {
 	WithheldSections []WithheldSection `json:"withheldSections"`
 
 	EmailedAt *int64 `json:"emailedAt" keel:"emailed_at"`
-	ReadAt    *int64 `json:"readAt" keel:"read_at"`
+	ReadAt    *int64 `json:"readAt"    keel:"read_at"`
 
-	Version   int64 `json:"version" keel:"version,version"`
+	Version   int64 `json:"version"   keel:"version,version"`
 	CreatedAt int64 `json:"createdAt" keel:"created_at,autocreate"`
 	UpdatedAt int64 `json:"updatedAt" keel:"updated_at,autoupdate"`
 }

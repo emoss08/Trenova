@@ -267,6 +267,7 @@ func (r *metricsRepository) CustomerEmptyMiles(
 	)
 }
 
+//nolint:gosec // G101: a query over worker credential expiries, not a credential
 const expiringCredentialsSQL = `
 SELECT
 	wct.id AS credential_type_id,

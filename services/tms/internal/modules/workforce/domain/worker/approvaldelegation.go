@@ -56,33 +56,33 @@ var (
 // could approve in the first place. Delegating from somebody who manages
 // nobody hands over nothing, which is the correct outcome rather than a bug.
 type ApprovalDelegation struct {
-	keel.Table `                                                     keel:"approval_delegations"`
+	keel.Table `keel:"approval_delegations"`
 
-	ID             pulid.ID `json:"id" keel:"id,pk,autoid:apdl_"`
+	ID             pulid.ID `json:"id"             keel:"id,pk,autoid:apdl_"`
 	BusinessUnitID pulid.ID `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
 	OrganizationID pulid.ID `json:"organizationId" keel:"organization_id,pk,tenant"`
 
 	DelegatorID pulid.ID      `json:"delegatorId" keel:"delegator_id"`
-	DelegateID  pulid.ID      `json:"delegateId" keel:"delegate_id"`
-	Scope       ApprovalScope `json:"scope" keel:"scope"`
+	DelegateID  pulid.ID      `json:"delegateId"  keel:"delegate_id"`
+	Scope       ApprovalScope `json:"scope"       keel:"scope"`
 
 	StartsAt int64  `json:"startsAt" keel:"starts_at"`
-	EndsAt   *int64 `json:"endsAt" keel:"ends_at"`
-	Reason   string `json:"reason" keel:"reason,nullzero"`
+	EndsAt   *int64 `json:"endsAt"   keel:"ends_at"`
+	Reason   string `json:"reason"   keel:"reason,nullzero"`
 
 	// RevokedAt is set when a delegation is called back before its window ends.
 	// It is kept rather than deleted so an approval made under it can still be
 	// explained afterwards.
-	RevokedAt   *int64   `json:"revokedAt" keel:"revoked_at"`
+	RevokedAt   *int64   `json:"revokedAt"   keel:"revoked_at"`
 	RevokedByID pulid.ID `json:"revokedById" keel:"revoked_by_id,nullzero"`
 	CreatedByID pulid.ID `json:"createdById" keel:"created_by_id,nullzero"`
 
-	Version   int64 `json:"version" keel:"version,version"`
+	Version   int64 `json:"version"   keel:"version,version"`
 	CreatedAt int64 `json:"createdAt" keel:"created_at,autocreate"`
 	UpdatedAt int64 `json:"updatedAt" keel:"updated_at,autoupdate"`
 
 	Delegator *tenant.User `json:"delegator,omitempty" keel:"belongs:delegator_id"`
-	Delegate  *tenant.User `json:"delegate,omitempty" keel:"belongs:delegate_id"`
+	Delegate  *tenant.User `json:"delegate,omitempty"  keel:"belongs:delegate_id"`
 }
 
 func (d *ApprovalDelegation) Validate(multiErr *errortypes.MultiError) {

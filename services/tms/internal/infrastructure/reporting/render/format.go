@@ -31,7 +31,7 @@ func FormatRow(formatters []*format.Formatter, b *table.Batch, row int, label st
 	return cells
 }
 
-func levelLabel(text export.Text, level table.Level) string {
+func levelLabel(text *export.Text, level table.Level) string {
 	switch {
 	case level == table.Total:
 		return text.Total

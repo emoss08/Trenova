@@ -101,28 +101,28 @@ var (
 
 // ShiftTemplate is a repeating pattern of working days.
 type ShiftTemplate struct {
-	keel.Table `                                                keel:"shift_templates"`
+	keel.Table `keel:"shift_templates"`
 
-	ID             pulid.ID `json:"id" keel:"id,pk,autoid:shft_"`
+	ID             pulid.ID `json:"id"             keel:"id,pk,autoid:shft_"`
 	BusinessUnitID pulid.ID `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
 	OrganizationID pulid.ID `json:"organizationId" keel:"organization_id,pk,tenant"`
 
-	Status      domaintypes.Status `json:"status" keel:"status"`
-	Code        string             `json:"code" keel:"code"`
-	Name        string             `json:"name" keel:"name"`
+	Status      domaintypes.Status `json:"status"      keel:"status"`
+	Code        string             `json:"code"        keel:"code"`
+	Name        string             `json:"name"        keel:"name"`
 	Description string             `json:"description" keel:"description,nullzero"`
-	Color       string             `json:"color" keel:"color,nullzero"`
+	Color       string             `json:"color"       keel:"color,nullzero"`
 	// DaysOfWeek is seven characters indexed from Sunday: 0111110 is Monday to
 	// Friday. A mask rather than an array so a pattern reads at a glance and
 	// compares without unpacking.
-	DaysOfWeek      string `json:"daysOfWeek" keel:"days_of_week"`
-	StartMinute     int16  `json:"startMinute" keel:"start_minute"`
+	DaysOfWeek      string `json:"daysOfWeek"      keel:"days_of_week"`
+	StartMinute     int16  `json:"startMinute"     keel:"start_minute"`
 	DurationMinutes int16  `json:"durationMinutes" keel:"duration_minutes"`
 	// CycleWeeks lets an A/B rotation be one template: the assignment carries
 	// which week of the cycle a worker starts on.
 	CycleWeeks int16 `json:"cycleWeeks" keel:"cycle_weeks"`
 
-	Version   int64 `json:"version" keel:"version,version"`
+	Version   int64 `json:"version"   keel:"version,version"`
 	CreatedAt int64 `json:"createdAt" keel:"created_at,autocreate"`
 	UpdatedAt int64 `json:"updatedAt" keel:"updated_at,autoupdate"`
 }
@@ -258,28 +258,28 @@ var (
 
 // WorkerShiftAssignment puts a worker on a pattern for a period.
 type WorkerShiftAssignment struct {
-	keel.Table `                                                        keel:"worker_shift_assignments"`
+	keel.Table `keel:"worker_shift_assignments"`
 
-	ID              pulid.ID `json:"id" keel:"id,pk,autoid:wsa_"`
-	BusinessUnitID  pulid.ID `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
-	OrganizationID  pulid.ID `json:"organizationId" keel:"organization_id,pk,tenant"`
-	WorkerID        pulid.ID `json:"workerId" keel:"worker_id"`
+	ID              pulid.ID `json:"id"              keel:"id,pk,autoid:wsa_"`
+	BusinessUnitID  pulid.ID `json:"businessUnitId"  keel:"business_unit_id,pk,tenant"`
+	OrganizationID  pulid.ID `json:"organizationId"  keel:"organization_id,pk,tenant"`
+	WorkerID        pulid.ID `json:"workerId"        keel:"worker_id"`
 	ShiftTemplateID pulid.ID `json:"shiftTemplateId" keel:"shift_template_id"`
 
 	EffectiveFrom int64  `json:"effectiveFrom" keel:"effective_from"`
-	EffectiveTo   *int64 `json:"effectiveTo" keel:"effective_to"`
+	EffectiveTo   *int64 `json:"effectiveTo"   keel:"effective_to"`
 	// CycleOffsetWeeks is which week of the template's cycle this worker starts
 	// on, so an A/B rotation is one template and two offsets.
 	CycleOffsetWeeks int16    `json:"cycleOffsetWeeks" keel:"cycle_offset_weeks"`
-	Notes            string   `json:"notes" keel:"notes,nullzero"`
-	AssignedByID     pulid.ID `json:"assignedById" keel:"assigned_by_id,nullzero"`
+	Notes            string   `json:"notes"            keel:"notes,nullzero"`
+	AssignedByID     pulid.ID `json:"assignedById"     keel:"assigned_by_id,nullzero"`
 
-	Version   int64 `json:"version" keel:"version,version"`
+	Version   int64 `json:"version"   keel:"version,version"`
 	CreatedAt int64 `json:"createdAt" keel:"created_at,autocreate"`
 	UpdatedAt int64 `json:"updatedAt" keel:"updated_at,autoupdate"`
 
 	ShiftTemplate *ShiftTemplate `json:"shiftTemplate,omitempty" keel:"belongs:shift_template_id"`
-	Worker        *Worker        `json:"worker,omitempty" keel:"belongs:worker_id"`
+	Worker        *Worker        `json:"worker,omitempty"        keel:"belongs:worker_id"`
 }
 
 func (a *WorkerShiftAssignment) Validate(multiErr *errortypes.MultiError) {
@@ -324,18 +324,18 @@ var (
 // WorkerAvailabilityPreference is what a driver would rather work on a given
 // weekday.
 type WorkerAvailabilityPreference struct {
-	keel.Table `                                                                keel:"worker_availability_preferences"`
+	keel.Table `keel:"worker_availability_preferences"`
 
-	ID             pulid.ID `json:"id" keel:"id,pk,autoid:wapf_"`
+	ID             pulid.ID `json:"id"             keel:"id,pk,autoid:wapf_"`
 	BusinessUnitID pulid.ID `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
 	OrganizationID pulid.ID `json:"organizationId" keel:"organization_id,pk,tenant"`
-	WorkerID       pulid.ID `json:"workerId" keel:"worker_id"`
+	WorkerID       pulid.ID `json:"workerId"       keel:"worker_id"`
 
-	DayOfWeek  int16                  `json:"dayOfWeek" keel:"day_of_week"`
+	DayOfWeek  int16                  `json:"dayOfWeek"  keel:"day_of_week"`
 	Preference AvailabilityPreference `json:"preference" keel:"preference"`
-	Note       string                 `json:"note" keel:"note,nullzero"`
+	Note       string                 `json:"note"       keel:"note,nullzero"`
 
-	Version   int64 `json:"version" keel:"version,version"`
+	Version   int64 `json:"version"   keel:"version,version"`
 	CreatedAt int64 `json:"createdAt" keel:"created_at,autocreate"`
 	UpdatedAt int64 `json:"updatedAt" keel:"updated_at,autoupdate"`
 }
@@ -389,31 +389,31 @@ var (
 
 // ShiftSwapRequest is one driver asking another to take a day.
 type ShiftSwapRequest struct {
-	keel.Table `                                                    keel:"shift_swap_requests"`
+	keel.Table `keel:"shift_swap_requests"`
 
-	ID                   pulid.ID `json:"id" keel:"id,pk,autoid:sswp_"`
-	BusinessUnitID       pulid.ID `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
-	OrganizationID       pulid.ID `json:"organizationId" keel:"organization_id,pk,tenant"`
-	RequestingWorkerID   pulid.ID `json:"requestingWorkerId" keel:"requesting_worker_id"`
+	ID                   pulid.ID `json:"id"                   keel:"id,pk,autoid:sswp_"`
+	BusinessUnitID       pulid.ID `json:"businessUnitId"       keel:"business_unit_id,pk,tenant"`
+	OrganizationID       pulid.ID `json:"organizationId"       keel:"organization_id,pk,tenant"`
+	RequestingWorkerID   pulid.ID `json:"requestingWorkerId"   keel:"requesting_worker_id"`
 	CounterpartyWorkerID pulid.ID `json:"counterpartyWorkerId" keel:"counterparty_worker_id,nullzero"`
 
 	Status ShiftSwapStatus `json:"status" keel:"status"`
 	// ShiftDate is the day being given up; CounterpartyShiftDate is the day
 	// offered back, when the swap is a trade rather than a hand-off.
-	ShiftDate             int64  `json:"shiftDate" keel:"shift_date"`
+	ShiftDate             int64  `json:"shiftDate"             keel:"shift_date"`
 	CounterpartyShiftDate *int64 `json:"counterpartyShiftDate" keel:"counterparty_shift_date"`
 
-	Reason       string   `json:"reason" keel:"reason,nullzero"`
+	Reason       string   `json:"reason"       keel:"reason,nullzero"`
 	ResponseNote string   `json:"responseNote" keel:"response_note,nullzero"`
-	RespondedAt  *int64   `json:"respondedAt" keel:"responded_at"`
-	DecidedAt    *int64   `json:"decidedAt" keel:"decided_at"`
-	DecidedByID  pulid.ID `json:"decidedById" keel:"decided_by_id,nullzero"`
+	RespondedAt  *int64   `json:"respondedAt"  keel:"responded_at"`
+	DecidedAt    *int64   `json:"decidedAt"    keel:"decided_at"`
+	DecidedByID  pulid.ID `json:"decidedById"  keel:"decided_by_id,nullzero"`
 
-	Version   int64 `json:"version" keel:"version,version"`
+	Version   int64 `json:"version"   keel:"version,version"`
 	CreatedAt int64 `json:"createdAt" keel:"created_at,autocreate"`
 	UpdatedAt int64 `json:"updatedAt" keel:"updated_at,autoupdate"`
 
-	RequestingWorker   *Worker `json:"requestingWorker,omitempty" keel:"belongs:requesting_worker_id"`
+	RequestingWorker   *Worker `json:"requestingWorker,omitempty"   keel:"belongs:requesting_worker_id"`
 	CounterpartyWorker *Worker `json:"counterpartyWorker,omitempty" keel:"belongs:counterparty_worker_id"`
 }
 

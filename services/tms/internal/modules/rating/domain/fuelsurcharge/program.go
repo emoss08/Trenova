@@ -20,48 +20,48 @@ var (
 )
 
 type FuelSurchargeProgram struct {
-	keel.Table `                                                       keel:"fuel_surcharge_programs"`
+	keel.Table `keel:"fuel_surcharge_programs"`
 
-	ID                   pulid.ID             `json:"id" keel:"id,pk,autoid:fsp_"`
-	BusinessUnitID       pulid.ID             `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
-	OrganizationID       pulid.ID             `json:"organizationId" keel:"organization_id,pk,tenant"`
-	Name                 string               `json:"name" keel:"name"`
-	Code                 string               `json:"code" keel:"code"`
-	Description          string               `json:"description" keel:"description,nullzero"`
-	Status               ProgramStatus        `json:"status" keel:"status"`
-	FuelIndexID          pulid.ID             `json:"fuelIndexId" keel:"fuel_index_id"`
-	AccessorialChargeID  pulid.ID             `json:"accessorialChargeId" keel:"accessorial_charge_id"`
-	Method               ProgramMethod        `json:"method" keel:"method"`
-	PegPrice             decimal.NullDecimal  `json:"pegPrice" keel:"peg_price"`
-	Increment            decimal.NullDecimal  `json:"increment" keel:"increment"`
-	IncrementRate        decimal.NullDecimal  `json:"incrementRate" keel:"increment_rate"`
-	MilesPerGallon       decimal.NullDecimal  `json:"milesPerGallon" keel:"miles_per_gallon"`
-	PercentBasis         PercentBasis         `json:"percentBasis" keel:"percent_basis"`
-	StepRounding         StepRounding         `json:"stepRounding" keel:"step_rounding"`
-	RateRounding         RateRounding         `json:"rateRounding" keel:"rate_rounding"`
-	RatePrecision        int16                `json:"ratePrecision" keel:"rate_precision"`
-	MinAmount            decimal.NullDecimal  `json:"minAmount" keel:"min_amount"`
-	MaxAmount            decimal.NullDecimal  `json:"maxAmount" keel:"max_amount"`
-	DateBasis            DateBasis            `json:"dateBasis" keel:"date_basis"`
-	PriceEffectiveDay    int16                `json:"priceEffectiveDay" keel:"price_effective_day"`
+	ID                   pulid.ID             `json:"id"                   keel:"id,pk,autoid:fsp_"`
+	BusinessUnitID       pulid.ID             `json:"businessUnitId"       keel:"business_unit_id,pk,tenant"`
+	OrganizationID       pulid.ID             `json:"organizationId"       keel:"organization_id,pk,tenant"`
+	Name                 string               `json:"name"                 keel:"name"`
+	Code                 string               `json:"code"                 keel:"code"`
+	Description          string               `json:"description"          keel:"description,nullzero"`
+	Status               ProgramStatus        `json:"status"               keel:"status"`
+	FuelIndexID          pulid.ID             `json:"fuelIndexId"          keel:"fuel_index_id"`
+	AccessorialChargeID  pulid.ID             `json:"accessorialChargeId"  keel:"accessorial_charge_id"`
+	Method               ProgramMethod        `json:"method"               keel:"method"`
+	PegPrice             decimal.NullDecimal  `json:"pegPrice"             keel:"peg_price"`
+	Increment            decimal.NullDecimal  `json:"increment"            keel:"increment"`
+	IncrementRate        decimal.NullDecimal  `json:"incrementRate"        keel:"increment_rate"`
+	MilesPerGallon       decimal.NullDecimal  `json:"milesPerGallon"       keel:"miles_per_gallon"`
+	PercentBasis         PercentBasis         `json:"percentBasis"         keel:"percent_basis"`
+	StepRounding         StepRounding         `json:"stepRounding"         keel:"step_rounding"`
+	RateRounding         RateRounding         `json:"rateRounding"         keel:"rate_rounding"`
+	RatePrecision        int16                `json:"ratePrecision"        keel:"rate_precision"`
+	MinAmount            decimal.NullDecimal  `json:"minAmount"            keel:"min_amount"`
+	MaxAmount            decimal.NullDecimal  `json:"maxAmount"            keel:"max_amount"`
+	DateBasis            DateBasis            `json:"dateBasis"            keel:"date_basis"`
+	PriceEffectiveDay    int16                `json:"priceEffectiveDay"    keel:"price_effective_day"`
 	MissingPriceFallback MissingPriceFallback `json:"missingPriceFallback" keel:"missing_price_fallback"`
-	EffectiveStartDate   *int64               `json:"effectiveStartDate" keel:"effective_start_date"`
-	EffectiveEndDate     *int64               `json:"effectiveEndDate" keel:"effective_end_date"`
-	ShipmentTypeIDs      []pulid.ID           `json:"shipmentTypeIds" keel:"shipment_type_ids,jsonb,nullzero"`
-	ServiceTypeIDs       []pulid.ID           `json:"serviceTypeIds" keel:"service_type_ids,jsonb,nullzero"`
-	TractorTypeIDs       []pulid.ID           `json:"tractorTypeIds" keel:"tractor_type_ids,jsonb,nullzero"`
-	TrailerTypeIDs       []pulid.ID           `json:"trailerTypeIds" keel:"trailer_type_ids,jsonb,nullzero"`
-	Version              int64                `json:"version" keel:"version,version"`
-	CreatedAt            int64                `json:"createdAt" keel:"created_at,autocreate"`
-	UpdatedAt            int64                `json:"updatedAt" keel:"updated_at,autoupdate"`
-	SearchVector         string               `json:"-" keel:"search_vector,tsvector,readonly,noselect"`
-	Rank                 string               `json:"-" keel:"rank,computed"`
+	EffectiveStartDate   *int64               `json:"effectiveStartDate"   keel:"effective_start_date"`
+	EffectiveEndDate     *int64               `json:"effectiveEndDate"     keel:"effective_end_date"`
+	ShipmentTypeIDs      []pulid.ID           `json:"shipmentTypeIds"      keel:"shipment_type_ids,jsonb,nullzero"`
+	ServiceTypeIDs       []pulid.ID           `json:"serviceTypeIds"       keel:"service_type_ids,jsonb,nullzero"`
+	TractorTypeIDs       []pulid.ID           `json:"tractorTypeIds"       keel:"tractor_type_ids,jsonb,nullzero"`
+	TrailerTypeIDs       []pulid.ID           `json:"trailerTypeIds"       keel:"trailer_type_ids,jsonb,nullzero"`
+	Version              int64                `json:"version"              keel:"version,version"`
+	CreatedAt            int64                `json:"createdAt"            keel:"created_at,autocreate"`
+	UpdatedAt            int64                `json:"updatedAt"            keel:"updated_at,autoupdate"`
+	SearchVector         string               `json:"-"                    keel:"search_vector,tsvector,readonly,noselect"`
+	Rank                 string               `json:"-"                    keel:"rank,computed"`
 
 	BusinessUnit      *tenant.BusinessUnit                 `json:"-"`
 	Organization      *tenant.Organization                 `json:"-"`
-	FuelIndex         *FuelIndex                           `json:"fuelIndex,omitempty" keel:"belongs:fuel_index_id"`
+	FuelIndex         *FuelIndex                           `json:"fuelIndex,omitempty"         keel:"belongs:fuel_index_id"`
 	AccessorialCharge *accessorialcharge.AccessorialCharge `json:"accessorialCharge,omitempty" keel:"belongs:accessorial_charge_id"`
-	TableRows         []*FuelSurchargeTableRow             `json:"tableRows,omitempty" keel:"many:fuel_surcharge_program_id"`
+	TableRows         []*FuelSurchargeTableRow             `json:"tableRows,omitempty"         keel:"many:fuel_surcharge_program_id"`
 }
 
 func (p *FuelSurchargeProgram) Validate(multiErr *errortypes.MultiError) {

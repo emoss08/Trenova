@@ -48,8 +48,8 @@ func (s *Service) DrillThrough(
 		limit = 0
 	}
 
-	result, err := s.engine.Drill(prepared.Context, prepared.Request, row, req.ColumnID,
-		analytics.DrillOptions{
+	result, err := s.engine.Drill(prepared.Context, &prepared.Request, row, req.ColumnID,
+		&analytics.DrillOptions{
 			Policy:      prepared.Access,
 			Location:    prepared.Location,
 			Params:      req.Params,

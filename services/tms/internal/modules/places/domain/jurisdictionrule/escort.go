@@ -17,14 +17,14 @@ import (
 type EscortThreshold struct {
 	keel.Table `keel:"jurisdiction_escort_thresholds"`
 
-	ID                 pulid.ID    `json:"id" keel:"id,pk,autoid:jet_"`
+	ID                 pulid.ID    `json:"id"                 keel:"id,pk,autoid:jet_"`
 	JurisdictionRuleID pulid.ID    `json:"jurisdictionRuleId" keel:"jurisdiction_rule_id"`
-	Role               EscortRole  `json:"role" keel:"role"`
-	Trigger            TriggerKind `json:"trigger" keel:"trigger"`
-	ThresholdValue     float64     `json:"thresholdValue" keel:"threshold_value"`
-	Note               string      `json:"note" keel:"note,nullzero"`
+	Role               EscortRole  `json:"role"               keel:"role"`
+	Trigger            TriggerKind `json:"trigger"            keel:"trigger"`
+	ThresholdValue     float64     `json:"thresholdValue"     keel:"threshold_value"`
+	Note               string      `json:"note"               keel:"note,nullzero"`
 
-	Version   int64 `json:"version" keel:"version,version"`
+	Version   int64 `json:"version"   keel:"version,version"`
 	CreatedAt int64 `json:"createdAt" keel:"created_at,autocreate"`
 	UpdatedAt int64 `json:"updatedAt" keel:"updated_at,autoupdate"`
 

@@ -154,9 +154,13 @@ func (r *repository) AverageSourceChars(
 		sample = intutils.Clamp(sample, 1, maxCharsSample)
 
 		newest := table.sample(sample)
-		out, err = keel.IntoOne[agentports.RetrievalSourceChars](ctx, r.db.Keel(ctx), newest.Query().
-			With(newest).
-			Pick(keel.Count(), keel.Raw("COALESCE(AVG(?), 0)::float8", newest.Col("chars"))))
+		out, err = keel.IntoOne[agentports.RetrievalSourceChars](
+			ctx,
+			r.db.Keel(ctx),
+			newest.Query().
+				With(newest).
+				Pick(keel.Count(), keel.Raw("COALESCE(AVG(?), 0)::float8", newest.Col("chars"))),
+		)
 		if err != nil {
 			return agentports.RetrievalSourceChars{}, fmt.Errorf(
 				"measure %s text: %w",

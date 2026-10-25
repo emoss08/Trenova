@@ -946,7 +946,12 @@ func (r *repository) GetCustomerSnapshot(
 				ctx,
 				r.db.Keel(ctx),
 				customerSnapshotSQL,
-				req.AsOfDate, trailingYearWindow, trailingDSOWindow, org, bu, req.CustomerID.String(),
+				req.AsOfDate,
+				trailingYearWindow,
+				trailingDSOWindow,
+				org,
+				bu,
+				req.CustomerID.String(),
 			)
 			if err != nil {
 				return nil, fmt.Errorf("get ar customer snapshot: %w", err)

@@ -15,20 +15,20 @@ import (
 type RateMatrixReview struct {
 	keel.Table `keel:"rate_matrix_reviews"`
 
-	ID                  pulid.ID                       `json:"id" keel:"id,pk,autoid:rmr_"`
-	OrganizationID      pulid.ID                       `json:"organizationId" keel:"organization_id,pk,tenant"`
-	BusinessUnitID      pulid.ID                       `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
-	RateMatrixID        pulid.ID                       `json:"rateMatrixId" keel:"rate_matrix_id"`
-	Round               int32                          `json:"round" keel:"round"`
-	Decision            formulatemplate.ReviewDecision `json:"decision" keel:"decision"`
-	ActorID             *pulid.ID                      `json:"actorId" keel:"actor_id"`
-	Comment             string                         `json:"comment" keel:"comment,nullzero"`
-	BaseVersionNumber   int64                          `json:"baseVersionNumber" keel:"base_version_number"`
+	ID                  pulid.ID                       `json:"id"                  keel:"id,pk,autoid:rmr_"`
+	OrganizationID      pulid.ID                       `json:"organizationId"      keel:"organization_id,pk,tenant"`
+	BusinessUnitID      pulid.ID                       `json:"businessUnitId"      keel:"business_unit_id,pk,tenant"`
+	RateMatrixID        pulid.ID                       `json:"rateMatrixId"        keel:"rate_matrix_id"`
+	Round               int32                          `json:"round"               keel:"round"`
+	Decision            formulatemplate.ReviewDecision `json:"decision"            keel:"decision"`
+	ActorID             *pulid.ID                      `json:"actorId"             keel:"actor_id"`
+	Comment             string                         `json:"comment"             keel:"comment,nullzero"`
+	BaseVersionNumber   int64                          `json:"baseVersionNumber"   keel:"base_version_number"`
 	RequestedReviewerID *pulid.ID                      `json:"requestedReviewerId" keel:"requested_reviewer_id"`
-	ReviewerNote        string                         `json:"reviewerNote" keel:"reviewer_note,nullzero"`
-	CreatedAt           int64                          `json:"createdAt" keel:"created_at,autocreate"`
+	ReviewerNote        string                         `json:"reviewerNote"        keel:"reviewer_note,nullzero"`
+	CreatedAt           int64                          `json:"createdAt"           keel:"created_at,autocreate"`
 
-	Actor             *tenant.User `json:"actor,omitempty" keel:"belongs:actor_id"`
+	Actor             *tenant.User `json:"actor,omitempty"             keel:"belongs:actor_id"`
 	RequestedReviewer *tenant.User `json:"requestedReviewer,omitempty" keel:"belongs:requested_reviewer_id"`
 }
 

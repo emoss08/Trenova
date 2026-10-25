@@ -23,26 +23,26 @@ var (
 
 type DistanceOverride struct {
 	keel.Table            `keel:"distance_overrides"`
-	ID                    pulid.ID `json:"id" keel:"id,pk,autoid:do_"`
-	BusinessUnitID        pulid.ID `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
-	OrganizationID        pulid.ID `json:"organizationId" keel:"organization_id,pk,tenant"`
-	OriginLocationID      pulid.ID `json:"originLocationId" keel:"origin_location_id"`
-	DestinationLocationID pulid.ID `json:"destinationLocationId" keel:"destination_location_id"`
-	CustomerID            pulid.ID `json:"customerId" keel:"customer_id,nullzero"`
-	Distance              float64  `json:"distance" keel:"distance"`
-	RouteSignature        string   `json:"-" keel:"route_signature"`
-	Version               int64    `json:"version" keel:"version,version"`
-	CreatedAt             int64    `json:"createdAt" keel:"created_at,autocreate"`
-	UpdatedAt             int64    `json:"updatedAt" keel:"updated_at,autoupdate"`
-	SearchVector          string   `json:"-" keel:"search_vector,tsvector,readonly,noselect"`
+	ID                    pulid.ID `keel:"id,pk,autoid:do_"                         json:"id"`
+	BusinessUnitID        pulid.ID `keel:"business_unit_id,pk,tenant"               json:"businessUnitId"`
+	OrganizationID        pulid.ID `keel:"organization_id,pk,tenant"                json:"organizationId"`
+	OriginLocationID      pulid.ID `keel:"origin_location_id"                       json:"originLocationId"`
+	DestinationLocationID pulid.ID `keel:"destination_location_id"                  json:"destinationLocationId"`
+	CustomerID            pulid.ID `keel:"customer_id,nullzero"                     json:"customerId"`
+	Distance              float64  `keel:"distance"                                 json:"distance"`
+	RouteSignature        string   `keel:"route_signature"                          json:"-"`
+	Version               int64    `keel:"version,version"                          json:"version"`
+	CreatedAt             int64    `keel:"created_at,autocreate"                    json:"createdAt"`
+	UpdatedAt             int64    `keel:"updated_at,autoupdate"                    json:"updatedAt"`
+	SearchVector          string   `keel:"search_vector,tsvector,readonly,noselect" json:"-"`
 
 	// Relationships
 	BusinessUnit        *tenant.BusinessUnit    `json:"-"`
 	Organization        *tenant.Organization    `json:"-"`
-	OriginLocation      *location.Location      `json:"originLocation,omitempty" keel:"belongs:origin_location_id"`
+	OriginLocation      *location.Location      `json:"originLocation,omitempty"      keel:"belongs:origin_location_id"`
 	DestinationLocation *location.Location      `json:"destinationLocation,omitempty" keel:"belongs:destination_location_id"`
-	Customer            *customer.Customer      `json:"customer,omitempty" keel:"belongs:customer_id"`
-	IntermediateStops   []*DistanceOverrideStop `json:"intermediateStops,omitempty" keel:"many:distance_override_id"`
+	Customer            *customer.Customer      `json:"customer,omitempty"            keel:"belongs:customer_id"`
+	IntermediateStops   []*DistanceOverrideStop `json:"intermediateStops,omitempty"   keel:"many:distance_override_id"`
 }
 
 func (d *DistanceOverride) Validate(multiErr *errortypes.MultiError) {

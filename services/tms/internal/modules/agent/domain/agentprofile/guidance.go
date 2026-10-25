@@ -85,21 +85,21 @@ func AllGuidanceSources() []GuidanceSource {
 type Guidance struct {
 	keel.Table `keel:"agent_profile_guidance"`
 
-	ID             pulid.ID `json:"id" keel:"id,pk,autoid:aprg_"`
+	ID             pulid.ID `json:"id"             keel:"id,pk,autoid:aprg_"`
 	BusinessUnitID pulid.ID `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
 	OrganizationID pulid.ID `json:"organizationId" keel:"organization_id,pk,tenant"`
 
-	Subject     Subject        `json:"subject" keel:"subject"`
-	UserID      *pulid.ID      `json:"userId" keel:"user_id"`
-	Content     string         `json:"content" keel:"content"`
-	Status      GuidanceStatus `json:"status" keel:"status"`
-	Source      GuidanceSource `json:"source" keel:"source"`
+	Subject     Subject        `json:"subject"     keel:"subject"`
+	UserID      *pulid.ID      `json:"userId"      keel:"user_id"`
+	Content     string         `json:"content"     keel:"content"`
+	Status      GuidanceStatus `json:"status"      keel:"status"`
+	Source      GuidanceSource `json:"source"      keel:"source"`
 	CreatedByID pulid.ID       `json:"createdById" keel:"created_by_id"`
-	ThreadID    *pulid.ID      `json:"threadId" keel:"thread_id"`
+	ThreadID    *pulid.ID      `json:"threadId"    keel:"thread_id"`
 	RetiredByID *pulid.ID      `json:"retiredById" keel:"retired_by_id"`
-	RetiredAt   *int64         `json:"retiredAt" keel:"retired_at"`
+	RetiredAt   *int64         `json:"retiredAt"   keel:"retired_at"`
 
-	Version   int64 `json:"version" keel:"version,version"`
+	Version   int64 `json:"version"   keel:"version,version"`
 	CreatedAt int64 `json:"createdAt" keel:"created_at,autocreate"`
 	UpdatedAt int64 `json:"updatedAt" keel:"updated_at,autoupdate"`
 

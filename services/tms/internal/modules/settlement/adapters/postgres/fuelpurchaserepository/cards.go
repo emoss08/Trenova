@@ -24,7 +24,10 @@ func cardFilters(req *fuelpurchaseports.ListFuelCardsRequest) []keel.Pred {
 		when(req.Provider != "", fc.Provider.Eq(req.Provider)),
 		when(!req.AssignedTractorID.IsNil(), fc.AssignedTractorID.Eq(req.AssignedTractorID)),
 		when(!req.AssignedWorkerID.IsNil(), fc.AssignedWorkerID.Eq(req.AssignedWorkerID)),
-		when(req.UnassignedOnly, keel.And(fc.AssignedTractorID.IsNull(), fc.AssignedWorkerID.IsNull())),
+		when(
+			req.UnassignedOnly,
+			keel.And(fc.AssignedTractorID.IsNull(), fc.AssignedWorkerID.IsNull()),
+		),
 		when(req.DiscoveredOnly, fc.DiscoveredAt.IsNotNull()),
 	}
 }

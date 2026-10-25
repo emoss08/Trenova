@@ -18,19 +18,19 @@ import (
 type RateSimulationResult struct {
 	keel.Table `keel:"rate_simulation_results"`
 
-	ID               pulid.ID `json:"id" keel:"id,pk,autoid:rsr_"`
-	BusinessUnitID   pulid.ID `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
-	OrganizationID   pulid.ID `json:"organizationId" keel:"organization_id,pk,tenant"`
+	ID               pulid.ID `json:"id"               keel:"id,pk,autoid:rsr_"`
+	BusinessUnitID   pulid.ID `json:"businessUnitId"   keel:"business_unit_id,pk,tenant"`
+	OrganizationID   pulid.ID `json:"organizationId"   keel:"organization_id,pk,tenant"`
 	RateSimulationID pulid.ID `json:"rateSimulationId" keel:"rate_simulation_id"`
 
 	ShipmentID pulid.ID `json:"shipmentId" keel:"shipment_id"`
-	ProNumber  string   `json:"proNumber" keel:"pro_number,nullzero"`
+	ProNumber  string   `json:"proNumber"  keel:"pro_number,nullzero"`
 
 	// CustomerID and LaneKey are copied onto the row so the result grid can be
 	// grouped without joining back to shipments that may since have been
 	// edited. A simulation is a record of a moment.
 	CustomerID *pulid.ID `json:"customerId" keel:"customer_id"`
-	LaneKey    string    `json:"laneKey" keel:"lane_key,nullzero"`
+	LaneKey    string    `json:"laneKey"    keel:"lane_key,nullzero"`
 
 	// EquipmentTypeID is what the load ran on, which is the third dimension
 	// pricing changes are usually judged by.
@@ -39,8 +39,8 @@ type RateSimulationResult struct {
 	// BeforeAmount is what the shipment was actually billed. AfterAmount is
 	// what the simulated agreement would have charged.
 	BeforeAmount decimal.Decimal `json:"beforeAmount" keel:"before_amount"`
-	AfterAmount  decimal.Decimal `json:"afterAmount" keel:"after_amount"`
-	Delta        decimal.Decimal `json:"delta" keel:"delta"`
+	AfterAmount  decimal.Decimal `json:"afterAmount"  keel:"after_amount"`
+	Delta        decimal.Decimal `json:"delta"        keel:"delta"`
 	DeltaPercent decimal.Decimal `json:"deltaPercent" keel:"delta_percent"`
 
 	Outcome ratequote.Outcome `json:"outcome" keel:"outcome"`
@@ -49,7 +49,7 @@ type RateSimulationResult struct {
 	// is what turns "this went up" into "this went up because this lane now
 	// wins".
 	BeforeRuleID *pulid.ID `json:"beforeRuleId" keel:"before_rule_id"`
-	AfterRuleID  *pulid.ID `json:"afterRuleId" keel:"after_rule_id"`
+	AfterRuleID  *pulid.ID `json:"afterRuleId"  keel:"after_rule_id"`
 
 	Error string `json:"error" keel:"error,nullzero"`
 

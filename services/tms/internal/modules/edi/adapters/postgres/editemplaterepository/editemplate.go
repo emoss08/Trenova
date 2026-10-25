@@ -89,7 +89,10 @@ func (f *templateFilter) where() []keel.Pred {
 		keel.When(f.transactionSet != "", t.TransactionSet.Eq(f.transactionSet)),
 		keel.When(f.direction != "", t.Direction.Eq(f.direction)),
 		keel.When(f.status != "", t.Status.Eq(f.status)),
-		keel.When(search != "", keel.Or(t.Name.ContainsFold(search), t.Description.ContainsFold(search))),
+		keel.When(
+			search != "",
+			keel.Or(t.Name.ContainsFold(search), t.Description.ContainsFold(search)),
+		),
 	}
 }
 
@@ -233,7 +236,13 @@ func (r *repository) CreateTemplate(
 			}
 
 			req.Version.TemplateID = req.Template.ID
-			if err := createVersion(ctx, db, req.Version, req.Segments, req.ScriptLibraries); err != nil {
+			if err := createVersion(
+				ctx,
+				db,
+				req.Version,
+				req.Segments,
+				req.ScriptLibraries,
+			); err != nil {
 				return nil, nil, err
 			}
 
@@ -274,7 +283,9 @@ func (r *repository) GetTemplateVersionByID(
 ) (*edi.EDITemplateVersion, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*edi.EDITemplateVersion, error) {
 		tv := edidb.EDITemplateVersions
-		entity, err := withContents(tv.Where(tv.ID.Eq(req.VersionID), tv.TemplateID.Eq(req.TemplateID))).
+		entity, err := withContents(
+			tv.Where(tv.ID.Eq(req.VersionID), tv.TemplateID.Eq(req.TemplateID)),
+		).
 			Load(tv.Template()).
 			One(ctx, r.db.Keel(ctx))
 		if err != nil {
@@ -344,7 +355,8 @@ func (r *repository) ReplaceTemplateVersionSegments(
 		}
 
 		seg := edidb.EDITemplateSegments
-		if _, err := seg.Where(seg.TemplateVersionID.Eq(req.Version.ID)).Delete(ctx, db); err != nil {
+		if _, err := seg.Where(seg.TemplateVersionID.Eq(req.Version.ID)).
+			Delete(ctx, db); err != nil {
 			return nil, segmentErrors.Map(err, req.Version.ID.String())
 		}
 		if err := createSegments(ctx, db, req.Version, req.Segments); err != nil {
@@ -645,7 +657,11 @@ func createStarterTemplate(
 		return nil, nil, versionErrors.Map(err, version.ID.String())
 	}
 
-	segments, err := editemplates.StarterSegments(starter.tenant, version.ID, starter.transactionSet)
+	segments, err := editemplates.StarterSegments(
+		starter.tenant,
+		version.ID,
+		starter.transactionSet,
+	)
 	if err != nil {
 		return nil, nil, err
 	}

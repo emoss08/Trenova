@@ -251,7 +251,11 @@ func (r *repository) Create(
 				attachment.OrganizationID = entity.OrganizationID
 				attachment.BusinessUnitID = entity.BusinessUnitID
 			}
-			if err := inboundmessagedb.InboundAttachments.CreateMany(ctx, db, attachments); err != nil {
+			if err := inboundmessagedb.InboundAttachments.CreateMany(
+				ctx,
+				db,
+				attachments,
+			); err != nil {
 				return nil, err
 			}
 		}

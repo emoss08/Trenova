@@ -12,23 +12,23 @@ import (
 )
 
 type FormulaLibraryVersion struct {
-	keel.Table `                                                          keel:"formula_library_versions"`
+	keel.Table `keel:"formula_library_versions"`
 
-	ID             pulid.ID                         `json:"id" keel:"id,pk,autoid:flv_"`
+	ID             pulid.ID                         `json:"id"             keel:"id,pk,autoid:flv_"`
 	OrganizationID pulid.ID                         `json:"organizationId" keel:"organization_id,pk,tenant"`
 	BusinessUnitID pulid.ID                         `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
-	LibraryID      pulid.ID                         `json:"libraryId" keel:"library_id"`
-	VersionNumber  int64                            `json:"versionNumber" keel:"version_number"`
-	Name           string                           `json:"name" keel:"name"`
-	Description    string                           `json:"description" keel:"description,nullzero"`
-	Source         string                           `json:"source" keel:"source"`
-	Imports        []tarifftypes.Import             `json:"imports" keel:"imports,jsonb"`
-	TestCount      int32                            `json:"testCount" keel:"test_count"`
-	Status         formulatemplate.Status           `json:"status" keel:"status"`
-	ChangeMessage  string                           `json:"changeMessage" keel:"change_message,nullzero"`
-	ChangeSummary  map[string]jsonutils.FieldChange `json:"changeSummary" keel:"change_summary,jsonb"`
-	CreatedByID    pulid.ID                         `json:"createdById" keel:"created_by_id"`
-	CreatedAt      int64                            `json:"createdAt" keel:"created_at,autocreate"`
+	LibraryID      pulid.ID                         `json:"libraryId"      keel:"library_id"`
+	VersionNumber  int64                            `json:"versionNumber"  keel:"version_number"`
+	Name           string                           `json:"name"           keel:"name"`
+	Description    string                           `json:"description"    keel:"description,nullzero"`
+	Source         string                           `json:"source"         keel:"source"`
+	Imports        []tarifftypes.Import             `json:"imports"        keel:"imports,jsonb"`
+	TestCount      int32                            `json:"testCount"      keel:"test_count"`
+	Status         formulatemplate.Status           `json:"status"         keel:"status"`
+	ChangeMessage  string                           `json:"changeMessage"  keel:"change_message,nullzero"`
+	ChangeSummary  map[string]jsonutils.FieldChange `json:"changeSummary"  keel:"change_summary,jsonb"`
+	CreatedByID    pulid.ID                         `json:"createdById"    keel:"created_by_id"`
+	CreatedAt      int64                            `json:"createdAt"      keel:"created_at,autocreate"`
 
 	CreatedBy *tenant.User `json:"createdBy,omitempty" keel:"belongs:created_by_id"`
 }

@@ -17,45 +17,45 @@ import (
 type TenderOffer struct {
 	keel.Table `keel:"tender_offers"`
 
-	ID             pulid.ID `json:"id" keel:"id,pk,autoid:tof_"`
+	ID             pulid.ID `json:"id"             keel:"id,pk,autoid:tof_"`
 	BusinessUnitID pulid.ID `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
 	OrganizationID pulid.ID `json:"organizationId" keel:"organization_id,pk,tenant"`
-	TenderID       pulid.ID `json:"tenderId" keel:"tender_id"`
-	CarrierID      pulid.ID `json:"carrierId" keel:"carrier_id"`
+	TenderID       pulid.ID `json:"tenderId"       keel:"tender_id"`
+	CarrierID      pulid.ID `json:"carrierId"      keel:"carrier_id"`
 
-	Rank                 int16                      `json:"rank" keel:"rank"`
-	RateMethod           shipment.CarrierRateMethod `json:"rateMethod" keel:"rate_method"`
-	Rate                 decimal.Decimal            `json:"rate" keel:"rate"`
-	OfferTTLSeconds      int32                      `json:"offerTtlSeconds" keel:"offer_ttl_seconds"`
-	Channel              Channel                    `json:"channel" keel:"channel"`
-	Status               OfferStatus                `json:"status" keel:"status"`
-	RecipientEmail       string                     `json:"recipientEmail" keel:"recipient_email,nullzero"`
-	SentAt               *int64                     `json:"sentAt" keel:"sent_at"`
-	ExpiresAt            *int64                     `json:"expiresAt" keel:"expires_at"`
-	RespondedAt          *int64                     `json:"respondedAt" keel:"responded_at"`
-	ResponseSource       ResponseSource             `json:"responseSource" keel:"response_source,nullzero"`
-	DeclineReason        string                     `json:"declineReason" keel:"decline_reason,nullzero"`
-	DeliveryError        string                     `json:"deliveryError" keel:"delivery_error,nullzero"`
-	EDIPartnerID         *pulid.ID                  `json:"ediPartnerId" keel:"edi_partner_id"`
-	EDIMessageID         *pulid.ID                  `json:"ediMessageId" keel:"edi_message_id"`
-	LateResponseAction   string                     `json:"lateResponseAction" keel:"late_response_action,nullzero"`
-	LateResponseAt       *int64                     `json:"lateResponseAt" keel:"late_response_at"`
-	CounterRate          decimal.NullDecimal        `json:"counterRate" keel:"counter_rate"`
-	CounterNote          string                     `json:"counterNote" keel:"counter_note,nullzero"`
-	CounteredAt          *int64                     `json:"counteredAt" keel:"countered_at"`
-	CounterMargin        decimal.NullDecimal        `json:"counterMargin" keel:"counter_margin_percent"`
+	Rank                 int16                      `json:"rank"                 keel:"rank"`
+	RateMethod           shipment.CarrierRateMethod `json:"rateMethod"           keel:"rate_method"`
+	Rate                 decimal.Decimal            `json:"rate"                 keel:"rate"`
+	OfferTTLSeconds      int32                      `json:"offerTtlSeconds"      keel:"offer_ttl_seconds"`
+	Channel              Channel                    `json:"channel"              keel:"channel"`
+	Status               OfferStatus                `json:"status"               keel:"status"`
+	RecipientEmail       string                     `json:"recipientEmail"       keel:"recipient_email,nullzero"`
+	SentAt               *int64                     `json:"sentAt"               keel:"sent_at"`
+	ExpiresAt            *int64                     `json:"expiresAt"            keel:"expires_at"`
+	RespondedAt          *int64                     `json:"respondedAt"          keel:"responded_at"`
+	ResponseSource       ResponseSource             `json:"responseSource"       keel:"response_source,nullzero"`
+	DeclineReason        string                     `json:"declineReason"        keel:"decline_reason,nullzero"`
+	DeliveryError        string                     `json:"deliveryError"        keel:"delivery_error,nullzero"`
+	EDIPartnerID         *pulid.ID                  `json:"ediPartnerId"         keel:"edi_partner_id"`
+	EDIMessageID         *pulid.ID                  `json:"ediMessageId"         keel:"edi_message_id"`
+	LateResponseAction   string                     `json:"lateResponseAction"   keel:"late_response_action,nullzero"`
+	LateResponseAt       *int64                     `json:"lateResponseAt"       keel:"late_response_at"`
+	CounterRate          decimal.NullDecimal        `json:"counterRate"          keel:"counter_rate"`
+	CounterNote          string                     `json:"counterNote"          keel:"counter_note,nullzero"`
+	CounteredAt          *int64                     `json:"counteredAt"          keel:"countered_at"`
+	CounterMargin        decimal.NullDecimal        `json:"counterMargin"        keel:"counter_margin_percent"`
 	CounterNeedsApproval bool                       `json:"counterNeedsApproval" keel:"counter_needs_approval"`
-	CounterDecidedAt     *int64                     `json:"counterDecidedAt" keel:"counter_decided_at"`
-	CounterDecidedByID   *pulid.ID                  `json:"counterDecidedById" keel:"counter_decided_by_id"`
-	RevokedAt            *int64                     `json:"revokedAt" keel:"revoked_at"`
-	RevokeReason         string                     `json:"revokeReason" keel:"revoke_reason,nullzero"`
-	RevokedByID          *pulid.ID                  `json:"revokedById" keel:"revoked_by_id"`
-	ReofferedFromID      *pulid.ID                  `json:"reofferedFromId" keel:"reoffered_from_id"`
-	Version              int64                      `json:"version" keel:"version,version"`
-	CreatedAt            int64                      `json:"createdAt" keel:"created_at,autocreate"`
-	UpdatedAt            int64                      `json:"updatedAt" keel:"updated_at,autoupdate"`
+	CounterDecidedAt     *int64                     `json:"counterDecidedAt"     keel:"counter_decided_at"`
+	CounterDecidedByID   *pulid.ID                  `json:"counterDecidedById"   keel:"counter_decided_by_id"`
+	RevokedAt            *int64                     `json:"revokedAt"            keel:"revoked_at"`
+	RevokeReason         string                     `json:"revokeReason"         keel:"revoke_reason,nullzero"`
+	RevokedByID          *pulid.ID                  `json:"revokedById"          keel:"revoked_by_id"`
+	ReofferedFromID      *pulid.ID                  `json:"reofferedFromId"      keel:"reoffered_from_id"`
+	Version              int64                      `json:"version"              keel:"version,version"`
+	CreatedAt            int64                      `json:"createdAt"            keel:"created_at,autocreate"`
+	UpdatedAt            int64                      `json:"updatedAt"            keel:"updated_at,autoupdate"`
 
-	Tender  *Tender          `json:"tender,omitempty" keel:"belongs:tender_id"`
+	Tender  *Tender          `json:"tender,omitempty"  keel:"belongs:tender_id"`
 	Carrier *carrier.Carrier `json:"carrier,omitempty" keel:"belongs:carrier_id"`
 }
 

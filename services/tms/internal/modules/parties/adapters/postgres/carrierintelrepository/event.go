@@ -341,6 +341,7 @@ func eventCounts(rows []eventStatusSeverityCount) *carrierintelports.CarrierInte
 			counts.Open += int(row.Count)
 		case carrierintel.EventStatusAcknowledged:
 			counts.Acknowledged += int(row.Count)
+		case carrierintel.EventStatusResolved, carrierintel.EventStatusDismissed:
 		}
 		if _, ranked := counts.BySeverity[row.Severity]; ranked {
 			counts.BySeverity[row.Severity] += int(row.Count)

@@ -119,7 +119,11 @@ func (ur *repository) UpdateColumns(
 			return nil, err
 		}
 
-		if err = dberror.CheckAffected(int64(len(updated)), "User", entity.ID.String()); err != nil {
+		if err = dberror.CheckAffected(
+			int64(len(updated)),
+			"User",
+			entity.ID.String(),
+		); err != nil {
 			return nil, err
 		}
 

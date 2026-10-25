@@ -80,26 +80,26 @@ type Evidence struct {
 type TuneUp struct {
 	keel.Table `keel:"ai_tune_ups"`
 
-	ID             pulid.ID `json:"id" keel:"id,pk,autoid:aitu_"`
+	ID             pulid.ID `json:"id"             keel:"id,pk,autoid:aitu_"`
 	BusinessUnitID pulid.ID `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
 	OrganizationID pulid.ID `json:"organizationId" keel:"organization_id,pk,tenant"`
 
-	Kind              Kind            `json:"kind" keel:"kind"`
-	Fingerprint       string          `json:"fingerprint" keel:"fingerprint"`
+	Kind              Kind            `json:"kind"              keel:"kind"`
+	Fingerprint       string          `json:"fingerprint"       keel:"fingerprint"`
 	AgentDefinitionID pulid.ID        `json:"agentDefinitionId" keel:"agent_definition_id,nullzero"`
-	ProviderID        pulid.ID        `json:"providerId" keel:"provider_id,nullzero"`
-	OtherProviderID   pulid.ID        `json:"otherProviderId" keel:"other_provider_id,nullzero"`
-	ToolName          string          `json:"toolName" keel:"tool_name,nullzero"`
-	Task              aiprovider.Task `json:"task" keel:"task,nullzero"`
-	Evidence          Evidence        `json:"evidence" keel:"evidence,jsonb"`
+	ProviderID        pulid.ID        `json:"providerId"        keel:"provider_id,nullzero"`
+	OtherProviderID   pulid.ID        `json:"otherProviderId"   keel:"other_provider_id,nullzero"`
+	ToolName          string          `json:"toolName"          keel:"tool_name,nullzero"`
+	Task              aiprovider.Task `json:"task"              keel:"task,nullzero"`
+	Evidence          Evidence        `json:"evidence"          keel:"evidence,jsonb"`
 
-	Status         Status   `json:"status" keel:"status"`
+	Status         Status   `json:"status"         keel:"status"`
 	DismissedUntil *int64   `json:"dismissedUntil" keel:"dismissed_until"`
-	DecidedByID    pulid.ID `json:"decidedById" keel:"decided_by_id,nullzero"`
-	DecidedAt      *int64   `json:"decidedAt" keel:"decided_at"`
-	ComputedAt     int64    `json:"computedAt" keel:"computed_at"`
+	DecidedByID    pulid.ID `json:"decidedById"    keel:"decided_by_id,nullzero"`
+	DecidedAt      *int64   `json:"decidedAt"      keel:"decided_at"`
+	ComputedAt     int64    `json:"computedAt"     keel:"computed_at"`
 
-	Version   int64 `json:"version" keel:"version,version"`
+	Version   int64 `json:"version"   keel:"version,version"`
 	CreatedAt int64 `json:"createdAt" keel:"created_at,autocreate"`
 	UpdatedAt int64 `json:"updatedAt" keel:"updated_at,autoupdate"`
 }

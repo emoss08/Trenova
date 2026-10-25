@@ -13,30 +13,30 @@ import (
 
 // Pickup and delivery stops on a move
 type Stop struct {
-	keel.Table `                                     keel:"stops,report=Operations"`
+	keel.Table `keel:"stops,report=Operations"`
 
-	ID                     pulid.ID           `json:"id" keel:"id,pk,autoid:stp_"`
-	BusinessUnitID         pulid.ID           `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
-	OrganizationID         pulid.ID           `json:"organizationId" keel:"organization_id,pk,tenant"`
-	ShipmentMoveID         pulid.ID           `json:"shipmentMoveId" keel:"shipment_move_id"`
-	LocationID             pulid.ID           `json:"locationId" keel:"location_id"`
-	Status                 StopStatus         `json:"status" keel:"status"`
-	Type                   StopType           `json:"type" keel:"type"`
-	ScheduleType           StopScheduleType   `json:"scheduleType" keel:"schedule_type"`
-	Sequence               int64              `json:"sequence" keel:"sequence,dimension"`
-	Pieces                 *int64             `json:"pieces" keel:"pieces,format=count"`
-	Weight                 *int64             `json:"weight" keel:"weight,format=weight"`
-	ScheduledWindowStart   int64              `json:"scheduledWindowStart" keel:"scheduled_window_start,type=epoch"`
-	ScheduledWindowEnd     *int64             `json:"scheduledWindowEnd" keel:"scheduled_window_end,type=epoch"`
-	ActualArrival          *int64             `json:"actualArrival" keel:"actual_arrival,type=epoch"`
-	ActualDeparture        *int64             `json:"actualDeparture" keel:"actual_departure,type=epoch"`
-	CountLateOverride      *bool              `json:"countLateOverride" keel:"count_late_override"`
+	ID                     pulid.ID           `json:"id"                     keel:"id,pk,autoid:stp_"`
+	BusinessUnitID         pulid.ID           `json:"businessUnitId"         keel:"business_unit_id,pk,tenant"`
+	OrganizationID         pulid.ID           `json:"organizationId"         keel:"organization_id,pk,tenant"`
+	ShipmentMoveID         pulid.ID           `json:"shipmentMoveId"         keel:"shipment_move_id"`
+	LocationID             pulid.ID           `json:"locationId"             keel:"location_id"`
+	Status                 StopStatus         `json:"status"                 keel:"status"`
+	Type                   StopType           `json:"type"                   keel:"type"`
+	ScheduleType           StopScheduleType   `json:"scheduleType"           keel:"schedule_type"`
+	Sequence               int64              `json:"sequence"               keel:"sequence,dimension"`
+	Pieces                 *int64             `json:"pieces"                 keel:"pieces,format=count"`
+	Weight                 *int64             `json:"weight"                 keel:"weight,format=weight"`
+	ScheduledWindowStart   int64              `json:"scheduledWindowStart"   keel:"scheduled_window_start,type=epoch"`
+	ScheduledWindowEnd     *int64             `json:"scheduledWindowEnd"     keel:"scheduled_window_end,type=epoch"`
+	ActualArrival          *int64             `json:"actualArrival"          keel:"actual_arrival,type=epoch"`
+	ActualDeparture        *int64             `json:"actualDeparture"        keel:"actual_departure,type=epoch"`
+	CountLateOverride      *bool              `json:"countLateOverride"      keel:"count_late_override"`
 	CountDetentionOverride *bool              `json:"countDetentionOverride" keel:"count_detention_override"`
-	AddressLine            string             `json:"addressLine" keel:"address_line,nullzero"`
-	Version                int64              `json:"version" keel:"version,version"`
-	CreatedAt              int64              `json:"createdAt" keel:"created_at,autocreate"`
-	UpdatedAt              int64              `json:"updatedAt" keel:"updated_at,autoupdate"`
-	Location               *location.Location `json:"location,omitempty" keel:"belongs:location_id"`
+	AddressLine            string             `json:"addressLine"            keel:"address_line,nullzero"`
+	Version                int64              `json:"version"                keel:"version,version"`
+	CreatedAt              int64              `json:"createdAt"              keel:"created_at,autocreate"`
+	UpdatedAt              int64              `json:"updatedAt"              keel:"updated_at,autoupdate"`
+	Location               *location.Location `json:"location,omitempty"     keel:"belongs:location_id"`
 }
 
 func (s *Stop) BeforeCreate(ctx context.Context) error {

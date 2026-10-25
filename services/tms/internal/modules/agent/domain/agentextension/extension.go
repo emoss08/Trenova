@@ -12,18 +12,18 @@ import (
 type Extension struct {
 	keel.Table `keel:"agent_extensions"`
 
-	ID             pulid.ID       `json:"id" keel:"id,pk,autoid:aext_"`
+	ID             pulid.ID       `json:"id"             keel:"id,pk,autoid:aext_"`
 	BusinessUnitID pulid.ID       `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
 	OrganizationID pulid.ID       `json:"organizationId" keel:"organization_id,pk,tenant"`
-	Type           Type           `json:"type" keel:"type"`
-	Enabled        bool           `json:"enabled" keel:"enabled"`
-	Availability   Availability   `json:"availability" keel:"availability"`
-	Configuration  map[string]any `json:"configuration" keel:"configuration,jsonb"`
-	EnabledByID    pulid.ID       `json:"enabledById" keel:"enabled_by_id,nullzero"`
-	EnabledAt      *int64         `json:"enabledAt" keel:"enabled_at"`
-	Version        int64          `json:"version" keel:"version,version"`
-	CreatedAt      int64          `json:"createdAt" keel:"created_at,autocreate"`
-	UpdatedAt      int64          `json:"updatedAt" keel:"updated_at,autoupdate"`
+	Type           Type           `json:"type"           keel:"type"`
+	Enabled        bool           `json:"enabled"        keel:"enabled"`
+	Availability   Availability   `json:"availability"   keel:"availability"`
+	Configuration  map[string]any `json:"configuration"  keel:"configuration,jsonb"`
+	EnabledByID    pulid.ID       `json:"enabledById"    keel:"enabled_by_id,nullzero"`
+	EnabledAt      *int64         `json:"enabledAt"      keel:"enabled_at"`
+	Version        int64          `json:"version"        keel:"version,version"`
+	CreatedAt      int64          `json:"createdAt"      keel:"created_at,autocreate"`
+	UpdatedAt      int64          `json:"updatedAt"      keel:"updated_at,autoupdate"`
 
 	EnabledBy *tenant.User `json:"enabledBy,omitempty" keel:"belongs:enabled_by_id"`
 }

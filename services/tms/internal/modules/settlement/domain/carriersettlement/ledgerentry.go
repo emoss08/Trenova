@@ -16,22 +16,22 @@ var (
 type LedgerEntry struct {
 	keel.Table `keel:"carrier_ledger_entries"`
 
-	ID                  pulid.ID        `json:"id" keel:"id,pk,autoid:carldg_"`
-	BusinessUnitID      pulid.ID        `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
-	OrganizationID      pulid.ID        `json:"organizationId" keel:"organization_id,pk,tenant"`
-	CarrierID           pulid.ID        `json:"carrierId" keel:"carrier_id"`
-	EntryType           LedgerEntryType `json:"entryType" keel:"entry_type"`
-	SourceObjectType    string          `json:"sourceObjectType" keel:"source_object_type"`
-	SourceObjectID      string          `json:"sourceObjectId" keel:"source_object_id"`
-	SourceEventType     string          `json:"sourceEventType" keel:"source_event_type"`
+	ID                  pulid.ID        `json:"id"                  keel:"id,pk,autoid:carldg_"`
+	BusinessUnitID      pulid.ID        `json:"businessUnitId"      keel:"business_unit_id,pk,tenant"`
+	OrganizationID      pulid.ID        `json:"organizationId"      keel:"organization_id,pk,tenant"`
+	CarrierID           pulid.ID        `json:"carrierId"           keel:"carrier_id"`
+	EntryType           LedgerEntryType `json:"entryType"           keel:"entry_type"`
+	SourceObjectType    string          `json:"sourceObjectType"    keel:"source_object_type"`
+	SourceObjectID      string          `json:"sourceObjectId"      keel:"source_object_id"`
+	SourceEventType     string          `json:"sourceEventType"     keel:"source_event_type"`
 	RelatedSettlementID *pulid.ID       `json:"relatedSettlementId" keel:"related_settlement_id"`
-	JournalBatchID      *pulid.ID       `json:"journalBatchId" keel:"journal_batch_id"`
-	DocumentNumber      string          `json:"documentNumber" keel:"document_number,nullzero"`
-	TransactionDate     int64           `json:"transactionDate" keel:"transaction_date"`
-	LineNumber          int             `json:"lineNumber" keel:"line_number"`
-	AmountMinor         int64           `json:"amountMinor" keel:"amount_minor"`
-	CreatedByID         pulid.ID        `json:"createdById" keel:"created_by_id"`
-	CreatedAt           int64           `json:"createdAt" keel:"created_at,autocreate"`
+	JournalBatchID      *pulid.ID       `json:"journalBatchId"      keel:"journal_batch_id"`
+	DocumentNumber      string          `json:"documentNumber"      keel:"document_number,nullzero"`
+	TransactionDate     int64           `json:"transactionDate"     keel:"transaction_date"`
+	LineNumber          int             `json:"lineNumber"          keel:"line_number"`
+	AmountMinor         int64           `json:"amountMinor"         keel:"amount_minor"`
+	CreatedByID         pulid.ID        `json:"createdById"         keel:"created_by_id"`
+	CreatedAt           int64           `json:"createdAt"           keel:"created_at,autocreate"`
 
 	Carrier *carrier.Carrier `json:"carrier,omitempty" keel:"belongs:carrier_id"`
 }

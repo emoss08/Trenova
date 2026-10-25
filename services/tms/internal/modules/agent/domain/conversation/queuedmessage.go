@@ -47,18 +47,18 @@ func (r *QueuedRequest) Directed() bool {
 type QueuedMessage struct {
 	keel.Table `keel:"assistant_queued_messages"`
 
-	ID             pulid.ID       `json:"id" keel:"id,pk,autoid:aqm_"`
+	ID             pulid.ID       `json:"id"             keel:"id,pk,autoid:aqm_"`
 	OrganizationID pulid.ID       `json:"organizationId" keel:"organization_id,pk,tenant"`
 	BusinessUnitID pulid.ID       `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
-	ThreadID       pulid.ID       `json:"threadId" keel:"thread_id"`
-	UserID         pulid.ID       `json:"userId" keel:"user_id"`
-	Content        string         `json:"content" keel:"content"`
-	Request        *QueuedRequest `json:"request" keel:"request,jsonb"`
-	Position       int64          `json:"position" keel:"position"`
-	Steer          bool           `json:"steer" keel:"steer"`
-	Version        int64          `json:"version" keel:"version,version"`
-	CreatedAt      int64          `json:"createdAt" keel:"created_at,autocreate"`
-	UpdatedAt      int64          `json:"updatedAt" keel:"updated_at,autoupdate"`
+	ThreadID       pulid.ID       `json:"threadId"       keel:"thread_id"`
+	UserID         pulid.ID       `json:"userId"         keel:"user_id"`
+	Content        string         `json:"content"        keel:"content"`
+	Request        *QueuedRequest `json:"request"        keel:"request,jsonb"`
+	Position       int64          `json:"position"       keel:"position"`
+	Steer          bool           `json:"steer"          keel:"steer"`
+	Version        int64          `json:"version"        keel:"version,version"`
+	CreatedAt      int64          `json:"createdAt"      keel:"created_at,autocreate"`
+	UpdatedAt      int64          `json:"updatedAt"      keel:"updated_at,autoupdate"`
 
 	Organization *tenant.Organization `json:"-"`
 	BusinessUnit *tenant.BusinessUnit `json:"-"`

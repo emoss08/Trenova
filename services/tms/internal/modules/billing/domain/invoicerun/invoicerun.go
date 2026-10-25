@@ -32,26 +32,26 @@ var (
 // to audit against; and it would leave a scheduled run that failed halfway with
 // nothing to resume from.
 type InvoiceRun struct {
-	keel.Table `                                               keel:"invoice_runs"`
+	keel.Table `keel:"invoice_runs"`
 
-	ID             pulid.ID              `json:"id" keel:"id,pk,autoid:invrun_"`
+	ID             pulid.ID              `json:"id"             keel:"id,pk,autoid:invrun_"`
 	BusinessUnitID pulid.ID              `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
 	OrganizationID pulid.ID              `json:"organizationId" keel:"organization_id,pk,tenant"`
-	Number         string                `json:"number" keel:"number"`
-	Status         Status                `json:"status" keel:"status"`
-	Source         Source                `json:"source" keel:"source"`
-	Cycle          customer.BillingCycle `json:"cycle" keel:"cycle,nullzero"`
-	PeriodStart    int64                 `json:"periodStart" keel:"period_start"`
-	PeriodEnd      int64                 `json:"periodEnd" keel:"period_end"`
-	InvoiceDate    int64                 `json:"invoiceDate" keel:"invoice_date"`
-	CustomerIDs    []string              `json:"customerIds" keel:"customer_ids,nullzero"`
-	CurrencyCode   string                `json:"currencyCode" keel:"currency_code"`
+	Number         string                `json:"number"         keel:"number"`
+	Status         Status                `json:"status"         keel:"status"`
+	Source         Source                `json:"source"         keel:"source"`
+	Cycle          customer.BillingCycle `json:"cycle"          keel:"cycle,nullzero"`
+	PeriodStart    int64                 `json:"periodStart"    keel:"period_start"`
+	PeriodEnd      int64                 `json:"periodEnd"      keel:"period_end"`
+	InvoiceDate    int64                 `json:"invoiceDate"    keel:"invoice_date"`
+	CustomerIDs    []string              `json:"customerIds"    keel:"customer_ids,nullzero"`
+	CurrencyCode   string                `json:"currencyCode"   keel:"currency_code"`
 
-	GroupCount       int             `json:"groupCount" keel:"group_count"`
-	ItemCount        int             `json:"itemCount" keel:"item_count"`
-	ExcludedCount    int             `json:"excludedCount" keel:"excluded_count"`
-	InvoiceCount     int             `json:"invoiceCount" keel:"invoice_count"`
-	TotalAmount      decimal.Decimal `json:"totalAmount" keel:"total_amount"`
+	GroupCount       int             `json:"groupCount"       keel:"group_count"`
+	ItemCount        int             `json:"itemCount"        keel:"item_count"`
+	ExcludedCount    int             `json:"excludedCount"    keel:"excluded_count"`
+	InvoiceCount     int             `json:"invoiceCount"     keel:"invoice_count"`
+	TotalAmount      decimal.Decimal `json:"totalAmount"      keel:"total_amount"`
 	TotalAmountMinor int64           `json:"totalAmountMinor" keel:"total_amount_minor"`
 
 	FailureReason string `json:"failureReason" keel:"failure_reason,nullzero"`
@@ -62,20 +62,20 @@ type InvoiceRun struct {
 	// why a month has two invoices without going hunting for it.
 	OffCycleReason string `json:"offCycleReason" keel:"off_cycle_reason,nullzero"`
 
-	BuiltByID     pulid.ID `json:"builtById" keel:"built_by_id,nullzero"`
-	BuiltAt       *int64   `json:"builtAt" keel:"built_at"`
+	BuiltByID     pulid.ID `json:"builtById"     keel:"built_by_id,nullzero"`
+	BuiltAt       *int64   `json:"builtAt"       keel:"built_at"`
 	CommittedByID pulid.ID `json:"committedById" keel:"committed_by_id,nullzero"`
-	CommittedAt   *int64   `json:"committedAt" keel:"committed_at"`
-	CanceledByID  pulid.ID `json:"canceledById" keel:"canceled_by_id,nullzero"`
-	CanceledAt    *int64   `json:"canceledAt" keel:"canceled_at"`
+	CommittedAt   *int64   `json:"committedAt"   keel:"committed_at"`
+	CanceledByID  pulid.ID `json:"canceledById"  keel:"canceled_by_id,nullzero"`
+	CanceledAt    *int64   `json:"canceledAt"    keel:"canceled_at"`
 
-	Version   int64 `json:"version" keel:"version,version"`
+	Version   int64 `json:"version"   keel:"version,version"`
 	CreatedAt int64 `json:"createdAt" keel:"created_at,autocreate"`
 	UpdatedAt int64 `json:"updatedAt" keel:"updated_at,autoupdate"`
 
 	BusinessUnit *tenant.BusinessUnit `json:"businessUnit,omitempty"`
 	Organization *tenant.Organization `json:"organization,omitempty"`
-	Groups       []*InvoiceRunGroup   `json:"groups,omitempty" keel:"many:run_id"`
+	Groups       []*InvoiceRunGroup   `json:"groups,omitempty"       keel:"many:run_id"`
 }
 
 func (r *InvoiceRun) Validate(multiErr *errortypes.MultiError) {

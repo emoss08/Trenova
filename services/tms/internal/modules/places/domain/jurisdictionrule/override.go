@@ -20,24 +20,24 @@ var (
 type Override struct {
 	keel.Table `keel:"jurisdiction_rule_overrides"`
 
-	ID             pulid.ID `json:"id" keel:"id,pk,autoid:jro_"`
+	ID             pulid.ID `json:"id"             keel:"id,pk,autoid:jro_"`
 	BusinessUnitID pulid.ID `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
 	OrganizationID pulid.ID `json:"organizationId" keel:"organization_id,pk,tenant"`
-	StateID        pulid.ID `json:"stateId" keel:"state_id"`
+	StateID        pulid.ID `json:"stateId"        keel:"state_id"`
 
-	MaxWidthFeet    *float64 `json:"maxWidthFeet" keel:"max_width_feet"`
-	MaxHeightFeet   *float64 `json:"maxHeightFeet" keel:"max_height_feet"`
-	MaxLengthFeet   *float64 `json:"maxLengthFeet" keel:"max_length_feet"`
+	MaxWidthFeet    *float64 `json:"maxWidthFeet"    keel:"max_width_feet"`
+	MaxHeightFeet   *float64 `json:"maxHeightFeet"   keel:"max_height_feet"`
+	MaxLengthFeet   *float64 `json:"maxLengthFeet"   keel:"max_length_feet"`
 	MaxWeightPounds *int64   `json:"maxWeightPounds" keel:"max_weight_pounds"`
 
 	PermitLeadTimeDays *int16 `json:"permitLeadTimeDays" keel:"permit_lead_time_days"`
 
-	DaylightOnly      *bool `json:"daylightOnly" keel:"daylight_only"`
+	DaylightOnly      *bool `json:"daylightOnly"      keel:"daylight_only"`
 	HolidayRestricted *bool `json:"holidayRestricted" keel:"holiday_restricted"`
 
 	Reason string `json:"reason" keel:"reason"`
 
-	Version   int64 `json:"version" keel:"version,version"`
+	Version   int64 `json:"version"   keel:"version,version"`
 	CreatedAt int64 `json:"createdAt" keel:"created_at,autocreate"`
 	UpdatedAt int64 `json:"updatedAt" keel:"updated_at,autoupdate"`
 

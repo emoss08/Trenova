@@ -19,36 +19,36 @@ var (
 
 // Hazmat reference data
 type HazardousMaterial struct {
-	keel.Table `                                                  keel:"hazardous_materials,report=Freight"`
+	keel.Table `keel:"hazardous_materials,report=Freight"`
 
-	ID                          pulid.ID           `json:"id" keel:"id,pk,autoid:hm_"`
-	BusinessUnitID              pulid.ID           `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
-	OrganizationID              pulid.ID           `json:"organizationId" keel:"organization_id,pk,tenant"`
-	Status                      domaintypes.Status `json:"status" keel:"status"`
-	Code                        string             `json:"code" keel:"code"`
-	Name                        string             `json:"name" keel:"name"`
-	Description                 string             `json:"description" keel:"description"`
-	Class                       HazardousClass     `json:"class" keel:"class"`
-	UNNumber                    string             `json:"unNumber" keel:"un_number,nullzero"`
-	PackingGroup                PackingGroup       `json:"packingGroup" keel:"packing_group"`
-	SubsidiaryHazardClass       string             `json:"subsidiaryHazardClass" keel:"subsidiary_hazard_class,nullzero"`
-	ErgGuideNumber              string             `json:"ergGuideNumber" keel:"erg_guide_number,nullzero"`
-	LabelCodes                  string             `json:"labelCodes" keel:"label_codes,nullzero"`
-	SpecialProvisions           string             `json:"specialProvisions" keel:"special_provisions,nullzero"`
-	ProperShippingName          string             `json:"properShippingName" keel:"proper_shipping_name,nullzero"`
-	HandlingInstructions        string             `json:"handlingInstructions" keel:"handling_instructions,nullzero"`
-	EmergencyContact            string             `json:"emergencyContact" keel:"emergency_contact,nullzero"`
+	ID                          pulid.ID           `json:"id"                          keel:"id,pk,autoid:hm_"`
+	BusinessUnitID              pulid.ID           `json:"businessUnitId"              keel:"business_unit_id,pk,tenant"`
+	OrganizationID              pulid.ID           `json:"organizationId"              keel:"organization_id,pk,tenant"`
+	Status                      domaintypes.Status `json:"status"                      keel:"status"`
+	Code                        string             `json:"code"                        keel:"code"`
+	Name                        string             `json:"name"                        keel:"name"`
+	Description                 string             `json:"description"                 keel:"description"`
+	Class                       HazardousClass     `json:"class"                       keel:"class"`
+	UNNumber                    string             `json:"unNumber"                    keel:"un_number,nullzero"`
+	PackingGroup                PackingGroup       `json:"packingGroup"                keel:"packing_group"`
+	SubsidiaryHazardClass       string             `json:"subsidiaryHazardClass"       keel:"subsidiary_hazard_class,nullzero"`
+	ErgGuideNumber              string             `json:"ergGuideNumber"              keel:"erg_guide_number,nullzero"`
+	LabelCodes                  string             `json:"labelCodes"                  keel:"label_codes,nullzero"`
+	SpecialProvisions           string             `json:"specialProvisions"           keel:"special_provisions,nullzero"`
+	ProperShippingName          string             `json:"properShippingName"          keel:"proper_shipping_name,nullzero"`
+	HandlingInstructions        string             `json:"handlingInstructions"        keel:"handling_instructions,nullzero"`
+	EmergencyContact            string             `json:"emergencyContact"            keel:"emergency_contact,nullzero"`
 	EmergencyContactPhoneNumber string             `json:"emergencyContactPhoneNumber" keel:"emergency_contact_phone_number,nullzero"`
-	QuantityThreshold           string             `json:"quantityThreshold" keel:"quantity_threshold,nullzero"`
+	QuantityThreshold           string             `json:"quantityThreshold"           keel:"quantity_threshold,nullzero"`
 	SearchVector                string             `json:"-"`
-	Rank                        string             `json:"-" keel:"rank,computed"`
-	PlacardRequired             bool               `json:"placardRequired" keel:"placard_required"`
-	IsReportableQuantity        bool               `json:"isReportableQuantity" keel:"is_reportable_quantity"`
-	MarinePollutant             bool               `json:"marinePollutant" keel:"marine_pollutant"`
-	InhalationHazard            bool               `json:"inhalationHazard" keel:"inhalation_hazard"`
-	Version                     int64              `json:"version" keel:"version,version"`
-	CreatedAt                   int64              `json:"createdAt" keel:"created_at,autocreate"`
-	UpdatedAt                   int64              `json:"updatedAt" keel:"updated_at,autoupdate"`
+	Rank                        string             `json:"-"                           keel:"rank,computed"`
+	PlacardRequired             bool               `json:"placardRequired"             keel:"placard_required"`
+	IsReportableQuantity        bool               `json:"isReportableQuantity"        keel:"is_reportable_quantity"`
+	MarinePollutant             bool               `json:"marinePollutant"             keel:"marine_pollutant"`
+	InhalationHazard            bool               `json:"inhalationHazard"            keel:"inhalation_hazard"`
+	Version                     int64              `json:"version"                     keel:"version,version"`
+	CreatedAt                   int64              `json:"createdAt"                   keel:"created_at,autocreate"`
+	UpdatedAt                   int64              `json:"updatedAt"                   keel:"updated_at,autoupdate"`
 
 	BusinessUnit *tenant.BusinessUnit `json:"businessUnit,omitempty"`
 	Organization *tenant.Organization `json:"organization,omitempty"`

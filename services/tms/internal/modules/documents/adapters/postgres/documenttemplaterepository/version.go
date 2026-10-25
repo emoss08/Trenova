@@ -17,12 +17,22 @@ import (
 	"go.uber.org/zap"
 )
 
+const fieldTemplateID = "templateId"
+
+func templateForeignKey(name string) dberror.Constraint {
+	return dberror.Constraint{
+		Name:    name,
+		Field:   fieldTemplateID,
+		Message: "Document template does not exist",
+	}
+}
+
 var versionErrors = dberror.Mapping{
 	Entity: "DocumentTemplateVersion",
 	Unique: []dberror.Constraint{
 		{
 			Name:    "uq_document_template_versions_one_draft",
-			Field:   "templateId",
+			Field:   fieldTemplateID,
 			Message: "This template already has a draft. Edit it or delete it before starting another.",
 		},
 		{
@@ -32,11 +42,7 @@ var versionErrors = dberror.Mapping{
 		},
 	},
 	ForeignKey: []dberror.Constraint{
-		{
-			Name:    "fk_document_template_versions_template",
-			Field:   "templateId",
-			Message: "Document template does not exist",
-		},
+		templateForeignKey("fk_document_template_versions_template"),
 		{
 			Name:    "fk_document_template_versions_source",
 			Field:   "sourceVersionId",
@@ -206,7 +212,11 @@ func (r *versionRepository) Create(
 			entity.ArchivedAt = nil
 			entity.ArchivedByID = nil
 
-			if err = documenttemplatedb.DocumentTemplateVersions.Create(ctx, db, entity); err != nil {
+			if err = documenttemplatedb.DocumentTemplateVersions.Create(
+				ctx,
+				db,
+				entity,
+			); err != nil {
 				r.l.Error("failed to create document template version", zap.Error(err))
 				return nil, versionErrors.Map(err, entity.ID.String())
 			}

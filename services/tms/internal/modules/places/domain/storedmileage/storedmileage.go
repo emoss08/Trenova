@@ -52,37 +52,37 @@ type JurisdictionDistance struct {
 
 type StoredMileage struct {
 	keel.Table            `keel:"stored_mileages"`
-	ID                    pulid.ID               `json:"id" keel:"id,pk,autoid:smg_"`
-	BusinessUnitID        pulid.ID               `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
-	OrganizationID        pulid.ID               `json:"organizationId" keel:"organization_id,pk,tenant"`
-	Status                string                 `json:"status" keel:"status"`
-	OriginKey             StopKey                `json:"originKey" keel:"origin_key,jsonb"`
-	DestinationKey        StopKey                `json:"destinationKey" keel:"destination_key,jsonb"`
-	IntermediateKeys      []StopKey              `json:"intermediateKeys" keel:"intermediate_keys,jsonb,nullzero"`
-	RouteSignature        string                 `json:"routeSignature" keel:"route_signature"`
-	RouteHash             string                 `json:"routeHash" keel:"route_hash"`
-	Distance              float64                `json:"distance" keel:"distance"`
-	DistanceUnits         string                 `json:"distanceUnits" keel:"distance_units"`
-	Provider              string                 `json:"provider" keel:"provider"`
-	Source                string                 `json:"source" keel:"source"`
-	RoutingType           string                 `json:"routingType" keel:"routing_type"`
-	Method                string                 `json:"method" keel:"method"`
-	LocationGranularity   string                 `json:"locationGranularity" keel:"location_granularity"`
-	DataVersion           string                 `json:"dataVersion" keel:"data_version"`
-	DistanceProfileID     pulid.ID               `json:"distanceProfileId" keel:"distance_profile_id"`
-	DistanceProfileName   string                 `json:"distanceProfileName" keel:"distance_profile_name,nullzero"`
-	Hazmat                bool                   `json:"hazmat" keel:"hazmat"`
-	HazmatTypes           []string               `json:"hazmatTypes" keel:"hazmat_types,nullzero"`
-	HazmatSignature       string                 `json:"hazmatSignature" keel:"hazmat_signature"`
-	ProviderMetadata      map[string]any         `json:"providerMetadata" keel:"provider_metadata,jsonb,nullzero"`
-	JurisdictionDistances []JurisdictionDistance `json:"jurisdictionDistances,omitempty" keel:"jurisdiction_distances,jsonb,nullzero"`
-	HitCount              int64                  `json:"hitCount" keel:"hit_count"`
-	LastUsedAt            *int64                 `json:"lastUsedAt" keel:"last_used_at"`
-	LastCalculatedAt      int64                  `json:"lastCalculatedAt" keel:"last_calculated_at"`
-	Version               int64                  `json:"version" keel:"version,version"`
-	CreatedAt             int64                  `json:"createdAt" keel:"created_at,autocreate"`
-	UpdatedAt             int64                  `json:"updatedAt" keel:"updated_at,autoupdate"`
-	SearchVector          string                 `json:"-"`
+	ID                    pulid.ID               `keel:"id,pk,autoid:smg_"                     json:"id"`
+	BusinessUnitID        pulid.ID               `keel:"business_unit_id,pk,tenant"            json:"businessUnitId"`
+	OrganizationID        pulid.ID               `keel:"organization_id,pk,tenant"             json:"organizationId"`
+	Status                string                 `keel:"status"                                json:"status"`
+	OriginKey             StopKey                `keel:"origin_key,jsonb"                      json:"originKey"`
+	DestinationKey        StopKey                `keel:"destination_key,jsonb"                 json:"destinationKey"`
+	IntermediateKeys      []StopKey              `keel:"intermediate_keys,jsonb,nullzero"      json:"intermediateKeys"`
+	RouteSignature        string                 `keel:"route_signature"                       json:"routeSignature"`
+	RouteHash             string                 `keel:"route_hash"                            json:"routeHash"`
+	Distance              float64                `keel:"distance"                              json:"distance"`
+	DistanceUnits         string                 `keel:"distance_units"                        json:"distanceUnits"`
+	Provider              string                 `keel:"provider"                              json:"provider"`
+	Source                string                 `keel:"source"                                json:"source"`
+	RoutingType           string                 `keel:"routing_type"                          json:"routingType"`
+	Method                string                 `keel:"method"                                json:"method"`
+	LocationGranularity   string                 `keel:"location_granularity"                  json:"locationGranularity"`
+	DataVersion           string                 `keel:"data_version"                          json:"dataVersion"`
+	DistanceProfileID     pulid.ID               `keel:"distance_profile_id"                   json:"distanceProfileId"`
+	DistanceProfileName   string                 `keel:"distance_profile_name,nullzero"        json:"distanceProfileName"`
+	Hazmat                bool                   `keel:"hazmat"                                json:"hazmat"`
+	HazmatTypes           []string               `keel:"hazmat_types,nullzero"                 json:"hazmatTypes"`
+	HazmatSignature       string                 `keel:"hazmat_signature"                      json:"hazmatSignature"`
+	ProviderMetadata      map[string]any         `keel:"provider_metadata,jsonb,nullzero"      json:"providerMetadata"`
+	JurisdictionDistances []JurisdictionDistance `keel:"jurisdiction_distances,jsonb,nullzero" json:"jurisdictionDistances,omitempty"`
+	HitCount              int64                  `keel:"hit_count"                             json:"hitCount"`
+	LastUsedAt            *int64                 `keel:"last_used_at"                          json:"lastUsedAt"`
+	LastCalculatedAt      int64                  `keel:"last_calculated_at"                    json:"lastCalculatedAt"`
+	Version               int64                  `keel:"version,version"                       json:"version"`
+	CreatedAt             int64                  `keel:"created_at,autocreate"                 json:"createdAt"`
+	UpdatedAt             int64                  `keel:"updated_at,autoupdate"                 json:"updatedAt"`
+	SearchVector          string                 `                                             json:"-"`
 
 	BusinessUnit *tenant.BusinessUnit `json:"-"`
 	Organization *tenant.Organization `json:"-"`

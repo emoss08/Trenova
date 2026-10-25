@@ -72,7 +72,10 @@ func listActivitiesQuery(
 	a := triagedb.Activities
 	ra := triagedb.Activities.As("ranked_activity")
 	ranked := keel.CTE(activityRankCTE, []string{"id", "activity_rank"}, ra.
-		Pick(ra.ID, keel.RowNumber().Over([]keel.Expr{ra.MessageID}, ra.CreatedAt.Desc(), ra.ID.Desc())).
+		Pick(
+			ra.ID,
+			keel.RowNumber().Over([]keel.Expr{ra.MessageID}, ra.CreatedAt.Desc(), ra.ID.Desc()),
+		).
 		Where(ra.MessageID.In(req.MessageIDs...)))
 
 	return a.Where(

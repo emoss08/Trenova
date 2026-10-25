@@ -18,53 +18,53 @@ import (
 
 // Cash received from customers and how much of it is applied
 type Payment struct {
-	keel.Table `                                                keel:"customer_payments,report=Accounting,label=Customer Payment"`
+	keel.Table `keel:"customer_payments,report=Accounting,label=Customer Payment"`
 
-	ID                   pulid.ID            `json:"id" keel:"id,pk,autoid:cpay_"`
-	OrganizationID       pulid.ID            `json:"organizationId" keel:"organization_id,pk,tenant"`
-	BusinessUnitID       pulid.ID            `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
-	CustomerID           pulid.ID            `json:"customerId" keel:"customer_id"`
-	PaymentDate          int64               `json:"paymentDate" keel:"payment_date"`
-	AccountingDate       int64               `json:"accountingDate" keel:"accounting_date"`
-	AmountMinor          int64               `json:"amountMinor" keel:"amount_minor,label=Amount (Minor)"`
-	AppliedAmountMinor   int64               `json:"appliedAmountMinor" keel:"applied_amount_minor,label=Applied (Minor)"`
+	ID                   pulid.ID            `json:"id"                   keel:"id,pk,autoid:cpay_"`
+	OrganizationID       pulid.ID            `json:"organizationId"       keel:"organization_id,pk,tenant"`
+	BusinessUnitID       pulid.ID            `json:"businessUnitId"       keel:"business_unit_id,pk,tenant"`
+	CustomerID           pulid.ID            `json:"customerId"           keel:"customer_id"`
+	PaymentDate          int64               `json:"paymentDate"          keel:"payment_date"`
+	AccountingDate       int64               `json:"accountingDate"       keel:"accounting_date"`
+	AmountMinor          int64               `json:"amountMinor"          keel:"amount_minor,label=Amount (Minor)"`
+	AppliedAmountMinor   int64               `json:"appliedAmountMinor"   keel:"applied_amount_minor,label=Applied (Minor)"`
 	UnappliedAmountMinor int64               `json:"unappliedAmountMinor" keel:"unapplied_amount_minor,label=Unapplied (Minor)"`
-	Status               Status              `json:"status" keel:"status"`
-	PaymentMethod        Method              `json:"paymentMethod" keel:"payment_method"`
-	ReferenceNumber      string              `json:"referenceNumber" keel:"reference_number,nullzero"`
-	Memo                 string              `json:"memo" keel:"memo,nullzero"`
-	CurrencyCode         string              `json:"currencyCode" keel:"currency_code,label=Currency"`
-	ExchangeRate         decimal.NullDecimal `json:"exchangeRate" keel:"exchange_rate"`
-	ExchangeRateDate     *int64              `json:"exchangeRateDate" keel:"exchange_rate_date"`
-	PostedBatchID        pulid.ID            `json:"postedBatchId" keel:"posted_batch_id,nullzero"`
-	ReversalBatchID      pulid.ID            `json:"reversalBatchId" keel:"reversal_batch_id,nullzero"`
-	ReversedByID         pulid.ID            `json:"reversedById" keel:"reversed_by_id,nullzero"`
-	ReversedAt           *int64              `json:"reversedAt" keel:"reversed_at"`
-	ReversalReason       string              `json:"reversalReason" keel:"reversal_reason,nullzero"`
-	CreatedByID          pulid.ID            `json:"createdById" keel:"created_by_id"`
-	UpdatedByID          pulid.ID            `json:"updatedById" keel:"updated_by_id,nullzero"`
-	Version              int64               `json:"version" keel:"version,version"`
-	CreatedAt            int64               `json:"createdAt" keel:"created_at,autocreate"`
-	UpdatedAt            int64               `json:"updatedAt" keel:"updated_at,autoupdate"`
+	Status               Status              `json:"status"               keel:"status"`
+	PaymentMethod        Method              `json:"paymentMethod"        keel:"payment_method"`
+	ReferenceNumber      string              `json:"referenceNumber"      keel:"reference_number,nullzero"`
+	Memo                 string              `json:"memo"                 keel:"memo,nullzero"`
+	CurrencyCode         string              `json:"currencyCode"         keel:"currency_code,label=Currency"`
+	ExchangeRate         decimal.NullDecimal `json:"exchangeRate"         keel:"exchange_rate"`
+	ExchangeRateDate     *int64              `json:"exchangeRateDate"     keel:"exchange_rate_date"`
+	PostedBatchID        pulid.ID            `json:"postedBatchId"        keel:"posted_batch_id,nullzero"`
+	ReversalBatchID      pulid.ID            `json:"reversalBatchId"      keel:"reversal_batch_id,nullzero"`
+	ReversedByID         pulid.ID            `json:"reversedById"         keel:"reversed_by_id,nullzero"`
+	ReversedAt           *int64              `json:"reversedAt"           keel:"reversed_at"`
+	ReversalReason       string              `json:"reversalReason"       keel:"reversal_reason,nullzero"`
+	CreatedByID          pulid.ID            `json:"createdById"          keel:"created_by_id"`
+	UpdatedByID          pulid.ID            `json:"updatedById"          keel:"updated_by_id,nullzero"`
+	Version              int64               `json:"version"              keel:"version,version"`
+	CreatedAt            int64               `json:"createdAt"            keel:"created_at,autocreate"`
+	UpdatedAt            int64               `json:"updatedAt"            keel:"updated_at,autoupdate"`
 
 	Applications []*Application     `json:"applications,omitempty" keel:"many:customer_payment_id"`
-	Customer     *customer.Customer `json:"customer,omitempty" keel:"belongs:customer_id"`
+	Customer     *customer.Customer `json:"customer,omitempty"     keel:"belongs:customer_id"`
 }
 
 // Which invoice each dollar of a payment was applied to
 type Application struct {
-	keel.Table `                                                             keel:"customer_payment_applications,report=Accounting,label=Payment Application"`
+	keel.Table `keel:"customer_payment_applications,report=Accounting,label=Payment Application"`
 
-	ID                  pulid.ID `json:"id" keel:"id,pk,autoid:cpapp_"`
-	OrganizationID      pulid.ID `json:"organizationId" keel:"organization_id,pk,tenant"`
-	BusinessUnitID      pulid.ID `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
-	CustomerPaymentID   pulid.ID `json:"customerPaymentId" keel:"customer_payment_id"`
-	InvoiceID           pulid.ID `json:"invoiceId" keel:"invoice_id"`
-	AppliedAmountMinor  int64    `json:"appliedAmountMinor" keel:"applied_amount_minor,label=Applied (Minor)"`
+	ID                  pulid.ID `json:"id"                  keel:"id,pk,autoid:cpapp_"`
+	OrganizationID      pulid.ID `json:"organizationId"      keel:"organization_id,pk,tenant"`
+	BusinessUnitID      pulid.ID `json:"businessUnitId"      keel:"business_unit_id,pk,tenant"`
+	CustomerPaymentID   pulid.ID `json:"customerPaymentId"   keel:"customer_payment_id"`
+	InvoiceID           pulid.ID `json:"invoiceId"           keel:"invoice_id"`
+	AppliedAmountMinor  int64    `json:"appliedAmountMinor"  keel:"applied_amount_minor,label=Applied (Minor)"`
 	ShortPayAmountMinor int64    `json:"shortPayAmountMinor" keel:"short_pay_amount_minor,label=Short Pay (Minor)"`
-	LineNumber          int      `json:"lineNumber" keel:"line_number,label=Line,dimension"`
-	CreatedAt           int64    `json:"createdAt" keel:"created_at,autocreate"`
-	UpdatedAt           int64    `json:"updatedAt" keel:"updated_at,autoupdate"`
+	LineNumber          int      `json:"lineNumber"          keel:"line_number,label=Line,dimension"`
+	CreatedAt           int64    `json:"createdAt"           keel:"created_at,autocreate"`
+	UpdatedAt           int64    `json:"updatedAt"           keel:"updated_at,autoupdate"`
 
 	Payment *Payment         `json:"payment,omitempty" keel:"belongs:customer_payment_id,label=Customer Payment"`
 	Invoice *invoice.Invoice `json:"invoice,omitempty" keel:"belongs:invoice_id"`

@@ -80,9 +80,9 @@ func (s *Service) runPreview(ctx context.Context, req *PreviewRequest) (*Preview
 	var result *analytics.Result
 	if req.PageSize > 0 {
 		size := min(req.PageSize, s.cfg.GetPreviewRowLimit())
-		result, err = s.engine.Page(prepared.Context, prepared.Request, req.Cursor, size)
+		result, err = s.engine.Page(prepared.Context, &prepared.Request, req.Cursor, size)
 	} else {
-		result, err = s.engine.Preview(prepared.Context, prepared.Request)
+		result, err = s.engine.Preview(prepared.Context, &prepared.Request)
 	}
 	if err != nil {
 		if s.metrics != nil {

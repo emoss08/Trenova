@@ -14,9 +14,9 @@ import (
 type RateImportRow struct {
 	keel.Table `keel:"rate_import_rows"`
 
-	ID                pulid.ID `json:"id" keel:"id,pk,autoid:rir_"`
-	BusinessUnitID    pulid.ID `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
-	OrganizationID    pulid.ID `json:"organizationId" keel:"organization_id,pk,tenant"`
+	ID                pulid.ID `json:"id"                keel:"id,pk,autoid:rir_"`
+	BusinessUnitID    pulid.ID `json:"businessUnitId"    keel:"business_unit_id,pk,tenant"`
+	OrganizationID    pulid.ID `json:"organizationId"    keel:"organization_id,pk,tenant"`
 	RateImportBatchID pulid.ID `json:"rateImportBatchId" keel:"rate_import_batch_id"`
 
 	// RowNumber is the line in the uploaded file, counting the header as one,

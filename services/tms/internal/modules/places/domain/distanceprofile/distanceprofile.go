@@ -37,28 +37,28 @@ const (
 
 type DistanceProfile struct {
 	keel.Table          `keel:"distance_profiles"`
-	ID                  pulid.ID         `json:"id" keel:"id,pk,autoid:dp_"`
-	BusinessUnitID      pulid.ID         `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
-	OrganizationID      pulid.ID         `json:"organizationId" keel:"organization_id,pk,tenant"`
-	Name                string           `json:"name" keel:"name"`
-	Description         string           `json:"description" keel:"description,nullzero"`
-	Status              string           `json:"status" keel:"status"`
-	IsDefault           bool             `json:"isDefault" keel:"is_default"`
-	Provider            integration.Type `json:"provider" keel:"provider"`
-	DataVersion         string           `json:"dataVersion" keel:"data_version"`
-	Region              string           `json:"region" keel:"region"`
-	RoutingType         string           `json:"routingType" keel:"routing_type"`
-	DistanceUnits       string           `json:"distanceUnits" keel:"distance_units"`
-	LocationGranularity string           `json:"locationGranularity" keel:"location_granularity"`
-	ProfileName         string           `json:"profileName" keel:"profile_name,nullzero"`
-	HighwayOnly         bool             `json:"highwayOnly" keel:"highway_only"`
-	TollRoads           bool             `json:"tollRoads" keel:"toll_roads"`
-	BordersOpen         bool             `json:"bordersOpen" keel:"borders_open"`
-	IncludeTollData     bool             `json:"includeTollData" keel:"include_toll_data"`
-	Version             int64            `json:"version" keel:"version,version"`
-	CreatedAt           int64            `json:"createdAt" keel:"created_at,autocreate"`
-	UpdatedAt           int64            `json:"updatedAt" keel:"updated_at,autoupdate"`
-	SearchVector        string           `json:"-"`
+	ID                  pulid.ID         `keel:"id,pk,autoid:dp_"           json:"id"`
+	BusinessUnitID      pulid.ID         `keel:"business_unit_id,pk,tenant" json:"businessUnitId"`
+	OrganizationID      pulid.ID         `keel:"organization_id,pk,tenant"  json:"organizationId"`
+	Name                string           `keel:"name"                       json:"name"`
+	Description         string           `keel:"description,nullzero"       json:"description"`
+	Status              string           `keel:"status"                     json:"status"`
+	IsDefault           bool             `keel:"is_default"                 json:"isDefault"`
+	Provider            integration.Type `keel:"provider"                   json:"provider"`
+	DataVersion         string           `keel:"data_version"               json:"dataVersion"`
+	Region              string           `keel:"region"                     json:"region"`
+	RoutingType         string           `keel:"routing_type"               json:"routingType"`
+	DistanceUnits       string           `keel:"distance_units"             json:"distanceUnits"`
+	LocationGranularity string           `keel:"location_granularity"       json:"locationGranularity"`
+	ProfileName         string           `keel:"profile_name,nullzero"      json:"profileName"`
+	HighwayOnly         bool             `keel:"highway_only"               json:"highwayOnly"`
+	TollRoads           bool             `keel:"toll_roads"                 json:"tollRoads"`
+	BordersOpen         bool             `keel:"borders_open"               json:"bordersOpen"`
+	IncludeTollData     bool             `keel:"include_toll_data"          json:"includeTollData"`
+	Version             int64            `keel:"version,version"            json:"version"`
+	CreatedAt           int64            `keel:"created_at,autocreate"      json:"createdAt"`
+	UpdatedAt           int64            `keel:"updated_at,autoupdate"      json:"updatedAt"`
+	SearchVector        string           `                                  json:"-"`
 
 	BusinessUnit *tenant.BusinessUnit `json:"-"`
 	Organization *tenant.Organization `json:"-"`

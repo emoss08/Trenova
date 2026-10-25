@@ -46,8 +46,8 @@ const (
 var outcomeColumnNames = []string{
 	"organization_id",
 	"business_unit_id",
-	"source_type",
-	"source_id",
+	colSourceType,
+	colSourceID,
 	"model_key",
 	"generation",
 	"chunk_count",
@@ -115,7 +115,10 @@ func (r *repository) MarkStale(
 		}
 
 		e := airetrievaldb.IndexEntries
-		if _, err := e.Upsert(ctx, r.db.Keel(ctx), entries,
+		if _, err := e.Upsert(
+			ctx,
+			r.db.Keel(ctx),
+			entries,
 			keel.OnConflict(e.OrganizationID, e.BusinessUnitID, e.SourceType, e.SourceID, e.ModelKey).
 				Set(
 					e.Status.To(airetrieval.IndexStatusPending),
@@ -173,7 +176,10 @@ func (r *repository) ClaimIndexEntries(
 			Where(
 				pickedEntries.ModelKey.Eq(req.ModelKey),
 				pickedEntries.Status.Eq(airetrieval.IndexStatusPending),
-				keel.Or(pickedEntries.LeaseExpiresAt.IsNull(), pickedEntries.LeaseExpiresAt.Lte(now)),
+				keel.Or(
+					pickedEntries.LeaseExpiresAt.IsNull(),
+					pickedEntries.LeaseExpiresAt.Lte(now),
+				),
 				keel.Or(pickedEntries.NextAttemptAt.IsNull(), pickedEntries.NextAttemptAt.Lte(now)),
 			).
 			Pick(pickedEntries.SourceType, pickedEntries.SourceID).
@@ -183,12 +189,12 @@ func (r *repository) ClaimIndexEntries(
 		if len(req.SourceTypes) > 0 {
 			pickedQuery.Where(pickedEntries.SourceType.In(req.SourceTypes...))
 		}
-		picked := keel.CTE("picked", []string{"source_type", "source_id"}, pickedQuery)
+		picked := keel.CTE("picked", []string{colSourceType, colSourceID}, pickedQuery)
 
 		entries, err := e.With(picked).
 			Join(picked,
-				picked.Col("source_type").EqCol(e.SourceType),
-				picked.Col("source_id").EqCol(e.SourceID),
+				picked.Col(colSourceType).EqCol(e.SourceType),
+				picked.Col(colSourceID).EqCol(e.SourceID),
 			).
 			Where(e.ModelKey.Eq(req.ModelKey)).
 			UpdateReturning(ctx, r.db.Keel(ctx),
@@ -260,8 +266,8 @@ func matchOutcome(
 	return q.With(outcome).Join(outcome,
 		outcome.Col("organization_id").EqCol(e.OrganizationID),
 		outcome.Col("business_unit_id").EqCol(e.BusinessUnitID),
-		outcome.Col("source_type").EqCol(e.SourceType),
-		outcome.Col("source_id").EqCol(e.SourceID),
+		outcome.Col(colSourceType).EqCol(e.SourceType),
+		outcome.Col(colSourceID).EqCol(e.SourceID),
 		outcome.Col("model_key").EqCol(e.ModelKey),
 	)
 }
@@ -531,13 +537,28 @@ func staleSourceQuery(
 	switch req.SourceType {
 	case airetrieval.SourceTypeMemory:
 		m := agentdb.Memories
-		return staleSources(m.Query(), staleSource{ID: m.ID, UpdatedAt: m.UpdatedAt}, req, limit), true
+		return staleSources(
+			m.Query(),
+			staleSource{ID: m.ID, UpdatedAt: m.UpdatedAt},
+			req,
+			limit,
+		), true
 	case airetrieval.SourceTypeDocument:
 		d := documentdb.Documents
-		return staleSources(d.Query(), staleSource{ID: d.ID, UpdatedAt: d.UpdatedAt}, req, limit), true
+		return staleSources(
+			d.Query(),
+			staleSource{ID: d.ID, UpdatedAt: d.UpdatedAt},
+			req,
+			limit,
+		), true
 	case airetrieval.SourceTypeInboundMessage:
 		m := inboundmessagedb.InboundMessages
-		return staleSources(m.Query(), staleSource{ID: m.ID, UpdatedAt: m.UpdatedAt}, req, limit), true
+		return staleSources(
+			m.Query(),
+			staleSource{ID: m.ID, UpdatedAt: m.UpdatedAt},
+			req,
+			limit,
+		), true
 	default:
 		return nil, false
 	}

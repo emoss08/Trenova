@@ -11,12 +11,12 @@ import (
 type CostCategoryGLAccount struct {
 	keel.Table `keel:"cost_category_gl_accounts"`
 
-	ID             pulid.ID `json:"id" keel:"id,pk,autoid:ccga_"`
+	ID             pulid.ID `json:"id"             keel:"id,pk,autoid:ccga_"`
 	BusinessUnitID pulid.ID `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
 	OrganizationID pulid.ID `json:"organizationId" keel:"organization_id,pk,tenant"`
 	CostCategoryID pulid.ID `json:"costCategoryId" keel:"cost_category_id"`
-	GLAccountID    pulid.ID `json:"glAccountId" keel:"gl_account_id"`
-	CreatedAt      int64    `json:"createdAt" keel:"created_at,autocreate"`
+	GLAccountID    pulid.ID `json:"glAccountId"    keel:"gl_account_id"`
+	CreatedAt      int64    `json:"createdAt"      keel:"created_at,autocreate"`
 
 	// Relationships
 	GLAccount *glaccount.GLAccount `json:"glAccount,omitempty" keel:"belongs:gl_account_id"`

@@ -133,25 +133,25 @@ var (
 
 // TimeClockEntry is one period of work.
 type TimeClockEntry struct {
-	keel.Table `                                                  keel:"time_clock_entries"`
+	keel.Table `keel:"time_clock_entries"`
 
-	ID             pulid.ID `json:"id" keel:"id,pk,autoid:tce_"`
+	ID             pulid.ID `json:"id"             keel:"id,pk,autoid:tce_"`
 	BusinessUnitID pulid.ID `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
 	OrganizationID pulid.ID `json:"organizationId" keel:"organization_id,pk,tenant"`
-	WorkerID       pulid.ID `json:"workerId" keel:"worker_id"`
-	TimesheetID    pulid.ID `json:"timesheetId" keel:"timesheet_id,nullzero"`
+	WorkerID       pulid.ID `json:"workerId"       keel:"worker_id"`
+	TimesheetID    pulid.ID `json:"timesheetId"    keel:"timesheet_id,nullzero"`
 
 	Source TimeEntrySource `json:"source" keel:"source"`
 	// ClockedOutAt of nil means the worker is still on the clock.
-	ClockedInAt  int64    `json:"clockedInAt" keel:"clocked_in_at"`
+	ClockedInAt  int64    `json:"clockedInAt"  keel:"clocked_in_at"`
 	ClockedOutAt *int64   `json:"clockedOutAt" keel:"clocked_out_at"`
 	BreakMinutes int32    `json:"breakMinutes" keel:"break_minutes"`
-	PayCodeID    pulid.ID `json:"payCodeId" keel:"pay_code_id,nullzero"`
-	Note         string   `json:"note" keel:"note,nullzero"`
-	EditedByID   pulid.ID `json:"editedById" keel:"edited_by_id,nullzero"`
-	EditReason   string   `json:"editReason" keel:"edit_reason,nullzero"`
+	PayCodeID    pulid.ID `json:"payCodeId"    keel:"pay_code_id,nullzero"`
+	Note         string   `json:"note"         keel:"note,nullzero"`
+	EditedByID   pulid.ID `json:"editedById"   keel:"edited_by_id,nullzero"`
+	EditReason   string   `json:"editReason"   keel:"edit_reason,nullzero"`
 
-	Version   int64 `json:"version" keel:"version,version"`
+	Version   int64 `json:"version"   keel:"version,version"`
 	CreatedAt int64 `json:"createdAt" keel:"created_at,autocreate"`
 	UpdatedAt int64 `json:"updatedAt" keel:"updated_at,autoupdate"`
 
@@ -266,38 +266,38 @@ var (
 // the decision — what a manager approved and what payroll paid from — and
 // recomputing it later would change a signed-off wage record.
 type Timesheet struct {
-	keel.Table `                                          keel:"timesheets"`
+	keel.Table `keel:"timesheets"`
 
-	ID             pulid.ID `json:"id" keel:"id,pk,autoid:tsh_"`
+	ID             pulid.ID `json:"id"             keel:"id,pk,autoid:tsh_"`
 	BusinessUnitID pulid.ID `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
 	OrganizationID pulid.ID `json:"organizationId" keel:"organization_id,pk,tenant"`
-	WorkerID       pulid.ID `json:"workerId" keel:"worker_id"`
+	WorkerID       pulid.ID `json:"workerId"       keel:"worker_id"`
 
-	Status      TimesheetStatus `json:"status" keel:"status"`
+	Status      TimesheetStatus `json:"status"      keel:"status"`
 	PeriodStart int64           `json:"periodStart" keel:"period_start"`
-	PeriodEnd   int64           `json:"periodEnd" keel:"period_end"`
+	PeriodEnd   int64           `json:"periodEnd"   keel:"period_end"`
 
-	RegularMinutes   int32 `json:"regularMinutes" keel:"regular_minutes"`
-	OvertimeMinutes  int32 `json:"overtimeMinutes" keel:"overtime_minutes"`
+	RegularMinutes   int32 `json:"regularMinutes"   keel:"regular_minutes"`
+	OvertimeMinutes  int32 `json:"overtimeMinutes"  keel:"overtime_minutes"`
 	PaidLeaveMinutes int32 `json:"paidLeaveMinutes" keel:"paid_leave_minutes"`
-	EntryCount       int32 `json:"entryCount" keel:"entry_count"`
+	EntryCount       int32 `json:"entryCount"       keel:"entry_count"`
 	// OvertimeThresholdMinutes is copied onto the sheet rather than read from a
 	// setting, so changing the rule next quarter cannot restate a week that was
 	// already approved.
 	OvertimeThresholdMinutes int32 `json:"overtimeThresholdMinutes" keel:"overtime_threshold_minutes"`
 
-	SubmittedAt     *int64   `json:"submittedAt" keel:"submitted_at"`
-	SubmittedByID   pulid.ID `json:"submittedById" keel:"submitted_by_id,nullzero"`
-	ApprovedAt      *int64   `json:"approvedAt" keel:"approved_at"`
-	ApprovedByID    pulid.ID `json:"approvedById" keel:"approved_by_id,nullzero"`
-	DecisionNote    string   `json:"decisionNote" keel:"decision_note,nullzero"`
+	SubmittedAt     *int64   `json:"submittedAt"     keel:"submitted_at"`
+	SubmittedByID   pulid.ID `json:"submittedById"   keel:"submitted_by_id,nullzero"`
+	ApprovedAt      *int64   `json:"approvedAt"      keel:"approved_at"`
+	ApprovedByID    pulid.ID `json:"approvedById"    keel:"approved_by_id,nullzero"`
+	DecisionNote    string   `json:"decisionNote"    keel:"decision_note,nullzero"`
 	PayrollExportID pulid.ID `json:"payrollExportId" keel:"payroll_export_id,nullzero"`
 
-	Version   int64 `json:"version" keel:"version,version"`
+	Version   int64 `json:"version"   keel:"version,version"`
 	CreatedAt int64 `json:"createdAt" keel:"created_at,autocreate"`
 	UpdatedAt int64 `json:"updatedAt" keel:"updated_at,autoupdate"`
 
-	Worker  *Worker           `json:"worker,omitempty" keel:"belongs:worker_id"`
+	Worker  *Worker           `json:"worker,omitempty"  keel:"belongs:worker_id"`
 	Entries []*TimeClockEntry `json:"entries,omitempty"`
 }
 
@@ -412,28 +412,28 @@ var (
 // carries the export it went out on, so a period cannot be sent twice without
 // somebody voiding the first run.
 type PayrollExport struct {
-	keel.Table `                                               keel:"payroll_exports"`
+	keel.Table `keel:"payroll_exports"`
 
-	ID             pulid.ID `json:"id" keel:"id,pk,autoid:pxb_"`
+	ID             pulid.ID `json:"id"             keel:"id,pk,autoid:pxb_"`
 	BusinessUnitID pulid.ID `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
 	OrganizationID pulid.ID `json:"organizationId" keel:"organization_id,pk,tenant"`
 
-	Status      PayrollExportStatus `json:"status" keel:"status"`
+	Status      PayrollExportStatus `json:"status"      keel:"status"`
 	PeriodStart int64               `json:"periodStart" keel:"period_start"`
-	PeriodEnd   int64               `json:"periodEnd" keel:"period_end"`
+	PeriodEnd   int64               `json:"periodEnd"   keel:"period_end"`
 
-	TimesheetCount   int32 `json:"timesheetCount" keel:"timesheet_count"`
-	RegularMinutes   int32 `json:"regularMinutes" keel:"regular_minutes"`
-	OvertimeMinutes  int32 `json:"overtimeMinutes" keel:"overtime_minutes"`
+	TimesheetCount   int32 `json:"timesheetCount"   keel:"timesheet_count"`
+	RegularMinutes   int32 `json:"regularMinutes"   keel:"regular_minutes"`
+	OvertimeMinutes  int32 `json:"overtimeMinutes"  keel:"overtime_minutes"`
 	PaidLeaveMinutes int32 `json:"paidLeaveMinutes" keel:"paid_leave_minutes"`
 
-	GeneratedAt   *int64   `json:"generatedAt" keel:"generated_at"`
+	GeneratedAt   *int64   `json:"generatedAt"   keel:"generated_at"`
 	GeneratedByID pulid.ID `json:"generatedById" keel:"generated_by_id,nullzero"`
-	VoidedAt      *int64   `json:"voidedAt" keel:"voided_at"`
-	VoidReason    string   `json:"voidReason" keel:"void_reason,nullzero"`
-	Note          string   `json:"note" keel:"note,nullzero"`
+	VoidedAt      *int64   `json:"voidedAt"      keel:"voided_at"`
+	VoidReason    string   `json:"voidReason"    keel:"void_reason,nullzero"`
+	Note          string   `json:"note"          keel:"note,nullzero"`
 
-	Version   int64 `json:"version" keel:"version,version"`
+	Version   int64 `json:"version"   keel:"version,version"`
 	CreatedAt int64 `json:"createdAt" keel:"created_at,autocreate"`
 	UpdatedAt int64 `json:"updatedAt" keel:"updated_at,autoupdate"`
 }

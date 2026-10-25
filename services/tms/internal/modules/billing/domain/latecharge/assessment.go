@@ -15,27 +15,27 @@ import (
 type LateChargeAssessment struct {
 	keel.Table `keel:"late_charge_assessments"`
 
-	ID                    pulid.ID        `json:"id" keel:"id,pk,autoid:lca_"`
-	OrganizationID        pulid.ID        `json:"organizationId" keel:"organization_id,pk,tenant"`
-	BusinessUnitID        pulid.ID        `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
-	CustomerID            pulid.ID        `json:"customerId" keel:"customer_id"`
-	SourceInvoiceID       pulid.ID        `json:"sourceInvoiceId" keel:"source_invoice_id"`
-	PeriodIndex           int             `json:"periodIndex" keel:"period_index"`
-	PeriodStart           int64           `json:"periodStart" keel:"period_start"`
-	PeriodEnd             int64           `json:"periodEnd" keel:"period_end"`
-	AsOfDate              int64           `json:"asOfDate" keel:"as_of_date"`
+	ID                    pulid.ID        `json:"id"                    keel:"id,pk,autoid:lca_"`
+	OrganizationID        pulid.ID        `json:"organizationId"        keel:"organization_id,pk,tenant"`
+	BusinessUnitID        pulid.ID        `json:"businessUnitId"        keel:"business_unit_id,pk,tenant"`
+	CustomerID            pulid.ID        `json:"customerId"            keel:"customer_id"`
+	SourceInvoiceID       pulid.ID        `json:"sourceInvoiceId"       keel:"source_invoice_id"`
+	PeriodIndex           int             `json:"periodIndex"           keel:"period_index"`
+	PeriodStart           int64           `json:"periodStart"           keel:"period_start"`
+	PeriodEnd             int64           `json:"periodEnd"             keel:"period_end"`
+	AsOfDate              int64           `json:"asOfDate"              keel:"as_of_date"`
 	BasisOpenBalanceMinor int64           `json:"basisOpenBalanceMinor" keel:"basis_open_balance_minor"`
-	RatePercent           decimal.Decimal `json:"ratePercent" keel:"rate_percent"`
-	ChargeMinor           int64           `json:"chargeMinor" keel:"charge_minor"`
-	DebitMemoInvoiceID    pulid.ID        `json:"debitMemoInvoiceId" keel:"debit_memo_invoice_id,nullzero"`
-	DebitMemoLineID       pulid.ID        `json:"debitMemoLineId" keel:"debit_memo_line_id,nullzero"`
-	RunKey                string          `json:"runKey" keel:"run_key"`
-	CreatedByID           pulid.ID        `json:"createdById" keel:"created_by_id,nullzero"`
-	CreatedAt             int64           `json:"createdAt" keel:"created_at,autocreate"`
-	UpdatedAt             int64           `json:"updatedAt" keel:"updated_at,autoupdate"`
+	RatePercent           decimal.Decimal `json:"ratePercent"           keel:"rate_percent"`
+	ChargeMinor           int64           `json:"chargeMinor"           keel:"charge_minor"`
+	DebitMemoInvoiceID    pulid.ID        `json:"debitMemoInvoiceId"    keel:"debit_memo_invoice_id,nullzero"`
+	DebitMemoLineID       pulid.ID        `json:"debitMemoLineId"       keel:"debit_memo_line_id,nullzero"`
+	RunKey                string          `json:"runKey"                keel:"run_key"`
+	CreatedByID           pulid.ID        `json:"createdById"           keel:"created_by_id,nullzero"`
+	CreatedAt             int64           `json:"createdAt"             keel:"created_at,autocreate"`
+	UpdatedAt             int64           `json:"updatedAt"             keel:"updated_at,autoupdate"`
 
 	SourceInvoice *invoice.Invoice `json:"sourceInvoice,omitempty" keel:"belongs:source_invoice_id"`
-	DebitMemo     *invoice.Invoice `json:"debitMemo,omitempty" keel:"belongs:debit_memo_invoice_id"`
+	DebitMemo     *invoice.Invoice `json:"debitMemo,omitempty"     keel:"belongs:debit_memo_invoice_id"`
 }
 
 func (a *LateChargeAssessment) Validate(multiErr *errortypes.MultiError) {

@@ -38,20 +38,20 @@ func TitleFrom(text string) string {
 type Thread struct {
 	keel.Table `keel:"assistant_threads"`
 
-	ID             pulid.ID `json:"id" keel:"id,pk,autoid:athr_"`
+	ID             pulid.ID `json:"id"             keel:"id,pk,autoid:athr_"`
 	BusinessUnitID pulid.ID `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
 	OrganizationID pulid.ID `json:"organizationId" keel:"organization_id,pk,tenant"`
 
-	UserID            pulid.ID `json:"userId" keel:"user_id"`
+	UserID            pulid.ID `json:"userId"            keel:"user_id"`
 	AgentDefinitionID pulid.ID `json:"agentDefinitionId" keel:"agent_definition_id"`
 
-	Title  string       `json:"title" keel:"title,nullzero"`
+	Title  string       `json:"title"  keel:"title,nullzero"`
 	Status ThreadStatus `json:"status" keel:"status"`
 
 	// LastMessageAt orders a user's thread list without a join onto messages.
 	LastMessageAt int64 `json:"lastMessageAt" keel:"last_message_at"`
 
-	LastReadAt int64            `json:"lastReadAt" keel:"last_read_at"`
+	LastReadAt int64            `json:"lastReadAt"          keel:"last_read_at"`
 	Attention  *ThreadAttention `json:"attention,omitempty"`
 
 	// PreferredProviderID is the model the person chose for this conversation.
@@ -68,10 +68,10 @@ type Thread struct {
 	// the Desk's rail. SubjectType and SubjectID name the record the
 	// conversation is about when it was opened from one, so every turn
 	// carries that record's context without the person restating it.
-	Origin      ThreadOrigin      `json:"origin" keel:"origin"`
-	Pinned      bool              `json:"pinned" keel:"pinned"`
+	Origin      ThreadOrigin      `json:"origin"      keel:"origin"`
+	Pinned      bool              `json:"pinned"      keel:"pinned"`
 	SubjectType agent.SubjectType `json:"subjectType" keel:"subject_type,nullzero"`
-	SubjectID   pulid.ID          `json:"subjectId" keel:"subject_id,nullzero"`
+	SubjectID   pulid.ID          `json:"subjectId"   keel:"subject_id,nullzero"`
 
 	// A conversation about a shipment, invoice or dispute is a case. The
 	// person can snooze it until a time, the next appointment or the ETA;
@@ -79,7 +79,7 @@ type Thread struct {
 	// never stored.
 	SnoozedUntil *int64                `json:"snoozedUntil,omitempty" keel:"snoozed_until"`
 	SnoozeAnchor deskcase.SnoozeAnchor `json:"snoozeAnchor,omitempty" keel:"snooze_anchor,nullzero"`
-	SnoozeStopID pulid.ID              `json:"-" keel:"snooze_stop_id,nullzero"`
+	SnoozeStopID pulid.ID              `json:"-"                      keel:"snooze_stop_id,nullzero"`
 	Case         *deskcase.Summary     `json:"case,omitempty"`
 
 	// CanContinue is whether the person reading the conversation may still
@@ -107,21 +107,21 @@ type Thread struct {
 	// compaction that started on its own. Stored as the exception so every
 	// conversation, however it was made, starts with it on.
 	ContextUsage   *ContextUsage `json:"contextUsage,omitempty" keel:"context_usage,jsonb"`
-	AutoCompactOff bool          `json:"autoCompactOff" keel:"auto_compact_off"`
+	AutoCompactOff bool          `json:"autoCompactOff"         keel:"auto_compact_off"`
 	// HandedFromThreadID is the conversation this one was handed off from,
 	// empty for one a person started.
 	HandedFromThreadID pulid.ID `json:"handedFromThreadId,omitempty" keel:"handed_from_thread_id,nullzero"`
 
-	Taint     *agent.RunTaint `json:"taint,omitempty" keel:"taint,jsonb"`
+	Taint     *agent.RunTaint `json:"taint,omitempty"     keel:"taint,jsonb"`
 	TaintedAt *int64          `json:"taintedAt,omitempty" keel:"tainted_at"`
 
-	Version   int64 `json:"version" keel:"version,version"`
+	Version   int64 `json:"version"   keel:"version,version"`
 	CreatedAt int64 `json:"createdAt" keel:"created_at,autocreate"`
 	UpdatedAt int64 `json:"updatedAt" keel:"updated_at,autoupdate"`
 
 	BusinessUnit *tenant.BusinessUnit `json:"businessUnit,omitempty"`
 	Organization *tenant.Organization `json:"organization,omitempty"`
-	User         *tenant.User         `json:"user,omitempty" keel:"belongs:user_id"`
+	User         *tenant.User         `json:"user,omitempty"         keel:"belongs:user_id"`
 }
 
 func (t *Thread) BeforeCreate(ctx context.Context) error {

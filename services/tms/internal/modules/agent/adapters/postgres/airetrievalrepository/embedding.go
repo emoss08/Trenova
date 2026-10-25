@@ -28,7 +28,12 @@ const (
 	setEfSearchStatement = "SET LOCAL hnsw.ef_search = "
 )
 
-var rankedColumns = []string{"source_type", "source_id", "chunk_index", "distance"}
+const (
+	colSourceType = "source_type"
+	colSourceID   = "source_id"
+)
+
+var rankedColumns = []string{colSourceType, colSourceID, "chunk_index", "distance"}
 
 type storedChunk struct {
 	ChunkIndex  int
@@ -471,24 +476,24 @@ func searchQuery(req *agentports.VectorSearchRequest, plan searchPlan) *keel.Que
 		Limit(plan.candidates))
 
 	best := keel.CTE("best", rankedColumns, candidate.Query().
-		DistinctOn(candidate.Col("source_type"), candidate.Col("source_id")).
+		DistinctOn(candidate.Col(colSourceType), candidate.Col(colSourceID)).
 		Pick(
-			candidate.Col("source_type"),
-			candidate.Col("source_id"),
+			candidate.Col(colSourceType),
+			candidate.Col(colSourceID),
 			candidate.Col("chunk_index"),
 			candidate.Col("distance"),
 		).
 		Order(
-			candidate.Col("source_type").Asc(),
-			candidate.Col("source_id").Asc(),
+			candidate.Col(colSourceType).Asc(),
+			candidate.Col(colSourceID).Asc(),
 			candidate.Col("distance").Asc(),
 		))
 
 	similarity := keel.Raw("1 - ?", best.Col("distance"))
 	outer := best.Query().
 		With(candidate, best).
-		Pick(best.Col("source_type"), best.Col("source_id"), best.Col("chunk_index"), similarity).
-		Order(best.Col("distance").Asc(), best.Col("source_id").Asc()).
+		Pick(best.Col(colSourceType), best.Col(colSourceID), best.Col("chunk_index"), similarity).
+		Order(best.Col("distance").Asc(), best.Col(colSourceID).Asc()).
 		Limit(plan.limit)
 	if req.MinSimilarity != 0 {
 		outer.Where(keel.Raw("1 - ? >= ?", best.Col("distance"), req.MinSimilarity))

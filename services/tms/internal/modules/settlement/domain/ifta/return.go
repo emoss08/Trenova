@@ -29,62 +29,62 @@ var (
 
 // Quarterly fuel tax returns
 type Return struct {
-	keel.Table `                                            keel:"ifta_returns,report=Equipment,label=IFTA Return"`
+	keel.Table `keel:"ifta_returns,report=Equipment,label=IFTA Return"`
 
-	ID             pulid.ID `json:"id" keel:"id,pk,autoid:ifr_"`
+	ID             pulid.ID `json:"id"             keel:"id,pk,autoid:ifr_"`
 	BusinessUnitID pulid.ID `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
 	OrganizationID pulid.ID `json:"organizationId" keel:"organization_id,pk,tenant"`
 
-	Year            int          `json:"year" keel:"year,dimension"`
-	Quarter         int          `json:"quarter" keel:"quarter,dimension"`
+	Year            int          `json:"year"            keel:"year,dimension"`
+	Quarter         int          `json:"quarter"         keel:"quarter,dimension"`
 	AmendmentNumber int          `json:"amendmentNumber" keel:"amendment_number,dimension"`
-	AmendsReturnID  *pulid.ID    `json:"amendsReturnId" keel:"amends_return_id"`
-	Status          ReturnStatus `json:"status" keel:"status"`
-	Timezone        string       `json:"timezone" keel:"timezone"`
-	PeriodStart     int64        `json:"periodStart" keel:"period_start,type=epoch"`
-	PeriodEnd       int64        `json:"periodEnd" keel:"period_end,type=epoch"`
+	AmendsReturnID  *pulid.ID    `json:"amendsReturnId"  keel:"amends_return_id"`
+	Status          ReturnStatus `json:"status"          keel:"status"`
+	Timezone        string       `json:"timezone"        keel:"timezone"`
+	PeriodStart     int64        `json:"periodStart"     keel:"period_start,type=epoch"`
+	PeriodEnd       int64        `json:"periodEnd"       keel:"period_end,type=epoch"`
 
-	TotalMiles          decimal.Decimal `json:"totalMiles" keel:"total_miles,format=distance"`
-	TotalTaxableMiles   decimal.Decimal `json:"totalTaxableMiles" keel:"total_taxable_miles,label=Taxable Miles,format=distance"`
-	TotalGallons        decimal.Decimal `json:"totalGallons" keel:"total_gallons"`
+	TotalMiles          decimal.Decimal `json:"totalMiles"          keel:"total_miles,format=distance"`
+	TotalTaxableMiles   decimal.Decimal `json:"totalTaxableMiles"   keel:"total_taxable_miles,label=Taxable Miles,format=distance"`
+	TotalGallons        decimal.Decimal `json:"totalGallons"        keel:"total_gallons"`
 	TotalTaxPaidGallons decimal.Decimal `json:"totalTaxPaidGallons" keel:"total_tax_paid_gallons,label=Tax-Paid Gallons"`
-	NetTaxableGallons   decimal.Decimal `json:"netTaxableGallons" keel:"net_taxable_gallons"`
+	NetTaxableGallons   decimal.Decimal `json:"netTaxableGallons"   keel:"net_taxable_gallons"`
 
-	TaxDueMinor       int64  `json:"taxDueMinor" keel:"tax_due_minor,label=Tax Due (Minor)"`
+	TaxDueMinor       int64  `json:"taxDueMinor"       keel:"tax_due_minor,label=Tax Due (Minor)"`
 	SurchargeDueMinor int64  `json:"surchargeDueMinor" keel:"surcharge_due_minor,label=Surcharge Due (Minor)"`
-	NetDueMinor       int64  `json:"netDueMinor" keel:"net_due_minor,label=Net Due (Minor)"`
-	CurrencyCode      string `json:"currencyCode" keel:"currency_code"`
+	NetDueMinor       int64  `json:"netDueMinor"       keel:"net_due_minor,label=Net Due (Minor)"`
+	CurrencyCode      string `json:"currencyCode"      keel:"currency_code"`
 
 	FleetMPGByFuelType []FleetMPG `json:"fleetMpgByFuelType" keel:"fleet_mpg_by_fuel_type,jsonb,nullzero"`
 
-	UnattributedMiles     decimal.Decimal `json:"unattributedMiles" keel:"unattributed_miles"`
+	UnattributedMiles     decimal.Decimal `json:"unattributedMiles"     keel:"unattributed_miles"`
 	UnattributedMoveCount int             `json:"unattributedMoveCount" keel:"unattributed_move_count"`
-	NoTractorMiles        decimal.Decimal `json:"noTractorMiles" keel:"no_tractor_miles"`
-	NoTractorMoveCount    int             `json:"noTractorMoveCount" keel:"no_tractor_move_count"`
+	NoTractorMiles        decimal.Decimal `json:"noTractorMiles"        keel:"no_tractor_miles"`
+	NoTractorMoveCount    int             `json:"noTractorMoveCount"    keel:"no_tractor_move_count"`
 
-	Problems   []Problem `json:"problems" keel:"problems,jsonb,nullzero"`
+	Problems   []Problem `json:"problems"   keel:"problems,jsonb,nullzero"`
 	ComputedAt *int64    `json:"computedAt" keel:"computed_at"`
 
-	FinalizedAt   *int64   `json:"finalizedAt" keel:"finalized_at"`
+	FinalizedAt   *int64   `json:"finalizedAt"   keel:"finalized_at"`
 	FinalizedByID pulid.ID `json:"finalizedById" keel:"finalized_by_id,nullzero"`
 
-	FiledAt         *int64   `json:"filedAt" keel:"filed_at"`
-	FiledByID       pulid.ID `json:"filedById" keel:"filed_by_id,nullzero"`
+	FiledAt         *int64   `json:"filedAt"         keel:"filed_at"`
+	FiledByID       pulid.ID `json:"filedById"       keel:"filed_by_id,nullzero"`
 	FilingReference string   `json:"filingReference" keel:"filing_reference,nullzero"`
 
-	ReopenedAt   *int64   `json:"reopenedAt" keel:"reopened_at"`
+	ReopenedAt   *int64   `json:"reopenedAt"   keel:"reopened_at"`
 	ReopenedByID pulid.ID `json:"reopenedById" keel:"reopened_by_id,nullzero"`
 	ReopenReason string   `json:"reopenReason" keel:"reopen_reason,nullzero"`
 
-	Version   int64 `json:"version" keel:"version,version"`
+	Version   int64 `json:"version"   keel:"version,version"`
 	CreatedAt int64 `json:"createdAt" keel:"created_at,autocreate"`
 	UpdatedAt int64 `json:"updatedAt" keel:"updated_at,autoupdate"`
 
 	AmendsReturn *Return       `json:"amendsReturn,omitempty" keel:"belongs:amends_return_id"`
-	FinalizedBy  *tenant.User  `json:"finalizedBy,omitempty" keel:"belongs:finalized_by_id,noreport"`
-	FiledBy      *tenant.User  `json:"filedBy,omitempty" keel:"belongs:filed_by_id,noreport"`
-	ReopenedBy   *tenant.User  `json:"reopenedBy,omitempty" keel:"belongs:reopened_by_id,noreport"`
-	Lines        []*ReturnLine `json:"lines,omitempty" keel:"many:return_id"`
+	FinalizedBy  *tenant.User  `json:"finalizedBy,omitempty"  keel:"belongs:finalized_by_id,noreport"`
+	FiledBy      *tenant.User  `json:"filedBy,omitempty"      keel:"belongs:filed_by_id,noreport"`
+	ReopenedBy   *tenant.User  `json:"reopenedBy,omitempty"   keel:"belongs:reopened_by_id,noreport"`
+	Lines        []*ReturnLine `json:"lines,omitempty"        keel:"many:return_id"`
 }
 
 func (r *Return) Normalize() {

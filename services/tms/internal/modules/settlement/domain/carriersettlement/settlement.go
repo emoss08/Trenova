@@ -3,6 +3,8 @@ package carriersettlement
 import (
 	"context"
 
+	"github.com/emoss08/trenova/shared/money"
+
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/carrier"
@@ -23,76 +25,76 @@ var (
 
 // Carrier payable statements for purchased transportation
 type CarrierSettlement struct {
-	keel.Table `                                                      keel:"carrier_settlements,report=Billing"`
+	keel.Table `keel:"carrier_settlements,report=Billing"`
 
-	ID                     pulid.ID            `json:"id" keel:"id,pk,autoid:carstl_"`
-	BusinessUnitID         pulid.ID            `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
-	OrganizationID         pulid.ID            `json:"organizationId" keel:"organization_id,pk,tenant"`
-	CarrierID              pulid.ID            `json:"carrierId" keel:"carrier_id"`
-	BatchID                *pulid.ID           `json:"batchId" keel:"batch_id"`
-	SettlementNumber       string              `json:"settlementNumber" keel:"settlement_number"`
-	Status                 Status              `json:"status" keel:"status"`
-	PeriodStart            int64               `json:"periodStart" keel:"period_start,type=epoch"`
-	PeriodEnd              int64               `json:"periodEnd" keel:"period_end,type=epoch"`
-	PayDate                int64               `json:"payDate" keel:"pay_date"`
-	GrossCostMinor         int64               `json:"grossCostMinor" keel:"gross_cost_minor,label=Gross Cost (Minor)"`
-	AdjustmentsMinor       int64               `json:"adjustmentsMinor" keel:"adjustments_minor,label=Adjustments (Minor)"`
-	NetPayableMinor        int64               `json:"netPayableMinor" keel:"net_payable_minor,label=Net Payable (Minor)"`
-	ShipmentCount          int                 `json:"shipmentCount" keel:"shipment_count"`
-	CurrencyCode           string              `json:"currencyCode" keel:"currency_code"`
-	ExchangeRate           decimal.NullDecimal `json:"exchangeRate" keel:"exchange_rate"`
-	ExchangeRateDate       *int64              `json:"exchangeRateDate" keel:"exchange_rate_date"`
-	Notes                  string              `json:"notes" keel:"notes,nullzero"`
-	SubmittedByID          pulid.ID            `json:"submittedById" keel:"submitted_by_id,nullzero"`
-	SubmittedAt            *int64              `json:"submittedAt" keel:"submitted_at"`
-	ApprovedByID           pulid.ID            `json:"approvedById" keel:"approved_by_id,nullzero"`
-	ApprovedAt             *int64              `json:"approvedAt" keel:"approved_at"`
-	PostedByID             pulid.ID            `json:"postedById" keel:"posted_by_id,nullzero"`
-	PostedAt               *int64              `json:"postedAt" keel:"posted_at"`
-	PostedJournalBatchID   *pulid.ID           `json:"postedJournalBatchId" keel:"posted_journal_batch_id"`
+	ID                     pulid.ID            `json:"id"                     keel:"id,pk,autoid:carstl_"`
+	BusinessUnitID         pulid.ID            `json:"businessUnitId"         keel:"business_unit_id,pk,tenant"`
+	OrganizationID         pulid.ID            `json:"organizationId"         keel:"organization_id,pk,tenant"`
+	CarrierID              pulid.ID            `json:"carrierId"              keel:"carrier_id"`
+	BatchID                *pulid.ID           `json:"batchId"                keel:"batch_id"`
+	SettlementNumber       string              `json:"settlementNumber"       keel:"settlement_number"`
+	Status                 Status              `json:"status"                 keel:"status"`
+	PeriodStart            int64               `json:"periodStart"            keel:"period_start,type=epoch"`
+	PeriodEnd              int64               `json:"periodEnd"              keel:"period_end,type=epoch"`
+	PayDate                int64               `json:"payDate"                keel:"pay_date"`
+	GrossCostMinor         int64               `json:"grossCostMinor"         keel:"gross_cost_minor,label=Gross Cost (Minor)"`
+	AdjustmentsMinor       int64               `json:"adjustmentsMinor"       keel:"adjustments_minor,label=Adjustments (Minor)"`
+	NetPayableMinor        int64               `json:"netPayableMinor"        keel:"net_payable_minor,label=Net Payable (Minor)"`
+	ShipmentCount          int                 `json:"shipmentCount"          keel:"shipment_count"`
+	CurrencyCode           string              `json:"currencyCode"           keel:"currency_code"`
+	ExchangeRate           decimal.NullDecimal `json:"exchangeRate"           keel:"exchange_rate"`
+	ExchangeRateDate       *int64              `json:"exchangeRateDate"       keel:"exchange_rate_date"`
+	Notes                  string              `json:"notes"                  keel:"notes,nullzero"`
+	SubmittedByID          pulid.ID            `json:"submittedById"          keel:"submitted_by_id,nullzero"`
+	SubmittedAt            *int64              `json:"submittedAt"            keel:"submitted_at"`
+	ApprovedByID           pulid.ID            `json:"approvedById"           keel:"approved_by_id,nullzero"`
+	ApprovedAt             *int64              `json:"approvedAt"             keel:"approved_at"`
+	PostedByID             pulid.ID            `json:"postedById"             keel:"posted_by_id,nullzero"`
+	PostedAt               *int64              `json:"postedAt"               keel:"posted_at"`
+	PostedJournalBatchID   *pulid.ID           `json:"postedJournalBatchId"   keel:"posted_journal_batch_id"`
 	PostedExpenseAccountID *pulid.ID           `json:"postedExpenseAccountId" keel:"posted_expense_account_id"`
-	PostedAPAccountID      *pulid.ID           `json:"postedApAccountId" keel:"posted_ap_account_id"`
-	PaidAt                 *int64              `json:"paidAt" keel:"paid_at"`
-	PaidByID               pulid.ID            `json:"paidById" keel:"paid_by_id,nullzero"`
-	PaymentMethod          string              `json:"paymentMethod" keel:"payment_method,nullzero"`
-	PaymentReference       string              `json:"paymentReference" keel:"payment_reference,nullzero"`
-	PaidJournalBatchID     *pulid.ID           `json:"paidJournalBatchId" keel:"paid_journal_batch_id"`
-	PaidExchangeRate       decimal.NullDecimal `json:"paidExchangeRate" keel:"paid_exchange_rate"`
-	PaidExchangeRateDate   *int64              `json:"paidExchangeRateDate" keel:"paid_exchange_rate_date"`
-	VoidedByID             pulid.ID            `json:"voidedById" keel:"voided_by_id,nullzero"`
-	VoidedAt               *int64              `json:"voidedAt" keel:"voided_at"`
-	VoidReason             string              `json:"voidReason" keel:"void_reason,nullzero"`
-	VoidJournalBatchID     *pulid.ID           `json:"voidJournalBatchId" keel:"void_journal_batch_id"`
-	Version                int64               `json:"version" keel:"version,version"`
-	CreatedAt              int64               `json:"createdAt" keel:"created_at,autocreate"`
-	UpdatedAt              int64               `json:"updatedAt" keel:"updated_at,autoupdate"`
+	PostedAPAccountID      *pulid.ID           `json:"postedApAccountId"      keel:"posted_ap_account_id"`
+	PaidAt                 *int64              `json:"paidAt"                 keel:"paid_at"`
+	PaidByID               pulid.ID            `json:"paidById"               keel:"paid_by_id,nullzero"`
+	PaymentMethod          string              `json:"paymentMethod"          keel:"payment_method,nullzero"`
+	PaymentReference       string              `json:"paymentReference"       keel:"payment_reference,nullzero"`
+	PaidJournalBatchID     *pulid.ID           `json:"paidJournalBatchId"     keel:"paid_journal_batch_id"`
+	PaidExchangeRate       decimal.NullDecimal `json:"paidExchangeRate"       keel:"paid_exchange_rate"`
+	PaidExchangeRateDate   *int64              `json:"paidExchangeRateDate"   keel:"paid_exchange_rate_date"`
+	VoidedByID             pulid.ID            `json:"voidedById"             keel:"voided_by_id,nullzero"`
+	VoidedAt               *int64              `json:"voidedAt"               keel:"voided_at"`
+	VoidReason             string              `json:"voidReason"             keel:"void_reason,nullzero"`
+	VoidJournalBatchID     *pulid.ID           `json:"voidJournalBatchId"     keel:"void_journal_batch_id"`
+	Version                int64               `json:"version"                keel:"version,version"`
+	CreatedAt              int64               `json:"createdAt"              keel:"created_at,autocreate"`
+	UpdatedAt              int64               `json:"updatedAt"              keel:"updated_at,autoupdate"`
 
 	BusinessUnit *tenant.BusinessUnit     `json:"businessUnit,omitempty"`
 	Organization *tenant.Organization     `json:"organization,omitempty"`
-	Carrier      *carrier.Carrier         `json:"carrier,omitempty" keel:"belongs:carrier_id"`
-	Batch        *CarrierSettlementBatch  `json:"batch,omitempty" keel:"belongs:batch_id,noreport"`
-	Lines        []*CarrierSettlementLine `json:"lines,omitempty" keel:"many:settlement_id,noreport"`
+	Carrier      *carrier.Carrier         `json:"carrier,omitempty"      keel:"belongs:carrier_id"`
+	Batch        *CarrierSettlementBatch  `json:"batch,omitempty"        keel:"belongs:batch_id,noreport"`
+	Lines        []*CarrierSettlementLine `json:"lines,omitempty"        keel:"many:settlement_id,noreport"`
 }
 
 type CarrierSettlementLine struct {
-	keel.Table `                                                            keel:"carrier_settlement_lines"`
+	keel.Table `keel:"carrier_settlement_lines"`
 
-	ID             pulid.ID      `json:"id" keel:"id,pk,autoid:carstll_"`
+	ID             pulid.ID      `json:"id"             keel:"id,pk,autoid:carstll_"`
 	BusinessUnitID pulid.ID      `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
 	OrganizationID pulid.ID      `json:"organizationId" keel:"organization_id,pk,tenant"`
-	SettlementID   pulid.ID      `json:"settlementId" keel:"settlement_id"`
-	LineNumber     int           `json:"lineNumber" keel:"line_number"`
-	EventType      CostEventType `json:"eventType" keel:"event_type"`
-	Description    string        `json:"description" keel:"description"`
-	AmountMinor    int64         `json:"amountMinor" keel:"amount_minor"`
-	CostEventID    *pulid.ID     `json:"costEventId" keel:"cost_event_id"`
-	GLAccountID    *pulid.ID     `json:"glAccountId" keel:"gl_account_id"`
-	ShipmentID     *pulid.ID     `json:"shipmentId" keel:"shipment_id"`
-	MoveID         *pulid.ID     `json:"moveId" keel:"move_id"`
-	ProNumber      string        `json:"proNumber" keel:"pro_number,nullzero"`
-	AddedByAgent   bool          `json:"addedByAgent" keel:"added_by_agent"`
-	CreatedAt      int64         `json:"createdAt" keel:"created_at,autocreate"`
-	UpdatedAt      int64         `json:"updatedAt" keel:"updated_at,autoupdate"`
+	SettlementID   pulid.ID      `json:"settlementId"   keel:"settlement_id"`
+	LineNumber     int           `json:"lineNumber"     keel:"line_number"`
+	EventType      CostEventType `json:"eventType"      keel:"event_type"`
+	Description    string        `json:"description"    keel:"description"`
+	AmountMinor    int64         `json:"amountMinor"    keel:"amount_minor"`
+	CostEventID    *pulid.ID     `json:"costEventId"    keel:"cost_event_id"`
+	GLAccountID    *pulid.ID     `json:"glAccountId"    keel:"gl_account_id"`
+	ShipmentID     *pulid.ID     `json:"shipmentId"     keel:"shipment_id"`
+	MoveID         *pulid.ID     `json:"moveId"         keel:"move_id"`
+	ProNumber      string        `json:"proNumber"      keel:"pro_number,nullzero"`
+	AddedByAgent   bool          `json:"addedByAgent"   keel:"added_by_agent"`
+	CreatedAt      int64         `json:"createdAt"      keel:"created_at,autocreate"`
+	UpdatedAt      int64         `json:"updatedAt"      keel:"updated_at,autoupdate"`
 }
 
 func (s *CarrierSettlement) Validate(multiErr *errortypes.MultiError) {
@@ -204,7 +206,7 @@ func (s *CarrierSettlement) BeforeCreate(ctx context.Context) error {
 		s.Status = StatusDraft
 	}
 	if s.CurrencyCode == "" {
-		s.CurrencyCode = "USD"
+		s.CurrencyCode = money.DefaultCurrencyCode
 	}
 
 	return nil

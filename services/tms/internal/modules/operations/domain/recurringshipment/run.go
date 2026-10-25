@@ -13,24 +13,24 @@ import (
 type RecurringShipmentRun struct {
 	keel.Table `keel:"recurring_shipment_runs"`
 
-	ID                   pulid.ID   `json:"id" keel:"id,pk,autoid:rsr_"`
-	BusinessUnitID       pulid.ID   `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
-	OrganizationID       pulid.ID   `json:"organizationId" keel:"organization_id,pk,tenant"`
-	RecurringShipmentID  pulid.ID   `json:"recurringShipmentId" keel:"recurring_shipment_id"`
-	GeneratedShipmentID  pulid.ID   `json:"generatedShipmentId" keel:"generated_shipment_id,nullzero"`
-	TriggeredByID        pulid.ID   `json:"triggeredById" keel:"triggered_by_id,nullzero"`
-	Status               RunStatus  `json:"status" keel:"status"`
-	Trigger              RunTrigger `json:"trigger" keel:"trigger"`
-	OccurrenceAt         int64      `json:"occurrenceAt" keel:"occurrence_at"`
+	ID                   pulid.ID   `json:"id"                   keel:"id,pk,autoid:rsr_"`
+	BusinessUnitID       pulid.ID   `json:"businessUnitId"       keel:"business_unit_id,pk,tenant"`
+	OrganizationID       pulid.ID   `json:"organizationId"       keel:"organization_id,pk,tenant"`
+	RecurringShipmentID  pulid.ID   `json:"recurringShipmentId"  keel:"recurring_shipment_id"`
+	GeneratedShipmentID  pulid.ID   `json:"generatedShipmentId"  keel:"generated_shipment_id,nullzero"`
+	TriggeredByID        pulid.ID   `json:"triggeredById"        keel:"triggered_by_id,nullzero"`
+	Status               RunStatus  `json:"status"               keel:"status"`
+	Trigger              RunTrigger `json:"trigger"              keel:"trigger"`
+	OccurrenceAt         int64      `json:"occurrenceAt"         keel:"occurrence_at"`
 	OriginalOccurrenceAt *int64     `json:"originalOccurrenceAt" keel:"original_occurrence_at"`
-	Detail               string     `json:"detail" keel:"detail,nullzero"`
-	CreatedAt            int64      `json:"createdAt" keel:"created_at,autocreate"`
+	Detail               string     `json:"detail"               keel:"detail,nullzero"`
+	CreatedAt            int64      `json:"createdAt"            keel:"created_at,autocreate"`
 
 	BusinessUnit      *tenant.BusinessUnit `json:"businessUnit,omitempty"`
 	Organization      *tenant.Organization `json:"organization,omitempty"`
 	RecurringShipment *RecurringShipment   `json:"recurringShipment,omitempty" keel:"belongs:recurring_shipment_id"`
 	GeneratedShipment *shipment.Shipment   `json:"generatedShipment,omitempty" keel:"belongs:generated_shipment_id"`
-	TriggeredBy       *tenant.User         `json:"triggeredBy,omitempty" keel:"belongs:triggered_by_id"`
+	TriggeredBy       *tenant.User         `json:"triggeredBy,omitempty"       keel:"belongs:triggered_by_id"`
 }
 
 func (rr *RecurringShipmentRun) GetID() pulid.ID {

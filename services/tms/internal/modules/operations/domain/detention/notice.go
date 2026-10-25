@@ -24,17 +24,17 @@ const (
 type DetentionNotice struct {
 	keel.Table `keel:"detention_notices"`
 
-	ID                    pulid.ID             `json:"id" keel:"id,pk,autoid:dtn_"`
-	BusinessUnitID        pulid.ID             `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
-	OrganizationID        pulid.ID             `json:"organizationId" keel:"organization_id,pk,tenant"`
+	ID                    pulid.ID             `json:"id"                    keel:"id,pk,autoid:dtn_"`
+	BusinessUnitID        pulid.ID             `json:"businessUnitId"        keel:"business_unit_id,pk,tenant"`
+	OrganizationID        pulid.ID             `json:"organizationId"        keel:"organization_id,pk,tenant"`
 	DetentionOccurrenceID pulid.ID             `json:"detentionOccurrenceId" keel:"detention_occurrence_id"`
-	ThreadKey             string               `json:"threadKey" keel:"thread_key"`
-	Kind                  NoticeKind           `json:"kind" keel:"kind"`
-	Channel               NoticeChannel        `json:"channel" keel:"channel"`
-	DeliveryStatus        NoticeDeliveryStatus `json:"deliveryStatus" keel:"delivery_status"`
-	Recipients            []string             `json:"recipients" keel:"recipients,jsonb,nullzero"`
-	Subject               string               `json:"subject" keel:"subject"`
-	Body                  string               `json:"body" keel:"body"`
+	ThreadKey             string               `json:"threadKey"             keel:"thread_key"`
+	Kind                  NoticeKind           `json:"kind"                  keel:"kind"`
+	Channel               NoticeChannel        `json:"channel"               keel:"channel"`
+	DeliveryStatus        NoticeDeliveryStatus `json:"deliveryStatus"        keel:"delivery_status"`
+	Recipients            []string             `json:"recipients"            keel:"recipients,jsonb,nullzero"`
+	Subject               string               `json:"subject"               keel:"subject"`
+	Body                  string               `json:"body"                  keel:"body"`
 	// BodyHTML snapshots the rendered HTML alongside the plain text.
 	//
 	// It exists because the send path used to rebuild HTML by wrapping Body in
@@ -48,22 +48,22 @@ type DetentionNotice struct {
 	// PDFDocumentID is the stored notice PDF, when the policy attaches one.
 	PDFDocumentID *pulid.ID `json:"pdfDocumentId" keel:"pdf_document_id"`
 
-	ScheduledFor         int64               `json:"scheduledFor" keel:"scheduled_for"`
-	SentAt               *int64              `json:"sentAt" keel:"sent_at"`
-	DeliveredAt          *int64              `json:"deliveredAt" keel:"delivered_at"`
-	OpenedAt             *int64              `json:"openedAt" keel:"opened_at"`
-	FailedAt             *int64              `json:"failedAt" keel:"failed_at"`
-	FailureReason        string              `json:"failureReason" keel:"failure_reason,nullzero"`
-	ProviderMessageID    string              `json:"providerMessageId" keel:"provider_message_id,nullzero"`
-	SentByID             *pulid.ID           `json:"sentById" keel:"sent_by_id"`
-	WasAutomatic         bool                `json:"wasAutomatic" keel:"was_automatic"`
+	ScheduledFor         int64               `json:"scheduledFor"         keel:"scheduled_for"`
+	SentAt               *int64              `json:"sentAt"               keel:"sent_at"`
+	DeliveredAt          *int64              `json:"deliveredAt"          keel:"delivered_at"`
+	OpenedAt             *int64              `json:"openedAt"             keel:"opened_at"`
+	FailedAt             *int64              `json:"failedAt"             keel:"failed_at"`
+	FailureReason        string              `json:"failureReason"        keel:"failure_reason,nullzero"`
+	ProviderMessageID    string              `json:"providerMessageId"    keel:"provider_message_id,nullzero"`
+	SentByID             *pulid.ID           `json:"sentById"             keel:"sent_by_id"`
+	WasAutomatic         bool                `json:"wasAutomatic"         keel:"was_automatic"`
 	SatisfiesRequirement bool                `json:"satisfiesRequirement" keel:"satisfies_requirement"`
-	QuotedFreeMinutes    int32               `json:"quotedFreeMinutes" keel:"quoted_free_minutes"`
-	QuotedRate           decimal.NullDecimal `json:"quotedRate" keel:"quoted_rate"`
-	QuotedAmount         decimal.NullDecimal `json:"quotedAmount" keel:"quoted_amount"`
-	Version              int64               `json:"version" keel:"version,version"`
-	CreatedAt            int64               `json:"createdAt" keel:"created_at,autocreate"`
-	UpdatedAt            int64               `json:"updatedAt" keel:"updated_at,autoupdate"`
+	QuotedFreeMinutes    int32               `json:"quotedFreeMinutes"    keel:"quoted_free_minutes"`
+	QuotedRate           decimal.NullDecimal `json:"quotedRate"           keel:"quoted_rate"`
+	QuotedAmount         decimal.NullDecimal `json:"quotedAmount"         keel:"quoted_amount"`
+	Version              int64               `json:"version"              keel:"version,version"`
+	CreatedAt            int64               `json:"createdAt"            keel:"created_at,autocreate"`
+	UpdatedAt            int64               `json:"updatedAt"            keel:"updated_at,autoupdate"`
 }
 
 func (n *DetentionNotice) GetID() pulid.ID { return n.ID }

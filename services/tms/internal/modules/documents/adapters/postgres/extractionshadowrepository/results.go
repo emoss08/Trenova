@@ -108,7 +108,10 @@ func (r *resultRepository) GetByExtraction(
 	})
 }
 
-func byExtraction(documentID pulid.ID, extractedAt int64) *keel.Query[extractionshadow.ShadowResult] {
+func byExtraction(
+	documentID pulid.ID,
+	extractedAt int64,
+) *keel.Query[extractionshadow.ShadowResult] {
 	sr := extractionshadowdb.ShadowResults
 
 	return sr.Where(sr.DocumentID.Eq(documentID), sr.ExtractedAt.Eq(extractedAt))
@@ -120,7 +123,13 @@ func (r *resultRepository) Save(
 ) (*extractionshadow.ShadowResult, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*extractionshadow.ShadowResult, error) {
 		sr := extractionshadowdb.ShadowResults
-		if err := sr.SaveExcept(ctx, r.db.Keel(ctx), entity, sr.DocumentID, sr.ExtractedAt); err != nil {
+		if err := sr.SaveExcept(
+			ctx,
+			r.db.Keel(ctx),
+			entity,
+			sr.DocumentID,
+			sr.ExtractedAt,
+		); err != nil {
 			r.l.Error("failed to save extraction shadow result", zap.Error(err))
 
 			return nil, resultErrors.Map(err, entity.ID.String())

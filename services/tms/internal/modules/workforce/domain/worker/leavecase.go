@@ -159,35 +159,35 @@ var (
 // by the entries under a case, so a case that has been open for months has used
 // nothing until days are recorded against it.
 type WorkerLeaveCase struct {
-	keel.Table `                                                  keel:"worker_leave_cases"`
+	keel.Table `keel:"worker_leave_cases"`
 
-	ID             pulid.ID `json:"id" keel:"id,pk,autoid:wlc_"`
+	ID             pulid.ID `json:"id"             keel:"id,pk,autoid:wlc_"`
 	BusinessUnitID pulid.ID `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
 	OrganizationID pulid.ID `json:"organizationId" keel:"organization_id,pk,tenant"`
-	WorkerID       pulid.ID `json:"workerId" keel:"worker_id"`
+	WorkerID       pulid.ID `json:"workerId"       keel:"worker_id"`
 
 	LeaveType LeaveType       `json:"leaveType" keel:"leave_type"`
-	Status    LeaveCaseStatus `json:"status" keel:"status"`
+	Status    LeaveCaseStatus `json:"status"    keel:"status"`
 	Frequency LeaveFrequency  `json:"frequency" keel:"frequency"`
-	Reason    string          `json:"reason" keel:"reason,nullzero"`
+	Reason    string          `json:"reason"    keel:"reason,nullzero"`
 
 	// FMLADesignated is the employer's decision that this leave counts against
 	// the entitlement (29 CFR 825.301). Leave can qualify and still not be
 	// designated, which is why it is its own flag rather than a leave type.
-	FMLADesignated    bool `json:"fmlaDesignated" keel:"fmla_designated"`
+	FMLADesignated    bool `json:"fmlaDesignated"    keel:"fmla_designated"`
 	MilitaryCaregiver bool `json:"militaryCaregiver" keel:"military_caregiver"`
 
 	RequestedAt int64  `json:"requestedAt" keel:"requested_at"`
-	StartsAt    int64  `json:"startsAt" keel:"starts_at"`
-	EndsAt      *int64 `json:"endsAt" keel:"ends_at"`
-	DecidedAt   *int64 `json:"decidedAt" keel:"decided_at"`
-	ClosedAt    *int64 `json:"closedAt" keel:"closed_at"`
+	StartsAt    int64  `json:"startsAt"    keel:"starts_at"`
+	EndsAt      *int64 `json:"endsAt"      keel:"ends_at"`
+	DecidedAt   *int64 `json:"decidedAt"   keel:"decided_at"`
+	ClosedAt    *int64 `json:"closedAt"    keel:"closed_at"`
 
-	CertificationStatus      LeaveCertificationStatus `json:"certificationStatus" keel:"certification_status"`
+	CertificationStatus      LeaveCertificationStatus `json:"certificationStatus"      keel:"certification_status"`
 	CertificationRequestedAt *int64                   `json:"certificationRequestedAt" keel:"certification_requested_at"`
-	CertificationDueAt       *int64                   `json:"certificationDueAt" keel:"certification_due_at"`
-	CertificationReceivedAt  *int64                   `json:"certificationReceivedAt" keel:"certification_received_at"`
-	RecertificationDueAt     *int64                   `json:"recertificationDueAt" keel:"recertification_due_at"`
+	CertificationDueAt       *int64                   `json:"certificationDueAt"       keel:"certification_due_at"`
+	CertificationReceivedAt  *int64                   `json:"certificationReceivedAt"  keel:"certification_received_at"`
+	RecertificationDueAt     *int64                   `json:"recertificationDueAt"     keel:"recertification_due_at"`
 
 	// EligibilityHoursWorked is the hours in the twelve months before the leave
 	// began. The system has no timeclock, so the office records it; it is
@@ -195,19 +195,19 @@ type WorkerLeaveCase struct {
 	EligibilityHoursWorked *int32 `json:"eligibilityHoursWorked" keel:"eligibility_hours_worked"`
 
 	EmploymentEventID pulid.ID `json:"employmentEventId" keel:"employment_event_id,nullzero"`
-	DocumentID        pulid.ID `json:"documentId" keel:"document_id,nullzero"`
-	Notes             string   `json:"notes" keel:"notes,nullzero"`
-	DecidedByID       pulid.ID `json:"decidedById" keel:"decided_by_id,nullzero"`
-	RecordedByID      pulid.ID `json:"recordedById" keel:"recorded_by_id,nullzero"`
+	DocumentID        pulid.ID `json:"documentId"        keel:"document_id,nullzero"`
+	Notes             string   `json:"notes"             keel:"notes,nullzero"`
+	DecidedByID       pulid.ID `json:"decidedById"       keel:"decided_by_id,nullzero"`
+	RecordedByID      pulid.ID `json:"recordedById"      keel:"recorded_by_id,nullzero"`
 
-	Version   int64 `json:"version" keel:"version,version"`
+	Version   int64 `json:"version"   keel:"version,version"`
 	CreatedAt int64 `json:"createdAt" keel:"created_at,autocreate"`
 	UpdatedAt int64 `json:"updatedAt" keel:"updated_at,autoupdate"`
 
-	Worker    *Worker             `json:"worker,omitempty" keel:"belongs:worker_id"`
-	Document  *document.Document  `json:"document,omitempty" keel:"belongs:document_id"`
+	Worker    *Worker             `json:"worker,omitempty"    keel:"belongs:worker_id"`
+	Document  *document.Document  `json:"document,omitempty"  keel:"belongs:document_id"`
 	DecidedBy *tenant.User        `json:"decidedBy,omitempty" keel:"belongs:decided_by_id"`
-	Entries   []*WorkerLeaveEntry `json:"entries,omitempty" keel:"many:leave_case_id"`
+	Entries   []*WorkerLeaveEntry `json:"entries,omitempty"   keel:"many:leave_case_id"`
 }
 
 func (c *WorkerLeaveCase) Validate(multiErr *errortypes.MultiError) {
@@ -358,16 +358,16 @@ var (
 // 29 CFR 825.205 lets intermittent leave be taken in the smallest increment the
 // employer uses for any other absence.
 type WorkerLeaveEntry struct {
-	keel.Table `                                                    keel:"worker_leave_entries"`
+	keel.Table `keel:"worker_leave_entries"`
 
-	ID             pulid.ID `json:"id" keel:"id,pk,autoid:wle_"`
+	ID             pulid.ID `json:"id"             keel:"id,pk,autoid:wle_"`
 	BusinessUnitID pulid.ID `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
 	OrganizationID pulid.ID `json:"organizationId" keel:"organization_id,pk,tenant"`
-	WorkerID       pulid.ID `json:"workerId" keel:"worker_id"`
-	LeaveCaseID    pulid.ID `json:"leaveCaseId" keel:"leave_case_id"`
+	WorkerID       pulid.ID `json:"workerId"       keel:"worker_id"`
+	LeaveCaseID    pulid.ID `json:"leaveCaseId"    keel:"leave_case_id"`
 
 	UsedOn int64           `json:"usedOn" keel:"used_on"`
-	Hours  decimal.Decimal `json:"hours" keel:"hours"`
+	Hours  decimal.Decimal `json:"hours"  keel:"hours"`
 	// CountsAgainstEntitlement is copied from the case when the day is
 	// recorded. It lives on the entry so that undesignating a case later does
 	// not silently rewrite what was already counted.
@@ -375,11 +375,11 @@ type WorkerLeaveEntry struct {
 
 	// PTOID is the paid time off this day was also taken as. FMLA runs
 	// concurrently with paid leave, so a day is very often both.
-	PTOID        pulid.ID `json:"ptoId" keel:"pto_id,nullzero"`
-	Notes        string   `json:"notes" keel:"notes,nullzero"`
+	PTOID        pulid.ID `json:"ptoId"        keel:"pto_id,nullzero"`
+	Notes        string   `json:"notes"        keel:"notes,nullzero"`
 	RecordedByID pulid.ID `json:"recordedById" keel:"recorded_by_id,nullzero"`
 
-	Version   int64 `json:"version" keel:"version,version"`
+	Version   int64 `json:"version"   keel:"version,version"`
 	CreatedAt int64 `json:"createdAt" keel:"created_at,autocreate"`
 	UpdatedAt int64 `json:"updatedAt" keel:"updated_at,autoupdate"`
 

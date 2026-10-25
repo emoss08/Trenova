@@ -79,5 +79,9 @@ func transactionSetOptionsQuery(
 
 func transactionSetSearch(s string) keel.Pred {
 	ts := edidb.EDITransactionSets
-	return keel.Or(ts.Code.ContainsFold(s), ts.Name.ContainsFold(s), ts.DefaultVersion.ContainsFold(s))
+	return keel.Or(
+		ts.Code.ContainsFold(s),
+		ts.Name.ContainsFold(s),
+		ts.DefaultVersion.ContainsFold(s),
+	)
 }

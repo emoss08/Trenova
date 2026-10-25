@@ -155,7 +155,9 @@ func (r *costEventRepository) ListPendingByCarrier(
 	})
 }
 
-func resolvedInvoiceMatch(ce *carriersettlementdb.CostEventsTable) *keel.Query[carriersettlement.InvoiceMatch] {
+func resolvedInvoiceMatch(
+	ce *carriersettlementdb.CostEventsTable,
+) *keel.Query[carriersettlement.InvoiceMatch] {
 	im := carriersettlementdb.InvoiceMatches
 	return im.Where(
 		im.CarrierAssignmentID.EqCol(ce.CarrierAssignmentID),

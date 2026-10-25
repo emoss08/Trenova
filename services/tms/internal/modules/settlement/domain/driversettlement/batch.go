@@ -3,6 +3,8 @@ package driversettlement
 import (
 	"context"
 
+	"github.com/emoss08/trenova/shared/money"
+
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/pkg/domaintypes"
@@ -20,34 +22,34 @@ var (
 
 // A pay run and its totals
 type SettlementBatch struct {
-	keel.Table `                                                           keel:"driver_settlement_batches,report=Payroll"`
+	keel.Table `keel:"driver_settlement_batches,report=Payroll"`
 
-	ID              pulid.ID    `json:"id" keel:"id,pk,autoid:dstlb_"`
-	BusinessUnitID  pulid.ID    `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
-	OrganizationID  pulid.ID    `json:"organizationId" keel:"organization_id,pk,tenant"`
-	Status          BatchStatus `json:"status" keel:"status"`
-	Name            string      `json:"name" keel:"name,label=Batch Name"`
-	PeriodStart     int64       `json:"periodStart" keel:"period_start,type=epoch"`
-	PeriodEnd       int64       `json:"periodEnd" keel:"period_end,type=epoch"`
-	PayDate         int64       `json:"payDate" keel:"pay_date"`
+	ID              pulid.ID    `json:"id"              keel:"id,pk,autoid:dstlb_"`
+	BusinessUnitID  pulid.ID    `json:"businessUnitId"  keel:"business_unit_id,pk,tenant"`
+	OrganizationID  pulid.ID    `json:"organizationId"  keel:"organization_id,pk,tenant"`
+	Status          BatchStatus `json:"status"          keel:"status"`
+	Name            string      `json:"name"            keel:"name,label=Batch Name"`
+	PeriodStart     int64       `json:"periodStart"     keel:"period_start,type=epoch"`
+	PeriodEnd       int64       `json:"periodEnd"       keel:"period_end,type=epoch"`
+	PayDate         int64       `json:"payDate"         keel:"pay_date"`
 	SettlementCount int         `json:"settlementCount" keel:"settlement_count,label=Settlements,format=count"`
-	ExceptionCount  int         `json:"exceptionCount" keel:"exception_count,label=Exceptions,format=count"`
+	ExceptionCount  int         `json:"exceptionCount"  keel:"exception_count,label=Exceptions,format=count"`
 	TotalGrossMinor int64       `json:"totalGrossMinor" keel:"total_gross_minor,label=Total Gross (Minor)"`
-	TotalNetMinor   int64       `json:"totalNetMinor" keel:"total_net_minor,label=Total Net (Minor)"`
-	CurrencyCode    string      `json:"currencyCode" keel:"currency_code,label=Currency"`
-	Notes           string      `json:"notes" keel:"notes,nullzero"`
-	GeneratedByID   pulid.ID    `json:"generatedById" keel:"generated_by_id,nullzero"`
-	GeneratedAt     *int64      `json:"generatedAt" keel:"generated_at"`
-	CompletedAt     *int64      `json:"completedAt" keel:"completed_at"`
-	CanceledByID    pulid.ID    `json:"canceledById" keel:"canceled_by_id,nullzero"`
-	CanceledAt      *int64      `json:"canceledAt" keel:"canceled_at"`
-	Version         int64       `json:"version" keel:"version,version"`
-	CreatedAt       int64       `json:"createdAt" keel:"created_at,autocreate"`
-	UpdatedAt       int64       `json:"updatedAt" keel:"updated_at,autoupdate"`
+	TotalNetMinor   int64       `json:"totalNetMinor"   keel:"total_net_minor,label=Total Net (Minor)"`
+	CurrencyCode    string      `json:"currencyCode"    keel:"currency_code,label=Currency"`
+	Notes           string      `json:"notes"           keel:"notes,nullzero"`
+	GeneratedByID   pulid.ID    `json:"generatedById"   keel:"generated_by_id,nullzero"`
+	GeneratedAt     *int64      `json:"generatedAt"     keel:"generated_at"`
+	CompletedAt     *int64      `json:"completedAt"     keel:"completed_at"`
+	CanceledByID    pulid.ID    `json:"canceledById"    keel:"canceled_by_id,nullzero"`
+	CanceledAt      *int64      `json:"canceledAt"      keel:"canceled_at"`
+	Version         int64       `json:"version"         keel:"version,version"`
+	CreatedAt       int64       `json:"createdAt"       keel:"created_at,autocreate"`
+	UpdatedAt       int64       `json:"updatedAt"       keel:"updated_at,autoupdate"`
 
 	BusinessUnit *tenant.BusinessUnit `json:"businessUnit,omitempty"`
 	Organization *tenant.Organization `json:"organization,omitempty"`
-	Settlements  []*Settlement        `json:"settlements,omitempty" keel:"many:batch_id"`
+	Settlements  []*Settlement        `json:"settlements,omitempty"  keel:"many:batch_id"`
 }
 
 func (b *SettlementBatch) Validate(multiErr *errortypes.MultiError) {
@@ -98,7 +100,7 @@ func (b *SettlementBatch) BeforeCreate(ctx context.Context) error {
 		b.Status = BatchStatusOpen
 	}
 	if b.CurrencyCode == "" {
-		b.CurrencyCode = "USD"
+		b.CurrencyCode = money.DefaultCurrencyCode
 	}
 
 	return nil

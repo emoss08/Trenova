@@ -664,17 +664,8 @@ func (r *repository) CreateEmailAttempt(
 		}
 
 		if existingID.IsNil() {
-			if err = invoicedb.EmailAttempts.Create(ctx, db, attempt); err != nil {
+			if err = insertEmailAttempt(ctx, db, attempt, attachments); err != nil {
 				return nil, emailAttemptErrors.Map(err, attempt.ID.String())
-			}
-			if len(attachments) > 0 {
-				for _, attachment := range attachments {
-					attachment.AttemptID = attempt.ID
-				}
-				err = invoicedb.EmailAttemptAttachments.CreateMany(ctx, db, attachments)
-				if err != nil {
-					return nil, emailAttemptErrors.Map(err, attempt.ID.String())
-				}
 			}
 		} else {
 			attempt.ID = existingID
@@ -690,6 +681,25 @@ func (r *repository) CreateEmailAttempt(
 
 		return entity, nil
 	})
+}
+
+func insertEmailAttempt(
+	ctx context.Context,
+	db *keel.DB,
+	attempt *invoice.EmailAttempt,
+	attachments []*invoice.EmailAttemptAttachment,
+) error {
+	if err := invoicedb.EmailAttempts.Create(ctx, db, attempt); err != nil {
+		return err
+	}
+	if len(attachments) == 0 {
+		return nil
+	}
+	for _, attachment := range attachments {
+		attachment.AttemptID = attempt.ID
+	}
+
+	return invoicedb.EmailAttemptAttachments.CreateMany(ctx, db, attachments)
 }
 
 func (r *repository) ListEmailAttempts(
@@ -821,19 +831,20 @@ func (r *repository) syncInvoiceSendStatus(
 		return nil, err
 	}
 	if len(attempts) == 0 {
-		return nil, nil
+		return nil, nil //nolint:nilnil // an invoice never sent has no send status to record
 	}
 
 	status, sentAt, lastError := invoiceSendStatusFromAttempts(
 		invoice.LatestSendAttempts(attempts),
 	)
 	inv := invoicedb.Invoices
-	rows, err := inv.Where(inv.ID.Eq(invoiceID)).UpdateReturning(ctx, db, inv.SendStatus.To(status), inv.SentAt.ToExpr(keel.Val(sentAt)), inv.LastSendError.To(lastError), inv.Version.ToExpr(inv.Version))
+	rows, err := inv.Where(inv.ID.Eq(invoiceID)).
+		UpdateReturning(ctx, db, inv.SendStatus.To(status), inv.SentAt.ToExpr(keel.Val(sentAt)), inv.LastSendError.To(lastError), inv.Version.ToExpr(inv.Version))
 	if err != nil {
 		return nil, invoiceErrors.Map(err, invoiceID.String())
 	}
 	if len(rows) == 0 {
-		return nil, nil
+		return nil, nil //nolint:nilnil // the invoice is gone, so there is no row to report
 	}
 
 	return rows[0], nil

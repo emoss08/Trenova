@@ -321,7 +321,9 @@ func reconciliationLimit(limit int) int {
 	return limit
 }
 
-func orEmpty(items []*documentupload.DocumentUploadSession) []*documentupload.DocumentUploadSession {
+func orEmpty(
+	items []*documentupload.DocumentUploadSession,
+) []*documentupload.DocumentUploadSession {
 	if items == nil {
 		return []*documentupload.DocumentUploadSession{}
 	}

@@ -80,7 +80,10 @@ func newListRecurringShipmentsTool(
 			"the id with shipment_update_recurring, shipment_set_recurring_status or " +
 			"shipment_generate_recurring.",
 		resource: permission.ResourceRecurringShipment,
-		config:   listquery.Describe((*recurringshipment.RecurringShipment)(nil), recurringshipmentdb.RecurringShipmentsSchema()),
+		config: listquery.Describe(
+			(*recurringshipment.RecurringShipment)(nil),
+			recurringshipmentdb.RecurringShipmentsSchema(),
+		),
 		fields: []listField{
 			{
 				Name:   paramStatus,

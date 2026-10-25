@@ -48,7 +48,7 @@ func New(p Params) formulatemplateports.FormulaTemplateRepository {
 
 func statusFilter(value string) (keel.Pred, error) {
 	if value == "" {
-		return nil, nil
+		return nil, nil //nolint:nilnil // a nil predicate leaves the list unfiltered
 	}
 
 	status, err := formulatemplate.StatusFromString(value)

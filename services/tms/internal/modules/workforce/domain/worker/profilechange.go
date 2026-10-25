@@ -190,22 +190,22 @@ var (
 // exactly what is being asked and an approval applies exactly that — not
 // whatever else happened to be on the form.
 type WorkerProfileChangeRequest struct {
-	keel.Table `                                                               keel:"worker_profile_change_requests"`
+	keel.Table `keel:"worker_profile_change_requests"`
 
-	ID             pulid.ID `json:"id" keel:"id,pk,autoid:wpcr_"`
+	ID             pulid.ID `json:"id"             keel:"id,pk,autoid:wpcr_"`
 	BusinessUnitID pulid.ID `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
 	OrganizationID pulid.ID `json:"organizationId" keel:"organization_id,pk,tenant"`
-	WorkerID       pulid.ID `json:"workerId" keel:"worker_id"`
+	WorkerID       pulid.ID `json:"workerId"       keel:"worker_id"`
 
-	Status       ProfileChangeStatus `json:"status" keel:"status"`
-	Changes      []FieldChange       `json:"changes" keel:"changes,jsonb"`
-	Note         string              `json:"note" keel:"note,nullzero"`
-	SubmittedAt  int64               `json:"submittedAt" keel:"submitted_at"`
-	DecidedAt    *int64              `json:"decidedAt" keel:"decided_at"`
-	DecidedByID  pulid.ID            `json:"decidedById" keel:"decided_by_id,nullzero"`
+	Status       ProfileChangeStatus `json:"status"       keel:"status"`
+	Changes      []FieldChange       `json:"changes"      keel:"changes,jsonb"`
+	Note         string              `json:"note"         keel:"note,nullzero"`
+	SubmittedAt  int64               `json:"submittedAt"  keel:"submitted_at"`
+	DecidedAt    *int64              `json:"decidedAt"    keel:"decided_at"`
+	DecidedByID  pulid.ID            `json:"decidedById"  keel:"decided_by_id,nullzero"`
 	DecisionNote string              `json:"decisionNote" keel:"decision_note,nullzero"`
 
-	Version   int64 `json:"version" keel:"version,version"`
+	Version   int64 `json:"version"   keel:"version,version"`
 	CreatedAt int64 `json:"createdAt" keel:"created_at,autocreate"`
 	UpdatedAt int64 `json:"updatedAt" keel:"updated_at,autoupdate"`
 

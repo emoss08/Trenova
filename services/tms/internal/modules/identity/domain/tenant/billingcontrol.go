@@ -20,29 +20,29 @@ var (
 type BillingControl struct {
 	keel.Table `keel:"billing_controls"`
 
-	ID             pulid.ID `json:"id" keel:"id,pk,autoid:bc_"`
+	ID             pulid.ID `json:"id"             keel:"id,pk,autoid:bc_"`
 	BusinessUnitID pulid.ID `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
 	OrganizationID pulid.ID `json:"organizationId" keel:"organization_id,pk,tenant"`
 
-	DefaultPaymentTerm                    PaymentTerm                    `json:"defaultPaymentTerm" keel:"default_payment_term"`
-	DefaultInvoiceTerms                   string                         `json:"defaultInvoiceTerms" keel:"default_invoice_terms,nullzero"`
-	DefaultInvoiceFooter                  string                         `json:"defaultInvoiceFooter" keel:"default_invoice_footer,nullzero"`
-	ShowDueDateOnInvoice                  bool                           `json:"showDueDateOnInvoice" keel:"show_due_date_on_invoice"`
-	ShowBalanceDueOnInvoice               bool                           `json:"showBalanceDueOnInvoice" keel:"show_balance_due_on_invoice"`
-	ReadyToBillAssignmentMode             ReadyToBillAssignmentMode      `json:"readyToBillAssignmentMode" keel:"ready_to_bill_assignment_mode"`
-	BillingQueueTransferMode              BillingQueueTransferMode       `json:"billingQueueTransferMode" keel:"billing_queue_transfer_mode"`
-	BillingQueueTransferSchedule          TransferSchedule               `json:"billingQueueTransferSchedule" keel:"billing_queue_transfer_schedule,nullzero"`
-	BillingQueueTransferBatchSize         int                            `json:"billingQueueTransferBatchSize" keel:"billing_queue_transfer_batch_size,nullzero"`
-	InvoiceDraftCreationMode              InvoiceDraftCreationMode       `json:"invoiceDraftCreationMode" keel:"invoice_draft_creation_mode"`
-	InvoicePostingMode                    InvoicePostingMode             `json:"invoicePostingMode" keel:"invoice_posting_mode"`
-	AutoInvoiceBatchSize                  int                            `json:"autoInvoiceBatchSize" keel:"auto_invoice_batch_size,nullzero"`
-	NotifyOnAutoInvoiceCreation           bool                           `json:"notifyOnAutoInvoiceCreation" keel:"notify_on_auto_invoice_creation"`
+	DefaultPaymentTerm                    PaymentTerm                    `json:"defaultPaymentTerm"                    keel:"default_payment_term"`
+	DefaultInvoiceTerms                   string                         `json:"defaultInvoiceTerms"                   keel:"default_invoice_terms,nullzero"`
+	DefaultInvoiceFooter                  string                         `json:"defaultInvoiceFooter"                  keel:"default_invoice_footer,nullzero"`
+	ShowDueDateOnInvoice                  bool                           `json:"showDueDateOnInvoice"                  keel:"show_due_date_on_invoice"`
+	ShowBalanceDueOnInvoice               bool                           `json:"showBalanceDueOnInvoice"               keel:"show_balance_due_on_invoice"`
+	ReadyToBillAssignmentMode             ReadyToBillAssignmentMode      `json:"readyToBillAssignmentMode"             keel:"ready_to_bill_assignment_mode"`
+	BillingQueueTransferMode              BillingQueueTransferMode       `json:"billingQueueTransferMode"              keel:"billing_queue_transfer_mode"`
+	BillingQueueTransferSchedule          TransferSchedule               `json:"billingQueueTransferSchedule"          keel:"billing_queue_transfer_schedule,nullzero"`
+	BillingQueueTransferBatchSize         int                            `json:"billingQueueTransferBatchSize"         keel:"billing_queue_transfer_batch_size,nullzero"`
+	InvoiceDraftCreationMode              InvoiceDraftCreationMode       `json:"invoiceDraftCreationMode"              keel:"invoice_draft_creation_mode"`
+	InvoicePostingMode                    InvoicePostingMode             `json:"invoicePostingMode"                    keel:"invoice_posting_mode"`
+	AutoInvoiceBatchSize                  int                            `json:"autoInvoiceBatchSize"                  keel:"auto_invoice_batch_size,nullzero"`
+	NotifyOnAutoInvoiceCreation           bool                           `json:"notifyOnAutoInvoiceCreation"           keel:"notify_on_auto_invoice_creation"`
 	ShipmentBillingRequirementEnforcement EnforcementLevel               `json:"shipmentBillingRequirementEnforcement" keel:"shipment_billing_requirement_enforcement"`
-	RateValidationEnforcement             EnforcementLevel               `json:"rateValidationEnforcement" keel:"rate_validation_enforcement"`
-	BillingExceptionDisposition           BillingExceptionDisposition    `json:"billingExceptionDisposition" keel:"billing_exception_disposition"`
-	NotifyOnBillingExceptions             bool                           `json:"notifyOnBillingExceptions" keel:"notify_on_billing_exceptions"`
-	RateVarianceTolerancePercent          decimal.Decimal                `json:"rateVarianceTolerancePercent" keel:"rate_variance_tolerance_percent"`
-	RateVarianceAutoResolutionMode        RateVarianceAutoResolutionMode `json:"rateVarianceAutoResolutionMode" keel:"rate_variance_auto_resolution_mode"`
+	RateValidationEnforcement             EnforcementLevel               `json:"rateValidationEnforcement"             keel:"rate_validation_enforcement"`
+	BillingExceptionDisposition           BillingExceptionDisposition    `json:"billingExceptionDisposition"           keel:"billing_exception_disposition"`
+	NotifyOnBillingExceptions             bool                           `json:"notifyOnBillingExceptions"             keel:"notify_on_billing_exceptions"`
+	RateVarianceTolerancePercent          decimal.Decimal                `json:"rateVarianceTolerancePercent"          keel:"rate_variance_tolerance_percent"`
+	RateVarianceAutoResolutionMode        RateVarianceAutoResolutionMode `json:"rateVarianceAutoResolutionMode"        keel:"rate_variance_auto_resolution_mode"`
 
 	// UnratedShipmentDisposition decides what happens when no rate agreement
 	// covers a shipment's lane. It defaults to falling back to the formula
@@ -50,9 +50,9 @@ type BillingControl struct {
 	// agreements existed, so an organization that has not written a contract
 	// yet sees no change at all.
 	UnratedShipmentDisposition UnratedShipmentDisposition `json:"unratedShipmentDisposition" keel:"unrated_shipment_disposition"`
-	FallbackFormulaTemplateID  *pulid.ID                  `json:"fallbackFormulaTemplateId" keel:"fallback_formula_template_id"`
-	RequireRateOverrideReason  bool                       `json:"requireRateOverrideReason" keel:"require_rate_override_reason"`
-	EnforceMarginFloor         bool                       `json:"enforceMarginFloor" keel:"enforce_margin_floor"`
+	FallbackFormulaTemplateID  *pulid.ID                  `json:"fallbackFormulaTemplateId"  keel:"fallback_formula_template_id"`
+	RequireRateOverrideReason  bool                       `json:"requireRateOverrideReason"  keel:"require_rate_override_reason"`
+	EnforceMarginFloor         bool                       `json:"enforceMarginFloor"         keel:"enforce_margin_floor"`
 
 	// LateChargeAssessmentMode says whether the nightly run previews or raises
 	// late-charge debit memos; the rate and grace live on each customer.
@@ -63,14 +63,14 @@ type BillingControl struct {
 	// PaymentRemindersEnabled emails customers about their overdue invoices on
 	// the days past due in PaymentReminderDays, one reminder per step.
 	PaymentRemindersEnabled bool    `json:"paymentRemindersEnabled" keel:"payment_reminders_enabled"`
-	PaymentReminderDays     []int32 `json:"paymentReminderDays" keel:"payment_reminder_days"`
+	PaymentReminderDays     []int32 `json:"paymentReminderDays"     keel:"payment_reminder_days"`
 
 	// MonthlyStatementsEnabled emails every customer with a balance or
 	// activity a statement of the month just closed, on MonthlyStatementDay.
 	MonthlyStatementsEnabled bool  `json:"monthlyStatementsEnabled" keel:"monthly_statements_enabled"`
-	MonthlyStatementDay      int16 `json:"monthlyStatementDay" keel:"monthly_statement_day"`
+	MonthlyStatementDay      int16 `json:"monthlyStatementDay"      keel:"monthly_statement_day"`
 
-	Version   int64 `json:"version" keel:"version,version"`
+	Version   int64 `json:"version"   keel:"version,version"`
 	CreatedAt int64 `json:"createdAt" keel:"created_at,autocreate"`
 	UpdatedAt int64 `json:"updatedAt" keel:"updated_at,autoupdate"`
 

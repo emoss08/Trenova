@@ -19,18 +19,18 @@ import (
 type DetentionPolicyTier struct {
 	keel.Table `keel:"detention_policy_tiers"`
 
-	ID                pulid.ID        `json:"id" keel:"id,pk,autoid:dpt_"`
-	BusinessUnitID    pulid.ID        `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
-	OrganizationID    pulid.ID        `json:"organizationId" keel:"organization_id,pk,tenant"`
+	ID                pulid.ID        `json:"id"                keel:"id,pk,autoid:dpt_"`
+	BusinessUnitID    pulid.ID        `json:"businessUnitId"    keel:"business_unit_id,pk,tenant"`
+	OrganizationID    pulid.ID        `json:"organizationId"    keel:"organization_id,pk,tenant"`
 	DetentionPolicyID pulid.ID        `json:"detentionPolicyId" keel:"detention_policy_id"`
-	FromMinute        int32           `json:"fromMinute" keel:"from_minute"`
-	ToMinute          *int32          `json:"toMinute" keel:"to_minute"`
-	Rate              decimal.Decimal `json:"rate" keel:"rate"`
-	RateUnit          TierRateUnit    `json:"rateUnit" keel:"rate_unit"`
-	Label             string          `json:"label" keel:"label,nullzero"`
-	SortOrder         int32           `json:"sortOrder" keel:"sort_order"`
-	CreatedAt         int64           `json:"createdAt" keel:"created_at,autocreate"`
-	UpdatedAt         int64           `json:"updatedAt" keel:"updated_at,autoupdate"`
+	FromMinute        int32           `json:"fromMinute"        keel:"from_minute"`
+	ToMinute          *int32          `json:"toMinute"          keel:"to_minute"`
+	Rate              decimal.Decimal `json:"rate"              keel:"rate"`
+	RateUnit          TierRateUnit    `json:"rateUnit"          keel:"rate_unit"`
+	Label             string          `json:"label"             keel:"label,nullzero"`
+	SortOrder         int32           `json:"sortOrder"         keel:"sort_order"`
+	CreatedAt         int64           `json:"createdAt"         keel:"created_at,autocreate"`
+	UpdatedAt         int64           `json:"updatedAt"         keel:"updated_at,autoupdate"`
 }
 
 func (t *DetentionPolicyTier) BeforeUpdate(_ context.Context) error {

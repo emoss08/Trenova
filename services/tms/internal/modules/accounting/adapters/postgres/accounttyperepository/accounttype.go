@@ -159,7 +159,8 @@ func (r *repository) BulkUpdateStatus(
 ) ([]*accounttype.AccountType, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) ([]*accounttype.AccountType, error) {
 		at := accounttypedb.AccountTypes
-		entities, err := at.Where(at.ID.In(req.AccountTypeIDs...)).UpdateReturning(ctx, r.db.Keel(ctx), at.Status.To(req.Status))
+		entities, err := at.Where(at.ID.In(req.AccountTypeIDs...)).
+			UpdateReturning(ctx, r.db.Keel(ctx), at.Status.To(req.Status))
 		if err != nil {
 			r.l.Error("failed to bulk update account type status", zap.Error(err))
 			return nil, err

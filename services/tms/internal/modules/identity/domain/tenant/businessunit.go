@@ -14,11 +14,11 @@ const BusinessUnitIDPrefix = "bu_"
 type BusinessUnit struct {
 	keel.Table `keel:"business_units"`
 
-	ID        pulid.ID       `json:"id" keel:"id,pk,autoid:bu_"`
-	Name      string         `json:"name" keel:"name"`
-	Code      string         `json:"code" keel:"code"`
-	Metadata  map[string]any `json:"-" keel:"metadata,jsonb"`
-	Version   int64          `json:"version" keel:"version,version"`
+	ID        pulid.ID       `json:"id"        keel:"id,pk,autoid:bu_"`
+	Name      string         `json:"name"      keel:"name"`
+	Code      string         `json:"code"      keel:"code"`
+	Metadata  map[string]any `json:"-"         keel:"metadata,jsonb"`
+	Version   int64          `json:"version"   keel:"version,version"`
 	CreatedAt int64          `json:"createdAt" keel:"created_at,autocreate"`
 	UpdatedAt int64          `json:"updatedAt" keel:"updated_at,autoupdate"`
 }

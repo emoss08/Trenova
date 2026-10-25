@@ -24,12 +24,12 @@ var (
 
 // Accounting periods, their status, and their close and reopen history
 type FiscalPeriod struct {
-	keel.Table `                                             keel:"fiscal_periods,report=Accounting"`
+	keel.Table `keel:"fiscal_periods,report=Accounting"`
 
-	ID             pulid.ID `json:"id" keel:"id,pk,autoid:fp_"`
+	ID             pulid.ID `json:"id"             keel:"id,pk,autoid:fp_"`
 	BusinessUnitID pulid.ID `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
 	OrganizationID pulid.ID `json:"organizationId" keel:"organization_id,pk,tenant"`
-	FiscalYearID   pulid.ID `json:"fiscalYearId" keel:"fiscal_year_id"`
+	FiscalYearID   pulid.ID `json:"fiscalYearId"   keel:"fiscal_year_id"`
 
 	// ---------------------------------------------------------------
 	// Core Identity
@@ -61,10 +61,10 @@ type FiscalPeriod struct {
 	// Close Tracking
 	// ---------------------------------------------------------------
 
-	LockedAt   *int64   `json:"lockedAt" keel:"locked_at"`
+	LockedAt   *int64   `json:"lockedAt"   keel:"locked_at"`
 	LockedByID pulid.ID `json:"lockedById" keel:"locked_by_id,nullzero"`
 
-	ClosedAt   *int64   `json:"closedAt" keel:"closed_at"`
+	ClosedAt   *int64   `json:"closedAt"   keel:"closed_at"`
 	ClosedByID pulid.ID `json:"closedById" keel:"closed_by_id,nullzero"`
 
 	// ---------------------------------------------------------------
@@ -75,21 +75,21 @@ type FiscalPeriod struct {
 	// having to dig through system logs.
 	// ---------------------------------------------------------------
 
-	ReopenedAt   *int64   `json:"reopenedAt" keel:"reopened_at"`
+	ReopenedAt   *int64   `json:"reopenedAt"   keel:"reopened_at"`
 	ReopenedByID pulid.ID `json:"reopenedById" keel:"reopened_by_id,nullzero"`
 	ReopenReason string   `json:"reopenReason" keel:"reopen_reason,nullzero"`
 
-	Version      int64  `json:"version" keel:"version,version"`
+	Version      int64  `json:"version"   keel:"version,version"`
 	CreatedAt    int64  `json:"createdAt" keel:"created_at,autocreate"`
 	UpdatedAt    int64  `json:"updatedAt" keel:"updated_at,autoupdate"`
-	SearchVector string `json:"-" keel:"search_vector,tsvector,readonly,noselect"`
-	Rank         string `json:"-" keel:"rank,computed"`
+	SearchVector string `json:"-"         keel:"search_vector,tsvector,readonly,noselect"`
+	Rank         string `json:"-"         keel:"rank,computed"`
 
 	BusinessUnit *tenant.BusinessUnit `json:"businessUnit,omitempty"`
 	Organization *tenant.Organization `json:"organization,omitempty"`
-	ClosedBy     *tenant.User         `json:"closedBy,omitempty" keel:"belongs:closed_by_id,noreport"`
-	LockedBy     *tenant.User         `json:"lockedBy,omitempty" keel:"belongs:locked_by_id,noreport"`
-	ReopenedBy   *tenant.User         `json:"reopenedBy,omitempty" keel:"belongs:reopened_by_id,noreport"`
+	ClosedBy     *tenant.User         `json:"closedBy,omitempty"     keel:"belongs:closed_by_id,noreport"`
+	LockedBy     *tenant.User         `json:"lockedBy,omitempty"     keel:"belongs:locked_by_id,noreport"`
+	ReopenedBy   *tenant.User         `json:"reopenedBy,omitempty"   keel:"belongs:reopened_by_id,noreport"`
 }
 
 func (fp *FiscalPeriod) BeforeCreate(_ context.Context) error {

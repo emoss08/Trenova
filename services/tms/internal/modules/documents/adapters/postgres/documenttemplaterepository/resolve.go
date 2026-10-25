@@ -195,7 +195,7 @@ func (r *templateRepository) Resolve(
 				return nil, err
 			}
 			if len(rows) == 0 {
-				return nil, nil //nolint:nilnil // no row means "use the built-in"
+				return nil, nil
 			}
 
 			return rows[0].toRow(), nil

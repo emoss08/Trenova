@@ -91,13 +91,13 @@ func ParseKey(value string) (Key, error) {
 type DecisionRecord struct {
 	keel.Table `keel:"shipment_suggestion_decisions"`
 
-	ID             pulid.ID `json:"id" keel:"id,pk,autoid:ssd_"`
+	ID             pulid.ID `json:"id"             keel:"id,pk,autoid:ssd_"`
 	BusinessUnitID pulid.ID `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
 	OrganizationID pulid.ID `json:"organizationId" keel:"organization_id,pk,tenant"`
-	UserID         pulid.ID `json:"userId" keel:"user_id"`
-	SuggestionKey  string   `json:"suggestionKey" keel:"suggestion_key"`
-	Decision       Decision `json:"decision" keel:"decision"`
-	DecidedAt      int64    `json:"decidedAt" keel:"decided_at"`
-	CreatedAt      int64    `json:"createdAt" keel:"created_at,autocreate"`
-	UpdatedAt      int64    `json:"updatedAt" keel:"updated_at,autoupdate"`
+	UserID         pulid.ID `json:"userId"         keel:"user_id"`
+	SuggestionKey  string   `json:"suggestionKey"  keel:"suggestion_key"`
+	Decision       Decision `json:"decision"       keel:"decision"`
+	DecidedAt      int64    `json:"decidedAt"      keel:"decided_at"`
+	CreatedAt      int64    `json:"createdAt"      keel:"created_at,autocreate"`
+	UpdatedAt      int64    `json:"updatedAt"      keel:"updated_at,autoupdate"`
 }

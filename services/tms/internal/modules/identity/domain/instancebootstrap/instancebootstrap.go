@@ -177,15 +177,14 @@ func (i *Inputs) IdentityDifferences(other *Inputs) []string {
 type InstanceBootstrap struct {
 	keel.Table `keel:"instance_bootstraps"`
 
-	ID             pulid.ID `json:"id" keel:"id,pk,autoid:ibs_"`
+	ID             pulid.ID `json:"id"             keel:"id,pk,autoid:ibs_"`
 	BusinessUnitID pulid.ID `json:"businessUnitId" keel:"business_unit_id,tenant"`
 	OrganizationID pulid.ID `json:"organizationId" keel:"organization_id,tenant"`
-	AdminUserID    pulid.ID `json:"adminUserId" keel:"admin_user_id,nullzero"`
-	Inputs         Inputs   `json:"inputs" keel:"inputs,jsonb"`
-	CompletedAt    int64    `json:"completedAt" keel:"completed_at"`
-	CreatedAt      int64    `json:"createdAt" keel:"created_at,autocreate"`
+	AdminUserID    pulid.ID `json:"adminUserId"    keel:"admin_user_id,nullzero"`
+	Inputs         Inputs   `json:"inputs"         keel:"inputs,jsonb"`
+	CompletedAt    int64    `json:"completedAt"    keel:"completed_at"`
+	CreatedAt      int64    `json:"createdAt"      keel:"created_at,autocreate"`
 }
-
 
 func (r *InstanceBootstrap) BeforeCreate(_ context.Context) error {
 	if r.CompletedAt == 0 {

@@ -177,47 +177,47 @@ type RetrainingResult struct {
 type RetrainingCycle struct {
 	keel.Table `keel:"ai_retraining_cycles"`
 
-	ID                   pulid.ID                        `json:"id" keel:"id,pk,autoid:airc_"`
-	Task                 aicorrection.Task               `json:"task" keel:"task"`
-	Trigger              RetrainingTrigger               `json:"trigger" keel:"trigger"`
-	Status               RetrainingStatus                `json:"status" keel:"status"`
-	SkipReason           RetrainingSkipReason            `json:"skipReason" keel:"skip_reason,nullzero"`
-	RequestedBy          string                          `json:"requestedBy" keel:"requested_by"`
-	Note                 string                          `json:"note" keel:"note,nullzero"`
-	ExportID             *pulid.ID                       `json:"exportId" keel:"export_id"`
-	CapturedFrom         int64                           `json:"capturedFrom" keel:"captured_from"`
-	CapturedTo           int64                           `json:"capturedTo" keel:"captured_to"`
-	NewSince             int64                           `json:"newSince" keel:"new_since"`
-	NewExamples          int                             `json:"newExamples" keel:"new_examples"`
-	MinNewExamples       int                             `json:"minNewExamples" keel:"min_new_examples"`
-	DriftingProviders    int                             `json:"driftingProviders" keel:"drifting_providers"`
-	MaxPerOrganization   int                             `json:"maxPerOrganization" keel:"max_per_organization"`
-	ValidationPercent    int                             `json:"validationPercent" keel:"validation_percent"`
+	ID                   pulid.ID                        `json:"id"                   keel:"id,pk,autoid:airc_"`
+	Task                 aicorrection.Task               `json:"task"                 keel:"task"`
+	Trigger              RetrainingTrigger               `json:"trigger"              keel:"trigger"`
+	Status               RetrainingStatus                `json:"status"               keel:"status"`
+	SkipReason           RetrainingSkipReason            `json:"skipReason"           keel:"skip_reason,nullzero"`
+	RequestedBy          string                          `json:"requestedBy"          keel:"requested_by"`
+	Note                 string                          `json:"note"                 keel:"note,nullzero"`
+	ExportID             *pulid.ID                       `json:"exportId"             keel:"export_id"`
+	CapturedFrom         int64                           `json:"capturedFrom"         keel:"captured_from"`
+	CapturedTo           int64                           `json:"capturedTo"           keel:"captured_to"`
+	NewSince             int64                           `json:"newSince"             keel:"new_since"`
+	NewExamples          int                             `json:"newExamples"          keel:"new_examples"`
+	MinNewExamples       int                             `json:"minNewExamples"       keel:"min_new_examples"`
+	DriftingProviders    int                             `json:"driftingProviders"    keel:"drifting_providers"`
+	MaxPerOrganization   int                             `json:"maxPerOrganization"   keel:"max_per_organization"`
+	ValidationPercent    int                             `json:"validationPercent"    keel:"validation_percent"`
 	StructuredOutputMode aiprovider.StructuredOutputMode `json:"structuredOutputMode" keel:"structured_output_mode"`
-	MinAccuracyPercent   int                             `json:"minAccuracyPercent" keel:"min_accuracy_percent"`
-	MaxRegressionPoints  int                             `json:"maxRegressionPoints" keel:"max_regression_points"`
+	MinAccuracyPercent   int                             `json:"minAccuracyPercent"   keel:"min_accuracy_percent"`
+	MaxRegressionPoints  int                             `json:"maxRegressionPoints"  keel:"max_regression_points"`
 
-	Trainer        string `json:"trainer" keel:"trainer,nullzero"`
-	Attempts       int    `json:"attempts" keel:"attempts"`
-	ClaimedAt      *int64 `json:"claimedAt" keel:"claimed_at"`
+	Trainer        string `json:"trainer"        keel:"trainer,nullzero"`
+	Attempts       int    `json:"attempts"       keel:"attempts"`
+	ClaimedAt      *int64 `json:"claimedAt"      keel:"claimed_at"`
 	LeaseExpiresAt *int64 `json:"leaseExpiresAt" keel:"lease_expires_at"`
 
-	TrainingConfig  string `json:"trainingConfig" keel:"training_config,nullzero"`
-	RunDirectory    string `json:"runDirectory" keel:"run_directory,nullzero"`
-	ModelDirectory  string `json:"modelDirectory" keel:"model_directory,nullzero"`
-	PromptSHA256    string `json:"promptSha256" keel:"prompt_sha256,nullzero"`
-	Examples        int    `json:"examples" keel:"examples"`
-	ModelCorrect    int    `json:"modelCorrect" keel:"model_correct"`
-	ModelScored     int    `json:"modelScored" keel:"model_scored"`
+	TrainingConfig  string `json:"trainingConfig"  keel:"training_config,nullzero"`
+	RunDirectory    string `json:"runDirectory"    keel:"run_directory,nullzero"`
+	ModelDirectory  string `json:"modelDirectory"  keel:"model_directory,nullzero"`
+	PromptSHA256    string `json:"promptSha256"    keel:"prompt_sha256,nullzero"`
+	Examples        int    `json:"examples"        keel:"examples"`
+	ModelCorrect    int    `json:"modelCorrect"    keel:"model_correct"`
+	ModelScored     int    `json:"modelScored"     keel:"model_scored"`
 	BaselineCorrect int    `json:"baselineCorrect" keel:"baseline_correct"`
-	BaselineScored  int    `json:"baselineScored" keel:"baseline_scored"`
-	GateMessage     string `json:"gateMessage" keel:"gate_message,nullzero"`
-	FailureMessage  string `json:"failureMessage" keel:"failure_message,nullzero"`
+	BaselineScored  int    `json:"baselineScored"  keel:"baseline_scored"`
+	GateMessage     string `json:"gateMessage"     keel:"gate_message,nullzero"`
+	FailureMessage  string `json:"failureMessage"  keel:"failure_message,nullzero"`
 
 	FinishedAt *int64 `json:"finishedAt" keel:"finished_at"`
-	Version    int64  `json:"version" keel:"version,version"`
-	CreatedAt  int64  `json:"createdAt" keel:"created_at,autocreate"`
-	UpdatedAt  int64  `json:"updatedAt" keel:"updated_at,autoupdate"`
+	Version    int64  `json:"version"    keel:"version,version"`
+	CreatedAt  int64  `json:"createdAt"  keel:"created_at,autocreate"`
+	UpdatedAt  int64  `json:"updatedAt"  keel:"updated_at,autoupdate"`
 }
 
 func (c *RetrainingCycle) Validate(multiErr *errortypes.MultiError) {

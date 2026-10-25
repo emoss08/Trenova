@@ -217,33 +217,33 @@ func (c ReflectionChange) Kept() bool {
 type Reflection struct {
 	keel.Table `keel:"agent_reflections"`
 
-	ID             pulid.ID `json:"id" keel:"id,pk,autoid:arfl_"`
+	ID             pulid.ID `json:"id"             keel:"id,pk,autoid:arfl_"`
 	BusinessUnitID pulid.ID `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
 	OrganizationID pulid.ID `json:"organizationId" keel:"organization_id,pk,tenant"`
 
 	AgentDefinitionID pulid.ID          `json:"agentDefinitionId" keel:"agent_definition_id"`
-	SubjectType       ReflectionSubject `json:"subjectType" keel:"subject_type"`
-	ThreadID          *pulid.ID         `json:"threadId" keel:"thread_id"`
-	RunID             *pulid.ID         `json:"runId" keel:"run_id"`
-	UserID            *pulid.ID         `json:"userId" keel:"user_id"`
-	FromSequence      int               `json:"fromSequence" keel:"from_sequence"`
-	ThroughSequence   int               `json:"throughSequence" keel:"through_sequence"`
+	SubjectType       ReflectionSubject `json:"subjectType"       keel:"subject_type"`
+	ThreadID          *pulid.ID         `json:"threadId"          keel:"thread_id"`
+	RunID             *pulid.ID         `json:"runId"             keel:"run_id"`
+	UserID            *pulid.ID         `json:"userId"            keel:"user_id"`
+	FromSequence      int               `json:"fromSequence"      keel:"from_sequence"`
+	ThroughSequence   int               `json:"throughSequence"   keel:"through_sequence"`
 
-	Status     ReflectionStatus   `json:"status" keel:"status"`
+	Status     ReflectionStatus   `json:"status"     keel:"status"`
 	SkipReason ReflectionSkip     `json:"skipReason" keel:"skip_reason,nullzero"`
-	Signals    ReflectionSignals  `json:"signals" keel:"signals,jsonb"`
-	Changes    []ReflectionChange `json:"changes" keel:"changes,jsonb"`
-	Notes      string             `json:"notes" keel:"notes,nullzero"`
-	Tainted    bool               `json:"tainted" keel:"tainted"`
+	Signals    ReflectionSignals  `json:"signals"    keel:"signals,jsonb"`
+	Changes    []ReflectionChange `json:"changes"    keel:"changes,jsonb"`
+	Notes      string             `json:"notes"      keel:"notes,nullzero"`
+	Tainted    bool               `json:"tainted"    keel:"tainted"`
 
-	Model        string   `json:"model" keel:"model,nullzero"`
-	ProviderID   pulid.ID `json:"providerId" keel:"provider_id,nullzero"`
-	InputTokens  int      `json:"inputTokens" keel:"input_tokens"`
+	Model        string   `json:"model"        keel:"model,nullzero"`
+	ProviderID   pulid.ID `json:"providerId"   keel:"provider_id,nullzero"`
+	InputTokens  int      `json:"inputTokens"  keel:"input_tokens"`
 	OutputTokens int      `json:"outputTokens" keel:"output_tokens"`
 	ErrorMessage string   `json:"errorMessage" keel:"error_message,nullzero"`
-	FinishedAt   *int64   `json:"finishedAt" keel:"finished_at"`
+	FinishedAt   *int64   `json:"finishedAt"   keel:"finished_at"`
 
-	Version   int64 `json:"version" keel:"version,version"`
+	Version   int64 `json:"version"   keel:"version,version"`
 	CreatedAt int64 `json:"createdAt" keel:"created_at,autocreate"`
 	UpdatedAt int64 `json:"updatedAt" keel:"updated_at,autoupdate"`
 

@@ -286,53 +286,53 @@ var (
 // 300 log; the rest are kept because the decision not to record is itself worth
 // a record.
 type WorkerInjury struct {
-	keel.Table `                                                keel:"worker_injuries"`
+	keel.Table `keel:"worker_injuries"`
 
-	ID             pulid.ID `json:"id" keel:"id,pk,autoid:winj_"`
+	ID             pulid.ID `json:"id"             keel:"id,pk,autoid:winj_"`
 	BusinessUnitID pulid.ID `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
 	OrganizationID pulid.ID `json:"organizationId" keel:"organization_id,pk,tenant"`
-	WorkerID       pulid.ID `json:"workerId" keel:"worker_id"`
+	WorkerID       pulid.ID `json:"workerId"       keel:"worker_id"`
 
 	// CaseNumber restarts each calendar year, which is how the 300 log reads.
 	CaseNumber int32 `json:"caseNumber" keel:"case_number"`
-	CaseYear   int16 `json:"caseYear" keel:"case_year"`
+	CaseYear   int16 `json:"caseYear"   keel:"case_year"`
 
 	Classification OSHACaseClassification `json:"classification" keel:"classification"`
-	IllnessType    OSHAIllnessType        `json:"illnessType" keel:"illness_type"`
-	Treatment      InjuryTreatment        `json:"treatment" keel:"treatment"`
-	Status         InjuryCaseStatus       `json:"status" keel:"status"`
+	IllnessType    OSHAIllnessType        `json:"illnessType"    keel:"illness_type"`
+	Treatment      InjuryTreatment        `json:"treatment"      keel:"treatment"`
+	Status         InjuryCaseStatus       `json:"status"         keel:"status"`
 
-	OccurredAt       int64  `json:"occurredAt" keel:"occurred_at"`
-	ReportedAt       *int64 `json:"reportedAt" keel:"reported_at"`
+	OccurredAt       int64  `json:"occurredAt"       keel:"occurred_at"`
+	ReportedAt       *int64 `json:"reportedAt"       keel:"reported_at"`
 	ReturnedToWorkAt *int64 `json:"returnedToWorkAt" keel:"returned_to_work_at"`
 
-	Location       string `json:"location" keel:"location,nullzero"`
-	Description    string `json:"description" keel:"description"`
-	BodyPart       string `json:"bodyPart" keel:"body_part,nullzero"`
-	HarmfulAgent   string `json:"harmfulAgent" keel:"harmful_agent,nullzero"`
-	DaysAway       int32  `json:"daysAway" keel:"days_away"`
+	Location       string `json:"location"       keel:"location,nullzero"`
+	Description    string `json:"description"    keel:"description"`
+	BodyPart       string `json:"bodyPart"       keel:"body_part,nullzero"`
+	HarmfulAgent   string `json:"harmfulAgent"   keel:"harmful_agent,nullzero"`
+	DaysAway       int32  `json:"daysAway"       keel:"days_away"`
 	DaysRestricted int32  `json:"daysRestricted" keel:"days_restricted"`
-	PrivacyCase    bool   `json:"privacyCase" keel:"privacy_case"`
+	PrivacyCase    bool   `json:"privacyCase"    keel:"privacy_case"`
 
-	ClaimStatus   WorkersCompClaimStatus `json:"claimStatus" keel:"claim_status"`
-	ClaimNumber   string                 `json:"claimNumber" keel:"claim_number,nullzero"`
-	ClaimCarrier  string                 `json:"claimCarrier" keel:"claim_carrier,nullzero"`
-	ClaimFiledAt  *int64                 `json:"claimFiledAt" keel:"claim_filed_at"`
+	ClaimStatus   WorkersCompClaimStatus `json:"claimStatus"   keel:"claim_status"`
+	ClaimNumber   string                 `json:"claimNumber"   keel:"claim_number,nullzero"`
+	ClaimCarrier  string                 `json:"claimCarrier"  keel:"claim_carrier,nullzero"`
+	ClaimFiledAt  *int64                 `json:"claimFiledAt"  keel:"claim_filed_at"`
 	ClaimClosedAt *int64                 `json:"claimClosedAt" keel:"claim_closed_at"`
 
 	SafetyEventID pulid.ID `json:"safetyEventId" keel:"safety_event_id,nullzero"`
-	DocumentID    pulid.ID `json:"documentId" keel:"document_id,nullzero"`
-	Notes         string   `json:"notes" keel:"notes,nullzero"`
-	RecordedByID  pulid.ID `json:"recordedById" keel:"recorded_by_id,nullzero"`
+	DocumentID    pulid.ID `json:"documentId"    keel:"document_id,nullzero"`
+	Notes         string   `json:"notes"         keel:"notes,nullzero"`
+	RecordedByID  pulid.ID `json:"recordedById"  keel:"recorded_by_id,nullzero"`
 
-	Version   int64 `json:"version" keel:"version,version"`
+	Version   int64 `json:"version"   keel:"version,version"`
 	CreatedAt int64 `json:"createdAt" keel:"created_at,autocreate"`
 	UpdatedAt int64 `json:"updatedAt" keel:"updated_at,autoupdate"`
 
-	Worker      *Worker            `json:"worker,omitempty" keel:"belongs:worker_id"`
+	Worker      *Worker            `json:"worker,omitempty"      keel:"belongs:worker_id"`
 	SafetyEvent *WorkerSafetyEvent `json:"safetyEvent,omitempty" keel:"belongs:safety_event_id"`
-	Document    *document.Document `json:"document,omitempty" keel:"belongs:document_id"`
-	RecordedBy  *tenant.User       `json:"recordedBy,omitempty" keel:"belongs:recorded_by_id"`
+	Document    *document.Document `json:"document,omitempty"    keel:"belongs:document_id"`
+	RecordedBy  *tenant.User       `json:"recordedBy,omitempty"  keel:"belongs:recorded_by_id"`
 }
 
 func (i *WorkerInjury) Validate(multiErr *errortypes.MultiError) {

@@ -10,16 +10,16 @@ import (
 type CustomFieldValue struct {
 	keel.Table `keel:"custom_field_values"`
 
-	ID             pulid.ID `json:"id" keel:"id,pk,autoid:cfv_"`
+	ID             pulid.ID `json:"id"             keel:"id,pk,autoid:cfv_"`
 	OrganizationID pulid.ID `json:"organizationId" keel:"organization_id,pk,tenant"`
 	BusinessUnitID pulid.ID `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
-	DefinitionID   pulid.ID `json:"definitionId" keel:"definition_id"`
-	ResourceType   string   `json:"resourceType" keel:"resource_type"`
-	ResourceID     string   `json:"resourceId" keel:"resource_id"`
-	Value          any      `json:"value" keel:"value,jsonb"`
-	Version        int64    `json:"version" keel:"version,version"`
-	CreatedAt      int64    `json:"createdAt" keel:"created_at,autocreate"`
-	UpdatedAt      int64    `json:"updatedAt" keel:"updated_at,autoupdate"`
+	DefinitionID   pulid.ID `json:"definitionId"   keel:"definition_id"`
+	ResourceType   string   `json:"resourceType"   keel:"resource_type"`
+	ResourceID     string   `json:"resourceId"     keel:"resource_id"`
+	Value          any      `json:"value"          keel:"value,jsonb"`
+	Version        int64    `json:"version"        keel:"version,version"`
+	CreatedAt      int64    `json:"createdAt"      keel:"created_at,autocreate"`
+	UpdatedAt      int64    `json:"updatedAt"      keel:"updated_at,autoupdate"`
 
 	Definition *CustomFieldDefinition `json:"definition,omitempty" keel:"belongs:definition_id"`
 }

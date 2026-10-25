@@ -359,48 +359,48 @@ func AllMemorySubjectTypes() []MemorySubjectType {
 type Memory struct {
 	keel.Table `keel:"agent_memories"`
 
-	ID             pulid.ID `json:"id" keel:"id,pk,autoid:amem_"`
+	ID             pulid.ID `json:"id"             keel:"id,pk,autoid:amem_"`
 	BusinessUnitID pulid.ID `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
 	OrganizationID pulid.ID `json:"organizationId" keel:"organization_id,pk,tenant"`
 
-	Kind   MemoryKind   `json:"kind" keel:"kind"`
+	Kind   MemoryKind   `json:"kind"   keel:"kind"`
 	Source MemorySource `json:"source" keel:"source"`
 	Status MemoryStatus `json:"status" keel:"status"`
 
-	SubjectType  MemorySubjectType `json:"subjectType" keel:"subject_type,nullzero"`
-	SubjectID    *pulid.ID         `json:"subjectId" keel:"subject_id"`
+	SubjectType  MemorySubjectType `json:"subjectType"  keel:"subject_type,nullzero"`
+	SubjectID    *pulid.ID         `json:"subjectId"    keel:"subject_id"`
 	SubjectLabel string            `json:"subjectLabel" keel:"subject_label,nullzero"`
-	ToolName     string            `json:"toolName" keel:"tool_name,nullzero"`
+	ToolName     string            `json:"toolName"     keel:"tool_name,nullzero"`
 
 	Content string `json:"content" keel:"content"`
 
 	AgentDefinitionID *pulid.ID   `json:"agentDefinitionId" keel:"agent_definition_id"`
-	Scope             MemoryScope `json:"scope" keel:"scope"`
+	Scope             MemoryScope `json:"scope"             keel:"scope"`
 	// OwnerUserID is the person a User-scoped memory is kept for, and RoleID
 	// the role a Role-scoped one is kept for. Each is empty for every other
 	// scope.
 	OwnerUserID *pulid.ID `json:"ownerUserId" keel:"owner_user_id"`
-	RoleID      *pulid.ID `json:"roleId" keel:"role_id"`
+	RoleID      *pulid.ID `json:"roleId"      keel:"role_id"`
 	// SourceThreadID is the conversation the run that recorded the memory
 	// was answering, so a list can say which conversation it came from.
-	SourceThreadID   *pulid.ID `json:"sourceThreadId" keel:"source_thread_id"`
-	Tainted          bool      `json:"tainted" keel:"tainted"`
-	TaintRunID       *pulid.ID `json:"taintRunId" keel:"taint_run_id"`
-	SourceRunID      *pulid.ID `json:"sourceRunId" keel:"source_run_id"`
+	SourceThreadID   *pulid.ID `json:"sourceThreadId"   keel:"source_thread_id"`
+	Tainted          bool      `json:"tainted"          keel:"tainted"`
+	TaintRunID       *pulid.ID `json:"taintRunId"       keel:"taint_run_id"`
+	SourceRunID      *pulid.ID `json:"sourceRunId"      keel:"source_run_id"`
 	SourceProposalID *pulid.ID `json:"sourceProposalId" keel:"source_proposal_id"`
-	ReflectionID     *pulid.ID `json:"reflectionId" keel:"reflection_id"`
-	SupersedesID     *pulid.ID `json:"supersedesId" keel:"supersedes_id"`
-	CreatedByUserID  *pulid.ID `json:"createdByUserId" keel:"created_by_user_id"`
-	RetiredByUserID  *pulid.ID `json:"retiredByUserId" keel:"retired_by_user_id"`
-	RetiredAt        *int64    `json:"retiredAt" keel:"retired_at"`
+	ReflectionID     *pulid.ID `json:"reflectionId"     keel:"reflection_id"`
+	SupersedesID     *pulid.ID `json:"supersedesId"     keel:"supersedes_id"`
+	CreatedByUserID  *pulid.ID `json:"createdByUserId"  keel:"created_by_user_id"`
+	RetiredByUserID  *pulid.ID `json:"retiredByUserId"  keel:"retired_by_user_id"`
+	RetiredAt        *int64    `json:"retiredAt"        keel:"retired_at"`
 	// ReviewedByUserID is the person who read a tainted memory and kept it,
 	// approving it as a suggestion or reviewing it in AI Control. Tainted
 	// still says where it came from; a reviewed memory taints no turn.
 	ReviewedByUserID *pulid.ID `json:"reviewedByUserId" keel:"reviewed_by_user_id"`
-	ReviewedAt       *int64    `json:"reviewedAt" keel:"reviewed_at"`
-	ExpiresAt        *int64    `json:"expiresAt" keel:"expires_at"`
+	ReviewedAt       *int64    `json:"reviewedAt"       keel:"reviewed_at"`
+	ExpiresAt        *int64    `json:"expiresAt"        keel:"expires_at"`
 
-	UseCount   int    `json:"useCount" keel:"use_count"`
+	UseCount   int    `json:"useCount"   keel:"use_count"`
 	LastUsedAt *int64 `json:"lastUsedAt" keel:"last_used_at"`
 
 	Evidence *MemoryEvidence `json:"evidence" keel:"evidence,jsonb"`
@@ -415,7 +415,7 @@ type Memory struct {
 	SourceTitle string `json:"-" keel:"source_title,computed,nullzero"`
 	RoleName    string `json:"-" keel:"role_name,computed,nullzero"`
 
-	Version   int64 `json:"version" keel:"version,version"`
+	Version   int64 `json:"version"   keel:"version,version"`
 	CreatedAt int64 `json:"createdAt" keel:"created_at,autocreate"`
 	UpdatedAt int64 `json:"updatedAt" keel:"updated_at,autoupdate"`
 

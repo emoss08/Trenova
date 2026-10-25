@@ -27,29 +27,29 @@ var (
 type ToolTrust struct {
 	keel.Table `keel:"agent_tool_trust"`
 
-	ID             pulid.ID `json:"id" keel:"id,pk,autoid:att_"`
+	ID             pulid.ID `json:"id"             keel:"id,pk,autoid:att_"`
 	BusinessUnitID pulid.ID `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
 	OrganizationID pulid.ID `json:"organizationId" keel:"organization_id,pk,tenant"`
 
 	AgentDefinitionID pulid.ID `json:"agentDefinitionId" keel:"agent_definition_id"`
-	ToolName          string   `json:"toolName" keel:"tool_name"`
+	ToolName          string   `json:"toolName"          keel:"tool_name"`
 
-	Streak            int `json:"streak" keel:"streak"`
-	Approvals         int `json:"approvals" keel:"approvals"`
-	Modifications     int `json:"modifications" keel:"modifications"`
-	Rejections        int `json:"rejections" keel:"rejections"`
+	Streak            int `json:"streak"            keel:"streak"`
+	Approvals         int `json:"approvals"         keel:"approvals"`
+	Modifications     int `json:"modifications"     keel:"modifications"`
+	Rejections        int `json:"rejections"        keel:"rejections"`
 	ExecutionFailures int `json:"executionFailures" keel:"execution_failures"`
 
 	// EarnedTier is the tier the ledger granted, when the tool's current tier
 	// on the agent was earned rather than chosen by a person. It is what lets
 	// a demotion take back only what trust gave: a tier a person set by hand
 	// never matches it and is never touched.
-	EarnedTier     AutonomyTier `json:"earnedTier" keel:"earned_tier,nullzero"`
+	EarnedTier     AutonomyTier `json:"earnedTier"     keel:"earned_tier,nullzero"`
 	LastDecisionAt *int64       `json:"lastDecisionAt" keel:"last_decision_at"`
-	PromotedAt     *int64       `json:"promotedAt" keel:"promoted_at"`
-	DemotedAt      *int64       `json:"demotedAt" keel:"demoted_at"`
+	PromotedAt     *int64       `json:"promotedAt"     keel:"promoted_at"`
+	DemotedAt      *int64       `json:"demotedAt"      keel:"demoted_at"`
 
-	Version   int64 `json:"version" keel:"version,version"`
+	Version   int64 `json:"version"   keel:"version,version"`
 	CreatedAt int64 `json:"createdAt" keel:"created_at,autocreate"`
 	UpdatedAt int64 `json:"updatedAt" keel:"updated_at,autoupdate"`
 

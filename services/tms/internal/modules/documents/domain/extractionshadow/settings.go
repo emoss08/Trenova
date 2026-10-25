@@ -23,19 +23,19 @@ const (
 type ShadowSettings struct {
 	keel.Table `keel:"extraction_shadow_settings"`
 
-	ID             pulid.ID `json:"id" keel:"id,pk,autoid:exss_"`
+	ID             pulid.ID `json:"id"             keel:"id,pk,autoid:exss_"`
 	BusinessUnitID pulid.ID `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
 	OrganizationID pulid.ID `json:"organizationId" keel:"organization_id,pk,tenant"`
 
-	Enabled       bool      `json:"enabled" keel:"enabled"`
-	ProviderID    *pulid.ID `json:"providerId" keel:"provider_id"`
+	Enabled       bool      `json:"enabled"       keel:"enabled"`
+	ProviderID    *pulid.ID `json:"providerId"    keel:"provider_id"`
 	SamplePercent int       `json:"samplePercent" keel:"sample_percent"`
-	DailyLimit    int       `json:"dailyLimit" keel:"daily_limit"`
+	DailyLimit    int       `json:"dailyLimit"    keel:"daily_limit"`
 
 	UpdatedByID *pulid.ID `json:"updatedById" keel:"updated_by_id"`
-	Version     int64     `json:"version" keel:"version,version"`
-	CreatedAt   int64     `json:"createdAt" keel:"created_at,autocreate"`
-	UpdatedAt   int64     `json:"updatedAt" keel:"updated_at,autoupdate"`
+	Version     int64     `json:"version"     keel:"version,version"`
+	CreatedAt   int64     `json:"createdAt"   keel:"created_at,autocreate"`
+	UpdatedAt   int64     `json:"updatedAt"   keel:"updated_at,autoupdate"`
 
 	BusinessUnit *tenant.BusinessUnit `json:"-"`
 	Organization *tenant.Organization `json:"-"`

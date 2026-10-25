@@ -13,49 +13,49 @@ import (
 type WeatherAlert struct {
 	keel.Table `keel:"weather_alerts"`
 
-	ID             pulid.ID          `json:"id" keel:"id,pk,autoid:walt_"`
+	ID             pulid.ID          `json:"id"             keel:"id,pk,autoid:walt_"`
 	OrganizationID pulid.ID          `json:"organizationId" keel:"organization_id,pk,tenant"`
 	BusinessUnitID pulid.ID          `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
-	NWSID          string            `json:"nwsId" keel:"nws_id"`
-	Event          string            `json:"event" keel:"event"`
-	Severity       string            `json:"severity" keel:"severity,nullzero"`
-	Urgency        string            `json:"urgency" keel:"urgency,nullzero"`
-	Certainty      string            `json:"certainty" keel:"certainty,nullzero"`
-	Headline       string            `json:"headline" keel:"headline,nullzero"`
-	Description    string            `json:"description" keel:"description,nullzero"`
-	Instruction    string            `json:"instruction" keel:"instruction,nullzero"`
-	AreaDesc       string            `json:"areaDesc" keel:"area_desc,nullzero"`
-	Effective      *int64            `json:"effective" keel:"effective"`
-	Expires        *int64            `json:"expires" keel:"expires"`
-	Onset          *int64            `json:"onset" keel:"onset"`
-	Ends           *int64            `json:"ends" keel:"ends"`
-	Status         string            `json:"status" keel:"status,nullzero"`
-	MessageType    string            `json:"messageType" keel:"message_type,nullzero"`
-	SenderName     string            `json:"senderName" keel:"sender_name,nullzero"`
-	Response       string            `json:"response" keel:"response,nullzero"`
-	Category       string            `json:"category" keel:"category,nullzero"`
-	AlertCategory  AlertCategory     `json:"alertCategory" keel:"alert_category"`
-	Geometry       *postgis.Geometry `json:"-" keel:"geometry"`
-	FirstSeenAt    int64             `json:"firstSeenAt" keel:"first_seen_at"`
-	LastUpdatedAt  int64             `json:"lastUpdatedAt" keel:"last_updated_at"`
-	ExpiredAt      *int64            `json:"expiredAt" keel:"expired_at"`
-	Version        int64             `json:"version" keel:"version,version"`
-	CreatedAt      int64             `json:"createdAt" keel:"created_at,autocreate"`
-	UpdatedAt      int64             `json:"updatedAt" keel:"updated_at,autoupdate"`
+	NWSID          string            `json:"nwsId"          keel:"nws_id"`
+	Event          string            `json:"event"          keel:"event"`
+	Severity       string            `json:"severity"       keel:"severity,nullzero"`
+	Urgency        string            `json:"urgency"        keel:"urgency,nullzero"`
+	Certainty      string            `json:"certainty"      keel:"certainty,nullzero"`
+	Headline       string            `json:"headline"       keel:"headline,nullzero"`
+	Description    string            `json:"description"    keel:"description,nullzero"`
+	Instruction    string            `json:"instruction"    keel:"instruction,nullzero"`
+	AreaDesc       string            `json:"areaDesc"       keel:"area_desc,nullzero"`
+	Effective      *int64            `json:"effective"      keel:"effective"`
+	Expires        *int64            `json:"expires"        keel:"expires"`
+	Onset          *int64            `json:"onset"          keel:"onset"`
+	Ends           *int64            `json:"ends"           keel:"ends"`
+	Status         string            `json:"status"         keel:"status,nullzero"`
+	MessageType    string            `json:"messageType"    keel:"message_type,nullzero"`
+	SenderName     string            `json:"senderName"     keel:"sender_name,nullzero"`
+	Response       string            `json:"response"       keel:"response,nullzero"`
+	Category       string            `json:"category"       keel:"category,nullzero"`
+	AlertCategory  AlertCategory     `json:"alertCategory"  keel:"alert_category"`
+	Geometry       *postgis.Geometry `json:"-"              keel:"geometry"`
+	FirstSeenAt    int64             `json:"firstSeenAt"    keel:"first_seen_at"`
+	LastUpdatedAt  int64             `json:"lastUpdatedAt"  keel:"last_updated_at"`
+	ExpiredAt      *int64            `json:"expiredAt"      keel:"expired_at"`
+	Version        int64             `json:"version"        keel:"version,version"`
+	CreatedAt      int64             `json:"createdAt"      keel:"created_at,autocreate"`
+	UpdatedAt      int64             `json:"updatedAt"      keel:"updated_at,autoupdate"`
 }
 
 type Activity struct {
 	keel.Table `keel:"weather_alert_activities"`
 
-	ID             pulid.ID       `json:"id" keel:"id,pk,autoid:waac_"`
+	ID             pulid.ID       `json:"id"             keel:"id,pk,autoid:waac_"`
 	OrganizationID pulid.ID       `json:"organizationId" keel:"organization_id,pk,tenant"`
 	BusinessUnitID pulid.ID       `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
 	WeatherAlertID pulid.ID       `json:"weatherAlertId" keel:"weather_alert_id"`
-	ActivityType   ActivityType   `json:"activityType" keel:"activity_type"`
-	Timestamp      int64          `json:"timestamp" keel:"timestamp"`
-	Details        map[string]any `json:"details" keel:"details,jsonb,nullzero"`
-	CreatedAt      int64          `json:"createdAt" keel:"created_at,autocreate"`
-	UpdatedAt      int64          `json:"updatedAt" keel:"updated_at,autoupdate"`
+	ActivityType   ActivityType   `json:"activityType"   keel:"activity_type"`
+	Timestamp      int64          `json:"timestamp"      keel:"timestamp"`
+	Details        map[string]any `json:"details"        keel:"details,jsonb,nullzero"`
+	CreatedAt      int64          `json:"createdAt"      keel:"created_at,autocreate"`
+	UpdatedAt      int64          `json:"updatedAt"      keel:"updated_at,autoupdate"`
 }
 
 func (w *WeatherAlert) IsSameMessage(stored *WeatherAlert) bool {

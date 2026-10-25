@@ -46,24 +46,24 @@ func (s SourceType) IsValid() bool {
 }
 
 type EquipmentContinuity struct {
-	keel.Table `                                                   keel:"equipment_continuity"`
+	keel.Table `keel:"equipment_continuity"`
 
-	ID                   pulid.ID      `json:"id" keel:"id,pk,autoid:eqc_"`
-	BusinessUnitID       pulid.ID      `json:"businessUnitId" keel:"business_unit_id,tenant"`
-	OrganizationID       pulid.ID      `json:"organizationId" keel:"organization_id,tenant"`
-	EquipmentType        EquipmentType `json:"equipmentType" keel:"equipment_type"`
-	EquipmentID          pulid.ID      `json:"equipmentId" keel:"equipment_id"`
-	CurrentLocationID    pulid.ID      `json:"currentLocationId" keel:"current_location_id"`
+	ID                   pulid.ID      `json:"id"                   keel:"id,pk,autoid:eqc_"`
+	BusinessUnitID       pulid.ID      `json:"businessUnitId"       keel:"business_unit_id,tenant"`
+	OrganizationID       pulid.ID      `json:"organizationId"       keel:"organization_id,tenant"`
+	EquipmentType        EquipmentType `json:"equipmentType"        keel:"equipment_type"`
+	EquipmentID          pulid.ID      `json:"equipmentId"          keel:"equipment_id"`
+	CurrentLocationID    pulid.ID      `json:"currentLocationId"    keel:"current_location_id"`
 	PreviousContinuityID pulid.ID      `json:"previousContinuityId" keel:"previous_continuity_id,nullzero"`
-	SourceType           SourceType    `json:"sourceType" keel:"source_type"`
-	SourceShipmentID     pulid.ID      `json:"sourceShipmentId" keel:"source_shipment_id,nullzero"`
+	SourceType           SourceType    `json:"sourceType"           keel:"source_type"`
+	SourceShipmentID     pulid.ID      `json:"sourceShipmentId"     keel:"source_shipment_id,nullzero"`
 	SourceShipmentMoveID pulid.ID      `json:"sourceShipmentMoveId" keel:"source_shipment_move_id,nullzero"`
-	SourceAssignmentID   pulid.ID      `json:"sourceAssignmentId" keel:"source_assignment_id,nullzero"`
-	IsCurrent            bool          `json:"isCurrent" keel:"is_current"`
-	SupersededAt         *int64        `json:"supersededAt" keel:"superseded_at"`
-	Version              int64         `json:"version" keel:"version,version"`
-	CreatedAt            int64         `json:"createdAt" keel:"created_at,autocreate"`
-	UpdatedAt            int64         `json:"updatedAt" keel:"updated_at,autoupdate"`
+	SourceAssignmentID   pulid.ID      `json:"sourceAssignmentId"   keel:"source_assignment_id,nullzero"`
+	IsCurrent            bool          `json:"isCurrent"            keel:"is_current"`
+	SupersededAt         *int64        `json:"supersededAt"         keel:"superseded_at"`
+	Version              int64         `json:"version"              keel:"version,version"`
+	CreatedAt            int64         `json:"createdAt"            keel:"created_at,autocreate"`
+	UpdatedAt            int64         `json:"updatedAt"            keel:"updated_at,autoupdate"`
 }
 
 func (e *EquipmentContinuity) Validate(multiErr *errortypes.MultiError) {

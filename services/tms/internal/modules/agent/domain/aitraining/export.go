@@ -52,36 +52,36 @@ type OrganizationProgress struct {
 type TrainingExport struct {
 	keel.Table `keel:"ai_training_exports"`
 
-	ID                 pulid.ID          `json:"id" keel:"id,pk,autoid:aitx_"`
-	Task               aicorrection.Task `json:"task" keel:"task"`
-	Status             ExportStatus      `json:"status" keel:"status"`
-	Format             string            `json:"format" keel:"format"`
-	CapturedFrom       int64             `json:"capturedFrom" keel:"captured_from"`
-	CapturedTo         int64             `json:"capturedTo" keel:"captured_to"`
+	ID                 pulid.ID          `json:"id"                 keel:"id,pk,autoid:aitx_"`
+	Task               aicorrection.Task `json:"task"               keel:"task"`
+	Status             ExportStatus      `json:"status"             keel:"status"`
+	Format             string            `json:"format"             keel:"format"`
+	CapturedFrom       int64             `json:"capturedFrom"       keel:"captured_from"`
+	CapturedTo         int64             `json:"capturedTo"         keel:"captured_to"`
 	MaxPerOrganization int               `json:"maxPerOrganization" keel:"max_per_organization"`
-	ValidationPercent  int               `json:"validationPercent" keel:"validation_percent"`
-	RequestedBy        string            `json:"requestedBy" keel:"requested_by"`
-	Note               string            `json:"note" keel:"note,nullzero"`
-	WorkflowID         string            `json:"workflowId" keel:"workflow_id,nullzero"`
+	ValidationPercent  int               `json:"validationPercent"  keel:"validation_percent"`
+	RequestedBy        string            `json:"requestedBy"        keel:"requested_by"`
+	Note               string            `json:"note"               keel:"note,nullzero"`
+	WorkflowID         string            `json:"workflowId"         keel:"workflow_id,nullzero"`
 
 	OrganizationsConsidered int                    `json:"organizationsConsidered" keel:"organizations_considered"`
-	OrganizationsIncluded   int                    `json:"organizationsIncluded" keel:"organizations_included"`
-	ExamplesTotal           int                    `json:"examplesTotal" keel:"examples_total"`
-	TrainExamples           int                    `json:"trainExamples" keel:"train_examples"`
-	ValidationExamples      int                    `json:"validationExamples" keel:"validation_examples"`
-	Dropped                 map[DropReason]int     `json:"dropped" keel:"dropped,jsonb"`
-	Parts                   []Part                 `json:"parts" keel:"parts,jsonb"`
-	Progress                []OrganizationProgress `json:"progress" keel:"progress,jsonb"`
+	OrganizationsIncluded   int                    `json:"organizationsIncluded"   keel:"organizations_included"`
+	ExamplesTotal           int                    `json:"examplesTotal"           keel:"examples_total"`
+	TrainExamples           int                    `json:"trainExamples"           keel:"train_examples"`
+	ValidationExamples      int                    `json:"validationExamples"      keel:"validation_examples"`
+	Dropped                 map[DropReason]int     `json:"dropped"                 keel:"dropped,jsonb"`
+	Parts                   []Part                 `json:"parts"                   keel:"parts,jsonb"`
+	Progress                []OrganizationProgress `json:"progress"                keel:"progress,jsonb"`
 
-	ManifestKey    string `json:"manifestKey" keel:"manifest_key,nullzero"`
+	ManifestKey    string `json:"manifestKey"    keel:"manifest_key,nullzero"`
 	ManifestSHA256 string `json:"manifestSha256" keel:"manifest_sha256,nullzero"`
 	FailureMessage string `json:"failureMessage" keel:"failure_message,nullzero"`
 
-	StartedAt  *int64 `json:"startedAt" keel:"started_at"`
+	StartedAt  *int64 `json:"startedAt"  keel:"started_at"`
 	FinishedAt *int64 `json:"finishedAt" keel:"finished_at"`
-	Version    int64  `json:"version" keel:"version,version"`
-	CreatedAt  int64  `json:"createdAt" keel:"created_at,autocreate"`
-	UpdatedAt  int64  `json:"updatedAt" keel:"updated_at,autoupdate"`
+	Version    int64  `json:"version"    keel:"version,version"`
+	CreatedAt  int64  `json:"createdAt"  keel:"created_at,autocreate"`
+	UpdatedAt  int64  `json:"updatedAt"  keel:"updated_at,autoupdate"`
 }
 
 func (e *TrainingExport) BeforeCreate(_ context.Context) error {

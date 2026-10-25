@@ -28,61 +28,61 @@ var (
 
 // External carriers that cover brokered freight
 type Carrier struct {
-	keel.Table `                                         keel:"carriers,report=Parties"`
+	keel.Table `keel:"carriers,report=Parties"`
 
-	ID             pulid.ID  `json:"id" keel:"id,pk,autoid:car_"`
+	ID             pulid.ID  `json:"id"             keel:"id,pk,autoid:car_"`
 	BusinessUnitID pulid.ID  `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
 	OrganizationID pulid.ID  `json:"organizationId" keel:"organization_id,pk,tenant"`
-	StateID        *pulid.ID `json:"stateId" keel:"state_id"`
-	RemitStateID   *pulid.ID `json:"remitStateId" keel:"remit_state_id"`
+	StateID        *pulid.ID `json:"stateId"        keel:"state_id"`
+	RemitStateID   *pulid.ID `json:"remitStateId"   keel:"remit_state_id"`
 
-	Status              Status           `json:"status" keel:"status"`
-	Code                string           `json:"code" keel:"code"`
-	Name                string           `json:"name" keel:"name"`
-	DBAName             string           `json:"dbaName" keel:"dba_name,nullzero"`
-	CarrierType         Type             `json:"carrierType" keel:"carrier_type"`
-	DOTNumber           string           `json:"dotNumber" keel:"dot_number,nullzero"`
-	MCNumber            string           `json:"mcNumber" keel:"mc_number,nullzero"`
-	SCAC                string           `json:"scac" keel:"scac,nullzero"`
-	ComplianceStatus    ComplianceStatus `json:"complianceStatus" keel:"compliance_status"`
-	SafetyRating        SafetyRating     `json:"safetyRating" keel:"safety_rating"`
-	QualifiedAt         *int64           `json:"qualifiedAt" keel:"qualified_at"`
-	DisqualifiedReason  string           `json:"disqualifiedReason" keel:"disqualified_reason,nullzero"`
-	TaxID               string           `json:"taxId" keel:"tax_id,nullzero"`
-	TaxIDType           *TaxIDType       `json:"taxIdType" keel:"tax_id_type"`
-	W9OnFile            bool             `json:"w9OnFile" keel:"w9_on_file,label=W-9 On File"`
-	Is1099Eligible      bool             `json:"is1099Eligible" keel:"is_1099_eligible,label=1099 Eligible"`
-	PaymentMethod       PaymentMethod    `json:"paymentMethod" keel:"payment_method"`
-	PaymentTermDays     int              `json:"paymentTermDays" keel:"payment_term_days,dimension"`
-	RemitToName         string           `json:"remitToName" keel:"remit_to_name,nullzero"`
-	RemitAddressLine1   string           `json:"remitAddressLine1" keel:"remit_address_line_1,nullzero"`
-	RemitAddressLine2   string           `json:"remitAddressLine2" keel:"remit_address_line_2,nullzero"`
-	RemitCity           string           `json:"remitCity" keel:"remit_city,nullzero"`
-	RemitPostalCode     string           `json:"remitPostalCode" keel:"remit_postal_code,nullzero"`
-	AddressLine1        string           `json:"addressLine1" keel:"address_line_1,nullzero"`
-	AddressLine2        string           `json:"addressLine2" keel:"address_line_2,nullzero"`
-	City                string           `json:"city" keel:"city,nullzero"`
-	PostalCode          string           `json:"postalCode" keel:"postal_code,nullzero"`
-	Phone               string           `json:"phone" keel:"phone,nullzero"`
-	Email               string           `json:"email" keel:"email,nullzero"`
-	ExternalID          string           `json:"externalId" keel:"external_id,nullzero"`
-	Notes               string           `json:"notes" keel:"notes,nullzero"`
-	IntelRiskLevel      string           `json:"intelRiskLevel" keel:"intel_risk_level,nullzero"`
+	Status              Status           `json:"status"              keel:"status"`
+	Code                string           `json:"code"                keel:"code"`
+	Name                string           `json:"name"                keel:"name"`
+	DBAName             string           `json:"dbaName"             keel:"dba_name,nullzero"`
+	CarrierType         Type             `json:"carrierType"         keel:"carrier_type"`
+	DOTNumber           string           `json:"dotNumber"           keel:"dot_number,nullzero"`
+	MCNumber            string           `json:"mcNumber"            keel:"mc_number,nullzero"`
+	SCAC                string           `json:"scac"                keel:"scac,nullzero"`
+	ComplianceStatus    ComplianceStatus `json:"complianceStatus"    keel:"compliance_status"`
+	SafetyRating        SafetyRating     `json:"safetyRating"        keel:"safety_rating"`
+	QualifiedAt         *int64           `json:"qualifiedAt"         keel:"qualified_at"`
+	DisqualifiedReason  string           `json:"disqualifiedReason"  keel:"disqualified_reason,nullzero"`
+	TaxID               string           `json:"taxId"               keel:"tax_id,nullzero"`
+	TaxIDType           *TaxIDType       `json:"taxIdType"           keel:"tax_id_type"`
+	W9OnFile            bool             `json:"w9OnFile"            keel:"w9_on_file,label=W-9 On File"`
+	Is1099Eligible      bool             `json:"is1099Eligible"      keel:"is_1099_eligible,label=1099 Eligible"`
+	PaymentMethod       PaymentMethod    `json:"paymentMethod"       keel:"payment_method"`
+	PaymentTermDays     int              `json:"paymentTermDays"     keel:"payment_term_days,dimension"`
+	RemitToName         string           `json:"remitToName"         keel:"remit_to_name,nullzero"`
+	RemitAddressLine1   string           `json:"remitAddressLine1"   keel:"remit_address_line_1,nullzero"`
+	RemitAddressLine2   string           `json:"remitAddressLine2"   keel:"remit_address_line_2,nullzero"`
+	RemitCity           string           `json:"remitCity"           keel:"remit_city,nullzero"`
+	RemitPostalCode     string           `json:"remitPostalCode"     keel:"remit_postal_code,nullzero"`
+	AddressLine1        string           `json:"addressLine1"        keel:"address_line_1,nullzero"`
+	AddressLine2        string           `json:"addressLine2"        keel:"address_line_2,nullzero"`
+	City                string           `json:"city"                keel:"city,nullzero"`
+	PostalCode          string           `json:"postalCode"          keel:"postal_code,nullzero"`
+	Phone               string           `json:"phone"               keel:"phone,nullzero"`
+	Email               string           `json:"email"               keel:"email,nullzero"`
+	ExternalID          string           `json:"externalId"          keel:"external_id,nullzero"`
+	Notes               string           `json:"notes"               keel:"notes,nullzero"`
+	IntelRiskLevel      string           `json:"intelRiskLevel"      keel:"intel_risk_level,nullzero"`
 	IntelReviewRequired bool             `json:"intelReviewRequired" keel:"intel_review_required"`
-	IntelBlockingCount  int              `json:"intelBlockingCount" keel:"intel_blocking_count"`
-	SearchVector        string           `json:"-" keel:"search_vector,tsvector,readonly,noselect"`
-	Rank                string           `json:"-" keel:"rank,computed"`
-	Version             int64            `json:"version" keel:"version,version"`
-	CreatedAt           int64            `json:"createdAt" keel:"created_at,autocreate"`
-	UpdatedAt           int64            `json:"updatedAt" keel:"updated_at,autoupdate"`
+	IntelBlockingCount  int              `json:"intelBlockingCount"  keel:"intel_blocking_count"`
+	SearchVector        string           `json:"-"                   keel:"search_vector,tsvector,readonly,noselect"`
+	Rank                string           `json:"-"                   keel:"rank,computed"`
+	Version             int64            `json:"version"             keel:"version,version"`
+	CreatedAt           int64            `json:"createdAt"           keel:"created_at,autocreate"`
+	UpdatedAt           int64            `json:"updatedAt"           keel:"updated_at,autoupdate"`
 
 	BusinessUnit      *tenant.BusinessUnit      `json:"businessUnit,omitempty"`
 	Organization      *tenant.Organization      `json:"organization,omitempty"`
-	State             *usstate.UsState          `json:"state,omitempty" keel:"belongs:state_id,noreport"`
-	RemitState        *usstate.UsState          `json:"remitState,omitempty" keel:"belongs:remit_state_id,noreport"`
-	Contacts          []*CarrierContact         `json:"contacts,omitempty" keel:"many:carrier_id,noreport"`
+	State             *usstate.UsState          `json:"state,omitempty"             keel:"belongs:state_id,noreport"`
+	RemitState        *usstate.UsState          `json:"remitState,omitempty"        keel:"belongs:remit_state_id,noreport"`
+	Contacts          []*CarrierContact         `json:"contacts,omitempty"          keel:"many:carrier_id,noreport"`
 	InsurancePolicies []*CarrierInsurancePolicy `json:"insurancePolicies,omitempty" keel:"many:carrier_id,noreport"`
-	EDIChannels       []*CarrierEDIChannel      `json:"ediChannels,omitempty" keel:"many:carrier_id,noreport"`
+	EDIChannels       []*CarrierEDIChannel      `json:"ediChannels,omitempty"       keel:"many:carrier_id,noreport"`
 }
 
 func (c *Carrier) BeforeCreate(_ context.Context) error {

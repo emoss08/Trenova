@@ -10,6 +10,7 @@ import (
 	"go.uber.org/zap"
 )
 
+//nolint:exhaustive // CapabilityLockNone reads without a lock
 var capabilityLocks = map[tenantports.CapabilityLock]keel.LockStrength{
 	tenantports.CapabilityLockShare:  keel.ForShare,
 	tenantports.CapabilityLockUpdate: keel.ForUpdate,

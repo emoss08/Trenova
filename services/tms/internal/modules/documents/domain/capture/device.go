@@ -30,30 +30,30 @@ const (
 type CaptureDevice struct {
 	keel.Table `keel:"capture_devices"`
 
-	ID                   pulid.ID     `json:"id" keel:"id,pk,autoid:cdev_"`
+	ID                   pulid.ID     `json:"id"             keel:"id,pk,autoid:cdev_"`
 	BusinessUnitID       pulid.ID     `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
 	OrganizationID       pulid.ID     `json:"organizationId" keel:"organization_id,pk,tenant"`
-	UserID               pulid.ID     `json:"userId" keel:"user_id"`
-	Name                 string       `json:"name" keel:"name"`
-	MachineName          string       `json:"machineName" keel:"machine_name"`
-	WindowsUser          string       `json:"windowsUser" keel:"windows_user,nullzero"`
-	AgentVersion         string       `json:"agentVersion" keel:"agent_version"`
-	Architecture         Architecture `json:"architecture" keel:"architecture"`
-	OSVersion            string       `json:"osVersion" keel:"os_version,nullzero"`
-	Status               DeviceStatus `json:"status" keel:"status"`
-	RefreshTokenHash     string       `json:"-" keel:"refresh_token_hash"`
-	PreviousRefreshHash  string       `json:"-" keel:"previous_refresh_hash,nullzero"`
-	AccessTokenHash      string       `json:"-" keel:"access_token_hash"`
-	AccessTokenExpiresAt int64        `json:"-" keel:"access_token_expires_at"`
-	Sources              []SourceInfo `json:"sources" keel:"sources,jsonb"`
-	LastSeenAt           *int64       `json:"lastSeenAt" keel:"last_seen_at"`
-	LastIP               string       `json:"lastIp" keel:"last_ip,nullzero"`
-	RevokedAt            *int64       `json:"revokedAt" keel:"revoked_at"`
-	RevokedByID          *pulid.ID    `json:"revokedById" keel:"revoked_by_id"`
-	RevokedReason        string       `json:"revokedReason" keel:"revoked_reason,nullzero"`
-	Version              int64        `json:"version" keel:"version,version"`
-	CreatedAt            int64        `json:"createdAt" keel:"created_at,autocreate"`
-	UpdatedAt            int64        `json:"updatedAt" keel:"updated_at,autoupdate"`
+	UserID               pulid.ID     `json:"userId"         keel:"user_id"`
+	Name                 string       `json:"name"           keel:"name"`
+	MachineName          string       `json:"machineName"    keel:"machine_name"`
+	WindowsUser          string       `json:"windowsUser"    keel:"windows_user,nullzero"`
+	AgentVersion         string       `json:"agentVersion"   keel:"agent_version"`
+	Architecture         Architecture `json:"architecture"   keel:"architecture"`
+	OSVersion            string       `json:"osVersion"      keel:"os_version,nullzero"`
+	Status               DeviceStatus `json:"status"         keel:"status"`
+	RefreshTokenHash     string       `json:"-"              keel:"refresh_token_hash"`
+	PreviousRefreshHash  string       `json:"-"              keel:"previous_refresh_hash,nullzero"`
+	AccessTokenHash      string       `json:"-"              keel:"access_token_hash"`
+	AccessTokenExpiresAt int64        `json:"-"              keel:"access_token_expires_at"`
+	Sources              []SourceInfo `json:"sources"        keel:"sources,jsonb"`
+	LastSeenAt           *int64       `json:"lastSeenAt"     keel:"last_seen_at"`
+	LastIP               string       `json:"lastIp"         keel:"last_ip,nullzero"`
+	RevokedAt            *int64       `json:"revokedAt"      keel:"revoked_at"`
+	RevokedByID          *pulid.ID    `json:"revokedById"    keel:"revoked_by_id"`
+	RevokedReason        string       `json:"revokedReason"  keel:"revoked_reason,nullzero"`
+	Version              int64        `json:"version"        keel:"version,version"`
+	CreatedAt            int64        `json:"createdAt"      keel:"created_at,autocreate"`
+	UpdatedAt            int64        `json:"updatedAt"      keel:"updated_at,autoupdate"`
 
 	Organization *tenant.Organization `json:"organization,omitempty"`
 	BusinessUnit *tenant.BusinessUnit `json:"businessUnit,omitempty"`

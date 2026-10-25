@@ -49,7 +49,12 @@ func (r *repository) Upsert(
 ) (*briefing.Briefing, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*briefing.Briefing, error) {
 		b := briefingdb.Briefings
-		inserted, err := b.Upsert(ctx, r.db.Keel(ctx), []*briefing.Briefing{entity}, upsertConflict())
+		inserted, err := b.Upsert(
+			ctx,
+			r.db.Keel(ctx),
+			[]*briefing.Briefing{entity},
+			upsertConflict(),
+		)
 		if err != nil {
 			r.l.Error("failed to upsert briefing",
 				zap.String("role", string(entity.RoleKey)),
@@ -119,7 +124,7 @@ func (r *repository) GetForDay(
 		entity, err := forDay(req.RoleKey, req.BriefingDate, req.UserID).One(ctx, r.db.Keel(ctx))
 		if err != nil {
 			if dberror.IsNotFoundError(err) {
-				return nil, nil //nolint:nilnil // the day's briefing has not been written yet
+				return nil, nil
 			}
 
 			return nil, fmt.Errorf("get briefing for day: %w", err)
@@ -147,7 +152,7 @@ func (r *repository) List(
 	req briefingports.ListBriefingsQuery,
 ) ([]*briefing.Briefing, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*briefing.Briefing, error) {
-		entities, err := listQuery(req).List(ctx, r.db.Keel(ctx))
+		entities, err := listQuery(&req).List(ctx, r.db.Keel(ctx))
 		if err != nil {
 			return nil, fmt.Errorf("list briefings: %w", err)
 		}
@@ -156,7 +161,7 @@ func (r *repository) List(
 	})
 }
 
-func listQuery(req briefingports.ListBriefingsQuery) *keel.Query[briefing.Briefing] {
+func listQuery(req *briefingports.ListBriefingsQuery) *keel.Query[briefing.Briefing] {
 	limit := req.Limit
 	if limit <= 0 {
 		limit = defaultListLimit
