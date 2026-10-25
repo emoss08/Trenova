@@ -8040,7 +8040,7 @@
     ]
   },
   "A parsing rule version was created concurrently. Retry the request.": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "go"
     ],
@@ -8823,7 +8823,7 @@
     ]
   },
   "A profile with this name already exists": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "go"
     ],
@@ -12509,7 +12509,7 @@
     ]
   },
   "A user with this email address already exists": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "go"
     ],
@@ -12518,7 +12518,7 @@
     ]
   },
   "A user with this username already exists": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "go"
     ],
@@ -12894,7 +12894,7 @@
     ]
   },
   "A worker can be selected only once per substance in a draw": {
-    "sites": 2,
+    "sites": 1,
     "scope": [
       "go"
     ],
@@ -26876,7 +26876,7 @@
     ]
   },
   "An internal EDI partner already exists for this target organization": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "go"
     ],
@@ -27074,7 +27074,7 @@
     ]
   },
   "An open internal EDI connection already exists for these organizations": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "go"
     ],
@@ -27314,7 +27314,7 @@
     ]
   },
   "An unresolved service failure already exists for this stop": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "go"
     ],
@@ -27649,7 +27649,7 @@
     ]
   },
   "Another active AS2 profile already uses this local and partner AS2 ID pair": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "go"
     ],
@@ -27658,7 +27658,7 @@
     ]
   },
   "Another active agreement with this factor covers part of these dates": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "go"
     ],
@@ -27860,7 +27860,7 @@
     ]
   },
   "Another profile was made the default at the same time; try again": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "go"
     ],
@@ -83167,7 +83167,7 @@
     ]
   },
   "Document does not exist or belongs to a different organization": {
-    "sites": 10,
+    "sites": 12,
     "scope": [
       "go"
     ],
@@ -83565,7 +83565,7 @@
     ]
   },
   "Document template does not exist": {
-    "sites": 1,
+    "sites": 3,
     "scope": [
       "go"
     ],
@@ -87972,7 +87972,7 @@
     ]
   },
   "EDI communication profile with this name already exists": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "go"
     ],
@@ -88393,7 +88393,7 @@
     ]
   },
   "EDI partner with this code already exists": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "go"
     ],
@@ -88402,7 +88402,7 @@
     ]
   },
   "EDI partner with this name already exists": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "go"
     ],
@@ -129294,7 +129294,7 @@
     ]
   },
   "Invoice adjustment can no longer be processed because its correction group is no longer valid. Refresh the invoice and try again.": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "go"
     ],
@@ -176569,7 +176569,7 @@
     ]
   },
   "One of these invoices is already on a schedule with the factor; reload the queue and try again": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "go"
     ],
@@ -183974,7 +183974,7 @@
     ]
   },
   "Organization with this DOT number already exists in this business unit": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "go"
     ],
@@ -183983,7 +183983,7 @@
     ]
   },
   "Organization with this SCAC code already exists in this business unit": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "go"
     ],
@@ -183992,7 +183992,7 @@
     ]
   },
   "Organization with this login slug already exists": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "go"
     ],
@@ -184001,7 +184001,7 @@
     ]
   },
   "Organization with this name already exists in this business unit": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "go"
     ],
@@ -239698,7 +239698,7 @@
     ]
   },
   "Service failure number already exists": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "go"
     ],
@@ -242688,7 +242688,7 @@
     ]
   },
   "Shipment already has an active hold of this type": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "go"
     ],
@@ -260055,7 +260055,7 @@
     ]
   },
   "That chargeback has already been reversed; reload to see the reserve": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "go"
     ],
@@ -260616,7 +260616,7 @@
     ]
   },
   "That schedule number is already in use; check the factoring schedule sequence": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "go"
     ],
@@ -280069,7 +280069,7 @@
     ]
   },
   "These invoices were just submitted; reload to see the schedule": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "go"
     ],
@@ -280784,6 +280784,15 @@
     ],
     "areas": [
       "routes/agent-control"
+    ]
+  },
+  "This agent's suite is already running": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "This agent's suite is already running; wait for it to finish": {
@@ -281824,7 +281833,7 @@
     ]
   },
   "This customer already has an open notice of assignment for this factor": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "go"
     ],
@@ -282562,7 +282571,7 @@
     ]
   },
   "This factor's delivery settings were just saved by someone else; reload and try again": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "go"
     ],
@@ -286220,6 +286229,15 @@
       "go/other"
     ]
   },
+  "This sweep already opened a run for the agent": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "This sync record could not be loaded.": {
     "sites": 1,
     "scope": [
@@ -287170,15 +287188,6 @@
     ]
   },
   "This worker already has this course assigned": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
-  "This worker already holds an active credential of this type": {
     "sites": 1,
     "scope": [
       "go"
@@ -315625,7 +315634,7 @@
     ]
   },
   "Worker does not exist or belongs to a different organization": {
-    "sites": 21,
+    "sites": 26,
     "scope": [
       "go"
     ],
@@ -339860,6 +339869,15 @@
       "go/other"
     ]
   },
+  "{0} already exists in your organization": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "{0} already goes first": {
     "sites": 1,
     "scope": [
@@ -341725,6 +341743,15 @@
     ],
     "areas": [
       "routes/carrier"
+    ]
+  },
+  "{0} does not exist in your organization": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "{0} does not exist in {1}: the clocks move forward past it": {
@@ -344687,6 +344714,15 @@
       "go/other"
     ]
   },
+  "{0} is not valid": {
+    "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "{0} is on": {
     "sites": 1,
     "scope": [
@@ -344860,7 +344896,7 @@
     ]
   },
   "{0} is required": {
-    "sites": 4,
+    "sites": 5,
     "scope": [
       "go",
       "ts"
@@ -348123,6 +348159,15 @@
       "routes/customer-ledger"
     ]
   },
+  "{0} overlaps an existing record in your organization": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "{0} overtime": {
     "sites": 1,
     "scope": [
@@ -348708,6 +348753,15 @@
     ],
     "areas": [
       "packages/shared/types"
+    ]
+  },
+  "{0} refers to a record that does not exist in your organization": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "{0} refused Trenova's certificate. If the account was refreshed from production, set up the certificate mapping again, then renew the certificate here. Nothing reaches {0} until then.": {
@@ -350699,6 +350753,15 @@
     ],
     "areas": [
       "routes/time-attendance"
+    ]
+  },
+  "{0} with this {1} already exists in your organization": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "{0} with {1}": {
