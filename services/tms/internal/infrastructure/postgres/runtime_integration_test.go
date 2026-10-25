@@ -136,6 +136,12 @@ func TestRuntime_TheResultCacheServesARepeatedReadPerTenantAndReadScope(t *testi
 	assert.Equal(t, first, second)
 	assert.Equal(t, int64(1), conn.tenantKeel.CacheStats().Hits)
 
+	untouched := keel.Budget(tenantA, keel.MaxRoundTrips(0))
+	third, err := cachedFleetCodes(untouched, conn)
+	require.NoError(t, err, "a hit sends nothing, not even the transaction's BEGIN")
+	assert.Equal(t, first, third)
+	assert.Equal(t, int64(2), conn.tenantKeel.CacheStats().Hits)
+
 	tenantB, err := cachedFleetCodes(dbscope.WithTenant(t.Context(), f.tenantB), conn)
 	require.NoError(t, err)
 	assert.Equal(t, []string{"FCB"}, tenantB, "another tenant never reads tenant A's entry")
@@ -149,7 +155,7 @@ func TestRuntime_TheResultCacheServesARepeatedReadPerTenantAndReadScope(t *testi
 	require.NoError(t, err)
 	assert.Equal(
 		t,
-		int64(1),
+		int64(2),
 		conn.tenantKeel.CacheStats().Hits,
 		"a narrower read scope is its own entry",
 	)
