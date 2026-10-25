@@ -43,7 +43,8 @@ but `Core`.
 - **Lists are connections.** `base.DataTableConnectionFromGraphQL` → the service's
   `ListConnection` with `projection.Select(...)` columns → `base.EntityCursorConnection`
   (`commodityresolver/commodity.resolvers.go`). `IncludeTotalCount` is set only when `totalCount`
-  is selected.
+  or `totalCountExact` is selected (`base.ConnectionTotalRequested`), and every connection type
+  declares `totalCountExact: Boolean!` beside `totalCount`.
 - **Mutations** map input to the domain with the generated mappers, take the actor from
   `actorutil.FromAuthContext(authCtx)`, and call the same service method an agent tool calls
   (`trailerresolver/trailer.resolvers.go`).

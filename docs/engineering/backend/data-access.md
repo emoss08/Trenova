@@ -163,9 +163,14 @@ struct.
   primary key, and nullable or joined sort keys put NULLs last. The cursor
   (`pagination.EncodeKeysetCursor`) carries keel's page cursor and the sort shape; a cursor read
   under another sort is a validation error on `after`. Every edge gets its own cursor
-  (`Page.CursorAt`, surfaced as `CursorListResult.EdgeCursors`). The page and its exact count share
-  one round trip, and the count runs only when `IncludeTotalCount` is set. `Columns` (the GraphQL
-  projection's SQL names) narrows the row with `Pick`; keel adds the keys and order columns.
+  (`Page.CursorAt`, surfaced as `CursorListResult.EdgeCursors`). The page and its count share one
+  round trip, and the count runs only when `IncludeTotalCount` is set. The count is exact up to
+  `pagination.ExactTotalUpTo` (10,000) rows and the planner's estimate above
+  (`keel.CountEstimateInto`), so a total never reads more than 10,001 rows; `TotalCountExact` says
+  which, every GraphQL connection exposes it as `totalCountExact`, and the client shows an
+  estimate as approximate ("about 1.2M"). A count you build by hand (a CTE, a port page) does the
+  same and carries the flag. `Columns` (the GraphQL projection's SQL names) narrows the row with
+  `Pick`; keel adds the keys and order columns.
 
   ```go
   fc := fleetcodedb.FleetCodes
