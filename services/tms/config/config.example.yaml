@@ -131,6 +131,31 @@ database:
   migrator:
     user: ""
     password: ""
+  # How many transactions and statements of one organization may run at once on
+  # the tenant pool, so one busy organization cannot hold every connection.
+  # 0 takes a quarter of maxOpenConns.
+  tenantConcurrency: 0
+  # The result cache serves a repository read that asks for it (keel's Query.Cache)
+  # without a round trip while no table it read has changed for the organization.
+  # See "Caching" in docs/engineering/backend/data-access.md.
+  cache:
+    enabled: true
+    localBytes: 268435456 # In-process LRU size per API or worker process (256 MiB)
+    # The listener follows table changes over LISTEN, which needs a session
+    # connection. Behind a transaction-mode pooler (PgBouncer), point it at
+    # PostgreSQL directly; empty uses host and port above.
+    listenHost: ""
+    listenPort: 0 # 0 uses port above
+    # A tier every process shares in Redis (the cache section). Off by default:
+    # it copies tenant rows into Redis.
+    shared:
+      enabled: false
+      prefix: "trenova:keel:"
+  # Every GraphQL operation and REST request counts the statements it sends; a
+  # statement text sent in more than maxRepeats round trips (an N+1 read) logs a
+  # warning with the SQL and its call sites. The request is never failed.
+  budget:
+    maxRepeats: 10
 
 # Search configuration
 search:

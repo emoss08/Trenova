@@ -624,6 +624,16 @@ func TestSetDefaults(t *testing.T) {
 		assert.Equal(t, "10s", l.viper.GetString("database.statementTimeout"))
 		assert.Equal(t, "5s", l.viper.GetString("database.lockTimeout"))
 		assert.Equal(t, "30s", l.viper.GetString("database.idleInTransactionSessionTimeout"))
+		assert.Equal(t, 0, l.viper.GetInt("database.tenantConcurrency"))
+		assert.True(t, l.viper.GetBool("database.cache.enabled"))
+		assert.Equal(
+			t,
+			DefaultDatabaseCacheLocalBytes,
+			l.viper.GetInt64("database.cache.localBytes"),
+		)
+		assert.False(t, l.viper.GetBool("database.cache.shared.enabled"))
+		assert.Equal(t, "trenova:keel:", l.viper.GetString("database.cache.shared.prefix"))
+		assert.Equal(t, 10, l.viper.GetInt("database.budget.maxRepeats"))
 	})
 
 	t.Run("session defaults", func(t *testing.T) {
@@ -1227,6 +1237,15 @@ func TestProductionConfigFileLoads(t *testing.T) {
 	assert.Equal(t, "__Host-trenova_session", cfg.Security.Session.Name)
 	assert.Equal(t, "enforce", cfg.Security.CSRF.BrowserGuard.Mode)
 	assert.Contains(t, cfg.Server.CORS.AllowedHeaders, "X-CSRF-Token")
+	assert.True(t, cfg.Database.Cache.Enabled)
+	assert.Equal(t, DefaultDatabaseCacheLocalBytes, cfg.Database.Cache.GetLocalBytes())
+	assert.False(
+		t,
+		cfg.Database.Cache.SharedEnabled(),
+		"the Redis tier copies tenant rows; it stays opt-in",
+	)
+	assert.Equal(t, 10, cfg.Database.Budget.GetMaxRepeats())
+	assert.Equal(t, 75/4, cfg.Database.GetTenantConcurrency(cfg.Database.MaxOpenConns))
 }
 
 // stageProductionBase fills in the sections config.test.yaml leaves out but a

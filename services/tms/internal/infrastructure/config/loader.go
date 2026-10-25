@@ -371,6 +371,14 @@ func (l *Loader) setDefaults() { //nolint:funlen // sets default configs
 	l.viper.SetDefault("database.system.maxOpenConns", 8)
 	l.viper.SetDefault("database.migrator.user", "")
 	l.viper.SetDefault("database.migrator.password", "")
+	l.viper.SetDefault("database.tenantConcurrency", 0)
+	l.viper.SetDefault("database.cache.enabled", true)
+	l.viper.SetDefault("database.cache.localBytes", DefaultDatabaseCacheLocalBytes)
+	l.viper.SetDefault("database.cache.listenHost", "")
+	l.viper.SetDefault("database.cache.listenPort", 0)
+	l.viper.SetDefault("database.cache.shared.enabled", false)
+	l.viper.SetDefault("database.cache.shared.prefix", DefaultDatabaseCacheSharedPrefix)
+	l.viper.SetDefault("database.budget.maxRepeats", DefaultDatabaseBudgetMaxRepeats)
 
 	// Session defaults
 	l.viper.SetDefault("security.session.name", "trv-session-id")
@@ -543,6 +551,7 @@ func (l *Loader) validateConfig(config *Config) error {
 
 	validators := []func(*Config) error{
 		validateRLSConfig,
+		validateDatabaseRuntimeConfig,
 		validateServerTimeouts,
 		validateTrustedProxies,
 		validateHostPrefixCookie,

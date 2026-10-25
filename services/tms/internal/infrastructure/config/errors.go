@@ -99,4 +99,16 @@ var (
 	ErrSectionPathConflict      = errors.New(
 		"configuration section path is already owned by another section or by the base configuration",
 	)
+	ErrDatabaseSharedCacheNeedsCache = errors.New(
+		"database.cache.shared.enabled needs database.cache.enabled",
+	)
+	ErrDatabaseCacheListenPortNeedsHost = errors.New(
+		"database.cache.listenPort needs database.cache.listenHost",
+	)
+	ErrDatabaseCacheLocalBytesTooSmall = errors.New(
+		"database.cache.localBytes must be at least 1 MiB (1048576)",
+	)
+	ErrDatabaseTenantConcurrencyExceedsPool = errors.New(
+		"database.tenantConcurrency cannot exceed database.maxOpenConns",
+	)
 )

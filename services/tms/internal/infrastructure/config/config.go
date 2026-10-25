@@ -735,6 +735,10 @@ type DatabaseConfig struct {
 	RLS              RLSConfig     `mapstructure:"rls"`
 	System           DatabaseRole  `mapstructure:"system"`
 	Migrator         DatabaseRole  `mapstructure:"migrator"`
+
+	TenantConcurrency int                  `mapstructure:"tenantConcurrency" validate:"min=0,max=1000"`
+	Cache             DatabaseCacheConfig  `mapstructure:"cache"`
+	Budget            DatabaseBudgetConfig `mapstructure:"budget"`
 }
 
 func (c *DatabaseConfig) GetStatementTimeout() time.Duration {
@@ -2148,10 +2152,14 @@ func (c *Config) GetDSN(password string) string {
 }
 
 func (c *Config) postgresDSN(user, password string) string {
+	return c.postgresDSNAt(c.Database.Host, c.Database.Port, user, password)
+}
+
+func (c *Config) postgresDSNAt(host string, port int, user, password string) string {
 	dsn := url.URL{
 		Scheme: "postgres",
 		User:   url.UserPassword(user, password),
-		Host:   net.JoinHostPort(c.Database.Host, strconv.Itoa(c.Database.Port)),
+		Host:   net.JoinHostPort(host, strconv.Itoa(port)),
 		Path:   "/" + c.Database.Name,
 		RawQuery: "sslmode=" + url.QueryEscape(c.Database.SSLMode) +
 			"&application_name=" + url.QueryEscape(c.App.Name) +
