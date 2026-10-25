@@ -75,7 +75,7 @@ func (r *repository) List(
 				inv.Query(),
 				&listquery.Request[invoice.Invoice]{
 					Filter: req.Filter,
-					Shape: func(q *keel.Query[invoice.Invoice]) *keel.Query[invoice.Invoice] {
+					Shape: func(q *keel.Query[*invoice.Invoice]) *keel.Query[*invoice.Invoice] {
 						return q.Load(inv.Customer(), inv.Shipment())
 					},
 				},
@@ -100,7 +100,7 @@ func (r *repository) ListConnection(
 				&listquery.Request[invoice.Invoice]{
 					Filter: req.Filter,
 					Cursor: req.Cursor,
-					Shape: func(q *keel.Query[invoice.Invoice]) *keel.Query[invoice.Invoice] {
+					Shape: func(q *keel.Query[*invoice.Invoice]) *keel.Query[*invoice.Invoice] {
 						return q.Load(inv.Customer())
 					},
 				},
@@ -115,7 +115,7 @@ func (r *repository) ListConnection(
 	)
 }
 
-func invoiceDetail() *keel.Query[invoice.Invoice] {
+func invoiceDetail() *keel.Query[*invoice.Invoice] {
 	inv := invoicedb.Invoices
 	lines := inv.Lines()
 
@@ -405,7 +405,7 @@ func (r *repository) CountPostedReconciliationDiscrepancies(
 
 func reconciliationDiscrepancies(
 	req *invoiceports.CountPostedInvoiceReconciliationDiscrepanciesRequest,
-) *keel.Query[invoice.Invoice] {
+) *keel.Query[*invoice.Invoice] {
 	inv := invoicedb.Invoices
 	bqi := billingqueuedb.BillingQueueItems
 	legs := shipmentdb.Shipments.As("leg")
@@ -600,7 +600,7 @@ func (r *repository) ListAttachments(
 	})
 }
 
-func emailAttemptDetail() *keel.Query[invoice.EmailAttempt] {
+func emailAttemptDetail() *keel.Query[*invoice.EmailAttempt] {
 	ea := invoicedb.EmailAttempts
 	attachments := ea.Attachments()
 

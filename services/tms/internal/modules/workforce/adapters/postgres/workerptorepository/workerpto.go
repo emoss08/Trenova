@@ -105,7 +105,7 @@ func (r *repository) List(
 				&listquery.Request[worker.WorkerPTO]{
 					Filter: req.Filter,
 					Cursor: req.Cursor,
-					Shape: func(q *keel.Query[worker.WorkerPTO]) *keel.Query[worker.WorkerPTO] {
+					Shape: func(q *keel.Query[*worker.WorkerPTO]) *keel.Query[*worker.WorkerPTO] {
 						return q.Load(listquery.When(req.IncludeWorker, p.Worker())...)
 					},
 				})
@@ -490,7 +490,7 @@ func (r *repository) ListUpcoming(
 				&listquery.Request[worker.WorkerPTO]{
 					Filter: upcomingPTOCursorFilter(req),
 					Cursor: req.Cursor,
-					Shape: func(q *keel.Query[worker.WorkerPTO]) *keel.Query[worker.WorkerPTO] {
+					Shape: func(q *keel.Query[*worker.WorkerPTO]) *keel.Query[*worker.WorkerPTO] {
 						return q.Load(p.Worker())
 					},
 				},
@@ -618,7 +618,7 @@ type chartDaysParams struct {
 	workerID     pulid.ID
 }
 
-func chartDaysQuery(p *chartDaysParams) *keel.Query[worker.WorkerPTO] {
+func chartDaysQuery(p *chartDaysParams) *keel.Query[*worker.WorkerPTO] {
 	pto := workerdb.WorkerPTOs
 	wrk := workerdb.Workers
 	localDay := func(ts any) keel.DynExpr {

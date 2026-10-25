@@ -132,7 +132,7 @@ func (r *repository) ListExceptions(
 	})
 }
 
-func summaryQuery(asOf int64) *keel.Query[bankreceipt.BankReceipt] {
+func summaryQuery(asOf int64) *keel.Query[*bankreceipt.BankReceipt] {
 	br := bankreceiptdb.BankReceipts
 	wi := bankreceiptworkitemdb.WorkItems.As("wi")
 	count := func(p keel.Pred) keel.Expr { return keel.Count().Filter(p) }

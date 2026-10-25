@@ -135,7 +135,7 @@ func caseFilter(req *workerports.ListLeaveCasesRequest) []keel.Pred {
 	}
 }
 
-func casesQuery(req *workerports.ListLeaveCasesRequest) *keel.Query[worker.WorkerLeaveCase] {
+func casesQuery(req *workerports.ListLeaveCasesRequest) *keel.Query[*worker.WorkerLeaveCase] {
 	c := workerdb.WorkerLeaveCases
 	loads := make([]keel.Loader, 0, 3)
 	loads = append(loads, listquery.When(req.IncludeWorker, c.Worker())...)

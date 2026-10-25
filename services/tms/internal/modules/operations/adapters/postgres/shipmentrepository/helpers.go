@@ -217,7 +217,7 @@ func shipmentScope(
 	filter *pagination.QueryOptions,
 	opts *shipmentports.ShipmentOptions,
 	quick []keel.Pred,
-) *keel.Query[shipment.Shipment] {
+) *keel.Query[*shipment.Shipment] {
 	q := shipmentdb.Shipments.Where(shipmentOptionPredicates(opts)...).Where(quick...)
 	if filter == nil {
 		return q

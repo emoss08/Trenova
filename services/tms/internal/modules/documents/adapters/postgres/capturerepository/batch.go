@@ -24,12 +24,6 @@ import (
 
 const maxMaintenanceBatch = 500
 
-// pageCodeMatch is true when any code on a page, the scanner's or the
-// server's, matches the pattern.
-const pageCodeMatch = "EXISTS (SELECT 1 FROM jsonb_array_elements_text(" +
-	"COALESCE(?->'deviceBarcodes', '[]'::jsonb) || COALESCE(?->'readCodes', '[]'::jsonb)" +
-	") AS code WHERE code ILIKE ?)"
-
 var batchErrors = dberror.Mapping{Entity: "Capture batch"}
 
 type batchRepository struct {
@@ -163,7 +157,7 @@ func (r *batchRepository) ListCursor(
 				&listquery.Request[capture.CaptureBatch]{
 					Filter: req.Filter,
 					Cursor: req.Cursor,
-					Shape: func(q *keel.Query[capture.CaptureBatch]) *keel.Query[capture.CaptureBatch] {
+					Shape: func(q *keel.Query[*capture.CaptureBatch]) *keel.Query[*capture.CaptureBatch] {
 						q = q.Load(b.CaptureDevice())
 						if req.IncludeItems {
 							q = q.Load(orderedItems(b))
@@ -226,6 +220,12 @@ func searchBatches(term string) keel.Pred {
 	item := capturedb.CaptureItems
 	sp := shipmentdb.Shipments
 	shipmentType := permission.ResourceShipment.String()
+	codes := keel.Rows("code", []string{"code"}, keel.DynFunc(
+		"jsonb_array_elements_text",
+		page.Markers.Path("deviceBarcodes").
+			Coalesce(keel.DynFunc("jsonb_build_array")).
+			Concat(page.Markers.Path("readCodes").Coalesce(keel.DynFunc("jsonb_build_array"))),
+	))
 
 	routed := keel.UnionAll(
 		item.Pick(item.FiledID).Where(item.BatchID.EqCol(b.ID), item.FiledType.Eq(shipmentType)),
@@ -244,9 +244,9 @@ func searchBatches(term string) keel.Pred {
 			user.ID.EqCol(b.UserID),
 			user.Name.ContainsFold(term),
 		)),
-		keel.Exists(page.Pick(page.ID).Where(
+		keel.Exists(page.JoinLateral(codes).Pick(page.ID).Where(
 			page.BatchID.EqCol(b.ID),
-			keel.Raw(pageCodeMatch, page.Markers, page.Markers, pattern),
+			keel.DynOf(codes.Col("code")).ILike(pattern),
 		)),
 		keel.Exists(sp.Pick(sp.ID).Where(
 			keel.Or(sp.ProNumber.ContainsFold(term), sp.BOL.ContainsFold(term)),

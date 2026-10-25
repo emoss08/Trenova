@@ -44,7 +44,7 @@ func yamlAsJSON(sr *seed.Run, path string, dest any) error {
 func backdate[T any](
 	ctx context.Context,
 	db *keel.DB,
-	h keel.Handle[T],
+	h keel.Handle[*T],
 	ids []string,
 	ats []int64,
 ) error {

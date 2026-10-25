@@ -81,7 +81,7 @@ func ratingDetailText(key string) keel.Expr {
 
 func candidatesQuery(
 	req *ediports.ListTenderReferenceCandidatesRequest,
-) *keel.Query[edi.EDIMessage] {
+) *keel.Query[*edi.EDIMessage] {
 	m := edidb.EDIMessages
 	f := edidb.EDIInboundFiles
 

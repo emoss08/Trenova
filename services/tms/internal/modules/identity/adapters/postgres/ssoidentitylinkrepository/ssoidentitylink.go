@@ -36,7 +36,7 @@ func New(p Params) tenantports.SSOIdentityLinkRepository {
 	}
 }
 
-func links(ctx context.Context, preds ...keel.Pred) *keel.Query[tenant.SSOIdentityLink] {
+func links(ctx context.Context, preds ...keel.Pred) *keel.Query[*tenant.SSOIdentityLink] {
 	q := tenantdb.SSOIdentityLinks.Query()
 	if dbscope.IsSystem(ctx) {
 		q = q.AllTenants()

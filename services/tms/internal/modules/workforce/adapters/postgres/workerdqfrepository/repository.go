@@ -232,7 +232,7 @@ func (r *repository) ListRetentionCandidates(
 	)
 }
 
-func retentionQuery(req *workerports.ListDQFRetentionCandidatesRequest) *keel.Query[worker.Worker] {
+func retentionQuery(req *workerports.ListDQFRetentionCandidatesRequest) *keel.Query[*worker.Worker] {
 	w := workerdb.Workers
 	wp := workerdb.WorkerProfiles
 

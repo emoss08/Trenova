@@ -63,7 +63,7 @@ func New(p Params) tenantports.UserRepository {
 	}
 }
 
-func tenantUsers(orgID pulid.ID) *keel.Query[tenant.User] {
+func tenantUsers(orgID pulid.ID) *keel.Query[*tenant.User] {
 	u := tenantdb.Users
 	return u.Where(
 		u.CurrentOrganizationID.Eq(orgID),
@@ -76,7 +76,7 @@ func keepVersion() keel.Assignment {
 	return u.Version.ToExpr(u.Version)
 }
 
-func allTenantsWhenSystem[T any](ctx context.Context, q *keel.Query[T]) *keel.Query[T] {
+func allTenantsWhenSystem[T any](ctx context.Context, q *keel.Query[*T]) *keel.Query[*T] {
 	if dbscope.IsSystem(ctx) {
 		return q.AllTenants()
 	}
@@ -170,7 +170,7 @@ func (ur *repository) List(
 				tenantUsers(req.Filter.TenantInfo.OrgID),
 				&listquery.Request[tenant.User]{
 					Filter: req.Filter,
-					Shape: func(q *keel.Query[tenant.User]) *keel.Query[tenant.User] {
+					Shape: func(q *keel.Query[*tenant.User]) *keel.Query[*tenant.User] {
 						return q.Load(u.Assignments().Role())
 					},
 				},

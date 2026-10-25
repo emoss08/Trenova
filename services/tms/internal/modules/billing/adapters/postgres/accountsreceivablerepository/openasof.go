@@ -1,165 +1,237 @@
 package accountsreceivablerepository
 
 import (
+	"github.com/emoss08/keel"
+	"github.com/emoss08/trenova/internal/modules/billing/adapters/postgres/receivablesql"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/customerledger"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/customerledger/customerledgerdb"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/customerpayment/customerpaymentdb"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice/invoicedb"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/customerledgerports"
-	"github.com/emoss08/trenova/pkg/pagination"
 )
 
 type openAsOfWindow struct {
-	tenantInfo pagination.TenantInfo
-	asOf       int64
-	step       int64
-	points     int
+	asOf   int64
+	step   int64
+	points int
 }
 
 func seriesWindow(req customerledgerports.ListARSeriesRequest) openAsOfWindow {
-	return openAsOfWindow{
-		tenantInfo: req.TenantInfo,
-		asOf:       req.AsOfDate,
-		step:       secondsPerWeek,
-		points:     req.Weeks,
-	}
+	return openAsOfWindow{asOf: req.AsOfDate, step: secondsPerWeek, points: req.Weeks}
 }
 
-func instantWindow(tenantInfo pagination.TenantInfo, asOf int64) openAsOfWindow {
-	return openAsOfWindow{tenantInfo: tenantInfo, asOf: asOf, step: secondsPerWeek, points: 1}
+func instantWindow(asOf int64) openAsOfWindow {
+	return openAsOfWindow{asOf: asOf, step: secondsPerWeek, points: 1}
 }
 
 func (w openAsOfWindow) start() int64 {
 	return w.asOf - int64(w.points-1)*w.step
 }
 
-func (w openAsOfWindow) args() []any {
-	org, bu := tenantArgs(w.tenantInfo)
-	return []any{
-		w.asOf,
-		w.step,
-		w.points,
-		org,
-		bu,
-		w.start(),
-		customerledger.SourceFactoringItem,
+type openAsOf struct {
+	ctes   []*keel.CTETable
+	points *keel.CTETable
+	items  *keel.CTETable
+}
+
+func (w openAsOfWindow) build() openAsOf {
+	series := keel.CTE("series", []string{"n"}, keel.Rows("series_n", []string{"n"}, keel.DynFunc(
+		"generate_series",
+		keel.DynLit(int64(0)).Cast(keel.TypeInt64),
+		keel.DynLit(int64(w.points-1)).Cast(keel.TypeInt64),
+	)))
+	seriesN := keel.DynOf(series.Col("n"))
+	points := keel.CTE("points", []string{"n", "period_end"}, series.Query().Pick(
+		seriesN,
+		keel.DynLit(w.asOf).Cast(keel.TypeInt64).Sub(seriesN.Mul(w.step)),
+	))
+
+	moved := w.movedInvoices()
+	candidates := w.candidates(moved)
+	settlements := settlementsOf(candidates)
+	changes := changesOf(candidates, settlements)
+	segments := segmentsOf(changes)
+	items := w.openItems(segments)
+
+	return openAsOf{
+		ctes: []*keel.CTETable{
+			series,
+			points,
+			moved,
+			candidates,
+			settlements,
+			changes,
+			segments,
+			items,
+		},
+		points: points,
+		items:  items,
 	}
 }
 
-const openAsOfCTEs = `
-		points AS (
-			SELECT n, $1::BIGINT - n * $2::BIGINT AS period_end
-			FROM generate_series(0, $3::INT - 1) AS n
+func (w openAsOfWindow) movedInvoices() *keel.CTETable {
+	start := w.start()
+	applied := customerpaymentdb.Applications.As("cpa")
+	reversedApp := customerpaymentdb.Applications.As("cpa")
+	reversed := customerpaymentdb.Payments.As("cp")
+	memo := customerpaymentdb.CreditMemoApplications.As("cma")
+	ledger := customerledgerdb.CustomerLedgerEntries.As("cle")
+
+	return keel.CTE("moved", []string{"invoice_id"}, keel.Union(
+		applied.Pick(applied.InvoiceID).Where(applied.CreatedAt.Gt(start)),
+		reversed.
+			Join(reversedApp, reversedApp.CustomerPaymentID.EqCol(reversed.ID)).
+			Pick(reversedApp.InvoiceID).
+			Where(reversed.ReversedAt.Gt(start)),
+		memo.Pick(memo.InvoiceID).Where(memo.CreatedAt.Gt(start)),
+		memo.Pick(memo.InvoiceID).Where(memo.UnappliedAt.Gt(start)),
+		ledger.
+			Pick(ledger.RelatedInvoiceID).
+			Where(
+				ledger.SourceObjectType.Eq(customerledger.SourceFactoringItem),
+				ledger.RelatedInvoiceID.IsNotNull(),
+				ledger.CreatedAt.Gt(start),
+			),
+	))
+}
+
+func (w openAsOfWindow) candidates(moved *keel.CTETable) *keel.CTETable {
+	open := invoicedb.Invoices.As("inv")
+	touched := invoicedb.Invoices.As("inv")
+	return keel.CTE(
+		"candidates",
+		[]string{"id", "invoice_date", "due_date", "total_amount_minor"},
+		keel.Union(
+			open.
+				Pick(open.ID, open.InvoiceDate, open.DueDate, open.TotalAmountMinor).
+				Where(open.InvoiceDate.Lte(w.asOf), receivablesql.Open(open)),
+			touched.
+				Join(moved, moved.Col("invoice_id").EqCol(touched.ID)).
+				Pick(touched.ID, touched.InvoiceDate, touched.DueDate, touched.TotalAmountMinor).
+				Where(receivablesql.Receivable(touched), touched.InvoiceDate.Lte(w.asOf)),
 		),
-		candidates AS (
-			SELECT inv.id, inv.organization_id, inv.business_unit_id, inv.invoice_date, inv.due_date, inv.total_amount_minor
-			FROM invoices inv
-			WHERE inv.organization_id = $4
-			  AND inv.business_unit_id = $5
-			  AND inv.invoice_date <= $1` + openInvoicePredicate + `
-			UNION
-			SELECT inv.id, inv.organization_id, inv.business_unit_id, inv.invoice_date, inv.due_date, inv.total_amount_minor
-			FROM (
-				SELECT cpa.invoice_id
-				FROM customer_payment_applications cpa
-				WHERE cpa.organization_id = $4
-				  AND cpa.business_unit_id = $5
-				  AND cpa.created_at > $6
-				UNION
-				SELECT cpa.invoice_id
-				FROM customer_payments cp
-				JOIN customer_payment_applications cpa
-				  ON cpa.customer_payment_id = cp.id
-				 AND cpa.organization_id = cp.organization_id
-				 AND cpa.business_unit_id = cp.business_unit_id
-				WHERE cp.organization_id = $4
-				  AND cp.business_unit_id = $5
-				  AND cp.reversed_at > $6
-				UNION
-				SELECT cma.invoice_id
-				FROM credit_memo_applications cma
-				WHERE cma.organization_id = $4
-				  AND cma.business_unit_id = $5
-				  AND cma.created_at > $6
-				UNION
-				SELECT cma.invoice_id
-				FROM credit_memo_applications cma
-				WHERE cma.organization_id = $4
-				  AND cma.business_unit_id = $5
-				  AND cma.unapplied_at > $6
-				UNION
-				SELECT cle.related_invoice_id
-				FROM customer_ledger_entries cle
-				WHERE cle.organization_id = $4
-				  AND cle.business_unit_id = $5
-				  AND cle.source_object_type = $7
-				  AND cle.related_invoice_id IS NOT NULL
-				  AND cle.created_at > $6
-			) moved
-			JOIN invoices inv
-			  ON inv.id = moved.invoice_id
-			 AND inv.organization_id = $4
-			 AND inv.business_unit_id = $5
-			WHERE inv.status = 'Posted'
-			  AND inv.bill_type IN ('Invoice', 'DebitMemo')
-			  AND inv.invoice_date <= $1
+	)
+}
+
+func settlementsOf(candidates *keel.CTETable) *keel.CTETable {
+	id := candidates.Col("id")
+	due := candidates.Col("due_date")
+	cpa := customerpaymentdb.Applications.As("cpa")
+	cp := customerpaymentdb.Payments.As("cp")
+	cma := customerpaymentdb.CreditMemoApplications.As("cma")
+	cle := customerledgerdb.CustomerLedgerEntries.As("cle")
+
+	return keel.CTE(
+		"settlements",
+		[]string{"invoice_id", "due_date", "settled_at", "released_at", "amount"},
+		keel.UnionAll(
+			cpa.
+				Join(candidates, id.EqCol(cpa.InvoiceID)).
+				Join(cp, cp.ID.EqCol(cpa.CustomerPaymentID)).
+				Pick(
+					id,
+					due,
+					cpa.CreatedAt,
+					cp.ReversedAt,
+					keel.DynOf(cpa.AppliedAmountMinor).Add(cpa.ShortPayAmountMinor),
+				),
+			cma.
+				Join(candidates, id.EqCol(cma.InvoiceID)).
+				Pick(id, due, cma.CreatedAt, cma.UnappliedAt, cma.AppliedAmountMinor),
+			cle.
+				Join(
+					candidates,
+					id.EqCol(cle.RelatedInvoiceID),
+					cle.SourceObjectType.Eq(customerledger.SourceFactoringItem),
+				).
+				Pick(id, due, cle.CreatedAt, keel.DynLit(nil), keel.DynOf(cle.AmountMinor).Neg()),
 		),
-		settlements AS (
-			SELECT c.id AS invoice_id, c.due_date, cpa.created_at AS settled_at, cp.reversed_at AS released_at,
-				cpa.applied_amount_minor + cpa.short_pay_amount_minor AS amount
-			FROM candidates c
-			JOIN customer_payment_applications cpa
-			  ON cpa.invoice_id = c.id
-			 AND cpa.organization_id = c.organization_id
-			 AND cpa.business_unit_id = c.business_unit_id
-			JOIN customer_payments cp
-			  ON cp.id = cpa.customer_payment_id
-			 AND cp.organization_id = cpa.organization_id
-			 AND cp.business_unit_id = cpa.business_unit_id
-			UNION ALL
-			SELECT c.id, c.due_date, cma.created_at, cma.unapplied_at, cma.applied_amount_minor
-			FROM candidates c
-			JOIN credit_memo_applications cma
-			  ON cma.invoice_id = c.id
-			 AND cma.organization_id = c.organization_id
-			 AND cma.business_unit_id = c.business_unit_id
-			UNION ALL
-			SELECT c.id, c.due_date, cle.created_at, NULL, -cle.amount_minor
-			FROM candidates c
-			JOIN customer_ledger_entries cle
-			  ON cle.related_invoice_id = c.id
-			 AND cle.organization_id = c.organization_id
-			 AND cle.business_unit_id = c.business_unit_id
-			 AND cle.source_object_type = $7
+	)
+}
+
+func changesOf(candidates, settlements *keel.CTETable) *keel.CTETable {
+	settledAt := keel.DynOf(settlements.Col("settled_at"))
+	releasedAt := keel.DynOf(settlements.Col("released_at"))
+	amount := keel.DynOf(settlements.Col("amount"))
+
+	return keel.CTE(
+		"changes",
+		[]string{"invoice_id", "due_date", "changed_at", "delta"},
+		keel.UnionAll(
+			candidates.Query().Pick(
+				candidates.Col("id"),
+				candidates.Col("due_date"),
+				candidates.Col("invoice_date"),
+				candidates.Col("total_amount_minor"),
+			),
+			settlements.Query().Pick(
+				settlements.Col("invoice_id"),
+				settlements.Col("due_date"),
+				settledAt,
+				amount.Neg(),
+			),
+			settlements.Query().
+				Pick(
+					settlements.Col("invoice_id"),
+					settlements.Col("due_date"),
+					keel.DynFunc("greatest", settledAt, releasedAt),
+					amount,
+				).
+				Where(releasedAt.IsNotNull()),
 		),
-		changes AS (
-			SELECT c.id AS invoice_id, c.due_date, c.invoice_date AS changed_at, c.total_amount_minor AS delta
-			FROM candidates c
-			UNION ALL
-			SELECT s.invoice_id, s.due_date, s.settled_at, -s.amount
-			FROM settlements s
-			UNION ALL
-			SELECT s.invoice_id, s.due_date, GREATEST(s.settled_at, s.released_at), s.amount
-			FROM settlements s
-			WHERE s.released_at IS NOT NULL
-		),
-		segments AS (
-			SELECT
-				ch.invoice_id,
-				ch.due_date,
-				ch.changed_at AS starts_at,
-				LEAD(ch.changed_at) OVER w AS ends_at,
-				SUM(SUM(ch.delta)) OVER w AS open_minor
-			FROM changes ch
-			GROUP BY ch.invoice_id, ch.due_date, ch.changed_at
-			WINDOW w AS (PARTITION BY ch.invoice_id ORDER BY ch.changed_at)
-		),
-		open_items AS (
-			SELECT n, seg.invoice_id, seg.due_date, seg.open_minor
-			FROM segments seg
-			CROSS JOIN LATERAL generate_series(
-				CASE
-					WHEN seg.ends_at IS NULL THEN 0
-					ELSE GREATEST(0, FLOOR(($1::BIGINT - seg.ends_at)::NUMERIC / $2::BIGINT)::INT + 1)
-				END,
-				LEAST($3::INT - 1, FLOOR(($1::BIGINT - seg.starts_at)::NUMERIC / $2::BIGINT)::INT)
-			) AS n
-			WHERE seg.open_minor > 0
-		)`
+	)
+}
+
+func segmentsOf(changes *keel.CTETable) *keel.CTETable {
+	id := changes.Col("invoice_id")
+	due := changes.Col("due_date")
+	changedAt := changes.Col("changed_at")
+	window := keel.NamedWindow("w")
+
+	return keel.CTE(
+		"segments",
+		[]string{"invoice_id", "due_date", "starts_at", "ends_at", "open_minor"},
+		changes.Query().
+			Pick(
+				id,
+				due,
+				changedAt,
+				keel.Lead(changedAt, 1, nil).OverWindow(window),
+				keel.Sum(keel.Sum(changes.Col("delta"))).OverWindow(window),
+			).
+			Group(id, due, changedAt).
+			Window("w", keel.PartitionBy(id).OrderBy(changedAt.Asc())),
+	)
+}
+
+func (w openAsOfWindow) openItems(segments *keel.CTETable) *keel.CTETable {
+	startsAt := keel.DynOf(segments.Col("starts_at"))
+	endsAt := keel.DynOf(segments.Col("ends_at"))
+	periodsBefore := func(at keel.DynExpr) keel.DynExpr {
+		return keel.DynFunc(
+			"floor",
+			keel.DynLit(w.asOf).Sub(at).Cast(keel.TypeNumeric).Div(w.step),
+		).Cast(keel.TypeInt64)
+	}
+	offsets := keel.Rows("offsets", []string{"n"}, keel.DynFunc(
+		"generate_series",
+		keel.DynCase().
+			When(endsAt.IsNull(), 0).
+			Else(keel.DynFunc("greatest", 0, periodsBefore(endsAt).Add(1))),
+		keel.DynFunc("least", int64(w.points-1), periodsBefore(startsAt)),
+	))
+
+	return keel.CTE(
+		"open_items",
+		[]string{"n", "invoice_id", "due_date", "open_minor"},
+		segments.Query().
+			JoinLateral(offsets).
+			Pick(
+				offsets.Col("n"),
+				segments.Col("invoice_id"),
+				segments.Col("due_date"),
+				segments.Col("open_minor"),
+			).
+			Where(keel.DynOf(segments.Col("open_minor")).Gt(0)),
+	)
+}

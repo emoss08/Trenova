@@ -116,7 +116,7 @@ func (r *repository) ListByMoveID(
 	)
 }
 
-func maxRevisionQuery(assignmentID pulid.ID) *keel.Query[rateconfirmation.RateConfirmation] {
+func maxRevisionQuery(assignmentID pulid.ID) *keel.Query[*rateconfirmation.RateConfirmation] {
 	rc := rateconfirmationdb.RateConfirmations
 
 	return rc.Pick(rc.Revision.Max()).Where(rc.CarrierAssignmentID.Eq(assignmentID))
@@ -279,7 +279,7 @@ func (r *repository) RevokeTokensForRateConfirmation(
 func deadTokensQuery(
 	req tenderports.PurgeDeadTokensRequest,
 	limit int,
-) *keel.Query[rateconfirmation.RateConfirmationToken] {
+) *keel.Query[*rateconfirmation.RateConfirmationToken] {
 	t := rateconfirmationdb.RateConfirmationTokens
 	dead := t.As("dead")
 

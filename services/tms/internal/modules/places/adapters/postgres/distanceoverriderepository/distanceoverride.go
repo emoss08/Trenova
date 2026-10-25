@@ -40,8 +40,8 @@ func New(p Params) distanceoverrideports.DistanceOverrideRepository {
 }
 
 func listShape(
-	q *keel.Query[distanceoverride.DistanceOverride],
-) *keel.Query[distanceoverride.DistanceOverride] {
+	q *keel.Query[*distanceoverride.DistanceOverride],
+) *keel.Query[*distanceoverride.DistanceOverride] {
 	do := distanceoverridedb.DistanceOverrides
 	stops := do.IntermediateStops()
 	return q.Load(

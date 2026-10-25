@@ -488,7 +488,7 @@ func TestSearch_AModelWithoutConfigurationSearchesItsTextColumns(t *testing.T) {
 		Token          string `json:"-"`
 	}
 
-	h := keel.Handle[bare]{
+	h := keel.Handle[*bare]{
 		Ref: &keel.Ref{Table: newTrucksTable("test_bare_trucks", "bt", testOwners)},
 	}
 	q := h.Query()
@@ -580,7 +580,7 @@ func TestKeysetOrder_OrdersByARelationsColumn(t *testing.T) {
 func TestConnectionResult_AnEmptyPageHasNoCursors(t *testing.T) {
 	t.Parallel()
 
-	result, err := connectionResult(&keel.Page[testTruck]{}, nil, nil)
+	result, err := connectionResult(&keel.Page[*testTruck]{}, nil, nil)
 	require.NoError(t, err)
 
 	assert.Empty(t, result.Items)

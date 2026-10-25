@@ -292,7 +292,7 @@ func (r *repository) ListForSweep(
 
 		t := tenderdb.Tenders
 		inFlight := tenderdb.TenderOffers.As("tof")
-		awaiting := func(extra ...keel.Pred) *keel.Query[tender.TenderOffer] {
+		awaiting := func(extra ...keel.Pred) *keel.Query[*tender.TenderOffer] {
 			q := inFlight.Where(
 				inFlight.TenderID.EqCol(t.ID),
 				inFlight.OrganizationID.EqCol(t.OrganizationID),

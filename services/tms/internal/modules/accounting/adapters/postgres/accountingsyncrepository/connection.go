@@ -48,7 +48,7 @@ func NewConnectionRepository(
 	}
 }
 
-func withoutTokens() *keel.Query[accountingsync.AccountingConnection] {
+func withoutTokens() *keel.Query[*accountingsync.AccountingConnection] {
 	ac := accountingsyncdb.AccountingConnections
 	return ac.Omit(ac.AccessTokenCiphertext, ac.RefreshTokenCiphertext, ac.ClientKeyCiphertext)
 }

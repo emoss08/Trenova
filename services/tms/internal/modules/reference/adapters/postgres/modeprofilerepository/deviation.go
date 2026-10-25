@@ -87,7 +87,7 @@ func (r *deviationRepository) List(
 			result, err := listquery.List(ctx, r.db.Keel(ctx), q,
 				&listquery.Request[modeprofile.Deviation]{
 					Filter: req.Filter,
-					Shape: func(q *keel.Query[modeprofile.Deviation]) *keel.Query[modeprofile.Deviation] {
+					Shape: func(q *keel.Query[*modeprofile.Deviation]) *keel.Query[*modeprofile.Deviation] {
 						return q.Load(d.Profile(), d.AcknowledgedBy())
 					},
 					Then: []keel.Order{d.OccurredAt.Desc()},

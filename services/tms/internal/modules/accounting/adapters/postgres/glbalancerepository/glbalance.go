@@ -63,7 +63,7 @@ func (b *yearBalance) balance() *glbalanceports.GLPeriodAccountBalance {
 	}
 }
 
-func balancesWithAccounts() *keel.Query[glbalance.GLAccountPeriodBalance] {
+func balancesWithAccounts() *keel.Query[*glbalance.GLAccountPeriodBalance] {
 	gb := glbalancedb.GLAccountPeriodBalances
 	gla := glaccountdb.GLAccounts
 	at := accounttypedb.AccountTypes

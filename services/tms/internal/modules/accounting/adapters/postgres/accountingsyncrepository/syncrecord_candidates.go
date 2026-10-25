@@ -49,7 +49,7 @@ type candidateSource struct {
 }
 
 type candidatePicker[T any] interface {
-	Pick(es ...keel.Expr) *keel.Query[T]
+	Pick(es ...keel.Expr) *keel.Query[*T]
 }
 
 func candidateQuery[T any](h candidatePicker[T]) candidateQueryFunc {

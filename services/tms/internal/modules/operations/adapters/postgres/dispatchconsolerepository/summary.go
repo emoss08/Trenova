@@ -132,7 +132,7 @@ func moveSummaryQuery(
 		Where(moveFilters(filter)...)
 }
 
-func driverSummaryQuery(filter *shipmentports.DispatchBoardFilter) *keel.Query[worker.Worker] {
+func driverSummaryQuery(filter *shipmentports.DispatchBoardFilter) *keel.Query[*worker.Worker] {
 	w := workerdb.Workers
 	return w.
 		Pick(

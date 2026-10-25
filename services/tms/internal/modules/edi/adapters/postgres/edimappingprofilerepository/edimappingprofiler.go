@@ -134,7 +134,7 @@ func (r *repository) SelectMappingProfileOptions(
 
 func mappingProfileOptionsQuery(
 	req *ediports.EDIMappingProfileSelectOptionsRequest,
-) *keel.Query[edi.EDIMappingProfile] {
+) *keel.Query[*edi.EDIMappingProfile] {
 	mp := edidb.EDIMappingProfiles
 	return mp.Pick(
 		mp.ID,
@@ -309,7 +309,7 @@ func (r *repository) DeleteMappingProfileItem(
 func (r *repository) deleteItem(
 	ctx context.Context,
 	id pulid.ID,
-	q *keel.Query[edi.EDIMappingProfileItem],
+	q *keel.Query[*edi.EDIMappingProfileItem],
 ) error {
 	n, err := q.Delete(ctx, r.db.Keel(ctx))
 	if err != nil {
@@ -414,8 +414,8 @@ func (r *repository) ensureMappingProfile(
 }
 
 func withPartnerAndEntries(
-	q *keel.Query[edi.EDIMappingProfile],
-) *keel.Query[edi.EDIMappingProfile] {
+	q *keel.Query[*edi.EDIMappingProfile],
+) *keel.Query[*edi.EDIMappingProfile] {
 	mp := edidb.EDIMappingProfiles
 	return q.Load(mp.Partner(), mp.Entries())
 }

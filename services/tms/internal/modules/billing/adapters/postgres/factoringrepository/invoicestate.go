@@ -191,7 +191,7 @@ func (r *invoiceStateRepository) ListConnection(
 func stateScope(
 	req *factoringports.ListInvoiceStateConnectionRequest,
 	term string,
-) *keel.Query[factoring.InvoiceState] {
+) *keel.Query[*factoring.InvoiceState] {
 	st := factoringdb.InvoiceStates
 	return st.Where(
 		keel.When(term != "", searchStates(term)),
@@ -411,7 +411,7 @@ func (r *invoiceStateRepository) GetSummary(
 	})
 }
 
-func verdictTotals(readyBefore int64) *keel.Query[factoring.InvoiceState] {
+func verdictTotals(readyBefore int64) *keel.Query[*factoring.InvoiceState] {
 	st := factoringdb.InvoiceStates
 	late := st.ReadySince.Lte(readyBefore)
 	return st.Group(st.Verdict).
@@ -429,7 +429,7 @@ func verdictTotals(readyBefore int64) *keel.Query[factoring.InvoiceState] {
 		))
 }
 
-func fundedTotals() *keel.Query[factoring.SubmissionItem] {
+func fundedTotals() *keel.Query[*factoring.SubmissionItem] {
 	item := factoringdb.SubmissionItems
 	return item.Pick(
 		keel.Count(),
@@ -439,7 +439,7 @@ func fundedTotals() *keel.Query[factoring.SubmissionItem] {
 	).Where(item.Status.Eq(factoring.SubmissionItemStatusFunded))
 }
 
-func chargebacksDue(before int64) *keel.Query[factoring.SubmissionItem] {
+func chargebacksDue(before int64) *keel.Query[*factoring.SubmissionItem] {
 	item := factoringdb.SubmissionItems
 	sub := factoringdb.Submissions
 	agr := factoringdb.Agreements

@@ -109,7 +109,7 @@ func (r *repository) SelectOptions(
 	)
 }
 
-func partnerOptionsQuery(req *ediports.EDIPartnerSelectOptionsRequest) *keel.Query[edi.EDIPartner] {
+func partnerOptionsQuery(req *ediports.EDIPartnerSelectOptionsRequest) *keel.Query[*edi.EDIPartner] {
 	ep := edidb.EDIPartners
 	return ep.Pick(
 		ep.ID,
@@ -219,7 +219,7 @@ func (r *repository) GetReadiness(
 	)
 }
 
-func readinessQuery(req *ediports.GetEDIPartnerReadinessRequest) *keel.Query[edi.EDIPartner] {
+func readinessQuery(req *ediports.GetEDIPartnerReadinessRequest) *keel.Query[*edi.EDIPartner] {
 	ep := edidb.EDIPartners
 	cp := edidb.EDICommunicationProfiles
 	mi := edidb.EDIMappingProfileItems
@@ -362,7 +362,7 @@ func (r *repository) outboundPartners(
 		All(ctx, r.db.Keel(ctx))
 }
 
-func listedPartners(req *ediports.ListEDIPartnersRequest) *keel.Query[edi.EDIPartner] {
+func listedPartners(req *ediports.ListEDIPartnersRequest) *keel.Query[*edi.EDIPartner] {
 	ep := edidb.EDIPartners
 	return ep.Where(
 		keel.When(req.CustomerID.IsNotNil(), ep.CustomerID.Eq(req.CustomerID)),
@@ -371,7 +371,7 @@ func listedPartners(req *ediports.ListEDIPartnersRequest) *keel.Query[edi.EDIPar
 	)
 }
 
-func withLinks(q *keel.Query[edi.EDIPartner]) *keel.Query[edi.EDIPartner] {
+func withLinks(q *keel.Query[*edi.EDIPartner]) *keel.Query[*edi.EDIPartner] {
 	ep := edidb.EDIPartners
 	return q.Load(ep.InternalOrganization(), ep.Connection(), ep.DefaultTransport())
 }

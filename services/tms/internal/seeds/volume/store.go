@@ -31,7 +31,7 @@ func idAt(prefix string, unix int64) pulid.ID {
 	return pulid.MustNewAt(prefix, time.Unix(unix, 0))
 }
 
-func insertRows[T any](ctx context.Context, db *keel.DB, h keel.Handle[T], rows []*T) error {
+func insertRows[T any](ctx context.Context, db *keel.DB, h keel.Handle[*T], rows []*T) error {
 	if len(rows) == 0 {
 		return nil
 	}
@@ -42,14 +42,14 @@ func insertRows[T any](ctx context.Context, db *keel.DB, h keel.Handle[T], rows 
 	return nil
 }
 
-func backdate[T any](ctx context.Context, db *keel.DB, h keel.Handle[T], stamps []stamp) error {
+func backdate[T any](ctx context.Context, db *keel.DB, h keel.Handle[*T], stamps []stamp) error {
 	return backdateColumns(ctx, db, h, stamps, false)
 }
 
 func backdateCreated[T any](
 	ctx context.Context,
 	db *keel.DB,
-	h keel.Handle[T],
+	h keel.Handle[*T],
 	stamps []stamp,
 ) error {
 	return backdateColumns(ctx, db, h, stamps, true)
@@ -58,7 +58,7 @@ func backdateCreated[T any](
 func backdateColumns[T any](
 	ctx context.Context,
 	db *keel.DB,
-	h keel.Handle[T],
+	h keel.Handle[*T],
 	stamps []stamp,
 	createdOnly bool,
 ) error {
@@ -114,7 +114,7 @@ func backdateColumns[T any](
 	return nil
 }
 
-func analyze[T any](ctx context.Context, db *keel.DB, h keel.Handle[T]) error {
+func analyze[T any](ctx context.Context, db *keel.DB, h keel.Handle[*T]) error {
 	if _, err := keel.Exec(ctx, db, "ANALYZE "+h.Ref.Table.Quoted); err != nil {
 		return fmt.Errorf("analyze %s: %w", h.Ref.Table.Name, err)
 	}
@@ -140,7 +140,7 @@ func ptr[T any](v T) *T {
 	return &v
 }
 
-func firstOrNil[T any](ctx context.Context, db *keel.DB, q *keel.Query[T]) (*T, error) {
+func firstOrNil[T any](ctx context.Context, db *keel.DB, q *keel.Query[*T]) (*T, error) {
 	row, err := q.First(ctx, db)
 	if errors.Is(err, keel.ErrNotFound) {
 		return nil, nil
@@ -365,7 +365,7 @@ func rollBackBalances(
 	return moveAccountBalances(ctx, db, moves)
 }
 
-func keepUpdated[T any](h keel.Handle[T]) keel.Assignment {
+func keepUpdated[T any](h keel.Handle[*T]) keel.Assignment {
 	index := h.Ref.Table.AutoUpdate
 	if index < 0 {
 		index = h.Ref.Table.PK[0]

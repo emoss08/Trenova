@@ -88,8 +88,8 @@ func (r *repository) ListPurchases(
 					Filter: req.Filter,
 					Cursor: req.Cursor,
 					Shape: func(
-						q *keel.Query[fuelpurchase.FuelPurchase],
-					) *keel.Query[fuelpurchase.FuelPurchase] {
+						q *keel.Query[*fuelpurchase.FuelPurchase],
+					) *keel.Query[*fuelpurchase.FuelPurchase] {
 						return q.Load(loads...)
 					},
 				},

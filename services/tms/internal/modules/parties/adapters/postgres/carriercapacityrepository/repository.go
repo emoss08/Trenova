@@ -53,8 +53,8 @@ func postingLoads() []keel.Loader {
 }
 
 func withPostingLoads(
-	q *keel.Query[carriercapacity.Posting],
-) *keel.Query[carriercapacity.Posting] {
+	q *keel.Query[*carriercapacity.Posting],
+) *keel.Query[*carriercapacity.Posting] {
 	return q.Load(postingLoads()...)
 }
 

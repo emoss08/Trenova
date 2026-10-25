@@ -127,7 +127,7 @@ func (r *noaRepository) ListOpen(
 	)
 }
 
-func openNoas(pairs []factoringports.NoaPair) *keel.Query[factoring.Noa] {
+func openNoas(pairs []factoringports.NoaPair) *keel.Query[*factoring.Noa] {
 	customers := make([]pulid.ID, len(pairs))
 	factors := make([]pulid.ID, len(pairs))
 	for i, pair := range pairs {

@@ -80,7 +80,7 @@ func (r *repository) GetAssignmentByID(
 
 func activeAssignmentQuery(
 	req *workerports.GetPTOAssignmentRequest,
-) *keel.Query[worker.WorkerPTOPolicyAssignment] {
+) *keel.Query[*worker.WorkerPTOPolicyAssignment] {
 	a := workerdb.WorkerPTOPolicyAssignments
 	active := a.EffectiveTo.IsNull()
 	if req.AsOf > 0 {

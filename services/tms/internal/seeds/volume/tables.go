@@ -31,7 +31,7 @@ import (
 
 type tableBackdate func(ctx context.Context, db *keel.DB, stamps []stamp, createdOnly bool) error
 
-func backdater[T any](h keel.Handle[T]) tableBackdate {
+func backdater[T any](h keel.Handle[*T]) tableBackdate {
 	return func(ctx context.Context, db *keel.DB, stamps []stamp, createdOnly bool) error {
 		return backdateColumns(ctx, db, h, stamps, createdOnly)
 	}

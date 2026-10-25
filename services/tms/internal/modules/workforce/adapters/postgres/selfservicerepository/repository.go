@@ -124,7 +124,7 @@ func (r *repository) UpdatePolicy(
 
 func acknowledgementsQuery(
 	req *workerports.ListPolicyAcknowledgementsRequest,
-) *keel.Query[worker.WorkerPolicyAcknowledgement] {
+) *keel.Query[*worker.WorkerPolicyAcknowledgement] {
 	a := workerdb.WorkerPolicyAcknowledgements
 	q := a.Where(
 		keel.When(req.PolicyID.IsNotNil(), a.PolicyID.Eq(req.PolicyID)),
@@ -238,7 +238,7 @@ func audienceFilter(audience worker.PolicyAudience) keel.Pred {
 	return nil
 }
 
-func policyComplianceQuery(req *workerports.PolicyComplianceRequest) *keel.Query[worker.Worker] {
+func policyComplianceQuery(req *workerports.PolicyComplianceRequest) *keel.Query[*worker.Worker] {
 	w := workerdb.Workers
 	a := workerdb.WorkerPolicyAcknowledgements
 
@@ -262,7 +262,7 @@ func policyComplianceQuery(req *workerports.PolicyComplianceRequest) *keel.Query
 
 func changeRequestsQuery(
 	req *workerports.ListProfileChangeRequestsRequest,
-) *keel.Query[worker.WorkerProfileChangeRequest] {
+) *keel.Query[*worker.WorkerProfileChangeRequest] {
 	c := workerdb.WorkerProfileChangeRequests
 	q := c.Where(
 		keel.When(req.WorkerID.IsNotNil(), c.WorkerID.Eq(req.WorkerID)),

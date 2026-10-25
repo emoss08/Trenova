@@ -108,7 +108,7 @@ func (r *priceRepository) UpsertPrices(
 
 func pricesByIndexQuery(
 	req *fuelsurchargeports.ListFuelIndexPricesRequest,
-) *keel.Query[fuelsurcharge.FuelIndexPrice] {
+) *keel.Query[*fuelsurcharge.FuelIndexPrice] {
 	p := fuelsurchargedb.FuelIndexPrices
 
 	return p.Where(
@@ -174,7 +174,7 @@ func (r *priceRepository) GetLatestOnOrBefore(
 	})
 }
 
-func latestPerIndexQuery(perIndex int, ceiling string) *keel.Query[fuelsurcharge.FuelIndexPrice] {
+func latestPerIndexQuery(perIndex int, ceiling string) *keel.Query[*fuelsurcharge.FuelIndexPrice] {
 	p := fuelsurchargedb.FuelIndexPrices
 	newer := p.As("newer")
 	newerCount := keel.Scalar(newer.Pick(keel.Count()).Where(

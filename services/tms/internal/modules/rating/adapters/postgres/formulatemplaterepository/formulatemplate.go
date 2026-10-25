@@ -358,7 +358,7 @@ type usageRow struct {
 	Fallbacks int64
 }
 
-func usageQuery(templateID pulid.ID) *keel.Query[formulatemplate.FormulaTemplate] {
+func usageQuery(templateID pulid.ID) *keel.Query[*formulatemplate.FormulaTemplate] {
 	ft := formulatemplatedb.FormulaTemplates
 	rr := rateagreementdb.RateAgreementRules
 	bc := tenantdb.BillingControls

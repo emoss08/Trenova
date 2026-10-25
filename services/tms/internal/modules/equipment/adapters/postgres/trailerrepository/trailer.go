@@ -89,7 +89,7 @@ func (r *repository) List(
 							equipmentcontinuity.EquipmentTypeTrailer,
 						),
 					},
-					Shape: func(q *keel.Query[trailer.Trailer]) *keel.Query[trailer.Trailer] {
+					Shape: func(q *keel.Query[*trailer.Trailer]) *keel.Query[*trailer.Trailer] {
 						return withLastKnownLocation(q.Load(loads...), &req.TrailerRelationIncludes)
 					},
 				},
@@ -242,7 +242,7 @@ func (r *repository) BulkUpdateStatus(
 
 func trailerQuery(
 	includes *trailerports.TrailerRelationIncludes,
-) (*keel.Query[trailer.Trailer], error) {
+) (*keel.Query[*trailer.Trailer], error) {
 	loads, err := trailerLoads(includes)
 	if err != nil {
 		return nil, err
@@ -312,9 +312,9 @@ func trailerLoads(includes *trailerports.TrailerRelationIncludes) ([]keel.Loader
 const lastKnownLocationFilter = "lastKnownLocationId"
 
 func withLastKnownLocation(
-	q *keel.Query[trailer.Trailer],
+	q *keel.Query[*trailer.Trailer],
 	includes *trailerports.TrailerRelationIncludes,
-) *keel.Query[trailer.Trailer] {
+) *keel.Query[*trailer.Trailer] {
 	if !includes.IncludeLastKnownLocation {
 		return q
 	}

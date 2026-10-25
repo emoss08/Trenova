@@ -179,7 +179,7 @@ func outcomeUpdate(
 	runID pulid.ID,
 	outcomes []billingtransferports.BillingTransferItemOutcome,
 	now int64,
-) (*keel.Query[billingtransfer.BillingTransferRunItem], []keel.Assignment, error) {
+) (*keel.Query[*billingtransfer.BillingTransferRunItem], []keel.Assignment, error) {
 	n := len(outcomes)
 	shipments := make([]pulid.ID, n)
 	proNumbers := make([]string, n)
@@ -353,7 +353,7 @@ type itemCounts struct {
 	Retryable      int
 }
 
-func runItemCounts(runID pulid.ID) *keel.Query[billingtransfer.BillingTransferRunItem] {
+func runItemCounts(runID pulid.ID) *keel.Query[*billingtransfer.BillingTransferRunItem] {
 	item := billingtransferdb.BillingTransferRunItems
 	return item.Pick(
 		keel.Count().Filter(item.Status.Ne(billingtransfer.ItemStatusPending)),

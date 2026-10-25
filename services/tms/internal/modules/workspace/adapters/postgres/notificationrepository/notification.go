@@ -37,7 +37,7 @@ func New(p Params) notificationports.NotificationRepository {
 	}
 }
 
-func notifications(ctx context.Context, orgID pulid.ID) *keel.Query[notification.Notification] {
+func notifications(ctx context.Context, orgID pulid.ID) *keel.Query[*notification.Notification] {
 	n := notificationdb.Notifications
 	if dbscope.IsSystem(ctx) {
 		return n.AllTenants().Where(n.OrganizationID.Eq(orgID))
@@ -161,7 +161,7 @@ func (r *repository) action(
 	ctx context.Context,
 	req notificationports.NotificationActionRequest,
 	preds ...keel.Pred,
-) *keel.Query[notification.Notification] {
+) *keel.Query[*notification.Notification] {
 	n := notificationdb.Notifications
 	return notifications(ctx, req.TenantInfo.OrgID).
 		Where(n.ID.In(req.IDs...), audience(req.TenantInfo, req.PersonalOnly)).
@@ -171,7 +171,7 @@ func (r *repository) action(
 func (r *repository) update(
 	ctx context.Context,
 	operation string,
-	q *keel.Query[notification.Notification],
+	q *keel.Query[*notification.Notification],
 	sets ...keel.Assignment,
 ) error {
 	n := notificationdb.Notifications

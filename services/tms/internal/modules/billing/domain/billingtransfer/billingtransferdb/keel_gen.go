@@ -413,7 +413,7 @@ var billingTransferRunItemsTable = schema.Table{
 		{Name: "marked_ready_to_invoice", Quoted: `"marked_ready_to_invoice"`, Field: "MarkedReadyToInvoice", Kind: schema.KindBool, Flags: 0, Label: `Marked Ready To Invoice`, JSON: `markedReadyToInvoice`},
 		{Name: "billing_queue_item_id", Quoted: `"billing_queue_item_id"`, Field: "BillingQueueItemID", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Billing Queue Item ID`, JSON: `billingQueueItemId`},
 		{Name: "billing_queue_number", Quoted: `"billing_queue_number"`, Field: "BillingQueueNumber", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Billing Queue Number`, JSON: `billingQueueNumber`},
-		{Name: "billing_queue_status", Quoted: `"billing_queue_status"`, Field: "BillingQueueStatus", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Billing Queue Status`, JSON: `billingQueueStatus`, Enum: enumBillingqueueStatus[:]},
+		{Name: "billing_queue_status", Quoted: `"billing_queue_status"`, Field: "BillingQueueStatus", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Billing Queue Status`, JSON: `billingQueueStatus`, Enum: enumBillingqueueStatus[:], SQLType: `billing_queue_status`},
 		{Name: "missing_requirements", Quoted: `"missing_requirements"`, Field: "MissingRequirements", Kind: schema.KindJSON, Flags: schema.FlagJSONB, Label: `Missing Requirements`, JSON: `missingRequirements`},
 		{Name: "validation_failures", Quoted: `"validation_failures"`, Field: "ValidationFailures", Kind: schema.KindJSON, Flags: schema.FlagJSONB, Label: `Validation Failures`, JSON: `validationFailures`},
 		{Name: "processed_at", Quoted: `"processed_at"`, Field: "ProcessedAt", Kind: schema.KindInt64, Flags: schema.FlagNullable, Label: `Processed At`, JSON: `processedAt`},

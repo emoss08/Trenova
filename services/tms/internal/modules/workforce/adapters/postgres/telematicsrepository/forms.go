@@ -50,7 +50,7 @@ func (r *repository) UpsertFormSubmission(
 
 func formSubmissionsQuery(
 	req *telematicsports.ListFormSubmissionsRequest,
-) *keel.Query[telematics.FormSubmission] {
+) *keel.Query[*telematics.FormSubmission] {
 	fs := telematicsdb.FormSubmissions
 	q := fs.Where(
 		keel.When(req.ShipmentID.IsNotNil(), fs.ShipmentID.Eq(req.ShipmentID)),

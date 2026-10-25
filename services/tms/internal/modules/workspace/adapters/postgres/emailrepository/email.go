@@ -469,7 +469,7 @@ func (r *repository) ListMessages(
 				m.Query(),
 				&listquery.Request[email.Message]{
 					Filter: req.Filter,
-					Shape: func(q *keel.Query[email.Message]) *keel.Query[email.Message] {
+					Shape: func(q *keel.Query[*email.Message]) *keel.Query[*email.Message] {
 						return q.Load(m.Profile())
 					},
 					Then: []keel.Order{m.CreatedAt.Desc()},

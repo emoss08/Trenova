@@ -212,10 +212,10 @@ func newTrucksTable(name, alias string, owners *schema.Table) *schema.Table {
 
 var (
 	testOwners = newOwnersTable()
-	testTrucks = keel.Handle[testTruck]{
+	testTrucks = keel.Handle[*testTruck]{
 		Ref: &keel.Ref{Table: newTrucksTable("test_trucks", "t", testOwners)},
 	}
-	testPlainTrucks = keel.Handle[testPlainTruck]{
+	testPlainTrucks = keel.Handle[*testPlainTruck]{
 		Ref: &keel.Ref{Table: newTrucksTable("test_plain_trucks", "pt", testOwners)},
 	}
 )

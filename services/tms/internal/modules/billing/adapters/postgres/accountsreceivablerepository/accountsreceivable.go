@@ -17,7 +17,6 @@ import (
 	"github.com/emoss08/trenova/internal/modules/parties/domain/customer/customerdb"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/factoringcompany/factoringcompanydb"
 	"github.com/emoss08/trenova/pkg/dberror"
-	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
@@ -125,12 +124,11 @@ func amountWhen(p keel.Pred, amount any) keel.DynExpr {
 	return keel.DynCase().When(p, amount).Else(0)
 }
 
-func agingBuckets(inv *invoicedb.InvoicesTable, asOf int64) []keel.DynExpr {
-	open := receivablesql.OpenMinor(inv)
-	days := pastDueDays(inv, asOf)
-	overdue := inv.DueDate.Lt(asOf)
+func agingBuckets(due, asOf, open keel.DynExpr) []keel.DynExpr {
+	days := asOf.Sub(due).Div(secondsPerDay)
+	overdue := due.Lt(asOf)
 	return []keel.DynExpr{
-		amountWhen(keel.Or(inv.DueDate.IsNull(), inv.DueDate.Gte(asOf)), open).Sum(),
+		amountWhen(keel.Or(due.IsNull(), due.Gte(asOf)), open).Sum(),
 		amountWhen(keel.And(overdue, days.Between(1, 30)), open).Sum(),
 		amountWhen(keel.And(overdue, days.Between(31, 60)), open).Sum(),
 		amountWhen(keel.And(overdue, days.Between(61, 90)), open).Sum(),
@@ -138,8 +136,12 @@ func agingBuckets(inv *invoicedb.InvoicesTable, asOf int64) []keel.DynExpr {
 	}
 }
 
-func agingQuery(inv *invoicedb.InvoicesTable, asOf int64) *keel.Query[invoice.Invoice] {
-	buckets := agingBuckets(inv, asOf)
+func invoiceAgingBuckets(inv *invoicedb.InvoicesTable, asOf int64) []keel.DynExpr {
+	return agingBuckets(keel.DynOf(inv.DueDate), keel.DynLit(asOf), receivablesql.OpenMinor(inv))
+}
+
+func agingQuery(inv *invoicedb.InvoicesTable, asOf int64) *keel.Query[*invoice.Invoice] {
+	buckets := invoiceAgingBuckets(inv, asOf)
 	return inv.
 		Pick(
 			inv.CustomerID,
@@ -155,11 +157,17 @@ func agingQuery(inv *invoicedb.InvoicesTable, asOf int64) *keel.Query[invoice.In
 		Group(inv.CustomerID, inv.BillToName)
 }
 
+func postedApplications(
+	cpa *customerpaymentdb.ApplicationsTable,
+	cp *customerpaymentdb.PaymentsTable,
+) *keel.Query[*customerpayment.Application] {
+	return cpa.Join(cp, cp.ID.EqCol(cpa.CustomerPaymentID), cp.Status.Eq(customerpayment.StatusPosted))
+}
+
 func hasShortPay(inv *invoicedb.InvoicesTable) keel.Pred {
 	cpa := customerpaymentdb.Applications.As("cpa")
 	cp := customerpaymentdb.Payments.As("cp")
-	return keel.Exists(cpa.
-		Join(cp, cp.ID.EqCol(cpa.CustomerPaymentID), cp.Status.Eq(customerpayment.StatusPosted)).
+	return keel.Exists(postedApplications(cpa, cp).
 		Where(cpa.InvoiceID.EqCol(inv.ID), cpa.ShortPayAmountMinor.Gt(0)))
 }
 
@@ -176,10 +184,6 @@ func (rec *agingRowRecord) row() *customerledgerports.ARCustomerAgingRow {
 			TotalOpenMinor:  rec.TotalOpenMinor,
 		},
 	}
-}
-
-func tenantArgs(tenantInfo pagination.TenantInfo) (orgID, buID string) {
-	return tenantInfo.OrgID.String(), tenantInfo.BuID.String()
 }
 
 func (r *repository) ListARAging(

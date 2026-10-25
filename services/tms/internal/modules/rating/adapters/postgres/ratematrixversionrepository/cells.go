@@ -35,7 +35,7 @@ func columnsForAxis(position int16) (axisColumns, bool) {
 	}
 }
 
-func versionCells(key ratematrix.VersionKey) *keel.Query[ratematrix.RateMatrixCell] {
+func versionCells(key ratematrix.VersionKey) *keel.Query[*ratematrix.RateMatrixCell] {
 	c := ratematrixdb.RateMatrixCells
 
 	return c.Where(c.RateMatrixID.Eq(key.RateMatrixID), c.VersionNumber.Eq(key.VersionNumber))
@@ -43,7 +43,7 @@ func versionCells(key ratematrix.VersionKey) *keel.Query[ratematrix.RateMatrixCe
 
 func tableCellsQuery(
 	req *ratematrixports.LoadTableCellsRequest,
-) *keel.Query[ratematrix.RateMatrixCell] {
+) *keel.Query[*ratematrix.RateMatrixCell] {
 	q := versionCells(req.Key)
 	for position, keys := range req.Keys {
 		if columns, ok := columnsForAxis(position); ok {

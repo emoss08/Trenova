@@ -109,7 +109,7 @@ func (r *repository) insertRules(
 
 func versionsQuery(
 	req *rateagreementports.ListRateAgreementVersionsRequest,
-) *keel.Query[rateagreement.RateAgreementVersion] {
+) *keel.Query[*rateagreement.RateAgreementVersion] {
 	v := rateagreementdb.RateAgreementVersions
 
 	return v.Where(v.RateAgreementID.Eq(req.RateAgreementID))

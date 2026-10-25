@@ -244,7 +244,7 @@ func (r *repository) ListRecentQuarantined(
 	})
 }
 
-func listedFiles(req *ediports.ListEDIInboundFilesRequest) *keel.Query[edi.EDIInboundFile] {
+func listedFiles(req *ediports.ListEDIInboundFilesRequest) *keel.Query[*edi.EDIInboundFile] {
 	f := edidb.EDIInboundFiles
 	return f.Omit(f.RawContent).Where(
 		keel.When(req.Status != "", f.Status.Eq(req.Status)),
@@ -252,6 +252,6 @@ func listedFiles(req *ediports.ListEDIInboundFilesRequest) *keel.Query[edi.EDIIn
 	)
 }
 
-func withPartner(q *keel.Query[edi.EDIInboundFile]) *keel.Query[edi.EDIInboundFile] {
+func withPartner(q *keel.Query[*edi.EDIInboundFile]) *keel.Query[*edi.EDIInboundFile] {
 	return q.Load(edidb.EDIInboundFiles.Partner())
 }

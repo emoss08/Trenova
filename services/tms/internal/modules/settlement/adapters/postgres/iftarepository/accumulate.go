@@ -91,7 +91,7 @@ func newAccumulationSource(req *iftaports.AccumulateMilesRequest) accumulationSo
 	return accumulationSource{inp: inp, jm: jm}
 }
 
-func (s accumulationSource) routeRows() *keel.Query[keel.Row] {
+func (s accumulationSource) routeRows() *keel.Query[*keel.Row] {
 	jm := s.jm
 	a := shipmentdb.Assignments
 	ifj := iftadb.Jurisdictions
@@ -120,7 +120,7 @@ func (s accumulationSource) routeRows() *keel.Query[keel.Row] {
 		)
 }
 
-func (s accumulationSource) noTractor() *keel.Query[keel.Row] {
+func (s accumulationSource) noTractor() *keel.Query[*keel.Row] {
 	jm := s.jm
 	a := shipmentdb.Assignments
 
@@ -133,7 +133,7 @@ func (s accumulationSource) noTractor() *keel.Query[keel.Row] {
 		Order(jm.Col("shipment_move_id").Asc())
 }
 
-func (s accumulationSource) unattributed() *keel.Query[keel.Row] {
+func (s accumulationSource) unattributed() *keel.Query[*keel.Row] {
 	inp := s.inp
 	smjm := shipmentdb.ShipmentMoveJurisdictionMiles
 	me := iftadb.JurisdictionMileageEntries
@@ -149,7 +149,7 @@ func (s accumulationSource) unattributed() *keel.Query[keel.Row] {
 		Order(inp.Col("completed_at").Asc(), inp.Col("id").Asc())
 }
 
-func (s accumulationSource) mismatches() *keel.Query[keel.Row] {
+func (s accumulationSource) mismatches() *keel.Query[*keel.Row] {
 	jm := s.jm
 	moveDistance := keel.DynOf(jm.Col("move_distance"))
 	attributed := jm.Col("miles").Sum()

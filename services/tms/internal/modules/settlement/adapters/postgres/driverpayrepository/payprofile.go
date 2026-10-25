@@ -86,8 +86,8 @@ func (r *payProfileRepository) ListConnection(
 					Filter: req.Filter,
 					Cursor: req.Cursor,
 					Shape: func(
-						q *keel.Query[driverpay.PayProfile],
-					) *keel.Query[driverpay.PayProfile] {
+						q *keel.Query[*driverpay.PayProfile],
+					) *keel.Query[*driverpay.PayProfile] {
 						return q.Load(orderedComponents(pp))
 					},
 				},

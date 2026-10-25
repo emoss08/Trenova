@@ -165,7 +165,7 @@ func (r *repository) GetByIDForUpdate(
 
 func (r *repository) one(
 	ctx context.Context,
-	q *keel.Query[fiscalperiod.FiscalPeriod],
+	q *keel.Query[*fiscalperiod.FiscalPeriod],
 	id pulid.ID,
 ) (*fiscalperiod.FiscalPeriod, error) {
 	entity, err := q.One(ctx, r.db.Keel(ctx))

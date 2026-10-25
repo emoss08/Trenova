@@ -18,7 +18,7 @@ type statsRow struct {
 	UsageCount int64
 }
 
-func statsQuery(templateIDs []pulid.ID) *keel.Query[formulatemplate.FormulaTemplate] {
+func statsQuery(templateIDs []pulid.ID) *keel.Query[*formulatemplate.FormulaTemplate] {
 	ft := formulatemplatedb.FormulaTemplates
 	rr := rateagreementdb.RateAgreementRules
 	rules := keel.Scalar(rr.Pick(keel.Count()).Where(rr.FormulaTemplateID.EqCol(ft.ID)))

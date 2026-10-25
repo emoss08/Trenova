@@ -18,7 +18,7 @@ var violationErrors = dberror.Mapping{Entity: "WorkerSafetyViolation"}
 
 func violationsQuery(
 	req *workerports.ListWorkerSafetyViolationsRequest,
-) *keel.Query[worker.WorkerSafetyViolation] {
+) *keel.Query[*worker.WorkerSafetyViolation] {
 	v := workerdb.WorkerSafetyViolations
 
 	return v.Where(

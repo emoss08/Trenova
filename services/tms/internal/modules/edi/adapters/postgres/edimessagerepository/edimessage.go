@@ -75,7 +75,7 @@ func (r *repository) ListMessages(
 	)
 }
 
-func archiveQuery(req *ediports.ListEDIMessagesRequest) *keel.Query[edi.EDIMessage] {
+func archiveQuery(req *ediports.ListEDIMessagesRequest) *keel.Query[*edi.EDIMessage] {
 	m := edidb.EDIMessages
 	ve := edidb.EDIMessageValidationErrors
 	search := strings.TrimSpace(req.Query)
@@ -114,7 +114,7 @@ func (r *repository) ListMessagesCursor(
 				&listquery.Request[edi.EDIMessage]{
 					Filter: req.Filter,
 					Cursor: req.Cursor,
-					Shape: func(q *keel.Query[edi.EDIMessage]) *keel.Query[edi.EDIMessage] {
+					Shape: func(q *keel.Query[*edi.EDIMessage]) *keel.Query[*edi.EDIMessage] {
 						return q.Load(m.Partner())
 					},
 				},
@@ -228,7 +228,7 @@ func (r *repository) GetServiceFailure214LifecycleMessage(
 
 func lifecycleMessageQuery(
 	req *ediports.GetServiceFailure214LifecycleMessageRequest,
-) *keel.Query[edi.EDIMessage] {
+) *keel.Query[*edi.EDIMessage] {
 	m := edidb.EDIMessages
 	failureID := req.ServiceFailureID.String()
 
@@ -262,7 +262,7 @@ func serviceFailure214LatestFor(alias, failureID, trigger string) keel.DynExpr {
 		Limit(1))).Coalesce("")
 }
 
-func serviceFailure214StatusQuery(failureID string) *keel.Query[edi.EDIMessage] {
+func serviceFailure214StatusQuery(failureID string) *keel.Query[*edi.EDIMessage] {
 	m := edidb.EDIMessages
 	e := edidb.EDIMessageValidationErrors
 
@@ -546,7 +546,7 @@ func (r *repository) GetPartnerScorecards(
 	)
 }
 
-func scorecardQuery(req *ediports.GetEDIPartnerScorecardsRequest) *keel.Query[edi.EDIMessage] {
+func scorecardQuery(req *ediports.GetEDIPartnerScorecardsRequest) *keel.Query[*edi.EDIMessage] {
 	m := edidb.EDIMessages
 	partner := m.Partner()
 	outbound := m.Direction.Eq(edi.DocumentDirectionOutbound)
@@ -606,7 +606,7 @@ func (r *repository) GetVolumeSeries(
 	})
 }
 
-func volumeQuery(req *ediports.GetEDIVolumeSeriesRequest) *keel.Query[edi.EDIMessage] {
+func volumeQuery(req *ediports.GetEDIVolumeSeriesRequest) *keel.Query[*edi.EDIMessage] {
 	m := edidb.EDIMessages
 	bucket := req.BucketSeconds
 	if bucket <= 0 {

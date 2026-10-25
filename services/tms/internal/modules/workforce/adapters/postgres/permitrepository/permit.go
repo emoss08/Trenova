@@ -350,8 +350,8 @@ func (r *jurisdictionRepository) List(
 				&listquery.Request[jurisdictionrule.JurisdictionRule]{
 					Filter: req.Filter,
 					Shape: func(
-						q *keel.Query[jurisdictionrule.JurisdictionRule],
-					) *keel.Query[jurisdictionrule.JurisdictionRule] {
+						q *keel.Query[*jurisdictionrule.JurisdictionRule],
+					) *keel.Query[*jurisdictionrule.JurisdictionRule] {
 						return q.Load(jr.State())
 					},
 					Then: []keel.Order{jr.StateID.Asc()},
@@ -485,8 +485,8 @@ func (r *jurisdictionRepository) ListConnection(
 					Filter: req.Filter,
 					Cursor: req.Cursor,
 					Shape: func(
-						q *keel.Query[jurisdictionrule.JurisdictionRule],
-					) *keel.Query[jurisdictionrule.JurisdictionRule] {
+						q *keel.Query[*jurisdictionrule.JurisdictionRule],
+					) *keel.Query[*jurisdictionrule.JurisdictionRule] {
 						return q.Load(jr.State())
 					},
 				})
@@ -515,8 +515,8 @@ func (r *jurisdictionRepository) ListOverridesConnection(
 					Filter: req.Filter,
 					Cursor: req.Cursor,
 					Shape: func(
-						q *keel.Query[jurisdictionrule.Override],
-					) *keel.Query[jurisdictionrule.Override] {
+						q *keel.Query[*jurisdictionrule.Override],
+					) *keel.Query[*jurisdictionrule.Override] {
 						return q.Load(o.State())
 					},
 				})

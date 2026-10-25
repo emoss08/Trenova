@@ -108,7 +108,7 @@ func (r *repository) ListDueBillingSchedules(
 	)
 }
 
-func dueBillingSchedulesQuery(allTenants bool) *keel.Query[customer.CustomerBillingProfile] {
+func dueBillingSchedulesQuery(allTenants bool) *keel.Query[*customer.CustomerBillingProfile] {
 	cbp := customerdb.CustomerBillingProfiles
 	cus := customerdb.Customers
 

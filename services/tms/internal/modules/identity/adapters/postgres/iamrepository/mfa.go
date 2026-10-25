@@ -36,7 +36,7 @@ func NewMFARepository(p MFARepositoryParams) iamports.MFARepository {
 	}
 }
 
-func userTOTP(ctx context.Context, userID pulid.ID) *keel.Query[iam.MFAAuthenticator] {
+func userTOTP(ctx context.Context, userID pulid.ID) *keel.Query[*iam.MFAAuthenticator] {
 	mfa := iamdb.MFAAuthenticators
 	return forTenant(
 		ctx,
@@ -46,7 +46,7 @@ func userTOTP(ctx context.Context, userID pulid.ID) *keel.Query[iam.MFAAuthentic
 	)
 }
 
-func userRecoveryCodes(ctx context.Context, userID pulid.ID) *keel.Query[iam.MFARecoveryCode] {
+func userRecoveryCodes(ctx context.Context, userID pulid.ID) *keel.Query[*iam.MFARecoveryCode] {
 	rc := iamdb.MFARecoveryCodes
 	return forTenant(ctx, rc.Query(), rc.UserID.Eq(userID))
 }

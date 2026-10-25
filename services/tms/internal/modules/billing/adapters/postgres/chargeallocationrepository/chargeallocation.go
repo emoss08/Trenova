@@ -464,7 +464,7 @@ func (r *repository) LockedIDs(
 	})
 }
 
-func lockedAllocations(allocationIDs []pulid.ID) *keel.Query[shipment.ChargeAllocation] {
+func lockedAllocations(allocationIDs []pulid.ID) *keel.Query[*shipment.ChargeAllocation] {
 	ca := shipmentdb.ChargeAllocations
 	inv := invoicedb.Invoices
 	return ca.Pick(ca.ID).

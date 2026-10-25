@@ -98,8 +98,8 @@ func (r *repository) ListTemplates(
 					Filter: req.Filter,
 					Cursor: req.Cursor,
 					Shape: func(
-						q *keel.Query[worker.WorkerChecklistTemplate],
-					) *keel.Query[worker.WorkerChecklistTemplate] {
+						q *keel.Query[*worker.WorkerChecklistTemplate],
+					) *keel.Query[*worker.WorkerChecklistTemplate] {
 						return q.Load(listquery.When(req.IncludeItems, templateItems())...)
 					},
 				},

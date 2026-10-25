@@ -56,7 +56,7 @@ func limitOr(requested, fallback int) int {
 	return fallback
 }
 
-func entriesQuery(req *workerports.ListTimeClockEntriesRequest) *keel.Query[worker.TimeClockEntry] {
+func entriesQuery(req *workerports.ListTimeClockEntriesRequest) *keel.Query[*worker.TimeClockEntry] {
 	e := workerdb.TimeClockEntries
 	q := e.Where(
 		keel.When(req.WorkerID.IsNotNil(), e.WorkerID.Eq(req.WorkerID)),
@@ -175,7 +175,7 @@ func (r *repository) DeleteEntry(
 	})
 }
 
-func timesheetsQuery(req *workerports.ListTimesheetsRequest) *keel.Query[worker.Timesheet] {
+func timesheetsQuery(req *workerports.ListTimesheetsRequest) *keel.Query[*worker.Timesheet] {
 	t := workerdb.Timesheets
 	q := t.Where(
 		keel.When(req.WorkerID.IsNotNil(), t.WorkerID.Eq(req.WorkerID)),

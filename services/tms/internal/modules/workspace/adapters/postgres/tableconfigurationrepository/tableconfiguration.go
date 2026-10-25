@@ -125,8 +125,8 @@ func (r *repository) ListConnection(
 					Cursor:  req.Cursor,
 					Columns: req.TableConfigurationColumns,
 					Shape: func(
-						q *keel.Query[tableconfiguration.TableConfiguration],
-					) *keel.Query[tableconfiguration.TableConfiguration] {
+						q *keel.Query[*tableconfiguration.TableConfiguration],
+					) *keel.Query[*tableconfiguration.TableConfiguration] {
 						return q.Load(
 							user.Pick(user.ID, user.Name, user.EmailAddress, user.ProfilePicURL),
 						)

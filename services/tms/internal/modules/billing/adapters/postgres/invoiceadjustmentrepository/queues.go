@@ -85,7 +85,7 @@ func approvalQueueKeyset() *listquery.Keyset {
 
 func approvalQueue(
 	filter *pagination.QueryOptions,
-) *keel.Query[invoiceadjustment.InvoiceAdjustment] {
+) *keel.Query[*invoiceadjustment.InvoiceAdjustment] {
 	ia := invoiceadjustmentdb.InvoiceAdjustments
 	preds := []keel.Pred{
 		ia.Status.Eq(invoiceadjustment.StatusPendingApproval),
@@ -108,8 +108,8 @@ func approvalQueue(
 }
 
 func approvalQueueShape(
-	q *keel.Query[invoiceadjustment.InvoiceAdjustment],
-) *keel.Query[invoiceadjustment.InvoiceAdjustment] {
+	q *keel.Query[*invoiceadjustment.InvoiceAdjustment],
+) *keel.Query[*invoiceadjustment.InvoiceAdjustment] {
 	ia := invoiceadjustmentdb.InvoiceAdjustments
 	orig := ia.OriginalInvoice()
 	cm := ia.CreditMemoInvoice()
@@ -215,7 +215,7 @@ func (r *repository) ListReconciliationQueue(
 
 func reconciliationQueue(
 	filter *pagination.QueryOptions,
-) *keel.Query[invoiceadjustment.InvoiceAdjustmentReconciliationException] {
+) *keel.Query[*invoiceadjustment.InvoiceAdjustmentReconciliationException] {
 	ex := invoiceadjustmentdb.InvoiceAdjustmentReconciliationExceptions
 	adj := ex.Adjustment()
 	orig := adj.OriginalInvoice()
@@ -328,7 +328,7 @@ func (r *repository) ListBatchQueue(
 
 func batchQueue(
 	filter *pagination.QueryOptions,
-) *keel.Query[invoiceadjustment.InvoiceAdjustmentBatch] {
+) *keel.Query[*invoiceadjustment.InvoiceAdjustmentBatch] {
 	b := invoiceadjustmentdb.InvoiceAdjustmentBatches
 	bi := invoiceadjustmentdb.InvoiceAdjustmentBatchItems.As("iabi")
 	failures := invoiceadjustmentdb.InvoiceAdjustmentBatchItems.As("iabf")
@@ -384,7 +384,7 @@ func adjustmentSearch(ia *invoiceadjustmentdb.InvoiceAdjustmentsTable, search st
 	)
 }
 
-func userName(u *tenantdb.UsersTable) *keel.Query[tenant.User] {
+func userName(u *tenantdb.UsersTable) *keel.Query[*tenant.User] {
 	return u.Pick(u.Name)
 }
 

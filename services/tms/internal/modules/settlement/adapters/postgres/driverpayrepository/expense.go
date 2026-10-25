@@ -99,7 +99,7 @@ func (r *driverExpenseRepository) ListConnection(
 				&listquery.Request[driverpay.Expense]{
 					Filter: req.Filter,
 					Cursor: req.Cursor,
-					Shape: func(q *keel.Query[driverpay.Expense]) *keel.Query[driverpay.Expense] {
+					Shape: func(q *keel.Query[*driverpay.Expense]) *keel.Query[*driverpay.Expense] {
 						return q.Load(expenseLoads(e)...)
 					},
 				},

@@ -63,7 +63,7 @@ type envelopeRecord struct {
 
 type source struct {
 	name       string
-	table      keel.Handle[keel.Row]
+	table      keel.Handle[*keel.Row]
 	id         keel.StringCol
 	org        keel.Col
 	bu         *keel.Col
@@ -210,7 +210,7 @@ func resolve(col *kernelports.EnvelopeColumn) (*source, error) {
 	ref := &keel.Ref{Table: table}
 	src := &source{
 		name:  col.Name,
-		table: keel.Handle[keel.Row]{Ref: ref},
+		table: keel.Handle[*keel.Row]{Ref: ref},
 		value: keel.Col{Ref: ref, Index: valueIndex},
 	}
 
@@ -273,7 +273,7 @@ func (s *source) column(e keel.Expr) (keel.Col, error) {
 	return keel.Col{Ref: s.table.Ref, Index: index}, nil
 }
 
-func (s *source) listQuery(req *kernelports.ListEnvelopeRowsRequest) *keel.Query[keel.Row] {
+func (s *source) listQuery(req *kernelports.ListEnvelopeRowsRequest) *keel.Query[*keel.Row] {
 	bu := keel.Expr(keel.DynLit(req.Tenant.BuID.String()).Cast(keel.TypeString))
 	if s.bu != nil {
 		bu = keel.DynOf(*s.bu).Cast(keel.TypeString)

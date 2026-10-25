@@ -17,9 +17,9 @@ const (
 
 func Tenant[T any](
 	ctx context.Context,
-	q *keel.Query[T],
+	q *keel.Query[*T],
 	tenant pagination.TenantInfo,
-) *keel.Query[T] {
+) *keel.Query[*T] {
 	if !dbscope.IsSystem(ctx) {
 		return q
 	}

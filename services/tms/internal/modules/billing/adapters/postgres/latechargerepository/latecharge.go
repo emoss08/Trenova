@@ -58,7 +58,7 @@ type candidateRecord struct {
 	AssessedPeriods  []int64
 }
 
-func candidatesQuery(asOf int64, customerIDs []pulid.ID) *keel.Query[invoice.Invoice] {
+func candidatesQuery(asOf int64, customerIDs []pulid.ID) *keel.Query[*invoice.Invoice] {
 	inv := invoicedb.Invoices
 	cus := customerdb.Customers
 	cbp := customerdb.CustomerBillingProfiles

@@ -171,7 +171,7 @@ struct.
   	Filter:  req.Filter,
   	Cursor:  req.Cursor,
   	Columns: req.FleetCodeColumns,
-  	Shape:   func(q *keel.Query[fleetcode.FleetCode]) *keel.Query[fleetcode.FleetCode] { return q.Load(fc.Manager()) },
+  	Shape:   func(q *keel.Query[*fleetcode.FleetCode]) *keel.Query[*fleetcode.FleetCode] { return q.Load(fc.Manager()) },
   })
   ```
 

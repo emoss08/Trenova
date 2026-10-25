@@ -146,7 +146,7 @@ func autoCancelableShipments(
 	thresholdDays int16,
 	currentTime int64,
 	limit int,
-) *keel.Query[shipment.Shipment] {
+) *keel.Query[*shipment.Shipment] {
 	if limit <= 0 {
 		limit = defaultSweepLimit
 	}
@@ -161,7 +161,7 @@ func autoCancelableShipments(
 	).Order(sp.ID.Asc()).Limit(limit)
 }
 
-func controlledAutoCancelIDs(currentTime int64, t tenancy) *keel.Query[shipment.Shipment] {
+func controlledAutoCancelIDs(currentTime int64, t tenancy) *keel.Query[*shipment.Shipment] {
 	sp := shipmentdb.Shipments.As("cancel_sp")
 	sc := tenantdb.ShipmentControls.As("cancel_sc")
 

@@ -51,14 +51,14 @@ func DeliveryAt(st *shipmentdb.StopsTable) keel.Expr {
 func FirstPickupStop(
 	st *shipmentdb.StopsTable,
 	sm *shipmentdb.ShipmentMovesTable,
-) *keel.Query[shipment.Stop] {
+) *keel.Query[*shipment.Stop] {
 	return shipmentStop(st, sm, pickFirstPickup)
 }
 
 func LastDeliveryStop(
 	st *shipmentdb.StopsTable,
 	sm *shipmentdb.ShipmentMovesTable,
-) *keel.Query[shipment.Stop] {
+) *keel.Query[*shipment.Stop] {
 	return shipmentStop(st, sm, pickLastDelivery)
 }
 
@@ -66,7 +66,7 @@ func shipmentStop(
 	st *shipmentdb.StopsTable,
 	sm *shipmentdb.ShipmentMovesTable,
 	pick stopPick,
-) *keel.Query[shipment.Stop] {
+) *keel.Query[*shipment.Stop] {
 	sp := shipmentdb.Shipments
 	q := st.Join(sm, sm.ID.EqCol(st.ShipmentMoveID)).
 		Where(
@@ -297,7 +297,7 @@ func DwellingStops(
 	st *shipmentdb.StopsTable,
 	sm *shipmentdb.ShipmentMovesTable,
 	now, thresholdMinutes int64,
-) *keel.Query[shipment.Stop] {
+) *keel.Query[*shipment.Stop] {
 	sp := shipmentdb.Shipments
 
 	return st.Join(sm, sm.ID.EqCol(st.ShipmentMoveID)).Where(
@@ -314,7 +314,7 @@ func DwellingStops(
 func AggregateScope(
 	filter *pagination.QueryOptions,
 	opts *shipmentports.ShipmentOptions,
-) (*keel.Query[shipment.Shipment], error) {
+) (*keel.Query[*shipment.Shipment], error) {
 	if filter == nil {
 		return nil, ErrShipmentScopeFilterMissing
 	}

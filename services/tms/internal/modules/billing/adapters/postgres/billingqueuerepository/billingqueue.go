@@ -58,8 +58,8 @@ func (r *repository) List(
 				&listquery.Request[billingqueue.BillingQueueItem]{
 					Filter: req.Filter,
 					Shape: func(
-						q *keel.Query[billingqueue.BillingQueueItem],
-					) *keel.Query[billingqueue.BillingQueueItem] {
+						q *keel.Query[*billingqueue.BillingQueueItem],
+					) *keel.Query[*billingqueue.BillingQueueItem] {
 						return q.Load(
 							bq.Shipment().Customer(),
 							bq.BillToCustomer(),
@@ -79,7 +79,7 @@ func (r *repository) List(
 	)
 }
 
-func itemDetail() *keel.Query[billingqueue.BillingQueueItem] {
+func itemDetail() *keel.Query[*billingqueue.BillingQueueItem] {
 	bq := billingqueuedb.BillingQueueItems
 	ord := orderdb.Orders
 	sh := bq.Shipment()
@@ -262,7 +262,7 @@ func syncTransferState(ctx context.Context, db *keel.DB, shipmentIDs []pulid.ID)
 
 func shipmentTransferSync(
 	shipmentIDs []pulid.ID,
-) (*keel.Query[shipment.Shipment], []keel.Assignment) {
+) (*keel.Query[*shipment.Shipment], []keel.Assignment) {
 	bq := billingqueuedb.BillingQueueItems
 	sh := shipmentdb.Shipments
 

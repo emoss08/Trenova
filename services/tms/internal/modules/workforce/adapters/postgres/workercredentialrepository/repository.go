@@ -428,7 +428,7 @@ func expiryWindow(
 func expiringQuery(
 	ctx context.Context,
 	req *workerports.ListExpiringWorkerCredentialsRequest,
-) *keel.Query[worker.WorkerCredential] {
+) *keel.Query[*worker.WorkerCredential] {
 	c := workerdb.WorkerCredentials
 	ct := c.CredentialType()
 	grace, horizon := expiryWindow(req)

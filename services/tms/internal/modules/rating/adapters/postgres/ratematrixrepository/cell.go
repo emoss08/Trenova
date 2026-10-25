@@ -15,7 +15,7 @@ import (
 
 func cellsQuery(
 	req *ratematrixports.ListRateMatrixCellsRequest,
-) *keel.Query[ratematrix.RateMatrixCell] {
+) *keel.Query[*ratematrix.RateMatrixCell] {
 	c := ratematrixdb.RateMatrixCells
 
 	return c.Where(c.RateMatrixID.Eq(req.RateMatrixID), c.VersionNumber.Eq(req.VersionNumber))
@@ -254,7 +254,7 @@ func misfitAt(position int16, dimension *ratematrix.RateMatrixDimension) keel.Pr
 
 func misfitQuery(
 	req *ratematrixports.CountMisfitCellsRequest,
-) *keel.Query[ratematrix.RateMatrixCell] {
+) *keel.Query[*ratematrix.RateMatrixCell] {
 	byPosition := make(map[int16]*ratematrix.RateMatrixDimension, len(req.Dimensions))
 	for _, dimension := range req.Dimensions {
 		if dimension != nil {

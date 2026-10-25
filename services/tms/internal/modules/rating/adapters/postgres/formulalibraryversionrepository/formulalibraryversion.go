@@ -146,7 +146,7 @@ func (r *repository) GetVersionRange(
 func latestApprovedQuery(
 	limit int,
 	filters ...keel.Pred,
-) *keel.Query[formulalibrary.FormulaLibraryVersion] {
+) *keel.Query[*formulalibrary.FormulaLibraryVersion] {
 	v := formulalibrarydb.FormulaLibraryVersions
 	fl := formulalibrarydb.FormulaLibraries
 
@@ -211,7 +211,7 @@ func (r *repository) ListLatestApproved(
 	)
 }
 
-func pinsQuery(pins []tarifftypes.Import) *keel.Query[formulalibrary.FormulaLibraryVersion] {
+func pinsQuery(pins []tarifftypes.Import) *keel.Query[*formulalibrary.FormulaLibraryVersion] {
 	ids := make([]string, 0, len(pins))
 	numbers := make([]int64, 0, len(pins))
 	for _, pin := range pins {

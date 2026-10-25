@@ -42,7 +42,7 @@ func New(p Params) apikeyports.APIKeyRepository {
 	}
 }
 
-func withPermissions(q *keel.Query[apikey.Key]) *keel.Query[apikey.Key] {
+func withPermissions(q *keel.Query[*apikey.Key]) *keel.Query[*apikey.Key] {
 	return q.Load(apikeydb.Keys.Permissions())
 }
 

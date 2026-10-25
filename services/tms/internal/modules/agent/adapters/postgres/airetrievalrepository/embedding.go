@@ -43,7 +43,7 @@ type storedChunk struct {
 func embeddingsOf(
 	source *agentports.AIRetrievalSourceRef,
 	modelKey string,
-) *keel.Query[airetrieval.Embedding] {
+) *keel.Query[*airetrieval.Embedding] {
 	e := airetrievaldb.Embeddings
 
 	return e.Where(
@@ -451,7 +451,7 @@ func (r *repository) Search(
 	})
 }
 
-func searchQuery(req *agentports.VectorSearchRequest, plan searchPlan) *keel.Query[keel.Row] {
+func searchQuery(req *agentports.VectorSearchRequest, plan searchPlan) *keel.Query[*keel.Row] {
 	e := airetrievaldb.Embeddings
 	query := pgvector.NewHalfVector(req.Query)
 	distance := func() keel.Expr {

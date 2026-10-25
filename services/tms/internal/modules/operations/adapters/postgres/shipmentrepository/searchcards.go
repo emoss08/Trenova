@@ -70,7 +70,7 @@ type stopPlace struct {
 	stop  *shipmentdb.StopsTable
 	loc   *locationdb.LocationsTable
 	state *usstatedb.UsStatesTable
-	query *keel.Query[shipment.Stop]
+	query *keel.Query[*shipment.Stop]
 }
 
 func firstPickupPlace() stopPlace {
@@ -111,7 +111,7 @@ func lastDeliveryPlace() stopPlace {
 	}
 }
 
-func (p stopPlace) join(q *keel.Query[shipment.Shipment]) *keel.Query[shipment.Shipment] {
+func (p stopPlace) join(q *keel.Query[*shipment.Shipment]) *keel.Query[*shipment.Shipment] {
 	return q.LeftJoinLateral(p.query).
 		LeftJoin(p.loc, p.loc.ID.EqCol(p.stop.LocationID)).
 		LeftJoin(p.state, p.state.ID.EqCol(p.loc.StateID))

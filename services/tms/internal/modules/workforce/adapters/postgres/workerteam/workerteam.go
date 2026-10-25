@@ -17,7 +17,7 @@ func Where(workerID keel.Col, managerIDs []pulid.ID) keel.Pred {
 	return workerID.InQuery(Members(managerIDs))
 }
 
-func Members(managerIDs []pulid.ID) *keel.Query[worker.Worker] {
+func Members(managerIDs []pulid.ID) *keel.Query[*worker.Worker] {
 	w := workerdb.Workers.As("team_workers")
 
 	return w.Pick(w.ID).Where(keel.Or(
@@ -26,7 +26,7 @@ func Members(managerIDs []pulid.ID) *keel.Query[worker.Worker] {
 	))
 }
 
-func managedFleets(managerIDs []pulid.ID) *keel.Query[fleetcode.FleetCode] {
+func managedFleets(managerIDs []pulid.ID) *keel.Query[*fleetcode.FleetCode] {
 	fc := fleetcodedb.FleetCodes.As("team_fleets")
 
 	return fc.Pick(fc.ID).Where(fc.ManagerID.In(managerIDs...))

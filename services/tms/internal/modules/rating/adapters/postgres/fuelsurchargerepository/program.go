@@ -79,7 +79,7 @@ func (r *programRepository) ListConnection(
 	)
 }
 
-func activeProgramsQuery() *keel.Query[fuelsurcharge.FuelSurchargeProgram] {
+func activeProgramsQuery() *keel.Query[*fuelsurcharge.FuelSurchargeProgram] {
 	p := fuelsurchargedb.FuelSurchargePrograms
 
 	return p.Where(p.Status.Eq(fuelsurcharge.ProgramStatusActive)).
@@ -108,7 +108,7 @@ func (r *programRepository) ListActive(
 
 func programQuery(
 	req *fuelsurchargeports.GetFuelSurchargeProgramByIDRequest,
-) *keel.Query[fuelsurcharge.FuelSurchargeProgram] {
+) *keel.Query[*fuelsurcharge.FuelSurchargeProgram] {
 	p := fuelsurchargedb.FuelSurchargePrograms
 	q := p.Where(p.ID.Eq(req.ProgramID))
 	if req.IncludeRows {
@@ -262,7 +262,7 @@ func (r *programRepository) Delete(
 	})
 }
 
-func fallbackShipmentsQuery(limit int) *keel.Query[shipment.AdditionalCharge] {
+func fallbackShipmentsQuery(limit int) *keel.Query[*shipment.AdditionalCharge] {
 	ac := shipmentdb.AdditionalCharges
 	sp := ac.Shipment()
 
@@ -297,7 +297,7 @@ func (r *programRepository) ListFallbackShipmentIDs(
 	})
 }
 
-func programOptionsQuery() *keel.Query[fuelsurcharge.FuelSurchargeProgram] {
+func programOptionsQuery() *keel.Query[*fuelsurcharge.FuelSurchargeProgram] {
 	p := fuelsurchargedb.FuelSurchargePrograms
 
 	return p.Pick(p.ID, p.Name, p.Code, p.Description, p.Method, p.Status).

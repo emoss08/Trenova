@@ -36,8 +36,8 @@ func New(p Params) journalreversalports.JournalReversalRepository {
 }
 
 func withEntries(
-	q *keel.Query[journalreversal.Reversal],
-) *keel.Query[journalreversal.Reversal] {
+	q *keel.Query[*journalreversal.Reversal],
+) *keel.Query[*journalreversal.Reversal] {
 	jr := journalreversaldb.Reversals
 	return q.Load(jr.OriginalJournalEntry(), jr.ReversalJournalEntry())
 }

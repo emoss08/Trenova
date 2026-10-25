@@ -65,8 +65,8 @@ func (r *policyRepository) List(
 				&listquery.Request[detention.DetentionPolicy]{
 					Filter: req.Filter,
 					Shape: func(
-						q *keel.Query[detention.DetentionPolicy],
-					) *keel.Query[detention.DetentionPolicy] {
+						q *keel.Query[*detention.DetentionPolicy],
+					) *keel.Query[*detention.DetentionPolicy] {
 						return q.Load(orderedTiers())
 					},
 				},

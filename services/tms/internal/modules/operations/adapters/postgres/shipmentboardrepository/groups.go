@@ -59,10 +59,10 @@ func (r *Repository) GroupSummary(
 }
 
 func groupSummaryQuery(
-	q *keel.Query[shipment.Shipment],
+	q *keel.Query[*shipment.Shipment],
 	groupBy shipment.BoardGrouping,
 	timezone string,
-) (*keel.Query[shipment.Shipment], error) {
+) (*keel.Query[*shipment.Shipment], error) {
 	switch groupBy {
 	case shipment.BoardGroupingShipDate:
 		return dayGroups(q, shipment.PickupStopTypes(), false, timezone), nil
@@ -103,11 +103,11 @@ func endStopID(types []shipment.StopType, last bool) keel.Expr {
 }
 
 func dayGroups(
-	q *keel.Query[shipment.Shipment],
+	q *keel.Query[*shipment.Shipment],
 	types []shipment.StopType,
 	last bool,
 	timezone string,
-) *keel.Query[shipment.Shipment] {
+) *keel.Query[*shipment.Shipment] {
 	gs := shipmentdb.Stops.As(groupStopAlias)
 	key := keel.DynFunc(
 		"to_char",
@@ -125,7 +125,7 @@ func dayGroups(
 		Order(keel.Asc(keel.DynOf(gs.ScheduledWindowStart).Min()).NullsLast())
 }
 
-func customerGroups(q *keel.Query[shipment.Shipment]) *keel.Query[shipment.Shipment] {
+func customerGroups(q *keel.Query[*shipment.Shipment]) *keel.Query[*shipment.Shipment] {
 	sp := shipmentdb.Shipments
 	cus := sp.Customer()
 
@@ -134,7 +134,7 @@ func customerGroups(q *keel.Query[shipment.Shipment]) *keel.Query[shipment.Shipm
 		Order(cus.Name.Asc().NullsLast(), sp.CustomerID.Asc())
 }
 
-func ownerGroups(q *keel.Query[shipment.Shipment]) *keel.Query[shipment.Shipment] {
+func ownerGroups(q *keel.Query[*shipment.Shipment]) *keel.Query[*shipment.Shipment] {
 	sp := shipmentdb.Shipments
 	owner := sp.Owner()
 

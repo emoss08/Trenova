@@ -13,20 +13,24 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/deskcase"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/deskcaseports"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue/billingqueuedb"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice/invoicedb"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/document"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/document/documentdb"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/detention"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/detention/detentiondb"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment/shipmentdb"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/carrier"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/carrier/carrierdb"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/customer/customerdb"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/rateconfirmation"
+	"github.com/emoss08/trenova/internal/modules/rating/domain/rateconfirmation/rateconfirmationdb"
+	"github.com/emoss08/trenova/internal/modules/reference/domain/documenttype/documenttypedb"
 	"github.com/emoss08/trenova/pkg/dberror"
-	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/jackc/pgx/v5"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
@@ -63,48 +67,44 @@ type shipmentRecordRow struct {
 	CarrierIDs        []string
 }
 
-const shipmentRecordsQuery = `
-SELECT
-	sp.id,
-	COALESCE(sp.pro_number, '') AS pro_number,
-	sp.status,
-	sp.customer_id,
-	COALESCE(sp.bill_to_customer_id, sp.customer_id) AS bill_to_id,
-	COALESCE(nxt.id, '') AS next_stop_id,
-	nxt.scheduled_window_start AS next_appointment_at,
-	ARRAY(
-		SELECT DISTINCT casn.carrier_id
-		FROM carrier_assignments AS casn
-		JOIN shipment_moves AS smv
-			ON smv.id = casn.shipment_move_id
-			AND smv.organization_id = casn.organization_id
-			AND smv.business_unit_id = casn.business_unit_id
-		WHERE smv.shipment_id = sp.id
-			AND casn.organization_id = sp.organization_id
-			AND casn.business_unit_id = sp.business_unit_id
-			AND casn.status <> $1
-	) AS carrier_ids
-FROM shipments AS sp
-LEFT JOIN LATERAL (
-	SELECT stp.id, stp.scheduled_window_start
-	FROM stops AS stp
-	JOIN shipment_moves AS smv
-		ON smv.id = stp.shipment_move_id
-		AND smv.organization_id = stp.organization_id
-		AND smv.business_unit_id = stp.business_unit_id
-	WHERE smv.shipment_id = sp.id
-		AND stp.organization_id = sp.organization_id
-		AND stp.business_unit_id = sp.business_unit_id
-		AND smv.status <> $2
-		AND stp.status <> $3
-		AND stp.actual_arrival IS NULL
-	ORDER BY smv.sequence ASC, stp.sequence ASC
-	LIMIT 1
-) AS nxt ON TRUE
-WHERE sp.organization_id = $4
-	AND sp.business_unit_id = $5
-	AND sp.id = ANY($6)
-`
+func shipmentRecordsQuery(ids []pulid.ID) *keel.Query[*shipment.Shipment] {
+	sp := shipmentdb.Shipments
+	casn := shipmentdb.CarrierAssignments
+	smv := shipmentdb.ShipmentMoves
+	nxt := shipmentdb.Stops.As("nxt")
+	nmv := shipmentdb.ShipmentMoves.As("nmv")
+
+	next := nxt.Join(nmv, nmv.ID.EqCol(nxt.ShipmentMoveID)).
+		Pick(nxt.ID, nxt.ScheduledWindowStart).
+		Where(
+			nmv.ShipmentID.EqCol(sp.ID),
+			nmv.Status.Ne(shipment.MoveStatusCanceled),
+			nxt.Status.Ne(shipment.StopStatusCanceled),
+			nxt.ActualArrival.IsNull(),
+		).
+		Order(nmv.Sequence.Asc(), nxt.Sequence.Asc()).
+		Limit(1)
+	carrierIDs := keel.ArrayOf(casn.Join(smv, smv.ID.EqCol(casn.ShipmentMoveID)).
+		Pick(casn.CarrierID).
+		Where(
+			smv.ShipmentID.EqCol(sp.ID),
+			casn.Status.Ne(shipment.CarrierAssignmentStatusCanceled),
+		).
+		Distinct())
+
+	return sp.LeftJoinLateral(next).
+		Pick(
+			sp.ID,
+			keel.DynOf(sp.ProNumber).Coalesce(""),
+			sp.Status,
+			sp.CustomerID,
+			keel.DynOf(sp.BillToCustomerID).Coalesce(sp.CustomerID),
+			keel.DynOf(nxt.ID).Coalesce(""),
+			nxt.ScheduledWindowStart,
+			carrierIDs,
+		).
+		Where(sp.ID.In(ids...))
+}
 
 func (r *repository) ListRecords(
 	ctx context.Context,
@@ -120,7 +120,7 @@ func (r *repository) ListRecords(
 		}
 
 		if ids := byType[agent.SubjectShipment]; len(ids) > 0 {
-			if err := r.shipmentRecords(ctx, req.TenantInfo, ids, out); err != nil {
+			if err := r.shipmentRecords(ctx, ids, out); err != nil {
 				return nil, err
 			}
 		}
@@ -141,22 +141,10 @@ func (r *repository) ListRecords(
 
 func (r *repository) shipmentRecords(
 	ctx context.Context,
-	tenant pagination.TenantInfo,
 	ids []pulid.ID,
 	out map[pulid.ID]*deskcase.Record,
 ) error {
-	rows, err := keel.QueryAll(
-		ctx,
-		r.db.Keel(ctx),
-		pgx.RowToStructByPos[shipmentRecordRow],
-		shipmentRecordsQuery,
-		string(shipment.CarrierAssignmentStatusCanceled),
-		string(shipment.MoveStatusCanceled),
-		string(shipment.StopStatusCanceled),
-		tenant.OrgID.String(),
-		tenant.BuID.String(),
-		idStrings(ids),
-	)
+	rows, err := keel.Into[shipmentRecordRow](ctx, r.db.Keel(ctx), shipmentRecordsQuery(ids))
 	if err != nil {
 		return fmt.Errorf("read the cases' shipments: %w", err)
 	}
@@ -293,155 +281,103 @@ type rateConRow struct {
 	Confirmed   bool   `json:"confirmed"`
 }
 
-const shipmentFactsQuery = `
-SELECT
-	sp.status,
-	sp.actual_delivery_date AS delivered_at,
-	EXISTS (
-		SELECT 1
-		FROM documents AS doc
-		JOIN document_types AS dt
-			ON dt.id = doc.document_type_id
-			AND dt.organization_id = doc.organization_id
-			AND dt.business_unit_id = doc.business_unit_id
-		WHERE doc.organization_id = sp.organization_id
-			AND doc.business_unit_id = sp.business_unit_id
-			AND doc.resource_type = $1
-			AND doc.resource_id = sp.id
-			AND doc.is_current_version
-			AND doc.status <> ALL($2)
-			AND upper(dt.code) = upper($3)
-	) AS pod_on_file,
-	ARRAY(
-		SELECT DISTINCT doc.document_type_id
-		FROM documents AS doc
-		WHERE doc.organization_id = sp.organization_id
-			AND doc.business_unit_id = sp.business_unit_id
-			AND doc.resource_type = $4
-			AND doc.resource_id = sp.id
-			AND doc.is_current_version
-			AND doc.status <> ALL($5)
-			AND doc.document_type_id IS NOT NULL
-	) AS document_type_ids,
-	COALESCE((
-		SELECT jsonb_agg(jsonb_build_object(
-			'carrierName', COALESCE(car.name, ''),
-			'confirmed', casn.status = $6 OR EXISTS (
-				SELECT 1
-				FROM rate_confirmations AS rc
-				WHERE rc.organization_id = casn.organization_id
-					AND rc.business_unit_id = casn.business_unit_id
-					AND rc.carrier_assignment_id = casn.id
-					AND rc.status = $7
-			)
-		) ORDER BY smv.sequence)
-		FROM carrier_assignments AS casn
-		JOIN shipment_moves AS smv
-			ON smv.id = casn.shipment_move_id
-			AND smv.organization_id = casn.organization_id
-			AND smv.business_unit_id = casn.business_unit_id
-		LEFT JOIN carriers AS car
-			ON car.id = casn.carrier_id
-			AND car.organization_id = casn.organization_id
-			AND car.business_unit_id = casn.business_unit_id
-		WHERE smv.shipment_id = sp.id
-			AND casn.organization_id = sp.organization_id
-			AND casn.business_unit_id = sp.business_unit_id
-			AND casn.status <> $8
-	), '[]'::jsonb) AS rate_cons,
-	ARRAY(
-		SELECT DISTINCT bqis.code
-		FROM billing_queue_issues AS bqis
-		JOIN billing_queue_items AS bqi
-			ON bqi.id = bqis.item_id
-			AND bqi.organization_id = bqis.organization_id
-			AND bqi.business_unit_id = bqis.business_unit_id
-		WHERE bqi.organization_id = sp.organization_id
-			AND bqi.business_unit_id = sp.business_unit_id
-			AND bqi.shipment_id = sp.id
-			AND bqi.status <> $9
-			AND bqis.resolution_key IS NULL
-			AND bqis.code = ANY($10)
-	) AS open_charge_issues,
-	(
-		SELECT count(*)
-		FROM detention_occurrences AS dto
-		WHERE dto.organization_id = sp.organization_id
-			AND dto.business_unit_id = sp.business_unit_id
-			AND dto.shipment_id = sp.id
-			AND dto.status = $11
-	) AS detention_accruing,
-	(
-		SELECT count(*)
-		FROM detention_occurrences AS dto
-		WHERE dto.organization_id = sp.organization_id
-			AND dto.business_unit_id = sp.business_unit_id
-			AND dto.shipment_id = sp.id
-			AND dto.status = ANY($12)
-	) AS detention_unapproved,
-	(
-		SELECT max(sc.created_at)
-		FROM shipment_comments AS sc
-		WHERE sc.organization_id = sp.organization_id
-			AND sc.business_unit_id = sp.business_unit_id
-			AND sc.shipment_id = sp.id
-			AND sc.type = $13
-			AND sc.metadata ->> $14 = ANY($15)
-	) AS customer_notified_at,
-	EXISTS (
-		SELECT 1
-		FROM billing_queue_items AS bqi
-		WHERE bqi.organization_id = sp.organization_id
-			AND bqi.business_unit_id = sp.business_unit_id
-			AND bqi.shipment_id = sp.id
-			AND bqi.status <> $16
-	) AS in_billing_queue
-FROM shipments AS sp
-WHERE sp.organization_id = $17
-	AND sp.business_unit_id = $18
-	AND sp.id = $19
-`
+func shipmentFactsQuery(
+	req *deskcaseports.GetShipmentCaseFactsRequest,
+) *keel.Query[*shipment.Shipment] {
+	sp := shipmentdb.Shipments
+	doc := documentdb.Documents
+	dt := documenttypedb.DocumentTypes
+	casn := shipmentdb.CarrierAssignments
+	smv := shipmentdb.ShipmentMoves
+	car := carrierdb.Carriers
+	rc := rateconfirmationdb.RateConfirmations
+	bqis := billingqueuedb.Issues
+	bqi := billingqueuedb.BillingQueueItems
+	dto := detentiondb.DetentionOccurrences
+	sc := shipmentdb.ShipmentComments
+	shipmentResource := permission.ResourceShipment.String()
+
+	currentDocuments := func() []keel.Pred {
+		return []keel.Pred{
+			doc.ResourceType.Eq(shipmentResource),
+			doc.ResourceID.EqCol(sp.ID),
+			doc.IsCurrentVersion.IsTrue(),
+			doc.Status.NotIn(document.StatusRejected, document.StatusArchived),
+		}
+	}
+	podOnFile := keel.Exists(doc.Join(dt, dt.ID.EqCol(doc.DocumentTypeID)).
+		Pick(doc.ID).
+		Where(append(
+			currentDocuments(),
+			keel.DynFunc("upper", dt.Code).Eq(keel.DynFunc("upper", req.PODCode)),
+		)...))
+	documentTypeIDs := keel.ArrayOf(doc.Pick(doc.DocumentTypeID).
+		Where(append(currentDocuments(), doc.DocumentTypeID.IsNotNull())...).
+		Distinct())
+	confirmed := keel.Or(
+		casn.Status.Eq(shipment.CarrierAssignmentStatusConfirmed),
+		keel.Exists(rc.Pick(rc.ID).Where(
+			rc.CarrierAssignmentID.EqCol(casn.ID),
+			rc.Status.Eq(rateconfirmation.StatusConfirmed),
+		)),
+	)
+	rateCons := keel.DynOf(keel.Scalar(casn.Join(smv, smv.ID.EqCol(casn.ShipmentMoveID)).
+		LeftJoin(car, car.ID.EqCol(casn.CarrierID)).
+		Pick(keel.DynFunc("jsonb_agg", keel.DynFunc(
+			"jsonb_build_object",
+			"carrierName", keel.DynOf(car.Name).Coalesce(""),
+			"confirmed", confirmed,
+		)).OrderBy(smv.Sequence.Asc())).
+		Where(
+			smv.ShipmentID.EqCol(sp.ID),
+			casn.Status.Ne(shipment.CarrierAssignmentStatusCanceled),
+		))).Coalesce(keel.DynFunc("jsonb_build_array"))
+	openChargeIssues := keel.ArrayOf(bqis.Join(bqi, bqi.ID.EqCol(bqis.ItemID)).
+		Pick(bqis.Code).
+		Where(
+			bqi.ShipmentID.EqCol(sp.ID),
+			bqi.Status.Ne(billingqueue.StatusCanceled),
+			bqis.ResolutionKey.IsNull(),
+			bqis.Code.In(
+				billingqueue.IssueAccessorialNotOnRateCon,
+				billingqueue.IssueChargeOverRateCon,
+			),
+		).
+		Distinct())
+	detentionCount := func(statuses ...detention.OccurrenceStatus) keel.Expr {
+		return keel.Scalar(dto.Pick(keel.Count()).
+			Where(dto.ShipmentID.EqCol(sp.ID), dto.Status.In(statuses...)))
+	}
+	customerNotifiedAt := keel.Scalar(sc.Pick(sc.CreatedAt.Max()).Where(
+		sc.ShipmentID.EqCol(sp.ID),
+		sc.Type.Eq(shipment.CommentTypeCustomerUpdate),
+		sc.Metadata.Text(shipment.CommentMetadataTool).In(shipment.CustomerEmailTools()...),
+	))
+	inBillingQueue := keel.Exists(bqi.Pick(bqi.ID).Where(
+		bqi.ShipmentID.EqCol(sp.ID),
+		bqi.Status.Ne(billingqueue.StatusCanceled),
+	))
+
+	return sp.Pick(
+		sp.Status,
+		sp.ActualDeliveryDate,
+		podOnFile,
+		documentTypeIDs,
+		rateCons,
+		openChargeIssues,
+		detentionCount(detention.OccurrenceStatusAccruing),
+		detentionCount(detention.OccurrenceStatusPending, detention.OccurrenceStatusDisputed),
+		customerNotifiedAt,
+		inBillingQueue,
+	).Where(sp.ID.Eq(req.ShipmentID))
+}
 
 func (r *repository) ShipmentFacts(
 	ctx context.Context,
 	req *deskcaseports.GetShipmentCaseFactsRequest,
 ) (*deskcase.ShipmentFacts, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*deskcase.ShipmentFacts, error) {
-		closedDocuments := []string{
-			string(document.StatusRejected),
-			string(document.StatusArchived),
-		}
-		rows, err := keel.QueryAll(
-			ctx,
-			r.db.Keel(ctx),
-			pgx.RowToStructByPos[shipmentFactsRow],
-			shipmentFactsQuery,
-			permission.ResourceShipment.String(),
-			closedDocuments,
-			req.PODCode,
-			permission.ResourceShipment.String(),
-			closedDocuments,
-			string(shipment.CarrierAssignmentStatusConfirmed),
-			string(rateconfirmation.StatusConfirmed),
-			string(shipment.CarrierAssignmentStatusCanceled),
-			string(billingqueue.StatusCanceled),
-			[]string{
-				string(billingqueue.IssueAccessorialNotOnRateCon),
-				string(billingqueue.IssueChargeOverRateCon),
-			},
-			string(detention.OccurrenceStatusAccruing),
-			[]string{
-				string(detention.OccurrenceStatusPending),
-				string(detention.OccurrenceStatusDisputed),
-			},
-			string(shipment.CommentTypeCustomerUpdate),
-			shipment.CommentMetadataTool,
-			shipment.CustomerEmailTools(),
-			string(billingqueue.StatusCanceled),
-			req.TenantInfo.OrgID.String(),
-			req.TenantInfo.BuID.String(),
-			req.ShipmentID.String(),
-		)
+		rows, err := keel.Into[shipmentFactsRow](ctx, r.db.Keel(ctx), shipmentFactsQuery(req))
 		if err != nil {
 			return nil, fmt.Errorf("read the shipment's case facts: %w", err)
 		}
@@ -541,23 +477,14 @@ func (r *repository) Parties(
 	})
 }
 
-func idStrings(ids []pulid.ID) []string {
-	out := make([]string, 0, len(ids))
-	for _, id := range ids {
-		out = append(out, id.String())
-	}
-
-	return out
-}
-
-func invoiceRecordsQuery(ids []pulid.ID) *keel.Query[invoice.Invoice] {
+func invoiceRecordsQuery(ids []pulid.ID) *keel.Query[*invoice.Invoice] {
 	inv := invoicedb.Invoices
 
 	return inv.Pick(inv.ID, inv.Number, inv.Status, inv.SettlementStatus, inv.CustomerID).
 		Where(inv.ID.In(ids...))
 }
 
-func disputeRecordsQuery(ids []pulid.ID) *keel.Query[invoice.InvoiceDispute] {
+func disputeRecordsQuery(ids []pulid.ID) *keel.Query[*invoice.InvoiceDispute] {
 	d := invoicedb.InvoiceDisputes
 
 	return d.Pick(
@@ -570,14 +497,14 @@ func disputeRecordsQuery(ids []pulid.ID) *keel.Query[invoice.InvoiceDispute] {
 	).Where(d.ID.In(ids...))
 }
 
-func invoiceFactsQuery(id pulid.ID) *keel.Query[invoice.Invoice] {
+func invoiceFactsQuery(id pulid.ID) *keel.Query[*invoice.Invoice] {
 	inv := invoicedb.Invoices
 
 	return inv.Pick(inv.Status, inv.SendStatus, inv.DisputeStatus, inv.SettlementStatus, inv.DueDate).
 		Where(inv.ID.Eq(id))
 }
 
-func carriersQuery(ids []pulid.ID) *keel.Query[carrier.Carrier] {
+func carriersQuery(ids []pulid.ID) *keel.Query[*carrier.Carrier] {
 	ca := carrierdb.Carriers
 
 	return ca.Pick(ca.ID, ca.Name).Where(ca.ID.In(ids...)).Order(ca.Name.Asc())

@@ -53,7 +53,7 @@ func (r *repository) ListTaxRates(
 						asc("fuelType"),
 					),
 					Cursor: req.Cursor,
-					Shape: func(q *keel.Query[ifta.TaxRate]) *keel.Query[ifta.TaxRate] {
+					Shape: func(q *keel.Query[*ifta.TaxRate]) *keel.Query[*ifta.TaxRate] {
 						if req.IncludeJurisdiction {
 							return q.Load(tr.Jurisdiction())
 						}

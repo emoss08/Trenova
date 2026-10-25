@@ -48,12 +48,12 @@ type Base interface {
 	) (*permissionports.TableMatchResult, error)
 }
 
-func Typed[T any](q *keel.Query[T]) Base {
+func Typed[T any](q *keel.Query[*T]) Base {
 	return &typedBase[T]{q: q}
 }
 
 type typedBase[T any] struct {
-	q *keel.Query[T]
+	q *keel.Query[*T]
 }
 
 type facetRow struct {

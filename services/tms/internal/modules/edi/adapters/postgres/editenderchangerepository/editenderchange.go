@@ -185,7 +185,7 @@ func (r *repository) UpdateTenderChange(
 	})
 }
 
-func withRecipient(q *keel.Query[edi.TenderChange]) *keel.Query[edi.TenderChange] {
+func withRecipient(q *keel.Query[*edi.TenderChange]) *keel.Query[*edi.TenderChange] {
 	return q.Load(edidb.TenderChanges.Recipient())
 }
 

@@ -13,10 +13,6 @@ import (
 
 const SecondsPerDay = int64(86400)
 
-const OpenInvoice = `inv.status = 'Posted'
-	  AND inv.bill_type IN ('Invoice', 'DebitMemo')
-	  AND inv.total_amount_minor > inv.applied_amount_minor`
-
 func ReceivableBillType(inv *invoicedb.InvoicesTable) keel.Pred {
 	return inv.BillType.In(billingqueue.BillTypeInvoice, billingqueue.BillTypeDebitMemo)
 }

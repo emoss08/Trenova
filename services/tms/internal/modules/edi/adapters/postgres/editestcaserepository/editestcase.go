@@ -152,7 +152,7 @@ func (r *repository) DeleteTestCase(
 	})
 }
 
-func listedTestCases(req *ediports.ListEDITestCasesRequest) *keel.Query[edi.EDITestCase] {
+func listedTestCases(req *ediports.ListEDITestCasesRequest) *keel.Query[*edi.EDITestCase] {
 	tc := edidb.EDITestCases
 	return tc.Where(keel.When(
 		req.PartnerDocumentProfileID.IsNotNil(),
@@ -160,6 +160,6 @@ func listedTestCases(req *ediports.ListEDITestCasesRequest) *keel.Query[edi.EDIT
 	))
 }
 
-func withDocumentProfile(q *keel.Query[edi.EDITestCase]) *keel.Query[edi.EDITestCase] {
+func withDocumentProfile(q *keel.Query[*edi.EDITestCase]) *keel.Query[*edi.EDITestCase] {
 	return q.Load(edidb.EDITestCases.DocumentProfile().Partner())
 }

@@ -52,7 +52,7 @@ func (r *repository) CreateApprovalRun(
 	})
 }
 
-func approvalRunWithItems() *keel.Query[billingqueue.ApprovalRun] {
+func approvalRunWithItems() *keel.Query[*billingqueue.ApprovalRun] {
 	run := billingqueuedb.ApprovalRuns
 	items := run.Items()
 	return run.Load(items.Order(items.Sequence.Asc()))
@@ -95,7 +95,7 @@ func (r *repository) GetApprovalRunByKey(
 	})
 }
 
-func scheduledRun(runID pulid.ID) *keel.Query[billingqueue.ApprovalRun] {
+func scheduledRun(runID pulid.ID) *keel.Query[*billingqueue.ApprovalRun] {
 	run := billingqueuedb.ApprovalRuns
 	return run.Where(
 		run.ID.Eq(runID),

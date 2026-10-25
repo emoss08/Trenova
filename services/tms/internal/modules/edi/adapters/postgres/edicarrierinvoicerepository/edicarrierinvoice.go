@@ -57,7 +57,7 @@ func (r *repository) ListCarrierInvoices(
 
 			return listquery.List(ctx, r.db.Keel(ctx), q, &listquery.Request[edi.CarrierInvoice]{
 				Filter: req.Filter,
-				Shape: func(q *keel.Query[edi.CarrierInvoice]) *keel.Query[edi.CarrierInvoice] {
+				Shape: func(q *keel.Query[*edi.CarrierInvoice]) *keel.Query[*edi.CarrierInvoice] {
 					return q.Load(ci.Partner())
 				},
 				Then: []keel.Order{ci.CreatedAt.Desc()},
