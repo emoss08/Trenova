@@ -15,14 +15,15 @@ import (
 
 // locationCategoriesTable is the schema of locationcategory.LocationCategory.
 var locationCategoriesTable = schema.Table{
-	Name:   "location_categories",
-	Quoted: `"location_categories"`,
-	Alias:  "lc",
-	Model:  "locationcategory.LocationCategory",
-	Label:  `Location Category`,
-	Plural: `Location Categories`,
-	Doc:    `Classification of locations`,
-	Report: &schema.TableReport{Category: `Parties`},
+	Name:        "location_categories",
+	Quoted:      `"location_categories"`,
+	Alias:       "lc",
+	Model:       "locationcategory.LocationCategory",
+	Label:       `Location Category`,
+	Plural:      `Location Categories`,
+	Doc:         `Classification of locations`,
+	Report:      &schema.TableReport{Category: `Parties`},
+	Constraints: (&locationcategory.LocationCategory{}).Constraints(),
 	Columns: []schema.Column{
 		{Name: "id", Quoted: `"id"`, Field: "ID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagAutoID, Label: `ID`, JSON: `id`, Report: &reportDimString},
 		{Name: "business_unit_id", Quoted: `"business_unit_id"`, Field: "BusinessUnitID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Business Unit ID`, JSON: `businessUnitId`, Report: &reportDimStringHidden},

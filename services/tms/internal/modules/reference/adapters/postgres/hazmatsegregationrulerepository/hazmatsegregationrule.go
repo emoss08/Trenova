@@ -17,28 +17,7 @@ import (
 	"go.uber.org/zap"
 )
 
-var hazmatSegregationRuleErrors = dberror.Mapping{
-	Entity: "HazmatSegregationRule",
-	Unique: []dberror.Constraint{
-		{
-			Name:    "idx_hazmat_segregation_rules_unique",
-			Field:   "classA",
-			Message: "A segregation rule for these classes and materials already exists in your organization",
-		},
-	},
-	ForeignKey: []dberror.Constraint{
-		{
-			Name:    "fk_hazmat_segregation_rules_hazmat_a",
-			Field:   "hazmatAId",
-			Message: "Hazardous material A does not exist or belongs to a different organization",
-		},
-		{
-			Name:    "fk_hazmat_segregation_rules_hazmat_b",
-			Field:   "hazmatBId",
-			Message: "Hazardous material B does not exist or belongs to a different organization",
-		},
-	},
-}
+var hazmatSegregationRuleErrors = dberror.Mapping{Entity: "HazmatSegregationRule"}
 
 type Params struct {
 	fx.In

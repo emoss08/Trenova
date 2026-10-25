@@ -127,3 +127,12 @@ func (a *AccountType) BeforeCreate(ctx context.Context) error {
 
 	return nil
 }
+
+func (AccountType) Constraints() []keel.Constraint {
+	return []keel.Constraint{
+		{
+			Name:    "idx_account_types_unique_code",
+			Message: "Account type with this code already exists in your organization",
+		},
+	}
+}

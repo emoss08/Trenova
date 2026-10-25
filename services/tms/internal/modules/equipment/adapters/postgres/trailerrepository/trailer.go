@@ -24,21 +24,7 @@ import (
 	"go.uber.org/zap"
 )
 
-var trailerErrors = dberror.Mapping{
-	Entity: "Trailer",
-	Unique: []dberror.Constraint{
-		{
-			Name:    "idx_trailers_code",
-			Field:   "code",
-			Message: "Trailer with this code already exists in your organization",
-		},
-		{
-			Name:    "idx_trailers_external_id_tenant",
-			Field:   "externalId",
-			Message: "Trailer with this external ID already exists in your organization",
-		},
-	},
-}
+var trailerErrors = dberror.Mapping{Entity: "Trailer"}
 
 type Params struct {
 	fx.In

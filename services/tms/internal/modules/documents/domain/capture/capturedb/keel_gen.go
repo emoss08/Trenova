@@ -1788,13 +1788,14 @@ func beforeCreateCapturePairing(ctx context.Context, p unsafe.Pointer) error {
 
 // captureProfilesTable is the schema of capture.CaptureProfile.
 var captureProfilesTable = schema.Table{
-	Name:   "capture_profiles",
-	Quoted: `"capture_profiles"`,
-	Alias:  "cp",
-	Model:  "capture.CaptureProfile",
-	Label:  `Capture Profile`,
-	Plural: `Capture Profiles`,
-	Doc:    `CaptureProfile is a named set of scan settings an organization offers the people who scan, so a billing clerk picks "PODs" rather than a resolution.`,
+	Name:        "capture_profiles",
+	Quoted:      `"capture_profiles"`,
+	Alias:       "cp",
+	Model:       "capture.CaptureProfile",
+	Label:       `Capture Profile`,
+	Plural:      `Capture Profiles`,
+	Doc:         `CaptureProfile is a named set of scan settings an organization offers the people who scan, so a billing clerk picks "PODs" rather than a resolution.`,
+	Constraints: (&capture.CaptureProfile{}).Constraints(),
 	Columns: []schema.Column{
 		{Name: "id", Quoted: `"id"`, Field: "ID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagAutoID, Label: `ID`, JSON: `id`},
 		{Name: "business_unit_id", Quoted: `"business_unit_id"`, Field: "BusinessUnitID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Business Unit ID`, JSON: `businessUnitId`},

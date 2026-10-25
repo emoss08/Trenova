@@ -36,3 +36,16 @@ func (b *BankReceiptBatch) Validate(multiErr *errortypes.MultiError) {
 		validation.Field(&b.Source, validation.Required),
 	))
 }
+
+func (BankReceiptBatch) Constraints() []keel.Constraint {
+	return []keel.Constraint{
+		{
+			Name:    "fk_bank_receipt_import_batches_created_by",
+			Message: "Created by user does not exist",
+		},
+		{
+			Name:    "fk_bank_receipt_import_batches_updated_by",
+			Message: "Updated by user does not exist",
+		},
+	}
+}

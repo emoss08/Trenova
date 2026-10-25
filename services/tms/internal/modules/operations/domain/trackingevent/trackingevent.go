@@ -111,3 +111,12 @@ func (e *TrackingEvent) Validate(multiErr *errortypes.MultiError) {
 		),
 	))
 }
+
+func (TrackingEvent) Constraints() []keel.Constraint {
+	return []keel.Constraint{
+		{
+			Name:    "fk_tracking_events_shipment",
+			Message: "Shipment does not exist in your organization",
+		},
+	}
+}

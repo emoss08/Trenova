@@ -252,6 +252,15 @@ func (t *ShiftTemplate) BeforeCreate(_ context.Context) error {
 	return nil
 }
 
+func (ShiftTemplate) Constraints() []keel.Constraint {
+	return []keel.Constraint{
+		{
+			Name:    "uq_shift_templates_code",
+			Message: "Shift template with this code already exists in your organization",
+		},
+	}
+}
+
 var (
 	_ validationframework.TenantedEntity = (*WorkerShiftAssignment)(nil)
 )
@@ -340,6 +349,23 @@ type WorkerAvailabilityPreference struct {
 	UpdatedAt int64 `json:"updatedAt" keel:"updated_at,autoupdate"`
 }
 
+func (WorkerShiftAssignment) Constraints() []keel.Constraint {
+	return []keel.Constraint{
+		{
+			Name:    "uq_worker_shift_assignments_open",
+			Message: "Worker already has an open shift assignment",
+		},
+		{
+			Name:    "fk_worker_shift_assignments_worker",
+			Message: "Worker does not exist or belongs to a different organization",
+		},
+		{
+			Name:    "fk_worker_shift_assignments_template",
+			Message: "Shift template does not exist or belongs to a different organization",
+		},
+	}
+}
+
 func (p *WorkerAvailabilityPreference) Validate(multiErr *errortypes.MultiError) {
 	multiErr.AddOzzoError(validation.ValidateStruct(p,
 		validation.Field(&p.WorkerID, validation.Required.Error("Worker is required")),
@@ -381,6 +407,15 @@ func (p *WorkerAvailabilityPreference) BeforeCreate(_ context.Context) error {
 	}
 
 	return nil
+}
+
+func (WorkerAvailabilityPreference) Constraints() []keel.Constraint {
+	return []keel.Constraint{
+		{
+			Name:    "fk_worker_availability_preferences_worker",
+			Message: "Worker does not exist or belongs to a different organization",
+		},
+	}
 }
 
 var (
@@ -469,4 +504,17 @@ func (r *ShiftSwapRequest) BeforeCreate(_ context.Context) error {
 	}
 
 	return nil
+}
+
+func (ShiftSwapRequest) Constraints() []keel.Constraint {
+	return []keel.Constraint{
+		{
+			Name:    "fk_shift_swap_requests_requester",
+			Message: "Requesting worker does not exist or belongs to a different organization",
+		},
+		{
+			Name:    "fk_shift_swap_requests_counterparty",
+			Message: "Counterparty worker does not exist or belongs to a different organization",
+		},
+	}
 }

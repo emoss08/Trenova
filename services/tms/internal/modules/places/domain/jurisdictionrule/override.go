@@ -106,3 +106,16 @@ func (o *Override) validatePositive(multiErr *errortypes.MultiError) {
 			"Permit lead time must be between 0 and 60 days")
 	}
 }
+
+func (Override) Constraints() []keel.Constraint {
+	return []keel.Constraint{
+		{
+			Name:    "uq_jurisdiction_rule_overrides_state",
+			Message: "Your organization already has an override for this state",
+		},
+		{
+			Name:    "fk_jurisdiction_rule_overrides_state",
+			Message: "State does not exist",
+		},
+	}
+}

@@ -101,3 +101,12 @@ func (lc *LocationCategory) GetPostgresSearchConfig() domaintypes.PostgresSearch
 		},
 	}
 }
+
+func (LocationCategory) Constraints() []keel.Constraint {
+	return []keel.Constraint{
+		{
+			Name:    "idx_location_categories_name",
+			Message: "Location category with this name already exists in your organization",
+		},
+	}
+}

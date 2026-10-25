@@ -15,23 +15,7 @@ import (
 	"go.uber.org/zap"
 )
 
-var ruleErrors = dberror.Mapping{
-	Entity: "DocumentPacketRule",
-	Unique: []dberror.Constraint{
-		{
-			Name:    "uq_document_packet_rules_resource_type_document_type",
-			Field:   "documentTypeId",
-			Message: "A packet rule for this document type already exists for this resource type",
-		},
-	},
-	ForeignKey: []dberror.Constraint{
-		{
-			Name:    "fk_document_packet_rules_document_type",
-			Field:   "documentTypeId",
-			Message: "Document type does not exist",
-		},
-	},
-}
+var ruleErrors = dberror.Mapping{Entity: "DocumentPacketRule"}
 
 type Params struct {
 	fx.In

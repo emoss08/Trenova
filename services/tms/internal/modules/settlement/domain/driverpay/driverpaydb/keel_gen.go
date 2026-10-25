@@ -21,13 +21,14 @@ import (
 
 // benefitPlansTable is the schema of driverpay.BenefitPlan.
 var benefitPlansTable = schema.Table{
-	Name:   "benefit_plans",
-	Quoted: `"benefit_plans"`,
-	Alias:  "bp",
-	Model:  "driverpay.BenefitPlan",
-	Label:  `Benefit Plan`,
-	Plural: `Benefit Plans`,
-	Doc:    `BenefitPlan is what a carrier offers, for one plan year.`,
+	Name:        "benefit_plans",
+	Quoted:      `"benefit_plans"`,
+	Alias:       "bp",
+	Model:       "driverpay.BenefitPlan",
+	Label:       `Benefit Plan`,
+	Plural:      `Benefit Plans`,
+	Doc:         `BenefitPlan is what a carrier offers, for one plan year.`,
+	Constraints: (&driverpay.BenefitPlan{}).Constraints(),
 	Columns: []schema.Column{
 		{Name: "id", Quoted: `"id"`, Field: "ID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagAutoID, Label: `ID`, JSON: `id`},
 		{Name: "business_unit_id", Quoted: `"business_unit_id"`, Field: "BusinessUnitID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Business Unit ID`, JSON: `businessUnitId`},
@@ -283,14 +284,15 @@ func beforeCreateBenefitPlan(ctx context.Context, p unsafe.Pointer) error {
 
 // escrowAccountsTable is the schema of driverpay.EscrowAccount.
 var escrowAccountsTable = schema.Table{
-	Name:   "escrow_accounts",
-	Quoted: `"escrow_accounts"`,
-	Alias:  "ea",
-	Model:  "driverpay.EscrowAccount",
-	Label:  `Escrow Account`,
-	Plural: `Escrow Accounts`,
-	Doc:    `Owner-operator escrow balances against their target`,
-	Report: &schema.TableReport{Category: `Payroll`},
+	Name:        "escrow_accounts",
+	Quoted:      `"escrow_accounts"`,
+	Alias:       "ea",
+	Model:       "driverpay.EscrowAccount",
+	Label:       `Escrow Account`,
+	Plural:      `Escrow Accounts`,
+	Doc:         `Owner-operator escrow balances against their target`,
+	Report:      &schema.TableReport{Category: `Payroll`},
+	Constraints: (&driverpay.EscrowAccount{}).Constraints(),
 	Columns: []schema.Column{
 		{Name: "id", Quoted: `"id"`, Field: "ID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagAutoID, Label: `ID`, JSON: `id`, Report: &reportDimString},
 		{Name: "business_unit_id", Quoted: `"business_unit_id"`, Field: "BusinessUnitID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Business Unit ID`, JSON: `businessUnitId`, Report: &reportDimStringHidden},
@@ -1312,14 +1314,15 @@ func beforeCreatePayAdvance(ctx context.Context, p unsafe.Pointer) error {
 
 // payCodesTable is the schema of driverpay.PayCode.
 var payCodesTable = schema.Table{
-	Name:   "pay_codes",
-	Quoted: `"pay_codes"`,
-	Alias:  "pc",
-	Model:  "driverpay.PayCode",
-	Label:  `Pay Code`,
-	Plural: `Pay Codes`,
-	Doc:    `Earning and deduction codes and the GL accounts they post to`,
-	Report: &schema.TableReport{Category: `Payroll`},
+	Name:        "pay_codes",
+	Quoted:      `"pay_codes"`,
+	Alias:       "pc",
+	Model:       "driverpay.PayCode",
+	Label:       `Pay Code`,
+	Plural:      `Pay Codes`,
+	Doc:         `Earning and deduction codes and the GL accounts they post to`,
+	Report:      &schema.TableReport{Category: `Payroll`},
+	Constraints: (&driverpay.PayCode{}).Constraints(),
 	Columns: []schema.Column{
 		{Name: "id", Quoted: `"id"`, Field: "ID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagAutoID, Label: `ID`, JSON: `id`, Report: &reportDimString},
 		{Name: "business_unit_id", Quoted: `"business_unit_id"`, Field: "BusinessUnitID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Business Unit ID`, JSON: `businessUnitId`, Report: &reportDimStringHidden},
@@ -1553,12 +1556,13 @@ func beforeCreatePayCode(ctx context.Context, p unsafe.Pointer) error {
 
 // payProfilesTable is the schema of driverpay.PayProfile.
 var payProfilesTable = schema.Table{
-	Name:   "driver_pay_profiles",
-	Quoted: `"driver_pay_profiles"`,
-	Alias:  "dpp",
-	Model:  "driverpay.PayProfile",
-	Label:  `Pay Profile`,
-	Plural: `Pay Profiles`,
+	Name:        "driver_pay_profiles",
+	Quoted:      `"driver_pay_profiles"`,
+	Alias:       "dpp",
+	Model:       "driverpay.PayProfile",
+	Label:       `Pay Profile`,
+	Plural:      `Pay Profiles`,
+	Constraints: (&driverpay.PayProfile{}).Constraints(),
 	Columns: []schema.Column{
 		{Name: "id", Quoted: `"id"`, Field: "ID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagAutoID, Label: `ID`, JSON: `id`},
 		{Name: "business_unit_id", Quoted: `"business_unit_id"`, Field: "BusinessUnitID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Business Unit ID`, JSON: `businessUnitId`},
@@ -2003,14 +2007,15 @@ func valuePayProfileComponent(p unsafe.Pointer, c int32) any {
 
 // recurringDeductionsTable is the schema of driverpay.RecurringDeduction.
 var recurringDeductionsTable = schema.Table{
-	Name:   "recurring_deductions",
-	Quoted: `"recurring_deductions"`,
-	Alias:  "rd",
-	Model:  "driverpay.RecurringDeduction",
-	Label:  `Recurring Deduction`,
-	Plural: `Recurring Deductions`,
-	Doc:    `Standing deductions, including garnishments and escrow contributions`,
-	Report: &schema.TableReport{Category: `Payroll`},
+	Name:        "recurring_deductions",
+	Quoted:      `"recurring_deductions"`,
+	Alias:       "rd",
+	Model:       "driverpay.RecurringDeduction",
+	Label:       `Recurring Deduction`,
+	Plural:      `Recurring Deductions`,
+	Doc:         `Standing deductions, including garnishments and escrow contributions`,
+	Report:      &schema.TableReport{Category: `Payroll`},
+	Constraints: (&driverpay.RecurringDeduction{}).Constraints(),
 	Columns: []schema.Column{
 		{Name: "id", Quoted: `"id"`, Field: "ID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagAutoID, Label: `ID`, JSON: `id`, Report: &reportDimString},
 		{Name: "business_unit_id", Quoted: `"business_unit_id"`, Field: "BusinessUnitID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Business Unit ID`, JSON: `businessUnitId`, Report: &reportDimStringHidden},
@@ -2336,14 +2341,15 @@ func beforeCreateRecurringDeduction(ctx context.Context, p unsafe.Pointer) error
 
 // recurringEarningsTable is the schema of driverpay.RecurringEarning.
 var recurringEarningsTable = schema.Table{
-	Name:   "recurring_earnings",
-	Quoted: `"recurring_earnings"`,
-	Alias:  "re",
-	Model:  "driverpay.RecurringEarning",
-	Label:  `Recurring Earning`,
-	Plural: `Recurring Earnings`,
-	Doc:    `Standing earnings such as per diem and retention bonuses`,
-	Report: &schema.TableReport{Category: `Payroll`},
+	Name:        "recurring_earnings",
+	Quoted:      `"recurring_earnings"`,
+	Alias:       "re",
+	Model:       "driverpay.RecurringEarning",
+	Label:       `Recurring Earning`,
+	Plural:      `Recurring Earnings`,
+	Doc:         `Standing earnings such as per diem and retention bonuses`,
+	Report:      &schema.TableReport{Category: `Payroll`},
+	Constraints: (&driverpay.RecurringEarning{}).Constraints(),
 	Columns: []schema.Column{
 		{Name: "id", Quoted: `"id"`, Field: "ID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagAutoID, Label: `ID`, JSON: `id`, Report: &reportDimString},
 		{Name: "business_unit_id", Quoted: `"business_unit_id"`, Field: "BusinessUnitID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Business Unit ID`, JSON: `businessUnitId`, Report: &reportDimStringHidden},
@@ -2607,13 +2613,14 @@ func beforeCreateRecurringEarning(ctx context.Context, p unsafe.Pointer) error {
 
 // workerBenefitEnrollmentsTable is the schema of driverpay.WorkerBenefitEnrollment.
 var workerBenefitEnrollmentsTable = schema.Table{
-	Name:   "worker_benefit_enrollments",
-	Quoted: `"worker_benefit_enrollments"`,
-	Alias:  "wbe",
-	Model:  "driverpay.WorkerBenefitEnrollment",
-	Label:  `Worker Benefit Enrollment`,
-	Plural: `Worker Benefit Enrollments`,
-	Doc:    `WorkerBenefitEnrollment is who is on which plan. The employee contribution is taken through a recurring deduction rather than a second mechanism, so it inherits the cap, the pause and the reversal on a voided settlement.`,
+	Name:        "worker_benefit_enrollments",
+	Quoted:      `"worker_benefit_enrollments"`,
+	Alias:       "wbe",
+	Model:       "driverpay.WorkerBenefitEnrollment",
+	Label:       `Worker Benefit Enrollment`,
+	Plural:      `Worker Benefit Enrollments`,
+	Doc:         `WorkerBenefitEnrollment is who is on which plan. The employee contribution is taken through a recurring deduction rather than a second mechanism, so it inherits the cap, the pause and the reversal on a voided settlement.`,
+	Constraints: (&driverpay.WorkerBenefitEnrollment{}).Constraints(),
 	Columns: []schema.Column{
 		{Name: "id", Quoted: `"id"`, Field: "ID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagAutoID, Label: `ID`, JSON: `id`},
 		{Name: "business_unit_id", Quoted: `"business_unit_id"`, Field: "BusinessUnitID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Business Unit ID`, JSON: `businessUnitId`},

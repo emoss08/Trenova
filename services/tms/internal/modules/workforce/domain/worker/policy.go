@@ -182,6 +182,19 @@ func (p *WorkerPolicy) BeforeCreate(_ context.Context) error {
 	return nil
 }
 
+func (WorkerPolicy) Constraints() []keel.Constraint {
+	return []keel.Constraint{
+		{
+			Name:    "uq_worker_policies_code",
+			Message: "Policy with this code already exists in your organization",
+		},
+		{
+			Name:    "fk_worker_policies_document",
+			Message: "Document does not exist or belongs to a different organization",
+		},
+	}
+}
+
 var (
 	_ validationframework.TenantedEntity = (*WorkerPolicyAcknowledgement)(nil)
 )
@@ -265,4 +278,22 @@ func (a *WorkerPolicyAcknowledgement) BeforeCreate(_ context.Context) error {
 	}
 
 	return nil
+}
+
+func (WorkerPolicyAcknowledgement) Constraints() []keel.Constraint {
+	return []keel.Constraint{
+		{
+			Name:    "uq_worker_policy_acknowledgements_version",
+			Field:   "versionLabel",
+			Message: "Worker has already acknowledged this version of the policy",
+		},
+		{
+			Name:    "fk_worker_policy_acknowledgements_policy",
+			Message: "Policy does not exist or belongs to a different organization",
+		},
+		{
+			Name:    "fk_worker_policy_acknowledgements_worker",
+			Message: "Worker does not exist or belongs to a different organization",
+		},
+	}
 }

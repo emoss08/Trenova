@@ -18,21 +18,7 @@ import (
 	"go.uber.org/zap"
 )
 
-var commodityErrors = dberror.Mapping{
-	Entity: "Shipment commodity",
-	ForeignKey: []dberror.Constraint{
-		{
-			Name:    "fk_shipment_commodities_commodity",
-			Field:   "commodityId",
-			Message: "Commodity does not exist in your organization",
-		},
-		{
-			Name:    "fk_shipment_commodities_shipment",
-			Field:   "shipmentId",
-			Message: "Shipment does not exist in your organization",
-		},
-	},
-}
+var commodityErrors = dberror.Mapping{Entity: "Shipment commodity"}
 
 type Params struct {
 	fx.In

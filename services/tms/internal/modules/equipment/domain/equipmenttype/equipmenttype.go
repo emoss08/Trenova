@@ -148,3 +148,12 @@ func (et *EquipmentType) GetPostgresSearchConfig() domaintypes.PostgresSearchCon
 		},
 	}
 }
+
+func (EquipmentType) Constraints() []keel.Constraint {
+	return []keel.Constraint{
+		{
+			Name:    "idx_equipment_types_code",
+			Message: "Equipment type with this code already exists in your organization",
+		},
+	}
+}

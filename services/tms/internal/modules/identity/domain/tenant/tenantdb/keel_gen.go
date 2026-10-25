@@ -2554,12 +2554,13 @@ func beforeCreateInvoiceAdjustmentControl(ctx context.Context, p unsafe.Pointer)
 
 // organizationsTable is the schema of tenant.Organization.
 var organizationsTable = schema.Table{
-	Name:   "organizations",
-	Quoted: `"organizations"`,
-	Alias:  "o",
-	Model:  "tenant.Organization",
-	Label:  `Organization`,
-	Plural: `Organizations`,
+	Name:        "organizations",
+	Quoted:      `"organizations"`,
+	Alias:       "o",
+	Model:       "tenant.Organization",
+	Label:       `Organization`,
+	Plural:      `Organizations`,
+	Constraints: (&tenant.Organization{}).Constraints(),
 	Columns: []schema.Column{
 		{Name: "id", Quoted: `"id"`, Field: "ID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagAutoID, Label: `ID`, JSON: `id`},
 		{Name: "state_id", Quoted: `"state_id"`, Field: "StateID", Kind: schema.KindString, Flags: 0, Label: `State ID`, JSON: `stateId`},
@@ -4612,12 +4613,13 @@ func beforeCreateShipmentControl(ctx context.Context, p unsafe.Pointer) error {
 
 // usersTable is the schema of tenant.User.
 var usersTable = schema.Table{
-	Name:   "users",
-	Quoted: `"users"`,
-	Alias:  "u",
-	Model:  "tenant.User",
-	Label:  `User`,
-	Plural: `Users`,
+	Name:        "users",
+	Quoted:      `"users"`,
+	Alias:       "u",
+	Model:       "tenant.User",
+	Label:       `User`,
+	Plural:      `Users`,
+	Constraints: (&tenant.User{}).Constraints(),
 	Columns: []schema.Column{
 		{Name: "id", Quoted: `"id"`, Field: "ID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagAutoID, Label: `ID`, JSON: `id`},
 		{Name: "business_unit_id", Quoted: `"business_unit_id"`, Field: "BusinessUnitID", Kind: schema.KindString, Flags: schema.FlagTenant, Label: `Business Unit ID`, JSON: `businessUnitId`},

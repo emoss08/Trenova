@@ -307,6 +307,19 @@ func (u *User) GetPostgresSearchConfig() domaintypes.PostgresSearchConfig {
 	}
 }
 
+func (User) Constraints() []keel.Constraint {
+	return []keel.Constraint{
+		{
+			Name:    "idx_users_email_address",
+			Message: "A user with this email address already exists",
+		},
+		{
+			Name:    "idx_users_username",
+			Message: "A user with this username already exists",
+		},
+	}
+}
+
 func (m *OrganizationMembership) Validate(multiErr *errortypes.MultiError) {
 	multiErr.AddOzzoError(validation.ValidateStruct(m,
 		validation.Field(&m.OrganizationID,

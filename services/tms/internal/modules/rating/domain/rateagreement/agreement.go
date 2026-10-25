@@ -425,3 +425,12 @@ func (ra *RateAgreement) GetPostgresSearchConfig() domaintypes.PostgresSearchCon
 		},
 	}
 }
+
+func (RateAgreement) Constraints() []keel.Constraint {
+	return []keel.Constraint{
+		{
+			Name:    "uq_rate_agreements_code",
+			Message: "A rate agreement with this code already exists in your organization",
+		},
+	}
+}

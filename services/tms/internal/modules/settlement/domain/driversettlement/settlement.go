@@ -193,6 +193,16 @@ func (l *SettlementLine) Validate(multiErr *errortypes.MultiError) {
 	}
 }
 
+func (SettlementLine) Constraints() []keel.Constraint {
+	return []keel.Constraint{
+		{
+			Name:    "uq_driver_settlement_lines_number",
+			Field:   "lines",
+			Message: "Settlement line numbers must be unique within a settlement",
+		},
+	}
+}
+
 func (s *Settlement) SyncTotals() {
 	var gross, reimbursements, deductions, carryIn int64
 	for idx, line := range s.Lines {
@@ -293,4 +303,13 @@ func (s *Settlement) BeforeCreate(ctx context.Context) error {
 	}
 
 	return nil
+}
+
+func (Settlement) Constraints() []keel.Constraint {
+	return []keel.Constraint{
+		{
+			Name:    "uq_driver_settlements_number",
+			Message: "Settlement with this number already exists in your organization",
+		},
+	}
 }

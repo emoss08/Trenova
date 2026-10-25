@@ -165,3 +165,16 @@ func (to *TenderOffer) BeforeCreate(_ context.Context) error {
 
 	return nil
 }
+
+func (TenderOffer) Constraints() []keel.Constraint {
+	return []keel.Constraint{
+		{
+			Name:    "fk_tender_offers_carrier",
+			Message: "Carrier does not exist in your organization",
+		},
+		{
+			Name:    "fk_tender_offers_edi_partner",
+			Message: "EDI partner does not exist in your organization",
+		},
+	}
+}

@@ -137,3 +137,12 @@ func (dt *DocumentType) GetPostgresSearchConfig() domaintypes.PostgresSearchConf
 		},
 	}
 }
+
+func (DocumentType) Constraints() []keel.Constraint {
+	return []keel.Constraint{
+		{
+			Name:    "idx_document_types_code",
+			Message: "Document type with this code already exists in your organization",
+		},
+	}
+}

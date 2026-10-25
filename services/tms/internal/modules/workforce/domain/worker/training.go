@@ -398,6 +398,15 @@ func (c *TrainingCourse) BeforeSave(_ context.Context) error {
 	return nil
 }
 
+func (TrainingCourse) Constraints() []keel.Constraint {
+	return []keel.Constraint{
+		{
+			Name:    "uq_training_courses_code",
+			Message: "A course with this code already exists",
+		},
+	}
+}
+
 var (
 	_ validationframework.TenantedEntity = (*WorkerTrainingRecord)(nil)
 )
@@ -574,4 +583,26 @@ func (r *WorkerTrainingRecord) BeforeCreate(_ context.Context) error {
 	}
 
 	return nil
+}
+
+func (WorkerTrainingRecord) Constraints() []keel.Constraint {
+	return []keel.Constraint{
+		{
+			Name:    "uq_worker_training_records_open",
+			Field:   "courseId",
+			Message: "This worker already has this course assigned",
+		},
+		{
+			Name:    "fk_worker_training_records_worker",
+			Message: "Worker does not exist or belongs to a different organization",
+		},
+		{
+			Name:    "fk_worker_training_records_course",
+			Message: "Course does not exist or belongs to a different organization",
+		},
+		{
+			Name:    "fk_worker_training_records_document",
+			Message: "Document does not exist or belongs to a different organization",
+		},
+	}
 }

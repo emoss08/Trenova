@@ -18,12 +18,13 @@ import (
 
 // accountingAppCredentialsTable is the schema of accountingsync.AccountingAppCredential.
 var accountingAppCredentialsTable = schema.Table{
-	Name:   "accounting_app_credentials",
-	Quoted: `"accounting_app_credentials"`,
-	Alias:  "aac",
-	Model:  "accountingsync.AccountingAppCredential",
-	Label:  `Accounting App Credential`,
-	Plural: `Accounting App Credentials`,
+	Name:        "accounting_app_credentials",
+	Quoted:      `"accounting_app_credentials"`,
+	Alias:       "aac",
+	Model:       "accountingsync.AccountingAppCredential",
+	Label:       `Accounting App Credential`,
+	Plural:      `Accounting App Credentials`,
+	Constraints: (&accountingsync.AccountingAppCredential{}).Constraints(),
 	Columns: []schema.Column{
 		{Name: "id", Quoted: `"id"`, Field: "ID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagAutoID, Label: `ID`, JSON: `id`},
 		{Name: "business_unit_id", Quoted: `"business_unit_id"`, Field: "BusinessUnitID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Business Unit ID`, JSON: `businessUnitId`},

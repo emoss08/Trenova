@@ -18,16 +18,7 @@ import (
 
 const appCredentialEntity = "Accounting app"
 
-var appCredentialErrors = dberror.Mapping{
-	Entity: appCredentialEntity,
-	Unique: []dberror.Constraint{
-		{
-			Name:    "uq_accounting_app_credentials_tenant_type",
-			Field:   "integrationType",
-			Message: "An accounting app is already registered for this integration",
-		},
-	},
-}
+var appCredentialErrors = dberror.Mapping{Entity: appCredentialEntity}
 
 type AppCredentialParams struct {
 	fx.In

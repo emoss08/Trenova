@@ -15,12 +15,13 @@ import (
 
 // documentPacketRulesTable is the schema of documentpacketrule.DocumentPacketRule.
 var documentPacketRulesTable = schema.Table{
-	Name:   "document_packet_rules",
-	Quoted: `"document_packet_rules"`,
-	Alias:  "dpr",
-	Model:  "documentpacketrule.DocumentPacketRule",
-	Label:  `Document Packet Rule`,
-	Plural: `Document Packet Rules`,
+	Name:        "document_packet_rules",
+	Quoted:      `"document_packet_rules"`,
+	Alias:       "dpr",
+	Model:       "documentpacketrule.DocumentPacketRule",
+	Label:       `Document Packet Rule`,
+	Plural:      `Document Packet Rules`,
+	Constraints: (&documentpacketrule.DocumentPacketRule{}).Constraints(),
 	Columns: []schema.Column{
 		{Name: "id", Quoted: `"id"`, Field: "ID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagAutoID, Label: `ID`, JSON: `id`},
 		{Name: "organization_id", Quoted: `"organization_id"`, Field: "OrganizationID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Organization ID`, JSON: `organizationId`},

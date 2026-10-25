@@ -202,3 +202,16 @@ func (t *Trailer) GetPostgresSearchConfig() domaintypes.PostgresSearchConfig {
 		},
 	}
 }
+
+func (Trailer) Constraints() []keel.Constraint {
+	return []keel.Constraint{
+		{
+			Name:    "idx_trailers_code",
+			Message: "Trailer with this code already exists in your organization",
+		},
+		{
+			Name:    "idx_trailers_external_id_tenant",
+			Message: "Trailer with this external ID already exists in your organization",
+		},
+	}
+}

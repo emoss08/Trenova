@@ -173,3 +173,12 @@ func (rc *ReasonCode) BeforeCreate(ctx context.Context) error {
 
 	return nil
 }
+
+func (ReasonCode) Constraints() []keel.Constraint {
+	return []keel.Constraint{
+		{
+			Name:    "ux_sfrc_tenant_code",
+			Message: "Service failure reason code already exists in your organization",
+		},
+	}
+}

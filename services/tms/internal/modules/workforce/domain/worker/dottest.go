@@ -444,3 +444,28 @@ func (t *WorkerDOTTest) BeforeCreate(_ context.Context) error {
 
 	return nil
 }
+
+func (WorkerDOTTest) Constraints() []keel.Constraint {
+	return []keel.Constraint{
+		{
+			Name:    "uq_worker_dot_tests_draw_entry",
+			Message: "This random selection already has a test recorded against it",
+		},
+		{
+			Name:    "fk_worker_dot_tests_safety_event",
+			Message: "Safety event does not exist or belongs to a different organization",
+		},
+		{
+			Name:    "fk_worker_dot_tests_draw_entry",
+			Message: "Random selection does not exist or belongs to a different organization",
+		},
+		{
+			Name:    "fk_worker_dot_tests_worker",
+			Message: "Worker does not exist or belongs to a different organization",
+		},
+		{
+			Name:    "fk_worker_dot_tests_document",
+			Message: "Document does not exist or belongs to a different organization",
+		},
+	}
+}

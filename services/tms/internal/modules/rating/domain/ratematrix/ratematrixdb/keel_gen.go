@@ -18,12 +18,13 @@ import (
 
 // rateMatrixesTable is the schema of ratematrix.RateMatrix.
 var rateMatrixesTable = schema.Table{
-	Name:   "rate_matrices",
-	Quoted: `"rate_matrices"`,
-	Alias:  "rm",
-	Model:  "ratematrix.RateMatrix",
-	Label:  `Rate Matrix`,
-	Plural: `Rate Matrixes`,
+	Name:        "rate_matrices",
+	Quoted:      `"rate_matrices"`,
+	Alias:       "rm",
+	Model:       "ratematrix.RateMatrix",
+	Label:       `Rate Matrix`,
+	Plural:      `Rate Matrixes`,
+	Constraints: (&ratematrix.RateMatrix{}).Constraints(),
 	Columns: []schema.Column{
 		{Name: "id", Quoted: `"id"`, Field: "ID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagAutoID, Label: `ID`, JSON: `id`},
 		{Name: "business_unit_id", Quoted: `"business_unit_id"`, Field: "BusinessUnitID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Business Unit ID`, JSON: `businessUnitId`},
@@ -644,13 +645,14 @@ func attachRateMatrixCell(p unsafe.Pointer, rel int32, child unsafe.Pointer) {
 
 // rateMatrixDimensionsTable is the schema of ratematrix.RateMatrixDimension.
 var rateMatrixDimensionsTable = schema.Table{
-	Name:   "rate_matrix_dimensions",
-	Quoted: `"rate_matrix_dimensions"`,
-	Alias:  "rmd",
-	Model:  "ratematrix.RateMatrixDimension",
-	Label:  `Rate Matrix Dimension`,
-	Plural: `Rate Matrix Dimensions`,
-	Doc:    "RateMatrixDimension is one axis of a matrix.\n\nPosition is the contract between a dimension and the cells beneath it: a dimension at position two is read from and written to a cell's third pair of columns. That is why position is validated to be dense and unique rather than merely present.",
+	Name:        "rate_matrix_dimensions",
+	Quoted:      `"rate_matrix_dimensions"`,
+	Alias:       "rmd",
+	Model:       "ratematrix.RateMatrixDimension",
+	Label:       `Rate Matrix Dimension`,
+	Plural:      `Rate Matrix Dimensions`,
+	Doc:         "RateMatrixDimension is one axis of a matrix.\n\nPosition is the contract between a dimension and the cells beneath it: a dimension at position two is read from and written to a cell's third pair of columns. That is why position is validated to be dense and unique rather than merely present.",
+	Constraints: (&ratematrix.RateMatrixDimension{}).Constraints(),
 	Columns: []schema.Column{
 		{Name: "id", Quoted: `"id"`, Field: "ID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagAutoID, Label: `ID`, JSON: `id`},
 		{Name: "business_unit_id", Quoted: `"business_unit_id"`, Field: "BusinessUnitID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Business Unit ID`, JSON: `businessUnitId`},

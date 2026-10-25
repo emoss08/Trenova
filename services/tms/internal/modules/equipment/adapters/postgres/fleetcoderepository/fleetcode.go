@@ -17,16 +17,7 @@ import (
 	"go.uber.org/zap"
 )
 
-var fleetCodeErrors = dberror.Mapping{
-	Entity: "FleetCode",
-	ForeignKey: []dberror.Constraint{
-		{
-			Name:    "fk_fleet_codes_manager",
-			Field:   "managerId",
-			Message: "Manager does not exist or is not a member of your organization",
-		},
-	},
-}
+var fleetCodeErrors = dberror.Mapping{Entity: "FleetCode"}
 
 type Params struct {
 	fx.In

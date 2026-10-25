@@ -327,3 +327,12 @@ func (rm *RateMatrix) GetPostgresSearchConfig() domaintypes.PostgresSearchConfig
 		},
 	}
 }
+
+func (RateMatrix) Constraints() []keel.Constraint {
+	return []keel.Constraint{
+		{
+			Name:    "uq_rate_matrices_code",
+			Message: "A rate matrix with this code already exists in your organization",
+		},
+	}
+}

@@ -3,11 +3,11 @@ package locationrepository
 import (
 	"testing"
 
+	"github.com/emoss08/keel/postgis"
 	"github.com/emoss08/trenova/internal/modules/places/domain/geofence"
 	"github.com/emoss08/trenova/internal/modules/places/domain/location"
 	"github.com/emoss08/trenova/internal/modules/places/domain/location/locationdb"
 	"github.com/emoss08/trenova/internal/testutil/keeltest"
-	"github.com/emoss08/trenova/pkg/postgis"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -16,7 +16,7 @@ import (
 func drawnGeometry(t *testing.T) *postgis.Geometry {
 	t.Helper()
 
-	geometry, err := postgis.PolygonGeometry([]postgis.Vertex{
+	geometry, err := geofence.PolygonGeometry([]geofence.Vertex{
 		{Latitude: 26.766562573433664, Longitude: -80.0526537300732},
 		{Latitude: 26.766792474681477, Longitude: -80.05071302469669},
 		{Latitude: 26.767414037693534, Longitude: -80.05068083818851},

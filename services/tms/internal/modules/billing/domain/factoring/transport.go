@@ -233,3 +233,12 @@ func (t *Transport) GetID() pulid.ID             { return t.ID }
 func (t *Transport) GetOrganizationID() pulid.ID { return t.OrganizationID }
 func (t *Transport) GetBusinessUnitID() pulid.ID { return t.BusinessUnitID }
 func (t *Transport) GetTableName() string        { return "factoring_transports" }
+
+func (Transport) Constraints() []keel.Constraint {
+	return []keel.Constraint{
+		{
+			Name:    "uq_factoring_transports_factor",
+			Message: "This factor's delivery settings were just saved by someone else; reload and try again",
+		},
+	}
+}

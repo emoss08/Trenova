@@ -371,3 +371,20 @@ func (g *GeneratedDocument) BeforeSave(_ context.Context) error {
 	g.Normalize()
 	return nil
 }
+
+func (GeneratedDocument) Constraints() []keel.Constraint {
+	return []keel.Constraint{
+		{
+			Name:    "fk_generated_documents_template_version",
+			Message: "Template version does not exist",
+		},
+		{
+			Name:    "fk_generated_documents_document",
+			Message: "Document does not exist",
+		},
+		{
+			Name:    "fk_generated_documents_template",
+			Message: "Document template does not exist",
+		},
+	}
+}

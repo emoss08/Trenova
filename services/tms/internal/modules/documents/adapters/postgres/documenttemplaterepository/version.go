@@ -17,39 +17,7 @@ import (
 	"go.uber.org/zap"
 )
 
-const fieldTemplateID = "templateId"
-
-func templateForeignKey(name string) dberror.Constraint {
-	return dberror.Constraint{
-		Name:    name,
-		Field:   fieldTemplateID,
-		Message: "Document template does not exist",
-	}
-}
-
-var versionErrors = dberror.Mapping{
-	Entity: "DocumentTemplateVersion",
-	Unique: []dberror.Constraint{
-		{
-			Name:    "uq_document_template_versions_one_draft",
-			Field:   fieldTemplateID,
-			Message: "This template already has a draft. Edit it or delete it before starting another.",
-		},
-		{
-			Name:    "uq_document_template_versions_one_active",
-			Field:   "status",
-			Message: "This template already has an active version",
-		},
-	},
-	ForeignKey: []dberror.Constraint{
-		templateForeignKey("fk_document_template_versions_template"),
-		{
-			Name:    "fk_document_template_versions_source",
-			Field:   "sourceVersionId",
-			Message: "Source version does not exist",
-		},
-	},
-}
+var versionErrors = dberror.Mapping{Entity: "DocumentTemplateVersion"}
 
 type VersionParams struct {
 	fx.In

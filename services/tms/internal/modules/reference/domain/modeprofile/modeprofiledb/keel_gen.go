@@ -17,12 +17,13 @@ import (
 
 // capabilityRulesTable is the schema of modeprofile.CapabilityRule.
 var capabilityRulesTable = schema.Table{
-	Name:   "mode_profile_capability_rules",
-	Quoted: `"mode_profile_capability_rules"`,
-	Alias:  "mpcr",
-	Model:  "modeprofile.CapabilityRule",
-	Label:  `Capability Rule`,
-	Plural: `Capability Rules`,
+	Name:        "mode_profile_capability_rules",
+	Quoted:      `"mode_profile_capability_rules"`,
+	Alias:       "mpcr",
+	Model:       "modeprofile.CapabilityRule",
+	Label:       `Capability Rule`,
+	Plural:      `Capability Rules`,
+	Constraints: (&modeprofile.CapabilityRule{}).Constraints(),
 	Columns: []schema.Column{
 		{Name: "id", Quoted: `"id"`, Field: "ID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagAutoID, Label: `ID`, JSON: `id`},
 		{Name: "business_unit_id", Quoted: `"business_unit_id"`, Field: "BusinessUnitID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Business Unit ID`, JSON: `businessUnitId`},
@@ -237,12 +238,13 @@ func beforeSaveCapabilityRule(ctx context.Context, p unsafe.Pointer) error {
 
 // deviationsTable is the schema of modeprofile.Deviation.
 var deviationsTable = schema.Table{
-	Name:   "mode_profile_deviations",
-	Quoted: `"mode_profile_deviations"`,
-	Alias:  "mpd",
-	Model:  "modeprofile.Deviation",
-	Label:  `Deviation`,
-	Plural: `Deviations`,
+	Name:        "mode_profile_deviations",
+	Quoted:      `"mode_profile_deviations"`,
+	Alias:       "mpd",
+	Model:       "modeprofile.Deviation",
+	Label:       `Deviation`,
+	Plural:      `Deviations`,
+	Constraints: (&modeprofile.Deviation{}).Constraints(),
 	Columns: []schema.Column{
 		{Name: "id", Quoted: `"id"`, Field: "ID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagAutoID, Label: `ID`, JSON: `id`},
 		{Name: "business_unit_id", Quoted: `"business_unit_id"`, Field: "BusinessUnitID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Business Unit ID`, JSON: `businessUnitId`},
@@ -557,12 +559,13 @@ func beforeSaveDeviation(ctx context.Context, p unsafe.Pointer) error {
 
 // profilesTable is the schema of modeprofile.Profile.
 var profilesTable = schema.Table{
-	Name:   "mode_profiles",
-	Quoted: `"mode_profiles"`,
-	Alias:  "mp",
-	Model:  "modeprofile.Profile",
-	Label:  `Profile`,
-	Plural: `Profiles`,
+	Name:        "mode_profiles",
+	Quoted:      `"mode_profiles"`,
+	Alias:       "mp",
+	Model:       "modeprofile.Profile",
+	Label:       `Profile`,
+	Plural:      `Profiles`,
+	Constraints: (&modeprofile.Profile{}).Constraints(),
 	Columns: []schema.Column{
 		{Name: "id", Quoted: `"id"`, Field: "ID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagAutoID, Label: `ID`, JSON: `id`},
 		{Name: "business_unit_id", Quoted: `"business_unit_id"`, Field: "BusinessUnitID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Business Unit ID`, JSON: `businessUnitId`},

@@ -29,16 +29,7 @@ const (
 	contactBatchSize  = 500
 )
 
-var checkCallErrors = dberror.Mapping{
-	Entity: "Check call",
-	ForeignKey: []dberror.Constraint{
-		{
-			Name:    "fk_check_calls_shipment",
-			Field:   "shipmentId",
-			Message: "Shipment does not exist in your organization",
-		},
-	},
-}
+var checkCallErrors = dberror.Mapping{Entity: "Check call"}
 
 type Params struct {
 	fx.In

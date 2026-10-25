@@ -20,26 +20,8 @@ import (
 )
 
 var (
-	settlementErrors = dberror.Mapping{
-		Entity: "DriverSettlement",
-		Unique: []dberror.Constraint{
-			{
-				Name:    "uq_driver_settlements_number",
-				Field:   "settlementNumber",
-				Message: "Settlement with this number already exists in your organization",
-			},
-		},
-	}
-	settlementLineErrors = dberror.Mapping{
-		Entity: "DriverSettlementLine",
-		Unique: []dberror.Constraint{
-			{
-				Name:    "uq_driver_settlement_lines_number",
-				Field:   "lines",
-				Message: "Settlement line numbers must be unique within a settlement",
-			},
-		},
-	}
+	settlementErrors     = dberror.Mapping{Entity: "DriverSettlement"}
+	settlementLineErrors = dberror.Mapping{Entity: "DriverSettlementLine"}
 )
 
 type Params struct {

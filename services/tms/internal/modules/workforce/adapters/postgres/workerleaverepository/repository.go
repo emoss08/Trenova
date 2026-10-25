@@ -27,54 +27,9 @@ const (
 
 var controlErrors = dberror.Mapping{Entity: "LeaveControl"}
 
-var caseErrors = dberror.Mapping{
-	Entity: "WorkerLeaveCase",
-	ForeignKey: []dberror.Constraint{
-		{
-			Name:    "fk_worker_leave_cases_worker",
-			Field:   "workerId",
-			Message: "Worker does not exist or belongs to a different organization",
-		},
-		{
-			Name:    "fk_worker_leave_cases_event",
-			Field:   "employmentEventId",
-			Message: "Employment event does not exist or belongs to a different organization",
-		},
-		{
-			Name:    "fk_worker_leave_cases_document",
-			Field:   "documentId",
-			Message: "Document does not exist or belongs to a different organization",
-		},
-	},
-}
+var caseErrors = dberror.Mapping{Entity: "WorkerLeaveCase"}
 
-var entryErrors = dberror.Mapping{
-	Entity: "WorkerLeaveEntry",
-	Unique: []dberror.Constraint{
-		{
-			Name:    "uq_worker_leave_entries_day",
-			Field:   "usedOn",
-			Message: "That day is already recorded against this case; edit it instead",
-		},
-	},
-	ForeignKey: []dberror.Constraint{
-		{
-			Name:    "fk_worker_leave_entries_worker",
-			Field:   "workerId",
-			Message: "Worker does not exist or belongs to a different organization",
-		},
-		{
-			Name:    "fk_worker_leave_entries_case",
-			Field:   "leaveCaseId",
-			Message: "Leave case does not exist or belongs to a different organization",
-		},
-		{
-			Name:    "fk_worker_leave_entries_pto",
-			Field:   "ptoId",
-			Message: "Time off request does not exist for this worker",
-		},
-	},
-}
+var entryErrors = dberror.Mapping{Entity: "WorkerLeaveEntry"}
 
 type Params struct {
 	fx.In

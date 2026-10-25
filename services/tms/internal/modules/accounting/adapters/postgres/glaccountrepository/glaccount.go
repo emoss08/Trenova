@@ -17,28 +17,7 @@ import (
 	"go.uber.org/zap"
 )
 
-var glAccountErrors = dberror.Mapping{
-	Entity: "GLAccount",
-	Unique: []dberror.Constraint{
-		{
-			Name:    "uq_gl_accounts_code",
-			Field:   "accountCode",
-			Message: "GL account with this account code already exists in your organization",
-		},
-	},
-	ForeignKey: []dberror.Constraint{
-		{
-			Name:    "fk_gl_accounts_account_type",
-			Field:   "accountTypeId",
-			Message: "Account type does not exist in your organization",
-		},
-		{
-			Name:    "fk_gl_accounts_parent",
-			Field:   "parentId",
-			Message: "Parent account does not exist or still has child accounts",
-		},
-	},
-}
+var glAccountErrors = dberror.Mapping{Entity: "GLAccount"}
 
 type Params struct {
 	fx.In

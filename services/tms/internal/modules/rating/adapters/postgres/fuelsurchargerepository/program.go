@@ -25,16 +25,7 @@ const (
 	usedFallbackDetailPath = "usedFallback"
 )
 
-var programErrors = dberror.Mapping{
-	Entity: "FuelSurchargeProgram",
-	Unique: []dberror.Constraint{
-		{
-			Name:    "uq_fuel_surcharge_programs_code",
-			Field:   "code",
-			Message: "A fuel surcharge program with this code already exists in your organization",
-		},
-	},
-}
+var programErrors = dberror.Mapping{Entity: "FuelSurchargeProgram"}
 
 type ProgramParams struct {
 	fx.In

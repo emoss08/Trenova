@@ -86,3 +86,12 @@ func (em *EquipmentManufacturer) GetPostgresSearchConfig() domaintypes.PostgresS
 		},
 	}
 }
+
+func (EquipmentManufacturer) Constraints() []keel.Constraint {
+	return []keel.Constraint{
+		{
+			Name:    "idx_equipment_manu_name",
+			Message: "Equipment manufacturer with this name already exists in your organization",
+		},
+	}
+}

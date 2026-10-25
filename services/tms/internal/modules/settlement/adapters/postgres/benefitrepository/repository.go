@@ -25,26 +25,8 @@ const (
 )
 
 var (
-	planErrors = dberror.Mapping{
-		Entity: "BenefitPlan",
-		Unique: []dberror.Constraint{
-			{
-				Name:    "uq_benefit_plans_code_year",
-				Field:   "code",
-				Message: "Benefit plan with this code already exists for the plan year",
-			},
-		},
-	}
-	enrollmentErrors = dberror.Mapping{
-		Entity: "WorkerBenefitEnrollment",
-		Unique: []dberror.Constraint{
-			{
-				Name:    "uq_worker_benefit_enrollments_open",
-				Field:   "benefitPlanId",
-				Message: "Worker already has an open enrollment in this benefit plan",
-			},
-		},
-	}
+	planErrors             = dberror.Mapping{Entity: "BenefitPlan"}
+	enrollmentErrors       = dberror.Mapping{Entity: "WorkerBenefitEnrollment"}
 	openEnrollmentStatuses = []driverpay.BenefitEnrollmentStatus{
 		driverpay.EnrollmentPending,
 		driverpay.EnrollmentActive,

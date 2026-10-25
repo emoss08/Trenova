@@ -17,21 +17,7 @@ import (
 	"go.uber.org/zap"
 )
 
-var batchErrors = dberror.Mapping{
-	Entity: "BankReceiptBatch",
-	ForeignKey: []dberror.Constraint{
-		{
-			Name:    "fk_bank_receipt_import_batches_created_by",
-			Field:   "createdById",
-			Message: "Created by user does not exist",
-		},
-		{
-			Name:    "fk_bank_receipt_import_batches_updated_by",
-			Field:   "updatedById",
-			Message: "Updated by user does not exist",
-		},
-	},
-}
+var batchErrors = dberror.Mapping{Entity: "BankReceiptBatch"}
 
 type Params struct {
 	fx.In

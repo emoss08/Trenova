@@ -7,6 +7,7 @@ import (
 	"unsafe"
 
 	"github.com/emoss08/keel"
+	"github.com/emoss08/keel/postgis"
 	"github.com/emoss08/keel/schema"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/glaccount"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/glaccount/glaccountdb"
@@ -27,14 +28,15 @@ import (
 
 // customersTable is the schema of customer.Customer.
 var customersTable = schema.Table{
-	Name:   "customers",
-	Quoted: `"customers"`,
-	Alias:  "c",
-	Model:  "customer.Customer",
-	Label:  `Customer`,
-	Plural: `Customers`,
-	Doc:    `Customers who tender freight`,
-	Report: &schema.TableReport{Category: `Parties`},
+	Name:        "customers",
+	Quoted:      `"customers"`,
+	Alias:       "c",
+	Model:       "customer.Customer",
+	Label:       `Customer`,
+	Plural:      `Customers`,
+	Doc:         `Customers who tender freight`,
+	Report:      &schema.TableReport{Category: `Parties`},
+	Constraints: (&customer.Customer{}).Constraints(),
 	Columns: []schema.Column{
 		{Name: "id", Quoted: `"id"`, Field: "ID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagAutoID, Label: `ID`, JSON: `id`, Report: &reportDimString},
 		{Name: "business_unit_id", Quoted: `"business_unit_id"`, Field: "BusinessUnitID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Business Unit ID`, JSON: `businessUnitId`, Report: &reportDimStringHidden},
@@ -124,7 +126,7 @@ type CustomersTable struct {
 	BrokerVettingEnabled    keel.BoolCol
 	CheckCallIntervalHours  keel.Int16Col
 	EtaRiskThresholdMinutes keel.Int16Col
-	Geom                    keelkinds.PostgisPointCol
+	Geom                    postgis.PointCol
 	AllowConsolidation      keel.BoolCol
 	ExclusiveConsolidation  keel.BoolCol
 	ConsolidationPriority   keel.Int64Col
@@ -161,7 +163,7 @@ var Customers = &CustomersTable{
 	BrokerVettingEnabled:    keel.BoolCol{Col: keel.Col{Ref: &customersRef, Index: 20}},
 	CheckCallIntervalHours:  keel.Int16Col{Col: keel.Col{Ref: &customersRef, Index: 21}},
 	EtaRiskThresholdMinutes: keel.Int16Col{Col: keel.Col{Ref: &customersRef, Index: 22}},
-	Geom:                    keelkinds.PostgisPointCol{AnyCol: keel.AnyCol{Col: keel.Col{Ref: &customersRef, Index: 23}}},
+	Geom:                    postgis.PointCol{AnyCol: keel.AnyCol{Col: keel.Col{Ref: &customersRef, Index: 23}}},
 	AllowConsolidation:      keel.BoolCol{Col: keel.Col{Ref: &customersRef, Index: 24}},
 	ExclusiveConsolidation:  keel.BoolCol{Col: keel.Col{Ref: &customersRef, Index: 25}},
 	ConsolidationPriority:   keel.Int64Col{Col: keel.Col{Ref: &customersRef, Index: 26}},
@@ -199,7 +201,7 @@ func BuildCustomers(r *keel.Ref) *CustomersTable {
 		BrokerVettingEnabled:    keel.BoolCol{Col: keel.Col{Ref: r, Index: 20}},
 		CheckCallIntervalHours:  keel.Int16Col{Col: keel.Col{Ref: r, Index: 21}},
 		EtaRiskThresholdMinutes: keel.Int16Col{Col: keel.Col{Ref: r, Index: 22}},
-		Geom:                    keelkinds.PostgisPointCol{AnyCol: keel.AnyCol{Col: keel.Col{Ref: r, Index: 23}}},
+		Geom:                    postgis.PointCol{AnyCol: keel.AnyCol{Col: keel.Col{Ref: r, Index: 23}}},
 		AllowConsolidation:      keel.BoolCol{Col: keel.Col{Ref: r, Index: 24}},
 		ExclusiveConsolidation:  keel.BoolCol{Col: keel.Col{Ref: r, Index: 25}},
 		ConsolidationPriority:   keel.Int64Col{Col: keel.Col{Ref: r, Index: 26}},

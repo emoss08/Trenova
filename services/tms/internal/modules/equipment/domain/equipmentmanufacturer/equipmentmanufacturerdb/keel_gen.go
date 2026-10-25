@@ -17,14 +17,15 @@ import (
 
 // equipmentManufacturersTable is the schema of equipmentmanufacturer.EquipmentManufacturer.
 var equipmentManufacturersTable = schema.Table{
-	Name:   "equipment_manufacturers",
-	Quoted: `"equipment_manufacturers"`,
-	Alias:  "em",
-	Model:  "equipmentmanufacturer.EquipmentManufacturer",
-	Label:  `Equipment Manufacturer`,
-	Plural: `Equipment Manufacturers`,
-	Doc:    `Equipment manufacturers`,
-	Report: &schema.TableReport{Category: `Equipment`},
+	Name:        "equipment_manufacturers",
+	Quoted:      `"equipment_manufacturers"`,
+	Alias:       "em",
+	Model:       "equipmentmanufacturer.EquipmentManufacturer",
+	Label:       `Equipment Manufacturer`,
+	Plural:      `Equipment Manufacturers`,
+	Doc:         `Equipment manufacturers`,
+	Report:      &schema.TableReport{Category: `Equipment`},
+	Constraints: (&equipmentmanufacturer.EquipmentManufacturer{}).Constraints(),
 	Columns: []schema.Column{
 		{Name: "id", Quoted: `"id"`, Field: "ID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagAutoID, Label: `ID`, JSON: `id`, Report: &reportDimString},
 		{Name: "business_unit_id", Quoted: `"business_unit_id"`, Field: "BusinessUnitID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Business Unit ID`, JSON: `businessUnitId`, Report: &reportDimStringHidden},

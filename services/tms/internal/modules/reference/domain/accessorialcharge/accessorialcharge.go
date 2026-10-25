@@ -150,3 +150,12 @@ func (a *AccessorialCharge) BeforeSave(_ context.Context) error {
 
 	return nil
 }
+
+func (AccessorialCharge) Constraints() []keel.Constraint {
+	return []keel.Constraint{
+		{
+			Name:    "uq_accessorial_charges_code",
+			Message: "Accessorial charge with this code already exists in your organization",
+		},
+	}
+}

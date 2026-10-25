@@ -5,12 +5,12 @@ package weatheralertrepository
 import (
 	"testing"
 
+	"github.com/emoss08/keel/postgis"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/weatheralert"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/weatheralertports"
 	"github.com/emoss08/trenova/internal/testutil/seedtest"
 	"github.com/emoss08/trenova/pkg/pagination"
-	"github.com/emoss08/trenova/pkg/postgis"
 	"github.com/paulmach/orb"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"

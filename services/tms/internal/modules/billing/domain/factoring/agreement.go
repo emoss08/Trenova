@@ -358,3 +358,12 @@ func (a *Agreement) GetID() pulid.ID             { return a.ID }
 func (a *Agreement) GetOrganizationID() pulid.ID { return a.OrganizationID }
 func (a *Agreement) GetBusinessUnitID() pulid.ID { return a.BusinessUnitID }
 func (a *Agreement) GetTableName() string        { return "factoring_agreements" }
+
+func (Agreement) Constraints() []keel.Constraint {
+	return []keel.Constraint{
+		{
+			Name:    "ex_factoring_agreements_active_overlap",
+			Message: "Another active agreement with this factor covers part of these dates",
+		},
+	}
+}

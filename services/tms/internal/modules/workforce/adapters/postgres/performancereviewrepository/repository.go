@@ -20,44 +20,9 @@ import (
 	"go.uber.org/zap"
 )
 
-var templateErrors = dberror.Mapping{
-	Entity: "PerformanceReviewTemplate",
-	Unique: []dberror.Constraint{
-		{
-			Name:    "uq_performance_review_templates_code",
-			Field:   "code",
-			Message: "A review template with this code already exists",
-		},
-		{
-			Name:    "uq_performance_review_templates_default",
-			Field:   "isDefault",
-			Message: "Another review template is already the default",
-		},
-	},
-}
+var templateErrors = dberror.Mapping{Entity: "PerformanceReviewTemplate"}
 
-var reviewErrors = dberror.Mapping{
-	Entity: "PerformanceReview",
-	Unique: []dberror.Constraint{
-		{
-			Name:    "uq_performance_reviews_open",
-			Field:   "templateId",
-			Message: "This worker already has an open review on this template",
-		},
-	},
-	ForeignKey: []dberror.Constraint{
-		{
-			Name:    "fk_performance_reviews_worker",
-			Field:   "workerId",
-			Message: "Worker does not exist or belongs to a different organization",
-		},
-		{
-			Name:    "fk_performance_reviews_template",
-			Field:   "templateId",
-			Message: "Review template does not exist or belongs to a different organization",
-		},
-	},
-}
+var reviewErrors = dberror.Mapping{Entity: "PerformanceReview"}
 
 var openReviewStatuses = []worker.ReviewStatus{
 	worker.ReviewStatusDraft,

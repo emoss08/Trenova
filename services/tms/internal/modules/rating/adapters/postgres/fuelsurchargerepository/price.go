@@ -21,16 +21,7 @@ const (
 	latestPriceCeiling    = "9999-12-31"
 )
 
-var fuelPriceErrors = dberror.Mapping{
-	Entity: "FuelIndexPrice",
-	Unique: []dberror.Constraint{
-		{
-			Name:    "uq_fuel_index_prices_week",
-			Field:   "priceDate",
-			Message: "This fuel index already has a price for that date",
-		},
-	},
-}
+var fuelPriceErrors = dberror.Mapping{Entity: "FuelIndexPrice"}
 
 type PriceParams struct {
 	fx.In

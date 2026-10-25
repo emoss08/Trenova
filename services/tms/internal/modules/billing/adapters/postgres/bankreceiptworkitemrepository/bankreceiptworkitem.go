@@ -17,43 +17,7 @@ import (
 	"go.uber.org/zap"
 )
 
-var workItemErrors = dberror.Mapping{
-	Entity: "BankReceiptWorkItem",
-	Unique: []dberror.Constraint{
-		{
-			Name:    "uq_bank_receipt_work_items_active",
-			Field:   "bankReceiptId",
-			Message: "An active work item already exists for this bank receipt",
-		},
-	},
-	ForeignKey: []dberror.Constraint{
-		{
-			Name:    "fk_bank_receipt_work_items_receipt",
-			Field:   "bankReceiptId",
-			Message: "Bank receipt does not exist in your organization",
-		},
-		{
-			Name:    "fk_bank_receipt_work_items_assigned_to",
-			Field:   "assignedToUserId",
-			Message: "Assigned user does not exist",
-		},
-		{
-			Name:    "fk_bank_receipt_work_items_resolved_by",
-			Field:   "resolvedByUserId",
-			Message: "Resolving user does not exist",
-		},
-		{
-			Name:    "fk_bank_receipt_work_items_created_by",
-			Field:   "createdById",
-			Message: "Created by user does not exist",
-		},
-		{
-			Name:    "fk_bank_receipt_work_items_updated_by",
-			Field:   "updatedById",
-			Message: "Updated by user does not exist",
-		},
-	},
-}
+var workItemErrors = dberror.Mapping{Entity: "BankReceiptWorkItem"}
 
 var activeStatuses = []bankreceiptworkitem.Status{
 	bankreceiptworkitem.StatusOpen,

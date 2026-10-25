@@ -150,3 +150,12 @@ func (r *RecurringEarning) BeforeCreate(ctx context.Context) error {
 
 	return nil
 }
+
+func (RecurringEarning) Constraints() []keel.Constraint {
+	return []keel.Constraint{
+		{
+			Name:    "fk_recurring_earnings_pay_code",
+			Message: "Pay code does not exist in your organization",
+		},
+	}
+}

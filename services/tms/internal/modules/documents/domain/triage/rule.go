@@ -186,3 +186,12 @@ func (r *Rule) BeforeUpdate(ctx context.Context) error {
 func (r *Rule) GetID() pulid.ID      { return r.ID }
 func (r *Rule) GetCreatedAt() int64  { return r.CreatedAt }
 func (r *Rule) GetTableName() string { return "triage_rules" }
+
+func (Rule) Constraints() []keel.Constraint {
+	return []keel.Constraint{
+		{
+			Name:    "fk_triage_rules_mailbox",
+			Message: "Mailbox does not exist",
+		},
+	}
+}

@@ -271,12 +271,13 @@ func beforeCreateApprovalDelegation(ctx context.Context, p unsafe.Pointer) error
 
 // dOTRandomDrawsTable is the schema of worker.DOTRandomDraw.
 var dOTRandomDrawsTable = schema.Table{
-	Name:   "dot_random_draws",
-	Quoted: `"dot_random_draws"`,
-	Alias:  "drd",
-	Model:  "worker.DOTRandomDraw",
-	Label:  `DOT Random Draw`,
-	Plural: `DOT Random Draws`,
+	Name:        "dot_random_draws",
+	Quoted:      `"dot_random_draws"`,
+	Alias:       "drd",
+	Model:       "worker.DOTRandomDraw",
+	Label:       `DOT Random Draw`,
+	Plural:      `DOT Random Draws`,
+	Constraints: (&worker.DOTRandomDraw{}).Constraints(),
 	Columns: []schema.Column{
 		{Name: "id", Quoted: `"id"`, Field: "ID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagAutoID, Label: `ID`, JSON: `id`},
 		{Name: "business_unit_id", Quoted: `"business_unit_id"`, Field: "BusinessUnitID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Business Unit ID`, JSON: `businessUnitId`},
@@ -574,12 +575,13 @@ func beforeCreateDOTRandomDraw(ctx context.Context, p unsafe.Pointer) error {
 
 // dOTRandomDrawEntriesTable is the schema of worker.DOTRandomDrawEntry.
 var dOTRandomDrawEntriesTable = schema.Table{
-	Name:   "dot_random_draw_entries",
-	Quoted: `"dot_random_draw_entries"`,
-	Alias:  "drde",
-	Model:  "worker.DOTRandomDrawEntry",
-	Label:  `DOT Random Draw Entry`,
-	Plural: `DOT Random Draw Entries`,
+	Name:        "dot_random_draw_entries",
+	Quoted:      `"dot_random_draw_entries"`,
+	Alias:       "drde",
+	Model:       "worker.DOTRandomDrawEntry",
+	Label:       `DOT Random Draw Entry`,
+	Plural:      `DOT Random Draw Entries`,
+	Constraints: (&worker.DOTRandomDrawEntry{}).Constraints(),
 	Columns: []schema.Column{
 		{Name: "id", Quoted: `"id"`, Field: "ID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagAutoID, Label: `ID`, JSON: `id`},
 		{Name: "business_unit_id", Quoted: `"business_unit_id"`, Field: "BusinessUnitID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Business Unit ID`, JSON: `businessUnitId`},
@@ -814,12 +816,13 @@ func beforeCreateDOTRandomDrawEntry(ctx context.Context, p unsafe.Pointer) error
 
 // dOTRandomPoolsTable is the schema of worker.DOTRandomPool.
 var dOTRandomPoolsTable = schema.Table{
-	Name:   "dot_random_pools",
-	Quoted: `"dot_random_pools"`,
-	Alias:  "drp",
-	Model:  "worker.DOTRandomPool",
-	Label:  `DOT Random Pool`,
-	Plural: `DOT Random Pools`,
+	Name:        "dot_random_pools",
+	Quoted:      `"dot_random_pools"`,
+	Alias:       "drp",
+	Model:       "worker.DOTRandomPool",
+	Label:       `DOT Random Pool`,
+	Plural:      `DOT Random Pools`,
+	Constraints: (&worker.DOTRandomPool{}).Constraints(),
 	Columns: []schema.Column{
 		{Name: "id", Quoted: `"id"`, Field: "ID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagAutoID, Label: `ID`, JSON: `id`},
 		{Name: "business_unit_id", Quoted: `"business_unit_id"`, Field: "BusinessUnitID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Business Unit ID`, JSON: `businessUnitId`},
@@ -1458,13 +1461,14 @@ func beforeCreateLeaveControl(ctx context.Context, p unsafe.Pointer) error {
 
 // oSHAAnnualSummariesTable is the schema of worker.OSHAAnnualSummary.
 var oSHAAnnualSummariesTable = schema.Table{
-	Name:   "osha_annual_summaries",
-	Quoted: `"osha_annual_summaries"`,
-	Alias:  "oas",
-	Model:  "worker.OSHAAnnualSummary",
-	Label:  `OSHA Annual Summary`,
-	Plural: `OSHA Annual Summaries`,
-	Doc:    "OSHAAnnualSummary is the 300A for one establishment and year. The organisation is the establishment: it carries one address, which is what OSHA means by one.\n\nThe case totals are deliberately not columns here. They are derived from the injuries whenever the summary is read, so a case corrected in March — which the rule requires for five years — cannot leave a stale summary behind it.",
+	Name:        "osha_annual_summaries",
+	Quoted:      `"osha_annual_summaries"`,
+	Alias:       "oas",
+	Model:       "worker.OSHAAnnualSummary",
+	Label:       `OSHA Annual Summary`,
+	Plural:      `OSHA Annual Summaries`,
+	Doc:         "OSHAAnnualSummary is the 300A for one establishment and year. The organisation is the establishment: it carries one address, which is what OSHA means by one.\n\nThe case totals are deliberately not columns here. They are derived from the injuries whenever the summary is read, so a case corrected in March — which the rule requires for five years — cannot leave a stale summary behind it.",
+	Constraints: (&worker.OSHAAnnualSummary{}).Constraints(),
 	Columns: []schema.Column{
 		{Name: "id", Quoted: `"id"`, Field: "ID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagAutoID, Label: `ID`, JSON: `id`},
 		{Name: "business_unit_id", Quoted: `"business_unit_id"`, Field: "BusinessUnitID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Business Unit ID`, JSON: `businessUnitId`},
@@ -1762,13 +1766,14 @@ func beforeCreateOSHAAnnualSummary(ctx context.Context, p unsafe.Pointer) error 
 
 // orgHolidaysTable is the schema of worker.OrgHoliday.
 var orgHolidaysTable = schema.Table{
-	Name:   "org_holidays",
-	Quoted: `"org_holidays"`,
-	Alias:  "oh",
-	Model:  "worker.OrgHoliday",
-	Label:  `Org Holiday`,
-	Plural: `Org Holidays`,
-	Doc:    `OrgHoliday is one calendar date the organisation treats specially. The date is stored as midnight UTC of the calendar day so it compares the same way regardless of the organisation's timezone.`,
+	Name:        "org_holidays",
+	Quoted:      `"org_holidays"`,
+	Alias:       "oh",
+	Model:       "worker.OrgHoliday",
+	Label:       `Org Holiday`,
+	Plural:      `Org Holidays`,
+	Doc:         `OrgHoliday is one calendar date the organisation treats specially. The date is stored as midnight UTC of the calendar day so it compares the same way regardless of the organisation's timezone.`,
+	Constraints: (&worker.OrgHoliday{}).Constraints(),
 	Columns: []schema.Column{
 		{Name: "id", Quoted: `"id"`, Field: "ID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagAutoID, Label: `ID`, JSON: `id`},
 		{Name: "business_unit_id", Quoted: `"business_unit_id"`, Field: "BusinessUnitID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Business Unit ID`, JSON: `businessUnitId`},
@@ -1939,12 +1944,13 @@ func beforeCreateOrgHoliday(ctx context.Context, p unsafe.Pointer) error {
 
 // pTOPoliciesTable is the schema of worker.PTOPolicy.
 var pTOPoliciesTable = schema.Table{
-	Name:   "pto_policies",
-	Quoted: `"pto_policies"`,
-	Alias:  "pp",
-	Model:  "worker.PTOPolicy",
-	Label:  `PTO Policy`,
-	Plural: `PTO Policies`,
+	Name:        "pto_policies",
+	Quoted:      `"pto_policies"`,
+	Alias:       "pp",
+	Model:       "worker.PTOPolicy",
+	Label:       `PTO Policy`,
+	Plural:      `PTO Policies`,
+	Constraints: (&worker.PTOPolicy{}).Constraints(),
 	Columns: []schema.Column{
 		{Name: "id", Quoted: `"id"`, Field: "ID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagAutoID, Label: `ID`, JSON: `id`},
 		{Name: "business_unit_id", Quoted: `"business_unit_id"`, Field: "BusinessUnitID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Business Unit ID`, JSON: `businessUnitId`},
@@ -2196,12 +2202,13 @@ func beforeCreatePTOPolicy(ctx context.Context, p unsafe.Pointer) error {
 
 // pTOPolicyRulesTable is the schema of worker.PTOPolicyRule.
 var pTOPolicyRulesTable = schema.Table{
-	Name:   "pto_policy_rules",
-	Quoted: `"pto_policy_rules"`,
-	Alias:  "ppr",
-	Model:  "worker.PTOPolicyRule",
-	Label:  `PTO Policy Rule`,
-	Plural: `PTO Policy Rules`,
+	Name:        "pto_policy_rules",
+	Quoted:      `"pto_policy_rules"`,
+	Alias:       "ppr",
+	Model:       "worker.PTOPolicyRule",
+	Label:       `PTO Policy Rule`,
+	Plural:      `PTO Policy Rules`,
+	Constraints: (&worker.PTOPolicyRule{}).Constraints(),
 	Columns: []schema.Column{
 		{Name: "id", Quoted: `"id"`, Field: "ID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagAutoID, Label: `ID`, JSON: `id`},
 		{Name: "business_unit_id", Quoted: `"business_unit_id"`, Field: "BusinessUnitID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Business Unit ID`, JSON: `businessUnitId`},
@@ -2654,12 +2661,13 @@ func beforeCreatePayrollExport(ctx context.Context, p unsafe.Pointer) error {
 
 // performanceReviewsTable is the schema of worker.PerformanceReview.
 var performanceReviewsTable = schema.Table{
-	Name:   "performance_reviews",
-	Quoted: `"performance_reviews"`,
-	Alias:  "pr",
-	Model:  "worker.PerformanceReview",
-	Label:  `Performance Review`,
-	Plural: `Performance Reviews`,
+	Name:        "performance_reviews",
+	Quoted:      `"performance_reviews"`,
+	Alias:       "pr",
+	Model:       "worker.PerformanceReview",
+	Label:       `Performance Review`,
+	Plural:      `Performance Reviews`,
+	Constraints: (&worker.PerformanceReview{}).Constraints(),
 	Columns: []schema.Column{
 		{Name: "id", Quoted: `"id"`, Field: "ID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagAutoID, Label: `ID`, JSON: `id`},
 		{Name: "business_unit_id", Quoted: `"business_unit_id"`, Field: "BusinessUnitID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Business Unit ID`, JSON: `businessUnitId`},
@@ -3011,12 +3019,13 @@ func beforeUpdatePerformanceReview(ctx context.Context, p unsafe.Pointer) error 
 
 // performanceReviewTemplatesTable is the schema of worker.PerformanceReviewTemplate.
 var performanceReviewTemplatesTable = schema.Table{
-	Name:   "performance_review_templates",
-	Quoted: `"performance_review_templates"`,
-	Alias:  "prt",
-	Model:  "worker.PerformanceReviewTemplate",
-	Label:  `Performance Review Template`,
-	Plural: `Performance Review Templates`,
+	Name:        "performance_review_templates",
+	Quoted:      `"performance_review_templates"`,
+	Alias:       "prt",
+	Model:       "worker.PerformanceReviewTemplate",
+	Label:       `Performance Review Template`,
+	Plural:      `Performance Review Templates`,
+	Constraints: (&worker.PerformanceReviewTemplate{}).Constraints(),
 	Columns: []schema.Column{
 		{Name: "id", Quoted: `"id"`, Field: "ID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagAutoID, Label: `ID`, JSON: `id`},
 		{Name: "business_unit_id", Quoted: `"business_unit_id"`, Field: "BusinessUnitID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Business Unit ID`, JSON: `businessUnitId`},
@@ -3455,13 +3464,14 @@ func beforeCreatePortalInvitation(ctx context.Context, p unsafe.Pointer) error {
 
 // shiftSwapRequestsTable is the schema of worker.ShiftSwapRequest.
 var shiftSwapRequestsTable = schema.Table{
-	Name:   "shift_swap_requests",
-	Quoted: `"shift_swap_requests"`,
-	Alias:  "ssr",
-	Model:  "worker.ShiftSwapRequest",
-	Label:  `Shift Swap Request`,
-	Plural: `Shift Swap Requests`,
-	Doc:    `ShiftSwapRequest is one driver asking another to take a day.`,
+	Name:        "shift_swap_requests",
+	Quoted:      `"shift_swap_requests"`,
+	Alias:       "ssr",
+	Model:       "worker.ShiftSwapRequest",
+	Label:       `Shift Swap Request`,
+	Plural:      `Shift Swap Requests`,
+	Doc:         `ShiftSwapRequest is one driver asking another to take a day.`,
+	Constraints: (&worker.ShiftSwapRequest{}).Constraints(),
 	Columns: []schema.Column{
 		{Name: "id", Quoted: `"id"`, Field: "ID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagAutoID, Label: `ID`, JSON: `id`},
 		{Name: "business_unit_id", Quoted: `"business_unit_id"`, Field: "BusinessUnitID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Business Unit ID`, JSON: `businessUnitId`},
@@ -3715,13 +3725,14 @@ func beforeCreateShiftSwapRequest(ctx context.Context, p unsafe.Pointer) error {
 
 // shiftTemplatesTable is the schema of worker.ShiftTemplate.
 var shiftTemplatesTable = schema.Table{
-	Name:   "shift_templates",
-	Quoted: `"shift_templates"`,
-	Alias:  "st",
-	Model:  "worker.ShiftTemplate",
-	Label:  `Shift Template`,
-	Plural: `Shift Templates`,
-	Doc:    `ShiftTemplate is a repeating pattern of working days.`,
+	Name:        "shift_templates",
+	Quoted:      `"shift_templates"`,
+	Alias:       "st",
+	Model:       "worker.ShiftTemplate",
+	Label:       `Shift Template`,
+	Plural:      `Shift Templates`,
+	Doc:         `ShiftTemplate is a repeating pattern of working days.`,
+	Constraints: (&worker.ShiftTemplate{}).Constraints(),
 	Columns: []schema.Column{
 		{Name: "id", Quoted: `"id"`, Field: "ID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagAutoID, Label: `ID`, JSON: `id`},
 		{Name: "business_unit_id", Quoted: `"business_unit_id"`, Field: "BusinessUnitID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Business Unit ID`, JSON: `businessUnitId`},
@@ -3927,13 +3938,14 @@ func beforeCreateShiftTemplate(ctx context.Context, p unsafe.Pointer) error {
 
 // timeClockEntriesTable is the schema of worker.TimeClockEntry.
 var timeClockEntriesTable = schema.Table{
-	Name:   "time_clock_entries",
-	Quoted: `"time_clock_entries"`,
-	Alias:  "tce",
-	Model:  "worker.TimeClockEntry",
-	Label:  `Time Clock Entry`,
-	Plural: `Time Clock Entries`,
-	Doc:    `TimeClockEntry is one period of work.`,
+	Name:        "time_clock_entries",
+	Quoted:      `"time_clock_entries"`,
+	Alias:       "tce",
+	Model:       "worker.TimeClockEntry",
+	Label:       `Time Clock Entry`,
+	Plural:      `Time Clock Entries`,
+	Doc:         `TimeClockEntry is one period of work.`,
+	Constraints: (&worker.TimeClockEntry{}).Constraints(),
 	Columns: []schema.Column{
 		{Name: "id", Quoted: `"id"`, Field: "ID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagAutoID, Label: `ID`, JSON: `id`},
 		{Name: "business_unit_id", Quoted: `"business_unit_id"`, Field: "BusinessUnitID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Business Unit ID`, JSON: `businessUnitId`},
@@ -4174,13 +4186,14 @@ func beforeCreateTimeClockEntry(ctx context.Context, p unsafe.Pointer) error {
 
 // timesheetsTable is the schema of worker.Timesheet.
 var timesheetsTable = schema.Table{
-	Name:   "timesheets",
-	Quoted: `"timesheets"`,
-	Alias:  "t",
-	Model:  "worker.Timesheet",
-	Label:  `Timesheet`,
-	Plural: `Timesheets`,
-	Doc:    "Timesheet is one worker's week of paid hours.\n\nIts totals are frozen at submit rather than derived on read. Everywhere else a roll-up is derived, because a stored one goes stale; here the roll-up is the decision — what a manager approved and what payroll paid from — and recomputing it later would change a signed-off wage record.",
+	Name:        "timesheets",
+	Quoted:      `"timesheets"`,
+	Alias:       "t",
+	Model:       "worker.Timesheet",
+	Label:       `Timesheet`,
+	Plural:      `Timesheets`,
+	Doc:         "Timesheet is one worker's week of paid hours.\n\nIts totals are frozen at submit rather than derived on read. Everywhere else a roll-up is derived, because a stored one goes stale; here the roll-up is the decision — what a manager approved and what payroll paid from — and recomputing it later would change a signed-off wage record.",
+	Constraints: (&worker.Timesheet{}).Constraints(),
 	Columns: []schema.Column{
 		{Name: "id", Quoted: `"id"`, Field: "ID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagAutoID, Label: `ID`, JSON: `id`},
 		{Name: "business_unit_id", Quoted: `"business_unit_id"`, Field: "BusinessUnitID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Business Unit ID`, JSON: `businessUnitId`},
@@ -4461,12 +4474,13 @@ func beforeCreateTimesheet(ctx context.Context, p unsafe.Pointer) error {
 
 // trainingCoursesTable is the schema of worker.TrainingCourse.
 var trainingCoursesTable = schema.Table{
-	Name:   "training_courses",
-	Quoted: `"training_courses"`,
-	Alias:  "tc",
-	Model:  "worker.TrainingCourse",
-	Label:  `Training Course`,
-	Plural: `Training Courses`,
+	Name:        "training_courses",
+	Quoted:      `"training_courses"`,
+	Alias:       "tc",
+	Model:       "worker.TrainingCourse",
+	Label:       `Training Course`,
+	Plural:      `Training Courses`,
+	Constraints: (&worker.TrainingCourse{}).Constraints(),
 	Columns: []schema.Column{
 		{Name: "id", Quoted: `"id"`, Field: "ID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagAutoID, Label: `ID`, JSON: `id`},
 		{Name: "business_unit_id", Quoted: `"business_unit_id"`, Field: "BusinessUnitID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Business Unit ID`, JSON: `businessUnitId`},
@@ -4752,14 +4766,15 @@ func beforeSaveTrainingCourse(ctx context.Context, p unsafe.Pointer) error {
 
 // workersTable is the schema of worker.Worker.
 var workersTable = schema.Table{
-	Name:   "workers",
-	Quoted: `"workers"`,
-	Alias:  "w",
-	Model:  "worker.Worker",
-	Label:  `Worker`,
-	Plural: `Workers`,
-	Doc:    `Drivers and operational workers`,
-	Report: &schema.TableReport{Category: `Parties`},
+	Name:        "workers",
+	Quoted:      `"workers"`,
+	Alias:       "w",
+	Model:       "worker.Worker",
+	Label:       `Worker`,
+	Plural:      `Workers`,
+	Doc:         `Drivers and operational workers`,
+	Report:      &schema.TableReport{Category: `Parties`},
+	Constraints: (&worker.Worker{}).Constraints(),
 	Columns: []schema.Column{
 		{Name: "id", Quoted: `"id"`, Field: "ID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagAutoID, Label: `ID`, JSON: `id`, Report: &reportDimString},
 		{Name: "business_unit_id", Quoted: `"business_unit_id"`, Field: "BusinessUnitID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Business Unit ID`, JSON: `businessUnitId`, Report: &reportDimStringHidden},
@@ -5230,13 +5245,14 @@ func afterLoadWorker(ctx context.Context, p unsafe.Pointer) error {
 
 // workerAvailabilityPreferencesTable is the schema of worker.WorkerAvailabilityPreference.
 var workerAvailabilityPreferencesTable = schema.Table{
-	Name:   "worker_availability_preferences",
-	Quoted: `"worker_availability_preferences"`,
-	Alias:  "wap",
-	Model:  "worker.WorkerAvailabilityPreference",
-	Label:  `Worker Availability Preference`,
-	Plural: `Worker Availability Preferences`,
-	Doc:    `WorkerAvailabilityPreference is what a driver would rather work on a given weekday.`,
+	Name:        "worker_availability_preferences",
+	Quoted:      `"worker_availability_preferences"`,
+	Alias:       "wap",
+	Model:       "worker.WorkerAvailabilityPreference",
+	Label:       `Worker Availability Preference`,
+	Plural:      `Worker Availability Preferences`,
+	Doc:         `WorkerAvailabilityPreference is what a driver would rather work on a given weekday.`,
+	Constraints: (&worker.WorkerAvailabilityPreference{}).Constraints(),
 	Columns: []schema.Column{
 		{Name: "id", Quoted: `"id"`, Field: "ID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagAutoID, Label: `ID`, JSON: `id`},
 		{Name: "business_unit_id", Quoted: `"business_unit_id"`, Field: "BusinessUnitID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Business Unit ID`, JSON: `businessUnitId`},
@@ -5401,12 +5417,13 @@ func beforeCreateWorkerAvailabilityPreference(ctx context.Context, p unsafe.Poin
 
 // workerChecklistsTable is the schema of worker.WorkerChecklist.
 var workerChecklistsTable = schema.Table{
-	Name:   "worker_checklists",
-	Quoted: `"worker_checklists"`,
-	Alias:  "wc",
-	Model:  "worker.WorkerChecklist",
-	Label:  `Worker Checklist`,
-	Plural: `Worker Checklists`,
+	Name:        "worker_checklists",
+	Quoted:      `"worker_checklists"`,
+	Alias:       "wc",
+	Model:       "worker.WorkerChecklist",
+	Label:       `Worker Checklist`,
+	Plural:      `Worker Checklists`,
+	Constraints: (&worker.WorkerChecklist{}).Constraints(),
 	Columns: []schema.Column{
 		{Name: "id", Quoted: `"id"`, Field: "ID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagAutoID, Label: `ID`, JSON: `id`},
 		{Name: "business_unit_id", Quoted: `"business_unit_id"`, Field: "BusinessUnitID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Business Unit ID`, JSON: `businessUnitId`},
@@ -5690,12 +5707,13 @@ func beforeCreateWorkerChecklist(ctx context.Context, p unsafe.Pointer) error {
 
 // workerChecklistItemsTable is the schema of worker.WorkerChecklistItem.
 var workerChecklistItemsTable = schema.Table{
-	Name:   "worker_checklist_items",
-	Quoted: `"worker_checklist_items"`,
-	Alias:  "wci",
-	Model:  "worker.WorkerChecklistItem",
-	Label:  `Worker Checklist Item`,
-	Plural: `Worker Checklist Items`,
+	Name:        "worker_checklist_items",
+	Quoted:      `"worker_checklist_items"`,
+	Alias:       "wci",
+	Model:       "worker.WorkerChecklistItem",
+	Label:       `Worker Checklist Item`,
+	Plural:      `Worker Checklist Items`,
+	Constraints: (&worker.WorkerChecklistItem{}).Constraints(),
 	Columns: []schema.Column{
 		{Name: "id", Quoted: `"id"`, Field: "ID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagAutoID, Label: `ID`, JSON: `id`},
 		{Name: "business_unit_id", Quoted: `"business_unit_id"`, Field: "BusinessUnitID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Business Unit ID`, JSON: `businessUnitId`},
@@ -6038,12 +6056,13 @@ func beforeCreateWorkerChecklistItem(ctx context.Context, p unsafe.Pointer) erro
 
 // workerChecklistTemplatesTable is the schema of worker.WorkerChecklistTemplate.
 var workerChecklistTemplatesTable = schema.Table{
-	Name:   "worker_checklist_templates",
-	Quoted: `"worker_checklist_templates"`,
-	Alias:  "wct",
-	Model:  "worker.WorkerChecklistTemplate",
-	Label:  `Worker Checklist Template`,
-	Plural: `Worker Checklist Templates`,
+	Name:        "worker_checklist_templates",
+	Quoted:      `"worker_checklist_templates"`,
+	Alias:       "wct",
+	Model:       "worker.WorkerChecklistTemplate",
+	Label:       `Worker Checklist Template`,
+	Plural:      `Worker Checklist Templates`,
+	Constraints: (&worker.WorkerChecklistTemplate{}).Constraints(),
 	Columns: []schema.Column{
 		{Name: "id", Quoted: `"id"`, Field: "ID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagAutoID, Label: `ID`, JSON: `id`},
 		{Name: "business_unit_id", Quoted: `"business_unit_id"`, Field: "BusinessUnitID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Business Unit ID`, JSON: `businessUnitId`},
@@ -6257,12 +6276,13 @@ func beforeCreateWorkerChecklistTemplate(ctx context.Context, p unsafe.Pointer) 
 
 // workerChecklistTemplateItemsTable is the schema of worker.WorkerChecklistTemplateItem.
 var workerChecklistTemplateItemsTable = schema.Table{
-	Name:   "worker_checklist_template_items",
-	Quoted: `"worker_checklist_template_items"`,
-	Alias:  "wcti",
-	Model:  "worker.WorkerChecklistTemplateItem",
-	Label:  `Worker Checklist Template Item`,
-	Plural: `Worker Checklist Template Items`,
+	Name:        "worker_checklist_template_items",
+	Quoted:      `"worker_checklist_template_items"`,
+	Alias:       "wcti",
+	Model:       "worker.WorkerChecklistTemplateItem",
+	Label:       `Worker Checklist Template Item`,
+	Plural:      `Worker Checklist Template Items`,
+	Constraints: (&worker.WorkerChecklistTemplateItem{}).Constraints(),
 	Columns: []schema.Column{
 		{Name: "id", Quoted: `"id"`, Field: "ID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagAutoID, Label: `ID`, JSON: `id`},
 		{Name: "business_unit_id", Quoted: `"business_unit_id"`, Field: "BusinessUnitID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Business Unit ID`, JSON: `businessUnitId`},
@@ -6498,12 +6518,13 @@ func beforeCreateWorkerChecklistTemplateItem(ctx context.Context, p unsafe.Point
 
 // workerClearinghouseQueriesTable is the schema of worker.WorkerClearinghouseQuery.
 var workerClearinghouseQueriesTable = schema.Table{
-	Name:   "worker_clearinghouse_queries",
-	Quoted: `"worker_clearinghouse_queries"`,
-	Alias:  "wcq",
-	Model:  "worker.WorkerClearinghouseQuery",
-	Label:  `Worker Clearinghouse Query`,
-	Plural: `Worker Clearinghouse Queries`,
+	Name:        "worker_clearinghouse_queries",
+	Quoted:      `"worker_clearinghouse_queries"`,
+	Alias:       "wcq",
+	Model:       "worker.WorkerClearinghouseQuery",
+	Label:       `Worker Clearinghouse Query`,
+	Plural:      `Worker Clearinghouse Queries`,
+	Constraints: (&worker.WorkerClearinghouseQuery{}).Constraints(),
 	Columns: []schema.Column{
 		{Name: "id", Quoted: `"id"`, Field: "ID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagAutoID, Label: `ID`, JSON: `id`},
 		{Name: "business_unit_id", Quoted: `"business_unit_id"`, Field: "BusinessUnitID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Business Unit ID`, JSON: `businessUnitId`},
@@ -6783,14 +6804,15 @@ func beforeCreateWorkerClearinghouseQuery(ctx context.Context, p unsafe.Pointer)
 
 // workerCredentialsTable is the schema of worker.WorkerCredential.
 var workerCredentialsTable = schema.Table{
-	Name:   "worker_credentials",
-	Quoted: `"worker_credentials"`,
-	Alias:  "wc",
-	Model:  "worker.WorkerCredential",
-	Label:  `Worker Credential`,
-	Plural: `Worker Credentials`,
-	Doc:    `Licences and certificates a worker holds, with their expiry and verification`,
-	Report: &schema.TableReport{Category: `Parties`},
+	Name:        "worker_credentials",
+	Quoted:      `"worker_credentials"`,
+	Alias:       "wc",
+	Model:       "worker.WorkerCredential",
+	Label:       `Worker Credential`,
+	Plural:      `Worker Credentials`,
+	Doc:         `Licences and certificates a worker holds, with their expiry and verification`,
+	Report:      &schema.TableReport{Category: `Parties`},
+	Constraints: (&worker.WorkerCredential{}).Constraints(),
 	Columns: []schema.Column{
 		{Name: "id", Quoted: `"id"`, Field: "ID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagAutoID, Label: `ID`, JSON: `id`, Report: &reportDimString},
 		{Name: "business_unit_id", Quoted: `"business_unit_id"`, Field: "BusinessUnitID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Business Unit ID`, JSON: `businessUnitId`, Report: &reportDimStringHidden},
@@ -7102,14 +7124,15 @@ func beforeCreateWorkerCredential(ctx context.Context, p unsafe.Pointer) error {
 
 // workerCredentialTypesTable is the schema of worker.WorkerCredentialType.
 var workerCredentialTypesTable = schema.Table{
-	Name:   "worker_credential_types",
-	Quoted: `"worker_credential_types"`,
-	Alias:  "wct",
-	Model:  "worker.WorkerCredentialType",
-	Label:  `Credential Type`,
-	Plural: `Credential Types`,
-	Doc:    `The catalog of credentials a carrier tracks`,
-	Report: &schema.TableReport{Category: `Parties`},
+	Name:        "worker_credential_types",
+	Quoted:      `"worker_credential_types"`,
+	Alias:       "wct",
+	Model:       "worker.WorkerCredentialType",
+	Label:       `Credential Type`,
+	Plural:      `Credential Types`,
+	Doc:         `The catalog of credentials a carrier tracks`,
+	Report:      &schema.TableReport{Category: `Parties`},
+	Constraints: (&worker.WorkerCredentialType{}).Constraints(),
 	Columns: []schema.Column{
 		{Name: "id", Quoted: `"id"`, Field: "ID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagAutoID, Label: `ID`, JSON: `id`, Report: &reportDimString},
 		{Name: "business_unit_id", Quoted: `"business_unit_id"`, Field: "BusinessUnitID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Business Unit ID`, JSON: `businessUnitId`, Report: &reportDimStringHidden},
@@ -7381,12 +7404,13 @@ func beforeSaveWorkerCredentialType(ctx context.Context, p unsafe.Pointer) error
 
 // workerDOTTestsTable is the schema of worker.WorkerDOTTest.
 var workerDOTTestsTable = schema.Table{
-	Name:   "worker_dot_tests",
-	Quoted: `"worker_dot_tests"`,
-	Alias:  "wdt",
-	Model:  "worker.WorkerDOTTest",
-	Label:  `Worker DOT Test`,
-	Plural: `Worker DOT Tests`,
+	Name:        "worker_dot_tests",
+	Quoted:      `"worker_dot_tests"`,
+	Alias:       "wdt",
+	Model:       "worker.WorkerDOTTest",
+	Label:       `Worker DOT Test`,
+	Plural:      `Worker DOT Tests`,
+	Constraints: (&worker.WorkerDOTTest{}).Constraints(),
 	Columns: []schema.Column{
 		{Name: "id", Quoted: `"id"`, Field: "ID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagAutoID, Label: `ID`, JSON: `id`},
 		{Name: "business_unit_id", Quoted: `"business_unit_id"`, Field: "BusinessUnitID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Business Unit ID`, JSON: `businessUnitId`},
@@ -7796,12 +7820,13 @@ func beforeCreateWorkerDOTTest(ctx context.Context, p unsafe.Pointer) error {
 
 // workerDOTViolationsTable is the schema of worker.WorkerDOTViolation.
 var workerDOTViolationsTable = schema.Table{
-	Name:   "worker_dot_violations",
-	Quoted: `"worker_dot_violations"`,
-	Alias:  "wdv",
-	Model:  "worker.WorkerDOTViolation",
-	Label:  `Worker DOT Violation`,
-	Plural: `Worker DOT Violations`,
+	Name:        "worker_dot_violations",
+	Quoted:      `"worker_dot_violations"`,
+	Alias:       "wdv",
+	Model:       "worker.WorkerDOTViolation",
+	Label:       `Worker DOT Violation`,
+	Plural:      `Worker DOT Violations`,
+	Constraints: (&worker.WorkerDOTViolation{}).Constraints(),
 	Columns: []schema.Column{
 		{Name: "id", Quoted: `"id"`, Field: "ID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagAutoID, Label: `ID`, JSON: `id`},
 		{Name: "business_unit_id", Quoted: `"business_unit_id"`, Field: "BusinessUnitID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Business Unit ID`, JSON: `businessUnitId`},
@@ -8156,12 +8181,13 @@ func beforeCreateWorkerDOTViolation(ctx context.Context, p unsafe.Pointer) error
 
 // workerDisciplinaryActionsTable is the schema of worker.WorkerDisciplinaryAction.
 var workerDisciplinaryActionsTable = schema.Table{
-	Name:   "worker_disciplinary_actions",
-	Quoted: `"worker_disciplinary_actions"`,
-	Alias:  "wda",
-	Model:  "worker.WorkerDisciplinaryAction",
-	Label:  `Worker Disciplinary Action`,
-	Plural: `Worker Disciplinary Actions`,
+	Name:        "worker_disciplinary_actions",
+	Quoted:      `"worker_disciplinary_actions"`,
+	Alias:       "wda",
+	Model:       "worker.WorkerDisciplinaryAction",
+	Label:       `Worker Disciplinary Action`,
+	Plural:      `Worker Disciplinary Actions`,
+	Constraints: (&worker.WorkerDisciplinaryAction{}).Constraints(),
 	Columns: []schema.Column{
 		{Name: "id", Quoted: `"id"`, Field: "ID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagAutoID, Label: `ID`, JSON: `id`},
 		{Name: "business_unit_id", Quoted: `"business_unit_id"`, Field: "BusinessUnitID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Business Unit ID`, JSON: `businessUnitId`},
@@ -8504,14 +8530,15 @@ func beforeCreateWorkerDisciplinaryAction(ctx context.Context, p unsafe.Pointer)
 
 // workerEmploymentEventsTable is the schema of worker.WorkerEmploymentEvent.
 var workerEmploymentEventsTable = schema.Table{
-	Name:   "worker_employment_events",
-	Quoted: `"worker_employment_events"`,
-	Alias:  "wee",
-	Model:  "worker.WorkerEmploymentEvent",
-	Label:  `Employment Event`,
-	Plural: `Employment Events`,
-	Doc:    `Hires, transfers, leave, suspensions and terminations, with who recorded them`,
-	Report: &schema.TableReport{Category: `Parties`},
+	Name:        "worker_employment_events",
+	Quoted:      `"worker_employment_events"`,
+	Alias:       "wee",
+	Model:       "worker.WorkerEmploymentEvent",
+	Label:       `Employment Event`,
+	Plural:      `Employment Events`,
+	Doc:         `Hires, transfers, leave, suspensions and terminations, with who recorded them`,
+	Report:      &schema.TableReport{Category: `Parties`},
+	Constraints: (&worker.WorkerEmploymentEvent{}).Constraints(),
 	Columns: []schema.Column{
 		{Name: "id", Quoted: `"id"`, Field: "ID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagAutoID, Label: `ID`, JSON: `id`, Report: &reportDimString},
 		{Name: "business_unit_id", Quoted: `"business_unit_id"`, Field: "BusinessUnitID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Business Unit ID`, JSON: `businessUnitId`, Report: &reportDimStringHidden},
@@ -8815,13 +8842,14 @@ func beforeSaveWorkerEmploymentEvent(ctx context.Context, p unsafe.Pointer) erro
 
 // workerEmploymentVerificationsTable is the schema of worker.WorkerEmploymentVerification.
 var workerEmploymentVerificationsTable = schema.Table{
-	Name:   "worker_employment_verifications",
-	Quoted: `"worker_employment_verifications"`,
-	Alias:  "wev",
-	Model:  "worker.WorkerEmploymentVerification",
-	Label:  `Worker Employment Verification`,
-	Plural: `Worker Employment Verifications`,
-	Doc:    `WorkerEmploymentVerification is one previous employer's safety performance history investigation (49 CFR 391.23). The drug and alcohol part is tracked separately because 49 CFR 382.413 asks for it specifically and an employer often answers the general request without it.`,
+	Name:        "worker_employment_verifications",
+	Quoted:      `"worker_employment_verifications"`,
+	Alias:       "wev",
+	Model:       "worker.WorkerEmploymentVerification",
+	Label:       `Worker Employment Verification`,
+	Plural:      `Worker Employment Verifications`,
+	Doc:         `WorkerEmploymentVerification is one previous employer's safety performance history investigation (49 CFR 391.23). The drug and alcohol part is tracked separately because 49 CFR 382.413 asks for it specifically and an employer often answers the general request without it.`,
+	Constraints: (&worker.WorkerEmploymentVerification{}).Constraints(),
 	Columns: []schema.Column{
 		{Name: "id", Quoted: `"id"`, Field: "ID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagAutoID, Label: `ID`, JSON: `id`},
 		{Name: "business_unit_id", Quoted: `"business_unit_id"`, Field: "BusinessUnitID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Business Unit ID`, JSON: `businessUnitId`},
@@ -9221,13 +9249,14 @@ func beforeCreateWorkerEmploymentVerification(ctx context.Context, p unsafe.Poin
 
 // workerInjuriesTable is the schema of worker.WorkerInjury.
 var workerInjuriesTable = schema.Table{
-	Name:   "worker_injuries",
-	Quoted: `"worker_injuries"`,
-	Alias:  "wi",
-	Model:  "worker.WorkerInjury",
-	Label:  `Worker Injury`,
-	Plural: `Worker Injuries`,
-	Doc:    `WorkerInjury is one injury or illness case. The recordable ones are the OSHA 300 log; the rest are kept because the decision not to record is itself worth a record.`,
+	Name:        "worker_injuries",
+	Quoted:      `"worker_injuries"`,
+	Alias:       "wi",
+	Model:       "worker.WorkerInjury",
+	Label:       `Worker Injury`,
+	Plural:      `Worker Injuries`,
+	Doc:         `WorkerInjury is one injury or illness case. The recordable ones are the OSHA 300 log; the rest are kept because the decision not to record is itself worth a record.`,
+	Constraints: (&worker.WorkerInjury{}).Constraints(),
 	Columns: []schema.Column{
 		{Name: "id", Quoted: `"id"`, Field: "ID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagAutoID, Label: `ID`, JSON: `id`},
 		{Name: "business_unit_id", Quoted: `"business_unit_id"`, Field: "BusinessUnitID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Business Unit ID`, JSON: `businessUnitId`},
@@ -9641,13 +9670,14 @@ func beforeCreateWorkerInjury(ctx context.Context, p unsafe.Pointer) error {
 
 // workerLeaveCasesTable is the schema of worker.WorkerLeaveCase.
 var workerLeaveCasesTable = schema.Table{
-	Name:   "worker_leave_cases",
-	Quoted: `"worker_leave_cases"`,
-	Alias:  "wlc",
-	Model:  "worker.WorkerLeaveCase",
-	Label:  `Worker Leave Case`,
-	Plural: `Worker Leave Cases`,
-	Doc:    `WorkerLeaveCase is one qualifying reason for leave. Entitlement is drawn down by the entries under a case, so a case that has been open for months has used nothing until days are recorded against it.`,
+	Name:        "worker_leave_cases",
+	Quoted:      `"worker_leave_cases"`,
+	Alias:       "wlc",
+	Model:       "worker.WorkerLeaveCase",
+	Label:       `Worker Leave Case`,
+	Plural:      `Worker Leave Cases`,
+	Doc:         `WorkerLeaveCase is one qualifying reason for leave. Entitlement is drawn down by the entries under a case, so a case that has been open for months has used nothing until days are recorded against it.`,
+	Constraints: (&worker.WorkerLeaveCase{}).Constraints(),
 	Columns: []schema.Column{
 		{Name: "id", Quoted: `"id"`, Field: "ID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagAutoID, Label: `ID`, JSON: `id`},
 		{Name: "business_unit_id", Quoted: `"business_unit_id"`, Field: "BusinessUnitID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Business Unit ID`, JSON: `businessUnitId`},
@@ -10040,13 +10070,14 @@ func beforeCreateWorkerLeaveCase(ctx context.Context, p unsafe.Pointer) error {
 
 // workerLeaveEntriesTable is the schema of worker.WorkerLeaveEntry.
 var workerLeaveEntriesTable = schema.Table{
-	Name:   "worker_leave_entries",
-	Quoted: `"worker_leave_entries"`,
-	Alias:  "wle",
-	Model:  "worker.WorkerLeaveEntry",
-	Label:  `Worker Leave Entry`,
-	Plural: `Worker Leave Entries`,
-	Doc:    `WorkerLeaveEntry is one day of leave taken. Intermittent leave is many rows; continuous leave is a row per working day. Hours rather than days, because 29 CFR 825.205 lets intermittent leave be taken in the smallest increment the employer uses for any other absence.`,
+	Name:        "worker_leave_entries",
+	Quoted:      `"worker_leave_entries"`,
+	Alias:       "wle",
+	Model:       "worker.WorkerLeaveEntry",
+	Label:       `Worker Leave Entry`,
+	Plural:      `Worker Leave Entries`,
+	Doc:         `WorkerLeaveEntry is one day of leave taken. Intermittent leave is many rows; continuous leave is a row per working day. Hours rather than days, because 29 CFR 825.205 lets intermittent leave be taken in the smallest increment the employer uses for any other absence.`,
+	Constraints: (&worker.WorkerLeaveEntry{}).Constraints(),
 	Columns: []schema.Column{
 		{Name: "id", Quoted: `"id"`, Field: "ID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagAutoID, Label: `ID`, JSON: `id`},
 		{Name: "business_unit_id", Quoted: `"business_unit_id"`, Field: "BusinessUnitID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Business Unit ID`, JSON: `businessUnitId`},
@@ -10259,14 +10290,15 @@ func attachWorkerLeaveEntry(p unsafe.Pointer, rel int32, child unsafe.Pointer) {
 
 // workerPTOsTable is the schema of worker.WorkerPTO.
 var workerPTOsTable = schema.Table{
-	Name:   "worker_pto",
-	Quoted: `"worker_pto"`,
-	Alias:  "wp",
-	Model:  "worker.WorkerPTO",
-	Label:  `Time Off Request`,
-	Plural: `Time Off Requests`,
-	Doc:    `Time-off requests and the days booked against them`,
-	Report: &schema.TableReport{Category: `Parties`},
+	Name:        "worker_pto",
+	Quoted:      `"worker_pto"`,
+	Alias:       "wp",
+	Model:       "worker.WorkerPTO",
+	Label:       `Time Off Request`,
+	Plural:      `Time Off Requests`,
+	Doc:         `Time-off requests and the days booked against them`,
+	Report:      &schema.TableReport{Category: `Parties`},
+	Constraints: (&worker.WorkerPTO{}).Constraints(),
 	Columns: []schema.Column{
 		{Name: "id", Quoted: `"id"`, Field: "ID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagAutoID, Label: `ID`, JSON: `id`, Report: &reportDimString},
 		{Name: "worker_id", Quoted: `"worker_id"`, Field: "WorkerID", Kind: schema.KindString, Flags: schema.FlagPK, Label: `Worker ID`, JSON: `workerId`, Report: &reportDimStringHidden},
@@ -10568,14 +10600,15 @@ func beforeCreateWorkerPTO(ctx context.Context, p unsafe.Pointer) error {
 
 // workerPTOBalancesTable is the schema of worker.WorkerPTOBalance.
 var workerPTOBalancesTable = schema.Table{
-	Name:   "worker_pto_balances",
-	Quoted: `"worker_pto_balances"`,
-	Alias:  "wpb",
-	Model:  "worker.WorkerPTOBalance",
-	Label:  `PTO Balance`,
-	Plural: `PTO Balances`,
-	Doc:    `What each worker has accrued, used and carried, per time-off type`,
-	Report: &schema.TableReport{Category: `Parties`},
+	Name:        "worker_pto_balances",
+	Quoted:      `"worker_pto_balances"`,
+	Alias:       "wpb",
+	Model:       "worker.WorkerPTOBalance",
+	Label:       `PTO Balance`,
+	Plural:      `PTO Balances`,
+	Doc:         `What each worker has accrued, used and carried, per time-off type`,
+	Report:      &schema.TableReport{Category: `Parties`},
+	Constraints: (&worker.WorkerPTOBalance{}).Constraints(),
 	Columns: []schema.Column{
 		{Name: "id", Quoted: `"id"`, Field: "ID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagAutoID, Label: `ID`, JSON: `id`, Report: &reportDimString},
 		{Name: "business_unit_id", Quoted: `"business_unit_id"`, Field: "BusinessUnitID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Business Unit ID`, JSON: `businessUnitId`, Report: &reportDimStringHidden},
@@ -11076,12 +11109,13 @@ func beforeCreateWorkerPTOLedgerEntry(ctx context.Context, p unsafe.Pointer) err
 
 // workerPTOPolicyAssignmentsTable is the schema of worker.WorkerPTOPolicyAssignment.
 var workerPTOPolicyAssignmentsTable = schema.Table{
-	Name:   "worker_pto_policy_assignments",
-	Quoted: `"worker_pto_policy_assignments"`,
-	Alias:  "wppa",
-	Model:  "worker.WorkerPTOPolicyAssignment",
-	Label:  `Worker PTO Policy Assignment`,
-	Plural: `Worker PTO Policy Assignments`,
+	Name:        "worker_pto_policy_assignments",
+	Quoted:      `"worker_pto_policy_assignments"`,
+	Alias:       "wppa",
+	Model:       "worker.WorkerPTOPolicyAssignment",
+	Label:       `Worker PTO Policy Assignment`,
+	Plural:      `Worker PTO Policy Assignments`,
+	Constraints: (&worker.WorkerPTOPolicyAssignment{}).Constraints(),
 	Columns: []schema.Column{
 		{Name: "id", Quoted: `"id"`, Field: "ID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagAutoID, Label: `ID`, JSON: `id`},
 		{Name: "business_unit_id", Quoted: `"business_unit_id"`, Field: "BusinessUnitID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Business Unit ID`, JSON: `businessUnitId`},
@@ -11288,13 +11322,14 @@ func attachWorkerPTOPolicyAssignment(p unsafe.Pointer, rel int32, child unsafe.P
 
 // workerPoliciesTable is the schema of worker.WorkerPolicy.
 var workerPoliciesTable = schema.Table{
-	Name:   "worker_policies",
-	Quoted: `"worker_policies"`,
-	Alias:  "wp",
-	Model:  "worker.WorkerPolicy",
-	Label:  `Worker Policy`,
-	Plural: `Worker Policies`,
-	Doc:    "WorkerPolicy is a handbook, a policy, or a notice the carrier needs people to have read. It is either a short text or an attached document — never neither, because a policy that says nothing is a signature with nothing behind it.\n\nThe version label is the load-bearing field. An acknowledgement records the version it was given for, so changing the text under a signed policy without changing the version is refused: it would make every existing signature a signature on words nobody saw.",
+	Name:        "worker_policies",
+	Quoted:      `"worker_policies"`,
+	Alias:       "wp",
+	Model:       "worker.WorkerPolicy",
+	Label:       `Worker Policy`,
+	Plural:      `Worker Policies`,
+	Doc:         "WorkerPolicy is a handbook, a policy, or a notice the carrier needs people to have read. It is either a short text or an attached document — never neither, because a policy that says nothing is a signature with nothing behind it.\n\nThe version label is the load-bearing field. An acknowledgement records the version it was given for, so changing the text under a signed policy without changing the version is refused: it would make every existing signature a signature on words nobody saw.",
+	Constraints: (&worker.WorkerPolicy{}).Constraints(),
 	Columns: []schema.Column{
 		{Name: "id", Quoted: `"id"`, Field: "ID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagAutoID, Label: `ID`, JSON: `id`},
 		{Name: "business_unit_id", Quoted: `"business_unit_id"`, Field: "BusinessUnitID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Business Unit ID`, JSON: `businessUnitId`},
@@ -11522,13 +11557,14 @@ func beforeCreateWorkerPolicy(ctx context.Context, p unsafe.Pointer) error {
 
 // workerPolicyAcknowledgementsTable is the schema of worker.WorkerPolicyAcknowledgement.
 var workerPolicyAcknowledgementsTable = schema.Table{
-	Name:   "worker_policy_acknowledgements",
-	Quoted: `"worker_policy_acknowledgements"`,
-	Alias:  "wpa",
-	Model:  "worker.WorkerPolicyAcknowledgement",
-	Label:  `Worker Policy Acknowledgement`,
-	Plural: `Worker Policy Acknowledgements`,
-	Doc:    "WorkerPolicyAcknowledgement is one worker's signature on one version of a policy. It copies what was signed — the version label and the document's checksum — because the policy row will move on and the signature must not.\n\nThe signature is a typed name plus the address and client it came from and the moment it was given. That is what an electronic signature is: not a picture of handwriting, but a record that a specific person, from a specific place, at a specific time, agreed to a specific text.",
+	Name:        "worker_policy_acknowledgements",
+	Quoted:      `"worker_policy_acknowledgements"`,
+	Alias:       "wpa",
+	Model:       "worker.WorkerPolicyAcknowledgement",
+	Label:       `Worker Policy Acknowledgement`,
+	Plural:      `Worker Policy Acknowledgements`,
+	Doc:         "WorkerPolicyAcknowledgement is one worker's signature on one version of a policy. It copies what was signed — the version label and the document's checksum — because the policy row will move on and the signature must not.\n\nThe signature is a typed name plus the address and client it came from and the moment it was given. That is what an electronic signature is: not a picture of handwriting, but a record that a specific person, from a specific place, at a specific time, agreed to a specific text.",
+	Constraints: (&worker.WorkerPolicyAcknowledgement{}).Constraints(),
 	Columns: []schema.Column{
 		{Name: "id", Quoted: `"id"`, Field: "ID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagAutoID, Label: `ID`, JSON: `id`},
 		{Name: "business_unit_id", Quoted: `"business_unit_id"`, Field: "BusinessUnitID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Business Unit ID`, JSON: `businessUnitId`},
@@ -11759,14 +11795,15 @@ func beforeCreateWorkerPolicyAcknowledgement(ctx context.Context, p unsafe.Point
 
 // workerProfilesTable is the schema of worker.WorkerProfile.
 var workerProfilesTable = schema.Table{
-	Name:   "worker_profiles",
-	Quoted: `"worker_profiles"`,
-	Alias:  "wp",
-	Model:  "worker.WorkerProfile",
-	Label:  `Worker Profile`,
-	Plural: `Worker Profiles`,
-	Doc:    `Licensing, compliance, and qualification details for a worker`,
-	Report: &schema.TableReport{Category: `Parties`},
+	Name:        "worker_profiles",
+	Quoted:      `"worker_profiles"`,
+	Alias:       "wp",
+	Model:       "worker.WorkerProfile",
+	Label:       `Worker Profile`,
+	Plural:      `Worker Profiles`,
+	Doc:         `Licensing, compliance, and qualification details for a worker`,
+	Report:      &schema.TableReport{Category: `Parties`},
+	Constraints: (&worker.WorkerProfile{}).Constraints(),
 	Columns: []schema.Column{
 		{Name: "id", Quoted: `"id"`, Field: "ID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagAutoID, Label: `ID`, JSON: `id`, Report: &reportDimString},
 		{Name: "worker_id", Quoted: `"worker_id"`, Field: "WorkerID", Kind: schema.KindString, Flags: schema.FlagPK, Label: `Worker ID`, JSON: `workerId`, Report: &reportDimString},
@@ -12239,13 +12276,14 @@ func beforeCreateWorkerProfile(ctx context.Context, p unsafe.Pointer) error {
 
 // workerProfileChangeRequestsTable is the schema of worker.WorkerProfileChangeRequest.
 var workerProfileChangeRequestsTable = schema.Table{
-	Name:   "worker_profile_change_requests",
-	Quoted: `"worker_profile_change_requests"`,
-	Alias:  "wpcr",
-	Model:  "worker.WorkerProfileChangeRequest",
-	Label:  `Worker Profile Change Request`,
-	Plural: `Worker Profile Change Requests`,
-	Doc:    `WorkerProfileChangeRequest is a driver asking to change their own record, waiting on somebody in the office. The changes are stored as before-and- after pairs rather than as a copy of the wanted record, so a manager sees exactly what is being asked and an approval applies exactly that — not whatever else happened to be on the form.`,
+	Name:        "worker_profile_change_requests",
+	Quoted:      `"worker_profile_change_requests"`,
+	Alias:       "wpcr",
+	Model:       "worker.WorkerProfileChangeRequest",
+	Label:       `Worker Profile Change Request`,
+	Plural:      `Worker Profile Change Requests`,
+	Doc:         `WorkerProfileChangeRequest is a driver asking to change their own record, waiting on somebody in the office. The changes are stored as before-and- after pairs rather than as a copy of the wanted record, so a manager sees exactly what is being asked and an approval applies exactly that — not whatever else happened to be on the form.`,
+	Constraints: (&worker.WorkerProfileChangeRequest{}).Constraints(),
 	Columns: []schema.Column{
 		{Name: "id", Quoted: `"id"`, Field: "ID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagAutoID, Label: `ID`, JSON: `id`},
 		{Name: "business_unit_id", Quoted: `"business_unit_id"`, Field: "BusinessUnitID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Business Unit ID`, JSON: `businessUnitId`},
@@ -12471,12 +12509,13 @@ func beforeCreateWorkerProfileChangeRequest(ctx context.Context, p unsafe.Pointe
 
 // workerRecognitionsTable is the schema of worker.WorkerRecognition.
 var workerRecognitionsTable = schema.Table{
-	Name:   "worker_recognitions",
-	Quoted: `"worker_recognitions"`,
-	Alias:  "wr",
-	Model:  "worker.WorkerRecognition",
-	Label:  `Worker Recognition`,
-	Plural: `Worker Recognitions`,
+	Name:        "worker_recognitions",
+	Quoted:      `"worker_recognitions"`,
+	Alias:       "wr",
+	Model:       "worker.WorkerRecognition",
+	Label:       `Worker Recognition`,
+	Plural:      `Worker Recognitions`,
+	Constraints: (&worker.WorkerRecognition{}).Constraints(),
 	Columns: []schema.Column{
 		{Name: "id", Quoted: `"id"`, Field: "ID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagAutoID, Label: `ID`, JSON: `id`},
 		{Name: "business_unit_id", Quoted: `"business_unit_id"`, Field: "BusinessUnitID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Business Unit ID`, JSON: `businessUnitId`},
@@ -12689,12 +12728,13 @@ func beforeCreateWorkerRecognition(ctx context.Context, p unsafe.Pointer) error 
 
 // workerSafetyEventsTable is the schema of worker.WorkerSafetyEvent.
 var workerSafetyEventsTable = schema.Table{
-	Name:   "worker_safety_events",
-	Quoted: `"worker_safety_events"`,
-	Alias:  "wse",
-	Model:  "worker.WorkerSafetyEvent",
-	Label:  `Worker Safety Event`,
-	Plural: `Worker Safety Events`,
+	Name:        "worker_safety_events",
+	Quoted:      `"worker_safety_events"`,
+	Alias:       "wse",
+	Model:       "worker.WorkerSafetyEvent",
+	Label:       `Worker Safety Event`,
+	Plural:      `Worker Safety Events`,
+	Constraints: (&worker.WorkerSafetyEvent{}).Constraints(),
 	Columns: []schema.Column{
 		{Name: "id", Quoted: `"id"`, Field: "ID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagAutoID, Label: `ID`, JSON: `id`},
 		{Name: "business_unit_id", Quoted: `"business_unit_id"`, Field: "BusinessUnitID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Business Unit ID`, JSON: `businessUnitId`},
@@ -13070,13 +13110,14 @@ func beforeCreateWorkerSafetyEvent(ctx context.Context, p unsafe.Pointer) error 
 
 // workerSafetyViolationsTable is the schema of worker.WorkerSafetyViolation.
 var workerSafetyViolationsTable = schema.Table{
-	Name:   "worker_safety_violations",
-	Quoted: `"worker_safety_violations"`,
-	Alias:  "wsv",
-	Model:  "worker.WorkerSafetyViolation",
-	Label:  `Worker Safety Violation`,
-	Plural: `Worker Safety Violations`,
-	Doc:    `WorkerSafetyViolation is one violation cited on a safety event. A roadside inspection routinely produces several, in different BASICs, so they are rows rather than a column on the event.`,
+	Name:        "worker_safety_violations",
+	Quoted:      `"worker_safety_violations"`,
+	Alias:       "wsv",
+	Model:       "worker.WorkerSafetyViolation",
+	Label:       `Worker Safety Violation`,
+	Plural:      `Worker Safety Violations`,
+	Doc:         `WorkerSafetyViolation is one violation cited on a safety event. A roadside inspection routinely produces several, in different BASICs, so they are rows rather than a column on the event.`,
+	Constraints: (&worker.WorkerSafetyViolation{}).Constraints(),
 	Columns: []schema.Column{
 		{Name: "id", Quoted: `"id"`, Field: "ID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagAutoID, Label: `ID`, JSON: `id`},
 		{Name: "business_unit_id", Quoted: `"business_unit_id"`, Field: "BusinessUnitID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Business Unit ID`, JSON: `businessUnitId`},
@@ -13282,13 +13323,14 @@ func beforeCreateWorkerSafetyViolation(ctx context.Context, p unsafe.Pointer) er
 
 // workerShiftAssignmentsTable is the schema of worker.WorkerShiftAssignment.
 var workerShiftAssignmentsTable = schema.Table{
-	Name:   "worker_shift_assignments",
-	Quoted: `"worker_shift_assignments"`,
-	Alias:  "wsa",
-	Model:  "worker.WorkerShiftAssignment",
-	Label:  `Worker Shift Assignment`,
-	Plural: `Worker Shift Assignments`,
-	Doc:    `WorkerShiftAssignment puts a worker on a pattern for a period.`,
+	Name:        "worker_shift_assignments",
+	Quoted:      `"worker_shift_assignments"`,
+	Alias:       "wsa",
+	Model:       "worker.WorkerShiftAssignment",
+	Label:       `Worker Shift Assignment`,
+	Plural:      `Worker Shift Assignments`,
+	Doc:         `WorkerShiftAssignment puts a worker on a pattern for a period.`,
+	Constraints: (&worker.WorkerShiftAssignment{}).Constraints(),
 	Columns: []schema.Column{
 		{Name: "id", Quoted: `"id"`, Field: "ID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagAutoID, Label: `ID`, JSON: `id`},
 		{Name: "business_unit_id", Quoted: `"business_unit_id"`, Field: "BusinessUnitID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Business Unit ID`, JSON: `businessUnitId`},
@@ -13656,12 +13698,13 @@ func valueWorkerSyncDrift(p unsafe.Pointer, c int32) any {
 
 // workerTrainingRecordsTable is the schema of worker.WorkerTrainingRecord.
 var workerTrainingRecordsTable = schema.Table{
-	Name:   "worker_training_records",
-	Quoted: `"worker_training_records"`,
-	Alias:  "wtr",
-	Model:  "worker.WorkerTrainingRecord",
-	Label:  `Worker Training Record`,
-	Plural: `Worker Training Records`,
+	Name:        "worker_training_records",
+	Quoted:      `"worker_training_records"`,
+	Alias:       "wtr",
+	Model:       "worker.WorkerTrainingRecord",
+	Label:       `Worker Training Record`,
+	Plural:      `Worker Training Records`,
+	Constraints: (&worker.WorkerTrainingRecord{}).Constraints(),
 	Columns: []schema.Column{
 		{Name: "id", Quoted: `"id"`, Field: "ID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagAutoID, Label: `ID`, JSON: `id`},
 		{Name: "business_unit_id", Quoted: `"business_unit_id"`, Field: "BusinessUnitID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Business Unit ID`, JSON: `businessUnitId`},

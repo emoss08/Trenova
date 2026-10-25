@@ -16,12 +16,13 @@ import (
 
 // documentUploadSessionsTable is the schema of documentupload.DocumentUploadSession.
 var documentUploadSessionsTable = schema.Table{
-	Name:   "document_upload_sessions",
-	Quoted: `"document_upload_sessions"`,
-	Alias:  "dus",
-	Model:  "documentupload.DocumentUploadSession",
-	Label:  `Document Upload Session`,
-	Plural: `Document Upload Sessions`,
+	Name:        "document_upload_sessions",
+	Quoted:      `"document_upload_sessions"`,
+	Alias:       "dus",
+	Model:       "documentupload.DocumentUploadSession",
+	Label:       `Document Upload Session`,
+	Plural:      `Document Upload Sessions`,
+	Constraints: (&documentupload.DocumentUploadSession{}).Constraints(),
 	Columns: []schema.Column{
 		{Name: "id", Quoted: `"id"`, Field: "ID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagAutoID, Label: `ID`, JSON: `id`},
 		{Name: "organization_id", Quoted: `"organization_id"`, Field: "OrganizationID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Organization ID`, JSON: `organizationId`},

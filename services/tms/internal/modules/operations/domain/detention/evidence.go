@@ -174,3 +174,17 @@ func (e *DetentionEvidence) BeforeCreate(ctx context.Context) error {
 
 	return nil
 }
+
+func (DetentionEvidence) Constraints() []keel.Constraint {
+	return []keel.Constraint{
+		{
+			Name:    "uq_detention_evidence_sequence",
+			Field:   "sequence",
+			Message: "Detention evidence was appended concurrently; retry",
+		},
+		{
+			Name:    "fk_detention_evidence_occurrence",
+			Message: "Detention occurrence does not exist in your organization",
+		},
+	}
+}

@@ -86,3 +86,12 @@ func (st *ServiceType) GetPostgresSearchConfig() domaintypes.PostgresSearchConfi
 		},
 	}
 }
+
+func (ServiceType) Constraints() []keel.Constraint {
+	return []keel.Constraint{
+		{
+			Name:    "idx_service_types_code",
+			Message: "Service type with this code already exists in your organization",
+		},
+	}
+}

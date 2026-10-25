@@ -194,3 +194,12 @@ func (d *InvoiceDispute) GetOrganizationID() pulid.ID {
 func (d *InvoiceDispute) GetBusinessUnitID() pulid.ID {
 	return d.BusinessUnitID
 }
+
+func (InvoiceDispute) Constraints() []keel.Constraint {
+	return []keel.Constraint{
+		{
+			Name:    "uq_invoice_disputes_open",
+			Message: "This invoice already has an open dispute",
+		},
+	}
+}

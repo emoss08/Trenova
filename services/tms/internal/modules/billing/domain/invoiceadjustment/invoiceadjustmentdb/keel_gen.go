@@ -23,14 +23,15 @@ import (
 
 // invoiceAdjustmentsTable is the schema of invoiceadjustment.InvoiceAdjustment.
 var invoiceAdjustmentsTable = schema.Table{
-	Name:   "invoice_adjustments",
-	Quoted: `"invoice_adjustments"`,
-	Alias:  "ia",
-	Model:  "invoiceadjustment.InvoiceAdjustment",
-	Label:  `Invoice Adjustment`,
-	Plural: `Invoice Adjustments`,
-	Doc:    `Credit memos and rebills against an issued invoice`,
-	Report: &schema.TableReport{Category: `Billing`},
+	Name:        "invoice_adjustments",
+	Quoted:      `"invoice_adjustments"`,
+	Alias:       "ia",
+	Model:       "invoiceadjustment.InvoiceAdjustment",
+	Label:       `Invoice Adjustment`,
+	Plural:      `Invoice Adjustments`,
+	Doc:         `Credit memos and rebills against an issued invoice`,
+	Report:      &schema.TableReport{Category: `Billing`},
+	Constraints: (&invoiceadjustment.InvoiceAdjustment{}).Constraints(),
 	Columns: []schema.Column{
 		{Name: "id", Quoted: `"id"`, Field: "ID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagAutoID, Label: `ID`, JSON: `id`, Report: &reportDimString},
 		{Name: "organization_id", Quoted: `"organization_id"`, Field: "OrganizationID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Organization ID`, JSON: `organizationId`, Report: &reportDimStringHidden},
@@ -577,12 +578,13 @@ func beforeCreateInvoiceAdjustment(ctx context.Context, p unsafe.Pointer) error 
 
 // invoiceAdjustmentBatchesTable is the schema of invoiceadjustment.InvoiceAdjustmentBatch.
 var invoiceAdjustmentBatchesTable = schema.Table{
-	Name:   "invoice_adjustment_batches",
-	Quoted: `"invoice_adjustment_batches"`,
-	Alias:  "iab",
-	Model:  "invoiceadjustment.InvoiceAdjustmentBatch",
-	Label:  `Invoice Adjustment Batch`,
-	Plural: `Invoice Adjustment Batches`,
+	Name:        "invoice_adjustment_batches",
+	Quoted:      `"invoice_adjustment_batches"`,
+	Alias:       "iab",
+	Model:       "invoiceadjustment.InvoiceAdjustmentBatch",
+	Label:       `Invoice Adjustment Batch`,
+	Plural:      `Invoice Adjustment Batches`,
+	Constraints: (&invoiceadjustment.InvoiceAdjustmentBatch{}).Constraints(),
 	Columns: []schema.Column{
 		{Name: "id", Quoted: `"id"`, Field: "ID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagAutoID, Label: `ID`, JSON: `id`},
 		{Name: "organization_id", Quoted: `"organization_id"`, Field: "OrganizationID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Organization ID`, JSON: `organizationId`},
@@ -850,12 +852,13 @@ func beforeCreateInvoiceAdjustmentBatch(ctx context.Context, p unsafe.Pointer) e
 
 // invoiceAdjustmentBatchItemsTable is the schema of invoiceadjustment.InvoiceAdjustmentBatchItem.
 var invoiceAdjustmentBatchItemsTable = schema.Table{
-	Name:   "invoice_adjustment_batch_items",
-	Quoted: `"invoice_adjustment_batch_items"`,
-	Alias:  "iabi",
-	Model:  "invoiceadjustment.InvoiceAdjustmentBatchItem",
-	Label:  `Invoice Adjustment Batch Item`,
-	Plural: `Invoice Adjustment Batch Items`,
+	Name:        "invoice_adjustment_batch_items",
+	Quoted:      `"invoice_adjustment_batch_items"`,
+	Alias:       "iabi",
+	Model:       "invoiceadjustment.InvoiceAdjustmentBatchItem",
+	Label:       `Invoice Adjustment Batch Item`,
+	Plural:      `Invoice Adjustment Batch Items`,
+	Constraints: (&invoiceadjustment.InvoiceAdjustmentBatchItem{}).Constraints(),
 	Columns: []schema.Column{
 		{Name: "id", Quoted: `"id"`, Field: "ID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagAutoID, Label: `ID`, JSON: `id`},
 		{Name: "organization_id", Quoted: `"organization_id"`, Field: "OrganizationID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Organization ID`, JSON: `organizationId`},
@@ -1207,12 +1210,13 @@ func valueInvoiceAdjustmentCorrectionGroup(p unsafe.Pointer, c int32) any {
 
 // invoiceAdjustmentDocumentReferencesTable is the schema of invoiceadjustment.InvoiceAdjustmentDocumentReference.
 var invoiceAdjustmentDocumentReferencesTable = schema.Table{
-	Name:   "invoice_adjustment_document_references",
-	Quoted: `"invoice_adjustment_document_references"`,
-	Alias:  "iadr",
-	Model:  "invoiceadjustment.InvoiceAdjustmentDocumentReference",
-	Label:  `Invoice Adjustment Document Reference`,
-	Plural: `Invoice Adjustment Document References`,
+	Name:        "invoice_adjustment_document_references",
+	Quoted:      `"invoice_adjustment_document_references"`,
+	Alias:       "iadr",
+	Model:       "invoiceadjustment.InvoiceAdjustmentDocumentReference",
+	Label:       `Invoice Adjustment Document Reference`,
+	Plural:      `Invoice Adjustment Document References`,
+	Constraints: (&invoiceadjustment.InvoiceAdjustmentDocumentReference{}).Constraints(),
 	Columns: []schema.Column{
 		{Name: "id", Quoted: `"id"`, Field: "ID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagAutoID, Label: `ID`, JSON: `id`},
 		{Name: "organization_id", Quoted: `"organization_id"`, Field: "OrganizationID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Organization ID`, JSON: `organizationId`},

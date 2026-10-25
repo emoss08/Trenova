@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/emoss08/keel"
+	"github.com/emoss08/keel/postgis"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/kernel/domain/usstate"
 	"github.com/emoss08/trenova/internal/modules/places/domain/geofence"
@@ -12,7 +13,6 @@ import (
 	"github.com/emoss08/trenova/pkg/domainvalidation"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
-	"github.com/emoss08/trenova/pkg/postgis"
 	"github.com/emoss08/trenova/pkg/validationframework"
 	"github.com/emoss08/trenova/shared/pulid"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
@@ -166,4 +166,17 @@ func (l *Location) BeforeCreate(ctx context.Context) error {
 	}
 
 	return nil
+}
+
+func (Location) Constraints() []keel.Constraint {
+	return []keel.Constraint{
+		{
+			Name:    "idx_locations_code",
+			Message: "Location with this code already exists in your organization",
+		},
+		{
+			Name:    "fk_locations_location_category",
+			Message: "Location category does not exist in your organization",
+		},
+	}
 }

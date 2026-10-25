@@ -135,3 +135,13 @@ func (wp *WorkerProfile) Validate(multiErr *errortypes.MultiError) {
 func (wp *WorkerProfile) GetTableName() string {
 	return "worker_profiles"
 }
+
+func (WorkerProfile) Constraints() []keel.Constraint {
+	return []keel.Constraint{
+		{
+			Name:    "fk_worker_profiles_license_state",
+			Field:   "profile.licenseStateId",
+			Message: "License state does not exist",
+		},
+	}
+}

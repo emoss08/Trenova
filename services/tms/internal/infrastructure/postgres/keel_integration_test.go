@@ -345,15 +345,7 @@ func TestKeel_ErrorsMapThroughTheEntityMapping(t *testing.T) {
 	db := conn.Keel(ctx)
 	s := keeltestdb.FleetCodes
 
-	mapping := dberror.Mapping{
-		Entity: "Fleet code",
-		Unique: []dberror.Constraint{
-			{Name: "pk_fleet_codes", Field: "id", Message: "Fleet code already exists"},
-		},
-		ForeignKey: []dberror.Constraint{
-			{Name: "fk_fleet_codes_manager", Field: "managerId", Message: "Manager does not exist"},
-		},
-	}
+	mapping := dberror.Mapping{Entity: "Fleet code"}
 
 	_, err := dbtx.Read(ctx, conn, func(ctx context.Context) (*keeltest.FleetCode, error) {
 		return s.Get(ctx, db, pulid.MustNew("fc_").String())

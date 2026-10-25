@@ -17,16 +17,7 @@ import (
 	"go.uber.org/zap"
 )
 
-var linkErrors = dberror.Mapping{
-	Entity: "Customer tracking link",
-	ForeignKey: []dberror.Constraint{
-		{
-			Name:    "fk_customer_tracking_links_shipment",
-			Field:   "shipmentId",
-			Message: "Shipment does not exist in your organization",
-		},
-	},
-}
+var linkErrors = dberror.Mapping{Entity: "Customer tracking link"}
 
 type linkRepository struct {
 	db *postgres.Connection

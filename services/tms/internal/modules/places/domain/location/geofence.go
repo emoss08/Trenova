@@ -1,9 +1,9 @@
 package location
 
 import (
+	"github.com/emoss08/keel/postgis"
 	"github.com/emoss08/trenova/internal/modules/places/domain/geofence"
 	"github.com/emoss08/trenova/pkg/errortypes"
-	"github.com/emoss08/trenova/pkg/postgis"
 )
 
 func (l *Location) NormalizeGeofence() {

@@ -15,16 +15,7 @@ import (
 	"go.uber.org/zap"
 )
 
-var scimGroupRoleMappingErrors = dberror.Mapping{
-	Entity: "SCIM group role mapping",
-	Unique: []dberror.Constraint{
-		{
-			Name:    "idx_sgrm_display_name",
-			Field:   "displayName",
-			Message: "A SCIM group role mapping with this display name already exists",
-		},
-	},
-}
+var scimGroupRoleMappingErrors = dberror.Mapping{Entity: "SCIM group role mapping"}
 
 func withMappingRole(
 	q *keel.Query[iam.SCIMGroupRoleMapping],

@@ -78,3 +78,12 @@ func (c *OrderCharge) GetOrganizationID() pulid.ID {
 func (c *OrderCharge) GetBusinessUnitID() pulid.ID {
 	return c.BusinessUnitID
 }
+
+func (OrderCharge) Constraints() []keel.Constraint {
+	return []keel.Constraint{
+		{
+			Name:    "fk_order_charges_order",
+			Message: "Order does not exist in your organization",
+		},
+	}
+}

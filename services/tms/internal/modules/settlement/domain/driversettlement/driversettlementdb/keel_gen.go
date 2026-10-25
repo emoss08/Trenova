@@ -298,14 +298,15 @@ func beforeCreateDispute(ctx context.Context, p unsafe.Pointer) error {
 
 // payEventsTable is the schema of driversettlement.PayEvent.
 var payEventsTable = schema.Table{
-	Name:   "driver_pay_events",
-	Quoted: `"driver_pay_events"`,
-	Alias:  "dpe",
-	Model:  "driversettlement.PayEvent",
-	Label:  `Driver Pay Event`,
-	Plural: `Driver Pay Events`,
-	Doc:    `Pay accrued against a shipment, before and after it settles`,
-	Report: &schema.TableReport{Category: `Payroll`},
+	Name:        "driver_pay_events",
+	Quoted:      `"driver_pay_events"`,
+	Alias:       "dpe",
+	Model:       "driversettlement.PayEvent",
+	Label:       `Driver Pay Event`,
+	Plural:      `Driver Pay Events`,
+	Doc:         `Pay accrued against a shipment, before and after it settles`,
+	Report:      &schema.TableReport{Category: `Payroll`},
+	Constraints: (&driversettlement.PayEvent{}).Constraints(),
 	Columns: []schema.Column{
 		{Name: "id", Quoted: `"id"`, Field: "ID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagAutoID, Label: `ID`, JSON: `id`, Report: &reportDimString},
 		{Name: "business_unit_id", Quoted: `"business_unit_id"`, Field: "BusinessUnitID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Business Unit ID`, JSON: `businessUnitId`, Report: &reportDimStringHidden},
@@ -646,14 +647,15 @@ func beforeCreatePayEvent(ctx context.Context, p unsafe.Pointer) error {
 
 // settlementsTable is the schema of driversettlement.Settlement.
 var settlementsTable = schema.Table{
-	Name:   "driver_settlements",
-	Quoted: `"driver_settlements"`,
-	Alias:  "ds",
-	Model:  "driversettlement.Settlement",
-	Label:  `Driver Settlement`,
-	Plural: `Driver Settlements`,
-	Doc:    `Driver and owner-operator pay statements`,
-	Report: &schema.TableReport{Category: `Payroll`},
+	Name:        "driver_settlements",
+	Quoted:      `"driver_settlements"`,
+	Alias:       "ds",
+	Model:       "driversettlement.Settlement",
+	Label:       `Driver Settlement`,
+	Plural:      `Driver Settlements`,
+	Doc:         `Driver and owner-operator pay statements`,
+	Report:      &schema.TableReport{Category: `Payroll`},
+	Constraints: (&driversettlement.Settlement{}).Constraints(),
 	Columns: []schema.Column{
 		{Name: "id", Quoted: `"id"`, Field: "ID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagAutoID, Label: `ID`, JSON: `id`, Report: &reportDimString},
 		{Name: "business_unit_id", Quoted: `"business_unit_id"`, Field: "BusinessUnitID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Business Unit ID`, JSON: `businessUnitId`, Report: &reportDimStringHidden},
@@ -1538,14 +1540,15 @@ func beforeCreateSettlementBatch(ctx context.Context, p unsafe.Pointer) error {
 
 // settlementLinesTable is the schema of driversettlement.SettlementLine.
 var settlementLinesTable = schema.Table{
-	Name:   "driver_settlement_lines",
-	Quoted: `"driver_settlement_lines"`,
-	Alias:  "dsl",
-	Model:  "driversettlement.SettlementLine",
-	Label:  `Settlement Line`,
-	Plural: `Settlement Lines`,
-	Doc:    `Each earning, deduction and reimbursement on a settlement`,
-	Report: &schema.TableReport{Category: `Payroll`},
+	Name:        "driver_settlement_lines",
+	Quoted:      `"driver_settlement_lines"`,
+	Alias:       "dsl",
+	Model:       "driversettlement.SettlementLine",
+	Label:       `Settlement Line`,
+	Plural:      `Settlement Lines`,
+	Doc:         `Each earning, deduction and reimbursement on a settlement`,
+	Report:      &schema.TableReport{Category: `Payroll`},
+	Constraints: (&driversettlement.SettlementLine{}).Constraints(),
 	Columns: []schema.Column{
 		{Name: "id", Quoted: `"id"`, Field: "ID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagAutoID, Label: `ID`, JSON: `id`, Report: &reportDimString},
 		{Name: "business_unit_id", Quoted: `"business_unit_id"`, Field: "BusinessUnitID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Business Unit ID`, JSON: `businessUnitId`, Report: &reportDimStringHidden},

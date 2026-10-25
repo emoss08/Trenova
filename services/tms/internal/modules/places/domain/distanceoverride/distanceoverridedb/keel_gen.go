@@ -19,12 +19,13 @@ import (
 
 // distanceOverridesTable is the schema of distanceoverride.DistanceOverride.
 var distanceOverridesTable = schema.Table{
-	Name:   "distance_overrides",
-	Quoted: `"distance_overrides"`,
-	Alias:  "do_",
-	Model:  "distanceoverride.DistanceOverride",
-	Label:  `Distance Override`,
-	Plural: `Distance Overrides`,
+	Name:        "distance_overrides",
+	Quoted:      `"distance_overrides"`,
+	Alias:       "do_",
+	Model:       "distanceoverride.DistanceOverride",
+	Label:       `Distance Override`,
+	Plural:      `Distance Overrides`,
+	Constraints: (&distanceoverride.DistanceOverride{}).Constraints(),
 	Columns: []schema.Column{
 		{Name: "id", Quoted: `"id"`, Field: "ID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagAutoID, Label: `ID`, JSON: `id`},
 		{Name: "business_unit_id", Quoted: `"business_unit_id"`, Field: "BusinessUnitID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Business Unit ID`, JSON: `businessUnitId`},
@@ -241,12 +242,13 @@ func attachDistanceOverride(p unsafe.Pointer, rel int32, child unsafe.Pointer) {
 
 // distanceOverrideStopsTable is the schema of distanceoverride.DistanceOverrideStop.
 var distanceOverrideStopsTable = schema.Table{
-	Name:   "distance_override_stops",
-	Quoted: `"distance_override_stops"`,
-	Alias:  "dos",
-	Model:  "distanceoverride.DistanceOverrideStop",
-	Label:  `Distance Override Stop`,
-	Plural: `Distance Override Stops`,
+	Name:        "distance_override_stops",
+	Quoted:      `"distance_override_stops"`,
+	Alias:       "dos",
+	Model:       "distanceoverride.DistanceOverrideStop",
+	Label:       `Distance Override Stop`,
+	Plural:      `Distance Override Stops`,
+	Constraints: (&distanceoverride.DistanceOverrideStop{}).Constraints(),
 	Columns: []schema.Column{
 		{Name: "distance_override_id", Quoted: `"distance_override_id"`, Field: "DistanceOverrideID", Kind: schema.KindString, Flags: schema.FlagPK, Label: `Distance Override ID`},
 		{Name: "business_unit_id", Quoted: `"business_unit_id"`, Field: "BusinessUnitID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Business Unit ID`},

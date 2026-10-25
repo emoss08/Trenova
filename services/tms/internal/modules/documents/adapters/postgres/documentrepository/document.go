@@ -24,31 +24,7 @@ import (
 
 const defaultReconciliationLimit = 100
 
-var documentErrors = dberror.Mapping{
-	Entity: "Document",
-	ForeignKey: []dberror.Constraint{
-		{
-			Name:    "fk_documents_document_type",
-			Field:   "documentTypeId",
-			Message: "Document type does not exist",
-		},
-		{
-			Name:    "fk_documents_uploaded_by",
-			Field:   "uploadedById",
-			Message: "Uploading user does not exist",
-		},
-		{
-			Name:    "fk_documents_approved_by",
-			Field:   "approvedById",
-			Message: "Approving user does not exist",
-		},
-		{
-			Name:    "fk_documents_rejected_by",
-			Field:   "rejectedById",
-			Message: "Rejecting user does not exist",
-		},
-	},
-}
+var documentErrors = dberror.Mapping{Entity: "Document"}
 
 type Params struct {
 	fx.In

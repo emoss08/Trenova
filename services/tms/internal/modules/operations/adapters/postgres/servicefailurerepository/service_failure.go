@@ -22,16 +22,7 @@ import (
 
 const serviceFailureEntity = "Service failure"
 
-var serviceFailureErrors = dberror.Mapping{
-	Entity: serviceFailureEntity,
-	ForeignKey: []dberror.Constraint{
-		{
-			Name:    "fk_sf_reason_code",
-			Field:   "reasonCodeId",
-			Message: "Reason code does not exist in your organization",
-		},
-	},
-}
+var serviceFailureErrors = dberror.Mapping{Entity: serviceFailureEntity}
 
 type Params struct {
 	fx.In

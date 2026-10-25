@@ -200,3 +200,12 @@ func (fp *FiscalPeriod) GetPostgresSearchConfig() domaintypes.PostgresSearchConf
 		},
 	}
 }
+
+func (FiscalPeriod) Constraints() []keel.Constraint {
+	return []keel.Constraint{
+		{
+			Name:    "fk_fiscal_periods_fiscal_year",
+			Message: "Fiscal year does not exist in your organization",
+		},
+	}
+}

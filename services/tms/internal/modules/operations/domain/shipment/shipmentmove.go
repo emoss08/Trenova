@@ -171,3 +171,12 @@ func (m *ShipmentMove) JurisdictionMilesSumMiles() float64 {
 	}
 	return total
 }
+
+func (ShipmentMove) Constraints() []keel.Constraint {
+	return []keel.Constraint{
+		{
+			Name:    "fk_shipment_moves_shipment",
+			Message: "Shipment does not exist in your organization",
+		},
+	}
+}

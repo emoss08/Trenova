@@ -27,14 +27,15 @@ import (
 
 // trailersTable is the schema of trailer.Trailer.
 var trailersTable = schema.Table{
-	Name:   "trailers",
-	Quoted: `"trailers"`,
-	Alias:  "t",
-	Model:  "trailer.Trailer",
-	Label:  `Trailer`,
-	Plural: `Trailers`,
-	Doc:    `Trailers and towed equipment`,
-	Report: &schema.TableReport{Category: `Equipment`},
+	Name:        "trailers",
+	Quoted:      `"trailers"`,
+	Alias:       "t",
+	Model:       "trailer.Trailer",
+	Label:       `Trailer`,
+	Plural:      `Trailers`,
+	Doc:         `Trailers and towed equipment`,
+	Report:      &schema.TableReport{Category: `Equipment`},
+	Constraints: (&trailer.Trailer{}).Constraints(),
 	Columns: []schema.Column{
 		{Name: "id", Quoted: `"id"`, Field: "ID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagAutoID, Label: `ID`, JSON: `id`, Report: &reportDimString},
 		{Name: "business_unit_id", Quoted: `"business_unit_id"`, Field: "BusinessUnitID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Business Unit ID`, JSON: `businessUnitId`, Report: &reportDimStringHidden},

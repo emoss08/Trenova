@@ -110,3 +110,13 @@ func (fp *FuelIndexPrice) BeforeUpdate(_ context.Context) error {
 
 	return nil
 }
+
+func (FuelIndexPrice) Constraints() []keel.Constraint {
+	return []keel.Constraint{
+		{
+			Name:    "uq_fuel_index_prices_week",
+			Field:   "priceDate",
+			Message: "This fuel index already has a price for that date",
+		},
+	}
+}

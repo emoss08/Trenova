@@ -535,12 +535,13 @@ func beforeCreateCarrierSettlement(ctx context.Context, p unsafe.Pointer) error 
 
 // carrierSettlementBatchesTable is the schema of carriersettlement.CarrierSettlementBatch.
 var carrierSettlementBatchesTable = schema.Table{
-	Name:   "carrier_settlement_batches",
-	Quoted: `"carrier_settlement_batches"`,
-	Alias:  "csb",
-	Model:  "carriersettlement.CarrierSettlementBatch",
-	Label:  `Carrier Settlement Batch`,
-	Plural: `Carrier Settlement Batches`,
+	Name:        "carrier_settlement_batches",
+	Quoted:      `"carrier_settlement_batches"`,
+	Alias:       "csb",
+	Model:       "carriersettlement.CarrierSettlementBatch",
+	Label:       `Carrier Settlement Batch`,
+	Plural:      `Carrier Settlement Batches`,
+	Constraints: (&carriersettlement.CarrierSettlementBatch{}).Constraints(),
 	Columns: []schema.Column{
 		{Name: "id", Quoted: `"id"`, Field: "ID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagAutoID, Label: `ID`, JSON: `id`},
 		{Name: "business_unit_id", Quoted: `"business_unit_id"`, Field: "BusinessUnitID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Business Unit ID`, JSON: `businessUnitId`},

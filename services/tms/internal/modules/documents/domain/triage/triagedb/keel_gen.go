@@ -873,12 +873,13 @@ func valueResponseTarget(p unsafe.Pointer, c int32) any {
 
 // rulesTable is the schema of triage.Rule.
 var rulesTable = schema.Table{
-	Name:   "triage_rules",
-	Quoted: `"triage_rules"`,
-	Alias:  "tr",
-	Model:  "triage.Rule",
-	Label:  `Rule`,
-	Plural: `Rules`,
+	Name:        "triage_rules",
+	Quoted:      `"triage_rules"`,
+	Alias:       "tr",
+	Model:       "triage.Rule",
+	Label:       `Rule`,
+	Plural:      `Rules`,
+	Constraints: (&triage.Rule{}).Constraints(),
 	Columns: []schema.Column{
 		{Name: "id", Quoted: `"id"`, Field: "ID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagAutoID, Label: `ID`, JSON: `id`},
 		{Name: "business_unit_id", Quoted: `"business_unit_id"`, Field: "BusinessUnitID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Business Unit ID`, JSON: `businessUnitId`},

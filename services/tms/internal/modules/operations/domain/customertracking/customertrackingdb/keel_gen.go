@@ -15,12 +15,13 @@ import (
 
 // linksTable is the schema of customertracking.Link.
 var linksTable = schema.Table{
-	Name:   "customer_tracking_links",
-	Quoted: `"customer_tracking_links"`,
-	Alias:  "ctl",
-	Model:  "customertracking.Link",
-	Label:  `Link`,
-	Plural: `Links`,
+	Name:        "customer_tracking_links",
+	Quoted:      `"customer_tracking_links"`,
+	Alias:       "ctl",
+	Model:       "customertracking.Link",
+	Label:       `Link`,
+	Plural:      `Links`,
+	Constraints: (&customertracking.Link{}).Constraints(),
 	Columns: []schema.Column{
 		{Name: "id", Quoted: `"id"`, Field: "ID", Kind: schema.KindString, Flags: schema.FlagPK, Label: `ID`, JSON: `id`},
 		{Name: "organization_id", Quoted: `"organization_id"`, Field: "OrganizationID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Organization ID`, JSON: `organizationId`},
@@ -225,13 +226,14 @@ func valueLink(p unsafe.Pointer, c int32) any {
 
 // notificationsTable is the schema of customertracking.Notification.
 var notificationsTable = schema.Table{
-	Name:   "customer_status_notifications",
-	Quoted: `"customer_status_notifications"`,
-	Alias:  "csn",
-	Model:  "customertracking.Notification",
-	Label:  `Notification`,
-	Plural: `Notifications`,
-	Doc:    `Notification is one status email a customer is owed. The row is the ledger: its natural key (shipment, event, subject) is unique, so an event that is seen twice, out of order or by two workers at once owes exactly one email, and the email is sent under the row's id as its idempotency key, so a retry never sends a second copy.`,
+	Name:        "customer_status_notifications",
+	Quoted:      `"customer_status_notifications"`,
+	Alias:       "csn",
+	Model:       "customertracking.Notification",
+	Label:       `Notification`,
+	Plural:      `Notifications`,
+	Doc:         `Notification is one status email a customer is owed. The row is the ledger: its natural key (shipment, event, subject) is unique, so an event that is seen twice, out of order or by two workers at once owes exactly one email, and the email is sent under the row's id as its idempotency key, so a retry never sends a second copy.`,
+	Constraints: (&customertracking.Notification{}).Constraints(),
 	Columns: []schema.Column{
 		{Name: "id", Quoted: `"id"`, Field: "ID", Kind: schema.KindString, Flags: schema.FlagPK, Label: `ID`, JSON: `id`},
 		{Name: "organization_id", Quoted: `"organization_id"`, Field: "OrganizationID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Organization ID`, JSON: `organizationId`},
@@ -498,12 +500,13 @@ func valueNotification(p unsafe.Pointer, c int32) any {
 
 // profilesTable is the schema of customertracking.Profile.
 var profilesTable = schema.Table{
-	Name:   "customer_tracking_profiles",
-	Quoted: `"customer_tracking_profiles"`,
-	Alias:  "ctp",
-	Model:  "customertracking.Profile",
-	Label:  `Profile`,
-	Plural: `Profiles`,
+	Name:        "customer_tracking_profiles",
+	Quoted:      `"customer_tracking_profiles"`,
+	Alias:       "ctp",
+	Model:       "customertracking.Profile",
+	Label:       `Profile`,
+	Plural:      `Profiles`,
+	Constraints: (&customertracking.Profile{}).Constraints(),
 	Columns: []schema.Column{
 		{Name: "id", Quoted: `"id"`, Field: "ID", Kind: schema.KindString, Flags: schema.FlagPK, Label: `ID`, JSON: `id`},
 		{Name: "organization_id", Quoted: `"organization_id"`, Field: "OrganizationID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Organization ID`, JSON: `organizationId`},

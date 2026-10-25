@@ -19,16 +19,7 @@ import (
 	"go.uber.org/zap"
 )
 
-var payProfileErrors = dberror.Mapping{
-	Entity: "PayProfile",
-	Unique: []dberror.Constraint{
-		{
-			Name:    "uq_driver_pay_profiles_name",
-			Field:   "name",
-			Message: "Pay profile with this name already exists in your organization",
-		},
-	},
-}
+var payProfileErrors = dberror.Mapping{Entity: "PayProfile"}
 
 type Params struct {
 	fx.In

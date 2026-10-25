@@ -222,3 +222,13 @@ func (r *CapabilityRule) BeforeSave(_ context.Context) error {
 	r.applyDefaults()
 	return nil
 }
+
+func (CapabilityRule) Constraints() []keel.Constraint {
+	return []keel.Constraint{
+		{
+			Name:    "uq_mode_profile_capability_rules_key",
+			Field:   "rules",
+			Message: "Each rule may appear only once in a mode profile",
+		},
+	}
+}

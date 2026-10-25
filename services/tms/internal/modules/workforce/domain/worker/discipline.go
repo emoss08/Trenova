@@ -248,6 +248,23 @@ func (a *WorkerDisciplinaryAction) BeforeCreate(_ context.Context) error {
 	return nil
 }
 
+func (WorkerDisciplinaryAction) Constraints() []keel.Constraint {
+	return []keel.Constraint{
+		{
+			Name:    "fk_worker_disciplinary_actions_event",
+			Message: "Safety event does not exist or belongs to a different organization",
+		},
+		{
+			Name:    "fk_worker_disciplinary_actions_document",
+			Message: "Document does not exist or belongs to a different organization",
+		},
+		{
+			Name:    "fk_worker_disciplinary_actions_worker",
+			Message: "Worker does not exist or belongs to a different organization",
+		},
+	}
+}
+
 // DisciplinaryLadder is where a worker stands: the rungs already taken that
 // still count, and the rung the next action would normally be.
 type DisciplinaryLadder struct {
@@ -383,4 +400,13 @@ func (r *WorkerRecognition) BeforeCreate(_ context.Context) error {
 	}
 
 	return nil
+}
+
+func (WorkerRecognition) Constraints() []keel.Constraint {
+	return []keel.Constraint{
+		{
+			Name:    "fk_worker_recognitions_worker",
+			Message: "Worker does not exist or belongs to a different organization",
+		},
+	}
 }

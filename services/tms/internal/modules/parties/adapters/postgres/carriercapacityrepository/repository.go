@@ -22,26 +22,7 @@ const (
 	maxOpenList     = 2000
 )
 
-var postingErrors = dberror.Mapping{
-	Entity: entityName,
-	ForeignKey: []dberror.Constraint{
-		{
-			Name:    "fk_carrier_capacity_postings_carrier",
-			Field:   "carrierId",
-			Message: "Carrier does not exist in your organization",
-		},
-		{
-			Name:    "fk_carrier_capacity_postings_origin_location",
-			Field:   "originLocationId",
-			Message: "Origin location does not exist in your organization",
-		},
-		{
-			Name:    "fk_carrier_capacity_postings_equipment_type",
-			Field:   "equipmentTypeId",
-			Message: "Equipment type does not exist in your organization",
-		},
-	},
-}
+var postingErrors = dberror.Mapping{Entity: entityName}
 
 type Params struct {
 	fx.In

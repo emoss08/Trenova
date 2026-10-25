@@ -21,14 +21,15 @@ import (
 
 // ordersTable is the schema of order.Order.
 var ordersTable = schema.Table{
-	Name:   "orders",
-	Quoted: `"orders"`,
-	Alias:  "o",
-	Model:  "order.Order",
-	Label:  `Order`,
-	Plural: `Orders`,
-	Doc:    `Commercial orders grouping one or more shipments`,
-	Report: &schema.TableReport{Category: `Operations`},
+	Name:        "orders",
+	Quoted:      `"orders"`,
+	Alias:       "o",
+	Model:       "order.Order",
+	Label:       `Order`,
+	Plural:      `Orders`,
+	Doc:         `Commercial orders grouping one or more shipments`,
+	Report:      &schema.TableReport{Category: `Operations`},
+	Constraints: (&order.Order{}).Constraints(),
 	Columns: []schema.Column{
 		{Name: "id", Quoted: `"id"`, Field: "ID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagAutoID, Label: `ID`, JSON: `id`, Report: &reportDimString},
 		{Name: "business_unit_id", Quoted: `"business_unit_id"`, Field: "BusinessUnitID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Business Unit ID`, JSON: `businessUnitId`, Report: &reportDimStringHidden},
@@ -313,13 +314,14 @@ func beforeCreateOrder(ctx context.Context, p unsafe.Pointer) error {
 
 // orderChargesTable is the schema of order.OrderCharge.
 var orderChargesTable = schema.Table{
-	Name:   "order_charges",
-	Quoted: `"order_charges"`,
-	Alias:  "oc",
-	Model:  "order.OrderCharge",
-	Label:  `Order Charge`,
-	Plural: `Order Charges`,
-	Doc:    `OrderCharge is an order-level charge that is not attributable to a single leg — e.g. a customs brokerage fee or an order-wide fuel surcharge. Per-leg accessorials still live on the shipment's AdditionalCharge; these roll into the order total and appear as their own lines on the grouped invoice.`,
+	Name:        "order_charges",
+	Quoted:      `"order_charges"`,
+	Alias:       "oc",
+	Model:       "order.OrderCharge",
+	Label:       `Order Charge`,
+	Plural:      `Order Charges`,
+	Doc:         `OrderCharge is an order-level charge that is not attributable to a single leg — e.g. a customs brokerage fee or an order-wide fuel surcharge. Per-leg accessorials still live on the shipment's AdditionalCharge; these roll into the order total and appear as their own lines on the grouped invoice.`,
+	Constraints: (&order.OrderCharge{}).Constraints(),
 	Columns: []schema.Column{
 		{Name: "id", Quoted: `"id"`, Field: "ID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagAutoID, Label: `ID`, JSON: `id`},
 		{Name: "business_unit_id", Quoted: `"business_unit_id"`, Field: "BusinessUnitID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Business Unit ID`, JSON: `businessUnitId`},

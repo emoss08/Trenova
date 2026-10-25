@@ -103,3 +103,12 @@ func (b *CarrierSettlementBatch) BeforeCreate(ctx context.Context) error {
 
 	return nil
 }
+
+func (CarrierSettlementBatch) Constraints() []keel.Constraint {
+	return []keel.Constraint{
+		{
+			Name:    "uq_carrier_settlement_batches_period",
+			Message: "An open carrier settlement batch already exists for this period",
+		},
+	}
+}

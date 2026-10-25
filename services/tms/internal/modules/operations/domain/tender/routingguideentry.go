@@ -121,3 +121,18 @@ func (rge *RoutingGuideEntry) BeforeCreate(_ context.Context) error {
 
 	return nil
 }
+
+func (RoutingGuideEntry) Constraints() []keel.Constraint {
+	return []keel.Constraint{
+		{
+			Name:    "uq_routing_guide_entries_rank",
+			Field:   "entries.rank",
+			Message: "Each routing guide entry must have a distinct rank",
+		},
+		{
+			Name:    "fk_routing_guide_entries_carrier",
+			Field:   "entries.carrierId",
+			Message: "Carrier does not exist in your organization",
+		},
+	}
+}

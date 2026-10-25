@@ -35,3 +35,32 @@ func (w *WorkItem) Validate(multiErr *errortypes.MultiError) {
 		validation.Field(&w.BankReceiptID, validation.Required),
 	))
 }
+
+func (WorkItem) Constraints() []keel.Constraint {
+	return []keel.Constraint{
+		{
+			Name:    "uq_bank_receipt_work_items_active",
+			Message: "An active work item already exists for this bank receipt",
+		},
+		{
+			Name:    "fk_bank_receipt_work_items_receipt",
+			Message: "Bank receipt does not exist in your organization",
+		},
+		{
+			Name:    "fk_bank_receipt_work_items_assigned_to",
+			Message: "Assigned user does not exist",
+		},
+		{
+			Name:    "fk_bank_receipt_work_items_resolved_by",
+			Message: "Resolving user does not exist",
+		},
+		{
+			Name:    "fk_bank_receipt_work_items_created_by",
+			Message: "Created by user does not exist",
+		},
+		{
+			Name:    "fk_bank_receipt_work_items_updated_by",
+			Message: "Updated by user does not exist",
+		},
+	}
+}

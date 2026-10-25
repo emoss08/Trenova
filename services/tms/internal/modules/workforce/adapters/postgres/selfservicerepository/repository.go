@@ -19,8 +19,6 @@ import (
 	"go.uber.org/zap"
 )
 
-const fieldWorkerID = "workerId"
-
 const (
 	defaultPolicyPageSize     = 200
 	defaultAckPageSize        = 500
@@ -28,64 +26,11 @@ const (
 	defaultCompliancePageSize = 1000
 )
 
-var policyErrors = dberror.Mapping{
-	Entity: "WorkerPolicy",
-	Unique: []dberror.Constraint{
-		{
-			Name:    "uq_worker_policies_code",
-			Field:   "code",
-			Message: "Policy with this code already exists in your organization",
-		},
-	},
-	ForeignKey: []dberror.Constraint{
-		{
-			Name:    "fk_worker_policies_document",
-			Field:   "documentId",
-			Message: "Document does not exist or belongs to a different organization",
-		},
-	},
-}
+var policyErrors = dberror.Mapping{Entity: "WorkerPolicy"}
 
-var acknowledgementErrors = dberror.Mapping{
-	Entity: "WorkerPolicyAcknowledgement",
-	Unique: []dberror.Constraint{
-		{
-			Name:    "uq_worker_policy_acknowledgements_version",
-			Field:   "versionLabel",
-			Message: "Worker has already acknowledged this version of the policy",
-		},
-	},
-	ForeignKey: []dberror.Constraint{
-		{
-			Name:    "fk_worker_policy_acknowledgements_policy",
-			Field:   "policyId",
-			Message: "Policy does not exist or belongs to a different organization",
-		},
-		{
-			Name:    "fk_worker_policy_acknowledgements_worker",
-			Field:   fieldWorkerID,
-			Message: "Worker does not exist or belongs to a different organization",
-		},
-	},
-}
+var acknowledgementErrors = dberror.Mapping{Entity: "WorkerPolicyAcknowledgement"}
 
-var changeRequestErrors = dberror.Mapping{
-	Entity: "WorkerProfileChangeRequest",
-	Unique: []dberror.Constraint{
-		{
-			Name:    "uq_worker_profile_change_requests_open",
-			Field:   fieldWorkerID,
-			Message: "Worker already has a pending profile change request",
-		},
-	},
-	ForeignKey: []dberror.Constraint{
-		{
-			Name:    "fk_worker_profile_change_requests_worker",
-			Field:   fieldWorkerID,
-			Message: "Worker does not exist or belongs to a different organization",
-		},
-	},
-}
+var changeRequestErrors = dberror.Mapping{Entity: "WorkerProfileChangeRequest"}
 
 type Params struct {
 	fx.In

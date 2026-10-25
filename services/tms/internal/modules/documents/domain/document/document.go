@@ -488,6 +488,27 @@ func (d *Document) Validate(multiErr *errortypes.MultiError) {
 	))
 }
 
+func (Document) Constraints() []keel.Constraint {
+	return []keel.Constraint{
+		{
+			Name:    "fk_documents_document_type",
+			Message: "Document type does not exist",
+		},
+		{
+			Name:    "fk_documents_uploaded_by",
+			Message: "Uploading user does not exist",
+		},
+		{
+			Name:    "fk_documents_approved_by",
+			Message: "Approving user does not exist",
+		},
+		{
+			Name:    "fk_documents_rejected_by",
+			Message: "Rejecting user does not exist",
+		},
+	}
+}
+
 const (
 	maxFileNameLength         = 255
 	maxFileTypeLength         = 100

@@ -23,21 +23,7 @@ const (
 	defaultRetentionPageSize    = 200
 )
 
-var verificationErrors = dberror.Mapping{
-	Entity: "WorkerEmploymentVerification",
-	ForeignKey: []dberror.Constraint{
-		{
-			Name:    "fk_worker_employment_verifications_worker",
-			Field:   "workerId",
-			Message: "Worker does not exist or belongs to a different organization",
-		},
-		{
-			Name:    "fk_worker_employment_verifications_document",
-			Field:   "documentId",
-			Message: "Document does not exist or belongs to a different organization",
-		},
-	},
-}
+var verificationErrors = dberror.Mapping{Entity: "WorkerEmploymentVerification"}
 
 type Params struct {
 	fx.In

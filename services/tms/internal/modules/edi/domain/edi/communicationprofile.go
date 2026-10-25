@@ -146,3 +146,16 @@ func (p *EDICommunicationProfile) Validate(multiErr *errortypes.MultiError) {
 		),
 	))
 }
+
+func (EDICommunicationProfile) Constraints() []keel.Constraint {
+	return []keel.Constraint{
+		{
+			Name:    "uq_edi_communication_profiles_active_as2_identifiers",
+			Message: "Another active AS2 profile already uses this local and partner AS2 ID pair",
+		},
+		{
+			Name:    "idx_edi_communication_profiles_name_org",
+			Message: "EDI communication profile with this name already exists",
+		},
+	}
+}

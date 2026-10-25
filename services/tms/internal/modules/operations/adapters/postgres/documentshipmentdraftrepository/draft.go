@@ -16,16 +16,7 @@ import (
 	"go.uber.org/zap"
 )
 
-var draftErrors = dberror.Mapping{
-	Entity: "Document shipment draft",
-	ForeignKey: []dberror.Constraint{
-		{
-			Name:    "fk_document_shipment_drafts_document",
-			Field:   "documentId",
-			Message: "Document does not exist in your organization",
-		},
-	},
-}
+var draftErrors = dberror.Mapping{Entity: "Document shipment draft"}
 
 type Params struct {
 	fx.In

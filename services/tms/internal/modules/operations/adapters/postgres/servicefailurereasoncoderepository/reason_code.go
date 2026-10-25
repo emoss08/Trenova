@@ -22,16 +22,7 @@ import (
 
 const reasonCodeEntity = "Service failure reason code"
 
-var reasonCodeErrors = dberror.Mapping{
-	Entity: reasonCodeEntity,
-	Unique: []dberror.Constraint{
-		{
-			Name:    "ux_sfrc_tenant_code",
-			Field:   "code",
-			Message: "Service failure reason code already exists in your organization",
-		},
-	},
-}
+var reasonCodeErrors = dberror.Mapping{Entity: reasonCodeEntity}
 
 type Params struct {
 	fx.In

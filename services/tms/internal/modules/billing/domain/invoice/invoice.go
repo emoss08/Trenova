@@ -665,6 +665,16 @@ func (l *InvoiceLine) Validate(multiErr *errortypes.MultiError, idx int) {
 	}
 }
 
+func (InvoiceLine) Constraints() []keel.Constraint {
+	return []keel.Constraint{
+		{
+			Name:    "uk_invoice_lines_number",
+			Field:   "lines",
+			Message: "Invoice line numbers must be unique within the invoice",
+		},
+	}
+}
+
 func (i *Invoice) BeforeCreate(ctx context.Context) error {
 	if i.Scope == "" {
 		i.Scope = ScopeShipment
@@ -781,6 +791,16 @@ func (a *Attachment) Validate(multiErr *errortypes.MultiError) {
 			validation.Min(0).Error("Sort order cannot be negative"),
 		),
 	))
+}
+
+func (Attachment) Constraints() []keel.Constraint {
+	return []keel.Constraint{
+		{
+			Name:    "uk_invoice_attachments_document",
+			Field:   "documentIds",
+			Message: "A document can be attached to the invoice only once",
+		},
+	}
 }
 
 func (a *EmailAttempt) Validate(multiErr *errortypes.MultiError) {
@@ -922,6 +942,16 @@ func (t *DocumentShareToken) Validate(multiErr *errortypes.MultiError) {
 	))
 }
 
+func (DocumentShareToken) Constraints() []keel.Constraint {
+	return []keel.Constraint{
+		{
+			Name:    "uk_invoice_document_share_tokens_hash",
+			Field:   "tokenHash",
+			Message: "Document share token already exists",
+		},
+	}
+}
+
 const (
 	maxProviderMessageIDLength     = 160
 	MaxEmailSubjectLength          = 998
@@ -934,6 +964,15 @@ const (
 // on either side means the default currency, which is what a blank is saved as.
 func (i *Invoice) BilledIn(currencyCode string) bool {
 	return strings.EqualFold(currencyOrDefault(i.CurrencyCode), currencyOrDefault(currencyCode))
+}
+
+func (Invoice) Constraints() []keel.Constraint {
+	return []keel.Constraint{
+		{
+			Name:    "uk_invoices_number",
+			Message: "Invoice with this number already exists in your organization",
+		},
+	}
 }
 
 func currencyOrDefault(code string) string {

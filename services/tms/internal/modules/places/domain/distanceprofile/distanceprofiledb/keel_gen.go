@@ -16,12 +16,13 @@ import (
 
 // distanceProfilesTable is the schema of distanceprofile.DistanceProfile.
 var distanceProfilesTable = schema.Table{
-	Name:   "distance_profiles",
-	Quoted: `"distance_profiles"`,
-	Alias:  "dp",
-	Model:  "distanceprofile.DistanceProfile",
-	Label:  `Distance Profile`,
-	Plural: `Distance Profiles`,
+	Name:        "distance_profiles",
+	Quoted:      `"distance_profiles"`,
+	Alias:       "dp",
+	Model:       "distanceprofile.DistanceProfile",
+	Label:       `Distance Profile`,
+	Plural:      `Distance Profiles`,
+	Constraints: (&distanceprofile.DistanceProfile{}).Constraints(),
 	Columns: []schema.Column{
 		{Name: "id", Quoted: `"id"`, Field: "ID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagAutoID, Label: `ID`, JSON: `id`},
 		{Name: "business_unit_id", Quoted: `"business_unit_id"`, Field: "BusinessUnitID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Business Unit ID`, JSON: `businessUnitId`},

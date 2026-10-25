@@ -539,13 +539,14 @@ func beforeUpdateJurisdictionRule(ctx context.Context, p unsafe.Pointer) error {
 
 // overridesTable is the schema of jurisdictionrule.Override.
 var overridesTable = schema.Table{
-	Name:   "jurisdiction_rule_overrides",
-	Quoted: `"jurisdiction_rule_overrides"`,
-	Alias:  "jro",
-	Model:  "jurisdictionrule.Override",
-	Label:  `Override`,
-	Plural: `Overrides`,
-	Doc:    `Override lets a carrier run a tighter posture than the statutory baseline without editing shared reference data. Every field is optional: an unset field means "defer to the jurisdiction rule".`,
+	Name:        "jurisdiction_rule_overrides",
+	Quoted:      `"jurisdiction_rule_overrides"`,
+	Alias:       "jro",
+	Model:       "jurisdictionrule.Override",
+	Label:       `Override`,
+	Plural:      `Overrides`,
+	Doc:         `Override lets a carrier run a tighter posture than the statutory baseline without editing shared reference data. Every field is optional: an unset field means "defer to the jurisdiction rule".`,
+	Constraints: (&jurisdictionrule.Override{}).Constraints(),
 	Columns: []schema.Column{
 		{Name: "id", Quoted: `"id"`, Field: "ID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagAutoID, Label: `ID`, JSON: `id`},
 		{Name: "business_unit_id", Quoted: `"business_unit_id"`, Field: "BusinessUnitID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Business Unit ID`, JSON: `businessUnitId`},

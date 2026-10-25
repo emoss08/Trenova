@@ -234,3 +234,32 @@ func (w *Worker) SamePartyDetails(other *Worker) bool {
 		w.StateID == other.StateID &&
 		w.PostalCode == other.PostalCode
 }
+
+func (Worker) Constraints() []keel.Constraint {
+	return []keel.Constraint{
+		{
+			Name:    "uq_workers_org_user",
+			Message: "This user is already linked to another worker in your organization",
+		},
+		{
+			Name:    "fk_workers_state",
+			Message: "State does not exist",
+		},
+		{
+			Name:    "fk_workers_manager",
+			Message: "Manager does not exist",
+		},
+		{
+			Name:    "fk_workers_fleet_code",
+			Message: "Fleet code does not exist or belongs to a different organization",
+		},
+		{
+			Name:    "fk_workers_user",
+			Message: "User does not exist",
+		},
+		{
+			Name:    "fk_workers_position",
+			Message: "Job position does not exist or belongs to a different organization",
+		},
+	}
+}

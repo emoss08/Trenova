@@ -23,12 +23,13 @@ import (
 
 // postingsTable is the schema of carriercapacity.Posting.
 var postingsTable = schema.Table{
-	Name:   "carrier_capacity_postings",
-	Quoted: `"carrier_capacity_postings"`,
-	Alias:  "ccp",
-	Model:  "carriercapacity.Posting",
-	Label:  `Posting`,
-	Plural: `Postings`,
+	Name:        "carrier_capacity_postings",
+	Quoted:      `"carrier_capacity_postings"`,
+	Alias:       "ccp",
+	Model:       "carriercapacity.Posting",
+	Label:       `Posting`,
+	Plural:      `Postings`,
+	Constraints: (&carriercapacity.Posting{}).Constraints(),
 	Columns: []schema.Column{
 		{Name: "id", Quoted: `"id"`, Field: "ID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagAutoID, Label: `ID`, JSON: `id`},
 		{Name: "business_unit_id", Quoted: `"business_unit_id"`, Field: "BusinessUnitID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Business Unit ID`, JSON: `businessUnitId`},

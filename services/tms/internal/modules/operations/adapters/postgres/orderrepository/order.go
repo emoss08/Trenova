@@ -26,33 +26,8 @@ var (
 )
 
 var (
-	orderErrors = dberror.Mapping{
-		Entity: "Order",
-		Unique: []dberror.Constraint{
-			{
-				Name:    "idx_orders_order_number",
-				Field:   "orderNumber",
-				Message: "Order with this order number already exists in your organization",
-			},
-		},
-		ForeignKey: []dberror.Constraint{
-			{
-				Name:    "fk_orders_customer",
-				Field:   "customerId",
-				Message: "Customer does not exist in your organization",
-			},
-		},
-	}
-	orderChargeErrors = dberror.Mapping{
-		Entity: "Order charge",
-		ForeignKey: []dberror.Constraint{
-			{
-				Name:    "fk_order_charges_order",
-				Field:   "orderId",
-				Message: "Order does not exist in your organization",
-			},
-		},
-	}
+	orderErrors       = dberror.Mapping{Entity: "Order"}
+	orderChargeErrors = dberror.Mapping{Entity: "Order charge"}
 )
 
 const (

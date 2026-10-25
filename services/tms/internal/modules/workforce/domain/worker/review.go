@@ -173,6 +173,19 @@ func (t *PerformanceReviewTemplate) BeforeSave(_ context.Context) error {
 	return nil
 }
 
+func (PerformanceReviewTemplate) Constraints() []keel.Constraint {
+	return []keel.Constraint{
+		{
+			Name:    "uq_performance_review_templates_code",
+			Message: "A review template with this code already exists",
+		},
+		{
+			Name:    "uq_performance_review_templates_default",
+			Message: "Another review template is already the default",
+		},
+	}
+}
+
 type ReviewStatus string
 
 const (
@@ -436,4 +449,22 @@ func (r *PerformanceReview) BeforeUpdate(_ context.Context) error {
 	}
 
 	return nil
+}
+
+func (PerformanceReview) Constraints() []keel.Constraint {
+	return []keel.Constraint{
+		{
+			Name:    "uq_performance_reviews_open",
+			Field:   "templateId",
+			Message: "This worker already has an open review on this template",
+		},
+		{
+			Name:    "fk_performance_reviews_worker",
+			Message: "Worker does not exist or belongs to a different organization",
+		},
+		{
+			Name:    "fk_performance_reviews_template",
+			Message: "Review template does not exist or belongs to a different organization",
+		},
+	}
 }

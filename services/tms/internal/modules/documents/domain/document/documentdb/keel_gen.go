@@ -17,12 +17,13 @@ import (
 
 // documentsTable is the schema of document.Document.
 var documentsTable = schema.Table{
-	Name:   "documents",
-	Quoted: `"documents"`,
-	Alias:  "d",
-	Model:  "document.Document",
-	Label:  `Document`,
-	Plural: `Documents`,
+	Name:        "documents",
+	Quoted:      `"documents"`,
+	Alias:       "d",
+	Model:       "document.Document",
+	Label:       `Document`,
+	Plural:      `Documents`,
+	Constraints: (&document.Document{}).Constraints(),
 	Columns: []schema.Column{
 		{Name: "id", Quoted: `"id"`, Field: "ID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagAutoID, Label: `ID`, JSON: `id`},
 		{Name: "organization_id", Quoted: `"organization_id"`, Field: "OrganizationID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Organization ID`, JSON: `organizationId`},

@@ -241,3 +241,12 @@ func (f *FactoringCompany) BeforeSave(context.Context) error {
 
 	return nil
 }
+
+func (FactoringCompany) Constraints() []keel.Constraint {
+	return []keel.Constraint{
+		{
+			Name:    "uq_factoring_companies_code",
+			Message: "A factoring company with this code already exists in your organization",
+		},
+	}
+}

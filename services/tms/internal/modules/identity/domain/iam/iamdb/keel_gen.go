@@ -17,12 +17,13 @@ import (
 
 // accessPoliciesTable is the schema of iam.AccessPolicy.
 var accessPoliciesTable = schema.Table{
-	Name:   "access_policies",
-	Quoted: `"access_policies"`,
-	Alias:  "ap",
-	Model:  "iam.AccessPolicy",
-	Label:  `Access Policy`,
-	Plural: `Access Policies`,
+	Name:        "access_policies",
+	Quoted:      `"access_policies"`,
+	Alias:       "ap",
+	Model:       "iam.AccessPolicy",
+	Label:       `Access Policy`,
+	Plural:      `Access Policies`,
+	Constraints: (&iam.AccessPolicy{}).Constraints(),
 	Columns: []schema.Column{
 		{Name: "id", Quoted: `"id"`, Field: "ID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagAutoID, Label: `ID`, JSON: `id`},
 		{Name: "organization_id", Quoted: `"organization_id"`, Field: "OrganizationID", Kind: schema.KindString, Flags: schema.FlagTenant, Label: `Organization ID`, JSON: `organizationId`},
@@ -1933,12 +1934,13 @@ func valueSCIMDirectory(p unsafe.Pointer, c int32) any {
 
 // sCIMGroupRoleMappingsTable is the schema of iam.SCIMGroupRoleMapping.
 var sCIMGroupRoleMappingsTable = schema.Table{
-	Name:   "scim_group_role_mappings",
-	Quoted: `"scim_group_role_mappings"`,
-	Alias:  "sgrm",
-	Model:  "iam.SCIMGroupRoleMapping",
-	Label:  `SCIM Group Role Mapping`,
-	Plural: `SCIM Group Role Mappings`,
+	Name:        "scim_group_role_mappings",
+	Quoted:      `"scim_group_role_mappings"`,
+	Alias:       "sgrm",
+	Model:       "iam.SCIMGroupRoleMapping",
+	Label:       `SCIM Group Role Mapping`,
+	Plural:      `SCIM Group Role Mappings`,
+	Constraints: (&iam.SCIMGroupRoleMapping{}).Constraints(),
 	Columns: []schema.Column{
 		{Name: "id", Quoted: `"id"`, Field: "ID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagAutoID, Label: `ID`, JSON: `id`},
 		{Name: "organization_id", Quoted: `"organization_id"`, Field: "OrganizationID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Organization ID`, JSON: `organizationId`},

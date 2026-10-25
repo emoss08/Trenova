@@ -190,3 +190,17 @@ func (r *InvoiceRun) GetCreatedAt() int64         { return r.CreatedAt }
 func (r *InvoiceRun) GetTableName() string        { return "invoice_runs" }
 func (r *InvoiceRun) GetOrganizationID() pulid.ID { return r.OrganizationID }
 func (r *InvoiceRun) GetBusinessUnitID() pulid.ID { return r.BusinessUnitID }
+
+func (InvoiceRun) Constraints() []keel.Constraint {
+	return []keel.Constraint{
+		{
+			Name:    "uk_invoice_runs_number",
+			Message: "Invoice run with this number already exists in your organization",
+		},
+		{
+			Name:    "uq_invoice_runs_scheduled_period",
+			Field:   "periodEnd",
+			Message: "A scheduled invoice run already exists for this cycle and period",
+		},
+	}
+}

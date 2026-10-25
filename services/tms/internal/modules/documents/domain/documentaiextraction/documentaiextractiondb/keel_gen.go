@@ -15,12 +15,13 @@ import (
 
 // extractionsTable is the schema of documentaiextraction.Extraction.
 var extractionsTable = schema.Table{
-	Name:   "document_ai_extractions",
-	Quoted: `"document_ai_extractions"`,
-	Alias:  "dae",
-	Model:  "documentaiextraction.Extraction",
-	Label:  `Extraction`,
-	Plural: `Extractions`,
+	Name:        "document_ai_extractions",
+	Quoted:      `"document_ai_extractions"`,
+	Alias:       "dae",
+	Model:       "documentaiextraction.Extraction",
+	Label:       `Extraction`,
+	Plural:      `Extractions`,
+	Constraints: (&documentaiextraction.Extraction{}).Constraints(),
 	Columns: []schema.Column{
 		{Name: "id", Quoted: `"id"`, Field: "ID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagAutoID, Label: `ID`, JSON: `id`},
 		{Name: "document_id", Quoted: `"document_id"`, Field: "DocumentID", Kind: schema.KindString, Flags: 0, Label: `Document ID`, JSON: `documentId`},

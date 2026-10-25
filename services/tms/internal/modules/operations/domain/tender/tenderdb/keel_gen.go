@@ -19,12 +19,13 @@ import (
 
 // routingGuidesTable is the schema of tender.RoutingGuide.
 var routingGuidesTable = schema.Table{
-	Name:   "routing_guides",
-	Quoted: `"routing_guides"`,
-	Alias:  "rg",
-	Model:  "tender.RoutingGuide",
-	Label:  `Routing Guide`,
-	Plural: `Routing Guides`,
+	Name:        "routing_guides",
+	Quoted:      `"routing_guides"`,
+	Alias:       "rg",
+	Model:       "tender.RoutingGuide",
+	Label:       `Routing Guide`,
+	Plural:      `Routing Guides`,
+	Constraints: (&tender.RoutingGuide{}).Constraints(),
 	Columns: []schema.Column{
 		{Name: "id", Quoted: `"id"`, Field: "ID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagAutoID, Label: `ID`, JSON: `id`},
 		{Name: "business_unit_id", Quoted: `"business_unit_id"`, Field: "BusinessUnitID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Business Unit ID`, JSON: `businessUnitId`},
@@ -270,12 +271,13 @@ func beforeCreateRoutingGuide(ctx context.Context, p unsafe.Pointer) error {
 
 // routingGuideEntriesTable is the schema of tender.RoutingGuideEntry.
 var routingGuideEntriesTable = schema.Table{
-	Name:   "routing_guide_entries",
-	Quoted: `"routing_guide_entries"`,
-	Alias:  "rge",
-	Model:  "tender.RoutingGuideEntry",
-	Label:  `Routing Guide Entry`,
-	Plural: `Routing Guide Entries`,
+	Name:        "routing_guide_entries",
+	Quoted:      `"routing_guide_entries"`,
+	Alias:       "rge",
+	Model:       "tender.RoutingGuideEntry",
+	Label:       `Routing Guide Entry`,
+	Plural:      `Routing Guide Entries`,
+	Constraints: (&tender.RoutingGuideEntry{}).Constraints(),
 	Columns: []schema.Column{
 		{Name: "id", Quoted: `"id"`, Field: "ID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagAutoID, Label: `ID`, JSON: `id`},
 		{Name: "business_unit_id", Quoted: `"business_unit_id"`, Field: "BusinessUnitID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Business Unit ID`, JSON: `businessUnitId`},
@@ -492,12 +494,13 @@ func beforeCreateRoutingGuideEntry(ctx context.Context, p unsafe.Pointer) error 
 
 // tendersTable is the schema of tender.Tender.
 var tendersTable = schema.Table{
-	Name:   "tenders",
-	Quoted: `"tenders"`,
-	Alias:  "t",
-	Model:  "tender.Tender",
-	Label:  `Tender`,
-	Plural: `Tenders`,
+	Name:        "tenders",
+	Quoted:      `"tenders"`,
+	Alias:       "t",
+	Model:       "tender.Tender",
+	Label:       `Tender`,
+	Plural:      `Tenders`,
+	Constraints: (&tender.Tender{}).Constraints(),
 	Columns: []schema.Column{
 		{Name: "id", Quoted: `"id"`, Field: "ID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagAutoID, Label: `ID`, JSON: `id`},
 		{Name: "business_unit_id", Quoted: `"business_unit_id"`, Field: "BusinessUnitID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Business Unit ID`, JSON: `businessUnitId`},
@@ -839,12 +842,13 @@ func beforeCreateTender(ctx context.Context, p unsafe.Pointer) error {
 
 // tenderOffersTable is the schema of tender.TenderOffer.
 var tenderOffersTable = schema.Table{
-	Name:   "tender_offers",
-	Quoted: `"tender_offers"`,
-	Alias:  "to_",
-	Model:  "tender.TenderOffer",
-	Label:  `Tender Offer`,
-	Plural: `Tender Offers`,
+	Name:        "tender_offers",
+	Quoted:      `"tender_offers"`,
+	Alias:       "to_",
+	Model:       "tender.TenderOffer",
+	Label:       `Tender Offer`,
+	Plural:      `Tender Offers`,
+	Constraints: (&tender.TenderOffer{}).Constraints(),
 	Columns: []schema.Column{
 		{Name: "id", Quoted: `"id"`, Field: "ID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagAutoID, Label: `ID`, JSON: `id`},
 		{Name: "business_unit_id", Quoted: `"business_unit_id"`, Field: "BusinessUnitID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Business Unit ID`, JSON: `businessUnitId`},
@@ -1292,12 +1296,13 @@ func beforeCreateTenderOffer(ctx context.Context, p unsafe.Pointer) error {
 
 // tenderOfferTokensTable is the schema of tender.TenderOfferToken.
 var tenderOfferTokensTable = schema.Table{
-	Name:   "tender_offer_tokens",
-	Quoted: `"tender_offer_tokens"`,
-	Alias:  "tot",
-	Model:  "tender.TenderOfferToken",
-	Label:  `Tender Offer Token`,
-	Plural: `Tender Offer Tokens`,
+	Name:        "tender_offer_tokens",
+	Quoted:      `"tender_offer_tokens"`,
+	Alias:       "tot",
+	Model:       "tender.TenderOfferToken",
+	Label:       `Tender Offer Token`,
+	Plural:      `Tender Offer Tokens`,
+	Constraints: (&tender.TenderOfferToken{}).Constraints(),
 	Columns: []schema.Column{
 		{Name: "id", Quoted: `"id"`, Field: "ID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagAutoID, Label: `ID`, JSON: `id`},
 		{Name: "business_unit_id", Quoted: `"business_unit_id"`, Field: "BusinessUnitID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Business Unit ID`, JSON: `businessUnitId`},

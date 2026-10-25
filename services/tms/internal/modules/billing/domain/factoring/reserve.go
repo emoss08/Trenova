@@ -130,3 +130,12 @@ func (e *ReserveEntry) GetCreatedAt() int64         { return e.CreatedAt }
 func (e *ReserveEntry) GetOrganizationID() pulid.ID { return e.OrganizationID }
 func (e *ReserveEntry) GetBusinessUnitID() pulid.ID { return e.BusinessUnitID }
 func (e *ReserveEntry) GetTableName() string        { return "factoring_reserve_entries" }
+
+func (ReserveEntry) Constraints() []keel.Constraint {
+	return []keel.Constraint{
+		{
+			Name:    "uq_factoring_reserve_entries_reversal",
+			Message: "That chargeback has already been reversed; reload to see the reserve",
+		},
+	}
+}

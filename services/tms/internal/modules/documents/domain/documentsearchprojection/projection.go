@@ -149,6 +149,15 @@ func (p *Projection) Validate(multiErr *errortypes.MultiError) {
 	))
 }
 
+func (Projection) Constraints() []keel.Constraint {
+	return []keel.Constraint{
+		{
+			Name:    "fk_document_search_projections_document",
+			Message: "Document does not exist",
+		},
+	}
+}
+
 const (
 	maxProjectionCodeLength = 100
 	maxProjectionNameLength = 255

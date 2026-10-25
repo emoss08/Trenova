@@ -21,21 +21,7 @@ import (
 	"go.uber.org/zap"
 )
 
-var chargeErrors = dberror.Mapping{
-	Entity: "Shipment additional charge",
-	ForeignKey: []dberror.Constraint{
-		{
-			Name:    "fk_additional_charges_accessorial_charge",
-			Field:   "accessorialChargeId",
-			Message: "Accessorial charge does not exist in your organization",
-		},
-		{
-			Name:    "fk_additional_charges_shipment",
-			Field:   "shipmentId",
-			Message: "Shipment does not exist in your organization",
-		},
-	},
-}
+var chargeErrors = dberror.Mapping{Entity: "Shipment additional charge"}
 
 type Params struct {
 	fx.In

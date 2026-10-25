@@ -433,6 +433,19 @@ func (e *WorkerEmploymentEvent) Apply(wrk *Worker) bool {
 	}
 }
 
+func (WorkerEmploymentEvent) Constraints() []keel.Constraint {
+	return []keel.Constraint{
+		{
+			Name:    "fk_worker_employment_events_worker",
+			Message: "Worker does not exist or belongs to a different organization",
+		},
+		{
+			Name:    "fk_worker_employment_events_document",
+			Message: "Document does not exist or belongs to a different organization",
+		},
+	}
+}
+
 // Tenure returns whole days of service between hire and either termination or
 // now. A zero hire date yields zero.
 func Tenure(hireDate int64, terminationDate *int64, now int64) time.Duration {

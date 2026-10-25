@@ -17,14 +17,15 @@ import (
 
 // fleetCodesTable is the schema of fleetcode.FleetCode.
 var fleetCodesTable = schema.Table{
-	Name:   "fleet_codes",
-	Quoted: `"fleet_codes"`,
-	Alias:  "fc",
-	Model:  "fleetcode.FleetCode",
-	Label:  `Fleet Code`,
-	Plural: `Fleet Codes`,
-	Doc:    `Fleet groupings`,
-	Report: &schema.TableReport{Category: `Equipment`},
+	Name:        "fleet_codes",
+	Quoted:      `"fleet_codes"`,
+	Alias:       "fc",
+	Model:       "fleetcode.FleetCode",
+	Label:       `Fleet Code`,
+	Plural:      `Fleet Codes`,
+	Doc:         `Fleet groupings`,
+	Report:      &schema.TableReport{Category: `Equipment`},
+	Constraints: (&fleetcode.FleetCode{}).Constraints(),
 	Columns: []schema.Column{
 		{Name: "id", Quoted: `"id"`, Field: "ID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagAutoID, Label: `ID`, JSON: `id`, Report: &reportDimString},
 		{Name: "business_unit_id", Quoted: `"business_unit_id"`, Field: "BusinessUnitID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Business Unit ID`, JSON: `businessUnitId`, Report: &reportDimStringHidden},

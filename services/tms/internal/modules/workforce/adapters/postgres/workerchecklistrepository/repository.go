@@ -24,70 +24,11 @@ const (
 	checklistBusyMessage = "Checklist is busy. Retry the request."
 )
 
-var templateErrors = dberror.Mapping{
-	Entity: "WorkerChecklistTemplate",
-	Unique: []dberror.Constraint{
-		{
-			Name:    "uq_worker_checklist_templates_code",
-			Field:   "code",
-			Message: "A checklist template with this code already exists",
-		},
-		{
-			Name:    "uq_worker_checklist_templates_default_trigger",
-			Field:   "isDefault",
-			Message: "Another checklist template is already the default for this trigger",
-		},
-	},
-	ForeignKey: []dberror.Constraint{
-		{
-			Name:    "fk_worker_checklist_template_items_credential_type",
-			Field:   "items",
-			Message: "A checklist item names a credential type that does not exist",
-		},
-		{
-			Name:    "fk_worker_checklist_template_items_document_type",
-			Field:   "items",
-			Message: "A checklist item names a document type that does not exist",
-		},
-	},
-}
+var templateErrors = dberror.Mapping{Entity: "WorkerChecklistTemplate"}
 
-var checklistErrors = dberror.Mapping{
-	Entity: "WorkerChecklist",
-	ForeignKey: []dberror.Constraint{
-		{
-			Name:    "fk_worker_checklists_worker",
-			Field:   "workerId",
-			Message: "Worker does not exist or belongs to a different organization",
-		},
-		{
-			Name:    "fk_worker_checklists_template",
-			Field:   "templateId",
-			Message: "Checklist template does not exist or belongs to a different organization",
-		},
-		{
-			Name:    "fk_worker_checklists_source_event",
-			Field:   "sourceEventId",
-			Message: "Employment event does not exist or belongs to a different organization",
-		},
-	},
-}
+var checklistErrors = dberror.Mapping{Entity: "WorkerChecklist"}
 
-var itemErrors = dberror.Mapping{
-	Entity: "WorkerChecklistItem",
-	ForeignKey: []dberror.Constraint{
-		{
-			Name:    "fk_worker_checklist_items_evidence_document",
-			Field:   "evidenceDocumentId",
-			Message: "Evidence document does not exist or belongs to a different organization",
-		},
-		{
-			Name:    "fk_worker_checklist_items_evidence_credential",
-			Field:   "evidenceCredentialId",
-			Message: "Evidence credential does not exist or belongs to a different organization",
-		},
-	},
-}
+var itemErrors = dberror.Mapping{Entity: "WorkerChecklistItem"}
 
 type templateCount struct {
 	TemplateID pulid.ID

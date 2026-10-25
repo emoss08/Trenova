@@ -24,26 +24,7 @@ import (
 	"go.uber.org/zap"
 )
 
-var tractorErrors = dberror.Mapping{
-	Entity: "Tractor",
-	Unique: []dberror.Constraint{
-		{
-			Name:    "idx_tractors_code",
-			Field:   "code",
-			Message: "Tractor with this code already exists in your organization",
-		},
-		{
-			Name:    "idx_tractors_primary_worker_id",
-			Field:   "primaryWorkerId",
-			Message: "Primary worker is already assigned to another tractor",
-		},
-		{
-			Name:    "idx_tractors_external_id_tenant",
-			Field:   "externalId",
-			Message: "Tractor with this external ID already exists in your organization",
-		},
-	},
-}
+var tractorErrors = dberror.Mapping{Entity: "Tractor"}
 
 type Params struct {
 	fx.In

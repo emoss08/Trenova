@@ -19,13 +19,14 @@ import (
 
 // invoiceRunsTable is the schema of invoicerun.InvoiceRun.
 var invoiceRunsTable = schema.Table{
-	Name:   "invoice_runs",
-	Quoted: `"invoice_runs"`,
-	Alias:  "ir",
-	Model:  "invoicerun.InvoiceRun",
-	Label:  `Invoice Run`,
-	Plural: `Invoice Runs`,
-	Doc:    "InvoiceRun is one pass at turning a period's approved billing-queue items into invoices.\n\nIt is persisted rather than derived because the flow is preview, adjust, commit across separate requests. A transient preview would force the server to re-derive eligibility at commit time and could silently bill a different set than the operator approved; it would give an operator's exclusion no resource to audit against; and it would leave a scheduled run that failed halfway with nothing to resume from.",
+	Name:        "invoice_runs",
+	Quoted:      `"invoice_runs"`,
+	Alias:       "ir",
+	Model:       "invoicerun.InvoiceRun",
+	Label:       `Invoice Run`,
+	Plural:      `Invoice Runs`,
+	Doc:         "InvoiceRun is one pass at turning a period's approved billing-queue items into invoices.\n\nIt is persisted rather than derived because the flow is preview, adjust, commit across separate requests. A transient preview would force the server to re-derive eligibility at commit time and could silently bill a different set than the operator approved; it would give an operator's exclusion no resource to audit against; and it would leave a scheduled run that failed halfway with nothing to resume from.",
+	Constraints: (&invoicerun.InvoiceRun{}).Constraints(),
 	Columns: []schema.Column{
 		{Name: "id", Quoted: `"id"`, Field: "ID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagAutoID, Label: `ID`, JSON: `id`},
 		{Name: "business_unit_id", Quoted: `"business_unit_id"`, Field: "BusinessUnitID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Business Unit ID`, JSON: `businessUnitId`},

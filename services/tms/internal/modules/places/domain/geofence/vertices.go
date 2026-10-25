@@ -1,10 +1,10 @@
-//nolint:gocritic // existing value-shaped APIs and hot-path helpers are intentionally stable
-package postgis
+package geofence
 
 import (
 	"errors"
 	"fmt"
 
+	"github.com/emoss08/keel/postgis"
 	"github.com/paulmach/orb"
 )
 
@@ -28,7 +28,7 @@ func NormalizeVertices(vertices []Vertex) []Vertex {
 	return normalized
 }
 
-func RectangleGeometry(vertices []Vertex) (*Geometry, error) {
+func RectangleGeometry(vertices []Vertex) (*postgis.Geometry, error) {
 	normalized := NormalizeVertices(vertices)
 	if len(normalized) < 4 {
 		return nil, errors.New("rectangle geofences require four corners")
@@ -56,7 +56,7 @@ func RectangleGeometry(vertices []Vertex) (*Geometry, error) {
 		return nil, errors.New("rectangle geofences require a non-zero width and height")
 	}
 
-	return &Geometry{
+	return &postgis.Geometry{
 		Geometry: orb.Polygon{
 			{
 				{minLon, minLat},
@@ -69,7 +69,7 @@ func RectangleGeometry(vertices []Vertex) (*Geometry, error) {
 	}, nil
 }
 
-func PolygonGeometry(vertices []Vertex) (*Geometry, error) {
+func PolygonGeometry(vertices []Vertex) (*postgis.Geometry, error) {
 	normalized := NormalizeVertices(vertices)
 	if len(normalized) < 3 {
 		return nil, errors.New("drawn geofences require at least three points")
@@ -81,10 +81,10 @@ func PolygonGeometry(vertices []Vertex) (*Geometry, error) {
 	}
 	ring = append(ring, ring[0])
 
-	return &Geometry{Geometry: orb.Polygon{ring}}, nil
+	return &postgis.Geometry{Geometry: orb.Polygon{ring}}, nil
 }
 
-func VerticesFromGeometry(geometry *Geometry) ([]Vertex, error) {
+func VerticesFromGeometry(geometry *postgis.Geometry) ([]Vertex, error) {
 	if geometry == nil || geometry.Geometry == nil {
 		return nil, nil
 	}
@@ -110,9 +110,4 @@ func VerticesFromGeometry(geometry *Geometry) ([]Vertex, error) {
 	}
 
 	return vertices, nil
-}
-
-func CirclePolygonExpression(longitude, latitude, radius float64) (string, []any) {
-	return "ST_Buffer(ST_SetSRID(ST_MakePoint(?, ?), 4326)::geography, ?)::geometry",
-		[]any{longitude, latitude, radius}
 }

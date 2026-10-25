@@ -194,3 +194,12 @@ func (c *EDIConnection) Validate(multiErr *errortypes.MultiError) {
 		),
 	))
 }
+
+func (EDIConnection) Constraints() []keel.Constraint {
+	return []keel.Constraint{
+		{
+			Name:    "idx_edi_connections_internal_open",
+			Message: "An open internal EDI connection already exists for these organizations",
+		},
+	}
+}

@@ -124,3 +124,12 @@ func (a *Assignment) BeforeCreate(_ context.Context) error {
 func (a *Assignment) GetID() pulid.ID {
 	return a.ID
 }
+
+func (Assignment) Constraints() []keel.Constraint {
+	return []keel.Constraint{
+		{
+			Name:    "uq_assignments_move_tenant_active",
+			Message: "Move already has an active assignment",
+		},
+	}
+}

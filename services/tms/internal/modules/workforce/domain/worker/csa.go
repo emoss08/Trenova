@@ -203,3 +203,16 @@ func (v *WorkerSafetyViolation) BeforeCreate(_ context.Context) error {
 
 	return nil
 }
+
+func (WorkerSafetyViolation) Constraints() []keel.Constraint {
+	return []keel.Constraint{
+		{
+			Name:    "fk_worker_safety_violations_event",
+			Message: "Safety event does not exist or belongs to a different organization",
+		},
+		{
+			Name:    "fk_worker_safety_violations_worker",
+			Message: "Worker does not exist or belongs to a different organization",
+		},
+	}
+}

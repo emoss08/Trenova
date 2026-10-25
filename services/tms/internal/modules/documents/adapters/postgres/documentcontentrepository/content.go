@@ -22,39 +22,9 @@ import (
 
 const defaultPendingLimit = 100
 
-var contentErrors = dberror.Mapping{
-	Entity: "Document content",
-	ForeignKey: []dberror.Constraint{
-		{
-			Name:    "fk_document_contents_document",
-			Field:   "documentId",
-			Message: "Document does not exist",
-		},
-	},
-}
+var contentErrors = dberror.Mapping{Entity: "Document content"}
 
-var pageErrors = dberror.Mapping{
-	Entity: "Document content page",
-	Unique: []dberror.Constraint{
-		{
-			Name:    "uq_document_content_pages_page",
-			Field:   "pageNumber",
-			Message: "Each page number may appear only once in a document's content",
-		},
-	},
-	ForeignKey: []dberror.Constraint{
-		{
-			Name:    "fk_document_content_pages_content",
-			Field:   "documentContentId",
-			Message: "Document content does not exist",
-		},
-		{
-			Name:    "fk_document_content_pages_document",
-			Field:   "documentId",
-			Message: "Document does not exist",
-		},
-	},
-}
+var pageErrors = dberror.Mapping{Entity: "Document content page"}
 
 type Params struct {
 	fx.In

@@ -17,16 +17,7 @@ import (
 	"go.uber.org/zap"
 )
 
-var testCaseErrors = dberror.Mapping{
-	Entity: "EDITestCase",
-	Unique: []dberror.Constraint{
-		{
-			Name:    "idx_edi_test_cases_name_profile",
-			Field:   "name",
-			Message: "An EDI test case with this name already exists for the document profile",
-		},
-	},
-}
+var testCaseErrors = dberror.Mapping{Entity: "EDITestCase"}
 
 type Params struct {
 	fx.In

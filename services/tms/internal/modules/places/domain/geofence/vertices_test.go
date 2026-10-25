@@ -1,4 +1,4 @@
-package postgis
+package geofence
 
 import (
 	"testing"

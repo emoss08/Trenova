@@ -191,3 +191,12 @@ func (e *EscrowAccount) BeforeCreate(ctx context.Context) error {
 
 	return nil
 }
+
+func (EscrowAccount) Constraints() []keel.Constraint {
+	return []keel.Constraint{
+		{
+			Name:    "uq_escrow_accounts_worker_active",
+			Message: "Worker already has an active escrow account",
+		},
+	}
+}

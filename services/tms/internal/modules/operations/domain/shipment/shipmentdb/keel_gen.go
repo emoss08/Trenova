@@ -43,12 +43,13 @@ import (
 
 // additionalChargesTable is the schema of shipment.AdditionalCharge.
 var additionalChargesTable = schema.Table{
-	Name:   "additional_charges",
-	Quoted: `"additional_charges"`,
-	Alias:  "ac",
-	Model:  "shipment.AdditionalCharge",
-	Label:  `Additional Charge`,
-	Plural: `Additional Charges`,
+	Name:        "additional_charges",
+	Quoted:      `"additional_charges"`,
+	Alias:       "ac",
+	Model:       "shipment.AdditionalCharge",
+	Label:       `Additional Charge`,
+	Plural:      `Additional Charges`,
+	Constraints: (&shipment.AdditionalCharge{}).Constraints(),
 	Columns: []schema.Column{
 		{Name: "id", Quoted: `"id"`, Field: "ID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagAutoID, Label: `ID`, JSON: `id`},
 		{Name: "business_unit_id", Quoted: `"business_unit_id"`, Field: "BusinessUnitID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Business Unit ID`, JSON: `businessUnitId`},
@@ -342,14 +343,15 @@ func attachAdditionalCharge(p unsafe.Pointer, rel int32, child unsafe.Pointer) {
 
 // assignmentsTable is the schema of shipment.Assignment.
 var assignmentsTable = schema.Table{
-	Name:   "assignments",
-	Quoted: `"assignments"`,
-	Alias:  "a",
-	Model:  "shipment.Assignment",
-	Label:  `Assignment`,
-	Plural: `Assignments`,
-	Doc:    `Equipment and driver assignments for a move`,
-	Report: &schema.TableReport{Category: `Operations`},
+	Name:        "assignments",
+	Quoted:      `"assignments"`,
+	Alias:       "a",
+	Model:       "shipment.Assignment",
+	Label:       `Assignment`,
+	Plural:      `Assignments`,
+	Doc:         `Equipment and driver assignments for a move`,
+	Report:      &schema.TableReport{Category: `Operations`},
+	Constraints: (&shipment.Assignment{}).Constraints(),
 	Columns: []schema.Column{
 		{Name: "id", Quoted: `"id"`, Field: "ID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagAutoID, Label: `ID`, JSON: `id`, Report: &reportDimString},
 		{Name: "business_unit_id", Quoted: `"business_unit_id"`, Field: "BusinessUnitID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Business Unit ID`, JSON: `businessUnitId`, Report: &reportDimStringHidden},
@@ -627,12 +629,13 @@ func beforeCreateAssignment(ctx context.Context, p unsafe.Pointer) error {
 
 // carrierAssignmentsTable is the schema of shipment.CarrierAssignment.
 var carrierAssignmentsTable = schema.Table{
-	Name:   "carrier_assignments",
-	Quoted: `"carrier_assignments"`,
-	Alias:  "ca",
-	Model:  "shipment.CarrierAssignment",
-	Label:  `Carrier Assignment`,
-	Plural: `Carrier Assignments`,
+	Name:        "carrier_assignments",
+	Quoted:      `"carrier_assignments"`,
+	Alias:       "ca",
+	Model:       "shipment.CarrierAssignment",
+	Label:       `Carrier Assignment`,
+	Plural:      `Carrier Assignments`,
+	Constraints: (&shipment.CarrierAssignment{}).Constraints(),
 	Columns: []schema.Column{
 		{Name: "id", Quoted: `"id"`, Field: "ID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagAutoID, Label: `ID`, JSON: `id`},
 		{Name: "business_unit_id", Quoted: `"business_unit_id"`, Field: "BusinessUnitID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Business Unit ID`, JSON: `businessUnitId`},
@@ -983,12 +986,13 @@ func beforeCreateCarrierAssignment(ctx context.Context, p unsafe.Pointer) error 
 
 // carrierAssignmentAccessorialsTable is the schema of shipment.CarrierAssignmentAccessorial.
 var carrierAssignmentAccessorialsTable = schema.Table{
-	Name:   "carrier_assignment_accessorials",
-	Quoted: `"carrier_assignment_accessorials"`,
-	Alias:  "caa",
-	Model:  "shipment.CarrierAssignmentAccessorial",
-	Label:  `Carrier Assignment Accessorial`,
-	Plural: `Carrier Assignment Accessorials`,
+	Name:        "carrier_assignment_accessorials",
+	Quoted:      `"carrier_assignment_accessorials"`,
+	Alias:       "caa",
+	Model:       "shipment.CarrierAssignmentAccessorial",
+	Label:       `Carrier Assignment Accessorial`,
+	Plural:      `Carrier Assignment Accessorials`,
+	Constraints: (&shipment.CarrierAssignmentAccessorial{}).Constraints(),
 	Columns: []schema.Column{
 		{Name: "id", Quoted: `"id"`, Field: "ID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagAutoID, Label: `ID`, JSON: `id`},
 		{Name: "business_unit_id", Quoted: `"business_unit_id"`, Field: "BusinessUnitID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Business Unit ID`, JSON: `businessUnitId`},
@@ -1430,14 +1434,15 @@ func attachChargeAllocation(p unsafe.Pointer, rel int32, child unsafe.Pointer) {
 
 // shipmentsTable is the schema of shipment.Shipment.
 var shipmentsTable = schema.Table{
-	Name:   "shipments",
-	Quoted: `"shipments"`,
-	Alias:  "s",
-	Model:  "shipment.Shipment",
-	Label:  `Shipment`,
-	Plural: `Shipments`,
-	Doc:    `Freight shipments and their lifecycle state`,
-	Report: &schema.TableReport{Category: `Operations`},
+	Name:        "shipments",
+	Quoted:      `"shipments"`,
+	Alias:       "s",
+	Model:       "shipment.Shipment",
+	Label:       `Shipment`,
+	Plural:      `Shipments`,
+	Doc:         `Freight shipments and their lifecycle state`,
+	Report:      &schema.TableReport{Category: `Operations`},
+	Constraints: (&shipment.Shipment{}).Constraints(),
 	Columns: []schema.Column{
 		{Name: "id", Quoted: `"id"`, Field: "ID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagAutoID, Label: `ID`, JSON: `id`, Report: &reportDimString},
 		{Name: "business_unit_id", Quoted: `"business_unit_id"`, Field: "BusinessUnitID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Business Unit ID`, JSON: `businessUnitId`, Report: &reportDimStringHidden},
@@ -2301,12 +2306,13 @@ func beforeUpdateShipment(ctx context.Context, p unsafe.Pointer) error {
 
 // shipmentCommentsTable is the schema of shipment.ShipmentComment.
 var shipmentCommentsTable = schema.Table{
-	Name:   "shipment_comments",
-	Quoted: `"shipment_comments"`,
-	Alias:  "sc",
-	Model:  "shipment.ShipmentComment",
-	Label:  `Shipment Comment`,
-	Plural: `Shipment Comments`,
+	Name:        "shipment_comments",
+	Quoted:      `"shipment_comments"`,
+	Alias:       "sc",
+	Model:       "shipment.ShipmentComment",
+	Label:       `Shipment Comment`,
+	Plural:      `Shipment Comments`,
+	Constraints: (&shipment.ShipmentComment{}).Constraints(),
 	Columns: []schema.Column{
 		{Name: "id", Quoted: `"id"`, Field: "ID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagAutoID, Label: `ID`, JSON: `id`},
 		{Name: "business_unit_id", Quoted: `"business_unit_id"`, Field: "BusinessUnitID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Business Unit ID`, JSON: `businessUnitId`},
@@ -2993,14 +2999,15 @@ func attachShipmentCommentMention(p unsafe.Pointer, rel int32, child unsafe.Poin
 
 // shipmentCommoditiesTable is the schema of shipment.ShipmentCommodity.
 var shipmentCommoditiesTable = schema.Table{
-	Name:   "shipment_commodities",
-	Quoted: `"shipment_commodities"`,
-	Alias:  "sc",
-	Model:  "shipment.ShipmentCommodity",
-	Label:  `Shipment Commodity`,
-	Plural: `Shipment Commodities`,
-	Doc:    `Commodity line items on a shipment`,
-	Report: &schema.TableReport{Category: `Operations`},
+	Name:        "shipment_commodities",
+	Quoted:      `"shipment_commodities"`,
+	Alias:       "sc",
+	Model:       "shipment.ShipmentCommodity",
+	Label:       `Shipment Commodity`,
+	Plural:      `Shipment Commodities`,
+	Doc:         `Commodity line items on a shipment`,
+	Report:      &schema.TableReport{Category: `Operations`},
+	Constraints: (&shipment.ShipmentCommodity{}).Constraints(),
 	Columns: []schema.Column{
 		{Name: "id", Quoted: `"id"`, Field: "ID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagAutoID, Label: `ID`, JSON: `id`, Report: &reportDimString},
 		{Name: "business_unit_id", Quoted: `"business_unit_id"`, Field: "BusinessUnitID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Business Unit ID`, JSON: `businessUnitId`, Report: &reportDimStringHidden},
@@ -3213,12 +3220,13 @@ func attachShipmentCommodity(p unsafe.Pointer, rel int32, child unsafe.Pointer) 
 
 // shipmentHoldsTable is the schema of shipment.ShipmentHold.
 var shipmentHoldsTable = schema.Table{
-	Name:   "shipment_holds",
-	Quoted: `"shipment_holds"`,
-	Alias:  "sh",
-	Model:  "shipment.ShipmentHold",
-	Label:  `Shipment Hold`,
-	Plural: `Shipment Holds`,
+	Name:        "shipment_holds",
+	Quoted:      `"shipment_holds"`,
+	Alias:       "sh",
+	Model:       "shipment.ShipmentHold",
+	Label:       `Shipment Hold`,
+	Plural:      `Shipment Holds`,
+	Constraints: (&shipment.ShipmentHold{}).Constraints(),
 	Columns: []schema.Column{
 		{Name: "id", Quoted: `"id"`, Field: "ID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagAutoID, Label: `ID`, JSON: `id`},
 		{Name: "shipment_id", Quoted: `"shipment_id"`, Field: "ShipmentID", Kind: schema.KindString, Flags: 0, Label: `Shipment ID`, JSON: `shipmentId`},
@@ -3523,14 +3531,15 @@ func beforeCreateShipmentHold(ctx context.Context, p unsafe.Pointer) error {
 
 // shipmentMovesTable is the schema of shipment.ShipmentMove.
 var shipmentMovesTable = schema.Table{
-	Name:   "shipment_moves",
-	Quoted: `"shipment_moves"`,
-	Alias:  "sm",
-	Model:  "shipment.ShipmentMove",
-	Label:  `Shipment Move`,
-	Plural: `Shipment Moves`,
-	Doc:    `Movement legs within a shipment`,
-	Report: &schema.TableReport{Category: `Operations`},
+	Name:        "shipment_moves",
+	Quoted:      `"shipment_moves"`,
+	Alias:       "sm",
+	Model:       "shipment.ShipmentMove",
+	Label:       `Shipment Move`,
+	Plural:      `Shipment Moves`,
+	Doc:         `Movement legs within a shipment`,
+	Report:      &schema.TableReport{Category: `Operations`},
+	Constraints: (&shipment.ShipmentMove{}).Constraints(),
 	Columns: []schema.Column{
 		{Name: "id", Quoted: `"id"`, Field: "ID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagAutoID, Label: `ID`, JSON: `id`, Report: &reportDimString},
 		{Name: "business_unit_id", Quoted: `"business_unit_id"`, Field: "BusinessUnitID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Business Unit ID`, JSON: `businessUnitId`, Report: &reportDimStringHidden},
@@ -4117,14 +4126,15 @@ func beforeCreateShipmentMoveJurisdictionMile(ctx context.Context, p unsafe.Poin
 
 // stopsTable is the schema of shipment.Stop.
 var stopsTable = schema.Table{
-	Name:   "stops",
-	Quoted: `"stops"`,
-	Alias:  "s",
-	Model:  "shipment.Stop",
-	Label:  `Stop`,
-	Plural: `Stops`,
-	Doc:    `Pickup and delivery stops on a move`,
-	Report: &schema.TableReport{Category: `Operations`},
+	Name:        "stops",
+	Quoted:      `"stops"`,
+	Alias:       "s",
+	Model:       "shipment.Stop",
+	Label:       `Stop`,
+	Plural:      `Stops`,
+	Doc:         `Pickup and delivery stops on a move`,
+	Report:      &schema.TableReport{Category: `Operations`},
+	Constraints: (&shipment.Stop{}).Constraints(),
 	Columns: []schema.Column{
 		{Name: "id", Quoted: `"id"`, Field: "ID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagAutoID, Label: `ID`, JSON: `id`, Report: &reportDimString},
 		{Name: "business_unit_id", Quoted: `"business_unit_id"`, Field: "BusinessUnitID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Business Unit ID`, JSON: `businessUnitId`, Report: &reportDimStringHidden},

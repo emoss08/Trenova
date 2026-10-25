@@ -167,4 +167,17 @@ func (s *Stop) Validate(multiErr *errortypes.MultiError) {
 	))
 }
 
+func (Stop) Constraints() []keel.Constraint {
+	return []keel.Constraint{
+		{
+			Name:    "fk_stops_location",
+			Message: "Location does not exist in your organization",
+		},
+		{
+			Name:    "fk_stops_shipment_move",
+			Message: "Shipment move does not exist in your organization",
+		},
+	}
+}
+
 const maxStopAddressLineLength = 200

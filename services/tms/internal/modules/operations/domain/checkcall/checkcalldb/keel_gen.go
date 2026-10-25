@@ -15,12 +15,13 @@ import (
 
 // checkCallsTable is the schema of checkcall.CheckCall.
 var checkCallsTable = schema.Table{
-	Name:   "check_calls",
-	Quoted: `"check_calls"`,
-	Alias:  "cc",
-	Model:  "checkcall.CheckCall",
-	Label:  `Check Call`,
-	Plural: `Check Calls`,
+	Name:        "check_calls",
+	Quoted:      `"check_calls"`,
+	Alias:       "cc",
+	Model:       "checkcall.CheckCall",
+	Label:       `Check Call`,
+	Plural:      `Check Calls`,
+	Constraints: (&checkcall.CheckCall{}).Constraints(),
 	Columns: []schema.Column{
 		{Name: "id", Quoted: `"id"`, Field: "ID", Kind: schema.KindString, Flags: schema.FlagPK, Label: `ID`, JSON: `id`},
 		{Name: "organization_id", Quoted: `"organization_id"`, Field: "OrganizationID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Organization ID`, JSON: `organizationId`},

@@ -15,21 +15,7 @@ import (
 	"go.uber.org/zap"
 )
 
-var eventErrors = dberror.Mapping{
-	Entity: "WorkerEmploymentEvent",
-	ForeignKey: []dberror.Constraint{
-		{
-			Name:    "fk_worker_employment_events_worker",
-			Field:   "workerId",
-			Message: "Worker does not exist or belongs to a different organization",
-		},
-		{
-			Name:    "fk_worker_employment_events_document",
-			Field:   "documentId",
-			Message: "Document does not exist or belongs to a different organization",
-		},
-	},
-}
+var eventErrors = dberror.Mapping{Entity: "WorkerEmploymentEvent"}
 
 const defaultPageSize = 500
 

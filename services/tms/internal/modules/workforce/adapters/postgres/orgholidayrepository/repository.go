@@ -14,16 +14,7 @@ import (
 	"go.uber.org/zap"
 )
 
-var holidayErrors = dberror.Mapping{
-	Entity: "OrgHoliday",
-	Unique: []dberror.Constraint{
-		{
-			Name:    "uq_org_holidays_date_kind",
-			Field:   "holidayDate",
-			Message: "There is already an entry of this kind on that date",
-		},
-	},
-}
+var holidayErrors = dberror.Mapping{Entity: "OrgHoliday"}
 
 type Params struct {
 	fx.In

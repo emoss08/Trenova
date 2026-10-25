@@ -19,21 +19,7 @@ import (
 
 const busyMessage = "Rate matrix is busy. Retry the request."
 
-var rateMatrixErrors = dberror.Mapping{
-	Entity: "RateMatrix",
-	Unique: []dberror.Constraint{
-		{
-			Name:    "uq_rate_matrices_code",
-			Field:   "code",
-			Message: "A rate matrix with this code already exists in your organization",
-		},
-		{
-			Name:    "uq_rate_matrix_dimensions_position",
-			Field:   "dimensions",
-			Message: "Two dimensions cannot share a position",
-		},
-	},
-}
+var rateMatrixErrors = dberror.Mapping{Entity: "RateMatrix"}
 
 type Params struct {
 	fx.In

@@ -272,6 +272,19 @@ func (p *PTOPolicy) GetPostgresSearchConfig() domaintypes.PostgresSearchConfig {
 	}
 }
 
+func (PTOPolicy) Constraints() []keel.Constraint {
+	return []keel.Constraint{
+		{
+			Name:    "uq_pto_policies_code",
+			Message: "PTO policy with this code already exists in your organization",
+		},
+		{
+			Name:    "uq_pto_policies_default",
+			Message: "Another PTO policy is already the default",
+		},
+	}
+}
+
 type PTOPolicyRule struct {
 	keel.Table `keel:"pto_policy_rules"`
 
@@ -476,4 +489,14 @@ func (r *PTOPolicyRule) BeforeUpdate(_ context.Context) error {
 	}
 
 	return nil
+}
+
+func (PTOPolicyRule) Constraints() []keel.Constraint {
+	return []keel.Constraint{
+		{
+			Name:    "uq_pto_policy_rules_type",
+			Field:   "rules",
+			Message: "Each PTO type may appear only once in a policy",
+		},
+	}
 }

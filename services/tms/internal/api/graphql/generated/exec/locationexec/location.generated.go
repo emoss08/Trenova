@@ -7,6 +7,7 @@ import (
 	"errors"
 
 	"github.com/99designs/gqlgen/graphql"
+	"github.com/emoss08/keel/postgis"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlexec"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
@@ -15,7 +16,6 @@ import (
 	"github.com/emoss08/trenova/internal/modules/places/domain/location"
 	"github.com/emoss08/trenova/internal/modules/places/domain/locationcategory"
 	"github.com/emoss08/trenova/pkg/domaintypes"
-	"github.com/emoss08/trenova/pkg/postgis"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/vektah/gqlparser/v2/ast"
 )

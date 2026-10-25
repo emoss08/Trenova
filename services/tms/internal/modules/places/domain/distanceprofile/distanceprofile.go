@@ -181,3 +181,12 @@ func (d *DistanceProfile) GetPostgresSearchConfig() domaintypes.PostgresSearchCo
 		},
 	}
 }
+
+func (DistanceProfile) Constraints() []keel.Constraint {
+	return []keel.Constraint{
+		{
+			Name:    "uq_distance_profiles_default",
+			Message: "Another distance profile is already the default",
+		},
+	}
+}

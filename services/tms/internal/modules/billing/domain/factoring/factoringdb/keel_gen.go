@@ -23,14 +23,15 @@ import (
 
 // agreementsTable is the schema of factoring.Agreement.
 var agreementsTable = schema.Table{
-	Name:   "factoring_agreements",
-	Quoted: `"factoring_agreements"`,
-	Alias:  "fa",
-	Model:  "factoring.Agreement",
-	Label:  `Factoring Agreement`,
-	Plural: `Factoring Agreements`,
-	Doc:    `The terms each factor buys invoices on, with their advance, reserve and effective dates`,
-	Report: &schema.TableReport{Category: `Billing`},
+	Name:        "factoring_agreements",
+	Quoted:      `"factoring_agreements"`,
+	Alias:       "fa",
+	Model:       "factoring.Agreement",
+	Label:       `Factoring Agreement`,
+	Plural:      `Factoring Agreements`,
+	Doc:         `The terms each factor buys invoices on, with their advance, reserve and effective dates`,
+	Report:      &schema.TableReport{Category: `Billing`},
+	Constraints: (&factoring.Agreement{}).Constraints(),
 	Columns: []schema.Column{
 		{Name: "id", Quoted: `"id"`, Field: "ID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagAutoID, Label: `ID`, JSON: `id`, Report: &reportDimString},
 		{Name: "organization_id", Quoted: `"organization_id"`, Field: "OrganizationID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Organization ID`, JSON: `organizationId`, Report: &reportDimStringHidden},
@@ -877,14 +878,15 @@ func attachInvoiceState(p unsafe.Pointer, rel int32, child unsafe.Pointer) {
 
 // noasTable is the schema of factoring.Noa.
 var noasTable = schema.Table{
-	Name:   "factoring_noas",
-	Quoted: `"factoring_noas"`,
-	Alias:  "fn",
-	Model:  "factoring.Noa",
-	Label:  `Notice of Assignment`,
-	Plural: `Notices of Assignment`,
-	Doc:    `Notices telling each customer to pay a factor, from draft to signed acknowledgement, expiry and release`,
-	Report: &schema.TableReport{Category: `Billing`},
+	Name:        "factoring_noas",
+	Quoted:      `"factoring_noas"`,
+	Alias:       "fn",
+	Model:       "factoring.Noa",
+	Label:       `Notice of Assignment`,
+	Plural:      `Notices of Assignment`,
+	Doc:         `Notices telling each customer to pay a factor, from draft to signed acknowledgement, expiry and release`,
+	Report:      &schema.TableReport{Category: `Billing`},
+	Constraints: (&factoring.Noa{}).Constraints(),
 	Columns: []schema.Column{
 		{Name: "id", Quoted: `"id"`, Field: "ID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagAutoID, Label: `ID`, JSON: `id`, Report: &reportDimString},
 		{Name: "organization_id", Quoted: `"organization_id"`, Field: "OrganizationID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Organization ID`, JSON: `organizationId`, Report: &reportDimStringHidden},
@@ -2124,14 +2126,15 @@ func beforeCreateRemittanceProfile(ctx context.Context, p unsafe.Pointer) error 
 
 // reserveEntriesTable is the schema of factoring.ReserveEntry.
 var reserveEntriesTable = schema.Table{
-	Name:   "factoring_reserve_entries",
-	Quoted: `"factoring_reserve_entries"`,
-	Alias:  "fre",
-	Model:  "factoring.ReserveEntry",
-	Label:  `Factoring Reserve Entry`,
-	Plural: `Factoring Reserve Entries`,
-	Doc:    `Each funding, reserve release, chargeback and reversal booked with a factor, with the cash, fee, reserve and receivables it moved`,
-	Report: &schema.TableReport{Category: `Billing`},
+	Name:        "factoring_reserve_entries",
+	Quoted:      `"factoring_reserve_entries"`,
+	Alias:       "fre",
+	Model:       "factoring.ReserveEntry",
+	Label:       `Factoring Reserve Entry`,
+	Plural:      `Factoring Reserve Entries`,
+	Doc:         `Each funding, reserve release, chargeback and reversal booked with a factor, with the cash, fee, reserve and receivables it moved`,
+	Report:      &schema.TableReport{Category: `Billing`},
+	Constraints: (&factoring.ReserveEntry{}).Constraints(),
 	Columns: []schema.Column{
 		{Name: "id", Quoted: `"id"`, Field: "ID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagAutoID, Label: `ID`, JSON: `id`, Report: &reportDimString},
 		{Name: "organization_id", Quoted: `"organization_id"`, Field: "OrganizationID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Organization ID`, JSON: `organizationId`, Report: &reportDimStringHidden},
@@ -2472,14 +2475,15 @@ func beforeCreateReserveEntry(ctx context.Context, p unsafe.Pointer) error {
 
 // submissionsTable is the schema of factoring.Submission.
 var submissionsTable = schema.Table{
-	Name:   "factoring_submissions",
-	Quoted: `"factoring_submissions"`,
-	Alias:  "fs",
-	Model:  "factoring.Submission",
-	Label:  `Factoring Schedule`,
-	Plural: `Factoring Schedules`,
-	Doc:    `Schedules of accounts sent to each factor, with their invoices' total, expected advance, fee and reserve, and how delivery went`,
-	Report: &schema.TableReport{Category: `Billing`},
+	Name:        "factoring_submissions",
+	Quoted:      `"factoring_submissions"`,
+	Alias:       "fs",
+	Model:       "factoring.Submission",
+	Label:       `Factoring Schedule`,
+	Plural:      `Factoring Schedules`,
+	Doc:         `Schedules of accounts sent to each factor, with their invoices' total, expected advance, fee and reserve, and how delivery went`,
+	Report:      &schema.TableReport{Category: `Billing`},
+	Constraints: (&factoring.Submission{}).Constraints(),
 	Columns: []schema.Column{
 		{Name: "id", Quoted: `"id"`, Field: "ID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagAutoID, Label: `ID`, JSON: `id`, Report: &reportDimString},
 		{Name: "organization_id", Quoted: `"organization_id"`, Field: "OrganizationID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Organization ID`, JSON: `organizationId`, Report: &reportDimStringHidden},
@@ -2879,14 +2883,15 @@ func beforeCreateSubmission(ctx context.Context, p unsafe.Pointer) error {
 
 // submissionItemsTable is the schema of factoring.SubmissionItem.
 var submissionItemsTable = schema.Table{
-	Name:   "factoring_submission_items",
-	Quoted: `"factoring_submission_items"`,
-	Alias:  "fsi",
-	Model:  "factoring.SubmissionItem",
-	Label:  `Factoring Schedule Invoice`,
-	Plural: `Factoring Schedule Invoices`,
-	Doc:    `Each invoice on a factoring schedule, with what the factor was expected to advance, charge and hold back on it`,
-	Report: &schema.TableReport{Category: `Billing`},
+	Name:        "factoring_submission_items",
+	Quoted:      `"factoring_submission_items"`,
+	Alias:       "fsi",
+	Model:       "factoring.SubmissionItem",
+	Label:       `Factoring Schedule Invoice`,
+	Plural:      `Factoring Schedule Invoices`,
+	Doc:         `Each invoice on a factoring schedule, with what the factor was expected to advance, charge and hold back on it`,
+	Report:      &schema.TableReport{Category: `Billing`},
+	Constraints: (&factoring.SubmissionItem{}).Constraints(),
 	Columns: []schema.Column{
 		{Name: "id", Quoted: `"id"`, Field: "ID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagAutoID, Label: `ID`, JSON: `id`, Report: &reportDimString},
 		{Name: "organization_id", Quoted: `"organization_id"`, Field: "OrganizationID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Organization ID`, JSON: `organizationId`, Report: &reportDimStringHidden},
@@ -3248,12 +3253,13 @@ func beforeCreateSubmissionItem(ctx context.Context, p unsafe.Pointer) error {
 
 // transportsTable is the schema of factoring.Transport.
 var transportsTable = schema.Table{
-	Name:   "factoring_transports",
-	Quoted: `"factoring_transports"`,
-	Alias:  "ft",
-	Model:  "factoring.Transport",
-	Label:  `Transport`,
-	Plural: `Transports`,
+	Name:        "factoring_transports",
+	Quoted:      `"factoring_transports"`,
+	Alias:       "ft",
+	Model:       "factoring.Transport",
+	Label:       `Transport`,
+	Plural:      `Transports`,
+	Constraints: (&factoring.Transport{}).Constraints(),
 	Columns: []schema.Column{
 		{Name: "id", Quoted: `"id"`, Field: "ID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagAutoID, Label: `ID`, JSON: `id`},
 		{Name: "organization_id", Quoted: `"organization_id"`, Field: "OrganizationID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Organization ID`, JSON: `organizationId`},

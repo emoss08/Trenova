@@ -275,6 +275,28 @@ func (v *DocumentTemplateVersion) BeforeCreate(ctx context.Context) error {
 	return nil
 }
 
+func (DocumentTemplateVersion) Constraints() []keel.Constraint {
+	return []keel.Constraint{
+		{
+			Name:    "uq_document_template_versions_one_draft",
+			Message: "This template already has a draft. Edit it or delete it before starting another.",
+		},
+		{
+			Name:    "uq_document_template_versions_one_active",
+			Field:   "status",
+			Message: "This template already has an active version",
+		},
+		{
+			Name:    "fk_document_template_versions_source",
+			Message: "Source version does not exist",
+		},
+		{
+			Name:    "fk_document_template_versions_template",
+			Message: "Document template does not exist",
+		},
+	}
+}
+
 func floatOr(value *float64, fallback float64) float64 {
 	if value == nil {
 		return fallback

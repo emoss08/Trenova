@@ -17,12 +17,13 @@ import (
 
 // fuelIndexesTable is the schema of fuelsurcharge.FuelIndex.
 var fuelIndexesTable = schema.Table{
-	Name:   "fuel_indices",
-	Quoted: `"fuel_indices"`,
-	Alias:  "fi",
-	Model:  "fuelsurcharge.FuelIndex",
-	Label:  `Fuel Index`,
-	Plural: `Fuel Indexes`,
+	Name:        "fuel_indices",
+	Quoted:      `"fuel_indices"`,
+	Alias:       "fi",
+	Model:       "fuelsurcharge.FuelIndex",
+	Label:       `Fuel Index`,
+	Plural:      `Fuel Indexes`,
+	Constraints: (&fuelsurcharge.FuelIndex{}).Constraints(),
 	Columns: []schema.Column{
 		{Name: "id", Quoted: `"id"`, Field: "ID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagAutoID, Label: `ID`, JSON: `id`},
 		{Name: "business_unit_id", Quoted: `"business_unit_id"`, Field: "BusinessUnitID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Business Unit ID`, JSON: `businessUnitId`},
@@ -252,12 +253,13 @@ func beforeSaveFuelIndex(ctx context.Context, p unsafe.Pointer) error {
 
 // fuelIndexPricesTable is the schema of fuelsurcharge.FuelIndexPrice.
 var fuelIndexPricesTable = schema.Table{
-	Name:   "fuel_index_prices",
-	Quoted: `"fuel_index_prices"`,
-	Alias:  "fip",
-	Model:  "fuelsurcharge.FuelIndexPrice",
-	Label:  `Fuel Index Price`,
-	Plural: `Fuel Index Prices`,
+	Name:        "fuel_index_prices",
+	Quoted:      `"fuel_index_prices"`,
+	Alias:       "fip",
+	Model:       "fuelsurcharge.FuelIndexPrice",
+	Label:       `Fuel Index Price`,
+	Plural:      `Fuel Index Prices`,
+	Constraints: (&fuelsurcharge.FuelIndexPrice{}).Constraints(),
 	Columns: []schema.Column{
 		{Name: "id", Quoted: `"id"`, Field: "ID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagAutoID, Label: `ID`, JSON: `id`},
 		{Name: "business_unit_id", Quoted: `"business_unit_id"`, Field: "BusinessUnitID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Business Unit ID`, JSON: `businessUnitId`},
@@ -453,12 +455,13 @@ func beforeUpdateFuelIndexPrice(ctx context.Context, p unsafe.Pointer) error {
 
 // fuelSurchargeProgramsTable is the schema of fuelsurcharge.FuelSurchargeProgram.
 var fuelSurchargeProgramsTable = schema.Table{
-	Name:   "fuel_surcharge_programs",
-	Quoted: `"fuel_surcharge_programs"`,
-	Alias:  "fsp",
-	Model:  "fuelsurcharge.FuelSurchargeProgram",
-	Label:  `Fuel Surcharge Program`,
-	Plural: `Fuel Surcharge Programs`,
+	Name:        "fuel_surcharge_programs",
+	Quoted:      `"fuel_surcharge_programs"`,
+	Alias:       "fsp",
+	Model:       "fuelsurcharge.FuelSurchargeProgram",
+	Label:       `Fuel Surcharge Program`,
+	Plural:      `Fuel Surcharge Programs`,
+	Constraints: (&fuelsurcharge.FuelSurchargeProgram{}).Constraints(),
 	Columns: []schema.Column{
 		{Name: "id", Quoted: `"id"`, Field: "ID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagAutoID, Label: `ID`, JSON: `id`},
 		{Name: "business_unit_id", Quoted: `"business_unit_id"`, Field: "BusinessUnitID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Business Unit ID`, JSON: `businessUnitId`},

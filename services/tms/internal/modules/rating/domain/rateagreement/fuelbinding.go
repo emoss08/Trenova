@@ -103,3 +103,13 @@ func (ragf *RateAgreementFuelBinding) GetBusinessUnitID() pulid.ID {
 func (ragf *RateAgreementFuelBinding) GetTableName() string {
 	return "rate_agreement_fuel_bindings"
 }
+
+func (RateAgreementFuelBinding) Constraints() []keel.Constraint {
+	return []keel.Constraint{
+		{
+			Name:    "uq_rate_agreement_fuel_bindings",
+			Field:   "fuelBinding",
+			Message: "A rate agreement can bind only one fuel surcharge program",
+		},
+	}
+}

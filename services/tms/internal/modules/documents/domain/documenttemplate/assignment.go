@@ -93,6 +93,19 @@ func (a *DocumentTemplateAssignment) Validate(multiErr *errortypes.MultiError) {
 	))
 }
 
+func (DocumentTemplateAssignment) Constraints() []keel.Constraint {
+	return []keel.Constraint{
+		{
+			Name:    "fk_document_template_assignments_customer",
+			Message: "Customer does not exist",
+		},
+		{
+			Name:    "fk_document_template_assignments_template",
+			Message: "Document template does not exist",
+		},
+	}
+}
+
 // TemplateSource says which tier of the resolution chain produced a template.
 //
 // It travels with a resolved template so a preview can tell an administrator why

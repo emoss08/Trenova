@@ -18,13 +18,14 @@ import (
 
 // detentionEvidencesTable is the schema of detention.DetentionEvidence.
 var detentionEvidencesTable = schema.Table{
-	Name:   "detention_evidence",
-	Quoted: `"detention_evidence"`,
-	Alias:  "de",
-	Model:  "detention.DetentionEvidence",
-	Label:  `Detention Evidence`,
-	Plural: `Detention Evidences`,
-	Doc:    `DetentionEvidence is one append-only fact about an occurrence, hash-chained to its predecessor. The carrier's structural credibility problem in a dispute is "you edited the arrival time after the fact" — chaining makes any edit provable rather than deniable.`,
+	Name:        "detention_evidence",
+	Quoted:      `"detention_evidence"`,
+	Alias:       "de",
+	Model:       "detention.DetentionEvidence",
+	Label:       `Detention Evidence`,
+	Plural:      `Detention Evidences`,
+	Doc:         `DetentionEvidence is one append-only fact about an occurrence, hash-chained to its predecessor. The carrier's structural credibility problem in a dispute is "you edited the arrival time after the fact" — chaining makes any edit provable rather than deniable.`,
+	Constraints: (&detention.DetentionEvidence{}).Constraints(),
 	Columns: []schema.Column{
 		{Name: "id", Quoted: `"id"`, Field: "ID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagAutoID, Label: `ID`, JSON: `id`},
 		{Name: "business_unit_id", Quoted: `"business_unit_id"`, Field: "BusinessUnitID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Business Unit ID`, JSON: `businessUnitId`},
@@ -241,13 +242,14 @@ func beforeCreateDetentionEvidence(ctx context.Context, p unsafe.Pointer) error 
 
 // detentionNoticesTable is the schema of detention.DetentionNotice.
 var detentionNoticesTable = schema.Table{
-	Name:   "detention_notices",
-	Quoted: `"detention_notices"`,
-	Alias:  "dn",
-	Model:  "detention.DetentionNotice",
-	Label:  `Detention Notice`,
-	Plural: `Detention Notices`,
-	Doc:    `DetentionNotice is the customer-facing warning that detention has started or is about to. Contracts that pay detention reliably require written notice at or before free-time expiry, so this is evidence, not courtesy: its delivery receipt is what makes the charge collectable.`,
+	Name:        "detention_notices",
+	Quoted:      `"detention_notices"`,
+	Alias:       "dn",
+	Model:       "detention.DetentionNotice",
+	Label:       `Detention Notice`,
+	Plural:      `Detention Notices`,
+	Doc:         `DetentionNotice is the customer-facing warning that detention has started or is about to. Contracts that pay detention reliably require written notice at or before free-time expiry, so this is evidence, not courtesy: its delivery receipt is what makes the charge collectable.`,
+	Constraints: (&detention.DetentionNotice{}).Constraints(),
 	Columns: []schema.Column{
 		{Name: "id", Quoted: `"id"`, Field: "ID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagAutoID, Label: `ID`, JSON: `id`},
 		{Name: "business_unit_id", Quoted: `"business_unit_id"`, Field: "BusinessUnitID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Business Unit ID`, JSON: `businessUnitId`},
@@ -605,13 +607,14 @@ func beforeUpdateDetentionNotice(ctx context.Context, p unsafe.Pointer) error {
 
 // detentionOccurrencesTable is the schema of detention.DetentionOccurrence.
 var detentionOccurrencesTable = schema.Table{
-	Name:   "detention_occurrences",
-	Quoted: `"detention_occurrences"`,
-	Alias:  "do_",
-	Model:  "detention.DetentionOccurrence",
-	Label:  `Detention Occurrence`,
-	Plural: `Detention Occurrences`,
-	Doc:    `DetentionOccurrence is the detention event at exactly one stop. It is the unit that gets billed, disputed, waived, and audited. Once the clock stops and the charge is billed the record is frozen: recalculation must never silently rewrite a number a customer has already been shown.`,
+	Name:        "detention_occurrences",
+	Quoted:      `"detention_occurrences"`,
+	Alias:       "do_",
+	Model:       "detention.DetentionOccurrence",
+	Label:       `Detention Occurrence`,
+	Plural:      `Detention Occurrences`,
+	Doc:         `DetentionOccurrence is the detention event at exactly one stop. It is the unit that gets billed, disputed, waived, and audited. Once the clock stops and the charge is billed the record is frozen: recalculation must never silently rewrite a number a customer has already been shown.`,
+	Constraints: (&detention.DetentionOccurrence{}).Constraints(),
 	Columns: []schema.Column{
 		{Name: "id", Quoted: `"id"`, Field: "ID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagAutoID, Label: `ID`, JSON: `id`},
 		{Name: "business_unit_id", Quoted: `"business_unit_id"`, Field: "BusinessUnitID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Business Unit ID`, JSON: `businessUnitId`},
@@ -1282,12 +1285,13 @@ func beforeUpdateDetentionOccurrence(ctx context.Context, p unsafe.Pointer) erro
 
 // detentionPoliciesTable is the schema of detention.DetentionPolicy.
 var detentionPoliciesTable = schema.Table{
-	Name:   "detention_policies",
-	Quoted: `"detention_policies"`,
-	Alias:  "dp",
-	Model:  "detention.DetentionPolicy",
-	Label:  `Detention Policy`,
-	Plural: `Detention Policies`,
+	Name:        "detention_policies",
+	Quoted:      `"detention_policies"`,
+	Alias:       "dp",
+	Model:       "detention.DetentionPolicy",
+	Label:       `Detention Policy`,
+	Plural:      `Detention Policies`,
+	Constraints: (&detention.DetentionPolicy{}).Constraints(),
 	Columns: []schema.Column{
 		{Name: "id", Quoted: `"id"`, Field: "ID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagAutoID, Label: `ID`, JSON: `id`},
 		{Name: "business_unit_id", Quoted: `"business_unit_id"`, Field: "BusinessUnitID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Business Unit ID`, JSON: `businessUnitId`},

@@ -340,6 +340,19 @@ type ItemFunding struct {
 	FeeMinor     int64
 }
 
+func (Submission) Constraints() []keel.Constraint {
+	return []keel.Constraint{
+		{
+			Name:    "uq_factoring_submissions_idempotency",
+			Message: "These invoices were just submitted; reload to see the schedule",
+		},
+		{
+			Name:    "uq_factoring_submissions_number",
+			Message: "That schedule number is already in use; check the factoring schedule sequence",
+		},
+	}
+}
+
 func (i *SubmissionItem) ExpectedFunding() ItemFunding {
 	return ItemFunding{AdvanceMinor: i.ExpectedAdvanceMinor, FeeMinor: i.ExpectedFeeMinor}
 }
@@ -462,4 +475,13 @@ func (i *SubmissionItem) BeforeCreate(ctx context.Context) error {
 	}
 
 	return nil
+}
+
+func (SubmissionItem) Constraints() []keel.Constraint {
+	return []keel.Constraint{
+		{
+			Name:    "uq_factoring_submission_items_live_invoice",
+			Message: "One of these invoices is already on a schedule with the factor; reload the queue and try again",
+		},
+	}
 }

@@ -334,6 +334,19 @@ func (t *WorkerCredentialType) BeforeSave(_ context.Context) error {
 	return nil
 }
 
+func (WorkerCredentialType) Constraints() []keel.Constraint {
+	return []keel.Constraint{
+		{
+			Name:    "uq_worker_credential_types_code",
+			Message: "A credential type with this code already exists",
+		},
+		{
+			Name:    "uq_worker_credential_types_profile_field",
+			Message: "Another credential type already feeds this profile field",
+		},
+	}
+}
+
 // SystemCredentialTypes is the catalog every organisation starts with. Codes are
 // stable identifiers; the migration that introduced the registry seeds the same
 // rows so an organisation created before or after it looks identical.

@@ -172,3 +172,20 @@ func (hsr *HazmatSegregationRule) GetPostgresSearchConfig() domaintypes.Postgres
 		},
 	}
 }
+
+func (HazmatSegregationRule) Constraints() []keel.Constraint {
+	return []keel.Constraint{
+		{
+			Name:    "idx_hazmat_segregation_rules_unique",
+			Message: "A segregation rule for these classes and materials already exists in your organization",
+		},
+		{
+			Name:    "fk_hazmat_segregation_rules_hazmat_a",
+			Message: "Hazardous material A does not exist or belongs to a different organization",
+		},
+		{
+			Name:    "fk_hazmat_segregation_rules_hazmat_b",
+			Message: "Hazardous material B does not exist or belongs to a different organization",
+		},
+	}
+}

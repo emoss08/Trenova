@@ -177,6 +177,15 @@ func (s *OSHAAnnualSummary) BeforeCreate(_ context.Context) error {
 	return nil
 }
 
+func (OSHAAnnualSummary) Constraints() []keel.Constraint {
+	return []keel.Constraint{
+		{
+			Name:    "uq_osha_annual_summaries_year",
+			Message: "A summary already exists for that year",
+		},
+	}
+}
+
 // OSHASummaryTotals is the boxed part of the 300A: the case counts and day
 // totals, derived from the log rather than typed in.
 type OSHASummaryTotals struct {

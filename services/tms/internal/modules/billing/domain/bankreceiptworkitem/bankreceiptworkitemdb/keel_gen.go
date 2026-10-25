@@ -15,12 +15,13 @@ import (
 
 // workItemsTable is the schema of bankreceiptworkitem.WorkItem.
 var workItemsTable = schema.Table{
-	Name:   "bank_receipt_work_items",
-	Quoted: `"bank_receipt_work_items"`,
-	Alias:  "brwi",
-	Model:  "bankreceiptworkitem.WorkItem",
-	Label:  `Work Item`,
-	Plural: `Work Items`,
+	Name:        "bank_receipt_work_items",
+	Quoted:      `"bank_receipt_work_items"`,
+	Alias:       "brwi",
+	Model:       "bankreceiptworkitem.WorkItem",
+	Label:       `Work Item`,
+	Plural:      `Work Items`,
+	Constraints: (&bankreceiptworkitem.WorkItem{}).Constraints(),
 	Columns: []schema.Column{
 		{Name: "id", Quoted: `"id"`, Field: "ID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagAutoID, Label: `ID`, JSON: `id`},
 		{Name: "organization_id", Quoted: `"organization_id"`, Field: "OrganizationID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Organization ID`, JSON: `organizationId`},

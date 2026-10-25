@@ -425,3 +425,24 @@ func (o *DetentionOccurrence) BeforeUpdate(ctx context.Context) error {
 
 	return nil
 }
+
+func (DetentionOccurrence) Constraints() []keel.Constraint {
+	return []keel.Constraint{
+		{
+			Name:    "uq_detention_occurrences_stop",
+			Message: "Stop already has a detention occurrence",
+		},
+		{
+			Name:    "fk_detention_occurrences_shipment",
+			Message: "Shipment does not exist in your organization",
+		},
+		{
+			Name:    "fk_detention_occurrences_policy",
+			Message: "Detention policy does not exist in your organization",
+		},
+		{
+			Name:    "fk_detention_occurrences_additional_charge",
+			Message: "Additional charge does not exist",
+		},
+	}
+}

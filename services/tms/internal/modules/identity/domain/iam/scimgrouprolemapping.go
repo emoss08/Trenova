@@ -88,3 +88,12 @@ func (m *SCIMGroupRoleMapping) GetPostgresSearchConfig() domaintypes.PostgresSea
 		},
 	}
 }
+
+func (SCIMGroupRoleMapping) Constraints() []keel.Constraint {
+	return []keel.Constraint{
+		{
+			Name:    "idx_sgrm_display_name",
+			Message: "A SCIM group role mapping with this display name already exists",
+		},
+	}
+}

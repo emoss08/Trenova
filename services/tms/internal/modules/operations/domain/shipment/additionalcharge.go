@@ -224,3 +224,16 @@ func (a *AdditionalCharge) Owner() SystemOwner {
 		return SystemOwnerNone
 	}
 }
+
+func (AdditionalCharge) Constraints() []keel.Constraint {
+	return []keel.Constraint{
+		{
+			Name:    "fk_additional_charges_accessorial_charge",
+			Message: "Accessorial charge does not exist in your organization",
+		},
+		{
+			Name:    "fk_additional_charges_shipment",
+			Message: "Shipment does not exist in your organization",
+		},
+	}
+}

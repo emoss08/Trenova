@@ -16,16 +16,7 @@ import (
 	"go.uber.org/zap"
 )
 
-var projectionErrors = dberror.Mapping{
-	Entity: "Document search projection",
-	ForeignKey: []dberror.Constraint{
-		{
-			Name:    "fk_document_search_projections_document",
-			Field:   "id",
-			Message: "Document does not exist",
-		},
-	},
-}
+var projectionErrors = dberror.Mapping{Entity: "Document search projection"}
 
 type Params struct {
 	fx.In

@@ -123,3 +123,24 @@ func (o *Organization) BeforeCreate(ctx context.Context) error {
 
 	return nil
 }
+
+func (Organization) Constraints() []keel.Constraint {
+	return []keel.Constraint{
+		{
+			Name:    "idx_organizations_name_business_unit",
+			Message: "Organization with this name already exists in this business unit",
+		},
+		{
+			Name:    "idx_organizations_scac_business_unit",
+			Message: "Organization with this SCAC code already exists in this business unit",
+		},
+		{
+			Name:    "idx_organizations_dot_business_unit",
+			Message: "Organization with this DOT number already exists in this business unit",
+		},
+		{
+			Name:    "idx_organizations_login_slug",
+			Message: "Organization with this login slug already exists",
+		},
+	}
+}

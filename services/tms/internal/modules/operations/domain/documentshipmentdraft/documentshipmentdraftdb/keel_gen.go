@@ -15,12 +15,13 @@ import (
 
 // documentShipmentDraftsTable is the schema of documentshipmentdraft.DocumentShipmentDraft.
 var documentShipmentDraftsTable = schema.Table{
-	Name:   "document_shipment_drafts",
-	Quoted: `"document_shipment_drafts"`,
-	Alias:  "dsd",
-	Model:  "documentshipmentdraft.DocumentShipmentDraft",
-	Label:  `Document Shipment Draft`,
-	Plural: `Document Shipment Drafts`,
+	Name:        "document_shipment_drafts",
+	Quoted:      `"document_shipment_drafts"`,
+	Alias:       "dsd",
+	Model:       "documentshipmentdraft.DocumentShipmentDraft",
+	Label:       `Document Shipment Draft`,
+	Plural:      `Document Shipment Drafts`,
+	Constraints: (&documentshipmentdraft.DocumentShipmentDraft{}).Constraints(),
 	Columns: []schema.Column{
 		{Name: "id", Quoted: `"id"`, Field: "ID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagAutoID, Label: `ID`, JSON: `id`},
 		{Name: "document_id", Quoted: `"document_id"`, Field: "DocumentID", Kind: schema.KindString, Flags: 0, Label: `Document ID`, JSON: `documentId`},

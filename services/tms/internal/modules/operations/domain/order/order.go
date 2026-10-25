@@ -138,3 +138,16 @@ func (o *Order) BeforeCreate(ctx context.Context) error {
 
 	return nil
 }
+
+func (Order) Constraints() []keel.Constraint {
+	return []keel.Constraint{
+		{
+			Name:    "idx_orders_order_number",
+			Message: "Order with this order number already exists in your organization",
+		},
+		{
+			Name:    "fk_orders_customer",
+			Message: "Customer does not exist in your organization",
+		},
+	}
+}

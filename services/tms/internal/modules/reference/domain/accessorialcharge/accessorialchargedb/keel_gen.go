@@ -15,14 +15,15 @@ import (
 
 // accessorialChargesTable is the schema of accessorialcharge.AccessorialCharge.
 var accessorialChargesTable = schema.Table{
-	Name:   "accessorial_charges",
-	Quoted: `"accessorial_charges"`,
-	Alias:  "ac",
-	Model:  "accessorialcharge.AccessorialCharge",
-	Label:  `Accessorial Charge`,
-	Plural: `Accessorial Charges`,
-	Doc:    `The organization's accessorial catalog and default pricing`,
-	Report: &schema.TableReport{Category: `Billing`},
+	Name:        "accessorial_charges",
+	Quoted:      `"accessorial_charges"`,
+	Alias:       "ac",
+	Model:       "accessorialcharge.AccessorialCharge",
+	Label:       `Accessorial Charge`,
+	Plural:      `Accessorial Charges`,
+	Doc:         `The organization's accessorial catalog and default pricing`,
+	Report:      &schema.TableReport{Category: `Billing`},
+	Constraints: (&accessorialcharge.AccessorialCharge{}).Constraints(),
 	Columns: []schema.Column{
 		{Name: "id", Quoted: `"id"`, Field: "ID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagAutoID, Label: `ID`, JSON: `id`, Report: &reportDimString},
 		{Name: "business_unit_id", Quoted: `"business_unit_id"`, Field: "BusinessUnitID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Business Unit ID`, JSON: `businessUnitId`, Report: &reportDimStringHidden},

@@ -18,28 +18,7 @@ import (
 
 const defaultOpenAssignmentPageSize = 100
 
-var assignmentErrors = dberror.Mapping{
-	Entity: "WorkerPTOPolicyAssignment",
-	Unique: []dberror.Constraint{
-		{
-			Name:    "uq_worker_pto_policy_assignments_open",
-			Field:   "workerId",
-			Message: "Worker already has an open PTO policy assignment",
-		},
-	},
-	ForeignKey: []dberror.Constraint{
-		{
-			Name:    "fk_worker_pto_policy_assignments_worker",
-			Field:   "workerId",
-			Message: "Worker does not exist or belongs to a different organization",
-		},
-		{
-			Name:    "fk_worker_pto_policy_assignments_policy",
-			Field:   "ptoPolicyId",
-			Message: "PTO policy does not exist or belongs to a different organization",
-		},
-	},
-}
+var assignmentErrors = dberror.Mapping{Entity: "WorkerPTOPolicyAssignment"}
 
 type tenantRow struct {
 	OrganizationID pulid.ID

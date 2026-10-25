@@ -15,12 +15,13 @@ import (
 
 // documentTypesTable is the schema of documenttype.DocumentType.
 var documentTypesTable = schema.Table{
-	Name:   "document_types",
-	Quoted: `"document_types"`,
-	Alias:  "dt",
-	Model:  "documenttype.DocumentType",
-	Label:  `Document Type`,
-	Plural: `Document Types`,
+	Name:        "document_types",
+	Quoted:      `"document_types"`,
+	Alias:       "dt",
+	Model:       "documenttype.DocumentType",
+	Label:       `Document Type`,
+	Plural:      `Document Types`,
+	Constraints: (&documenttype.DocumentType{}).Constraints(),
 	Columns: []schema.Column{
 		{Name: "id", Quoted: `"id"`, Field: "ID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagAutoID, Label: `ID`, JSON: `id`},
 		{Name: "business_unit_id", Quoted: `"business_unit_id"`, Field: "BusinessUnitID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Business Unit ID`, JSON: `businessUnitId`},

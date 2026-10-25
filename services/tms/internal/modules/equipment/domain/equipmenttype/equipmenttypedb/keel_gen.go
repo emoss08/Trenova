@@ -17,14 +17,15 @@ import (
 
 // equipmentTypesTable is the schema of equipmenttype.EquipmentType.
 var equipmentTypesTable = schema.Table{
-	Name:   "equipment_types",
-	Quoted: `"equipment_types"`,
-	Alias:  "et",
-	Model:  "equipmenttype.EquipmentType",
-	Label:  `Equipment Type`,
-	Plural: `Equipment Types`,
-	Doc:    `Equipment classification`,
-	Report: &schema.TableReport{Category: `Equipment`},
+	Name:        "equipment_types",
+	Quoted:      `"equipment_types"`,
+	Alias:       "et",
+	Model:       "equipmenttype.EquipmentType",
+	Label:       `Equipment Type`,
+	Plural:      `Equipment Types`,
+	Doc:         `Equipment classification`,
+	Report:      &schema.TableReport{Category: `Equipment`},
+	Constraints: (&equipmenttype.EquipmentType{}).Constraints(),
 	Columns: []schema.Column{
 		{Name: "id", Quoted: `"id"`, Field: "ID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagAutoID, Label: `ID`, JSON: `id`, Report: &reportDimString},
 		{Name: "business_unit_id", Quoted: `"business_unit_id"`, Field: "BusinessUnitID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Business Unit ID`, JSON: `businessUnitId`, Report: &reportDimStringHidden},

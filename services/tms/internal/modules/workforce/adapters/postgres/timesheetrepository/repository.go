@@ -18,64 +18,15 @@ import (
 	"go.uber.org/zap"
 )
 
-const fieldWorkerID = "workerId"
-
 const (
 	defaultEntryPageSize     = 500
 	defaultTimesheetPageSize = 200
 	defaultExportPageSize    = 100
 )
 
-var entryErrors = dberror.Mapping{
-	Entity: "TimeClockEntry",
-	Unique: []dberror.Constraint{
-		{
-			Name:    "uq_time_clock_entries_open",
-			Field:   fieldWorkerID,
-			Message: "Worker is already on the clock",
-		},
-	},
-	ForeignKey: []dberror.Constraint{
-		{
-			Name:    "fk_time_clock_entries_worker",
-			Field:   fieldWorkerID,
-			Message: "Worker does not exist or belongs to a different organization",
-		},
-		{
-			Name:    "fk_time_clock_entries_timesheet",
-			Field:   "timesheetId",
-			Message: "Timesheet does not exist or belongs to a different organization",
-		},
-		{
-			Name:    "fk_time_clock_entries_pay_code",
-			Field:   "payCodeId",
-			Message: "Pay code does not exist or belongs to a different organization",
-		},
-	},
-}
+var entryErrors = dberror.Mapping{Entity: "TimeClockEntry"}
 
-var timesheetErrors = dberror.Mapping{
-	Entity: "Timesheet",
-	Unique: []dberror.Constraint{
-		{
-			Name:    "uq_timesheets_worker_period",
-			Field:   "periodStart",
-			Message: "Worker already has a timesheet for this period",
-		},
-	},
-	ForeignKey: []dberror.Constraint{
-		{
-			Name:    "fk_timesheets_worker",
-			Field:   fieldWorkerID,
-			Message: "Worker does not exist or belongs to a different organization",
-		},
-		{
-			Name:    "fk_timesheets_payroll_export",
-			Field:   "payrollExportId",
-			Message: "Payroll export does not exist or belongs to a different organization",
-		},
-	},
-}
+var timesheetErrors = dberror.Mapping{Entity: "Timesheet"}
 
 var exportErrors = dberror.Mapping{Entity: "PayrollExport"}
 

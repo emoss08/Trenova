@@ -15,23 +15,7 @@ import (
 	"go.uber.org/zap"
 )
 
-var profileErrors = dberror.Mapping{
-	Entity: "Customer tracking settings",
-	Unique: []dberror.Constraint{
-		{
-			Name:    "uq_customer_tracking_profiles_customer",
-			Field:   "customerId",
-			Message: "Customer already has tracking settings",
-		},
-	},
-	ForeignKey: []dberror.Constraint{
-		{
-			Name:    "fk_customer_tracking_profiles_customer",
-			Field:   "customerId",
-			Message: "Customer does not exist in your organization",
-		},
-	},
-}
+var profileErrors = dberror.Mapping{Entity: "Customer tracking settings"}
 
 type profileRepository struct {
 	db *postgres.Connection

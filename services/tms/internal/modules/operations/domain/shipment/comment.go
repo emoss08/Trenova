@@ -313,6 +313,15 @@ func (c *ShipmentComment) GetBusinessUnitID() pulid.ID {
 	return c.BusinessUnitID
 }
 
+func (ShipmentComment) Constraints() []keel.Constraint {
+	return []keel.Constraint{
+		{
+			Name:    "fk_shipment_comments_shipment",
+			Message: "Shipment does not exist in your organization",
+		},
+	}
+}
+
 func (a *ShipmentCommentAcknowledgment) Validate(multiErr *errortypes.MultiError) {
 	multiErr.AddOzzoError(validation.ValidateStruct(
 		a,

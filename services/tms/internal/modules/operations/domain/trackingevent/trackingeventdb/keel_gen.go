@@ -16,12 +16,13 @@ import (
 
 // trackingEventsTable is the schema of trackingevent.TrackingEvent.
 var trackingEventsTable = schema.Table{
-	Name:   "tracking_events",
-	Quoted: `"tracking_events"`,
-	Alias:  "te",
-	Model:  "trackingevent.TrackingEvent",
-	Label:  `Tracking Event`,
-	Plural: `Tracking Events`,
+	Name:        "tracking_events",
+	Quoted:      `"tracking_events"`,
+	Alias:       "te",
+	Model:       "trackingevent.TrackingEvent",
+	Label:       `Tracking Event`,
+	Plural:      `Tracking Events`,
+	Constraints: (&trackingevent.TrackingEvent{}).Constraints(),
 	Columns: []schema.Column{
 		{Name: "id", Quoted: `"id"`, Field: "ID", Kind: schema.KindString, Flags: schema.FlagPK, Label: `ID`, JSON: `id`},
 		{Name: "organization_id", Quoted: `"organization_id"`, Field: "OrganizationID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Organization ID`, JSON: `organizationId`},

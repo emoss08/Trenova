@@ -371,6 +371,19 @@ func (p *AccessPolicy) GetTableName() string {
 	return "access_policies"
 }
 
+func (AccessPolicy) Constraints() []keel.Constraint {
+	return []keel.Constraint{
+		{
+			Name:    "idx_access_policies_name_tenant",
+			Message: "Access policy with this name already exists",
+		},
+		{
+			Name:    "idx_access_policies_enabled_scope_tenant",
+			Message: "An enabled access policy with the same resource, operation, and conditions already exists",
+		},
+	}
+}
+
 func (i *ExternalIdentity) Validate(multiErr *errortypes.MultiError) {
 	multiErr.AddOzzoError(validation.ValidateStruct(i,
 		validation.Field(&i.OrganizationID,

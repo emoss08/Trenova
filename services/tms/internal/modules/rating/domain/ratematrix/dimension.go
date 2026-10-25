@@ -193,3 +193,13 @@ func (rmd *RateMatrixDimension) GetBusinessUnitID() pulid.ID {
 func (rmd *RateMatrixDimension) GetTableName() string {
 	return "rate_matrix_dimensions"
 }
+
+func (RateMatrixDimension) Constraints() []keel.Constraint {
+	return []keel.Constraint{
+		{
+			Name:    "uq_rate_matrix_dimensions_position",
+			Field:   "dimensions",
+			Message: "Two dimensions cannot share a position",
+		},
+	}
+}

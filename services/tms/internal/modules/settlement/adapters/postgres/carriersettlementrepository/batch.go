@@ -36,16 +36,7 @@ WHERE b.id = $1
 	AND b.organization_id = $2
 	AND b.business_unit_id = $3`
 
-var batchErrors = dberror.Mapping{
-	Entity: "CarrierSettlementBatch",
-	Unique: []dberror.Constraint{
-		{
-			Name:    "uq_carrier_settlement_batches_period",
-			Field:   "periodStart",
-			Message: "An open carrier settlement batch already exists for this period",
-		},
-	},
-}
+var batchErrors = dberror.Mapping{Entity: "CarrierSettlementBatch"}
 
 type batchRepository struct {
 	db *postgres.Connection

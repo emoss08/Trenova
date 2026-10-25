@@ -15,12 +15,13 @@ import (
 
 // holdReasonsTable is the schema of holdreason.HoldReason.
 var holdReasonsTable = schema.Table{
-	Name:   "hold_reasons",
-	Quoted: `"hold_reasons"`,
-	Alias:  "hr",
-	Model:  "holdreason.HoldReason",
-	Label:  `Hold Reason`,
-	Plural: `Hold Reasons`,
+	Name:        "hold_reasons",
+	Quoted:      `"hold_reasons"`,
+	Alias:       "hr",
+	Model:       "holdreason.HoldReason",
+	Label:       `Hold Reason`,
+	Plural:      `Hold Reasons`,
+	Constraints: (&holdreason.HoldReason{}).Constraints(),
 	Columns: []schema.Column{
 		{Name: "id", Quoted: `"id"`, Field: "ID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagAutoID, Label: `ID`, JSON: `id`},
 		{Name: "business_unit_id", Quoted: `"business_unit_id"`, Field: "BusinessUnitID", Kind: schema.KindString, Flags: schema.FlagTenant, Label: `Business Unit ID`, JSON: `businessUnitId`},

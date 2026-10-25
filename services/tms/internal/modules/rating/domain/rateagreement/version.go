@@ -283,3 +283,13 @@ func (ragv *RateAgreementVersion) GetBusinessUnitID() pulid.ID {
 func (ragv *RateAgreementVersion) GetTableName() string {
 	return "rate_agreement_versions"
 }
+
+func (RateAgreementVersion) Constraints() []keel.Constraint {
+	return []keel.Constraint{
+		{
+			Name:    "uq_rate_agreement_versions_number",
+			Field:   "versionNumber",
+			Message: "This version of the rate agreement was already recorded; refresh and try again",
+		},
+	}
+}

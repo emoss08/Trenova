@@ -273,6 +273,16 @@ func (p *BenefitPlan) applyDefaults() {
 	}
 }
 
+func (BenefitPlan) Constraints() []keel.Constraint {
+	return []keel.Constraint{
+		{
+			Name:    "uq_benefit_plans_code_year",
+			Field:   "code",
+			Message: "Benefit plan with this code already exists for the plan year",
+		},
+	}
+}
+
 var (
 	_ validationframework.TenantedEntity = (*WorkerBenefitEnrollment)(nil)
 )
@@ -401,5 +411,15 @@ func (e *WorkerBenefitEnrollment) applyDefaults() {
 	}
 	if e.CoverageTier == "" {
 		e.CoverageTier = TierEmployee
+	}
+}
+
+func (WorkerBenefitEnrollment) Constraints() []keel.Constraint {
+	return []keel.Constraint{
+		{
+			Name:    "uq_worker_benefit_enrollments_open",
+			Field:   "benefitPlanId",
+			Message: "Worker already has an open enrollment in this benefit plan",
+		},
 	}
 }

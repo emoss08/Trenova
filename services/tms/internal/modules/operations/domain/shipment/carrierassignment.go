@@ -221,6 +221,23 @@ func (ca *CarrierAssignment) BeforeCreate(_ context.Context) error {
 	return nil
 }
 
+func (CarrierAssignment) Constraints() []keel.Constraint {
+	return []keel.Constraint{
+		{
+			Name:    "idx_carrier_assignments_active_move",
+			Message: "Move already has an active carrier assignment",
+		},
+		{
+			Name:    "fk_carrier_assignments_shipment_move",
+			Message: "Move does not exist in your organization",
+		},
+		{
+			Name:    "fk_carrier_assignments_carrier",
+			Message: "Carrier does not exist in your organization",
+		},
+	}
+}
+
 type CarrierAssignmentAccessorial struct {
 	keel.Table `keel:"carrier_assignment_accessorials"`
 
@@ -268,4 +285,14 @@ func (caa *CarrierAssignmentAccessorial) GetOrganizationID() pulid.ID {
 
 func (caa *CarrierAssignmentAccessorial) GetBusinessUnitID() pulid.ID {
 	return caa.BusinessUnitID
+}
+
+func (CarrierAssignmentAccessorial) Constraints() []keel.Constraint {
+	return []keel.Constraint{
+		{
+			Name:    "fk_carrier_assignment_accessorials_charge",
+			Field:   "accessorials.accessorialChargeId",
+			Message: "Accessorial charge does not exist in your organization",
+		},
+	}
 }

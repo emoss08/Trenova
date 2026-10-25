@@ -23,16 +23,7 @@ import (
 
 const maxFactorsByEmail = 20
 
-var factoringCompanyErrors = dberror.Mapping{
-	Entity: "FactoringCompany",
-	Unique: []dberror.Constraint{
-		{
-			Name:    "uq_factoring_companies_code",
-			Field:   "code",
-			Message: "A factoring company with this code already exists in your organization",
-		},
-	},
-}
+var factoringCompanyErrors = dberror.Mapping{Entity: "FactoringCompany"}
 
 type Params struct {
 	fx.In

@@ -17,16 +17,7 @@ import (
 	"go.uber.org/zap"
 )
 
-var accessorialChargeErrors = dberror.Mapping{
-	Entity: "AccessorialCharge",
-	Unique: []dberror.Constraint{
-		{
-			Name:    "uq_accessorial_charges_code",
-			Field:   "code",
-			Message: "Accessorial charge with this code already exists in your organization",
-		},
-	},
-}
+var accessorialChargeErrors = dberror.Mapping{Entity: "AccessorialCharge"}
 
 type Params struct {
 	fx.In

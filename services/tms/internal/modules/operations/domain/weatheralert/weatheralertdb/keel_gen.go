@@ -7,6 +7,7 @@ import (
 	"unsafe"
 
 	"github.com/emoss08/keel"
+	"github.com/emoss08/keel/postgis"
 	"github.com/emoss08/keel/schema"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/weatheralert"
 	"github.com/emoss08/trenova/pkg/keelkinds"
@@ -15,12 +16,13 @@ import (
 
 // activitiesTable is the schema of weatheralert.Activity.
 var activitiesTable = schema.Table{
-	Name:   "weather_alert_activities",
-	Quoted: `"weather_alert_activities"`,
-	Alias:  "waa",
-	Model:  "weatheralert.Activity",
-	Label:  `Activity`,
-	Plural: `Activities`,
+	Name:        "weather_alert_activities",
+	Quoted:      `"weather_alert_activities"`,
+	Alias:       "waa",
+	Model:       "weatheralert.Activity",
+	Label:       `Activity`,
+	Plural:      `Activities`,
+	Constraints: (&weatheralert.Activity{}).Constraints(),
 	Columns: []schema.Column{
 		{Name: "id", Quoted: `"id"`, Field: "ID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagAutoID, Label: `ID`, JSON: `id`},
 		{Name: "organization_id", Quoted: `"organization_id"`, Field: "OrganizationID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Organization ID`, JSON: `organizationId`},
@@ -170,12 +172,13 @@ func valueActivity(p unsafe.Pointer, c int32) any {
 
 // weatherAlertsTable is the schema of weatheralert.WeatherAlert.
 var weatherAlertsTable = schema.Table{
-	Name:   "weather_alerts",
-	Quoted: `"weather_alerts"`,
-	Alias:  "wa",
-	Model:  "weatheralert.WeatherAlert",
-	Label:  `Weather Alert`,
-	Plural: `Weather Alerts`,
+	Name:        "weather_alerts",
+	Quoted:      `"weather_alerts"`,
+	Alias:       "wa",
+	Model:       "weatheralert.WeatherAlert",
+	Label:       `Weather Alert`,
+	Plural:      `Weather Alerts`,
+	Constraints: (&weatheralert.WeatherAlert{}).Constraints(),
 	Columns: []schema.Column{
 		{Name: "id", Quoted: `"id"`, Field: "ID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagAutoID, Label: `ID`, JSON: `id`},
 		{Name: "organization_id", Quoted: `"organization_id"`, Field: "OrganizationID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Organization ID`, JSON: `organizationId`},
@@ -252,7 +255,7 @@ type WeatherAlertsTable struct {
 	Response       keel.StringCol
 	Category       keel.StringCol
 	AlertCategory  AlertCategoryCol
-	Geometry       keelkinds.PostgisGeometryCol
+	Geometry       postgis.GeometryCol
 	FirstSeenAt    keel.Int64Col
 	LastUpdatedAt  keel.Int64Col
 	ExpiredAt      keel.Int64Col
@@ -286,7 +289,7 @@ var WeatherAlerts = &WeatherAlertsTable{
 	Response:       keel.StringCol{Col: keel.Col{Ref: &weatherAlertsRef, Index: 19}},
 	Category:       keel.StringCol{Col: keel.Col{Ref: &weatherAlertsRef, Index: 20}},
 	AlertCategory:  AlertCategoryCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &weatherAlertsRef, Index: 21}}},
-	Geometry:       keelkinds.PostgisGeometryCol{AnyCol: keel.AnyCol{Col: keel.Col{Ref: &weatherAlertsRef, Index: 22}}},
+	Geometry:       postgis.GeometryCol{AnyCol: keel.AnyCol{Col: keel.Col{Ref: &weatherAlertsRef, Index: 22}}},
 	FirstSeenAt:    keel.Int64Col{Col: keel.Col{Ref: &weatherAlertsRef, Index: 23}},
 	LastUpdatedAt:  keel.Int64Col{Col: keel.Col{Ref: &weatherAlertsRef, Index: 24}},
 	ExpiredAt:      keel.Int64Col{Col: keel.Col{Ref: &weatherAlertsRef, Index: 25}},
@@ -321,7 +324,7 @@ func BuildWeatherAlerts(r *keel.Ref) *WeatherAlertsTable {
 		Response:       keel.StringCol{Col: keel.Col{Ref: r, Index: 19}},
 		Category:       keel.StringCol{Col: keel.Col{Ref: r, Index: 20}},
 		AlertCategory:  AlertCategoryCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 21}}},
-		Geometry:       keelkinds.PostgisGeometryCol{AnyCol: keel.AnyCol{Col: keel.Col{Ref: r, Index: 22}}},
+		Geometry:       postgis.GeometryCol{AnyCol: keel.AnyCol{Col: keel.Col{Ref: r, Index: 22}}},
 		FirstSeenAt:    keel.Int64Col{Col: keel.Col{Ref: r, Index: 23}},
 		LastUpdatedAt:  keel.Int64Col{Col: keel.Col{Ref: r, Index: 24}},
 		ExpiredAt:      keel.Int64Col{Col: keel.Col{Ref: r, Index: 25}},

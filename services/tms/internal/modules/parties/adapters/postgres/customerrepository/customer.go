@@ -23,16 +23,7 @@ import (
 )
 
 var (
-	customerErrors = dberror.Mapping{
-		Entity: "Customer",
-		Unique: []dberror.Constraint{
-			{
-				Name:    "idx_customers_code",
-				Field:   "code",
-				Message: "Customer with this code already exists in your organization",
-			},
-		},
-	}
+	customerErrors       = dberror.Mapping{Entity: "Customer"}
 	billingProfileErrors = dberror.Mapping{Entity: "Customer billing profile"}
 	emailProfileErrors   = dberror.Mapping{Entity: "Customer email profile"}
 )

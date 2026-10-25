@@ -6,11 +6,11 @@ import (
 	"strings"
 
 	"github.com/emoss08/keel"
+	"github.com/emoss08/keel/postgis"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/kernel/domain/usstate"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/errortypes"
-	"github.com/emoss08/trenova/pkg/postgis"
 	"github.com/emoss08/trenova/pkg/validationframework"
 	"github.com/emoss08/trenova/shared/addressutils"
 	"github.com/emoss08/trenova/shared/money"
@@ -326,4 +326,13 @@ func (c *Customer) SamePartyDetails(other *Customer) bool {
 		c.City == other.City &&
 		c.StateID == other.StateID &&
 		c.PostalCode == other.PostalCode
+}
+
+func (Customer) Constraints() []keel.Constraint {
+	return []keel.Constraint{
+		{
+			Name:    "idx_customers_code",
+			Message: "Customer with this code already exists in your organization",
+		},
+	}
 }

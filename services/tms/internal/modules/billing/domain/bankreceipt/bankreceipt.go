@@ -49,3 +49,12 @@ func (r *BankReceipt) Validate(multiErr *errortypes.MultiError) {
 		)
 	}
 }
+
+func (BankReceipt) Constraints() []keel.Constraint {
+	return []keel.Constraint{
+		{
+			Name:    "uq_bank_receipts_matched_payment",
+			Message: "Another bank receipt is already matched to this payment",
+		},
+	}
+}

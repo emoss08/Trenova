@@ -17,14 +17,15 @@ import (
 
 // fiscalPeriodsTable is the schema of fiscalperiod.FiscalPeriod.
 var fiscalPeriodsTable = schema.Table{
-	Name:   "fiscal_periods",
-	Quoted: `"fiscal_periods"`,
-	Alias:  "fp",
-	Model:  "fiscalperiod.FiscalPeriod",
-	Label:  `Fiscal Period`,
-	Plural: `Fiscal Periods`,
-	Doc:    `Accounting periods, their status, and their close and reopen history`,
-	Report: &schema.TableReport{Category: `Accounting`},
+	Name:        "fiscal_periods",
+	Quoted:      `"fiscal_periods"`,
+	Alias:       "fp",
+	Model:       "fiscalperiod.FiscalPeriod",
+	Label:       `Fiscal Period`,
+	Plural:      `Fiscal Periods`,
+	Doc:         `Accounting periods, their status, and their close and reopen history`,
+	Report:      &schema.TableReport{Category: `Accounting`},
+	Constraints: (&fiscalperiod.FiscalPeriod{}).Constraints(),
 	Columns: []schema.Column{
 		{Name: "id", Quoted: `"id"`, Field: "ID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagAutoID, Label: `ID`, JSON: `id`, Report: &reportDimString},
 		{Name: "business_unit_id", Quoted: `"business_unit_id"`, Field: "BusinessUnitID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Business Unit ID`, JSON: `businessUnitId`, Report: &reportDimStringHidden},

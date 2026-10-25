@@ -16,16 +16,7 @@ import (
 	"go.uber.org/zap"
 )
 
-var fuelIndexErrors = dberror.Mapping{
-	Entity: "FuelIndex",
-	Unique: []dberror.Constraint{
-		{
-			Name:    "uq_fuel_indices_code",
-			Field:   "code",
-			Message: "A fuel index with this code already exists in your organization",
-		},
-	},
-}
+var fuelIndexErrors = dberror.Mapping{Entity: "FuelIndex"}
 
 type IndexParams struct {
 	fx.In

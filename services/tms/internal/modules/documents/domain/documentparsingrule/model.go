@@ -71,6 +71,20 @@ func (r *RuleSet) BeforeCreate(ctx context.Context) error {
 	return nil
 }
 
+func (RuleSet) Constraints() []keel.Constraint {
+	return []keel.Constraint{
+		{
+			Name:    "uq_document_parsing_rule_sets_name_kind_scope",
+			Field:   "name",
+			Message: "A parsing rule set with this name already exists for this document kind",
+		},
+		{
+			Name:    "fk_document_parsing_rule_sets_published_version",
+			Message: "Published version does not exist",
+		},
+	}
+}
+
 type RuleVersion struct {
 	keel.Table `keel:"document_parsing_rule_versions"`
 
@@ -153,6 +167,19 @@ func (r *RuleVersion) BeforeCreate(ctx context.Context) error {
 	return nil
 }
 
+func (RuleVersion) Constraints() []keel.Constraint {
+	return []keel.Constraint{
+		{
+			Name:    "fk_document_parsing_rule_versions_rule_set",
+			Message: "Parsing rule set does not exist",
+		},
+		{
+			Name:    "uq_document_parsing_rule_versions_rule_set_version",
+			Message: "A parsing rule version was created concurrently. Retry the request.",
+		},
+	}
+}
+
 type Fixture struct {
 	keel.Table `keel:"document_parsing_rule_fixtures"`
 
@@ -211,6 +238,15 @@ func (f *Fixture) BeforeCreate(ctx context.Context) error {
 	}
 
 	return nil
+}
+
+func (Fixture) Constraints() []keel.Constraint {
+	return []keel.Constraint{
+		{
+			Name:    "fk_document_parsing_rule_fixtures_rule_set",
+			Message: "Parsing rule set does not exist",
+		},
+	}
 }
 
 type MatchConfig struct {

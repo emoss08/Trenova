@@ -27,16 +27,7 @@ import (
 
 const MaxWorklistAccounts = 5000
 
-var accountErrors = dberror.Mapping{
-	Entity: "Collections account",
-	Unique: []dberror.Constraint{
-		{
-			Name:    "uq_collection_accounts_customer",
-			Field:   "customerId",
-			Message: "Someone else started working this customer at the same time. Reload it and try again.",
-		},
-	},
-}
+var accountErrors = dberror.Mapping{Entity: "Collections account"}
 
 var activityErrors = dberror.Mapping{Entity: "Collections activity"}
 
