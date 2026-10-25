@@ -46,7 +46,7 @@ func (r *repository) ReviewCredit(
 			identity, err := keel.IntoOne[customerIdentity](
 				ctx,
 				db,
-				c.Pick(keel.DynOf(c.Name).Coalesce(""), c.Code).Where(c.ID.Eq(req.CustomerID)),
+				c.Pick(c.Name.Coalesce(""), c.Code).Where(c.ID.Eq(req.CustomerID)),
 			)
 			if dberror.IsNotFoundError(err) {
 				return result, nil

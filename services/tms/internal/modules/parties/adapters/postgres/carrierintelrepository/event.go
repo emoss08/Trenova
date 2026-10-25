@@ -348,13 +348,13 @@ func eventCounts(rows []eventStatusSeverityCount) *carrierintelports.CarrierInte
 }
 
 func eventSeverityRank() keel.Expr {
-	severity := keel.DynOf(carrierinteldb.CarrierIntelEvents.Severity).Cast(keel.TypeString)
+	severity := keel.CastText(carrierinteldb.CarrierIntelEvents.Severity)
 	rank := keel.DynCase()
 	for i, level := range eventSeverityOrder {
-		rank = rank.When(severity.Eq(string(level)), keel.DynLit(int64(i)).Cast(keel.TypeInt64))
+		rank = rank.When(severity.Eq(string(level)), keel.Int64(int64(i)))
 	}
 
-	return rank.Else(keel.DynLit(int64(len(eventSeverityOrder))).Cast(keel.TypeInt64))
+	return rank.Else(keel.Int64(int64(len(eventSeverityOrder))))
 }
 
 func (r *eventRepository) ListForDigest(

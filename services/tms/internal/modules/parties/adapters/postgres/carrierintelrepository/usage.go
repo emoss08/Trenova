@@ -87,7 +87,7 @@ func (r *usageRepository) CostSince(
 		total, err := keel.IntoOne[decimal.Decimal](
 			ctx,
 			r.db.Keel(ctx),
-			u.Pick(keel.DynOf(u.EstimatedCost).Sum().Coalesce(0)).
+			u.Pick(keel.NumericOf(u.EstimatedCost.Sum()).Coalesce(0)).
 				Where(u.CreatedAt.Gte(since)),
 		)
 		if err != nil {
@@ -183,7 +183,7 @@ func (r *usageRepository) RollupDay(ctx context.Context, dayStart int64) (int, e
 		start := timeutils.DayStartUTC(dayStart)
 		l := carrierinteldb.CarrierIntelUsageRecords
 		d := carrierinteldb.CarrierIntelUsageDailies
-		day := keel.DynLit(int64(timeutils.DayKeyUTC(start))).Cast(keel.TypeInt64)
+		day := keel.Int64(int64(timeutils.DayKeyUTC(start)))
 		affected, err := d.UpsertFrom(
 			ctx,
 			r.db.Keel(ctx),
@@ -194,8 +194,8 @@ func (r *usageRepository) RollupDay(ctx context.Context, dayStart int64) (int, e
 				l.Endpoint,
 				day,
 				keel.Count(),
-				keel.DynOf(l.BillableUnits).Sum().Coalesce(0),
-				keel.DynOf(l.EstimatedCost).Sum().Coalesce(0),
+				keel.Int64Of(l.BillableUnits.Sum()).Coalesce(0),
+				keel.NumericOf(l.EstimatedCost.Sum()).Coalesce(0),
 			).
 				Where(l.CreatedAt.Gte(start), l.CreatedAt.Lt(start+timeutils.SecondsPerDay)).
 				Group(l.OrganizationID, l.BusinessUnitID, l.Provider, l.Endpoint),
