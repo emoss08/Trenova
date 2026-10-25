@@ -159,6 +159,7 @@ func DatabaseConfig(p ConfigParams) func() (keel.Config, error) {
 		kc := dbpool.KeelConfig(nil, nil)
 		kc.DSN = dsn
 		kc.Tables = keeltables.All()
+		kc.DataVersions = keel.DataVersionsConfig{Enabled: true}
 
 		return kc, nil
 	}
