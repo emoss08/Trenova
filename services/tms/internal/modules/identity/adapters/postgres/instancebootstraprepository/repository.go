@@ -65,7 +65,7 @@ func (r *repository) GetState(
 
 			u := tenantdb.Users
 			count, err := u.AllTenants().
-				Where(keel.Raw("lower(?) <> ?", u.Username, tenant.SystemUsername)).
+				Where(keel.DynFunc("lower", u.Username).Ne(tenant.SystemUsername)).
 				Count(ctx, db)
 			if err != nil {
 				return nil, fmt.Errorf("count users: %w", err)

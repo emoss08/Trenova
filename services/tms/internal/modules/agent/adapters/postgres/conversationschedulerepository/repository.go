@@ -111,12 +111,12 @@ func (r *repository) create(
 	th := conversationdb.Threads
 	if _, err = th.Where(th.ID.Eq(schedule.ThreadID)).Update(ctx, db,
 		th.LastMessageAt.To(now),
-		th.Title.ToExpr(keel.Raw(
-			"CASE WHEN NULLIF(BTRIM(?), '') IS NULL THEN NULLIF(?, '') ELSE ? END",
-			th.Title,
-			threadTitle,
-			th.Title,
-		)),
+		th.Title.ToExpr(keel.DynCase().
+			When(
+				keel.DynFunc("btrim", th.Title).NullIf("").IsNull(),
+				keel.DynLit(threadTitle).Cast(keel.TypeString).NullIf(""),
+			).
+			Else(th.Title)),
 		th.Version.ToExpr(th.Version),
 	); err != nil {
 		return fmt.Errorf("touch thread: %w", err)

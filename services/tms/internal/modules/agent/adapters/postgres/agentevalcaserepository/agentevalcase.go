@@ -377,14 +377,15 @@ func (r *repository) ListSamplingCases(
 		ev := agentdb.Evaluations
 
 		lastFailure := keel.Scalar(ev.
-			Pick(keel.Raw(
-				"CASE WHEN ? = ? OR (? ->> 'passed') = 'false' THEN COALESCE(?, ?) ELSE 0 END",
-				ev.Status,
-				string(agent.EvaluationStatusFailed),
-				ev.Checks,
-				ev.CompletedAt,
-				ev.UpdatedAt,
-			)).
+			Pick(keel.DynCase().
+				When(
+					keel.Or(
+						ev.Status.Eq(agent.EvaluationStatusFailed),
+						keel.DynOf(ev.Checks.Text("passed")).Eq("false"),
+					),
+					keel.DynOf(ev.CompletedAt).Coalesce(ev.UpdatedAt),
+				).
+				Else(keel.DynLit(0).Cast(keel.TypeInt64))).
 			Where(
 				ev.EvalCaseID.EqCol(c.ID),
 				ev.Status.In(agent.EvaluationStatusCompleted, agent.EvaluationStatusFailed),

@@ -195,12 +195,9 @@ func activityWindowPredicate(opts *shipmentports.ShipmentOptions) keel.Pred {
 		st.Any(
 			st.ScheduledWindowStart.Gt(0),
 			st.ScheduledWindowStart.Lte(opts.ActivityWindowEnd),
-			keel.Raw(
-				"COALESCE(?, ?) >= ?",
-				st.ScheduledWindowEnd,
-				st.ScheduledWindowStart,
-				opts.ActivityWindowStart,
-			),
+			keel.DynOf(st.ScheduledWindowEnd).
+				Coalesce(st.ScheduledWindowStart).
+				Gte(opts.ActivityWindowStart),
 		),
 	)
 }

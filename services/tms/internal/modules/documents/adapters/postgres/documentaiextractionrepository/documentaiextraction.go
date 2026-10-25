@@ -93,7 +93,10 @@ func (r *repository) SavePending(
 						ex.Model.ToExpr(keel.DynOf(ex.Model.Excluded()).NullIf("").Coalesce(ex.Model)),
 						ex.Status.ToExpr(keel.DynCase().
 							When(
-								ex.Status.In(documentaiextraction.StatusApplied, documentaiextraction.StatusSkipped),
+								ex.Status.In(
+									documentaiextraction.StatusApplied,
+									documentaiextraction.StatusSkipped,
+								),
 								ex.Status,
 							).
 							Else(ex.Status.Excluded())),

@@ -296,11 +296,11 @@ func lastContacts(
 				Pick(te.ShipmentMoveID, te.ReceivedAt.Max()).
 				Where(te.ShipmentMoveID.In(batch...)), &events),
 			keel.IntoSlice(st.Group(st.ShipmentMoveID).
-				Pick(st.ShipmentMoveID, keel.Max(keel.Raw(
-					"GREATEST(COALESCE(?, 0), COALESCE(?, 0))",
-					st.ActualArrival,
-					st.ActualDeparture,
-				))).
+				Pick(st.ShipmentMoveID, keel.DynFunc(
+					"greatest",
+					keel.DynOf(st.ActualArrival).Coalesce(0),
+					keel.DynOf(st.ActualDeparture).Coalesce(0),
+				).Max()).
 				Where(st.ShipmentMoveID.In(batch...)), &visits),
 		)
 		if err != nil {

@@ -195,7 +195,7 @@ func (r *Repository) ListReadyToBillCustomers(
 				ctx,
 				r.db.Keel(ctx),
 				sp.Group(sp.CustomerID, cus.Name).
-					Pick(sp.CustomerID, cus.Name, keel.Count(), total, keel.Raw("COUNT(*) OVER ()")).
+					Pick(sp.CustomerID, cus.Name, keel.Count(), total, keel.Count().OverWindow(keel.Window{})).
 					Where(shipmentrepository.BillingTransferCandidateCondition()).
 					Order(keel.Desc(total), sp.CustomerID.Asc()).
 					Limit(limit),
