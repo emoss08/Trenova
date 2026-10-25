@@ -214,7 +214,7 @@ func (r *repository) RecordMatch(
 			ctx,
 			r.db.Keel(ctx),
 			ru.MatchCount.Add(1),
-			ru.LastMatchedAt.ToExpr(keel.Raw("GREATEST(COALESCE(?, 0), ?)", ru.LastMatchedAt, req.At)),
+			ru.LastMatchedAt.ToExpr(keel.DynFunc("greatest", keel.DynOf(ru.LastMatchedAt).Coalesce(0), req.At)),
 			ru.LastMessageID.To(req.MessageID),
 			ru.Version.ToExpr(ru.Version),
 			ru.UpdatedAt.ToExpr(ru.UpdatedAt),

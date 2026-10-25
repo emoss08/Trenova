@@ -70,12 +70,9 @@ func (r *repository) SumBalanceAsOf(
 
 func nonRecourseFactoredEntry(cle *customerledgerdb.CustomerLedgerEntriesTable) keel.Pred {
 	inv := invoicedb.Invoices.As("inv")
-	return keel.Exists(inv.Pick(keel.Raw("1")).Where(
-		inv.ID.EqCol(keel.Raw(
-			"COALESCE(?, CASE WHEN ? = 'Invoice' THEN ? END)",
-			cle.RelatedInvoiceID,
-			cle.SourceObjectType,
-			cle.SourceObjectID,
+	return keel.Exists(inv.Where(
+		inv.ID.EqCol(keel.DynOf(cle.RelatedInvoiceID).Coalesce(
+			keel.DynCase().When(cle.SourceObjectType.Eq("Invoice"), cle.SourceObjectID).End(),
 		)),
 		receivablesql.SoldWithoutRecourse(inv),
 	))

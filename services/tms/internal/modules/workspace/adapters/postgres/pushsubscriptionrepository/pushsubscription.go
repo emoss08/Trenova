@@ -66,7 +66,7 @@ func (r *pushSubscriptionRepository) Save(
 			ctx,
 			db,
 			[]*notification.PushSubscription{entity},
-			keel.Raw("md5(?)", p.Endpoint),
+			keel.DynFunc("md5", p.Endpoint),
 		)
 		if err != nil {
 			return nil, fmt.Errorf("save push subscription: %w", err)
@@ -76,7 +76,7 @@ func (r *pushSubscriptionRepository) Save(
 		}
 
 		updated, err := p.Where(
-			keel.Raw("md5(?) = md5(?)", p.Endpoint, req.Endpoint),
+			keel.DynFunc("md5", p.Endpoint).Eq(keel.DynFunc("md5", req.Endpoint)),
 			p.UserID.Eq(req.TenantInfo.UserID),
 		).UpdateReturning(ctx, db, p.P256dh.To(req.P256dh), p.Auth.To(req.Auth), p.UserAgent.To(req.UserAgent))
 		if err != nil {

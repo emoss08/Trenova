@@ -157,7 +157,8 @@ func (r *repository) Arrivals(
 
 func arrivalsQuery(req triageports.BriefingWindow) *keel.Query[inboundmessage.InboundMessage] {
 	m := inboundmessagedb.InboundMessages
-	hour := keel.Raw("FLOOR((? - ?) / 3600)::int8", m.ReceivedAt, req.DayStart)
+	hour := keel.DynFunc("floor", keel.DynOf(m.ReceivedAt).Sub(req.DayStart).Div(3600)).
+		Cast(keel.TypeInt64)
 	nova := settledByRule()
 
 	return messages().
@@ -281,10 +282,8 @@ func correctionTotalsQuery(
 		act.ActorKind.Eq(triage.ActorPerson),
 		act.CreatedAt.Gte(req.WeekStart),
 	))
-	corrected := keel.Raw(
-		"(? OR COALESCE(? @> '[{\"flagged\": true}]'::jsonb, FALSE))",
-		m.ClassificationCorrected,
-		m.Facts,
+	corrected := keel.DynOf(m.ClassificationCorrected).Or(
+		keel.DynOf(m.Facts.Contains([]map[string]bool{{"flagged": true}})).Coalesce(false),
 	)
 	thisWeek := m.ReceivedAt.Gte(req.WeekStart)
 	lastWeek := m.ReceivedAt.Lt(req.WeekStart)

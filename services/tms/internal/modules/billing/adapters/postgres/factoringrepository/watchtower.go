@@ -240,7 +240,7 @@ func unfundedSubmissions(
 	item := factoringdb.SubmissionItems
 	agr := factoringdb.Agreements
 	fac := sub.FactoringCompany()
-	dueAt := keel.Raw("? + ? * 86400", sub.SentAt, agr.FundingDays)
+	dueAt := keel.DynOf(sub.SentAt).Add(keel.DynOf(agr.FundingDays).Mul(86400))
 
 	return sub.Pick(
 		sub.ID,
@@ -292,7 +292,7 @@ func chargebacksDueSoon(
 	item := factoringdb.SubmissionItems
 	sub := item.Submission()
 	agr := sub.Agreement()
-	deadline := keel.Raw("? + ? * 86400", item.FundedOn, agr.ChargebackWindowDays)
+	deadline := keel.DynOf(item.FundedOn).Add(keel.DynOf(agr.ChargebackWindowDays).Mul(86400))
 
 	return item.Pick(
 		item.ID,
@@ -306,7 +306,7 @@ func chargebacksDueSoon(
 		blank(sub.FactoringCompany().Name),
 		sub.CurrencyCode,
 		item.FaceMinor,
-		keel.Raw("COALESCE(?, 0) + COALESCE(?, 0)", item.AdvanceMinor, item.FeeMinor),
+		keel.DynOf(item.AdvanceMinor).Coalesce(0).Add(keel.DynOf(item.FeeMinor).Coalesce(0)),
 		item.FundedOn,
 		deadline,
 	).

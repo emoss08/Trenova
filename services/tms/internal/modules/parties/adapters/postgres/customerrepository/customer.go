@@ -404,12 +404,12 @@ func billingProfileConflict() keel.Conflict {
 		conflict = conflict.Update(col)
 	}
 
-	return conflict.Set(cbp.CreditHoldAutomatic.ToExpr(keel.Raw(
-		"CASE WHEN ? IS DISTINCT FROM ? THEN FALSE ELSE ? END",
-		cbp.CreditStatus,
-		cbp.CreditStatus.Excluded(),
-		cbp.CreditHoldAutomatic,
-	)))
+	return conflict.Set(cbp.CreditHoldAutomatic.ToExpr(keel.DynCase().
+		When(
+			keel.DynOf(cbp.CreditStatus).IsDistinctFrom(cbp.CreditStatus.Excluded()),
+			keel.DynLit(false).Cast(keel.TypeBool),
+		).
+		Else(cbp.CreditHoldAutomatic)))
 }
 
 func (r *repository) saveBillingProfile(ctx context.Context, cus *customer.Customer) error {

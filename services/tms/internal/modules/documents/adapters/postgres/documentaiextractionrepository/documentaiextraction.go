@@ -91,14 +91,12 @@ func (r *repository) SavePending(
 					Set(
 						ex.ResponseID.ToExpr(keel.DynOf(ex.ResponseID.Excluded()).NullIf("").Coalesce(ex.ResponseID)),
 						ex.Model.ToExpr(keel.DynOf(ex.Model.Excluded()).NullIf("").Coalesce(ex.Model)),
-						ex.Status.ToExpr(keel.Raw(
-							"CASE WHEN ? IN (?, ?) THEN ? ELSE ? END",
-							ex.Status,
-							string(documentaiextraction.StatusApplied),
-							string(documentaiextraction.StatusSkipped),
-							ex.Status,
-							ex.Status.Excluded(),
-						)),
+						ex.Status.ToExpr(keel.DynCase().
+							When(
+								ex.Status.In(documentaiextraction.StatusApplied, documentaiextraction.StatusSkipped),
+								ex.Status,
+							).
+							Else(ex.Status.Excluded())),
 						ex.SubmittedAt.ToExpr(keel.DynOf(ex.SubmittedAt.Excluded()).Coalesce(ex.SubmittedAt)),
 					),
 			)

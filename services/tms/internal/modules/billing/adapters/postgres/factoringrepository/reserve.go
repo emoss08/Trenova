@@ -86,7 +86,7 @@ func reserveScope(
 	return re.Where(
 		keel.When(term != "", keel.Or(
 			re.Memo.ContainsFold(term),
-			keel.Raw("?::text ILIKE ?", re.Kind, pattern),
+			keel.DynOf(re.Kind).Cast(keel.TypeString).ILike(pattern),
 		)),
 		keel.When(
 			req.FactoringCompanyID.IsNotNil(),
@@ -170,10 +170,10 @@ func reserveBalance(
 		keel.DynOf(re.LiabilityMinor.Sum()).Coalesce(0),
 		keel.DynOf(cash(factoring.ReserveEntryFunding)).Coalesce(0),
 		keel.DynOf(cash(factoring.ReserveEntryRelease)).Coalesce(0),
-		keel.Raw("COALESCE(-?, 0)", cash(
+		keel.DynOf(cash(
 			factoring.ReserveEntryChargeback,
 			factoring.ReserveEntryChargebackReversal,
-		)),
+		)).Neg().Coalesce(0),
 		keel.DynOf(re.FeeMinor.Sum()).Coalesce(0),
 		keel.Count(),
 		re.OccurredOn.Max(),

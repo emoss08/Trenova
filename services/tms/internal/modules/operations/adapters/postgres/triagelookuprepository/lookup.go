@@ -71,7 +71,7 @@ func (r *repository) PeekDetails(
 					sp.ID,
 					sp.Status,
 					text(cus.Name),
-					keel.Raw("coalesce(nullif(?, ''), ?, '')", et.Description, et.Code),
+					keel.DynOf(et.Description).NullIf("").Coalesce(et.Code, ""),
 					sp.ActualDeliveryDate,
 				).
 				Where(sp.ID.In(shipmentIDs...)))
@@ -218,7 +218,7 @@ func (r *repository) FindLocations(
 			var stateMatch keel.Pred
 			if state != "" {
 				stateMatch = keel.Or(
-					keel.Raw("upper(?) = upper(?)", us.Abbreviation, state),
+					keel.DynFunc("upper", us.Abbreviation).Eq(keel.DynFunc("upper", state)),
 					lowerEq(us.Name, state),
 				)
 			}
@@ -227,7 +227,12 @@ func (r *repository) FindLocations(
 				LeftJoin(us, us.ID.EqCol(loc.StateID)).
 				Pick(
 					loc.ID,
-					keel.Raw("concat_ws(' · ', ?, concat_ws(', ', ?, ?))", loc.Name, loc.City, us.Abbreviation),
+					keel.DynFunc(
+						"concat_ws",
+						" · ",
+						loc.Name,
+						keel.DynFunc("concat_ws", ", ", loc.City, us.Abbreviation),
+					),
 					text(loc.Timezone),
 					exact,
 				).
@@ -301,7 +306,7 @@ func (r *repository) HoldReasonByCode(
 		hr := holdreasondb.HoldReasons
 		id, err := keel.IntoOne[pulid.ID](ctx, r.db.Keel(ctx), hr.
 			Pick(hr.ID).
-			Where(keel.Raw("upper(?) = upper(?)", hr.Code, code), hr.Active.IsTrue()).
+			Where(keel.DynFunc("upper", hr.Code).Eq(keel.DynFunc("upper", code)), hr.Active.IsTrue()).
 			Limit(1))
 		if dberror.IsNotFoundError(err) {
 			return pulid.Nil, nil

@@ -42,7 +42,7 @@ type expenseRow struct {
 }
 
 func floatSum(e keel.Expr) keel.Expr {
-	return keel.Raw("COALESCE(?, 0)::float8", e)
+	return keel.DynOf(e).Coalesce(0).Cast(keel.TypeFloat64)
 }
 
 func (r *actualsRepository) SumExpenseByAccounts(
@@ -60,11 +60,12 @@ func (r *actualsRepository) SumExpenseByAccounts(
 			Join(fp, fp.ID.EqCol(gb.FiscalPeriodID)).
 			Pick(
 				gb.GLAccountID,
-				keel.Raw(
-					"(COALESCE(SUM(? - ?), 0) / 100.0)::numeric",
-					gb.PeriodDebitMinor,
-					gb.PeriodCreditMinor,
-				),
+				keel.DynOf(gb.PeriodDebitMinor).
+					Sub(gb.PeriodCreditMinor).
+					Sum().
+					Coalesce(0).
+					Div(100.0).
+					Cast(keel.TypeNumeric),
 			).
 			Where(
 				gb.GLAccountID.In(req.GLAccountIDs...),
@@ -232,13 +233,15 @@ func (r *actualsRepository) FleetCostAggregates(
 				ctx,
 				r.db.Keel(ctx),
 				totals.Query().With(totals).Pick(
-					keel.Raw("(?)::int", keel.Count().Filter(moving)),
-					keel.Raw("(?)::int", keel.Count().Filter(keel.And(
+					keel.Count().Filter(moving),
+					keel.Count().Filter(keel.And(
 						moving,
-						keel.Raw("? < ?::numeric * ?", totals.Col("revenue"), req.CostPerMile, costMiles),
-					),
+						keel.DynOf(totals.Col("revenue")).
+							Lt(keel.DynLit(req.CostPerMile).Cast(keel.TypeNumeric).Mul(costMiles)),
 					)),
-					keel.Raw("COALESCE(?, 0)::numeric", keel.Sum(totals.Col("revenue")).Filter(moving)),
+					keel.DynOf(keel.Sum(totals.Col("revenue")).Filter(moving)).
+						Coalesce(0).
+						Cast(keel.TypeNumeric),
 					floatSum(keel.Sum(totals.Col("total_miles"))),
 					floatSum(keel.Sum(totals.Col("loaded_miles"))),
 					floatSum(keel.Sum(totals.Col("deadhead_miles"))),

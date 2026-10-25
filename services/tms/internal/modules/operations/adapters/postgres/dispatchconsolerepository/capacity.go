@@ -32,11 +32,12 @@ func (r *repository) ListBoardDrivers(
 		us := usstatedb.UsStates
 		wt := tractordb.Tractors.As("wtrac")
 		available := string(domaintypes.EquipmentStatusAvailable)
+		isAvailable := keel.DynOf(wt.Status).Eq(available)
 
 		tractorOf := wt.
 			Pick(wt.ID, wt.Code, wt.EquipmentTypeID, wt.FleetCodeID, wt.Status).
 			Where(wt.PrimaryWorkerID.EqCol(w.ID)).
-			Order(keel.Desc(keel.Raw("(? = ?)", wt.Status, available)), wt.Code.Asc()).
+			Order(isAvailable.Desc(), wt.Code.Asc()).
 			Limit(1)
 
 		preds := driverFilters(filter)
@@ -70,7 +71,7 @@ func (r *repository) ListBoardDrivers(
 				text(wt.Code),
 				text(wt.EquipmentTypeID),
 				text(wt.FleetCodeID),
-				keel.Raw("coalesce(? = ?, FALSE)", wt.Status, available),
+				isAvailable.Coalesce(false),
 				zero(openAssignments(w)),
 			).
 			Where(preds...).
@@ -147,12 +148,7 @@ func (r *repository) ListWorkerCommitments(
 						keel.DynOf(windowStart).Coalesce(0).Lte(req.WindowEnd)),
 					keel.When(
 						req.WindowStart > 0,
-						keel.Raw(
-							"coalesce(?, ?, 0) >= ?",
-							windowEnd,
-							windowStart,
-							req.WindowStart,
-						),
+						keel.DynOf(windowEnd).Coalesce(windowStart, 0).Gte(req.WindowStart),
 					),
 				).
 				Order(keel.Asc(windowStart))
@@ -222,10 +218,10 @@ func (r *repository) ListWorkerWorkload(
 				Group(asn.PrimaryWorkerID, sm.ShipmentID).
 				Pick(
 					asn.PrimaryWorkerID,
-					keel.Raw("count(*)::int"),
+					keel.Count(),
 					keel.DynOf(sm.Distance).Sum().Coalesce(0).Cast(keel.TypeFloat64),
 					keel.DynOf(sp.TotalChargeAmount).Max().Coalesce(0).Cast(keel.TypeFloat64),
-					keel.Raw("max(coalesce(?, ?))", departure, asn.CreatedAt),
+					keel.DynOf(departure).Coalesce(asn.CreatedAt).Max(),
 				).
 				Where(
 					asn.PrimaryWorkerID.In(req.WorkerIDs...),
@@ -241,9 +237,9 @@ func (r *repository) ListWorkerWorkload(
 			Group(workerID).
 			Pick(
 				workerID,
-				keel.Raw("sum(?)::int", perShipment.Col("move_count")),
-				keel.Raw("sum(?)::float8", perShipment.Col("total_miles")),
-				keel.Raw("sum(?)::float8", perShipment.Col("shipment_revenue")),
+				keel.DynOf(perShipment.Col("move_count")).Sum().Cast(keel.TypeInt64),
+				keel.DynOf(perShipment.Col("total_miles")).Sum().Cast(keel.TypeFloat64),
+				keel.DynOf(perShipment.Col("shipment_revenue")).Sum().Cast(keel.TypeFloat64),
 				keel.DynOf(perShipment.Col("last_ended_at")).Max(),
 			))
 		if err != nil {
@@ -273,7 +269,7 @@ func (r *repository) ListWorkerLaneExperience(
 				Join(sm, sm.ID.EqCol(asn.ShipmentMoveID)).
 				Join(sp, sp.ID.EqCol(sm.ShipmentID)).
 				Group(asn.PrimaryWorkerID, sp.CustomerID).
-				Pick(asn.PrimaryWorkerID, sp.CustomerID, keel.Raw("count(*)::int")).
+				Pick(asn.PrimaryWorkerID, sp.CustomerID, keel.Count()).
 				Where(
 					asn.PrimaryWorkerID.In(req.WorkerIDs...),
 					sp.CustomerID.In(req.CustomerIDs...),

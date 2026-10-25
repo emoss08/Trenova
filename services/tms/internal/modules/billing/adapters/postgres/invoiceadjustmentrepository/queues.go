@@ -252,7 +252,7 @@ func reconciliationQueue(
 			),
 		).
 		Order(
-			keel.Asc(keel.Raw("CASE WHEN ? = ? THEN 0 ELSE 1 END", ex.Status, invoiceadjustment.ExceptionStatusOpen)),
+			keel.DynOf(ex.Status).Eq(invoiceadjustment.ExceptionStatusOpen).Desc().NullsLast(),
 			ex.UpdatedAt.Desc(),
 		)
 }
@@ -358,7 +358,10 @@ func batchQueue(
 	))
 
 	return b.Where(preds...).
-		Compute(b.PendingCount, keel.Raw("GREATEST(? - ?, 0)", b.TotalCount, b.ProcessedCount)).
+		Compute(
+			b.PendingCount,
+			keel.DynFunc("greatest", keel.DynOf(b.TotalCount).Sub(b.ProcessedCount), 0),
+		).
 		Compute(b.SubmittedByName, keel.DynOf(submitter.Name).Coalesce("")).
 		Compute(b.LastFailure, keel.DynOf(lastFailure).Coalesce("")).
 		Compute(b.LastFailureCount, keel.DynOf(failureCount).Coalesce(0)).

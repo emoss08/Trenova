@@ -33,7 +33,7 @@ func rootExpr() keel.Expr {
 func rootIs(root string) keel.Pred {
 	a := assistantartifactdb.Artifacts
 
-	return keel.Raw("COALESCE(?, ?) = ?", a.LineageID, a.ID, root)
+	return keel.DynOf(a.LineageID).Coalesce(a.ID).Eq(root)
 }
 
 // ErrBadCursor is a cursor this repository did not hand out.
@@ -78,58 +78,46 @@ func decodeCursor(raw string) (lineageCursor, error) {
 // are the domain's own constants, never input, so they are written in place.
 func familyExpr() keel.Expr {
 	a := assistantartifactdb.Artifacts
-	var (
-		b    strings.Builder
-		args []any
-	)
-	b.WriteString("CASE")
-	for _, family := range assistantartifact.AllFamilies() {
-		kinds, viewPath := assistantartifact.FamilyKinds(family)
+	family := keel.DynCase()
+	for _, f := range assistantartifact.AllFamilies() {
+		kinds, viewPath := assistantartifact.FamilyKinds(f)
 		if len(kinds) == 0 {
 			continue
 		}
-		b.WriteString(" WHEN ")
-		condition, conditionArgs := familyCondition(a, kinds, viewPath)
-		b.WriteString(condition)
-		args = append(args, conditionArgs...)
-		b.WriteString(" THEN '")
-		b.WriteString(string(family))
-		b.WriteString("'")
+		family = family.When(
+			familyCondition(a, kinds, viewPath),
+			keel.DynLit(string(f)).Cast(keel.TypeString),
+		)
 	}
-	b.WriteString(" ELSE '")
-	b.WriteString(string(assistantartifact.FamilyDoc))
-	b.WriteString("' END")
 
-	return keel.Raw(b.String(), args...)
+	return family.Else(keel.DynLit(string(assistantartifact.FamilyDoc)).Cast(keel.TypeString))
 }
 
 func familyCondition(
 	a *assistantartifactdb.ArtifactsTable,
 	kinds []assistantartifact.Kind,
 	viewPath *bool,
-) (condition string, args []any) {
-	quoted := make([]string, 0, len(kinds))
+) keel.Pred {
+	listed := make([]assistantartifact.Kind, 0, len(kinds))
 	for _, kind := range kinds {
 		if kind == assistantartifact.KindTableView && viewPath != nil {
 			continue
 		}
-		quoted = append(quoted, "'"+string(kind)+"'")
+		listed = append(listed, kind)
 	}
-	var clauses []string
-	if len(quoted) > 0 {
-		clauses = append(clauses, "? IN ("+strings.Join(quoted, ", ")+")")
-		args = append(args, a.Kind)
+	var clauses []keel.Pred
+	if len(listed) > 0 {
+		clauses = append(clauses, a.Kind.In(listed...))
 	}
 	if viewPath != nil {
-		opens := "IS NULL"
-		if *viewPath {
-			opens = "IS NOT NULL"
+		opens := a.Payload.HasKey("path")
+		if !*viewPath {
+			opens = keel.Not(opens)
 		}
-		clauses = append(clauses, "(? = 'table_view' AND ?->'path' "+opens+")")
-		args = append(args, a.Kind, a.Payload)
+		clauses = append(clauses, keel.And(a.Kind.Eq(assistantartifact.KindTableView), opens))
 	}
 
-	return "(" + strings.Join(clauses, " OR ") + ")", args
+	return keel.Or(clauses...)
 }
 
 func escapeLike(text string) string {
@@ -144,8 +132,8 @@ func matching(req *assistantartifactports.ListArtifactsRequest) []keel.Pred {
 	if needle := strings.TrimSpace(req.Query); needle != "" {
 		pattern := "%" + escapeLike(needle) + "%"
 		preds = append(preds, keel.Or(
-			keel.Raw("? ILIKE ?", a.Title, pattern),
-			keel.Raw("?->>'tool' ILIKE ?", a.Payload, pattern),
+			a.Title.ILike(pattern),
+			keel.DynOf(a.Payload.Text("tool")).ILike(pattern),
 		))
 	}
 
@@ -265,7 +253,7 @@ func lineageQuery(req *assistantartifactports.ListArtifactsRequest) *keel.CTETab
 		Group(rootExpr()).
 		Pick(
 			rootExpr(),
-			keel.Raw("bool_or(?)", a.Pinned),
+			keel.DynFunc("bool_or", a.Pinned),
 			a.CreatedAt.Max(),
 			keel.DynOf(familyExpr()).Max(),
 		))
@@ -286,13 +274,11 @@ func pageQuery(
 		window.Where(keel.DynOf(lineages.Col("family")).Eq(string(req.Family)))
 	}
 	if req.PinnedOnly {
-		window.Where(keel.Raw("?", pinned))
+		window.Where(keel.DynOf(pinned))
 	}
 	if cursor != nil {
-		window.Where(keel.Raw(
-			"(?::int, ?, ?) < (?, ?, ?)",
-			pinned, last, root,
-			boolInt(cursor.pinned), cursor.last, cursor.root,
+		window.Where(keel.DynRow(pinned, last, root).Lt(
+			keel.DynRow(cursor.pinned, cursor.last, cursor.root),
 		))
 	}
 
@@ -300,14 +286,6 @@ func pageQuery(
 		Pick(root, pinned, last).
 		Order(pinned.Desc(), last.Desc(), root.Desc()).
 		Limit(limit + 1)
-}
-
-func boolInt(value bool) int {
-	if value {
-		return 1
-	}
-
-	return 0
 }
 
 type versionsRequest struct {
@@ -375,7 +353,7 @@ func versionsQuery(req *versionsRequest) *keel.Query[assistantartifact.Artifact]
 
 	return a.Where(
 		a.ThreadID.Eq(req.threadID),
-		keel.Raw("COALESCE(?, ?) = ANY(?)", a.LineageID, a.ID, req.roots),
+		keel.DynOf(rootExpr()).In(req.roots),
 	).
 		Order(a.LineageSeq.Asc(), a.CreatedAt.Asc(), a.ID.Asc())
 }

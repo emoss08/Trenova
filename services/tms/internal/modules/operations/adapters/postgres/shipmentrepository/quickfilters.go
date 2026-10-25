@@ -240,7 +240,7 @@ func costMiles(sm *shipmentdb.ShipmentMovesTable, includeDeadhead bool) keel.Exp
 		return keel.DynOf(sm.Distance).Sum().Coalesce(0)
 	}
 
-	return keel.Raw("COALESCE(SUM(?) FILTER (WHERE ?), 0)", sm.Distance, sm.Loaded)
+	return keel.DynOf(sm.Distance).Sum().Filter(keel.DynOf(sm.Loaded)).Coalesce(0)
 }
 
 func lowMarginCondition(margin *shipmentports.ShipmentMarginBasis) keel.Pred {
@@ -248,18 +248,20 @@ func lowMarginCondition(margin *shipmentports.ShipmentMarginBasis) keel.Pred {
 	sm := shipmentdb.ShipmentMoves.As(quickMilesAlias)
 	revenue := sp.TotalChargeAmount
 
-	miles := sm.Pick(keel.Raw("1")).
+	cost := keel.DynFunc(
+		"round",
+		keel.DynLit(margin.CostPerMile).Cast(keel.TypeNumeric).
+			Mul(keel.DynOf(costMiles(sm, margin.IncludeDeadheadMiles)).Cast(keel.TypeNumeric)),
+		2,
+	)
+
+	miles := sm.
 		Where(sm.ShipmentID.EqCol(sp.ID), sm.Status.Ne(shipment.MoveStatusCanceled)).
 		Having(
-			keel.Raw("COALESCE(SUM(?), 0) > 0", sm.Distance),
-			keel.Raw(
-				"(? <= 0 OR ROUND((? - ROUND(?::numeric * (?)::numeric, 2)) * 100 / ?, 2) < ?)",
-				revenue,
-				revenue,
-				margin.CostPerMile,
-				costMiles(sm, margin.IncludeDeadheadMiles),
-				revenue,
-				margin.TargetMarginPercent,
+			keel.DynOf(sm.Distance).Sum().Coalesce(0).Gt(0),
+			keel.DynOf(revenue).Lte(0).Or(
+				keel.DynFunc("round", keel.DynOf(revenue).Sub(cost).Mul(100).Div(revenue), 2).
+					Lt(margin.TargetMarginPercent),
 			),
 		)
 

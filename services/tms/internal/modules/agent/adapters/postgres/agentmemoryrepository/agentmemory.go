@@ -711,42 +711,45 @@ func replaceableStatuses() []agent.MemoryStatus {
 func taintsLast() keel.Order {
 	m := agentdb.Memories
 
-	return keel.Asc(keel.Raw(
-		"CASE WHEN ? AND ? IS NULL THEN 1 ELSE 0 END",
-		m.Tainted,
-		m.ReviewedAt,
-	))
+	return keel.DynCase().
+		When(keel.And(keel.DynOf(m.Tainted), m.ReviewedAt.IsNull()), orderRank(1)).
+		Else(orderRank(0)).
+		Asc()
 }
 
 func activeFirst() keel.Order {
-	return keel.Asc(keel.Raw(
-		"CASE ? WHEN 'Active' THEN 0 ELSE 1 END",
-		agentdb.Memories.Status,
-	))
+	return keel.DynCase().
+		When(agentdb.Memories.Status.Eq(agent.MemoryStatusActive), orderRank(0)).
+		Else(orderRank(1)).
+		Asc()
 }
 
 // kindOrder puts instructions before corrections before procedures before
 // facts, the order a prompt reads them in.
 func kindOrder() keel.Order {
-	return keel.Asc(keel.Raw(
-		"CASE ? WHEN 'Instruction' THEN 0 WHEN 'Correction' THEN 1 "+
-			"WHEN 'Procedure' THEN 2 ELSE 3 END",
-		agentdb.Memories.Kind,
-	))
+	kind := agentdb.Memories.Kind
+
+	return keel.DynCase().
+		When(kind.Eq(agent.MemoryKindInstruction), orderRank(0)).
+		When(kind.Eq(agent.MemoryKindCorrection), orderRank(1)).
+		When(kind.Eq(agent.MemoryKindProcedure), orderRank(2)).
+		Else(orderRank(3)).
+		Asc()
 }
 
 func candidateOrder() keel.Order {
 	m := agentdb.Memories
 
-	return keel.Asc(keel.Raw(
-		"CASE WHEN ? IS NOT NULL THEN 0 WHEN ? IS NULL AND ? = ? THEN 1 "+
-			"WHEN ? IS NOT NULL THEN 2 ELSE 3 END",
-		m.SubjectType,
-		m.ToolName,
-		m.Kind,
-		string(agent.MemoryKindInstruction),
-		m.ToolName,
-	))
+	return keel.DynCase().
+		When(m.SubjectType.IsNotNull(), orderRank(0)).
+		When(keel.And(m.ToolName.IsNull(), m.Kind.Eq(agent.MemoryKindInstruction)), orderRank(1)).
+		When(m.ToolName.IsNotNull(), orderRank(2)).
+		Else(orderRank(3)).
+		Asc()
+}
+
+func orderRank(n int64) keel.DynExpr {
+	return keel.DynLit(n).Cast(keel.TypeInt64)
 }
 
 func boundedCandidateLimit(limit int) int {

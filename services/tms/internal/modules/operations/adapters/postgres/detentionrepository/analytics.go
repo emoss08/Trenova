@@ -175,7 +175,7 @@ func (r *analyticsRepository) FacilityStats(
 				keel.DynOf(loc.Name).Coalesce(""),
 				keel.Count(),
 				keel.Count().Filter(o.RoundedMinutes.Gt(0)),
-				keel.Raw("coalesce(round(avg(?)), 0)::bigint", o.RawDwellMinutes),
+				keel.DynFunc("round", keel.DynOf(o.RawDwellMinutes).Avg()).Coalesce(0).Cast(keel.TypeInt64),
 				keel.Raw(
 					"coalesce(percentile_cont(0.5) WITHIN GROUP (ORDER BY ?), 0)",
 					o.RawDwellMinutes,
@@ -260,7 +260,7 @@ func (r *analyticsRepository) WaiverStats(
 			stats, err := keel.Into[detentionports.WaiverLeakageStat](ctx, r.db.Keel(ctx), o.
 				Group(o.WaiverReason).
 				Pick(
-					keel.Raw("coalesce(?::text, '')", o.WaiverReason),
+					keel.DynOf(o.WaiverReason).Cast(keel.TypeString).Coalesce(""),
 					keel.Count(),
 					o.WaivedByID.CountDistinct(),
 					sumOrZero(o.WaivedAmount),

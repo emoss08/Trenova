@@ -519,8 +519,8 @@ func (r *repository) ListAwaitingPromise(
 			Pick(acc.CustomerID).
 			Where(
 				acc.CustomerID.In(req.CustomerIDs...),
-				keel.Raw("? + 86400 > ?", prm.PromisedOn, req.AsOf),
-				keel.Raw("? > COALESCE(?, 0)", prm.PromisedAmountMinor, paid),
+				keel.DynOf(prm.PromisedOn).Add(86400).Gt(req.AsOf),
+				keel.DynOf(prm.PromisedAmountMinor).Gt(keel.DynOf(paid).Coalesce(0)),
 			))
 		if err != nil {
 			return nil, fmt.Errorf("list customers awaiting a promise: %w", err)

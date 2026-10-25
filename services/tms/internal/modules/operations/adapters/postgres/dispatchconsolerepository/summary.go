@@ -78,7 +78,7 @@ func (r *repository) GetBoardSummary(
 }
 
 func countIf(preds ...keel.Pred) keel.Expr {
-	return keel.Raw("?::int", keel.Count().Filter(keel.And(preds...)))
+	return keel.Count().Filter(keel.And(preds...))
 }
 
 func moveSummaryQuery(
@@ -111,7 +111,7 @@ func moveSummaryQuery(
 			),
 			countIf(
 				covered,
-				keel.Raw("coalesce(?, ?) >= ?", asn.CreatedAt, ca.CreatedAt, dayStart),
+				keel.DynOf(asn.CreatedAt).Coalesce(ca.CreatedAt).Gte(dayStart),
 			),
 			keel.Raw(
 				"coalesce(avg(ST_DistanceSphere(ST_MakePoint(?, ?), ST_MakePoint(?, ?)) / ?) "+
@@ -131,7 +131,7 @@ func driverSummaryQuery(filter *shipmentports.DispatchBoardFilter) *keel.Query[w
 	w := workerdb.Workers
 	return w.
 		Pick(
-			keel.Raw("count(*)::int"),
+			keel.Count(),
 			countIf(keel.DynOf(openAssignments(w)).Coalesce(0).Eq(0)),
 		).
 		Where(driverFilters(filter)...).

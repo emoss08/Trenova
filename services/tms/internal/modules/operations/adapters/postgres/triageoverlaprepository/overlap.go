@@ -135,12 +135,12 @@ func stopAt(
 		Join(stop, stop.ShipmentMoveID.EqCol(move.ID)).
 		Join(loc, loc.ID.EqCol(stop.LocationID)).
 		Join(state, state.ID.EqCol(loc.StateID)).
-		Pick(keel.Raw("1")).
 		Where(
 			move.ShipmentID.EqCol(sp.ID),
 			stop.Type.In(req.types...),
 			stop.Status.Ne(shipment.StopStatusCanceled),
-			keel.Raw("lower(btrim(?)) = ?", loc.City, strings.ToLower(strings.TrimSpace(req.city))),
+			keel.DynFunc("lower", keel.DynFunc("btrim", loc.City)).
+				Eq(strings.ToLower(strings.TrimSpace(req.city))),
 			keel.DynFunc("upper", state.Abbreviation).Eq(strings.ToUpper(req.state)),
 			keel.When(req.from > 0 && req.to > req.from, stop.ScheduledWindowStart.Gte(req.from)),
 			keel.When(req.from > 0 && req.to > req.from, stop.ScheduledWindowStart.Lt(req.to)),

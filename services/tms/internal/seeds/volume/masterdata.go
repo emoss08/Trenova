@@ -103,7 +103,7 @@ func mdTaken[T any](
 	h keel.Handle[T],
 	column keel.Expr,
 ) (map[string]struct{}, error) {
-	values, err := keel.Into[string](ctx, db, h.Pick(keel.Raw("COALESCE(lower(?), '')", column)))
+	values, err := keel.Into[string](ctx, db, h.Pick(keel.DynFunc("lower", column).Coalesce("")))
 	if err != nil {
 		return nil, fmt.Errorf("load existing %s values: %w", h.Ref.Table.Name, err)
 	}

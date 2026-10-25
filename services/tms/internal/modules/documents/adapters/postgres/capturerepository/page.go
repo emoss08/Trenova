@@ -101,7 +101,7 @@ func (r *pageRepository) RecordInspection(
 			p.HeightPx.To(int64(entity.HeightPx)),
 			p.ThumbnailPath.To(entity.ThumbnailPath),
 			blankScore,
-			p.Markers.ToExpr(keel.DynOf(markers).Cast(keel.TypeJSON)),
+			p.Markers.ToExpr(keel.DynLit(markers).Cast(keel.TypeJSON)),
 			p.FailureMessage.To(entity.FailureMessage),
 		)
 		if err != nil {

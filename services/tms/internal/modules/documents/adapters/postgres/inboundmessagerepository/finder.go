@@ -74,7 +74,7 @@ func referenceForms(reference string) []string {
 }
 
 func lowerLike(col keel.Expr, pattern string) keel.Pred {
-	return keel.Raw("LOWER(?) LIKE ?", col, pattern)
+	return keel.DynFunc("lower", col).Like(pattern)
 }
 
 func (f *RecordFinder) FindCustomerByEmail(

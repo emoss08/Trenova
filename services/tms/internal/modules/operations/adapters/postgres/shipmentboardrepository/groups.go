@@ -109,15 +109,18 @@ func dayGroups(
 	timezone string,
 ) *keel.Query[shipment.Shipment] {
 	gs := shipmentdb.Stops.As(groupStopAlias)
-	key := keel.Raw(
-		"COALESCE(to_char(to_timestamp(?) AT TIME ZONE ?, ?), '')",
-		gs.ScheduledWindowStart,
-		timezone,
+	key := keel.DynFunc(
+		"to_char",
+		keel.DynFunc(
+			"timezone",
+			keel.DynLit(timezone).Cast(keel.TypeString),
+			keel.DynFunc("to_timestamp", gs.ScheduledWindowStart),
+		),
 		dayKeyFormat,
-	)
+	).Coalesce("")
 
 	return q.LeftJoin(gs, gs.ID.EqCol(endStopID(types, last))).
-		Pick(key, keel.Raw("''"), keel.Count(), revenueSum()).
+		Pick(key, keel.DynLit(""), keel.Count(), revenueSum()).
 		Group(key).
 		Order(keel.Asc(keel.DynOf(gs.ScheduledWindowStart).Min()).NullsLast())
 }

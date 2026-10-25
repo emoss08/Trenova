@@ -107,7 +107,7 @@ type ownedSource struct {
 }
 
 func labelText(e keel.Expr) keel.Expr {
-	return keel.Raw("COALESCE((?)::text, '')", e)
+	return keel.DynOf(e).Cast(keel.TypeString).Coalesce("")
 }
 
 //nolint:exhaustive // only the resources whose records a preview names by label are listed
@@ -216,7 +216,19 @@ var sources = map[permission.Resource]source{
 	},
 	permission.ResourceCustomerPayment: func(ids []pulid.ID) projection {
 		t := customerpaymentdb.Payments
-		return t.Pick(t.ID, labelText(keel.Raw("COALESCE(NULLIF(?, ''), 'Payment of ' || TO_CHAR(TO_TIMESTAMP(?) AT TIME ZONE 'UTC', 'YYYY-MM-DD'))", t.ReferenceNumber, t.PaymentDate))).
+		paidOn := keel.DynFunc(
+			"to_char",
+			keel.DynFunc(
+				"timezone",
+				keel.DynLit("UTC").Cast(keel.TypeString),
+				keel.DynFunc("to_timestamp", t.PaymentDate),
+			),
+			keel.DynLit("YYYY-MM-DD").Cast(keel.TypeString),
+		)
+		label := keel.DynOf(t.ReferenceNumber).
+			NullIf("").
+			Coalesce(keel.DynLit("Payment of ").Cast(keel.TypeString).Concat(paidOn))
+		return t.Pick(t.ID, labelText(label)).
 			Where(t.ID.In(ids...))
 	},
 	permission.ResourceDocumentType: func(ids []pulid.ID) projection {
@@ -295,7 +307,7 @@ var ownedSources = map[permission.Resource]ownedSource{
 	permission.ResourceTender: {
 		query: func(ids []pulid.ID) projection {
 			t := tenderdb.TenderOffers
-			return t.Pick(t.ID, t.CarrierID, keel.Raw("''")).Where(t.ID.In(ids...))
+			return t.Pick(t.ID, t.CarrierID, keel.DynLit("")).Where(t.ID.In(ids...))
 		},
 		owner: permission.ResourceCarrier,
 	},

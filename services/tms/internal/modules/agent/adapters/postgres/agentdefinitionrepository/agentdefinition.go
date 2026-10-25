@@ -598,7 +598,7 @@ func (r *repository) StatsByIDs(
 					Group(run.AgentDefinitionID).
 					Pick(
 						run.AgentDefinitionID,
-						keel.Raw("0"),
+						keel.DynLit(0).Cast(keel.TypeInt64),
 						keel.Count().Filter(run.Status.In(openRunStatuses()...)),
 						run.StartedAt.Max(),
 					).

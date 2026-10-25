@@ -13,10 +13,7 @@ import (
 	"go.uber.org/zap"
 )
 
-const (
-	copiedIDSQL  = "? || upper(substr(replace(gen_random_uuid()::text, '-', ''), 1, 26))"
-	copiedNowSQL = "extract(epoch from current_timestamp)::bigint"
-)
+const copiedIDSQL = "? || upper(substr(replace(gen_random_uuid()::text, '-', ''), 1, 26))"
 
 func cellsQuery(
 	req *ratematrixports.ListRateMatrixCellsRequest,
@@ -168,7 +165,8 @@ func copiedID(prefix string) keel.Expr {
 }
 
 func copiedNow() keel.Expr {
-	return keel.Raw(copiedNowSQL)
+	return keel.DynFunc("date_part", keel.DynLit("epoch").Cast(keel.TypeString), keel.DynFunc("now")).
+		Cast(keel.TypeInt64)
 }
 
 func copyDimensions(
@@ -292,5 +290,5 @@ func (r *repository) CountMisfitCells(
 }
 
 func versionNumber(n int64) keel.Expr {
-	return keel.DynOf(n).Cast(keel.TypeInt64)
+	return keel.DynLit(n).Cast(keel.TypeInt64)
 }

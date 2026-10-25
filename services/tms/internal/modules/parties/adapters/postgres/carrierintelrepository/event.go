@@ -3,7 +3,6 @@ package carrierintelrepository
 import (
 	"context"
 	"fmt"
-	"strings"
 
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
@@ -47,9 +46,6 @@ var (
 		carrierintel.SeverityLow,
 		carrierintel.SeverityInfo,
 	}
-	eventSeverityRankSQL = "CASE ?::text" +
-		strings.Repeat(" WHEN ? THEN ?::integer", len(eventSeverityOrder)) +
-		" ELSE ?::integer END"
 )
 
 type eventRepository struct {
@@ -352,15 +348,13 @@ func eventCounts(rows []eventStatusSeverityCount) *carrierintelports.CarrierInte
 }
 
 func eventSeverityRank() keel.Expr {
-	e := carrierinteldb.CarrierIntelEvents
-	args := make([]any, 0, len(eventSeverityOrder)*2+2)
-	args = append(args, e.Severity)
-	for i, severity := range eventSeverityOrder {
-		args = append(args, string(severity), i)
+	severity := keel.DynOf(carrierinteldb.CarrierIntelEvents.Severity).Cast(keel.TypeString)
+	rank := keel.DynCase()
+	for i, level := range eventSeverityOrder {
+		rank = rank.When(severity.Eq(string(level)), keel.DynLit(int64(i)).Cast(keel.TypeInt64))
 	}
-	args = append(args, len(eventSeverityOrder))
 
-	return keel.Raw(eventSeverityRankSQL, args...)
+	return rank.Else(keel.DynLit(int64(len(eventSeverityOrder))).Cast(keel.TypeInt64))
 }
 
 func (r *eventRepository) ListForDigest(

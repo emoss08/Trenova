@@ -67,7 +67,7 @@ func pendingQueue(req *agentports.ListPendingDecisionsQuery) *keel.CTETable {
 	pDef := agentdefinitiondb.Definitions.As("pdef")
 	proposals := p.
 		Pick(
-			keel.DynOf(string(agentports.PendingDecisionProposal)).Cast(keel.TypeString),
+			keel.DynLit(string(agentports.PendingDecisionProposal)).Cast(keel.TypeString),
 			p.ID,
 			p.CreatedAt,
 			pRun.AgentDefinitionID,
@@ -92,13 +92,13 @@ func pendingQueue(req *agentports.ListPendingDecisionsQuery) *keel.CTETable {
 	step := agentdb.AgentProposals.As("step")
 	plans := pl.
 		Pick(
-			keel.DynOf(string(agentports.PendingDecisionPlan)).Cast(keel.TypeString),
+			keel.DynLit(string(agentports.PendingDecisionPlan)).Cast(keel.TypeString),
 			pl.ID,
 			pl.CreatedAt,
 			plRun.AgentDefinitionID,
 			keel.DynOf(plDef.Name).Coalesce(""),
 			keel.DynOf(plDef.ShadowMode).Coalesce(false),
-			keel.DynOf(agent.PlanToolName).Cast(keel.TypeString),
+			keel.DynLit(agent.PlanToolName).Cast(keel.TypeString),
 		).
 		Join(plRun, plRun.ID.EqCol(pl.RunID)).
 		LeftJoin(plDef, plDef.ID.EqCol(plRun.AgentDefinitionID)).

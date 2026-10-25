@@ -180,7 +180,7 @@ func delayedShipments(
 		st.Status.NotIn(shipmentstate.DelayedExcludedStopStatuses()...),
 		st.ActualDeparture.IsNull(),
 		keel.DynOf(windowEnd).Gt(0),
-		keel.Raw("? + ? < ?", windowEnd, thresholdSeconds, currentTime),
+		windowEnd.Add(thresholdSeconds).Lt(currentTime),
 	)
 	lateMoves := sm.Pick(sm.ShipmentID).Where(
 		sm.ID.InQuery(lateStops),
@@ -211,13 +211,11 @@ func autoDelayedShipmentIDs(currentTime int64, t tenancy) *keel.Query[shipment.S
 			st.Status.NotIn(shipmentstate.DelayedExcludedStopStatuses()...),
 			st.ActualDeparture.IsNull(),
 			keel.DynOf(windowEnd).Gt(0),
-			keel.Raw(
-				"? + (COALESCE(?, ?) * 60) < ?",
-				windowEnd,
-				sc.AutoDelayShipmentsThreshold,
-				shipmentstate.DefaultDelayThresholdMinutes,
-				currentTime,
-			),
+			windowEnd.Add(
+				keel.DynOf(sc.AutoDelayShipmentsThreshold).
+					Coalesce(shipmentstate.DefaultDelayThresholdMinutes).
+					Mul(keel.DynLit(60).Cast(keel.TypeInt64)),
+			).Lt(currentTime),
 			sm.Status.NotIn(shipmentstate.DelayedExcludedMoveStatuses()...),
 			sp.Status.NotIn(shipmentstate.DelayedExcludedShipmentStatuses()...),
 		)

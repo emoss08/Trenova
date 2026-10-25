@@ -609,7 +609,7 @@ func (r *repository) RecalculateTotal(
 		if _, err := o.Where(o.ID.Eq(orderID)).Update(
 			ctx,
 			r.db.Keel(ctx),
-			o.TotalAmount.ToExpr(keel.Raw("(?) + (?)", legTotal, chargeTotal)),
+			o.TotalAmount.ToExpr(keel.DynOf(legTotal).Add(chargeTotal)),
 		); err != nil {
 			r.l.Error("failed to recalculate order total", zap.Error(err))
 			return err

@@ -277,7 +277,7 @@ func shipmentTransferSync(
 			).
 			Order(
 				bq.ShipmentID.Asc(),
-				keel.Asc(keel.Raw(transferStatusRankExpr, bq.Status)),
+				transferStatusRank(bq.Status),
 				bq.CreatedAt.Desc(),
 				bq.ID.Desc(),
 			),
@@ -505,13 +505,26 @@ func tenantInfo(entity *billingqueue.BillingQueueItem) pagination.TenantInfo {
 	}
 }
 
-const transferStatusRankExpr = `CASE ?
-	WHEN 'SentBackToOps' THEN 0
-	WHEN 'Exception' THEN 1
-	WHEN 'OnHold' THEN 1
-	WHEN 'ReadyForReview' THEN 2
-	WHEN 'InReview' THEN 3
-	WHEN 'Approved' THEN 5
-	WHEN 'Canceled' THEN 8
-	WHEN 'Posted' THEN 9
-	ELSE 4 END`
+var transferStatusRanks = []struct {
+	status billingqueue.Status
+	rank   int64
+}{
+	{billingqueue.StatusSentBackToOps, 0},
+	{billingqueue.StatusException, 1},
+	{billingqueue.StatusOnHold, 1},
+	{billingqueue.StatusReadyForReview, 2},
+	{billingqueue.StatusInReview, 3},
+	{billingqueue.StatusApproved, 5},
+	{billingqueue.StatusCanceled, 8},
+	{billingqueue.StatusPosted, 9},
+}
+
+func transferStatusRank(status keel.Expr) keel.Order {
+	value := keel.DynOf(status)
+	rank := keel.DynCase()
+	for _, r := range transferStatusRanks {
+		rank = rank.When(value.Eq(string(r.status)), keel.DynLit(r.rank).Cast(keel.TypeInt64))
+	}
+
+	return rank.Else(keel.DynLit(int64(4)).Cast(keel.TypeInt64)).Asc()
+}

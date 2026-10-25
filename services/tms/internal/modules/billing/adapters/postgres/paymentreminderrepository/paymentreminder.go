@@ -9,6 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/billing/adapters/postgres/factoringsql"
 	"github.com/emoss08/trenova/internal/modules/billing/adapters/postgres/receivablesql"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice/invoicedb"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/paymentreminder"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/paymentreminder/paymentreminderdb"
@@ -68,7 +69,7 @@ func (r *repository) ListOverdueInvoices(
 					inv.InvoiceDate,
 					inv.DueDate,
 					receivablesql.OpenMinor(inv),
-					keel.Raw("? = 'Disputed'", inv.DisputeStatus),
+					inv.DisputeStatus.Eq(invoice.DisputeStatusDisputed),
 					keel.DynOf(lastStep).Coalesce(0),
 				).
 				Where(

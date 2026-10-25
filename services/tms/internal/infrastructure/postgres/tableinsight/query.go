@@ -85,7 +85,7 @@ func (b *typedBase[T]) facet(
 	limit = min(limit, MaxFacetLimit)
 
 	value := keel.DynOf(column.Col).Cast(keel.TypeString)
-	total := keel.Raw("(?)::bigint", keel.Sum(keel.Count()).OverWindow(keel.Window{}))
+	total := keel.DynOf(keel.Sum(keel.Count()).OverWindow(keel.Window{})).Cast(keel.TypeInt64)
 	rows, err := keel.Into[facetRow](ctx, db, b.q.Clone().
 		Pick(value, keel.Count(), total).
 		Group(column.Col).
@@ -279,9 +279,9 @@ func (b *typedBase[T]) series(
 	group := keel.DynOf(exprs.group).Cast(keel.TypeString)
 	bucket := keel.Raw("width_bucket(?, ?::bigint[])", exprs.date, req.Bounds)
 	rows, err := keel.Into[seriesRow](ctx, db, b.q.Clone().
-		Pick(group, bucket, keel.Raw("(?)::text", exprs.value)).
+		Pick(group, bucket, keel.DynOf(exprs.value).Cast(keel.TypeString)).
 		Where(
-			keel.Raw("? = ANY(?)", exprs.group, req.GroupValues),
+			keel.DynOf(exprs.group).In(keel.DynLit(req.GroupValues)),
 			keel.DynOf(exprs.date).Gte(req.Bounds[0]),
 			keel.DynOf(exprs.date).Lt(req.Bounds[periods]),
 		).

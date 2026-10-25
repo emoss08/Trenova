@@ -93,8 +93,8 @@ func (ur *repository) FindIdentityConflicts(
 				ur.db.Keel(ctx),
 				u.AllTenants().
 					Pick(
-						keel.Raw("coalesce(bool_or(?), false)", emailMatch),
-						keel.Raw("coalesce(bool_or(?), false)", usernameMatch),
+						keel.DynFunc("bool_or", emailMatch).Coalesce(false),
+						keel.DynFunc("bool_or", usernameMatch).Coalesce(false),
 					).
 					Where(
 						keel.Or(emailMatch, usernameMatch),

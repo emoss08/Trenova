@@ -151,9 +151,9 @@ func (r *repository) Swap(ctx context.Context, req *kernelports.SwapEnvelopeRequ
 			return false, err
 		}
 
-		replacement := keel.Raw("?", req.Replacement)
+		replacement := keel.DynLit(req.Replacement)
 		if req.Column.JSONMap {
-			replacement = keel.DynOf(req.Replacement).Cast(keel.TypeJSON)
+			replacement = replacement.Cast(keel.TypeJSON)
 		}
 
 		sets := slices.Concat(src.untouched, []keel.Assignment{src.value.ToExpr(replacement)})
@@ -180,13 +180,14 @@ func (r *repository) SwapVersion(
 			return fmt.Errorf("%s version: %w", src.name, err)
 		}
 
-		set := version.ToExpr(keel.Raw("?", req.Replacement))
+		set := version.ToExpr(keel.DynLit(req.Replacement))
 		if req.Replacement == "" {
 			set = version.ToNull()
 		}
-		expected := keel.Raw("?::text = ?", version, req.Expected)
+		versionText := keel.DynOf(version).Cast(keel.TypeString)
+		expected := versionText.Eq(req.Expected)
 		if req.Expected == "" {
-			expected = keel.Raw("COALESCE(?::text, '') = ''", version)
+			expected = versionText.Coalesce("").Eq("")
 		}
 
 		sets := slices.Concat(src.untouched, []keel.Assignment{set})
@@ -274,7 +275,7 @@ func (s *source) column(e keel.Expr) (keel.Col, error) {
 }
 
 func (s *source) listQuery(req *kernelports.ListEnvelopeRowsRequest) *keel.Query[keel.Row] {
-	bu := keel.Expr(keel.DynOf(req.Tenant.BuID.String()).Cast(keel.TypeString))
+	bu := keel.Expr(keel.DynLit(req.Tenant.BuID.String()).Cast(keel.TypeString))
 	if s.bu != nil {
 		bu = keel.DynOf(*s.bu).Cast(keel.TypeString)
 	}
@@ -288,7 +289,7 @@ func (s *source) listQuery(req *kernelports.ListEnvelopeRowsRequest) *keel.Query
 	).
 		Where(
 			s.value.IsNotNull(),
-			keel.Raw("?::text <> ''", s.value),
+			keel.DynOf(s.value).Cast(keel.TypeString).Ne(""),
 			keel.When(req.After != "", s.id.Gt(req.After)),
 		).
 		Order(s.id.Asc()).
@@ -311,7 +312,7 @@ func (s *source) extraArray() keel.Expr {
 func (s *source) matches(row *kernelports.EnvelopeRow) []keel.Pred {
 	return []keel.Pred{
 		s.id.Eq(row.ID),
-		keel.Raw("?::text = ?", s.value, row.Sealed),
+		keel.DynOf(s.value).Cast(keel.TypeString).Eq(row.Sealed),
 	}
 }
 

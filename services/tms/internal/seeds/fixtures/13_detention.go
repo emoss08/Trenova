@@ -1679,8 +1679,12 @@ func (s *DetentionSeed) createDetentionCharge(
 	).Update(
 		ctx,
 		db,
-		sh.OtherChargeAmount.ToExpr(keel.Raw("COALESCE(?, 0) + ?", sh.OtherChargeAmount, p.occurrence.BillableAmount)),
-		sh.TotalChargeAmount.ToExpr(keel.Raw("COALESCE(?, 0) + ?", sh.TotalChargeAmount, p.occurrence.BillableAmount)),
+		sh.OtherChargeAmount.ToExpr(
+			keel.DynOf(sh.OtherChargeAmount).Coalesce(0).Add(p.occurrence.BillableAmount),
+		),
+		sh.TotalChargeAmount.ToExpr(
+			keel.DynOf(sh.TotalChargeAmount).Coalesce(0).Add(p.occurrence.BillableAmount),
+		),
 	)
 	if err != nil {
 		return nil, fmt.Errorf("apply detention charge to shipment total: %w", err)

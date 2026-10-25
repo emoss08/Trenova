@@ -418,12 +418,12 @@ func applyOutcome(
 	}
 	if status == airetrieval.IndexStatusFailed {
 		sets = append(sets,
-			e.Status.ToExpr(keel.Raw(
-				"CASE WHEN ? = 0 THEN ? ELSE ? END",
-				outcome.Col("next_attempt_at"),
-				string(airetrieval.IndexStatusFailed),
-				string(airetrieval.IndexStatusPending),
-			)),
+			e.Status.ToExpr(keel.DynCase().
+				When(
+					keel.DynOf(outcome.Col("next_attempt_at")).Eq(0),
+					keel.DynLit(string(airetrieval.IndexStatusFailed)).Cast(keel.TypeString),
+				).
+				Else(keel.DynLit(string(airetrieval.IndexStatusPending)).Cast(keel.TypeString))),
 			e.NextAttemptAt.ToExpr(keel.DynOf(outcome.Col("next_attempt_at")).NullIf(0)),
 		)
 	} else {
@@ -494,11 +494,11 @@ func staleIndexEntry(
 		entry.SourceID.IsNull(),
 		keel.And(
 			entry.Status.In(airetrieval.IndexStatusIndexed, airetrieval.IndexStatusSkipped),
-			keel.Raw("? >= COALESCE(?, 0)", updatedAt, entry.IndexedAt),
+			keel.DynOf(updatedAt).Gte(keel.DynOf(entry.IndexedAt).Coalesce(0)),
 		),
 		keel.And(
 			entry.Status.Eq(airetrieval.IndexStatusFailed),
-			keel.Raw("? >= COALESCE(?, 0)", updatedAt, entry.LastAttemptAt),
+			keel.DynOf(updatedAt).Gte(keel.DynOf(entry.LastAttemptAt).Coalesce(0)),
 		),
 	)
 }

@@ -62,13 +62,9 @@ func New(p Params) telematicsports.TelematicsRepository {
 func newerPosition(col keel.Col, excluded keel.Expr) keel.Expr {
 	vp := telematicsdb.VehiclePositions
 
-	return keel.Raw(
-		"CASE WHEN ? <= ? THEN ? ELSE ? END",
-		vp.RecordedAt,
-		vp.RecordedAt.Excluded(),
-		excluded,
-		col,
-	)
+	return keel.DynCase().
+		When(keel.DynOf(vp.RecordedAt).Lte(vp.RecordedAt.Excluded()), excluded).
+		Else(col)
 }
 
 func positionConflict() keel.Conflict {

@@ -34,14 +34,11 @@ func (r *repository) ListWorkerOnTimeStats(
 				Group(asn.PrimaryWorkerID).
 				Pick(
 					asn.PrimaryWorkerID,
-					keel.Raw("count(*)::int"),
-					countIf(keel.Raw(
-						"? <= coalesce(?, ?)",
-						st.ActualArrival,
-						st.ScheduledWindowEnd,
-						st.ScheduledWindowStart,
+					keel.Count(),
+					countIf(keel.DynOf(st.ActualArrival).Lte(
+						keel.DynOf(st.ScheduledWindowEnd).Coalesce(st.ScheduledWindowStart),
 					)),
-					keel.Raw("0"),
+					keel.DynLit(0).Cast(keel.TypeInt64),
 				).
 				Where(
 					asn.PrimaryWorkerID.In(req.WorkerIDs...),
@@ -59,7 +56,12 @@ func (r *repository) ListWorkerOnTimeStats(
 				Join(fa, fa.ShipmentMoveID.EqCol(sf.ShipmentMoveID)).
 				Join(rc, rc.ID.EqCol(sf.ReasonCodeID)).
 				Group(fa.PrimaryWorkerID).
-				Pick(fa.PrimaryWorkerID, keel.Raw("0"), keel.Raw("0"), keel.Raw("count(*)::int")).
+				Pick(
+					fa.PrimaryWorkerID,
+					keel.DynLit(0).Cast(keel.TypeInt64),
+					keel.DynLit(0).Cast(keel.TypeInt64),
+					keel.Count(),
+				).
 				Where(
 					fa.PrimaryWorkerID.In(req.WorkerIDs...),
 					sf.Status.Ne(servicefailure.StatusVoided),
@@ -120,15 +122,16 @@ func (r *repository) ListWorkerAcceptanceStats(
 					asn.PrimaryWorkerID,
 					countIf(asn.AckStatus.Eq(shipment.AssignmentAckAccepted)),
 					countIf(asn.AckStatus.Eq(shipment.AssignmentAckDeclined)),
-					keel.Raw(
-						"coalesce(avg(? - ?) FILTER (WHERE ? AND ? IS NOT NULL AND ? >= ?), 0)::float8",
-						asn.AckAt,
-						asn.CreatedAt,
-						answered,
-						asn.AckAt,
-						asn.AckAt,
-						asn.CreatedAt,
-					),
+					keel.DynOf(asn.AckAt).
+						Sub(asn.CreatedAt).
+						Avg().
+						Filter(keel.And(
+							answered,
+							keel.DynOf(asn.AckAt).IsNotNull(),
+							keel.DynOf(asn.AckAt).Gte(asn.CreatedAt),
+						)).
+						Coalesce(0).
+						Cast(keel.TypeFloat64),
 				).
 				Where(
 					asn.PrimaryWorkerID.In(req.WorkerIDs...),

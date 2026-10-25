@@ -251,13 +251,11 @@ func (r *repository) distinctByMessage(
 			).
 			Order(
 				rp.MessageID.Asc(),
-				keel.Asc(keel.Raw(
-					"CASE ? WHEN ? THEN ?::int WHEN ? THEN ?::int ELSE ?::int END",
-					rp.Status,
-					string(triage.ReplySent), statusRankSent,
-					string(triage.ReplySending), statusRankSending,
-					statusRankOther,
-				)),
+				keel.DynCase().
+					When(rp.Status.Eq(triage.ReplySent), statusRank(statusRankSent)).
+					When(rp.Status.Eq(triage.ReplySending), statusRank(statusRankSending)).
+					Else(statusRank(statusRankOther)).
+					Asc(),
 				rp.CreatedAt.Desc(),
 				rp.ID.Desc(),
 			).
@@ -316,4 +314,8 @@ func (r *repository) ThreadKeyForMessageKeys(
 
 		return "", false, nil
 	})
+}
+
+func statusRank(rank int64) keel.DynExpr {
+	return keel.DynLit(rank).Cast(keel.TypeInt64)
 }

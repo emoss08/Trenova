@@ -91,7 +91,7 @@ func (r *viewRepository) Create(
 
 		v := triagedb.Views
 		stats, err := keel.IntoOne[viewStats](ctx, db, v.
-			Pick(keel.Count(), keel.Raw("COALESCE(MAX(?) + 1, 0)", v.Position)).
+			Pick(keel.Count(), keel.DynOf(v.Position).Max().Add(1).Coalesce(0)).
 			Where(v.UserID.Eq(view.UserID)))
 		if err != nil {
 			return nil, err
@@ -199,7 +199,7 @@ func waitingCountsQuery(views []*triage.View) keel.Projection {
 
 func waitingSearchCount(view *triage.View) *keel.Query[inboundmessage.InboundMessage] {
 	m := inboundmessagedb.InboundMessages
-	q := m.Pick(keel.DynOf(view.ID.String()).Cast(keel.TypeString), keel.Count()).
+	q := m.Pick(keel.DynLit(view.ID.String()).Cast(keel.TypeString), keel.Count()).
 		Where(m.Status.In(needsReviewStatuses...), m.Parked.IsNull())
 
 	return searchPredicate(q, view.Query)

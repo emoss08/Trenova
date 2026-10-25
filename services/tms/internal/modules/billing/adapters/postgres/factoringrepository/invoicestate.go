@@ -119,15 +119,15 @@ func (r *invoiceStateRepository) Upsert(
 		st := factoringdb.InvoiceStates
 		ready := factoring.VerdictReady
 		stillReady := func(col keel.Col) keel.Expr {
-			return keel.Raw(
-				"CASE WHEN ? = ? AND ? = ? THEN ? ELSE ? END",
-				st.Verdict.Excluded(),
-				string(ready),
-				st.Verdict,
-				string(ready),
-				col,
-				col.Excluded(),
-			)
+			return keel.DynCase().
+				When(
+					keel.And(
+						keel.DynOf(st.Verdict.Excluded()).Eq(string(ready)),
+						keel.DynOf(st.Verdict).Eq(string(ready)),
+					),
+					col,
+				).
+				Else(col.Excluded())
 		}
 
 		_, err := st.Upsert(ctx, db, []*factoring.InvoiceState{entity},
@@ -445,11 +445,11 @@ func chargebacksDue(before int64) *keel.Query[factoring.SubmissionItem] {
 	agr := factoringdb.Agreements
 	return item.Pick(
 		keel.Count(),
-		keel.Raw(
-			"COALESCE(SUM(COALESCE(?, 0) + COALESCE(?, 0)), 0)",
-			item.AdvanceMinor,
-			item.FeeMinor,
-		),
+		keel.DynOf(item.AdvanceMinor).
+			Coalesce(0).
+			Add(keel.DynOf(item.FeeMinor).Coalesce(0)).
+			Sum().
+			Coalesce(0),
 	).
 		Join(sub, sub.ID.EqCol(item.SubmissionID)).
 		Join(agr, agr.ID.EqCol(sub.AgreementID)).
@@ -457,7 +457,7 @@ func chargebacksDue(before int64) *keel.Query[factoring.SubmissionItem] {
 			item.Status.Eq(factoring.SubmissionItemStatusFunded),
 			item.FundedOn.IsNotNull(),
 			agr.Recourse.Eq(factoring.RecourseFull),
-			keel.Raw("? + ? * 86400 <= ?", item.FundedOn, agr.ChargebackWindowDays, before),
+			keel.DynOf(item.FundedOn).Add(keel.DynOf(agr.ChargebackWindowDays).Mul(86400)).Lte(before),
 		)
 }
 

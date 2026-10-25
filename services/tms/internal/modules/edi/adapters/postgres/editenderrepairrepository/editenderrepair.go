@@ -92,7 +92,7 @@ func candidatesQuery(
 			m.BusinessUnitID,
 			m.TransferID.Coalesce(""),
 			m.RawX12,
-			keel.Raw("COALESCE(SUBSTRING(? FROM 1 FOR ?), '')", f.RawContent, fileHeadSize),
+			keel.DynFunc("substr", f.RawContent, 1, fileHeadSize).Coalesce(""),
 			ratingDetailText(shipmentIDKey),
 			ratingDetailText(paymentMethodKey),
 		).

@@ -61,7 +61,7 @@ type resolvedScan struct {
 }
 
 func text(e keel.Expr) keel.Expr {
-	return keel.Raw("COALESCE(?::text, '')", e)
+	return keel.DynOf(e).Cast(keel.TypeString).Coalesce("")
 }
 
 func resolveColumns(
@@ -223,7 +223,7 @@ func resolveQuery(
 		// No customer in scope: the assignment tier cannot apply, so the join is
 		// left out rather than made harmless. NULL keeps the projection stable.
 		return q.Where(t.IsOrgDefault.IsTrue()).
-			Pick(resolveColumns(v, t, keel.Raw("NULL::varchar"))...).
+			Pick(resolveColumns(v, t, keel.DynLit(nil).Cast(keel.TypeString))...).
 			Limit(1)
 	}
 
@@ -237,6 +237,6 @@ func resolveQuery(
 	).
 		Where(keel.Or(a.ID.IsNotNull(), t.IsOrgDefault.IsTrue())).
 		Pick(resolveColumns(v, t, a.ID)...).
-		Order(keel.Desc(keel.Raw("(? IS NOT NULL)", a.ID))).
+		Order(keel.DynOf(a.ID).IsNotNull().Desc()).
 		Limit(1)
 }

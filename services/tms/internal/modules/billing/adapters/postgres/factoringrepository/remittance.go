@@ -2,7 +2,6 @@ package factoringrepository
 
 import (
 	"context"
-	"strconv"
 
 	"github.com/bytedance/sonic"
 	"github.com/emoss08/keel"
@@ -390,10 +389,7 @@ func remittanceCandidates(
 func candidateMatch(invoices []string, amounts []int64) (invoiceMatch, amountMatch keel.Pred) {
 	item := factoringdb.SubmissionItems
 	normalized := keel.Raw("upper(regexp_replace(?, '[^[:alnum:]]', '', 'g'))", item.InvoiceNumber)
-	tolerance := keel.Raw(
-		"greatest("+strconv.Itoa(minCandidateTolerance)+", ?)",
-		item.ExpectedFeeMinor,
-	)
+	tolerance := keel.DynFunc("greatest", minCandidateTolerance, item.ExpectedFeeMinor)
 	near := func(target keel.Expr) keel.Expr {
 		return keel.Raw("abs(abs(amt.v) - ?) <= ?", target, tolerance)
 	}
@@ -403,8 +399,8 @@ func candidateMatch(invoices []string, amounts []int64) (invoiceMatch, amountMat
 		amounts,
 		near(item.ExpectedAdvanceMinor),
 		near(item.FaceMinor),
-		near(keel.Raw("coalesce(?, -1)", item.ReserveMinor)),
-		near(keel.Raw("coalesce(?, 0) + coalesce(?, 0)", item.AdvanceMinor, item.FeeMinor)),
+		near(keel.DynOf(item.ReserveMinor).Coalesce(-1)),
+		near(keel.DynOf(item.AdvanceMinor).Coalesce(0).Add(keel.DynOf(item.FeeMinor).Coalesce(0))),
 	)
 	invoiceMatch = keel.Raw(
 		"EXISTS (SELECT 1 FROM unnest(?::text[]) AS ref(v) WHERE ? = ref.v OR "+

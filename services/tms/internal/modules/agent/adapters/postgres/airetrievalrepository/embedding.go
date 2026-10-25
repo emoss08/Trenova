@@ -489,14 +489,14 @@ func searchQuery(req *agentports.VectorSearchRequest, plan searchPlan) *keel.Que
 			candidate.Col("distance").Asc(),
 		))
 
-	similarity := keel.Raw("1 - ?", best.Col("distance"))
+	similarity := keel.DynLit(1).Sub(best.Col("distance"))
 	outer := best.Query().
 		With(candidate, best).
 		Pick(best.Col(colSourceType), best.Col(colSourceID), best.Col("chunk_index"), similarity).
 		Order(best.Col("distance").Asc(), best.Col(colSourceID).Asc()).
 		Limit(plan.limit)
 	if req.MinSimilarity != 0 {
-		outer.Where(keel.Raw("1 - ? >= ?", best.Col("distance"), req.MinSimilarity))
+		outer.Where(similarity.Gte(req.MinSimilarity))
 	}
 
 	return outer

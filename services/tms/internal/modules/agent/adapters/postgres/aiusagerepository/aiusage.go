@@ -102,7 +102,7 @@ func totalsPicks(keys ...keel.Expr) []keel.Expr {
 	picks := make([]keel.Expr, 0, 12)
 	picks = append(picks, keys...)
 	for len(picks) < 3 {
-		picks = append(picks, keel.Raw("''"))
+		picks = append(picks, keel.DynLit(""))
 	}
 
 	return append(picks,
@@ -112,7 +112,7 @@ func totalsPicks(keys ...keel.Expr) []keel.Expr {
 		keel.DynOf(u.OutputTokens).Sum().Coalesce(0),
 		keel.DynOf(u.ReasoningTokens).Sum().Coalesce(0),
 		keel.DynOf(u.CostUSD).Sum().Coalesce(0).Cast(keel.TypeString),
-		keel.Raw("COUNT(?)", u.CostUSD),
+		keel.DynOf(u.CostUSD).Count(),
 		latencyPercentile("0.5"),
 		latencyPercentile("0.95"),
 	)
@@ -194,14 +194,19 @@ func (r *repository) Daily(
 			q.Where(u.ProviderID.Eq(req.ProviderID))
 		}
 
+		day := keel.DynFunc(
+			"to_char",
+			keel.DynFunc(
+				"timezone",
+				keel.DynLit(req.Timezone).Cast(keel.TypeString),
+				keel.DynFunc("to_timestamp", u.CreatedAt),
+			),
+			"YYYY-MM-DD",
+		)
 		rows, err := keel.Into[totalsRow](ctx, r.db.Keel(ctx), q.
-			Group(keel.Raw("1")).
-			Pick(totalsPicks(keel.Raw(
-				"to_char(to_timestamp(?) AT TIME ZONE ?, 'YYYY-MM-DD')",
-				u.CreatedAt,
-				req.Timezone,
-			))...).
-			Order(keel.Asc(keel.Raw("1"))))
+			Group(day).
+			Pick(totalsPicks(day)...).
+			Order(day.Asc()))
 		if err != nil {
 			return nil, fmt.Errorf("summarise ai usage by day: %w", err)
 		}

@@ -85,7 +85,7 @@ func deskVisible(filter *agentports.DeskMemoryFilter) keel.Pred {
 	case text.empty():
 		return visible
 	case text.unmatchable():
-		return keel.Raw("FALSE")
+		return keel.Not(keel.True())
 	default:
 		return keel.And(visible, text.primary().matches(m.SearchVector))
 	}

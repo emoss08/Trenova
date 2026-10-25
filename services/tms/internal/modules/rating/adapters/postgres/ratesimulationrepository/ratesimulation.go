@@ -19,8 +19,6 @@ import (
 	"go.uber.org/zap"
 )
 
-const shipDateSQL = "COALESCE(?, ?)"
-
 var simulationErrors = dberror.Mapping{Entity: "RateSimulation"}
 
 type Params struct {
@@ -214,12 +212,12 @@ func simulationShipmentsQuery(
 	req *ratesimulationports.ListSimulationShipmentsRequest,
 ) *keel.Query[shipment.Shipment] {
 	sp := shipmentdb.Shipments
-	shipDate := keel.Raw(shipDateSQL, sp.ActualShipDate, sp.CreatedAt)
+	shipDate := keel.DynOf(sp.ActualShipDate).Coalesce(sp.CreatedAt)
 
 	return sp.Pick(sp.ID).
 		Where(
-			keel.DynOf(shipDate).Gte(req.From),
-			keel.DynOf(shipDate).Lt(req.To),
+			shipDate.Gte(req.From),
+			shipDate.Lt(req.To),
 			keel.When(!req.AfterID.IsNil(), sp.ID.Gt(req.AfterID)),
 		).
 		Order(sp.ID.Asc()).

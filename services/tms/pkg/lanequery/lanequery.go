@@ -38,7 +38,7 @@ func lanes(opts Options) *keel.Query[keel.Row] {
 	destinationLocation := locationdb.Locations.As(destinationLocationAlias)
 	originState := usstatedb.UsStates.As(originStateAlias)
 	destinationState := usstatedb.UsStates.As(destinationStateAlias)
-	count := keel.Raw("count(*)::int")
+	count := keel.Count()
 
 	q := endpoints.Query().With(endpoints).
 		Join(originLocation, originLocation.ID.EqCol(origin)).

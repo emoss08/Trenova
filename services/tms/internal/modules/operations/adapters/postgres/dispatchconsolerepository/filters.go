@@ -93,7 +93,7 @@ func text(e keel.Expr) keel.Expr {
 }
 
 func enumText(e keel.Expr) keel.Expr {
-	return keel.Raw("coalesce(?::text, '')", e)
+	return keel.DynOf(e).Cast(keel.TypeString).Coalesce("")
 }
 
 func zero(e keel.Expr) keel.Expr {
@@ -142,13 +142,9 @@ func moveFilters(filter *shipmentports.DispatchBoardFilter) []keel.Pred {
 	// still the dispatcher's problem, and would otherwise vanish from the board entirely.
 	if filter.WindowStart > 0 {
 		preds = append(preds, keel.Or(
-			keel.Raw(
-				"coalesce(?, ?, ?) >= ?",
-				destination.stop.ScheduledWindowEnd,
-				destination.stop.ScheduledWindowStart,
-				origin.stop.ScheduledWindowStart,
-				filter.WindowStart,
-			),
+			keel.DynOf(destination.stop.ScheduledWindowEnd).
+				Coalesce(destination.stop.ScheduledWindowStart, origin.stop.ScheduledWindowStart).
+				Gte(filter.WindowStart),
 			sm.Status.In(openBoardStatuses...),
 		))
 	}
@@ -186,7 +182,7 @@ func openAssignments(w *workerdb.WorkersTable) keel.Expr {
 
 	return keel.Scalar(a.
 		Join(m, m.ID.EqCol(a.ShipmentMoveID)).
-		Pick(keel.Raw("count(*)::int")).
+		Pick(keel.Count()).
 		Where(
 			a.PrimaryWorkerID.EqCol(w.ID),
 			a.ArchivedAt.IsNull(),

@@ -269,7 +269,7 @@ func (r *repository) dropOrphans(ctx context.Context, entity *shipment.Shipment)
 		ca.ShipmentID.Eq(entity.ID),
 		ca.ChargeKind.Eq(shipment.ChargeAllocationKindAccessorial),
 		ca.InvoiceID.IsNull(),
-		keel.NotExists(ac.Pick(keel.Raw("1")).Where(ac.ID.EqCol(ca.AdditionalChargeID))),
+		keel.NotExists(ac.Where(ac.ID.EqCol(ca.AdditionalChargeID))),
 	).Delete(ctx, r.db.Keel(ctx))
 
 	return allocationErrors.Map(err, "")

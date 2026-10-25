@@ -142,7 +142,7 @@ func (r *repository) GetByID(
 
 func unmatchedPayment(cp *customerpaymentdb.PaymentsTable) keel.Pred {
 	br := bankreceiptdb.BankReceipts.As("br")
-	return keel.NotExists(br.Pick(keel.Raw("1")).Where(
+	return keel.NotExists(br.Where(
 		br.MatchedCustomerPaymentID.EqCol(cp.ID),
 		br.Status.Eq(bankreceipt.StatusMatched),
 	))
@@ -188,11 +188,11 @@ func (r *repository) FindSuggestedMatchCandidates(
 			)),
 			keel.When(req.AmountMinor > 0, keel.Or(
 				cp.AmountMinor.Eq(req.AmountMinor),
-				keel.Raw("ABS(? - ?) <= 100", cp.AmountMinor, req.AmountMinor),
+				keel.DynFunc("abs", keel.DynOf(cp.AmountMinor).Sub(req.AmountMinor)).Lte(100),
 			)),
 			keel.When(
 				req.ReceiptDate > 0,
-				keel.Raw("ABS(? - ?) <= 604800", cp.PaymentDate, req.ReceiptDate),
+				keel.DynFunc("abs", keel.DynOf(cp.PaymentDate).Sub(req.ReceiptDate)).Lte(604800),
 			),
 		).
 			Order(cp.CreatedAt.Desc()).

@@ -148,7 +148,7 @@ func (r *repository) FindDefault(
 			),
 		).
 			Order(
-				keel.Asc(keel.Raw("CASE WHEN ? = ? THEN 0 ELSE 1 END", rc.AppliesTo, string(appliesTo))),
+				keel.Desc(rc.AppliesTo.Eq(appliesTo)),
 				rc.SortOrder.Asc(),
 				rc.Code.Asc(),
 			).

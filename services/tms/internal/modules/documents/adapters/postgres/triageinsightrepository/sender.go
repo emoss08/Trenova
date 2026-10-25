@@ -120,7 +120,7 @@ func senderRecentQuery(
 	m := inboundmessagedb.InboundMessages
 
 	return withReference(messages()).
-		Pick(messageRowColumns(keel.Raw("FALSE"))...).
+		Pick(messageRowColumns(keel.DynLit(false).Cast(keel.TypeBool))...).
 		Where(fromSender(req)...).
 		Where(keel.When(req.ExcludeID.IsNotNil(), m.ID.Ne(req.ExcludeID))).
 		Order(m.ReceivedAt.Desc(), m.ID.Desc()).
@@ -217,7 +217,7 @@ func driverParty(
 	}
 
 	w := workerdb.Workers
-	email := keel.Raw("LOWER(BTRIM(?))", w.Email)
+	email := keel.DynFunc("lower", keel.DynFunc("btrim", w.Email))
 	exists, err := w.Where(
 		w.Status.Eq(domaintypes.StatusActive),
 		keel.Or(

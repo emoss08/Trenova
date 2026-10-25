@@ -308,11 +308,11 @@ func (r *repository) SearchByResource(
 		} else {
 			search := keel.SearchConfig("simple", "english")
 			q = q.Where(keel.Or(d.SearchVector.Match(query, search), dc.SearchVector.Match(query, search))).
-				Order(keel.Desc(keel.Raw(
-					"GREATEST(?, COALESCE(?, 0))",
+				Order(keel.DynFunc(
+					"greatest",
 					d.SearchVector.RankCD(query, search),
-					dc.SearchVector.RankCD(query, search),
-				)))
+					keel.DynOf(dc.SearchVector.RankCD(query, search)).Coalesce(0),
+				).Desc())
 		}
 
 		var (

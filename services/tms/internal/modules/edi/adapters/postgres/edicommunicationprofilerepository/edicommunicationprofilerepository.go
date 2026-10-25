@@ -216,7 +216,7 @@ func (r *repository) CountStaleInboundPollingProfiles(
 		cp := edidb.EDICommunicationProfiles
 		return cp.AllTenants().
 			Where(pollingProfile()...).
-			Where(keel.Raw("COALESCE(?, ?) < ?", cp.LastPollSuccessAt, cp.CreatedAt, staleBefore)).
+			Where(keel.DynOf(cp.LastPollSuccessAt).Coalesce(cp.CreatedAt).Lt(staleBefore)).
 			Count(ctx, r.db.Keel(ctx))
 	})
 }
@@ -236,8 +236,8 @@ func (r *repository) GetActiveAS2ProfileByIdentifiers(
 				cp.Status.Eq(domaintypes.StatusActive),
 				cp.Method.Eq(edi.ConnectionMethodAS2),
 				cp.EDIPartnerID.IsNotNull(),
-				keel.Raw("TRIM(?) = ?", cp.Config.Text("localAS2Id"), req.LocalAS2ID),
-				keel.Raw("TRIM(?) = ?", cp.Config.Text("partnerAS2Id"), req.PartnerAS2ID),
+				keel.DynFunc("trim", cp.Config.Text("localAS2Id")).Eq(req.LocalAS2ID),
+				keel.DynFunc("trim", cp.Config.Text("partnerAS2Id")).Eq(req.PartnerAS2ID),
 			).
 			Order(cp.UpdatedAt.Desc()).
 			First(ctx, r.db.Keel(ctx))
@@ -323,6 +323,6 @@ func pollingProfile() []keel.Pred {
 		cp.Status.Eq(domaintypes.StatusActive),
 		cp.Method.In(pollingMethods...),
 		cp.EDIPartnerID.IsNotNull(),
-		keel.Raw("COALESCE(TRIM(?), '') <> ''", cp.Config.Text("inboundDirectory")),
+		keel.DynFunc("trim", cp.Config.Text("inboundDirectory")).Coalesce("").Ne(""),
 	}
 }

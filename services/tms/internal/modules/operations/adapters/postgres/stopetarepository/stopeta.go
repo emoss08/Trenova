@@ -121,12 +121,7 @@ func newerETA() keel.Conflict {
 
 	sets := make([]keel.Assignment, 0, len(cols))
 	for _, col := range cols {
-		sets = append(sets, col.ToExpr(keel.Raw(
-			"CASE WHEN ? THEN ? ELSE ? END",
-			newer,
-			col.Excluded(),
-			col,
-		)))
+		sets = append(sets, col.ToExpr(keel.DynCase().When(newer, col.Excluded()).Else(col)))
 	}
 
 	return keel.OnConflict(e.OrganizationID, e.BusinessUnitID, e.StopID).Set(sets...)

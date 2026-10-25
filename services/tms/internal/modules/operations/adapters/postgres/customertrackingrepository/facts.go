@@ -187,7 +187,7 @@ func (r *factRepository) CustomerVisibleHolds(
 				LeftJoin(hr, hr.ID.EqCol(hc.HoldReasonID)).
 				Pick(
 					hc.Type,
-					keel.Raw("coalesce(?, ?, '')", hr.Label, hc.ReasonCode),
+					keel.DynOf(hr.Label).Coalesce(hc.ReasonCode, ""),
 					hc.StartedAt,
 				).
 				Where(
