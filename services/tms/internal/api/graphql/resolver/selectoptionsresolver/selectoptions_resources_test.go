@@ -68,7 +68,7 @@ func TestPayCodeSelectOptionItem(t *testing.T) {
 	assert.Equal(t, "Linehaul", item.option.Meta["name"])
 	assert.Equal(t, string(driverpay.PayCodeDirectionEarning), item.option.Meta["direction"])
 	assert.Equal(t, true, item.option.Meta["taxable"])
-	assert.Equal(t, int64(1780415883), item.cursor.CreatedAt)
+	assert.Equal(t, int64(1780415883), item.cursor.At)
 }
 
 func TestPayProfileSelectOptionItem(t *testing.T) {
@@ -275,5 +275,5 @@ func TestJournalEntrySelectOptionItem_NamesTheEntryByNumberAndCarriesOnlyItsRefe
 		"status":         "Posted",
 		"accountingDate": int64(1792065600),
 	}, item.option.Meta)
-	assert.Equal(t, int64(1792000000), item.cursor.CreatedAt)
+	assert.Equal(t, int64(1792000000), item.cursor.At)
 }

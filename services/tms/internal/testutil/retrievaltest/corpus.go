@@ -321,6 +321,8 @@ type EmbedSeed struct {
 func SeedEmbeddings(t *testing.T, ctx context.Context, seed EmbedSeed) {
 	t.Helper()
 
+	ctx = dbscope.WithTenant(ctx, seed.Corpus.Tenant.DBTenant())
+
 	ids := make([]pulid.ID, 0, len(seed.Corpus.IDs))
 	for _, id := range seed.Corpus.IDs {
 		ids = append(ids, id)

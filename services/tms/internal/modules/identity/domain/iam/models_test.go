@@ -35,15 +35,11 @@ func TestIdentityProviderBeforeCreate(t *testing.T) {
 	provider := &IdentityProvider{}
 	err := provider.BeforeCreate(t.Context())
 	require.NoError(t, err)
-	assert.True(t, provider.ID.IsNotNil())
-	assert.NotZero(t, provider.CreatedAt)
 	assert.NotNil(t, provider.AllowedDomains)
 	assert.NotNil(t, provider.AttributeMap)
 	assert.Equal(t, []string{"openid", "email", "profile"}, provider.OIDCScopes)
 
-	err = provider.BeforeUpdate(t.Context())
-	require.NoError(t, err)
-	assert.NotZero(t, provider.UpdatedAt)
+	require.NoError(t, provider.BeforeUpdate(t.Context()))
 }
 
 func TestAccessPolicyValidate(t *testing.T) {

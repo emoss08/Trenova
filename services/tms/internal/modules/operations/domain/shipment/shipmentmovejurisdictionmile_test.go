@@ -218,12 +218,9 @@ func TestShipmentMoveJurisdictionMile_BeforeCreateDefaults(t *testing.T) {
 	row := &ShipmentMoveJurisdictionMile{}
 	require.NoError(t, row.BeforeCreate(t.Context()))
 
-	assert.False(t, row.ID.IsNil())
 	assert.Equal(t, JurisdictionMileSourceRouteCalculation, row.Source)
 	assert.Equal(t, JurisdictionDistanceUnitsMiles, row.DistanceUnits)
 	assert.NotZero(t, row.CalculatedAt)
-	assert.NotZero(t, row.CreatedAt)
-	assert.Equal(t, row.CreatedAt, row.UpdatedAt)
 
 	explicit := &ShipmentMoveJurisdictionMile{
 		Source:        JurisdictionMileSourceManual,

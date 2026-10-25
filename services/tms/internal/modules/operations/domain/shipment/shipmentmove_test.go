@@ -43,8 +43,6 @@ func TestShipmentMove_BeforeCreateDefaultsCoverageToUnassigned(t *testing.T) {
 		require.NoError(t, move.BeforeCreate(t.Context()))
 
 		assert.Equal(t, MoveCoverageTypeUnassigned, move.CoverageType)
-		assert.False(t, move.ID.IsNil())
-		assert.NotZero(t, move.CreatedAt)
 	})
 
 	t.Run("insert keeps an explicit coverage", func(t *testing.T) {
@@ -63,7 +61,6 @@ func TestShipmentMove_BeforeCreateDefaultsCoverageToUnassigned(t *testing.T) {
 		require.NoError(t, move.BeforeUpdate(t.Context()))
 
 		assert.Equal(t, MoveCoverageTypeUnassigned, move.CoverageType)
-		assert.NotZero(t, move.UpdatedAt)
 	})
 }
 

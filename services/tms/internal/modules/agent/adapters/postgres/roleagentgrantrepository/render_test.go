@@ -27,7 +27,7 @@ func TestCurrentGrantsQueryLocksTheGrants(t *testing.T) {
 	t.Parallel()
 
 	rag := permissiondb.RoleAgentGrants
-	sql, _ := keeltest.Render(t, currentGrantsQuery(replaceParams{
+	sql, _ := keeltest.Render(t, currentGrantsQuery(&replaceParams{
 		fixed:   rag.RoleID,
 		fixedID: pulid.ID("rol_1"),
 		varying: rag.AgentDefinitionID,

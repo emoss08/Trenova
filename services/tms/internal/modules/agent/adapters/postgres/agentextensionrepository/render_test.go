@@ -16,7 +16,7 @@ func TestReserveIncrementsOnlyBelowTheLimit(t *testing.T) {
 	t.Parallel()
 
 	tenant := pagination.TenantInfo{OrgID: pulid.MustNew("org_"), BuID: pulid.MustNew("bu_")}
-	args := reserveArgs(agentextensionports.ReserveExtensionRequestParams{
+	args := reserveArgs(&agentextensionports.ReserveExtensionRequestParams{
 		TenantInfo: tenant,
 		Type:       agentextension.TypeExa,
 		Day:        20260923,
@@ -51,9 +51,9 @@ func TestRecordOutcomeAddsToTheTenantsDay(t *testing.T) {
 	})
 	sql, args := keeltest.Render(t, q.Limit(1))
 
-	assert.Contains(t, sql, `agextu."business_unit_id" = $1 AND agextu."organization_id" = $2`)
-	assert.Contains(t, sql, `agextu."extension_type" = $3 AND agextu."day" = $4`)
-	assert.Equal(t, []any{"bu_1", "org_1", "Exa", int64(20260923)}, args)
+	assert.Contains(t, sql, `aeud."organization_id" = $1 AND aeud."business_unit_id" = $2`)
+	assert.Contains(t, sql, `aeud."extension_type" = $3 AND aeud."day" = $4`)
+	assert.Equal(t, []any{"org_1", "bu_1", "Exa", int64(20260923)}, args)
 	assert.Len(t, sets, 3)
 }
 
@@ -65,10 +65,10 @@ func TestSummarizeReadsTheMonthForOneTenant(t *testing.T) {
 		Today:   20260923,
 	}))
 
-	assert.Contains(t, sql, `FILTER (WHERE agextu."day" = $`)
-	assert.Contains(t, sql, `agextu."day" >= $`)
-	assert.Contains(t, sql, `agextu."day" <= $`)
-	assert.Contains(t, sql, `GROUP BY agextu."extension_type"`)
+	assert.Contains(t, sql, `FILTER (WHERE aeud."day" = $`)
+	assert.Contains(t, sql, `aeud."day" >= $`)
+	assert.Contains(t, sql, `aeud."day" <= $`)
+	assert.Contains(t, sql, `GROUP BY aeud."extension_type"`)
 	assert.Contains(t, args, int64(20260901))
 	assert.Contains(t, args, int64(20260923))
 	assert.Contains(t, args, "org_1")

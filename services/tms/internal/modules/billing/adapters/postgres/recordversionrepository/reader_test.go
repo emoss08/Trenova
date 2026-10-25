@@ -190,7 +190,8 @@ func TestVersionLookup_ReadsTheVersionByID(t *testing.T) {
 	require.True(t, ok)
 	sql, args := keeltest.Render(t, query)
 
-	assert.Contains(t, sql, `."version" FROM "orders"`)
+	assert.Contains(t, sql, `SELECT o."version"`)
+	assert.Contains(t, sql, `FROM "orders" o`)
 	assert.Contains(t, sql, `."id" = $`)
 	assert.Contains(t, args, "ord_1")
 }

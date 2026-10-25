@@ -41,7 +41,7 @@ func TestPruneHistoryDeletesOnlyRankedNonCurrentSnapshots(t *testing.T) {
 	assert.Contains(
 		t,
 		sql,
-		`row_number() OVER (PARTITION BY "history"."subject_type", "history"."subject_id"`,
+		`row_number() OVER (PARTITION BY history."subject_type", history."subject_id"`,
 		sql,
 	)
 	assert.Contains(t, sql, `"is_current" IS FALSE`, sql)
@@ -112,6 +112,6 @@ func TestPendingSyncCoversEnrolAndUnenrol(t *testing.T) {
 	sql, args := keeltest.Render(t, en.Where(pendingSyncPredicate()))
 
 	assert.Contains(t, sql, " OR ", sql)
-	assert.Contains(t, args, carrierintel.DesiredStateEnrolled)
-	assert.Contains(t, args, carrierintel.DesiredStateNotEnrolled)
+	assert.Contains(t, args, string(carrierintel.DesiredStateEnrolled))
+	assert.Contains(t, args, string(carrierintel.DesiredStateNotEnrolled))
 }

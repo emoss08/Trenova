@@ -128,8 +128,8 @@ func TestDescribeParameterShape_SaysWhatToSend(t *testing.T) {
 	assert.Equal(
 		t,
 		"a JSON array of enum",
-		describeParameterShape(ir.Parameter{Type: "enum", Multi: true}),
+		describeParameterShape(&ir.Parameter{Type: "enum", Multi: true}),
 	)
-	assert.Equal(t, "a single int", describeParameterShape(ir.Parameter{Type: "int"}))
-	assert.Equal(t, "a single value", describeParameterShape(ir.Parameter{}))
+	assert.Equal(t, "a single int", describeParameterShape(&ir.Parameter{Type: "int"}))
+	assert.Equal(t, "a single value", describeParameterShape(&ir.Parameter{}))
 }

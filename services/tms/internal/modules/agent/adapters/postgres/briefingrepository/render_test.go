@@ -35,7 +35,7 @@ func TestForDayReadsOnePersonsBriefing(t *testing.T) {
 func TestListCapsTheLimitAndOrdersNewestDayFirst(t *testing.T) {
 	t.Parallel()
 
-	sql, _ := keeltest.Render(t, listQuery(briefingports.ListBriefingsQuery{Limit: 500}))
+	sql, _ := keeltest.Render(t, listQuery(&briefingports.ListBriefingsQuery{Limit: 500}))
 
 	assert.Contains(t, sql, `"briefing_date" DESC`, sql)
 	assert.Contains(t, sql, "LIMIT 90", sql)

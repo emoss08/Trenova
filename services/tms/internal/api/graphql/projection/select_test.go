@@ -131,5 +131,5 @@ func TestColumnNames_NamesTheGeneratedColumns(t *testing.T) {
 	t.Parallel()
 
 	r := manualjournaldb.Requests
-	assert.Equal(t, []string{"total_debit", "total_credit"}, ColumnNames(r.TotalDebit.Col, r.TotalCredit.Col))
+	assert.Equal(t, []string{"total_debit_minor", "total_credit_minor"}, ColumnNames(r.TotalDebit.Col, r.TotalCredit.Col))
 }

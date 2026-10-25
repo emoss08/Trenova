@@ -106,7 +106,7 @@ func TestSearchToolsNeverLeakAndMarkEveryRecord(t *testing.T) {
 			settings := airetrieval.DefaultSettings(seeded.OrgID, seeded.BuID)
 			settings.ActiveModelKey = retrievaltest.ModelKey
 			settings.Dimensions = airetrieval.Dimensions768
-			_, err = repo.UpdateSettings(ctx, settings)
+			_, err = repo.UpdateSettings(dbscope.WithTenant(ctx, seeded.DBTenant()), settings)
 			require.NoError(t, err)
 		}
 		for _, corpus := range []*retrievaltest.Corpus{

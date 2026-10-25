@@ -14,7 +14,8 @@ func TestOrphans_AreOnlyOldBaselinesNoProposalNames(t *testing.T) {
 	ctx := dbscope.WithSystem(t.Context(), "test")
 	sql, args := keeltest.RenderIn(t, ctx, orphans(1767225600, 250))
 
-	assert.Contains(t, sql, `SELECT orphan."proposal_id" FROM "agent_proposal_baselines" orphan`)
+	assert.Contains(t, sql, `SELECT orphan."proposal_id"`)
+	assert.Contains(t, sql, `FROM "agent_proposal_baselines" orphan`)
 	assert.Contains(t, sql, `orphan."created_at" < $1`)
 	assert.Contains(t, sql, `NOT EXISTS (SELECT`)
 	assert.Contains(t, sql, `"agent_proposals" ap`)

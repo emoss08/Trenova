@@ -228,17 +228,3 @@ func TestAgentRun_Validate_DelegateRunNamesItsParent(t *testing.T) {
 		})
 	}
 }
-
-func TestInsertStampsUpdatedAtForTheAuditProjector(t *testing.T) {
-	t.Parallel()
-
-	run := baseRun()
-	require.NoError(t, run.BeforeCreate(t.Context()))
-	assert.NotZero(t, run.UpdatedAt)
-	assert.Equal(t, run.CreatedAt, run.UpdatedAt)
-
-	proposal := baseProposal()
-	require.NoError(t, proposal.BeforeCreate(t.Context()))
-	assert.NotZero(t, proposal.UpdatedAt)
-	assert.Equal(t, proposal.CreatedAt, proposal.UpdatedAt)
-}

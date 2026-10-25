@@ -209,7 +209,8 @@ func TestTractorConnectionToModel_PropagatesTotalCount(t *testing.T) {
 				Code:      "TRC-100",
 			},
 		},
-		TotalCount: &total,
+		TotalCount:  &total,
+		EdgeCursors: []string{"edge-1"},
 	})
 
 	require.NoError(t, err)

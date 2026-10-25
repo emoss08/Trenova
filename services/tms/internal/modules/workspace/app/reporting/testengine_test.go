@@ -68,7 +68,7 @@ func (f *fakeEngine) recorded(kind string) []engineCall {
 
 func (f *fakeEngine) compile(
 	ctx context.Context,
-	req analytics.Request,
+	req *analytics.Request,
 ) (*analytics.Compiled, error) {
 	if f.err != nil {
 		return nil, f.err
@@ -81,17 +81,17 @@ func (f *fakeEngine) Catalog() *analytics.Catalog { return f.catalog }
 
 func (f *fakeEngine) Compile(
 	ctx context.Context,
-	req analytics.Request,
+	req *analytics.Request,
 ) (*analytics.Compiled, error) {
-	f.record(engineCall{Kind: "compile", Request: req})
+	f.record(engineCall{Kind: "compile", Request: *req})
 	return f.compile(ctx, req)
 }
 
 func (f *fakeEngine) Preview(
 	ctx context.Context,
-	req analytics.Request,
+	req *analytics.Request,
 ) (*analytics.Result, error) {
-	f.record(engineCall{Kind: "preview", Request: req})
+	f.record(engineCall{Kind: "preview", Request: *req})
 	if _, err := f.compile(ctx, req); err != nil {
 		return nil, err
 	}
@@ -100,19 +100,19 @@ func (f *fakeEngine) Preview(
 
 func (f *fakeEngine) Page(
 	ctx context.Context,
-	req analytics.Request,
+	req *analytics.Request,
 	cursor string,
 	size int,
 ) (*analytics.Result, error) {
-	f.record(engineCall{Kind: "page", Request: req, Cursor: cursor, PageSize: size})
+	f.record(engineCall{Kind: "page", Request: *req, Cursor: cursor, PageSize: size})
 	if _, err := f.compile(ctx, req); err != nil {
 		return nil, err
 	}
 	return nil, errNotExecuted
 }
 
-func (f *fakeEngine) Count(ctx context.Context, req analytics.Request) (int64, error) {
-	f.record(engineCall{Kind: "count", Request: req})
+func (f *fakeEngine) Count(ctx context.Context, req *analytics.Request) (int64, error) {
+	f.record(engineCall{Kind: "count", Request: *req})
 	if _, err := f.compile(ctx, req); err != nil {
 		return 0, err
 	}
@@ -121,20 +121,20 @@ func (f *fakeEngine) Count(ctx context.Context, req analytics.Request) (int64, e
 
 func (f *fakeEngine) Drill(
 	ctx context.Context,
-	req analytics.Request,
+	req *analytics.Request,
 	row []ir.DrillValue,
 	column string,
-	opts analytics.DrillOptions,
+	opts *analytics.DrillOptions,
 ) (*analytics.Result, error) {
-	f.record(engineCall{Kind: "drill", Request: req, Row: row, Column: column, Drill: opts})
+	f.record(engineCall{Kind: "drill", Request: *req, Row: row, Column: column, Drill: *opts})
 	if _, err := f.compile(ctx, req); err != nil {
 		return nil, err
 	}
 	return nil, errNotExecuted
 }
 
-func (f *fakeEngine) Run(ctx context.Context, req analytics.Request) (*analytics.Stream, error) {
-	f.record(engineCall{Kind: "run", Request: req})
+func (f *fakeEngine) Run(ctx context.Context, req *analytics.Request) (*analytics.Stream, error) {
+	f.record(engineCall{Kind: "run", Request: *req})
 	if _, err := f.compile(ctx, req); err != nil {
 		return nil, err
 	}
