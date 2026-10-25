@@ -53,26 +53,29 @@ func App(o Options) keelcli.App {
 	settings := NewSettings(o.Name, o.ConfigOptions)
 	env := seedenv.Env{Config: settings.MustConfig}
 
+	dbConfig := DatabaseConfig(ConfigParams{
+		Name:       o.Name,
+		Settings:   settings,
+		Migrations: set,
+		Options:    opts,
+		Log:        os.Stderr,
+	})
+	opts.AfterFunc = markMigratedTables(dbConfig)
+
 	app := keelcli.App{
 		Name:        o.Name,
 		Description: o.Description,
 		Version:     buildVersion(),
-		Config: DatabaseConfig(ConfigParams{
-			Name:       o.Name,
-			Settings:   settings,
-			Migrations: set,
-			Options:    opts,
-			Log:        os.Stderr,
-		}),
-		Migrations: set,
-		Migrate:    opts,
-		Stamp:      StampPath,
-		Lint:       migrations.LintRules(),
-		Seeds:      Seeds(settings, o.Fixtures),
-		Tenants:    env.Tenants,
-		System:     env.System,
-		Extensions: extensions,
-		Commands:   append([]keelcli.Command{EnableVectorCommand}, o.Commands...),
+		Config:      dbConfig,
+		Migrations:  set,
+		Migrate:     opts,
+		Stamp:       StampPath,
+		Lint:        migrations.LintRules(),
+		Seeds:       Seeds(settings, o.Fixtures),
+		Tenants:     env.Tenants,
+		System:      env.System,
+		Extensions:  extensions,
+		Commands:    append([]keelcli.Command{EnableVectorCommand}, o.Commands...),
 	}
 	if o.Development {
 		app.Dirs = migrations.Dirs()
