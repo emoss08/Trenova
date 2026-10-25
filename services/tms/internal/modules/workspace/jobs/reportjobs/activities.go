@@ -427,6 +427,7 @@ func (a *Activities) ExecuteAndRenderActivity(
 	if err != nil {
 		return nil, classifyEngineError(reporting.EngineError(run.Context, run.Access, err))
 	}
+	result.CacheHit = stream.Cached()
 
 	if digest != nil {
 		captured, digestErr := digest.digest(run.Context, stream.Columns())

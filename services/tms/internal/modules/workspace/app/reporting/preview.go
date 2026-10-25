@@ -36,7 +36,6 @@ type PreviewResult struct {
 	Cursor    string
 	Timezone  string
 	Rollup    string
-	Cached    bool
 }
 
 func (s *Service) Preview(ctx context.Context, req *PreviewRequest) (*PreviewResult, error) {
@@ -105,7 +104,6 @@ func collectPreview(ctx context.Context, result *analytics.Result) (*PreviewResu
 		Columns: columns,
 		Rows:    make([][]any, 0, result.Len()),
 		Rollup:  result.Rollup(),
-		Cached:  result.Cached(),
 	}
 	for {
 		batch, err := result.Next(ctx)

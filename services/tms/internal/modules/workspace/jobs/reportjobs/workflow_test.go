@@ -60,6 +60,7 @@ func TestRunReportWorkflowSuccess(t *testing.T) {
 			ArtifactKey: "reports/org_test/rrun_test/1/report.csv",
 			RowCount:    42,
 			ByteSize:    1024,
+			CacheHit:    true,
 		}, nil)
 
 	var finalized *FinalizePayload
@@ -81,6 +82,7 @@ func TestRunReportWorkflowSuccess(t *testing.T) {
 	require.NotNil(t, finalized)
 	assert.Equal(t, report.RunStatusSucceeded, finalized.Status)
 	assert.Equal(t, "reports/org_test/rrun_test/1/report.csv", finalized.ArtifactKey)
+	assert.True(t, finalized.CacheHit)
 }
 
 func TestRunReportWorkflowManualRunSkipsDelivery(t *testing.T) {

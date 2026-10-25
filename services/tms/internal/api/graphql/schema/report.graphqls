@@ -213,6 +213,7 @@ type ReportRun @kind(resource: "report") {
   rowsStored: Boolean!
   error: ReportRunError
   artifactExpiresAt: Timestamp
+  "Whether the run's rows came from the report result cache rather than a statement."
   cacheHit: Boolean!
   queuedAt: Timestamp
   startedAt: Timestamp
@@ -351,8 +352,6 @@ type ReportPreview {
   timezone: String!
   "The rollup that answered the report instead of the base tables, when one did."
   rollup: String
-  "Whether the rows came from the result cache."
-  cached: Boolean!
 }
 
 input ReportDrillValueInput {

@@ -656,7 +656,6 @@ func reportPreviewToModel(result *reportingservice.PreviewResult) *gqlmodel.Repo
 		Cursor:    nilIfEmpty(result.Cursor),
 		Timezone:  result.Timezone,
 		Rollup:    nilIfEmpty(result.Rollup),
-		Cached:    result.Cached,
 	}
 	if result.Totals != nil {
 		preview.Totals = result.Totals
