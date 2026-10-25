@@ -201,9 +201,9 @@ func (s *candidateSource) build(
 		queued = append(queued, rec.ObjectID.EqCol(s.id), rec.Operation.Eq(req.Operation))
 	}
 
-	number := keel.Expr(keel.DynLit("").Cast(keel.TypeString))
+	number := keel.Text("")
 	if s.number != nil {
-		number = keel.DynOf(*s.number).Coalesce("")
+		number = s.number.Coalesce("")
 	}
 
 	preds := []keel.Pred{
@@ -262,11 +262,12 @@ func journalDayQueued(
 		timezone = time.UTC.String()
 	}
 	return []keel.Pred{
-		keel.DynOf(rec.ObjectID).Eq(keel.DynLit(accountingsync.JournalDayPrefix).Cast(keel.TypeString).Concat(keel.DynFunc(
-			"to_char",
-			keel.DynFunc("timezone", keel.DynLit(timezone).Cast(keel.TypeString), keel.DynFunc("to_timestamp", je.AccountingDate)),
-			keel.DynLit(accountingsync.JournalDaySQLLayout).Cast(keel.TypeString),
-		))),
-		keel.DynOf(rec.QueuedAt).Gte(je.PostedAt),
+		keel.DynOf(rec.ObjectID).
+			Eq(keel.DynLit(accountingsync.JournalDayPrefix).Cast(keel.TypeString).Concat(
+				keel.ToTimestamp(je.AccountingDate).
+					AtTimeZone(keel.Text(timezone)).
+					ToChar(accountingsync.JournalDaySQLLayout),
+			)),
+		keel.Int64Of(rec.QueuedAt).GteExpr(je.PostedAt),
 	}
 }

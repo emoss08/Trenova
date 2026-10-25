@@ -83,9 +83,9 @@ func dueRecords(sr *accountingsyncdb.AccountingSyncRecordsTable, now int64) keel
 func dispatchRankOrder(sr *accountingsyncdb.AccountingSyncRecordsTable) keel.Order {
 	rank := keel.DynCase()
 	for _, typ := range accountingsync.AllSyncObjectTypes() {
-		rank = rank.When(sr.ObjectType.Eq(typ), keel.DynLit(typ.DispatchRank()).Cast(keel.TypeInt64))
+		rank = rank.When(sr.ObjectType.Eq(typ), keel.Int64(int64(typ.DispatchRank())))
 	}
-	return rank.Else(keel.DynLit(9).Cast(keel.TypeInt64)).Asc()
+	return rank.Else(keel.Int64(9)).Asc()
 }
 
 func (r *syncRecordRepository) Enqueue(
@@ -500,8 +500,8 @@ func (r *syncRecordRepository) ListAttention(
 			limit = intutils.Clamp(limit, 1, maxSyncListLimit)
 
 			sr := accountingsyncdb.AccountingSyncRecords
-			category := keel.DynOf(sr.ErrorCategory).Coalesce("")
-			resolution := keel.DynOf(sr.Resolution).Coalesce("")
+			category := sr.ErrorCategory.Coalesce("")
+			resolution := sr.Resolution.Coalesce("")
 			groups, err := keel.Into[accountingsyncports.AccountingSyncAttentionGroup](
 				ctx,
 				r.db.Keel(ctx),
@@ -555,7 +555,7 @@ func (r *syncRecordRepository) MappingUsage(
 		used := keel.Rows(
 			mappingUsageSource,
 			[]string{mappingUsageColumn},
-			keel.DynFunc("unnest", sr.MappingIDs),
+			sr.MappingIDs.Unnest(),
 		)
 		mappingID := used.Col(mappingUsageColumn)
 

@@ -261,7 +261,7 @@ func (r *inboundChangeRepository) ListAttention(
 				r.db.Keel(ctx),
 				ic.Group(ic.Reason).
 					Pick(
-						keel.DynOf(ic.Reason).Cast(keel.TypeString).Coalesce(""),
+						keel.CastText(ic.Reason).Coalesce(""),
 						keel.Count(),
 						ic.DetectedAt.Min(),
 						ic.ID.Min(),
