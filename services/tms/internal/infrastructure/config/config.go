@@ -1302,7 +1302,6 @@ func (c *CacheConfig) GetRedisAddr() string {
 
 type ReportingConfig struct {
 	PoolMaxOpenConns              int           `mapstructure:"poolMaxOpenConns"              validate:"min=0,max=64"`
-	PoolMaxIdleConns              int           `mapstructure:"poolMaxIdleConns"              validate:"min=0,max=64"`
 	StatementTimeout              time.Duration `mapstructure:"statementTimeout"`
 	PreviewStatementTimeout       time.Duration `mapstructure:"previewStatementTimeout"`
 	MaxRunDuration                time.Duration `mapstructure:"maxRunDuration"`
@@ -1334,13 +1333,6 @@ func (c *ReportingConfig) GetPoolMaxOpenConns() int {
 		return 4
 	}
 	return c.PoolMaxOpenConns
-}
-
-func (c *ReportingConfig) GetPoolMaxIdleConns() int {
-	if c.PoolMaxIdleConns == 0 {
-		return 2
-	}
-	return c.PoolMaxIdleConns
 }
 
 func (c *ReportingConfig) GetStatementTimeout() time.Duration {
