@@ -23,7 +23,7 @@ import (
 	"go.uber.org/zap"
 )
 
-const fieldCredentialTypeID = "credentialTypeId"
+const fieldCredentialTypeID = "credentialTypeId" //nolint:gosec // G101: a field name, not a credential
 
 const (
 	defaultExpiringPageSize = 500

@@ -287,10 +287,10 @@ func audienceFilter(audience worker.PolicyAudience) keel.Pred {
 	case worker.PolicyAudienceContractors:
 		return w.Type.Eq(worker.WorkerTypeContractor)
 	case worker.PolicyAudienceAll:
-		fallthrough
-	default:
 		return nil
 	}
+
+	return nil
 }
 
 func policyComplianceQuery(req *workerports.PolicyComplianceRequest) *keel.Query[worker.Worker] {

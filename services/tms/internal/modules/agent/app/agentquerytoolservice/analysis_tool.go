@@ -483,10 +483,10 @@ func analysisFormat(column *table.Column) string {
 		return fieldPercent
 	case format.StyleAuto, format.StyleNumber, format.StyleDuration, format.StyleDate,
 		format.StyleBool, format.StyleText:
-		fallthrough
-	default:
 		return ""
 	}
+
+	return ""
 }
 
 func (t *analyzeDataTool) fileDataset(

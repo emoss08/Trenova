@@ -955,7 +955,10 @@ func (r *repository) PlanDuplicate(
 				req.TenantInfo.UserID,
 			)
 
-			return &shipmentports.ShipmentDuplicatePlan{Source: source, Copies: graph.shipments}, nil
+			return &shipmentports.ShipmentDuplicatePlan{
+				Source: source,
+				Copies: graph.shipments,
+			}, nil
 		},
 	)
 }

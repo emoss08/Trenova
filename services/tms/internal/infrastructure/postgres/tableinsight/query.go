@@ -147,7 +147,11 @@ func (b *typedBase[T]) aggregate(
 		return nil, err
 	}
 	if len(totals) != len(values) {
-		return nil, fmt.Errorf("read table totals: %d values for %d totals", len(totals), len(values))
+		return nil, fmt.Errorf(
+			"read table totals: %d values for %d totals",
+			len(totals),
+			len(values),
+		)
 	}
 
 	result := &permissionports.TableAggregateResult{
@@ -362,7 +366,9 @@ func (b *typedBase[T]) matchingIDs(
 		return nil, err
 	}
 
-	result := &permissionports.TableMatchResult{IDs: make([]string, 0, min(len(rows), maxMatchCapacity))}
+	result := &permissionports.TableMatchResult{
+		IDs: make([]string, 0, min(len(rows), maxMatchCapacity)),
+	}
 	for _, row := range rows {
 		result.IDs = append(result.IDs, row.ID)
 		result.Total = row.Total

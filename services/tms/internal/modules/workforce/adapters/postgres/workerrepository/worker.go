@@ -433,10 +433,9 @@ func credentialFieldColumn(field worker.CredentialProfileField) (keel.Int64Col, 
 	case worker.CredentialProfileFieldMVRDueDate:
 		return wp.MVRDueDate, nil
 	case worker.CredentialProfileFieldNone:
-		fallthrough
-	default:
-		return keel.Int64Col{}, fmt.Errorf("%w: %s", worker.ErrInvalidCredentialProfileField, field)
 	}
+
+	return keel.Int64Col{}, fmt.Errorf("%w: %s", worker.ErrInvalidCredentialProfileField, field)
 }
 
 func credentialFieldAssignments(
