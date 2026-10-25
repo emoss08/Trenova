@@ -314,3 +314,12 @@ func (p *PayProfile) BeforeCreate(ctx context.Context) error {
 
 	return nil
 }
+
+func (PayProfile) Constraints() []keel.Constraint {
+	return []keel.Constraint{
+		{
+			Name:    "uq_driver_pay_profiles_name",
+			Message: "Pay profile with this name already exists in your organization",
+		},
+	}
+}

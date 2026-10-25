@@ -20,26 +20,7 @@ import (
 
 const policyBusyMessage = "PTO policy is busy. Retry the request."
 
-var policyErrors = dberror.Mapping{
-	Entity: "PTOPolicy",
-	Unique: []dberror.Constraint{
-		{
-			Name:    "uq_pto_policies_code",
-			Field:   "code",
-			Message: "PTO policy with this code already exists in your organization",
-		},
-		{
-			Name:    "uq_pto_policies_default",
-			Field:   "isDefault",
-			Message: "Another PTO policy is already the default",
-		},
-		{
-			Name:    "uq_pto_policy_rules_type",
-			Field:   "rules",
-			Message: "Each PTO type may appear only once in a policy",
-		},
-	},
-}
+var policyErrors = dberror.Mapping{Entity: "PTOPolicy"}
 
 type policyCount struct {
 	PolicyID pulid.ID

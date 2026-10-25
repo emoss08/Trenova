@@ -131,3 +131,17 @@ func (r *DocumentPacketRule) applyDefaults() {
 		r.ExpirationWarningDays = defaultExpirationWarningDays
 	}
 }
+
+func (DocumentPacketRule) Constraints() []keel.Constraint {
+	return []keel.Constraint{
+		{
+			Name:    "uq_document_packet_rules_resource_type_document_type",
+			Field:   "documentTypeId",
+			Message: "A packet rule for this document type already exists for this resource type",
+		},
+		{
+			Name:    "fk_document_packet_rules_document_type",
+			Message: "Document type does not exist",
+		},
+	}
+}

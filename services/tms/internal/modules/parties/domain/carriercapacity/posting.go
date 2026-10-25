@@ -216,3 +216,20 @@ func (p *Posting) GetPostgresSearchConfig() domaintypes.PostgresSearchConfig {
 		UseSearchVector: true,
 	}
 }
+
+func (Posting) Constraints() []keel.Constraint {
+	return []keel.Constraint{
+		{
+			Name:    "fk_carrier_capacity_postings_carrier",
+			Message: "Carrier does not exist in your organization",
+		},
+		{
+			Name:    "fk_carrier_capacity_postings_origin_location",
+			Message: "Origin location does not exist in your organization",
+		},
+		{
+			Name:    "fk_carrier_capacity_postings_equipment_type",
+			Message: "Equipment type does not exist in your organization",
+		},
+	}
+}

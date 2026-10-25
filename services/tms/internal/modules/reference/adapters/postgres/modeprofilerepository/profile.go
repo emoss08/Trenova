@@ -18,33 +18,7 @@ import (
 
 const profileBusyMessage = "Mode profile is busy. Retry the request."
 
-var profileErrors = dberror.Mapping{
-	Entity: "ModeProfile",
-	Unique: []dberror.Constraint{
-		{
-			Name:    "uq_mode_profiles_code",
-			Field:   "code",
-			Message: "Mode profile with this code already exists in your organization",
-		},
-		{
-			Name:    "uq_mode_profiles_org_default",
-			Field:   "isOrgDefault",
-			Message: "Another mode profile is already the organization default",
-		},
-		{
-			Name:    "uq_mode_profile_capability_rules_key",
-			Field:   "rules",
-			Message: "Each rule may appear only once in a mode profile",
-		},
-	},
-	ForeignKey: []dberror.Constraint{
-		{
-			Name:    "fk_mode_profiles_customer",
-			Field:   "customerId",
-			Message: "Customer does not exist or belongs to a different organization",
-		},
-	},
-}
+var profileErrors = dberror.Mapping{Entity: "ModeProfile"}
 
 type ProfileParams struct {
 	fx.In

@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/emoss08/keel"
+	"github.com/emoss08/keel/postgis"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/telematics/telematicsdb"
@@ -113,16 +114,20 @@ func moveSummaryQuery(
 				covered,
 				keel.DynOf(asn.CreatedAt).Coalesce(ca.CreatedAt).Gte(dayStart),
 			),
-			keel.Raw(
-				"coalesce(avg(ST_DistanceSphere(ST_MakePoint(?, ?), ST_MakePoint(?, ?)) / ?) "+
-					"FILTER (WHERE ? IS NOT NULL AND ? IS NOT NULL "+
-					"AND ? IS NOT NULL AND ? IS NOT NULL), 0)::float8",
-				pos.Longitude, pos.Latitude,
-				origin.loc.Longitude, origin.loc.Latitude,
-				metersPerMile,
-				asn.ID, pos.TractorID,
-				origin.loc.Latitude, origin.loc.Longitude,
-			),
+			postgis.DistanceSphere(
+				postgis.Pt(pos.Longitude, pos.Latitude),
+				postgis.Pt(origin.loc.Longitude, origin.loc.Latitude),
+			).
+				Div(metersPerMile).
+				Avg().
+				Filter(keel.And(
+					asn.ID.IsNotNull(),
+					pos.TractorID.IsNotNull(),
+					origin.loc.Latitude.IsNotNull(),
+					origin.loc.Longitude.IsNotNull(),
+				)).
+				Coalesce(0).
+				Cast(keel.TypeFloat64),
 		).
 		Where(moveFilters(filter)...)
 }

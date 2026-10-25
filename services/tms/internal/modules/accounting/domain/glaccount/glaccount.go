@@ -122,3 +122,20 @@ func (g *GLAccount) BeforeCreate(ctx context.Context) error {
 
 	return nil
 }
+
+func (GLAccount) Constraints() []keel.Constraint {
+	return []keel.Constraint{
+		{
+			Name:    "uq_gl_accounts_code",
+			Message: "GL account with this account code already exists in your organization",
+		},
+		{
+			Name:    "fk_gl_accounts_account_type",
+			Message: "Account type does not exist in your organization",
+		},
+		{
+			Name:    "fk_gl_accounts_parent",
+			Message: "Parent account does not exist or still has child accounts",
+		},
+	}
+}

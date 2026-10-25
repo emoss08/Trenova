@@ -15,14 +15,15 @@ import (
 
 // shipmentTypesTable is the schema of shipmenttype.ShipmentType.
 var shipmentTypesTable = schema.Table{
-	Name:   "shipment_types",
-	Quoted: `"shipment_types"`,
-	Alias:  "st",
-	Model:  "shipmenttype.ShipmentType",
-	Label:  `Shipment Type`,
-	Plural: `Shipment Types`,
-	Doc:    `Shipment classification`,
-	Report: &schema.TableReport{Category: `Configuration`},
+	Name:        "shipment_types",
+	Quoted:      `"shipment_types"`,
+	Alias:       "st",
+	Model:       "shipmenttype.ShipmentType",
+	Label:       `Shipment Type`,
+	Plural:      `Shipment Types`,
+	Doc:         `Shipment classification`,
+	Report:      &schema.TableReport{Category: `Configuration`},
+	Constraints: (&shipmenttype.ShipmentType{}).Constraints(),
 	Columns: []schema.Column{
 		{Name: "id", Quoted: `"id"`, Field: "ID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagAutoID, Label: `ID`, JSON: `id`, Report: &reportDimString},
 		{Name: "business_unit_id", Quoted: `"business_unit_id"`, Field: "BusinessUnitID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Business Unit ID`, JSON: `businessUnitId`, Report: &reportDimStringHidden},

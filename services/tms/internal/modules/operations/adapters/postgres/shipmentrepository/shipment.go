@@ -39,53 +39,7 @@ const (
 	defaultRatedByTemplates = 100
 )
 
-var shipmentErrors = dberror.Mapping{
-	Entity: shipmentEntity,
-	Unique: []dberror.Constraint{
-		{
-			Name:    "uq_shipments_external_reference",
-			Field:   "externalReference",
-			Message: "Another shipment for this customer already uses this customer reference",
-		},
-		{
-			Name:    "uq_shipments_idempotency_key",
-			Field:   "idempotencyKey",
-			Message: "A shipment was already created with this idempotency key",
-		},
-	},
-	ForeignKey: []dberror.Constraint{
-		{
-			Name:    "fk_shipments_customer",
-			Field:   "customerId",
-			Message: "Customer does not exist in your organization",
-		},
-		{
-			Name:    "fk_shipments_service_type",
-			Field:   "serviceTypeId",
-			Message: "Service type does not exist in your organization",
-		},
-		{
-			Name:    "fk_shipments_shipment_type",
-			Field:   "shipmentTypeId",
-			Message: "Shipment type does not exist in your organization",
-		},
-		{
-			Name:    "fk_shipments_tractor_type",
-			Field:   "tractorTypeId",
-			Message: "Tractor type does not exist in your organization",
-		},
-		{
-			Name:    "fk_shipments_trailer_type",
-			Field:   "trailerTypeId",
-			Message: "Trailer type does not exist in your organization",
-		},
-		{
-			Name:    "fk_shipments_formula_template",
-			Field:   "formulaTemplateId",
-			Message: "Formula template does not exist in your organization",
-		},
-	},
-}
+var shipmentErrors = dberror.Mapping{Entity: shipmentEntity}
 
 type Params struct {
 	fx.In

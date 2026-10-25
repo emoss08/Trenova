@@ -150,3 +150,16 @@ func (p *CaptureProfile) BeforeCreate(ctx context.Context) error {
 
 	return nil
 }
+
+func (CaptureProfile) Constraints() []keel.Constraint {
+	return []keel.Constraint{
+		{
+			Name:    "uq_capture_profiles_name",
+			Message: "A profile with this name already exists",
+		},
+		{
+			Name:    "uq_capture_profiles_default",
+			Message: "Another profile was made the default at the same time; try again",
+		},
+	}
+}

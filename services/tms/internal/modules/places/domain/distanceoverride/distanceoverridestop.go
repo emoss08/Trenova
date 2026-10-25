@@ -30,3 +30,18 @@ func (s *DistanceOverrideStop) Validate(multiErr *errortypes.MultiError) {
 		),
 	))
 }
+
+func (DistanceOverrideStop) Constraints() []keel.Constraint {
+	return []keel.Constraint{
+		{
+			Name:    "uq_distance_override_stops_location",
+			Field:   "intermediateStops",
+			Message: "Intermediate stop location must be unique within the route",
+		},
+		{
+			Name:    "fk_distance_override_stops_location",
+			Field:   "intermediateStops",
+			Message: "Intermediate stop location does not exist in your organization",
+		},
+	}
+}

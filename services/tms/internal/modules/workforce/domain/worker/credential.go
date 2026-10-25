@@ -235,3 +235,25 @@ func (c *WorkerCredential) BeforeCreate(_ context.Context) error {
 
 	return nil
 }
+
+func (WorkerCredential) Constraints() []keel.Constraint {
+	return []keel.Constraint{
+		{
+			Name:    "fk_worker_credentials_worker",
+			Message: "Worker does not exist or belongs to a different organization",
+		},
+		{
+			Name:    "fk_worker_credentials_type",
+			Message: "Credential type does not exist or belongs to a different organization",
+		},
+		{
+			Name:    "fk_worker_credentials_document",
+			Message: "Document does not exist or belongs to a different organization",
+		},
+		{
+			Name:    "uq_worker_credentials_active_type",
+			Field:   "credentialTypeId",
+			Message: "This worker already holds an active credential of this type. Renew it instead.",
+		},
+	}
+}

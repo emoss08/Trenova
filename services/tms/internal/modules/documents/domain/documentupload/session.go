@@ -246,6 +246,15 @@ func (s *DocumentUploadSession) Validate(multiErr *errortypes.MultiError) {
 	))
 }
 
+func (DocumentUploadSession) Constraints() []keel.Constraint {
+	return []keel.Constraint{
+		{
+			Name:    "fk_document_upload_sessions_document",
+			Message: "Document does not exist",
+		},
+	}
+}
+
 const (
 	maxSessionCodeLength       = 100
 	maxSessionNameLength       = 255

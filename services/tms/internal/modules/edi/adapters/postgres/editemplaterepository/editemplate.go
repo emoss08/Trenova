@@ -23,37 +23,10 @@ import (
 )
 
 var (
-	templateErrors = dberror.Mapping{
-		Entity: "EDITemplate",
-		Unique: []dberror.Constraint{
-			{
-				Name:    "idx_edi_templates_name_org_bu",
-				Field:   "name",
-				Message: "An EDI template with this name already exists in your organization",
-			},
-		},
-	}
-	versionErrors = dberror.Mapping{
-		Entity: "EDITemplateVersion",
-		Unique: []dberror.Constraint{
-			{
-				Name:    "idx_edi_template_versions_number",
-				Field:   "versionNumber",
-				Message: "This template already has a version with this number",
-			},
-		},
-	}
-	segmentErrors = dberror.Mapping{Entity: "EDITemplateSegment"}
-	libraryErrors = dberror.Mapping{
-		Entity: "EDITemplateScriptLibrary",
-		Unique: []dberror.Constraint{
-			{
-				Name:    "idx_edi_template_script_libraries_name",
-				Field:   "scriptLibraries",
-				Message: "Script library names must be unique within a template version",
-			},
-		},
-	}
+	templateErrors = dberror.Mapping{Entity: "EDITemplate"}
+	versionErrors  = dberror.Mapping{Entity: "EDITemplateVersion"}
+	segmentErrors  = dberror.Mapping{Entity: "EDITemplateSegment"}
+	libraryErrors  = dberror.Mapping{Entity: "EDITemplateScriptLibrary"}
 )
 
 type Params struct {

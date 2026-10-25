@@ -3,8 +3,8 @@ package geofence
 import (
 	"fmt"
 
+	"github.com/emoss08/keel/postgis"
 	"github.com/emoss08/trenova/pkg/errortypes"
-	"github.com/emoss08/trenova/pkg/postgis"
 	"github.com/emoss08/trenova/shared/geoutils"
 )
 
@@ -18,8 +18,6 @@ const (
 	TypeRectangle = Type("rectangle")
 	TypeDraw      = Type("draw")
 )
-
-type Vertex = postgis.Vertex
 
 type Fields struct {
 	GeofenceType         Type
@@ -53,7 +51,7 @@ func Normalize(fields *Fields) {
 		fields.GeofenceType = TypeAuto
 	}
 
-	fields.GeofenceVertices = postgis.NormalizeVertices(fields.GeofenceVertices)
+	fields.GeofenceVertices = NormalizeVertices(fields.GeofenceVertices)
 	if fields.GeofenceVertices == nil {
 		fields.GeofenceVertices = []Vertex{}
 	}
@@ -112,7 +110,7 @@ func Validate(fields Fields, params ValidateParams) {
 				errortypes.ErrInvalid,
 				"Rectangle geofences require four corners",
 			)
-		} else if _, err := postgis.RectangleGeometry(fields.GeofenceVertices); err != nil {
+		} else if _, err := RectangleGeometry(fields.GeofenceVertices); err != nil {
 			multiErr.Add("geofenceVertices", errortypes.ErrInvalid, err.Error())
 		}
 	case TypeDraw:
@@ -122,7 +120,7 @@ func Validate(fields Fields, params ValidateParams) {
 				errortypes.ErrInvalid,
 				"Drawn geofences require at least three points",
 			)
-		} else if _, err := postgis.PolygonGeometry(fields.GeofenceVertices); err != nil {
+		} else if _, err := PolygonGeometry(fields.GeofenceVertices); err != nil {
 			multiErr.Add("geofenceVertices", errortypes.ErrInvalid, err.Error())
 		}
 	}
@@ -134,9 +132,9 @@ func Polygon(fields Fields) (*postgis.Geometry, error) {
 	//nolint:exhaustive // only actionable enum states require explicit handling here
 	switch fields.GeofenceType {
 	case TypeRectangle:
-		return postgis.RectangleGeometry(fields.GeofenceVertices)
+		return RectangleGeometry(fields.GeofenceVertices)
 	case TypeDraw:
-		return postgis.PolygonGeometry(fields.GeofenceVertices)
+		return PolygonGeometry(fields.GeofenceVertices)
 	default:
 		return nil, nil //nolint:nilnil // nil result represents an optional absence in this API
 	}
@@ -148,7 +146,7 @@ func PopulateVertices(fields *Fields) error {
 		return nil
 	}
 
-	vertices, err := postgis.VerticesFromGeometry(fields.GeofenceGeometry)
+	vertices, err := VerticesFromGeometry(fields.GeofenceGeometry)
 	if err != nil {
 		return err
 	}

@@ -15,16 +15,7 @@ import (
 	"go.uber.org/zap"
 )
 
-var extractionErrors = dberror.Mapping{
-	Entity: "DocumentAIExtraction",
-	ForeignKey: []dberror.Constraint{
-		{
-			Name:    "fk_document_ai_extractions_document",
-			Field:   "documentId",
-			Message: "Document does not exist",
-		},
-	},
-}
+var extractionErrors = dberror.Mapping{Entity: "DocumentAIExtraction"}
 
 type Params struct {
 	fx.In

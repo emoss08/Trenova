@@ -17,16 +17,7 @@ import (
 	"go.uber.org/zap"
 )
 
-var manufacturerErrors = dberror.Mapping{
-	Entity: "EquipmentManufacturer",
-	Unique: []dberror.Constraint{
-		{
-			Name:    "idx_equipment_manu_name",
-			Field:   "name",
-			Message: "Equipment manufacturer with this name already exists in your organization",
-		},
-	},
-}
+var manufacturerErrors = dberror.Mapping{Entity: "EquipmentManufacturer"}
 
 type Params struct {
 	fx.In

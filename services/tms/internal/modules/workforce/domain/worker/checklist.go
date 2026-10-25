@@ -395,6 +395,21 @@ func (i *WorkerChecklistTemplateItem) Validate(multiErr *errortypes.MultiError) 
 	}
 }
 
+func (WorkerChecklistTemplateItem) Constraints() []keel.Constraint {
+	return []keel.Constraint{
+		{
+			Name:    "fk_worker_checklist_template_items_credential_type",
+			Field:   "items",
+			Message: "A checklist item names a credential type that does not exist",
+		},
+		{
+			Name:    "fk_worker_checklist_template_items_document_type",
+			Field:   "items",
+			Message: "A checklist item names a document type that does not exist",
+		},
+	}
+}
+
 type WorkerChecklist struct {
 	keel.Table `keel:"worker_checklists"`
 
@@ -528,6 +543,19 @@ func (i *WorkerChecklistItem) BeforeCreate(_ context.Context) error {
 	return nil
 }
 
+func (WorkerChecklistItem) Constraints() []keel.Constraint {
+	return []keel.Constraint{
+		{
+			Name:    "fk_worker_checklist_items_evidence_document",
+			Message: "Evidence document does not exist or belongs to a different organization",
+		},
+		{
+			Name:    "fk_worker_checklist_items_evidence_credential",
+			Message: "Evidence credential does not exist or belongs to a different organization",
+		},
+	}
+}
+
 // ChecklistProgress is the roll-up the UI rings and the DQF readiness rule
 // both read from.
 type ChecklistProgress struct {
@@ -627,6 +655,20 @@ func (t *WorkerChecklistTemplate) Instantiate(
 	return checklist
 }
 
+func (WorkerChecklistTemplate) Constraints() []keel.Constraint {
+	return []keel.Constraint{
+		{
+			Name:    "uq_worker_checklist_templates_code",
+			Message: "A checklist template with this code already exists",
+		},
+		{
+			Name:    "uq_worker_checklist_templates_default_trigger",
+			Field:   "isDefault",
+			Message: "Another checklist template is already the default for this trigger",
+		},
+	}
+}
+
 // ChecklistEvidence is what the auto-satisfy pass looks at: the worker's
 // active credentials by type, worker documents by type, and portal access.
 type ChecklistEvidence struct {
@@ -678,4 +720,21 @@ func (c *WorkerChecklist) AutoSatisfy(
 		changed = append(changed, item)
 	}
 	return changed
+}
+
+func (WorkerChecklist) Constraints() []keel.Constraint {
+	return []keel.Constraint{
+		{
+			Name:    "fk_worker_checklists_worker",
+			Message: "Worker does not exist or belongs to a different organization",
+		},
+		{
+			Name:    "fk_worker_checklists_template",
+			Message: "Checklist template does not exist or belongs to a different organization",
+		},
+		{
+			Name:    "fk_worker_checklists_source_event",
+			Message: "Employment event does not exist or belongs to a different organization",
+		},
+	}
 }

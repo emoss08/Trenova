@@ -4,7 +4,6 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/pkg/errortypes"
-	"github.com/emoss08/trenova/pkg/postgis"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -165,7 +164,7 @@ func TestPopulateVertices(t *testing.T) {
 	t.Run("polygon geometry hydrates vertices", func(t *testing.T) {
 		t.Parallel()
 
-		geometry, err := postgis.PolygonGeometry([]postgis.Vertex{
+		geometry, err := PolygonGeometry([]Vertex{
 			{Latitude: 0, Longitude: 0},
 			{Latitude: 1, Longitude: 0},
 			{Latitude: 1, Longitude: 1},

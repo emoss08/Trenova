@@ -188,3 +188,20 @@ func (n *DetentionNotice) BeforeUpdate(ctx context.Context) error {
 
 	return nil
 }
+
+func (DetentionNotice) Constraints() []keel.Constraint {
+	return []keel.Constraint{
+		{
+			Name:    "fk_detention_notices_occurrence",
+			Message: "Detention occurrence does not exist in your organization",
+		},
+		{
+			Name:    "fk_detention_notices_template_version",
+			Message: "Document template version does not exist in your organization",
+		},
+		{
+			Name:    "fk_detention_notices_pdf_document",
+			Message: "Document does not exist in your organization",
+		},
+	}
+}

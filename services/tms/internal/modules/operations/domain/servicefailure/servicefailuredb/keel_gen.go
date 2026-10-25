@@ -19,12 +19,13 @@ import (
 
 // reasonCodesTable is the schema of servicefailure.ReasonCode.
 var reasonCodesTable = schema.Table{
-	Name:   "service_failure_reason_codes",
-	Quoted: `"service_failure_reason_codes"`,
-	Alias:  "sfrc",
-	Model:  "servicefailure.ReasonCode",
-	Label:  `Reason Code`,
-	Plural: `Reason Codes`,
+	Name:        "service_failure_reason_codes",
+	Quoted:      `"service_failure_reason_codes"`,
+	Alias:       "sfrc",
+	Model:       "servicefailure.ReasonCode",
+	Label:       `Reason Code`,
+	Plural:      `Reason Codes`,
+	Constraints: (&servicefailure.ReasonCode{}).Constraints(),
 	Columns: []schema.Column{
 		{Name: "id", Quoted: `"id"`, Field: "ID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagAutoID, Label: `ID`, JSON: `id`},
 		{Name: "business_unit_id", Quoted: `"business_unit_id"`, Field: "BusinessUnitID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Business Unit ID`, JSON: `businessUnitId`},
@@ -348,12 +349,13 @@ func beforeUpdateReasonCode(ctx context.Context, p unsafe.Pointer) error {
 
 // serviceFailuresTable is the schema of servicefailure.ServiceFailure.
 var serviceFailuresTable = schema.Table{
-	Name:   "service_failures",
-	Quoted: `"service_failures"`,
-	Alias:  "sf",
-	Model:  "servicefailure.ServiceFailure",
-	Label:  `Service Failure`,
-	Plural: `Service Failures`,
+	Name:        "service_failures",
+	Quoted:      `"service_failures"`,
+	Alias:       "sf",
+	Model:       "servicefailure.ServiceFailure",
+	Label:       `Service Failure`,
+	Plural:      `Service Failures`,
+	Constraints: (&servicefailure.ServiceFailure{}).Constraints(),
 	Columns: []schema.Column{
 		{Name: "id", Quoted: `"id"`, Field: "ID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagAutoID, Label: `ID`, JSON: `id`},
 		{Name: "business_unit_id", Quoted: `"business_unit_id"`, Field: "BusinessUnitID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Business Unit ID`, JSON: `businessUnitId`},

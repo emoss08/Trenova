@@ -50,3 +50,13 @@ func (tot *TenderOfferToken) GetOrganizationID() pulid.ID {
 func (tot *TenderOfferToken) GetBusinessUnitID() pulid.ID {
 	return tot.BusinessUnitID
 }
+
+func (TenderOfferToken) Constraints() []keel.Constraint {
+	return []keel.Constraint{
+		{
+			Name:    "uq_tender_offer_tokens_hash",
+			Field:   "tokenHash",
+			Message: "Tender offer token already exists",
+		},
+	}
+}

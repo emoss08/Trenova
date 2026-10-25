@@ -16,39 +16,9 @@ import (
 	"go.uber.org/zap"
 )
 
-var carrierAssignmentErrors = dberror.Mapping{
-	Entity: "Carrier assignment",
-	Unique: []dberror.Constraint{
-		{
-			Name:    "idx_carrier_assignments_active_move",
-			Field:   "shipmentMoveId",
-			Message: "Move already has an active carrier assignment",
-		},
-	},
-	ForeignKey: []dberror.Constraint{
-		{
-			Name:    "fk_carrier_assignments_shipment_move",
-			Field:   "shipmentMoveId",
-			Message: "Move does not exist in your organization",
-		},
-		{
-			Name:    "fk_carrier_assignments_carrier",
-			Field:   "carrierId",
-			Message: "Carrier does not exist in your organization",
-		},
-	},
-}
+var carrierAssignmentErrors = dberror.Mapping{Entity: "Carrier assignment"}
 
-var accessorialErrors = dberror.Mapping{
-	Entity: "Carrier assignment accessorial",
-	ForeignKey: []dberror.Constraint{
-		{
-			Name:    "fk_carrier_assignment_accessorials_charge",
-			Field:   "accessorials.accessorialChargeId",
-			Message: "Accessorial charge does not exist in your organization",
-		},
-	},
-}
+var accessorialErrors = dberror.Mapping{Entity: "Carrier assignment accessorial"}
 
 type Params struct {
 	fx.In

@@ -7,6 +7,7 @@ import (
 	"unsafe"
 
 	"github.com/emoss08/keel"
+	"github.com/emoss08/keel/postgis"
 	"github.com/emoss08/keel/schema"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant/tenantdb"
@@ -25,14 +26,15 @@ import (
 
 // rateAgreementsTable is the schema of rateagreement.RateAgreement.
 var rateAgreementsTable = schema.Table{
-	Name:   "rate_agreements",
-	Quoted: `"rate_agreements"`,
-	Alias:  "ra",
-	Model:  "rateagreement.RateAgreement",
-	Label:  `Rate Agreement`,
-	Plural: `Rate Agreements`,
-	Doc:    `Negotiated customer and carrier contracts`,
-	Report: &schema.TableReport{Category: `Billing`},
+	Name:        "rate_agreements",
+	Quoted:      `"rate_agreements"`,
+	Alias:       "ra",
+	Model:       "rateagreement.RateAgreement",
+	Label:       `Rate Agreement`,
+	Plural:      `Rate Agreements`,
+	Doc:         `Negotiated customer and carrier contracts`,
+	Report:      &schema.TableReport{Category: `Billing`},
+	Constraints: (&rateagreement.RateAgreement{}).Constraints(),
 	Columns: []schema.Column{
 		{Name: "id", Quoted: `"id"`, Field: "ID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagAutoID, Label: `ID`, JSON: `id`, Report: &reportDimString},
 		{Name: "business_unit_id", Quoted: `"business_unit_id"`, Field: "BusinessUnitID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Business Unit ID`, JSON: `businessUnitId`, Report: &reportDimStringHidden},
@@ -498,14 +500,15 @@ func beforeSaveRateAgreement(ctx context.Context, p unsafe.Pointer) error {
 
 // rateAgreementAccessorialsTable is the schema of rateagreement.RateAgreementAccessorial.
 var rateAgreementAccessorialsTable = schema.Table{
-	Name:   "rate_agreement_accessorials",
-	Quoted: `"rate_agreement_accessorials"`,
-	Alias:  "raa",
-	Model:  "rateagreement.RateAgreementAccessorial",
-	Label:  `Contract Accessorial`,
-	Plural: `Contract Accessorials`,
-	Doc:    `The negotiated price of each accessorial under a contract`,
-	Report: &schema.TableReport{Category: `Billing`},
+	Name:        "rate_agreement_accessorials",
+	Quoted:      `"rate_agreement_accessorials"`,
+	Alias:       "raa",
+	Model:       "rateagreement.RateAgreementAccessorial",
+	Label:       `Contract Accessorial`,
+	Plural:      `Contract Accessorials`,
+	Doc:         `The negotiated price of each accessorial under a contract`,
+	Report:      &schema.TableReport{Category: `Billing`},
+	Constraints: (&rateagreement.RateAgreementAccessorial{}).Constraints(),
 	Columns: []schema.Column{
 		{Name: "id", Quoted: `"id"`, Field: "ID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagAutoID, Label: `ID`, JSON: `id`, Report: &reportDimString},
 		{Name: "business_unit_id", Quoted: `"business_unit_id"`, Field: "BusinessUnitID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Business Unit ID`, JSON: `businessUnitId`, Report: &reportDimStringHidden},
@@ -798,13 +801,14 @@ func beforeUpdateRateAgreementAccessorial(ctx context.Context, p unsafe.Pointer)
 
 // rateAgreementFuelBindingsTable is the schema of rateagreement.RateAgreementFuelBinding.
 var rateAgreementFuelBindingsTable = schema.Table{
-	Name:   "rate_agreement_fuel_bindings",
-	Quoted: `"rate_agreement_fuel_bindings"`,
-	Alias:  "rafb",
-	Model:  "rateagreement.RateAgreementFuelBinding",
-	Label:  `Rate Agreement Fuel Binding`,
-	Plural: `Rate Agreement Fuel Bindings`,
-	Doc:    "RateAgreementFuelBinding attaches a fuel surcharge program to a contract, and lets that contract bend the program's terms.\n\nFuel programs are organization-wide, and until now the only way to point a customer at one was through their billing profile — one program per customer, no matter how many contracts they hold. Real contracts negotiate fuel separately: a different peg, a capped surcharge, or none at all. Those are the three overrides here, and the resolution order the engine follows is agreement, then customer billing profile, then organization default.",
+	Name:        "rate_agreement_fuel_bindings",
+	Quoted:      `"rate_agreement_fuel_bindings"`,
+	Alias:       "rafb",
+	Model:       "rateagreement.RateAgreementFuelBinding",
+	Label:       `Rate Agreement Fuel Binding`,
+	Plural:      `Rate Agreement Fuel Bindings`,
+	Doc:         "RateAgreementFuelBinding attaches a fuel surcharge program to a contract, and lets that contract bend the program's terms.\n\nFuel programs are organization-wide, and until now the only way to point a customer at one was through their billing profile — one program per customer, no matter how many contracts they hold. Real contracts negotiate fuel separately: a different peg, a capped surcharge, or none at all. Those are the three overrides here, and the resolution order the engine follows is agreement, then customer billing profile, then organization default.",
+	Constraints: (&rateagreement.RateAgreementFuelBinding{}).Constraints(),
 	Columns: []schema.Column{
 		{Name: "id", Quoted: `"id"`, Field: "ID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagAutoID, Label: `ID`, JSON: `id`},
 		{Name: "business_unit_id", Quoted: `"business_unit_id"`, Field: "BusinessUnitID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Business Unit ID`, JSON: `businessUnitId`},
@@ -1116,8 +1120,8 @@ type RateAgreementRulesTable struct {
 	OriginLongitude         keel.Float64Col
 	DestinationLatitude     keel.Float64Col
 	DestinationLongitude    keel.Float64Col
-	OriginCenter            keelkinds.PostgisPointCol
-	DestinationCenter       keelkinds.PostgisPointCol
+	OriginCenter            postgis.PointCol
+	DestinationCenter       postgis.PointCol
 	ServiceTypeIDs          keel.JSONBCol
 	ShipmentTypeIDs         keel.JSONBCol
 	TractorTypeIDs          keel.JSONBCol
@@ -1174,8 +1178,8 @@ var RateAgreementRules = &RateAgreementRulesTable{
 	OriginLongitude:         keel.Float64Col{Col: keel.Col{Ref: &rateAgreementRulesRef, Index: 19}},
 	DestinationLatitude:     keel.Float64Col{Col: keel.Col{Ref: &rateAgreementRulesRef, Index: 20}},
 	DestinationLongitude:    keel.Float64Col{Col: keel.Col{Ref: &rateAgreementRulesRef, Index: 21}},
-	OriginCenter:            keelkinds.PostgisPointCol{AnyCol: keel.AnyCol{Col: keel.Col{Ref: &rateAgreementRulesRef, Index: 22}}},
-	DestinationCenter:       keelkinds.PostgisPointCol{AnyCol: keel.AnyCol{Col: keel.Col{Ref: &rateAgreementRulesRef, Index: 23}}},
+	OriginCenter:            postgis.PointCol{AnyCol: keel.AnyCol{Col: keel.Col{Ref: &rateAgreementRulesRef, Index: 22}}},
+	DestinationCenter:       postgis.PointCol{AnyCol: keel.AnyCol{Col: keel.Col{Ref: &rateAgreementRulesRef, Index: 23}}},
 	ServiceTypeIDs:          keel.JSONBCol{Col: keel.Col{Ref: &rateAgreementRulesRef, Index: 24}},
 	ShipmentTypeIDs:         keel.JSONBCol{Col: keel.Col{Ref: &rateAgreementRulesRef, Index: 25}},
 	TractorTypeIDs:          keel.JSONBCol{Col: keel.Col{Ref: &rateAgreementRulesRef, Index: 26}},
@@ -1233,8 +1237,8 @@ func BuildRateAgreementRules(r *keel.Ref) *RateAgreementRulesTable {
 		OriginLongitude:         keel.Float64Col{Col: keel.Col{Ref: r, Index: 19}},
 		DestinationLatitude:     keel.Float64Col{Col: keel.Col{Ref: r, Index: 20}},
 		DestinationLongitude:    keel.Float64Col{Col: keel.Col{Ref: r, Index: 21}},
-		OriginCenter:            keelkinds.PostgisPointCol{AnyCol: keel.AnyCol{Col: keel.Col{Ref: r, Index: 22}}},
-		DestinationCenter:       keelkinds.PostgisPointCol{AnyCol: keel.AnyCol{Col: keel.Col{Ref: r, Index: 23}}},
+		OriginCenter:            postgis.PointCol{AnyCol: keel.AnyCol{Col: keel.Col{Ref: r, Index: 22}}},
+		DestinationCenter:       postgis.PointCol{AnyCol: keel.AnyCol{Col: keel.Col{Ref: r, Index: 23}}},
 		ServiceTypeIDs:          keel.JSONBCol{Col: keel.Col{Ref: r, Index: 24}},
 		ShipmentTypeIDs:         keel.JSONBCol{Col: keel.Col{Ref: r, Index: 25}},
 		TractorTypeIDs:          keel.JSONBCol{Col: keel.Col{Ref: r, Index: 26}},
@@ -1621,14 +1625,15 @@ func beforeUpdateRateAgreementRule(ctx context.Context, p unsafe.Pointer) error 
 
 // rateAgreementVersionsTable is the schema of rateagreement.RateAgreementVersion.
 var rateAgreementVersionsTable = schema.Table{
-	Name:   "rate_agreement_versions",
-	Quoted: `"rate_agreement_versions"`,
-	Alias:  "rav",
-	Model:  "rateagreement.RateAgreementVersion",
-	Label:  `Agreement Version`,
-	Plural: `Agreement Versions`,
-	Doc:    `What a contract said at each revision, and why it changed`,
-	Report: &schema.TableReport{Category: `Billing`},
+	Name:        "rate_agreement_versions",
+	Quoted:      `"rate_agreement_versions"`,
+	Alias:       "rav",
+	Model:       "rateagreement.RateAgreementVersion",
+	Label:       `Agreement Version`,
+	Plural:      `Agreement Versions`,
+	Doc:         `What a contract said at each revision, and why it changed`,
+	Report:      &schema.TableReport{Category: `Billing`},
+	Constraints: (&rateagreement.RateAgreementVersion{}).Constraints(),
 	Columns: []schema.Column{
 		{Name: "id", Quoted: `"id"`, Field: "ID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagAutoID, Label: `ID`, JSON: `id`, Report: &reportDimString},
 		{Name: "business_unit_id", Quoted: `"business_unit_id"`, Field: "BusinessUnitID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Business Unit ID`, JSON: `businessUnitId`, Report: &reportDimStringHidden},

@@ -44,6 +44,15 @@ func (n *Notification) IdempotencyKey() string {
 	return "customer-status-" + n.ID.String()
 }
 
+func (Notification) Constraints() []keel.Constraint {
+	return []keel.Constraint{
+		{
+			Name:    "fk_customer_status_notifications_shipment",
+			Message: "Shipment does not exist in your organization",
+		},
+	}
+}
+
 // RetryDelaySeconds backs a failed delivery off exponentially from a minute to
 // an hour, so a mail provider outage is ridden out without hammering it.
 func RetryDelaySeconds(attempts int16) int64 {

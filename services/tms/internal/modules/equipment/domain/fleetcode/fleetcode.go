@@ -93,3 +93,13 @@ func (fc *FleetCode) GetPostgresSearchConfig() domaintypes.PostgresSearchConfig 
 		},
 	}
 }
+
+func (FleetCode) Constraints() []keel.Constraint {
+	return []keel.Constraint{
+		{
+			Name:    "fk_fleet_codes_manager",
+			Field:   "managerId",
+			Message: "Manager does not exist or is not a member of your organization",
+		},
+	}
+}

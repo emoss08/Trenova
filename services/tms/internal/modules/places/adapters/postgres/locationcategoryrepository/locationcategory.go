@@ -16,16 +16,7 @@ import (
 	"go.uber.org/zap"
 )
 
-var locationCategoryErrors = dberror.Mapping{
-	Entity: "LocationCategory",
-	Unique: []dberror.Constraint{
-		{
-			Name:    "idx_location_categories_name",
-			Field:   "name",
-			Message: "Location category with this name already exists in your organization",
-		},
-	},
-}
+var locationCategoryErrors = dberror.Mapping{Entity: "LocationCategory"}
 
 type Params struct {
 	fx.In

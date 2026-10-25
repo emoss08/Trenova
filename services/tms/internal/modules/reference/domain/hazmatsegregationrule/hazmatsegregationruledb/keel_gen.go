@@ -17,12 +17,13 @@ import (
 
 // hazmatSegregationRulesTable is the schema of hazmatsegregationrule.HazmatSegregationRule.
 var hazmatSegregationRulesTable = schema.Table{
-	Name:   "hazmat_segregation_rules",
-	Quoted: `"hazmat_segregation_rules"`,
-	Alias:  "hsr",
-	Model:  "hazmatsegregationrule.HazmatSegregationRule",
-	Label:  `Hazmat Segregation Rule`,
-	Plural: `Hazmat Segregation Rules`,
+	Name:        "hazmat_segregation_rules",
+	Quoted:      `"hazmat_segregation_rules"`,
+	Alias:       "hsr",
+	Model:       "hazmatsegregationrule.HazmatSegregationRule",
+	Label:       `Hazmat Segregation Rule`,
+	Plural:      `Hazmat Segregation Rules`,
+	Constraints: (&hazmatsegregationrule.HazmatSegregationRule{}).Constraints(),
 	Columns: []schema.Column{
 		{Name: "id", Quoted: `"id"`, Field: "ID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagAutoID, Label: `ID`, JSON: `id`},
 		{Name: "business_unit_id", Quoted: `"business_unit_id"`, Field: "BusinessUnitID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Business Unit ID`, JSON: `businessUnitId`},

@@ -109,6 +109,15 @@ func (e *Extraction) Validate(multiErr *errortypes.MultiError) {
 	))
 }
 
+func (Extraction) Constraints() []keel.Constraint {
+	return []keel.Constraint{
+		{
+			Name:    "fk_document_ai_extractions_document",
+			Message: "Document does not exist",
+		},
+	}
+}
+
 const (
 	maxRequestHashLength   = 64
 	maxWorkflowFieldLength = 255

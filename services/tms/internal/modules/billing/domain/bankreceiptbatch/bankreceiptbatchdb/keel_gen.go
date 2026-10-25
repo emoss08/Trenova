@@ -15,12 +15,13 @@ import (
 
 // bankReceiptBatchesTable is the schema of bankreceiptbatch.BankReceiptBatch.
 var bankReceiptBatchesTable = schema.Table{
-	Name:   "bank_receipt_import_batches",
-	Quoted: `"bank_receipt_import_batches"`,
-	Alias:  "brib",
-	Model:  "bankreceiptbatch.BankReceiptBatch",
-	Label:  `Bank Receipt Batch`,
-	Plural: `Bank Receipt Batches`,
+	Name:        "bank_receipt_import_batches",
+	Quoted:      `"bank_receipt_import_batches"`,
+	Alias:       "brib",
+	Model:       "bankreceiptbatch.BankReceiptBatch",
+	Label:       `Bank Receipt Batch`,
+	Plural:      `Bank Receipt Batches`,
+	Constraints: (&bankreceiptbatch.BankReceiptBatch{}).Constraints(),
 	Columns: []schema.Column{
 		{Name: "id", Quoted: `"id"`, Field: "ID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagAutoID, Label: `ID`, JSON: `id`},
 		{Name: "organization_id", Quoted: `"organization_id"`, Field: "OrganizationID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Organization ID`, JSON: `organizationId`},

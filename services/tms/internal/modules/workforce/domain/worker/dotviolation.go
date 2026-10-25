@@ -342,3 +342,28 @@ func (v *WorkerDOTViolation) BeforeCreate(_ context.Context) error {
 
 	return nil
 }
+
+func (WorkerDOTViolation) Constraints() []keel.Constraint {
+	return []keel.Constraint{
+		{
+			Name:    "uq_worker_dot_violations_open",
+			Message: "This worker already has an unresolved violation; record the new one against it",
+		},
+		{
+			Name:    "fk_worker_dot_violations_source_test",
+			Message: "Source test does not exist or belongs to a different organization",
+		},
+		{
+			Name:    "fk_worker_dot_violations_rtd_test",
+			Message: "Return-to-duty test does not exist or belongs to a different organization",
+		},
+		{
+			Name:    "fk_worker_dot_violations_worker",
+			Message: "Worker does not exist or belongs to a different organization",
+		},
+		{
+			Name:    "fk_worker_dot_violations_document",
+			Message: "Document does not exist or belongs to a different organization",
+		},
+	}
+}

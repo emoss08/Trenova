@@ -18,21 +18,7 @@ import (
 	"go.uber.org/zap"
 )
 
-var runErrors = dberror.Mapping{
-	Entity: "Invoice run",
-	Unique: []dberror.Constraint{
-		{
-			Name:    "uk_invoice_runs_number",
-			Field:   "number",
-			Message: "Invoice run with this number already exists in your organization",
-		},
-		{
-			Name:    "uq_invoice_runs_scheduled_period",
-			Field:   "periodEnd",
-			Message: "A scheduled invoice run already exists for this cycle and period",
-		},
-	},
-}
+var runErrors = dberror.Mapping{Entity: "Invoice run"}
 
 var groupErrors = dberror.Mapping{Entity: "Invoice run group"}
 

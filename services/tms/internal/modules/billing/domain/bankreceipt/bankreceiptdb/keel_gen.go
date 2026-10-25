@@ -17,14 +17,15 @@ import (
 
 // bankReceiptsTable is the schema of bankreceipt.BankReceipt.
 var bankReceiptsTable = schema.Table{
-	Name:   "bank_receipts",
-	Quoted: `"bank_receipts"`,
-	Alias:  "br",
-	Model:  "bankreceipt.BankReceipt",
-	Label:  `Bank Receipt`,
-	Plural: `Bank Receipts`,
-	Doc:    `Deposits read off the bank statement and their match state`,
-	Report: &schema.TableReport{Category: `Accounting`},
+	Name:        "bank_receipts",
+	Quoted:      `"bank_receipts"`,
+	Alias:       "br",
+	Model:       "bankreceipt.BankReceipt",
+	Label:       `Bank Receipt`,
+	Plural:      `Bank Receipts`,
+	Doc:         `Deposits read off the bank statement and their match state`,
+	Report:      &schema.TableReport{Category: `Accounting`},
+	Constraints: (&bankreceipt.BankReceipt{}).Constraints(),
 	Columns: []schema.Column{
 		{Name: "id", Quoted: `"id"`, Field: "ID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagAutoID, Label: `ID`, JSON: `id`, Report: &reportDimString},
 		{Name: "organization_id", Quoted: `"organization_id"`, Field: "OrganizationID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Organization ID`, JSON: `organizationId`, Report: &reportDimStringHidden},

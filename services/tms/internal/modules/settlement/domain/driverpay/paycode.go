@@ -135,6 +135,16 @@ func (p *PayCode) BeforeCreate(ctx context.Context) error {
 	return nil
 }
 
+func (PayCode) Constraints() []keel.Constraint {
+	return []keel.Constraint{
+		{
+			Name:    "uq_pay_codes_org_direction_code",
+			Field:   "code",
+			Message: "Pay code with this code and direction already exists in your organization",
+		},
+	}
+}
+
 type SystemPayCode struct {
 	Direction PayCodeDirection
 	Code      string

@@ -18,16 +18,7 @@ import (
 	"go.uber.org/zap"
 )
 
-var balanceErrors = dberror.Mapping{
-	Entity: "WorkerPTOBalance",
-	ForeignKey: []dberror.Constraint{
-		{
-			Name:    "fk_worker_pto_balances_worker",
-			Field:   "workerId",
-			Message: "Worker does not exist or belongs to a different organization",
-		},
-	},
-}
+var balanceErrors = dberror.Mapping{Entity: "WorkerPTOBalance"}
 
 type Params struct {
 	fx.In

@@ -20,16 +20,7 @@ import (
 
 const busyMessage = "Distance profile is busy. Retry the request."
 
-var distanceProfileErrors = dberror.Mapping{
-	Entity: "DistanceProfile",
-	Unique: []dberror.Constraint{
-		{
-			Name:    "uq_distance_profiles_default",
-			Field:   "isDefault",
-			Message: "Another distance profile is already the default",
-		},
-	},
-}
+var distanceProfileErrors = dberror.Mapping{Entity: "DistanceProfile"}
 
 type Params struct {
 	fx.In

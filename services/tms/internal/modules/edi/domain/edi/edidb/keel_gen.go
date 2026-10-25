@@ -571,12 +571,13 @@ func valueEDICodeListDefinition(p unsafe.Pointer, c int32) any {
 
 // eDICommunicationProfilesTable is the schema of edi.EDICommunicationProfile.
 var eDICommunicationProfilesTable = schema.Table{
-	Name:   "edi_communication_profiles",
-	Quoted: `"edi_communication_profiles"`,
-	Alias:  "ecp",
-	Model:  "edi.EDICommunicationProfile",
-	Label:  `EDI Communication Profile`,
-	Plural: `EDI Communication Profiles`,
+	Name:        "edi_communication_profiles",
+	Quoted:      `"edi_communication_profiles"`,
+	Alias:       "ecp",
+	Model:       "edi.EDICommunicationProfile",
+	Label:       `EDI Communication Profile`,
+	Plural:      `EDI Communication Profiles`,
+	Constraints: (&edi.EDICommunicationProfile{}).Constraints(),
 	Columns: []schema.Column{
 		{Name: "id", Quoted: `"id"`, Field: "ID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagAutoID, Label: `ID`, JSON: `id`},
 		{Name: "business_unit_id", Quoted: `"business_unit_id"`, Field: "BusinessUnitID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Business Unit ID`, JSON: `businessUnitId`},
@@ -869,12 +870,13 @@ func beforeSaveEDICommunicationProfile(ctx context.Context, p unsafe.Pointer) er
 
 // eDIConnectionsTable is the schema of edi.EDIConnection.
 var eDIConnectionsTable = schema.Table{
-	Name:   "edi_connections",
-	Quoted: `"edi_connections"`,
-	Alias:  "ec",
-	Model:  "edi.EDIConnection",
-	Label:  `EDI Connection`,
-	Plural: `EDI Connections`,
+	Name:        "edi_connections",
+	Quoted:      `"edi_connections"`,
+	Alias:       "ec",
+	Model:       "edi.EDIConnection",
+	Label:       `EDI Connection`,
+	Plural:      `EDI Connections`,
+	Constraints: (&edi.EDIConnection{}).Constraints(),
 	Columns: []schema.Column{
 		{Name: "id", Quoted: `"id"`, Field: "ID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagAutoID, Label: `ID`, JSON: `id`},
 		{Name: "business_unit_id", Quoted: `"business_unit_id"`, Field: "BusinessUnitID", Kind: schema.KindString, Flags: schema.FlagTenant, Label: `Business Unit ID`, JSON: `businessUnitId`},
@@ -3159,12 +3161,13 @@ func valueEDIMessageValidationError(p unsafe.Pointer, c int32) any {
 
 // eDIPartnersTable is the schema of edi.EDIPartner.
 var eDIPartnersTable = schema.Table{
-	Name:   "edi_partners",
-	Quoted: `"edi_partners"`,
-	Alias:  "ep",
-	Model:  "edi.EDIPartner",
-	Label:  `EDI Partner`,
-	Plural: `EDI Partners`,
+	Name:        "edi_partners",
+	Quoted:      `"edi_partners"`,
+	Alias:       "ep",
+	Model:       "edi.EDIPartner",
+	Label:       `EDI Partner`,
+	Plural:      `EDI Partners`,
+	Constraints: (&edi.EDIPartner{}).Constraints(),
 	Columns: []schema.Column{
 		{Name: "id", Quoted: `"id"`, Field: "ID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagAutoID, Label: `ID`, JSON: `id`},
 		{Name: "business_unit_id", Quoted: `"business_unit_id"`, Field: "BusinessUnitID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Business Unit ID`, JSON: `businessUnitId`},
@@ -4827,12 +4830,13 @@ func attachEDISourceContextSchema(p unsafe.Pointer, rel int32, child unsafe.Poin
 
 // eDITemplatesTable is the schema of edi.EDITemplate.
 var eDITemplatesTable = schema.Table{
-	Name:   "edi_templates",
-	Quoted: `"edi_templates"`,
-	Alias:  "et",
-	Model:  "edi.EDITemplate",
-	Label:  `EDI Template`,
-	Plural: `EDI Templates`,
+	Name:        "edi_templates",
+	Quoted:      `"edi_templates"`,
+	Alias:       "et",
+	Model:       "edi.EDITemplate",
+	Label:       `EDI Template`,
+	Plural:      `EDI Templates`,
+	Constraints: (&edi.EDITemplate{}).Constraints(),
 	Columns: []schema.Column{
 		{Name: "id", Quoted: `"id"`, Field: "ID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagAutoID, Label: `ID`, JSON: `id`},
 		{Name: "business_unit_id", Quoted: `"business_unit_id"`, Field: "BusinessUnitID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Business Unit ID`, JSON: `businessUnitId`},
@@ -5055,12 +5059,13 @@ func attachEDITemplate(p unsafe.Pointer, rel int32, child unsafe.Pointer) {
 
 // eDITemplateScriptLibrariesTable is the schema of edi.EDITemplateScriptLibrary.
 var eDITemplateScriptLibrariesTable = schema.Table{
-	Name:   "edi_template_script_libraries",
-	Quoted: `"edi_template_script_libraries"`,
-	Alias:  "etsl",
-	Model:  "edi.EDITemplateScriptLibrary",
-	Label:  `EDI Template Script Library`,
-	Plural: `EDI Template Script Libraries`,
+	Name:        "edi_template_script_libraries",
+	Quoted:      `"edi_template_script_libraries"`,
+	Alias:       "etsl",
+	Model:       "edi.EDITemplateScriptLibrary",
+	Label:       `EDI Template Script Library`,
+	Plural:      `EDI Template Script Libraries`,
+	Constraints: (&edi.EDITemplateScriptLibrary{}).Constraints(),
 	Columns: []schema.Column{
 		{Name: "id", Quoted: `"id"`, Field: "ID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagAutoID, Label: `ID`, JSON: `id`},
 		{Name: "business_unit_id", Quoted: `"business_unit_id"`, Field: "BusinessUnitID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Business Unit ID`, JSON: `businessUnitId`},
@@ -5491,12 +5496,13 @@ func beforeSaveEDITemplateSegment(ctx context.Context, p unsafe.Pointer) error {
 
 // eDITemplateVersionsTable is the schema of edi.EDITemplateVersion.
 var eDITemplateVersionsTable = schema.Table{
-	Name:   "edi_template_versions",
-	Quoted: `"edi_template_versions"`,
-	Alias:  "etv",
-	Model:  "edi.EDITemplateVersion",
-	Label:  `EDI Template Version`,
-	Plural: `EDI Template Versions`,
+	Name:        "edi_template_versions",
+	Quoted:      `"edi_template_versions"`,
+	Alias:       "etv",
+	Model:       "edi.EDITemplateVersion",
+	Label:       `EDI Template Version`,
+	Plural:      `EDI Template Versions`,
+	Constraints: (&edi.EDITemplateVersion{}).Constraints(),
 	Columns: []schema.Column{
 		{Name: "id", Quoted: `"id"`, Field: "ID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagAutoID, Label: `ID`, JSON: `id`},
 		{Name: "business_unit_id", Quoted: `"business_unit_id"`, Field: "BusinessUnitID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Business Unit ID`, JSON: `businessUnitId`},
@@ -5895,12 +5901,13 @@ func attachEDITemplateVersion(p unsafe.Pointer, rel int32, child unsafe.Pointer)
 
 // eDITestCasesTable is the schema of edi.EDITestCase.
 var eDITestCasesTable = schema.Table{
-	Name:   "edi_test_cases",
-	Quoted: `"edi_test_cases"`,
-	Alias:  "etc",
-	Model:  "edi.EDITestCase",
-	Label:  `EDI Test Case`,
-	Plural: `EDI Test Cases`,
+	Name:        "edi_test_cases",
+	Quoted:      `"edi_test_cases"`,
+	Alias:       "etc",
+	Model:       "edi.EDITestCase",
+	Label:       `EDI Test Case`,
+	Plural:      `EDI Test Cases`,
+	Constraints: (&edi.EDITestCase{}).Constraints(),
 	Columns: []schema.Column{
 		{Name: "id", Quoted: `"id"`, Field: "ID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagAutoID, Label: `ID`, JSON: `id`},
 		{Name: "business_unit_id", Quoted: `"business_unit_id"`, Field: "BusinessUnitID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Business Unit ID`, JSON: `businessUnitId`},

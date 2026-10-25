@@ -349,6 +349,23 @@ func (c *WorkerLeaveCase) BeforeCreate(_ context.Context) error {
 	return nil
 }
 
+func (WorkerLeaveCase) Constraints() []keel.Constraint {
+	return []keel.Constraint{
+		{
+			Name:    "fk_worker_leave_cases_worker",
+			Message: "Worker does not exist or belongs to a different organization",
+		},
+		{
+			Name:    "fk_worker_leave_cases_event",
+			Message: "Employment event does not exist or belongs to a different organization",
+		},
+		{
+			Name:    "fk_worker_leave_cases_document",
+			Message: "Document does not exist or belongs to a different organization",
+		},
+	}
+}
+
 var (
 	_ validationframework.TenantedEntity = (*WorkerLeaveEntry)(nil)
 )
@@ -418,3 +435,25 @@ func (e *WorkerLeaveEntry) GetTableName() string { return "worker_leave_entries"
 func (e *WorkerLeaveEntry) GetResourceType() string { return "worker_leave_entry" }
 
 func (e *WorkerLeaveEntry) GetResourceID() string { return e.ID.String() }
+
+func (WorkerLeaveEntry) Constraints() []keel.Constraint {
+	return []keel.Constraint{
+		{
+			Name:    "uq_worker_leave_entries_day",
+			Field:   "usedOn",
+			Message: "That day is already recorded against this case; edit it instead",
+		},
+		{
+			Name:    "fk_worker_leave_entries_worker",
+			Message: "Worker does not exist or belongs to a different organization",
+		},
+		{
+			Name:    "fk_worker_leave_entries_case",
+			Message: "Leave case does not exist or belongs to a different organization",
+		},
+		{
+			Name:    "fk_worker_leave_entries_pto",
+			Message: "Time off request does not exist for this worker",
+		},
+	}
+}

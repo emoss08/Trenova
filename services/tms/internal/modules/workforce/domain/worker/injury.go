@@ -494,3 +494,25 @@ func (i *WorkerInjury) BeforeCreate(_ context.Context) error {
 
 	return nil
 }
+
+func (WorkerInjury) Constraints() []keel.Constraint {
+	return []keel.Constraint{
+		{
+			Name:    "uq_worker_injuries_case",
+			Field:   "caseNumber",
+			Message: "That case number is already used for this year; try again",
+		},
+		{
+			Name:    "fk_worker_injuries_worker",
+			Message: "Worker does not exist or belongs to a different organization",
+		},
+		{
+			Name:    "fk_worker_injuries_safety_event",
+			Message: "Safety event does not exist or belongs to a different organization",
+		},
+		{
+			Name:    "fk_worker_injuries_document",
+			Message: "Document does not exist or belongs to a different organization",
+		},
+	}
+}

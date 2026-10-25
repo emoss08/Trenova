@@ -12,6 +12,12 @@ type TxOptions struct {
 	Isolation   sql.IsolationLevel
 	ReadOnly    bool
 	LockTimeout time.Duration
+	Settings    []TxSetting
+}
+
+type TxSetting struct {
+	Name  string
+	Value string
 }
 
 type Transactor interface {

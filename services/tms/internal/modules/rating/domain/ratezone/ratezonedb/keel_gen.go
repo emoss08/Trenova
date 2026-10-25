@@ -15,12 +15,13 @@ import (
 
 // rateZonesTable is the schema of ratezone.RateZone.
 var rateZonesTable = schema.Table{
-	Name:   "rate_zones",
-	Quoted: `"rate_zones"`,
-	Alias:  "rz",
-	Model:  "ratezone.RateZone",
-	Label:  `Rate Zone`,
-	Plural: `Rate Zones`,
+	Name:        "rate_zones",
+	Quoted:      `"rate_zones"`,
+	Alias:       "rz",
+	Model:       "ratezone.RateZone",
+	Label:       `Rate Zone`,
+	Plural:      `Rate Zones`,
+	Constraints: (&ratezone.RateZone{}).Constraints(),
 	Columns: []schema.Column{
 		{Name: "id", Quoted: `"id"`, Field: "ID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagAutoID, Label: `ID`, JSON: `id`},
 		{Name: "business_unit_id", Quoted: `"business_unit_id"`, Field: "BusinessUnitID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Business Unit ID`, JSON: `businessUnitId`},
@@ -224,13 +225,14 @@ func beforeCreateRateZone(ctx context.Context, p unsafe.Pointer) error {
 
 // rateZoneMembersTable is the schema of ratezone.RateZoneMember.
 var rateZoneMembersTable = schema.Table{
-	Name:   "rate_zone_members",
-	Quoted: `"rate_zone_members"`,
-	Alias:  "rzm",
-	Model:  "ratezone.RateZoneMember",
-	Label:  `Rate Zone Member`,
-	Plural: `Rate Zone Members`,
-	Doc:    "RateZoneMember is one place that belongs to a zone.\n\nA member names a place with the same vocabulary a rate rule uses, so a zone is exactly a union of the primitive scopes. Zones deliberately cannot contain other zones: nesting would turn membership from an indexed lookup into a graph walk, and the rating path cannot afford that.",
+	Name:        "rate_zone_members",
+	Quoted:      `"rate_zone_members"`,
+	Alias:       "rzm",
+	Model:       "ratezone.RateZoneMember",
+	Label:       `Rate Zone Member`,
+	Plural:      `Rate Zone Members`,
+	Doc:         "RateZoneMember is one place that belongs to a zone.\n\nA member names a place with the same vocabulary a rate rule uses, so a zone is exactly a union of the primitive scopes. Zones deliberately cannot contain other zones: nesting would turn membership from an indexed lookup into a graph walk, and the rating path cannot afford that.",
+	Constraints: (&ratezone.RateZoneMember{}).Constraints(),
 	Columns: []schema.Column{
 		{Name: "id", Quoted: `"id"`, Field: "ID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagAutoID, Label: `ID`, JSON: `id`},
 		{Name: "business_unit_id", Quoted: `"business_unit_id"`, Field: "BusinessUnitID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Business Unit ID`, JSON: `businessUnitId`},

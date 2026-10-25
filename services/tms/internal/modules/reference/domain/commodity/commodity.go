@@ -188,3 +188,16 @@ func (c *Commodity) GetPostgresSearchConfig() domaintypes.PostgresSearchConfig {
 		},
 	}
 }
+
+func (Commodity) Constraints() []keel.Constraint {
+	return []keel.Constraint{
+		{
+			Name:    "idx_commodities_name",
+			Message: "Commodity with this name already exists in your organization",
+		},
+		{
+			Name:    "fk_commodities_hazardous_material",
+			Message: "Hazardous material does not exist or belongs to a different organization",
+		},
+	}
+}

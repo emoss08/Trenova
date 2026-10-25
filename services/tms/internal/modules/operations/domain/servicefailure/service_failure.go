@@ -247,6 +247,23 @@ func (sf *ServiceFailure) ensureIdentity() {
 	}
 }
 
+func (ServiceFailure) Constraints() []keel.Constraint {
+	return []keel.Constraint{
+		{
+			Name:    "fk_sf_reason_code",
+			Message: "Reason code does not exist in your organization",
+		},
+		{
+			Name:    "ux_sf_active_stop_type",
+			Message: "An unresolved service failure already exists for this stop",
+		},
+		{
+			Name:    "ux_sf_tenant_number",
+			Message: "Service failure number already exists",
+		},
+	}
+}
+
 func serviceFailureNumber(id pulid.ID) string {
 	value := strings.TrimPrefix(id.String(), "sf_")
 	if len(value) > 12 {

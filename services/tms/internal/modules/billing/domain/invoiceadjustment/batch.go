@@ -80,6 +80,15 @@ func (b *InvoiceAdjustmentBatch) Validate(multiErr *errortypes.MultiError) {
 	))
 }
 
+func (InvoiceAdjustmentBatch) Constraints() []keel.Constraint {
+	return []keel.Constraint{
+		{
+			Name:    "uq_invoice_adjustment_batches_idempotency",
+			Message: "An adjustment batch with this idempotency key already exists",
+		},
+	}
+}
+
 func (i *InvoiceAdjustmentBatchItem) Validate(multiErr *errortypes.MultiError) {
 	multiErr.AddOzzoError(validation.ValidateStruct(i,
 		validation.Field(&i.OrganizationID,
@@ -114,6 +123,15 @@ func (i *InvoiceAdjustmentBatchItem) Validate(multiErr *errortypes.MultiError) {
 			),
 		),
 	))
+}
+
+func (InvoiceAdjustmentBatchItem) Constraints() []keel.Constraint {
+	return []keel.Constraint{
+		{
+			Name:    "uq_invoice_adjustment_batch_items_idempotency",
+			Message: "An adjustment batch item with this idempotency key already exists",
+		},
+	}
 }
 
 const maxBatchIdempotencyKeyLength = 200

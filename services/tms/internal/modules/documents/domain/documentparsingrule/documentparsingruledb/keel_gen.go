@@ -15,12 +15,13 @@ import (
 
 // fixturesTable is the schema of documentparsingrule.Fixture.
 var fixturesTable = schema.Table{
-	Name:   "document_parsing_rule_fixtures",
-	Quoted: `"document_parsing_rule_fixtures"`,
-	Alias:  "dprf",
-	Model:  "documentparsingrule.Fixture",
-	Label:  `Fixture`,
-	Plural: `Fixtures`,
+	Name:        "document_parsing_rule_fixtures",
+	Quoted:      `"document_parsing_rule_fixtures"`,
+	Alias:       "dprf",
+	Model:       "documentparsingrule.Fixture",
+	Label:       `Fixture`,
+	Plural:      `Fixtures`,
+	Constraints: (&documentparsingrule.Fixture{}).Constraints(),
 	Columns: []schema.Column{
 		{Name: "id", Quoted: `"id"`, Field: "ID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagAutoID, Label: `ID`, JSON: `id`},
 		{Name: "rule_set_id", Quoted: `"rule_set_id"`, Field: "RuleSetID", Kind: schema.KindString, Flags: 0, Label: `Rule Set ID`, JSON: `ruleSetId`},
@@ -224,12 +225,13 @@ func beforeCreateFixture(ctx context.Context, p unsafe.Pointer) error {
 
 // ruleSetsTable is the schema of documentparsingrule.RuleSet.
 var ruleSetsTable = schema.Table{
-	Name:   "document_parsing_rule_sets",
-	Quoted: `"document_parsing_rule_sets"`,
-	Alias:  "dprs",
-	Model:  "documentparsingrule.RuleSet",
-	Label:  `Rule Set`,
-	Plural: `Rule Sets`,
+	Name:        "document_parsing_rule_sets",
+	Quoted:      `"document_parsing_rule_sets"`,
+	Alias:       "dprs",
+	Model:       "documentparsingrule.RuleSet",
+	Label:       `Rule Set`,
+	Plural:      `Rule Sets`,
+	Constraints: (&documentparsingrule.RuleSet{}).Constraints(),
 	Columns: []schema.Column{
 		{Name: "id", Quoted: `"id"`, Field: "ID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagAutoID, Label: `ID`, JSON: `id`},
 		{Name: "organization_id", Quoted: `"organization_id"`, Field: "OrganizationID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Organization ID`, JSON: `organizationId`},
@@ -403,12 +405,13 @@ func beforeCreateRuleSet(ctx context.Context, p unsafe.Pointer) error {
 
 // ruleVersionsTable is the schema of documentparsingrule.RuleVersion.
 var ruleVersionsTable = schema.Table{
-	Name:   "document_parsing_rule_versions",
-	Quoted: `"document_parsing_rule_versions"`,
-	Alias:  "dprv",
-	Model:  "documentparsingrule.RuleVersion",
-	Label:  `Rule Version`,
-	Plural: `Rule Versions`,
+	Name:        "document_parsing_rule_versions",
+	Quoted:      `"document_parsing_rule_versions"`,
+	Alias:       "dprv",
+	Model:       "documentparsingrule.RuleVersion",
+	Label:       `Rule Version`,
+	Plural:      `Rule Versions`,
+	Constraints: (&documentparsingrule.RuleVersion{}).Constraints(),
 	Columns: []schema.Column{
 		{Name: "id", Quoted: `"id"`, Field: "ID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagAutoID, Label: `ID`, JSON: `id`},
 		{Name: "rule_set_id", Quoted: `"rule_set_id"`, Field: "RuleSetID", Kind: schema.KindString, Flags: 0, Label: `Rule Set ID`, JSON: `ruleSetId`},

@@ -185,3 +185,12 @@ func (r *RecurringDeduction) BeforeCreate(ctx context.Context) error {
 
 	return nil
 }
+
+func (RecurringDeduction) Constraints() []keel.Constraint {
+	return []keel.Constraint{
+		{
+			Name:    "fk_recurring_deductions_pay_code",
+			Message: "Pay code does not exist in your organization",
+		},
+	}
+}

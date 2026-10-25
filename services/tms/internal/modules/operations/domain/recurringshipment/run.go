@@ -88,3 +88,12 @@ func (r *RecurringShipmentRun) Validate(multiErr *errortypes.MultiError) {
 		),
 	))
 }
+
+func (RecurringShipmentRun) Constraints() []keel.Constraint {
+	return []keel.Constraint{
+		{
+			Name:    "fk_recurring_shipment_runs_series",
+			Message: "Recurring shipment does not exist in your organization",
+		},
+	}
+}

@@ -300,3 +300,16 @@ func (v *WorkerEmploymentVerification) BeforeCreate(_ context.Context) error {
 
 	return nil
 }
+
+func (WorkerEmploymentVerification) Constraints() []keel.Constraint {
+	return []keel.Constraint{
+		{
+			Name:    "fk_worker_employment_verifications_worker",
+			Message: "Worker does not exist or belongs to a different organization",
+		},
+		{
+			Name:    "fk_worker_employment_verifications_document",
+			Message: "Document does not exist or belongs to a different organization",
+		},
+	}
+}

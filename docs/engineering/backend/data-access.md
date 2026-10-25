@@ -55,30 +55,46 @@ Shape: an fx `Params{DB *postgres.Connection; Logger}`, an unexported `repositor
   policy wider than the tenant scope (a person reads their own memberships in every organization)
   writes the policy's rule into the query and runs under a system scope
   (`userrepository.membershipReadScope`).
-- **Errors.** Declare one `dberror.Mapping` per entity with the constraints a caller can hit
-  (names from the migration) and pass every keel error through `Map(err, id)`:
+- **Errors.** keel returns every constraint violation as a `*keel.ConstraintError` resolved
+  against the model: the constraint's columns without the tenant columns (index expressions such
+  as `lower(code)` and partial-index predicates included), their JSON field names, and the message
+  the model declares. Declare the constraints a user can hit on the model, with the migration's
+  names; keel gen records them and the schemalint test (`keel.Verify`) fails when a name drifts:
 
   ```go
-  var tractorErrors = dberror.Mapping{
-  	Entity: "Tractor",
-  	Unique: []dberror.Constraint{
-  		{Name: "idx_tractors_code", Field: "code", Message: "Tractor with this code already exists in your organization"},
-  	},
+  func (Tractor) Constraints() []keel.Constraint {
+  	return []keel.Constraint{
+  		{Name: "idx_tractors_code", Message: "Tractor with this code already exists in your organization"},
+  		{Name: "fk_tractors_fleet_code", Field: "fleetCodeId", Message: "Fleet code does not exist"},
+  	}
   }
   ```
+
+  `Field` is needed only when the form field is not the constraint's first non-tenant column (a key
+  led by a reference, a child row reported under its parent's field, a column hidden from JSON).
+  Each repository keeps one `dberror.Mapping{Entity: "Tractor"}` and passes every keel error
+  through `Map(err, id)`; a constraint without a declared message gets a default for its kind.
 
   | keel | Caller sees |
   |---|---|
   | `keel.ErrNotFound` | `NotFoundError` "Tractor not found within your organization" |
   | `keel.ErrConflict` (`Save`, a version mismatch) | the `version` validation error the client shows as a conflict |
-  | unique violation | validation error on the mapped field, `DUPLICATE` |
-  | foreign key violation | validation error on the mapped field, `INVALID_REFERENCE` |
+  | unique or exclusion violation | validation error on the constraint's field, `DUPLICATE` |
+  | foreign key violation | validation error on the constraint's field, `INVALID_REFERENCE` |
+  | not-null violation | validation error on the column's field, `REQUIRED` |
+  | check violation | validation error on the constraint's field, `INVALID` |
   | `keel.ErrReadOnly` | a read-only refusal (`dberror.IsReadOnlyTransaction`) |
   | `keel.ErrTenantMismatch` | an authorization error and a tenant-boundary report, like a row-level security refusal |
   | `ErrNoScope`, `ErrAllTenantsRequired`, `ErrSystemScopeRequired` | a programming error: an internal error |
 
-  An unmapped constraint passes through, and `NormalizeDatabaseError` turns it into the generic
-  duplicate conflict at the edge.
+  Every violation maps, declared or not; code that needs to branch on one constraint checks
+  `dberror.ExtractConstraintName(err)`, and that name is declared on the model too.
+- **PostGIS.** Geometry and geography fields are `*postgis.Point` and `*postgis.Geometry` from
+  `github.com/emoss08/keel/postgis`; their generated columns carry spatial methods
+  (`DWithin`, `Distance`, `Contains`, `Within`, `Intersects`, `Area`, `SetExpr`), and
+  `postgis.Pt`, `postgis.Buffer`, `postgis.FromGeoJSON` and `postgis.DistanceSphere` build values.
+  Write no `ST_*` SQL by hand. GeoJSON in Go goes through `pkg/geojson`; a constant that a partial
+  GiST index's predicate names stays inline with `keel.DynConst`.
 - **Batch reads are first-class.** Every entity read per parent row has a `GetByIDs`/`…ByIDs`
   method so a dataloader can batch it ([api.md](api.md)):
   `t.Where(t.ID.In(ids...)).Limit(len(ids)).List(ctx, db)`. `In` binds one array, so 3 or 3,000

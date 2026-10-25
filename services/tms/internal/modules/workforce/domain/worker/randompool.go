@@ -303,6 +303,19 @@ func (p *DOTRandomPool) BeforeUpdate(_ context.Context) error {
 	return nil
 }
 
+func (DOTRandomPool) Constraints() []keel.Constraint {
+	return []keel.Constraint{
+		{
+			Name:    "uq_dot_random_pools_code",
+			Message: "A pool with this code already exists",
+		},
+		{
+			Name:    "uq_dot_random_pools_default",
+			Message: "Another pool is already the default",
+		},
+	}
+}
+
 var (
 	_ validationframework.TenantedEntity = (*DOTRandomDraw)(nil)
 )
@@ -410,6 +423,20 @@ func (d *DOTRandomDraw) BeforeCreate(_ context.Context) error {
 	return nil
 }
 
+func (DOTRandomDraw) Constraints() []keel.Constraint {
+	return []keel.Constraint{
+		{
+			Name:    "uq_dot_random_draws_period",
+			Field:   "periodKey",
+			Message: "This pool has already been drawn for that period",
+		},
+		{
+			Name:    "fk_dot_random_draws_pool",
+			Message: "Pool does not exist or belongs to a different organization",
+		},
+	}
+}
+
 var (
 	_ validationframework.TenantedEntity = (*DOTRandomDrawEntry)(nil)
 )
@@ -489,6 +516,21 @@ func (e *DOTRandomDrawEntry) BeforeCreate(_ context.Context) error {
 	}
 
 	return nil
+}
+
+func (DOTRandomDrawEntry) Constraints() []keel.Constraint {
+	return []keel.Constraint{
+		{
+			Name:    "uq_dot_random_draw_entries_worker",
+			Field:   "entries",
+			Message: "A worker can be selected only once per substance in a draw",
+		},
+		{
+			Name:    "fk_dot_random_draw_entries_worker",
+			Field:   "entries",
+			Message: "Worker does not exist or belongs to a different organization",
+		},
+	}
 }
 
 // SelectRandom picks the first n candidates by the order the seed imposes. The

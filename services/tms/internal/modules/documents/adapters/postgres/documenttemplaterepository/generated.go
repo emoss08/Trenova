@@ -17,22 +17,7 @@ import (
 	"go.uber.org/zap"
 )
 
-var generatedErrors = dberror.Mapping{
-	Entity: "GeneratedDocument",
-	ForeignKey: []dberror.Constraint{
-		{
-			Name:    "fk_generated_documents_template_version",
-			Field:   "templateVersionId",
-			Message: "Template version does not exist",
-		},
-		templateForeignKey("fk_generated_documents_template"),
-		{
-			Name:    "fk_generated_documents_document",
-			Field:   "documentId",
-			Message: "Document does not exist",
-		},
-	},
-}
+var generatedErrors = dberror.Mapping{Entity: "GeneratedDocument"}
 
 type GeneratedParams struct {
 	fx.In

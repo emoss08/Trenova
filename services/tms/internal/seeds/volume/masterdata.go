@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/emoss08/keel"
+	"github.com/emoss08/keel/postgis"
 	"github.com/emoss08/trenova/internal/modules/equipment/domain/equipmentmanufacturer/equipmentmanufacturerdb"
 	"github.com/emoss08/trenova/internal/modules/equipment/domain/equipmenttype/equipmenttypedb"
 	"github.com/emoss08/trenova/internal/modules/equipment/domain/fleetcode/fleetcodedb"
@@ -606,10 +607,9 @@ func (g *generator) mdLocations(ctx context.Context, tx *keel.DB) error {
 	for _, loc := range locations {
 		locationIDs = append(locationIDs, loc.ID)
 	}
-	if _, err = l.Where(l.ID.In(locationIDs...)).Update(ctx, tx, l.GeofenceGeometry.ToExpr(keel.Raw(
-		"ST_Buffer(ST_SetSRID(ST_MakePoint(?, ?), 4326)::geography, ?)::geometry",
-		l.Longitude, l.Latitude, l.GeofenceRadiusMeters,
-	))); err != nil {
+	if _, err = l.Where(l.ID.In(locationIDs...)).Update(ctx, tx, l.GeofenceGeometry.ToExpr(
+		postgis.Buffer(postgis.Pt(l.Longitude, l.Latitude), l.GeofenceRadiusMeters),
+	)); err != nil {
 		return fmt.Errorf("build location geofences: %w", err)
 	}
 	if err = backdate(ctx, tx, locationdb.Locations.Handle, stamps); err != nil {

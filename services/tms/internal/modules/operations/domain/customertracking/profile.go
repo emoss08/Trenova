@@ -174,3 +174,16 @@ func (p *Profile) Validate(multiErr *errortypes.MultiError) {
 		}
 	}
 }
+
+func (Profile) Constraints() []keel.Constraint {
+	return []keel.Constraint{
+		{
+			Name:    "uq_customer_tracking_profiles_customer",
+			Message: "Customer already has tracking settings",
+		},
+		{
+			Name:    "fk_customer_tracking_profiles_customer",
+			Message: "Customer does not exist in your organization",
+		},
+	}
+}

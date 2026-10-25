@@ -59,3 +59,18 @@ func (cec *CarrierEDIChannel) GetOrganizationID() pulid.ID {
 func (cec *CarrierEDIChannel) GetBusinessUnitID() pulid.ID {
 	return cec.BusinessUnitID
 }
+
+func (CarrierEDIChannel) Constraints() []keel.Constraint {
+	return []keel.Constraint{
+		{
+			Name:    "uq_carrier_edi_channels_default",
+			Field:   "ediChannels",
+			Message: "Carrier can have only one default EDI channel",
+		},
+		{
+			Name:    "uq_carrier_edi_channels_partner",
+			Field:   "ediChannels",
+			Message: "Carrier already has an EDI channel for this partner",
+		},
+	}
+}

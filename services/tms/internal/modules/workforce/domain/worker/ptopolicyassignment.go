@@ -75,3 +75,20 @@ func (a *WorkerPTOPolicyAssignment) GetTableName() string { return "worker_pto_p
 func (a *WorkerPTOPolicyAssignment) GetResourceType() string { return "worker_pto_policy_assignment" }
 
 func (a *WorkerPTOPolicyAssignment) GetResourceID() string { return a.ID.String() }
+
+func (WorkerPTOPolicyAssignment) Constraints() []keel.Constraint {
+	return []keel.Constraint{
+		{
+			Name:    "uq_worker_pto_policy_assignments_open",
+			Message: "Worker already has an open PTO policy assignment",
+		},
+		{
+			Name:    "fk_worker_pto_policy_assignments_worker",
+			Message: "Worker does not exist or belongs to a different organization",
+		},
+		{
+			Name:    "fk_worker_pto_policy_assignments_policy",
+			Message: "PTO policy does not exist or belongs to a different organization",
+		},
+	}
+}

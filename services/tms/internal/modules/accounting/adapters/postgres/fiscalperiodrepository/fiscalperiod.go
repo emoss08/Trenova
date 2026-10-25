@@ -24,16 +24,7 @@ import (
 
 const maxExpiredUnclosedPeriods = 1000
 
-var fiscalPeriodErrors = dberror.Mapping{
-	Entity: "FiscalPeriod",
-	ForeignKey: []dberror.Constraint{
-		{
-			Name:    "fk_fiscal_periods_fiscal_year",
-			Field:   "fiscalYearId",
-			Message: "Fiscal year does not exist in your organization",
-		},
-	},
-}
+var fiscalPeriodErrors = dberror.Mapping{Entity: "FiscalPeriod"}
 
 type Params struct {
 	fx.In

@@ -17,14 +17,15 @@ import (
 
 // gLAccountsTable is the schema of glaccount.GLAccount.
 var gLAccountsTable = schema.Table{
-	Name:   "gl_accounts",
-	Quoted: `"gl_accounts"`,
-	Alias:  "ga",
-	Model:  "glaccount.GLAccount",
-	Label:  `GL Account`,
-	Plural: `GL Accounts`,
-	Doc:    `The chart of accounts and its running balances`,
-	Report: &schema.TableReport{Category: `Accounting`},
+	Name:        "gl_accounts",
+	Quoted:      `"gl_accounts"`,
+	Alias:       "ga",
+	Model:       "glaccount.GLAccount",
+	Label:       `GL Account`,
+	Plural:      `GL Accounts`,
+	Doc:         `The chart of accounts and its running balances`,
+	Report:      &schema.TableReport{Category: `Accounting`},
+	Constraints: (&glaccount.GLAccount{}).Constraints(),
 	Columns: []schema.Column{
 		{Name: "id", Quoted: `"id"`, Field: "ID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagAutoID, Label: `ID`, JSON: `id`, Report: &reportDimString},
 		{Name: "business_unit_id", Quoted: `"business_unit_id"`, Field: "BusinessUnitID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Business Unit ID`, JSON: `businessUnitId`, Report: &reportDimStringHidden},

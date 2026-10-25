@@ -18,14 +18,12 @@ import (
 const (
 	maxChunksPerSource = 500
 
-	defaultSearchLimit   = 10
-	maxSearchLimit       = 200
-	candidatesPerResult  = 4
-	maxSearchCandidates  = 1000
-	minHNSWEfSearch      = 40
-	maxHNSWEfSearch      = 1000
-	setIterativeScan     = "SET LOCAL hnsw.iterative_scan = relaxed_order"
-	setEfSearchStatement = "SET LOCAL hnsw.ef_search = "
+	defaultSearchLimit  = 10
+	maxSearchLimit      = 200
+	candidatesPerResult = 4
+	maxSearchCandidates = 1000
+	minHNSWEfSearch     = 40
+	maxHNSWEfSearch     = 1000
 )
 
 const (
@@ -420,20 +418,15 @@ func (r *repository) Search(
 		var hits []agentports.VectorSearchHit
 		err = r.db.Transact(
 			ctx,
-			kernelports.TxOptions{ReadOnly: true},
+			kernelports.TxOptions{
+				ReadOnly: true,
+				Settings: []kernelports.TxSetting{
+					{Name: "hnsw.iterative_scan", Value: "relaxed_order"},
+					{Name: "hnsw.ef_search", Value: strconv.Itoa(plan.efSearch)},
+				},
+			},
 			func(ctx context.Context) error {
 				db := r.db.Keel(ctx)
-				if _, txErr := keel.Exec(ctx, db, setIterativeScan); txErr != nil {
-					return fmt.Errorf("enable iterative index scan: %w", txErr)
-				}
-				if _, txErr := keel.Exec(
-					ctx,
-					db,
-					setEfSearchStatement+strconv.Itoa(plan.efSearch),
-				); txErr != nil {
-					return fmt.Errorf("set index search breadth: %w", txErr)
-				}
-
 				var txErr error
 				if hits, txErr = keel.Into[agentports.VectorSearchHit](
 					ctx,

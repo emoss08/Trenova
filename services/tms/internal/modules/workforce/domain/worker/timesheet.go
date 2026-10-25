@@ -255,6 +255,27 @@ func (e *TimeClockEntry) BeforeCreate(_ context.Context) error {
 	return nil
 }
 
+func (TimeClockEntry) Constraints() []keel.Constraint {
+	return []keel.Constraint{
+		{
+			Name:    "uq_time_clock_entries_open",
+			Message: "Worker is already on the clock",
+		},
+		{
+			Name:    "fk_time_clock_entries_worker",
+			Message: "Worker does not exist or belongs to a different organization",
+		},
+		{
+			Name:    "fk_time_clock_entries_timesheet",
+			Message: "Timesheet does not exist or belongs to a different organization",
+		},
+		{
+			Name:    "fk_time_clock_entries_pay_code",
+			Message: "Pay code does not exist or belongs to a different organization",
+		},
+	}
+}
+
 var (
 	_ validationframework.TenantedEntity = (*Timesheet)(nil)
 )
@@ -402,6 +423,24 @@ func (t *Timesheet) BeforeCreate(_ context.Context) error {
 	}
 
 	return nil
+}
+
+func (Timesheet) Constraints() []keel.Constraint {
+	return []keel.Constraint{
+		{
+			Name:    "uq_timesheets_worker_period",
+			Field:   "periodStart",
+			Message: "Worker already has a timesheet for this period",
+		},
+		{
+			Name:    "fk_timesheets_worker",
+			Message: "Worker does not exist or belongs to a different organization",
+		},
+		{
+			Name:    "fk_timesheets_payroll_export",
+			Message: "Payroll export does not exist or belongs to a different organization",
+		},
+	}
 }
 
 var (

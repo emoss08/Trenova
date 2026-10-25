@@ -114,6 +114,15 @@ type HolidayCalendar struct {
 	recurBlk  map[string]*OrgHoliday
 }
 
+func (OrgHoliday) Constraints() []keel.Constraint {
+	return []keel.Constraint{
+		{
+			Name:    "uq_org_holidays_date_kind",
+			Message: "There is already an entry of this kind on that date",
+		},
+	}
+}
+
 func NewHolidayCalendar(rows []*OrgHoliday) *HolidayCalendar {
 	cal := &HolidayCalendar{
 		holidays:  make(map[string]*OrgHoliday, len(rows)),

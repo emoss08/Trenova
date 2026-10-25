@@ -17,16 +17,7 @@ import (
 	"go.uber.org/zap"
 )
 
-var payEventErrors = dberror.Mapping{
-	Entity: "PayEvent",
-	Unique: []dberror.Constraint{
-		{
-			Name:    "uq_driver_pay_events_idempotency",
-			Field:   "idempotencyKey",
-			Message: "Pay event with this idempotency key already exists",
-		},
-	},
-}
+var payEventErrors = dberror.Mapping{Entity: "PayEvent"}
 
 type payEventRepository struct {
 	db *postgres.Connection

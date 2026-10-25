@@ -15,12 +15,13 @@ import (
 
 // projectionsTable is the schema of documentsearchprojection.Projection.
 var projectionsTable = schema.Table{
-	Name:   "document_search_projections",
-	Quoted: `"document_search_projections"`,
-	Alias:  "dsp",
-	Model:  "documentsearchprojection.Projection",
-	Label:  `Projection`,
-	Plural: `Projections`,
+	Name:        "document_search_projections",
+	Quoted:      `"document_search_projections"`,
+	Alias:       "dsp",
+	Model:       "documentsearchprojection.Projection",
+	Label:       `Projection`,
+	Plural:      `Projections`,
+	Constraints: (&documentsearchprojection.Projection{}).Constraints(),
 	Columns: []schema.Column{
 		{Name: "id", Quoted: `"id"`, Field: "ID", Kind: schema.KindString, Flags: schema.FlagPK, Label: `ID`, JSON: `id`},
 		{Name: "organization_id", Quoted: `"organization_id"`, Field: "OrganizationID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Organization ID`, JSON: `organizationId`},

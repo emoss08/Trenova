@@ -254,6 +254,19 @@ func (a *InvoiceAdjustment) BeforeCreate(ctx context.Context) error {
 	return nil
 }
 
+func (InvoiceAdjustment) Constraints() []keel.Constraint {
+	return []keel.Constraint{
+		{
+			Name:    "uq_invoice_adjustments_idempotency",
+			Message: "An invoice adjustment with this idempotency key already exists",
+		},
+		{
+			Name:    "fk_invoice_adjustments_correction_group",
+			Message: "Invoice adjustment can no longer be processed because its correction group is no longer valid. Refresh the invoice and try again.",
+		},
+	}
+}
+
 func (e *InvoiceAdjustmentReconciliationException) BeforeCreate(ctx context.Context) error {
 	if e.Status == "" {
 		e.Status = ExceptionStatusOpen
@@ -306,6 +319,16 @@ func (r *InvoiceAdjustmentDocumentReference) Validate(multiErr *errortypes.Multi
 			)),
 		),
 	))
+}
+
+func (InvoiceAdjustmentDocumentReference) Constraints() []keel.Constraint {
+	return []keel.Constraint{
+		{
+			Name:    "uq_invoice_adjustment_document_references",
+			Field:   "documentIds",
+			Message: "A document can be referenced by the adjustment only once",
+		},
+	}
 }
 
 func (l *InvoiceAdjustmentLine) Validate(multiErr *errortypes.MultiError) {

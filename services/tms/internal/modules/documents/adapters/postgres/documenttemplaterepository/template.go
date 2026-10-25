@@ -10,39 +10,16 @@ import (
 	"github.com/emoss08/trenova/internal/modules/documents/domain/documenttemplate/documenttemplatedb"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documenttemplateports"
 	"github.com/emoss08/trenova/pkg/dberror"
+	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/listquery"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
 
-var templateErrors = dberror.Mapping{
-	Entity: "DocumentTemplate",
-	Unique: []dberror.Constraint{
-		{
-			Name:    "uq_document_templates_code",
-			Field:   "code",
-			Message: "A document template with this code already exists",
-		},
-		{
-			Name:    "uq_document_templates_org_default",
-			Field:   "isOrgDefault",
-			Message: "Another template is already the organization default for this kind",
-		},
-	},
-	ForeignKey: []dberror.Constraint{
-		{
-			Name:    "fk_document_templates_active_version",
-			Field:   "activeVersionId",
-			Message: "Active version does not exist",
-		},
-		{
-			Name:    "fk_generated_documents_template_version",
-			Field:   "id",
-			Message: "This template produced documents that were sent, so its versions cannot be deleted",
-		},
-	},
-}
+const generatedVersionConstraint = "fk_generated_documents_template_version"
+
+var templateErrors = dberror.Mapping{Entity: "DocumentTemplate"}
 
 type TemplateParams struct {
 	fx.In
@@ -252,11 +229,24 @@ func (r *templateRepository) Delete(
 		n, err := t.Where(t.ID.Eq(req.DocumentTemplateID)).Delete(ctx, db)
 		if err != nil {
 			r.l.Error("failed to delete document template", zap.Error(err))
-			return templateErrors.Map(err, id)
+			return mapTemplateDeleteError(err, id)
 		}
 
 		return dberror.CheckAffected(n, "DocumentTemplate", id)
 	})
+}
+
+func mapTemplateDeleteError(err error, id string) error {
+	if dberror.IsForeignKeyConstraintViolation(err) &&
+		dberror.ExtractConstraintName(err) == generatedVersionConstraint {
+		return errortypes.NewValidationError(
+			"id",
+			errortypes.ErrInvalidReference,
+			"This template produced documents that were sent, so its versions cannot be deleted",
+		).WithInternal(err)
+	}
+
+	return templateErrors.Map(err, id)
 }
 
 func (r *templateRepository) SelectOptions(

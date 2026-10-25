@@ -27,44 +27,9 @@ const (
 	secondsPerDay           = int64(86400)
 )
 
-var courseErrors = dberror.Mapping{
-	Entity: "TrainingCourse",
-	Unique: []dberror.Constraint{
-		{
-			Name:    "uq_training_courses_code",
-			Field:   "code",
-			Message: "A course with this code already exists",
-		},
-	},
-}
+var courseErrors = dberror.Mapping{Entity: "TrainingCourse"}
 
-var recordErrors = dberror.Mapping{
-	Entity: "WorkerTrainingRecord",
-	Unique: []dberror.Constraint{
-		{
-			Name:    "uq_worker_training_records_open",
-			Field:   "courseId",
-			Message: "This worker already has this course assigned",
-		},
-	},
-	ForeignKey: []dberror.Constraint{
-		{
-			Name:    "fk_worker_training_records_worker",
-			Field:   "workerId",
-			Message: "Worker does not exist or belongs to a different organization",
-		},
-		{
-			Name:    "fk_worker_training_records_course",
-			Field:   "courseId",
-			Message: "Course does not exist or belongs to a different organization",
-		},
-		{
-			Name:    "fk_worker_training_records_document",
-			Field:   "documentId",
-			Message: "Document does not exist or belongs to a different organization",
-		},
-	},
-}
+var recordErrors = dberror.Mapping{Entity: "WorkerTrainingRecord"}
 
 var openTrainingStatuses = []worker.TrainingStatus{
 	worker.TrainingStatusAssigned,

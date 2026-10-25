@@ -247,3 +247,12 @@ func (n *Noa) GetCreatedAt() int64         { return n.CreatedAt }
 func (n *Noa) GetOrganizationID() pulid.ID { return n.OrganizationID }
 func (n *Noa) GetBusinessUnitID() pulid.ID { return n.BusinessUnitID }
 func (n *Noa) GetTableName() string        { return "factoring_noas" }
+
+func (Noa) Constraints() []keel.Constraint {
+	return []keel.Constraint{
+		{
+			Name:    "uq_factoring_noas_open",
+			Message: "This customer already has an open notice of assignment for this factor",
+		},
+	}
+}

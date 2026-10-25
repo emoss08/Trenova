@@ -99,6 +99,15 @@ func (d *DocumentShipmentDraft) Validate(multiErr *errortypes.MultiError) {
 	))
 }
 
+func (DocumentShipmentDraft) Constraints() []keel.Constraint {
+	return []keel.Constraint{
+		{
+			Name:    "fk_document_shipment_drafts_document",
+			Message: "Document does not exist in your organization",
+		},
+	}
+}
+
 const (
 	maxDraftKindLength        = 100
 	maxDraftFailureCodeLength = 100

@@ -14,17 +14,7 @@ import (
 	"go.uber.org/zap"
 )
 
-var violationErrors = dberror.Mapping{
-	Entity: "WorkerSafetyViolation",
-	ForeignKey: []dberror.Constraint{
-		{
-			Name:    "fk_worker_safety_violations_event",
-			Field:   "safetyEventId",
-			Message: "Safety event does not exist or belongs to a different organization",
-		},
-		workerForeignKey("fk_worker_safety_violations_worker"),
-	},
-}
+var violationErrors = dberror.Mapping{Entity: "WorkerSafetyViolation"}
 
 func violationsQuery(
 	req *workerports.ListWorkerSafetyViolationsRequest,

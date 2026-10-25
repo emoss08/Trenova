@@ -16,16 +16,7 @@ import (
 	"go.uber.org/zap"
 )
 
-var holdReasonErrors = dberror.Mapping{
-	Entity: "HoldReason",
-	Unique: []dberror.Constraint{
-		{
-			Name:    "ux_hr_org_bu_type_code",
-			Field:   "code",
-			Message: "Hold reason with this code already exists in your organization",
-		},
-	},
-}
+var holdReasonErrors = dberror.Mapping{Entity: "HoldReason"}
 
 type Params struct {
 	fx.In

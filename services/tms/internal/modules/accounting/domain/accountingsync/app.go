@@ -107,3 +107,12 @@ func WebhookPath(typ integration.Type) string {
 	profile := MustProfile(typ)
 	return profile.WebhookPath()
 }
+
+func (AccountingAppCredential) Constraints() []keel.Constraint {
+	return []keel.Constraint{
+		{
+			Name:    "uq_accounting_app_credentials_tenant_type",
+			Message: "An accounting app is already registered for this integration",
+		},
+	}
+}

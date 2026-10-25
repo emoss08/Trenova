@@ -233,3 +233,16 @@ func (q *WorkerClearinghouseQuery) BeforeCreate(_ context.Context) error {
 
 	return nil
 }
+
+func (WorkerClearinghouseQuery) Constraints() []keel.Constraint {
+	return []keel.Constraint{
+		{
+			Name:    "fk_worker_clearinghouse_queries_worker",
+			Message: "Worker does not exist or belongs to a different organization",
+		},
+		{
+			Name:    "fk_worker_clearinghouse_queries_document",
+			Message: "Document does not exist or belongs to a different organization",
+		},
+	}
+}

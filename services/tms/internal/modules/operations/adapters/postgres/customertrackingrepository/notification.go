@@ -17,16 +17,7 @@ import (
 	"go.uber.org/zap"
 )
 
-var notificationErrors = dberror.Mapping{
-	Entity: "Customer status notification",
-	ForeignKey: []dberror.Constraint{
-		{
-			Name:    "fk_customer_status_notifications_shipment",
-			Field:   "shipmentId",
-			Message: "Shipment does not exist in your organization",
-		},
-	},
-}
+var notificationErrors = dberror.Mapping{Entity: "Customer status notification"}
 
 type notificationRepository struct {
 	db *postgres.Connection

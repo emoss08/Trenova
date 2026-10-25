@@ -215,3 +215,12 @@ func (rz *RateZone) GetPostgresSearchConfig() domaintypes.PostgresSearchConfig {
 		},
 	}
 }
+
+func (RateZone) Constraints() []keel.Constraint {
+	return []keel.Constraint{
+		{
+			Name:    "uq_rate_zones_code",
+			Message: "A rate zone with this code already exists in your organization",
+		},
+	}
+}

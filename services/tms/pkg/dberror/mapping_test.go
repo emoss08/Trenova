@@ -15,25 +15,43 @@ import (
 
 const parityID = "com_1"
 
-var parityMapping = Mapping{
-	Entity: "Commodity",
-	Unique: []Constraint{
-		{Name: "idx_commodities_name", Field: "name", Message: "Commodity with this name already exists"},
-	},
-	ForeignKey: []Constraint{
-		{Name: "fk_commodities_hazmat", Field: "hazardousMaterialId", Message: "Hazardous material does not exist"},
-	},
-}
+var parityMapping = Mapping{Entity: "Commodity"}
 
 func pgError(code, constraint string) *pgconn.PgError {
 	return &pgconn.PgError{Code: code, ConstraintName: constraint, Message: "violation"}
 }
 
-func TestMapTurnsKeelAndPostgresErrorsIntoTheCallersErrors(t *testing.T) {
+func violationOf(
+	kind keel.ConstraintKind,
+	code, constraint, message string,
+	fields, labels []string,
+) *keel.ConstraintError {
+	return &keel.ConstraintError{
+		Kind:       kind,
+		Table:      "commodities",
+		Constraint: constraint,
+		Fields:     fields,
+		Labels:     labels,
+		Message:    message,
+		Err:        pgError(code, constraint),
+	}
+}
+
+func TestMapTurnsKeelErrorsIntoTheCallersErrors(t *testing.T) {
 	t.Parallel()
 
-	unique := pgError(pgerrcode.UniqueViolation, "idx_commodities_name")
-	foreignKey := pgError(pgerrcode.ForeignKeyViolation, "fk_commodities_hazmat")
+	declared := violationOf(keel.ConstraintUnique, pgerrcode.UniqueViolation, "idx_commodities_name",
+		"Commodity with this name already exists", []string{"name"}, []string{"Name"})
+	unique := violationOf(keel.ConstraintUnique, pgerrcode.UniqueViolation, "idx_commodities_code",
+		"", []string{"code"}, []string{"Code"})
+	foreignKey := violationOf(keel.ConstraintForeignKey, pgerrcode.ForeignKeyViolation,
+		"fk_commodities_hazmat", "", []string{"hazardousMaterialId"}, []string{"Hazardous Material"})
+	notNull := violationOf(keel.ConstraintNotNull, pgerrcode.NotNullViolation, "", "",
+		[]string{"name"}, []string{"Name"})
+	check := violationOf(keel.ConstraintCheck, pgerrcode.CheckViolation, "ck_commodities_temp", "",
+		nil, nil)
+	exclusion := violationOf(keel.ConstraintExclusion, pgerrcode.ExclusionViolation,
+		"ex_commodities_window", "", nil, nil)
 
 	tests := []struct {
 		name string
@@ -43,9 +61,7 @@ func TestMapTurnsKeelAndPostgresErrorsIntoTheCallersErrors(t *testing.T) {
 		{
 			name: "not found carries the entity name",
 			keel: fmt.Errorf("commodities: %w", keel.ErrNotFound),
-			want: errortypes.NewNotFoundError(
-				"{0} not found within your organization", "Commodity",
-			),
+			want: errortypes.NewNotFoundError("{0} not found within your organization", "Commodity"),
 		},
 		{
 			name: "optimistic lock conflict is a version mismatch on the entity",
@@ -53,18 +69,41 @@ func TestMapTurnsKeelAndPostgresErrorsIntoTheCallersErrors(t *testing.T) {
 			want: CreateVersionMismatchError(parityMapping.Entity, parityID),
 		},
 		{
-			name: "unique violation names the request field",
-			keel: unique,
-			want: errortypes.NewValidationError(
-				"name", errortypes.ErrDuplicate, "Commodity with this name already exists",
-			),
+			name: "a declared message wins",
+			keel: fmt.Errorf("create: %w", declared),
+			want: errortypes.NewValidationError("name", errortypes.ErrDuplicate,
+				"Commodity with this name already exists").WithInternal(declared),
 		},
 		{
-			name: "foreign key violation names the request field",
+			name: "unique violation without a message names the entity and the column",
+			keel: unique,
+			want: errortypes.NewValidationError("code", errortypes.ErrDuplicate,
+				"{0} with this {1} already exists in your organization", "Commodity", "Code").
+				WithInternal(unique),
+		},
+		{
+			name: "foreign key violation names the reference",
 			keel: foreignKey,
-			want: errortypes.NewValidationError(
-				"hazardousMaterialId", errortypes.ErrInvalidReference, "Hazardous material does not exist",
-			),
+			want: errortypes.NewValidationError("hazardousMaterialId", errortypes.ErrInvalidReference,
+				"{0} does not exist in your organization", "Hazardous Material").WithInternal(foreignKey),
+		},
+		{
+			name: "not null violation is required",
+			keel: notNull,
+			want: errortypes.NewValidationError("name", errortypes.ErrRequired, "{0} is required", "Name").
+				WithInternal(notNull),
+		},
+		{
+			name: "check violation without columns names the entity",
+			keel: check,
+			want: errortypes.NewValidationError("", errortypes.ErrInvalid, "{0} is not valid", "Commodity").
+				WithInternal(check),
+		},
+		{
+			name: "exclusion violation is an overlap",
+			keel: exclusion,
+			want: errortypes.NewValidationError("", errortypes.ErrDuplicate,
+				"{0} overlaps an existing record in your organization", "Commodity").WithInternal(exclusion),
 		},
 	}
 
@@ -80,7 +119,7 @@ func TestMapTurnsKeelAndPostgresErrorsIntoTheCallersErrors(t *testing.T) {
 func TestMapLeavesUnmappedErrorsAlone(t *testing.T) {
 	t.Parallel()
 
-	other := pgError(pgerrcode.UniqueViolation, "idx_commodities_code")
+	other := pgError(pgerrcode.SerializationFailure, "")
 	assert.Same(t, other, parityMapping.Map(other, parityID))
 
 	plain := errors.New("connection refused")

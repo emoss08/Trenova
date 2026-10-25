@@ -2,21 +2,14 @@ package dberror
 
 import (
 	"errors"
+	"strings"
 
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/pkg/errortypes"
 )
 
-type Constraint struct {
-	Name    string
-	Field   string
-	Message string
-}
-
 type Mapping struct {
-	Entity     string
-	Unique     []Constraint
-	ForeignKey []Constraint
+	Entity string
 }
 
 func (m Mapping) Map(err error, entityID string) error {
@@ -27,13 +20,13 @@ func (m Mapping) Map(err error, entityID string) error {
 		return HandleNotFoundError(err, m.Entity)
 	case IsVersionConflict(err):
 		return CreateVersionMismatchError(m.Entity, entityID)
-	case IsUniqueConstraintViolation(err):
-		return MapUniqueViolation(err, m.Unique...)
-	case IsForeignKeyConstraintViolation(err):
-		return MapForeignKeyViolation(err, m.ForeignKey...)
-	default:
-		return err
 	}
+
+	if ce, ok := errors.AsType[*keel.ConstraintError](err); ok {
+		return ConstraintViolation(m.Entity, ce)
+	}
+
+	return err
 }
 
 func IsVersionConflict(err error) bool {
@@ -48,31 +41,56 @@ func HandleVersionConflict(err error, entityName, entityID string) error {
 	return err
 }
 
-func MapUniqueViolation(err error, constraints ...Constraint) error {
-	if !IsUniqueConstraintViolation(err) {
-		return err
+func ConstraintViolation(entity string, ce *keel.ConstraintError) error {
+	field := ""
+	if len(ce.Fields) > 0 {
+		field = ce.Fields[0]
+	}
+	label := strings.Join(ce.Labels, " and ")
+
+	var verr *errortypes.Error
+	switch {
+	case ce.Message != "":
+		verr = errortypes.NewValidationError(field, violationCode(ce.Kind), ce.Message)
+	case ce.Kind == keel.ConstraintUnique && label != "":
+		verr = errortypes.NewValidationError(field, errortypes.ErrDuplicate,
+			"{0} with this {1} already exists in your organization", entity, label)
+	case ce.Kind == keel.ConstraintUnique:
+		verr = errortypes.NewValidationError(field, errortypes.ErrDuplicate,
+			"{0} already exists in your organization", entity)
+	case ce.Kind == keel.ConstraintForeignKey && label != "":
+		verr = errortypes.NewValidationError(field, errortypes.ErrInvalidReference,
+			"{0} does not exist in your organization", label)
+	case ce.Kind == keel.ConstraintForeignKey:
+		verr = errortypes.NewValidationError(field, errortypes.ErrInvalidReference,
+			"{0} refers to a record that does not exist in your organization", entity)
+	case ce.Kind == keel.ConstraintNotNull && label != "":
+		verr = errortypes.NewValidationError(field, errortypes.ErrRequired, "{0} is required", label)
+	case ce.Kind == keel.ConstraintExclusion:
+		verr = errortypes.NewValidationError(field, errortypes.ErrDuplicate,
+			"{0} overlaps an existing record in your organization", entity)
+	case label != "":
+		verr = errortypes.NewValidationError(field, errortypes.ErrInvalid, "{0} is not valid", label)
+	default:
+		verr = errortypes.NewValidationError(field, errortypes.ErrInvalid, "{0} is not valid", entity)
 	}
 
-	return constraintError(err, errortypes.ErrDuplicate, constraints)
+	return verr.WithInternal(ce)
 }
 
-func MapForeignKeyViolation(err error, constraints ...Constraint) error {
-	if !IsForeignKeyConstraintViolation(err) {
-		return err
+func violationCode(kind keel.ConstraintKind) errortypes.ErrorCode {
+	switch kind {
+	case keel.ConstraintUnique, keel.ConstraintExclusion:
+		return errortypes.ErrDuplicate
+	case keel.ConstraintForeignKey:
+		return errortypes.ErrInvalidReference
+	case keel.ConstraintNotNull:
+		return errortypes.ErrRequired
+	case keel.ConstraintCheck:
+		return errortypes.ErrInvalid
 	}
 
-	return constraintError(err, errortypes.ErrInvalidReference, constraints)
-}
-
-func constraintError(err error, code errortypes.ErrorCode, constraints []Constraint) error {
-	name := ExtractConstraintName(err)
-	for _, c := range constraints {
-		if c.Name == name {
-			return errortypes.NewValidationError(c.Field, code, c.Message)
-		}
-	}
-
-	return err
+	return errortypes.ErrInvalid
 }
 
 func IsTenantBoundaryViolation(err error) bool {

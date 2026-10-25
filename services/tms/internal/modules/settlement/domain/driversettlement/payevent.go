@@ -125,3 +125,12 @@ func (p *PayEvent) BeforeCreate(ctx context.Context) error {
 
 	return nil
 }
+
+func (PayEvent) Constraints() []keel.Constraint {
+	return []keel.Constraint{
+		{
+			Name:    "uq_driver_pay_events_idempotency",
+			Message: "Pay event with this idempotency key already exists",
+		},
+	}
+}

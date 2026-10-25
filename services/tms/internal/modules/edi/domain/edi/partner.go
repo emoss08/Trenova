@@ -163,3 +163,20 @@ func (p *EDIPartner) BeforeSave(_ context.Context) error {
 func (p *EDIPartner) GetCreatedAt() int64 {
 	return p.CreatedAt
 }
+
+func (EDIPartner) Constraints() []keel.Constraint {
+	return []keel.Constraint{
+		{
+			Name:    "idx_edi_partners_code_org",
+			Message: "EDI partner with this code already exists",
+		},
+		{
+			Name:    "idx_edi_partners_name_org",
+			Message: "EDI partner with this name already exists",
+		},
+		{
+			Name:    "idx_edi_partners_internal_relationship_org_bu",
+			Message: "An internal EDI partner already exists for this target organization",
+		},
+	}
+}

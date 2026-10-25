@@ -17,13 +17,14 @@ import (
 
 // documentTemplatesTable is the schema of documenttemplate.DocumentTemplate.
 var documentTemplatesTable = schema.Table{
-	Name:   "document_templates",
-	Quoted: `"document_templates"`,
-	Alias:  "dt",
-	Model:  "documenttemplate.DocumentTemplate",
-	Label:  `Document Template`,
-	Plural: `Document Templates`,
-	Doc:    "DocumentTemplate is a named, versioned template an organization owns.\n\nIt carries identity only. Content lives on the versions, which is what lets an administrator edit without changing what customers are currently receiving.",
+	Name:        "document_templates",
+	Quoted:      `"document_templates"`,
+	Alias:       "dt",
+	Model:       "documenttemplate.DocumentTemplate",
+	Label:       `Document Template`,
+	Plural:      `Document Templates`,
+	Doc:         "DocumentTemplate is a named, versioned template an organization owns.\n\nIt carries identity only. Content lives on the versions, which is what lets an administrator edit without changing what customers are currently receiving.",
+	Constraints: (&documenttemplate.DocumentTemplate{}).Constraints(),
 	Columns: []schema.Column{
 		{Name: "id", Quoted: `"id"`, Field: "ID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagAutoID, Label: `ID`, JSON: `id`},
 		{Name: "business_unit_id", Quoted: `"business_unit_id"`, Field: "BusinessUnitID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Business Unit ID`, JSON: `businessUnitId`},
@@ -283,13 +284,14 @@ func beforeUpdateDocumentTemplate(ctx context.Context, p unsafe.Pointer) error {
 
 // documentTemplateAssignmentsTable is the schema of documenttemplate.DocumentTemplateAssignment.
 var documentTemplateAssignmentsTable = schema.Table{
-	Name:   "document_template_assignments",
-	Quoted: `"document_template_assignments"`,
-	Alias:  "dta",
-	Model:  "documenttemplate.DocumentTemplateAssignment",
-	Label:  `Document Template Assignment`,
-	Plural: `Document Template Assignments`,
-	Doc:    "DocumentTemplateAssignment points one customer at one template for one kind.\n\nAssignment replaces the whole template rather than merging pieces of it, which is simple to reason about and to preview: what the customer receives is exactly the assigned template's active version. The cost is that an assigned customer stops inheriting later changes to the organization default, which is why publishing shows how many customers are unaffected.",
+	Name:        "document_template_assignments",
+	Quoted:      `"document_template_assignments"`,
+	Alias:       "dta",
+	Model:       "documenttemplate.DocumentTemplateAssignment",
+	Label:       `Document Template Assignment`,
+	Plural:      `Document Template Assignments`,
+	Doc:         "DocumentTemplateAssignment points one customer at one template for one kind.\n\nAssignment replaces the whole template rather than merging pieces of it, which is simple to reason about and to preview: what the customer receives is exactly the assigned template's active version. The cost is that an assigned customer stops inheriting later changes to the organization default, which is why publishing shows how many customers are unaffected.",
+	Constraints: (&documenttemplate.DocumentTemplateAssignment{}).Constraints(),
 	Columns: []schema.Column{
 		{Name: "id", Quoted: `"id"`, Field: "ID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagAutoID, Label: `ID`, JSON: `id`},
 		{Name: "business_unit_id", Quoted: `"business_unit_id"`, Field: "BusinessUnitID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Business Unit ID`, JSON: `businessUnitId`},
@@ -474,13 +476,14 @@ func attachDocumentTemplateAssignment(p unsafe.Pointer, rel int32, child unsafe.
 
 // documentTemplateVersionsTable is the schema of documenttemplate.DocumentTemplateVersion.
 var documentTemplateVersionsTable = schema.Table{
-	Name:   "document_template_versions",
-	Quoted: `"document_template_versions"`,
-	Alias:  "dtv",
-	Model:  "documenttemplate.DocumentTemplateVersion",
-	Label:  `Document Template Version`,
-	Plural: `Document Template Versions`,
-	Doc:    "DocumentTemplateVersion is one revision of a template's content.\n\nA published version is treated as immutable: rollback creates a new version copied from an old one rather than editing history, so the bytes a customer received can always be reproduced from the version a generated document names.",
+	Name:        "document_template_versions",
+	Quoted:      `"document_template_versions"`,
+	Alias:       "dtv",
+	Model:       "documenttemplate.DocumentTemplateVersion",
+	Label:       `Document Template Version`,
+	Plural:      `Document Template Versions`,
+	Doc:         "DocumentTemplateVersion is one revision of a template's content.\n\nA published version is treated as immutable: rollback creates a new version copied from an old one rather than editing history, so the bytes a customer received can always be reproduced from the version a generated document names.",
+	Constraints: (&documenttemplate.DocumentTemplateVersion{}).Constraints(),
 	Columns: []schema.Column{
 		{Name: "id", Quoted: `"id"`, Field: "ID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagAutoID, Label: `ID`, JSON: `id`},
 		{Name: "business_unit_id", Quoted: `"business_unit_id"`, Field: "BusinessUnitID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Business Unit ID`, JSON: `businessUnitId`},
@@ -890,13 +893,14 @@ func beforeCreateDocumentTemplateVersion(ctx context.Context, p unsafe.Pointer) 
 
 // generatedDocumentsTable is the schema of documenttemplate.GeneratedDocument.
 var generatedDocumentsTable = schema.Table{
-	Name:   "generated_documents",
-	Quoted: `"generated_documents"`,
-	Alias:  "gd",
-	Model:  "documenttemplate.GeneratedDocument",
-	Label:  `Generated Document`,
-	Plural: `Generated Documents`,
-	Doc:    "GeneratedDocument is one rendered artifact and the template version that produced it.\n\nTemplateVersionID is the point of this table. Without it, \"what did we actually send that customer in March\" is unanswerable once a template has been edited — and a detention charge or an invoice dispute is exactly when that question gets asked. The foreign key is RESTRICT so a version with output attributed to it cannot be deleted out from under the record.",
+	Name:        "generated_documents",
+	Quoted:      `"generated_documents"`,
+	Alias:       "gd",
+	Model:       "documenttemplate.GeneratedDocument",
+	Label:       `Generated Document`,
+	Plural:      `Generated Documents`,
+	Doc:         "GeneratedDocument is one rendered artifact and the template version that produced it.\n\nTemplateVersionID is the point of this table. Without it, \"what did we actually send that customer in March\" is unanswerable once a template has been edited — and a detention charge or an invoice dispute is exactly when that question gets asked. The foreign key is RESTRICT so a version with output attributed to it cannot be deleted out from under the record.",
+	Constraints: (&documenttemplate.GeneratedDocument{}).Constraints(),
 	Columns: []schema.Column{
 		{Name: "id", Quoted: `"id"`, Field: "ID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagAutoID, Label: `ID`, JSON: `id`},
 		{Name: "business_unit_id", Quoted: `"business_unit_id"`, Field: "BusinessUnitID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Business Unit ID`, JSON: `businessUnitId`},

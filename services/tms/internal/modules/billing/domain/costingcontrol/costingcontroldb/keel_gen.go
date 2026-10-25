@@ -19,12 +19,13 @@ import (
 
 // costCategoriesTable is the schema of costingcontrol.CostCategory.
 var costCategoriesTable = schema.Table{
-	Name:   "cost_categories",
-	Quoted: `"cost_categories"`,
-	Alias:  "cc",
-	Model:  "costingcontrol.CostCategory",
-	Label:  `Cost Category`,
-	Plural: `Cost Categories`,
+	Name:        "cost_categories",
+	Quoted:      `"cost_categories"`,
+	Alias:       "cc",
+	Model:       "costingcontrol.CostCategory",
+	Label:       `Cost Category`,
+	Plural:      `Cost Categories`,
+	Constraints: (&costingcontrol.CostCategory{}).Constraints(),
 	Columns: []schema.Column{
 		{Name: "id", Quoted: `"id"`, Field: "ID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagAutoID, Label: `ID`, JSON: `id`},
 		{Name: "business_unit_id", Quoted: `"business_unit_id"`, Field: "BusinessUnitID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Business Unit ID`, JSON: `businessUnitId`},

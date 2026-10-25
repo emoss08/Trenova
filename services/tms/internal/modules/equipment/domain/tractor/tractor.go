@@ -223,3 +223,20 @@ func (t *Tractor) SetCustomFields(fields map[string]any) {
 func (t *Tractor) GetCustomFields() map[string]any {
 	return t.CustomFields
 }
+
+func (Tractor) Constraints() []keel.Constraint {
+	return []keel.Constraint{
+		{
+			Name:    "idx_tractors_code",
+			Message: "Tractor with this code already exists in your organization",
+		},
+		{
+			Name:    "idx_tractors_primary_worker_id",
+			Message: "Primary worker is already assigned to another tractor",
+		},
+		{
+			Name:    "idx_tractors_external_id_tenant",
+			Message: "Tractor with this external ID already exists in your organization",
+		},
+	}
+}

@@ -254,3 +254,13 @@ func (raga *RateAgreementAccessorial) GetBusinessUnitID() pulid.ID {
 func (raga *RateAgreementAccessorial) GetTableName() string {
 	return "rate_agreement_accessorials"
 }
+
+func (RateAgreementAccessorial) Constraints() []keel.Constraint {
+	return []keel.Constraint{
+		{
+			Name:    "uq_rate_agreement_accessorials",
+			Field:   "accessorials",
+			Message: "An accessorial charge can appear only once in an agreement's schedule",
+		},
+	}
+}

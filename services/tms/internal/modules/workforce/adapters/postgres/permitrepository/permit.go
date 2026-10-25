@@ -27,23 +27,7 @@ var (
 	requirementErrors = dberror.Mapping{Entity: "PermitRequirement"}
 	holdReasonErrors  = dberror.Mapping{Entity: "HoldReason"}
 	ruleErrors        = dberror.Mapping{Entity: "JurisdictionRule"}
-	overrideErrors    = dberror.Mapping{
-		Entity: "JurisdictionOverride",
-		Unique: []dberror.Constraint{
-			{
-				Name:    "uq_jurisdiction_rule_overrides_state",
-				Field:   "stateId",
-				Message: "Your organization already has an override for this state",
-			},
-		},
-		ForeignKey: []dberror.Constraint{
-			{
-				Name:    "fk_jurisdiction_rule_overrides_state",
-				Field:   "stateId",
-				Message: "State does not exist",
-			},
-		},
-	}
+	overrideErrors    = dberror.Mapping{Entity: "JurisdictionOverride"}
 )
 
 type locationState struct {

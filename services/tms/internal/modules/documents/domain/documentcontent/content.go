@@ -211,6 +211,15 @@ func (c *Content) PagedText() string {
 	return b.String()
 }
 
+func (Content) Constraints() []keel.Constraint {
+	return []keel.Constraint{
+		{
+			Name:    "fk_document_contents_document",
+			Message: "Document does not exist",
+		},
+	}
+}
+
 func RawObjectKey(organizationID, documentID pulid.ID) string {
 	return organizationID.String() + "/document-extraction/" + documentID.String() + "/docling.json.gz"
 }

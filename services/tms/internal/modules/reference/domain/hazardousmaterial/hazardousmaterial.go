@@ -179,3 +179,12 @@ func (hm *HazardousMaterial) GetPostgresSearchConfig() domaintypes.PostgresSearc
 		},
 	}
 }
+
+func (HazardousMaterial) Constraints() []keel.Constraint {
+	return []keel.Constraint{
+		{
+			Name:    "idx_hazardous_materials_code",
+			Message: "Hazardous material with this code already exists in your organization",
+		},
+	}
+}

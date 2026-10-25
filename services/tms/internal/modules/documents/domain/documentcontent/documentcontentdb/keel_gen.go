@@ -15,12 +15,13 @@ import (
 
 // contentsTable is the schema of documentcontent.Content.
 var contentsTable = schema.Table{
-	Name:   "document_contents",
-	Quoted: `"document_contents"`,
-	Alias:  "dc",
-	Model:  "documentcontent.Content",
-	Label:  `Content`,
-	Plural: `Contents`,
+	Name:        "document_contents",
+	Quoted:      `"document_contents"`,
+	Alias:       "dc",
+	Model:       "documentcontent.Content",
+	Label:       `Content`,
+	Plural:      `Contents`,
+	Constraints: (&documentcontent.Content{}).Constraints(),
 	Columns: []schema.Column{
 		{Name: "id", Quoted: `"id"`, Field: "ID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagAutoID, Label: `ID`, JSON: `id`},
 		{Name: "document_id", Quoted: `"document_id"`, Field: "DocumentID", Kind: schema.KindString, Flags: 0, Label: `Document ID`, JSON: `documentId`},
@@ -303,12 +304,13 @@ func beforeUpdateContent(ctx context.Context, p unsafe.Pointer) error {
 
 // pagesTable is the schema of documentcontent.Page.
 var pagesTable = schema.Table{
-	Name:   "document_content_pages",
-	Quoted: `"document_content_pages"`,
-	Alias:  "dcp",
-	Model:  "documentcontent.Page",
-	Label:  `Page`,
-	Plural: `Pages`,
+	Name:        "document_content_pages",
+	Quoted:      `"document_content_pages"`,
+	Alias:       "dcp",
+	Model:       "documentcontent.Page",
+	Label:       `Page`,
+	Plural:      `Pages`,
+	Constraints: (&documentcontent.Page{}).Constraints(),
 	Columns: []schema.Column{
 		{Name: "id", Quoted: `"id"`, Field: "ID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagAutoID, Label: `ID`, JSON: `id`},
 		{Name: "document_content_id", Quoted: `"document_content_id"`, Field: "DocumentContentID", Kind: schema.KindString, Flags: 0, Label: `Document Content ID`, JSON: `documentContentId`},

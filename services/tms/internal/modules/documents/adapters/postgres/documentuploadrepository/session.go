@@ -20,16 +20,7 @@ import (
 
 const defaultReconciliationLimit = 100
 
-var sessionErrors = dberror.Mapping{
-	Entity: "Document upload session",
-	ForeignKey: []dberror.Constraint{
-		{
-			Name:    "fk_document_upload_sessions_document",
-			Field:   "documentId",
-			Message: "Document does not exist",
-		},
-	},
-}
+var sessionErrors = dberror.Mapping{Entity: "Document upload session"}
 
 var (
 	supersededStatuses = []documentupload.Status{

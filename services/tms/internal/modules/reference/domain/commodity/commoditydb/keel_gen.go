@@ -17,14 +17,15 @@ import (
 
 // commoditiesTable is the schema of commodity.Commodity.
 var commoditiesTable = schema.Table{
-	Name:   "commodities",
-	Quoted: `"commodities"`,
-	Alias:  "c",
-	Model:  "commodity.Commodity",
-	Label:  `Commodity`,
-	Plural: `Commodities`,
-	Doc:    `Freight commodities`,
-	Report: &schema.TableReport{Category: `Freight`},
+	Name:        "commodities",
+	Quoted:      `"commodities"`,
+	Alias:       "c",
+	Model:       "commodity.Commodity",
+	Label:       `Commodity`,
+	Plural:      `Commodities`,
+	Doc:         `Freight commodities`,
+	Report:      &schema.TableReport{Category: `Freight`},
+	Constraints: (&commodity.Commodity{}).Constraints(),
 	Columns: []schema.Column{
 		{Name: "id", Quoted: `"id"`, Field: "ID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagAutoID, Label: `ID`, JSON: `id`, Report: &reportDimString},
 		{Name: "business_unit_id", Quoted: `"business_unit_id"`, Field: "BusinessUnitID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Business Unit ID`, JSON: `businessUnitId`, Report: &reportDimStringHidden},

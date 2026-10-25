@@ -583,3 +583,24 @@ func (p *DetentionPolicy) BeforeUpdate(ctx context.Context) error {
 
 	return nil
 }
+
+func (DetentionPolicy) Constraints() []keel.Constraint {
+	return []keel.Constraint{
+		{
+			Name:    "uq_detention_policies_code",
+			Message: "Detention policy with this code already exists in your organization",
+		},
+		{
+			Name:    "uq_detention_policies_org_default",
+			Message: "Your organization already has a default detention policy",
+		},
+		{
+			Name:    "fk_detention_policies_accessorial",
+			Message: "Accessorial charge does not exist in your organization",
+		},
+		{
+			Name:    "fk_detention_policies_layover_accessorial",
+			Message: "Layover accessorial charge does not exist in your organization",
+		},
+	}
+}

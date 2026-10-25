@@ -17,16 +17,7 @@ import (
 	"go.uber.org/zap"
 )
 
-var trackingEventErrors = dberror.Mapping{
-	Entity: "Tracking event",
-	ForeignKey: []dberror.Constraint{
-		{
-			Name:    "fk_tracking_events_shipment",
-			Field:   "shipmentId",
-			Message: "Shipment does not exist in your organization",
-		},
-	},
-}
+var trackingEventErrors = dberror.Mapping{Entity: "Tracking event"}
 
 type Params struct {
 	fx.In

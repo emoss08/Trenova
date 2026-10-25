@@ -86,3 +86,12 @@ func (sht *ShipmentType) GetPostgresSearchConfig() domaintypes.PostgresSearchCon
 		},
 	}
 }
+
+func (ShipmentType) Constraints() []keel.Constraint {
+	return []keel.Constraint{
+		{
+			Name:    "idx_shipment_types_code",
+			Message: "Shipment type with this code already exists in your organization",
+		},
+	}
+}

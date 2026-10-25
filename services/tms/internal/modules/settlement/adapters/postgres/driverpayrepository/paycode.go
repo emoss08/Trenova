@@ -18,16 +18,7 @@ import (
 	"go.uber.org/zap"
 )
 
-var payCodeErrors = dberror.Mapping{
-	Entity: "PayCode",
-	Unique: []dberror.Constraint{
-		{
-			Name:    "uq_pay_codes_org_direction_code",
-			Field:   "code",
-			Message: "Pay code with this code and direction already exists in your organization",
-		},
-	},
-}
+var payCodeErrors = dberror.Mapping{Entity: "PayCode"}
 
 type payCodeRepository struct {
 	db *postgres.Connection

@@ -17,16 +17,7 @@ import (
 	"go.uber.org/zap"
 )
 
-var ruleErrors = dberror.Mapping{
-	Entity: "TriageRule",
-	ForeignKey: []dberror.Constraint{
-		{
-			Name:    "fk_triage_rules_mailbox",
-			Field:   "mailboxId",
-			Message: "Mailbox does not exist",
-		},
-	},
-}
+var ruleErrors = dberror.Mapping{Entity: "TriageRule"}
 
 type Params struct {
 	fx.In

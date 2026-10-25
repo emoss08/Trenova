@@ -19,74 +19,19 @@ import (
 	"go.uber.org/zap"
 )
 
-const fieldWorkerID = "workerId"
-
 const (
 	defaultTemplatePageSize   = 200
 	defaultAssignmentPageSize = 200
 	defaultSwapPageSize       = 200
 )
 
-var templateErrors = dberror.Mapping{
-	Entity: "ShiftTemplate",
-	Unique: []dberror.Constraint{
-		{
-			Name:    "uq_shift_templates_code",
-			Field:   "code",
-			Message: "Shift template with this code already exists in your organization",
-		},
-	},
-}
+var templateErrors = dberror.Mapping{Entity: "ShiftTemplate"}
 
-var assignmentErrors = dberror.Mapping{
-	Entity: "WorkerShiftAssignment",
-	Unique: []dberror.Constraint{
-		{
-			Name:    "uq_worker_shift_assignments_open",
-			Field:   fieldWorkerID,
-			Message: "Worker already has an open shift assignment",
-		},
-	},
-	ForeignKey: []dberror.Constraint{
-		{
-			Name:    "fk_worker_shift_assignments_worker",
-			Field:   fieldWorkerID,
-			Message: "Worker does not exist or belongs to a different organization",
-		},
-		{
-			Name:    "fk_worker_shift_assignments_template",
-			Field:   "shiftTemplateId",
-			Message: "Shift template does not exist or belongs to a different organization",
-		},
-	},
-}
+var assignmentErrors = dberror.Mapping{Entity: "WorkerShiftAssignment"}
 
-var preferenceErrors = dberror.Mapping{
-	Entity: "WorkerAvailabilityPreference",
-	ForeignKey: []dberror.Constraint{
-		{
-			Name:    "fk_worker_availability_preferences_worker",
-			Field:   fieldWorkerID,
-			Message: "Worker does not exist or belongs to a different organization",
-		},
-	},
-}
+var preferenceErrors = dberror.Mapping{Entity: "WorkerAvailabilityPreference"}
 
-var swapErrors = dberror.Mapping{
-	Entity: "ShiftSwapRequest",
-	ForeignKey: []dberror.Constraint{
-		{
-			Name:    "fk_shift_swap_requests_requester",
-			Field:   "requestingWorkerId",
-			Message: "Requesting worker does not exist or belongs to a different organization",
-		},
-		{
-			Name:    "fk_shift_swap_requests_counterparty",
-			Field:   "counterpartyWorkerId",
-			Message: "Counterparty worker does not exist or belongs to a different organization",
-		},
-	},
-}
+var swapErrors = dberror.Mapping{Entity: "ShiftSwapRequest"}
 
 type templateCount struct {
 	TemplateID pulid.ID

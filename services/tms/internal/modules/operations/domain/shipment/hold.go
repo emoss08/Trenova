@@ -163,3 +163,16 @@ func (h *ShipmentHold) GetOrganizationID() pulid.ID {
 func (h *ShipmentHold) GetBusinessUnitID() pulid.ID {
 	return h.BusinessUnitID
 }
+
+func (ShipmentHold) Constraints() []keel.Constraint {
+	return []keel.Constraint{
+		{
+			Name:    "fk_shipment_holds_shipment",
+			Message: "Shipment does not exist in your organization",
+		},
+		{
+			Name:    "ux_shipment_holds_active_by_type",
+			Message: "Shipment already has an active hold of this type",
+		},
+	}
+}

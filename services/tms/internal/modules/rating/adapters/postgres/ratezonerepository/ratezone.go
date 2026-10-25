@@ -22,21 +22,7 @@ import (
 
 const busyMessage = "Rate zone is busy. Retry the request."
 
-var rateZoneErrors = dberror.Mapping{
-	Entity: "RateZone",
-	Unique: []dberror.Constraint{
-		{
-			Name:    "uq_rate_zones_code",
-			Field:   "code",
-			Message: "A rate zone with this code already exists in your organization",
-		},
-		{
-			Name:    "uq_rate_zone_members",
-			Field:   "members",
-			Message: "A place can appear only once in a rate zone",
-		},
-	},
-}
+var rateZoneErrors = dberror.Mapping{Entity: "RateZone"}
 
 type Params struct {
 	fx.In

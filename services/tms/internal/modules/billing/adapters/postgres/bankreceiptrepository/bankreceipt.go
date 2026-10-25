@@ -18,16 +18,7 @@ import (
 	"go.uber.org/zap"
 )
 
-var bankReceiptErrors = dberror.Mapping{
-	Entity: "BankReceipt",
-	Unique: []dberror.Constraint{
-		{
-			Name:    "uq_bank_receipts_matched_payment",
-			Field:   "matchedCustomerPaymentId",
-			Message: "Another bank receipt is already matched to this payment",
-		},
-	},
-}
+var bankReceiptErrors = dberror.Mapping{Entity: "BankReceipt"}
 
 type Params struct {
 	fx.In

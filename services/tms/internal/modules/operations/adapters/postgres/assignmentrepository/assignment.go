@@ -21,16 +21,7 @@ import (
 	"go.uber.org/zap"
 )
 
-var assignmentErrors = dberror.Mapping{
-	Entity: "Assignment",
-	Unique: []dberror.Constraint{
-		{
-			Name:    "uq_assignments_move_tenant_active",
-			Field:   "shipmentMoveId",
-			Message: "Move already has an active assignment",
-		},
-	},
-}
+var assignmentErrors = dberror.Mapping{Entity: "Assignment"}
 
 var activeMoveStatuses = []shipment.MoveStatus{
 	shipment.MoveStatusInTransit,

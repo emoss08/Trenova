@@ -19,36 +19,7 @@ import (
 	"go.uber.org/zap"
 )
 
-var carrierErrors = dberror.Mapping{
-	Entity: "Carrier",
-	Unique: []dberror.Constraint{
-		{
-			Name:    "idx_carriers_code",
-			Field:   "code",
-			Message: "Carrier with this code already exists in your organization",
-		},
-		{
-			Name:    "idx_carriers_dot_number",
-			Field:   "dotNumber",
-			Message: "Carrier with this DOT number already exists in your organization",
-		},
-		{
-			Name:    "idx_carriers_scac",
-			Field:   "scac",
-			Message: "Carrier with this SCAC already exists in your organization",
-		},
-		{
-			Name:    "uq_carrier_edi_channels_default",
-			Field:   "ediChannels",
-			Message: "Carrier can have only one default EDI channel",
-		},
-		{
-			Name:    "uq_carrier_edi_channels_partner",
-			Field:   "ediChannels",
-			Message: "Carrier already has an EDI channel for this partner",
-		},
-	},
-}
+var carrierErrors = dberror.Mapping{Entity: "Carrier"}
 
 type Params struct {
 	fx.In

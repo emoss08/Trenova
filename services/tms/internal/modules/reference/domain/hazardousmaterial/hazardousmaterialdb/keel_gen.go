@@ -15,14 +15,15 @@ import (
 
 // hazardousMaterialsTable is the schema of hazardousmaterial.HazardousMaterial.
 var hazardousMaterialsTable = schema.Table{
-	Name:   "hazardous_materials",
-	Quoted: `"hazardous_materials"`,
-	Alias:  "hm",
-	Model:  "hazardousmaterial.HazardousMaterial",
-	Label:  `Hazardous Material`,
-	Plural: `Hazardous Materials`,
-	Doc:    `Hazmat reference data`,
-	Report: &schema.TableReport{Category: `Freight`},
+	Name:        "hazardous_materials",
+	Quoted:      `"hazardous_materials"`,
+	Alias:       "hm",
+	Model:       "hazardousmaterial.HazardousMaterial",
+	Label:       `Hazardous Material`,
+	Plural:      `Hazardous Materials`,
+	Doc:         `Hazmat reference data`,
+	Report:      &schema.TableReport{Category: `Freight`},
+	Constraints: (&hazardousmaterial.HazardousMaterial{}).Constraints(),
 	Columns: []schema.Column{
 		{Name: "id", Quoted: `"id"`, Field: "ID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagAutoID, Label: `ID`, JSON: `id`, Report: &reportDimString},
 		{Name: "business_unit_id", Quoted: `"business_unit_id"`, Field: "BusinessUnitID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Business Unit ID`, JSON: `businessUnitId`, Report: &reportDimStringHidden},

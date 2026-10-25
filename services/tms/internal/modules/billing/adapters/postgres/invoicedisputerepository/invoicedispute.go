@@ -14,16 +14,7 @@ import (
 	"go.uber.org/zap"
 )
 
-var disputeErrors = dberror.Mapping{
-	Entity: "InvoiceDispute",
-	Unique: []dberror.Constraint{
-		{
-			Name:    "uq_invoice_disputes_open",
-			Field:   "invoiceId",
-			Message: "This invoice already has an open dispute",
-		},
-	},
-}
+var disputeErrors = dberror.Mapping{Entity: "InvoiceDispute"}
 
 type Params struct {
 	fx.In

@@ -13,6 +13,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/ports/weatheralertports"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/dbscope"
+	"github.com/emoss08/trenova/pkg/geojson"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/jsonutils"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -21,27 +22,9 @@ import (
 	"go.uber.org/zap"
 )
 
-var weatherAlertErrors = dberror.Mapping{
-	Entity: "Weather Alert",
-	Unique: []dberror.Constraint{
-		{
-			Name:    "idx_weather_alerts_tenant_nws_id",
-			Field:   "nwsId",
-			Message: "Weather alert with this NWS ID already exists in your organization",
-		},
-	},
-}
+var weatherAlertErrors = dberror.Mapping{Entity: "Weather Alert"}
 
-var activityErrors = dberror.Mapping{
-	Entity: "Weather Alert Activity",
-	ForeignKey: []dberror.Constraint{
-		{
-			Name:    "fk_weather_alert_activities_alert",
-			Field:   "weatherAlertId",
-			Message: "Weather alert does not exist in your organization",
-		},
-	},
-}
+var activityErrors = dberror.Mapping{Entity: "Weather Alert Activity"}
 
 type Params struct {
 	fx.In
@@ -351,7 +334,7 @@ func buildDiff(
 func snapshot(alert *weatheralert.WeatherAlert) map[string]any {
 	geometryJSON := ""
 	if alert.Geometry != nil {
-		if raw, err := alert.Geometry.GeoJSONString(); err == nil {
+		if raw, err := geojson.String(alert.Geometry); err == nil {
 			geometryJSON = raw
 		}
 	}

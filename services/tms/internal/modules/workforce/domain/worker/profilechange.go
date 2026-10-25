@@ -336,3 +336,16 @@ func (r *WorkerProfileChangeRequest) BeforeCreate(_ context.Context) error {
 
 	return nil
 }
+
+func (WorkerProfileChangeRequest) Constraints() []keel.Constraint {
+	return []keel.Constraint{
+		{
+			Name:    "uq_worker_profile_change_requests_open",
+			Message: "Worker already has a pending profile change request",
+		},
+		{
+			Name:    "fk_worker_profile_change_requests_worker",
+			Message: "Worker does not exist or belongs to a different organization",
+		},
+	}
+}

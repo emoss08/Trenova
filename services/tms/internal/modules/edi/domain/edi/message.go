@@ -363,6 +363,16 @@ func (c *EDITestCase) Validate(multiErr *errortypes.MultiError) {
 	))
 }
 
+func (EDITestCase) Constraints() []keel.Constraint {
+	return []keel.Constraint{
+		{
+			Name:    "idx_edi_test_cases_name_profile",
+			Field:   "name",
+			Message: "An EDI test case with this name already exists for the document profile",
+		},
+	}
+}
+
 const (
 	maxAS2FieldLength       = 255
 	maxDiagnosticCodeLength = 100

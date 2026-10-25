@@ -31,51 +31,15 @@ import (
 	"go.uber.org/zap"
 )
 
-var invoiceErrors = dberror.Mapping{
-	Entity: "Invoice",
-	Unique: []dberror.Constraint{
-		{
-			Name:    "uk_invoices_number",
-			Field:   "number",
-			Message: "Invoice with this number already exists in your organization",
-		},
-	},
-}
+var invoiceErrors = dberror.Mapping{Entity: "Invoice"}
 
-var invoiceLineErrors = dberror.Mapping{
-	Entity: "Invoice line",
-	Unique: []dberror.Constraint{
-		{
-			Name:    "uk_invoice_lines_number",
-			Field:   "lines",
-			Message: "Invoice line numbers must be unique within the invoice",
-		},
-	},
-}
+var invoiceLineErrors = dberror.Mapping{Entity: "Invoice line"}
 
-var attachmentErrors = dberror.Mapping{
-	Entity: "Invoice attachment",
-	Unique: []dberror.Constraint{
-		{
-			Name:    "uk_invoice_attachments_document",
-			Field:   "documentIds",
-			Message: "A document can be attached to the invoice only once",
-		},
-	},
-}
+var attachmentErrors = dberror.Mapping{Entity: "Invoice attachment"}
 
 var emailAttemptErrors = dberror.Mapping{Entity: "Invoice email attempt"}
 
-var shareTokenErrors = dberror.Mapping{
-	Entity: "Document share token",
-	Unique: []dberror.Constraint{
-		{
-			Name:    "uk_invoice_document_share_tokens_hash",
-			Field:   "tokenHash",
-			Message: "Document share token already exists",
-		},
-	},
-}
+var shareTokenErrors = dberror.Mapping{Entity: "Document share token"}
 
 type Params struct {
 	fx.In

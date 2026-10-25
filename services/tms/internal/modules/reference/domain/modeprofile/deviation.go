@@ -169,3 +169,16 @@ func (d *Deviation) BeforeSave(_ context.Context) error {
 	d.applyDefaults()
 	return nil
 }
+
+func (Deviation) Constraints() []keel.Constraint {
+	return []keel.Constraint{
+		{
+			Name:    "fk_mode_profile_deviations_profile",
+			Message: "Mode profile does not exist or belongs to a different organization",
+		},
+		{
+			Name:    "fk_mode_profile_deviations_acknowledged_by",
+			Message: "Acknowledging user does not exist",
+		},
+	}
+}

@@ -23,16 +23,7 @@ import (
 
 const commentEntity = "Shipment comment"
 
-var commentErrors = dberror.Mapping{
-	Entity: commentEntity,
-	ForeignKey: []dberror.Constraint{
-		{
-			Name:    "fk_shipment_comments_shipment",
-			Field:   "shipmentId",
-			Message: "Shipment does not exist in your organization",
-		},
-	},
-}
+var commentErrors = dberror.Mapping{Entity: commentEntity}
 
 type Params struct {
 	fx.In

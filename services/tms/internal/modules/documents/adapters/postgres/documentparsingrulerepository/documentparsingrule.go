@@ -19,45 +19,11 @@ import (
 
 const versionNumberConstraint = "uq_document_parsing_rule_versions_rule_set_version"
 
-var ruleSetErrors = dberror.Mapping{
-	Entity: "DocumentParsingRuleSet",
-	Unique: []dberror.Constraint{
-		{
-			Name:    "uq_document_parsing_rule_sets_name_kind_scope",
-			Field:   "name",
-			Message: "A parsing rule set with this name already exists for this document kind",
-		},
-	},
-	ForeignKey: []dberror.Constraint{
-		{
-			Name:    "fk_document_parsing_rule_sets_published_version",
-			Field:   "publishedVersionId",
-			Message: "Published version does not exist",
-		},
-	},
-}
+var ruleSetErrors = dberror.Mapping{Entity: "DocumentParsingRuleSet"}
 
-var ruleVersionErrors = dberror.Mapping{
-	Entity: "DocumentParsingRuleVersion",
-	ForeignKey: []dberror.Constraint{
-		{
-			Name:    "fk_document_parsing_rule_versions_rule_set",
-			Field:   "ruleSetId",
-			Message: "Parsing rule set does not exist",
-		},
-	},
-}
+var ruleVersionErrors = dberror.Mapping{Entity: "DocumentParsingRuleVersion"}
 
-var fixtureErrors = dberror.Mapping{
-	Entity: "DocumentParsingRuleFixture",
-	ForeignKey: []dberror.Constraint{
-		{
-			Name:    "fk_document_parsing_rule_fixtures_rule_set",
-			Field:   "ruleSetId",
-			Message: "Parsing rule set does not exist",
-		},
-	},
-}
+var fixtureErrors = dberror.Mapping{Entity: "DocumentParsingRuleFixture"}
 
 type Params struct {
 	fx.In

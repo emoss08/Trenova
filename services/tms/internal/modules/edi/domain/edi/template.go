@@ -101,3 +101,12 @@ func (t *EDITemplate) Validate(multiErr *errortypes.MultiError) {
 		),
 	))
 }
+
+func (EDITemplate) Constraints() []keel.Constraint {
+	return []keel.Constraint{
+		{
+			Name:    "idx_edi_templates_name_org_bu",
+			Message: "An EDI template with this name already exists in your organization",
+		},
+	}
+}

@@ -17,16 +17,7 @@ import (
 	"go.uber.org/zap"
 )
 
-var accountTypeErrors = dberror.Mapping{
-	Entity: "AccountType",
-	Unique: []dberror.Constraint{
-		{
-			Name:    "idx_account_types_unique_code",
-			Field:   "code",
-			Message: "Account type with this code already exists in your organization",
-		},
-	},
-}
+var accountTypeErrors = dberror.Mapping{Entity: "AccountType"}
 
 type Params struct {
 	fx.In

@@ -140,3 +140,12 @@ func (fi *FuelIndex) BeforeSave(_ context.Context) error {
 	}
 	return nil
 }
+
+func (FuelIndex) Constraints() []keel.Constraint {
+	return []keel.Constraint{
+		{
+			Name:    "uq_fuel_indices_code",
+			Message: "A fuel index with this code already exists in your organization",
+		},
+	}
+}

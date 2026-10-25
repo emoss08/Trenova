@@ -15,14 +15,15 @@ import (
 
 // accountTypesTable is the schema of accounttype.AccountType.
 var accountTypesTable = schema.Table{
-	Name:   "account_types",
-	Quoted: `"account_types"`,
-	Alias:  "at_",
-	Model:  "accounttype.AccountType",
-	Label:  `Account Type`,
-	Plural: `Account Types`,
-	Doc:    `Asset, liability, equity, revenue and expense classification`,
-	Report: &schema.TableReport{Category: `Accounting`},
+	Name:        "account_types",
+	Quoted:      `"account_types"`,
+	Alias:       "at_",
+	Model:       "accounttype.AccountType",
+	Label:       `Account Type`,
+	Plural:      `Account Types`,
+	Doc:         `Asset, liability, equity, revenue and expense classification`,
+	Report:      &schema.TableReport{Category: `Accounting`},
+	Constraints: (&accounttype.AccountType{}).Constraints(),
 	Columns: []schema.Column{
 		{Name: "id", Quoted: `"id"`, Field: "ID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagAutoID, Label: `ID`, JSON: `id`, Report: &reportDimString},
 		{Name: "business_unit_id", Quoted: `"business_unit_id"`, Field: "BusinessUnitID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Business Unit ID`, JSON: `businessUnitId`, Report: &reportDimStringHidden},

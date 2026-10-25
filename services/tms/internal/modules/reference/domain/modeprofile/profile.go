@@ -286,3 +286,20 @@ func (p *Profile) BeforeSave(_ context.Context) error {
 	p.applyDefaults()
 	return nil
 }
+
+func (Profile) Constraints() []keel.Constraint {
+	return []keel.Constraint{
+		{
+			Name:    "uq_mode_profiles_code",
+			Message: "Mode profile with this code already exists in your organization",
+		},
+		{
+			Name:    "uq_mode_profiles_org_default",
+			Message: "Another mode profile is already the organization default",
+		},
+		{
+			Name:    "fk_mode_profiles_customer",
+			Message: "Customer does not exist or belongs to a different organization",
+		},
+	}
+}

@@ -7,6 +7,7 @@ import (
 	"unsafe"
 
 	"github.com/emoss08/keel"
+	"github.com/emoss08/keel/postgis"
 	"github.com/emoss08/keel/schema"
 	"github.com/emoss08/trenova/internal/modules/kernel/domain/usstate"
 	"github.com/emoss08/trenova/internal/modules/kernel/domain/usstate/usstatedb"
@@ -19,14 +20,15 @@ import (
 
 // locationsTable is the schema of location.Location.
 var locationsTable = schema.Table{
-	Name:   "locations",
-	Quoted: `"locations"`,
-	Alias:  "l",
-	Model:  "location.Location",
-	Label:  `Location`,
-	Plural: `Locations`,
-	Doc:    `Physical pickup, delivery, and facility locations`,
-	Report: &schema.TableReport{Category: `Parties`},
+	Name:        "locations",
+	Quoted:      `"locations"`,
+	Alias:       "l",
+	Model:       "location.Location",
+	Label:       `Location`,
+	Plural:      `Locations`,
+	Doc:         `Physical pickup, delivery, and facility locations`,
+	Report:      &schema.TableReport{Category: `Parties`},
+	Constraints: (&location.Location{}).Constraints(),
 	Columns: []schema.Column{
 		{Name: "id", Quoted: `"id"`, Field: "ID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagAutoID, Label: `ID`, JSON: `id`, Report: &reportDimString},
 		{Name: "business_unit_id", Quoted: `"business_unit_id"`, Field: "BusinessUnitID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Business Unit ID`, JSON: `businessUnitId`, Report: &reportDimStringHidden},
@@ -103,10 +105,10 @@ type LocationsTable struct {
 	IsGeocoded           keel.BoolCol
 	Longitude            keel.Float64Col
 	Latitude             keel.Float64Col
-	Geom                 keelkinds.PostgisPointCol
+	Geom                 postgis.PointCol
 	GeofenceType         keelkinds.GeofenceTypeCol
 	GeofenceRadiusMeters keel.Float64Col
-	GeofenceGeometry     keelkinds.PostgisGeometryCol
+	GeofenceGeometry     postgis.GeometryCol
 	Version              keel.Int64Col
 	CreatedAt            keel.Int64Col
 	UpdatedAt            keel.Int64Col
@@ -135,10 +137,10 @@ var Locations = &LocationsTable{
 	IsGeocoded:           keel.BoolCol{Col: keel.Col{Ref: &locationsRef, Index: 15}},
 	Longitude:            keel.Float64Col{Col: keel.Col{Ref: &locationsRef, Index: 16}},
 	Latitude:             keel.Float64Col{Col: keel.Col{Ref: &locationsRef, Index: 17}},
-	Geom:                 keelkinds.PostgisPointCol{AnyCol: keel.AnyCol{Col: keel.Col{Ref: &locationsRef, Index: 18}}},
+	Geom:                 postgis.PointCol{AnyCol: keel.AnyCol{Col: keel.Col{Ref: &locationsRef, Index: 18}}},
 	GeofenceType:         keelkinds.GeofenceTypeCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &locationsRef, Index: 19}}},
 	GeofenceRadiusMeters: keel.Float64Col{Col: keel.Col{Ref: &locationsRef, Index: 20}},
-	GeofenceGeometry:     keelkinds.PostgisGeometryCol{AnyCol: keel.AnyCol{Col: keel.Col{Ref: &locationsRef, Index: 21}}},
+	GeofenceGeometry:     postgis.GeometryCol{AnyCol: keel.AnyCol{Col: keel.Col{Ref: &locationsRef, Index: 21}}},
 	Version:              keel.Int64Col{Col: keel.Col{Ref: &locationsRef, Index: 22}},
 	CreatedAt:            keel.Int64Col{Col: keel.Col{Ref: &locationsRef, Index: 23}},
 	UpdatedAt:            keel.Int64Col{Col: keel.Col{Ref: &locationsRef, Index: 24}},
@@ -168,10 +170,10 @@ func BuildLocations(r *keel.Ref) *LocationsTable {
 		IsGeocoded:           keel.BoolCol{Col: keel.Col{Ref: r, Index: 15}},
 		Longitude:            keel.Float64Col{Col: keel.Col{Ref: r, Index: 16}},
 		Latitude:             keel.Float64Col{Col: keel.Col{Ref: r, Index: 17}},
-		Geom:                 keelkinds.PostgisPointCol{AnyCol: keel.AnyCol{Col: keel.Col{Ref: r, Index: 18}}},
+		Geom:                 postgis.PointCol{AnyCol: keel.AnyCol{Col: keel.Col{Ref: r, Index: 18}}},
 		GeofenceType:         keelkinds.GeofenceTypeCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 19}}},
 		GeofenceRadiusMeters: keel.Float64Col{Col: keel.Col{Ref: r, Index: 20}},
-		GeofenceGeometry:     keelkinds.PostgisGeometryCol{AnyCol: keel.AnyCol{Col: keel.Col{Ref: r, Index: 21}}},
+		GeofenceGeometry:     postgis.GeometryCol{AnyCol: keel.AnyCol{Col: keel.Col{Ref: r, Index: 21}}},
 		Version:              keel.Int64Col{Col: keel.Col{Ref: r, Index: 22}},
 		CreatedAt:            keel.Int64Col{Col: keel.Col{Ref: r, Index: 23}},
 		UpdatedAt:            keel.Int64Col{Col: keel.Col{Ref: r, Index: 24}},

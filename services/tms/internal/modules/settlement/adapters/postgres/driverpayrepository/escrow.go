@@ -17,16 +17,7 @@ import (
 )
 
 var (
-	escrowAccountErrors = dberror.Mapping{
-		Entity: "EscrowAccount",
-		Unique: []dberror.Constraint{
-			{
-				Name:    "uq_escrow_accounts_worker_active",
-				Field:   "workerId",
-				Message: "Worker already has an active escrow account",
-			},
-		},
-	}
+	escrowAccountErrors     = dberror.Mapping{Entity: "EscrowAccount"}
 	escrowTransactionErrors = dberror.Mapping{Entity: "EscrowTransaction"}
 )
 

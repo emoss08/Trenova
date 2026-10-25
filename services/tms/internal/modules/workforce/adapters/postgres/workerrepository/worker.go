@@ -29,53 +29,9 @@ const (
 	syncDriftBusyMessage = "Worker sync state is busy. Retry the request."
 )
 
-var workerErrors = dberror.Mapping{
-	Entity: "Worker",
-	Unique: []dberror.Constraint{
-		{
-			Name:    "uq_workers_org_user",
-			Field:   "userId",
-			Message: "This user is already linked to another worker in your organization",
-		},
-	},
-	ForeignKey: []dberror.Constraint{
-		{
-			Name:    "fk_workers_state",
-			Field:   "stateId",
-			Message: "State does not exist",
-		},
-		{
-			Name:    "fk_workers_manager",
-			Field:   "managerId",
-			Message: "Manager does not exist",
-		},
-		{
-			Name:    "fk_workers_fleet_code",
-			Field:   "fleetCodeId",
-			Message: "Fleet code does not exist or belongs to a different organization",
-		},
-		{
-			Name:    "fk_workers_user",
-			Field:   "userId",
-			Message: "User does not exist",
-		},
-		{
-			Name:    "fk_workers_position",
-			Field:   "positionId",
-			Message: "Job position does not exist or belongs to a different organization",
-		},
-		{
-			Name:    "fk_worker_profiles_license_state",
-			Field:   "profile.licenseStateId",
-			Message: "License state does not exist",
-		},
-	},
-}
+var workerErrors = dberror.Mapping{Entity: "Worker"}
 
-var workerProfileErrors = dberror.Mapping{
-	Entity:     "WorkerProfile",
-	ForeignKey: workerErrors.ForeignKey,
-}
+var workerProfileErrors = dberror.Mapping{Entity: "WorkerProfile"}
 
 type Params struct {
 	fx.In

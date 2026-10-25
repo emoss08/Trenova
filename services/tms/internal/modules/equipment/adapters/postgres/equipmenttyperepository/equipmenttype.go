@@ -17,16 +17,7 @@ import (
 	"go.uber.org/zap"
 )
 
-var equipmentTypeErrors = dberror.Mapping{
-	Entity: "EquipmentType",
-	Unique: []dberror.Constraint{
-		{
-			Name:    "idx_equipment_types_code",
-			Field:   "code",
-			Message: "Equipment type with this code already exists in your organization",
-		},
-	},
-}
+var equipmentTypeErrors = dberror.Mapping{Entity: "EquipmentType"}
 
 type Params struct {
 	fx.In

@@ -7,7 +7,6 @@ import (
 	"github.com/emoss08/trenova/internal/modules/places/domain/geofence"
 	"github.com/emoss08/trenova/internal/modules/places/domain/rategeo"
 	"github.com/emoss08/trenova/pkg/domaintypes"
-	"github.com/emoss08/trenova/pkg/postgis"
 	"github.com/emoss08/trenova/shared/pulid"
 	pgvector "github.com/pgvector/pgvector-go"
 	"github.com/shopspring/decimal"
@@ -263,48 +262,6 @@ func (c PgvectorHalfVectorCol) Between(lo, hi pgvector.HalfVector) keel.Pred {
 func (c PgvectorHalfVectorCol) To(v pgvector.HalfVector) keel.Assignment  { return c.AnyCol.To(v) }
 func (c PgvectorHalfVectorCol) In(vs ...pgvector.HalfVector) keel.Pred    { return c.AnyCol.In(vs) }
 func (c PgvectorHalfVectorCol) NotIn(vs ...pgvector.HalfVector) keel.Pred { return c.AnyCol.NotIn(vs) }
-
-// PostgisGeometryCol is a column of postgis.Geometry values.
-type PostgisGeometryCol struct{ keel.AnyCol }
-
-func (c PostgisGeometryCol) Eq(v postgis.Geometry) keel.Pred  { return c.AnyCol.Eq(&v) }
-func (c PostgisGeometryCol) Ne(v postgis.Geometry) keel.Pred  { return c.AnyCol.Ne(&v) }
-func (c PostgisGeometryCol) Gt(v postgis.Geometry) keel.Pred  { return c.AnyCol.Gt(&v) }
-func (c PostgisGeometryCol) Gte(v postgis.Geometry) keel.Pred { return c.AnyCol.Gte(&v) }
-func (c PostgisGeometryCol) Lt(v postgis.Geometry) keel.Pred  { return c.AnyCol.Lt(&v) }
-func (c PostgisGeometryCol) Lte(v postgis.Geometry) keel.Pred { return c.AnyCol.Lte(&v) }
-func (c PostgisGeometryCol) IsDistinctFrom(v postgis.Geometry) keel.Pred {
-	return c.AnyCol.IsDistinctFrom(&v)
-}
-func (c PostgisGeometryCol) Between(lo, hi postgis.Geometry) keel.Pred {
-	return c.AnyCol.Between(&lo, &hi)
-}
-func (c PostgisGeometryCol) To(v postgis.Geometry) keel.Assignment { return c.AnyCol.To(&v) }
-func (c PostgisGeometryCol) In(vs ...postgis.Geometry) keel.Pred {
-	return c.AnyCol.In(keel.Pointers(vs))
-}
-func (c PostgisGeometryCol) NotIn(vs ...postgis.Geometry) keel.Pred {
-	return c.AnyCol.NotIn(keel.Pointers(vs))
-}
-
-// PostgisPointCol is a column of postgis.Point values.
-type PostgisPointCol struct{ keel.AnyCol }
-
-func (c PostgisPointCol) Eq(v postgis.Point) keel.Pred  { return c.AnyCol.Eq(&v) }
-func (c PostgisPointCol) Ne(v postgis.Point) keel.Pred  { return c.AnyCol.Ne(&v) }
-func (c PostgisPointCol) Gt(v postgis.Point) keel.Pred  { return c.AnyCol.Gt(&v) }
-func (c PostgisPointCol) Gte(v postgis.Point) keel.Pred { return c.AnyCol.Gte(&v) }
-func (c PostgisPointCol) Lt(v postgis.Point) keel.Pred  { return c.AnyCol.Lt(&v) }
-func (c PostgisPointCol) Lte(v postgis.Point) keel.Pred { return c.AnyCol.Lte(&v) }
-func (c PostgisPointCol) IsDistinctFrom(v postgis.Point) keel.Pred {
-	return c.AnyCol.IsDistinctFrom(&v)
-}
-func (c PostgisPointCol) Between(lo, hi postgis.Point) keel.Pred { return c.AnyCol.Between(&lo, &hi) }
-func (c PostgisPointCol) To(v postgis.Point) keel.Assignment     { return c.AnyCol.To(&v) }
-func (c PostgisPointCol) In(vs ...postgis.Point) keel.Pred       { return c.AnyCol.In(keel.Pointers(vs)) }
-func (c PostgisPointCol) NotIn(vs ...postgis.Point) keel.Pred {
-	return c.AnyCol.NotIn(keel.Pointers(vs))
-}
 
 // PulidIDCol is a column of pulid.ID values.
 type PulidIDCol struct{ keel.StringCol }

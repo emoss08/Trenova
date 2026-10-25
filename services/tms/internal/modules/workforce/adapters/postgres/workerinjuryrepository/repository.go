@@ -21,44 +21,9 @@ const (
 	defaultSummaryPageSize = 20
 )
 
-var injuryErrors = dberror.Mapping{
-	Entity: "WorkerInjury",
-	Unique: []dberror.Constraint{
-		{
-			Name:    "uq_worker_injuries_case",
-			Field:   "caseNumber",
-			Message: "That case number is already used for this year; try again",
-		},
-	},
-	ForeignKey: []dberror.Constraint{
-		{
-			Name:    "fk_worker_injuries_worker",
-			Field:   "workerId",
-			Message: "Worker does not exist or belongs to a different organization",
-		},
-		{
-			Name:    "fk_worker_injuries_safety_event",
-			Field:   "safetyEventId",
-			Message: "Safety event does not exist or belongs to a different organization",
-		},
-		{
-			Name:    "fk_worker_injuries_document",
-			Field:   "documentId",
-			Message: "Document does not exist or belongs to a different organization",
-		},
-	},
-}
+var injuryErrors = dberror.Mapping{Entity: "WorkerInjury"}
 
-var summaryErrors = dberror.Mapping{
-	Entity: "OSHAAnnualSummary",
-	Unique: []dberror.Constraint{
-		{
-			Name:    "uq_osha_annual_summaries_year",
-			Field:   "year",
-			Message: "A summary already exists for that year",
-		},
-	},
-}
+var summaryErrors = dberror.Mapping{Entity: "OSHAAnnualSummary"}
 
 var recordableClassifications = []worker.OSHACaseClassification{
 	worker.CaseOtherRecordable,

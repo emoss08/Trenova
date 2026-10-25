@@ -17,56 +17,11 @@ import (
 	"go.uber.org/zap"
 )
 
-const fieldWorkerID = "workerId"
+var eventErrors = dberror.Mapping{Entity: "WorkerSafetyEvent"}
 
-func workerForeignKey(name string) dberror.Constraint {
-	return dberror.Constraint{
-		Name:    name,
-		Field:   fieldWorkerID,
-		Message: "Worker does not exist or belongs to a different organization",
-	}
-}
+var actionErrors = dberror.Mapping{Entity: "WorkerDisciplinaryAction"}
 
-var eventErrors = dberror.Mapping{
-	Entity: "WorkerSafetyEvent",
-	ForeignKey: []dberror.Constraint{
-		workerForeignKey("fk_worker_safety_events_worker"),
-		{
-			Name:    "fk_worker_safety_events_shipment",
-			Field:   "shipmentId",
-			Message: "Shipment does not exist or belongs to a different organization",
-		},
-		{
-			Name:    "fk_worker_safety_events_document",
-			Field:   "documentId",
-			Message: "Document does not exist or belongs to a different organization",
-		},
-	},
-}
-
-var actionErrors = dberror.Mapping{
-	Entity: "WorkerDisciplinaryAction",
-	ForeignKey: []dberror.Constraint{
-		workerForeignKey("fk_worker_disciplinary_actions_worker"),
-		{
-			Name:    "fk_worker_disciplinary_actions_event",
-			Field:   "safetyEventId",
-			Message: "Safety event does not exist or belongs to a different organization",
-		},
-		{
-			Name:    "fk_worker_disciplinary_actions_document",
-			Field:   "documentId",
-			Message: "Document does not exist or belongs to a different organization",
-		},
-	},
-}
-
-var recognitionErrors = dberror.Mapping{
-	Entity: "WorkerRecognition",
-	ForeignKey: []dberror.Constraint{
-		workerForeignKey("fk_worker_recognitions_worker"),
-	},
-}
+var recognitionErrors = dberror.Mapping{Entity: "WorkerRecognition"}
 
 type Params struct {
 	fx.In

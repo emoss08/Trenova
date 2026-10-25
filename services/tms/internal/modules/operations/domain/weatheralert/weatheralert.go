@@ -2,9 +2,9 @@ package weatheralert
 
 import (
 	"github.com/emoss08/keel"
+	"github.com/emoss08/keel/postgis"
 	"github.com/emoss08/trenova/pkg/domainvalidation"
 	"github.com/emoss08/trenova/pkg/errortypes"
-	"github.com/emoss08/trenova/pkg/postgis"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/typeutils"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
@@ -91,6 +91,15 @@ func (w *WeatherAlert) Validate(multiErr *errortypes.MultiError) {
 	}
 }
 
+func (WeatherAlert) Constraints() []keel.Constraint {
+	return []keel.Constraint{
+		{
+			Name:    "idx_weather_alerts_tenant_nws_id",
+			Message: "Weather alert with this NWS ID already exists in your organization",
+		},
+	}
+}
+
 func (a *Activity) Validate(multiErr *errortypes.MultiError) {
 	multiErr.AddOzzoError(validation.ValidateStruct(a,
 		validation.Field(&a.OrganizationID,
@@ -111,4 +120,13 @@ func (a *Activity) Validate(multiErr *errortypes.MultiError) {
 			validation.Min(int64(1)).Error("Timestamp must be a valid timestamp"),
 		),
 	))
+}
+
+func (Activity) Constraints() []keel.Constraint {
+	return []keel.Constraint{
+		{
+			Name:    "fk_weather_alert_activities_alert",
+			Message: "Weather alert does not exist in your organization",
+		},
+	}
 }

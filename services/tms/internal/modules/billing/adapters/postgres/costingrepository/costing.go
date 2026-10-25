@@ -15,16 +15,7 @@ import (
 
 var costingControlErrors = dberror.Mapping{Entity: "CostingControl"}
 
-var costCategoryErrors = dberror.Mapping{
-	Entity: "CostCategory",
-	Unique: []dberror.Constraint{
-		{
-			Name:    "uq_cost_categories_category",
-			Field:   "category",
-			Message: "A cost category of this kind already exists",
-		},
-	},
-}
+var costCategoryErrors = dberror.Mapping{Entity: "CostCategory"}
 
 type Params struct {
 	fx.In

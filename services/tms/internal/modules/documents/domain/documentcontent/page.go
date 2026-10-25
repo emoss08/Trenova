@@ -84,3 +84,21 @@ func (p *Page) ModelText() string {
 
 	return p.ExtractedText
 }
+
+func (Page) Constraints() []keel.Constraint {
+	return []keel.Constraint{
+		{
+			Name:    "uq_document_content_pages_page",
+			Field:   "pageNumber",
+			Message: "Each page number may appear only once in a document's content",
+		},
+		{
+			Name:    "fk_document_content_pages_content",
+			Message: "Document content does not exist",
+		},
+		{
+			Name:    "fk_document_content_pages_document",
+			Message: "Document does not exist",
+		},
+	}
+}

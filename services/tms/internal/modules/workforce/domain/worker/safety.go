@@ -355,6 +355,23 @@ func (e *WorkerSafetyEvent) BeforeCreate(_ context.Context) error {
 	return nil
 }
 
+func (WorkerSafetyEvent) Constraints() []keel.Constraint {
+	return []keel.Constraint{
+		{
+			Name:    "fk_worker_safety_events_shipment",
+			Message: "Shipment does not exist or belongs to a different organization",
+		},
+		{
+			Name:    "fk_worker_safety_events_document",
+			Message: "Document does not exist or belongs to a different organization",
+		},
+		{
+			Name:    "fk_worker_safety_events_worker",
+			Message: "Worker does not exist or belongs to a different organization",
+		},
+	}
+}
+
 // SafetyRating buckets a scorecard for chips and gauges.
 type SafetyRating string
 

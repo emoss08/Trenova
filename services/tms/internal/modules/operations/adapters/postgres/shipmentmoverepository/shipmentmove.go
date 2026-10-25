@@ -19,31 +19,8 @@ import (
 )
 
 var (
-	moveErrors = dberror.Mapping{
-		Entity: "Shipment move",
-		ForeignKey: []dberror.Constraint{
-			{
-				Name:    "fk_shipment_moves_shipment",
-				Field:   "shipmentId",
-				Message: "Shipment does not exist in your organization",
-			},
-		},
-	}
-	stopErrors = dberror.Mapping{
-		Entity: "Shipment stop",
-		ForeignKey: []dberror.Constraint{
-			{
-				Name:    "fk_stops_location",
-				Field:   "locationId",
-				Message: "Location does not exist in your organization",
-			},
-			{
-				Name:    "fk_stops_shipment_move",
-				Field:   "shipmentMoveId",
-				Message: "Shipment move does not exist in your organization",
-			},
-		},
-	}
+	moveErrors       = dberror.Mapping{Entity: "Shipment move"}
+	stopErrors       = dberror.Mapping{Entity: "Shipment stop"}
 	stopActualErrors = dberror.Mapping{Entity: "Stop"}
 )
 

@@ -11,37 +11,9 @@ import (
 const busyMessage = "Rate agreement is busy. Retry the request."
 
 var (
-	agreementErrors = dberror.Mapping{
-		Entity: "RateAgreement",
-		Unique: []dberror.Constraint{
-			{
-				Name:    "uq_rate_agreements_code",
-				Field:   "code",
-				Message: "A rate agreement with this code already exists in your organization",
-			},
-			{
-				Name:    "uq_rate_agreement_accessorials",
-				Field:   "accessorials",
-				Message: "An accessorial charge can appear only once in an agreement's schedule",
-			},
-			{
-				Name:    "uq_rate_agreement_fuel_bindings",
-				Field:   "fuelBinding",
-				Message: "A rate agreement can bind only one fuel surcharge program",
-			},
-		},
-	}
-	ruleErrors    = dberror.Mapping{Entity: "RateAgreementRule"}
-	versionErrors = dberror.Mapping{
-		Entity: "RateAgreementVersion",
-		Unique: []dberror.Constraint{
-			{
-				Name:    "uq_rate_agreement_versions_number",
-				Field:   "versionNumber",
-				Message: "This version of the rate agreement was already recorded; refresh and try again",
-			},
-		},
-	}
+	agreementErrors = dberror.Mapping{Entity: "RateAgreement"}
+	ruleErrors      = dberror.Mapping{Entity: "RateAgreementRule"}
+	versionErrors   = dberror.Mapping{Entity: "RateAgreementVersion"}
 )
 
 func mapAgreementError(err error, id string) error {

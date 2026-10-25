@@ -27,14 +27,15 @@ import (
 
 // tractorsTable is the schema of tractor.Tractor.
 var tractorsTable = schema.Table{
-	Name:   "tractors",
-	Quoted: `"tractors"`,
-	Alias:  "t",
-	Model:  "tractor.Tractor",
-	Label:  `Tractor`,
-	Plural: `Tractors`,
-	Doc:    `Power units`,
-	Report: &schema.TableReport{Category: `Equipment`},
+	Name:        "tractors",
+	Quoted:      `"tractors"`,
+	Alias:       "t",
+	Model:       "tractor.Tractor",
+	Label:       `Tractor`,
+	Plural:      `Tractors`,
+	Doc:         `Power units`,
+	Report:      &schema.TableReport{Category: `Equipment`},
+	Constraints: (&tractor.Tractor{}).Constraints(),
 	Columns: []schema.Column{
 		{Name: "id", Quoted: `"id"`, Field: "ID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagAutoID, Label: `ID`, JSON: `id`, Report: &reportDimString},
 		{Name: "business_unit_id", Quoted: `"business_unit_id"`, Field: "BusinessUnitID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Business Unit ID`, JSON: `businessUnitId`, Report: &reportDimStringHidden},

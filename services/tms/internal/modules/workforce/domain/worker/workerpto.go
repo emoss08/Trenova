@@ -161,3 +161,12 @@ func (wpto *WorkerPTO) GetPostgresSearchConfig() domaintypes.PostgresSearchConfi
 		},
 	}
 }
+
+func (WorkerPTO) Constraints() []keel.Constraint {
+	return []keel.Constraint{
+		{
+			Name:    "fk_worker_pto_worker",
+			Message: "Worker does not exist or belongs to a different organization",
+		},
+	}
+}

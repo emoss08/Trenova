@@ -32,3 +32,12 @@ func NewLinkID() pulid.ID {
 func (l *Link) IsUsable(now int64) bool {
 	return l != nil && l.RevokedAt == nil && l.ExpiresAt > now
 }
+
+func (Link) Constraints() []keel.Constraint {
+	return []keel.Constraint{
+		{
+			Name:    "fk_customer_tracking_links_shipment",
+			Message: "Shipment does not exist in your organization",
+		},
+	}
+}

@@ -17,14 +17,15 @@ import (
 
 // factoringCompaniesTable is the schema of factoringcompany.FactoringCompany.
 var factoringCompaniesTable = schema.Table{
-	Name:   "factoring_companies",
-	Quoted: `"factoring_companies"`,
-	Alias:  "fc",
-	Model:  "factoringcompany.FactoringCompany",
-	Label:  `Factoring Company`,
-	Plural: `Factoring Companies`,
-	Doc:    `Factors that buy customer invoices and the remittance details invoices carry to them`,
-	Report: &schema.TableReport{Category: `Parties`},
+	Name:        "factoring_companies",
+	Quoted:      `"factoring_companies"`,
+	Alias:       "fc",
+	Model:       "factoringcompany.FactoringCompany",
+	Label:       `Factoring Company`,
+	Plural:      `Factoring Companies`,
+	Doc:         `Factors that buy customer invoices and the remittance details invoices carry to them`,
+	Report:      &schema.TableReport{Category: `Parties`},
+	Constraints: (&factoringcompany.FactoringCompany{}).Constraints(),
 	Columns: []schema.Column{
 		{Name: "id", Quoted: `"id"`, Field: "ID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagAutoID, Label: `ID`, JSON: `id`, Report: &reportDimString},
 		{Name: "business_unit_id", Quoted: `"business_unit_id"`, Field: "BusinessUnitID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Business Unit ID`, JSON: `businessUnitId`, Report: &reportDimStringHidden},

@@ -23,12 +23,13 @@ import (
 
 // recurringShipmentsTable is the schema of recurringshipment.RecurringShipment.
 var recurringShipmentsTable = schema.Table{
-	Name:   "recurring_shipments",
-	Quoted: `"recurring_shipments"`,
-	Alias:  "rs",
-	Model:  "recurringshipment.RecurringShipment",
-	Label:  `Recurring Shipment`,
-	Plural: `Recurring Shipments`,
+	Name:        "recurring_shipments",
+	Quoted:      `"recurring_shipments"`,
+	Alias:       "rs",
+	Model:       "recurringshipment.RecurringShipment",
+	Label:       `Recurring Shipment`,
+	Plural:      `Recurring Shipments`,
+	Constraints: (&recurringshipment.RecurringShipment{}).Constraints(),
 	Columns: []schema.Column{
 		{Name: "id", Quoted: `"id"`, Field: "ID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagAutoID, Label: `ID`, JSON: `id`},
 		{Name: "business_unit_id", Quoted: `"business_unit_id"`, Field: "BusinessUnitID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Business Unit ID`, JSON: `businessUnitId`},
@@ -449,12 +450,13 @@ func beforeCreateRecurringShipment(ctx context.Context, p unsafe.Pointer) error 
 
 // recurringShipmentRunsTable is the schema of recurringshipment.RecurringShipmentRun.
 var recurringShipmentRunsTable = schema.Table{
-	Name:   "recurring_shipment_runs",
-	Quoted: `"recurring_shipment_runs"`,
-	Alias:  "rsr",
-	Model:  "recurringshipment.RecurringShipmentRun",
-	Label:  `Recurring Shipment Run`,
-	Plural: `Recurring Shipment Runs`,
+	Name:        "recurring_shipment_runs",
+	Quoted:      `"recurring_shipment_runs"`,
+	Alias:       "rsr",
+	Model:       "recurringshipment.RecurringShipmentRun",
+	Label:       `Recurring Shipment Run`,
+	Plural:      `Recurring Shipment Runs`,
+	Constraints: (&recurringshipment.RecurringShipmentRun{}).Constraints(),
 	Columns: []schema.Column{
 		{Name: "id", Quoted: `"id"`, Field: "ID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagAutoID, Label: `ID`, JSON: `id`},
 		{Name: "business_unit_id", Quoted: `"business_unit_id"`, Field: "BusinessUnitID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Business Unit ID`, JSON: `businessUnitId`},

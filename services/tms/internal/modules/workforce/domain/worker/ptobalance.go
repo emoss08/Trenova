@@ -79,3 +79,12 @@ func (b *WorkerPTOBalance) GetTableName() string { return "worker_pto_balances" 
 func (b *WorkerPTOBalance) GetResourceType() string { return "worker_pto_balance" }
 
 func (b *WorkerPTOBalance) GetResourceID() string { return b.ID.String() }
+
+func (WorkerPTOBalance) Constraints() []keel.Constraint {
+	return []keel.Constraint{
+		{
+			Name:    "fk_worker_pto_balances_worker",
+			Message: "Worker does not exist or belongs to a different organization",
+		},
+	}
+}

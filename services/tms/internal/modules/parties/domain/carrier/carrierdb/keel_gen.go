@@ -19,14 +19,15 @@ import (
 
 // carriersTable is the schema of carrier.Carrier.
 var carriersTable = schema.Table{
-	Name:   "carriers",
-	Quoted: `"carriers"`,
-	Alias:  "c",
-	Model:  "carrier.Carrier",
-	Label:  `Carrier`,
-	Plural: `Carriers`,
-	Doc:    `External carriers that cover brokered freight`,
-	Report: &schema.TableReport{Category: `Parties`},
+	Name:        "carriers",
+	Quoted:      `"carriers"`,
+	Alias:       "c",
+	Model:       "carrier.Carrier",
+	Label:       `Carrier`,
+	Plural:      `Carriers`,
+	Doc:         `External carriers that cover brokered freight`,
+	Report:      &schema.TableReport{Category: `Parties`},
+	Constraints: (&carrier.Carrier{}).Constraints(),
 	Columns: []schema.Column{
 		{Name: "id", Quoted: `"id"`, Field: "ID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagAutoID, Label: `ID`, JSON: `id`, Report: &reportDimString},
 		{Name: "business_unit_id", Quoted: `"business_unit_id"`, Field: "BusinessUnitID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Business Unit ID`, JSON: `businessUnitId`, Report: &reportDimStringHidden},
@@ -787,12 +788,13 @@ func attachCarrierContact(p unsafe.Pointer, rel int32, child unsafe.Pointer) {
 
 // carrierEDIChannelsTable is the schema of carrier.CarrierEDIChannel.
 var carrierEDIChannelsTable = schema.Table{
-	Name:   "carrier_edi_channels",
-	Quoted: `"carrier_edi_channels"`,
-	Alias:  "cec",
-	Model:  "carrier.CarrierEDIChannel",
-	Label:  `Carrier EDI Channel`,
-	Plural: `Carrier EDI Channels`,
+	Name:        "carrier_edi_channels",
+	Quoted:      `"carrier_edi_channels"`,
+	Alias:       "cec",
+	Model:       "carrier.CarrierEDIChannel",
+	Label:       `Carrier EDI Channel`,
+	Plural:      `Carrier EDI Channels`,
+	Constraints: (&carrier.CarrierEDIChannel{}).Constraints(),
 	Columns: []schema.Column{
 		{Name: "id", Quoted: `"id"`, Field: "ID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagAutoID, Label: `ID`, JSON: `id`},
 		{Name: "business_unit_id", Quoted: `"business_unit_id"`, Field: "BusinessUnitID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Business Unit ID`, JSON: `businessUnitId`},

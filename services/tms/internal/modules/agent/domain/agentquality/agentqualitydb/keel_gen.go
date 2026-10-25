@@ -638,12 +638,13 @@ func beforeCreateEvalCase(ctx context.Context, p unsafe.Pointer) error {
 
 // suiteRunsTable is the schema of agentquality.SuiteRun.
 var suiteRunsTable = schema.Table{
-	Name:   "agent_suite_runs",
-	Quoted: `"agent_suite_runs"`,
-	Alias:  "asr",
-	Model:  "agentquality.SuiteRun",
-	Label:  `Suite Run`,
-	Plural: `Suite Runs`,
+	Name:        "agent_suite_runs",
+	Quoted:      `"agent_suite_runs"`,
+	Alias:       "asr",
+	Model:       "agentquality.SuiteRun",
+	Label:       `Suite Run`,
+	Plural:      `Suite Runs`,
+	Constraints: (&agentquality.SuiteRun{}).Constraints(),
 	Columns: []schema.Column{
 		{Name: "id", Quoted: `"id"`, Field: "ID", Kind: schema.KindString, Flags: schema.FlagPK, Label: `ID`, JSON: `id`},
 		{Name: "business_unit_id", Quoted: `"business_unit_id"`, Field: "BusinessUnitID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Business Unit ID`, JSON: `businessUnitId`},

@@ -150,3 +150,12 @@ type Account struct {
 	CreatedAt         int64    `json:"createdAt"         keel:"created_at,autocreate"`
 	UpdatedAt         int64    `json:"updatedAt"         keel:"updated_at,autoupdate"`
 }
+
+func (Account) Constraints() []keel.Constraint {
+	return []keel.Constraint{
+		{
+			Name:    "uq_collection_accounts_customer",
+			Message: "Someone else started working this customer at the same time. Reload it and try again.",
+		},
+	}
+}

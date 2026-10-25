@@ -121,3 +121,12 @@ func (c *CheckCall) Validate(multiErr *errortypes.MultiError) {
 		),
 	))
 }
+
+func (CheckCall) Constraints() []keel.Constraint {
+	return []keel.Constraint{
+		{
+			Name:    "fk_check_calls_shipment",
+			Message: "Shipment does not exist in your organization",
+		},
+	}
+}

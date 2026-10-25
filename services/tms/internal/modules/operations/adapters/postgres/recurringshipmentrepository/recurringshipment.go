@@ -26,42 +26,9 @@ import (
 	"go.uber.org/zap"
 )
 
-var seriesErrors = dberror.Mapping{
-	Entity: "RecurringShipment",
-	ForeignKey: []dberror.Constraint{
-		{
-			Name:    "fk_recurring_shipments_source_shipment",
-			Field:   "sourceShipmentId",
-			Message: "Source shipment does not exist in your organization",
-		},
-		{
-			Name:    "fk_recurring_shipments_customer",
-			Field:   "customerId",
-			Message: "Customer does not exist in your organization",
-		},
-		{
-			Name:    "fk_recurring_shipments_origin_location",
-			Field:   "originLocationId",
-			Message: "Origin location does not exist in your organization",
-		},
-		{
-			Name:    "fk_recurring_shipments_destination_location",
-			Field:   "destinationLocationId",
-			Message: "Destination location does not exist in your organization",
-		},
-	},
-}
+var seriesErrors = dberror.Mapping{Entity: "RecurringShipment"}
 
-var runErrors = dberror.Mapping{
-	Entity: "RecurringShipmentRun",
-	ForeignKey: []dberror.Constraint{
-		{
-			Name:    "fk_recurring_shipment_runs_series",
-			Field:   "recurringShipmentId",
-			Message: "Recurring shipment does not exist in your organization",
-		},
-	},
-}
+var runErrors = dberror.Mapping{Entity: "RecurringShipmentRun"}
 
 type Params struct {
 	fx.In

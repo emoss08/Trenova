@@ -32,12 +32,13 @@ import (
 
 // attachmentsTable is the schema of invoice.Attachment.
 var attachmentsTable = schema.Table{
-	Name:   "invoice_attachments",
-	Quoted: `"invoice_attachments"`,
-	Alias:  "ia",
-	Model:  "invoice.Attachment",
-	Label:  `Attachment`,
-	Plural: `Attachments`,
+	Name:        "invoice_attachments",
+	Quoted:      `"invoice_attachments"`,
+	Alias:       "ia",
+	Model:       "invoice.Attachment",
+	Label:       `Attachment`,
+	Plural:      `Attachments`,
+	Constraints: (&invoice.Attachment{}).Constraints(),
 	Columns: []schema.Column{
 		{Name: "id", Quoted: `"id"`, Field: "ID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagAutoID, Label: `ID`, JSON: `id`},
 		{Name: "organization_id", Quoted: `"organization_id"`, Field: "OrganizationID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Organization ID`, JSON: `organizationId`},
@@ -207,12 +208,13 @@ func attachAttachment(p unsafe.Pointer, rel int32, child unsafe.Pointer) {
 
 // documentShareTokensTable is the schema of invoice.DocumentShareToken.
 var documentShareTokensTable = schema.Table{
-	Name:   "invoice_document_share_tokens",
-	Quoted: `"invoice_document_share_tokens"`,
-	Alias:  "idst",
-	Model:  "invoice.DocumentShareToken",
-	Label:  `Document Share Token`,
-	Plural: `Document Share Tokens`,
+	Name:        "invoice_document_share_tokens",
+	Quoted:      `"invoice_document_share_tokens"`,
+	Alias:       "idst",
+	Model:       "invoice.DocumentShareToken",
+	Label:       `Document Share Token`,
+	Plural:      `Document Share Tokens`,
+	Constraints: (&invoice.DocumentShareToken{}).Constraints(),
 	Columns: []schema.Column{
 		{Name: "id", Quoted: `"id"`, Field: "ID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagAutoID, Label: `ID`, JSON: `id`},
 		{Name: "organization_id", Quoted: `"organization_id"`, Field: "OrganizationID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Organization ID`, JSON: `organizationId`},
@@ -975,14 +977,15 @@ func attachEmailAttemptAttachment(p unsafe.Pointer, rel int32, child unsafe.Poin
 
 // invoicesTable is the schema of invoice.Invoice.
 var invoicesTable = schema.Table{
-	Name:   "invoices",
-	Quoted: `"invoices"`,
-	Alias:  "i",
-	Model:  "invoice.Invoice",
-	Label:  `Invoice`,
-	Plural: `Invoices`,
-	Doc:    `Customer invoices`,
-	Report: &schema.TableReport{Category: `Billing`},
+	Name:        "invoices",
+	Quoted:      `"invoices"`,
+	Alias:       "i",
+	Model:       "invoice.Invoice",
+	Label:       `Invoice`,
+	Plural:      `Invoices`,
+	Doc:         `Customer invoices`,
+	Report:      &schema.TableReport{Category: `Billing`},
+	Constraints: (&invoice.Invoice{}).Constraints(),
 	Columns: []schema.Column{
 		{Name: "id", Quoted: `"id"`, Field: "ID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagAutoID, Label: `ID`, JSON: `id`, Report: &reportDimString},
 		{Name: "organization_id", Quoted: `"organization_id"`, Field: "OrganizationID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Organization ID`, JSON: `organizationId`, Report: &reportDimStringHidden},
@@ -2016,13 +2019,14 @@ func beforeUpdateInvoice(ctx context.Context, p unsafe.Pointer) error {
 
 // invoiceDisputesTable is the schema of invoice.InvoiceDispute.
 var invoiceDisputesTable = schema.Table{
-	Name:   "invoice_disputes",
-	Quoted: `"invoice_disputes"`,
-	Alias:  "id",
-	Model:  "invoice.InvoiceDispute",
-	Label:  `Invoice Dispute`,
-	Plural: `Invoice Disputes`,
-	Doc:    `InvoiceDispute is one dispute case raised against a posted invoice. An invoice has at most one open case; resolving or withdrawing it clears the invoice's Disputed flag.`,
+	Name:        "invoice_disputes",
+	Quoted:      `"invoice_disputes"`,
+	Alias:       "id",
+	Model:       "invoice.InvoiceDispute",
+	Label:       `Invoice Dispute`,
+	Plural:      `Invoice Disputes`,
+	Doc:         `InvoiceDispute is one dispute case raised against a posted invoice. An invoice has at most one open case; resolving or withdrawing it clears the invoice's Disputed flag.`,
+	Constraints: (&invoice.InvoiceDispute{}).Constraints(),
 	Columns: []schema.Column{
 		{Name: "id", Quoted: `"id"`, Field: "ID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagAutoID, Label: `ID`, JSON: `id`},
 		{Name: "organization_id", Quoted: `"organization_id"`, Field: "OrganizationID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Organization ID`, JSON: `organizationId`},
@@ -2303,14 +2307,15 @@ func beforeCreateInvoiceDispute(ctx context.Context, p unsafe.Pointer) error {
 
 // invoiceLinesTable is the schema of invoice.InvoiceLine.
 var invoiceLinesTable = schema.Table{
-	Name:   "invoice_lines",
-	Quoted: `"invoice_lines"`,
-	Alias:  "il",
-	Model:  "invoice.InvoiceLine",
-	Label:  `Invoice Line`,
-	Plural: `Invoice Lines`,
-	Doc:    `Line items on an invoice`,
-	Report: &schema.TableReport{Category: `Billing`},
+	Name:        "invoice_lines",
+	Quoted:      `"invoice_lines"`,
+	Alias:       "il",
+	Model:       "invoice.InvoiceLine",
+	Label:       `Invoice Line`,
+	Plural:      `Invoice Lines`,
+	Doc:         `Line items on an invoice`,
+	Report:      &schema.TableReport{Category: `Billing`},
+	Constraints: (&invoice.InvoiceLine{}).Constraints(),
 	Columns: []schema.Column{
 		{Name: "id", Quoted: `"id"`, Field: "ID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagAutoID, Label: `ID`, JSON: `id`, Report: &reportDimString},
 		{Name: "organization_id", Quoted: `"organization_id"`, Field: "OrganizationID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Organization ID`, JSON: `organizationId`, Report: &reportDimStringHidden},

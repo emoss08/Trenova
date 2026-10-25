@@ -141,3 +141,25 @@ func (d *DistanceOverride) NormalizeIntermediateStops() {
 
 	d.IntermediateStops = normalizedStops
 }
+
+func (DistanceOverride) Constraints() []keel.Constraint {
+	return []keel.Constraint{
+		{
+			Name:    "uq_distance_overrides_route_signature",
+			Field:   "intermediateStops",
+			Message: "Distance override with this route already exists",
+		},
+		{
+			Name:    "fk_distance_overrides_origin_location",
+			Message: "Origin location does not exist in your organization",
+		},
+		{
+			Name:    "fk_distance_overrides_destination_location",
+			Message: "Destination location does not exist in your organization",
+		},
+		{
+			Name:    "fk_distance_overrides_customer",
+			Message: "Customer does not exist in your organization",
+		},
+	}
+}

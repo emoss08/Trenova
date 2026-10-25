@@ -145,3 +145,20 @@ func (t *Tender) BeforeCreate(_ context.Context) error {
 
 	return nil
 }
+
+func (Tender) Constraints() []keel.Constraint {
+	return []keel.Constraint{
+		{
+			Name:    "uq_tenders_live_move",
+			Message: "Move already has a live tender",
+		},
+		{
+			Name:    "fk_tenders_shipment",
+			Message: "Shipment does not exist in your organization",
+		},
+		{
+			Name:    "fk_tenders_shipment_move",
+			Message: "Move does not exist in your organization",
+		},
+	}
+}

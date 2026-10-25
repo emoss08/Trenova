@@ -24,16 +24,7 @@ const (
 	shipmentHoldEntityName = "Shipment hold"
 )
 
-var holdErrors = dberror.Mapping{
-	Entity: shipmentHoldEntityName,
-	ForeignKey: []dberror.Constraint{
-		{
-			Name:    "fk_shipment_holds_shipment",
-			Field:   "shipmentId",
-			Message: "Shipment does not exist in your organization",
-		},
-	},
-}
+var holdErrors = dberror.Mapping{Entity: shipmentHoldEntityName}
 
 type Params struct {
 	fx.In

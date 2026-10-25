@@ -20,18 +20,7 @@ import (
 	"go.uber.org/zap"
 )
 
-const fieldIdempotencyKey = "idempotencyKey"
-
-var adjustmentErrors = dberror.Mapping{
-	Entity: "InvoiceAdjustment",
-	Unique: []dberror.Constraint{
-		{
-			Name:    "uq_invoice_adjustments_idempotency",
-			Field:   fieldIdempotencyKey,
-			Message: "An invoice adjustment with this idempotency key already exists",
-		},
-	},
-}
+var adjustmentErrors = dberror.Mapping{Entity: "InvoiceAdjustment"}
 
 var adjustmentLineErrors = dberror.Mapping{Entity: "InvoiceAdjustmentLine"}
 
@@ -39,40 +28,13 @@ var snapshotErrors = dberror.Mapping{Entity: "InvoiceAdjustmentSnapshot"}
 
 var exceptionErrors = dberror.Mapping{Entity: "InvoiceReconciliationException"}
 
-var documentReferenceErrors = dberror.Mapping{
-	Entity: "InvoiceAdjustmentDocumentReference",
-	Unique: []dberror.Constraint{
-		{
-			Name:    "uq_invoice_adjustment_document_references",
-			Field:   "documentIds",
-			Message: "A document can be referenced by the adjustment only once",
-		},
-	},
-}
+var documentReferenceErrors = dberror.Mapping{Entity: "InvoiceAdjustmentDocumentReference"}
 
 var correctionGroupErrors = dberror.Mapping{Entity: "InvoiceCorrectionGroup"}
 
-var batchErrors = dberror.Mapping{
-	Entity: "InvoiceAdjustmentBatch",
-	Unique: []dberror.Constraint{
-		{
-			Name:    "uq_invoice_adjustment_batches_idempotency",
-			Field:   fieldIdempotencyKey,
-			Message: "An adjustment batch with this idempotency key already exists",
-		},
-	},
-}
+var batchErrors = dberror.Mapping{Entity: "InvoiceAdjustmentBatch"}
 
-var batchItemErrors = dberror.Mapping{
-	Entity: "InvoiceAdjustmentBatchItem",
-	Unique: []dberror.Constraint{
-		{
-			Name:    "uq_invoice_adjustment_batch_items_idempotency",
-			Field:   fieldIdempotencyKey,
-			Message: "An adjustment batch item with this idempotency key already exists",
-		},
-	},
-}
+var batchItemErrors = dberror.Mapping{Entity: "InvoiceAdjustmentBatchItem"}
 
 var invoiceErrors = dberror.Mapping{Entity: "Invoice"}
 

@@ -16,16 +16,7 @@ import (
 	"go.uber.org/zap"
 )
 
-var recurringEarningErrors = dberror.Mapping{
-	Entity: "RecurringEarning",
-	ForeignKey: []dberror.Constraint{
-		{
-			Name:    "fk_recurring_earnings_pay_code",
-			Field:   "payCodeId",
-			Message: "Pay code does not exist in your organization",
-		},
-	},
-}
+var recurringEarningErrors = dberror.Mapping{Entity: "RecurringEarning"}
 
 type recurringEarningRepository struct {
 	db *postgres.Connection

@@ -22,16 +22,7 @@ import (
 	"go.uber.org/zap"
 )
 
-var hazardousMaterialErrors = dberror.Mapping{
-	Entity: "HazardousMaterial",
-	Unique: []dberror.Constraint{
-		{
-			Name:    "idx_hazardous_materials_code",
-			Field:   "code",
-			Message: "Hazardous material with this code already exists in your organization",
-		},
-	},
-}
+var hazardousMaterialErrors = dberror.Mapping{Entity: "HazardousMaterial"}
 
 type Params struct {
 	fx.In

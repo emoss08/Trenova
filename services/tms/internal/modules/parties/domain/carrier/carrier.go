@@ -310,3 +310,20 @@ func (c *Carrier) SamePartyDetails(other *Carrier) bool {
 		pulid.ConvertFromPtr(c.RemitStateID) == pulid.ConvertFromPtr(other.RemitStateID) &&
 		c.RemitPostalCode == other.RemitPostalCode
 }
+
+func (Carrier) Constraints() []keel.Constraint {
+	return []keel.Constraint{
+		{
+			Name:    "idx_carriers_code",
+			Message: "Carrier with this code already exists in your organization",
+		},
+		{
+			Name:    "idx_carriers_dot_number",
+			Message: "Carrier with this DOT number already exists in your organization",
+		},
+		{
+			Name:    "idx_carriers_scac",
+			Message: "Carrier with this SCAC already exists in your organization",
+		},
+	}
+}

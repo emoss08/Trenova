@@ -22,39 +22,9 @@ import (
 
 const rankShift = 10000
 
-var guideErrors = dberror.Mapping{
-	Entity: "Routing guide",
-	ForeignKey: []dberror.Constraint{
-		{
-			Name:    "fk_routing_guides_origin_location",
-			Field:   "originLocationId",
-			Message: "Origin location does not exist in your organization",
-		},
-		{
-			Name:    "fk_routing_guides_destination_location",
-			Field:   "destinationLocationId",
-			Message: "Destination location does not exist in your organization",
-		},
-	},
-}
+var guideErrors = dberror.Mapping{Entity: "Routing guide"}
 
-var entryErrors = dberror.Mapping{
-	Entity: "Routing guide entry",
-	Unique: []dberror.Constraint{
-		{
-			Name:    "uq_routing_guide_entries_rank",
-			Field:   "entries.rank",
-			Message: "Each routing guide entry must have a distinct rank",
-		},
-	},
-	ForeignKey: []dberror.Constraint{
-		{
-			Name:    "fk_routing_guide_entries_carrier",
-			Field:   "entries.carrierId",
-			Message: "Carrier does not exist in your organization",
-		},
-	},
-}
+var entryErrors = dberror.Mapping{Entity: "Routing guide entry"}
 
 type Params struct {
 	fx.In

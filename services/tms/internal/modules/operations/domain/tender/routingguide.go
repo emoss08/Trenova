@@ -219,3 +219,16 @@ func (rg *RoutingGuide) BeforeCreate(_ context.Context) error {
 
 	return nil
 }
+
+func (RoutingGuide) Constraints() []keel.Constraint {
+	return []keel.Constraint{
+		{
+			Name:    "fk_routing_guides_origin_location",
+			Message: "Origin location does not exist in your organization",
+		},
+		{
+			Name:    "fk_routing_guides_destination_location",
+			Message: "Destination location does not exist in your organization",
+		},
+	}
+}

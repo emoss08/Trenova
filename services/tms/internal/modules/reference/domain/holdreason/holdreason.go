@@ -123,3 +123,13 @@ func (hr *HoldReason) GetPostgresSearchConfig() domaintypes.PostgresSearchConfig
 		},
 	}
 }
+
+func (HoldReason) Constraints() []keel.Constraint {
+	return []keel.Constraint{
+		{
+			Name:    "ux_hr_org_bu_type_code",
+			Field:   "code",
+			Message: "Hold reason with this code already exists in your organization",
+		},
+	}
+}

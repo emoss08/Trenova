@@ -15,13 +15,14 @@ import (
 
 // accountsTable is the schema of collection.Account.
 var accountsTable = schema.Table{
-	Name:   "collection_accounts",
-	Quoted: `"collection_accounts"`,
-	Alias:  "ca",
-	Model:  "collection.Account",
-	Label:  `Account`,
-	Plural: `Accounts`,
-	Doc:    `Account is a customer as collections works it: its collector, its next follow-up, and the promise to pay standing against its balance.`,
+	Name:        "collection_accounts",
+	Quoted:      `"collection_accounts"`,
+	Alias:       "ca",
+	Model:       "collection.Account",
+	Label:       `Account`,
+	Plural:      `Accounts`,
+	Doc:         `Account is a customer as collections works it: its collector, its next follow-up, and the promise to pay standing against its balance.`,
+	Constraints: (&collection.Account{}).Constraints(),
 	Columns: []schema.Column{
 		{Name: "id", Quoted: `"id"`, Field: "ID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagAutoID, Label: `ID`, JSON: `id`},
 		{Name: "organization_id", Quoted: `"organization_id"`, Field: "OrganizationID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Organization ID`, JSON: `organizationId`},

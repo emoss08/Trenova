@@ -37,55 +37,11 @@ const (
 	defaultTokenPurgeLimit = 500
 )
 
-var tenderErrors = dberror.Mapping{
-	Entity: "Tender",
-	Unique: []dberror.Constraint{
-		{
-			Name:    "uq_tenders_live_move",
-			Field:   "shipmentMoveId",
-			Message: "Move already has a live tender",
-		},
-	},
-	ForeignKey: []dberror.Constraint{
-		{
-			Name:    "fk_tenders_shipment",
-			Field:   "shipmentId",
-			Message: "Shipment does not exist in your organization",
-		},
-		{
-			Name:    "fk_tenders_shipment_move",
-			Field:   "shipmentMoveId",
-			Message: "Move does not exist in your organization",
-		},
-	},
-}
+var tenderErrors = dberror.Mapping{Entity: "Tender"}
 
-var offerErrors = dberror.Mapping{
-	Entity: "Tender offer",
-	ForeignKey: []dberror.Constraint{
-		{
-			Name:    "fk_tender_offers_carrier",
-			Field:   "carrierId",
-			Message: "Carrier does not exist in your organization",
-		},
-		{
-			Name:    "fk_tender_offers_edi_partner",
-			Field:   "ediPartnerId",
-			Message: "EDI partner does not exist in your organization",
-		},
-	},
-}
+var offerErrors = dberror.Mapping{Entity: "Tender offer"}
 
-var tokenErrors = dberror.Mapping{
-	Entity: "Tender offer token",
-	Unique: []dberror.Constraint{
-		{
-			Name:    "uq_tender_offer_tokens_hash",
-			Field:   "tokenHash",
-			Message: "Tender offer token already exists",
-		},
-	},
-}
+var tokenErrors = dberror.Mapping{Entity: "Tender offer token"}
 
 type repository struct {
 	db *postgres.Connection

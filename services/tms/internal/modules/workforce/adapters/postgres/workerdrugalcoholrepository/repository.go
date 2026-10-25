@@ -22,144 +22,22 @@ import (
 )
 
 const (
-	fieldWorkerID   = "workerId"
-	fieldDocumentID = "documentId"
-)
-
-func workerForeignKey(name string) dberror.Constraint {
-	return dberror.Constraint{
-		Name:    name,
-		Field:   fieldWorkerID,
-		Message: "Worker does not exist or belongs to a different organization",
-	}
-}
-
-func documentForeignKey(name string) dberror.Constraint {
-	return dberror.Constraint{
-		Name:    name,
-		Field:   fieldDocumentID,
-		Message: "Document does not exist or belongs to a different organization",
-	}
-}
-
-const (
 	defaultTestPageSize  = 200
 	defaultDrawPageSize  = 50
 	defaultSweepPageSize = 500
 )
 
-var testErrors = dberror.Mapping{
-	Entity: "WorkerDOTTest",
-	Unique: []dberror.Constraint{
-		{
-			Name:    "uq_worker_dot_tests_draw_entry",
-			Field:   "drawEntryId",
-			Message: "This random selection already has a test recorded against it",
-		},
-	},
-	ForeignKey: []dberror.Constraint{
-		workerForeignKey("fk_worker_dot_tests_worker"),
-		{
-			Name:    "fk_worker_dot_tests_safety_event",
-			Field:   "safetyEventId",
-			Message: "Safety event does not exist or belongs to a different organization",
-		},
-		{
-			Name:    "fk_worker_dot_tests_draw_entry",
-			Field:   "drawEntryId",
-			Message: "Random selection does not exist or belongs to a different organization",
-		},
-		documentForeignKey("fk_worker_dot_tests_document"),
-	},
-}
+var testErrors = dberror.Mapping{Entity: "WorkerDOTTest"}
 
-var violationErrors = dberror.Mapping{
-	Entity: "WorkerDOTViolation",
-	Unique: []dberror.Constraint{
-		{
-			Name:    "uq_worker_dot_violations_open",
-			Field:   fieldWorkerID,
-			Message: "This worker already has an unresolved violation; record the new one against it",
-		},
-	},
-	ForeignKey: []dberror.Constraint{
-		workerForeignKey("fk_worker_dot_violations_worker"),
-		{
-			Name:    "fk_worker_dot_violations_source_test",
-			Field:   "sourceTestId",
-			Message: "Source test does not exist or belongs to a different organization",
-		},
-		{
-			Name:    "fk_worker_dot_violations_rtd_test",
-			Field:   "rtdTestId",
-			Message: "Return-to-duty test does not exist or belongs to a different organization",
-		},
-		documentForeignKey("fk_worker_dot_violations_document"),
-	},
-}
+var violationErrors = dberror.Mapping{Entity: "WorkerDOTViolation"}
 
-var queryErrors = dberror.Mapping{
-	Entity: "WorkerClearinghouseQuery",
-	ForeignKey: []dberror.Constraint{
-		workerForeignKey("fk_worker_clearinghouse_queries_worker"),
-		documentForeignKey("fk_worker_clearinghouse_queries_document"),
-	},
-}
+var queryErrors = dberror.Mapping{Entity: "WorkerClearinghouseQuery"}
 
-var poolErrors = dberror.Mapping{
-	Entity: "DOTRandomPool",
-	Unique: []dberror.Constraint{
-		{
-			Name:    "uq_dot_random_pools_code",
-			Field:   "code",
-			Message: "A pool with this code already exists",
-		},
-		{
-			Name:    "uq_dot_random_pools_default",
-			Field:   "isDefault",
-			Message: "Another pool is already the default",
-		},
-	},
-}
+var poolErrors = dberror.Mapping{Entity: "DOTRandomPool"}
 
-var drawErrors = dberror.Mapping{
-	Entity: "DOTRandomDraw",
-	Unique: []dberror.Constraint{
-		{
-			Name:    "uq_dot_random_draws_period",
-			Field:   "periodKey",
-			Message: "This pool has already been drawn for that period",
-		},
-		{
-			Name:    "uq_dot_random_draw_entries_worker",
-			Field:   "entries",
-			Message: "A worker can be selected only once per substance in a draw",
-		},
-	},
-	ForeignKey: []dberror.Constraint{
-		{
-			Name:    "fk_dot_random_draws_pool",
-			Field:   "poolId",
-			Message: "Pool does not exist or belongs to a different organization",
-		},
-		{
-			Name:    "fk_dot_random_draw_entries_worker",
-			Field:   "entries",
-			Message: "Worker does not exist or belongs to a different organization",
-		},
-	},
-}
+var drawErrors = dberror.Mapping{Entity: "DOTRandomDraw"}
 
-var drawEntryErrors = dberror.Mapping{
-	Entity: "DOTRandomDrawEntry",
-	Unique: []dberror.Constraint{
-		{
-			Name:    "uq_dot_random_draw_entries_worker",
-			Field:   fieldWorkerID,
-			Message: "A worker can be selected only once per substance in a draw",
-		},
-	},
-}
+var drawEntryErrors = dberror.Mapping{Entity: "DOTRandomDrawEntry"}
 
 type Params struct {
 	fx.In

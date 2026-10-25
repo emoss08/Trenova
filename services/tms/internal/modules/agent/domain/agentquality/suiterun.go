@@ -243,3 +243,16 @@ func (r *SuiteRun) GetPostgresSearchConfig() domaintypes.PostgresSearchConfig {
 		},
 	}
 }
+
+func (SuiteRun) Constraints() []keel.Constraint {
+	return []keel.Constraint{
+		{
+			Name:    "uq_agent_suite_runs_one_running",
+			Message: "This agent's suite is already running",
+		},
+		{
+			Name:    "uq_agent_suite_runs_sweep_key",
+			Message: "This sweep already opened a run for the agent",
+		},
+	}
+}

@@ -224,3 +224,24 @@ func (rs *RecurringShipment) BeforeCreate(_ context.Context) error {
 
 	return nil
 }
+
+func (RecurringShipment) Constraints() []keel.Constraint {
+	return []keel.Constraint{
+		{
+			Name:    "fk_recurring_shipments_source_shipment",
+			Message: "Source shipment does not exist in your organization",
+		},
+		{
+			Name:    "fk_recurring_shipments_customer",
+			Message: "Customer does not exist in your organization",
+		},
+		{
+			Name:    "fk_recurring_shipments_origin_location",
+			Message: "Origin location does not exist in your organization",
+		},
+		{
+			Name:    "fk_recurring_shipments_destination_location",
+			Message: "Destination location does not exist in your organization",
+		},
+	}
+}

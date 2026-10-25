@@ -19,16 +19,7 @@ import (
 
 var systemDocumentTypeCodes = []string{"INVOICE", "CREDITMEMO", "DEBITMEMO"}
 
-var documentTypeErrors = dberror.Mapping{
-	Entity: "DocumentType",
-	Unique: []dberror.Constraint{
-		{
-			Name:    "idx_document_types_code",
-			Field:   "code",
-			Message: "Document type with this code already exists in your organization",
-		},
-	},
-}
+var documentTypeErrors = dberror.Mapping{Entity: "DocumentType"}
 
 type Params struct {
 	fx.In

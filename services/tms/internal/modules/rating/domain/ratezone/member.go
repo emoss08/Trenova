@@ -154,3 +154,13 @@ func (rzm *RateZoneMember) GetBusinessUnitID() pulid.ID {
 func (rzm *RateZoneMember) GetTableName() string {
 	return "rate_zone_members"
 }
+
+func (RateZoneMember) Constraints() []keel.Constraint {
+	return []keel.Constraint{
+		{
+			Name:    "uq_rate_zone_members",
+			Field:   "members",
+			Message: "A place can appear only once in a rate zone",
+		},
+	}
+}

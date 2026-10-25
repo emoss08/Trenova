@@ -6,6 +6,7 @@ import (
 	"fmt"
 
 	"github.com/emoss08/keel"
+	"github.com/emoss08/keel/postgis"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/quotatx"
@@ -20,32 +21,13 @@ import (
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/listquery"
 	"github.com/emoss08/trenova/pkg/pagination"
-	"github.com/emoss08/trenova/pkg/postgis"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
 
-const geoJSONGeometrySQL = "ST_SetSRID(ST_GeomFromGeoJSON(?), 4326)"
-
 var errCircleGeofence = errors.New("circle geofences require longitude, latitude, and radius")
 
-var locationErrors = dberror.Mapping{
-	Entity: "Location",
-	Unique: []dberror.Constraint{
-		{
-			Name:    "idx_locations_code",
-			Field:   "code",
-			Message: "Location with this code already exists in your organization",
-		},
-	},
-	ForeignKey: []dberror.Constraint{
-		{
-			Name:    "fk_locations_location_category",
-			Field:   "locationCategoryId",
-			Message: "Location category does not exist in your organization",
-		},
-	},
-}
+var locationErrors = dberror.Mapping{Entity: "Location"}
 
 type Params struct {
 	fx.In
@@ -146,24 +128,17 @@ func geofenceGeometry(entity *location.Location) (keel.Assignment, bool, error) 
 			return keel.Assignment{}, false, errCircleGeofence
 		}
 
-		expression, args := postgis.CirclePolygonExpression(
-			*entity.Longitude,
-			*entity.Latitude,
+		return geometry.SetExpr(postgis.Buffer(
+			postgis.Pt(*entity.Longitude, *entity.Latitude),
 			*entity.GeofenceRadiusMeters,
-		)
-		return geometry.ToExpr(keel.Raw(expression, args...)), true, nil
+		)), true, nil
 	case geofence.TypeRectangle, geofence.TypeDraw:
 		polygon, err := entity.GeofencePolygon()
 		if err != nil {
 			return keel.Assignment{}, false, err
 		}
 
-		geometryJSON, err := polygon.GeoJSONString()
-		if err != nil {
-			return keel.Assignment{}, false, err
-		}
-
-		return geometry.ToExpr(keel.Raw(geoJSONGeometrySQL, geometryJSON)), true, nil
+		return geometry.To(polygon), true, nil
 	default:
 		return keel.Assignment{}, false, fmt.Errorf(
 			"unsupported location geofence type %q",

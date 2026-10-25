@@ -23,8 +23,6 @@ import (
 	"go.uber.org/zap"
 )
 
-const fieldCredentialTypeID = "credentialTypeId" //nolint:gosec // G101: a field name, not a credential
-
 const (
 	defaultExpiringPageSize = 500
 	secondsPerDay           = int64(86400)
@@ -34,63 +32,9 @@ var errExpiringKeysetBySoonest = errors.New(
 	"expiring credentials ordered soonest first page by offset, not by afterId",
 )
 
-var typeErrors = dberror.Mapping{
-	Entity: "WorkerCredentialType",
-	Unique: []dberror.Constraint{
-		{
-			Name:    "uq_worker_credential_types_code",
-			Field:   "code",
-			Message: "A credential type with this code already exists",
-		},
-		{
-			Name:    "uq_worker_credential_types_profile_field",
-			Field:   "profileField",
-			Message: "Another credential type already feeds this profile field",
-		},
-	},
-}
+var typeErrors = dberror.Mapping{Entity: "WorkerCredentialType"}
 
-var credentialForeignKeys = []dberror.Constraint{
-	{
-		Name:    "fk_worker_credentials_worker",
-		Field:   "workerId",
-		Message: "Worker does not exist or belongs to a different organization",
-	},
-	{
-		Name:    "fk_worker_credentials_type",
-		Field:   fieldCredentialTypeID,
-		Message: "Credential type does not exist or belongs to a different organization",
-	},
-	{
-		Name:    "fk_worker_credentials_document",
-		Field:   "documentId",
-		Message: "Document does not exist or belongs to a different organization",
-	},
-}
-
-var credentialErrors = dberror.Mapping{
-	Entity: "WorkerCredential",
-	Unique: []dberror.Constraint{
-		{
-			Name:    "uq_worker_credentials_active_type",
-			Field:   fieldCredentialTypeID,
-			Message: "This worker already holds an active credential of this type",
-		},
-	},
-	ForeignKey: credentialForeignKeys,
-}
-
-var credentialCreateErrors = dberror.Mapping{
-	Entity: "WorkerCredential",
-	Unique: []dberror.Constraint{
-		{
-			Name:    "uq_worker_credentials_active_type",
-			Field:   fieldCredentialTypeID,
-			Message: "This worker already holds an active credential of this type. Renew it instead.",
-		},
-	},
-	ForeignKey: credentialForeignKeys,
-}
+var credentialErrors = dberror.Mapping{Entity: "WorkerCredential"}
 
 type typeCount struct {
 	TypeID pulid.ID
@@ -415,7 +359,7 @@ func (r *repository) Create(
 		if err := r.create(ctx, req); err != nil {
 			r.l.Error("failed to create worker credential", zap.Error(err))
 			return nil, dberror.MapRetryableTransactionError(
-				credentialCreateErrors.Map(err, req.Entity.ID.String()),
+				credentialErrors.Map(err, req.Entity.ID.String()),
 				"Credential is busy. Retry the request.",
 			)
 		}

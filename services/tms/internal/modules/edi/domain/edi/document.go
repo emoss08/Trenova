@@ -352,6 +352,16 @@ func (v *EDITemplateVersion) Validate(multiErr *errortypes.MultiError) {
 	}
 }
 
+func (EDITemplateVersion) Constraints() []keel.Constraint {
+	return []keel.Constraint{
+		{
+			Name:    "idx_edi_template_versions_number",
+			Field:   "versionNumber",
+			Message: "This template already has a version with this number",
+		},
+	}
+}
+
 func (s *EDITemplateSegment) Validate(multiErr *errortypes.MultiError) {
 	// Tenancy and the owning version are stamped when the parent is written, so
 	// they are not the caller's to supply.
@@ -401,6 +411,16 @@ func (l *EDITemplateScriptLibrary) Validate(multiErr *errortypes.MultiError) {
 			domainvalidation.ValidEnum[TemplateStatus]("Status is invalid"),
 		),
 	))
+}
+
+func (EDITemplateScriptLibrary) Constraints() []keel.Constraint {
+	return []keel.Constraint{
+		{
+			Name:    "idx_edi_template_script_libraries_name",
+			Field:   "scriptLibraries",
+			Message: "Script library names must be unique within a template version",
+		},
+	}
 }
 
 const (

@@ -24,21 +24,7 @@ var (
 	identityProviderErrors = dberror.Mapping{Entity: "Identity provider"}
 	scimDirectoryErrors    = dberror.Mapping{Entity: "SCIM directory"}
 	scimTokenErrors        = dberror.Mapping{Entity: "SCIM token"}
-	accessPolicyErrors     = dberror.Mapping{
-		Entity: "Access policy",
-		Unique: []dberror.Constraint{
-			{
-				Name:    "idx_access_policies_name_tenant",
-				Field:   "name",
-				Message: "Access policy with this name already exists",
-			},
-			{
-				Name:    "idx_access_policies_enabled_scope_tenant",
-				Field:   "resource",
-				Message: "An enabled access policy with the same resource, operation, and conditions already exists",
-			},
-		},
-	}
+	accessPolicyErrors     = dberror.Mapping{Entity: "Access policy"}
 )
 
 type Params struct {

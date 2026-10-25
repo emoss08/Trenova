@@ -17,21 +17,7 @@ import (
 	"go.uber.org/zap"
 )
 
-var deviationErrors = dberror.Mapping{
-	Entity: "Deviation",
-	ForeignKey: []dberror.Constraint{
-		{
-			Name:    "fk_mode_profile_deviations_profile",
-			Field:   "modeProfileId",
-			Message: "Mode profile does not exist or belongs to a different organization",
-		},
-		{
-			Name:    "fk_mode_profile_deviations_acknowledged_by",
-			Field:   "acknowledgedById",
-			Message: "Acknowledging user does not exist",
-		},
-	},
-}
+var deviationErrors = dberror.Mapping{Entity: "Deviation"}
 
 type ledgerRow struct {
 	RuleKey        modeprofile.RuleKey

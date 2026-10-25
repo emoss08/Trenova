@@ -272,3 +272,12 @@ func (p *FuelSurchargeProgram) applyDefaults() {
 		p.MissingPriceFallback = FallbackUseLatestAvailable
 	}
 }
+
+func (FuelSurchargeProgram) Constraints() []keel.Constraint {
+	return []keel.Constraint{
+		{
+			Name:    "uq_fuel_surcharge_programs_code",
+			Message: "A fuel surcharge program with this code already exists in your organization",
+		},
+	}
+}

@@ -71,16 +71,7 @@ WHERE wpto.organization_id = $4
 GROUP BY date, wpto.type
 ORDER BY date, wpto.type`
 
-var ptoErrors = dberror.Mapping{
-	Entity: "WorkerPTO",
-	ForeignKey: []dberror.Constraint{
-		{
-			Name:    "fk_worker_pto_worker",
-			Field:   "workerId",
-			Message: "Worker does not exist or belongs to a different organization",
-		},
-	},
-}
+var ptoErrors = dberror.Mapping{Entity: "WorkerPTO"}
 
 type Params struct {
 	fx.In

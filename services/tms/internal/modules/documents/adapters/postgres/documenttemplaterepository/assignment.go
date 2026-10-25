@@ -16,17 +16,7 @@ import (
 	"go.uber.org/zap"
 )
 
-var assignmentErrors = dberror.Mapping{
-	Entity: "DocumentTemplateAssignment",
-	ForeignKey: []dberror.Constraint{
-		templateForeignKey("fk_document_template_assignments_template"),
-		{
-			Name:    "fk_document_template_assignments_customer",
-			Field:   "customerId",
-			Message: "Customer does not exist",
-		},
-	},
-}
+var assignmentErrors = dberror.Mapping{Entity: "DocumentTemplateAssignment"}
 
 type AssignmentParams struct {
 	fx.In

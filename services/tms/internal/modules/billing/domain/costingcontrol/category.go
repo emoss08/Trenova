@@ -122,3 +122,13 @@ func (cat *CostCategory) GetOrganizationID() pulid.ID {
 func (cat *CostCategory) GetBusinessUnitID() pulid.ID {
 	return cat.BusinessUnitID
 }
+
+func (CostCategory) Constraints() []keel.Constraint {
+	return []keel.Constraint{
+		{
+			Name:    "uq_cost_categories_category",
+			Field:   "category",
+			Message: "A cost category of this kind already exists",
+		},
+	}
+}

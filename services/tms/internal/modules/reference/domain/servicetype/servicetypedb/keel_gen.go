@@ -15,14 +15,15 @@ import (
 
 // serviceTypesTable is the schema of servicetype.ServiceType.
 var serviceTypesTable = schema.Table{
-	Name:   "service_types",
-	Quoted: `"service_types"`,
-	Alias:  "st",
-	Model:  "servicetype.ServiceType",
-	Label:  `Service Type`,
-	Plural: `Service Types`,
-	Doc:    `Service level classification`,
-	Report: &schema.TableReport{Category: `Configuration`},
+	Name:        "service_types",
+	Quoted:      `"service_types"`,
+	Alias:       "st",
+	Model:       "servicetype.ServiceType",
+	Label:       `Service Type`,
+	Plural:      `Service Types`,
+	Doc:         `Service level classification`,
+	Report:      &schema.TableReport{Category: `Configuration`},
+	Constraints: (&servicetype.ServiceType{}).Constraints(),
 	Columns: []schema.Column{
 		{Name: "id", Quoted: `"id"`, Field: "ID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagAutoID, Label: `ID`, JSON: `id`, Report: &reportDimString},
 		{Name: "business_unit_id", Quoted: `"business_unit_id"`, Field: "BusinessUnitID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Business Unit ID`, JSON: `businessUnitId`, Report: &reportDimStringHidden},

@@ -583,4 +583,43 @@ func (s *Shipment) BeforeUpdate(ctx context.Context) error {
 	return nil
 }
 
+func (Shipment) Constraints() []keel.Constraint {
+	return []keel.Constraint{
+		{
+			Name:    "uq_shipments_external_reference",
+			Field:   "externalReference",
+			Message: "Another shipment for this customer already uses this customer reference",
+		},
+		{
+			Name:    "uq_shipments_idempotency_key",
+			Field:   "idempotencyKey",
+			Message: "A shipment was already created with this idempotency key",
+		},
+		{
+			Name:    "fk_shipments_customer",
+			Message: "Customer does not exist in your organization",
+		},
+		{
+			Name:    "fk_shipments_service_type",
+			Message: "Service type does not exist in your organization",
+		},
+		{
+			Name:    "fk_shipments_shipment_type",
+			Message: "Shipment type does not exist in your organization",
+		},
+		{
+			Name:    "fk_shipments_tractor_type",
+			Message: "Tractor type does not exist in your organization",
+		},
+		{
+			Name:    "fk_shipments_trailer_type",
+			Message: "Trailer type does not exist in your organization",
+		},
+		{
+			Name:    "fk_shipments_formula_template",
+			Message: "Formula template does not exist in your organization",
+		},
+	}
+}
+
 const MaxExternalReferenceLength = 100

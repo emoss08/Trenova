@@ -79,3 +79,16 @@ func (sc *ShipmentCommodity) MeetsLinearFeetPerUnitRequirement() bool {
 
 	return sc.Pieces > 0 && *sc.Commodity.LinearFeetPerUnit > 0
 }
+
+func (ShipmentCommodity) Constraints() []keel.Constraint {
+	return []keel.Constraint{
+		{
+			Name:    "fk_shipment_commodities_commodity",
+			Message: "Commodity does not exist in your organization",
+		},
+		{
+			Name:    "fk_shipment_commodities_shipment",
+			Message: "Shipment does not exist in your organization",
+		},
+	}
+}

@@ -168,6 +168,24 @@ func (t *DocumentTemplate) BeforeUpdate(_ context.Context) error {
 	return nil
 }
 
+func (DocumentTemplate) Constraints() []keel.Constraint {
+	return []keel.Constraint{
+		{
+			Name:    "uq_document_templates_code",
+			Message: "A document template with this code already exists",
+		},
+		{
+			Name:    "uq_document_templates_org_default",
+			Field:   "isOrgDefault",
+			Message: "Another template is already the organization default for this kind",
+		},
+		{
+			Name:    "fk_document_templates_active_version",
+			Message: "Active version does not exist",
+		},
+	}
+}
+
 // ErrTemplateKindUnknown is returned when a template names a kind the registry does
 // not publish, which would leave it unrenderable.
 var ErrTemplateKindUnknown = errors.New("template kind is not registered")
