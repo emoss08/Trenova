@@ -20,8 +20,8 @@ repository method ──▶ dbtx.Read / dbtx.Write (one keel transaction per met
                                │
 scope guard ──▶ keel (Config.OnBegin): BEGIN [READ ONLY]; SELECT set_config('trenova.scope', 'v1.<key>.<org>.<bu>.<user>.<exp>.<hmac>', true)
                                │
-PostgreSQL ──▶ policy: organization_id = (SELECT trenova_rls.org_id())
-                       AND business_unit_id = (SELECT trenova_rls.bu_id())
+PostgreSQL ──▶ policy: (organization_id, business_unit_id)
+                       = (SELECT t.org_id, t.bu_id FROM trenova_rls.tenant() AS t)
                                │
                trenova_rls.claims() verifies the HMAC and expiry, or raises 42501
 ```
@@ -135,7 +135,10 @@ func (r *repository) GetByID(ctx context.Context, req GetRequest) (*thing.Thing,
 applied a migration, so the migration does not call it (`task db-lint` warns when one does).
 Any other shape (nullable tenant, two parties, owned through a parent) calls
 `trenova_rls.apply_policy('public.t', '<read expr>', '<write expr>')` with
-expressions that consult `trenova_rls.org_id()` / `bu_id()` / `user_id()`. A table
+expressions that consult `trenova_rls.tenant()`, `org_id()`, `bu_id()` or `user_id()`. Each
+`(SELECT …)` over one of them is an InitPlan that verifies the signed scope once per table per
+statement, about 60 µs each: compare a row with `(SELECT t.org_id, t.bu_id FROM
+trenova_rls.tenant() AS t)` rather than writing two subqueries, as `standard_expr()` does. A table
 with no tenant data is added to `trenova_rls.global_tables` with its reason. A table
 the application may only read and append to (an audit log) is added to
 `trenova_rls.append_only_tables`, and `reconcile()` keeps `UPDATE` and `DELETE`
