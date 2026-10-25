@@ -8,6 +8,7 @@ import (
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbpool"
 	"github.com/emoss08/trenova/internal/keeltables"
+	"github.com/emoss08/trenova/internal/testutil/shapetest"
 	"github.com/stretchr/testify/require"
 )
 
@@ -19,7 +20,7 @@ const (
 func Open(t *testing.T, ctx context.Context, dsn string) *keel.DB {
 	t.Helper()
 
-	cfg := dbpool.KeelConfig(nil, nil)
+	cfg := dbpool.KeelConfig(nil, shapetest.Observers(t))
 	cfg.DSN = dsn
 	cfg.Tables = keeltables.All()
 	cfg.DataVersions = keel.DataVersionsConfig{Enabled: true, Interval: heldVersionInterval}
