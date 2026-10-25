@@ -7,7 +7,6 @@ import (
 	"errors"
 
 	"github.com/99designs/gqlgen/graphql"
-	"github.com/emoss08/keel/postgis"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlexec"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
@@ -36,7 +35,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*postgis.Vertex)
+					obj := o.(*geofence.Vertex)
 					return obj.Latitude, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNFloat2float64),
@@ -46,7 +45,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*postgis.Vertex)
+					obj := o.(*geofence.Vertex)
 					return obj.Longitude, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNFloat2float64),
@@ -259,7 +258,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*location.Location)
 					return obj.GeofenceVertices, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNGeofenceVertex2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋpkgᚋpostgisᚐVertexᚄ),
+				Marshal: gqlexec.Marshal(marshalNGeofenceVertex2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋplacesᚋdomainᚋgeofenceᚐVertexᚄ),
 			},
 			{
 				Name:     "version",
@@ -543,13 +542,13 @@ func marshalNFloat2float64(ctx context.Context, ec *gqlexec.Exec, sel ast.Select
 	return graphql.WrapContextMarshaler(ctx, res)
 }
 
-func marshalNGeofenceVertex2githubᚗcomᚋemoss08ᚋtrenovaᚋpkgᚋpostgisᚐVertex(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v geofence.Vertex) graphql.Marshaler {
+func marshalNGeofenceVertex2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋplacesᚋdomainᚋgeofenceᚐVertex(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v geofence.Vertex) graphql.Marshaler {
 	return ec.MarshalType(ctx, sel, "GeofenceVertex", &v)
 }
 
-func marshalNGeofenceVertex2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋpkgᚋpostgisᚐVertexᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []geofence.Vertex) graphql.Marshaler {
+func marshalNGeofenceVertex2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋplacesᚋdomainᚋgeofenceᚐVertexᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []geofence.Vertex) graphql.Marshaler {
 	return gqlexec.List[geofence.Vertex]{
-		Elem:        marshalNGeofenceVertex2githubᚗcomᚋemoss08ᚋtrenovaᚋpkgᚋpostgisᚐVertex,
+		Elem:        marshalNGeofenceVertex2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋplacesᚋdomainᚋgeofenceᚐVertex,
 		NonNull:     true,
 		NonNullElem: true,
 	}.Marshal(ctx, ec, sel, v)
