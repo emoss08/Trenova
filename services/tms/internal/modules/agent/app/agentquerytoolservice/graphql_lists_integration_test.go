@@ -38,6 +38,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/app/workerptoservice"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment/shipmentdb"
 	"github.com/emoss08/trenova/internal/modules/parties/adapters/postgres/carrierrepository"
 	"github.com/emoss08/trenova/internal/modules/parties/adapters/postgres/customerrepository"
 	"github.com/emoss08/trenova/internal/modules/parties/app/carrierservice"
@@ -61,6 +62,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/rating/app/tariff"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/formulalibrary"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/formulatemplate"
+	"github.com/emoss08/trenova/internal/modules/rating/ports/formulatemplateports"
 	"github.com/emoss08/trenova/internal/modules/reference/adapters/postgres/accessorialchargerepository"
 	"github.com/emoss08/trenova/internal/modules/reference/adapters/postgres/commodityrepository"
 	"github.com/emoss08/trenova/internal/modules/reference/adapters/postgres/documenttyperepository"
@@ -229,7 +231,10 @@ func convertedListCases(
 	}
 
 	formulaTemplates := formulatemplaterepository.New(
-		formulatemplaterepository.Params{DB: conn, Logger: logger})
+		formulatemplaterepository.Params{
+			DB: conn, Logger: logger,
+			Consumers: formulatemplateports.TemplateConsumers{Shipments: shipmentdb.Shipments.FormulaTemplateID},
+		})
 	formulaVersions := formulatemplateversionrepository.New(
 		formulatemplateversionrepository.Params{DB: conn, Logger: logger})
 	libraries := formulalibraryrepository.New(

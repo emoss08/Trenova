@@ -9,38 +9,39 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/pkg/keelkinds"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/jackc/pgx/v5"
 	"go.uber.org/fx"
 )
 
 var ErrUnscopedKind = errors.New("record kind has no database read scope")
 
-const visibleIDsTemplate = " WHERE organization_id = $1 AND business_unit_id = $2 AND id = ANY($3::text[])"
-
-var visibleIDsSQL = map[string]string{
-	"invoice":  "SELECT id FROM invoices" + visibleIDsTemplate,
-	"order":    "SELECT id FROM orders" + visibleIDsTemplate,
-	"shipment": "SELECT id FROM shipments" + visibleIDsTemplate,
-	"worker":   "SELECT id FROM workers" + visibleIDsTemplate,
-}
-
 type Params struct {
 	fx.In
 
-	DB *postgres.Connection
+	DB      *postgres.Connection
+	Sources kernelports.VisibleRecordSources
 }
 
 type repository struct {
-	db *postgres.Connection
+	db      *postgres.Connection
+	sources map[string]keelkinds.PulidIDCol
+}
+
+type visibleRecord struct {
+	ID pulid.ID
 }
 
 func New(p Params) kernelports.RecordVisibility {
-	return &repository{db: p.DB}
+	sources := make(map[string]keelkinds.PulidIDCol, len(p.Sources))
+	for _, source := range p.Sources {
+		sources[source.Kind] = source.ID
+	}
+	return &repository{db: p.DB, sources: sources}
 }
 
 func (r *repository) Scoped(kind string) bool {
-	_, ok := visibleIDsSQL[kind]
+	_, ok := r.sources[kind]
 	return ok
 }
 
@@ -48,7 +49,7 @@ func (r *repository) VisibleIDs(
 	ctx context.Context,
 	req *kernelports.ListVisibleRecordsRequest,
 ) ([]pulid.ID, error) {
-	statement, ok := visibleIDsSQL[req.Kind]
+	id, ok := r.sources[req.Kind]
 	if !ok {
 		return nil, fmt.Errorf("%w: %s", ErrUnscopedKind, req.Kind)
 	}
@@ -57,25 +58,17 @@ func (r *repository) VisibleIDs(
 	}
 
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]pulid.ID, error) {
-		ids := make([]string, len(req.IDs))
-		for i, id := range req.IDs {
-			ids[i] = id.String()
-		}
-
-		visible, err := keel.QueryAll(
+		records, err := keel.Into[visibleRecord](
 			ctx,
 			r.db.Keel(ctx),
-			pgx.RowTo[pulid.ID],
-			statement,
-			req.TenantInfo.OrgID.String(),
-			req.TenantInfo.BuID.String(),
-			ids,
+			keel.Handle[*keel.Row]{Ref: id.Ref}.Pick(id).Where(id.In(req.IDs...)),
 		)
 		if err != nil {
 			return nil, fmt.Errorf("check which %s records are visible: %w", req.Kind, err)
 		}
-		if visible == nil {
-			return []pulid.ID{}, nil
+		visible := make([]pulid.ID, 0, len(records))
+		for _, record := range records {
+			visible = append(visible, record.ID)
 		}
 		return visible, nil
 	})

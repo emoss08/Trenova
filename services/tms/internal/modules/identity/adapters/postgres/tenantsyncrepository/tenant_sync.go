@@ -2,6 +2,7 @@ package tenantsyncrepository
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/emoss08/keel"
 
@@ -10,7 +11,9 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant/tenantdb"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/pkg/dbscope"
+	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"go.uber.org/fx"
 )
@@ -27,6 +30,36 @@ type repository struct {
 
 func New(p Params) tenantports.TenantSyncRepository {
 	return &repository{db: p.DB}
+}
+
+func NewTenantLister(p Params) kernelports.TenantLister {
+	return &repository{db: p.DB}
+}
+
+func (r *repository) ListTenants(ctx context.Context) ([]pagination.TenantInfo, error) {
+	ctx = dbscope.WithSystem(
+		ctx,
+		"list every organization to rewrap its sealed values to the active key",
+	)
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]pagination.TenantInfo, error) {
+		o := tenantdb.Organizations
+		orgs, err := o.AllTenants().
+			Pick(o.ID, o.BusinessUnitID).
+			Order(o.ID.Asc()).
+			All(ctx, r.db.Keel(ctx))
+		if err != nil {
+			return nil, fmt.Errorf("list organizations: %w", err)
+		}
+
+		tenants := make([]pagination.TenantInfo, 0, len(orgs))
+		for _, org := range orgs {
+			tenants = append(
+				tenants,
+				pagination.TenantInfo{OrgID: org.ID, BuID: org.BusinessUnitID},
+			)
+		}
+		return tenants, nil
+	})
 }
 
 func (r *repository) ListBusinessUnits(

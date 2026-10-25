@@ -86,7 +86,6 @@ type SwapEnvelopeVersionRequest struct {
 }
 
 type EnvelopeRepository interface {
-	ListTenants(ctx context.Context) ([]pagination.TenantInfo, error)
 	ListRows(ctx context.Context, req *ListEnvelopeRowsRequest) ([]*EnvelopeRow, error)
 	Present(ctx context.Context, column *EnvelopeColumn, row *EnvelopeRow) (bool, error)
 	Swap(ctx context.Context, req *SwapEnvelopeRequest) (bool, error)

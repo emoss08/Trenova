@@ -24,6 +24,11 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+var sources = kernelports.VisibleRecordSources{
+	{Kind: "shipment", ID: shipmentdb.Shipments.ID},
+	{Kind: "worker", ID: workerdb.Workers.ID},
+}
+
 func TestVisibleIDs_AppliesTheRequestsReadScope(t *testing.T) {
 	ctx, admin, dsn, cleanup := seedtest.SetupTestDBWithDSN(t)
 	t.Cleanup(cleanup)
@@ -50,7 +55,7 @@ func TestVisibleIDs_AppliesTheRequestsReadScope(t *testing.T) {
 		Update(data.Ctx(ctx), admin, sh.OwnerID.To(data.User.ID))
 	require.NoError(t, err)
 
-	repo := New(Params{DB: dbtest.NewRLSConnection(t, admin, dsn)})
+	repo := New(Params{DB: dbtest.NewRLSConnection(t, admin, dsn), Sources: sources})
 	ids := []pulid.ID{owned.ID, others.ID, pulid.MustNew("shp_")}
 	request := &kernelports.ListVisibleRecordsRequest{TenantInfo: tenant, Kind: "shipment", IDs: ids}
 
@@ -139,7 +144,7 @@ func TestVisibleIDs_AKindThePersonCannotReadIsLeftToTheCaller(t *testing.T) {
 	})
 	require.NoError(t, err)
 
-	repo := New(Params{DB: dbtest.NewRLSConnection(t, admin, dsn)})
+	repo := New(Params{DB: dbtest.NewRLSConnection(t, admin, dsn), Sources: sources})
 	cannotRead := readscope.With(
 		dbscope.WithTenant(t.Context(), tenant.DBTenant()),
 		func(context.Context) (readscope.Grants, error) {

@@ -30,29 +30,25 @@ var (
 	orderChargeErrors = dberror.Mapping{Entity: "Order charge"}
 )
 
-const (
-	noInvoicesSQL = "NOT EXISTS (SELECT 1 FROM invoices AS inv WHERE inv.order_id = ? " +
-		"AND inv.organization_id = ? AND inv.business_unit_id = ?)"
-	noQueueItemsSQL = "NOT EXISTS (SELECT 1 FROM billing_queue_items AS bqi WHERE bqi.order_id = ? " +
-		"AND bqi.organization_id = ? AND bqi.business_unit_id = ?)"
-)
-
 type Params struct {
 	fx.In
 
-	DB     *postgres.Connection
-	Logger *zap.Logger
+	DB         *postgres.Connection
+	Logger     *zap.Logger
+	References orderports.OrderReferences
 }
 
 type repository struct {
-	db *postgres.Connection
-	l  *zap.Logger
+	db         *postgres.Connection
+	l          *zap.Logger
+	references orderports.OrderReferences
 }
 
 func New(p Params) orderports.OrderRepository {
 	return &repository{
-		db: p.DB,
-		l:  p.Logger.Named("postgres.order-repository"),
+		db:         p.DB,
+		l:          p.Logger.Named("postgres.order-repository"),
+		references: p.References,
 	}
 }
 
@@ -304,14 +300,7 @@ func (r *repository) DeleteIfEmpty(
 	orderID pulid.ID,
 ) (int64, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (int64, error) {
-		o := orderdb.Orders
-		deleted, err := o.Where(
-			o.ID.Eq(orderID),
-			o.Shipments().None(),
-			o.Charges().None(),
-			keel.Raw(noInvoicesSQL, o.ID, o.OrganizationID, o.BusinessUnitID),
-			keel.Raw(noQueueItemsSQL, o.ID, o.OrganizationID, o.BusinessUnitID),
-		).Delete(ctx, r.db.Keel(ctx))
+		deleted, err := r.emptyOrder(orderID).Delete(ctx, r.db.Keel(ctx))
 		if err != nil {
 			r.l.Error("failed to delete empty order", zap.Error(err))
 			return 0, err
@@ -319,6 +308,19 @@ func (r *repository) DeleteIfEmpty(
 
 		return deleted, nil
 	})
+}
+
+func (r *repository) emptyOrder(orderID pulid.ID) *keel.Query[*order.Order] {
+	o := orderdb.Orders
+	preds := make([]keel.Pred, 0, 3+len(r.references))
+	preds = append(preds, o.ID.Eq(orderID), o.Shipments().None(), o.Charges().None())
+	for _, ref := range r.references {
+		preds = append(
+			preds,
+			keel.NotExists(keel.Handle[*keel.Row]{Ref: ref.Ref}.Where(ref.EqCol(o.ID))),
+		)
+	}
+	return o.Where(preds...)
 }
 
 func (r *repository) AddCharge(

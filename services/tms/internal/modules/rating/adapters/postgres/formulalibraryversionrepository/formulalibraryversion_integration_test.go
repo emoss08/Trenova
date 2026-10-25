@@ -6,6 +6,7 @@ import (
 	"context"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment/shipmentdb"
 	"github.com/emoss08/trenova/internal/modules/rating/adapters/postgres/formulalibraryrepository"
 	"github.com/emoss08/trenova/internal/modules/rating/adapters/postgres/formulalibraryversionrepository"
 	"github.com/emoss08/trenova/internal/modules/rating/adapters/postgres/formulatemplaterepository"
@@ -50,6 +51,7 @@ func setup(t *testing.T) *libraryFixture {
 		}),
 		templates: formulatemplaterepository.New(formulatemplaterepository.Params{
 			DB: conn, Logger: zap.NewNop(),
+			Consumers: formulatemplateports.TemplateConsumers{Shipments: shipmentdb.Shipments.FormulaTemplateID},
 		}),
 		tversions: formulatemplateversionrepository.New(formulatemplateversionrepository.Params{
 			DB: conn, Logger: zap.NewNop(),

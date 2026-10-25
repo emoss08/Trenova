@@ -234,7 +234,11 @@ func TestRun_MovesSingleValuesToTheActiveKey(t *testing.T) {
 	column := secretColumn("secrets", func(row *kernelports.EnvelopeRow, _ string) []kernelports.SecretScope {
 		return []kernelports.SecretScope{boundAAD(row.Tenant, row.ID).SecretScope()}
 	})
-	service := New(Deps{Repository: repo, Rewrapper: encryptionservice.NewEnvelopeRewrapper(rotated)})
+	service := New(Deps{
+		Repository: repo,
+		Tenants:    repo,
+		Rewrapper:  encryptionservice.NewEnvelopeRewrapper(rotated),
+	})
 
 	report, err := service.Run(
 		t.Context(),
@@ -271,6 +275,7 @@ func TestRun_DryRunWritesNothing(t *testing.T) {
 	})
 	service := New(Deps{
 		Repository: repo,
+		Tenants:    repo,
 		Rewrapper:  encryptionservice.NewEnvelopeRewrapper(keyring(t, newKey, oldKey)),
 	})
 
@@ -302,6 +307,7 @@ func TestRun_RebindsALegacyValueOntoItsFirstScope(t *testing.T) {
 	newOnly := keyring(t, newKey)
 	service := New(Deps{
 		Repository: repo,
+		Tenants:    repo,
 		Rewrapper:  encryptionservice.NewEnvelopeRewrapper(keyring(t, newKey, oldKey)),
 	})
 
@@ -348,6 +354,7 @@ func TestRun_RewrapsEveryEnvelopeInAJSONMap(t *testing.T) {
 	column.JSONMap = true
 	service := New(Deps{
 		Repository: repo,
+		Tenants:    repo,
 		Rewrapper:  encryptionservice.NewEnvelopeRewrapper(keyring(t, newKey, oldKey)),
 	})
 
@@ -394,6 +401,7 @@ func TestRun_ReportsValuesItCannotOpenAndKeepsGoing(t *testing.T) {
 	})
 	service := New(Deps{
 		Repository: repo,
+		Tenants:    repo,
 		Rewrapper:  encryptionservice.NewEnvelopeRewrapper(keyring(t, newKey, oldKey)),
 	})
 
@@ -427,6 +435,7 @@ func TestRun_ReportsARowChangedUnderneathAsAConflict(t *testing.T) {
 	})
 	service := New(Deps{
 		Repository: repo,
+		Tenants:    repo,
 		Rewrapper:  encryptionservice.NewEnvelopeRewrapper(keyring(t, newKey, oldKey)),
 	})
 
@@ -472,6 +481,7 @@ func TestRun_RewritesDocumentObjectsAndRecordsTheirNewVersion(t *testing.T) {
 	storage := &fakeStorage{objects: map[string][]byte{key: sealed}}
 	service := New(Deps{
 		Repository: repo,
+		Tenants:    repo,
 		Rewrapper:  encryptionservice.NewEnvelopeRewrapper(keyring(t, newKey, oldKey)),
 		Storage:    storage,
 	})
@@ -521,6 +531,7 @@ func TestRun_NeverRewritesTheObjectOfADeletedDocument(t *testing.T) {
 	storage := &fakeStorage{objects: map[string][]byte{key: sealed}}
 	service := New(Deps{
 		Repository: repo,
+		Tenants:    repo,
 		Rewrapper:  encryptionservice.NewEnvelopeRewrapper(keyring(t, newKey, oldKey)),
 		Storage:    storage,
 	})
@@ -595,6 +606,7 @@ func TestRun_CountsAndLogsObjectsThatAreNotStreamingBlobs(t *testing.T) {
 	core, logs := observer.New(zap.WarnLevel)
 	service := New(Deps{
 		Repository: repo,
+		Tenants:    repo,
 		Rewrapper:  encryptionservice.NewEnvelopeRewrapper(keyring(t, newKey)),
 		Storage:    storage,
 		Logger:     zap.New(core),
@@ -630,6 +642,7 @@ func TestRun_AnObjectStorageCouldNotReadIsAFailureNotASkip(t *testing.T) {
 	}
 	service := New(Deps{
 		Repository: repo,
+		Tenants:    repo,
 		Rewrapper:  encryptionservice.NewEnvelopeRewrapper(keyring(t, newKey)),
 		Storage:    storage,
 	})

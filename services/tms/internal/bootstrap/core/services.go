@@ -36,6 +36,9 @@ var ServiceModule = fx.Module("api-services", ledgersync.Module, fx.Provide(
 	workflowstarter.NewSignalStarter,
 	newDetectorRegistry,
 	newBriefingSources,
+	newVisibleRecordSources,
+	newOrderReferences,
+	newTemplateConsumers,
 	fx.Annotate(
 		internaledistatussync.New,
 		fx.As(new(shipmenteventports.ShipmentEventObserver)),
