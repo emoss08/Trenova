@@ -84,7 +84,7 @@ func upsertConflict() keel.Conflict {
 		b.BusinessUnitID,
 		b.RoleKey,
 		b.BriefingDate,
-		keel.DynOf(b.UserID).Coalesce(""),
+		keel.DynOf(b.UserID).Coalesce(keel.DynConst("")),
 	).Update(
 		b.RunID,
 		b.Status,

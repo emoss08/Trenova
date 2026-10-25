@@ -112,10 +112,10 @@ func (r *repository) UpsertTenderRecipient(
 			tr.SourceBusinessUnitID,
 			tr.SourceOrganizationID,
 			tr.RecipientKind,
-			keel.DynOf(tr.RecipientOrganizationID).Coalesce(""),
-			keel.DynOf(tr.RecipientBusinessUnitID).Coalesce(""),
-			keel.DynOf(tr.EDIPartnerID).Coalesce(""),
-			keel.DynOf(tr.PartnerDocumentProfileID).Coalesce(""),
+			keel.DynOf(tr.RecipientOrganizationID).Coalesce(keel.DynConst("")),
+			keel.DynOf(tr.RecipientBusinessUnitID).Coalesce(keel.DynConst("")),
+			keel.DynOf(tr.EDIPartnerID).Coalesce(keel.DynConst("")),
+			keel.DynOf(tr.PartnerDocumentProfileID).Coalesce(keel.DynConst("")),
 		).
 			Update(
 				tr.LatestBaselinePayload,
