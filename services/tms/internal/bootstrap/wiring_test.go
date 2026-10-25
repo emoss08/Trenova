@@ -200,7 +200,8 @@ func TestWiring_BestEffortPortsAreActuallyProvided(t *testing.T) {
 Agent tools read through persisted GraphQL operations, and they run on the
 worker as well as in the API. Nothing asks for the reader until a converted
 tool does, and fx.ValidateApp checks only what is asked for, so these ask for
-it in both processes and in both worker binaries.
+it in both processes, in both worker binaries, and in the worker the desk bench
+runs in process, which went without it until `trenova desk` could not start.
 */
 func TestWiring_EveryProcessBuildsTheAgentGraphQLReader(t *testing.T) {
 	t.Parallel()
@@ -211,6 +212,7 @@ func TestWiring_EveryProcessBuildsTheAgentGraphQLReader(t *testing.T) {
 		"worker":        {bootstrap.Options(), bootstrap.WorkerOptions(), need},
 		"worker binary": {core.Options(), workerapp.Modules(), workerapp.Options(), need},
 		"api binary":    {core.Options(), apiapp.Options(), need},
+		"desk bench":    {bootstrap.Options(), bootstrap.UnscheduledWorkerOptions(), need},
 	}
 	for name, options := range graphs {
 		t.Run(name, func(t *testing.T) {
