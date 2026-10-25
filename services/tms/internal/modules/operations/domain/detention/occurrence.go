@@ -60,7 +60,7 @@ type DetentionOccurrence struct {
 	GrossAmount        decimal.Decimal           `json:"grossAmount"        keel:"gross_amount"`
 	BillableAmount     decimal.Decimal           `json:"billableAmount"     keel:"billable_amount"`
 	DriverPayMinutes   int32                     `json:"driverPayMinutes"   keel:"driver_pay_minutes"`
-	DriverPayAmount    decimal.NullDecimal       `json:"driverPayAmount"    keel:"driver_pay_amount"`
+	DriverPayAmount    decimal.NullDecimal       `json:"driverPayAmount"    keel:"driver_pay_amount,default"`
 	NetMargin          decimal.NullDecimal       `json:"netMargin"          keel:"net_margin"`
 	CapApplied         CapKind                   `json:"capApplied"         keel:"cap_applied"`
 	ConvertedToLayover bool                      `json:"convertedToLayover" keel:"converted_to_layover"`
@@ -401,9 +401,6 @@ func (o *DetentionOccurrence) BeforeCreate(ctx context.Context) error {
 	}
 	if o.NotificationStatus == "" {
 		o.NotificationStatus = NotificationStatusNotRequired
-	}
-	if !o.DriverPayAmount.Valid {
-		o.DriverPayAmount = decimal.NewNullDecimal(decimal.Zero)
 	}
 	if !o.NetMargin.Valid {
 		o.NetMargin = decimal.NewNullDecimal(o.BillableAmount.Sub(o.DriverPayAmount.Decimal))

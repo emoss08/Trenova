@@ -22,16 +22,6 @@ import (
 const (
 	defaultUsageDeleteBatchSize = 5000
 	maxUsageDeleteBatchSize     = 50000
-
-	usageRollupSQL = `INSERT INTO carrier_intel_usage_daily ` +
-		`(organization_id, business_unit_id, provider, endpoint, day, calls, billable_units, estimated_cost) ` +
-		`SELECT organization_id, business_unit_id, provider, endpoint, $1::integer, COUNT(*), ` +
-		`COALESCE(SUM(billable_units), 0), COALESCE(SUM(estimated_cost), 0) ` +
-		`FROM carrier_intel_usage_ledger WHERE created_at >= $2 AND created_at < $3 ` +
-		`GROUP BY organization_id, business_unit_id, provider, endpoint ` +
-		`ON CONFLICT (organization_id, business_unit_id, provider, endpoint, day) DO UPDATE SET ` +
-		`calls = EXCLUDED.calls, billable_units = EXCLUDED.billable_units, ` +
-		`estimated_cost = EXCLUDED.estimated_cost`
 )
 
 type usageRepository struct {
@@ -191,13 +181,34 @@ func (r *usageRepository) RollupDay(ctx context.Context, dayStart int64) (int, e
 	ctx = dbscope.WithSystem(ctx, "roll up carrier intelligence usage across every organization")
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (int, error) {
 		start := timeutils.DayStartUTC(dayStart)
-		affected, err := keel.Exec(
+		l := carrierinteldb.CarrierIntelUsageRecords
+		d := carrierinteldb.CarrierIntelUsageDailies
+		day := keel.DynLit(int64(timeutils.DayKeyUTC(start))).Cast(keel.TypeInt64)
+		affected, err := d.UpsertFrom(
 			ctx,
 			r.db.Keel(ctx),
-			usageRollupSQL,
-			timeutils.DayKeyUTC(start),
-			start,
-			start+timeutils.SecondsPerDay,
+			l.Pick(
+				l.OrganizationID,
+				l.BusinessUnitID,
+				l.Provider,
+				l.Endpoint,
+				day,
+				keel.Count(),
+				keel.DynOf(l.BillableUnits).Sum().Coalesce(0),
+				keel.DynOf(l.EstimatedCost).Sum().Coalesce(0),
+			).
+				Where(l.CreatedAt.Gte(start), l.CreatedAt.Lt(start+timeutils.SecondsPerDay)).
+				Group(l.OrganizationID, l.BusinessUnitID, l.Provider, l.Endpoint),
+			keel.OnConflict(d.OrganizationID, d.BusinessUnitID, d.Provider, d.Endpoint, d.Day).
+				Update(d.Calls, d.BillableUnits, d.EstimatedCost),
+			d.OrganizationID,
+			d.BusinessUnitID,
+			d.Provider,
+			d.Endpoint,
+			d.Day,
+			d.Calls,
+			d.BillableUnits,
+			d.EstimatedCost,
 		)
 		if err != nil {
 			r.l.Error("failed to roll up carrier intel usage", zap.Error(err))

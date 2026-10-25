@@ -329,6 +329,10 @@ func (c *Connection) Transact(
 			ctx = kernelports.WithReadOnly(ctx)
 		}
 
+		if len(opts.Settings) > 0 {
+			return keel.Read(ctx, db, fn, txSettings(opts.Settings)...)
+		}
+
 		return fn(ctx)
 	}
 
@@ -379,7 +383,16 @@ func keelTxOptions(opts kernelports.TxOptions) ([]keel.TxOption, error) {
 		txOpts = append(txOpts, keel.LockTimeout(opts.LockTimeout))
 	}
 
-	return txOpts, nil
+	return append(txOpts, txSettings(opts.Settings)...), nil
+}
+
+func txSettings(settings []kernelports.TxSetting) []keel.TxOption {
+	out := make([]keel.TxOption, len(settings))
+	for i, s := range settings {
+		out[i] = keel.Setting(s.Name, s.Value)
+	}
+
+	return out
 }
 
 func (c *Connection) Savepoint(ctx context.Context, fn func(context.Context) error) error {
