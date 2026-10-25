@@ -115,9 +115,9 @@ func (r *repository) Swap(ctx context.Context, req *kernelports.SwapEnvelopeRequ
 			return false, err
 		}
 
-		replacement := keel.DynLit(req.Replacement)
+		replacement := keel.Val(req.Replacement)
 		if req.Column.JSONMap {
-			replacement = replacement.Cast(keel.TypeJSON)
+			replacement = keel.JSONB([]byte(req.Replacement))
 		}
 
 		sets := slices.Concat(src.untouched, []keel.Assignment{src.value.ToExpr(replacement)})
@@ -144,11 +144,11 @@ func (r *repository) SwapVersion(
 			return fmt.Errorf("%s version: %w", src.name, err)
 		}
 
-		set := version.ToExpr(keel.DynLit(req.Replacement))
+		set := version.ToExpr(keel.Val(req.Replacement))
 		if req.Replacement == "" {
 			set = version.ToNull()
 		}
-		versionText := keel.DynOf(version).Cast(keel.TypeString)
+		versionText := keel.CastText(version)
 		expected := versionText.Eq(req.Expected)
 		if req.Expected == "" {
 			expected = versionText.Coalesce("").Eq("")
@@ -239,21 +239,21 @@ func (s *source) column(e keel.Expr) (keel.Col, error) {
 }
 
 func (s *source) listQuery(req *kernelports.ListEnvelopeRowsRequest) *keel.Query[*keel.Row] {
-	bu := keel.Expr(keel.DynLit(req.Tenant.BuID.String()).Cast(keel.TypeString))
+	bu := keel.Text(req.Tenant.BuID.String())
 	if s.bu != nil {
-		bu = keel.DynOf(*s.bu).Cast(keel.TypeString)
+		bu = keel.CastText(*s.bu)
 	}
 
 	return s.table.Pick(
-		keel.DynOf(s.id).Cast(keel.TypeString),
-		keel.DynOf(s.org).Cast(keel.TypeString),
+		keel.CastText(s.id),
+		keel.CastText(s.org),
 		bu,
-		keel.DynOf(s.value).Cast(keel.TypeString),
+		keel.CastText(s.value),
 		s.extraArray(),
 	).
 		Where(
 			s.value.IsNotNull(),
-			keel.DynOf(s.value).Cast(keel.TypeString).Ne(""),
+			keel.CastText(s.value).Ne(""),
 			keel.When(req.After != "", s.id.Gt(req.After)),
 		).
 		Order(s.id.Asc()).
@@ -267,7 +267,7 @@ func (s *source) extraArray() keel.Expr {
 
 	items := make([]any, len(s.extra))
 	for i := range s.extra {
-		items[i] = keel.DynOf(s.extra[i]).Cast(keel.TypeString).Coalesce("")
+		items[i] = keel.CastText(s.extra[i]).Coalesce("")
 	}
 	return keel.DynArray(items...)
 }
@@ -275,7 +275,7 @@ func (s *source) extraArray() keel.Expr {
 func (s *source) matches(row *kernelports.EnvelopeRow) []keel.Pred {
 	return []keel.Pred{
 		s.id.Eq(row.ID),
-		keel.DynOf(s.value).Cast(keel.TypeString).Eq(row.Sealed),
+		keel.CastText(s.value).Eq(row.Sealed),
 	}
 }
 

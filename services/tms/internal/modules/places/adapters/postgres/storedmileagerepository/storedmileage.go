@@ -117,7 +117,7 @@ func (r *repository) Lookup(
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*storedmileage.StoredMileage, error) {
 		sm := storedmileagedb.StoredMileages
 		entity, err := sm.Where(
-			keel.DynOf(sm.Status).Eq(keel.DynConst(storedmileage.StatusActive)),
+			sm.Status.EqCol(keel.DynConst(storedmileage.StatusActive)),
 			sm.RouteHash.Eq(req.RouteHash),
 			sm.DistanceUnits.Eq(req.DistanceUnits),
 			sm.RoutingType.Eq(req.RoutingType),
@@ -161,7 +161,7 @@ func (r *repository) BulkUpsert(
 				sm.DistanceProfileID,
 				sm.HazmatSignature,
 			).
-				Where(keel.DynOf(sm.Status).Eq(keel.DynConst(storedmileage.StatusActive))).
+				Where(sm.Status.EqCol(keel.DynConst(storedmileage.StatusActive))).
 				Update(
 					sm.Distance,
 					sm.Provider,
@@ -171,7 +171,10 @@ func (r *repository) BulkUpsert(
 					sm.ProviderMetadata,
 					sm.LastCalculatedAt,
 				).
-				Set(sm.JurisdictionDistances.ToExpr(keel.DynOf(sm.JurisdictionDistances.Excluded()).Coalesce(sm.JurisdictionDistances))),
+				Set(sm.JurisdictionDistances.ToExpr(
+					keel.JSONBOf(sm.JurisdictionDistances.Excluded()).
+						Coalesce(sm.JurisdictionDistances),
+				)),
 		)
 		return err
 	})

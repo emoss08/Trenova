@@ -170,11 +170,8 @@ func (r *repository) GetByName(
 ) (*documenttype.DocumentType, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*documenttype.DocumentType, error) {
 		dt := documenttypedb.DocumentTypes
-		name := keel.DynLit(strings.TrimSpace(req.Name)).Cast(keel.TypeString)
-		entity, err := dt.Where(
-			keel.DynFunc("lower", keel.DynFunc("btrim", dt.Name)).
-				Eq(keel.DynFunc("lower", keel.DynFunc("btrim", name))),
-		).
+		name := keel.Text(strings.TrimSpace(req.Name))
+		entity, err := dt.Where(dt.Name.Trim().Lower().EqExpr(name.Trim().Lower())).
 			Order(dt.CreatedAt.Asc()).
 			Cache(resultcache.Reference()...).
 			First(ctx, r.db.Keel(ctx))
