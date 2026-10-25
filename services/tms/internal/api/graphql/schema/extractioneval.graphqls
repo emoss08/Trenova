@@ -124,6 +124,8 @@ type AICorrectionConnection {
   edges: [AICorrectionEdge!]!
   pageInfo: PageInfo!
   totalCount: Int
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
 }
 
 type ExtractionEvalPage {
@@ -165,6 +167,8 @@ type ExtractionEvalCaseConnection {
   edges: [ExtractionEvalCaseEdge!]!
   pageInfo: PageInfo!
   totalCount: Int
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
 }
 
 "One model, pinned to one AI provider, run over the active extraction cases."
@@ -218,6 +222,8 @@ type ExtractionEvalRunConnection {
   edges: [ExtractionEvalRunEdge!]!
   pageInfo: PageInfo!
   totalCount: Int
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
 }
 
 "One case evaluated within a run."
@@ -262,6 +268,8 @@ type ExtractionEvalResultConnection {
   edges: [ExtractionEvalResultEdge!]!
   pageInfo: PageInfo!
   totalCount: Int
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
 }
 
 type ExtractionAccuracyGroup {

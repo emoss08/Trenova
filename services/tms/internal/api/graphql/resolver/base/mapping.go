@@ -2,6 +2,7 @@ package base
 
 import (
 	"context"
+	"slices"
 	"strings"
 
 	"github.com/99designs/gqlgen/graphql"
@@ -216,7 +217,7 @@ func MemtableRequestFromGraphQL(
 		Sort:              SortFieldsFromGraphQL(input.Sort),
 		First:             IntValue(input.First),
 		After:             StringValue(input.After),
-		IncludeTotalCount: ConnectionFieldRequested(ctx, ConnectionTotalCountField),
+		IncludeTotalCount: ConnectionTotalRequested(ctx),
 	}
 }
 
@@ -241,14 +242,25 @@ func EntityCursorPageFromGraphQL(
 			"Cursor is invalid",
 		)
 	}
-	cursor.IncludeTotalCount = ConnectionFieldRequested(ctx, ConnectionTotalCountField)
+	cursor.IncludeTotalCount = ConnectionTotalRequested(ctx)
 
 	return gqlEntityCursorPage{Cursor: cursor}, nil
 }
 
-const ConnectionTotalCountField = "totalCount"
+const (
+	ConnectionTotalCountField      = "totalCount"
+	ConnectionTotalCountExactField = "totalCountExact"
+)
 
-func ConnectionFieldRequested(ctx context.Context, name string) bool {
+func ConnectionTotalRequested(ctx context.Context) bool {
+	return ConnectionFieldRequested(
+		ctx,
+		ConnectionTotalCountField,
+		ConnectionTotalCountExactField,
+	)
+}
+
+func ConnectionFieldRequested(ctx context.Context, names ...string) bool {
 	if ctx == nil {
 		return true
 	}
@@ -257,7 +269,7 @@ func ConnectionFieldRequested(ctx context.Context, name string) bool {
 	}
 
 	for _, field := range graphql.CollectFieldsCtx(ctx, nil) {
-		if field.Name == name {
+		if slices.Contains(names, field.Name) {
 			return true
 		}
 	}

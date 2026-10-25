@@ -440,9 +440,10 @@ func reportDefinitionConnectionToModel(
 	}
 
 	return &gqlmodel.ReportDefinitionConnection{
-		Edges:      page.Edges,
-		PageInfo:   page.PageInfo,
-		TotalCount: base.DerefInt(page.TotalCount),
+		Edges:           page.Edges,
+		PageInfo:        page.PageInfo,
+		TotalCount:      base.DerefInt(page.TotalCount),
+		TotalCountExact: page.TotalCountExact,
 	}, nil
 }
 
@@ -461,9 +462,10 @@ func reportRunConnectionToModel(
 	}
 
 	return &gqlmodel.ReportRunConnection{
-		Edges:      page.Edges,
-		PageInfo:   page.PageInfo,
-		TotalCount: base.DerefInt(page.TotalCount),
+		Edges:           page.Edges,
+		PageInfo:        page.PageInfo,
+		TotalCount:      base.DerefInt(page.TotalCount),
+		TotalCountExact: page.TotalCountExact,
 	}, nil
 }
 

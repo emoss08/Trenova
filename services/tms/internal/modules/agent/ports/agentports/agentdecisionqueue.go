@@ -3,6 +3,7 @@ package agentports
 import (
 	"context"
 
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -92,7 +93,7 @@ type AgentDecisionQueueRepository interface {
 	) (*PendingDecisionsPageRow, error)
 	// CountPending is the size of the queue under the same filters as
 	// ListPending, for a connection that asks for its total.
-	CountPending(ctx context.Context, req ListPendingDecisionsQuery) (int, error)
+	CountPending(ctx context.Context, req ListPendingDecisionsQuery) (keel.RowCount, error)
 	Summary(ctx context.Context, req PendingDecisionSummaryRequest) (*PendingDecisionSummary, error)
 	// ListRecent is what was decided lately, newest first: proposals that
 	// stood on their own, each with who decided it.

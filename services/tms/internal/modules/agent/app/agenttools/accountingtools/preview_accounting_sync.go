@@ -178,18 +178,22 @@ func (t *RetryAccountingSyncTool) Preview(
 		common.CountOf(len(plan.records), "document"),
 		plan.summary.ProviderName,
 	)
-	left := 0
+	left, exact := 0, true
 	if len(plan.req.ErrorCategories) > 0 {
-		waiting, wErr := t.waitingCount(ctx, plan.req)
+		waiting, waitingExact, wErr := t.waitingCount(ctx, plan.req)
 		if wErr != nil {
 			return nil, wErr
 		}
-		left = max(waiting-len(plan.records), 0)
+		left, exact = max(waiting-len(plan.records), 0), waitingExact
 	}
 	if left > 0 {
+		leaves := common.CountOf(left, "other record")
+		if !exact {
+			leaves = "about " + leaves
+		}
 		summary += fmt.Sprintf(
 			" It leaves %s that last failed as %s for another retry.",
-			common.CountOf(left, "other record"),
+			leaves,
 			joinCategories(plan.req.ErrorCategories),
 		)
 	}

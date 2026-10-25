@@ -63,10 +63,11 @@ func (r *repository) ListApprovalQueue(
 			}
 
 			return &pagination.CursorListResult[*approvalItem]{
-				Items:       items,
-				HasNextPage: page.HasNextPage,
-				TotalCount:  page.TotalCount,
-				EdgeCursors: page.EdgeCursors,
+				Items:           items,
+				HasNextPage:     page.HasNextPage,
+				TotalCount:      page.TotalCount,
+				TotalCountExact: page.TotalCountExact,
+				EdgeCursors:     page.EdgeCursors,
 			}, nil
 		},
 	)

@@ -530,6 +530,8 @@ type AccountingSyncRecordConnection {
   edges: [AccountingSyncRecordEdge!]!
   pageInfo: PageInfo!
   totalCount: Int
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
 }
 
 "One try at sending a sync record."
@@ -792,6 +794,8 @@ type AccountingMappingConnection {
   edges: [AccountingMappingEdge!]!
   pageInfo: PageInfo!
   totalCount: Int
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
 }
 
 "How many mappings of one kind are in each state."
@@ -1026,6 +1030,8 @@ type AccountingInboundChangeConnection {
   edges: [AccountingInboundChangeEdge!]!
   pageInfo: PageInfo!
   totalCount: Int
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
 }
 
 type AccountingInboundSummary {
@@ -1187,6 +1193,8 @@ type AccountingDriftFindingConnection {
   edges: [AccountingDriftFindingEdge!]!
   pageInfo: PageInfo!
   totalCount: Int
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
 }
 
 type AccountingDriftSummary {

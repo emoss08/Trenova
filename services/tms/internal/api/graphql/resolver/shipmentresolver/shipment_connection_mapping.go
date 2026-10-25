@@ -30,8 +30,9 @@ func shipmentConnectionToModel(
 		return nil, err
 	}
 	return &gqlmodel.ShipmentConnection{
-		Edges:      edges,
-		TotalCount: result.TotalCount,
+		Edges:           edges,
+		TotalCount:      result.TotalCount,
+		TotalCountExact: result.TotalCountExact,
 		PageInfo: base.PageInfo(
 			result.HasNextPage,
 			endCursor,
@@ -57,8 +58,9 @@ func shipmentCommentConnectionToModel(
 		return nil, err
 	}
 	return &gqlmodel.ShipmentCommentConnection{
-		Edges:      edges,
-		TotalCount: result.TotalCount,
+		Edges:           edges,
+		TotalCount:      result.TotalCount,
+		TotalCountExact: result.TotalCountExact,
 		PageInfo: base.PageInfo(
 			result.HasNextPage,
 			endCursor,

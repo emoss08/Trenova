@@ -98,6 +98,8 @@ type CustomerPaymentConnection {
   edges: [CustomerPaymentEdge!]!
   pageInfo: PageInfo!
   totalCount: Int
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
 }
 
 input CustomerPaymentApplicationInput {

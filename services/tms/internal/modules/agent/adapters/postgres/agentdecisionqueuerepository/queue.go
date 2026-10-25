@@ -14,6 +14,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant/tenantdb"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/pkg/pagination"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
@@ -195,19 +196,19 @@ func (r *repository) ListPending(
 func (r *repository) CountPending(
 	ctx context.Context,
 	req agentports.ListPendingDecisionsQuery,
-) (int, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) (int, error) {
+) (keel.RowCount, error) {
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) (keel.RowCount, error) {
 		q := pendingQueue(&req)
 		count, err := q.Query().With(q).
 			Where(keel.When(req.ActionableOnly, keel.DynOf(q.Col("shadow")).Not())).
-			Count(ctx, r.db.Keel(ctx))
+			CountEstimate(ctx, r.db.Keel(ctx), pagination.ExactTotalUpTo)
 		if err != nil {
 			r.l.Error("failed to count pending decisions", zap.Error(err))
 
-			return 0, fmt.Errorf("count pending decisions: %w", err)
+			return keel.RowCount{}, fmt.Errorf("count pending decisions: %w", err)
 		}
 
-		return int(count), nil
+		return count, nil
 	})
 }
 

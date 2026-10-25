@@ -471,6 +471,8 @@ type EdiPartnerConnection {
   edges: [EdiPartnerEdge!]!
   pageInfo: PageInfo!
   totalCount: Int
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
 }
 
 type EdiCommunicationProfileEdge {
@@ -482,6 +484,8 @@ type EdiCommunicationProfileConnection {
   edges: [EdiCommunicationProfileEdge!]!
   pageInfo: PageInfo!
   totalCount: Int
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
 }
 
 type EdiTransferEdge {
@@ -493,6 +497,8 @@ type EdiTransferConnection {
   edges: [EdiTransferEdge!]!
   pageInfo: PageInfo!
   totalCount: Int
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
 }
 
 type EdiMessageEdge {
@@ -504,6 +510,8 @@ type EdiMessageConnection {
   edges: [EdiMessageEdge!]!
   pageInfo: PageInfo!
   totalCount: Int
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
 }
 
 type EdiInboundFileEdge {
@@ -515,6 +523,8 @@ type EdiInboundFileConnection {
   edges: [EdiInboundFileEdge!]!
   pageInfo: PageInfo!
   totalCount: Int
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
 }
 
 type EdiTemplateEdge {
@@ -526,6 +536,8 @@ type EdiTemplateConnection {
   edges: [EdiTemplateEdge!]!
   pageInfo: PageInfo!
   totalCount: Int
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
 }
 
 type EdiMappingProfileEdge {
@@ -537,6 +549,8 @@ type EdiMappingProfileConnection {
   edges: [EdiMappingProfileEdge!]!
   pageInfo: PageInfo!
   totalCount: Int
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
 }
 
 """
@@ -835,6 +849,8 @@ type EdiTestCaseConnection {
   edges: [EdiTestCaseEdge!]!
   pageInfo: PageInfo!
   totalCount: Int
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
 }
 
 extend type Query {

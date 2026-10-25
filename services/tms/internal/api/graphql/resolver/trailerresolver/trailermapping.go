@@ -82,23 +82,9 @@ func trailerRelationIncludesForFields(
 func trailerConnectionToModel(
 	result *pagination.CursorListResult[*trailer.Trailer],
 ) (*gqlmodel.TrailerConnection, error) {
-	return trailerConnectionFromItems(
-		result.Items,
-		result.HasNextPage,
-		result.TotalCount,
-		result,
-	)
-}
-
-func trailerConnectionFromItems(
-	items []*trailer.Trailer,
-	hasNextPage bool,
-	totalCount *int,
-	cursors pagination.EdgeCursorProvider,
-) (*gqlmodel.TrailerConnection, error) {
 	edges, err := base.EntityCursorEdges(
-		items,
-		cursors,
+		result.Items,
+		result,
 		func(node *trailer.Trailer, cursor string) *gqlmodel.TrailerEdge {
 			return &gqlmodel.TrailerEdge{
 				Node:   node,
@@ -117,10 +103,11 @@ func trailerConnectionFromItems(
 	return &gqlmodel.TrailerConnection{
 		Edges: edges,
 		PageInfo: base.PageInfo(
-			hasNextPage,
+			result.HasNextPage,
 			endCursor,
 		),
-		TotalCount: totalCount,
+		TotalCount:      result.TotalCount,
+		TotalCountExact: result.TotalCountExact,
 	}, nil
 }
 

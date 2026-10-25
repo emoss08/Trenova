@@ -68,6 +68,8 @@ type AgentEvalCaseConnection {
   edges: [AgentEvalCaseEdge!]!
   pageInfo: PageInfo!
   totalCount: Int
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
 }
 
 "A case as it was created, or the case that already asked the same thing."
@@ -218,6 +220,8 @@ type AgentSuiteRunConnection {
   edges: [AgentSuiteRunEdge!]!
   pageInfo: PageInfo!
   totalCount: Int
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
 }
 
 "One case of a suite run: its replay, with the checks, scores and judge's note."
@@ -230,6 +234,8 @@ type AgentSuiteRunCaseConnection {
   edges: [AgentSuiteRunCaseEdge!]!
   pageInfo: PageInfo!
   totalCount: Int
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
 }
 
 "When and how far the nightly agent quality sweep runs."
@@ -345,6 +351,8 @@ type AgentWorstRatedAnswerConnection {
   pageInfo: PageInfo!
   "Every answer matching the filters. Counted only when selected."
   totalCount: Int
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
 }
 
 "One agent's quality over a window."
@@ -394,6 +402,8 @@ type AgentQualityAgentConnection {
   edges: [AgentQualityAgentEdge!]!
   pageInfo: PageInfo!
   totalCount: Int
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
 }
 
 extend type Query {

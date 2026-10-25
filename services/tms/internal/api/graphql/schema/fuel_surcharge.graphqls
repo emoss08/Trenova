@@ -75,6 +75,8 @@ type FuelIndexConnection {
   edges: [FuelIndexEdge!]!
   pageInfo: PageInfo!
   totalCount: Int
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
 }
 
 type FuelIndexPrice @kind(resource: "fuel_surcharge_program") {
@@ -151,6 +153,8 @@ type FuelSurchargeProgramConnection {
   edges: [FuelSurchargeProgramEdge!]!
   pageInfo: PageInfo!
   totalCount: Int
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
 }
 
 type FuelIndexLatestPrice @kind(resource: "fuel_surcharge_program") {

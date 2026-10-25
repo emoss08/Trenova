@@ -278,6 +278,8 @@ type AIProviderConnection {
   edges: [AIProviderEdge!]!
   pageInfo: PageInfo!
   totalCount: Int
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
 }
 
 "A provider as its editor holds it, reduced to what decides where tasks go."

@@ -172,6 +172,8 @@ type ReportDefinitionConnection {
   edges: [ReportDefinitionEdge!]!
   pageInfo: PageInfo!
   totalCount: Int!
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
 }
 
 type ReportDefinitionRevision {
@@ -228,6 +230,8 @@ type ReportRunConnection {
   edges: [ReportRunEdge!]!
   pageInfo: PageInfo!
   totalCount: Int!
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
 }
 
 # --- Report schedules --------------------------------------------------------

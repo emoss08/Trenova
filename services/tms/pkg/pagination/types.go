@@ -70,11 +70,12 @@ type Response[T any] struct {
 }
 
 type CursorResponse[T any] struct {
-	Results     T      `json:"results"`
-	Count       int    `json:"count"`
-	TotalCount  *int   `json:"totalCount"`
-	Next        string `json:"next"`
-	Previous    string `json:"previous"`
-	HasNextPage bool   `json:"hasNextPage"`
-	EndCursor   string `json:"endCursor"`
+	Results         T      `json:"results"`
+	Count           int    `json:"count"`
+	TotalCount      *int   `json:"totalCount"`
+	TotalCountExact bool   `json:"totalCountExact"`
+	Next            string `json:"next"`
+	Previous        string `json:"previous"`
+	HasNextPage     bool   `json:"hasNextPage"`
+	EndCursor       string `json:"endCursor"`
 }

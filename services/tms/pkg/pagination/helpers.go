@@ -96,13 +96,14 @@ func List[T any](
 
 	total := result.Total
 	helpers.JSON(c, http.StatusOK, CursorResponse[[]T]{
-		Count:       total,
-		TotalCount:  &total,
-		Results:     items,
-		Next:        GetNextCursorPageURL(c, endCursor, limit, hasNextPage),
-		Previous:    "",
-		HasNextPage: hasNextPage,
-		EndCursor:   endCursor,
+		Count:           total,
+		TotalCount:      &total,
+		TotalCountExact: true,
+		Results:         items,
+		Next:            GetNextCursorPageURL(c, endCursor, limit, hasNextPage),
+		Previous:        "",
+		HasNextPage:     hasNextPage,
+		EndCursor:       endCursor,
 	})
 }
 
@@ -139,13 +140,14 @@ func CursorList[T any](
 	}
 
 	helpers.JSON(c, http.StatusOK, CursorResponse[[]T]{
-		Count:       count,
-		TotalCount:  result.TotalCount,
-		Results:     result.Items,
-		Next:        GetNextCursorPageURL(c, endCursor, cursorInfo.Limit, result.HasNextPage),
-		Previous:    "",
-		HasNextPage: result.HasNextPage,
-		EndCursor:   endCursor,
+		Count:           count,
+		TotalCount:      result.TotalCount,
+		TotalCountExact: result.TotalCountExact,
+		Results:         result.Items,
+		Next:            GetNextCursorPageURL(c, endCursor, cursorInfo.Limit, result.HasNextPage),
+		Previous:        "",
+		HasNextPage:     result.HasNextPage,
+		EndCursor:       endCursor,
 	})
 }
 

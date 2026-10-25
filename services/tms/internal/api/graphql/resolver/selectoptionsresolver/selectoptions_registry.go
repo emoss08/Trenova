@@ -391,7 +391,8 @@ func selectOptionConnection(
 				return edge.Cursor
 			}),
 		),
-		TotalCount: new(total),
+		TotalCount:      new(total),
+		TotalCountExact: true,
 	}, nil
 }
 

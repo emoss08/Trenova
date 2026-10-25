@@ -501,13 +501,14 @@ func (t *shipmentListTool) wordOutcome(
 				"asking the person to choose from this page.", search.window.limit)
 	case found.hasMore:
 		outcome.cursorPaged(&search.window, true, found.nextCursor)
-		if total, err := countShipments(ctx, t.repo, &pagination.QueryOptions{
+		if total, exact, err := countShipments(ctx, t.repo, &pagination.QueryOptions{
 			TenantInfo:   tenantOf(search.params),
 			Query:        search.query,
 			FieldFilters: search.filters,
 		}, shipmentports.ShipmentOptions{Statuses: search.statuses}); err == nil &&
 			total > len(rows) {
 			outcome.Total = &total
+			outcome.TotalEstimated = !exact
 		}
 	}
 	if len(sampled) > 0 {

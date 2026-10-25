@@ -125,9 +125,10 @@ type AgentQualityAgentEdge struct {
 }
 
 type AgentQualityAgentPage struct {
-	Edges       []*AgentQualityAgentEdge `json:"edges"`
-	HasNextPage bool                     `json:"hasNextPage"`
-	TotalCount  *int                     `json:"totalCount"`
+	Edges           []*AgentQualityAgentEdge `json:"edges"`
+	HasNextPage     bool                     `json:"hasNextPage"`
+	TotalCount      *int                     `json:"totalCount"`
+	TotalCountExact bool                     `json:"totalCountExact"`
 }
 
 type ListAgentWorstRatedTableRequest struct {
@@ -144,9 +145,10 @@ type AgentWorstRatedEdge struct {
 }
 
 type AgentWorstRatedPage struct {
-	Edges       []*AgentWorstRatedEdge `json:"edges"`
-	HasNextPage bool                   `json:"hasNextPage"`
-	TotalCount  *int                   `json:"totalCount"`
+	Edges           []*AgentWorstRatedEdge `json:"edges"`
+	HasNextPage     bool                   `json:"hasNextPage"`
+	TotalCount      *int                   `json:"totalCount"`
+	TotalCountExact bool                   `json:"totalCountExact"`
 }
 
 type RunAgentSuiteRequest struct {

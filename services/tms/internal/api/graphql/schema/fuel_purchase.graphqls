@@ -139,6 +139,8 @@ type FuelCardConnection {
   edges: [FuelCardEdge!]!
   pageInfo: PageInfo!
   totalCount: Int
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
 }
 
 """
@@ -207,6 +209,8 @@ type FuelPurchaseConnection {
   edges: [FuelPurchaseEdge!]!
   pageInfo: PageInfo!
   totalCount: Int
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
 }
 
 """
@@ -354,6 +358,8 @@ type FuelPurchaseImportRowConnection {
   edges: [FuelPurchaseImportRowEdge!]!
   pageInfo: PageInfo!
   totalCount: Int
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
 }
 
 """
@@ -484,6 +490,8 @@ type FuelPurchaseImportBatchConnection {
   edges: [FuelPurchaseImportBatchEdge!]!
   pageInfo: PageInfo!
   totalCount: Int
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
 }
 
 input CancelFuelCardInput {

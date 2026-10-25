@@ -328,7 +328,7 @@ func (r *suiteRunRepository) ListAgents(
 
 			var (
 				rows  []agentqualityports.AgentQualityAgentRow
-				total int64
+				total keel.RowCount
 			)
 			items := []keel.BatchItem{
 				keel.IntoSlice(d.
@@ -338,7 +338,10 @@ func (r *suiteRunRepository) ListAgents(
 					Offset(max(req.Offset, 0)), &rows),
 			}
 			if req.IncludeTotalCount {
-				items = append(items, keel.CountInto(d.Query(), &total))
+				items = append(
+					items,
+					keel.CountEstimateInto(d.Query(), pagination.ExactTotalUpTo, &total),
+				)
 			}
 			if err := keel.Batch(ctx, r.db.Keel(ctx), items...); err != nil {
 				return nil, fmt.Errorf("list agents for quality: %w", err)
@@ -346,7 +349,8 @@ func (r *suiteRunRepository) ListAgents(
 
 			result := &agentqualityports.AgentQualityAgentRows{}
 			if req.IncludeTotalCount {
-				result.TotalCount = new(int(total))
+				result.TotalCount = new(int(total.N))
+				result.TotalCountExact = total.Exact
 			}
 			if len(rows) > limit {
 				result.HasNextPage = true

@@ -299,6 +299,7 @@ func TestGraphQLListTool_CountsTheListOnlyWhenAPersonsTableAsks(t *testing.T) {
 	require.NoError(t, err)
 	assert.True(t, h.repo.lastConnection().Cursor.IncludeTotalCount)
 	assert.Equal(t, float64(5), counted["total"])
+	assert.NotContains(t, counted, "totalEstimated", "a counted total is not marked as an estimate")
 	assert.Len(t, itemIDs(counted), 2)
 
 	uncounted, err := h.query(t, person, active)

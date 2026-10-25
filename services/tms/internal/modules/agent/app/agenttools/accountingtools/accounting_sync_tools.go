@@ -439,19 +439,19 @@ func (t *RetryAccountingSyncTool) ResolveProposalSelection(
 func (t *RetryAccountingSyncTool) waitingCount(
 	ctx context.Context,
 	req *accountingsyncports.RetryAccountingSyncRequest,
-) (int, error) {
+) (int, bool, error) {
 	candidates := retryCandidatesRequest(req.TenantInfo, req.IntegrationType, req.ErrorCategories)
 	candidates.Cursor.Limit = 1
 	candidates.Cursor.IncludeTotalCount = true
 	page, err := t.sync.ListRecords(ctx, candidates)
 	if err != nil {
-		return 0, err
+		return 0, false, err
 	}
 	if page.TotalCount == nil {
-		return len(page.Items), nil
+		return len(page.Items), true, nil
 	}
 
-	return *page.TotalCount, nil
+	return *page.TotalCount, page.TotalCountExact, nil
 }
 
 func retryCandidatesRequest(

@@ -133,6 +133,7 @@ func TestList_WithPagination(t *testing.T) {
 	assert.Equal(t, 10, response.Count)
 	require.NotNil(t, response.TotalCount)
 	assert.Equal(t, 10, *response.TotalCount)
+	assert.True(t, response.TotalCountExact)
 	assert.Len(t, response.Results, 2)
 
 	var fields map[string]any
@@ -602,7 +603,8 @@ func TestCursorList_UsesTotalCountForRESTCursorResponseCount(t *testing.T) {
 					{ID: pulid.MustNew("item_"), CreatedAt: 1710000000000, Name: "Alpha"},
 					{ID: pulid.MustNew("item_"), CreatedAt: 1710000001000, Name: "Beta"},
 				},
-				TotalCount: &total,
+				TotalCount:      &total,
+				TotalCountExact: true,
 			}, nil
 		},
 	)
@@ -614,7 +616,46 @@ func TestCursorList_UsesTotalCountForRESTCursorResponseCount(t *testing.T) {
 	assert.Equal(t, total, response.Count)
 	require.NotNil(t, response.TotalCount)
 	assert.Equal(t, total, *response.TotalCount)
+	assert.True(t, response.TotalCountExact)
 	assert.Len(t, response.Results, 2)
+}
+
+func TestCursorList_CarriesAnEstimatedTotal(t *testing.T) {
+	t.Parallel()
+
+	gin.SetMode(gin.TestMode)
+	w := httptest.NewRecorder()
+	c, _ := gin.CreateTestContext(w)
+	c.Request = httptest.NewRequest(http.MethodGet, "http://example.com/api/items?limit=2", nil)
+
+	eh := newTestErrorHandler()
+	opts := &QueryOptions{
+		Pagination: Info{Limit: 2, Offset: 0},
+	}
+	total := 1_250_000
+
+	CursorList[cursorTestItem](
+		c,
+		opts,
+		eh,
+		func(_ CursorInfo) (*CursorListResult[cursorTestItem], error) {
+			return &CursorListResult[cursorTestItem]{
+				Items: []cursorTestItem{
+					{ID: pulid.MustNew("item_"), CreatedAt: 1710000000000, Name: "Alpha"},
+				},
+				TotalCount: &total,
+			}, nil
+		},
+	)
+
+	require.Equal(t, http.StatusOK, w.Code)
+
+	var response CursorResponse[[]cursorTestItem]
+	require.NoError(t, sonic.Unmarshal(w.Body.Bytes(), &response))
+	require.NotNil(t, response.TotalCount)
+	assert.Equal(t, total, *response.TotalCount)
+	assert.False(t, response.TotalCountExact)
+	assert.Contains(t, w.Body.String(), `"totalCountExact":false`)
 }
 
 func TestCursorList_FallsBackToPageLengthWhenTotalCountIsUnavailable(t *testing.T) {

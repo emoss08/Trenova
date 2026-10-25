@@ -93,6 +93,7 @@ func (f *fakeSyncOperator) ListRecords(
 	}
 	if req.Cursor.IncludeTotalCount {
 		page.TotalCount = &total
+		page.TotalCountExact = true
 	}
 	return page, nil
 }

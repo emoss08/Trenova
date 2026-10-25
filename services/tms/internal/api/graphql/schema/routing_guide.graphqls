@@ -48,6 +48,8 @@ type RoutingGuideConnection {
   edges: [RoutingGuideEdge!]!
   pageInfo: PageInfo!
   totalCount: Int
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
 }
 
 input MatchRoutingGuideInput {

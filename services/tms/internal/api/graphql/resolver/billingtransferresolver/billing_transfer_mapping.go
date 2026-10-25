@@ -139,9 +139,10 @@ func billingTransferRunItemConnectionToModel(
 	}
 
 	return &gqlmodel.BillingTransferRunItemConnection{
-		Edges:      page.Edges,
-		PageInfo:   page.PageInfo,
-		TotalCount: base.DerefInt(page.TotalCount),
+		Edges:           page.Edges,
+		PageInfo:        page.PageInfo,
+		TotalCount:      base.DerefInt(page.TotalCount),
+		TotalCountExact: page.TotalCountExact,
 	}, nil
 }
 
