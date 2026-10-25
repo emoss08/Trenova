@@ -727,6 +727,13 @@ func (r *repository) ListUsersWithPermission(
 	ctx context.Context,
 	req permissionports.ListUsersWithPermissionRequest,
 ) ([]permissionports.PermittedUser, error) {
+	if req.OrganizationID.IsNotNil() && req.BusinessUnitID.IsNotNil() {
+		ctx = dbscope.WithTenant(ctx, dbscope.Tenant{
+			OrganizationID: req.OrganizationID,
+			BusinessUnitID: req.BusinessUnitID,
+		})
+	}
+
 	return dbtx.Read(
 		ctx,
 		r.db,

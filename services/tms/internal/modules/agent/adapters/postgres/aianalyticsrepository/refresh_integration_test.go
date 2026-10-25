@@ -40,7 +40,7 @@ func seededTenant(
 	return data.Ctx(ctx), data.Info()
 }
 
-func insert[T any](ctx context.Context, t *testing.T, db *keel.DB, h keel.Handle[*T], rows ...T) {
+func insert[T any](ctx context.Context, t *testing.T, db *keel.DB, h keel.Handle[*T], rows ...*T) {
 	t.Helper()
 	require.NoError(t, h.CreateMany(ctx, db, rows))
 }
