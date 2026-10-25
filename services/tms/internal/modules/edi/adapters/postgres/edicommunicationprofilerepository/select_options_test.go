@@ -28,15 +28,15 @@ func TestProfileOptionsQuery_AppliesTheFiltersAndSearch(t *testing.T) {
 		`SELECT ecp."id", ecp."business_unit_id", ecp."organization_id", ecp."edi_connection_id", `+
 			`ecp."edi_partner_id", ecp."method", ecp."status", ecp."name", ecp."description" `+
 			`FROM "edi_communication_profiles" ecp `+
-			`WHERE ecp."business_unit_id" = $1 AND ecp."organization_id" = $2 AND ecp."status" = $3 `+
-			`AND ecp."method" = $4 AND ecp."edi_partner_id" = $5 `+
-			`AND (ecp."name" ILIKE $6 OR ecp."description" ILIKE $7 OR (CAST(ecp."method" AS text) ILIKE $8)) `+
+			`WHERE ecp."business_unit_id" = $1 AND ecp."organization_id" = $2 AND ecp."status" = 'Active' `+
+			`AND ecp."method" = 'SFTP' AND ecp."edi_partner_id" = $3 `+
+			`AND (ecp."name" ILIKE $4 OR ecp."description" ILIKE $5 OR (CAST(ecp."method" AS text) ILIKE $6)) `+
 			`ORDER BY ecp."name" ASC LIMIT 10`,
 		sql,
 	)
 	assert.Equal(
 		t,
-		[]any{"bu_1", "org_1", "Active", "SFTP", "edip_1", `%car\_rier%`, `%car\_rier%`, `%car\_rier%`},
+		[]any{"bu_1", "org_1", "edip_1", `%car\_rier%`, `%car\_rier%`, `%car\_rier%`},
 		args,
 	)
 }

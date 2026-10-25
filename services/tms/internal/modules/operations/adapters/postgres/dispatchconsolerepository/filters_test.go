@@ -42,7 +42,7 @@ func TestMoveFiltersKeepPastDueOpenMoves(t *testing.T) {
 
 	require.Regexp(
 		t,
-		`\(\(coalesce\([a-z_]+\."scheduled_window_end", [a-z_]+\."scheduled_window_start", [a-z_]+\."scheduled_window_start"\) >= \$\d+\) OR [a-z_]+\."status" = ANY\(\$\d+\)\)`,
+		`\(\(coalesce\([a-z_]+\."scheduled_window_end", [a-z_]+\."scheduled_window_start", [a-z_]+\."scheduled_window_start"\) >= \$\d+\) OR [a-z_]+\."status" IN \('New', 'Assigned', 'InTransit'\)\)`,
 		sql,
 		"open moves must be exempt from the window lower bound",
 	)
@@ -54,7 +54,6 @@ func TestMoveFiltersKeepPastDueOpenMoves(t *testing.T) {
 	)
 	require.Contains(t, args, fmt.Sprint(testWindowStart))
 	require.Contains(t, args, fmt.Sprint(testWindowEnd))
-	require.Contains(t, args, "New Assigned InTransit")
 }
 
 // TestMoveFiltersDefaultToOpenStatuses guards the board against defaulting to every move
@@ -64,9 +63,9 @@ func TestMoveFiltersDefaultToOpenStatuses(t *testing.T) {
 
 	sql, args := renderMoveFilters(t, &shipmentports.DispatchBoardFilter{})
 
-	require.Contains(t, args, "New Assigned InTransit")
+	require.Equal(t, "[bu_1 org_1]", args)
 	require.NotContains(t, sql, "coalesce(")
-	require.Equal(t, 1, strings.Count(sql, `"status" = ANY(`))
+	require.Equal(t, 1, strings.Count(sql, `"status" IN ('New', 'Assigned', 'InTransit')`))
 }
 
 // TestMoveFiltersHonorExplicitStatuses keeps an explicit status request authoritative;
@@ -79,6 +78,7 @@ func TestMoveFiltersHonorExplicitStatuses(t *testing.T) {
 		WindowStart:  testWindowStart,
 	})
 
-	require.Contains(t, args, "[Completed]")
+	require.Contains(t, sql, `sm."status" IN ('Completed')`)
 	require.Contains(t, sql, ") >= $")
+	require.Equal(t, fmt.Sprint([]any{"bu_1", "org_1", testWindowStart}), args)
 }

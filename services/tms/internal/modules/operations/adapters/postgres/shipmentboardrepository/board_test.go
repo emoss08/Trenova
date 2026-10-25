@@ -55,21 +55,21 @@ func TestGroupSummaryBucketsShipDatesByLocalDayOfTheFirstPickup(t *testing.T) {
 	assert.Contains(t, sql, `grp_stop."id" = (SELECT end_stp."id"`)
 	assert.Contains(t, sql, `ORDER BY end_sm."sequence" ASC, end_stp."sequence" ASC, (end_stp."id" COLLATE "C") ASC LIMIT 1`)
 	key := `coalesce(to_char(timezone($3::text, to_timestamp(grp_stop."scheduled_window_start")), $4), $5)`
-	assert.Contains(t, sql, `SELECT `+key+`, $6, count(*), coalesce(sum(s."total_charge_amount"), $7) FROM`)
-	assert.Contains(t, sql, `GROUP BY `+key+` ORDER BY`)
+	assert.Contains(t, sql, `SELECT `+key+`, $6::text, count(*), coalesce(sum(s."total_charge_amount"), $7) FROM`)
+	assert.Contains(t, sql, `GROUP BY 1 ORDER BY`)
 	assert.Contains(t, sql, `min(grp_stop."scheduled_window_start") ASC NULLS LAST`)
 	assert.Equal(t, "America/Chicago", args[2])
 	assert.Equal(t, []any{"", "", 0}, args[4:7])
-	assert.Contains(t, args, []string{"Pickup", "SplitPickup"})
+	assert.Contains(t, sql, `end_stp."type" IN ('Pickup', 'SplitPickup')`)
 }
 
 func TestGroupSummaryBucketsDeliveryDatesByTheLastDelivery(t *testing.T) {
 	t.Parallel()
 
-	sql, args := renderGroupSummary(t, shipment.BoardGroupingDeliveryDate)
+	sql, _ := renderGroupSummary(t, shipment.BoardGroupingDeliveryDate)
 
 	assert.Contains(t, sql, `ORDER BY end_sm."sequence" DESC, end_stp."sequence" DESC, (end_stp."id" COLLATE "C") DESC LIMIT 1`)
-	assert.Contains(t, args, []string{"Delivery", "SplitDelivery"})
+	assert.Contains(t, sql, `end_stp."type" IN ('Delivery', 'SplitDelivery')`)
 }
 
 func TestGroupSummaryOrdersCustomersTheWayTheBoardSortsThem(t *testing.T) {

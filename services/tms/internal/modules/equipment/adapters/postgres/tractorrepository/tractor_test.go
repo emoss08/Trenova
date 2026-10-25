@@ -59,11 +59,11 @@ func TestTractorQuery_ReadsTheLastKnownLocationThroughOneLateralJoin(t *testing.
 		sql,
 		`LEFT JOIN LATERAL (SELECT lkc2."current_location_id" FROM "equipment_continuity" lkc2 `+
 			`WHERE lkc2."business_unit_id" = $1 AND lkc2."organization_id" = $2 AND lkc2."equipment_id" = t."id" `+
-			`AND lkc2."equipment_type" = $3 AND lkc2."is_current" IS TRUE LIMIT 1) lkc ON TRUE`,
+			`AND lkc2."equipment_type" = 'Tractor' AND lkc2."is_current" IS TRUE LIMIT 1) lkc ON TRUE`,
 	)
 	assert.Contains(t, sql, "l.latitude")
 	assert.Contains(t, sql, "l.longitude")
-	assert.Equal(t, []any{"bu_1", "org_1", "Tractor"}, args)
+	assert.Equal(t, []any{"bu_1", "org_1"}, args)
 }
 
 func TestTractorQuery_LeavesTheLocationOutWhenUnselected(t *testing.T) {
@@ -126,8 +126,8 @@ func TestStatusFilter(t *testing.T) {
 
 	sql, args := keeltest.Render(t, tractordb.Tractors.
 		Where(repo.statusFilter(string(domaintypes.EquipmentStatusAvailable))).Limit(1))
-	assert.Contains(t, sql, `AND t."status" = $3 LIMIT 1`)
-	assert.Equal(t, "Available", args[2])
+	assert.Contains(t, sql, `AND t."status" = 'Available' LIMIT 1`)
+	assert.Len(t, args, 2)
 }
 
 func TestNormalizeLookupKeys_LowersTrimsAndDedupes(t *testing.T) {

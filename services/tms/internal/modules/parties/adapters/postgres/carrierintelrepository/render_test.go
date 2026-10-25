@@ -87,8 +87,8 @@ func TestEventFiltersCombineStatusesAndSubject(t *testing.T) {
 		})...),
 	)
 
-	assert.Contains(t, sql, `"status" = ANY(`, sql)
-	assert.Contains(t, sql, `"subject_type" =`, sql)
+	assert.Contains(t, sql, `"status" IN ('Open', 'Acknowledged')`, sql)
+	assert.Contains(t, sql, `"subject_type" = 'Carrier'`, sql)
 	assert.Contains(t, sql, `"subject_id" =`, sql)
 	assert.Contains(t, args, "car_1")
 }
@@ -112,6 +112,7 @@ func TestPendingSyncCoversEnrolAndUnenrol(t *testing.T) {
 	sql, args := keeltest.Render(t, en.Where(pendingSyncPredicate()))
 
 	assert.Contains(t, sql, " OR ", sql)
-	assert.Contains(t, args, string(carrierintel.DesiredStateEnrolled))
-	assert.Contains(t, args, string(carrierintel.DesiredStateNotEnrolled))
+	assert.Contains(t, sql, `cme."desired_state" = 'Enrolled'`, sql)
+	assert.Contains(t, sql, `cme."desired_state" = 'NotEnrolled'`, sql)
+	assert.Equal(t, []any{"bu_1", "org_1"}, args)
 }

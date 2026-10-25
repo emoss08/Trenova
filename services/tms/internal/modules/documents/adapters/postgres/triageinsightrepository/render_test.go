@@ -31,12 +31,15 @@ func TestBriefingCountsIsOneRoundTripOfIndexedCounts(t *testing.T) {
 	sqlText, args := keeltest.Render(t, briefingCountsQuery(window()))
 
 	assertTenant(t, sqlText)
-	assert.Contains(t, sqlText, `im."due_at" < $9`, sqlText)
+	assert.Contains(t, sqlText, `im."due_at" < $5`, sqlText)
 	assert.Contains(t, sqlText, `im."reviewed_by" IS NOT NULL`, sqlText)
 	assert.Contains(t, sqlText, `im."handled_by_rule_id" IS NOT NULL`, sqlText)
 	assert.Contains(t, sqlText, `im."parked" IS NOT NULL`, sqlText)
+	assert.Contains(t, sqlText, `(im."status" IN ('InReview', 'Quarantined') AND im."parked" IS NULL)`, sqlText)
+	assert.Contains(t, sqlText, `im."status" IN ('Actioned', 'Ignored') AND im."reviewed_at" >= $3`, sqlText)
 	assert.Contains(t, sqlText, `EXISTS (SELECT 1 FROM "inbound_messages" any_message`, sqlText)
-	assert.Equal(t, int64(1_760_290_000), args[8])
+	assert.Equal(t, int64(1_760_290_000), args[4])
+	assert.Len(t, args, 5)
 }
 
 func TestHandledKeepsThreeSamplesPerGroup(t *testing.T) {
@@ -69,7 +72,7 @@ func TestArrivalsAreBucketedByHourSinceMidnight(t *testing.T) {
 	hour := `CAST(floor(((im."received_at" - $5::bigint) / $6::bigint)) AS bigint)`
 	assert.Contains(t, sqlText, "SELECT "+hour, sqlText)
 	assert.Contains(t, sqlText, `im."received_at" <= $4`, sqlText)
-	assert.Contains(t, sqlText, "GROUP BY "+hour+" ORDER BY "+hour+" ASC", sqlText)
+	assert.Contains(t, sqlText, "GROUP BY 1 ORDER BY 1 ASC", sqlText)
 	assert.Equal(t, int64(1_760_290_000), args[3])
 	assert.Equal(t, int64(1_760_245_200), args[4])
 	assert.Equal(t, 3600, args[5])
@@ -92,7 +95,7 @@ func TestWaitingIsSoonestDueFirstAndBounded(t *testing.T) {
 	sqlText, args := keeltest.Render(t, waitingQuery(triageports.WaitingRequest{Limit: 1000}))
 
 	assertTenant(t, sqlText)
-	assert.Contains(t, sqlText, `im."status" = ANY($3) AND im."parked" IS NULL`, sqlText)
+	assert.Contains(t, sqlText, `im."status" IN ('InReview', 'Quarantined') AND im."parked" IS NULL`, sqlText)
 	assert.Contains(
 		t,
 		sqlText,
@@ -101,7 +104,7 @@ func TestWaitingIsSoonestDueFirstAndBounded(t *testing.T) {
 	)
 	assert.NotContains(t, sqlText, `im."text_body"`, sqlText)
 	assert.NotContains(t, sqlText, `im."html_key"`, sqlText)
-	assert.Equal(t, []any{"bu_1", "org_1", []string{"InReview", "Quarantined"}}, args)
+	assert.Equal(t, []any{"bu_1", "org_1"}, args)
 }
 
 func TestCorrectionTotalsCompareTwoWeeks(t *testing.T) {
@@ -113,11 +116,10 @@ func TestCorrectionTotalsCompareTwoWeeks(t *testing.T) {
 	}))
 
 	assertTenant(t, sqlText)
-	assert.Contains(t, sqlText, `ima."kind" = ANY($4) AND ima."actor_kind" = $5`, sqlText)
+	assert.Contains(t, sqlText, `ima."kind" IN ('Corrected', 'FactFlagged') AND ima."actor_kind" = 'Person' AND ima."created_at" >= $4`, sqlText)
 	assert.Contains(t, sqlText, `im."nova_read" IS TRUE AND im."received_at" >= $3`, sqlText)
 	assert.Equal(t, int64(1_759_100_000), args[2])
-	assert.Equal(t, []string{"Corrected", "FactFlagged"}, args[3])
-	assert.Equal(t, "Person", args[4])
+	assert.Equal(t, int64(1_759_700_000), args[3])
 }
 
 func TestRuleCandidatesNarrowBySentence(t *testing.T) {
@@ -138,8 +140,8 @@ func TestRuleCandidatesNarrowBySentence(t *testing.T) {
 	assert.Contains(
 		t,
 		sqlText,
-		`im."classification" = $3 AND im."received_at" >= $4 AND im."nova_read" IS TRUE `+
-			`AND im."mailbox_id" = $5 AND (im."sender_domain" = $6 OR im."sender_domain" LIKE $7)`,
+		`im."classification" = 'ProofOfDelivery' AND im."received_at" >= $3 AND im."nova_read" IS TRUE `+
+			`AND im."mailbox_id" = $4 AND (im."sender_domain" = $5 OR im."sender_domain" LIKE $6)`,
 		sqlText,
 	)
 	assert.Contains(t, sqlText, `EXISTS (SELECT 1 FROM "inbound_message_attachments" ima`, sqlText)
@@ -147,7 +149,7 @@ func TestRuleCandidatesNarrowBySentence(t *testing.T) {
 	assert.Equal(
 		t,
 		[]any{
-			"bu_1", "org_1", "ProofOfDelivery", int64(1_757_700_000), "imbx_1", "drivers.example",
+			"bu_1", "org_1", int64(1_757_700_000), "imbx_1", "drivers.example",
 			"%.drivers.example", "", "", "", 0, "", "", "", "", "", "", "", "", 0, "",
 		},
 		args,
@@ -160,10 +162,10 @@ func TestRuleCandidatesNarrowBySentence(t *testing.T) {
 	assert.Contains(
 		t,
 		sqlText,
-		`im."sender_domain" = $5 AND (lower(btrim(im."from_address")) = $6)`,
+		`im."sender_domain" = $4 AND (lower(btrim(im."from_address")) = $5)`,
 		sqlText,
 	)
-	assert.Equal(t, []any{"acme.example", "ops@acme.example"}, args[4:])
+	assert.Equal(t, []any{"acme.example", "ops@acme.example"}, args[3:])
 
 	customer := base
 	customer.SenderScope = triage.SenderAnyCustomer
@@ -180,15 +182,14 @@ func TestManualOutcomesCountPeopleOnly(t *testing.T) {
 
 	assertTenant(t, sqlText)
 	assert.Contains(t, sqlText, `WITH "manual_outcomes" ("message_id", "outcome") AS`, sqlText)
-	assert.Contains(t, sqlText, `ima."actor_kind" = $4 AND ima."kind" = ANY($5)`, sqlText)
+	assert.Contains(t, sqlText, `ima."actor_kind" = 'Person' AND ima."kind" IN ('Filed', 'Handled', 'Ignored') AND ima."created_at" >= $4`, sqlText)
 	assert.Contains(
 		t,
 		sqlText,
 		`GROUP BY im."sender_domain", im."classification", mo."outcome"`,
 		sqlText,
 	)
-	assert.Equal(t, "Person", args[3])
-	assert.Equal(t, []string{"Filed", "Handled", "Ignored"}, args[4])
+	assert.Equal(t, int64(1_757_700_000), args[3])
 }
 
 func TestSenderDomainsEscapeTheSearch(t *testing.T) {

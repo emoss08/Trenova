@@ -61,8 +61,8 @@ func TestStatusFilterComparesTheStatus(t *testing.T) {
 	ft := formulatemplatedb.FormulaTemplates
 	sql, args := keeltest.Render(t, ft.Where(pred).Limit(25))
 
-	assert.Contains(t, sql, `ft."status" = $3`)
-	assert.Equal(t, []any{"org_1", "bu_1", "Active"}, args)
+	assert.Contains(t, sql, `ft."status" = 'Active'`)
+	assert.Equal(t, []any{"org_1", "bu_1"}, args)
 }
 
 func TestStatusFilterRefusesAnUnknownStatus(t *testing.T) {
