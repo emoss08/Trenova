@@ -47,10 +47,12 @@ func TestDeleteIfEmpty_KeepsAnOrderBillingStillReferences(t *testing.T) {
 	empty := newOrder("ORD-EMPTY-1")
 	queued := newOrder("ORD-QUEUED-1")
 	_, err = keel.Exec(sys, db, `
-		INSERT INTO billing_queue_items (id, organization_id, business_unit_id, shipment_id, order_id)
-		VALUES ($1, $2, $3, $4, $5)`,
+		INSERT INTO billing_queue_items
+			(id, organization_id, business_unit_id, shipment_id, order_id, bill_to_customer_id)
+		VALUES ($1, $2, $3, $4, $5, $6)`,
 		pulid.MustNew("bqi_").String(), seeded.OrganizationID.String(),
 		seeded.BusinessUnitID.String(), seeded.ShipmentID.String(), queued.String(),
+		seeded.CustomerID.String(),
 	)
 	require.NoError(t, err)
 
