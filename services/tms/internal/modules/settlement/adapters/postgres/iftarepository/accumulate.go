@@ -41,8 +41,8 @@ func inMiles(distance keel.Expr, units keel.StringCol) keel.DynExpr {
 		Else(distance)
 }
 
-func roundMiles(e keel.Expr) keel.DynExpr {
-	return keel.DynFunc("round", keel.DynOf(e).Cast(keel.TypeNumeric), milesPrecision)
+func roundMiles(e keel.Expr) keel.NumericExpr {
+	return keel.CastNumeric(keel.NumericOf(e)).RoundTo(milesPrecision)
 }
 
 func newAccumulationSource(req *iftaports.AccumulateMilesRequest) accumulationSource {
@@ -51,9 +51,7 @@ func newAccumulationSource(req *iftaports.AccumulateMilesRequest) accumulationSo
 	smjm := shipmentdb.ShipmentMoveJurisdictionMiles
 	me := iftadb.JurisdictionMileageEntries
 
-	completedAt := keel.DynOf(stp.ActualDeparture).
-		Coalesce(stp.ActualArrival).
-		Max().
+	completedAt := keel.Int64Of(stp.ActualDeparture.Coalesce(stp.ActualArrival).Max()).
 		Coalesce(sm.UpdatedAt)
 
 	inp := keel.CTE(
@@ -96,7 +94,7 @@ func (s accumulationSource) routeRows() *keel.Query[*keel.Row] {
 	a := shipmentdb.Assignments
 	ifj := iftadb.Jurisdictions
 	miles := jm.Col("miles").Sum()
-	loaded := keel.DynOf(jm.Col("loaded"))
+	loaded := keel.BoolOf(jm.Col("loaded"))
 
 	return jm.Query().
 		With(s.inp, jm).
@@ -107,9 +105,9 @@ func (s accumulationSource) routeRows() *keel.Query[*keel.Row] {
 			jm.Col("country_code"),
 			jm.Col("jurisdiction_code"),
 			ifj.ID,
-			roundMiles(keel.DynOf(miles).Coalesce(0)),
-			roundMiles(keel.DynOf(miles.Filter(loaded.IsTrue())).Coalesce(0)),
-			roundMiles(keel.DynOf(miles.Filter(loaded.IsFalse())).Coalesce(0)),
+			roundMiles(keel.NumericOf(miles).Coalesce(0)),
+			roundMiles(keel.NumericOf(miles.Filter(loaded.IsTrue())).Coalesce(0)),
+			roundMiles(keel.NumericOf(miles.Filter(loaded.IsFalse())).Coalesce(0)),
 			jm.Col("shipment_move_id").CountDistinct(),
 		).
 		Group(a.TractorID, jm.Col("country_code"), jm.Col("jurisdiction_code"), ifj.ID).
@@ -127,7 +125,7 @@ func (s accumulationSource) noTractor() *keel.Query[*keel.Row] {
 	return jm.Query().
 		With(s.inp, jm).
 		LeftJoin(a, a.ShipmentMoveID.EqCol(jm.Col("shipment_move_id")), a.ArchivedAt.IsNull()).
-		Pick(jm.Col("shipment_move_id"), roundMiles(keel.DynOf(jm.Col("miles").Sum()).Coalesce(0))).
+		Pick(jm.Col("shipment_move_id"), roundMiles(keel.NumericOf(jm.Col("miles").Sum()).Coalesce(0))).
 		Where(a.TractorID.IsNull()).
 		Group(jm.Col("shipment_move_id")).
 		Order(jm.Col("shipment_move_id").Asc())
@@ -160,8 +158,10 @@ func (s accumulationSource) mismatches() *keel.Query[*keel.Row] {
 		Where(moveDistance.IsNotNull()).
 		Group(jm.Col("shipment_move_id"), jm.Col("move_distance")).
 		Having(
-			keel.DynFunc("abs", keel.DynOf(attributed).Sub(moveDistance)).
-				Gt(keel.DynFunc("greatest", mismatchFloorMiles, moveDistance.Mul(mismatchTolerance))),
+			keel.NumericOf(keel.DynOf(attributed).Sub(moveDistance)).Abs().GtExpr(
+				keel.Numeric(mismatchFloorMiles).
+					Greatest(keel.NumericOf(moveDistance.Mul(mismatchTolerance))),
+			),
 		).
 		Order(jm.Col("shipment_move_id").Asc())
 }
@@ -234,9 +234,9 @@ func (r *repository) manualRows(
 				j.CountryCode,
 				j.Code,
 				me.JurisdictionID,
-				keel.DynOf(me.Miles.Sum()).Coalesce(0),
-				keel.DynOf(me.Miles.Sum().Filter(me.Loaded.IsTrue())).Coalesce(0),
-				keel.DynOf(me.Miles.Sum().Filter(me.Loaded.IsFalse())).Coalesce(0),
+				keel.NumericOf(me.Miles.Sum()).Coalesce(0),
+				keel.NumericOf(me.Miles.Sum().Filter(me.Loaded.IsTrue())).Coalesce(0),
+				keel.NumericOf(me.Miles.Sum().Filter(me.Loaded.IsFalse())).Coalesce(0),
 				keel.Count(),
 			).
 			Where(

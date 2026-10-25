@@ -290,7 +290,7 @@ func (r *payEventRepository) ListUnsettledWorkerSummaries(
 				r.db.Keel(ctx),
 				pe.Pick(
 					pe.WorkerID,
-					keel.DynFunc("trim", keel.DynOf(w.FirstName).Concat(" ").Concat(w.LastName)),
+					keel.StringOf(keel.DynOf(w.FirstName).Concat(" ").Concat(w.LastName)).Trim(),
 					keel.Count().Filter(released),
 					gross,
 					keel.Count().Filter(held),

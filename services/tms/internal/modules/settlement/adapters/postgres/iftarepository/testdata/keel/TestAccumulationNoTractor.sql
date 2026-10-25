@@ -4,7 +4,7 @@ WITH inp (id, loaded, distance, completed_at) AS (
   LEFT JOIN stops s ON s.business_unit_id = $3 AND s.organization_id = $4 AND s.shipment_move_id = sm.id
   WHERE sm.business_unit_id = $3 AND sm.organization_id = $4 AND sm.status = 'Completed'
   GROUP BY sm.id, sm.loaded, sm.distance, sm.distance_units, sm.updated_at
-  HAVING (coalesce(max(coalesce(s.actual_departure, s.actual_arrival)), sm.updated_at) >= $7) AND (coalesce(max(coalesce(s.actual_departure, s.actual_arrival)), sm.updated_at) < $8)
+  HAVING coalesce(max(coalesce(s.actual_departure, s.actual_arrival)), sm.updated_at) >= $7 AND coalesce(max(coalesce(s.actual_departure, s.actual_arrival)), sm.updated_at) < $8
 ), jm (shipment_move_id, country_code, jurisdiction_code, loaded, move_distance, miles) AS (
   SELECT smjm.shipment_move_id, smjm.country_code, smjm.jurisdiction_code, i.loaded, i.distance, CASE WHEN smjm.distance_units = $9 THEN (smjm.distance / $10) ELSE smjm.distance END
   FROM shipment_move_jurisdiction_miles smjm

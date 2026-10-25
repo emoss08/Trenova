@@ -57,7 +57,7 @@ func (r *repository) SumPurchases(
 					fp.CurrencyCode,
 					keel.Count(),
 					fp.Gallons.Sum(),
-					keel.DynOf(fp.Gallons.Sum().Filter(fp.TaxPaid.IsFalse())).Coalesce(0),
+					keel.NumericOf(fp.Gallons.Sum().Filter(fp.TaxPaid.IsFalse())).Coalesce(0),
 					total,
 					fp.PurchasedAt.Max(),
 				).

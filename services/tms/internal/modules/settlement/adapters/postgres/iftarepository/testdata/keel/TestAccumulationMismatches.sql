@@ -4,7 +4,7 @@ WITH inp (id, loaded, distance, completed_at) AS (
   LEFT JOIN stops s ON s.business_unit_id = $5 AND s.organization_id = $6 AND s.shipment_move_id = sm.id
   WHERE sm.business_unit_id = $5 AND sm.organization_id = $6 AND sm.status = 'Completed'
   GROUP BY sm.id, sm.loaded, sm.distance, sm.distance_units, sm.updated_at
-  HAVING (coalesce(max(coalesce(s.actual_departure, s.actual_arrival)), sm.updated_at) >= $9) AND (coalesce(max(coalesce(s.actual_departure, s.actual_arrival)), sm.updated_at) < $10)
+  HAVING coalesce(max(coalesce(s.actual_departure, s.actual_arrival)), sm.updated_at) >= $9 AND coalesce(max(coalesce(s.actual_departure, s.actual_arrival)), sm.updated_at) < $10
 ), jm (shipment_move_id, country_code, jurisdiction_code, loaded, move_distance, miles) AS (
   SELECT smjm.shipment_move_id, smjm.country_code, smjm.jurisdiction_code, i.loaded, i.distance, CASE WHEN smjm.distance_units = $11 THEN (smjm.distance / $12) ELSE smjm.distance END
   FROM shipment_move_jurisdiction_miles smjm
@@ -19,7 +19,7 @@ SELECT j.shipment_move_id, round(CAST(j.move_distance AS numeric), $1), round(CA
 FROM jm j
 WHERE (j.move_distance IS NOT NULL)
 GROUP BY j.shipment_move_id, j.move_distance
-HAVING (abs((sum(j.miles) - j.move_distance)) > greatest($3, (j.move_distance * $4)))
+HAVING abs((sum(j.miles) - j.move_distance)) > greatest($3::numeric, (j.move_distance * $4))
 ORDER BY j.shipment_move_id ASC
 -- $1 = 3
 -- $2 = 3
