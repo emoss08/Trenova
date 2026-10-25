@@ -12,6 +12,7 @@ import (
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/listquery"
 	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/pkg/resultcache"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
@@ -24,34 +25,18 @@ type ProfileParams struct {
 	fx.In
 
 	DB     *postgres.Connection
-	Cache  modeprofileports.ModeProfileCacheRepository
 	Logger *zap.Logger
 }
 
 type profileRepository struct {
-	db    *postgres.Connection
-	cache modeprofileports.ModeProfileCacheRepository
-	l     *zap.Logger
+	db *postgres.Connection
+	l  *zap.Logger
 }
 
 func NewProfileRepository(p ProfileParams) modeprofileports.ModeProfileRepository {
 	return &profileRepository{
-		db:    p.DB,
-		cache: p.Cache,
-		l:     p.Logger.Named("postgres.mode-profile-repository"),
-	}
-}
-
-func (r *profileRepository) invalidate(ctx context.Context, entity *modeprofile.Profile) {
-	if r.cache == nil {
-		return
-	}
-
-	if err := r.cache.Invalidate(ctx, pagination.TenantInfo{
-		OrgID: entity.OrganizationID,
-		BuID:  entity.BusinessUnitID,
-	}); err != nil {
-		r.l.Warn("failed to invalidate mode profile cache", zap.Error(err))
+		db: p.DB,
+		l:  p.Logger.Named("postgres.mode-profile-repository"),
 	}
 }
 
@@ -119,6 +104,7 @@ func (r *profileRepository) GetActiveProfiles(
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*modeprofile.Profile, error) {
 		p := modeprofiledb.Profiles
 		entities, err := p.Where(p.Status.Eq(modeprofile.ProfileStatusActive)).
+			Cache(resultcache.Settings()...).
 			Load(orderedRules()).
 			Order(p.Priority.Desc(), p.SpecificityScore.Desc(), p.CreatedAt.Asc()).
 			All(ctx, r.db.Keel(ctx))
@@ -178,8 +164,6 @@ func (r *profileRepository) Create(
 			)
 		}
 
-		r.invalidate(ctx, entity)
-
 		return entity, nil
 	})
 }
@@ -200,8 +184,6 @@ func (r *profileRepository) Update(
 				profileBusyMessage,
 			)
 		}
-
-		r.invalidate(ctx, entity)
 
 		return entity, nil
 	})
