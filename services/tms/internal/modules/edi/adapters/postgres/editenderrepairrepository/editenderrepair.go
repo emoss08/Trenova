@@ -74,9 +74,9 @@ func inboundTenders(orgID pulid.ID) []keel.Pred {
 	}
 }
 
-func ratingDetailText(key string) keel.Expr {
+func ratingDetailText(key string) keel.StringExpr {
 	m := edidb.EDIMessages
-	return keel.DynOf(m.PayloadSnapshot.Text("loadTender", "ratingDetail", key)).Coalesce("")
+	return m.PayloadSnapshot.Text("loadTender", "ratingDetail", key).Coalesce("")
 }
 
 func candidatesQuery(
@@ -92,7 +92,7 @@ func candidatesQuery(
 			m.BusinessUnitID,
 			m.TransferID.Coalesce(""),
 			m.RawX12,
-			keel.DynFunc("substr", f.RawContent, 1, fileHeadSize).Coalesce(""),
+			f.RawContent.Substr(1, fileHeadSize).Coalesce(""),
 			ratingDetailText(shipmentIDKey),
 			ratingDetailText(paymentMethodKey),
 		).
@@ -104,7 +104,7 @@ func candidatesQuery(
 		).
 		Where(inboundTenders(req.OrganizationID)...).
 		Where(
-			keel.DynFunc("btrim", m.RawX12).NullIf("").IsNotNull(),
+			m.RawX12.Trim().NullIf("").IsNotNull(),
 			keel.When(req.AfterID.IsNotNil(), m.ID.Gt(req.AfterID)),
 		).
 		Order(m.ID.Asc()).
@@ -155,8 +155,8 @@ func (r *repository) CountUnreadableTenders(
 		count, err := m.AllTenants().
 			Where(inboundTenders(req.OrganizationID)...).
 			Where(
-				keel.DynFunc("btrim", m.RawX12).NullIf("").IsNull(),
-				keel.DynOf(ratingDetailText(shipmentIDKey)).Ne(""),
+				m.RawX12.Trim().NullIf("").IsNull(),
+				ratingDetailText(shipmentIDKey).Ne(""),
 			).
 			Count(ctx, r.db.Keel(ctx))
 		if err != nil {
@@ -219,16 +219,13 @@ func referencesJSON(shipmentID, paymentMethod string) (string, error) {
 
 func withReferences(column keel.JSONBCol, references string, path ...string) keel.Assignment {
 	kept := column.Path(path...).
-		Coalesce(keel.DynFunc("jsonb_build_object")).
-		Sub(keel.DynLit(shipmentIDKey).Cast(keel.TypeString)).
-		Sub(keel.DynLit(paymentMethodKey).Cast(keel.TypeString))
+		Coalesce(keel.JSONBuildObject()).
+		Sub(keel.Text(shipmentIDKey)).
+		Sub(keel.Text(paymentMethodKey))
 
-	return column.ToExpr(keel.DynFunc(
-		"jsonb_set",
-		column,
-		path,
-		kept.Concat(keel.DynLit(references).Cast(keel.TypeJSON)),
-	))
+	return column.ToExpr(
+		column.Set(path, keel.JSONBOf(kept).Concat(keel.JSONB([]byte(references)))),
+	)
 }
 
 func transferMatch(req *ediports.RepairTenderReferenceRequest) keel.Pred {
@@ -239,7 +236,7 @@ func transferMatch(req *ediports.RepairTenderReferenceRequest) keel.Pred {
 			t.InboundMessageID.Eq(candidate.MessageID),
 			keel.When(candidate.TransferID.IsNotNil(), t.ID.Eq(candidate.TransferID)),
 		),
-		keel.DynOf(t.TenderPayload.Text("ratingDetail", shipmentIDKey)).Coalesce("").Eq(candidate.ShipmentID),
+		t.TenderPayload.Text("ratingDetail", shipmentIDKey).Coalesce("").Eq(candidate.ShipmentID),
 	)
 }
 

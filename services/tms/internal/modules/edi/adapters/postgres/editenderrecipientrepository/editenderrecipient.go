@@ -112,10 +112,10 @@ func (r *repository) UpsertTenderRecipient(
 			tr.SourceBusinessUnitID,
 			tr.SourceOrganizationID,
 			tr.RecipientKind,
-			keel.DynOf(tr.RecipientOrganizationID).Coalesce(keel.DynConst("")),
-			keel.DynOf(tr.RecipientBusinessUnitID).Coalesce(keel.DynConst("")),
-			keel.DynOf(tr.EDIPartnerID).Coalesce(keel.DynConst("")),
-			keel.DynOf(tr.PartnerDocumentProfileID).Coalesce(keel.DynConst("")),
+			tr.RecipientOrganizationID.Coalesce(keel.DynConst("")),
+			tr.RecipientBusinessUnitID.Coalesce(keel.DynConst("")),
+			tr.EDIPartnerID.Coalesce(keel.DynConst("")),
+			tr.PartnerDocumentProfileID.Coalesce(keel.DynConst("")),
 		).
 			Update(
 				tr.LatestBaselinePayload,
@@ -170,8 +170,8 @@ func (r *repository) UpdateTenderRecipient(
 	})
 }
 
-func keepStored(col keel.Col) keel.Expr {
-	return keel.DynOf(col.Excluded()).NullIf("").Coalesce(col)
+func keepStored(col keel.Col) keel.StringExpr {
+	return keel.StringOf(col.Excluded()).NullIf("").Coalesce(col)
 }
 
 func visibleTo(tr *edidb.TenderRecipientsTable, tenant pagination.TenantInfo) keel.Pred {
