@@ -220,12 +220,14 @@ func searchBatches(term string) keel.Pred {
 	item := capturedb.CaptureItems
 	sp := shipmentdb.Shipments
 	shipmentType := permission.ResourceShipment.String()
-	codes := keel.Rows("code", []string{"code"}, keel.DynFunc(
-		"jsonb_array_elements_text",
-		page.Markers.Path("deviceBarcodes").
-			Coalesce(keel.DynFunc("jsonb_build_array")).
-			Concat(page.Markers.Path("readCodes").Coalesce(keel.DynFunc("jsonb_build_array"))),
-	))
+	codes := keel.Rows(
+		"code",
+		[]string{"code"},
+		keel.JSONBOf(page.Markers.Path("deviceBarcodes")).
+			Coalesce(keel.JSONBuildArray()).
+			Concat(keel.JSONBOf(page.Markers.Path("readCodes")).Coalesce(keel.JSONBuildArray())).
+			ArrayElementsText(),
+	)
 
 	routed := keel.UnionAll(
 		item.Pick(item.FiledID).Where(item.BatchID.EqCol(b.ID), item.FiledType.Eq(shipmentType)),
@@ -246,7 +248,7 @@ func searchBatches(term string) keel.Pred {
 		)),
 		keel.Exists(page.JoinLateral(codes).Pick(page.ID).Where(
 			page.BatchID.EqCol(b.ID),
-			keel.DynOf(codes.Col("code")).ILike(pattern),
+			keel.StringOf(codes.Col("code")).ILike(pattern),
 		)),
 		keel.Exists(sp.Pick(sp.ID).Where(
 			keel.Or(sp.ProNumber.ContainsFold(term), sp.BOL.ContainsFold(term)),

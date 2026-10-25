@@ -60,8 +60,8 @@ type resolvedScan struct {
 	AssignmentID *pulid.ID
 }
 
-func text(e keel.Expr) keel.Expr {
-	return keel.DynOf(e).Cast(keel.TypeString).Coalesce("")
+func text(e keel.Expr) keel.StringExpr {
+	return keel.CastText(e).Coalesce("")
 }
 
 func resolveColumns(
@@ -237,6 +237,6 @@ func resolveQuery(
 	).
 		Where(keel.Or(a.ID.IsNotNull(), t.IsOrgDefault.IsTrue())).
 		Pick(resolveColumns(v, t, a.ID)...).
-		Order(keel.DynOf(a.ID).IsNotNull().Desc()).
+		Order(keel.Desc(a.ID.IsNotNull())).
 		Limit(1)
 }

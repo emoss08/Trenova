@@ -199,7 +199,7 @@ func waitingCountsQuery(views []*triage.View) keel.Projection {
 
 func waitingSearchCount(view *triage.View) *keel.Query[*inboundmessage.InboundMessage] {
 	m := inboundmessagedb.InboundMessages
-	q := m.Pick(keel.DynLit(view.ID.String()), keel.Count()).
+	q := m.Pick(keel.Text(view.ID.String()), keel.Count()).
 		Where(m.Status.In(needsReviewStatuses...), m.Parked.IsNull())
 
 	return searchPredicate(q, view.Query)

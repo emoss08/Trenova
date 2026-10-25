@@ -62,7 +62,7 @@ func TestResolveForACustomerPrefersItsAssignmentOfTheSameKind(t *testing.T) {
 		t,
 		sqlText,
 		`AND (dta."id" IS NOT NULL OR dt."is_org_default" IS TRUE) `+
-			`ORDER BY (dta."id" IS NOT NULL) DESC LIMIT 1`,
+			`ORDER BY dta."id" IS NOT NULL DESC LIMIT 1`,
 		sqlText,
 	)
 	require.Len(t, args, 14)

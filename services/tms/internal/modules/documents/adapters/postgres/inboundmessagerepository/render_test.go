@@ -57,11 +57,13 @@ func TestTheCensusGroupsOpenMailByParkingOwnerAndLateness(t *testing.T) {
 	assert.Equal(
 		t,
 		`SELECT im."status", coalesce(im."classification", $3), im."mailbox_id", `+
-			`coalesce(im."parked", $4), coalesce((im."owner_id" = $5), $6), `+
-			`coalesce((im."due_at" < $7), $8), count(*) FROM "inbound_messages" im `+
+			`coalesce(im."parked", $4), coalesce(im."owner_id" = $5::text, $6), `+
+			`coalesce(im."due_at" < $7, $8), count(*) FROM "inbound_messages" im `+
 			`WHERE im."business_unit_id" = $1 AND im."organization_id" = $2 `+
 			`AND im."status" IN ('Received', 'Processing', 'Classified', 'InReview', 'Quarantined') `+
-			`GROUP BY im."status", 2, im."mailbox_id", 4, 5, 6`,
+			`GROUP BY im."status", coalesce(im."classification", $3), im."mailbox_id", `+
+			`coalesce(im."parked", $4), coalesce(im."owner_id" = $5::text, $6), `+
+			`coalesce(im."due_at" < $7, $8)`,
 		sqlText,
 	)
 	assert.Equal(t, []any{
@@ -87,12 +89,12 @@ func TestTheCensusCountsSettledMailWithoutTheOpenLanesWork(t *testing.T) {
 
 	assert.Equal(
 		t,
-		`SELECT im."status", coalesce(im."classification", $3), im."mailbox_id", $4::text, $5::boolean, $6::boolean, `+
+		`SELECT im."status", coalesce(im."classification", $3), im."mailbox_id", $4::text, $5::boolean, $5::boolean, `+
 			`count(*) FROM "inbound_messages" im WHERE im."business_unit_id" = $1 AND im."organization_id" = $2 `+
 			`AND im."status" IN ('Actioned', 'Ignored') GROUP BY im."status", im."classification", im."mailbox_id"`,
 		sqlText,
 	)
-	assert.Equal(t, []any{"bu_1", "org_1", "", "", false, false}, args)
+	assert.Equal(t, []any{"bu_1", "org_1", "", "", false}, args)
 
 	_, bothHalves := countBreakdownQuery(inboundmessageports.CountInboundMessagesRequest{}).(keel.Compound)
 	assert.True(t, bothHalves, "open and settled mail are counted by one UNION ALL")
@@ -103,7 +105,7 @@ func TestTheCensusCountsSettledMailWithoutTheOpenLanesWork(t *testing.T) {
 	assert.True(t, oneHalf, "only settled statuses need no union")
 	if oneHalf {
 		sqlText, _ = keeltest.Render(t, settledOnly)
-		assert.Contains(t, sqlText, `$4::text, $5::boolean, $6::boolean, count(*)`, sqlText)
+		assert.Contains(t, sqlText, `$4::text, $5::boolean, $5::boolean, count(*)`, sqlText)
 		assert.Contains(t, sqlText, `im."status" IN ('Actioned') GROUP BY`, sqlText)
 	}
 }

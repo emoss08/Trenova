@@ -214,10 +214,9 @@ func (r *repository) AlternateAddresses(
 		delivered := rp.Pick(rp.ToAddress.Lower(), rp.SentAt.Max()).
 			Where(
 				rp.Status.Eq(triage.ReplySent),
-				keel.DynFunc(
-					"lower",
+				keel.StringOf(
 					keel.DynFunc("split_part", rp.ToAddress, keel.DynConst("@"), keel.DynConst(2)),
-				).Eq(domain),
+				).Lower().Eq(domain),
 				rp.SentAt.Gte(req.Since),
 				rp.ToAddress.Lower().Ne(exclude),
 			).

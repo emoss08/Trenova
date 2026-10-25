@@ -97,8 +97,8 @@ func sentenceQuery(req triageports.FindRuleBySentenceRequest) *keel.Query[*triag
 	return ru.Where(
 		ru.Classification.Eq(sentence.Classification),
 		ru.SenderScope.Eq(sentence.SenderScope),
-		keel.DynOf(ru.Sender).Coalesce(keel.DynConst("")).Eq(sentence.Sender),
-		keel.DynOf(ru.MailboxID).Coalesce(keel.DynConst("")).Eq(sentence.MailboxID.String()),
+		ru.Sender.Coalesce(keel.DynConst("")).Eq(sentence.Sender),
+		ru.MailboxID.Coalesce(keel.DynConst("")).Eq(sentence.MailboxID.String()),
 		ru.Action.Eq(sentence.Action),
 		keel.When(sentence.ID.IsNotNil(), ru.ID.Ne(sentence.ID)),
 	)
@@ -206,7 +206,7 @@ func (r *repository) RecordMatch(
 			r.db.Keel(ctx),
 			ru.MatchCount.Add(1),
 			ru.LastMatchedAt.ToExpr(
-				keel.DynFunc("greatest", keel.DynOf(ru.LastMatchedAt).Coalesce(0), req.At),
+				ru.LastMatchedAt.Coalesce(0).Greatest(keel.Int64(req.At)),
 			),
 			ru.LastMessageID.To(req.MessageID),
 			ru.Version.ToExpr(ru.Version),

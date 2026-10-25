@@ -162,7 +162,7 @@ func TestRuleCandidatesNarrowBySentence(t *testing.T) {
 	assert.Contains(
 		t,
 		sqlText,
-		`im."sender_domain" = $4 AND (lower(btrim(im."from_address")) = $5)`,
+		`im."sender_domain" = $4 AND lower(btrim(im."from_address")) = $5`,
 		sqlText,
 	)
 	assert.Equal(t, []any{"acme.example", "ops@acme.example"}, args[3:])

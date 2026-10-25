@@ -316,6 +316,6 @@ func (r *repository) ThreadKeyForMessageKeys(
 	})
 }
 
-func statusRank(rank int64) keel.DynExpr {
-	return keel.DynLit(rank).Cast(keel.TypeInt64)
+func statusRank(rank int64) keel.Int64Expr {
+	return keel.Int64(rank)
 }

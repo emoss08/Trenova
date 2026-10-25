@@ -356,11 +356,8 @@ func searchDocumentsQuery(plan keywordPlan) *keel.Query[*document.Document] {
 	dc := documentcontentdb.Contents
 	simple := anyWord("simple")
 	english := anyWord("english")
-	rank := keel.DynFunc(
-		"greatest",
-		d.SearchVector.RankCD(plan.query, simple...),
-		keel.DynOf(dc.SearchVector.RankCD(plan.query, english...)).Coalesce(0),
-	)
+	rank := keel.Float64Of(d.SearchVector.RankCD(plan.query, simple...)).
+		Greatest(keel.Float64Of(dc.SearchVector.RankCD(plan.query, english...)).Coalesce(0))
 
 	return d.LeftJoin(dc, dc.DocumentID.EqCol(d.ID)).
 		Pick(d.ID, rank).

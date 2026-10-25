@@ -84,11 +84,11 @@ func kindOf[T any](table recordTable[T], shape recordShape) recordKind {
 	}
 }
 
-func orBlank(e keel.Expr) keel.Expr {
-	return keel.DynOf(e).Coalesce("")
+func orBlank(c keel.StringValue) keel.StringExpr {
+	return keel.StringOf(c).Coalesce("")
 }
 
-var noSubtitle = keel.DynLit("").Cast(keel.TypeString)
+var noSubtitle = keel.Text("")
 
 var recordKinds = map[string]recordKind{
 	permission.ResourceShipment.String(): kindOf(shipmentdb.Shipments, recordShape{
@@ -98,7 +98,7 @@ var recordKinds = map[string]recordKind{
 	}),
 	permission.ResourceWorker.String(): kindOf(workerdb.Workers, recordShape{
 		id:       workerdb.Workers.ID,
-		title:    keel.DynFunc("concat_ws", " ", workerdb.Workers.FirstName, workerdb.Workers.LastName),
+		title:    keel.ConcatWS(" ", workerdb.Workers.FirstName, workerdb.Workers.LastName),
 		subtitle: noSubtitle,
 	}),
 	permission.ResourceTractor.String(): kindOf(tractordb.Tractors, recordShape{

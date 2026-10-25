@@ -282,8 +282,9 @@ func correctionTotalsQuery(
 		act.ActorKind.Eq(triage.ActorPerson),
 		act.CreatedAt.Gte(req.WeekStart),
 	))
-	corrected := keel.DynOf(m.ClassificationCorrected).Or(
-		keel.DynOf(m.Facts.Contains([]map[string]bool{{"flagged": true}})).Coalesce(false),
+	corrected := keel.Or(
+		keel.BoolOf(m.ClassificationCorrected),
+		keel.BoolOf(m.Facts.Contains([]map[string]bool{{"flagged": true}})).Coalesce(false),
 	)
 	thisWeek := m.ReceivedAt.Gte(req.WeekStart)
 	lastWeek := m.ReceivedAt.Lt(req.WeekStart)

@@ -80,7 +80,7 @@ func ruleCandidates(req *triageports.RuleCandidatesRequest) []keel.Pred {
 	case triage.SenderAddress:
 		preds = append(preds,
 			m.SenderDomain.Eq(emailutils.Domain(req.Sender)),
-			keel.DynFunc("lower", keel.DynFunc("btrim", m.FromAddress)).Eq(strings.ToLower(req.Sender)),
+			m.FromAddress.Trim().Lower().Eq(strings.ToLower(req.Sender)),
 		)
 	case triage.SenderAnyCustomer:
 		preds = append(preds, m.MatchedCustomerID.IsNotNull())
@@ -145,14 +145,14 @@ func manualOutcomesQuery(
 			act.MessageID,
 			keel.DynCase().
 				When(
-					keel.DynFunc("bool_or", act.Kind.Eq(triage.ActivityIgnored)),
-					keel.DynLit(string(triage.ActivityIgnored)),
+					keel.BoolOf(keel.BoolOr(act.Kind.Eq(triage.ActivityIgnored))),
+					keel.Text(string(triage.ActivityIgnored)),
 				).
 				When(
-					keel.DynFunc("bool_or", act.Kind.Eq(triage.ActivityFiled)),
-					keel.DynLit(string(triage.ActivityFiled)),
+					keel.BoolOf(keel.BoolOr(act.Kind.Eq(triage.ActivityFiled))),
+					keel.Text(string(triage.ActivityFiled)),
 				).
-				Else(keel.DynLit(string(triage.ActivityHandled))),
+				Else(keel.Text(string(triage.ActivityHandled))),
 		).
 		Where(
 			act.ActorKind.Eq(triage.ActorPerson),
@@ -192,8 +192,8 @@ func manualOutcomesQuery(
 			keel.Max(arrivals.Col("arrived")),
 			m.MailboxID.CountDistinct(),
 			m.MailboxID.Min(),
-			keel.DynFunc("bool_and", keel.DynOf(m.MatchedCustomerID).IsNotNull()),
-			keel.DynFunc("bool_and", keel.DynOf(m.MatchedCarrierID).IsNotNull()),
+			keel.BoolAnd(m.MatchedCustomerID.IsNotNull()),
+			keel.BoolAnd(m.MatchedCarrierID.IsNotNull()),
 		).
 		Where(m.ReceivedAt.Gte(req.Since)).
 		Group(m.SenderDomain, m.Classification, outcome)
@@ -223,7 +223,7 @@ func messageRowsQuery(
 	m := inboundmessagedb.InboundMessages
 
 	return withReference(messages()).
-		Pick(messageRowColumns(keel.DynLit(false).Cast(keel.TypeBool))...).
+		Pick(messageRowColumns(keel.Bool(false))...).
 		Where(m.ID.In(req.IDs...)).
 		Limit(len(req.IDs))
 }
