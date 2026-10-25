@@ -124,10 +124,17 @@ row, err := tractordb.Tractors.Get(ctx, r.db.Keel(ctx), req.ID)
 ```
 
 With relations or projected columns, build the query and end with `One`
-(`tractorrepository.tractorQuery`). Belongs-to and has-one loads join into the statement; each
-level of to-many loads is one more round trip for every parent. A pick relation joins as a
-`LEFT JOIN LATERAL (… LIMIT 1)` for a one-row read and loads in one statement for all parents
-otherwise.
+(`tractorrepository.tractorQuery`). Belongs-to and has-one loads join into the statement. To-many
+loads are **pipelined**: every `dbtx.Read` runs at repeatable read (below), so keel sends the read
+and its whole relation tree in one round trip, each level selecting its parents' keys with a
+subquery that repeats the parent level's statement. A level falls back to a round trip per level
+where its parent could return other rows when re-run (a `Limit` without `Order`, a `Lock`,
+`DISTINCT ON`, a grouped parent), inside a `dbtx.Write` (read committed) and in a transaction keel
+cannot see the isolation of. Each level re-runs its ancestors' filters as a semi-join, so the
+foreign key and the parent's filter need indexes. A query whose rows are not stable on one snapshot
+(a volatile function, a `Limit` without a total order inside a CTE or a hand-written lateral join)
+takes `LoadStrategy(keel.LoadPerLevel)`. A pick relation joins as a `LEFT JOIN LATERAL (… LIMIT 1)`
+for a one-row read and loads in one statement for all parents otherwise.
 
 ```go
 et := t.EquipmentType()
@@ -280,7 +287,13 @@ security scoped.
 | Slow queries, tracing, query timing | one `slowQueryLog` per pool and `tracingObserver` (`go.sql.query_timing`) |
 | Development query log | `database.queryLog` (`off`, `errors`, `all`; development only): `keel/keellog` prints each statement to stderr with its values, caller, transaction and outcome; `errors` prints failed and slow ones (`keelobserve.go`) |
 | Constraint catalog, generic plans | keel reads the constraints of `keeltables.All()` at open (`dbpool.Options.Tables`); `keeltest.UsesIndex` asserts a hot-path query reaches its index under a generic plan (`schemalint/index_plans_integration_test.go`) |
-| Pool metrics | `trenova_db_pool_*` from `pgxpool.Stat` (`metrics.Database.RegisterPoolStats`) |
+| Read isolation | `ReadIsolation: keel.RepeatableRead` (`dbpool.KeelConfig`): every `dbtx.Read` reads one snapshot; writes and single terminals outside a transaction keep read committed |
+| Read commits | a read transaction's `COMMIT` is sent without waiting for its reply (keel's default); a failed reply closes the connection and counts in `trenova_db_pool_read_commit_failures_total` |
+| Deadlines | `DeadlineTimeouts: true`: every transaction sets `statement_timeout` to the time left on its context's deadline in its `BEGIN` round trip, so the server stops work nobody waits for; the session `statement_timeout` stays the ceiling |
+| Tenant concurrency | `database.tenantConcurrency` (0: a quarter of the pool's `maxOpenConns`) bounds one organization's concurrent transactions and terminals per pool, so one tenant's burst cannot hold every connection; system scopes take no slot; waits count in `trenova_db_pool_tenant_waits_total` |
+| Result cache | `database.cache` on the tenant pool ([Caching](#caching)); `trenova_db_cache_*` |
+| Query budgets | every REST request and GraphQL operation runs under `keel.Budget` ([Budgets](#budgets)) |
+| Pool metrics | `trenova_db_pool_*` from `pgxpool.Stat` and keel (`metrics.Database.RegisterPoolStats`, `RegisterRuntimeStats`) |
 
 `dbtx.Read`/`Write` and services' `kernelports.Transactor.Transact(ctx, opts, fn)` go through
 `Connection.Transact`:
@@ -289,8 +302,13 @@ security scoped.
   (applying a `LockTimeout` and `Settings` as `keel.Setting`s for the call, restored after it); any other call opens a new, detached transaction
   (`keel.Detached()`), so a context with another tenant's scope, or a `RunDetached` one, never
   writes in the caller's transaction.
-- `TxOptions` carries `ReadOnly` (a `keel.Read` transaction), `Isolation` (read committed,
-  repeatable read or serializable; anything else is `ErrUnsupportedIsolation`) and `LockTimeout`.
+- `TxOptions` carries `ReadOnly` (a `keel.Read` transaction), `Isolation` and `LockTimeout`.
+  `Isolation` maps to `keel.ReadCommitted`, `keel.RepeatableRead` or `keel.Serializable`, values of
+  `keel.Isolation` passed as options (anything else is `ErrUnsupportedIsolation`); the default
+  leaves a read at repeatable read and a write at read committed. A read-only repeatable read
+  costs nothing over read committed and cannot fail a serialization check, so the counts, lists
+  and relation loads of one `dbtx.Read` agree. Ask for `sql.LevelReadCommitted` only for a long
+  read that must see rows committed while it runs.
 - `dbtx.Savepoint` uses `keel.Savepoint` inside a transaction and runs the function directly
   outside one.
 - `kernelports.AfterCommit` callbacks run after the outermost commit, never after a rollback.
@@ -311,6 +329,34 @@ the same-scope join rule and the after-commit hooks.
 - **Lock timeouts**: a transaction that may wait passes `kernelports.TxOptions{LockTimeout: …}`.
 - Keep transactions short: no network call (HTTP, Temporal, Redis, the imaging worker) inside
   one. Work that must follow a commit goes through `kernelports.AfterCommit`.
+
+## Budgets
+
+`middleware.QueryBudgetMiddleware` (every `/api/v1` route except event streams and websockets) and
+`gqlext.QueryBudgetExtension` (every GraphQL operation but subscriptions, on the HTTP server and
+the agent read path) put `querybudget.Budgets.Start` on the context: `keel.Budget` with
+`keel.MaxRepeats(database.budget.maxRepeats)` (default 10) and `keel.OnExceeded`. A statement text
+sent in more round trips than that, the shape of an N+1 read, logs one warning per request
+(`database.budget`) with the route or operation, the round trips and statements, and the repeated
+SQL with the call sites that sent it again. Production never fails a request over a budget; fix
+the read the warning names with a batch, a `...ByIDs` method or a dataloader. Work that runs
+outside a request (an activity, a sweep) starts its own budget with `Budgets.Start` when it is a
+hot path. Tests may set hard limits ([testing.md](testing.md#shapes-and-budgets)).
+
+## Plan guard
+
+`keeltest.UsesIndex` pins the plans a test names; the plan guard checks every statement the
+application sends. Integration test databases record each distinct statement text when
+`KEEL_SHAPES` names a file (`internal/testutil/shapetest`, wired into `seedtest` and every
+`Connection` the tests build), and `scripts/dbplans/dbplans.sh` builds `trenova_plans` on the test
+server (migrations, seeds, fixtures and `volume -shipments 20000`), runs `ANALYZE`, and runs
+`trenova-db plans -shapes FILE -sort-limit`: `EXPLAIN (GENERIC_PLAN)` of every shape, the plan a
+prepared statement settles on. It fails (exit 3) on a sequential scan of a relation over 10,000
+rows and on a `Sort` under a `Limit` over such a relation (a page sorted in full because no index
+gives its order); small reference tables pass. A shape that cannot be planned (a temporary table) is
+listed and does not fail. CI runs it after the integration tests; `task db-plans` runs both
+locally. A finding is fixed with the index the query needs, a constant that reaches a partial index,
+or a query whose order an index gives.
 
 ## Migrations
 
@@ -374,6 +420,7 @@ A new column, relation or table needs `task keel-gen` in the same change, and
   A test of a migration's content reads it with `migrations.File("<version>_<name>")` or the `Set`.
 - Service tests fake `kernelports.Transactor` with `dbtest.NopConnection`, and list fakes build
   pages with `internal/testutil/pagetest`.
+- Statement shapes and budgets in tests: [testing.md](testing.md#shapes-and-budgets).
 
 ## Caching
 
@@ -387,6 +434,94 @@ A new column, relation or table needs `task keel-gen` in the same change, and
   read scope narrows the result.
 - `pkg/redishelpers` for Redis JSON; `shared/lrucache` and `shared/ttlcache` in process. A cache
   never holds data a narrower permission or read scope could not see.
+
+### Result cache
+
+keel's result cache (`database.cache`, on by default) serves a repository read that asks for it
+without a round trip while no table it read has changed for the organization. It is built on data
+versions, which `dbpool` keeps on: every keel write bumps its (tenant, table) pairs after commit,
+and the versions reach every process over `LISTEN keel_data_versions`.
+
+```go
+dt := documenttypedb.DocumentTypes
+return dt.Where(dt.IsSystem.IsTrue()).Order(dt.Code.Asc()).Limit(500).
+	Cache(keel.TTL(10*time.Minute)).List(ctx, r.db.Keel(ctx))
+```
+
+- **Where.** Reads far more frequent than writes to their tables: reference and settings tables,
+  option lists, controls, small catalogs. Not a table written on every request, not a read whose
+  rows are read once.
+- **Key.** An entry is keyed by the statements and their values, the tenant, and
+  `postgres.readScopeCacheKey`: the encoded read scope and, when it narrows anything, the user, so
+  two people of one organization whose permissions show them different rows never share one. A
+  read scope that cannot be resolved never matches a resolved one.
+- **Never on a user-owned table.** A query on a table whose row-level security policy reads
+  `trenova_rls.user_id()` outside a read scope (`users`, `user_organization_memberships`,
+  `organizations` through memberships, `mfa_authenticators`, `mfa_recovery_codes`; see
+  `20261231007040_row_level_security.sql` and `20261231008410_mfa_totp.sql`) returns rows that
+  depend on the person, and the key does not hold the person when nothing is narrowed: never
+  `.Cache` it.
+- **Invisible writes.** `keel.Exec`, `QueryValue`, triggers and statements through `db.Pool()` do
+  not bump versions: call `keel.MarkChanged(ctx, db, tables...)` beside them, or do not cache
+  reads of what they write. A table only a `keel.Raw` fragment reads is named with
+  `keel.AlsoReads`.
+- **Bypasses.** Inside a `dbtx.Write`, inside a `dbtx.Read` after its first statement (its
+  snapshot is taken: put the cached read first, or in its own `dbtx.Read`), under a system scope, for
+  a `Lock`, and while the listener reconnects, the read goes to the database.
+- **Freshness.** This process's writes invalidate its entries at once; another process's after
+  `DataVersions.Interval` (1s) and the notification.
+- **Sizing and tiers.** `database.cache.localBytes` (256 MiB) per process. The Redis tier
+  (`database.cache.shared.enabled`, off by default) copies tenant rows into Redis; turn it on only
+  where Redis is protected like PostgreSQL. The listener needs a session connection: behind a
+  transaction-mode pooler, `database.cache.listenHost`/`listenPort` point it at PostgreSQL.
+- `trenova_db_cache_{hits,misses,bypasses,errors}_total`, `_bytes`, `_versions` and `_listening`;
+  store and listener errors log at most once per 10 seconds. A row read as it is from
+  Postgres is cached with the result cache below, never a hand-rolled map: that one is
+  invalidated by every process's writes and bounded.
+
+### Result cache
+
+keel's result cache (`Query.Cache`, configured in
+`internal/infrastructure/postgres/resultcache.go`) serves a read from memory while no table it
+read has changed for the tenant: an entry is checked against keel's data versions on every hit,
+so a write anywhere invalidates it within the versions' flush interval (a write of the same
+process at once). Ask for it with a TTL class from `pkg/resultcache`
+(`Cache(resultcache.Settings()...)`); the TTL only bounds how long an unused entry stays.
+
+- **What to cache.** Reads on most requests whose tables change rarely: a tenant's settings rows,
+  role resolution, reference lookups by id or code, small whole-table catalogs and the
+  no-search select options of a dropdown. Never a list a person filters or scrolls, a table
+  written on most requests (an entry would never be hit), or a read that compares with `now()`
+  in SQL (`rbacrepository.GetAuthorizedRoles`).
+- **Never cache a table whose row-level security policy reads `trenova_rls.user_id()`**:
+  `users`, `user_organization_memberships`, `organizations`, `mfa_authenticators`,
+  `mfa_recovery_codes`, and `shipments`, `orders`, `invoices`, `workers` (their read-scope
+  policies), nor a query that joins or loads one. The entry is keyed by the tenant and the read
+  scope, not the user, so one user's rows would be served to another.
+- **The cached terminal is the first statement of its `dbtx.Read`.** A repeatable-read
+  transaction that has sent a statement has its snapshot and bypasses the cache, as do writes,
+  joined transactions, system scopes and `Lock`. A get-or-create reads in `dbtx.Read` before
+  opening a write (`dbtx.GetOrCreate`, `distancecontrolrepository.EnsureDefault`,
+  `sequenceconfigrepository.GetByTenant`); a write on the read path would also move the
+  table's version on every request.
+- **A row that may be missing is read with `Limit(1)` and `List`**, so its absence is cached
+  too (`iamrepository.accessSettingsRepository.Get`); `One` and `First` cache only a found row.
+- **Every write goes through keel** (or calls `keel.MarkChanged` next to raw SQL), and a table
+  read only through `keel.Raw` is named with `keel.AlsoReads`. `trenova-db` records data
+  versions, so seeds invalidate too; a migration's SQL does not: processes started after it begin
+  empty, and entries of older ones (or of the shared Redis tier) live out their TTL.
+- **Tests** open a cached database with `cachetest.Open(t, ctx, dsn)` and assert
+  `cachetest.RequireHit`/`RequireMiss` around a read, a write and the read again
+  (`rolerepository/role_cache_integration_test.go`).
+
+| TTL class | Reads |
+|---|---|
+| `Settings` (5 min) | identity: shipment, billing, accounting, invoice adjustment, document, dash, agent, settlement and carrier settlement controls, data retention, sequence configs (`sequenceconfigrepository`, `seqgen` format provider), organization access settings; operations: dispatch control; places: distance control, default distance profile; parties: carrier intel control; workspace: data entry control, active custom field definitions by resource; billing: costing control with its categories and GL links; workforce: leave control; agent: AI retrieval settings, agent quality control; documents: extraction shadow settings, triage settings and response targets |
+| `Access` (5 min) | `rolerepository.GetUserRoleAssignments`, `GetRolesWithInheritance` (behind the Redis permission cache, so an organization's epoch bump recomputes from memory) |
+| `Reference` (30 min) | by id, by ids, by code or name, and select options: accessorial charges (and `ListCatalog`), document types, hold reasons, service types, shipment types, hazardous materials, commodities (by id and ids), active hazmat segregation rules, distance profiles by id, exchange rates by date |
+| `Catalog` (1 h) | global seeded tables: US states (by id, ids, abbreviation, select options), DOT hazmat references by id |
+
+No cached query reads a table only through `keel.Raw` today, so none needs `AlsoReads`.
 
 ## Seeding
 
