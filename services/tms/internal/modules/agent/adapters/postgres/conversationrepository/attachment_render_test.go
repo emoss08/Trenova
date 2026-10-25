@@ -21,13 +21,12 @@ func TestCarriesAttachmentAsksForThePersonsMessageInThatThread(t *testing.T) {
 	}))
 
 	assert.Contains(t, sql, `am."thread_id" = $3`, sql)
-	assert.Contains(t, sql, `am."role" = $4`, sql)
-	assert.Contains(t, sql, `am."attachments" @> $5`, sql)
+	assert.Contains(t, sql, `am."role" = 'User'`, sql)
+	assert.Contains(t, sql, `am."attachments" @> $4`, sql)
 	assert.Equal(t, []any{
 		threadID.String(),
-		string(conversation.RoleUser),
 		[]map[string]string{{"documentId": documentID.String()}},
-	}, args[2:5])
+	}, args[2:4])
 }
 
 func TestMessagesSinceCompactionReadAfterTheLatestSummary(t *testing.T) {
@@ -39,9 +38,9 @@ func TestMessagesSinceCompactionReadAfterTheLatestSummary(t *testing.T) {
 		SinceCompaction: true,
 	}))
 
-	assert.Contains(t, sql, `am."sequence" > coalesce((SELECT CAST((compacted."compaction" #>> $5) AS bigint)`, sql)
-	assert.Contains(t, sql, `compacted."thread_id" = $3 AND compacted."kind" = $4`, sql)
-	assert.Contains(t, sql, `ORDER BY compacted."sequence" DESC LIMIT 1), $6)`, sql)
-	assert.Equal(t, string(conversation.MessageKindCompaction), args[3])
-	assert.Equal(t, -1, args[5])
+	assert.Contains(t, sql, `am."sequence" > coalesce((SELECT CAST((compacted."compaction" #>> $4) AS bigint)`, sql)
+	assert.Contains(t, sql, `compacted."thread_id" = $3 AND compacted."kind" = 'Compaction'`, sql)
+	assert.Contains(t, sql, `ORDER BY compacted."sequence" DESC LIMIT 1), $5)`, sql)
+	assert.NotContains(t, args, string(conversation.MessageKindCompaction))
+	assert.Equal(t, -1, args[4])
 }

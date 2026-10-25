@@ -42,7 +42,7 @@ type recordKind struct {
 }
 
 type recordTable[T any] interface {
-	Where(ps ...keel.Pred) *keel.Query[T]
+	Where(ps ...keel.Pred) *keel.Query[*T]
 }
 
 type recordShape struct {

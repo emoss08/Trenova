@@ -79,7 +79,7 @@ func NewSubjectRepository(p Params) carrierintelports.CarrierIntelSubjectReposit
 func buildCarrierSubjectsQuery(
 	req *carrierintelports.ListCarrierIntelSubjectsRequest,
 	limit int,
-) *keel.Query[carrier.Carrier] {
+) *keel.Query[*carrier.Carrier] {
 	c := carrierdb.Carriers
 	ca := shipmentdb.CarrierAssignments
 	to := tenderdb.TenderOffers
@@ -178,7 +178,7 @@ func customerSubject(row *customerSubjectRow) carrierintelports.CarrierIntelSubj
 	}
 }
 
-func customerSubjectQuery(preds ...keel.Pred) *keel.Query[customer.Customer] {
+func customerSubjectQuery(preds ...keel.Pred) *keel.Query[*customer.Customer] {
 	c := customerdb.Customers
 	return c.Pick(
 		c.ID,

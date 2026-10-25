@@ -60,7 +60,7 @@ var pageFavoritesRef = keel.Ref{Table: &pageFavoritesTable}
 
 // PageFavoritesTable is the table of pagefavorite.PageFavorite.
 type PageFavoritesTable struct {
-	keel.Handle[pagefavorite.PageFavorite]
+	keel.Handle[*pagefavorite.PageFavorite]
 	ID             keelkinds.PulidIDCol
 	OrganizationID keelkinds.PulidIDCol
 	BusinessUnitID keelkinds.PulidIDCol
@@ -74,7 +74,7 @@ type PageFavoritesTable struct {
 
 // PageFavorites references the page_favorites table.
 var PageFavorites = &PageFavoritesTable{
-	Handle:         keel.Handle[pagefavorite.PageFavorite]{Ref: &pageFavoritesRef},
+	Handle:         keel.Handle[*pagefavorite.PageFavorite]{Ref: &pageFavoritesRef},
 	ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &pageFavoritesRef, Index: 0}}},
 	OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &pageFavoritesRef, Index: 1}}},
 	BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &pageFavoritesRef, Index: 2}}},
@@ -89,7 +89,7 @@ var PageFavorites = &PageFavoritesTable{
 // BuildPageFavorites builds the handle of page_favorites for ref. Generated relation and alias methods call it.
 func BuildPageFavorites(r *keel.Ref) *PageFavoritesTable {
 	return &PageFavoritesTable{
-		Handle:         keel.Handle[pagefavorite.PageFavorite]{Ref: r},
+		Handle:         keel.Handle[*pagefavorite.PageFavorite]{Ref: r},
 		ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},

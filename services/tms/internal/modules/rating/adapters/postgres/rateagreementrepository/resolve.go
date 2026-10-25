@@ -102,8 +102,8 @@ func (r *repository) ResolveRules(
 // order the database happened to return, and the same shipment could rate two
 // ways.
 func candidateOrder(
-	q *keel.Query[rateagreement.RateAgreementRule],
-) *keel.Query[rateagreement.RateAgreementRule] {
+	q *keel.Query[*rateagreement.RateAgreementRule],
+) *keel.Query[*rateagreement.RateAgreementRule] {
 	rr := rateagreementdb.RateAgreementRules
 	ra := rateagreementdb.RateAgreements
 
@@ -118,7 +118,7 @@ func candidateOrder(
 
 func baseCandidateQuery(
 	req *rateagreementports.ResolveRateRulesRequest,
-) *keel.Query[rateagreement.RateAgreementRule] {
+) *keel.Query[*rateagreement.RateAgreementRule] {
 	rr := rateagreementdb.RateAgreementRules
 	ra := rateagreementdb.RateAgreements
 
@@ -152,7 +152,7 @@ func baseCandidateQuery(
 func keyedRulesQuery(
 	req *rateagreementports.ResolveRateRulesRequest,
 	limit int,
-) *keel.Query[rateagreement.RateAgreementRule] {
+) *keel.Query[*rateagreement.RateAgreementRule] {
 	rr := rateagreementdb.RateAgreementRules
 
 	return candidateOrder(baseCandidateQuery(req).Where(rr.LaneKey.In(req.LaneKeys...))).
@@ -189,7 +189,7 @@ func radiusMatch(scope, center, radius keel.Expr, lon, lat float64) keel.Pred {
 func radiusRulesQuery(
 	req *rateagreementports.ResolveRateRulesRequest,
 	limit int,
-) *keel.Query[rateagreement.RateAgreementRule] {
+) *keel.Query[*rateagreement.RateAgreementRule] {
 	rr := rateagreementdb.RateAgreementRules
 
 	return candidateOrder(baseCandidateQuery(req).Where(

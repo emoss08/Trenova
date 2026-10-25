@@ -147,7 +147,7 @@ func (r *repository) Create(
 func (r *repository) updateOne(
 	ctx context.Context,
 	id pulid.ID,
-	q *keel.Query[agent.AgentProposal],
+	q *keel.Query[*agent.AgentProposal],
 	sets ...keel.Assignment,
 ) (*agent.AgentProposal, error) {
 	rows, err := q.UpdateReturning(ctx, r.db.Keel(ctx), append(sets, keepVersion())...)
@@ -204,7 +204,7 @@ func (r *repository) ExpirePendingByRun(
 	})
 }
 
-func pendingOfRuns(runs *keel.Query[agent.AgentRun]) *keel.Query[agent.AgentProposal] {
+func pendingOfRuns(runs *keel.Query[*agent.AgentRun]) *keel.Query[*agent.AgentProposal] {
 	p := agentdb.AgentProposals
 
 	return p.Where(p.Status.Eq(agent.ProposalStatusPending), p.RunID.InQuery(runs))
@@ -212,7 +212,7 @@ func pendingOfRuns(runs *keel.Query[agent.AgentRun]) *keel.Query[agent.AgentProp
 
 func (r *repository) expireByRuns(
 	ctx context.Context,
-	runs *keel.Query[agent.AgentRun],
+	runs *keel.Query[*agent.AgentRun],
 ) (int, error) {
 	n, err := pendingOfRuns(runs).Update(ctx, r.db.Keel(ctx), expiry()...)
 	if err != nil {
@@ -393,7 +393,7 @@ func (r *repository) ListByIDs(
 	})
 }
 
-func byPlansQuery(planIDs ...pulid.ID) *keel.Query[agent.AgentProposal] {
+func byPlansQuery(planIDs ...pulid.ID) *keel.Query[*agent.AgentProposal] {
 	p := agentdb.AgentProposals
 
 	return p.Where(p.PlanID.In(planIDs...)).

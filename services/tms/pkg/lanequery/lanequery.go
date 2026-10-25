@@ -28,7 +28,7 @@ func New(opts Options) keel.Projection {
 	return lanes(opts)
 }
 
-func lanes(opts Options) *keel.Query[keel.Row] {
+func lanes(opts Options) *keel.Query[*keel.Row] {
 	endpoints := keel.CTE(endpointsCTE, []string{originLocationID, destinationLocationID},
 		shipmentEndpoints(opts.Shipments))
 	origin := endpoints.Col(originLocationID)
@@ -60,7 +60,7 @@ func lanes(opts Options) *keel.Query[keel.Row] {
 	return q
 }
 
-func shipmentEndpoints(filter []keel.Pred) *keel.Query[shipment.Shipment] {
+func shipmentEndpoints(filter []keel.Pred) *keel.Query[*shipment.Shipment] {
 	s := shipmentdb.Shipments
 	m := shipmentdb.ShipmentMoves
 	st := shipmentdb.Stops

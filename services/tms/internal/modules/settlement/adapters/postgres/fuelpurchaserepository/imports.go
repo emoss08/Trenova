@@ -351,8 +351,8 @@ func (r *repository) ListImportBatches(
 					Filter: req.Filter,
 					Cursor: req.Cursor,
 					Shape: func(
-						q *keel.Query[fuelpurchase.ImportBatch],
-					) *keel.Query[fuelpurchase.ImportBatch] {
+						q *keel.Query[*fuelpurchase.ImportBatch],
+					) *keel.Query[*fuelpurchase.ImportBatch] {
 						if req.IncludeDefaultCard {
 							return q.Load(b.DefaultFuelCard())
 						}

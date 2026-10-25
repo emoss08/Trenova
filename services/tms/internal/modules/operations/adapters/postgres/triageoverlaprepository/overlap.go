@@ -86,7 +86,7 @@ func checkable(load *triageports.TenderLoad) bool {
 func overlapQuery(
 	customerID pulid.ID,
 	load *triageports.TenderLoad,
-) *keel.Query[shipment.Shipment] {
+) *keel.Query[*shipment.Shipment] {
 	sp := shipmentdb.Shipments
 
 	pickup := stopAt(sp, "pick", stopAtRequest{
@@ -125,7 +125,7 @@ func stopAt(
 	sp *shipmentdb.ShipmentsTable,
 	alias string,
 	req stopAtRequest,
-) *keel.Query[shipment.ShipmentMove] {
+) *keel.Query[*shipment.ShipmentMove] {
 	move := shipmentdb.ShipmentMoves.As(alias + "_sm")
 	stop := shipmentdb.Stops.As(alias + "_stp")
 	loc := locationdb.Locations.As(alias + "_loc")

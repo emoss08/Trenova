@@ -41,7 +41,7 @@ func New(p Params) shipmentimportchatports.ShipmentImportChatRepository {
 
 func conversationByDocumentQuery(
 	req shipmentimportchatports.GetShipmentImportConversationRequest,
-) *keel.Query[shipmentimportchat.Conversation] {
+) *keel.Query[*shipmentimportchat.Conversation] {
 	c := shipmentimportchatdb.Conversations
 	q := c.Where(c.DocumentID.Eq(req.DocumentID))
 	if req.Status != "" {
@@ -57,14 +57,14 @@ func conversationByDocumentQuery(
 
 func listTurnsQuery(
 	req shipmentimportchatports.ListShipmentImportTurnsRequest,
-) *keel.Query[shipmentimportchat.Turn] {
+) *keel.Query[*shipmentimportchat.Turn] {
 	t := shipmentimportchatdb.Turns
 
 	return t.Where(t.ConversationID.Eq(req.ConversationID)).
 		Order(t.TurnIndex.Asc(), t.CreatedAt.Asc())
 }
 
-func archiveActiveQuery(documentID pulid.ID) *keel.Query[shipmentimportchat.Conversation] {
+func archiveActiveQuery(documentID pulid.ID) *keel.Query[*shipmentimportchat.Conversation] {
 	c := shipmentimportchatdb.Conversations
 
 	return c.Where(

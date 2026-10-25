@@ -140,7 +140,7 @@ func (r *pageRepository) GetBySequence(
 	})
 }
 
-func bySequence(batchID pulid.ID, sequence int) *keel.Query[capture.CapturePage] {
+func bySequence(batchID pulid.ID, sequence int) *keel.Query[*capture.CapturePage] {
 	p := capturedb.CapturePages
 
 	return p.Where(p.BatchID.Eq(batchID), p.Sequence.Eq(int64(sequence)))

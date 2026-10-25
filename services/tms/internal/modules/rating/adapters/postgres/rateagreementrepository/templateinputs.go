@@ -99,7 +99,7 @@ func inputSet(
 func ruleInputsQuery(
 	req *rateagreementports.ListInputsByTemplateRequest,
 	limit int,
-) *keel.Query[rateagreement.RateAgreementRule] {
+) *keel.Query[*rateagreement.RateAgreementRule] {
 	rr := rateagreementdb.RateAgreementRules
 	ra := rateagreementdb.RateAgreements
 
@@ -131,7 +131,7 @@ func (r *repository) ruleInputSets(
 func shipmentInputsQuery(
 	req *rateagreementports.ListInputsByTemplateRequest,
 	limit int,
-) *keel.Query[shipment.Shipment] {
+) *keel.Query[*shipment.Shipment] {
 	sp := shipmentdb.Shipments
 
 	return sp.Where(

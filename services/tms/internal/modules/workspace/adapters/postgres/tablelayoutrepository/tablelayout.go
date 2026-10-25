@@ -34,7 +34,7 @@ func New(p Params) tablelayoutports.TableLayoutRepository {
 	}
 }
 
-func layoutOf(req *tablelayoutports.TableLayoutRequest) *keel.Query[tablelayout.TableLayout] {
+func layoutOf(req *tablelayoutports.TableLayoutRequest) *keel.Query[*tablelayout.TableLayout] {
 	tl := tablelayoutdb.TableLayouts
 	return tl.Where(tl.UserID.Eq(req.TenantInfo.UserID), tl.Resource.Eq(req.Resource))
 }

@@ -61,7 +61,7 @@ var preferencesRef = keel.Ref{Table: &preferencesTable}
 
 // PreferencesTable is the table of homelayout.Preference.
 type PreferencesTable struct {
-	keel.Handle[homelayout.Preference]
+	keel.Handle[*homelayout.Preference]
 	ID             keelkinds.PulidIDCol
 	OrganizationID keelkinds.PulidIDCol
 	BusinessUnitID keelkinds.PulidIDCol
@@ -74,7 +74,7 @@ type PreferencesTable struct {
 
 // Preferences references the home_preferences table.
 var Preferences = &PreferencesTable{
-	Handle:         keel.Handle[homelayout.Preference]{Ref: &preferencesRef},
+	Handle:         keel.Handle[*homelayout.Preference]{Ref: &preferencesRef},
 	ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &preferencesRef, Index: 0}}},
 	OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &preferencesRef, Index: 1}}},
 	BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &preferencesRef, Index: 2}}},
@@ -88,7 +88,7 @@ var Preferences = &PreferencesTable{
 // BuildPreferences builds the handle of home_preferences for ref. Generated relation and alias methods call it.
 func BuildPreferences(r *keel.Ref) *PreferencesTable {
 	return &PreferencesTable{
-		Handle:         keel.Handle[homelayout.Preference]{Ref: r},
+		Handle:         keel.Handle[*homelayout.Preference]{Ref: r},
 		ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -229,7 +229,7 @@ var presetsRef = keel.Ref{Table: &presetsTable}
 
 // PresetsTable is the table of homelayout.Preset.
 type PresetsTable struct {
-	keel.Handle[homelayout.Preset]
+	keel.Handle[*homelayout.Preset]
 	ID                 keelkinds.PulidIDCol
 	BusinessUnitID     keelkinds.PulidIDCol
 	OrganizationID     keelkinds.PulidIDCol
@@ -249,7 +249,7 @@ type PresetsTable struct {
 
 // Presets references the home_layout_presets table.
 var Presets = &PresetsTable{
-	Handle:             keel.Handle[homelayout.Preset]{Ref: &presetsRef},
+	Handle:             keel.Handle[*homelayout.Preset]{Ref: &presetsRef},
 	ID:                 keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &presetsRef, Index: 0}}},
 	BusinessUnitID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &presetsRef, Index: 1}}},
 	OrganizationID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &presetsRef, Index: 2}}},
@@ -270,7 +270,7 @@ var Presets = &PresetsTable{
 // BuildPresets builds the handle of home_layout_presets for ref. Generated relation and alias methods call it.
 func BuildPresets(r *keel.Ref) *PresetsTable {
 	return &PresetsTable{
-		Handle:             keel.Handle[homelayout.Preset]{Ref: r},
+		Handle:             keel.Handle[*homelayout.Preset]{Ref: r},
 		ID:                 keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},

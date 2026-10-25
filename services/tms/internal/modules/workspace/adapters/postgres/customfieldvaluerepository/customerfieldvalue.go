@@ -41,7 +41,7 @@ func New(p Params) customfieldports.CustomFieldValueRepository {
 	}
 }
 
-func resourceValues(resourceType, resourceID string) *keel.Query[customfield.CustomFieldValue] {
+func resourceValues(resourceType, resourceID string) *keel.Query[*customfield.CustomFieldValue] {
 	v := customfielddb.CustomFieldValues
 	return v.Where(v.ResourceType.Eq(resourceType), v.ResourceID.Eq(resourceID))
 }

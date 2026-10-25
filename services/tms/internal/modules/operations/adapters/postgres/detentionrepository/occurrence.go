@@ -43,7 +43,7 @@ func NewOccurrenceRepository(
 	}
 }
 
-type occurrenceQuery = keel.Query[detention.DetentionOccurrence]
+type occurrenceQuery = keel.Query[*detention.DetentionOccurrence]
 
 func withOccurrenceNames(q *occurrenceQuery) *occurrenceQuery {
 	o := detentiondb.DetentionOccurrences

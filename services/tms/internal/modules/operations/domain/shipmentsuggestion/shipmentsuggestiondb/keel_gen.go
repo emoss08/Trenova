@@ -54,7 +54,7 @@ var decisionRecordsRef = keel.Ref{Table: &decisionRecordsTable}
 
 // DecisionRecordsTable is the table of shipmentsuggestion.DecisionRecord.
 type DecisionRecordsTable struct {
-	keel.Handle[shipmentsuggestion.DecisionRecord]
+	keel.Handle[*shipmentsuggestion.DecisionRecord]
 	ID             keelkinds.PulidIDCol
 	BusinessUnitID keelkinds.PulidIDCol
 	OrganizationID keelkinds.PulidIDCol
@@ -68,7 +68,7 @@ type DecisionRecordsTable struct {
 
 // DecisionRecords references the shipment_suggestion_decisions table.
 var DecisionRecords = &DecisionRecordsTable{
-	Handle:         keel.Handle[shipmentsuggestion.DecisionRecord]{Ref: &decisionRecordsRef},
+	Handle:         keel.Handle[*shipmentsuggestion.DecisionRecord]{Ref: &decisionRecordsRef},
 	ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &decisionRecordsRef, Index: 0}}},
 	BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &decisionRecordsRef, Index: 1}}},
 	OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &decisionRecordsRef, Index: 2}}},
@@ -83,7 +83,7 @@ var DecisionRecords = &DecisionRecordsTable{
 // BuildDecisionRecords builds the handle of shipment_suggestion_decisions for ref. Generated relation and alias methods call it.
 func BuildDecisionRecords(r *keel.Ref) *DecisionRecordsTable {
 	return &DecisionRecordsTable{
-		Handle:         keel.Handle[shipmentsuggestion.DecisionRecord]{Ref: r},
+		Handle:         keel.Handle[*shipmentsuggestion.DecisionRecord]{Ref: r},
 		ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},

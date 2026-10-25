@@ -65,7 +65,7 @@ func (r *indexRepository) ListConnection(
 	)
 }
 
-func activeIndexesQuery(source *fuelsurcharge.IndexSource) *keel.Query[fuelsurcharge.FuelIndex] {
+func activeIndexesQuery(source *fuelsurcharge.IndexSource) *keel.Query[*fuelsurcharge.FuelIndex] {
 	fi := fuelsurchargedb.FuelIndexes
 	q := fi.Where(fi.IsActive.IsTrue())
 	if source != nil {
@@ -182,7 +182,7 @@ func (r *indexRepository) Delete(
 	})
 }
 
-func indexOptionsQuery() *keel.Query[fuelsurcharge.FuelIndex] {
+func indexOptionsQuery() *keel.Query[*fuelsurcharge.FuelIndex] {
 	fi := fuelsurchargedb.FuelIndexes
 
 	return fi.Pick(fi.ID, fi.Name, fi.Code, fi.Description, fi.Source, fi.EIASeriesID, fi.IsActive).

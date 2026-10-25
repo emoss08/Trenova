@@ -10,6 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiaudit"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiaudit/aiauditdb"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aiauditports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"go.uber.org/zap"
@@ -18,7 +19,6 @@ import (
 const (
 	pruneSetting      = "trenova.ai_audit_prune"
 	defaultPruneBatch = 5000
-	admitPruneSQL     = "SELECT set_config($1, 'on', true)"
 )
 
 // GetChainHead reads a tenant's chain head, or an empty one for a tenant
@@ -183,11 +183,21 @@ func (r *repository) Prune(
 		batch = defaultPruneBatch
 	}
 
+	admitPrune := kernelports.TxOptions{
+		Settings: []kernelports.TxSetting{{Name: pruneSetting, Value: "on"}},
+	}
 	total := 0
 	for {
-		deleted, err := dbtx.Write(ctx, r.db, func(ctx context.Context) (int, error) {
-			return r.pruneBatch(ctx, req.TenantInfo, req.ThroughSeq, batch)
-		})
+		var deleted int
+		err := r.db.Transact(
+			ctx,
+			admitPrune,
+			func(ctx context.Context) error {
+				var batchErr error
+				deleted, batchErr = r.pruneBatch(ctx, req.TenantInfo, req.ThroughSeq, batch)
+				return batchErr
+			},
+		)
 		if err != nil {
 			r.l.Error("failed to prune AI audit events",
 				zap.String("organizationId", req.TenantInfo.OrgID.String()),
@@ -214,10 +224,6 @@ func (r *repository) pruneBatch(
 	batch int,
 ) (int, error) {
 	db := r.db.Keel(ctx)
-	if _, err := keel.Exec(ctx, db, admitPruneSQL, pruneSetting); err != nil {
-		return 0, fmt.Errorf("admit the AI audit prune: %w", err)
-	}
-
 	e := aiauditdb.AIAuditEvents
 	doomed := aiauditdb.AIAuditEvents.As("doomed")
 	deleted, err := e.AllTenants().

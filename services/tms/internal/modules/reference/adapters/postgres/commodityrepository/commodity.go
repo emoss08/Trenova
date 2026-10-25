@@ -182,7 +182,7 @@ func (r *repository) GetByIDs(
 	})
 }
 
-func commoditiesByIDs(ids []pulid.ID) *keel.Query[commodity.Commodity] {
+func commoditiesByIDs(ids []pulid.ID) *keel.Query[*commodity.Commodity] {
 	c := commoditydb.Commodities
 
 	return c.Where(c.ID.In(ids...)).Load(c.HazardousMaterial()).Limit(len(ids))

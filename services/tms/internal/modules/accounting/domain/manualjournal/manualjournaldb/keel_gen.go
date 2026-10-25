@@ -64,7 +64,7 @@ var linesRef = keel.Ref{Table: &linesTable}
 
 // LinesTable is the table of manualjournal.Line.
 type LinesTable struct {
-	keel.Handle[manualjournal.Line]
+	keel.Handle[*manualjournal.Line]
 	ID                     keelkinds.PulidIDCol
 	OrganizationID         keelkinds.PulidIDCol
 	BusinessUnitID         keelkinds.PulidIDCol
@@ -82,7 +82,7 @@ type LinesTable struct {
 
 // Lines references the manual_journal_request_lines table.
 var Lines = &LinesTable{
-	Handle:                 keel.Handle[manualjournal.Line]{Ref: &linesRef},
+	Handle:                 keel.Handle[*manualjournal.Line]{Ref: &linesRef},
 	ID:                     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &linesRef, Index: 0}}},
 	OrganizationID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &linesRef, Index: 1}}},
 	BusinessUnitID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &linesRef, Index: 2}}},
@@ -101,7 +101,7 @@ var Lines = &LinesTable{
 // BuildLines builds the handle of manual_journal_request_lines for ref. Generated relation and alias methods call it.
 func BuildLines(r *keel.Ref) *LinesTable {
 	return &LinesTable{
-		Handle:                 keel.Handle[manualjournal.Line]{Ref: r},
+		Handle:                 keel.Handle[*manualjournal.Line]{Ref: r},
 		ID:                     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		OrganizationID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		BusinessUnitID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -285,7 +285,7 @@ var requestsRef = keel.Ref{Table: &requestsTable}
 
 // RequestsTable is the table of manualjournal.Request.
 type RequestsTable struct {
-	keel.Handle[manualjournal.Request]
+	keel.Handle[*manualjournal.Request]
 	ID                      keelkinds.PulidIDCol
 	OrganizationID          keelkinds.PulidIDCol
 	BusinessUnitID          keelkinds.PulidIDCol
@@ -318,7 +318,7 @@ type RequestsTable struct {
 
 // Requests references the manual_journal_requests table.
 var Requests = &RequestsTable{
-	Handle:                  keel.Handle[manualjournal.Request]{Ref: &requestsRef},
+	Handle:                  keel.Handle[*manualjournal.Request]{Ref: &requestsRef},
 	ID:                      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &requestsRef, Index: 0}}},
 	OrganizationID:          keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &requestsRef, Index: 1}}},
 	BusinessUnitID:          keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &requestsRef, Index: 2}}},
@@ -352,7 +352,7 @@ var Requests = &RequestsTable{
 // BuildRequests builds the handle of manual_journal_requests for ref. Generated relation and alias methods call it.
 func BuildRequests(r *keel.Ref) *RequestsTable {
 	return &RequestsTable{
-		Handle:                  keel.Handle[manualjournal.Request]{Ref: r},
+		Handle:                  keel.Handle[*manualjournal.Request]{Ref: r},
 		ID:                      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		OrganizationID:          keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		BusinessUnitID:          keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},

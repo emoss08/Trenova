@@ -196,7 +196,7 @@ func (r *agreementRepository) load(ctx context.Context, id pulid.ID) (*factoring
 	return entity, nil
 }
 
-func withChildren() *keel.Query[factoring.Agreement] {
+func withChildren() *keel.Query[*factoring.Agreement] {
 	a := factoringdb.Agreements
 	tiers := a.FeeTiers()
 

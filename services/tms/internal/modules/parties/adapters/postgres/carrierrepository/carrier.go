@@ -75,7 +75,7 @@ func (r *repository) List(
 				carrierdb.Carriers.Query(),
 				&listquery.Request[carrier.Carrier]{
 					Filter: req.Filter,
-					Shape: func(q *keel.Query[carrier.Carrier]) *keel.Query[carrier.Carrier] {
+					Shape: func(q *keel.Query[*carrier.Carrier]) *keel.Query[*carrier.Carrier] {
 						return q.Load(carrierLoads(req.CarrierFilterOptions)...)
 					},
 				},
@@ -106,7 +106,7 @@ func (r *repository) ListConnection(
 					Filter:  req.Filter,
 					Cursor:  req.Cursor,
 					Columns: req.CarrierColumns,
-					Shape: func(q *keel.Query[carrier.Carrier]) *keel.Query[carrier.Carrier] {
+					Shape: func(q *keel.Query[*carrier.Carrier]) *keel.Query[*carrier.Carrier] {
 						return q.Load(carrierLoads(req.CarrierFilterOptions)...)
 					},
 				},

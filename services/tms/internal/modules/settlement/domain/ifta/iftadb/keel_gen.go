@@ -67,7 +67,7 @@ var jurisdictionsRef = keel.Ref{Table: &jurisdictionsTable}
 
 // JurisdictionsTable is the table of ifta.Jurisdiction.
 type JurisdictionsTable struct {
-	keel.Handle[ifta.Jurisdiction]
+	keel.Handle[*ifta.Jurisdiction]
 	ID           keelkinds.PulidIDCol
 	CountryCode  keel.StringCol
 	Code         keel.StringCol
@@ -83,7 +83,7 @@ type JurisdictionsTable struct {
 
 // Jurisdictions references the ifta_jurisdictions table.
 var Jurisdictions = &JurisdictionsTable{
-	Handle:       keel.Handle[ifta.Jurisdiction]{Ref: &jurisdictionsRef},
+	Handle:       keel.Handle[*ifta.Jurisdiction]{Ref: &jurisdictionsRef},
 	ID:           keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &jurisdictionsRef, Index: 0}}},
 	CountryCode:  keel.StringCol{Col: keel.Col{Ref: &jurisdictionsRef, Index: 1}},
 	Code:         keel.StringCol{Col: keel.Col{Ref: &jurisdictionsRef, Index: 2}},
@@ -100,7 +100,7 @@ var Jurisdictions = &JurisdictionsTable{
 // BuildJurisdictions builds the handle of ifta_jurisdictions for ref. Generated relation and alias methods call it.
 func BuildJurisdictions(r *keel.Ref) *JurisdictionsTable {
 	return &JurisdictionsTable{
-		Handle:       keel.Handle[ifta.Jurisdiction]{Ref: r},
+		Handle:       keel.Handle[*ifta.Jurisdiction]{Ref: r},
 		ID:           keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		CountryCode:  keel.StringCol{Col: keel.Col{Ref: r, Index: 1}},
 		Code:         keel.StringCol{Col: keel.Col{Ref: r, Index: 2}},
@@ -270,7 +270,7 @@ var jurisdictionMileageEntriesRef = keel.Ref{Table: &jurisdictionMileageEntriesT
 
 // JurisdictionMileageEntriesTable is the table of ifta.JurisdictionMileageEntry.
 type JurisdictionMileageEntriesTable struct {
-	keel.Handle[ifta.JurisdictionMileageEntry]
+	keel.Handle[*ifta.JurisdictionMileageEntry]
 	ID             keelkinds.PulidIDCol
 	BusinessUnitID keelkinds.PulidIDCol
 	OrganizationID keelkinds.PulidIDCol
@@ -292,7 +292,7 @@ type JurisdictionMileageEntriesTable struct {
 
 // JurisdictionMileageEntries references the ifta_jurisdiction_mileage_entries table.
 var JurisdictionMileageEntries = &JurisdictionMileageEntriesTable{
-	Handle:         keel.Handle[ifta.JurisdictionMileageEntry]{Ref: &jurisdictionMileageEntriesRef},
+	Handle:         keel.Handle[*ifta.JurisdictionMileageEntry]{Ref: &jurisdictionMileageEntriesRef},
 	ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &jurisdictionMileageEntriesRef, Index: 0}}},
 	BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &jurisdictionMileageEntriesRef, Index: 1}}},
 	OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &jurisdictionMileageEntriesRef, Index: 2}}},
@@ -315,7 +315,7 @@ var JurisdictionMileageEntries = &JurisdictionMileageEntriesTable{
 // BuildJurisdictionMileageEntries builds the handle of ifta_jurisdiction_mileage_entries for ref. Generated relation and alias methods call it.
 func BuildJurisdictionMileageEntries(r *keel.Ref) *JurisdictionMileageEntriesTable {
 	return &JurisdictionMileageEntriesTable{
-		Handle:         keel.Handle[ifta.JurisdictionMileageEntry]{Ref: r},
+		Handle:         keel.Handle[*ifta.JurisdictionMileageEntry]{Ref: r},
 		ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -560,7 +560,7 @@ var returnsRef = keel.Ref{Table: &returnsTable}
 
 // ReturnsTable is the table of ifta.Return.
 type ReturnsTable struct {
-	keel.Handle[ifta.Return]
+	keel.Handle[*ifta.Return]
 	ID                    keelkinds.PulidIDCol
 	BusinessUnitID        keelkinds.PulidIDCol
 	OrganizationID        keelkinds.PulidIDCol
@@ -603,7 +603,7 @@ type ReturnsTable struct {
 
 // Returns references the ifta_returns table.
 var Returns = &ReturnsTable{
-	Handle:                keel.Handle[ifta.Return]{Ref: &returnsRef},
+	Handle:                keel.Handle[*ifta.Return]{Ref: &returnsRef},
 	ID:                    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &returnsRef, Index: 0}}},
 	BusinessUnitID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &returnsRef, Index: 1}}},
 	OrganizationID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &returnsRef, Index: 2}}},
@@ -647,7 +647,7 @@ var Returns = &ReturnsTable{
 // BuildReturns builds the handle of ifta_returns for ref. Generated relation and alias methods call it.
 func BuildReturns(r *keel.Ref) *ReturnsTable {
 	return &ReturnsTable{
-		Handle:                keel.Handle[ifta.Return]{Ref: r},
+		Handle:                keel.Handle[*ifta.Return]{Ref: r},
 		ID:                    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -1015,7 +1015,7 @@ var returnLinesRef = keel.Ref{Table: &returnLinesTable}
 
 // ReturnLinesTable is the table of ifta.ReturnLine.
 type ReturnLinesTable struct {
-	keel.Handle[ifta.ReturnLine]
+	keel.Handle[*ifta.ReturnLine]
 	ID                     keelkinds.PulidIDCol
 	BusinessUnitID         keelkinds.PulidIDCol
 	OrganizationID         keelkinds.PulidIDCol
@@ -1047,7 +1047,7 @@ type ReturnLinesTable struct {
 
 // ReturnLines references the ifta_return_lines table.
 var ReturnLines = &ReturnLinesTable{
-	Handle:                 keel.Handle[ifta.ReturnLine]{Ref: &returnLinesRef},
+	Handle:                 keel.Handle[*ifta.ReturnLine]{Ref: &returnLinesRef},
 	ID:                     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &returnLinesRef, Index: 0}}},
 	BusinessUnitID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &returnLinesRef, Index: 1}}},
 	OrganizationID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &returnLinesRef, Index: 2}}},
@@ -1080,7 +1080,7 @@ var ReturnLines = &ReturnLinesTable{
 // BuildReturnLines builds the handle of ifta_return_lines for ref. Generated relation and alias methods call it.
 func BuildReturnLines(r *keel.Ref) *ReturnLinesTable {
 	return &ReturnLinesTable{
-		Handle:                 keel.Handle[ifta.ReturnLine]{Ref: r},
+		Handle:                 keel.Handle[*ifta.ReturnLine]{Ref: r},
 		ID:                     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -1319,7 +1319,7 @@ var taxRatesRef = keel.Ref{Table: &taxRatesTable}
 
 // TaxRatesTable is the table of ifta.TaxRate.
 type TaxRatesTable struct {
-	keel.Handle[ifta.TaxRate]
+	keel.Handle[*ifta.TaxRate]
 	ID                     keelkinds.PulidIDCol
 	JurisdictionID         keelkinds.PulidIDCol
 	Year                   keel.Int64Col
@@ -1337,7 +1337,7 @@ type TaxRatesTable struct {
 
 // TaxRates references the ifta_tax_rates table.
 var TaxRates = &TaxRatesTable{
-	Handle:                 keel.Handle[ifta.TaxRate]{Ref: &taxRatesRef},
+	Handle:                 keel.Handle[*ifta.TaxRate]{Ref: &taxRatesRef},
 	ID:                     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &taxRatesRef, Index: 0}}},
 	JurisdictionID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &taxRatesRef, Index: 1}}},
 	Year:                   keel.Int64Col{Col: keel.Col{Ref: &taxRatesRef, Index: 2}},
@@ -1356,7 +1356,7 @@ var TaxRates = &TaxRatesTable{
 // BuildTaxRates builds the handle of ifta_tax_rates for ref. Generated relation and alias methods call it.
 func BuildTaxRates(r *keel.Ref) *TaxRatesTable {
 	return &TaxRatesTable{
-		Handle:                 keel.Handle[ifta.TaxRate]{Ref: r},
+		Handle:                 keel.Handle[*ifta.TaxRate]{Ref: r},
 		ID:                     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		JurisdictionID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		Year:                   keel.Int64Col{Col: keel.Col{Ref: r, Index: 2}},

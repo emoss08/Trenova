@@ -94,8 +94,8 @@ func TestThreadPageQueryContinuesBelowTheCursorInRailOrder(t *testing.T) {
 
 	sql, args := keeltest.Render(t, threadPageQuery(req, threadWindow{after: after, limit: 50}))
 
-	assert.Contains(t, sql, threadPosition+" < ROW($5, $6, $7)", sql)
-	assert.Equal(t, []any{false, int64(42), "athr_01J00000000000000000000000"}, args[4:7])
+	assert.Contains(t, sql, threadPosition+" < ROW($4, $5, $6)", sql)
+	assert.Equal(t, []any{false, int64(42), "athr_01J00000000000000000000000"}, args[3:6])
 	assert.Contains(
 		t,
 		sql,
@@ -103,7 +103,7 @@ func TestThreadPageQueryContinuesBelowTheCursorInRailOrder(t *testing.T) {
 		sql,
 	)
 	assert.Contains(t, sql, "LIMIT 51", "one more than the page says whether another follows")
-	assert.Contains(t, sql, `at_."origin" <> ALL($4)`, "unlisted conversations stay off the rail")
+	assert.Contains(t, sql, `at_."origin" NOT IN ('Ask', 'Import', 'Formula')`, "unlisted conversations stay off the rail")
 }
 
 func TestThreadPageQueryReadsTheFirstPageWithoutACursor(t *testing.T) {
@@ -115,7 +115,7 @@ func TestThreadPageQueryReadsTheFirstPageWithoutACursor(t *testing.T) {
 	sql, _ := keeltest.Render(t, threadPageQuery(req, threadWindow{limit: 100}))
 
 	assert.NotContains(t, sql, ") < ROW(", sql)
-	assert.NotContains(t, sql, `"origin"`+" <> ALL", sql)
+	assert.NotContains(t, sql, `"origin" NOT IN`, sql)
 	assert.Contains(t, sql, "LIMIT 101", sql)
 }
 
@@ -139,17 +139,17 @@ func TestThreadPageQueryReadsOneRangeBetweenTwoBoundaries(t *testing.T) {
 
 	sql, args := keeltest.Render(t, threadPageQuery(req, window))
 
-	assert.Contains(t, sql, threadPosition+" < ROW($5, $6, $7)", sql)
+	assert.Contains(t, sql, threadPosition+" < ROW($4, $5, $6)", sql)
 	assert.Contains(
 		t,
 		sql,
-		threadPosition+" >= ROW($8, $9, $10)",
+		threadPosition+" >= ROW($7, $8, $9)",
 		"the boundary row's place is in the range, whichever row now sits there",
 	)
 	assert.Equal(t, []any{
 		true, int64(900), "athr_01J00000000000000000000009",
 		false, int64(42), "athr_01J00000000000000000000001",
-	}, args[4:10])
+	}, args[3:9])
 	assert.Contains(t, sql, "LIMIT 1001", sql)
 }
 
@@ -205,10 +205,10 @@ func TestThreadPageQueryReadsOneShelf(t *testing.T) {
 
 	sql, args := keeltest.Render(t, threadPageQuery(req, threadWindow{limit: 50}))
 
-	assert.Contains(t, sql, `at_."pinned" = $5`, sql)
-	assert.Contains(t, sql, threadTouched+" >= $6", sql)
-	assert.Contains(t, sql, threadTouched+" < $7", sql)
-	assert.Equal(t, []any{false, int64(1_000), int64(2_000)}, args[4:7])
+	assert.Contains(t, sql, `at_."pinned" = $4`, sql)
+	assert.Contains(t, sql, threadTouched+" >= $5", sql)
+	assert.Contains(t, sql, threadTouched+" < $6", sql)
+	assert.Equal(t, []any{false, int64(1_000), int64(2_000)}, args[3:6])
 }
 
 func TestThreadPageQueryReadsOnlyPinnedConversations(t *testing.T) {
@@ -220,8 +220,8 @@ func TestThreadPageQueryReadsOnlyPinnedConversations(t *testing.T) {
 
 	sql, args := keeltest.Render(t, threadPageQuery(req, threadWindow{limit: 50}))
 
-	assert.Contains(t, sql, `at_."pinned" = $5`, sql)
-	assert.Equal(t, true, args[4])
+	assert.Contains(t, sql, `at_."pinned" = $4`, sql)
+	assert.Equal(t, true, args[3])
 	assert.NotContains(t, sql, threadTouched+" >=", sql)
 	assert.NotContains(t, sql, threadTouched+" <", sql)
 }
@@ -236,8 +236,8 @@ func TestThreadPageQueryLeavesAnOpenEndedShelfUnbounded(t *testing.T) {
 
 	assert.NotContains(t, sql, `at_."pinned" =`, sql)
 	assert.NotContains(t, sql, threadTouched+" >=", sql)
-	assert.Contains(t, sql, threadTouched+" < $5", sql)
-	assert.Equal(t, int64(2_000), args[4])
+	assert.Contains(t, sql, threadTouched+" < $4", sql)
+	assert.Equal(t, int64(2_000), args[3])
 }
 
 func TestThreadShelfCountQueryBandsEveryConversationOnce(t *testing.T) {
@@ -250,15 +250,15 @@ func TestThreadShelfCountQueryBandsEveryConversationOnce(t *testing.T) {
 
 	sql, args := keeltest.Render(t, threadShelfCountQuery(req))
 
-	band := `CASE WHEN at_."pinned" THEN $5::bigint` +
-		" WHEN (" + threadTouched + " >= $6) THEN $7::bigint" +
-		" WHEN (" + threadTouched + " >= $8) THEN $9::bigint" +
-		" WHEN (" + threadTouched + " >= $10) THEN $11::bigint" +
-		" ELSE $12::bigint END"
+	band := `CASE WHEN at_."pinned" THEN $4::bigint` +
+		" WHEN (" + threadTouched + " >= $5) THEN $6::bigint" +
+		" WHEN (" + threadTouched + " >= $7) THEN $8::bigint" +
+		" WHEN (" + threadTouched + " >= $9) THEN $10::bigint" +
+		" ELSE $11::bigint END"
 	assert.Contains(t, sql, "SELECT "+band+", count(*)", sql)
-	assert.Contains(t, sql, "GROUP BY "+band, sql)
+	assert.Contains(t, sql, ") GROUP BY 1", sql)
 	assert.Equal(t, []any{
 		-1, int64(3_000), 0, int64(2_000), 1, int64(1_000), 2, 3,
-	}, args[4:12])
-	assert.Contains(t, sql, `at_."origin" <> ALL($4)`, "unlisted conversations are not counted")
+	}, args[3:11])
+	assert.Contains(t, sql, `at_."origin" NOT IN ('Ask', 'Import', 'Formula')`, "unlisted conversations are not counted")
 }

@@ -101,7 +101,7 @@ func (g *generator) mdStamp(id pulid.ID, created int64) stamp {
 func mdTaken[T any](
 	ctx context.Context,
 	db *keel.DB,
-	h keel.Handle[T],
+	h keel.Handle[*T],
 	column keel.Expr,
 ) (map[string]struct{}, error) {
 	values, err := keel.Into[string](ctx, db, h.Pick(keel.DynFunc("lower", column).Coalesce("")))

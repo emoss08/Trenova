@@ -73,7 +73,7 @@ var eventsRef = keel.Ref{Table: &eventsTable}
 
 // EventsTable is the table of shipmentevent.Event.
 type EventsTable struct {
-	keel.Handle[shipmentevent.Event]
+	keel.Handle[*shipmentevent.Event]
 	ID             keelkinds.PulidIDCol
 	BusinessUnitID keelkinds.PulidIDCol
 	OrganizationID keelkinds.PulidIDCol
@@ -96,7 +96,7 @@ type EventsTable struct {
 
 // Events references the shipment_events table.
 var Events = &EventsTable{
-	Handle:         keel.Handle[shipmentevent.Event]{Ref: &eventsRef},
+	Handle:         keel.Handle[*shipmentevent.Event]{Ref: &eventsRef},
 	ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &eventsRef, Index: 0}}},
 	BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &eventsRef, Index: 1}}},
 	OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &eventsRef, Index: 2}}},
@@ -120,7 +120,7 @@ var Events = &EventsTable{
 // BuildEvents builds the handle of shipment_events for ref. Generated relation and alias methods call it.
 func BuildEvents(r *keel.Ref) *EventsTable {
 	return &EventsTable{
-		Handle:         keel.Handle[shipmentevent.Event]{Ref: r},
+		Handle:         keel.Handle[*shipmentevent.Event]{Ref: r},
 		ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},

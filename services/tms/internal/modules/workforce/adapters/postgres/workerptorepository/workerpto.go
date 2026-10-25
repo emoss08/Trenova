@@ -4,8 +4,8 @@ import (
 	"context"
 	"fmt"
 	"strings"
+	"time"
 
-	"github.com/bytedance/sonic"
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
@@ -20,56 +20,19 @@ import (
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
-	"github.com/jackc/pgx/v5"
 	"github.com/shopspring/decimal"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
 
-const chartDateSeriesSQL = `
-SELECT to_char(gs.day, 'YYYY-MM-DD')
-FROM generate_series(
-	date_trunc('day', to_timestamp($1::bigint) AT TIME ZONE $2),
-	date_trunc('day', to_timestamp($3::bigint) AT TIME ZONE $2),
-	interval '1 day'
-) AS gs(day)
-ORDER BY gs.day ASC`
-
-const chartDataSQL = `
-SELECT to_char(day_series.day, 'YYYY-MM-DD') AS date,
-	wpto.type::text AS type,
-	COUNT(DISTINCT wpto.worker_id)::int AS count,
-	json_agg(DISTINCT jsonb_build_object(
-		'id', wrk.id,
-		'firstName', wrk.first_name,
-		'lastName', wrk.last_name,
-		'ptoType', wpto.type::text
-	))::text AS workers
-FROM worker_pto wpto
-INNER JOIN workers wrk
-	ON wpto.worker_id = wrk.id
-	AND wpto.organization_id = wrk.organization_id
-	AND wpto.business_unit_id = wrk.business_unit_id
-CROSS JOIN LATERAL generate_series(
-	GREATEST(
-		date_trunc('day', to_timestamp(wpto.start_date) AT TIME ZONE $1),
-		date_trunc('day', to_timestamp($2::bigint) AT TIME ZONE $1)
-	),
-	LEAST(
-		date_trunc('day', to_timestamp(wpto.end_date) AT TIME ZONE $1),
-		date_trunc('day', to_timestamp($3::bigint) AT TIME ZONE $1)
-	),
-	interval '1 day'
-) AS day_series(day)
-WHERE wpto.organization_id = $4
-	AND wpto.business_unit_id = $5
-	AND wpto.status = 'Approved'
-	AND wpto.end_date >= $6
-	AND wpto.start_date <= $7
-	AND ($8 = '' OR wpto.type::text = $8)
-	AND ($9 = '' OR wpto.worker_id = $9)
-GROUP BY date, wpto.type
-ORDER BY date, wpto.type`
+const (
+	chartDateLayout   = "2006-01-02"
+	chartDayFormat    = "YYYY-MM-DD"
+	chartDaySeries    = "day_series"
+	chartDaySeriesDay = "day"
+	chartTruncUnit    = "day"
+	chartDayStep      = "1 day"
+)
 
 var ptoErrors = dberror.Mapping{Entity: "WorkerPTO"}
 
@@ -142,7 +105,7 @@ func (r *repository) List(
 				&listquery.Request[worker.WorkerPTO]{
 					Filter: req.Filter,
 					Cursor: req.Cursor,
-					Shape: func(q *keel.Query[worker.WorkerPTO]) *keel.Query[worker.WorkerPTO] {
+					Shape: func(q *keel.Query[*worker.WorkerPTO]) *keel.Query[*worker.WorkerPTO] {
 						return q.Load(listquery.When(req.IncludeWorker, p.Worker())...)
 					},
 				})
@@ -527,7 +490,7 @@ func (r *repository) ListUpcoming(
 				&listquery.Request[worker.WorkerPTO]{
 					Filter: upcomingPTOCursorFilter(req),
 					Cursor: req.Cursor,
-					Shape: func(q *keel.Query[worker.WorkerPTO]) *keel.Query[worker.WorkerPTO] {
+					Shape: func(q *keel.Query[*worker.WorkerPTO]) *keel.Query[*worker.WorkerPTO] {
 						return q.Load(p.Worker())
 					},
 				},
@@ -542,11 +505,17 @@ func (r *repository) ListUpcoming(
 	)
 }
 
-type ptoAggregateRow struct {
-	Date    string
-	Type    string
+type ptoDayRow struct {
+	Date      string
+	Type      worker.PTOType
+	WorkerID  pulid.ID
+	FirstName string
+	LastName  string
+}
+
+type ptoAggregate struct {
 	Count   int
-	Workers string
+	Workers []workerports.PTOChartWorker
 }
 
 type chartFieldSetter struct {
@@ -607,62 +576,134 @@ func (r *repository) GetChartData(
 				return nil, err
 			}
 
-			db := r.db.Keel(ctx)
-			dateSeries, err := keel.QueryAll(ctx, db, pgx.RowTo[string], chartDateSeriesSQL,
-				req.StartDateFrom, timezone, req.StartDateTo)
+			loc, err := time.LoadLocation(timezone)
 			if err != nil {
-				log.Error("failed to generate date series", zap.Error(err))
-				return nil, err
+				log.Error("failed to load chart timezone", zap.Error(err))
+				return nil, fmt.Errorf("load timezone %q: %w", timezone, err)
 			}
 
-			ptoData, err := keel.QueryAll(
+			ptoData, err := keel.Into[ptoDayRow](
 				ctx,
-				db,
-				pgx.RowToStructByPos[ptoAggregateRow],
-				chartDataSQL,
-				timezone,
-				req.StartDateFrom,
-				req.StartDateTo,
-				req.Filter.TenantInfo.OrgID.String(),
-				req.Filter.TenantInfo.BuID.String(),
-				fromDayStartUnix,
-				toDayEndUnix,
-				ptoType,
-				workerID,
+				r.db.Keel(ctx),
+				chartDaysQuery(&chartDaysParams{
+					timezone:     timezone,
+					from:         req.StartDateFrom,
+					to:           req.StartDateTo,
+					overlapStart: fromDayStartUnix,
+					overlapEnd:   toDayEndUnix,
+					ptoType:      ptoType,
+					workerID:     workerID,
+				}),
 			)
 			if err != nil {
 				log.Error("failed to get PTO chart data", zap.Error(err))
 				return nil, err
 			}
 
-			return r.buildPTOChartDataQuery(dateSeries, r.aggregatePTOData(ptoData), log), nil
+			return r.buildPTOChartDataQuery(
+				chartDates(req.StartDateFrom, req.StartDateTo, loc),
+				r.aggregatePTOData(ptoData),
+			), nil
 		},
 	)
 }
 
-func chartFilters(req *workerports.PTOChartRequest) (ptoType, workerID string, err error) {
+type chartDaysParams struct {
+	timezone     string
+	from         int64
+	to           int64
+	overlapStart int64
+	overlapEnd   int64
+	ptoType      worker.PTOType
+	workerID     pulid.ID
+}
+
+func chartDaysQuery(p *chartDaysParams) *keel.Query[*worker.WorkerPTO] {
+	pto := workerdb.WorkerPTOs
+	wrk := workerdb.Workers
+	localDay := func(ts any) keel.DynExpr {
+		return keel.DynFunc(
+			"date_trunc",
+			keel.DynConst(chartTruncUnit),
+			keel.DynFunc("timezone", p.timezone, keel.DynFunc("to_timestamp", ts)),
+		)
+	}
+	series := keel.Rows(
+		chartDaySeries,
+		[]string{chartDaySeriesDay},
+		keel.DynFunc(
+			"generate_series",
+			keel.DynFunc(
+				"greatest",
+				localDay(pto.StartDate),
+				localDay(keel.DynLit(p.from).Cast(keel.TypeInt64)),
+			),
+			keel.DynFunc(
+				"least",
+				localDay(pto.EndDate),
+				localDay(keel.DynLit(p.to).Cast(keel.TypeInt64)),
+			),
+			keel.DynConst(chartDayStep),
+		),
+	)
+	day := keel.DynFunc("to_char", series.Col(chartDaySeriesDay), chartDayFormat)
+
+	return pto.
+		Join(wrk, wrk.ID.EqCol(pto.WorkerID)).
+		JoinLateral(series).
+		DistinctOn(day, pto.Type, pto.WorkerID).
+		Pick(day, pto.Type, pto.WorkerID, wrk.FirstName, wrk.LastName).
+		Where(
+			pto.Status.Eq(worker.PTOStatusApproved),
+			pto.EndDate.Gte(p.overlapStart),
+			pto.StartDate.Lte(p.overlapEnd),
+			keel.When(p.ptoType != "", pto.Type.Eq(p.ptoType)),
+			keel.When(!p.workerID.IsNil(), pto.WorkerID.Eq(p.workerID)),
+		).
+		Order(day.Asc(), pto.Type.Asc(), pto.WorkerID.Asc())
+}
+
+func chartDates(from, to int64, loc *time.Location) []string {
+	start := calendarDay(from, loc)
+	end := calendarDay(to, loc)
+	dates := make([]string, 0)
+	for day := start; !day.After(end); day = day.AddDate(0, 0, 1) {
+		dates = append(dates, day.Format(chartDateLayout))
+	}
+
+	return dates
+}
+
+func calendarDay(ts int64, loc *time.Location) time.Time {
+	local := time.Unix(ts, 0).In(loc)
+	return time.Date(local.Year(), local.Month(), local.Day(), 0, 0, 0, 0, time.UTC)
+}
+
+func chartFilters(
+	req *workerports.PTOChartRequest,
+) (ptoType worker.PTOType, workerID pulid.ID, err error) {
 	if req.Type != "" && !strings.EqualFold(req.Type, "all") {
 		parsed, parseErr := worker.PTOTypeFromString(req.Type)
 		if parseErr != nil {
-			return "", "", errortypes.NewValidationError(
+			return "", pulid.Nil, errortypes.NewValidationError(
 				"type",
 				errortypes.ErrInvalid,
 				"type must be one of: all, Personal, Vacation, Sick, Holiday, Bereavement, Maternity, Paternity",
 			)
 		}
-		ptoType = parsed.String()
+		ptoType = parsed
 	}
 
 	if req.WorkerID != "" {
 		parsed, parseErr := pulid.MustParse(req.WorkerID)
 		if parseErr != nil {
-			return "", "", errortypes.NewValidationError(
+			return "", pulid.Nil, errortypes.NewValidationError(
 				"workerId",
 				errortypes.ErrInvalidFormat,
 				"workerId must be a valid ID",
 			)
 		}
-		workerID = parsed.String()
+		workerID = parsed
 	}
 
 	return ptoType, workerID, nil
@@ -684,14 +725,27 @@ func (r *repository) calculateChartDateBoundaries(
 }
 
 func (r *repository) aggregatePTOData(
-	ptoData []ptoAggregateRow,
-) map[string]map[string]ptoAggregateRow {
-	ptoMap := make(map[string]map[string]ptoAggregateRow)
-	for _, row := range ptoData {
-		if ptoMap[row.Date] == nil {
-			ptoMap[row.Date] = make(map[string]ptoAggregateRow)
+	rows []ptoDayRow,
+) map[string]map[worker.PTOType]*ptoAggregate {
+	ptoMap := make(map[string]map[worker.PTOType]*ptoAggregate)
+	for _, row := range rows {
+		byType := ptoMap[row.Date]
+		if byType == nil {
+			byType = make(map[worker.PTOType]*ptoAggregate)
+			ptoMap[row.Date] = byType
 		}
-		ptoMap[row.Date][row.Type] = row
+		agg := byType[row.Type]
+		if agg == nil {
+			agg = &ptoAggregate{}
+			byType[row.Type] = agg
+		}
+		agg.Count++
+		agg.Workers = append(agg.Workers, workerports.PTOChartWorker{
+			ID:        row.WorkerID.String(),
+			FirstName: row.FirstName,
+			LastName:  row.LastName,
+			PTOType:   row.Type.String(),
+		})
 	}
 
 	return ptoMap
@@ -699,8 +753,7 @@ func (r *repository) aggregatePTOData(
 
 func (r *repository) buildPTOChartDataQuery(
 	dateSeries []string,
-	ptoMap map[string]map[string]ptoAggregateRow,
-	log *zap.Logger,
+	ptoMap map[string]map[worker.PTOType]*ptoAggregate,
 ) []*workerports.PTOChartDataPoint {
 	result := make([]*workerports.PTOChartDataPoint, 0, len(dateSeries))
 	for _, date := range dateSeries {
@@ -708,47 +761,19 @@ func (r *repository) buildPTOChartDataQuery(
 			Date:    date,
 			Workers: make(map[string][]workerports.PTOChartWorker),
 		}
-		for _, ptoType := range []worker.PTOType{
-			worker.PTOTypeVacation,
-			worker.PTOTypeSick,
-			worker.PTOTypeHoliday,
-			worker.PTOTypeBereavement,
-			worker.PTOTypeMaternity,
-			worker.PTOTypePaternity,
-			worker.PTOTypePersonal,
-		} {
+		for ptoType := range chartTypeSetters {
 			dataPoint.Workers[ptoType.String()] = []workerports.PTOChartWorker{}
 		}
 
-		if dayData, exists := ptoMap[date]; exists {
-			for rawType, row := range dayData {
-				var workers []workerports.PTOChartWorker
-				if err := sonic.UnmarshalString(row.Workers, &workers); err != nil {
-					log.Error(
-						"failed to parse worker details",
-						zap.Error(err),
-						zap.String("date", date),
-						zap.String("type", rawType),
-					)
-
-					workers = []workerports.PTOChartWorker{}
-				}
-
-				ptoType, err := worker.PTOTypeFromString(rawType)
-				if err != nil {
-					log.Warn("unsupported PTO type in chart data", zap.String("type", rawType))
-					continue
-				}
-
-				setter, ok := chartTypeSetters[ptoType]
-				if !ok {
-					log.Warn("missing chart type setter", zap.String("type", rawType))
-					continue
-				}
-
-				setter.countSetter(dataPoint, row.Count)
-				dataPoint.Workers[setter.workerKey] = workers
+		for ptoType, agg := range ptoMap[date] {
+			setter, ok := chartTypeSetters[ptoType]
+			if !ok {
+				r.l.Warn("missing chart type setter", zap.String("type", ptoType.String()))
+				continue
 			}
+
+			setter.countSetter(dataPoint, agg.Count)
+			dataPoint.Workers[setter.workerKey] = agg.Workers
 		}
 
 		result = append(result, dataPoint)

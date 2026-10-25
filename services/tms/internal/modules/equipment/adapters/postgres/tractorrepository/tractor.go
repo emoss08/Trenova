@@ -89,7 +89,7 @@ func (r *repository) List(
 							equipmentcontinuity.EquipmentTypeTractor,
 						),
 					},
-					Shape: func(q *keel.Query[tractor.Tractor]) *keel.Query[tractor.Tractor] {
+					Shape: func(q *keel.Query[*tractor.Tractor]) *keel.Query[*tractor.Tractor] {
 						return withLastKnownLocation(q.Load(loads...), &req.TractorRelationIncludes)
 					},
 				},
@@ -241,7 +241,7 @@ func (r *repository) SelectOptions(
 
 func tractorQuery(
 	includes *tractorports.TractorRelationIncludes,
-) (*keel.Query[tractor.Tractor], error) {
+) (*keel.Query[*tractor.Tractor], error) {
 	loads, err := tractorLoads(includes)
 	if err != nil {
 		return nil, err
@@ -331,9 +331,9 @@ func tractorLoads(includes *tractorports.TractorRelationIncludes) ([]keel.Loader
 const lastKnownLocationFilter = "lastKnownLocationId"
 
 func withLastKnownLocation(
-	q *keel.Query[tractor.Tractor],
+	q *keel.Query[*tractor.Tractor],
 	includes *tractorports.TractorRelationIncludes,
-) *keel.Query[tractor.Tractor] {
+) *keel.Query[*tractor.Tractor] {
 	if !includes.IncludeLastKnownLocation {
 		return q
 	}

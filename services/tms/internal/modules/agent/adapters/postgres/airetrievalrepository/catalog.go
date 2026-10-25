@@ -49,7 +49,7 @@ func catalogRefsMatch(refs []airetrieval.CatalogItemRef) keel.Pred {
 func catalogScope(
 	modelKey string,
 	corpus airetrieval.CatalogCorpus,
-) *keel.Query[airetrieval.CatalogEmbedding] {
+) *keel.Query[*airetrieval.CatalogEmbedding] {
 	c := airetrievaldb.CatalogEmbeddings
 
 	return c.Where(c.ModelKey.Eq(modelKey), c.Corpus.Eq(corpus))

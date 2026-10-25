@@ -99,8 +99,8 @@ func (r *disputeRepository) ListConnection(
 					Filter: req.Filter,
 					Cursor: req.Cursor,
 					Shape: func(
-						q *keel.Query[driversettlement.Dispute],
-					) *keel.Query[driversettlement.Dispute] {
+						q *keel.Query[*driversettlement.Dispute],
+					) *keel.Query[*driversettlement.Dispute] {
 						return q.Load(d.Worker(), d.Settlement(), d.ResolvedBy())
 					},
 				},

@@ -76,7 +76,7 @@ var hazmatSegregationRulesRef = keel.Ref{Table: &hazmatSegregationRulesTable}
 
 // HazmatSegregationRulesTable is the table of hazmatsegregationrule.HazmatSegregationRule.
 type HazmatSegregationRulesTable struct {
-	keel.Handle[hazmatsegregationrule.HazmatSegregationRule]
+	keel.Handle[*hazmatsegregationrule.HazmatSegregationRule]
 	ID               keelkinds.PulidIDCol
 	BusinessUnitID   keelkinds.PulidIDCol
 	OrganizationID   keelkinds.PulidIDCol
@@ -103,7 +103,7 @@ type HazmatSegregationRulesTable struct {
 
 // HazmatSegregationRules references the hazmat_segregation_rules table.
 var HazmatSegregationRules = &HazmatSegregationRulesTable{
-	Handle:           keel.Handle[hazmatsegregationrule.HazmatSegregationRule]{Ref: &hazmatSegregationRulesRef},
+	Handle:           keel.Handle[*hazmatsegregationrule.HazmatSegregationRule]{Ref: &hazmatSegregationRulesRef},
 	ID:               keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &hazmatSegregationRulesRef, Index: 0}}},
 	BusinessUnitID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &hazmatSegregationRulesRef, Index: 1}}},
 	OrganizationID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &hazmatSegregationRulesRef, Index: 2}}},
@@ -131,7 +131,7 @@ var HazmatSegregationRules = &HazmatSegregationRulesTable{
 // BuildHazmatSegregationRules builds the handle of hazmat_segregation_rules for ref. Generated relation and alias methods call it.
 func BuildHazmatSegregationRules(r *keel.Ref) *HazmatSegregationRulesTable {
 	return &HazmatSegregationRulesTable{
-		Handle:           keel.Handle[hazmatsegregationrule.HazmatSegregationRule]{Ref: r},
+		Handle:           keel.Handle[*hazmatsegregationrule.HazmatSegregationRule]{Ref: r},
 		ID:               keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},

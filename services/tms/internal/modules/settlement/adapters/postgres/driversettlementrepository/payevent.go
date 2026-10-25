@@ -74,8 +74,8 @@ func (r *payEventRepository) ListConnection(
 					Filter: req.Filter,
 					Cursor: req.Cursor,
 					Shape: func(
-						q *keel.Query[driversettlement.PayEvent],
-					) *keel.Query[driversettlement.PayEvent] {
+						q *keel.Query[*driversettlement.PayEvent],
+					) *keel.Query[*driversettlement.PayEvent] {
 						return q.Load(pe.Worker())
 					},
 				},

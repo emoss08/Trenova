@@ -33,5 +33,5 @@ func TestSelectOptionsQuery_OffersOnlyServedMatrices(t *testing.T) {
 	sql, _ := keeltest.Render(t, selectOptionsQuery().Limit(10))
 
 	assert.Contains(t, sql, `"published_version_number" > $`)
-	assert.Contains(t, sql, `"status" <> $`)
+	assert.Contains(t, sql, `"status" <> 'Inactive'`)
 }

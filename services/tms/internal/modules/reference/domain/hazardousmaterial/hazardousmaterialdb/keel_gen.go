@@ -76,7 +76,7 @@ var hazardousMaterialsRef = keel.Ref{Table: &hazardousMaterialsTable}
 
 // HazardousMaterialsTable is the table of hazardousmaterial.HazardousMaterial.
 type HazardousMaterialsTable struct {
-	keel.Handle[hazardousmaterial.HazardousMaterial]
+	keel.Handle[*hazardousmaterial.HazardousMaterial]
 	ID                          keelkinds.PulidIDCol
 	BusinessUnitID              keelkinds.PulidIDCol
 	OrganizationID              keelkinds.PulidIDCol
@@ -108,7 +108,7 @@ type HazardousMaterialsTable struct {
 
 // HazardousMaterials references the hazardous_materials table.
 var HazardousMaterials = &HazardousMaterialsTable{
-	Handle:                      keel.Handle[hazardousmaterial.HazardousMaterial]{Ref: &hazardousMaterialsRef},
+	Handle:                      keel.Handle[*hazardousmaterial.HazardousMaterial]{Ref: &hazardousMaterialsRef},
 	ID:                          keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &hazardousMaterialsRef, Index: 0}}},
 	BusinessUnitID:              keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &hazardousMaterialsRef, Index: 1}}},
 	OrganizationID:              keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &hazardousMaterialsRef, Index: 2}}},
@@ -141,7 +141,7 @@ var HazardousMaterials = &HazardousMaterialsTable{
 // BuildHazardousMaterials builds the handle of hazardous_materials for ref. Generated relation and alias methods call it.
 func BuildHazardousMaterials(r *keel.Ref) *HazardousMaterialsTable {
 	return &HazardousMaterialsTable{
-		Handle:                      keel.Handle[hazardousmaterial.HazardousMaterial]{Ref: r},
+		Handle:                      keel.Handle[*hazardousmaterial.HazardousMaterial]{Ref: r},
 		ID:                          keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID:              keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID:              keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},

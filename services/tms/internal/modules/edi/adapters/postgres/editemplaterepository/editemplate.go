@@ -153,7 +153,7 @@ func (r *repository) SelectTemplateOptions(
 
 func templateOptionsQuery(
 	req *ediports.EDITemplateSelectOptionsRequest,
-) *keel.Query[edi.EDITemplate] {
+) *keel.Query[*edi.EDITemplate] {
 	t := edidb.EDITemplates
 	filter := templateFilter{
 		transactionSet: req.TransactionSet,
@@ -784,7 +784,7 @@ func setLibraryStatus(
 	return libraryErrors.Map(err, version.ID.String())
 }
 
-func withContents(q *keel.Query[edi.EDITemplateVersion]) *keel.Query[edi.EDITemplateVersion] {
+func withContents(q *keel.Query[*edi.EDITemplateVersion]) *keel.Query[*edi.EDITemplateVersion] {
 	tv := edidb.EDITemplateVersions
 	seg := tv.Segments()
 	lib := tv.ScriptLibraries()
@@ -793,8 +793,8 @@ func withContents(q *keel.Query[edi.EDITemplateVersion]) *keel.Query[edi.EDITemp
 }
 
 func withDocumentTypeAndVersions(
-	q *keel.Query[edi.EDITemplate],
-) *keel.Query[edi.EDITemplate] {
+	q *keel.Query[*edi.EDITemplate],
+) *keel.Query[*edi.EDITemplate] {
 	t := edidb.EDITemplates
 	versions := t.Versions()
 

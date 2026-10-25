@@ -48,7 +48,7 @@ func listLoads() []keel.Loader {
 	return []keel.Loader{sf.ReasonCode(), sf.Shipment(), sf.Stop().Location().State()}
 }
 
-func detailQuery() *keel.Query[servicefailure.ServiceFailure] {
+func detailQuery() *keel.Query[*servicefailure.ServiceFailure] {
 	sf := servicefailuredb.ServiceFailures
 	return sf.Load(
 		sf.ReasonCode(),
@@ -95,8 +95,8 @@ func (r *repository) List(
 				&listquery.Request[servicefailure.ServiceFailure]{
 					Filter: req.Filter,
 					Shape: func(
-						q *keel.Query[servicefailure.ServiceFailure],
-					) *keel.Query[servicefailure.ServiceFailure] {
+						q *keel.Query[*servicefailure.ServiceFailure],
+					) *keel.Query[*servicefailure.ServiceFailure] {
 						return q.Load(listLoads()...)
 					},
 					Then: []keel.Order{sf.CreatedAt.Desc()},
@@ -134,8 +134,8 @@ func (r *repository) ListConnection(
 					Cursor:  req.Cursor,
 					Columns: req.ServiceFailureColumns,
 					Shape: func(
-						q *keel.Query[servicefailure.ServiceFailure],
-					) *keel.Query[servicefailure.ServiceFailure] {
+						q *keel.Query[*servicefailure.ServiceFailure],
+					) *keel.Query[*servicefailure.ServiceFailure] {
 						return q.Load(listLoads()...)
 					},
 				},

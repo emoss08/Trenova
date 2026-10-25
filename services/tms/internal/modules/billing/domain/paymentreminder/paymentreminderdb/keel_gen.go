@@ -60,7 +60,7 @@ var remindersRef = keel.Ref{Table: &remindersTable}
 
 // RemindersTable is the table of paymentreminder.Reminder.
 type RemindersTable struct {
-	keel.Handle[paymentreminder.Reminder]
+	keel.Handle[*paymentreminder.Reminder]
 	ID              keelkinds.PulidIDCol
 	OrganizationID  keelkinds.PulidIDCol
 	BusinessUnitID  keelkinds.PulidIDCol
@@ -78,7 +78,7 @@ type RemindersTable struct {
 
 // Reminders references the invoice_payment_reminders table.
 var Reminders = &RemindersTable{
-	Handle:          keel.Handle[paymentreminder.Reminder]{Ref: &remindersRef},
+	Handle:          keel.Handle[*paymentreminder.Reminder]{Ref: &remindersRef},
 	ID:              keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &remindersRef, Index: 0}}},
 	OrganizationID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &remindersRef, Index: 1}}},
 	BusinessUnitID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &remindersRef, Index: 2}}},
@@ -97,7 +97,7 @@ var Reminders = &RemindersTable{
 // BuildReminders builds the handle of invoice_payment_reminders for ref. Generated relation and alias methods call it.
 func BuildReminders(r *keel.Ref) *RemindersTable {
 	return &RemindersTable{
-		Handle:          keel.Handle[paymentreminder.Reminder]{Ref: r},
+		Handle:          keel.Handle[*paymentreminder.Reminder]{Ref: r},
 		ID:              keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		OrganizationID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		BusinessUnitID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},

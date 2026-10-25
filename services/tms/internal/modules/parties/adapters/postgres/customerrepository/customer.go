@@ -83,7 +83,7 @@ func (r *repository) List(
 				c.Query(),
 				&listquery.Request[customer.Customer]{
 					Filter: req.Filter,
-					Shape: func(q *keel.Query[customer.Customer]) *keel.Query[customer.Customer] {
+					Shape: func(q *keel.Query[*customer.Customer]) *keel.Query[*customer.Customer] {
 						return q.Load(customerLoads(req.CustomerFilterOptions)...)
 					},
 				},
@@ -115,7 +115,7 @@ func (r *repository) ListConnection(
 					Filter:  req.Filter,
 					Cursor:  req.Cursor,
 					Columns: req.CustomerColumns,
-					Shape: func(q *keel.Query[customer.Customer]) *keel.Query[customer.Customer] {
+					Shape: func(q *keel.Query[*customer.Customer]) *keel.Query[*customer.Customer] {
 						return q.Load(customerLoads(req.CustomerFilterOptions)...)
 					},
 				},

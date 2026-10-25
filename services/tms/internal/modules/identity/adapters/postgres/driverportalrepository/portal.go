@@ -410,7 +410,7 @@ func (r *portalAccessRepository) uniqueUsername(
 	for suffix := 2; ; suffix++ {
 		exists, err := u.Where(
 			u.CurrentOrganizationID.Eq(invitation.OrganizationID),
-			u.Username.Eq(candidate),
+			u.Username.Lower().Eq(strings.ToLower(candidate)),
 		).Exists(ctx, db)
 		if err != nil {
 			return "", fmt.Errorf("check portal username: %w", err)

@@ -39,7 +39,7 @@ func New(p Params) tenantports.PasswordResetTokenRepository {
 	}
 }
 
-func tokens(ctx context.Context, preds ...keel.Pred) *keel.Query[tenant.PasswordResetToken] {
+func tokens(ctx context.Context, preds ...keel.Pred) *keel.Query[*tenant.PasswordResetToken] {
 	prt := tenantdb.PasswordResetTokens
 	q := prt.Query()
 	if dbscope.IsSystem(ctx) {

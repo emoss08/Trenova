@@ -104,7 +104,7 @@ var trailersRef = keel.Ref{Table: &trailersTable}
 
 // TrailersTable is the table of trailer.Trailer.
 type TrailersTable struct {
-	keel.Handle[trailer.Trailer]
+	keel.Handle[*trailer.Trailer]
 	ID                         keelkinds.PulidIDCol
 	BusinessUnitID             keelkinds.PulidIDCol
 	OrganizationID             keelkinds.PulidIDCol
@@ -142,7 +142,7 @@ type TrailersTable struct {
 
 // Trailers references the trailers table.
 var Trailers = &TrailersTable{
-	Handle:                     keel.Handle[trailer.Trailer]{Ref: &trailersRef},
+	Handle:                     keel.Handle[*trailer.Trailer]{Ref: &trailersRef},
 	ID:                         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &trailersRef, Index: 0}}},
 	BusinessUnitID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &trailersRef, Index: 1}}},
 	OrganizationID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &trailersRef, Index: 2}}},
@@ -181,7 +181,7 @@ var Trailers = &TrailersTable{
 // BuildTrailers builds the handle of trailers for ref. Generated relation and alias methods call it.
 func BuildTrailers(r *keel.Ref) *TrailersTable {
 	return &TrailersTable{
-		Handle:                     keel.Handle[trailer.Trailer]{Ref: r},
+		Handle:                     keel.Handle[*trailer.Trailer]{Ref: r},
 		ID:                         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},

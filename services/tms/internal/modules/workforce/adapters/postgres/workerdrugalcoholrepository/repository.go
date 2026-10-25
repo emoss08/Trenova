@@ -82,7 +82,7 @@ func testLoads(includeWorker, includeDocument, includeActors bool) []keel.Loader
 	return append(loads, listquery.When(includeActors, t.OrderedBy(), t.RecordedBy())...)
 }
 
-func testsQuery(req *workerports.ListWorkerDOTTestsRequest) *keel.Query[worker.WorkerDOTTest] {
+func testsQuery(req *workerports.ListWorkerDOTTestsRequest) *keel.Query[*worker.WorkerDOTTest] {
 	t := workerdb.WorkerDOTTests
 
 	return t.Where(
@@ -589,7 +589,7 @@ func (r *repository) UpdateDraw(
 	})
 }
 
-func poolCandidatesQuery(req *workerports.ListPoolCandidatesRequest) *keel.Query[worker.Worker] {
+func poolCandidatesQuery(req *workerports.ListPoolCandidatesRequest) *keel.Query[*worker.Worker] {
 	w := workerdb.Workers
 	wp := workerdb.WorkerProfiles
 	driverTypes := make([]worker.DriverType, 0, len(req.DriverTypes))
@@ -624,7 +624,7 @@ func (r *repository) ListPoolCandidates(
 
 func drawEntriesQuery(
 	req *workerports.ListDOTRandomDrawEntriesRequest,
-) *keel.Query[worker.DOTRandomDrawEntry] {
+) *keel.Query[*worker.DOTRandomDrawEntry] {
 	e := workerdb.DOTRandomDrawEntries
 	loads := listquery.When(req.IncludeWorker, e.Worker())
 	loads = append(loads, listquery.When(req.IncludeDraw, e.Draw())...)
@@ -710,7 +710,7 @@ func (r *repository) UpdateProfileRollup(
 
 func clearinghouseDueQuery(
 	req *workerports.ListWorkersWithClearinghouseDueRequest,
-) *keel.Query[worker.Worker] {
+) *keel.Query[*worker.Worker] {
 	w := workerdb.Workers
 	wp := workerdb.WorkerProfiles
 

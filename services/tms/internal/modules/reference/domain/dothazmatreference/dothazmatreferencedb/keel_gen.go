@@ -62,7 +62,7 @@ var dotHazmatReferencesRef = keel.Ref{Table: &dotHazmatReferencesTable}
 
 // DotHazmatReferencesTable is the table of dothazmatreference.DotHazmatReference.
 type DotHazmatReferencesTable struct {
-	keel.Handle[dothazmatreference.DotHazmatReference]
+	keel.Handle[*dothazmatreference.DotHazmatReference]
 	ID                  keelkinds.PulidIDCol
 	UnNumber            keel.StringCol
 	ProperShippingName  keel.StringCol
@@ -84,7 +84,7 @@ type DotHazmatReferencesTable struct {
 
 // DotHazmatReferences references the dot_hazmat_references table.
 var DotHazmatReferences = &DotHazmatReferencesTable{
-	Handle:              keel.Handle[dothazmatreference.DotHazmatReference]{Ref: &dotHazmatReferencesRef},
+	Handle:              keel.Handle[*dothazmatreference.DotHazmatReference]{Ref: &dotHazmatReferencesRef},
 	ID:                  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &dotHazmatReferencesRef, Index: 0}}},
 	UnNumber:            keel.StringCol{Col: keel.Col{Ref: &dotHazmatReferencesRef, Index: 1}},
 	ProperShippingName:  keel.StringCol{Col: keel.Col{Ref: &dotHazmatReferencesRef, Index: 2}},
@@ -107,7 +107,7 @@ var DotHazmatReferences = &DotHazmatReferencesTable{
 // BuildDotHazmatReferences builds the handle of dot_hazmat_references for ref. Generated relation and alias methods call it.
 func BuildDotHazmatReferences(r *keel.Ref) *DotHazmatReferencesTable {
 	return &DotHazmatReferencesTable{
-		Handle:              keel.Handle[dothazmatreference.DotHazmatReference]{Ref: r},
+		Handle:              keel.Handle[*dothazmatreference.DotHazmatReference]{Ref: r},
 		ID:                  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		UnNumber:            keel.StringCol{Col: keel.Col{Ref: r, Index: 1}},
 		ProperShippingName:  keel.StringCol{Col: keel.Col{Ref: r, Index: 2}},

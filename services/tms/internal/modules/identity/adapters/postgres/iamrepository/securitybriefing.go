@@ -39,7 +39,7 @@ type memberScope struct {
 	Now        int64
 }
 
-func memberQuery(ctx context.Context, scope memberScope) *keel.Query[tenant.User] {
+func memberQuery(ctx context.Context, scope memberScope) *keel.Query[*tenant.User] {
 	u := tenantdb.Users
 	m := tenantdb.OrganizationMemberships
 

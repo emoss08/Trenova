@@ -53,7 +53,7 @@ func (r *repository) List(
 				gla.Query(),
 				&listquery.Request[glaccount.GLAccount]{
 					Filter: req.Filter,
-					Shape: func(q *keel.Query[glaccount.GLAccount]) *keel.Query[glaccount.GLAccount] {
+					Shape: func(q *keel.Query[*glaccount.GLAccount]) *keel.Query[*glaccount.GLAccount] {
 						return q.Load(gla.AccountType())
 					},
 					Then: []keel.Order{gla.AccountCode.Asc()},

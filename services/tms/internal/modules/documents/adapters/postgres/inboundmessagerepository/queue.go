@@ -140,7 +140,7 @@ func (r *repository) queueStates(
 
 func queueStatesQuery(
 	req inboundmessageports.QueueStatesRequest,
-) *keel.Query[inboundmessage.InboundMessage] {
+) *keel.Query[*inboundmessage.InboundMessage] {
 	m := inboundmessagedb.InboundMessages
 	q := m.Pick(stateColumns()...).
 		Where(m.ID.In(req.IDs...)).
@@ -176,7 +176,7 @@ func (r *repository) SelectIDs(
 
 func selectIDsQuery(
 	req inboundmessageports.SelectInboundMessageIDsRequest,
-) *keel.Query[inboundmessage.InboundMessage] {
+) *keel.Query[*inboundmessage.InboundMessage] {
 	m := inboundmessagedb.InboundMessages
 	folder := req.Folder
 
@@ -247,7 +247,7 @@ func patchAssignments(patch inboundmessageports.QueuePatch, now int64) []keel.As
 		sets = append(sets, m.ActionState.ToExpr(keel.DynOf(m.ActionState).Concat(keel.DynFunc(
 			"jsonb_build_object",
 			keel.DynConst("handedOffTo"),
-			keel.DynLit(patch.HandOff.To.String()).Cast(keel.TypeString),
+			keel.DynLit(patch.HandOff.To.String()),
 			keel.DynConst("handedOffAt"),
 			keel.DynLit(now).Cast(keel.TypeInt64),
 		))))
@@ -466,7 +466,7 @@ func (r *repository) ListThread(
 
 func listThreadQuery(
 	req inboundmessageports.ListThreadRequest,
-) *keel.Query[inboundmessage.InboundMessage] {
+) *keel.Query[*inboundmessage.InboundMessage] {
 	m := inboundmessagedb.InboundMessages
 	newest := inboundmessagedb.InboundMessages.As("newest")
 	limit := max(req.Limit, 1)
@@ -648,7 +648,7 @@ func (r *repository) HandOffCandidates(
 
 func handOffCandidatesQuery(
 	req inboundmessageports.HandOffCandidatesRequest,
-) *keel.Query[inboundmessage.InboundMessage] {
+) *keel.Query[*inboundmessage.InboundMessage] {
 	m := inboundmessagedb.InboundMessages
 
 	return m.Pick(m.ID).

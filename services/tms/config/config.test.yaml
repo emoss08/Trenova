@@ -17,6 +17,7 @@ database:
   statementTimeout: 10s
   lockTimeout: 5s
   idleInTransactionSessionTimeout: 30s
+  queryLog: "off"
 
 cache:
   host: localhost

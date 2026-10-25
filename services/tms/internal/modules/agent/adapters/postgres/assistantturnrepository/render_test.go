@@ -21,7 +21,7 @@ func TestGetByIDQueryChecksTheOwnerWhenGiven(t *testing.T) {
 	assert.Contains(t, args, "usr_1")
 
 	anyone, _ := keeltest.Render(t, getByIDQuery(&agentports.GetAssistantTurnRequest{ID: pulid.ID("atrn_1")}))
-	assert.NotContains(t, anyone, `"user_id"  = `)
+	assert.NotContains(t, anyone, `"user_id" = `)
 }
 
 func TestActiveQueryReadsALiveTurn(t *testing.T) {
@@ -31,7 +31,7 @@ func TestActiveQueryReadsALiveTurn(t *testing.T) {
 		ThreadID: pulid.ID("ath_1"),
 		UserID:   pulid.ID("usr_1"),
 	}))
-	assert.Contains(t, sql, `"status" = ANY(`)
+	assert.Contains(t, sql, `at_."status" IN ('Pending', 'Running')`)
 	assert.Contains(t, args, "ath_1")
 }
 

@@ -50,7 +50,7 @@ func (r *repository) List(
 			result, err := listquery.List(ctx, r.db.Keel(ctx), fc.Query(),
 				&listquery.Request[fleetcode.FleetCode]{
 					Filter: req.Filter,
-					Shape: func(q *keel.Query[fleetcode.FleetCode]) *keel.Query[fleetcode.FleetCode] {
+					Shape: func(q *keel.Query[*fleetcode.FleetCode]) *keel.Query[*fleetcode.FleetCode] {
 						if req.IncludeManagerDetails {
 							return q.Load(fc.Manager())
 						}
@@ -81,7 +81,7 @@ func (r *repository) ListConnection(
 					Filter:  req.Filter,
 					Cursor:  req.Cursor,
 					Columns: req.FleetCodeColumns,
-					Shape: func(q *keel.Query[fleetcode.FleetCode]) *keel.Query[fleetcode.FleetCode] {
+					Shape: func(q *keel.Query[*fleetcode.FleetCode]) *keel.Query[*fleetcode.FleetCode] {
 						return q.Load(fc.Manager())
 					},
 				})

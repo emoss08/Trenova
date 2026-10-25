@@ -1,542 +1,708 @@
 package aianalyticsrepository
 
 import (
-	"fmt"
-	"strings"
-
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agent/agentdb"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aianalytics"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aianalytics/aianalyticsdb"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiusage"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aiusage/aiusagedb"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation/conversationdb"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/shared/sliceutils"
 )
 
 const (
 	callUnitPrefix  = "call_"
 	lookbackSeconds = 3600
+
+	authFailurePattern = `(\m401\M|\m403\M|unauthori[sz]ed|forbidden|access denied|invalid api key|invalid x-api-key|authentication|permission denied|not authorized)`
+	rateLimitPattern   = `(\m429\M|rate.?limit|too many requests|quota exceeded|throttl)`
 )
 
-func quoted[T ~string](values ...T) string {
-	out := make([]string, 0, len(values))
-	for _, value := range values {
-		out = append(out, "'"+strings.ReplaceAll(string(value), "'", "''")+"'")
+var (
+	timeoutPhrases = []string{"deadline exceeded", "timed out", "timeout"}
+
+	callColumns = []string{
+		"model_calls", "failed_calls", "failovers", "input_tokens", "output_tokens",
+		"cache_read_tokens", "cache_write_tokens", "cost_usd", "advisor_calls",
+		"advisor_prompt_tokens", "advisor_output_tokens", "advisor_cost_usd", "first_start_ms",
+		"last_end_ms", "first_token_ms", "model", "provider_id", "task", "agent_definition_id",
+		"answered", "last_call_at",
+	}
+	countedCallColumns = []string{
+		"model_calls", "failed_calls", "failovers", "input_tokens", "output_tokens",
+		"cache_read_tokens", "cache_write_tokens",
+	}
+	advisorCountColumns = []string{
+		"advisor_calls", "advisor_prompt_tokens", "advisor_output_tokens",
+	}
+	stepColumns = []string{
+		"owner_id", "tool_calls", "tool_failures_model", "tool_failures_tool", "last_end_ms",
+	}
+	hourKeyColumns = []string{"hour", "provider_id", "model", "task", "agent_definition_id"}
+
+	unitSources = []aianalytics.Source{
+		aianalytics.SourceAgentRun,
+		aianalytics.SourceAssistantTurn,
+	}
+)
+
+type unitColumn interface {
+	keel.Column
+	keel.Expr
+	Excluded() keel.Expr
+}
+
+func trackedUnitColumns(w *aianalyticsdb.WorkUnitsTable) []unitColumn {
+	return []unitColumn{
+		w.Source, w.AgentDefinitionID, w.ProviderID, w.Model, w.Task, w.Outcome,
+		w.DecisionRunID, w.StartedAtMs, w.FinishedAt, w.DurationMs, w.FirstTokenMs,
+		w.ModelCalls, w.FailedCalls, w.Failovers, w.InputTokens, w.OutputTokens,
+		w.CacheReadTokens, w.CacheWriteTokens, w.CostUSD, w.AdvisorCalls,
+		w.AdvisorPromptTokens, w.AdvisorOutputTokens, w.AdvisorCostUSD, w.ToolCalls,
+		w.ToolFailuresModel, w.ToolFailuresTool,
+	}
+}
+
+func unitConflict() keel.Conflict {
+	w := aianalyticsdb.WorkUnits
+	tracked := trackedUnitColumns(w)
+	updated := make([]keel.Column, 0, len(tracked)+1)
+	stored := make([]any, 0, len(tracked))
+	proposed := make([]any, 0, len(tracked))
+	for _, col := range tracked {
+		updated = append(updated, col)
+		stored = append(stored, col)
+		proposed = append(proposed, col.Excluded())
+	}
+	updated = append(updated, w.RefreshStamp)
+
+	return keel.OnConflict(w.ID, w.BusinessUnitID, w.OrganizationID).
+		Update(updated...).
+		Set(w.ModelKey.ToExpr(keel.DynCase().
+			When(keel.DynOf(w.Model).Eq(w.Model.Excluded()), w.ModelKey).
+			Else(""))).
+		UpdateWhere(keel.DynRow(stored...).IsDistinctFrom(keel.DynRow(proposed...)))
+}
+
+func unitInsertColumns(w *aianalyticsdb.WorkUnitsTable, withDecisionRun bool) []keel.Column {
+	cols := []keel.Column{w.ID, w.Source, w.AgentDefinitionID, w.ProviderID, w.Model, w.ModelKey,
+		w.Task, w.Outcome}
+	if withDecisionRun {
+		cols = append(cols, w.DecisionRunID)
 	}
 
-	return strings.Join(out, ", ")
+	return append(cols,
+		w.StartedAtMs, w.FinishedAt, w.DurationMs, w.FirstTokenMs, w.ModelCalls, w.FailedCalls,
+		w.Failovers, w.InputTokens, w.OutputTokens, w.CacheReadTokens, w.CacheWriteTokens,
+		w.CostUSD, w.AdvisorCalls, w.AdvisorPromptTokens, w.AdvisorOutputTokens,
+		w.AdvisorCostUSD, w.ToolCalls, w.ToolFailuresModel, w.ToolFailuresTool, w.RefreshStamp,
+	)
 }
 
-var (
-	modelCauseList = quoted(aianalytics.ModelCauses()...)
-	causeList      = quoted(aianalytics.AllCauses()...)
+func stepCause(s *agentdb.AgentRunStepsTable) keel.DynExpr {
+	cause := s.Outcome.Text("cause")
+	verdict := keel.DynOf(s.Outcome.Text("verdict"))
+	reason := keel.DynOf(s.Outcome.Text("reason"))
+	lowered := keel.DynFunc("lower", keel.DynOf(s.Outcome.Text("reason")).Coalesce(""))
+	timedOut := make([]keel.Pred, 0, len(timeoutPhrases))
+	for _, phrase := range timeoutPhrases {
+		timedOut = append(timedOut, lowered.Contains(phrase))
+	}
 
-	causeSQL = fmt.Sprintf(`CASE
-		WHEN s.status <> '%[1]s' THEN ''
-		WHEN COALESCE(s.outcome->>'cause', '') IN (%[2]s) THEN s.outcome->>'cause'
-		WHEN s.outcome->>'verdict' = '%[3]s' AND s.outcome->>'reason' = %[4]s THEN '%[5]s'
-		WHEN s.outcome->>'verdict' = '%[3]s' THEN '%[6]s'
-		WHEN s.outcome->>'verdict' = '%[7]s' THEN '%[8]s'
-		WHEN s.outcome->>'verdict' = '%[9]s' AND s.outcome->>'reason' = %[10]s THEN '%[5]s'
-		WHEN s.outcome->>'verdict' IN ('%[9]s', '%[11]s') THEN '%[12]s'
-		WHEN LOWER(COALESCE(s.outcome->>'reason', '')) ~ '(deadline exceeded|timed out|timeout)' THEN '%[13]s'
-		ELSE '%[14]s'
-	END`,
-		agentports.RunStepFailed,
-		causeList,
-		aianalytics.VerdictInvalid,
-		quoted(aianalytics.ReasonUnregistered),
-		aianalytics.CauseToolNotHeld,
-		aianalytics.CauseWrongArguments,
-		aianalytics.VerdictDuplicate,
-		aianalytics.CauseRepeatedCall,
-		aianalytics.VerdictDenied,
-		quoted(aianalytics.ReasonNotHeld),
-		aianalytics.VerdictOverBudget,
-		aianalytics.CauseBlockedByRule,
-		aianalytics.CauseToolTimedOut,
-		aianalytics.CauseToolError,
-	)
+	return keel.DynCase().
+		When(s.Status.Ne(string(agentports.RunStepFailed)), "").
+		When(
+			keel.DynOf(cause).Coalesce("").In(sliceutils.Strings(aianalytics.AllCauses())),
+			cause,
+		).
+		When(
+			keel.And(
+				verdict.Eq(aianalytics.VerdictInvalid),
+				reason.Eq(aianalytics.ReasonUnregistered),
+			),
+			string(aianalytics.CauseToolNotHeld),
+		).
+		When(verdict.Eq(aianalytics.VerdictInvalid), string(aianalytics.CauseWrongArguments)).
+		When(verdict.Eq(aianalytics.VerdictDuplicate), string(aianalytics.CauseRepeatedCall)).
+		When(
+			keel.And(verdict.Eq(aianalytics.VerdictDenied), reason.Eq(aianalytics.ReasonNotHeld)),
+			string(aianalytics.CauseToolNotHeld),
+		).
+		When(
+			verdict.In([]string{aianalytics.VerdictDenied, aianalytics.VerdictOverBudget}),
+			string(aianalytics.CauseBlockedByRule),
+		).
+		When(keel.Or(timedOut...), string(aianalytics.CauseToolTimedOut)).
+		Else(string(aianalytics.CauseToolError))
+}
 
-	standaloneSurfaces = quoted(
-		aiusage.SurfaceEvaluation,
-		aiusage.SurfaceIndexing,
-		aiusage.SurfaceRetrieval,
-	)
+func providerError(u *aiusagedb.AIUsageRecordsTable) keel.DynExpr {
+	return keel.DynCase().
+		When(u.Succeeded.IsTrue(), string(aianalytics.ProviderErrorNone)).
+		When(
+			u.ErrorClass.Eq(aiusage.ErrorClassCancelled),
+			string(aianalytics.ProviderErrorCancelled),
+		).
+		When(u.ErrorClass.Eq(aiusage.ErrorClassRefused), string(aianalytics.ProviderErrorDeclined)).
+		When(
+			keel.Or(
+				u.ErrorClass.Eq(aiusage.ErrorClassAuth),
+				u.ErrorMessage.MatchFold(authFailurePattern),
+			),
+			string(aianalytics.ProviderErrorAccessDenied),
+		).
+		When(
+			keel.Or(
+				u.ErrorClass.Eq(aiusage.ErrorClassRateLimited),
+				u.ErrorMessage.MatchFold(rateLimitPattern),
+			),
+			string(aianalytics.ProviderErrorRateLimited),
+		).
+		When(u.ErrorClass.Eq(aiusage.ErrorClassTimeout), string(aianalytics.ProviderErrorTimedOut)).
+		When(
+			u.ErrorClass.Eq(aiusage.ErrorClassNetwork),
+			string(aianalytics.ProviderErrorCouldNotConnect),
+		).
+		Else(string(aianalytics.ProviderErrorServer))
+}
 
-	nonCompletionSurfaces = quoted(
-		aiusage.SurfaceIndexing,
-		aiusage.SurfaceRetrieval,
-	)
+func callAggregates(u *aiusagedb.AIUsageRecordsTable) []keel.Expr {
+	callEnd := keel.DynOf(u.RecordedAtMs).Coalesce(keel.DynOf(u.CreatedAt).Mul(1000))
+	callStart := callEnd.Sub(u.LatencyMs)
+	latestFirst := []keel.Order{u.Succeeded.Desc(), callEnd.Desc()}
+	first := func(agg keel.Agg) keel.DynExpr { return keel.DynOf(agg).At(1) }
 
-	callEndMs = "COALESCE(u.recorded_at_ms, u.created_at * 1000)"
-
-	bucketSQL = fmt.Sprintf(
-		"CASE WHEN c.first_token_ms < %[1]d THEN 0 "+
-			"ELSE LEAST(%[2]d, FLOOR(%[3]d * LN(c.first_token_ms::float8 / %[1]d) / LN(2))::int + 1) END",
-		aianalytics.HistogramBaseMs,
-		aianalytics.HistogramBuckets-1,
-		aianalytics.HistogramStepsPerOctet,
-	)
-
-	authFailureSQL = `u.error_message ~* '(\m401\M|\m403\M|unauthori[sz]ed|forbidden|access denied|invalid api key|invalid x-api-key|authentication|permission denied|not authorized)'`
-
-	rateLimitSQL = `u.error_message ~* '(\m429\M|rate.?limit|too many requests|quota exceeded|throttl)'`
-
-	providerErrorSQL = fmt.Sprintf(`CASE
-				WHEN u.succeeded THEN '%[1]s'
-				WHEN u.error_class = '%[2]s' THEN '%[3]s'
-				WHEN u.error_class = '%[4]s' THEN '%[5]s'
-				WHEN u.error_class = '%[6]s' OR %[7]s THEN '%[8]s'
-				WHEN u.error_class = '%[9]s' OR %[10]s THEN '%[11]s'
-				WHEN u.error_class = '%[12]s' THEN '%[13]s'
-				WHEN u.error_class = '%[14]s' THEN '%[15]s'
-				ELSE '%[16]s'
-			END`,
-		aianalytics.ProviderErrorNone,
-		aiusage.ErrorClassCancelled, aianalytics.ProviderErrorCancelled,
-		aiusage.ErrorClassRefused, aianalytics.ProviderErrorDeclined,
-		aiusage.ErrorClassAuth, authFailureSQL, aianalytics.ProviderErrorAccessDenied,
-		aiusage.ErrorClassRateLimited, rateLimitSQL, aianalytics.ProviderErrorRateLimited,
-		aiusage.ErrorClassTimeout, aianalytics.ProviderErrorTimedOut,
-		aiusage.ErrorClassNetwork, aianalytics.ProviderErrorCouldNotConnect,
-		aianalytics.ProviderErrorServer,
-	)
-)
+	return []keel.Expr{
+		keel.Count(),
+		keel.Count().Filter(u.Succeeded.Eq(false)),
+		keel.Count().Filter(u.Failover.IsTrue()),
+		summed(keel.DynCase().
+			When(u.ProviderKind.Eq(aiprovider.KindAnthropicMessages), u.InputTokens).
+			Else(keel.DynFunc(
+				"greatest",
+				keel.DynOf(u.InputTokens).Sub(u.CacheReadTokens).Sub(u.CacheWriteTokens),
+				keel.DynConst(0),
+			))),
+		summed(u.OutputTokens),
+		summed(u.CacheReadTokens),
+		summed(u.CacheWriteTokens),
+		u.CostUSD.Sum(),
+		summed(u.AdvisorCalls),
+		summed(keel.DynOf(u.AdvisorInputTokens).
+			Add(u.AdvisorCacheReadTokens).
+			Add(u.AdvisorCacheWriteTokens)),
+		summed(u.AdvisorOutputTokens),
+		u.AdvisorCostUSD.Sum(),
+		keel.Min(callStart),
+		keel.Max(callEnd),
+		first(keel.ArrayAgg(u.FirstTokenMs).
+			OrderBy(callStart.Asc()).
+			Filter(u.FirstTokenMs.IsNotNull())),
+		first(keel.ArrayAgg(u.Model).OrderBy(latestFirst...)),
+		first(keel.ArrayAgg(u.ProviderID).OrderBy(latestFirst...)),
+		first(keel.ArrayAgg(u.Task).OrderBy(latestFirst...)),
+		first(keel.ArrayAgg(u.AgentDefinitionID).
+			OrderBy(callEnd.Asc()).
+			Filter(u.AgentDefinitionID.IsNotNull())),
+		keel.DynFunc("bool_or", u.Succeeded),
+		u.CreatedAt.Max(),
+	}
+}
 
 type ownedSource struct {
-	source        aianalytics.Source
-	table         string
-	ownerKind     agent.RunOwnerKind
-	statuses      string
-	extraWhere    string
-	agentColumn   string
-	decisionRun   string
-	taskFallback  string
-	outcomeSQL    string
-	finishedAtSQL string
-	startedAtSQL  string
-	modelFallback string
+	source    aianalytics.Source
+	ownerKind agent.RunOwnerKind
+	owners    func(req *unitRefresh) *keel.CTETable
+	agent     func(owners, calls *keel.CTETable) keel.Expr
+	outcome   func(owners, handed *keel.CTETable) keel.Expr
 }
 
-func callAggregates() string {
-	return fmt.Sprintf(`COUNT(*) AS model_calls,
-			COUNT(*) FILTER (WHERE NOT u.succeeded) AS failed_calls,
-			COUNT(*) FILTER (WHERE u.failover) AS failovers,
-			COALESCE(SUM(CASE WHEN u.provider_kind = '%[2]s' THEN u.input_tokens
-				ELSE GREATEST(u.input_tokens - u.cache_read_tokens - u.cache_write_tokens, 0)
-				END), 0) AS input_tokens,
-			COALESCE(SUM(u.output_tokens), 0) AS output_tokens,
-			COALESCE(SUM(u.cache_read_tokens), 0) AS cache_read_tokens,
-			COALESCE(SUM(u.cache_write_tokens), 0) AS cache_write_tokens,
-			SUM(u.cost_usd) AS cost_usd,
-			COALESCE(SUM(u.advisor_calls), 0) AS advisor_calls,
-			COALESCE(SUM(u.advisor_input_tokens + u.advisor_cache_read_tokens +
-				u.advisor_cache_write_tokens), 0) AS advisor_prompt_tokens,
-			COALESCE(SUM(u.advisor_output_tokens), 0) AS advisor_output_tokens,
-			SUM(u.advisor_cost_usd) AS advisor_cost_usd,
-			MIN(%[1]s - u.latency_ms) AS first_start_ms,
-			MAX(%[1]s) AS last_end_ms,
-			(ARRAY_AGG(u.first_token_ms ORDER BY %[1]s - u.latency_ms)
-				FILTER (WHERE u.first_token_ms IS NOT NULL))[1] AS first_token_ms,
-			(ARRAY_AGG(u.model ORDER BY u.succeeded DESC, %[1]s DESC))[1] AS model,
-			(ARRAY_AGG(u.provider_id ORDER BY u.succeeded DESC, %[1]s DESC))[1] AS provider_id,
-			(ARRAY_AGG(u.task ORDER BY u.succeeded DESC, %[1]s DESC))[1] AS task,
-			(ARRAY_AGG(u.agent_definition_id ORDER BY %[1]s)
-				FILTER (WHERE u.agent_definition_id IS NOT NULL))[1] AS agent_definition_id,
-			BOOL_OR(u.succeeded) AS answered,
-			MAX(u.created_at) AS last_call_at`, callEndMs, aiprovider.KindAnthropicMessages)
+type unitRefresh struct {
+	from  int64
+	to    int64
+	stamp int64
 }
 
-const unitColumns = `id, business_unit_id, organization_id, source, agent_definition_id, provider_id,
-	model, model_key, task, outcome, decision_run_id, started_at_ms, finished_at, duration_ms,
-	first_token_ms, model_calls, failed_calls, failovers, input_tokens, output_tokens,
-	cache_read_tokens, cache_write_tokens, cost_usd, advisor_calls, advisor_prompt_tokens,
-	advisor_output_tokens, advisor_cost_usd, tool_calls, tool_failures_model, tool_failures_tool,
-	refresh_stamp`
-
-const unitConflict = `ON CONFLICT (id, business_unit_id, organization_id) DO UPDATE SET
-	source = EXCLUDED.source,
-	agent_definition_id = EXCLUDED.agent_definition_id,
-	provider_id = EXCLUDED.provider_id,
-	model = EXCLUDED.model,
-	model_key = CASE WHEN ai_work_units.model = EXCLUDED.model THEN ai_work_units.model_key ELSE '' END,
-	task = EXCLUDED.task,
-	outcome = EXCLUDED.outcome,
-	decision_run_id = EXCLUDED.decision_run_id,
-	started_at_ms = EXCLUDED.started_at_ms,
-	finished_at = EXCLUDED.finished_at,
-	duration_ms = EXCLUDED.duration_ms,
-	first_token_ms = EXCLUDED.first_token_ms,
-	model_calls = EXCLUDED.model_calls,
-	failed_calls = EXCLUDED.failed_calls,
-	failovers = EXCLUDED.failovers,
-	input_tokens = EXCLUDED.input_tokens,
-	output_tokens = EXCLUDED.output_tokens,
-	cache_read_tokens = EXCLUDED.cache_read_tokens,
-	cache_write_tokens = EXCLUDED.cache_write_tokens,
-	cost_usd = EXCLUDED.cost_usd,
-	advisor_calls = EXCLUDED.advisor_calls,
-	advisor_prompt_tokens = EXCLUDED.advisor_prompt_tokens,
-	advisor_output_tokens = EXCLUDED.advisor_output_tokens,
-	advisor_cost_usd = EXCLUDED.advisor_cost_usd,
-	tool_calls = EXCLUDED.tool_calls,
-	tool_failures_model = EXCLUDED.tool_failures_model,
-	tool_failures_tool = EXCLUDED.tool_failures_tool,
-	refresh_stamp = EXCLUDED.refresh_stamp
-	WHERE (
-		ai_work_units.source, ai_work_units.agent_definition_id, ai_work_units.provider_id,
-		ai_work_units.model, ai_work_units.task, ai_work_units.outcome,
-		ai_work_units.decision_run_id, ai_work_units.started_at_ms, ai_work_units.finished_at,
-		ai_work_units.duration_ms, ai_work_units.first_token_ms, ai_work_units.model_calls,
-		ai_work_units.failed_calls, ai_work_units.failovers, ai_work_units.input_tokens,
-		ai_work_units.output_tokens, ai_work_units.cache_read_tokens,
-		ai_work_units.cache_write_tokens, ai_work_units.cost_usd, ai_work_units.advisor_calls,
-		ai_work_units.advisor_prompt_tokens, ai_work_units.advisor_output_tokens,
-		ai_work_units.advisor_cost_usd, ai_work_units.tool_calls,
-		ai_work_units.tool_failures_model, ai_work_units.tool_failures_tool
-	) IS DISTINCT FROM (
-		EXCLUDED.source, EXCLUDED.agent_definition_id, EXCLUDED.provider_id, EXCLUDED.model,
-		EXCLUDED.task, EXCLUDED.outcome, EXCLUDED.decision_run_id, EXCLUDED.started_at_ms,
-		EXCLUDED.finished_at, EXCLUDED.duration_ms, EXCLUDED.first_token_ms,
-		EXCLUDED.model_calls, EXCLUDED.failed_calls, EXCLUDED.failovers, EXCLUDED.input_tokens,
-		EXCLUDED.output_tokens, EXCLUDED.cache_read_tokens, EXCLUDED.cache_write_tokens,
-		EXCLUDED.cost_usd, EXCLUDED.advisor_calls, EXCLUDED.advisor_prompt_tokens,
-		EXCLUDED.advisor_output_tokens, EXCLUDED.advisor_cost_usd, EXCLUDED.tool_calls,
-		EXCLUDED.tool_failures_model, EXCLUDED.tool_failures_tool
-	)`
-
-func ownedUnitsSQL(src ownedSource) string {
-	return fmt.Sprintf(`WITH owners AS (
-		SELECT o.*
-		FROM %[1]s AS o
-		WHERE o.organization_id = ?org AND o.business_unit_id = ?bu
-			AND o.updated_at >= ?from AND o.updated_at < ?to
-			AND o.status IN (%[2]s)%[3]s
-	),
-	calls AS (
-		SELECT u.owner_id, %[4]s
-		FROM ai_usage_records AS u
-		WHERE u.organization_id = ?org AND u.business_unit_id = ?bu
-			AND u.owner_kind = '%[5]s' AND u.owner_id IN (SELECT id FROM owners)
-		GROUP BY u.owner_id
-	),
-	steps AS (
-		SELECT s.owner_id,
-			COUNT(*) AS tool_calls,
-			COUNT(*) FILTER (WHERE c.cause IN (%[6]s)) AS tool_failures_model,
-			COUNT(*) FILTER (WHERE c.cause <> '' AND c.cause NOT IN (%[6]s)) AS tool_failures_tool,
-			MAX(COALESCE(s.settled_at_ms, s.started_at_ms, s.updated_at * 1000)) AS last_end_ms
-		FROM agent_run_steps AS s
-		CROSS JOIN LATERAL (SELECT %[7]s AS cause) AS c
-		WHERE s.organization_id = ?org AND s.business_unit_id = ?bu
-			AND s.owner_kind = '%[5]s' AND s.owner_id IN (SELECT id FROM owners)
-			AND s.kind = '%[8]s' AND s.status <> '%[9]s'
-		GROUP BY s.owner_id
-	),
-	handed AS (
-		SELECT DISTINCT e.run_id
-		FROM agent_exceptions AS e
-		WHERE e.organization_id = ?org AND e.business_unit_id = ?bu
-			AND e.run_id IN (SELECT %[10]s FROM owners AS o WHERE %[10]s IS NOT NULL)
-	),
-	units AS (
-		SELECT o.id,
-			COALESCE(%[11]s, c.agent_definition_id) AS agent_definition_id,
-			COALESCE(c.provider_id, NULLIF(o.fingerprint->>'providerId', '')) AS provider_id,
-			COALESCE(c.model, NULLIF(o.fingerprint->>'model', '')%[12]s) AS model,
-			COALESCE(c.task, %[13]s) AS task,
-			%[14]s AS outcome,
-			%[10]s AS decision_run_id,
-			COALESCE(c.first_start_ms, %[15]s) AS started_at_ms,
-			%[16]s AS finished_at,
-			c.last_end_ms AS call_end_ms,
-			st.last_end_ms AS step_end_ms,
-			c.first_token_ms,
-			COALESCE(c.model_calls, 0) AS model_calls,
-			COALESCE(c.failed_calls, 0) AS failed_calls,
-			COALESCE(c.failovers, 0) AS failovers,
-			COALESCE(c.input_tokens, 0) AS input_tokens,
-			COALESCE(c.output_tokens, 0) AS output_tokens,
-			COALESCE(c.cache_read_tokens, 0) AS cache_read_tokens,
-			COALESCE(c.cache_write_tokens, 0) AS cache_write_tokens,
-			c.cost_usd,
-			COALESCE(c.advisor_calls, 0) AS advisor_calls,
-			COALESCE(c.advisor_prompt_tokens, 0) AS advisor_prompt_tokens,
-			COALESCE(c.advisor_output_tokens, 0) AS advisor_output_tokens,
-			c.advisor_cost_usd,
-			COALESCE(st.tool_calls, 0) AS tool_calls,
-			COALESCE(st.tool_failures_model, 0) AS tool_failures_model,
-			COALESCE(st.tool_failures_tool, 0) AS tool_failures_tool
-		FROM owners AS o
-		LEFT JOIN calls AS c ON c.owner_id = o.id
-		LEFT JOIN steps AS st ON st.owner_id = o.id
-		LEFT JOIN handed AS h ON h.run_id = %[10]s
-	)
-	INSERT INTO ai_work_units (%[17]s)
-	SELECT units.id, ?bu, ?org, '%[18]s', units.agent_definition_id, units.provider_id,
-		units.model, '', units.task, units.outcome, units.decision_run_id, units.started_at_ms,
-		units.finished_at,
-		GREATEST(0, GREATEST(
-			COALESCE(units.call_end_ms, 0),
-			COALESCE(units.step_end_ms, 0),
-			CASE WHEN units.call_end_ms IS NULL AND units.step_end_ms IS NULL
-				THEN units.finished_at * 1000 ELSE 0 END
-		) - units.started_at_ms),
-		units.first_token_ms, units.model_calls, units.failed_calls, units.failovers,
-		units.input_tokens, units.output_tokens, units.cache_read_tokens,
-		units.cache_write_tokens, units.cost_usd, units.advisor_calls,
-		units.advisor_prompt_tokens, units.advisor_output_tokens, units.advisor_cost_usd,
-		units.tool_calls,
-		units.tool_failures_model, units.tool_failures_tool, ?stamp
-	FROM units
-	WHERE units.model IS NOT NULL
-	%[19]s`,
-		src.table,
-		src.statuses,
-		src.extraWhere,
-		callAggregates(),
-		src.ownerKind,
-		modelCauseList,
-		causeSQL,
-		agentports.RunStepTool,
-		agentports.RunStepStarted,
-		src.decisionRun,
-		src.agentColumn,
-		src.modelFallback,
-		src.taskFallback,
-		src.outcomeSQL,
-		src.startedAtSQL,
-		src.finishedAtSQL,
-		unitColumns,
-		src.source,
-		unitConflict,
-	)
+var ownerColumns = []string{
+	"id", "decision_run_id", "provider_hint", "model_hint", "task_hint", "status", "at_limit",
+	"started_ms", "finished_at",
 }
 
-var runUnitsSQL = ownedUnitsSQL(ownedSource{
+func providerHint(fingerprint keel.JSONBCol) keel.DynExpr {
+	return keel.DynOf(fingerprint.Text("providerId")).NullIf("")
+}
+
+func modelHint(fingerprint keel.JSONBCol) keel.DynExpr {
+	return keel.DynOf(fingerprint.Text("model")).NullIf("")
+}
+
+func stoppedAtLimit(fingerprint keel.JSONBCol) keel.DynExpr {
+	return keel.DynOf(fingerprint.Text("stoppedAtLimit")).Cast(keel.TypeBool).Coalesce(false)
+}
+
+func ownerStartedMs(startedAt, createdAt keel.Int64Col) keel.DynExpr {
+	return keel.DynOf(startedAt).NullIf(0).Coalesce(createdAt).Mul(1000)
+}
+
+func runOwners(req *unitRefresh) *keel.CTETable {
+	o := agentdb.AgentRuns
+
+	return keel.CTE("owners", append(append([]string{}, ownerColumns...), "agent_definition_id"), o.
+		Pick(
+			o.ID,
+			o.ID,
+			providerHint(o.Fingerprint),
+			modelHint(o.Fingerprint).Coalesce(keel.DynOf(o.ModelIdentifier).NullIf("")),
+			keel.DynCase().
+				When(o.AgentType.Eq(agent.TypeBillingException),
+					string(aiprovider.TaskBillingDiagnosis)).
+				When(o.AgentType.Eq(agent.TypeAssistantChat), string(aiprovider.TaskAssistantChat)).
+				Else(string(aiprovider.TaskGeneral)),
+			o.Status,
+			stoppedAtLimit(o.Fingerprint),
+			ownerStartedMs(o.StartedAt, o.CreatedAt),
+			keel.DynOf(o.CompletedAt).Coalesce(o.UpdatedAt),
+			o.AgentDefinitionID,
+		).
+		Where(
+			o.UpdatedAt.Gte(req.from),
+			o.UpdatedAt.Lt(req.to),
+			o.Status.In(
+				agent.RunStatusCompleted,
+				agent.RunStatusShadowCompleted,
+				agent.RunStatusAwaitingDecision,
+				agent.RunStatusFailed,
+			),
+			o.TurnID.IsNull(),
+		))
+}
+
+func turnOwners(req *unitRefresh) *keel.CTETable {
+	o := conversationdb.AssistantTurns
+
+	return keel.CTE("owners", ownerColumns, o.
+		Pick(
+			o.ID,
+			o.RunID,
+			providerHint(o.Fingerprint),
+			modelHint(o.Fingerprint),
+			keel.DynLit(string(aiprovider.TaskAssistantChat)),
+			o.Status,
+			stoppedAtLimit(o.Fingerprint),
+			ownerStartedMs(o.StartedAt, o.CreatedAt),
+			keel.DynOf(o.CompletedAt).Coalesce(o.UpdatedAt),
+		).
+		Where(
+			o.UpdatedAt.Gte(req.from),
+			o.UpdatedAt.Lt(req.to),
+			o.Status.In(
+				conversation.AssistantTurnStatusCompleted,
+				conversation.AssistantTurnStatusRefused,
+				conversation.AssistantTurnStatusStopped,
+				conversation.AssistantTurnStatusFailed,
+			),
+			o.Origin.Ne(conversation.AssistantTurnOriginCompaction),
+		))
+}
+
+var runSource = ownedSource{
 	source:    aianalytics.SourceAgentRun,
-	table:     "agent_runs",
 	ownerKind: agent.RunOwnerAgentRun,
-	statuses: quoted(
-		agent.RunStatusCompleted,
-		agent.RunStatusShadowCompleted,
-		agent.RunStatusAwaitingDecision,
-		agent.RunStatusFailed,
-	),
-	extraWhere:  "\n\t\t\tAND o.turn_id IS NULL",
-	agentColumn: "o.agent_definition_id",
-	decisionRun: "o.id",
-	taskFallback: fmt.Sprintf("CASE o.agent_type WHEN %s THEN '%s' WHEN %s THEN '%s' ELSE '%s' END",
-		quoted(agent.TypeBillingException), aiprovider.TaskBillingDiagnosis,
-		quoted(agent.TypeAssistantChat), aiprovider.TaskAssistantChat,
-		aiprovider.TaskGeneral,
-	),
-	outcomeSQL: fmt.Sprintf(`CASE
-				WHEN o.status = %s THEN '%s'
-				WHEN h.run_id IS NOT NULL THEN '%s'
-				WHEN COALESCE((o.fingerprint->>'stoppedAtLimit')::boolean, false) THEN '%s'
-				ELSE '%s'
-			END`,
-		quoted(agent.RunStatusFailed), aianalytics.OutcomeFailed,
-		aianalytics.OutcomeHandedOff,
-		aianalytics.OutcomeStopped,
-		aianalytics.OutcomeCompleted,
-	),
-	startedAtSQL:  "COALESCE(NULLIF(o.started_at, 0), o.created_at) * 1000",
-	finishedAtSQL: "COALESCE(o.completed_at, o.updated_at)",
-	modelFallback: ", NULLIF(o.model_identifier, '')",
-})
+	owners:    runOwners,
+	agent: func(owners, calls *keel.CTETable) keel.Expr {
+		return keel.DynOf(owners.Col("agent_definition_id")).
+			Coalesce(calls.Col("agent_definition_id"))
+	},
+	outcome: func(owners, handed *keel.CTETable) keel.Expr {
+		return keel.DynCase().
+			When(owners.Col("status").Eq(string(agent.RunStatusFailed)),
+				string(aianalytics.OutcomeFailed)).
+			When(handed.Col("run_id").IsNotNull(), string(aianalytics.OutcomeHandedOff)).
+			When(keel.DynOf(owners.Col("at_limit")).IsTrue(), string(aianalytics.OutcomeStopped)).
+			Else(string(aianalytics.OutcomeCompleted))
+	},
+}
 
-var turnUnitsSQL = ownedUnitsSQL(ownedSource{
+var turnSource = ownedSource{
 	source:    aianalytics.SourceAssistantTurn,
-	table:     "assistant_turns",
 	ownerKind: agent.RunOwnerAssistantTurn,
-	statuses: quoted(
-		conversation.AssistantTurnStatusCompleted,
-		conversation.AssistantTurnStatusRefused,
-		conversation.AssistantTurnStatusStopped,
-		conversation.AssistantTurnStatusFailed,
-	),
-	extraWhere:   "\n\t\t\tAND o.origin <> " + quoted(conversation.AssistantTurnOriginCompaction),
-	agentColumn:  "NULL::varchar",
-	decisionRun:  "o.run_id",
-	taskFallback: quoted(aiprovider.TaskAssistantChat),
-	outcomeSQL: fmt.Sprintf(`CASE
-				WHEN o.status = %s THEN '%s'
-				WHEN o.status = %s THEN '%s'
-				WHEN COALESCE((o.fingerprint->>'stoppedAtLimit')::boolean, false) THEN '%s'
-				WHEN h.run_id IS NOT NULL THEN '%s'
-				ELSE '%s'
-			END`,
-		quoted(conversation.AssistantTurnStatusFailed), aianalytics.OutcomeFailed,
-		quoted(conversation.AssistantTurnStatusStopped), aianalytics.OutcomeStopped,
-		aianalytics.OutcomeStopped,
-		aianalytics.OutcomeHandedOff,
-		aianalytics.OutcomeCompleted,
-	),
-	startedAtSQL:  "COALESCE(NULLIF(o.started_at, 0), o.created_at) * 1000",
-	finishedAtSQL: "COALESCE(o.completed_at, o.updated_at)",
-	modelFallback: "",
-})
+	owners:    turnOwners,
+	agent: func(_, calls *keel.CTETable) keel.Expr {
+		return calls.Col("agent_definition_id")
+	},
+	outcome: func(owners, handed *keel.CTETable) keel.Expr {
+		return keel.DynCase().
+			When(owners.Col("status").Eq(string(conversation.AssistantTurnStatusFailed)),
+				string(aianalytics.OutcomeFailed)).
+			When(owners.Col("status").Eq(string(conversation.AssistantTurnStatusStopped)),
+				string(aianalytics.OutcomeStopped)).
+			When(keel.DynOf(owners.Col("at_limit")).IsTrue(), string(aianalytics.OutcomeStopped)).
+			When(handed.Col("run_id").IsNotNull(), string(aianalytics.OutcomeHandedOff)).
+			Else(string(aianalytics.OutcomeCompleted))
+	},
+}
 
-var (
-	callUnitKeySQL = fmt.Sprintf(
-		"CASE WHEN u.trace_id IS NOT NULL THEN '%s' || md5(u.trace_id || ':' || u.task || ':' || COALESCE(u.subject_id, '')) ELSE u.id END",
-		callUnitPrefix,
+func zeroed(col keel.Expr) keel.DynExpr {
+	return keel.DynOf(col).Coalesce(0)
+}
+
+func ownedUnitsSource(src *ownedSource, req *unitRefresh) *keel.Query[*keel.Row] {
+	owners := src.owners(req)
+
+	u := aiusagedb.AIUsageRecords
+	calls := keel.CTE("calls", append([]string{"owner_id"}, callColumns...), u.
+		Pick(append([]keel.Expr{u.OwnerID}, callAggregates(u)...)...).
+		Where(u.OwnerKind.Eq(src.ownerKind), u.OwnerID.InQuery(owners.Query().Pick(owners.Col("id")))).
+		Group(u.OwnerID))
+
+	s := agentdb.AgentRunSteps
+	stepCauses := keel.Rows("c", []string{"cause"}, stepCause(s))
+	cause := keel.DynOf(stepCauses.Col("cause"))
+	modelCauses := sliceutils.Strings(aianalytics.ModelCauses())
+	steps := keel.CTE("steps", stepColumns, s.
+		JoinLateral(stepCauses).
+		Pick(
+			s.OwnerID,
+			keel.Count(),
+			keel.Count().Filter(cause.In(modelCauses)),
+			keel.Count().Filter(keel.And(cause.Ne(""), cause.NotIn(modelCauses))),
+			keel.Max(keel.DynOf(s.SettledAtMs).
+				Coalesce(s.StartedAtMs, keel.DynOf(s.UpdatedAt).Mul(1000))),
+		).
+		Where(
+			s.OwnerKind.Eq(string(src.ownerKind)),
+			s.OwnerID.InQuery(owners.Query().Pick(owners.Col("id"))),
+			s.Kind.Eq(string(agentports.RunStepTool)),
+			s.Status.Ne(string(agentports.RunStepStarted)),
+		).
+		Group(s.OwnerID))
+
+	e := agentdb.AgentExceptions
+	decisionRun := owners.Col("decision_run_id")
+	handed := keel.CTE("handed", []string{"run_id"}, e.
+		Pick(e.RunID).
+		Where(e.RunID.InQuery(owners.Query().Pick(decisionRun).Where(decisionRun.IsNotNull()))).
+		Distinct())
+
+	callEnd := calls.Col("last_end_ms")
+	stepEnd := steps.Col("last_end_ms")
+	startedAt := keel.DynOf(calls.Col("first_start_ms")).Coalesce(owners.Col("started_ms"))
+	finishedAt := owners.Col("finished_at")
+	model := keel.DynOf(calls.Col("model")).Coalesce(owners.Col("model_hint"))
+	duration := keel.DynFunc("greatest", keel.DynConst(0), keel.DynFunc(
+		"greatest",
+		zeroed(callEnd),
+		zeroed(stepEnd),
+		keel.DynCase().
+			When(keel.And(callEnd.IsNull(), stepEnd.IsNull()), keel.DynOf(finishedAt).Mul(1000)).
+			Else(keel.DynConst(0)),
+	).Sub(startedAt))
+
+	picks := []keel.Expr{
+		owners.Col("id"),
+		keel.DynLit(string(src.source)),
+		src.agent(owners, calls),
+		keel.DynOf(calls.Col("provider_id")).Coalesce(owners.Col("provider_hint")),
+		model,
+		keel.DynLit(""),
+		keel.DynOf(calls.Col("task")).Coalesce(owners.Col("task_hint")),
+		src.outcome(owners, handed),
+		decisionRun,
+		startedAt,
+		finishedAt,
+		duration,
+		calls.Col("first_token_ms"),
+	}
+	for _, name := range countedCallColumns {
+		picks = append(picks, zeroed(calls.Col(name)))
+	}
+	picks = append(picks, calls.Col("cost_usd"))
+	for _, name := range advisorCountColumns {
+		picks = append(picks, zeroed(calls.Col(name)))
+	}
+	picks = append(picks,
+		calls.Col("advisor_cost_usd"),
+		zeroed(steps.Col("tool_calls")),
+		zeroed(steps.Col("tool_failures_model")),
+		zeroed(steps.Col("tool_failures_tool")),
+		keel.DynLit(req.stamp),
 	)
 
-	standaloneCallSQL = fmt.Sprintf(`u.organization_id = ?org AND u.business_unit_id = ?bu
-			AND u.owner_id IS NULL AND u.run_id IS NULL AND u.thread_id IS NULL
-			AND u.surface NOT IN (%s)
-			AND COALESCE(u.feature, '') <> %s`,
-		standaloneSurfaces,
-		quoted(aiusage.FeatureAgentEvaluation),
+	return owners.Query().
+		With(owners, calls, steps, handed).
+		LeftJoin(calls, calls.Col("owner_id").EqCol(owners.Col("id"))).
+		LeftJoin(steps, steps.Col("owner_id").EqCol(owners.Col("id"))).
+		LeftJoin(handed, handed.Col("run_id").EqCol(decisionRun)).
+		Pick(picks...).
+		Where(model.IsNotNull())
+}
+
+func callUnitKey(u *aiusagedb.AIUsageRecordsTable) keel.DynExpr {
+	return keel.DynCase().
+		When(u.TraceID.IsNotNull(), keel.DynLit(callUnitPrefix).Concat(keel.DynFunc(
+			"md5",
+			keel.DynOf(u.TraceID).
+				Concat(":").
+				Concat(u.Task).
+				Concat(":").
+				Concat(keel.DynOf(u.SubjectID).Coalesce("")),
+		))).
+		Else(u.ID)
+}
+
+func standaloneCalls(u *aiusagedb.AIUsageRecordsTable) []keel.Pred {
+	return []keel.Pred{
+		u.OwnerID.IsNull(),
+		u.RunID.IsNull(),
+		u.ThreadID.IsNull(),
+		u.Surface.NotIn(
+			aiusage.SurfaceEvaluation,
+			aiusage.SurfaceIndexing,
+			aiusage.SurfaceRetrieval,
+		),
+		keel.DynOf(u.Feature).Coalesce("").Ne(string(aiusage.FeatureAgentEvaluation)),
+	}
+}
+
+func callUnitsSource(req *unitRefresh) *keel.Query[*keel.Row] {
+	u := aiusagedb.AIUsageRecords
+	key := callUnitKey(u)
+	touched := keel.CTE("touched", []string{colUnitID}, u.
+		Pick(key).
+		Where(append(standaloneCalls(u), u.CreatedAt.Gte(req.from), u.CreatedAt.Lt(req.to))...).
+		Distinct())
+	touchedID := touched.Col(colUnitID)
+	calls := keel.CTE("calls", append([]string{colUnitID}, callColumns...), u.
+		Pick(append([]keel.Expr{key}, callAggregates(u)...)...).
+		Where(append(standaloneCalls(u),
+			u.CreatedAt.Gte(req.from-lookbackSeconds),
+			u.CreatedAt.Lt(req.to),
+			keel.Exists(touched.Query().Pick(touchedID).Where(keel.DynOf(touchedID).Eq(key))),
+		)...).
+		Group(key))
+	col := calls.Col
+
+	picks := []keel.Expr{
+		col(colUnitID),
+		keel.DynLit(string(aianalytics.SourceCall)),
+		col("agent_definition_id"),
+		col("provider_id"),
+		col("model"),
+		keel.DynLit(""),
+		col("task"),
+		keel.DynCase().
+			When(keel.DynOf(col("answered")).IsTrue(), string(aianalytics.OutcomeCompleted)).
+			Else(string(aianalytics.OutcomeFailed)),
+		col("first_start_ms"),
+		col("last_call_at"),
+		keel.DynFunc("greatest", keel.DynConst(0),
+			keel.DynOf(col("last_end_ms")).Sub(col("first_start_ms"))),
+		col("first_token_ms"),
+	}
+	for _, name := range countedCallColumns {
+		picks = append(picks, col(name))
+	}
+	picks = append(picks, col("cost_usd"))
+	for _, name := range advisorCountColumns {
+		picks = append(picks, col(name))
+	}
+	picks = append(picks,
+		col("advisor_cost_usd"),
+		keel.DynConst(0),
+		keel.DynConst(0),
+		keel.DynConst(0),
+		keel.DynLit(req.stamp),
 	)
 
-	callUnitsSQL = fmt.Sprintf(`WITH touched AS (
-		SELECT DISTINCT %[1]s AS unit_id
-		FROM ai_usage_records AS u
-		WHERE %[2]s
-			AND u.created_at >= ?from AND u.created_at < ?to
-	),
-	calls AS (
-		SELECT %[1]s AS unit_id, %[3]s
-		FROM ai_usage_records AS u
-		WHERE %[2]s
-			AND u.created_at >= ?from - %[4]d AND u.created_at < ?to
-			AND %[1]s IN (SELECT unit_id FROM touched)
-		GROUP BY 1
-	)
-	INSERT INTO ai_work_units (%[5]s)
-	SELECT c.unit_id, ?bu, ?org, '%[6]s', c.agent_definition_id, c.provider_id, c.model, '',
-		c.task,
-		CASE WHEN c.answered THEN '%[7]s' ELSE '%[8]s' END,
-		NULL,
-		c.first_start_ms,
-		c.last_call_at,
-		GREATEST(0, c.last_end_ms - c.first_start_ms),
-		c.first_token_ms, c.model_calls, c.failed_calls, c.failovers, c.input_tokens,
-		c.output_tokens, c.cache_read_tokens, c.cache_write_tokens, c.cost_usd,
-		c.advisor_calls, c.advisor_prompt_tokens, c.advisor_output_tokens, c.advisor_cost_usd,
-		0, 0, 0, ?stamp
-	FROM calls AS c
-	WHERE c.model IS NOT NULL
-	%[9]s`,
-		callUnitKeySQL,
-		standaloneCallSQL,
-		callAggregates(),
-		lookbackSeconds,
-		unitColumns,
-		aianalytics.SourceCall,
-		aianalytics.OutcomeCompleted,
-		aianalytics.OutcomeFailed,
-		unitConflict,
-	)
-)
+	return calls.Query().
+		With(touched, calls).
+		Pick(picks...).
+		Where(col("model").IsNotNull())
+}
 
-var (
-	clearUnitToolsSQL = fmt.Sprintf(`DELETE FROM ai_work_unit_tools AS t
-	USING ai_work_units AS w
-	WHERE t.organization_id = ?org AND t.business_unit_id = ?bu
-		AND w.organization_id = t.organization_id AND w.business_unit_id = t.business_unit_id
-		AND w.id = t.unit_id AND w.refresh_stamp = ?stamp
-		AND w.source IN (%s)`,
-		quoted(aianalytics.SourceAgentRun, aianalytics.SourceAssistantTurn),
-	)
+func clearUnitToolsQuery(stamp int64) *keel.Query[*aianalytics.UnitTool] {
+	t := aianalyticsdb.UnitTools
+	w := aianalyticsdb.WorkUnits
 
-	insertUnitToolsSQL = fmt.Sprintf(`INSERT INTO ai_work_unit_tools
-		(organization_id, business_unit_id, unit_id, tool_name, cause, finished_at,
-		model_key, provider_id, agent_definition_id, task, calls)
-	SELECT ?org, ?bu, s.owner_id, s.tool_name, c.cause, w.finished_at,
-		w.model_key, COALESCE(w.provider_id, ''), COALESCE(w.agent_definition_id, ''), w.task, COUNT(*)
-	FROM ai_work_units AS w
-	JOIN agent_run_steps AS s
-		ON s.organization_id = w.organization_id
-		AND s.business_unit_id = w.business_unit_id
-		AND s.owner_id = w.id
-	CROSS JOIN LATERAL (SELECT %[1]s AS cause) AS c
-	WHERE w.organization_id = ?org AND w.business_unit_id = ?bu
-		AND w.refresh_stamp = ?stamp
-		AND w.source IN (%[2]s)
-		AND s.kind = '%[3]s' AND s.status <> '%[4]s' AND s.tool_name <> ''
-	GROUP BY s.owner_id, s.tool_name, c.cause, w.finished_at, w.model_key, w.provider_id,
-		w.agent_definition_id, w.task`,
-		causeSQL,
-		quoted(aianalytics.SourceAgentRun, aianalytics.SourceAssistantTurn),
-		agentports.RunStepTool,
-		agentports.RunStepStarted,
-	)
-)
+	return t.Join(w, w.ID.EqCol(t.UnitID)).
+		Where(w.RefreshStamp.Eq(stamp), w.Source.In(unitSources...))
+}
 
-var (
-	clearProviderHoursSQL = `DELETE FROM ai_provider_hourly_stats
-	WHERE organization_id = ?org AND business_unit_id = ?bu
-		AND hour >= ?from_hour AND hour < ?to_hour`
+func unitToolsSource(stamp int64) *keel.Query[*aianalytics.WorkUnit] {
+	w := aianalyticsdb.WorkUnits
+	s := agentdb.AgentRunSteps
+	stepCauses := keel.Rows("c", []string{"cause"}, stepCause(s))
+	cause := stepCauses.Col("cause")
 
-	insertProviderHoursSQL = fmt.Sprintf(`WITH calls AS (
-		SELECT (u.created_at / 3600) * 3600 AS hour,
-			COALESCE(u.provider_id, '') AS provider_id,
-			u.model,
-			u.task,
-			COALESCE(u.agent_definition_id, '') AS agent_definition_id,
-			%[1]s AS error_class,
-			u.succeeded,
-			u.first_token_ms,
-			u.trace_id
-		FROM ai_usage_records AS u
-		WHERE u.organization_id = ?org AND u.business_unit_id = ?bu
-			AND u.created_at >= ?from_hour AND u.created_at < ?to_hour
-			AND u.surface NOT IN (%[2]s)
-	),
-	rescued AS (
-		SELECT trace_id, ARRAY_AGG(DISTINCT provider_id) AS providers
-		FROM calls
-		WHERE succeeded AND trace_id IS NOT NULL
-		GROUP BY trace_id
-	),
-	grouped AS (
-		SELECT c.hour, c.provider_id, c.model, c.task, c.agent_definition_id, c.error_class,
-			COUNT(*) AS calls,
-			COUNT(*) FILTER (
-				WHERE NOT c.succeeded AND r.providers IS NOT NULL
-					AND NOT (r.providers <@ ARRAY[c.provider_id]::varchar[])
-			) AS fell_to_next
-		FROM calls AS c
-		LEFT JOIN rescued AS r ON r.trace_id = c.trace_id
-		GROUP BY c.hour, c.provider_id, c.model, c.task, c.agent_definition_id, c.error_class
-	),
-	hist AS (
-		SELECT c.hour, c.provider_id, c.model, c.task, c.agent_definition_id,
-			%[3]s AS bucket,
-			COUNT(*)::int AS n
-		FROM calls AS c
-		WHERE c.succeeded AND c.first_token_ms IS NOT NULL
-		GROUP BY 1, 2, 3, 4, 5, 6
-	),
-	arrays AS (
-		SELECT k.hour, k.provider_id, k.model, k.task, k.agent_definition_id,
-			ARRAY_AGG(COALESCE(h.n, 0) ORDER BY b.i) AS first_token_hist
-		FROM (SELECT DISTINCT hour, provider_id, model, task, agent_definition_id FROM hist) AS k
-		CROSS JOIN generate_series(0, %[4]d) AS b(i)
-		LEFT JOIN hist AS h
-			ON h.hour = k.hour AND h.provider_id = k.provider_id AND h.model = k.model
-			AND h.task = k.task AND h.agent_definition_id = k.agent_definition_id
-			AND h.bucket = b.i
-		GROUP BY k.hour, k.provider_id, k.model, k.task, k.agent_definition_id
-	)
-	INSERT INTO ai_provider_hourly_stats
-		(organization_id, business_unit_id, hour, provider_id, model, model_key, task,
-		agent_definition_id, error_class, calls, fell_to_next, first_token_hist)
-	SELECT ?org, ?bu, g.hour, g.provider_id, g.model, '', g.task, g.agent_definition_id,
-		g.error_class, g.calls, g.fell_to_next,
-		CASE WHEN g.error_class = '' THEN COALESCE(a.first_token_hist, '{}') ELSE '{}' END
-	FROM grouped AS g
-	LEFT JOIN arrays AS a
-		ON a.hour = g.hour AND a.provider_id = g.provider_id AND a.model = g.model
-		AND a.task = g.task AND a.agent_definition_id = g.agent_definition_id`,
-		providerErrorSQL,
-		nonCompletionSurfaces,
-		bucketSQL,
-		aianalytics.HistogramBuckets-1,
-	)
-)
+	return w.Join(s, s.OwnerID.EqCol(w.ID)).
+		JoinLateral(stepCauses).
+		Pick(
+			s.OwnerID,
+			s.ToolName,
+			cause,
+			w.FinishedAt,
+			w.ModelKey,
+			keel.DynOf(w.ProviderID).Coalesce(""),
+			keel.DynOf(w.AgentDefinitionID).Coalesce(""),
+			w.Task,
+			keel.Count(),
+		).
+		Where(
+			w.RefreshStamp.Eq(stamp),
+			w.Source.In(unitSources...),
+			s.Kind.Eq(string(agentports.RunStepTool)),
+			s.Status.Ne(string(agentports.RunStepStarted)),
+			s.ToolName.Ne(""),
+		).
+		Group(s.OwnerID, s.ToolName, cause, w.FinishedAt, w.ModelKey, w.ProviderID,
+			w.AgentDefinitionID, w.Task)
+}
+
+func unitToolColumns(t *aianalyticsdb.UnitToolsTable) []keel.Column {
+	return []keel.Column{t.UnitID, t.ToolName, t.Cause, t.FinishedAt, t.ModelKey, t.ProviderID,
+		t.AgentDefinitionID, t.Task, t.Calls}
+}
+
+func clearProviderHoursQuery(fromHour, toHour int64) *keel.Query[*aianalytics.ProviderHour] {
+	h := aianalyticsdb.ProviderHours
+
+	return h.Where(h.Hour.Gte(fromHour), h.Hour.Lt(toHour))
+}
+
+func firstTokenBucket(firstTokenMs keel.Expr) keel.DynExpr {
+	ms := keel.DynOf(firstTokenMs)
+
+	return keel.DynCase().
+		When(ms.Lt(keel.DynConst(aianalytics.HistogramBaseMs)), keel.DynConst(0)).
+		Else(keel.DynFunc(
+			"least",
+			keel.DynConst(aianalytics.HistogramBuckets-1),
+			keel.DynFunc("floor", keel.DynConst(aianalytics.HistogramStepsPerOctet).
+				Mul(keel.DynFunc("ln", ms.Cast(keel.TypeFloat64).
+					Div(keel.DynConst(aianalytics.HistogramBaseMs)))).
+				Div(keel.DynFunc("ln", keel.DynConst(2)))).
+				Cast(keel.TypeInt64).
+				Add(keel.DynConst(1)),
+		))
+}
+
+func cteColumns(cte *keel.CTETable, names ...string) []keel.Expr {
+	out := make([]keel.Expr, 0, len(names))
+	for _, name := range names {
+		out = append(out, cte.Col(name))
+	}
+
+	return out
+}
+
+func sameHourKey(left, right *keel.CTETable) []keel.Pred {
+	out := make([]keel.Pred, 0, len(hourKeyColumns))
+	for _, name := range hourKeyColumns {
+		out = append(out, left.Col(name).EqCol(right.Col(name)))
+	}
+
+	return out
+}
+
+func providerHoursSource(fromHour, toHour int64) *keel.Query[*keel.Row] {
+	u := aiusagedb.AIUsageRecords
+	calls := keel.CTE("calls", append(append([]string{}, hourKeyColumns...),
+		"error_class", "succeeded", "first_token_ms", "trace_id"), u.
+		Pick(
+			keel.DynOf(u.CreatedAt).Div(3600).Mul(3600),
+			keel.DynOf(u.ProviderID).Coalesce(""),
+			u.Model,
+			u.Task,
+			keel.DynOf(u.AgentDefinitionID).Coalesce(""),
+			providerError(u),
+			u.Succeeded,
+			u.FirstTokenMs,
+			u.TraceID,
+		).
+		Where(
+			u.CreatedAt.Gte(fromHour),
+			u.CreatedAt.Lt(toHour),
+			u.Surface.NotIn(aiusage.SurfaceIndexing, aiusage.SurfaceRetrieval),
+		))
+	call := calls.Col
+
+	rescued := keel.CTE("rescued", []string{"trace_id", "providers"}, calls.Query().
+		Pick(call("trace_id"), keel.ArrayAgg(call("provider_id")).Distinct()).
+		Where(keel.DynOf(call("succeeded")).IsTrue(), call("trace_id").IsNotNull()).
+		Group(call("trace_id")))
+
+	groupKeys := cteColumns(calls, append(append([]string{}, hourKeyColumns...), "error_class")...)
+	grouped := keel.CTE("grouped", append(append([]string{}, hourKeyColumns...),
+		"error_class", "calls", "fell_to_next"), calls.Query().
+		LeftJoin(rescued, rescued.Col("trace_id").EqCol(call("trace_id"))).
+		Pick(append(append([]keel.Expr{}, groupKeys...),
+			keel.Count(),
+			keel.Count().Filter(keel.And(
+				keel.DynOf(call("succeeded")).Eq(false),
+				rescued.Col("providers").IsNotNull(),
+				keel.Not(keel.DynOf(rescued.Col("providers")).
+					CoveredBy(keel.DynArray(call("provider_id")))),
+			)),
+		)...).
+		Group(groupKeys...))
+
+	hourKeys := cteColumns(calls, hourKeyColumns...)
+	bucket := firstTokenBucket(call("first_token_ms"))
+	hist := keel.CTE("hist", append(append([]string{}, hourKeyColumns...), "bucket", "n"),
+		calls.Query().
+			Pick(append(append([]keel.Expr{}, hourKeys...), bucket, keel.Count())...).
+			Where(keel.DynOf(call("succeeded")).IsTrue(), call("first_token_ms").IsNotNull()).
+			Group(append(append([]keel.Expr{}, hourKeys...), bucket)...))
+
+	histKeys := keel.CTE("hist_keys", hourKeyColumns, hist.Query().
+		Pick(cteColumns(hist, hourKeyColumns...)...).
+		Distinct())
+	series := keel.Rows("b", []string{"i"}, keel.DynFunc(
+		"generate_series",
+		keel.DynConst(0),
+		keel.DynConst(aianalytics.HistogramBuckets-1),
+	))
+	keyColumns := cteColumns(histKeys, hourKeyColumns...)
+	arrays := keel.CTE("arrays", append(append([]string{}, hourKeyColumns...), "first_token_hist"),
+		histKeys.Query().
+			JoinLateral(series).
+			LeftJoin(hist, append(sameHourKey(hist, histKeys),
+				hist.Col("bucket").EqCol(series.Col("i")))...).
+			Pick(append(append([]keel.Expr{}, keyColumns...),
+				keel.ArrayAgg(keel.DynOf(hist.Col("n")).Coalesce(0)).
+					OrderBy(series.Col("i").Asc()),
+			)...).
+			Group(keyColumns...))
+
+	group := grouped.Col
+	return grouped.Query().
+		With(calls, rescued, grouped, hist, histKeys, arrays).
+		LeftJoin(arrays, sameHourKey(arrays, grouped)...).
+		Pick(
+			group("hour"),
+			group("provider_id"),
+			group("model"),
+			keel.DynLit(""),
+			group("task"),
+			group("agent_definition_id"),
+			group("error_class"),
+			group("calls"),
+			group("fell_to_next"),
+			keel.DynCase().
+				When(
+					group("error_class").Eq(string(aianalytics.ProviderErrorNone)),
+					keel.DynOf(arrays.Col("first_token_hist")).Coalesce(keel.DynConst("{}")),
+				).
+				Else(keel.DynConst("{}")),
+		)
+}
+
+func providerHourColumns(h *aianalyticsdb.ProviderHoursTable) []keel.Column {
+	return []keel.Column{h.Hour, h.ProviderID, h.Model, h.ModelKey, h.Task, h.AgentDefinitionID,
+		h.ErrorClass, h.Calls, h.FellToNext, h.FirstTokenHist}
+}

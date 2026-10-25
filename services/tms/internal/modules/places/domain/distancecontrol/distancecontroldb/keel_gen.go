@@ -64,7 +64,7 @@ var distanceControlsRef = keel.Ref{Table: &distanceControlsTable}
 
 // DistanceControlsTable is the table of distancecontrol.DistanceControl.
 type DistanceControlsTable struct {
-	keel.Handle[distancecontrol.DistanceControl]
+	keel.Handle[*distancecontrol.DistanceControl]
 	ID                                           keelkinds.PulidIDCol
 	BusinessUnitID                               keelkinds.PulidIDCol
 	OrganizationID                               keelkinds.PulidIDCol
@@ -88,7 +88,7 @@ type DistanceControlsTable struct {
 
 // DistanceControls references the distance_controls table.
 var DistanceControls = &DistanceControlsTable{
-	Handle:                         keel.Handle[distancecontrol.DistanceControl]{Ref: &distanceControlsRef},
+	Handle:                         keel.Handle[*distancecontrol.DistanceControl]{Ref: &distanceControlsRef},
 	ID:                             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &distanceControlsRef, Index: 0}}},
 	BusinessUnitID:                 keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &distanceControlsRef, Index: 1}}},
 	OrganizationID:                 keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &distanceControlsRef, Index: 2}}},
@@ -113,7 +113,7 @@ var DistanceControls = &DistanceControlsTable{
 // BuildDistanceControls builds the handle of distance_controls for ref. Generated relation and alias methods call it.
 func BuildDistanceControls(r *keel.Ref) *DistanceControlsTable {
 	return &DistanceControlsTable{
-		Handle:                         keel.Handle[distancecontrol.DistanceControl]{Ref: r},
+		Handle:                         keel.Handle[*distancecontrol.DistanceControl]{Ref: r},
 		ID:                             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID:                 keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID:                 keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},

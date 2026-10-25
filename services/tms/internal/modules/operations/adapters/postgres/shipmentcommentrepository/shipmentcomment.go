@@ -77,8 +77,8 @@ func (r *repository) ListByShipmentID(
 					Filter: filter,
 					Cursor: req.Cursor,
 					Shape: func(
-						q *keel.Query[shipment.ShipmentComment],
-					) *keel.Query[shipment.ShipmentComment] {
+						q *keel.Query[*shipment.ShipmentComment],
+					) *keel.Query[*shipment.ShipmentComment] {
 						q = withCommentRelations(q)
 						if replyMode {
 							return q
@@ -137,7 +137,9 @@ func listConditions(req *shipmentports.ListShipmentCommentsRequest) []keel.Pred 
 	return preds
 }
 
-func withReplyCount(q *keel.Query[shipment.ShipmentComment]) *keel.Query[shipment.ShipmentComment] {
+func withReplyCount(
+	q *keel.Query[*shipment.ShipmentComment],
+) *keel.Query[*shipment.ShipmentComment] {
 	sc := shipmentdb.ShipmentComments
 	replies := sc.As("scr")
 
@@ -148,8 +150,8 @@ func withReplyCount(q *keel.Query[shipment.ShipmentComment]) *keel.Query[shipmen
 }
 
 func withCommentRelations(
-	q *keel.Query[shipment.ShipmentComment],
-) *keel.Query[shipment.ShipmentComment] {
+	q *keel.Query[*shipment.ShipmentComment],
+) *keel.Query[*shipment.ShipmentComment] {
 	sc := shipmentdb.ShipmentComments
 	mentions := sc.MentionedUsers()
 	acks := sc.Acknowledgments()

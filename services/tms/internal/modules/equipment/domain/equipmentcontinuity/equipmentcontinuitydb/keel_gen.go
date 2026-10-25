@@ -61,7 +61,7 @@ var equipmentContinuitiesRef = keel.Ref{Table: &equipmentContinuitiesTable}
 
 // EquipmentContinuitiesTable is the table of equipmentcontinuity.EquipmentContinuity.
 type EquipmentContinuitiesTable struct {
-	keel.Handle[equipmentcontinuity.EquipmentContinuity]
+	keel.Handle[*equipmentcontinuity.EquipmentContinuity]
 	ID                   keelkinds.PulidIDCol
 	BusinessUnitID       keelkinds.PulidIDCol
 	OrganizationID       keelkinds.PulidIDCol
@@ -82,7 +82,7 @@ type EquipmentContinuitiesTable struct {
 
 // EquipmentContinuities references the equipment_continuity table.
 var EquipmentContinuities = &EquipmentContinuitiesTable{
-	Handle:               keel.Handle[equipmentcontinuity.EquipmentContinuity]{Ref: &equipmentContinuitiesRef},
+	Handle:               keel.Handle[*equipmentcontinuity.EquipmentContinuity]{Ref: &equipmentContinuitiesRef},
 	ID:                   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &equipmentContinuitiesRef, Index: 0}}},
 	BusinessUnitID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &equipmentContinuitiesRef, Index: 1}}},
 	OrganizationID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &equipmentContinuitiesRef, Index: 2}}},
@@ -104,7 +104,7 @@ var EquipmentContinuities = &EquipmentContinuitiesTable{
 // BuildEquipmentContinuities builds the handle of equipment_continuity for ref. Generated relation and alias methods call it.
 func BuildEquipmentContinuities(r *keel.Ref) *EquipmentContinuitiesTable {
 	return &EquipmentContinuitiesTable{
-		Handle:               keel.Handle[equipmentcontinuity.EquipmentContinuity]{Ref: r},
+		Handle:               keel.Handle[*equipmentcontinuity.EquipmentContinuity]{Ref: r},
 		ID:                   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},

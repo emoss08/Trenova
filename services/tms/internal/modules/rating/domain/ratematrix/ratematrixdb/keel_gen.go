@@ -79,7 +79,7 @@ var rateMatrixesRef = keel.Ref{Table: &rateMatrixesTable}
 
 // RateMatrixesTable is the table of ratematrix.RateMatrix.
 type RateMatrixesTable struct {
-	keel.Handle[ratematrix.RateMatrix]
+	keel.Handle[*ratematrix.RateMatrix]
 	ID                     keelkinds.PulidIDCol
 	BusinessUnitID         keelkinds.PulidIDCol
 	OrganizationID         keelkinds.PulidIDCol
@@ -107,7 +107,7 @@ type RateMatrixesTable struct {
 
 // RateMatrixes references the rate_matrices table.
 var RateMatrixes = &RateMatrixesTable{
-	Handle:                 keel.Handle[ratematrix.RateMatrix]{Ref: &rateMatrixesRef},
+	Handle:                 keel.Handle[*ratematrix.RateMatrix]{Ref: &rateMatrixesRef},
 	ID:                     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &rateMatrixesRef, Index: 0}}},
 	BusinessUnitID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &rateMatrixesRef, Index: 1}}},
 	OrganizationID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &rateMatrixesRef, Index: 2}}},
@@ -136,7 +136,7 @@ var RateMatrixes = &RateMatrixesTable{
 // BuildRateMatrixes builds the handle of rate_matrices for ref. Generated relation and alias methods call it.
 func BuildRateMatrixes(r *keel.Ref) *RateMatrixesTable {
 	return &RateMatrixesTable{
-		Handle:                 keel.Handle[ratematrix.RateMatrix]{Ref: r},
+		Handle:                 keel.Handle[*ratematrix.RateMatrix]{Ref: r},
 		ID:                     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -400,7 +400,7 @@ var rateMatrixCellsRef = keel.Ref{Table: &rateMatrixCellsTable}
 
 // RateMatrixCellsTable is the table of ratematrix.RateMatrixCell.
 type RateMatrixCellsTable struct {
-	keel.Handle[ratematrix.RateMatrixCell]
+	keel.Handle[*ratematrix.RateMatrixCell]
 	ID              keelkinds.PulidIDCol
 	BusinessUnitID  keelkinds.PulidIDCol
 	OrganizationID  keelkinds.PulidIDCol
@@ -431,7 +431,7 @@ type RateMatrixCellsTable struct {
 
 // RateMatrixCells references the rate_matrix_cells table.
 var RateMatrixCells = &RateMatrixCellsTable{
-	Handle:          keel.Handle[ratematrix.RateMatrixCell]{Ref: &rateMatrixCellsRef},
+	Handle:          keel.Handle[*ratematrix.RateMatrixCell]{Ref: &rateMatrixCellsRef},
 	ID:              keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &rateMatrixCellsRef, Index: 0}}},
 	BusinessUnitID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &rateMatrixCellsRef, Index: 1}}},
 	OrganizationID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &rateMatrixCellsRef, Index: 2}}},
@@ -463,7 +463,7 @@ var RateMatrixCells = &RateMatrixCellsTable{
 // BuildRateMatrixCells builds the handle of rate_matrix_cells for ref. Generated relation and alias methods call it.
 func BuildRateMatrixCells(r *keel.Ref) *RateMatrixCellsTable {
 	return &RateMatrixCellsTable{
-		Handle:          keel.Handle[ratematrix.RateMatrixCell]{Ref: r},
+		Handle:          keel.Handle[*ratematrix.RateMatrixCell]{Ref: r},
 		ID:              keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -696,7 +696,7 @@ var rateMatrixDimensionsRef = keel.Ref{Table: &rateMatrixDimensionsTable}
 
 // RateMatrixDimensionsTable is the table of ratematrix.RateMatrixDimension.
 type RateMatrixDimensionsTable struct {
-	keel.Handle[ratematrix.RateMatrixDimension]
+	keel.Handle[*ratematrix.RateMatrixDimension]
 	ID               keelkinds.PulidIDCol
 	BusinessUnitID   keelkinds.PulidIDCol
 	OrganizationID   keelkinds.PulidIDCol
@@ -714,7 +714,7 @@ type RateMatrixDimensionsTable struct {
 
 // RateMatrixDimensions references the rate_matrix_dimensions table.
 var RateMatrixDimensions = &RateMatrixDimensionsTable{
-	Handle:           keel.Handle[ratematrix.RateMatrixDimension]{Ref: &rateMatrixDimensionsRef},
+	Handle:           keel.Handle[*ratematrix.RateMatrixDimension]{Ref: &rateMatrixDimensionsRef},
 	ID:               keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &rateMatrixDimensionsRef, Index: 0}}},
 	BusinessUnitID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &rateMatrixDimensionsRef, Index: 1}}},
 	OrganizationID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &rateMatrixDimensionsRef, Index: 2}}},
@@ -733,7 +733,7 @@ var RateMatrixDimensions = &RateMatrixDimensionsTable{
 // BuildRateMatrixDimensions builds the handle of rate_matrix_dimensions for ref. Generated relation and alias methods call it.
 func BuildRateMatrixDimensions(r *keel.Ref) *RateMatrixDimensionsTable {
 	return &RateMatrixDimensionsTable{
-		Handle:           keel.Handle[ratematrix.RateMatrixDimension]{Ref: r},
+		Handle:           keel.Handle[*ratematrix.RateMatrixDimension]{Ref: r},
 		ID:               keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -910,7 +910,7 @@ var rateMatrixReviewsRef = keel.Ref{Table: &rateMatrixReviewsTable}
 
 // RateMatrixReviewsTable is the table of ratematrix.RateMatrixReview.
 type RateMatrixReviewsTable struct {
-	keel.Handle[ratematrix.RateMatrixReview]
+	keel.Handle[*ratematrix.RateMatrixReview]
 	ID                  keelkinds.PulidIDCol
 	OrganizationID      keelkinds.PulidIDCol
 	BusinessUnitID      keelkinds.PulidIDCol
@@ -927,7 +927,7 @@ type RateMatrixReviewsTable struct {
 
 // RateMatrixReviews references the rate_matrix_reviews table.
 var RateMatrixReviews = &RateMatrixReviewsTable{
-	Handle:              keel.Handle[ratematrix.RateMatrixReview]{Ref: &rateMatrixReviewsRef},
+	Handle:              keel.Handle[*ratematrix.RateMatrixReview]{Ref: &rateMatrixReviewsRef},
 	ID:                  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &rateMatrixReviewsRef, Index: 0}}},
 	OrganizationID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &rateMatrixReviewsRef, Index: 1}}},
 	BusinessUnitID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &rateMatrixReviewsRef, Index: 2}}},
@@ -945,7 +945,7 @@ var RateMatrixReviews = &RateMatrixReviewsTable{
 // BuildRateMatrixReviews builds the handle of rate_matrix_reviews for ref. Generated relation and alias methods call it.
 func BuildRateMatrixReviews(r *keel.Ref) *RateMatrixReviewsTable {
 	return &RateMatrixReviewsTable{
-		Handle:              keel.Handle[ratematrix.RateMatrixReview]{Ref: r},
+		Handle:              keel.Handle[*ratematrix.RateMatrixReview]{Ref: r},
 		ID:                  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		OrganizationID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		BusinessUnitID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -1124,7 +1124,7 @@ var rateMatrixVersionsRef = keel.Ref{Table: &rateMatrixVersionsTable}
 
 // RateMatrixVersionsTable is the table of ratematrix.RateMatrixVersion.
 type RateMatrixVersionsTable struct {
-	keel.Handle[ratematrix.RateMatrixVersion]
+	keel.Handle[*ratematrix.RateMatrixVersion]
 	ID             keelkinds.PulidIDCol
 	OrganizationID keelkinds.PulidIDCol
 	BusinessUnitID keelkinds.PulidIDCol
@@ -1143,7 +1143,7 @@ type RateMatrixVersionsTable struct {
 
 // RateMatrixVersions references the rate_matrix_versions table.
 var RateMatrixVersions = &RateMatrixVersionsTable{
-	Handle:         keel.Handle[ratematrix.RateMatrixVersion]{Ref: &rateMatrixVersionsRef},
+	Handle:         keel.Handle[*ratematrix.RateMatrixVersion]{Ref: &rateMatrixVersionsRef},
 	ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &rateMatrixVersionsRef, Index: 0}}},
 	OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &rateMatrixVersionsRef, Index: 1}}},
 	BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &rateMatrixVersionsRef, Index: 2}}},
@@ -1163,7 +1163,7 @@ var RateMatrixVersions = &RateMatrixVersionsTable{
 // BuildRateMatrixVersions builds the handle of rate_matrix_versions for ref. Generated relation and alias methods call it.
 func BuildRateMatrixVersions(r *keel.Ref) *RateMatrixVersionsTable {
 	return &RateMatrixVersionsTable{
-		Handle:         keel.Handle[ratematrix.RateMatrixVersion]{Ref: r},
+		Handle:         keel.Handle[*ratematrix.RateMatrixVersion]{Ref: r},
 		ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},

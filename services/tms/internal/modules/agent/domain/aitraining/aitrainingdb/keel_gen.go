@@ -85,7 +85,7 @@ var retrainingCyclesRef = keel.Ref{Table: &retrainingCyclesTable}
 
 // RetrainingCyclesTable is the table of aitraining.RetrainingCycle.
 type RetrainingCyclesTable struct {
-	keel.Handle[aitraining.RetrainingCycle]
+	keel.Handle[*aitraining.RetrainingCycle]
 	ID                   keelkinds.PulidIDCol
 	Task                 aicorrectiondb.TaskCol
 	Trigger              RetrainingTriggerCol
@@ -128,7 +128,7 @@ type RetrainingCyclesTable struct {
 
 // RetrainingCycles references the ai_retraining_cycles table.
 var RetrainingCycles = &RetrainingCyclesTable{
-	Handle:               keel.Handle[aitraining.RetrainingCycle]{Ref: &retrainingCyclesRef},
+	Handle:               keel.Handle[*aitraining.RetrainingCycle]{Ref: &retrainingCyclesRef},
 	ID:                   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &retrainingCyclesRef, Index: 0}}},
 	Task:                 aicorrectiondb.TaskCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &retrainingCyclesRef, Index: 1}}},
 	Trigger:              RetrainingTriggerCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &retrainingCyclesRef, Index: 2}}},
@@ -172,7 +172,7 @@ var RetrainingCycles = &RetrainingCyclesTable{
 // BuildRetrainingCycles builds the handle of ai_retraining_cycles for ref. Generated relation and alias methods call it.
 func BuildRetrainingCycles(r *keel.Ref) *RetrainingCyclesTable {
 	return &RetrainingCyclesTable{
-		Handle:               keel.Handle[aitraining.RetrainingCycle]{Ref: r},
+		Handle:               keel.Handle[*aitraining.RetrainingCycle]{Ref: r},
 		ID:                   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		Task:                 aicorrectiondb.TaskCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		Trigger:              RetrainingTriggerCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -498,7 +498,7 @@ var trainingExportsRef = keel.Ref{Table: &trainingExportsTable}
 
 // TrainingExportsTable is the table of aitraining.TrainingExport.
 type TrainingExportsTable struct {
-	keel.Handle[aitraining.TrainingExport]
+	keel.Handle[*aitraining.TrainingExport]
 	ID                      keelkinds.PulidIDCol
 	Task                    aicorrectiondb.TaskCol
 	Status                  ExportStatusCol
@@ -530,7 +530,7 @@ type TrainingExportsTable struct {
 
 // TrainingExports references the ai_training_exports table.
 var TrainingExports = &TrainingExportsTable{
-	Handle:                  keel.Handle[aitraining.TrainingExport]{Ref: &trainingExportsRef},
+	Handle:                  keel.Handle[*aitraining.TrainingExport]{Ref: &trainingExportsRef},
 	ID:                      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &trainingExportsRef, Index: 0}}},
 	Task:                    aicorrectiondb.TaskCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &trainingExportsRef, Index: 1}}},
 	Status:                  ExportStatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &trainingExportsRef, Index: 2}}},
@@ -563,7 +563,7 @@ var TrainingExports = &TrainingExportsTable{
 // BuildTrainingExports builds the handle of ai_training_exports for ref. Generated relation and alias methods call it.
 func BuildTrainingExports(r *keel.Ref) *TrainingExportsTable {
 	return &TrainingExportsTable{
-		Handle:                  keel.Handle[aitraining.TrainingExport]{Ref: r},
+		Handle:                  keel.Handle[*aitraining.TrainingExport]{Ref: r},
 		ID:                      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		Task:                    aicorrectiondb.TaskCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		Status:                  ExportStatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -811,7 +811,7 @@ var trainingExportRecordsRef = keel.Ref{Table: &trainingExportRecordsTable}
 
 // TrainingExportRecordsTable is the table of aitraining.TrainingExportRecord.
 type TrainingExportRecordsTable struct {
-	keel.Handle[aitraining.TrainingExportRecord]
+	keel.Handle[*aitraining.TrainingExportRecord]
 	ID               keelkinds.PulidIDCol
 	BusinessUnitID   keelkinds.PulidIDCol
 	OrganizationID   keelkinds.PulidIDCol
@@ -826,7 +826,7 @@ type TrainingExportRecordsTable struct {
 
 // TrainingExportRecords references the ai_training_export_records table.
 var TrainingExportRecords = &TrainingExportRecordsTable{
-	Handle:           keel.Handle[aitraining.TrainingExportRecord]{Ref: &trainingExportRecordsRef},
+	Handle:           keel.Handle[*aitraining.TrainingExportRecord]{Ref: &trainingExportRecordsRef},
 	ID:               keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &trainingExportRecordsRef, Index: 0}}},
 	BusinessUnitID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &trainingExportRecordsRef, Index: 1}}},
 	OrganizationID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &trainingExportRecordsRef, Index: 2}}},
@@ -842,7 +842,7 @@ var TrainingExportRecords = &TrainingExportRecordsTable{
 // BuildTrainingExportRecords builds the handle of ai_training_export_records for ref. Generated relation and alias methods call it.
 func BuildTrainingExportRecords(r *keel.Ref) *TrainingExportRecordsTable {
 	return &TrainingExportRecordsTable{
-		Handle:           keel.Handle[aitraining.TrainingExportRecord]{Ref: r},
+		Handle:           keel.Handle[*aitraining.TrainingExportRecord]{Ref: r},
 		ID:               keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},

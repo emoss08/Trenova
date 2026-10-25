@@ -108,8 +108,8 @@ func (r *repository) ListConnection(
 					Filter: req.Filter,
 					Cursor: req.Cursor,
 					Shape: func(
-						q *keel.Query[customerpayment.Payment],
-					) *keel.Query[customerpayment.Payment] {
+						q *keel.Query[*customerpayment.Payment],
+					) *keel.Query[*customerpayment.Payment] {
 						return q.Load(orderedApplications())
 					},
 				},

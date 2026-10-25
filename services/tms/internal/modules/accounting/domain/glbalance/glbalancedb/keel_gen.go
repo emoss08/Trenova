@@ -71,7 +71,7 @@ var gLAccountPeriodBalancesRef = keel.Ref{Table: &gLAccountPeriodBalancesTable}
 
 // GLAccountPeriodBalancesTable is the table of glbalance.GLAccountPeriodBalance.
 type GLAccountPeriodBalancesTable struct {
-	keel.Handle[glbalance.GLAccountPeriodBalance]
+	keel.Handle[*glbalance.GLAccountPeriodBalance]
 	OrganizationID     keelkinds.PulidIDCol
 	BusinessUnitID     keelkinds.PulidIDCol
 	GLAccountID        keelkinds.PulidIDCol
@@ -87,7 +87,7 @@ type GLAccountPeriodBalancesTable struct {
 
 // GLAccountPeriodBalances references the gl_account_balances_by_period table.
 var GLAccountPeriodBalances = &GLAccountPeriodBalancesTable{
-	Handle:             keel.Handle[glbalance.GLAccountPeriodBalance]{Ref: &gLAccountPeriodBalancesRef},
+	Handle:             keel.Handle[*glbalance.GLAccountPeriodBalance]{Ref: &gLAccountPeriodBalancesRef},
 	OrganizationID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &gLAccountPeriodBalancesRef, Index: 0}}},
 	BusinessUnitID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &gLAccountPeriodBalancesRef, Index: 1}}},
 	GLAccountID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &gLAccountPeriodBalancesRef, Index: 2}}},
@@ -104,7 +104,7 @@ var GLAccountPeriodBalances = &GLAccountPeriodBalancesTable{
 // BuildGLAccountPeriodBalances builds the handle of gl_account_balances_by_period for ref. Generated relation and alias methods call it.
 func BuildGLAccountPeriodBalances(r *keel.Ref) *GLAccountPeriodBalancesTable {
 	return &GLAccountPeriodBalancesTable{
-		Handle:             keel.Handle[glbalance.GLAccountPeriodBalance]{Ref: r},
+		Handle:             keel.Handle[*glbalance.GLAccountPeriodBalance]{Ref: r},
 		OrganizationID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		GLAccountID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},

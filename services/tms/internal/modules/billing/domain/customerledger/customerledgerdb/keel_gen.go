@@ -70,7 +70,7 @@ var customerLedgerEntriesRef = keel.Ref{Table: &customerLedgerEntriesTable}
 
 // CustomerLedgerEntriesTable is the table of customerledger.CustomerLedgerEntry.
 type CustomerLedgerEntriesTable struct {
-	keel.Handle[customerledger.CustomerLedgerEntry]
+	keel.Handle[*customerledger.CustomerLedgerEntry]
 	ID               keelkinds.PulidIDCol
 	OrganizationID   keelkinds.PulidIDCol
 	BusinessUnitID   keelkinds.PulidIDCol
@@ -89,7 +89,7 @@ type CustomerLedgerEntriesTable struct {
 
 // CustomerLedgerEntries references the customer_ledger_entries table.
 var CustomerLedgerEntries = &CustomerLedgerEntriesTable{
-	Handle:           keel.Handle[customerledger.CustomerLedgerEntry]{Ref: &customerLedgerEntriesRef},
+	Handle:           keel.Handle[*customerledger.CustomerLedgerEntry]{Ref: &customerLedgerEntriesRef},
 	ID:               keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &customerLedgerEntriesRef, Index: 0}}},
 	OrganizationID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &customerLedgerEntriesRef, Index: 1}}},
 	BusinessUnitID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &customerLedgerEntriesRef, Index: 2}}},
@@ -109,7 +109,7 @@ var CustomerLedgerEntries = &CustomerLedgerEntriesTable{
 // BuildCustomerLedgerEntries builds the handle of customer_ledger_entries for ref. Generated relation and alias methods call it.
 func BuildCustomerLedgerEntries(r *keel.Ref) *CustomerLedgerEntriesTable {
 	return &CustomerLedgerEntriesTable{
-		Handle:           keel.Handle[customerledger.CustomerLedgerEntry]{Ref: r},
+		Handle:           keel.Handle[*customerledger.CustomerLedgerEntry]{Ref: r},
 		ID:               keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		OrganizationID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		BusinessUnitID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},

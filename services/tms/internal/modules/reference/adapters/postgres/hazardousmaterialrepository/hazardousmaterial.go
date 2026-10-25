@@ -301,7 +301,7 @@ func abbreviateName(name string, maxLength int) string {
 func (r *repository) codeExists(ctx context.Context, code string) (bool, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (bool, error) {
 		hm := hazardousmaterialdb.HazardousMaterials
-		return hm.Where(hm.Code.Eq(code)).Exists(ctx, r.db.Keel(ctx))
+		return hm.Where(hm.Code.Lower().Eq(strings.ToLower(code))).Exists(ctx, r.db.Keel(ctx))
 	})
 }
 

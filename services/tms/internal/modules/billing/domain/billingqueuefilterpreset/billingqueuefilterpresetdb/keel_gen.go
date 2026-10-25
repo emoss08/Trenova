@@ -55,7 +55,7 @@ var billingQueueFilterPresetsRef = keel.Ref{Table: &billingQueueFilterPresetsTab
 
 // BillingQueueFilterPresetsTable is the table of billingqueuefilterpreset.BillingQueueFilterPreset.
 type BillingQueueFilterPresetsTable struct {
-	keel.Handle[billingqueuefilterpreset.BillingQueueFilterPreset]
+	keel.Handle[*billingqueuefilterpreset.BillingQueueFilterPreset]
 	ID             keelkinds.PulidIDCol
 	OrganizationID keelkinds.PulidIDCol
 	BusinessUnitID keelkinds.PulidIDCol
@@ -70,7 +70,7 @@ type BillingQueueFilterPresetsTable struct {
 
 // BillingQueueFilterPresets references the billing_queue_filter_presets table.
 var BillingQueueFilterPresets = &BillingQueueFilterPresetsTable{
-	Handle:         keel.Handle[billingqueuefilterpreset.BillingQueueFilterPreset]{Ref: &billingQueueFilterPresetsRef},
+	Handle:         keel.Handle[*billingqueuefilterpreset.BillingQueueFilterPreset]{Ref: &billingQueueFilterPresetsRef},
 	ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &billingQueueFilterPresetsRef, Index: 0}}},
 	OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &billingQueueFilterPresetsRef, Index: 1}}},
 	BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &billingQueueFilterPresetsRef, Index: 2}}},
@@ -86,7 +86,7 @@ var BillingQueueFilterPresets = &BillingQueueFilterPresetsTable{
 // BuildBillingQueueFilterPresets builds the handle of billing_queue_filter_presets for ref. Generated relation and alias methods call it.
 func BuildBillingQueueFilterPresets(r *keel.Ref) *BillingQueueFilterPresetsTable {
 	return &BillingQueueFilterPresetsTable{
-		Handle:         keel.Handle[billingqueuefilterpreset.BillingQueueFilterPreset]{Ref: r},
+		Handle:         keel.Handle[*billingqueuefilterpreset.BillingQueueFilterPreset]{Ref: r},
 		ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},

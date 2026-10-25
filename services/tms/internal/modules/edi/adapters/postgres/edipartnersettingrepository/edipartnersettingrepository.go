@@ -59,7 +59,7 @@ func (r *repository) ListPartnerSettingSchemas(
 
 func schemasQuery(
 	req *ediports.ListEDIPartnerSettingSchemasRequest,
-) *keel.Query[edi.EDIPartnerSettingSchema] {
+) *keel.Query[*edi.EDIPartnerSettingSchema] {
 	ps := edidb.EDIPartnerSettingSchemas
 	search := strings.TrimSpace(req.Filter.Query)
 
@@ -116,7 +116,7 @@ func (r *repository) GetActivePartnerSettingSchema(
 
 func activeSchemaQuery(
 	req *ediports.GetActiveEDIPartnerSettingSchemaRequest,
-) *keel.Query[edi.EDIPartnerSettingSchema] {
+) *keel.Query[*edi.EDIPartnerSettingSchema] {
 	ps := edidb.EDIPartnerSettingSchemas
 	q := ps.Where(
 		ps.Standard.Eq(req.Standard),
@@ -171,7 +171,7 @@ func (r *repository) searchPartnerSettingFields(
 
 func fieldsQuery(
 	req *ediports.ListEDIPartnerSettingFieldsRequest,
-) *keel.Query[edi.EDIPartnerSettingField] {
+) *keel.Query[*edi.EDIPartnerSettingField] {
 	pf := edidb.EDIPartnerSettingFields
 	schema := pf.Schema()
 	pathPrefix := strings.TrimSpace(req.PathPrefix)

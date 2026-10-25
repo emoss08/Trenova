@@ -442,7 +442,7 @@ func (r *repository) SetToolTier(
 				Concat(keel.DynFunc(
 					"jsonb_build_object",
 					keel.DynLit(req.ToolName).Cast(keel.TypeString),
-					keel.DynLit(string(req.Tier)).Cast(keel.TypeString),
+					keel.DynLit(string(req.Tier)),
 				))),
 		)
 		if err != nil {
@@ -601,7 +601,7 @@ func (r *repository) StatsByIDs(
 					Group(run.AgentDefinitionID).
 					Pick(
 						run.AgentDefinitionID,
-						keel.DynLit(0).Cast(keel.TypeInt64),
+						keel.DynLit(0),
 						keel.Count().Filter(run.Status.In(openRunStatuses()...)),
 						run.StartedAt.Max(),
 					).

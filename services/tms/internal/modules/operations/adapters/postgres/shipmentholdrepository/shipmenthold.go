@@ -45,7 +45,7 @@ func New(p Params) shipmentports.ShipmentHoldRepository {
 	}
 }
 
-func holdQuery() *keel.Query[shipment.ShipmentHold] {
+func holdQuery() *keel.Query[*shipment.ShipmentHold] {
 	h := shipmentdb.ShipmentHolds
 	return h.Load(h.HoldReason(), h.CreatedBy(), h.ReleasedBy())
 }

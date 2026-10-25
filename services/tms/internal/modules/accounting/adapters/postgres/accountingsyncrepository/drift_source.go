@@ -232,7 +232,7 @@ func paymentStates(req *accountingsyncports.ListAccountingDriftStatesRequest) ke
 			cp.AmountMinor,
 			cp.UnappliedAmountMinor,
 			cp.AppliedAmountMinor,
-			keel.DynLit(0).Cast(keel.TypeInt64),
+			keel.DynLit(0),
 			cp.Status.Eq(customerpayment.StatusReversed),
 			cp.Status,
 		).
@@ -252,9 +252,9 @@ func applicationStates(req *accountingsyncports.ListAccountingDriftStatesRequest
 			cus.Name,
 			inv.CurrencyCode,
 			cma.AppliedAmountMinor,
-			keel.DynLit(0).Cast(keel.TypeInt64),
+			keel.DynLit(0),
 			cma.AppliedAmountMinor,
-			keel.DynLit(0).Cast(keel.TypeInt64),
+			keel.DynLit(0),
 			cma.Status.Eq(customerpayment.CreditApplicationStatusUnapplied),
 			cma.Status,
 		).
@@ -282,9 +282,9 @@ func carrierStates(req *accountingsyncports.ListAccountingDriftStatesRequest) ke
 			carr.Name,
 			cs.CurrencyCode,
 			keel.DynFunc("abs", cs.NetPayableMinor),
-			keel.DynLit(0).Cast(keel.TypeInt64),
-			keel.DynLit(0).Cast(keel.TypeInt64),
-			keel.DynLit(0).Cast(keel.TypeInt64),
+			keel.DynLit(0),
+			keel.DynLit(0),
+			keel.DynLit(0),
 			settlementVoided(
 				req.ObjectType,
 				cs.Status.Eq(carriersettlement.StatusVoided),
@@ -306,9 +306,9 @@ func driverStates(req *accountingsyncports.ListAccountingDriftStatesRequest) kee
 			keel.DynFunc("trim", keel.DynOf(wrk.FirstName).Concat(" ").Concat(wrk.LastName)),
 			ds.CurrencyCode,
 			keel.DynFunc("abs", ds.NetPayMinor),
-			keel.DynLit(0).Cast(keel.TypeInt64),
-			keel.DynLit(0).Cast(keel.TypeInt64),
-			keel.DynLit(0).Cast(keel.TypeInt64),
+			keel.DynLit(0),
+			keel.DynLit(0),
+			keel.DynLit(0),
 			settlementVoided(
 				req.ObjectType,
 				ds.Status.Eq(driversettlement.StatusVoided),
@@ -321,7 +321,7 @@ func driverStates(req *accountingsyncports.ListAccountingDriftStatesRequest) kee
 
 func balanceDocuments(
 	req *accountingsyncports.ListAccountingDriftBalancesRequest,
-) *keel.Query[accountingsync.AccountingSyncRecord] {
+) *keel.Query[*accountingsync.AccountingSyncRecord] {
 	sr := accountingsyncdb.AccountingSyncRecords
 	inv := invoicedb.Invoices
 	return sr.Join(inv, inv.ID.EqCol(sr.ObjectID)).
@@ -444,7 +444,7 @@ func waitingInbound(
 func unsettledRecords(
 	req *accountingsyncports.ListAccountingDriftPendingCustomersRequest,
 	objectTypes ...accountingsync.SyncObjectType,
-) *keel.Query[accountingsync.AccountingSyncRecord] {
+) *keel.Query[*accountingsync.AccountingSyncRecord] {
 	sr := accountingsyncdb.AccountingSyncRecords
 	return sr.Where(
 		sr.ConnectionID.Eq(req.ConnectionID),

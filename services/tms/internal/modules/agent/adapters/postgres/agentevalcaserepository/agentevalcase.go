@@ -323,7 +323,7 @@ func (r *repository) PurgeOrphaned(
 
 func (r *repository) deleteKeys(
 	ctx context.Context,
-	keys *keel.Query[agentquality.EvalCase],
+	keys *keel.Query[*agentquality.EvalCase],
 	allTenants bool,
 ) (int, error) {
 	c := agentqualitydb.EvalCases

@@ -69,7 +69,7 @@ var extractionsRef = keel.Ref{Table: &extractionsTable}
 
 // ExtractionsTable is the table of documentaiextraction.Extraction.
 type ExtractionsTable struct {
-	keel.Handle[documentaiextraction.Extraction]
+	keel.Handle[*documentaiextraction.Extraction]
 	ID             keelkinds.PulidIDCol
 	DocumentID     keelkinds.PulidIDCol
 	OrganizationID keelkinds.PulidIDCol
@@ -96,7 +96,7 @@ type ExtractionsTable struct {
 
 // Extractions references the document_ai_extractions table.
 var Extractions = &ExtractionsTable{
-	Handle:         keel.Handle[documentaiextraction.Extraction]{Ref: &extractionsRef},
+	Handle:         keel.Handle[*documentaiextraction.Extraction]{Ref: &extractionsRef},
 	ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &extractionsRef, Index: 0}}},
 	DocumentID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &extractionsRef, Index: 1}}},
 	OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &extractionsRef, Index: 2}}},
@@ -124,7 +124,7 @@ var Extractions = &ExtractionsTable{
 // BuildExtractions builds the handle of document_ai_extractions for ref. Generated relation and alias methods call it.
 func BuildExtractions(r *keel.Ref) *ExtractionsTable {
 	return &ExtractionsTable{
-		Handle:         keel.Handle[documentaiextraction.Extraction]{Ref: r},
+		Handle:         keel.Handle[*documentaiextraction.Extraction]{Ref: r},
 		ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		DocumentID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},

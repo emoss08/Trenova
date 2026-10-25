@@ -159,7 +159,7 @@ func TestOverdueSkipsItemsEscalatedTooRecently(t *testing.T) {
 	}
 	sql, args := keeltest.Render(t, wi.Where(overduePred(req)))
 
-	assert.Contains(t, sql, `wi."due_source" IS DISTINCT FROM $`, sql)
+	assert.Contains(t, sql, `wi."due_source" IS DISTINCT FROM 'Source'`, sql)
 	assert.Contains(t, sql, `wi."last_escalated_at" IS NULL`, sql)
 	assert.Contains(t, sql, `wi."last_escalated_at" <= $`, sql)
 	assert.Contains(t, args, int64(900))

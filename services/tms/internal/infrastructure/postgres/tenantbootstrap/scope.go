@@ -23,7 +23,7 @@ func (s Scope) now() int64 {
 	return timeutils.NowUnix()
 }
 
-func scoped[T any](ctx context.Context, q *keel.Query[T]) *keel.Query[T] {
+func scoped[T any](ctx context.Context, q *keel.Query[*T]) *keel.Query[*T] {
 	if dbscope.IsSystem(ctx) {
 		return q.AllTenants()
 	}

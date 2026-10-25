@@ -67,7 +67,7 @@ func injuryLoads(includeWorker, includeDocument, includeEvent bool) []keel.Loade
 	return append(loads, listquery.When(includeEvent, i.SafetyEvent())...)
 }
 
-func injuriesQuery(req *workerports.ListWorkerInjuriesRequest) *keel.Query[worker.WorkerInjury] {
+func injuriesQuery(req *workerports.ListWorkerInjuriesRequest) *keel.Query[*worker.WorkerInjury] {
 	i := workerdb.WorkerInjuries
 
 	return i.Where(

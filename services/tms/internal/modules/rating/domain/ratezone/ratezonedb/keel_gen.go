@@ -64,7 +64,7 @@ var rateZonesRef = keel.Ref{Table: &rateZonesTable}
 
 // RateZonesTable is the table of ratezone.RateZone.
 type RateZonesTable struct {
-	keel.Handle[ratezone.RateZone]
+	keel.Handle[*ratezone.RateZone]
 	ID             keelkinds.PulidIDCol
 	BusinessUnitID keelkinds.PulidIDCol
 	OrganizationID keelkinds.PulidIDCol
@@ -82,7 +82,7 @@ type RateZonesTable struct {
 
 // RateZones references the rate_zones table.
 var RateZones = &RateZonesTable{
-	Handle:         keel.Handle[ratezone.RateZone]{Ref: &rateZonesRef},
+	Handle:         keel.Handle[*ratezone.RateZone]{Ref: &rateZonesRef},
 	ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &rateZonesRef, Index: 0}}},
 	BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &rateZonesRef, Index: 1}}},
 	OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &rateZonesRef, Index: 2}}},
@@ -101,7 +101,7 @@ var RateZones = &RateZonesTable{
 // BuildRateZones builds the handle of rate_zones for ref. Generated relation and alias methods call it.
 func BuildRateZones(r *keel.Ref) *RateZonesTable {
 	return &RateZonesTable{
-		Handle:         keel.Handle[ratezone.RateZone]{Ref: r},
+		Handle:         keel.Handle[*ratezone.RateZone]{Ref: r},
 		ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -273,7 +273,7 @@ var rateZoneMembersRef = keel.Ref{Table: &rateZoneMembersTable}
 
 // RateZoneMembersTable is the table of ratezone.RateZoneMember.
 type RateZoneMembersTable struct {
-	keel.Handle[ratezone.RateZoneMember]
+	keel.Handle[*ratezone.RateZoneMember]
 	ID             keelkinds.PulidIDCol
 	BusinessUnitID keelkinds.PulidIDCol
 	OrganizationID keelkinds.PulidIDCol
@@ -288,7 +288,7 @@ type RateZoneMembersTable struct {
 
 // RateZoneMembers references the rate_zone_members table.
 var RateZoneMembers = &RateZoneMembersTable{
-	Handle:         keel.Handle[ratezone.RateZoneMember]{Ref: &rateZoneMembersRef},
+	Handle:         keel.Handle[*ratezone.RateZoneMember]{Ref: &rateZoneMembersRef},
 	ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &rateZoneMembersRef, Index: 0}}},
 	BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &rateZoneMembersRef, Index: 1}}},
 	OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &rateZoneMembersRef, Index: 2}}},
@@ -304,7 +304,7 @@ var RateZoneMembers = &RateZoneMembersTable{
 // BuildRateZoneMembers builds the handle of rate_zone_members for ref. Generated relation and alias methods call it.
 func BuildRateZoneMembers(r *keel.Ref) *RateZoneMembersTable {
 	return &RateZoneMembersTable{
-		Handle:         keel.Handle[ratezone.RateZoneMember]{Ref: r},
+		Handle:         keel.Handle[*ratezone.RateZoneMember]{Ref: r},
 		ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},

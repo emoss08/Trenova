@@ -77,7 +77,7 @@ func (r *profileRepository) List(
 			result, err := listquery.List(ctx, r.db.Keel(ctx), q,
 				&listquery.Request[modeprofile.Profile]{
 					Filter: req.Filter,
-					Shape: func(q *keel.Query[modeprofile.Profile]) *keel.Query[modeprofile.Profile] {
+					Shape: func(q *keel.Query[*modeprofile.Profile]) *keel.Query[*modeprofile.Profile] {
 						return q.Load(orderedRules())
 					},
 					Then: []keel.Order{p.CreatedAt.Desc()},

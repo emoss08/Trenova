@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/testutil/keeltest"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -117,4 +118,39 @@ func TestBuildTomorrowsPickupsCardMapsStatuses(t *testing.T) {
 	assert.Equal(t, TomorrowPickupStatusTentative, card.Pickups[2].Status)
 	assert.Equal(t, new("TERM-LA"), card.Pickups[0].Origin)
 	assert.Equal(t, new("DC-CHI"), card.Pickups[0].Destination)
+}
+
+func TestAnalyticsQueriesRender(t *testing.T) {
+	t.Parallel()
+
+	window := analyticsWindow{
+		TodayStart:     1_000,
+		TomorrowStart:  2_000,
+		Now:            1_500,
+		YesterdayStart: 0,
+		YesterdayEnd:   500,
+		SevenDayStart:  -6_000,
+	}
+
+	cases := map[string]keeltest.Renderer{
+		"active_shipments": activeShipmentsQuery(window),
+		"hourly_shipments": hourlyShipmentsQuery(window, "America/Chicago"),
+		"on_time":          onTimeQuery(window),
+		"revenue_today":    revenueTodayQuery(window),
+		"hourly_revenue":   hourlyRevenueQuery(window, "America/Chicago"),
+		"empty_mile":       emptyMileQuery(window),
+		"at_risk":          atRiskQuery(window),
+		"unassigned":       unassignedQuery(window),
+		"ready_dispatch":   readyToDispatchQuery(window),
+		"detention":        detentionWatchlistQuery(1_500),
+		"customer_mix":     customerMixQuery(1_500, 1_000, 500),
+		"tomorrow_pickups": tomorrowsPickupsQuery(2_000, 3_000, 20, 0),
+	}
+	for name, q := range cases {
+		t.Run(name, func(t *testing.T) {
+			t.Parallel()
+
+			keeltest.Snapshot(t, q)
+		})
+	}
 }

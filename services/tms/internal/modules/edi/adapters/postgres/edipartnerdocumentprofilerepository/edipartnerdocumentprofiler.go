@@ -89,7 +89,7 @@ func (r *repository) ListPartnerDocumentProfiles(
 
 func listProfilesQuery(
 	req *ediports.ListEDIPartnerDocumentProfilesRequest,
-) *keel.Query[edi.EDIPartnerDocumentProfile] {
+) *keel.Query[*edi.EDIPartnerDocumentProfile] {
 	dp := edidb.EDIPartnerDocumentProfiles
 	filter := profileFilter{
 		transactionSet: req.TransactionSet,
@@ -128,7 +128,7 @@ func (r *repository) SelectPartnerDocumentProfileOptions(
 
 func profileOptionsQuery(
 	req *ediports.EDIPartnerDocumentProfileSelectOptionsRequest,
-) *keel.Query[edi.EDIPartnerDocumentProfile] {
+) *keel.Query[*edi.EDIPartnerDocumentProfile] {
 	dp := edidb.EDIPartnerDocumentProfiles
 	filter := profileFilter{
 		transactionSet: req.TransactionSet,

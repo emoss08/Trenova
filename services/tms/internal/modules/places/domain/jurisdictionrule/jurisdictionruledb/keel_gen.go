@@ -61,7 +61,7 @@ var escortThresholdsRef = keel.Ref{Table: &escortThresholdsTable}
 
 // EscortThresholdsTable is the table of jurisdictionrule.EscortThreshold.
 type EscortThresholdsTable struct {
-	keel.Handle[jurisdictionrule.EscortThreshold]
+	keel.Handle[*jurisdictionrule.EscortThreshold]
 	ID                 keelkinds.PulidIDCol
 	JurisdictionRuleID keelkinds.PulidIDCol
 	Role               EscortRoleCol
@@ -75,7 +75,7 @@ type EscortThresholdsTable struct {
 
 // EscortThresholds references the jurisdiction_escort_thresholds table.
 var EscortThresholds = &EscortThresholdsTable{
-	Handle:             keel.Handle[jurisdictionrule.EscortThreshold]{Ref: &escortThresholdsRef},
+	Handle:             keel.Handle[*jurisdictionrule.EscortThreshold]{Ref: &escortThresholdsRef},
 	ID:                 keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &escortThresholdsRef, Index: 0}}},
 	JurisdictionRuleID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &escortThresholdsRef, Index: 1}}},
 	Role:               EscortRoleCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &escortThresholdsRef, Index: 2}}},
@@ -90,7 +90,7 @@ var EscortThresholds = &EscortThresholdsTable{
 // BuildEscortThresholds builds the handle of jurisdiction_escort_thresholds for ref. Generated relation and alias methods call it.
 func BuildEscortThresholds(r *keel.Ref) *EscortThresholdsTable {
 	return &EscortThresholdsTable{
-		Handle:             keel.Handle[jurisdictionrule.EscortThreshold]{Ref: r},
+		Handle:             keel.Handle[*jurisdictionrule.EscortThreshold]{Ref: r},
 		ID:                 keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		JurisdictionRuleID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		Role:               EscortRoleCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -256,7 +256,7 @@ var jurisdictionRulesRef = keel.Ref{Table: &jurisdictionRulesTable}
 
 // JurisdictionRulesTable is the table of jurisdictionrule.JurisdictionRule.
 type JurisdictionRulesTable struct {
-	keel.Handle[jurisdictionrule.JurisdictionRule]
+	keel.Handle[*jurisdictionrule.JurisdictionRule]
 	ID                    keelkinds.PulidIDCol
 	StateID               keelkinds.PulidIDCol
 	Status                StatusCol
@@ -287,7 +287,7 @@ type JurisdictionRulesTable struct {
 
 // JurisdictionRules references the jurisdiction_rules table.
 var JurisdictionRules = &JurisdictionRulesTable{
-	Handle:                keel.Handle[jurisdictionrule.JurisdictionRule]{Ref: &jurisdictionRulesRef},
+	Handle:                keel.Handle[*jurisdictionrule.JurisdictionRule]{Ref: &jurisdictionRulesRef},
 	ID:                    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &jurisdictionRulesRef, Index: 0}}},
 	StateID:               keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &jurisdictionRulesRef, Index: 1}}},
 	Status:                StatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &jurisdictionRulesRef, Index: 2}}},
@@ -319,7 +319,7 @@ var JurisdictionRules = &JurisdictionRulesTable{
 // BuildJurisdictionRules builds the handle of jurisdiction_rules for ref. Generated relation and alias methods call it.
 func BuildJurisdictionRules(r *keel.Ref) *JurisdictionRulesTable {
 	return &JurisdictionRulesTable{
-		Handle:                keel.Handle[jurisdictionrule.JurisdictionRule]{Ref: r},
+		Handle:                keel.Handle[*jurisdictionrule.JurisdictionRule]{Ref: r},
 		ID:                    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		StateID:               keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		Status:                StatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -590,7 +590,7 @@ var overridesRef = keel.Ref{Table: &overridesTable}
 
 // OverridesTable is the table of jurisdictionrule.Override.
 type OverridesTable struct {
-	keel.Handle[jurisdictionrule.Override]
+	keel.Handle[*jurisdictionrule.Override]
 	ID                 keelkinds.PulidIDCol
 	BusinessUnitID     keelkinds.PulidIDCol
 	OrganizationID     keelkinds.PulidIDCol
@@ -610,7 +610,7 @@ type OverridesTable struct {
 
 // Overrides references the jurisdiction_rule_overrides table.
 var Overrides = &OverridesTable{
-	Handle:             keel.Handle[jurisdictionrule.Override]{Ref: &overridesRef},
+	Handle:             keel.Handle[*jurisdictionrule.Override]{Ref: &overridesRef},
 	ID:                 keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &overridesRef, Index: 0}}},
 	BusinessUnitID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &overridesRef, Index: 1}}},
 	OrganizationID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &overridesRef, Index: 2}}},
@@ -631,7 +631,7 @@ var Overrides = &OverridesTable{
 // BuildOverrides builds the handle of jurisdiction_rule_overrides for ref. Generated relation and alias methods call it.
 func BuildOverrides(r *keel.Ref) *OverridesTable {
 	return &OverridesTable{
-		Handle:             keel.Handle[jurisdictionrule.Override]{Ref: r},
+		Handle:             keel.Handle[*jurisdictionrule.Override]{Ref: r},
 		ID:                 keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},

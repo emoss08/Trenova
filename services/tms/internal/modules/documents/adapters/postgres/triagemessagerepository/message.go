@@ -60,7 +60,7 @@ func (r *repository) ClaimRule(
 	})
 }
 
-func claimRuleQuery(req *triageports.ClaimRuleRequest) *keel.Query[inboundmessage.InboundMessage] {
+func claimRuleQuery(req *triageports.ClaimRuleRequest) *keel.Query[*inboundmessage.InboundMessage] {
 	m := inboundmessagedb.InboundMessages
 
 	return m.Pick(m.Version).Where(m.ID.Eq(req.MessageID), m.HandledByRuleID.IsNull())

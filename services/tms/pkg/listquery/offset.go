@@ -10,7 +10,7 @@ import (
 func Offset[T any](
 	ctx context.Context,
 	db *keel.DB,
-	q *keel.Query[T],
+	q *keel.Query[*T],
 	info pagination.Info,
 ) (*pagination.ListResult[*T], error) {
 	counted := q.Clone()

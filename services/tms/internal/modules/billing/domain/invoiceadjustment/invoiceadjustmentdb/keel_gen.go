@@ -111,7 +111,7 @@ var invoiceAdjustmentsRef = keel.Ref{Table: &invoiceAdjustmentsTable}
 
 // InvoiceAdjustmentsTable is the table of invoiceadjustment.InvoiceAdjustment.
 type InvoiceAdjustmentsTable struct {
-	keel.Handle[invoiceadjustment.InvoiceAdjustment]
+	keel.Handle[*invoiceadjustment.InvoiceAdjustment]
 	ID                              keelkinds.PulidIDCol
 	OrganizationID                  keelkinds.PulidIDCol
 	BusinessUnitID                  keelkinds.PulidIDCol
@@ -156,7 +156,7 @@ type InvoiceAdjustmentsTable struct {
 
 // InvoiceAdjustments references the invoice_adjustments table.
 var InvoiceAdjustments = &InvoiceAdjustmentsTable{
-	Handle:                          keel.Handle[invoiceadjustment.InvoiceAdjustment]{Ref: &invoiceAdjustmentsRef},
+	Handle:                          keel.Handle[*invoiceadjustment.InvoiceAdjustment]{Ref: &invoiceAdjustmentsRef},
 	ID:                              keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &invoiceAdjustmentsRef, Index: 0}}},
 	OrganizationID:                  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &invoiceAdjustmentsRef, Index: 1}}},
 	BusinessUnitID:                  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &invoiceAdjustmentsRef, Index: 2}}},
@@ -202,7 +202,7 @@ var InvoiceAdjustments = &InvoiceAdjustmentsTable{
 // BuildInvoiceAdjustments builds the handle of invoice_adjustments for ref. Generated relation and alias methods call it.
 func BuildInvoiceAdjustments(r *keel.Ref) *InvoiceAdjustmentsTable {
 	return &InvoiceAdjustmentsTable{
-		Handle:                          keel.Handle[invoiceadjustment.InvoiceAdjustment]{Ref: r},
+		Handle:                          keel.Handle[*invoiceadjustment.InvoiceAdjustment]{Ref: r},
 		ID:                              keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		OrganizationID:                  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		BusinessUnitID:                  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -634,7 +634,7 @@ var invoiceAdjustmentBatchesRef = keel.Ref{Table: &invoiceAdjustmentBatchesTable
 
 // InvoiceAdjustmentBatchesTable is the table of invoiceadjustment.InvoiceAdjustmentBatch.
 type InvoiceAdjustmentBatchesTable struct {
-	keel.Handle[invoiceadjustment.InvoiceAdjustmentBatch]
+	keel.Handle[*invoiceadjustment.InvoiceAdjustmentBatch]
 	ID               keelkinds.PulidIDCol
 	OrganizationID   keelkinds.PulidIDCol
 	BusinessUnitID   keelkinds.PulidIDCol
@@ -658,7 +658,7 @@ type InvoiceAdjustmentBatchesTable struct {
 
 // InvoiceAdjustmentBatches references the invoice_adjustment_batches table.
 var InvoiceAdjustmentBatches = &InvoiceAdjustmentBatchesTable{
-	Handle:           keel.Handle[invoiceadjustment.InvoiceAdjustmentBatch]{Ref: &invoiceAdjustmentBatchesRef},
+	Handle:           keel.Handle[*invoiceadjustment.InvoiceAdjustmentBatch]{Ref: &invoiceAdjustmentBatchesRef},
 	ID:               keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &invoiceAdjustmentBatchesRef, Index: 0}}},
 	OrganizationID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &invoiceAdjustmentBatchesRef, Index: 1}}},
 	BusinessUnitID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &invoiceAdjustmentBatchesRef, Index: 2}}},
@@ -683,7 +683,7 @@ var InvoiceAdjustmentBatches = &InvoiceAdjustmentBatchesTable{
 // BuildInvoiceAdjustmentBatches builds the handle of invoice_adjustment_batches for ref. Generated relation and alias methods call it.
 func BuildInvoiceAdjustmentBatches(r *keel.Ref) *InvoiceAdjustmentBatchesTable {
 	return &InvoiceAdjustmentBatchesTable{
-		Handle:           keel.Handle[invoiceadjustment.InvoiceAdjustmentBatch]{Ref: r},
+		Handle:           keel.Handle[*invoiceadjustment.InvoiceAdjustmentBatch]{Ref: r},
 		ID:               keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		OrganizationID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		BusinessUnitID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -897,7 +897,7 @@ var invoiceAdjustmentBatchItemsRef = keel.Ref{Table: &invoiceAdjustmentBatchItem
 
 // InvoiceAdjustmentBatchItemsTable is the table of invoiceadjustment.InvoiceAdjustmentBatchItem.
 type InvoiceAdjustmentBatchItemsTable struct {
-	keel.Handle[invoiceadjustment.InvoiceAdjustmentBatchItem]
+	keel.Handle[*invoiceadjustment.InvoiceAdjustmentBatchItem]
 	ID             keelkinds.PulidIDCol
 	OrganizationID keelkinds.PulidIDCol
 	BusinessUnitID keelkinds.PulidIDCol
@@ -915,7 +915,7 @@ type InvoiceAdjustmentBatchItemsTable struct {
 
 // InvoiceAdjustmentBatchItems references the invoice_adjustment_batch_items table.
 var InvoiceAdjustmentBatchItems = &InvoiceAdjustmentBatchItemsTable{
-	Handle:         keel.Handle[invoiceadjustment.InvoiceAdjustmentBatchItem]{Ref: &invoiceAdjustmentBatchItemsRef},
+	Handle:         keel.Handle[*invoiceadjustment.InvoiceAdjustmentBatchItem]{Ref: &invoiceAdjustmentBatchItemsRef},
 	ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &invoiceAdjustmentBatchItemsRef, Index: 0}}},
 	OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &invoiceAdjustmentBatchItemsRef, Index: 1}}},
 	BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &invoiceAdjustmentBatchItemsRef, Index: 2}}},
@@ -934,7 +934,7 @@ var InvoiceAdjustmentBatchItems = &InvoiceAdjustmentBatchItemsTable{
 // BuildInvoiceAdjustmentBatchItems builds the handle of invoice_adjustment_batch_items for ref. Generated relation and alias methods call it.
 func BuildInvoiceAdjustmentBatchItems(r *keel.Ref) *InvoiceAdjustmentBatchItemsTable {
 	return &InvoiceAdjustmentBatchItemsTable{
-		Handle:         keel.Handle[invoiceadjustment.InvoiceAdjustmentBatchItem]{Ref: r},
+		Handle:         keel.Handle[*invoiceadjustment.InvoiceAdjustmentBatchItem]{Ref: r},
 		ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -1094,7 +1094,7 @@ var invoiceAdjustmentCorrectionGroupsRef = keel.Ref{Table: &invoiceAdjustmentCor
 
 // InvoiceAdjustmentCorrectionGroupsTable is the table of invoiceadjustment.InvoiceAdjustmentCorrectionGroup.
 type InvoiceAdjustmentCorrectionGroupsTable struct {
-	keel.Handle[invoiceadjustment.InvoiceAdjustmentCorrectionGroup]
+	keel.Handle[*invoiceadjustment.InvoiceAdjustmentCorrectionGroup]
 	ID               keelkinds.PulidIDCol
 	OrganizationID   keelkinds.PulidIDCol
 	BusinessUnitID   keelkinds.PulidIDCol
@@ -1107,7 +1107,7 @@ type InvoiceAdjustmentCorrectionGroupsTable struct {
 
 // InvoiceAdjustmentCorrectionGroups references the invoice_correction_groups table.
 var InvoiceAdjustmentCorrectionGroups = &InvoiceAdjustmentCorrectionGroupsTable{
-	Handle:           keel.Handle[invoiceadjustment.InvoiceAdjustmentCorrectionGroup]{Ref: &invoiceAdjustmentCorrectionGroupsRef},
+	Handle:           keel.Handle[*invoiceadjustment.InvoiceAdjustmentCorrectionGroup]{Ref: &invoiceAdjustmentCorrectionGroupsRef},
 	ID:               keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &invoiceAdjustmentCorrectionGroupsRef, Index: 0}}},
 	OrganizationID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &invoiceAdjustmentCorrectionGroupsRef, Index: 1}}},
 	BusinessUnitID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &invoiceAdjustmentCorrectionGroupsRef, Index: 2}}},
@@ -1121,7 +1121,7 @@ var InvoiceAdjustmentCorrectionGroups = &InvoiceAdjustmentCorrectionGroupsTable{
 // BuildInvoiceAdjustmentCorrectionGroups builds the handle of invoice_correction_groups for ref. Generated relation and alias methods call it.
 func BuildInvoiceAdjustmentCorrectionGroups(r *keel.Ref) *InvoiceAdjustmentCorrectionGroupsTable {
 	return &InvoiceAdjustmentCorrectionGroupsTable{
-		Handle:           keel.Handle[invoiceadjustment.InvoiceAdjustmentCorrectionGroup]{Ref: r},
+		Handle:           keel.Handle[*invoiceadjustment.InvoiceAdjustmentCorrectionGroup]{Ref: r},
 		ID:               keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		OrganizationID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		BusinessUnitID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -1260,7 +1260,7 @@ var invoiceAdjustmentDocumentReferencesRef = keel.Ref{Table: &invoiceAdjustmentD
 
 // InvoiceAdjustmentDocumentReferencesTable is the table of invoiceadjustment.InvoiceAdjustmentDocumentReference.
 type InvoiceAdjustmentDocumentReferencesTable struct {
-	keel.Handle[invoiceadjustment.InvoiceAdjustmentDocumentReference]
+	keel.Handle[*invoiceadjustment.InvoiceAdjustmentDocumentReference]
 	ID                   keelkinds.PulidIDCol
 	OrganizationID       keelkinds.PulidIDCol
 	BusinessUnitID       keelkinds.PulidIDCol
@@ -1280,7 +1280,7 @@ type InvoiceAdjustmentDocumentReferencesTable struct {
 
 // InvoiceAdjustmentDocumentReferences references the invoice_adjustment_document_references table.
 var InvoiceAdjustmentDocumentReferences = &InvoiceAdjustmentDocumentReferencesTable{
-	Handle:               keel.Handle[invoiceadjustment.InvoiceAdjustmentDocumentReference]{Ref: &invoiceAdjustmentDocumentReferencesRef},
+	Handle:               keel.Handle[*invoiceadjustment.InvoiceAdjustmentDocumentReference]{Ref: &invoiceAdjustmentDocumentReferencesRef},
 	ID:                   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &invoiceAdjustmentDocumentReferencesRef, Index: 0}}},
 	OrganizationID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &invoiceAdjustmentDocumentReferencesRef, Index: 1}}},
 	BusinessUnitID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &invoiceAdjustmentDocumentReferencesRef, Index: 2}}},
@@ -1301,7 +1301,7 @@ var InvoiceAdjustmentDocumentReferences = &InvoiceAdjustmentDocumentReferencesTa
 // BuildInvoiceAdjustmentDocumentReferences builds the handle of invoice_adjustment_document_references for ref. Generated relation and alias methods call it.
 func BuildInvoiceAdjustmentDocumentReferences(r *keel.Ref) *InvoiceAdjustmentDocumentReferencesTable {
 	return &InvoiceAdjustmentDocumentReferencesTable{
-		Handle:               keel.Handle[invoiceadjustment.InvoiceAdjustmentDocumentReference]{Ref: r},
+		Handle:               keel.Handle[*invoiceadjustment.InvoiceAdjustmentDocumentReference]{Ref: r},
 		ID:                   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		OrganizationID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		BusinessUnitID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -1490,7 +1490,7 @@ var invoiceAdjustmentLinesRef = keel.Ref{Table: &invoiceAdjustmentLinesTable}
 
 // InvoiceAdjustmentLinesTable is the table of invoiceadjustment.InvoiceAdjustmentLine.
 type InvoiceAdjustmentLinesTable struct {
-	keel.Handle[invoiceadjustment.InvoiceAdjustmentLine]
+	keel.Handle[*invoiceadjustment.InvoiceAdjustmentLine]
 	ID                      keelkinds.PulidIDCol
 	OrganizationID          keelkinds.PulidIDCol
 	BusinessUnitID          keelkinds.PulidIDCol
@@ -1515,7 +1515,7 @@ type InvoiceAdjustmentLinesTable struct {
 
 // InvoiceAdjustmentLines references the invoice_adjustment_lines table.
 var InvoiceAdjustmentLines = &InvoiceAdjustmentLinesTable{
-	Handle:                  keel.Handle[invoiceadjustment.InvoiceAdjustmentLine]{Ref: &invoiceAdjustmentLinesRef},
+	Handle:                  keel.Handle[*invoiceadjustment.InvoiceAdjustmentLine]{Ref: &invoiceAdjustmentLinesRef},
 	ID:                      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &invoiceAdjustmentLinesRef, Index: 0}}},
 	OrganizationID:          keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &invoiceAdjustmentLinesRef, Index: 1}}},
 	BusinessUnitID:          keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &invoiceAdjustmentLinesRef, Index: 2}}},
@@ -1541,7 +1541,7 @@ var InvoiceAdjustmentLines = &InvoiceAdjustmentLinesTable{
 // BuildInvoiceAdjustmentLines builds the handle of invoice_adjustment_lines for ref. Generated relation and alias methods call it.
 func BuildInvoiceAdjustmentLines(r *keel.Ref) *InvoiceAdjustmentLinesTable {
 	return &InvoiceAdjustmentLinesTable{
-		Handle:                  keel.Handle[invoiceadjustment.InvoiceAdjustmentLine]{Ref: r},
+		Handle:                  keel.Handle[*invoiceadjustment.InvoiceAdjustmentLine]{Ref: r},
 		ID:                      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		OrganizationID:          keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		BusinessUnitID:          keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -1739,7 +1739,7 @@ var invoiceAdjustmentReconciliationExceptionsRef = keel.Ref{Table: &invoiceAdjus
 
 // InvoiceAdjustmentReconciliationExceptionsTable is the table of invoiceadjustment.InvoiceAdjustmentReconciliationException.
 type InvoiceAdjustmentReconciliationExceptionsTable struct {
-	keel.Handle[invoiceadjustment.InvoiceAdjustmentReconciliationException]
+	keel.Handle[*invoiceadjustment.InvoiceAdjustmentReconciliationException]
 	ID                  keelkinds.PulidIDCol
 	OrganizationID      keelkinds.PulidIDCol
 	BusinessUnitID      keelkinds.PulidIDCol
@@ -1756,7 +1756,7 @@ type InvoiceAdjustmentReconciliationExceptionsTable struct {
 
 // InvoiceAdjustmentReconciliationExceptions references the invoice_reconciliation_exceptions table.
 var InvoiceAdjustmentReconciliationExceptions = &InvoiceAdjustmentReconciliationExceptionsTable{
-	Handle:              keel.Handle[invoiceadjustment.InvoiceAdjustmentReconciliationException]{Ref: &invoiceAdjustmentReconciliationExceptionsRef},
+	Handle:              keel.Handle[*invoiceadjustment.InvoiceAdjustmentReconciliationException]{Ref: &invoiceAdjustmentReconciliationExceptionsRef},
 	ID:                  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &invoiceAdjustmentReconciliationExceptionsRef, Index: 0}}},
 	OrganizationID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &invoiceAdjustmentReconciliationExceptionsRef, Index: 1}}},
 	BusinessUnitID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &invoiceAdjustmentReconciliationExceptionsRef, Index: 2}}},
@@ -1774,7 +1774,7 @@ var InvoiceAdjustmentReconciliationExceptions = &InvoiceAdjustmentReconciliation
 // BuildInvoiceAdjustmentReconciliationExceptions builds the handle of invoice_reconciliation_exceptions for ref. Generated relation and alias methods call it.
 func BuildInvoiceAdjustmentReconciliationExceptions(r *keel.Ref) *InvoiceAdjustmentReconciliationExceptionsTable {
 	return &InvoiceAdjustmentReconciliationExceptionsTable{
-		Handle:              keel.Handle[invoiceadjustment.InvoiceAdjustmentReconciliationException]{Ref: r},
+		Handle:              keel.Handle[*invoiceadjustment.InvoiceAdjustmentReconciliationException]{Ref: r},
 		ID:                  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		OrganizationID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		BusinessUnitID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -1946,7 +1946,7 @@ var invoiceAdjustmentSnapshotsRef = keel.Ref{Table: &invoiceAdjustmentSnapshotsT
 
 // InvoiceAdjustmentSnapshotsTable is the table of invoiceadjustment.InvoiceAdjustmentSnapshot.
 type InvoiceAdjustmentSnapshotsTable struct {
-	keel.Handle[invoiceadjustment.InvoiceAdjustmentSnapshot]
+	keel.Handle[*invoiceadjustment.InvoiceAdjustmentSnapshot]
 	ID             keelkinds.PulidIDCol
 	OrganizationID keelkinds.PulidIDCol
 	BusinessUnitID keelkinds.PulidIDCol
@@ -1960,7 +1960,7 @@ type InvoiceAdjustmentSnapshotsTable struct {
 
 // InvoiceAdjustmentSnapshots references the invoice_adjustment_snapshots table.
 var InvoiceAdjustmentSnapshots = &InvoiceAdjustmentSnapshotsTable{
-	Handle:         keel.Handle[invoiceadjustment.InvoiceAdjustmentSnapshot]{Ref: &invoiceAdjustmentSnapshotsRef},
+	Handle:         keel.Handle[*invoiceadjustment.InvoiceAdjustmentSnapshot]{Ref: &invoiceAdjustmentSnapshotsRef},
 	ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &invoiceAdjustmentSnapshotsRef, Index: 0}}},
 	OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &invoiceAdjustmentSnapshotsRef, Index: 1}}},
 	BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &invoiceAdjustmentSnapshotsRef, Index: 2}}},
@@ -1975,7 +1975,7 @@ var InvoiceAdjustmentSnapshots = &InvoiceAdjustmentSnapshotsTable{
 // BuildInvoiceAdjustmentSnapshots builds the handle of invoice_adjustment_snapshots for ref. Generated relation and alias methods call it.
 func BuildInvoiceAdjustmentSnapshots(r *keel.Ref) *InvoiceAdjustmentSnapshotsTable {
 	return &InvoiceAdjustmentSnapshotsTable{
-		Handle:         keel.Handle[invoiceadjustment.InvoiceAdjustmentSnapshot]{Ref: r},
+		Handle:         keel.Handle[*invoiceadjustment.InvoiceAdjustmentSnapshot]{Ref: r},
 		ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},

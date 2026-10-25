@@ -603,7 +603,7 @@ func (s *AIAnalyticsSeed) loadRefs(ctx context.Context, db *keel.DB, refs *analy
 	return nil
 }
 
-func insertChunks[T any](ctx context.Context, db *keel.DB, what string, h keel.Handle[T], rows []*T) error {
+func insertChunks[T any](ctx context.Context, db *keel.DB, what string, h keel.Handle[*T], rows []*T) error {
 	if _, err := h.Copy(ctx, db, rows); err != nil {
 		return fmt.Errorf("insert %s: %w", what, err)
 	}

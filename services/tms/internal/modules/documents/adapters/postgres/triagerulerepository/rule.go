@@ -90,7 +90,7 @@ func (r *repository) FindBySentence(
 	})
 }
 
-func sentenceQuery(req triageports.FindRuleBySentenceRequest) *keel.Query[triage.Rule] {
+func sentenceQuery(req triageports.FindRuleBySentenceRequest) *keel.Query[*triage.Rule] {
 	ru := triagedb.Rules
 	sentence := req.Sentence
 

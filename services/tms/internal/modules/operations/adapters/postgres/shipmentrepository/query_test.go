@@ -25,7 +25,8 @@ func TestShipmentOptionPredicates_ActivityWindowAddsOverlapPredicate(t *testing.
 	assert.Contains(t, sql, `(coalesce(s2."scheduled_window_end", s2."scheduled_window_start") >= $`)
 	assert.Contains(t, args, int64(1_700_086_400))
 	assert.Contains(t, args, int64(1_700_000_000))
-	assert.Contains(t, args, "Canceled")
+	assert.Contains(t, sql, `"status" <> 'Canceled'`)
+	assert.NotContains(t, args, "Canceled")
 }
 
 func TestShipmentOptionPredicates_NoOptionsAddNothing(t *testing.T) {
@@ -73,7 +74,7 @@ func TestShipmentOptionPredicates_IDsAndStatusesMatchThoseShipments(t *testing.T
 	})...)
 
 	assert.Contains(t, sql, `s."id" = ANY(`)
-	assert.Contains(t, sql, `s."status" = ANY(`)
+	assert.Contains(t, sql, `s."status" IN ('New')`)
 	assert.Contains(t, args, []string{id.String()})
 }
 
@@ -85,7 +86,7 @@ func TestShipmentOptionPredicates_BillingTransferEligibleKeepsQueuedShipmentsOut
 	})...)
 
 	assert.Contains(t, sql, `s."billing_transfer_status"`)
-	assert.Contains(t, sql, `s."status" = ANY(`)
+	assert.Contains(t, sql, `s."status" IN ('Completed', 'ReadyToInvoice')`)
 }
 
 func TestShipmentLoads_IncludeCustomerJoinsOnlyTheCustomer(t *testing.T) {
@@ -136,7 +137,7 @@ func TestAutoDelayedShipmentIDs_JoinsTheShipmentControl(t *testing.T) {
 
 	assert.Contains(t, sql, `"shipment_controls" auto_sc`)
 	assert.Contains(t, sql, `auto_sc."auto_delay_shipments" IS TRUE`)
-	assert.Contains(t, sql, `(coalesce(auto_sc."auto_delay_shipments_threshold", $5) * $6::bigint)`)
+	assert.Contains(t, sql, `(coalesce(auto_sc."auto_delay_shipments_threshold", $4) * $5::bigint)`)
 	assert.Contains(t, args, int64(1_800_000_000))
 }
 
@@ -145,11 +146,11 @@ func TestAutoCancelableShipments_UsesThreshold(t *testing.T) {
 
 	sql, args := keeltest.Render(t, autoCancelableShipments(2, 1_800_000_000, 25))
 
-	assert.Contains(t, sql, `s."status" = $3`)
-	assert.Contains(t, sql, `s."created_at" <= $4`)
+	assert.Contains(t, sql, `s."status" = 'New'`)
+	assert.Contains(t, sql, `s."created_at" <= $3`)
 	assert.Contains(t, sql, `LIMIT 25`)
-	assert.Equal(t, "New", args[2])
-	assert.Equal(t, int64(1_800_000_000-2*secondsPerDay), args[3])
+	assert.Len(t, args, 3)
+	assert.Equal(t, int64(1_800_000_000-2*secondsPerDay), args[2])
 }
 
 func TestControlledAutoCancelIDs_JoinsTheShipmentControl(t *testing.T) {
@@ -162,11 +163,12 @@ func TestControlledAutoCancelIDs_JoinsTheShipmentControl(t *testing.T) {
 	assert.Contains(
 		t,
 		sql,
-		`(cancel_sp."created_at" <= ($4 - (coalesce(cancel_sc."auto_cancel_shipments_threshold", $5) * $6::bigint)))`,
+		`(cancel_sp."created_at" <= ($3 - (coalesce(cancel_sc."auto_cancel_shipments_threshold", $4) * $5::bigint)))`,
 		"the day length is bigint so the threshold and the clock are not read as smallint",
 	)
-	assert.Equal(t, int64(1_800_000_000), args[3])
-	assert.Equal(t, secondsPerDay, args[5])
+	assert.Contains(t, sql, `cancel_sp."status" = 'New'`)
+	assert.Equal(t, int64(1_800_000_000), args[2])
+	assert.Equal(t, secondsPerDay, args[4])
 }
 
 func TestPreviousRateOrigins_PinsTheFirstPickup(t *testing.T) {

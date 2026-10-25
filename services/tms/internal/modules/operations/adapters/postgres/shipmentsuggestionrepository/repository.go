@@ -135,7 +135,7 @@ func (r *repository) Prune(
 	})
 }
 
-func byKey(userID pulid.ID, key string) *keel.Query[shipmentsuggestion.DecisionRecord] {
+func byKey(userID pulid.ID, key string) *keel.Query[*shipmentsuggestion.DecisionRecord] {
 	d := shipmentsuggestiondb.DecisionRecords
 	return d.Where(d.UserID.Eq(userID), d.SuggestionKey.Eq(key))
 }

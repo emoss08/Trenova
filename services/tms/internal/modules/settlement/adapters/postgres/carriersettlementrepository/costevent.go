@@ -75,8 +75,8 @@ func (r *costEventRepository) ListConnection(
 					Filter: req.Filter,
 					Cursor: req.Cursor,
 					Shape: func(
-						q *keel.Query[carriersettlement.CostEvent],
-					) *keel.Query[carriersettlement.CostEvent] {
+						q *keel.Query[*carriersettlement.CostEvent],
+					) *keel.Query[*carriersettlement.CostEvent] {
 						return q.Load(ce.Carrier())
 					},
 				},
@@ -157,7 +157,7 @@ func (r *costEventRepository) ListPendingByCarrier(
 
 func resolvedInvoiceMatch(
 	ce *carriersettlementdb.CostEventsTable,
-) *keel.Query[carriersettlement.InvoiceMatch] {
+) *keel.Query[*carriersettlement.InvoiceMatch] {
 	im := carriersettlementdb.InvoiceMatches
 	return im.Where(
 		im.CarrierAssignmentID.EqCol(ce.CarrierAssignmentID),

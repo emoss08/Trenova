@@ -80,7 +80,7 @@ var journalBatchesRef = keel.Ref{Table: &journalBatchesTable}
 
 // JournalBatchesTable is the table of journalentry.JournalBatch.
 type JournalBatchesTable struct {
-	keel.Handle[journalentry.JournalBatch]
+	keel.Handle[*journalentry.JournalBatch]
 	ID             keelkinds.PulidIDCol
 	BusinessUnitID keelkinds.PulidIDCol
 	OrganizationID keelkinds.PulidIDCol
@@ -102,7 +102,7 @@ type JournalBatchesTable struct {
 
 // JournalBatches references the journal_batches table.
 var JournalBatches = &JournalBatchesTable{
-	Handle:         keel.Handle[journalentry.JournalBatch]{Ref: &journalBatchesRef},
+	Handle:         keel.Handle[*journalentry.JournalBatch]{Ref: &journalBatchesRef},
 	ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &journalBatchesRef, Index: 0}}},
 	BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &journalBatchesRef, Index: 1}}},
 	OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &journalBatchesRef, Index: 2}}},
@@ -125,7 +125,7 @@ var JournalBatches = &JournalBatchesTable{
 // BuildJournalBatches builds the handle of journal_batches for ref. Generated relation and alias methods call it.
 func BuildJournalBatches(r *keel.Ref) *JournalBatchesTable {
 	return &JournalBatchesTable{
-		Handle:         keel.Handle[journalentry.JournalBatch]{Ref: r},
+		Handle:         keel.Handle[*journalentry.JournalBatch]{Ref: r},
 		ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -368,7 +368,7 @@ var journalEntriesRef = keel.Ref{Table: &journalEntriesTable}
 
 // JournalEntriesTable is the table of journalentry.JournalEntry.
 type JournalEntriesTable struct {
-	keel.Handle[journalentry.JournalEntry]
+	keel.Handle[*journalentry.JournalEntry]
 	ID               keelkinds.PulidIDCol
 	BusinessUnitID   keelkinds.PulidIDCol
 	OrganizationID   keelkinds.PulidIDCol
@@ -414,7 +414,7 @@ type JournalEntriesTable struct {
 
 // JournalEntries references the journal_entries table.
 var JournalEntries = &JournalEntriesTable{
-	Handle:           keel.Handle[journalentry.JournalEntry]{Ref: &journalEntriesRef},
+	Handle:           keel.Handle[*journalentry.JournalEntry]{Ref: &journalEntriesRef},
 	ID:               keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &journalEntriesRef, Index: 0}}},
 	BusinessUnitID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &journalEntriesRef, Index: 1}}},
 	OrganizationID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &journalEntriesRef, Index: 2}}},
@@ -461,7 +461,7 @@ var JournalEntries = &JournalEntriesTable{
 // BuildJournalEntries builds the handle of journal_entries for ref. Generated relation and alias methods call it.
 func BuildJournalEntries(r *keel.Ref) *JournalEntriesTable {
 	return &JournalEntriesTable{
-		Handle:           keel.Handle[journalentry.JournalEntry]{Ref: r},
+		Handle:           keel.Handle[*journalentry.JournalEntry]{Ref: r},
 		ID:               keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -871,7 +871,7 @@ var journalEntryLinesRef = keel.Ref{Table: &journalEntryLinesTable}
 
 // JournalEntryLinesTable is the table of journalentry.JournalEntryLine.
 type JournalEntryLinesTable struct {
-	keel.Handle[journalentry.JournalEntryLine]
+	keel.Handle[*journalentry.JournalEntryLine]
 	ID             keelkinds.PulidIDCol
 	BusinessUnitID keelkinds.PulidIDCol
 	OrganizationID keelkinds.PulidIDCol
@@ -900,7 +900,7 @@ type JournalEntryLinesTable struct {
 
 // JournalEntryLines references the journal_entry_lines table.
 var JournalEntryLines = &JournalEntryLinesTable{
-	Handle:         keel.Handle[journalentry.JournalEntryLine]{Ref: &journalEntryLinesRef},
+	Handle:         keel.Handle[*journalentry.JournalEntryLine]{Ref: &journalEntryLinesRef},
 	ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &journalEntryLinesRef, Index: 0}}},
 	BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &journalEntryLinesRef, Index: 1}}},
 	OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &journalEntryLinesRef, Index: 2}}},
@@ -930,7 +930,7 @@ var JournalEntryLines = &JournalEntryLinesTable{
 // BuildJournalEntryLines builds the handle of journal_entry_lines for ref. Generated relation and alias methods call it.
 func BuildJournalEntryLines(r *keel.Ref) *JournalEntryLinesTable {
 	return &JournalEntryLinesTable{
-		Handle:         keel.Handle[journalentry.JournalEntryLine]{Ref: r},
+		Handle:         keel.Handle[*journalentry.JournalEntryLine]{Ref: r},
 		ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},

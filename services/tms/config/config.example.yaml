@@ -107,6 +107,9 @@ database:
   statementTimeout: 10s # Per-statement database deadline
   lockTimeout: 5s # Maximum time a statement may wait for a lock
   idleInTransactionSessionTimeout: 30s # Maximum time a transaction may sit idle
+  # Development only: print statements to stderr with their bound values, caller
+  # and outcome. "errors" prints failed and slow ones, "all" every one, "off" none.
+  queryLog: errors
   # Row-level security binds every transaction to the signed tenant scope of the
   # request or job that opened it, so PostgreSQL itself refuses rows of any other
   # organization. "observe" signs scopes and logs access that would be refused;

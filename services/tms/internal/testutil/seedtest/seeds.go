@@ -10,6 +10,7 @@ import (
 	"github.com/emoss08/keel/seed"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbpool"
+	"github.com/emoss08/trenova/internal/keeltables"
 	"github.com/emoss08/trenova/internal/seeds/reference"
 	"github.com/emoss08/trenova/internal/seeds/seedenv"
 )
@@ -61,6 +62,7 @@ func applySeeds(kind Template) func(ctx context.Context, dsn string) error {
 	return func(ctx context.Context, dsn string) error {
 		cfg := dbpool.KeelConfig(nil, nil)
 		cfg.DSN = dsn
+		cfg.Tables = keeltables.All()
 		db, err := keel.Open(ctx, cfg)
 		if err != nil {
 			return fmt.Errorf("open the template database: %w", err)

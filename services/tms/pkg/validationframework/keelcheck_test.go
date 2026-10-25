@@ -90,13 +90,7 @@ func TestKeelChecker_UniquenessQuery(t *testing.T) {
 	})
 	require.NoError(t, err)
 
-	sql, args, err := q.ToSQL(ctx, keeltest.RenderDB(t))
-	require.NoError(t, err)
-
-	assert.Equal(t, `SELECT ci."id" AS c1 FROM "check_items" ci `+
-		`WHERE ci."organization_id" = $1 AND ci."business_unit_id" = $2 `+
-		`AND (lower(ci."code") = lower($3::text)) AND (ci."kind_id" = $4) AND (ci."id" <> $5) LIMIT 1`, sql)
-	assert.Equal(t, []any{"org_1", "bu_1", "ABC", "ck_1", "ci_1"}, args)
+	keeltest.SnapshotIn(t, ctx, q)
 }
 
 func TestKeelChecker_ReferenceQueryReachesRelatedTables(t *testing.T) {
@@ -114,12 +108,7 @@ func TestKeelChecker_ReferenceQueryReachesRelatedTables(t *testing.T) {
 	})
 	require.NoError(t, err)
 
-	sql, args, err := q.ToSQL(ctx, keeltest.RenderDB(t))
-	require.NoError(t, err)
-
-	assert.Equal(t, `SELECT ck."id" AS c1 FROM "check_kinds" ck `+
-		`WHERE ck."organization_id" = $1 AND ck."business_unit_id" = $2 AND (ck."id" = $3) LIMIT 1`, sql)
-	assert.Equal(t, []any{"org_1", "bu_1", "ck_1"}, args)
+	keeltest.SnapshotIn(t, ctx, q)
 }
 
 func TestKeelChecker_RefusesWhatItDoesNotKnow(t *testing.T) {
@@ -166,12 +155,7 @@ func TestKeelChecker_ASystemScopeReadsEveryTenant(t *testing.T) {
 	})
 	require.NoError(t, err)
 
-	sql, args, err := q.ToSQL(ctx, keeltest.RenderDB(t))
-	require.NoError(t, err)
-
-	assert.Equal(t, `SELECT ci."id" AS c1 FROM "check_items" ci `+
-		`WHERE (ci."organization_id" = $1) AND (ci."business_unit_id" = $2) AND (ci."id" = $3) LIMIT 1`, sql)
-	assert.Equal(t, []any{"org_1", "bu_1", "ci_1"}, args)
+	keeltest.SnapshotIn(t, ctx, q)
 }
 
 func TestKeelReferenceCheck_AGlobalTableNeedsNoTenant(t *testing.T) {
@@ -186,11 +170,7 @@ func TestKeelReferenceCheck_AGlobalTableNeedsNoTenant(t *testing.T) {
 		pulid.ID("st_1"),
 	)
 
-	sql, args, err := q.ToSQL(t.Context(), keeltest.RenderDB(t))
-	require.NoError(t, err)
-
-	assert.Equal(t, `SELECT cs."id" AS c1 FROM "check_states" cs WHERE (cs."id" = $1) LIMIT 1`, sql)
-	assert.Equal(t, []any{"st_1"}, args)
+	keeltest.SnapshotIn(t, t.Context(), q)
 
 	exists, err := KeelReferenceCheck(nil, states)(t.Context(), pulid.Nil, pulid.Nil, pulid.Nil)
 	require.NoError(t, err)

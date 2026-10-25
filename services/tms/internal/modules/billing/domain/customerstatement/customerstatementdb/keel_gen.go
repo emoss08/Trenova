@@ -60,7 +60,7 @@ var statementsRef = keel.Ref{Table: &statementsTable}
 
 // StatementsTable is the table of customerstatement.Statement.
 type StatementsTable struct {
-	keel.Handle[customerstatement.Statement]
+	keel.Handle[*customerstatement.Statement]
 	ID                 keelkinds.PulidIDCol
 	OrganizationID     keelkinds.PulidIDCol
 	BusinessUnitID     keelkinds.PulidIDCol
@@ -78,7 +78,7 @@ type StatementsTable struct {
 
 // Statements references the customer_statements table.
 var Statements = &StatementsTable{
-	Handle:             keel.Handle[customerstatement.Statement]{Ref: &statementsRef},
+	Handle:             keel.Handle[*customerstatement.Statement]{Ref: &statementsRef},
 	ID:                 keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &statementsRef, Index: 0}}},
 	OrganizationID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &statementsRef, Index: 1}}},
 	BusinessUnitID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &statementsRef, Index: 2}}},
@@ -97,7 +97,7 @@ var Statements = &StatementsTable{
 // BuildStatements builds the handle of customer_statements for ref. Generated relation and alias methods call it.
 func BuildStatements(r *keel.Ref) *StatementsTable {
 	return &StatementsTable{
-		Handle:             keel.Handle[customerstatement.Statement]{Ref: r},
+		Handle:             keel.Handle[*customerstatement.Statement]{Ref: r},
 		ID:                 keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		OrganizationID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		BusinessUnitID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},

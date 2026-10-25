@@ -258,9 +258,9 @@ func outcomeTable(rows []outcomeRow) *keel.CTETable {
 }
 
 func matchOutcome(
-	q *keel.Query[airetrieval.IndexEntry],
+	q *keel.Query[*airetrieval.IndexEntry],
 	outcome *keel.CTETable,
-) *keel.Query[airetrieval.IndexEntry] {
+) *keel.Query[*airetrieval.IndexEntry] {
 	e := airetrievaldb.IndexEntries
 
 	return q.With(outcome).Join(outcome,
@@ -421,9 +421,9 @@ func applyOutcome(
 			e.Status.ToExpr(keel.DynCase().
 				When(
 					keel.DynOf(outcome.Col("next_attempt_at")).Eq(0),
-					keel.DynLit(string(airetrieval.IndexStatusFailed)).Cast(keel.TypeString),
+					keel.DynLit(string(airetrieval.IndexStatusFailed)),
 				).
-				Else(keel.DynLit(string(airetrieval.IndexStatusPending)).Cast(keel.TypeString))),
+				Else(keel.DynLit(string(airetrieval.IndexStatusPending)))),
 			e.NextAttemptAt.ToExpr(keel.DynOf(outcome.Col("next_attempt_at")).NullIf(0)),
 		)
 	} else {
@@ -509,7 +509,7 @@ type staleSource struct {
 }
 
 func staleSources[T any](
-	q *keel.Query[T],
+	q *keel.Query[*T],
 	source staleSource,
 	req *agentports.FindStaleAIRetrievalSourcesRequest,
 	limit int,

@@ -50,7 +50,8 @@ func TestTrailerQuery_ReadsTheLocationsCoordinates(t *testing.T) {
 		sql,
 		`LEFT JOIN LATERAL (SELECT lkc2."current_location_id" FROM "equipment_continuity" lkc2`,
 	)
-	assert.Contains(t, args, "Trailer")
+	assert.Contains(t, sql, `lkc2."equipment_type" = 'Trailer'`)
+	assert.Equal(t, []any{"bu_1", "org_1"}, args)
 }
 
 func TestTrailerQuery_LeavesTheLocationOutWhenUnselected(t *testing.T) {
@@ -90,5 +91,5 @@ func TestTrailerStatusFilter(t *testing.T) {
 
 	sql, _ := keeltest.Render(t, trailerdb.Trailers.
 		Where(repo.statusFilter(string(domaintypes.EquipmentStatusAvailable))).Limit(1))
-	assert.Contains(t, sql, `AND t."status" = $3 LIMIT 1`)
+	assert.Contains(t, sql, `AND t."status" = 'Available' LIMIT 1`)
 }

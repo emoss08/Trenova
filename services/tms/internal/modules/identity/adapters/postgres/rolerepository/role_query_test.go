@@ -4,6 +4,8 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/testutil/keeltest"
 	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -46,4 +48,21 @@ func TestGetRolesWithInheritanceSkipsTheQueryForAnEmptyRoleSet(t *testing.T) {
 	roles, err := repo.GetRolesWithInheritance(keeltest.TenantContext(t), nil)
 	require.NoError(t, err)
 	assert.Empty(t, roles)
+}
+
+func TestOrphanedAssignmentsQueryCrossesTenants(t *testing.T) {
+	t.Parallel()
+
+	ctx := dbscope.WithSystem(t.Context(), "orphaned assignments test")
+	keeltest.SnapshotIn(t, ctx, orphanedAssignmentsQuery(100, 50))
+}
+
+func TestUsersWithPermissionQueryWalksParentRoles(t *testing.T) {
+	t.Parallel()
+
+	keeltest.Snapshot(t, usersWithPermissionQuery(&permissionports.ListUsersWithPermissionRequest{
+		Resource:  permission.ResourceAgentProposal,
+		Operation: permission.OpUpdate,
+		Now:       100,
+	}))
 }

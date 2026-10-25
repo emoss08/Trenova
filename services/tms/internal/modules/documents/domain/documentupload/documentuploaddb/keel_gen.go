@@ -81,7 +81,7 @@ var documentUploadSessionsRef = keel.Ref{Table: &documentUploadSessionsTable}
 
 // DocumentUploadSessionsTable is the table of documentupload.DocumentUploadSession.
 type DocumentUploadSessionsTable struct {
-	keel.Handle[documentupload.DocumentUploadSession]
+	keel.Handle[*documentupload.DocumentUploadSession]
 	ID                      keelkinds.PulidIDCol
 	OrganizationID          keelkinds.PulidIDCol
 	BusinessUnitID          keelkinds.PulidIDCol
@@ -118,7 +118,7 @@ type DocumentUploadSessionsTable struct {
 
 // DocumentUploadSessions references the document_upload_sessions table.
 var DocumentUploadSessions = &DocumentUploadSessionsTable{
-	Handle:                  keel.Handle[documentupload.DocumentUploadSession]{Ref: &documentUploadSessionsRef},
+	Handle:                  keel.Handle[*documentupload.DocumentUploadSession]{Ref: &documentUploadSessionsRef},
 	ID:                      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &documentUploadSessionsRef, Index: 0}}},
 	OrganizationID:          keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &documentUploadSessionsRef, Index: 1}}},
 	BusinessUnitID:          keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &documentUploadSessionsRef, Index: 2}}},
@@ -156,7 +156,7 @@ var DocumentUploadSessions = &DocumentUploadSessionsTable{
 // BuildDocumentUploadSessions builds the handle of document_upload_sessions for ref. Generated relation and alias methods call it.
 func BuildDocumentUploadSessions(r *keel.Ref) *DocumentUploadSessionsTable {
 	return &DocumentUploadSessionsTable{
-		Handle:                  keel.Handle[documentupload.DocumentUploadSession]{Ref: r},
+		Handle:                  keel.Handle[*documentupload.DocumentUploadSession]{Ref: r},
 		ID:                      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		OrganizationID:          keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		BusinessUnitID:          keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},

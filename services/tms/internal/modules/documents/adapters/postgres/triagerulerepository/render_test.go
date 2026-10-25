@@ -33,18 +33,15 @@ func TestSentenceQueryMatchesTheWholeSentence(t *testing.T) {
 		t,
 		sqlText,
 		`FROM "triage_rules" tr WHERE tr."business_unit_id" = $1 AND tr."organization_id" = $2 `+
-			`AND tr."classification" = $3 AND tr."sender_scope" = $4 `+
-			`AND (coalesce(tr."sender", '') = $5) AND (coalesce(tr."mailbox_id", '') = $6) `+
-			`AND tr."action" = $7 LIMIT 1`,
+			`AND tr."classification" = 'RateConfirmation' AND tr."sender_scope" = 'Domain' `+
+			`AND (coalesce(tr."sender", '') = $3) AND (coalesce(tr."mailbox_id", '') = $4) `+
+			`AND tr."action" = 'FileOnShipment' LIMIT 1`,
 	)
 	assert.Equal(t, []any{
 		"bu_1",
 		"org_1",
-		string(inboundmessage.ClassificationRateConfirmation),
-		string(triage.SenderDomain),
 		"acme.com",
 		"",
-		string(inboundmessage.NovaActionFileOnShipment),
 	}, args)
 }
 
@@ -62,9 +59,11 @@ func TestSentenceQueryLeavesTheRuleBeingEditedOut(t *testing.T) {
 	assert.Contains(
 		t,
 		sqlText,
-		`AND (coalesce(tr."mailbox_id", '') = $6) AND tr."action" = $7 AND tr."id" <> $8 LIMIT 1`,
+		`AND tr."classification" = 'Invoice' AND tr."sender_scope" = 'AnyCarrier' `+
+			`AND (coalesce(tr."sender", '') = $3) AND (coalesce(tr."mailbox_id", '') = $4) `+
+			`AND tr."action" = 'Ignore' AND tr."id" <> $5 LIMIT 1`,
 	)
-	require.Len(t, args, 8)
-	assert.Equal(t, "imbx_1", args[5])
-	assert.Equal(t, "trl_1", args[7])
+	require.Len(t, args, 5)
+	assert.Equal(t, "imbx_1", args[3])
+	assert.Equal(t, "trl_1", args[4])
 }

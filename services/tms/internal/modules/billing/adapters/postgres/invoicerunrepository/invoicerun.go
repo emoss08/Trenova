@@ -94,7 +94,7 @@ func (r *repository) ListConnection(
 	)
 }
 
-func runQuery(includeGroups, includeItems bool) *keel.Query[invoicerun.InvoiceRun] {
+func runQuery(includeGroups, includeItems bool) *keel.Query[*invoicerun.InvoiceRun] {
 	run := invoicerundb.InvoiceRuns
 	if !includeGroups && !includeItems {
 		return run.Query()

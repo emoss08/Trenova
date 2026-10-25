@@ -25,21 +25,17 @@ func TestResolveWithoutACustomerReadsOnlyTheLiveOrgDefault(t *testing.T) {
 	assert.Contains(
 		t,
 		sqlText,
-		`WHERE dtv."business_unit_id" = $1 AND dtv."organization_id" = $2 AND dtv."status" = $3 `+
-			`AND dt."kind" = $4 AND dt."is_org_default" IS TRUE LIMIT 1`,
+		`WHERE dtv."business_unit_id" = $1 AND dtv."organization_id" = $2 AND dtv."status" = 'Active' `+
+			`AND dt."kind" = 'invoice.pdf' AND dt."is_org_default" IS TRUE LIMIT 1`,
 		sqlText,
 	)
-	assert.Contains(t, sqlText, `coalesce(CAST(dtv."subject" AS text), $5)`, sqlText)
-	assert.Contains(t, sqlText, `coalesce(CAST(dt."description" AS text), $15)`, sqlText)
+	assert.Contains(t, sqlText, `coalesce(CAST(dtv."subject" AS text), $3)`, sqlText)
+	assert.Contains(t, sqlText, `coalesce(CAST(dt."description" AS text), $13)`, sqlText)
 	assert.Contains(t, sqlText, `CAST(NULL AS text) FROM`, sqlText)
 	assert.NotContains(t, sqlText, "document_template_assignments", sqlText)
-	require.Len(t, args, 15)
-	assert.Equal(
-		t,
-		[]any{"bu_1", "org_1", string(documenttemplate.VersionStatusActive), string(documenttemplate.KindInvoicePDF)},
-		args[:4],
-	)
-	for _, blank := range args[4:] {
+	require.Len(t, args, 13)
+	assert.Equal(t, []any{"bu_1", "org_1"}, args[:2])
+	for _, blank := range args[2:] {
 		assert.Equal(t, "", blank)
 	}
 }
@@ -59,7 +55,7 @@ func TestResolveForACustomerPrefersItsAssignmentOfTheSameKind(t *testing.T) {
 		sqlText,
 		`LEFT JOIN "document_template_assignments" dta ON dta."business_unit_id" = $1 `+
 			`AND dta."organization_id" = $2 AND dta."template_id" = dt."id" `+
-			`AND dta."kind" = dt."kind" AND dta."customer_id" = $16`,
+			`AND dta."kind" = dt."kind" AND dta."customer_id" = $14`,
 		sqlText,
 	)
 	assert.Contains(
@@ -69,8 +65,8 @@ func TestResolveForACustomerPrefersItsAssignmentOfTheSameKind(t *testing.T) {
 			`ORDER BY (dta."id" IS NOT NULL) DESC LIMIT 1`,
 		sqlText,
 	)
-	require.Len(t, args, 16)
-	assert.Equal(t, "cus_1", args[15])
+	require.Len(t, args, 14)
+	assert.Equal(t, "cus_1", args[13])
 }
 
 func TestResolvedScanCarriesEveryRenderedVersionField(t *testing.T) {

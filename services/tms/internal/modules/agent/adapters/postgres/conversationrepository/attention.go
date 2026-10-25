@@ -7,13 +7,12 @@ import (
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agent/agentdb"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation/conversationdb"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/emoss08/trenova/shared/sliceutils"
-	"github.com/jackc/pgx/v5"
 )
 
 type threadAttentionRow struct {
@@ -27,54 +26,45 @@ type pendingProposalRunRow struct {
 	RunID    pulid.ID
 }
 
-const threadAttentionQuery = `
-SELECT
-	t.id AS thread_id,
-	(
-		SELECT count(*)
-		FROM agent_plans AS pl
-		JOIN agent_runs AS r
-			ON r.id = pl.run_id
-			AND r.organization_id = pl.organization_id
-			AND r.business_unit_id = pl.business_unit_id
-		WHERE pl.organization_id = t.organization_id
-			AND pl.business_unit_id = t.business_unit_id
-			AND pl.status = $1
-			AND r.subject_type = $2
-			AND r.subject_id = t.id
-	) AS pending_plans,
-	COALESCE((
-		SELECT tr.status
-		FROM assistant_turns AS tr
-		WHERE tr.organization_id = t.organization_id
-			AND tr.business_unit_id = t.business_unit_id
-			AND tr.thread_id = t.id
-		ORDER BY tr.created_at DESC, tr.id DESC
-		LIMIT 1
-	), '') AS last_turn_status
-FROM assistant_threads AS t
-WHERE t.organization_id = $3
-	AND t.business_unit_id = $4
-	AND t.user_id = $5
-	AND t.id = ANY($6::text[])
-`
+func threadAttentionQuery(
+	req *agentports.ListThreadAttentionRequest,
+) *keel.Query[*conversation.Thread] {
+	th := conversationdb.Threads
+	pl := agentdb.AgentPlans
+	run := agentdb.AgentRuns
+	tr := conversationdb.AssistantTurns
 
-const pendingProposalRunsQuery = `
-SELECT r.subject_id AS thread_id, p.run_id AS run_id
-FROM agent_proposals AS p
-JOIN agent_runs AS r
-	ON r.id = p.run_id
-	AND r.organization_id = p.organization_id
-	AND r.business_unit_id = p.business_unit_id
-WHERE p.organization_id = $1
-	AND p.business_unit_id = $2
-	AND p.status = $3
-	AND p.plan_id IS NULL
-	AND (p.expires_at IS NULL OR p.expires_at = 0
-		OR p.expires_at > extract(epoch from current_timestamp)::bigint)
-	AND r.subject_type = $4
-	AND r.subject_id = ANY($5::text[])
-`
+	pendingPlans := keel.Scalar(pl.Join(run, run.ID.EqCol(pl.RunID)).
+		Pick(keel.Count()).
+		Where(
+			pl.Status.Eq(agent.PlanStatusPending),
+			run.SubjectType.Eq(agent.SubjectAssistantThread),
+			run.SubjectID.EqCol(th.ID),
+		))
+	lastTurnStatus := keel.DynOf(keel.Scalar(tr.Pick(tr.Status).
+		Where(tr.ThreadID.EqCol(th.ID)).
+		Order(tr.CreatedAt.Desc(), tr.ID.Desc()).
+		Limit(1))).Coalesce("")
+
+	return th.Pick(th.ID, pendingPlans, lastTurnStatus).
+		Where(th.UserID.Eq(req.UserID), th.ID.In(req.ThreadIDs...))
+}
+
+func pendingProposalRunsQuery(threadIDs []pulid.ID) *keel.Query[*agent.AgentProposal] {
+	p := agentdb.AgentProposals
+	run := agentdb.AgentRuns
+	now := keel.DynFunc("date_part", "epoch", keel.DynFunc("now")).Cast(keel.TypeInt64)
+
+	return p.Join(run, run.ID.EqCol(p.RunID)).
+		Pick(run.SubjectID, p.RunID).
+		Where(
+			p.Status.Eq(agent.ProposalStatusPending),
+			p.PlanID.IsNull(),
+			keel.Or(p.ExpiresAt.IsNull(), p.ExpiresAt.Eq(0), keel.DynOf(p.ExpiresAt).Gt(now)),
+			run.SubjectType.Eq(agent.SubjectAssistantThread),
+			run.SubjectID.In(threadIDs...),
+		)
+}
 
 func (r *repository) ListThreadAttention(
 	ctx context.Context,
@@ -90,18 +80,7 @@ func (r *repository) ListThreadAttention(
 			}
 
 			db := r.db.Keel(ctx)
-			rows, err := keel.QueryAll(
-				ctx,
-				db,
-				pgx.RowToStructByName[threadAttentionRow],
-				threadAttentionQuery,
-				string(agent.PlanStatusPending),
-				string(agent.SubjectAssistantThread),
-				req.TenantInfo.OrgID.String(),
-				req.TenantInfo.BuID.String(),
-				req.UserID.String(),
-				sliceutils.Strings(req.ThreadIDs),
-			)
+			rows, err := keel.Into[threadAttentionRow](ctx, db, threadAttentionQuery(&req))
 			if err != nil {
 				return nil, fmt.Errorf("list thread attention: %w", err)
 			}
@@ -118,17 +97,7 @@ func (r *repository) ListThreadAttention(
 				return out, nil
 			}
 
-			runs, err := keel.QueryAll(
-				ctx,
-				db,
-				pgx.RowToStructByName[pendingProposalRunRow],
-				pendingProposalRunsQuery,
-				req.TenantInfo.OrgID.String(),
-				req.TenantInfo.BuID.String(),
-				string(agent.ProposalStatusPending),
-				string(agent.SubjectAssistantThread),
-				sliceutils.Strings(owned),
-			)
+			runs, err := keel.Into[pendingProposalRunRow](ctx, db, pendingProposalRunsQuery(owned))
 			if err != nil {
 				return nil, fmt.Errorf("list pending proposal runs: %w", err)
 			}

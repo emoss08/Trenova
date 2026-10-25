@@ -44,9 +44,9 @@ func New(p Params) permissionports.RBACRepository {
 
 func forTenant[T any](
 	ctx context.Context,
-	q *keel.Query[T],
+	q *keel.Query[*T],
 	preds ...keel.Pred,
-) *keel.Query[T] {
+) *keel.Query[*T] {
 	if dbscope.IsSystem(ctx) {
 		q = q.AllTenants()
 	}
@@ -476,8 +476,8 @@ func (r *repository) syncParentRoleIDs(ctx context.Context, seniorRoleID pulid.I
 }
 
 func withConstraintRoles(
-	q *keel.Query[permission.RoleConstraint],
-) *keel.Query[permission.RoleConstraint] {
+	q *keel.Query[*permission.RoleConstraint],
+) *keel.Query[*permission.RoleConstraint] {
 	roles := permissiondb.RoleConstraints.Roles()
 	return q.Load(roles.Pick(
 		roles.ID,

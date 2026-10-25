@@ -205,7 +205,7 @@ func (r *templateRepository) Resolve(
 
 func resolveQuery(
 	req *documenttemplateports.ResolveDocumentTemplateRequest,
-) *keel.Query[documenttemplate.DocumentTemplateVersion] {
+) *keel.Query[*documenttemplate.DocumentTemplateVersion] {
 	v := documenttemplatedb.DocumentTemplateVersions
 	t := documenttemplatedb.DocumentTemplates
 	a := documenttemplatedb.DocumentTemplateAssignments

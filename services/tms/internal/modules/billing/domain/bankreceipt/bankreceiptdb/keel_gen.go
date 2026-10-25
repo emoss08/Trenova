@@ -72,7 +72,7 @@ var bankReceiptsRef = keel.Ref{Table: &bankReceiptsTable}
 
 // BankReceiptsTable is the table of bankreceipt.BankReceipt.
 type BankReceiptsTable struct {
-	keel.Handle[bankreceipt.BankReceipt]
+	keel.Handle[*bankreceipt.BankReceipt]
 	ID                       keelkinds.PulidIDCol
 	OrganizationID           keelkinds.PulidIDCol
 	BusinessUnitID           keelkinds.PulidIDCol
@@ -95,7 +95,7 @@ type BankReceiptsTable struct {
 
 // BankReceipts references the bank_receipts table.
 var BankReceipts = &BankReceiptsTable{
-	Handle:                   keel.Handle[bankreceipt.BankReceipt]{Ref: &bankReceiptsRef},
+	Handle:                   keel.Handle[*bankreceipt.BankReceipt]{Ref: &bankReceiptsRef},
 	ID:                       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &bankReceiptsRef, Index: 0}}},
 	OrganizationID:           keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &bankReceiptsRef, Index: 1}}},
 	BusinessUnitID:           keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &bankReceiptsRef, Index: 2}}},
@@ -119,7 +119,7 @@ var BankReceipts = &BankReceiptsTable{
 // BuildBankReceipts builds the handle of bank_receipts for ref. Generated relation and alias methods call it.
 func BuildBankReceipts(r *keel.Ref) *BankReceiptsTable {
 	return &BankReceiptsTable{
-		Handle:                   keel.Handle[bankreceipt.BankReceipt]{Ref: r},
+		Handle:                   keel.Handle[*bankreceipt.BankReceipt]{Ref: r},
 		ID:                       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		OrganizationID:           keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		BusinessUnitID:           keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},

@@ -103,7 +103,7 @@ var documentsRef = keel.Ref{Table: &documentsTable}
 
 // DocumentsTable is the table of document.Document.
 type DocumentsTable struct {
-	keel.Handle[document.Document]
+	keel.Handle[*document.Document]
 	ID                    keelkinds.PulidIDCol
 	OrganizationID        keelkinds.PulidIDCol
 	BusinessUnitID        keelkinds.PulidIDCol
@@ -158,7 +158,7 @@ type DocumentsTable struct {
 
 // Documents references the documents table.
 var Documents = &DocumentsTable{
-	Handle:                keel.Handle[document.Document]{Ref: &documentsRef},
+	Handle:                keel.Handle[*document.Document]{Ref: &documentsRef},
 	ID:                    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &documentsRef, Index: 0}}},
 	OrganizationID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &documentsRef, Index: 1}}},
 	BusinessUnitID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &documentsRef, Index: 2}}},
@@ -214,7 +214,7 @@ var Documents = &DocumentsTable{
 // BuildDocuments builds the handle of documents for ref. Generated relation and alias methods call it.
 func BuildDocuments(r *keel.Ref) *DocumentsTable {
 	return &DocumentsTable{
-		Handle:                keel.Handle[document.Document]{Ref: r},
+		Handle:                keel.Handle[*document.Document]{Ref: r},
 		ID:                    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		OrganizationID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		BusinessUnitID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},

@@ -133,7 +133,7 @@ func (r *repository) Update(
 func byDocumentExtractedAt(
 	documentID pulid.ID,
 	extractedAt int64,
-) *keel.Query[documentaiextraction.Extraction] {
+) *keel.Query[*documentaiextraction.Extraction] {
 	ex := documentaiextractiondb.Extractions
 	return ex.Where(ex.DocumentID.Eq(documentID), ex.ExtractedAt.Eq(extractedAt))
 }

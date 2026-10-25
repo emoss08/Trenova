@@ -103,7 +103,7 @@ func (r *repository) ListActiveByTenant(
 	)
 }
 
-func activeRules() *keel.Query[hazmatsegregationrule.HazmatSegregationRule] {
+func activeRules() *keel.Query[*hazmatsegregationrule.HazmatSegregationRule] {
 	hsr := hazmatsegregationruledb.HazmatSegregationRules
 
 	return hsr.Where(hsr.Status.Eq(domaintypes.StatusActive)).Order(hsr.Name.Asc(), hsr.ID.Asc())

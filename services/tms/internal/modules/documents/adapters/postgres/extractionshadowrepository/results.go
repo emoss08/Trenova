@@ -111,7 +111,7 @@ func (r *resultRepository) GetByExtraction(
 func byExtraction(
 	documentID pulid.ID,
 	extractedAt int64,
-) *keel.Query[extractionshadow.ShadowResult] {
+) *keel.Query[*extractionshadow.ShadowResult] {
 	sr := extractionshadowdb.ShadowResults
 
 	return sr.Where(sr.DocumentID.Eq(documentID), sr.ExtractedAt.Eq(extractedAt))

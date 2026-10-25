@@ -7,9 +7,13 @@ import (
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/usstate/usstatedb"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment/shipmentdb"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
-	"github.com/jackc/pgx/v5"
+	"github.com/emoss08/trenova/internal/modules/places/domain/location/locationdb"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker/workerdb"
+	"github.com/emoss08/trenova/shared/sliceutils"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
@@ -30,134 +34,96 @@ func NewSearchCardReader(p SearchCardParams) shipmentports.ShipmentSearchCardRea
 	return &searchCardReader{db: p.DB, l: p.Logger.Named("postgres.shipment-search-card-reader")}
 }
 
-var liveShipmentStatuses = []string{
-	string(shipment.StatusNew),
-	string(shipment.StatusPartiallyAssigned),
-	string(shipment.StatusAssigned),
-	string(shipment.StatusInTransit),
-	string(shipment.StatusDelayed),
-	string(shipment.StatusPartiallyCompleted),
+const (
+	originStopAlias     = "origin_stp"
+	originMoveAlias     = "origin_sm"
+	originLocationAlias = "origin_loc"
+	originStateAlias    = "origin_ust"
+	destStopAlias       = "dest_stp"
+	destMoveAlias       = "dest_sm"
+	destLocationAlias   = "dest_loc"
+	destStateAlias      = "dest_ust"
+	driverAssignAlias   = "drv_asg"
+	driverMoveAlias     = "drv_sm"
+	driverSeatAlias     = "drv_seat"
+	driverWorkerAlias   = "drv"
+	seatSourceName      = "seat"
+	seatSourceWorkerID  = "worker_id"
+)
+
+var liveShipmentStatuses = []shipment.Status{
+	shipment.StatusNew,
+	shipment.StatusPartiallyAssigned,
+	shipment.StatusAssigned,
+	shipment.StatusInTransit,
+	shipment.StatusDelayed,
+	shipment.StatusPartiallyCompleted,
 }
 
-var openMoveStatuses = []string{
-	string(shipment.MoveStatusNew),
-	string(shipment.MoveStatusAssigned),
-	string(shipment.MoveStatusInTransit),
+var openMoveStatuses = []shipment.MoveStatus{
+	shipment.MoveStatusNew,
+	shipment.MoveStatusAssigned,
+	shipment.MoveStatusInTransit,
 }
 
-const searchCardsSQL = `
-SELECT
-	sp.id AS shipment_id,
-	COALESCE(sp.pro_number, '') AS pro_number,
-	COALESCE(sp.bol, '') AS bol,
-	sp.status AS status,
-	COALESCE(sp.customer_id, '') AS customer_id,
-	COALESCE(cus.name, '') AS customer_name,
-	COALESCE(cus.code, '') AS customer_code,
-	COALESCE(svt.code, '') AS service_type_code,
-	COALESCE(origin.city, '') AS origin_city,
-	COALESCE(origin.state, '') AS origin_state,
-	COALESCE(dest.city, '') AS destination_city,
-	COALESCE(dest.state, '') AS destination_state,
-	COALESCE(drv.id, '') AS driver_id,
-	COALESCE(drv.name, '') AS driver_name
-FROM shipments AS sp
-LEFT JOIN customers AS cus ON cus.id = sp.customer_id
-	AND cus.organization_id = sp.organization_id
-	AND cus.business_unit_id = sp.business_unit_id
-LEFT JOIN service_types AS svt ON svt.id = sp.service_type_id
-	AND svt.organization_id = sp.organization_id
-	AND svt.business_unit_id = sp.business_unit_id
-LEFT JOIN LATERAL (
-	SELECT loc.city AS city, ust.abbreviation AS state
-	FROM stops AS stp
-	JOIN shipment_moves AS smv ON smv.id = stp.shipment_move_id
-		AND smv.organization_id = stp.organization_id
-		AND smv.business_unit_id = stp.business_unit_id
-	LEFT JOIN locations AS loc ON loc.id = stp.location_id
-		AND loc.organization_id = stp.organization_id
-		AND loc.business_unit_id = stp.business_unit_id
-	LEFT JOIN us_states AS ust ON ust.id = loc.state_id
-	WHERE smv.shipment_id = sp.id
-		AND smv.organization_id = sp.organization_id
-		AND smv.business_unit_id = sp.business_unit_id
-		AND stp.type IN ('Pickup', 'SplitPickup')
-	ORDER BY smv.sequence ASC, stp.sequence ASC
-	LIMIT 1
-) AS origin ON TRUE
-LEFT JOIN LATERAL (
-	SELECT loc.city AS city, ust.abbreviation AS state
-	FROM stops AS stp
-	JOIN shipment_moves AS smv ON smv.id = stp.shipment_move_id
-		AND smv.organization_id = stp.organization_id
-		AND smv.business_unit_id = stp.business_unit_id
-	LEFT JOIN locations AS loc ON loc.id = stp.location_id
-		AND loc.organization_id = stp.organization_id
-		AND loc.business_unit_id = stp.business_unit_id
-	LEFT JOIN us_states AS ust ON ust.id = loc.state_id
-	WHERE smv.shipment_id = sp.id
-		AND smv.organization_id = sp.organization_id
-		AND smv.business_unit_id = sp.business_unit_id
-		AND stp.type IN ('Delivery', 'SplitDelivery')
-	ORDER BY smv.sequence DESC, stp.sequence DESC
-	LIMIT 1
-) AS dest ON TRUE
-LEFT JOIN LATERAL (
-	SELECT wrk.id AS id, CONCAT_WS(' ', wrk.first_name, wrk.last_name) AS name
-	FROM shipment_moves AS smv
-	JOIN assignments AS asg ON asg.shipment_move_id = smv.id
-		AND asg.organization_id = smv.organization_id
-		AND asg.business_unit_id = smv.business_unit_id
-		AND asg.archived_at IS NULL
-		AND asg.status != $4
-	JOIN workers AS wrk ON wrk.id = asg.primary_worker_id
-		AND wrk.organization_id = asg.organization_id
-		AND wrk.business_unit_id = asg.business_unit_id
-	WHERE smv.shipment_id = sp.id
-		AND smv.organization_id = sp.organization_id
-		AND smv.business_unit_id = sp.business_unit_id
-		AND smv.status != $5
-	ORDER BY (smv.status = $6) ASC, smv.sequence ASC
-	LIMIT 1
-) AS drv ON TRUE
-WHERE sp.organization_id = $1
-	AND sp.business_unit_id = $2
-	AND sp.id = ANY($3)`
+type stopPlace struct {
+	stop  *shipmentdb.StopsTable
+	loc   *locationdb.LocationsTable
+	state *usstatedb.UsStatesTable
+	query *keel.Query[*shipment.Stop]
+}
 
-const customerLinksSQL = `
-SELECT
-	sp.id AS shipment_id,
-	sp.customer_id AS customer_id,
-	'' AS worker_id
-FROM shipments AS sp
-WHERE sp.organization_id = $1
-	AND sp.business_unit_id = $2
-	AND sp.customer_id = ANY($3)
-	AND sp.status != $4
-ORDER BY (sp.status::text = ANY($5)) DESC, sp.updated_at DESC
-LIMIT $6`
+func firstPickupPlace() stopPlace {
+	st := shipmentdb.Stops.As(originStopAlias)
+	sm := shipmentdb.ShipmentMoves.As(originMoveAlias)
 
-const workerLinksSQL = `
-SELECT DISTINCT ON (seat.worker_id)
-	sp.id AS shipment_id,
-	'' AS customer_id,
-	seat.worker_id AS worker_id
-FROM assignments AS asg
-JOIN shipment_moves AS smv ON smv.id = asg.shipment_move_id
-	AND smv.organization_id = asg.organization_id
-	AND smv.business_unit_id = asg.business_unit_id
-JOIN shipments AS sp ON sp.id = smv.shipment_id
-	AND sp.organization_id = smv.organization_id
-	AND sp.business_unit_id = smv.business_unit_id
-CROSS JOIN LATERAL (VALUES (asg.primary_worker_id), (asg.secondary_worker_id)) AS seat(worker_id)
-WHERE asg.organization_id = $1
-	AND asg.business_unit_id = $2
-	AND asg.archived_at IS NULL
-	AND asg.status != $3
-	AND smv.status::text = ANY($4)
-	AND sp.status::text = ANY($5)
-	AND seat.worker_id = ANY($6)
-ORDER BY seat.worker_id, (smv.status = $7) DESC, smv.sequence ASC, sp.updated_at DESC`
+	return stopPlace{
+		stop:  st,
+		loc:   locationdb.Locations.As(originLocationAlias),
+		state: usstatedb.UsStates.As(originStateAlias),
+		query: st.Join(sm, sm.ID.EqCol(st.ShipmentMoveID)).
+			Where(
+				sm.ShipmentID.EqCol(shipmentdb.Shipments.ID),
+				st.Type.In(shipment.PickupStopTypes()...),
+			).
+			Order(sm.Sequence.Asc(), st.Sequence.Asc()).
+			Limit(1).
+			Pick(st.LocationID),
+	}
+}
+
+func lastDeliveryPlace() stopPlace {
+	st := shipmentdb.Stops.As(destStopAlias)
+	sm := shipmentdb.ShipmentMoves.As(destMoveAlias)
+
+	return stopPlace{
+		stop:  st,
+		loc:   locationdb.Locations.As(destLocationAlias),
+		state: usstatedb.UsStates.As(destStateAlias),
+		query: st.Join(sm, sm.ID.EqCol(st.ShipmentMoveID)).
+			Where(
+				sm.ShipmentID.EqCol(shipmentdb.Shipments.ID),
+				st.Type.In(shipment.DeliveryStopTypes()...),
+			).
+			Order(sm.Sequence.Desc(), st.Sequence.Desc()).
+			Limit(1).
+			Pick(st.LocationID),
+	}
+}
+
+func (p stopPlace) join(q *keel.Query[*shipment.Shipment]) *keel.Query[*shipment.Shipment] {
+	return q.LeftJoinLateral(p.query).
+		LeftJoin(p.loc, p.loc.ID.EqCol(p.stop.LocationID)).
+		LeftJoin(p.state, p.state.ID.EqCol(p.loc.StateID))
+}
+
+func (p stopPlace) city() keel.Expr {
+	return keel.DynOf(p.loc.City).Coalesce("")
+}
+
+func (p stopPlace) stateCode() keel.Expr {
+	return keel.DynOf(p.state.Abbreviation).Coalesce("")
+}
 
 func (r *searchCardReader) ListSearchCards(
 	ctx context.Context,
@@ -171,24 +137,53 @@ func (r *searchCardReader) ListSearchCards(
 				return nil, nil
 			}
 
-			cards, err := keel.QueryAll(
-				ctx,
-				r.db.Keel(ctx),
-				pgx.RowToAddrOfStructByName[shipmentports.ShipmentSearchCard],
-				searchCardsSQL,
-				req.TenantInfo.OrgID.String(),
-				req.TenantInfo.BuID.String(),
-				keel.Strings(req.ShipmentIDs),
-				string(shipment.AssignmentStatusCanceled),
-				string(shipment.MoveStatusCanceled),
-				string(shipment.MoveStatusCompleted),
-			)
+			sp := shipmentdb.Shipments
+			origin := firstPickupPlace()
+			dest := lastDeliveryPlace()
+			asg := shipmentdb.Assignments.As(driverAssignAlias)
+			sm := shipmentdb.ShipmentMoves.As(driverMoveAlias)
+			seat := workerdb.Workers.As(driverSeatAlias)
+			drv := workerdb.Workers.As(driverWorkerAlias)
+			driver := asg.Join(sm, sm.ID.EqCol(asg.ShipmentMoveID)).
+				Join(seat, seat.ID.EqCol(asg.PrimaryWorkerID)).
+				Where(
+					sm.ShipmentID.EqCol(sp.ID),
+					sm.Status.Ne(shipment.MoveStatusCanceled),
+					asg.ArchivedAt.IsNull(),
+					asg.Status.Ne(shipment.AssignmentStatusCanceled),
+				).
+				Order(keel.Asc(sm.Status.Eq(shipment.MoveStatusCompleted)), sm.Sequence.Asc()).
+				Limit(1).
+				Pick(asg.PrimaryWorkerID)
+
+			q := dest.join(origin.join(sp.Query())).
+				LeftJoinLateral(driver).
+				LeftJoin(drv, drv.ID.EqCol(asg.PrimaryWorkerID)).
+				Pick(
+					sp.ID,
+					keel.DynOf(sp.ProNumber).Coalesce(""),
+					keel.DynOf(sp.BOL).Coalesce(""),
+					sp.Status,
+					keel.DynOf(sp.CustomerID).Coalesce(""),
+					keel.DynOf(sp.Customer().Name).Coalesce(""),
+					keel.DynOf(sp.Customer().Code).Coalesce(""),
+					keel.DynOf(sp.ServiceType().Code).Coalesce(""),
+					origin.city(),
+					origin.stateCode(),
+					dest.city(),
+					dest.stateCode(),
+					keel.DynOf(drv.ID).Coalesce(""),
+					keel.DynFunc("concat_ws", " ", drv.FirstName, drv.LastName).Coalesce(""),
+				).
+				Where(sp.ID.In(req.ShipmentIDs...))
+
+			cards, err := keel.Into[shipmentports.ShipmentSearchCard](ctx, r.db.Keel(ctx), q)
 			if err != nil {
 				r.l.Error("failed to list shipment search cards", zap.Error(err))
 				return nil, fmt.Errorf("list shipment search cards: %w", err)
 			}
 
-			return cards, nil
+			return sliceutils.Pointers(cards), nil
 		},
 	)
 }
@@ -228,47 +223,60 @@ func (r *searchCardReader) customerLinks(
 	ctx context.Context,
 	req *shipmentports.ListShipmentPartyLinksRequest,
 ) ([]*shipmentports.ShipmentPartyLink, error) {
-	links, err := keel.QueryAll(
-		ctx,
-		r.db.Keel(ctx),
-		pgx.RowToAddrOfStructByName[shipmentports.ShipmentPartyLink],
-		customerLinksSQL,
-		req.TenantInfo.OrgID.String(),
-		req.TenantInfo.BuID.String(),
-		keel.Strings(req.CustomerIDs),
-		string(shipment.StatusCanceled),
-		liveShipmentStatuses,
-		req.CustomerLimit,
-	)
+	sp := shipmentdb.Shipments
+	links, err := keel.Into[shipmentports.ShipmentPartyLink](ctx, r.db.Keel(ctx), sp.
+		Pick(sp.ID, sp.CustomerID, keel.DynLit("")).
+		Where(
+			sp.CustomerID.In(req.CustomerIDs...),
+			sp.Status.Ne(shipment.StatusCanceled),
+		).
+		Order(keel.Desc(sp.Status.In(liveShipmentStatuses...)), sp.UpdatedAt.Desc()).
+		Limit(req.CustomerLimit))
 	if err != nil {
 		r.l.Error("failed to list customer shipments for search", zap.Error(err))
 		return nil, fmt.Errorf("list customer shipments for search: %w", err)
 	}
 
-	return links, nil
+	return sliceutils.Pointers(links), nil
 }
 
 func (r *searchCardReader) workerLinks(
 	ctx context.Context,
 	req *shipmentports.ListShipmentPartyLinksRequest,
 ) ([]*shipmentports.ShipmentPartyLink, error) {
-	links, err := keel.QueryAll(
-		ctx,
-		r.db.Keel(ctx),
-		pgx.RowToAddrOfStructByName[shipmentports.ShipmentPartyLink],
-		workerLinksSQL,
-		req.TenantInfo.OrgID.String(),
-		req.TenantInfo.BuID.String(),
-		string(shipment.AssignmentStatusCanceled),
-		openMoveStatuses,
-		liveShipmentStatuses,
-		keel.Strings(req.WorkerIDs),
-		string(shipment.MoveStatusInTransit),
+	asg := shipmentdb.Assignments
+	sm := shipmentdb.ShipmentMoves
+	sp := shipmentdb.Shipments
+	seat := keel.Rows(
+		seatSourceName,
+		[]string{seatSourceWorkerID},
+		keel.DynFunc("unnest", keel.DynArray(asg.PrimaryWorkerID, asg.SecondaryWorkerID)),
 	)
+	workerID := seat.Col(seatSourceWorkerID)
+
+	links, err := keel.Into[shipmentports.ShipmentPartyLink](ctx, r.db.Keel(ctx), asg.
+		Join(sm, sm.ID.EqCol(asg.ShipmentMoveID)).
+		Join(sp, sp.ID.EqCol(sm.ShipmentID)).
+		JoinLateral(seat).
+		DistinctOn(workerID).
+		Pick(sp.ID, keel.DynLit(""), workerID).
+		Where(
+			asg.ArchivedAt.IsNull(),
+			asg.Status.Ne(shipment.AssignmentStatusCanceled),
+			sm.Status.In(openMoveStatuses...),
+			sp.Status.In(liveShipmentStatuses...),
+			workerID.In(keel.Strings(req.WorkerIDs)),
+		).
+		Order(
+			workerID.Asc(),
+			keel.Desc(sm.Status.Eq(shipment.MoveStatusInTransit)),
+			sm.Sequence.Asc(),
+			sp.UpdatedAt.Desc(),
+		))
 	if err != nil {
 		r.l.Error("failed to list worker loads for search", zap.Error(err))
 		return nil, fmt.Errorf("list worker loads for search: %w", err)
 	}
 
-	return links, nil
+	return sliceutils.Pointers(links), nil
 }

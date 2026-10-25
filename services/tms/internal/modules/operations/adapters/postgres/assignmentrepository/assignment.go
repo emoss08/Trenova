@@ -47,7 +47,7 @@ func New(p Params) shipmentports.AssignmentRepository {
 	}
 }
 
-type assignmentQuery = keel.Query[shipment.Assignment]
+type assignmentQuery = keel.Query[*shipment.Assignment]
 
 func liveAssignments() *assignmentQuery {
 	a := shipmentdb.Assignments
@@ -388,7 +388,7 @@ func actualTimelineEvents(column keelkinds.PulidIDCol, resourceID pulid.ID) *kee
 	stopEvents := func(
 		at func(*shipmentdb.StopsTable) keel.Int64Col,
 		kind shipmentports.ActualTimelineEventType,
-	) *keel.Query[shipment.Assignment] {
+	) *keel.Query[*shipment.Assignment] {
 		a := shipmentdb.Assignments
 		sm := shipmentdb.ShipmentMoves
 		st := shipmentdb.Stops
@@ -399,7 +399,7 @@ func actualTimelineEvents(column keelkinds.PulidIDCol, resourceID pulid.ID) *kee
 			LeftJoin(loc, loc.ID.EqCol(st.LocationID)).
 			Pick(
 				at(st),
-				keel.DynLit(string(kind)).Cast(keel.TypeString),
+				keel.DynLit(string(kind)),
 				st.ID,
 				st.ShipmentMoveID,
 				sm.ShipmentID,

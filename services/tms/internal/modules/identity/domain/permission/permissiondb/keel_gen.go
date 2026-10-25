@@ -54,7 +54,7 @@ var resourcePermissionsRef = keel.Ref{Table: &resourcePermissionsTable}
 
 // ResourcePermissionsTable is the table of permission.ResourcePermission.
 type ResourcePermissionsTable struct {
-	keel.Handle[permission.ResourcePermission]
+	keel.Handle[*permission.ResourcePermission]
 	ID         keelkinds.PulidIDCol
 	RoleID     keelkinds.PulidIDCol
 	Resource   keel.StringCol
@@ -66,7 +66,7 @@ type ResourcePermissionsTable struct {
 
 // ResourcePermissions references the resource_permissions table.
 var ResourcePermissions = &ResourcePermissionsTable{
-	Handle:     keel.Handle[permission.ResourcePermission]{Ref: &resourcePermissionsRef},
+	Handle:     keel.Handle[*permission.ResourcePermission]{Ref: &resourcePermissionsRef},
 	ID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &resourcePermissionsRef, Index: 0}}},
 	RoleID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &resourcePermissionsRef, Index: 1}}},
 	Resource:   keel.StringCol{Col: keel.Col{Ref: &resourcePermissionsRef, Index: 2}},
@@ -79,7 +79,7 @@ var ResourcePermissions = &ResourcePermissionsTable{
 // BuildResourcePermissions builds the handle of resource_permissions for ref. Generated relation and alias methods call it.
 func BuildResourcePermissions(r *keel.Ref) *ResourcePermissionsTable {
 	return &ResourcePermissionsTable{
-		Handle:     keel.Handle[permission.ResourcePermission]{Ref: r},
+		Handle:     keel.Handle[*permission.ResourcePermission]{Ref: r},
 		ID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		RoleID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		Resource:   keel.StringCol{Col: keel.Col{Ref: r, Index: 2}},
@@ -213,7 +213,7 @@ var rolesRef = keel.Ref{Table: &rolesTable}
 
 // RolesTable is the table of permission.Role.
 type RolesTable struct {
-	keel.Handle[permission.Role]
+	keel.Handle[*permission.Role]
 	ID                 keelkinds.PulidIDCol
 	BusinessUnitID     keelkinds.PulidIDCol
 	OrganizationID     keelkinds.PulidIDCol
@@ -230,7 +230,7 @@ type RolesTable struct {
 
 // Roles references the roles table.
 var Roles = &RolesTable{
-	Handle:             keel.Handle[permission.Role]{Ref: &rolesRef},
+	Handle:             keel.Handle[*permission.Role]{Ref: &rolesRef},
 	ID:                 keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &rolesRef, Index: 0}}},
 	BusinessUnitID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &rolesRef, Index: 1}}},
 	OrganizationID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &rolesRef, Index: 2}}},
@@ -248,7 +248,7 @@ var Roles = &RolesTable{
 // BuildRoles builds the handle of roles for ref. Generated relation and alias methods call it.
 func BuildRoles(r *keel.Ref) *RolesTable {
 	return &RolesTable{
-		Handle:             keel.Handle[permission.Role]{Ref: r},
+		Handle:             keel.Handle[*permission.Role]{Ref: r},
 		ID:                 keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -413,7 +413,7 @@ var roleAgentGrantsRef = keel.Ref{Table: &roleAgentGrantsTable}
 
 // RoleAgentGrantsTable is the table of permission.RoleAgentGrant.
 type RoleAgentGrantsTable struct {
-	keel.Handle[permission.RoleAgentGrant]
+	keel.Handle[*permission.RoleAgentGrant]
 	ID                keelkinds.PulidIDCol
 	OrganizationID    keelkinds.PulidIDCol
 	BusinessUnitID    keelkinds.PulidIDCol
@@ -425,7 +425,7 @@ type RoleAgentGrantsTable struct {
 
 // RoleAgentGrants references the role_agent_grants table.
 var RoleAgentGrants = &RoleAgentGrantsTable{
-	Handle:            keel.Handle[permission.RoleAgentGrant]{Ref: &roleAgentGrantsRef},
+	Handle:            keel.Handle[*permission.RoleAgentGrant]{Ref: &roleAgentGrantsRef},
 	ID:                keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &roleAgentGrantsRef, Index: 0}}},
 	OrganizationID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &roleAgentGrantsRef, Index: 1}}},
 	BusinessUnitID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &roleAgentGrantsRef, Index: 2}}},
@@ -438,7 +438,7 @@ var RoleAgentGrants = &RoleAgentGrantsTable{
 // BuildRoleAgentGrants builds the handle of role_agent_grants for ref. Generated relation and alias methods call it.
 func BuildRoleAgentGrants(r *keel.Ref) *RoleAgentGrantsTable {
 	return &RoleAgentGrantsTable{
-		Handle:            keel.Handle[permission.RoleAgentGrant]{Ref: r},
+		Handle:            keel.Handle[*permission.RoleAgentGrant]{Ref: r},
 		ID:                keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		OrganizationID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		BusinessUnitID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -564,7 +564,7 @@ var roleConstraintsRef = keel.Ref{Table: &roleConstraintsTable}
 
 // RoleConstraintsTable is the table of permission.RoleConstraint.
 type RoleConstraintsTable struct {
-	keel.Handle[permission.RoleConstraint]
+	keel.Handle[*permission.RoleConstraint]
 	ID             keelkinds.PulidIDCol
 	OrganizationID keelkinds.PulidIDCol
 	BusinessUnitID keelkinds.PulidIDCol
@@ -580,7 +580,7 @@ type RoleConstraintsTable struct {
 
 // RoleConstraints references the role_constraints table.
 var RoleConstraints = &RoleConstraintsTable{
-	Handle:         keel.Handle[permission.RoleConstraint]{Ref: &roleConstraintsRef},
+	Handle:         keel.Handle[*permission.RoleConstraint]{Ref: &roleConstraintsRef},
 	ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &roleConstraintsRef, Index: 0}}},
 	OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &roleConstraintsRef, Index: 1}}},
 	BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &roleConstraintsRef, Index: 2}}},
@@ -597,7 +597,7 @@ var RoleConstraints = &RoleConstraintsTable{
 // BuildRoleConstraints builds the handle of role_constraints for ref. Generated relation and alias methods call it.
 func BuildRoleConstraints(r *keel.Ref) *RoleConstraintsTable {
 	return &RoleConstraintsTable{
-		Handle:         keel.Handle[permission.RoleConstraint]{Ref: r},
+		Handle:         keel.Handle[*permission.RoleConstraint]{Ref: r},
 		ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -749,7 +749,7 @@ var roleConstraintRolesRef = keel.Ref{Table: &roleConstraintRolesTable}
 
 // RoleConstraintRolesTable is the table of permission.RoleConstraintRole.
 type RoleConstraintRolesTable struct {
-	keel.Handle[permission.RoleConstraintRole]
+	keel.Handle[*permission.RoleConstraintRole]
 	ID               keelkinds.PulidIDCol
 	RoleConstraintID keelkinds.PulidIDCol
 	RoleID           keelkinds.PulidIDCol
@@ -760,7 +760,7 @@ type RoleConstraintRolesTable struct {
 
 // RoleConstraintRoles references the role_constraint_roles table.
 var RoleConstraintRoles = &RoleConstraintRolesTable{
-	Handle:           keel.Handle[permission.RoleConstraintRole]{Ref: &roleConstraintRolesRef},
+	Handle:           keel.Handle[*permission.RoleConstraintRole]{Ref: &roleConstraintRolesRef},
 	ID:               keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &roleConstraintRolesRef, Index: 0}}},
 	RoleConstraintID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &roleConstraintRolesRef, Index: 1}}},
 	RoleID:           keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &roleConstraintRolesRef, Index: 2}}},
@@ -772,7 +772,7 @@ var RoleConstraintRoles = &RoleConstraintRolesTable{
 // BuildRoleConstraintRoles builds the handle of role_constraint_roles for ref. Generated relation and alias methods call it.
 func BuildRoleConstraintRoles(r *keel.Ref) *RoleConstraintRolesTable {
 	return &RoleConstraintRolesTable{
-		Handle:           keel.Handle[permission.RoleConstraintRole]{Ref: r},
+		Handle:           keel.Handle[*permission.RoleConstraintRole]{Ref: r},
 		ID:               keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		RoleConstraintID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		RoleID:           keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -904,7 +904,7 @@ var roleHierarchyEdgesRef = keel.Ref{Table: &roleHierarchyEdgesTable}
 
 // RoleHierarchyEdgesTable is the table of permission.RoleHierarchyEdge.
 type RoleHierarchyEdgesTable struct {
-	keel.Handle[permission.RoleHierarchyEdge]
+	keel.Handle[*permission.RoleHierarchyEdge]
 	ID             keelkinds.PulidIDCol
 	SeniorRoleID   keelkinds.PulidIDCol
 	JuniorRoleID   keelkinds.PulidIDCol
@@ -917,7 +917,7 @@ type RoleHierarchyEdgesTable struct {
 
 // RoleHierarchyEdges references the role_hierarchy_edges table.
 var RoleHierarchyEdges = &RoleHierarchyEdgesTable{
-	Handle:         keel.Handle[permission.RoleHierarchyEdge]{Ref: &roleHierarchyEdgesRef},
+	Handle:         keel.Handle[*permission.RoleHierarchyEdge]{Ref: &roleHierarchyEdgesRef},
 	ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &roleHierarchyEdgesRef, Index: 0}}},
 	SeniorRoleID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &roleHierarchyEdgesRef, Index: 1}}},
 	JuniorRoleID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &roleHierarchyEdgesRef, Index: 2}}},
@@ -931,7 +931,7 @@ var RoleHierarchyEdges = &RoleHierarchyEdgesTable{
 // BuildRoleHierarchyEdges builds the handle of role_hierarchy_edges for ref. Generated relation and alias methods call it.
 func BuildRoleHierarchyEdges(r *keel.Ref) *RoleHierarchyEdgesTable {
 	return &RoleHierarchyEdgesTable{
-		Handle:         keel.Handle[permission.RoleHierarchyEdge]{Ref: r},
+		Handle:         keel.Handle[*permission.RoleHierarchyEdge]{Ref: r},
 		ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		SeniorRoleID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		JuniorRoleID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -1071,7 +1071,7 @@ var userRoleAssignmentsRef = keel.Ref{Table: &userRoleAssignmentsTable}
 
 // UserRoleAssignmentsTable is the table of permission.UserRoleAssignment.
 type UserRoleAssignmentsTable struct {
-	keel.Handle[permission.UserRoleAssignment]
+	keel.Handle[*permission.UserRoleAssignment]
 	ID             keelkinds.PulidIDCol
 	UserID         keelkinds.PulidIDCol
 	OrganizationID keelkinds.PulidIDCol
@@ -1083,7 +1083,7 @@ type UserRoleAssignmentsTable struct {
 
 // UserRoleAssignments references the user_role_assignments table.
 var UserRoleAssignments = &UserRoleAssignmentsTable{
-	Handle:         keel.Handle[permission.UserRoleAssignment]{Ref: &userRoleAssignmentsRef},
+	Handle:         keel.Handle[*permission.UserRoleAssignment]{Ref: &userRoleAssignmentsRef},
 	ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &userRoleAssignmentsRef, Index: 0}}},
 	UserID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &userRoleAssignmentsRef, Index: 1}}},
 	OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &userRoleAssignmentsRef, Index: 2}}},
@@ -1096,7 +1096,7 @@ var UserRoleAssignments = &UserRoleAssignmentsTable{
 // BuildUserRoleAssignments builds the handle of user_role_assignments for ref. Generated relation and alias methods call it.
 func BuildUserRoleAssignments(r *keel.Ref) *UserRoleAssignmentsTable {
 	return &UserRoleAssignmentsTable{
-		Handle:         keel.Handle[permission.UserRoleAssignment]{Ref: r},
+		Handle:         keel.Handle[*permission.UserRoleAssignment]{Ref: r},
 		ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		UserID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},

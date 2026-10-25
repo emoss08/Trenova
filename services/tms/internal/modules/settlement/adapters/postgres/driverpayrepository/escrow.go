@@ -74,8 +74,8 @@ func (r *escrowAccountRepository) ListConnection(
 					Filter: req.Filter,
 					Cursor: req.Cursor,
 					Shape: func(
-						q *keel.Query[driverpay.EscrowAccount],
-					) *keel.Query[driverpay.EscrowAccount] {
+						q *keel.Query[*driverpay.EscrowAccount],
+					) *keel.Query[*driverpay.EscrowAccount] {
 						return q.Load(ea.Worker())
 					},
 				},

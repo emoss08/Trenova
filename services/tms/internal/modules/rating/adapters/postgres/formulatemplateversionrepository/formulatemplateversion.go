@@ -130,8 +130,8 @@ func (r *repository) List(
 				&listquery.Request[formulatemplate.FormulaTemplateVersion]{
 					Filter: req.Filter,
 					Shape: func(
-						q *keel.Query[formulatemplate.FormulaTemplateVersion],
-					) *keel.Query[formulatemplate.FormulaTemplateVersion] {
+						q *keel.Query[*formulatemplate.FormulaTemplateVersion],
+					) *keel.Query[*formulatemplate.FormulaTemplateVersion] {
 						return q.Load(v.CreatedBy())
 					},
 					Then: []keel.Order{v.VersionNumber.Desc()},
@@ -497,7 +497,7 @@ type matrixUsageRow struct {
 
 func matrixUsageQuery(
 	req *formulatemplateports.ListMatrixUsagesRequest,
-) *keel.Query[formulatemplate.VersionTable] {
+) *keel.Query[*formulatemplate.VersionTable] {
 	vt := formulatemplatedb.VersionTables
 	v := formulatemplatedb.FormulaTemplateVersions
 	ft := formulatemplatedb.FormulaTemplates
@@ -557,7 +557,7 @@ type libraryUsageRow struct {
 
 func libraryUsageQuery(
 	req *formulatemplateports.ListLibraryUsagesRequest,
-) *keel.Query[formulatemplate.VersionImport] {
+) *keel.Query[*formulatemplate.VersionImport] {
 	vi := formulatemplatedb.VersionImports
 	v := formulatemplatedb.FormulaTemplateVersions
 	ft := formulatemplatedb.FormulaTemplates

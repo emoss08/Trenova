@@ -62,7 +62,7 @@ var accessPoliciesRef = keel.Ref{Table: &accessPoliciesTable}
 
 // AccessPoliciesTable is the table of iam.AccessPolicy.
 type AccessPoliciesTable struct {
-	keel.Handle[iam.AccessPolicy]
+	keel.Handle[*iam.AccessPolicy]
 	ID             keelkinds.PulidIDCol
 	OrganizationID keelkinds.PulidIDCol
 	BusinessUnitID keelkinds.PulidIDCol
@@ -79,7 +79,7 @@ type AccessPoliciesTable struct {
 
 // AccessPolicies references the access_policies table.
 var AccessPolicies = &AccessPoliciesTable{
-	Handle:         keel.Handle[iam.AccessPolicy]{Ref: &accessPoliciesRef},
+	Handle:         keel.Handle[*iam.AccessPolicy]{Ref: &accessPoliciesRef},
 	ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &accessPoliciesRef, Index: 0}}},
 	OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &accessPoliciesRef, Index: 1}}},
 	BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &accessPoliciesRef, Index: 2}}},
@@ -97,7 +97,7 @@ var AccessPolicies = &AccessPoliciesTable{
 // BuildAccessPolicies builds the handle of access_policies for ref. Generated relation and alias methods call it.
 func BuildAccessPolicies(r *keel.Ref) *AccessPoliciesTable {
 	return &AccessPoliciesTable{
-		Handle:         keel.Handle[iam.AccessPolicy]{Ref: r},
+		Handle:         keel.Handle[*iam.AccessPolicy]{Ref: r},
 		ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -244,7 +244,7 @@ var accessSettingsesRef = keel.Ref{Table: &accessSettingsesTable}
 
 // AccessSettingsesTable is the table of iam.AccessSettings.
 type AccessSettingsesTable struct {
-	keel.Handle[iam.AccessSettings]
+	keel.Handle[*iam.AccessSettings]
 	OrganizationID        keelkinds.PulidIDCol
 	BusinessUnitID        keelkinds.PulidIDCol
 	RequireRoleActivation keel.BoolCol
@@ -256,7 +256,7 @@ type AccessSettingsesTable struct {
 
 // AccessSettingses references the organization_access_settings table.
 var AccessSettingses = &AccessSettingsesTable{
-	Handle:                keel.Handle[iam.AccessSettings]{Ref: &accessSettingsesRef},
+	Handle:                keel.Handle[*iam.AccessSettings]{Ref: &accessSettingsesRef},
 	OrganizationID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &accessSettingsesRef, Index: 0}}},
 	BusinessUnitID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &accessSettingsesRef, Index: 1}}},
 	RequireRoleActivation: keel.BoolCol{Col: keel.Col{Ref: &accessSettingsesRef, Index: 2}},
@@ -269,7 +269,7 @@ var AccessSettingses = &AccessSettingsesTable{
 // BuildAccessSettingses builds the handle of organization_access_settings for ref. Generated relation and alias methods call it.
 func BuildAccessSettingses(r *keel.Ref) *AccessSettingsesTable {
 	return &AccessSettingsesTable{
-		Handle:                keel.Handle[iam.AccessSettings]{Ref: r},
+		Handle:                keel.Handle[*iam.AccessSettings]{Ref: r},
 		OrganizationID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		RequireRoleActivation: keel.BoolCol{Col: keel.Col{Ref: r, Index: 2}},
@@ -390,7 +390,7 @@ var authEventsRef = keel.Ref{Table: &authEventsTable}
 
 // AuthEventsTable is the table of iam.AuthEvent.
 type AuthEventsTable struct {
-	keel.Handle[iam.AuthEvent]
+	keel.Handle[*iam.AuthEvent]
 	ID                 keelkinds.PulidIDCol
 	UserID             keelkinds.PulidIDCol
 	OrganizationID     keelkinds.PulidIDCol
@@ -412,7 +412,7 @@ type AuthEventsTable struct {
 
 // AuthEvents references the auth_events table.
 var AuthEvents = &AuthEventsTable{
-	Handle:             keel.Handle[iam.AuthEvent]{Ref: &authEventsRef},
+	Handle:             keel.Handle[*iam.AuthEvent]{Ref: &authEventsRef},
 	ID:                 keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &authEventsRef, Index: 0}}},
 	UserID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &authEventsRef, Index: 1}}},
 	OrganizationID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &authEventsRef, Index: 2}}},
@@ -435,7 +435,7 @@ var AuthEvents = &AuthEventsTable{
 // BuildAuthEvents builds the handle of auth_events for ref. Generated relation and alias methods call it.
 func BuildAuthEvents(r *keel.Ref) *AuthEventsTable {
 	return &AuthEventsTable{
-		Handle:             keel.Handle[iam.AuthEvent]{Ref: r},
+		Handle:             keel.Handle[*iam.AuthEvent]{Ref: r},
 		ID:                 keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		UserID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -638,7 +638,7 @@ var externalIdentitiesRef = keel.Ref{Table: &externalIdentitiesTable}
 
 // ExternalIdentitiesTable is the table of iam.ExternalIdentity.
 type ExternalIdentitiesTable struct {
-	keel.Handle[iam.ExternalIdentity]
+	keel.Handle[*iam.ExternalIdentity]
 	ID                 keelkinds.PulidIDCol
 	UserID             keelkinds.PulidIDCol
 	OrganizationID     keelkinds.PulidIDCol
@@ -655,7 +655,7 @@ type ExternalIdentitiesTable struct {
 
 // ExternalIdentities references the external_identities table.
 var ExternalIdentities = &ExternalIdentitiesTable{
-	Handle:             keel.Handle[iam.ExternalIdentity]{Ref: &externalIdentitiesRef},
+	Handle:             keel.Handle[*iam.ExternalIdentity]{Ref: &externalIdentitiesRef},
 	ID:                 keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &externalIdentitiesRef, Index: 0}}},
 	UserID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &externalIdentitiesRef, Index: 1}}},
 	OrganizationID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &externalIdentitiesRef, Index: 2}}},
@@ -673,7 +673,7 @@ var ExternalIdentities = &ExternalIdentitiesTable{
 // BuildExternalIdentities builds the handle of external_identities for ref. Generated relation and alias methods call it.
 func BuildExternalIdentities(r *keel.Ref) *ExternalIdentitiesTable {
 	return &ExternalIdentitiesTable{
-		Handle:             keel.Handle[iam.ExternalIdentity]{Ref: r},
+		Handle:             keel.Handle[*iam.ExternalIdentity]{Ref: r},
 		ID:                 keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		UserID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -850,7 +850,7 @@ var identityProvidersRef = keel.Ref{Table: &identityProvidersTable}
 
 // IdentityProvidersTable is the table of iam.IdentityProvider.
 type IdentityProvidersTable struct {
-	keel.Handle[iam.IdentityProvider]
+	keel.Handle[*iam.IdentityProvider]
 	ID                  keelkinds.PulidIDCol
 	OrganizationID      keelkinds.PulidIDCol
 	BusinessUnitID      keelkinds.PulidIDCol
@@ -880,7 +880,7 @@ type IdentityProvidersTable struct {
 
 // IdentityProviders references the identity_providers table.
 var IdentityProviders = &IdentityProvidersTable{
-	Handle:              keel.Handle[iam.IdentityProvider]{Ref: &identityProvidersRef},
+	Handle:              keel.Handle[*iam.IdentityProvider]{Ref: &identityProvidersRef},
 	ID:                  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &identityProvidersRef, Index: 0}}},
 	OrganizationID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &identityProvidersRef, Index: 1}}},
 	BusinessUnitID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &identityProvidersRef, Index: 2}}},
@@ -911,7 +911,7 @@ var IdentityProviders = &IdentityProvidersTable{
 // BuildIdentityProviders builds the handle of identity_providers for ref. Generated relation and alias methods call it.
 func BuildIdentityProviders(r *keel.Ref) *IdentityProvidersTable {
 	return &IdentityProvidersTable{
-		Handle:              keel.Handle[iam.IdentityProvider]{Ref: r},
+		Handle:              keel.Handle[*iam.IdentityProvider]{Ref: r},
 		ID:                  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		OrganizationID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		BusinessUnitID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -1166,7 +1166,7 @@ var mFAAuthenticatorsRef = keel.Ref{Table: &mFAAuthenticatorsTable}
 
 // MFAAuthenticatorsTable is the table of iam.MFAAuthenticator.
 type MFAAuthenticatorsTable struct {
-	keel.Handle[iam.MFAAuthenticator]
+	keel.Handle[*iam.MFAAuthenticator]
 	ID             keelkinds.PulidIDCol
 	UserID         keelkinds.PulidIDCol
 	OrganizationID keelkinds.PulidIDCol
@@ -1184,7 +1184,7 @@ type MFAAuthenticatorsTable struct {
 
 // MFAAuthenticators references the mfa_authenticators table.
 var MFAAuthenticators = &MFAAuthenticatorsTable{
-	Handle:         keel.Handle[iam.MFAAuthenticator]{Ref: &mFAAuthenticatorsRef},
+	Handle:         keel.Handle[*iam.MFAAuthenticator]{Ref: &mFAAuthenticatorsRef},
 	ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &mFAAuthenticatorsRef, Index: 0}}},
 	UserID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &mFAAuthenticatorsRef, Index: 1}}},
 	OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &mFAAuthenticatorsRef, Index: 2}}},
@@ -1203,7 +1203,7 @@ var MFAAuthenticators = &MFAAuthenticatorsTable{
 // BuildMFAAuthenticators builds the handle of mfa_authenticators for ref. Generated relation and alias methods call it.
 func BuildMFAAuthenticators(r *keel.Ref) *MFAAuthenticatorsTable {
 	return &MFAAuthenticatorsTable{
-		Handle:         keel.Handle[iam.MFAAuthenticator]{Ref: r},
+		Handle:         keel.Handle[*iam.MFAAuthenticator]{Ref: r},
 		ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		UserID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -1356,7 +1356,7 @@ var mFARecoveryCodesRef = keel.Ref{Table: &mFARecoveryCodesTable}
 
 // MFARecoveryCodesTable is the table of iam.MFARecoveryCode.
 type MFARecoveryCodesTable struct {
-	keel.Handle[iam.MFARecoveryCode]
+	keel.Handle[*iam.MFARecoveryCode]
 	ID             keelkinds.PulidIDCol
 	UserID         keelkinds.PulidIDCol
 	OrganizationID keelkinds.PulidIDCol
@@ -1368,7 +1368,7 @@ type MFARecoveryCodesTable struct {
 
 // MFARecoveryCodes references the mfa_recovery_codes table.
 var MFARecoveryCodes = &MFARecoveryCodesTable{
-	Handle:         keel.Handle[iam.MFARecoveryCode]{Ref: &mFARecoveryCodesRef},
+	Handle:         keel.Handle[*iam.MFARecoveryCode]{Ref: &mFARecoveryCodesRef},
 	ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &mFARecoveryCodesRef, Index: 0}}},
 	UserID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &mFARecoveryCodesRef, Index: 1}}},
 	OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &mFARecoveryCodesRef, Index: 2}}},
@@ -1381,7 +1381,7 @@ var MFARecoveryCodes = &MFARecoveryCodesTable{
 // BuildMFARecoveryCodes builds the handle of mfa_recovery_codes for ref. Generated relation and alias methods call it.
 func BuildMFARecoveryCodes(r *keel.Ref) *MFARecoveryCodesTable {
 	return &MFARecoveryCodesTable{
-		Handle:         keel.Handle[iam.MFARecoveryCode]{Ref: r},
+		Handle:         keel.Handle[*iam.MFARecoveryCode]{Ref: r},
 		ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		UserID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -1498,7 +1498,7 @@ var provisioningAuditRecordsRef = keel.Ref{Table: &provisioningAuditRecordsTable
 
 // ProvisioningAuditRecordsTable is the table of iam.ProvisioningAuditRecord.
 type ProvisioningAuditRecordsTable struct {
-	keel.Handle[iam.ProvisioningAuditRecord]
+	keel.Handle[*iam.ProvisioningAuditRecord]
 	ID             keelkinds.PulidIDCol
 	OrganizationID keelkinds.PulidIDCol
 	DirectoryID    keelkinds.PulidIDCol
@@ -1513,7 +1513,7 @@ type ProvisioningAuditRecordsTable struct {
 
 // ProvisioningAuditRecords references the provisioning_audit_records table.
 var ProvisioningAuditRecords = &ProvisioningAuditRecordsTable{
-	Handle:         keel.Handle[iam.ProvisioningAuditRecord]{Ref: &provisioningAuditRecordsRef},
+	Handle:         keel.Handle[*iam.ProvisioningAuditRecord]{Ref: &provisioningAuditRecordsRef},
 	ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &provisioningAuditRecordsRef, Index: 0}}},
 	OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &provisioningAuditRecordsRef, Index: 1}}},
 	DirectoryID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &provisioningAuditRecordsRef, Index: 2}}},
@@ -1529,7 +1529,7 @@ var ProvisioningAuditRecords = &ProvisioningAuditRecordsTable{
 // BuildProvisioningAuditRecords builds the handle of provisioning_audit_records for ref. Generated relation and alias methods call it.
 func BuildProvisioningAuditRecords(r *keel.Ref) *ProvisioningAuditRecordsTable {
 	return &ProvisioningAuditRecordsTable{
-		Handle:         keel.Handle[iam.ProvisioningAuditRecord]{Ref: r},
+		Handle:         keel.Handle[*iam.ProvisioningAuditRecord]{Ref: r},
 		ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		DirectoryID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -1669,7 +1669,7 @@ var riskDecisionsRef = keel.Ref{Table: &riskDecisionsTable}
 
 // RiskDecisionsTable is the table of iam.RiskDecision.
 type RiskDecisionsTable struct {
-	keel.Handle[iam.RiskDecision]
+	keel.Handle[*iam.RiskDecision]
 	ID             keelkinds.PulidIDCol
 	UserID         keelkinds.PulidIDCol
 	OrganizationID keelkinds.PulidIDCol
@@ -1682,7 +1682,7 @@ type RiskDecisionsTable struct {
 
 // RiskDecisions references the risk_decisions table.
 var RiskDecisions = &RiskDecisionsTable{
-	Handle:         keel.Handle[iam.RiskDecision]{Ref: &riskDecisionsRef},
+	Handle:         keel.Handle[*iam.RiskDecision]{Ref: &riskDecisionsRef},
 	ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &riskDecisionsRef, Index: 0}}},
 	UserID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &riskDecisionsRef, Index: 1}}},
 	OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &riskDecisionsRef, Index: 2}}},
@@ -1696,7 +1696,7 @@ var RiskDecisions = &RiskDecisionsTable{
 // BuildRiskDecisions builds the handle of risk_decisions for ref. Generated relation and alias methods call it.
 func BuildRiskDecisions(r *keel.Ref) *RiskDecisionsTable {
 	return &RiskDecisionsTable{
-		Handle:         keel.Handle[iam.RiskDecision]{Ref: r},
+		Handle:         keel.Handle[*iam.RiskDecision]{Ref: r},
 		ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		UserID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -1835,7 +1835,7 @@ var sCIMDirectoriesRef = keel.Ref{Table: &sCIMDirectoriesTable}
 
 // SCIMDirectoriesTable is the table of iam.SCIMDirectory.
 type SCIMDirectoriesTable struct {
-	keel.Handle[iam.SCIMDirectory]
+	keel.Handle[*iam.SCIMDirectory]
 	ID             keelkinds.PulidIDCol
 	OrganizationID keelkinds.PulidIDCol
 	BusinessUnitID keelkinds.PulidIDCol
@@ -1847,7 +1847,7 @@ type SCIMDirectoriesTable struct {
 
 // SCIMDirectories references the scim_directories table.
 var SCIMDirectories = &SCIMDirectoriesTable{
-	Handle:         keel.Handle[iam.SCIMDirectory]{Ref: &sCIMDirectoriesRef},
+	Handle:         keel.Handle[*iam.SCIMDirectory]{Ref: &sCIMDirectoriesRef},
 	ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &sCIMDirectoriesRef, Index: 0}}},
 	OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &sCIMDirectoriesRef, Index: 1}}},
 	BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &sCIMDirectoriesRef, Index: 2}}},
@@ -1860,7 +1860,7 @@ var SCIMDirectories = &SCIMDirectoriesTable{
 // BuildSCIMDirectories builds the handle of scim_directories for ref. Generated relation and alias methods call it.
 func BuildSCIMDirectories(r *keel.Ref) *SCIMDirectoriesTable {
 	return &SCIMDirectoriesTable{
-		Handle:         keel.Handle[iam.SCIMDirectory]{Ref: r},
+		Handle:         keel.Handle[*iam.SCIMDirectory]{Ref: r},
 		ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -1981,7 +1981,7 @@ var sCIMGroupRoleMappingsRef = keel.Ref{Table: &sCIMGroupRoleMappingsTable}
 
 // SCIMGroupRoleMappingsTable is the table of iam.SCIMGroupRoleMapping.
 type SCIMGroupRoleMappingsTable struct {
-	keel.Handle[iam.SCIMGroupRoleMapping]
+	keel.Handle[*iam.SCIMGroupRoleMapping]
 	ID              keelkinds.PulidIDCol
 	OrganizationID  keelkinds.PulidIDCol
 	BusinessUnitID  keelkinds.PulidIDCol
@@ -1998,7 +1998,7 @@ type SCIMGroupRoleMappingsTable struct {
 
 // SCIMGroupRoleMappings references the scim_group_role_mappings table.
 var SCIMGroupRoleMappings = &SCIMGroupRoleMappingsTable{
-	Handle:          keel.Handle[iam.SCIMGroupRoleMapping]{Ref: &sCIMGroupRoleMappingsRef},
+	Handle:          keel.Handle[*iam.SCIMGroupRoleMapping]{Ref: &sCIMGroupRoleMappingsRef},
 	ID:              keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &sCIMGroupRoleMappingsRef, Index: 0}}},
 	OrganizationID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &sCIMGroupRoleMappingsRef, Index: 1}}},
 	BusinessUnitID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &sCIMGroupRoleMappingsRef, Index: 2}}},
@@ -2016,7 +2016,7 @@ var SCIMGroupRoleMappings = &SCIMGroupRoleMappingsTable{
 // BuildSCIMGroupRoleMappings builds the handle of scim_group_role_mappings for ref. Generated relation and alias methods call it.
 func BuildSCIMGroupRoleMappings(r *keel.Ref) *SCIMGroupRoleMappingsTable {
 	return &SCIMGroupRoleMappingsTable{
-		Handle:          keel.Handle[iam.SCIMGroupRoleMapping]{Ref: r},
+		Handle:          keel.Handle[*iam.SCIMGroupRoleMapping]{Ref: r},
 		ID:              keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		OrganizationID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		BusinessUnitID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -2169,7 +2169,7 @@ var sCIMTokensRef = keel.Ref{Table: &sCIMTokensTable}
 
 // SCIMTokensTable is the table of iam.SCIMToken.
 type SCIMTokensTable struct {
-	keel.Handle[iam.SCIMToken]
+	keel.Handle[*iam.SCIMToken]
 	ID             keelkinds.PulidIDCol
 	OrganizationID keelkinds.PulidIDCol
 	DirectoryID    keelkinds.PulidIDCol
@@ -2185,7 +2185,7 @@ type SCIMTokensTable struct {
 
 // SCIMTokens references the scim_tokens table.
 var SCIMTokens = &SCIMTokensTable{
-	Handle:         keel.Handle[iam.SCIMToken]{Ref: &sCIMTokensRef},
+	Handle:         keel.Handle[*iam.SCIMToken]{Ref: &sCIMTokensRef},
 	ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &sCIMTokensRef, Index: 0}}},
 	OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &sCIMTokensRef, Index: 1}}},
 	DirectoryID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &sCIMTokensRef, Index: 2}}},
@@ -2202,7 +2202,7 @@ var SCIMTokens = &SCIMTokensTable{
 // BuildSCIMTokens builds the handle of scim_tokens for ref. Generated relation and alias methods call it.
 func BuildSCIMTokens(r *keel.Ref) *SCIMTokensTable {
 	return &SCIMTokensTable{
-		Handle:         keel.Handle[iam.SCIMToken]{Ref: r},
+		Handle:         keel.Handle[*iam.SCIMToken]{Ref: r},
 		ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		DirectoryID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},

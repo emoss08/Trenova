@@ -62,7 +62,9 @@ func prepareTurn(turn *conversation.AssistantTurn) {
 	}
 }
 
-func getByIDQuery(req *agentports.GetAssistantTurnRequest) *keel.Query[conversation.AssistantTurn] {
+func getByIDQuery(
+	req *agentports.GetAssistantTurnRequest,
+) *keel.Query[*conversation.AssistantTurn] {
 	at := conversationdb.AssistantTurns
 
 	return at.Where(
@@ -73,7 +75,7 @@ func getByIDQuery(req *agentports.GetAssistantTurnRequest) *keel.Query[conversat
 
 func activeQuery(
 	req *agentports.ActiveAssistantTurnRequest,
-) *keel.Query[conversation.AssistantTurn] {
+) *keel.Query[*conversation.AssistantTurn] {
 	at := conversationdb.AssistantTurns
 
 	return at.Where(
@@ -85,7 +87,7 @@ func activeQuery(
 
 func liveTurnsQuery(
 	req *agentports.ListLiveAssistantTurnsRequest,
-) *keel.Query[conversation.AssistantTurn] {
+) *keel.Query[*conversation.AssistantTurn] {
 	at := conversationdb.AssistantTurns
 	th := conversationdb.Threads.As("live_thread")
 
@@ -100,7 +102,7 @@ func liveTurnsQuery(
 
 func liveThreadTitlesQuery(
 	req *agentports.ListLiveAssistantTurnsRequest,
-) *keel.Query[conversation.Thread] {
+) *keel.Query[*conversation.Thread] {
 	th := conversationdb.Threads
 
 	return th.Pick(th.ID, th.Title).Where(

@@ -82,7 +82,7 @@ var ordersRef = keel.Ref{Table: &ordersTable}
 
 // OrdersTable is the table of order.Order.
 type OrdersTable struct {
-	keel.Handle[order.Order]
+	keel.Handle[*order.Order]
 	ID             keelkinds.PulidIDCol
 	BusinessUnitID keelkinds.PulidIDCol
 	OrganizationID keelkinds.PulidIDCol
@@ -106,7 +106,7 @@ type OrdersTable struct {
 
 // Orders references the orders table.
 var Orders = &OrdersTable{
-	Handle:         keel.Handle[order.Order]{Ref: &ordersRef},
+	Handle:         keel.Handle[*order.Order]{Ref: &ordersRef},
 	ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &ordersRef, Index: 0}}},
 	BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &ordersRef, Index: 1}}},
 	OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &ordersRef, Index: 2}}},
@@ -131,7 +131,7 @@ var Orders = &OrdersTable{
 // BuildOrders builds the handle of orders for ref. Generated relation and alias methods call it.
 func BuildOrders(r *keel.Ref) *OrdersTable {
 	return &OrdersTable{
-		Handle:         keel.Handle[order.Order]{Ref: r},
+		Handle:         keel.Handle[*order.Order]{Ref: r},
 		ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -362,7 +362,7 @@ var orderChargesRef = keel.Ref{Table: &orderChargesTable}
 
 // OrderChargesTable is the table of order.OrderCharge.
 type OrderChargesTable struct {
-	keel.Handle[order.OrderCharge]
+	keel.Handle[*order.OrderCharge]
 	ID             keelkinds.PulidIDCol
 	BusinessUnitID keelkinds.PulidIDCol
 	OrganizationID keelkinds.PulidIDCol
@@ -378,7 +378,7 @@ type OrderChargesTable struct {
 
 // OrderCharges references the order_charges table.
 var OrderCharges = &OrderChargesTable{
-	Handle:         keel.Handle[order.OrderCharge]{Ref: &orderChargesRef},
+	Handle:         keel.Handle[*order.OrderCharge]{Ref: &orderChargesRef},
 	ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &orderChargesRef, Index: 0}}},
 	BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &orderChargesRef, Index: 1}}},
 	OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &orderChargesRef, Index: 2}}},
@@ -395,7 +395,7 @@ var OrderCharges = &OrderChargesTable{
 // BuildOrderCharges builds the handle of order_charges for ref. Generated relation and alias methods call it.
 func BuildOrderCharges(r *keel.Ref) *OrderChargesTable {
 	return &OrderChargesTable{
-		Handle:         keel.Handle[order.OrderCharge]{Ref: r},
+		Handle:         keel.Handle[*order.OrderCharge]{Ref: r},
 		ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},

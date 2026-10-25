@@ -62,7 +62,7 @@ var exchangeRatesRef = keel.Ref{Table: &exchangeRatesTable}
 
 // ExchangeRatesTable is the table of exchangerate.ExchangeRate.
 type ExchangeRatesTable struct {
-	keel.Handle[exchangerate.ExchangeRate]
+	keel.Handle[*exchangerate.ExchangeRate]
 	ID                 keelkinds.PulidIDCol
 	BusinessUnitID     keelkinds.PulidIDCol
 	OrganizationID     keelkinds.PulidIDCol
@@ -82,7 +82,7 @@ type ExchangeRatesTable struct {
 
 // ExchangeRates references the exchange_rates table.
 var ExchangeRates = &ExchangeRatesTable{
-	Handle:             keel.Handle[exchangerate.ExchangeRate]{Ref: &exchangeRatesRef},
+	Handle:             keel.Handle[*exchangerate.ExchangeRate]{Ref: &exchangeRatesRef},
 	ID:                 keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &exchangeRatesRef, Index: 0}}},
 	BusinessUnitID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &exchangeRatesRef, Index: 1}}},
 	OrganizationID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &exchangeRatesRef, Index: 2}}},
@@ -103,7 +103,7 @@ var ExchangeRates = &ExchangeRatesTable{
 // BuildExchangeRates builds the handle of exchange_rates for ref. Generated relation and alias methods call it.
 func BuildExchangeRates(r *keel.Ref) *ExchangeRatesTable {
 	return &ExchangeRatesTable{
-		Handle:             keel.Handle[exchangerate.ExchangeRate]{Ref: r},
+		Handle:             keel.Handle[*exchangerate.ExchangeRate]{Ref: r},
 		ID:                 keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -269,7 +269,7 @@ var settlementQuotesRef = keel.Ref{Table: &settlementQuotesTable}
 
 // SettlementQuotesTable is the table of exchangerate.SettlementQuote.
 type SettlementQuotesTable struct {
-	keel.Handle[exchangerate.SettlementQuote]
+	keel.Handle[*exchangerate.SettlementQuote]
 	ID              keelkinds.PulidIDCol
 	BusinessUnitID  keelkinds.PulidIDCol
 	OrganizationID  keelkinds.PulidIDCol
@@ -287,7 +287,7 @@ type SettlementQuotesTable struct {
 
 // SettlementQuotes references the exchange_rate_settlement_quotes table.
 var SettlementQuotes = &SettlementQuotesTable{
-	Handle:          keel.Handle[exchangerate.SettlementQuote]{Ref: &settlementQuotesRef},
+	Handle:          keel.Handle[*exchangerate.SettlementQuote]{Ref: &settlementQuotesRef},
 	ID:              keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &settlementQuotesRef, Index: 0}}},
 	BusinessUnitID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &settlementQuotesRef, Index: 1}}},
 	OrganizationID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &settlementQuotesRef, Index: 2}}},
@@ -306,7 +306,7 @@ var SettlementQuotes = &SettlementQuotesTable{
 // BuildSettlementQuotes builds the handle of exchange_rate_settlement_quotes for ref. Generated relation and alias methods call it.
 func BuildSettlementQuotes(r *keel.Ref) *SettlementQuotesTable {
 	return &SettlementQuotesTable{
-		Handle:          keel.Handle[exchangerate.SettlementQuote]{Ref: r},
+		Handle:          keel.Handle[*exchangerate.SettlementQuote]{Ref: r},
 		ID:              keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},

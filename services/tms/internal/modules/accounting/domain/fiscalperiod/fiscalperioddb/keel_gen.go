@@ -82,7 +82,7 @@ var fiscalPeriodsRef = keel.Ref{Table: &fiscalPeriodsTable}
 
 // FiscalPeriodsTable is the table of fiscalperiod.FiscalPeriod.
 type FiscalPeriodsTable struct {
-	keel.Handle[fiscalperiod.FiscalPeriod]
+	keel.Handle[*fiscalperiod.FiscalPeriod]
 	ID                    keelkinds.PulidIDCol
 	BusinessUnitID        keelkinds.PulidIDCol
 	OrganizationID        keelkinds.PulidIDCol
@@ -112,7 +112,7 @@ type FiscalPeriodsTable struct {
 
 // FiscalPeriods references the fiscal_periods table.
 var FiscalPeriods = &FiscalPeriodsTable{
-	Handle:                keel.Handle[fiscalperiod.FiscalPeriod]{Ref: &fiscalPeriodsRef},
+	Handle:                keel.Handle[*fiscalperiod.FiscalPeriod]{Ref: &fiscalPeriodsRef},
 	ID:                    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &fiscalPeriodsRef, Index: 0}}},
 	BusinessUnitID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &fiscalPeriodsRef, Index: 1}}},
 	OrganizationID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &fiscalPeriodsRef, Index: 2}}},
@@ -143,7 +143,7 @@ var FiscalPeriods = &FiscalPeriodsTable{
 // BuildFiscalPeriods builds the handle of fiscal_periods for ref. Generated relation and alias methods call it.
 func BuildFiscalPeriods(r *keel.Ref) *FiscalPeriodsTable {
 	return &FiscalPeriodsTable{
-		Handle:                keel.Handle[fiscalperiod.FiscalPeriod]{Ref: r},
+		Handle:                keel.Handle[*fiscalperiod.FiscalPeriod]{Ref: r},
 		ID:                    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},

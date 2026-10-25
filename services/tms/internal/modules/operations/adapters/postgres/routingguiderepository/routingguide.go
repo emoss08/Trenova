@@ -45,7 +45,7 @@ func New(p Params) tenderports.RoutingGuideRepository {
 	}
 }
 
-type guideQuery = keel.Query[tender.RoutingGuide]
+type guideQuery = keel.Query[*tender.RoutingGuide]
 
 func rankedEntries() keel.Loader {
 	e := tenderdb.RoutingGuides.Entries()

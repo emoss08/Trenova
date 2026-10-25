@@ -18,8 +18,8 @@ import (
 var scimGroupRoleMappingErrors = dberror.Mapping{Entity: "SCIM group role mapping"}
 
 func withMappingRole(
-	q *keel.Query[iam.SCIMGroupRoleMapping],
-) *keel.Query[iam.SCIMGroupRoleMapping] {
+	q *keel.Query[*iam.SCIMGroupRoleMapping],
+) *keel.Query[*iam.SCIMGroupRoleMapping] {
 	return q.Load(iamdb.SCIMGroupRoleMappings.Role())
 }
 

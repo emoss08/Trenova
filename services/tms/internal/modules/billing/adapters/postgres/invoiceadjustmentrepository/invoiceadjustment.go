@@ -72,7 +72,7 @@ func New(p Params) invoiceadjustmentports.InvoiceAdjustmentRepository {
 	}
 }
 
-func adjustmentDetail() *keel.Query[invoiceadjustment.InvoiceAdjustment] {
+func adjustmentDetail() *keel.Query[*invoiceadjustment.InvoiceAdjustment] {
 	ia := invoiceadjustmentdb.InvoiceAdjustments
 	lines := ia.Lines()
 	refs := ia.DocumentReferences()
@@ -177,7 +177,7 @@ func (r *repository) GetInvoiceLineCreditUsage(
 
 func lineCreditUsage(
 	req *invoiceadjustmentports.GetInvoiceLineCreditUsageRequest,
-) *keel.Query[invoiceadjustment.InvoiceAdjustmentLine] {
+) *keel.Query[*invoiceadjustment.InvoiceAdjustmentLine] {
 	l := invoiceadjustmentdb.InvoiceAdjustmentLines
 	ia := invoiceadjustmentdb.InvoiceAdjustments
 
@@ -525,7 +525,7 @@ func (r *repository) CreateBatch(
 	)
 }
 
-func batchDetail() *keel.Query[invoiceadjustment.InvoiceAdjustmentBatch] {
+func batchDetail() *keel.Query[*invoiceadjustment.InvoiceAdjustmentBatch] {
 	b := invoiceadjustmentdb.InvoiceAdjustmentBatches
 	return b.Load(b.Items())
 }

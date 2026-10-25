@@ -111,8 +111,8 @@ func (r *settlementRepository) ListConnection(
 					Filter: req.Filter,
 					Cursor: req.Cursor,
 					Shape: func(
-						q *keel.Query[driversettlement.Settlement],
-					) *keel.Query[driversettlement.Settlement] {
+						q *keel.Query[*driversettlement.Settlement],
+					) *keel.Query[*driversettlement.Settlement] {
 						return q.Load(s.Worker())
 					},
 				},

@@ -111,7 +111,7 @@ func (r *repository) ListConnection(
 func agreementQuery(
 	req *rateagreementports.GetRateAgreementByIDRequest,
 	now int64,
-) *keel.Query[rateagreement.RateAgreement] {
+) *keel.Query[*rateagreement.RateAgreement] {
 	ra := rateagreementdb.RateAgreements
 	q := ra.Where(ra.ID.Eq(req.RateAgreementID))
 
@@ -152,7 +152,7 @@ func (r *repository) GetByID(
 
 func rulesQuery(
 	req *rateagreementports.ListRateAgreementRulesRequest,
-) *keel.Query[rateagreement.RateAgreementRule] {
+) *keel.Query[*rateagreement.RateAgreementRule] {
 	rr := rateagreementdb.RateAgreementRules
 	q := rr.Where(
 		rr.RateAgreementID.Eq(req.RateAgreementID),
@@ -331,7 +331,7 @@ func deleteChildren(ctx context.Context, db *keel.DB, agreementID pulid.ID) erro
 	return err
 }
 
-func selectOptionsQuery() *keel.Query[rateagreement.RateAgreement] {
+func selectOptionsQuery() *keel.Query[*rateagreement.RateAgreement] {
 	ra := rateagreementdb.RateAgreements
 
 	return ra.Pick(ra.ID, ra.Code, ra.Name, ra.PartyType, ra.Status, ra.Currency).

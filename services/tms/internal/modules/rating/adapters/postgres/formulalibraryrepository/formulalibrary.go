@@ -179,7 +179,7 @@ func (r *repository) NamesLike(
 	})
 }
 
-func namesLikeQuery(prefix string) *keel.Query[formulalibrary.FormulaLibrary] {
+func namesLikeQuery(prefix string) *keel.Query[*formulalibrary.FormulaLibrary] {
 	fl := formulalibrarydb.FormulaLibraries
 
 	return fl.Pick(fl.Name).Where(fl.Name.HasPrefixFold(prefix)).Limit(maxNamesLike)

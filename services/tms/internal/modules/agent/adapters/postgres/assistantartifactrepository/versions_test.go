@@ -1,6 +1,7 @@
 package assistantartifactrepository
 
 import (
+	"strings"
 	"testing"
 
 	"github.com/emoss08/trenova/internal/testutil/keeltest"
@@ -20,13 +21,13 @@ func TestSummaryQueryKeepsOnlyTheSummaryKeysOfAPayload(t *testing.T) {
 
 	sql, args := keeltest.Render(t, summaryQuery(versionsTestRequest()))
 
-	assert.Contains(
-		t,
-		sql,
-		`COALESCE((SELECT jsonb_object_agg(e.key, e.value) FROM jsonb_each(aa."payload") AS e WHERE e.key = ANY(`,
-	)
-	assert.Contains(t, sql, "jsonb_build_object())")
-	assert.Contains(t, args, []string{"tool", "entity", "path", "documentId"})
+	for _, key := range []string{"tool", "entity", "path", "documentId"} {
+		assert.Contains(t, args, key)
+		assert.Contains(t, args, []string{key})
+	}
+	assert.Equal(t, 4, strings.Count(sql, `CASE WHEN aa."payload" ? $`))
+	assert.Contains(t, sql, `jsonb_build_object()`)
+	assert.Contains(t, sql, `aa."payload" #> $`)
 	assert.Contains(t, args, []string{"aart_a", "aart_b"})
 }
 
@@ -35,7 +36,7 @@ func TestVersionsQueryReadsTheWholePayloadInLineageOrder(t *testing.T) {
 
 	sql, _ := keeltest.Render(t, versionsQuery(versionsTestRequest()))
 
-	assert.NotContains(t, sql, "jsonb_object_agg")
+	assert.NotContains(t, sql, "jsonb_build_object")
 	assert.Contains(t, sql, `aa."payload"`)
 	assert.Contains(t, sql, `coalesce(aa."lineage_id", aa."id") = ANY(`)
 	assert.Contains(

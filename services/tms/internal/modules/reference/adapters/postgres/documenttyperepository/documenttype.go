@@ -148,7 +148,7 @@ func (r *repository) GetByCode(
 ) (*documenttype.DocumentType, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*documenttype.DocumentType, error) {
 		dt := documenttypedb.DocumentTypes
-		entity, err := dt.Where(dt.Code.Eq(req.Code)).
+		entity, err := dt.Where(dt.Code.Lower().Eq(strings.ToLower(req.Code))).
 			Order(dt.CreatedAt.Asc()).
 			First(ctx, r.db.Keel(ctx))
 		if err != nil {

@@ -84,7 +84,7 @@ var postingsRef = keel.Ref{Table: &postingsTable}
 
 // PostingsTable is the table of carriercapacity.Posting.
 type PostingsTable struct {
-	keel.Handle[carriercapacity.Posting]
+	keel.Handle[*carriercapacity.Posting]
 	ID                 keelkinds.PulidIDCol
 	BusinessUnitID     keelkinds.PulidIDCol
 	OrganizationID     keelkinds.PulidIDCol
@@ -110,7 +110,7 @@ type PostingsTable struct {
 
 // Postings references the carrier_capacity_postings table.
 var Postings = &PostingsTable{
-	Handle:             keel.Handle[carriercapacity.Posting]{Ref: &postingsRef},
+	Handle:             keel.Handle[*carriercapacity.Posting]{Ref: &postingsRef},
 	ID:                 keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &postingsRef, Index: 0}}},
 	BusinessUnitID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &postingsRef, Index: 1}}},
 	OrganizationID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &postingsRef, Index: 2}}},
@@ -137,7 +137,7 @@ var Postings = &PostingsTable{
 // BuildPostings builds the handle of carrier_capacity_postings for ref. Generated relation and alias methods call it.
 func BuildPostings(r *keel.Ref) *PostingsTable {
 	return &PostingsTable{
-		Handle:             keel.Handle[carriercapacity.Posting]{Ref: r},
+		Handle:             keel.Handle[*carriercapacity.Posting]{Ref: r},
 		ID:                 keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},

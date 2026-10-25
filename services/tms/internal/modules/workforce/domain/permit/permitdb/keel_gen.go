@@ -70,7 +70,7 @@ var permitsRef = keel.Ref{Table: &permitsTable}
 
 // PermitsTable is the table of permit.Permit.
 type PermitsTable struct {
-	keel.Handle[permit.Permit]
+	keel.Handle[*permit.Permit]
 	ID             keelkinds.PulidIDCol
 	BusinessUnitID keelkinds.PulidIDCol
 	OrganizationID keelkinds.PulidIDCol
@@ -91,7 +91,7 @@ type PermitsTable struct {
 
 // Permits references the permits table.
 var Permits = &PermitsTable{
-	Handle:         keel.Handle[permit.Permit]{Ref: &permitsRef},
+	Handle:         keel.Handle[*permit.Permit]{Ref: &permitsRef},
 	ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &permitsRef, Index: 0}}},
 	BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &permitsRef, Index: 1}}},
 	OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &permitsRef, Index: 2}}},
@@ -113,7 +113,7 @@ var Permits = &PermitsTable{
 // BuildPermits builds the handle of permits for ref. Generated relation and alias methods call it.
 func BuildPermits(r *keel.Ref) *PermitsTable {
 	return &PermitsTable{
-		Handle:         keel.Handle[permit.Permit]{Ref: r},
+		Handle:         keel.Handle[*permit.Permit]{Ref: r},
 		ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -324,7 +324,7 @@ var requirementsRef = keel.Ref{Table: &requirementsTable}
 
 // RequirementsTable is the table of permit.Requirement.
 type RequirementsTable struct {
-	keel.Handle[permit.Requirement]
+	keel.Handle[*permit.Requirement]
 	ID                  keelkinds.PulidIDCol
 	BusinessUnitID      keelkinds.PulidIDCol
 	OrganizationID      keelkinds.PulidIDCol
@@ -351,7 +351,7 @@ type RequirementsTable struct {
 
 // Requirements references the permit_requirements table.
 var Requirements = &RequirementsTable{
-	Handle:              keel.Handle[permit.Requirement]{Ref: &requirementsRef},
+	Handle:              keel.Handle[*permit.Requirement]{Ref: &requirementsRef},
 	ID:                  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &requirementsRef, Index: 0}}},
 	BusinessUnitID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &requirementsRef, Index: 1}}},
 	OrganizationID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &requirementsRef, Index: 2}}},
@@ -379,7 +379,7 @@ var Requirements = &RequirementsTable{
 // BuildRequirements builds the handle of permit_requirements for ref. Generated relation and alias methods call it.
 func BuildRequirements(r *keel.Ref) *RequirementsTable {
 	return &RequirementsTable{
-		Handle:              keel.Handle[permit.Requirement]{Ref: r},
+		Handle:              keel.Handle[*permit.Requirement]{Ref: r},
 		ID:                  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},

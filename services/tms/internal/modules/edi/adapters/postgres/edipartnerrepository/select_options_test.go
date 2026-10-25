@@ -21,9 +21,13 @@ func TestPartnerOptionsQuery_AppliesTheFiltersAndSearch(t *testing.T) {
 	sql, args := keeltest.Render(t, q)
 
 	assert.Contains(t, sql, `FROM "edi_partners" ep WHERE`)
-	assert.Contains(t, sql, `ep."kind" = $3 AND ep."enabled_for_outbound" IS TRUE AND (ep."name" ILIKE $4 OR ep."code" ILIKE $5) LIMIT 10`)
-	assert.Contains(t, args, "External")
-	assert.Contains(t, args, "%acme%")
+	assert.Contains(
+		t,
+		sql,
+		`ep."kind" = 'External' AND ep."enabled_for_outbound" IS TRUE `+
+			`AND (ep."name" ILIKE $3 OR ep."code" ILIKE $4) LIMIT 10`,
+	)
+	assert.Equal(t, []any{"bu_1", "org_1", "%acme%", "%acme%"}, args)
 }
 
 func TestReadinessQuery_ChecksEverySetupStepInOneStatement(t *testing.T) {
@@ -39,7 +43,7 @@ func TestReadinessQuery_ChecksEverySetupStepInOneStatement(t *testing.T) {
 	assert.Contains(t, sql, `EXISTS (SELECT 1 FROM "edi_mapping_profile_items" empi`)
 	assert.Contains(t, sql, `EXISTS (SELECT 1 FROM "edi_test_cases" etc`)
 	assert.Contains(t, sql, `FROM "edi_partners" ep WHERE ep."business_unit_id" = $1 AND ep."organization_id" = $2 AND ep."id" = ANY($3)`)
-	assert.Contains(t, args, []string{"edip_1", "edip_2"})
-	assert.Contains(t, args, "Inbound")
-	assert.Contains(t, args, "Outbound")
+	assert.Contains(t, sql, `epdp."status" = 'Active' AND epdp."direction" = 'Inbound'`)
+	assert.Contains(t, sql, `epdp2."status" = 'Active' AND epdp2."direction" = 'Outbound'`)
+	assert.Equal(t, []any{"bu_1", "org_1", []string{"edip_1", "edip_2"}, "", ""}, args)
 }

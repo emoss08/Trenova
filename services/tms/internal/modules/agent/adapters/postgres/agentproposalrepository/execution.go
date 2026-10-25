@@ -161,7 +161,7 @@ var errMoneyCurrencyRequired = errors.New("sum automatic money writes: a currenc
 func automaticMoneyQuery(
 	req *agentports.SumAutomaticMoneyRequest,
 	currency string,
-) *keel.Query[agent.AgentProposal] {
+) *keel.Query[*agent.AgentProposal] {
 	p := agentdb.AgentProposals
 	status, at := agent.ProposalStatusExecuted, p.ExecutedAt
 	if req.Simulated {

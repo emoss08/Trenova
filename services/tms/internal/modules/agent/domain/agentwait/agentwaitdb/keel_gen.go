@@ -72,7 +72,7 @@ var waitsRef = keel.Ref{Table: &waitsTable}
 
 // WaitsTable is the table of agentwait.Wait.
 type WaitsTable struct {
-	keel.Handle[agentwait.Wait]
+	keel.Handle[*agentwait.Wait]
 	ID                keelkinds.PulidIDCol
 	OrganizationID    keelkinds.PulidIDCol
 	BusinessUnitID    keelkinds.PulidIDCol
@@ -103,7 +103,7 @@ type WaitsTable struct {
 
 // Waits references the agent_waits table.
 var Waits = &WaitsTable{
-	Handle:            keel.Handle[agentwait.Wait]{Ref: &waitsRef},
+	Handle:            keel.Handle[*agentwait.Wait]{Ref: &waitsRef},
 	ID:                keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &waitsRef, Index: 0}}},
 	OrganizationID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &waitsRef, Index: 1}}},
 	BusinessUnitID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &waitsRef, Index: 2}}},
@@ -135,7 +135,7 @@ var Waits = &WaitsTable{
 // BuildWaits builds the handle of agent_waits for ref. Generated relation and alias methods call it.
 func BuildWaits(r *keel.Ref) *WaitsTable {
 	return &WaitsTable{
-		Handle:            keel.Handle[agentwait.Wait]{Ref: r},
+		Handle:            keel.Handle[*agentwait.Wait]{Ref: r},
 		ID:                keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		OrganizationID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		BusinessUnitID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},

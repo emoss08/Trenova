@@ -23,7 +23,6 @@ import (
 	"github.com/emoss08/trenova/shared/intutils"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
-	"github.com/jackc/pgx/v5"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
@@ -41,17 +40,9 @@ const (
 	defaultPurgeLimit      = 1000
 	pickedRecordAlias      = "picked"
 	purgedAttemptAlias     = "purged"
+	mappingUsageSource     = "usage"
+	mappingUsageColumn     = "mapping_id"
 )
-
-const mappingUsageSQL = `SELECT usage.mapping_id, count(*)
-FROM accounting_sync_records sr
-CROSS JOIN LATERAL unnest(sr.mapping_ids) AS usage(mapping_id)
-WHERE sr.organization_id = $1
-  AND sr.business_unit_id = $2
-  AND sr.connection_id = $3
-  AND sr.status = $4
-  AND usage.mapping_id = ANY($5)
-GROUP BY usage.mapping_id`
 
 var syncRecordErrors = dberror.Mapping{Entity: syncRecordEntity}
 
@@ -560,22 +551,23 @@ func (r *syncRecordRepository) MappingUsage(
 			return usage, nil
 		}
 
-		ids := make([]string, 0, len(req.MappingIDs))
-		for _, id := range req.MappingIDs {
-			ids = append(ids, id.String())
-		}
-
-		rows, err := keel.QueryAll(
-			ctx,
-			r.db.Keel(ctx),
-			pgx.RowToStructByPos[mappingUsageRow],
-			mappingUsageSQL,
-			req.TenantInfo.OrgID.String(),
-			req.TenantInfo.BuID.String(),
-			req.ConnectionID.String(),
-			string(accountingsync.SyncStatusSynced),
-			ids,
+		sr := accountingsyncdb.AccountingSyncRecords
+		used := keel.Rows(
+			mappingUsageSource,
+			[]string{mappingUsageColumn},
+			keel.DynFunc("unnest", sr.MappingIDs),
 		)
+		mappingID := used.Col(mappingUsageColumn)
+
+		rows, err := keel.Into[mappingUsageRow](ctx, r.db.Keel(ctx), sr.
+			JoinLateral(used).
+			Pick(mappingID, keel.Count()).
+			Where(
+				sr.ConnectionID.Eq(req.ConnectionID),
+				sr.Status.Eq(accountingsync.SyncStatusSynced),
+				mappingID.In(keel.Strings(req.MappingIDs)),
+			).
+			Group(mappingID))
 		if err != nil {
 			return nil, err
 		}

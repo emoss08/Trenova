@@ -14,6 +14,7 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbpool"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/pgxdsn"
+	"github.com/emoss08/trenova/internal/keeltables"
 	"github.com/emoss08/trenova/internal/seeds/reference"
 	"github.com/emoss08/trenova/internal/seeds/seedenv"
 	"github.com/emoss08/trenova/schema/migrations"
@@ -157,6 +158,7 @@ func DatabaseConfig(p ConfigParams) func() (keel.Config, error) {
 
 		kc := dbpool.KeelConfig(nil, nil)
 		kc.DSN = dsn
+		kc.Tables = keeltables.All()
 
 		return kc, nil
 	}

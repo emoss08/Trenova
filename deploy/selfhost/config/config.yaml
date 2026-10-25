@@ -72,6 +72,7 @@ database:
   statementTimeout: 10s
   lockTimeout: 5s
   idleInTransactionSessionTimeout: 30s
+  queryLog: "off"
   # PostgreSQL row-level security is off in this stack: the application
   # connects as the database owner. Moving to enforced tenant isolation takes
   # separate application, system and migrator roles; see "Hardening" in

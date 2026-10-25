@@ -91,7 +91,7 @@ func charCount(e keel.Expr) keel.DynExpr {
 	return keel.DynFunc("length", keel.DynOf(e).Coalesce(""))
 }
 
-func charsSample[T any](q *keel.Query[T]) *keel.CTETable {
+func charsSample[T any](q *keel.Query[*T]) *keel.CTETable {
 	return keel.CTE(charsSampleCTE, []string{"chars"}, q)
 }
 

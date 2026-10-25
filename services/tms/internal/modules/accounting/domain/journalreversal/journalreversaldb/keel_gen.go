@@ -78,7 +78,7 @@ var reversalsRef = keel.Ref{Table: &reversalsTable}
 
 // ReversalsTable is the table of journalreversal.Reversal.
 type ReversalsTable struct {
-	keel.Handle[journalreversal.Reversal]
+	keel.Handle[*journalreversal.Reversal]
 	ID                      keelkinds.PulidIDCol
 	OrganizationID          keelkinds.PulidIDCol
 	BusinessUnitID          keelkinds.PulidIDCol
@@ -109,7 +109,7 @@ type ReversalsTable struct {
 
 // Reversals references the journal_reversals table.
 var Reversals = &ReversalsTable{
-	Handle:                  keel.Handle[journalreversal.Reversal]{Ref: &reversalsRef},
+	Handle:                  keel.Handle[*journalreversal.Reversal]{Ref: &reversalsRef},
 	ID:                      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &reversalsRef, Index: 0}}},
 	OrganizationID:          keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &reversalsRef, Index: 1}}},
 	BusinessUnitID:          keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &reversalsRef, Index: 2}}},
@@ -141,7 +141,7 @@ var Reversals = &ReversalsTable{
 // BuildReversals builds the handle of journal_reversals for ref. Generated relation and alias methods call it.
 func BuildReversals(r *keel.Ref) *ReversalsTable {
 	return &ReversalsTable{
-		Handle:                  keel.Handle[journalreversal.Reversal]{Ref: r},
+		Handle:                  keel.Handle[*journalreversal.Reversal]{Ref: r},
 		ID:                      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		OrganizationID:          keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		BusinessUnitID:          keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},

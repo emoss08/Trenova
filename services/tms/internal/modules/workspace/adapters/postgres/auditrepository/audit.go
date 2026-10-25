@@ -40,7 +40,7 @@ func New(p Params) auditports.AuditRepository {
 	}
 }
 
-func withPrincipals(q *keel.Query[audit.Entry]) *keel.Query[audit.Entry] {
+func withPrincipals(q *keel.Query[*audit.Entry]) *keel.Query[*audit.Entry] {
 	e := auditdb.Entries
 	return q.Load(e.User(), e.APIKey())
 }

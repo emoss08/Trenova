@@ -66,7 +66,7 @@ var sourcesRef = keel.Ref{Table: &sourcesTable}
 
 // SourcesTable is the table of journalsource.Source.
 type SourcesTable struct {
-	keel.Handle[journalsource.Source]
+	keel.Handle[*journalsource.Source]
 	ID                   keelkinds.PulidIDCol
 	BusinessUnitID       keelkinds.PulidIDCol
 	OrganizationID       keelkinds.PulidIDCol
@@ -83,7 +83,7 @@ type SourcesTable struct {
 
 // Sources references the journal_sources table.
 var Sources = &SourcesTable{
-	Handle:               keel.Handle[journalsource.Source]{Ref: &sourcesRef},
+	Handle:               keel.Handle[*journalsource.Source]{Ref: &sourcesRef},
 	ID:                   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &sourcesRef, Index: 0}}},
 	BusinessUnitID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &sourcesRef, Index: 1}}},
 	OrganizationID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &sourcesRef, Index: 2}}},
@@ -101,7 +101,7 @@ var Sources = &SourcesTable{
 // BuildSources builds the handle of journal_sources for ref. Generated relation and alias methods call it.
 func BuildSources(r *keel.Ref) *SourcesTable {
 	return &SourcesTable{
-		Handle:               keel.Handle[journalsource.Source]{Ref: r},
+		Handle:               keel.Handle[*journalsource.Source]{Ref: r},
 		ID:                   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -262,7 +262,7 @@ var sourceJournalLinksRef = keel.Ref{Table: &sourceJournalLinksTable}
 
 // SourceJournalLinksTable is the table of journalsource.SourceJournalLink.
 type SourceJournalLinksTable struct {
-	keel.Handle[journalsource.SourceJournalLink]
+	keel.Handle[*journalsource.SourceJournalLink]
 	ID              keelkinds.PulidIDCol
 	BusinessUnitID  keelkinds.PulidIDCol
 	OrganizationID  keelkinds.PulidIDCol
@@ -275,7 +275,7 @@ type SourceJournalLinksTable struct {
 
 // SourceJournalLinks references the source_journal_links table.
 var SourceJournalLinks = &SourceJournalLinksTable{
-	Handle:          keel.Handle[journalsource.SourceJournalLink]{Ref: &sourceJournalLinksRef},
+	Handle:          keel.Handle[*journalsource.SourceJournalLink]{Ref: &sourceJournalLinksRef},
 	ID:              keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &sourceJournalLinksRef, Index: 0}}},
 	BusinessUnitID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &sourceJournalLinksRef, Index: 1}}},
 	OrganizationID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &sourceJournalLinksRef, Index: 2}}},
@@ -289,7 +289,7 @@ var SourceJournalLinks = &SourceJournalLinksTable{
 // BuildSourceJournalLinks builds the handle of source_journal_links for ref. Generated relation and alias methods call it.
 func BuildSourceJournalLinks(r *keel.Ref) *SourceJournalLinksTable {
 	return &SourceJournalLinksTable{
-		Handle:          keel.Handle[journalsource.SourceJournalLink]{Ref: r},
+		Handle:          keel.Handle[*journalsource.SourceJournalLink]{Ref: r},
 		ID:              keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},

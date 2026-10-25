@@ -38,7 +38,7 @@ func sumOrZero(e keel.Expr) keel.Expr {
 // cached safety standing, and the terminal they belong to. The cache is what
 // the roster itself shows, so the fleet view and the list behind it cannot
 // disagree.
-func rosterScope(req *workerports.FleetSafetyRequest) *keel.Query[worker.Worker] {
+func rosterScope(req *workerports.FleetSafetyRequest) *keel.Query[*worker.Worker] {
 	w := workerdb.Workers
 	wp := workerdb.WorkerProfiles
 
@@ -53,7 +53,7 @@ func rosterScope(req *workerports.FleetSafetyRequest) *keel.Query[worker.Worker]
 func eventScope(
 	req *workerports.FleetSafetyRequest,
 	since int64,
-) *keel.Query[worker.WorkerSafetyEvent] {
+) *keel.Query[*worker.WorkerSafetyEvent] {
 	e := workerdb.WorkerSafetyEvents
 	w := workerdb.Workers
 
@@ -63,7 +63,7 @@ func eventScope(
 	)
 }
 
-func fleetRatingsQuery(req *workerports.FleetSafetyRequest) *keel.Query[worker.Worker] {
+func fleetRatingsQuery(req *workerports.FleetSafetyRequest) *keel.Query[*worker.Worker] {
 	wp := workerdb.WorkerProfiles
 
 	return rosterScope(req).
@@ -94,7 +94,7 @@ func (r *repository) FleetRatings(
 	)
 }
 
-func fleetTerminalsQuery(req *workerports.FleetSafetyRequest) *keel.Query[worker.Worker] {
+func fleetTerminalsQuery(req *workerports.FleetSafetyRequest) *keel.Query[*worker.Worker] {
 	w := workerdb.Workers
 	wp := workerdb.WorkerProfiles
 	fc := w.FleetCode()
@@ -183,7 +183,7 @@ func csaBucketExpr(now int64) keel.Expr {
 		Else(bucket(2))
 }
 
-func fleetBasicsQuery(req *workerports.FleetSafetyRequest) *keel.Query[worker.WorkerSafetyEvent] {
+func fleetBasicsQuery(req *workerports.FleetSafetyRequest) *keel.Query[*worker.WorkerSafetyEvent] {
 	e := workerdb.WorkerSafetyEvents
 	v := workerdb.WorkerSafetyViolations
 	since := timeutils.AddMonthsUTC(req.Now, -worker.SafetyPointsRetentionMonths)
@@ -262,7 +262,7 @@ func (r *repository) FleetEventBasics(
 	)
 }
 
-func fleetTrendQuery(req *workerports.FleetSafetyRequest) *keel.Query[worker.WorkerSafetyEvent] {
+func fleetTrendQuery(req *workerports.FleetSafetyRequest) *keel.Query[*worker.WorkerSafetyEvent] {
 	e := workerdb.WorkerSafetyEvents
 	since := timeutils.AddMonthsUTC(req.Now, -req.WindowMonths)
 	period := keel.DynFunc(
@@ -321,7 +321,7 @@ func (r *repository) FleetTrend(
 	)
 }
 
-func fleetRankingQuery(req *workerports.FleetSafetyRequest) *keel.Query[worker.Worker] {
+func fleetRankingQuery(req *workerports.FleetSafetyRequest) *keel.Query[*worker.Worker] {
 	w := workerdb.Workers
 	wp := workerdb.WorkerProfiles
 	e := workerdb.WorkerSafetyEvents

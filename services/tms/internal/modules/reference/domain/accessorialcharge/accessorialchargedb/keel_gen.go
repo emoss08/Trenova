@@ -65,7 +65,7 @@ var accessorialChargesRef = keel.Ref{Table: &accessorialChargesTable}
 
 // AccessorialChargesTable is the table of accessorialcharge.AccessorialCharge.
 type AccessorialChargesTable struct {
-	keel.Handle[accessorialcharge.AccessorialCharge]
+	keel.Handle[*accessorialcharge.AccessorialCharge]
 	ID             keelkinds.PulidIDCol
 	BusinessUnitID keelkinds.PulidIDCol
 	OrganizationID keelkinds.PulidIDCol
@@ -84,7 +84,7 @@ type AccessorialChargesTable struct {
 
 // AccessorialCharges references the accessorial_charges table.
 var AccessorialCharges = &AccessorialChargesTable{
-	Handle:         keel.Handle[accessorialcharge.AccessorialCharge]{Ref: &accessorialChargesRef},
+	Handle:         keel.Handle[*accessorialcharge.AccessorialCharge]{Ref: &accessorialChargesRef},
 	ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &accessorialChargesRef, Index: 0}}},
 	BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &accessorialChargesRef, Index: 1}}},
 	OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &accessorialChargesRef, Index: 2}}},
@@ -104,7 +104,7 @@ var AccessorialCharges = &AccessorialChargesTable{
 // BuildAccessorialCharges builds the handle of accessorial_charges for ref. Generated relation and alias methods call it.
 func BuildAccessorialCharges(r *keel.Ref) *AccessorialChargesTable {
 	return &AccessorialChargesTable{
-		Handle:         keel.Handle[accessorialcharge.AccessorialCharge]{Ref: r},
+		Handle:         keel.Handle[*accessorialcharge.AccessorialCharge]{Ref: r},
 		ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},

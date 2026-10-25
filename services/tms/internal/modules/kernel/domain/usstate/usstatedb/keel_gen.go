@@ -53,7 +53,7 @@ var usStatesRef = keel.Ref{Table: &usStatesTable}
 
 // UsStatesTable is the table of usstate.UsState.
 type UsStatesTable struct {
-	keel.Handle[usstate.UsState]
+	keel.Handle[*usstate.UsState]
 	ID           keelkinds.PulidIDCol
 	Name         keel.StringCol
 	Abbreviation keel.StringCol
@@ -65,7 +65,7 @@ type UsStatesTable struct {
 
 // UsStates references the us_states table.
 var UsStates = &UsStatesTable{
-	Handle:       keel.Handle[usstate.UsState]{Ref: &usStatesRef},
+	Handle:       keel.Handle[*usstate.UsState]{Ref: &usStatesRef},
 	ID:           keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &usStatesRef, Index: 0}}},
 	Name:         keel.StringCol{Col: keel.Col{Ref: &usStatesRef, Index: 1}},
 	Abbreviation: keel.StringCol{Col: keel.Col{Ref: &usStatesRef, Index: 2}},
@@ -78,7 +78,7 @@ var UsStates = &UsStatesTable{
 // BuildUsStates builds the handle of us_states for ref. Generated relation and alias methods call it.
 func BuildUsStates(r *keel.Ref) *UsStatesTable {
 	return &UsStatesTable{
-		Handle:       keel.Handle[usstate.UsState]{Ref: r},
+		Handle:       keel.Handle[*usstate.UsState]{Ref: r},
 		ID:           keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		Name:         keel.StringCol{Col: keel.Col{Ref: r, Index: 1}},
 		Abbreviation: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}},

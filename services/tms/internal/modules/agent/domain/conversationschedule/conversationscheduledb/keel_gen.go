@@ -63,7 +63,7 @@ var schedulesRef = keel.Ref{Table: &schedulesTable}
 
 // SchedulesTable is the table of conversationschedule.Schedule.
 type SchedulesTable struct {
-	keel.Handle[conversationschedule.Schedule]
+	keel.Handle[*conversationschedule.Schedule]
 	ID             keelkinds.PulidIDCol
 	BusinessUnitID keelkinds.PulidIDCol
 	OrganizationID keelkinds.PulidIDCol
@@ -84,7 +84,7 @@ type SchedulesTable struct {
 
 // Schedules references the conversation_schedules table.
 var Schedules = &SchedulesTable{
-	Handle:         keel.Handle[conversationschedule.Schedule]{Ref: &schedulesRef},
+	Handle:         keel.Handle[*conversationschedule.Schedule]{Ref: &schedulesRef},
 	ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &schedulesRef, Index: 0}}},
 	BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &schedulesRef, Index: 1}}},
 	OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &schedulesRef, Index: 2}}},
@@ -106,7 +106,7 @@ var Schedules = &SchedulesTable{
 // BuildSchedules builds the handle of conversation_schedules for ref. Generated relation and alias methods call it.
 func BuildSchedules(r *keel.Ref) *SchedulesTable {
 	return &SchedulesTable{
-		Handle:         keel.Handle[conversationschedule.Schedule]{Ref: r},
+		Handle:         keel.Handle[*conversationschedule.Schedule]{Ref: r},
 		ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},

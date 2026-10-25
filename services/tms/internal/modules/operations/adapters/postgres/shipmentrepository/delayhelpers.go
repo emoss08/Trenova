@@ -165,7 +165,7 @@ func delayedShipments(
 	thresholdMinutes int16,
 	currentTime int64,
 	limit int,
-) *keel.Query[shipment.Shipment] {
+) *keel.Query[*shipment.Shipment] {
 	if limit <= 0 {
 		limit = defaultSweepLimit
 	}
@@ -193,7 +193,7 @@ func delayedShipments(
 	).Order(sp.ID.Asc()).Limit(limit)
 }
 
-func autoDelayedShipmentIDs(currentTime int64, t tenancy) *keel.Query[shipment.Stop] {
+func autoDelayedShipmentIDs(currentTime int64, t tenancy) *keel.Query[*shipment.Stop] {
 	st := shipmentdb.Stops.As("auto_stp")
 	sm := shipmentdb.ShipmentMoves.As("auto_sm")
 	sp := shipmentdb.Shipments.As("auto_sp")

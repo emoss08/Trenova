@@ -82,7 +82,7 @@ var captureBatchesRef = keel.Ref{Table: &captureBatchesTable}
 
 // CaptureBatchesTable is the table of capture.CaptureBatch.
 type CaptureBatchesTable struct {
-	keel.Handle[capture.CaptureBatch]
+	keel.Handle[*capture.CaptureBatch]
 	ID                  keelkinds.PulidIDCol
 	BusinessUnitID      keelkinds.PulidIDCol
 	OrganizationID      keelkinds.PulidIDCol
@@ -116,7 +116,7 @@ type CaptureBatchesTable struct {
 
 // CaptureBatches references the capture_batches table.
 var CaptureBatches = &CaptureBatchesTable{
-	Handle:              keel.Handle[capture.CaptureBatch]{Ref: &captureBatchesRef},
+	Handle:              keel.Handle[*capture.CaptureBatch]{Ref: &captureBatchesRef},
 	ID:                  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &captureBatchesRef, Index: 0}}},
 	BusinessUnitID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &captureBatchesRef, Index: 1}}},
 	OrganizationID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &captureBatchesRef, Index: 2}}},
@@ -151,7 +151,7 @@ var CaptureBatches = &CaptureBatchesTable{
 // BuildCaptureBatches builds the handle of capture_batches for ref. Generated relation and alias methods call it.
 func BuildCaptureBatches(r *keel.Ref) *CaptureBatchesTable {
 	return &CaptureBatchesTable{
-		Handle:              keel.Handle[capture.CaptureBatch]{Ref: r},
+		Handle:              keel.Handle[*capture.CaptureBatch]{Ref: r},
 		ID:                  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -445,7 +445,7 @@ var captureCoverSheetsRef = keel.Ref{Table: &captureCoverSheetsTable}
 
 // CaptureCoverSheetsTable is the table of capture.CaptureCoverSheet.
 type CaptureCoverSheetsTable struct {
-	keel.Handle[capture.CaptureCoverSheet]
+	keel.Handle[*capture.CaptureCoverSheet]
 	ID             keelkinds.PulidIDCol
 	BusinessUnitID keelkinds.PulidIDCol
 	OrganizationID keelkinds.PulidIDCol
@@ -462,7 +462,7 @@ type CaptureCoverSheetsTable struct {
 
 // CaptureCoverSheets references the capture_cover_sheets table.
 var CaptureCoverSheets = &CaptureCoverSheetsTable{
-	Handle:         keel.Handle[capture.CaptureCoverSheet]{Ref: &captureCoverSheetsRef},
+	Handle:         keel.Handle[*capture.CaptureCoverSheet]{Ref: &captureCoverSheetsRef},
 	ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &captureCoverSheetsRef, Index: 0}}},
 	BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &captureCoverSheetsRef, Index: 1}}},
 	OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &captureCoverSheetsRef, Index: 2}}},
@@ -480,7 +480,7 @@ var CaptureCoverSheets = &CaptureCoverSheetsTable{
 // BuildCaptureCoverSheets builds the handle of capture_cover_sheets for ref. Generated relation and alias methods call it.
 func BuildCaptureCoverSheets(r *keel.Ref) *CaptureCoverSheetsTable {
 	return &CaptureCoverSheetsTable{
-		Handle:         keel.Handle[capture.CaptureCoverSheet]{Ref: r},
+		Handle:         keel.Handle[*capture.CaptureCoverSheet]{Ref: r},
 		ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -647,7 +647,7 @@ var captureDevicesRef = keel.Ref{Table: &captureDevicesTable}
 
 // CaptureDevicesTable is the table of capture.CaptureDevice.
 type CaptureDevicesTable struct {
-	keel.Handle[capture.CaptureDevice]
+	keel.Handle[*capture.CaptureDevice]
 	ID                   keelkinds.PulidIDCol
 	BusinessUnitID       keelkinds.PulidIDCol
 	OrganizationID       keelkinds.PulidIDCol
@@ -676,7 +676,7 @@ type CaptureDevicesTable struct {
 
 // CaptureDevices references the capture_devices table.
 var CaptureDevices = &CaptureDevicesTable{
-	Handle:               keel.Handle[capture.CaptureDevice]{Ref: &captureDevicesRef},
+	Handle:               keel.Handle[*capture.CaptureDevice]{Ref: &captureDevicesRef},
 	ID:                   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &captureDevicesRef, Index: 0}}},
 	BusinessUnitID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &captureDevicesRef, Index: 1}}},
 	OrganizationID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &captureDevicesRef, Index: 2}}},
@@ -706,7 +706,7 @@ var CaptureDevices = &CaptureDevicesTable{
 // BuildCaptureDevices builds the handle of capture_devices for ref. Generated relation and alias methods call it.
 func BuildCaptureDevices(r *keel.Ref) *CaptureDevicesTable {
 	return &CaptureDevicesTable{
-		Handle:               keel.Handle[capture.CaptureDevice]{Ref: r},
+		Handle:               keel.Handle[*capture.CaptureDevice]{Ref: r},
 		ID:                   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -954,7 +954,7 @@ var captureItemsRef = keel.Ref{Table: &captureItemsTable}
 
 // CaptureItemsTable is the table of capture.CaptureItem.
 type CaptureItemsTable struct {
-	keel.Handle[capture.CaptureItem]
+	keel.Handle[*capture.CaptureItem]
 	ID                   keelkinds.PulidIDCol
 	BusinessUnitID       keelkinds.PulidIDCol
 	OrganizationID       keelkinds.PulidIDCol
@@ -985,7 +985,7 @@ type CaptureItemsTable struct {
 
 // CaptureItems references the capture_items table.
 var CaptureItems = &CaptureItemsTable{
-	Handle:               keel.Handle[capture.CaptureItem]{Ref: &captureItemsRef},
+	Handle:               keel.Handle[*capture.CaptureItem]{Ref: &captureItemsRef},
 	ID:                   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &captureItemsRef, Index: 0}}},
 	BusinessUnitID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &captureItemsRef, Index: 1}}},
 	OrganizationID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &captureItemsRef, Index: 2}}},
@@ -1017,7 +1017,7 @@ var CaptureItems = &CaptureItemsTable{
 // BuildCaptureItems builds the handle of capture_items for ref. Generated relation and alias methods call it.
 func BuildCaptureItems(r *keel.Ref) *CaptureItemsTable {
 	return &CaptureItemsTable{
-		Handle:               keel.Handle[capture.CaptureItem]{Ref: r},
+		Handle:               keel.Handle[*capture.CaptureItem]{Ref: r},
 		ID:                   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -1294,7 +1294,7 @@ var capturePagesRef = keel.Ref{Table: &capturePagesTable}
 
 // CapturePagesTable is the table of capture.CapturePage.
 type CapturePagesTable struct {
-	keel.Handle[capture.CapturePage]
+	keel.Handle[*capture.CapturePage]
 	ID             keelkinds.PulidIDCol
 	BusinessUnitID keelkinds.PulidIDCol
 	OrganizationID keelkinds.PulidIDCol
@@ -1320,7 +1320,7 @@ type CapturePagesTable struct {
 
 // CapturePages references the capture_pages table.
 var CapturePages = &CapturePagesTable{
-	Handle:         keel.Handle[capture.CapturePage]{Ref: &capturePagesRef},
+	Handle:         keel.Handle[*capture.CapturePage]{Ref: &capturePagesRef},
 	ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &capturePagesRef, Index: 0}}},
 	BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &capturePagesRef, Index: 1}}},
 	OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &capturePagesRef, Index: 2}}},
@@ -1347,7 +1347,7 @@ var CapturePages = &CapturePagesTable{
 // BuildCapturePages builds the handle of capture_pages for ref. Generated relation and alias methods call it.
 func BuildCapturePages(r *keel.Ref) *CapturePagesTable {
 	return &CapturePagesTable{
-		Handle:         keel.Handle[capture.CapturePage]{Ref: r},
+		Handle:         keel.Handle[*capture.CapturePage]{Ref: r},
 		ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -1557,7 +1557,7 @@ var capturePairingsRef = keel.Ref{Table: &capturePairingsTable}
 
 // CapturePairingsTable is the table of capture.CapturePairing.
 type CapturePairingsTable struct {
-	keel.Handle[capture.CapturePairing]
+	keel.Handle[*capture.CapturePairing]
 	ID             keelkinds.PulidIDCol
 	DeviceCodeHash keel.StringCol
 	UserCode       keel.StringCol
@@ -1583,7 +1583,7 @@ type CapturePairingsTable struct {
 
 // CapturePairings references the capture_pairings table.
 var CapturePairings = &CapturePairingsTable{
-	Handle:         keel.Handle[capture.CapturePairing]{Ref: &capturePairingsRef},
+	Handle:         keel.Handle[*capture.CapturePairing]{Ref: &capturePairingsRef},
 	ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &capturePairingsRef, Index: 0}}},
 	DeviceCodeHash: keel.StringCol{Col: keel.Col{Ref: &capturePairingsRef, Index: 1}},
 	UserCode:       keel.StringCol{Col: keel.Col{Ref: &capturePairingsRef, Index: 2}},
@@ -1610,7 +1610,7 @@ var CapturePairings = &CapturePairingsTable{
 // BuildCapturePairings builds the handle of capture_pairings for ref. Generated relation and alias methods call it.
 func BuildCapturePairings(r *keel.Ref) *CapturePairingsTable {
 	return &CapturePairingsTable{
-		Handle:         keel.Handle[capture.CapturePairing]{Ref: r},
+		Handle:         keel.Handle[*capture.CapturePairing]{Ref: r},
 		ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		DeviceCodeHash: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}},
 		UserCode:       keel.StringCol{Col: keel.Col{Ref: r, Index: 2}},
@@ -1840,7 +1840,7 @@ var captureProfilesRef = keel.Ref{Table: &captureProfilesTable}
 
 // CaptureProfilesTable is the table of capture.CaptureProfile.
 type CaptureProfilesTable struct {
-	keel.Handle[capture.CaptureProfile]
+	keel.Handle[*capture.CaptureProfile]
 	ID                  keelkinds.PulidIDCol
 	BusinessUnitID      keelkinds.PulidIDCol
 	OrganizationID      keelkinds.PulidIDCol
@@ -1864,7 +1864,7 @@ type CaptureProfilesTable struct {
 
 // CaptureProfiles references the capture_profiles table.
 var CaptureProfiles = &CaptureProfilesTable{
-	Handle:              keel.Handle[capture.CaptureProfile]{Ref: &captureProfilesRef},
+	Handle:              keel.Handle[*capture.CaptureProfile]{Ref: &captureProfilesRef},
 	ID:                  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &captureProfilesRef, Index: 0}}},
 	BusinessUnitID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &captureProfilesRef, Index: 1}}},
 	OrganizationID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &captureProfilesRef, Index: 2}}},
@@ -1889,7 +1889,7 @@ var CaptureProfiles = &CaptureProfilesTable{
 // BuildCaptureProfiles builds the handle of capture_profiles for ref. Generated relation and alias methods call it.
 func BuildCaptureProfiles(r *keel.Ref) *CaptureProfilesTable {
 	return &CaptureProfilesTable{
-		Handle:              keel.Handle[capture.CaptureProfile]{Ref: r},
+		Handle:              keel.Handle[*capture.CaptureProfile]{Ref: r},
 		ID:                  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -2090,7 +2090,7 @@ var captureRequestsRef = keel.Ref{Table: &captureRequestsTable}
 
 // CaptureRequestsTable is the table of capture.CaptureRequest.
 type CaptureRequestsTable struct {
-	keel.Handle[capture.CaptureRequest]
+	keel.Handle[*capture.CaptureRequest]
 	ID             keelkinds.PulidIDCol
 	BusinessUnitID keelkinds.PulidIDCol
 	OrganizationID keelkinds.PulidIDCol
@@ -2116,7 +2116,7 @@ type CaptureRequestsTable struct {
 
 // CaptureRequests references the capture_requests table.
 var CaptureRequests = &CaptureRequestsTable{
-	Handle:         keel.Handle[capture.CaptureRequest]{Ref: &captureRequestsRef},
+	Handle:         keel.Handle[*capture.CaptureRequest]{Ref: &captureRequestsRef},
 	ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &captureRequestsRef, Index: 0}}},
 	BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &captureRequestsRef, Index: 1}}},
 	OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &captureRequestsRef, Index: 2}}},
@@ -2143,7 +2143,7 @@ var CaptureRequests = &CaptureRequestsTable{
 // BuildCaptureRequests builds the handle of capture_requests for ref. Generated relation and alias methods call it.
 func BuildCaptureRequests(r *keel.Ref) *CaptureRequestsTable {
 	return &CaptureRequestsTable{
-		Handle:         keel.Handle[capture.CaptureRequest]{Ref: r},
+		Handle:         keel.Handle[*capture.CaptureRequest]{Ref: r},
 		ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},

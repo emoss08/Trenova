@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/keel"
+	keelsnap "github.com/emoss08/keel/keeltest"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbpool"
 	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -56,4 +57,18 @@ func RenderIn(t testing.TB, ctx context.Context, q Renderer) (string, []any) {
 	require.NoError(t, err)
 
 	return sql, args
+}
+
+func Snapshot(t testing.TB, q Renderer) {
+	t.Helper()
+
+	sql, args := Render(t, q)
+	keelsnap.Snapshot(t, sql, args)
+}
+
+func SnapshotIn(t testing.TB, ctx context.Context, q Renderer) {
+	t.Helper()
+
+	sql, args := RenderIn(t, ctx, q)
+	keelsnap.Snapshot(t, sql, args)
 }

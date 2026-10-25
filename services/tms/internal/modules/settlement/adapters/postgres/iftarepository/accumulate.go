@@ -7,97 +7,22 @@ import (
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment/shipmentdb"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/ifta/iftadb"
 	"github.com/emoss08/trenova/internal/modules/settlement/ports/iftaports"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/jackc/pgx/v5"
+	"github.com/emoss08/trenova/shared/sliceutils"
 	"github.com/shopspring/decimal"
 	"go.uber.org/zap"
 )
 
 const (
-	accumulationPrefix = `WITH mc AS (
-	SELECT sm.id, sm.organization_id, sm.business_unit_id, sm.loaded,
-		CASE WHEN sm.distance_units = $1 THEN sm.distance / 1.609344 ELSE sm.distance END AS distance,
-		COALESCE(MAX(COALESCE(stp.actual_departure, stp.actual_arrival)), sm.updated_at) AS completed_at
-	FROM shipment_moves AS sm
-	LEFT JOIN stops AS stp
-		ON stp.shipment_move_id = sm.id
-		AND stp.organization_id = sm.organization_id
-		AND stp.business_unit_id = sm.business_unit_id
-	WHERE sm.organization_id = $2 AND sm.business_unit_id = $3 AND sm.status = $4
-	GROUP BY sm.id, sm.organization_id, sm.business_unit_id, sm.loaded, sm.distance,
-		sm.distance_units, sm.updated_at
-), inp AS (
-	SELECT mc.* FROM mc WHERE mc.completed_at >= $5 AND mc.completed_at < $6
-), overridden AS (
-	SELECT DISTINCT ifme.shipment_move_id
-	FROM ifta_jurisdiction_mileage_entries AS ifme
-	WHERE ifme.organization_id = $2 AND ifme.business_unit_id = $3
-		AND ifme.shipment_move_id IS NOT NULL
-), jm AS (
-	SELECT smjm.shipment_move_id, smjm.organization_id, smjm.business_unit_id,
-		smjm.country_code, smjm.jurisdiction_code, inp.loaded AS loaded,
-		inp.distance AS move_distance,
-		CASE WHEN smjm.distance_units = $7 THEN smjm.distance / 1.609344 ELSE smjm.distance END AS miles
-	FROM shipment_move_jurisdiction_miles AS smjm
-	JOIN inp ON inp.id = smjm.shipment_move_id
-		AND inp.organization_id = smjm.organization_id
-		AND inp.business_unit_id = smjm.business_unit_id
-	WHERE smjm.organization_id = $2 AND smjm.business_unit_id = $3
-		AND NOT EXISTS (SELECT 1 FROM overridden o WHERE o.shipment_move_id = smjm.shipment_move_id)
-) `
-
-	routeRowsSQL = accumulationPrefix + `SELECT a.tractor_id AS tractor_id,
-	jm.country_code AS country_code, jm.jurisdiction_code AS jurisdiction_code,
-	ifj.id AS jurisdiction_id,
-	ROUND((COALESCE(SUM(jm.miles), 0))::numeric, 3) AS miles,
-	ROUND((COALESCE(SUM(jm.miles) FILTER (WHERE jm.loaded), 0))::numeric, 3) AS loaded_miles,
-	ROUND((COALESCE(SUM(jm.miles) FILTER (WHERE NOT jm.loaded), 0))::numeric, 3) AS empty_miles,
-	COUNT(DISTINCT jm.shipment_move_id) AS move_count
-FROM jm
-LEFT JOIN assignments AS a
-	ON a.shipment_move_id = jm.shipment_move_id
-	AND a.organization_id = jm.organization_id
-	AND a.business_unit_id = jm.business_unit_id
-	AND a.archived_at IS NULL
-LEFT JOIN ifta_jurisdictions AS ifj
-	ON ifj.country_code = jm.country_code
-	AND ifj.code = jm.jurisdiction_code
-GROUP BY a.tractor_id, jm.country_code, jm.jurisdiction_code, ifj.id
-ORDER BY a.tractor_id NULLS FIRST, jm.country_code, jm.jurisdiction_code`
-
-	noTractorSQL = accumulationPrefix + `SELECT jm.shipment_move_id AS move_id,
-	ROUND((COALESCE(SUM(jm.miles), 0))::numeric, 3) AS miles
-FROM jm
-LEFT JOIN assignments AS a
-	ON a.shipment_move_id = jm.shipment_move_id
-	AND a.organization_id = jm.organization_id
-	AND a.business_unit_id = jm.business_unit_id
-	AND a.archived_at IS NULL
-WHERE a.tractor_id IS NULL
-GROUP BY jm.shipment_move_id
-ORDER BY jm.shipment_move_id`
-
-	unattributedSQL = accumulationPrefix + `SELECT inp.id AS move_id,
-	ROUND((inp.distance)::numeric, 3) AS miles
-FROM inp
-WHERE inp.distance > 0
-	AND NOT EXISTS (SELECT 1 FROM shipment_move_jurisdiction_miles AS smjm
-		WHERE smjm.shipment_move_id = inp.id
-		AND smjm.organization_id = inp.organization_id
-		AND smjm.business_unit_id = inp.business_unit_id)
-	AND NOT EXISTS (SELECT 1 FROM overridden o WHERE o.shipment_move_id = inp.id)
-ORDER BY inp.completed_at, inp.id`
-
-	mismatchSQL = accumulationPrefix + `SELECT jm.shipment_move_id AS move_id,
-	ROUND((jm.move_distance)::numeric, 3) AS move_distance,
-	ROUND((SUM(jm.miles))::numeric, 3) AS attributed_miles
-FROM jm
-WHERE jm.move_distance IS NOT NULL
-GROUP BY jm.shipment_move_id, jm.move_distance
-HAVING ABS(SUM(jm.miles) - jm.move_distance) > GREATEST(1, jm.move_distance * 0.02)
-ORDER BY jm.shipment_move_id`
+	kilometersPerMile    = 1.609344
+	milesPrecision       = 3
+	mismatchFloorMiles   = 1
+	mismatchTolerance    = 0.02
+	inputMovesCTE        = "inp"
+	jurisdictionMilesCTE = "jm"
 )
 
 type moveMiles struct {
@@ -105,18 +30,140 @@ type moveMiles struct {
 	Miles  decimal.Decimal
 }
 
-func accumulationArgs(req *iftaports.AccumulateMilesRequest) []any {
-	kilometers := string(shipment.JurisdictionDistanceUnitsKilometers)
+type accumulationSource struct {
+	inp *keel.CTETable
+	jm  *keel.CTETable
+}
 
-	return []any{
-		kilometers,
-		req.TenantInfo.OrgID.String(),
-		req.TenantInfo.BuID.String(),
-		string(shipment.MoveStatusCompleted),
-		req.Start,
-		req.End,
-		kilometers,
-	}
+func inMiles(distance keel.Expr, units keel.StringCol) keel.DynExpr {
+	return keel.DynCase().
+		When(units.Eq(shipment.JurisdictionDistanceUnitsKilometers), keel.DynOf(distance).Div(kilometersPerMile)).
+		Else(distance)
+}
+
+func roundMiles(e keel.Expr) keel.DynExpr {
+	return keel.DynFunc("round", keel.DynOf(e).Cast(keel.TypeNumeric), milesPrecision)
+}
+
+func newAccumulationSource(req *iftaports.AccumulateMilesRequest) accumulationSource {
+	sm := shipmentdb.ShipmentMoves
+	stp := shipmentdb.Stops
+	smjm := shipmentdb.ShipmentMoveJurisdictionMiles
+	me := iftadb.JurisdictionMileageEntries
+
+	completedAt := keel.DynOf(stp.ActualDeparture).
+		Coalesce(stp.ActualArrival).
+		Max().
+		Coalesce(sm.UpdatedAt)
+
+	inp := keel.CTE(
+		inputMovesCTE,
+		[]string{"id", "loaded", "distance", "completed_at"},
+		sm.LeftJoin(stp, stp.ShipmentMoveID.EqCol(sm.ID)).
+			Pick(sm.ID, sm.Loaded, inMiles(sm.Distance, sm.DistanceUnits), completedAt).
+			Where(sm.Status.Eq(shipment.MoveStatusCompleted)).
+			Group(sm.ID, sm.Loaded, sm.Distance, sm.DistanceUnits, sm.UpdatedAt).
+			Having(completedAt.Gte(req.Start), completedAt.Lt(req.End)),
+	)
+
+	jm := keel.CTE(
+		jurisdictionMilesCTE,
+		[]string{
+			"shipment_move_id",
+			"country_code",
+			"jurisdiction_code",
+			"loaded",
+			"move_distance",
+			"miles",
+		},
+		smjm.Join(inp, inp.Col("id").EqCol(smjm.ShipmentMoveID)).
+			Pick(
+				smjm.ShipmentMoveID,
+				smjm.CountryCode,
+				smjm.JurisdictionCode,
+				inp.Col("loaded"),
+				inp.Col("distance"),
+				inMiles(smjm.Distance, smjm.DistanceUnits),
+			).
+			Where(keel.NotExists(me.Where(me.ShipmentMoveID.EqCol(smjm.ShipmentMoveID)))),
+	)
+
+	return accumulationSource{inp: inp, jm: jm}
+}
+
+func (s accumulationSource) routeRows() *keel.Query[*keel.Row] {
+	jm := s.jm
+	a := shipmentdb.Assignments
+	ifj := iftadb.Jurisdictions
+	miles := jm.Col("miles").Sum()
+	loaded := keel.DynOf(jm.Col("loaded"))
+
+	return jm.Query().
+		With(s.inp, jm).
+		LeftJoin(a, a.ShipmentMoveID.EqCol(jm.Col("shipment_move_id")), a.ArchivedAt.IsNull()).
+		LeftJoin(ifj, ifj.CountryCode.EqCol(jm.Col("country_code")), ifj.Code.EqCol(jm.Col("jurisdiction_code"))).
+		Pick(
+			a.TractorID,
+			jm.Col("country_code"),
+			jm.Col("jurisdiction_code"),
+			ifj.ID,
+			roundMiles(keel.DynOf(miles).Coalesce(0)),
+			roundMiles(keel.DynOf(miles.Filter(loaded.IsTrue())).Coalesce(0)),
+			roundMiles(keel.DynOf(miles.Filter(loaded.IsFalse())).Coalesce(0)),
+			jm.Col("shipment_move_id").CountDistinct(),
+		).
+		Group(a.TractorID, jm.Col("country_code"), jm.Col("jurisdiction_code"), ifj.ID).
+		Order(
+			a.TractorID.Asc().NullsFirst(),
+			jm.Col("country_code").Asc(),
+			jm.Col("jurisdiction_code").Asc(),
+		)
+}
+
+func (s accumulationSource) noTractor() *keel.Query[*keel.Row] {
+	jm := s.jm
+	a := shipmentdb.Assignments
+
+	return jm.Query().
+		With(s.inp, jm).
+		LeftJoin(a, a.ShipmentMoveID.EqCol(jm.Col("shipment_move_id")), a.ArchivedAt.IsNull()).
+		Pick(jm.Col("shipment_move_id"), roundMiles(keel.DynOf(jm.Col("miles").Sum()).Coalesce(0))).
+		Where(a.TractorID.IsNull()).
+		Group(jm.Col("shipment_move_id")).
+		Order(jm.Col("shipment_move_id").Asc())
+}
+
+func (s accumulationSource) unattributed() *keel.Query[*keel.Row] {
+	inp := s.inp
+	smjm := shipmentdb.ShipmentMoveJurisdictionMiles
+	me := iftadb.JurisdictionMileageEntries
+
+	return inp.Query().
+		With(inp).
+		Pick(inp.Col("id"), roundMiles(inp.Col("distance"))).
+		Where(
+			inp.Col("distance").Gt(0),
+			keel.NotExists(smjm.Where(smjm.ShipmentMoveID.EqCol(inp.Col("id")))),
+			keel.NotExists(me.Where(me.ShipmentMoveID.EqCol(inp.Col("id")))),
+		).
+		Order(inp.Col("completed_at").Asc(), inp.Col("id").Asc())
+}
+
+func (s accumulationSource) mismatches() *keel.Query[*keel.Row] {
+	jm := s.jm
+	moveDistance := keel.DynOf(jm.Col("move_distance"))
+	attributed := jm.Col("miles").Sum()
+
+	return jm.Query().
+		With(s.inp, jm).
+		Pick(jm.Col("shipment_move_id"), roundMiles(moveDistance), roundMiles(attributed)).
+		Where(moveDistance.IsNotNull()).
+		Group(jm.Col("shipment_move_id"), jm.Col("move_distance")).
+		Having(
+			keel.DynFunc("abs", keel.DynOf(attributed).Sub(moveDistance)).
+				Gt(keel.DynFunc("greatest", mismatchFloorMiles, moveDistance.Mul(mismatchTolerance))),
+		).
+		Order(jm.Col("shipment_move_id").Asc())
 }
 
 func (r *repository) AccumulateMiles(
@@ -125,50 +172,27 @@ func (r *repository) AccumulateMiles(
 ) (*iftaports.MileAccumulation, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*iftaports.MileAccumulation, error) {
 		db := r.db.Keel(ctx)
-		args := accumulationArgs(req)
+		src := newAccumulationSource(req)
 
-		routeRows, err := keel.QueryAll(
-			ctx,
-			db,
-			pgx.RowToAddrOfStructByPos[iftaports.MileRow],
-			routeRowsSQL,
-			args...,
-		)
+		routeRows, err := keel.Into[iftaports.MileRow](ctx, db, src.routeRows())
 		if err != nil {
 			r.l.Error("failed to accumulate route miles", zap.Error(err))
 			return nil, fmt.Errorf("accumulate route miles: %w", err)
 		}
 
-		noTractor, err := keel.QueryAll(
-			ctx,
-			db,
-			pgx.RowToStructByPos[moveMiles],
-			noTractorSQL,
-			args...)
+		noTractor, err := keel.Into[moveMiles](ctx, db, src.noTractor())
 		if err != nil {
 			r.l.Error("failed to accumulate no-tractor miles", zap.Error(err))
 			return nil, fmt.Errorf("accumulate no-tractor miles: %w", err)
 		}
 
-		unattributed, err := keel.QueryAll(
-			ctx,
-			db,
-			pgx.RowToStructByPos[moveMiles],
-			unattributedSQL,
-			args...,
-		)
+		unattributed, err := keel.Into[moveMiles](ctx, db, src.unattributed())
 		if err != nil {
 			r.l.Error("failed to list unattributed moves", zap.Error(err))
 			return nil, fmt.Errorf("list unattributed moves: %w", err)
 		}
 
-		mismatches, err := keel.QueryAll(
-			ctx,
-			db,
-			pgx.RowToStructByPos[iftaports.MoveMismatch],
-			mismatchSQL,
-			args...,
-		)
+		mismatches, err := keel.Into[iftaports.MoveMismatch](ctx, db, src.mismatches())
 		if err != nil {
 			r.l.Error("failed to detect jurisdiction mileage mismatches", zap.Error(err))
 			return nil, fmt.Errorf("detect mileage mismatches: %w", err)
@@ -180,7 +204,7 @@ func (r *repository) AccumulateMiles(
 		}
 
 		out := &iftaports.MileAccumulation{
-			RouteRows:  nonNil(routeRows),
+			RouteRows:  nonNil(sliceutils.Pointers(routeRows)),
 			ManualRows: manual,
 			Mismatches: nonNil(mismatches),
 		}

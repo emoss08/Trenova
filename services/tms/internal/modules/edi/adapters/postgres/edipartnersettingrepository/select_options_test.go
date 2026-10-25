@@ -34,7 +34,18 @@ func TestFieldsQuery_AppliesTheSchemaSearchAndFieldFilters(t *testing.T) {
 	sql, args := keeltest.Render(t, q)
 
 	assert.Contains(t, sql, `FROM "edi_partner_setting_fields" epsf LEFT JOIN "edi_partner_setting_schemas" s ON s."id" = epsf."schema_id"`)
-	assert.Contains(t, sql, `epsf."path" LIKE $6 AND epsf."group_key" = $7 AND epsf."required" = $8 AND epsf."secret" = $9`)
+	assert.Contains(
+		t,
+		sql,
+		`((s."organization_id" = $1 AND s."business_unit_id" = $2) `+
+			`OR (s."organization_id" IS NULL AND s."business_unit_id" IS NULL))`,
+	)
+	assert.Contains(
+		t,
+		sql,
+		`s."transaction_set" = '204' AND s."direction" = 'Outbound' AND epsf."status" = 'Active' `+
+			`AND epsf."path" LIKE $3 AND epsf."group_key" = $4 AND epsf."required" = $5 AND epsf."secret" = $6`,
+	)
 	assert.Contains(t, sql, `ORDER BY epsf."display_order" ASC, epsf."path" ASC LIMIT 20`)
 	assert.Contains(t, args, "carrier.%")
 	assert.Contains(t, args, "%scac%")
@@ -56,8 +67,19 @@ func TestActiveSchemaQuery_PrefersTheTenantAndDocumentTypeSchema(t *testing.T) {
 
 	sql, args := keeltest.Render(t, q)
 
-	assert.Contains(t, sql, `((epss."organization_id" = $6 AND epss."business_unit_id" = $7) OR (epss."organization_id" IS NULL AND epss."business_unit_id" IS NULL))`)
-	assert.Contains(t, sql, `(epss."document_type_id" = $8 OR epss."document_type_id" IS NULL)`)
+	assert.Contains(
+		t,
+		sql,
+		`WHERE epss."standard" = 'X12' AND epss."transaction_set" = '204' AND epss."direction" = 'Outbound' `+
+			`AND epss."x12_version" = $1 AND epss."status" = 'Active'`,
+	)
+	assert.Contains(
+		t,
+		sql,
+		`((epss."organization_id" = $2 AND epss."business_unit_id" = $3) `+
+			`OR (epss."organization_id" IS NULL AND epss."business_unit_id" IS NULL))`,
+	)
+	assert.Contains(t, sql, `(epss."document_type_id" = $4 OR epss."document_type_id" IS NULL)`)
 	assert.Contains(t, sql, `ORDER BY epss."organization_id" IS NOT NULL DESC, epss."schema_version" DESC, epss."document_type_id" IS NOT NULL DESC LIMIT 1`)
 	assert.Contains(t, args, "org_1")
 	assert.Contains(t, args, "bu_1")

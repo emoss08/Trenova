@@ -68,7 +68,7 @@ var artifactsRef = keel.Ref{Table: &artifactsTable}
 
 // ArtifactsTable is the table of assistantartifact.Artifact.
 type ArtifactsTable struct {
-	keel.Handle[assistantartifact.Artifact]
+	keel.Handle[*assistantartifact.Artifact]
 	ID               keelkinds.PulidIDCol
 	BusinessUnitID   keelkinds.PulidIDCol
 	OrganizationID   keelkinds.PulidIDCol
@@ -94,7 +94,7 @@ type ArtifactsTable struct {
 
 // Artifacts references the assistant_artifacts table.
 var Artifacts = &ArtifactsTable{
-	Handle:           keel.Handle[assistantartifact.Artifact]{Ref: &artifactsRef},
+	Handle:           keel.Handle[*assistantartifact.Artifact]{Ref: &artifactsRef},
 	ID:               keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &artifactsRef, Index: 0}}},
 	BusinessUnitID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &artifactsRef, Index: 1}}},
 	OrganizationID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &artifactsRef, Index: 2}}},
@@ -121,7 +121,7 @@ var Artifacts = &ArtifactsTable{
 // BuildArtifacts builds the handle of assistant_artifacts for ref. Generated relation and alias methods call it.
 func BuildArtifacts(r *keel.Ref) *ArtifactsTable {
 	return &ArtifactsTable{
-		Handle:           keel.Handle[assistantartifact.Artifact]{Ref: r},
+		Handle:           keel.Handle[*assistantartifact.Artifact]{Ref: r},
 		ID:               keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},

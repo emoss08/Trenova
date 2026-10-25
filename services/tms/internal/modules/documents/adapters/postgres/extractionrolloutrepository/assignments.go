@@ -96,7 +96,7 @@ func (r *assignmentRepository) GetByExtraction(
 func byExtraction(
 	documentID pulid.ID,
 	extractedAt int64,
-) *keel.Query[extractionrollout.RolloutAssignment] {
+) *keel.Query[*extractionrollout.RolloutAssignment] {
 	ra := extractionrolloutdb.RolloutAssignments
 
 	return ra.Where(ra.DocumentID.Eq(documentID), ra.ExtractedAt.Eq(extractedAt))
@@ -141,13 +141,13 @@ func (r *assignmentRepository) Totals(
 			servedBy := keel.DynCase().
 				When(
 					keel.DynOf(ra.ServedProviderID).IsNull(),
-					keel.DynLit(string(extractionrollout.ServedByNone)).Cast(keel.TypeString),
+					keel.DynLit(string(extractionrollout.ServedByNone)),
 				).
 				When(
 					keel.DynOf(ra.ServedProviderID).Eq(ra.CandidateProviderID),
-					keel.DynLit(string(extractionrollout.ServedByCandidate)).Cast(keel.TypeString),
+					keel.DynLit(string(extractionrollout.ServedByCandidate)),
 				).
-				Else(keel.DynLit(string(extractionrollout.ServedByOther)).Cast(keel.TypeString))
+				Else(keel.DynLit(string(extractionrollout.ServedByOther)))
 
 			totals, err := keel.Into[extractionrolloutports.RolloutAssignmentTotal](
 				ctx,

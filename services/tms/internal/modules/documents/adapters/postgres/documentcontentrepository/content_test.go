@@ -1,7 +1,6 @@
 package documentcontentrepository
 
 import (
-	"fmt"
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentcontentports"
@@ -10,8 +9,10 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-const pendingEligibility = `d."status" = $%d AND d."processing_profile" = ANY($%d) ` +
-	`AND (dc."document_id" IS NULL OR dc."status" = ANY($%d) OR d."content_status" = ANY($%d))`
+const pendingEligibility = `d."status" = 'Active' AND d."processing_profile" IN ` +
+	`('rate_confirmation_import', 'assistant_attachment', 'inbound_attachment', 'capture', 'factoring_remittance') ` +
+	`AND (dc."document_id" IS NULL OR dc."status" IN ('Pending', 'Extracting') ` +
+	`OR d."content_status" IN ('Pending', 'Extracting'))`
 
 func TestListPendingExtractionTenants_GroupsByTheQualifiedTenantColumns(t *testing.T) {
 	t.Parallel()
@@ -32,16 +33,15 @@ func TestListPendingExtractionTenants_GroupsByTheQualifiedTenantColumns(t *testi
 			`AND dc."organization_id" = d."organization_id" AND dc."business_unit_id" = d."business_unit_id"`,
 		sqlText,
 	)
-	assert.Contains(t, sqlText, "WHERE "+fmt.Sprintf(pendingEligibility, 1, 2, 3, 4), sqlText)
+	assert.Contains(t, sqlText, "WHERE "+pendingEligibility, sqlText)
 	assert.Contains(
 		t,
 		sqlText,
-		`AND d."updated_at" <= $5 GROUP BY d."organization_id", d."business_unit_id" `+
+		`AND d."updated_at" <= $1 GROUP BY d."organization_id", d."business_unit_id" `+
 			`ORDER BY d."organization_id" ASC, d."business_unit_id" ASC LIMIT 100`,
 		sqlText,
 	)
-	assert.Equal(t, "Active", args[0])
-	assert.Equal(t, int64(1779222120), args[4])
+	assert.Equal(t, []any{int64(1779222120)}, args)
 }
 
 func TestListPendingExtraction_LeavesFailedDocumentsForAReextract(t *testing.T) {
@@ -59,11 +59,11 @@ func TestListPendingExtraction_LeavesFailedDocumentsForAReextract(t *testing.T) 
 		t,
 		sqlText,
 		`WHERE d."organization_id" = $1 AND d."business_unit_id" = $2 AND `+
-			fmt.Sprintf(pendingEligibility, 3, 4, 5, 6)+
-			` AND d."updated_at" <= $7 ORDER BY d."updated_at" ASC LIMIT 10`,
+			pendingEligibility+
+			` AND d."updated_at" <= $3 ORDER BY d."updated_at" ASC LIMIT 10`,
 		sqlText,
 	)
-	assert.Equal(t, []string{"Pending", "Extracting"}, args[4])
-	assert.Equal(t, []string{"Pending", "Extracting"}, args[5])
-	assert.NotContains(t, args, "Failed")
+	assert.Len(t, args, 3)
+	assert.Equal(t, int64(1779222120), args[2])
+	assert.NotContains(t, sqlText, "'Failed'")
 }

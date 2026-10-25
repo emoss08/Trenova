@@ -355,6 +355,7 @@ func (l *Loader) setDefaults() { //nolint:funlen // sets default configs
 
 	// Database defaults
 	l.viper.SetDefault("database.sslMode", "prefer")
+	l.viper.SetDefault("database.queryLog", "errors")
 	l.viper.SetDefault("database.maxOpenConns", 100)
 	l.viper.SetDefault("database.connMaxLifetime", "1h")
 	l.viper.SetDefault("database.connMaxIdleTime", "10m")

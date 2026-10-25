@@ -36,7 +36,7 @@ func New(p Params) notificationports.PushSubscriptionRepository {
 	}
 }
 
-func subscriptions(ctx context.Context) *keel.Query[notification.PushSubscription] {
+func subscriptions(ctx context.Context) *keel.Query[*notification.PushSubscription] {
 	q := notificationdb.PushSubscriptions.Query()
 	if dbscope.IsSystem(ctx) {
 		q = q.AllTenants()

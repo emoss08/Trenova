@@ -68,7 +68,7 @@ var distanceProfilesRef = keel.Ref{Table: &distanceProfilesTable}
 
 // DistanceProfilesTable is the table of distanceprofile.DistanceProfile.
 type DistanceProfilesTable struct {
-	keel.Handle[distanceprofile.DistanceProfile]
+	keel.Handle[*distanceprofile.DistanceProfile]
 	ID                  keelkinds.PulidIDCol
 	BusinessUnitID      keelkinds.PulidIDCol
 	OrganizationID      keelkinds.PulidIDCol
@@ -94,7 +94,7 @@ type DistanceProfilesTable struct {
 
 // DistanceProfiles references the distance_profiles table.
 var DistanceProfiles = &DistanceProfilesTable{
-	Handle:              keel.Handle[distanceprofile.DistanceProfile]{Ref: &distanceProfilesRef},
+	Handle:              keel.Handle[*distanceprofile.DistanceProfile]{Ref: &distanceProfilesRef},
 	ID:                  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &distanceProfilesRef, Index: 0}}},
 	BusinessUnitID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &distanceProfilesRef, Index: 1}}},
 	OrganizationID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &distanceProfilesRef, Index: 2}}},
@@ -121,7 +121,7 @@ var DistanceProfiles = &DistanceProfilesTable{
 // BuildDistanceProfiles builds the handle of distance_profiles for ref. Generated relation and alias methods call it.
 func BuildDistanceProfiles(r *keel.Ref) *DistanceProfilesTable {
 	return &DistanceProfilesTable{
-		Handle:              keel.Handle[distanceprofile.DistanceProfile]{Ref: r},
+		Handle:              keel.Handle[*distanceprofile.DistanceProfile]{Ref: r},
 		ID:                  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},

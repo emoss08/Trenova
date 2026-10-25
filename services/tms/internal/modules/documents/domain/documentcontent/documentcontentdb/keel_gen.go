@@ -69,7 +69,7 @@ var contentsRef = keel.Ref{Table: &contentsTable}
 
 // ContentsTable is the table of documentcontent.Content.
 type ContentsTable struct {
-	keel.Handle[documentcontent.Content]
+	keel.Handle[*documentcontent.Content]
 	ID                       keelkinds.PulidIDCol
 	DocumentID               keelkinds.PulidIDCol
 	OrganizationID           keelkinds.PulidIDCol
@@ -95,7 +95,7 @@ type ContentsTable struct {
 
 // Contents references the document_contents table.
 var Contents = &ContentsTable{
-	Handle:                   keel.Handle[documentcontent.Content]{Ref: &contentsRef},
+	Handle:                   keel.Handle[*documentcontent.Content]{Ref: &contentsRef},
 	ID:                       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &contentsRef, Index: 0}}},
 	DocumentID:               keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &contentsRef, Index: 1}}},
 	OrganizationID:           keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &contentsRef, Index: 2}}},
@@ -122,7 +122,7 @@ var Contents = &ContentsTable{
 // BuildContents builds the handle of document_contents for ref. Generated relation and alias methods call it.
 func BuildContents(r *keel.Ref) *ContentsTable {
 	return &ContentsTable{
-		Handle:                   keel.Handle[documentcontent.Content]{Ref: r},
+		Handle:                   keel.Handle[*documentcontent.Content]{Ref: r},
 		ID:                       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		DocumentID:               keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID:           keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -355,7 +355,7 @@ var pagesRef = keel.Ref{Table: &pagesTable}
 
 // PagesTable is the table of documentcontent.Page.
 type PagesTable struct {
-	keel.Handle[documentcontent.Page]
+	keel.Handle[*documentcontent.Page]
 	ID                   keelkinds.PulidIDCol
 	DocumentContentID    keelkinds.PulidIDCol
 	DocumentID           keelkinds.PulidIDCol
@@ -377,7 +377,7 @@ type PagesTable struct {
 
 // Pages references the document_content_pages table.
 var Pages = &PagesTable{
-	Handle:               keel.Handle[documentcontent.Page]{Ref: &pagesRef},
+	Handle:               keel.Handle[*documentcontent.Page]{Ref: &pagesRef},
 	ID:                   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &pagesRef, Index: 0}}},
 	DocumentContentID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &pagesRef, Index: 1}}},
 	DocumentID:           keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &pagesRef, Index: 2}}},
@@ -400,7 +400,7 @@ var Pages = &PagesTable{
 // BuildPages builds the handle of document_content_pages for ref. Generated relation and alias methods call it.
 func BuildPages(r *keel.Ref) *PagesTable {
 	return &PagesTable{
-		Handle:               keel.Handle[documentcontent.Page]{Ref: r},
+		Handle:               keel.Handle[*documentcontent.Page]{Ref: r},
 		ID:                   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		DocumentContentID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		DocumentID:           keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},

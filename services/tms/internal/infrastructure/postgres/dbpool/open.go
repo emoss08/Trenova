@@ -8,7 +8,7 @@ import (
 	"github.com/bytedance/sonic"
 	"github.com/emoss08/keel"
 	"github.com/emoss08/keel/postgis"
-	"github.com/emoss08/trenova/internal/keeltables"
+	"github.com/emoss08/keel/schema"
 	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
@@ -28,6 +28,8 @@ type Options struct {
 	RuntimeParams   map[string]string
 	Guard           Guard
 	Observers       []keel.Observer
+	ObserveArgs     bool
+	Tables          []*schema.Table
 	VersionErrors   func(error)
 }
 
@@ -56,6 +58,8 @@ func Open(ctx context.Context, opts *Options) (*keel.DB, error) {
 
 	cfg := KeelConfig(opts.Guard, opts.Observers)
 	cfg.Pool = pc
+	cfg.ObserveArgs = opts.ObserveArgs
+	cfg.Tables = opts.Tables
 	cfg.DataVersions = keel.DataVersionsConfig{
 		Enabled:  true,
 		Interval: dataVersionInterval,
@@ -89,7 +93,6 @@ func KeelConfig(guard Guard, observers []keel.Observer) keel.Config {
 		},
 		Observers:    observers,
 		AfterConnect: postgis.Register,
-		Tables:       keeltables.All(),
 	}
 	if guard != nil {
 		cfg.OnBegin = guard.OnBegin

@@ -83,8 +83,8 @@ func (r *settlementRepository) ListConnection(
 					Filter: req.Filter,
 					Cursor: req.Cursor,
 					Shape: func(
-						q *keel.Query[carriersettlement.CarrierSettlement],
-					) *keel.Query[carriersettlement.CarrierSettlement] {
+						q *keel.Query[*carriersettlement.CarrierSettlement],
+					) *keel.Query[*carriersettlement.CarrierSettlement] {
 						return q.Load(s.Carrier())
 					},
 				},

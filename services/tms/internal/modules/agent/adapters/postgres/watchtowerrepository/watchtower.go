@@ -534,7 +534,7 @@ type tenantRow struct {
 	BusinessUnitID pulid.ID
 }
 
-func tenantsNeedingAttentionQuery(now int64) *keel.Query[watchtower.Item] {
+func tenantsNeedingAttentionQuery(now int64) *keel.Query[*watchtower.Item] {
 	it := watchtowerdb.Items
 	return it.AllTenants().
 		Pick(it.OrganizationID, it.BusinessUnitID).
@@ -610,7 +610,7 @@ func (r *repository) List(
 	})
 }
 
-func listQuery(req *watchtowerports.ListWatchtowerItemsQuery) *keel.Query[watchtower.Item] {
+func listQuery(req *watchtowerports.ListWatchtowerItemsQuery) *keel.Query[*watchtower.Item] {
 	it := watchtowerdb.Items
 
 	limit := req.Limit
@@ -687,7 +687,7 @@ type countTotals struct {
 	MineOverdue    int64
 }
 
-func openItems(req *watchtowerports.CountWatchtowerItemsRequest) *keel.Query[watchtower.Item] {
+func openItems(req *watchtowerports.CountWatchtowerItemsRequest) *keel.Query[*watchtower.Item] {
 	it := watchtowerdb.Items
 	return it.Where(
 		it.ResolvedAt.IsNull(),
@@ -697,7 +697,7 @@ func openItems(req *watchtowerports.CountWatchtowerItemsRequest) *keel.Query[wat
 
 func countTotalsQuery(
 	req *watchtowerports.CountWatchtowerItemsRequest,
-) *keel.Query[watchtower.Item] {
+) *keel.Query[*watchtower.Item] {
 	it := watchtowerdb.Items
 	rd := watchtowerdb.Reads
 	critical := it.Severity.Eq(watchtower.SeverityCritical)
@@ -728,7 +728,7 @@ func countTotalsQuery(
 
 func countByKindQuery(
 	req *watchtowerports.CountWatchtowerItemsRequest,
-) *keel.Query[watchtower.Item] {
+) *keel.Query[*watchtower.Item] {
 	it := watchtowerdb.Items
 	return openItems(req).
 		Where(it.Status.Ne(watchtower.StatusSnoozed)).
@@ -869,7 +869,7 @@ func (r *repository) ListReadItemIDs(
 
 func clearedQuery(
 	req *watchtowerports.CountClearedWatchtowerItemsRequest,
-) *keel.Query[watchtower.Item] {
+) *keel.Query[*watchtower.Item] {
 	it := watchtowerdb.Items
 	ev := watchtowerdb.Events
 	snoozedByReader := ev.Where(

@@ -39,7 +39,7 @@ func New(p Params) deskcaseports.CaseChecklistRepository {
 	return &repository{db: p.DB, l: p.Logger.Named("postgres.case-checklist-repository")}
 }
 
-func withCustomerName() *keel.Query[deskcase.ChecklistTemplate] {
+func withCustomerName() *keel.Query[*deskcase.ChecklistTemplate] {
 	t := deskcasedb.ChecklistTemplates
 	cus := customerdb.Customers.As("cus")
 
@@ -49,7 +49,7 @@ func withCustomerName() *keel.Query[deskcase.ChecklistTemplate] {
 
 func listTemplatesQuery(
 	req *deskcaseports.ListCaseChecklistTemplatesRequest,
-) *keel.Query[deskcase.ChecklistTemplate] {
+) *keel.Query[*deskcase.ChecklistTemplate] {
 	t := deskcasedb.ChecklistTemplates
 
 	return withCustomerName().
@@ -60,7 +60,7 @@ func listTemplatesQuery(
 
 func templateForQuery(
 	req *deskcaseports.GetCaseChecklistTemplateForRequest,
-) *keel.Query[deskcase.ChecklistTemplate] {
+) *keel.Query[*deskcase.ChecklistTemplate] {
 	t := deskcasedb.ChecklistTemplates
 
 	return t.Where(
@@ -76,7 +76,7 @@ func templateForQuery(
 
 func listTicksQuery(
 	req *deskcaseports.ListCaseChecklistTicksRequest,
-) *keel.Query[deskcase.ChecklistTick] {
+) *keel.Query[*deskcase.ChecklistTick] {
 	tk := deskcasedb.ChecklistTicks
 	usr := tenantdb.Users.As("usr")
 

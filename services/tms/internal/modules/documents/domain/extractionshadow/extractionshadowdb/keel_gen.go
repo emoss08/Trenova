@@ -87,7 +87,7 @@ var shadowResultsRef = keel.Ref{Table: &shadowResultsTable}
 
 // ShadowResultsTable is the table of extractionshadow.ShadowResult.
 type ShadowResultsTable struct {
-	keel.Handle[extractionshadow.ShadowResult]
+	keel.Handle[*extractionshadow.ShadowResult]
 	ID                     keelkinds.PulidIDCol
 	BusinessUnitID         keelkinds.PulidIDCol
 	OrganizationID         keelkinds.PulidIDCol
@@ -133,7 +133,7 @@ type ShadowResultsTable struct {
 
 // ShadowResults references the extraction_shadow_results table.
 var ShadowResults = &ShadowResultsTable{
-	Handle:                 keel.Handle[extractionshadow.ShadowResult]{Ref: &shadowResultsRef},
+	Handle:                 keel.Handle[*extractionshadow.ShadowResult]{Ref: &shadowResultsRef},
 	ID:                     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &shadowResultsRef, Index: 0}}},
 	BusinessUnitID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &shadowResultsRef, Index: 1}}},
 	OrganizationID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &shadowResultsRef, Index: 2}}},
@@ -180,7 +180,7 @@ var ShadowResults = &ShadowResultsTable{
 // BuildShadowResults builds the handle of extraction_shadow_results for ref. Generated relation and alias methods call it.
 func BuildShadowResults(r *keel.Ref) *ShadowResultsTable {
 	return &ShadowResultsTable{
-		Handle:                 keel.Handle[extractionshadow.ShadowResult]{Ref: r},
+		Handle:                 keel.Handle[*extractionshadow.ShadowResult]{Ref: r},
 		ID:                     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -515,7 +515,7 @@ var shadowSettingsesRef = keel.Ref{Table: &shadowSettingsesTable}
 
 // ShadowSettingsesTable is the table of extractionshadow.ShadowSettings.
 type ShadowSettingsesTable struct {
-	keel.Handle[extractionshadow.ShadowSettings]
+	keel.Handle[*extractionshadow.ShadowSettings]
 	ID             keelkinds.PulidIDCol
 	BusinessUnitID keelkinds.PulidIDCol
 	OrganizationID keelkinds.PulidIDCol
@@ -531,7 +531,7 @@ type ShadowSettingsesTable struct {
 
 // ShadowSettingses references the extraction_shadow_settings table.
 var ShadowSettingses = &ShadowSettingsesTable{
-	Handle:         keel.Handle[extractionshadow.ShadowSettings]{Ref: &shadowSettingsesRef},
+	Handle:         keel.Handle[*extractionshadow.ShadowSettings]{Ref: &shadowSettingsesRef},
 	ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &shadowSettingsesRef, Index: 0}}},
 	BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &shadowSettingsesRef, Index: 1}}},
 	OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &shadowSettingsesRef, Index: 2}}},
@@ -548,7 +548,7 @@ var ShadowSettingses = &ShadowSettingsesTable{
 // BuildShadowSettingses builds the handle of extraction_shadow_settings for ref. Generated relation and alias methods call it.
 func BuildShadowSettingses(r *keel.Ref) *ShadowSettingsesTable {
 	return &ShadowSettingsesTable{
-		Handle:         keel.Handle[extractionshadow.ShadowSettings]{Ref: r},
+		Handle:         keel.Handle[*extractionshadow.ShadowSettings]{Ref: r},
 		ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},

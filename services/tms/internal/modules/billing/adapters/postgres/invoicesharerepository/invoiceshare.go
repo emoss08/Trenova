@@ -80,7 +80,7 @@ func (r *repository) ListByInvoiceID(
 	})
 }
 
-func userSummary(u *tenantdb.UsersTable) *keel.Query[tenant.User] {
+func userSummary(u *tenantdb.UsersTable) *keel.Query[*tenant.User] {
 	return u.Pick(
 		u.ID,
 		u.Name,

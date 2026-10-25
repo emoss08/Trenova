@@ -72,8 +72,8 @@ func (r *recurringDeductionRepository) ListConnection(
 					Filter: req.Filter,
 					Cursor: req.Cursor,
 					Shape: func(
-						q *keel.Query[driverpay.RecurringDeduction],
-					) *keel.Query[driverpay.RecurringDeduction] {
+						q *keel.Query[*driverpay.RecurringDeduction],
+					) *keel.Query[*driverpay.RecurringDeduction] {
 						return q.Load(rd.Worker(), rd.PayCode())
 					},
 				},

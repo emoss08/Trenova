@@ -16,7 +16,6 @@ import (
 	"github.com/emoss08/trenova/pkg/listquery"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/jackc/pgx/v5"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
@@ -24,6 +23,8 @@ import (
 const (
 	serviceFailure214ReviewedTrigger = "Reviewed"
 	serviceFailure214ResolvedTrigger = "Resolved"
+	serviceFailure214ReviewedAlias   = "sf_reviewed"
+	serviceFailure214ResolvedAlias   = "sf_resolved"
 
 	defaultRecentFailuresLimit = 10
 	defaultBucketSeconds       = 3600
@@ -74,7 +75,7 @@ func (r *repository) ListMessages(
 	)
 }
 
-func archiveQuery(req *ediports.ListEDIMessagesRequest) *keel.Query[edi.EDIMessage] {
+func archiveQuery(req *ediports.ListEDIMessagesRequest) *keel.Query[*edi.EDIMessage] {
 	m := edidb.EDIMessages
 	ve := edidb.EDIMessageValidationErrors
 	search := strings.TrimSpace(req.Query)
@@ -113,7 +114,7 @@ func (r *repository) ListMessagesCursor(
 				&listquery.Request[edi.EDIMessage]{
 					Filter: req.Filter,
 					Cursor: req.Cursor,
-					Shape: func(q *keel.Query[edi.EDIMessage]) *keel.Query[edi.EDIMessage] {
+					Shape: func(q *keel.Query[*edi.EDIMessage]) *keel.Query[*edi.EDIMessage] {
 						return q.Load(m.Partner())
 					},
 				},
@@ -227,75 +228,72 @@ func (r *repository) GetServiceFailure214LifecycleMessage(
 
 func lifecycleMessageQuery(
 	req *ediports.GetServiceFailure214LifecycleMessageRequest,
-) *keel.Query[edi.EDIMessage] {
+) *keel.Query[*edi.EDIMessage] {
 	m := edidb.EDIMessages
 	failureID := req.ServiceFailureID.String()
 
-	return m.Where(
-		m.TransactionSet.Eq(edi.TransactionSet214),
-		m.Direction.Eq(edi.DocumentDirectionOutbound),
-		m.PayloadSnapshot.Text("shipmentStatus", "serviceFailureId").Eq(failureID),
-		m.PayloadSnapshot.Text("shipmentStatus", "references", "serviceFailureId").Eq(failureID),
-		m.PayloadSnapshot.Text("shipmentStatus", "references", "serviceFailure214Trigger").
-			Eq(req.Trigger),
-	).
+	return m.Where(serviceFailure214Lifecycle(m, failureID)...).
+		Where(serviceFailure214Trigger(m).Eq(req.Trigger)).
 		Load(m.Partner(), m.PartnerDocumentProfile()).
 		Order(m.GeneratedAt.Desc())
 }
 
-const serviceFailure214StatusSQL = `
-WITH lifecycle_messages AS (
-	SELECT
-		emsg.id,
-		emsg.status,
-		emsg.delivery_status,
-		emsg.ack_status,
-		emsg.generated_at,
-		emsg.payload_snapshot->'shipmentStatus'->'references'->>'serviceFailure214Trigger' AS trigger
-	FROM edi_messages AS emsg
-	WHERE emsg.organization_id = $1
-		AND emsg.business_unit_id = $2
-		AND emsg.transaction_set = $3
-		AND emsg.direction = $4
-		AND emsg.payload_snapshot->'shipmentStatus'->>'serviceFailureId' = $5
-		AND emsg.payload_snapshot->'shipmentStatus'->'references'->>'serviceFailureId' = $5
-),
-last_message AS (
-	SELECT *
-	FROM lifecycle_messages
-	ORDER BY generated_at DESC, id DESC
-	LIMIT 1
-),
-last_diagnostic AS (
-	SELECT emve.message
-	FROM edi_message_validation_errors AS emve
-	JOIN last_message lm ON lm.id = emve.message_id
-	WHERE emve.organization_id = $1
-		AND emve.business_unit_id = $2
-		AND emve.severity = $6
-	ORDER BY emve.created_at DESC, emve.id DESC
-	LIMIT 1
-)
-SELECT
-	$5::text AS service_failure_id,
-	COALESCE((
-		SELECT id FROM lifecycle_messages
-		WHERE trigger = $7
-		ORDER BY generated_at DESC, id DESC
-		LIMIT 1
-	), '') AS reviewed_message_id,
-	COALESCE((
-		SELECT id FROM lifecycle_messages
-		WHERE trigger = $8
-		ORDER BY generated_at DESC, id DESC
-		LIMIT 1
-	), '') AS resolved_message_id,
-	COALESCE((SELECT id FROM last_message), '') AS last_message_id,
-	COALESCE((SELECT status::text FROM last_message), '') AS generated_status,
-	COALESCE((SELECT delivery_status::text FROM last_message), '') AS delivery_status,
-	COALESCE((SELECT ack_status::text FROM last_message), '') AS ack_status,
-	COALESCE((SELECT message FROM last_diagnostic), '') AS last_diagnostic,
-	COALESCE((SELECT generated_at FROM last_message), 0) AS last_generated_at`
+func serviceFailure214Lifecycle(m *edidb.EDIMessagesTable, failureID string) []keel.Pred {
+	return []keel.Pred{
+		m.TransactionSet.Eq(edi.TransactionSet214),
+		m.Direction.Eq(edi.DocumentDirectionOutbound),
+		m.PayloadSnapshot.Text("shipmentStatus", "serviceFailureId").Eq(failureID),
+		m.PayloadSnapshot.Text("shipmentStatus", "references", "serviceFailureId").Eq(failureID),
+	}
+}
+
+func serviceFailure214Trigger(m *edidb.EDIMessagesTable) keel.StringExpr {
+	return m.PayloadSnapshot.Text("shipmentStatus", "references", "serviceFailure214Trigger")
+}
+
+func serviceFailure214LatestFor(alias, failureID, trigger string) keel.DynExpr {
+	m := edidb.EDIMessages.As(alias)
+
+	return keel.DynOf(keel.Scalar(m.
+		Pick(m.ID).
+		Where(serviceFailure214Lifecycle(m, failureID)...).
+		Where(serviceFailure214Trigger(m).Eq(trigger)).
+		Order(m.GeneratedAt.Desc(), m.ID.Desc()).
+		Limit(1))).Coalesce("")
+}
+
+func serviceFailure214StatusQuery(failureID string) *keel.Query[*edi.EDIMessage] {
+	m := edidb.EDIMessages
+	e := edidb.EDIMessageValidationErrors
+
+	return m.
+		Pick(
+			keel.DynLit(failureID),
+			serviceFailure214LatestFor(
+				serviceFailure214ReviewedAlias,
+				failureID,
+				serviceFailure214ReviewedTrigger,
+			),
+			serviceFailure214LatestFor(
+				serviceFailure214ResolvedAlias,
+				failureID,
+				serviceFailure214ResolvedTrigger,
+			),
+			m.ID,
+			keel.DynOf(m.Status).Cast(keel.TypeString).Coalesce(""),
+			keel.DynOf(m.DeliveryStatus).Cast(keel.TypeString).Coalesce(""),
+			keel.DynOf(m.AckStatus).Cast(keel.TypeString).Coalesce(""),
+			keel.DynOf(keel.Scalar(e.
+				Pick(e.Message).
+				Where(e.MessageID.EqCol(m.ID), e.Severity.Eq(edi.ValidationSeverityError)).
+				Order(e.CreatedAt.Desc(), e.ID.Desc()).
+				Limit(1))).Coalesce(""),
+			keel.DynOf(m.GeneratedAt).Coalesce(0),
+		).
+		Where(serviceFailure214Lifecycle(m, failureID)...).
+		Order(m.GeneratedAt.Desc(), m.ID.Desc()).
+		Limit(1)
+}
 
 func (r *repository) GetServiceFailure214Status(
 	ctx context.Context,
@@ -305,19 +303,10 @@ func (r *repository) GetServiceFailure214Status(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*ediports.ServiceFailure214StatusRow, error) {
-			rows, err := keel.QueryAll(
+			rows, err := keel.Into[ediports.ServiceFailure214StatusRow](
 				ctx,
 				r.db.Keel(ctx),
-				pgx.RowToStructByPos[ediports.ServiceFailure214StatusRow],
-				serviceFailure214StatusSQL,
-				req.TenantInfo.OrgID.String(),
-				req.TenantInfo.BuID.String(),
-				string(edi.TransactionSet214),
-				string(edi.DocumentDirectionOutbound),
-				req.ServiceFailureID.String(),
-				string(edi.ValidationSeverityError),
-				serviceFailure214ReviewedTrigger,
-				serviceFailure214ResolvedTrigger,
+				serviceFailure214StatusQuery(req.ServiceFailureID.String()),
 			)
 			if err != nil {
 				return nil, err
@@ -565,7 +554,7 @@ func (r *repository) GetPartnerScorecards(
 	)
 }
 
-func scorecardQuery(req *ediports.GetEDIPartnerScorecardsRequest) *keel.Query[edi.EDIMessage] {
+func scorecardQuery(req *ediports.GetEDIPartnerScorecardsRequest) *keel.Query[*edi.EDIMessage] {
 	m := edidb.EDIMessages
 	partner := m.Partner()
 	outbound := m.Direction.Eq(edi.DocumentDirectionOutbound)
@@ -625,7 +614,7 @@ func (r *repository) GetVolumeSeries(
 	})
 }
 
-func volumeQuery(req *ediports.GetEDIVolumeSeriesRequest) *keel.Query[edi.EDIMessage] {
+func volumeQuery(req *ediports.GetEDIVolumeSeriesRequest) *keel.Query[*edi.EDIMessage] {
 	m := edidb.EDIMessages
 	bucket := req.BucketSeconds
 	if bucket <= 0 {

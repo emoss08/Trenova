@@ -56,18 +56,17 @@ func TestTheCensusGroupsOpenMailByParkingOwnerAndLateness(t *testing.T) {
 
 	assert.Equal(
 		t,
-		`SELECT im."status", coalesce(im."classification", $4), im."mailbox_id", `+
-			`coalesce(im."parked", $5), coalesce((im."owner_id" = $6), $7), `+
-			`coalesce((im."due_at" < $8), $9), count(*) FROM "inbound_messages" im `+
-			`WHERE im."business_unit_id" = $1 AND im."organization_id" = $2 AND im."status" = ANY($3) `+
-			`GROUP BY im."status", coalesce(im."classification", $4), im."mailbox_id", `+
-			`coalesce(im."parked", $5), coalesce((im."owner_id" = $6), $7), coalesce((im."due_at" < $8), $9)`,
+		`SELECT im."status", coalesce(im."classification", $3), im."mailbox_id", `+
+			`coalesce(im."parked", $4), coalesce((im."owner_id" = $5), $6), `+
+			`coalesce((im."due_at" < $7), $8), count(*) FROM "inbound_messages" im `+
+			`WHERE im."business_unit_id" = $1 AND im."organization_id" = $2 `+
+			`AND im."status" IN ('Received', 'Processing', 'Classified', 'InReview', 'Quarantined') `+
+			`GROUP BY im."status", 2, im."mailbox_id", 4, 5, 6`,
 		sqlText,
 	)
 	assert.Equal(t, []any{
 		"bu_1",
 		"org_1",
-		[]string{"Received", "Processing", "Classified", "InReview", "Quarantined"},
 		"",
 		"",
 		"usr_01J00000000000000000000VW",
@@ -88,23 +87,24 @@ func TestTheCensusCountsSettledMailWithoutTheOpenLanesWork(t *testing.T) {
 
 	assert.Equal(
 		t,
-		`SELECT im."status", coalesce(im."classification", $4), im."mailbox_id", $5, $6::boolean, $6::boolean, count(*) `+
-			`FROM "inbound_messages" im WHERE im."business_unit_id" = $1 AND im."organization_id" = $2 `+
-			`AND im."status" = ANY($3) GROUP BY im."status", im."classification", im."mailbox_id"`,
+		`SELECT im."status", coalesce(im."classification", $3), im."mailbox_id", $4::text, $5::boolean, $6::boolean, `+
+			`count(*) FROM "inbound_messages" im WHERE im."business_unit_id" = $1 AND im."organization_id" = $2 `+
+			`AND im."status" IN ('Actioned', 'Ignored') GROUP BY im."status", im."classification", im."mailbox_id"`,
 		sqlText,
 	)
-	assert.Equal(t, []any{"bu_1", "org_1", []string{"Actioned", "Ignored"}, "", "", false}, args)
+	assert.Equal(t, []any{"bu_1", "org_1", "", "", false, false}, args)
 
 	_, bothHalves := countBreakdownQuery(inboundmessageports.CountInboundMessagesRequest{}).(keel.Compound)
 	assert.True(t, bothHalves, "open and settled mail are counted by one UNION ALL")
 
 	settledOnly, oneHalf := countBreakdownQuery(inboundmessageports.CountInboundMessagesRequest{
 		Statuses: []inboundmessage.Status{inboundmessage.StatusActioned},
-	}).(*keel.Query[inboundmessage.InboundMessage])
+	}).(*keel.Query[*inboundmessage.InboundMessage])
 	assert.True(t, oneHalf, "only settled statuses need no union")
 	if oneHalf {
 		sqlText, _ = keeltest.Render(t, settledOnly)
-		assert.Contains(t, sqlText, `$5, $6::boolean, $6::boolean, count(*)`, sqlText)
+		assert.Contains(t, sqlText, `$4::text, $5::boolean, $6::boolean, count(*)`, sqlText)
+		assert.Contains(t, sqlText, `im."status" IN ('Actioned') GROUP BY`, sqlText)
 	}
 }
 
@@ -120,10 +120,10 @@ func TestRetentionReadsOnlySettledMailInsideOneTenant(t *testing.T) {
 		t,
 		`SELECT im."id", im."organization_id", im."business_unit_id", im."html_key" `+
 			`FROM "inbound_messages" im WHERE im."business_unit_id" = $1 AND im."organization_id" = $2 `+
-			`AND im."status" = ANY($3) AND im."received_at" < $4 ORDER BY im."received_at" ASC LIMIT 500`,
+			`AND im."status" IN ('Actioned', 'Ignored') AND im."received_at" < $3 ORDER BY im."received_at" ASC LIMIT 500`,
 		sqlText,
 	)
-	assert.Equal(t, []any{"bu_1", "org_1", []string{"Actioned", "Ignored"}, int64(1_700_000_000)}, args)
+	assert.Equal(t, []any{"bu_1", "org_1", int64(1_700_000_000)}, args)
 }
 
 func TestTheLanesAskTheQuestionTheirFolderNames(t *testing.T) {
@@ -132,31 +132,31 @@ func TestTheLanesAskTheQuestionTheirFolderNames(t *testing.T) {
 	viewer := pulid.ID("usr_01J00000000000000000000VW")
 	cases := map[inboundmessageports.Lane]struct {
 		where string
-		arg   any
+		args  []any
 	}{
 		inboundmessageports.LaneWaiting: {
-			where: `(im."status" = ANY($3) AND im."parked" IS NULL)`,
-			arg:   []string{"InReview", "Quarantined"},
+			where: `(im."status" IN ('InReview', 'Quarantined') AND im."parked" IS NULL)`,
+			args:  []any{"bu_1", "org_1"},
 		},
 		inboundmessageports.LaneAssignedToMe: {
-			where: `(im."status" = ANY($3) AND im."parked" IS NULL AND im."owner_id" = $4)`,
-			arg:   []string{"InReview", "Quarantined"},
+			where: `(im."status" IN ('InReview', 'Quarantined') AND im."parked" IS NULL AND im."owner_id" = $3)`,
+			args:  []any{"bu_1", "org_1", string(viewer)},
 		},
 		inboundmessageports.LaneWaitingOnThem: {
-			where: `im."parked" = $3`,
-			arg:   string(inboundmessage.ParkingAwaitingReply),
+			where: `im."parked" = 'AwaitingReply'`,
+			args:  []any{"bu_1", "org_1"},
 		},
 		inboundmessageports.LaneSnoozed: {
-			where: `im."parked" = $3`,
-			arg:   string(inboundmessage.ParkingSnoozed),
+			where: `im."parked" = 'Snoozed'`,
+			args:  []any{"bu_1", "org_1"},
 		},
 		inboundmessageports.LaneHandled: {
-			where: `im."status" = $3`,
-			arg:   string(inboundmessage.StatusActioned),
+			where: `im."status" = 'Actioned'`,
+			args:  []any{"bu_1", "org_1"},
 		},
 		inboundmessageports.LaneIgnored: {
-			where: `im."status" = $3`,
-			arg:   string(inboundmessage.StatusIgnored),
+			where: `im."status" = 'Ignored'`,
+			args:  []any{"bu_1", "org_1"},
 		},
 	}
 	for lane, want := range cases {
@@ -165,9 +165,7 @@ func TestTheLanesAskTheQuestionTheirFolderNames(t *testing.T) {
 			ViewerID: viewer,
 		})
 		assert.Contains(t, sqlText, want.where, "%s: %s", lane, sqlText)
-		if assert.GreaterOrEqual(t, len(args), 3, lane) {
-			assert.Equal(t, want.arg, args[2], lane)
-		}
+		assert.Equal(t, want.args, args, lane)
 	}
 
 	everything, args := renderFolder(t, &inboundmessageports.ListInboundMessagesRequest{
@@ -200,12 +198,11 @@ func TestCollapsingKeepsTheNewestOfEachThreadInTheFolder(t *testing.T) {
 		`(ROW(nwr."received_at", nwr."id") > ROW(im."received_at", im."id"))`,
 		sqlText,
 	)
-	assert.Contains(t, sqlText, `(nwr."status" = ANY($5) AND nwr."parked" IS NULL)`, sqlText)
-	assert.Contains(t, sqlText, `nwr."classification" = $4`, sqlText)
-	assert.Contains(t, sqlText, `nwr."subject" ILIKE $6`, sqlText,
+	assert.Contains(t, sqlText, `(nwr."status" IN ('InReview', 'Quarantined') AND nwr."parked" IS NULL)`, sqlText)
+	assert.Contains(t, sqlText, `nwr."classification" = 'DetentionDispute'`, sqlText)
+	assert.Contains(t, sqlText, `nwr."subject" ILIKE $3`, sqlText,
 		"the newer message has to be in the same folder, search included")
-	assert.Equal(t, "DetentionDispute", args[3])
-	assert.Equal(t, "%detention%", args[5])
+	assert.Equal(t, "%detention%", args[2])
 
 	thread, args := renderFolder(t, &inboundmessageports.ListInboundMessagesRequest{
 		ThreadKey:       "abc@acme.example",

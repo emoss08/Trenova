@@ -103,7 +103,7 @@ func (r *repository) ListConnection(
 
 func rateMatrixQuery(
 	req *ratematrixports.GetRateMatrixByIDRequest,
-) *keel.Query[ratematrix.RateMatrix] {
+) *keel.Query[*ratematrix.RateMatrix] {
 	rm := ratematrixdb.RateMatrixes
 	q := rm.Where(rm.ID.Eq(req.RateMatrixID))
 	if req.IncludeDimensions {
@@ -253,7 +253,7 @@ func (r *repository) Delete(
 	})
 }
 
-func selectOptionsQuery() *keel.Query[ratematrix.RateMatrix] {
+func selectOptionsQuery() *keel.Query[*ratematrix.RateMatrix] {
 	rm := ratematrixdb.RateMatrixes
 
 	return rm.Pick(

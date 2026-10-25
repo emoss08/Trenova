@@ -30,7 +30,7 @@ var openMoveStatuses = []shipment.MoveStatus{
 	shipment.MoveStatusInTransit,
 }
 
-type moveQuery = keel.Query[shipment.ShipmentMove]
+type moveQuery = keel.Query[*shipment.ShipmentMove]
 
 // stopEdge is a move's first or last live stop, read through a lateral subquery, with the
 // stop's location and state joined to its output.
@@ -62,7 +62,7 @@ func newStopEdge(alias string, last bool) stopEdge {
 	}
 }
 
-func joinEdge[T any](q *keel.Query[T], e stopEdge, moveID keel.Expr) *keel.Query[T] {
+func joinEdge[T any](q *keel.Query[*T], e stopEdge, moveID keel.Expr) *keel.Query[*T] {
 	st := e.stop
 	order := st.Sequence.Asc()
 	if e.last {

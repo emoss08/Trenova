@@ -77,7 +77,7 @@ func (r *repository) ListLanes(
 
 func agreementRules(
 	req *rateagreementports.ListRateAgreementLanesRequest,
-) *keel.Query[rateagreement.RateAgreementRule] {
+) *keel.Query[*rateagreement.RateAgreementRule] {
 	rr := rateagreementdb.RateAgreementRules
 
 	return rr.Where(rr.RateAgreementID.Eq(req.RateAgreementID))
@@ -86,7 +86,7 @@ func agreementRules(
 func laneCountQuery(
 	req *rateagreementports.ListRateAgreementLanesRequest,
 	now int64,
-) *keel.Query[rateagreement.RateAgreementRule] {
+) *keel.Query[*rateagreement.RateAgreementRule] {
 	rr := rateagreementdb.RateAgreementRules
 
 	return agreementRules(req).Pick(keel.Count(), keel.Count().Filter(liveLanes(rr, now)))
@@ -95,7 +95,7 @@ func laneCountQuery(
 func lanePageQuery(
 	req *rateagreementports.ListRateAgreementLanesRequest,
 	now int64,
-) *keel.Query[rateagreement.RateAgreementRule] {
+) *keel.Query[*rateagreement.RateAgreementRule] {
 	rr := rateagreementdb.RateAgreementRules
 
 	return agreementRules(req).
@@ -108,7 +108,7 @@ func lanePageQuery(
 func laneSummaryQuery(
 	req *rateagreementports.ListRateAgreementLanesRequest,
 	now int64,
-) *keel.Query[rateagreement.RateAgreementRule] {
+) *keel.Query[*rateagreement.RateAgreementRule] {
 	rr := rateagreementdb.RateAgreementRules
 	ft := formulatemplatedb.FormulaTemplates
 	rate := keel.DynCase().

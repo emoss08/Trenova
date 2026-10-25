@@ -7,73 +7,152 @@ import (
 
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agent/agentdb"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/assistantartifact"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/assistantartifact/assistantartifactdb"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation/conversationdb"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
-	"github.com/emoss08/trenova/shared/sliceutils"
-	"github.com/jackc/pgx/v5"
 )
 
-const deskThreads = `
-	t.organization_id = $1 AND t.business_unit_id = $2 AND t.user_id = $3
-	AND t.origin <> ALL($4::text[])`
+var deskColumns = []string{
+	"kind", "id", "thread_id", "agent_id", "title", "thread_title", "artifact_kind", "status", "at",
+}
 
-var deskSearchQueries = map[string]string{
-	"chat": `
-SELECT 'chat' AS kind, t.id AS id, t.id AS thread_id, t.agent_definition_id AS agent_id,
-	coalesce(t.title, '') AS title, '' AS thread_title, '' AS artifact_kind, t.status AS status,
-	greatest(t.last_message_at, t.created_at) AS at
-FROM assistant_threads AS t
-WHERE ` + deskThreads + `
-	AND ($5 = '' OR t.title ILIKE $6)
-ORDER BY t.pinned DESC, greatest(t.last_message_at, t.created_at) DESC
-LIMIT $7`,
-	"msg": `
-SELECT * FROM (
-	SELECT DISTINCT ON (m.thread_id, md5(m.content))
-		'msg' AS kind, m.id AS id, t.id AS thread_id,
-		coalesce(m.agent_definition_id, t.agent_definition_id) AS agent_id,
-		left(m.content, 4000) AS title, coalesce(t.title, '') AS thread_title, '' AS artifact_kind,
-		m.role AS status, m.created_at AS at
-	FROM assistant_messages AS m
-	JOIN assistant_threads AS t ON t.id = m.thread_id
-		AND t.organization_id = m.organization_id AND t.business_unit_id = m.business_unit_id
-	WHERE ` + deskThreads + `
-		AND m.role IN ('User', 'Assistant') AND m.content <> ''
-		AND ($5 = '' OR m.content ILIKE $6)
-	ORDER BY m.thread_id, md5(m.content), m.created_at DESC
-) AS distinct_messages
-ORDER BY at DESC
-LIMIT $7`,
-	"art": `
-SELECT * FROM (
-	SELECT DISTINCT ON (coalesce(a.lineage_id, a.id))
-		'art' AS kind, a.id AS id, t.id AS thread_id, t.agent_definition_id AS agent_id,
-		a.title AS title, coalesce(t.title, '') AS thread_title, a.kind AS artifact_kind,
-		a.status AS status, a.created_at AS at
-	FROM assistant_artifacts AS a
-	JOIN assistant_threads AS t ON t.id = a.thread_id
-		AND t.organization_id = a.organization_id AND t.business_unit_id = a.business_unit_id
-	WHERE ` + deskThreads + `
-		AND a.kind <> 'decision_request'
-		AND ($5 = '' OR a.title ILIKE $6)
-	ORDER BY coalesce(a.lineage_id, a.id), a.lineage_seq DESC, a.created_at DESC
-) AS latest
-ORDER BY at DESC
-LIMIT $7`,
-	"dec": `
-SELECT 'dec' AS kind, a.id AS id, t.id AS thread_id, t.agent_definition_id AS agent_id,
-	a.title AS title, coalesce(t.title, '') AS thread_title, a.kind AS artifact_kind,
-	coalesce(p.status::text, a.status) AS status, a.created_at AS at
-FROM assistant_artifacts AS a
-JOIN assistant_threads AS t ON t.id = a.thread_id
-	AND t.organization_id = a.organization_id AND t.business_unit_id = a.business_unit_id
-LEFT JOIN agent_proposals AS p ON p.id = a.proposal_id
-	AND p.organization_id = a.organization_id AND p.business_unit_id = a.business_unit_id
-WHERE ` + deskThreads + `
-	AND a.kind = 'decision_request'
-	AND ($5 = '' OR a.title ILIKE $6)
-ORDER BY a.created_at DESC
-LIMIT $7`,
+type deskTerms struct {
+	req      agentports.SearchDeskRequest
+	term     string
+	contains string
+}
+
+type deskQuery func(terms *deskTerms) keel.Projection
+
+func deskThreads(t *conversationdb.ThreadsTable, terms *deskTerms) keel.Pred {
+	return keel.And(
+		t.UserID.Eq(terms.req.UserID),
+		t.Origin.NotIn(conversation.UnlistedOrigins()...),
+	)
+}
+
+func latestFirst(cte *keel.CTETable, limit int) keel.Projection {
+	cols := make([]keel.Expr, 0, len(deskColumns))
+	for _, name := range deskColumns {
+		cols = append(cols, cte.Col(name))
+	}
+
+	return cte.Query().With(cte).Pick(cols...).Order(cte.Col("at").Desc()).Limit(limit)
+}
+
+func deskChats(terms *deskTerms) keel.Projection {
+	t := conversationdb.Threads
+	at := keel.DynFunc("greatest", t.LastMessageAt, t.CreatedAt)
+
+	return t.Pick(
+		keel.DynLit("chat"),
+		t.ID,
+		t.ID,
+		t.AgentDefinitionID,
+		keel.DynOf(t.Title).Coalesce(""),
+		keel.DynLit(""),
+		keel.DynLit(""),
+		t.Status,
+		at,
+	).
+		Where(
+			deskThreads(t, terms),
+			keel.When(terms.term != "", t.Title.ILike(terms.contains)),
+		).
+		Order(t.Pinned.Desc(), at.Desc()).
+		Limit(terms.req.LimitPerKind)
+}
+
+func deskMessages(terms *deskTerms) keel.Projection {
+	m := conversationdb.Messages
+	t := conversationdb.Threads
+	digest := keel.DynFunc("md5", m.Content)
+
+	return latestFirst(keel.CTE("distinct_messages", deskColumns, m.
+		Join(t, t.ID.EqCol(m.ThreadID)).
+		DistinctOn(m.ThreadID, digest).
+		Pick(
+			keel.DynLit("msg"),
+			m.ID,
+			t.ID,
+			keel.DynOf(m.AgentDefinitionID).Coalesce(t.AgentDefinitionID),
+			keel.DynFunc("left", m.Content, 4000),
+			keel.DynOf(t.Title).Coalesce(""),
+			keel.DynLit(""),
+			m.Role,
+			m.CreatedAt,
+		).
+		Where(
+			deskThreads(t, terms),
+			m.Role.In(conversation.RoleUser, conversation.RoleAssistant),
+			m.Content.Ne(""),
+			keel.When(terms.term != "", m.Content.ILike(terms.contains)),
+		).
+		Order(m.ThreadID.Asc(), digest.Asc(), m.CreatedAt.Desc())), terms.req.LimitPerKind)
+}
+
+func deskArtifacts(terms *deskTerms) keel.Projection {
+	a := assistantartifactdb.Artifacts
+	t := conversationdb.Threads
+	lineage := keel.DynOf(a.LineageID).Coalesce(a.ID)
+
+	return latestFirst(keel.CTE("latest", deskColumns, a.
+		Join(t, t.ID.EqCol(a.ThreadID)).
+		DistinctOn(lineage).
+		Pick(
+			keel.DynLit("art"),
+			a.ID,
+			t.ID,
+			t.AgentDefinitionID,
+			a.Title,
+			keel.DynOf(t.Title).Coalesce(""),
+			a.Kind,
+			a.Status,
+			a.CreatedAt,
+		).
+		Where(
+			deskThreads(t, terms),
+			a.Kind.Ne(assistantartifact.KindDecisionRequest),
+			keel.When(terms.term != "", a.Title.ILike(terms.contains)),
+		).
+		Order(lineage.Asc(), a.LineageSeq.Desc(), a.CreatedAt.Desc())), terms.req.LimitPerKind)
+}
+
+func deskDecisions(terms *deskTerms) keel.Projection {
+	a := assistantartifactdb.Artifacts
+	t := conversationdb.Threads
+	p := agentdb.AgentProposals
+
+	return a.Join(t, t.ID.EqCol(a.ThreadID)).
+		LeftJoin(p, p.ID.EqCol(a.ProposalID)).
+		Pick(
+			keel.DynLit("dec"),
+			a.ID,
+			t.ID,
+			t.AgentDefinitionID,
+			a.Title,
+			keel.DynOf(t.Title).Coalesce(""),
+			a.Kind,
+			keel.DynOf(p.Status).Cast(keel.TypeString).Coalesce(a.Status),
+			a.CreatedAt,
+		).
+		Where(
+			deskThreads(t, terms),
+			a.Kind.Eq(assistantartifact.KindDecisionRequest),
+			keel.When(terms.term != "", a.Title.ILike(terms.contains)),
+		).
+		Order(a.CreatedAt.Desc()).
+		Limit(terms.req.LimitPerKind)
+}
+
+var deskSearchQueries = map[string]deskQuery{
+	"chat": deskChats,
+	"msg":  deskMessages,
+	"art":  deskArtifacts,
+	"dec":  deskDecisions,
 }
 
 func (r *repository) SearchDesk(
@@ -81,63 +160,52 @@ func (r *repository) SearchDesk(
 	req agentports.SearchDeskRequest,
 ) ([]agentports.DeskSearchRow, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]agentports.DeskSearchRow, error) {
-		db := r.db.Keel(ctx)
-		term := strings.TrimSpace(req.Query)
-		contains := ""
-		if term != "" {
-			contains = "%" + likeEscape(term) + "%"
+		if req.LimitPerKind <= 0 {
+			return []agentports.DeskSearchRow{}, nil
 		}
-		unlisted := sliceutils.Strings(conversation.UnlistedOrigins())
-		out := make([]agentports.DeskSearchRow, 0, len(req.Kinds)*req.LimitPerKind)
+		terms := &deskTerms{req: req, term: strings.TrimSpace(req.Query)}
+		if terms.term != "" {
+			terms.contains = "%" + likeEscape(terms.term) + "%"
+		}
+		results := make([][]agentports.DeskSearchRow, 0, len(req.Kinds))
+		items := make([]keel.BatchItem, 0, len(req.Kinds))
 		for _, kind := range req.Kinds {
 			query, ok := deskSearchQueries[kind]
 			if !ok {
 				continue
 			}
-			rows, err := keel.QueryAll(
-				ctx,
-				db,
-				pgx.RowToStructByName[agentports.DeskSearchRow],
-				query,
-				req.TenantInfo.OrgID.String(),
-				req.TenantInfo.BuID.String(),
-				req.UserID.String(),
-				unlisted,
-				term,
-				contains,
-				req.LimitPerKind,
-			)
-			if err != nil {
-				return nil, fmt.Errorf("search desk %s: %w", kind, err)
-			}
+			results = append(results, nil)
+			items = append(items, keel.IntoSlice(query(terms), &results[len(results)-1]))
+		}
+		if len(items) == 0 {
+			return []agentports.DeskSearchRow{}, nil
+		}
+		if err := keel.Batch(ctx, r.db.Keel(ctx), items...); err != nil {
+			return nil, fmt.Errorf("search desk: %w", err)
+		}
+		out := make([]agentports.DeskSearchRow, 0, len(req.Kinds)*req.LimitPerKind)
+		for _, rows := range results {
 			out = append(out, rows...)
 		}
 		return out, nil
 	})
 }
 
-const countQuestionsSinceQuery = `
-SELECT count(*)
-FROM assistant_messages AS m
-JOIN assistant_threads AS t ON t.id = m.thread_id
-	AND t.organization_id = m.organization_id AND t.business_unit_id = m.business_unit_id
-WHERE m.organization_id = $1 AND m.business_unit_id = $2 AND t.user_id = $3
-	AND m.role = 'User' AND m.kind = 'Message' AND m.created_at >= $4`
-
 func (r *repository) CountQuestionsSince(
 	ctx context.Context,
 	req agentports.CountQuestionsSinceRequest,
 ) (int, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (int, error) {
-		count, err := keel.QueryValue[int64](
-			ctx,
-			r.db.Keel(ctx),
-			countQuestionsSinceQuery,
-			req.TenantInfo.OrgID.String(),
-			req.TenantInfo.BuID.String(),
-			req.UserID.String(),
-			req.Since,
-		)
+		m := conversationdb.Messages
+		t := conversationdb.Threads
+		count, err := m.Join(t, t.ID.EqCol(m.ThreadID)).
+			Where(
+				t.UserID.Eq(req.UserID),
+				m.Role.Eq(conversation.RoleUser),
+				m.Kind.Eq(conversation.MessageKindMessage),
+				m.CreatedAt.Gte(req.Since),
+			).
+			Count(ctx, r.db.Keel(ctx))
 		if err != nil {
 			return 0, fmt.Errorf("count questions: %w", err)
 		}

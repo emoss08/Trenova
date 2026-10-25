@@ -139,7 +139,7 @@ func (row *scheduleTargetRow) target() *agentqualityports.QualityScheduleTarget 
 	}
 }
 
-func scheduleTargetQuery(allTenants bool) *keel.Query[tenant.Organization] {
+func scheduleTargetQuery(allTenants bool) *keel.Query[*tenant.Organization] {
 	org := tenantdb.Organizations
 	cases := agentqualitydb.EvalCases.Query()
 	q := org.Query()

@@ -16,8 +16,8 @@ func TestConversationByDocumentQuery(t *testing.T) {
 	active, activeArgs := keeltest.Render(t, conversationByDocumentQuery(
 		shipmentimportchatports.GetShipmentImportConversationRequest{DocumentID: pulid.ID("doc_1")},
 	))
-	assert.Contains(t, active, `ORDER BY sicc."status" = $4 DESC, sicc."updated_at" DESC`)
-	assert.Equal(t, string(shipmentimportchat.ConversationStatusActive), activeArgs[3])
+	assert.Contains(t, active, `ORDER BY sicc."status" = 'Active' DESC, sicc."updated_at" DESC`)
+	assert.Equal(t, []any{"org_1", "bu_1", "doc_1"}, activeArgs)
 	assert.Contains(t, active, "LIMIT 1")
 
 	byStatus, args := keeltest.Render(t, conversationByDocumentQuery(
@@ -27,7 +27,8 @@ func TestConversationByDocumentQuery(t *testing.T) {
 		},
 	))
 	assert.Contains(t, byStatus, `ORDER BY sicc."updated_at" DESC`)
-	assert.Contains(t, args, string(shipmentimportchat.ConversationStatusCompleted))
+	assert.Contains(t, byStatus, `sicc."status" = 'Completed'`)
+	assert.NotContains(t, args, string(shipmentimportchat.ConversationStatusCompleted))
 }
 
 func TestListTurnsQuery(t *testing.T) {
@@ -42,7 +43,7 @@ func TestListTurnsQuery(t *testing.T) {
 func TestArchiveActiveQuery(t *testing.T) {
 	t.Parallel()
 
-	_, args := keeltest.Render(t, archiveActiveQuery(pulid.ID("doc_1")))
-	assert.Contains(t, args, string(shipmentimportchat.ConversationStatusActive))
+	sql, args := keeltest.Render(t, archiveActiveQuery(pulid.ID("doc_1")))
+	assert.Contains(t, sql, `sicc."status" = 'Active'`, sql)
 	assert.Contains(t, args, "doc_1")
 }

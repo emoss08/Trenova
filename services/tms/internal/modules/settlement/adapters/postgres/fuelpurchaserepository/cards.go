@@ -56,7 +56,7 @@ func (r *repository) ListCards(
 				&listquery.Request[fuelpurchase.FuelCard]{
 					Filter: req.Filter,
 					Cursor: req.Cursor,
-					Shape: func(q *keel.Query[fuelpurchase.FuelCard]) *keel.Query[fuelpurchase.FuelCard] {
+					Shape: func(q *keel.Query[*fuelpurchase.FuelCard]) *keel.Query[*fuelpurchase.FuelCard] {
 						return q.Load(cardAssignments(req.IncludeAssignments)...)
 					},
 				},

@@ -95,7 +95,7 @@ var rateQuotesRef = keel.Ref{Table: &rateQuotesTable}
 
 // RateQuotesTable is the table of ratequote.RateQuote.
 type RateQuotesTable struct {
-	keel.Handle[ratequote.RateQuote]
+	keel.Handle[*ratequote.RateQuote]
 	ID                           keelkinds.PulidIDCol
 	BusinessUnitID               keelkinds.PulidIDCol
 	OrganizationID               keelkinds.PulidIDCol
@@ -137,7 +137,7 @@ type RateQuotesTable struct {
 
 // RateQuotes references the rate_quotes table.
 var RateQuotes = &RateQuotesTable{
-	Handle:                       keel.Handle[ratequote.RateQuote]{Ref: &rateQuotesRef},
+	Handle:                       keel.Handle[*ratequote.RateQuote]{Ref: &rateQuotesRef},
 	ID:                           keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &rateQuotesRef, Index: 0}}},
 	BusinessUnitID:               keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &rateQuotesRef, Index: 1}}},
 	OrganizationID:               keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &rateQuotesRef, Index: 2}}},
@@ -180,7 +180,7 @@ var RateQuotes = &RateQuotesTable{
 // BuildRateQuotes builds the handle of rate_quotes for ref. Generated relation and alias methods call it.
 func BuildRateQuotes(r *keel.Ref) *RateQuotesTable {
 	return &RateQuotesTable{
-		Handle:                       keel.Handle[ratequote.RateQuote]{Ref: r},
+		Handle:                       keel.Handle[*ratequote.RateQuote]{Ref: r},
 		ID:                           keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID:               keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID:               keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},

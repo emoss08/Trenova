@@ -55,7 +55,7 @@ var fleetCodesRef = keel.Ref{Table: &fleetCodesTable}
 
 // FleetCodesTable is the table of keeltest.FleetCode.
 type FleetCodesTable struct {
-	keel.Handle[keeltest.FleetCode]
+	keel.Handle[*keeltest.FleetCode]
 	ID             keel.StringCol
 	OrganizationID keel.StringCol
 	BusinessUnitID keel.StringCol
@@ -70,7 +70,7 @@ type FleetCodesTable struct {
 
 // FleetCodes references the fleet_codes table.
 var FleetCodes = &FleetCodesTable{
-	Handle:         keel.Handle[keeltest.FleetCode]{Ref: &fleetCodesRef},
+	Handle:         keel.Handle[*keeltest.FleetCode]{Ref: &fleetCodesRef},
 	ID:             keel.StringCol{Col: keel.Col{Ref: &fleetCodesRef, Index: 0}},
 	OrganizationID: keel.StringCol{Col: keel.Col{Ref: &fleetCodesRef, Index: 1}},
 	BusinessUnitID: keel.StringCol{Col: keel.Col{Ref: &fleetCodesRef, Index: 2}},
@@ -86,7 +86,7 @@ var FleetCodes = &FleetCodesTable{
 // BuildFleetCodes builds the handle of fleet_codes for ref. Generated relation and alias methods call it.
 func BuildFleetCodes(r *keel.Ref) *FleetCodesTable {
 	return &FleetCodesTable{
-		Handle:         keel.Handle[keeltest.FleetCode]{Ref: r},
+		Handle:         keel.Handle[*keeltest.FleetCode]{Ref: r},
 		ID:             keel.StringCol{Col: keel.Col{Ref: r, Index: 0}},
 		OrganizationID: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}},
 		BusinessUnitID: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}},

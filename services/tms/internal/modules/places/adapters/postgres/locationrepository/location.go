@@ -51,7 +51,7 @@ func New(p Params) locationports.LocationRepository {
 	}
 }
 
-func withRelations(q *keel.Query[location.Location]) *keel.Query[location.Location] {
+func withRelations(q *keel.Query[*location.Location]) *keel.Query[*location.Location] {
 	l := locationdb.Locations
 	return q.Load(l.State(), l.LocationCategory())
 }

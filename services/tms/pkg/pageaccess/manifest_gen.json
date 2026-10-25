@@ -1,5 +1,5 @@
 {
-  "version": "sha256:cdfad5b1c3de0a0797d91c24e0c5a02cea53631f9d2901b0c7efc98c3efa055d",
+  "version": "sha256:4d872ea5dfcea01ddfc1523d6e0f52b0b897b106eaf7fa6779267f0200c4359d",
   "screens": [
     {
       "path": "/",
@@ -1048,7 +1048,9 @@
       "reads": [
         "journal_reversal"
       ],
-      "references": [],
+      "references": [
+        "journal_entry"
+      ],
       "declared": []
     },
     {
@@ -40327,7 +40329,18 @@
       "reads": [
         "journal_reversal"
       ],
-      "linked": [],
+      "linked": [
+        {
+          "kind": "journal_entry",
+          "fields": [
+            "accountingDate",
+            "entryNumber",
+            "entryType",
+            "fiscalPeriodId",
+            "status"
+          ]
+        }
+      ],
       "declared": []
     },
     {

@@ -63,7 +63,7 @@ var extractionRolloutsRef = keel.Ref{Table: &extractionRolloutsTable}
 
 // ExtractionRolloutsTable is the table of extractionrollout.ExtractionRollout.
 type ExtractionRolloutsTable struct {
-	keel.Handle[extractionrollout.ExtractionRollout]
+	keel.Handle[*extractionrollout.ExtractionRollout]
 	ID                         keelkinds.PulidIDCol
 	BusinessUnitID             keelkinds.PulidIDCol
 	OrganizationID             keelkinds.PulidIDCol
@@ -85,7 +85,7 @@ type ExtractionRolloutsTable struct {
 
 // ExtractionRollouts references the extraction_rollouts table.
 var ExtractionRollouts = &ExtractionRolloutsTable{
-	Handle:                     keel.Handle[extractionrollout.ExtractionRollout]{Ref: &extractionRolloutsRef},
+	Handle:                     keel.Handle[*extractionrollout.ExtractionRollout]{Ref: &extractionRolloutsRef},
 	ID:                         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &extractionRolloutsRef, Index: 0}}},
 	BusinessUnitID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &extractionRolloutsRef, Index: 1}}},
 	OrganizationID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &extractionRolloutsRef, Index: 2}}},
@@ -108,7 +108,7 @@ var ExtractionRollouts = &ExtractionRolloutsTable{
 // BuildExtractionRollouts builds the handle of extraction_rollouts for ref. Generated relation and alias methods call it.
 func BuildExtractionRollouts(r *keel.Ref) *ExtractionRolloutsTable {
 	return &ExtractionRolloutsTable{
-		Handle:                     keel.Handle[extractionrollout.ExtractionRollout]{Ref: r},
+		Handle:                     keel.Handle[*extractionrollout.ExtractionRollout]{Ref: r},
 		ID:                         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -298,7 +298,7 @@ var rolloutAssignmentsRef = keel.Ref{Table: &rolloutAssignmentsTable}
 
 // RolloutAssignmentsTable is the table of extractionrollout.RolloutAssignment.
 type RolloutAssignmentsTable struct {
-	keel.Handle[extractionrollout.RolloutAssignment]
+	keel.Handle[*extractionrollout.RolloutAssignment]
 	ID                  keelkinds.PulidIDCol
 	BusinessUnitID      keelkinds.PulidIDCol
 	OrganizationID      keelkinds.PulidIDCol
@@ -317,7 +317,7 @@ type RolloutAssignmentsTable struct {
 
 // RolloutAssignments references the extraction_rollout_assignments table.
 var RolloutAssignments = &RolloutAssignmentsTable{
-	Handle:              keel.Handle[extractionrollout.RolloutAssignment]{Ref: &rolloutAssignmentsRef},
+	Handle:              keel.Handle[*extractionrollout.RolloutAssignment]{Ref: &rolloutAssignmentsRef},
 	ID:                  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &rolloutAssignmentsRef, Index: 0}}},
 	BusinessUnitID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &rolloutAssignmentsRef, Index: 1}}},
 	OrganizationID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &rolloutAssignmentsRef, Index: 2}}},
@@ -337,7 +337,7 @@ var RolloutAssignments = &RolloutAssignmentsTable{
 // BuildRolloutAssignments builds the handle of extraction_rollout_assignments for ref. Generated relation and alias methods call it.
 func BuildRolloutAssignments(r *keel.Ref) *RolloutAssignmentsTable {
 	return &RolloutAssignmentsTable{
-		Handle:              keel.Handle[extractionrollout.RolloutAssignment]{Ref: r},
+		Handle:              keel.Handle[*extractionrollout.RolloutAssignment]{Ref: r},
 		ID:                  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},

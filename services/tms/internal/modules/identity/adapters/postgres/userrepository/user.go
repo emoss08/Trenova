@@ -2,6 +2,7 @@ package userrepository
 
 import (
 	"context"
+	"strings"
 	"time"
 
 	"github.com/emoss08/keel"
@@ -62,7 +63,7 @@ func New(p Params) tenantports.UserRepository {
 	}
 }
 
-func tenantUsers(orgID pulid.ID) *keel.Query[tenant.User] {
+func tenantUsers(orgID pulid.ID) *keel.Query[*tenant.User] {
 	u := tenantdb.Users
 	return u.Where(
 		u.CurrentOrganizationID.Eq(orgID),
@@ -75,7 +76,7 @@ func keepVersion() keel.Assignment {
 	return u.Version.ToExpr(u.Version)
 }
 
-func allTenantsWhenSystem[T any](ctx context.Context, q *keel.Query[T]) *keel.Query[T] {
+func allTenantsWhenSystem[T any](ctx context.Context, q *keel.Query[*T]) *keel.Query[*T] {
 	if dbscope.IsSystem(ctx) {
 		return q.AllTenants()
 	}
@@ -169,7 +170,7 @@ func (ur *repository) List(
 				tenantUsers(req.Filter.TenantInfo.OrgID),
 				&listquery.Request[tenant.User]{
 					Filter: req.Filter,
-					Shape: func(q *keel.Query[tenant.User]) *keel.Query[tenant.User] {
+					Shape: func(q *keel.Query[*tenant.User]) *keel.Query[*tenant.User] {
 						return q.Load(u.Assignments().Role())
 					},
 				},
@@ -296,7 +297,7 @@ func (ur *repository) FindByEmail(ctx context.Context, emailAddress string) (*te
 	return dbtx.Read(ctx, ur.db, func(ctx context.Context) (*tenant.User, error) {
 		u := tenantdb.Users
 		user, err := u.AllTenants().
-			Where(u.EmailAddress.Eq(emailAddress)).
+			Where(u.EmailAddress.Lower().Eq(strings.ToLower(emailAddress))).
 			One(ctx, ur.db.Keel(ctx))
 		if err != nil {
 			if dberror.IsNotFoundError(err) {
@@ -714,7 +715,8 @@ func (ur *repository) GetSystemUser(ctx context.Context, columns ...string) (*te
 			return nil, err
 		}
 
-		user, err := q.Where(u.Username.Eq(tenant.SystemUsername)).One(ctx, ur.db.Keel(ctx))
+		user, err := q.Where(u.Username.Lower().Eq(strings.ToLower(tenant.SystemUsername))).
+			One(ctx, ur.db.Keel(ctx))
 		if err != nil {
 			return nil, userErrors.Map(err, tenant.SystemUsername)
 		}

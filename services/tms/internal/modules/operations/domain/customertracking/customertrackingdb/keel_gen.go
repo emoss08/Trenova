@@ -61,7 +61,7 @@ var linksRef = keel.Ref{Table: &linksTable}
 
 // LinksTable is the table of customertracking.Link.
 type LinksTable struct {
-	keel.Handle[customertracking.Link]
+	keel.Handle[*customertracking.Link]
 	ID             keelkinds.PulidIDCol
 	OrganizationID keelkinds.PulidIDCol
 	BusinessUnitID keelkinds.PulidIDCol
@@ -81,7 +81,7 @@ type LinksTable struct {
 
 // Links references the customer_tracking_links table.
 var Links = &LinksTable{
-	Handle:         keel.Handle[customertracking.Link]{Ref: &linksRef},
+	Handle:         keel.Handle[*customertracking.Link]{Ref: &linksRef},
 	ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &linksRef, Index: 0}}},
 	OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &linksRef, Index: 1}}},
 	BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &linksRef, Index: 2}}},
@@ -102,7 +102,7 @@ var Links = &LinksTable{
 // BuildLinks builds the handle of customer_tracking_links for ref. Generated relation and alias methods call it.
 func BuildLinks(r *keel.Ref) *LinksTable {
 	return &LinksTable{
-		Handle:         keel.Handle[customertracking.Link]{Ref: r},
+		Handle:         keel.Handle[*customertracking.Link]{Ref: r},
 		ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -279,7 +279,7 @@ var notificationsRef = keel.Ref{Table: &notificationsTable}
 
 // NotificationsTable is the table of customertracking.Notification.
 type NotificationsTable struct {
-	keel.Handle[customertracking.Notification]
+	keel.Handle[*customertracking.Notification]
 	ID             keelkinds.PulidIDCol
 	OrganizationID keelkinds.PulidIDCol
 	BusinessUnitID keelkinds.PulidIDCol
@@ -305,7 +305,7 @@ type NotificationsTable struct {
 
 // Notifications references the customer_status_notifications table.
 var Notifications = &NotificationsTable{
-	Handle:         keel.Handle[customertracking.Notification]{Ref: &notificationsRef},
+	Handle:         keel.Handle[*customertracking.Notification]{Ref: &notificationsRef},
 	ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &notificationsRef, Index: 0}}},
 	OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &notificationsRef, Index: 1}}},
 	BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &notificationsRef, Index: 2}}},
@@ -332,7 +332,7 @@ var Notifications = &NotificationsTable{
 // BuildNotifications builds the handle of customer_status_notifications for ref. Generated relation and alias methods call it.
 func BuildNotifications(r *keel.Ref) *NotificationsTable {
 	return &NotificationsTable{
-		Handle:         keel.Handle[customertracking.Notification]{Ref: r},
+		Handle:         keel.Handle[*customertracking.Notification]{Ref: r},
 		ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -549,7 +549,7 @@ var profilesRef = keel.Ref{Table: &profilesTable}
 
 // ProfilesTable is the table of customertracking.Profile.
 type ProfilesTable struct {
-	keel.Handle[customertracking.Profile]
+	keel.Handle[*customertracking.Profile]
 	ID                     keelkinds.PulidIDCol
 	OrganizationID         keelkinds.PulidIDCol
 	BusinessUnitID         keelkinds.PulidIDCol
@@ -571,7 +571,7 @@ type ProfilesTable struct {
 
 // Profiles references the customer_tracking_profiles table.
 var Profiles = &ProfilesTable{
-	Handle:                 keel.Handle[customertracking.Profile]{Ref: &profilesRef},
+	Handle:                 keel.Handle[*customertracking.Profile]{Ref: &profilesRef},
 	ID:                     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &profilesRef, Index: 0}}},
 	OrganizationID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &profilesRef, Index: 1}}},
 	BusinessUnitID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &profilesRef, Index: 2}}},
@@ -594,7 +594,7 @@ var Profiles = &ProfilesTable{
 // BuildProfiles builds the handle of customer_tracking_profiles for ref. Generated relation and alias methods call it.
 func BuildProfiles(r *keel.Ref) *ProfilesTable {
 	return &ProfilesTable{
-		Handle:                 keel.Handle[customertracking.Profile]{Ref: r},
+		Handle:                 keel.Handle[*customertracking.Profile]{Ref: r},
 		ID:                     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		OrganizationID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		BusinessUnitID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},

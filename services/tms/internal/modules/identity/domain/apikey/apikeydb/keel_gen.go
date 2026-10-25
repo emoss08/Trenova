@@ -69,7 +69,7 @@ var keysRef = keel.Ref{Table: &keysTable}
 
 // KeysTable is the table of apikey.Key.
 type KeysTable struct {
-	keel.Handle[apikey.Key]
+	keel.Handle[*apikey.Key]
 	ID                keelkinds.PulidIDCol
 	BusinessUnitID    keelkinds.PulidIDCol
 	OrganizationID    keelkinds.PulidIDCol
@@ -92,7 +92,7 @@ type KeysTable struct {
 
 // Keys references the api_keys table.
 var Keys = &KeysTable{
-	Handle:            keel.Handle[apikey.Key]{Ref: &keysRef},
+	Handle:            keel.Handle[*apikey.Key]{Ref: &keysRef},
 	ID:                keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &keysRef, Index: 0}}},
 	BusinessUnitID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &keysRef, Index: 1}}},
 	OrganizationID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &keysRef, Index: 2}}},
@@ -116,7 +116,7 @@ var Keys = &KeysTable{
 // BuildKeys builds the handle of api_keys for ref. Generated relation and alias methods call it.
 func BuildKeys(r *keel.Ref) *KeysTable {
 	return &KeysTable{
-		Handle:            keel.Handle[apikey.Key]{Ref: r},
+		Handle:            keel.Handle[*apikey.Key]{Ref: r},
 		ID:                keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -319,7 +319,7 @@ var permissionsRef = keel.Ref{Table: &permissionsTable}
 
 // PermissionsTable is the table of apikey.Permission.
 type PermissionsTable struct {
-	keel.Handle[apikey.Permission]
+	keel.Handle[*apikey.Permission]
 	ID             keelkinds.PulidIDCol
 	APIKeyID       keelkinds.PulidIDCol
 	BusinessUnitID keelkinds.PulidIDCol
@@ -333,7 +333,7 @@ type PermissionsTable struct {
 
 // Permissions references the api_key_permissions table.
 var Permissions = &PermissionsTable{
-	Handle:         keel.Handle[apikey.Permission]{Ref: &permissionsRef},
+	Handle:         keel.Handle[*apikey.Permission]{Ref: &permissionsRef},
 	ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &permissionsRef, Index: 0}}},
 	APIKeyID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &permissionsRef, Index: 1}}},
 	BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &permissionsRef, Index: 2}}},
@@ -348,7 +348,7 @@ var Permissions = &PermissionsTable{
 // BuildPermissions builds the handle of api_key_permissions for ref. Generated relation and alias methods call it.
 func BuildPermissions(r *keel.Ref) *PermissionsTable {
 	return &PermissionsTable{
-		Handle:         keel.Handle[apikey.Permission]{Ref: r},
+		Handle:         keel.Handle[*apikey.Permission]{Ref: r},
 		ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		APIKeyID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -482,7 +482,7 @@ var usageDailiesRef = keel.Ref{Table: &usageDailiesTable}
 
 // UsageDailiesTable is the table of apikey.UsageDaily.
 type UsageDailiesTable struct {
-	keel.Handle[apikey.UsageDaily]
+	keel.Handle[*apikey.UsageDaily]
 	APIKeyID       keelkinds.PulidIDCol
 	OrganizationID keelkinds.PulidIDCol
 	BusinessUnitID keelkinds.PulidIDCol
@@ -492,7 +492,7 @@ type UsageDailiesTable struct {
 
 // UsageDailies references the api_key_usage_daily table.
 var UsageDailies = &UsageDailiesTable{
-	Handle:         keel.Handle[apikey.UsageDaily]{Ref: &usageDailiesRef},
+	Handle:         keel.Handle[*apikey.UsageDaily]{Ref: &usageDailiesRef},
 	APIKeyID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &usageDailiesRef, Index: 0}}},
 	OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &usageDailiesRef, Index: 1}}},
 	BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &usageDailiesRef, Index: 2}}},
@@ -503,7 +503,7 @@ var UsageDailies = &UsageDailiesTable{
 // BuildUsageDailies builds the handle of api_key_usage_daily for ref. Generated relation and alias methods call it.
 func BuildUsageDailies(r *keel.Ref) *UsageDailiesTable {
 	return &UsageDailiesTable{
-		Handle:         keel.Handle[apikey.UsageDaily]{Ref: r},
+		Handle:         keel.Handle[*apikey.UsageDaily]{Ref: r},
 		APIKeyID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},

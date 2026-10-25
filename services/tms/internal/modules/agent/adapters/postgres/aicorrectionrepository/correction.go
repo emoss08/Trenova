@@ -52,7 +52,7 @@ func New(p Params) aicorrectionports.AICorrectionRepository {
 	}
 }
 
-func crossing[T any](q *keel.Query[T], allTenants bool) *keel.Query[T] {
+func crossing[T any](q *keel.Query[*T], allTenants bool) *keel.Query[*T] {
 	if allTenants {
 		return q.AllTenants()
 	}
@@ -267,7 +267,7 @@ func (r *repository) WeeklyTrainableTotalsByProvider(
 
 func (r *repository) weeklyTotals(
 	ctx context.Context,
-	q *keel.Query[aicorrection.Correction],
+	q *keel.Query[*aicorrection.Correction],
 	task aicorrection.Task,
 	since int64,
 ) ([]aicorrection.WeekTotal, error) {

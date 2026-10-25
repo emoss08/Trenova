@@ -78,7 +78,7 @@ func New(cfg *Config) Result {
 	return Result{Source: &source{cfg: cfg}}
 }
 
-func Filtered[T any](table keel.Handle[T]) BaseQuery {
+func Filtered[T any](table keel.Handle[*T]) BaseQuery {
 	return func(
 		_ context.Context,
 		scope *permissionports.TableInsightScope,

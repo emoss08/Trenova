@@ -50,7 +50,7 @@ func TestRunReads_KeepConversationRunsToTheirOwnerForAPerson(t *testing.T) {
 	t.Parallel()
 
 	for _, query := range readEveryWay(t, agentports.PersonRunRead(pulid.MustNew("usr_"))) {
-		assert.Contains(t, query, `ar."subject_type" <> $`, query)
+		assert.Contains(t, query, `ar."subject_type" <> 'AssistantThread'`, query)
 		assert.Contains(t, query, `EXISTS (SELECT`, query)
 		assert.Contains(t, query, `"assistant_threads" readable_thread`, query)
 		assert.Contains(t, query, `readable_thread."id" = ar."subject_id"`, query)
@@ -62,7 +62,7 @@ func TestRunReads_ShowNoConversationRunsToAReaderWhoIsNoPerson(t *testing.T) {
 	t.Parallel()
 
 	for _, query := range readEveryWay(t, agentports.PersonRunRead(pulid.Nil)) {
-		assert.Contains(t, query, `ar."subject_type" <> $`, query)
+		assert.Contains(t, query, `ar."subject_type" <> 'AssistantThread'`, query)
 		assert.NotContains(t, query, "assistant_threads", query)
 	}
 }
@@ -71,7 +71,7 @@ func TestRunReads_LeaveAnUnattendedReadAsItWas(t *testing.T) {
 	t.Parallel()
 
 	for _, query := range readEveryWay(t, agentports.UnattendedRunRead()) {
-		assert.NotContains(t, query, `ar."subject_type" <> $`, query)
+		assert.NotContains(t, query, `ar."subject_type" <> 'AssistantThread'`, query)
 		assert.NotContains(t, query, "assistant_threads", query)
 	}
 }

@@ -1526,7 +1526,7 @@ func bilStampOf[T any](rows []T, fn func(T) stamp) []stamp {
 func bilInsert[T any](
 	ctx context.Context,
 	tx *keel.DB,
-	h keel.Handle[T],
+	h keel.Handle[*T],
 	rows []*T,
 	fn func(*T) stamp,
 	createdOnly bool,

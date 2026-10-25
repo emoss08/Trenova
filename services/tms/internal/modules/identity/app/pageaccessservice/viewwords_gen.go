@@ -418,7 +418,7 @@ var linkedFrom = map[string][]string{
 	"inbound_mailbox":             {"inbound_message"},
 	"invoice":                     {"customer_payment", "factoring_submission", "invoice_dispute"},
 	"invoice_dispute":             {"invoice"},
-	"journal_entry":               {"manual_journal"},
+	"journal_entry":               {"journal_reversal", "manual_journal"},
 	"journal_reversal":            {"journal_entry"},
 	"location":                    {"carrier", "detention", "distance_override", "service_failure", "shipment"},
 	"location_category":           {"location"},

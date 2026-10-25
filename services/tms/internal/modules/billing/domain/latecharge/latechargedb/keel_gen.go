@@ -71,7 +71,7 @@ var lateChargeAssessmentsRef = keel.Ref{Table: &lateChargeAssessmentsTable}
 
 // LateChargeAssessmentsTable is the table of latecharge.LateChargeAssessment.
 type LateChargeAssessmentsTable struct {
-	keel.Handle[latecharge.LateChargeAssessment]
+	keel.Handle[*latecharge.LateChargeAssessment]
 	ID                    keelkinds.PulidIDCol
 	OrganizationID        keelkinds.PulidIDCol
 	BusinessUnitID        keelkinds.PulidIDCol
@@ -94,7 +94,7 @@ type LateChargeAssessmentsTable struct {
 
 // LateChargeAssessments references the late_charge_assessments table.
 var LateChargeAssessments = &LateChargeAssessmentsTable{
-	Handle:                keel.Handle[latecharge.LateChargeAssessment]{Ref: &lateChargeAssessmentsRef},
+	Handle:                keel.Handle[*latecharge.LateChargeAssessment]{Ref: &lateChargeAssessmentsRef},
 	ID:                    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &lateChargeAssessmentsRef, Index: 0}}},
 	OrganizationID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &lateChargeAssessmentsRef, Index: 1}}},
 	BusinessUnitID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &lateChargeAssessmentsRef, Index: 2}}},
@@ -118,7 +118,7 @@ var LateChargeAssessments = &LateChargeAssessmentsTable{
 // BuildLateChargeAssessments builds the handle of late_charge_assessments for ref. Generated relation and alias methods call it.
 func BuildLateChargeAssessments(r *keel.Ref) *LateChargeAssessmentsTable {
 	return &LateChargeAssessmentsTable{
-		Handle:                keel.Handle[latecharge.LateChargeAssessment]{Ref: r},
+		Handle:                keel.Handle[*latecharge.LateChargeAssessment]{Ref: r},
 		ID:                    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		OrganizationID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		BusinessUnitID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},

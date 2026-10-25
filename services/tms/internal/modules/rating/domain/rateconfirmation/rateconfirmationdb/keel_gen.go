@@ -81,7 +81,7 @@ var rateConfirmationsRef = keel.Ref{Table: &rateConfirmationsTable}
 
 // RateConfirmationsTable is the table of rateconfirmation.RateConfirmation.
 type RateConfirmationsTable struct {
-	keel.Handle[rateconfirmation.RateConfirmation]
+	keel.Handle[*rateconfirmation.RateConfirmation]
 	ID                  keelkinds.PulidIDCol
 	BusinessUnitID      keelkinds.PulidIDCol
 	OrganizationID      keelkinds.PulidIDCol
@@ -111,7 +111,7 @@ type RateConfirmationsTable struct {
 
 // RateConfirmations references the rate_confirmations table.
 var RateConfirmations = &RateConfirmationsTable{
-	Handle:              keel.Handle[rateconfirmation.RateConfirmation]{Ref: &rateConfirmationsRef},
+	Handle:              keel.Handle[*rateconfirmation.RateConfirmation]{Ref: &rateConfirmationsRef},
 	ID:                  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &rateConfirmationsRef, Index: 0}}},
 	BusinessUnitID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &rateConfirmationsRef, Index: 1}}},
 	OrganizationID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &rateConfirmationsRef, Index: 2}}},
@@ -142,7 +142,7 @@ var RateConfirmations = &RateConfirmationsTable{
 // BuildRateConfirmations builds the handle of rate_confirmations for ref. Generated relation and alias methods call it.
 func BuildRateConfirmations(r *keel.Ref) *RateConfirmationsTable {
 	return &RateConfirmationsTable{
-		Handle:              keel.Handle[rateconfirmation.RateConfirmation]{Ref: r},
+		Handle:              keel.Handle[*rateconfirmation.RateConfirmation]{Ref: r},
 		ID:                  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -420,7 +420,7 @@ var rateConfirmationTokensRef = keel.Ref{Table: &rateConfirmationTokensTable}
 
 // RateConfirmationTokensTable is the table of rateconfirmation.RateConfirmationToken.
 type RateConfirmationTokensTable struct {
-	keel.Handle[rateconfirmation.RateConfirmationToken]
+	keel.Handle[*rateconfirmation.RateConfirmationToken]
 	ID                 keelkinds.PulidIDCol
 	BusinessUnitID     keelkinds.PulidIDCol
 	OrganizationID     keelkinds.PulidIDCol
@@ -436,7 +436,7 @@ type RateConfirmationTokensTable struct {
 
 // RateConfirmationTokens references the rate_confirmation_tokens table.
 var RateConfirmationTokens = &RateConfirmationTokensTable{
-	Handle:             keel.Handle[rateconfirmation.RateConfirmationToken]{Ref: &rateConfirmationTokensRef},
+	Handle:             keel.Handle[*rateconfirmation.RateConfirmationToken]{Ref: &rateConfirmationTokensRef},
 	ID:                 keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &rateConfirmationTokensRef, Index: 0}}},
 	BusinessUnitID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &rateConfirmationTokensRef, Index: 1}}},
 	OrganizationID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &rateConfirmationTokensRef, Index: 2}}},
@@ -453,7 +453,7 @@ var RateConfirmationTokens = &RateConfirmationTokensTable{
 // BuildRateConfirmationTokens builds the handle of rate_confirmation_tokens for ref. Generated relation and alias methods call it.
 func BuildRateConfirmationTokens(r *keel.Ref) *RateConfirmationTokensTable {
 	return &RateConfirmationTokensTable{
-		Handle:             keel.Handle[rateconfirmation.RateConfirmationToken]{Ref: r},
+		Handle:             keel.Handle[*rateconfirmation.RateConfirmationToken]{Ref: r},
 		ID:                 keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},

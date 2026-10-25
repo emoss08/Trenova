@@ -86,7 +86,7 @@ var carrierInvoicesRef = keel.Ref{Table: &carrierInvoicesTable}
 
 // CarrierInvoicesTable is the table of edi.CarrierInvoice.
 type CarrierInvoicesTable struct {
-	keel.Handle[edi.CarrierInvoice]
+	keel.Handle[*edi.CarrierInvoice]
 	ID                   keelkinds.PulidIDCol
 	BusinessUnitID       keelkinds.PulidIDCol
 	OrganizationID       keelkinds.PulidIDCol
@@ -121,7 +121,7 @@ type CarrierInvoicesTable struct {
 
 // CarrierInvoices references the edi_carrier_invoices table.
 var CarrierInvoices = &CarrierInvoicesTable{
-	Handle:               keel.Handle[edi.CarrierInvoice]{Ref: &carrierInvoicesRef},
+	Handle:               keel.Handle[*edi.CarrierInvoice]{Ref: &carrierInvoicesRef},
 	ID:                   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &carrierInvoicesRef, Index: 0}}},
 	BusinessUnitID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &carrierInvoicesRef, Index: 1}}},
 	OrganizationID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &carrierInvoicesRef, Index: 2}}},
@@ -157,7 +157,7 @@ var CarrierInvoices = &CarrierInvoicesTable{
 // BuildCarrierInvoices builds the handle of edi_carrier_invoices for ref. Generated relation and alias methods call it.
 func BuildCarrierInvoices(r *keel.Ref) *CarrierInvoicesTable {
 	return &CarrierInvoicesTable{
-		Handle:               keel.Handle[edi.CarrierInvoice]{Ref: r},
+		Handle:               keel.Handle[*edi.CarrierInvoice]{Ref: r},
 		ID:                   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -458,7 +458,7 @@ var eDICodeListDefinitionsRef = keel.Ref{Table: &eDICodeListDefinitionsTable}
 
 // EDICodeListDefinitionsTable is the table of edi.EDICodeListDefinition.
 type EDICodeListDefinitionsTable struct {
-	keel.Handle[edi.EDICodeListDefinition]
+	keel.Handle[*edi.EDICodeListDefinition]
 	ID               keelkinds.PulidIDCol
 	TransactionSetID keelkinds.PulidIDCol
 	Direction        DocumentDirectionCol
@@ -472,7 +472,7 @@ type EDICodeListDefinitionsTable struct {
 
 // EDICodeListDefinitions references the edi_code_list_definitions table.
 var EDICodeListDefinitions = &EDICodeListDefinitionsTable{
-	Handle:           keel.Handle[edi.EDICodeListDefinition]{Ref: &eDICodeListDefinitionsRef},
+	Handle:           keel.Handle[*edi.EDICodeListDefinition]{Ref: &eDICodeListDefinitionsRef},
 	ID:               keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &eDICodeListDefinitionsRef, Index: 0}}},
 	TransactionSetID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &eDICodeListDefinitionsRef, Index: 1}}},
 	Direction:        DocumentDirectionCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &eDICodeListDefinitionsRef, Index: 2}}},
@@ -487,7 +487,7 @@ var EDICodeListDefinitions = &EDICodeListDefinitionsTable{
 // BuildEDICodeListDefinitions builds the handle of edi_code_list_definitions for ref. Generated relation and alias methods call it.
 func BuildEDICodeListDefinitions(r *keel.Ref) *EDICodeListDefinitionsTable {
 	return &EDICodeListDefinitionsTable{
-		Handle:           keel.Handle[edi.EDICodeListDefinition]{Ref: r},
+		Handle:           keel.Handle[*edi.EDICodeListDefinition]{Ref: r},
 		ID:               keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		TransactionSetID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		Direction:        DocumentDirectionCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -629,7 +629,7 @@ var eDICommunicationProfilesRef = keel.Ref{Table: &eDICommunicationProfilesTable
 
 // EDICommunicationProfilesTable is the table of edi.EDICommunicationProfile.
 type EDICommunicationProfilesTable struct {
-	keel.Handle[edi.EDICommunicationProfile]
+	keel.Handle[*edi.EDICommunicationProfile]
 	ID                keelkinds.PulidIDCol
 	BusinessUnitID    keelkinds.PulidIDCol
 	OrganizationID    keelkinds.PulidIDCol
@@ -653,7 +653,7 @@ type EDICommunicationProfilesTable struct {
 
 // EDICommunicationProfiles references the edi_communication_profiles table.
 var EDICommunicationProfiles = &EDICommunicationProfilesTable{
-	Handle:            keel.Handle[edi.EDICommunicationProfile]{Ref: &eDICommunicationProfilesRef},
+	Handle:            keel.Handle[*edi.EDICommunicationProfile]{Ref: &eDICommunicationProfilesRef},
 	ID:                keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &eDICommunicationProfilesRef, Index: 0}}},
 	BusinessUnitID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &eDICommunicationProfilesRef, Index: 1}}},
 	OrganizationID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &eDICommunicationProfilesRef, Index: 2}}},
@@ -678,7 +678,7 @@ var EDICommunicationProfiles = &EDICommunicationProfilesTable{
 // BuildEDICommunicationProfiles builds the handle of edi_communication_profiles for ref. Generated relation and alias methods call it.
 func BuildEDICommunicationProfiles(r *keel.Ref) *EDICommunicationProfilesTable {
 	return &EDICommunicationProfilesTable{
-		Handle:            keel.Handle[edi.EDICommunicationProfile]{Ref: r},
+		Handle:            keel.Handle[*edi.EDICommunicationProfile]{Ref: r},
 		ID:                keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -936,7 +936,7 @@ var eDIConnectionsRef = keel.Ref{Table: &eDIConnectionsTable}
 
 // EDIConnectionsTable is the table of edi.EDIConnection.
 type EDIConnectionsTable struct {
-	keel.Handle[edi.EDIConnection]
+	keel.Handle[*edi.EDIConnection]
 	ID                   keelkinds.PulidIDCol
 	BusinessUnitID       keelkinds.PulidIDCol
 	SourceOrganizationID keelkinds.PulidIDCol
@@ -966,7 +966,7 @@ type EDIConnectionsTable struct {
 
 // EDIConnections references the edi_connections table.
 var EDIConnections = &EDIConnectionsTable{
-	Handle:               keel.Handle[edi.EDIConnection]{Ref: &eDIConnectionsRef},
+	Handle:               keel.Handle[*edi.EDIConnection]{Ref: &eDIConnectionsRef},
 	ID:                   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &eDIConnectionsRef, Index: 0}}},
 	BusinessUnitID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &eDIConnectionsRef, Index: 1}}},
 	SourceOrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &eDIConnectionsRef, Index: 2}}},
@@ -997,7 +997,7 @@ var EDIConnections = &EDIConnectionsTable{
 // BuildEDIConnections builds the handle of edi_connections for ref. Generated relation and alias methods call it.
 func BuildEDIConnections(r *keel.Ref) *EDIConnectionsTable {
 	return &EDIConnectionsTable{
-		Handle:               keel.Handle[edi.EDIConnection]{Ref: r},
+		Handle:               keel.Handle[*edi.EDIConnection]{Ref: r},
 		ID:                   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		SourceOrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -1288,7 +1288,7 @@ var eDIControlNumberSequencesRef = keel.Ref{Table: &eDIControlNumberSequencesTab
 
 // EDIControlNumberSequencesTable is the table of edi.EDIControlNumberSequence.
 type EDIControlNumberSequencesTable struct {
-	keel.Handle[edi.EDIControlNumberSequence]
+	keel.Handle[*edi.EDIControlNumberSequence]
 	ID             keelkinds.PulidIDCol
 	BusinessUnitID keelkinds.PulidIDCol
 	OrganizationID keelkinds.PulidIDCol
@@ -1305,7 +1305,7 @@ type EDIControlNumberSequencesTable struct {
 
 // EDIControlNumberSequences references the edi_control_number_sequences table.
 var EDIControlNumberSequences = &EDIControlNumberSequencesTable{
-	Handle:         keel.Handle[edi.EDIControlNumberSequence]{Ref: &eDIControlNumberSequencesRef},
+	Handle:         keel.Handle[*edi.EDIControlNumberSequence]{Ref: &eDIControlNumberSequencesRef},
 	ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &eDIControlNumberSequencesRef, Index: 0}}},
 	BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &eDIControlNumberSequencesRef, Index: 1}}},
 	OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &eDIControlNumberSequencesRef, Index: 2}}},
@@ -1323,7 +1323,7 @@ var EDIControlNumberSequences = &EDIControlNumberSequencesTable{
 // BuildEDIControlNumberSequences builds the handle of edi_control_number_sequences for ref. Generated relation and alias methods call it.
 func BuildEDIControlNumberSequences(r *keel.Ref) *EDIControlNumberSequencesTable {
 	return &EDIControlNumberSequencesTable{
-		Handle:         keel.Handle[edi.EDIControlNumberSequence]{Ref: r},
+		Handle:         keel.Handle[*edi.EDIControlNumberSequence]{Ref: r},
 		ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -1481,7 +1481,7 @@ var eDIDocumentTypesRef = keel.Ref{Table: &eDIDocumentTypesTable}
 
 // EDIDocumentTypesTable is the table of edi.EDIDocumentType.
 type EDIDocumentTypesTable struct {
-	keel.Handle[edi.EDIDocumentType]
+	keel.Handle[*edi.EDIDocumentType]
 	ID               keelkinds.PulidIDCol
 	Code             keel.StringCol
 	Name             keel.StringCol
@@ -1497,7 +1497,7 @@ type EDIDocumentTypesTable struct {
 
 // EDIDocumentTypes references the edi_document_types table.
 var EDIDocumentTypes = &EDIDocumentTypesTable{
-	Handle:           keel.Handle[edi.EDIDocumentType]{Ref: &eDIDocumentTypesRef},
+	Handle:           keel.Handle[*edi.EDIDocumentType]{Ref: &eDIDocumentTypesRef},
 	ID:               keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &eDIDocumentTypesRef, Index: 0}}},
 	Code:             keel.StringCol{Col: keel.Col{Ref: &eDIDocumentTypesRef, Index: 1}},
 	Name:             keel.StringCol{Col: keel.Col{Ref: &eDIDocumentTypesRef, Index: 2}},
@@ -1514,7 +1514,7 @@ var EDIDocumentTypes = &EDIDocumentTypesTable{
 // BuildEDIDocumentTypes builds the handle of edi_document_types for ref. Generated relation and alias methods call it.
 func BuildEDIDocumentTypes(r *keel.Ref) *EDIDocumentTypesTable {
 	return &EDIDocumentTypesTable{
-		Handle:           keel.Handle[edi.EDIDocumentType]{Ref: r},
+		Handle:           keel.Handle[*edi.EDIDocumentType]{Ref: r},
 		ID:               keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		Code:             keel.StringCol{Col: keel.Col{Ref: r, Index: 1}},
 		Name:             keel.StringCol{Col: keel.Col{Ref: r, Index: 2}},
@@ -1685,7 +1685,7 @@ var eDIInboundFilesRef = keel.Ref{Table: &eDIInboundFilesTable}
 
 // EDIInboundFilesTable is the table of edi.EDIInboundFile.
 type EDIInboundFilesTable struct {
-	keel.Handle[edi.EDIInboundFile]
+	keel.Handle[*edi.EDIInboundFile]
 	ID                       keelkinds.PulidIDCol
 	BusinessUnitID           keelkinds.PulidIDCol
 	OrganizationID           keelkinds.PulidIDCol
@@ -1715,7 +1715,7 @@ type EDIInboundFilesTable struct {
 
 // EDIInboundFiles references the edi_inbound_files table.
 var EDIInboundFiles = &EDIInboundFilesTable{
-	Handle:                   keel.Handle[edi.EDIInboundFile]{Ref: &eDIInboundFilesRef},
+	Handle:                   keel.Handle[*edi.EDIInboundFile]{Ref: &eDIInboundFilesRef},
 	ID:                       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &eDIInboundFilesRef, Index: 0}}},
 	BusinessUnitID:           keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &eDIInboundFilesRef, Index: 1}}},
 	OrganizationID:           keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &eDIInboundFilesRef, Index: 2}}},
@@ -1746,7 +1746,7 @@ var EDIInboundFiles = &EDIInboundFilesTable{
 // BuildEDIInboundFiles builds the handle of edi_inbound_files for ref. Generated relation and alias methods call it.
 func BuildEDIInboundFiles(r *keel.Ref) *EDIInboundFilesTable {
 	return &EDIInboundFilesTable{
-		Handle:                   keel.Handle[edi.EDIInboundFile]{Ref: r},
+		Handle:                   keel.Handle[*edi.EDIInboundFile]{Ref: r},
 		ID:                       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID:           keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID:           keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -2022,7 +2022,7 @@ var eDIMappingProfilesRef = keel.Ref{Table: &eDIMappingProfilesTable}
 
 // EDIMappingProfilesTable is the table of edi.EDIMappingProfile.
 type EDIMappingProfilesTable struct {
-	keel.Handle[edi.EDIMappingProfile]
+	keel.Handle[*edi.EDIMappingProfile]
 	ID             keelkinds.PulidIDCol
 	BusinessUnitID keelkinds.PulidIDCol
 	OrganizationID keelkinds.PulidIDCol
@@ -2038,7 +2038,7 @@ type EDIMappingProfilesTable struct {
 
 // EDIMappingProfiles references the edi_mapping_profiles table.
 var EDIMappingProfiles = &EDIMappingProfilesTable{
-	Handle:         keel.Handle[edi.EDIMappingProfile]{Ref: &eDIMappingProfilesRef},
+	Handle:         keel.Handle[*edi.EDIMappingProfile]{Ref: &eDIMappingProfilesRef},
 	ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &eDIMappingProfilesRef, Index: 0}}},
 	BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &eDIMappingProfilesRef, Index: 1}}},
 	OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &eDIMappingProfilesRef, Index: 2}}},
@@ -2055,7 +2055,7 @@ var EDIMappingProfiles = &EDIMappingProfilesTable{
 // BuildEDIMappingProfiles builds the handle of edi_mapping_profiles for ref. Generated relation and alias methods call it.
 func BuildEDIMappingProfiles(r *keel.Ref) *EDIMappingProfilesTable {
 	return &EDIMappingProfilesTable{
-		Handle:         keel.Handle[edi.EDIMappingProfile]{Ref: r},
+		Handle:         keel.Handle[*edi.EDIMappingProfile]{Ref: r},
 		ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -2222,7 +2222,7 @@ var eDIMappingProfileItemsRef = keel.Ref{Table: &eDIMappingProfileItemsTable}
 
 // EDIMappingProfileItemsTable is the table of edi.EDIMappingProfileItem.
 type EDIMappingProfileItemsTable struct {
-	keel.Handle[edi.EDIMappingProfileItem]
+	keel.Handle[*edi.EDIMappingProfileItem]
 	ID               keelkinds.PulidIDCol
 	BusinessUnitID   keelkinds.PulidIDCol
 	OrganizationID   keelkinds.PulidIDCol
@@ -2242,7 +2242,7 @@ type EDIMappingProfileItemsTable struct {
 
 // EDIMappingProfileItems references the edi_mapping_profile_items table.
 var EDIMappingProfileItems = &EDIMappingProfileItemsTable{
-	Handle:           keel.Handle[edi.EDIMappingProfileItem]{Ref: &eDIMappingProfileItemsRef},
+	Handle:           keel.Handle[*edi.EDIMappingProfileItem]{Ref: &eDIMappingProfileItemsRef},
 	ID:               keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &eDIMappingProfileItemsRef, Index: 0}}},
 	BusinessUnitID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &eDIMappingProfileItemsRef, Index: 1}}},
 	OrganizationID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &eDIMappingProfileItemsRef, Index: 2}}},
@@ -2263,7 +2263,7 @@ var EDIMappingProfileItems = &EDIMappingProfileItemsTable{
 // BuildEDIMappingProfileItems builds the handle of edi_mapping_profile_items for ref. Generated relation and alias methods call it.
 func BuildEDIMappingProfileItems(r *keel.Ref) *EDIMappingProfileItemsTable {
 	return &EDIMappingProfileItemsTable{
-		Handle:           keel.Handle[edi.EDIMappingProfileItem]{Ref: r},
+		Handle:           keel.Handle[*edi.EDIMappingProfileItem]{Ref: r},
 		ID:               keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -2495,7 +2495,7 @@ var eDIMessagesRef = keel.Ref{Table: &eDIMessagesTable}
 
 // EDIMessagesTable is the table of edi.EDIMessage.
 type EDIMessagesTable struct {
-	keel.Handle[edi.EDIMessage]
+	keel.Handle[*edi.EDIMessage]
 	ID                       keelkinds.PulidIDCol
 	BusinessUnitID           keelkinds.PulidIDCol
 	OrganizationID           keelkinds.PulidIDCol
@@ -2544,7 +2544,7 @@ type EDIMessagesTable struct {
 
 // EDIMessages references the edi_messages table.
 var EDIMessages = &EDIMessagesTable{
-	Handle:                   keel.Handle[edi.EDIMessage]{Ref: &eDIMessagesRef},
+	Handle:                   keel.Handle[*edi.EDIMessage]{Ref: &eDIMessagesRef},
 	ID:                       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &eDIMessagesRef, Index: 0}}},
 	BusinessUnitID:           keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &eDIMessagesRef, Index: 1}}},
 	OrganizationID:           keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &eDIMessagesRef, Index: 2}}},
@@ -2594,7 +2594,7 @@ var EDIMessages = &EDIMessagesTable{
 // BuildEDIMessages builds the handle of edi_messages for ref. Generated relation and alias methods call it.
 func BuildEDIMessages(r *keel.Ref) *EDIMessagesTable {
 	return &EDIMessagesTable{
-		Handle:                   keel.Handle[edi.EDIMessage]{Ref: r},
+		Handle:                   keel.Handle[*edi.EDIMessage]{Ref: r},
 		ID:                       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID:           keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID:           keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -3016,7 +3016,7 @@ var eDIMessageValidationErrorsRef = keel.Ref{Table: &eDIMessageValidationErrorsT
 
 // EDIMessageValidationErrorsTable is the table of edi.EDIMessageValidationError.
 type EDIMessageValidationErrorsTable struct {
-	keel.Handle[edi.EDIMessageValidationError]
+	keel.Handle[*edi.EDIMessageValidationError]
 	ID              keelkinds.PulidIDCol
 	BusinessUnitID  keelkinds.PulidIDCol
 	OrganizationID  keelkinds.PulidIDCol
@@ -3033,7 +3033,7 @@ type EDIMessageValidationErrorsTable struct {
 
 // EDIMessageValidationErrors references the edi_message_validation_errors table.
 var EDIMessageValidationErrors = &EDIMessageValidationErrorsTable{
-	Handle:          keel.Handle[edi.EDIMessageValidationError]{Ref: &eDIMessageValidationErrorsRef},
+	Handle:          keel.Handle[*edi.EDIMessageValidationError]{Ref: &eDIMessageValidationErrorsRef},
 	ID:              keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &eDIMessageValidationErrorsRef, Index: 0}}},
 	BusinessUnitID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &eDIMessageValidationErrorsRef, Index: 1}}},
 	OrganizationID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &eDIMessageValidationErrorsRef, Index: 2}}},
@@ -3051,7 +3051,7 @@ var EDIMessageValidationErrors = &EDIMessageValidationErrorsTable{
 // BuildEDIMessageValidationErrors builds the handle of edi_message_validation_errors for ref. Generated relation and alias methods call it.
 func BuildEDIMessageValidationErrors(r *keel.Ref) *EDIMessageValidationErrorsTable {
 	return &EDIMessageValidationErrorsTable{
-		Handle:          keel.Handle[edi.EDIMessageValidationError]{Ref: r},
+		Handle:          keel.Handle[*edi.EDIMessageValidationError]{Ref: r},
 		ID:              keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -3230,7 +3230,7 @@ var eDIPartnersRef = keel.Ref{Table: &eDIPartnersTable}
 
 // EDIPartnersTable is the table of edi.EDIPartner.
 type EDIPartnersTable struct {
-	keel.Handle[edi.EDIPartner]
+	keel.Handle[*edi.EDIPartner]
 	ID                      keelkinds.PulidIDCol
 	BusinessUnitID          keelkinds.PulidIDCol
 	OrganizationID          keelkinds.PulidIDCol
@@ -3261,7 +3261,7 @@ type EDIPartnersTable struct {
 
 // EDIPartners references the edi_partners table.
 var EDIPartners = &EDIPartnersTable{
-	Handle:                  keel.Handle[edi.EDIPartner]{Ref: &eDIPartnersRef},
+	Handle:                  keel.Handle[*edi.EDIPartner]{Ref: &eDIPartnersRef},
 	ID:                      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &eDIPartnersRef, Index: 0}}},
 	BusinessUnitID:          keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &eDIPartnersRef, Index: 1}}},
 	OrganizationID:          keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &eDIPartnersRef, Index: 2}}},
@@ -3293,7 +3293,7 @@ var EDIPartners = &EDIPartnersTable{
 // BuildEDIPartners builds the handle of edi_partners for ref. Generated relation and alias methods call it.
 func BuildEDIPartners(r *keel.Ref) *EDIPartnersTable {
 	return &EDIPartnersTable{
-		Handle:                  keel.Handle[edi.EDIPartner]{Ref: r},
+		Handle:                  keel.Handle[*edi.EDIPartner]{Ref: r},
 		ID:                      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID:          keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID:          keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -3619,7 +3619,7 @@ var eDIPartnerDocumentProfilesRef = keel.Ref{Table: &eDIPartnerDocumentProfilesT
 
 // EDIPartnerDocumentProfilesTable is the table of edi.EDIPartnerDocumentProfile.
 type EDIPartnerDocumentProfilesTable struct {
-	keel.Handle[edi.EDIPartnerDocumentProfile]
+	keel.Handle[*edi.EDIPartnerDocumentProfile]
 	ID                           keelkinds.PulidIDCol
 	BusinessUnitID               keelkinds.PulidIDCol
 	OrganizationID               keelkinds.PulidIDCol
@@ -3647,7 +3647,7 @@ type EDIPartnerDocumentProfilesTable struct {
 
 // EDIPartnerDocumentProfiles references the edi_partner_document_profiles table.
 var EDIPartnerDocumentProfiles = &EDIPartnerDocumentProfilesTable{
-	Handle:                       keel.Handle[edi.EDIPartnerDocumentProfile]{Ref: &eDIPartnerDocumentProfilesRef},
+	Handle:                       keel.Handle[*edi.EDIPartnerDocumentProfile]{Ref: &eDIPartnerDocumentProfilesRef},
 	ID:                           keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &eDIPartnerDocumentProfilesRef, Index: 0}}},
 	BusinessUnitID:               keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &eDIPartnerDocumentProfilesRef, Index: 1}}},
 	OrganizationID:               keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &eDIPartnerDocumentProfilesRef, Index: 2}}},
@@ -3676,7 +3676,7 @@ var EDIPartnerDocumentProfiles = &EDIPartnerDocumentProfilesTable{
 // BuildEDIPartnerDocumentProfiles builds the handle of edi_partner_document_profiles for ref. Generated relation and alias methods call it.
 func BuildEDIPartnerDocumentProfiles(r *keel.Ref) *EDIPartnerDocumentProfilesTable {
 	return &EDIPartnerDocumentProfilesTable{
-		Handle:                       keel.Handle[edi.EDIPartnerDocumentProfile]{Ref: r},
+		Handle:                       keel.Handle[*edi.EDIPartnerDocumentProfile]{Ref: r},
 		ID:                           keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID:               keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID:               keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -3954,7 +3954,7 @@ var eDIPartnerSettingFieldsRef = keel.Ref{Table: &eDIPartnerSettingFieldsTable}
 
 // EDIPartnerSettingFieldsTable is the table of edi.EDIPartnerSettingField.
 type EDIPartnerSettingFieldsTable struct {
-	keel.Handle[edi.EDIPartnerSettingField]
+	keel.Handle[*edi.EDIPartnerSettingField]
 	ID                keelkinds.PulidIDCol
 	SchemaID          keelkinds.PulidIDCol
 	Path              keel.StringCol
@@ -3979,7 +3979,7 @@ type EDIPartnerSettingFieldsTable struct {
 
 // EDIPartnerSettingFields references the edi_partner_setting_fields table.
 var EDIPartnerSettingFields = &EDIPartnerSettingFieldsTable{
-	Handle:            keel.Handle[edi.EDIPartnerSettingField]{Ref: &eDIPartnerSettingFieldsRef},
+	Handle:            keel.Handle[*edi.EDIPartnerSettingField]{Ref: &eDIPartnerSettingFieldsRef},
 	ID:                keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &eDIPartnerSettingFieldsRef, Index: 0}}},
 	SchemaID:          keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &eDIPartnerSettingFieldsRef, Index: 1}}},
 	Path:              keel.StringCol{Col: keel.Col{Ref: &eDIPartnerSettingFieldsRef, Index: 2}},
@@ -4005,7 +4005,7 @@ var EDIPartnerSettingFields = &EDIPartnerSettingFieldsTable{
 // BuildEDIPartnerSettingFields builds the handle of edi_partner_setting_fields for ref. Generated relation and alias methods call it.
 func BuildEDIPartnerSettingFields(r *keel.Ref) *EDIPartnerSettingFieldsTable {
 	return &EDIPartnerSettingFieldsTable{
-		Handle:            keel.Handle[edi.EDIPartnerSettingField]{Ref: r},
+		Handle:            keel.Handle[*edi.EDIPartnerSettingField]{Ref: r},
 		ID:                keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		SchemaID:          keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		Path:              keel.StringCol{Col: keel.Col{Ref: r, Index: 2}},
@@ -4225,7 +4225,7 @@ var eDIPartnerSettingSchemasRef = keel.Ref{Table: &eDIPartnerSettingSchemasTable
 
 // EDIPartnerSettingSchemasTable is the table of edi.EDIPartnerSettingSchema.
 type EDIPartnerSettingSchemasTable struct {
-	keel.Handle[edi.EDIPartnerSettingSchema]
+	keel.Handle[*edi.EDIPartnerSettingSchema]
 	ID             keelkinds.PulidIDCol
 	BusinessUnitID keelkinds.PulidIDCol
 	OrganizationID keelkinds.PulidIDCol
@@ -4244,7 +4244,7 @@ type EDIPartnerSettingSchemasTable struct {
 
 // EDIPartnerSettingSchemas references the edi_partner_setting_schemas table.
 var EDIPartnerSettingSchemas = &EDIPartnerSettingSchemasTable{
-	Handle:         keel.Handle[edi.EDIPartnerSettingSchema]{Ref: &eDIPartnerSettingSchemasRef},
+	Handle:         keel.Handle[*edi.EDIPartnerSettingSchema]{Ref: &eDIPartnerSettingSchemasRef},
 	ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &eDIPartnerSettingSchemasRef, Index: 0}}},
 	BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &eDIPartnerSettingSchemasRef, Index: 1}}},
 	OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &eDIPartnerSettingSchemasRef, Index: 2}}},
@@ -4264,7 +4264,7 @@ var EDIPartnerSettingSchemas = &EDIPartnerSettingSchemasTable{
 // BuildEDIPartnerSettingSchemas builds the handle of edi_partner_setting_schemas for ref. Generated relation and alias methods call it.
 func BuildEDIPartnerSettingSchemas(r *keel.Ref) *EDIPartnerSettingSchemasTable {
 	return &EDIPartnerSettingSchemasTable{
-		Handle:         keel.Handle[edi.EDIPartnerSettingSchema]{Ref: r},
+		Handle:         keel.Handle[*edi.EDIPartnerSettingSchema]{Ref: r},
 		ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -4447,7 +4447,7 @@ var eDISourceContextFieldsRef = keel.Ref{Table: &eDISourceContextFieldsTable}
 
 // EDISourceContextFieldsTable is the table of edi.EDISourceContextField.
 type EDISourceContextFieldsTable struct {
-	keel.Handle[edi.EDISourceContextField]
+	keel.Handle[*edi.EDISourceContextField]
 	ID          keelkinds.PulidIDCol
 	SchemaID    keelkinds.PulidIDCol
 	Path        keel.StringCol
@@ -4465,7 +4465,7 @@ type EDISourceContextFieldsTable struct {
 
 // EDISourceContextFields references the edi_source_context_fields table.
 var EDISourceContextFields = &EDISourceContextFieldsTable{
-	Handle:      keel.Handle[edi.EDISourceContextField]{Ref: &eDISourceContextFieldsRef},
+	Handle:      keel.Handle[*edi.EDISourceContextField]{Ref: &eDISourceContextFieldsRef},
 	ID:          keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &eDISourceContextFieldsRef, Index: 0}}},
 	SchemaID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &eDISourceContextFieldsRef, Index: 1}}},
 	Path:        keel.StringCol{Col: keel.Col{Ref: &eDISourceContextFieldsRef, Index: 2}},
@@ -4484,7 +4484,7 @@ var EDISourceContextFields = &EDISourceContextFieldsTable{
 // BuildEDISourceContextFields builds the handle of edi_source_context_fields for ref. Generated relation and alias methods call it.
 func BuildEDISourceContextFields(r *keel.Ref) *EDISourceContextFieldsTable {
 	return &EDISourceContextFieldsTable{
-		Handle:      keel.Handle[edi.EDISourceContextField]{Ref: r},
+		Handle:      keel.Handle[*edi.EDISourceContextField]{Ref: r},
 		ID:          keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		SchemaID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		Path:        keel.StringCol{Col: keel.Col{Ref: r, Index: 2}},
@@ -4658,7 +4658,7 @@ var eDISourceContextSchemasRef = keel.Ref{Table: &eDISourceContextSchemasTable}
 
 // EDISourceContextSchemasTable is the table of edi.EDISourceContextSchema.
 type EDISourceContextSchemasTable struct {
-	keel.Handle[edi.EDISourceContextSchema]
+	keel.Handle[*edi.EDISourceContextSchema]
 	ID             keelkinds.PulidIDCol
 	BusinessUnitID keelkinds.PulidIDCol
 	OrganizationID keelkinds.PulidIDCol
@@ -4677,7 +4677,7 @@ type EDISourceContextSchemasTable struct {
 
 // EDISourceContextSchemas references the edi_source_context_schemas table.
 var EDISourceContextSchemas = &EDISourceContextSchemasTable{
-	Handle:         keel.Handle[edi.EDISourceContextSchema]{Ref: &eDISourceContextSchemasRef},
+	Handle:         keel.Handle[*edi.EDISourceContextSchema]{Ref: &eDISourceContextSchemasRef},
 	ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &eDISourceContextSchemasRef, Index: 0}}},
 	BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &eDISourceContextSchemasRef, Index: 1}}},
 	OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &eDISourceContextSchemasRef, Index: 2}}},
@@ -4697,7 +4697,7 @@ var EDISourceContextSchemas = &EDISourceContextSchemasTable{
 // BuildEDISourceContextSchemas builds the handle of edi_source_context_schemas for ref. Generated relation and alias methods call it.
 func BuildEDISourceContextSchemas(r *keel.Ref) *EDISourceContextSchemasTable {
 	return &EDISourceContextSchemasTable{
-		Handle:         keel.Handle[edi.EDISourceContextSchema]{Ref: r},
+		Handle:         keel.Handle[*edi.EDISourceContextSchema]{Ref: r},
 		ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -4881,7 +4881,7 @@ var eDITemplatesRef = keel.Ref{Table: &eDITemplatesTable}
 
 // EDITemplatesTable is the table of edi.EDITemplate.
 type EDITemplatesTable struct {
-	keel.Handle[edi.EDITemplate]
+	keel.Handle[*edi.EDITemplate]
 	ID             keelkinds.PulidIDCol
 	BusinessUnitID keelkinds.PulidIDCol
 	OrganizationID keelkinds.PulidIDCol
@@ -4900,7 +4900,7 @@ type EDITemplatesTable struct {
 
 // EDITemplates references the edi_templates table.
 var EDITemplates = &EDITemplatesTable{
-	Handle:         keel.Handle[edi.EDITemplate]{Ref: &eDITemplatesRef},
+	Handle:         keel.Handle[*edi.EDITemplate]{Ref: &eDITemplatesRef},
 	ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &eDITemplatesRef, Index: 0}}},
 	BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &eDITemplatesRef, Index: 1}}},
 	OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &eDITemplatesRef, Index: 2}}},
@@ -4920,7 +4920,7 @@ var EDITemplates = &EDITemplatesTable{
 // BuildEDITemplates builds the handle of edi_templates for ref. Generated relation and alias methods call it.
 func BuildEDITemplates(r *keel.Ref) *EDITemplatesTable {
 	return &EDITemplatesTable{
-		Handle:         keel.Handle[edi.EDITemplate]{Ref: r},
+		Handle:         keel.Handle[*edi.EDITemplate]{Ref: r},
 		ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -5106,7 +5106,7 @@ var eDITemplateScriptLibrariesRef = keel.Ref{Table: &eDITemplateScriptLibrariesT
 
 // EDITemplateScriptLibrariesTable is the table of edi.EDITemplateScriptLibrary.
 type EDITemplateScriptLibrariesTable struct {
-	keel.Handle[edi.EDITemplateScriptLibrary]
+	keel.Handle[*edi.EDITemplateScriptLibrary]
 	ID                keelkinds.PulidIDCol
 	BusinessUnitID    keelkinds.PulidIDCol
 	OrganizationID    keelkinds.PulidIDCol
@@ -5123,7 +5123,7 @@ type EDITemplateScriptLibrariesTable struct {
 
 // EDITemplateScriptLibraries references the edi_template_script_libraries table.
 var EDITemplateScriptLibraries = &EDITemplateScriptLibrariesTable{
-	Handle:            keel.Handle[edi.EDITemplateScriptLibrary]{Ref: &eDITemplateScriptLibrariesRef},
+	Handle:            keel.Handle[*edi.EDITemplateScriptLibrary]{Ref: &eDITemplateScriptLibrariesRef},
 	ID:                keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &eDITemplateScriptLibrariesRef, Index: 0}}},
 	BusinessUnitID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &eDITemplateScriptLibrariesRef, Index: 1}}},
 	OrganizationID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &eDITemplateScriptLibrariesRef, Index: 2}}},
@@ -5141,7 +5141,7 @@ var EDITemplateScriptLibraries = &EDITemplateScriptLibrariesTable{
 // BuildEDITemplateScriptLibraries builds the handle of edi_template_script_libraries for ref. Generated relation and alias methods call it.
 func BuildEDITemplateScriptLibraries(r *keel.Ref) *EDITemplateScriptLibrariesTable {
 	return &EDITemplateScriptLibrariesTable{
-		Handle:            keel.Handle[edi.EDITemplateScriptLibrary]{Ref: r},
+		Handle:            keel.Handle[*edi.EDITemplateScriptLibrary]{Ref: r},
 		ID:                keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -5307,7 +5307,7 @@ var eDITemplateSegmentsRef = keel.Ref{Table: &eDITemplateSegmentsTable}
 
 // EDITemplateSegmentsTable is the table of edi.EDITemplateSegment.
 type EDITemplateSegmentsTable struct {
-	keel.Handle[edi.EDITemplateSegment]
+	keel.Handle[*edi.EDITemplateSegment]
 	ID                keelkinds.PulidIDCol
 	BusinessUnitID    keelkinds.PulidIDCol
 	OrganizationID    keelkinds.PulidIDCol
@@ -5328,7 +5328,7 @@ type EDITemplateSegmentsTable struct {
 
 // EDITemplateSegments references the edi_template_segments table.
 var EDITemplateSegments = &EDITemplateSegmentsTable{
-	Handle:            keel.Handle[edi.EDITemplateSegment]{Ref: &eDITemplateSegmentsRef},
+	Handle:            keel.Handle[*edi.EDITemplateSegment]{Ref: &eDITemplateSegmentsRef},
 	ID:                keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &eDITemplateSegmentsRef, Index: 0}}},
 	BusinessUnitID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &eDITemplateSegmentsRef, Index: 1}}},
 	OrganizationID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &eDITemplateSegmentsRef, Index: 2}}},
@@ -5350,7 +5350,7 @@ var EDITemplateSegments = &EDITemplateSegmentsTable{
 // BuildEDITemplateSegments builds the handle of edi_template_segments for ref. Generated relation and alias methods call it.
 func BuildEDITemplateSegments(r *keel.Ref) *EDITemplateSegmentsTable {
 	return &EDITemplateSegmentsTable{
-		Handle:            keel.Handle[edi.EDITemplateSegment]{Ref: r},
+		Handle:            keel.Handle[*edi.EDITemplateSegment]{Ref: r},
 		ID:                keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -5563,7 +5563,7 @@ var eDITemplateVersionsRef = keel.Ref{Table: &eDITemplateVersionsTable}
 
 // EDITemplateVersionsTable is the table of edi.EDITemplateVersion.
 type EDITemplateVersionsTable struct {
-	keel.Handle[edi.EDITemplateVersion]
+	keel.Handle[*edi.EDITemplateVersion]
 	ID                 keelkinds.PulidIDCol
 	BusinessUnitID     keelkinds.PulidIDCol
 	OrganizationID     keelkinds.PulidIDCol
@@ -5597,7 +5597,7 @@ type EDITemplateVersionsTable struct {
 
 // EDITemplateVersions references the edi_template_versions table.
 var EDITemplateVersions = &EDITemplateVersionsTable{
-	Handle:             keel.Handle[edi.EDITemplateVersion]{Ref: &eDITemplateVersionsRef},
+	Handle:             keel.Handle[*edi.EDITemplateVersion]{Ref: &eDITemplateVersionsRef},
 	ID:                 keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &eDITemplateVersionsRef, Index: 0}}},
 	BusinessUnitID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &eDITemplateVersionsRef, Index: 1}}},
 	OrganizationID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &eDITemplateVersionsRef, Index: 2}}},
@@ -5632,7 +5632,7 @@ var EDITemplateVersions = &EDITemplateVersionsTable{
 // BuildEDITemplateVersions builds the handle of edi_template_versions for ref. Generated relation and alias methods call it.
 func BuildEDITemplateVersions(r *keel.Ref) *EDITemplateVersionsTable {
 	return &EDITemplateVersionsTable{
-		Handle:             keel.Handle[edi.EDITemplateVersion]{Ref: r},
+		Handle:             keel.Handle[*edi.EDITemplateVersion]{Ref: r},
 		ID:                 keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -5954,7 +5954,7 @@ var eDITestCasesRef = keel.Ref{Table: &eDITestCasesTable}
 
 // EDITestCasesTable is the table of edi.EDITestCase.
 type EDITestCasesTable struct {
-	keel.Handle[edi.EDITestCase]
+	keel.Handle[*edi.EDITestCase]
 	ID                       keelkinds.PulidIDCol
 	BusinessUnitID           keelkinds.PulidIDCol
 	OrganizationID           keelkinds.PulidIDCol
@@ -5977,7 +5977,7 @@ type EDITestCasesTable struct {
 
 // EDITestCases references the edi_test_cases table.
 var EDITestCases = &EDITestCasesTable{
-	Handle:                   keel.Handle[edi.EDITestCase]{Ref: &eDITestCasesRef},
+	Handle:                   keel.Handle[*edi.EDITestCase]{Ref: &eDITestCasesRef},
 	ID:                       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &eDITestCasesRef, Index: 0}}},
 	BusinessUnitID:           keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &eDITestCasesRef, Index: 1}}},
 	OrganizationID:           keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &eDITestCasesRef, Index: 2}}},
@@ -6001,7 +6001,7 @@ var EDITestCases = &EDITestCasesTable{
 // BuildEDITestCases builds the handle of edi_test_cases for ref. Generated relation and alias methods call it.
 func BuildEDITestCases(r *keel.Ref) *EDITestCasesTable {
 	return &EDITestCasesTable{
-		Handle:                   keel.Handle[edi.EDITestCase]{Ref: r},
+		Handle:                   keel.Handle[*edi.EDITestCase]{Ref: r},
 		ID:                       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID:           keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID:           keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -6203,7 +6203,7 @@ var eDITransactionElementDefinitionsRef = keel.Ref{Table: &eDITransactionElement
 
 // EDITransactionElementDefinitionsTable is the table of edi.EDITransactionElementDefinition.
 type EDITransactionElementDefinitionsTable struct {
-	keel.Handle[edi.EDITransactionElementDefinition]
+	keel.Handle[*edi.EDITransactionElementDefinition]
 	ID               keelkinds.PulidIDCol
 	TransactionSetID keelkinds.PulidIDCol
 	Direction        DocumentDirectionCol
@@ -6223,7 +6223,7 @@ type EDITransactionElementDefinitionsTable struct {
 
 // EDITransactionElementDefinitions references the edi_transaction_element_definitions table.
 var EDITransactionElementDefinitions = &EDITransactionElementDefinitionsTable{
-	Handle:           keel.Handle[edi.EDITransactionElementDefinition]{Ref: &eDITransactionElementDefinitionsRef},
+	Handle:           keel.Handle[*edi.EDITransactionElementDefinition]{Ref: &eDITransactionElementDefinitionsRef},
 	ID:               keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &eDITransactionElementDefinitionsRef, Index: 0}}},
 	TransactionSetID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &eDITransactionElementDefinitionsRef, Index: 1}}},
 	Direction:        DocumentDirectionCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &eDITransactionElementDefinitionsRef, Index: 2}}},
@@ -6244,7 +6244,7 @@ var EDITransactionElementDefinitions = &EDITransactionElementDefinitionsTable{
 // BuildEDITransactionElementDefinitions builds the handle of edi_transaction_element_definitions for ref. Generated relation and alias methods call it.
 func BuildEDITransactionElementDefinitions(r *keel.Ref) *EDITransactionElementDefinitionsTable {
 	return &EDITransactionElementDefinitionsTable{
-		Handle:           keel.Handle[edi.EDITransactionElementDefinition]{Ref: r},
+		Handle:           keel.Handle[*edi.EDITransactionElementDefinition]{Ref: r},
 		ID:               keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		TransactionSetID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		Direction:        DocumentDirectionCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -6413,7 +6413,7 @@ var eDITransactionLoopDefinitionsRef = keel.Ref{Table: &eDITransactionLoopDefini
 
 // EDITransactionLoopDefinitionsTable is the table of edi.EDITransactionLoopDefinition.
 type EDITransactionLoopDefinitionsTable struct {
-	keel.Handle[edi.EDITransactionLoopDefinition]
+	keel.Handle[*edi.EDITransactionLoopDefinition]
 	ID               keelkinds.PulidIDCol
 	TransactionSetID keelkinds.PulidIDCol
 	Direction        DocumentDirectionCol
@@ -6430,7 +6430,7 @@ type EDITransactionLoopDefinitionsTable struct {
 
 // EDITransactionLoopDefinitions references the edi_transaction_loop_definitions table.
 var EDITransactionLoopDefinitions = &EDITransactionLoopDefinitionsTable{
-	Handle:           keel.Handle[edi.EDITransactionLoopDefinition]{Ref: &eDITransactionLoopDefinitionsRef},
+	Handle:           keel.Handle[*edi.EDITransactionLoopDefinition]{Ref: &eDITransactionLoopDefinitionsRef},
 	ID:               keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &eDITransactionLoopDefinitionsRef, Index: 0}}},
 	TransactionSetID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &eDITransactionLoopDefinitionsRef, Index: 1}}},
 	Direction:        DocumentDirectionCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &eDITransactionLoopDefinitionsRef, Index: 2}}},
@@ -6448,7 +6448,7 @@ var EDITransactionLoopDefinitions = &EDITransactionLoopDefinitionsTable{
 // BuildEDITransactionLoopDefinitions builds the handle of edi_transaction_loop_definitions for ref. Generated relation and alias methods call it.
 func BuildEDITransactionLoopDefinitions(r *keel.Ref) *EDITransactionLoopDefinitionsTable {
 	return &EDITransactionLoopDefinitionsTable{
-		Handle:           keel.Handle[edi.EDITransactionLoopDefinition]{Ref: r},
+		Handle:           keel.Handle[*edi.EDITransactionLoopDefinition]{Ref: r},
 		ID:               keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		TransactionSetID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		Direction:        DocumentDirectionCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -6603,7 +6603,7 @@ var eDITransactionSegmentDefinitionsRef = keel.Ref{Table: &eDITransactionSegment
 
 // EDITransactionSegmentDefinitionsTable is the table of edi.EDITransactionSegmentDefinition.
 type EDITransactionSegmentDefinitionsTable struct {
-	keel.Handle[edi.EDITransactionSegmentDefinition]
+	keel.Handle[*edi.EDITransactionSegmentDefinition]
 	ID               keelkinds.PulidIDCol
 	TransactionSetID keelkinds.PulidIDCol
 	Direction        DocumentDirectionCol
@@ -6622,7 +6622,7 @@ type EDITransactionSegmentDefinitionsTable struct {
 
 // EDITransactionSegmentDefinitions references the edi_transaction_segment_definitions table.
 var EDITransactionSegmentDefinitions = &EDITransactionSegmentDefinitionsTable{
-	Handle:           keel.Handle[edi.EDITransactionSegmentDefinition]{Ref: &eDITransactionSegmentDefinitionsRef},
+	Handle:           keel.Handle[*edi.EDITransactionSegmentDefinition]{Ref: &eDITransactionSegmentDefinitionsRef},
 	ID:               keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &eDITransactionSegmentDefinitionsRef, Index: 0}}},
 	TransactionSetID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &eDITransactionSegmentDefinitionsRef, Index: 1}}},
 	Direction:        DocumentDirectionCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &eDITransactionSegmentDefinitionsRef, Index: 2}}},
@@ -6642,7 +6642,7 @@ var EDITransactionSegmentDefinitions = &EDITransactionSegmentDefinitionsTable{
 // BuildEDITransactionSegmentDefinitions builds the handle of edi_transaction_segment_definitions for ref. Generated relation and alias methods call it.
 func BuildEDITransactionSegmentDefinitions(r *keel.Ref) *EDITransactionSegmentDefinitionsTable {
 	return &EDITransactionSegmentDefinitionsTable{
-		Handle:           keel.Handle[edi.EDITransactionSegmentDefinition]{Ref: r},
+		Handle:           keel.Handle[*edi.EDITransactionSegmentDefinition]{Ref: r},
 		ID:               keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		TransactionSetID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		Direction:        DocumentDirectionCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -6807,7 +6807,7 @@ var eDITransactionSetsRef = keel.Ref{Table: &eDITransactionSetsTable}
 
 // EDITransactionSetsTable is the table of edi.EDITransactionSet.
 type EDITransactionSetsTable struct {
-	keel.Handle[edi.EDITransactionSet]
+	keel.Handle[*edi.EDITransactionSet]
 	ID             keelkinds.PulidIDCol
 	Standard       EDIStandardCol
 	Code           TransactionSetCol
@@ -6821,7 +6821,7 @@ type EDITransactionSetsTable struct {
 
 // EDITransactionSets references the edi_transaction_sets table.
 var EDITransactionSets = &EDITransactionSetsTable{
-	Handle:         keel.Handle[edi.EDITransactionSet]{Ref: &eDITransactionSetsRef},
+	Handle:         keel.Handle[*edi.EDITransactionSet]{Ref: &eDITransactionSetsRef},
 	ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &eDITransactionSetsRef, Index: 0}}},
 	Standard:       EDIStandardCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &eDITransactionSetsRef, Index: 1}}},
 	Code:           TransactionSetCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &eDITransactionSetsRef, Index: 2}}},
@@ -6836,7 +6836,7 @@ var EDITransactionSets = &EDITransactionSetsTable{
 // BuildEDITransactionSets builds the handle of edi_transaction_sets for ref. Generated relation and alias methods call it.
 func BuildEDITransactionSets(r *keel.Ref) *EDITransactionSetsTable {
 	return &EDITransactionSetsTable{
-		Handle:         keel.Handle[edi.EDITransactionSet]{Ref: r},
+		Handle:         keel.Handle[*edi.EDITransactionSet]{Ref: r},
 		ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		Standard:       EDIStandardCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		Code:           TransactionSetCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -6991,7 +6991,7 @@ var eDITransfersRef = keel.Ref{Table: &eDITransfersTable}
 
 // EDITransfersTable is the table of edi.EDITransfer.
 type EDITransfersTable struct {
-	keel.Handle[edi.EDITransfer]
+	keel.Handle[*edi.EDITransfer]
 	ID                    keelkinds.PulidIDCol
 	SourceOrganizationID  keelkinds.PulidIDCol
 	SourceBusinessUnitID  keelkinds.PulidIDCol
@@ -7026,7 +7026,7 @@ type EDITransfersTable struct {
 
 // EDITransfers references the edi_load_tender_transfers table.
 var EDITransfers = &EDITransfersTable{
-	Handle:                keel.Handle[edi.EDITransfer]{Ref: &eDITransfersRef},
+	Handle:                keel.Handle[*edi.EDITransfer]{Ref: &eDITransfersRef},
 	ID:                    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &eDITransfersRef, Index: 0}}},
 	SourceOrganizationID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &eDITransfersRef, Index: 1}}},
 	SourceBusinessUnitID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &eDITransfersRef, Index: 2}}},
@@ -7062,7 +7062,7 @@ var EDITransfers = &EDITransfersTable{
 // BuildEDITransfers builds the handle of edi_load_tender_transfers for ref. Generated relation and alias methods call it.
 func BuildEDITransfers(r *keel.Ref) *EDITransfersTable {
 	return &EDITransfersTable{
-		Handle:                keel.Handle[edi.EDITransfer]{Ref: r},
+		Handle:                keel.Handle[*edi.EDITransfer]{Ref: r},
 		ID:                    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		SourceOrganizationID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		SourceBusinessUnitID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -7381,7 +7381,7 @@ var shipmentLinksRef = keel.Ref{Table: &shipmentLinksTable}
 
 // ShipmentLinksTable is the table of edi.ShipmentLink.
 type ShipmentLinksTable struct {
-	keel.Handle[edi.ShipmentLink]
+	keel.Handle[*edi.ShipmentLink]
 	ID                   keelkinds.PulidIDCol
 	BusinessUnitID       keelkinds.PulidIDCol
 	SourceOrganizationID keelkinds.PulidIDCol
@@ -7400,7 +7400,7 @@ type ShipmentLinksTable struct {
 
 // ShipmentLinks references the edi_shipment_links table.
 var ShipmentLinks = &ShipmentLinksTable{
-	Handle:               keel.Handle[edi.ShipmentLink]{Ref: &shipmentLinksRef},
+	Handle:               keel.Handle[*edi.ShipmentLink]{Ref: &shipmentLinksRef},
 	ID:                   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &shipmentLinksRef, Index: 0}}},
 	BusinessUnitID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &shipmentLinksRef, Index: 1}}},
 	SourceOrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &shipmentLinksRef, Index: 2}}},
@@ -7420,7 +7420,7 @@ var ShipmentLinks = &ShipmentLinksTable{
 // BuildShipmentLinks builds the handle of edi_shipment_links for ref. Generated relation and alias methods call it.
 func BuildShipmentLinks(r *keel.Ref) *ShipmentLinksTable {
 	return &ShipmentLinksTable{
-		Handle:               keel.Handle[edi.ShipmentLink]{Ref: r},
+		Handle:               keel.Handle[*edi.ShipmentLink]{Ref: r},
 		ID:                   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		SourceOrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -7614,7 +7614,7 @@ var tenderChangesRef = keel.Ref{Table: &tenderChangesTable}
 
 // TenderChangesTable is the table of edi.TenderChange.
 type TenderChangesTable struct {
-	keel.Handle[edi.TenderChange]
+	keel.Handle[*edi.TenderChange]
 	ID                      keelkinds.PulidIDCol
 	BusinessUnitID          keelkinds.PulidIDCol
 	SourceOrganizationID    keelkinds.PulidIDCol
@@ -7649,7 +7649,7 @@ type TenderChangesTable struct {
 
 // TenderChanges references the edi_tender_changes table.
 var TenderChanges = &TenderChangesTable{
-	Handle:                  keel.Handle[edi.TenderChange]{Ref: &tenderChangesRef},
+	Handle:                  keel.Handle[*edi.TenderChange]{Ref: &tenderChangesRef},
 	ID:                      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &tenderChangesRef, Index: 0}}},
 	BusinessUnitID:          keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &tenderChangesRef, Index: 1}}},
 	SourceOrganizationID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &tenderChangesRef, Index: 2}}},
@@ -7685,7 +7685,7 @@ var TenderChanges = &TenderChangesTable{
 // BuildTenderChanges builds the handle of edi_tender_changes for ref. Generated relation and alias methods call it.
 func BuildTenderChanges(r *keel.Ref) *TenderChangesTable {
 	return &TenderChangesTable{
-		Handle:                  keel.Handle[edi.TenderChange]{Ref: r},
+		Handle:                  keel.Handle[*edi.TenderChange]{Ref: r},
 		ID:                      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID:          keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		SourceOrganizationID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -7984,7 +7984,7 @@ var tenderRecipientsRef = keel.Ref{Table: &tenderRecipientsTable}
 
 // TenderRecipientsTable is the table of edi.TenderRecipient.
 type TenderRecipientsTable struct {
-	keel.Handle[edi.TenderRecipient]
+	keel.Handle[*edi.TenderRecipient]
 	ID                       keelkinds.PulidIDCol
 	BusinessUnitID           keelkinds.PulidIDCol
 	SourceOrganizationID     keelkinds.PulidIDCol
@@ -8011,7 +8011,7 @@ type TenderRecipientsTable struct {
 
 // TenderRecipients references the edi_tender_recipients table.
 var TenderRecipients = &TenderRecipientsTable{
-	Handle:                   keel.Handle[edi.TenderRecipient]{Ref: &tenderRecipientsRef},
+	Handle:                   keel.Handle[*edi.TenderRecipient]{Ref: &tenderRecipientsRef},
 	ID:                       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &tenderRecipientsRef, Index: 0}}},
 	BusinessUnitID:           keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &tenderRecipientsRef, Index: 1}}},
 	SourceOrganizationID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &tenderRecipientsRef, Index: 2}}},
@@ -8039,7 +8039,7 @@ var TenderRecipients = &TenderRecipientsTable{
 // BuildTenderRecipients builds the handle of edi_tender_recipients for ref. Generated relation and alias methods call it.
 func BuildTenderRecipients(r *keel.Ref) *TenderRecipientsTable {
 	return &TenderRecipientsTable{
-		Handle:                   keel.Handle[edi.TenderRecipient]{Ref: r},
+		Handle:                   keel.Handle[*edi.TenderRecipient]{Ref: r},
 		ID:                       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID:           keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		SourceOrganizationID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -8280,7 +8280,7 @@ var transferChangesRef = keel.Ref{Table: &transferChangesTable}
 
 // TransferChangesTable is the table of edi.TransferChange.
 type TransferChangesTable struct {
-	keel.Handle[edi.TransferChange]
+	keel.Handle[*edi.TransferChange]
 	ID                    keelkinds.PulidIDCol
 	BusinessUnitID        keelkinds.PulidIDCol
 	ShipmentLinkID        keelkinds.PulidIDCol
@@ -8308,7 +8308,7 @@ type TransferChangesTable struct {
 
 // TransferChanges references the edi_transfer_changes table.
 var TransferChanges = &TransferChangesTable{
-	Handle:                keel.Handle[edi.TransferChange]{Ref: &transferChangesRef},
+	Handle:                keel.Handle[*edi.TransferChange]{Ref: &transferChangesRef},
 	ID:                    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &transferChangesRef, Index: 0}}},
 	BusinessUnitID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &transferChangesRef, Index: 1}}},
 	ShipmentLinkID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &transferChangesRef, Index: 2}}},
@@ -8337,7 +8337,7 @@ var TransferChanges = &TransferChangesTable{
 // BuildTransferChanges builds the handle of edi_transfer_changes for ref. Generated relation and alias methods call it.
 func BuildTransferChanges(r *keel.Ref) *TransferChangesTable {
 	return &TransferChangesTable{
-		Handle:                keel.Handle[edi.TransferChange]{Ref: r},
+		Handle:                keel.Handle[*edi.TransferChange]{Ref: r},
 		ID:                    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		ShipmentLinkID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},

@@ -138,7 +138,7 @@ func forDay(
 	roleKey briefing.RoleKey,
 	briefingDate string,
 	userID *pulid.ID,
-) *keel.Query[briefing.Briefing] {
+) *keel.Query[*briefing.Briefing] {
 	b := briefingdb.Briefings
 	return b.Where(
 		b.RoleKey.Eq(roleKey),
@@ -161,7 +161,7 @@ func (r *repository) List(
 	})
 }
 
-func listQuery(req *briefingports.ListBriefingsQuery) *keel.Query[briefing.Briefing] {
+func listQuery(req *briefingports.ListBriefingsQuery) *keel.Query[*briefing.Briefing] {
 	limit := req.Limit
 	if limit <= 0 {
 		limit = defaultListLimit

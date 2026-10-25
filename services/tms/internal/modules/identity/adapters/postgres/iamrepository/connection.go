@@ -17,7 +17,7 @@ func listIAMConnection[T any](
 	ctx context.Context,
 	db *keel.DB,
 	name string,
-	q *keel.Query[T],
+	q *keel.Query[*T],
 	req *iamports.ListIAMConnectionRequest,
 ) (*pagination.CursorListResult[*T], error) {
 	result, err := listquery.Connection(ctx, db, q, &listquery.Request[T]{

@@ -59,7 +59,7 @@ func (r *repository) List(
 				fy.Query(),
 				&listquery.Request[fiscalyear.FiscalYear]{
 					Filter: req.Filter,
-					Shape: func(q *keel.Query[fiscalyear.FiscalYear]) *keel.Query[fiscalyear.FiscalYear] {
+					Shape: func(q *keel.Query[*fiscalyear.FiscalYear]) *keel.Query[*fiscalyear.FiscalYear] {
 						if req.IncludePeriods {
 							return q.Load(fy.Periods())
 						}
@@ -187,7 +187,7 @@ func (r *repository) GetCurrentFiscalYearForUpdate(
 
 func (r *repository) one(
 	ctx context.Context,
-	q *keel.Query[fiscalyear.FiscalYear],
+	q *keel.Query[*fiscalyear.FiscalYear],
 	id string,
 ) (*fiscalyear.FiscalYear, error) {
 	entity, err := q.One(ctx, r.db.Keel(ctx))
@@ -347,7 +347,7 @@ func (r *repository) Reopen(
 func (r *repository) updateOne(
 	ctx context.Context,
 	id pulid.ID,
-	q *keel.Query[fiscalyear.FiscalYear],
+	q *keel.Query[*fiscalyear.FiscalYear],
 	sets ...keel.Assignment,
 ) (*fiscalyear.FiscalYear, error) {
 	rows, err := q.UpdateReturning(ctx, r.db.Keel(ctx), sets...)

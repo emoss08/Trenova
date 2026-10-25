@@ -59,7 +59,7 @@ var runsRef = keel.Ref{Table: &runsTable}
 
 // RunsTable is the table of distancecalculation.Run.
 type RunsTable struct {
-	keel.Handle[distancecalculation.Run]
+	keel.Handle[*distancecalculation.Run]
 	ID              keelkinds.PulidIDCol
 	BusinessUnitID  keelkinds.PulidIDCol
 	OrganizationID  keelkinds.PulidIDCol
@@ -78,7 +78,7 @@ type RunsTable struct {
 
 // Runs references the distance_calculation_runs table.
 var Runs = &RunsTable{
-	Handle:          keel.Handle[distancecalculation.Run]{Ref: &runsRef},
+	Handle:          keel.Handle[*distancecalculation.Run]{Ref: &runsRef},
 	ID:              keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &runsRef, Index: 0}}},
 	BusinessUnitID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &runsRef, Index: 1}}},
 	OrganizationID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &runsRef, Index: 2}}},
@@ -98,7 +98,7 @@ var Runs = &RunsTable{
 // BuildRuns builds the handle of distance_calculation_runs for ref. Generated relation and alias methods call it.
 func BuildRuns(r *keel.Ref) *RunsTable {
 	return &RunsTable{
-		Handle:          keel.Handle[distancecalculation.Run]{Ref: r},
+		Handle:          keel.Handle[*distancecalculation.Run]{Ref: r},
 		ID:              keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},

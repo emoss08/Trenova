@@ -44,9 +44,9 @@ func New(p Params) tenantports.SSOConfigRepository {
 
 func forTenant[T any](
 	ctx context.Context,
-	q *keel.Query[T],
+	q *keel.Query[*T],
 	preds ...keel.Pred,
-) *keel.Query[T] {
+) *keel.Query[*T] {
 	if dbscope.IsSystem(ctx) {
 		q = q.AllTenants()
 	}

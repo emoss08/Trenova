@@ -69,13 +69,13 @@ func rosterFilter(req *workerports.RotaQuery) []keel.Pred {
 	}
 }
 
-func rosterQuery(req *workerports.RotaQuery) *keel.Query[worker.Worker] {
+func rosterQuery(req *workerports.RotaQuery) *keel.Query[*worker.Worker] {
 	w := workerdb.Workers
 
 	return w.Pick(w.ID).Where(rosterFilter(req)...)
 }
 
-func rotaWorkersQuery(req *workerports.RotaQuery) *keel.Query[worker.Worker] {
+func rotaWorkersQuery(req *workerports.RotaQuery) *keel.Query[*worker.Worker] {
 	w := workerdb.Workers
 	fc := w.FleetCode()
 	sa := workerdb.WorkerShiftAssignments

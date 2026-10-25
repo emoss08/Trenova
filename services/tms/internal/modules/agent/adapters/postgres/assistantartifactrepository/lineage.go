@@ -266,7 +266,7 @@ func pageQuery(
 	req *assistantartifactports.ListArtifactsRequest,
 	cursor *lineageCursor,
 	limit int,
-) *keel.Query[keel.Row] {
+) *keel.Query[*keel.Row] {
 	root, pinned, last := lineages.Col("root"), lineages.Col("pinned"), lineages.Col("last")
 	window := lineages.Query().With(lineages)
 	if req.Family != "" {
@@ -336,18 +336,24 @@ func (r *repository) versionsOf(
 	return artifacts, nil
 }
 
-func summaryQuery(req *versionsRequest) *keel.Query[assistantartifact.Artifact] {
+func summaryQuery(req *versionsRequest) *keel.Query[*assistantartifact.Artifact] {
 	a := assistantartifactdb.Artifacts
 
-	return versionsQuery(req).Pick(a.ID, keel.Raw(
-		"COALESCE((SELECT jsonb_object_agg(e.key, e.value) FROM jsonb_each(?) AS e "+
-			"WHERE e.key = ANY(?)), jsonb_build_object())",
-		a.Payload,
-		assistantartifact.SummaryPayloadKeys(),
-	))
+	return versionsQuery(req).Pick(a.ID, summaryPayloadOf(a.Payload))
 }
 
-func versionsQuery(req *versionsRequest) *keel.Query[assistantartifact.Artifact] {
+func summaryPayloadOf(payload keel.JSONBCol) keel.DynExpr {
+	summary := keel.DynFunc("jsonb_build_object")
+	for _, key := range assistantartifact.SummaryPayloadKeys() {
+		summary = summary.Concat(keel.DynCase().
+			When(payload.HasKey(key), keel.DynFunc("jsonb_build_object", key, payload.Path(key))).
+			Else(keel.DynFunc("jsonb_build_object")))
+	}
+
+	return summary
+}
+
+func versionsQuery(req *versionsRequest) *keel.Query[*assistantartifact.Artifact] {
 	a := assistantartifactdb.Artifacts
 
 	return a.Where(

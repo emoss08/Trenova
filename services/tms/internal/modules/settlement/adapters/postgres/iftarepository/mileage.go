@@ -70,8 +70,8 @@ func (r *repository) ListMileageEntries(
 					Filter: withDefaultSort(req.Filter, desc("traveledAt")),
 					Cursor: req.Cursor,
 					Shape: func(
-						q *keel.Query[ifta.JurisdictionMileageEntry],
-					) *keel.Query[ifta.JurisdictionMileageEntry] {
+						q *keel.Query[*ifta.JurisdictionMileageEntry],
+					) *keel.Query[*ifta.JurisdictionMileageEntry] {
 						return q.Load(loads...)
 					},
 				},

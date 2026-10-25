@@ -71,7 +71,7 @@ func (r *repository) SelectDocumentTypeOptions(
 
 func documentTypeOptionsQuery(
 	req *ediports.EDIDocumentTypeSelectOptionsRequest,
-) *keel.Query[edi.EDIDocumentType] {
+) *keel.Query[*edi.EDIDocumentType] {
 	dt := edidb.EDIDocumentTypes
 	return dt.Pick(
 		dt.ID,

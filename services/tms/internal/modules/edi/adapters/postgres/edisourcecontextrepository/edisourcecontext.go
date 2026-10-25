@@ -57,7 +57,7 @@ func (r *repository) ListSourceContextSchemas(
 
 func schemasQuery(
 	req *ediports.ListEDISourceContextSchemasRequest,
-) *keel.Query[edi.EDISourceContextSchema] {
+) *keel.Query[*edi.EDISourceContextSchema] {
 	sc := edidb.EDISourceContextSchemas
 	search := strings.TrimSpace(req.Filter.Query)
 
@@ -160,7 +160,7 @@ func (r *repository) searchSourceContextFields(
 
 func fieldsQuery(
 	req *ediports.ListEDISourceContextFieldsRequest,
-) *keel.Query[edi.EDISourceContextField] {
+) *keel.Query[*edi.EDISourceContextField] {
 	sf := edidb.EDISourceContextFields
 	schema := sf.Schema()
 	pathPrefix := strings.TrimSpace(req.PathPrefix)

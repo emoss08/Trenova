@@ -102,7 +102,7 @@ var customersRef = keel.Ref{Table: &customersTable}
 
 // CustomersTable is the table of customer.Customer.
 type CustomersTable struct {
-	keel.Handle[customer.Customer]
+	keel.Handle[*customer.Customer]
 	ID                      keelkinds.PulidIDCol
 	BusinessUnitID          keelkinds.PulidIDCol
 	OrganizationID          keelkinds.PulidIDCol
@@ -139,7 +139,7 @@ type CustomersTable struct {
 
 // Customers references the customers table.
 var Customers = &CustomersTable{
-	Handle:                  keel.Handle[customer.Customer]{Ref: &customersRef},
+	Handle:                  keel.Handle[*customer.Customer]{Ref: &customersRef},
 	ID:                      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &customersRef, Index: 0}}},
 	BusinessUnitID:          keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &customersRef, Index: 1}}},
 	OrganizationID:          keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &customersRef, Index: 2}}},
@@ -177,7 +177,7 @@ var Customers = &CustomersTable{
 // BuildCustomers builds the handle of customers for ref. Generated relation and alias methods call it.
 func BuildCustomers(r *keel.Ref) *CustomersTable {
 	return &CustomersTable{
-		Handle:                  keel.Handle[customer.Customer]{Ref: r},
+		Handle:                  keel.Handle[*customer.Customer]{Ref: r},
 		ID:                      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID:          keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID:          keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -559,7 +559,7 @@ var customerBillingProfilesRef = keel.Ref{Table: &customerBillingProfilesTable}
 
 // CustomerBillingProfilesTable is the table of customer.CustomerBillingProfile.
 type CustomerBillingProfilesTable struct {
-	keel.Handle[customer.CustomerBillingProfile]
+	keel.Handle[*customer.CustomerBillingProfile]
 	ID                              keelkinds.PulidIDCol
 	BusinessUnitID                  keelkinds.PulidIDCol
 	OrganizationID                  keelkinds.PulidIDCol
@@ -624,7 +624,7 @@ type CustomerBillingProfilesTable struct {
 
 // CustomerBillingProfiles references the customer_billing_profiles table.
 var CustomerBillingProfiles = &CustomerBillingProfilesTable{
-	Handle:                          keel.Handle[customer.CustomerBillingProfile]{Ref: &customerBillingProfilesRef},
+	Handle:                          keel.Handle[*customer.CustomerBillingProfile]{Ref: &customerBillingProfilesRef},
 	ID:                              keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &customerBillingProfilesRef, Index: 0}}},
 	BusinessUnitID:                  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &customerBillingProfilesRef, Index: 1}}},
 	OrganizationID:                  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &customerBillingProfilesRef, Index: 2}}},
@@ -690,7 +690,7 @@ var CustomerBillingProfiles = &CustomerBillingProfilesTable{
 // BuildCustomerBillingProfiles builds the handle of customer_billing_profiles for ref. Generated relation and alias methods call it.
 func BuildCustomerBillingProfiles(r *keel.Ref) *CustomerBillingProfilesTable {
 	return &CustomerBillingProfilesTable{
-		Handle:                          keel.Handle[customer.CustomerBillingProfile]{Ref: r},
+		Handle:                          keel.Handle[*customer.CustomerBillingProfile]{Ref: r},
 		ID:                              keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID:                  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID:                  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -1169,7 +1169,7 @@ var customerBillingProfileDocumentTypesRef = keel.Ref{Table: &customerBillingPro
 
 // CustomerBillingProfileDocumentTypesTable is the table of customer.CustomerBillingProfileDocumentType.
 type CustomerBillingProfileDocumentTypesTable struct {
-	keel.Handle[customer.CustomerBillingProfileDocumentType]
+	keel.Handle[*customer.CustomerBillingProfileDocumentType]
 	OrganizationID   keelkinds.PulidIDCol
 	BusinessUnitID   keelkinds.PulidIDCol
 	BillingProfileID keelkinds.PulidIDCol
@@ -1178,7 +1178,7 @@ type CustomerBillingProfileDocumentTypesTable struct {
 
 // CustomerBillingProfileDocumentTypes references the customer_billing_profile_document_types table.
 var CustomerBillingProfileDocumentTypes = &CustomerBillingProfileDocumentTypesTable{
-	Handle:           keel.Handle[customer.CustomerBillingProfileDocumentType]{Ref: &customerBillingProfileDocumentTypesRef},
+	Handle:           keel.Handle[*customer.CustomerBillingProfileDocumentType]{Ref: &customerBillingProfileDocumentTypesRef},
 	OrganizationID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &customerBillingProfileDocumentTypesRef, Index: 0}}},
 	BusinessUnitID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &customerBillingProfileDocumentTypesRef, Index: 1}}},
 	BillingProfileID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &customerBillingProfileDocumentTypesRef, Index: 2}}},
@@ -1188,7 +1188,7 @@ var CustomerBillingProfileDocumentTypes = &CustomerBillingProfileDocumentTypesTa
 // BuildCustomerBillingProfileDocumentTypes builds the handle of customer_billing_profile_document_types for ref. Generated relation and alias methods call it.
 func BuildCustomerBillingProfileDocumentTypes(r *keel.Ref) *CustomerBillingProfileDocumentTypesTable {
 	return &CustomerBillingProfileDocumentTypesTable{
-		Handle:           keel.Handle[customer.CustomerBillingProfileDocumentType]{Ref: r},
+		Handle:           keel.Handle[*customer.CustomerBillingProfileDocumentType]{Ref: r},
 		OrganizationID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		BillingProfileID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -1311,7 +1311,7 @@ var customerEmailProfilesRef = keel.Ref{Table: &customerEmailProfilesTable}
 
 // CustomerEmailProfilesTable is the table of customer.CustomerEmailProfile.
 type CustomerEmailProfilesTable struct {
-	keel.Handle[customer.CustomerEmailProfile]
+	keel.Handle[*customer.CustomerEmailProfile]
 	ID                    keelkinds.PulidIDCol
 	BusinessUnitID        keelkinds.PulidIDCol
 	OrganizationID        keelkinds.PulidIDCol
@@ -1331,7 +1331,7 @@ type CustomerEmailProfilesTable struct {
 
 // CustomerEmailProfiles references the customer_email_profiles table.
 var CustomerEmailProfiles = &CustomerEmailProfilesTable{
-	Handle:                keel.Handle[customer.CustomerEmailProfile]{Ref: &customerEmailProfilesRef},
+	Handle:                keel.Handle[*customer.CustomerEmailProfile]{Ref: &customerEmailProfilesRef},
 	ID:                    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &customerEmailProfilesRef, Index: 0}}},
 	BusinessUnitID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &customerEmailProfilesRef, Index: 1}}},
 	OrganizationID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &customerEmailProfilesRef, Index: 2}}},
@@ -1352,7 +1352,7 @@ var CustomerEmailProfiles = &CustomerEmailProfilesTable{
 // BuildCustomerEmailProfiles builds the handle of customer_email_profiles for ref. Generated relation and alias methods call it.
 func BuildCustomerEmailProfiles(r *keel.Ref) *CustomerEmailProfilesTable {
 	return &CustomerEmailProfilesTable{
-		Handle:                keel.Handle[customer.CustomerEmailProfile]{Ref: r},
+		Handle:                keel.Handle[*customer.CustomerEmailProfile]{Ref: r},
 		ID:                    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
