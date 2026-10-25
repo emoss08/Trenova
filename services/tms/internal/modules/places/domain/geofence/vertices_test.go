@@ -3,6 +3,7 @@ package geofence
 import (
 	"testing"
 
+	"github.com/emoss08/keel/postgis"
 	"github.com/paulmach/orb"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -47,7 +48,7 @@ func TestRectangleGeometry(t *testing.T) {
 func TestVerticesFromGeometry(t *testing.T) {
 	t.Parallel()
 
-	vertices, err := VerticesFromGeometry(&Geometry{
+	vertices, err := VerticesFromGeometry(&postgis.Geometry{
 		Geometry: orb.Polygon{
 			{
 				{-97.0, 32.0},
