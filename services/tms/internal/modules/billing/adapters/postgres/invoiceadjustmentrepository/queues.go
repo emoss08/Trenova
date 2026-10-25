@@ -77,7 +77,7 @@ func approvalQueueKeyset() *listquery.Keyset {
 	ia := invoiceadjustmentdb.InvoiceAdjustments
 	return &listquery.Keyset{
 		Orders: []keel.Order{
-			keel.Desc(keel.DynOf(ia.SubmittedAt).Coalesce(ia.CreatedAt)),
+			ia.SubmittedAt.Coalesce(ia.CreatedAt).Desc(),
 			ia.ID.Desc(),
 		},
 		Shape: approvalQueueCursorSort,
@@ -253,7 +253,7 @@ func reconciliationQueue(
 			),
 		).
 		Order(
-			keel.DynOf(ex.Status).Eq(invoiceadjustment.ExceptionStatusOpen).Desc().NullsLast(),
+			keel.Desc(ex.Status.Eq(invoiceadjustment.ExceptionStatusOpen)).NullsLast(),
 			ex.UpdatedAt.Desc(),
 		)
 }
@@ -361,12 +361,12 @@ func batchQueue(
 	return b.Where(preds...).
 		Compute(
 			b.PendingCount,
-			keel.DynFunc("greatest", keel.DynOf(b.TotalCount).Sub(b.ProcessedCount), 0),
+			keel.Int64Of(keel.DynOf(b.TotalCount).Sub(b.ProcessedCount)).Greatest(keel.Int64(0)),
 		).
-		Compute(b.SubmittedByName, keel.DynOf(submitter.Name).Coalesce("")).
-		Compute(b.LastFailure, keel.DynOf(lastFailure).Coalesce("")).
-		Compute(b.LastFailureCount, keel.DynOf(failureCount).Coalesce(0)).
-		Order(keel.Desc(keel.DynOf(b.SubmittedAt).Coalesce(b.CreatedAt)))
+		Compute(b.SubmittedByName, submitter.Name.Coalesce("")).
+		Compute(b.LastFailure, keel.StringOf(lastFailure).Coalesce("")).
+		Compute(b.LastFailureCount, keel.Int64Of(failureCount).Coalesce(0)).
+		Order(b.SubmittedAt.Coalesce(b.CreatedAt).Desc())
 }
 
 func adjustmentSearch(ia *invoiceadjustmentdb.InvoiceAdjustmentsTable, search string) keel.Pred {

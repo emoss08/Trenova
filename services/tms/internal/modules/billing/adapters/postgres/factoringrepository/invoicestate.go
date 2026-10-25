@@ -122,8 +122,8 @@ func (r *invoiceStateRepository) Upsert(
 			return keel.DynCase().
 				When(
 					keel.And(
-						keel.DynOf(st.Verdict.Excluded()).Eq(string(ready)),
-						keel.DynOf(st.Verdict).Eq(string(ready)),
+						keel.StringOf(st.Verdict.Excluded()).Eq(string(ready)),
+						st.Verdict.Eq(ready),
 					),
 					col,
 				).
@@ -264,7 +264,7 @@ func openFactoredInvoices(inv *invoicedb.InvoicesTable) keel.Pred {
 		inv.Status.Eq(invoice.StatusPosted),
 		inv.FactoringCompanyID.IsNotNull(),
 		inv.BillType.Ne(billingqueue.BillTypeCreditMemo),
-		keel.DynOf(inv.TotalAmountMinor).Gt(inv.AppliedAmountMinor),
+		keel.Int64Of(inv.TotalAmountMinor).GtExpr(inv.AppliedAmountMinor),
 	)
 }
 
@@ -418,9 +418,9 @@ func verdictTotals(readyBefore int64) *keel.Query[*factoring.InvoiceState] {
 		Pick(
 			st.Verdict,
 			keel.Count(),
-			keel.DynOf(st.OpenBalanceMinor.Sum()).Coalesce(0),
+			keel.NumericOf(st.OpenBalanceMinor.Sum()).Coalesce(0),
 			keel.Count().Filter(late),
-			keel.DynOf(st.OpenBalanceMinor.Sum().Filter(late)).Coalesce(0),
+			keel.NumericOf(st.OpenBalanceMinor.Sum().Filter(late)).Coalesce(0),
 		).
 		Where(st.Verdict.In(
 			factoring.VerdictReady,
@@ -433,9 +433,9 @@ func fundedTotals() *keel.Query[*factoring.SubmissionItem] {
 	item := factoringdb.SubmissionItems
 	return item.Pick(
 		keel.Count(),
-		keel.DynOf(item.FaceMinor.Sum()).Coalesce(0),
-		keel.Count().Filter(keel.DynOf(item.ReserveMinor).Coalesce(0).Gt(0)),
-		keel.DynOf(item.ReserveMinor.Sum()).Coalesce(0),
+		keel.NumericOf(item.FaceMinor.Sum()).Coalesce(0),
+		keel.Count().Filter(item.ReserveMinor.Coalesce(0).Gt(0)),
+		keel.NumericOf(item.ReserveMinor.Sum()).Coalesce(0),
 	).Where(item.Status.Eq(factoring.SubmissionItemStatusFunded))
 }
 
@@ -445,11 +445,9 @@ func chargebacksDue(before int64) *keel.Query[*factoring.SubmissionItem] {
 	agr := factoringdb.Agreements
 	return item.Pick(
 		keel.Count(),
-		keel.DynOf(item.AdvanceMinor).
-			Coalesce(0).
-			Add(keel.DynOf(item.FeeMinor).Coalesce(0)).
-			Sum().
-			Coalesce(0),
+		keel.NumericOf(
+			keel.Sum(keel.DynOf(item.AdvanceMinor.Coalesce(0)).Add(item.FeeMinor.Coalesce(0))),
+		).Coalesce(0),
 	).
 		Join(sub, sub.ID.EqCol(item.SubmissionID)).
 		Join(agr, agr.ID.EqCol(sub.AgreementID)).
@@ -457,7 +455,9 @@ func chargebacksDue(before int64) *keel.Query[*factoring.SubmissionItem] {
 			item.Status.Eq(factoring.SubmissionItemStatusFunded),
 			item.FundedOn.IsNotNull(),
 			agr.Recourse.Eq(factoring.RecourseFull),
-			keel.DynOf(item.FundedOn).Add(keel.DynOf(agr.ChargebackWindowDays).Mul(86400)).Lte(before),
+			keel.DynOf(item.FundedOn).
+				Add(keel.DynOf(agr.ChargebackWindowDays).Mul(86400)).
+				Lte(before),
 		)
 }
 

@@ -433,10 +433,10 @@ func reconciliationDiscrepancies(
 	))
 
 	sign := keel.DynCase().
-		When(keel.DynOf(inv.BillType).Eq(billingqueue.BillTypeCreditMemo), signed(-1)).
+		When(inv.BillType.Eq(billingqueue.BillTypeCreditMemo), signed(-1)).
 		Else(signed(1))
 	orderPart := keel.DynCase().
-		When(inv.OrderID.IsNotNull(), keel.DynOf(orderTotal).Coalesce(0)).
+		When(inv.OrderID.IsNotNull(), keel.NumericOf(orderTotal).Coalesce(0)).
 		Else(signed(0))
 	expected := sign.Mul(keel.DynOf(splitTotal).Coalesce(legTotal, shipmentTotal, 0)).Add(orderPart)
 
@@ -445,7 +445,7 @@ func reconciliationDiscrepancies(
 		inv.PostedAt.IsNotNull(),
 		inv.PostedAt.Gte(req.PeriodStartDate),
 		inv.PostedAt.Lte(req.PeriodEndDate),
-		keel.DynFunc("abs", keel.DynOf(inv.TotalAmount).Sub(expected)).Gt(req.ToleranceAmount),
+		keel.NumericOf(keel.DynOf(inv.TotalAmount).Sub(expected)).Abs().Gt(req.ToleranceAmount),
 	)
 }
 
@@ -996,6 +996,6 @@ func (r *repository) StampExchangeRate(
 	})
 }
 
-func signed(n int64) keel.DynExpr {
-	return keel.DynLit(n).Cast(keel.TypeInt64)
+func signed(n int64) keel.Int64Expr {
+	return keel.Int64(n)
 }

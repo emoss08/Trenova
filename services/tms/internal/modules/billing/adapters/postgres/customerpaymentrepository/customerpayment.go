@@ -188,11 +188,11 @@ func (r *repository) FindSuggestedMatchCandidates(
 			)),
 			keel.When(req.AmountMinor > 0, keel.Or(
 				cp.AmountMinor.Eq(req.AmountMinor),
-				keel.DynFunc("abs", keel.DynOf(cp.AmountMinor).Sub(req.AmountMinor)).Lte(100),
+				keel.Int64Of(keel.DynOf(cp.AmountMinor).Sub(req.AmountMinor)).Abs().Lte(100),
 			)),
 			keel.When(
 				req.ReceiptDate > 0,
-				keel.DynFunc("abs", keel.DynOf(cp.PaymentDate).Sub(req.ReceiptDate)).Lte(604800),
+				keel.Int64Of(keel.DynOf(cp.PaymentDate).Sub(req.ReceiptDate)).Abs().Lte(604800),
 			),
 		).
 			Order(cp.CreatedAt.Desc()).
@@ -321,7 +321,7 @@ func (r *repository) SumReceived(
 			rows, err := keel.Into[customerpaymentports.PaymentsReceived](ctx, r.db.Keel(ctx), cp.
 				Pick(
 					cp.CurrencyCode,
-					keel.DynOf(cp.AmountMinor.Sum()).Coalesce(0),
+					keel.NumericOf(cp.AmountMinor.Sum()).Coalesce(0),
 					keel.Count(),
 				).
 				Where(

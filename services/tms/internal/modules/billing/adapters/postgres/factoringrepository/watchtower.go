@@ -33,8 +33,8 @@ func NewWatchtowerReader(p Params) factoringports.WatchtowerReader {
 	}
 }
 
-func blank(e keel.Expr) keel.Expr {
-	return keel.DynOf(e).Coalesce("")
+func blank(e keel.Expr) keel.StringExpr {
+	return keel.StringOf(e).Coalesce("")
 }
 
 func intoPointers[R any](ctx context.Context, db *keel.DB, p keel.Projection) ([]*R, error) {
@@ -262,7 +262,7 @@ func unfundedSubmissions(
 		Where(
 			sub.Status.In(factoring.AwaitingFundingStatuses()...),
 			sub.SentAt.IsNotNull(),
-			keel.DynOf(dueAt).Lt(req.At),
+			keel.Int64Of(dueAt).Lt(req.At),
 		).
 		Group(sub.ID, sub.OrganizationID, sub.BusinessUnitID, fac.Name, agr.FundingDays).
 		Order(keel.Asc(dueAt), sub.ID.Asc()).
@@ -306,7 +306,7 @@ func chargebacksDueSoon(
 		blank(sub.FactoringCompany().Name),
 		sub.CurrencyCode,
 		item.FaceMinor,
-		keel.DynOf(item.AdvanceMinor).Coalesce(0).Add(keel.DynOf(item.FeeMinor).Coalesce(0)),
+		keel.DynOf(item.AdvanceMinor.Coalesce(0)).Add(item.FeeMinor.Coalesce(0)),
 		item.FundedOn,
 		deadline,
 	).
@@ -315,7 +315,7 @@ func chargebacksDueSoon(
 			item.Status.Eq(factoring.SubmissionItemStatusFunded),
 			item.FundedOn.IsNotNull(),
 			agr.Recourse.Eq(factoring.RecourseFull),
-			keel.DynOf(deadline).Lte(req.Before),
+			keel.Int64Of(deadline).Lte(req.Before),
 			keel.When(req.UnwarnedOnly, item.ChargebackWarnedAt.IsNull()),
 		).
 		Order(keel.Asc(deadline), item.ID.Asc()).

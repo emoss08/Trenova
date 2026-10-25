@@ -28,20 +28,20 @@ const (
 )
 
 func inDays(seconds keel.DynExpr) keel.DynExpr {
-	return seconds.Div(keel.DynLit(secondsPerDay).Cast(keel.TypeNumeric))
+	return seconds.Div(keel.Numeric(secondsPerDay))
 }
 
-func orZero(e keel.Expr) keel.DynExpr {
-	return keel.DynOf(e).Coalesce(0)
+func orZero(e keel.Expr) keel.NumericExpr {
+	return keel.NumericOf(e).Coalesce(0)
 }
 
-func billedIn(inv *invoicedb.InvoicesTable, from, to any) keel.Pred {
+func billedIn(inv *invoicedb.InvoicesTable, from, to keel.Int64Value) keel.Pred {
 	return keel.And(
 		inv.PostedAt.IsNotNull(),
-		keel.Or(inv.VoidedAt.IsNull(), keel.DynOf(inv.VoidedAt).Gt(to)),
+		keel.Or(inv.VoidedAt.IsNull(), keel.Int64Of(inv.VoidedAt).GtExpr(to)),
 		receivablesql.ReceivableBillType(inv),
-		keel.DynOf(inv.InvoiceDate).Gt(from),
-		keel.DynOf(inv.InvoiceDate).Lte(to),
+		keel.Int64Of(inv.InvoiceDate).GtExpr(from),
+		keel.Int64Of(inv.InvoiceDate).LteExpr(to),
 	)
 }
 
@@ -50,12 +50,12 @@ func avgDaysToPay(
 	cp *customerpaymentdb.PaymentsTable,
 	inv *invoicedb.InvoicesTable,
 	preds ...keel.Pred,
-) keel.DynExpr {
+) keel.NumericExpr {
 	weighted := keel.DynOf(cpa.AppliedAmountMinor).
 		Mul(inDays(keel.DynOf(cp.PaymentDate).Sub(inv.InvoiceDate)))
 	return orZero(keel.Scalar(postedApplications(cpa, cp).
 		Join(inv, inv.ID.EqCol(cpa.InvoiceID)).
-		Pick(weighted.Sum().Div(keel.DynOf(cpa.AppliedAmountMinor.Sum()).NullIf(0))).
+		Pick(weighted.Sum().Div(keel.NumericOf(cpa.AppliedAmountMinor.Sum()).NullIf(0))).
 		Where(append([]keel.Pred{cpa.AppliedAmountMinor.Gt(0)}, preds...)...)))
 }
 
@@ -254,10 +254,11 @@ func balanceSeriesQuery(req customerledgerports.ListARSeriesRequest) *keel.Query
 		LeftJoin(balances, balances.Col("n").EqCol(points.Col("n"))).
 		Pick(
 			periodEnd,
-			keel.DynOf(balances.Col("ar_balance_minor")).Coalesce(0),
+			keel.NumericOf(balances.Col("ar_balance_minor")).Coalesce(0),
 			orZero(keel.Scalar(inv.
 				Pick(inv.TotalAmountMinor.Sum()).
-				Where(billedIn(inv, periodEnd.Sub(trailingDSOWindow), periodEnd)))),
+				Where(billedIn(inv, keel.Int64Of(periodEnd.Sub(trailingDSOWindow)), keel.Int64Of(periodEnd))),
+			)),
 		).
 		Order(periodEnd.Asc())
 }
@@ -402,16 +403,18 @@ func cashFlowQuery(req customerledgerports.ListARCashFlowRequest) *keel.Query[*k
 	weeks := keel.CTE("weeks", []string{"week_start"}, keel.Rows(
 		"week",
 		[]string{"week_start"},
-		keel.DynFunc(
-			"generate_series",
-			keel.DynLit(int64(-req.PastWeeks)).Cast(keel.TypeInt64),
-			keel.DynLit(int64(req.FutureWeeks-1)).Cast(keel.TypeInt64),
-		).Mul(secondsPerWeek).Add(req.AsOfDate),
+		keel.DynOf(keel.GenerateSeries(
+			keel.Int64(int64(-req.PastWeeks)),
+			keel.Int64(int64(req.FutureWeeks-1)),
+		)).Mul(secondsPerWeek).Add(req.AsOfDate),
 	))
 	weekStart := keel.DynOf(weeks.Col("week_start"))
 	weekEnd := weekStart.Add(secondsPerWeek)
 	inWeek := func(at keel.Expr) keel.Pred {
-		return keel.And(keel.DynOf(at).Gte(weekStart), keel.DynOf(at).Lt(weekEnd))
+		return keel.And(
+			keel.Int64Of(at).GteExpr(keel.Int64Of(weekStart)),
+			keel.Int64Of(at).LtExpr(keel.Int64Of(weekEnd)),
+		)
 	}
 
 	inv := invoicedb.Invoices
@@ -421,16 +424,9 @@ func cashFlowQuery(req customerledgerports.ListARCashFlowRequest) *keel.Query[*k
 	agr := factoringdb.Agreements
 	reserved := factoringdb.SubmissionItems.As("reserved")
 	reservedInv := invoicedb.Invoices.As("reserved_inv")
-	advanceAt := keel.DynFunc(
-		"greatest",
-		keel.DynOf(fs.SentAt).Add(keel.DynOf(agr.FundingDays).Mul(secondsPerDay)),
-		keel.DynLit(req.AsOfDate).Cast(keel.TypeInt64),
-	)
-	releaseAt := keel.DynFunc(
-		"greatest",
-		reservedInv.DueDate,
-		keel.DynLit(req.AsOfDate).Cast(keel.TypeInt64),
-	)
+	advanceAt := keel.Int64Of(keel.DynOf(fs.SentAt).Add(keel.DynOf(agr.FundingDays).Mul(secondsPerDay))).
+		Greatest(keel.Int64(req.AsOfDate))
+	releaseAt := reservedInv.DueDate.Greatest(keel.Int64(req.AsOfDate))
 
 	return weeks.Query().With(weeks).
 		Pick(
@@ -471,7 +467,7 @@ func cashFlowQuery(req customerledgerports.ListARCashFlowRequest) *keel.Query[*k
 					reservedInv.DueDate.IsNotNull(),
 					inWeek(releaseAt),
 				))),
-			weekStart.Gte(keel.DynLit(req.AsOfDate).Cast(keel.TypeInt64)),
+			keel.Int64Of(weekStart).GteExpr(keel.Int64(req.AsOfDate)),
 		).
 		Order(weekStart.Asc())
 }
@@ -496,13 +492,13 @@ func collectionTotalsQuery(periodStart, periodEnd int64) *keel.Query[*keel.Row] 
 	bounds := keel.CTE("bounds", []string{"period_start", colPeriodEnd}, keel.Rows(
 		"bound",
 		[]string{"period_start", colPeriodEnd},
-		keel.DynLit(periodStart),
-		keel.DynLit(periodEnd),
+		keel.Int64(periodStart),
+		keel.Int64(periodEnd),
 	))
-	start := keel.DynOf(bounds.Col("period_start"))
-	end := keel.DynOf(bounds.Col(colPeriodEnd))
+	start := keel.Int64Of(bounds.Col("period_start"))
+	end := keel.Int64Of(bounds.Col(colPeriodEnd))
 	inPeriod := func(ts keel.Expr) keel.Pred {
-		return keel.And(keel.DynOf(ts).Gt(start), keel.DynOf(ts).Lte(end))
+		return keel.And(keel.Int64Of(ts).GtExpr(start), keel.Int64Of(ts).LteExpr(end))
 	}
 
 	inv := invoicedb.Invoices.As("inv")
@@ -524,7 +520,7 @@ func collectionTotalsQuery(periodStart, periodEnd int64) *keel.Query[*keel.Row] 
 				Pick(open.Sum()).
 				Where(
 					receivablesql.Open(inv),
-					keel.Or(inv.DueDate.IsNull(), keel.DynOf(inv.DueDate).Gte(end)),
+					keel.Or(inv.DueDate.IsNull(), keel.Int64Of(inv.DueDate).GteExpr(end)),
 				))),
 			orZero(
 				keel.Scalar(inv.Pick(inv.TotalAmountMinor.Sum()).Where(billedIn(inv, start, end))),
@@ -709,8 +705,8 @@ func worklistQuery(
 		Pick(picks...).
 		Where(keel.Or(
 			daysPastDue.Gte(15),
-			keel.DynOf(items.Col("is_disputed")).IsTrue(),
-			keel.DynOf(items.Col("has_short_pay")).IsTrue(),
+			keel.BoolOf(items.Col("is_disputed")).IsTrue(),
+			keel.BoolOf(items.Col("has_short_pay")).IsTrue(),
 		)).
 		Order(daysPastDue.Desc(), items.Col("open_amount_minor").Desc()).
 		Limit(req.Limit)
@@ -798,7 +794,7 @@ func customerSnapshotQuery(
 		Pick(
 			cus.Name,
 			orZero(profile(keel.DynOf(cbp.CreditLimit).Mul(100).Cast(keel.TypeInt64))),
-			keel.DynOf(profile(cbp.CreditLimit.IsNotNull())).Coalesce(false),
+			keel.BoolOf(profile(cbp.CreditLimit.IsNotNull())).Coalesce(false),
 			orZero(keel.Scalar(payments().Pick(cp.UnappliedAmountMinor.Sum()))),
 			orZero(openInvoices(keel.Count())),
 			orZero(openInvoices(inv.InvoiceDate.Min())),
@@ -814,7 +810,8 @@ func customerSnapshotQuery(
 			),
 			orZero(keel.Scalar(inv.
 				Pick(inv.TotalAmountMinor.Sum()).
-				Where(inv.CustomerID.EqCol(cus.ID), billedIn(inv, asOf-trailingDSOWindow, asOf)))),
+				Where(inv.CustomerID.EqCol(cus.ID), billedIn(inv, keel.Int64(asOf-trailingDSOWindow), keel.Int64(asOf))),
+			)),
 		).
 		Where(cus.ID.Eq(req.CustomerID))
 }
@@ -823,15 +820,7 @@ func customerMonthlyCollectionsQuery(
 	req customerledgerports.GetARCustomerSnapshotRequest,
 ) *keel.Query[*customerpayment.Payment] {
 	cp := customerpaymentdb.Payments
-	month := keel.DynFunc(
-		"date_part",
-		keel.DynConst("epoch"),
-		keel.DynFunc(
-			"date_trunc",
-			keel.DynConst("month"),
-			keel.DynFunc("to_timestamp", cp.PaymentDate),
-		),
-	).Cast(keel.TypeInt64)
+	month := keel.Epoch(keel.DateTrunc("month", keel.ToTimestamp(cp.PaymentDate)))
 	return cp.
 		Pick(month, cp.AmountMinor.Sum()).
 		Where(

@@ -41,15 +41,15 @@ type openAsOf struct {
 }
 
 func (w openAsOfWindow) build() openAsOf {
-	series := keel.CTE("series", []string{"n"}, keel.Rows("series_n", []string{"n"}, keel.DynFunc(
-		"generate_series",
-		keel.DynLit(int64(0)).Cast(keel.TypeInt64),
-		keel.DynLit(int64(w.points-1)).Cast(keel.TypeInt64),
-	)))
+	series := keel.CTE("series", []string{"n"}, keel.Rows(
+		"series_n",
+		[]string{"n"},
+		keel.GenerateSeries(keel.Int64(0), keel.Int64(int64(w.points-1))),
+	))
 	seriesN := keel.DynOf(series.Col("n"))
 	points := keel.CTE("points", []string{"n", colPeriodEnd}, series.Query().Pick(
 		seriesN,
-		keel.DynLit(w.asOf).Cast(keel.TypeInt64).Sub(seriesN.Mul(w.step)),
+		keel.DynOf(keel.Int64(w.asOf)).Sub(seriesN.Mul(w.step)),
 	))
 
 	moved := w.movedInvoices()
@@ -156,9 +156,9 @@ func settlementsOf(candidates *keel.CTETable) *keel.CTETable {
 }
 
 func changesOf(candidates, settlements *keel.CTETable) *keel.CTETable {
-	settledAt := keel.DynOf(settlements.Col("settled_at"))
-	releasedAt := keel.DynOf(settlements.Col("released_at"))
-	amount := keel.DynOf(settlements.Col("amount"))
+	settledAt := settlements.Col("settled_at")
+	releasedAt := settlements.Col("released_at")
+	amount := settlements.Col("amount")
 
 	return keel.CTE(
 		"changes",
@@ -174,13 +174,13 @@ func changesOf(candidates, settlements *keel.CTETable) *keel.CTETable {
 				settlements.Col(colInvoiceID),
 				settlements.Col(colDueDate),
 				settledAt,
-				amount.Neg(),
+				keel.DynOf(amount).Neg(),
 			),
 			settlements.Query().
 				Pick(
 					settlements.Col(colInvoiceID),
 					settlements.Col(colDueDate),
-					keel.DynFunc("greatest", settledAt, releasedAt),
+					keel.Int64Of(settledAt).Greatest(keel.Int64Of(releasedAt)),
 					amount,
 				).
 				Where(releasedAt.IsNotNull()),
@@ -213,18 +213,17 @@ func segmentsOf(changes *keel.CTETable) *keel.CTETable {
 func (w openAsOfWindow) openItems(segments *keel.CTETable) *keel.CTETable {
 	startsAt := keel.DynOf(segments.Col("starts_at"))
 	endsAt := keel.DynOf(segments.Col("ends_at"))
-	periodsBefore := func(at keel.DynExpr) keel.DynExpr {
-		return keel.DynFunc(
-			"floor",
-			keel.DynLit(w.asOf).Sub(at).Cast(keel.TypeNumeric).Div(w.step),
-		).Cast(keel.TypeInt64)
+	periodsBefore := func(at keel.DynExpr) keel.Int64Expr {
+		return keel.CastInt64(
+			keel.NumericOf(keel.DynLit(w.asOf).Sub(at).Cast(keel.TypeNumeric).Div(w.step)).Floor(),
+		)
 	}
-	offsets := keel.Rows("offsets", []string{"n"}, keel.DynFunc(
-		"generate_series",
-		keel.DynCase().
-			When(endsAt.IsNull(), 0).
-			Else(keel.DynFunc("greatest", 0, periodsBefore(endsAt).Add(1))),
-		keel.DynFunc("least", int64(w.points-1), periodsBefore(startsAt)),
+	firstOffset := keel.DynCase().
+		When(endsAt.IsNull(), 0).
+		Else(keel.Int64(0).Greatest(keel.Int64Of(keel.DynOf(periodsBefore(endsAt)).Add(1))))
+	offsets := keel.Rows("offsets", []string{"n"}, keel.GenerateSeries(
+		keel.Int64Of(firstOffset),
+		keel.Int64(int64(w.points-1)).Least(periodsBefore(startsAt)),
 	))
 
 	return keel.CTE(
@@ -238,6 +237,6 @@ func (w openAsOfWindow) openItems(segments *keel.CTETable) *keel.CTETable {
 				segments.Col(colDueDate),
 				segments.Col("open_minor"),
 			).
-			Where(keel.DynOf(segments.Col("open_minor")).Gt(0)),
+			Where(segments.Col("open_minor").Gt(0)),
 	)
 }

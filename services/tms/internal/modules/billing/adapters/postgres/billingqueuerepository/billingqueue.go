@@ -85,7 +85,7 @@ func itemDetail() *keel.Query[*billingqueue.BillingQueueItem] {
 	sh := bq.Shipment()
 	po := keel.Scalar(ord.Pick(ord.PONumber).Where(ord.ID.EqCol(bq.OrderID)).Limit(1))
 
-	return bq.Compute(bq.PONumber, keel.DynOf(po).Coalesce("")).
+	return bq.Compute(bq.PONumber, keel.StringOf(po).Coalesce("")).
 		Load(
 			sh.Customer(),
 			sh.AdditionalCharges(),
@@ -288,7 +288,7 @@ func shipmentTransferSync(
 		Where(sh.ID.In(shipmentIDs...))
 
 	return q, []keel.Assignment{
-		sh.BillingTransferStatus.ToExpr(keel.DynOf(latest.Col("status")).Cast(keel.TypeString)),
+		sh.BillingTransferStatus.ToExpr(keel.CastText(latest.Col("status"))),
 		sh.TransferredToBillingAt.ToExpr(latest.Col("created_at")),
 		sh.Version.ToExpr(sh.Version),
 		sh.UpdatedAt.ToExpr(sh.UpdatedAt),
@@ -520,11 +520,11 @@ var transferStatusRanks = []struct {
 }
 
 func transferStatusRank(status keel.Expr) keel.Order {
-	value := keel.DynOf(status)
+	value := keel.StringOf(status)
 	rank := keel.DynCase()
 	for _, r := range transferStatusRanks {
-		rank = rank.When(value.Eq(string(r.status)), keel.DynLit(r.rank).Cast(keel.TypeInt64))
+		rank = rank.When(value.Eq(string(r.status)), keel.Int64(r.rank))
 	}
 
-	return rank.Else(keel.DynLit(int64(4)).Cast(keel.TypeInt64)).Asc()
+	return rank.Else(keel.Int64(4)).Asc()
 }

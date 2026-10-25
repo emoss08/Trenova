@@ -86,7 +86,7 @@ func reserveScope(
 	return re.Where(
 		keel.When(term != "", keel.Or(
 			re.Memo.ContainsFold(term),
-			keel.DynOf(re.Kind).Cast(keel.TypeString).ILike(pattern),
+			keel.CastText(re.Kind).ILike(pattern),
 		)),
 		keel.When(
 			req.FactoringCompanyID.IsNotNil(),
@@ -166,15 +166,15 @@ func reserveBalance(
 	}
 
 	return re.Pick(
-		keel.DynOf(re.ReserveMinor.Sum()).Coalesce(0),
-		keel.DynOf(re.LiabilityMinor.Sum()).Coalesce(0),
-		keel.DynOf(cash(factoring.ReserveEntryFunding)).Coalesce(0),
-		keel.DynOf(cash(factoring.ReserveEntryRelease)).Coalesce(0),
+		keel.NumericOf(re.ReserveMinor.Sum()).Coalesce(0),
+		keel.NumericOf(re.LiabilityMinor.Sum()).Coalesce(0),
+		keel.NumericOf(cash(factoring.ReserveEntryFunding)).Coalesce(0),
+		keel.NumericOf(cash(factoring.ReserveEntryRelease)).Coalesce(0),
 		keel.DynOf(cash(
 			factoring.ReserveEntryChargeback,
 			factoring.ReserveEntryChargebackReversal,
 		)).Neg().Coalesce(0),
-		keel.DynOf(re.FeeMinor.Sum()).Coalesce(0),
+		keel.NumericOf(re.FeeMinor.Sum()).Coalesce(0),
 		keel.Count(),
 		re.OccurredOn.Max(),
 	).Where(re.FactoringCompanyID.Eq(req.FactoringCompanyID))

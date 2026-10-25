@@ -117,7 +117,7 @@ func pastDueDays(inv *invoicedb.InvoicesTable, asOf int64) keel.DynExpr {
 func daysPastDue(inv *invoicedb.InvoicesTable, asOf int64) keel.DynExpr {
 	return keel.DynCase().
 		When(keel.Or(inv.DueDate.IsNull(), inv.DueDate.Gte(asOf)), 0).
-		Else(keel.DynFunc("greatest", pastDueDays(inv, asOf), 0))
+		Else(keel.Int64Of(pastDueDays(inv, asOf)).Greatest(keel.Int64(0)))
 }
 
 func amountWhen(p keel.Pred, amount any) keel.DynExpr {

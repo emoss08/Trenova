@@ -38,7 +38,7 @@ func endpointStop(
 		Where(move.ShipmentID.EqCol(sp.ID), stop.Type.In(types...)).
 		Order(order...).
 		Limit(1)
-	return q, keel.DynOf(stop.LocationID).Cast(keel.TypeString).Coalesce("")
+	return q, keel.CastText(stop.LocationID).Coalesce("")
 }
 
 func consolidationCandidates(

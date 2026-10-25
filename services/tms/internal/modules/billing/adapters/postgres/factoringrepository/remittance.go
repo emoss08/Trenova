@@ -128,8 +128,8 @@ func withMatchedItem(
 	line := factoringdb.RemittanceLines
 	item := line.SubmissionItem()
 	return q.
-		Compute(line.MatchedInvoice, keel.DynOf(item.InvoiceNumber).Coalesce("")).
-		Compute(line.MatchedSubmission, keel.DynOf(item.SubmissionID).Coalesce(""))
+		Compute(line.MatchedInvoice, item.InvoiceNumber.Coalesce("")).
+		Compute(line.MatchedSubmission, item.SubmissionID.Coalesce(""))
 }
 
 func (r *remittanceRepository) FindByInboundDocument(
@@ -305,7 +305,7 @@ func lineOutcomes(
 		"reason", "suggestions", "ignored_reason", "reserve_entry_id",
 	}, ids, kinds, statuses, matchedBy, items, scores, reasons, suggestions, ignored, reserves)
 	orNull := func(column string) keel.Expr {
-		return keel.DynOf(outcome.Col(column)).NullIf("")
+		return keel.StringOf(outcome.Col(column)).NullIf("")
 	}
 
 	q := line.With(outcome).
@@ -388,37 +388,34 @@ func remittanceCandidates(
 
 func candidateMatch(invoices []string, amounts []int64) (invoiceMatch, amountMatch keel.Pred) {
 	item := factoringdb.SubmissionItems
-	normalized := keel.DynFunc("upper", keel.DynFunc(
-		"regexp_replace",
-		item.InvoiceNumber,
-		keel.DynConst("[^[:alnum:]]"),
-		keel.DynConst(""),
-		keel.DynConst("g"),
-	))
-	tolerance := keel.DynFunc("greatest", minCandidateTolerance, item.ExpectedFeeMinor)
+	normalized := item.InvoiceNumber.RegexpReplace("[^[:alnum:]]", "", "g").Upper()
+	tolerance := keel.Int64(minCandidateTolerance).Greatest(item.ExpectedFeeMinor)
 	amt := keel.Unnest("amt", []string{"v"}, amounts)
-	amount := keel.DynFunc("abs", amt.Col("v"))
+	amount := keel.Int64Of(amt.Col("v")).Abs()
 	near := func(target keel.Expr) keel.Pred {
-		return keel.DynFunc("abs", amount.Sub(target)).Lte(tolerance)
+		return keel.Int64Of(keel.DynOf(amount).Sub(target)).Abs().LteExpr(tolerance)
 	}
 	amountMatch = keel.Exists(amt.Query().With(amt).Where(keel.Or(
 		near(item.ExpectedAdvanceMinor),
 		near(item.FaceMinor),
-		near(keel.DynOf(item.ReserveMinor).Coalesce(-1)),
-		near(keel.DynOf(item.AdvanceMinor).Coalesce(0).Add(keel.DynOf(item.FeeMinor).Coalesce(0))),
+		near(item.ReserveMinor.Coalesce(-1)),
+		near(keel.DynOf(item.AdvanceMinor.Coalesce(0)).Add(item.FeeMinor.Coalesce(0))),
 	)))
 
 	ref := keel.Unnest("ref", []string{"v"}, invoices)
-	text := keel.DynOf(ref.Col("v"))
-	contains := func(needle keel.DynExpr) keel.DynExpr {
+	text := keel.StringOf(ref.Col("v"))
+	contains := func(needle keel.Expr) keel.DynExpr {
 		return keel.DynConst("%").Concat(needle).Concat(keel.DynConst("%"))
 	}
 	invoiceMatch = keel.Exists(ref.Query().With(ref).Where(keel.Or(
-		normalized.Eq(text),
+		normalized.EqExpr(text),
 		keel.And(
-			keel.DynFunc("length", text).Gte(4),
-			keel.DynFunc("length", normalized).Gte(4),
-			keel.Or(normalized.Like(contains(text)), text.Like(contains(normalized))),
+			text.Length().Gte(4),
+			normalized.Length().Gte(4),
+			keel.Or(
+				keel.DynOf(normalized).Like(contains(text)),
+				keel.DynOf(text).Like(contains(normalized)),
+			),
 		),
 	)))
 
@@ -458,8 +455,8 @@ func openRemittances(limit int) *keel.Query[*factoring.Remittance] {
 	return rem.Pick(
 		rem.ID,
 		rem.FactoringCompanyID,
-		keel.DynOf(fac.Name).Coalesce(""),
-		keel.DynOf(rem.FileName).Coalesce(""),
+		fac.Name.Coalesce(""),
+		rem.FileName.Coalesce(""),
 		rem.Status,
 		rem.ExceptionCount,
 		rem.MatchedCount,

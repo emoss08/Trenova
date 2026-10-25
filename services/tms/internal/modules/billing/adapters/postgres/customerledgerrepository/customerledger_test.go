@@ -10,6 +10,9 @@ import (
 
 func TestBalancesLeaveOutNonRecourseFactoredEntries(t *testing.T) {
 	cle := customerledgerdb.CustomerLedgerEntries
-	keeltest.Snapshot(t, cle.Pick(cle.CustomerID, keel.DynOf(keel.Sum(cle.AmountMinor)).Coalesce(0)).
-		Where(keel.Not(nonRecourseFactoredEntry(cle))).Group(cle.CustomerID))
+	keeltest.Snapshot(
+		t,
+		cle.Pick(cle.CustomerID, keel.NumericOf(cle.AmountMinor.Sum()).Coalesce(0)).
+			Where(keel.Not(nonRecourseFactoredEntry(cle))).Group(cle.CustomerID),
+	)
 }
