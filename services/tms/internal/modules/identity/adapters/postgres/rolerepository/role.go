@@ -28,7 +28,6 @@ const (
 	parentRoleAlias          = "parent_role"
 	directAssignment         = "direct"
 	orphanedScopeReason      = "find role assignments in organizations their holders no longer belong to, across every organization"
-	removeParentRoleSQL      = "array_remove(?, ?)"
 	roleClosureParentColumn  = "parent_role_ids"
 	roleClosureRoleColumn    = "id"
 	alreadyAssignedMessage   = "Role is already assigned to this user"
@@ -416,7 +415,7 @@ func (r *repository) Delete(ctx context.Context, req permissionports.DeleteRoleR
 		).Update(
 			ctx,
 			db,
-			ro.ParentRoleIDs.ToExpr(keel.Raw(removeParentRoleSQL, ro.ParentRoleIDs, req.RoleID.String())),
+			ro.ParentRoleIDs.Remove(req.RoleID.String()),
 		); err != nil {
 			r.l.Error("failed to drop the deleted role from its seniors", zap.Error(err))
 			return err

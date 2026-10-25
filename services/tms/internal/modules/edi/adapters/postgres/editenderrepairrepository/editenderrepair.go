@@ -26,8 +26,8 @@ const (
 	shipmentIDKey    = "externalShipmentId"
 	paymentMethodKey = "paymentMethod"
 
-	transferReferencesPath = "{ratingDetail}"
-	messageReferencesPath  = "{loadTender,ratingDetail}"
+	ratingDetailKey = "ratingDetail"
+	loadTenderKey   = "loadTender"
 )
 
 type Params struct {
@@ -217,16 +217,17 @@ func referencesJSON(shipmentID, paymentMethod string) (string, error) {
 	return encoded, nil
 }
 
-func withReferences(column keel.JSONBCol, path, references string) keel.Assignment {
-	return column.ToExpr(keel.Raw(
-		"jsonb_set(?, ?::text[], (COALESCE(? #> ?::text[], jsonb_build_object()) - ? - ?) || ?::jsonb)",
+func withReferences(column keel.JSONBCol, references string, path ...string) keel.Assignment {
+	kept := column.Path(path...).
+		Coalesce(keel.DynFunc("jsonb_build_object")).
+		Sub(keel.DynLit(shipmentIDKey).Cast(keel.TypeString)).
+		Sub(keel.DynLit(paymentMethodKey).Cast(keel.TypeString))
+
+	return column.ToExpr(keel.DynFunc(
+		"jsonb_set",
 		column,
 		path,
-		column,
-		path,
-		shipmentIDKey,
-		paymentMethodKey,
-		references,
+		kept.Concat(keel.DynLit(references).Cast(keel.TypeJSON)),
 	))
 }
 
@@ -281,7 +282,7 @@ func repairTransfers(
 ) (int, error) {
 	t := edidb.EDITransfers
 	n, err := t.Where(transferMatch(req)).
-		Update(ctx, db, withReferences(t.TenderPayload, transferReferencesPath, references))
+		Update(ctx, db, withReferences(t.TenderPayload, references, ratingDetailKey))
 	if err != nil {
 		return 0, fmt.Errorf("repair the tender references of transfers: %w", err)
 	}
@@ -303,7 +304,11 @@ func repairMessage(
 			m.OrganizationID.Eq(candidate.OrganizationID),
 			m.BusinessUnitID.Eq(candidate.BusinessUnitID),
 		).
-		Update(ctx, db, withReferences(m.PayloadSnapshot, messageReferencesPath, references))
+		Update(
+			ctx,
+			db,
+			withReferences(m.PayloadSnapshot, references, loadTenderKey, ratingDetailKey),
+		)
 	if err != nil {
 		return fmt.Errorf(
 			"repair the tender references of message %s: %w",

@@ -244,12 +244,13 @@ func patchAssignments(patch inboundmessageports.QueuePatch, now int64) []keel.As
 		sets = append(sets, m.HandledByRuleID.ToNull(), m.HandledAction.ToNull())
 	}
 	if patch.HandOff != nil {
-		sets = append(sets, m.ActionState.ToExpr(keel.Raw(
-			"? || jsonb_build_object('handedOffTo', ?::text, 'handedOffAt', ?::bigint)",
-			m.ActionState,
-			patch.HandOff.To.String(),
-			now,
-		)))
+		sets = append(sets, m.ActionState.ToExpr(keel.DynOf(m.ActionState).Concat(keel.DynFunc(
+			"jsonb_build_object",
+			keel.DynConst("handedOffTo"),
+			keel.DynLit(patch.HandOff.To.String()).Cast(keel.TypeString),
+			keel.DynConst("handedOffAt"),
+			keel.DynLit(now).Cast(keel.TypeInt64),
+		))))
 	}
 	if patch.ClearShipment {
 		sets = append(sets, m.MatchedShipmentID.ToNull())

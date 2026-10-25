@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"slices"
-	"strings"
 
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
@@ -301,12 +300,11 @@ func (s *source) extraArray() keel.Expr {
 		return keel.Raw("ARRAY[]::text[]")
 	}
 
-	args := make([]any, len(s.extra))
+	items := make([]any, len(s.extra))
 	for i := range s.extra {
-		args[i] = s.extra[i]
+		items[i] = keel.DynOf(s.extra[i]).Cast(keel.TypeString).Coalesce("")
 	}
-	items := strings.TrimSuffix(strings.Repeat("COALESCE(?::text, ''), ", len(s.extra)), ", ")
-	return keel.Raw("ARRAY["+items+"]::text[]", args...)
+	return keel.DynArray(items...)
 }
 
 func (s *source) matches(row *kernelports.EnvelopeRow) []keel.Pred {

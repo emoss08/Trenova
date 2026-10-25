@@ -13,9 +13,6 @@ import (
 	"go.uber.org/zap"
 )
 
-const rateInputSQL = "CASE WHEN jsonb_typeof(? -> 'rate') = 'object' " +
-	"THEN (? -> 'rate' ->> '$q')::numeric END"
-
 type laneCounts struct {
 	Total int64
 	Live  int64
@@ -114,7 +111,12 @@ func laneSummaryQuery(
 ) *keel.Query[rateagreement.RateAgreementRule] {
 	rr := rateagreementdb.RateAgreementRules
 	ft := formulatemplatedb.FormulaTemplates
-	rate := keel.Raw(rateInputSQL, rr.Inputs, rr.Inputs)
+	rate := keel.DynCase().
+		When(
+			keel.DynFunc("jsonb_typeof", rr.Inputs.Path("rate")).Eq(keel.DynConst("object")),
+			keel.DynOf(rr.Inputs.Text("rate", "$q")).Cast(keel.TypeNumeric),
+		).
+		End()
 
 	return agreementRules(req).
 		LeftJoin(ft, ft.ID.EqCol(rr.FormulaTemplateID)).

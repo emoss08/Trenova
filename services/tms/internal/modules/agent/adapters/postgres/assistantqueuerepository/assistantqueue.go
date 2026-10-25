@@ -101,8 +101,8 @@ func reorderQuery(
 func reorderPosition(ids []pulid.ID) keel.Assignment {
 	q := conversationdb.QueuedMessages
 
-	return q.Position.ToExpr(keel.Raw(
-		"array_position(?::varchar[], ?)",
+	return q.Position.ToExpr(keel.DynFunc(
+		"array_position",
 		pulid.Map(ids, func(id pulid.ID) string { return id.String() }),
 		q.ID,
 	))
