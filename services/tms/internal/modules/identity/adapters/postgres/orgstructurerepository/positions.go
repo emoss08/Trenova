@@ -18,9 +18,7 @@ import (
 
 const positionsAlias = "jpos"
 
-func asText(v any) keel.DynExpr { return keel.DynLit(v).Cast(keel.TypeString) }
-
-func orEmpty(e keel.Expr) keel.DynExpr { return keel.DynOf(e).Coalesce("") }
+func orEmpty(e keel.Expr) keel.StringExpr { return keel.StringOf(e).Coalesce("") }
 
 // Two rosters hold positions. Drivers are workers and carry position_id on
 // their own row; the front office is made of people who log in, and their
@@ -40,7 +38,7 @@ func (r *repository) StaffByPosition(
 			Join(jp, jp.ID.EqCol(m.PositionID)).
 			Where(u.Status.Eq(domaintypes.StatusActive)).
 			Group(m.PositionID, jp.Title, jp.Code, jp.Department).
-			Pick(m.PositionID, jp.Title, jp.Code, asText(jp.Department), keel.Count()))
+			Pick(m.PositionID, jp.Title, jp.Code, keel.CastText(jp.Department), keel.Count()))
 		if err != nil {
 			r.l.Error("failed to count staff by position", zap.Error(err))
 			return nil, fmt.Errorf("count staff by position: %w", err)
@@ -61,10 +59,10 @@ func (r *repository) ListPositionHolders(
 		workers, err := keel.Into[workerports.PositionHolderRow](ctx, db, w.
 			Where(w.PositionID.Eq(positionID)).
 			Pick(
-				asText(string(workerports.PositionHolderWorker)),
+				keel.Text(string(workerports.PositionHolderWorker)),
 				w.ID,
 				keel.DynOf(w.FirstName).Concat(" ").Concat(w.LastName),
-				asText(w.Status),
+				keel.CastText(w.Status),
 				orEmpty(fc.Code),
 			).
 			Order(keel.Desc(w.Status.Eq(domaintypes.StatusActive)), w.LastName.Asc(), w.FirstName.Asc()))
@@ -78,10 +76,10 @@ func (r *repository) ListPositionHolders(
 		users, err := keel.Into[workerports.PositionHolderRow](ctx, db, m.
 			Where(m.PositionID.Eq(positionID), u.ID.IsNotNull()).
 			Pick(
-				asText(string(workerports.PositionHolderUser)),
+				keel.Text(string(workerports.PositionHolderUser)),
 				u.ID,
 				u.Name,
-				asText(u.Status),
+				keel.CastText(u.Status),
 				u.EmailAddress,
 			).
 			Order(keel.Desc(u.Status.Eq(domaintypes.StatusActive)), u.Name.Asc()))

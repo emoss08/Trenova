@@ -236,7 +236,7 @@ func (r *repository) GetUsersWithRole(
 			u.Name,
 			ura.OrganizationID,
 			o.Name,
-			keel.DynLit(directAssignment).Cast(keel.TypeString),
+			keel.Text(directAssignment),
 		))
 		if err != nil {
 			r.l.Error(

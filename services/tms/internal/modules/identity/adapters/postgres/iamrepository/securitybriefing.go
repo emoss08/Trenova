@@ -64,7 +64,7 @@ func activeTOTP(ctx context.Context) keel.Pred {
 		mfa.UserID.EqCol(u.ID),
 		mfa.Type.Eq(iam.MFAAuthenticatorTypeTOTP),
 		mfa.Enabled.IsTrue(),
-		keel.DynOf(mfa.VerifiedAt).Coalesce(0).Gt(0),
+		mfa.VerifiedAt.Coalesce(0).Gt(0),
 	))
 }
 
@@ -81,9 +81,9 @@ func (r *securityBriefingRepository) MemberSummary(
 			memberQuery(ctx, memberScope{TenantInfo: req.TenantInfo, Now: req.Now}).Pick(
 				keel.Count(),
 				keel.Count().Filter(u.IsLocked.IsTrue()),
-				keel.Count().Filter(keel.DynOf(u.LastLoginAt).Coalesce(0).Eq(0)),
+				keel.Count().Filter(u.LastLoginAt.Coalesce(0).Eq(0)),
 				keel.Count().Filter(
-					keel.DynOf(u.LastLoginAt).NullIf(0).Coalesce(m.JoinedAt).Lt(req.DormantBefore),
+					u.LastLoginAt.NullIf(0).Coalesce(m.JoinedAt).Lt(req.DormantBefore),
 				),
 				keel.Count().Filter(u.MustChangePassword.IsTrue()),
 			),
@@ -133,7 +133,7 @@ func (r *securityBriefingRepository) MFACoverage(
 		}
 
 		u := tenantdb.Users
-		lastSignIn := keel.DynOf(u.LastLoginAt).NullIf(0)
+		lastSignIn := u.LastLoginAt.NullIf(0)
 		members, err := keel.Into[iam.SecurityMemberRef](
 			ctx,
 			db,
@@ -226,19 +226,17 @@ func (r *securityBriefingRepository) APIKeySummary(
 		k := apikeydb.Keys
 		summary, err := keel.IntoOne[iam.SecurityAPIKeySummary](ctx, r.db.Keel(ctx), k.Where(
 			k.Status.Eq(apikey.StatusActive),
-			keel.DynOf(k.ExpiresAt).Coalesce(0).Eq(0).Or(keel.DynOf(k.ExpiresAt).Gt(req.Now)),
+			keel.Or(k.ExpiresAt.Coalesce(0).Eq(0), k.ExpiresAt.Gt(req.Now)),
 		).Pick(
 			keel.Count(),
-			keel.Count().Filter(keel.DynOf(k.ExpiresAt).Coalesce(0).Eq(0)),
+			keel.Count().Filter(k.ExpiresAt.Coalesce(0).Eq(0)),
 			keel.Count().Filter(
-				keel.DynOf(k.LastUsedAt).NullIf(0).Coalesce(k.CreatedAt).Lt(req.UnusedBefore),
+				k.LastUsedAt.NullIf(0).Coalesce(k.CreatedAt).Lt(req.UnusedBefore),
 			),
-			keel.Count().Filter(
-				keel.DynOf(k.ExpiresAt).
-					Gt(req.Now).
-					And(keel.DynOf(k.ExpiresAt).Lte(req.ExpiringBefore)),
-			),
-		))
+			keel.Count().
+				Filter(keel.And(k.ExpiresAt.Gt(req.Now), k.ExpiresAt.Lte(req.ExpiringBefore))),
+		),
+		)
 		if err != nil {
 			r.l.Error("failed to summarize api keys", zap.Error(err))
 			return nil, fmt.Errorf("summarize api keys: %w", err)
