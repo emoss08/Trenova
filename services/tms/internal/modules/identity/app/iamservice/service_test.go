@@ -1,12 +1,11 @@
 package iamservice
 
 import (
-	"github.com/emoss08/trenova/internal/testutil/mocks/iamportsmock"
 	"errors"
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/identity/domain/iam"
-	"github.com/emoss08/trenova/internal/modules/identity/ports/iamports"
+	"github.com/emoss08/trenova/internal/testutil/mocks/iamportsmock"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -16,18 +15,15 @@ import (
 )
 
 type accessPolicyServiceDeps struct {
-	svc         *service
-	repo        *iamportsmock.MockIAMRepository
-	policyCache *iamportsmock.MockAccessPolicyCacheRepository
-	tenant      pagination.TenantInfo
-	lookup      iamports.IAMTenantPolicyLookupRequest
+	svc    *service
+	repo   *iamportsmock.MockIAMRepository
+	tenant pagination.TenantInfo
 }
 
 func setupAccessPolicyService(t *testing.T) accessPolicyServiceDeps {
 	t.Helper()
 
 	repo := iamportsmock.NewMockIAMRepository(t)
-	policyCache := iamportsmock.NewMockAccessPolicyCacheRepository(t)
 	tenant := pagination.TenantInfo{
 		OrgID: pulid.MustNew("org_"),
 		BuID:  pulid.MustNew("bu_"),
@@ -35,21 +31,15 @@ func setupAccessPolicyService(t *testing.T) accessPolicyServiceDeps {
 
 	return accessPolicyServiceDeps{
 		svc: &service{
-			repo:        repo,
-			policyCache: policyCache,
+			repo: repo,
 			validator: newValidator(
 				&accessPolicyValidatorRepo{},
 				&accessPolicyUniquenessChecker{},
 			),
 			l: zap.NewNop(),
 		},
-		repo:        repo,
-		policyCache: policyCache,
-		tenant:      tenant,
-		lookup: iamports.IAMTenantPolicyLookupRequest{
-			OrganizationID: tenant.OrgID,
-			BusinessUnitID: tenant.BuID,
-		},
+		repo:   repo,
+		tenant: tenant,
 	}
 }
 
@@ -64,7 +54,7 @@ func validAccessPolicy() *iam.AccessPolicy {
 	}
 }
 
-func TestCreateAccessPolicy_InvalidatesCache(t *testing.T) {
+func TestCreateAccessPolicy_StampsTheTenant(t *testing.T) {
 	t.Parallel()
 
 	deps := setupAccessPolicyService(t)
@@ -75,7 +65,6 @@ func TestCreateAccessPolicy_InvalidatesCache(t *testing.T) {
 		CreateAccessPolicy(ctx, mock.AnythingOfType("*iam.AccessPolicy")).
 		Return(entity, nil).
 		Once()
-	deps.policyCache.EXPECT().Invalidate(ctx, deps.lookup).Return(nil).Once()
 
 	created, err := deps.svc.CreateAccessPolicy(ctx, deps.tenant, entity)
 
@@ -84,24 +73,24 @@ func TestCreateAccessPolicy_InvalidatesCache(t *testing.T) {
 	assert.Equal(t, deps.tenant.BuID, created.BusinessUnitID)
 }
 
-func TestCreateAccessPolicy_RepositoryFailureSkipsInvalidation(t *testing.T) {
+func TestCreateAccessPolicy_RepositoryFailurePropagates(t *testing.T) {
 	t.Parallel()
 
 	deps := setupAccessPolicyService(t)
 	ctx := t.Context()
+	insertErr := errors.New("insert failed")
 
 	deps.repo.EXPECT().
 		CreateAccessPolicy(ctx, mock.AnythingOfType("*iam.AccessPolicy")).
-		Return(nil, errors.New("insert failed")).
+		Return(nil, insertErr).
 		Once()
 
 	_, err := deps.svc.CreateAccessPolicy(ctx, deps.tenant, validAccessPolicy())
 
-	require.Error(t, err)
-	deps.policyCache.AssertNotCalled(t, "Invalidate", mock.Anything, mock.Anything)
+	require.ErrorIs(t, err, insertErr)
 }
 
-func TestUpdateAccessPolicy_InvalidatesCache(t *testing.T) {
+func TestUpdateAccessPolicy_KeepsTheRequestedID(t *testing.T) {
 	t.Parallel()
 
 	deps := setupAccessPolicyService(t)
@@ -113,7 +102,6 @@ func TestUpdateAccessPolicy_InvalidatesCache(t *testing.T) {
 		UpdateAccessPolicy(ctx, mock.AnythingOfType("*iam.AccessPolicy")).
 		Return(entity, nil).
 		Once()
-	deps.policyCache.EXPECT().Invalidate(ctx, deps.lookup).Return(nil).Once()
 
 	updated, err := deps.svc.UpdateAccessPolicy(ctx, deps.tenant, id, entity)
 
@@ -121,7 +109,7 @@ func TestUpdateAccessPolicy_InvalidatesCache(t *testing.T) {
 	assert.Equal(t, id, updated.ID)
 }
 
-func TestDeleteAccessPolicy_InvalidatesCache(t *testing.T) {
+func TestDeleteAccessPolicy_DeletesThroughTheRepository(t *testing.T) {
 	t.Parallel()
 
 	deps := setupAccessPolicyService(t)
@@ -129,34 +117,6 @@ func TestDeleteAccessPolicy_InvalidatesCache(t *testing.T) {
 	id := pulid.MustNew("ap_")
 
 	deps.repo.EXPECT().DeleteAccessPolicy(ctx, deps.tenant, id).Return(nil).Once()
-	deps.policyCache.EXPECT().Invalidate(ctx, deps.lookup).Return(nil).Once()
 
 	require.NoError(t, deps.svc.DeleteAccessPolicy(ctx, deps.tenant, id))
-}
-
-func TestDeleteAccessPolicy_InvalidationFailureDoesNotFailMutation(t *testing.T) {
-	t.Parallel()
-
-	deps := setupAccessPolicyService(t)
-	ctx := t.Context()
-	id := pulid.MustNew("ap_")
-
-	deps.repo.EXPECT().DeleteAccessPolicy(ctx, deps.tenant, id).Return(nil).Once()
-	deps.policyCache.EXPECT().Invalidate(ctx, deps.lookup).Return(errors.New("redis down")).Once()
-
-	require.NoError(t, deps.svc.DeleteAccessPolicy(ctx, deps.tenant, id))
-}
-
-func TestDeleteAccessPolicy_WithoutCacheStillDeletes(t *testing.T) {
-	t.Parallel()
-
-	deps := setupAccessPolicyService(t)
-	deps.svc.policyCache = nil
-	ctx := t.Context()
-	id := pulid.MustNew("ap_")
-
-	deps.repo.EXPECT().DeleteAccessPolicy(ctx, deps.tenant, id).Return(nil).Once()
-
-	require.NoError(t, deps.svc.DeleteAccessPolicy(ctx, deps.tenant, id))
-	deps.policyCache.AssertNotCalled(t, "Invalidate", mock.Anything, mock.Anything)
 }

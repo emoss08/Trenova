@@ -48,7 +48,6 @@ func TestAccessPolicyChangesAreRecorded(t *testing.T) {
 
 	deps.repo.EXPECT().CreateAccessPolicy(ctx, mock.AnythingOfType("*iam.AccessPolicy")).Return(saved, nil).Once()
 	deps.repo.EXPECT().DeleteAccessPolicy(ctx, deps.tenant, saved.ID).Return(nil).Once()
-	deps.policyCache.EXPECT().Invalidate(ctx, deps.lookup).Return(nil).Twice()
 
 	_, err := deps.svc.CreateAccessPolicy(ctx, deps.tenant, entity)
 	require.NoError(t, err)

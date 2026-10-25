@@ -26,19 +26,6 @@ type IAMTenantPolicyLookupRequest struct {
 	BusinessUnitID pulid.ID
 }
 
-type AccessPolicyCacheRepository interface {
-	GetEnabled(
-		ctx context.Context,
-		req IAMTenantPolicyLookupRequest,
-	) ([]*iam.AccessPolicy, bool, error)
-	SetEnabled(
-		ctx context.Context,
-		req IAMTenantPolicyLookupRequest,
-		policies []*iam.AccessPolicy,
-	) error
-	Invalidate(ctx context.Context, req IAMTenantPolicyLookupRequest) error
-}
-
 type ListSCIMDirectoryRequest struct {
 	Filter *pagination.QueryOptions `json:"filter"`
 }

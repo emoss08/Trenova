@@ -34,37 +34,34 @@ const (
 type Params struct {
 	fx.In
 
-	Repo        iamports.IAMRepository
-	PolicyCache iamports.AccessPolicyCacheRepository
-	Encryption  *encryptionservice.Service
-	Validator   *Validator
-	Auditor     permissionports.SecurityAuditor
-	Logger      *zap.Logger
-	Config      *config.Config                `optional:"true"`
-	Plans       platformplanports.PlanService `optional:"true"`
+	Repo       iamports.IAMRepository
+	Encryption *encryptionservice.Service
+	Validator  *Validator
+	Auditor    permissionports.SecurityAuditor
+	Logger     *zap.Logger
+	Config     *config.Config                `optional:"true"`
+	Plans      platformplanports.PlanService `optional:"true"`
 }
 
 type service struct {
-	repo        iamports.IAMRepository
-	policyCache iamports.AccessPolicyCacheRepository
-	enc         *encryptionservice.Service
-	validator   *Validator
-	auditor     permissionports.SecurityAuditor
-	l           *zap.Logger
-	plans       platformplanports.PlanService
-	issuers     httpsafe.Policy
+	repo      iamports.IAMRepository
+	enc       *encryptionservice.Service
+	validator *Validator
+	auditor   permissionports.SecurityAuditor
+	l         *zap.Logger
+	plans     platformplanports.PlanService
+	issuers   httpsafe.Policy
 }
 
 func New(p Params) iamports.IAMService {
 	return &service{
-		repo:        p.Repo,
-		policyCache: p.PolicyCache,
-		enc:         p.Encryption,
-		validator:   p.Validator,
-		auditor:     p.Auditor,
-		l:           p.Logger.Named("service.iam"),
-		plans:       p.Plans,
-		issuers:     p.Config.SSOIssuerPolicy(),
+		repo:      p.Repo,
+		enc:       p.Encryption,
+		validator: p.Validator,
+		auditor:   p.Auditor,
+		l:         p.Logger.Named("service.iam"),
+		plans:     p.Plans,
+		issuers:   p.Config.SSOIssuerPolicy(),
 	}
 }
 
@@ -688,7 +685,6 @@ func (s *service) CreateAccessPolicy(
 	if err != nil {
 		return nil, err
 	}
-	s.invalidateAccessPolicyCache(ctx, tenantInfo)
 	s.recordChange(ctx, &iamChange{
 		tenantInfo: tenantInfo,
 		resource:   permission.ResourceAccessPolicy,
@@ -717,7 +713,6 @@ func (s *service) UpdateAccessPolicy(
 	if err != nil {
 		return nil, err
 	}
-	s.invalidateAccessPolicyCache(ctx, tenantInfo)
 	s.recordChange(ctx, &iamChange{
 		tenantInfo: tenantInfo,
 		resource:   permission.ResourceAccessPolicy,
@@ -744,7 +739,6 @@ func (s *service) DeleteAccessPolicy(
 	if err := s.repo.DeleteAccessPolicy(ctx, tenantInfo, id); err != nil {
 		return err
 	}
-	s.invalidateAccessPolicyCache(ctx, tenantInfo)
 	s.recordChange(ctx, &iamChange{
 		tenantInfo: tenantInfo,
 		resource:   permission.ResourceAccessPolicy,
@@ -753,26 +747,6 @@ func (s *service) DeleteAccessPolicy(
 		comment:    "Access policy deleted",
 	})
 	return nil
-}
-
-func (s *service) invalidateAccessPolicyCache(
-	ctx context.Context,
-	tenantInfo pagination.TenantInfo,
-) {
-	if s.policyCache == nil {
-		return
-	}
-	err := s.policyCache.Invalidate(ctx, iamports.IAMTenantPolicyLookupRequest{
-		OrganizationID: tenantInfo.OrgID,
-		BusinessUnitID: tenantInfo.BuID,
-	})
-	if err != nil {
-		s.l.Error("failed to invalidate access policy cache",
-			zap.String("orgID", tenantInfo.OrgID.String()),
-			zap.String("buID", tenantInfo.BuID.String()),
-			zap.Error(err),
-		)
-	}
 }
 
 func (s *service) ListAuthEvents(
