@@ -13,8 +13,6 @@ import (
 	"go.uber.org/zap"
 )
 
-const copiedIDSQL = "? || upper(substr(replace(gen_random_uuid()::text, '-', ''), 1, 26))"
-
 func cellsQuery(
 	req *ratematrixports.ListRateMatrixCellsRequest,
 ) *keel.Query[ratematrix.RateMatrixCell] {
@@ -161,7 +159,14 @@ func copyVersion(
 }
 
 func copiedID(prefix string) keel.Expr {
-	return keel.Raw(copiedIDSQL, prefix)
+	uuid := keel.DynFunc("gen_random_uuid").Cast(keel.TypeString)
+
+	return keel.DynLit(prefix).Concat(keel.DynFunc("upper", keel.DynFunc(
+		"substr",
+		keel.DynFunc("replace", uuid, keel.DynConst("-"), keel.DynConst("")),
+		keel.DynConst(1),
+		keel.DynConst(26),
+	)))
 }
 
 func copiedNow() keel.Expr {

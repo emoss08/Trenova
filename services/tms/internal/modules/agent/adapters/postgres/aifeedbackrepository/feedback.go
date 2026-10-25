@@ -287,12 +287,9 @@ func (r *repository) WorstRated(
 						positive,
 						negative,
 						f.CreatedAt.Max(),
-						keel.Raw(
-							"(ARRAY_AGG(? ORDER BY ? ASC, ? DESC))[1]",
-							f.ID,
-							f.Rating,
-							f.CreatedAt,
-						),
+						keel.DynOf(
+							keel.ArrayAgg(f.ID).OrderBy(f.Rating.Asc(), f.CreatedAt.Desc()),
+						).At(1),
 					).
 					Order(
 						keel.Desc(keel.DynOf(negative).Sub(positive)),

@@ -176,14 +176,8 @@ func (r *analyticsRepository) FacilityStats(
 				keel.Count(),
 				keel.Count().Filter(o.RoundedMinutes.Gt(0)),
 				keel.DynFunc("round", keel.DynOf(o.RawDwellMinutes).Avg()).Coalesce(0).Cast(keel.TypeInt64),
-				keel.Raw(
-					"coalesce(percentile_cont(0.5) WITHIN GROUP (ORDER BY ?), 0)",
-					o.RawDwellMinutes,
-				),
-				keel.Raw(
-					"coalesce(percentile_cont(0.9) WITHIN GROUP (ORDER BY ?), 0)",
-					o.RawDwellMinutes,
-				),
+				keel.DynOf(keel.PercentileCont(0.5, o.RawDwellMinutes.Asc())).Coalesce(0),
+				keel.DynOf(keel.PercentileCont(0.9, o.RawDwellMinutes.Asc())).Coalesce(0),
 			}, outcomeColumns()...)
 
 			q := o.LeftJoin(loc, loc.ID.EqCol(o.LocationID)).

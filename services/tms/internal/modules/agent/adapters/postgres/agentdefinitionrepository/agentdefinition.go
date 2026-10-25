@@ -433,14 +433,17 @@ func (r *repository) SetToolTier(
 		).Update(
 			ctx,
 			r.db.Keel(ctx),
-			d.ToolTiers.ToExpr(keel.Raw(
-				"(CASE WHEN jsonb_typeof(?) = 'object' THEN ? ELSE jsonb_build_object() END) "+
-					"|| jsonb_build_object(?::text, ?::text)",
-				d.ToolTiers,
-				d.ToolTiers,
-				req.ToolName,
-				string(req.Tier),
-			)),
+			d.ToolTiers.ToExpr(keel.DynCase().
+				When(
+					keel.DynFunc("jsonb_typeof", d.ToolTiers).Eq(keel.DynConst("object")),
+					d.ToolTiers,
+				).
+				Else(keel.DynFunc("jsonb_build_object")).
+				Concat(keel.DynFunc(
+					"jsonb_build_object",
+					keel.DynLit(req.ToolName).Cast(keel.TypeString),
+					keel.DynLit(string(req.Tier)).Cast(keel.TypeString),
+				))),
 		)
 		if err != nil {
 			return fmt.Errorf("set agent definition tool tier: %w", err)
@@ -544,11 +547,11 @@ func (r *repository) removeDelegate(ctx context.Context, id pulid.ID) error {
 	_, err := d.Where(d.DelegateIDs.Has(id.String())).Update(
 		ctx,
 		r.db.Keel(ctx),
-		d.DelegateIDs.ToExpr(keel.Raw(
-			"NULLIF(array_remove(?, ?::text), ARRAY[]::text[])",
+		d.DelegateIDs.ToExpr(keel.DynFunc(
+			"array_remove",
 			d.DelegateIDs,
-			id.String(),
-		)),
+			keel.DynLit(id.String()).Cast(keel.TypeString),
+		).NullIf([]string{})),
 	)
 	if err != nil {
 		return fmt.Errorf("remove a deleted agent from the agents that delegate to it: %w", err)

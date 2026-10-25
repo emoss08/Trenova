@@ -355,7 +355,7 @@ type searchPlan struct {
 	limit       int
 	candidates  int
 	efSearch    int
-	dimensions  string
+	dimensions  int
 }
 
 func planSearch(req *agentports.VectorSearchRequest) (searchPlan, error) {
@@ -384,7 +384,7 @@ func planSearch(req *agentports.VectorSearchRequest) (searchPlan, error) {
 	plan := searchPlan{
 		sourceTypes: req.SourceTypes,
 		limit:       req.Limit,
-		dimensions:  strconv.Itoa(req.Dimensions),
+		dimensions:  req.Dimensions,
 	}
 	if len(plan.sourceTypes) == 0 {
 		plan.sourceTypes = airetrieval.AllSourceTypes()
@@ -460,7 +460,7 @@ func (r *repository) Search(
 func searchQuery(req *agentports.VectorSearchRequest, plan searchPlan) *keel.Query[keel.Row] {
 	e := airetrievaldb.Embeddings
 	query := pgvector.NewHalfVector(req.Query)
-	cast := "::halfvec(" + plan.dimensions + ")"
+	cast := "::halfvec(" + strconv.Itoa(plan.dimensions) + ")"
 	distance := func() keel.Expr {
 		return keel.Raw("?"+cast+" <=> ?"+cast, e.Embedding, query)
 	}
@@ -469,7 +469,7 @@ func searchQuery(req *agentports.VectorSearchRequest, plan searchPlan) *keel.Que
 		Where(
 			e.SourceType.In(plan.sourceTypes...),
 			e.ModelKey.Eq(req.ModelKey),
-			keel.Raw("? = "+plan.dimensions, e.Dimensions),
+			keel.DynOf(e.Dimensions).Eq(keel.DynConst(plan.dimensions)),
 		).
 		Pick(e.SourceType, e.SourceID, e.ChunkIndex, distance()).
 		Order(keel.Asc(distance())).

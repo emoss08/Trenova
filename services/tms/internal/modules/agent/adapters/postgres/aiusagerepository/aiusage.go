@@ -84,17 +84,15 @@ func (row *totalsRow) totals() aiusageports.AIUsageTotals {
 	}
 }
 
-func latencyPercentile(fraction string) keel.Expr {
+func latencyPercentile(fraction float64) keel.Expr {
 	u := aiusagedb.AIUsageRecords
 
-	return keel.Raw(
-		"COALESCE(percentile_cont("+fraction+") WITHIN GROUP (ORDER BY ?) "+
-			"FILTER (WHERE ? AND ? <> ?), 0)::float8",
-		u.LatencyMs,
-		u.Succeeded,
-		u.Surface,
-		string(aiusage.SurfaceBackground),
-	)
+	return keel.DynOf(
+		keel.PercentileCont(fraction, u.LatencyMs.Asc()).Filter(keel.And(
+			keel.DynOf(u.Succeeded),
+			u.Surface.Ne(aiusage.SurfaceBackground),
+		)),
+	).Coalesce(0).Cast(keel.TypeFloat64)
 }
 
 func totalsPicks(keys ...keel.Expr) []keel.Expr {
@@ -113,8 +111,8 @@ func totalsPicks(keys ...keel.Expr) []keel.Expr {
 		keel.DynOf(u.ReasoningTokens).Sum().Coalesce(0),
 		keel.DynOf(u.CostUSD).Sum().Coalesce(0).Cast(keel.TypeString),
 		keel.DynOf(u.CostUSD).Count(),
-		latencyPercentile("0.5"),
-		latencyPercentile("0.95"),
+		latencyPercentile(0.5),
+		latencyPercentile(0.95),
 	)
 }
 

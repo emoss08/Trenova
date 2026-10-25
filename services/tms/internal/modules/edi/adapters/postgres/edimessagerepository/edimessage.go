@@ -592,11 +592,8 @@ func scorecardQuery(req *ediports.GetEDIPartnerScorecardsRequest) *keel.Query[ed
 			keel.Count().Filter(delivered(edi.MessageDeliveryStatusDeadLettered)),
 			keel.Count().Filter(m.Direction.Eq(edi.DocumentDirectionInbound)),
 			latency.Avg().Filter(acknowledged).Cast(keel.TypeFloat64),
-			keel.Raw(
-				"(percentile_cont(0.95) WITHIN GROUP (ORDER BY ?) FILTER (WHERE ?))::float8",
-				latency,
-				acknowledged,
-			),
+			keel.DynOf(keel.PercentileCont(0.95, latency.Asc()).Filter(acknowledged)).
+				Cast(keel.TypeFloat64),
 			keel.Count().Filter(keel.And(
 				m.AckStatus.Eq(edi.MessageAcknowledgmentStatusPending),
 				m.GeneratedAt.Lt(req.OverdueAckPendingSince),

@@ -193,7 +193,7 @@ func deliveryWithin(start, end int64) keel.Pred {
 
 	return keel.And(
 		sp.Status.Ne(shipment.StatusCanceled),
-		keel.Raw("int8range(?, ?) @> (?)", start, end, keel.Scalar(delivery)),
+		keel.DynFunc("int8range", start, end).Covers(keel.Scalar(delivery)),
 	)
 }
 
@@ -214,7 +214,11 @@ func pickupWindowCondition(now int64, spec shipment.QuickFilterSpec) keel.Pred {
 
 	return keel.And(
 		StageCondition(shipment.StageNeedsCoverage),
-		keel.Raw("int8range(?::bigint, ?::bigint) @> (?)", lower, upper, keel.Scalar(pickup)),
+		keel.DynFunc(
+			"int8range",
+			keel.DynLit(lower).Cast(keel.TypeInt64),
+			keel.DynLit(upper).Cast(keel.TypeInt64),
+		).Covers(keel.Scalar(pickup)),
 	)
 }
 
@@ -225,7 +229,7 @@ func reeferCondition() keel.Pred {
 	profiles := mpf.Where(
 		mpf.Status.Eq(modeprofile.ProfileStatusActive),
 		mpf.EquipmentClass.Eq(modeprofile.EquipmentClassRefrigerated),
-		keel.Raw("? @> jsonb_build_array(?)", mpf.EquipmentTypeIDs, sp.TrailerTypeID),
+		mpf.EquipmentTypeIDs.Contains(keel.DynFunc("jsonb_build_array", sp.TrailerTypeID)),
 	)
 
 	return keel.Or(

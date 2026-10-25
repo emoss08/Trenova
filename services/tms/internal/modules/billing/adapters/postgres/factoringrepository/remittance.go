@@ -388,7 +388,13 @@ func remittanceCandidates(
 
 func candidateMatch(invoices []string, amounts []int64) (invoiceMatch, amountMatch keel.Pred) {
 	item := factoringdb.SubmissionItems
-	normalized := keel.Raw("upper(regexp_replace(?, '[^[:alnum:]]', '', 'g'))", item.InvoiceNumber)
+	normalized := keel.DynFunc("upper", keel.DynFunc(
+		"regexp_replace",
+		item.InvoiceNumber,
+		keel.DynConst("[^[:alnum:]]"),
+		keel.DynConst(""),
+		keel.DynConst("g"),
+	))
 	tolerance := keel.DynFunc("greatest", minCandidateTolerance, item.ExpectedFeeMinor)
 	near := func(target keel.Expr) keel.Expr {
 		return keel.Raw("abs(abs(amt.v) - ?) <= ?", target, tolerance)

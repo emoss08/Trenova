@@ -104,12 +104,11 @@ func senderSummaryQuery(
 
 	return messages().
 		Pick(
-			keel.Raw(
-				"PERCENTILE_CONT(0.5) WITHIN GROUP (ORDER BY ? - ?) FILTER (WHERE ? AND ? >= ?)",
-				m.ReviewedAt, m.ReceivedAt, settledByPerson(), m.ReviewedAt, m.ReceivedAt,
+			keel.PercentileCont(0.5, keel.DynOf(m.ReviewedAt).Sub(m.ReceivedAt).Asc()).Filter(
+				keel.And(settledByPerson(), keel.DynOf(m.ReviewedAt).Gte(m.ReceivedAt)),
 			),
-			text(keel.Raw("MODE() WITHIN GROUP (ORDER BY ?)", m.MatchedCustomerID)),
-			text(keel.Raw("MODE() WITHIN GROUP (ORDER BY ?)", m.MatchedCarrierID)),
+			text(keel.Mode(m.MatchedCustomerID.Asc())),
+			text(keel.Mode(m.MatchedCarrierID.Asc())),
 		).
 		Where(fromSender(req)...)
 }

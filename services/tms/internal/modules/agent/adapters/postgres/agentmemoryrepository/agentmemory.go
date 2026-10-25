@@ -351,12 +351,7 @@ func (r *repository) FindActive(
 
 		entity, err := m.Where(
 			keptOnly(req.Now, req.IncludeSuggested),
-			keel.Raw(
-				"BTRIM(REGEXP_REPLACE(LOWER(?), '[^[:alnum:]]+', ' ', 'g')) = "+
-					"BTRIM(REGEXP_REPLACE(LOWER(?), '[^[:alnum:]]+', ' ', 'g'))",
-				m.Content,
-				req.Content,
-			),
+			foldedContent(m.Content).Eq(foldedContent(req.Content)),
 			sameReaders(&req),
 			keel.When(!req.Tainted, keel.Or(m.Tainted.IsFalse(), m.ReviewedAt.IsNotNull())),
 			subject,
@@ -774,4 +769,14 @@ func setID(col keelkinds.PulidIDCol, id pulid.ID) keel.Assignment {
 	}
 
 	return col.To(id)
+}
+
+func foldedContent(v any) keel.DynExpr {
+	return keel.DynFunc("btrim", keel.DynFunc(
+		"regexp_replace",
+		keel.DynFunc("lower", v),
+		keel.DynConst("[^[:alnum:]]+"),
+		keel.DynConst(" "),
+		keel.DynConst("g"),
+	))
 }

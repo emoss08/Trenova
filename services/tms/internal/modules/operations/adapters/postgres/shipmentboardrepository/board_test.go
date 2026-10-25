@@ -53,7 +53,7 @@ func TestGroupSummaryBucketsShipDatesByLocalDayOfTheFirstPickup(t *testing.T) {
 
 	assert.Contains(t, sql, `LEFT JOIN "stops" grp_stop ON`)
 	assert.Contains(t, sql, `grp_stop."id" = (SELECT end_stp."id"`)
-	assert.Contains(t, sql, `ORDER BY end_sm."sequence" ASC, end_stp."sequence" ASC, end_stp."id" COLLATE "C" ASC LIMIT 1`)
+	assert.Contains(t, sql, `ORDER BY end_sm."sequence" ASC, end_stp."sequence" ASC, (end_stp."id" COLLATE "C") ASC LIMIT 1`)
 	assert.Contains(t, sql, `to_char(to_timestamp(grp_stop."scheduled_window_start") AT TIME ZONE `)
 	assert.Contains(t, sql, `GROUP BY COALESCE(to_char(`)
 	assert.Contains(t, sql, `MIN(grp_stop."scheduled_window_start") ASC NULLS LAST`)
@@ -66,7 +66,7 @@ func TestGroupSummaryBucketsDeliveryDatesByTheLastDelivery(t *testing.T) {
 
 	sql, args := renderGroupSummary(t, shipment.BoardGroupingDeliveryDate)
 
-	assert.Contains(t, sql, `ORDER BY end_sm."sequence" DESC, end_stp."sequence" DESC, end_stp."id" COLLATE "C" DESC LIMIT 1`)
+	assert.Contains(t, sql, `ORDER BY end_sm."sequence" DESC, end_stp."sequence" DESC, (end_stp."id" COLLATE "C") DESC LIMIT 1`)
 	assert.Contains(t, args, []string{"Delivery", "SplitDelivery"})
 }
 
@@ -126,8 +126,7 @@ func TestQuickFilterTotalsIsOneQuery(t *testing.T) {
 	require.NoError(t, err)
 
 	sql, _ := keeltest.Render(t, totals)
-	assert.Contains(t, sql, `ARRAY[COUNT(*) FILTER (WHERE s."stage_rank" = `)
-	assert.Contains(t, sql, `]::bigint[]`)
-	assert.Contains(t, sql, `]::text[]`)
-	assert.Contains(t, sql, `COALESCE(SUM(s."total_charge_amount") FILTER (WHERE `)
+	assert.Contains(t, sql, `ARRAY[count(*) FILTER (WHERE s."stage_rank" = `)
+	assert.Contains(t, sql, `ARRAY[CAST(coalesce(sum(s."total_charge_amount") FILTER (WHERE `)
+	assert.Contains(t, sql, ` AS text)]`)
 }

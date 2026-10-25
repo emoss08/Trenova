@@ -3,7 +3,6 @@ package watchtowerrepository
 import (
 	"context"
 	"fmt"
-	"strconv"
 
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
@@ -672,10 +671,7 @@ func listQuery(req *watchtowerports.ListWatchtowerItemsQuery) *keel.Query[watcht
 }
 
 func dueSortExpr() keel.Expr {
-	return keel.Raw(
-		"COALESCE(?, "+strconv.FormatInt(watchtower.NoDueSortKey, 10)+")",
-		watchtowerdb.Items.DueAt,
-	)
+	return keel.DynOf(watchtowerdb.Items.DueAt).Coalesce(keel.DynConst(watchtower.NoDueSortKey))
 }
 
 type countTotals struct {

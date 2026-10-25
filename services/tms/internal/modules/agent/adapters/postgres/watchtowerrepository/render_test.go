@@ -126,7 +126,7 @@ func TestListOrderedByDueContinuesAfterTheCursor(t *testing.T) {
 		Limit:       1000,
 	}))
 
-	due := `COALESCE(wi."due_at", ` + strconv.FormatInt(watchtower.NoDueSortKey, 10) + `)`
+	due := `coalesce(wi."due_at", ` + strconv.FormatInt(watchtower.NoDueSortKey, 10) + `)`
 	assert.Contains(t, sql, "("+due+`, wi."id") > ($`, sql)
 	assert.Contains(t, sql, `ORDER BY `+due+` ASC, wi."id" ASC LIMIT 200`, sql)
 	assert.Contains(t, sql, `(wi."assignee_id" IS NULL OR wi."assignee_id" = ANY(`, sql)

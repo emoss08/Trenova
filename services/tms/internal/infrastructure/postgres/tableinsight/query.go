@@ -3,7 +3,6 @@ package tableinsight
 import (
 	"context"
 	"fmt"
-	"strings"
 
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
@@ -181,11 +180,13 @@ func (b *typedBase[T]) aggregate(
 	return result, nil
 }
 
-func textArray(values []any) keel.RawExpr {
-	return keel.Raw(
-		"ARRAY["+strings.TrimSuffix(strings.Repeat("(?)::text, ", len(values)), ", ")+"]",
-		values...,
-	)
+func textArray(values []any) keel.DynExpr {
+	elements := make([]any, len(values))
+	for i, v := range values {
+		elements[i] = keel.DynLit(v).Cast(keel.TypeString)
+	}
+
+	return keel.DynArray(elements...)
 }
 
 type seriesRow struct {
@@ -277,7 +278,7 @@ func (b *typedBase[T]) series(
 	}
 
 	group := keel.DynOf(exprs.group).Cast(keel.TypeString)
-	bucket := keel.Raw("width_bucket(?, ?::bigint[])", exprs.date, req.Bounds)
+	bucket := keel.DynFunc("width_bucket", keel.DynOf(exprs.date).Cast(keel.TypeInt64), req.Bounds)
 	rows, err := keel.Into[seriesRow](ctx, db, b.q.Clone().
 		Pick(group, bucket, keel.DynOf(exprs.value).Cast(keel.TypeString)).
 		Where(
