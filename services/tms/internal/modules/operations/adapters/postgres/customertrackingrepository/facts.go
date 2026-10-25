@@ -21,6 +21,7 @@ import (
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/pkg/resultcache"
 	"github.com/emoss08/trenova/shared/pulid"
 	"go.uber.org/zap"
 )
@@ -57,6 +58,23 @@ func (r *factRepository) ListNotifyingTenants(
 			return nil, fmt.Errorf("list organizations with customer status emails: %w", err)
 		}
 		return tenantsOf(rows), nil
+	})
+}
+
+func (r *factRepository) HasNotifyingCustomers(
+	ctx context.Context,
+	tenantInfo pagination.TenantInfo,
+) (bool, error) {
+	ctx = dbscope.WithTenant(ctx, tenantInfo.DBTenant())
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) (bool, error) {
+		p := customertrackingdb.Profiles
+		notifying, err := p.Where(p.NotificationsEnabledAt.IsNotNull()).
+			Cache(resultcache.Settings()...).
+			Exists(ctx, r.db.Keel(ctx))
+		if err != nil {
+			return false, fmt.Errorf("check for customers with status emails: %w", err)
+		}
+		return notifying, nil
 	})
 }
 

@@ -3,6 +3,7 @@ package customerstatustrigger
 import (
 	"context"
 	"errors"
+	"slices"
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentevent"
@@ -33,9 +34,15 @@ type fakeFacts struct {
 	calls   int
 }
 
-func (f *fakeFacts) ListNotifyingTenants(context.Context) ([]pagination.TenantInfo, error) {
+func (f *fakeFacts) HasNotifyingCustomers(
+	_ context.Context,
+	tenant pagination.TenantInfo,
+) (bool, error) {
 	f.calls++
-	return f.tenants, f.err
+	if f.err != nil {
+		return false, f.err
+	}
+	return slices.Contains(f.tenants, tenant), nil
 }
 
 var notifying = pagination.TenantInfo{OrgID: pulid.MustNew("org_"), BuID: pulid.MustNew("bu_")}
@@ -65,7 +72,7 @@ func TestTrigger_EvaluatesStopAndStatusChangesForNotifyingOrganizations(t *testi
 	assert.Equal(t, []pulid.ID{arrived.ShipmentID}, requester.requested)
 }
 
-func TestTrigger_SkipsOrganizationsWithoutRulesAndCachesTheAnswer(t *testing.T) {
+func TestTrigger_SkipsOrganizationsWithoutRules(t *testing.T) {
 	facts := &fakeFacts{tenants: []pagination.TenantInfo{notifying}}
 	trigger, requester := newTrigger(facts)
 	quiet := pagination.TenantInfo{OrgID: pulid.MustNew("org_"), BuID: pulid.MustNew("bu_")}
@@ -74,7 +81,7 @@ func TestTrigger_SkipsOrganizationsWithoutRulesAndCachesTheAnswer(t *testing.T) 
 	trigger.StopEtasRefreshed(t.Context(), quiet, []pulid.ID{pulid.MustNew("shp_")})
 
 	assert.Empty(t, requester.requested)
-	assert.Equal(t, 1, facts.calls)
+	assert.Equal(t, 2, facts.calls, "each change asks the repository's cached read")
 }
 
 func TestTrigger_EtaRefreshesAskForEachShipment(t *testing.T) {
