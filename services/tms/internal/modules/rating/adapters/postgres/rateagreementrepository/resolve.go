@@ -5,7 +5,9 @@ import (
 	"sort"
 
 	"github.com/emoss08/keel"
+	"github.com/emoss08/keel/postgis"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/places/domain/rategeo"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/rateagreement"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/rateagreement/rateagreementdb"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/rateagreementports"
@@ -19,9 +21,6 @@ import (
 // problem — overlapping contracts, or lanes written far broader than intended —
 // and the quote says so rather than quietly scanning through them.
 const DefaultCandidateLimit = 200
-
-const radiusMatchSQL = "(? <> 'Radius' OR ST_DWithin(?, " +
-	"ST_SetSRID(ST_MakePoint(?, ?), 4326)::geography, ?))"
 
 // ResolveRules fetches every rule that could price one lane.
 //
@@ -180,6 +179,13 @@ func (r *repository) resolveKeyedRules(
 // predicate against the partial GiST indexes instead. There are only ever a
 // handful per organization, which is why a second query is cheaper than trying
 // to force both shapes through one.
+func radiusMatch(scope, center, radius keel.Expr, lon, lat float64) keel.Pred {
+	return keel.Or(
+		keel.DynOf(scope).Ne(keel.DynConst(string(rategeo.ScopeTypeRadius))),
+		postgis.DWithin(center, postgis.Pt(lon, lat), radius),
+	)
+}
+
 func radiusRulesQuery(
 	req *rateagreementports.ResolveRateRulesRequest,
 	limit int,
@@ -188,10 +194,10 @@ func radiusRulesQuery(
 
 	return candidateOrder(baseCandidateQuery(req).Where(
 		rr.LaneKey.Eq(rateagreement.RadiusLaneKey),
-		keel.Raw(radiusMatchSQL, rr.OriginScopeType, rr.OriginCenter,
-			*req.OriginLongitude, *req.OriginLatitude, rr.OriginRadiusMeters),
-		keel.Raw(radiusMatchSQL, rr.DestinationScopeType, rr.DestinationCenter,
-			*req.DestinationLongitude, *req.DestinationLatitude, rr.DestinationRadiusMeters),
+		radiusMatch(rr.OriginScopeType, rr.OriginCenter, rr.OriginRadiusMeters,
+			*req.OriginLongitude, *req.OriginLatitude),
+		radiusMatch(rr.DestinationScopeType, rr.DestinationCenter, rr.DestinationRadiusMeters,
+			*req.DestinationLongitude, *req.DestinationLatitude),
 	)).Limit(limit + 1)
 }
 
