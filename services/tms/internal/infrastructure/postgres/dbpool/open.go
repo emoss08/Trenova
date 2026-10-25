@@ -7,6 +7,8 @@ import (
 
 	"github.com/bytedance/sonic"
 	"github.com/emoss08/keel"
+	"github.com/emoss08/keel/postgis"
+	"github.com/emoss08/trenova/internal/keeltables"
 	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
@@ -86,7 +88,8 @@ func KeelConfig(guard Guard, observers []keel.Observer) keel.Config {
 			UnmarshalNumber: sonic.Config{UseNumber: true}.Froze().Unmarshal,
 		},
 		Observers:    observers,
-		AfterConnect: registerPostGIS,
+		AfterConnect: postgis.Register,
+		Tables:       keeltables.All(),
 	}
 	if guard != nil {
 		cfg.OnBegin = guard.OnBegin
