@@ -13,6 +13,7 @@ import (
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/listquery"
 	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/pkg/resultcache"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
@@ -131,7 +132,10 @@ func (r *repository) GetByID(
 	req shipmenttypeports.GetShipmentTypeByIDRequest,
 ) (*shipmenttype.ShipmentType, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*shipmenttype.ShipmentType, error) {
-		entity, err := shipmenttypedb.ShipmentTypes.Get(ctx, r.db.Keel(ctx), req.ID)
+		st := shipmenttypedb.ShipmentTypes
+		entity, err := st.Where(st.ID.Eq(req.ID)).
+			Cache(resultcache.Reference()...).
+			One(ctx, r.db.Keel(ctx))
 		if err != nil {
 			return nil, shipmentTypeErrors.Map(err, req.ID.String())
 		}
@@ -152,6 +156,7 @@ func (r *repository) GetByIDs(
 		st := shipmenttypedb.ShipmentTypes
 		entities, err := st.Where(st.ID.In(req.ShipmentTypeIDs...)).
 			Limit(len(req.ShipmentTypeIDs)).
+			Cache(resultcache.Reference()...).
 			List(ctx, r.db.Keel(ctx))
 		if err != nil {
 			r.l.Error("failed to get shipment types", zap.Error(err))
@@ -194,7 +199,8 @@ func (r *repository) SelectOptions(
 		func(ctx context.Context) (*pagination.ListResult[*shipmenttype.ShipmentType], error) {
 			st := shipmenttypedb.ShipmentTypes
 			q := st.Pick(st.ID, st.Status, st.Code, st.Description, st.Color).
-				Where(st.Status.Eq(domaintypes.StatusActive))
+				Where(st.Status.Eq(domaintypes.StatusActive)).
+				Cache(resultcache.Reference()...)
 
 			return listquery.SelectOptions(
 				ctx,

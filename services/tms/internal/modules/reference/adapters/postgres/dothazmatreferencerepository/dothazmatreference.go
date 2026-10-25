@@ -12,6 +12,7 @@ import (
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/listquery"
 	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/pkg/resultcache"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
@@ -45,11 +46,10 @@ func (r *repository) GetByID(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*dothazmatreference.DotHazmatReference, error) {
-			entity, err := dothazmatreferencedb.DotHazmatReferences.Get(
-				ctx,
-				r.db.Keel(ctx),
-				req.DotHazmatReferenceID,
-			)
+			d := dothazmatreferencedb.DotHazmatReferences
+			entity, err := d.Where(d.ID.Eq(req.DotHazmatReferenceID)).
+				Cache(resultcache.Catalog()...).
+				One(ctx, r.db.Keel(ctx))
 			if err != nil {
 				return nil, dotHazmatReferenceErrors.Map(err, req.DotHazmatReferenceID.String())
 			}

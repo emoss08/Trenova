@@ -13,6 +13,7 @@ import (
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/listquery"
 	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/pkg/resultcache"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
@@ -144,7 +145,10 @@ func (r *repository) GetByID(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*accessorialcharge.AccessorialCharge, error) {
-			entity, err := accessorialchargedb.AccessorialCharges.Get(ctx, r.db.Keel(ctx), req.ID)
+			ac := accessorialchargedb.AccessorialCharges
+			entity, err := ac.Where(ac.ID.Eq(req.ID)).
+				Cache(resultcache.Reference()...).
+				One(ctx, r.db.Keel(ctx))
 			if err != nil {
 				return nil, accessorialChargeErrors.Map(err, req.ID.String())
 			}
@@ -175,6 +179,7 @@ func (r *repository) ListCatalog(
 				ac.Amount,
 			).
 				Order(ac.Code.Asc()).
+				Cache(resultcache.Reference()...).
 				All(ctx, r.db.Keel(ctx))
 			if err != nil {
 				r.l.Error("failed to list the accessorial charge catalog", zap.Error(err))
@@ -203,7 +208,9 @@ func (r *repository) SelectOptions(
 				ac.Method,
 				ac.RateUnit,
 				ac.Amount,
-			).Where(ac.Status.Eq(domaintypes.StatusActive))
+			).
+				Where(ac.Status.Eq(domaintypes.StatusActive)).
+				Cache(resultcache.Reference()...)
 
 			return listquery.SelectOptions(
 				ctx,

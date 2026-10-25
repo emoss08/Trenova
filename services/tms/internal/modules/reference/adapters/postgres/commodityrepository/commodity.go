@@ -13,6 +13,7 @@ import (
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/listquery"
 	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/pkg/resultcache"
 	"github.com/emoss08/trenova/shared/pulid"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
@@ -68,7 +69,10 @@ func (r *repository) GetByID(
 	req commodityports.GetCommodityByIDRequest,
 ) (*commodity.Commodity, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*commodity.Commodity, error) {
-		entity, err := commoditydb.Commodities.Get(ctx, r.db.Keel(ctx), req.ID)
+		c := commoditydb.Commodities
+		entity, err := c.Where(c.ID.Eq(req.ID)).
+			Cache(resultcache.Reference()...).
+			One(ctx, r.db.Keel(ctx))
 		if err != nil {
 			return nil, commodityErrors.Map(err, req.ID.String())
 		}
@@ -172,7 +176,9 @@ func (r *repository) GetByIDs(
 			return []*commodity.Commodity{}, nil
 		}
 
-		entities, err := commoditiesByIDs(req.CommodityIDs).List(ctx, r.db.Keel(ctx))
+		entities, err := commoditiesByIDs(req.CommodityIDs).
+			Cache(resultcache.Reference()...).
+			List(ctx, r.db.Keel(ctx))
 		if err != nil {
 			r.l.Error("failed to get commodities", zap.Error(err))
 			return nil, err
