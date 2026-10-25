@@ -13,6 +13,7 @@ import (
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
+	"github.com/emoss08/trenova/internal/testutil/shapetest"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/fx/fxtest"
@@ -74,6 +75,7 @@ func NewRLSConnection(t *testing.T, admin *keel.DB, dsn string) *postgres.Connec
 		Lifecycle: lifecycle,
 		Config:    cfg,
 		Logger:    zaptest.NewLogger(t),
+		Observers: shapetest.Observers(t),
 	})
 	require.NoError(t, err)
 	lifecycle.RequireStart()

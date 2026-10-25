@@ -16,6 +16,7 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/testutil/seedtest"
+	"github.com/emoss08/trenova/internal/testutil/shapetest"
 	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/readscope"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -167,6 +168,7 @@ func (f *rlsFixture) connect(t *testing.T) *Connection {
 		Lifecycle: fxtest.NewLifecycle(t),
 		Config:    f.cfg,
 		Logger:    zaptest.NewLogger(t),
+		Observers: shapetest.Observers(t),
 	}, oltpSettings(f.cfg))
 	require.NoError(t, err)
 	require.NoError(t, conn.connect(t.Context()))
@@ -363,6 +365,7 @@ func TestRLS_StartupRefusesAnApplicationRoleThatCanBypass(t *testing.T) {
 		Lifecycle: fxtest.NewLifecycle(t),
 		Config:    f.cfg,
 		Logger:    zaptest.NewLogger(t),
+		Observers: shapetest.Observers(t),
 	}, oltpSettings(f.cfg))
 	require.NoError(t, err)
 	t.Cleanup(func() { _ = conn.shutdown(context.Background()) })
