@@ -21,16 +21,18 @@ const (
 )
 
 type Options struct {
-	DSN             string
-	MaxConns        int
-	MaxConnLifetime time.Duration
-	MaxConnIdleTime time.Duration
-	RuntimeParams   map[string]string
-	Guard           Guard
-	Observers       []keel.Observer
-	ObserveArgs     bool
-	Tables          []*schema.Table
-	VersionErrors   func(error)
+	DSN               string
+	MaxConns          int
+	MaxConnLifetime   time.Duration
+	MaxConnIdleTime   time.Duration
+	RuntimeParams     map[string]string
+	Guard             Guard
+	Observers         []keel.Observer
+	ObserveArgs       bool
+	Tables            []*schema.Table
+	VersionErrors     func(error)
+	TenantConcurrency int
+	Cache             *keel.CacheConfig
 }
 
 type Guard interface {
@@ -65,6 +67,8 @@ func Open(ctx context.Context, opts *Options) (*keel.DB, error) {
 		Interval: dataVersionInterval,
 		OnError:  opts.VersionErrors,
 	}
+	cfg.TenantConcurrency = opts.TenantConcurrency
+	cfg.Cache = opts.Cache
 
 	db, err := keel.Open(ctx, cfg)
 	if err != nil {
@@ -91,8 +95,10 @@ func KeelConfig(guard Guard, observers []keel.Observer) keel.Config {
 			Unmarshal:       sonic.Unmarshal,
 			UnmarshalNumber: sonic.Config{UseNumber: true}.Froze().Unmarshal,
 		},
-		Observers:    observers,
-		AfterConnect: postgis.Register,
+		Observers:        observers,
+		AfterConnect:     postgis.Register,
+		ReadIsolation:    keel.RepeatableRead,
+		DeadlineTimeouts: true,
 	}
 	if guard != nil {
 		cfg.OnBegin = guard.OnBegin

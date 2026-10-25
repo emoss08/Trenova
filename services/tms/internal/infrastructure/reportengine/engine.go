@@ -11,6 +11,7 @@ import (
 	"github.com/emoss08/keel/analytics/ir"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
+	trenovaredis "github.com/emoss08/trenova/internal/infrastructure/redis"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/reportports"
 	"github.com/emoss08/trenova/pkg/readscope"
 	"github.com/redis/go-redis/v9"
@@ -77,7 +78,10 @@ func (e *Engine) start(ctx context.Context) error {
 
 	runners := []*analytics.Runner{interactive, interactive}
 	if e.redis != nil {
-		store := cache.NewRedis(redisClient{e.redis}, cache.RedisOptions{Prefix: cachePrefix})
+		store := cache.NewRedis(
+			trenovaredis.NewBytesClient(e.redis),
+			cache.RedisOptions{Prefix: cachePrefix},
+		)
 		cached, cacheErr := analytics.NewRunner(db, e.catalog, e.options(store))
 		if cacheErr != nil {
 			return cacheErr
@@ -205,27 +209,4 @@ func (e *Engine) Run(ctx context.Context, req *analytics.Request) (*analytics.St
 		return interactive.Run(ctx, *req)
 	}
 	return cached.Run(ctx, *req)
-}
-
-type redisClient struct {
-	client *redis.Client
-}
-
-func (c redisClient) Get(ctx context.Context, key string) (value []byte, found bool, err error) {
-	value, err = c.client.Get(ctx, key).Bytes()
-	if errors.Is(err, redis.Nil) {
-		return nil, false, nil
-	}
-	if err != nil {
-		return nil, false, err
-	}
-	return value, true, nil
-}
-
-func (c redisClient) Set(ctx context.Context, key string, value []byte, ttl time.Duration) error {
-	return c.client.Set(ctx, key, value, ttl).Err()
-}
-
-func (c redisClient) Del(ctx context.Context, key string) error {
-	return c.client.Del(ctx, key).Err()
 }

@@ -125,6 +125,104 @@ func (m *Database) RegisterPoolStats(stats func() PoolStats) {
 	})
 }
 
+type ResultCacheStats struct {
+	Hits      int64
+	Misses    int64
+	Bypasses  int64
+	Errors    int64
+	Bytes     int64
+	Versions  int
+	Listening bool
+}
+
+type RuntimeStats struct {
+	Cache              ResultCacheStats
+	TenantWaits        int64
+	ReadCommitFailures int64
+}
+
+func (m *Database) RegisterRuntimeStats(stats func() RuntimeStats) {
+	m.ifEnabled(func() {
+		m.mustRegister(
+			prometheus.NewCounterFunc(prometheus.CounterOpts{
+				Namespace: Namespace,
+				Subsystem: "db_cache",
+				Name:      "hits_total",
+				Help:      "Total number of database reads served from the result cache.",
+			}, func() float64 {
+				return float64(stats().Cache.Hits)
+			}),
+			prometheus.NewCounterFunc(prometheus.CounterOpts{
+				Namespace: Namespace,
+				Subsystem: "db_cache",
+				Name:      "misses_total",
+				Help:      "Total number of cacheable database reads that read the database.",
+			}, func() float64 {
+				return float64(stats().Cache.Misses)
+			}),
+			prometheus.NewCounterFunc(prometheus.CounterOpts{
+				Namespace: Namespace,
+				Subsystem: "db_cache",
+				Name:      "bypasses_total",
+				Help:      "Total number of cacheable database reads where the result cache did not apply.",
+			}, func() float64 {
+				return float64(stats().Cache.Bypasses)
+			}),
+			prometheus.NewCounterFunc(prometheus.CounterOpts{
+				Namespace: Namespace,
+				Subsystem: "db_cache",
+				Name:      "errors_total",
+				Help:      "Total number of result cache store, listener and decoder failures.",
+			}, func() float64 {
+				return float64(stats().Cache.Errors)
+			}),
+			prometheus.NewGaugeFunc(prometheus.GaugeOpts{
+				Namespace: Namespace,
+				Subsystem: "db_cache",
+				Name:      "bytes",
+				Help:      "Bytes held by the in-process result cache.",
+			}, func() float64 {
+				return float64(stats().Cache.Bytes)
+			}),
+			prometheus.NewGaugeFunc(prometheus.GaugeOpts{
+				Namespace: Namespace,
+				Subsystem: "db_cache",
+				Name:      "versions",
+				Help:      "Number of (tenant, table) data versions the result cache holds.",
+			}, func() float64 {
+				return float64(stats().Cache.Versions)
+			}),
+			prometheus.NewGaugeFunc(prometheus.GaugeOpts{
+				Namespace: Namespace,
+				Subsystem: "db_cache",
+				Name:      "listening",
+				Help:      "1 while the result cache's data version listener is connected; the cache is bypassed at 0.",
+			}, func() float64 {
+				if stats().Cache.Listening {
+					return 1
+				}
+				return 0
+			}),
+			prometheus.NewCounterFunc(prometheus.CounterOpts{
+				Namespace: Namespace,
+				Subsystem: "db_pool",
+				Name:      "tenant_waits_total",
+				Help:      "Total number of times work waited for one of its tenant's concurrency slots.",
+			}, func() float64 {
+				return float64(stats().TenantWaits)
+			}),
+			prometheus.NewCounterFunc(prometheus.CounterOpts{
+				Namespace: Namespace,
+				Subsystem: "db_pool",
+				Name:      "read_commit_failures_total",
+				Help:      "Total number of connections closed because the reply to a read transaction's end failed.",
+			}, func() float64 {
+				return float64(stats().ReadCommitFailures)
+			}),
+		)
+	})
+}
+
 func (m *Database) PoolStats() (PoolStats, bool) {
 	if m == nil || m.stats == nil {
 		return PoolStats{}, false
