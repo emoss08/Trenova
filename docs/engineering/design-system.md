@@ -603,6 +603,15 @@ module.
   are announced assertively, everything else politely, and each change in place is
   announced again.
 
+### List totals
+
+A list counts its rows exactly up to 10,000 and takes the database's estimate above, so
+every connection's `totalCount` comes with `totalCountExact`. Select both (with the same
+`@include`), and show an estimate as approximate: `formatRowTotal(total, false)` writes it
+compactly ("1.2M") inside a message that says so ("of about {0}"), never as a bare number
+that reads as counted. Paging never trusts an estimate for the last page: it pages as far as
+it has read.
+
 ### Loading states
 
 A page's first paint is its Suspense fallback: the chunk is still on the wire, or a
