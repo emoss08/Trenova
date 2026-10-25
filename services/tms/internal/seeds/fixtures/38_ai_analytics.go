@@ -559,6 +559,7 @@ func (s *AIAnalyticsSeed) ensureBackupProvider(
 		},
 		Priority:            30,
 		Enabled:             true,
+		Scripts:             true,
 		ThinkingStyle:       aiprovider.ThinkingStyleAuto,
 		Platform:            aiprovider.PlatformDirect,
 		EmbeddingInputStyle: aiprovider.EmbeddingInputStyleNone,

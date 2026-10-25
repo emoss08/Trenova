@@ -203,10 +203,14 @@ fans out inside itself. **Search terms:** "for each", "every one of", "reconcile
   shows only once the first result says how many rows there are, after the turn's tools are
   fixed, and a model that has just read one page of 568 does not search for a scripting tool;
   it offers to page through the rest.
-- **What the prompt says.** An agent that holds it gets `scriptRule` beside the calculation rule
-  (`agentdefinition.trenovaRules`): a question across many records is one script that reads
-  every page, run in that turn, and the counts it prints are a tool's figures. Like the analysis
-  rule, it depends only on whether the tool is held, so the cached prompt stays put.
+- **What the prompt says.** An agent that holds it reads `scriptCalculationRule` in place of
+  the calculation rule (`agentdefinition.trenovaRules`): a figure no tool stated (a count, a
+  total, a ranking, the earliest of something) is worked out by a script that reads every
+  page, run in that turn, and what it prints is a tool's figure. The boundary on writing
+  software says the script's Python is not software. Adding a script rule after "do not
+  calculate" was not enough: a model kept the stricter rule, listed the records it had read
+  and left the counting to the person. Like the analysis rule, it depends only on whether the
+  tool is held, so the cached prompt stays put.
 - The design's Desk artifact is not built in 5a. A script's output is the model's to read and
   answer from, and a table worth a card is `report_analyze_data`'s work.
 
