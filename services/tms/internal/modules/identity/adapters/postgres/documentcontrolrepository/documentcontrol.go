@@ -9,6 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant/tenantdb"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/pkg/dberror"
+	"github.com/emoss08/trenova/pkg/resultcache"
 	"github.com/emoss08/trenova/shared/pulid"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
@@ -117,5 +118,5 @@ func (r *repository) GetOrCreate(
 }
 
 func (r *repository) find(ctx context.Context) (*tenant.DocumentControl, error) {
-	return tenantdb.DocumentControls.Query().One(ctx, r.db.Keel(ctx))
+	return tenantdb.DocumentControls.Cache(resultcache.Settings()...).One(ctx, r.db.Keel(ctx))
 }

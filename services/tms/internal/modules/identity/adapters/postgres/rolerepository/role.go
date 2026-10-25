@@ -17,6 +17,7 @@ import (
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/listquery"
 	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/pkg/resultcache"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
 	"go.uber.org/fx"
@@ -205,7 +206,9 @@ func (r *repository) GetRolesWithInheritance(
 			return []*permission.Role{}, nil
 		}
 
-		roles, err := rolesWithInheritance(ctx, roleIDs).All(ctx, r.db.Keel(ctx))
+		roles, err := rolesWithInheritance(ctx, roleIDs).
+			Cache(resultcache.Access()...).
+			All(ctx, r.db.Keel(ctx))
 		if err != nil {
 			r.l.Error(
 				"failed to get roles with inheritance",
@@ -267,6 +270,7 @@ func (r *repository) GetUserRoleAssignments(
 				ura.OrganizationID.Eq(orgID),
 			).
 				Load(ura.Role()).
+				Cache(resultcache.Access()...).
 				All(ctx, r.db.Keel(ctx))
 			if err != nil {
 				r.l.Error(

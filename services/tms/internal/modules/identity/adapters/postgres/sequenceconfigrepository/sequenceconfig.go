@@ -13,6 +13,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/pkg/resultcache"
 	"github.com/emoss08/trenova/shared/pulid"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
@@ -43,35 +44,53 @@ func (r *repository) GetByTenant(
 	ctx context.Context,
 	req tenantports.GetSequenceConfigRequest,
 ) (*tenant.SequenceConfigDocument, error) {
-	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*tenant.SequenceConfigDocument, error) {
-		if err := r.ensureDefaults(ctx, req.TenantInfo.OrgID, req.TenantInfo.BuID); err != nil {
-			return nil, err
-		}
+	configs, err := dbtx.Read(ctx, r.db, r.listRequired)
+	if err != nil {
+		return nil, err
+	}
 
-		sc := tenantdb.SequenceConfigs
-		requiredTypes := tenant.RequiredSequenceTypes()
-		configs, err := sc.Where(sc.SequenceType.In(requiredTypes...)).
-			Limit(len(requiredTypes)).
-			List(ctx, r.db.Keel(ctx))
+	if len(configs) < len(tenant.RequiredSequenceTypes()) {
+		configs, err = dbtx.Write(
+			ctx,
+			r.db,
+			func(ctx context.Context) ([]*tenant.SequenceConfig, error) {
+				seedErr := r.ensureDefaults(ctx, req.TenantInfo.OrgID, req.TenantInfo.BuID)
+				if seedErr != nil {
+					return nil, seedErr
+				}
+
+				return r.listRequired(ctx)
+			},
+		)
 		if err != nil {
 			return nil, err
 		}
+	}
 
-		sort.Slice(configs, func(i, j int) bool {
-			return tenant.SequenceTypeSortOrder(
-				configs[i].SequenceType,
-			) < tenant.SequenceTypeSortOrder(
-				configs[j].SequenceType,
-			)
-		})
-		normalizeSequenceConfigs(configs)
-
-		return &tenant.SequenceConfigDocument{
-			OrganizationID: req.TenantInfo.OrgID,
-			BusinessUnitID: req.TenantInfo.BuID,
-			Configs:        configs,
-		}, nil
+	sort.Slice(configs, func(i, j int) bool {
+		return tenant.SequenceTypeSortOrder(
+			configs[i].SequenceType,
+		) < tenant.SequenceTypeSortOrder(
+			configs[j].SequenceType,
+		)
 	})
+	normalizeSequenceConfigs(configs)
+
+	return &tenant.SequenceConfigDocument{
+		OrganizationID: req.TenantInfo.OrgID,
+		BusinessUnitID: req.TenantInfo.BuID,
+		Configs:        configs,
+	}, nil
+}
+
+func (r *repository) listRequired(ctx context.Context) ([]*tenant.SequenceConfig, error) {
+	sc := tenantdb.SequenceConfigs
+	requiredTypes := tenant.RequiredSequenceTypes()
+
+	return sc.Where(sc.SequenceType.In(requiredTypes...)).
+		Limit(len(requiredTypes)).
+		Cache(resultcache.Settings()...).
+		List(ctx, r.db.Keel(ctx))
 }
 
 func normalizeSequenceConfigs(configs []*tenant.SequenceConfig) {

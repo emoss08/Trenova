@@ -12,6 +12,7 @@ import (
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/pkg/resultcache"
 	"go.uber.org/zap"
 )
 
@@ -32,16 +33,18 @@ func (r *accessSettingsRepository) Get(
 	tenant pagination.TenantInfo,
 ) (*iam.AccessSettings, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*iam.AccessSettings, error) {
-		settings, err := iamdb.AccessSettingses.Query().One(ctx, r.db.Keel(ctx))
+		rows, err := iamdb.AccessSettingses.Limit(1).
+			Cache(resultcache.Settings()...).
+			List(ctx, r.db.Keel(ctx))
 		if err != nil {
-			if dberror.IsNotFoundError(err) {
-				return iam.DefaultAccessSettings(tenant.OrgID, tenant.BuID), nil
-			}
 			r.l.Error("failed to read access settings", zap.Error(err))
 			return nil, fmt.Errorf("read access settings: %w", err)
 		}
+		if len(rows) == 0 {
+			return iam.DefaultAccessSettings(tenant.OrgID, tenant.BuID), nil
+		}
 
-		return settings, nil
+		return rows[0], nil
 	})
 }
 

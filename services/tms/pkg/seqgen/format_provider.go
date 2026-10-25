@@ -8,6 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant/tenantdb"
 	"github.com/emoss08/trenova/pkg/dberror"
+	"github.com/emoss08/trenova/pkg/resultcache"
 	"github.com/emoss08/trenova/shared/pulid"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
@@ -45,7 +46,7 @@ func (p *formatProvider) GetFormat(
 			sc.SequenceType.Eq(sequenceType),
 			sc.OrganizationID.Eq(orgID),
 			sc.BusinessUnitID.Eq(buID),
-		).First(ctx, p.db.Keel(ctx))
+		).Cache(resultcache.Settings()...).First(ctx, p.db.Keel(ctx))
 		return err
 	})
 	if err != nil {

@@ -11,6 +11,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/pkg/resultcache"
 	"github.com/emoss08/trenova/shared/pulid"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
@@ -89,7 +90,7 @@ func (r *repository) GetOrCreate(
 
 func (r *repository) selectControl(ctx context.Context) (*tenant.DashControl, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*tenant.DashControl, error) {
-		return tenantdb.DashControls.Query().One(ctx, r.db.Keel(ctx))
+		return tenantdb.DashControls.Cache(resultcache.Settings()...).One(ctx, r.db.Keel(ctx))
 	})
 }
 

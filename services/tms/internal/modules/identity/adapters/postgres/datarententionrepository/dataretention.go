@@ -12,6 +12,7 @@ import (
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/pkg/resultcache"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
@@ -67,7 +68,8 @@ func (r *repository) Get(
 	_ tenantports.GetDataRetentionRequest,
 ) (*tenant.DataRetention, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*tenant.DataRetention, error) {
-		entity, err := tenantdb.DataRetentions.Query().One(ctx, r.db.Keel(ctx))
+		entity, err := tenantdb.DataRetentions.Cache(resultcache.Settings()...).
+			One(ctx, r.db.Keel(ctx))
 		if err != nil {
 			return nil, dataRetentionErrors.Map(err, "")
 		}

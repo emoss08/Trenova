@@ -10,6 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/dbscope"
+	"github.com/emoss08/trenova/pkg/resultcache"
 	"github.com/emoss08/trenova/shared/pulid"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
@@ -42,7 +43,9 @@ func (r *repository) GetByOrgID(
 ) (*tenant.AccountingControl, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*tenant.AccountingControl, error) {
 		ac := tenantdb.AccountingControls
-		entity, err := ac.Where(ac.OrganizationID.Eq(orgID)).One(ctx, r.db.Keel(ctx))
+		entity, err := ac.Where(ac.OrganizationID.Eq(orgID)).
+			Cache(resultcache.Settings()...).
+			One(ctx, r.db.Keel(ctx))
 		if err != nil {
 			r.l.Error(
 				"failed to get accounting control",
