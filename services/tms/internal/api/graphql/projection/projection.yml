@@ -457,6 +457,7 @@ virtuals:
     - lanes
     - laneCount
     - currentVersion
+    - laneCountExact
   VehiclePosition:
     - tractorCode
     - primaryWorkerId
@@ -577,6 +578,10 @@ virtuals:
     - blame
   InvoiceAdjustment:
     - supportingDocumentIds
+  CarrierInvoiceMatchList:
+    - totalCountExact
+  EdiCarrierInvoiceList:
+    - totalCountExact
 
 specials:
   ManualJournal:
