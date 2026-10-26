@@ -138,7 +138,7 @@ func (r *repository) TeamMembers(
 		fc := w.FleetCode()
 		jp := w.Position()
 		p := w.Profile()
-		direct := keel.DynOf(w.ManagerID.In(req.ManagerIDs...))
+		direct := keel.BoolOf(w.ManagerID.In(req.ManagerIDs...))
 
 		rows, err := keel.Into[workerports.TeamMemberRow](ctx, r.db.Keel(ctx), w.
 			Where(
@@ -164,7 +164,7 @@ func (r *repository) TeamMembers(
 				p.HireDate,
 				p.TerminationDate,
 			).
-			Order(keel.Desc(direct), w.LastName.Asc(), w.FirstName.Asc()).
+			Order(direct.Desc(), w.LastName.Asc(), w.FirstName.Asc()).
 			Limit(limitOr(req.Limit, defaultTeamPageSize)))
 		if err != nil {
 			r.l.Error("failed to read team members", zap.Error(err))

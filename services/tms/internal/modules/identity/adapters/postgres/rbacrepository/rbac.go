@@ -211,7 +211,7 @@ func rolePermissionCounts(ctx context.Context, roleIDs []pulid.ID) keel.Projecti
 	closure.Recurse(forTenant(
 		ctx,
 		parent.Pick(closure.Col("root_id"), parent.ID, parent.ParentRoleIDs).
-			Join(closure, keel.DynOf(parent.ID).In(closure.Col("parent_role_ids"))),
+			Join(closure, parent.ID.InArray(keel.StringArrayOf(closure.Col("parent_role_ids")))),
 	)).Distinct()
 
 	rp := permissiondb.ResourcePermissions
@@ -222,7 +222,7 @@ func rolePermissionCounts(ctx context.Context, roleIDs []pulid.ID) keel.Projecti
 		With(closure).
 		LeftJoin(rp, rp.RoleID.EqCol(closure.Col("role_id"))).
 		LeftJoinLateral(op).
-		Pick(root, keel.DynOf(rp.Resource).Concat(":").Concat(op.Col("op")).CountDistinct()).
+		Pick(root, keel.CountOf(rp.Resource.Cat(keel.Text(":"), keel.StringOf(op.Col("op")))).Distinct()).
 		Group(root))
 }
 

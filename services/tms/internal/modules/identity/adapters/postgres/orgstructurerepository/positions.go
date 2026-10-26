@@ -61,11 +61,12 @@ func (r *repository) ListPositionHolders(
 			Pick(
 				keel.Text(string(workerports.PositionHolderWorker)),
 				w.ID,
-				keel.DynOf(w.FirstName).Concat(" ").Concat(w.LastName),
+				w.FirstName.Cat(keel.Text(" "), w.LastName),
 				keel.CastText(w.Status),
 				orEmpty(fc.Code),
 			).
-			Order(keel.Desc(w.Status.Eq(domaintypes.StatusActive)), w.LastName.Asc(), w.FirstName.Asc()))
+			Order(keel.Desc(w.Status.Eq(domaintypes.StatusActive)), w.LastName.Asc(), w.FirstName.Asc()),
+		)
 		if err != nil {
 			r.l.Error("failed to list workers in position", zap.Error(err))
 			return nil, fmt.Errorf("list workers in position: %w", err)

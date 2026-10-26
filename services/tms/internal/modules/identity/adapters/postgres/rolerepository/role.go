@@ -187,7 +187,10 @@ func rolesWithInheritance(ctx context.Context, roleIDs []pulid.ID) *keel.Query[*
 	closure.Recurse(forTenant(
 		ctx,
 		parent.Pick(parent.ID, parent.ParentRoleIDs).
-			Join(closure, keel.DynOf(parent.ID).In(closure.Col(roleClosureParentColumn))),
+			Join(
+				closure,
+				parent.ID.InArray(keel.StringArrayOf(closure.Col(roleClosureParentColumn))),
+			),
 	)).Distinct()
 
 	return forTenant(
@@ -783,7 +786,7 @@ func usersWithPermissionQuery(
 	)
 	held.Recurse(parent.
 		Pick(held.Col(heldUserColumn), parent.ID, parent.ParentRoleIDs).
-		Join(held, keel.DynOf(parent.ID).In(held.Col(heldParentColumn)))).
+		Join(held, parent.ID.InArray(keel.StringArrayOf(held.Col(heldParentColumn))))).
 		Distinct()
 
 	return u.With(held).
