@@ -141901,7 +141901,7 @@
     ]
   },
   "Loading collections performance": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
@@ -142707,7 +142707,7 @@
     ]
   },
   "Loading the DSO trend": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
@@ -142760,8 +142760,17 @@
       "routes/desk"
     ]
   },
-  "Loading the aging trend": {
+  "Loading the accounting dashboard": {
     "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/accounting-dashboard"
+    ]
+  },
+  "Loading the aging trend": {
+    "sites": 2,
     "scope": [
       "ts"
     ],
@@ -142879,7 +142888,7 @@
     ]
   },
   "Loading the cash-flow forecast": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
@@ -142916,7 +142925,7 @@
     ]
   },
   "Loading the collections worklist": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
@@ -143323,7 +143332,7 @@
     ]
   },
   "Loading the top overdue customers": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
@@ -209885,6 +209894,15 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "Receivables begin when the first invoice posts from billing. Once one does, the balance, days sales outstanding, aging and collections figures fill in here.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/accounting-dashboard"
     ]
   },
   "Receivables data is unavailable.": {

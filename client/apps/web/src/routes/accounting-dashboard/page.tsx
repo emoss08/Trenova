@@ -11,6 +11,7 @@ import { Operation, Resource } from "@trenova/shared/types/permission";
 import { Link } from "react-router";
 import { AccountingBriefing } from "./_components/accounting-briefing";
 import { AccountingDashboardEmpty } from "./_components/accounting-dashboard-empty";
+import { AccountingDashboardSkeleton } from "./_components/accounting-dashboard-skeleton";
 import { AgingCard } from "./_components/aging-card";
 import { ARKpiRow } from "./_components/ar-kpi-row";
 import { CashFlowForecastCard } from "./_components/cash-flow-forecast-card";
@@ -23,8 +24,8 @@ export function AccountingDashboardPage() {
   const t = useT();
 
   const { allowed: canRecordPayment } = usePermission(Resource.CustomerPayment, Operation.Create);
-  const { data: kpis, isError } = useQuery(ar.dashboardKpis());
-  const deciding = kpis === undefined && !isError;
+  const { data: kpis, errorUpdatedAt } = useQuery(ar.dashboardKpis());
+  const deciding = kpis === undefined && errorUpdatedAt === 0;
   const neverInvoiced = kpis !== undefined && !receivablesHaveActivity(kpis.overview);
 
   return (
@@ -41,16 +42,17 @@ export function AccountingDashboardPage() {
       }}
     >
       {/* The KPIs decide between the empty state and the dashboard, so the
-          other cards (and their reads) wait for them. */}
+          other cards (and their reads) wait for them. A failed read keeps
+          the dashboard: errorUpdatedAt outlives the KPI row's refetch, which
+          resets isError. */}
       {deciding ? (
-        <ARKpiRow />
+        <AccountingDashboardSkeleton />
       ) : neverInvoiced ? (
         <AccountingDashboardEmpty
           title={t("Nothing on the books yet")}
-          description={
-            "Receivables begin when the first invoice posts from billing. Once one does, the " +
-            "balance, days sales outstanding, aging and collections figures fill in here."
-          }
+          description={t(
+            "Receivables begin when the first invoice posts from billing. Once one does, the balance, days sales outstanding, aging and collections figures fill in here.",
+          )}
         />
       ) : (
         <>
