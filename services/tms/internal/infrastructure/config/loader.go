@@ -373,6 +373,7 @@ func (l *Loader) setDefaults() { //nolint:funlen // sets default configs
 	l.viper.SetDefault("database.migrator.password", "")
 	l.viper.SetDefault("database.tenantConcurrency", 0)
 	l.viper.SetDefault("database.slowWaitWarning", "5s")
+	l.viper.SetDefault("database.maxWait", "60s")
 	l.viper.SetDefault("database.cache.enabled", true)
 	l.viper.SetDefault("database.cache.localBytes", DefaultDatabaseCacheLocalBytes)
 	l.viper.SetDefault("database.cache.listenHost", "")

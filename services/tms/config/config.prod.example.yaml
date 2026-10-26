@@ -57,6 +57,7 @@ database:
   queryLog: "off"
   tenantConcurrency: 0 # 0 takes a quarter of maxOpenConns
   slowWaitWarning: 5s # Warn, with stacks, about work waiting this long for a slot or connection; 0 is off
+  maxWait: 60s # Fail work waiting this long for a slot or connection as busy; keep above server.requestTimeout; 0 is off
   cache:
     enabled: true
     localBytes: 268435456

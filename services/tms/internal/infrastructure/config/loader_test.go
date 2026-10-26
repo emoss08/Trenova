@@ -625,6 +625,7 @@ func TestSetDefaults(t *testing.T) {
 		assert.Equal(t, "5s", l.viper.GetString("database.lockTimeout"))
 		assert.Equal(t, "30s", l.viper.GetString("database.idleInTransactionSessionTimeout"))
 		assert.Equal(t, 0, l.viper.GetInt("database.tenantConcurrency"))
+		assert.Equal(t, time.Minute, l.viper.GetDuration("database.maxWait"))
 		assert.True(t, l.viper.GetBool("database.cache.enabled"))
 		assert.Equal(
 			t,

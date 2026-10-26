@@ -252,6 +252,7 @@ func (c *Connection) openPool(ctx context.Context, opts *dbpool.Options) (*keel.
 	opts.Observers = c.poolObservers(slow)
 	opts.ObserveArgs = queryLog(c.cfg) != nil
 	opts.Tables = keeltables.All()
+	opts.MaxWait = c.cfg.Database.MaxWait
 	opts.VersionErrors = func(err error) {
 		c.logger.Warn(context.Background(), "Failed to record data versions", zap.Error(err))
 	}

@@ -34,6 +34,7 @@ type Options struct {
 	TenantConcurrency int
 	Cache             *keel.CacheConfig
 	SlowWaits         keel.SlowWaitConfig
+	MaxWait           time.Duration
 }
 
 type Guard interface {
@@ -71,6 +72,7 @@ func Open(ctx context.Context, opts *Options) (*keel.DB, error) {
 	cfg.TenantConcurrency = opts.TenantConcurrency
 	cfg.Cache = opts.Cache
 	cfg.SlowWaits = opts.SlowWaits
+	cfg.MaxWait = opts.MaxWait
 
 	db, err := keel.Open(ctx, cfg)
 	if err != nil {

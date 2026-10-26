@@ -285,6 +285,9 @@ the cache follows changes over `LISTEN`, which needs a session connection.
 transactions one organization may run at once. Work that waits longer than
 `database.slowWaitWarning` (5s; 0 turns it off) for one of those slots or for a connection logs
 a warning naming what holds them, with stacks, and counts in `trenova_db_slow_waits_total`.
+`database.maxWait` (60s; 0 turns it off) ends any such wait outright: the work fails as busy and
+can retry, so a background job without a deadline cannot wait forever. Keep it above
+`server.requestTimeout`.
 
 ## Upgrades
 

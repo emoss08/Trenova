@@ -17,6 +17,7 @@ import (
 	"github.com/emoss08/trenova/internal/testutil/keeltest"
 	"github.com/emoss08/trenova/internal/testutil/keeltest/keeltestdb"
 	"github.com/emoss08/trenova/internal/testutil/shapetest"
+	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/readscope"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -260,6 +261,27 @@ func TestRuntime_AWaitForATenantSlotLogsWhoHoldsIt(t *testing.T) {
 	require.True(t, ok)
 	assert.Contains(t, fmt.Sprint(stack), "TestRuntime_AWaitForATenantSlotLogsWhoHoldsIt",
 		"the holder's stack reaches the code that opened the transaction")
+}
+
+func TestRuntime_AWaitPastMaxWaitFailsAsRetryable(t *testing.T) {
+	f := newRLSFixture(t, config.RLSModeEnforce)
+	f.cfg.Database.TenantConcurrency = 1
+	f.cfg.Database.MaxWait = 100 * time.Millisecond
+	conn := f.connect(t)
+
+	tenantA := dbscope.WithTenant(t.Context(), f.tenantA)
+	_, err := dbtx.Read(tenantA, conn, func(ctx context.Context) ([]string, error) {
+		codes, readErr := fleetCodes(ctx, conn)
+		require.NoError(t, readErr)
+
+		start := time.Now()
+		_, waitErr := fleetCodes(tenantA, conn)
+		require.ErrorIs(t, waitErr, keel.ErrWaitLimit)
+		assert.Less(t, time.Since(start), 5*time.Second, "the wait ends at database.maxWait")
+		assert.True(t, dberror.IsRetryableTransactionError(waitErr), "a wait past the limit is busy, not broken")
+		return codes, nil
+	})
+	require.NoError(t, err)
 }
 
 func TestRuntime_ConnectionReportsTenantConcurrencyAndCacheStats(t *testing.T) {
