@@ -163,7 +163,7 @@ func IsRowLevelSecurityViolation(err error) bool {
 }
 
 func IsRetryableTransactionError(err error) bool {
-	if errors.Is(err, context.DeadlineExceeded) {
+	if errors.Is(err, context.DeadlineExceeded) || errors.Is(err, keel.ErrWaitLimit) {
 		return true
 	}
 
@@ -184,7 +184,11 @@ func MapRetryableTransactionError(err error, message string) error {
 	}
 
 	code := ExtractCode(err)
-	if code == "" && errors.Is(err, context.DeadlineExceeded) {
+	switch {
+	case code != "":
+	case errors.Is(err, keel.ErrWaitLimit):
+		code = "wait_limit"
+	case errors.Is(err, context.DeadlineExceeded):
 		code = "context_deadline_exceeded"
 	}
 

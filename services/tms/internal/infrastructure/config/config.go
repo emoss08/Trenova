@@ -738,6 +738,7 @@ type DatabaseConfig struct {
 
 	TenantConcurrency int                  `mapstructure:"tenantConcurrency" validate:"min=0,max=1000"`
 	SlowWaitWarning   time.Duration        `mapstructure:"slowWaitWarning"   validate:"min=0"`
+	MaxWait           time.Duration        `mapstructure:"maxWait"           validate:"min=0"`
 	Cache             DatabaseCacheConfig  `mapstructure:"cache"`
 	Budget            DatabaseBudgetConfig `mapstructure:"budget"`
 }

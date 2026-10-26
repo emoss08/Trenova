@@ -20,6 +20,7 @@ database:
   queryLog: "off"
   tenantConcurrency: 0
   slowWaitWarning: 5s
+  maxWait: 60s
   cache:
     enabled: true
     localBytes: 16777216

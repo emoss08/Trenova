@@ -140,6 +140,12 @@ database:
   # naming the waiter and, for a slot, the work holding the organization's
   # slots, with their stacks. 0 turns the warnings off.
   slowWaitWarning: 5s
+  # The longest any work waits for an organization's slot or a pool connection,
+  # whatever its own deadline; past it the work fails as busy and can retry, and
+  # a read waiting on another request's cache read reads the database itself.
+  # Keep it above server.requestTimeout so it only ends waits nothing else would
+  # (background jobs without a deadline). 0 leaves waits to their context.
+  maxWait: 60s
   # The result cache serves a repository read that asks for it (keel's Query.Cache)
   # without a round trip while no table it read has changed for the organization.
   # See "Caching" in docs/engineering/backend/data-access.md.
