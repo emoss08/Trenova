@@ -5,7 +5,9 @@
 //! `range` in UTF-16 code units of that file. See `docs/engineering/lading.md`, "Module
 //! operations".
 
+use std::cell::RefCell;
 use std::collections::BTreeMap;
+use std::rc::Rc;
 
 use serde::Deserialize;
 use serde_json::value::RawValue;
@@ -47,10 +49,58 @@ pub const MAX_SAMPLES: usize = 2_000;
 
 #[derive(Deserialize)]
 #[serde(rename_all = "camelCase")]
-struct ProjectInput {
-    project: Project,
-    #[serde(default)]
-    context: Context,
+struct Head<'a> {
+    #[serde(borrow)]
+    project: &'a RawValue,
+    #[serde(borrow, default)]
+    context: Option<&'a RawValue>,
+}
+
+/// How many checked programs an instance keeps.
+const CACHED_PROGRAMS: usize = 2;
+
+thread_local! {
+    /// Checked programs by the exact bytes of their project and context, most recent first: the
+    /// editor and the TMS call the module many times with the same project, and checking it is
+    /// most of a call. The key is the bytes themselves, never a hash, so no project is ever
+    /// mistaken for another tenant's.
+    static PROGRAMS: RefCell<Vec<(String, String, Rc<Program>)>> = const { RefCell::new(Vec::new()) };
+}
+
+/// The checked program of an operation's `project` and `context`.
+fn program(input: &RawValue) -> Result<Rc<Program>, RequestError> {
+    let head: Head<'_> = decode(input)?;
+    let project_text = head.project.get();
+    let context_text = head.context.map_or("{}", RawValue::get);
+    let cached = PROGRAMS.with(|cache| {
+        cache
+            .borrow()
+            .iter()
+            .find(|(project, context, _)| project == project_text && context == context_text)
+            .map(|(_, _, program)| Rc::clone(program))
+    });
+    if let Some(program) = cached {
+        return Ok(program);
+    }
+    let project: Project = serde_json::from_str(project_text)
+        .map_err(|error| RequestError::invalid_input(format!("project: {error}")))?;
+    checked_project(&project)?;
+    let context: Context = serde_json::from_str(context_text)
+        .map_err(|error| RequestError::invalid_input(format!("context: {error}")))?;
+    let program = Rc::new(check_project(&project, &context));
+    PROGRAMS.with(|cache| {
+        let mut cache = cache.borrow_mut();
+        cache.insert(
+            0,
+            (
+                project_text.to_owned(),
+                context_text.to_owned(),
+                Rc::clone(&program),
+            ),
+        );
+        cache.truncate(CACHED_PROGRAMS);
+    });
+    Ok(program)
 }
 
 fn checked_project(project: &Project) -> Result<(), RequestError> {
@@ -83,9 +133,7 @@ fn indexes(program: &Program) -> Vec<Utf16Index> {
 
 /// `lading.check`.
 pub fn check(input: &RawValue) -> OpResult {
-    let input: ProjectInput = decode(input)?;
-    checked_project(&input.project)?;
-    let program = check_project(&input.project, &input.context);
+    let program = program(input)?;
     encode(&check_json(&program))
 }
 
@@ -204,8 +252,10 @@ fn check_json(program: &Program) -> Json {
                         super::syntax::ast::FlowDecl::Receive(receive) => json!({
                             "kind": "receive",
                             "set": receive.set.name,
+                            "binder": receive.binder.name,
                             "map": receive.map.as_ref().map(|map| map.name.clone()),
                             "rules": receive.rules.as_ref().map(|rules| rules.name.clone()),
+                            "acknowledge": receive.acknowledge.as_ref().map_or("997", |ack| ack.name.as_str()),
                         }),
                         super::syntax::ast::FlowDecl::Respond(respond) => json!({
                             "kind": "respond",
@@ -217,6 +267,8 @@ fn check_json(program: &Program) -> Json {
                             "set": send.set.name,
                             "map": send.map.as_ref().map(|map| map.name.clone()),
                             "events": send.events.iter().map(|event| event.name.clone()).collect::<Vec<_>>(),
+                            "until": send.until.as_ref().map(|event| event.name.clone()),
+                            "batched": send.batch.is_some(),
                         }),
                         super::syntax::ast::FlowDecl::Expect(expect) => json!({ "kind": "expect", "set": expect.set.name }),
                     }),
@@ -302,9 +354,6 @@ pub fn tokens(input: &RawValue) -> OpResult {
 #[derive(Deserialize)]
 #[serde(rename_all = "camelCase")]
 struct AtInput {
-    project: Project,
-    #[serde(default)]
-    context: Context,
     path: String,
     offset: u32,
     #[serde(default)]
@@ -322,34 +371,30 @@ const fn yes() -> bool {
 #[derive(Deserialize)]
 #[serde(rename_all = "camelCase")]
 struct RangeInput {
-    project: Project,
-    #[serde(default)]
-    context: Context,
     path: String,
     range: Range,
     #[serde(default)]
     values: Vec<RunValue>,
 }
 
-fn open(project: &Project, context: &Context, path: &str) -> Result<Session, RequestError> {
-    checked_project(project)?;
-    Session::open(project, context, path)
+fn open(raw: &RawValue, path: &str) -> Result<Session, RequestError> {
+    Session::open(program(raw)?, path)
         .ok_or_else(|| RequestError::invalid_input(format!("the project has no file {path:?}")))
 }
 
 /// `lading.complete`.
-pub fn complete(input: &RawValue) -> OpResult {
-    let input: AtInput = decode(input)?;
-    let session = open(&input.project, &input.context, &input.path)?;
+pub fn complete(raw: &RawValue) -> OpResult {
+    let input: AtInput = decode(raw)?;
+    let session = open(raw, &input.path)?;
     let offset = session.byte(input.offset);
     let found = completions(&session, offset);
     encode(&json!({ "range": range(&session.index, found.range), "items": found.items }))
 }
 
 /// `lading.hover`.
-pub fn hover(input: &RawValue) -> OpResult {
-    let input: AtInput = decode(input)?;
-    let session = open(&input.project, &input.context, &input.path)?;
+pub fn hover(raw: &RawValue) -> OpResult {
+    let input: AtInput = decode(raw)?;
+    let session = open(raw, &input.path)?;
     let offset = session.byte(input.offset);
     let Some(found) = hovered(&session, offset, &input.values) else {
         return encode(&Json::Null);
@@ -361,9 +406,9 @@ pub fn hover(input: &RawValue) -> OpResult {
 }
 
 /// `lading.signature`.
-pub fn signature(input: &RawValue) -> OpResult {
-    let input: AtInput = decode(input)?;
-    let session = open(&input.project, &input.context, &input.path)?;
+pub fn signature(raw: &RawValue) -> OpResult {
+    let input: AtInput = decode(raw)?;
+    let session = open(raw, &input.path)?;
     let offset = session.byte(input.offset);
     let Some(found) = signatures(&session, offset) else {
         return encode(&json!({ "signatures": [], "active": null, "activeParameter": null }));
@@ -381,9 +426,9 @@ pub fn signature(input: &RawValue) -> OpResult {
 }
 
 /// `lading.definition`.
-pub fn definition(input: &RawValue) -> OpResult {
-    let input: AtInput = decode(input)?;
-    let session = open(&input.project, &input.context, &input.path)?;
+pub fn definition(raw: &RawValue) -> OpResult {
+    let input: AtInput = decode(raw)?;
+    let session = open(raw, &input.path)?;
     let offset = session.byte(input.offset);
     let indexes = indexes(&session.program);
     let targets: Vec<Json> = definitions(&session, offset)
@@ -394,9 +439,9 @@ pub fn definition(input: &RawValue) -> OpResult {
 }
 
 /// `lading.references`.
-pub fn references(input: &RawValue) -> OpResult {
-    let input: AtInput = decode(input)?;
-    let session = open(&input.project, &input.context, &input.path)?;
+pub fn references(raw: &RawValue) -> OpResult {
+    let input: AtInput = decode(raw)?;
+    let session = open(raw, &input.path)?;
     let offset = session.byte(input.offset);
     let indexes = indexes(&session.program);
     let found: Vec<Json> = referenced(&session, offset, input.include_declaration)
@@ -413,9 +458,9 @@ pub fn references(input: &RawValue) -> OpResult {
 }
 
 /// `lading.rename`.
-pub fn rename(input: &RawValue) -> OpResult {
-    let input: AtInput = decode(input)?;
-    let session = open(&input.project, &input.context, &input.path)?;
+pub fn rename(raw: &RawValue) -> OpResult {
+    let input: AtInput = decode(raw)?;
+    let session = open(raw, &input.path)?;
     let offset = session.byte(input.offset);
     let indexes = indexes(&session.program);
     match renamed(&session, offset, input.new_name.as_deref()) {
@@ -434,9 +479,9 @@ pub fn rename(input: &RawValue) -> OpResult {
 }
 
 /// `lading.inlays`.
-pub fn inlays(input: &RawValue) -> OpResult {
-    let input: RangeInput = decode(input)?;
-    let session = open(&input.project, &input.context, &input.path)?;
+pub fn inlays(raw: &RawValue) -> OpResult {
+    let input: RangeInput = decode(raw)?;
+    let session = open(raw, &input.path)?;
     let span = Span::new(session.byte(input.range.from), session.byte(input.range.to));
     let found: Vec<Json> = hints(&session, span, &input.values)
         .into_iter()
@@ -446,9 +491,9 @@ pub fn inlays(input: &RawValue) -> OpResult {
 }
 
 /// `lading.actions`.
-pub fn actions(input: &RawValue) -> OpResult {
-    let input: RangeInput = decode(input)?;
-    let session = open(&input.project, &input.context, &input.path)?;
+pub fn actions(raw: &RawValue) -> OpResult {
+    let input: RangeInput = decode(raw)?;
+    let session = open(raw, &input.path)?;
     let span = Span::new(session.byte(input.range.from), session.byte(input.range.to));
     let indexes = indexes(&session.program);
     let empty = Utf16Index::new("");
@@ -471,26 +516,20 @@ pub fn actions(input: &RawValue) -> OpResult {
 #[derive(Deserialize)]
 #[serde(rename_all = "camelCase")]
 struct RunInput {
-    project: Project,
-    #[serde(default)]
-    context: Context,
     #[serde(flatten)]
     run: RunRequest,
 }
 
 /// `lading.run`.
-pub fn run(input: &RawValue) -> OpResult {
-    let input: RunInput = decode(input)?;
-    checked_project(&input.project)?;
-    let program = check_project(&input.project, &input.context);
+pub fn run(raw: &RawValue) -> OpResult {
+    let program = program(raw)?;
+    let input: RunInput = decode(raw)?;
     encode(&run_map(&program, &input.run))
 }
 
 /// `lading.test`.
-pub fn test(input: &RawValue) -> OpResult {
-    let input: ProjectInput = decode(input)?;
-    checked_project(&input.project)?;
-    let program = check_project(&input.project, &input.context);
+pub fn test(raw: &RawValue) -> OpResult {
+    let program = program(raw)?;
     let report = run_tests(&program);
     let indexes = indexes(&program);
     let tests: Vec<Json> = report
@@ -552,9 +591,6 @@ pub fn test(input: &RawValue) -> OpResult {
 #[derive(Deserialize)]
 #[serde(rename_all = "camelCase")]
 struct FlowInput {
-    project: Project,
-    #[serde(default)]
-    context: Context,
     flow: String,
     #[serde(default)]
     state: Option<FlowState>,
@@ -566,10 +602,9 @@ struct FlowInput {
 }
 
 /// `lading.flowStep`.
-pub fn flow_step(input: &RawValue) -> OpResult {
-    let input: FlowInput = decode(input)?;
-    checked_project(&input.project)?;
-    let program = check_project(&input.project, &input.context);
+pub fn flow_step(raw: &RawValue) -> OpResult {
+    let program = program(raw)?;
+    let input: FlowInput = decode(raw)?;
     if program.has_errors() {
         return Err(RequestError::invalid_input("the project has errors"));
     }
@@ -600,10 +635,9 @@ pub fn flow_step(input: &RawValue) -> OpResult {
 }
 
 /// `lading.flowKey`.
-pub fn flow_key(input: &RawValue) -> OpResult {
-    let input: FlowInput = decode(input)?;
-    checked_project(&input.project)?;
-    let program = check_project(&input.project, &input.context);
+pub fn flow_key(raw: &RawValue) -> OpResult {
+    let program = program(raw)?;
+    let input: FlowInput = decode(raw)?;
     let now = input
         .now
         .as_deref()
@@ -641,17 +675,13 @@ pub fn replay(input: &RawValue) -> OpResult {
 #[derive(Deserialize)]
 #[serde(rename_all = "camelCase")]
 struct GuideInput {
-    project: Project,
-    #[serde(default)]
-    context: Context,
     name: String,
 }
 
 /// `lading.guide`.
-pub fn guide(input: &RawValue) -> OpResult {
-    let input: GuideInput = decode(input)?;
-    checked_project(&input.project)?;
-    let program = check_project(&input.project, &input.context);
+pub fn guide(raw: &RawValue) -> OpResult {
+    let program = program(raw)?;
+    let input: GuideInput = decode(raw)?;
     match program.guide(&input.name) {
         Some(entry) => encode(entry.compiled.guide()),
         None => Err(RequestError::invalid_input(format!(

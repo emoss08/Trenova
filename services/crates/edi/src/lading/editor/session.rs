@@ -5,9 +5,10 @@ use serde::Serialize;
 use trenova_module_kit::message::Message;
 use trenova_module_kit::span::{Span, Utf16Index};
 
-use crate::lading::check::{Program, check};
+use std::rc::Rc;
+
+use crate::lading::check::Program;
 use crate::lading::facts::ScopeFact;
-use crate::lading::project::{Context, Project};
 use crate::lading::syntax::lexer::lex;
 use crate::lading::syntax::token::{Tok, Token};
 
@@ -34,7 +35,7 @@ impl Doc {
 #[derive(Debug)]
 pub struct Session {
     /// The program.
-    pub program: Program,
+    pub program: Rc<Program>,
     /// The file being edited.
     pub unit: usize,
     /// Its UTF-16 index.
@@ -44,10 +45,9 @@ pub struct Session {
 }
 
 impl Session {
-    /// Checks a project and opens one of its files; `None` when the path is not in it.
+    /// Opens one file of a checked project; `None` when the path is not in it.
     #[must_use]
-    pub fn open(project: &Project, context: &Context, path: &str) -> Option<Self> {
-        let program = check(project, context);
+    pub fn open(program: Rc<Program>, path: &str) -> Option<Self> {
         let unit = program.unit_at(path)?;
         let source = &program.units[unit].source;
         let index = Utf16Index::new(source);
