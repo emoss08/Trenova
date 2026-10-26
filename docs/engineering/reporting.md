@@ -192,8 +192,15 @@ reporting pool, built when fx starts:
 - **interactive**, with no result cache: `Preview`, `Page`, `Drill`, `Compile`, and `Run` for a
   request whose read scope narrows (an `own` or `team` grant, so `readscope.Encode` is not
   empty);
-- **cached**, with a Redis result cache (prefix `report:analytics:`, TTL `resultCacheTtl`):
-  `Run` for every other request. Without Redis, both are the interactive runner.
+- **cached**, with the result cache (`reporting.resultCache`): `Run` for every other request.
+  With `resultCache.enabled` off, both are the interactive runner.
+
+The result cache follows the decision for keel's own ([backend/data-access.md](backend/data-access.md#result-cache)):
+an in-process tier per worker (`cache.NewMemory`, `localBytes`, 128 MiB, 8 shards) is on by
+default; the Redis tier (`resultCache.shared.enabled`, prefix `report:analytics:`) is off by
+default because it copies tenant report rows into Redis. With it on, `tieredStore` writes both
+tiers and keeps a Redis hit in the process too. A run of more than `MaxCachedRows` (50,000) rows,
+or larger than a local shard, is not kept locally; that is not logged.
 
 A run records whether its rows came from the cache (`Stream.Cached()`, stored as
 `ReportRun.cacheHit` and shown on the runs list); a preview never reads it, so `ReportPreview`
@@ -205,7 +212,7 @@ among them), the output, and keel's data version of every table the statement re
 bumps after a write through it commits
 ([backend/data-access.md](backend/data-access.md#pools-and-transactions)). The read scope is a
 session setting rather than an argument, which is why a narrowed run never reads the cache. The
-TTL is the backstop for writes keel does not see.
+TTL (`resultCache.ttl`, 15 min) is the backstop for writes keel does not see.
 
 No rollups are declared and the runners have no rollup router, so every report reads its base
 tables. `Primary: true`: reports run on the primary, not a replica.
@@ -234,7 +241,8 @@ Every entry point passes keel's guards. Trenova sets them from `reporting:`:
 | `previewRowLimit` | 100 | preview rows; the most a page or a drill-through returns |
 | `maxRows` | 5,000,000 | rows a run streams |
 | `poolMaxOpenConns` | 4 | connections in the reporting pool |
-| `resultCacheTtl` | 15 min | cached results |
+| `resultCache.enabled`, `resultCache.localBytes`, `resultCache.ttl` | on, 128 MiB, 15 min | the in-process result cache of runs |
+| `resultCache.shared.enabled` | off | the Redis tier, which copies tenant report rows into Redis |
 
 `reportengine.DefinitionLimits` and `ComplexityLimits` turn this section into keel's limits; the
 runners, `Validate` and the canned report test all read them.
@@ -351,7 +359,7 @@ an hour (`ZOMBIE`); and the catalog check every 15 minutes. Their cross-tenant r
 
 A deploy that renames or removes a reportable model, field or relation changes
 `Catalog.Version()` and can break saved reports. `CheckReportDefinitionsAgainstCatalogWorkflow`
-finds them: `ListCatalogStale` reads definitions whose `catalog_version` is below or above the
+finds them, on the newest catalog version still running only (below), and `ListCatalogStale` reads definitions whose `catalog_version` is below or above the
 current version (two range scans on `idx_report_definitions_catalog_version`, empty once a
 deploy has been checked), 200 at a time and at most 20,000 a run, across every tenant. Each is
 resolved with `Engine.Validate`, and `RecordCatalogCheck` writes, in the definition's tenant:
@@ -368,6 +376,25 @@ save that lands meanwhile wins and the check leaves that row alone; it bumps nei
 nor `updated_at`, so a person editing the report never loses their save to it. A change of
 status is audited (`report`, `update`, the system principal, `event: catalog_check`). The
 builder shows the diagnostics and the library badges the status.
+
+**Owners are told once per pass.** Every report a pass marks `needs_attention` is grouped by
+owner, and each owner gets one `report_needs_attention` notification (the
+`notification.report_needs_attention` template: the first report's name, `ReportCount` and
+`OtherReports`; `definitionIds`, at most 20, in the data; the client opens the one report, or the
+library for several). The notices go out when the pass ends, also when it fails, and only for
+rows that pass changed, so a retried activity never repeats one; a repaired report is not
+announced, its badge just clears.
+
+**Rolling deploys and rollbacks.** Every report worker records its catalog version in
+`report_catalog_versions` (a global table: `version`, `first_seen_at`, `last_seen_at`) when it
+starts and every 5 minutes (`StartCatalogHeartbeat`), and the activity records it again before
+it looks. A pass runs, and checks again before every batch, only while its own version is the
+newest (latest `first_seen_at`) among those seen in the last 20 minutes; otherwise it stops with
+`superseded`. So while old and new workers run side by side only the new ones decide, and a
+rollback hands the check back to the old version once the new workers have been gone for 20
+minutes; their verdicts are then redone. A version not seen for 30 days is forgotten. A version
+registered in the middle of an older version's batch can lose at most that batch to it, and
+takes the rows back on its next pass.
 
 ## Schedules, alerts and delivery
 
