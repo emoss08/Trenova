@@ -628,6 +628,10 @@ A partner guide narrows its base (a built-in `x12.*` guide or another partner gu
 - **severity:** `severity <finding> error|warning|info` changes how a finding kind is reported
   for this partner (the kinds are those in [edi-x12.md](edi-x12.md)).
 
+A segment line names its loops (`0300.0310.N1`), or the segment's ID alone when the base guide
+has it in only one place (`S5` for `0300.S5`); an ID found in several loops is an error
+(`guide-ambiguous-path`) that lists them.
+
 Only narrowing is allowed: making something optional mandatory or unused, shortening a length,
 restricting codes, lowering a maximum, adding a syntax note. Anything else is an error
 (`guide-widens`), with the base's rule shown beside it. The onboarding agent drafts a guide from

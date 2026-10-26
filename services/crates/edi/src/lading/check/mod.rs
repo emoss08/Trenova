@@ -1222,6 +1222,12 @@ mod findings {
                 "L11 max 100",
                 "guide-widens",
             ),
+            (
+                "guides/acme-204.lading",
+                "0300.0310.N1 {",
+                "N1 {",
+                "guide-ambiguous-path",
+            ),
         ];
         let mut failures = Vec::new();
         for (path, old, new, code) in cases {
@@ -1233,5 +1239,10 @@ mod findings {
             }
         }
         assert!(failures.is_empty(), "{}", failures.join("\n"));
+    }
+    #[test]
+    fn a_guide_line_names_a_segment_found_in_one_loop_by_its_id() {
+        let found = codes("guides/acme-204.lading", "0300.S5 {", "S5 {");
+        assert!(found.is_empty(), "{found:?}");
     }
 }

@@ -154,11 +154,11 @@ fn compile_unit(
 }
 
 /// Where a guide line points in the structure.
-fn locate<'g>(nodes: &'g mut [Node], path: &[Ident]) -> Option<&'g mut Node> {
+fn locate<'g>(nodes: &'g mut [Node], path: &[&str]) -> Option<&'g mut Node> {
     let (first, rest) = path.split_first()?;
     let found = nodes.iter_mut().find(|node| match node {
-        Node::Segment(segment) => segment.segment == first.name && rest.is_empty(),
-        Node::Loop(definition) => definition.id == first.name,
+        Node::Segment(segment) => segment.segment == *first && rest.is_empty(),
+        Node::Loop(definition) => definition.id == *first,
     })?;
     if rest.is_empty() {
         return Some(found);
@@ -169,11 +169,73 @@ fn locate<'g>(nodes: &'g mut [Node], path: &[Ident]) -> Option<&'g mut Node> {
     }
 }
 
-fn structure_path(path: &[Ident]) -> String {
+/// Every path to a segment with this ID, its loops outermost first.
+fn segment_paths(nodes: &[Node], id: &str, prefix: &mut Vec<String>, found: &mut Vec<Vec<String>>) {
+    for node in nodes {
+        match node {
+            Node::Segment(segment) if segment.segment == id => {
+                let mut path = prefix.clone();
+                path.push(id.to_owned());
+                found.push(path);
+            }
+            Node::Segment(_) => {}
+            Node::Loop(definition) => {
+                prefix.push(definition.id.clone());
+                segment_paths(&definition.children, id, prefix, found);
+                prefix.pop();
+            }
+        }
+    }
+}
+
+/// The path a segment line names: as written, or, for a bare segment ID the top level does not
+/// have, the one loop that does.
+fn resolve_segment(
+    nodes: &[Node],
+    path: &[Ident],
+    span: Span,
+) -> Result<Vec<String>, Diagnostic> {
+    let written: Vec<String> = path.iter().map(|ident| ident.name.clone()).collect();
+    let [only] = path else {
+        return Ok(written);
+    };
+    let at_top = nodes.iter().any(|node| match node {
+        Node::Segment(segment) => segment.segment == only.name,
+        Node::Loop(_) => false,
+    });
+    if at_top {
+        return Ok(written);
+    }
+    let mut found = Vec::new();
+    segment_paths(nodes, &only.name, &mut Vec::new(), &mut found);
+    match found.len() {
+        0 => Ok(written),
+        1 => Ok(found.remove(0)),
+        _ => Err(Diagnostic::error(
+            "guide-ambiguous-path",
+            span,
+            Message::with(
+                message!("{0} is in more than one loop; name the loop: {1}"),
+                [
+                    Arg::from(only.name.as_str()),
+                    Arg::from(
+                        found
+                            .iter()
+                            .map(|path| path.join("."))
+                            .collect::<Vec<_>>()
+                            .join(", "),
+                    ),
+                ],
+            ),
+        )),
+    }
+}
+
+fn structure_path(path: &[&str]) -> String {
     let mut text = String::from("structure");
     for part in path {
         text.push('/');
-        text.push_str(&part.name);
+        text.push_str(part);
     }
     text
 }
@@ -224,9 +286,10 @@ fn apply(
             span,
             ..
         } => {
-            let at = structure_path(path);
+            let names: Vec<&str> = path.iter().map(|ident| ident.name.as_str()).collect();
+            let at = structure_path(&names);
             spans.push((at, *span));
-            let Some(Node::Loop(definition)) = locate(&mut guide.structure, path) else {
+            let Some(Node::Loop(definition)) = locate(&mut guide.structure, &names) else {
                 diagnostics.push(not_found(path, *span));
                 return;
             };
@@ -255,14 +318,22 @@ fn apply(
             doc,
             span,
         } => {
-            let at = structure_path(path);
+            let resolved = match resolve_segment(&guide.structure, path, *span) {
+                Ok(resolved) => resolved,
+                Err(diagnostic) => {
+                    diagnostics.push(diagnostic);
+                    return;
+                }
+            };
+            let names: Vec<&str> = resolved.iter().map(String::as_str).collect();
+            let at = structure_path(&names);
             spans.push((at.clone(), *span));
             let segment_id = path
                 .last()
                 .map(|ident| ident.name.clone())
                 .unwrap_or_default();
             let dictionary = guide.segments.get(&segment_id).cloned();
-            let Some(Node::Segment(segment)) = locate(&mut guide.structure, path) else {
+            let Some(Node::Segment(segment)) = locate(&mut guide.structure, &names) else {
                 diagnostics.push(not_found(path, *span));
                 return;
             };
