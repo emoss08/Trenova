@@ -48,8 +48,6 @@ type Catalog struct {
 	// feeds names, for each step of a recipe, the tools whose recipe it is a
 	// step of before the tool itself.
 	feeds map[string][]string
-	// followers names, for each tool, the tools that follow it.
-	followers map[string][]string
 }
 
 func New(descriptors []agentports.AgentToolDescriptor) *Catalog {
@@ -58,12 +56,11 @@ func New(descriptors []agentports.AgentToolDescriptor) *Catalog {
 	sort.Slice(sorted, func(i, j int) bool { return sorted[i].Name < sorted[j].Name })
 
 	catalog := &Catalog{
-		entries:   make([]indexed, 0, len(sorted)),
-		byName:    make(map[string]int, len(sorted)),
-		family:    indexFamilies(),
-		items:     make([]agentports.EmbeddingCatalogItem, 0, len(sorted)),
-		feeds:     make(map[string][]string),
-		followers: make(map[string][]string),
+		entries: make([]indexed, 0, len(sorted)),
+		byName:  make(map[string]int, len(sorted)),
+		family:  indexFamilies(),
+		items:   make([]agentports.EmbeddingCatalogItem, 0, len(sorted)),
+		feeds:   make(map[string][]string),
 	}
 
 	tieRanks := readingOrderRanks(sorted)
@@ -90,11 +87,6 @@ func New(descriptors []agentports.AgentToolDescriptor) *Catalog {
 			}
 			if !slices.Contains(catalog.feeds[step], descriptor.Name) {
 				catalog.feeds[step] = append(catalog.feeds[step], descriptor.Name)
-			}
-		}
-		for _, followed := range descriptor.Follows {
-			if !slices.Contains(catalog.followers[followed], descriptor.Name) {
-				catalog.followers[followed] = append(catalog.followers[followed], descriptor.Name)
 			}
 		}
 	}
@@ -127,12 +119,6 @@ func readingOrderRanks(sorted []agentports.AgentToolDescriptor) []int {
 // shipment_match_records feeds shipment_create.
 func (c *Catalog) Feeds(name string) []string {
 	return c.feeds[name]
-}
-
-// Followers names the tools that follow a tool: report_analyze_data follows
-// report_run.
-func (c *Catalog) Followers(name string) []string {
-	return c.followers[name]
 }
 
 // Descriptor returns one tool by its exact name.

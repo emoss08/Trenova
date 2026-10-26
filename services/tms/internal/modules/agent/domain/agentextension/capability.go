@@ -8,7 +8,6 @@ const (
 	ToolListPortalSites = "web_list_portal_sites"
 	ToolReadPortal      = "web_read_portal"
 	ToolActOnPortal     = "web_use_portal"
-	ToolAnalyzeData     = "report_analyze_data"
 	ToolWatchWeb        = "web_watch"
 	ToolListWebWatches  = "web_list_watches"
 	ToolStopWebWatch    = "web_stop_watch"
@@ -23,14 +22,12 @@ type Capability string
 const (
 	CapabilityWebResearch      = Capability("WebResearch")
 	CapabilityPortalAutomation = Capability("PortalAutomation")
-	CapabilityDataAnalysis     = Capability("DataAnalysis")
 )
 
 func AllCapabilities() []Capability {
 	return []Capability{
 		CapabilityWebResearch,
 		CapabilityPortalAutomation,
-		CapabilityDataAnalysis,
 	}
 }
 
@@ -70,11 +67,6 @@ var capabilities = map[Capability]CapabilitySpec{
 		OutsideContentTools: []string{ToolReadPortal},
 		Unchecked:           "the portal could not be checked",
 		RequestNoun:         "portal tasks",
-	},
-	CapabilityDataAnalysis: {
-		Tools:       []string{ToolAnalyzeData},
-		Unchecked:   "the analysis could not run",
-		RequestNoun: "analyses",
 	},
 }
 

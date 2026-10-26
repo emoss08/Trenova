@@ -14,7 +14,6 @@ function analysis(overrides: Partial<AnalysisView> = {}): AnalysisView {
     code: CODE,
     datasets: [],
     output: "Open 21637.5\n",
-    results: [],
     charts: [],
     tables: [],
     figures: [{ label: "Open balance", value: 21637.5, kind: "number", currency: "", note: "" }],
@@ -76,5 +75,52 @@ describe("AnalysisResult workings", () => {
 
     expect(screen.queryByRole("button", { name: /Code/ })).not.toBeInTheDocument();
     expect(screen.queryByRole("button", { name: /What it printed/ })).not.toBeInTheDocument();
+  });
+});
+
+describe("AnalysisResult charts", () => {
+  const chart = {
+    kind: "bar" as const,
+    title: "Open by customer",
+    x: { label: "Customer", kind: "text" as const, values: ["Acme", "Peak"] },
+    series: [{ name: "Open", values: [36912.16, 1200] }],
+    valueKind: "money" as const,
+    currency: "USD",
+    stacked: false,
+    horizontal: false,
+  };
+
+  it("draws each chart the script showed, in the order it showed it", async () => {
+    render(
+      <AnalysisResult
+        analysis={analysis({
+          figures: [],
+          charts: [chart, { ...chart, title: "Billed by customer" }],
+          layout: [
+            { kind: "chart", index: 1 },
+            { kind: "chart", index: 0 },
+          ],
+        })}
+      />,
+    );
+
+    const figures = await screen.findAllByRole("figure");
+    expect(figures.map((figure) => figure.getAttribute("aria-label"))).toEqual([
+      "Billed by customer",
+      "Open by customer",
+    ]);
+  });
+
+  it("says a chart with no values has nothing to draw", async () => {
+    render(
+      <AnalysisResult
+        analysis={analysis({
+          figures: [],
+          charts: [{ ...chart, series: [{ name: "Open", values: [null, null] }] }],
+        })}
+      />,
+    );
+
+    expect(await screen.findByText("This chart has no values to draw.")).toBeInTheDocument();
   });
 });

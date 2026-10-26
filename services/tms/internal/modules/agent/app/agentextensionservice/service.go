@@ -51,7 +51,6 @@ type Params struct {
 	Plans        platformplanports.PlanService            `                                   optional:"true"`
 	Sites        agentextensionports.PortalSiteRepository
 	Runs         agentextensionports.PortalRunRepository
-	Analyses     agentextensionports.AnalysisRunRepository
 	Watches      agentextensionports.WebWatchRepository
 	Findings     agentextensionports.WebWatchFindingRepository
 	Workflows    kernelports.WorkflowStarter `                                   optional:"true"`
@@ -67,12 +66,10 @@ type Service struct {
 	connectors map[agentextension.Type]agentextensionports.ExtensionConnector
 	webSearch  map[agentextension.Type]agentextensionports.WebSearchProvider
 	browsers   map[agentextension.Type]agentextensionports.BrowserProvider
-	sandboxes  map[agentextension.Type]agentextensionports.SandboxProvider
 	watchers   map[agentextension.Type]agentextensionports.WebWatchProvider
 	plans      platformplanports.PlanService
 	sites      agentextensionports.PortalSiteRepository
 	runs       agentextensionports.PortalRunRepository
-	analyses   agentextensionports.AnalysisRunRepository
 	watches    agentextensionports.WebWatchRepository
 	findings   agentextensionports.WebWatchFindingRepository
 	workflows  kernelports.WorkflowStarter
@@ -94,10 +91,6 @@ func New(p Params) *Service {
 		map[agentextension.Type]agentextensionports.BrowserProvider,
 		len(p.Connectors),
 	)
-	sandboxes := make(
-		map[agentextension.Type]agentextensionports.SandboxProvider,
-		len(p.Connectors),
-	)
 	watchers := make(
 		map[agentextension.Type]agentextensionports.WebWatchProvider,
 		len(p.Connectors),
@@ -114,9 +107,6 @@ func New(p Params) *Service {
 		if provider, ok := connector.(agentextensionports.BrowserProvider); ok {
 			browsers[typ] = provider
 		}
-		if provider, ok := connector.(agentextensionports.SandboxProvider); ok {
-			sandboxes[typ] = provider
-		}
 		if provider, ok := connector.(agentextensionports.WebWatchProvider); ok {
 			watchers[typ] = provider
 		}
@@ -131,12 +121,10 @@ func New(p Params) *Service {
 		connectors: connectors,
 		webSearch:  webSearch,
 		browsers:   browsers,
-		sandboxes:  sandboxes,
 		watchers:   watchers,
 		plans:      p.Plans,
 		sites:      p.Sites,
 		runs:       p.Runs,
-		analyses:   p.Analyses,
 		watches:    p.Watches,
 		findings:   p.Findings,
 		workflows:  p.Workflows,

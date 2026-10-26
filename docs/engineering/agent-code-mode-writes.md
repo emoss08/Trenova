@@ -93,7 +93,7 @@ all of these hold:
 - its policy does not `Escalates` and has no `TaintHold`;
 - it is not a runtime-control tool (no `agent_` name: `agent_run_script`, `agent_create_wait`,
   `agent_create_memory`, delegation and the ask-the-person tools) and not an extension tool
-  (`web_*`, the portal tools, `report_analyze_data`);
+  (`web_*`, the portal tools);
 - it implements both `ToolPreviewer` and `TargetedTool`, so its own preview shows the person what
   it would do and pins the version of the record it names.
 

@@ -112,11 +112,12 @@ type Provider struct {
 	// recorded by the router on the first call it refused. It is cleared when
 	// the advisor, the model or the platform changes.
 	AdvisorRefusal *AdvisorRefusal `json:"advisorRefusal" keel:"advisor_refusal,jsonb"`
-	// Scripts lets this provider's model answer with a read-only script
-	// (code mode), and ScriptWrites lets those scripts prepare writes, proposed
-	// as one batch for a person. Both are off by default, and both still need
-	// the organization's own opt-in: the plan capability, the E2B extension's
-	// "Read-only scripts" setting and the code_mode permission.
+	// Scripts lets this provider's model answer with a read-only script that
+	// reads records, report runs and attached files and shows figures, tables
+	// and charts, run in Trenova's own interpreter; it is on by default.
+	// ScriptWrites lets those scripts prepare writes, proposed as one batch for
+	// a person, and is off by default. Both need the person's code_mode
+	// permission.
 	Scripts      bool `json:"scripts"      keel:"code_mode_scripts"`
 	ScriptWrites bool `json:"scriptWrites" keel:"code_mode_writes"`
 

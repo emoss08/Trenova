@@ -311,7 +311,9 @@ the same-scope join rule and the after-commit hooks.
 
 Migrations are keel files in `schema/migrations/`, one per change, `<version>_<snake_name>.sql`;
 `task db-create-migration name=add_holds [kind=notx]` writes one with the version from the clock
-(older files number versions within a day as counters, which keel accepts). A transactional file
+(older files number versions within a day as counters, which keel accepts). Until the clock passes
+the newest version (the `20261231…` counters run ahead of it), rename the file to the next counter
+after the newest, or it is refused as older than an applied migration. A transactional file
 runs whole, in one transaction with its row in `keel_migrations`, so it needs no separators. There
 are no down migrations: fix forward with a new migration, and rebuild a development database with
 `task db-reset`. `trenova-db up` (`cmd/db`) is the deploy step that applies them, `trenova-devdb up`

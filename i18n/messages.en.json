@@ -21693,15 +21693,6 @@
       "routes/agent-control"
     ]
   },
-  "Agent data analysis": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "apps/web/lib"
-    ]
-  },
   "Agent definition loader is not configured": {
     "sites": 1,
     "scope": [
@@ -22126,16 +22117,7 @@
       "apps/web/lib"
     ]
   },
-  "Agents answer questions a report alone does not — margin by lane over a quarter, which customers drift past their payment terms, where detention clusters by facility and hour — by running Python over the report results and spreadsheets they were given, and show the figures and charts beside the reply. The code runs in a sandbox that cannot reach the internet.": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
-  "Agents answering a question that needs many reads with one short read-only script": {
+  "Agents answering questions across many records, and analyzing report results and attached files, with short read-only scripts": {
     "sites": 1,
     "scope": [
       "go"
@@ -22316,15 +22298,6 @@
     ]
   },
   "Agents reading and acting on the third-party web portals the organization set up, through an enabled extension": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
-  "Agents running code over the report results and files a person gave them, through an enabled extension": {
     "sites": 1,
     "scope": [
       "go"
@@ -27332,7 +27305,7 @@
     ]
   },
   "Analyses": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "ts"
     ],
@@ -27388,17 +27361,6 @@
     ],
     "areas": [
       "routes/agent-control"
-    ]
-  },
-  "Analyze data": {
-    "sites": 2,
-    "scope": [
-      "go",
-      "ts"
-    ],
-    "areas": [
-      "apps/web/components",
-      "go/other"
     ]
   },
   "Analyzing rate confirmation": {
@@ -51513,11 +51475,12 @@
     ]
   },
   "Chart": {
-    "sites": 6,
+    "sites": 8,
     "scope": [
       "ts"
     ],
     "areas": [
+      "apps/web/components",
       "apps/web/types",
       "routes/home",
       "routes/reports",
@@ -51540,15 +51503,6 @@
     ],
     "areas": [
       "routes/reports"
-    ]
-  },
-  "Chart {0}": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "apps/web/components"
     ]
   },
   "Charts": {
@@ -57472,15 +57426,6 @@
     ],
     "areas": [
       "go/other"
-    ]
-  },
-  "Code error": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "apps/web/lib"
     ]
   },
   "Code expires": {
@@ -64902,7 +64847,7 @@
     ]
   },
   "Cost": {
-    "sites": 23,
+    "sites": 22,
     "scope": [
       "go",
       "ts"
@@ -72313,15 +72258,6 @@
       "apps/web/config"
     ]
   },
-  "Data Analysis": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
   "Data Entry Control": {
     "sites": 1,
     "scope": [
@@ -72358,15 +72294,6 @@
     ],
     "areas": [
       "apps/web/components"
-    ]
-  },
-  "Data analysis": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
     ]
   },
   "Data as of": {
@@ -138538,15 +138465,6 @@
       "routes/agent-control"
     ]
   },
-  "Let agents analyze this person's report results and attached files": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
   "Let agents look things up on portals for this person": {
     "sites": 1,
     "scope": [
@@ -138574,7 +138492,7 @@
       "go/other"
     ]
   },
-  "Let agents run read-only scripts over what this person may read": {
+  "Let agents run read-only scripts over what this person may read, the reports they ran and the files they attached": {
     "sites": 1,
     "scope": [
       "go"
@@ -138593,15 +138511,6 @@
     ]
   },
   "Let agents search the web and read pages when an answer is not in Trenova.": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
-  "Let agents work out figures and charts from your reports and spreadsheets with Python.": {
     "sites": 1,
     "scope": [
       "go"
@@ -141656,6 +141565,15 @@
       "routes/agent-control"
     ]
   },
+  "Loading analysis": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "Loading analytics": {
     "sites": 1,
     "scope": [
@@ -143459,7 +143377,7 @@
     ]
   },
   "Loading…": {
-    "sites": 11,
+    "sites": 12,
     "scope": [
       "ts"
     ],
@@ -160092,7 +160010,7 @@
       "routes/factoring-company"
     ]
   },
-  "No analyses yet. Each one an agent runs is listed here with its code and output.": {
+  "No analyses yet. Each script an agent runs that shows someone a figure, table or chart is listed here.": {
     "sites": 1,
     "scope": [
       "ts"
@@ -207971,15 +207889,6 @@
       "routes/driver-settlement"
     ]
   },
-  "Read-only scripts": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
   "Read-only until you approve": {
     "sites": 1,
     "scope": [
@@ -209956,15 +209865,6 @@
     ],
     "areas": [
       "routes/admin"
-    ]
-  },
-  "Recent analyses": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/agent-control"
     ]
   },
   "Recent artifacts": {
@@ -221792,12 +221692,11 @@
     ]
   },
   "Results": {
-    "sites": 2,
+    "sites": 1,
     "scope": [
       "ts"
     ],
     "areas": [
-      "apps/web/components",
       "routes/agent-control"
     ]
   },
@@ -226454,6 +226353,15 @@
       "apps/web/components"
     ]
   },
+  "Run a script": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "Run a simulation against historical shipments": {
     "sites": 1,
     "scope": [
@@ -227029,7 +226937,7 @@
     ]
   },
   "Running": {
-    "sites": 12,
+    "sites": 11,
     "scope": [
       "go",
       "ts"
@@ -227192,15 +227100,6 @@
       "routes/recurring-shipment",
       "routes/reports",
       "routes/time-attendance"
-    ]
-  },
-  "Runs Python over report results and attached spreadsheets, and returns the figures and charts.": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
     ]
   },
   "Runs a block with an optional's value, when it has one.": {
@@ -228653,24 +228552,6 @@
     ],
     "areas": [
       "routes/admin"
-    ]
-  },
-  "Sandbox template": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
-  "Sandbox template must be an E2B template name such as code-interpreter-v1": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
     ]
   },
   "Sat": {
@@ -232184,6 +232065,15 @@
       "routes/edi"
     ]
   },
+  "Script error": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/lib"
+    ]
+  },
   "Script is required": {
     "sites": 1,
     "scope": [
@@ -232230,6 +232120,15 @@
       "go/other",
       "routes/agent-control",
       "routes/edi"
+    ]
+  },
+  "Scripts and analysis": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Scripts apply only to a provider that handles assistant chat": {
@@ -233617,15 +233516,6 @@
     "areas": [
       "routes/shipment",
       "routes/tractor"
-    ]
-  },
-  "Seconds per analysis": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
     ]
   },
   "Secret access key": {
@@ -244972,6 +244862,15 @@
       "routes/desk"
     ]
   },
+  "Show older analyses": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "Show on the board": {
     "sites": 1,
     "scope": [
@@ -253163,7 +253062,7 @@
     ]
   },
   "Stopped": {
-    "sites": 9,
+    "sites": 10,
     "scope": [
       "ts"
     ],
@@ -259991,15 +259890,6 @@
       "go/other"
     ]
   },
-  "That analysis was not found": {
-    "sites": 2,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
   "That approval is already delegated to this person for the same period": {
     "sites": 1,
     "scope": [
@@ -260056,15 +259946,6 @@
   },
   "That chargeback has already been reversed; reload to see the reserve": {
     "sites": 2,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
-  "That chart was not found": {
-    "sites": 1,
     "scope": [
       "go"
     ],
@@ -262052,7 +261933,7 @@
     ]
   },
   "The analysis id is not valid": {
-    "sites": 2,
+    "sites": 1,
     "scope": [
       "go"
     ],
@@ -262060,7 +261941,16 @@
       "api/handlers"
     ]
   },
-  "The analysis you opened is older than the ones listed here.": {
+  "The analysis you opened": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
+  "The analysis you opened was not found.": {
     "sites": 1,
     "scope": [
       "ts"
@@ -263798,15 +263688,6 @@
       "go/other"
     ]
   },
-  "The chart number is not valid": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "api/handlers"
-    ]
-  },
   "The chart of accounts and its running balances": {
     "sites": 1,
     "scope": [
@@ -264054,15 +263935,6 @@
       "go/other"
     ]
   },
-  "The code is running in the sandbox": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "apps/web/lib"
-    ]
-  },
   "The code of the account type": {
     "sites": 1,
     "scope": [
@@ -264106,33 +263978,6 @@
     ],
     "areas": [
       "routes/shipment-type"
-    ]
-  },
-  "The code raised an error; the agent can fix it and run it again": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "apps/web/lib"
-    ]
-  },
-  "The code ran out of time and was stopped": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "apps/web/lib"
-    ]
-  },
-  "The code ran to the end": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "apps/web/lib"
     ]
   },
   "The code.": {
@@ -265264,15 +265109,6 @@
     ],
     "areas": [
       "routes/table-change-alert"
-    ]
-  },
-  "The datasets together are larger than 40 MB. Narrow them, or analyze them one at a time.": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
     ]
   },
   "The date `n` days later (earlier when `n` is negative).": {
@@ -275352,15 +275188,6 @@
       "routes/desk"
     ]
   },
-  "The sandbox could not run the code": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "apps/web/lib"
-    ]
-  },
   "The saved {0} app keys could not be read. Enter them again.": {
     "sites": 1,
     "scope": [
@@ -275706,6 +275533,15 @@
       "apps/web/components"
     ]
   },
+  "The script could not be run": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/lib"
+    ]
+  },
   "The script is empty. Send the Python to run.": {
     "sites": 1,
     "scope": [
@@ -275713,6 +275549,42 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "The script raised an error; the agent can fix it and run it again": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/lib"
+    ]
+  },
+  "The script ran out of time and was stopped": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/lib"
+    ]
+  },
+  "The script ran to the end": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/lib"
+    ]
+  },
+  "The script reached a limit on its reads or memory and was stopped": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/lib"
     ]
   },
   "The search didn't run": {
@@ -280824,6 +280696,15 @@
       "rules/tariff"
     ]
   },
+  "This analysis could not be loaded.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "This applies to every year.": {
     "sites": 1,
     "scope": [
@@ -281342,6 +281223,15 @@
     ],
     "areas": [
       "template/detention.notice.email"
+    ]
+  },
+  "This chart has no values to draw.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "This check is already settled": {
@@ -302333,7 +302223,7 @@
     ]
   },
   "View": {
-    "sites": 129,
+    "sites": 128,
     "scope": [
       "go",
       "ts"
@@ -322759,6 +322649,15 @@
       "api/handlers"
     ]
   },
+  "beforeId must be the id of the last analysis on the page before": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "api/handlers"
+    ]
+  },
   "being confirmed": {
     "sites": 1,
     "scope": [
@@ -326303,15 +326202,6 @@
     "areas": [
       "apps/web/components",
       "routes/reports"
-    ]
-  },
-  "every sandbox the account may run at once is in use": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
     ]
   },
   "every settlement": {
@@ -330315,6 +330205,15 @@
       "rules/tariff"
     ]
   },
+  "show a figure, a table or a chart": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "showing the {0} most recent": {
     "sites": 1,
     "scope": [
@@ -331063,15 +330962,6 @@
   },
   "the {0} extension cannot browse": {
     "sites": 2,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
-  "the {0} extension cannot run code": {
-    "sites": 1,
     "scope": [
       "go"
     ],
@@ -332209,6 +332099,15 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "what was shown could not be read": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "when it applies": {
@@ -336819,6 +336718,15 @@
       "apps/web/hooks"
     ]
   },
+  "{0, plural, one {# value is} other {# values are}} not drawn: a pie shows only values above zero.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "{0, plural, one {# version} other {# versions}}": {
     "sites": 1,
     "scope": [
@@ -341331,15 +341239,6 @@
     ],
     "areas": [
       "apps/web/hooks"
-    ]
-  },
-  "{0} could not be loaded.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "apps/web/components"
     ]
   },
   "{0} could not be posted automatically": {

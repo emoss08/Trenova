@@ -46,15 +46,15 @@ func TestLineageKeyFor(t *testing.T) {
 		"two guides are two drafts",
 	)
 	assert.Equal(t,
-		LineageKeyFor(KindAnalysis, "report_analyze_data",
+		LineageKeyFor(KindAnalysis, "agent_run_script",
 			map[string]any{"title": "Open AR by customer", "code": "print(1)"}),
-		LineageKeyFor(KindAnalysis, "report_analyze_data",
+		LineageKeyFor(KindAnalysis, "agent_run_script",
 			map[string]any{"title": " open  AR by Customer", "code": "print(2)"}),
 		"an analysis run again under its title is its next version, whatever the code",
 	)
 	assert.NotEqual(t,
-		LineageKeyFor(KindAnalysis, "report_analyze_data", map[string]any{"title": "Open AR by customer"}),
-		LineageKeyFor(KindAnalysis, "report_analyze_data", map[string]any{"title": "Lane margin"}),
+		LineageKeyFor(KindAnalysis, "agent_run_script", map[string]any{"title": "Open AR by customer"}),
+		LineageKeyFor(KindAnalysis, "agent_run_script", map[string]any{"title": "Lane margin"}),
 	)
 	assert.False(t, IsLookup(KindAnalysis),
 		"an analysis is made on purpose, so it is kept whether or not the reply points to it")

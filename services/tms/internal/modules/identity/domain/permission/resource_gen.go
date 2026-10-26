@@ -135,7 +135,6 @@ const (
 	ResourceAgentExtension   Resource = "agent_extension"
 	ResourceWebResearch      Resource = "web_research"
 	ResourcePortalAutomation Resource = "portal_automation"
-	ResourceDataAnalysis     Resource = "data_analysis"
 	ResourceCodeMode         Resource = "code_mode"
 	ResourceAgentDefinition  Resource = "agent_definition"
 	ResourceAgentMemory      Resource = "agent_memory"

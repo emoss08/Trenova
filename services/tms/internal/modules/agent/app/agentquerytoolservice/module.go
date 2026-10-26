@@ -2,8 +2,9 @@ package agentquerytoolservice
 
 import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/insightservice"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentextensionports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/analysisports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/scriptports"
 	"github.com/emoss08/trenova/internal/modules/billing/app/bankreceiptservice"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/bankreceiptworkitemports"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentports"
@@ -100,8 +101,7 @@ func coreToolProviders() []any {
 		newListPortalSitesTool,
 		newReadPortalTool,
 		newListWebWatchesTool,
-		provideAnalyzeDataTool,
-		newRunScriptTool,
+		provideRunScriptTool,
 	}
 }
 
@@ -133,13 +133,20 @@ func provideRunReportTool(
 	return newRunReportTool(reports, permissions)
 }
 
-func provideAnalyzeDataTool(
+func provideRunScriptTool(
 	reports *reporting.Service,
+	runner scriptports.Runner,
 	files documentports.ConversationFileReader,
-	analyzer agentextensionports.DataAnalyzer,
 	permissions permissionports.PermissionEngine,
+	analyses analysisports.RunRecorder,
 ) agentports.AgentQueryTool {
-	return newAnalyzeDataTool(reports, files, analyzer, permissions)
+	return newRunScriptTool(&runScriptToolParams{
+		Runner:      runner,
+		Reports:     reports,
+		Files:       files,
+		Permissions: permissions,
+		Analyses:    analyses,
+	})
 }
 
 func provideGetReportRunTool(reports *reporting.Service) agentports.AgentQueryTool {

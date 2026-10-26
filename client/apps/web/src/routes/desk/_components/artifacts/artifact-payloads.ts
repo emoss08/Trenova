@@ -14,11 +14,13 @@ import {
 import type { AnalysisView } from "@/components/assistant/analysis-result";
 import { isRecordEntityType, recordPath, type RecordEntityType } from "@/config/record-links";
 import {
+  analysisChartsSchema,
+  analysisDatasetsSchema,
   analysisFiguresSchema,
   analysisLayoutSchema,
+  analysisRunStatusSchema,
   analysisTablesSchema,
-  type AnalysisRunStatus,
-} from "@/types/agent-extension";
+} from "@/types/analysis";
 import { isAppPath } from "@/lib/app-path";
 import type { ReportPreviewColumn } from "@/lib/graphql/reports";
 import type { AssistantArtifact } from "@/types/assistant";
@@ -971,50 +973,27 @@ export function runDiffFrom(artifact: AssistantArtifact): RunDiffArtifactPayload
   };
 }
 
-const ANALYSIS_STATUSES: readonly AnalysisRunStatus[] = [
-  "Running",
-  "Succeeded",
-  "Errored",
-  "Failed",
-  "TimedOut",
-];
-
 /**
- * What an analysis showed: the figures it printed and returned, the charts it
- * drew by position (their images are read from the run), the exception it
- * raised, and the code. A status the server did not send reads as a failure,
+ * What a script showed: its headline figures, tables and charts as what they plot, the
+ * exception it raised, and the code. A status the server did not send reads as a failure,
  * never as a success.
  */
 export function analysisFrom(artifact: AssistantArtifact): AnalysisView {
   const payload = artifact.payload;
-  const status = stringOf(payload.status) as AnalysisRunStatus;
+  const status = analysisRunStatusSchema.catch("Failed").parse(payload.status);
   const error = isRecord(payload.error) ? payload.error : null;
 
   return {
     runId: stringOf(payload.analysisRunId),
-    status: ANALYSIS_STATUSES.includes(status) ? status : "Failed",
+    status,
     title: stringOf(payload.title) || artifact.title,
     code: stringOf(payload.code),
-    datasets: listOf(payload.datasets)
-      .filter(isRecord)
-      .map((dataset) => ({
-        name: stringOf(dataset.name),
-        path: stringOf(dataset.path),
-        source: dataset.source === "Attachment" ? ("Attachment" as const) : ("ReportRun" as const),
-        label: stringOf(dataset.label),
-        rows: numberOf(dataset.rows),
-      })),
+    datasets: analysisDatasetsSchema.catch([]).parse(payload.datasets),
     output: stringOf(payload.output),
-    results: listOf(payload.results)
-      .map(stringOf)
-      .filter((text) => text !== ""),
     tables: analysisTablesSchema.catch([]).parse(payload.tables),
     figures: analysisFiguresSchema.catch([]).parse(payload.figures),
+    charts: analysisChartsSchema.catch([]).parse(payload.charts),
     layout: analysisLayoutSchema.catch([]).parse(payload.layout),
-    charts: listOf(payload.charts)
-      .filter(isRecord)
-      .map((chart) => ({ position: numberOf(chart.position), title: stringOf(chart.title) }))
-      .filter((chart) => chart.position > 0),
     error: error
       ? {
           name: stringOf(error.name),

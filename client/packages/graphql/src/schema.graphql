@@ -1088,9 +1088,9 @@ type AIProvider {
   """
   scriptWrites: Boolean!
   """
-  The provider's model may answer a fan-out question with one read-only
-  script (code mode). The organization must also turn on read-only scripts
-  in its E2B extension and grant code_mode.
+  The provider's model may answer with a read-only script that reads records,
+  report runs and attached files and shows figures, tables and charts, run in
+  Trenova's own interpreter. On by default; the person needs code_mode.
   """
   scripts: Boolean!
   structuredOutputMode: AIStructuredOutputMode!

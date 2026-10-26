@@ -33,6 +33,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aitraining/aitrainingdb"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aituneup/aituneupdb"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiusage/aiusagedb"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/analysis/analysisdb"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/assistantartifact/assistantartifactdb"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/briefing/briefingdb"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation/conversationdb"
@@ -182,8 +183,7 @@ func All() []*schema.Table {
 		accountingsyncdb.AccountingSyncRecordsSchema(),
 		accountingsyncdb.AccountingWebhookSubscriptionsSchema(),
 		shipmentdb.AdditionalChargesSchema(),
-		agentextensiondb.AnalysisChartsSchema(),
-		agentextensiondb.AnalysisRunsSchema(),
+		analysisdb.RunsSchema(),
 		tenantdb.AgentControlsSchema(),
 		agentdb.AgentDecisionsSchema(),
 		agentdefinitiondb.DefinitionVersionsSchema(),

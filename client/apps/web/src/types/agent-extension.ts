@@ -96,7 +96,6 @@ export type UpdateAgentExtensionRequest = z.infer<typeof updateAgentExtensionReq
 export const AgentExtensionCapability = {
   WebResearch: "WebResearch",
   PortalAutomation: "PortalAutomation",
-  DataAnalysis: "DataAnalysis",
 } as const;
 
 export const portalSiteSchema = z.object({
@@ -243,114 +242,6 @@ export const webWatchFindingsResponseSchema = z.object({
     .transform((value) => value ?? []),
 });
 
-export const analysisRunStatusSchema = z.enum([
-  "Running",
-  "Succeeded",
-  "Errored",
-  "Failed",
-  "TimedOut",
-]);
-
-export const analysisDatasetSchema = z.object({
-  name: z.string(),
-  source: z.enum(["ReportRun", "Attachment"]),
-  sourceId: z.string(),
-  label: z.string(),
-  path: z.string(),
-  rows: z.number().int(),
-  bytes: z.number().int(),
-});
-
-/** How an analysis value reads: a percent is a fraction, a date ISO 8601 text. */
-export const analysisValueKindSchema = z
-  .enum(["text", "number", "money", "count", "percent", "date", "datetime", "bool"])
-  .catch("text");
-
-const analysisCellSchema = z.union([z.string(), z.number(), z.boolean(), z.null()]).catch(null);
-
-export const analysisTableSchema = z.object({
-  title: z.string().optional().default(""),
-  columns: z.array(
-    z.object({
-      name: z.string(),
-      kind: analysisValueKindSchema,
-      currency: z.string().optional().default(""),
-    }),
-  ),
-  rows: z.array(z.array(analysisCellSchema)),
-  totalRows: z.number().int(),
-});
-
-export const analysisFigureSchema = z.object({
-  label: z.string(),
-  value: analysisCellSchema,
-  kind: analysisValueKindSchema,
-  currency: z.string().optional().default(""),
-  note: z.string().optional().default(""),
-});
-
-export const analysisBlockSchema = z.object({
-  kind: z.enum(["chart", "table"]),
-  index: z.number().int(),
-});
-
-export const analysisTablesSchema = z
-  .array(analysisTableSchema)
-  .nullish()
-  .transform((value) => value ?? []);
-
-export const analysisFiguresSchema = z
-  .array(analysisFigureSchema)
-  .nullish()
-  .transform((value) => value ?? []);
-
-export const analysisLayoutSchema = z
-  .array(analysisBlockSchema)
-  .nullish()
-  .transform((value) => value ?? []);
-
-export const analysisRunSchema = z.object({
-  id: z.string(),
-  extensionType: z.string(),
-  status: analysisRunStatusSchema,
-  title: z.string().default(""),
-  purpose: z.string(),
-  code: z.string(),
-  datasets: z
-    .array(analysisDatasetSchema)
-    .nullish()
-    .transform((value) => value ?? []),
-  stdout: z.string(),
-  stderr: z.string(),
-  results: z
-    .array(z.string())
-    .nullish()
-    .transform((value) => value ?? []),
-  tables: analysisTablesSchema,
-  figures: analysisFiguresSchema,
-  layout: analysisLayoutSchema,
-  errorName: z.string(),
-  errorValue: z.string(),
-  traceback: z.string(),
-  chartCount: z.number().int(),
-  failure: z.string(),
-  durationMs: z.number().int(),
-  costUsd: z.union([z.string(), z.number()]).transform((value) => Number(value) || 0),
-  agentRunId: optionalIdSchema,
-  threadId: optionalIdSchema,
-  requestedById: optionalIdSchema,
-  startedAt: z.number().int(),
-  finishedAt: z.number().int().nullish(),
-});
-
-export const analysisRunsResponseSchema = z.object({
-  items: z
-    .array(analysisRunSchema)
-    .nullish()
-    .transform((value) => value ?? []),
-  nextBefore: z.number().int(),
-});
-
 export const portalRecordingSchema = z.object({
   recordingUrl: z.string(),
   shareUrl: z.string(),
@@ -435,10 +326,3 @@ export type WebWatchCadence = z.infer<typeof webWatchCadenceSchema>;
 export type WebWatchFinding = z.infer<typeof webWatchFindingSchema>;
 export type WebWatchesResponse = z.infer<typeof webWatchesResponseSchema>;
 export type WebWatchFindingsResponse = z.infer<typeof webWatchFindingsResponseSchema>;
-export type AnalysisRun = z.infer<typeof analysisRunSchema>;
-export type AnalysisValueKind = z.infer<typeof analysisValueKindSchema>;
-export type AnalysisTable = z.infer<typeof analysisTableSchema>;
-export type AnalysisFigure = z.infer<typeof analysisFigureSchema>;
-export type AnalysisBlock = z.infer<typeof analysisBlockSchema>;
-export type AnalysisRunStatus = z.infer<typeof analysisRunStatusSchema>;
-export type AnalysisRunsResponse = z.infer<typeof analysisRunsResponseSchema>;

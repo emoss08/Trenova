@@ -16,6 +16,12 @@ network. The only way a script reaches data is a Go broker, which runs each read
 a script reads leaves Trenova, and nothing is billed per script, so code mode is free and on by
 default.
 
+A script is also how an agent analyzes. It reads a report run or a file the person attached in
+full, as a dataset (§4.1), and shows the person headline figures, tables and charts (§4.2); a
+script that shows something is kept as an analysis and drawn on the Desk (§4.3). This replaced
+the E2B data analysis extension and its `report_analyze_data` tool, which ran pandas in a
+vendor's sandbox and sent the data there.
+
 The review's evidence (§2.3 of [desk-harness-review.md](../desk-harness-review.md)) decides
 the shape:
 
@@ -139,7 +145,11 @@ finds `trenova`, `inputs` and `help` as globals:
 - `trenova.result(value)` hands back one structured value, once;
 - `trenova.tools()` lists the reads, and `help(trenova.shipment.list)` prints one read's
   description and parameters from the index;
-- `trenova.inputs` (also `inputs`) holds the call's inputs.
+- `trenova.inputs` (also `inputs`) holds the call's inputs;
+- each dataset (§4.1) is a global named after it, and `trenova.datasets` lists them;
+- `show_figure`, `show_table` and `show_chart` show the person what the script found (§4.2);
+- `mean`, `median`, `percentile`, `stdev` and `group_by(rows, key)` stand in for `statistics`,
+  which Monty does not ship.
 
 `the_sdk_names_no_tool` (the crate's tests) asserts that the SDK names no tool.
 
@@ -152,7 +162,7 @@ from a script when `ToolPolicy.CallableFromScript()` holds:
 - it is not self-scoped;
 - its `Script` is `ScriptCallable`, the zero value.
 
-It must also not be an extension tool (web, portal, analysis or the script tool itself), and
+It must also not be an extension tool (web, portal or the script tool itself), and
 not one of the tools that read pasted partner text (`ReadsExternalContent`). Reads another
 desk's agents hold, which a conversation reaches through `find_tools`, are not in the index: a
 script calls only what its own agent holds. Each entry carries the tool's name, its
@@ -170,8 +180,8 @@ The tool is named under [agent-tool-conventions.md](agent-tool-conventions.md):
 - the object is `script`, so in reading order it is `run_agent_script`.
 
 `TestNamespacedToolsFollowTheConventions` covers it. It lives in `agentquerytoolservice`
-(`script_tool.go`) beside `report_analyze_data`, so the catalog, `find_tools`, the safety doc
-and the contract tests treat it as any other read.
+(`script_tool.go`), so the catalog, `find_tools`, the safety doc and the contract tests treat it
+as any other read.
 
 | Parameter | Type | Rule |
 |---|---|---|
@@ -179,10 +189,11 @@ and the contract tests treat it as any other read.
 | `purpose` | string | One sentence, at most 500 characters. |
 | `code` | string | Python, at most 20,000 characters. |
 | `inputs` | list of `{name, value}` | At most 32, values as text, 16 KB encoded in all. They are read as `trenova.inputs[name]`, so a recurring script can be run again with new parameters (the LATM idea in review §4 item 5) without editing its code. They are a list rather than an object because every object in a tool's schema is closed. |
+| `datasets` | list of `{name, reportRunId \| documentId}` | At most 5 (§4.1). |
 
 **Policy:** a read (tiers AutoExecute, egress none, `Effect: lookup`) with:
 
-- resource `code_mode`, its own (§7), so an organization can grant analysis without code mode;
+- resource `code_mode`, its own (§7), which the Desk bundle grants;
 - `ReadsExternal: marked`, source `record_note`;
 - `Sources` naming every source a read can mark, so the safety table names them;
 - `Script: ScriptRunner`.
@@ -209,10 +220,95 @@ fans out inside itself. **Search terms:** "for each", "every one of", "reconcile
   page, run in that turn, and what it prints is a tool's figure. The boundary on writing
   software says the script's Python is not software. Adding a script rule after "do not
   calculate" was not enough: a model kept the stricter rule, listed the records it had read
-  and left the counting to the person. Like the analysis rule, it depends only on whether the
-  tool is held, so the cached prompt stays put.
-- The design's Desk artifact is not built in 5a. A script's output is the model's to read and
-  answer from, and a table worth a card is `report_analyze_data`'s work.
+  and left the counting to the person. The rule also says a report run or an attached file is
+  read in full as a dataset, that a request to analyze, explore or chart is a script that shows
+  its answer, and that the agent never says it cannot run Python. It depends only on whether
+  the tool is held, so the cached prompt stays put. Before it, the Report analyst asked to "run
+  AR aging by customer and do analysis on it" read report_run's sample and offered the analysis
+  as a next step; `deskbench/scenarios/analysis.yaml` holds that case and the rest.
+- **What the grounding guard asks for.** A reply that files nothing is held to the figures the
+  conversation read ("What the reply may claim" in [agent-runtime.md](agent-runtime.md)); a
+  share worked out in the head is sent back once telling an agent that holds the tool to work it
+  out with a script.
+
+### 4.1 Datasets
+
+A dataset is a table a script reads in full, named for the global it is bound to (lower-case
+letters, digits and underscores, starting with a letter, and not one of the SDK's own names,
+`analysis.CheckDatasetName`), with exactly one source:
+
+- **A report run** (`reportRunId`, kind `report_run`). Only a run the same person ran
+  (`RequestedByID`), and only while they may read reports (`report:read`, checked by the
+  tool). Its stored rows are read through `reporting.Service.ReadRunRows`, which audits the
+  read, as keel's raw CSV (`export.CSVOptions{Raw: true}`), and typed by its columns: numbers
+  as numbers, times as ISO 8601 in the organization's zone (a date column as a date), flags as
+  flags. Each row is a dict keyed by the column labels `report_run` showed (`row["Open
+  Balance"]`), and each column carries its kind, so money read from a report shows as money
+  unasked. Totals are left out.
+- **An attached file** (`documentId`). Only one the person attached to this conversation
+  (`Document.AttachedBy`), read through `ConversationFileReader`. A CSV or XLSX file is read
+  with `rateimport`'s readers and headed by its header row; a column every value of which is a
+  number (thousands separators and a dollar sign allowed) reads as numbers, one of ISO dates as
+  dates, and anything else as text. A text file is its text. An attached file taints the call
+  (`scriptAnswer.TaintedRecords`), as `agent_read_attachment` would; a report run is the
+  organization's own data and taints nothing.
+
+Another person's run, and a file from another conversation, are refused as though they did not
+exist; a run with no person behind it reads no datasets. A dataset is at most 20 MB, 200,000
+rows and 200 columns, and the datasets of one call 40 MB together (`analysis.MaxDataset*`).
+
+The rows never pass through the prompt or the broker. The runner sends the module an index of
+the datasets (`scriptrunner.datasetIndex`: name, label, columns, row count), and the SDK pages
+the rows in through the `rows` host function, at most 5,000 rows or 512 KB at a time, before
+the script runs. So a 100,000-row run costs the interpreter its memory, not the read limits:
+rows from a dataset are not counted against the 5,000 rows a script's reads may bring in (§6).
+
+### 4.2 What a script shows
+
+Printing is the agent looking at the data; showing is answering the person. Three SDK functions
+send what to show through the `show` host function, which the runner keeps within what a run may
+show (`analysis.Display`):
+
+| Function | Shows | At most |
+|---|---|---|
+| `show_figure(label, value, kind=None, note="", currency="")` | a headline number | 8 |
+| `show_table(rows, title="", columns=None, kinds=None)` | rows as dicts, lists or one dict, 200 rows and 20 columns | 6 |
+| `show_chart(kind, x, y, title="", x_label="", y_label="", value_kind=None, stacked=False, horizontal=False)` | a `bar`, `line`, `area`, `scatter` or `pie` chart; `y` is one list, or a dict of named series | 4, of 8 series and 500 points each |
+
+A kind is `text`, `number`, `money`, `count`, `percent` (a fraction), `date`, `datetime` or
+`bool`. One left out is inferred from the values, and a table column named like a dataset
+column takes that column's kind and currency. Past a limit the call returns
+`{"status": "limit"}` and the script carries on; the answer's `notShown` counts what was not
+shown. A chart is kept as what it plots (`analysis.Chart`: its axis, series and kinds), not as
+an image, and the client draws it in the reader's theme with Recharts
+(`components/assistant/analysis-chart.tsx`).
+
+### 4.3 Kept analyses and the Desk card
+
+A script that showed something is kept as an analysis (`analysis.Run`, table
+`agent_analysis_runs`, ids `aanr_`), whatever its status: its title, purpose, code, the datasets
+it read (names, sources and row counts, never rows), its output, what it showed in the order it
+showed it (`layout`), and how it ended. A script that only printed is not kept: its reads are
+in the run's steps.
+
+The tool answers with the analysis id and what was shown, tables cut to their first 25 rows.
+A kept analysis that ran to the end becomes the Desk's `analysis` artifact
+(`assistantservice/analysis_artifact.go`), titled by the script's title, so running it again
+under the same title is the next version of one card. The card draws the figures as a strip,
+then each chart and table in the order shown, and folds what it printed and the code beneath; a
+table longer than the agent was shown is read whole from `GET /agent-analysis/runs/:runID/`.
+
+Who reads an analysis (`agentanalysishandler`):
+
+- `GET /agent-analysis/runs/` is the history, for those who oversee agents (`agent_run:read`),
+  newest first, paged by the last run's start time and id, each run's status, title, purpose
+  and timing only. AI Control shows it under Activity → Analyses.
+- `GET /agent-analysis/runs/:runID/` is one analysis whole, for the person it ran for
+  (`code_mode:read`) and for those who oversee agents; anyone else is told it does not exist.
+
+An analysis is the `analysis_run` record kind; its link
+(`/admin/agent-control?tab=activity&activity=analyses&analysisRun=<id>`) opens the history with
+it expanded, read on its own when it is older than the pages loaded.
 
 ## 5. The interpreter
 
@@ -283,7 +379,7 @@ cannot raise one. The values are `codemode.DefaultLimits()` and the constants in
 | Output back to the model | 8,000 characters, the end kept | the module | `outputTruncated`, `output` |
 | Result | 64 KB | the runner | dropped and refused, `result` |
 | Memory | 256 MiB | Monty's memory limit (`MemoryError`, which a script cannot catch); past a margin, `monty-alloc` exits the module; the instance's pages are capped at 1 GiB | `Stopped`, `memory` |
-| Host calls | the read limit plus 8 | the module | `Stopped`, `calls` |
+| Host calls | the read limit for reads; 20,000 for paging datasets in and showing | the module | `Stopped`, `calls` |
 | Scripts per turn | 3 | `runScriptTool`, from `DispatchCall.ScriptPosition` | the call is refused |
 | Scripts running at once | 8 per worker | `pkg/scriptvm`'s slots (`DefaultMaxConcurrent`), so a worker's script memory stays near 8 × 256 MiB | the script waits up to 10 s for a slot (`DefaultQueueWait`), then `Failed`: too many scripts are running |
 
@@ -551,6 +647,10 @@ decides from its own use whether to keep it.
 | The WebAssembly host | `pkg/scriptvm` (embeds `scripts.wasm`); the compilation cache, shared with the rules engine, `pkg/wasmcache` |
 | The interpreter, the SDK and the module's ABI | `services/crates/scripts` (`trenova-scripts`), built by `task rust:wasm-scripts`; Monty vendored in `services/vendor/monty` |
 | Permission resource | `permission.ResourceCodeMode`, granted by the `platform.assistant` bundle |
+| Datasets (resolving, typing) | `agentquerytoolservice/script_datasets.go` |
+| Paging datasets in, what a script shows | `scriptrunner/display.go`; `domain/analysis` (`run.go`, `display.go`) |
+| Kept analyses and who reads them | `analysisrunservice`, `analysisrunrepository`, `api/handlers/agentanalysishandler`; table `agent_analysis_runs` |
+| The Desk card and the history | `assistantservice/analysis_artifact.go`; client `routes/desk/_components/artifacts/kinds/analysis/`, `components/assistant/analysis-result.tsx` and `analysis-chart.tsx`, `routes/agent-control/_components/activity/analysis-runs.tsx` |
 | Red-team cases and harness | `agentredteam/testdata/cases/16_*`–`27_*`, `scripts.go` (`providerScripts`) |
 | Scenarios | `deskbench/scenarios/codemode.yaml`; `mode` and `pair` in `internal/deskbench` |
 
@@ -602,6 +702,12 @@ E2B settings and the daily limit went with E2B, the Scripts setting is on by def
 Desk bundle grants `code_mode`. Answers 2 and 3 above are superseded where they say otherwise;
 the poll interval no longer exists.
 
+2026-10-26, the owner: E2B is gone entirely. Data analysis moved onto the same interpreter:
+`report_analyze_data` folded into `agent_run_script` (datasets, `show_*`, kept analyses), the
+`data_analysis` resource and `agent.data_analysis` plan capability went with it, and charts are
+specs the client draws. Migration `20261231020500_analysis_on_the_script_interpreter` dropped
+the E2B runs, their chart images and the extension, and renamed the tool in saved agents.
+
 ## 15. Known limits
 
 - **The tool's embedding.** `agent_run_script`'s vector in the eval gate's fixture
@@ -616,5 +722,10 @@ the poll interval no longer exists.
   model can fix; the tool's `code` parameter says what is there.
 - **A wall-time stop loses the output.** The instance is stopped mid-instruction, so what it
   printed before is not read back; the CPU limit, which ends most runaway scripts first, keeps it.
-- **No history view yet.** A script appears in the run's steps and its trace. AI Control lists
-  analyses but not scripts; a view of a script's reads beneath it is part of 5b's batch review.
+- **A script that showed nothing has no history view.** It appears in the run's steps and its
+  trace; AI Control lists only analyses. A view of a script's reads beneath it is part of 5b's
+  batch review.
+- **No pandas, numpy or matplotlib.** Monty has no third-party packages. Datasets arrive as
+  lists of dicts and the SDK's helpers cover the statistics an analysis needs; a chart is a
+  spec. A model asked to install a package is told what scripts are and that they have no
+  packages.

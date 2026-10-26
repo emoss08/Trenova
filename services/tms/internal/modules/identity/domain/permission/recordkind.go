@@ -99,7 +99,7 @@ var recordKinds = map[RecordKind]recordKindSpec{
 	KindWait:                    {"awt_", ResourceAgentRun, "wait"},
 	KindPortalSite:              {"apst_", ResourceAgentExtension, "portal site"},
 	KindPortalRun:               {"aprn_", ResourceAgentExtension, "portal task"},
-	KindAnalysisRun:             {"aanr_", ResourceAgentExtension, "analysis"},
+	KindAnalysisRun:             {"aanr_", ResourceAgentRun, "analysis"},
 	KindWebWatch:                {"awwt_", ResourceAgentExtension, "web watch"},
 	KindWatchtowerItem:          {"wt_", ResourceWatchtower, "watchtower item"},
 	KindAccountingConnection:    {"acctc_", ResourceAccountingIntegration, "accounting connection"},

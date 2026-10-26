@@ -180,6 +180,7 @@ export function buildRailItems(
     if (permissions.exceptions) {
       children.push({ view: "exceptions", label: t("Exceptions") });
     }
+    children.push({ view: "analyses", label: t("Analyses") });
     items.push({
       tab: "activity",
       status:

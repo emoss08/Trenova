@@ -2,7 +2,7 @@
 //!
 //! A run is a conversation. The host sends [`Request::Start`] with the script, the reads its
 //! agent holds, its inputs, the clock and the limits; the module answers with a [`Step`]. A
-//! [`Step::Call`] asks the host to run one of its three functions and send back the answer
+//! [`Step::Call`] asks the host to run one of its functions and send back the answer
 //! as [`Request::Resume`]; [`Step::Done`] ends the run. Payloads and replies stay JSON text the
 //! script's own SDK encodes and decodes, so the module never interprets a read's arguments or
 //! its rows: the host's broker decides everything about a read.
@@ -32,10 +32,18 @@ pub struct Start {
     pub index: String,
     /// The script's inputs, as JSON text of an object, read as `trenova.inputs`.
     pub inputs: String,
+    /// The datasets the script reads, as JSON text: `[{name, label, rows, columns: [{name, kind}]}]`.
+    /// Their rows are not here: the SDK pages them in with [`HostFunction::Rows`].
+    #[serde(default = "no_datasets")]
+    pub datasets: String,
     /// The instant `date.today()` and `datetime.now()` read, in the organization's zone.
     pub clock: Clock,
     /// What the run may spend.
     pub limits: Limits,
+}
+
+fn no_datasets() -> String {
+    "[]".to_owned()
 }
 
 /// A fixed clock: every read of the time inside the script sees this instant.
@@ -63,7 +71,9 @@ pub struct Limits {
     pub cpu_ms: u64,
     /// Python call depth.
     pub recursion: usize,
-    /// Host calls the script may make in all.
+    /// Reads the script may make in all: [`HostFunction::Read`], [`HostFunction::Gather`] and
+    /// [`HostFunction::Result`] calls. Paging a dataset in and showing a result are the host's
+    /// to bound, and do not count.
     pub calls: usize,
 }
 
@@ -82,7 +92,7 @@ pub enum Step {
     Done(Done),
 }
 
-/// The three things a script can ask of the host.
+/// The things a script can ask of the host.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub enum HostFunction {
@@ -92,6 +102,18 @@ pub enum HostFunction {
     Gather,
     /// The script's one structured result, answered with `{"status"}`.
     Result,
+    /// A page of a dataset's rows: `{"dataset", "offset"}`, answered with `{"rows", "done"}`.
+    Rows,
+    /// A figure, table or chart for the person: `{"type", ...}`, answered with `{"status"}`.
+    Show,
+}
+
+impl HostFunction {
+    /// Whether a call spends the script's reads.
+    #[must_use]
+    pub const fn is_read(self) -> bool {
+        matches!(self, Self::Read | Self::Gather | Self::Result)
+    }
 }
 
 /// How a script ended.

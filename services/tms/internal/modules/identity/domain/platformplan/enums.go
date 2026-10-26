@@ -60,7 +60,6 @@ const (
 	CapabilityAgentAutomation         = Capability("agent.automation")
 	CapabilityAgentWebSearch          = Capability("agent.web_search")
 	CapabilityAgentPortalAutomation   = Capability("agent.portal_automation")
-	CapabilityAgentDataAnalysis       = Capability("agent.data_analysis")
 	CapabilityCarrierIntelligencePaid = Capability("carrier_intelligence.paid")
 	CapabilityDocumentIntelligence    = Capability("document_intelligence")
 	CapabilitySMS                     = Capability("sms")
@@ -75,7 +74,6 @@ func AllCapabilities() []Capability {
 		CapabilityAgentAutomation,
 		CapabilityAgentWebSearch,
 		CapabilityAgentPortalAutomation,
-		CapabilityAgentDataAnalysis,
 		CapabilityCarrierIntelligencePaid,
 		CapabilityDocumentIntelligence,
 		CapabilitySMS,
@@ -95,7 +93,6 @@ func (c Capability) IsValid() bool {
 		CapabilityAgentAutomation,
 		CapabilityAgentWebSearch,
 		CapabilityAgentPortalAutomation,
-		CapabilityAgentDataAnalysis,
 		CapabilityCarrierIntelligencePaid,
 		CapabilityDocumentIntelligence,
 		CapabilitySMS,
