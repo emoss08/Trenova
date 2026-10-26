@@ -89,6 +89,7 @@ fn parents(guide: &CompiledGuide) -> Vec<Option<usize>> {
 
 impl Tree {
     /// Places a transaction's segments in loop instances.
+    #[allow(clippy::too_many_lines)]
     #[must_use]
     pub fn build(
         guide_index: usize,

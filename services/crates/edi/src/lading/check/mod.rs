@@ -9,7 +9,7 @@ mod calls;
 mod decls;
 mod env;
 mod expr;
-mod flow;
+pub mod flow;
 mod guide;
 mod inbound;
 mod outbound;

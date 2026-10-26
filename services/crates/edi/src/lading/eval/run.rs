@@ -232,6 +232,7 @@ pub fn given(program: &Program, request: &RunRequest) -> Given {
         settings,
         lookups,
         now,
+        stand_in: false,
     }
 }
 
@@ -285,7 +286,7 @@ fn budget() -> Message {
     ))
 }
 
-fn statements(program: &Program, unit: usize) -> Vec<&Stmt> {
+pub fn statements(program: &Program, unit: usize) -> Vec<&Stmt> {
     program.units[unit]
         .items()
         .iter()
@@ -297,7 +298,7 @@ fn statements(program: &Program, unit: usize) -> Vec<&Stmt> {
 }
 
 /// The rules files of a map, by file.
-fn rules_of(program: &Program, map: &str) -> Vec<usize> {
+pub fn rules_of(program: &Program, map: &str) -> Vec<usize> {
     program
         .rules
         .values()
@@ -306,40 +307,61 @@ fn rules_of(program: &Program, map: &str) -> Vec<usize> {
         .collect()
 }
 
-/// Fills a document and runs its rules, as one transaction's result.
-fn fill(
+/// Fills a document and runs its rules.
+pub fn fill_value(
     interp: &mut Interp<'_>,
-    request: &RunRequest,
+    map: &str,
+    rules: bool,
     info: &MapInfo,
     mut frame: Frame,
-) -> Result<(Json, Vec<Fixed>), Halt> {
+) -> Result<(Value, Vec<Fixed>), Halt> {
     let program = interp.program;
     let Some(document) = info.document else {
-        return Ok((Json::Null, Vec::new()));
+        return Ok((Value::None, Vec::new()));
     };
     let stmts = statements(program, info.unit);
     let mut value = interp.fill_document(&mut frame, &stmts, document)?;
     let mut fixes = Vec::new();
-    if request.rules {
-        for unit in rules_of(program, &request.map) {
+    if rules {
+        for unit in rules_of(program, map) {
             value = interp.run_rules(unit, value, &mut fixes)?;
         }
     }
-    Ok((to_json(&value), fixes))
+    Ok((value, fixes))
 }
 
-#[allow(clippy::too_many_lines)]
-fn run_x12(
-    program: &Program,
-    given: &Given,
+fn fill(
+    interp: &mut Interp<'_>,
     request: &RunRequest,
     info: &MapInfo,
+    frame: Frame,
+) -> Result<(Json, Vec<Fixed>), Halt> {
+    fill_value(interp, &request.map, request.rules, info, frame)
+        .map(|(value, fixes)| (to_json(&value), fixes))
+}
+
+/// One transaction set read from X12 with a guide.
+#[derive(Debug)]
+pub struct ReadTransaction {
+    /// ST02.
+    pub control: String,
+    /// Whether validation rejected it.
+    pub rejected: bool,
+    /// What validation found.
+    pub findings: Vec<Finding>,
+    /// Its segments in loop instances, when it was not rejected.
+    pub tree: Option<Rc<Tree>>,
+}
+
+/// Reads the transaction sets of a guide's set from X12 text.
+pub fn read_x12(
+    program: &Program,
     guide: usize,
     text: &str,
-) -> RunResult {
+) -> Result<Vec<ReadTransaction>, Message> {
     let compiled = &program.guides[guide].compiled;
     let set = compiled.guide().transaction_set.clone();
-    let reading = match read(&ReadRequest {
+    let reading = read(&ReadRequest {
         text: text.to_owned(),
         separators: None,
         guides: vec![GuideChoice {
@@ -349,95 +371,123 @@ fn run_x12(
         }],
         include_segments: true,
         fragment: false,
-    }) {
-        Ok(reading) => reading,
-        Err(problem) => {
-            return failed(Message::with(
-                message!("The X12 does not read: {0}"),
-                [Arg::from(problem.detail)],
-            ));
-        }
-    };
+    })
+    .map_err(|problem| {
+        Message::with(
+            message!("The X12 does not read: {0}"),
+            [Arg::from(problem.detail)],
+        )
+    })?;
     let component = reading.separators.component.chars().next().unwrap_or('>');
     let repetition = reading.separators.repetition.chars().next();
-    let mut result = RunResult::default();
-    let mut index = 0;
+    let mut found = Vec::new();
     for interchange in &reading.interchanges {
         for group in &interchange.groups {
             for transaction in &group.transactions {
                 if transaction.transaction_set != set {
                     continue;
                 }
-                let mut entry = TransactionResult {
-                    index,
-                    control: transaction.control_number.clone(),
-                    status: "accepted",
-                    findings: transaction.findings.clone(),
-                    document: Json::Null,
-                    outcomes: Vec::new(),
-                    fixes: Vec::new(),
-                    lineage: Vec::new(),
-                    unread: Vec::new(),
-                };
-                index += 1;
-                if transaction.status == TransactionStatus::Rejected {
-                    entry.status = "rejected";
-                    result.transactions.push(entry);
-                    continue;
-                }
-                let raw: Vec<Raw> = reading.segments[transaction.first_segment
-                    ..=transaction
+                let rejected = transaction.status == TransactionStatus::Rejected;
+                let tree = (!rejected).then(|| {
+                    let last = transaction
                         .last_segment
-                        .min(reading.segments.len().saturating_sub(1))]
-                    .iter()
-                    .map(|segment| Raw {
-                        id: segment.id.clone(),
-                        elements: segment.elements.clone(),
-                        position: segment.position.unwrap_or(0),
-                    })
-                    .collect();
-                let tree = Rc::new(Tree::build(
-                    guide,
-                    compiled.clone(),
-                    raw,
-                    component,
-                    repetition,
-                ));
-                let mut interp = Interp::new(program, given, RUN_STEPS);
-                let mut frame = Frame::new(info.unit);
-                frame.root = Some(Rc::clone(&tree));
-                match fill(&mut interp, request, info, frame) {
-                    Ok((document, fixes)) => {
-                        entry.document = document;
-                        entry.fixes = fixes;
-                    }
-                    Err(Halt::Budget) => {
-                        result.error = Some(budget());
-                    }
-                }
-                let read = tree.read.borrow();
-                entry.unread = tree
-                    .present()
-                    .into_iter()
-                    .filter(|key| !read.contains(key))
-                    .map(|(segment, position)| {
-                        format!("{}{position:02}", tree.segments[segment].path)
-                    })
-                    .collect();
-                drop(read);
-                absorb(&mut result, &mut entry, interp);
-                result.transactions.push(entry);
-                if result.error.is_some() {
-                    return result;
-                }
+                        .min(reading.segments.len().saturating_sub(1));
+                    let raw: Vec<Raw> = reading.segments[transaction.first_segment..=last]
+                        .iter()
+                        .map(|segment| Raw {
+                            id: segment.id.clone(),
+                            elements: segment.elements.clone(),
+                            position: segment.position.unwrap_or(0),
+                        })
+                        .collect();
+                    Rc::new(Tree::build(
+                        guide,
+                        compiled.clone(),
+                        raw,
+                        component,
+                        repetition,
+                    ))
+                });
+                found.push(ReadTransaction {
+                    control: transaction.control_number.clone(),
+                    rejected,
+                    findings: transaction.findings.clone(),
+                    tree,
+                });
             }
         }
     }
-    if index == 0 {
-        result.error = Some(Message::with(
+    if found.is_empty() {
+        return Err(Message::with(
             message!("The X12 holds no {0} transaction set"),
             [Arg::from(set.as_str())],
         ));
+    }
+    Ok(found)
+}
+
+/// The elements present in a transaction that nothing read.
+#[must_use]
+pub fn unread(tree: &Tree) -> Vec<(usize, u32)> {
+    let read = tree.read.borrow();
+    tree.present()
+        .into_iter()
+        .filter(|key| !read.contains(key))
+        .collect()
+}
+
+fn run_x12(
+    program: &Program,
+    given: &Given,
+    request: &RunRequest,
+    info: &MapInfo,
+    guide: usize,
+    text: &str,
+) -> RunResult {
+    let transactions = match read_x12(program, guide, text) {
+        Ok(transactions) => transactions,
+        Err(message) => return failed(message),
+    };
+    let mut result = RunResult::default();
+    for (index, transaction) in transactions.into_iter().enumerate() {
+        let mut entry = TransactionResult {
+            index,
+            control: transaction.control,
+            status: if transaction.rejected {
+                "rejected"
+            } else {
+                "accepted"
+            },
+            findings: transaction.findings,
+            document: Json::Null,
+            outcomes: Vec::new(),
+            fixes: Vec::new(),
+            lineage: Vec::new(),
+            unread: Vec::new(),
+        };
+        let Some(tree) = transaction.tree else {
+            result.transactions.push(entry);
+            continue;
+        };
+        let mut interp = Interp::new(program, given, RUN_STEPS);
+        let mut frame = Frame::new(info.unit);
+        frame.root = Some(Rc::clone(&tree));
+        match fill(&mut interp, request, info, frame) {
+            Ok((document, fixes)) => {
+                entry.document = document;
+                entry.fixes = fixes;
+            }
+            Err(Halt::Budget) => result.error = Some(budget()),
+        }
+        entry.unread = unread(&tree)
+            .into_iter()
+            .map(|(segment, position)| format!("{}{position:02}", tree.segments[segment].path))
+            .collect();
+        absorb(&mut result, &mut entry, interp);
+        result.transactions.push(entry);
+        if result.error.is_some() {
+            break;
+        }
     }
     result
 }
@@ -634,7 +684,8 @@ pub fn sendable(output: &WriteResult) -> bool {
 
 /// Writes the envelope around a transaction's segments: the interchange and the transaction
 /// set alone.
-fn envelope(
+#[allow(clippy::too_many_lines)]
+pub fn envelope(
     program: &Program,
     guide: usize,
     given: &Given,

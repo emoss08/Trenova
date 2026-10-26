@@ -8,10 +8,12 @@
 pub mod check;
 pub mod eval;
 pub mod facts;
+pub mod flow;
 pub mod project;
 pub mod schema;
 pub mod stdlib;
 pub mod syntax;
+pub mod testing;
 pub mod types;
 pub mod tz;
 pub mod values;

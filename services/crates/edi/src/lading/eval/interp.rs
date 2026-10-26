@@ -145,6 +145,9 @@ pub struct Given {
     pub lookups: BTreeMap<(String, String), Option<Reference>>,
     /// The time the run started.
     pub now: i64,
+    /// Whether a lookup the host did not answer finds a stand-in record (tests), rather than
+    /// being a need.
+    pub stand_in: bool,
 }
 
 /// One scope's names.
@@ -1048,6 +1051,13 @@ impl<'p> Interp<'p> {
                 }
                 Value::None
             }
+            None if self.given.stand_in => Value::Ref(Rc::new(Reference {
+                kind: crate::lading::schema::lookup(kind).map_or("", |lookup| lookup.name),
+                id: format!("{kind}:{code_text}"),
+                code: code_text.clone(),
+                label: code_text,
+                zone: None,
+            })),
             None => {
                 self.needs.insert(Need {
                     kind: kind.to_owned(),
