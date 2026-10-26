@@ -147,6 +147,28 @@ describe("accounting dashboard empty state", () => {
     expect(screen.queryByRole("region", { name: "Accounting brief" })).not.toBeInTheDocument();
   });
 
+  it("holds the dashboard's skeleton, and reads no panel, until the KPIs answer", async () => {
+    mocks.fetchArDashboardKpis.mockReturnValue(new Promise(() => {}));
+    renderAccountingPage(<AccountingDashboardPage />);
+
+    expect(
+      await screen.findByRole("generic", { name: "Loading the accounting dashboard" }),
+    ).toHaveAttribute("aria-busy", "true");
+    expect(screen.queryByText("Nothing on the books yet")).not.toBeInTheDocument();
+    expect(mocks.fetchArDsoTrend).not.toHaveBeenCalled();
+  });
+
+  it("shows the dashboard when the KPIs cannot be read, for each panel to say what failed", async () => {
+    mocks.fetchArDashboardKpis.mockRejectedValue(new Error("down"));
+    renderAccountingPage(<AccountingDashboardPage />);
+
+    await waitFor(() => expect(mocks.fetchArDsoTrend).toHaveBeenCalled());
+    expect(screen.queryByText("Nothing on the books yet")).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("generic", { name: "Loading the accounting dashboard" }),
+    ).not.toBeInTheDocument();
+  });
+
   it("keeps the dashboard while an invoice is open", async () => {
     mocks.fetchArDashboardKpis.mockResolvedValue(
       kpis({ hasInvoiced: true, openInvoiceCount: 2, totalOpenMinor: 40_000 }),
