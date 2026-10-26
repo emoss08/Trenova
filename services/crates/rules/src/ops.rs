@@ -7,56 +7,12 @@
 //! error is always a caller bug, never something to show a user, so its detail is plain English
 //! for a developer and is not translated.
 //!
-//! Each area owns its handlers; this table is the only place that names them.
+//! The envelope, request errors and dispatch are `trenova_module_kit::ops`; this module holds
+//! the rules module's operation table, the only place that names its handlers.
 
-use serde::Deserialize;
-use serde::Serialize;
 use serde_json::value::RawValue;
-
-/// Why a request could not be run.
-#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
-pub struct RequestError {
-    /// A stable code: `malformed`, `unknown_op` or `invalid_input`.
-    pub code: &'static str,
-    /// What was wrong, for the developer who sent it.
-    pub detail: String,
-}
-
-impl RequestError {
-    /// The input did not match the operation's shape.
-    pub fn invalid_input(detail: impl Into<String>) -> Self {
-        Self {
-            code: "invalid_input",
-            detail: detail.into(),
-        }
-    }
-}
-
-/// What an operation handler returns: its output, already serialised, or a request error.
-pub type OpResult = Result<Box<RawValue>, RequestError>;
-
-/// Decodes an operation's input from its raw JSON.
-pub fn decode<'a, T: Deserialize<'a>>(input: &'a RawValue) -> Result<T, RequestError> {
-    serde_json::from_str(input.get())
-        .map_err(|error| RequestError::invalid_input(error.to_string()))
-}
-
-/// Serialises an operation's output.
-pub fn encode<T: Serialize>(output: &T) -> OpResult {
-    serde_json::value::to_raw_value(output).map_err(|error| RequestError {
-        code: "invalid_input",
-        detail: format!("the output could not be serialised: {error}"),
-    })
-}
-
-#[derive(Deserialize)]
-struct Envelope<'a> {
-    op: &'a str,
-    #[serde(borrow)]
-    input: Option<&'a RawValue>,
-}
-
-type Handler = fn(&RawValue) -> OpResult;
+use trenova_module_kit::ops::{Handler, Version};
+use trenova_module_kit::ops::{OpResult, encode};
 
 /// Every operation the module answers, by name.
 const OPERATIONS: &[(&str, Handler)] = &[
@@ -99,59 +55,11 @@ const OPERATIONS: &[(&str, Handler)] = &[
 /// Runs one request and returns the response bytes. Never panics on any input.
 #[must_use]
 pub fn dispatch(request: &[u8]) -> Vec<u8> {
-    let result = run(request);
-    let response = match result {
-        Ok(output) => format!("{{\"ok\":{}}}", output.get()),
-        Err(error) => {
-            serde_json::to_string(&ErrorResponse { error: &error }).unwrap_or_else(|_| {
-                String::from("{\"error\":{\"code\":\"malformed\",\"detail\":\"\"}}")
-            })
-        }
-    };
-    response.into_bytes()
-}
-
-#[derive(Serialize)]
-struct ErrorResponse<'a> {
-    error: &'a RequestError,
-}
-
-fn run(request: &[u8]) -> OpResult {
-    let text = std::str::from_utf8(request).map_err(|_| RequestError {
-        code: "malformed",
-        detail: String::from("the request is not UTF-8"),
-    })?;
-    let envelope: Envelope<'_> = serde_json::from_str(text).map_err(|error| RequestError {
-        code: "malformed",
-        detail: error.to_string(),
-    })?;
-    let handler = OPERATIONS
-        .iter()
-        .find(|(name, _)| *name == envelope.op)
-        .map(|(_, handler)| *handler)
-        .ok_or_else(|| RequestError {
-            code: "unknown_op",
-            detail: format!("no operation is named {:?}", envelope.op),
-        })?;
-    let empty = RawValue::from_string(String::from("{}")).map_err(|error| RequestError {
-        code: "malformed",
-        detail: error.to_string(),
-    })?;
-    handler(envelope.input.unwrap_or(&empty))
-}
-
-#[derive(Serialize)]
-#[serde(rename_all = "camelCase")]
-struct Version {
-    version: &'static str,
-    operations: Vec<&'static str>,
+    trenova_module_kit::ops::dispatch(request, OPERATIONS)
 }
 
 fn version(_: &RawValue) -> OpResult {
-    encode(&Version {
-        version: env!("CARGO_PKG_VERSION"),
-        operations: OPERATIONS.iter().map(|(name, _)| *name).collect(),
-    })
+    encode(&Version::of(env!("CARGO_PKG_VERSION"), OPERATIONS))
 }
 
 #[cfg(test)]

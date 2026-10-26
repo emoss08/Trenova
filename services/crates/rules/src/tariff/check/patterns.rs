@@ -27,10 +27,10 @@
 //! The work is bounded: past [`WORK_LIMIT`] steps the analysis stops and reports nothing more,
 //! so a pathological match costs a bounded amount of time.
 
-use crate::message;
-use crate::message::{Arg, Message};
 use rust_decimal::Decimal;
 use std::cmp::Ordering;
+use trenova_module_kit::message;
+use trenova_module_kit::message::{Arg, Message};
 
 /// How many matrix rows the analysis may visit before it stops.
 pub const WORK_LIMIT: usize = 20_000;
@@ -1111,7 +1111,7 @@ mod tests {
         coverage
             .missing
             .iter()
-            .map(crate::message::Message::english)
+            .map(trenova_module_kit::message::Message::english)
             .collect()
     }
 
@@ -1249,7 +1249,7 @@ mod tests {
         let named: Vec<String> = coverage
             .missing
             .iter()
-            .map(crate::message::Message::english)
+            .map(trenova_module_kit::message::Message::english)
             .collect();
         assert_eq!(named, ["`5000 lb` and above"]);
     }
@@ -1263,7 +1263,7 @@ mod tests {
         let named: Vec<String> = coverage
             .missing
             .iter()
-            .map(crate::message::Message::english)
+            .map(trenova_module_kit::message::Message::english)
             .collect();
         assert_eq!(named, ["`none`"]);
     }
@@ -1298,7 +1298,7 @@ mod tests {
         let named: Vec<String> = coverage
             .missing
             .iter()
-            .map(crate::message::Message::english)
+            .map(trenova_module_kit::message::Message::english)
             .collect();
         assert_eq!(named, ["`B`", "`C`"]);
     }
@@ -1335,7 +1335,7 @@ mod tests {
         let named: Vec<String> = coverage
             .missing
             .iter()
-            .map(crate::message::Message::english)
+            .map(trenova_module_kit::message::Message::english)
             .collect();
         assert_eq!(named, ["`{ a: false, b: false }`"]);
     }

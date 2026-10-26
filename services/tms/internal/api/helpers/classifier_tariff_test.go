@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/emoss08/trenova/pkg/wasmmodule"
+
 	tarifferrors "github.com/emoss08/trenova/internal/modules/rating/app/tariff/errors"
 	"github.com/emoss08/trenova/pkg/rules"
 	"github.com/stretchr/testify/assert"
@@ -22,14 +24,14 @@ func TestClassifyTariff_TenantAuthoredFaultsAreValidationProblems(t *testing.T) 
 			name: "an evaluation error returned bare",
 			err: fmt.Errorf("rate: %w", &tarifferrors.EvaluationError{
 				Code:    "overflow",
-				Message: rules.Message{Template: "The amount is too large"},
+				Message: wasmmodule.Message{Template: "The amount is too large"},
 			}),
 		},
 		{
 			name: "an evaluation error as a validation error",
 			err: tarifferrors.Evaluation("source", &rules.TariffEvalError{
 				Code:    "divideByZero",
-				Message: rules.Message{Template: "Division by zero"},
+				Message: wasmmodule.Message{Template: "Division by zero"},
 			}),
 		},
 	}
@@ -46,11 +48,11 @@ func TestClassifyTariff_ModuleFailuresStayInternal(t *testing.T) {
 	t.Parallel()
 
 	classifier := NewDefaultClassifier()
-	assert.Equal(t, ProblemTypeInternal, classifier.Classify(fmt.Errorf("check: %w", rules.ErrTrap)))
+	assert.Equal(t, ProblemTypeInternal, classifier.Classify(fmt.Errorf("check: %w", wasmmodule.ErrTrap)))
 	assert.Equal(
 		t,
 		ProblemTypeInternal,
-		classifier.Classify(&rules.RequestError{Op: rules.OpTariffCheck, Code: "malformed"}),
+		classifier.Classify(&wasmmodule.RequestError{Op: rules.OpTariffCheck, Code: "malformed"}),
 	)
 }
 
@@ -62,7 +64,7 @@ func TestSanitizer_CarriesTheSourceRangeOfACheckError(t *testing.T) {
 			Range:    &rules.TariffRange{From: 12, To: 19},
 			Severity: rules.SeverityError,
 			Code:     "unknown-name",
-			Message:  rules.Message{Template: "There is no `{0}`", Args: []any{"weigth"}},
+			Message:  wasmmodule.Message{Template: "There is no `{0}`", Args: []any{"weigth"}},
 		}},
 	}, tarifferrors.CheckFields{})
 	require.Error(t, err)

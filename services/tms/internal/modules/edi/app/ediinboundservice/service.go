@@ -7,6 +7,7 @@ import (
 	"encoding/hex"
 	"errors"
 	"fmt"
+	"strconv"
 	"strings"
 	"time"
 
@@ -27,6 +28,8 @@ import (
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/pkg/x12"
+	"github.com/emoss08/trenova/shared/i18n"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/stringutils"
 	"github.com/emoss08/trenova/shared/timeutils"
@@ -364,9 +367,12 @@ func (s *Service) processInboundFile(
 		return nil, scanErr
 	}
 
-	interchange, parseErr := parseInterchange(file.RawContent)
-	if parseErr != nil {
-		return s.quarantineFile(ctx, file, parseErr.Error())
+	interchange, problem, err := parseInterchange(ctx, file.RawContent)
+	if err != nil {
+		return nil, err
+	}
+	if problem != nil {
+		return s.quarantineFile(ctx, file, problem.Error())
 	}
 
 	file.InterchangeControlNumber = interchange.controlNumber
@@ -525,6 +531,10 @@ func (s *Service) processTransaction(
 		return transactionOutcome{err: err}
 	}
 	outcome := transactionOutcome{message: message}
+	if transaction.rejected() {
+		outcome.err = rejectedTransactionError(transaction)
+		return outcome
+	}
 	switch transaction.set {
 	case edi.TransactionSet997, edi.TransactionSet999:
 		outcome.warnings = s.routeAcknowledgment(ctx, file, partner, message, transaction)
@@ -568,18 +578,25 @@ func (s *Service) recordInboundMessage(
 		return nil, err
 	}
 	payload := transaction.documentPayload()
+	status := edi.MessageStatusGenerated
+	if transaction.rejected() {
+		status = edi.MessageStatusFailed
+	}
 	message := &edi.EDIMessage{
-		BusinessUnitID:           file.BusinessUnitID,
-		OrganizationID:           file.OrganizationID,
-		EDIPartnerID:             file.EDIPartnerID,
-		DocumentTypeID:           documentType.ID,
-		InboundFileID:            file.ID,
-		Direction:                edi.DocumentDirectionInbound,
-		Standard:                 edi.EDIStandardX12,
-		TransactionSet:           transaction.set,
-		X12Version:               documentType.DefaultVersion,
-		Status:                   edi.MessageStatusGenerated,
-		ValidationMode:           edi.ValidationModeDisabled,
+		BusinessUnitID: file.BusinessUnitID,
+		OrganizationID: file.OrganizationID,
+		EDIPartnerID:   file.EDIPartnerID,
+		DocumentTypeID: documentType.ID,
+		InboundFileID:  file.ID,
+		Direction:      edi.DocumentDirectionInbound,
+		Standard:       edi.EDIStandardX12,
+		TransactionSet: transaction.set,
+		X12Version: stringutils.FirstNonEmpty(
+			transaction.version,
+			documentType.DefaultVersion,
+		),
+		Status:                   status,
+		ValidationMode:           edi.ValidationModeStrict,
 		InterchangeControlNumber: file.InterchangeControlNumber,
 		GroupControlNumber:       transaction.groupControlNumber,
 		TransactionControlNumber: transaction.controlNumber,
@@ -590,7 +607,46 @@ func (s *Service) recordInboundMessage(
 	}
 	return s.messageRepo.CreateMessageWithDiagnostics(
 		ctx,
-		ediports.CreateEDIMessageWithDiagnosticsRequest{Message: message},
+		ediports.CreateEDIMessageWithDiagnosticsRequest{
+			Message:     message,
+			Diagnostics: findingDiagnostics(transaction.findings),
+		},
+	)
+}
+
+func findingDiagnostics(findings []x12.Finding) []*edi.EDIMessageValidationError {
+	diagnostics := make([]*edi.EDIMessageValidationError, 0, len(findings))
+	for index := range findings {
+		finding := &findings[index]
+		diagnostic := edix12inspect.FindingDiagnostic(finding, i18n.Default)
+		diagnostics = append(diagnostics, &edi.EDIMessageValidationError{
+			Severity:        diagnostic.Severity,
+			Code:            diagnostic.Code,
+			SegmentID:       diagnostic.SegmentID,
+			ElementPosition: diagnostic.ElementPosition,
+			Path:            diagnostic.Path,
+			Message:         diagnostic.Message,
+		})
+	}
+	return diagnostics
+}
+
+func rejectedTransactionError(transaction *parsedTransaction) error {
+	count := 0
+	first := ""
+	for index := range transaction.findings {
+		if transaction.findings[index].IsError() {
+			if count == 0 {
+				first = transaction.findings[index].Message.String()
+			}
+			count++
+		}
+	}
+	return fmt.Errorf(
+		"%w: %d errors against the partner's guide, the first: %s",
+		errRejectedTransaction,
+		count,
+		first,
 	)
 }
 
@@ -637,42 +693,57 @@ func (s *Service) generateInboundAcknowledgments(
 	interchange *parsedInterchange,
 	warnings *[]string,
 ) {
-	ackSets := map[edi.TransactionSet][]*parsedTransaction{}
-	for index := range interchange.transactions {
-		transaction := &interchange.transactions[index]
-		if transaction.set == edi.TransactionSet997 ||
-			transaction.set == edi.TransactionSet999 {
+	tenantInfo := inboundFileTenant(file)
+	for index := range interchange.groups {
+		group := &interchange.groups[index]
+		set := acknowledgedSet(interchange, index)
+		if set == "" {
 			continue
 		}
-		ackSets[transaction.set] = append(ackSets[transaction.set], transaction)
-	}
-	tenantInfo := pagination.TenantInfo{
-		OrgID: file.OrganizationID,
-		BuID:  file.BusinessUnitID,
-	}
-	for transactionSet, transactions := range ackSets {
-		ackType := s.inboundAcknowledgmentType(ctx, tenantInfo, partner.ID, transactionSet)
+		ackType := s.inboundAcknowledgmentType(ctx, tenantInfo, partner.ID, set)
 		if ackType == edi.AcknowledgmentTypeNone {
 			continue
 		}
-		for _, transaction := range transactions {
-			if err := s.generateAcknowledgment(
-				ctx,
-				tenantInfo,
-				partner,
-				transaction,
+		_, err := s.ediService.GenerateAcknowledgment(
+			ctx,
+			&ediservice.GenerateAcknowledgmentRequest{
+				TenantInfo:   tenantInfo,
+				EDIPartnerID: partner.ID,
+				Type:         ackType,
+				Group:        group.group,
+				IdempotencyKey: fmt.Sprintf(
+					"inbound-ack:%s:%d:%d",
+					file.ID,
+					file.Version,
+					index,
+				),
+			},
+		)
+		if err != nil {
+			*warnings = append(*warnings, fmt.Sprintf(
+				"failed to generate %s acknowledgment for group %s: %s",
 				ackType,
-			); err != nil {
-				*warnings = append(*warnings, fmt.Sprintf(
-					"failed to generate %s acknowledgment for %s/%s: %s",
-					ackType,
-					transaction.set,
-					transaction.controlNumber,
-					err.Error(),
-				))
-			}
+				stringutils.FirstNonEmpty(group.controlNumber, strconv.Itoa(index+1)),
+				err.Error(),
+			))
 		}
 	}
+}
+
+// acknowledgedSet is the transaction set whose inbound profile decides how a group is
+// acknowledged: its first set that is not itself an acknowledgment, since a group of
+// acknowledgments is never acknowledged.
+func acknowledgedSet(interchange *parsedInterchange, group int) edi.TransactionSet {
+	for index := range interchange.transactions {
+		transaction := &interchange.transactions[index]
+		if transaction.group != group {
+			continue
+		}
+		if transaction.set != edi.TransactionSet997 && transaction.set != edi.TransactionSet999 {
+			return transaction.set
+		}
+	}
+	return ""
 }
 
 func (s *Service) inboundAcknowledgmentType(
@@ -698,38 +769,6 @@ func (s *Service) inboundAcknowledgmentType(
 		return edi.AcknowledgmentTypeNone
 	}
 	return profile.Acknowledgment.Type
-}
-
-func (s *Service) generateAcknowledgment(
-	ctx context.Context,
-	tenantInfo pagination.TenantInfo,
-	partner *edi.EDIPartner,
-	transaction *parsedTransaction,
-	ackType edi.AcknowledgmentType,
-) error {
-	ackSet := edi.TransactionSet997
-	if ackType == edi.AcknowledgmentType999 {
-		ackSet = edi.TransactionSet999
-	}
-	profile, err := s.ediService.EnsureOutboundDocumentProfile(
-		ctx,
-		tenantInfo,
-		partner.ID,
-		ackSet,
-	)
-	if err != nil {
-		return err
-	}
-	payload := acknowledgmentPayloadForTransaction(transaction, ackSet)
-	_, err = s.ediService.GenerateDocument(ctx, &ediservice.GenerateEDIDocumentRequest{
-		TenantInfo:               tenantInfo,
-		PartnerDocumentProfileID: profile.ID,
-		EDIPartnerID:             partner.ID,
-		TransactionSet:           ackSet,
-		Direction:                edi.DocumentDirectionOutbound,
-		Payload:                  &payload,
-	})
-	return err
 }
 
 func (s *Service) ListInboundFiles(
@@ -765,7 +804,13 @@ func (s *Service) InspectInboundFile(
 		)
 	}
 
-	result := edix12inspect.InspectX12(&edix12inspect.InspectX12Request{RawX12: file.RawContent})
+	result, err := edix12inspect.InspectX12(
+		ctx,
+		&edix12inspect.InspectX12Request{RawX12: file.RawContent},
+	)
+	if err != nil {
+		return nil, err
+	}
 	overview := result.FileInspection()
 	return &overview, nil
 }

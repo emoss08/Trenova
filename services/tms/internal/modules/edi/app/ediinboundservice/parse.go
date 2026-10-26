@@ -1,6 +1,7 @@
 package ediinboundservice
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"slices"
@@ -10,106 +11,131 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/edi/app/edix12inspect"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
+	"github.com/emoss08/trenova/pkg/x12"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/stringutils"
 	"github.com/shopspring/decimal"
 )
 
-func parseInterchange(rawX12 string) (*parsedInterchange, error) {
+var (
+	errEmptyFile     = errors.New("inbound file is empty")
+	errNoSegments    = errors.New("inbound file does not contain any X12 segments")
+	errNoInterchange = errors.New(
+		"inbound file does not start with an ISA interchange header",
+	)
+	errNoTransactions             = errors.New("inbound file does not contain any X12 transactions")
+	errTransactionWithoutSegments = errors.New("transaction does not contain any segments")
+	errRejectedTransaction        = errors.New("rejected, so it was not processed")
+)
+
+// parseInterchange reads a file through the EDI module against the partner's guides.
+// A returned problem is the file's fault and quarantines it; an error is the
+// module's and is retried.
+func parseInterchange(
+	ctx context.Context,
+	rawX12 string,
+) (interchange *parsedInterchange, problem, err error) {
 	if strings.TrimSpace(rawX12) == "" {
-		return nil, errors.New("inbound file is empty")
+		return nil, errEmptyFile, nil
 	}
-	inspection := edix12inspect.InspectX12(&edix12inspect.InspectX12Request{RawX12: rawX12})
+	inspection, err := edix12inspect.InspectX12(
+		ctx,
+		&edix12inspect.InspectX12Request{RawX12: rawX12},
+	)
+	if err != nil {
+		return nil, nil, err
+	}
+	reading := inspection.Reading
 	if len(inspection.Segments) == 0 {
-		return nil, errors.New("inbound file does not contain any X12 segments")
+		return nil, errNoSegments, nil
 	}
-	isa := findSegment(inspection.Segments, "ISA")
-	if isa == nil {
-		return nil, errors.New("inbound file does not start with an ISA interchange header")
+	if len(reading.Interchanges) == 0 || reading.Interchanges[0].Header == nil {
+		return nil, errNoInterchange, nil
+	}
+	if reading.Summary.Transactions == 0 {
+		return nil, errNoTransactions, nil
 	}
 
-	interchange := &parsedInterchange{
+	first := &reading.Interchanges[0]
+	interchange = &parsedInterchange{
 		inspection:        inspection,
-		controlNumber:     strings.TrimSpace(elementValue(isa, 13)),
-		senderQualifier:   strings.TrimSpace(elementValue(isa, 5)),
-		senderID:          strings.TrimSpace(elementValue(isa, 6)),
-		receiverQualifier: strings.TrimSpace(elementValue(isa, 7)),
-		receiverID:        strings.TrimSpace(elementValue(isa, 8)),
+		reading:           reading,
+		controlNumber:     first.Header.ControlNumber,
+		senderQualifier:   first.Header.SenderQualifier,
+		senderID:          first.Header.SenderID,
+		receiverQualifier: first.Header.ReceiverQualifier,
+		receiverID:        first.Header.ReceiverID,
+		version:           first.Header.Version,
+		usage:             first.Header.Usage,
+		transactions:      make([]parsedTransaction, 0, reading.Summary.Transactions),
 	}
-	if gs := findSegment(inspection.Segments, "GS"); gs != nil {
-		interchange.functionalGroupID = strings.TrimSpace(elementValue(gs, 1))
-		interchange.applicationSender = strings.TrimSpace(elementValue(gs, 2))
-		interchange.applicationReceiver = strings.TrimSpace(elementValue(gs, 3))
-		interchange.groupControlNumber = strings.TrimSpace(elementValue(gs, 6))
-	}
-	if len(inspection.Transactions) == 0 {
-		return nil, errors.New("inbound file does not contain any X12 transactions")
-	}
-
-	interchange.transactions = make([]parsedTransaction, 0, len(inspection.Transactions))
-	for index := range inspection.Transactions {
-		transaction := &inspection.Transactions[index]
-		segments := transactionSegments(inspection.Segments, transaction)
-		if len(segments) == 0 {
-			return nil, fmt.Errorf(
-				"transaction %d does not contain any segments",
-				transaction.Index,
-			)
+	for interchangeIndex := range reading.Interchanges {
+		for groupIndex := range reading.Interchanges[interchangeIndex].Groups {
+			group := &reading.Interchanges[interchangeIndex].Groups[groupIndex]
+			parsed := parsedGroup{group: group}
+			if group.Header != nil {
+				parsed.functionalGroupID = group.Header.FunctionalID
+				parsed.controlNumber = group.Header.ControlNumber
+				parsed.applicationSender = group.Header.Sender
+				parsed.applicationReceiver = group.Header.Receiver
+				parsed.version = group.Header.Version
+			}
+			interchange.groups = append(interchange.groups, parsed)
+			for transactionIndex := range group.Transactions {
+				transaction, buildErr := buildTransaction(
+					inspection,
+					&group.Transactions[transactionIndex],
+					len(interchange.groups)-1,
+					&parsed,
+				)
+				if buildErr != nil {
+					return nil, buildErr, nil
+				}
+				interchange.transactions = append(interchange.transactions, *transaction)
+			}
 		}
-		raw := strings.Builder{}
-		for segmentIndex := range segments {
-			raw.WriteString(segments[segmentIndex].RawWithTerminator)
-		}
-		functionalGroupID, groupControlNumber := interchange.functionalGroupID,
-			interchange.groupControlNumber
-		if group := enclosingGroup(inspection.Groups, transaction); group != nil {
-			functionalGroupID = strings.TrimSpace(group.FunctionalIDCode)
-			groupControlNumber = strings.TrimSpace(group.GSControlNumber)
-		}
-		interchange.transactions = append(interchange.transactions, parsedTransaction{
-			set:                edi.TransactionSet(transaction.TransactionSet),
-			controlNumber:      strings.TrimSpace(transaction.STControlNumber),
-			groupControlNumber: groupControlNumber,
-			functionalGroupID:  functionalGroupID,
-			segments:           segments,
-			raw:                raw.String(),
-		})
 	}
-	return interchange, nil
+	if len(interchange.groups) > 0 {
+		lead := &interchange.groups[0]
+		interchange.functionalGroupID = lead.functionalGroupID
+		interchange.groupControlNumber = lead.controlNumber
+		interchange.applicationSender = lead.applicationSender
+		interchange.applicationReceiver = lead.applicationReceiver
+	}
+	return interchange, nil, nil
 }
 
-func enclosingGroup(
-	groups []edix12inspect.X12FunctionalGroup,
-	transaction *edix12inspect.X12Transaction,
-) *edix12inspect.X12FunctionalGroup {
-	for index := range groups {
-		group := &groups[index]
-		if transaction.StartSegmentIndex <= group.StartSegmentIndex {
-			continue
-		}
-		if group.EndSegmentIndex == 0 || transaction.StartSegmentIndex < group.EndSegmentIndex {
-			return group
-		}
+func buildTransaction(
+	inspection *edix12inspect.InspectX12Result,
+	transaction *x12.Transaction,
+	group int,
+	parsed *parsedGroup,
+) (*parsedTransaction, error) {
+	if transaction.FirstSegment > transaction.LastSegment ||
+		transaction.LastSegment >= len(inspection.Segments) {
+		return nil, fmt.Errorf(
+			"%w: transaction %d",
+			errTransactionWithoutSegments,
+			transaction.Index+1,
+		)
 	}
-	return nil
-}
-
-func transactionSegments(
-	segments []edix12inspect.X12Segment,
-	transaction *edix12inspect.X12Transaction,
-) []edix12inspect.X12Segment {
-	result := make([]edix12inspect.X12Segment, 0, transaction.ActualSegments+2)
-	end := transaction.EndSegmentIndex
-	if end == 0 {
-		end = len(segments) - 1
-	}
+	segments := inspection.Segments[transaction.FirstSegment : transaction.LastSegment+1]
+	raw := strings.Builder{}
 	for index := range segments {
-		if segments[index].Index >= transaction.StartSegmentIndex &&
-			segments[index].Index <= end {
-			result = append(result, segments[index])
-		}
+		raw.WriteString(segments[index].RawWithTerminator)
 	}
-	return result
+	return &parsedTransaction{
+		set:                edi.TransactionSet(transaction.TransactionSet),
+		controlNumber:      transaction.ControlNumber,
+		groupControlNumber: parsed.controlNumber,
+		functionalGroupID:  parsed.functionalGroupID,
+		segments:           segments,
+		raw:                raw.String(),
+		version:            stringutils.FirstNonEmpty(transaction.Convention, parsed.version),
+		group:              group,
+		status:             transaction.Status,
+		findings:           transaction.Findings,
+	}, nil
 }
 
 func findSegment(segments []edix12inspect.X12Segment, segmentID string) *edix12inspect.X12Segment {
@@ -484,13 +510,9 @@ func applyFreightInvoiceHeader(
 	payload *edi.FreightInvoicePayload,
 	segments []edix12inspect.X12Segment,
 ) {
-	b3 := findSegment(segments, "B3")
-	applyFreightInvoiceB3(payload, b3)
+	applyFreightInvoiceB3(payload, findSegment(segments, "B3"))
 	if c3 := findSegment(segments, "C3"); c3 != nil {
-		payload.CurrencyCode = strings.ToUpper(strings.TrimSpace(elementValue(c3, 1)))
-	}
-	if payload.CurrencyCode == "" && b3 != nil {
-		payload.CurrencyCode = currencyCodeFromX12(elementValue(b3, 11))
+		payload.CurrencyCode = currencyCodeFromX12(elementValue(c3, 1))
 	}
 }
 
@@ -508,14 +530,15 @@ func applyFreightInvoiceB3(
 	if paymentMethod := strings.TrimSpace(elementValue(b3, 4)); paymentMethod != "" {
 		payload.ReferenceNumbers["paymentMethod"] = paymentMethod
 	}
-	if amount, err := decimalFromX12(elementValue(b3, 6)); err == nil {
+	payload.InvoiceDate = parseX12Timestamp(elementValue(b3, 6), "")
+	if amount, ok := numberElement(b3, 7); ok {
 		payload.TotalAmount = amount
 	}
-	if correction := strings.TrimSpace(elementValue(b3, 7)); correction != "" {
+	if correction := strings.TrimSpace(elementValue(b3, 8)); correction != "" {
 		payload.ReferenceNumbers["correctionIndicator"] = correction
 	}
-	payload.DeliveryDate = parseX12Timestamp(elementValue(b3, 8), "")
-	if scac := strings.TrimSpace(elementValue(b3, 10)); scac != "" {
+	payload.DeliveryDate = parseX12Timestamp(elementValue(b3, 9), "")
+	if scac := strings.TrimSpace(elementValue(b3, 11)); scac != "" {
 		payload.ReferenceNumbers["scac"] = scac
 	}
 }
@@ -672,10 +695,10 @@ func parseFreightInvoiceCharges(
 			}
 		case "L1":
 			charge := resolve(segment)
-			if rate, err := decimalFromX12(elementValue(segment, 2)); err == nil {
+			if rate, ok := numberElement(segment, 2); ok {
 				charge.Rate = rate
 			}
-			if amount, err := decimalFromX12(elementValue(segment, 4)); err == nil {
+			if amount, ok := numberElement(segment, 4); ok {
 				charge.Amount = amount.Decimal
 			}
 			if code := strings.ToUpper(strings.TrimSpace(elementValue(segment, 8))); code != "" {
@@ -701,7 +724,7 @@ func applyFreightInvoiceTotals(
 		payload.Weight = &weight
 	}
 	if !payload.TotalAmount.Valid {
-		if amount, err := decimalFromX12(elementValue(l3, 5)); err == nil {
+		if amount, ok := numberElement(l3, 5); ok {
 			payload.TotalAmount = amount
 		}
 	}
@@ -725,22 +748,26 @@ type TenderReference struct {
 }
 
 func TenderReferences(
+	ctx context.Context,
 	rawTransaction string,
 	envelope *edi.X12EnvelopeSettings,
-) (TenderReference, bool) {
+) (TenderReference, bool, error) {
 	if strings.TrimSpace(rawTransaction) == "" {
-		return TenderReference{}, false
+		return TenderReference{}, false, nil
 	}
-	inspection := edix12inspect.InspectX12(&edix12inspect.InspectX12Request{
+	inspection, err := edix12inspect.InspectX12(ctx, &edix12inspect.InspectX12Request{
 		RawX12:   rawTransaction,
 		Envelope: envelope,
 	})
+	if err != nil {
+		return TenderReference{}, false, err
+	}
 	b2 := findSegment(inspection.Segments, "B2")
 	if b2 == nil {
-		return TenderReference{}, false
+		return TenderReference{}, false, nil
 	}
 	shipmentID, paymentMethod := readB2(b2)
-	return TenderReference{ShipmentID: shipmentID, PaymentMethod: paymentMethod}, true
+	return TenderReference{ShipmentID: shipmentID, PaymentMethod: paymentMethod}, true, nil
 }
 
 const trenovaShipmentIDPrefix = "shp_"
@@ -839,11 +866,7 @@ func applyTotalsFromL3(payload *edi.LoadTenderPayload, l3 *edix12inspect.X12Segm
 			payload.Weight = &weight
 		}
 	}
-	charge := strings.TrimSpace(elementValue(l3, 5))
-	if charge == "" {
-		return
-	}
-	if amount, err := decimalFromX12(charge); err == nil {
+	if amount, ok := numberElement(l3, 5); ok {
 		payload.TotalChargeAmount = amount
 	}
 }
@@ -1049,37 +1072,6 @@ func referenceFromL11(segments []edix12inspect.X12Segment) string {
 	return ""
 }
 
-func acknowledgmentPayloadForTransaction(
-	transaction *parsedTransaction,
-	ackSet edi.TransactionSet,
-) edi.DocumentPayload {
-	ack := edi.FunctionalAcknowledgmentPayload{
-		OriginalFunctionalGroupID: stringutils.FirstNonEmpty(
-			transaction.functionalGroupID,
-			edi.FunctionalGroupDefault(transaction.set),
-		),
-		OriginalGroupControlNumber:       transaction.groupControlNumber,
-		OriginalTransactionSet:           transaction.set,
-		OriginalTransactionControlNumber: transaction.controlNumber,
-		GroupAcknowledgmentCode:          "A",
-		TransactionAcknowledgmentCode:    "A",
-		AcceptedTransactionSetCount:      1,
-		ReceivedTransactionSetCount:      1,
-		IncludedTransactionSetCount:      1,
-	}
-	if ackSet == edi.TransactionSet999 {
-		implementation := edi.ImplementationAckPayload(ack)
-		return edi.DocumentPayload{
-			TransactionSet:               edi.TransactionSet999,
-			ImplementationAcknowledgment: &implementation,
-		}
-	}
-	return edi.DocumentPayload{
-		TransactionSet:           edi.TransactionSet997,
-		FunctionalAcknowledgment: &ack,
-	}
-}
-
 func transactionSetFromCode(code string) edi.TransactionSet {
 	code = strings.TrimSpace(code)
 	switch code {
@@ -1121,12 +1113,22 @@ func parseInt64(value string) int64 {
 	return parsed
 }
 
-func decimalFromX12(value string) (decimal.NullDecimal, error) {
-	parsed, err := decimal.NewFromString(strings.TrimSpace(value))
-	if err != nil {
-		return decimal.NullDecimal{}, err
+func numberElement(segment *edix12inspect.X12Segment, position int) (decimal.NullDecimal, bool) {
+	if segment == nil {
+		return decimal.NullDecimal{}, false
 	}
-	return decimal.NullDecimal{Decimal: parsed, Valid: true}, nil
+	for index := range segment.Elements {
+		element := &segment.Elements[index]
+		if element.Position != position {
+			continue
+		}
+		parsed, err := x12.ParseNumber(element.Value, element.DataType)
+		if err != nil {
+			return decimal.NullDecimal{}, false
+		}
+		return decimal.NullDecimal{Decimal: parsed, Valid: true}, true
+	}
+	return decimal.NullDecimal{}, false
 }
 
 func parseX12Timestamp(dateValue, timeValue string) int64 {

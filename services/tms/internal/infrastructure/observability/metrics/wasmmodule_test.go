@@ -1,0 +1,67 @@
+//revive:disable-next-line:var-naming
+package metrics
+
+import (
+	"testing"
+	"time"
+
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/testutil"
+	"github.com/stretchr/testify/assert"
+	"go.uber.org/zap"
+)
+
+func TestWasmModule_DisabledAndNilRecordsAreNoOps(t *testing.T) {
+	t.Parallel()
+
+	for _, m := range []*WasmModule{nil, NewWasmModule(nil, zap.NewNop(), false, "rules", "rules")} {
+		assert.NotPanics(t, func() {
+			m.InstanceAcquired()
+			m.CallFinished("rules.version", "ok", time.Millisecond)
+			m.InstanceDiscarded("trap")
+			m.InstanceReleased()
+		})
+	}
+}
+
+func TestWasmModule_CountsCallsInstancesAndDiscards(t *testing.T) {
+	t.Parallel()
+
+	m := NewWasmModule(prometheus.NewRegistry(), zap.NewNop(), true, "rules", "rules")
+
+	m.InstanceAcquired()
+	m.InstanceAcquired()
+	m.CallFinished("tariff.check", "ok", 2*time.Millisecond)
+	m.CallFinished("tariff.check", "ok", 3*time.Millisecond)
+	m.CallFinished("tariff.evaluate", "trap", time.Millisecond)
+	m.InstanceDiscarded("trap")
+	m.InstanceReleased()
+
+	assert.InDelta(t, 2, testutil.ToFloat64(m.calls.WithLabelValues("tariff.check", "ok")), 0)
+	assert.InDelta(t, 1, testutil.ToFloat64(m.calls.WithLabelValues("tariff.evaluate", "trap")), 0)
+	assert.Equal(t, 2, testutil.CollectAndCount(m.duration))
+	assert.InDelta(t, 1, testutil.ToFloat64(m.inUse), 0)
+	assert.InDelta(t, 1, testutil.ToFloat64(m.discarded.WithLabelValues("trap")), 0)
+
+	m.InstanceReleased()
+	assert.InDelta(t, 0, testutil.ToFloat64(m.inUse), 0)
+}
+
+func TestWasmModule_EachModuleRegistersUnderItsOwnSubsystem(t *testing.T) {
+	t.Parallel()
+
+	registry := prometheus.NewRegistry()
+	rules := NewWasmModule(registry, zap.NewNop(), true, "rules", "rules")
+	edi := NewWasmModule(registry, zap.NewNop(), true, "edi_module", "EDI")
+	rules.CallFinished("rules.version", "ok", time.Millisecond)
+	edi.CallFinished("x12.read", "ok", time.Millisecond)
+
+	families, err := registry.Gather()
+	assert.NoError(t, err)
+	names := make([]string, 0, len(families))
+	for _, family := range families {
+		names = append(names, family.GetName())
+	}
+	assert.Contains(t, names, Namespace+"_rules_calls_total")
+	assert.Contains(t, names, Namespace+"_edi_module_calls_total")
+}

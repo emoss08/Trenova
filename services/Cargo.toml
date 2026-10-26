@@ -1,7 +1,7 @@
 [workspace]
 resolver = "3"
 members = ["imaging", "crates/*"]
-exclude = ["tms", "postgres", "vendor", "imaging/fuzz", "crates/sandbox/fuzz", "crates/rules/fuzz", "crates/scripts/fuzz"]
+exclude = ["tms", "postgres", "vendor", "imaging/fuzz", "crates/sandbox/fuzz", "crates/rules/fuzz", "crates/scripts/fuzz", "crates/edi/fuzz"]
 
 [workspace.package]
 version = "0.1.0"
@@ -12,7 +12,9 @@ publish = false
 repository = "https://github.com/emoss08/trenova"
 
 [workspace.dependencies]
+trenova-edi = { path = "crates/edi" }
 trenova-imaging-core = { path = "crates/imaging-core" }
+trenova-module-kit = { path = "crates/module-kit" }
 trenova-proto = { path = "crates/proto" }
 trenova-rules = { path = "crates/rules" }
 trenova-sandbox = { path = "crates/sandbox" }

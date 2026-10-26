@@ -1,8 +1,8 @@
 name: Rust services
 
 # The services Cargo workspace (services/Cargo.toml): every backend Rust crate, the
-# contracts in services/proto, the trenova-rules WebAssembly module and its committed
-# copies, and the imaging worker's image. desktop/capture has its own workflow
+# contracts in services/proto, the trenova-rules, trenova-scripts and trenova-edi WebAssembly
+# modules and their committed copies, and the imaging worker's image. desktop/capture has its own workflow
 # (native-capture.yml).
 
 on:
@@ -26,6 +26,9 @@ on:
       # The trenova-scripts WebAssembly module's committed copy.
       - "services/tms/pkg/scriptvm/scripts.wasm"
       - "services/tms/pkg/scriptvm/scripts.wasm.sha256"
+      # The trenova-edi WebAssembly module's committed copy.
+      - "services/tms/pkg/x12/edi.wasm"
+      - "services/tms/pkg/x12/edi.wasm.sha256"
       - "desktop/capture/rust-toolchain.toml"
       - "deploy/Dockerfile.imaging"
       - "deploy/Dockerfile.imaging.dockerignore"
@@ -51,6 +54,9 @@ on:
       # The trenova-scripts WebAssembly module's committed copy.
       - "services/tms/pkg/scriptvm/scripts.wasm"
       - "services/tms/pkg/scriptvm/scripts.wasm.sha256"
+      # The trenova-edi WebAssembly module's committed copy.
+      - "services/tms/pkg/x12/edi.wasm"
+      - "services/tms/pkg/x12/edi.wasm.sha256"
       - "desktop/capture/rust-toolchain.toml"
       - "deploy/Dockerfile.imaging"
       - "deploy/Dockerfile.imaging.dockerignore"
@@ -183,6 +189,34 @@ jobs:
             exit 1
           fi
 
+  wasm-edi:
+    name: EDI WebAssembly module
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v5
+      - uses: dtolnay/rust-toolchain@master
+        with:
+          toolchain: "1.96"
+          targets: wasm32-unknown-unknown
+          components: clippy
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: services
+          key: wasm-edi
+      - uses: actions/cache@v4
+        with:
+          path: services/target/binaryen
+          key: binaryen-${{ runner.os }}-${{ hashFiles('services/scripts/wasm-module.sh') }}
+      - name: Clippy for wasm32-unknown-unknown
+        run: cargo clippy -p trenova-edi --target wasm32-unknown-unknown --locked -- -D warnings
+      - name: The committed edi.wasm matches a fresh build
+        working-directory: .
+        run: |
+          if ! services/crates/edi/scripts/build-wasm.sh check; then
+            echo "::error::Run 'task rust:wasm-edi' and commit services/tms/pkg/x12."
+            exit 1
+          fi
+
   deny:
     name: cargo-deny
     runs-on: ubuntu-latest
@@ -239,6 +273,7 @@ jobs:
             services/imaging/fuzz
             services/crates/rules/fuzz
             services/crates/scripts/fuzz
+            services/crates/edi/fuzz
       - run: cargo install cargo-fuzz --locked --version 0.13.2
       - name: Sandbox frame protocol
         working-directory: services/crates/sandbox/fuzz
@@ -264,6 +299,13 @@ jobs:
           mkdir -p corpus/script_session corpus/request
           cargo +nightly fuzz run script_session corpus/script_session seeds/script_session -- -dict=script_session.dict -max_total_time=90 -rss_limit_mb=1024
           cargo +nightly fuzz run request corpus/request seeds/request -- -max_total_time=30 -rss_limit_mb=1024
+      - name: X12
+        working-directory: services/crates/edi/fuzz
+        run: |
+          mkdir -p corpus/x12_read corpus/x12_guide corpus/dispatch
+          cargo +nightly fuzz run x12_read corpus/x12_read seeds/x12_read -- -max_total_time=60 -rss_limit_mb=1024
+          cargo +nightly fuzz run x12_guide corpus/x12_guide -- -max_total_time=45 -rss_limit_mb=1024
+          cargo +nightly fuzz run dispatch corpus/dispatch -- -max_total_time=30 -rss_limit_mb=1024
 
   image:
     name: Imaging image

@@ -10,8 +10,8 @@
 //! another module, the interpreter moves it onto the call, so the host can underline it in the
 //! source the author is looking at.
 
-use crate::message::{Arg, Message};
 use crate::span::Span;
+use trenova_module_kit::message::{Arg, Message};
 
 /// What went wrong, as a stable name the host may branch on.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
@@ -118,7 +118,7 @@ impl EvalError {
     pub fn overflow() -> Self {
         Self::new(
             Code::Overflow,
-            Message::new(crate::message!(
+            Message::new(trenova_module_kit::message!(
                 "The result is too large: it does not fit in 28 significant digits"
             )),
         )
@@ -129,7 +129,7 @@ impl EvalError {
     pub fn divide_by_zero() -> Self {
         Self::new(
             Code::DivideByZero,
-            Message::new(crate::message!("Division by zero")),
+            Message::new(trenova_module_kit::message!("Division by zero")),
         )
     }
 }

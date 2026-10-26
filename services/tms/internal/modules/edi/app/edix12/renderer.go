@@ -411,8 +411,6 @@ func isQualifiedFieldRoot(path string) bool {
 		"invoice.",
 		"shipmentStatus.",
 		"tenderResponse.",
-		"functionalAck.",
-		"implementationAck.",
 		"repeat.",
 		"runtime.",
 		"partner.",
@@ -662,8 +660,6 @@ var documentRootKeys = [...]string{
 	"invoice",
 	"shipmentStatus",
 	"tenderResponse",
-	"functionalAck",
-	"implementationAck",
 }
 
 func resolveStarlarkElementValue(params elementResolveParams) (string, []Diagnostic) {

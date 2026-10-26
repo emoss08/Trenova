@@ -8,9 +8,9 @@
 
 use crate::allocation::input::nullable;
 use crate::allocation::input::optional_decimal;
-use crate::ops::RequestError;
 use rust_decimal::Decimal;
 use serde::Deserialize;
+use trenova_module_kit::ops::RequestError;
 
 /// How many axes a matrix can declare.
 pub const MAX_DIMENSIONS: usize = 4;

@@ -1,0 +1,15 @@
+[package]
+name = "trenova-module-kit"
+description = "The chassis every Trenova WebAssembly module runs on: user-facing messages as English ICU templates, the JSON operation envelope and its request errors, and the three ABI exports the Go host and the browser call."
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+publish.workspace = true
+
+[dependencies]
+serde.workspace = true
+serde_json = { workspace = true, features = ["raw_value"] }
+
+[lints]
+workspace = true

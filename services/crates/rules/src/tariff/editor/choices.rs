@@ -15,7 +15,7 @@ use crate::tariff::syntax::program::ModuleId;
 pub const CHOSEN: &str = "chosen";
 
 /// What `chosen` gives, for completion and signature help.
-pub const CHOSEN_DOC: &str = crate::message!(
+pub const CHOSEN_DOC: &str = trenova_module_kit::message!(
     "The label of the option the last evaluation of the `best` or `worst` with this label kept, or `none` when it was not reached or every option refused."
 );
 

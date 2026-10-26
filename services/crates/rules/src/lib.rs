@@ -19,7 +19,6 @@ pub mod abi;
 pub mod allocation;
 pub mod lane;
 pub mod matrix;
-pub mod message;
 pub mod ops;
 pub mod report;
 pub mod span;

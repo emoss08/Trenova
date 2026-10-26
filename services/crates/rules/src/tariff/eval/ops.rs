@@ -73,8 +73,6 @@ use super::tables::{Need, Tables};
 use super::tests::{TestRequest, TestResult, needs_of, run_suite};
 use super::trace::range;
 use super::value::{Value, format_decimal};
-use crate::message::{Arg, Message};
-use crate::ops::{OpResult, decode, encode};
 use crate::span::Utf16Index;
 use crate::tariff::check::{Analysis, check};
 use crate::tariff::context::Context;
@@ -88,6 +86,8 @@ use serde::Deserialize;
 use serde_json::value::RawValue;
 use serde_json::{Map, Value as Json};
 use std::collections::BTreeMap;
+use trenova_module_kit::message::{Arg, Message};
+use trenova_module_kit::ops::{OpResult, decode, encode};
 
 #[derive(Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
@@ -213,7 +213,7 @@ fn shared_record(
 fn record_error(error: &crate::tariff::wire::WireError) -> EvalError {
     EvalError::with(
         Code::Record,
-        crate::message!("The record does not fit the schema at {0}: {1}"),
+        trenova_module_kit::message!("The record does not fit the schema at {0}: {1}"),
         [
             Arg::from(error.path.clone()),
             Arg::from(error.message.clone()),

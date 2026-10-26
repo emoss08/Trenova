@@ -3,8 +3,6 @@
 //! the one-line explanations of keywords and units.
 
 use super::session::Session;
-use crate::message;
-use crate::message::{Arg, Message};
 use crate::tariff::check::describe::{base_noun, snippet, unit_noun};
 use crate::tariff::check::methods::Method;
 use crate::tariff::check::{SymbolId, SymbolKind};
@@ -15,6 +13,8 @@ use crate::tariff::syntax::program::{Decl, ModuleId};
 use crate::tariff::types::Type;
 use crate::tariff::units::{Base, Simple};
 use crate::tariff::wire::decode;
+use trenova_module_kit::message;
+use trenova_module_kit::message::{Arg, Message};
 
 /// The most fields an inline record type shows before `…`.
 const SHOWN_FIELDS: usize = 4;

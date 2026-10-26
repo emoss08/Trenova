@@ -16,10 +16,10 @@
 use super::error::{Code, EvalError};
 use super::time::{Date, DateTime};
 use super::value::{Value, is_percent, percent_unit};
-use crate::message::{Arg, Message};
 use crate::tariff::units::{Quantity, Unit, UnitError};
 use rust_decimal::Decimal;
 use std::rc::Rc;
+use trenova_module_kit::message::{Arg, Message};
 
 /// What a unit error means at run time.
 #[must_use]
@@ -28,17 +28,17 @@ pub fn unit_error(error: &UnitError) -> EvalError {
         UnitError::Overflow => EvalError::overflow(),
         UnitError::Mismatch { from, to } => EvalError::with(
             Code::Conversion,
-            crate::message!("{0} cannot be converted to {1}"),
+            trenova_module_kit::message!("{0} cannot be converted to {1}"),
             [Arg::from(from.clone()), Arg::from(to.clone())],
         ),
         UnitError::Temperature => EvalError::with(
             Code::Conversion,
-            crate::message!("Temperatures can only be compared and subtracted"),
+            trenova_module_kit::message!("Temperatures can only be compared and subtracted"),
             [],
         ),
         UnitError::Unknown(text) => EvalError::with(
             Code::Conversion,
-            crate::message!("{0} is not a unit"),
+            trenova_module_kit::message!("{0} is not a unit"),
             [Arg::from(text.clone())],
         ),
     }
@@ -46,7 +46,7 @@ pub fn unit_error(error: &UnitError) -> EvalError {
 
 fn wrong(symbol: &str, left: &Value, right: &Value) -> EvalError {
     EvalError::internal(Message::with(
-        crate::message!("{0} cannot be applied to {1} and {2}"),
+        trenova_module_kit::message!("{0} cannot be applied to {1} and {2}"),
         [
             Arg::from(symbol),
             Arg::from(left.kind()),
@@ -203,7 +203,7 @@ pub fn neg(value: &Value) -> Result<Value, EvalError> {
             quantity.unit.clone(),
         )))),
         other => Err(EvalError::internal(Message::with(
-            crate::message!("{0} cannot be negated"),
+            trenova_module_kit::message!("{0} cannot be negated"),
             [Arg::from(other.kind())],
         ))),
     }

@@ -9,8 +9,6 @@
 
 use super::describe::{default_unit, quote, single};
 use super::fixes::replace;
-use crate::message;
-use crate::message::{Arg, Message};
 use crate::tariff::diagnostic::Diagnostic;
 use crate::tariff::diagnostic::nearest;
 use crate::tariff::docs::Doc;
@@ -18,6 +16,8 @@ use crate::tariff::syntax::ast::{FieldType, Name, TypeExpr, TypeExprKind};
 use crate::tariff::types::{FieldDef, RecordType, Type};
 use crate::tariff::units::{Base, Dim, Unit, simple};
 use std::sync::Arc;
+use trenova_module_kit::message;
+use trenova_module_kit::message::{Arg, Message};
 
 /// The built-in type names, with what each is, for completion and the catalog.
 pub const BUILTIN_TYPES: &[(&str, &str)] = &[

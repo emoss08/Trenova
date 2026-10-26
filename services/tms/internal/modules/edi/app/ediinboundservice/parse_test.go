@@ -123,7 +123,7 @@ func TestParseInterchangeRoundTripsRendered204(t *testing.T) {
 	sample.ShipmentID = shipmentID
 	raw := renderBase204(t, sample)
 	require.Contains(t, raw, "B2****"+shipmentID.String()+"**PP~")
-	interchange, err := parseInterchange(raw)
+	interchange, err := parseTestInterchange(t, raw)
 	require.NoError(t, err)
 
 	require.Equal(t, "000000042", interchange.controlNumber)
@@ -195,7 +195,7 @@ func TestParseAcknowledgments997(t *testing.T) {
 		"GE*1*101~" +
 		"IEA*1*000000101~"
 
-	interchange, err := parseInterchange(raw)
+	interchange, err := parseTestInterchange(t, raw)
 	require.NoError(t, err)
 	require.Len(t, interchange.transactions, 1)
 	transaction := interchange.transactions[0]
@@ -232,7 +232,7 @@ func TestAcknowledgmentResolution_AcceptedWithErrorsKeepsWhatThePartnerNoted(t *
 		"GE*1*103~" +
 		"IEA*1*000000103~"
 
-	interchange, err := parseInterchange(raw)
+	interchange, err := parseTestInterchange(t, raw)
 	require.NoError(t, err)
 	entries := parseAcknowledgments(&interchange.transactions[0])
 	require.Len(t, entries, 1)
@@ -260,7 +260,7 @@ func TestParseAcknowledgmentsRejected999(t *testing.T) {
 		"GE*1*102~" +
 		"IEA*1*000000102~"
 
-	interchange, err := parseInterchange(raw)
+	interchange, err := parseTestInterchange(t, raw)
 	require.NoError(t, err)
 	require.Len(t, interchange.transactions, 1)
 	entries := parseAcknowledgments(&interchange.transactions[0])
@@ -285,7 +285,7 @@ func TestParseTenderResponse990(t *testing.T) {
 		"GE*1*103~" +
 		"IEA*1*000000103~"
 
-	interchange, err := parseInterchange(raw)
+	interchange, err := parseTestInterchange(t, raw)
 	require.NoError(t, err)
 	require.Len(t, interchange.transactions, 1)
 	details := parseTenderResponse(&interchange.transactions[0])
@@ -300,7 +300,7 @@ func TestParseFreightInvoice210(t *testing.T) {
 		"*260107*1200*^*00401*000000105*0*P*>~" +
 		"GS*IM*PARTNER*TRENOVA*20260107*1200*105*X*004010~" +
 		"ST*210*0001~" +
-		"B3*B*INV-4501*SHIP-1001*PP**1250.50**20260105*35*SCAC~" +
+		"B3*B*INV-4501*SHIP-1001*PP**20260105*125050**20260106*035*SCAC~" +
 		"C3*USD~" +
 		"N9*BM*BOL-778899~" +
 		"N9*CN*PRO-555~" +
@@ -311,16 +311,16 @@ func TestParseFreightInvoice210(t *testing.T) {
 		"LX*1~" +
 		"L5*1*LINEHAUL~" +
 		"L0*1***42000*G~" +
-		"L1*1*2.5*PM*1100.00****LHS~" +
+		"L1*1*2.5*PM*110000****LHS~" +
 		"LX*2~" +
 		"L5*2*FUEL SURCHARGE~" +
-		"L1*2**FR*150.50****FUE~" +
-		"L3*42000*G***1250.50~" +
-		"SE*17*0001~" +
+		"L1*2**FR*15050****FUE~" +
+		"L3*42000*G***125050~" +
+		"SE*16*0001~" +
 		"GE*1*105~" +
 		"IEA*1*000000105~"
 
-	interchange, err := parseInterchange(raw)
+	interchange, err := parseTestInterchange(t, raw)
 	require.NoError(t, err)
 	require.Len(t, interchange.transactions, 1)
 	transaction := interchange.transactions[0]
@@ -383,12 +383,12 @@ func TestParseFreightInvoice210FallbacksToL3AndL11(t *testing.T) {
 		"ST*210*0001~" +
 		"B3**INV-9001**TP~" +
 		"L11*BOL-4455*BM~" +
-		"L3*18000*G***875.25~" +
+		"L3*18000*G***87525~" +
 		"SE*5*0001~" +
 		"GE*1*106~" +
 		"IEA*1*000000106~"
 
-	interchange, err := parseInterchange(raw)
+	interchange, err := parseTestInterchange(t, raw)
 	require.NoError(t, err)
 	require.Len(t, interchange.transactions, 1)
 	invoice := parseFreightInvoice(&interchange.transactions[0])
@@ -472,7 +472,7 @@ func TestParseInterchangeRoundTripsRendered210(t *testing.T) {
 		},
 	})
 
-	interchange, err := parseInterchange(rendered)
+	interchange, err := parseTestInterchange(t, rendered)
 	require.NoError(t, err)
 	require.Len(t, interchange.transactions, 1)
 	transaction := interchange.transactions[0]
@@ -513,7 +513,7 @@ func TestParseShipmentStatus214(t *testing.T) {
 		"GE*1*104~" +
 		"IEA*1*000000104~"
 
-	interchange, err := parseInterchange(raw)
+	interchange, err := parseTestInterchange(t, raw)
 	require.NoError(t, err)
 	require.Len(t, interchange.transactions, 1)
 	details := parseShipmentStatus(&interchange.transactions[0])
@@ -550,7 +550,7 @@ func TestParseShipmentStatus214ReadsEveryStatusLoop(t *testing.T) {
 		"GE*1*105~" +
 		"IEA*1*000000105~"
 
-	interchange, err := parseInterchange(raw)
+	interchange, err := parseTestInterchange(t, raw)
 	require.NoError(t, err)
 	details := parseShipmentStatus(&interchange.transactions[0])
 
@@ -621,7 +621,7 @@ func TestParseShipmentStatus214SkipsEmptyStatusSegments(t *testing.T) {
 		"GE*1*106~" +
 		"IEA*1*000000106~"
 
-	interchange, err := parseInterchange(raw)
+	interchange, err := parseTestInterchange(t, raw)
 	require.NoError(t, err)
 	details := parseShipmentStatus(&interchange.transactions[0])
 
@@ -650,7 +650,7 @@ func TestParseInterchangeKeepsEachTransactionInItsOwnGroup(t *testing.T) {
 		"GE*1*318~" +
 		"IEA*2*000000317~"
 
-	interchange, err := parseInterchange(raw)
+	interchange, err := parseTestInterchange(t, raw)
 	require.NoError(t, err)
 	require.Len(t, interchange.transactions, 2)
 
@@ -678,7 +678,7 @@ func tenderRatingDetail(t *testing.T, b2 string) map[string]any {
 		"GE*1*501~" +
 		"IEA*1*000000501~"
 
-	interchange, err := parseInterchange(raw)
+	interchange, err := parseTestInterchange(t, raw)
 	require.NoError(t, err)
 	require.Len(t, interchange.transactions, 1)
 	payload := interchange.transactions[0].documentPayload()
@@ -764,3 +764,39 @@ func TestParseLoadTenderStillReadsB2AsTrenovaOnceWroteIt(t *testing.T) {
 		})
 	}
 }
+
+func parseTestInterchange(t *testing.T, raw string) (*parsedInterchange, error) {
+	t.Helper()
+	interchange, problem, err := parseInterchange(t.Context(), raw)
+	if err != nil {
+		return nil, err
+	}
+	if problem != nil {
+		return nil, problem
+	}
+	return interchange, nil
+}
+
+// partnerTender is a 204 as a partner sends it: each stop's S5 loop carries its own dates
+// and party, and the tender's bill of lading is in L11 with qualifier BM.
+const partnerTender = "ISA*00*          *00*          *ZZ*PARTNER        *ZZ*TRENOVA        " +
+	"*260107*1200*^*00401*000000201*0*P*>~" +
+	"GS*SM*PARTNER*TRENOVA*20260107*1200*201*X*004010~" +
+	"ST*204*0001~" +
+	"B2**PTNR**SHIP-778899**PP~" +
+	"B2A*00~" +
+	"L11*BOL-778899*BM~" +
+	"S5*1*LD*42000*L*24*PC~" +
+	"G62*69*20260109*U*0800~" +
+	"N1*SH*ACME DC*93*ACME-DC~" +
+	"N3*100 MAIN ST~" +
+	"N4*CHICAGO*IL*60601*US~" +
+	"S5*2*UL*42000*L*24*PC~" +
+	"G62*70*20260111*X*1600~" +
+	"N1*CN*BIGBOX STORE 14*93*BIGBOX-14~" +
+	"N3*200 MARKET ST~" +
+	"N4*DALLAS*TX*75201*US~" +
+	"L3*42000*G***185000~" +
+	"SE*16*0001~" +
+	"GE*1*201~" +
+	"IEA*1*000000201~"

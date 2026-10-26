@@ -8,8 +8,6 @@ use super::consts::{date_ordinal, date_time_ordinal};
 use super::describe::{quote, quote_span, words};
 use super::patterns::{ArmPat, Bound, Domain, Interval, Key, Pat, Space, analyze, listing};
 use super::scope::LocalKind;
-use crate::message;
-use crate::message::{Arg, Message};
 use crate::span::Span;
 use crate::tariff::diagnostic::Diagnostic;
 use crate::tariff::syntax::ast::{Arm, ArmBody, Expr, ExprKind, Pattern, PatternKind, UnaryOp};
@@ -17,6 +15,8 @@ use crate::tariff::types::{EnumType, Type};
 use crate::tariff::units::{Unit, convert};
 use rust_decimal::Decimal;
 use std::sync::Arc;
+use trenova_module_kit::message;
+use trenova_module_kit::message::{Arg, Message};
 
 /// What one match's patterns share while they are typed.
 struct Line {

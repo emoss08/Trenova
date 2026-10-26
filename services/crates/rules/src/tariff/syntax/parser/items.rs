@@ -2,9 +2,6 @@
 //! and `test`.
 
 use super::Parser;
-use crate::message;
-use crate::message::Arg;
-use crate::message::Message;
 use crate::span::Span;
 use crate::tariff::diagnostic::Change;
 use crate::tariff::diagnostic::Diagnostic;
@@ -28,6 +25,9 @@ use crate::tariff::syntax::ast::TypeExprKind;
 use crate::tariff::syntax::ast::Use;
 use crate::tariff::syntax::ast::Variant;
 use crate::tariff::syntax::token::TokenKind;
+use trenova_module_kit::message;
+use trenova_module_kit::message::Arg;
+use trenova_module_kit::message::Message;
 
 use super::statements::BlockKind;
 

@@ -83,6 +83,7 @@ import {
 import {
   buildEDIDocumentContextQuery,
   buildNewPartnerDocumentProfileDraft,
+  isAcknowledgmentTransactionSet,
   resolveSelectedDocumentTemplateId,
 } from "../utils/edi-designer-utils";
 import { buildArchiveMessagesQueryString, buildX12Filename } from "../utils/edi-message-utils";
@@ -192,6 +193,7 @@ export function DocumentPreviewArchiveTab() {
   });
   const queriedSelectedProfile =
     profilesQuery.data?.results.find((profile) => profile.id === profileId) ?? null;
+  const writtenByTrenova = isAcknowledgmentTransactionSet(profileDraft.transactionSet);
   const firstTemplateId = templatesQuery.data?.results[0]?.id;
   const selectedTemplateId = resolveSelectedDocumentTemplateId(
     profileDraft.templateId,
@@ -317,25 +319,33 @@ export function DocumentPreviewArchiveTab() {
               value={profileDraft.name}
               onChange={(name) => setProfileDraft((current) => ({ ...current, name }))}
             />
-            <ControlledEDITemplateAutocompleteField
-              value={selectedTemplateId}
-              transactionSet={archiveTransactionSet}
-              direction={archiveDirection}
-              onValueChange={(templateId) => {
-                const selectedTemplateHasProductionVersion = !!templatesQuery.data?.results.find(
-                  (template) => template.id === templateId,
-                )?.activeVersion;
-                setProfileDraft((current) => ({
-                  ...current,
-                  templateId,
-                  templateVersionId: undefined,
-                  status:
-                    selectedTemplateHasProductionVersion || current.status === "Inactive"
-                      ? current.status
-                      : "Inactive",
-                }));
-              }}
-            />
+            {writtenByTrenova ? (
+              <p className="text-muted-foreground text-xs">
+                {t(
+                  "Trenova writes acknowledgments from the files it receives, so this profile has no template.",
+                )}
+              </p>
+            ) : (
+              <ControlledEDITemplateAutocompleteField
+                value={selectedTemplateId}
+                transactionSet={archiveTransactionSet}
+                direction={archiveDirection}
+                onValueChange={(templateId) => {
+                  const selectedTemplateHasProductionVersion = !!templatesQuery.data?.results.find(
+                    (template) => template.id === templateId,
+                  )?.activeVersion;
+                  setProfileDraft((current) => ({
+                    ...current,
+                    templateId,
+                    templateVersionId: undefined,
+                    status:
+                      selectedTemplateHasProductionVersion || current.status === "Inactive"
+                        ? current.status
+                        : "Inactive",
+                  }));
+                }}
+              />
+            )}
             <div className="grid grid-cols-2 gap-2">
               <InputBlock
                 label={t("Version override")}
@@ -401,7 +411,7 @@ export function DocumentPreviewArchiveTab() {
                   request: {
                     ...profileDraft,
                     ediPartnerId: partnerId,
-                    templateId: selectedTemplateId || undefined,
+                    templateId: writtenByTrenova ? undefined : selectedTemplateId || undefined,
                     partnerSettings: parseSettings(rawPartnerSettings),
                   },
                 })

@@ -5,14 +5,14 @@ use crate::matrix::coverage::find_issues;
 use crate::matrix::input::Cell;
 use crate::matrix::input::Dimension;
 use crate::matrix::input::dimensions as checked_dimensions;
-use crate::message::Message;
-use crate::ops::OpResult;
-use crate::ops::decode;
-use crate::ops::encode;
 use crate::wire::Dec;
 use serde::Deserialize;
 use serde::Serialize;
 use serde_json::value::RawValue;
+use trenova_module_kit::message::Message;
+use trenova_module_kit::ops::OpResult;
+use trenova_module_kit::ops::decode;
+use trenova_module_kit::ops::encode;
 
 #[derive(Deserialize, Default)]
 #[serde(default)]

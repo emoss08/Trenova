@@ -69,7 +69,6 @@ use super::budget::Meter;
 use super::error::{Code, EvalError};
 use super::value::{Value, format_decimal};
 use crate::matrix::band;
-use crate::message::{Arg, Message};
 use crate::span::Span;
 use crate::tariff::schema::{Axis, TableShape};
 use crate::tariff::types::Type;
@@ -81,6 +80,7 @@ use serde_json::{Map, Value as Json};
 use std::cmp::Ordering;
 use std::collections::{BTreeMap, BTreeSet};
 use std::rc::Rc;
+use trenova_module_kit::message::{Arg, Message};
 
 /// Where a cell sits on one axis: `{"key": "752"}` on an exact axis, `{"min": "0", "max":
 /// "5000"}` on a range axis (no `max` is open-ended), `{"from": "30000", "to": "31999"}` on a
@@ -326,7 +326,7 @@ impl Tables {
         for shape in shapes {
             let built = if tables.contains_key(&shape.code) {
                 Err(table_error(
-                    crate::message!("The rate table {0} is sent twice"),
+                    trenova_module_kit::message!("The rate table {0} is sent twice"),
                     &shape.code,
                 ))
             } else {
@@ -398,7 +398,7 @@ impl Tables {
             Some(Ok(table)) => Ok(Rc::clone(table)),
             Some(Err(error)) => Err(error.clone()),
             None => Err(table_error(
-                crate::message!("No rate table named {0} was sent with the request"),
+                trenova_module_kit::message!("No rate table named {0} was sent with the request"),
                 code,
             )),
         }
@@ -576,7 +576,7 @@ fn numeric(value: &Value) -> Result<(Decimal, Option<Unit>), EvalError> {
         Value::Int(number) | Value::Number(number) => Ok((*number, None)),
         Value::Quantity(quantity) => Ok((quantity.value, Some(quantity.unit.clone()))),
         other => Err(EvalError::internal(Message::with(
-            crate::message!("{0} cannot be interpolated"),
+            trenova_module_kit::message!("{0} cannot be interpolated"),
             [Arg::from(other.kind())],
         ))),
     }
@@ -604,7 +604,7 @@ fn axis_rule(code: &str, axis: &Axis) -> Result<AxisRule, EvalError> {
                 "Zip3" => Normalization::Zip3,
                 _ => {
                     return Err(table_error(
-                        crate::message!(
+                        trenova_module_kit::message!(
                             "The rate table {0} has an axis with an unknown key normalisation"
                         ),
                         code,
@@ -620,7 +620,7 @@ fn axis_rule(code: &str, axis: &Axis) -> Result<AxisRule, EvalError> {
                 Ok(AxisRule::ZipRange)
             } else {
                 Err(table_error(
-                    crate::message!(
+                    trenova_module_kit::message!(
                         "The rate table {0} has a postal-code range axis with a key normalisation or an overflow policy, which such an axis does not take"
                     ),
                     code,
@@ -635,7 +635,7 @@ fn axis_rule(code: &str, axis: &Axis) -> Result<AxisRule, EvalError> {
                 "Nearest" => Overflow::Nearest,
                 _ => {
                     return Err(table_error(
-                        crate::message!(
+                        trenova_module_kit::message!(
                             "The rate table {0} has an axis with an unknown overflow policy"
                         ),
                         code,
@@ -644,7 +644,9 @@ fn axis_rule(code: &str, axis: &Axis) -> Result<AxisRule, EvalError> {
             },
         }),
         _ => Err(table_error(
-            crate::message!("The rate table {0} has an axis that is neither Exact nor Range"),
+            trenova_module_kit::message!(
+                "The rate table {0} has an axis that is neither Exact nor Range"
+            ),
             code,
         )),
     }
@@ -662,7 +664,9 @@ fn range_bound(code: &str, axis: &Axis) -> Result<BoundKind, EvalError> {
         Some(text) => {
             let unit = Unit::parse(text).map_err(|_| {
                 table_error(
-                    crate::message!("The rate table {0} has an axis whose unit is not a unit"),
+                    trenova_module_kit::message!(
+                        "The rate table {0} has an axis whose unit is not a unit"
+                    ),
                     code,
                 )
             })?;
@@ -680,13 +684,13 @@ fn index(shape: &TableShape) -> Result<Table, EvalError> {
     let code = shape.code.as_str();
     if shape.axes.is_empty() || shape.axes.len() > 4 {
         return Err(table_error(
-            crate::message!("The rate table {0} must have one to four axes"),
+            trenova_module_kit::message!("The rate table {0} must have one to four axes"),
             code,
         ));
     }
     let value_type = shape.value().ok_or_else(|| {
         table_error(
-            crate::message!("The rate table {0} has a value type a table cannot hold"),
+            trenova_module_kit::message!("The rate table {0} has a value type a table cannot hold"),
             code,
         )
     })?;
@@ -819,7 +823,7 @@ fn given_place(
 ) -> Result<Vec<Position>, EvalError> {
     if cell.keys.len() != axes.len() {
         return Err(EvalError::internal(Message::with(
-            crate::message!("The rate table {0} takes {1} keys, not {2}"),
+            trenova_module_kit::message!("The rate table {0} takes {1} keys, not {2}"),
             [
                 Arg::from(code),
                 Arg::from(axes.len()),
@@ -894,7 +898,9 @@ fn cell(
 ) -> Result<Cell, EvalError> {
     if wire.at.len() != axes.len() {
         return Err(table_error(
-            crate::message!("The rate table {0} has a cell without one position per axis"),
+            trenova_module_kit::message!(
+                "The rate table {0} has a cell without one position per axis"
+            ),
             code,
         ));
     }
@@ -907,7 +913,7 @@ fn cell(
             } => {
                 let Some(key) = &position.key else {
                     return Err(table_error(
-                        crate::message!(
+                        trenova_module_kit::message!(
                             "The rate table {0} has a cell without a key on an exact axis"
                         ),
                         code,
@@ -918,7 +924,7 @@ fn cell(
             AxisRule::Range { .. } => {
                 let Some(min) = position.min else {
                     return Err(table_error(
-                        crate::message!(
+                        trenova_module_kit::message!(
                             "The rate table {0} has a cell without a band floor on a range axis"
                         ),
                         code,
@@ -943,7 +949,7 @@ fn cell(
 fn postal_range(code: &str, position: &AtWire) -> Result<PostalRange, EvalError> {
     let (Some(from), Some(to)) = (&position.from, &position.to) else {
         return Err(table_error(
-            crate::message!(
+            trenova_module_kit::message!(
                 "The rate table {0} has a cell without both ends of a postal-code range"
             ),
             code,
@@ -953,7 +959,7 @@ fn postal_range(code: &str, position: &AtWire) -> Result<PostalRange, EvalError>
     let len = from.chars().count();
     if len == 0 || to.chars().count() != len {
         return Err(table_error(
-            crate::message!(
+            trenova_module_kit::message!(
                 "The rate table {0} has a postal-code range whose ends are empty or of different lengths"
             ),
             code,
@@ -961,7 +967,7 @@ fn postal_range(code: &str, position: &AtWire) -> Result<PostalRange, EvalError>
     }
     if from > to {
         return Err(table_error(
-            crate::message!(
+            trenova_module_kit::message!(
                 "The rate table {0} has a postal-code range that ends before it starts"
             ),
             code,
@@ -975,7 +981,7 @@ fn cell_value(code: &str, value_type: &Type, value: Decimal) -> Result<Value, Ev
         Type::Int if value.fract().is_zero() => Value::Int(value.trunc().normalize()),
         Type::Int => {
             return Err(table_error(
-                crate::message!(
+                trenova_module_kit::message!(
                     "The rate table {0} holds whole numbers, but a cell has a fraction"
                 ),
                 code,
@@ -992,7 +998,9 @@ fn cell_value(code: &str, value_type: &Type, value: Decimal) -> Result<Value, Ev
         }
         _ => {
             return Err(table_error(
-                crate::message!("The rate table {0} has a value type a table cannot hold"),
+                trenova_module_kit::message!(
+                    "The rate table {0} has a value type a table cannot hold"
+                ),
                 code,
             ));
         }
@@ -1046,7 +1054,7 @@ fn normalise(key: &str, normalization: Normalization, freight_class: bool) -> St
 
 fn unusable_key(code: &str, key: &Value) -> EvalError {
     EvalError::internal(Message::with(
-        crate::message!("The rate table {0} cannot be read with {1} as a key"),
+        trenova_module_kit::message!("The rate table {0} cannot be read with {1} as a key"),
         [Arg::from(code), Arg::from(key.kind())],
     ))
 }
@@ -1057,7 +1065,7 @@ impl Table {
         match self.axes.as_slice() {
             [AxisRule::Range { bound, .. }] => Ok(bound.clone()),
             _ => Err(EvalError::internal(Message::with(
-                crate::message!("The rate table {0} is not a single-axis range table"),
+                trenova_module_kit::message!("The rate table {0} is not a single-axis range table"),
                 [Arg::from(code)],
             ))),
         }
@@ -1128,7 +1136,7 @@ impl Table {
     fn find(&self, code: &str, keys: &[Value], meter: &mut Meter) -> Result<Found, EvalError> {
         if keys.len() != self.axes.len() {
             return Err(EvalError::internal(Message::with(
-                crate::message!("The rate table {0} takes {1} keys, not {2}"),
+                trenova_module_kit::message!("The rate table {0} takes {1} keys, not {2}"),
                 [
                     Arg::from(code),
                     Arg::from(self.axes.len()),

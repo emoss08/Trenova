@@ -22,13 +22,13 @@
 //! error where it is written.
 
 use super::describe::{quote, quotient, single};
-use crate::message;
-use crate::message::{Arg, Message};
 use crate::tariff::diagnostic::Diagnostic;
 use crate::tariff::schema::ORDERED_ENUMS;
 use crate::tariff::syntax::ast::{BinaryOp, Expr, ExprKind};
 use crate::tariff::types::{QuantityType, Type};
 use crate::tariff::units::{Base, Dim, Unit};
+use trenova_module_kit::message;
+use trenova_module_kit::message::{Arg, Message};
 
 /// Why an operator does not apply to its operands.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]

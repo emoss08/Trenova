@@ -4,6 +4,8 @@ import (
 	stderrors "errors"
 	"testing"
 
+	"github.com/emoss08/trenova/pkg/wasmmodule"
+
 	tarifferrors "github.com/emoss08/trenova/internal/modules/rating/app/tariff/errors"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/rules"
@@ -20,26 +22,26 @@ func TestCheckRefusal_PlacesEachErrorOnItsField(t *testing.T) {
 				Range:    &rules.TariffRange{From: 40, To: 46},
 				Severity: rules.SeverityError,
 				Code:     "unit-mismatch",
-				Message:  rules.Message{Template: "`rate` is money per mile"},
+				Message:  wasmmodule.Message{Template: "`rate` is money per mile"},
 			},
 			{
 				Range:    &rules.TariffRange{From: 2, To: 3},
 				Severity: rules.SeverityWarning,
 				Code:     "unused",
-				Message:  rules.Message{Template: "`x` is never used"},
+				Message:  wasmmodule.Message{Template: "`x` is never used"},
 			},
 			{
 				Severity: rules.SeverityError,
 				Code:     tarifferrors.CodeInputValue,
 				Path:     "agreement.breaks[2].rate",
-				Message:  rules.Message{Template: "Expected money per hundredweight"},
+				Message:  wasmmodule.Message{Template: "Expected money per hundredweight"},
 			},
 			{
 				Range:    &rules.TariffRange{From: 0, To: 4},
 				Severity: rules.SeverityError,
 				Code:     "unknown-name",
 				Module:   "org.accessorials",
-				Message:  rules.Message{Template: "There is no `{0}`", Args: []any{"fee"}},
+				Message:  wasmmodule.Message{Template: "There is no `{0}`", Args: []any{"fee"}},
 			},
 		},
 	}
@@ -94,7 +96,7 @@ func TestEvaluationAndRefusal_CarryTheirRange(t *testing.T) {
 
 	evaluation := tarifferrors.Evaluation("formulaTemplateId", &rules.TariffEvalError{
 		Code:    "overflow",
-		Message: rules.Message{Template: "The amount passed {0} digits", Args: []any{int64(28)}},
+		Message: wasmmodule.Message{Template: "The amount passed {0} digits", Args: []any{int64(28)}},
 		Range:   &rules.TariffRange{From: 5, To: 9},
 	})
 	assert.Equal(t, "formulaTemplateId", evaluation.Field)

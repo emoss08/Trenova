@@ -9,8 +9,6 @@ use super::describe::{quote, quote_span, words};
 use super::fixes::replace;
 use super::operators;
 use super::scope::LocalKind;
-use crate::message;
-use crate::message::{Arg, Message};
 use crate::span::Span;
 use crate::tariff::diagnostic::Diagnostic;
 use crate::tariff::syntax::ast::{
@@ -18,6 +16,8 @@ use crate::tariff::syntax::ast::{
     IfStmt, Name, RoundTo, Stmt, StmtKind, TotalClause,
 };
 use crate::tariff::types::Type;
+use trenova_module_kit::message;
+use trenova_module_kit::message::{Arg, Message};
 
 impl Checker<'_> {
     /// A block: a scope of its own.

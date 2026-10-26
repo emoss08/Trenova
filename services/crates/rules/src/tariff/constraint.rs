@@ -21,7 +21,6 @@
 //! [`message`] words a breach the same way everywhere: "`rate` must be from $0.50/mi to
 //! $15.00/mi; $235.00/mi is outside it", with values written as interpolation writes them.
 
-use crate::message::{Arg, Message};
 use crate::tariff::eval::value::{Value, is_percent};
 use crate::tariff::types::Type;
 use crate::tariff::wire::decode;
@@ -29,6 +28,7 @@ use serde_json::Value as Json;
 use serde_json::json;
 use std::cmp::Ordering;
 use std::fmt::Write as _;
+use trenova_module_kit::message::{Arg, Message};
 
 /// What values an input accepts, beyond its type.
 #[derive(Debug, Clone, PartialEq)]
@@ -301,7 +301,7 @@ pub fn message(constraint: &Constraint, subject: &str, value: &Value) -> Message
                 _ => Json::Array(values.clone()).to_string(),
             };
             Message::with(
-                crate::message!("{0} must be one of {1}; {2} isn't"),
+                trenova_module_kit::message!("{0} must be one of {1}; {2} isn't"),
                 [subject, Arg::from(listed), shown],
             )
         }
@@ -333,27 +333,29 @@ fn range_message(
 ) -> Message {
     match (low, high) {
         (Some(low), Some(high)) if inclusive => Message::with(
-            crate::message!("{0} must be from {1} to {2}; {3} is outside it"),
+            trenova_module_kit::message!("{0} must be from {1} to {2}; {3} is outside it"),
             [subject, low, high, shown],
         ),
         (Some(low), Some(high)) => Message::with(
-            crate::message!("{0} must be at least {1} and below {2}; {3} is outside it"),
+            trenova_module_kit::message!(
+                "{0} must be at least {1} and below {2}; {3} is outside it"
+            ),
             [subject, low, high, shown],
         ),
         (Some(low), None) => Message::with(
-            crate::message!("{0} must be at least {1}; {2} is below it"),
+            trenova_module_kit::message!("{0} must be at least {1}; {2} is below it"),
             [subject, low, shown],
         ),
         (None, Some(high)) if inclusive => Message::with(
-            crate::message!("{0} must be at most {1}; {2} is above it"),
+            trenova_module_kit::message!("{0} must be at most {1}; {2} is above it"),
             [subject, high, shown],
         ),
         (None, Some(high)) => Message::with(
-            crate::message!("{0} must be below {1}; {2} isn't"),
+            trenova_module_kit::message!("{0} must be below {1}; {2} isn't"),
             [subject, high, shown],
         ),
         (None, None) => Message::with(
-            crate::message!("{0} is outside its constraint: {1}"),
+            trenova_module_kit::message!("{0} is outside its constraint: {1}"),
             [subject, shown],
         ),
     }

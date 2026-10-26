@@ -15,8 +15,8 @@
 //! limits apply to each program of a request separately.
 
 use super::error::{Code, EvalError};
-use crate::message::{Arg, Message};
 use serde::Deserialize;
+use trenova_module_kit::message::{Arg, Message};
 
 /// The most a program may use.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -139,7 +139,7 @@ impl Meter {
             .saturating_add(u64::try_from(count).unwrap_or(u64::MAX));
         if self.steps > self.limits.steps {
             return Err(exhausted(
-                crate::message!(
+                trenova_module_kit::message!(
                     "The tariff used up its step budget ({0, plural, one {# step} other {# steps}}) before it finished"
                 ),
                 self.limits.steps,
@@ -160,7 +160,7 @@ impl Meter {
             .saturating_add(u64::try_from(bytes).unwrap_or(u64::MAX));
         if self.text_bytes > self.limits.text_bytes {
             return Err(exhausted(
-                crate::message!(
+                trenova_module_kit::message!(
                     "The tariff built more text than its budget allows ({0, plural, one {# byte} other {# bytes}})"
                 ),
                 self.limits.text_bytes,
@@ -176,7 +176,7 @@ impl Meter {
             .saturating_add(u64::try_from(count).unwrap_or(u64::MAX));
         if self.items > self.limits.items {
             return Err(exhausted(
-                crate::message!(
+                trenova_module_kit::message!(
                     "The tariff created more list items than its budget allows ({0, plural, one {# item} other {# items}})"
                 ),
                 self.limits.items,
@@ -189,7 +189,7 @@ impl Meter {
     pub fn items_would_fit(&self, count: u64) -> Result<(), EvalError> {
         if self.items.saturating_add(count) > self.limits.items {
             return Err(exhausted(
-                crate::message!(
+                trenova_module_kit::message!(
                     "The tariff created more list items than its budget allows ({0, plural, one {# item} other {# items}})"
                 ),
                 self.limits.items,
@@ -202,7 +202,7 @@ impl Meter {
     pub fn enter(&mut self) -> Result<(), EvalError> {
         if self.depth >= self.limits.call_depth {
             return Err(exhausted(
-                crate::message!(
+                trenova_module_kit::message!(
                     "The tariff called functions nested deeper than its budget allows ({0, plural, one {# call} other {# calls}})"
                 ),
                 u64::from(self.limits.call_depth),

@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"strconv"
 
+	"github.com/emoss08/trenova/pkg/wasmmodule"
+
 	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/shared/i18n"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -174,24 +176,24 @@ type TariffChange struct {
 }
 
 type TariffFix struct {
-	Label   Message        `json:"label"`
-	Changes []TariffChange `json:"changes"`
+	Label   wasmmodule.Message `json:"label"`
+	Changes []TariffChange     `json:"changes"`
 }
 
 type TariffRelated struct {
-	Range   TariffRange `json:"range"`
-	Message Message     `json:"message"`
+	Range   TariffRange        `json:"range"`
+	Message wasmmodule.Message `json:"message"`
 }
 
 type TariffDiagnostic struct {
-	Range    *TariffRange    `json:"range,omitempty"`
-	Severity string          `json:"severity"`
-	Code     string          `json:"code"`
-	Message  Message         `json:"message"`
-	Fixes    []TariffFix     `json:"fixes,omitempty"`
-	Related  []TariffRelated `json:"related,omitempty"`
-	Module   string          `json:"module,omitempty"`
-	Path     string          `json:"path,omitempty"`
+	Range    *TariffRange       `json:"range,omitempty"`
+	Severity string             `json:"severity"`
+	Code     string             `json:"code"`
+	Message  wasmmodule.Message `json:"message"`
+	Fixes    []TariffFix        `json:"fixes,omitempty"`
+	Related  []TariffRelated    `json:"related,omitempty"`
+	Module   string             `json:"module,omitempty"`
+	Path     string             `json:"path,omitempty"`
 }
 
 type TariffHeader struct {
@@ -320,7 +322,7 @@ type TariffBill struct {
 
 type TariffRefusal struct {
 	Text    string
-	Message *Message
+	Message *wasmmodule.Message
 	Range   *TariffRange
 }
 
@@ -338,7 +340,7 @@ func (r *TariffRefusal) UnmarshalJSON(data []byte) error {
 	if len(wire.Message) > 0 && wire.Message[0] == '"' {
 		return sonic.Unmarshal(wire.Message, &r.Text)
 	}
-	var message Message
+	var message wasmmodule.Message
 	if err := message.UnmarshalJSON(wire.Message); err != nil {
 		return err
 	}
@@ -352,11 +354,15 @@ func (r TariffRefusal) MarshalJSON() ([]byte, error) {
 	dst := append(make([]byte, 0, len(r.Text)+48), `{"message":`...)
 	if r.Message != nil {
 		var err error
-		if dst, err = appendMessage(dst, *r.Message); err != nil {
+		if dst, err = wasmmodule.AppendMessage(dst, *r.Message); err != nil {
 			return nil, err
 		}
 	} else {
-		dst = appendString(dst, r.Text)
+		text, err := sonic.Marshal(r.Text)
+		if err != nil {
+			return nil, err
+		}
+		dst = append(dst, text...)
 	}
 	dst = append(dst, `,"range":`...)
 	if r.Range == nil {
@@ -379,9 +385,9 @@ func (r *TariffRefusal) Localize(locale i18n.Locale) string {
 }
 
 type TariffEvalError struct {
-	Code    string       `json:"code"`
-	Message Message      `json:"message"`
-	Range   *TariffRange `json:"range"`
+	Code    string             `json:"code"`
+	Message wasmmodule.Message `json:"message"`
+	Range   *TariffRange       `json:"range"`
 }
 
 type TariffNeed struct {
@@ -444,9 +450,9 @@ type TariffTestValue struct {
 }
 
 type TariffTestFailure struct {
-	Range   TariffRange       `json:"range"`
-	Message Message           `json:"message"`
-	Values  []TariffTestValue `json:"values,omitempty"`
+	Range   TariffRange        `json:"range"`
+	Message wasmmodule.Message `json:"message"`
+	Values  []TariffTestValue  `json:"values,omitempty"`
 }
 
 type TariffShownValue struct {

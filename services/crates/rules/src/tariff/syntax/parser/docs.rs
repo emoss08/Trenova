@@ -3,8 +3,6 @@
 //! header, to the file. A block attached to nothing is a `doc` warning.
 
 use super::Parser;
-use crate::message;
-use crate::message::Message;
 use crate::span::Span;
 use crate::tariff::diagnostic::Change;
 use crate::tariff::diagnostic::Diagnostic;
@@ -12,6 +10,8 @@ use crate::tariff::diagnostic::Fix;
 use crate::tariff::syntax::ast::Doc;
 use crate::tariff::syntax::token::Token;
 use crate::tariff::syntax::token::TokenKind;
+use trenova_module_kit::message;
+use trenova_module_kit::message::Message;
 
 #[derive(Debug, Clone)]
 struct Block {

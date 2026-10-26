@@ -182,7 +182,10 @@ func (t *previewEDIDocumentTool) Query(
 		if pErr != nil {
 			return nil, pErr
 		}
-		view := documentPreviewView(call.set, &answered.OutboundDocumentPreview)
+		view, vErr := documentPreviewView(ctx, call.set, &answered.OutboundDocumentPreview)
+		if vErr != nil {
+			return nil, vErr
+		}
 		view.Response = string(answered.Choice)
 		view.outside = []agent.RecordRef{
 			{EntityType: ediTransferEntity, ID: call.transferID.String()},
@@ -203,7 +206,11 @@ func (t *previewEDIDocumentTool) Query(
 		return nil, err
 	}
 
-	return t.gated(ctx, params, documentPreviewView(call.set, preview)), nil
+	view, err := documentPreviewView(ctx, call.set, preview)
+	if err != nil {
+		return nil, err
+	}
+	return t.gated(ctx, params, view), nil
 }
 
 func (t *previewEDIDocumentTool) gated(
@@ -319,9 +326,10 @@ func (t *previewEDIDocumentTool) mayReadSource(
 }
 
 func documentPreviewView(
+	ctx context.Context,
 	set edi.TransactionSet,
 	preview *ediservice.OutboundDocumentPreview,
-) *ediDocumentPreviewView {
+) (*ediDocumentPreviewView, error) {
 	document := preview.Document
 	view := &ediDocumentPreviewView{
 		Title:          "EDI " + string(set),
@@ -346,12 +354,15 @@ func documentPreviewView(
 		view.Title += " to " + partner
 	}
 
-	inspection := edix12inspect.InspectX12(&edix12inspect.InspectX12Request{
+	inspection, err := edix12inspect.InspectX12(ctx, &edix12inspect.InspectX12Request{
 		RawX12:         document.RawX12,
 		TransactionSet: set,
 		X12Version:     document.X12Version,
 		Envelope:       envelope,
 	})
+	if err != nil {
+		return nil, err
+	}
 	view.Segments = make([]string, 0, min(len(inspection.Segments), maxPreviewSegments))
 	for idx := range inspection.Segments {
 		if len(view.Segments) == maxPreviewSegments {
@@ -363,7 +374,7 @@ func documentPreviewView(
 	view.Raw = stringutils.TruncateBytes(document.RawX12, maxRawX12Bytes)
 	view.RawTruncated = len(view.Raw) < len(document.RawX12)
 
-	return view
+	return view, nil
 }
 
 func previewFindings(diagnostics []edix12.Diagnostic) []ediDiagnosticRow {

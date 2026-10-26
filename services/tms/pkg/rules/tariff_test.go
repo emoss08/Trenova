@@ -1,8 +1,10 @@
 package rules_test
 
 import (
-	"github.com/bytedance/sonic"
 	"testing"
+
+	"github.com/bytedance/sonic"
+	"github.com/emoss08/trenova/pkg/wasmmodule"
 
 	"github.com/emoss08/trenova/pkg/rules"
 	"github.com/shopspring/decimal"
@@ -478,7 +480,7 @@ func TestTariffRefusalEncodesItsWireShape(t *testing.T) {
 	assert.JSONEq(t, `{"message":"No weight","range":{"from":3,"to":9}}`, string(text))
 
 	message, err := sonic.Marshal(&rules.TariffRefusal{
-		Message: &rules.Message{Template: "The input {0} has no value and no default", Args: []any{"rate"}},
+		Message: &wasmmodule.Message{Template: "The input {0} has no value and no default", Args: []any{"rate"}},
 	})
 	require.NoError(t, err)
 	assert.JSONEq(t,

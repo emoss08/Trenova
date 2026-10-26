@@ -7,13 +7,13 @@ use crate::lane::parse::parse_key;
 use crate::lane::rule::RuleInput;
 use crate::lane::scope::Place;
 use crate::lane::scope::lane_key_candidates;
-use crate::message::Message;
-use crate::ops::OpResult;
-use crate::ops::decode;
-use crate::ops::encode;
 use serde::Deserialize;
 use serde::Serialize;
 use serde_json::value::RawValue;
+use trenova_module_kit::message::Message;
+use trenova_module_kit::ops::OpResult;
+use trenova_module_kit::ops::decode;
+use trenova_module_kit::ops::encode;
 
 #[derive(Deserialize)]
 struct RulesInput {

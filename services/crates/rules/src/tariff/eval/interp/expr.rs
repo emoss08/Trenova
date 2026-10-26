@@ -1,7 +1,6 @@
 //! Expressions.
 
 use super::{Env, Interp, refusal, unknown_name};
-use crate::message::{Arg, Message};
 use crate::span::Span;
 use crate::tariff::eval::bill::{Sums, Wanted};
 use crate::tariff::eval::error::{EvalError, Stop};
@@ -18,6 +17,7 @@ use crate::tariff::units::Unit;
 use rust_decimal::Decimal;
 use rust_decimal::prelude::ToPrimitive;
 use std::rc::Rc;
+use trenova_module_kit::message::{Arg, Message};
 
 /// The roots a file's own code may read.
 const ROOTS: [&str; 5] = ["shipment", "lane", "customer", "fuel", "rating"];
@@ -162,16 +162,16 @@ impl<'a> Interp<'_, 'a> {
                 self.match_value(env, &value, arms, expr.span)
             }
             ExprKind::Range { .. } => Err(internal(
-                crate::message!("A range can only be walked by for or tested with in"),
+                trenova_module_kit::message!("A range can only be walked by for or tested with in"),
                 [],
             )),
             ExprKind::Lambda { .. } => Err(internal(
-                crate::message!("A lambda can only be given to a list method"),
+                trenova_module_kit::message!("A lambda can only be given to a list method"),
                 [],
             )),
             ExprKind::Choose(choose) => self.choice(env, choose, choose.span).map(Value::money),
             ExprKind::Missing => Err(internal(
-                crate::message!("The tariff is incomplete here"),
+                trenova_module_kit::message!("The tariff is incomplete here"),
                 [],
             )),
         }
@@ -271,7 +271,7 @@ impl<'a> Interp<'_, 'a> {
         }
         if !self.evaluating.insert(key.clone()) {
             return Err(internal(
-                crate::message!("The constant {0} is defined in terms of itself"),
+                trenova_module_kit::message!("The constant {0} is defined in terms of itself"),
                 [Arg::from(decl.name.text.clone())],
             ));
         }
@@ -393,7 +393,7 @@ impl<'a> Interp<'_, 'a> {
             "total" => sums.total().map_err(Stop::Failed)?,
             _ => {
                 return Err(internal(
-                    crate::message!("The bill has no {0}"),
+                    trenova_module_kit::message!("The bill has no {0}"),
                     [Arg::from(name)],
                 ));
             }
@@ -427,7 +427,7 @@ impl<'a> Interp<'_, 'a> {
                 Ok(text::index(content, *at).unwrap_or(Value::None))
             }
             _ => Err(internal(
-                crate::message!("{0} cannot be indexed like this"),
+                trenova_module_kit::message!("{0} cannot be indexed like this"),
                 [Arg::from(target_value.kind())],
             )),
         }
@@ -501,7 +501,7 @@ impl<'a> Interp<'_, 'a> {
         let order = |wanted: &dyn Fn(Ordering) -> bool| -> Result<Value, EvalError> {
             if a.is_none() || b.is_none() {
                 return Err(EvalError::internal(Message::with(
-                    crate::message!("{0} and {1} have no order between them"),
+                    trenova_module_kit::message!("{0} and {1} have no order between them"),
                     [Arg::from(a.kind()), Arg::from(b.kind())],
                 )));
             }
@@ -520,9 +520,9 @@ impl<'a> Interp<'_, 'a> {
             BinaryOp::Div => operators::div(a, b, self.keeps_percent(env, expr, a, b)),
             BinaryOp::Rem => operators::rem(a, b),
             BinaryOp::Coalesce | BinaryOp::Or | BinaryOp::And | BinaryOp::In | BinaryOp::NotIn => {
-                Err(EvalError::internal(Message::new(crate::message!(
-                    "This operator is not arithmetic"
-                ))))
+                Err(EvalError::internal(Message::new(
+                    trenova_module_kit::message!("This operator is not arithmetic"),
+                )))
             }
         }
     }
@@ -568,7 +568,7 @@ impl<'a> Interp<'_, 'a> {
                 Ok(false)
             }
             other => Err(internal(
-                crate::message!("in needs a list or a range, not {0}"),
+                trenova_module_kit::message!("in needs a list or a range, not {0}"),
                 [Arg::from(other.kind())],
             )),
         }
@@ -656,13 +656,16 @@ pub(super) fn literal(kind: &ExprKind) -> Result<Value, Stop> {
         ExprKind::Time(literal) => Time::from_seconds(literal.seconds())
             .map(Value::Time)
             .ok_or_else(|| Stop::Failed(EvalError::overflow())),
-        _ => Err(internal(crate::message!("This is not a literal"), [])),
+        _ => Err(internal(
+            trenova_module_kit::message!("This is not a literal"),
+            [],
+        )),
     }
 }
 
 fn not_bool(value: &Value) -> Stop {
     internal(
-        crate::message!("A condition must be true or false, not {0}"),
+        trenova_module_kit::message!("A condition must be true or false, not {0}"),
         [Arg::from(value.kind())],
     )
 }
@@ -677,7 +680,7 @@ pub(super) fn property(value: &Value, name: &str) -> Result<Value, Stop> {
     };
     found.ok_or_else(|| {
         internal(
-            crate::message!("{0} has no field or property named {1}"),
+            trenova_module_kit::message!("{0} has no field or property named {1}"),
             [Arg::from(value.kind()), Arg::from(name)],
         )
     })

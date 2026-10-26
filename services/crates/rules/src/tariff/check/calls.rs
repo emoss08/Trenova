@@ -9,14 +9,14 @@ use super::methods::{self, Method, ParamKind, Rule};
 use super::operators;
 use super::scope::LocalKind;
 use super::{Callee, HintKind};
-use crate::message;
-use crate::message::{Arg, Message};
 use crate::span::Span;
 use crate::tariff::diagnostic::Diagnostic;
 use crate::tariff::syntax::ast::{Arg as CallArg, BinaryOp, Expr, ExprKind, FileKind, Name};
 use crate::tariff::types::{FieldDef, RecordType, Type};
 use crate::tariff::units::{Unit, simple};
 use std::sync::Arc;
+use trenova_module_kit::message;
+use trenova_module_kit::message::{Arg, Message};
 
 /// The shipment's method that tests what the user asked for: `shipment.requested(LIFT)`.
 pub const REQUESTED: &str = "requested";

@@ -18,12 +18,12 @@ use super::describe::{
 };
 use super::names::receiver_type;
 use super::session::Session;
-use crate::message;
-use crate::message::Message;
 use crate::tariff::check::{CONSTRUCTORS, Callee, REQUESTED_DOC, TABLE_METHODS, location_record};
 use crate::tariff::docs::{Doc, collapse};
 use crate::tariff::syntax::token::TokenKind;
 use crate::tariff::types::FieldDef;
+use trenova_module_kit::message;
+use trenova_module_kit::message::Message;
 
 /// The most brackets signature help looks out through to find a call.
 const MAX_NESTING: usize = 16;
@@ -224,7 +224,7 @@ fn constructor_help(session: &Session<'_>, constructor: &str) -> Option<Help> {
             message!(
                 "Builds a `{0}` for a test: every field is named and optional, and the sample record's values fill the rest."
             ),
-            [crate::message::Arg::from(*record)],
+            [trenova_module_kit::message::Arg::from(*record)],
         ))),
         params,
     })

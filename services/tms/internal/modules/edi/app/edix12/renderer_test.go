@@ -807,42 +807,6 @@ func TestRenderX12_StarterTemplatesRenderTransactionSets(t *testing.T) {
 				},
 			},
 		},
-		{
-			name:           "997 functional acknowledgment",
-			transactionSet: edi.TransactionSet997,
-			payload: edi.DocumentPayload{
-				TransactionSet: edi.TransactionSet997,
-				FunctionalAcknowledgment: &edi.FunctionalAcknowledgmentPayload{
-					OriginalFunctionalGroupID:        "SM",
-					OriginalGroupControlNumber:       "7",
-					OriginalTransactionSet:           edi.TransactionSet204,
-					OriginalTransactionControlNumber: "0007",
-					GroupAcknowledgmentCode:          "A",
-					TransactionAcknowledgmentCode:    "A",
-					AcceptedTransactionSetCount:      1,
-					ReceivedTransactionSetCount:      1,
-					IncludedTransactionSetCount:      1,
-				},
-			},
-		},
-		{
-			name:           "999 implementation acknowledgment",
-			transactionSet: edi.TransactionSet999,
-			payload: edi.DocumentPayload{
-				TransactionSet: edi.TransactionSet999,
-				ImplementationAcknowledgment: &edi.ImplementationAckPayload{
-					OriginalFunctionalGroupID:        "SM",
-					OriginalGroupControlNumber:       "9",
-					OriginalTransactionSet:           edi.TransactionSet204,
-					OriginalTransactionControlNumber: "0009",
-					GroupAcknowledgmentCode:          "A",
-					TransactionAcknowledgmentCode:    "A",
-					AcceptedTransactionSetCount:      1,
-					ReceivedTransactionSetCount:      1,
-					IncludedTransactionSetCount:      1,
-				},
-			},
-		},
 	}
 
 	for _, tt := range tests {
@@ -1503,4 +1467,17 @@ func findElement(
 	segment := findSegment(t, input, segmentID)
 	require.Less(t, index, len(segment.Elements))
 	return &segment.Elements[index]
+}
+
+func TestStarterSegments_AcknowledgmentsHaveNoStarter(t *testing.T) {
+	t.Parallel()
+
+	for _, set := range []edi.TransactionSet{edi.TransactionSet997, edi.TransactionSet999} {
+		_, err := editemplates.StarterSegments(
+			pagination.TenantInfo{},
+			pulid.MustNew("editv_"),
+			set,
+		)
+		require.Error(t, err, set)
+	}
 }

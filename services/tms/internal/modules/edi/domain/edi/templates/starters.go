@@ -22,10 +22,6 @@ func StarterSegments(
 		return Base214Segments(tenantInfo, versionID), nil
 	case edi.TransactionSet990:
 		return Base990Segments(tenantInfo, versionID), nil
-	case edi.TransactionSet997:
-		return Base997Segments(tenantInfo, versionID), nil
-	case edi.TransactionSet999:
-		return Base999Segments(tenantInfo, versionID), nil
 	default:
 		return nil, fmt.Errorf("unsupported X12 transaction set %q", transactionSet)
 	}
@@ -58,9 +54,9 @@ func Base210Segments(
 					"PP",
 					false,
 				),
-				b.field(6, "Net Amount Due", "invoice.totalAmount", "", true),
-				b.el(7, "Correction Indicator", edi.TemplateElementSourceConstant, ""),
-				b.field(11, "Currency Code", "invoice.currencyCode", "USD"),
+				b.date(6, "Date", "invoice.invoiceDate", true),
+				b.amount(7, "Net Amount Due", "invoice.totalAmount", true),
+				b.partner(11, "Standard Carrier Alpha Code", "carrier.scac"),
 			},
 		),
 		b.segment(50, "C3", "Currency", "", false, []edi.TemplateElement{
@@ -89,7 +85,7 @@ func Base210Segments(
 		),
 		b.segment(70, "G62", "Date Time", "", false, []edi.TemplateElement{
 			b.el(1, "Date Qualifier", edi.TemplateElementSourceConstant, "86"),
-			b.field(2, "Invoice Date", "invoice.invoiceDate", ""),
+			b.date(2, "Invoice Date", "invoice.invoiceDate"),
 		}),
 		b.segment(80, "N1", "Name", "", false, []edi.TemplateElement{
 			b.el(1, "Entity Identifier Code", edi.TemplateElementSourceConstant, "BT"),
@@ -145,12 +141,12 @@ func Base210Segments(
 			false,
 			[]edi.TemplateElement{
 				b.repeat(1, "Lading Line Item Number", "sequence", ""),
-				b.repeat(4, "Charge", "amount", ""),
+				b.repeatAmount(4, "Charge", "amount"),
 				b.repeat(8, "Special Charge Code", "code", ""),
 			},
 		),
 		b.segment(150, "L3", "Total Weight and Charges", "", true, []edi.TemplateElement{
-			b.field(5, "Charge", "invoice.totalAmount", "", true),
+			b.amount(5, "Charge", "invoice.totalAmount", true),
 		}),
 	)
 	segments = append(segments, x12Trailers(b, 160)...)
@@ -290,128 +286,6 @@ func Base990Segments(
 		}),
 	)
 	segments = append(segments, x12Trailers(b, 70)...)
-	return segments
-}
-
-func Base997Segments(
-	tenantInfo pagination.TenantInfo,
-	versionID pulid.ID,
-) []*edi.EDITemplateSegment {
-	return acknowledgmentSegments(
-		tenantInfo,
-		versionID,
-		edi.TransactionSet997,
-		"functionalAck",
-		false,
-	)
-}
-
-func Base999Segments(
-	tenantInfo pagination.TenantInfo,
-	versionID pulid.ID,
-) []*edi.EDITemplateSegment {
-	return acknowledgmentSegments(
-		tenantInfo,
-		versionID,
-		edi.TransactionSet999,
-		"implementationAck",
-		true,
-	)
-}
-
-func acknowledgmentSegments(
-	tenantInfo pagination.TenantInfo,
-	versionID pulid.ID,
-	transactionSet edi.TransactionSet,
-	root string,
-	implementation bool,
-) []*edi.EDITemplateSegment {
-	b := base204Builder{tenantInfo: tenantInfo, versionID: versionID}
-	segments := append([]*edi.EDITemplateSegment{}, b.envelopeSegments()...)
-	errorSegment := "AK3"
-	errorElement := "AK4"
-	ackSegment := "AK5"
-	if implementation {
-		errorSegment = "IK3"
-		errorElement = "IK4"
-		ackSegment = "IK5"
-	}
-	segments = append(
-		segments,
-		x12ST(b, transactionSet),
-		b.segment(40, "AK1", "Functional Group Response Header", "", true, []edi.TemplateElement{
-			b.field(1, "Functional Identifier Code", root+".originalFunctionalGroupId", "", true),
-			b.field(2, "Group Control Number", root+".originalGroupControlNumber", "", true),
-		}),
-		b.segment(50, "AK2", "Transaction Set Response Header", "", false, []edi.TemplateElement{
-			b.field(
-				1,
-				"Transaction Set Identifier Code",
-				root+".originalTransactionSet",
-				"",
-				false,
-			),
-			b.field(
-				2,
-				"Transaction Set Control Number",
-				root+".originalTransactionControlNumber",
-				"",
-				false,
-			),
-		}),
-		b.segment(
-			60,
-			errorSegment,
-			"Data Segment Note",
-			root+".diagnostics",
-			false,
-			[]edi.TemplateElement{
-				b.repeat(1, "Segment ID Code", "segmentId", ""),
-				b.repeat(2, "Segment Position", "segmentPosition", ""),
-				b.repeat(4, "Error Code", "errorCode", ""),
-			},
-		),
-		b.segment(
-			70,
-			errorElement,
-			"Data Element Note",
-			root+".diagnostics",
-			false,
-			[]edi.TemplateElement{
-				b.repeat(1, "Element Position", "elementPosition", ""),
-				b.repeat(3, "Error Code", "errorCode", ""),
-			},
-		),
-		b.segment(
-			80,
-			ackSegment,
-			"Transaction Set Response Trailer",
-			"",
-			true,
-			[]edi.TemplateElement{
-				b.field(
-					1,
-					"Transaction Set Acknowledgment Code",
-					root+".transactionAcknowledgmentCode",
-					"A",
-					true,
-				),
-			},
-		),
-		b.segment(90, "AK9", "Functional Group Response Trailer", "", true, []edi.TemplateElement{
-			b.field(
-				1,
-				"Functional Group Acknowledge Code",
-				root+".groupAcknowledgmentCode",
-				"A",
-				true,
-			),
-			b.field(2, "Included Transaction Sets", root+".includedTransactionSetCount", "1", true),
-			b.field(3, "Received Transaction Sets", root+".receivedTransactionSetCount", "1", true),
-			b.field(4, "Accepted Transaction Sets", root+".acceptedTransactionSetCount", "1", true),
-		}),
-	)
-	segments = append(segments, x12Trailers(b, 100)...)
 	return segments
 }
 

@@ -12,7 +12,7 @@ func formatSegments(segments []X12Segment, diagnostics []NormalizedDiagnostic) s
 		if i > 0 {
 			builder.WriteByte('\n')
 		}
-		prefix := indentationForSegment(segment.SegmentID)
+		prefix := indentationForSegment(segment)
 		builder.WriteString(prefix)
 		builder.WriteString(segment.SegmentID)
 		builder.WriteString(" - ")
@@ -72,15 +72,18 @@ func diagnosticIndexesForSegment(
 	return matches
 }
 
-func indentationForSegment(segmentID string) string {
-	switch segmentID {
+func indentationForSegment(segment *X12Segment) string {
+	switch segment.SegmentID {
 	case "ISA", "IEA":
 		return ""
 	case "GS", "GE":
 		return "  "
-	default:
-		return "    "
 	}
+	depth := 0
+	if segment.Loop != "" {
+		depth = strings.Count(segment.Loop, "/") + 1
+	}
+	return strings.Repeat("  ", depth+2)
 }
 
 func twoDigit(value int) string {

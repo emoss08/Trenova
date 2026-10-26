@@ -6,6 +6,8 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/emoss08/trenova/pkg/wasmmodule"
+
 	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiusage"
@@ -287,7 +289,7 @@ func TestExplainFormula_RefusesSourceThatDoesNotCheck(t *testing.T) {
 		Diagnostics: []rules.TariffDiagnostic{{
 			Severity: rules.SeverityError,
 			Code:     "unknown-name",
-			Message:  rules.Message{Template: "There is no `ratee`"},
+			Message:  wasmmodule.Message{Template: "There is no `ratee`"},
 		}},
 	}
 
@@ -429,7 +431,7 @@ func TestSuggestTests_WritesRunnableBlocksAndRunsThem(t *testing.T) {
 				Name:   "Long trip fails",
 				Status: rules.TariffTestFailed,
 				Failures: []rules.TariffTestFailure{{
-					Message: rules.Message{Template: "total was $6,000"},
+					Message: wasmmodule.Message{Template: "total was $6,000"},
 				}},
 			})
 		}
@@ -472,7 +474,7 @@ func TestSuggestTests_RefusesSourceThatDoesNotCheck(t *testing.T) {
 				Diagnostics: []rules.TariffDiagnostic{{
 					Severity: rules.SeverityError,
 					Code:     "syntax",
-					Message:  rules.Message{Template: "Expected a charge"},
+					Message:  wasmmodule.Message{Template: "Expected a charge"},
 				}},
 			},
 			Tests: passingRun(),
@@ -519,7 +521,7 @@ func failingTests(string) *formulatemplateservice.TestSourceResult {
 			Name:   "a short haul bills its miles",
 			Status: rules.TariffTestFailed,
 			Failures: []rules.TariffTestFailure{{
-				Message: rules.Message{Template: "total was $250, not $200"},
+				Message: wasmmodule.Message{Template: "total was $250, not $200"},
 			}},
 		}}},
 	}

@@ -5,7 +5,7 @@
 //! parameter's doc ([`param_text`] of its function's) is a template too. `task i18n` collects the
 //! same templates from the `.tariff` sources (`i18n/tools/extract-tariff.mjs`).
 //!
-//! [`crate::message::Message`] carries a `&'static str`, while a collapsed doc is computed. The
+//! [`trenova_module_kit::message::Message`] carries a `&'static str`, while a collapsed doc is computed. The
 //! templates are therefore built once per process into a table that lives for the program, and
 //! [`template`] hands out `&'static str`s into it: no leak per call, and no template that the
 //! standard library sources do not hold.

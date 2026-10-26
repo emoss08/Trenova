@@ -3,6 +3,7 @@ package errors
 import (
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/rules"
+	"github.com/emoss08/trenova/pkg/wasmmodule"
 )
 
 const (
@@ -91,7 +92,7 @@ func (e *DiagnosticError) LocalizedMessage() (message string, args []any) {
 
 type EvaluationError struct {
 	Code    string
-	Message rules.Message
+	Message wasmmodule.Message
 	Range   *rules.TariffRange
 }
 

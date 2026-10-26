@@ -25,6 +25,7 @@ import {
   getReadOnlyReason,
   getTransformOperationDefinition,
   insertPathReference,
+  isAcknowledgmentTransactionSet,
   isTemplateVersionEditable,
   parseConditionString,
   resolveSelectedDocumentTemplateId,
@@ -280,6 +281,23 @@ describe("transform operation metadata", () => {
     const definition = getTransformOperationDefinition("replace");
     expect(definition?.arguments.map((argument) => argument.key)).toEqual(["old", "new", "count"]);
   });
+  it("lets format_decimal write implied decimal places for X12 N types", () => {
+    const definition = getTransformOperationDefinition("format_decimal");
+    expect(definition?.arguments.map((argument) => [argument.key, argument.kind])).toEqual([
+      ["places", "number"],
+      ["implied", "boolean"],
+    ]);
+  });
+});
+
+describe("isAcknowledgmentTransactionSet", () => {
+  it("is true only for 997 and 999, which Trenova writes without a template", () => {
+    expect(
+      ["997", "999", "204", "210", "214", "990", "", null, undefined].map(
+        isAcknowledgmentTransactionSet,
+      ),
+    ).toEqual([true, true, false, false, false, false, false, false, false]);
+  });
 });
 
 describe("EDI document source inputs", () => {
@@ -300,11 +318,9 @@ describe("EDI document source inputs", () => {
     ]);
     expect(getEDIDocumentSourceInputs("997").map((input) => input.field)).toEqual([
       "sourceMessageId",
-      "payload",
     ]);
     expect(getEDIDocumentSourceInputs("999").map((input) => input.field)).toEqual([
       "sourceMessageId",
-      "payload",
     ]);
     expect(getEDIDocumentSourceInputs(undefined).map((input) => input.field)).toEqual(["payload"]);
   });

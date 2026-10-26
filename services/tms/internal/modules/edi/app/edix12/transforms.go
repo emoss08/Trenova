@@ -409,7 +409,14 @@ func transformFormatDecimal(r *transformRuntime, value any, args map[string]any)
 			valueToString(value),
 		)
 	}
+	implied, _, err := r.optionalArg(args, "implied")
+	if err != nil {
+		return nil, err
+	}
 	places32 := int32(places)
+	if flag, isBool := implied.(bool); isBool && flag {
+		return number.Shift(places32).Round(0).StringFixed(0), nil
+	}
 	return number.StringFixed(places32), nil
 }
 

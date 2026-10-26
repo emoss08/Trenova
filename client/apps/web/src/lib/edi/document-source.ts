@@ -58,14 +58,8 @@ const ediDocumentSourceInputsByTransactionSet: Record<string, EDIDocumentSourceI
     { field: "transferId", label: "Transfer ID", placeholder: "editr_..." },
     { field: "payload", label: "Payload JSON", placeholder: "" },
   ],
-  "997": [
-    { field: "sourceMessageId", label: "Source message ID", placeholder: "edimsg_..." },
-    { field: "payload", label: "Payload JSON", placeholder: "" },
-  ],
-  "999": [
-    { field: "sourceMessageId", label: "Source message ID", placeholder: "edimsg_..." },
-    { field: "payload", label: "Payload JSON", placeholder: "" },
-  ],
+  "997": [{ field: "sourceMessageId", label: "Source message ID", placeholder: "edimsg_..." }],
+  "999": [{ field: "sourceMessageId", label: "Source message ID", placeholder: "edimsg_..." }],
 };
 
 export function getEDIDocumentSourceInputs(transactionSet?: string | null) {

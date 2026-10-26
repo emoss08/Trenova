@@ -4,7 +4,7 @@
 //! [`check`] takes a loaded [`Program`] (the root file and every library it imports) and the
 //! request's [`Context`](crate::tariff::context::Context), and returns an [`Analysis`]:
 //!
-//! - **diagnostics** per module, each with a stable code, an English [`Message`](crate::message::Message)
+//! - **diagnostics** per module, each with a stable code, an English [`Message`](trenova_module_kit::message::Message)
 //!   and fixes (the loader's and parser's stay in [`Program::diagnostics`]);
 //! - the **type** of every expression, by [`NodeId`], per module ([`Analysis::type_of`], which
 //!   the evaluator's static type oracle reads);

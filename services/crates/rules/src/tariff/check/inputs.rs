@@ -20,14 +20,14 @@ use super::consts::wire;
 use super::decls::State;
 use super::describe::{quote, unit_text};
 use super::{InputInfo, ModuleAnalysis};
-use crate::message;
-use crate::message::Message;
 use crate::tariff::diagnostic::nearest;
 use crate::tariff::syntax::ast::ItemKind;
 use crate::tariff::syntax::program::{Decl, Module};
 use crate::tariff::types::Type;
 use crate::tariff::units::Dim;
 use serde_json::{Map, Value as Json, json};
+use trenova_module_kit::message;
+use trenova_module_kit::message::Message;
 
 /// The root's inputs, in declaration order.
 #[must_use]

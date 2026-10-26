@@ -36,11 +36,11 @@
 
 use super::error::{Code, EvalError, Refusal};
 use super::value::{Value, money_digits};
-use crate::message::{Arg, Message};
 use crate::span::Span;
 use crate::tariff::syntax::ast::{ChooseKind, RoundMode};
 use rust_decimal::{Decimal, RoundingStrategy};
 use std::collections::BTreeMap;
+use trenova_module_kit::message::{Arg, Message};
 
 /// What a line is.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
@@ -125,7 +125,7 @@ pub fn limit(
     {
         return Err(EvalError::with(
             Code::Argument,
-            crate::message!("The charge's minimum {0} is above its maximum {1}"),
+            trenova_module_kit::message!("The charge's minimum {0} is above its maximum {1}"),
             [
                 Arg::from(Value::money(low).display()),
                 Arg::from(Value::money(high).display()),
@@ -271,7 +271,7 @@ pub fn round_to(
     if increment <= Decimal::ZERO {
         return Err(EvalError::with(
             Code::Argument,
-            crate::message!("A rounding increment must be more than zero, not {0}"),
+            trenova_module_kit::message!("A rounding increment must be more than zero, not {0}"),
             [Arg::from(format!("${}", money_digits(increment)))],
         ));
     }
@@ -360,7 +360,7 @@ impl Bill {
             return Err(EvalError::new(
                 Code::NegativeCharge,
                 Message::with(
-                    crate::message!(
+                    trenova_module_kit::message!(
                         "The {0} charge came out at {1}: a coded charge must be more than zero"
                     ),
                     [
@@ -430,13 +430,17 @@ impl Bill {
         let accessorial_total = sum(kept.iter().filter(|line| !line.freight()))?;
         if freight_total.is_sign_negative() && !freight_total.is_zero() {
             return Err(below_zero(
-                crate::message!("The freight lines add up to {0}: freight cannot be below zero"),
+                trenova_module_kit::message!(
+                    "The freight lines add up to {0}: freight cannot be below zero"
+                ),
                 freight_total,
             ));
         }
         if rounded_total.is_sign_negative() && !rounded_total.is_zero() {
             return Err(below_zero(
-                crate::message!("The bill's total is {0}: a total cannot be below zero"),
+                trenova_module_kit::message!(
+                    "The bill's total is {0}: a total cannot be below zero"
+                ),
                 rounded_total,
             ));
         }
@@ -652,7 +656,7 @@ impl Finished {
         if rate <= Decimal::ZERO {
             return Err(EvalError::with(
                 Code::Argument,
-                crate::message!("An exchange rate must be more than zero, not {0}"),
+                trenova_module_kit::message!("An exchange rate must be more than zero, not {0}"),
                 [Arg::from(super::value::format_decimal(rate))],
             ));
         }

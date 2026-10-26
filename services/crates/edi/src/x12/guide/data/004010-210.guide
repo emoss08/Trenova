@@ -1,0 +1,60 @@
+guide x12.004010.210 | Motor Carrier Freight Details and Invoice
+set 210 IM 004010
+
+# Heading
+ST M 1
+B3 M 1
+C3 O 1
+ITD O 1
+N9 O 300
+G62 O 6
+R3 O 12
+H3 O 6
+K1 O 10
+loop 0100 O 10 | Name
+  N1 M 1
+  N2 O 1
+  N3 O 2
+  N4 O 1
+  N9 O 5
+end
+loop 0200 O 10 | Equipment Details
+  N7 M 1
+  M7 O 5
+end
+loop 0300 O 12 | Stop Off Details
+  S5 M 1
+  N9 O 10
+  G62 O 2
+  loop 0310 O 2 | Name
+    N1 M 1
+    N2 O 1
+    N3 O 2
+    N4 O 1
+  end
+end
+
+# Detail
+loop 0400 O 9999 | Assigned Number
+  LX M 1
+  N9 O 5
+  POD O 1
+  L5 O 30
+  L0 O 10
+  L1 O 10
+  L4 O 10
+  L7 O 10
+  K1 O 10
+  loop 0460 O 999 | Name
+    N1 M 1
+    N2 O 1
+    N3 O 2
+    N4 O 1
+    N9 O 5
+  end
+end
+
+# Summary
+L3 M 1
+K1 O 10
+SE M 1

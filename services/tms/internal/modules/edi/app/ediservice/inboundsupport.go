@@ -340,14 +340,10 @@ func (s *Service) EnsureOutboundDocumentProfile(
 	if err != nil {
 		return nil, err
 	}
-	template, _, err := s.templateRepo.EnsureBaseTemplate(ctx, tenantInfo, transactionSet)
-	if err != nil {
-		return nil, err
-	}
 	return s.UpsertPartnerDocumentProfile(ctx, &UpsertEDIPartnerDocumentProfileRequest{
 		TenantInfo:     tenantInfo,
 		EDIPartnerID:   partnerID,
-		TemplateID:     template.ID,
+		TransactionSet: transactionSet,
 		Status:         edi.DocumentStatusActive,
 		Envelope:       envelope,
 		Acknowledgment: edi.AcknowledgmentConfig{Type: edi.AcknowledgmentTypeNone},

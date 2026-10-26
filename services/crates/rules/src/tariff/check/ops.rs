@@ -14,7 +14,6 @@
 use super::consts::wire;
 use super::inputs::validate;
 use super::{Analysis, InputInfo};
-use crate::ops::{OpResult, RequestError, decode, encode};
 use crate::span::{Span, Utf16Index};
 use crate::tariff::context::Context;
 use crate::tariff::diagnostic::{Diagnostic, WireDiagnostic};
@@ -23,6 +22,7 @@ use crate::tariff::syntax::program::{ModuleId, Program, load};
 use serde::Deserialize;
 use serde_json::value::RawValue;
 use serde_json::{Map, Value as Json, json};
+use trenova_module_kit::ops::{OpResult, RequestError, decode, encode};
 
 #[derive(Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]

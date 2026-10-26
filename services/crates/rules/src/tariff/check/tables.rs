@@ -18,8 +18,6 @@ use super::ModuleAnalysis;
 use super::checker::{Checker, Want};
 use super::describe::{quote, words};
 use super::fixes::replace;
-use crate::message;
-use crate::message::{Arg, Message};
 use crate::span::Span;
 use crate::tariff::context::Context;
 use crate::tariff::diagnostic::Diagnostic;
@@ -28,6 +26,8 @@ use crate::tariff::syntax::ast::{Arg as CallArg, Expr, ExprKind, ItemKind, Name,
 use crate::tariff::syntax::program::Module;
 use crate::tariff::types::{FieldDef, RecordType, Type};
 use std::sync::Arc;
+use trenova_module_kit::message;
+use trenova_module_kit::message::{Arg, Message};
 
 /// The methods a table has besides indexing.
 pub const TABLE_METHODS: &[(&str, &str)] = &[

@@ -1,0 +1,688 @@
+# Version 004010 segments for the transportation sets Trenova reads and writes (204, 210, 214,
+# 990) and the functional acknowledgment (997). Written from trading partners' published
+# implementation guides for these sets. Element lengths, types, usage and syntax notes are the
+# standard's; code lists are kept only where they are short and stable, since a partner's guide
+# restricts the rest.
+
+segment ST | Transaction Set Header
+  143 ID 3/3 M | Transaction Set Identifier Code
+  329 AN 4/9 M | Transaction Set Control Number
+
+segment SE | Transaction Set Trailer
+  96 N0 1/10 M | Number of Included Segments
+  329 AN 4/9 M | Transaction Set Control Number
+
+segment B1 | Beginning Segment for Booking or Pick-up/Delivery
+  140 ID 2/4 M | Standard Carrier Alpha Code
+  145 AN 1/30 M | Shipment Identification Number
+  373 DT 8/8 X | Date
+  558 ID 1/1 X | Reservation Action Code
+  rules P0304
+
+segment B2 | Beginning Segment for Shipment Information Transaction
+  375 ID 2/2 O | Tariff Service Code
+  140 ID 2/4 O | Standard Carrier Alpha Code
+  195 ID 6/9 O | Standard Point Location Code
+  145 AN 1/30 O | Shipment Identification Number
+  188 ID 1/1 O | Weight Unit Code
+  146 ID 2/2 M | Shipment Method of Payment
+  147 ID 1/1 O | Shipment Qualifier
+  86 N0 1/3 O | Total Equipment
+  460 ID 1/1 O | Customs Documentation Handling Code
+  129 ID 1/1 O | Line of Business
+  183 R 1/8 O | Volume
+  184 ID 1/1 O | Volume Unit Qualifier
+
+segment B2A | Set Purpose
+  353 ID 2/2 M | Transaction Set Purpose Code
+  346 ID 2/2 O | Application Type
+
+segment B3 | Beginning Segment for Carrier's Invoice
+  147 ID 1/1 O | Shipment Qualifier
+  76 AN 1/22 M | Invoice Number
+  145 AN 1/30 O | Shipment Identification Number
+  146 ID 2/2 M | Shipment Method of Payment
+  188 ID 1/1 O | Weight Unit Code
+  373 DT 8/8 M | Date
+  193 N2 1/12 M | Net Amount Due
+  202 ID 2/2 O | Correction Indicator
+  32 DT 8/8 X | Delivery Date
+  374 ID 3/3 X | Date/Time Qualifier
+  140 ID 2/4 M | Standard Carrier Alpha Code
+  373 DT 8/8 O | Date
+  375 ID 2/2 O | Tariff Service Code
+  335 ID 3/3 O | Transportation Terms Code
+  rules P0910
+
+segment B10 | Beginning Segment for Transportation Carrier Shipment Status Message
+  127 AN 1/30 X | Reference Identification
+  145 AN 1/30 X | Shipment Identification Number
+  140 ID 2/4 M | Standard Carrier Alpha Code
+  71 N0 1/9 O | Inquiry Request Number
+  128 ID 2/3 O | Reference Identification Qualifier
+  127 AN 1/30 O | Reference Identification
+  1073 ID 1/1 O | Yes/No Condition or Response Code
+  rules R0102 P0506
+
+segment C3 | Currency
+  100 ID 3/3 M | Currency Code
+  280 R 4/10 O | Exchange Rate
+  100 ID 3/3 O | Currency Code
+  100 ID 3/3 O | Currency Code
+
+segment ITD | Terms of Sale/Deferred Terms of Sale
+  336 ID 2/2 O | Terms Type Code
+  333 ID 1/2 O | Terms Basis Date Code
+  338 R 1/6 O | Terms Discount Percent
+  370 DT 8/8 X | Terms Discount Due Date
+  351 N0 1/3 X | Terms Discount Days Due
+  446 DT 8/8 O | Terms Net Due Date
+  386 N0 1/3 O | Terms Net Days
+  362 N2 1/10 O | Terms Discount Amount
+  388 DT 8/8 O | Terms Deferred Due Date
+  389 N2 1/10 X | Deferred Amount Due
+  342 R 1/5 X | Percent of Invoice Payable
+  352 AN 1/80 O | Description
+  765 N0 1/2 X | Day of Month
+  107 ID 1/2 O | Payment Method Code
+  954 R 1/10 O | Percent
+
+segment N9 | Reference Identification
+  128 ID 2/3 M | Reference Identification Qualifier
+  127 AN 1/30 X | Reference Identification
+  369 AN 1/45 X | Free-form Description
+  373 DT 8/8 O | Date
+  337 TM 4/8 X | Time
+  623 ID 2/2 O | Time Code
+  C040 composite O | Reference Identifier
+    - 128 ID 2/3 M | Reference Identification Qualifier
+    - 127 AN 1/30 M | Reference Identification
+    - 128 ID 2/3 X | Reference Identification Qualifier
+    - 127 AN 1/30 X | Reference Identification
+    - 128 ID 2/3 X | Reference Identification Qualifier
+    - 127 AN 1/30 X | Reference Identification
+  rules R0203 C0605
+
+segment G62 | Date/Time
+  432 ID 2/2 X | Date Qualifier
+  373 DT 8/8 X | Date
+  176 ID 1/2 X | Time Qualifier
+  337 TM 4/8 X | Time
+  623 ID 2/2 O | Time Code
+  rules R0103 P0102 P0304
+
+segment MS3 | Interline Information
+  140 ID 2/4 M | Standard Carrier Alpha Code
+  133 ID 1/2 M | Routing Sequence Code
+  19 AN 2/30 X | City Name
+  91 ID 1/2 O | Transportation Method/Type Code
+  156 ID 2/2 O | State or Province Code
+  rules C0503
+
+segment AT5 | Bill of Lading Handling Requirements
+  152 ID 2/3 X | Special Handling Code
+  560 ID 2/10 X | Special Services Code
+  153 AN 2/80 X | Special Handling Description
+  rules R010203
+
+segment PLD | Pallet Information
+  406 N0 1/3 M | Quantity of Pallets Shipped
+  399 ID 1/1 O | Pallet Exchange Code
+  188 ID 1/1 X | Weight Unit Code
+  81 R 1/10 X | Weight
+  rules P0304
+
+segment LH6 | Hazardous Certification
+  93 AN 1/60 O | Name
+  1305 ID 1/1 X | Hazardous Certification Code
+  1306 AN 1/25 X | Hazardous Certification Declaration
+  1306 AN 1/25 O | Hazardous Certification Declaration
+  rules P0203
+
+segment NTE | Note/Special Instruction
+  363 ID 3/3 O | Note Reference Code
+  352 AN 1/80 M | Description
+
+segment N1 | Name
+  98 ID 2/3 M | Entity Identifier Code
+  93 AN 1/60 X | Name
+  66 ID 1/2 X | Identification Code Qualifier
+  67 AN 2/80 X | Identification Code
+  706 ID 2/2 O | Entity Relationship Code
+  98 ID 2/3 O | Entity Identifier Code
+  rules R0203 P0304
+
+segment N2 | Additional Name Information
+  93 AN 1/60 M | Name
+  93 AN 1/60 O | Name
+
+segment N3 | Address Information
+  166 AN 1/55 M | Address Information
+  166 AN 1/55 O | Address Information
+
+segment N4 | Geographic Location
+  19 AN 2/30 O | City Name
+  156 ID 2/2 O | State or Province Code
+  116 ID 3/15 O | Postal Code
+  26 ID 2/3 O | Country Code
+  309 ID 1/2 X | Location Qualifier
+  310 AN 1/30 O | Location Identifier
+  rules C0605
+
+segment G61 | Contact
+  366 ID 2/2 M | Contact Function Code
+  93 AN 1/60 M | Name
+  365 ID 2/2 X | Communication Number Qualifier
+  364 AN 1/80 X | Communication Number
+  443 AN 1/20 O | Contact Inquiry Reference
+  rules P0304
+
+segment N7 | Equipment Details
+  206 AN 1/4 O | Equipment Initial
+  207 AN 1/10 M | Equipment Number
+  81 R 1/10 O | Weight
+  187 ID 1/2 X | Weight Qualifier
+  167 R 1/8 O | Tare Weight
+  232 N0 3/8 O | Weight Allowance
+  205 N0 1/6 O | Dunnage
+  183 R 1/8 X | Volume
+  184 ID 1/1 X | Volume Unit Qualifier
+  102 ID 1/1 O | Ownership Code
+  40 ID 2/2 X | Equipment Description Code
+  140 ID 2/4 O | Standard Carrier Alpha Code
+  319 AN 4/4 O | Temperature Control
+  219 AN 1/3 O | Position
+  567 N0 4/5 O | Equipment Length
+  571 N0 2/8 O | Tare Qualifier Code
+  188 ID 1/1 X | Weight Unit Code
+  761 N0 1/2 O | Equipment Number Check Digit
+  56 ID 1/2 O | Type of Service Code
+  65 R 1/8 O | Height
+  189 R 1/8 O | Width
+  24 ID 5/5 O | Equipment Type
+  140 ID 2/4 O | Standard Carrier Alpha Code
+  rules P0304 P0809
+
+segment N7A | Accessorial Equipment Details
+  1 AN 1/80 O | Accessorial Equipment Code
+  1 AN 1/80 O | Accessorial Equipment Code
+  1 AN 1/80 O | Accessorial Equipment Code
+  1 AN 1/80 O | Accessorial Equipment Code
+  1 AN 1/80 O | Accessorial Equipment Code
+  1 AN 1/80 O | Accessorial Equipment Code
+  1 AN 1/80 O | Accessorial Equipment Code
+  1 AN 1/80 O | Accessorial Equipment Code
+  1 AN 1/80 O | Accessorial Equipment Code
+  1 AN 1/80 O | Accessorial Equipment Code
+
+segment MEA | Measurements
+  737 ID 2/2 O | Measurement Reference ID Code
+  738 ID 1/3 X | Measurement Qualifier
+  739 R 1/20 X | Measurement Value
+  C001 composite X | Composite Unit of Measure
+    - 355 ID 2/2 M | Unit or Basis for Measurement Code
+    - 1018 R 1/15 O | Exponent
+    - 649 R 1/10 O | Multiplier
+    - 355 ID 2/2 X | Unit or Basis for Measurement Code
+    - 1018 R 1/15 X | Exponent
+    - 649 R 1/10 X | Multiplier
+    - 355 ID 2/2 X | Unit or Basis for Measurement Code
+    - 1018 R 1/15 X | Exponent
+    - 649 R 1/10 X | Multiplier
+    - 355 ID 2/2 X | Unit or Basis for Measurement Code
+    - 1018 R 1/15 X | Exponent
+    - 649 R 1/10 X | Multiplier
+    - 355 ID 2/2 X | Unit or Basis for Measurement Code
+    - 1018 R 1/15 X | Exponent
+    - 649 R 1/10 X | Multiplier
+  740 R 1/20 X | Range Minimum
+  741 R 1/20 X | Range Maximum
+  935 ID 2/2 O | Measurement Significance Code
+  936 ID 2/2 X | Measurement Attribute Code
+  752 ID 2/2 O | Surface/Layer/Position Code
+  1373 ID 3/3 O | Measurement Method or Device
+
+segment M7 | Seal Numbers
+  225 AN 2/15 M | Seal Number
+  225 AN 2/15 O | Seal Number
+  225 AN 2/15 O | Seal Number
+  225 AN 2/15 O | Seal Number
+  98 ID 2/3 O | Entity Identifier Code
+
+segment S5 | Stop Off Details
+  165 N0 1/3 M | Stop Sequence Number
+  163 ID 2/2 M | Stop Reason Code
+  81 R 1/10 X | Weight
+  188 ID 1/1 X | Weight Unit Code
+  382 R 1/10 X | Number of Units Shipped
+  355 ID 2/2 X | Unit or Basis for Measurement Code
+  183 R 1/8 X | Volume
+  184 ID 1/1 X | Volume Unit Qualifier
+  352 AN 1/80 O | Description
+  190 ID 1/1 O | Standard Point Location Code
+  rules P0304 P0506 P0708
+
+segment L11 | Business Instructions and Reference Number
+  127 AN 1/30 X | Reference Identification
+  128 ID 2/3 X | Reference Identification Qualifier
+  352 AN 1/80 X | Description
+  rules R0103 P0102
+
+segment AT8 | Shipment Weight, Packaging and Quantity Data
+  187 ID 1/2 X | Weight Qualifier
+  188 ID 1/1 X | Weight Unit Code
+  81 R 1/10 X | Weight
+  80 N0 1/7 O | Lading Quantity
+  80 N0 1/7 O | Lading Quantity
+  184 ID 1/1 X | Volume Unit Qualifier
+  183 R 1/8 X | Volume
+  rules P010203 P0607
+
+segment LAD | Lading Detail
+  211 ID 3/5 X | Packaging Form Code
+  80 N0 1/7 X | Lading Quantity
+  188 ID 1/1 X | Weight Unit Code
+  384 R 1/10 X | Unit Weight
+  188 ID 1/1 X | Weight Unit Code
+  81 R 1/10 X | Weight
+  235 ID 2/2 X | Product/Service ID Qualifier
+  234 AN 1/48 X | Product/Service ID
+  235 ID 2/2 X | Product/Service ID Qualifier
+  234 AN 1/48 X | Product/Service ID
+  235 ID 2/2 X | Product/Service ID Qualifier
+  234 AN 1/48 X | Product/Service ID
+  352 AN 1/80 O | Description
+  rules P0102 P0304 P0506 P0708 P0910 P1112
+
+segment L5 | Description, Marks and Numbers
+  213 N0 1/3 O | Lading Line Item Number
+  79 AN 1/50 O | Lading Description
+  22 AN 1/16 X | Commodity Code
+  23 ID 1/1 X | Commodity Code Qualifier
+  103 AN 3/5 O | Packaging Code
+  87 AN 1/48 O | Marks and Numbers
+  88 ID 1/2 X | Marks and Numbers Qualifier
+  23 ID 1/1 X | Commodity Code Qualifier
+  22 AN 1/16 X | Commodity Code
+  595 ID 1/3 O | Compartment ID Code
+  rules P0304 P0708 P0809
+
+segment OID | Order Identification Detail
+  127 AN 1/30 X | Reference Identification
+  324 AN 1/22 X | Purchase Order Number
+  127 AN 1/30 O | Reference Identification
+  355 ID 2/2 X | Unit or Basis for Measurement Code
+  380 R 1/15 X | Quantity
+  188 ID 1/1 X | Weight Unit Code
+  81 R 1/10 X | Weight
+  184 ID 1/1 X | Volume Unit Qualifier
+  183 R 1/8 X | Volume
+  rules R0102 P0405 P0607 P0809
+
+segment LH1 | Hazardous Identification Information
+  355 ID 2/2 M | Unit or Basis for Measurement Code
+  80 N0 1/7 M | Lading Quantity
+  277 AN 6/6 X | UN/NA Identification Code
+  200 AN 1/7 X | Hazardous Materials Page
+  22 AN 1/16 X | Commodity Code
+  355 ID 2/2 X | Unit or Basis for Measurement Code
+  380 R 1/15 X | Quantity
+  254 ID 1/1 O | Packing Group Code
+  1375 AN 1/2 O | Interim Hazardous Material Regulatory Number
+  271 AN 1/80 O | Industry Code
+  rules P0607
+
+segment LH2 | Hazardous Classification Information
+  215 AN 1/30 X | Hazardous Classification
+  983 ID 1/1 X | Hazardous Class Qualifier
+  218 AN 1/7 X | Hazardous Placard Notation
+  222 ID 1/3 O | Hazardous Endorsement
+  759 ID 2/2 O | Reportable Quantity Code
+  355 ID 2/2 X | Unit or Basis for Measurement Code
+  408 R 1/4 X | Temperature
+  355 ID 2/2 X | Unit or Basis for Measurement Code
+  408 R 1/4 X | Temperature
+  355 ID 2/2 X | Unit or Basis for Measurement Code
+  408 R 1/4 X | Temperature
+  rules R0102 P0607 P0809 P1011
+
+segment LH3 | Hazardous Material Shipping Name
+  224 AN 1/25 X | Hazardous Material Shipping Name
+  984 ID 1/1 X | Hazardous Material Shipping Name Qualifier
+  985 ID 1/1 O | N.O.S. Indicator Code
+  1073 ID 1/1 O | Yes/No Condition or Response Code
+  rules P0102
+
+segment LFH | Freeform Hazardous Material Information
+  808 ID 3/3 M | Hazardous Material Shipment Information Qualifier
+  809 AN 1/25 M | Hazardous Material Shipment Information
+  809 AN 1/25 O | Hazardous Material Shipment Information
+  1023 AN 1/10 O | Hazardous Zone Code
+  355 ID 2/2 X | Unit or Basis for Measurement Code
+  380 R 1/15 X | Quantity
+  380 R 1/15 O | Quantity
+  rules P0506
+
+segment L3 | Total Weight and Charges
+  81 R 1/10 X | Weight
+  187 ID 1/2 X | Weight Qualifier
+  60 R 1/9 X | Freight Rate
+  122 ID 2/2 X | Rate/Value Qualifier
+  58 N2 1/12 X | Charge
+  191 N2 1/9 O | Advances
+  117 N2 1/9 O | Prepaid Amount
+  150 ID 3/3 O | Special Charge or Allowance Code
+  183 R 1/8 X | Volume
+  184 ID 1/1 X | Volume Unit Qualifier
+  80 N0 1/7 O | Lading Quantity
+  188 ID 1/1 O | Weight Unit Code
+  171 AN 2/7 O | Tariff Number
+  74 N2 1/12 O | Declared Value
+  122 ID 2/2 X | Rate/Value Qualifier
+  rules P0102 P0304 P0910 P1415
+
+segment R3 | Route Information - Motor
+  140 ID 2/4 M | Standard Carrier Alpha Code
+  133 ID 1/2 M | Routing Sequence Code
+  19 AN 2/30 O | City Name
+  91 ID 1/2 O | Transportation Method/Type Code
+  646 AN 1/9 O | Standard Point Location Code
+  76 AN 1/22 O | Invoice Number
+  373 DT 8/8 O | Date
+  193 N2 1/12 O | Net Amount Due
+  56 ID 1/2 O | Type of Service Code
+
+segment H3 | Special Handling Instructions
+  152 ID 2/3 X | Special Handling Code
+  153 AN 2/30 X | Special Handling Description
+  241 ID 2/2 O | Protective Service Code
+  242 ID 2/4 O | Vent Instruction Code
+  257 ID 2/2 O | Tariff Application Code
+  rules R0102
+
+segment K1 | Remarks
+  61 AN 1/30 M | Free-Form Message
+  61 AN 1/30 O | Free-Form Message
+
+segment LX | Assigned Number
+  554 N0 1/6 M | Assigned Number
+
+segment POD | Proof of Delivery
+  373 DT 8/8 M | Date
+  337 TM 4/8 O | Time
+  93 AN 1/60 M | Name
+
+segment L0 | Line Item - Quantity and Weight
+  213 N0 1/3 O | Lading Line Item Number
+  220 R 1/15 X | Billed/Rated-as Quantity
+  221 ID 2/2 X | Billed/Rated-as Qualifier
+  81 R 1/10 X | Weight
+  187 ID 1/2 X | Weight Qualifier
+  183 R 1/8 X | Volume
+  184 ID 1/1 X | Volume Unit Qualifier
+  80 N0 1/7 X | Lading Quantity
+  211 ID 3/5 X | Packaging Form Code
+  458 AN 2/2 O | Dunnage Description
+  188 ID 1/1 O | Weight Unit Code
+  56 ID 1/2 O | Type of Service Code
+  380 R 1/15 X | Quantity
+  211 ID 3/5 X | Packaging Form Code
+  1073 ID 1/1 O | Yes/No Condition or Response Code
+  rules P0203 P0405 P0607 P0809 P1314
+
+segment L1 | Rate and Charges
+  213 N0 1/3 O | Lading Line Item Number
+  60 R 1/9 X | Freight Rate
+  122 ID 2/2 X | Rate/Value Qualifier
+  58 N2 1/12 X | Charge
+  191 N2 1/9 O | Advances
+  117 N2 1/9 O | Prepaid Amount
+  120 N0 1/3 O | Rate Combination Point Code
+  150 ID 3/3 O | Special Charge or Allowance Code
+  121 AN 1/4 O | Rate Class Code
+  39 ID 2/3 O | Entitlement Code
+  16 ID 1/1 O | Charge Method of Payment
+  276 AN 1/25 O | Special Charge Description
+  257 ID 2/2 O | Tariff Application Code
+  74 N2 1/12 O | Declared Value
+  122 ID 2/2 O | Rate/Value Qualifier
+  372 ID 1/2 O | Lading Liability Code
+  220 R 1/15 X | Billed/Rated-as Quantity
+  221 ID 2/2 X | Billed/Rated-as Qualifier
+  954 R 1/10 O | Percent
+  100 ID 3/3 O | Currency Code
+  610 N2 1/15 O | Amount
+  rules P0203 P1718
+
+segment L4 | Measurement
+  82 R 1/8 M | Length
+  189 R 1/8 M | Width
+  65 R 1/8 M | Height
+  90 ID 1/1 M | Measurement Unit Qualifier
+  380 R 1/15 O | Quantity
+  271 AN 1/30 O | Industry Code
+
+segment L7 | Tariff Reference
+  213 N0 1/3 O | Lading Line Item Number
+  168 AN 1/4 O | Tariff Agency Code
+  171 AN 1/7 O | Tariff Number
+  172 AN 1/2 O | Tariff Section
+  169 AN 1/4 O | Tariff Item Number
+  170 N0 1/2 O | Tariff Item Part
+  59 AN 1/16 O | Freight Class Code
+  173 AN 1/4 O | Tariff Supplement Identifier
+  46 AN 1/30 O | Ex Parte
+  373 DT 8/8 O | Date
+  119 AN 1/6 O | Rate Basis Number
+  227 AN 1/4 O | Tariff Column
+  294 AN 1/2 O | Tariff Distance
+  295 ID 1/1 O | Distance Qualifier
+  19 AN 2/30 O | City Name
+  156 ID 2/2 O | State or Province Code
+
+segment AT7 | Shipment Status Details
+  1650 ID 2/2 X | Shipment Status Code
+  1651 ID 2/2 X | Shipment Status or Appointment Reason Code
+  1652 ID 2/2 X | Shipment Appointment Status Code
+  1651 ID 2/2 X | Shipment Status or Appointment Reason Code
+  373 DT 8/8 O | Date
+  337 TM 4/8 X | Time
+  623 ID 2/2 O | Time Code
+  rules R0103 P0102 P0304 C0706
+
+segment MS1 | Equipment, Shipment, or Real Property Location
+  19 AN 2/30 X | City Name
+  156 ID 2/2 X | State or Province Code
+  26 ID 2/3 X | Country Code
+  1654 R 7/7 X | Longitude Code
+  1655 R 7/7 X | Latitude Code
+  1280 ID 1/1 X | Direction Identifier Code
+  1280 ID 1/1 X | Direction Identifier Code
+  rules L010203 P0405 C0604 C0705
+
+segment MS2 | Equipment or Container Owner and Type
+  140 ID 2/4 O | Standard Carrier Alpha Code
+  207 AN 1/10 O | Equipment Number
+  40 ID 2/2 O | Equipment Description Code
+  761 N0 1/1 O | Equipment Number Check Digit
+  rules P0102
+
+segment Q7 | Lading Exception Status
+  1651 ID 2/2 M | Shipment Status or Appointment Reason Code
+  211 ID 3/5 X | Packaging Form Code
+  80 N0 1/7 X | Lading Quantity
+  188 ID 1/1 X | Weight Unit Code
+  81 R 1/10 X | Weight
+  rules P0203 P0405
+
+segment MAN | Marks and Numbers
+  88 ID 1/2 M | Marks and Numbers Qualifier
+  87 AN 1/48 M | Marks and Numbers
+  87 AN 1/48 O | Marks and Numbers
+  88 ID 1/2 X | Marks and Numbers Qualifier
+  87 AN 1/48 X | Marks and Numbers
+  87 AN 1/48 O | Marks and Numbers
+  rules P0405
+
+segment CD3 | Carton (Package) Detail
+  188 ID 1/1 X | Weight Unit Code
+  81 R 1/10 X | Weight
+  1656 AN 1/2 O | Zone
+  1657 ID 2/2 O | Service Standard
+  284 ID 1/2 O | Service Level Code
+  368 ID 2/2 O | Shipment/Order Status Code
+  284 ID 1/2 O | Service Level Code
+  284 ID 1/2 O | Service Level Code
+  26 ID 2/3 O | Country Code
+  166 AN 1/55 O | Address Information
+  57 ID 1/1 O | Weight Determination Code
+  rules P0102
+
+segment H6 | Special Services
+  560 ID 2/10 O | Special Services Code
+  152 ID 2/3 O | Special Handling Code
+  1678 N0 1/3 X | Quantity of Pallets
+  1679 ID 1/1 X | Pallet Exchange Code
+  1680 AN 1/80 O | Special Handling Description
+  1681 ID 1/2 O | Equipment Description Code
+  1682 AN 1/2 O | Equipment Size
+  rules P0304
+
+segment SPO | Shipment Purchase Order Detail
+  324 AN 1/22 M | Purchase Order Number
+  127 AN 1/30 O | Reference Identification
+  355 ID 2/2 X | Unit or Basis for Measurement Code
+  380 R 1/15 X | Quantity
+  188 ID 1/1 X | Weight Unit Code
+  81 R 1/10 X | Weight
+  1004 ID 1/1 O | Application Error Condition Code
+  1648 AN 1/30 O | Item Number
+  rules P0304 P0506
+
+segment AK1 | Functional Group Response Header
+  479 ID 2/2 M | Functional Identifier Code
+  28 N0 1/9 M | Group Control Number
+
+segment AK2 | Transaction Set Response Header
+  143 ID 3/3 M | Transaction Set Identifier Code
+  329 AN 4/9 M | Transaction Set Control Number
+
+segment AK3 | Data Segment Note
+  721 ID 2/3 M | Segment ID Code
+  719 N0 1/6 M | Segment Position in Transaction Set
+  447 AN 1/6 O | Loop Identifier Code
+  720 ID 1/3 O | Segment Syntax Error Code
+
+segment AK4 | Data Element Note
+  C030 composite M | Position in Segment
+    - 722 N0 1/2 M | Element Position in Segment
+    - 1528 N0 1/2 O | Component Data Element Position in Composite
+  725 N0 1/4 O | Data Element Reference Number
+  723 ID 1/3 M | Data Element Syntax Error Code
+  724 AN 1/99 O | Copy of Bad Data Element
+
+segment AK5 | Transaction Set Response Trailer
+  717 ID 1/1 M | Transaction Set Acknowledgment Code
+  718 ID 1/3 O | Transaction Set Syntax Error Code
+  718 ID 1/3 O | Transaction Set Syntax Error Code
+  718 ID 1/3 O | Transaction Set Syntax Error Code
+  718 ID 1/3 O | Transaction Set Syntax Error Code
+  718 ID 1/3 O | Transaction Set Syntax Error Code
+
+segment AK9 | Functional Group Response Trailer
+  715 ID 1/1 M | Functional Group Acknowledge Code
+  97 N0 1/6 M | Number of Transaction Sets Included
+  123 N0 1/6 M | Number of Received Transaction Sets
+  2 N0 1/6 M | Number of Accepted Transaction Sets
+  716 ID 1/3 O | Functional Group Syntax Error Code
+  716 ID 1/3 O | Functional Group Syntax Error Code
+  716 ID 1/3 O | Functional Group Syntax Error Code
+  716 ID 1/3 O | Functional Group Syntax Error Code
+  716 ID 1/3 O | Functional Group Syntax Error Code
+
+codes 717 | Transaction Set Acknowledgment Code
+  A | Accepted
+  E | Accepted But Errors Were Noted
+  M | Rejected, Message Authentication Code (MAC) Failed
+  R | Rejected
+  W | Rejected, Assurance Failed Validity Tests
+  X | Rejected, Content After Decryption Could Not Be Analyzed
+
+codes 715 | Functional Group Acknowledge Code
+  A | Accepted
+  E | Accepted, But Errors Were Noted
+  M | Rejected, Message Authentication Code (MAC) Failed
+  P | Partially Accepted, At Least One Transaction Set Was Rejected
+  R | Rejected
+  W | Rejected, Assurance Failed Validity Tests
+  X | Rejected, Content After Decryption Could Not Be Analyzed
+
+codes 720 | Segment Syntax Error Code
+  1 | Unrecognized segment ID
+  2 | Unexpected segment
+  3 | Mandatory segment missing
+  4 | Loop Occurs Over Maximum Times
+  5 | Segment Exceeds Maximum Use
+  6 | Segment Not in Defined Transaction Set
+  7 | Segment Not in Proper Sequence
+  8 | Segment Has Data Element Errors
+
+codes 723 | Data Element Syntax Error Code
+  1 | Mandatory data element missing
+  2 | Conditional required data element missing
+  3 | Too many data elements
+  4 | Data element too short
+  5 | Data element too long
+  6 | Invalid character in data element
+  7 | Invalid code value
+  8 | Invalid Date
+  9 | Invalid Time
+  10 | Exclusion Condition Violated
+  12 | Too Many Repetitions
+  13 | Too Many Components
+
+codes 718 | Transaction Set Syntax Error Code
+  1 | Transaction Set Not Supported
+  2 | Transaction Set Trailer Missing
+  3 | Transaction Set Control Number in Header and Trailer Do Not Match
+  4 | Number of Included Segments Does Not Match Actual Count
+  5 | One or More Segments in Error
+  6 | Missing or Invalid Transaction Set Identifier
+  7 | Missing or Invalid Transaction Set Control Number
+  8 | Authentication Key Name Unknown
+  9 | Encryption Key Name Unknown
+  10 | Requested Service (Authentication or Encrypted) Not Available
+  11 | Unknown Security Recipient
+  12 | Incorrect Message Length (Encryption Only)
+  13 | Message Authentication Code Failed
+  15 | Unknown Security Originator
+  16 | Syntax Error in Decrypted Text
+  17 | Security Not Supported
+  18 | Transaction Set not in Functional Group
+  23 | Transaction Set Control Number Not Unique within the Functional Group
+  24 | S3E Security End Segment Missing for S3S Security Start Segment
+  25 | S3S Security Start Segment Missing for S3E Security End Segment
+  26 | S4E Security End Segment Missing for S4S Security Start Segment
+  27 | S4S Security Start Segment Missing for S4E Security End Segment
+
+codes 716 | Functional Group Syntax Error Code
+  1 | Functional Group Not Supported
+  2 | Functional Group Version Not Supported
+  3 | Functional Group Trailer Missing
+  4 | Group Control Number in the Functional Group Header and Trailer Do Not Agree
+  5 | Number of Included Transaction Sets Does Not Match Actual Count
+  6 | Group Control Number Violates Syntax
+  10 | Authentication Key Name Unknown
+  11 | Encryption Key Name Unknown
+  12 | Requested Service (Authentication or Encryption) Not Available
+  13 | Unknown Security Recipient
+  14 | Unknown Security Originator
+  15 | Syntax Error in Decrypted Text
+  16 | Security Not Supported
+  17 | Incorrect Message Length (Encryption Only)
+  18 | Message Authentication Code Failed
+  19 | Functional Group Control Number not Unique within Interchange
+  23 | S3E Security End Segment Missing for S3S Security Start Segment
+  24 | S3S Security Start Segment Missing for S3E End Segment
+  25 | S4E Security End Segment Missing for S4S Security Start Segment
+  26 | S4S Security Start Segment Missing for S4E Security End Segment

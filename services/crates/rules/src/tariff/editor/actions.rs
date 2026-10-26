@@ -26,8 +26,6 @@ use super::describe::type_text;
 use super::literals::{is_literal, literal_type, literal_value};
 use super::rename::Edit;
 use super::session::Session;
-use crate::message;
-use crate::message::{Arg, Message};
 use crate::span::{Range, Span};
 use crate::tariff::check::describe::{quote, snippet};
 use crate::tariff::syntax::ast::{Expr, ExprKind, FileKind, ItemKind, NodeId, StmtKind};
@@ -36,6 +34,8 @@ use crate::tariff::syntax::program::ModuleId;
 use crate::tariff::syntax::token::TokenKind;
 use crate::tariff::types::Type;
 use std::collections::BTreeSet;
+use trenova_module_kit::message;
+use trenova_module_kit::message::{Arg, Message};
 
 /// One refactoring.
 #[derive(Debug, Clone, PartialEq)]

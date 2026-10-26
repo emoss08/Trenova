@@ -115,7 +115,9 @@ Shape: an fx `Params{DB *postgres.Connection; Logger}`, an unexported `repositor
   method so a dataloader can batch it ([api.md](api.md)):
   `t.Where(t.ID.In(ids...)).Limit(len(ids)).List(ctx, db)`. `In` binds one array, so 3 or 3,000
   IDs are one statement shape. `List` refuses a query without `Limit`; `All` is for sets bounded by
-  the input.
+  the input. The refusal is at run time, applies to `ListInto` inside a `Batch` too, and counts
+  `Limit(0)` as no limit: return early on empty IDs, and read children bounded by a page of
+  parents (every version of a page's lineages) with `AllInto`.
 
 ### Reads
 

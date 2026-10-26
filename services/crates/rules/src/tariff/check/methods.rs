@@ -15,9 +15,9 @@
 //! - `avg` is not optional: a `Number` for numbers (whole numbers too), else the values' own
 //!   kind (`Money`, `Weight`). An empty list stops the rating with an `argument` error.
 
-use crate::message;
 use crate::tariff::types::Type;
 use crate::tariff::units::Dim;
+use trenova_module_kit::message;
 
 /// The one property that reads the record (`rating.holidays`), so it is refused where the
 /// record can't be read.

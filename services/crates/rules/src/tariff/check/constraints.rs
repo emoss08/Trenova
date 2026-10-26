@@ -19,13 +19,13 @@ use super::consts::{Value, wire};
 use super::decls::FoldedConstraint;
 use super::describe::{quote, words};
 use super::operators::{ordered_enums, ranged, text_range};
-use crate::message;
-use crate::message::{Arg, Message};
 use crate::tariff::diagnostic::Diagnostic;
 use crate::tariff::eval::value::Value as RunValue;
 use crate::tariff::syntax::ast::{Expr, ExprKind};
 use crate::tariff::types::Type;
 use std::cmp::Ordering;
+use trenova_module_kit::message;
+use trenova_module_kit::message::{Arg, Message};
 
 /// The code of every constraint finding.
 const CODE: &str = "constraint";

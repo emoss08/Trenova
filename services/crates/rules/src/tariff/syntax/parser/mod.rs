@@ -32,14 +32,14 @@ use super::lexer;
 use super::token::Token;
 use super::token::TokenKind;
 use super::walk;
-use crate::message;
-use crate::message::Arg;
-use crate::message::Message;
 use crate::span::Span;
 use crate::tariff::diagnostic::Change;
 use crate::tariff::diagnostic::Diagnostic;
 use crate::tariff::diagnostic::Fix;
 use docs::DocTable;
+use trenova_module_kit::message;
+use trenova_module_kit::message::Arg;
+use trenova_module_kit::message::Message;
 
 /// The deepest a tree may be.
 pub const MAX_DEPTH: usize = 128;

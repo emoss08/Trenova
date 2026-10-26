@@ -2,7 +2,6 @@
 
 use super::expr::internal;
 use super::{Env, Flow, Interp, refusal};
-use crate::message::Arg;
 use crate::span::Span;
 use crate::tariff::eval::bill::{self, Billed, Line, LineKind, Note, cents};
 use crate::tariff::eval::error::{EvalError, Stop};
@@ -15,6 +14,7 @@ use crate::tariff::syntax::ast::{
 };
 use rust_decimal::Decimal;
 use rust_decimal::prelude::ToPrimitive;
+use trenova_module_kit::message::Arg;
 
 impl<'a> Interp<'_, 'a> {
     /// Runs every file-level statement of a module, top to bottom, in `env`.
@@ -29,7 +29,7 @@ impl<'a> Interp<'_, 'a> {
                     Flow::Normal => {}
                     Flow::Break | Flow::Continue | Flow::Return(_) => {
                         return Err(internal(
-                            crate::message!(
+                            trenova_module_kit::message!(
                                 "break, continue and return only work inside loops and functions"
                             ),
                             [],
@@ -133,15 +133,15 @@ impl<'a> Interp<'_, 'a> {
                 Ok(Flow::Normal)
             }
             StmtKind::Given { .. } | StmtKind::Expect(_) => Err(internal(
-                crate::message!("given and expect only work inside a test"),
+                trenova_module_kit::message!("given and expect only work inside a test"),
                 [],
             )),
             StmtKind::Vary { .. } | StmtKind::Assume(_) => Err(internal(
-                crate::message!("vary and assume only work inside a property"),
+                trenova_module_kit::message!("vary and assume only work inside a property"),
                 [],
             )),
             StmtKind::Item(_) => Err(internal(
-                crate::message!("A declaration cannot be written inside a block"),
+                trenova_module_kit::message!("A declaration cannot be written inside a block"),
                 [],
             )),
             StmtKind::Expr(expr) => {
@@ -203,13 +203,13 @@ impl<'a> Interp<'_, 'a> {
         let traced = self.traced(env);
         let Some(slot) = env.slot_mut(name) else {
             return Err(internal(
-                crate::message!("Nothing named {0} is in scope here"),
+                trenova_module_kit::message!("Nothing named {0} is in scope here"),
                 [Arg::from(name)],
             ));
         };
         if !slot.mutable {
             return Err(internal(
-                crate::message!("{0} is not a var, so it cannot change"),
+                trenova_module_kit::message!("{0} is not a var, so it cannot change"),
                 [Arg::from(name)],
             ));
         }
@@ -232,7 +232,7 @@ impl<'a> Interp<'_, 'a> {
     fn money(value: &Value, what: &'static str) -> Result<Decimal, Stop> {
         value.as_money().ok_or_else(|| {
             internal(
-                crate::message!("{0} must be money, not {1}"),
+                trenova_module_kit::message!("{0} must be money, not {1}"),
                 [Arg::from(what), Arg::from(value.kind())],
             )
         })
@@ -254,7 +254,7 @@ impl<'a> Interp<'_, 'a> {
                 Some("maximum") => maximum = Some(Self::money(&value, "A charge's maximum")?),
                 _ => {
                     return Err(internal(
-                        crate::message!(
+                        trenova_module_kit::message!(
                             "A charge takes only quantity, rate, minimum and maximum options"
                         ),
                         [],
@@ -269,7 +269,9 @@ impl<'a> Interp<'_, 'a> {
             }
             _ => {
                 return Err(internal(
-                    crate::message!("A charge needs an amount, or both a quantity and a rate"),
+                    trenova_module_kit::message!(
+                        "A charge needs an amount, or both a quantity and a rate"
+                    ),
                     [],
                 ));
             }
@@ -396,7 +398,7 @@ impl<'a> Interp<'_, 'a> {
         {
             let (Some(start), Some(end)) = (start, end) else {
                 return Err(internal(
-                    crate::message!("A for loop needs a range with both ends"),
+                    trenova_module_kit::message!("A for loop needs a range with both ends"),
                     [],
                 ));
             };
@@ -404,7 +406,7 @@ impl<'a> Interp<'_, 'a> {
             let last = self.eval(env, end)?;
             let (Value::Int(first), Value::Int(last)) = (&first, &last) else {
                 return Err(internal(
-                    crate::message!("A for loop walks a range of whole numbers"),
+                    trenova_module_kit::message!("A for loop walks a range of whole numbers"),
                     [],
                 ));
             };
@@ -422,7 +424,7 @@ impl<'a> Interp<'_, 'a> {
         match self.eval(env, iterable)? {
             Value::List(items) => Ok(Walk::List(items)),
             other => Err(internal(
-                crate::message!("A for loop walks a list or a range, not {0}"),
+                trenova_module_kit::message!("A for loop walks a list or a range, not {0}"),
                 [Arg::from(other.kind())],
             )),
         }

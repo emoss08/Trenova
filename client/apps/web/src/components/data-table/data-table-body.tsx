@@ -163,6 +163,9 @@ function DataTableRowInner<TData extends RowData>({
       if (e.shiftKey || e.altKey) return;
       const target = e.target as HTMLElement;
 
+      // React bubbles a click through a portal to the row that rendered it, so a
+      // choice made in a cell's popover, menu or dialog would otherwise open the row.
+      if (!e.currentTarget.contains(target)) return;
       if (target.closest(INTERACTIVE_SELECTOR)) return;
       if (target.closest<HTMLElement>("td")?.dataset.columnId === "select") return;
 

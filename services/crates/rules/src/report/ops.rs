@@ -5,9 +5,6 @@
 //! values. `report.resolve` resolves the displays a report builder previews before the server
 //! has seen the report.
 
-use crate::ops::OpResult;
-use crate::ops::decode;
-use crate::ops::encode;
 use crate::report::display::Display;
 use crate::report::display::ResolveInput;
 use crate::report::display::resolve as resolve_display;
@@ -20,6 +17,9 @@ use serde::Deserialize;
 use serde::Serialize;
 use serde_json::value::RawValue;
 use std::borrow::Cow;
+use trenova_module_kit::ops::OpResult;
+use trenova_module_kit::ops::decode;
+use trenova_module_kit::ops::encode;
 
 #[derive(Deserialize)]
 #[serde(rename_all = "camelCase")]

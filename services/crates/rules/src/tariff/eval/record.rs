@@ -13,13 +13,13 @@
 use super::operators::duration_between;
 use super::time::{Date, DateTime};
 use super::value::{Record, Value};
-use crate::message::{Arg, Message};
 use crate::tariff::schema::{Schema, Settings};
 use crate::tariff::units::{Base, Dim, Unit};
 use crate::tariff::wire::{WireError, decode};
 use rust_decimal::Decimal;
 use serde_json::Value as Json;
 use std::rc::Rc;
+use trenova_module_kit::message::{Arg, Message};
 
 /// The schema roots a record holds, in order.
 pub const ROOTS: [&str; 5] = ["shipment", "lane", "customer", "fuel", "rating"];
@@ -33,7 +33,7 @@ pub fn decode_record(json: &Json, schema: &Schema) -> Result<Value, WireError> {
     let Some(object) = json.as_object() else {
         return Err(WireError {
             path: String::new(),
-            message: Message::new(crate::message!(
+            message: Message::new(trenova_module_kit::message!(
                 "The record must be an object holding shipment, lane, customer, fuel and rating"
             )),
         });
@@ -42,7 +42,7 @@ pub fn decode_record(json: &Json, schema: &Schema) -> Result<Value, WireError> {
         return Err(WireError {
             path: unknown.clone(),
             message: Message::with(
-                crate::message!("{0} is not a root of the record"),
+                trenova_module_kit::message!("{0} is not a root of the record"),
                 [Arg::from(unknown.clone())],
             ),
         });
@@ -52,7 +52,10 @@ pub fn decode_record(json: &Json, schema: &Schema) -> Result<Value, WireError> {
         let (Some(ty), Some(value)) = (schema.root(root), object.get(root)) else {
             return Err(WireError {
                 path: root.to_owned(),
-                message: Message::with(crate::message!("The record has no {0}"), [Arg::from(root)]),
+                message: Message::with(
+                    trenova_module_kit::message!("The record has no {0}"),
+                    [Arg::from(root)],
+                ),
             });
         };
         fields.push((Rc::from(root), decode(value, ty, root)?));
