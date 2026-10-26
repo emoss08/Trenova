@@ -10,6 +10,7 @@ import {
   type LadingCheck,
   type LadingCheckedFile,
   type LadingContext,
+  type LadingEdit,
   type LadingLocation,
   type LadingProjectInput,
   type LadingRunValue,
@@ -28,6 +29,8 @@ export type LadingLanguageService = {
   values: () => readonly LadingRunValue[];
   /** Opens a location: in this file it moves the cursor, in another the studio opens it. */
   openLocation: (location: LadingLocation) => void;
+  /** Applies a rename's or a refactoring's edits, which may reach other files of the project. */
+  applyEdits: (edits: readonly LadingEdit[]) => void;
 };
 
 export const ladingServiceFacet = Facet.define<LadingLanguageService, LadingLanguageService | null>(
@@ -65,6 +68,20 @@ export function checkProject(
 export function checkedFile(service: LadingLanguageService): LadingCheckedFile | null {
   const check = checkProject(service.edi(), service.project(), service.context());
   return check.files.find((file) => file.path === service.path()) ?? null;
+}
+
+/**
+ * The project with the edited file as the editor holds it now. The studio learns of an edit after
+ * the editor's transaction, so a tool answering inside one reads the file from the editor.
+ */
+export function liveProject(service: LadingLanguageService, source: string): LadingProjectInput {
+  const project = service.project();
+  const path = service.path();
+  if (project.files.find((file) => file.path === path)?.source === source) return project;
+  return {
+    ...project,
+    files: project.files.map((file) => (file.path === path ? { path, source } : file)),
+  };
 }
 
 const reported = new Set<string>();

@@ -157253,7 +157253,7 @@
     ]
   },
   "New name": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
@@ -170429,6 +170429,24 @@
     ]
   },
   "Nothing here can be promoted to an input": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
+  "Nothing here can be refactored": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
+  "Nothing here has references": {
     "sites": 1,
     "scope": [
       "ts"
@@ -206302,11 +206320,12 @@
     ]
   },
   "Read from {0}": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "ts"
     ],
     "areas": [
+      "apps/web/components",
       "routes/inbox"
     ]
   },
@@ -211632,7 +211651,7 @@
     ]
   },
   "Refactorings": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
@@ -211896,11 +211915,12 @@
     ]
   },
   "References": {
-    "sites": 3,
+    "sites": 4,
     "scope": [
       "ts"
     ],
     "areas": [
+      "apps/web/components",
       "routes/desk",
       "routes/invoice"
     ]
@@ -215129,7 +215149,7 @@
     ]
   },
   "Rename {0} to": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
@@ -287904,7 +287924,7 @@
     ]
   },
   "Through {0}": {
-    "sites": 10,
+    "sites": 11,
     "scope": [
       "ts"
     ],

@@ -2,6 +2,7 @@ import type { LadingCheck, LadingSetting } from "@trenova/shared/edi/lading";
 import type { LadingVersion } from "@trenova/shared/types/lading";
 import { describe, expect, it } from "vitest";
 import {
+  applyFileEdits,
   isDirty,
   isEditable,
   lineOf,
@@ -294,5 +295,37 @@ describe("settings", () => {
     expect(settingValue(setting("Int", "3"), "2.5", "")).toBeUndefined();
     expect(settingValue(setting("Percent", "5"), "five", "")).toBeUndefined();
     expect(settingValue(setting("Weight", null), "10", "")).toBeUndefined();
+  });
+});
+
+describe("applyFileEdits", () => {
+  const files = [
+    { path: "maps/a.lading", source: "let x = 1\nlet y = x\n" },
+    { path: "maps/b.lading", source: "use x\n" },
+  ];
+
+  it("applies several edits to one file against its original offsets", () => {
+    expect(
+      applyFileEdits(files, [
+        { path: "maps/a.lading", range: { from: 4, to: 5 }, insert: "count" },
+        { path: "maps/a.lading", range: { from: 18, to: 19 }, insert: "count" },
+      ])[0],
+    ).toEqual({ path: "maps/a.lading", source: "let count = 1\nlet y = count\n" });
+  });
+
+  it("edits other files and leaves untouched ones as they were", () => {
+    const next = applyFileEdits(files, [
+      { path: "maps/b.lading", range: { from: 4, to: 5 }, insert: "count" },
+    ]);
+    expect(next[0]).toBe(files[0]);
+    expect(next[1]).toEqual({ path: "maps/b.lading", source: "use count\n" });
+  });
+
+  it("creates the file an edit names when the project lacks it", () => {
+    expect(
+      applyFileEdits(files, [
+        { path: "lib/common.lading", range: { from: 0, to: 0 }, insert: "library common\n" },
+      ]).at(-1),
+    ).toEqual({ path: "lib/common.lading", source: "library common\n" });
   });
 });

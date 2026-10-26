@@ -832,7 +832,7 @@ property "every decision writes a reservation code" {
 
 `vary name in samples "glob"`, `in [values]`, `in a..b` (24 values: both ends, landmarks and
 evenly spread points, as Tariff) or over an enum; at most 256 cases. A failing case is shrunk to
-the simplest one and can be saved as a test.
+the simplest one, which the tests panel shows as the counterexample.
 
 **Coverage.** Every test records which assignments, segment blocks, rules and flow arms ran; the
 studio marks the lines no test reached. **Unread data**: every element present in the project's
@@ -867,23 +867,40 @@ A project version is **Draft**, **Certified**, **Active**, **Shadow**, **Superse
 
 ## The editor
 
-The studio edits a project: the file tree, one editor per file, the samples, and the panels
-below. Everything is computed by the module from the project, in the browser:
+The studio (`/edi/lading/:partnerId`, `client/apps/web/src/routes/edi/lading/`) edits one
+partner's project: the version picker and its actions above, the file tree with each file's
+error and warning counts, one editor per file (`components/lading-editor/`), and the panels below.
+A partner without a project gets the start form, which writes the starter for the chosen role
+and sets as the first draft. Everything about the text is computed by the module in the browser,
+against the organisation and custom fields from `GET /edi/lading/context/`:
 
-- diagnostics with quick fixes, completion (X12 paths from the guide with each segment's and
+- **the editor:** colour from `lading.tokens`; diagnostics with quick fixes from `lading.check`
+  of the whole working copy; completion (X12 paths from the guide with each segment's and
   element's name, usage and codes; document fields; settings; functions; crosswalks; enum
-  variants), hover (the guide's description, the type, the doc, the last run's value and its
-  lineage, the guide line's PDF page), signature help, go to definition (into libraries, guides
-  and the base guide), find references, rename, folding, the outline and formatting;
-- **inlay values** from the selected sample: every assignment shows what it produced;
-- **the sample panel:** the X12 tree with each element's name, the document the map produced,
-  and lineage both ways (click an element to see what reads it, a field to see where it came
-  from);
-- **the tests panel:** tests and properties run on every change, a property's counterexample
-  with "Save as test", coverage in the gutter and the unread-data list;
-- **refactorings:** *Extract crosswalk* (from a `match` or chain of `when`s), *Promote to
-  setting* (a literal becomes a partner setting), *Move to library*, and *Extract function*;
-- **readiness, replay and shadow** for the version, with their results.
+  variants); hover (the guide's description, the type, the doc, and the last run's value with
+  the elements it was read from and the steps it went through);
+  signature help; inlay values from the last run; go to definition (F12, Mod-click, into other
+  files); Find references (Shift-F12); rename (F2) and the refactorings (Mod-.: *Extract
+  crosswalk*, *Extract function*, *Promote to setting*, *Move to library*), whose edits may reach
+  other files and land in the working copy; folding from the outline; formatting (Shift-Alt-F);
+- **problems:** every finding in the project, errors first, each opening its file at the range;
+- **tests:** tests and properties run on the working copy without saving, with readiness,
+  failures that open their range, a property's counterexample, the elements the samples carry
+  that no map reads, and the lines no test reached marked in the editor;
+- **run:** one map on one sample, either here (the working copy, no lookups answered) or with
+  live data (the saved version on the server, lookups answered from the organisation's records);
+  the transactions, findings, outcomes, the document, the written X12, the lookups asked for and
+  the unmapped codes; its values feed hover and inlays;
+- **release:** replays of each inbound map against the active version, with their differences,
+  and the shadow's results;
+- **settings:** the partner settings the partner file declares, changed on the active version
+  without a new version;
+- **notes** for the version.
+
+A draft is the only version that changes: the studio holds a working copy, saves it in one
+write (with the version number, so a concurrent save is refused), blocks leaving the page while
+it is unsaved, and offers certify only once the copy is saved and has no errors. Every other
+version opens read-only, and *New draft from this version* copies it.
 
 ## Module operations
 

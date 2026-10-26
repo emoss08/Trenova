@@ -4,7 +4,9 @@ import type { Extension } from "@codemirror/state";
 import { EditorView } from "@codemirror/view";
 import type {
   LadingContext,
+  LadingEdit,
   LadingLocation,
+  LadingRange,
   LadingProjectInput,
   LadingRunValue,
 } from "@trenova/shared/edi/lading";
@@ -17,9 +19,11 @@ import { darkTheme, languageServiceTheme, lightTheme } from "../formula-editor/e
 import { ladingAssist, revealLadingRange } from "./lading-assist";
 import { ladingHighlight } from "./lading-highlight";
 import { ladingLinter } from "./lading-lint";
+import { ladingTools, refreshLadingInlays, setLadingCoverage } from "./lading-tools";
 import type { LadingLanguageService } from "./lading-service";
 
 const NO_VALUES: readonly LadingRunValue[] = [];
+const NO_RANGES: readonly LadingRange[] = [];
 
 export type LadingEditorProps = {
   /** The file's path in the project. */
@@ -31,12 +35,16 @@ export type LadingEditorProps = {
   context: LadingContext;
   /** The last run's values: hover shows what each field came to. */
   values?: readonly LadingRunValue[];
-  /** Opens a location in another file of the project (go to definition). */
+  /** Opens a location in another file of the project (go to definition, references). */
   onOpenFile: (location: LadingLocation) => void;
+  /** Applies a rename's or a refactoring's edits to the project's other files. */
+  onEditFiles?: (edits: readonly LadingEdit[]) => void;
   /** Told why formatting was refused, or null when it formatted. */
   onFormat?: (reason: string | null) => void;
   /** A range to move to once, such as a finding picked in the problems list. */
   reveal?: { from: number; to: number } | null;
+  /** What the last test run did not reach in this file; those lines are marked. */
+  uncovered?: readonly LadingRange[];
   readOnly?: boolean;
   className?: string;
 };
@@ -56,8 +64,10 @@ export function LadingEditor({
   context,
   values = NO_VALUES,
   onOpenFile,
+  onEditFiles,
   onFormat,
   reveal = null,
+  uncovered = NO_RANGES,
   readOnly = false,
   className,
 }: LadingEditorProps) {
@@ -78,6 +88,24 @@ export function LadingEditor({
     onOpenFile(location);
   });
   const reportFormat = useLatestCallback((reason: string | null) => onFormat?.(reason));
+  const applyEdits = useLatestCallback((edits: readonly LadingEdit[]) => {
+    const view = viewRef.current;
+    const here = edits.filter((edit) => edit.path === path);
+    const elsewhere = edits.filter((edit) => edit.path !== path);
+    if (view && here.length > 0) {
+      const length = view.state.doc.length;
+      view.dispatch({
+        changes: here.map((edit) => ({
+          from: Math.min(edit.range.from, length),
+          to: Math.min(edit.range.to, length),
+          insert: edit.insert,
+        })),
+        userEvent: "refactor",
+        scrollIntoView: true,
+      });
+    }
+    if (elsewhere.length > 0) onEditFiles?.(elsewhere);
+  });
 
   const extensions = useMemo((): Extension[] => {
     const service: LadingLanguageService = {
@@ -87,16 +115,26 @@ export function LadingEditor({
       path: getPath,
       values: getValues,
       openLocation,
+      applyEdits,
     };
     return [
       ladingHighlight(getEdi),
       ladingLinter(service),
       ladingAssist(service, reportFormat),
+      ladingTools(service),
       lintGutter(),
       EditorView.lineWrapping,
       languageServiceTheme,
     ];
-  }, [getEdi, getProject, getContext, getPath, getValues, openLocation, reportFormat]);
+  }, [getEdi, getProject, getContext, getPath, getValues, openLocation, applyEdits, reportFormat]);
+
+  useEffect(() => {
+    viewRef.current?.dispatch({ effects: refreshLadingInlays.of(null) });
+  }, [values, project]);
+
+  useEffect(() => {
+    viewRef.current?.dispatch({ effects: setLadingCoverage.of(uncovered) });
+  }, [uncovered]);
 
   useEffect(() => {
     if (reveal && viewRef.current) revealLadingRange(viewRef.current, reveal);

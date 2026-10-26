@@ -135,6 +135,20 @@ export function renderLadingHover(hover: LadingHover): HTMLElement {
     row.className = "cm-tariff-hover-value";
     row.textContent = translate("In the last run: {0}", contents.value.value);
     dom.appendChild(row);
+    const sources = contents.value.sources ?? [];
+    if (sources.length > 0) {
+      const from = document.createElement("div");
+      from.className = "cm-tariff-hover-value";
+      from.textContent = translate("Read from {0}", sources.join(", "));
+      dom.appendChild(from);
+    }
+    const steps = contents.value.steps ?? [];
+    if (steps.length > 0) {
+      const through = document.createElement("div");
+      through.className = "cm-tariff-hover-value";
+      through.textContent = translate("Through {0}", steps.join(" · "));
+      dom.appendChild(through);
+    }
   }
   return dom;
 }

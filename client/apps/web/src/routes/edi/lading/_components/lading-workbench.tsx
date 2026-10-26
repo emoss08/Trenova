@@ -16,6 +16,7 @@ import type {
   LadingRange,
   LadingRunValue,
   LadingSample,
+  LadingTestReport,
 } from "@trenova/shared/edi/lading";
 import { useEdi } from "@trenova/shared/hooks/use-edi";
 import type {
@@ -27,7 +28,13 @@ import { useMemo, useState } from "react";
 import { LadingFileTree } from "./lading-file-tree";
 import { LadingPanels } from "./lading-panels";
 import { LadingVersionToolbar } from "./lading-version-toolbar";
-import { isDirty, isEditable, problemCounts, projectProblems } from "./studio-model";
+import {
+  applyFileEdits,
+  isDirty,
+  isEditable,
+  problemCounts,
+  projectProblems,
+} from "./studio-model";
 
 type Reveal = { path: string; range: LadingRange };
 
@@ -71,6 +78,7 @@ export function LadingWorkbench({
   const [openPath, setOpenPath] = useState(() => firstPath(version.files, detail.samples));
   const [reveal, setReveal] = useState<Reveal | null>(null);
   const [values, setValues] = useState<readonly LadingRunValue[]>([]);
+  const [coverage, setCoverage] = useState<LadingTestReport["coverage"]>([]);
 
   const working = useMemo(() => ({ files, samples }), [files, samples]);
   const check = checkProject(edi, working, context);
@@ -168,11 +176,13 @@ export function LadingWorkbench({
                   context={context}
                   values={values}
                   onOpenFile={open}
+                  onEditFiles={(edits) => setFiles((current) => applyFileEdits(current, edits))}
                   onFormat={(reason) => {
                     if (reason)
                       toast.error(t("The file was not formatted"), { description: reason });
                   }}
                   reveal={reveal?.path === openFile.path ? reveal.range : null}
+                  uncovered={coverage.find((entry) => entry.path === openFile.path)?.uncovered}
                   readOnly={!editable}
                 />
               ) : openSample ? (
@@ -217,6 +227,7 @@ export function LadingWorkbench({
                 onNotesChange={setNotes}
                 onOpen={open}
                 onValues={setValues}
+                onCoverage={setCoverage}
               />
             </ResizablePanel>
           </ResizablePanelGroup>

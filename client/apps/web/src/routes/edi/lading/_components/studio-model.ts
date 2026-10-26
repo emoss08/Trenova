@@ -1,6 +1,7 @@
 import type {
   LadingCheck,
   LadingDiagnostic,
+  LadingEdit,
   LadingFile,
   LadingLineage,
   LadingRunInput,
@@ -224,4 +225,33 @@ export function settingValue(setting: LadingSetting, draft: SettingDraft, unit: 
     return Number.isFinite(number) && unit !== "" ? { value: number, unit } : undefined;
   }
   return undefined;
+}
+
+/**
+ * The files with a rename's or a refactoring's edits applied: each file's edits from the end
+ * back, so earlier offsets still hold. An edit to a path the project lacks creates that file, as
+ * Move to library does.
+ */
+export function applyFileEdits(
+  files: readonly LadingFile[],
+  edits: readonly LadingEdit[],
+): LadingFile[] {
+  const byPath = new Map<string, LadingEdit[]>();
+  for (const edit of edits) byPath.set(edit.path, [...(byPath.get(edit.path) ?? []), edit]);
+  const edit = (source: string, changes: readonly LadingEdit[]) =>
+    [...changes]
+      .sort((a, b) => b.range.from - a.range.from)
+      .reduce(
+        (text, change) =>
+          text.slice(0, change.range.from) + change.insert + text.slice(change.range.to),
+        source,
+      );
+  const next = files.map((file) => {
+    const changes = byPath.get(file.path);
+    return changes ? { path: file.path, source: edit(file.source, changes) } : file;
+  });
+  for (const [path, changes] of byPath) {
+    if (!files.some((file) => file.path === path)) next.push({ path, source: edit("", changes) });
+  }
+  return next;
 }

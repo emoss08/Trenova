@@ -22,20 +22,23 @@ export function LadingTestsPanel({
   working,
   context,
   onOpen,
+  onCoverage,
 }: {
   working: LadingProjectInput;
   context: LadingContext;
   onOpen: (location: LadingLocation) => void;
+  /** Told what the last test run left uncovered, for the editor's gutter. */
+  onCoverage: (coverage: LadingTestReport["coverage"]) => void;
 }) {
   const t = useT();
   const edi = useEdi();
   const [run, setRun] = useState<{ report: LadingTestReport | null; of: LadingProjectInput }>();
 
-  const runTests = () =>
-    setRun({
-      report: unlessRefused(() => ladingTest(edi, { project: working, context }), null),
-      of: working,
-    });
+  const runTests = () => {
+    const report = unlessRefused(() => ladingTest(edi, { project: working, context }), null);
+    setRun({ report, of: working });
+    onCoverage(report?.coverage ?? []);
+  };
 
   const report = run?.report;
   const stale = run !== undefined && run.of !== working;

@@ -8,6 +8,7 @@ import type {
   LadingLocation,
   LadingProjectInput,
   LadingRunValue,
+  LadingTestReport,
 } from "@trenova/shared/edi/lading";
 import type { LadingProject, LadingVersion } from "@trenova/shared/types/lading";
 import { cn } from "@trenova/shared/lib/utils";
@@ -34,6 +35,7 @@ export function LadingPanels({
   onNotesChange,
   onOpen,
   onValues,
+  onCoverage,
 }: {
   project: LadingProject;
   version: LadingVersion;
@@ -48,6 +50,7 @@ export function LadingPanels({
   onNotesChange: (notes: string) => void;
   onOpen: (location: LadingLocation) => void;
   onValues: (values: readonly LadingRunValue[]) => void;
+  onCoverage: (coverage: LadingTestReport["coverage"]) => void;
 }) {
   const t = useT();
   return (
@@ -66,7 +69,12 @@ export function LadingPanels({
         <ProblemsList problems={problems} working={working} onOpen={onOpen} />
       </TabsPanel>
       <TabsPanel value="tests" className="min-h-0 flex-1 overflow-y-auto">
-        <LadingTestsPanel working={working} context={context} onOpen={onOpen} />
+        <LadingTestsPanel
+          working={working}
+          context={context}
+          onOpen={onOpen}
+          onCoverage={onCoverage}
+        />
       </TabsPanel>
       <TabsPanel value="run" className="min-h-0 flex-1 overflow-y-auto">
         <LadingRunPanel
