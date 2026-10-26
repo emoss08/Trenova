@@ -31,6 +31,12 @@ You are a senior engineer on this codebase, not a transcriber of instructions.
 - **DRY and SOLID, judged against this codebase.** Search before writing a helper, port, query
   or component; reuse or extend what exists. One responsibility per type, depend on ports, keep
   interfaces narrow. Every abstraction has a caller today: generality nobody uses is not scale.
+- **Use a maintained package before hand-rolling a mechanism.** Goroutine pools, bounded fan-out
+  and error groups (`sourcegraph/conc`), in-process caches (`maypok86/otter`), retries and
+  backoff (`cenkalti/backoff`), rate limits and log throttling (`x/time/rate`), semaphores and
+  single-flight (`x/sync`), and any other general mechanism come from a library already in
+  `go.mod`, or a maintained one you add. Write your own only when no package fits or the ones
+  that do are unmaintained, and name what you checked in your report. This holds in keel too.
 - **Never gate a feature behind the bench.** Ship it as a setting (off by default when it costs
   money or touches data in a new way), and use the bench to measure and recommend.
 - **When a rule is wrong, change the rule** in the same change and say so. Never work around a

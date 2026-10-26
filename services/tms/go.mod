@@ -9,7 +9,7 @@ require (
 	github.com/aws/aws-sdk-go-v2/config v1.27.27
 	github.com/aws/aws-sdk-go-v2/credentials v1.17.27
 	github.com/boombuler/barcode v1.1.0
-	github.com/emoss08/keel v0.2.0
+	github.com/emoss08/keel v0.3.0
 	github.com/emoss08/trenova/shared v0.0.0
 	github.com/ledongthuc/pdf v0.0.0-20260929131644-d0d294e5c96a
 	github.com/pgvector/pgvector-go v0.4.1
@@ -150,6 +150,7 @@ require (
 	github.com/logrusorgru/aurora/v3 v3.0.0 // indirect
 	github.com/lucasb-eyer/go-colorful v1.4.1 // indirect
 	github.com/mattn/go-runewidth v0.0.30 // indirect
+	github.com/maypok86/otter/v2 v2.4.0 // indirect
 	github.com/mazznoer/csscolorparser v0.1.3 // indirect
 	github.com/mitchellh/hashstructure/v2 v2.0.2 // indirect
 	github.com/muesli/cancelreader v0.2.2 // indirect

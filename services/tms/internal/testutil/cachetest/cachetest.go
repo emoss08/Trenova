@@ -24,7 +24,7 @@ func Open(t *testing.T, ctx context.Context, dsn string) *keel.DB {
 	cfg.DSN = dsn
 	cfg.Tables = keeltables.All()
 	cfg.DataVersions = keel.DataVersionsConfig{Enabled: true, Interval: heldVersionInterval}
-	cfg.Cache = &keel.CacheConfig{Local: keel.LRU(cacheBytes)}
+	cfg.Cache = &keel.CacheConfig{Local: keel.MemoryCache(cacheBytes)}
 
 	db, err := keel.Open(ctx, cfg)
 	require.NoError(t, err, "open a keel database with the result cache")
