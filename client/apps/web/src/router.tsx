@@ -175,7 +175,13 @@ export const routes: RouteObject[] = withPathScopedRevalidation([
           },
           {
             path: "/organization/data-retention",
-            loader: combineLoaders(protectedLoader, createPermissionLoader(Resource.Organization)),
+            loader: combineLoaders(
+              protectedLoader,
+              createPermissionLoader(Resource.Organization),
+              createPrefetchLoader(
+                lazyPrefetch(() => import("@/routes/organization/data-retention/page")),
+              ),
+            ),
             async lazy() {
               const { DataRetentionPage } =
                 await import("@/routes/organization/data-retention/page");
