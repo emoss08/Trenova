@@ -85,13 +85,13 @@ func endStopID(types []shipment.StopType, last bool) keel.Expr {
 	order := []keel.Order{
 		sm.Sequence.Asc(),
 		st.Sequence.Asc(),
-		keel.DynOf(st.ID).Collate("C").Asc(),
+		st.ID.Collate("C").Asc(),
 	}
 	if last {
 		order = []keel.Order{
 			sm.Sequence.Desc(),
 			st.Sequence.Desc(),
-			keel.DynOf(st.ID).Collate("C").Desc(),
+			st.ID.Collate("C").Desc(),
 		}
 	}
 

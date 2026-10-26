@@ -110,7 +110,7 @@ func (r *repository) ListBoardMoves(
 				dest.stop.ScheduledWindowEnd,
 				text(asn.ID),
 				text(asn.PrimaryWorkerID),
-				keel.DynCase().
+				keel.CaseString().
 					When(assignedWorkers.ID.IsNull(), keel.Text("")).
 					Else(keel.Concat(assignedWorkers.FirstName, " ", assignedWorkers.LastName)),
 				text(asn.TractorID),

@@ -191,10 +191,10 @@ func completedMovesWithoutBreakdown() *keel.CTETable {
 		Group(sm.ID, sm.OrganizationID, sm.BusinessUnitID, sm.Distance, sm.DistanceUnits, sm.UpdatedAt).
 		Pick(
 			sm.ID,
-			keel.DynCase().
+			keel.CaseFloat64().
 				When(
 					sm.DistanceUnits.Eq(shipment.JurisdictionDistanceUnitsKilometers),
-					keel.DynOf(sm.Distance).Div(kilometersPerMile),
+					sm.Distance.Div(keel.Float64(kilometersPerMile)),
 				).
 				Else(sm.Distance),
 			keel.Int64Of(st.ActualDeparture.Coalesce(st.ActualArrival).Max()).

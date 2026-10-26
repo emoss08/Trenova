@@ -137,7 +137,11 @@ func TestAutoDelayedShipmentIDs_JoinsTheShipmentControl(t *testing.T) {
 
 	assert.Contains(t, sql, `"shipment_controls" auto_sc`)
 	assert.Contains(t, sql, `auto_sc."auto_delay_shipments" IS TRUE`)
-	assert.Contains(t, sql, `(coalesce(auto_sc."auto_delay_shipments_threshold", $4) * $5::bigint)`)
+	assert.Contains(
+		t,
+		sql,
+		`(CAST(coalesce(auto_sc."auto_delay_shipments_threshold", $4) AS bigint) * $5::bigint)`,
+	)
 	assert.Contains(t, args, int64(1_800_000_000))
 }
 
@@ -163,7 +167,8 @@ func TestControlledAutoCancelIDs_JoinsTheShipmentControl(t *testing.T) {
 	assert.Contains(
 		t,
 		sql,
-		`cancel_sp."created_at" <= ($3 - (coalesce(cancel_sc."auto_cancel_shipments_threshold", $4) * $5::bigint))`,
+		`cancel_sp."created_at" <= ($3::bigint - (CAST(coalesce(`+
+			`cancel_sc."auto_cancel_shipments_threshold", $4) AS bigint) * $5::bigint))`,
 		"the day length is bigint so the threshold and the clock are not read as smallint",
 	)
 	assert.Contains(t, sql, `cancel_sp."status" = 'New'`)

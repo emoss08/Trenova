@@ -388,8 +388,8 @@ func (r *repository) ListDue(
 					rsh.Status.Eq(recurringshipment.StatusActive),
 					rsh.AutoGenerate.IsTrue(),
 					rsh.NextOccurrenceAt.IsNotNull(),
-					keel.DynOf(rsh.NextOccurrenceAt).
-						Sub(keel.DynOf(rsh.LeadTimeDays).Cast(keel.TypeInt64).Mul(86400)).
+					rsh.NextOccurrenceAt.
+						Sub(keel.CastInt64(rsh.LeadTimeDays).Mul(keel.Int64(86400))).
 						Lte(req.Now),
 				).
 				Order(rsh.NextOccurrenceAt.Asc())

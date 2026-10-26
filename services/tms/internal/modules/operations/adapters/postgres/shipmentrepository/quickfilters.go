@@ -215,10 +215,8 @@ func pickupWindowCondition(now int64, spec shipment.QuickFilterSpec) keel.Pred {
 
 	return keel.And(
 		StageCondition(shipment.StageNeedsCoverage),
-		keel.Int8Range(
-			keel.Int64Of(keel.DynLit(lower).Cast(keel.TypeInt64)),
-			keel.Int64Of(keel.DynLit(upper).Cast(keel.TypeInt64)),
-		).Covers(keel.Int64Of(keel.Scalar(pickup))),
+		keel.Int8Range(keel.Int64Ptr(lower), keel.Int64Ptr(upper)).
+			Covers(keel.Int64Of(keel.Scalar(pickup))),
 	)
 }
 
@@ -252,10 +250,9 @@ func lowMarginCondition(margin *shipmentports.ShipmentMarginBasis) keel.Pred {
 	sm := shipmentdb.ShipmentMoves.As(quickMilesAlias)
 	revenue := sp.TotalChargeAmount
 
-	cost := keel.NumericOf(
-		keel.DynOf(keel.Numeric(margin.CostPerMile)).
-			Mul(keel.CastNumeric(costMiles(sm, margin.IncludeDeadheadMiles))),
-	).RoundTo(2)
+	cost := keel.Numeric(margin.CostPerMile).
+		Mul(keel.CastNumeric(costMiles(sm, margin.IncludeDeadheadMiles))).
+		RoundTo(2)
 
 	miles := sm.
 		Where(sm.ShipmentID.EqCol(sp.ID), sm.Status.Ne(shipment.MoveStatusCanceled)).
@@ -263,7 +260,7 @@ func lowMarginCondition(margin *shipmentports.ShipmentMarginBasis) keel.Pred {
 			keel.Float64Of(sm.Distance.Sum()).Coalesce(0).Gt(0),
 			keel.Or(
 				revenue.AnyCol.Lte(0),
-				keel.NumericOf(keel.DynOf(revenue).Sub(cost).Mul(100).Div(revenue)).
+				revenue.Sub(cost).Mul(keel.Numeric(100)).Div(revenue).
 					RoundTo(2).
 					Lt(margin.TargetMarginPercent),
 			),

@@ -146,14 +146,14 @@ func quickFilterTotalsQuery(
 	basis *shipmentports.ShipmentQuickFilterBasis,
 	filters []shipment.QuickFilterSpec,
 ) (*keel.Query[*shipment.Shipment], error) {
-	counts := make([]any, 0, len(filters))
-	revenues := make([]any, 0, len(filters))
+	counts := make([]keel.Int64Value, 0, len(filters))
+	revenues := make([]keel.StringValue, 0, len(filters))
 	for _, spec := range filters {
 		cond, err := shipmentrepository.QuickFilterCondition(basis, spec)
 		if err != nil {
 			return nil, err
 		}
-		counts = append(counts, keel.Count().Filter(cond))
+		counts = append(counts, keel.Int64Of(keel.Count().Filter(cond)))
 		revenues = append(
 			revenues,
 			keel.CastText(
@@ -163,7 +163,7 @@ func quickFilterTotalsQuery(
 		)
 	}
 
-	return q.Pick(keel.DynArray(counts...), keel.DynArray(revenues...)), nil
+	return q.Pick(keel.ArrayOfInt64(counts...), keel.ArrayOfString(revenues...)), nil
 }
 
 func pointers[T any](rows []T) []*T {

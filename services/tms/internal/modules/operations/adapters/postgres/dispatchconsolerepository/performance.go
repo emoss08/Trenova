@@ -123,7 +123,7 @@ func (r *repository) ListWorkerAcceptanceStats(
 					countIf(asn.AckStatus.Eq(shipment.AssignmentAckAccepted)),
 					countIf(asn.AckStatus.Eq(shipment.AssignmentAckDeclined)),
 					keel.CastFloat64(keel.NumericOf(
-						keel.Avg(keel.DynOf(asn.AckAt).Sub(asn.CreatedAt)).
+						asn.AckAt.Sub(asn.CreatedAt).Avg().
 							Filter(keel.And(
 								answered,
 								asn.AckAt.IsNotNull(),

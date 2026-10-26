@@ -250,7 +250,7 @@ func (r *searchCardReader) workerLinks(
 	seat := keel.Rows(
 		seatSourceName,
 		[]string{seatSourceWorkerID},
-		keel.DynFunc("unnest", keel.DynArray(asg.PrimaryWorkerID, asg.SecondaryWorkerID)),
+		keel.ArrayOfString(asg.PrimaryWorkerID, asg.SecondaryWorkerID).Unnest(),
 	)
 	workerID := seat.Col(seatSourceWorkerID)
 

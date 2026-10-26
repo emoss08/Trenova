@@ -104,27 +104,44 @@ func (r *repository) ReplaceForShipments(
 	})
 }
 
-type excludable interface {
-	ToExpr(e keel.Expr) keel.Assignment
-	Excluded() keel.Expr
-}
-
 func newerETA() keel.Conflict {
 	e := stopetadb.StopETAs
 	newer := keel.Int64Of(e.ComputedAt).LteExpr(keel.Int64Of(e.ComputedAt.Excluded()))
-	cols := []excludable{
-		e.ShipmentID, e.ShipmentMoveID, e.MoveSequence, e.StopSequence, e.Arrived,
-		e.EstimatedArrival, e.EstimatedDeparture, e.WindowEnd, e.SlackMinutes, e.Verdict,
-		e.Basis, e.DriveMethod, e.MilesRemaining, e.DriveMinutes, e.RestMinutes, e.InputAt,
-		e.InputStale, e.ThresholdMinutes, e.Reason, e.ComputedAt,
+	text := func(c keel.StringCol) keel.Assignment {
+		return c.ToExpr(keel.CaseString().When(newer, keel.StringOf(c.Excluded())).Else(c))
+	}
+	bigint := func(c keel.Int64Col) keel.Assignment {
+		return c.ToExpr(keel.CaseInt64().When(newer, keel.Int64Of(c.Excluded())).Else(c))
+	}
+	boolean := func(c keel.BoolCol) keel.Assignment {
+		return c.ToExpr(keel.CaseBool().When(newer, keel.BoolOf(c.Excluded())).Else(c))
+	}
+	float := func(c keel.Float64Col) keel.Assignment {
+		return c.ToExpr(keel.CaseFloat64().When(newer, keel.Float64Of(c.Excluded())).Else(c))
 	}
 
-	sets := make([]keel.Assignment, 0, len(cols))
-	for _, col := range cols {
-		sets = append(sets, col.ToExpr(keel.DynCase().When(newer, col.Excluded()).Else(col)))
-	}
-
-	return keel.OnConflict(e.OrganizationID, e.BusinessUnitID, e.StopID).Set(sets...)
+	return keel.OnConflict(e.OrganizationID, e.BusinessUnitID, e.StopID).Set(
+		text(e.ShipmentID.StringCol),
+		text(e.ShipmentMoveID.StringCol),
+		bigint(e.MoveSequence),
+		bigint(e.StopSequence),
+		boolean(e.Arrived),
+		bigint(e.EstimatedArrival),
+		bigint(e.EstimatedDeparture),
+		bigint(e.WindowEnd),
+		bigint(e.SlackMinutes),
+		text(e.Verdict.StringCol),
+		text(e.Basis.StringCol),
+		text(e.DriveMethod.StringCol),
+		float(e.MilesRemaining),
+		bigint(e.DriveMinutes),
+		bigint(e.RestMinutes),
+		bigint(e.InputAt),
+		boolean(e.InputStale),
+		bigint(e.ThresholdMinutes),
+		text(e.Reason),
+		bigint(e.ComputedAt),
+	)
 }
 
 func (r *repository) ListByShipmentIDs(

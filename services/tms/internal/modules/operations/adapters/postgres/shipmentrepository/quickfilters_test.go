@@ -110,11 +110,11 @@ func TestQuickFilterCondition_PickupWindowBounds(t *testing.T) {
 	assert.Contains(t, soon, `ORDER BY qf_sm."sequence" ASC, qf_stp."sequence" ASC LIMIT 1`)
 	assert.Contains(t, soon, `qf_stp."type" IN ('Pickup', 'SplitPickup')`)
 	upper := now + 120*60
-	assert.Contains(t, soonArgs, &upper)
+	assert.Contains(t, soonArgs, upper)
 
 	_, laterArgs := renderQuickFilter(t, basis, shipment.PickupWindowFilter(360, nil))
 	lower := now + 360*60
-	assert.Contains(t, laterArgs, &lower)
+	assert.Contains(t, laterArgs, lower)
 }
 
 func TestQuickFilterCondition_LowMarginMatchesEstimator(t *testing.T) {
@@ -129,7 +129,7 @@ func TestQuickFilterCondition_LowMarginMatchesEstimator(t *testing.T) {
 		sql,
 		`round(($6::numeric * CAST(coalesce(sum(qf_mi."distance"), $7) AS numeric)), $8)`,
 	)
-	assert.Contains(t, sql, `* $9::bigint) / s."total_charge_amount"), $10) < $11)`)
+	assert.Contains(t, sql, `* $9::numeric) / s."total_charge_amount"), $10) < $11)`)
 	assert.Equal(t, []any{0, float64(0), 0}, args[2:5])
 	assert.Equal(t, []any{0, int64(2), 100, int64(2)}, args[6:10])
 	assert.Contains(t, args, decimal.RequireFromString("1.85"))
