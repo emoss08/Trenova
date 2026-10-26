@@ -2149,6 +2149,7 @@ deps:
       - operations-ports
       - pkg
       - infrastructure
+      - edi-app # TODO(build-arch): layer import inside the module that the layer rules do not allow (1 imports)
   edi-app:
     mayDependOn:
       - edi-domain
