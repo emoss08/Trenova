@@ -105,7 +105,6 @@ func seedTransfers(t *testing.T) *transferFixture {
 			TransactionSet:           edi.TransactionSet204,
 			X12Version:               edi.DefaultX12204Version,
 			Status:                   edi.MessageStatusGenerated,
-			ValidationMode:           edi.ValidationModeDisabled,
 			InterchangeControlNumber: "000000001",
 			GroupControlNumber:       "1",
 			TransactionControlNumber: bol,

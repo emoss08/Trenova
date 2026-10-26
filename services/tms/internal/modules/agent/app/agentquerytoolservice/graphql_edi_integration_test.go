@@ -118,7 +118,7 @@ func writeEDIRows(
 			EDIPartnerID: partners[0].ID, DocumentTypeID: ediDocumentType,
 			Direction: edi.DocumentDirectionOutbound, Standard: edi.EDIStandardX12,
 			TransactionSet: edi.TransactionSet214, X12Version: "004010",
-			Status: edi.MessageStatusGenerated, ValidationMode: edi.ValidationModeStrict,
+			Status:                   edi.MessageStatusGenerated,
 			InterchangeControlNumber: fmt.Sprintf("%09d", idx+1),
 			GroupControlNumber:       "1", TransactionControlNumber: "0001",
 			RawX12:          "ISA*00*SECRET~",

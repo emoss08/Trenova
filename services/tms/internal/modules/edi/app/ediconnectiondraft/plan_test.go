@@ -2,6 +2,7 @@ package ediconnectiondraft
 
 import (
 	_ "embed"
+	"fmt"
 	"regexp"
 	"strconv"
 	"strings"
@@ -11,6 +12,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
 	"github.com/emoss08/trenova/pkg/domaintypes"
+	"github.com/emoss08/trenova/pkg/lading"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -145,26 +147,53 @@ func valueOf(t *testing.T, values []ediports.DraftValue, field string) ediports.
 	return ediports.DraftValue{}
 }
 
-func profileFor(
+func setFor(
 	t *testing.T,
 	draft *ediports.ConnectionDraft,
 	set edi.TransactionSet,
 	direction edi.DocumentDirection,
-) ediports.DraftDocumentProfile {
+) ediports.DraftSet {
 	t.Helper()
-	for _, profile := range draft.DocumentProfiles {
-		if profile.TransactionSet == set && profile.Direction == direction {
-			return profile
+	for _, drafted := range draft.Sets {
+		if drafted.TransactionSet == set && drafted.Direction == direction {
+			return drafted
 		}
 	}
-	require.Failf(t, "missing profile", "%s %s", set, direction)
-	return ediports.DraftDocumentProfile{}
+	require.Failf(t, "missing set", "%s %s", set, direction)
+	return ediports.DraftSet{}
+}
+
+func projectFile(t *testing.T, files []lading.File, path string) string {
+	t.Helper()
+	for _, file := range files {
+		if file.Path == path {
+			return file.Source
+		}
+	}
+	require.Failf(t, "missing file", "%s is not in the project", path)
+	return ""
+}
+
+func draftedFile(
+	t *testing.T,
+	project *ediports.DraftProject,
+	path string,
+) ediports.DraftProjectFile {
+	t.Helper()
+	require.NotNil(t, project)
+	for _, file := range project.Files {
+		if file.Path == path {
+			return file
+		}
+	}
+	require.Failf(t, "missing file", "%s is not in the drafted project", path)
+	return ediports.DraftProjectFile{}
 }
 
 func TestPlan_DraftsAWholeNewConnectionFromTheSpec(t *testing.T) {
 	t.Parallel()
 
-	h := newHarness()
+	h := newHarness(t)
 	draft, err := h.service.PlanConnectionDraft(t.Context(), acmeRequest(t))
 	require.NoError(t, err)
 
@@ -189,26 +218,33 @@ func TestPlan_DraftsAWholeNewConnectionFromTheSpec(t *testing.T) {
 	assert.True(t, draft.Connection.Inbound)
 	assert.True(t, draft.Connection.Outbound)
 	assert.Equal(t, edi.ConnectionMethodAS2, draft.Connection.Method)
-	assert.Len(t, draft.DocumentProfiles, 4)
+	assert.Len(t, draft.Sets, 4)
 
-	tender := profileFor(t, draft, edi.TransactionSet204, edi.DocumentDirectionInbound)
-	assert.Equal(t, edi.DocumentStatusInactive, tender.Status)
-	assert.Equal(t, "SM", valueOf(t, tender.Fields, setField(edi.TransactionSet204, edi.DocumentDirectionInbound, setAttrFunctionalGroupID)).Value)
+	tender := setFor(t, draft, edi.TransactionSet204, edi.DocumentDirectionInbound)
+	assert.Equal(t, ediports.ChangeKindAdd, tender.Change)
 	assert.Equal(t, "004010", valueOf(t, tender.Fields, setField(edi.TransactionSet204, edi.DocumentDirectionInbound, setAttrVersion)).Value)
-	assert.True(t, tender.Template.Starter)
+	assert.Equal(t, 1, tender.Requirements)
 	assert.Empty(t, tender.ControlNumbers, "inbound documents carry the partner's numbers")
 
-	status := profileFor(t, draft, edi.TransactionSet214, edi.DocumentDirectionOutbound)
+	status := setFor(t, draft, edi.TransactionSet214, edi.DocumentDirectionOutbound)
 	ack := valueOf(t, status.Fields, setField(edi.TransactionSet214, edi.DocumentDirectionOutbound, setAttrAck))
 	assert.Equal(t, "997", ack.Value)
 	require.Len(t, status.ControlNumbers, 1)
 	assert.Equal(t, int64(1000), status.ControlNumbers[0].Start)
 	assert.Equal(t, edi.ControlNumberKindInterchange, status.ControlNumbers[0].Kind)
-	require.Len(t, status.Template.Unmet, 1, "the base 214 has no MS1, and writes no K1")
-	assert.Equal(t, "MS1", status.Template.Unmet[0].SegmentID)
-	assert.Equal(t, 5, status.Template.Unmet[0].Source.Page)
+	assert.Equal(t, 2, status.Requirements, "MS1 is required and K1 is not used")
+	for _, unmet := range status.Unmet {
+		assert.Equal(t, 5, unmet.Source.Page, "an unmet rule cites the page that asks for it")
+	}
 
-	response := profileFor(t, draft, edi.TransactionSet990, edi.DocumentDirectionOutbound)
+	require.NotNil(t, draft.Project)
+	assert.Equal(t, ediports.ChangeKindAdd, draft.Project.Change)
+	assert.Equal(t, lading.RoleCarrier, draft.Project.Role, "the partner tenders and the carrier answers")
+	assert.Zero(t, draft.Project.Errors, draft.Project.Diagnostics)
+	assert.Equal(t, ediports.ChangeKindAdd, draftedFile(t, draft.Project, "guides/214.lading").Change)
+	assert.Equal(t, ediports.ChangeKindAdd, draftedFile(t, draft.Project, "guides/204.lading").Change)
+
+	response := setFor(t, draft, edi.TransactionSet990, edi.DocumentDirectionOutbound)
 	window := valueOf(t, response.Fields, setField(edi.TransactionSet990, edi.DocumentDirectionOutbound, setAttrAckWindowMinutes))
 	assert.Equal(t, "240", window.Value, "4 hours")
 
@@ -265,7 +301,7 @@ func TestPlan_TakesSettingsAsTheGuideWritesThem(t *testing.T) {
 		}
 	}
 
-	draft, err := newHarness().service.PlanConnectionDraft(t.Context(), req)
+	draft, err := newHarness(t).service.PlanConnectionDraft(t.Context(), req)
 	require.NoError(t, err)
 
 	assert.Empty(t, draft.Decisions)
@@ -327,7 +363,7 @@ func TestPlan_HoldsAValueWhoseQuoteIsNotOnThePage(t *testing.T) {
 	req := acmeRequest(t)
 	req.Values[0] = value(fieldPartnerCode, "ACMERETAIL", 3, "Partner code is ACMERETAIL")
 
-	draft, err := newHarness().service.PlanConnectionDraft(t.Context(), req)
+	draft, err := newHarness(t).service.PlanConnectionDraft(t.Context(), req)
 	require.NoError(t, err)
 
 	code := valueOf(t, draft.Partner.Fields, fieldPartnerCode)
@@ -344,7 +380,7 @@ func TestPlan_FollowsAQuoteToThePageItIsOn(t *testing.T) {
 	req := acmeRequest(t)
 	req.Values[0] = value(fieldPartnerCode, "ACMERETAIL", 2, "Trading Partner Code: ACMERETAIL")
 
-	draft, err := newHarness().service.PlanConnectionDraft(t.Context(), req)
+	draft, err := newHarness(t).service.PlanConnectionDraft(t.Context(), req)
 	require.NoError(t, err)
 
 	code := valueOf(t, draft.Partner.Fields, fieldPartnerCode)
@@ -359,7 +395,7 @@ func TestPlan_RefusesAValueTheQuoteDoesNotSay(t *testing.T) {
 	req := acmeRequest(t)
 	req.Values[1] = value(fieldPartnerName, "Acme Wholesale", 1, "Trading Partner Name: Acme Retail Group")
 
-	draft, err := newHarness().service.PlanConnectionDraft(t.Context(), req)
+	draft, err := newHarness(t).service.PlanConnectionDraft(t.Context(), req)
 	require.NoError(t, err)
 
 	name := valueOf(t, draft.Partner.Fields, fieldPartnerName)
@@ -373,7 +409,7 @@ func TestPlan_HoldsALowConfidenceValue(t *testing.T) {
 	req := acmeRequest(t)
 	req.Values[1].Confidence = 0.55
 
-	draft, err := newHarness().service.PlanConnectionDraft(t.Context(), req)
+	draft, err := newHarness(t).service.PlanConnectionDraft(t.Context(), req)
 	require.NoError(t, err)
 
 	name := valueOf(t, draft.Partner.Fields, fieldPartnerName)
@@ -394,7 +430,7 @@ func TestPlan_HoldsConflictingValuesUntilThePersonPicksOne(t *testing.T) {
 		"https://as2.acmeretail.example/as2/receive", 2,
 		"Production AS2 URL: https://as2.acmeretail.example/as2/receive"))
 
-	h := newHarness()
+	h := newHarness(t)
 	draft, err := h.service.PlanConnectionDraft(t.Context(), req)
 	require.NoError(t, err)
 	endpoint := valueOf(t, draft.Transport.Fields, "as2.endpointUrl")
@@ -440,7 +476,7 @@ func TestPlan_HoldsAValueTheSpecsOwnSampleContradicts(t *testing.T) {
 		}
 	}
 
-	draft, err := newHarness().service.PlanConnectionDraft(t.Context(), req)
+	draft, err := newHarness(t).service.PlanConnectionDraft(t.Context(), req)
 	require.NoError(t, err)
 
 	ours := valueOf(t, draft.Interchange, fieldOurID)
@@ -465,7 +501,7 @@ func TestPlan_TakesEnvelopeValuesFromTheSampleWhenTheTextIsSilent(t *testing.T) 
 	}
 	req.Values = kept
 
-	draft, err := newHarness().service.PlanConnectionDraft(t.Context(), req)
+	draft, err := newHarness(t).service.PlanConnectionDraft(t.Context(), req)
 	require.NoError(t, err)
 
 	qualifier := valueOf(t, draft.Interchange, fieldPartnerQualifier)
@@ -482,14 +518,14 @@ func TestPlan_RefusesSecretsAndUnknownFields(t *testing.T) {
 	for _, field := range []string{"as2.privateKey", "transport.password", "knownHostKey", "as2.partnerSigningCertificate", "isa.securityInformation"} {
 		req := acmeRequest(t)
 		req.Values = append(req.Values, value(field, "Acme#Test2026", 2, "keystore password: Acme#Test2026"))
-		_, err := newHarness().service.PlanConnectionDraft(t.Context(), req)
+		_, err := newHarness(t).service.PlanConnectionDraft(t.Context(), req)
 		require.Error(t, err, field)
 		assert.Contains(t, err.Error(), "never taken from a document", field)
 	}
 
 	req := acmeRequest(t)
 	req.Values = append(req.Values, value("partner.favoriteColor", "blue", 1, "Acme Retail Group"))
-	_, err := newHarness().service.PlanConnectionDraft(t.Context(), req)
+	_, err := newHarness(t).service.PlanConnectionDraft(t.Context(), req)
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), `Unknown field "partner.favoriteColor"`)
 }
@@ -507,7 +543,7 @@ func TestPlan_DraftsTheSameFromAQuoteWhoseSecretWasRedacted(t *testing.T) {
 				req.Values[index].Citation = cite(2, quote)
 			}
 		}
-		draft, err := newHarness().service.PlanConnectionDraft(t.Context(), req)
+		draft, err := newHarness(t).service.PlanConnectionDraft(t.Context(), req)
 		require.NoError(t, err)
 		return draft
 	}
@@ -532,22 +568,59 @@ func TestPlan_NeedsReadableText(t *testing.T) {
 
 	req := acmeRequest(t)
 	req.Document.Pages = nil
-	_, err := newHarness().service.PlanConnectionDraft(t.Context(), req)
+	_, err := newHarness(t).service.PlanConnectionDraft(t.Context(), req)
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), "no readable text")
 }
 
-func existingAcme(req *ediports.ConnectionDraftRequest) *ediports.EDIPartnerSetup {
+// acmeVersion is the active Lading version a partner set up before this guide would have: the
+// carrier starter for Acme's interchange, receiving 204s and sending 214s.
+func acmeVersion(t *testing.T, projectID pulid.ID) *edi.LadingVersion {
+	t.Helper()
+	client := lading.Default()
+	starter, err := client.Starter(t.Context(), &lading.StarterRequest{
+		Name:        "ACMERETAIL",
+		Label:       "Acme Retail Group",
+		Role:        lading.RoleCarrier,
+		Zone:        "America/Chicago",
+		Version:     "004010",
+		Them:        &[2]string{"01", "007912345"},
+		Us:          &[2]string{"02", "TRNV"},
+		Group:       &[2]string{"ACMERETAIL", "TRNV"},
+		Usage:       valueTest,
+		Acknowledge: "997",
+		AckWithin:   240,
+		Sets:        []string{"204", "214"},
+	})
+	require.NoError(t, err)
+	encoded, err := lading.Encode(
+		&lading.Project{Files: starter.Files, Samples: starter.Samples},
+		&lading.Context{Org: lading.Org{Name: "Trenova Logistics", SCAC: "TRNV", Zone: "America/Chicago"}},
+	)
+	require.NoError(t, err)
+	check, err := client.Check(t.Context(), encoded)
+	require.NoError(t, err)
+	require.Zero(t, check.Errors)
+	return &edi.LadingVersion{
+		ID:        pulid.MustNew("ldv_"),
+		ProjectID: projectID,
+		Number:    2,
+		Status:    edi.LadingVersionStatusActive,
+		Files:     starter.Files,
+		Manifest:  *check,
+	}
+}
+
+func existingAcme(t *testing.T, req *ediports.ConnectionDraftRequest) *ediports.EDIPartnerSetup {
+	t.Helper()
 	partnerID := pulid.MustNew("edip_")
 	tenant := req.TenantInfo
-	envelope := edi.X12EnvelopeSettings{
-		InterchangeSenderQualifier: "02", InterchangeSenderID: "TRNV",
-		InterchangeReceiverQualifier: "01", InterchangeReceiverID: "007912345",
-		ApplicationSenderCode: "TRNV", ApplicationReceiverCode: "ACMERETAIL",
-		InterchangeUsageIndicator: "T", ElementSeparator: "*", SegmentTerminator: "~",
-		ComponentSeparator: ">", RepetitionSeparator: "^",
+	project := &edi.LadingProject{
+		ID:             pulid.MustNew("ldp_"),
+		OrganizationID: tenant.OrgID,
+		BusinessUnitID: tenant.BuID,
+		EDIPartnerID:   partnerID,
 	}
-	statusTemplate := pulid.MustNew("editpl_")
 	return &ediports.EDIPartnerSetup{
 		Partner: &edi.EDIPartner{
 			ID: partnerID, OrganizationID: tenant.OrgID, BusinessUnitID: tenant.BuID,
@@ -564,22 +637,11 @@ func existingAcme(req *ediports.ConnectionDraftRequest) *ediports.EDIPartnerSetu
 				"localAS2Id": "TRENOVA-AS2", "partnerAS2Id": "ACMERETAILAS2",
 				"endpointUrl": "https://as2-test.acmeretail.example/as2/receive", "mdnMode": "sync",
 				"signingAlgorithm": "sha256", "encryptionAlgorithm": "aes256-cbc", "environment": "test",
-				"isaSenderQualifier": "02", "isaSenderId": "TRNV", "isaReceiverQualifier": "01",
-				"isaReceiverId": "007912345", "gsSenderId": "TRNV", "gsReceiverId": "ACMERETAIL",
-				"x12Version": "004010",
 			},
 			EncryptedSecrets: map[string]string{"privateKey": "trenova-envelope:v1:abc"},
 		}},
-		DocumentProfiles: []*edi.EDIPartnerDocumentProfile{{
-			ID: pulid.MustNew("edidp_"), EDIPartnerID: partnerID,
-			DocumentTypeID: documentTypeID(edi.TransactionSet214, edi.DocumentDirectionOutbound),
-			TemplateID:     statusTemplate, Name: "Acme 214", Status: edi.DocumentStatusActive,
-			Direction: edi.DocumentDirectionOutbound, TransactionSet: edi.TransactionSet214,
-			X12VersionOverride: "004010", FunctionalGroupID: "QM", Envelope: envelope,
-			Acknowledgment: edi.AcknowledgmentConfig{Expected: true, Type: edi.AcknowledgmentType997, SLAInMinutes: 120, MissingAckSeverity: edi.ValidationSeverityWarning},
-			ValidationMode: edi.ValidationModeStrict, Version: 7,
-			Template: &edi.EDITemplate{ID: statusTemplate, Name: "Acme 214 template"},
-		}},
+		Project:       project,
+		LatestVersion: acmeVersion(t, project.ID),
 		MappingItems: []*edi.EDIMappingProfileItem{{
 			EntityType: edi.MappingEntityTypeServiceType, SourceID: "OLD", TargetID: pulid.MustNew("st_"),
 			TargetLabel: "Legacy",
@@ -594,9 +656,9 @@ func existingAcme(req *ediports.ConnectionDraftRequest) *ediports.EDIPartnerSetu
 func TestPlan_ARevisedSpecForAKnownPartnerIsAChangeSet(t *testing.T) {
 	t.Parallel()
 
-	h := newHarness()
+	h := newHarness(t)
 	req := acmeRequest(t)
-	existing := existingAcme(req)
+	existing := existingAcme(t, req)
 	h.repo.partners = []*ediports.EDIPartnerSetup{existing}
 	standard := pulid.MustNew("st_")
 	h.repo.targets[edi.MappingEntityTypeServiceType] = map[pulid.ID]string{standard: "STD"}
@@ -625,35 +687,43 @@ func TestPlan_ARevisedSpecForAKnownPartnerIsAChangeSet(t *testing.T) {
 	assert.Equal(t, ediports.ChangeKindSame, draft.Transport.Change)
 	assert.Equal(t, domaintypes.StatusActive, draft.Transport.Status)
 
-	status := profileFor(t, draft, edi.TransactionSet214, edi.DocumentDirectionOutbound)
-	assert.Equal(t, existing.DocumentProfiles[0].ID, status.ProfileID)
-	assert.Equal(t, ediports.ChangeKindSame, status.Change, "the profile already matches the spec")
-	assert.Equal(t, ediports.ChangeKindSame, status.Template.Change)
-	assert.Equal(t, keptTemplateNote, status.Template.Note)
-	window := valueOf(t, status.Fields, setField(edi.TransactionSet214, edi.DocumentDirectionOutbound, setAttrAckWindowMinutes))
-	assert.Equal(t, ediports.ValueStatusKept, window.Status)
-	assert.Equal(t, edi.DocumentStatusActive, status.Status)
+	status := setFor(t, draft, edi.TransactionSet214, edi.DocumentDirectionOutbound)
+	assert.NotEqual(t, ediports.ChangeKindAdd, status.Change, "the project already sends 214s")
 	require.Len(t, status.ControlNumbers, 1)
 	assert.Equal(t, ediports.ChangeKindSame, status.ControlNumbers[0].Change)
 	assert.Equal(t, int64(5000), status.ControlNumbers[0].Current)
 	assert.Contains(t, status.ControlNumbers[0].Problem, "would reissue numbers")
 
-	assert.Equal(t, ediports.ChangeKindAdd, profileFor(t, draft, edi.TransactionSet990, edi.DocumentDirectionOutbound).Change)
+	assert.Equal(t, ediports.ChangeKindAdd, setFor(t, draft, edi.TransactionSet990, edi.DocumentDirectionOutbound).Change)
+
+	require.NotNil(t, draft.Project)
+	assert.Equal(t, existing.Project.ID, draft.Project.ProjectID)
+	assert.Equal(t, ediports.ChangeKindChange, draft.Project.Change, "the guide's requirements are added")
+	assert.Equal(t, ediports.ChangeKindAdd, draftedFile(t, draft.Project, "guides/214.lading").Change)
+	gaps := make([]string, 0, len(draft.Gaps))
+	for _, gap := range draft.Gaps {
+		gaps = append(gaps, gap.Summary)
+	}
+	assert.Contains(t, gaps, fmt.Sprintf(noMapSummary, titleSet(edi.TransactionSet990, edi.DocumentDirectionOutbound)),
+		"a set the project has no map for is named for the studio")
 
 	require.Len(t, draft.Mappings, 1)
 	assert.Equal(t, ediports.ChangeKindAdd, draft.Mappings[0].Change)
 	assert.Equal(t, "STD", draft.Mappings[0].TargetLabel)
-	require.Len(t, draft.Kept, 1)
-	assert.Contains(t, draft.Kept[0].Label, "OLD")
+	kept := make([]string, 0, len(draft.Kept))
+	for _, item := range draft.Kept {
+		kept = append(kept, item.Label)
+	}
+	assert.Contains(t, strings.Join(kept, "\n"), "OLD")
 	assert.True(t, draft.Ready, draft.Blockers)
 }
 
 func TestPlan_AnUnsureValueThatIsAlreadySavedChangesNothing(t *testing.T) {
 	t.Parallel()
 
-	h := newHarness()
+	h := newHarness(t)
 	req := acmeRequest(t)
-	h.repo.partners = []*ediports.EDIPartnerSetup{existingAcme(req)}
+	h.repo.partners = []*ediports.EDIPartnerSetup{existingAcme(t, req)}
 	for idx := range req.Values {
 		if req.Values[idx].Field == "as2.endpointUrl" {
 			req.Values[idx].Confidence = 0.7
@@ -674,7 +744,7 @@ func TestPlan_AnUnsureValueThatIsAlreadySavedChangesNothing(t *testing.T) {
 	assert.NotContains(t, draft.Blockers, "Decide AS2 endpoint URL")
 
 	moved := acmeRequest(t)
-	h.repo.partners = []*ediports.EDIPartnerSetup{existingAcme(moved)}
+	h.repo.partners = []*ediports.EDIPartnerSetup{existingAcme(t, moved)}
 	for idx := range moved.Values {
 		if moved.Values[idx].Field == "as2.endpointUrl" {
 			moved.Values[idx] = value("as2.endpointUrl", "https://as2.acmeretail.example/as2/receive",
@@ -691,10 +761,10 @@ func TestPlan_AnUnsureValueThatIsAlreadySavedChangesNothing(t *testing.T) {
 func TestPlan_NeverPicksBetweenTwoMatchingPartners(t *testing.T) {
 	t.Parallel()
 
-	h := newHarness()
+	h := newHarness(t)
 	req := acmeRequest(t)
-	first := existingAcme(req)
-	second := existingAcme(req)
+	first := existingAcme(t, req)
+	second := existingAcme(t, req)
 	second.Partner.Code = "ACME-2"
 	second.Partner.Name = "Acme Retail Group West"
 	h.repo.partners = []*ediports.EDIPartnerSetup{first, second}
@@ -708,51 +778,59 @@ func TestPlan_NeverPicksBetweenTwoMatchingPartners(t *testing.T) {
 	assert.Contains(t, draft.Blockers, "Name which existing partner this spec is for")
 }
 
-func TestPlan_ChoosesTheTemplateThatMeetsTheMostRequirements(t *testing.T) {
+func TestPlan_WritesTheGuidesRequirementsIntoGuideFilesWithTheirPages(t *testing.T) {
 	t.Parallel()
 
-	h := newHarness()
-	req := acmeRequest(t)
-	versionID := pulid.MustNew("editv_")
-	h.repo.templates = []*edi.EDITemplateVersion{{
-		ID: versionID, TemplateID: pulid.MustNew("editpl_"), VersionNumber: 3, IsActive: true,
-		Template: &edi.EDITemplate{Name: "Retail 214", TransactionSet: edi.TransactionSet214, Direction: edi.DocumentDirectionOutbound},
-		Segments: []*edi.EDITemplateSegment{
-			{SegmentID: "AT7", Required: true, Elements: []edi.TemplateElement{{Position: 1}}},
-			{SegmentID: "MS1", Required: true, Elements: []edi.TemplateElement{{Position: 1}}},
-		},
-	}}
-	h.repo.templates[0].Template.ID = h.repo.templates[0].TemplateID
-
-	draft, err := h.service.PlanConnectionDraft(t.Context(), req)
+	plan, err := newHarness(t).service.PreviewConnectionDraft(t.Context(), acmeRequest(t))
 	require.NoError(t, err)
+	require.NotNil(t, plan.Project)
+	assert.Equal(t, ediports.ChangeKindAdd, plan.Project.Change)
+	assert.Nil(t, plan.Project.Before)
 
-	status := profileFor(t, draft, edi.TransactionSet214, edi.DocumentDirectionOutbound)
-	assert.Equal(t, "Retail 214 (version 3)", status.Template.Name)
-	assert.False(t, status.Template.Starter)
-	assert.Empty(t, status.Template.Unmet)
-	assert.Equal(t, 2, status.Template.Met)
-	require.Len(t, status.Template.Considered, 2)
+	status := projectFile(t, plan.Project.Files, "guides/214.lading")
+	assert.True(t, strings.HasPrefix(status, "guide "), status)
+	assert.Contains(t, status, "from x12.004010.214")
+	assert.Contains(t, status, "/// p.5: MS1 Equipment Location is mandatory on every status.")
+	assert.Contains(t, status, "/// p.5: K1 Remarks is not used.")
+
+	tender := projectFile(t, plan.Project.Files, "guides/204.lading")
+	assert.Contains(t, tender, "B2 { 04 required }")
+
+	maps := 0
+	for _, file := range plan.Project.Files {
+		if strings.HasPrefix(strings.TrimSpace(file.Source), "map ") &&
+			strings.Contains(file.Source, "x12.004010.214") {
+			maps++
+		}
+	}
+	assert.Zero(t, maps, "every 214 map reads or writes through the partner's guide, not the base set")
+
+	paths := make([]string, 0, len(plan.Project.Samples))
+	for _, sample := range plan.Project.Samples {
+		paths = append(paths, sample.Path)
+	}
+	assert.Contains(t, paths, "samples/spec-page-7.x12", "the guide's own example is kept as a sample")
 }
 
-func TestPlan_ListsWhatAnInvalidPartnerSettingWouldBreak(t *testing.T) {
+func TestPlan_NamesTheAcknowledgmentItChoseWhenTheGuideAsksForTwo(t *testing.T) {
 	t.Parallel()
 
-	h := newHarness()
-	h.setup.settingsErrors = nil
 	req := acmeRequest(t)
-	req.Values = append(req.Values, value(fieldCarrierSCAC, "TRNV", 3, "Carrier interchange receiver: qualifier 02 (SCAC), ID TRNV"))
+	for index := range req.Values {
+		if req.Values[index].Field == setField(edi.TransactionSet210, edi.DocumentDirectionOutbound, setAttrAck) {
+			req.Values[index] = value(req.Values[index].Field, "999", 4,
+				"Acme does not support the 999 Implementation Acknowledgment.")
+		}
+	}
 
-	draft, err := h.service.PlanConnectionDraft(t.Context(), req)
+	draft, err := newHarness(t).service.PlanConnectionDraft(t.Context(), req)
 	require.NoError(t, err)
-	assert.Empty(t, draft.Failures)
 
-	h.setup.settingsErrors = []edi.Diagnostic{{Severity: edi.ValidationSeverityError, Path: "carrier.scac", Message: "SCAC is required"}}
-	draft, err = h.service.PlanConnectionDraft(t.Context(), req)
-	require.NoError(t, err)
-	require.NotEmpty(t, draft.Failures)
-	assert.Equal(t, "partnerSettings.carrier.scac", draft.Failures[0].Field)
-	assert.False(t, draft.Ready)
+	summaries := make([]string, 0, len(draft.Gaps))
+	for _, gap := range draft.Gaps {
+		summaries = append(summaries, gap.Summary)
+	}
+	assert.Contains(t, summaries, fmt.Sprintf(ackConflict, "997 and 999", "997"))
 }
 
 func TestDocumentDigest_IsTheTextInPageOrder(t *testing.T) {
