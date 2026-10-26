@@ -14248,6 +14248,15 @@
       "routes/edi"
     ]
   },
+  "AI": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/organization"
+    ]
+  },
   "AI & Automation": {
     "sites": 3,
     "scope": [
@@ -14312,6 +14321,15 @@
       "apps/web/config"
     ]
   },
+  "AI audit trail": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/organization"
+    ]
+  },
   "AI audit trail export": {
     "sites": 1,
     "scope": [
@@ -14319,15 +14337,6 @@
     ],
     "areas": [
       "apps/web/config"
-    ]
-  },
-  "AI audit trail retention (days)": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/organization"
     ]
   },
   "AI audit trail retention must be a whole number of days": {
@@ -14397,15 +14406,6 @@
       "go/other"
     ]
   },
-  "AI correction retention (days)": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/organization"
-    ]
-  },
   "AI correction retention must be a whole number of days": {
     "sites": 1,
     "scope": [
@@ -14442,6 +14442,15 @@
       "go/other"
     ]
   },
+  "AI corrections": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/organization"
+    ]
+  },
   "AI document intelligence is disabled": {
     "sites": 1,
     "scope": [
@@ -14460,6 +14469,15 @@
       "apps/web/components"
     ]
   },
+  "AI feedback": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/organization"
+    ]
+  },
   "AI feedback maintenance": {
     "sites": 1,
     "scope": [
@@ -14467,15 +14485,6 @@
     ],
     "areas": [
       "go/other"
-    ]
-  },
-  "AI feedback retention (days)": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/organization"
     ]
   },
   "AI feedback retention must be at least 30 days": {
@@ -22531,15 +22540,6 @@
       "apps/web/lib"
     ]
   },
-  "Agent evaluation case retention (days)": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/organization"
-    ]
-  },
   "Agent evaluation case retention cannot be negative": {
     "sites": 1,
     "scope": [
@@ -22556,6 +22556,15 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "Agent evaluation cases": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/organization"
     ]
   },
   "Agent evaluations": {
@@ -35518,6 +35527,15 @@
       "routes/fuel-card"
     ]
   },
+  "At least {0, plural, one {# day} other {# days}}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/organization"
+    ]
+  },
   "At least {0}": {
     "sites": 2,
     "scope": [
@@ -36385,12 +36403,13 @@
     ]
   },
   "Audit": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
-      "apps/web/lib"
+      "apps/web/lib",
+      "routes/organization"
     ]
   },
   "Audit Log": {
@@ -36411,15 +36430,6 @@
       "go/other"
     ]
   },
-  "Audit Retention (days)": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/organization"
-    ]
-  },
   "Audit chain": {
     "sites": 1,
     "scope": [
@@ -36430,21 +36440,13 @@
     ]
   },
   "Audit entries": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/web/config",
-      "routes/admin"
-    ]
-  },
-  "Audit entries older than this are deleted by the nightly audit retention purge.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
+      "routes/admin",
       "routes/organization"
     ]
   },
@@ -47696,6 +47698,15 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "Captured cases and their replays, which keep a redacted copy of what the agent was given. Kept forever, they last until they expire or their conversation is deleted.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/organization"
     ]
   },
   "Captured documents cannot be filed onto that kind of record": {
@@ -61056,15 +61067,6 @@
       "routes/admin"
     ]
   },
-  "Configure how long audit entries, the AI audit trail and raw EDI payloads are kept before the nightly purge jobs remove them.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/organization"
-    ]
-  },
   "Configure how the system automatically voids shipments that have been in the \"New\" status for more than the configured threshold based on the creation date. This helps maintain operational efficiency and ensures that shipments are not left in a \"New\" state for an extended period of time.": {
     "sites": 1,
     "scope": [
@@ -72501,7 +72503,7 @@
     ]
   },
   "Data": {
-    "sites": 3,
+    "sites": 4,
     "scope": [
       "go",
       "ts"
@@ -72509,7 +72511,8 @@
     "areas": [
       "apps/web/components",
       "go/other",
-      "routes/desk"
+      "routes/desk",
+      "routes/organization"
     ]
   },
   "Data & Integrations": {
@@ -73254,7 +73257,7 @@
     ]
   },
   "Days": {
-    "sites": 10,
+    "sites": 11,
     "scope": [
       "go",
       "ts"
@@ -73265,6 +73268,7 @@
       "routes/ar-open-items",
       "routes/factoring",
       "routes/factoring-submission",
+      "routes/organization",
       "routes/reports",
       "routes/settings",
       "routes/worker"
@@ -77008,14 +77012,15 @@
     ]
   },
   "Deleted": {
-    "sites": 3,
+    "sites": 4,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/web/components",
       "routes/admin",
-      "routes/desk"
+      "routes/desk",
+      "routes/organization"
     ]
   },
   "Deleted comments cannot be edited": {
@@ -87536,7 +87541,7 @@
     ]
   },
   "EDI": {
-    "sites": 20,
+    "sites": 21,
     "scope": [
       "go",
       "ts"
@@ -87553,6 +87558,7 @@
       "routes/inbox",
       "routes/invoice",
       "routes/invoice-register",
+      "routes/organization",
       "routes/shipment"
     ]
   },
@@ -87620,15 +87626,6 @@
       "routes/edi"
     ]
   },
-  "EDI Inbound File Retention (days)": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/organization"
-    ]
-  },
   "EDI Inbound Files": {
     "sites": 1,
     "scope": [
@@ -87654,15 +87651,6 @@
     ],
     "areas": [
       "routes/edi"
-    ]
-  },
-  "EDI Message Retention (days)": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/organization"
     ]
   },
   "EDI Messages": {
@@ -96400,15 +96388,6 @@
       "go/other"
     ]
   },
-  "Evaluation cases captured longer ago than this are purged with their replays, since they keep a redacted copy of what the agent was given. 0 keeps cases until they expire or their conversation is deleted.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/organization"
-    ]
-  },
   "Evaluation completed": {
     "sites": 1,
     "scope": [
@@ -96757,15 +96736,6 @@
     ],
     "areas": [
       "routes/fleet-safety"
-    ]
-  },
-  "Events on the signed AI audit trail older than this are deleted by the nightly sweep, which only cuts where the chain was sealed. At least 365 days; the default of 2555 days is seven years, which is what most audits of AI decisions ask for.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/organization"
     ]
   },
   "Every": {
@@ -111340,6 +111310,15 @@
       "go/other"
     ]
   },
+  "Forever": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/organization"
+    ]
+  },
   "Forfeit balance": {
     "sites": 1,
     "scope": [
@@ -121030,6 +121009,15 @@
       "routes/agent-control"
     ]
   },
+  "How long each kind of record is kept before the nightly purge jobs remove it.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/organization"
+    ]
+  },
   "How long one call may run before it's abandoned.": {
     "sites": 1,
     "scope": [
@@ -124979,6 +124967,15 @@
     ],
     "areas": [
       "api/handlers"
+    ]
+  },
+  "Inbound file contents": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/organization"
     ]
   },
   "Inbound files": {
@@ -133084,6 +133081,15 @@
       "apps/web/components"
     ]
   },
+  "Keep forever": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/organization"
+    ]
+  },
   "Keep guide": {
     "sites": 1,
     "scope": [
@@ -133892,7 +133898,7 @@
     ]
   },
   "Kept": {
-    "sites": 6,
+    "sites": 7,
     "scope": [
       "ts"
     ],
@@ -133900,7 +133906,8 @@
       "apps/web/lib",
       "routes/agent-control",
       "routes/desk",
-      "routes/detention-intelligence"
+      "routes/detention-intelligence",
+      "routes/organization"
     ]
   },
   "Kept alongside the original record as the reason for the correction.": {
@@ -133937,6 +133944,15 @@
     ],
     "areas": [
       "routes/agent-control"
+    ]
+  },
+  "Kept for": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/organization"
     ]
   },
   "Kept for its history only": {
@@ -149756,6 +149772,15 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "Message payloads": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/organization"
     ]
   },
   "Message stream": {
@@ -201713,6 +201738,15 @@
       "go/other"
     ]
   },
+  "Purged with replays": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/organization"
+    ]
+  },
   "Purpose": {
     "sites": 3,
     "scope": [
@@ -205411,7 +205445,7 @@
       "routes/worker"
     ]
   },
-  "Ratings of AI output, with the question and answer each person saw, are deleted after this many days. At least 30.": {
+  "Ratings of AI output, with the question and answer each person saw.": {
     "sites": 1,
     "scope": [
       "ts"
@@ -205456,7 +205490,7 @@
       "routes/edi"
     ]
   },
-  "Raw X12 and payload snapshots for delivered/inbound messages older than this are blanked. 0 keeps raw payloads forever. Purged messages can no longer be replayed.": {
+  "Raw X12 and payload snapshots of delivered and inbound messages. A blanked message can no longer be replayed.": {
     "sites": 1,
     "scope": [
       "ts"
@@ -205481,6 +205515,15 @@
     ],
     "areas": [
       "routes/edi"
+    ]
+  },
+  "Raw content blanked": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/organization"
     ]
   },
   "Raw dwell minutes cannot be negative": {
@@ -205519,7 +205562,7 @@
       "routes/desk"
     ]
   },
-  "Raw inbound EDI file contents older than this are blanked while metadata is kept. 0 keeps raw payloads forever.": {
+  "Raw inbound EDI files. The record of each file stays.": {
     "sites": 1,
     "scope": [
       "ts"
@@ -215061,6 +215104,15 @@
       "apps/web/lib"
     ]
   },
+  "Removes before": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/organization"
+    ]
+  },
   "Removes inbound messages settled more than six months ago.": {
     "sites": 1,
     "scope": [
@@ -220484,15 +220536,6 @@
     "areas": [
       "routes/admin",
       "routes/worker"
-    ]
-  },
-  "Retention windows": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/organization"
     ]
   },
   "Retire": {
@@ -227446,7 +227489,7 @@
     ]
   },
   "Save changes": {
-    "sites": 46,
+    "sites": 47,
     "scope": [
       "ts"
     ],
@@ -227470,6 +227513,7 @@
       "routes/holiday",
       "routes/invoice-adjustment-control",
       "routes/leave-control",
+      "routes/organization",
       "routes/reports",
       "routes/settlement-control",
       "routes/shipment",
@@ -227733,13 +227777,12 @@
     ]
   },
   "Save settings": {
-    "sites": 2,
+    "sites": 1,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/edi",
-      "routes/organization"
+      "routes/edi"
     ]
   },
   "Save split": {
@@ -244426,6 +244469,15 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "Signed events recording each AI decision, cut only where the chain was sealed. Seven years is what most audits of AI decisions ask for.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/organization"
     ]
   },
   "Signed in": {
@@ -263401,15 +263453,6 @@
       "routes/reports"
     ]
   },
-  "The data retention settings could not be loaded.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/organization"
-    ]
-  },
   "The data type for this field": {
     "sites": 1,
     "scope": [
@@ -273492,6 +273535,15 @@
       "go/other"
     ]
   },
+  "The record of who changed what, removed by the nightly audit purge.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/organization"
+    ]
+  },
   "The record stays as it is. The driver is told, with your reason.": {
     "sites": 1,
     "scope": [
@@ -279557,12 +279609,13 @@
     ]
   },
   "Then": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "apps/web/components",
+      "routes/organization"
     ]
   },
   "Then it stops for the day and says so": {
@@ -309977,7 +310030,7 @@
       "routes/insights"
     ]
   },
-  "What was read from a document, kept beside what a person confirmed when they created a shipment from it, is deleted after this many days. These corrections measure extraction accuracy. At least 30.": {
+  "What was read from a document beside what a person confirmed, used to measure extraction accuracy.": {
     "sites": 1,
     "scope": [
       "ts"
@@ -318669,12 +318722,13 @@
     ]
   },
   "You can view these settings but not change them.": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/admin"
+      "routes/admin",
+      "routes/organization"
     ]
   },
   "You can't ask this agent any more": {

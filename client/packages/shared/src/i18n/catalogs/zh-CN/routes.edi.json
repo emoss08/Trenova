@@ -331,6 +331,7 @@
   "Save a password in the Secrets tab before activating this profile.": "启用此配置文件前，请先在“密钥”标签页中保存密码。",
   "Save a private key in the Secrets tab before activating this profile.": "启用此配置文件前，请先在“密钥”标签页中保存私钥。",
   "Save partner": "保存合作伙伴",
+  "Save settings": "保存设置",
   "Save the draft before certifying it": "请先保存草稿再认证",
   "Save the draft before replaying it": "请先保存草稿再重放",
   "Save the draft to run it with live data": "保存草稿以使用实时数据运行",

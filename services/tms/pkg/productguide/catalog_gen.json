@@ -1,5 +1,5 @@
 {
-  "version": "sha256:d4d6e69b991a475b4a10a83ae5719b8fa0ad3207ab5c29e865a91c5745ff8cfd",
+  "version": "sha256:a6992d45544fede4b388478c87e67c98040b16f7a2d64cb5371aa1b147eaee93",
   "modules": [
     {
       "id": "home",
@@ -15909,8 +15909,8 @@
         "Data & Integrations",
         "Data retention"
       ],
-      "description": "Configure how long audit entries, the AI audit trail and raw EDI payloads are kept before the nightly purge jobs remove them.",
-      "summary": "Data retention sets how long the organization keeps audit entries, the AI audit trail and raw EDI payloads before the nightly purge jobs remove them. The page is one form, **Retention windows**, with values in days: **Audit Retention (days)**, **EDI Inbound File Retention (days)**, **EDI Message Retention (days)**, **AI feedback retention (days)**, **Agent evaluation case retention (days)** and **AI audit trail retention (days)**.\n\nAdministrators use it to balance storage and privacy against how far back people need to look at audit history or replay EDI traffic.",
+      "description": "How long each kind of record is kept before the nightly purge jobs remove it.",
+      "summary": "Data retention sets how long the organization keeps audit entries, raw EDI payloads and the AI records before the nightly purge jobs remove them. The page is one table, grouped under **Audit**, **EDI** and **AI**. Each row names the data, how long it is **Kept for** in days, the date it **Removes before** today, and what happens **Then**: deleted, or for EDI, the raw content blanked while the record stays.\n\nAdministrators use it to balance storage and privacy against how far back people need to look at audit history or replay EDI traffic.",
       "requires": [
         {
           "resource": "organization",
@@ -15937,8 +15937,8 @@
           ],
           "steps": [
             "Open [Data retention](/organization/data-retention).",
-            "Enter the number of days in **Audit Retention (days)**. It must be at least 1.",
-            "Select **Save settings**."
+            "Enter the number of days for **Audit entries**. It must be at least 1.",
+            "Select **Save changes**."
           ]
         },
         {
@@ -15951,8 +15951,8 @@
           ],
           "steps": [
             "Open [Data retention](/organization/data-retention).",
-            "Enter the number of days in **AI audit trail retention (days)**. It must be at least 365; the default of 2555 days is seven years, which is what most audits of AI decisions ask for.",
-            "Select **Save settings**."
+            "Enter the number of days for **AI audit trail**. It must be at least 365; the default of 2555 days is seven years, which is what most audits of AI decisions ask for.",
+            "Select **Save changes**."
           ]
         },
         {
@@ -15965,13 +15965,13 @@
           ],
           "steps": [
             "Open [Data retention](/organization/data-retention).",
-            "Enter the number of days in **EDI Inbound File Retention (days)** for raw inbound EDI file contents, and in **EDI Message Retention (days)** for raw X12 and payload snapshots of delivered and inbound messages.",
-            "Enter 0 in either field to keep those raw payloads forever.",
-            "Select **Save settings**."
+            "For **Inbound file contents** or **Message payloads**, turn off **Forever** and enter the number of days. A limit starts at 90 days.",
+            "Turn **Forever** back on to keep those raw payloads with no limit.",
+            "Select **Save changes**."
           ]
         }
       ],
-      "notes": "Opening the page needs read access to the organization; **Save settings** appears only for people with update access to the organization.\n\nAudit entries older than the audit window are deleted by the nightly purge. Events on the [AI audit trail](/admin/agent-control) older than its window are deleted by their own nightly sweep, which cuts only where the trail's chain was sealed, so what is left still verifies. For EDI, the purge blanks the raw contents but keeps the file and message records and their metadata. A purged EDI message can no longer be replayed from [EDI messages](/edi/messages).",
+      "notes": "Opening the page needs read access to the organization; people without update access see the table read-only, and **Save changes** appears only once something has changed.\n\nAudit entries older than the audit window are deleted by the nightly purge. Events on the [AI audit trail](/admin/agent-control) older than its window are deleted by their own nightly sweep, which cuts only where the trail's chain was sealed, so what is left still verifies. For EDI, the purge blanks the raw contents but keeps the file and message records and their metadata. A purged EDI message can no longer be replayed from [EDI messages](/edi/messages). Agent evaluation cases kept **Forever** last until they expire or their conversation is deleted.",
       "related": [
         "/admin/audit-logs",
         "/admin/agent-control",
