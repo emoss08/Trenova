@@ -192,13 +192,16 @@ counted only under `rejections_total` when the persisted-operation layer refuses
 them. In production and staging that layer rejects anything not in the manifest,
 so unparseable documents cannot reach the executor at all.
 
-## Rules Engine Metrics
+## WebAssembly Module Metrics
 
-The rules engine (`pkg/rules`, docs/engineering/rules-engine.md) runs one WebAssembly
-module in wazero on a pool of instances, one call per instance at a time. `pkg/rules` cannot
-import this package, so it reports through its `rules.Observer` interface, which `Rules`
-implements; `internal/bootstrap/infrastructure/rules.go` hands it to the default runtime at
-start.
+Each WebAssembly module the TMS runs in wazero (`pkg/rules`, docs/engineering/rules-engine.md;
+`pkg/x12`, docs/engineering/edi-x12.md) runs on a pool of instances, one call per instance at a
+time, through `pkg/wasmmodule`. That package cannot import this one, so it reports through its
+`wasmmodule.Observer` interface, which `WasmModule` implements; `NewWasmModule` builds one per
+module under its own subsystem (`Rules` as `trenova_rules_*`, `EDIModule` as
+`trenova_edi_module_*`), and `internal/bootstrap/infrastructure/wasmmodules.go` hands each to its
+default runtime at start. The rules module's series are below; the EDI module's have the same
+names under `trenova_edi_module_` (operations `x12.read`, `x12.acknowledge`, ...).
 
 - `trenova_rules_calls_total{op,outcome}`: every call, by operation and how it ended
 - `trenova_rules_call_duration_seconds{op}`: how long a call took, including the wait for a
