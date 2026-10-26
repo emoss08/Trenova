@@ -42,7 +42,7 @@ use super::rename::{prepare, rename as renamed};
 use super::session::Session;
 use super::signature::signature as signatures;
 use super::values::Values;
-use crate::span::{Range, Span, Utf16Index};
+use trenova_module_kit::span::{Range, Span, Utf16Index};
 use crate::tariff::check::ops::kind;
 use crate::tariff::context::Context;
 use serde::Deserialize;

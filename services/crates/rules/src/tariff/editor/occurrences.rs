@@ -19,7 +19,7 @@
 
 use super::cursor::{Scoped, Scopes, body_at, locate, statements};
 use super::session::Session;
-use crate::span::Span;
+use trenova_module_kit::span::Span;
 use crate::tariff::check::{Callee, ModuleAnalysis, SymbolId, SymbolKind};
 use crate::tariff::syntax::ast::{
     Expect, ExprKind, File, ItemKind, Name, NodeId, Pattern, PatternKind, StmtKind,

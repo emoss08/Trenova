@@ -36,7 +36,7 @@
 
 use super::error::{Code, EvalError, Refusal};
 use super::value::{Value, money_digits};
-use crate::span::Span;
+use trenova_module_kit::span::Span;
 use crate::tariff::syntax::ast::{ChooseKind, RoundMode};
 use rust_decimal::{Decimal, RoundingStrategy};
 use std::collections::BTreeMap;

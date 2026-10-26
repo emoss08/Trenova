@@ -1,4 +1,5 @@
-//! Findings about a Tariff file, shared by the parser and the checker.
+//! Findings about a source file in one of the modules' languages (Tariff, Lading), shared by
+//! their parsers and checkers.
 //!
 //! Every finding has a stable kebab-case code the hosts can switch on (`syntax`, `unit-mismatch`,
 //! `optional-unhandled`, …), an English [`Message`] each host translates, a byte span and the
@@ -6,7 +7,7 @@
 //! the operation boundary.
 
 use crate::span::Span;
-use trenova_module_kit::message::Message;
+use crate::message::Message;
 
 /// How much a finding matters. Only errors stop a file from saving, previewing and rating.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, PartialOrd, Ord)]

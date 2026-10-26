@@ -26,7 +26,7 @@
 //! region id ([`Interp::enter_region`]).
 
 use super::interp::{Env, Interp};
-use crate::span::{Span, Utf16Index};
+use trenova_module_kit::span::{Span, Utf16Index};
 use crate::tariff::eval::trace::range;
 use crate::tariff::syntax::ast::{
     ArmBody, Block, Choose, Condition, Expr, ExprKind, File, FileKind, FnBody, ItemKind, RoundTo,

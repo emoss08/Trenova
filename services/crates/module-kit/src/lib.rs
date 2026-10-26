@@ -10,10 +10,14 @@
 //! - [`message`]: user-facing text as English ICU templates and their arguments;
 //! - [`ops`]: the request envelope, the response envelope and request errors, and dispatch over
 //!   a module's operation table;
-//! - [`export_abi!`]: the three exports, named for the module.
+//! - [`export_abi!`]: the three exports, named for the module;
+//! - [`span`] and [`diagnostic`]: byte spans, UTF-16 wire ranges and the findings with fixes a
+//!   module's language (Tariff, Lading) reports to its editor.
 
+pub mod diagnostic;
 pub mod message;
 pub mod ops;
+pub mod span;
 
 /// Defines a module's three exports, `<prefix>_alloc`, `<prefix>_call` and `<prefix>_free`,
 /// around its dispatch function (`fn(&[u8]) -> Vec<u8>`).

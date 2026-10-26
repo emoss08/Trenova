@@ -14,7 +14,7 @@ use super::choices::{choice_named, chosen_at};
 use super::cursor::{Node, Scopes, locate, token_at};
 use super::occurrences::{input_target_at, local_at, split_qualified};
 use super::session::Session;
-use crate::span::Span;
+use trenova_module_kit::span::Span;
 use crate::tariff::check::describe::snippet;
 use crate::tariff::check::{Callee, SymbolKind};
 use crate::tariff::syntax::ast::{ExprKind, ItemKind, PatternKind, StmtKind};

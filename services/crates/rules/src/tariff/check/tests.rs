@@ -12,7 +12,7 @@
 
 use super::fixes::apply;
 use crate::tariff::context::Context;
-use crate::tariff::diagnostic::{Diagnostic, Severity};
+use trenova_module_kit::diagnostic::{Diagnostic, Severity};
 use crate::tariff::syntax::program::{ModuleId, load};
 use serde_json::{Value as Json, json};
 

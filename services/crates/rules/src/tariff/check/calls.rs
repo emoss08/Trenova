@@ -9,8 +9,8 @@ use super::methods::{self, Method, ParamKind, Rule};
 use super::operators;
 use super::scope::LocalKind;
 use super::{Callee, HintKind};
-use crate::span::Span;
-use crate::tariff::diagnostic::Diagnostic;
+use trenova_module_kit::span::Span;
+use trenova_module_kit::diagnostic::Diagnostic;
 use crate::tariff::syntax::ast::{Arg as CallArg, BinaryOp, Expr, ExprKind, FileKind, Name};
 use crate::tariff::types::{FieldDef, RecordType, Type};
 use crate::tariff::units::{Unit, simple};
@@ -1105,7 +1105,7 @@ impl Checker<'_> {
                             [quote(&label)],
                         ),
                     );
-                    if let Some(close) = crate::tariff::diagnostic::nearest(
+                    if let Some(close) = trenova_module_kit::diagnostic::nearest(
                         &label,
                         self.billed.labels.iter().map(String::as_str),
                     ) {

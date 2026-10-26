@@ -2,7 +2,7 @@
 //! `lb/ft3`), record types and `?` optionals.
 
 use super::Parser;
-use crate::span::Span;
+use trenova_module_kit::span::Span;
 use crate::tariff::syntax::ast::FieldType;
 use crate::tariff::syntax::ast::Name;
 use crate::tariff::syntax::ast::TypeExpr;

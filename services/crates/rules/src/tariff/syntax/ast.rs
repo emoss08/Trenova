@@ -12,8 +12,8 @@
 //! parser's depth limit, so every walk over it may recurse.
 
 use super::token::Token;
-use crate::span::Span;
-use crate::tariff::diagnostic::Diagnostic;
+use trenova_module_kit::span::Span;
+use trenova_module_kit::diagnostic::Diagnostic;
 use rust_decimal::Decimal;
 
 /// An expression's identity within its file, assigned by the parser in source order from 0.

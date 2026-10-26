@@ -58,7 +58,7 @@ use super::record::{sample, settle};
 use super::run::{Supplied, bind_inputs, enforce_constraint};
 use super::tables::{GivenCell, Need, Tables};
 use super::value::{Record, Value};
-use crate::span::Span;
+use trenova_module_kit::span::Span;
 use crate::tariff::schema::Settings;
 use crate::tariff::syntax::ast::{
     Block, Expect, Expr, ExprKind, FileKind, ItemKind, Name, Stmt, StmtKind, TextPart,

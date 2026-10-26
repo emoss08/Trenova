@@ -32,7 +32,7 @@ use super::tables::{Need, Tables};
 use super::text;
 use super::trace::Trace;
 use super::value::Value;
-use crate::span::Span;
+use trenova_module_kit::span::Span;
 use crate::tariff::syntax::ast::NodeId;
 use crate::tariff::types::Type;
 use link::Linked;

@@ -7,7 +7,7 @@
 
 use super::cursor::{Scopes, statements};
 use super::session::Session;
-use crate::span::Span;
+use trenova_module_kit::span::Span;
 use crate::tariff::syntax::ast::{ChoiceOption, Choose, Expr, ExprKind, File, StmtKind};
 use crate::tariff::syntax::program::ModuleId;
 

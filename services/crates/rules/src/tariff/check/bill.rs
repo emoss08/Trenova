@@ -20,8 +20,8 @@ use super::Callee;
 use super::checker::{Body, Checker};
 use super::describe::quote;
 use super::fixes::replace;
-use crate::span::Span;
-use crate::tariff::diagnostic::Diagnostic;
+use trenova_module_kit::span::Span;
+use trenova_module_kit::diagnostic::Diagnostic;
 use crate::tariff::schema::bill_type;
 use crate::tariff::syntax::ast::{
     Arg as CallArg, ArmBody, Block, Choose, Expr, ExprKind, FileKind, Name, Stmt, StmtKind,
@@ -372,7 +372,7 @@ impl Checker<'_> {
             let mut diagnostic =
                 Diagnostic::warning("not-billed", at, Message::with(never, [what]));
             if let Read::Label(label) = wanted
-                && let Some(close) = crate::tariff::diagnostic::nearest(
+                && let Some(close) = trenova_module_kit::diagnostic::nearest(
                     label,
                     self.billed.labels.iter().map(String::as_str),
                 )

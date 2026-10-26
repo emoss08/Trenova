@@ -11,8 +11,8 @@ use super::methods::{self, HOLIDAY, Rule};
 use super::operators::{self, Problem};
 use super::scope::{LocalKind, PathKey};
 use super::{HintKind, SymbolKind};
-use crate::span::Span;
-use crate::tariff::diagnostic::Diagnostic;
+use trenova_module_kit::span::Span;
+use trenova_module_kit::diagnostic::Diagnostic;
 use crate::tariff::syntax::ast::{
     BinaryOp, Condition, Expr, ExprKind, FieldInit, Name, Text, TextPart, UnaryOp, UnitExpr,
 };

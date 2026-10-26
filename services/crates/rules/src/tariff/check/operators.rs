@@ -22,7 +22,7 @@
 //! error where it is written.
 
 use super::describe::{quote, quotient, single};
-use crate::tariff::diagnostic::Diagnostic;
+use trenova_module_kit::diagnostic::Diagnostic;
 use crate::tariff::schema::ORDERED_ENUMS;
 use crate::tariff::syntax::ast::{BinaryOp, Expr, ExprKind};
 use crate::tariff::types::{QuantityType, Type};

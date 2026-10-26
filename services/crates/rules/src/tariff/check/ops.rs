@@ -14,9 +14,9 @@
 use super::consts::wire;
 use super::inputs::validate;
 use super::{Analysis, InputInfo};
-use crate::span::{Span, Utf16Index};
+use trenova_module_kit::span::{Span, Utf16Index};
 use crate::tariff::context::Context;
-use crate::tariff::diagnostic::{Diagnostic, WireDiagnostic};
+use trenova_module_kit::diagnostic::{Diagnostic, WireDiagnostic};
 use crate::tariff::syntax::ast::{FileKind, ItemKind, Stmt, StmtKind};
 use crate::tariff::syntax::program::{ModuleId, Program, load};
 use serde::Deserialize;

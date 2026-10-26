@@ -2,7 +2,7 @@
 
 use super::Formatter;
 use super::doc::Doc;
-use crate::span::Span;
+use trenova_module_kit::span::Span;
 use crate::tariff::syntax::ast::Arg;
 use crate::tariff::syntax::ast::ArmBody;
 use crate::tariff::syntax::ast::BinaryOp;

@@ -2,7 +2,7 @@
 
 use super::expr::internal;
 use super::{Env, Flow, Interp, refusal};
-use crate::span::Span;
+use trenova_module_kit::span::Span;
 use crate::tariff::eval::bill::{self, Billed, Line, LineKind, Note, cents};
 use crate::tariff::eval::error::{EvalError, Stop};
 use crate::tariff::eval::operators;

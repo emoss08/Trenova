@@ -531,7 +531,7 @@ impl<'a> Driver<'_, '_, '_, 'a> {
 }
 
 /// A span as a byte range.
-fn span_range(span: crate::span::Span) -> std::ops::Range<usize> {
+fn span_range(span: trenova_module_kit::span::Span) -> std::ops::Range<usize> {
     let start = usize::try_from(span.start).unwrap_or(usize::MAX);
     let end = usize::try_from(span.end).unwrap_or(usize::MAX);
     start..end.max(start)

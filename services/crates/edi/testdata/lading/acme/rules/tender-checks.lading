@@ -1,0 +1,28 @@
+rules tenderChecks for tenderIn
+
+rule "pickup comes before delivery" {
+  require stops.first.window.start < stops.last.window.start
+    else decline "Delivery is scheduled before pickup"
+}
+
+rule "within what we haul automatically" {
+  require (weight ?? 0 lb) <= partner.maxWeight
+    else hold "Over {partner.maxWeight}: a planner decides"
+}
+
+rule "a consignee has a postal code" {
+  for stop in stops where stop.type == Delivery {
+    require exists stop.address.postal
+      else reject at stop.address.postal "The consignee's postal code is missing"
+  }
+}
+
+rule "ACME sends nine-digit zips" {
+  for stop in stops where (stop.address.postal ?? "").matches(r"^\d{9}$") {
+    fix stop.address.postal <- stop.address.postal.zip5()
+  }
+}
+
+rule "hazmat needs eyes" {
+  warn "Hazmat on board: check placards" when commodities.any(c => c.hazmat)
+}

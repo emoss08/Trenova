@@ -6,9 +6,9 @@ use super::scope::{Local, LocalKind, PathKey, Scopes};
 use super::{
     Callee, Hint, HintKind, ModuleAnalysis, ModuleId, Reference, Symbol, SymbolId, SymbolKind,
 };
-use crate::span::Span;
+use trenova_module_kit::span::Span;
 use crate::tariff::context::Context;
-use crate::tariff::diagnostic::Diagnostic;
+use trenova_module_kit::diagnostic::Diagnostic;
 use crate::tariff::schema::Schema;
 use crate::tariff::syntax::ast::{Expr, FileKind, Name, NodeId};
 use crate::tariff::types::{EnumType, Type};

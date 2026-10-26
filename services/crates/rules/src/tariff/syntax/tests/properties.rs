@@ -3,8 +3,8 @@
 //! nothing panics on any input.
 
 use super::reference_blocks;
-use crate::span::Utf16Index;
-use crate::tariff::diagnostic::Severity;
+use trenova_module_kit::span::Utf16Index;
+use trenova_module_kit::diagnostic::Severity;
 use crate::tariff::syntax::ast::File;
 use crate::tariff::syntax::format::format;
 use crate::tariff::syntax::lexer::MAX_SOURCE_BYTES;

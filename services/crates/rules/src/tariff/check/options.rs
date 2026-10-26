@@ -5,8 +5,8 @@
 use super::ModuleAnalysis;
 use super::describe::quote;
 use super::fixes::replace;
-use crate::span::Span;
-use crate::tariff::diagnostic::{Diagnostic, nearest};
+use trenova_module_kit::span::Span;
+use trenova_module_kit::diagnostic::{Diagnostic, nearest};
 use crate::tariff::syntax::ast::{BinaryOp, Choose, Expr, ExprKind, Stmt, StmtKind};
 use crate::tariff::syntax::program::Module;
 use crate::tariff::syntax::walk::{self, Visit};

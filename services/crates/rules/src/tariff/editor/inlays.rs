@@ -19,7 +19,7 @@ use super::names::parameters;
 use super::session::Session;
 use super::values::Values;
 use super::vary::{varied, vary_type};
-use crate::span::Span;
+use trenova_module_kit::span::Span;
 use crate::tariff::check::describe::snippet;
 use crate::tariff::check::{Callee, HintKind};
 use crate::tariff::syntax::ast::{Expr, ExprKind};

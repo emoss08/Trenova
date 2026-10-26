@@ -2,7 +2,7 @@
 //! weight`, `` `shipment.weight` ``. Every phrase is a [`Message`] of its own, so a sentence
 //! built from phrases still translates part by part.
 
-use crate::span::Span;
+use trenova_module_kit::span::Span;
 use crate::tariff::types::{QuantityType, Type};
 use crate::tariff::units::{Base, Dim, Simple, Unit};
 use trenova_module_kit::message;

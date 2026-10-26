@@ -69,7 +69,7 @@ use super::budget::Meter;
 use super::error::{Code, EvalError};
 use super::value::{Value, format_decimal};
 use crate::matrix::band;
-use crate::span::Span;
+use trenova_module_kit::span::Span;
 use crate::tariff::schema::{Axis, TableShape};
 use crate::tariff::types::Type;
 use crate::tariff::units::{Base, Quantity, Unit};

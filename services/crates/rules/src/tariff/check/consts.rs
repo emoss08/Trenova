@@ -6,7 +6,7 @@
 //! record of constant expressions, negation and the arithmetic operators on them (with the same
 //! unit algebra the evaluator uses). Text is constant when it has no interpolation.
 
-use crate::span::Span;
+use trenova_module_kit::span::Span;
 use crate::tariff::syntax::ast::{
     BinaryOp, DateLit, DateTimeLit, Expr, ExprKind, NodeId, TimeLit, UnaryOp,
 };

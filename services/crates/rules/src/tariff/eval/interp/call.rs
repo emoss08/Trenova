@@ -4,7 +4,7 @@
 
 use super::expr::{internal, unit_argument};
 use super::{Env, Flow, Interp};
-use crate::span::Span;
+use trenova_module_kit::span::Span;
 use crate::tariff::eval::bill::Wanted;
 use crate::tariff::eval::error::Stop;
 use crate::tariff::eval::lists::{self, Host};

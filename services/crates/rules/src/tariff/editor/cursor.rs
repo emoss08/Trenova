@@ -16,7 +16,7 @@
 //!   besides its locals (the record, inputs, the file's bindings) follows the body's kind
 //!   ([`Body`]), the same rules the checker applies.
 
-use crate::span::Span;
+use trenova_module_kit::span::Span;
 use crate::tariff::syntax::ast::{
     Arg, Arm, ArmBody, Binding, Block, Condition, Expect, Expr, ExprKind, File, FnBody, Item,
     ItemKind, Name, Param, Pattern, PatternKind, RoundTo, Stmt, StmtKind, Text, TextPart,

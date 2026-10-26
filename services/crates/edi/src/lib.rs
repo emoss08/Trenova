@@ -16,5 +16,6 @@
 
 #[cfg(target_arch = "wasm32")]
 pub mod abi;
+pub mod lading;
 pub mod ops;
 pub mod x12;

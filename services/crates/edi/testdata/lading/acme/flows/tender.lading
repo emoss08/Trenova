@@ -1,0 +1,35 @@
+flow tender with acme
+
+receive 204 as tender
+  via tenderIn, rules tenderChecks
+  key tender.key
+  acknowledge with 997
+  on Original -> create
+  on Change   -> update stops, commodities, refs keep customer, total
+    hold when tender.total != current.total "ACME changed the rate"
+  on Cancel   -> cancel unless dispatched else hold "ACME cancelled after dispatch"
+
+respond 990 via responseOut
+  accept automatically when partner.autoAccept
+  decline automatically when declined
+  otherwise planner decides within 2 h else escalate "ACME tender {tender.key} needs an answer"
+
+send 214 via statusOut on StopArrived, StopDeparted, Delivered, EtaChanged batch within 5 min until Delivered
+
+send 210 via invoiceOut on InvoicePosted
+
+expect 997 for every send within 30 min else resend 1 then escalate "ACME has not acknowledged"
+
+test "a rate change after acceptance is held" {
+  receive file "samples/original.x12"
+  respond accept
+  receive file "samples/change-rate.x12"
+  expect held "ACME changed the rate"
+  expect sent 997
+}
+
+test "an unanswered tender escalates" {
+  receive file "samples/original.x12"
+  advance 2 h
+  expect escalated "ACME tender L-1001 needs an answer"
+}

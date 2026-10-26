@@ -28,7 +28,7 @@ use super::occurrences::{
     occurrences, variant_at,
 };
 use super::session::Session;
-use crate::span::Span;
+use trenova_module_kit::span::Span;
 use crate::tariff::check::describe::{quote, snippet};
 use crate::tariff::check::lower::BUILTIN_TYPES;
 use crate::tariff::check::{SymbolId, SymbolKind};

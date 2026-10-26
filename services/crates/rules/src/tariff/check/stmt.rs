@@ -9,8 +9,8 @@ use super::describe::{quote, quote_span, words};
 use super::fixes::replace;
 use super::operators;
 use super::scope::LocalKind;
-use crate::span::Span;
-use crate::tariff::diagnostic::Diagnostic;
+use trenova_module_kit::span::Span;
+use trenova_module_kit::diagnostic::Diagnostic;
 use crate::tariff::syntax::ast::{
     ArmBody, AssignOp, BinaryOp, Binding, Block, Charge, Expect, Expr, ExprKind, FileKind, ForStmt,
     IfStmt, Name, RoundTo, Stmt, StmtKind, TotalClause,

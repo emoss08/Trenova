@@ -2,7 +2,7 @@
 //! variants, `none`, `_`, bindings, record shapes and `|` alternatives.
 
 use super::Parser;
-use crate::span::Span;
+use trenova_module_kit::span::Span;
 use crate::tariff::syntax::ast::Expr;
 use crate::tariff::syntax::ast::ExprKind;
 use crate::tariff::syntax::ast::Pattern;

@@ -20,7 +20,7 @@ use super::consts::wire;
 use super::decls::State;
 use super::describe::{quote, unit_text};
 use super::{InputInfo, ModuleAnalysis};
-use crate::tariff::diagnostic::nearest;
+use trenova_module_kit::diagnostic::nearest;
 use crate::tariff::syntax::ast::ItemKind;
 use crate::tariff::syntax::program::{Decl, Module};
 use crate::tariff::types::Type;

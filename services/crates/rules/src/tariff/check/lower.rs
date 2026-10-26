@@ -9,8 +9,8 @@
 
 use super::describe::{default_unit, quote, single};
 use super::fixes::replace;
-use crate::tariff::diagnostic::Diagnostic;
-use crate::tariff::diagnostic::nearest;
+use trenova_module_kit::diagnostic::Diagnostic;
+use trenova_module_kit::diagnostic::nearest;
 use crate::tariff::docs::Doc;
 use crate::tariff::syntax::ast::{FieldType, Name, TypeExpr, TypeExprKind};
 use crate::tariff::types::{FieldDef, RecordType, Type};

@@ -1,0 +1,31 @@
+map tenderIn
+  from acme.204
+  to   loadTender
+  use  common
+
+key      <- B204
+purpose  <- B2A01 via purposes
+bol      <- L11[02 == "BM"].01 ?? L11[02 == "BL"].01
+refs     <- refs(L11)
+customer <- lookup Customer(N1[01 == "BT"].04)
+weight   <- measure(L301, "L")
+total    <- money(L305, partner.currency)
+
+stops <- each 0300 as stop {
+  let party = stop.0310
+  sequence <- stop.S501
+  type     <- stop.S502 via stopTypes else reject "Stop {stop.S501} has no type"
+  location <- lookup Location(party.N104) learn address(party)
+  name     <- party.N102.titleCase()
+  address  <- address(party)
+  window   <- window(stop.G62, location.zone ?? partner.zone)
+    else reject "Stop {stop.S501} has no appointment"
+}
+
+test "a two-stop tender" {
+  given file "samples/two-stops.x12"
+  given lookup Customer("ACME-BT") = "Acme Corp"
+  expect stops.count == 2
+  expect stops.last.type == Delivery
+  expect no holds
+}

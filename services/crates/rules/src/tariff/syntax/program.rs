@@ -28,11 +28,11 @@ use super::ast;
 use super::ast::FileKind;
 use super::ast::ItemKind;
 use super::parse;
-use crate::span::Span;
-use crate::span::Utf16Index;
+use trenova_module_kit::span::Span;
+use trenova_module_kit::span::Utf16Index;
 use crate::tariff::context::Context;
-use crate::tariff::diagnostic::Diagnostic;
-use crate::tariff::diagnostic::nearest;
+use trenova_module_kit::diagnostic::Diagnostic;
+use trenova_module_kit::diagnostic::nearest;
 use crate::tariff::stdlib;
 use std::collections::BTreeMap;
 use trenova_module_kit::message;
@@ -694,10 +694,10 @@ impl Loader<'_> {
     }
 }
 
-fn replace_fix(span: Span, with: &str) -> crate::tariff::diagnostic::Fix {
-    crate::tariff::diagnostic::Fix {
+fn replace_fix(span: Span, with: &str) -> trenova_module_kit::diagnostic::Fix {
+    trenova_module_kit::diagnostic::Fix {
         label: Message::with(message!("Change to `{0}`"), [Arg::from(with)]),
-        changes: vec![crate::tariff::diagnostic::Change {
+        changes: vec![trenova_module_kit::diagnostic::Change {
             span,
             insert: with.to_owned(),
         }],

@@ -7,7 +7,7 @@
 //! loop) shows its last value and how many times it ran. Anything else in the array, and any
 //! malformed entry, is ignored: the trace is a hint, never a reason to refuse a request.
 
-use crate::span::Range;
+use trenova_module_kit::span::Range;
 use serde_json::{Value as Json, json};
 
 /// One traced value.

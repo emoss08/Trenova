@@ -9,7 +9,7 @@
 
 use super::expr::{in_range, internal};
 use super::{Env, Flow, Interp};
-use crate::span::Span;
+use trenova_module_kit::span::Span;
 use crate::tariff::eval::error::Stop;
 use crate::tariff::eval::trace::Event;
 use crate::tariff::eval::value::Value;

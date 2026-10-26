@@ -1,7 +1,7 @@
 //! Expressions.
 
 use super::{Env, Interp, refusal, unknown_name};
-use crate::span::Span;
+use trenova_module_kit::span::Span;
 use crate::tariff::eval::bill::{Sums, Wanted};
 use crate::tariff::eval::error::{EvalError, Stop};
 use crate::tariff::eval::operators::{self, scales_a_percent};

@@ -108,7 +108,7 @@ pub fn param_text(doc: &str, param: &str) -> Option<String> {
 #[cfg(test)]
 mod tests {
     use super::{Doc, collapse, param_text};
-    use crate::span::Span;
+    use trenova_module_kit::span::Span;
     use crate::tariff::syntax::ast;
 
     #[test]

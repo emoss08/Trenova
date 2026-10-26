@@ -3,10 +3,10 @@
 //! header, to the file. A block attached to nothing is a `doc` warning.
 
 use super::Parser;
-use crate::span::Span;
-use crate::tariff::diagnostic::Change;
-use crate::tariff::diagnostic::Diagnostic;
-use crate::tariff::diagnostic::Fix;
+use trenova_module_kit::span::Span;
+use trenova_module_kit::diagnostic::Change;
+use trenova_module_kit::diagnostic::Diagnostic;
+use trenova_module_kit::diagnostic::Fix;
 use crate::tariff::syntax::ast::Doc;
 use crate::tariff::syntax::token::Token;
 use crate::tariff::syntax::token::TokenKind;

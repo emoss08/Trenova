@@ -29,7 +29,7 @@ use super::cursor::{self, Body, Bracket, Located, Scopes, line_start, previous, 
 use super::describe::{function_signature, method_signature, type_text};
 use super::names;
 use super::session::Session;
-use crate::span::Span;
+use trenova_module_kit::span::Span;
 use crate::tariff::check::describe::snippet as source_text;
 use crate::tariff::check::lower::BUILTIN_TYPES;
 use crate::tariff::check::methods::{self, ParamKind, Receiver};

@@ -26,10 +26,10 @@
 
 use super::token::Token;
 use super::token::TokenKind;
-use crate::span::Span;
-use crate::tariff::diagnostic::Change;
-use crate::tariff::diagnostic::Diagnostic;
-use crate::tariff::diagnostic::Fix;
+use trenova_module_kit::span::Span;
+use trenova_module_kit::diagnostic::Change;
+use trenova_module_kit::diagnostic::Diagnostic;
+use trenova_module_kit::diagnostic::Fix;
 use crate::tariff::syntax::ast::DateLit;
 use crate::tariff::syntax::ast::DateTimeLit;
 use crate::tariff::syntax::ast::TimeLit;

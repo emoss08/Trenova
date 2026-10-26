@@ -37,9 +37,9 @@ use super::describe::{quote, quote_span, words, zero};
 use super::fixes::replace;
 use super::scope::LocalKind;
 use super::{HintKind, ModuleAnalysis};
-use crate::span::Span;
+use trenova_module_kit::span::Span;
 use crate::tariff::constraint::admits;
-use crate::tariff::diagnostic::Diagnostic;
+use trenova_module_kit::diagnostic::Diagnostic;
 use crate::tariff::syntax::ast::{
     Block, Expr, ExprKind, FileKind, ItemKind, Name, Property, StmtKind,
 };

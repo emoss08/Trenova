@@ -1,0 +1,18 @@
+partner acme "ACME Retail"
+
+interchange {
+  them ZZ "ACMERETAIL"
+  us ZZ "TRNV-ACME"
+  group "ACME" <-> "TRENOVA"
+  version 004010
+  separators "*" "~" ">" "^"
+  usage test
+}
+
+zone America/Chicago
+currency "USD"
+
+/// Accept ACME tenders without a planner.
+setting autoAccept: Bool = false
+/// The heaviest load accepted automatically.
+setting maxWeight: Weight = 45_000 lb in 1 lb..80_000 lb

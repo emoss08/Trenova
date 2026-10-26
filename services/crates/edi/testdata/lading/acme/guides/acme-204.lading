@@ -1,0 +1,13 @@
+guide acme.204 from x12.004010.204 "ACME Load Tender Guide rev 3.2"
+
+/// ACME's load number; every later message quotes it.
+B2 { 04 required }
+B2A { 01 codes "00", "01", "04", "05" }
+L11 max 10 { 02 codes "BM", "PO", "CR", "IA" }
+NTE unused
+loop 0300 min 2 max 12
+0300.S5 { 02 codes "LD", "UL" }
+0300.G62 { 01 codes "69", "70", "37", "38", "53", "54"; 04 required }
+0300.0310.N1 { 01 codes "SH", "CN"; 04 required }
+0300.0310.N4 { 03 length 5..9 }
+severity code-not-in-list warning

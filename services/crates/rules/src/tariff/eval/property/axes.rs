@@ -25,7 +25,7 @@ use super::super::operators;
 use super::super::tables::Tables;
 use super::super::time::{Date, DateTime, Time};
 use super::super::value::Value;
-use crate::span::Span;
+use trenova_module_kit::span::Span;
 use crate::tariff::schema::Schema;
 use crate::tariff::syntax::ast::{Expr, ExprKind, Input, ItemKind, Name, Stmt, StmtKind, UnaryOp};
 use crate::tariff::syntax::program::ModuleId;

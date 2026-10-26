@@ -17,7 +17,7 @@
 use super::bill::Limited;
 use super::tables::Lookup;
 use super::value::Value;
-use crate::span::{Span, Utf16Index};
+use trenova_module_kit::span::{Span, Utf16Index};
 use crate::tariff::wire::encode;
 use rust_decimal::Decimal;
 use serde_json::{Map, Value as Json};

@@ -30,7 +30,7 @@ use super::run::{Outcome, Request, run_program};
 use super::tables::Tables;
 use super::trace::Trace;
 use super::value::{Record, Value, format_decimal, format_quantity, money_digits};
-use crate::span::Utf16Index;
+use trenova_module_kit::span::Utf16Index;
 use crate::tariff::check::Analysis;
 use crate::tariff::context::Context;
 use crate::tariff::schema::{Axis, ENUMS, Schema, TableShape};
