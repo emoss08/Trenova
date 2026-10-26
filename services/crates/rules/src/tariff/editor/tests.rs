@@ -683,13 +683,20 @@ fn features_at_every_offset(source: &str) {
         let _ = super::rename::prepare(&session, offset);
         let _ = super::rename::rename(&session, offset, "renamed");
         let _ = super::references::references(&session, offset, true);
-        let _ = super::actions::actions(&session, crate::span::Span::new(offset, offset));
         let _ = super::actions::actions(
             &session,
-            crate::span::Span::new(offset, offset.saturating_add(5).min(end)),
+            trenova_module_kit::span::Span::new(offset, offset),
+        );
+        let _ = super::actions::actions(
+            &session,
+            trenova_module_kit::span::Span::new(offset, offset.saturating_add(5).min(end)),
         );
     }
-    let _ = super::inlays::inlays(&session, crate::span::Span::new(0, end), &values);
+    let _ = super::inlays::inlays(
+        &session,
+        trenova_module_kit::span::Span::new(0, end),
+        &values,
+    );
 }
 
 /// A tariff with every construct the reference added last: input constraints, choices nested
@@ -808,7 +815,7 @@ proptest::proptest! {
             let _ = super::definition::definition(&session, at);
             let _ = super::rename::rename(&session, at, "renamed");
             let _ = super::references::references(&session, at, true);
-            let _ = super::actions::actions(&session, crate::span::Span::new(at, at));
+            let _ = super::actions::actions(&session, trenova_module_kit::span::Span::new(at, at));
         }
     }
 }

@@ -9,7 +9,6 @@ import { FormControl, FormGroup, FormSection } from "@trenova/shared/components/
 import type { EDICommunicationProfileRow } from "@/lib/graphql/edi-table";
 import type { Control } from "react-hook-form";
 import {
-  acknowledgmentOptions,
   as2CompressionOptions,
   as2EncryptionAlgorithmOptions,
   as2InboundRequirementOptions,
@@ -439,86 +438,8 @@ export function X12EnvelopeFields({ control }: ProfileFieldsProps) {
   const t = useT();
 
   return (
-    <FormSection title={t("X12 envelope")}>
+    <FormSection title={t("Environment")}>
       <FormGroup cols={2}>
-        <FormControl>
-          <InputField
-            control={control}
-            name="config.isaSenderQualifier"
-            label={t("ISA sender qualifier")}
-            placeholder={t("ZZ")}
-            rules={{ required: true }}
-            description={t(
-              "The qualifier code that identifies the type of our ISA sender ID (e.g. 01, ZZ).",
-            )}
-          />
-        </FormControl>
-        <FormControl>
-          <InputField
-            control={control}
-            name="config.isaSenderId"
-            label={t("ISA sender ID")}
-            placeholder="TRENOVA"
-            rules={{ required: true }}
-            description={t("Our sender identifier placed in the ISA interchange header.")}
-          />
-        </FormControl>
-        <FormControl>
-          <InputField
-            control={control}
-            name="config.isaReceiverQualifier"
-            label={t("ISA receiver qualifier")}
-            placeholder={t("ZZ")}
-            rules={{ required: true }}
-            description={t(
-              "The qualifier code that identifies the type of the partner's ISA receiver ID.",
-            )}
-          />
-        </FormControl>
-        <FormControl>
-          <InputField
-            control={control}
-            name="config.isaReceiverId"
-            label={t("ISA receiver ID")}
-            placeholder="PARTNERCO"
-            rules={{ required: true }}
-            description={t(
-              "The partner's receiver identifier placed in the ISA interchange header.",
-            )}
-          />
-        </FormControl>
-        <FormControl>
-          <InputField
-            control={control}
-            name="config.gsSenderId"
-            label={t("GS sender ID")}
-            placeholder="TRENOVA"
-            rules={{ required: true }}
-            description={t("Our application sender code placed in the GS functional group header.")}
-          />
-        </FormControl>
-        <FormControl>
-          <InputField
-            control={control}
-            name="config.gsReceiverId"
-            label={t("GS receiver ID")}
-            placeholder="PARTNERCO"
-            rules={{ required: true }}
-            description={t(
-              "The partner's application receiver code placed in the GS functional group header.",
-            )}
-          />
-        </FormControl>
-        <FormControl>
-          <InputField
-            control={control}
-            name="config.x12Version"
-            label={t("X12 version")}
-            placeholder="004010"
-            rules={{ required: true }}
-            description={t("The X12 release version the partner expects (e.g. 004010, 005010).")}
-          />
-        </FormControl>
         <FormControl>
           <SelectField
             control={control}
@@ -526,23 +447,15 @@ export function X12EnvelopeFields({ control }: ProfileFieldsProps) {
             label={t("Environment")}
             options={environmentOptions}
             rules={{ required: true }}
-            description={t(
-              "Whether this envelope targets the partner's test or production system.",
-            )}
-          />
-        </FormControl>
-        <FormControl cols="full">
-          <SelectField
-            control={control}
-            name="config.acknowledgmentPreference"
-            label={t("Acknowledgment preference")}
-            options={acknowledgmentOptions}
-            description={t(
-              "Which functional acknowledgments (997/999) to request from the partner.",
-            )}
+            description={t("Whether this profile reaches the partner's test or production system.")}
           />
         </FormControl>
       </FormGroup>
+      <p className="text-muted-foreground text-sm">
+        {t(
+          "The interchange IDs, group codes, X12 version and acknowledgments are in the partner's Lading project.",
+        )}
+      </p>
     </FormSection>
   );
 }

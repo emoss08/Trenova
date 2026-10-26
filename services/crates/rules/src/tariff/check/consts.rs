@@ -6,7 +6,6 @@
 //! record of constant expressions, negation and the arithmetic operators on them (with the same
 //! unit algebra the evaluator uses). Text is constant when it has no interpolation.
 
-use crate::span::Span;
 use crate::tariff::syntax::ast::{
     BinaryOp, DateLit, DateTimeLit, Expr, ExprKind, NodeId, TimeLit, UnaryOp,
 };
@@ -15,6 +14,7 @@ use crate::tariff::units::{Quantity, Unit};
 use rust_decimal::Decimal;
 use serde_json::{Map, Value as Json, json};
 use std::fmt::Write as _;
+use trenova_module_kit::span::Span;
 
 /// A folded value.
 #[derive(Debug, Clone, PartialEq)]

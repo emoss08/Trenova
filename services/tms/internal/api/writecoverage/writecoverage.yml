@@ -1264,19 +1264,13 @@ writes:
   # edi
   "DELETE /api/v1/edi/mapping-profiles/:profileID/items/:mappingItemID/":
     exempt: configuration
-    reason: "Trading partner setup: partners, connections, mappings, templates and communication profiles an EDI administrator maintains and certifies."
+    reason: "Trading partner setup: partners, connections, mappings and communication profiles an EDI administrator maintains."
   "DELETE /api/v1/edi/partners/:partnerID/mapping-profile/items/:mappingItemID/":
     exempt: configuration
-    reason: "Trading partner setup: partners, connections, mappings, templates and communication profiles an EDI administrator maintains and certifies."
-  "DELETE /api/v1/edi/test-cases/:testCaseID/":
-    exempt: configuration
-    reason: "Trading partner setup: partners, connections, mappings, templates and communication profiles an EDI administrator maintains and certifies."
+    reason: "Trading partner setup: partners, connections, mappings and communication profiles an EDI administrator maintains."
   "POST /api/v1/edi/as2/inbound/":
     exempt: infrastructure
     reason: "Receives AS2 messages a trading partner sends; no person makes this call."
-  "POST /api/v1/edi/catalog/partner-settings/validate/":
-    exempt: read-only
-    reason: "Validates, inspects, previews or tests EDI setup and saves nothing."
   "POST /api/v1/edi/communication-profiles/":
     tools: [edi_apply_connection_draft]
   "POST /api/v1/edi/communication-profiles/:profileID/poll/":
@@ -1290,29 +1284,64 @@ writes:
     reason: "Validates, inspects, previews or tests EDI setup and saves nothing."
   "POST /api/v1/edi/connections/":
     exempt: configuration
-    reason: "Trading partner setup: partners, connections, mappings, templates and communication profiles an EDI administrator maintains and certifies."
+    reason: "Trading partner setup: partners, connections, mappings and communication profiles an EDI administrator maintains."
   "POST /api/v1/edi/connections/:connectionID/accept/":
     exempt: configuration
-    reason: "Trading partner setup: partners, connections, mappings, templates and communication profiles an EDI administrator maintains and certifies."
+    reason: "Trading partner setup: partners, connections, mappings and communication profiles an EDI administrator maintains."
   "POST /api/v1/edi/connections/:connectionID/reject/":
     exempt: configuration
-    reason: "Trading partner setup: partners, connections, mappings, templates and communication profiles an EDI administrator maintains and certifies."
+    reason: "Trading partner setup: partners, connections, mappings and communication profiles an EDI administrator maintains."
   "POST /api/v1/edi/connections/:connectionID/revoke/":
     exempt: configuration
-    reason: "Trading partner setup: partners, connections, mappings, templates and communication profiles an EDI administrator maintains and certifies."
+    reason: "Trading partner setup: partners, connections, mappings and communication profiles an EDI administrator maintains."
   "POST /api/v1/edi/connections/:connectionID/suspend/":
     exempt: configuration
-    reason: "Trading partner setup: partners, connections, mappings, templates and communication profiles an EDI administrator maintains and certifies."
+    reason: "Trading partner setup: partners, connections, mappings and communication profiles an EDI administrator maintains."
   "POST /api/v1/edi/control-numbers/reset/":
     exempt: configuration
-    reason: "Trading partner setup: partners, connections, mappings, templates and communication profiles an EDI administrator maintains and certifies."
-  "POST /api/v1/edi/document-profiles/":
-    tools: [edi_apply_connection_draft]
+    reason: "Trading partner setup: partners, connections, mappings and communication profiles an EDI administrator maintains."
   "POST /api/v1/edi/documents/generate/":
     tools: [edi_send_status_update]
   "POST /api/v1/edi/documents/preview/":
     exempt: read-only
     reason: "Validates, inspects, previews or tests EDI setup and saves nothing."
+  "DELETE /api/v1/edi/lading/versions/:versionID/shadow/":
+    exempt: configuration
+    reason: "Stops comparing a certified Lading version with the active one; the person who started the shadow decides when it has run long enough."
+  "POST /api/v1/edi/flows/instances/:instanceID/release/":
+    pending: "Release a held or escalated EDI flow once the planner has dealt with what held it"
+  "POST /api/v1/edi/lading/projects/":
+    tools: [edi_apply_connection_draft]
+  "POST /api/v1/edi/lading/projects/:projectID/drafts/":
+    exempt: configuration
+    reason: "Lading project files an EDI developer writes, tests and certifies in the Lading studio; an agent drafts them through edi_apply_connection_draft."
+  "POST /api/v1/edi/lading/versions/:versionID/activate/":
+    exempt: attestation
+    reason: "Putting a certified Lading version live for a trading partner is the decision of the person accountable for that partner's EDI."
+  "POST /api/v1/edi/lading/versions/:versionID/archive/":
+    exempt: configuration
+    reason: "Lading project files an EDI developer writes, tests and certifies in the Lading studio; an agent drafts them through edi_apply_connection_draft."
+  "POST /api/v1/edi/lading/versions/:versionID/certify/":
+    exempt: attestation
+    reason: "Certifying a Lading version attests that its tests, coverage and replay were reviewed by a person."
+  "POST /api/v1/edi/lading/versions/:versionID/replays/":
+    exempt: read-only
+    reason: "Replays a Lading version on the partner's past messages and records the differences; nothing is sent or changed."
+  "POST /api/v1/edi/lading/versions/:versionID/run/":
+    exempt: read-only
+    reason: "Runs a map of a Lading version on an input and saves nothing."
+  "POST /api/v1/edi/lading/versions/:versionID/shadow/":
+    exempt: configuration
+    reason: "Compares a certified Lading version with the active one on live traffic, sending nothing; part of putting a version live."
+  "POST /api/v1/edi/lading/versions/:versionID/test/":
+    exempt: read-only
+    reason: "Runs a Lading version's tests and records their result; nothing a partner sees changes."
+  "PUT /api/v1/edi/lading/projects/:projectID/settings/":
+    exempt: configuration
+    reason: "A partner's Lading settings, such as automatic acceptance, are policy an EDI administrator sets for the partner."
+  "PUT /api/v1/edi/lading/versions/:versionID/":
+    exempt: configuration
+    reason: "Lading project files an EDI developer writes, tests and certifies in the Lading studio; an agent drafts them through edi_apply_connection_draft."
   "POST /api/v1/edi/inbound-files/:fileID/reprocess/":
     tools: [edi_reprocess_inbound_file]
   "POST /api/v1/edi/inbound-files/bulk-reprocess/":
@@ -1329,38 +1358,11 @@ writes:
     tools: [edi_apply_connection_draft]
   "POST /api/v1/edi/partners/internal-pairs/":
     exempt: configuration
-    reason: "Trading partner setup: partners, connections, mappings, templates and communication profiles an EDI administrator maintains and certifies."
-  "POST /api/v1/edi/templates/":
-    exempt: configuration
-    reason: "Trading partner setup: partners, connections, mappings, templates and communication profiles an EDI administrator maintains and certifies."
-  "POST /api/v1/edi/templates/:templateID/draft/":
-    exempt: configuration
-    reason: "Trading partner setup: partners, connections, mappings, templates and communication profiles an EDI administrator maintains and certifies."
-  "POST /api/v1/edi/templates/:templateID/versions/:versionID/activate/":
-    exempt: configuration
-    reason: "Trading partner setup: partners, connections, mappings, templates and communication profiles an EDI administrator maintains and certifies."
-  "POST /api/v1/edi/templates/:templateID/versions/:versionID/archive/":
-    exempt: configuration
-    reason: "Trading partner setup: partners, connections, mappings, templates and communication profiles an EDI administrator maintains and certifies."
-  "POST /api/v1/edi/templates/:templateID/versions/:versionID/certify/":
-    exempt: configuration
-    reason: "Trading partner setup: partners, connections, mappings, templates and communication profiles an EDI administrator maintains and certifies."
-  "POST /api/v1/edi/templates/:templateID/versions/:versionID/rollback/":
-    exempt: configuration
-    reason: "Trading partner setup: partners, connections, mappings, templates and communication profiles an EDI administrator maintains and certifies."
-  "POST /api/v1/edi/templates/:templateID/versions/:versionID/validate/":
-    exempt: read-only
-    reason: "Validates, inspects, previews or tests EDI setup and saves nothing."
+    reason: "Trading partner setup: partners, connections, mappings and communication profiles an EDI administrator maintains."
   "POST /api/v1/edi/tender-changes/:changeID/apply/":
     tools: [edi_review_tender_change]
   "POST /api/v1/edi/tender-changes/:changeID/reject/":
     tools: [edi_review_tender_change]
-  "POST /api/v1/edi/test-cases/":
-    exempt: configuration
-    reason: "Trading partner setup: partners, connections, mappings, templates and communication profiles an EDI administrator maintains and certifies."
-  "POST /api/v1/edi/test-cases/:testCaseID/preview/":
-    exempt: read-only
-    reason: "Validates, inspects, previews or tests EDI setup and saves nothing."
   "POST /api/v1/edi/transfer-changes/:changeID/apply/":
     tools: [edi_review_transfer_change]
   "POST /api/v1/edi/transfer-changes/:changeID/reject/":
@@ -1384,30 +1386,13 @@ writes:
     reason: "Validates, inspects, previews or tests EDI setup and saves nothing."
   "PUT /api/v1/edi/communication-profiles/:profileID/":
     tools: [edi_apply_connection_draft]
-  "PUT /api/v1/edi/document-profiles/:profileID/":
-    tools: [edi_apply_connection_draft]
   "PUT /api/v1/edi/mapping-profiles/:profileID/items/":
     exempt: configuration
-    reason: "Trading partner setup: partners, connections, mappings, templates and communication profiles an EDI administrator maintains and certifies."
+    reason: "Trading partner setup: partners, connections, mappings and communication profiles an EDI administrator maintains."
   "PUT /api/v1/edi/partners/:partnerID/":
     tools: [edi_apply_connection_draft]
   "PUT /api/v1/edi/partners/:partnerID/mapping-profile/":
     tools: [edi_apply_connection_draft]
-  "PUT /api/v1/edi/templates/:templateID/":
-    exempt: configuration
-    reason: "Trading partner setup: partners, connections, mappings, templates and communication profiles an EDI administrator maintains and certifies."
-  "PUT /api/v1/edi/templates/:templateID/versions/:versionID/":
-    exempt: configuration
-    reason: "Trading partner setup: partners, connections, mappings, templates and communication profiles an EDI administrator maintains and certifies."
-  "PUT /api/v1/edi/templates/:templateID/versions/:versionID/script-libraries/":
-    exempt: configuration
-    reason: "Trading partner setup: partners, connections, mappings, templates and communication profiles an EDI administrator maintains and certifies."
-  "PUT /api/v1/edi/templates/:templateID/versions/:versionID/segments/":
-    exempt: configuration
-    reason: "Trading partner setup: partners, connections, mappings, templates and communication profiles an EDI administrator maintains and certifies."
-  "PUT /api/v1/edi/test-cases/:testCaseID/":
-    exempt: configuration
-    reason: "Trading partner setup: partners, connections, mappings, templates and communication profiles an EDI administrator maintains and certifies."
 
   # email
   "DELETE /api/v1/email-profiles/:profileID/":

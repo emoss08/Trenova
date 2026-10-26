@@ -1155,11 +1155,11 @@ var Shard = &gqlexec.Shard{
 				Marshal: gqlexec.Marshal(marshalNString2string),
 			},
 			{
-				Name:     "documentProfileId",
+				Name:     "ladingVersionId",
 				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*invoiceports.InvoiceEDISendPlan)
-					return obj.DocumentProfileID, nil
+					return obj.LadingVersionID, nil
 				},
 				Marshal: gqlexec.Marshal(marshalOID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
 			},

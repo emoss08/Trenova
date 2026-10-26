@@ -10,7 +10,6 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/edi/app/ediservice"
-	"github.com/emoss08/trenova/internal/modules/edi/app/edix12"
 	"github.com/emoss08/trenova/internal/modules/edi/app/edix12inspect"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
@@ -116,7 +115,7 @@ func (t *previewEDIDocumentTool) Policy() agentports.ToolPolicy {
 		reads:    agent.ExternalReadMarked,
 		source:   agent.TaintSourceEDI,
 		rationale: "Renders the X12 a send would produce from records already in Trenova, " +
-			"with the partner profile's findings; nothing is saved and nothing is sent.",
+			"with what the partner's Lading version found; nothing is saved and nothing is sent.",
 	})
 }
 
@@ -124,8 +123,7 @@ type ediDocumentPreviewView struct {
 	Title          string             `json:"title"`
 	TransactionSet string             `json:"transactionSet"`
 	Partner        string             `json:"partner,omitempty"`
-	Profile        string             `json:"profile,omitempty"`
-	ValidationMode string             `json:"validationMode,omitempty"`
+	Map            string             `json:"map,omitempty"`
 	X12Version     string             `json:"x12Version,omitempty"`
 	Response       string             `json:"response,omitempty"`
 	WouldSend      bool               `json:"wouldSend"`
@@ -341,24 +339,16 @@ func documentPreviewView(
 		Findings:       previewFindings(document.Diagnostics),
 		Note:           previewDocumentNote,
 	}
-	var envelope *edi.X12EnvelopeSettings
-	if profile := document.Profile; profile != nil {
-		envelope = &profile.Envelope
-		view.Profile = profile.Name
-		view.ValidationMode = string(profile.ValidationMode)
-		if profile.Partner != nil {
-			view.Partner = profile.Partner.Name
-		}
-	}
-	if partner := stringutils.FirstNonEmpty(view.Partner, view.Profile); partner != "" {
-		view.Title += " to " + partner
+	view.Partner = document.PartnerName
+	view.Map = document.Map
+	if view.Partner != "" {
+		view.Title += " to " + view.Partner
 	}
 
 	inspection, err := edix12inspect.InspectX12(ctx, &edix12inspect.InspectX12Request{
 		RawX12:         document.RawX12,
 		TransactionSet: set,
 		X12Version:     document.X12Version,
-		Envelope:       envelope,
 	})
 	if err != nil {
 		return nil, err
@@ -377,7 +367,7 @@ func documentPreviewView(
 	return view, nil
 }
 
-func previewFindings(diagnostics []edix12.Diagnostic) []ediDiagnosticRow {
+func previewFindings(diagnostics []edi.Diagnostic) []ediDiagnosticRow {
 	rows := make([]ediDiagnosticRow, 0, min(len(diagnostics), maxMessageDiagnostics))
 	for idx := range diagnostics {
 		if len(rows) == maxMessageDiagnostics {

@@ -71,6 +71,12 @@ type GetEDIOutboundMessageForAckRequest struct {
 	TransactionControlNumber string                `json:"transactionControlNumber"`
 }
 
+type LinkEDIMessageFlowRequest struct {
+	ID             pulid.ID              `json:"id"`
+	TenantInfo     pagination.TenantInfo `json:"tenantInfo"`
+	FlowInstanceID pulid.ID              `json:"flowInstanceId"`
+}
+
 type UpdateEDIMessageAcknowledgmentRequest struct {
 	ID            pulid.ID                        `json:"id"`
 	TenantInfo    pagination.TenantInfo           `json:"tenantInfo"`
@@ -200,7 +206,22 @@ type ListRecentEDIMessageFailuresRequest struct {
 	Limit          int                   `json:"limit"`
 }
 
+type ListEDIReplayMessagesRequest struct {
+	TenantInfo     pagination.TenantInfo `json:"tenantInfo"`
+	PartnerID      pulid.ID              `json:"partnerId"`
+	TransactionSet edi.TransactionSet    `json:"transactionSet"`
+	Direction      edi.DocumentDirection `json:"direction"`
+	From           int64                 `json:"from"`
+	To             int64                 `json:"to"`
+	AfterID        pulid.ID              `json:"afterId"`
+	Limit          int                   `json:"limit"`
+}
+
 type EDIMessageRepository interface {
+	ListReplayMessages(
+		ctx context.Context,
+		req *ListEDIReplayMessagesRequest,
+	) ([]*edi.EDIMessage, error)
 	ListMessages(
 		ctx context.Context,
 		req *ListEDIMessagesRequest,
@@ -226,6 +247,7 @@ type EDIMessageRepository interface {
 		ctx context.Context,
 		req GetServiceFailure214StatusRequest,
 	) (*ServiceFailure214StatusRow, error)
+	LinkMessageFlow(ctx context.Context, req *LinkEDIMessageFlowRequest) (*edi.EDIMessage, error)
 	UpdateMessageDelivery(
 		ctx context.Context,
 		req *UpdateEDIMessageDeliveryRequest,

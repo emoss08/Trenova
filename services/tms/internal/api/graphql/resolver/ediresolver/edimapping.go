@@ -222,43 +222,21 @@ func summaryStatusCounts[T ~string](counts map[T]int) []*gqlmodel.EDISummaryStat
 	return result
 }
 
-func ediTestCaseConnectionToModel(
-	result *pagination.CursorListResult[*edi.EDITestCase],
-) (*gqlmodel.EDITestCaseConnection, error) {
+func ediFlowInstanceConnectionToModel(
+	result *pagination.CursorListResult[*edi.FlowInstance],
+) (*gqlmodel.EDIFlowInstanceConnection, error) {
 	page, err := base.EntityCursorConnection(
 		result,
-		func(node *edi.EDITestCase, cursor string) *gqlmodel.EDITestCaseEdge {
-			return &gqlmodel.EDITestCaseEdge{Node: node, Cursor: cursor}
+		func(node *edi.FlowInstance, cursor string) *gqlmodel.EDIFlowInstanceEdge {
+			return &gqlmodel.EDIFlowInstanceEdge{Node: node, Cursor: cursor}
 		},
-		func(edge *gqlmodel.EDITestCaseEdge) string { return edge.Cursor },
+		func(edge *gqlmodel.EDIFlowInstanceEdge) string { return edge.Cursor },
 	)
 	if err != nil {
 		return nil, err
 	}
 
-	return &gqlmodel.EDITestCaseConnection{
-		Edges:           page.Edges,
-		PageInfo:        page.PageInfo,
-		TotalCount:      page.TotalCount,
-		TotalCountExact: page.TotalCountExact,
-	}, nil
-}
-
-func ediTemplateConnectionToModel(
-	result *pagination.CursorListResult[*edi.EDITemplate],
-) (*gqlmodel.EDITemplateConnection, error) {
-	page, err := base.EntityCursorConnection(
-		result,
-		func(node *edi.EDITemplate, cursor string) *gqlmodel.EDITemplateEdge {
-			return &gqlmodel.EDITemplateEdge{Node: node, Cursor: cursor}
-		},
-		func(edge *gqlmodel.EDITemplateEdge) string { return edge.Cursor },
-	)
-	if err != nil {
-		return nil, err
-	}
-
-	return &gqlmodel.EDITemplateConnection{
+	return &gqlmodel.EDIFlowInstanceConnection{
 		Edges:           page.Edges,
 		PageInfo:        page.PageInfo,
 		TotalCount:      page.TotalCount,

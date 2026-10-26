@@ -3,11 +3,12 @@ import { AmountDisplay } from "@trenova/shared/components/accounting/amount-disp
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { fetchMyYtdPay } from "@trenova/shared/lib/graphql/driver-portal";
 import { useQuery } from "@tanstack/react-query";
+import { useState } from "react";
 
 export function YtdCard() {
   const t = useT();
 
-  const year = new Date().getFullYear();
+  const [year] = useState(() => new Date().getFullYear());
   const ytd = useQuery({
     queryKey: ["dash-ytd-pay", year],
     queryFn: async ({ signal }) => {

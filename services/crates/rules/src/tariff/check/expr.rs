@@ -11,16 +11,16 @@ use super::methods::{self, HOLIDAY, Rule};
 use super::operators::{self, Problem};
 use super::scope::{LocalKind, PathKey};
 use super::{HintKind, SymbolKind};
-use crate::span::Span;
-use crate::tariff::diagnostic::Diagnostic;
 use crate::tariff::syntax::ast::{
     BinaryOp, Condition, Expr, ExprKind, FieldInit, Name, Text, TextPart, UnaryOp, UnitExpr,
 };
 use crate::tariff::types::{EnumType, FieldDef, RecordType, Type};
 use crate::tariff::units::{SIMPLE_UNITS, Unit, simple};
 use std::sync::Arc;
+use trenova_module_kit::diagnostic::Diagnostic;
 use trenova_module_kit::message;
 use trenova_module_kit::message::{Arg, Message};
+use trenova_module_kit::span::Span;
 
 /// Whether text interpolation can write a value of this type: a scalar, an enum, or a list or
 /// record whose items and fields are themselves interpolatable, written as the evaluator prints

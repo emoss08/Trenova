@@ -1,0 +1,42 @@
+map statusOut
+  from shipmentStatus
+  to   x12.004010.214
+
+B10 { 01 <- proNumber, 02 <- key, 03 <- org.scac }
+L11 when exists bol { 01 <- bol, 02 <- "BM" }
+
+0205 <- each events as event {
+  LX { 01 <- index + 1 }
+  0210 {
+    AT7 {
+      01 <- event.kind via statusCodes
+      02 <- event.reason ?? "NS"
+      05 <- event.at
+      06 <- event.at
+      07 <- event.at.zoneCode()
+    }
+    MS1 when exists event.city { 01 <- event.city, 02 <- event.state, 03 <- event.country }
+  }
+}
+
+crosswalk statusCodes: EventKind <-> Code<AT701> {
+  ArrivedPickup <-> "X3"
+  DepartedPickup <-> "AF"
+  ArrivedDelivery <-> "X1"
+  Delivered <-> "D1"
+  else -> "X6"
+}
+
+test "an arrival writes the right AT7" {
+  given shipmentStatus {
+    key: "L-1001"
+    events: [{ kind: ArrivedDelivery, at: @2026-01-10T08:30[America/Chicago], stop: 2, city: "Chicago", state: "IL" }]
+  }
+  expect x12 contains "AT7*X1*NS***20260110*0830*CT~"
+}
+
+property "every event writes a status" {
+  vary kind in EventKind
+  given shipmentStatus { key: "L-1", events: [{ kind: kind, at: @2026-01-10T14:30Z }] }
+  expect x12 contains "AT7*"
+}

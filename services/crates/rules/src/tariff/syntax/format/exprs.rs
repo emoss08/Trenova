@@ -2,7 +2,6 @@
 
 use super::Formatter;
 use super::doc::Doc;
-use crate::span::Span;
 use crate::tariff::syntax::ast::Arg;
 use crate::tariff::syntax::ast::ArmBody;
 use crate::tariff::syntax::ast::BinaryOp;
@@ -16,6 +15,7 @@ use crate::tariff::syntax::ast::TypeExpr;
 use crate::tariff::syntax::ast::TypeExprKind;
 use crate::tariff::syntax::ast::UnaryOp;
 use crate::tariff::syntax::ast::UnitExpr;
+use trenova_module_kit::span::Span;
 
 /// The unit of `.in(lb/ft3)`, written as a unit is (`lb/ft3`, `$/cwt`), not as a division.
 fn written_unit(callee: &Expr, args: &[Arg]) -> Option<String> {

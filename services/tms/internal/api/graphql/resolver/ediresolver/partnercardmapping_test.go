@@ -9,6 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/carrier"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/customer"
+	"github.com/emoss08/trenova/pkg/lading"
 	"github.com/emoss08/trenova/shared/as2"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -25,7 +26,7 @@ func partnerCardFixture() *ediservice.EDIPartnerCard {
 			TotalCount:     2,
 			Items: []ediservice.EDIPartnerReadinessItem{
 				{Key: "details", Label: "Partner details", Complete: true},
-				{Key: "test-case", Label: "At least one passing test case"},
+				{Key: "lading-active", Label: "An active Lading version"},
 			},
 		},
 		Mappings: &ediports.EDIMappingSummary{},
@@ -105,7 +106,9 @@ func TestEDIPartnerCardToModel_KeepsCarriersNullWhenNotRead(t *testing.T) {
 	model := ediPartnerCardToModel(partnerCardFixture())
 	assert.Nil(t, model.Carriers, "null tells the card the carriers were not read")
 	assert.Nil(t, model.Customer, "a partner that names no customer has none")
-	assert.Equal(t, []*edi.EDIPartnerDocumentProfile{}, model.DocumentProfiles)
+	require.NotNil(t, model.Lading, "a partner with no project has an empty Lading block")
+	assert.Nil(t, model.Lading.Project)
+	assert.Nil(t, model.Lading.Active)
 	assert.Equal(t, []*edi.EDIMessage{}, model.Attention.OverdueAcks)
 	assert.Equal(t, []*edi.EDIInboundFile{}, model.Attention.QuarantinedFiles)
 
@@ -178,7 +181,76 @@ func TestEDIPartnerCardToModel_ReadsTheLinksAndFigures(t *testing.T) {
 		TotalCount:     2,
 		Items: []*gqlmodel.EDIPartnerReadinessItem{
 			{Key: "details", Label: "Partner details", Complete: true},
-			{Key: "test-case", Label: "At least one passing test case", Complete: false},
+			{Key: "lading-active", Label: "An active Lading version", Complete: false},
 		},
 	}, model.Readiness)
+}
+
+func TestEDIPartnerCardToModel_CarriesTheLadingVersionsRunning(t *testing.T) {
+	t.Parallel()
+
+	card := partnerCardFixture()
+	card.Lading = &ediservice.EDIPartnerLading{
+		Project: &edi.LadingProject{ID: pulid.MustNew("ldp_"), EDIPartnerID: card.Partner.ID},
+		Active:  &edi.LadingVersion{ID: pulid.MustNew("ldv_"), Number: 3},
+		Shadow:  &edi.LadingVersion{ID: pulid.MustNew("ldv_"), Number: 4},
+	}
+
+	model := ediPartnerCardToModel(card)
+
+	require.NotNil(t, model.Lading)
+	assert.Same(t, card.Lading.Project, model.Lading.Project)
+	assert.Same(t, card.Lading.Active, model.Lading.Active)
+	assert.Same(t, card.Lading.Shadow, model.Lading.Shadow)
+}
+
+func TestLadingVersionModel_ReadsTheEnvelopeAndSetsFromTheManifest(t *testing.T) {
+	t.Parallel()
+
+	manifest := &lading.Check{
+		Partner: &lading.Partner{Interchange: &lading.Interchange{
+			Them:    &lading.Party{Qualifier: "01", ID: "007912345"},
+			Us:      &lading.Party{Qualifier: "02", ID: "TRNV"},
+			Group:   &lading.GroupCodes{Theirs: "ACME", Ours: "TRNV"},
+			Version: "004010",
+			Usage:   "test",
+		}},
+		Maps: []lading.Map{
+			{Name: "statusOut", Set: "214", Direction: lading.DirectionOutbound},
+			{Name: "tenderIn", Set: "204", Direction: lading.DirectionInbound},
+			{Name: "answerOut", Set: "990", Direction: lading.DirectionOutbound},
+			{Name: "ordersCsv", Direction: lading.DirectionInbound},
+		},
+		Flows: []lading.Flow{
+			{Name: "tender", Clauses: []lading.Clause{
+				{Kind: lading.ClauseReceive, Set: "204", Map: "tenderIn", Acknowledge: "997"},
+				{Kind: lading.ClauseRespond, Set: "990", Map: "answerOut"},
+				{Kind: lading.ClauseSend, Set: "214", Map: "statusOut"},
+				{Kind: lading.ClauseExpect, Set: "997", Within: 1800},
+			}},
+		},
+	}
+
+	interchange := ladingInterchangeToModel(manifest)
+	require.NotNil(t, interchange)
+	assert.Equal(t, "007912345", *interchange.TheirID)
+	assert.Equal(t, "02", *interchange.OurQualifier)
+	assert.Equal(t, "ACME", *interchange.TheirGroupCode)
+	assert.Equal(t, "test", *interchange.Usage)
+	assert.Equal(t, []string{}, interchange.Separators, "none written reads as an empty list")
+
+	ack, within := "997", 1800
+	assert.Equal(t, []*gqlmodel.EDILadingExchange{
+		{TransactionSet: "204", Direction: edi.DocumentDirectionInbound, Map: "tenderIn", Acknowledgment: &ack},
+		{
+			TransactionSet: "214", Direction: edi.DocumentDirectionOutbound, Map: "statusOut",
+			Acknowledgment: &ack, AcknowledgmentWithin: &within,
+		},
+		{
+			TransactionSet: "990", Direction: edi.DocumentDirectionOutbound, Map: "answerOut",
+			Acknowledgment: &ack, AcknowledgmentWithin: &within,
+		},
+	}, ladingExchangesToModel(manifest), "a map that reads no X12 set is not an exchange")
+
+	assert.Nil(t, ladingInterchangeToModel(&lading.Check{}), "a project with no partner file")
 }

@@ -163,14 +163,15 @@ func TestDraftEDIConnection_NamesWhatTheReplyMustTellThePerson(t *testing.T) {
 		FileName: "acme-guide.pdf",
 		Ready:    true,
 		Partner:  ediports.DraftPartner{Match: ediports.PartnerMatchNew},
-		DocumentProfiles: []ediports.DraftDocumentProfile{{
+		Sets: []ediports.DraftSet{{
 			TransactionSet: edi.TransactionSet214,
 			Direction:      edi.DocumentDirectionOutbound,
-			Template: ediports.DraftTemplateChoice{Unmet: []ediports.DraftRequirementCheck{{
+			Unmet: []ediports.DraftRequirementCheck{{
 				SegmentID: "MS1", ElementPosition: 1, Usage: ediports.RequirementUsageMandatory,
 				Source: ediports.DraftSource{Kind: ediports.SourceKindDocument, Page: 5},
-			}}},
+			}},
 		}},
+		Project: &ediports.DraftProject{Errors: 2},
 		Gaps: []ediports.DraftGap{{
 			Kind:    ediports.GapKindAmbiguous,
 			Summary: "Accessorial charge codes are in Appendix B, which is not in this document",
@@ -190,7 +191,9 @@ func TestDraftEDIConnection_NamesWhatTheReplyMustTellThePerson(t *testing.T) {
 	note := result.(*connectionDraftView).Note
 
 	assert.Contains(t, note, "In your reply, tell the person:")
-	assert.Contains(t, note, "the 214 outbound template does not meet MS1-01 (page 5)")
+	assert.Contains(t, note, "the drafted 214 outbound map does not write MS1-01 (page 5)")
+	assert.Contains(t, note,
+		"the drafted Lading project has 2 errors to fix in the studio before it can be certified")
 	assert.Contains(t, note,
 		"the guide leaves this open: Accessorial charge codes are in Appendix B, which is not "+
 			"in this document (page 6)")
@@ -241,8 +244,8 @@ func TestDraftEDIConnection_NamesWhatARevisedGuideChanges(t *testing.T) {
 	page := func(n int) ediports.DraftSource {
 		return ediports.DraftSource{Kind: ediports.SourceKindDocument, Page: n}
 	}
-	interchange := func(set edi.TransactionSet) ediports.DraftDocumentProfile {
-		return ediports.DraftDocumentProfile{
+	interchange := func(set edi.TransactionSet) ediports.DraftSet {
+		return ediports.DraftSet{
 			TransactionSet: set,
 			Direction:      edi.DocumentDirectionOutbound,
 			Change:         ediports.ChangeKindChange,
@@ -267,7 +270,7 @@ func TestDraftEDIConnection_NamesWhatARevisedGuideChanges(t *testing.T) {
 			},
 		},
 		Transport: &ediports.DraftTransport{Change: ediports.ChangeKindSame},
-		DocumentProfiles: []ediports.DraftDocumentProfile{
+		Sets: []ediports.DraftSet{
 			{
 				TransactionSet: edi.TransactionSet204,
 				Direction:      edi.DocumentDirectionInbound,

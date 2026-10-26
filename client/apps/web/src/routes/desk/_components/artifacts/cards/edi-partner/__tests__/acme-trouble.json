@@ -26,86 +26,67 @@
       "name": "Acme Foods",
       "code": "ACME"
     },
-    "documentProfiles": [
-      {
-        "id": "edidp_acme_214",
-        "name": "Acme 214 status",
-        "status": "Active",
-        "direction": "Outbound",
-        "transactionSet": "214",
-        "functionalGroupId": "QM",
-        "envelope": {
-          "interchangeSenderQualifier": "ZZ",
-          "interchangeSenderId": "TRENOVA        ",
-          "interchangeReceiverQualifier": "01",
-          "interchangeReceiverId": "078742193      ",
-          "applicationSenderCode": "TRENOVA",
-          "applicationReceiverCode": "078742193",
-          "interchangeUsageIndicator": "P",
-          "elementSeparator": "*",
-          "segmentTerminator": "~",
-          "componentSeparator": ">",
-          "repetitionSeparator": "^"
-        },
-        "acknowledgment": {
-          "expected": true,
-          "type": "997",
-          "slaInMinutes": 240
-        }
+    "lading": {
+      "project": {
+        "id": "ldp_acme",
+        "activeVersionId": "ldv_acme",
+        "shadowVersionId": null,
+        "updatedAt": 1788272000
       },
-      {
-        "id": "edidp_acme_210",
-        "name": "Acme 210 invoice",
+      "active": {
+        "id": "ldv_acme",
+        "number": 3,
         "status": "Active",
-        "direction": "Outbound",
-        "transactionSet": "210",
-        "functionalGroupId": "IM",
-        "envelope": {
-          "interchangeSenderQualifier": "ZZ",
-          "interchangeSenderId": "TRENOVA        ",
-          "interchangeReceiverQualifier": "01",
-          "interchangeReceiverId": "078742193      ",
-          "applicationSenderCode": "TRENOVA",
-          "applicationReceiverCode": "078742193",
-          "interchangeUsageIndicator": "P",
-          "elementSeparator": "*",
-          "segmentTerminator": "~",
-          "componentSeparator": ">",
-          "repetitionSeparator": "^"
+        "errorCount": 0,
+        "warningCount": 0,
+        "activatedAt": 1788272000,
+        "readiness": {
+          "tests": 12,
+          "failing": 0,
+          "ready": true
         },
-        "acknowledgment": {
-          "expected": true,
-          "type": "997",
-          "slaInMinutes": 1440
-        }
+        "interchange": {
+          "theirQualifier": "01",
+          "theirId": "078742193",
+          "ourQualifier": "ZZ",
+          "ourId": "TRENOVA",
+          "theirGroupCode": "078742193",
+          "ourGroupCode": "TRENOVA",
+          "version": "004010",
+          "usage": "production",
+          "separators": [
+            "*",
+            "~",
+            ">",
+            "^"
+          ]
+        },
+        "exchanges": [
+          {
+            "transactionSet": "204",
+            "direction": "Inbound",
+            "map": "tenderIn",
+            "acknowledgment": "997",
+            "acknowledgmentWithin": null
+          },
+          {
+            "transactionSet": "210",
+            "direction": "Outbound",
+            "map": "invoiceOut",
+            "acknowledgment": "997",
+            "acknowledgmentWithin": 86400
+          },
+          {
+            "transactionSet": "214",
+            "direction": "Outbound",
+            "map": "statusOut",
+            "acknowledgment": "997",
+            "acknowledgmentWithin": 14400
+          }
+        ]
       },
-      {
-        "id": "edidp_acme_204",
-        "name": "Acme 204 tender",
-        "status": "Active",
-        "direction": "Inbound",
-        "transactionSet": "204",
-        "functionalGroupId": "SM",
-        "envelope": {
-          "interchangeSenderQualifier": "01",
-          "interchangeSenderId": "078742193      ",
-          "interchangeReceiverQualifier": "ZZ",
-          "interchangeReceiverId": "TRENOVA        ",
-          "applicationSenderCode": "078742193",
-          "applicationReceiverCode": "TRENOVA",
-          "interchangeUsageIndicator": "P",
-          "elementSeparator": "*",
-          "segmentTerminator": "~",
-          "componentSeparator": ">",
-          "repetitionSeparator": "^"
-        },
-        "acknowledgment": {
-          "expected": true,
-          "type": "997",
-          "slaInMinutes": 0
-        }
-      }
-    ],
+      "shadow": null
+    },
     "transports": [
       {
         "profile": {
@@ -118,7 +99,7 @@
             "port": 22,
             "username": "trenova",
             "authMode": "privateKey",
-            "knownHostKey": "ssh-ed25519 AAAAC3Nz\u2026",
+            "knownHostKey": "ssh-ed25519 AAAAC3Nz…",
             "outboundDirectory": "/inbound",
             "inboundDirectory": "/outbound/tenders",
             "archiveDirectory": "/outbound/archive",

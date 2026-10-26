@@ -186,7 +186,7 @@ func readyPlan(method edi.ConnectionMethod) *invoiceports.InvoiceEDISendPlan {
 	return &invoiceports.InvoiceEDISendPlan{
 		Enabled:             true,
 		PartnerID:           pulid.MustNew("edip_"),
-		DocumentProfileID:   pulid.MustNew("epdp_"),
+		LadingVersionID:     pulid.MustNew("ldv_"),
 		CommunicationMethod: string(method),
 		Blockers:            []string{},
 	}
@@ -323,7 +323,6 @@ func TestSendInvoiceEDIActivityGeneratesForExternalAndSendsForInternalPartners(t
 				GenerateDocument(mock.Anything, mock.MatchedBy(func(req *ediports.GenerateEDIDocumentRequest) bool {
 					return req.InvoiceID == f.inv.ID &&
 						req.EDIPartnerID == plan.PartnerID &&
-						req.PartnerDocumentProfileID == plan.DocumentProfileID &&
 						req.TransactionSet == edi.TransactionSet210 &&
 						req.Direction == edi.DocumentDirectionOutbound &&
 						req.GeneratedByID == f.tenantInfo.UserID

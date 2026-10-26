@@ -58,7 +58,6 @@ use super::record::{sample, settle};
 use super::run::{Supplied, bind_inputs, enforce_constraint};
 use super::tables::{GivenCell, Need, Tables};
 use super::value::{Record, Value};
-use crate::span::Span;
 use crate::tariff::schema::Settings;
 use crate::tariff::syntax::ast::{
     Block, Expect, Expr, ExprKind, FileKind, ItemKind, Name, Stmt, StmtKind, TextPart,
@@ -67,6 +66,7 @@ use crate::tariff::syntax::program::Program;
 use std::collections::BTreeMap;
 use std::rc::Rc;
 use trenova_module_kit::message::{Arg, Message};
+use trenova_module_kit::span::Span;
 
 /// The whole run's step meter, as a multiple of the per-test step limit.
 pub const FILE_STEPS: u64 = 32;

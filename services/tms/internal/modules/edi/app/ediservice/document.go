@@ -2,41 +2,35 @@ package ediservice
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
-	"github.com/emoss08/trenova/internal/modules/edi/app/edix12"
+	"github.com/emoss08/trenova/internal/modules/edi/app/edilading"
 	"github.com/emoss08/trenova/internal/modules/edi/app/edix12inspect"
+	"github.com/emoss08/trenova/internal/modules/edi/app/ladingdoc"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
-	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/servicefailureports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmenteventports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/places/ports/locationports"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/errortypes"
+	"github.com/emoss08/trenova/pkg/lading"
 	"github.com/emoss08/trenova/pkg/pagination"
-	"github.com/emoss08/trenova/shared/maputils"
+	"github.com/emoss08/trenova/shared/i18n"
+	"github.com/emoss08/trenova/shared/jsonutils"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/stringutils"
-	"github.com/emoss08/trenova/shared/timeutils"
 	"go.uber.org/zap"
 )
 
-type resolvedDocumentContext struct {
-	ctx                context.Context
-	profile            *edi.EDIPartnerDocumentProfile
-	templateVersion    *edi.EDITemplateVersion
-	payload            edi.DocumentPayload
-	x12Version         string
-	runtime            map[string]any
-	partnerDiagnostics []edix12.Diagnostic
-	carrierSCAC        string
-}
+const provisionalInterchange = "000000000"
 
 func (s *Service) ListDocumentTypes(
 	ctx context.Context,
@@ -52,239 +46,15 @@ func (s *Service) SelectDocumentTypeOptions(
 	return s.documentTypeRepo.SelectDocumentTypeOptions(ctx, req)
 }
 
-func (s *Service) ListTemplates(
-	ctx context.Context,
-	req *ediports.ListEDITemplatesRequest,
-) (*pagination.ListResult[*edi.EDITemplate], error) {
-	return s.templateRepo.ListTemplates(ctx, req)
-}
-
-func (s *Service) SelectTemplateOptions(
-	ctx context.Context,
-	req *ediports.EDITemplateSelectOptionsRequest,
-) (*pagination.ListResult[*edi.EDITemplate], error) {
-	return s.templateRepo.SelectTemplateOptions(ctx, req)
-}
-
-func (s *Service) ListPartnerDocumentProfiles(
-	ctx context.Context,
-	req *ediports.ListEDIPartnerDocumentProfilesRequest,
-) (*pagination.ListResult[*edi.EDIPartnerDocumentProfile], error) {
-	return s.documentProfileRepo.ListPartnerDocumentProfiles(ctx, req)
-}
-
-func (s *Service) SelectPartnerDocumentProfileOptions(
-	ctx context.Context,
-	req *ediports.EDIPartnerDocumentProfileSelectOptionsRequest,
-) (*pagination.ListResult[*edi.EDIPartnerDocumentProfile], error) {
-	return s.documentProfileRepo.SelectPartnerDocumentProfileOptions(ctx, req)
-}
-
-func (s *Service) GetPartnerDocumentProfile(
-	ctx context.Context,
-	req ediports.GetEDIPartnerDocumentProfileByIDRequest,
-) (*edi.EDIPartnerDocumentProfile, error) {
-	return s.documentProfileRepo.GetPartnerDocumentProfileByID(ctx, req)
-}
-
-//nolint:cyclop,funlen // The profile upsert validates several independent EDI profile invariants explicitly.
-func (s *Service) UpsertPartnerDocumentProfile(
-	ctx context.Context,
-	req *UpsertEDIPartnerDocumentProfileRequest,
-	actor *permissionports.RequestActor,
-) (*edi.EDIPartnerDocumentProfile, error) {
-	if req == nil {
-		return nil, s.validator.ValidatePartnerDocumentProfileRequest(req)
-	}
-	if req.Envelope.ElementSeparator == "" {
-		req.Envelope = edi.DefaultX12EnvelopeSettings()
-	}
-	if multiErr := s.validator.ValidatePartnerDocumentProfileRequest(req); multiErr != nil {
-		return nil, multiErr
-	}
-	source, err := s.resolveProfileSource(ctx, req)
-	if err != nil {
-		return nil, err
-	}
-	documentType := source.documentType
-
-	profile := &edi.EDIPartnerDocumentProfile{
-		ID:                req.ProfileID,
-		BusinessUnitID:    req.TenantInfo.BuID,
-		OrganizationID:    req.TenantInfo.OrgID,
-		EDIPartnerID:      req.EDIPartnerID,
-		DocumentTypeID:    documentType.ID,
-		TemplateID:        source.templateID,
-		TemplateVersionID: source.templateVersionID(),
-		Name: stringutils.FirstNonEmpty(
-			req.Name,
-			defaultProfileName(documentType.TransactionSet, documentType.Direction),
-		),
-		Status:             req.Status,
-		Direction:          documentType.Direction,
-		Standard:           documentType.Standard,
-		TransactionSet:     documentType.TransactionSet,
-		X12VersionOverride: req.X12VersionOverride,
-		FunctionalGroupID: stringutils.FirstNonEmpty(
-			req.FunctionalGroupID,
-			source.functionalGroupID(),
-			edi.FunctionalGroupDefault(documentType.TransactionSet),
-		),
-		Envelope:                     req.Envelope,
-		Acknowledgment:               req.Acknowledgment,
-		ValidationMode:               req.ValidationMode,
-		PartnerSettings:              req.PartnerSettings,
-		PartnerSettingsSchemaID:      req.PartnerSettingsSchemaID,
-		PartnerSettingsSchemaVersion: req.PartnerSettingsSchemaVersion,
-		Version:                      req.Version,
-	}
-	if profile.Status == "" {
-		profile.Status = edi.DocumentStatusActive
-	}
-	if source.templateVersion != nil {
-		if err = validateProfileTemplateVersionCompatibility(
-			profile.Status,
-			source.templateVersion,
-		); err != nil {
-			return nil, err
-		}
-	}
-	if profile.ValidationMode == "" {
-		profile.ValidationMode = edi.ValidationModeStrict
-	}
-	if profile.Envelope.ElementSeparator == "" {
-		profile.Envelope = edi.DefaultX12EnvelopeSettings()
-	}
-	partnerDiagnostics, err := s.validateProfilePartnerSettings(
-		ctx,
-		profile,
-		req.TenantInfo,
-		profile.PartnerSettings,
-	)
-	if err != nil {
-		return nil, err
-	}
-	if profile.Status == edi.DocumentStatusActive &&
-		hasPartnerSettingErrorDiagnostics(partnerDiagnostics) {
-		return nil, partnerSettingsValidationError(partnerDiagnostics)
-	}
-	if profile.ID.IsNil() {
-		created, createErr := s.documentProfileRepo.CreatePartnerDocumentProfile(ctx, profile)
-		if createErr != nil {
-			return nil, createErr
-		}
-		s.logAction(
-			created,
-			actor,
-			permission.OpCreate,
-			nil,
-			created,
-			"EDI document profile created",
-		)
-		return created, nil
-	}
-	updated, err := s.documentProfileRepo.UpdatePartnerDocumentProfile(ctx, profile)
-	if err != nil {
-		return nil, err
-	}
-	s.logAction(updated, actor, permission.OpUpdate, nil, updated, "EDI document profile updated")
-	return updated, nil
-}
-
-type profileSource struct {
-	documentType    *edi.EDIDocumentType
-	templateID      pulid.ID
-	templateVersion *edi.EDITemplateVersion
-}
-
-func (p *profileSource) templateVersionID() pulid.ID {
-	if p.templateVersion == nil {
-		return pulid.Nil
-	}
-	return p.templateVersion.ID
-}
-
-func (p *profileSource) functionalGroupID() string {
-	if p.templateVersion == nil {
-		return ""
-	}
-	return p.templateVersion.FunctionalGroupID
-}
-
-func (s *Service) resolveProfileSource(
-	ctx context.Context,
-	req *UpsertEDIPartnerDocumentProfileRequest,
-) (*profileSource, error) {
-	if req.TransactionSet.IsAcknowledgment() {
-		documentType, err := s.documentTypeFor(
-			ctx,
-			edi.EDIStandardX12,
-			req.TransactionSet,
-			edi.DocumentDirectionOutbound,
-		)
-		if err != nil {
-			return nil, err
-		}
-		return &profileSource{documentType: documentType}, nil
-	}
-	if req.TemplateID.IsNil() {
-		transactionSet := req.TransactionSet
-		if transactionSet == "" {
-			transactionSet = edi.TransactionSet204
-		}
-		base, _, err := s.templateRepo.EnsureBaseTemplate(ctx, req.TenantInfo, transactionSet)
-		if err != nil {
-			return nil, err
-		}
-		req.TemplateID = base.ID
-	}
-	templateVersion, err := s.resolveProfileTemplateVersion(ctx, req)
-	if err != nil {
-		return nil, err
-	}
-	template, err := s.templateRepo.GetTemplateByID(ctx, ediports.GetEDITemplateByIDRequest{
-		ID:         req.TemplateID,
-		TenantInfo: req.TenantInfo,
-	})
-	if err != nil {
-		return nil, err
-	}
-	if req.TransactionSet != "" && req.TransactionSet != template.TransactionSet {
-		return nil, errortypes.NewValidationError(
-			"templateId",
-			errortypes.ErrInvalidReference,
-			"The template is for a different transaction set than the profile",
-		)
-	}
-	documentType := template.DocumentType
-	if documentType == nil {
-		documentType, err = s.documentTypeFor(
-			ctx,
-			template.Standard,
-			template.TransactionSet,
-			template.Direction,
-		)
-		if err != nil {
-			return nil, err
-		}
-	}
-	return &profileSource{
-		documentType:    documentType,
-		templateID:      req.TemplateID,
-		templateVersion: templateVersion,
-	}, nil
-}
-
 func (s *Service) documentTypeFor(
 	ctx context.Context,
-	standard edi.EDIStandard,
 	transactionSet edi.TransactionSet,
 	direction edi.DocumentDirection,
 ) (*edi.EDIDocumentType, error) {
 	documentTypes, err := s.documentTypeRepo.ListDocumentTypes(
 		ctx,
 		ediports.ListEDIDocumentTypesRequest{
-			Standard:       standard,
+			Standard:       edi.EDIStandardX12,
 			TransactionSet: transactionSet,
 			Direction:      direction,
 		},
@@ -298,130 +68,452 @@ func (s *Service) documentTypeFor(
 	return documentTypes[0], nil
 }
 
-func (s *Service) resolveProfileTemplateVersion(
-	ctx context.Context,
-	req *UpsertEDIPartnerDocumentProfileRequest,
-) (*edi.EDITemplateVersion, error) {
-	if req.TemplateVersionID.IsNotNil() {
-		return s.templateRepo.GetTemplateVersionByID(
-			ctx,
-			ediports.GetEDITemplateVersionByIDRequest{
-				TemplateID: req.TemplateID,
-				VersionID:  req.TemplateVersionID,
-				TenantInfo: req.TenantInfo,
-			},
-		)
-	}
-
-	version, err := s.templateRepo.GetActiveTemplateVersion(
-		ctx,
-		ediports.GetActiveEDITemplateVersionRequest{
-			TemplateID: req.TemplateID,
-			TenantInfo: req.TenantInfo,
-		},
-	)
-	if err == nil {
-		return version, nil
-	}
-	if !errortypes.IsNotFoundError(err) {
-		return nil, err
-	}
-
-	if req.Status == "" || req.Status == edi.DocumentStatusActive {
-		return nil, errortypes.NewValidationError(
-			"templateVersionId",
-			errortypes.ErrInvalidOperation,
-			"Active document profiles require an active or certified template version. Activate a template version or save the profile as inactive.",
-		)
-	}
-
-	versions, listErr := s.templateRepo.ListTemplateVersions(
-		ctx,
-		ediports.ListEDITemplateVersionsRequest{
-			TemplateID: req.TemplateID,
-			TenantInfo: req.TenantInfo,
-		},
-	)
-	if listErr != nil {
-		return nil, listErr
-	}
-	for _, candidate := range versions {
-		if candidate.Status != edi.TemplateStatusArchived {
-			return candidate, nil
-		}
-	}
-	return nil, errortypes.NewValidationError(
-		"templateVersionId",
-		errortypes.ErrInvalidReference,
-		"Template version is required",
-	)
+// outbound is one message Trenova writes: the partner's running version, the map that writes
+// it and the flow clause it belongs to, and the document it writes.
+type outbound struct {
+	partner      *edi.EDIPartner
+	program      *edilading.Program
+	programs     *edilading.Programs
+	set          edi.TransactionSet
+	mapName      string
+	flow         *lading.Flow
+	clause       *lading.Clause
+	event        string
+	key          string
+	payload      edi.DocumentPayload
+	document     jsonutils.RawJSON
+	documentType *edi.EDIDocumentType
+	shipmentID   pulid.ID
 }
 
-func validateProfileTemplateVersionCompatibility(
-	status edi.DocumentStatus,
-	version *edi.EDITemplateVersion,
-) error {
-	if version == nil {
-		return errortypes.NewValidationError(
-			"templateVersionId",
-			errortypes.ErrInvalidReference,
-			"Template version is required",
+func (s *Service) programs(
+	ctx context.Context,
+	tenantInfo pagination.TenantInfo,
+	partner *edi.EDIPartner,
+) (*edilading.Programs, error) {
+	programs, err := s.lading.Load(ctx, tenantInfo, partner.ID)
+	switch {
+	case errors.Is(err, edilading.ErrNoProject):
+		return nil, errortypes.NewBusinessError(
+			"{0} has no Lading project; create one from the partner's EDI page",
+			partner.Name,
+		)
+	case err != nil:
+		return nil, err
+	case programs.Active == nil:
+		return nil, errortypes.NewBusinessError(
+			"{0}'s Lading project has no active version; certify and activate one first",
+			partner.Name,
 		)
 	}
-	if status == "" {
-		status = edi.DocumentStatusActive
+	return programs, nil
+}
+
+func (s *Service) resolveOutbound(
+	ctx context.Context,
+	req *PreviewEDIDocumentRequest,
+) (*outbound, error) {
+	if req == nil || req.EDIPartnerID.IsNil() {
+		return nil, errortypes.NewValidationError(
+			"ediPartnerId",
+			errortypes.ErrRequired,
+			"EDI partner is required",
+		)
 	}
-	if status == edi.DocumentStatusActive {
-		switch version.Status {
-		case edi.TemplateStatusActive, edi.TemplateStatusCertified:
-			return nil
-		case edi.TemplateStatusDraft,
-			edi.TemplateStatusDeprecated,
-			edi.TemplateStatusArchived,
-			edi.TemplateStatusSuperseded:
-			return errortypes.NewValidationError(
-				"templateVersionId",
-				errortypes.ErrInvalidOperation,
-				"Active document profiles can only pin active or certified template versions",
-			)
+	set := req.TransactionSet
+	if set == "" && req.Payload != nil {
+		set = req.Payload.TransactionSet
+	}
+	if set == "" {
+		return nil, errortypes.NewValidationError(
+			"transactionSet",
+			errortypes.ErrRequired,
+			"Transaction set is required",
+		)
+	}
+	if set.IsAcknowledgment() {
+		return nil, errortypes.NewValidationError(
+			"sourceMessageId",
+			errortypes.ErrRequired,
+			"An acknowledgment is written from the message it answers. Choose that message.",
+		)
+	}
+	partner, err := s.partnerRepo.GetByID(ctx, ediports.GetEDIPartnerByIDRequest{
+		ID:         req.EDIPartnerID,
+		TenantInfo: req.TenantInfo,
+	})
+	if err != nil {
+		return nil, err
+	}
+	programs, err := s.programs(ctx, req.TenantInfo, partner)
+	if err != nil {
+		return nil, err
+	}
+	payload, err := s.resolvePayload(ctx, req, set)
+	if err != nil {
+		return nil, err
+	}
+	payload.TransactionSet = set
+	o := &outbound{
+		partner:    partner,
+		program:    programs.Active,
+		programs:   programs,
+		set:        set,
+		payload:    payload,
+		event:      flowEventFor(req, &payload),
+		shipmentID: documentShipmentID(payload),
+	}
+	if err = o.chooseMap(req.Map); err != nil {
+		return nil, err
+	}
+	if o.key, o.document, err = s.documentFor(ctx, req.TenantInfo, o); err != nil {
+		return nil, err
+	}
+	if o.documentType, err = s.documentTypeFor(
+		ctx,
+		set,
+		edi.DocumentDirectionOutbound,
+	); err != nil {
+		return nil, err
+	}
+	return o, nil
+}
+
+// chooseMap picks the map that writes the set: the one asked for, else the one the flow writes
+// it with for this event, else the partner's only outbound map for the set.
+func (o *outbound) chooseMap(asked string) error {
+	manifest := o.program.Manifest
+	set := string(o.set)
+	if o.event != "" {
+		o.flow, o.clause = manifest.Sending(set, o.event)
+	}
+	if o.clause == nil && o.set == edi.TransactionSet990 {
+		o.flow, o.clause = manifest.Responding(set)
+	}
+	switch {
+	case asked != "":
+		o.mapName = asked
+	case o.clause != nil && o.clause.Map != "":
+		o.mapName = o.clause.Map
+	default:
+		for index := range manifest.Maps {
+			candidate := &manifest.Maps[index]
+			if candidate.Direction == lading.DirectionOutbound && candidate.Set == set {
+				o.mapName = candidate.Name
+				break
+			}
 		}
 	}
-	if version.Status == edi.TemplateStatusArchived {
-		return errortypes.NewValidationError(
-			"templateVersionId",
-			errortypes.ErrInvalidOperation,
-			"Archived template versions cannot be used for document profiles",
+	found := manifest.Map(o.mapName)
+	if found == nil || found.Direction != lading.DirectionOutbound || found.Set != set {
+		return errortypes.NewBusinessError(
+			"{0}'s active Lading version writes no {1}",
+			o.partner.Name,
+			set,
 		)
 	}
 	return nil
 }
 
-func validateProductionTemplateVersion(version *edi.EDITemplateVersion) error {
-	if version == nil {
-		return errortypes.NewValidationError(
-			"templateVersionId",
-			errortypes.ErrInvalidReference,
-			"Template version is required",
-		)
+func flowEventFor(req *PreviewEDIDocumentRequest, payload *edi.DocumentPayload) string {
+	switch {
+	case req.InvoiceID.IsNotNil():
+		return "InvoicePosted"
+	case req.ServiceFailureID.IsNotNil():
+		return "ServiceFailure"
+	case req.ShipmentEventID.IsNotNil():
+		if payload.ShipmentStatus != nil {
+			return statusEvent(payload.ShipmentStatus.StatusCode)
+		}
+	case payload.LoadTender != nil && req.TransferID.IsNil():
+		if payload.LoadTender.PurposeCode == edi.LoadTenderPurposeCancel {
+			return "TenderCancelled"
+		}
+		return "TenderOffered"
 	}
-	switch version.Status {
-	case edi.TemplateStatusActive, edi.TemplateStatusCertified:
-		return nil
-	case edi.TemplateStatusDraft,
-		edi.TemplateStatusDeprecated,
-		edi.TemplateStatusArchived,
-		edi.TemplateStatusSuperseded:
-		return errortypes.NewValidationError(
-			"templateVersionId",
-			errortypes.ErrInvalidOperation,
-			"Production EDI generation requires an active or certified template version",
-		)
+	return ""
+}
+
+func statusEvent(code string) string {
+	switch ladingdoc.EventKindOf(code) {
+	case "ArrivedPickup", "ArrivedDelivery":
+		return "StopArrived"
+	case "DepartedPickup", "DepartedDelivery":
+		return "StopDeparted"
+	case "Delivered":
+		return "Delivered"
+	case "EtaChanged":
+		return "EtaChanged"
+	case "Dispatched":
+		return "Dispatched"
+	default:
+		return ""
 	}
-	return errortypes.NewValidationError(
-		"templateVersionId",
-		errortypes.ErrInvalidOperation,
-		"Production EDI generation requires an active or certified template version",
+}
+
+func (s *Service) zones(
+	ctx context.Context,
+	tenantInfo pagination.TenantInfo,
+	payload *edi.DocumentPayload,
+) ladingdoc.Zones {
+	zones := ladingdoc.Zones{Locations: map[pulid.ID]string{}}
+	ladingContext, err := s.lading.Context(ctx, tenantInfo)
+	if err == nil {
+		zones.Default = ladingContext.Org.Zone
+	}
+	ids := make([]pulid.ID, 0)
+	tender := payload.LoadTender
+	if tender == nil {
+		tender = payload.Shipment
+	}
+	if tender != nil {
+		for moveIndex := range tender.Moves {
+			for stopIndex := range tender.Moves[moveIndex].Stops {
+				if id := tender.Moves[moveIndex].Stops[stopIndex].LocationID; id.IsNotNil() {
+					ids = append(ids, id)
+				}
+			}
+		}
+	}
+	if payload.ShipmentStatus != nil && payload.ShipmentStatus.LocationID.IsNotNil() {
+		ids = append(ids, payload.ShipmentStatus.LocationID)
+	}
+	if len(ids) == 0 || s.locationRepo == nil {
+		return zones
+	}
+	locations, err := s.locationRepo.GetByIDs(ctx, locationports.GetLocationsByIDsRequest{
+		TenantInfo:  tenantInfo,
+		LocationIDs: ids,
+	})
+	if err != nil {
+		s.l.Warn("failed to read location time zones for an EDI document", zap.Error(err))
+		return zones
+	}
+	for _, location := range locations {
+		zones.Locations[location.ID] = location.Timezone
+	}
+	return zones
+}
+
+// documentFor converts the payload to the document the map reads, and the key the partner
+// knows the load by.
+func (s *Service) documentFor(
+	ctx context.Context,
+	tenantInfo pagination.TenantInfo,
+	o *outbound,
+) (string, jsonutils.RawJSON, error) {
+	payload := &o.payload
+	zones := s.zones(ctx, tenantInfo, payload)
+	var (
+		key      string
+		document jsonutils.RawJSON
+		err      error
 	)
+	switch {
+	case payload.LoadTender != nil || payload.Shipment != nil:
+		tender := payload.LoadTender
+		if tender == nil {
+			tender = payload.Shipment
+		}
+		key = tender.ShipmentID.String()
+		if tender.TenderOfferID.IsNotNil() {
+			key = tender.TenderOfferID.String()
+		}
+		document, err = ladingdoc.FromLoadTender(tender, key, zones)
+	case payload.TenderResponse != nil:
+		key = s.tenderKey(ctx, tenantInfo, payload.TenderResponse.TransferID)
+		document, err = ladingdoc.FromTenderResponse(
+			payload.TenderResponse,
+			key,
+			"",
+			time.Now().Unix(),
+			zones.Default,
+		)
+	case payload.ShipmentStatus != nil:
+		status := payload.ShipmentStatus
+		key = stringutils.FirstNonEmpty(
+			status.ShipperReference,
+			status.BOL,
+			status.ShipmentID.String(),
+		)
+		document, err = ladingdoc.FromShipmentStatus(status, key, zones)
+	case payload.FreightInvoice != nil:
+		invoicePayload := payload.FreightInvoice
+		key = stringutils.FirstNonEmpty(
+			invoicePayload.ReferenceNumbers["shipmentId"],
+			invoicePayload.BOL,
+			invoicePayload.ShipmentID.String(),
+		)
+		document, err = ladingdoc.FromFreightInvoice(invoicePayload, key, zones.Default)
+	default:
+		return "", nil, errortypes.NewValidationError(
+			"payload",
+			errortypes.ErrRequired,
+			"The {0} has nothing to write",
+			o.set,
+		)
+	}
+	if err != nil {
+		return "", nil, errortypes.NewValidationError("payload", errortypes.ErrInvalid, err.Error())
+	}
+	return key, document, nil
+}
+
+// tenderKey is the partner's identifier of the load a transfer tendered.
+func (s *Service) tenderKey(
+	ctx context.Context,
+	tenantInfo pagination.TenantInfo,
+	transferID pulid.ID,
+) string {
+	if transferID.IsNil() {
+		return ""
+	}
+	transfer, err := s.transferRepo.GetTransferByID(ctx, ediports.GetEDITransferByIDRequest{
+		ID:         transferID,
+		TenantInfo: tenantInfo,
+	})
+	if err != nil {
+		return transferID.String()
+	}
+	if key, ok := transfer.TenderPayload.RatingDetail["externalShipmentId"].(string); ok &&
+		key != "" {
+		return key
+	}
+	return transferID.String()
+}
+
+type writeOptions struct {
+	flowInstanceID pulid.ID
+	flowSendID     string
+}
+
+// render writes the document with the map; with no control numbers it writes a provisional
+// message for a preview.
+func (s *Service) render(
+	ctx context.Context,
+	tenantInfo pagination.TenantInfo,
+	o *outbound,
+	control lading.Control,
+) (*lading.RunResult, error) {
+	result, err := s.lading.Run(ctx, &edilading.RunRequest{
+		TenantInfo: tenantInfo,
+		PartnerID:  o.partner.ID,
+		Program:    o.program,
+		Map:        o.mapName,
+		Input:      lading.DocumentInput(o.document),
+		Control:    control,
+		Now:        time.Now(),
+		Rules:      true,
+	})
+	if err != nil {
+		return nil, err
+	}
+	if result.Error != nil {
+		return nil, result.Error.ValidationError("document", errortypes.ErrInvalid)
+	}
+	if result.Output == nil {
+		return nil, errortypes.NewBusinessError("Map {0} wrote no message", o.mapName)
+	}
+	return result, nil
+}
+
+func outputDiagnostics(output *lading.WriteResult) []edi.Diagnostic {
+	diagnostics := make(
+		[]edi.Diagnostic,
+		0,
+		len(output.Findings)+len(output.Validation)+len(output.Outcomes),
+	)
+	for index := range output.Findings {
+		finding := &output.Findings[index]
+		diagnostics = append(diagnostics, edi.Diagnostic{
+			Severity: severityOf(finding.Severity),
+			Code:     finding.Code,
+			Path:     finding.Path,
+			Message:  finding.Message.String(),
+		})
+	}
+	for index := range output.Validation {
+		finding := &output.Validation[index]
+		diagnostic := edix12inspect.FindingDiagnostic(finding, i18n.Default)
+		diagnostics = append(diagnostics, edi.Diagnostic{
+			Severity:        diagnostic.Severity,
+			Code:            diagnostic.Code,
+			SegmentID:       diagnostic.SegmentID,
+			ElementPosition: diagnostic.ElementPosition,
+			Path:            diagnostic.Path,
+			Message:         diagnostic.Message,
+		})
+	}
+	for index := range output.Outcomes {
+		outcome := &output.Outcomes[index]
+		severity := edi.ValidationSeverityError
+		if outcome.Kind == lading.OutcomeWarn {
+			severity = edi.ValidationSeverityWarning
+		}
+		diagnostics = append(diagnostics, edi.Diagnostic{
+			Severity: severity,
+			Code:     "lading-" + outcome.Kind,
+			Path:     outcome.Path,
+			Message:  stringutils.FirstNonEmpty(outcome.Rule+": "+outcome.Message, outcome.Message),
+		})
+	}
+	return diagnostics
+}
+
+func severityOf(severity string) edi.ValidationSeverity {
+	switch severity {
+	case lading.SeverityError:
+		return edi.ValidationSeverityError
+	case lading.SeverityWarning:
+		return edi.ValidationSeverityWarning
+	default:
+		return edi.ValidationSeverityInfo
+	}
+}
+
+func (s *Service) preview(
+	ctx context.Context,
+	tenantInfo pagination.TenantInfo,
+	o *outbound,
+) (*EDIDocumentPreview, *lading.WriteResult, error) {
+	result, err := s.render(ctx, tenantInfo, o, lading.Control{})
+	if err != nil {
+		return nil, nil, err
+	}
+	output := result.Output
+	return &EDIDocumentPreview{
+		PartnerName:              o.partner.Name,
+		RawX12:                   output.Text,
+		SegmentCount:             segmentCount(output.Transaction),
+		X12Version:               interchangeVersion(o.program),
+		InterchangeControlNumber: provisionalInterchange,
+		GroupControlNumber:       "0",
+		TransactionControlNumber: "0000",
+		Diagnostics:              outputDiagnostics(output),
+		LadingVersionID:          o.program.Version.ID,
+		Map:                      o.mapName,
+		Document:                 output.Document,
+		Lineage:                  output.Lineage,
+		Outcomes:                 output.Outcomes,
+	}, output, nil
+}
+
+func segmentCount(transaction string) int64 {
+	count := int64(0)
+	for _, line := range strings.Split(transaction, "\n") {
+		if strings.TrimSpace(line) != "" {
+			count++
+		}
+	}
+	return count
+}
+
+func interchangeVersion(program *edilading.Program) string {
+	if program.Manifest.Partner != nil && program.Manifest.Partner.Interchange != nil &&
+		program.Manifest.Partner.Interchange.Version != "" {
+		return program.Manifest.Partner.Interchange.Version
+	}
+	return edi.DefaultX12204Version
 }
 
 func (s *Service) PreviewDocument(
@@ -431,97 +523,71 @@ func (s *Service) PreviewDocument(
 	if req != nil && req.SourceMessageID.IsNotNil() {
 		return s.previewMessageAcknowledgment(ctx, req)
 	}
-	resolved, err := s.resolveDocumentContext(ctx, req)
+	o, err := s.resolveOutbound(ctx, req)
 	if err != nil {
 		return nil, err
 	}
-
-	return resolved.renderPreview()
+	preview, _, err := s.preview(ctx, req.TenantInfo, o)
+	return preview, err
 }
 
-func (r *resolvedDocumentContext) renderPreview() (*EDIDocumentPreview, error) {
-	edix12.SetProvisionalControlNumbers(r.runtime)
-	result, err := edix12.RenderX12(r.renderInput())
+type OutboundDocumentPreview struct {
+	Document *EDIDocumentPreview
+	Blocking bool
+}
+
+// PreviewOutboundDocument writes a message as it would be sent, without numbering or keeping it.
+func (s *Service) PreviewOutboundDocument(
+	ctx context.Context,
+	req *GenerateEDIDocumentRequest,
+) (*OutboundDocumentPreview, error) {
+	o, err := s.resolveOutbound(ctx, previewRequest(req))
 	if err != nil {
 		return nil, err
 	}
-	diagnostics := mergeEDIDiagnostics(result.Diagnostics, r.partnerDiagnostics)
-	return &EDIDocumentPreview{
-		RawX12:                   result.RawX12,
-		SegmentCount:             result.SegmentCount,
-		X12Version:               r.x12Version,
-		InterchangeControlNumber: fmt.Sprint(r.runtime["isaControlNumber"]),
-		GroupControlNumber:       fmt.Sprint(r.runtime["groupControlNumber"]),
-		TransactionControlNumber: fmt.Sprint(r.runtime["transactionControlNumber"]),
-		Diagnostics:              diagnostics,
-		Profile:                  r.profile,
-		TemplateVersion:          r.templateVersion,
-	}, nil
-}
-
-func (r *resolvedDocumentContext) outboundPreview() (*OutboundDocumentPreview, error) {
-	provisional := *r
-	provisional.runtime = maputils.CloneShallow(r.runtime)
-	preview, err := provisional.renderPreview()
+	preview, output, err := s.preview(ctx, req.TenantInfo, o)
 	if err != nil {
 		return nil, err
 	}
-
-	return &OutboundDocumentPreview{
-		Document: preview,
-		Blocking: edix12.HasBlockingDiagnostics(preview.Diagnostics, r.profile.ValidationMode),
-	}, nil
+	return &OutboundDocumentPreview{Document: preview, Blocking: output.Blocked()}, nil
 }
 
-func (r *resolvedDocumentContext) provisionalRender() (*EDIDocumentPreview, error) {
-	preview, err := r.outboundPreview()
+// PlanGenerateDocument is the message GenerateDocument would write, refused as it would be.
+func (s *Service) PlanGenerateDocument(
+	ctx context.Context,
+	req *GenerateEDIDocumentRequest,
+) (*EDIDocumentPreview, error) {
+	preview, err := s.PreviewOutboundDocument(ctx, req)
 	if err != nil {
 		return nil, err
 	}
 	if preview.Blocking {
 		return nil, diagnosticsToValidationError(preview.Document.Diagnostics)
 	}
-
 	return preview.Document, nil
 }
 
-func (s *Service) resolveGenerateContext(
-	ctx context.Context,
-	req *GenerateEDIDocumentRequest,
-) (*resolvedDocumentContext, error) {
-	if req == nil {
-		return nil, errortypes.NewValidationError(
-			"document",
-			errortypes.ErrRequired,
-			"Document request is required",
-		)
+func previewRequest(req *GenerateEDIDocumentRequest) *PreviewEDIDocumentRequest {
+	return &PreviewEDIDocumentRequest{
+		TenantInfo:       req.TenantInfo,
+		Map:              req.Map,
+		EDIPartnerID:     req.EDIPartnerID,
+		ShipmentID:       req.ShipmentID,
+		TransferID:       req.TransferID,
+		InvoiceID:        req.InvoiceID,
+		ShipmentEventID:  req.ShipmentEventID,
+		ServiceFailureID: req.ServiceFailureID,
+		SourceMessageID:  req.SourceMessageID,
+		TransactionSet:   req.TransactionSet,
+		Direction:        req.Direction,
+		Payload:          req.Payload,
+		CarrierSCAC:      req.CarrierSCAC,
 	}
-	resolved, err := s.resolveDocumentContext(ctx, &PreviewEDIDocumentRequest{
-		TenantInfo:               req.TenantInfo,
-		PartnerDocumentProfileID: req.PartnerDocumentProfileID,
-		EDIPartnerID:             req.EDIPartnerID,
-		ShipmentID:               req.ShipmentID,
-		TransferID:               req.TransferID,
-		InvoiceID:                req.InvoiceID,
-		ShipmentEventID:          req.ShipmentEventID,
-		ServiceFailureID:         req.ServiceFailureID,
-		SourceMessageID:          req.SourceMessageID,
-		TransactionSet:           req.TransactionSet,
-		Direction:                req.Direction,
-		Payload:                  req.Payload,
-		CarrierSCAC:              req.CarrierSCAC,
-	})
-	if err != nil {
-		return nil, err
-	}
-	if err = validateProductionTemplateVersion(resolved.templateVersion); err != nil {
-		return nil, err
-	}
-
-	return resolved, nil
 }
 
-//nolint:funlen // Document generation keeps the validation, render, persist, and audit flow together transactionally.
+// GenerateDocument writes and keeps a message for Trenova's side of an exchange. A message a
+// partner's flow sends on one of Trenova's events goes through the flow, which may keep it to
+// send later with others (ediports.ErrSendDeferred); any other is written at once.
 func (s *Service) GenerateDocument(
 	ctx context.Context,
 	req *GenerateEDIDocumentRequest,
@@ -532,95 +598,114 @@ func (s *Service) GenerateDocument(
 	if existing, found, err := s.generatedDocument(ctx, req); err != nil || found {
 		return existing, err
 	}
-
-	resolved, err := s.resolveGenerateContext(ctx, req)
+	o, err := s.resolveOutbound(ctx, previewRequest(req))
 	if err != nil {
 		return nil, err
 	}
-	if _, err = resolved.provisionalRender(); err != nil {
-		return nil, err
+	if o.flow != nil && o.clause != nil && o.clause.Kind == lading.ClauseSend && req.Map == "" {
+		return s.sendThroughFlow(ctx, req, o)
 	}
+	return s.write(ctx, req, o, &writeOptions{})
+}
 
-	controlNumbers, err := s.controlNumberRepo.AllocateControlNumbers(
-		ctx,
-		ediports.AllocateEDIControlNumbersRequest{
-			TenantInfo:     req.TenantInfo,
-			PartnerID:      resolved.profile.EDIPartnerID,
-			DocumentTypeID: resolved.profile.DocumentTypeID,
-			Kinds: []edi.ControlNumberKind{
-				edi.ControlNumberKindInterchange,
-				edi.ControlNumberKindGroup,
-				edi.ControlNumberKindTransaction,
-			},
+func (s *Service) sendThroughFlow(
+	ctx context.Context,
+	req *GenerateEDIDocumentRequest,
+	o *outbound,
+) (*edi.EDIMessage, error) {
+	dispatched, err := s.flows.Dispatch(ctx, &edilading.DispatchRequest{
+		TenantInfo:  req.TenantInfo,
+		PartnerID:   o.partner.ID,
+		Program:     o.program,
+		Flow:        o.flow.Name,
+		FallbackKey: o.key,
+		Event: lading.FlowEvent{
+			Kind:     lading.EventTrenova,
+			Event:    o.event,
+			Document: o.document,
 		},
-	)
+		ShipmentID: o.shipmentID,
+		TransferID: req.TransferID,
+		ActorID:    req.GeneratedByID,
+	})
 	if err != nil {
 		return nil, err
 	}
-	resolved.runtime["isaControlNumber"] = fmt.Sprintf(
-		"%09d",
-		controlNumbers[edi.ControlNumberKindInterchange],
-	)
-	resolved.runtime["groupControlNumber"] = strconv.FormatInt(
-		controlNumbers[edi.ControlNumberKindGroup],
-		10,
-	)
-	resolved.runtime["transactionControlNumber"] = fmt.Sprintf(
-		"%04d",
-		controlNumbers[edi.ControlNumberKindTransaction],
-	)
-	result, err := edix12.RenderX12(resolved.renderInput())
+	sent, err := s.ExecuteFlowActions(ctx, req.TenantInfo, dispatched, &FlowActionContext{
+		GeneratedByID:        req.GeneratedByID,
+		DisableDeliveryQueue: req.DisableDeliveryQueue,
+		IdempotencyKey:       req.IdempotencyKey,
+		Payload:              &o.payload,
+	})
 	if err != nil {
 		return nil, err
 	}
-	diagnostics := mergeEDIDiagnostics(result.Diagnostics, resolved.partnerDiagnostics)
-	if edix12.HasBlockingDiagnostics(diagnostics, resolved.profile.ValidationMode) {
+	for _, message := range sent {
+		if message.TransactionSet == o.set {
+			return message, nil
+		}
+	}
+	return nil, ediports.ErrSendDeferred
+}
+
+// write numbers, writes and keeps one outbound message.
+func (s *Service) write(
+	ctx context.Context,
+	req *GenerateEDIDocumentRequest,
+	o *outbound,
+	options *writeOptions,
+) (*edi.EDIMessage, error) {
+	control, err := s.allocateControl(ctx, req.TenantInfo, o)
+	if err != nil {
+		return nil, err
+	}
+	result, err := s.render(ctx, req.TenantInfo, o, control)
+	if err != nil {
+		return nil, err
+	}
+	output := result.Output
+	diagnostics := outputDiagnostics(output)
+	if output.Blocked() {
 		return nil, diagnosticsToValidationError(diagnostics)
+	}
+	shipmentID := o.shipmentID
+	if shipmentID.IsNil() {
+		shipmentID = req.ShipmentID
 	}
 	message := &edi.EDIMessage{
 		BusinessUnitID:           req.TenantInfo.BuID,
 		OrganizationID:           req.TenantInfo.OrgID,
-		EDIPartnerID:             resolved.profile.EDIPartnerID,
-		DocumentTypeID:           resolved.profile.DocumentTypeID,
-		PartnerDocumentProfileID: resolved.profile.ID,
-		TemplateID:               resolved.profile.TemplateID,
-		TemplateVersionID:        resolved.templateVersion.ID,
-		ShipmentID:               documentShipmentID(resolved.payload),
+		EDIPartnerID:             o.partner.ID,
+		DocumentTypeID:           o.documentType.ID,
+		LadingVersionID:          o.program.Version.ID,
+		FlowInstanceID:           options.flowInstanceID,
+		FlowSendID:               options.flowSendID,
+		ShipmentID:               shipmentID,
 		TransferID:               req.TransferID,
 		InvoiceID:                req.InvoiceID,
-		Direction:                resolved.profile.Direction,
-		Standard:                 resolved.profile.Standard,
-		TransactionSet:           resolved.profile.TransactionSet,
-		X12Version:               resolved.x12Version,
+		Direction:                edi.DocumentDirectionOutbound,
+		Standard:                 edi.EDIStandardX12,
+		TransactionSet:           o.set,
+		X12Version:               interchangeVersion(o.program),
 		Status:                   edi.MessageStatusGenerated,
-		ValidationMode:           resolved.profile.ValidationMode,
-		InterchangeControlNumber: fmt.Sprint(resolved.runtime["isaControlNumber"]),
-		GroupControlNumber:       fmt.Sprint(resolved.runtime["groupControlNumber"]),
-		TransactionControlNumber: fmt.Sprint(resolved.runtime["transactionControlNumber"]),
-		SegmentCount:             result.SegmentCount,
-		RawX12:                   result.RawX12,
-		PayloadSnapshot:          resolved.payload,
-		AckStatus:                generatedMessageAckStatus(resolved.profile),
+		InterchangeControlNumber: fmt.Sprintf("%09d", control.Interchange),
+		GroupControlNumber:       strconv.FormatUint(control.Group, 10),
+		TransactionControlNumber: fmt.Sprintf("%04d", control.Transaction),
+		SegmentCount:             segmentCount(output.Transaction),
+		RawX12:                   output.Text,
+		PayloadSnapshot:          o.payload,
+		Document:                 output.Document,
+		Lineage:                  output.Lineage,
+		Outcomes:                 output.Outcomes,
+		AckStatus:                ackStatusFor(o),
 		GeneratedByID:            req.GeneratedByID,
 		IdempotencyKey:           req.IdempotencyKey,
-	}
-	messageDiagnostics := make([]*edi.EDIMessageValidationError, 0, len(diagnostics))
-	for _, diagnostic := range diagnostics {
-		messageDiagnostics = append(messageDiagnostics, &edi.EDIMessageValidationError{
-			Severity:        diagnostic.Severity,
-			Code:            diagnostic.Code,
-			SegmentID:       diagnostic.SegmentID,
-			ElementPosition: diagnostic.ElementPosition,
-			Path:            diagnostic.Path,
-			Message:         diagnostic.Message,
-			SuggestedFix:    diagnostic.SuggestedFix,
-		})
 	}
 	created, err := s.messageRepo.CreateMessageWithDiagnostics(
 		ctx,
 		ediports.CreateEDIMessageWithDiagnosticsRequest{
 			Message:     message,
-			Diagnostics: messageDiagnostics,
+			Diagnostics: messageDiagnostics(diagnostics),
 		},
 	)
 	if err != nil {
@@ -635,8 +720,9 @@ func (s *Service) GenerateDocument(
 		}
 		return nil, err
 	}
+	s.shadowOutbound(ctx, req.TenantInfo, o, created)
 	if !req.SuppressTenderRecipientUpsert {
-		if err = s.upsertExternalTenderRecipient(ctx, created, resolved.profile); err != nil {
+		if err = s.upsertExternalTenderRecipient(ctx, created, o.partner); err != nil {
 			return nil, err
 		}
 	}
@@ -650,6 +736,112 @@ func (s *Service) GenerateDocument(
 		}
 	}
 	return created, nil
+}
+
+func (s *Service) allocateControl(
+	ctx context.Context,
+	tenantInfo pagination.TenantInfo,
+	o *outbound,
+) (lading.Control, error) {
+	allocated, err := s.controlNumberRepo.AllocateControlNumbers(
+		ctx,
+		ediports.AllocateEDIControlNumbersRequest{
+			TenantInfo:     tenantInfo,
+			PartnerID:      o.partner.ID,
+			DocumentTypeID: o.documentType.ID,
+			Kinds: []edi.ControlNumberKind{
+				edi.ControlNumberKindInterchange,
+				edi.ControlNumberKindGroup,
+				edi.ControlNumberKindTransaction,
+			},
+		},
+	)
+	if err != nil {
+		return lading.Control{}, err
+	}
+	var control lading.Control
+	if control.Interchange, err = controlNumberOf(
+		allocated,
+		edi.ControlNumberKindInterchange,
+	); err != nil {
+		return lading.Control{}, err
+	}
+	if control.Group, err = controlNumberOf(allocated, edi.ControlNumberKindGroup); err != nil {
+		return lading.Control{}, err
+	}
+	if control.Transaction, err = controlNumberOf(
+		allocated,
+		edi.ControlNumberKindTransaction,
+	); err != nil {
+		return lading.Control{}, err
+	}
+	return control, nil
+}
+
+func controlNumberOf(
+	allocated map[edi.ControlNumberKind]int64,
+	kind edi.ControlNumberKind,
+) (uint64, error) {
+	number, ok := allocated[kind]
+	if !ok || number <= 0 {
+		return 0, fmt.Errorf("ediservice: no %s control number was allocated", kind)
+	}
+	return uint64(number), nil
+}
+
+func (s *Service) shadowOutbound(
+	ctx context.Context,
+	tenantInfo pagination.TenantInfo,
+	o *outbound,
+	message *edi.EDIMessage,
+) {
+	if s.replayer == nil || o.programs == nil || o.programs.Shadow == nil {
+		return
+	}
+	s.replayer.Shadow(ctx, &edilading.ShadowRunRequest{
+		TenantInfo: tenantInfo,
+		Programs:   o.programs,
+		Map:        o.mapName,
+		MessageID:  message.ID,
+		Set:        o.set,
+		Input:      lading.DocumentInput(o.document),
+		Now:        time.Now(),
+	})
+}
+
+// ackStatusFor is pending when the flow that sends the set expects the partner to acknowledge it.
+func ackStatusFor(o *outbound) edi.MessageAcknowledgmentStatus {
+	manifest := o.program.Manifest
+	for index := range manifest.Flows {
+		flow := &manifest.Flows[index]
+		if manifest.Expecting(flow.Name) == nil {
+			continue
+		}
+		for clause := range flow.Clauses {
+			candidate := &flow.Clauses[clause]
+			if (candidate.Kind == lading.ClauseSend || candidate.Kind == lading.ClauseRespond) &&
+				candidate.Set == string(o.set) {
+				return edi.MessageAcknowledgmentStatusPending
+			}
+		}
+	}
+	return edi.MessageAcknowledgmentStatusNotExpected
+}
+
+func messageDiagnostics(diagnostics []edi.Diagnostic) []*edi.EDIMessageValidationError {
+	out := make([]*edi.EDIMessageValidationError, 0, len(diagnostics))
+	for _, diagnostic := range diagnostics {
+		out = append(out, &edi.EDIMessageValidationError{
+			Severity:        diagnostic.Severity,
+			Code:            diagnostic.Code,
+			SegmentID:       diagnostic.SegmentID,
+			ElementPosition: diagnostic.ElementPosition,
+			Path:            diagnostic.Path,
+			Message:         diagnostic.Message,
+			SuggestedFix:    diagnostic.SuggestedFix,
+		})
+	}
+	return out
 }
 
 func (s *Service) generatedDocument(
@@ -694,18 +886,6 @@ func (s *Service) generatedDocument(
 	return existing, true, nil
 }
 
-func generatedMessageAckStatus(
-	profile *edi.EDIPartnerDocumentProfile,
-) edi.MessageAcknowledgmentStatus {
-	if profile == nil ||
-		profile.Direction != edi.DocumentDirectionOutbound ||
-		!profile.Acknowledgment.Expected ||
-		profile.Acknowledgment.Type == edi.AcknowledgmentTypeNone {
-		return edi.MessageAcknowledgmentStatusNotExpected
-	}
-	return edi.MessageAcknowledgmentStatusPending
-}
-
 func (s *Service) ListMessages(
 	ctx context.Context,
 	req *ediports.ListEDIMessagesRequest,
@@ -748,12 +928,12 @@ func (s *Service) InspectMessage(
 	if err != nil {
 		return nil, err
 	}
-	renderDiagnostics := make([]edix12.Diagnostic, 0, len(message.ValidationErrors))
+	diagnostics := make([]edi.Diagnostic, 0, len(message.ValidationErrors))
 	for _, diagnostic := range message.ValidationErrors {
 		if strings.HasPrefix(diagnostic.Code, edix12inspect.FindingCodePrefix) {
 			continue
 		}
-		renderDiagnostics = append(renderDiagnostics, edix12.Diagnostic{
+		diagnostics = append(diagnostics, edi.Diagnostic{
 			Severity:        diagnostic.Severity,
 			Code:            diagnostic.Code,
 			SegmentID:       diagnostic.SegmentID,
@@ -767,8 +947,7 @@ func (s *Service) InspectMessage(
 		RawX12:         message.RawX12,
 		TransactionSet: message.TransactionSet,
 		X12Version:     message.X12Version,
-		Envelope:       messageEnvelope(message),
-		Diagnostics:    renderDiagnostics,
+		Diagnostics:    diagnostics,
 	})
 	if err != nil {
 		return nil, err
@@ -777,204 +956,25 @@ func (s *Service) InspectMessage(
 		Message:    message,
 		Inspection: *inspection,
 		Provenance: EDIInspectionProvenance{
-			MessageID:         message.ID,
-			ProfileID:         message.PartnerDocumentProfileID,
-			TemplateID:        message.TemplateID,
-			TemplateVersionID: message.TemplateVersionID,
-			GeneratedAt:       message.GeneratedAt,
-			GeneratedByID:     message.GeneratedByID,
+			MessageID:       message.ID,
+			LadingVersionID: message.LadingVersionID,
+			FlowInstanceID:  message.FlowInstanceID,
+			GeneratedAt:     message.GeneratedAt,
+			GeneratedByID:   message.GeneratedByID,
 		},
 	}, nil
-}
-
-func (s *Service) ListTestCases(
-	ctx context.Context,
-	req *ediports.ListEDITestCasesRequest,
-) (*pagination.ListResult[*edi.EDITestCase], error) {
-	return s.testCaseRepo.ListTestCases(ctx, req)
-}
-
-func (s *Service) PreviewTestCase(
-	ctx context.Context,
-	testCaseID pulid.ID,
-	tenantInfo pagination.TenantInfo,
-) (*EDIDocumentPreview, error) {
-	testCase, err := s.testCaseRepo.GetTestCaseByID(ctx, ediports.GetEDITestCaseByIDRequest{
-		ID:         testCaseID,
-		TenantInfo: tenantInfo,
-	})
-	if err != nil {
-		return nil, err
-	}
-	preview, err := s.PreviewDocument(ctx, &PreviewEDIDocumentRequest{
-		TenantInfo:               tenantInfo,
-		PartnerDocumentProfileID: testCase.PartnerDocumentProfileID,
-		Payload:                  &testCase.Payload,
-	})
-	if err != nil {
-		return nil, err
-	}
-	s.recordTestCaseRun(ctx, testCase, tenantInfo, preview)
-	return preview, nil
-}
-
-func (s *Service) recordTestCaseRun(
-	ctx context.Context,
-	testCase *edi.EDITestCase,
-	tenantInfo pagination.TenantInfo,
-	preview *EDIDocumentPreview,
-) {
-	verdict := EvaluateTestCaseRun(testCase, preview.Diagnostics)
-	if err := s.testCaseRepo.RecordTestCaseRun(ctx, &ediports.RecordEDITestCaseRunRequest{
-		ID:         testCase.ID,
-		TenantInfo: tenantInfo,
-		RanAt:      timeutils.NowUnix(),
-		Passed:     verdict.Passed,
-		Warnings:   verdict.Warnings,
-		Errors:     verdict.Errors,
-	}); err != nil {
-		s.l.Warn(
-			"failed to record EDI test case run outcome",
-			zap.String("testCaseId", testCase.ID.String()),
-			zap.Error(err),
-		)
-	}
-}
-
-func mergeEDIDiagnostics(
-	primary []edix12.Diagnostic,
-	additional []edix12.Diagnostic,
-) []edix12.Diagnostic {
-	diagnostics := make([]edix12.Diagnostic, 0, len(primary)+len(additional))
-	diagnostics = append(diagnostics, primary...)
-	diagnostics = append(diagnostics, additional...)
-	return diagnostics
-}
-
-func messageEnvelope(message *edi.EDIMessage) *edi.X12EnvelopeSettings {
-	if message == nil || message.PartnerDocumentProfile == nil {
-		return nil
-	}
-	envelope := message.PartnerDocumentProfile.Envelope
-	return &envelope
-}
-
-func (s *Service) resolveDocumentContext(
-	ctx context.Context,
-	req *PreviewEDIDocumentRequest,
-) (*resolvedDocumentContext, error) {
-	if multiErr := s.validator.ValidatePreviewDocumentRequest(req); multiErr != nil {
-		return nil, multiErr
-	}
-	profile, err := s.resolveProfile(ctx, req)
-	if err != nil {
-		return nil, err
-	}
-	if profile.TransactionSet.IsAcknowledgment() {
-		return nil, errortypes.NewValidationError(
-			"sourceMessageId",
-			errortypes.ErrRequired,
-			"An acknowledgment is written from the message it answers. Choose that message.",
-		)
-	}
-	templateVersion, err := s.templateRepo.GetActiveTemplateVersion(
-		ctx,
-		ediports.GetActiveEDITemplateVersionRequest{
-			TemplateID: profile.TemplateID,
-			TenantInfo: req.TenantInfo,
-			VersionID:  profile.TemplateVersionID,
-		},
-	)
-	if err != nil {
-		return nil, err
-	}
-	payload, err := s.resolvePayload(ctx, req, profile)
-	if err != nil {
-		return nil, err
-	}
-	x12Version := stringutils.FirstNonEmpty(
-		profile.X12VersionOverride,
-		templateVersion.X12Version,
-		defaultX12Version(profile.TransactionSet),
-	)
-	runtime := edix12.RuntimeValues(profile, x12Version)
-	partnerDiagnostics, err := s.validateProfilePartnerSettings(
-		ctx,
-		profile,
-		req.TenantInfo,
-		profile.PartnerSettings,
-	)
-	if err != nil {
-		return nil, err
-	}
-	return &resolvedDocumentContext{
-		ctx:                ctx,
-		profile:            profile,
-		templateVersion:    templateVersion,
-		payload:            payload,
-		x12Version:         x12Version,
-		runtime:            runtime,
-		partnerDiagnostics: partnerDiagnostics,
-		carrierSCAC:        req.CarrierSCAC,
-	}, nil
-}
-
-func (s *Service) resolveProfile(
-	ctx context.Context,
-	req *PreviewEDIDocumentRequest,
-) (*edi.EDIPartnerDocumentProfile, error) {
-	if !req.PartnerDocumentProfileID.IsNil() {
-		return s.documentProfileRepo.GetPartnerDocumentProfileByID(
-			ctx,
-			ediports.GetEDIPartnerDocumentProfileByIDRequest{
-				ID:         req.PartnerDocumentProfileID,
-				TenantInfo: req.TenantInfo,
-			},
-		)
-	}
-	if req.EDIPartnerID.IsNil() {
-		return nil, errortypes.NewValidationError(
-			"ediPartnerId",
-			errortypes.ErrRequired,
-			"EDI partner or document profile is required",
-		)
-	}
-	profile, err := s.documentProfileRepo.GetActivePartnerDocumentProfile(
-		ctx,
-		ediports.GetActiveEDIPartnerDocumentProfileRequest{
-			PartnerID:      req.EDIPartnerID,
-			TenantInfo:     req.TenantInfo,
-			TransactionSet: req.TransactionSet,
-			Direction:      req.Direction,
-		},
-	)
-	if err != nil && strings.Contains(err.Error(), "multiple active EDI document profiles") {
-		return nil, errortypes.NewValidationError(
-			"transactionSet",
-			errortypes.ErrRequired,
-			"Transaction set and direction are required when a partner has multiple active EDI document profiles",
-		)
-	}
-	return profile, err
 }
 
 //nolint:cyclop,funlen,gocognit // Payload resolution is explicit per transaction set to preserve validation behavior.
 func (s *Service) resolvePayload(
 	ctx context.Context,
 	req *PreviewEDIDocumentRequest,
-	profile *edi.EDIPartnerDocumentProfile,
+	transactionSet edi.TransactionSet,
 ) (edi.DocumentPayload, error) {
 	if req.Payload != nil {
 		payload := *req.Payload
 		payload.Normalize()
 		return payload, nil
-	}
-	transactionSet := profile.TransactionSet
-	if transactionSet == "" {
-		transactionSet = req.TransactionSet
-	}
-	if transactionSet == "" {
-		transactionSet = edi.TransactionSet204
 	}
 	if !req.TransferID.IsNil() {
 		if transactionSet != edi.TransactionSet204 && transactionSet != edi.TransactionSet990 {
@@ -1110,6 +1110,7 @@ func (s *Service) resolvePayload(
 		return buildShipmentStatusPayload(source), nil
 	}
 	return edi.NewLoadTenderDocumentPayload(buildTenderPayload(source)), nil
+
 }
 
 func sourceTransactionSetError(
@@ -1168,36 +1169,6 @@ func missingSourceError(transactionSet edi.TransactionSet) error {
 	}
 }
 
-func (c *resolvedDocumentContext) renderInput() *edix12.RenderInput {
-	return &edix12.RenderInput{
-		Context:         c.ctx,
-		Profile:         c.profile,
-		TemplateVersion: c.templateVersion,
-		DocumentPayload: c.payload,
-		X12Version:      c.x12Version,
-		Runtime:         c.runtime,
-		CarrierSCAC:     c.carrierSCAC,
-	}
-}
-
-func defaultX12Version(transactionSet edi.TransactionSet) string {
-	if transactionSet == edi.TransactionSet999 {
-		return "005010"
-	}
-	return edi.DefaultX12204Version
-}
-
-func defaultProfileName(transactionSet edi.TransactionSet, direction edi.DocumentDirection) string {
-	parts := []string{"X12"}
-	if transactionSet != "" {
-		parts = append(parts, string(transactionSet))
-	}
-	if direction != "" {
-		parts = append(parts, string(direction))
-	}
-	return strings.Join(parts, " ")
-}
-
 func documentShipmentID(payload edi.DocumentPayload) pulid.ID {
 	payload.Normalize()
 	if payload.Shipment != nil {
@@ -1215,7 +1186,7 @@ func documentShipmentID(payload edi.DocumentPayload) pulid.ID {
 	return pulid.Nil
 }
 
-func diagnosticsToValidationError(diagnostics []edix12.Diagnostic) error {
+func diagnosticsToValidationError(diagnostics []edi.Diagnostic) error {
 	multiErr := errortypes.NewMultiError()
 	for _, diagnostic := range diagnostics {
 		if diagnostic.Severity != edi.ValidationSeverityError {

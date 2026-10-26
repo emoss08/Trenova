@@ -3798,6 +3798,8 @@ name = "trenova-edi"
 version = "0.1.0"
 dependencies = [
  "proptest",
+ "regex-lite",
+ "rust_decimal",
  "serde",
  "serde_json",
  "trenova-module-kit",

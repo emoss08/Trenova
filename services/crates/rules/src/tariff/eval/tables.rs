@@ -69,7 +69,6 @@ use super::budget::Meter;
 use super::error::{Code, EvalError};
 use super::value::{Value, format_decimal};
 use crate::matrix::band;
-use crate::span::Span;
 use crate::tariff::schema::{Axis, TableShape};
 use crate::tariff::types::Type;
 use crate::tariff::units::{Base, Quantity, Unit};
@@ -81,6 +80,7 @@ use std::cmp::Ordering;
 use std::collections::{BTreeMap, BTreeSet};
 use std::rc::Rc;
 use trenova_module_kit::message::{Arg, Message};
+use trenova_module_kit::span::Span;
 
 /// Where a cell sits on one axis: `{"key": "752"}` on an exact axis, `{"min": "0", "max":
 /// "5000"}` on a range axis (no `max` is open-ended), `{"from": "30000", "to": "31999"}` on a

@@ -7,6 +7,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/emoss08/trenova/internal/modules/edi/app/edilading"
 	"github.com/emoss08/trenova/internal/modules/edi/app/edix12inspect"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
@@ -83,15 +84,24 @@ func (s *Service) GenerateAcknowledgment(
 		return existing, lookupErr
 	}
 
-	profile, err := s.EnsureOutboundDocumentProfile(ctx, req.TenantInfo, req.EDIPartnerID, ackSet)
+	envelope, program, err := s.partnerEnvelope(ctx, req.TenantInfo, req.EDIPartnerID)
 	if err != nil {
 		return nil, err
 	}
-	numbers, err := s.allocateAcknowledgmentNumbers(ctx, req.TenantInfo, profile)
+	documentType, err := s.documentTypeFor(ctx, ackSet, edi.DocumentDirectionOutbound)
 	if err != nil {
 		return nil, err
 	}
-	written, err := writeAcknowledgment(ctx, profile, kind, req.Group, numbers)
+	numbers, err := s.allocateAcknowledgmentNumbers(
+		ctx,
+		req.TenantInfo,
+		req.EDIPartnerID,
+		documentType.ID,
+	)
+	if err != nil {
+		return nil, err
+	}
+	written, err := writeAcknowledgment(ctx, &envelope, kind, req.Group, numbers)
 	if err != nil {
 		return nil, err
 	}
@@ -99,15 +109,14 @@ func (s *Service) GenerateAcknowledgment(
 	message := &edi.EDIMessage{
 		BusinessUnitID:           req.TenantInfo.BuID,
 		OrganizationID:           req.TenantInfo.OrgID,
-		EDIPartnerID:             profile.EDIPartnerID,
-		DocumentTypeID:           profile.DocumentTypeID,
-		PartnerDocumentProfileID: profile.ID,
+		EDIPartnerID:             req.EDIPartnerID,
+		DocumentTypeID:           documentType.ID,
+		LadingVersionID:          program.Version.ID,
 		Direction:                edi.DocumentDirectionOutbound,
 		Standard:                 edi.EDIStandardX12,
 		TransactionSet:           ackSet,
 		X12Version:               acknowledgmentVersion(kind),
 		Status:                   edi.MessageStatusGenerated,
-		ValidationMode:           edi.ValidationModeStrict,
 		InterchangeControlNumber: numbers.interchange,
 		GroupControlNumber:       numbers.group,
 		TransactionControlNumber: numbers.transaction,
@@ -137,14 +146,15 @@ func (s *Service) GenerateAcknowledgment(
 func (s *Service) allocateAcknowledgmentNumbers(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
-	profile *edi.EDIPartnerDocumentProfile,
+	partnerID pulid.ID,
+	documentTypeID pulid.ID,
 ) (acknowledgmentControlNumbers, error) {
 	allocated, err := s.controlNumberRepo.AllocateControlNumbers(
 		ctx,
 		ediports.AllocateEDIControlNumbersRequest{
 			TenantInfo:     tenantInfo,
-			PartnerID:      profile.EDIPartnerID,
-			DocumentTypeID: profile.DocumentTypeID,
+			PartnerID:      partnerID,
+			DocumentTypeID: documentTypeID,
 			Kinds: []edi.ControlNumberKind{
 				edi.ControlNumberKindInterchange,
 				edi.ControlNumberKindGroup,
@@ -196,22 +206,28 @@ func (s *Service) previewMessageAcknowledgment(
 	ctx context.Context,
 	req *PreviewEDIDocumentRequest,
 ) (*EDIDocumentPreview, error) {
-	profile, kind, group, err := s.messageAcknowledgmentSource(ctx, req)
+	source, err := s.messageAcknowledgmentSource(ctx, req)
 	if err != nil {
 		return nil, err
 	}
-	written, err := writeAcknowledgment(ctx, profile, kind, group, provisionalAcknowledgmentNumbers)
+	written, err := writeAcknowledgment(
+		ctx,
+		&source.envelope,
+		source.kind,
+		source.group,
+		provisionalAcknowledgmentNumbers,
+	)
 	if err != nil {
 		return nil, err
 	}
 	return &EDIDocumentPreview{
 		RawX12:                   written.Text,
 		SegmentCount:             int64(written.SegmentCount),
-		X12Version:               acknowledgmentVersion(kind),
+		X12Version:               acknowledgmentVersion(source.kind),
 		InterchangeControlNumber: provisionalAcknowledgmentNumbers.interchange,
 		GroupControlNumber:       provisionalAcknowledgmentNumbers.group,
 		TransactionControlNumber: provisionalAcknowledgmentNumbers.transaction,
-		Profile:                  profile,
+		LadingVersionID:          source.program.Version.ID,
 	}, nil
 }
 
@@ -219,31 +235,38 @@ func (s *Service) generateMessageAcknowledgment(
 	ctx context.Context,
 	req *GenerateEDIDocumentRequest,
 ) (*edi.EDIMessage, error) {
-	profile, _, group, err := s.messageAcknowledgmentSource(ctx, &PreviewEDIDocumentRequest{
-		TenantInfo:               req.TenantInfo,
-		PartnerDocumentProfileID: req.PartnerDocumentProfileID,
-		EDIPartnerID:             req.EDIPartnerID,
-		SourceMessageID:          req.SourceMessageID,
-		TransactionSet:           req.TransactionSet,
-		Direction:                req.Direction,
+	source, err := s.messageAcknowledgmentSource(ctx, &PreviewEDIDocumentRequest{
+		TenantInfo:      req.TenantInfo,
+		EDIPartnerID:    req.EDIPartnerID,
+		SourceMessageID: req.SourceMessageID,
+		TransactionSet:  req.TransactionSet,
+		Direction:       req.Direction,
 	})
 	if err != nil {
 		return nil, err
 	}
 	ackType := edi.AcknowledgmentType997
-	if profile.TransactionSet == edi.TransactionSet999 {
+	if source.kind == x12.AcknowledgmentKind999 {
 		ackType = edi.AcknowledgmentType999
 	}
 	return s.GenerateAcknowledgment(ctx, &GenerateAcknowledgmentRequest{
 		TenantInfo:           req.TenantInfo,
-		EDIPartnerID:         profile.EDIPartnerID,
+		EDIPartnerID:         source.partnerID,
 		Type:                 ackType,
-		Group:                group,
+		Group:                source.group,
 		SourceMessageID:      req.SourceMessageID,
 		GeneratedByID:        req.GeneratedByID,
 		IdempotencyKey:       req.IdempotencyKey,
 		DisableDeliveryQueue: req.DisableDeliveryQueue,
 	})
+}
+
+type acknowledgmentSource struct {
+	partnerID pulid.ID
+	program   *edilading.Program
+	envelope  edi.X12EnvelopeSettings
+	kind      x12.AcknowledgmentKind
+	group     *x12.Group
 }
 
 // messageAcknowledgmentSource reads a stored inbound message again against its guide
@@ -252,9 +275,9 @@ func (s *Service) generateMessageAcknowledgment(
 func (s *Service) messageAcknowledgmentSource(
 	ctx context.Context,
 	req *PreviewEDIDocumentRequest,
-) (*edi.EDIPartnerDocumentProfile, x12.AcknowledgmentKind, *x12.Group, error) {
-	if req.PartnerDocumentProfileID.IsNil() && !req.TransactionSet.IsAcknowledgment() {
-		return nil, "", nil, sourceTransactionSetError(
+) (*acknowledgmentSource, error) {
+	if !req.TransactionSet.IsAcknowledgment() {
+		return nil, sourceTransactionSetError(
 			"sourceMessageId",
 			"source message",
 			req.TransactionSet,
@@ -262,23 +285,31 @@ func (s *Service) messageAcknowledgmentSource(
 			edi.TransactionSet999,
 		)
 	}
+	_, kind, err := acknowledgmentSet(edi.AcknowledgmentType(req.TransactionSet))
+	if err != nil {
+		return nil, err
+	}
 	message, err := s.messageRepo.GetMessageByID(ctx, ediports.GetEDIMessageByIDRequest{
 		ID:         req.SourceMessageID,
 		TenantInfo: req.TenantInfo,
 	})
 	if err != nil {
-		return nil, "", nil, err
+		return nil, err
 	}
 	if message.Direction != edi.DocumentDirectionInbound {
-		return nil, "", nil, errortypes.NewValidationError(
+		return nil, errortypes.NewValidationError(
 			"sourceMessageId",
 			errortypes.ErrInvalid,
 			"Only a message received from a partner can be acknowledged",
 		)
 	}
-	profile, kind, err := s.acknowledgmentProfile(ctx, req, message)
+	partnerID := req.EDIPartnerID
+	if partnerID.IsNil() {
+		partnerID = message.EDIPartnerID
+	}
+	envelope, program, err := s.partnerEnvelope(ctx, req.TenantInfo, partnerID)
 	if err != nil {
-		return nil, "", nil, err
+		return nil, err
 	}
 
 	reading, err := x12.Default().Read(ctx, &x12.ReadRequest{
@@ -286,82 +317,32 @@ func (s *Service) messageAcknowledgmentSource(
 		Fragment: edix12inspect.IsFragment(message.RawX12),
 	})
 	if err != nil {
-		return nil, "", nil, err
+		return nil, err
 	}
 	transactions := edix12inspect.AllTransactions(reading)
 	if len(transactions) == 0 {
-		return nil, "", nil, errortypes.NewValidationError(
+		return nil, errortypes.NewValidationError(
 			"sourceMessageId",
 			errortypes.ErrInvalid,
 			"The source message holds no transaction set to acknowledge",
 		)
 	}
 	transaction := *transactions[0]
-	functionalGroup := edi.FunctionalGroupDefault(message.TransactionSet)
-	if message.PartnerDocumentProfile != nil &&
-		message.PartnerDocumentProfile.FunctionalGroupID != "" {
-		functionalGroup = message.PartnerDocumentProfile.FunctionalGroupID
-	}
-	group := &x12.Group{
-		Header: &x12.GSHeader{
-			FunctionalID:  functionalGroup,
-			ControlNumber: message.GroupControlNumber,
-			Version:       message.X12Version,
-		},
-		Transactions:   []x12.Transaction{transaction},
-		Acknowledgment: singleTransactionAcknowledgment(transaction.Status),
-	}
-	return profile, kind, group, nil
-}
-
-func (s *Service) acknowledgmentProfile(
-	ctx context.Context,
-	req *PreviewEDIDocumentRequest,
-	message *edi.EDIMessage,
-) (*edi.EDIPartnerDocumentProfile, x12.AcknowledgmentKind, error) {
-	var profile *edi.EDIPartnerDocumentProfile
-	var err error
-	if req.PartnerDocumentProfileID.IsNotNil() {
-		profile, err = s.documentProfileRepo.GetPartnerDocumentProfileByID(
-			ctx,
-			ediports.GetEDIPartnerDocumentProfileByIDRequest{
-				ID:         req.PartnerDocumentProfileID,
-				TenantInfo: req.TenantInfo,
+	return &acknowledgmentSource{
+		partnerID: partnerID,
+		program:   program,
+		envelope:  envelope,
+		kind:      kind,
+		group: &x12.Group{
+			Header: &x12.GSHeader{
+				FunctionalID:  edi.FunctionalGroupDefault(message.TransactionSet),
+				ControlNumber: message.GroupControlNumber,
+				Version:       message.X12Version,
 			},
-		)
-	} else {
-		partnerID := req.EDIPartnerID
-		if partnerID.IsNil() {
-			partnerID = message.EDIPartnerID
-		}
-		profile, err = s.EnsureOutboundDocumentProfile(
-			ctx,
-			req.TenantInfo,
-			partnerID,
-			req.TransactionSet,
-		)
-	}
-	if err != nil {
-		return nil, "", err
-	}
-	if !profile.TransactionSet.IsAcknowledgment() {
-		return nil, "", sourceTransactionSetError(
-			"sourceMessageId",
-			"source message",
-			profile.TransactionSet,
-			edi.TransactionSet997,
-			edi.TransactionSet999,
-		)
-	}
-	ackType := edi.AcknowledgmentType997
-	if profile.TransactionSet == edi.TransactionSet999 {
-		ackType = edi.AcknowledgmentType999
-	}
-	_, kind, err := acknowledgmentSet(ackType)
-	if err != nil {
-		return nil, "", err
-	}
-	return profile, kind, nil
+			Transactions:   []x12.Transaction{transaction},
+			Acknowledgment: singleTransactionAcknowledgment(transaction.Status),
+		},
+	}, nil
 }
 
 func singleTransactionAcknowledgment(status x12.TransactionStatus) x12.GroupAcknowledgment {
@@ -379,12 +360,11 @@ func singleTransactionAcknowledgment(status x12.TransactionStatus) x12.GroupAckn
 
 func writeAcknowledgment(
 	ctx context.Context,
-	profile *edi.EDIPartnerDocumentProfile,
+	envelope *edi.X12EnvelopeSettings,
 	kind x12.AcknowledgmentKind,
 	group *x12.Group,
 	numbers acknowledgmentControlNumbers,
 ) (*x12.Acknowledgment, error) {
-	envelope := profile.Envelope
 	defaults := edi.DefaultX12EnvelopeSettings()
 	now := time.Now().UTC()
 	acknowledgments, err := x12.Default().Acknowledge(ctx, &x12.AcknowledgeRequest{

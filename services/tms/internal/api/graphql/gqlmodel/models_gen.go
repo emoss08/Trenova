@@ -4304,6 +4304,19 @@ type EDICommunicationProfileEdge struct {
 	Cursor string                       `json:"cursor"`
 }
 
+type EDIFlowInstanceConnection struct {
+	Edges      []*EDIFlowInstanceEdge `json:"edges"`
+	PageInfo   *PageInfo              `json:"pageInfo"`
+	TotalCount *int                   `json:"totalCount,omitempty"`
+	// Whether totalCount was counted; false when it is the planner's estimate of a list too large to count.
+	TotalCountExact bool `json:"totalCountExact"`
+}
+
+type EDIFlowInstanceEdge struct {
+	Node   *edi.FlowInstance `json:"node"`
+	Cursor string            `json:"cursor"`
+}
+
 type EDIInboundFileConnection struct {
 	Edges      []*EDIInboundFileEdge `json:"edges"`
 	PageInfo   *PageInfo             `json:"pageInfo"`
@@ -4327,6 +4340,32 @@ type EDIInboundFileDetail struct {
 type EDIInboundFileEdge struct {
 	Node   *edi.EDIInboundFile `json:"node"`
 	Cursor string              `json:"cursor"`
+}
+
+// A set a Lading version exchanges with the partner.
+type EDILadingExchange struct {
+	TransactionSet string                `json:"transactionSet"`
+	Direction      edi.DocumentDirection `json:"direction"`
+	Map            string                `json:"map"`
+	// The acknowledgment that answers it: the one Trenova sends back for an inbound set, the one the flow expects for an outbound set. Null when none is.
+	Acknowledgment *string `json:"acknowledgment,omitempty"`
+	// Seconds the flow waits for that acknowledgment, for an outbound set.
+	AcknowledgmentWithin *int `json:"acknowledgmentWithin,omitempty"`
+}
+
+// The X12 envelope a Lading version writes and expects.
+type EDILadingInterchange struct {
+	TheirQualifier *string `json:"theirQualifier,omitempty"`
+	TheirID        *string `json:"theirId,omitempty"`
+	OurQualifier   *string `json:"ourQualifier,omitempty"`
+	OurID          *string `json:"ourId,omitempty"`
+	TheirGroupCode *string `json:"theirGroupCode,omitempty"`
+	OurGroupCode   *string `json:"ourGroupCode,omitempty"`
+	Version        *string `json:"version,omitempty"`
+	// test or production.
+	Usage *string `json:"usage,omitempty"`
+	// Element, segment, component and repetition separators, in that order.
+	Separators []string `json:"separators"`
 }
 
 type EDIMappingCount struct {
@@ -4427,14 +4466,15 @@ type EDIPartnerAttention struct {
 // Credentials are named and said to be on file or not; no secret value or private key is
 // ever returned.
 type EDIPartnerCard struct {
-	Partner          *edi.EDIPartner                  `json:"partner"`
-	Customer         *EDIPartnerCustomer              `json:"customer,omitempty"`
-	DocumentProfiles []*edi.EDIPartnerDocumentProfile `json:"documentProfiles"`
-	Transports       []*EDIPartnerTransport           `json:"transports"`
-	Readiness        *EDIPartnerCardReadiness         `json:"readiness"`
-	Mappings         *EDIPartnerMappingSummary        `json:"mappings"`
-	Activity         *EDIPartnerActivity              `json:"activity"`
-	Attention        *EDIPartnerAttention             `json:"attention"`
+	Partner  *edi.EDIPartner     `json:"partner"`
+	Customer *EDIPartnerCustomer `json:"customer,omitempty"`
+	// The partner's Lading project and the versions running.
+	Lading     *EDIPartnerLading         `json:"lading"`
+	Transports []*EDIPartnerTransport    `json:"transports"`
+	Readiness  *EDIPartnerCardReadiness  `json:"readiness"`
+	Mappings   *EDIPartnerMappingSummary `json:"mappings"`
+	Activity   *EDIPartnerActivity       `json:"activity"`
+	Attention  *EDIPartnerAttention      `json:"attention"`
 	// The carriers reached through the partner; null for someone who may not read carriers.
 	Carriers []*EDIPartnerCarrier `json:"carriers,omitempty"`
 }
@@ -4471,6 +4511,14 @@ type EDIPartnerCustomer struct {
 type EDIPartnerEdge struct {
 	Node   *edi.EDIPartner `json:"node"`
 	Cursor string          `json:"cursor"`
+}
+
+type EDIPartnerLading struct {
+	Project *edi.LadingProject `json:"project,omitempty"`
+	// The version Trenova runs for the partner.
+	Active *edi.LadingVersion `json:"active,omitempty"`
+	// The version compared with it on live traffic, if one is.
+	Shadow *edi.LadingVersion `json:"shadow,omitempty"`
 }
 
 type EDIPartnerMappingSummary struct {
@@ -4562,19 +4610,6 @@ type EDISummaryStatusCount struct {
 	Count  int    `json:"count"`
 }
 
-type EDITemplateConnection struct {
-	Edges      []*EDITemplateEdge `json:"edges"`
-	PageInfo   *PageInfo          `json:"pageInfo"`
-	TotalCount *int               `json:"totalCount,omitempty"`
-	// Whether totalCount was counted; false when it is the planner's estimate of a list too large to count.
-	TotalCountExact bool `json:"totalCountExact"`
-}
-
-type EDITemplateEdge struct {
-	Node   *edi.EDITemplate `json:"node"`
-	Cursor string           `json:"cursor"`
-}
-
 type EDITenderCharge struct {
 	Charge string  `json:"charge"`
 	Method *string `json:"method,omitempty"`
@@ -4607,19 +4642,6 @@ type EDITenderStop struct {
 	WindowCloses *int    `json:"windowCloses,omitempty"`
 	Pieces       *int    `json:"pieces,omitempty"`
 	Weight       *int    `json:"weight,omitempty"`
-}
-
-type EDITestCaseConnection struct {
-	Edges      []*EDITestCaseEdge `json:"edges"`
-	PageInfo   *PageInfo          `json:"pageInfo"`
-	TotalCount *int               `json:"totalCount,omitempty"`
-	// Whether totalCount was counted; false when it is the planner's estimate of a list too large to count.
-	TotalCountExact bool `json:"totalCountExact"`
-}
-
-type EDITestCaseEdge struct {
-	Node   *edi.EDITestCase `json:"node"`
-	Cursor string           `json:"cursor"`
 }
 
 type EDITransferConnection struct {
@@ -14419,8 +14441,6 @@ const (
 	SelectOptionResourceEDIDocumentType           SelectOptionResource = "EDI_DOCUMENT_TYPE"
 	SelectOptionResourceEDIMappingProfile         SelectOptionResource = "EDI_MAPPING_PROFILE"
 	SelectOptionResourceEDIPartner                SelectOptionResource = "EDI_PARTNER"
-	SelectOptionResourceEDIPartnerDocumentProfile SelectOptionResource = "EDI_PARTNER_DOCUMENT_PROFILE"
-	SelectOptionResourceEDITemplate               SelectOptionResource = "EDI_TEMPLATE"
 	SelectOptionResourceEDITransactionSet         SelectOptionResource = "EDI_TRANSACTION_SET"
 	SelectOptionResourceEmailProfile              SelectOptionResource = "EMAIL_PROFILE"
 	SelectOptionResourceShiftTemplate             SelectOptionResource = "SHIFT_TEMPLATE"
@@ -14485,8 +14505,6 @@ var AllSelectOptionResource = []SelectOptionResource{
 	SelectOptionResourceEDIDocumentType,
 	SelectOptionResourceEDIMappingProfile,
 	SelectOptionResourceEDIPartner,
-	SelectOptionResourceEDIPartnerDocumentProfile,
-	SelectOptionResourceEDITemplate,
 	SelectOptionResourceEDITransactionSet,
 	SelectOptionResourceEmailProfile,
 	SelectOptionResourceShiftTemplate,
@@ -14505,7 +14523,7 @@ var AllSelectOptionResource = []SelectOptionResource{
 
 func (e SelectOptionResource) IsValid() bool {
 	switch e {
-	case SelectOptionResourceAccessorialCharge, SelectOptionResourceAccountType, SelectOptionResourceAiProvider, SelectOptionResourceCaptureDevice, SelectOptionResourceCaptureProfile, SelectOptionResourceCarrier, SelectOptionResourceCommodity, SelectOptionResourceCustomer, SelectOptionResourceDetentionPolicy, SelectOptionResourceDistanceProfile, SelectOptionResourceDocumentType, SelectOptionResourceEDIConnection, SelectOptionResourceEDITransfer, SelectOptionResourceEquipmentManufacturer, SelectOptionResourceEquipmentType, SelectOptionResourceFactoringCompany, SelectOptionResourceFleetCode, SelectOptionResourceFormulaTemplate, SelectOptionResourceFiscalPeriod, SelectOptionResourceFiscalYear, SelectOptionResourceFuelIndex, SelectOptionResourceFuelSurchargeProgram, SelectOptionResourceGlAccount, SelectOptionResourceIFTAFuelType, SelectOptionResourceHazardousMaterial, SelectOptionResourceJournalEntry, SelectOptionResourceLocation, SelectOptionResourceLocationCategory, SelectOptionResourceOrder, SelectOptionResourceOrganization, SelectOptionResourceRateAgreement, SelectOptionResourceRateMatrix, SelectOptionResourceRateZone, SelectOptionResourceRole, SelectOptionResourceServiceFailureReasonCode, SelectOptionResourceServiceType, SelectOptionResourceShipment, SelectOptionResourceShipmentType, SelectOptionResourceTractor, SelectOptionResourceTrailer, SelectOptionResourceUsState, SelectOptionResourceUser, SelectOptionResourceWorker, SelectOptionResourceEDICommunicationProfile, SelectOptionResourceEDIDocumentType, SelectOptionResourceEDIMappingProfile, SelectOptionResourceEDIPartner, SelectOptionResourceEDIPartnerDocumentProfile, SelectOptionResourceEDITemplate, SelectOptionResourceEDITransactionSet, SelectOptionResourceEmailProfile, SelectOptionResourceShiftTemplate, SelectOptionResourceWorkerPolicy, SelectOptionResourceJobPosition, SelectOptionResourceFuelCard, SelectOptionResourceBenefitPlan, SelectOptionResourceIFTAJurisdiction, SelectOptionResourcePayCode, SelectOptionResourcePayProfile, SelectOptionResourcePerformanceReviewTemplate, SelectOptionResourcePTOPolicy, SelectOptionResourceTrainingCourse, SelectOptionResourceWorkerCredentialType:
+	case SelectOptionResourceAccessorialCharge, SelectOptionResourceAccountType, SelectOptionResourceAiProvider, SelectOptionResourceCaptureDevice, SelectOptionResourceCaptureProfile, SelectOptionResourceCarrier, SelectOptionResourceCommodity, SelectOptionResourceCustomer, SelectOptionResourceDetentionPolicy, SelectOptionResourceDistanceProfile, SelectOptionResourceDocumentType, SelectOptionResourceEDIConnection, SelectOptionResourceEDITransfer, SelectOptionResourceEquipmentManufacturer, SelectOptionResourceEquipmentType, SelectOptionResourceFactoringCompany, SelectOptionResourceFleetCode, SelectOptionResourceFormulaTemplate, SelectOptionResourceFiscalPeriod, SelectOptionResourceFiscalYear, SelectOptionResourceFuelIndex, SelectOptionResourceFuelSurchargeProgram, SelectOptionResourceGlAccount, SelectOptionResourceIFTAFuelType, SelectOptionResourceHazardousMaterial, SelectOptionResourceJournalEntry, SelectOptionResourceLocation, SelectOptionResourceLocationCategory, SelectOptionResourceOrder, SelectOptionResourceOrganization, SelectOptionResourceRateAgreement, SelectOptionResourceRateMatrix, SelectOptionResourceRateZone, SelectOptionResourceRole, SelectOptionResourceServiceFailureReasonCode, SelectOptionResourceServiceType, SelectOptionResourceShipment, SelectOptionResourceShipmentType, SelectOptionResourceTractor, SelectOptionResourceTrailer, SelectOptionResourceUsState, SelectOptionResourceUser, SelectOptionResourceWorker, SelectOptionResourceEDICommunicationProfile, SelectOptionResourceEDIDocumentType, SelectOptionResourceEDIMappingProfile, SelectOptionResourceEDIPartner, SelectOptionResourceEDITransactionSet, SelectOptionResourceEmailProfile, SelectOptionResourceShiftTemplate, SelectOptionResourceWorkerPolicy, SelectOptionResourceJobPosition, SelectOptionResourceFuelCard, SelectOptionResourceBenefitPlan, SelectOptionResourceIFTAJurisdiction, SelectOptionResourcePayCode, SelectOptionResourcePayProfile, SelectOptionResourcePerformanceReviewTemplate, SelectOptionResourcePTOPolicy, SelectOptionResourceTrainingCourse, SelectOptionResourceWorkerCredentialType:
 		return true
 	}
 	return false

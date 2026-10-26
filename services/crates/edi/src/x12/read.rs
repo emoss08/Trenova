@@ -1384,7 +1384,7 @@ impl<'a> Reader<'_, 'a> {
             if matches!(scanned.segment.id, "ST" | "SE") {
                 continue;
             }
-            let Some(definition) = guide.segment(scanned.segment.id) else {
+            let Some(definition) = guide.definition(placement.node, scanned.segment.id) else {
                 continue;
             };
             let position = u32::try_from(offset + 1).unwrap_or(u32::MAX);

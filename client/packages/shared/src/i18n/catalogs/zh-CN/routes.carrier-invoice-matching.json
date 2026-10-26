@@ -61,6 +61,7 @@
   "Reconciliation status": "核对状态",
   "Reject match": "拒绝比对",
   "Rejected{0}": "已驳回{0}",
+  "Repeat": "重复",
   "Resolved automatically because the variance was within tolerance": "因差异在容差范围内而自动结案",
   "Resolved{0}{1}": "已处理{0}{1}",
   "Search invoice, pro number, carrier...": "搜索发票、PRO 号码、承运商...",

@@ -21,6 +21,5 @@ pub mod lane;
 pub mod matrix;
 pub mod ops;
 pub mod report;
-pub mod span;
 pub mod tariff;
 pub mod wire;

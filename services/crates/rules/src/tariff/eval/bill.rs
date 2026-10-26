@@ -36,11 +36,11 @@
 
 use super::error::{Code, EvalError, Refusal};
 use super::value::{Value, money_digits};
-use crate::span::Span;
 use crate::tariff::syntax::ast::{ChooseKind, RoundMode};
 use rust_decimal::{Decimal, RoundingStrategy};
 use std::collections::BTreeMap;
 use trenova_module_kit::message::{Arg, Message};
+use trenova_module_kit::span::Span;
 
 /// What a line is.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]

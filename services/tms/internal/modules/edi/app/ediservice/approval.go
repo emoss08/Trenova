@@ -441,6 +441,7 @@ func (s *Service) ProcessLoadTenderApproval(
 		}
 	}
 	if approvedTransfer != nil {
+		s.attachFlowShipment(ctx, approvedTransfer)
 		s.generateExternalTenderResponse(ctx, approvedTransfer, payload.Actor.UserID)
 	}
 

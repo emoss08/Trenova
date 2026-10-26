@@ -16,8 +16,8 @@ how much the desk may do with its mail without a person. Resend sends only a mes
 recipients and subject to the webhook, so a Resend mailbox also needs an API key: the body and
 attachments are read from Resend with it after the message arrives.
 
-Each mailbox card shows whether it is **Listening** or **Not listening**, what it is **Trusted
-to** do, its **Purpose** and when it was **Created**. A mailbox without a signing secret refuses
+Each mailbox card shows whether it is **Listening** or **Not listening**, when mail last
+arrived, and when it was created. A mailbox without a signing secret refuses
 every delivery, and a Resend mailbox without an API key accepts mail but cannot read its body or
 attachments, so each message waits for a person saying why. Resend forwards everything its
 account receives to every webhook, so a Resend mailbox only keeps mail addressed to its own

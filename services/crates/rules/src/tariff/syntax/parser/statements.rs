@@ -1,10 +1,6 @@
 //! Statements and blocks.
 
 use super::Parser;
-use crate::span::Span;
-use crate::tariff::diagnostic::Change;
-use crate::tariff::diagnostic::Diagnostic;
-use crate::tariff::diagnostic::Fix;
 use crate::tariff::syntax::ast::Arm;
 use crate::tariff::syntax::ast::ArmBody;
 use crate::tariff::syntax::ast::AssignOp;
@@ -29,9 +25,13 @@ use crate::tariff::syntax::ast::Text;
 use crate::tariff::syntax::ast::TotalBound;
 use crate::tariff::syntax::ast::TotalClause;
 use crate::tariff::syntax::token::TokenKind;
+use trenova_module_kit::diagnostic::Change;
+use trenova_module_kit::diagnostic::Diagnostic;
+use trenova_module_kit::diagnostic::Fix;
 use trenova_module_kit::message;
 use trenova_module_kit::message::Arg;
 use trenova_module_kit::message::Message;
+use trenova_module_kit::span::Span;
 
 /// Where a block is, which decides the position rules its statements follow.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]

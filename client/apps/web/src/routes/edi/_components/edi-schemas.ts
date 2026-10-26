@@ -2,12 +2,9 @@ import { translate } from "@trenova/shared/i18n/runtime";
 import { timezoneChoices } from "@/lib/choices";
 import {
   ediConnectionMethodSchema,
-  ediDocumentPayloadSchema,
   ediMappingEntityTypeSchema,
   ediPartnerKindSchema,
   type EDIPartner,
-  type EDITestCase,
-  type SaveEDITestCaseRequest,
   type UpsertEDIPartnerRequest,
 } from "@trenova/shared/types/edi";
 import type { SELECT_OPTIONS_ENDPOINTS } from "@trenova/shared/types/server";
@@ -92,12 +89,6 @@ export const sftpAuthModeOptions = [
   { label: "Password", value: "password" },
 ];
 
-export const acknowledgmentOptions = [
-  { label: "997 Functional ACK", value: "997" },
-  { label: "999 Implementation ACK", value: "999" },
-  { label: "None", value: "none" },
-];
-
 export const communicationProfileConfigSchema = z.object({
   connectedOrganizationId: z.string(),
   localAS2Id: z.string(),
@@ -135,15 +126,7 @@ export const communicationProfileConfigSchema = z.object({
   gsRoutingId: z.string(),
   endpoint: z.string(),
   contactEmail: z.string(),
-  isaSenderQualifier: z.string(),
-  isaSenderId: z.string(),
-  isaReceiverQualifier: z.string(),
-  isaReceiverId: z.string(),
-  gsSenderId: z.string(),
-  gsReceiverId: z.string(),
-  x12Version: z.string(),
   environment: z.string(),
-  acknowledgmentPreference: z.string(),
 });
 
 export const communicationProfileSecretsSchema = z.object({
@@ -286,102 +269,4 @@ export function toPartnerRequest(values: EDIPartnerFormValues): UpsertEDIPartner
 export function emptyToUndefined(value: string) {
   const trimmed = value.trim();
   return trimmed === "" ? undefined : trimmed;
-}
-
-export const ediTestCaseFormSchema = z.object({
-  partnerDocumentProfileId: z
-    .string()
-    .min(1, { error: () => translate("Document profile is required") }),
-  name: z
-    .string()
-    .trim()
-    .min(1, { error: () => translate("Name is required") }),
-  description: z.string(),
-  payloadJson: z
-    .string()
-    .trim()
-    .min(1, { error: () => translate("Payload is required") })
-    .superRefine((value, ctx) => {
-      let parsed: unknown;
-      try {
-        parsed = JSON.parse(value);
-      } catch {
-        ctx.addIssue({ code: "custom", message: translate("Payload must be valid JSON") });
-        return;
-      }
-      const result = ediDocumentPayloadSchema.safeParse(parsed);
-      if (!result.success) {
-        ctx.addIssue({
-          code: "custom",
-          message: translate("Payload must be a valid EDI document payload"),
-        });
-        return;
-      }
-      const payload = result.data;
-      const hasBranch = Boolean(
-        payload.loadTender ||
-        payload.shipment ||
-        payload.invoice ||
-        payload.shipmentStatus ||
-        payload.tenderResponse ||
-        payload.functionalAck ||
-        payload.implementationAck,
-      );
-      if (!hasBranch) {
-        ctx.addIssue({
-          code: "custom",
-          message: translate("Payload must contain at least one transaction branch"),
-        });
-      }
-    }),
-  expectedWarnings: z
-    .number()
-    .int()
-    .min(0, { error: () => translate("Expected warnings cannot be negative") }),
-  expectedErrors: z
-    .number()
-    .int()
-    .min(0, { error: () => translate("Expected errors cannot be negative") }),
-  expectedWarningCodes: z.string(),
-  expectedErrorCodes: z.string(),
-  version: z.number(),
-});
-
-export type EDITestCaseFormValues = z.infer<typeof ediTestCaseFormSchema>;
-
-export function getTestCaseFormDefaults(testCase?: EDITestCase | null): EDITestCaseFormValues {
-  return {
-    partnerDocumentProfileId: testCase?.partnerDocumentProfileId ?? "",
-    name: testCase?.name ?? "",
-    description: testCase?.description ?? "",
-    payloadJson: JSON.stringify(testCase?.payload ?? {}, null, 2),
-    expectedWarnings: testCase?.expectedWarnings ?? 0,
-    expectedErrors: testCase?.expectedErrors ?? 0,
-    expectedWarningCodes: (testCase?.expectedWarningCodes ?? []).join(", "),
-    expectedErrorCodes: (testCase?.expectedErrorCodes ?? []).join(", "),
-    version: testCase?.version ?? 0,
-  };
-}
-
-export function parseDiagnosticCodes(value: string): string[] {
-  const seen = new Set<string>();
-  for (const raw of value.split(",")) {
-    const trimmed = raw.trim();
-    if (trimmed !== "") seen.add(trimmed);
-  }
-  return Array.from(seen).sort();
-}
-
-export function toTestCaseRequest(values: EDITestCaseFormValues): SaveEDITestCaseRequest {
-  return {
-    partnerDocumentProfileId: values.partnerDocumentProfileId,
-    name: values.name,
-    description: emptyToUndefined(values.description),
-    payload: ediDocumentPayloadSchema.parse(JSON.parse(values.payloadJson)),
-    expectedWarnings: values.expectedWarnings,
-    expectedErrors: values.expectedErrors,
-    expectedWarningCodes: parseDiagnosticCodes(values.expectedWarningCodes),
-    expectedErrorCodes: parseDiagnosticCodes(values.expectedErrorCodes),
-    version: values.version,
-  };
 }

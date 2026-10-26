@@ -333,6 +333,7 @@ pub fn parse_layout(text: &str) -> Result<Layout, String> {
                         max,
                         min,
                         notes: String::new(),
+                        definition: None,
                     }),
                 );
             }

@@ -22,9 +22,8 @@ func (s *Service) PreviewConnectionDraft(
 			After:  p.writes.partner,
 			Change: p.draft.Partner.Change,
 		},
-		DocumentProfiles: make([]ediports.PlannedDocumentProfile, 0, len(p.writes.profiles)),
-		Mappings:         make([]ediports.PlannedMapping, 0, len(p.writes.mappings)),
-		ControlNumbers:   make([]ediports.PlannedControlNumber, 0, len(p.writes.controls)),
+		Mappings:       make([]ediports.PlannedMapping, 0, len(p.writes.mappings)),
+		ControlNumbers: make([]ediports.PlannedControlNumber, 0, len(p.writes.controls)),
 	}
 	if p.match.setup != nil {
 		plan.Partner.Before = p.match.setup.Partner
@@ -32,12 +31,16 @@ func (s *Service) PreviewConnectionDraft(
 	if transport := p.plannedTransport(); transport != nil {
 		plan.Transport = transport
 	}
-	for _, profile := range p.writes.profiles {
-		plan.DocumentProfiles = append(plan.DocumentProfiles, ediports.PlannedDocumentProfile{
-			Before: p.current.profiles[profileKey(profile.set, profile.direction)],
-			After:  plannedProfile(p, profile),
-			Change: profile.change,
-		})
+	if project := p.writes.project; project != nil {
+		plan.Project = &ediports.PlannedProject{
+			Files:   project.files,
+			Samples: project.samples,
+			Change:  project.change,
+		}
+		if p.match.setup != nil {
+			plan.Project.Project = p.match.setup.Project
+		}
+		plan.Project.Before = p.current.version
 	}
 	for _, item := range p.writes.mappings {
 		before := p.current.mapping(item.EntityType, item.SourceID)
@@ -52,7 +55,7 @@ func (s *Service) PreviewConnectionDraft(
 		})
 	}
 	for _, control := range p.writes.controls {
-		documentTypeID := p.docTypes[profileKey(control.set, control.direction)]
+		documentTypeID := p.docTypes[setKey(control.set, control.direction)]
 		before := p.current.sequence(documentTypeID, control.kind)
 		change := ediports.ChangeKindAdd
 		if before != nil {
@@ -98,31 +101,4 @@ func (p *planner) plannedTransport() *ediports.PlannedTransport {
 		planned.Before = p.current.transport
 	}
 	return planned
-}
-
-func plannedProfile(p *planner, profile *profileWrite) *edi.EDIPartnerDocumentProfile {
-	request := profile.request
-	return &edi.EDIPartnerDocumentProfile{
-		ID:                           request.ProfileID,
-		BusinessUnitID:               p.req.TenantInfo.BuID,
-		OrganizationID:               p.req.TenantInfo.OrgID,
-		EDIPartnerID:                 request.EDIPartnerID,
-		DocumentTypeID:               p.docTypes[profileKey(profile.set, profile.direction)],
-		TemplateID:                   request.TemplateID,
-		TemplateVersionID:            request.TemplateVersionID,
-		Name:                         request.Name,
-		Status:                       request.Status,
-		Direction:                    profile.direction,
-		Standard:                     edi.EDIStandardX12,
-		TransactionSet:               profile.set,
-		X12VersionOverride:           request.X12VersionOverride,
-		FunctionalGroupID:            request.FunctionalGroupID,
-		Envelope:                     request.Envelope,
-		Acknowledgment:               request.Acknowledgment,
-		ValidationMode:               request.ValidationMode,
-		PartnerSettings:              request.PartnerSettings,
-		PartnerSettingsSchemaID:      request.PartnerSettingsSchemaID,
-		PartnerSettingsSchemaVersion: request.PartnerSettingsSchemaVersion,
-		Version:                      request.Version,
-	}
 }

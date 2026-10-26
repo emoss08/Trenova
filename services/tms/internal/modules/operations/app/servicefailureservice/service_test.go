@@ -1,25 +1,25 @@
 package servicefailureservice
 
 import (
+	"context"
+	"testing"
+
 	"github.com/emoss08/trenova/internal/testutil/mocks/agentportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/auditportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/dispatchcontrolportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/ediportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/servicefailureportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/shipmentportsmock"
-	"context"
-	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/operations/domain/dispatchcontrol"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
-	"github.com/emoss08/trenova/internal/modules/places/domain/location"
-	"github.com/emoss08/trenova/internal/modules/operations/domain/servicefailure"
-	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
-	"github.com/emoss08/trenova/internal/modules/kernel/domain/usstate"
-	"github.com/emoss08/trenova/internal/modules/edi/app/edix12"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/usstate"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/dispatchcontrol"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/servicefailure"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/servicefailureports"
+	"github.com/emoss08/trenova/internal/modules/places/domain/location"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -708,7 +708,7 @@ func TestPreflightServiceFailure214BlocksMandatoryDiagnostics(t *testing.T) {
 			Trigger:   servicefailureports.ServiceFailureEDITriggerReviewed,
 			Action:    ediports.ServiceFailureEDIActionBlocked,
 			Mandatory: true,
-			Diagnostics: []edix12.Diagnostic{{
+			Diagnostics: []edi.Diagnostic{{
 				Severity: edi.ValidationSeverityError,
 				Path:     "shipmentStatus.statusReasonCode",
 				Message:  "status reason required",
@@ -803,11 +803,10 @@ func TestGenerateServiceFailure214RecordsGeneratedAndDuplicateOnly(t *testing.T)
 			ediSvc.EXPECT().
 				GenerateServiceFailure214ForLifecycle(mock.Anything, mock.Anything).
 				Return(&servicefailureports.ServiceFailure214LifecycleResult{
-					Trigger:                  servicefailureports.ServiceFailureEDITriggerReviewed,
-					Action:                   tt.action,
-					MessageID:                pulid.MustNew("edimsg_"),
-					EDIPartnerID:             pulid.MustNew("edip_"),
-					PartnerDocumentProfileID: pulid.MustNew("edidp_"),
+					Trigger:      servicefailureports.ServiceFailureEDITriggerReviewed,
+					Action:       tt.action,
+					MessageID:    pulid.MustNew("edimsg_"),
+					EDIPartnerID: pulid.MustNew("edip_"),
 				}, nil).
 				Once()
 			if tt.wantComment {

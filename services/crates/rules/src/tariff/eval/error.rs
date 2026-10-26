@@ -10,8 +10,8 @@
 //! another module, the interpreter moves it onto the call, so the host can underline it in the
 //! source the author is looking at.
 
-use crate::span::Span;
 use trenova_module_kit::message::{Arg, Message};
+use trenova_module_kit::span::Span;
 
 /// What went wrong, as a stable name the host may branch on.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]

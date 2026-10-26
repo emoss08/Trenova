@@ -1,6 +1,6 @@
 import type {
   DeskEdiPartnerCard,
-  EdiPartnerDocumentProfile,
+  EdiPartnerExchange,
   EdiPartnerMessage,
   EdiPartnerTransport,
 } from "@/lib/graphql/edi-partner-card";
@@ -118,22 +118,15 @@ export function partnerSubtitle(card: DeskEdiPartnerCard, t: TranslateFn): strin
   return t("Turned off both ways");
 }
 
-/** Whether the partner's interchanges go out marked for production, for test, or both. */
-export type UsageReading = "production" | "test" | "mixed" | null;
+/** Whether the partner's interchanges go out marked for production or for test. */
+export type UsageReading = "production" | "test" | null;
 
-export function partnerUsage(profiles: readonly EdiPartnerDocumentProfile[]): UsageReading {
-  const indicators = new Set(
-    profiles
-      .filter((profile) => profile.status === "Active")
-      .map((profile) => profile.envelope.interchangeUsageIndicator.toUpperCase()),
-  );
-  if (indicators.size === 0) {
-    return null;
-  }
-  if (indicators.size > 1) {
-    return "mixed";
-  }
-  return indicators.has("P") ? "production" : "test";
+/** The usage the partner's active Lading version writes in ISA15. */
+export function partnerUsage(card: DeskEdiPartnerCard): UsageReading {
+  const usage = card.lading.active?.interchange?.usage;
+  if (usage === "production") return "production";
+  if (usage === "test") return "test";
+  return null;
 }
 
 export function usageLabel(usage: UsageReading, t: TranslateFn): string {
@@ -142,8 +135,6 @@ export function usageLabel(usage: UsageReading, t: TranslateFn): string {
       return t("Production");
     case "test":
       return t("Test");
-    case "mixed":
-      return t("Production and test");
     default:
       return "";
   }
@@ -162,7 +153,7 @@ export function lastMessageAt(card: DeskEdiPartnerCard): number | null {
 
 /** The facts under the head: production or test, the latest message, and the ways it is reached. */
 export function headFacts(card: DeskEdiPartnerCard, now: number, t: TranslateFn): string[] {
-  const facts = [usageLabel(partnerUsage(card.documentProfiles), t)];
+  const facts = [usageLabel(partnerUsage(card), t)];
   const latest = lastMessageAt(card);
   if (latest !== null) {
     facts.push(t("Last message {0}", formatSecondsAgo(Math.max(0, now - latest))));
@@ -217,16 +208,8 @@ export type Exchange = {
   inbound: LaneSet[];
 };
 
-function ackName(type: string): string {
-  return type === "None" || type === "" ? "" : type;
-}
-
-function slaText(minutes: number): string {
-  return formatDurationFromSeconds(minutes * 60);
-}
-
 function outboundNote(
-  profile: EdiPartnerDocumentProfile | undefined,
+  exchange: EdiPartnerExchange | undefined,
   activity: DeskEdiPartnerCard["activity"]["sets"][number] | undefined,
   t: TranslateFn,
 ): Pick<LaneSet, "note" | "state"> {
@@ -245,29 +228,31 @@ function outboundNote(
       state: "warn",
     };
   }
-  const ack = profile?.acknowledgment;
-  if (ack?.expected && ackName(ack.type)) {
-    return ack.slaInMinutes > 0
+  if (exchange?.acknowledgment) {
+    return exchange.acknowledgmentWithin
       ? {
-          note: t("Waits on a {0} within {1}", ackName(ack.type), slaText(ack.slaInMinutes)),
+          note: t(
+            "Waits on a {0} within {1}",
+            exchange.acknowledgment,
+            formatDurationFromSeconds(exchange.acknowledgmentWithin),
+          ),
           state: null,
         }
-      : { note: t("Waits on a {0}", ackName(ack.type)), state: null };
+      : { note: t("Waits on a {0}", exchange.acknowledgment), state: null };
   }
   return { note: t("No acknowledgment asked"), state: null };
 }
 
 function inboundNote(
   set: string,
-  profile: EdiPartnerDocumentProfile | undefined,
+  exchange: EdiPartnerExchange | undefined,
   t: TranslateFn,
 ): Pick<LaneSet, "note" | "state"> {
   if (set === "997" || set === "999") {
     return { note: t("Answers what we send"), state: null };
   }
-  const ack = profile?.acknowledgment;
-  if (ack?.expected && ackName(ack.type)) {
-    return { note: t("We send a {0} back", ackName(ack.type)), state: null };
+  if (exchange?.acknowledgment) {
+    return { note: t("We send a {0} back", exchange.acknowledgment), state: null };
   }
   return { note: t("No acknowledgment sent back"), state: null };
 }
@@ -277,37 +262,36 @@ function laneSets(
   direction: "Outbound" | "Inbound",
   t: TranslateFn,
 ): LaneSet[] {
-  const profiles = new Map<string, EdiPartnerDocumentProfile>();
-  for (const profile of card.documentProfiles) {
-    if (profile.direction !== direction) continue;
-    const held = profiles.get(profile.transactionSet);
-    if (!held || (held.status !== "Active" && profile.status === "Active")) {
-      profiles.set(profile.transactionSet, profile);
+  const exchanges = new Map<string, EdiPartnerExchange>();
+  for (const exchange of card.lading.active?.exchanges ?? []) {
+    if (exchange.direction === direction && !exchanges.has(exchange.transactionSet)) {
+      exchanges.set(exchange.transactionSet, exchange);
     }
   }
+  const test = partnerUsage(card) === "test";
   const activity = new Map(
     card.activity.sets
       .filter((set) => set.direction === direction)
       .map((set) => [set.transactionSet, set] as const),
   );
-  const sets = [...new Set([...profiles.keys(), ...activity.keys()])].sort();
+  const sets = [...new Set([...exchanges.keys(), ...activity.keys()])].sort();
   const traded = card.partner.kind === "Internal" || card.activity.sets.length > 0;
   return sets.map((set) => {
-    const profile = profiles.get(set);
+    const exchange = exchanges.get(set);
     const seen = activity.get(set);
-    const off = profile !== undefined && profile.status !== "Active";
+    const off = exchange === undefined && set !== "997" && set !== "999";
     const note = off
-      ? { note: t("Turned off"), state: null }
+      ? { note: t("Not in the active Lading version"), state: null }
       : direction === "Outbound"
-        ? outboundNote(profile, seen, t)
-        : inboundNote(set, profile, t);
+        ? outboundNote(exchange, seen, t)
+        : inboundNote(set, exchange, t);
     return {
       key: `${direction}:${set}`,
       set,
       name: transactionSetName(set, t),
       ...note,
       count: seen ? seen.count : traded ? 0 : null,
-      test: profile?.envelope.interchangeUsageIndicator.toUpperCase() === "T",
+      test: !off && test,
       off,
     };
   });
@@ -315,7 +299,7 @@ function laneSets(
 
 /** The two ends of the exchange and the sets that travel each way between them. */
 export function partnerExchange(card: DeskEdiPartnerCard, t: TranslateFn): Exchange {
-  const address = partnerAddress(card.documentProfiles);
+  const address = partnerAddress(card);
   const internal = card.partner.kind === "Internal";
   return {
     counted: true,
@@ -384,70 +368,31 @@ export type AddressEnd = { qualifier: string; id: string; application: string };
 export type PartnerAddress = {
   us: AddressEnd;
   them: AddressEnd;
+  /** ISA15 as written: P or T. */
   usage: string;
   separators: { element: string; segment: string; component: string; repetition: string };
-  /** How many active sets are addressed differently from the one drawn. */
-  differing: number;
 };
 
-function addressOf(profile: EdiPartnerDocumentProfile): Omit<PartnerAddress, "differing"> {
-  const envelope = profile.envelope;
-  const sender: AddressEnd = {
-    qualifier: envelope.interchangeSenderQualifier,
-    id: envelope.interchangeSenderId.trim(),
-    application: envelope.applicationSenderCode,
-  };
-  const receiver: AddressEnd = {
-    qualifier: envelope.interchangeReceiverQualifier,
-    id: envelope.interchangeReceiverId.trim(),
-    application: envelope.applicationReceiverCode,
-  };
-  const outbound = profile.direction === "Outbound";
-  return {
-    us: outbound ? sender : receiver,
-    them: outbound ? receiver : sender,
-    usage: envelope.interchangeUsageIndicator.toUpperCase(),
-    separators: {
-      element: envelope.elementSeparator,
-      segment: envelope.segmentTerminator,
-      component: envelope.componentSeparator,
-      repetition: envelope.repetitionSeparator,
-    },
-  };
-}
-
-function sameAddress(a: Omit<PartnerAddress, "differing">, b: Omit<PartnerAddress, "differing">) {
-  return (
-    a.us.qualifier === b.us.qualifier &&
-    a.us.id === b.us.id &&
-    a.them.qualifier === b.them.qualifier &&
-    a.them.id === b.them.id &&
-    a.usage === b.usage
-  );
-}
-
-/**
- * How interchanges with the partner are addressed, from us to them: an
- * outbound set's envelope as written, an inbound one's turned round. The first
- * active outbound set leads; any set addressed otherwise is counted.
- */
-export function partnerAddress(
-  profiles: readonly EdiPartnerDocumentProfile[],
-): PartnerAddress | null {
-  const active = profiles.filter((profile) => profile.status === "Active");
-  const ordered = [
-    ...active.filter((profile) => profile.direction === "Outbound"),
-    ...active.filter((profile) => profile.direction === "Inbound"),
-  ];
-  const lead = ordered[0];
-  if (!lead) {
+/** How interchanges with the partner are addressed, from us to them, by the active Lading version. */
+export function partnerAddress(card: DeskEdiPartnerCard): PartnerAddress | null {
+  const interchange = card.lading.active?.interchange;
+  if (!interchange || !interchange.theirId || !interchange.ourId) {
     return null;
   }
-  const address = addressOf(lead);
+  const [element = "", segment = "", component = "", repetition = ""] = interchange.separators;
   return {
-    ...address,
-    differing: ordered.slice(1).filter((profile) => !sameAddress(addressOf(profile), address))
-      .length,
+    us: {
+      qualifier: interchange.ourQualifier ?? "",
+      id: interchange.ourId,
+      application: interchange.ourGroupCode ?? "",
+    },
+    them: {
+      qualifier: interchange.theirQualifier ?? "",
+      id: interchange.theirId,
+      application: interchange.theirGroupCode ?? "",
+    },
+    usage: interchange.usage === "production" ? "P" : "T",
+    separators: { element, segment, component, repetition },
   };
 }
 
@@ -536,25 +481,19 @@ export type AckRuler = {
   scale: number;
   average: number | null;
   slowest: number | null;
-  /** The promised turnaround: the shortest any set waits on, if any set waits. */
+  /** The promised turnaround: the shortest any outbound set waits on, if any set waits. */
   promise: number | null;
   line: string;
 };
 
-/** How quickly the partner's acknowledgments came back, against what is promised. */
+/** How quickly the partner's acknowledgments came back, against what the flow promises. */
 export function ackRuler(card: DeskEdiPartnerCard, t: TranslateFn): AckRuler | null {
   const score = card.activity.scorecard;
   const average = score.avgAckSeconds ?? null;
   const slowest = score.p95AckSeconds ?? null;
-  const promises = card.documentProfiles
-    .filter(
-      (profile) =>
-        profile.status === "Active" &&
-        profile.direction === "Outbound" &&
-        profile.acknowledgment.expected &&
-        profile.acknowledgment.slaInMinutes > 0,
-    )
-    .map((profile) => profile.acknowledgment.slaInMinutes * 60);
+  const promises = (card.lading.active?.exchanges ?? [])
+    .filter((exchange) => exchange.direction === "Outbound" && exchange.acknowledgmentWithin)
+    .map((exchange) => exchange.acknowledgmentWithin ?? 0);
   const promise = promises.length > 0 ? Math.min(...promises) : null;
   if (average === null && slowest === null) {
     return promise === null

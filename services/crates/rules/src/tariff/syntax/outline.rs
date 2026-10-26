@@ -23,7 +23,7 @@ use super::ast::TypeExpr;
 use super::ast::TypeExprKind;
 use super::token::TokenKind;
 use super::walk;
-use crate::span::Span;
+use trenova_module_kit::span::Span;
 
 /// What an outline entry is.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]

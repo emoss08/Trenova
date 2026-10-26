@@ -3735,9 +3735,11 @@ export type EdiDocumentDirection =
   | 'Inbound'
   | 'Outbound';
 
-export type EdiDocumentStatus =
-  | 'Active'
-  | 'Inactive';
+export type EdiFlowInstanceStatus =
+  | 'Closed'
+  | 'Escalated'
+  | 'Held'
+  | 'Open';
 
 export type EdiInboundFileStatus =
   | 'Duplicate'
@@ -3746,6 +3748,14 @@ export type EdiInboundFileStatus =
   | 'Processed'
   | 'Quarantined'
   | 'Received';
+
+export type EdiLadingVersionStatus =
+  | 'Active'
+  | 'Archived'
+  | 'Certified'
+  | 'Draft'
+  | 'Shadow'
+  | 'Superseded';
 
 export type EdiMappingEntityType =
   | 'AccessorialCharge'
@@ -3780,20 +3790,9 @@ export type EdiPartnerKind =
   | 'External'
   | 'Internal';
 
-export type EdiStandard =
-  | 'X12';
-
 export type EdiSummaryAttentionKind =
   | 'InboundFile'
   | 'Message';
-
-export type EdiTemplateStatus =
-  | 'Active'
-  | 'Archived'
-  | 'Certified'
-  | 'Deprecated'
-  | 'Draft'
-  | 'Superseded';
 
 export type EdiTransferDirection =
   | 'Inbound'
@@ -6976,8 +6975,6 @@ export type SelectOptionResource =
   | 'EDI_DOCUMENT_TYPE'
   | 'EDI_MAPPING_PROFILE'
   | 'EDI_PARTNER'
-  | 'EDI_PARTNER_DOCUMENT_PROFILE'
-  | 'EDI_TEMPLATE'
   | 'EDI_TRANSACTION_SET'
   | 'EDI_TRANSFER'
   | 'EMAIL_PROFILE'
@@ -13513,21 +13510,6 @@ export type EdiVolumeSeriesQueryVariables = Exact<{
 
 export type EdiVolumeSeriesQuery = { ediVolumeSeries: Array<{ bucketStart: number, bucketSeconds: number, outboundCount: number, sentCount: number, failedCount: number, receivedCount: number }> };
 
-export type EdiTemplateVersionSummaryFieldsFragment = { id: string, businessUnitId: string, organizationId: string, templateId: string, sourceVersionId: string | null, versionNumber: number, x12Version: string, functionalGroupId: string, status: EdiTemplateStatus, isActive: boolean, notes: string | null, certifiedAt: number | null, activatedAt: number | null, archivedAt: number | null, deprecatedAt: number | null, supersededAt: number | null, version: number, createdAt: number, updatedAt: number } & { ' $fragmentName'?: 'EdiTemplateVersionSummaryFieldsFragment' };
-
-export type EdiTemplateListFieldsFragment = { id: string, businessUnitId: string, organizationId: string, documentTypeId: string, name: string, description: string | null, direction: EdiDocumentDirection, standard: EdiStandard, transactionSet: string, status: EdiTemplateStatus, version: number, createdAt: number, updatedAt: number, versions: Array<{ ' $fragmentRefs'?: { 'EdiTemplateVersionSummaryFieldsFragment': EdiTemplateVersionSummaryFieldsFragment } }> | null } & { ' $fragmentName'?: 'EdiTemplateListFieldsFragment' };
-
-export type EdiTemplateListQueryVariables = Exact<{
-  input: DataTableConnectionInput;
-  status?: EdiTemplateStatus | null | undefined;
-  transactionSet?: string | null | undefined;
-  direction?: EdiDocumentDirection | null | undefined;
-  includeTotalCount?: boolean | null | undefined;
-}>;
-
-
-export type EdiTemplateListQuery = { ediTemplates: { totalCount?: number | null, totalCountExact?: boolean, edges: Array<{ node: { ' $fragmentRefs'?: { 'EdiTemplateListFieldsFragment': EdiTemplateListFieldsFragment } } }>, pageInfo: { hasNextPage: boolean, endCursor: string | null } } };
-
 export type DeskEdiPartnersQueryVariables = Exact<{
   input: DataTableConnectionInput;
   includeTotalCount?: boolean | null | undefined;
@@ -13619,7 +13601,7 @@ export type DeskEdiPartnerCardQueryVariables = Exact<{
 }>;
 
 
-export type DeskEdiPartnerCardQuery = { ediPartnerCard: { partner: { id: string, kind: EdiPartnerKind, status: EntityStatus, code: string, name: string, description: string | null, customerId: string | null, internalOrganizationId: string | null, country: string, timezone: string | null, contactName: string | null, contactEmail: string | null, contactPhone: string | null, enabledForInbound: boolean, enabledForOutbound: boolean, updatedAt: number, internalOrganization: { id: string, name: string } | null, connection: { id: string, method: EdiConnectionMethod, status: EdiConnectionStatus, requestedAt: number, acceptedAt: number | null, rejectedAt: number | null, rejectionReason: string | null, suspendedAt: number | null, revokedAt: number | null, capabilities: { loadTenderOutbound: boolean, loadTenderInbound: boolean, shipmentStatus: boolean, invoice: boolean } } | null }, customer: { id: string, name: string, code: string } | null, documentProfiles: Array<{ id: string, name: string, status: EdiDocumentStatus, direction: EdiDocumentDirection, transactionSet: string, functionalGroupId: string, envelope: { interchangeSenderQualifier: string, interchangeSenderId: string, interchangeReceiverQualifier: string, interchangeReceiverId: string, applicationSenderCode: string, applicationReceiverCode: string, interchangeUsageIndicator: string, elementSeparator: string, segmentTerminator: string, componentSeparator: string, repetitionSeparator: string }, acknowledgment: { expected: boolean, type: string, slaInMinutes: number } }>, transports: Array<{ lastPollAttemptAt: number | null, lastPollSuccessAt: number | null, lastPollError: string | null, profile: { id: string, name: string, method: EdiConnectionMethod, status: EntityStatus, config: unknown }, credentials: Array<{ key: string, secret: boolean, required: boolean, onFile: boolean }>, certificates: Array<{ role: EdiTransportCertificateRole, readable: boolean, subject: string | null, issuer: string | null, notBefore: number | null, notAfter: number | null, expired: boolean }> }>, readiness: { ready: boolean, completedCount: number, totalCount: number, items: Array<{ key: string, label: string, complete: boolean }> }, mappings: { profileId: string | null, updatedAt: number | null, counts: Array<{ entityType: EdiMappingEntityType, count: number }> }, activity: { since: number, seriesSince: number, scorecard: { outboundTotal: number, sentCount: number, failedCount: number, deadLetteredCount: number, receivedCount: number, deliverySuccessRate: number | null, avgAckSeconds: number | null, p95AckSeconds: number | null, overdueAckCount: number }, ackStatusCounts: Array<{ status: string, count: number }>, sets: Array<{ transactionSet: string, direction: EdiDocumentDirection, count: number, failedCount: number, deadLetteredCount: number, lastAt: number | null }>, series: Array<{ bucketStart: number, bucketSeconds: number, outboundCount: number, sentCount: number, failedCount: number, receivedCount: number }> }, attention: { overdueAckAgeSeconds: number, overdueAckCount: number, oldestOverdueAt: number | null, overdueAcks: Array<{ ' $fragmentRefs'?: { 'DeskEdiPartnerMessageFieldsFragment': DeskEdiPartnerMessageFieldsFragment } }>, deadLettered: Array<{ ' $fragmentRefs'?: { 'DeskEdiPartnerMessageFieldsFragment': DeskEdiPartnerMessageFieldsFragment } }>, quarantinedFiles: Array<{ id: string, fileName: string, remotePath: string, sizeBytes: number, failureReason: string | null, receivedAt: number }> }, carriers: Array<{ carrierId: string, carrierName: string, carrierCode: string | null, scac: string | null, isDefault: boolean }> | null } };
+export type DeskEdiPartnerCardQuery = { ediPartnerCard: { partner: { id: string, kind: EdiPartnerKind, status: EntityStatus, code: string, name: string, description: string | null, customerId: string | null, internalOrganizationId: string | null, country: string, timezone: string | null, contactName: string | null, contactEmail: string | null, contactPhone: string | null, enabledForInbound: boolean, enabledForOutbound: boolean, updatedAt: number, internalOrganization: { id: string, name: string } | null, connection: { id: string, method: EdiConnectionMethod, status: EdiConnectionStatus, requestedAt: number, acceptedAt: number | null, rejectedAt: number | null, rejectionReason: string | null, suspendedAt: number | null, revokedAt: number | null, capabilities: { loadTenderOutbound: boolean, loadTenderInbound: boolean, shipmentStatus: boolean, invoice: boolean } } | null }, customer: { id: string, name: string, code: string } | null, lading: { project: { id: string, activeVersionId: string | null, shadowVersionId: string | null, updatedAt: number } | null, active: { id: string, number: number, status: EdiLadingVersionStatus, errorCount: number, warningCount: number, activatedAt: number | null, readiness: { tests: number, failing: number, ready: boolean } | null, interchange: { theirQualifier: string | null, theirId: string | null, ourQualifier: string | null, ourId: string | null, theirGroupCode: string | null, ourGroupCode: string | null, version: string | null, usage: string | null, separators: Array<string> } | null, exchanges: Array<{ transactionSet: string, direction: EdiDocumentDirection, map: string, acknowledgment: string | null, acknowledgmentWithin: number | null }> } | null, shadow: { id: string, number: number, status: EdiLadingVersionStatus, shadowUntil: number | null } | null }, transports: Array<{ lastPollAttemptAt: number | null, lastPollSuccessAt: number | null, lastPollError: string | null, profile: { id: string, name: string, method: EdiConnectionMethod, status: EntityStatus, config: unknown }, credentials: Array<{ key: string, secret: boolean, required: boolean, onFile: boolean }>, certificates: Array<{ role: EdiTransportCertificateRole, readable: boolean, subject: string | null, issuer: string | null, notBefore: number | null, notAfter: number | null, expired: boolean }> }>, readiness: { ready: boolean, completedCount: number, totalCount: number, items: Array<{ key: string, label: string, complete: boolean }> }, mappings: { profileId: string | null, updatedAt: number | null, counts: Array<{ entityType: EdiMappingEntityType, count: number }> }, activity: { since: number, seriesSince: number, scorecard: { outboundTotal: number, sentCount: number, failedCount: number, deadLetteredCount: number, receivedCount: number, deliverySuccessRate: number | null, avgAckSeconds: number | null, p95AckSeconds: number | null, overdueAckCount: number }, ackStatusCounts: Array<{ status: string, count: number }>, sets: Array<{ transactionSet: string, direction: EdiDocumentDirection, count: number, failedCount: number, deadLetteredCount: number, lastAt: number | null }>, series: Array<{ bucketStart: number, bucketSeconds: number, outboundCount: number, sentCount: number, failedCount: number, receivedCount: number }> }, attention: { overdueAckAgeSeconds: number, overdueAckCount: number, oldestOverdueAt: number | null, overdueAcks: Array<{ ' $fragmentRefs'?: { 'DeskEdiPartnerMessageFieldsFragment': DeskEdiPartnerMessageFieldsFragment } }>, deadLettered: Array<{ ' $fragmentRefs'?: { 'DeskEdiPartnerMessageFieldsFragment': DeskEdiPartnerMessageFieldsFragment } }>, quarantinedFiles: Array<{ id: string, fileName: string, remotePath: string, sizeBytes: number, failureReason: string | null, receivedAt: number }> }, carriers: Array<{ carrierId: string, carrierName: string, carrierCode: string | null, scac: string | null, isDefault: boolean }> | null } };
 
 export type DeskEdiPartnerMessageFieldsFragment = { id: string, direction: EdiDocumentDirection, transactionSet: string, interchangeControlNumber: string, status: EdiMessageStatus, deliveryStatus: EdiMessageDeliveryStatus | null, deliveryAttempts: number, deliveryLastAttemptAt: number | null, deliveryLastError: string | null, deliverySentAt: number | null, ackStatus: EdiMessageAckStatus | null, ackReceivedAt: number | null, ackLastError: string | null, generatedAt: number } & { ' $fragmentName'?: 'DeskEdiPartnerMessageFieldsFragment' };
 
@@ -13677,7 +13659,7 @@ export type EdiTransferTableQueryVariables = Exact<{
 
 export type EdiTransferTableQuery = { ediTransfers: { totalCount?: number | null, totalCountExact?: boolean, edges: Array<{ node: { ' $fragmentRefs'?: { 'EdiTransferRowFieldsFragment': EdiTransferRowFieldsFragment } } }>, pageInfo: { hasNextPage: boolean, endCursor: string | null } } };
 
-export type EdiMessageRowFieldsFragment = { id: string, businessUnitId: string, organizationId: string, ediPartnerId: string, documentTypeId: string, partnerDocumentProfileId: string | null, shipmentId: string | null, transferId: string | null, inboundFileId: string | null, direction: EdiDocumentDirection, transactionSet: string, x12Version: string, status: EdiMessageStatus, interchangeControlNumber: string, groupControlNumber: string, transactionControlNumber: string, segmentCount: number, deliveryStatus: EdiMessageDeliveryStatus | null, deliveryRemotePath: string | null, deliveryAttempts: number, deliveryLastAttemptAt: number | null, deliverySentAt: number | null, deliveryLastError: string | null, ackStatus: EdiMessageAckStatus | null, ackMessageId: string | null, ackReceivedAt: number | null, ackLastError: string | null, generatedAt: number, version: number, partner: { id: string, code: string, name: string } | null } & { ' $fragmentName'?: 'EdiMessageRowFieldsFragment' };
+export type EdiMessageRowFieldsFragment = { id: string, businessUnitId: string, organizationId: string, ediPartnerId: string, documentTypeId: string, ladingVersionId: string | null, flowInstanceId: string | null, shipmentId: string | null, transferId: string | null, inboundFileId: string | null, direction: EdiDocumentDirection, transactionSet: string, x12Version: string, status: EdiMessageStatus, interchangeControlNumber: string, groupControlNumber: string, transactionControlNumber: string, segmentCount: number, deliveryStatus: EdiMessageDeliveryStatus | null, deliveryRemotePath: string | null, deliveryAttempts: number, deliveryLastAttemptAt: number | null, deliverySentAt: number | null, deliveryLastError: string | null, ackStatus: EdiMessageAckStatus | null, ackMessageId: string | null, ackReceivedAt: number | null, ackLastError: string | null, generatedAt: number, version: number, partner: { id: string, code: string, name: string } | null } & { ' $fragmentName'?: 'EdiMessageRowFieldsFragment' };
 
 export type EdiMessageTableQueryVariables = Exact<{
   input: DataTableConnectionInput;
@@ -13707,16 +13689,17 @@ export type EdiMappingProfileTableQueryVariables = Exact<{
 
 export type EdiMappingProfileTableQuery = { ediMappingProfiles: { totalCount?: number | null, totalCountExact?: boolean, edges: Array<{ node: { ' $fragmentRefs'?: { 'EdiMappingProfileRowFieldsFragment': EdiMappingProfileRowFieldsFragment } } }>, pageInfo: { hasNextPage: boolean, endCursor: string | null } } };
 
-export type EdiTestCaseRowFieldsFragment = { id: string, businessUnitId: string, organizationId: string, partnerDocumentProfileId: string, name: string, description: string | null, expectedWarnings: number, expectedErrors: number, version: number, createdAt: number, updatedAt: number, documentProfile: { id: string, name: string, direction: EdiDocumentDirection, transactionSet: string, partner: { id: string, code: string, name: string } | null } | null } & { ' $fragmentName'?: 'EdiTestCaseRowFieldsFragment' };
+export type EdiFlowInstanceRowFieldsFragment = { id: string, ediPartnerId: string, versionId: string | null, flow: string, key: string, status: EdiFlowInstanceStatus, reason: string | null, wakeAt: number | null, shipmentId: string | null, transferId: string | null, lastEventAt: number, heldAt: number | null, resolvedAt: number | null, createdAt: number, updatedAt: number, partner: { id: string, code: string, name: string } | null } & { ' $fragmentName'?: 'EdiFlowInstanceRowFieldsFragment' };
 
-export type EdiTestCaseTableQueryVariables = Exact<{
+export type EdiFlowInstanceTableQueryVariables = Exact<{
   input: DataTableConnectionInput;
-  partnerDocumentProfileId?: string | number | null | undefined;
+  partnerId?: string | number | null | undefined;
+  statuses?: Array<EdiFlowInstanceStatus> | EdiFlowInstanceStatus | null | undefined;
   includeTotalCount?: boolean | null | undefined;
 }>;
 
 
-export type EdiTestCaseTableQuery = { ediTestCases: { totalCount?: number | null, totalCountExact?: boolean, edges: Array<{ node: { ' $fragmentRefs'?: { 'EdiTestCaseRowFieldsFragment': EdiTestCaseRowFieldsFragment } } }>, pageInfo: { hasNextPage: boolean, endCursor: string | null } } };
+export type EdiFlowInstanceTableQuery = { ediFlowInstances: { totalCount?: number | null, totalCountExact?: boolean, edges: Array<{ node: { ' $fragmentRefs'?: { 'EdiFlowInstanceRowFieldsFragment': EdiFlowInstanceRowFieldsFragment } } }>, pageInfo: { hasNextPage: boolean, endCursor: string | null } } };
 
 export type DeskEmailProfilesQueryVariables = Exact<{
   input: DataTableConnectionInput;
@@ -15957,7 +15940,7 @@ export type InvoiceDisputeFieldsFragment = { id: string, invoiceId: string, stat
 
 export type CreditMemoApplicationFieldsFragment = { id: string, creditMemoInvoiceId: string, invoiceId: string, appliedAmountMinor: number, accountingDate: number, lineNumber: number, status: CreditMemoApplicationStatus, unappliedAt: number | null, unappliedById: string | null, unappliedReason: string, createdById: string, createdAt: number, updatedAt: number, creditMemo: { id: string, number: string, billType: BillType, status: InvoiceStatus } | null, invoice: { id: string, number: string, billType: BillType, status: InvoiceStatus } | null } & { ' $fragmentName'?: 'CreditMemoApplicationFieldsFragment' };
 
-export type InvoiceEdiSendPlanFieldsFragment = { invoiceId: string, enabled: boolean, autoSend: boolean, partnerId: string | null, partnerName: string, documentProfileId: string | null, communicationMethod: string, status: InvoiceEdiSendStatus, lastMessageId: string | null, lastError: string, sentAt: number | null, blockers: Array<string> } & { ' $fragmentName'?: 'InvoiceEdiSendPlanFieldsFragment' };
+export type InvoiceEdiSendPlanFieldsFragment = { invoiceId: string, enabled: boolean, autoSend: boolean, partnerId: string | null, partnerName: string, ladingVersionId: string | null, communicationMethod: string, status: InvoiceEdiSendStatus, lastMessageId: string | null, lastError: string, sentAt: number | null, blockers: Array<string> } & { ' $fragmentName'?: 'InvoiceEdiSendPlanFieldsFragment' };
 
 export type InvoiceArFieldsFragment = { id: string, number: string, status: InvoiceStatus, billType: BillType, currencyCode: string, appliedAmount: string, openBalance: string, balanceDueMinor: number, creditRemaining: string, daysPastDue: number | null, voidedAt: number | null, voidedById: string | null, voidReason: string, voidDisposition: InvoiceVoidDisposition | null, voidedByAdjustmentId: string | null, referenceInvoiceId: string | null, memoReason: string, memoKind: InvoiceMemoKind | null, ediSendStatus: InvoiceEdiSendStatus, lastEdiMessageId: string | null, ediSentAt: number | null, lastEdiError: string, referenceInvoice: { ' $fragmentRefs'?: { 'InvoiceRelatedFieldsFragment': InvoiceRelatedFieldsFragment } } | null, paymentApplications: Array<{ id: string, customerPaymentId: string, invoiceId: string, appliedAmountMinor: number, shortPayAmountMinor: number, lineNumber: number, createdAt: number, payment: { id: string, paymentDate: number, status: CustomerPaymentStatus, paymentMethod: CustomerPaymentMethod, referenceNumber: string } | null }>, creditApplications: Array<{ ' $fragmentRefs'?: { 'CreditMemoApplicationFieldsFragment': CreditMemoApplicationFieldsFragment } }>, disputes: Array<{ ' $fragmentRefs'?: { 'InvoiceDisputeFieldsFragment': InvoiceDisputeFieldsFragment } }>, openDispute: { ' $fragmentRefs'?: { 'InvoiceDisputeFieldsFragment': InvoiceDisputeFieldsFragment } } | null, lateChargeAssessments: Array<{ id: string, sourceInvoiceId: string, periodIndex: number, periodStart: number, periodEnd: number, asOfDate: number, basisOpenBalanceMinor: number, ratePercent: string, chargeMinor: number, debitMemoInvoiceId: string | null, debitMemo: { id: string, number: string, status: InvoiceStatus } | null }>, ediSendPlan: { ' $fragmentRefs'?: { 'InvoiceEdiSendPlanFieldsFragment': InvoiceEdiSendPlanFieldsFragment } } } & { ' $fragmentName'?: 'InvoiceArFieldsFragment' };
 
@@ -17011,7 +16994,13 @@ export type EdiCarrierInvoiceReferenceFragment = { id: string, invoiceNumber: st
 
 export type EdiCommunicationProfileReferenceFragment = { id: string, status: EntityStatus, name: string } & { ' $fragmentName'?: 'EdiCommunicationProfileReferenceFragment' };
 
+export type EdiFlowInstanceReferenceFragment = { id: string, status: EdiFlowInstanceStatus } & { ' $fragmentName'?: 'EdiFlowInstanceReferenceFragment' };
+
 export type EdiInboundFileReferenceFragment = { id: string, status: EdiInboundFileStatus } & { ' $fragmentName'?: 'EdiInboundFileReferenceFragment' };
+
+export type EdiLadingProjectReferenceFragment = { id: string } & { ' $fragmentName'?: 'EdiLadingProjectReferenceFragment' };
+
+export type EdiLadingVersionReferenceFragment = { id: string, status: EdiLadingVersionStatus } & { ' $fragmentName'?: 'EdiLadingVersionReferenceFragment' };
 
 export type EdiMessageReferenceFragment = { id: string, status: EdiMessageStatus } & { ' $fragmentName'?: 'EdiMessageReferenceFragment' };
 
@@ -19895,12 +19884,11 @@ export { PortalTrainingFieldsFragmentDoc, WorkerPortalStatusDocument, InviteWork
 export { DeskDriverSettlementCardDocument, DeskDriverSettlementStatementDocument, DeskPayCodeOptionsDocument } from "./documents/driver-settlement/desk";
 export { PayProfileTableDocument, WorkerPayAssignmentsDocument, EffectiveWorkerPayAssignmentDocument, PayProfileAssignmentsDocument, PayProfileDetailDocument, RecurringDeductionTableDocument, RecurringEarningTableDocument, PayCodeTableDocument, PayAdvanceTableDocument, EscrowAccountTableDocument, EscrowAccountDetailDocument, DriverSettlementTableDocument, DriverSettlementDetailDocument, SettlementBatchTableDocument, DriverPayEventTableDocument, WorkerEarningsSummaryDocument, WorkerYtdPaySummariesDocument, SettlementControlDocument, SettlementWorkspaceSummaryDocument, UnsettledWorkerSummariesDocument, CurrentSettlementPeriodDocument, PreviewDriverSettlementDocument, ExportSettlementBatchCsvDocument, CreatePayProfileDocument, UpdatePayProfileDocument, AssignPayProfileToWorkerDocument, EndWorkerPayAssignmentDocument, CreateRecurringDeductionDocument, UpdateRecurringDeductionDocument, CreatePayCodeDocument, UpdatePayCodeDocument, CreateRecurringEarningDocument, UpdateRecurringEarningDocument, IssuePayAdvanceDocument, WriteOffPayAdvanceDocument, OpenEscrowAccountDocument, UpdateEscrowAccountDocument, AdjustEscrowAccountDocument, CloseEscrowAccountDocument, GenerateSettlementBatchDocument, GenerateDriverSettlementDocument, SubmitDriverSettlementDocument, ApproveDriverSettlementDocument, RejectDriverSettlementDocument, PostDriverSettlementDocument, MarkDriverSettlementPaidDocument, VoidDriverSettlementDocument, RecalculateDriverSettlementDocument, AddDriverSettlementAdjustmentDocument, RemoveDriverSettlementAdjustmentDocument, HoldDriverPayEventDocument, ReleaseDriverPayEventDocument, AttachPayEventsToSettlementDocument, DetachPayEventFromSettlementDocument, BulkDriverSettlementActionDocument, UpdateSettlementControlDocument, SettlementBatchDetailDocument, UnsettledPayEventsDocument, PayWorkerNowDocument } from "./documents/driver-settlement/operations";
 export { EdiPartnerScorecardsDocument, EdiVolumeSeriesDocument } from "./documents/edi/analytics";
-export { EdiTemplateVersionSummaryFieldsFragmentDoc, EdiTemplateListFieldsFragmentDoc, EdiTemplateListDocument } from "./documents/edi/designer";
 export { DeskEdiMessageRowFieldsFragmentDoc, DeskEdiTransferRowFieldsFragmentDoc, DeskEdiPartnersDocument, DeskEdiInboundFilesDocument, DeskEdiInboundFileDocument, DeskEdiMessagesDocument, DeskEdiMessageDocument, DeskEdiTransfersDocument, DeskEdiTransferDocument, DeskEdiAckHealthDocument, DeskEdiCarrierInvoicesDocument } from "./documents/edi/desk";
 export { DeskEdiPartnerMessageFieldsFragmentDoc, DeskEdiPartnerCardDocument, DeskEdiPartnerMessagesDocument } from "./documents/edi/partner-desk";
 export { EdiPartnerReadinessDocument } from "./documents/edi/readiness";
 export { EdiSummaryDocument } from "./documents/edi/summary";
-export { EdiPartnerRowFieldsFragmentDoc, EdiCommunicationProfileRowFieldsFragmentDoc, EdiTransferRowFieldsFragmentDoc, EdiMessageRowFieldsFragmentDoc, EdiInboundFileRowFieldsFragmentDoc, EdiMappingProfileRowFieldsFragmentDoc, EdiTestCaseRowFieldsFragmentDoc, EdiPartnerTableDocument, EdiCommunicationProfileTableDocument, EdiTransferTableDocument, EdiMessageTableDocument, EdiInboundFileTableDocument, EdiMappingProfileTableDocument, EdiTestCaseTableDocument } from "./documents/edi/table";
+export { EdiPartnerRowFieldsFragmentDoc, EdiCommunicationProfileRowFieldsFragmentDoc, EdiTransferRowFieldsFragmentDoc, EdiMessageRowFieldsFragmentDoc, EdiInboundFileRowFieldsFragmentDoc, EdiMappingProfileRowFieldsFragmentDoc, EdiFlowInstanceRowFieldsFragmentDoc, EdiPartnerTableDocument, EdiCommunicationProfileTableDocument, EdiTransferTableDocument, EdiMessageTableDocument, EdiInboundFileTableDocument, EdiMappingProfileTableDocument, EdiFlowInstanceTableDocument } from "./documents/edi/table";
 export { DeskEmailProfilesDocument } from "./documents/email-profile/desk";
 export { EmailProfileTableRowFieldsFragmentDoc, EmailProfileTableDocument } from "./documents/email-profile/table";
 export { EquipmentManufacturerTableRowFieldsFragmentDoc, EquipmentManufacturerTableDocument } from "./documents/equipment-manufacturer/table";
@@ -19988,7 +19976,7 @@ export { RateAgreementRowFieldsFragmentDoc, RateZoneRowFieldsFragmentDoc, RateMa
 export { DeskRecordActivityDocument } from "./documents/record-activity/desk";
 export { DeskRecurringShipmentsDocument } from "./documents/recurring-shipment/desk";
 export { RecurringShipmentTableRowFieldsFragmentDoc, RecurringShipmentTableDocument } from "./documents/recurring-shipment/table";
-export { InboundMailboxReferenceFragmentDoc, JournalEntryReferenceFragmentDoc, AccessorialChargeReferenceFragmentDoc, AgentProposalReferenceFragmentDoc, AgentDefinitionReferenceFragmentDoc, AgentRunReferenceFragmentDoc, BenefitPlanReferenceFragmentDoc, BusinessUnitReferenceFragmentDoc, CaptureDeviceReferenceFragmentDoc, CarrierReferenceFragmentDoc, CarrierInvoiceMatchReferenceFragmentDoc, CarrierSettlementReferenceFragmentDoc, CommodityReferenceFragmentDoc, CustomerReferenceFragmentDoc, CustomerPaymentReferenceFragmentDoc, DotRandomDrawReferenceFragmentDoc, DotRandomDrawEntryReferenceFragmentDoc, DotRandomPoolReferenceFragmentDoc, DocumentTypeReferenceFragmentDoc, DriverPayEventReferenceFragmentDoc, DriverSettlementReferenceFragmentDoc, EdiCarrierInvoiceReferenceFragmentDoc, EdiCommunicationProfileReferenceFragmentDoc, EdiInboundFileReferenceFragmentDoc, EdiMessageReferenceFragmentDoc, EdiPartnerCustomerReferenceFragmentDoc, EdiTransferReferenceFragmentDoc, EmailProfileReferenceFragmentDoc, EquipmentManufacturerReferenceFragmentDoc, EquipmentTypeReferenceFragmentDoc, EscrowAccountReferenceFragmentDoc, FactoringCompanyReferenceFragmentDoc, FactoringInvoiceStateReferenceFragmentDoc, FactoringSubmissionReferenceFragmentDoc, FiscalPeriodReferenceFragmentDoc, FuelCardReferenceFragmentDoc, FuelIndexPriceReferenceFragmentDoc, FuelProgramCurrentRateReferenceFragmentDoc, FuelPurchaseReferenceFragmentDoc, FuelPurchaseImportBatchReferenceFragmentDoc, FuelSurchargeProgramReferenceFragmentDoc, InboundShipmentRefReferenceFragmentDoc, InvoiceReferenceFragmentDoc, InvoiceAdjustmentReferenceFragmentDoc, InvoiceDisputeReferenceFragmentDoc, JournalReversalReferenceFragmentDoc, LocationReferenceFragmentDoc, LocationCategoryReferenceFragmentDoc, ManualJournalReferenceFragmentDoc, OrganizationReferenceFragmentDoc, PtoPolicyReferenceFragmentDoc, PayAdvanceReferenceFragmentDoc, PayCodeReferenceFragmentDoc, PerformanceReviewReferenceFragmentDoc, PerformanceReviewTemplateReferenceFragmentDoc, RoleReferenceFragmentDoc, RoutingGuideReferenceFragmentDoc, ServiceFailureReasonCodeReferenceFragmentDoc, ServiceFailureShipmentReferenceFragmentDoc, SettlementDisputeReferenceFragmentDoc, ShiftTemplateReferenceFragmentDoc, ShipmentReferenceFragmentDoc, ShipmentAccessorialChargeReferenceFragmentDoc, ShipmentCommodityDetailReferenceFragmentDoc, EdiPartnerReferenceFragmentDoc, ShipmentCustomerReferenceFragmentDoc, ShipmentEventShipmentReferenceReferenceFragmentDoc, TractorReferenceFragmentDoc, TrailerReferenceFragmentDoc, TrainingCourseReferenceFragmentDoc, UserReferenceFragmentDoc, FleetCodeReferenceFragmentDoc, WorkerReferenceFragmentDoc, WorkerChecklistReferenceFragmentDoc, WorkerCredentialReferenceFragmentDoc, WorkerCredentialTypeReferenceFragmentDoc, WorkerDisciplinaryActionReferenceFragmentDoc, WorkerEarningsSummaryReferenceFragmentDoc, WorkerInjuryReferenceFragmentDoc, WorkerPolicyReferenceFragmentDoc, WorkerSafetyViolationReferenceFragmentDoc, WorkerSafetyEventReferenceFragmentDoc } from "./documents/reference/reference";
+export { InboundMailboxReferenceFragmentDoc, JournalEntryReferenceFragmentDoc, AccessorialChargeReferenceFragmentDoc, AgentProposalReferenceFragmentDoc, AgentDefinitionReferenceFragmentDoc, AgentRunReferenceFragmentDoc, BenefitPlanReferenceFragmentDoc, BusinessUnitReferenceFragmentDoc, CaptureDeviceReferenceFragmentDoc, CarrierReferenceFragmentDoc, CarrierInvoiceMatchReferenceFragmentDoc, CarrierSettlementReferenceFragmentDoc, CommodityReferenceFragmentDoc, CustomerReferenceFragmentDoc, CustomerPaymentReferenceFragmentDoc, DotRandomDrawReferenceFragmentDoc, DotRandomDrawEntryReferenceFragmentDoc, DotRandomPoolReferenceFragmentDoc, DocumentTypeReferenceFragmentDoc, DriverPayEventReferenceFragmentDoc, DriverSettlementReferenceFragmentDoc, EdiCarrierInvoiceReferenceFragmentDoc, EdiCommunicationProfileReferenceFragmentDoc, EdiFlowInstanceReferenceFragmentDoc, EdiInboundFileReferenceFragmentDoc, EdiLadingProjectReferenceFragmentDoc, EdiLadingVersionReferenceFragmentDoc, EdiMessageReferenceFragmentDoc, EdiPartnerCustomerReferenceFragmentDoc, EdiTransferReferenceFragmentDoc, EmailProfileReferenceFragmentDoc, EquipmentManufacturerReferenceFragmentDoc, EquipmentTypeReferenceFragmentDoc, EscrowAccountReferenceFragmentDoc, FactoringCompanyReferenceFragmentDoc, FactoringInvoiceStateReferenceFragmentDoc, FactoringSubmissionReferenceFragmentDoc, FiscalPeriodReferenceFragmentDoc, FuelCardReferenceFragmentDoc, FuelIndexPriceReferenceFragmentDoc, FuelProgramCurrentRateReferenceFragmentDoc, FuelPurchaseReferenceFragmentDoc, FuelPurchaseImportBatchReferenceFragmentDoc, FuelSurchargeProgramReferenceFragmentDoc, InboundShipmentRefReferenceFragmentDoc, InvoiceReferenceFragmentDoc, InvoiceAdjustmentReferenceFragmentDoc, InvoiceDisputeReferenceFragmentDoc, JournalReversalReferenceFragmentDoc, LocationReferenceFragmentDoc, LocationCategoryReferenceFragmentDoc, ManualJournalReferenceFragmentDoc, OrganizationReferenceFragmentDoc, PtoPolicyReferenceFragmentDoc, PayAdvanceReferenceFragmentDoc, PayCodeReferenceFragmentDoc, PerformanceReviewReferenceFragmentDoc, PerformanceReviewTemplateReferenceFragmentDoc, RoleReferenceFragmentDoc, RoutingGuideReferenceFragmentDoc, ServiceFailureReasonCodeReferenceFragmentDoc, ServiceFailureShipmentReferenceFragmentDoc, SettlementDisputeReferenceFragmentDoc, ShiftTemplateReferenceFragmentDoc, ShipmentReferenceFragmentDoc, ShipmentAccessorialChargeReferenceFragmentDoc, ShipmentCommodityDetailReferenceFragmentDoc, EdiPartnerReferenceFragmentDoc, ShipmentCustomerReferenceFragmentDoc, ShipmentEventShipmentReferenceReferenceFragmentDoc, TractorReferenceFragmentDoc, TrailerReferenceFragmentDoc, TrainingCourseReferenceFragmentDoc, UserReferenceFragmentDoc, FleetCodeReferenceFragmentDoc, WorkerReferenceFragmentDoc, WorkerChecklistReferenceFragmentDoc, WorkerCredentialReferenceFragmentDoc, WorkerCredentialTypeReferenceFragmentDoc, WorkerDisciplinaryActionReferenceFragmentDoc, WorkerEarningsSummaryReferenceFragmentDoc, WorkerInjuryReferenceFragmentDoc, WorkerPolicyReferenceFragmentDoc, WorkerSafetyViolationReferenceFragmentDoc, WorkerSafetyEventReferenceFragmentDoc } from "./documents/reference/reference";
 export { CannedReportsDocument } from "./documents/reports/canned";
 export { ReportCatalogDocument } from "./documents/reports/catalog";
 export { ReportDashboardFieldsFragmentDoc, ReportDashboardsDocument, ReportDashboardByIdDocument, CreateReportDashboardDocument, UpdateReportDashboardDocument, DeleteReportDashboardDocument } from "./documents/reports/dashboards";

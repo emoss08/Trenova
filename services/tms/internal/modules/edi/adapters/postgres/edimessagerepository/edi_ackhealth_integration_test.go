@@ -77,7 +77,6 @@ func TestOverdueAcks_ListAndCountAgreeOnWhatIsOverdue(t *testing.T) {
 			TransactionSet:           edi.TransactionSet214,
 			X12Version:               edi.DefaultX12204Version,
 			Status:                   edi.MessageStatusGenerated,
-			ValidationMode:           edi.ValidationModeDisabled,
 			RawX12:                   "ISA*TEST~",
 			InterchangeControlNumber: fmt.Sprintf("%09d", index+1),
 			GroupControlNumber:       fmt.Sprintf("%d", index+1),

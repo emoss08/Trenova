@@ -1,9 +1,9 @@
 package ediconnectiondraft
 
 import (
+	"strings"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -12,9 +12,9 @@ import (
 func TestPreview_ShowsEachRecordAsItIsAndAsItWouldBe(t *testing.T) {
 	t.Parallel()
 
-	h := newHarness()
+	h := newHarness(t)
 	req := acmeRequest(t)
-	existing := existingAcme(req)
+	existing := existingAcme(t, req)
 	h.repo.partners = []*ediports.EDIPartnerSetup{existing}
 
 	plan, err := h.service.PreviewConnectionDraft(t.Context(), req)
@@ -31,18 +31,15 @@ func TestPreview_ShowsEachRecordAsItIsAndAsItWouldBe(t *testing.T) {
 	assert.Equal(t, ediports.ChangeKindSame, plan.Transport.Change)
 	assert.NotContains(t, plan.Transport.After.Config, "privateKey", "secrets never enter a plan")
 
-	byKey := map[string]ediports.PlannedDocumentProfile{}
-	for _, profile := range plan.DocumentProfiles {
-		byKey[profileKey(profile.After.TransactionSet, profile.After.Direction)] = profile
+	require.NotNil(t, plan.Project)
+	assert.Equal(t, ediports.ChangeKindChange, plan.Project.Change)
+	assert.Same(t, existing.Project, plan.Project.Project)
+	assert.Same(t, existing.LatestVersion, plan.Project.Before)
+	assert.NotEmpty(t, plan.Project.Files)
+	for _, sample := range plan.Project.Samples {
+		assert.True(t, strings.HasPrefix(sample.Path, "samples/spec-page-"),
+			"a draft adds the guide's own examples; the project keeps its samples")
 	}
-	require.Len(t, byKey, 4)
-	status := byKey[profileKey(edi.TransactionSet214, edi.DocumentDirectionOutbound)]
-	assert.Equal(t, ediports.ChangeKindSame, status.Change)
-	assert.Same(t, existing.DocumentProfiles[0], status.Before)
-	tender := byKey[profileKey(edi.TransactionSet204, edi.DocumentDirectionInbound)]
-	assert.Equal(t, ediports.ChangeKindAdd, tender.Change)
-	assert.Nil(t, tender.Before)
-	assert.Equal(t, "007912345", tender.After.Envelope.InterchangeSenderID)
 
 	require.Len(t, plan.ControlNumbers, 2, "the 990 and 210 start at 1000; the 214 already passed it")
 	for _, control := range plan.ControlNumbers {

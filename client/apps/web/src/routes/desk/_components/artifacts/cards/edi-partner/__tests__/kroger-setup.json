@@ -26,60 +26,60 @@
       "name": "The Kroger Co.",
       "code": "KROGER"
     },
-    "documentProfiles": [
-      {
-        "id": "edidp_kroger_214",
-        "name": "Kroger 214 status",
-        "status": "Active",
-        "direction": "Outbound",
-        "transactionSet": "214",
-        "functionalGroupId": "QM",
-        "envelope": {
-          "interchangeSenderQualifier": "ZZ",
-          "interchangeSenderId": "TRENOVA        ",
-          "interchangeReceiverQualifier": "ZZ",
-          "interchangeReceiverId": "KROGERTMS      ",
-          "applicationSenderCode": "TRENOVA",
-          "applicationReceiverCode": "KROGERTMS",
-          "interchangeUsageIndicator": "T",
-          "elementSeparator": "*",
-          "segmentTerminator": "~",
-          "componentSeparator": ">",
-          "repetitionSeparator": "^"
-        },
-        "acknowledgment": {
-          "expected": true,
-          "type": "997",
-          "slaInMinutes": 120
-        }
+    "lading": {
+      "project": {
+        "id": "ldp_kroger",
+        "activeVersionId": "ldv_kroger",
+        "shadowVersionId": null,
+        "updatedAt": 1788272000
       },
-      {
-        "id": "edidp_kroger_204",
-        "name": "Kroger 204 tender",
+      "active": {
+        "id": "ldv_kroger",
+        "number": 3,
         "status": "Active",
-        "direction": "Inbound",
-        "transactionSet": "204",
-        "functionalGroupId": "SM",
-        "envelope": {
-          "interchangeSenderQualifier": "ZZ",
-          "interchangeSenderId": "KROGERTMS      ",
-          "interchangeReceiverQualifier": "ZZ",
-          "interchangeReceiverId": "TRENOVA        ",
-          "applicationSenderCode": "KROGERTMS",
-          "applicationReceiverCode": "TRENOVA",
-          "interchangeUsageIndicator": "T",
-          "elementSeparator": "*",
-          "segmentTerminator": "~",
-          "componentSeparator": ">",
-          "repetitionSeparator": "^"
+        "errorCount": 0,
+        "warningCount": 0,
+        "activatedAt": 1788272000,
+        "readiness": {
+          "tests": 12,
+          "failing": 0,
+          "ready": true
         },
-        "acknowledgment": {
-          "expected": true,
-          "type": "997",
-          "slaInMinutes": 0
-        }
-      }
-    ],
+        "interchange": {
+          "theirQualifier": "ZZ",
+          "theirId": "KROGERTMS",
+          "ourQualifier": "ZZ",
+          "ourId": "TRENOVA",
+          "theirGroupCode": "KROGERTMS",
+          "ourGroupCode": "TRENOVA",
+          "version": "004010",
+          "usage": "test",
+          "separators": [
+            "*",
+            "~",
+            ">",
+            "^"
+          ]
+        },
+        "exchanges": [
+          {
+            "transactionSet": "204",
+            "direction": "Inbound",
+            "map": "tenderIn",
+            "acknowledgment": "997",
+            "acknowledgmentWithin": null
+          },
+          {
+            "transactionSet": "214",
+            "direction": "Outbound",
+            "map": "statusOut",
+            "acknowledgment": "997",
+            "acknowledgmentWithin": 7200
+          }
+        ]
+      },
+      "shadow": null
+    },
     "transports": [],
     "readiness": {
       "ready": false,

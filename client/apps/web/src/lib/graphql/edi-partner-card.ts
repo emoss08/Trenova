@@ -18,7 +18,8 @@ export type DeskEdiPartnerCard = Omit<RawEdiPartnerCard, "attention"> & {
   };
 };
 export type DeskEdiPartner = DeskEdiPartnerCard["partner"];
-export type EdiPartnerDocumentProfile = DeskEdiPartnerCard["documentProfiles"][number];
+export type EdiPartnerLadingVersion = NonNullable<DeskEdiPartnerCard["lading"]["active"]>;
+export type EdiPartnerExchange = EdiPartnerLadingVersion["exchanges"][number];
 export type EdiPartnerTransport = DeskEdiPartnerCard["transports"][number];
 export type EdiPartnerActivity = DeskEdiPartnerCard["activity"];
 export type EdiPartnerAttention = DeskEdiPartnerCard["attention"];

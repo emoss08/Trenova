@@ -2,11 +2,11 @@
 //! weight`, `` `shipment.weight` ``. Every phrase is a [`Message`] of its own, so a sentence
 //! built from phrases still translates part by part.
 
-use crate::span::Span;
 use crate::tariff::types::{QuantityType, Type};
 use crate::tariff::units::{Base, Dim, Simple, Unit};
 use trenova_module_kit::message;
 use trenova_module_kit::message::{Arg, Message};
+use trenova_module_kit::span::Span;
 
 /// The longest snippet of source quoted in a message, in characters.
 const LONGEST_QUOTE: usize = 48;

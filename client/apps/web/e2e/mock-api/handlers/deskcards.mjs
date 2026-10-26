@@ -641,9 +641,8 @@ function threadSlug(state) {
 function provenance({ message }) {
   return {
     messageId: message.id,
-    profileId: message.partnerDocumentProfileId,
-    templateId: message.templateId,
-    templateVersionId: message.templateVersionId,
+    ladingVersionId: message.ladingVersionId || null,
+    flowInstanceId: message.flowInstanceId || null,
     generatedAt: message.generatedAt,
     generatedById: message.generatedById,
   };

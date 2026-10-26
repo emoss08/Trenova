@@ -15,9 +15,9 @@ import (
 	"github.com/emoss08/keel"
 	"github.com/emoss08/keel/seed"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
-	"github.com/emoss08/trenova/internal/modules/edi/domain/edi/templates"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/pkg/domaintypes"
+	"github.com/emoss08/trenova/pkg/lading"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/timeutils"
 )
@@ -71,7 +71,7 @@ type EDITradingPartnerSeed struct {
 var EDITradingPartner = Seeds.Add(seed.Seed{
 	Name:        "edi_trading_partner",
 	Kind:        seed.Fixture,
-	Description: "Seeds an outside EDI trading partner for Acme Manufacturing with outbound 214 and 990 profiles and 214s in every acknowledgment state",
+	Description: "Seeds an outside EDI trading partner for Acme Manufacturing with an active Lading project from the carrier starter and 214s in every acknowledgment state",
 	After:       []*seed.Seed{AdminAccount, Shipment},
 	Run:         (&EDITradingPartnerSeed{}).Run,
 })
@@ -88,15 +88,16 @@ func (s *EDITradingPartnerSeed) Run(ctx context.Context, sr *seed.Run) error {
 	if err != nil {
 		return err
 	}
-	profile214, err := seedOutboundProfile(ctx, db, tenant, partner, edi.TransactionSet214)
+	version, err := seedLadingProject(ctx, db, tenant, partner, lading.Org{
+		Name: org.Name,
+		SCAC: org.ScacCode,
+		Zone: org.Timezone,
+	})
 	if err != nil {
 		return err
 	}
-	if _, err = seedOutboundProfile(ctx, db, tenant, partner, edi.TransactionSet990); err != nil {
-		return err
-	}
 
-	return seedOutboundMessages(ctx, db, tenant, partner, profile214)
+	return seedOutboundMessages(ctx, db, tenant, partner, version)
 }
 
 func seedEDIPartner(
@@ -137,160 +138,110 @@ func seedEDIPartner(
 	return partner, nil
 }
 
-func seedOutboundProfile(
+// seedLadingProject gives the partner Trenova's carrier starter, checked and tested, as the
+// version it runs on.
+func seedLadingProject(
 	ctx context.Context,
 	db *keel.DB,
 	tenant pagination.TenantInfo,
 	partner *edi.EDIPartner,
-	set edi.TransactionSet,
-) (*edi.EDIPartnerDocumentProfile, error) {
-	template, version, err := seedBaseTemplate(ctx, db, tenant, set)
+	org lading.Org,
+) (*edi.LadingVersion, error) {
+	client := lading.Default()
+	starter, err := client.Starter(ctx, &lading.StarterRequest{
+		Name:  SeedEDIPartnerCode,
+		Label: SeedEDIPartnerName,
+		Role:  lading.RoleCarrier,
+		Them:  &[2]string{"ZZ", seedEDIReceiverID},
+		Us:    &[2]string{"ZZ", seedEDISenderID},
+		Zone:  partner.Timezone,
+		Usage: "production",
+	})
+	if err != nil {
+		return nil, fmt.Errorf("write the carrier starter: %w", err)
+	}
+	encoded, err := lading.Encode(
+		&lading.Project{Files: starter.Files, Samples: starter.Samples},
+		&lading.Context{Org: org},
+	)
 	if err != nil {
 		return nil, err
 	}
-
-	envelope := edi.DefaultX12EnvelopeSettings()
-	envelope.InterchangeSenderID = seedEDISenderID
-	envelope.InterchangeReceiverID = seedEDIReceiverID
-	envelope.ApplicationSenderCode = seedEDISenderID
-	envelope.ApplicationReceiverCode = seedEDIReceiverID
-	acknowledgment := edi.AcknowledgmentConfig{
-		Expected:           true,
-		Type:               edi.AcknowledgmentType997,
-		SLAInMinutes:       240,
-		MissingAckSeverity: edi.ValidationSeverityWarning,
+	check, err := client.Check(ctx, encoded)
+	if err != nil {
+		return nil, fmt.Errorf("check the carrier starter: %w", err)
 	}
-	if set == edi.TransactionSet990 {
-		acknowledgment = edi.AcknowledgmentConfig{Type: edi.AcknowledgmentTypeNone}
+	report, err := client.Test(ctx, encoded)
+	if err != nil {
+		return nil, fmt.Errorf("test the carrier starter: %w", err)
+	}
+	if !report.Readiness.Ready {
+		return nil, fmt.Errorf("the carrier starter is not ready: %+v", report.Readiness)
 	}
 
-	profile := &edi.EDIPartnerDocumentProfile{
+	project := &edi.LadingProject{
 		BusinessUnitID:    tenant.BuID,
 		OrganizationID:    tenant.OrgID,
 		EDIPartnerID:      partner.ID,
-		DocumentTypeID:    template.DocumentTypeID,
-		TemplateID:        template.ID,
-		TemplateVersionID: version.ID,
-		Name:              fmt.Sprintf("%s %s outbound", SeedEDIPartnerCode, set),
-		Status:            edi.DocumentStatusActive,
-		Direction:         edi.DocumentDirectionOutbound,
-		Standard:          edi.EDIStandardX12,
-		TransactionSet:    set,
-		FunctionalGroupID: edi.FunctionalGroupDefault(set),
-		Envelope:          envelope,
-		Acknowledgment:    acknowledgment,
-		ValidationMode:    edi.ValidationModeStrict,
-		PartnerSettings:   map[string]any{"carrier": map[string]any{"scac": seedEDICarrierSCAC}},
+		Settings:          map[string]any{},
+		NextVersionNumber: 2,
 	}
-	if err = edidb.EDIPartnerDocumentProfiles.Create(ctx, db, profile); err != nil {
-		return nil, fmt.Errorf("insert the %s document profile: %w", set, err)
+	if err = edidb.LadingProjects.Create(ctx, db, project); err != nil {
+		return nil, fmt.Errorf("insert the Lading project: %w", err)
 	}
 
-	return profile, nil
-}
-
-func seedBaseTemplate(
-	ctx context.Context,
-	db *keel.DB,
-	tenant pagination.TenantInfo,
-	set edi.TransactionSet,
-) (*edi.EDITemplate, *edi.EDITemplateVersion, error) {
-	documentType, err := edidb.EDIDocumentTypes.Query().Where(
-		edidb.EDIDocumentTypes.Standard.Eq(edi.EDIStandardX12),
-		edidb.EDIDocumentTypes.TransactionSet.Eq(set),
-		edidb.EDIDocumentTypes.Direction.Eq(edi.DocumentDirectionOutbound),
-	).First(ctx, db)
-	if err != nil {
-		return nil, nil, fmt.Errorf("find the X12 %s outbound document type: %w", set, err)
+	refs := make([]edi.LadingSampleRef, 0, len(starter.Samples))
+	for _, sample := range starter.Samples {
+		digest := lading.Digest(sample.Content)
+		refs = append(refs, edi.LadingSampleRef{
+			Path:   sample.Path,
+			Digest: digest,
+			Size:   len(sample.Content),
+		})
+		if err = edidb.LadingSamples.Create(ctx, db, &edi.LadingSample{
+			BusinessUnitID: tenant.BuID,
+			OrganizationID: tenant.OrgID,
+			ProjectID:      project.ID,
+			Digest:         digest,
+			Size:           len(sample.Content),
+			Content:        sample.Content,
+		}); err != nil {
+			return nil, fmt.Errorf("insert Lading sample %s: %w", sample.Path, err)
+		}
 	}
 
-	name := fmt.Sprintf("Base X12 %s %s", set, edi.DocumentDirectionOutbound)
-	existing, existingVersion, err := findBaseTemplate(ctx, db, tenant, set, name)
-	if err != nil {
-		return nil, nil, err
-	}
-	if existing != nil {
-		return existing, existingVersion, nil
-	}
-
-	template := &edi.EDITemplate{
+	now := timeutils.NowUnix()
+	version := &edi.LadingVersion{
 		BusinessUnitID: tenant.BuID,
 		OrganizationID: tenant.OrgID,
-		DocumentTypeID: documentType.ID,
-		Name:           name,
-		Description:    fmt.Sprintf("Tenant-scoped base outbound X12 %s template", set),
-		Direction:      edi.DocumentDirectionOutbound,
-		Standard:       edi.EDIStandardX12,
-		TransactionSet: set,
-		Status:         edi.TemplateStatusActive,
+		ProjectID:      project.ID,
+		Number:         1,
+		Status:         edi.LadingVersionStatusActive,
+		Files:          starter.Files,
+		Samples:        refs,
+		Manifest:       *check,
+		Readiness: &edi.LadingReadiness{
+			Errors:               report.Readiness.Errors,
+			Failing:              report.Readiness.Failing,
+			Tests:                report.Readiness.Tests,
+			UncoveredFlowClauses: report.Readiness.UncoveredFlowClauses,
+			Ready:                true,
+			CheckedAt:            now,
+		},
+		Notes:        "Trenova's carrier starter",
+		ErrorCount:   check.Errors,
+		WarningCount: check.Warnings,
+		CertifiedAt:  &now,
+		ActivatedAt:  &now,
 	}
-	if err = edidb.EDITemplates.Create(ctx, db, template); err != nil {
-		return nil, nil, fmt.Errorf("insert the base %s template: %w", set, err)
+	if err = edidb.LadingVersions.Create(ctx, db, version); err != nil {
+		return nil, fmt.Errorf("insert the Lading version: %w", err)
 	}
-
-	activatedAt := timeutils.NowUnix()
-	version := &edi.EDITemplateVersion{
-		BusinessUnitID:    tenant.BuID,
-		OrganizationID:    tenant.OrgID,
-		TemplateID:        template.ID,
-		VersionNumber:     1,
-		X12Version:        edi.DefaultX12204Version,
-		FunctionalGroupID: edi.FunctionalGroupDefault(set),
-		Status:            edi.TemplateStatusActive,
-		IsActive:          true,
-		Notes:             fmt.Sprintf("Seeded base %s X12 %s outbound profile", edi.DefaultX12204Version, set),
-		ActivatedAt:       &activatedAt,
+	project.ActiveVersionID = version.ID
+	if err = edidb.LadingProjects.Save(ctx, db, project); err != nil {
+		return nil, fmt.Errorf("activate the Lading version: %w", err)
 	}
-	if err = edidb.EDITemplateVersions.Create(ctx, db, version); err != nil {
-		return nil, nil, fmt.Errorf("insert the base %s template version: %w", set, err)
-	}
-
-	segments, err := templates.StarterSegments(tenant, version.ID, set)
-	if err != nil {
-		return nil, nil, err
-	}
-	if err = edidb.EDITemplateSegments.CreateMany(ctx, db, segments); err != nil {
-		return nil, nil, fmt.Errorf("insert the base %s template segments: %w", set, err)
-	}
-
-	return template, version, nil
-}
-
-func findBaseTemplate(
-	ctx context.Context,
-	db *keel.DB,
-	tenant pagination.TenantInfo,
-	set edi.TransactionSet,
-	name string,
-) (*edi.EDITemplate, *edi.EDITemplateVersion, error) {
-	t := edidb.EDITemplates
-	template, err := t.AllTenants().Where(
-		t.OrganizationID.Eq(tenant.OrgID),
-		t.BusinessUnitID.Eq(tenant.BuID),
-		t.Standard.Eq(edi.EDIStandardX12),
-		t.TransactionSet.Eq(set),
-		t.Direction.Eq(edi.DocumentDirectionOutbound),
-		t.Name.Eq(name),
-	).First(ctx, db)
-	if errors.Is(err, keel.ErrNotFound) {
-		return nil, nil, nil
-	}
-	if err != nil {
-		return nil, nil, fmt.Errorf("look for the base %s template: %w", set, err)
-	}
-
-	v := edidb.EDITemplateVersions
-	version, err := v.AllTenants().Where(
-		v.OrganizationID.Eq(tenant.OrgID),
-		v.BusinessUnitID.Eq(tenant.BuID),
-		v.TemplateID.Eq(template.ID),
-		v.IsActive.IsTrue(),
-	).First(ctx, db)
-	if err != nil {
-		return nil, nil, fmt.Errorf("find the active version of the base %s template: %w", set, err)
-	}
-
-	return template, version, nil
+	return version, nil
 }
 
 func seedOutboundMessages(
@@ -298,8 +249,17 @@ func seedOutboundMessages(
 	db *keel.DB,
 	tenant pagination.TenantInfo,
 	partner *edi.EDIPartner,
-	profile *edi.EDIPartnerDocumentProfile,
+	version *edi.LadingVersion,
 ) error {
+	documentType, err := edidb.EDIDocumentTypes.Where(
+		edidb.EDIDocumentTypes.Standard.Eq(edi.EDIStandardX12),
+		edidb.EDIDocumentTypes.TransactionSet.Eq(edi.TransactionSet214),
+		edidb.EDIDocumentTypes.Direction.Eq(edi.DocumentDirectionOutbound),
+	).First(ctx, db)
+	if err != nil {
+		return fmt.Errorf("find the outbound 214 document type: %w", err)
+	}
+
 	shipments, err := shipmentdb.Shipments.AllTenants().Where(
 		shipmentdb.Shipments.OrganizationID.Eq(tenant.OrgID),
 		shipmentdb.Shipments.BusinessUnitID.Eq(tenant.BuID),
@@ -321,17 +281,14 @@ func seedOutboundMessages(
 			BusinessUnitID:           tenant.BuID,
 			OrganizationID:           tenant.OrgID,
 			EDIPartnerID:             partner.ID,
-			DocumentTypeID:           profile.DocumentTypeID,
-			PartnerDocumentProfileID: profile.ID,
-			TemplateID:               profile.TemplateID,
-			TemplateVersionID:        profile.TemplateVersionID,
+			DocumentTypeID:           documentType.ID,
+			LadingVersionID:          version.ID,
 			ShipmentID:               load.ID,
 			Direction:                edi.DocumentDirectionOutbound,
 			Standard:                 edi.EDIStandardX12,
 			TransactionSet:           entry.set,
 			X12Version:               edi.DefaultX12204Version,
 			Status:                   edi.MessageStatusGenerated,
-			ValidationMode:           edi.ValidationModeStrict,
 			InterchangeControlNumber: fmt.Sprintf("%09d", 5000+control),
 			GroupControlNumber:       fmt.Sprintf("%d", 5000+control),
 			TransactionControlNumber: fmt.Sprintf("%04d", control),
@@ -389,8 +346,14 @@ func seed214(at time.Time, control int, load *shipment.Shipment, status string) 
 	group := fmt.Sprintf("%d", 5000+control)
 	set := fmt.Sprintf("%04d", control)
 	segments := []string{
-		fmt.Sprintf("ISA*00*          *00*          *ZZ*%-15s*ZZ*%-15s*%s*%s*^*00401*%s*0*P*>",
-			seedEDISenderID, seedEDIReceiverID, at.Format("060102"), at.Format("1504"), interchange),
+		fmt.Sprintf(
+			"ISA*00*          *00*          *ZZ*%-15s*ZZ*%-15s*%s*%s*^*00401*%s*0*P*>",
+			seedEDISenderID,
+			seedEDIReceiverID,
+			at.Format("060102"),
+			at.Format("1504"),
+			interchange,
+		),
 		fmt.Sprintf("GS*QM*%s*%s*%s*%s*%s*X*004010",
 			seedEDISenderID, seedEDIReceiverID, at.Format("20060102"), at.Format("1504"), group),
 		"ST*214*" + set,

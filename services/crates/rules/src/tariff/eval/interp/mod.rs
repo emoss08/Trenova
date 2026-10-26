@@ -32,7 +32,6 @@ use super::tables::{Need, Tables};
 use super::text;
 use super::trace::Trace;
 use super::value::Value;
-use crate::span::Span;
 use crate::tariff::syntax::ast::NodeId;
 use crate::tariff::types::Type;
 use link::Linked;
@@ -41,6 +40,7 @@ use rust_decimal::Decimal;
 use std::collections::{BTreeMap, BTreeSet};
 use std::rc::Rc;
 use trenova_module_kit::message::{Arg, Message};
+use trenova_module_kit::span::Span;
 
 /// How a statement ended.
 #[derive(Debug, Clone)]

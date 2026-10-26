@@ -132,8 +132,8 @@ describe("generateBreadcrumbSegments group labels", () => {
   });
 
   it("names a module's own root after the module, even when its base path is a page inside it", () => {
-    const segments = generateBreadcrumbSegments("/edi/designer");
-    expect(segments.map((segment) => segment.label)).toEqual(["EDI", "Template designer"]);
+    const segments = generateBreadcrumbSegments("/edi/lading");
+    expect(segments.map((segment) => segment.label)).toEqual(["EDI", "Lading studio"]);
   });
 
   it("does not let a group claim the module itself when its pages sit directly under it", () => {

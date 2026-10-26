@@ -209,7 +209,7 @@ type MockEDICommunicationProfileRepository_GetActiveAS2ProfileByIdentifiers_Call
 
 // GetActiveAS2ProfileByIdentifiers is a helper method to define mock.On call
 //   - ctx context.Context
-//   - req repositories.GetActiveAS2ProfileByIdentifiersRequest
+//   - req ediports.GetActiveAS2ProfileByIdentifiersRequest
 func (_e *MockEDICommunicationProfileRepository_Expecter) GetActiveAS2ProfileByIdentifiers(ctx any, req any) *MockEDICommunicationProfileRepository_GetActiveAS2ProfileByIdentifiers_Call {
 	return &MockEDICommunicationProfileRepository_GetActiveAS2ProfileByIdentifiers_Call{Call: _e.mock.On("GetActiveAS2ProfileByIdentifiers", ctx, req)}
 }
@@ -277,7 +277,7 @@ type MockEDICommunicationProfileRepository_GetActiveProfileByPartner_Call struct
 
 // GetActiveProfileByPartner is a helper method to define mock.On call
 //   - ctx context.Context
-//   - req repositories.GetActiveEDICommunicationProfileByPartnerRequest
+//   - req ediports.GetActiveEDICommunicationProfileByPartnerRequest
 func (_e *MockEDICommunicationProfileRepository_Expecter) GetActiveProfileByPartner(ctx any, req any) *MockEDICommunicationProfileRepository_GetActiveProfileByPartner_Call {
 	return &MockEDICommunicationProfileRepository_GetActiveProfileByPartner_Call{Call: _e.mock.On("GetActiveProfileByPartner", ctx, req)}
 }
@@ -306,74 +306,6 @@ func (_c *MockEDICommunicationProfileRepository_GetActiveProfileByPartner_Call) 
 }
 
 func (_c *MockEDICommunicationProfileRepository_GetActiveProfileByPartner_Call) RunAndReturn(run func(ctx context.Context, req ediports.GetActiveEDICommunicationProfileByPartnerRequest) (*edi.EDICommunicationProfile, error)) *MockEDICommunicationProfileRepository_GetActiveProfileByPartner_Call {
-	_c.Call.Return(run)
-	return _c
-}
-
-// ListProfilesByPartner provides a mock function for the type MockEDICommunicationProfileRepository
-func (_mock *MockEDICommunicationProfileRepository) ListProfilesByPartner(ctx context.Context, req ediports.ListEDICommunicationProfilesByPartnerRequest) ([]*edi.EDICommunicationProfile, error) {
-	ret := _mock.Called(ctx, req)
-
-	if len(ret) == 0 {
-		panic("no return value specified for ListProfilesByPartner")
-	}
-
-	var r0 []*edi.EDICommunicationProfile
-	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, ediports.ListEDICommunicationProfilesByPartnerRequest) ([]*edi.EDICommunicationProfile, error)); ok {
-		return returnFunc(ctx, req)
-	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, ediports.ListEDICommunicationProfilesByPartnerRequest) []*edi.EDICommunicationProfile); ok {
-		r0 = returnFunc(ctx, req)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).([]*edi.EDICommunicationProfile)
-		}
-	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, ediports.ListEDICommunicationProfilesByPartnerRequest) error); ok {
-		r1 = returnFunc(ctx, req)
-	} else {
-		r1 = ret.Error(1)
-	}
-	return r0, r1
-}
-
-// MockEDICommunicationProfileRepository_ListProfilesByPartner_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ListProfilesByPartner'
-type MockEDICommunicationProfileRepository_ListProfilesByPartner_Call struct {
-	*mock.Call
-}
-
-// ListProfilesByPartner is a helper method to define mock.On call
-//   - ctx context.Context
-//   - req repositories.GetActiveEDICommunicationProfileByPartnerRequest
-func (_e *MockEDICommunicationProfileRepository_Expecter) ListProfilesByPartner(ctx any, req any) *MockEDICommunicationProfileRepository_ListProfilesByPartner_Call {
-	return &MockEDICommunicationProfileRepository_ListProfilesByPartner_Call{Call: _e.mock.On("ListProfilesByPartner", ctx, req)}
-}
-
-func (_c *MockEDICommunicationProfileRepository_ListProfilesByPartner_Call) Run(run func(ctx context.Context, req ediports.ListEDICommunicationProfilesByPartnerRequest)) *MockEDICommunicationProfileRepository_ListProfilesByPartner_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		var arg0 context.Context
-		if args[0] != nil {
-			arg0 = args[0].(context.Context)
-		}
-		var arg1 ediports.ListEDICommunicationProfilesByPartnerRequest
-		if args[1] != nil {
-			arg1 = args[1].(ediports.ListEDICommunicationProfilesByPartnerRequest)
-		}
-		run(
-			arg0,
-			arg1,
-		)
-	})
-	return _c
-}
-
-func (_c *MockEDICommunicationProfileRepository_ListProfilesByPartner_Call) Return(eDICommunicationProfile []*edi.EDICommunicationProfile, err error) *MockEDICommunicationProfileRepository_ListProfilesByPartner_Call {
-	_c.Call.Return(eDICommunicationProfile, err)
-	return _c
-}
-
-func (_c *MockEDICommunicationProfileRepository_ListProfilesByPartner_Call) RunAndReturn(run func(ctx context.Context, req ediports.ListEDICommunicationProfilesByPartnerRequest) ([]*edi.EDICommunicationProfile, error)) *MockEDICommunicationProfileRepository_ListProfilesByPartner_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -413,7 +345,7 @@ type MockEDICommunicationProfileRepository_GetProfileByID_Call struct {
 
 // GetProfileByID is a helper method to define mock.On call
 //   - ctx context.Context
-//   - req repositories.GetEDICommunicationProfileByIDRequest
+//   - req ediports.GetEDICommunicationProfileByIDRequest
 func (_e *MockEDICommunicationProfileRepository_Expecter) GetProfileByID(ctx any, req any) *MockEDICommunicationProfileRepository_GetProfileByID_Call {
 	return &MockEDICommunicationProfileRepository_GetProfileByID_Call{Call: _e.mock.On("GetProfileByID", ctx, req)}
 }
@@ -543,7 +475,7 @@ type MockEDICommunicationProfileRepository_ListProfiles_Call struct {
 
 // ListProfiles is a helper method to define mock.On call
 //   - ctx context.Context
-//   - req *repositories.ListEDICommunicationProfilesRequest
+//   - req *ediports.ListEDICommunicationProfilesRequest
 func (_e *MockEDICommunicationProfileRepository_Expecter) ListProfiles(ctx any, req any) *MockEDICommunicationProfileRepository_ListProfiles_Call {
 	return &MockEDICommunicationProfileRepository_ListProfiles_Call{Call: _e.mock.On("ListProfiles", ctx, req)}
 }
@@ -572,6 +504,74 @@ func (_c *MockEDICommunicationProfileRepository_ListProfiles_Call) Return(listRe
 }
 
 func (_c *MockEDICommunicationProfileRepository_ListProfiles_Call) RunAndReturn(run func(ctx context.Context, req *ediports.ListEDICommunicationProfilesRequest) (*pagination.ListResult[*edi.EDICommunicationProfile], error)) *MockEDICommunicationProfileRepository_ListProfiles_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// ListProfilesByPartner provides a mock function for the type MockEDICommunicationProfileRepository
+func (_mock *MockEDICommunicationProfileRepository) ListProfilesByPartner(ctx context.Context, req ediports.ListEDICommunicationProfilesByPartnerRequest) ([]*edi.EDICommunicationProfile, error) {
+	ret := _mock.Called(ctx, req)
+
+	if len(ret) == 0 {
+		panic("no return value specified for ListProfilesByPartner")
+	}
+
+	var r0 []*edi.EDICommunicationProfile
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, ediports.ListEDICommunicationProfilesByPartnerRequest) ([]*edi.EDICommunicationProfile, error)); ok {
+		return returnFunc(ctx, req)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, ediports.ListEDICommunicationProfilesByPartnerRequest) []*edi.EDICommunicationProfile); ok {
+		r0 = returnFunc(ctx, req)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]*edi.EDICommunicationProfile)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, ediports.ListEDICommunicationProfilesByPartnerRequest) error); ok {
+		r1 = returnFunc(ctx, req)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockEDICommunicationProfileRepository_ListProfilesByPartner_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ListProfilesByPartner'
+type MockEDICommunicationProfileRepository_ListProfilesByPartner_Call struct {
+	*mock.Call
+}
+
+// ListProfilesByPartner is a helper method to define mock.On call
+//   - ctx context.Context
+//   - req ediports.ListEDICommunicationProfilesByPartnerRequest
+func (_e *MockEDICommunicationProfileRepository_Expecter) ListProfilesByPartner(ctx any, req any) *MockEDICommunicationProfileRepository_ListProfilesByPartner_Call {
+	return &MockEDICommunicationProfileRepository_ListProfilesByPartner_Call{Call: _e.mock.On("ListProfilesByPartner", ctx, req)}
+}
+
+func (_c *MockEDICommunicationProfileRepository_ListProfilesByPartner_Call) Run(run func(ctx context.Context, req ediports.ListEDICommunicationProfilesByPartnerRequest)) *MockEDICommunicationProfileRepository_ListProfilesByPartner_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 ediports.ListEDICommunicationProfilesByPartnerRequest
+		if args[1] != nil {
+			arg1 = args[1].(ediports.ListEDICommunicationProfilesByPartnerRequest)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockEDICommunicationProfileRepository_ListProfilesByPartner_Call) Return(eDICommunicationProfiles []*edi.EDICommunicationProfile, err error) *MockEDICommunicationProfileRepository_ListProfilesByPartner_Call {
+	_c.Call.Return(eDICommunicationProfiles, err)
+	return _c
+}
+
+func (_c *MockEDICommunicationProfileRepository_ListProfilesByPartner_Call) RunAndReturn(run func(ctx context.Context, req ediports.ListEDICommunicationProfilesByPartnerRequest) ([]*edi.EDICommunicationProfile, error)) *MockEDICommunicationProfileRepository_ListProfilesByPartner_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -611,7 +611,7 @@ type MockEDICommunicationProfileRepository_ListProfilesCursor_Call struct {
 
 // ListProfilesCursor is a helper method to define mock.On call
 //   - ctx context.Context
-//   - req *repositories.ListEDICommunicationProfilesRequest
+//   - req *ediports.ListEDICommunicationProfilesRequest
 func (_e *MockEDICommunicationProfileRepository_Expecter) ListProfilesCursor(ctx any, req any) *MockEDICommunicationProfileRepository_ListProfilesCursor_Call {
 	return &MockEDICommunicationProfileRepository_ListProfilesCursor_Call{Call: _e.mock.On("ListProfilesCursor", ctx, req)}
 }
@@ -668,7 +668,7 @@ type MockEDICommunicationProfileRepository_RecordInboundPollOutcome_Call struct 
 
 // RecordInboundPollOutcome is a helper method to define mock.On call
 //   - ctx context.Context
-//   - req repositories.RecordEDIProfilePollOutcomeRequest
+//   - req ediports.RecordEDIProfilePollOutcomeRequest
 func (_e *MockEDICommunicationProfileRepository_Expecter) RecordInboundPollOutcome(ctx any, req any) *MockEDICommunicationProfileRepository_RecordInboundPollOutcome_Call {
 	return &MockEDICommunicationProfileRepository_RecordInboundPollOutcome_Call{Call: _e.mock.On("RecordInboundPollOutcome", ctx, req)}
 }
@@ -736,7 +736,7 @@ type MockEDICommunicationProfileRepository_SelectProfileOptions_Call struct {
 
 // SelectProfileOptions is a helper method to define mock.On call
 //   - ctx context.Context
-//   - req *repositories.EDICommunicationProfileSelectOptionsRequest
+//   - req *ediports.EDICommunicationProfileSelectOptionsRequest
 func (_e *MockEDICommunicationProfileRepository_Expecter) SelectProfileOptions(ctx any, req any) *MockEDICommunicationProfileRepository_SelectProfileOptions_Call {
 	return &MockEDICommunicationProfileRepository_SelectProfileOptions_Call{Call: _e.mock.On("SelectProfileOptions", ctx, req)}
 }

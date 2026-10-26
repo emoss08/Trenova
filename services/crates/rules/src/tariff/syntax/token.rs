@@ -1,7 +1,7 @@
 //! Tokens: what the lexer produces, what the parser reads and what `tariff.tokens` sends the
 //! editor for highlighting.
 
-use crate::span::Span;
+use trenova_module_kit::span::Span;
 
 /// One token.
 #[derive(Debug, Clone, PartialEq, Eq)]

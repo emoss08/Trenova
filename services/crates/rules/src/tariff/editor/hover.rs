@@ -18,7 +18,6 @@ use super::occurrences::{Subject, local_at, local_subject};
 use super::session::Session;
 use super::values::{Values, hover_json};
 use super::vary::{varied_at, vary_type};
-use crate::span::{Range, Span};
 use crate::tariff::check::describe::{quote, snippet, unit_text};
 use crate::tariff::check::lower::BUILTIN_TYPES;
 use crate::tariff::check::methods;
@@ -37,6 +36,7 @@ use rust_decimal::{Decimal, RoundingStrategy};
 use serde_json::Value as Json;
 use trenova_module_kit::message;
 use trenova_module_kit::message::{Arg, Message};
+use trenova_module_kit::span::{Range, Span};
 
 /// What hover shows.
 #[derive(Debug, Clone, PartialEq)]

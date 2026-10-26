@@ -8,7 +8,6 @@
 //! value with `expect <expression> == <value>`. It is named `"<property>: <values>"`.
 
 use super::axes::{Axis, Target};
-use crate::span::{Span, Utf16Index};
 use crate::tariff::eval::StaticTypes;
 use crate::tariff::eval::error::Refusal;
 use crate::tariff::eval::ops::refusal_json;
@@ -22,6 +21,7 @@ use crate::tariff::types::Type;
 use crate::tariff::wire::encode;
 use serde_json::{Map, Value as Json};
 use std::fmt::Write as _;
+use trenova_module_kit::span::{Span, Utf16Index};
 
 /// A failed property's case.
 #[derive(Debug, Clone)]

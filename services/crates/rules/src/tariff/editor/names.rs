@@ -11,7 +11,6 @@ use super::complete::{CompletionItem, Items, Kind, Rank, Site, Then, callee_of, 
 use super::cursor::{Body, Bracket};
 use super::describe::{symbol_signature, type_text};
 use super::session::Session;
-use crate::span::Span;
 use crate::tariff::check::methods::ParamKind;
 use crate::tariff::check::{APPLIES, CONSTRUCTORS, Callee, SymbolKind, location_record};
 use crate::tariff::docs::Doc;
@@ -23,6 +22,7 @@ use crate::tariff::units::Dim;
 use std::sync::Arc;
 use trenova_module_kit::message;
 use trenova_module_kit::message::Message;
+use trenova_module_kit::span::Span;
 
 /// Adds a keyword.
 pub fn keyword(items: &mut Items, rank: Rank, word: &str) {

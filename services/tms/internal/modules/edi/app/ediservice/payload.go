@@ -9,7 +9,6 @@ import (
 	"strings"
 
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
-	"github.com/emoss08/trenova/internal/modules/edi/app/edix12"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/servicefailure"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
@@ -564,15 +563,8 @@ func applyServiceFailureEquipment(
 	}
 }
 
-func serviceFailurePayloadDiagnostics(
-	payload *edi.ShipmentStatusPayload,
-	settings ...serviceFailure214Settings,
-) []edix12.Diagnostic {
-	var profileSettings serviceFailure214Settings
-	if len(settings) > 0 {
-		profileSettings = settings[0]
-	}
-	return serviceFailure214Diagnostics(payload, profileSettings)
+func serviceFailurePayloadDiagnostics(payload *edi.ShipmentStatusPayload) []edi.Diagnostic {
+	return serviceFailure214Diagnostics(payload)
 }
 
 func buildTenderResponsePayload(transfer *edi.EDITransfer) edi.DocumentPayload {

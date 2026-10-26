@@ -1,7 +1,6 @@
 package edix12inspect
 
 import (
-	"github.com/emoss08/trenova/internal/modules/edi/app/edix12"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
 	"github.com/emoss08/trenova/pkg/x12"
 )
@@ -23,7 +22,6 @@ const (
 	DiagnosticSourceRender         = DiagnosticSource("render")
 	DiagnosticSourceValidation     = DiagnosticSource("validation")
 	DiagnosticSourceTransform      = DiagnosticSource("transform")
-	DiagnosticSourceStarlark       = DiagnosticSource("starlark")
 	DiagnosticSourceCondition      = DiagnosticSource("condition")
 	DiagnosticSourceSourceContext  = DiagnosticSource("source_context")
 	DiagnosticSourcePartnerSetting = DiagnosticSource("partner_setting")
@@ -34,7 +32,7 @@ type InspectX12Request struct {
 	TransactionSet edi.TransactionSet       `json:"transactionSet"`
 	X12Version     string                   `json:"x12Version"`
 	Envelope       *edi.X12EnvelopeSettings `json:"envelope,omitempty"`
-	Diagnostics    []edix12.Diagnostic      `json:"diagnostics,omitempty"`
+	Diagnostics    []edi.Diagnostic         `json:"diagnostics,omitempty"`
 }
 
 type InspectOverview struct {

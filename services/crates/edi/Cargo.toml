@@ -14,6 +14,8 @@ crate-type = ["cdylib", "rlib"]
 trenova-module-kit.workspace = true
 serde.workspace = true
 serde_json = { workspace = true, features = ["raw_value"] }
+regex-lite.workspace = true
+rust_decimal.workspace = true
 
 [dev-dependencies]
 proptest.workspace = true

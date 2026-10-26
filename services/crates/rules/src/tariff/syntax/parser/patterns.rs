@@ -2,7 +2,6 @@
 //! variants, `none`, `_`, bindings, record shapes and `|` alternatives.
 
 use super::Parser;
-use crate::span::Span;
 use crate::tariff::syntax::ast::Expr;
 use crate::tariff::syntax::ast::ExprKind;
 use crate::tariff::syntax::ast::Pattern;
@@ -12,6 +11,7 @@ use crate::tariff::syntax::ast::UnaryOp;
 use crate::tariff::syntax::token::TokenKind;
 use trenova_module_kit::message;
 use trenova_module_kit::message::Message;
+use trenova_module_kit::span::Span;
 
 impl Parser<'_> {
     /// A pattern and how deep it is.

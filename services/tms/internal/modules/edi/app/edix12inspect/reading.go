@@ -4,7 +4,6 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/emoss08/trenova/internal/modules/edi/app/edix12"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
 	"github.com/emoss08/trenova/pkg/x12"
 	"github.com/emoss08/trenova/shared/i18n"
@@ -210,7 +209,7 @@ func splitComponents(value, componentSeparator string) []X12Component {
 }
 
 func normalizeRenderDiagnostics(
-	diagnostics []edix12.Diagnostic,
+	diagnostics []edi.Diagnostic,
 	segments []X12Segment,
 ) []NormalizedDiagnostic {
 	normalized := make([]NormalizedDiagnostic, 0, len(diagnostics))
@@ -230,7 +229,7 @@ func normalizeRenderDiagnostics(
 	return normalized
 }
 
-func sourceForDiagnostic(diagnostic *edix12.Diagnostic) DiagnosticSource {
+func sourceForDiagnostic(diagnostic *edi.Diagnostic) DiagnosticSource {
 	code := strings.ToLower(diagnostic.Code)
 	path := strings.ToLower(diagnostic.Path)
 	switch {
@@ -238,8 +237,6 @@ func sourceForDiagnostic(diagnostic *edix12.Diagnostic) DiagnosticSource {
 		return DiagnosticSourceSourceContext
 	case strings.Contains(code, "partner_setting") || strings.Contains(path, "partnersettings"):
 		return DiagnosticSourcePartnerSetting
-	case strings.Contains(code, "starlark"):
-		return DiagnosticSourceStarlark
 	case strings.Contains(code, "condition"):
 		return DiagnosticSourceCondition
 	case strings.Contains(code, "transform"):
@@ -251,7 +248,7 @@ func sourceForDiagnostic(diagnostic *edix12.Diagnostic) DiagnosticSource {
 	}
 }
 
-func segmentIndexForDiagnostic(segments []X12Segment, diagnostic *edix12.Diagnostic) int {
+func segmentIndexForDiagnostic(segments []X12Segment, diagnostic *edi.Diagnostic) int {
 	if diagnostic.SegmentID == "" {
 		return 0
 	}

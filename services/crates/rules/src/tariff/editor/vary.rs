@@ -6,10 +6,10 @@
 use super::cursor::{statements, vary_name};
 use super::literals::literal_type;
 use super::session::Session;
-use crate::span::Span;
 use crate::tariff::syntax::ast::{Expr, ExprKind, File, Name, Stmt, StmtKind};
 use crate::tariff::syntax::program::ModuleId;
 use crate::tariff::types::Type;
+use trenova_module_kit::span::Span;
 
 /// One `vary` that declares a name: the statement, the name and its values.
 #[derive(Debug, Clone, Copy)]

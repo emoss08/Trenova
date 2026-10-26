@@ -12,6 +12,7 @@ overrides:
   "@codemirror/state": "^6.7.6"
   "@codemirror/view": "6.43.6"
   "@tanstack/query-core": "5.102.8"
+  "@tanstack/table-core": "9.3.1"
 # Packages that must resolve once (see singleton-packages.ts). Every
 # package.json references them as "catalog:" so versions cannot drift.
 catalog:
@@ -20,6 +21,7 @@ catalog:
   "@base-ui/react": ^1.9.0
   "@tanstack/react-query": ^5.104.5
   "@tanstack/react-table": ^9.3.1
+  "@tanstack/table-core": "9.3.1"
   react-router: ^8.5.0
   react-hook-form: ^7.91.0
   react-error-boundary: ^6.1.6

@@ -43,6 +43,7 @@ import { DocumentService } from "./document";
 import { DocumentControlService } from "./document-control";
 import { DocumentPacketRuleService } from "./document-packet-rule";
 import { EDIService } from "./edi";
+import { LadingService } from "./edi/lading";
 import { EmailService } from "./email";
 import { EquipmentManufacturerService } from "./equipment-manufacturer";
 import { EquipmentTypeService } from "./equipment-type";
@@ -185,6 +186,7 @@ class APIService {
   public weatherAlertService: WeatherAlertService;
   public weatherRadarService: WeatherRadarService;
   public ediService: EDIService;
+  public ladingService: LadingService;
   public emailService: EmailService;
   public serviceFailureService: ServiceFailureService;
   public serviceFailureReasonCodeService: ServiceFailureReasonCodeService;
@@ -281,6 +283,7 @@ class APIService {
     this.weatherAlertService = new WeatherAlertService();
     this.weatherRadarService = new WeatherRadarService();
     this.ediService = new EDIService();
+    this.ladingService = new LadingService();
     this.emailService = new EmailService();
     this.serviceFailureService = new ServiceFailureService();
     this.serviceFailureReasonCodeService = new ServiceFailureReasonCodeService();

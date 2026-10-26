@@ -246,7 +246,7 @@ function requirementName(requirement: DraftRequirement, t: TranslateFn): string 
     : requirement.segmentId;
 }
 
-/** What the guide asks of a document type that the chosen template does not meet. */
+/** What the guide asks of a document type that the drafted map does not write. */
 export function RequirementList({ requirements }: { requirements: readonly DraftRequirement[] }) {
   const t = useT();
   return (

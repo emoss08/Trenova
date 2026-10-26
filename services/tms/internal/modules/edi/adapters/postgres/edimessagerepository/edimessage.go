@@ -94,7 +94,7 @@ func archiveQuery(req *ediports.ListEDIMessagesRequest) *keel.Query[*edi.EDIMess
 			)),
 		).
 		Compute(m.DiagnosticCount, keel.Scalar(ve.Pick(keel.Count()).Where(ve.MessageID.EqCol(m.ID)))).
-		Load(m.Partner(), m.PartnerDocumentProfile(), m.Template()).
+		Load(m.Partner()).
 		Order(m.GeneratedAt.Desc())
 }
 
@@ -110,7 +110,8 @@ func (r *repository) ListMessagesCursor(
 			return listquery.Connection(
 				ctx,
 				r.db.Keel(ctx),
-				m.Omit(m.RawX12, m.PayloadSnapshot).Where(messageListFilters(req)...),
+				m.Omit(m.RawX12, m.PayloadSnapshot, m.Document, m.Lineage, m.Outcomes).
+					Where(messageListFilters(req)...),
 				&listquery.Request[edi.EDIMessage]{
 					Filter: req.Filter,
 					Cursor: req.Cursor,
@@ -144,18 +145,12 @@ func (r *repository) GetMessageByID(
 ) (*edi.EDIMessage, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*edi.EDIMessage, error) {
 		m := edidb.EDIMessages
-		tv := m.TemplateVersion()
-		libraries := tv.ScriptLibraries()
 		diagnostics := m.ValidationErrors()
 
 		entity, err := m.Where(m.ID.Eq(req.ID)).
 			Load(
 				m.Partner(),
 				m.DocumentType(),
-				m.PartnerDocumentProfile(),
-				m.Template(),
-				tv,
-				libraries.Order(libraries.Name.Lower().Asc()),
 				diagnostics.Order(diagnostics.CreatedAt.Asc(), diagnostics.ID.Asc()),
 			).
 			One(ctx, r.db.Keel(ctx))
@@ -234,7 +229,7 @@ func lifecycleMessageQuery(
 
 	return m.Where(serviceFailure214Lifecycle(m, failureID)...).
 		Where(serviceFailure214Trigger(m).Eq(req.Trigger)).
-		Load(m.Partner(), m.PartnerDocumentProfile()).
+		Load(m.Partner()).
 		Order(m.GeneratedAt.Desc())
 }
 
@@ -351,6 +346,19 @@ func (r *repository) UpdateMessageDelivery(
 		}
 
 		return updateOne(ctx, r.db.Keel(ctx), req.ID, sets)
+	})
+}
+
+func (r *repository) LinkMessageFlow(
+	ctx context.Context,
+	req *ediports.LinkEDIMessageFlowRequest,
+) (*edi.EDIMessage, error) {
+	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*edi.EDIMessage, error) {
+		m := edidb.EDIMessages
+		return updateOne(ctx, r.db.Keel(ctx), req.ID, []keel.Assignment{
+			m.FlowInstanceID.To(req.FlowInstanceID),
+			m.Version.ToExpr(m.Version),
+		})
 	})
 }
 
@@ -767,7 +775,7 @@ func (r *repository) ListOverdueAcks(
 			return overdue, nil
 		}
 
-		messages, err := m.Omit(m.RawX12, m.PayloadSnapshot).
+		messages, err := m.Omit(m.RawX12, m.PayloadSnapshot, m.Document, m.Lineage, m.Outcomes).
 			Where(filter.where()...).
 			Load(m.Partner()).
 			Order(m.GeneratedAt.Asc(), m.ID.Asc()).
@@ -793,7 +801,7 @@ func (r *repository) ListRecentDeadLettered(
 		}
 
 		m := edidb.EDIMessages
-		return m.Omit(m.RawX12, m.PayloadSnapshot).
+		return m.Omit(m.RawX12, m.PayloadSnapshot, m.Document, m.Lineage, m.Outcomes).
 			Where(
 				m.DeliveryStatus.Eq(edi.MessageDeliveryStatusDeadLettered),
 				keel.When(req.PartnerID.IsNotNil(), m.EDIPartnerID.Eq(req.PartnerID)),
@@ -803,6 +811,38 @@ func (r *repository) ListRecentDeadLettered(
 			Load(m.Partner()).
 			Order(m.UpdatedAt.Desc()).
 			Limit(limit).
+			List(ctx, r.db.Keel(ctx))
+	})
+}
+
+func (r *repository) ListReplayMessages(
+	ctx context.Context,
+	req *ediports.ListEDIReplayMessagesRequest,
+) ([]*edi.EDIMessage, error) {
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*edi.EDIMessage, error) {
+		m := edidb.EDIMessages
+		return m.Pick(
+			m.ID,
+			m.OrganizationID,
+			m.BusinessUnitID,
+			m.EDIPartnerID,
+			m.TransactionSet,
+			m.Direction,
+			m.RawX12,
+			m.Document,
+			m.GeneratedAt,
+		).
+			Where(
+				m.EDIPartnerID.Eq(req.PartnerID),
+				m.TransactionSet.Eq(req.TransactionSet),
+				m.Direction.Eq(req.Direction),
+				m.GeneratedAt.Gte(req.From),
+				m.GeneratedAt.Lte(req.To),
+				m.RawPurgedAt.IsNull(),
+				keel.When(req.AfterID.IsNotNil(), m.ID.Gt(req.AfterID)),
+			).
+			Order(m.ID.Asc()).
+			Limit(req.Limit).
 			List(ctx, r.db.Keel(ctx))
 	})
 }

@@ -8,9 +8,7 @@ use super::describe::quote;
 use super::scope::LocalKind;
 use super::stmt::later_names;
 use super::{Analysis, ImportInfo, ModuleAnalysis, ModuleId, Program, Symbol, SymbolKind};
-use crate::span::Span;
 use crate::tariff::context::Context;
-use crate::tariff::diagnostic::{Diagnostic, Severity};
 use crate::tariff::docs::Doc;
 use crate::tariff::schema::{BILL_DOC, Schema, TABLES_DOC, bill_type};
 use crate::tariff::syntax::ast::{
@@ -19,8 +17,10 @@ use crate::tariff::syntax::ast::{
 use crate::tariff::syntax::program::Decl;
 use crate::tariff::types::Type;
 use std::collections::BTreeMap;
+use trenova_module_kit::diagnostic::{Diagnostic, Severity};
 use trenova_module_kit::message;
 use trenova_module_kit::message::Message;
+use trenova_module_kit::span::Span;
 
 /// Checks a program; see [`super`].
 #[must_use]

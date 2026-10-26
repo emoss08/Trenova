@@ -12,6 +12,9 @@ import (
 	"testing"
 	"time"
 
+	"github.com/emoss08/trenova/internal/modules/edi/app/edilading"
+	"github.com/emoss08/trenova/pkg/errortypes"
+
 	"github.com/emoss08/trenova/internal/modules/edi/app/editransport"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
@@ -29,38 +32,41 @@ import (
 )
 
 type partnerCardRepos struct {
-	partners  *ediportsmock.MockEDIPartnerRepository
-	documents *ediportsmock.MockEDIPartnerDocumentProfileRepository
-	profiles  *ediportsmock.MockEDICommunicationProfileRepository
-	mappings  *ediportsmock.MockEDIMappingProfileRepository
-	messages  *ediportsmock.MockEDIMessageRepository
-	files     *ediportsmock.MockEDIInboundFileRepository
-	carriers  *carrierportsmock.MockCarrierRepository
+	partners *ediportsmock.MockEDIPartnerRepository
+	projects *ediportsmock.MockLadingProjectRepository
+	profiles *ediportsmock.MockEDICommunicationProfileRepository
+	mappings *ediportsmock.MockEDIMappingProfileRepository
+	messages *ediportsmock.MockEDIMessageRepository
+	files    *ediportsmock.MockEDIInboundFileRepository
+	carriers *carrierportsmock.MockCarrierRepository
 }
 
 func newPartnerCardRepos(t *testing.T) partnerCardRepos {
 	t.Helper()
 	return partnerCardRepos{
-		partners:  ediportsmock.NewMockEDIPartnerRepository(t),
-		documents: ediportsmock.NewMockEDIPartnerDocumentProfileRepository(t),
-		profiles:  ediportsmock.NewMockEDICommunicationProfileRepository(t),
-		mappings:  ediportsmock.NewMockEDIMappingProfileRepository(t),
-		messages:  ediportsmock.NewMockEDIMessageRepository(t),
-		files:     ediportsmock.NewMockEDIInboundFileRepository(t),
-		carriers:  carrierportsmock.NewMockCarrierRepository(t),
+		partners: ediportsmock.NewMockEDIPartnerRepository(t),
+		projects: ediportsmock.NewMockLadingProjectRepository(t),
+		profiles: ediportsmock.NewMockEDICommunicationProfileRepository(t),
+		mappings: ediportsmock.NewMockEDIMappingProfileRepository(t),
+		messages: ediportsmock.NewMockEDIMessageRepository(t),
+		files:    ediportsmock.NewMockEDIInboundFileRepository(t),
+		carriers: carrierportsmock.NewMockCarrierRepository(t),
 	}
 }
 
 func (r partnerCardRepos) service() *Service {
 	return &Service{
-		l:                   zap.NewNop(),
-		partnerRepo:         r.partners,
-		documentProfileRepo: r.documents,
-		profileRepo:         r.profiles,
-		mappingProfileRepo:  r.mappings,
-		messageRepo:         r.messages,
-		inboundFileRepo:     r.files,
-		carrierRepo:         r.carriers,
+		l:           zap.NewNop(),
+		partnerRepo: r.partners,
+		lading: edilading.NewRuntime(edilading.RuntimeParams{
+			Logger:   zap.NewNop(),
+			Projects: r.projects,
+		}),
+		profileRepo:        r.profiles,
+		mappingProfileRepo: r.mappings,
+		messageRepo:        r.messages,
+		inboundFileRepo:    r.files,
+		carrierRepo:        r.carriers,
 	}
 }
 
@@ -81,8 +87,8 @@ func expiringCertificatePEM(t *testing.T, notAfter time.Time) string {
 }
 
 func expectPartnerCardQuiet(r partnerCardRepos, partnerID pulid.ID) {
-	r.documents.EXPECT().ListPartnerDocumentProfiles(mock.Anything, mock.Anything).
-		Return(&pagination.ListResult[*edi.EDIPartnerDocumentProfile]{}, nil)
+	r.projects.EXPECT().GetRunnableVersions(mock.Anything, mock.Anything).
+		Return(nil, errortypes.NewNotFoundError("no project"))
 	r.profiles.EXPECT().ListProfilesByPartner(mock.Anything, mock.Anything).
 		Return([]*edi.EDICommunicationProfile{}, nil)
 	r.partners.EXPECT().GetReadiness(mock.Anything, mock.Anything).
@@ -118,12 +124,10 @@ func TestGetPartnerCard_ReadsOnePartnerOverItsWindows(t *testing.T) {
 	r.partners.EXPECT().GetByID(mock.Anything, mock.Anything).
 		Run(func(_ context.Context, req ediports.GetEDIPartnerByIDRequest) { partnerReq = req }).
 		Return(partner, nil)
-	var documentsReq *ediports.ListEDIPartnerDocumentProfilesRequest
-	r.documents.EXPECT().ListPartnerDocumentProfiles(mock.Anything, mock.Anything).
-		Run(func(_ context.Context, req *ediports.ListEDIPartnerDocumentProfilesRequest) {
-			documentsReq = req
-		}).
-		Return(&pagination.ListResult[*edi.EDIPartnerDocumentProfile]{}, nil)
+	var projectReq ediports.GetRunnableLadingVersionRequest
+	r.projects.EXPECT().GetRunnableVersions(mock.Anything, mock.Anything).
+		Run(func(_ context.Context, req ediports.GetRunnableLadingVersionRequest) { projectReq = req }).
+		Return(nil, errortypes.NewNotFoundError("no project"))
 	r.profiles.EXPECT().ListProfilesByPartner(mock.Anything, mock.Anything).
 		Return([]*edi.EDICommunicationProfile{}, nil)
 	r.partners.EXPECT().GetReadiness(mock.Anything, mock.Anything).
@@ -179,8 +183,8 @@ func TestGetPartnerCard_ReadsOnePartnerOverItsWindows(t *testing.T) {
 	assert.Equal(t, ediports.GetEDIPartnerByIDRequest{
 		ID: partnerID, TenantInfo: tenant, IncludeLinks: true,
 	}, partnerReq, "the customer and connection are read with the partner")
-	assert.Equal(t, partnerID, documentsReq.PartnerID)
-	assert.Equal(t, tenant, documentsReq.Filter.TenantInfo)
+	assert.Equal(t, partnerID, projectReq.PartnerID)
+	assert.Equal(t, tenant, projectReq.TenantInfo)
 	assert.Equal(t, partnerID, mappingReq.PartnerID)
 
 	window := card.Activity.Since

@@ -5,7 +5,6 @@
 //! position, so finding what a name means is a binary search rather than a scan, and a work
 //! meter ([`Session::tick`]) every feature charges for the nodes and candidates it visits.
 
-use crate::span::{Span, Utf16Index};
 use crate::tariff::check::{Analysis, Reference, Symbol, SymbolId, SymbolKind, check};
 use crate::tariff::context::Context;
 use crate::tariff::schema::Schema;
@@ -13,6 +12,7 @@ use crate::tariff::syntax::ast::{File, FileKind};
 use crate::tariff::syntax::program::{Decl, Module, ModuleId, Program, Resolved, load};
 use std::cell::Cell;
 use std::collections::BTreeMap;
+use trenova_module_kit::span::{Span, Utf16Index};
 
 /// A loaded and checked file.
 #[derive(Debug)]

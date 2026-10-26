@@ -180,15 +180,21 @@ func draftNote(draft *ediports.ConnectionDraft) string {
 }
 
 func draftFindings(draft *ediports.ConnectionDraft) []string {
-	findings := make([]string, 0, len(draft.Gaps)+len(draft.DocumentProfiles)+1)
-	for index := range draft.DocumentProfiles {
-		profile := &draft.DocumentProfiles[index]
-		for ruleIndex := range profile.Template.Unmet {
-			rule := &profile.Template.Unmet[ruleIndex]
-			findings = append(findings, fmt.Sprintf("the %s %s template does not meet %s%s",
-				profile.TransactionSet, strings.ToLower(string(profile.Direction)),
+	findings := make([]string, 0, len(draft.Gaps)+len(draft.Sets)+1)
+	for index := range draft.Sets {
+		set := &draft.Sets[index]
+		for ruleIndex := range set.Unmet {
+			rule := &set.Unmet[ruleIndex]
+			findings = append(findings, fmt.Sprintf("the drafted %s %s map does not write %s%s",
+				set.TransactionSet, strings.ToLower(string(set.Direction)),
 				segmentRule(rule.SegmentID, rule.ElementPosition), onPage(rule.Source.Page)))
 		}
+	}
+	if draft.Project != nil && draft.Project.Errors > 0 {
+		findings = append(findings, fmt.Sprintf(
+			"the drafted Lading project has %d errors to fix in the studio before it can be certified",
+			draft.Project.Errors,
+		))
 	}
 	for index := range draft.Gaps {
 		gap := &draft.Gaps[index]
@@ -217,23 +223,30 @@ func draftChanges(draft *ediports.ConnectionDraft) []string {
 		changes = appendValueChanges(changes, draft.Transport.Fields)
 	}
 	changes = appendValueChanges(changes, draft.Interchange)
-	controls := make(map[controlChange][]string, len(draft.DocumentProfiles))
-	order := make([]controlChange, 0, len(draft.DocumentProfiles))
-	for index := range draft.DocumentProfiles {
-		profile := &draft.DocumentProfiles[index]
-		name := fmt.Sprintf("%s %s", profile.TransactionSet,
-			strings.ToLower(string(profile.Direction)))
-		if profile.Change == ediports.ChangeKindAdd {
-			changes = append(changes, "adds the "+name+" document profile")
+	controls := make(map[controlChange][]string, len(draft.Sets))
+	order := make([]controlChange, 0, len(draft.Sets))
+	if project := draft.Project; project != nil && project.Change == ediports.ChangeKindChange {
+		for _, file := range project.Files {
+			switch file.Change {
+			case ediports.ChangeKindAdd:
+				changes = append(changes, "adds "+file.Path+" to the Lading project")
+			case ediports.ChangeKindChange:
+				changes = append(changes, "rewrites "+file.Path+" in the Lading project")
+			case ediports.ChangeKindSame, ediports.ChangeKindNone:
+			}
+		}
+	}
+	for index := range draft.Sets {
+		set := &draft.Sets[index]
+		name := fmt.Sprintf("%s %s", set.TransactionSet,
+			strings.ToLower(string(set.Direction)))
+		if set.Change == ediports.ChangeKindAdd {
+			changes = append(changes, "starts exchanging the "+name)
 			continue
 		}
-		changes = appendValueChanges(changes, profile.Fields)
-		if template := &profile.Template; template.Change == ediports.ChangeKindChange {
-			changes = append(changes, fmt.Sprintf("the %s template from %s to %s",
-				name, template.Current, template.Name))
-		}
-		for controlIndex := range profile.ControlNumbers {
-			control := &profile.ControlNumbers[controlIndex]
+		changes = appendValueChanges(changes, set.Fields)
+		for controlIndex := range set.ControlNumbers {
+			control := &set.ControlNumbers[controlIndex]
 			if !control.Change.Writes() {
 				continue
 			}

@@ -2,8 +2,10 @@ package ediservice
 
 import (
 	"context"
+	"errors"
 	"strings"
 
+	"github.com/emoss08/trenova/internal/modules/edi/app/edilading"
 	"github.com/emoss08/trenova/internal/modules/edi/app/editransport"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
@@ -21,7 +23,6 @@ const (
 	PartnerCardSeriesWindowSeconds   = int64(14 * 24 * 60 * 60)
 	PartnerCardSeriesBucketSeconds   = volumeBucketHour
 	PartnerCardAttentionLimit        = 5
-	partnerCardDocumentProfileLimit  = 100
 )
 
 type PartnerCertificateRole string
@@ -86,15 +87,21 @@ type EDIPartnerAttention struct {
 	Quarantined     []*edi.EDIInboundFile
 }
 
+type EDIPartnerLading struct {
+	Project *edi.LadingProject
+	Active  *edi.LadingVersion
+	Shadow  *edi.LadingVersion
+}
+
 type EDIPartnerCard struct {
-	Partner          *edi.EDIPartner
-	DocumentProfiles []*edi.EDIPartnerDocumentProfile
-	Transports       []*EDIPartnerTransport
-	Readiness        *EDIPartnerReadiness
-	Mappings         *ediports.EDIMappingSummary
-	Activity         *EDIPartnerActivity
-	Attention        *EDIPartnerAttention
-	Carriers         []*carrier.CarrierEDIChannel
+	Partner    *edi.EDIPartner
+	Lading     *EDIPartnerLading
+	Transports []*EDIPartnerTransport
+	Readiness  *EDIPartnerReadiness
+	Mappings   *ediports.EDIMappingSummary
+	Activity   *EDIPartnerActivity
+	Attention  *EDIPartnerAttention
+	Carriers   []*carrier.CarrierEDIChannel
 }
 
 func (s *Service) GetPartnerCard(
@@ -111,7 +118,7 @@ func (s *Service) GetPartnerCard(
 	}
 
 	card := &EDIPartnerCard{Partner: partner}
-	if card.DocumentProfiles, err = s.partnerCardDocumentProfiles(ctx, req); err != nil {
+	if err = s.fillPartnerCardLading(ctx, req, card); err != nil {
 		return nil, err
 	}
 	if card.Transports, err = s.partnerCardTransports(ctx, req); err != nil {
@@ -151,28 +158,33 @@ func (s *Service) GetPartnerCard(
 	return card, nil
 }
 
-func (s *Service) partnerCardDocumentProfiles(
+func (s *Service) fillPartnerCardLading(
 	ctx context.Context,
 	req *GetEDIPartnerCardRequest,
-) ([]*edi.EDIPartnerDocumentProfile, error) {
-	result, err := s.documentProfileRepo.ListPartnerDocumentProfiles(
-		ctx,
-		&ediports.ListEDIPartnerDocumentProfilesRequest{
-			Filter: &pagination.QueryOptions{
-				TenantInfo: req.TenantInfo,
-				Pagination: pagination.Info{Limit: partnerCardDocumentProfileLimit},
-			},
-			PartnerID: req.PartnerID,
-		},
-	)
+	card *EDIPartnerCard,
+) error {
+	programs, err := s.lading.Load(ctx, req.TenantInfo, req.PartnerID)
+	if errors.Is(err, edilading.ErrNoProject) {
+		return nil
+	}
 	if err != nil {
-		return nil, err
+		return err
 	}
-	if result == nil {
-		return []*edi.EDIPartnerDocumentProfile{}, nil
+	card.Lading = &EDIPartnerLading{Project: programs.Project}
+	if programs.Active != nil {
+		card.Lading.Active = withoutFiles(programs.Active.Version)
 	}
+	if programs.Shadow != nil {
+		card.Lading.Shadow = withoutFiles(programs.Shadow.Version)
+	}
+	return nil
+}
 
-	return result.Items, nil
+func withoutFiles(version *edi.LadingVersion) *edi.LadingVersion {
+	summary := *version
+	summary.Files = nil
+	summary.Samples = nil
+	return &summary
 }
 
 func (s *Service) partnerCardTransports(

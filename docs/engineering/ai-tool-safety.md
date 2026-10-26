@@ -154,7 +154,7 @@ Looks something up. Nothing changes and nothing is sent.
 | List EDI tender changes (`edi_list_tender_changes`) | Reads only | Automatic | — | Always, from EDI | Lists changes another organization wrote to loads tendered over EDI; nothing changes and nothing is sent. |
 | List EDI transfer changes (`edi_list_transfer_changes`) | Reads only | Automatic | — | Always, from EDI | Lists statuses another organization reported on a linked load; nothing changes and nothing is sent. |
 | List EDI transfers (`edi_list_transfers`) | Reads only | Automatic | — | Always, from EDI | Lists load tenders trading partners sent, whose contents the partner wrote; nothing changes and nothing is sent. |
-| Preview EDI x12 (`edi_preview_x12`) | Reads only | Automatic | — | When the record is marked, from EDI | Renders the X12 a send would produce from records already in Trenova, with the partner profile's findings; nothing is saved and nothing is sent. |
+| Preview EDI x12 (`edi_preview_x12`) | Reads only | Automatic | — | When the record is marked, from EDI | Renders the X12 a send would produce from records already in Trenova, with what the partner's Lading version found; nothing is saved and nothing is sent. |
 | Get tractor (`equipment_get_tractor`) | Reads only | Automatic | — | — | Reads records the caller may already open; it changes nothing and sends nothing. |
 | Get trailer (`equipment_get_trailer`) | Reads only | Automatic | — | — | Reads records the caller may already open; it changes nothing and sends nothing. |
 | List equipment manufacturers (`equipment_list_manufacturers`) | Reads only | Automatic | — | — | Reads records the caller may already open; it changes nothing and sends nothing. |

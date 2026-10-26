@@ -2,12 +2,13 @@ package invoiceservice
 
 import (
 	"errors"
+	"strings"
+	"testing"
+
 	"github.com/emoss08/trenova/internal/testutil/mocks/customerportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/ediportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/invoiceportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/kernelportsmock"
-	"strings"
-	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
@@ -19,6 +20,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/parties/ports/customerports"
 	"github.com/emoss08/trenova/internal/testutil"
 	"github.com/emoss08/trenova/pkg/errortypes"
+	"github.com/emoss08/trenova/pkg/lading"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -45,7 +47,7 @@ func TestBuildEDISendPlanBlockers(t *testing.T) {
 		Name: "AMD EDI",
 		Kind: edi.PartnerKindExternal,
 	}
-	profile := &edi.EDIPartnerDocumentProfile{ID: pulid.MustNew("epdp_")}
+	version := &edi.LadingVersion{ID: pulid.MustNew("ldv_")}
 
 	t.Run("profile switched off", func(t *testing.T) {
 		t.Parallel()
@@ -84,7 +86,7 @@ func TestBuildEDISendPlanBlockers(t *testing.T) {
 			enabled,
 			&ediPartnerTarget{
 				Partner:             partner,
-				DocumentProfile:     profile,
+				LadingVersion:       version,
 				CommunicationMethod: edi.ConnectionMethodAS2,
 			},
 		)
@@ -98,18 +100,18 @@ func TestBuildEDISendPlanBlockers(t *testing.T) {
 		assert.True(t, plan.AutoSend)
 	})
 
-	t.Run("partner without profiles", func(t *testing.T) {
+	t.Run("partner without a version or transport", func(t *testing.T) {
 		t.Parallel()
 		plan := buildEDISendPlan(posted, enabled, &ediPartnerTarget{
 			Partner:  partner,
-			Blockers: []string{ediBlockerNoDocumentProfile, ediBlockerNoCommunication},
+			Blockers: []string{ediBlockerNoLadingVersion, ediBlockerNoCommunication},
 		})
 		assert.Equal(t, partner.ID, plan.PartnerID)
 		assert.Equal(t, "AMD EDI", plan.PartnerName)
-		assert.True(t, plan.DocumentProfileID.IsNil())
+		assert.True(t, plan.LadingVersionID.IsNil())
 		assert.Equal(
 			t,
-			[]string{ediBlockerNoDocumentProfile, ediBlockerNoCommunication},
+			[]string{ediBlockerNoLadingVersion, ediBlockerNoCommunication},
 			plan.Blockers,
 		)
 	})
@@ -117,10 +119,10 @@ func TestBuildEDISendPlanBlockers(t *testing.T) {
 	t.Run("ready external partner", func(t *testing.T) {
 		t.Parallel()
 		plan := buildEDISendPlan(posted, enabled, &ediPartnerTarget{
-			Partner: partner, DocumentProfile: profile, CommunicationMethod: edi.ConnectionMethodSFTP,
+			Partner: partner, LadingVersion: version, CommunicationMethod: edi.ConnectionMethodSFTP,
 		})
 		assert.Empty(t, plan.Blockers)
-		assert.Equal(t, profile.ID, plan.DocumentProfileID)
+		assert.Equal(t, version.ID, plan.LadingVersionID)
 		assert.Equal(t, "SFTP", plan.CommunicationMethod)
 	})
 }
@@ -130,23 +132,13 @@ func TestResolvePartnerTargetInternalPartnerNeedsNoTransport(t *testing.T) {
 
 	tenantInfo := pagination.TenantInfo{OrgID: pulid.MustNew("org_"), BuID: pulid.MustNew("bu_")}
 	partner := &edi.EDIPartner{ID: pulid.MustNew("edip_"), Kind: edi.PartnerKindInternal}
-	profile := &edi.EDIPartnerDocumentProfile{ID: pulid.MustNew("epdp_")}
 
-	documentProfiles := ediportsmock.NewMockEDIPartnerDocumentProfileRepository(t)
-	documentProfiles.EXPECT().
-		GetActivePartnerDocumentProfile(mock.Anything, ediports.GetActiveEDIPartnerDocumentProfileRequest{
-			PartnerID:      partner.ID,
-			TenantInfo:     tenantInfo,
-			TransactionSet: edi.TransactionSet210,
-			Direction:      edi.DocumentDirectionOutbound,
-		}).
-		Return(profile, nil).
-		Once()
+	projects := ediportsmock.NewMockLadingProjectRepository(t)
 	commProfiles := ediportsmock.NewMockEDICommunicationProfileRepository(t)
 
 	svc := &Service{
 		l:                           zap.NewNop(),
-		ediDocumentProfileRepo:      documentProfiles,
+		ediLadingProjects:           projects,
 		ediCommunicationProfileRepo: commProfiles,
 	}
 
@@ -155,7 +147,76 @@ func TestResolvePartnerTargetInternalPartnerNeedsNoTransport(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, edi.ConnectionMethodInternal, target.CommunicationMethod)
 	assert.Empty(t, target.Blockers)
+	assert.Nil(t, target.LadingVersion, "internal partners exchange no X12")
 	commProfiles.AssertNotCalled(t, "GetActiveProfileByPartner", mock.Anything, mock.Anything)
+	projects.AssertNotCalled(t, "GetRunnableVersions", mock.Anything, mock.Anything)
+}
+
+func TestInvoiceLadingVersionNeedsAnOutbound210Map(t *testing.T) {
+	t.Parallel()
+
+	tenantInfo := pagination.TenantInfo{OrgID: pulid.MustNew("org_"), BuID: pulid.MustNew("bu_")}
+	partner := &edi.EDIPartner{ID: pulid.MustNew("edip_"), Kind: edi.PartnerKindExternal}
+	withMaps := func(maps ...lading.Map) *ediports.RunnableLadingVersions {
+		return &ediports.RunnableLadingVersions{Active: &edi.LadingVersion{
+			ID:       pulid.MustNew("ldv_"),
+			Manifest: lading.Check{Maps: maps},
+		}}
+	}
+
+	tests := []struct {
+		name     string
+		runnable *ediports.RunnableLadingVersions
+		err      error
+		found    bool
+	}{
+		{
+			name: "an outbound 210 map",
+			runnable: withMaps(
+				lading.Map{Name: "invoiceOut", Set: "210", Direction: lading.DirectionOutbound},
+			),
+			found: true,
+		},
+		{
+			name: "only an inbound 210 map",
+			runnable: withMaps(
+				lading.Map{Name: "invoiceIn", Set: "210", Direction: lading.DirectionInbound},
+			),
+		},
+		{
+			name:     "no active version",
+			runnable: &ediports.RunnableLadingVersions{},
+		},
+		{
+			name: "no project",
+			err:  errortypes.NewNotFoundError("LadingProject"),
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			projects := ediportsmock.NewMockLadingProjectRepository(t)
+			projects.EXPECT().
+				GetRunnableVersions(mock.Anything, ediports.GetRunnableLadingVersionRequest{
+					TenantInfo: tenantInfo,
+					PartnerID:  partner.ID,
+				}).
+				Return(tt.runnable, tt.err).
+				Once()
+			svc := &Service{l: zap.NewNop(), ediLadingProjects: projects}
+
+			version, found, err := svc.invoiceLadingVersion(t.Context(), tenantInfo, partner)
+
+			require.NoError(t, err)
+			assert.Equal(t, tt.found, found)
+			if tt.found {
+				require.NotNil(t, version)
+				assert.Equal(t, tt.runnable.Active.ID, version.ID)
+				return
+			}
+			assert.Nil(t, version)
+		})
+	}
 }
 
 func TestResolvePartnerTargetReportsMissingProfiles(t *testing.T) {
@@ -164,10 +225,10 @@ func TestResolvePartnerTargetReportsMissingProfiles(t *testing.T) {
 	tenantInfo := pagination.TenantInfo{OrgID: pulid.MustNew("org_"), BuID: pulid.MustNew("bu_")}
 	partner := &edi.EDIPartner{ID: pulid.MustNew("edip_"), Kind: edi.PartnerKindExternal}
 
-	documentProfiles := ediportsmock.NewMockEDIPartnerDocumentProfileRepository(t)
-	documentProfiles.EXPECT().
-		GetActivePartnerDocumentProfile(mock.Anything, mock.Anything).
-		Return(nil, errortypes.NewNotFoundError("no 210 profile")).
+	projects := ediportsmock.NewMockLadingProjectRepository(t)
+	projects.EXPECT().
+		GetRunnableVersions(mock.Anything, mock.Anything).
+		Return(nil, errortypes.NewNotFoundError("LadingProject")).
 		Once()
 	commProfiles := ediportsmock.NewMockEDICommunicationProfileRepository(t)
 	commProfiles.EXPECT().
@@ -180,7 +241,7 @@ func TestResolvePartnerTargetReportsMissingProfiles(t *testing.T) {
 
 	svc := &Service{
 		l:                           zap.NewNop(),
-		ediDocumentProfileRepo:      documentProfiles,
+		ediLadingProjects:           projects,
 		ediCommunicationProfileRepo: commProfiles,
 	}
 
@@ -189,7 +250,7 @@ func TestResolvePartnerTargetReportsMissingProfiles(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(
 		t,
-		[]string{ediBlockerNoDocumentProfile, ediBlockerNoCommunication},
+		[]string{ediBlockerNoLadingVersion, ediBlockerNoCommunication},
 		target.Blockers,
 	)
 }
@@ -224,7 +285,7 @@ func TestResolveEDISendPlansWithoutEDIWiringNeverTouchesCustomers(t *testing.T) 
 }
 
 // ediWiredFixture is an invoice whose customer has EDI invoicing on, an active
-// external partner, a 210 profile and an SFTP channel: nothing blocks a send.
+// external partner, an active Lading version that writes a 210 and an SFTP channel: nothing blocks a send.
 type ediWiredFixture struct {
 	tenantInfo pagination.TenantInfo
 	actor      *permissionports.RequestActor
@@ -268,10 +329,15 @@ func newEDIWiredFixture(t *testing.T, status invoice.EDISendStatus) *ediWiredFix
 		Return([]*edi.EDIPartner{{ID: partnerID, CustomerID: customerID, Name: "AMD EDI", Kind: edi.PartnerKindExternal}}, nil).
 		Maybe()
 
-	documentProfiles := ediportsmock.NewMockEDIPartnerDocumentProfileRepository(t)
-	documentProfiles.EXPECT().
-		GetActivePartnerDocumentProfile(mock.Anything, mock.Anything).
-		Return(&edi.EDIPartnerDocumentProfile{ID: pulid.MustNew("epdp_")}, nil).
+	projects := ediportsmock.NewMockLadingProjectRepository(t)
+	projects.EXPECT().
+		GetRunnableVersions(mock.Anything, mock.Anything).
+		Return(&ediports.RunnableLadingVersions{Active: &edi.LadingVersion{
+			ID: pulid.MustNew("ldv_"),
+			Manifest: lading.Check{Maps: []lading.Map{
+				{Name: "invoiceOut", Set: "210", Direction: lading.DirectionOutbound},
+			}},
+		}}, nil).
 		Maybe()
 	commProfiles := ediportsmock.NewMockEDICommunicationProfileRepository(t)
 	commProfiles.EXPECT().
@@ -300,7 +366,7 @@ func newEDIWiredFixture(t *testing.T, status invoice.EDISendStatus) *ediWiredFix
 		customerRepo:                customerRepo,
 		workflowStarter:             f.starter,
 		ediPartnerRepo:              partners,
-		ediDocumentProfileRepo:      documentProfiles,
+		ediLadingProjects:           projects,
 		ediCommunicationProfileRepo: commProfiles,
 	}
 
@@ -458,13 +524,13 @@ func TestEnqueueEDIAfterPostRecordsTheFirstBlocker(t *testing.T) {
 	t.Parallel()
 
 	f := newEDIWiredFixture(t, invoice.EDISendStatusNotSent)
-	f.svc.ediDocumentProfileRepo = nil
+	f.svc.ediLadingProjects = nil
 	f.repo.EXPECT().
 		UpdateEDISendStatus(mock.Anything, invoiceports.UpdateInvoiceEDISendStatusRequest{
 			TenantInfo: f.tenantInfo,
 			InvoiceID:  f.inv.ID,
 			Status:     invoice.EDISendStatusNotConfigured,
-			Error:      ediBlockerNoDocumentProfile,
+			Error:      ediBlockerNoLadingVersion,
 		}).
 		Return(nil).
 		Once()
@@ -472,7 +538,7 @@ func TestEnqueueEDIAfterPostRecordsTheFirstBlocker(t *testing.T) {
 	f.svc.enqueueEDIAfterPost(t.Context(), f.inv, f.tenantInfo, f.actor)
 
 	assert.Equal(t, invoice.EDISendStatusNotConfigured, f.inv.EDISendStatus)
-	assert.Equal(t, ediBlockerNoDocumentProfile, f.inv.LastEDIError)
+	assert.Equal(t, ediBlockerNoLadingVersion, f.inv.LastEDIError)
 	f.starter.AssertNotCalled(
 		t,
 		"StartWorkflow",

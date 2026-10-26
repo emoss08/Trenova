@@ -94,7 +94,6 @@ func partnerFields() []*fieldSpec {
 			normalize: normalizeCountry,
 			fallback:  "US",
 		},
-		{key: fieldCarrierSCAC, label: "Your SCAC", scope: scopeCarrier, normalize: normalizeSCAC},
 	}
 }
 
@@ -407,12 +406,6 @@ func setFieldsFor(set edi.TransactionSet, direction edi.DocumentDirection) []*fi
 			scope:     scopeSet,
 			normalize: normalizeMinutes,
 			matches:   matchesMinutes,
-		},
-		{
-			key:       prefix + setAttrFunctionalGroupID,
-			label:     name + " functional group",
-			scope:     scopeSet,
-			normalize: normalizeFunctionalGroup,
 		},
 	}
 }

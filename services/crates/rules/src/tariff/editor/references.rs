@@ -48,7 +48,7 @@ fn subject(
     session: &Session<'_>,
     scopes: &Scopes<'_>,
     offset: u32,
-    span: crate::span::Span,
+    span: trenova_module_kit::span::Span,
 ) -> Option<Subject> {
     if let Some((_, id)) = session.symbol_at(offset) {
         let symbol = session.symbol(id)?;

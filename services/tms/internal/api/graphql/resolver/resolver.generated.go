@@ -258,11 +258,10 @@ type Resolver struct {
 	driverSettlementLine               *driversettlementresolver.DriverSettlementLineResolver
 	driverSettlementLineGroup          *driversettlementresolver.DriverSettlementLineGroupResolver
 	drugAlcoholStanding                *workerdrugalcoholresolver.DrugAlcoholStandingResolver
-	ediAcknowledgmentConfig            *ediresolver.EdiAcknowledgmentConfigResolver
 	ediCarrierInvoice                  *carriersettlementresolver.EdiCarrierInvoiceResolver
+	ediFlowInstance                    *ediresolver.EdiFlowInstanceResolver
+	ediLadingVersion                   *ediresolver.EdiLadingVersionResolver
 	ediMessage                         *ediresolver.EdiMessageResolver
-	ediPartnerDocumentProfile          *ediresolver.EdiPartnerDocumentProfileResolver
-	ediTemplate                        *ediresolver.EdiTemplateResolver
 	ediTransfer                        *ediresolver.EdiTransferResolver
 	equipmentContinuity                *equipmentcontinuityresolver.EquipmentContinuityResolver
 	escrowAccount                      *driversettlementresolver.EscrowAccountResolver
@@ -1299,11 +1298,10 @@ func FromServices(s *Services) *Resolver {
 		driverSettlementLine:         &driversettlementresolver.DriverSettlementLineResolver{Deps: driversettlementDeps},
 		driverSettlementLineGroup:    &driversettlementresolver.DriverSettlementLineGroupResolver{Deps: driversettlementDeps},
 		drugAlcoholStanding:          &workerdrugalcoholresolver.DrugAlcoholStandingResolver{Deps: workerdrugalcoholDeps},
-		ediAcknowledgmentConfig:      &ediresolver.EdiAcknowledgmentConfigResolver{Deps: ediDeps},
 		ediCarrierInvoice:            &carriersettlementresolver.EdiCarrierInvoiceResolver{Deps: carriersettlementDeps},
+		ediFlowInstance:              &ediresolver.EdiFlowInstanceResolver{Deps: ediDeps},
+		ediLadingVersion:             &ediresolver.EdiLadingVersionResolver{Deps: ediDeps},
 		ediMessage:                   &ediresolver.EdiMessageResolver{Deps: ediDeps},
-		ediPartnerDocumentProfile:    &ediresolver.EdiPartnerDocumentProfileResolver{Deps: ediDeps},
-		ediTemplate:                  &ediresolver.EdiTemplateResolver{Deps: ediDeps},
 		ediTransfer:                  &ediresolver.EdiTransferResolver{Deps: ediDeps},
 		equipmentContinuity:          &equipmentcontinuityresolver.EquipmentContinuityResolver{Deps: equipmentcontinuityDeps},
 		escrowAccount:                &driversettlementresolver.EscrowAccountResolver{Deps: driversettlementDeps},
@@ -2201,24 +2199,20 @@ func (r *Resolver) DrugAlcoholStanding() generated.DrugAlcoholStandingResolver {
 	return r.drugAlcoholStanding
 }
 
-func (r *Resolver) EdiAcknowledgmentConfig() generated.EdiAcknowledgmentConfigResolver {
-	return r.ediAcknowledgmentConfig
-}
-
 func (r *Resolver) EdiCarrierInvoice() generated.EdiCarrierInvoiceResolver {
 	return r.ediCarrierInvoice
 }
 
+func (r *Resolver) EdiFlowInstance() generated.EdiFlowInstanceResolver {
+	return r.ediFlowInstance
+}
+
+func (r *Resolver) EdiLadingVersion() generated.EdiLadingVersionResolver {
+	return r.ediLadingVersion
+}
+
 func (r *Resolver) EdiMessage() generated.EdiMessageResolver {
 	return r.ediMessage
-}
-
-func (r *Resolver) EdiPartnerDocumentProfile() generated.EdiPartnerDocumentProfileResolver {
-	return r.ediPartnerDocumentProfile
-}
-
-func (r *Resolver) EdiTemplate() generated.EdiTemplateResolver {
-	return r.ediTemplate
 }
 
 func (r *Resolver) EdiTransfer() generated.EdiTransferResolver {

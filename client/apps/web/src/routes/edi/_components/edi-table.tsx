@@ -6,7 +6,7 @@ import {
   type EDIInboundFileRow,
   type EDIMappingProfileRow,
   type EDIMessageRow,
-  type EDITestCaseTableRow,
+  type EDIFlowInstanceRow,
   type EDITransferRow,
 } from "@/lib/graphql/edi-table";
 import { apiService } from "@/services/api";
@@ -25,12 +25,11 @@ import { useCallback, useMemo, useState } from "react";
 import { toast } from "@trenova/shared/components/ui/toast";
 import { notifyEDIBulkOutcome } from "./edi-bulk-actions";
 import { getCommunicationProfileColumns } from "./edi-communication-profile-columns";
-import { DesignerWorkspace } from "./edi-designer-workspace";
 import { getInboundFileColumns } from "./edi-inbound-file-columns";
 import { getMappingProfileColumns } from "./edi-mapping-profile-columns";
 import { getMessageColumns } from "./edi-message-columns";
 import { getPartnerColumns } from "./edi-partner-columns";
-import { getTestCaseColumns } from "./edi-test-case-columns";
+import { getFlowInstanceColumns } from "./edi-flow-instance-columns";
 import { getTransferColumns } from "./edi-transfer-columns";
 import type { EDIPageKind } from "./edi-types";
 import { EDIOverview } from "./overview/edi-overview";
@@ -45,7 +44,7 @@ import {
 } from "./panel/edi-panel-invalidation";
 import { PartnerPanel } from "./panel/edi-partner-panel";
 import { EDIReasonDialog } from "./panel/edi-reason-dialog";
-import { TestCasePanel } from "./panel/edi-test-case-panel";
+import { FlowInstancePanel } from "./panel/edi-flow-instance-panel";
 import {
   ACTIONABLE_TRANSFER_STATUSES,
   EDITransferReviewPanel,
@@ -61,11 +60,10 @@ export default function EdiTable({ kind }: { kind: EDIPageKind }) {
       {kind === "partners" && <PartnersWorkspace />}
       {kind === "communication-profiles" && <CommunicationProfilesWorkspace />}
       {kind === "mapping-profiles" && <MappingProfilesWorkspace />}
-      {kind === "designer" && <DesignerWorkspace />}
       {(kind === "inbound" || kind === "outbound") && <TransfersWorkspace direction={kind} />}
       {kind === "messages" && <MessagesWorkspace />}
       {kind === "inbound-files" && <InboundFilesWorkspace />}
-      {kind === "test-cases" && <TestCasesWorkspace />}
+      {kind === "flows" && <FlowInstancesWorkspace />}
     </div>
   );
 }
@@ -435,23 +433,24 @@ function InboundFilesWorkspace() {
   );
 }
 
-function TestCasesWorkspace() {
+function FlowInstancesWorkspace() {
   const t = useT();
-  const columns = useMemo(() => getTestCaseColumns(t), [t]);
+  const columns = useMemo(() => getFlowInstanceColumns(t), [t]);
 
   return (
     <Outer>
-      <div className="flex flex-col p-1">
-        <DataTable<EDITestCaseTableRow>
-          name="EDI Test Case"
-          emptyTitle={t("No EDI test cases yet")}
-          queryKey="edi-test-case-list"
-          resource={Resource.EDI}
-          columns={columns}
-          TablePanel={TestCasePanel}
-          graphql={ediTableGraphQLConfigs.testCases}
-        />
-      </div>
+      <DataTable<EDIFlowInstanceRow>
+        name="EDI Flow Instance"
+        emptyTitle={t("No flow instances yet")}
+        queryKey="edi-flow-instance-list"
+        resource={Resource.EDI}
+        columns={columns}
+        TablePanel={FlowInstancePanel}
+        graphql={ediTableGraphQLConfigs.flowInstances}
+        enableCreateAction={false}
+        enableReadOnlyPanel
+        refetchIntervalMs={EDI_QUEUE_REFETCH_INTERVAL_MS}
+      />
     </Outer>
   );
 }

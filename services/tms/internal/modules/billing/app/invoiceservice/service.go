@@ -104,14 +104,14 @@ type Params struct {
 	AccountingPolicy     *accountingcontrolpolicyservice.Service
 	BillingPolicy        *billingcontrolpolicyservice.Service
 
-	EDIPartnerRepo              ediports.EDIPartnerRepository                `optional:"true"`
-	EDIDocumentProfileRepo      ediports.EDIPartnerDocumentProfileRepository `optional:"true"`
-	EDICommunicationProfileRepo ediports.EDICommunicationProfileRepository   `optional:"true"`
-	LateChargeRepo              latechargeports.LateChargeRepository         `optional:"true"`
-	AccountingSync              accountingsyncports.AccountingSyncEnqueuer   `optional:"true"`
-	EmailSenders                emailports.EmailSenderResolver               `optional:"true"`
-	GLAccounts                  glaccountports.GLAccountRepository           `optional:"true"`
-	Config                      *config.Config                               `optional:"true"`
+	EDIPartnerRepo              ediports.EDIPartnerRepository              `optional:"true"`
+	EDILadingProjects           ediports.LadingProjectRepository           `optional:"true"`
+	EDICommunicationProfileRepo ediports.EDICommunicationProfileRepository `optional:"true"`
+	LateChargeRepo              latechargeports.LateChargeRepository       `optional:"true"`
+	AccountingSync              accountingsyncports.AccountingSyncEnqueuer `optional:"true"`
+	EmailSenders                emailports.EmailSenderResolver             `optional:"true"`
+	GLAccounts                  glaccountports.GLAccountRepository         `optional:"true"`
+	Config                      *config.Config                             `optional:"true"`
 	Permissions                 permissionports.PermissionEngine
 }
 
@@ -156,7 +156,7 @@ type Service struct {
 	billingPolicy        *billingcontrolpolicyservice.Service
 
 	ediPartnerRepo              ediports.EDIPartnerRepository
-	ediDocumentProfileRepo      ediports.EDIPartnerDocumentProfileRepository
+	ediLadingProjects           ediports.LadingProjectRepository
 	ediCommunicationProfileRepo ediports.EDICommunicationProfileRepository
 	lateChargeRepo              latechargeports.LateChargeRepository
 	accountingSync              accountingsyncports.AccountingSyncEnqueuer
@@ -236,7 +236,7 @@ func NewService(p Params) *Service { //nolint:gocritic // mirrors New
 		accountingPolicy:            p.AccountingPolicy,
 		billingPolicy:               p.BillingPolicy,
 		ediPartnerRepo:              p.EDIPartnerRepo,
-		ediDocumentProfileRepo:      p.EDIDocumentProfileRepo,
+		ediLadingProjects:           p.EDILadingProjects,
 		ediCommunicationProfileRepo: p.EDICommunicationProfileRepo,
 		lateChargeRepo:              p.LateChargeRepo,
 		accountingSync:              p.AccountingSync,

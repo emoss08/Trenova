@@ -2,27 +2,32 @@ package ediconnectiondraft
 
 import (
 	"context"
+	"fmt"
 	"slices"
 	"strings"
+	"sync"
+	"testing"
 
-	"github.com/emoss08/trenova/internal/testutil/dbtest"
-
+	"github.com/emoss08/trenova/internal/modules/edi/app/edilading"
 	"github.com/emoss08/trenova/internal/modules/edi/app/ediservice"
-	"github.com/emoss08/trenova/internal/modules/edi/app/edix12"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/testutil/dbtest"
+	"github.com/emoss08/trenova/internal/testutil/mocks/tenantportsmock"
 	"github.com/emoss08/trenova/pkg/errortypes"
+	"github.com/emoss08/trenova/pkg/lading"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
+	"github.com/stretchr/testify/mock"
 	"go.uber.org/zap"
 )
 
 type fakeRepo struct {
-	partners  []*ediports.EDIPartnerSetup
-	templates []*edi.EDITemplateVersion
-	identity  *ediports.InterchangeIdentity
-	targets   map[edi.MappingEntityType]map[pulid.ID]string
+	partners []*ediports.EDIPartnerSetup
+	identity *ediports.InterchangeIdentity
+	targets  map[edi.MappingEntityType]map[pulid.ID]string
 }
 
 func (f *fakeRepo) FindPartnerMatches(
@@ -38,11 +43,11 @@ func (f *fakeRepo) FindPartnerMatches(
 			ByName:     req.Name != "" && strings.EqualFold(partner.Name, req.Name),
 			ByCustomer: req.CustomerID.IsNotNil() && partner.CustomerID == req.CustomerID,
 		}
-		for _, profile := range setup.DocumentProfiles {
-			if req.ISAID != "" && profile.Direction == edi.DocumentDirectionOutbound &&
-				profile.Envelope.InterchangeReceiverID == req.ISAID {
-				match.ByInterchange = true
-			}
+		if version := setup.LatestVersion; version != nil && req.ISAID != "" &&
+			version.Manifest.Partner != nil && version.Manifest.Partner.Interchange != nil &&
+			version.Manifest.Partner.Interchange.Them != nil &&
+			version.Manifest.Partner.Interchange.Them.ID == req.ISAID {
+			match.ByInterchange = true
 		}
 		for _, profile := range setup.CommunicationProfiles {
 			if req.AS2ID != "" && profile.Config["partnerAS2Id"] == req.AS2ID {
@@ -66,20 +71,6 @@ func (f *fakeRepo) GetPartnerSetup(
 		}
 	}
 	return nil, errortypes.NewNotFoundError("EDIPartner not found")
-}
-
-func (f *fakeRepo) ListTemplateCandidates(
-	_ context.Context,
-	req *ediports.ListEDITemplateCandidatesRequest,
-) ([]*edi.EDITemplateVersion, error) {
-	out := make([]*edi.EDITemplateVersion, 0)
-	for _, version := range f.templates {
-		if version.Template.TransactionSet == req.TransactionSet &&
-			version.Template.Direction == req.Direction {
-			out = append(out, version)
-		}
-	}
-	return out, nil
 }
 
 func (f *fakeRepo) GetInterchangeIdentity(
@@ -133,13 +124,11 @@ func documentTypeID(set edi.TransactionSet, direction edi.DocumentDirection) pul
 }
 
 type fakeSetup struct {
-	settingsErrors []edix12.Diagnostic
-	partners       []*edi.EDIPartner
-	transports     []*ediservice.UpsertEDICommunicationProfileRequest
-	profiles       []*ediservice.UpsertEDIPartnerDocumentProfileRequest
-	mappings       []*ediports.SaveMappingItemsRequest
-	controls       []*ediports.ResetEDIControlNumberRequest
-	failOn         string
+	partners   []*edi.EDIPartner
+	transports []*ediservice.UpsertEDICommunicationProfileRequest
+	mappings   []*ediports.SaveMappingItemsRequest
+	controls   []*ediports.ResetEDIControlNumberRequest
+	failOn     string
 }
 
 func (f *fakeSetup) fail(step string) error {
@@ -196,19 +185,6 @@ func (f *fakeSetup) UpdateCommunicationProfile(
 	return &edi.EDICommunicationProfile{ID: req.ProfileID, Name: req.Name}, nil
 }
 
-func (f *fakeSetup) UpsertPartnerDocumentProfile(
-	_ context.Context,
-	req *ediservice.UpsertEDIPartnerDocumentProfileRequest,
-	_ *permissionports.RequestActor,
-) (*edi.EDIPartnerDocumentProfile, error) {
-	f.profiles = append(f.profiles, req)
-	id := req.ProfileID
-	if id.IsNil() {
-		id = pulid.MustNew("edidp_")
-	}
-	return &edi.EDIPartnerDocumentProfile{ID: id, Name: req.Name}, nil
-}
-
 func (f *fakeSetup) SaveMappingProfile(
 	_ context.Context,
 	req *ediports.SaveMappingItemsRequest,
@@ -226,50 +202,102 @@ func (f *fakeSetup) StartControlNumber(
 	return &edi.EDIControlNumberSequence{ID: pulid.MustNew("edicn_"), Kind: req.Kind}, nil
 }
 
-func (f *fakeSetup) ValidatePartnerSettings(
-	context.Context,
-	*ediservice.ValidatePartnerSettingsRequest,
-) ([]edix12.Diagnostic, error) {
-	return f.settingsErrors, nil
+type fakeProjects struct {
+	setup   *fakeSetup
+	imports []*edilading.ImportRequest
 }
 
-type fakeTemplates struct {
-	ediports.EDITemplateRepository
-	ensured []edi.DocumentDirection
+func (f *fakeProjects) Import(
+	_ context.Context,
+	req *edilading.ImportRequest,
+	_ *permissionports.RequestActor,
+) (*edi.LadingVersion, error) {
+	if err := f.setup.fail("project"); err != nil {
+		return nil, err
+	}
+	f.imports = append(f.imports, req)
+	return &edi.LadingVersion{
+		ID:        pulid.MustNew("ldv_"),
+		ProjectID: pulid.MustNew("ldp_"),
+		Number:    1,
+		Status:    edi.LadingVersionStatusDraft,
+		Files:     req.Files,
+	}, nil
 }
 
-func (f *fakeTemplates) EnsureStarterTemplate(
+var storedSamples sync.Map
+
+func storeSamples(samples []lading.Sample) []edi.LadingSampleRef {
+	refs := make([]edi.LadingSampleRef, 0, len(samples))
+	for _, sample := range samples {
+		digest := lading.Digest(sample.Content)
+		storedSamples.Store(digest, sample.Content)
+		refs = append(refs, edi.LadingSampleRef{
+			Path:   sample.Path,
+			Digest: digest,
+			Size:   len(sample.Content),
+		})
+	}
+	return refs
+}
+
+func versionSamples(version *edi.LadingVersion) ([]lading.Sample, error) {
+	samples := make([]lading.Sample, 0, len(version.Samples))
+	for _, ref := range version.Samples {
+		content, ok := storedSamples.Load(ref.Digest)
+		if !ok {
+			return nil, fmt.Errorf("lading sample %s of version %s is missing", ref.Path, version.ID)
+		}
+		samples = append(samples, lading.Sample{Path: ref.Path, Content: content.(string)})
+	}
+	return samples, nil
+}
+
+func (f *fakeProjects) Samples(
 	_ context.Context,
 	_ pagination.TenantInfo,
-	set edi.TransactionSet,
-	direction edi.DocumentDirection,
-) (*edi.EDITemplate, *edi.EDITemplateVersion, error) {
-	f.ensured = append(f.ensured, direction)
-	template := &edi.EDITemplate{ID: pulid.MustNew("editpl_"), TransactionSet: set, Direction: direction}
-	return template, &edi.EDITemplateVersion{ID: pulid.MustNew("editv_"), TemplateID: template.ID}, nil
+	version *edi.LadingVersion,
+) ([]lading.Sample, error) {
+	return versionSamples(version)
 }
 
 type harness struct {
-	service   *Service
-	repo      *fakeRepo
-	setup     *fakeSetup
-	templates *fakeTemplates
+	service  *Service
+	repo     *fakeRepo
+	setup    *fakeSetup
+	projects *fakeProjects
 }
 
-func newHarness() *harness {
+// newHarness is a draft service over in-memory records, with the real Lading runtime for
+// starters, checks and sample runs, in an organization whose clock is in Chicago.
+func newHarness(t *testing.T) *harness {
+	t.Helper()
+	orgs := tenantportsmock.NewMockOrganizationRepository(t)
+	orgs.EXPECT().GetByID(mock.Anything, mock.Anything).
+		Return(&tenant.Organization{
+			Name:     "Trenova Logistics",
+			ScacCode: "TRNV",
+			Timezone: "America/Chicago",
+		}, nil).
+		Maybe()
+	setup := &fakeSetup{}
 	h := &harness{
-		repo:      &fakeRepo{targets: map[edi.MappingEntityType]map[pulid.ID]string{}},
-		setup:     &fakeSetup{},
-		templates: &fakeTemplates{},
+		repo:     &fakeRepo{targets: map[edi.MappingEntityType]map[pulid.ID]string{}},
+		setup:    setup,
+		projects: &fakeProjects{setup: setup},
 	}
 	h.service = &Service{
 		repo:          h.repo,
-		templates:     h.templates,
 		documentTypes: fakeDocumentTypes{},
 		setup:         h.setup,
 		validator:     ediservice.NewValidator(),
-		db:            dbtest.NopConnection{},
-		l:             zap.NewNop(),
+		lading: edilading.NewRuntime(edilading.RuntimeParams{
+			Logger: zap.NewNop(),
+			Orgs:   orgs,
+		}),
+		projects: h.projects,
+		db:       dbtest.NopConnection{},
+		l:        zap.NewNop(),
 	}
 	return h
 }

@@ -32,14 +32,14 @@ use super::lexer;
 use super::token::Token;
 use super::token::TokenKind;
 use super::walk;
-use crate::span::Span;
-use crate::tariff::diagnostic::Change;
-use crate::tariff::diagnostic::Diagnostic;
-use crate::tariff::diagnostic::Fix;
 use docs::DocTable;
+use trenova_module_kit::diagnostic::Change;
+use trenova_module_kit::diagnostic::Diagnostic;
+use trenova_module_kit::diagnostic::Fix;
 use trenova_module_kit::message;
 use trenova_module_kit::message::Arg;
 use trenova_module_kit::message::Message;
+use trenova_module_kit::span::Span;
 
 /// The deepest a tree may be.
 pub const MAX_DEPTH: usize = 128;
@@ -349,7 +349,7 @@ impl<'a> Parser<'a> {
             self.diagnostics.iter().rev().take(4).any(|existing| {
                 existing.span.start == at && existing.severity == diagnostic.severity
             });
-        if diagnostic.severity == crate::tariff::diagnostic::Severity::Error {
+        if diagnostic.severity == trenova_module_kit::diagnostic::Severity::Error {
             self.statement_failed = true;
         }
         if !duplicate {

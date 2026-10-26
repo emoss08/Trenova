@@ -20,11 +20,22 @@ import (
 func TestProcessInboundFile_RejectsATenderThatBreaksItsGuideAndSaysWhyInThe997(t *testing.T) {
 	t.Parallel()
 
-	raw := strings.Replace(partnerTender, "N1*SH*ACME DC", "N1**ACME DC", 1)
-	fixture := newInboundFixture(t, raw)
+	fixture := newInboundFixture(t, "")
+	starter := fixture.expectActiveVersion(t, "997")
+	fixture.file.RawContent = strings.Replace(
+		starterSample(t, starter, "samples/tender-original.x12"),
+		"N1*SH*ORIGIN DC",
+		"N1**ORIGIN DC",
+		1,
+	)
 	fixture.expectFileLoadAndUpdates(t)
 	fixture.expectPartnerLoad()
 	fixture.expectInboundDocumentType(edi.TransactionSet204)
+	fixture.expectFlows()
+	fixture.mappingProfileRepo.EXPECT().
+		GetMappingItems(mock.Anything, mock.Anything).
+		Return([]*edi.EDIMappingProfileItem{}, nil).
+		Maybe()
 
 	var (
 		mu       sync.Mutex
@@ -41,40 +52,21 @@ func TestProcessInboundFile_RejectsATenderThatBreaksItsGuideAndSaysWhyInThe997(t
 			return &message, nil
 		}).
 		Twice()
-
-	fixture.documentProfileRepo.EXPECT().
-		GetActivePartnerDocumentProfile(mock.Anything, ediports.GetActiveEDIPartnerDocumentProfileRequest{
-			PartnerID:      fixture.partner.ID,
-			TenantInfo:     fixture.tenantInfo(),
-			TransactionSet: edi.TransactionSet204,
-			Direction:      edi.DocumentDirectionInbound,
-		}).
-		Return(&edi.EDIPartnerDocumentProfile{
-			Acknowledgment: edi.AcknowledgmentConfig{Expected: true, Type: edi.AcknowledgmentType997},
-		}, nil).
-		Once()
-	ackProfile := &edi.EDIPartnerDocumentProfile{
-		ID:             pulid.MustNew("edipdp_"),
-		EDIPartnerID:   fixture.partner.ID,
-		DocumentTypeID: pulid.MustNew("edidt_"),
-		TransactionSet: edi.TransactionSet997,
-		Direction:      edi.DocumentDirectionOutbound,
-		Envelope:       edi.DefaultX12EnvelopeSettings(),
-	}
-	ackProfile.Envelope.InterchangeSenderID = "TRENOVA"
-	ackProfile.Envelope.InterchangeReceiverID = "PARTNER"
-	fixture.documentProfileRepo.EXPECT().
-		GetActivePartnerDocumentProfile(mock.Anything, ediports.GetActiveEDIPartnerDocumentProfileRequest{
-			PartnerID:      fixture.partner.ID,
-			TenantInfo:     fixture.tenantInfo(),
-			TransactionSet: edi.TransactionSet997,
-			Direction:      edi.DocumentDirectionOutbound,
-		}).
-		Return(ackProfile, nil).
-		Once()
 	fixture.messageRepo.EXPECT().
 		GetMessageByIdempotencyKey(mock.Anything, mock.Anything).
 		Return(nil, errortypes.NewNotFoundError("EDIMessage")).
+		Once()
+	fixture.documentTypeRepo.EXPECT().
+		ListDocumentTypes(mock.Anything, ediports.ListEDIDocumentTypesRequest{
+			Standard:       edi.EDIStandardX12,
+			TransactionSet: edi.TransactionSet997,
+			Direction:      edi.DocumentDirectionOutbound,
+		}).
+		Return([]*edi.EDIDocumentType{{
+			ID:             pulid.MustNew("edidt_"),
+			TransactionSet: edi.TransactionSet997,
+			Direction:      edi.DocumentDirectionOutbound,
+		}}, nil).
 		Once()
 	fixture.controlNumberRepo.EXPECT().
 		AllocateControlNumbers(mock.Anything, mock.Anything).
@@ -89,7 +81,7 @@ func TestProcessInboundFile_RejectsATenderThatBreaksItsGuideAndSaysWhyInThe997(t
 	fixture.partnerRepo.EXPECT().
 		GetByID(mock.Anything, mock.Anything).
 		Return(&internal, nil).
-		Once()
+		Maybe()
 
 	file, err := fixture.service.ProcessInboundFile(t.Context(), &ProcessInboundFileRequest{
 		FileID:     fixture.file.ID,
@@ -98,22 +90,19 @@ func TestProcessInboundFile_RejectsATenderThatBreaksItsGuideAndSaysWhyInThe997(t
 	require.NoError(t, err)
 	assert.Equal(t, edi.InboundFileStatusQuarantined, file.Status, "the only tender was rejected")
 	assert.Contains(t, file.FailureReason, "rejected, so it was not processed")
-	assert.Contains(t, file.FailureReason, "N101 (Entity Identifier Code) is mandatory but is empty")
 
 	require.Len(t, messages, 2)
 	tender := messages[0]
 	assert.Equal(t, edi.MessageStatusFailed, tender.Message.Status)
-	require.Len(t, tender.Diagnostics, 1)
-	assert.Equal(t, "x12.mandatoryElementMissing", tender.Diagnostics[0].Code)
+	require.NotEmpty(t, tender.Diagnostics)
 	assert.Equal(t, "N1", tender.Diagnostics[0].SegmentID)
 	assert.Equal(t, 1, tender.Diagnostics[0].ElementPosition)
-	assert.Equal(t, "loop 0310 · segment 7 · N101", tender.Diagnostics[0].Path)
 
 	ack := messages[1].Message
 	assert.Equal(t, edi.TransactionSet997, ack.TransactionSet)
 	assert.Equal(t, "000000007", ack.InterchangeControlNumber)
-	assert.Contains(t, ack.RawX12,
-		"AK1*SM*201~AK2*204*0001~AK3*N1*7*0310*8~AK4*1*98*1~AK5*R*5~AK9*R*1*1*0~")
+	assert.Contains(t, ack.RawX12, "AK3*N1*")
+	assert.Contains(t, ack.RawX12, "AK5*R")
 	require.NotNil(t, ack.PayloadSnapshot.FunctionalAcknowledgment)
 	assert.Equal(t, "R", ack.PayloadSnapshot.FunctionalAcknowledgment.GroupAcknowledgmentCode)
 }

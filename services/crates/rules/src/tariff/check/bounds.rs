@@ -17,8 +17,6 @@ use super::decls::{FoldedConstraint, State, constant_of};
 use super::describe::{quote, quote_span, snippet};
 use super::fixes::replace;
 use super::{ModuleAnalysis, SymbolKind};
-use crate::span::Span;
-use crate::tariff::diagnostic::{Diagnostic, nearest};
 use crate::tariff::syntax::ast::{
     BinaryOp, Expr, ExprKind, ItemKind, Pattern, PatternKind, Stmt, StmtKind,
 };
@@ -27,8 +25,10 @@ use crate::tariff::syntax::walk::{self, Visit};
 use crate::tariff::types::Type;
 use std::cmp::Ordering;
 use std::collections::BTreeMap;
+use trenova_module_kit::diagnostic::{Diagnostic, nearest};
 use trenova_module_kit::message;
 use trenova_module_kit::message::{Arg, Message};
+use trenova_module_kit::span::Span;
 
 /// The code of the warnings.
 const CODE: &str = "bounds";

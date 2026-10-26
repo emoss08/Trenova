@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
+
 	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -64,26 +65,20 @@ func buildPartnerReadiness(row *ediports.EDIPartnerReadinessRow) *EDIPartnerRead
 			Complete: row.HasMappingProfile,
 		},
 	}
-	if row.EnabledForInbound {
-		items = append(items, EDIPartnerReadinessItem{
-			Key:      "inbound-document-profile",
-			Label:    "Active inbound document profile",
-			Complete: row.HasInboundDocProfile,
-		})
-	}
-	if row.EnabledForOutbound {
-		items = append(items, EDIPartnerReadinessItem{
-			Key:      "outbound-document-profile",
-			Label:    "Active outbound document profile",
-			Complete: row.HasOutboundDocProfile,
-		})
-	}
-	if row.Kind == string(edi.PartnerKindExternal) {
-		items = append(items, EDIPartnerReadinessItem{
-			Key:      "test-case",
-			Label:    "At least one passing test case",
-			Complete: row.HasPassingTestCase,
-		})
+	if row.Kind != string(edi.PartnerKindInternal) &&
+		(row.EnabledForInbound || row.EnabledForOutbound) {
+		items = append(items,
+			EDIPartnerReadinessItem{
+				Key:      "lading-project",
+				Label:    "Lading project",
+				Complete: row.HasLadingProject,
+			},
+			EDIPartnerReadinessItem{
+				Key:      "lading-active-version",
+				Label:    "Certified Lading version running",
+				Complete: row.HasActiveVersion,
+			},
+		)
 	}
 
 	state := &EDIPartnerReadiness{

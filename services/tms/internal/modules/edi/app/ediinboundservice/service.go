@@ -18,6 +18,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/watchtowerports"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/contentscanports"
+	"github.com/emoss08/trenova/internal/modules/edi/app/edilading"
 	"github.com/emoss08/trenova/internal/modules/edi/app/ediservice"
 	"github.com/emoss08/trenova/internal/modules/edi/app/edix12inspect"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
@@ -30,7 +31,6 @@ import (
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/x12"
 	"github.com/emoss08/trenova/shared/i18n"
-	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/stringutils"
 	"github.com/emoss08/trenova/shared/timeutils"
 	"go.uber.org/fx"
@@ -46,13 +46,15 @@ type Params struct {
 	PartnerRepo         ediports.EDIPartnerRepository
 	MessageRepo         ediports.EDIMessageRepository
 	DocumentTypeRepo    ediports.EDIDocumentTypeRepository
-	DocumentProfileRepo ediports.EDIPartnerDocumentProfileRepository
 	TransferRepo        ediports.EDILoadTenderTransferRepository
 	TenderRecipientRepo ediports.EDITenderRecipientRepository
 	TenderRepo          tenderports.TenderRepository           `optional:"true"`
 	TenderResponses     tenderports.TenderResponseRecorder     `optional:"true"`
 	InvoiceMatcher      carrierports.CarrierInvoiceAutoMatcher `optional:"true"`
 	EDIService          *ediservice.Service
+	Lading              *edilading.Runtime
+	Flows               *edilading.Flows
+	Replayer            *edilading.Replayer `optional:"true"`
 	Transport           ediports.EDITransportDispatcher
 	ContentGate         contentscanports.Gate
 	WorkflowStarter     kernelports.WorkflowStarter
@@ -71,13 +73,15 @@ type Service struct {
 	partnerRepo         ediports.EDIPartnerRepository
 	messageRepo         ediports.EDIMessageRepository
 	documentTypeRepo    ediports.EDIDocumentTypeRepository
-	documentProfileRepo ediports.EDIPartnerDocumentProfileRepository
 	transferRepo        ediports.EDILoadTenderTransferRepository
 	tenderRecipientRepo ediports.EDITenderRecipientRepository
 	tenderRepo          tenderports.TenderRepository
 	tenderResponses     tenderports.TenderResponseRecorder
 	invoiceMatcher      carrierports.CarrierInvoiceAutoMatcher
 	ediService          *ediservice.Service
+	lading              *edilading.Runtime
+	flows               *edilading.Flows
+	replayer            *edilading.Replayer
 	transport           ediports.EDITransportDispatcher
 	workflowStarter     kernelports.WorkflowStarter
 	metrics             *metrics.EDI
@@ -102,13 +106,15 @@ func New(p Params) *Service {
 		partnerRepo:         p.PartnerRepo,
 		messageRepo:         p.MessageRepo,
 		documentTypeRepo:    p.DocumentTypeRepo,
-		documentProfileRepo: p.DocumentProfileRepo,
 		transferRepo:        p.TransferRepo,
 		tenderRecipientRepo: p.TenderRecipientRepo,
 		tenderRepo:          p.TenderRepo,
 		tenderResponses:     p.TenderResponses,
 		invoiceMatcher:      p.InvoiceMatcher,
 		ediService:          p.EDIService,
+		lading:              p.Lading,
+		flows:               p.Flows,
+		replayer:            p.Replayer,
 		transport:           p.Transport,
 		workflowStarter:     p.WorkflowStarter,
 	}
@@ -408,13 +414,30 @@ func (s *Service) processInboundFile(
 		)
 	}
 
+	read, err := s.readFile(ctx, req.TenantInfo, partner, interchange, file.RawContent)
+	if errors.Is(err, errNoReceivingVersion) {
+		return s.quarantineFile(ctx, file, fmt.Sprintf(
+			"%s: activate a version of %s's Lading project to read its files",
+			err.Error(),
+			partner.Name,
+		))
+	}
+	if err != nil {
+		return nil, err
+	}
+
 	warnings := make([]string, 0)
 	failures := 0
 	processed := 0
 	tendered := false
+	first := map[edi.TransactionSet]*edi.EDIMessage{}
 	for index := range interchange.transactions {
 		transaction := &interchange.transactions[index]
-		outcome := s.processTransaction(ctx, file, partner, transaction)
+		outcome := s.processTransaction(ctx, file, partner, interchange, read, transaction)
+		if outcome.message != nil && first[transaction.set] == nil &&
+			read.transaction(transaction) != nil {
+			first[transaction.set] = outcome.message
+		}
 		warnings = append(warnings, outcome.warnings...)
 		tendered = tendered || outcome.tendered
 		if outcome.err != nil {
@@ -430,7 +453,8 @@ func (s *Service) processInboundFile(
 		processed++
 	}
 
-	s.generateInboundAcknowledgments(ctx, file, partner, interchange, &warnings)
+	s.shadow(ctx, file, read, first)
+	s.generateInboundAcknowledgments(ctx, file, partner, interchange, read, &warnings)
 
 	now := timeutils.NowUnix()
 	file.ProcessedAt = &now
@@ -524,79 +548,111 @@ func (s *Service) processTransaction(
 	ctx context.Context,
 	file *edi.EDIInboundFile,
 	partner *edi.EDIPartner,
+	interchange *parsedInterchange,
+	r *reading,
 	transaction *parsedTransaction,
 ) transactionOutcome {
-	message, err := s.recordInboundMessage(ctx, file, transaction)
+	read := r.transaction(transaction)
+	if read != nil {
+		read.apply(interchange, transaction)
+	}
+	recorded, err := s.recordInboundMessage(ctx, file, transaction, read, r.programs.Active)
 	if err != nil {
 		return transactionOutcome{err: err}
 	}
+	message := recorded.message
 	outcome := transactionOutcome{message: message}
-	if transaction.rejected() {
-		outcome.err = rejectedTransactionError(transaction)
+	switch {
+	case recorded.unreadable != nil:
+		outcome.err = recorded.unreadable
 		return outcome
-	}
-	switch transaction.set {
-	case edi.TransactionSet997, edi.TransactionSet999:
+	case transaction.set.IsAcknowledgment():
+		if transaction.rejected() {
+			outcome.err = rejectedTransactionError(transaction)
+			return outcome
+		}
 		outcome.warnings = s.routeAcknowledgment(ctx, file, partner, message, transaction)
-	case edi.TransactionSet990:
-		outcome.warnings, outcome.err = s.routeTenderResponse(ctx, file, partner, transaction)
-	case edi.TransactionSet214:
-		outcome.warnings, outcome.err = s.routeShipmentStatus(ctx, file, partner, transaction)
-	case edi.TransactionSet204:
-		outcome.tendered, outcome.warnings, outcome.err = s.routeLoadTender(
-			ctx,
-			file,
-			partner,
-			message,
-			transaction,
-		)
-	case edi.TransactionSet210:
-		outcome.warnings, outcome.err = s.routeFreightInvoice(
-			ctx,
-			file,
-			partner,
-			message,
-			transaction,
-		)
-	default:
+		return outcome
+	case read == nil:
+		reason, ok := r.skipped[transaction.set]
+		if !ok {
+			reason = "the partner's map read no transaction with this control number"
+		}
 		outcome.warnings = []string{fmt.Sprintf(
-			"transaction %s/%s recorded without processing: unsupported transaction set",
+			"transaction %s/%s recorded without processing: %s",
 			transaction.set,
 			transaction.controlNumber,
+			reason,
 		)}
+		return outcome
+	}
+	outcome = s.receive(ctx, &received{
+		file:        file,
+		partner:     partner,
+		message:     message,
+		transaction: transaction,
+		read:        read,
+		programs:    r.programs,
+	})
+	if transaction.rejected() && outcome.err == nil {
+		outcome.err = rejectedTransactionError(transaction)
 	}
 	return outcome
 }
 
+type recordedMessage struct {
+	message    *edi.EDIMessage
+	unreadable error
+}
+
+// recordInboundMessage keeps a received transaction with what the partner's version read from
+// it. A document the version read that Trenova cannot take is kept as failed and reported as
+// unreadable.
 func (s *Service) recordInboundMessage(
 	ctx context.Context,
 	file *edi.EDIInboundFile,
 	transaction *parsedTransaction,
-) (*edi.EDIMessage, error) {
+	read *readTransaction,
+	program *edilading.Program,
+) (*recordedMessage, error) {
 	documentType, err := s.inboundDocumentType(ctx, transaction.set)
 	if err != nil {
 		return nil, err
 	}
-	payload := transaction.documentPayload()
+	payload := edi.DocumentPayload{TransactionSet: transaction.set}
+	var payloadErr error
+	switch {
+	case transaction.set.IsAcknowledgment():
+		payload = transaction.documentPayload()
+	case read != nil:
+		payload, payloadErr = read.payload(transaction.set)
+		if payloadErr != nil {
+			payloadErr = fmt.Errorf(
+				"the document map %s read could not be taken: %w",
+				read.clause.Map,
+				payloadErr,
+			)
+		}
+	}
 	status := edi.MessageStatusGenerated
-	if transaction.rejected() {
+	if transaction.rejected() || payloadErr != nil {
 		status = edi.MessageStatusFailed
 	}
 	message := &edi.EDIMessage{
-		BusinessUnitID: file.BusinessUnitID,
-		OrganizationID: file.OrganizationID,
-		EDIPartnerID:   file.EDIPartnerID,
-		DocumentTypeID: documentType.ID,
-		InboundFileID:  file.ID,
-		Direction:      edi.DocumentDirectionInbound,
-		Standard:       edi.EDIStandardX12,
-		TransactionSet: transaction.set,
+		BusinessUnitID:  file.BusinessUnitID,
+		OrganizationID:  file.OrganizationID,
+		EDIPartnerID:    file.EDIPartnerID,
+		DocumentTypeID:  documentType.ID,
+		InboundFileID:   file.ID,
+		LadingVersionID: program.Version.ID,
+		Direction:       edi.DocumentDirectionInbound,
+		Standard:        edi.EDIStandardX12,
+		TransactionSet:  transaction.set,
 		X12Version: stringutils.FirstNonEmpty(
 			transaction.version,
 			documentType.DefaultVersion,
 		),
 		Status:                   status,
-		ValidationMode:           edi.ValidationModeStrict,
 		InterchangeControlNumber: file.InterchangeControlNumber,
 		GroupControlNumber:       transaction.groupControlNumber,
 		TransactionControlNumber: transaction.controlNumber,
@@ -605,13 +661,22 @@ func (s *Service) recordInboundMessage(
 		PayloadSnapshot:          payload,
 		AckStatus:                edi.MessageAcknowledgmentStatusNotExpected,
 	}
-	return s.messageRepo.CreateMessageWithDiagnostics(
+	if read != nil {
+		message.Document = read.result.Document
+		message.Lineage = read.result.Lineage
+		message.Outcomes = read.result.Outcomes
+	}
+	created, err := s.messageRepo.CreateMessageWithDiagnostics(
 		ctx,
 		ediports.CreateEDIMessageWithDiagnosticsRequest{
 			Message:     message,
 			Diagnostics: findingDiagnostics(transaction.findings),
 		},
 	)
+	if err != nil {
+		return nil, err
+	}
+	return &recordedMessage{message: created, unreadable: payloadErr}, nil
 }
 
 func findingDiagnostics(findings []x12.Finding) []*edi.EDIMessageValidationError {
@@ -691,6 +756,7 @@ func (s *Service) generateInboundAcknowledgments(
 	file *edi.EDIInboundFile,
 	partner *edi.EDIPartner,
 	interchange *parsedInterchange,
+	read *reading,
 	warnings *[]string,
 ) {
 	tenantInfo := inboundFileTenant(file)
@@ -700,7 +766,7 @@ func (s *Service) generateInboundAcknowledgments(
 		if set == "" {
 			continue
 		}
-		ackType := s.inboundAcknowledgmentType(ctx, tenantInfo, partner.ID, set)
+		ackType := read.programs.Active.Acknowledgment(set)
 		if ackType == edi.AcknowledgmentTypeNone {
 			continue
 		}
@@ -730,7 +796,7 @@ func (s *Service) generateInboundAcknowledgments(
 	}
 }
 
-// acknowledgedSet is the transaction set whose inbound profile decides how a group is
+// acknowledgedSet is the transaction set whose receive clause decides how a group is
 // acknowledged: its first set that is not itself an acknowledgment, since a group of
 // acknowledgments is never acknowledged.
 func acknowledgedSet(interchange *parsedInterchange, group int) edi.TransactionSet {
@@ -744,31 +810,6 @@ func acknowledgedSet(interchange *parsedInterchange, group int) edi.TransactionS
 		}
 	}
 	return ""
-}
-
-func (s *Service) inboundAcknowledgmentType(
-	ctx context.Context,
-	tenantInfo pagination.TenantInfo,
-	partnerID pulid.ID,
-	transactionSet edi.TransactionSet,
-) edi.AcknowledgmentType {
-	profile, err := s.documentProfileRepo.GetActivePartnerDocumentProfile(
-		ctx,
-		ediports.GetActiveEDIPartnerDocumentProfileRequest{
-			PartnerID:      partnerID,
-			TenantInfo:     tenantInfo,
-			TransactionSet: transactionSet,
-			Direction:      edi.DocumentDirectionInbound,
-		},
-	)
-	if err != nil || profile == nil {
-		return edi.AcknowledgmentTypeNone
-	}
-	if !profile.Acknowledgment.Expected ||
-		profile.Acknowledgment.Type == edi.AcknowledgmentTypeNone {
-		return edi.AcknowledgmentTypeNone
-	}
-	return profile.Acknowledgment.Type
 }
 
 func (s *Service) ListInboundFiles(

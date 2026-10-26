@@ -2,7 +2,6 @@
 
 use super::expr::internal;
 use super::{Env, Flow, Interp, refusal};
-use crate::span::Span;
 use crate::tariff::eval::bill::{self, Billed, Line, LineKind, Note, cents};
 use crate::tariff::eval::error::{EvalError, Stop};
 use crate::tariff::eval::operators;
@@ -15,6 +14,7 @@ use crate::tariff::syntax::ast::{
 use rust_decimal::Decimal;
 use rust_decimal::prelude::ToPrimitive;
 use trenova_module_kit::message::Arg;
+use trenova_module_kit::span::Span;
 
 impl<'a> Interp<'_, 'a> {
     /// Runs every file-level statement of a module, top to bottom, in `env`.

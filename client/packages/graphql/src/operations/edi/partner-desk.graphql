@@ -48,30 +48,49 @@ query DeskEdiPartnerCard($id: ID!) {
       name
       code
     }
-    documentProfiles {
-      id
-      name
-      status
-      direction
-      transactionSet
-      functionalGroupId
-      envelope {
-        interchangeSenderQualifier
-        interchangeSenderId
-        interchangeReceiverQualifier
-        interchangeReceiverId
-        applicationSenderCode
-        applicationReceiverCode
-        interchangeUsageIndicator
-        elementSeparator
-        segmentTerminator
-        componentSeparator
-        repetitionSeparator
+    lading {
+      project {
+        id
+        activeVersionId
+        shadowVersionId
+        updatedAt
       }
-      acknowledgment {
-        expected
-        type
-        slaInMinutes
+      active {
+        id
+        number
+        status
+        errorCount
+        warningCount
+        activatedAt
+        readiness {
+          tests
+          failing
+          ready
+        }
+        interchange {
+          theirQualifier
+          theirId
+          ourQualifier
+          ourId
+          theirGroupCode
+          ourGroupCode
+          version
+          usage
+          separators
+        }
+        exchanges {
+          transactionSet
+          direction
+          map
+          acknowledgment
+          acknowledgmentWithin
+        }
+      }
+      shadow {
+        id
+        number
+        status
+        shadowUntil
       }
     }
     transports {

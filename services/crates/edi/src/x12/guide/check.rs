@@ -77,10 +77,25 @@ pub fn check_guide(guide: &Guide, base: Option<&Guide>) -> Vec<GuideProblem> {
     for (id, segment) in &guide.segments {
         check_segment(id, segment, &mut problems);
     }
+    check_use_definitions(&guide.structure, &mut problems);
     if let Some(base) = base {
         check_narrowing(guide, base, &mut problems);
     }
     problems.0
+}
+
+/// Checks the definitions a guide gives one use of a segment, like the dictionary's.
+fn check_use_definitions(nodes: &[Node], problems: &mut Problems) {
+    for node in nodes {
+        match node {
+            Node::Segment(segment) => {
+                if let Some(definition) = &segment.definition {
+                    check_segment(&segment.segment, definition, problems);
+                }
+            }
+            Node::Loop(definition) => check_use_definitions(&definition.children, problems),
+        }
+    }
 }
 
 fn check_header(guide: &Guide, problems: &mut Problems) {
@@ -383,38 +398,48 @@ fn narrow_segments(guide: &Guide, base: &Guide, problems: &mut Problems) {
             );
             continue;
         };
-        if segment.elements.len() > base_segment.elements.len() {
+        narrow_definition(&path, id, segment, base_segment, problems);
+    }
+}
+
+fn narrow_definition(
+    path: &str,
+    id: &str,
+    segment: &SegmentDef,
+    base_segment: &SegmentDef,
+    problems: &mut Problems,
+) {
+    if segment.elements.len() > base_segment.elements.len() {
+        problems.widening(
+            path,
+            Message::with(
+                message!("{0} has more elements than the base defines"),
+                [Arg::from(id)],
+            ),
+        );
+    }
+    for (index, (element, base_element)) in segment
+        .elements
+        .iter()
+        .zip(&base_segment.elements)
+        .enumerate()
+    {
+        narrow_element(
+            &format!("{path}/{:02}", index + 1),
+            element,
+            base_element,
+            problems,
+        );
+    }
+    for rule in &base_segment.rules {
+        if !segment.rules.contains(rule) {
             problems.widening(
-                path.as_str(),
+                path,
                 Message::with(
-                    message!("{0} has more elements than the base defines"),
-                    [Arg::from(id.as_str())],
+                    message!("The base's syntax note {0} is missing"),
+                    [Arg::from(rule.as_str())],
                 ),
             );
-        }
-        for (index, (element, base_element)) in segment
-            .elements
-            .iter()
-            .zip(&base_segment.elements)
-            .enumerate()
-        {
-            narrow_element(
-                &format!("{path}/{:02}", index + 1),
-                element,
-                base_element,
-                problems,
-            );
-        }
-        for rule in &base_segment.rules {
-            if !segment.rules.contains(rule) {
-                problems.widening(
-                    path.as_str(),
-                    Message::with(
-                        message!("The base's syntax note {0} is missing"),
-                        [Arg::from(rule.as_str())],
-                    ),
-                );
-            }
         }
     }
 }
@@ -434,6 +459,12 @@ fn narrow_structure(guide: &Guide, base: &Guide, problems: &mut Problems) {
             );
             continue;
         };
+        if let (Some(definition), Some(id)) = (node.definition, node.segment) {
+            let base_definition = base_node.definition.or_else(|| base.segments.get(id));
+            if let Some(base_definition) = base_definition {
+                narrow_definition(path, id, definition, base_definition, problems);
+            }
+        }
         if !node.usage.is_narrowing_of(base_node.usage) {
             problems.widening(
                 path.as_str(),
@@ -579,14 +610,16 @@ fn narrow_element(path: &str, element: &ElementDef, base: &ElementDef, problems:
     }
 }
 
-struct IndexedNode {
+struct IndexedNode<'a> {
     parent: String,
     order: usize,
     usage: Usage,
     max: u32,
+    segment: Option<&'a str>,
+    definition: Option<&'a SegmentDef>,
 }
 
-fn index_nodes(nodes: &[Node], parent: &str, index: &mut BTreeMap<String, IndexedNode>) {
+fn index_nodes<'a>(nodes: &'a [Node], parent: &str, index: &mut BTreeMap<String, IndexedNode<'a>>) {
     let mut seen: BTreeMap<String, usize> = BTreeMap::new();
     for (order, node) in nodes.iter().enumerate() {
         let (name, usage, max) = match node {
@@ -610,6 +643,14 @@ fn index_nodes(nodes: &[Node], parent: &str, index: &mut BTreeMap<String, Indexe
                 order,
                 usage,
                 max,
+                segment: match node {
+                    Node::Segment(segment) => Some(segment.segment.as_str()),
+                    Node::Loop(_) => None,
+                },
+                definition: match node {
+                    Node::Segment(segment) => segment.definition.as_ref(),
+                    Node::Loop(_) => None,
+                },
             },
         );
     }

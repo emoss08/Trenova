@@ -5,7 +5,7 @@ import { Operation, Resource } from "@trenova/shared/types/permission";
 import { MemoryRouter } from "react-router";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { DeskEdiMessage, DeskEdiMessageArtifact } from "../desk-edi-message";
-import { HOUR, NOW, RAW_214, wireDocumentProfile, wireInspection, wireMessage } from "./fixtures";
+import { HOUR, NOW, RAW_214, wireInspection, wireMessage } from "./fixtures";
 
 const server = vi.hoisted(() => ({ get: vi.fn() }));
 
@@ -206,10 +206,9 @@ describe("DeskEdiMessage", () => {
     );
   });
 
-  it("reads a message whose document profile never set what a missing acknowledgment means", async () => {
+  it("reads a message received before Lading, which names no version or flow", async () => {
     route({
-      "/edi/messages/edimsg_1/": () =>
-        wireMessage({ partnerDocumentProfile: wireDocumentProfile() }),
+      "/edi/messages/edimsg_1/": () => wireMessage({ ladingVersionId: null, flowInstanceId: null }),
     });
     draw();
 
@@ -219,11 +218,11 @@ describe("DeskEdiMessage", () => {
     expect(screen.queryByText("This EDI message could not be read")).toBeNull();
   });
 
-  it("draws the X12 of a message no profile or template generated", async () => {
+  it("draws the X12 of a message no Lading version wrote", async () => {
     route({
       "/edi/messages/edimsg_1/inspect/": () =>
         wireInspection({
-          provenance: { profileId: null, templateId: null, templateVersionId: null },
+          provenance: { ladingVersionId: null, flowInstanceId: null },
         }),
     });
     draw();

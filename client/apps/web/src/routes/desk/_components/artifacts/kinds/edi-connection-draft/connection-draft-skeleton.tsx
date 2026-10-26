@@ -39,7 +39,7 @@ function ValueRowsSkeleton({ rows }: { rows: readonly (readonly [number, number]
   );
 }
 
-/** A document type while the draft is read: its stamp, its name and template, its settings. */
+/** A document type while the draft is read: its stamp, its name, its rules and settings. */
 function ProfileSkeleton() {
   return (
     <div className="dk-ecd-prof">

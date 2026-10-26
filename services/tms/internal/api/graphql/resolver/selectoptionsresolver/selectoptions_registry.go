@@ -208,12 +208,6 @@ func (r *Deps) SelectOptionRegistry() map[gqlmodel.SelectOptionResource]SelectOp
 		gqlmodel.SelectOptionResourceEDIPartner: {
 			Resolve: r.resolveEDIPartnerSelectOptions,
 		},
-		gqlmodel.SelectOptionResourceEDIPartnerDocumentProfile: {
-			Resolve: r.resolveEDIPartnerDocumentProfileSelectOptions,
-		},
-		gqlmodel.SelectOptionResourceEDITemplate: {
-			Resolve: r.resolveEDITemplateSelectOptions,
-		},
 		gqlmodel.SelectOptionResourceEDITransactionSet: {
 			Resolve:  r.resolveEDITransactionSetSelectOptions,
 			parseIDs: base.ParseCatalogIDs,
@@ -572,59 +566,6 @@ func ediPartnerSelectOption(entity *edi.EDIPartner) *gqlmodel.SelectOption {
 		Meta: map[string]any{
 			"code": entity.Code,
 			"kind": string(entity.Kind),
-		},
-	}
-}
-
-func ediPartnerDocumentProfileSelectOptionItem(
-	entity *edi.EDIPartnerDocumentProfile,
-) selectOptionConnectionItem {
-	return selectOptionConnectionItemFor(
-		ediPartnerDocumentProfileSelectOption(entity),
-		entity.CreatedAt,
-		entity.ID,
-	)
-}
-
-func ediPartnerDocumentProfileSelectOption(
-	entity *edi.EDIPartnerDocumentProfile,
-) *gqlmodel.SelectOption {
-	label := entity.Name
-	if entity.Partner != nil {
-		label = entity.Partner.Code + " - " + entity.Name
-	}
-	description := string(entity.TransactionSet) + " \u00b7 " + string(entity.Direction)
-	if entity.Standard != "" {
-		description = string(entity.Standard) + " \u00b7 " + description
-	}
-	return &gqlmodel.SelectOption{
-		ID:          entity.ID.String(),
-		Label:       label,
-		Description: stringutils.Ptr(description),
-		Meta: map[string]any{
-			"transactionSet": string(entity.TransactionSet),
-			"direction":      string(entity.Direction),
-			"standard":       string(entity.Standard),
-			"status":         string(entity.Status),
-		},
-	}
-}
-
-func ediTemplateSelectOptionItem(entity *edi.EDITemplate) selectOptionConnectionItem {
-	return selectOptionConnectionItemFor(
-		ediTemplateSelectOption(entity),
-		entity.CreatedAt,
-		entity.ID,
-	)
-}
-
-func ediTemplateSelectOption(entity *edi.EDITemplate) *gqlmodel.SelectOption {
-	return &gqlmodel.SelectOption{
-		ID:          entity.ID.String(),
-		Label:       entity.Name,
-		Description: stringutils.Ptr(entity.Description),
-		Meta: map[string]any{
-			"status": string(entity.Status),
 		},
 	}
 }

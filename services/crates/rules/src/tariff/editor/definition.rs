@@ -14,13 +14,13 @@ use super::choices::{choice_named, chosen_at};
 use super::cursor::{Node, Scopes, locate, token_at};
 use super::occurrences::{input_target_at, local_at, split_qualified};
 use super::session::Session;
-use crate::span::Span;
 use crate::tariff::check::describe::snippet;
 use crate::tariff::check::{Callee, SymbolKind};
 use crate::tariff::syntax::ast::{ExprKind, ItemKind, PatternKind, StmtKind};
 use crate::tariff::syntax::program::ModuleId;
 use crate::tariff::syntax::token::TokenKind;
 use crate::tariff::types::Type;
+use trenova_module_kit::span::Span;
 
 /// One place a definition is.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]

@@ -23,15 +23,15 @@
 use super::checker::{Body, Checker};
 use super::describe::quote;
 use super::fixes::replace;
-use crate::span::Span;
-use crate::tariff::diagnostic::Diagnostic;
 use crate::tariff::syntax::ast::{
     Arg as CallArg, ArmBody, Block, ChoiceOption, Choose, ChooseKind, Expr, ExprKind, FileKind,
     Name, NodeId, StmtKind,
 };
 use crate::tariff::types::Type;
+use trenova_module_kit::diagnostic::Diagnostic;
 use trenova_module_kit::message;
 use trenova_module_kit::message::Message;
+use trenova_module_kit::span::Span;
 
 /// What the checker tracks about the choices around the statement being checked.
 #[derive(Debug, Default)]
@@ -291,7 +291,7 @@ impl Checker<'_> {
     }
 
     fn unknown_choice(&mut self, span: Span, label: &str) {
-        let close = crate::tariff::diagnostic::nearest(
+        let close = trenova_module_kit::diagnostic::nearest(
             label,
             self.billed.choices.iter().map(String::as_str),
         )

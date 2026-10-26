@@ -73,10 +73,8 @@ use super::tables::{Need, Tables};
 use super::tests::{TestRequest, TestResult, needs_of, run_suite};
 use super::trace::range;
 use super::value::{Value, format_decimal};
-use crate::span::Utf16Index;
 use crate::tariff::check::{Analysis, check};
 use crate::tariff::context::Context;
-use crate::tariff::diagnostic::{Diagnostic, Severity};
 use crate::tariff::schema::Schema;
 use crate::tariff::syntax::ast::FileKind;
 use crate::tariff::syntax::program::{ModuleId, Program, load};
@@ -86,8 +84,10 @@ use serde::Deserialize;
 use serde_json::value::RawValue;
 use serde_json::{Map, Value as Json};
 use std::collections::BTreeMap;
+use trenova_module_kit::diagnostic::{Diagnostic, Severity};
 use trenova_module_kit::message::{Arg, Message};
 use trenova_module_kit::ops::{OpResult, decode, encode};
+use trenova_module_kit::span::Utf16Index;
 
 #[derive(Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]

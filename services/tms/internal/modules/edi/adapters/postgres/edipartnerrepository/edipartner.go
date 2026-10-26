@@ -225,16 +225,7 @@ func readinessQuery(req *ediports.GetEDIPartnerReadinessRequest) *keel.Query[*ed
 	ep := edidb.EDIPartners
 	cp := edidb.EDICommunicationProfiles
 	mi := edidb.EDIMappingProfileItems
-	dp := edidb.EDIPartnerDocumentProfiles
-	tc := edidb.EDITestCases
-
-	activeDocumentProfile := func(direction edi.DocumentDirection) keel.Pred {
-		return keel.Exists(dp.Where(
-			dp.EDIPartnerID.EqCol(ep.ID),
-			dp.Status.Eq(edi.DocumentStatusActive),
-			dp.Direction.Eq(direction),
-		))
-	}
+	lp := edidb.LadingProjects
 
 	return ep.Pick(
 		ep.ID,
@@ -242,12 +233,8 @@ func readinessQuery(req *ediports.GetEDIPartnerReadinessRequest) *keel.Query[*ed
 		ep.Timezone.Coalesce(""),
 		keel.Exists(cp.Where(cp.EDIPartnerID.EqCol(ep.ID), cp.Status.Eq(domaintypes.StatusActive))),
 		keel.Exists(mi.Where(mi.EDIPartnerID.EqCol(ep.ID))),
-		activeDocumentProfile(edi.DocumentDirectionInbound),
-		activeDocumentProfile(edi.DocumentDirectionOutbound),
-		keel.Exists(tc.Where(
-			tc.DocumentProfile().EDIPartnerID.EqCol(ep.ID),
-			tc.LastRunPassed.IsTrue(),
-		)),
+		keel.Exists(lp.Where(lp.EDIPartnerID.EqCol(ep.ID))),
+		keel.Exists(lp.Where(lp.EDIPartnerID.EqCol(ep.ID), lp.ActiveVersionID.IsNotNull())),
 		ep.EnabledForInbound,
 		ep.EnabledForOutbound,
 		keel.CastText(ep.Kind),

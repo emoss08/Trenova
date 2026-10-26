@@ -8,6 +8,8 @@ package ediresolver
 import (
 	"context"
 
+	"github.com/emoss08/trenova/shared/i18n"
+
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
 	"github.com/emoss08/trenova/internal/modules/edi/app/ediservice"
@@ -20,14 +22,6 @@ import (
 )
 
 func (r *EdiMessageResolver) TransactionSet(ctx context.Context, obj *edi.EDIMessage) (string, error) {
-	return string(obj.TransactionSet), nil
-}
-
-func (r *EdiPartnerDocumentProfileResolver) TransactionSet(ctx context.Context, obj *edi.EDIPartnerDocumentProfile) (string, error) {
-	return string(obj.TransactionSet), nil
-}
-
-func (r *EdiTemplateResolver) TransactionSet(ctx context.Context, obj *edi.EDITemplate) (string, error) {
 	return string(obj.TransactionSet), nil
 }
 
@@ -190,39 +184,6 @@ func (r *QueryResolver) EDIInboundFiles(ctx context.Context, input gqlmodel.Data
 	return ediInboundFileConnectionToModel(result)
 }
 
-func (r *QueryResolver) EDITemplates(ctx context.Context, input gqlmodel.DataTableConnectionInput, status *edi.TemplateStatus, transactionSet *string, direction *edi.DocumentDirection) (*gqlmodel.EDITemplateConnection, error) {
-	authCtx, err := r.RequirePermission(ctx, permission.ResourceEDI, permission.OpRead)
-	if err != nil {
-		return nil, err
-	}
-
-	tableInput, err := base.DataTableConnectionFromGraphQL(ctx, &input, base.TenantInfo(authCtx))
-	if err != nil {
-		return nil, err
-	}
-
-	req := &ediports.ListEDITemplatesRequest{
-		Filter: tableInput.Filter,
-		Cursor: tableInput.Cursor,
-	}
-	if status != nil {
-		req.Status = *status
-	}
-	if transactionSet != nil && *transactionSet != "" {
-		req.TransactionSet = edi.TransactionSet(*transactionSet)
-	}
-	if direction != nil {
-		req.Direction = *direction
-	}
-
-	result, err := r.EdiService.ListTemplatesCursor(ctx, req)
-	if err != nil {
-		return nil, err
-	}
-
-	return ediTemplateConnectionToModel(result)
-}
-
 func (r *QueryResolver) EDIMappingProfiles(ctx context.Context, input gqlmodel.DataTableConnectionInput, partnerID *string) (*gqlmodel.EDIMappingProfileConnection, error) {
 	authCtx, err := r.RequirePermission(ctx, permission.ResourceEDI, permission.OpRead)
 	if err != nil {
@@ -254,7 +215,7 @@ func (r *QueryResolver) EDIMappingProfiles(ctx context.Context, input gqlmodel.D
 	return ediMappingProfileConnectionToModel(result)
 }
 
-func (r *QueryResolver) EDITestCases(ctx context.Context, input gqlmodel.DataTableConnectionInput, partnerDocumentProfileID *string) (*gqlmodel.EDITestCaseConnection, error) {
+func (r *QueryResolver) EDIFlowInstances(ctx context.Context, input gqlmodel.DataTableConnectionInput, partnerID *string, shipmentID *string, statuses []edi.FlowInstanceStatus) (*gqlmodel.EDIFlowInstanceConnection, error) {
 	authCtx, err := r.RequirePermission(ctx, permission.ResourceEDI, permission.OpRead)
 	if err != nil {
 		return nil, err
@@ -265,24 +226,36 @@ func (r *QueryResolver) EDITestCases(ctx context.Context, input gqlmodel.DataTab
 		return nil, err
 	}
 
-	req := &ediports.ListEDITestCasesRequest{
-		Filter: tableInput.Filter,
-		Cursor: tableInput.Cursor,
+	req := &ediports.ListFlowInstancesRequest{
+		Filter:   tableInput.Filter,
+		Cursor:   tableInput.Cursor,
+		Statuses: statuses,
 	}
-	if partnerDocumentProfileID != nil && *partnerDocumentProfileID != "" {
-		parsed, parseErr := pulid.MustParse(*partnerDocumentProfileID)
-		if parseErr != nil {
-			return nil, parseErr
+	if partnerID != nil && *partnerID != "" {
+		if req.PartnerID, err = pulid.MustParse(*partnerID); err != nil {
+			return nil, err
 		}
-		req.PartnerDocumentProfileID = parsed
+	}
+	if shipmentID != nil && *shipmentID != "" {
+		if req.ShipmentID, err = pulid.MustParse(*shipmentID); err != nil {
+			return nil, err
+		}
 	}
 
-	result, err := r.EdiService.ListTestCasesCursor(ctx, req)
+	result, err := r.EdiService.ListFlowInstancesCursor(ctx, req)
 	if err != nil {
 		return nil, err
 	}
 
-	return ediTestCaseConnectionToModel(result)
+	return ediFlowInstanceConnectionToModel(result)
+}
+
+func (r *EdiFlowInstanceResolver) Reason(ctx context.Context, obj *edi.FlowInstance) (*string, error) {
+	if obj.Reason == nil || obj.Reason.IsZero() {
+		return nil, nil
+	}
+	reason := obj.Reason.Localize(i18n.FromContext(ctx))
+	return &reason, nil
 }
 
 func (r *QueryResolver) EDISummary(ctx context.Context, sinceHours *int) (*gqlmodel.EDISummary, error) {
@@ -367,10 +340,6 @@ func (r *QueryResolver) EDIVolumeSeries(ctx context.Context, sinceHours *int) ([
 		return nil, err
 	}
 	return ediVolumeSeriesToModel(series), nil
-}
-
-func (r *EdiAcknowledgmentConfigResolver) Type(ctx context.Context, obj *edi.AcknowledgmentConfig) (string, error) {
-	return string(obj.Type), nil
 }
 
 func (r *QueryResolver) EDIPartnerCard(ctx context.Context, id string) (*gqlmodel.EDIPartnerCard, error) {
@@ -561,4 +530,18 @@ func (r *QueryResolver) EDIAckHealth(ctx context.Context, partnerID *string, tra
 	}
 
 	return ediAckHealthToModel(health), nil
+}
+
+func (r *EdiLadingVersionResolver) Interchange(
+	_ context.Context,
+	obj *edi.LadingVersion,
+) (*gqlmodel.EDILadingInterchange, error) {
+	return ladingInterchangeToModel(&obj.Manifest), nil
+}
+
+func (r *EdiLadingVersionResolver) Exchanges(
+	_ context.Context,
+	obj *edi.LadingVersion,
+) ([]*gqlmodel.EDILadingExchange, error) {
+	return ladingExchangesToModel(&obj.Manifest), nil
 }

@@ -26,12 +26,12 @@ use super::ast::File;
 use super::parse;
 use super::shape;
 use super::token::TokenKind;
-use crate::span::Span;
-use crate::tariff::diagnostic::Diagnostic;
-use crate::tariff::diagnostic::Severity;
 use doc::Doc;
+use trenova_module_kit::diagnostic::Diagnostic;
+use trenova_module_kit::diagnostic::Severity;
 use trenova_module_kit::message;
 use trenova_module_kit::message::Message;
+use trenova_module_kit::span::Span;
 
 /// The column a formatted line stays within when it can be broken.
 pub const WIDTH: usize = 100;

@@ -211,6 +211,7 @@
   "Suggested tests": "Pruebas sugeridas",
   "Tariff source": "Código fuente de la tarifa",
   "Template duplicated successfully": "Plantilla duplicada correctamente",
+  "Template name": "Nombre de la plantilla",
   "Test name": "Nombre de la prueba",
   "Tests and the preview read each table's newest published version. Approval pins it for contracts.": "Las pruebas y la vista previa leen la versión publicada más reciente de cada tabla. La aprobación la fija para los contratos.",
   "Tests live in the source and run on every change. A version with a failing test cannot be submitted.": "Las pruebas están en el código fuente y se ejecutan en cada cambio. Una versión con una prueba fallida no se puede enviar.",

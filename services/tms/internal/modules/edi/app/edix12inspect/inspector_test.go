@@ -5,7 +5,6 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/edi/app/edix12"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -137,7 +136,7 @@ func TestInspectX12_MergesRenderDiagnostics(t *testing.T) {
 
 	result := inspect(t, &InspectX12Request{
 		RawX12: valid204("*", "~", ">", "^"),
-		Diagnostics: []edix12.Diagnostic{
+		Diagnostics: []edi.Diagnostic{
 			{
 				Severity:        edi.ValidationSeverityError,
 				Code:            "required",

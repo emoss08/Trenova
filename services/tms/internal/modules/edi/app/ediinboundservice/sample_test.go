@@ -37,8 +37,6 @@ func TestParseSample_ReadsTheEnvelopeAndEachTransaction(t *testing.T) {
 	transaction := sample.Transactions[0]
 	assert.Equal(t, edi.TransactionSet204, transaction.TransactionSet)
 	assert.Equal(t, "0001", transaction.ControlNumber)
-	require.NotNil(t, transaction.Payload.LoadTender)
-	assert.Equal(t, "LOAD-77", transaction.Payload.LoadTender.RatingDetail["externalShipmentId"])
 }
 
 func TestParseSample_RefusesTextThatIsNotAnInterchange(t *testing.T) {

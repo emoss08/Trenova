@@ -143,7 +143,7 @@ type MockEDIPartnerRepository_GetByID_Call struct {
 
 // GetByID is a helper method to define mock.On call
 //   - ctx context.Context
-//   - req repositories.GetEDIPartnerByIDRequest
+//   - req ediports.GetEDIPartnerByIDRequest
 func (_e *MockEDIPartnerRepository_Expecter) GetByID(ctx any, req any) *MockEDIPartnerRepository_GetByID_Call {
 	return &MockEDIPartnerRepository_GetByID_Call{Call: _e.mock.On("GetByID", ctx, req)}
 }
@@ -211,7 +211,7 @@ type MockEDIPartnerRepository_GetReadiness_Call struct {
 
 // GetReadiness is a helper method to define mock.On call
 //   - ctx context.Context
-//   - req *repositories.GetEDIPartnerReadinessRequest
+//   - req *ediports.GetEDIPartnerReadinessRequest
 func (_e *MockEDIPartnerRepository_Expecter) GetReadiness(ctx any, req any) *MockEDIPartnerRepository_GetReadiness_Call {
 	return &MockEDIPartnerRepository_GetReadiness_Call{Call: _e.mock.On("GetReadiness", ctx, req)}
 }
@@ -279,7 +279,7 @@ type MockEDIPartnerRepository_GetReciprocalInternalPartner_Call struct {
 
 // GetReciprocalInternalPartner is a helper method to define mock.On call
 //   - ctx context.Context
-//   - req repositories.GetReciprocalInternalPartnerRequest
+//   - req ediports.GetReciprocalInternalPartnerRequest
 func (_e *MockEDIPartnerRepository_Expecter) GetReciprocalInternalPartner(ctx any, req any) *MockEDIPartnerRepository_GetReciprocalInternalPartner_Call {
 	return &MockEDIPartnerRepository_GetReciprocalInternalPartner_Call{Call: _e.mock.On("GetReciprocalInternalPartner", ctx, req)}
 }
@@ -308,142 +308,6 @@ func (_c *MockEDIPartnerRepository_GetReciprocalInternalPartner_Call) Return(eDI
 }
 
 func (_c *MockEDIPartnerRepository_GetReciprocalInternalPartner_Call) RunAndReturn(run func(ctx context.Context, req ediports.GetReciprocalInternalPartnerRequest) (*edi.EDIPartner, error)) *MockEDIPartnerRepository_GetReciprocalInternalPartner_Call {
-	_c.Call.Return(run)
-	return _c
-}
-
-// ListOutboundPartnersByCustomerIDs provides a mock function for the type MockEDIPartnerRepository
-func (_mock *MockEDIPartnerRepository) ListOutboundPartnersByCustomerIDs(ctx context.Context, req ediports.ListEDIPartnersByCustomerIDsRequest) ([]*edi.EDIPartner, error) {
-	ret := _mock.Called(ctx, req)
-
-	if len(ret) == 0 {
-		panic("no return value specified for ListOutboundPartnersByCustomerIDs")
-	}
-
-	var r0 []*edi.EDIPartner
-	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, ediports.ListEDIPartnersByCustomerIDsRequest) ([]*edi.EDIPartner, error)); ok {
-		return returnFunc(ctx, req)
-	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, ediports.ListEDIPartnersByCustomerIDsRequest) []*edi.EDIPartner); ok {
-		r0 = returnFunc(ctx, req)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).([]*edi.EDIPartner)
-		}
-	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, ediports.ListEDIPartnersByCustomerIDsRequest) error); ok {
-		r1 = returnFunc(ctx, req)
-	} else {
-		r1 = ret.Error(1)
-	}
-	return r0, r1
-}
-
-// MockEDIPartnerRepository_ListOutboundPartnersByCustomerIDs_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ListOutboundPartnersByCustomerIDs'
-type MockEDIPartnerRepository_ListOutboundPartnersByCustomerIDs_Call struct {
-	*mock.Call
-}
-
-// ListOutboundPartnersByCustomerIDs is a helper method to define mock.On call
-//   - ctx context.Context
-//   - req repositories.ListEDIPartnersByCustomerIDsRequest
-func (_e *MockEDIPartnerRepository_Expecter) ListOutboundPartnersByCustomerIDs(ctx any, req any) *MockEDIPartnerRepository_ListOutboundPartnersByCustomerIDs_Call {
-	return &MockEDIPartnerRepository_ListOutboundPartnersByCustomerIDs_Call{Call: _e.mock.On("ListOutboundPartnersByCustomerIDs", ctx, req)}
-}
-
-func (_c *MockEDIPartnerRepository_ListOutboundPartnersByCustomerIDs_Call) Run(run func(ctx context.Context, req ediports.ListEDIPartnersByCustomerIDsRequest)) *MockEDIPartnerRepository_ListOutboundPartnersByCustomerIDs_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		var arg0 context.Context
-		if args[0] != nil {
-			arg0 = args[0].(context.Context)
-		}
-		var arg1 ediports.ListEDIPartnersByCustomerIDsRequest
-		if args[1] != nil {
-			arg1 = args[1].(ediports.ListEDIPartnersByCustomerIDsRequest)
-		}
-		run(
-			arg0,
-			arg1,
-		)
-	})
-	return _c
-}
-
-func (_c *MockEDIPartnerRepository_ListOutboundPartnersByCustomerIDs_Call) Return(v0 []*edi.EDIPartner, err error) *MockEDIPartnerRepository_ListOutboundPartnersByCustomerIDs_Call {
-	_c.Call.Return(v0, err)
-	return _c
-}
-
-func (_c *MockEDIPartnerRepository_ListOutboundPartnersByCustomerIDs_Call) RunAndReturn(run func(ctx context.Context, req ediports.ListEDIPartnersByCustomerIDsRequest) ([]*edi.EDIPartner, error)) *MockEDIPartnerRepository_ListOutboundPartnersByCustomerIDs_Call {
-	_c.Call.Return(run)
-	return _c
-}
-
-// ListInternalOutboundPartnersByCustomerIDs provides a mock function for the type MockEDIPartnerRepository
-func (_mock *MockEDIPartnerRepository) ListInternalOutboundPartnersByCustomerIDs(ctx context.Context, req ediports.ListEDIPartnersByCustomerIDsRequest) ([]*edi.EDIPartner, error) {
-	ret := _mock.Called(ctx, req)
-
-	if len(ret) == 0 {
-		panic("no return value specified for ListInternalOutboundPartnersByCustomerIDs")
-	}
-
-	var r0 []*edi.EDIPartner
-	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, ediports.ListEDIPartnersByCustomerIDsRequest) ([]*edi.EDIPartner, error)); ok {
-		return returnFunc(ctx, req)
-	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, ediports.ListEDIPartnersByCustomerIDsRequest) []*edi.EDIPartner); ok {
-		r0 = returnFunc(ctx, req)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).([]*edi.EDIPartner)
-		}
-	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, ediports.ListEDIPartnersByCustomerIDsRequest) error); ok {
-		r1 = returnFunc(ctx, req)
-	} else {
-		r1 = ret.Error(1)
-	}
-	return r0, r1
-}
-
-// MockEDIPartnerRepository_ListInternalOutboundPartnersByCustomerIDs_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ListInternalOutboundPartnersByCustomerIDs'
-type MockEDIPartnerRepository_ListInternalOutboundPartnersByCustomerIDs_Call struct {
-	*mock.Call
-}
-
-// ListInternalOutboundPartnersByCustomerIDs is a helper method to define mock.On call
-//   - ctx context.Context
-//   - req repositories.ListEDIPartnersByCustomerIDsRequest
-func (_e *MockEDIPartnerRepository_Expecter) ListInternalOutboundPartnersByCustomerIDs(ctx any, req any) *MockEDIPartnerRepository_ListInternalOutboundPartnersByCustomerIDs_Call {
-	return &MockEDIPartnerRepository_ListInternalOutboundPartnersByCustomerIDs_Call{Call: _e.mock.On("ListInternalOutboundPartnersByCustomerIDs", ctx, req)}
-}
-
-func (_c *MockEDIPartnerRepository_ListInternalOutboundPartnersByCustomerIDs_Call) Run(run func(ctx context.Context, req ediports.ListEDIPartnersByCustomerIDsRequest)) *MockEDIPartnerRepository_ListInternalOutboundPartnersByCustomerIDs_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		var arg0 context.Context
-		if args[0] != nil {
-			arg0 = args[0].(context.Context)
-		}
-		var arg1 ediports.ListEDIPartnersByCustomerIDsRequest
-		if args[1] != nil {
-			arg1 = args[1].(ediports.ListEDIPartnersByCustomerIDsRequest)
-		}
-		run(
-			arg0,
-			arg1,
-		)
-	})
-	return _c
-}
-
-func (_c *MockEDIPartnerRepository_ListInternalOutboundPartnersByCustomerIDs_Call) Return(eDIPartners []*edi.EDIPartner, err error) *MockEDIPartnerRepository_ListInternalOutboundPartnersByCustomerIDs_Call {
-	_c.Call.Return(eDIPartners, err)
-	return _c
-}
-
-func (_c *MockEDIPartnerRepository_ListInternalOutboundPartnersByCustomerIDs_Call) RunAndReturn(run func(ctx context.Context, req ediports.ListEDIPartnersByCustomerIDsRequest) ([]*edi.EDIPartner, error)) *MockEDIPartnerRepository_ListInternalOutboundPartnersByCustomerIDs_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -483,7 +347,7 @@ type MockEDIPartnerRepository_List_Call struct {
 
 // List is a helper method to define mock.On call
 //   - ctx context.Context
-//   - req *repositories.ListEDIPartnersRequest
+//   - req *ediports.ListEDIPartnersRequest
 func (_e *MockEDIPartnerRepository_Expecter) List(ctx any, req any) *MockEDIPartnerRepository_List_Call {
 	return &MockEDIPartnerRepository_List_Call{Call: _e.mock.On("List", ctx, req)}
 }
@@ -551,7 +415,7 @@ type MockEDIPartnerRepository_ListCursor_Call struct {
 
 // ListCursor is a helper method to define mock.On call
 //   - ctx context.Context
-//   - req *repositories.ListEDIPartnersRequest
+//   - req *ediports.ListEDIPartnersRequest
 func (_e *MockEDIPartnerRepository_Expecter) ListCursor(ctx any, req any) *MockEDIPartnerRepository_ListCursor_Call {
 	return &MockEDIPartnerRepository_ListCursor_Call{Call: _e.mock.On("ListCursor", ctx, req)}
 }
@@ -580,6 +444,142 @@ func (_c *MockEDIPartnerRepository_ListCursor_Call) Return(cursorListResult *pag
 }
 
 func (_c *MockEDIPartnerRepository_ListCursor_Call) RunAndReturn(run func(ctx context.Context, req *ediports.ListEDIPartnersRequest) (*pagination.CursorListResult[*edi.EDIPartner], error)) *MockEDIPartnerRepository_ListCursor_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// ListInternalOutboundPartnersByCustomerIDs provides a mock function for the type MockEDIPartnerRepository
+func (_mock *MockEDIPartnerRepository) ListInternalOutboundPartnersByCustomerIDs(ctx context.Context, req ediports.ListEDIPartnersByCustomerIDsRequest) ([]*edi.EDIPartner, error) {
+	ret := _mock.Called(ctx, req)
+
+	if len(ret) == 0 {
+		panic("no return value specified for ListInternalOutboundPartnersByCustomerIDs")
+	}
+
+	var r0 []*edi.EDIPartner
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, ediports.ListEDIPartnersByCustomerIDsRequest) ([]*edi.EDIPartner, error)); ok {
+		return returnFunc(ctx, req)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, ediports.ListEDIPartnersByCustomerIDsRequest) []*edi.EDIPartner); ok {
+		r0 = returnFunc(ctx, req)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]*edi.EDIPartner)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, ediports.ListEDIPartnersByCustomerIDsRequest) error); ok {
+		r1 = returnFunc(ctx, req)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockEDIPartnerRepository_ListInternalOutboundPartnersByCustomerIDs_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ListInternalOutboundPartnersByCustomerIDs'
+type MockEDIPartnerRepository_ListInternalOutboundPartnersByCustomerIDs_Call struct {
+	*mock.Call
+}
+
+// ListInternalOutboundPartnersByCustomerIDs is a helper method to define mock.On call
+//   - ctx context.Context
+//   - req ediports.ListEDIPartnersByCustomerIDsRequest
+func (_e *MockEDIPartnerRepository_Expecter) ListInternalOutboundPartnersByCustomerIDs(ctx any, req any) *MockEDIPartnerRepository_ListInternalOutboundPartnersByCustomerIDs_Call {
+	return &MockEDIPartnerRepository_ListInternalOutboundPartnersByCustomerIDs_Call{Call: _e.mock.On("ListInternalOutboundPartnersByCustomerIDs", ctx, req)}
+}
+
+func (_c *MockEDIPartnerRepository_ListInternalOutboundPartnersByCustomerIDs_Call) Run(run func(ctx context.Context, req ediports.ListEDIPartnersByCustomerIDsRequest)) *MockEDIPartnerRepository_ListInternalOutboundPartnersByCustomerIDs_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 ediports.ListEDIPartnersByCustomerIDsRequest
+		if args[1] != nil {
+			arg1 = args[1].(ediports.ListEDIPartnersByCustomerIDsRequest)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockEDIPartnerRepository_ListInternalOutboundPartnersByCustomerIDs_Call) Return(eDIPartners []*edi.EDIPartner, err error) *MockEDIPartnerRepository_ListInternalOutboundPartnersByCustomerIDs_Call {
+	_c.Call.Return(eDIPartners, err)
+	return _c
+}
+
+func (_c *MockEDIPartnerRepository_ListInternalOutboundPartnersByCustomerIDs_Call) RunAndReturn(run func(ctx context.Context, req ediports.ListEDIPartnersByCustomerIDsRequest) ([]*edi.EDIPartner, error)) *MockEDIPartnerRepository_ListInternalOutboundPartnersByCustomerIDs_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// ListOutboundPartnersByCustomerIDs provides a mock function for the type MockEDIPartnerRepository
+func (_mock *MockEDIPartnerRepository) ListOutboundPartnersByCustomerIDs(ctx context.Context, req ediports.ListEDIPartnersByCustomerIDsRequest) ([]*edi.EDIPartner, error) {
+	ret := _mock.Called(ctx, req)
+
+	if len(ret) == 0 {
+		panic("no return value specified for ListOutboundPartnersByCustomerIDs")
+	}
+
+	var r0 []*edi.EDIPartner
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, ediports.ListEDIPartnersByCustomerIDsRequest) ([]*edi.EDIPartner, error)); ok {
+		return returnFunc(ctx, req)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, ediports.ListEDIPartnersByCustomerIDsRequest) []*edi.EDIPartner); ok {
+		r0 = returnFunc(ctx, req)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]*edi.EDIPartner)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, ediports.ListEDIPartnersByCustomerIDsRequest) error); ok {
+		r1 = returnFunc(ctx, req)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockEDIPartnerRepository_ListOutboundPartnersByCustomerIDs_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ListOutboundPartnersByCustomerIDs'
+type MockEDIPartnerRepository_ListOutboundPartnersByCustomerIDs_Call struct {
+	*mock.Call
+}
+
+// ListOutboundPartnersByCustomerIDs is a helper method to define mock.On call
+//   - ctx context.Context
+//   - req ediports.ListEDIPartnersByCustomerIDsRequest
+func (_e *MockEDIPartnerRepository_Expecter) ListOutboundPartnersByCustomerIDs(ctx any, req any) *MockEDIPartnerRepository_ListOutboundPartnersByCustomerIDs_Call {
+	return &MockEDIPartnerRepository_ListOutboundPartnersByCustomerIDs_Call{Call: _e.mock.On("ListOutboundPartnersByCustomerIDs", ctx, req)}
+}
+
+func (_c *MockEDIPartnerRepository_ListOutboundPartnersByCustomerIDs_Call) Run(run func(ctx context.Context, req ediports.ListEDIPartnersByCustomerIDsRequest)) *MockEDIPartnerRepository_ListOutboundPartnersByCustomerIDs_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 ediports.ListEDIPartnersByCustomerIDsRequest
+		if args[1] != nil {
+			arg1 = args[1].(ediports.ListEDIPartnersByCustomerIDsRequest)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockEDIPartnerRepository_ListOutboundPartnersByCustomerIDs_Call) Return(eDIPartners []*edi.EDIPartner, err error) *MockEDIPartnerRepository_ListOutboundPartnersByCustomerIDs_Call {
+	_c.Call.Return(eDIPartners, err)
+	return _c
+}
+
+func (_c *MockEDIPartnerRepository_ListOutboundPartnersByCustomerIDs_Call) RunAndReturn(run func(ctx context.Context, req ediports.ListEDIPartnersByCustomerIDsRequest) ([]*edi.EDIPartner, error)) *MockEDIPartnerRepository_ListOutboundPartnersByCustomerIDs_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -619,7 +619,7 @@ type MockEDIPartnerRepository_SelectOptions_Call struct {
 
 // SelectOptions is a helper method to define mock.On call
 //   - ctx context.Context
-//   - req *repositories.EDIPartnerSelectOptionsRequest
+//   - req *ediports.EDIPartnerSelectOptionsRequest
 func (_e *MockEDIPartnerRepository_Expecter) SelectOptions(ctx any, req any) *MockEDIPartnerRepository_SelectOptions_Call {
 	return &MockEDIPartnerRepository_SelectOptions_Call{Call: _e.mock.On("SelectOptions", ctx, req)}
 }
