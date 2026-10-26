@@ -21,12 +21,8 @@ pub struct Highlight {
 pub fn highlights(source: &str, parsed: &Parsed) -> Vec<Highlight> {
     let index = Utf16Index::new(source);
     let mut spans: Vec<(Span, &'static str)> = Vec::with_capacity(parsed.tokens.len());
-    let keywords: std::collections::BTreeSet<u32> = parsed
-        .file
-        .keywords
-        .iter()
-        .map(|span| span.start)
-        .collect();
+    let keywords: std::collections::BTreeSet<u32> =
+        parsed.file.keywords.iter().map(|span| span.start).collect();
     for token in &parsed.tokens {
         let text = source
             .get(token.span.start as usize..token.span.end as usize)

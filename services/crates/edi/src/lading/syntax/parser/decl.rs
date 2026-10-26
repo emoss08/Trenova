@@ -122,7 +122,10 @@ impl Parser<'_> {
         Body {
             lets,
             value: value.unwrap_or_else(|| {
-                self.error_at(end, Message::new(message!("A function body ends with its value")));
+                self.error_at(
+                    end,
+                    Message::new(message!("A function body ends with its value")),
+                );
                 Expr::error(end)
             }),
         }
@@ -229,10 +232,12 @@ impl Parser<'_> {
     pub(super) fn rule_decl(&mut self, doc: Doc) -> RuleDecl {
         let start = self.token().span.start;
         self.eat_word("rule");
-        let title = self.text_lit("the rule's title").unwrap_or_else(|| TextLit {
-            value: String::new(),
-            span: self.token().span,
-        });
+        let title = self
+            .text_lit("the rule's title")
+            .unwrap_or_else(|| TextLit {
+                value: String::new(),
+                span: self.token().span,
+            });
         let body = self.block();
         RuleDecl {
             doc,

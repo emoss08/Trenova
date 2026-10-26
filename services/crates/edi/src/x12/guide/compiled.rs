@@ -38,6 +38,8 @@ pub struct CompiledNode {
     pub min: u32,
     /// Its children, for a loop.
     pub children: Vec<usize>,
+    /// Its own definition, for a segment use the guide narrows here only.
+    pub definition: Option<SegmentDef>,
 }
 
 impl CompiledNode {
@@ -99,6 +101,7 @@ impl CompiledGuide {
                         max: segment.max,
                         min: segment.min,
                         children: Vec::new(),
+                        definition: segment.definition.clone(),
                     });
                 }
                 Node::Loop(definition) => {
@@ -115,6 +118,7 @@ impl CompiledGuide {
                         max: definition.repeat,
                         min: definition.min,
                         children: Vec::new(),
+                        definition: None,
                     });
                     let children = self.add_nodes(&definition.children);
                     self.nodes[index].children = children;
@@ -147,6 +151,21 @@ impl CompiledGuide {
     #[must_use]
     pub fn segment(&self, id: &str) -> Option<&SegmentDef> {
         self.guide.segments.get(id)
+    }
+
+    /// The definition of segment `id` placed at `node`: the use's own when the guide narrows it
+    /// there, the dictionary's otherwise.
+    #[must_use]
+    pub fn definition(&self, node: Option<usize>, id: &str) -> Option<&SegmentDef> {
+        node.and_then(|index| self.nodes.get(index))
+            .and_then(|node| node.definition.as_ref())
+            .or_else(|| self.guide.segments.get(id))
+    }
+
+    /// How many nodes the structure has.
+    #[must_use]
+    pub fn node_count(&self) -> usize {
+        self.nodes.len()
     }
 
     /// Whether the structure uses the segment anywhere.

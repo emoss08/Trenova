@@ -113,7 +113,13 @@ struct Builder<'a> {
 }
 
 impl Builder<'_> {
-    fn symbol(&self, name: impl Into<String>, kind: &'static str, span: Span, name_span: Span) -> Symbol {
+    fn symbol(
+        &self,
+        name: impl Into<String>,
+        kind: &'static str,
+        span: Span,
+        name_span: Span,
+    ) -> Symbol {
         Symbol {
             name: name.into(),
             kind,
@@ -155,19 +161,33 @@ impl Builder<'_> {
             Item::Interchange(block) => {
                 self.symbol("interchange", "interchange", block.span, block.span)
             }
-            Item::Zone(zone) => self.symbol(format!("zone {}", zone.name), "setting", zone.span, zone.span),
+            Item::Zone(zone) => self.symbol(
+                format!("zone {}", zone.name),
+                "setting",
+                zone.span,
+                zone.span,
+            ),
             Item::Currency(currency) => self.symbol(
                 format!("currency {}", currency.value),
                 "setting",
                 currency.span,
                 currency.span,
             ),
-            Item::Guide(decl) => self.symbol(self.snippet(decl.span()), "guide", decl.span(), match decl {
-                GuideDecl::Segment { path, .. } | GuideDecl::Loop { path, .. } => path
-                    .first()
-                    .map_or(decl.span(), |first| first.span.cover(path.last().map_or(first.span, |last| last.span))),
-                GuideDecl::Severity { kind, .. } => kind.span,
-            }),
+            Item::Guide(decl) => self.symbol(
+                self.snippet(decl.span()),
+                "guide",
+                decl.span(),
+                match decl {
+                    GuideDecl::Segment { path, .. } | GuideDecl::Loop { path, .. } => {
+                        path.first().map_or(decl.span(), |first| {
+                            first
+                                .span
+                                .cover(path.last().map_or(first.span, |last| last.span))
+                        })
+                    }
+                    GuideDecl::Severity { kind, .. } => kind.span,
+                },
+            ),
             Item::Flow(decl) => self.flow(decl),
             Item::Stmt(stmt) => self.stmt(stmt)?,
             Item::Error(_) => return None,
@@ -187,10 +207,10 @@ impl Builder<'_> {
                     .arms
                     .iter()
                     .map(|arm| {
-                        let name = arm
-                            .purpose
-                            .as_ref()
-                            .map_or_else(|| "->".to_owned(), |purpose| format!("on {}", purpose.name));
+                        let name = arm.purpose.as_ref().map_or_else(
+                            || "->".to_owned(),
+                            |purpose| format!("on {}", purpose.name),
+                        );
                         self.symbol(name, "arm", arm.span, arm.span)
                     })
                     .collect();
@@ -219,13 +239,14 @@ impl Builder<'_> {
 
     fn stmt(&self, stmt: &Stmt) -> Option<Symbol> {
         Some(match stmt {
-            Stmt::Assign { target, value, span, .. } => {
-                let mut symbol = self.symbol(
-                    self.snippet(target.span),
-                    "field",
-                    *span,
-                    target.span,
-                );
+            Stmt::Assign {
+                target,
+                value,
+                span,
+                ..
+            } => {
+                let mut symbol =
+                    self.symbol(self.snippet(target.span), "field", *span, target.span);
                 if let super::ast::ExprKind::Each { body, .. } = &value.kind {
                     symbol.children = self.block(body);
                 }
@@ -237,8 +258,11 @@ impl Builder<'_> {
                 symbol.children = self.block(body);
                 symbol
             }
-            Stmt::Each { binder, body, span, .. } => {
-                let mut symbol = self.symbol(format!("each {}", binder.name), "loop", *span, binder.span);
+            Stmt::Each {
+                binder, body, span, ..
+            } => {
+                let mut symbol =
+                    self.symbol(format!("each {}", binder.name), "loop", *span, binder.span);
                 symbol.children = self.block(body);
                 symbol
             }
@@ -252,7 +276,11 @@ impl Builder<'_> {
     }
 
     fn block(&self, block: &Block) -> Vec<Symbol> {
-        block.stmts.iter().filter_map(|stmt| self.stmt(stmt)).collect()
+        block
+            .stmts
+            .iter()
+            .filter_map(|stmt| self.stmt(stmt))
+            .collect()
     }
 }
 
@@ -266,7 +294,11 @@ mod tests {
         let source = include_str!("../../../testdata/lading/acme/maps/tender-in.lading");
         let parsed = parse(source);
         let symbols = outline(source, &parsed.file.items, &parsed.file.header);
-        assert!(symbols.iter().any(|symbol| symbol.name == "stops" && !symbol.children.is_empty()));
+        assert!(
+            symbols
+                .iter()
+                .any(|symbol| symbol.name == "stops" && !symbol.children.is_empty())
+        );
         assert!(symbols.iter().any(|symbol| symbol.kind == "test"));
         assert!(!folds(source, &parsed.file.items).is_empty());
     }

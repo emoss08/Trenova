@@ -6,14 +6,21 @@ use trenova_module_kit::span::Span;
 
 use super::Parser;
 use crate::lading::syntax::ast::{
-    Action, ExpectAck, FlowDecl, Ident, Item, Otherwise, Receive, ReceiveArm, Respond,
-    Send,
+    Action, ExpectAck, FlowDecl, Ident, Item, Otherwise, Receive, ReceiveArm, Respond, Send,
 };
 use crate::lading::syntax::token::Tok;
 
 /// Words that start a top-level line of a flow file, so a clause's continuation stops there.
 const FLOW_STARTS: &[&str] = &[
-    "receive", "respond", "send", "expect", "test", "property", "fn", "crosswalk", "const",
+    "receive",
+    "respond",
+    "send",
+    "expect",
+    "test",
+    "property",
+    "fn",
+    "crosswalk",
+    "const",
 ];
 
 impl Parser<'_> {

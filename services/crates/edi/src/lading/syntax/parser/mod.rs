@@ -6,7 +6,7 @@
 //! statement continues.
 
 mod decl;
-mod expr;
+pub(crate) mod expr;
 mod flow;
 mod guide;
 mod stmt;
@@ -151,9 +151,9 @@ impl Parser<'_> {
     }
 
     fn word_at(&self, ahead: usize, word: &str) -> bool {
-        self.tokens.get(self.pos + ahead).is_some_and(|token| {
-            token.kind == Tok::Name && self.text_of(token.span) == word
-        })
+        self.tokens
+            .get(self.pos + ahead)
+            .is_some_and(|token| token.kind == Tok::Name && self.text_of(token.span) == word)
     }
 
     /// Eats the keyword `word`, recording it for highlighting.
@@ -170,10 +170,7 @@ impl Parser<'_> {
     fn expect_word(&mut self, word: &str) -> Option<Span> {
         let found = self.eat_word(word);
         if found.is_none() {
-            self.error_here(Message::with(
-                message!("Expected {0}"),
-                [Arg::from(word)],
-            ));
+            self.error_here(Message::with(message!("Expected {0}"), [Arg::from(word)]));
         }
         found
     }
@@ -537,9 +534,9 @@ impl Parser<'_> {
         {
             index += 1;
         }
-        self.tokens.get(index).is_some_and(|token| {
-            token.kind == Tok::Name && self.text_of(token.span) == word
-        })
+        self.tokens
+            .get(index)
+            .is_some_and(|token| token.kind == Tok::Name && self.text_of(token.span) == word)
     }
 
     fn map_header(&mut self) -> Option<Header> {
@@ -654,13 +651,34 @@ mod tests {
     use crate::lading::syntax::ast::{FlowDecl, Header, Item, Stmt};
 
     const CORPUS: &[(&str, &str)] = &[
-        ("partner", include_str!("../../../../testdata/lading/acme/partner.lading")),
-        ("guide", include_str!("../../../../testdata/lading/acme/guides/acme-204.lading")),
-        ("library", include_str!("../../../../testdata/lading/acme/lib/common.lading")),
-        ("map", include_str!("../../../../testdata/lading/acme/maps/tender-in.lading")),
-        ("map", include_str!("../../../../testdata/lading/acme/maps/status-out.lading")),
-        ("rules", include_str!("../../../../testdata/lading/acme/rules/tender-checks.lading")),
-        ("flow", include_str!("../../../../testdata/lading/acme/flows/tender.lading")),
+        (
+            "partner",
+            include_str!("../../../../testdata/lading/acme/partner.lading"),
+        ),
+        (
+            "guide",
+            include_str!("../../../../testdata/lading/acme/guides/acme-204.lading"),
+        ),
+        (
+            "library",
+            include_str!("../../../../testdata/lading/acme/lib/common.lading"),
+        ),
+        (
+            "map",
+            include_str!("../../../../testdata/lading/acme/maps/tender-in.lading"),
+        ),
+        (
+            "map",
+            include_str!("../../../../testdata/lading/acme/maps/status-out.lading"),
+        ),
+        (
+            "rules",
+            include_str!("../../../../testdata/lading/acme/rules/tender-checks.lading"),
+        ),
+        (
+            "flow",
+            include_str!("../../../../testdata/lading/acme/flows/tender.lading"),
+        ),
     ];
 
     #[test]
@@ -683,7 +701,11 @@ mod tests {
             assert!(messages.is_empty(), "{kind}: {messages:#?}");
             assert_eq!(parsed.file.header.kind(), *kind);
             assert!(
-                parsed.file.items.iter().all(|item| !matches!(item, Item::Error(_))),
+                parsed
+                    .file
+                    .items
+                    .iter()
+                    .all(|item| !matches!(item, Item::Error(_))),
                 "{kind}: {:#?}",
                 parsed.file.items
             );
@@ -704,7 +726,7 @@ mod tests {
             .iter()
             .filter(|item| matches!(item, Item::Stmt(Stmt::Assign { .. })))
             .count();
-        assert_eq!(assigns, 8);
+        assert_eq!(assigns, 9);
     }
 
     #[test]
@@ -725,25 +747,32 @@ mod tests {
         };
         assert_eq!(receive.arms.len(), 3);
         assert!(receive.key.is_some());
-        assert_eq!(receive.rules.as_ref().map(|r| r.name.as_str()), Some("tenderChecks"));
+        assert_eq!(
+            receive.rules.as_ref().map(|r| r.name.as_str()),
+            Some("tenderChecks")
+        );
     }
 
     #[test]
     fn broken_lines_recover_on_the_next() {
-        let parsed = parse("map m\n  from loadTender\n  to x12.004010.214\n\nB10 { 01 <- }\nLX { 01 <- 1 }\n");
+        let parsed = parse(
+            "map m\n  from loadTender\n  to x12.004010.214\n\nB10 { 01 <- }\nLX { 01 <- 1 }\n",
+        );
         assert!(!parsed.diagnostics.is_empty());
         assert!(
-            parsed
-                .file
-                .items
-                .iter()
-                .any(|item| matches!(item, Item::Stmt(Stmt::Segment { id, .. }) if id.name == "LX"))
+            parsed.file.items.iter().any(
+                |item| matches!(item, Item::Stmt(Stmt::Segment { id, .. }) if id.name == "LX")
+            )
         );
     }
 
     #[test]
     fn deep_nesting_is_refused_not_overflowed() {
-        let source = format!("map m\n from loadTender\n to x12.004010.214\nkey <- {}1{}\n", "(".repeat(5000), ")".repeat(5000));
+        let source = format!(
+            "map m\n from loadTender\n to x12.004010.214\nkey <- {}1{}\n",
+            "(".repeat(5000),
+            ")".repeat(5000)
+        );
         let parsed = parse(&source);
         assert!(!parsed.diagnostics.is_empty());
     }

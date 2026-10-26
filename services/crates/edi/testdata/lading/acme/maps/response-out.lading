@@ -1,0 +1,27 @@
+map responseOut
+  from tenderResponse
+  to   x12.004010.990
+
+B1 {
+  01 <- scac ?? org.scac
+  02 <- key
+  03 <- respondedAt
+  04 <- decision via decisions
+}
+N9 when exists reason { 01 <- "ZZ", 02 <- reason.truncate(30) }
+
+crosswalk decisions: Decision <-> Code<B104> {
+  Accept  <-> "A"
+  Decline <-> "D"
+}
+
+test "an acceptance" {
+  given tenderResponse { key: "L-1001", decision: Accept, respondedAt: @2026-01-10T14:30Z }
+  expect x12 contains "B1*TRNV*L-1001*20260110*A~"
+}
+
+property "every decision writes a reservation code" {
+  vary decision in Decision
+  given tenderResponse { key: "P-1", decision: decision, respondedAt: @2026-01-10T14:30Z }
+  expect x12 contains "B1*"
+}

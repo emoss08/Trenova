@@ -5,10 +5,11 @@ map tenderIn
 
 key      <- B204
 purpose  <- B2A01 via purposes
-bol      <- L11[02 == "BM"].01 ?? L11[02 == "BL"].01
+bol      <- L11[02 == "BM"].01
+poNumber <- L11[02 == "PO"].01
 refs     <- refs(L11)
-customer <- lookup Customer(N1[01 == "BT"].04)
-weight   <- measure(L301, "L")
+customer <- lookup Customer(0100[N101 == "BT"].N104)
+weight   <- weight(L301, L312 ?? "L")
 total    <- money(L305, partner.currency)
 
 stops <- each 0300 as stop {

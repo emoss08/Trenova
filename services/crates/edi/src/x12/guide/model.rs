@@ -148,6 +148,10 @@ pub struct SegmentUse {
     /// Notes for people.
     #[serde(default, skip_serializing_if = "String::is_empty")]
     pub notes: String,
+    /// This use's own definition, narrowing the dictionary's here only: a partner whose N1 in a
+    /// stop must carry an ID, while its bill-to N1 need not.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub definition: Option<SegmentDef>,
 }
 
 /// A loop in the structure.

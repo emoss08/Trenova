@@ -10,4 +10,4 @@ loop 0300 min 2 max 12
 0300.G62 { 01 codes "69", "70", "37", "38", "53", "54"; 04 required }
 0300.0310.N1 { 01 codes "SH", "CN"; 04 required }
 0300.0310.N4 { 03 length 5..9 }
-severity code-not-in-list warning
+severity invalid-code warning

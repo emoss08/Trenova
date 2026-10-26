@@ -254,8 +254,10 @@ runs every map against them as you type; coverage and replay use them.
 | Temperature | `°F`, `°C` (comparison and difference only) |
 | Duration | `s`, `min`, `h`, `d` |
 
-`measure(value, unitCode)` builds a measure from a number and an X12 unit code: weight units
-`L`, `K` (and `E`, metric ton), length `F`, `I`, `M`, volume `E`, `X` per the element's code list.
+`weight(value, unitCode)`, `length(value, unitCode)`, `volume(value, unitCode)` and
+`temperature(value, scale)` build a measure from a number and the X12 unit code next to it:
+weights `L` (pounds), `K` (kilograms), `E` (metric tons); lengths `F`, `I`, `M`; volumes `E`
+(cubic feet), `X` (cubic meters), `G` (gallons); temperatures `F`, `C`. An unknown code is none.
 Trenova stores weights in pounds, lengths in feet, volumes in cubic feet and temperatures in °F;
 a document field converts on assignment.
 
@@ -436,7 +438,7 @@ by an inbound map.
 | `refs` | `[Text: Text]` |
 | `notes` | `[Text]` |
 | `stops` | `[Stop]`: `sequence: Int`, `type: StopType` (`Pickup`, `Delivery`), `location: Location?`, `name: Text?`, `code: Text?`, `address: Address?`, `window: Window`, `weight: Weight?`, `pieces: Int?`, `refs`, `notes` |
-| `commodities` | `[Commodity]`: `commodity: CommodityRef?`, `description: Text`, `weight: Weight?`, `pieces: Int?`, `hazmat: Bool` |
+| `commodities` | `[CommodityLine]`: `commodity: Commodity?`, `description: Text`, `weight: Weight?`, `pieces: Int?`, `hazmat: Bool` |
 | `charges` | `[Charge]`: `accessorial: Accessorial?`, `code: Text?`, `description: Text?`, `amount: Money` |
 | `custom` | the organisation's shipment custom fields |
 
@@ -547,7 +549,7 @@ Every function is also a method on its first argument: `postal.zip5()` is `zip5(
 | Text | `trim`, `upper`, `lower`, `titleCase`, `take(n)`, `drop(n)`, `truncate(n)`, `pad(n, with: " ", left: false)`, `replace(old, new)`, `split(sep)`, `join(list, sep)`, `digits`, `letters`, `clean` (removes characters X12 can't carry and the partner's separators), `startsWith`, `endsWith`, `contains`, `matches(pattern)`, `length`, `isBlank` |
 | Numbers | `round(places = 0)`, `floor`, `ceil`, `abs`, `min`, `max`, `int(x)`, `decimal(x)`, `text(x)` |
 | Money | `money(amount, currency)`, `amount(money)`, `currency(money)` |
-| Measures | `measure(value, unitCode)`, `in(measure, unit)` (`weight.in(kg)`), `value(measure, unit)` |
+| Measures | `weight(value, code)`, `length(value, code)`, `volume(value, code)`, `temperature(value, scale)`, `in(measure, unit)` (`weight.in(kg)`), `value(measure, unit)` |
 | Dates and times | `at(date, time, zone)`, `date(text, pattern)`, `time(text, pattern)`, `dateTime(text, pattern, zone)`, `date(dt)`, `time(dt)`, `zone(dt)`, `inZone(dt, zone)`, `zoneCode(dt)` (`CT`, `ET`, `LT`, ...), `zoneFromCode(code)`, `addBusinessDays(date, n)`, `now()` |
 | Lists | `count`, `first`, `last`, `isEmpty`, `find(f)`, `filter(f)`, `map(f)`, `any(f)`, `all(f)`, `sum(f)`, `min(f)`, `max(f)`, `sortBy(f)`, `distinct`, `take(n)`, `drop(n)`, `flatten`, `get(i)` |
 | X12 | `refs(segments)` (an L11 or N9 list as qualifier to value), `address(loop)` (N3 and N4 of a name loop as an `Address`), `party(loop)` (N1, N3, N4 as a `Party`), `elements(segment)` (every element as text) |
@@ -613,7 +615,7 @@ loop 0300 min 2 max 12
 0300.G62 { 01 codes "69", "70", "37", "38", "53", "54"; 04 required }
 0300.0310.N1 { 01 codes "SH", "CN"; 04 required }
 0300.0310.N4 { 03 length 5..9 }
-severity code-not-in-list warning
+severity invalid-code warning
 ```
 
 A partner guide narrows its base (a built-in `x12.*` guide or another partner guide):

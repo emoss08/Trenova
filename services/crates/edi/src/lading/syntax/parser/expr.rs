@@ -217,7 +217,11 @@ impl Parser<'_> {
         loop {
             if self.at(Tok::Newline) && self.continuation_ahead(false) {
                 let mut index = self.pos;
-                while self.tokens.get(index).is_some_and(|t| t.kind == Tok::Newline) {
+                while self
+                    .tokens
+                    .get(index)
+                    .is_some_and(|t| t.kind == Tok::Newline)
+                {
                     index += 1;
                 }
                 if self.tokens.get(index).is_some_and(|t| t.kind == Tok::Dot) {
@@ -467,7 +471,9 @@ impl Parser<'_> {
         };
         let expr = sub.expr();
         if !sub.at(Tok::Eof) {
-            sub.error_here(Message::new(message!("Expected the end of the interpolation")));
+            sub.error_here(Message::new(message!(
+                "Expected the end of the interpolation"
+            )));
         }
         self.diagnostics.append(&mut sub.diagnostics);
         self.keywords.append(&mut sub.keywords);
@@ -686,10 +692,7 @@ impl Parser<'_> {
                 let value = self.type_expr();
                 if !matches!(&inner.kind, TypeExprKind::Named(name, args) if name == "Text" && args.is_empty())
                 {
-                    self.error_at(
-                        inner.span,
-                        Message::new(message!("A map's keys are Text")),
-                    );
+                    self.error_at(inner.span, Message::new(message!("A map's keys are Text")));
                 }
                 TypeExprKind::Map(Box::new(value))
             } else {
@@ -706,7 +709,10 @@ impl Parser<'_> {
             let mut args = Vec::new();
             if self.eat(Tok::Lt).is_some() {
                 loop {
-                    if matches!(self.peek(), Tok::X12 | Tok::Digits | Tok::TypeName | Tok::Name) {
+                    if matches!(
+                        self.peek(),
+                        Tok::X12 | Tok::Digits | Tok::TypeName | Tok::Name
+                    ) {
                         let arg = self.advance();
                         args.push(self.text_of(arg.span).to_owned());
                     } else {

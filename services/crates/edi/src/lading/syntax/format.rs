@@ -258,7 +258,10 @@ impl<'a> Printer<'a> {
     /// Appends the comment after the code of the line `[start, end)`.
     fn trailing_comments(&mut self, start: usize, end: usize, text: &mut String) {
         let line_last_end = self.tokens[end.saturating_sub(1).max(start)].span.end;
-        let next_newline = self.tokens.get(end).map_or(u32::MAX, |next| next.span.start);
+        let next_newline = self
+            .tokens
+            .get(end)
+            .map_or(u32::MAX, |next| next.span.start);
         while let Some(comment) = self.comments.get(self.state.comment) {
             if !self.is_trailing(comment)
                 || comment.span.start < line_last_end
@@ -304,10 +307,9 @@ impl<'a> Printer<'a> {
             .source
             .get(token.span.end as usize..gap_end)
             .unwrap_or_default();
-        let has_comment = self
-            .comments
-            .iter()
-            .any(|comment| comment.span.start >= token.span.end && (comment.span.start as usize) < gap_end);
+        let has_comment = self.comments.iter().any(|comment| {
+            comment.span.start >= token.span.end && (comment.span.start as usize) < gap_end
+        });
         if has_comment {
             let first_comment = self
                 .comments
@@ -407,7 +409,9 @@ impl<'a> Printer<'a> {
                 for line_index in group {
                     if let Some(arm) = self.lines[line_index].arm {
                         let pad = widest - arm;
-                        self.lines[line_index].text.insert_str(arm, &" ".repeat(pad));
+                        self.lines[line_index]
+                            .text
+                            .insert_str(arm, &" ".repeat(pad));
                     }
                 }
                 index = end;
@@ -451,7 +455,10 @@ fn base_is_assignment(tokens: &[Token]) -> bool {
 
 fn space_between(prev: Token, next: Token, next_text: &str) -> bool {
     let touching = prev.span.end == next.span.start;
-    let tight_after = matches!(prev.kind, Tok::Dot | Tok::DotDot | Tok::LParen | Tok::LBracket);
+    let tight_after = matches!(
+        prev.kind,
+        Tok::Dot | Tok::DotDot | Tok::LParen | Tok::LBracket
+    );
     let tight_before = matches!(
         next.kind,
         Tok::Comma | Tok::Semi | Tok::RParen | Tok::RBracket | Tok::Dot | Tok::DotDot | Tok::Colon
@@ -466,7 +473,13 @@ fn space_between(prev: Token, next: Token, next_text: &str) -> bool {
         && matches!(next.kind, Tok::LParen | Tok::LBracket);
     let unary_minus = prev.kind == Tok::Minus && touching && next_text != "-";
     let empty_braces = prev.kind == Tok::LBrace && next.kind == Tok::RBrace;
-    !(tight_after || tight_before || percent || postfix_question || call || unary_minus || empty_braces)
+    !(tight_after
+        || tight_before
+        || percent
+        || postfix_question
+        || call
+        || unary_minus
+        || empty_braces)
 }
 
 #[cfg(test)]

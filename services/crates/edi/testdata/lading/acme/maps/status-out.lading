@@ -35,7 +35,8 @@ test "an arrival writes the right AT7" {
   expect x12 contains "AT7*X1*NS***20260110*0830*CT~"
 }
 
-property "every decision writes a reservation code" {
-  vary weight in 1 lb..80_000 lb
-  expect weight > 0 lb
+property "every event writes a status" {
+  vary kind in EventKind
+  given shipmentStatus { key: "L-1", events: [{ kind: kind, at: @2026-01-10T14:30Z }] }
+  expect x12 contains "AT7*"
 }

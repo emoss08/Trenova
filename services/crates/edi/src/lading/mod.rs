@@ -5,4 +5,12 @@
 //! documents into X12; rules with outcomes; flows Trenova runs per conversation; tests,
 //! properties, coverage, lineage and replay; and the editor's operations.
 
+pub mod check;
+pub mod facts;
+pub mod project;
+pub mod schema;
+pub mod stdlib;
 pub mod syntax;
+pub mod types;
+pub mod tz;
+pub mod values;

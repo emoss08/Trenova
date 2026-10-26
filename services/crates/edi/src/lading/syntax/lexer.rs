@@ -202,7 +202,8 @@ impl Lexer<'_> {
     fn temporal(&mut self, start: usize) {
         self.pos += 1;
         let rest = &self.bytes[self.pos..];
-        let is_date = rest.len() >= 10 && rest[4] == b'-' && rest[..4].iter().all(u8::is_ascii_digit);
+        let is_date =
+            rest.len() >= 10 && rest[4] == b'-' && rest[..4].iter().all(u8::is_ascii_digit);
         if is_date {
             self.pos += 10;
             if self.peek() == b'T' && self.peek_at(1).is_ascii_digit() {
@@ -498,10 +499,20 @@ mod tests {
     fn x12_paths_lex_as_references_and_loop_ids() {
         assert_eq!(
             kinds("stop.0310.N104"),
-            vec![Tok::Name, Tok::Dot, Tok::Digits, Tok::Dot, Tok::X12, Tok::Eof]
+            vec![
+                Tok::Name,
+                Tok::Dot,
+                Tok::Digits,
+                Tok::Dot,
+                Tok::X12,
+                Tok::Eof
+            ]
         );
         assert_eq!(kinds("each 0300"), vec![Tok::Name, Tok::Digits, Tok::Eof]);
-        assert_eq!(kinds("seg.02"), vec![Tok::Name, Tok::Dot, Tok::Digits, Tok::Eof]);
+        assert_eq!(
+            kinds("seg.02"),
+            vec![Tok::Name, Tok::Dot, Tok::Digits, Tok::Eof]
+        );
         assert_eq!(kinds("2000A"), vec![Tok::Digits, Tok::Eof]);
     }
 
@@ -513,7 +524,10 @@ mod tests {
         );
         assert_eq!(kinds("45_000 lb"), vec![Tok::Number, Tok::Name, Tok::Eof]);
         assert_eq!(kinds("12.50"), vec![Tok::Number, Tok::Eof]);
-        assert_eq!(kinds("-10 °F"), vec![Tok::Minus, Tok::Number, Tok::Name, Tok::Eof]);
+        assert_eq!(
+            kinds("-10 °F"),
+            vec![Tok::Minus, Tok::Number, Tok::Name, Tok::Eof]
+        );
         assert_eq!(kinds("$1_850.00"), vec![Tok::Money, Tok::Eof]);
         assert_eq!(kinds("5%"), vec![Tok::Number, Tok::Percent, Tok::Eof]);
     }
@@ -527,7 +541,10 @@ mod tests {
             kinds("@2026-01-10T08:30[America/Chicago]"),
             vec![Tok::Instant, Tok::Eof]
         );
-        assert_eq!(kinds("@2026-01-10T08:30-06:00"), vec![Tok::Instant, Tok::Eof]);
+        assert_eq!(
+            kinds("@2026-01-10T08:30-06:00"),
+            vec![Tok::Instant, Tok::Eof]
+        );
     }
 
     #[test]
