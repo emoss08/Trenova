@@ -8,6 +8,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/emoss08/trenova/internal/modules/edi/app/edilading"
 	"github.com/emoss08/trenova/internal/modules/edi/app/ladingdoc"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
@@ -332,13 +333,19 @@ func (p *planner) buildProject(ctx context.Context, exchanges []*exchange) error
 	}
 
 	files := starter.Files
-	samples := starter.Samples
+	samples := append(slices.Clone(starter.Samples), p.specSamples()...)
+	checked := samples
 	change := ediports.ChangeKindAdd
 	project := &ediports.DraftProject{Role: request.Role}
 	var guided map[string]string
 	if version := p.current.version; version != nil {
 		files, guided = p.adaptProject(version, starter.Files, exchanges)
-		samples = nil
+		kept, keptErr := p.s.projects.Samples(ctx, p.req.TenantInfo, version)
+		if keptErr != nil {
+			return keptErr
+		}
+		samples = p.specSamples()
+		checked = edilading.MergeSamples(kept, samples)
 		project.ProjectID = version.ProjectID
 	}
 	name := partnerName(files)
@@ -350,7 +357,7 @@ func (p *planner) buildProject(ctx context.Context, exchanges []*exchange) error
 	var guides []*guideFile
 	for attempt := 1; ; attempt++ {
 		guides = p.guides(name, request.Version, exchanges, guided)
-		check, err = p.check(ctx, withGuides(files, guides))
+		check, err = p.check(ctx, withGuides(files, guides), checked)
 		if err != nil {
 			return err
 		}
@@ -359,11 +366,6 @@ func (p *planner) buildProject(ctx context.Context, exchanges []*exchange) error
 		}
 	}
 	files = withGuides(files, guides)
-	if p.current.version == nil {
-		samples = append(samples, p.specSamples()...)
-	} else {
-		samples = p.specSamples()
-	}
 
 	p.unmet(check, exchanges)
 	p.projectFailures(check, guides)
@@ -526,7 +528,8 @@ func (p *planner) adaptProject(
 	manifest := &version.Manifest
 	guided = map[string]string{}
 	for _, guide := range manifest.Guides {
-		if guide.Set != "" && guide.Path != guidePath(edi.TransactionSet(guide.Set)) {
+		if guide.Set != "" && guide.Path != "" &&
+			guide.Path != guidePath(edi.TransactionSet(guide.Set)) {
 			guided[guide.Set] = guide.Name
 		}
 	}
@@ -717,12 +720,16 @@ func withGuides(files []lading.File, guides []*guideFile) []lading.File {
 	return out
 }
 
-func (p *planner) check(ctx context.Context, files []lading.File) (*lading.Check, error) {
+func (p *planner) check(
+	ctx context.Context,
+	files []lading.File,
+	samples []lading.Sample,
+) (*lading.Check, error) {
 	ladingContext, err := p.s.lading.Context(ctx, p.req.TenantInfo)
 	if err != nil {
 		return nil, err
 	}
-	encoded, err := lading.Encode(&lading.Project{Files: files}, ladingContext)
+	encoded, err := lading.Encode(&lading.Project{Files: files, Samples: samples}, ladingContext)
 	if err != nil {
 		return nil, err
 	}

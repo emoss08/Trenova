@@ -86,8 +86,10 @@ func acmeWithOwnGuide(t *testing.T, req *ediports.ConnectionDraftRequest, usage 
 		Path:   "guides/acme-tender.lading",
 		Source: "guide acmeTender from x12.004010.204 \"Acme's own 204\"\n\nB2 required\n",
 	})
+	samples, err := versionSamples(version)
+	require.NoError(t, err)
 	encoded, err := lading.Encode(
-		&lading.Project{Files: files},
+		&lading.Project{Files: files, Samples: samples},
 		&lading.Context{Org: lading.Org{Name: "Trenova Logistics", SCAC: "TRNV", Zone: "America/Chicago"}},
 	)
 	require.NoError(t, err)

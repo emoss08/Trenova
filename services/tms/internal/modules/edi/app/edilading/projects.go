@@ -226,14 +226,14 @@ func (s *Projects) GetVersion(
 	if err != nil {
 		return nil, err
 	}
-	samples, err := s.samples(ctx, req.TenantInfo, version)
+	samples, err := s.Samples(ctx, req.TenantInfo, version)
 	if err != nil {
 		return nil, err
 	}
 	return &VersionDetail{Version: version, Samples: samples}, nil
 }
 
-func (s *Projects) samples(
+func (s *Projects) Samples(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 	version *edi.LadingVersion,
@@ -514,7 +514,7 @@ func (s *Projects) Import(
 			return nil, err
 		}
 	}
-	kept, err := s.samples(ctx, req.TenantInfo, draft)
+	kept, err := s.Samples(ctx, req.TenantInfo, draft)
 	if err != nil {
 		return nil, err
 	}
@@ -522,7 +522,7 @@ func (s *Projects) Import(
 		TenantInfo: req.TenantInfo,
 		VersionID:  draft.ID,
 		Files:      req.Files,
-		Samples:    mergeSamples(kept, req.Samples),
+		Samples:    MergeSamples(kept, req.Samples),
 		Notes:      req.Notes,
 		Version:    draft.Version,
 	}, actor)
@@ -586,7 +586,7 @@ func (s *Projects) importProject(
 	return versions[0], nil
 }
 
-func mergeSamples(kept, added []lading.Sample) []lading.Sample {
+func MergeSamples(kept, added []lading.Sample) []lading.Sample {
 	replaced := make(map[string]bool, len(added))
 	for _, sample := range added {
 		replaced[sample.Path] = true
@@ -790,7 +790,7 @@ func (s *Projects) test(
 	tenantInfo pagination.TenantInfo,
 	version *edi.LadingVersion,
 ) (*lading.TestReport, error) {
-	samples, err := s.samples(ctx, tenantInfo, version)
+	samples, err := s.Samples(ctx, tenantInfo, version)
 	if err != nil {
 		return nil, err
 	}

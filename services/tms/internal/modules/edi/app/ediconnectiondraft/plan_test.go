@@ -607,6 +607,7 @@ func acmeVersion(t *testing.T, projectID pulid.ID) *edi.LadingVersion {
 		Number:    2,
 		Status:    edi.LadingVersionStatusActive,
 		Files:     starter.Files,
+		Samples:   storeSamples(starter.Samples),
 		Manifest:  *check,
 	}
 }

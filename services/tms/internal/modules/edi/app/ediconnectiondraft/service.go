@@ -9,6 +9,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/pkg/lading"
+	"github.com/emoss08/trenova/pkg/pagination"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
@@ -45,12 +47,17 @@ type setupService interface {
 	) (*edi.EDIControlNumberSequence, error)
 }
 
-type projectImporter interface {
+type projectStore interface {
 	Import(
 		ctx context.Context,
 		req *edilading.ImportRequest,
 		actor *permissionports.RequestActor,
 	) (*edi.LadingVersion, error)
+	Samples(
+		ctx context.Context,
+		tenantInfo pagination.TenantInfo,
+		version *edi.LadingVersion,
+	) ([]lading.Sample, error)
 }
 
 type Params struct {
@@ -72,7 +79,7 @@ type Service struct {
 	setup         setupService
 	validator     *ediservice.Validator
 	lading        *edilading.Runtime
-	projects      projectImporter
+	projects      projectStore
 	db            kernelports.Transactor
 	l             *zap.Logger
 }

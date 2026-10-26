@@ -41,9 +41,14 @@ func TestReadinessQuery_ChecksEverySetupStepInOneStatement(t *testing.T) {
 
 	assert.Contains(t, sql, `EXISTS (SELECT 1 FROM "edi_communication_profiles" ecp`)
 	assert.Contains(t, sql, `EXISTS (SELECT 1 FROM "edi_mapping_profile_items" empi`)
-	assert.Contains(t, sql, `EXISTS (SELECT 1 FROM "edi_test_cases" etc`)
+	assert.Contains(t, sql, `EXISTS (SELECT 1 FROM "edi_lading_projects" elp WHERE`)
+	assert.Contains(
+		t,
+		sql,
+		`EXISTS (SELECT 1 FROM "edi_lading_projects" elp2 WHERE elp2."business_unit_id" = $1 `+
+			`AND elp2."organization_id" = $2 AND elp2."edi_partner_id" = ep."id" `+
+			`AND elp2."active_version_id" IS NOT NULL)`,
+	)
 	assert.Contains(t, sql, `FROM "edi_partners" ep WHERE ep."business_unit_id" = $1 AND ep."organization_id" = $2 AND ep."id" = ANY($3)`)
-	assert.Contains(t, sql, `epdp."status" = 'Active' AND epdp."direction" = 'Inbound'`)
-	assert.Contains(t, sql, `epdp2."status" = 'Active' AND epdp2."direction" = 'Outbound'`)
 	assert.Equal(t, []any{"bu_1", "org_1", []string{"edip_1", "edip_2"}, "", ""}, args)
 }

@@ -9,7 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
 	"github.com/emoss08/trenova/internal/testutil/mocks/ediportsmock"
 	"github.com/emoss08/trenova/pkg/errortypes"
-	"github.com/emoss08/trenova/pkg/jsonutils"
+	"github.com/emoss08/trenova/shared/jsonutils"
 	"github.com/emoss08/trenova/pkg/lading"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -90,7 +90,7 @@ func TestValidateProject_RefusesPathsThatLeaveTheProject(t *testing.T) {
 func TestMergeSamples_ReplacesThoseAtTheSamePathAndKeepsTheRest(t *testing.T) {
 	t.Parallel()
 
-	merged := mergeSamples(
+	merged := MergeSamples(
 		[]lading.Sample{
 			{Path: "samples/a.x12", Content: "old a"},
 			{Path: "samples/b.x12", Content: "b"},

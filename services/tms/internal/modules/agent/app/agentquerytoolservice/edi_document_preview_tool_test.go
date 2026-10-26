@@ -125,7 +125,6 @@ func TestPreviewEDIDocument_RendersA214ThroughTheSendPathWithItsFindings(t *test
 func TestPreviewEDIDocument_AnswersATenderWithThe990ItWouldSend(t *testing.T) {
 	t.Parallel()
 
-	profile.TransactionSet = edi.TransactionSet990
 	transfer := &edi.EDITransfer{ID: pulid.MustNew("edilt_"), Status: edi.TransferStatusPendingApproval}
 	fake := &fakeDocumentPreviewer{response: &ediservice.TenderResponsePreview{
 		OutboundDocumentPreview: ediservice.OutboundDocumentPreview{

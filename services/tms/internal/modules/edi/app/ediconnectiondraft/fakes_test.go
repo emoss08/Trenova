@@ -2,8 +2,10 @@ package ediconnectiondraft
 
 import (
 	"context"
+	"fmt"
 	"slices"
 	"strings"
+	"sync"
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/edi/app/edilading"
@@ -15,6 +17,7 @@ import (
 	"github.com/emoss08/trenova/internal/testutil/dbtest"
 	"github.com/emoss08/trenova/internal/testutil/mocks/tenantportsmock"
 	"github.com/emoss08/trenova/pkg/errortypes"
+	"github.com/emoss08/trenova/pkg/lading"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/mock"
@@ -220,6 +223,42 @@ func (f *fakeProjects) Import(
 		Status:    edi.LadingVersionStatusDraft,
 		Files:     req.Files,
 	}, nil
+}
+
+var storedSamples sync.Map
+
+func storeSamples(samples []lading.Sample) []edi.LadingSampleRef {
+	refs := make([]edi.LadingSampleRef, 0, len(samples))
+	for _, sample := range samples {
+		digest := lading.Digest(sample.Content)
+		storedSamples.Store(digest, sample.Content)
+		refs = append(refs, edi.LadingSampleRef{
+			Path:   sample.Path,
+			Digest: digest,
+			Size:   len(sample.Content),
+		})
+	}
+	return refs
+}
+
+func versionSamples(version *edi.LadingVersion) ([]lading.Sample, error) {
+	samples := make([]lading.Sample, 0, len(version.Samples))
+	for _, ref := range version.Samples {
+		content, ok := storedSamples.Load(ref.Digest)
+		if !ok {
+			return nil, fmt.Errorf("lading sample %s of version %s is missing", ref.Path, version.ID)
+		}
+		samples = append(samples, lading.Sample{Path: ref.Path, Content: content.(string)})
+	}
+	return samples, nil
+}
+
+func (f *fakeProjects) Samples(
+	_ context.Context,
+	_ pagination.TenantInfo,
+	version *edi.LadingVersion,
+) ([]lading.Sample, error) {
+	return versionSamples(version)
 }
 
 type harness struct {
