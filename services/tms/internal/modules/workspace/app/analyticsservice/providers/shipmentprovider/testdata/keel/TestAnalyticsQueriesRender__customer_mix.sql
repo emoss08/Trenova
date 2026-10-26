@@ -4,7 +4,7 @@ JOIN customers c ON c.business_unit_id = $1 AND c.organization_id = $2 AND c.id 
 WHERE s.business_unit_id = $1 AND s.organization_id = $2 AND (s.created_at >= $3 AND s.created_at <= $4) AND s.status <> 'Canceled'
 GROUP BY s.customer_id, c.name
 HAVING CAST(coalesce(sum(s.total_charge_amount) FILTER (WHERE s.created_at >= $6), $7) AS double precision) > $10
-ORDER BY CAST(coalesce(sum(s.total_charge_amount) FILTER (WHERE s.created_at >= $6), $7) AS double precision) DESC LIMIT 5
+ORDER BY 3 DESC LIMIT 5
 -- $1 = 'bu_1'
 -- $2 = 'org_1'
 -- $3 = 500
