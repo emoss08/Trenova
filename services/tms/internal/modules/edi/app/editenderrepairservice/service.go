@@ -110,10 +110,14 @@ func (s *Service) repairOne(
 	candidate *ediports.TenderReferenceCandidate,
 	report *Report,
 ) error {
-	read, found := ediinboundservice.TenderReferences(
+	read, found, err := ediinboundservice.TenderReferences(
+		ctx,
 		candidate.RawX12,
-		separatorsFor(candidate),
+		separatorsFor(ctx, candidate),
 	)
+	if err != nil {
+		return fmt.Errorf("re-read inbound tender %s: %w", candidate.MessageID, err)
+	}
 	if !found {
 		report.Skipped++
 		if req.OnSkip != nil {
@@ -159,10 +163,13 @@ func (s *Service) repairOne(
 	return nil
 }
 
-func separatorsFor(candidate *ediports.TenderReferenceCandidate) *edi.X12EnvelopeSettings {
+func separatorsFor(
+	ctx context.Context,
+	candidate *ediports.TenderReferenceCandidate,
+) *edi.X12EnvelopeSettings {
 	if head := strings.TrimLeftFunc(candidate.FileHead, unicode.IsSpace); head != "" {
-		separators, _ := edix12inspect.DetectSeparators(head, nil)
-		if separators.Source == edix12inspect.SeparatorSourceISA {
+		separators, err := edix12inspect.DetectSeparators(ctx, head, nil)
+		if err == nil && separators.Source == edix12inspect.SeparatorSourceISA {
 			return &edi.X12EnvelopeSettings{
 				ElementSeparator:    separators.Element,
 				SegmentTerminator:   separators.Segment,

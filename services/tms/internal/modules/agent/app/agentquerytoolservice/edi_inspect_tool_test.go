@@ -52,9 +52,10 @@ func TestInspectX12_ReadsPastedX12WithTheInboundFileCardsOverview(t *testing.T) 
 	assert.Equal(t, pastedShipmentStatus, inspector.requests[0].RawX12)
 
 	view := result.(*inspectX12View)
-	expected := edix12inspect.InspectX12(&edix12inspect.InspectX12Request{
+	expected, err := edix12inspect.InspectX12(t.Context(), &edix12inspect.InspectX12Request{
 		RawX12: pastedShipmentStatus,
 	})
+	require.NoError(t, err)
 	assert.Equal(t, expected.FileInspection(), view.FileInspection,
 		"the overview the inbound file card draws, unchanged")
 	assert.Equal(t, "000000417", view.Envelope.ISAControlNumber)

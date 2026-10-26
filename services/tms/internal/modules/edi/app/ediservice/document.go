@@ -2,7 +2,6 @@ package ediservice
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"strconv"
 	"strings"
@@ -103,45 +102,11 @@ func (s *Service) UpsertPartnerDocumentProfile(
 	if multiErr := s.validator.ValidatePartnerDocumentProfileRequest(req); multiErr != nil {
 		return nil, multiErr
 	}
-	if req.TemplateID.IsNil() {
-		base, _, err := s.templateRepo.EnsureBase204Template(ctx, req.TenantInfo)
-		if err != nil {
-			return nil, err
-		}
-		req.TemplateID = base.ID
-	}
-	templateVersion, err := s.resolveProfileTemplateVersion(ctx, req)
+	source, err := s.resolveProfileSource(ctx, req)
 	if err != nil {
 		return nil, err
 	}
-	if err = validateProfileTemplateVersionCompatibility(req.Status, templateVersion); err != nil {
-		return nil, err
-	}
-	template, err := s.templateRepo.GetTemplateByID(ctx, ediports.GetEDITemplateByIDRequest{
-		ID:         req.TemplateID,
-		TenantInfo: req.TenantInfo,
-	})
-	if err != nil {
-		return nil, err
-	}
-	documentType := template.DocumentType
-	if documentType == nil {
-		documentTypes, listErr := s.documentTypeRepo.ListDocumentTypes(
-			ctx,
-			ediports.ListEDIDocumentTypesRequest{
-				Standard:       template.Standard,
-				TransactionSet: template.TransactionSet,
-				Direction:      template.Direction,
-			},
-		)
-		if listErr != nil {
-			return nil, listErr
-		}
-		if len(documentTypes) == 0 {
-			return nil, errors.New("selected template document type is not seeded")
-		}
-		documentType = documentTypes[0]
-	}
+	documentType := source.documentType
 
 	profile := &edi.EDIPartnerDocumentProfile{
 		ID:                req.ProfileID,
@@ -149,8 +114,8 @@ func (s *Service) UpsertPartnerDocumentProfile(
 		OrganizationID:    req.TenantInfo.OrgID,
 		EDIPartnerID:      req.EDIPartnerID,
 		DocumentTypeID:    documentType.ID,
-		TemplateID:        req.TemplateID,
-		TemplateVersionID: req.TemplateVersionID,
+		TemplateID:        source.templateID,
+		TemplateVersionID: source.templateVersionID(),
 		Name: stringutils.FirstNonEmpty(
 			req.Name,
 			defaultProfileName(documentType.TransactionSet, documentType.Direction),
@@ -162,7 +127,7 @@ func (s *Service) UpsertPartnerDocumentProfile(
 		X12VersionOverride: req.X12VersionOverride,
 		FunctionalGroupID: stringutils.FirstNonEmpty(
 			req.FunctionalGroupID,
-			templateVersion.FunctionalGroupID,
+			source.functionalGroupID(),
 			edi.FunctionalGroupDefault(documentType.TransactionSet),
 		),
 		Envelope:                     req.Envelope,
@@ -176,20 +141,19 @@ func (s *Service) UpsertPartnerDocumentProfile(
 	if profile.Status == "" {
 		profile.Status = edi.DocumentStatusActive
 	}
-	if err = validateProfileTemplateVersionCompatibility(
-		profile.Status,
-		templateVersion,
-	); err != nil {
-		return nil, err
+	if source.templateVersion != nil {
+		if err = validateProfileTemplateVersionCompatibility(
+			profile.Status,
+			source.templateVersion,
+		); err != nil {
+			return nil, err
+		}
 	}
 	if profile.ValidationMode == "" {
 		profile.ValidationMode = edi.ValidationModeStrict
 	}
 	if profile.Envelope.ElementSeparator == "" {
 		profile.Envelope = edi.DefaultX12EnvelopeSettings()
-	}
-	if profile.TemplateVersionID.IsNil() {
-		profile.TemplateVersionID = templateVersion.ID
 	}
 	partnerDiagnostics, err := s.validateProfilePartnerSettings(
 		ctx,
@@ -225,6 +189,113 @@ func (s *Service) UpsertPartnerDocumentProfile(
 	}
 	s.logAction(updated, actor, permission.OpUpdate, nil, updated, "EDI document profile updated")
 	return updated, nil
+}
+
+type profileSource struct {
+	documentType    *edi.EDIDocumentType
+	templateID      pulid.ID
+	templateVersion *edi.EDITemplateVersion
+}
+
+func (p *profileSource) templateVersionID() pulid.ID {
+	if p.templateVersion == nil {
+		return pulid.Nil
+	}
+	return p.templateVersion.ID
+}
+
+func (p *profileSource) functionalGroupID() string {
+	if p.templateVersion == nil {
+		return ""
+	}
+	return p.templateVersion.FunctionalGroupID
+}
+
+func (s *Service) resolveProfileSource(
+	ctx context.Context,
+	req *UpsertEDIPartnerDocumentProfileRequest,
+) (*profileSource, error) {
+	if req.TransactionSet.IsAcknowledgment() {
+		documentType, err := s.documentTypeFor(
+			ctx,
+			edi.EDIStandardX12,
+			req.TransactionSet,
+			edi.DocumentDirectionOutbound,
+		)
+		if err != nil {
+			return nil, err
+		}
+		return &profileSource{documentType: documentType}, nil
+	}
+	if req.TemplateID.IsNil() {
+		transactionSet := req.TransactionSet
+		if transactionSet == "" {
+			transactionSet = edi.TransactionSet204
+		}
+		base, _, err := s.templateRepo.EnsureBaseTemplate(ctx, req.TenantInfo, transactionSet)
+		if err != nil {
+			return nil, err
+		}
+		req.TemplateID = base.ID
+	}
+	templateVersion, err := s.resolveProfileTemplateVersion(ctx, req)
+	if err != nil {
+		return nil, err
+	}
+	template, err := s.templateRepo.GetTemplateByID(ctx, ediports.GetEDITemplateByIDRequest{
+		ID:         req.TemplateID,
+		TenantInfo: req.TenantInfo,
+	})
+	if err != nil {
+		return nil, err
+	}
+	if req.TransactionSet != "" && req.TransactionSet != template.TransactionSet {
+		return nil, errortypes.NewValidationError(
+			"templateId",
+			errortypes.ErrInvalidReference,
+			"The template is for a different transaction set than the profile",
+		)
+	}
+	documentType := template.DocumentType
+	if documentType == nil {
+		documentType, err = s.documentTypeFor(
+			ctx,
+			template.Standard,
+			template.TransactionSet,
+			template.Direction,
+		)
+		if err != nil {
+			return nil, err
+		}
+	}
+	return &profileSource{
+		documentType:    documentType,
+		templateID:      req.TemplateID,
+		templateVersion: templateVersion,
+	}, nil
+}
+
+func (s *Service) documentTypeFor(
+	ctx context.Context,
+	standard edi.EDIStandard,
+	transactionSet edi.TransactionSet,
+	direction edi.DocumentDirection,
+) (*edi.EDIDocumentType, error) {
+	documentTypes, err := s.documentTypeRepo.ListDocumentTypes(
+		ctx,
+		ediports.ListEDIDocumentTypesRequest{
+			Standard:       standard,
+			TransactionSet: transactionSet,
+			Direction:      direction,
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+	if len(documentTypes) == 0 {
+		return nil, fmt.Errorf("document type %s %s is not seeded", transactionSet, direction)
+	}
+	return documentTypes[0], nil
 }
 
 func (s *Service) resolveProfileTemplateVersion(
@@ -357,6 +428,9 @@ func (s *Service) PreviewDocument(
 	ctx context.Context,
 	req *PreviewEDIDocumentRequest,
 ) (*EDIDocumentPreview, error) {
+	if req != nil && req.SourceMessageID.IsNotNil() {
+		return s.previewMessageAcknowledgment(ctx, req)
+	}
 	resolved, err := s.resolveDocumentContext(ctx, req)
 	if err != nil {
 		return nil, err
@@ -452,6 +526,9 @@ func (s *Service) GenerateDocument(
 	ctx context.Context,
 	req *GenerateEDIDocumentRequest,
 ) (*edi.EDIMessage, error) {
+	if req != nil && req.SourceMessageID.IsNotNil() {
+		return s.generateMessageAcknowledgment(ctx, req)
+	}
 	if existing, found, err := s.generatedDocument(ctx, req); err != nil || found {
 		return existing, err
 	}
@@ -644,7 +721,7 @@ func (s *Service) GetMessage(
 }
 
 func (s *Service) InspectX12(
-	_ context.Context,
+	ctx context.Context,
 	req *InspectX12Request,
 ) (*edix12inspect.InspectX12Result, error) {
 	if req == nil {
@@ -654,14 +731,13 @@ func (s *Service) InspectX12(
 			"Inspection request is required",
 		)
 	}
-	result := edix12inspect.InspectX12(&edix12inspect.InspectX12Request{
+	return edix12inspect.InspectX12(ctx, &edix12inspect.InspectX12Request{
 		RawX12:         req.RawX12,
 		TransactionSet: req.TransactionSet,
 		X12Version:     req.X12Version,
 		Envelope:       req.Envelope,
 		Diagnostics:    req.Diagnostics,
 	})
-	return &result, nil
 }
 
 func (s *Service) InspectMessage(
@@ -674,6 +750,9 @@ func (s *Service) InspectMessage(
 	}
 	renderDiagnostics := make([]edix12.Diagnostic, 0, len(message.ValidationErrors))
 	for _, diagnostic := range message.ValidationErrors {
+		if strings.HasPrefix(diagnostic.Code, edix12inspect.FindingCodePrefix) {
+			continue
+		}
 		renderDiagnostics = append(renderDiagnostics, edix12.Diagnostic{
 			Severity:        diagnostic.Severity,
 			Code:            diagnostic.Code,
@@ -684,16 +763,19 @@ func (s *Service) InspectMessage(
 			SuggestedFix:    diagnostic.SuggestedFix,
 		})
 	}
-	inspection := edix12inspect.InspectX12(&edix12inspect.InspectX12Request{
+	inspection, err := edix12inspect.InspectX12(ctx, &edix12inspect.InspectX12Request{
 		RawX12:         message.RawX12,
 		TransactionSet: message.TransactionSet,
 		X12Version:     message.X12Version,
 		Envelope:       messageEnvelope(message),
 		Diagnostics:    renderDiagnostics,
 	})
+	if err != nil {
+		return nil, err
+	}
 	return &EDIMessageInspection{
 		Message:    message,
-		Inspection: inspection,
+		Inspection: *inspection,
 		Provenance: EDIInspectionProvenance{
 			MessageID:         message.ID,
 			ProfileID:         message.PartnerDocumentProfileID,
@@ -787,6 +869,13 @@ func (s *Service) resolveDocumentContext(
 	profile, err := s.resolveProfile(ctx, req)
 	if err != nil {
 		return nil, err
+	}
+	if profile.TransactionSet.IsAcknowledgment() {
+		return nil, errortypes.NewValidationError(
+			"sourceMessageId",
+			errortypes.ErrRequired,
+			"An acknowledgment is written from the message it answers. Choose that message.",
+		)
 	}
 	templateVersion, err := s.templateRepo.GetActiveTemplateVersion(
 		ctx,
@@ -909,18 +998,6 @@ func (s *Service) resolvePayload(
 			return buildTenderResponsePayload(transfer), nil
 		}
 		return edi.NewLoadTenderDocumentPayload(transfer.TenderPayload), nil
-	}
-	if !req.SourceMessageID.IsNil() {
-		if transactionSet != edi.TransactionSet997 && transactionSet != edi.TransactionSet999 {
-			return edi.DocumentPayload{}, sourceTransactionSetError(
-				"sourceMessageId",
-				"source message",
-				transactionSet,
-				edi.TransactionSet997,
-				edi.TransactionSet999,
-			)
-		}
-		return s.buildAcknowledgmentPayload(ctx, req, transactionSet)
 	}
 	if !req.InvoiceID.IsNil() {
 		if transactionSet != edi.TransactionSet210 {

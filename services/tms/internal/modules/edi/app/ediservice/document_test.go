@@ -1,6 +1,7 @@
 package ediservice
 
 import (
+	"context"
 	"github.com/emoss08/trenova/internal/testutil/mocks/ediportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/invoiceportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/shipmenteventportsmock"
@@ -303,4 +304,104 @@ func TestUpsertPartnerDocumentProfile_ActiveProfileRequiresActiveTemplateVersion
 	)
 
 	requireValidationError(t, err, "templateVersionId", errortypes.ErrInvalidOperation)
+}
+
+func TestUpsertPartnerDocumentProfile_AcknowledgmentProfileHasNoTemplate(t *testing.T) {
+	t.Parallel()
+
+	tenantInfo := pagination.TenantInfo{
+		OrgID: pulid.MustNew("org_"),
+		BuID:  pulid.MustNew("bu_"),
+	}
+	documentTypeID := pulid.MustNew("edidt_")
+	partnerID := pulid.MustNew("edip_")
+	repo := ediportsmock.NewMockEDIDocumentRepository(t)
+	repo.EXPECT().
+		ListDocumentTypes(mock.Anything, ediports.ListEDIDocumentTypesRequest{
+			Standard:       edi.EDIStandardX12,
+			TransactionSet: edi.TransactionSet997,
+			Direction:      edi.DocumentDirectionOutbound,
+		}).
+		Return([]*edi.EDIDocumentType{{
+			ID:             documentTypeID,
+			Standard:       edi.EDIStandardX12,
+			TransactionSet: edi.TransactionSet997,
+			Direction:      edi.DocumentDirectionOutbound,
+		}}, nil).
+		Once()
+	repo.EXPECT().
+		GetActivePartnerSettingSchema(mock.Anything, mock.Anything).
+		Return(nil, sql.ErrNoRows).
+		Once()
+	repo.EXPECT().
+		CreatePartnerDocumentProfile(
+			mock.Anything,
+			mock.MatchedBy(func(profile *edi.EDIPartnerDocumentProfile) bool {
+				return profile.TemplateID.IsNil() &&
+					profile.TemplateVersionID.IsNil() &&
+					profile.DocumentTypeID == documentTypeID &&
+					profile.TransactionSet == edi.TransactionSet997 &&
+					profile.FunctionalGroupID == "FA"
+			}),
+		).
+		RunAndReturn(func(
+			_ context.Context,
+			profile *edi.EDIPartnerDocumentProfile,
+		) (*edi.EDIPartnerDocumentProfile, error) {
+			return profile, nil
+		}).
+		Once()
+
+	service := &Service{
+		documentTypeRepo:    repo,
+		sourceContextRepo:   repo,
+		partnerSettingRepo:  repo,
+		templateRepo:        repo,
+		documentProfileRepo: repo,
+		controlNumberRepo:   repo,
+		messageRepo:         repo,
+		testCaseRepo:        repo,
+		validator:           NewValidator(),
+	}
+	profile, err := service.UpsertPartnerDocumentProfile(
+		t.Context(),
+		&UpsertEDIPartnerDocumentProfileRequest{
+			TenantInfo:     tenantInfo,
+			EDIPartnerID:   partnerID,
+			TransactionSet: edi.TransactionSet997,
+			Status:         edi.DocumentStatusActive,
+			Envelope:       edi.DefaultX12EnvelopeSettings(),
+			Acknowledgment: edi.AcknowledgmentConfig{Type: edi.AcknowledgmentTypeNone},
+			ValidationMode: edi.ValidationModeWarnOnly,
+		},
+		nil,
+	)
+
+	require.NoError(t, err)
+	require.True(t, profile.TemplateID.IsNil())
+}
+
+func TestUpsertPartnerDocumentProfile_AcknowledgmentProfileRejectsTemplate(t *testing.T) {
+	t.Parallel()
+
+	service := &Service{validator: NewValidator()}
+	_, err := service.UpsertPartnerDocumentProfile(
+		t.Context(),
+		&UpsertEDIPartnerDocumentProfileRequest{
+			TenantInfo: pagination.TenantInfo{
+				OrgID: pulid.MustNew("org_"),
+				BuID:  pulid.MustNew("bu_"),
+			},
+			EDIPartnerID:   pulid.MustNew("edip_"),
+			TransactionSet: edi.TransactionSet999,
+			TemplateID:     pulid.MustNew("editpl_"),
+			Envelope:       edi.DefaultX12EnvelopeSettings(),
+			Acknowledgment: edi.AcknowledgmentConfig{Type: edi.AcknowledgmentTypeNone},
+			ValidationMode: edi.ValidationModeStrict,
+		},
+		nil,
+	)
+
+	require.Error(t, err)
+	require.Contains(t, err.Error(), "no template")
 }

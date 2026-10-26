@@ -3064,6 +3064,17 @@
       "go/other"
     ]
   },
+  "A GE closes a functional group that never started": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/edi",
+      "edi/x12"
+    ]
+  },
   "A JSON key file for a service account allowed to call Claude.": {
     "sites": 1,
     "scope": [
@@ -4543,6 +4554,17 @@
       "packages/shared/types"
     ]
   },
+  "A code list needs at least one code": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/edi",
+      "edi/x12"
+    ]
+  },
   "A coded waiver reason is required": {
     "sites": 2,
     "scope": [
@@ -4802,6 +4824,39 @@
     ],
     "areas": [
       "routes/training-course"
+    ]
+  },
+  "A composite cannot contain a composite": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/edi",
+      "edi/x12"
+    ]
+  },
+  "A composite needs its components": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/edi",
+      "edi/x12"
+    ]
+  },
+  "A composite's codes belong to its components": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/edi",
+      "edi/x12"
     ]
   },
   "A computer appears here once somebody approves it from Trenova Capture's pairing code.": {
@@ -6728,6 +6783,17 @@
       "go/other"
     ]
   },
+  "A guide needs an identifier": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/edi",
+      "edi/x12"
+    ]
+  },
   "A hand-off topic cannot be longer than 80 characters": {
     "sites": 1,
     "scope": [
@@ -7300,13 +7366,15 @@
       "go/other"
     ]
   },
-  "A loop cannot be its own parent": {
-    "sites": 1,
+  "A loop needs an identifier": {
+    "sites": 2,
     "scope": [
-      "go"
+      "go",
+      "ts"
     ],
     "areas": [
-      "go/other"
+      "apps/web/edi",
+      "edi/x12"
     ]
   },
   "A manual checklist cannot be the default — pick the event that should start it": {
@@ -16586,15 +16654,6 @@
       "routes/edi"
     ]
   },
-  "Acknowledgment Requested": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
   "Acknowledgment SLA cannot be negative": {
     "sites": 1,
     "scope": [
@@ -16631,6 +16690,15 @@
       "packages/shared/components"
     ]
   },
+  "Acknowledgment profiles have no template": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Acknowledgment requested": {
     "sites": 2,
     "scope": [
@@ -16651,6 +16719,15 @@
     ]
   },
   "Acknowledgment type is invalid": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Acknowledgment type must be 997 or 999": {
     "sites": 1,
     "scope": [
       "go"
@@ -20387,15 +20464,6 @@
     ],
     "areas": [
       "routes/carrier"
-    ]
-  },
-  "Address Information": {
-    "sites": 2,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
     ]
   },
   "Address Line": {
@@ -25241,6 +25309,17 @@
       "apps/web/components"
     ]
   },
+  "An IEA closes an interchange that never started": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/edi",
+      "edi/x12"
+    ]
+  },
   "An Instruction, a Procedure or a Correction recorded after the run read text from outside the organization waits for a person's approval; a Fact is recorded and stays marked as drawn from outside text.": {
     "sites": 1,
     "scope": [
@@ -25248,6 +25327,17 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "An SE closes a transaction set that never started": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/edi",
+      "edi/x12"
     ]
   },
   "An `if` that gives a value needs an `else` branch": {
@@ -25439,6 +25529,15 @@
     ]
   },
   "An acknowledging user is required once a deviation leaves the open state": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "An acknowledgment is written from the message it answers. Choose that message.": {
     "sites": 1,
     "scope": [
       "go"
@@ -26367,6 +26466,17 @@
     "areas": [
       "go/other",
       "packages/shared/types"
+    ]
+  },
+  "An element repeats at least once": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/edi",
+      "edi/x12"
     ]
   },
   "An email can carry at most {0} files": {
@@ -27893,6 +28003,28 @@
       "go/other"
     ]
   },
+  "Another functional group in this interchange has the control number {0}": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/edi",
+      "edi/x12"
+    ]
+  },
+  "Another interchange in this file has the control number {0}": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/edi",
+      "edi/x12"
+    ]
+  },
   "Another lane covers the same geography with a higher priority, so this one can never apply.": {
     "sites": 2,
     "scope": [
@@ -28028,6 +28160,17 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "Another transaction set in this group has the control number {0}": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/edi",
+      "edi/x12"
     ]
   },
   "Answer": {
@@ -28887,33 +29030,6 @@
     ],
     "areas": [
       "routes/admin"
-    ]
-  },
-  "Application Receiver Code": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
-  "Application Sender Code": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
-  "Application Type": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
     ]
   },
   "Application client ID": {
@@ -36166,24 +36282,6 @@
     ],
     "areas": [
       "apps/web/hooks"
-    ]
-  },
-  "Authorization Information": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
-  "Authorization Information Qualifier": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
     ]
   },
   "Authorization Required": {
@@ -51239,14 +51337,12 @@
     ]
   },
   "Charge": {
-    "sites": 16,
+    "sites": 15,
     "scope": [
-      "go",
       "ts"
     ],
     "areas": [
       "apps/web/lib",
-      "go/other",
       "routes/billing-queue",
       "routes/desk",
       "routes/edi",
@@ -55051,15 +55147,6 @@
       "apps/web/lib"
     ]
   },
-  "City Name": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
   "City State": {
     "sites": 2,
     "scope": [
@@ -57509,15 +57596,6 @@
       "go/other"
     ]
   },
-  "Code cannot be longer than 40 characters": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
   "Code cannot be longer than 50 characters": {
     "sites": 1,
     "scope": [
@@ -57611,7 +57689,7 @@
     ]
   },
   "Code is required": {
-    "sites": 66,
+    "sites": 65,
     "scope": [
       "go",
       "ts"
@@ -58805,24 +58883,6 @@
       "routes/inbox",
       "routes/reports",
       "routes/shipment"
-    ]
-  },
-  "Commodity Code": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
-  "Commodity Code Qualifier": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
     ]
   },
   "Commodity ID is required": {
@@ -60033,15 +60093,6 @@
       "routes/driver-pay-event",
       "routes/pay-profile",
       "routes/worker"
-    ]
-  },
-  "Component Element Separator": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
     ]
   },
   "Component element separator": {
@@ -66788,15 +66839,6 @@
       "routes/rate-zone"
     ]
   },
-  "Country Code": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
   "Country ISO 3 is required": {
     "sites": 2,
     "scope": [
@@ -72588,7 +72630,7 @@
     ]
   },
   "Date": {
-    "sites": 36,
+    "sites": 34,
     "scope": [
       "go",
       "ts"
@@ -72627,15 +72669,6 @@
     ],
     "areas": [
       "apps/web/types"
-    ]
-  },
-  "Date Qualifier": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
     ]
   },
   "Date and time": {
@@ -78337,7 +78370,7 @@
     ]
   },
   "Description": {
-    "sites": 181,
+    "sites": 180,
     "scope": [
       "go",
       "ts"
@@ -78516,7 +78549,7 @@
     ]
   },
   "Description is required": {
-    "sites": 23,
+    "sites": 22,
     "scope": [
       "go",
       "ts"
@@ -80510,7 +80543,7 @@
     ]
   },
   "Direction is required": {
-    "sites": 12,
+    "sites": 8,
     "scope": [
       "go"
     ],
@@ -90997,24 +91030,6 @@
       "routes/edi"
     ]
   },
-  "Element cannot be longer than 20 characters": {
-    "sites": 2,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
-  "Element is required": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
   "Element position cannot be negative": {
     "sites": 1,
     "scope": [
@@ -95310,15 +95325,6 @@
     "areas": [
       "apps/web/types",
       "routes/reports"
-    ]
-  },
-  "Entity Identifier Code": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
     ]
   },
   "Entity identifier code": {
@@ -111891,7 +111897,7 @@
       "routes/reports"
     ]
   },
-  "Format a decimal with fixed places.": {
+  "Format a decimal with fixed places, or with implied places and no point (X12 N2).": {
     "sites": 1,
     "scope": [
       "ts"
@@ -114378,15 +114384,6 @@
       "routes/edi"
     ]
   },
-  "Functional Identifier Code": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
   "Functional acknowledgment": {
     "sites": 2,
     "scope": [
@@ -114734,6 +114731,17 @@
       "routes/desk"
     ]
   },
+  "GE01 says {0} transaction sets, but the group has {1}": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/edi",
+      "edi/x12"
+    ]
+  },
   "GE01 says {0}; {1} found": {
     "sites": 1,
     "scope": [
@@ -114741,6 +114749,17 @@
     ],
     "areas": [
       "routes/desk"
+    ]
+  },
+  "GE02 is {0}, but GS06 is {1}": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/edi",
+      "edi/x12"
     ]
   },
   "GL Account": {
@@ -115036,6 +115055,28 @@
     "areas": [
       "routes/desk",
       "routes/edi"
+    ]
+  },
+  "GS01 is {0}, but transaction set {1} belongs in a {2} group": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/edi",
+      "edi/x12"
+    ]
+  },
+  "GS06 is {0}, but a group control number is one to nine digits": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/edi",
+      "edi/x12"
     ]
   },
   "GSH": {
@@ -117239,15 +117280,6 @@
       "routes/edi",
       "routes/reports",
       "routes/shipment"
-    ]
-  },
-  "Group Control Number": {
-    "sites": 2,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
     ]
   },
   "Group by": {
@@ -122827,6 +122859,17 @@
       "routes/desk"
     ]
   },
+  "IEA01 says {0} functional groups, but the interchange has {1}": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/edi",
+      "edi/x12"
+    ]
+  },
   "IEA01 says {0}; {1} found": {
     "sites": 1,
     "scope": [
@@ -122834,6 +122877,17 @@
     ],
     "areas": [
       "routes/desk"
+    ]
+  },
+  "IEA02 is {0}, but ISA13 is {1}": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/edi",
+      "edi/x12"
     ]
   },
   "IFTA Member": {
@@ -123189,6 +123243,28 @@
       "routes/desk"
     ]
   },
+  "ISA11 is {0}; before version 00402 it is the standards identifier U": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/edi",
+      "edi/x12"
+    ]
+  },
+  "ISA{0} is {1} characters, longer than its fixed width of {2}; it was cut": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/edi",
+      "edi/x12"
+    ]
+  },
   "ISO 4217 code for all line amounts (e.g. USD).": {
     "sites": 1,
     "scope": [
@@ -123331,24 +123407,6 @@
     ],
     "areas": [
       "api/middleware"
-    ]
-  },
-  "Identification Code": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
-  "Identification Code Qualifier": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
     ]
   },
   "Identification, address, and operating boundary for this location.": {
@@ -123914,6 +123972,15 @@
     ]
   },
   "Implementation guide note": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/edi"
+    ]
+  },
+  "Implied decimal": {
     "sites": 1,
     "scope": [
       "ts"
@@ -127424,42 +127491,6 @@
       "routes/desk"
     ]
   },
-  "Interchange Control Number": {
-    "sites": 2,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
-  "Interchange Control Version Number": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
-  "Interchange Date": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
-  "Interchange ID Qualifier": {
-    "sites": 2,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
   "Interchange ID qualifier": {
     "sites": 2,
     "scope": [
@@ -127467,33 +127498,6 @@
     ],
     "areas": [
       "routes/edi"
-    ]
-  },
-  "Interchange Receiver ID": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
-  "Interchange Sender ID": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
-  "Interchange Time": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
     ]
   },
   "Interchange control header": {
@@ -135459,33 +135463,6 @@
     ],
     "areas": [
       "routes/worker"
-    ]
-  },
-  "Lading Description": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
-  "Lading Line Item Number": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
-  "Lading Quantity": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
     ]
   },
   "Lading description": {
@@ -145080,7 +145057,7 @@
     ]
   },
   "Loop cannot be longer than 50 characters": {
-    "sites": 3,
+    "sites": 1,
     "scope": [
       "go"
     ],
@@ -145088,13 +145065,70 @@
       "go/other"
     ]
   },
-  "Loop is required": {
-    "sites": 1,
+  "Loop {0} is mandatory, but its first segment {1} is missing": {
+    "sites": 2,
     "scope": [
-      "go"
+      "go",
+      "ts"
     ],
     "areas": [
-      "go/other"
+      "apps/web/edi",
+      "edi/x12"
+    ]
+  },
+  "Loop {0} must start with a segment": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/edi",
+      "edi/x12"
+    ]
+  },
+  "Loop {0} repeats {1} times, fewer than the partner's minimum of {2}": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/edi",
+      "edi/x12"
+    ]
+  },
+  "Loop {0} repeats {1} times, more than its maximum of {2}": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/edi",
+      "edi/x12"
+    ]
+  },
+  "Loop {0} starts with a segment that is not used": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/edi",
+      "edi/x12"
+    ]
+  },
+  "Loops nest more than {0} deep": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/edi",
+      "edi/x12"
     ]
   },
   "Loosen a parameter": {
@@ -149095,7 +149129,7 @@
     ]
   },
   "Max use is required": {
-    "sites": 2,
+    "sites": 1,
     "scope": [
       "go"
     ],
@@ -149104,7 +149138,7 @@
     ]
   },
   "Max use must be at least one": {
-    "sites": 2,
+    "sites": 1,
     "scope": [
       "go"
     ],
@@ -149387,7 +149421,7 @@
     ]
   },
   "Maximum length cannot be less than the minimum": {
-    "sites": 2,
+    "sites": 1,
     "scope": [
       "go"
     ],
@@ -151675,7 +151709,7 @@
     ]
   },
   "Minimum length cannot be negative": {
-    "sites": 2,
+    "sites": 1,
     "scope": [
       "go"
     ],
@@ -155183,7 +155217,7 @@
     ]
   },
   "Name": {
-    "sites": 168,
+    "sites": 167,
     "scope": [
       "go",
       "ts"
@@ -155439,7 +155473,7 @@
     ]
   },
   "Name cannot be longer than 200 characters": {
-    "sites": 16,
+    "sites": 13,
     "scope": [
       "go"
     ],
@@ -155555,7 +155589,7 @@
     ]
   },
   "Name is required": {
-    "sites": 148,
+    "sites": 145,
     "scope": [
       "go",
       "ts"
@@ -162903,6 +162937,17 @@
     ],
     "areas": [
       "apps/web/lib"
+    ]
+  },
+  "No guide covers transaction set {0}": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/edi",
+      "edi/x12"
     ]
   },
   "No hazardous materials yet": {
@@ -174140,33 +174185,6 @@
       "routes/accounting-sync"
     ]
   },
-  "Number of Included Functional Groups": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
-  "Number of Included Segments": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
-  "Number of Transaction Sets Included": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
   "Number of cases": {
     "sites": 2,
     "scope": [
@@ -177377,6 +177395,17 @@
       "go/other"
     ]
   },
+  "Only a composite has components": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/edi",
+      "edi/x12"
+    ]
+  },
   "Only a credit memo can be applied": {
     "sites": 1,
     "scope": [
@@ -177549,6 +177578,15 @@
     ]
   },
   "Only a load covered by an outside carrier gets a carrier tracking link": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Only a message received from a partner can be acknowledged": {
     "sites": 1,
     "scope": [
       "go"
@@ -188390,15 +188428,6 @@
       "go/other"
     ]
   },
-  "Parent loop cannot be longer than 50 characters": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
   "Parent owner kind and parent owner id must be set together": {
     "sites": 1,
     "scope": [
@@ -190968,7 +190997,7 @@
     ]
   },
   "Payload JSON": {
-    "sites": 7,
+    "sites": 5,
     "scope": [
       "ts"
     ],
@@ -196898,24 +196927,6 @@
       "api/graphql"
     ]
   },
-  "Position is required": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
-  "Position must be at least one": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
   "Position update": {
     "sites": 1,
     "scope": [
@@ -197372,7 +197383,7 @@
     ]
   },
   "Postal Code": {
-    "sites": 7,
+    "sites": 6,
     "scope": [
       "go",
       "ts"
@@ -208033,6 +208044,17 @@
       "go/other"
     ]
   },
+  "Read with the {0} guide, since none is for version {1}": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/edi",
+      "edi/x12"
+    ]
+  },
   "Read with this mapping": {
     "sites": 1,
     "scope": [
@@ -213119,24 +213141,6 @@
       "go/other"
     ]
   },
-  "Reference Identification": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
-  "Reference Identification Qualifier": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
   "Reference Invoice": {
     "sites": 1,
     "scope": [
@@ -217211,15 +217215,6 @@
     ],
     "areas": [
       "routes/desk"
-    ]
-  },
-  "Repetition Separator": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
     ]
   },
   "Repetition separator": {
@@ -221478,15 +221473,6 @@
     ],
     "areas": [
       "routes/scheduling"
-    ]
-  },
-  "Responsible Agency Code": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
     ]
   },
   "Responsible agency code": {
@@ -227909,6 +227895,17 @@
       "routes/edi"
     ]
   },
+  "SE01 says {0} segments, but the transaction set has {1}": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/edi",
+      "edi/x12"
+    ]
+  },
   "SE01 says {0}; {1} counted": {
     "sites": 1,
     "scope": [
@@ -227916,6 +227913,17 @@
     ],
     "areas": [
       "routes/desk"
+    ]
+  },
+  "SE02 is {0}, but ST02 is {1}": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/edi",
+      "edi/x12"
     ]
   },
   "SFTP": {
@@ -228138,6 +228146,39 @@
     ],
     "areas": [
       "routes/edi"
+    ]
+  },
+  "ST01 is {0}, but a transaction set identifier is three digits": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/edi",
+      "edi/x12"
+    ]
+  },
+  "ST02 is {0}, but a transaction set control number is four to nine characters": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/edi",
+      "edi/x12"
+    ]
+  },
+  "ST03 is {0}, but the guide is for {1}": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/edi",
+      "edi/x12"
     ]
   },
   "SaaS and software licenses": {
@@ -233988,24 +234029,6 @@
       "routes/settings"
     ]
   },
-  "Security Information": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
-  "Security Information Qualifier": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
   "Security and MDN": {
     "sites": 1,
     "scope": [
@@ -234367,7 +234390,7 @@
     ]
   },
   "Segment cannot be longer than 10 characters": {
-    "sites": 4,
+    "sites": 2,
     "scope": [
       "go"
     ],
@@ -234403,7 +234426,7 @@
     ]
   },
   "Segment is required": {
-    "sites": 3,
+    "sites": 1,
     "scope": [
       "go"
     ],
@@ -239231,7 +239254,7 @@
     ]
   },
   "Sequence cannot be negative": {
-    "sites": 11,
+    "sites": 9,
     "scope": [
       "go"
     ],
@@ -242734,24 +242757,6 @@
     ]
   },
   "Shipment IDs are required": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
-  "Shipment Identification Number": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
-  "Shipment Method of Payment": {
     "sites": 1,
     "scope": [
       "go"
@@ -250195,15 +250200,6 @@
       "routes/desk"
     ]
   },
-  "Standard Carrier Alpha Code": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
   "Standard Carrier Alpha Code: 2-4 uppercase letters used on EDI documents and BOLs.": {
     "sites": 1,
     "scope": [
@@ -250220,15 +250216,6 @@
     ],
     "areas": [
       "routes/fiscal-year"
-    ]
-  },
-  "Standard Point Location Code": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
     ]
   },
   "Standard adjustment approval policy": {
@@ -251692,15 +251679,6 @@
       "routes/routing-guide"
     ]
   },
-  "State or Province Code": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
   "State or province": {
     "sites": 1,
     "scope": [
@@ -252850,24 +252828,6 @@
     ]
   },
   "Stop Pay": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
-  "Stop Reason Code": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
-  "Stop Sequence Number": {
     "sites": 1,
     "scope": [
       "go"
@@ -257619,15 +257579,6 @@
       "go/other"
     ]
   },
-  "Tariff Service Code": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
   "Tariff editor": {
     "sites": 1,
     "scope": [
@@ -261249,6 +261200,28 @@
       "routes/agent-control"
     ]
   },
+  "The ISA is not 106 characters, so its padding was lost; it was read by its separators": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/edi",
+      "edi/x12"
+    ]
+  },
+  "The ISA's separators are not distinct punctuation": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/edi",
+      "edi/x12"
+    ]
+  },
   "The ISO country code.": {
     "sites": 4,
     "scope": [
@@ -262807,6 +262780,61 @@
       "go/other"
     ]
   },
+  "The base requires this element, so a partner cannot make it optional or not used": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/edi",
+      "edi/x12"
+    ]
+  },
+  "The base requires this, but the guide leaves it out": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/edi",
+      "edi/x12"
+    ]
+  },
+  "The base requires this, so a partner cannot make it optional or not used": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/edi",
+      "edi/x12"
+    ]
+  },
+  "The base restricts this element's codes, but the guide does not": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/edi",
+      "edi/x12"
+    ]
+  },
+  "The base's syntax note {0} is missing": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/edi",
+      "edi/x12"
+    ]
+  },
   "The batch for this pay period is already completed; generate individual carrier settlements for late costs instead": {
     "sites": 1,
     "scope": [
@@ -264307,6 +264335,17 @@
       "routes/shipment-type"
     ]
   },
+  "The code {0} is not in the base's list": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/edi",
+      "edi/x12"
+    ]
+  },
   "The code.": {
     "sites": 2,
     "scope": [
@@ -264500,6 +264539,17 @@
     ],
     "areas": [
       "routes/desk"
+    ]
+  },
+  "The component separator in ISA16 is the same as another separator": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/edi",
+      "edi/x12"
     ]
   },
   "The computation flagged nothing on this quarter.": {
@@ -266633,6 +266683,28 @@
       "routes/capture"
     ]
   },
+  "The element is {0} {1} in the base guide": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/edi",
+      "edi/x12"
+    ]
+  },
+  "The element repeats up to {0} times, more than the base's {1}": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/edi",
+      "edi/x12"
+    ]
+  },
   "The eligibility check has been refreshed.": {
     "sites": 1,
     "scope": [
@@ -267851,15 +267923,6 @@
       "go/other"
     ]
   },
-  "The final segment is missing the detected segment terminator.": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
   "The first `n` items.": {
     "sites": 2,
     "scope": [
@@ -268110,6 +268173,17 @@
       "apps/web/components"
     ]
   },
+  "The fixed value {0} is not a value the element allows": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/edi",
+      "edi/x12"
+    ]
+  },
   "The flat rate formula template is not available": {
     "sites": 1,
     "scope": [
@@ -268262,15 +268336,6 @@
     ],
     "areas": [
       "routes/rate-agreement"
-    ]
-  },
-  "The formula took longer than {0} to price, so it was stopped": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
     ]
   },
   "The four digits printed at the end of the card number.": {
@@ -268440,6 +268505,26 @@
       "routes/edi"
     ]
   },
+  "The functional group to acknowledge is required": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "The functional group {0} is not two capital letters": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/edi",
+      "edi/x12"
+    ]
+  },
   "The funding and reserve reports factors sent, how far each was read, matched and booked": {
     "sites": 1,
     "scope": [
@@ -268537,6 +268622,17 @@
     ],
     "areas": [
       "routes/desk"
+    ]
+  },
+  "The guide is for {0}, but its base is for {1}": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/edi",
+      "edi/x12"
     ]
   },
   "The guide {0} is for the existing trading partner {1} ({2}, id {3}). Draft it again for that partner.": {
@@ -269731,6 +269827,17 @@
       "rules/tariff"
     ]
   },
+  "The lengths {0} to {1} are wider than the base's {2} to {3}": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/edi",
+      "edi/x12"
+    ]
+  },
   "The letter telling a customer that, from the effective date, every invoice is assigned to your factoring company and must be paid only to the factor's remittance address, with an acknowledgement for the customer to sign and return.": {
     "sites": 1,
     "scope": [
@@ -270406,6 +270513,17 @@
       "rules/tariff"
     ]
   },
+  "The maximum length must be between 1 and {0}": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/edi",
+      "edi/x12"
+    ]
+  },
   "The maximum load weight the trailer can carry.": {
     "sites": 1,
     "scope": [
@@ -270415,6 +270533,17 @@
       "routes/trailer"
     ]
   },
+  "The maximum must be at least 1": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/edi",
+      "edi/x12"
+    ]
+  },
   "The maximum temperature for the shipment.": {
     "sites": 1,
     "scope": [
@@ -270422,6 +270551,17 @@
     ],
     "areas": [
       "routes/shipment"
+    ]
+  },
+  "The maximum {0} is above the base's {1}": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/edi",
+      "edi/x12"
     ]
   },
   "The medical review officer who verified the laboratory result.": {
@@ -270705,6 +270845,17 @@
       "rules/tariff"
     ]
   },
+  "The minimum length {0} is above the maximum {1}": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/edi",
+      "edi/x12"
+    ]
+  },
   "The minimum number of stops the parser must extract for this fixture to pass.": {
     "sites": 1,
     "scope": [
@@ -270730,6 +270881,17 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "The minimum {0} is above the maximum {1}": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/edi",
+      "edi/x12"
     ]
   },
   "The minute, 0 to 59.": {
@@ -275941,6 +276103,17 @@
       "routes/admin"
     ]
   },
+  "The segment terminator is the same as another separator": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/edi",
+      "edi/x12"
+    ]
+  },
   "The selected carrier cost events are no longer pending; they were attached or voided by a concurrent request": {
     "sites": 1,
     "scope": [
@@ -276698,6 +276871,15 @@
       "go/other"
     ]
   },
+  "The source message holds no transaction set to acknowledge": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "The source must check before it can be explained: {0}": {
     "sites": 1,
     "scope": [
@@ -277258,6 +277440,39 @@
       "go/other"
     ]
   },
+  "The structure must end with the SE segment": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/edi",
+      "edi/x12"
+    ]
+  },
+  "The structure must start with the ST segment": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/edi",
+      "edi/x12"
+    ]
+  },
+  "The structure uses {0}, which the guide does not define": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/edi",
+      "edi/x12"
+    ]
+  },
   "The subject the agent composed. Required on the subject channel.": {
     "sites": 1,
     "scope": [
@@ -277354,6 +277569,17 @@
     ],
     "areas": [
       "routes/accounting-sync"
+    ]
+  },
+  "The syntax note {0} names an element the segment does not have": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/edi",
+      "edi/x12"
     ]
   },
   "The system": {
@@ -277714,6 +277940,15 @@
       "routes/worker"
     ]
   },
+  "The template is for a different transaction set than the profile": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "The template status.": {
     "sites": 1,
     "scope": [
@@ -277943,6 +278178,17 @@
     ],
     "areas": [
       "routes/policies"
+    ]
+  },
+  "The text does not start with an ISA interchange header": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/edi",
+      "edi/x12"
     ]
   },
   "The text in lower case.": {
@@ -278370,6 +278616,17 @@
     ],
     "areas": [
       "routes/agent-control"
+    ]
+  },
+  "The transaction set {0} is not three digits": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/edi",
+      "edi/x12"
     ]
   },
   "The transfer could not be queued — try again shortly": {
@@ -278906,6 +279163,17 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "The version {0} does not start with six digits": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/edi",
+      "edi/x12"
     ]
   },
   "The violation as written on the inspection report.": {
@@ -283312,6 +283580,17 @@
       "routes/desk"
     ]
   },
+  "This functional group has no GE": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/edi",
+      "edi/x12"
+    ]
+  },
   "This guide has no carrier entries.": {
     "sites": 1,
     "scope": [
@@ -283427,6 +283706,17 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "This interchange has no IEA: the file ended early": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/edi",
+      "edi/x12"
     ]
   },
   "This interchange was already processed and was skipped.": {
@@ -283666,6 +283956,17 @@
     ],
     "areas": [
       "routes/settings"
+    ]
+  },
+  "This is in a different order than in the base guide": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/edi",
+      "edi/x12"
     ]
   },
   "This is never true: {0}": {
@@ -284881,6 +285182,17 @@
     ],
     "areas": [
       "packages/shared/components"
+    ]
+  },
+  "This part of the structure is not in the base guide": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/edi",
+      "edi/x12"
     ]
   },
   "This partner has completed every onboarding step.": {
@@ -286947,6 +287259,28 @@
       "routes/desk"
     ]
   },
+  "This transaction set has no SE": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/edi",
+      "edi/x12"
+    ]
+  },
+  "This transaction set is outside any functional group: the GS is missing": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/edi",
+      "edi/x12"
+    ]
+  },
   "This transfer has already finished": {
     "sites": 1,
     "scope": [
@@ -288219,13 +288553,11 @@
     ]
   },
   "Time": {
-    "sites": 4,
+    "sites": 2,
     "scope": [
-      "go",
       "ts"
     ],
     "areas": [
-      "go/other",
       "packages/shared/components",
       "routes/edi"
     ]
@@ -288277,15 +288609,6 @@
     ]
   },
   "Time Off Type": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
-  "Time Qualifier": {
     "sites": 1,
     "scope": [
       "go"
@@ -292410,33 +292733,6 @@
       "go/other"
     ]
   },
-  "Transaction Set Control Number": {
-    "sites": 2,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
-  "Transaction Set Identifier Code": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
-  "Transaction Set Purpose Code": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
   "Transaction Type": {
     "sites": 1,
     "scope": [
@@ -292602,8 +292898,17 @@
       "routes/edi"
     ]
   },
+  "Transaction set is invalid": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Transaction set is required": {
-    "sites": 10,
+    "sites": 6,
     "scope": [
       "go"
     ],
@@ -293604,6 +293909,24 @@
     ],
     "areas": [
       "routes/desk"
+    ]
+  },
+  "Trenova writes 997 and 999 acknowledgments from the files it receives, so they have no template": {
+    "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Trenova writes acknowledgments from the files it receives, so this profile has no template.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/edi"
     ]
   },
   "Trenova wrote this entry from its source when the source posted.": {
@@ -295707,24 +296030,6 @@
     ]
   },
   "Unable to load the existing shipment for validation": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
-  "Unable to read X12 separators from ISA; default X12 separators were used.": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
-  "Unable to read fixed-width ISA separators; envelope separators were used.": {
     "sites": 1,
     "scope": [
       "go"
@@ -299682,15 +299987,6 @@
       "routes/edi"
     ]
   },
-  "Usage Indicator": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
   "Usage and spend are visible to users who can manage carrier intelligence.": {
     "sites": 2,
     "scope": [
@@ -302135,15 +302431,6 @@
       "routes/formula-template",
       "routes/policies",
       "routes/rate-agreement"
-    ]
-  },
-  "Version / Release / Industry Identifier Code": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
     ]
   },
   "Version after": {
@@ -307407,7 +307694,7 @@
     ]
   },
   "Weight": {
-    "sites": 30,
+    "sites": 29,
     "scope": [
       "go",
       "ts"
@@ -307448,24 +307735,6 @@
     ]
   },
   "Weight Per Unit": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
-  "Weight Qualifier": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
-  "Weight Unit Code": {
     "sites": 1,
     "scope": [
       "go"
@@ -317638,7 +317907,7 @@
     ]
   },
   "X12 version cannot be longer than 20 characters": {
-    "sites": 9,
+    "sites": 5,
     "scope": [
       "go"
     ],
@@ -317647,7 +317916,7 @@
     ]
   },
   "X12 version is required": {
-    "sites": 9,
+    "sites": 5,
     "scope": [
       "go",
       "ts"
@@ -335123,6 +335392,17 @@
       "routes/desk"
     ]
   },
+  "{0, plural, one {# more finding was} other {# more findings were}} left out": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/edi",
+      "edi/x12"
+    ]
+  },
   "{0, plural, one {# more finding} other {# more findings}}": {
     "sites": 1,
     "scope": [
@@ -339467,6 +339747,182 @@
       "go/other"
     ]
   },
+  "{0} ({1}) cannot be used with the others the syntax note {2} names": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/edi",
+      "edi/x12"
+    ]
+  },
+  "{0} ({1}) has implied decimal places, so {2} should be written without a decimal point": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/edi",
+      "edi/x12"
+    ]
+  },
+  "{0} ({1}) has {2} components, but only {3} are defined": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/edi",
+      "edi/x12"
+    ]
+  },
+  "{0} ({1}) holds the control character U+{2}": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/edi",
+      "edi/x12"
+    ]
+  },
+  "{0} ({1}) holds {2}, which is not one of its codes": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/edi",
+      "edi/x12"
+    ]
+  },
+  "{0} ({1}) is a simple element but has components": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/edi",
+      "edi/x12"
+    ]
+  },
+  "{0} ({1}) is mandatory but is empty": {
+    "sites": 4,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/edi",
+      "edi/x12"
+    ]
+  },
+  "{0} ({1}) is not a date: {2}": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/edi",
+      "edi/x12"
+    ]
+  },
+  "{0} ({1}) is not a time: {2}": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/edi",
+      "edi/x12"
+    ]
+  },
+  "{0} ({1}) is not used by this partner, but has a value": {
+    "sites": 4,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/edi",
+      "edi/x12"
+    ]
+  },
+  "{0} ({1}) is required by the syntax note {2}": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/edi",
+      "edi/x12"
+    ]
+  },
+  "{0} ({1}) is {2} characters, longer than its maximum of {3}": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/edi",
+      "edi/x12"
+    ]
+  },
+  "{0} ({1}) is {2} characters, shorter than its minimum of {3}": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/edi",
+      "edi/x12"
+    ]
+  },
+  "{0} ({1}) must be a number, but is {2}": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/edi",
+      "edi/x12"
+    ]
+  },
+  "{0} ({1}) must be {2}, but is {3}": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/edi",
+      "edi/x12"
+    ]
+  },
+  "{0} ({1}) repeats {2} times, but may repeat at most {3}": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/edi",
+      "edi/x12"
+    ]
+  },
   "{0} + running": {
     "sites": 1,
     "scope": [
@@ -340342,6 +340798,28 @@
       "routes/agent-control"
     ]
   },
+  "{0} appears {1} times here, more than its maximum of {2}": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/edi",
+      "edi/x12"
+    ]
+  },
+  "{0} appears {1} times, fewer than the partner's minimum of {2}": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/edi",
+      "edi/x12"
+    ]
+  },
   "{0} applied": {
     "sites": 1,
     "scope": [
@@ -340734,6 +341212,17 @@
     ],
     "areas": [
       "routes/shipment"
+    ]
+  },
+  "{0} belongs to this transaction set, but not here": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/edi",
+      "edi/x12"
     ]
   },
   "{0} better, {1} worse": {
@@ -343040,6 +343529,17 @@
       "routes/admin"
     ]
   },
+  "{0} has more elements than the base defines": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/edi",
+      "edi/x12"
+    ]
+  },
   "{0} has never run": {
     "sites": 1,
     "scope": [
@@ -343419,6 +343919,17 @@
     ],
     "areas": [
       "template/agent.proposal_reminder.email"
+    ]
+  },
+  "{0} has {1} elements, but only {2} are defined": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/edi",
+      "edi/x12"
     ]
   },
   "{0} hasn't received any mail yet": {
@@ -344431,6 +344942,17 @@
       "routes/onboarding"
     ]
   },
+  "{0} is mandatory here, but is missing": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/edi",
+      "edi/x12"
+    ]
+  },
   "{0} is missing": {
     "sites": 1,
     "scope": [
@@ -344626,6 +345148,50 @@
       "rules/tariff"
     ]
   },
+  "{0} is not a segment ID": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/edi",
+      "edi/x12"
+    ]
+  },
+  "{0} is not a segment ID: two or three capital letters and digits": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/edi",
+      "edi/x12"
+    ]
+  },
+  "{0} is not a segment of the base guide": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/edi",
+      "edi/x12"
+    ]
+  },
+  "{0} is not a segment this guide knows": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/edi",
+      "edi/x12"
+    ]
+  },
   "{0} is not a step in a rate agreement's review": {
     "sites": 1,
     "scope": [
@@ -344660,6 +345226,17 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "{0} is not a syntax note": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/edi",
+      "edi/x12"
     ]
   },
   "{0} is not a unit": {
@@ -344906,6 +345483,17 @@
       "go/other"
     ]
   },
+  "{0} is not part of this transaction set": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/edi",
+      "edi/x12"
+    ]
+  },
   "{0} is not printed, so it has no running header or footer": {
     "sites": 1,
     "scope": [
@@ -344967,6 +345555,17 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "{0} is not used by this partner, but is present": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/edi",
+      "edi/x12"
     ]
   },
   "{0} is not valid": {
@@ -345032,6 +345631,28 @@
     "areas": [
       "apps/web/rules",
       "rules/tariff"
+    ]
+  },
+  "{0} is outside any interchange: the ISA is missing": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/edi",
+      "edi/x12"
+    ]
+  },
+  "{0} is outside any transaction set": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/edi",
+      "edi/x12"
     ]
   },
   "{0} is outside its constraint: {1}": {
@@ -353510,6 +354131,17 @@
     ],
     "areas": [
       "routes/worker"
+    ]
+  },
+  "{0}{1} held a separator, which was written as a space": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/edi",
+      "edi/x12"
     ]
   },
   "{0}{1} priced this shipment.": {

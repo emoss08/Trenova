@@ -43,7 +43,8 @@ template that is not interface text takes `// i18n-ignore: <reason>`); see the i
 [generated-artifacts.md](../docs/engineering/generated-artifacts.md) for the rules.
 
 Nobody edits a catalog by hand. `task i18n` finds every user-facing string in the Go
-services, the React apps and the rules crate (`services/crates/rules`) and writes them to
+services, the React apps and the Rust WebAssembly crates (`services/crates/rules`,
+`services/crates/edi`) and writes them to
 `messages.en.json`; the per-locale files hold the translations.
 
 ## The English string is the key
@@ -177,8 +178,10 @@ need an explicit parameterised message instead.
 
 ## Maintaining the Rust extractor
 
-`tools/extract-rust.mjs` reads the `message!("...")` templates in `services/crates/rules/src`
-([rules-engine.md](../docs/engineering/rules-engine.md)). The crate returns English ICU
+`tools/extract-rust.mjs` reads the `message!("...")` templates in each crate listed in its
+`RUST_ROOTS` (`services/crates/rules/src`, [rules-engine.md](../docs/engineering/rules-engine.md);
+`services/crates/edi/src`, [edi-x12.md](../docs/engineering/edi-x12.md)), each with the Go
+scope and web bundle its text reaches. The crate returns English ICU
 templates and never translates, and the same template reaches the browser (the formula
 editor, the rule screens) and the server (the validation errors it reports), so every
 template is filed twice: once in the Go scope, area `rules/<module>`, and once in the client

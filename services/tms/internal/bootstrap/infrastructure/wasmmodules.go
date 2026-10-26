@@ -7,6 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/observability/metrics"
 	"github.com/emoss08/trenova/pkg/rules"
 	"github.com/emoss08/trenova/pkg/wasmmodule"
+	"github.com/emoss08/trenova/pkg/x12"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
@@ -33,10 +34,16 @@ var WasmModulesModule = fx.Module("wasmmodules",
 func startWasmModuleWarmup(p wasmModulesParams) {
 	rulesRuntime := rules.Default().Runtime
 	rulesRuntime.Instrument(p.Logger.Named("rules"), p.Metrics.Rules)
+	ediRuntime := x12.Default().Runtime
+	ediRuntime.Instrument(p.Logger.Named("edi"), p.Metrics.EDIModule)
 	modules := []warmedModule{
 		{
 			runtime: rulesRuntime,
 			failure: "rules module failed to warm up; every formula check, rating evaluation and allocation that calls it will fail",
+		},
+		{
+			runtime: ediRuntime,
+			failure: "EDI module failed to warm up; every inbound file, inspection and acknowledgment that calls it will fail",
 		},
 	}
 

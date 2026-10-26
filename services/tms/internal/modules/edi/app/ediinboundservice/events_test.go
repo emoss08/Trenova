@@ -79,7 +79,7 @@ func TestProcessInboundFile_WakesIntakeOnlyOnQuarantine(t *testing.T) {
 func TestProcessInboundFile_RaisesTheTenderItCarriedAndNotAQuarantine(t *testing.T) {
 	t.Parallel()
 
-	raw := renderBase204(t, sampleTenderPayload())
+	raw := partnerTender
 	fixture := newInboundFixture(t, raw)
 	publisher := &recordingPublisher{}
 	fixture.service.publisher = publisher

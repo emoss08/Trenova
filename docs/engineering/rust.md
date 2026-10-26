@@ -53,7 +53,9 @@ services/
     imaging-core/         trenova-imaging-core: platform-neutral page imaging (shared with capture)
     rules/                trenova-rules: the rules engine, one WebAssembly module for the TMS and the browser
     scripts/              trenova-scripts: agent scripts in Monty, a WebAssembly module only the TMS runs
-  scripts/wasm-module.sh  the reproducible WebAssembly build both modules' build-wasm.sh source
+    edi/                  trenova-edi: X12 reading, guides, validation and acknowledgments, one WebAssembly module for the TMS and the browser
+    module-kit/           trenova-module-kit: the ABI macro, operation dispatch and `message!` every browser module shares
+  scripts/wasm-module.sh  the reproducible WebAssembly build every module's build-wasm.sh sources
   vendor/monty/           Monty with one patch (vendor/monty/TRENOVA.md); excluded from the workspace
   imaging/                trenova-imaging: the imaging worker (a deployable)
   tms/                    the Go service
@@ -182,7 +184,19 @@ Fat-LTO builds are slow; do not run them over and over. Cap parallelism with
 
 `trenova-rules` (`services/crates/rules`, [rules-engine.md](rules-engine.md)) is the first
 WebAssembly crate, and the pattern for any later one. `trenova-scripts`
-(`services/crates/scripts`, [agent-code-mode.md](agent-code-mode.md)) is the second.
+(`services/crates/scripts`, [agent-code-mode.md](agent-code-mode.md)) is the second, and
+`trenova-edi` (`services/crates/edi`, [edi-x12.md](edi-x12.md)) the third.
+
+- **A browser module builds on `trenova-module-kit`** (`services/crates/module-kit`): its
+  `export_abi!` macro writes the three exports, `ops::dispatch` decodes the envelope and runs the
+  operation table, and `message!` makes user-facing text an extractable template. A new module
+  writes its operation table and nothing else at the boundary.
+- **The Go side is `pkg/wasmmodule`**: the wazero runtime, the compile cache, the instance pool,
+  the error sentinels and the metrics observer, described once in rules-engine.md ("The Go
+  host"). A module's package (`pkg/rules`, `pkg/x12`) is a `wasmmodule.Spec` (name, bytes,
+  version operation, cache directory and its environment variable) and typed calls on a
+  `Runtime` that embeds `*wasmmodule.Runtime`. Metrics come from one `metrics.NewWasmModule`
+  per module (`trenova_rules_*`, `trenova_edi_module_*`).
 
 - **A module the browser runs is `wasm32-unknown-unknown` with no imports at all** (no WASI, no
   clock, no randomness, no I/O), so the bytes the TMS runs in wazero are the bytes the browser
@@ -261,13 +275,15 @@ WebAssembly crate, and the pattern for any later one. `trenova-scripts`
 | `task rust:wasm-rules-check` | rebuild it and fail when a committed copy or its `.sha256` differs |
 | `task rust:wasm-scripts` | build `trenova-scripts` to WebAssembly (`wasm32-wasip1`, profile `wasm-server`, `wasm-opt -O3`) and install `services/tms/pkg/scriptvm/scripts.wasm` with its `.sha256` |
 | `task rust:wasm-scripts-check` | rebuild it and fail when the committed copy or its `.sha256` differs |
+| `task rust:wasm-edi` | build `trenova-edi` to WebAssembly (`wasm32-unknown-unknown`, profile `wasm`, `wasm-opt -Os`) and install `services/tms/pkg/x12/edi.wasm` with its `.sha256` |
+| `task rust:wasm-edi-check` | rebuild it and fail when the committed copy or its `.sha256` differs |
 
 ## CI
 
 `.github/workflows/rust.yml` runs on changes under `services/` outside `services/tms`, the
 generated Go contracts, the committed `rules.wasm` copies, the toolchain pins and the imaging
 Dockerfile: the toolchain-pin check, `cargo fmt --check`, clippy with `-D warnings`,
-`cargo test --workspace` with PDFium and libheif installed, the two WebAssembly modules (clippy
+`cargo test --workspace` with PDFium and libheif installed, the three WebAssembly modules (clippy
 for `wasm32-unknown-unknown` and `wasm32-wasip1`, and each `build-wasm.sh check`), `cargo deny check`, buf lint and
 breaking, the generated-Go check, bounded fuzzing, and the imaging image (its test stage, the runtime image, and a start-up check that it refuses
 to run in production without TLS and reports ready in development). `native-capture.yml` also

@@ -169,7 +169,7 @@ func rawShipmentStatus214(offerRef, statusCode string) string {
 
 func parse214Transaction(t *testing.T, raw string) *parsedTransaction {
 	t.Helper()
-	interchange, err := parseInterchange(raw)
+	interchange, err := parseTestInterchange(t, raw)
 	require.NoError(t, err)
 	require.Len(t, interchange.transactions, 1)
 	require.Equal(t, edi.TransactionSet214, interchange.transactions[0].set)
@@ -580,9 +580,9 @@ func freightInvoiceTransaction(t *testing.T) *parsedTransaction {
 		"*260107*1200*^*00401*000000401*0*P*>~" +
 		"GS*IM*CARRIER*TRENOVA*20260107*1200*401*X*004010~" +
 		"ST*210*0001~" +
-		"B3**INV-1*BOL-42*PP**150000*20260107***SCAC~" +
+		"B3**INV-1*BOL-42*PP**20260107*150000****SCAC~" +
 		"SE*3*0001~GE*1*401~IEA*1*000000401~"
-	interchange, err := parseInterchange(raw)
+	interchange, err := parseTestInterchange(t, raw)
 	require.NoError(t, err)
 	require.Len(t, interchange.transactions, 1)
 	return &interchange.transactions[0]

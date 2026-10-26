@@ -1349,6 +1349,7 @@ export type UpsertEDICommunicationProfileRequest = {
 
 export type UpsertEDIPartnerDocumentProfileRequest = {
   ediPartnerId: string;
+  transactionSet?: z.infer<typeof ediTransactionSetSchema>;
   templateId?: string;
   templateVersionId?: string;
   name: string;

@@ -4,6 +4,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/edi/app/edix12inspect"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
 	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/pkg/x12"
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
@@ -30,7 +31,8 @@ type PollableProfile struct {
 }
 
 type parsedInterchange struct {
-	inspection          edix12inspect.InspectX12Result
+	inspection          *edix12inspect.InspectX12Result
+	reading             *x12.Reading
 	controlNumber       string
 	senderQualifier     string
 	senderID            string
@@ -40,7 +42,19 @@ type parsedInterchange struct {
 	groupControlNumber  string
 	applicationSender   string
 	applicationReceiver string
+	version             string
+	usage               string
+	groups              []parsedGroup
 	transactions        []parsedTransaction
+}
+
+type parsedGroup struct {
+	group               *x12.Group
+	functionalGroupID   string
+	controlNumber       string
+	applicationSender   string
+	applicationReceiver string
+	version             string
 }
 
 type parsedTransaction struct {
@@ -50,6 +64,14 @@ type parsedTransaction struct {
 	functionalGroupID  string
 	segments           []edix12inspect.X12Segment
 	raw                string
+	version            string
+	group              int
+	status             x12.TransactionStatus
+	findings           []x12.Finding
+}
+
+func (t *parsedTransaction) rejected() bool {
+	return t.status == x12.TransactionRejected
 }
 
 type transactionOutcome struct {

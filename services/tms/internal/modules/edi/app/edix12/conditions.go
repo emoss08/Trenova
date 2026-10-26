@@ -19,17 +19,15 @@ const (
 )
 
 var validConditionRoots = map[string]struct{}{
-	"shipment":          {},
-	"loadTender":        {},
-	"invoice":           {},
-	"shipmentStatus":    {},
-	"tenderResponse":    {},
-	"functionalAck":     {},
-	"implementationAck": {},
-	"repeat":            {},
-	"partner":           {},
-	"mapping":           {},
-	"runtime":           {},
+	"shipment":       {},
+	"loadTender":     {},
+	"invoice":        {},
+	"shipmentStatus": {},
+	"tenderResponse": {},
+	"repeat":         {},
+	"partner":        {},
+	"mapping":        {},
+	"runtime":        {},
 }
 
 type conditionEvalParams struct {

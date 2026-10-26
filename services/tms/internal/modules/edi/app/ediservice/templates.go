@@ -786,6 +786,13 @@ func (s *Service) validateTemplateCreateRequest(
 	if req.TransactionSet == "" {
 		req.TransactionSet = edi.TransactionSet204
 	}
+	if req.TransactionSet.IsAcknowledgment() {
+		multiErr.Add(
+			"transactionSet",
+			errortypes.ErrInvalidOperation,
+			"Trenova writes 997 and 999 acknowledgments from the files it receives, so they have no template",
+		)
+	}
 	if multiErr.HasErrors() {
 		return multiErr
 	}

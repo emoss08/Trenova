@@ -1,7 +1,8 @@
-// extract-rust.mjs collects the message!("...") templates in the rules crate
-// (services/crates/rules, docs/engineering/rules-engine.md).
+// extract-rust.mjs collects the message!("...") templates in the WebAssembly crates: the rules
+// crate (services/crates/rules, docs/engineering/rules-engine.md) and the EDI crate
+// (services/crates/edi, docs/engineering/edi-x12.md).
 //
-// The crate never translates. Every sentence it returns is an English ICU template written as
+// A crate never translates. Every sentence it returns is an English ICU template written as
 // message!("..."), sent over the wire as {"message": template, "args": [...]}, and looked up by
 // the browser (translate) and the server (shared/i18n). So each template has to reach both
 // catalogs: the Go scope, for the validation errors the server reports, and the web app's
@@ -27,11 +28,17 @@ import { basename, dirname, join, relative, sep } from "node:path";
 import { extractTariffDocs } from "./extract-tariff.mjs";
 import { reject } from "./filter.mjs";
 
-export const RUST_ROOTS = ["services/crates/rules/src"];
-
-// The client area a rules template is filed under. Any area under apps/web/ puts a string in
+// The client area a crate's template is filed under. Any area under apps/web/ puts a string in
 // the web app's startup bundle (bundles.mjs), where every screen that renders it has it.
 export const RULES_CLIENT_AREA = "apps/web/rules";
+export const EDI_CLIENT_AREA = "apps/web/edi";
+
+// Each crate with message! templates: where its sources are, the Go area its templates are
+// filed under (by top-level module: rules/tariff, edi/x12), and its client area.
+export const RUST_ROOTS = [
+  { root: "services/crates/rules/src", area: "rules", clientArea: RULES_CLIENT_AREA },
+  { root: "services/crates/edi/src", area: "edi", clientArea: EDI_CLIENT_AREA },
+];
 
 const MACRO = "message";
 
@@ -400,12 +407,12 @@ function moduleDir(file) {
   return join(dirname(file), name.slice(0, -".rs".length));
 }
 
-// rulesArea files a template under the crate's top-level module it comes from
+// crateArea files a template under the crate's top-level module it comes from
 // (src/formula/check.rs -> rules/formula), so translation can be batched by area.
-function rulesArea(root, file) {
+function crateArea(area, root, file) {
   const parts = relative(root, file).split(sep);
   const top = parts[0].replace(/\.(rs|tariff)$/, "");
-  return top === "lib" ? "rules" : `rules/${top}`;
+  return top === "lib" ? area : `${area}/${top}`;
 }
 
 /**
@@ -416,7 +423,7 @@ export async function extractRust(repoRoot, roots = RUST_ROOTS) {
   const entries = [];
   const rejected = [];
 
-  for (const root of roots) {
+  for (const { root, area, clientArea } of roots) {
     const absoluteRoot = join(repoRoot, root);
     const parsed = [];
     const excluded = [];
@@ -442,8 +449,8 @@ export async function extractRust(repoRoot, roots = RUST_ROOTS) {
           continue;
         }
         const site = { message, file: relPath, line, kind };
-        entries.push({ ...site, area: rulesArea(absoluteRoot, path), scope: "go" });
-        entries.push({ ...site, area: RULES_CLIENT_AREA, scope: "ts" });
+        entries.push({ ...site, area: crateArea(area, absoluteRoot, path), scope: "go" });
+        entries.push({ ...site, area: clientArea, scope: "ts" });
       }
     };
 

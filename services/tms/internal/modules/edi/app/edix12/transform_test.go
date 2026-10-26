@@ -214,6 +214,23 @@ func TestRender204_TransformPipelineRendersValues(t *testing.T) {
 			wantRaw: "L11*12.30*BM",
 		},
 		{
+			name: "implied decimal format",
+			configure: func(t *testing.T, input *RenderInput) {
+				setTransform(
+					findElement(t, input, "L11", 0),
+					edi.TemplateElementBaseSource{
+						Source: edi.TemplateElementSourceConstant,
+						Value:  "1250.505",
+					},
+					edi.TemplateTransformStep{
+						Operation: "format_decimal",
+						Arguments: map[string]any{"places": 2, "implied": true},
+					},
+				)
+			},
+			wantRaw: "L11*125051*BM",
+		},
+		{
 			name: "qualifier mapping from repeat",
 			configure: func(t *testing.T, input *RenderInput) {
 				setTransform(

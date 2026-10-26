@@ -3794,6 +3794,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "trenova-edi"
+version = "0.1.0"
+dependencies = [
+ "proptest",
+ "serde",
+ "serde_json",
+ "trenova-module-kit",
+]
+
+[[package]]
 name = "trenova-imaging"
 version = "0.1.0"
 dependencies = [

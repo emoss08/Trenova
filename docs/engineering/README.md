@@ -29,6 +29,7 @@ in [backend/](backend/README.md). Frontend rules are in the `trenova-frontend` s
 | [rust](rust.md) | any Rust code | services build on `trenova-service-kit`; untrusted input is parsed in `trenova-sandbox` |
 | [rules-engine](rules-engine.md) | `services/crates/rules`, `pkg/rules`, `client/packages/shared/src/rules`, any caller of Tariff, allocation, report formatting, lanes or rate matrices | one artifact for both hosts: rebuild with `task rust:wasm-rules` and commit both copies, never edit `rules.wasm`; one call per request, never one per item |
 | [imaging-worker](imaging-worker.md) | the worker, its proto, `infrastructure/imaging`, `pagerender`, anything that renders or assembles a document; `blob.go`, `storedobject` | no PDF or image library in Go; stored objects go through `storedobject` as streaming sealed blobs |
+| [edi-x12](edi-x12.md) | `services/crates/edi`, `pkg/x12`, `pkg/wasmmodule`, `edix12inspect`, inbound X12 parsing, acknowledgments, a starter template's numbers or dates | the module is the only X12 reader: positions and types come from the guide, never a Go constant; rebuild with `task rust:wasm-edi`; 997/999 are written by the crate and have no template |
 
 ## Operations domain
 

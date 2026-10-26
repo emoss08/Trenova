@@ -1,0 +1,42 @@
+# cargo-fuzz targets for the X12 core. Outside the services workspace (cargo-fuzz builds with
+# nightly and its own flags); run with
+#   cargo +nightly fuzz run x12_read seeds/x12_read -- -max_total_time=60
+#   cargo +nightly fuzz run x12_guide -- -max_total_time=30
+#   cargo +nightly fuzz run dispatch -- -max_total_time=30
+[package]
+name = "trenova-edi-fuzz"
+version = "0.0.0"
+edition = "2024"
+publish = false
+license = "FSL-1.1-ALv2"
+
+[package.metadata]
+cargo-fuzz = true
+
+[dependencies]
+libfuzzer-sys = "0.4"
+serde_json = "1"
+trenova-edi = { path = ".." }
+
+[workspace]
+
+[[bin]]
+name = "x12_read"
+path = "fuzz_targets/x12_read.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "x12_guide"
+path = "fuzz_targets/x12_guide.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "dispatch"
+path = "fuzz_targets/dispatch.rs"
+test = false
+doc = false
+bench = false

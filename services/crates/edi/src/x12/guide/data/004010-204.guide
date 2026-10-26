@@ -1,0 +1,74 @@
+guide x12.004010.204 | Motor Carrier Load Tender
+set 204 SM 004010
+
+# Heading
+ST M 1
+B2 M 1
+B2A M 1
+L11 O 50
+G62 O 1
+MS3 O 1
+AT5 O 6
+PLD O 1
+LH6 O 6
+NTE O 10
+loop 0100 O 5 | Name
+  N1 M 1
+  N2 O 2
+  N3 O 2
+  N4 O 1
+  L11 O 5
+  G61 O 3
+end
+loop 0200 O 10 | Equipment Details
+  N7 M 1
+  N7A O 1
+  MEA O 1
+  M7 O 2
+end
+
+# Detail
+loop 0300 M 999 | Stop Off Details
+  S5 M 1
+  L11 O 50
+  G62 O 2
+  AT8 O 1
+  LAD O 999
+  AT5 O 6
+  PLD O 1
+  NTE O 20
+  loop 0310 O 1 | Name
+    N1 M 1
+    N2 O 2
+    N3 O 2
+    N4 O 1
+    G61 O 3
+  end
+  loop 0320 O 99 | Description, Marks and Numbers
+    L5 M 1
+    AT8 O 1
+    loop 0325 O 99 | Hazardous Identification Information
+      LH1 M 1
+      LH2 O 4
+      LH3 O 10
+      LFH O 20
+    end
+  end
+  loop 0350 O 999 | Order Identification Detail
+    OID M 1
+    G62 O 2
+    LAD O 999
+    loop 0360 O 99 | Description, Marks and Numbers
+      L5 M 1
+      AT8 O 1
+    end
+  end
+  loop 0370 O 10 | Equipment Details
+    N7 M 1
+    MEA O 1
+  end
+end
+
+# Summary
+L3 O 1
+SE M 1

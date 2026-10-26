@@ -25,7 +25,7 @@ conventions are in [rust.md](rust.md).
 |---|---|
 | `services/crates/rules/src/abi.rs` | the three exports: `rules_alloc`, `rules_call`, `rules_free` |
 | `src/ops.rs` | the operation table and the request/response envelope |
-| `src/message.rs` | `message!` and `Message`: user-facing text as English ICU templates plus arguments |
+| `trenova-module-kit` (`services/crates/module-kit`) | `export_abi!`, operation dispatch, and `message!` and `Message`: user-facing text as English ICU templates plus arguments, shared with `trenova-edi` |
 | `src/span.rs` | byte spans inside the crate; UTF-16 `Range` on the wire |
 | `src/wire.rs` | `Dec`: exact decimals on the wire |
 | `src/tariff/syntax/` | lexer, error-tolerant parser, syntax tree, outline, formatter, tokens for highlighting, and loading a file with the libraries it imports; `tariff.format`, `tariff.tokens`, `tariff.setName` |
@@ -39,7 +39,7 @@ conventions are in [rust.md](rust.md).
 | `src/tariff/wire.rs` | Tariff values on the wire, decoded against their types and encoded canonically |
 | `src/allocation/`, `src/report/`, `src/lane/`, `src/matrix/` | the other rules |
 | `services/crates/rules/testdata/` | the regression corpora every implementation detail answers to: one file per area for the other rules, and `tariff/syntax/`, `tariff/check/`, `tariff/eval/` and `tariff/editor/` with one corpus per topic |
-| `services/tms/pkg/rules/` | the Go host: the embedded `rules.wasm`, the wazero runtime and instance pool, typed calls per area |
+| `services/tms/pkg/rules/` | the Go host: the embedded `rules.wasm` and typed calls per area, on the shared runtime in `pkg/wasmmodule` |
 | `client/packages/shared/src/rules/` | the browser loader: the same `rules.wasm`, `loadRules()`, synchronous access once loaded, typed calls per area |
 
 ## One artifact, two hosts
@@ -1388,17 +1388,19 @@ an operation beyond its name. Typed calls per area wrap the generic call in modu
 own beside it (Go: next to `pkg/rules`; browser: beside `runtime.ts`), each decoding into its
 own types.
 
-### The Go host (`services/tms/pkg/rules`)
+### The Go host (`services/tms/pkg/rules` on `pkg/wasmmodule`)
 
 ```go
 err := rules.Call(ctx, "allocation.split", input, &output)  // sonic in and out
 raw, err := rules.CallRaw(ctx, "tariff.catalog", []byte("{}")) // pre-encoded input, raw `ok` out
-info, err := rules.Version(ctx)                              // rules.VersionInfo{Version, Operations}
+info, err := rules.Version(ctx)                              // wasmmodule.VersionInfo{Version, Operations}
 ```
 
 The package functions use `rules.Default()`, the process-wide `*rules.Runtime`.
-`rules.New(rules.Options{PoolSize, RecycleMemoryBytes, MemoryLimitBytes})` builds another
-(tests do). The API is generic-free, so typed callers build on it without spreading generic
+`rules.New(wasmmodule.Options{PoolSize, RecycleMemoryBytes, MemoryLimitBytes})` builds another
+(tests do). Everything below is `pkg/wasmmodule`, which `pkg/x12` ([edi-x12.md](edi-x12.md)) runs
+on too: a module package is a `wasmmodule.Spec` and typed calls on a `Runtime` embedding
+`*wasmmodule.Runtime`. The API is generic-free, so typed callers build on it without spreading generic
 code. `CallRaw` is for input that is already JSON, such as a cached rate table: the request is
 spliced, not re-encoded, and the output comes back as the raw JSON of `ok`.
 
@@ -1426,7 +1428,7 @@ context. An instance is discarded and replaced after:
   never shrinks.
 
 Each instance is also capped at 256 MiB (`Options.MemoryLimitBytes`): an allocation past it
-traps instead of growing. A request over 64 MiB (`rules.MaxRequestBytes`) is refused before
+traps instead of growing. A request over 64 MiB (`wasmmodule.MaxRequestBytes`) is refused before
 it runs.
 
 **Timeouts.** The host adds none of its own: the caller's context bounds both the wait and the
@@ -1438,15 +1440,16 @@ work stops instead of being abandoned. The evaluator's budgets bound a program i
 
 | Error | Means | The caller |
 |---|---|---|
-| `ErrRequest`, as `*rules.RequestError{Op, Code, Detail}` | the module refused the request (`malformed`, `unknown_op`, `invalid_input`), or the host did (`too_large`) | has a bug: return an internal error, never show the detail |
+| `ErrRequest`, as `*wasmmodule.RequestError{Op, Code, Detail}` | the module refused the request (`malformed`, `unknown_op`, `invalid_input`), or the host did (`too_large`) | has a bug: return an internal error, never show the detail |
 | `ErrTrap` | the module panicked or answered with something that is not an envelope; logged at error with the operation, never the payload; the instance is gone | returns an internal error and never retries |
 | `ErrContextDone` | the context ended while waiting for an instance or running; wraps `ctx.Err()` | treats it as any cancelled work |
 | `ErrUnavailable` | the module failed to compile or instantiate, or the runtime was closed | returns an internal error; start-up already logged why |
 
 Typed callers map these to `errortypes` at their own edge.
 
-**Metrics.** `pkg/rules` cannot import the metrics package, so it reports through a small
-`rules.Observer`, implemented by `metrics.Rules` (README in
+**Metrics.** `pkg/wasmmodule` cannot import the metrics package, so it reports through a small
+`wasmmodule.Observer`, implemented by `metrics.WasmModule` (`metrics.NewWasmModule`, one per
+module; the EDI module's are `trenova_edi_module_*`) (README in
 `internal/infrastructure/observability/metrics`):
 
 | Metric | Labels |
@@ -1459,10 +1462,10 @@ Typed callers map these to `errortypes` at their own edge.
 `op` is the operation's name. A name the module does not know, or one not shaped like
 `area.name`, is counted as `unknown`, so a caller bug cannot grow the label set.
 
-**Warm-up.** `infrastructure.RulesModule` (`internal/bootstrap/infrastructure/rules.go`, in the
-core options both the API and the worker start with) gives the default runtime the logger and
-the metrics. At start it warms the runtime in the background: compile, instantiate and call
-`rules.version`, within two minutes. Start-up never waits for it. A failure is logged at error
+**Warm-up.** `infrastructure.WasmModulesModule` (`internal/bootstrap/infrastructure/wasmmodules.go`,
+in the core options both the API and the worker start with) gives each default runtime (rules
+and edi) the logger and its metrics. At start it warms each in the background: compile,
+instantiate and call its version operation, within two minutes. Start-up never waits for it. A failure is logged at error
 level and every call reports it as `ErrUnavailable`.
 
 ### Go callers

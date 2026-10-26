@@ -71,7 +71,10 @@ So there are four ways in, from least to most disruptive:
 
 Each candidate gives what is there today, what Rust changes, what it costs, and what to fix in Go first.
 
-### R1. Document and imaging worker
+### R1. Document and imaging worker (done)
+
+The imaging worker (`services/imaging`, `docs/engineering/imaging-worker.md`) does every
+document and image computation; the TMS calls it through `kernelports.Imaging`.
 
 **Today.** Nearly every document operation goes through four PDFium WASM instances with 1,024 MB of
 linear memory each (`internal/infrastructure/config/config.go:1736-1762`). The pool is warmed in the
@@ -260,26 +263,15 @@ against Meilisearch's, and the `LEAKPROOF` question in R4 applies to its operato
 
 **Fix now regardless.** Set `AttributesToRetrieve`.
 
-### R6. An X12 core crate
+### R6. An X12 core crate (in progress)
 
-**Today.** `modules/edi/app/edix12inspect/inspector.go` (521 lines) reads separators from fixed ISA
-offsets, splits segments with `strings.Split`, finds byte offsets with `strings.Index` per chunk, runs a
-regex per segment ID, and allocates a struct for every element. Validation (`validation.go`) is
-structural only: envelope order and ISA/GS/ST control counts. `dictionary.go` covers 16 segments. Loops,
-segment repeat counts and code lists are not checked against any implementation guide. The 204, 210,
-214, 990, 997 and 999 mappings are hand-written (`ediinboundservice/parse.go`, 1,142 lines). The repo has
-no fuzz tests (`testing.F` appears nowhere).
-
-**With Rust.** A tokenizer that borrows slices of the input instead of copying them, loops and repeat
-counts modeled as types driven by the partner's guide, `cargo-fuzz` from day one, and a WASM build so the
-browser inspector and `dev/edi-partner-sim` use the same parser.
-
-**What improves.** Robustness and correctness on untrusted partner files, plus guide-driven validation
-that fits the agent-led onboarding in `docs/engineering/edi-spec-onboarding.md`. Volume is low, so this
-is not about speed.
-
-**Alternative.** Go's native fuzzing covers part of the robustness gap without a port. Typed loop
-modeling and copy-free parsing are where Rust is clearly better.
+The `trenova-edi` crate (`services/crates/edi`, one WebAssembly module run by wazero through
+`pkg/x12`, and by the browser next) is the only X12 reader: separators, envelopes, a loop walker
+driven by base and partner guides, element and syntax-note checks, 997/999 written from the
+reading, a writer, proptest and three cargo-fuzz targets (`docs/engineering/edi-x12.md`).
+`edix12inspect` and the inbound pipeline read through it, rejected transactions are not routed,
+and acknowledgments report real errors. The browser loader, maps in place of `parse.go` and
+the flat templates, and the designer follow (`docs/notes/edi/self-serve-edi.md`, order of work).
 
 ### R7. A local sandbox for code mode (done)
 
@@ -366,12 +358,12 @@ only if it shows up in a profile.
 
 | # | Candidate | Main gain | Seam | Effort (rough) | Prerequisite |
 | --- | --- | --- | --- | --- | --- |
-| R1 | Document and imaging worker | Memory, throughput, one imaging library | Sidecar, or wazero for pure parts | Large | Binary encryption envelope; page cache |
+| R1 | Document and imaging worker | Memory, throughput, one imaging library | Sidecar (done) | Large | Binary encryption envelope; page cache |
 | R2 | Capture companion uploads results | Server CPU per scanned page | Existing desktop crate | Small | Shared JSON fixtures; CI path filter |
 | R3 | Shared calculation crate | One answer in browser and server; hard timeouts | Browser WASM plus wazero | Large | Fix TS rounding with shared fixtures first |
 | R4 | pgrx `claims()` | Per-statement overhead under RLS | Postgres extension | Medium | Measure; SQL fixes |
 | R5 | `pg_search` | Search under RLS, one fewer service | Postgres extension | Medium | — |
-| R6 | X12 core crate | Robust, guide-driven parsing | wazero plus browser WASM | Medium | — |
+| R6 | X12 core crate | Robust, guide-driven parsing | wazero plus browser WASM (reading done) | Medium | — |
 | R7 | Local code-mode sandbox | No vendor, lower latency | wazero (done) | Medium | — |
 | R8 | Imaging in Dash | Small uploads over cellular | Browser WASM | Small–medium | PWA basics |
 | R9 | Spreadsheet parsing | Memory, sandboxing | wazero | Small | Go limits and streaming first |
@@ -416,7 +408,7 @@ output. Trimming the spec to the endpoints used would cut compile time more than
    the formula language as its anchor.
 4. **Database:** run the R4 measurements and SQL fixes, then decide on pgrx. Evaluate R5 at the same time,
    since both rule out managed Postgres.
-5. **As needs arise:** R6 when EDI onboarding volume grows, R11
+5. **As needs arise:** R11
    only at scale, the rest when a profile points at them.
 
 ## 6. What to measure before porting

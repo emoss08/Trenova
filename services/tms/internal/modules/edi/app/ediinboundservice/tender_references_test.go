@@ -51,7 +51,8 @@ func TestTenderReferencesReadsAStoredTransactionWithItsSeparators(t *testing.T) 
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
-			got, found := TenderReferences(tt.raw, tt.envelope)
+			got, found, err := TenderReferences(t.Context(), tt.raw, tt.envelope)
+			require.NoError(t, err)
 			require.Equal(t, tt.wantFound, found)
 			require.Equal(t, tt.want, got)
 		})

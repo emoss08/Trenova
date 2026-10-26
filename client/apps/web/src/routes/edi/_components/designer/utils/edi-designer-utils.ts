@@ -31,6 +31,10 @@ export function functionalGroupForTransactionSet(transactionSet?: string | null)
   return functionalGroupByTransactionSet[transactionSet ?? ""] ?? "SM";
 }
 
+export function isAcknowledgmentTransactionSet(transactionSet?: string | null) {
+  return transactionSet === "997" || transactionSet === "999";
+}
+
 export function buildEDIDocumentContextQuery(filters: EDIDocumentContextFilters) {
   const params = new URLSearchParams({ limit: String(filters.limit ?? 100) });
   if (filters.partnerId) params.set("partnerId", filters.partnerId);
@@ -225,8 +229,12 @@ export const transformOperationDefinitions: TransformOperationDefinition[] = [
   {
     operation: "format_decimal",
     label: "Format decimal",
-    description: "Format a decimal with fixed places.",
-    arguments: [{ key: "places", label: "Places", kind: "number", placeholder: "2" }],
+    description:
+      "Format a decimal with fixed places, or with implied places and no point (X12 N2).",
+    arguments: [
+      { key: "places", label: "Places", kind: "number", placeholder: "2" },
+      { key: "implied", label: "Implied decimal", kind: "boolean", placeholder: "false" },
+    ],
   },
   {
     operation: "format_int",

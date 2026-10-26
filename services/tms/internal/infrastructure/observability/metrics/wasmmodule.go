@@ -9,8 +9,9 @@ import (
 )
 
 const (
-	labelOp        = "op"
-	rulesSubsystem = "rules"
+	labelOp            = "op"
+	rulesSubsystem     = "rules"
+	ediModuleSubsystem = "edi_module"
 )
 
 var WasmModuleDurationBuckets = []float64{

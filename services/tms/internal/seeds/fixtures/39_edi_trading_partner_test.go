@@ -17,7 +17,8 @@ func TestEDISeed_Writes214sThatParseCleanly(t *testing.T) {
 	load := &shipment.Shipment{ProNumber: "SEED-SHP-001", BOL: "BOL-1001"}
 	raw := seed214(time.Date(2026, 10, 14, 9, 30, 0, 0, time.UTC), 3, load, "X3")
 
-	inspection := edix12inspect.InspectX12(&edix12inspect.InspectX12Request{RawX12: raw})
+	inspection, err := edix12inspect.InspectX12(t.Context(), &edix12inspect.InspectX12Request{RawX12: raw})
+	require.NoError(t, err)
 	for _, diagnostic := range inspection.Diagnostics {
 		assert.NotEqualf(t, edi.ValidationSeverityError, diagnostic.Severity,
 			"%s at %s: %s", diagnostic.Code, diagnostic.SegmentID, diagnostic.Message)

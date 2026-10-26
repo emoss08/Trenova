@@ -1,0 +1,15 @@
+guide x12.004010.997 | Functional Acknowledgment
+set 997 FA 004010
+
+ST M 1
+AK1 M 1
+loop AK2 O 999999 | Transaction Set Response Header
+  AK2 M 1
+  loop AK3 O 999999 | Data Segment Note
+    AK3 M 1
+    AK4 O 99
+  end
+  AK5 M 1
+end
+AK9 M 1
+SE M 1

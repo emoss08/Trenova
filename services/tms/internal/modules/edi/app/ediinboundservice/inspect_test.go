@@ -55,7 +55,8 @@ func TestInspectInboundFile_FlagsWhatTheFileGotWrong(t *testing.T) {
 	for _, diagnostic := range result.Diagnostics {
 		codes = append(codes, diagnostic.Code)
 	}
-	assert.Contains(t, codes, "x12.count.se01_mismatch")
+	assert.Contains(t, codes, "x12.segmentCountMismatch")
+	assert.Contains(t, codes, "x12.mandatorySegmentMissing", "the tender has no stop")
 }
 
 func TestInspectInboundFile_SaysAFileThatIsNotX12CarriesNoInterchange(t *testing.T) {

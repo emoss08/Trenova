@@ -135,6 +135,7 @@ type UpsertEDIPartnerDocumentProfileRequest struct {
 	TenantInfo                   pagination.TenantInfo    `json:"-"`
 	ProfileID                    pulid.ID                 `json:"-"`
 	EDIPartnerID                 pulid.ID                 `json:"ediPartnerId"`
+	TransactionSet               edi.TransactionSet       `json:"transactionSet"`
 	TemplateID                   pulid.ID                 `json:"templateId"`
 	TemplateVersionID            pulid.ID                 `json:"templateVersionId"`
 	Name                         string                   `json:"name"`

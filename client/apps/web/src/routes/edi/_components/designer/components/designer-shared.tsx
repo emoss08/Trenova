@@ -326,7 +326,8 @@ function profileToDraft(
 ): UpsertEDIPartnerDocumentProfileRequest {
   return {
     ediPartnerId: profile.ediPartnerId,
-    templateId: profile.templateId,
+    transactionSet: profile.transactionSet,
+    templateId: profile.templateId || undefined,
     templateVersionId: profile.templateVersionId ?? undefined,
     name: profile.name,
     status: profile.status,

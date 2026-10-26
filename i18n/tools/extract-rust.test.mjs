@@ -204,7 +204,8 @@ describe("extractRust", () => {
   });
 
   it("finds nothing under a root that does not exist", async () => {
-    assert.deepEqual(await extractRust(root, ["services/crates/missing/src"]), {
+    const missing = { root: "services/crates/missing/src", area: "missing", clientArea: "apps/web/missing" };
+    assert.deepEqual(await extractRust(root, [missing]), {
       entries: [],
       rejected: [],
     });

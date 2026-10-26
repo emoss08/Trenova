@@ -11,7 +11,6 @@ import (
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
 	"github.com/emoss08/trenova/internal/modules/edi/app/edix12"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
-	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/servicefailure"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentevent"
@@ -753,46 +752,6 @@ func shipmentProNumber(source *shipment.Shipment) string {
 		return ""
 	}
 	return source.ProNumber
-}
-
-func (s *Service) buildAcknowledgmentPayload(
-	ctx context.Context,
-	req *PreviewEDIDocumentRequest,
-	transactionSet edi.TransactionSet,
-) (edi.DocumentPayload, error) {
-	message, err := s.messageRepo.GetMessageByID(ctx, ediports.GetEDIMessageByIDRequest{
-		ID:         req.SourceMessageID,
-		TenantInfo: req.TenantInfo,
-	})
-	if err != nil {
-		return edi.DocumentPayload{}, err
-	}
-	ack := edi.FunctionalAcknowledgmentPayload{
-		SourceMessageID:                  message.ID,
-		OriginalFunctionalGroupID:        edi.FunctionalGroupDefault(message.TransactionSet),
-		OriginalGroupControlNumber:       message.GroupControlNumber,
-		OriginalTransactionSet:           message.TransactionSet,
-		OriginalTransactionControlNumber: message.TransactionControlNumber,
-		GroupAcknowledgmentCode:          "A",
-		TransactionAcknowledgmentCode:    "A",
-		AcceptedTransactionSetCount:      1,
-		ReceivedTransactionSetCount:      1,
-		IncludedTransactionSetCount:      1,
-	}
-	if message.PartnerDocumentProfile != nil {
-		ack.OriginalFunctionalGroupID = message.PartnerDocumentProfile.FunctionalGroupID
-	}
-	if transactionSet == edi.TransactionSet999 {
-		implementation := edi.ImplementationAckPayload(ack)
-		return edi.DocumentPayload{
-			TransactionSet:               edi.TransactionSet999,
-			ImplementationAcknowledgment: &implementation,
-		}, nil
-	}
-	return edi.DocumentPayload{
-		TransactionSet:           edi.TransactionSet997,
-		FunctionalAcknowledgment: &ack,
-	}, nil
 }
 
 func sourceLabelIndex(

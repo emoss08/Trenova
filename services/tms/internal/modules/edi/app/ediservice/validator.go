@@ -166,6 +166,17 @@ func (v *Validator) ValidatePartnerDocumentProfileRequest(
 	if req.EDIPartnerID.IsNil() {
 		multiErr.Add("ediPartnerId", errortypes.ErrRequired, "EDI partner is required")
 	}
+	if req.TransactionSet != "" && !req.TransactionSet.IsValid() {
+		multiErr.Add("transactionSet", errortypes.ErrInvalid, "Transaction set is invalid")
+	}
+	if req.TransactionSet.IsAcknowledgment() &&
+		(req.TemplateID.IsNotNil() || req.TemplateVersionID.IsNotNil()) {
+		multiErr.Add(
+			"templateId",
+			errortypes.ErrInvalidOperation,
+			"Trenova writes 997 and 999 acknowledgments from the files it receives, so they have no template",
+		)
+	}
 	validateDocumentStatus(multiErr, req.Status)
 	validateValidationMode(multiErr, req.ValidationMode)
 	validateAcknowledgmentType(multiErr, req.Acknowledgment.Type)

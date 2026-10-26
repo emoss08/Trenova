@@ -1,6 +1,7 @@
 package ediconnectiondraft
 
 import (
+	"context"
 	"strings"
 	"unicode"
 
@@ -130,8 +131,8 @@ func cleanSample(raw string, terminator byte) string {
 	return strings.Join(lines, "")
 }
 
-func (s *specSample) parse() {
-	s.parsed, s.err = ediinboundservice.ParseSample(s.raw)
+func (s *specSample) parse(ctx context.Context) {
+	s.parsed, s.err = ediinboundservice.ParseSample(ctx, s.raw)
 }
 
 func (s *specSample) transactionSet() edi.TransactionSet {

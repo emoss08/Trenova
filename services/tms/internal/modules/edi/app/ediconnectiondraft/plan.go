@@ -103,7 +103,7 @@ func (s *Service) plan(
 			DocumentDigest: DocumentDigest(req.Document.Pages),
 		},
 	}
-	p.gatherEvidence()
+	p.gatherEvidence(ctx)
 
 	var err error
 	if p.match, err = s.matchPartner(ctx, req, p.evidence.hints()); err != nil {
@@ -144,7 +144,7 @@ func (s *Service) plan(
 	return p, nil
 }
 
-func (p *planner) gatherEvidence() {
+func (p *planner) gatherEvidence(ctx context.Context) {
 	for inputIndex := range p.req.Values {
 		input := &p.req.Values[inputIndex]
 		spec := fieldCatalog[input.Field]
@@ -162,7 +162,7 @@ func (p *planner) gatherEvidence() {
 	}
 	p.samples = findSamples(p.pages)
 	for _, sample := range p.samples {
-		sample.parse()
+		sample.parse(ctx)
 		sample.orient(partnerIDs)
 		sample.contribute(p.evidence)
 	}

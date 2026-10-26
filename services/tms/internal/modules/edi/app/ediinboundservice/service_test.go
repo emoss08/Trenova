@@ -29,6 +29,7 @@ type inboundFixture struct {
 	transferRepo        *ediportsmock.MockEDILoadTenderTransferRepository
 	recipientRepo       *ediportsmock.MockEDITenderRecipientRepository
 	mappingProfileRepo  *ediportsmock.MockEDIMappingProfileRepository
+	controlNumberRepo   *ediportsmock.MockEDIControlNumberRepository
 }
 
 func newInboundFixture(t *testing.T, rawContent string) *inboundFixture {
@@ -65,11 +66,16 @@ func newInboundFixture(t *testing.T, rawContent string) *inboundFixture {
 		transferRepo:        ediportsmock.NewMockEDILoadTenderTransferRepository(t),
 		recipientRepo:       ediportsmock.NewMockEDITenderRecipientRepository(t),
 		mappingProfileRepo:  ediportsmock.NewMockEDIMappingProfileRepository(t),
+		controlNumberRepo:   ediportsmock.NewMockEDIControlNumberRepository(t),
 	}
 	ediSvc := ediservice.New(ediservice.Params{
 		Logger:              zap.NewNop(),
+		PartnerRepo:         fixture.partnerRepo,
 		MappingProfileRepo:  fixture.mappingProfileRepo,
 		TenderRecipientRepo: fixture.recipientRepo,
+		DocumentProfileRepo: fixture.documentProfileRepo,
+		ControlNumberRepo:   fixture.controlNumberRepo,
+		MessageRepo:         fixture.messageRepo,
 	})
 	fixture.service = &Service{
 		l:                   zap.NewNop(),
@@ -227,7 +233,7 @@ func TestProcessInboundFile_Reconciles997Acknowledgment(t *testing.T) {
 func TestProcessInboundFile_Creates204TransferRequiringMapping(t *testing.T) {
 	t.Parallel()
 
-	raw := renderBase204(t, sampleTenderPayload())
+	raw := partnerTender
 	fixture := newInboundFixture(t, raw)
 	fixture.expectFileLoadAndUpdates(t)
 	fixture.expectPartnerLoad()

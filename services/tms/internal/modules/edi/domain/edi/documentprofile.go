@@ -18,7 +18,7 @@ type EDIPartnerDocumentProfile struct {
 	OrganizationID               pulid.ID             `json:"organizationId"               keel:"organization_id,pk,tenant"`
 	EDIPartnerID                 pulid.ID             `json:"ediPartnerId"                 keel:"edi_partner_id"`
 	DocumentTypeID               pulid.ID             `json:"documentTypeId"               keel:"document_type_id"`
-	TemplateID                   pulid.ID             `json:"templateId"                   keel:"template_id"`
+	TemplateID                   pulid.ID             `json:"templateId"                   keel:"template_id,nullzero"`
 	TemplateVersionID            pulid.ID             `json:"templateVersionId"            keel:"template_version_id,nullzero"`
 	Name                         string               `json:"name"                         keel:"name"`
 	Status                       DocumentStatus       `json:"status"                       keel:"status"`
@@ -175,7 +175,16 @@ func (p *EDIPartnerDocumentProfile) Validate(multiErr *errortypes.MultiError) {
 		validation.Field(&p.DocumentTypeID,
 			validation.Required.Error("Document type is required"),
 		),
-		validation.Field(&p.TemplateID, validation.Required.Error("Template is required")),
+		validation.Field(&p.TemplateID,
+			validation.When(
+				!p.TransactionSet.IsAcknowledgment(),
+				validation.Required.Error("Template is required"),
+			),
+			validation.When(
+				p.TransactionSet.IsAcknowledgment(),
+				validation.Empty.Error("Acknowledgment profiles have no template"),
+			),
+		),
 		validation.Field(&p.Name,
 			validation.Required.Error("Name is required"),
 			validation.Length(1, maxEDINameLength).

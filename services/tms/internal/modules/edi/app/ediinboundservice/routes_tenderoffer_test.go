@@ -148,7 +148,7 @@ func rawTenderResponse990(offerRef, reservationCode, remarks string) string {
 
 func parse990Transaction(t *testing.T, raw string) *parsedTransaction {
 	t.Helper()
-	interchange, err := parseInterchange(raw)
+	interchange, err := parseTestInterchange(t, raw)
 	require.NoError(t, err)
 	require.Len(t, interchange.transactions, 1)
 	require.Equal(t, edi.TransactionSet990, interchange.transactions[0].set)

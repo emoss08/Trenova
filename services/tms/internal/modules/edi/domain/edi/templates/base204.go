@@ -96,6 +96,60 @@ func (b base204Builder) repeat(
 	return element
 }
 
+func (b base204Builder) amount(
+	position int,
+	name, path string,
+	required ...bool,
+) edi.TemplateElement {
+	return b.transformed(position, name, path, impliedCents(), required...)
+}
+
+func (b base204Builder) date(
+	position int,
+	name, path string,
+	required ...bool,
+) edi.TemplateElement {
+	return b.transformed(
+		position,
+		name,
+		path,
+		[]edi.TemplateTransformStep{{Operation: "format_date"}},
+		required...,
+	)
+}
+
+func (b base204Builder) transformed(
+	position int,
+	name, path string,
+	pipeline []edi.TemplateTransformStep,
+	required ...bool,
+) edi.TemplateElement {
+	element := b.el(position, name, edi.TemplateElementSourceTransform, "", firstRequired(required))
+	element.BaseSource = &edi.TemplateElementBaseSource{
+		Source:    edi.TemplateElementSourceFieldPath,
+		FieldPath: path,
+	}
+	element.TransformPipeline = pipeline
+	return element
+}
+
+func (b base204Builder) repeatAmount(position int, name, path string) edi.TemplateElement {
+	element := b.el(position, name, edi.TemplateElementSourceTransform, "")
+	element.BaseSource = &edi.TemplateElementBaseSource{
+		Source:     edi.TemplateElementSourceRepeat,
+		RepeatPath: path,
+	}
+	element.TransformPipeline = impliedCents()
+	return element
+}
+
+func impliedCents() []edi.TemplateTransformStep {
+	return []edi.TemplateTransformStep{{
+		Operation: "format_decimal",
+		Arguments: map[string]any{"places": 2, "implied": true},
+	}}
+}
+
 func (b base204Builder) runtime(
 	position int,
 	name, key string,
@@ -305,7 +359,7 @@ func (b base204Builder) summarySegments() []*edi.EDITemplateSegment {
 		b.segment(160, "L3", "Total Weight and Charges", "", false, []edi.TemplateElement{
 			b.field(1, "Weight", "weight", ""),
 			b.el(2, "Weight Qualifier", edi.TemplateElementSourceConstant, "G"),
-			b.field(5, "Charge", "totalChargeAmount", ""),
+			b.amount(5, "Charge", "totalChargeAmount"),
 		}),
 	}
 }
