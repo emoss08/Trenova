@@ -61,6 +61,11 @@ export const edi = createQueryKeys("edi", {
     queryKey: ["messages", query],
     queryFn: async () => apiService.ediService.listMessages(query),
   }),
+  partner: (partnerId: string) => ({
+    queryKey: ["partner", partnerId],
+    queryFn: async ({ signal }: { signal?: AbortSignal }) =>
+      apiService.ediService.getPartner(partnerId, { signal }),
+  }),
   partnerCard: (partnerId: string) => ({
     queryKey: ["partner-card", partnerId],
     queryFn: async ({ signal }: { signal?: AbortSignal }) =>

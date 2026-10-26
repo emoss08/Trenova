@@ -1,6 +1,11 @@
-import { api } from "@trenova/shared/lib/api";
+import { api, ApiRequestError } from "@trenova/shared/lib/api";
 import { safeParse } from "@trenova/shared/lib/parse";
-import type { LadingRunInput, LadingRunResult, LadingTestReport } from "@trenova/shared/edi/lading";
+import type {
+  LadingContext,
+  LadingRunInput,
+  LadingRunResult,
+  LadingTestReport,
+} from "@trenova/shared/edi/lading";
 import {
   flowInstanceDetailSchema,
   ladingProjectSchema,
@@ -19,16 +24,27 @@ type Options = { signal?: AbortSignal };
 
 /** The Lading studio's REST calls (docs/engineering/lading.md, "Versions, replay and shadow"). */
 export class LadingService {
+  /** The organisation and custom fields projects are checked against, as the server checks them. */
+  public async getContext(options?: Options) {
+    return api.get<LadingContext>("/edi/lading/context/", { signal: options?.signal });
+  }
+
   public async createProject(request: CreateLadingProjectRequest) {
     const response = await api.post("/edi/lading/projects/", request);
     return safeParse(ladingProjectSchema, response, "LadingProject");
   }
 
+  /** The partner's project, or null for a partner that has none yet. */
   public async getPartnerProject(partnerId: string, options?: Options) {
-    const response = await api.get(`/edi/lading/projects/by-partner/${partnerId}/`, {
-      signal: options?.signal,
-    });
-    return safeParse(ladingProjectSchema, response, "LadingProject");
+    try {
+      const response = await api.get(`/edi/lading/projects/by-partner/${partnerId}/`, {
+        signal: options?.signal,
+      });
+      return safeParse(ladingProjectSchema, response, "LadingProject");
+    } catch (error) {
+      if (error instanceof ApiRequestError && error.status === 404) return null;
+      throw error;
+    }
   }
 
   public async listVersions(projectId: string, options?: Options) {

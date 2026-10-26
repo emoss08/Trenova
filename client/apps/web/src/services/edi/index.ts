@@ -191,6 +191,11 @@ export class EDIService {
     return safeParse(ediPartnerReadinessSchema, response, "EDIPartnerReadiness");
   }
 
+  public async getPartner(partnerId: string, options?: { signal?: AbortSignal }) {
+    const response = await api.get(`/edi/partners/${partnerId}/`, { signal: options?.signal });
+    return safeParse(ediPartnerSchema, response, "EDIPartner");
+  }
+
   public async createPartner(request: UpsertEDIPartnerRequest) {
     const response = await api.post("/edi/partners/", request);
     return safeParse(ediPartnerSchema, response, "EDIPartner");

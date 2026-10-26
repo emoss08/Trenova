@@ -2,6 +2,11 @@ import { apiService } from "@/services/api";
 import { createQueryKeys } from "@lukemorales/query-key-factory";
 
 export const lading = createQueryKeys("lading", {
+  context: () => ({
+    queryKey: ["context"],
+    queryFn: async ({ signal }: { signal?: AbortSignal }) =>
+      apiService.ladingService.getContext({ signal }),
+  }),
   partnerProject: (partnerId: string) => ({
     queryKey: ["partner-project", partnerId],
     queryFn: async ({ signal }: { signal?: AbortSignal }) =>

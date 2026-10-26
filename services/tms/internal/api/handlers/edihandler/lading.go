@@ -26,6 +26,7 @@ func (h *Handler) registerLadingRoutes(lading *gin.RouterGroup) {
 	update := h.pm.RequirePermission(permission.ResourceEDI.String(), permission.OpUpdate)
 
 	lading.GET("/catalog/", read, h.ladingCatalog)
+	lading.GET("/context/", read, h.ladingContext)
 
 	projects := lading.Group("/projects")
 	projects.POST("/", create, h.createLadingProject)
@@ -68,6 +69,20 @@ func (h *Handler) ladingCatalog(c *gin.Context) {
 		return
 	}
 	c.Data(http.StatusOK, "application/json; charset=utf-8", catalog)
+}
+
+// ladingContext is what the studio checks and runs a project against in the browser: the
+// organisation and its shipment custom fields, the same context the server encodes with.
+func (h *Handler) ladingContext(c *gin.Context) {
+	context, err := h.ladingRuntime.Context(
+		c.Request.Context(),
+		tenantInfoFromAuth(authctx.GetAuthContext(c)),
+	)
+	if err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+	helpers.JSON(c, http.StatusOK, context)
 }
 
 func (h *Handler) createLadingProject(c *gin.Context) {

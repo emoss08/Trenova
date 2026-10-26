@@ -72,10 +72,11 @@ export function tariffHighlight(getRules: () => RulesRuntime): Extension {
     },
     { decorations: (value) => value.decorations },
   );
-  return [plugin, highlightTheme];
+  return [plugin, syntaxHighlightTheme];
 }
 
-const highlightTheme = EditorView.baseTheme({
+/** The `cm-syntax-<role>` colours every source editor draws with (Tariff and Lading). */
+export const syntaxHighlightTheme = EditorView.baseTheme({
   ".cm-syntax-keyword": { color: "var(--syntax-keyword)" },
   ".cm-syntax-type": { color: "var(--syntax-type)" },
   ".cm-syntax-meta": { color: "var(--syntax-meta)" },
