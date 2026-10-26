@@ -34,8 +34,10 @@ $$;
 
 -- Re-apply the standard policy to every table that carries the old two-InitPlan form: a
 -- tenant_isolation policy on non-null organization_id and business_unit_id columns whose
--- expression is exactly the old standard comparison. Hand-written policies (memberships,
--- cross-organization rows, user-owned rows) do not match and keep their own expressions.
+-- expression is exactly the old standard comparison, as pg_get_expr prints it (with the
+-- ::text casts of varchar columns, or without them for text columns). Hand-written policies
+-- (memberships, cross-organization rows, user-owned rows) do not match and keep their own
+-- expressions.
 DO $reapply$
 DECLARE
     candidate record;
@@ -51,8 +53,10 @@ BEGIN
             AND c.relkind IN ('r', 'p')
             AND org.attnotnull
             AND bu.attnotnull
-            AND regexp_replace(pg_get_expr(p.polqual, p.polrelid), '\s+', '', 'g')
-                = '((organization_id=(SELECTtrenova_rls.org_id()ASorg_id))AND(business_unit_id=(SELECTtrenova_rls.bu_id()ASbu_id)))'
+            AND regexp_replace(pg_get_expr(p.polqual, p.polrelid), '\s+', '', 'g') IN (
+                '(((organization_id)::text=(SELECTtrenova_rls.org_id()ASorg_id))AND((business_unit_id)::text=(SELECTtrenova_rls.bu_id()ASbu_id)))',
+                '((organization_id=(SELECTtrenova_rls.org_id()ASorg_id))AND(business_unit_id=(SELECTtrenova_rls.bu_id()ASbu_id)))'
+            )
     LOOP
         PERFORM trenova_rls.apply_policy(candidate.target, trenova_rls.standard_expr());
     END LOOP;
