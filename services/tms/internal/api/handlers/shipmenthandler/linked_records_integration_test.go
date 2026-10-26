@@ -247,12 +247,13 @@ func TestGetShipment_UnderRowLevelSecurityShowsTheDriversReferenceView(t *testin
 	}
 	enforced := &config.Config{}
 	enforced.Database.RLS.Mode = config.RLSModeEnforce
+	rls := dbtest.NewRLSConnection(t, load.admin, load.dsn)
 	scopes := readscopeservice.New(readscopeservice.Params{
 		Config:   enforced,
+		DB:       rls,
 		Engine:   shipmentOnly,
 		Registry: permission.NewRegistry(),
 	})
-	rls := dbtest.NewRLSConnection(t, load.admin, load.dsn)
 
 	body, header := serveExpandedShipment(t, ctx, rls, load, shipmentOnly, true, scopes)
 	driver := primaryWorkerOf(t, body)
@@ -270,6 +271,7 @@ func TestGetShipment_UnderRowLevelSecurityShowsTheDriversReferenceView(t *testin
 	whole, header := serveExpandedShipment(t, ctx, rls, load, &mocks.DenyResourcesPermissionEngine{}, true,
 		readscopeservice.New(readscopeservice.Params{
 			Config:   enforced,
+			DB:       rls,
 			Engine:   &mocks.DenyResourcesPermissionEngine{},
 			Registry: permission.NewRegistry(),
 		}))

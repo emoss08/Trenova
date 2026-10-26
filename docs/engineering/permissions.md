@@ -221,6 +221,14 @@ applies it to every read: lists, lookups, loaders, search, insights and reports 
 The value only narrows what the signed tenant scope allows, so it is not signed; work
 with no holder (jobs, unattended agents) reads its whole tenant.
 
+The first query that needs the value may be inside a transaction that has not sent its
+`BEGIN` yet (the result cache keys a read by its read scope before the read runs), so the
+grants resolve in a read-only transaction of their own (`RunDetached`, through
+`kernelports.Detacher`). Were they to join the caller's transaction, their first read would
+send its `BEGIN`, whose scope guard asks the same holder for the value it is still
+resolving, and the request would wait on itself for good
+(`TestRuntime_ACachedReadWhoseReadScopeReadsTheDatabaseFinishes`).
+
 Only `own` and `team` grants are sent. A kind the principal cannot read at all is left
 out of the setting, so the database shows its rows to whatever reaches them from a record
 the person can read (a tractor's driver, a shipment's order, a document's shipment), and

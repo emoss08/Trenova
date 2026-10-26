@@ -35,6 +35,17 @@ func (f *fakeTeams) ManagerIDs(
 	return f.ids, nil, f.err
 }
 
+type inlineDetacher struct{ calls int }
+
+func (d *inlineDetacher) RunDetached(
+	ctx context.Context,
+	_ bool,
+	fn func(context.Context) error,
+) error {
+	d.calls++
+	return fn(ctx)
+}
+
 func enforcing() *config.Config {
 	cfg := &config.Config{}
 	cfg.Database.RLS.Mode = config.RLSModeEnforce
@@ -71,6 +82,7 @@ func newService(
 
 	return New(Params{
 		Config:   cfg,
+		DB:       &inlineDetacher{},
 		Engine:   engine,
 		Teams:    teams,
 		Registry: permission.NewRegistry(),
@@ -196,4 +208,31 @@ func TestEnforceableScopes_OffersOnlyWhatIsEnforced(t *testing.T) {
 		[]permission.DataScope{permission.DataScopeOrganization},
 		svc.EnforceableScopes("customer"),
 	)
+}
+
+func TestGrants_ResolvesInATransactionOfItsOwn(t *testing.T) {
+	t.Parallel()
+
+	engine := permissionportsmock.NewMockPermissionEngine(t)
+	engine.On("CheckBatch", mock.Anything, mock.Anything).
+		Return(func(_ context.Context, req *permissionports.BatchPermissionCheckRequest) *permissionports.BatchPermissionCheckResult {
+			return scopesFor(map[string]permission.DataScope{"shipment": permission.DataScopeOwn})(req)
+		}, nil)
+	detacher := &inlineDetacher{}
+	svc := New(Params{
+		Config:   enforcing(),
+		DB:       detacher,
+		Engine:   engine,
+		Teams:    &fakeTeams{},
+		Registry: permission.NewRegistry(),
+	})
+
+	_, err := svc.Grants(t.Context(), principal())
+	require.NoError(t, err)
+	assert.Equal(t, 1, detacher.calls, "the grants never join the caller's transaction")
+
+	_, err = New(Params{Config: &config.Config{}, DB: detacher, Registry: permission.NewRegistry()}).
+		Grants(t.Context(), principal())
+	require.NoError(t, err)
+	assert.Equal(t, 1, detacher.calls, "a database that enforces no scope opens no transaction")
 }

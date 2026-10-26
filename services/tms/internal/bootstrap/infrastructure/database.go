@@ -19,6 +19,10 @@ func asSavepointer(conn *postgres.Connection) kernelports.Savepointer {
 	return conn
 }
 
+func asDetacher(conn *postgres.Connection) kernelports.Detacher {
+	return conn
+}
+
 var DatabaseModule = fx.Module(
 	"database",
 	fx.Provide(
@@ -27,6 +31,7 @@ var DatabaseModule = fx.Module(
 		asDBConnection,
 		asTransactor,
 		asSavepointer,
+		asDetacher,
 		postgres.NewCapabilityProbe,
 		querybudget.New,
 	),

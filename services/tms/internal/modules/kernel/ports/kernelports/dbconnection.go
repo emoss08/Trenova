@@ -24,6 +24,10 @@ type Transactor interface {
 	Transact(ctx context.Context, opts TxOptions, fn func(context.Context) error) error
 }
 
+type Detacher interface {
+	RunDetached(ctx context.Context, readOnly bool, fn func(context.Context) error) error
+}
+
 type Savepointer interface {
 	Savepoint(ctx context.Context, fn func(context.Context) error) error
 }

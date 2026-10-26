@@ -6,6 +6,7 @@ import (
 	"context"
 	"database/sql"
 	"testing"
+	"time"
 
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
@@ -175,6 +176,39 @@ func TestRuntime_TheResultCacheServesARepeatedReadPerTenantAndReadScope(t *testi
 		afterWrite,
 		"this process's write invalidates its entries at once",
 	)
+}
+
+func TestRuntime_ACachedReadWhoseReadScopeReadsTheDatabaseFinishes(t *testing.T) {
+	f := newRLSFixture(t, config.RLSModeEnforce)
+	f.cfg.Database.Cache = config.DatabaseCacheConfig{Enabled: true, LocalBytes: 8 << 20}
+	conn := f.connect(t)
+
+	resolved := 0
+	ctx := readscope.With(
+		dbscope.WithTenant(t.Context(), f.tenantA),
+		func(ctx context.Context) (readscope.Grants, error) {
+			resolved++
+			err := conn.RunDetached(ctx, true, func(ctx context.Context) error {
+				_, err := cachedFleetCodes(ctx, conn)
+				return err
+			})
+			return readscope.Grants{}, err
+		},
+	)
+
+	done := make(chan error, 1)
+	go func() {
+		_, err := cachedFleetCodes(ctx, conn)
+		done <- err
+	}()
+
+	select {
+	case err := <-done:
+		require.NoError(t, err)
+	case <-time.After(15 * time.Second):
+		t.Fatal("a cached read whose read scope resolves through the database never finished")
+	}
+	assert.Equal(t, 1, resolved, "the read scope resolves once per request")
 }
 
 func TestRuntime_ConnectionReportsTenantConcurrencyAndCacheStats(t *testing.T) {
