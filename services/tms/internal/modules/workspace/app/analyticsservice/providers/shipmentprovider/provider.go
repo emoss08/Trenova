@@ -868,7 +868,7 @@ func detentionWatchlistQuery(now int64) *keel.Query[*shipment.Stop] {
 	sm := shipmentdb.ShipmentMoves
 	sp := shipmentdb.Shipments
 	cus := customerdb.Customers
-	dwell := keel.DynLit(now).Sub(stp.ActualArrival).Cast(keel.TypeInt64)
+	dwell := keel.Int64(now).Sub(stp.ActualArrival)
 
 	return stp.
 		Join(sm, sm.ID.EqCol(stp.ShipmentMoveID)).
@@ -880,7 +880,7 @@ func detentionWatchlistQuery(now int64) *keel.Query[*shipment.Stop] {
 			stp.ActualArrival.IsNotNull(),
 			stp.ActualArrival.Gt(0),
 			keel.Or(stp.ActualDeparture.IsNull(), stp.ActualDeparture.Eq(0)),
-			keel.DynLit(now).Sub(stp.ActualArrival).Gt(detentionDwellFloorSeconds),
+			dwell.Gt(detentionDwellFloorSeconds),
 		).
 		Order(dwell.Desc(), sp.ProNumber.Asc()).
 		Limit(detentionWatchlistLimit)
