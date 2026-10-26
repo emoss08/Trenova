@@ -13,6 +13,7 @@ import (
 	"github.com/emoss08/trenova/internal/testutil/dbtest"
 	"github.com/emoss08/trenova/internal/testutil/seedtest"
 	"github.com/emoss08/trenova/pkg/dberror"
+	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/stretchr/testify/assert"
@@ -83,20 +84,41 @@ func TestGetTenderRecipientByID_UnderRowLevelSecurityOnlyTheTwoPartiesSeeIt(t *t
 	}
 }
 
-func TestTenderRecipients_RefuseARecipientOfAnotherBusinessUnit(t *testing.T) {
+func TestTenderRecipients_LiveInTheirSourceShipmentsBusinessUnit(t *testing.T) {
 	tender := editest.SeedInternalTender(t)
 	transfer := tender.NewTransfer(t, edi.TransferStatusPendingApproval)
 	elsewhere := seedtest.SeedAdditionalTenant(t, tender.Ctx, tender.Admin, "XB")
+	systemCtx := dbscope.WithSystem(tender.Ctx, "test a tender recipient's business unit")
 
-	row := tender.Recipient(transfer)
-	row.RecipientOrganizationID = elsewhere.Organization.ID
-	row.RecipientBusinessUnitID = elsewhere.BusinessUnit.ID
-	err := edidb.TenderRecipients.Create(tender.Source.Ctx, tender.Admin, row)
-
+	misplaced := tender.Recipient(transfer)
+	misplaced.BusinessUnitID = elsewhere.BusinessUnit.ID
+	err := edidb.TenderRecipients.Create(systemCtx, tender.Admin, misplaced)
 	require.Error(t, err)
 	assert.Equal(
 		t,
-		"ck_edi_tender_recipients_one_business_unit",
+		"fk_edi_tender_recipients_source_shipment",
 		dberror.ExtractConstraintName(err),
+		"a recipient is stored in its source shipment's business unit",
+	)
+
+	foreign := tender.Recipient(transfer)
+	foreign.RecipientOrganizationID = elsewhere.Organization.ID
+	require.NoError(t, edidb.TenderRecipients.Create(tender.Source.Ctx, tender.Admin, foreign))
+
+	repo := editenderrecipientrepository.New(editenderrecipientrepository.Params{
+		DB:     dbtest.NewRLSConnection(t, tender.Admin, tender.DSN),
+		Logger: zap.NewNop(),
+	})
+	other := editest.TenantOf(tender.Ctx, elsewhere.Info())
+	_, err = repo.GetTenderRecipientByID(other.Ctx, ediports.GetEDITenderRecipientByIDRequest{
+		ID:         foreign.ID,
+		TenantInfo: other.Info,
+	})
+	require.Error(t, err)
+	assert.True(
+		t,
+		errortypes.IsNotFoundError(err),
+		"an organization of another business unit never reads a recipient row, even one naming it: %v",
+		err,
 	)
 }

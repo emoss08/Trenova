@@ -62,7 +62,6 @@ func (r *repository) ListActiveTenderRecipientsForSourceShipment(
 		tr := edidb.TenderRecipients
 		return tr.Where(
 			tr.SourceOrganizationID.Eq(req.TenantInfo.OrgID),
-			tr.SourceBusinessUnitID.Eq(req.TenantInfo.BuID),
 			tr.SourceShipmentID.Eq(req.SourceShipmentID),
 			tr.Status.Eq(edi.TenderRecipientStatusActive),
 		).
@@ -79,7 +78,6 @@ func (r *repository) GetActiveExternalRecipientByShipmentReference(
 		tr := edidb.TenderRecipients
 		entity, err := tr.Where(
 			tr.SourceOrganizationID.Eq(req.TenantInfo.OrgID),
-			tr.SourceBusinessUnitID.Eq(req.TenantInfo.BuID),
 			tr.EDIPartnerID.Eq(req.PartnerID),
 			tr.RecipientKind.Eq(edi.TenderRecipientKindExternal),
 			tr.Status.Eq(edi.TenderRecipientStatusActive),
@@ -109,11 +107,10 @@ func (r *repository) UpsertTenderRecipient(
 		entity := req.Recipient
 		_, err := tr.Upsert(ctx, db, []*edi.TenderRecipient{entity}, keel.OnConflict(
 			tr.SourceShipmentID,
-			tr.SourceBusinessUnitID,
+			tr.BusinessUnitID,
 			tr.SourceOrganizationID,
 			tr.RecipientKind,
 			tr.RecipientOrganizationID.Coalesce(keel.DynConst("")),
-			tr.RecipientBusinessUnitID.Coalesce(keel.DynConst("")),
 			tr.EDIPartnerID.Coalesce(keel.DynConst("")),
 			tr.PartnerDocumentProfileID.Coalesce(keel.DynConst("")),
 		).
@@ -141,11 +138,9 @@ func (r *repository) UpsertTenderRecipient(
 
 		stored, err := tr.Where(
 			tr.SourceShipmentID.Eq(entity.SourceShipmentID),
-			tr.SourceBusinessUnitID.Eq(entity.SourceBusinessUnitID),
 			tr.SourceOrganizationID.Eq(entity.SourceOrganizationID),
 			tr.RecipientKind.Eq(entity.RecipientKind),
 			tr.RecipientOrganizationID.Eq(entity.RecipientOrganizationID),
-			tr.RecipientBusinessUnitID.Eq(entity.RecipientBusinessUnitID),
 			tr.EDIPartnerID.Eq(entity.EDIPartnerID),
 			tr.PartnerDocumentProfileID.Eq(entity.PartnerDocumentProfileID),
 		).One(ctx, db)

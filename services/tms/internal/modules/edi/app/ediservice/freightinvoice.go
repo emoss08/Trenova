@@ -103,7 +103,7 @@ func (s *Service) RecordInboundFreightInvoice(
 			req.Recipient.SourceShipmentID,
 			pagination.TenantInfo{
 				OrgID: req.Recipient.SourceOrganizationID,
-				BuID:  req.Recipient.SourceBusinessUnitID,
+				BuID:  req.Recipient.BusinessUnitID,
 			},
 			invoice,
 		)

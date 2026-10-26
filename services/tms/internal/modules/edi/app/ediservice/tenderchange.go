@@ -78,7 +78,6 @@ func (s *Service) createTenderChangeForRecipient(
 	change := &edi.TenderChange{
 		BusinessUnitID:       recipient.BusinessUnitID,
 		SourceOrganizationID: recipient.SourceOrganizationID,
-		SourceBusinessUnitID: recipient.SourceBusinessUnitID,
 		SourceShipmentID:     recipient.SourceShipmentID,
 		RecipientID:          recipient.ID,
 		RecipientKind:        recipient.RecipientKind,
@@ -138,7 +137,7 @@ func (s *Service) generateExternalTenderChange(
 	message, err := s.GenerateDocument(ctx, &GenerateEDIDocumentRequest{
 		TenantInfo: pagination.TenantInfo{
 			OrgID:  recipient.SourceOrganizationID,
-			BuID:   recipient.SourceBusinessUnitID,
+			BuID:   recipient.BusinessUnitID,
 			UserID: actorUserID(actor),
 		},
 		PartnerDocumentProfileID: recipient.PartnerDocumentProfileID,
@@ -357,7 +356,7 @@ func (s *Service) applyLinkedShipmentTenderChange(
 	}
 	sourceTenantInfo := pagination.TenantInfo{
 		OrgID: recipient.SourceOrganizationID,
-		BuID:  recipient.SourceBusinessUnitID,
+		BuID:  recipient.BusinessUnitID,
 	}
 	link, err := s.shipmentLinkRepo.GetShipmentLinkByID(
 		ctx,
@@ -432,10 +431,8 @@ func validateTenderChangeReviewer(
 			"Only internal tender changes can be manually reviewed",
 		)
 	}
-	isRecipientOrg := change.Recipient.RecipientOrganizationID == tenantInfo.OrgID
-	isRecipientBU := change.Recipient.RecipientBusinessUnitID.IsNil() ||
-		change.Recipient.RecipientBusinessUnitID == tenantInfo.BuID
-	if !isRecipientOrg || !isRecipientBU {
+	if change.Recipient.RecipientOrganizationID != tenantInfo.OrgID ||
+		change.Recipient.BusinessUnitID != tenantInfo.BuID {
 		return errortypes.NewValidationError(
 			"tenantInfo",
 			errortypes.ErrInvalidOperation,
@@ -448,9 +445,7 @@ func validateTenderChangeReviewer(
 func tenderRecipientTenantInfo(
 	recipient *edi.TenderRecipient,
 ) (pagination.TenantInfo, error) {
-	if recipient == nil ||
-		recipient.RecipientOrganizationID.IsNil() ||
-		recipient.RecipientBusinessUnitID.IsNil() {
+	if recipient == nil || recipient.RecipientOrganizationID.IsNil() {
 		return pagination.TenantInfo{}, errortypes.NewValidationError(
 			"recipientId",
 			errortypes.ErrRequired,
@@ -459,7 +454,7 @@ func tenderRecipientTenantInfo(
 	}
 	return pagination.TenantInfo{
 		OrgID: recipient.RecipientOrganizationID,
-		BuID:  recipient.RecipientBusinessUnitID,
+		BuID:  recipient.BusinessUnitID,
 	}, nil
 }
 
@@ -493,11 +488,9 @@ func (s *Service) upsertInternalTenderRecipient(
 	recipient := &edi.TenderRecipient{
 		BusinessUnitID:          transfer.SourceBusinessUnitID,
 		SourceOrganizationID:    transfer.SourceOrganizationID,
-		SourceBusinessUnitID:    transfer.SourceBusinessUnitID,
 		SourceShipmentID:        transfer.SourceShipmentID,
 		RecipientKind:           edi.TenderRecipientKindInternal,
 		RecipientOrganizationID: transfer.TargetOrganizationID,
-		RecipientBusinessUnitID: transfer.TargetBusinessUnitID,
 		EDIPartnerID:            transfer.TargetPartnerID,
 		OriginalTransferID:      transfer.ID,
 		LatestBaselinePayload:   payload,
@@ -553,7 +546,6 @@ func (s *Service) upsertExternalTenderRecipient(
 	recipient := &edi.TenderRecipient{
 		BusinessUnitID:           message.BusinessUnitID,
 		SourceOrganizationID:     message.OrganizationID,
-		SourceBusinessUnitID:     message.BusinessUnitID,
 		SourceShipmentID:         payload.ShipmentID,
 		RecipientKind:            edi.TenderRecipientKindExternal,
 		EDIPartnerID:             message.EDIPartnerID,

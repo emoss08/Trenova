@@ -154,11 +154,9 @@ func (it *InternalTender) Recipient(transfer *edi.EDITransfer) *edi.TenderRecipi
 	return &edi.TenderRecipient{
 		BusinessUnitID:          transfer.SourceBusinessUnitID,
 		SourceOrganizationID:    transfer.SourceOrganizationID,
-		SourceBusinessUnitID:    transfer.SourceBusinessUnitID,
 		SourceShipmentID:        transfer.SourceShipmentID,
 		RecipientKind:           edi.TenderRecipientKindInternal,
 		RecipientOrganizationID: transfer.TargetOrganizationID,
-		RecipientBusinessUnitID: transfer.TargetBusinessUnitID,
 		EDIPartnerID:            transfer.TargetPartnerID,
 		OriginalTransferID:      transfer.ID,
 		LatestBaselinePayload:   transfer.TenderPayload,
