@@ -5,7 +5,7 @@ CROSS JOIN LATERAL (
   SELECT generate_series(greatest(date_trunc('day', timezone($7::text, to_timestamp(wp.start_date))), date_trunc('day', timezone($7::text, to_timestamp($8::bigint)))), least(date_trunc('day', timezone($7::text, to_timestamp(wp.end_date))), date_trunc('day', timezone($7::text, to_timestamp($9::bigint)))), $10::interval) AS day
 ) ds
 WHERE wp.business_unit_id = $1 AND wp.organization_id = $2 AND wp.status = 'Approved' AND wp.end_date >= $3 AND wp.start_date <= $4 AND wp.type = 'Vacation' AND wp.worker_id = $5
-ORDER BY to_char(ds.day, $6) ASC, wp.type ASC, wp.worker_id ASC
+ORDER BY 1 ASC, wp.type ASC, wp.worker_id ASC
 -- $1 = 'bu_1'
 -- $2 = 'org_1'
 -- $3 = 90

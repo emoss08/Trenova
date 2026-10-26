@@ -13,7 +13,7 @@ WHERE a.business_unit_id = $1 AND a.organization_id = $2 AND a.archived_at IS NU
     ))
   )
 )
-GROUP BY a.primary_worker_id, ((a.created_at / 86400) * 86400)
+GROUP BY a.primary_worker_id, 2
 -- $1 = 'bu_1'
 -- $2 = 'org_1'
 -- $3 = 1700000000
