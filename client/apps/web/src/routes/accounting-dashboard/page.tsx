@@ -23,7 +23,8 @@ export function AccountingDashboardPage() {
   const t = useT();
 
   const { allowed: canRecordPayment } = usePermission(Resource.CustomerPayment, Operation.Create);
-  const { data: kpis } = useQuery(ar.dashboardKpis());
+  const { data: kpis, isError } = useQuery(ar.dashboardKpis());
+  const deciding = kpis === undefined && !isError;
   const neverInvoiced = kpis !== undefined && !receivablesHaveActivity(kpis.overview);
 
   return (
@@ -39,7 +40,11 @@ export function AccountingDashboardPage() {
         ) : undefined,
       }}
     >
-      {neverInvoiced ? (
+      {/* The KPIs decide between the empty state and the dashboard, so the
+          other cards (and their reads) wait for them. */}
+      {deciding ? (
+        <ARKpiRow />
+      ) : neverInvoiced ? (
         <AccountingDashboardEmpty
           title={t("Nothing on the books yet")}
           description={
