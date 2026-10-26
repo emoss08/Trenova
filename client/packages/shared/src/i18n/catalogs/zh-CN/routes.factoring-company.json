@@ -108,6 +108,7 @@
   "Share held back until the customer pays the factor.": "在客户向保理公司付款前保留的比例。",
   "Share of the invoice paid when the factor funds it.": "保理公司放款时支付的发票比例。",
   "Short identifier, unique across your organization.": "简短标识符，在您的组织内唯一。",
+  "Showing the latest {0} of about {1} movements. A report on factoring reserve entries lists them all.": "显示最近 {0} 笔往来（共约 {1} 笔）。保理保留金分录报表会列出全部往来。",
   "Showing the latest {0} of {1} movements. A report on factoring reserve entries lists them all.": "显示最近 {0} 笔往来（共 {1} 笔）。保理保留金分录报表会列出全部往来。",
   "Stored. Leave blank to keep it.": "已保存。留空即保留现有值。",
   "Submission": "提交",

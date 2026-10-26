@@ -59,6 +59,7 @@
   "A change to this shipment (like an updated stop or distance) re-rated the automatic fuel surcharge from <b>{0}</b> to <b>{1}</b>. Only one fuel surcharge line is kept — choose which amount to bill.": "此運單的變更（例如停靠點或距離有所更新）已將自動燃油附加費從 <b>{0}</b> 重新計價為 <b>{1}</b>。系統只會保留一筆燃油附加費明細——請選擇要計費的金額。",
   "A rate agreement": "一份運價協議",
   "A recurring shipment already covers this lane": "已有週期性運單涵蓋本路線",
+  "About {0} previous rates found": "找到約 {0} 筆先前費率",
   "Accept confident": "接受高信賴項目",
   "Accessorial base": "附加費基準",
   "Accessorial charges are additional fees charged for services such as detention, fuel surcharge, and more.": "附加費是就滯留費、燃油附加費等服務加收的額外費用。",

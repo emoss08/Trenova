@@ -59,6 +59,7 @@
   "A change to this shipment (like an updated stop or distance) re-rated the automatic fuel surcharge from <b>{0}</b> to <b>{1}</b>. Only one fuel surcharge line is kept — choose which amount to bill.": "Un cambio en este envío (como una parada o una distancia actualizadas) volvió a tarificar el recargo automático por combustible de <b>{0}</b> a <b>{1}</b>. Solo se conserva una línea de recargo por combustible: elija qué importe facturar.",
   "A rate agreement": "Un acuerdo tarifario",
   "A recurring shipment already covers this lane": "Un envío recurrente ya cubre esta ruta",
+  "About {0} previous rates found": "Se encontraron unas {0} tarifas anteriores",
   "Accept confident": "Aceptar los de alta confianza",
   "Accessorial base": "Base del cargo accesorio",
   "Accessorial charges are additional fees charged for services such as detention, fuel surcharge, and more.": "Los cargos accesorios son tarifas adicionales por servicios como demoras, recargo por combustible y otros.",

@@ -108,6 +108,7 @@
   "Share held back until the customer pays the factor.": "在客戶付款給承購公司前保留的比例。",
   "Share of the invoice paid when the factor funds it.": "承購公司撥款時支付的發票比例。",
   "Short identifier, unique across your organization.": "簡短識別碼，在您的組織內唯一。",
+  "Showing the latest {0} of about {1} movements. A report on factoring reserve entries lists them all.": "顯示約 {1} 筆異動中最新的 {0} 筆。承購保留款分錄報表會列出全部。",
   "Showing the latest {0} of {1} movements. A report on factoring reserve entries lists them all.": "顯示 {1} 筆異動中最新的 {0} 筆。承購保留款分錄報表會列出全部。",
   "Stored. Leave blank to keep it.": "已儲存。留空即保留現有值。",
   "Submission": "提交",

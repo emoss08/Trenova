@@ -1,4 +1,5 @@
 {
+  "About {0} shipments can transfer": "约 {0} 笔运单可转移",
   "Add notes...": "新增备注...",
   "Adjust terms": "调整条款",
   "Adjustment-origin rebill": "源自调整的重新开单",
@@ -150,6 +151,7 @@
   "Shipments that can transfer": "可转移的运单",
   "Show historical queue records that already produced a posted invoice.": "显示已生成过账发票的历史队列记录。",
   "Show outcome": "显示结果",
+  "Showing {0} of about {1}": "显示 {0} / 约 {1} 笔",
   "Showing {0} of {1}": "显示 {0} / {1} 笔",
   "Something outside the billing policy stopped the transfer. Try it again.": "计费策略以外的原因中止了转移，请重试。",
   "Start transfer": "开始转移",
@@ -178,6 +180,8 @@
   "This statement bills itself when the period closes. Billing it here is only for getting ahead of that.": "此对账单会在期间结束时自动计费。在此计费仅是为了提前处理。",
   "This transfer keeps running if you close this window.": "即使关闭此窗口，此转移任务仍会继续运行。",
   "Total charge is $0.00": "总费用为 $0.00",
+  "Transfer all of about {0}": "转移全部约 {0} 笔",
+  "Transfer all of about {0} shipments that match the current search and status?": "要转移符合当前搜索和状态的全部约 {0} 笔运单吗？",
   "Transfer all {0}": "转移全部 {0} 笔",
   "Transfer failed": "转移失败",
   "Transfer more": "继续转移",

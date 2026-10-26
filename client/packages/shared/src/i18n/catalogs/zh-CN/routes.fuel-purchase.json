@@ -51,6 +51,7 @@
   "Select a card": "选择卡片",
   "Select a unit": "选择单位",
   "Showing {0, plural, one {# row} other {# rows}}": "显示 {0, plural, other {# 行}}",
+  "Showing {0} of about {1} rows": "显示 {0} / 约 {1} 行",
   "Statements identify a card by its last four digits, and that is all a purchase needs to be matched back to it. The full card number is never stored.": "对账单以末四位识别卡片，而采购记录只需这四位即可比对回该卡片。系统绝不会存储完整卡号。",
   "The card and transaction reference came from the statement and are read-only here, so the same statement cannot be counted twice if it is imported again. {0}": "卡片与交易引用编号来自对账单，在此为只读，因此同一份对账单即使再次导入也不会重复计算。{0}",
   "The card the purchase was charged to, when one was used.": "此采购所刷的卡片 (若有使用卡片)。",
