@@ -1353,6 +1353,7 @@ var enumKind = [...]schema.EnumValue{
 	{Value: `notification.report_run_delivered`, Label: `Notification Report Delivered`, Doc: `KindNotificationReportDelivered announces a delivered scheduled report.`},
 	{Value: `notification.report_delivery_email_failed`, Label: `Notification Report Delivery Failed`, Doc: `KindNotificationReportDeliveryFailed reports a scheduled report that was produced but could not be emailed.`},
 	{Value: `notification.report_schedule_skipped`, Label: `Notification Report Schedule Skipped`, Doc: `KindNotificationReportScheduleSkipped reports a skipped or disabled schedule.`},
+	{Value: `notification.report_needs_attention`, Label: `Notification Report Needs Attention`, Doc: `KindNotificationReportNeedsAttention tells an owner their saved reports no longer validate against the report catalog.`},
 	{Value: `notification.shipment_comment_mention`, Label: `Notification Comment Mention`, Doc: `KindNotificationCommentMention tells someone they were named in a comment.`},
 	{Value: `notification.shipment_comment_reply`, Label: `Notification Comment Reply`, Doc: `KindNotificationCommentReply tells someone their comment got a reply.`},
 	{Value: `notification.invoice_shared`, Label: `Notification Invoice Shared`},

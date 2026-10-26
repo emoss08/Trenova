@@ -7557,7 +7557,6 @@ var tenderChangesTable = schema.Table{
 		{Name: "id", Quoted: `"id"`, Field: "ID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagAutoID, Label: `ID`, JSON: `id`},
 		{Name: "business_unit_id", Quoted: `"business_unit_id"`, Field: "BusinessUnitID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Business Unit ID`, JSON: `businessUnitId`},
 		{Name: "source_organization_id", Quoted: `"source_organization_id"`, Field: "SourceOrganizationID", Kind: schema.KindString, Flags: 0, Label: `Source Organization ID`, JSON: `sourceOrganizationId`},
-		{Name: "source_business_unit_id", Quoted: `"source_business_unit_id"`, Field: "SourceBusinessUnitID", Kind: schema.KindString, Flags: 0, Label: `Source Business Unit ID`, JSON: `sourceBusinessUnitId`},
 		{Name: "source_shipment_id", Quoted: `"source_shipment_id"`, Field: "SourceShipmentID", Kind: schema.KindString, Flags: 0, Label: `Source Shipment ID`, JSON: `sourceShipmentId`},
 		{Name: "recipient_id", Quoted: `"recipient_id"`, Field: "RecipientID", Kind: schema.KindString, Flags: 0, Label: `Recipient ID`, JSON: `recipientId`},
 		{Name: "recipient_kind", Quoted: `"recipient_kind"`, Field: "RecipientKind", Kind: schema.KindString, Flags: 0, Label: `Recipient Kind`, JSON: `recipientKind`, Enum: enumTenderRecipientKind[:]},
@@ -7586,18 +7585,18 @@ var tenderChangesTable = schema.Table{
 		{Name: "updated_at", Quoted: `"updated_at"`, Field: "UpdatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoUpdate, Label: `Updated At`, JSON: `updatedAt`},
 	},
 	Relations: []schema.Relation{
-		{Name: "Recipient", Alias: "r", Kind: schema.BelongsTo, Local: []int32{5}, Remote: []int32{0}, Label: `Recipient`, JSON: `recipient`},
+		{Name: "Recipient", Alias: "r", Kind: schema.BelongsTo, Local: []int32{4}, Remote: []int32{0}, Label: `Recipient`, JSON: `recipient`},
 	},
 	PK:           []int32{0, 1},
 	Tenant:       []int32{1},
-	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 27, 28, 29},
-	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 27, 28, 29},
-	Update:       []int32{2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 29},
+	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 26, 27, 28},
+	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 26, 27, 28},
+	Update:       []int32{2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 28},
 	Returning:    nil,
-	Version:      27,
+	Version:      26,
 	AutoID:       0,
-	AutoCreate:   28,
-	AutoUpdate:   29,
+	AutoCreate:   27,
+	AutoUpdate:   28,
 	IDPrefix:     "editcg_",
 	New:          newTenderChange,
 	NewN:         newNTenderChange,
@@ -7618,7 +7617,6 @@ type TenderChangesTable struct {
 	ID                      keelkinds.PulidIDCol
 	BusinessUnitID          keelkinds.PulidIDCol
 	SourceOrganizationID    keelkinds.PulidIDCol
-	SourceBusinessUnitID    keelkinds.PulidIDCol
 	SourceShipmentID        keelkinds.PulidIDCol
 	RecipientID             keelkinds.PulidIDCol
 	RecipientKind           TenderRecipientKindCol
@@ -7653,33 +7651,32 @@ var TenderChanges = &TenderChangesTable{
 	ID:                      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &tenderChangesRef, Index: 0}}},
 	BusinessUnitID:          keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &tenderChangesRef, Index: 1}}},
 	SourceOrganizationID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &tenderChangesRef, Index: 2}}},
-	SourceBusinessUnitID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &tenderChangesRef, Index: 3}}},
-	SourceShipmentID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &tenderChangesRef, Index: 4}}},
-	RecipientID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &tenderChangesRef, Index: 5}}},
-	RecipientKind:           TenderRecipientKindCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &tenderChangesRef, Index: 6}}},
-	Status:                  TenderChangeStatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &tenderChangesRef, Index: 7}}},
-	ChangeType:              keel.StringCol{Col: keel.Col{Ref: &tenderChangesRef, Index: 8}},
-	IdempotencyKey:          keel.StringCol{Col: keel.Col{Ref: &tenderChangesRef, Index: 9}},
-	SourceShipmentVersion:   keel.Int64Col{Col: keel.Col{Ref: &tenderChangesRef, Index: 10}},
-	PreviousBaselinePayload: keel.JSONBCol{Col: keel.Col{Ref: &tenderChangesRef, Index: 11}},
-	NewTenderPayload:        keel.JSONBCol{Col: keel.Col{Ref: &tenderChangesRef, Index: 12}},
-	PreviousBaselineHash:    keel.StringCol{Col: keel.Col{Ref: &tenderChangesRef, Index: 13}},
-	NewPayloadHash:          keel.StringCol{Col: keel.Col{Ref: &tenderChangesRef, Index: 14}},
-	DiffSummary:             keel.JSONBCol{Col: keel.Col{Ref: &tenderChangesRef, Index: 15}},
-	ConflictMetadata:        keel.JSONBCol{Col: keel.Col{Ref: &tenderChangesRef, Index: 16}},
-	InternalTransferID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &tenderChangesRef, Index: 17}}},
-	ShipmentLinkID:          keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &tenderChangesRef, Index: 18}}},
-	OutboundMessageID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &tenderChangesRef, Index: 19}}},
-	ReviewedByID:            keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &tenderChangesRef, Index: 20}}},
-	ReviewedAt:              keel.Int64Col{Col: keel.Col{Ref: &tenderChangesRef, Index: 21}},
-	AppliedByID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &tenderChangesRef, Index: 22}}},
-	AppliedAt:               keel.Int64Col{Col: keel.Col{Ref: &tenderChangesRef, Index: 23}},
-	FailureReason:           keel.StringCol{Col: keel.Col{Ref: &tenderChangesRef, Index: 24}},
-	SearchVector:            keel.TSVectorCol{Col: keel.Col{Ref: &tenderChangesRef, Index: 25}},
-	Rank:                    keel.StringCol{Col: keel.Col{Ref: &tenderChangesRef, Index: 26}},
-	Version:                 keel.Int64Col{Col: keel.Col{Ref: &tenderChangesRef, Index: 27}},
-	CreatedAt:               keel.Int64Col{Col: keel.Col{Ref: &tenderChangesRef, Index: 28}},
-	UpdatedAt:               keel.Int64Col{Col: keel.Col{Ref: &tenderChangesRef, Index: 29}},
+	SourceShipmentID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &tenderChangesRef, Index: 3}}},
+	RecipientID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &tenderChangesRef, Index: 4}}},
+	RecipientKind:           TenderRecipientKindCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &tenderChangesRef, Index: 5}}},
+	Status:                  TenderChangeStatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &tenderChangesRef, Index: 6}}},
+	ChangeType:              keel.StringCol{Col: keel.Col{Ref: &tenderChangesRef, Index: 7}},
+	IdempotencyKey:          keel.StringCol{Col: keel.Col{Ref: &tenderChangesRef, Index: 8}},
+	SourceShipmentVersion:   keel.Int64Col{Col: keel.Col{Ref: &tenderChangesRef, Index: 9}},
+	PreviousBaselinePayload: keel.JSONBCol{Col: keel.Col{Ref: &tenderChangesRef, Index: 10}},
+	NewTenderPayload:        keel.JSONBCol{Col: keel.Col{Ref: &tenderChangesRef, Index: 11}},
+	PreviousBaselineHash:    keel.StringCol{Col: keel.Col{Ref: &tenderChangesRef, Index: 12}},
+	NewPayloadHash:          keel.StringCol{Col: keel.Col{Ref: &tenderChangesRef, Index: 13}},
+	DiffSummary:             keel.JSONBCol{Col: keel.Col{Ref: &tenderChangesRef, Index: 14}},
+	ConflictMetadata:        keel.JSONBCol{Col: keel.Col{Ref: &tenderChangesRef, Index: 15}},
+	InternalTransferID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &tenderChangesRef, Index: 16}}},
+	ShipmentLinkID:          keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &tenderChangesRef, Index: 17}}},
+	OutboundMessageID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &tenderChangesRef, Index: 18}}},
+	ReviewedByID:            keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &tenderChangesRef, Index: 19}}},
+	ReviewedAt:              keel.Int64Col{Col: keel.Col{Ref: &tenderChangesRef, Index: 20}},
+	AppliedByID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &tenderChangesRef, Index: 21}}},
+	AppliedAt:               keel.Int64Col{Col: keel.Col{Ref: &tenderChangesRef, Index: 22}},
+	FailureReason:           keel.StringCol{Col: keel.Col{Ref: &tenderChangesRef, Index: 23}},
+	SearchVector:            keel.TSVectorCol{Col: keel.Col{Ref: &tenderChangesRef, Index: 24}},
+	Rank:                    keel.StringCol{Col: keel.Col{Ref: &tenderChangesRef, Index: 25}},
+	Version:                 keel.Int64Col{Col: keel.Col{Ref: &tenderChangesRef, Index: 26}},
+	CreatedAt:               keel.Int64Col{Col: keel.Col{Ref: &tenderChangesRef, Index: 27}},
+	UpdatedAt:               keel.Int64Col{Col: keel.Col{Ref: &tenderChangesRef, Index: 28}},
 }
 
 // BuildTenderChanges builds the handle of edi_tender_changes for ref. Generated relation and alias methods call it.
@@ -7689,33 +7686,32 @@ func BuildTenderChanges(r *keel.Ref) *TenderChangesTable {
 		ID:                      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID:          keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		SourceOrganizationID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
-		SourceBusinessUnitID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 3}}},
-		SourceShipmentID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 4}}},
-		RecipientID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 5}}},
-		RecipientKind:           TenderRecipientKindCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 6}}},
-		Status:                  TenderChangeStatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 7}}},
-		ChangeType:              keel.StringCol{Col: keel.Col{Ref: r, Index: 8}},
-		IdempotencyKey:          keel.StringCol{Col: keel.Col{Ref: r, Index: 9}},
-		SourceShipmentVersion:   keel.Int64Col{Col: keel.Col{Ref: r, Index: 10}},
-		PreviousBaselinePayload: keel.JSONBCol{Col: keel.Col{Ref: r, Index: 11}},
-		NewTenderPayload:        keel.JSONBCol{Col: keel.Col{Ref: r, Index: 12}},
-		PreviousBaselineHash:    keel.StringCol{Col: keel.Col{Ref: r, Index: 13}},
-		NewPayloadHash:          keel.StringCol{Col: keel.Col{Ref: r, Index: 14}},
-		DiffSummary:             keel.JSONBCol{Col: keel.Col{Ref: r, Index: 15}},
-		ConflictMetadata:        keel.JSONBCol{Col: keel.Col{Ref: r, Index: 16}},
-		InternalTransferID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 17}}},
-		ShipmentLinkID:          keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 18}}},
-		OutboundMessageID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 19}}},
-		ReviewedByID:            keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 20}}},
-		ReviewedAt:              keel.Int64Col{Col: keel.Col{Ref: r, Index: 21}},
-		AppliedByID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 22}}},
-		AppliedAt:               keel.Int64Col{Col: keel.Col{Ref: r, Index: 23}},
-		FailureReason:           keel.StringCol{Col: keel.Col{Ref: r, Index: 24}},
-		SearchVector:            keel.TSVectorCol{Col: keel.Col{Ref: r, Index: 25}},
-		Rank:                    keel.StringCol{Col: keel.Col{Ref: r, Index: 26}},
-		Version:                 keel.Int64Col{Col: keel.Col{Ref: r, Index: 27}},
-		CreatedAt:               keel.Int64Col{Col: keel.Col{Ref: r, Index: 28}},
-		UpdatedAt:               keel.Int64Col{Col: keel.Col{Ref: r, Index: 29}},
+		SourceShipmentID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 3}}},
+		RecipientID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 4}}},
+		RecipientKind:           TenderRecipientKindCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 5}}},
+		Status:                  TenderChangeStatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 6}}},
+		ChangeType:              keel.StringCol{Col: keel.Col{Ref: r, Index: 7}},
+		IdempotencyKey:          keel.StringCol{Col: keel.Col{Ref: r, Index: 8}},
+		SourceShipmentVersion:   keel.Int64Col{Col: keel.Col{Ref: r, Index: 9}},
+		PreviousBaselinePayload: keel.JSONBCol{Col: keel.Col{Ref: r, Index: 10}},
+		NewTenderPayload:        keel.JSONBCol{Col: keel.Col{Ref: r, Index: 11}},
+		PreviousBaselineHash:    keel.StringCol{Col: keel.Col{Ref: r, Index: 12}},
+		NewPayloadHash:          keel.StringCol{Col: keel.Col{Ref: r, Index: 13}},
+		DiffSummary:             keel.JSONBCol{Col: keel.Col{Ref: r, Index: 14}},
+		ConflictMetadata:        keel.JSONBCol{Col: keel.Col{Ref: r, Index: 15}},
+		InternalTransferID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 16}}},
+		ShipmentLinkID:          keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 17}}},
+		OutboundMessageID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 18}}},
+		ReviewedByID:            keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 19}}},
+		ReviewedAt:              keel.Int64Col{Col: keel.Col{Ref: r, Index: 20}},
+		AppliedByID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 21}}},
+		AppliedAt:               keel.Int64Col{Col: keel.Col{Ref: r, Index: 22}},
+		FailureReason:           keel.StringCol{Col: keel.Col{Ref: r, Index: 23}},
+		SearchVector:            keel.TSVectorCol{Col: keel.Col{Ref: r, Index: 24}},
+		Rank:                    keel.StringCol{Col: keel.Col{Ref: r, Index: 25}},
+		Version:                 keel.Int64Col{Col: keel.Col{Ref: r, Index: 26}},
+		CreatedAt:               keel.Int64Col{Col: keel.Col{Ref: r, Index: 27}},
+		UpdatedAt:               keel.Int64Col{Col: keel.Col{Ref: r, Index: 28}},
 	}
 }
 
@@ -7753,58 +7749,56 @@ func ptrTenderChange(p unsafe.Pointer, c int32) any {
 	case 2:
 		return (*string)(unsafe.Pointer(&r.SourceOrganizationID))
 	case 3:
-		return (*string)(unsafe.Pointer(&r.SourceBusinessUnitID))
-	case 4:
 		return (*string)(unsafe.Pointer(&r.SourceShipmentID))
-	case 5:
+	case 4:
 		return (*string)(unsafe.Pointer(&r.RecipientID))
-	case 6:
+	case 5:
 		return (*string)(unsafe.Pointer(&r.RecipientKind))
-	case 7:
+	case 6:
 		return (*string)(unsafe.Pointer(&r.Status))
-	case 8:
+	case 7:
 		return &r.ChangeType
-	case 9:
+	case 8:
 		return &r.IdempotencyKey
-	case 10:
+	case 9:
 		return &r.SourceShipmentVersion
-	case 11:
+	case 10:
 		return &r.PreviousBaselinePayload
-	case 12:
+	case 11:
 		return &r.NewTenderPayload
-	case 13:
+	case 12:
 		return &r.PreviousBaselineHash
-	case 14:
+	case 13:
 		return &r.NewPayloadHash
-	case 15:
+	case 14:
 		return &r.DiffSummary
-	case 16:
+	case 15:
 		return &r.ConflictMetadata
-	case 17:
+	case 16:
 		return (*string)(unsafe.Pointer(&r.InternalTransferID))
-	case 18:
+	case 17:
 		return (*string)(unsafe.Pointer(&r.ShipmentLinkID))
-	case 19:
+	case 18:
 		return (*string)(unsafe.Pointer(&r.OutboundMessageID))
-	case 20:
+	case 19:
 		return (*string)(unsafe.Pointer(&r.ReviewedByID))
-	case 21:
+	case 20:
 		return &r.ReviewedAt
-	case 22:
+	case 21:
 		return (*string)(unsafe.Pointer(&r.AppliedByID))
-	case 23:
+	case 22:
 		return &r.AppliedAt
-	case 24:
+	case 23:
 		return &r.FailureReason
-	case 25:
+	case 24:
 		return &r.SearchVector
-	case 26:
+	case 25:
 		return &r.Rank
-	case 27:
+	case 26:
 		return &r.Version
-	case 28:
+	case 27:
 		return &r.CreatedAt
-	case 29:
+	case 28:
 		return &r.UpdatedAt
 	}
 	return nil
@@ -7820,88 +7814,86 @@ func valueTenderChange(p unsafe.Pointer, c int32) any {
 	case 2:
 		return string(r.SourceOrganizationID)
 	case 3:
-		return string(r.SourceBusinessUnitID)
-	case 4:
 		return string(r.SourceShipmentID)
-	case 5:
+	case 4:
 		return string(r.RecipientID)
-	case 6:
+	case 5:
 		return string(r.RecipientKind)
-	case 7:
+	case 6:
 		return string(r.Status)
-	case 8:
+	case 7:
 		return r.ChangeType
-	case 9:
+	case 8:
 		return r.IdempotencyKey
-	case 10:
+	case 9:
 		return r.SourceShipmentVersion
-	case 11:
+	case 10:
 		return r.PreviousBaselinePayload
-	case 12:
+	case 11:
 		return r.NewTenderPayload
-	case 13:
+	case 12:
 		return r.PreviousBaselineHash
-	case 14:
+	case 13:
 		return r.NewPayloadHash
-	case 15:
+	case 14:
 		if r.DiffSummary == nil {
 			return keel.EmptyJSONObject
 		}
 		return r.DiffSummary
-	case 16:
+	case 15:
 		if r.ConflictMetadata == nil {
 			return keel.EmptyJSONObject
 		}
 		return r.ConflictMetadata
-	case 17:
+	case 16:
 		if r.InternalTransferID == "" {
 			return nil
 		}
 		return string(r.InternalTransferID)
-	case 18:
+	case 17:
 		if r.ShipmentLinkID == "" {
 			return nil
 		}
 		return string(r.ShipmentLinkID)
-	case 19:
+	case 18:
 		if r.OutboundMessageID == "" {
 			return nil
 		}
 		return string(r.OutboundMessageID)
-	case 20:
+	case 19:
 		if r.ReviewedByID == "" {
 			return nil
 		}
 		return string(r.ReviewedByID)
-	case 21:
+	case 20:
 		if r.ReviewedAt == nil {
 			return nil
 		}
 		return *r.ReviewedAt
-	case 22:
+	case 21:
 		if r.AppliedByID == "" {
 			return nil
 		}
 		return string(r.AppliedByID)
-	case 23:
+	case 22:
 		if r.AppliedAt == nil {
 			return nil
 		}
 		return *r.AppliedAt
-	case 24:
+	case 23:
 		if r.FailureReason == "" {
 			return nil
 		}
 		return r.FailureReason
-	case 25:
+	case 24:
 		return r.SearchVector
-	case 26:
+	case 25:
 		return r.Rank
-	case 27:
+	case 26:
 		return r.Version
-	case 28:
+	case 27:
 		return r.CreatedAt
-	case 29:
+	case 28:
 		return r.UpdatedAt
 	}
 	return nil
@@ -7939,11 +7931,9 @@ var tenderRecipientsTable = schema.Table{
 		{Name: "id", Quoted: `"id"`, Field: "ID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagAutoID, Label: `ID`, JSON: `id`},
 		{Name: "business_unit_id", Quoted: `"business_unit_id"`, Field: "BusinessUnitID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Business Unit ID`, JSON: `businessUnitId`},
 		{Name: "source_organization_id", Quoted: `"source_organization_id"`, Field: "SourceOrganizationID", Kind: schema.KindString, Flags: 0, Label: `Source Organization ID`, JSON: `sourceOrganizationId`},
-		{Name: "source_business_unit_id", Quoted: `"source_business_unit_id"`, Field: "SourceBusinessUnitID", Kind: schema.KindString, Flags: 0, Label: `Source Business Unit ID`, JSON: `sourceBusinessUnitId`},
 		{Name: "source_shipment_id", Quoted: `"source_shipment_id"`, Field: "SourceShipmentID", Kind: schema.KindString, Flags: 0, Label: `Source Shipment ID`, JSON: `sourceShipmentId`},
 		{Name: "recipient_kind", Quoted: `"recipient_kind"`, Field: "RecipientKind", Kind: schema.KindString, Flags: 0, Label: `Recipient Kind`, JSON: `recipientKind`, Enum: enumTenderRecipientKind[:]},
 		{Name: "recipient_organization_id", Quoted: `"recipient_organization_id"`, Field: "RecipientOrganizationID", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Recipient Organization ID`, JSON: `recipientOrganizationId`},
-		{Name: "recipient_business_unit_id", Quoted: `"recipient_business_unit_id"`, Field: "RecipientBusinessUnitID", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Recipient Business Unit ID`, JSON: `recipientBusinessUnitId`},
 		{Name: "edi_partner_id", Quoted: `"edi_partner_id"`, Field: "EDIPartnerID", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `EDI Partner ID`, JSON: `ediPartnerId`},
 		{Name: "partner_document_profile_id", Quoted: `"partner_document_profile_id"`, Field: "PartnerDocumentProfileID", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Partner Document Profile ID`, JSON: `partnerDocumentProfileId`},
 		{Name: "communication_profile_id", Quoted: `"communication_profile_id"`, Field: "CommunicationProfileID", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Communication Profile ID`, JSON: `communicationProfileId`},
@@ -7961,14 +7951,14 @@ var tenderRecipientsTable = schema.Table{
 	},
 	PK:           []int32{0, 1},
 	Tenant:       []int32{1},
-	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21},
-	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21},
-	Update:       []int32{2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 21},
+	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19},
+	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19},
+	Update:       []int32{2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 19},
 	Returning:    nil,
-	Version:      19,
+	Version:      17,
 	AutoID:       0,
-	AutoCreate:   20,
-	AutoUpdate:   21,
+	AutoCreate:   18,
+	AutoUpdate:   19,
 	IDPrefix:     "editr_",
 	New:          newTenderRecipient,
 	NewN:         newNTenderRecipient,
@@ -7988,11 +7978,9 @@ type TenderRecipientsTable struct {
 	ID                       keelkinds.PulidIDCol
 	BusinessUnitID           keelkinds.PulidIDCol
 	SourceOrganizationID     keelkinds.PulidIDCol
-	SourceBusinessUnitID     keelkinds.PulidIDCol
 	SourceShipmentID         keelkinds.PulidIDCol
 	RecipientKind            TenderRecipientKindCol
 	RecipientOrganizationID  keelkinds.PulidIDCol
-	RecipientBusinessUnitID  keelkinds.PulidIDCol
 	EDIPartnerID             keelkinds.PulidIDCol
 	PartnerDocumentProfileID keelkinds.PulidIDCol
 	CommunicationProfileID   keelkinds.PulidIDCol
@@ -8015,25 +8003,23 @@ var TenderRecipients = &TenderRecipientsTable{
 	ID:                       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &tenderRecipientsRef, Index: 0}}},
 	BusinessUnitID:           keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &tenderRecipientsRef, Index: 1}}},
 	SourceOrganizationID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &tenderRecipientsRef, Index: 2}}},
-	SourceBusinessUnitID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &tenderRecipientsRef, Index: 3}}},
-	SourceShipmentID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &tenderRecipientsRef, Index: 4}}},
-	RecipientKind:            TenderRecipientKindCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &tenderRecipientsRef, Index: 5}}},
-	RecipientOrganizationID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &tenderRecipientsRef, Index: 6}}},
-	RecipientBusinessUnitID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &tenderRecipientsRef, Index: 7}}},
-	EDIPartnerID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &tenderRecipientsRef, Index: 8}}},
-	PartnerDocumentProfileID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &tenderRecipientsRef, Index: 9}}},
-	CommunicationProfileID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &tenderRecipientsRef, Index: 10}}},
-	OriginalTransferID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &tenderRecipientsRef, Index: 11}}},
-	ShipmentLinkID:           keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &tenderRecipientsRef, Index: 12}}},
-	OriginalMessageID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &tenderRecipientsRef, Index: 13}}},
-	LatestBaselinePayload:    keel.JSONBCol{Col: keel.Col{Ref: &tenderRecipientsRef, Index: 14}},
-	LatestBaselineHash:       keel.StringCol{Col: keel.Col{Ref: &tenderRecipientsRef, Index: 15}},
-	BaselineRecordedAt:       keel.Int64Col{Col: keel.Col{Ref: &tenderRecipientsRef, Index: 16}},
-	BaselineStatus:           TenderRecipientBaselineStatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &tenderRecipientsRef, Index: 17}}},
-	Status:                   TenderRecipientStatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &tenderRecipientsRef, Index: 18}}},
-	Version:                  keel.Int64Col{Col: keel.Col{Ref: &tenderRecipientsRef, Index: 19}},
-	CreatedAt:                keel.Int64Col{Col: keel.Col{Ref: &tenderRecipientsRef, Index: 20}},
-	UpdatedAt:                keel.Int64Col{Col: keel.Col{Ref: &tenderRecipientsRef, Index: 21}},
+	SourceShipmentID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &tenderRecipientsRef, Index: 3}}},
+	RecipientKind:            TenderRecipientKindCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &tenderRecipientsRef, Index: 4}}},
+	RecipientOrganizationID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &tenderRecipientsRef, Index: 5}}},
+	EDIPartnerID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &tenderRecipientsRef, Index: 6}}},
+	PartnerDocumentProfileID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &tenderRecipientsRef, Index: 7}}},
+	CommunicationProfileID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &tenderRecipientsRef, Index: 8}}},
+	OriginalTransferID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &tenderRecipientsRef, Index: 9}}},
+	ShipmentLinkID:           keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &tenderRecipientsRef, Index: 10}}},
+	OriginalMessageID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &tenderRecipientsRef, Index: 11}}},
+	LatestBaselinePayload:    keel.JSONBCol{Col: keel.Col{Ref: &tenderRecipientsRef, Index: 12}},
+	LatestBaselineHash:       keel.StringCol{Col: keel.Col{Ref: &tenderRecipientsRef, Index: 13}},
+	BaselineRecordedAt:       keel.Int64Col{Col: keel.Col{Ref: &tenderRecipientsRef, Index: 14}},
+	BaselineStatus:           TenderRecipientBaselineStatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &tenderRecipientsRef, Index: 15}}},
+	Status:                   TenderRecipientStatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &tenderRecipientsRef, Index: 16}}},
+	Version:                  keel.Int64Col{Col: keel.Col{Ref: &tenderRecipientsRef, Index: 17}},
+	CreatedAt:                keel.Int64Col{Col: keel.Col{Ref: &tenderRecipientsRef, Index: 18}},
+	UpdatedAt:                keel.Int64Col{Col: keel.Col{Ref: &tenderRecipientsRef, Index: 19}},
 }
 
 // BuildTenderRecipients builds the handle of edi_tender_recipients for ref. Generated relation and alias methods call it.
@@ -8043,25 +8029,23 @@ func BuildTenderRecipients(r *keel.Ref) *TenderRecipientsTable {
 		ID:                       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID:           keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		SourceOrganizationID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
-		SourceBusinessUnitID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 3}}},
-		SourceShipmentID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 4}}},
-		RecipientKind:            TenderRecipientKindCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 5}}},
-		RecipientOrganizationID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 6}}},
-		RecipientBusinessUnitID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 7}}},
-		EDIPartnerID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 8}}},
-		PartnerDocumentProfileID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 9}}},
-		CommunicationProfileID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 10}}},
-		OriginalTransferID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 11}}},
-		ShipmentLinkID:           keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 12}}},
-		OriginalMessageID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 13}}},
-		LatestBaselinePayload:    keel.JSONBCol{Col: keel.Col{Ref: r, Index: 14}},
-		LatestBaselineHash:       keel.StringCol{Col: keel.Col{Ref: r, Index: 15}},
-		BaselineRecordedAt:       keel.Int64Col{Col: keel.Col{Ref: r, Index: 16}},
-		BaselineStatus:           TenderRecipientBaselineStatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 17}}},
-		Status:                   TenderRecipientStatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 18}}},
-		Version:                  keel.Int64Col{Col: keel.Col{Ref: r, Index: 19}},
-		CreatedAt:                keel.Int64Col{Col: keel.Col{Ref: r, Index: 20}},
-		UpdatedAt:                keel.Int64Col{Col: keel.Col{Ref: r, Index: 21}},
+		SourceShipmentID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 3}}},
+		RecipientKind:            TenderRecipientKindCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 4}}},
+		RecipientOrganizationID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 5}}},
+		EDIPartnerID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 6}}},
+		PartnerDocumentProfileID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 7}}},
+		CommunicationProfileID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 8}}},
+		OriginalTransferID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 9}}},
+		ShipmentLinkID:           keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 10}}},
+		OriginalMessageID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 11}}},
+		LatestBaselinePayload:    keel.JSONBCol{Col: keel.Col{Ref: r, Index: 12}},
+		LatestBaselineHash:       keel.StringCol{Col: keel.Col{Ref: r, Index: 13}},
+		BaselineRecordedAt:       keel.Int64Col{Col: keel.Col{Ref: r, Index: 14}},
+		BaselineStatus:           TenderRecipientBaselineStatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 15}}},
+		Status:                   TenderRecipientStatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 16}}},
+		Version:                  keel.Int64Col{Col: keel.Col{Ref: r, Index: 17}},
+		CreatedAt:                keel.Int64Col{Col: keel.Col{Ref: r, Index: 18}},
+		UpdatedAt:                keel.Int64Col{Col: keel.Col{Ref: r, Index: 19}},
 	}
 }
 
@@ -8094,42 +8078,38 @@ func ptrTenderRecipient(p unsafe.Pointer, c int32) any {
 	case 2:
 		return (*string)(unsafe.Pointer(&r.SourceOrganizationID))
 	case 3:
-		return (*string)(unsafe.Pointer(&r.SourceBusinessUnitID))
-	case 4:
 		return (*string)(unsafe.Pointer(&r.SourceShipmentID))
-	case 5:
+	case 4:
 		return (*string)(unsafe.Pointer(&r.RecipientKind))
-	case 6:
+	case 5:
 		return (*string)(unsafe.Pointer(&r.RecipientOrganizationID))
-	case 7:
-		return (*string)(unsafe.Pointer(&r.RecipientBusinessUnitID))
-	case 8:
+	case 6:
 		return (*string)(unsafe.Pointer(&r.EDIPartnerID))
-	case 9:
+	case 7:
 		return (*string)(unsafe.Pointer(&r.PartnerDocumentProfileID))
-	case 10:
+	case 8:
 		return (*string)(unsafe.Pointer(&r.CommunicationProfileID))
-	case 11:
+	case 9:
 		return (*string)(unsafe.Pointer(&r.OriginalTransferID))
-	case 12:
+	case 10:
 		return (*string)(unsafe.Pointer(&r.ShipmentLinkID))
-	case 13:
+	case 11:
 		return (*string)(unsafe.Pointer(&r.OriginalMessageID))
-	case 14:
+	case 12:
 		return &r.LatestBaselinePayload
-	case 15:
+	case 13:
 		return &r.LatestBaselineHash
-	case 16:
+	case 14:
 		return &r.BaselineRecordedAt
-	case 17:
+	case 15:
 		return (*string)(unsafe.Pointer(&r.BaselineStatus))
-	case 18:
+	case 16:
 		return (*string)(unsafe.Pointer(&r.Status))
-	case 19:
+	case 17:
 		return &r.Version
-	case 20:
+	case 18:
 		return &r.CreatedAt
-	case 21:
+	case 19:
 		return &r.UpdatedAt
 	}
 	return nil
@@ -8145,66 +8125,59 @@ func valueTenderRecipient(p unsafe.Pointer, c int32) any {
 	case 2:
 		return string(r.SourceOrganizationID)
 	case 3:
-		return string(r.SourceBusinessUnitID)
-	case 4:
 		return string(r.SourceShipmentID)
-	case 5:
+	case 4:
 		return string(r.RecipientKind)
-	case 6:
+	case 5:
 		if r.RecipientOrganizationID == "" {
 			return nil
 		}
 		return string(r.RecipientOrganizationID)
-	case 7:
-		if r.RecipientBusinessUnitID == "" {
-			return nil
-		}
-		return string(r.RecipientBusinessUnitID)
-	case 8:
+	case 6:
 		if r.EDIPartnerID == "" {
 			return nil
 		}
 		return string(r.EDIPartnerID)
-	case 9:
+	case 7:
 		if r.PartnerDocumentProfileID == "" {
 			return nil
 		}
 		return string(r.PartnerDocumentProfileID)
-	case 10:
+	case 8:
 		if r.CommunicationProfileID == "" {
 			return nil
 		}
 		return string(r.CommunicationProfileID)
-	case 11:
+	case 9:
 		if r.OriginalTransferID == "" {
 			return nil
 		}
 		return string(r.OriginalTransferID)
-	case 12:
+	case 10:
 		if r.ShipmentLinkID == "" {
 			return nil
 		}
 		return string(r.ShipmentLinkID)
-	case 13:
+	case 11:
 		if r.OriginalMessageID == "" {
 			return nil
 		}
 		return string(r.OriginalMessageID)
-	case 14:
+	case 12:
 		return r.LatestBaselinePayload
-	case 15:
+	case 13:
 		return r.LatestBaselineHash
-	case 16:
+	case 14:
 		return r.BaselineRecordedAt
-	case 17:
+	case 15:
 		return string(r.BaselineStatus)
-	case 18:
+	case 16:
 		return string(r.Status)
-	case 19:
+	case 17:
 		return r.Version
-	case 20:
+	case 18:
 		return r.CreatedAt
-	case 21:
+	case 19:
 		return r.UpdatedAt
 	}
 	return nil

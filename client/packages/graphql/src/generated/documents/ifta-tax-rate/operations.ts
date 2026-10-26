@@ -2,6 +2,6 @@
 import type { TypedDocumentString, DeleteIftaTaxRateMutation, DeleteIftaTaxRateMutationVariables, IftaTaxRateFieldsFragment, IftaTaxRateTableQuery, IftaTaxRateTableQueryVariables, UpsertIftaTaxRatesMutation, UpsertIftaTaxRatesMutationVariables } from "../../graphql";
 
 export const IftaTaxRateFieldsFragmentDoc = {"__meta__":{"fragmentName":"IftaTaxRateFields"}} as unknown as TypedDocumentString<IftaTaxRateFieldsFragment, unknown>;
-export const IftaTaxRateTableDocument = {"__meta__":{"kind":"query","name":"IftaTaxRateTable","hash":"sha256:75d9876e1746a57e7069435584d0c2968945fa0273152ed0c5b0d4ac7c2ca8c3"}} as unknown as TypedDocumentString<IftaTaxRateTableQuery, IftaTaxRateTableQueryVariables>;
+export const IftaTaxRateTableDocument = {"__meta__":{"kind":"query","name":"IftaTaxRateTable","hash":"sha256:1621a7a4177d210e1a1cb8efe08c3440554b74f5b826f2e0fbaf525f28357a91"}} as unknown as TypedDocumentString<IftaTaxRateTableQuery, IftaTaxRateTableQueryVariables>;
 export const UpsertIftaTaxRatesDocument = {"__meta__":{"kind":"mutation","name":"UpsertIftaTaxRates","hash":"sha256:40687ccd074f12591f177689ac65f9ebc0c02b96ee78cbd3a20c61f549c6f28b"}} as unknown as TypedDocumentString<UpsertIftaTaxRatesMutation, UpsertIftaTaxRatesMutationVariables>;
 export const DeleteIftaTaxRateDocument = {"__meta__":{"kind":"mutation","name":"DeleteIftaTaxRate","hash":"sha256:3ea06bea9c4fe480fb22642ac0608f800ac5ce37559751b23103bc25274b2755"}} as unknown as TypedDocumentString<DeleteIftaTaxRateMutation, DeleteIftaTaxRateMutationVariables>;

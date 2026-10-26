@@ -2,4 +2,4 @@
 import type { TypedDocumentString, InvoiceRegisterQuery, InvoiceRegisterQueryVariables, InvoiceRegisterRowFieldsFragment } from "../../graphql";
 
 export const InvoiceRegisterRowFieldsFragmentDoc = {"__meta__":{"fragmentName":"InvoiceRegisterRowFields"}} as unknown as TypedDocumentString<InvoiceRegisterRowFieldsFragment, unknown>;
-export const InvoiceRegisterDocument = {"__meta__":{"kind":"query","name":"InvoiceRegister","hash":"sha256:8eb41ed1f98348761e3772a8f4c14d977cd23cfcf10c1910662d021f9af44745"}} as unknown as TypedDocumentString<InvoiceRegisterQuery, InvoiceRegisterQueryVariables>;
+export const InvoiceRegisterDocument = {"__meta__":{"kind":"query","name":"InvoiceRegister","hash":"sha256:4ed0570404461d441767270685254b197d50c91d28cb7f9a4b054e39bb895fe2"}} as unknown as TypedDocumentString<InvoiceRegisterQuery, InvoiceRegisterQueryVariables>;

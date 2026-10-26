@@ -2,4 +2,4 @@
 import type { TypedDocumentString, RoleTableQuery, RoleTableQueryVariables, RoleTableRowFieldsFragment } from "../../graphql";
 
 export const RoleTableRowFieldsFragmentDoc = {"__meta__":{"fragmentName":"RoleTableRowFields"}} as unknown as TypedDocumentString<RoleTableRowFieldsFragment, unknown>;
-export const RoleTableDocument = {"__meta__":{"kind":"query","name":"RoleTable","hash":"sha256:f9ba0ee6a3cf8ba0c1449a77fcc482b705168d4f0047d2051cd028dbe74816e2"}} as unknown as TypedDocumentString<RoleTableQuery, RoleTableQueryVariables>;
+export const RoleTableDocument = {"__meta__":{"kind":"query","name":"RoleTable","hash":"sha256:b59bcb3469e1edc00ce0530a2dbb6e6b33bb0253a09c1def2406919a3852090c"}} as unknown as TypedDocumentString<RoleTableQuery, RoleTableQueryVariables>;

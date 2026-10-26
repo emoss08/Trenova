@@ -2,4 +2,4 @@
 import type { TypedDocumentString, ApiKeyTableQuery, ApiKeyTableQueryVariables, ApiKeyTableRowFieldsFragment } from "../../graphql";
 
 export const ApiKeyTableRowFieldsFragmentDoc = {"__meta__":{"fragmentName":"ApiKeyTableRowFields"}} as unknown as TypedDocumentString<ApiKeyTableRowFieldsFragment, unknown>;
-export const ApiKeyTableDocument = {"__meta__":{"kind":"query","name":"ApiKeyTable","hash":"sha256:aeacf34d9ae14863db97c29a2ea928d83c46bba47f49ecd6a05ccdf7d4a33951"}} as unknown as TypedDocumentString<ApiKeyTableQuery, ApiKeyTableQueryVariables>;
+export const ApiKeyTableDocument = {"__meta__":{"kind":"query","name":"ApiKeyTable","hash":"sha256:f454bc6ae65d11e62b6189c4dfa3499f50770aaa2dae1592f843a3d3f6442102"}} as unknown as TypedDocumentString<ApiKeyTableQuery, ApiKeyTableQueryVariables>;

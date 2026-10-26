@@ -2,4 +2,4 @@
 import type { TypedDocumentString, UserTableQuery, UserTableQueryVariables, UserTableRowFieldsFragment } from "../../graphql";
 
 export const UserTableRowFieldsFragmentDoc = {"__meta__":{"fragmentName":"UserTableRowFields"}} as unknown as TypedDocumentString<UserTableRowFieldsFragment, unknown>;
-export const UserTableDocument = {"__meta__":{"kind":"query","name":"UserTable","hash":"sha256:40300ce9b4742ab9f0008bfa9e6af539b18334e725df797823f41d75af2f3b48"}} as unknown as TypedDocumentString<UserTableQuery, UserTableQueryVariables>;
+export const UserTableDocument = {"__meta__":{"kind":"query","name":"UserTable","hash":"sha256:efddf55707f831fa86ace4db6d81fe9bfa345d5f110dbd2703c10ae1ff17ab9f"}} as unknown as TypedDocumentString<UserTableQuery, UserTableQueryVariables>;

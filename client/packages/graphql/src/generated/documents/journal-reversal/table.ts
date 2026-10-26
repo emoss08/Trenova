@@ -2,4 +2,4 @@
 import type { TypedDocumentString, JournalReversalTableQuery, JournalReversalTableQueryVariables, JournalReversalTableRowFieldsFragment } from "../../graphql";
 
 export const JournalReversalTableRowFieldsFragmentDoc = {"__meta__":{"fragmentName":"JournalReversalTableRowFields"}} as unknown as TypedDocumentString<JournalReversalTableRowFieldsFragment, unknown>;
-export const JournalReversalTableDocument = {"__meta__":{"kind":"query","name":"JournalReversalTable","hash":"sha256:c357e8b3db988ca975bf971ec92d12244510b27edf5e21ee7eb4040e0b3af3f6"}} as unknown as TypedDocumentString<JournalReversalTableQuery, JournalReversalTableQueryVariables>;
+export const JournalReversalTableDocument = {"__meta__":{"kind":"query","name":"JournalReversalTable","hash":"sha256:31c18ff0b0631657cca2ed9222a7f1b04b1b22b052979e0a8f0f37445176f6ea"}} as unknown as TypedDocumentString<JournalReversalTableQuery, JournalReversalTableQueryVariables>;

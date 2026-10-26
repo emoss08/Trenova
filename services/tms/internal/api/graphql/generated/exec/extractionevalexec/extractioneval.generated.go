@@ -370,6 +370,16 @@ var Shard = &gqlexec.Shard{
 				},
 				Marshal: gqlexec.Marshal(marshalOInt2ᚖint),
 			},
+			{
+				Name:     "totalCountExact",
+				NonNull:  true,
+				ChildErr: errNoChild5,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.AICorrectionConnection)
+					return obj.TotalCountExact, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
+			},
 		}},
 		{Object: "AICorrectionEdge", Fields: []*gqlexec.Field{
 			{
@@ -428,7 +438,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "outcome",
 				NonNull:  true,
-				ChildErr: errNoChild5,
+				ChildErr: errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*aicorrection.FieldResult)
 					return obj.Outcome, nil
@@ -490,7 +500,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "sampled",
 				NonNull:  true,
-				ChildErr: errNoChild6,
+				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*extractionevalports.ExtractionAccuracy)
 					return obj.Sampled, nil
@@ -911,6 +921,16 @@ var Shard = &gqlexec.Shard{
 				},
 				Marshal: gqlexec.Marshal(marshalOInt2ᚖint),
 			},
+			{
+				Name:     "totalCountExact",
+				NonNull:  true,
+				ChildErr: errNoChild5,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.ExtractionEvalCaseConnection)
+					return obj.TotalCountExact, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
+			},
 		}},
 		{Object: "ExtractionEvalCaseCounts", Fields: []*gqlexec.Field{
 			{
@@ -1013,7 +1033,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "alreadyRunning",
 				NonNull:  true,
-				ChildErr: errNoChild6,
+				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*extractionevalports.RefreezeExtractionEvalCasesResult)
 					return obj.AlreadyRunning, nil
@@ -1406,6 +1426,16 @@ var Shard = &gqlexec.Shard{
 					return obj.TotalCount, nil
 				},
 				Marshal: gqlexec.Marshal(marshalOInt2ᚖint),
+			},
+			{
+				Name:     "totalCountExact",
+				NonNull:  true,
+				ChildErr: errNoChild5,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.ExtractionEvalResultConnection)
+					return obj.TotalCountExact, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
 			},
 		}},
 		{Object: "ExtractionEvalResultEdge", Fields: []*gqlexec.Field{
@@ -1818,6 +1848,16 @@ var Shard = &gqlexec.Shard{
 				},
 				Marshal: gqlexec.Marshal(marshalOInt2ᚖint),
 			},
+			{
+				Name:     "totalCountExact",
+				NonNull:  true,
+				ChildErr: errNoChild5,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.ExtractionEvalRunConnection)
+					return obj.TotalCountExact, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
+			},
 		}},
 		{Object: "ExtractionEvalRunEdge", Fields: []*gqlexec.Field{
 			{
@@ -1958,7 +1998,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "providerRemoved",
 				NonNull:  true,
-				ChildErr: errNoChild6,
+				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*extractionevalports.ExtractionProviderTrend)
 					return obj.ProviderRemoved, nil
@@ -2011,7 +2051,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "comparable",
 				NonNull:  true,
-				ChildErr: errNoChild6,
+				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*extractionevalports.ExtractionProviderTrend)
 					return obj.Comparable, nil
@@ -2021,7 +2061,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "drifting",
 				NonNull:  true,
-				ChildErr: errNoChild6,
+				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*extractionevalports.ExtractionProviderTrend)
 					return obj.Drifting, nil
@@ -2254,7 +2294,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "appointmentRequired",
 				NonNull:  true,
-				ChildErr: errNoChild6,
+				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*aicorrection.StopSnapshot)
 					return obj.AppointmentRequired, nil
@@ -2364,7 +2404,7 @@ var Shard = &gqlexec.Shard{
 				Name:       "deleteExtractionEvalCase",
 				NonNull:    true,
 				IsResolver: true,
-				ChildErr:   errNoChild6,
+				ChildErr:   errNoChild5,
 				Args:       field_Mutation_deleteExtractionEvalCase_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
@@ -2630,8 +2670,8 @@ var (
 	errNoChild2  = errors.New("field of type Float does not have child fields")
 	errNoChild3  = errors.New("field of type Int does not have child fields")
 	errNoChild4  = errors.New("field of type Timestamp does not have child fields")
-	errNoChild5  = errors.New("field of type AICorrectionOutcome does not have child fields")
-	errNoChild6  = errors.New("field of type Boolean does not have child fields")
+	errNoChild5  = errors.New("field of type Boolean does not have child fields")
+	errNoChild6  = errors.New("field of type AICorrectionOutcome does not have child fields")
 	errNoChild7  = errors.New("field of type ExtractionEvalCaseStatus does not have child fields")
 	errNoChild8  = errors.New("field of type ExtractionEvalRefreezeStatus does not have child fields")
 	errNoChild9  = errors.New("field of type ExtractionEvalResultStatus does not have child fields")

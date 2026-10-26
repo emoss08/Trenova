@@ -9234,7 +9234,7 @@ export type AccessorialChargeTableQueryVariables = Exact<{
 }>;
 
 
-export type AccessorialChargeTableQuery = { accessorialCharges: { totalCount?: number | null, edges: Array<{ node: { ' $fragmentRefs'?: { 'AccessorialChargeTableRowFieldsFragment': AccessorialChargeTableRowFieldsFragment } } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
+export type AccessorialChargeTableQuery = { accessorialCharges: { totalCount?: number | null, totalCountExact?: boolean, edges: Array<{ node: { ' $fragmentRefs'?: { 'AccessorialChargeTableRowFieldsFragment': AccessorialChargeTableRowFieldsFragment } } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
 
 export type AccountTypeTableRowFieldsFragment = { id: string, businessUnitId: string, organizationId: string, status: EntityStatus, code: string, name: string, description: string | null, category: AccountCategory, color: string | null, isSystem: boolean, version: number, createdAt: number, updatedAt: number } & { ' $fragmentName'?: 'AccountTypeTableRowFieldsFragment' };
 
@@ -9244,7 +9244,7 @@ export type AccountTypeTableQueryVariables = Exact<{
 }>;
 
 
-export type AccountTypeTableQuery = { accountTypes: { totalCount?: number | null, edges: Array<{ node: { ' $fragmentRefs'?: { 'AccountTypeTableRowFieldsFragment': AccountTypeTableRowFieldsFragment } } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
+export type AccountTypeTableQuery = { accountTypes: { totalCount?: number | null, totalCountExact?: boolean, edges: Array<{ node: { ' $fragmentRefs'?: { 'AccountTypeTableRowFieldsFragment': AccountTypeTableRowFieldsFragment } } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
 
 export type DeskAccountingConnectionQueryVariables = Exact<{
   integrationType: AccountingSystem;
@@ -9335,7 +9335,7 @@ export type DeskAccountingDriftFindingsQueryVariables = Exact<{
 }>;
 
 
-export type DeskAccountingDriftFindingsQuery = { accountingDriftFindingTable: { totalCount?: number | null, edges: Array<{ node: { id: string, kind: AccountingDriftKind, status: AccountingDriftStatus, resolution: AccountingDriftResolution | null, resolutionNote: string, objectType: AccountingSyncObjectType, objectId: string, objectNumber: string, partyName: string, externalUrl: string, currencyCode: string, trenovaMinor: number | null, providerMinor: number | null, differenceMinor: number | null, trenovaState: string, providerState: string, providerModifiedBy: string, providerModifiedAt: number | null, detectedAt: number, directions: Array<AccountingDriftDirection>, pushed: boolean, detail: Array<{ objectType: AccountingSyncObjectType, objectId: string, objectNumber: string, trenovaMinor: number, providerMinor: number }> } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
+export type DeskAccountingDriftFindingsQuery = { accountingDriftFindingTable: { totalCount?: number | null, totalCountExact?: boolean, edges: Array<{ node: { id: string, kind: AccountingDriftKind, status: AccountingDriftStatus, resolution: AccountingDriftResolution | null, resolutionNote: string, objectType: AccountingSyncObjectType, objectId: string, objectNumber: string, partyName: string, externalUrl: string, currencyCode: string, trenovaMinor: number | null, providerMinor: number | null, differenceMinor: number | null, trenovaState: string, providerState: string, providerModifiedBy: string, providerModifiedAt: number | null, detectedAt: number, directions: Array<AccountingDriftDirection>, pushed: boolean, detail: Array<{ objectType: AccountingSyncObjectType, objectId: string, objectNumber: string, trenovaMinor: number, providerMinor: number }> } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
 
 export type DeskAccountingDriftOverviewQueryVariables = Exact<{
   integrationType: AccountingSystem;
@@ -9351,7 +9351,7 @@ export type DeskAccountingInboundChangesQueryVariables = Exact<{
 }>;
 
 
-export type DeskAccountingInboundChangesQuery = { accountingInboundChangeTable: { totalCount?: number | null, edges: Array<{ node: { id: string, kind: AccountingInboundChangeKind, status: AccountingInboundChangeStatus, reason: AccountingInboundChangeReason | null, resolution: string, externalNumber: string, externalUrl: string, partyName: string, partyObjectId: string | null, txnDate: number, amountMinor: number, currencyCode: string, referenceNumber: string, methodName: string, providerModifiedBy: string, detectedAt: number, lines: Array<{ documentKind: AccountingInboundDocumentKind, objectId: string | null, objectNumber: string, amountMinor: number, openMinor: number }> } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
+export type DeskAccountingInboundChangesQuery = { accountingInboundChangeTable: { totalCount?: number | null, totalCountExact?: boolean, edges: Array<{ node: { id: string, kind: AccountingInboundChangeKind, status: AccountingInboundChangeStatus, reason: AccountingInboundChangeReason | null, resolution: string, externalNumber: string, externalUrl: string, partyName: string, partyObjectId: string | null, txnDate: number, amountMinor: number, currencyCode: string, referenceNumber: string, methodName: string, providerModifiedBy: string, detectedAt: number, lines: Array<{ documentKind: AccountingInboundDocumentKind, objectId: string | null, objectNumber: string, amountMinor: number, openMinor: number }> } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
 
 export type AccountingDriftFindingFieldsFragment = { id: string, connectionId: string, objectType: AccountingSyncObjectType, objectId: string, objectNumber: string, partyId: string | null, partyName: string, externalId: string, externalUrl: string, kind: AccountingDriftKind, currencyCode: string, trenovaMinor: number | null, providerMinor: number | null, differenceMinor: number | null, trenovaState: string, providerState: string, providerModifiedAt: number | null, providerModifiedBy: string, status: AccountingDriftStatus, resolution: AccountingDriftResolution | null, resolutionNote: string, fixObjectType: AccountingDriftFixObject | null, fixObjectId: string | null, directions: Array<AccountingDriftDirection>, pushed: boolean, resolvedAt: number | null, detectedAt: number, lastSeenAt: number, version: number, updatedAt: number, detail: Array<{ objectType: AccountingSyncObjectType, objectId: string, objectNumber: string, trenovaMinor: number, providerMinor: number }>, resolvedBy: { id: string, name: string } | null } & { ' $fragmentName'?: 'AccountingDriftFindingFieldsFragment' };
 
@@ -9406,7 +9406,7 @@ export type AccountingDriftFindingTableQueryVariables = Exact<{
 }>;
 
 
-export type AccountingDriftFindingTableQuery = { accountingDriftFindingTable: { totalCount?: number | null, edges: Array<{ node: { id: string, connectionId: string, objectType: AccountingSyncObjectType, objectId: string, objectNumber: string, partyId: string | null, partyName: string, externalId: string, externalUrl: string, kind: AccountingDriftKind, currencyCode: string, trenovaMinor: number | null, providerMinor: number | null, differenceMinor: number | null, trenovaState: string, providerState: string, providerModifiedAt: number | null, providerModifiedBy: string, status: AccountingDriftStatus, resolution: AccountingDriftResolution | null, resolutionNote: string, fixObjectType: AccountingDriftFixObject | null, fixObjectId: string | null, directions: Array<AccountingDriftDirection>, pushed: boolean, resolvedAt: number | null, detectedAt: number, lastSeenAt: number, version: number, updatedAt: number, detail: Array<{ objectType: AccountingSyncObjectType, objectId: string, objectNumber: string, trenovaMinor: number, providerMinor: number }>, resolvedBy: { id: string, name: string } | null } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
+export type AccountingDriftFindingTableQuery = { accountingDriftFindingTable: { totalCount?: number | null, totalCountExact?: boolean, edges: Array<{ node: { id: string, connectionId: string, objectType: AccountingSyncObjectType, objectId: string, objectNumber: string, partyId: string | null, partyName: string, externalId: string, externalUrl: string, kind: AccountingDriftKind, currencyCode: string, trenovaMinor: number | null, providerMinor: number | null, differenceMinor: number | null, trenovaState: string, providerState: string, providerModifiedAt: number | null, providerModifiedBy: string, status: AccountingDriftStatus, resolution: AccountingDriftResolution | null, resolutionNote: string, fixObjectType: AccountingDriftFixObject | null, fixObjectId: string | null, directions: Array<AccountingDriftDirection>, pushed: boolean, resolvedAt: number | null, detectedAt: number, lastSeenAt: number, version: number, updatedAt: number, detail: Array<{ objectType: AccountingSyncObjectType, objectId: string, objectNumber: string, trenovaMinor: number, providerMinor: number }>, resolvedBy: { id: string, name: string } | null } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
 
 export type AccountingInboundChangeFieldsFragment = { id: string, kind: AccountingInboundChangeKind, status: AccountingInboundChangeStatus, reason: AccountingInboundChangeReason | null, resolution: string, externalId: string, externalNumber: string, externalUrl: string, providerModifiedAt: number | null, providerModifiedBy: string, txnDate: number, amountMinor: number, currencyCode: string, partyName: string, partyObjectId: string | null, referenceNumber: string, methodName: string, unappliedMinor: number, decidedAt: number | null, note: string, detectedAt: number, version: number, updatedAt: number, lines: Array<{ documentKind: AccountingInboundDocumentKind, documentExternalId: string, amountMinor: number, objectType: AccountingSyncObjectType | null, objectId: string | null, objectNumber: string, openMinor: number }>, appliedObjects: Array<{ type: AccountingAppliedObjectType, id: string }>, decidedBy: { id: string, name: string } | null } & { ' $fragmentName'?: 'AccountingInboundChangeFieldsFragment' };
 
@@ -9452,7 +9452,7 @@ export type AccountingInboundChangeTableQueryVariables = Exact<{
 }>;
 
 
-export type AccountingInboundChangeTableQuery = { accountingInboundChangeTable: { totalCount?: number | null, edges: Array<{ node: { id: string, kind: AccountingInboundChangeKind, status: AccountingInboundChangeStatus, reason: AccountingInboundChangeReason | null, resolution: string, externalId: string, externalNumber: string, externalUrl: string, providerModifiedAt: number | null, providerModifiedBy: string, txnDate: number, amountMinor: number, currencyCode: string, partyName: string, partyObjectId: string | null, referenceNumber: string, methodName: string, unappliedMinor: number, decidedAt: number | null, note: string, detectedAt: number, version: number, updatedAt: number, lines: Array<{ documentKind: AccountingInboundDocumentKind, documentExternalId: string, amountMinor: number, objectType: AccountingSyncObjectType | null, objectId: string | null, objectNumber: string, openMinor: number }>, appliedObjects: Array<{ type: AccountingAppliedObjectType, id: string }>, decidedBy: { id: string, name: string } | null } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
+export type AccountingInboundChangeTableQuery = { accountingInboundChangeTable: { totalCount?: number | null, totalCountExact?: boolean, edges: Array<{ node: { id: string, kind: AccountingInboundChangeKind, status: AccountingInboundChangeStatus, reason: AccountingInboundChangeReason | null, resolution: string, externalId: string, externalNumber: string, externalUrl: string, providerModifiedAt: number | null, providerModifiedBy: string, txnDate: number, amountMinor: number, currencyCode: string, partyName: string, partyObjectId: string | null, referenceNumber: string, methodName: string, unappliedMinor: number, decidedAt: number | null, note: string, detectedAt: number, version: number, updatedAt: number, lines: Array<{ documentKind: AccountingInboundDocumentKind, documentExternalId: string, amountMinor: number, objectType: AccountingSyncObjectType | null, objectId: string | null, objectNumber: string, openMinor: number }>, appliedObjects: Array<{ type: AccountingAppliedObjectType, id: string }>, decidedBy: { id: string, name: string } | null } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
 
 export type AccountingConnectionFieldsFragment = { id: string, integrationType: AccountingSystem, status: AccountingConnectionStatus, appSource: AccountingAppSource, appEnvironment: AccountingAppEnvironment | null, externalCompanyName: string, externalLegalName: string, externalCountry: string, externalHomeCurrency: string, externalMultiCurrencyEnabled: boolean, externalBooksClosedThrough: number | null, lastCheckedAt: number | null, lastSuccessAt: number | null, lastFailureAt: number | null, consecutiveFailures: number, lastErrorCategory: AccountingErrorCategory | null, lastErrorMessage: string, lastWebhookAt: number | null, refreshTokenAbsoluteExpiresAt: number, authMethod: AccountingAuthMethod, certificateId: string | null, certificateExpiresAt: number | null, connectedAt: number, disconnectedAt: number | null, setupStep: AccountingSetupStep, syncMode: AccountingSyncMode, ledgerGranularity: AccountingLedgerGranularity | null, ledgerOpeningBalancesSentAt: number | null, externalFiscalYearStartMonth: number, syncStartDate: number | null, syncEnabledAt: number | null, autoSync: boolean, driverSettlementsEnabledAt: number | null, syncsDriverSettlements: boolean, inboundPaymentPolicy: AccountingInboundPaymentPolicy, changesReadAt: number | null, changesErrorMessage: string, pausedAt: number | null, pausedReason: string, referenceRefreshStartedAt: number | null, referenceRefreshedAt: number | null, referenceRefreshError: string, version: number, updatedAt: number, pausedBy: { id: string, name: string } | null } & { ' $fragmentName'?: 'AccountingConnectionFieldsFragment' };
 
@@ -9643,7 +9643,7 @@ export type AccountingSyncRecordsQueryVariables = Exact<{
 }>;
 
 
-export type AccountingSyncRecordsQuery = { accountingSyncRecords: { totalCount: number | null, edges: Array<{ node: { ' $fragmentRefs'?: { 'AccountingSyncRecordFieldsFragment': AccountingSyncRecordFieldsFragment } } }>, pageInfo: { hasNextPage: boolean, endCursor: string | null } } };
+export type AccountingSyncRecordsQuery = { accountingSyncRecords: { totalCount: number | null, totalCountExact: boolean, edges: Array<{ node: { ' $fragmentRefs'?: { 'AccountingSyncRecordFieldsFragment': AccountingSyncRecordFieldsFragment } } }>, pageInfo: { hasNextPage: boolean, endCursor: string | null } } };
 
 export type AccountingSyncRecordQueryVariables = Exact<{
   id: string | number;
@@ -9757,7 +9757,7 @@ export type AccountingSyncRecordTableQueryVariables = Exact<{
 }>;
 
 
-export type AccountingSyncRecordTableQuery = { accountingSyncRecordTable: { totalCount?: number | null, edges: Array<{ node: { id: string, objectType: AccountingSyncObjectType, objectId: string, objectNumber: string, operation: AccountingSyncOperation, sourceEvent: AccountingSyncSourceEvent, revision: number, documentDate: number | null, dependsOnRecordId: string | null, status: AccountingSyncRecordStatus, attemptCount: number, nextAttemptAt: number | null, externalId: string, externalDocNumber: string, externalUrl: string, errorCategory: AccountingSyncErrorCategory | null, errorCode: string, errorMessage: string, resolution: string, queuedAt: number, startedAt: number | null, syncedAt: number | null, skippedReason: string, redatedTo: number | null, version: number, updatedAt: number, skippedBy: { id: string, name: string } | null } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
+export type AccountingSyncRecordTableQuery = { accountingSyncRecordTable: { totalCount?: number | null, totalCountExact?: boolean, edges: Array<{ node: { id: string, objectType: AccountingSyncObjectType, objectId: string, objectNumber: string, operation: AccountingSyncOperation, sourceEvent: AccountingSyncSourceEvent, revision: number, documentDate: number | null, dependsOnRecordId: string | null, status: AccountingSyncRecordStatus, attemptCount: number, nextAttemptAt: number | null, externalId: string, externalDocNumber: string, externalUrl: string, errorCategory: AccountingSyncErrorCategory | null, errorCode: string, errorMessage: string, resolution: string, queuedAt: number, startedAt: number | null, syncedAt: number | null, skippedReason: string, redatedTo: number | null, version: number, updatedAt: number, skippedBy: { id: string, name: string } | null } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
 
 export type LateChargeAssessmentResultFieldsFragment = { asOfDate: number, preview: boolean, mode: LateChargeAssessmentMode, memosCreated: number, memosPosted: number, customersSkipped: number, totalChargeMinor: number, customers: Array<{ customerId: string, customerName: string, currencyCode: string, totalChargeMinor: number, debitMemoId: string | null, debitMemoNumber: string, posted: boolean, skipped: boolean, skipReason: string, lines: Array<{ invoiceId: string, invoiceNumber: string, periodIndex: number, periodStart: number, periodEnd: number, basisOpenBalanceMinor: number, ratePercent: string, chargeMinor: number }> }> } & { ' $fragmentName'?: 'LateChargeAssessmentResultFieldsFragment' };
 
@@ -9881,7 +9881,7 @@ export type MyAgentsQueryVariables = Exact<{
 }>;
 
 
-export type MyAgentsQuery = { myAgents: { totalCount?: number | null, edges: Array<{ node: { ' $fragmentRefs'?: { 'MyAgentFieldsFragment': MyAgentFieldsFragment } } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
+export type MyAgentsQuery = { myAgents: { totalCount?: number | null, totalCountExact?: boolean, edges: Array<{ node: { ' $fragmentRefs'?: { 'MyAgentFieldsFragment': MyAgentFieldsFragment } } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
 
 export type MyAgentMatchQueryVariables = Exact<{
   input: MyAgentMatchInput;
@@ -10048,7 +10048,7 @@ export type AiUsageFeaturesQueryVariables = Exact<{
 }>;
 
 
-export type AiUsageFeaturesQuery = { aiUsageFeatures: { totalCount?: number | null, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } }, edges: Array<{ cursor: string, node: { feature: AiUsageFeature | null, calls: number, failed: number, inputTokens: number, outputTokens: number, costUsd: string, pricedCalls: number, latencyP50Ms: number, latencyP95Ms: number } }> } };
+export type AiUsageFeaturesQuery = { aiUsageFeatures: { totalCount?: number | null, totalCountExact?: boolean, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } }, edges: Array<{ cursor: string, node: { feature: AiUsageFeature | null, calls: number, failed: number, inputTokens: number, outputTokens: number, costUsd: string, pricedCalls: number, latencyP50Ms: number, latencyP95Ms: number } }> } };
 
 export type AiTuneUpFieldsFragment = { id: string, kind: AiTuneUpKind, toolName: string | null, task: AiTask | null, status: AiTuneUpStatus, dismissedUntil: number | null, computedAt: number, version: number, agent: { id: string, name: string, icon: string, accent: string } | null, provider: { id: string, name: string, kind: AiProviderKind } | null, otherProvider: { id: string, name: string, kind: AiProviderKind } | null, evidence: { fromTier: AgentAutonomyTier | null, toTier: AgentAutonomyTier | null, streak: number, approvals: number, approvalsPerWeek: number, rejections: number, calls: number, failed: number, rescued: number, recorded: number, matchRate: number, wouldFail: number, tasks: Array<AiTask>, model: string, lastRunAt: number | null, idleSince: number, tools: number } } & { ' $fragmentName'?: 'AiTuneUpFieldsFragment' };
 
@@ -10134,7 +10134,7 @@ export type AiAuditEventTableQueryVariables = Exact<{
 }>;
 
 
-export type AiAuditEventTableQuery = { aiAuditEvents: { totalCount?: number | null, edges: Array<{ node: { ' $fragmentRefs'?: { 'AiAuditEventRowFieldsFragment': AiAuditEventRowFieldsFragment } } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
+export type AiAuditEventTableQuery = { aiAuditEvents: { totalCount?: number | null, totalCountExact?: boolean, edges: Array<{ node: { ' $fragmentRefs'?: { 'AiAuditEventRowFieldsFragment': AiAuditEventRowFieldsFragment } } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
 
 export type AiAuditEventDetailQueryVariables = Exact<{
   id: string | number;
@@ -10154,7 +10154,7 @@ export type AiAuditExportTableQueryVariables = Exact<{
 }>;
 
 
-export type AiAuditExportTableQuery = { aiAuditExports: { totalCount?: number | null, edges: Array<{ node: { ' $fragmentRefs'?: { 'AiAuditExportFieldsFragment': AiAuditExportFieldsFragment } } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
+export type AiAuditExportTableQuery = { aiAuditExports: { totalCount?: number | null, totalCountExact?: boolean, edges: Array<{ node: { ' $fragmentRefs'?: { 'AiAuditExportFieldsFragment': AiAuditExportFieldsFragment } } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
 
 export type AiAuditExportDetailQueryVariables = Exact<{
   id: string | number;
@@ -10287,7 +10287,7 @@ export type PendingDecisionsQueryVariables = Exact<{
 }>;
 
 
-export type PendingDecisionsQuery = { pendingDecisions: { totalCount?: number | null, edges: Array<{ cursor: string, node:
+export type PendingDecisionsQuery = { pendingDecisions: { totalCount?: number | null, totalCountExact?: boolean, edges: Array<{ cursor: string, node:
         | (
           { __typename: 'AgentPlan' }
           & { ' $fragmentRefs'?: { 'PendingPlanFieldsFragment': PendingPlanFieldsFragment } }
@@ -10337,7 +10337,7 @@ export type AgentDefinitionCardsQueryVariables = Exact<{
 }>;
 
 
-export type AgentDefinitionCardsQuery = { agentDefinitions: { totalCount?: number | null, edges: Array<{ node: { ' $fragmentRefs'?: { 'AgentDefinitionCardFieldsFragment': AgentDefinitionCardFieldsFragment } } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
+export type AgentDefinitionCardsQuery = { agentDefinitions: { totalCount?: number | null, totalCountExact?: boolean, edges: Array<{ node: { ' $fragmentRefs'?: { 'AgentDefinitionCardFieldsFragment': AgentDefinitionCardFieldsFragment } } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
 
 export type AgentChoiceFieldsFragment = { id: string, name: string, description: string | null, template: AgentTemplate | null, icon: string, accent: string, toolNames: Array<string>, systemKey: string | null, starters: Array<{ label: string, prompt: string }> } & { ' $fragmentName'?: 'AgentChoiceFieldsFragment' };
 
@@ -10347,28 +10347,28 @@ export type AgentChoicesQueryVariables = Exact<{
 }>;
 
 
-export type AgentChoicesQuery = { agentDefinitions: { totalCount?: number | null, edges: Array<{ node: { ' $fragmentRefs'?: { 'AgentChoiceFieldsFragment': AgentChoiceFieldsFragment } } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
+export type AgentChoicesQuery = { agentDefinitions: { totalCount?: number | null, totalCountExact?: boolean, edges: Array<{ node: { ' $fragmentRefs'?: { 'AgentChoiceFieldsFragment': AgentChoiceFieldsFragment } } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
 
 export type AgentDefinitionCountQueryVariables = Exact<{
   input: DataTableConnectionInput;
 }>;
 
 
-export type AgentDefinitionCountQuery = { agentDefinitions: { totalCount: number | null } };
+export type AgentDefinitionCountQuery = { agentDefinitions: { totalCount: number | null, totalCountExact: boolean } };
 
 export type AgentRunCountQueryVariables = Exact<{
   input: DataTableConnectionInput;
 }>;
 
 
-export type AgentRunCountQuery = { agentRuns: { totalCount: number | null } };
+export type AgentRunCountQuery = { agentRuns: { totalCount: number | null, totalCountExact: boolean } };
 
 export type AgentProposalCountQueryVariables = Exact<{
   input: DataTableConnectionInput;
 }>;
 
 
-export type AgentProposalCountQuery = { agentProposals: { totalCount: number | null } };
+export type AgentProposalCountQuery = { agentProposals: { totalCount: number | null, totalCountExact: boolean } };
 
 export type DeskMemoryFieldsFragment = { id: string, content: string, kind: AgentMemoryKind, scope: AgentMemoryScope, roleId: string | null, roleName: string, status: AgentMemoryStatus, source: AgentMemorySource, sourceTitle: string, useCount: number, lastUsedAt: number | null, createdAt: number, version: number, editable: boolean, reason: string, quotes: Array<string>, replaces: { id: string, content: string, status: AgentMemoryStatus } | null, replacedBy: { id: string, content: string, status: AgentMemoryStatus } | null } & { ' $fragmentName'?: 'DeskMemoryFieldsFragment' };
 
@@ -10451,7 +10451,7 @@ export type AgentEvalCaseTableQueryVariables = Exact<{
 }>;
 
 
-export type AgentEvalCaseTableQuery = { agentEvalCases: { totalCount?: number | null, edges: Array<{ node: { ' $fragmentRefs'?: { 'AgentEvalCaseTableRowFieldsFragment': AgentEvalCaseTableRowFieldsFragment } } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
+export type AgentEvalCaseTableQuery = { agentEvalCases: { totalCount?: number | null, totalCountExact?: boolean, edges: Array<{ node: { ' $fragmentRefs'?: { 'AgentEvalCaseTableRowFieldsFragment': AgentEvalCaseTableRowFieldsFragment } } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
 
 export type AgentEvalCaseDetailQueryVariables = Exact<{
   id: string | number;
@@ -10498,7 +10498,7 @@ export type AgentEvaluationTableQueryVariables = Exact<{
 }>;
 
 
-export type AgentEvaluationTableQuery = { agentEvaluations: { totalCount?: number | null, edges: Array<{ node: { ' $fragmentRefs'?: { 'AgentEvaluationTableRowFieldsFragment': AgentEvaluationTableRowFieldsFragment } } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
+export type AgentEvaluationTableQuery = { agentEvaluations: { totalCount?: number | null, totalCountExact?: boolean, edges: Array<{ node: { ' $fragmentRefs'?: { 'AgentEvaluationTableRowFieldsFragment': AgentEvaluationTableRowFieldsFragment } } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
 
 export type AgentEvaluationDetailQueryVariables = Exact<{
   id: string | number;
@@ -10527,7 +10527,7 @@ export type AgentExceptionTableQueryVariables = Exact<{
 }>;
 
 
-export type AgentExceptionTableQuery = { agentExceptions: { totalCount?: number | null, edges: Array<{ node: { ' $fragmentRefs'?: { 'AgentExceptionTableRowFieldsFragment': AgentExceptionTableRowFieldsFragment } } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
+export type AgentExceptionTableQuery = { agentExceptions: { totalCount?: number | null, totalCountExact?: boolean, edges: Array<{ node: { ' $fragmentRefs'?: { 'AgentExceptionTableRowFieldsFragment': AgentExceptionTableRowFieldsFragment } } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
 
 export type AgentExceptionDetailQueryVariables = Exact<{
   id: string | number;
@@ -10552,14 +10552,14 @@ export type AgentMemoryTableQueryVariables = Exact<{
 }>;
 
 
-export type AgentMemoryTableQuery = { agentMemories: { totalCount?: number | null, edges: Array<{ node: { ' $fragmentRefs'?: { 'AgentMemoryTableRowFieldsFragment': AgentMemoryTableRowFieldsFragment } } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
+export type AgentMemoryTableQuery = { agentMemories: { totalCount?: number | null, totalCountExact?: boolean, edges: Array<{ node: { ' $fragmentRefs'?: { 'AgentMemoryTableRowFieldsFragment': AgentMemoryTableRowFieldsFragment } } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
 
 export type AgentMemoryCountQueryVariables = Exact<{
   input: DataTableConnectionInput;
 }>;
 
 
-export type AgentMemoryCountQuery = { agentMemories: { totalCount: number | null } };
+export type AgentMemoryCountQuery = { agentMemories: { totalCount: number | null, totalCountExact: boolean } };
 
 export type AgentMemoryUsageQueryVariables = Exact<{ [key: string]: never; }>;
 
@@ -10621,7 +10621,7 @@ export type AgentReflectionsQueryVariables = Exact<{
 }>;
 
 
-export type AgentReflectionsQuery = { agentReflections: { totalCount?: number | null, edges: Array<{ node: { ' $fragmentRefs'?: { 'AgentReflectionRowFieldsFragment': AgentReflectionRowFieldsFragment } } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
+export type AgentReflectionsQuery = { agentReflections: { totalCount?: number | null, totalCountExact?: boolean, edges: Array<{ node: { ' $fragmentRefs'?: { 'AgentReflectionRowFieldsFragment': AgentReflectionRowFieldsFragment } } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
 
 export type AgentPlanTableRowFieldsFragment = { id: string, organizationId: string, businessUnitId: string, runId: string, title: string, summary: string, status: AgentPlanStatus, stepCount: number, completedSteps: number, failedStep: number | null, failureError: string, decidedByUserId: string | null, decidedAt: number | null, expiresAt: number | null, version: number, createdAt: number, updatedAt: number, hold: { reason: PendingDecisionHoldReason, agentName: string } | null } & { ' $fragmentName'?: 'AgentPlanTableRowFieldsFragment' };
 
@@ -10631,7 +10631,7 @@ export type AgentPlanTableQueryVariables = Exact<{
 }>;
 
 
-export type AgentPlanTableQuery = { agentPlans: { totalCount?: number | null, edges: Array<{ node: { ' $fragmentRefs'?: { 'AgentPlanTableRowFieldsFragment': AgentPlanTableRowFieldsFragment } } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
+export type AgentPlanTableQuery = { agentPlans: { totalCount?: number | null, totalCountExact?: boolean, edges: Array<{ node: { ' $fragmentRefs'?: { 'AgentPlanTableRowFieldsFragment': AgentPlanTableRowFieldsFragment } } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
 
 export type AgentPlanDetailQueryVariables = Exact<{
   id: string | number;
@@ -10772,7 +10772,7 @@ export type AgentProposalTableQueryVariables = Exact<{
 }>;
 
 
-export type AgentProposalTableQuery = { agentProposals: { totalCount?: number | null, edges: Array<{ node: { ' $fragmentRefs'?: { 'AgentProposalTableRowFieldsFragment': AgentProposalTableRowFieldsFragment } } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
+export type AgentProposalTableQuery = { agentProposals: { totalCount?: number | null, totalCountExact?: boolean, edges: Array<{ node: { ' $fragmentRefs'?: { 'AgentProposalTableRowFieldsFragment': AgentProposalTableRowFieldsFragment } } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
 
 export type AgentProposalDetailQueryVariables = Exact<{
   id: string | number;
@@ -10813,7 +10813,7 @@ export type AgentQualityAgentTableQueryVariables = Exact<{
 }>;
 
 
-export type AgentQualityAgentTableQuery = { agentQualityAgentConnection: { totalCount?: number | null, edges: Array<{ node: { id: string, agentDefinitionId: string, name: string, enabled: boolean, ratingsVisible: boolean, satisfaction: number | null, satisfactionDelta: number | null, ratings: number, qualityScore: number | null, openRegression: boolean, qualityPoints: Array<{ ' $fragmentRefs'?: { 'AgentQualityPointFieldsFragment': AgentQualityPointFieldsFragment } }>, lastSuiteRun: { ' $fragmentRefs'?: { 'AgentSuiteRunFieldsFragment': AgentSuiteRunFieldsFragment } } | null } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
+export type AgentQualityAgentTableQuery = { agentQualityAgentConnection: { totalCount?: number | null, totalCountExact?: boolean, edges: Array<{ node: { id: string, agentDefinitionId: string, name: string, enabled: boolean, ratingsVisible: boolean, satisfaction: number | null, satisfactionDelta: number | null, ratings: number, qualityScore: number | null, openRegression: boolean, qualityPoints: Array<{ ' $fragmentRefs'?: { 'AgentQualityPointFieldsFragment': AgentQualityPointFieldsFragment } }>, lastSuiteRun: { ' $fragmentRefs'?: { 'AgentSuiteRunFieldsFragment': AgentSuiteRunFieldsFragment } } | null } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
 
 export type AgentWorstRatedAnswerTableQueryVariables = Exact<{
   agentDefinitionId?: string | number | null | undefined;
@@ -10823,7 +10823,7 @@ export type AgentWorstRatedAnswerTableQueryVariables = Exact<{
 }>;
 
 
-export type AgentWorstRatedAnswerTableQuery = { agentWorstRatedAnswerConnection: { totalCount?: number | null, edges: Array<{ node: { ' $fragmentRefs'?: { 'AgentWorstRatedAnswerFieldsFragment': AgentWorstRatedAnswerFieldsFragment } } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
+export type AgentWorstRatedAnswerTableQuery = { agentWorstRatedAnswerConnection: { totalCount?: number | null, totalCountExact?: boolean, edges: Array<{ node: { ' $fragmentRefs'?: { 'AgentWorstRatedAnswerFieldsFragment': AgentWorstRatedAnswerFieldsFragment } } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
 
 export type AgentQualityQueryVariables = Exact<{
   agentDefinitionId: string | number;
@@ -10840,7 +10840,7 @@ export type AgentSuiteRunTableQueryVariables = Exact<{
 }>;
 
 
-export type AgentSuiteRunTableQuery = { agentSuiteRunConnection: { totalCount?: number | null, edges: Array<{ node: { ' $fragmentRefs'?: { 'AgentSuiteRunFieldsFragment': AgentSuiteRunFieldsFragment } } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
+export type AgentSuiteRunTableQuery = { agentSuiteRunConnection: { totalCount?: number | null, totalCountExact?: boolean, edges: Array<{ node: { ' $fragmentRefs'?: { 'AgentSuiteRunFieldsFragment': AgentSuiteRunFieldsFragment } } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
 
 export type AgentSuiteRunQueryVariables = Exact<{
   id: string | number;
@@ -10856,7 +10856,7 @@ export type AgentSuiteRunCaseTableQueryVariables = Exact<{
 }>;
 
 
-export type AgentSuiteRunCaseTableQuery = { agentSuiteRunCaseConnection: { totalCount?: number | null, edges: Array<{ node: { ' $fragmentRefs'?: { 'AgentSuiteRunCaseFieldsFragment': AgentSuiteRunCaseFieldsFragment } } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
+export type AgentSuiteRunCaseTableQuery = { agentSuiteRunCaseConnection: { totalCount?: number | null, totalCountExact?: boolean, edges: Array<{ node: { ' $fragmentRefs'?: { 'AgentSuiteRunCaseFieldsFragment': AgentSuiteRunCaseFieldsFragment } } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
 
 export type AgentQualityControlQueryVariables = Exact<{ [key: string]: never; }>;
 
@@ -10900,7 +10900,7 @@ export type AiRetrievalFailedEntryTableQueryVariables = Exact<{
 }>;
 
 
-export type AiRetrievalFailedEntryTableQuery = { aiRetrievalFailedEntryConnection: { totalCount?: number | null, edges: Array<{ node: { ' $fragmentRefs'?: { 'AiRetrievalFailedEntryFieldsFragment': AiRetrievalFailedEntryFieldsFragment } } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
+export type AiRetrievalFailedEntryTableQuery = { aiRetrievalFailedEntryConnection: { totalCount?: number | null, totalCountExact?: boolean, edges: Array<{ node: { ' $fragmentRefs'?: { 'AiRetrievalFailedEntryFieldsFragment': AiRetrievalFailedEntryFieldsFragment } } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
 
 export type UpdateAiRetrievalSettingsMutationVariables = Exact<{
   input: AiRetrievalSettingsPatchInput;
@@ -10924,7 +10924,7 @@ export type AgentRunTableQueryVariables = Exact<{
 }>;
 
 
-export type AgentRunTableQuery = { agentRuns: { totalCount?: number | null, edges: Array<{ node: { ' $fragmentRefs'?: { 'AgentRunTableRowFieldsFragment': AgentRunTableRowFieldsFragment } } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
+export type AgentRunTableQuery = { agentRuns: { totalCount?: number | null, totalCountExact?: boolean, edges: Array<{ node: { ' $fragmentRefs'?: { 'AgentRunTableRowFieldsFragment': AgentRunTableRowFieldsFragment } } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
 
 export type AgentRunTranscriptFieldsFragment = { omittedMessages: number, omittedAt: number, messages: Array<{ role: string, kind: string, content: string, reasoning: string, toolCallId: string, toolName: string, toolFailed: boolean, toolVerdict: string, toolSummary: string, agentDefinitionId: string, delegateCallId: string, omitted: boolean, createdAt: number, toolCalls: Array<{ id: string, name: string, arguments: unknown }> }> } & { ' $fragmentName'?: 'AgentRunTranscriptFieldsFragment' };
 
@@ -10961,7 +10961,7 @@ export type AgentToolRuleTableQueryVariables = Exact<{
 }>;
 
 
-export type AgentToolRuleTableQuery = { agentToolRuleConnection: { totalCount?: number | null, edges: Array<{ node: (
+export type AgentToolRuleTableQuery = { agentToolRuleConnection: { totalCount?: number | null, totalCountExact?: boolean, edges: Array<{ node: (
         { runsWithoutPerson: boolean | null }
         & { ' $fragmentRefs'?: { 'AgentToolPolicyFieldsFragment': AgentToolPolicyFieldsFragment } }
       ) }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
@@ -10973,7 +10973,7 @@ export type AgentToolSafetyTableQueryVariables = Exact<{
 }>;
 
 
-export type AgentToolSafetyTableQuery = { agentToolSafetyConnection: { totalCount?: number | null, edges: Array<{ node: { ' $fragmentRefs'?: { 'AgentToolSafetyRowFieldsFragment': AgentToolSafetyRowFieldsFragment } } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
+export type AgentToolSafetyTableQuery = { agentToolSafetyConnection: { totalCount?: number | null, totalCountExact?: boolean, edges: Array<{ node: { ' $fragmentRefs'?: { 'AgentToolSafetyRowFieldsFragment': AgentToolSafetyRowFieldsFragment } } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
 
 export type AgentSafetySummaryQueryVariables = Exact<{ [key: string]: never; }>;
 
@@ -11040,7 +11040,7 @@ export type AiFeedbackTableQueryVariables = Exact<{
 }>;
 
 
-export type AiFeedbackTableQuery = { aiFeedback: { totalCount?: number | null, edges: Array<{ node: { ' $fragmentRefs'?: { 'AiFeedbackTableRowFieldsFragment': AiFeedbackTableRowFieldsFragment } } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
+export type AiFeedbackTableQuery = { aiFeedback: { totalCount?: number | null, totalCountExact?: boolean, edges: Array<{ node: { ' $fragmentRefs'?: { 'AiFeedbackTableRowFieldsFragment': AiFeedbackTableRowFieldsFragment } } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
 
 export type AgentFeedbackSummaryQueryVariables = Exact<{
   agentDefinitionId: string | number;
@@ -11136,7 +11136,7 @@ export type ApiKeyTableQueryVariables = Exact<{
 }>;
 
 
-export type ApiKeyTableQuery = { apiKeys: { totalCount?: number | null, edges: Array<{ node: { ' $fragmentRefs'?: { 'ApiKeyTableRowFieldsFragment': ApiKeyTableRowFieldsFragment } } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
+export type ApiKeyTableQuery = { apiKeys: { totalCount?: number | null, totalCountExact?: boolean, edges: Array<{ node: { ' $fragmentRefs'?: { 'ApiKeyTableRowFieldsFragment': ApiKeyTableRowFieldsFragment } } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
 
 export type AttentionSummaryQueryVariables = Exact<{ [key: string]: never; }>;
 
@@ -11159,7 +11159,7 @@ export type AuditLogTableQueryVariables = Exact<{
 }>;
 
 
-export type AuditLogTableQuery = { auditEntries: { totalCount?: number | null, edges: Array<{ node: { ' $fragmentRefs'?: { 'AuditLogTableRowFieldsFragment': AuditLogTableRowFieldsFragment } } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
+export type AuditLogTableQuery = { auditEntries: { totalCount?: number | null, totalCountExact?: boolean, edges: Array<{ node: { ' $fragmentRefs'?: { 'AuditLogTableRowFieldsFragment': AuditLogTableRowFieldsFragment } } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
 
 export type BenefitPlansQueryVariables = Exact<{
   activeOnly?: boolean | null | undefined;
@@ -11261,7 +11261,7 @@ export type BillingTransferCandidatesQueryVariables = Exact<{
 }>;
 
 
-export type BillingTransferCandidatesQuery = { shipments: { totalCount?: number | null, edges: Array<{ node: { id: string, proNumber: string, bol: string | null, status: ShipmentStatus, billingTransferStatus: string | null, totalChargeAmount: string, actualDeliveryDate: number | null, customer: { id: string, code: string, name: string } | null } }>, pageInfo: { hasNextPage: boolean, endCursor: string | null } } };
+export type BillingTransferCandidatesQuery = { shipments: { totalCount?: number | null, totalCountExact?: boolean, edges: Array<{ node: { id: string, proNumber: string, bol: string | null, status: ShipmentStatus, billingTransferStatus: string | null, totalChargeAmount: string, actualDeliveryDate: number | null, customer: { id: string, code: string, name: string } | null } }>, pageInfo: { hasNextPage: boolean, endCursor: string | null } } };
 
 export type BillingTransferCandidateIdsQueryVariables = Exact<{
   input: ShipmentBillingTransferCandidateIdsInput;
@@ -11290,7 +11290,7 @@ export type BillingTransferRunItemsQueryVariables = Exact<{
 }>;
 
 
-export type BillingTransferRunItemsQuery = { billingTransferRunItems: { totalCount?: number, edges: Array<{ node: { id: string, shipmentId: string, sequence: number, proNumber: string | null, status: BillingTransferItemStatus, failureCode: ShipmentBillingTransferFailureCode | null, errorMessage: string | null, markedReadyToInvoice: boolean, billingQueueNumber: string | null, billingQueueStatus: BillingQueueStatus | null, missingRequirements: Array<{ documentTypeId: string, documentTypeCode: string, documentTypeName: string }>, validationFailures: Array<{ field: string, code: string, message: string }> } }>, pageInfo: { hasNextPage: boolean, endCursor: string | null } } };
+export type BillingTransferRunItemsQuery = { billingTransferRunItems: { totalCount?: number, totalCountExact?: boolean, edges: Array<{ node: { id: string, shipmentId: string, sequence: number, proNumber: string | null, status: BillingTransferItemStatus, failureCode: ShipmentBillingTransferFailureCode | null, errorMessage: string | null, markedReadyToInvoice: boolean, billingQueueNumber: string | null, billingQueueStatus: BillingQueueStatus | null, missingRequirements: Array<{ documentTypeId: string, documentTypeCode: string, documentTypeName: string }>, validationFailures: Array<{ field: string, code: string, message: string }> } }>, pageInfo: { hasNextPage: boolean, endCursor: string | null } } };
 
 export type StartBillingTransferRunMutationVariables = Exact<{
   input: StartBillingTransferRunInput;
@@ -11421,7 +11421,7 @@ export type CaptureBatchCountQueryVariables = Exact<{
 }>;
 
 
-export type CaptureBatchCountQuery = { captureBatches: { totalCount: number | null } };
+export type CaptureBatchCountQuery = { captureBatches: { totalCount: number | null, totalCountExact: boolean } };
 
 export type CaptureBatchQueryVariables = Exact<{
   id: string | number;
@@ -11631,7 +11631,7 @@ export type DeskCarrierSettlementsQueryVariables = Exact<{
 }>;
 
 
-export type DeskCarrierSettlementsQuery = { carrierSettlements: { totalCount?: number | null, edges: Array<{ node: { id: string, settlementNumber: string, status: CarrierSettlementStatus, periodStart: number, periodEnd: number, payDate: number, netPayableMinor: number, shipmentCount: number, currencyCode: string } }>, pageInfo: { hasNextPage: boolean, endCursor: string | null } } };
+export type DeskCarrierSettlementsQuery = { carrierSettlements: { totalCount?: number | null, totalCountExact?: boolean, edges: Array<{ node: { id: string, settlementNumber: string, status: CarrierSettlementStatus, periodStart: number, periodEnd: number, payDate: number, netPayableMinor: number, shipmentCount: number, currencyCode: string } }>, pageInfo: { hasNextPage: boolean, endCursor: string | null } } };
 
 export type DeskCarrierCapacityPostingsQueryVariables = Exact<{
   input: DataTableConnectionInput;
@@ -11640,7 +11640,7 @@ export type DeskCarrierCapacityPostingsQueryVariables = Exact<{
 }>;
 
 
-export type DeskCarrierCapacityPostingsQuery = { carrierCapacityPostings: { totalCount?: number | null, edges: Array<{ node: { id: string, carrierId: string, originLocationId: string | null, originStateId: string | null, originRadiusMiles: number | null, destinationStateId: string | null, equipmentTypeId: string | null, availableFrom: number, availableTo: number, truckCount: number, rateMethod: CarrierCapacityRateMethod, rate: string | null, source: CarrierCapacitySource, version: number, carrier: { id: string, name: string } | null, originLocation: { id: string, name: string, city: string } | null, originState: { id: string, abbreviation: string } | null, destinationState: { id: string, abbreviation: string } | null, equipmentType: { id: string, code: string } | null } }>, pageInfo: { hasNextPage: boolean, endCursor: string | null } } };
+export type DeskCarrierCapacityPostingsQuery = { carrierCapacityPostings: { totalCount?: number | null, totalCountExact?: boolean, edges: Array<{ node: { id: string, carrierId: string, originLocationId: string | null, originStateId: string | null, originRadiusMiles: number | null, destinationStateId: string | null, equipmentTypeId: string | null, availableFrom: number, availableTo: number, truckCount: number, rateMethod: CarrierCapacityRateMethod, rate: string | null, source: CarrierCapacitySource, version: number, carrier: { id: string, name: string } | null, originLocation: { id: string, name: string, city: string } | null, originState: { id: string, abbreviation: string } | null, destinationState: { id: string, abbreviation: string } | null, equipmentType: { id: string, code: string } | null } }>, pageInfo: { hasNextPage: boolean, endCursor: string | null } } };
 
 export type DeskCarrierInvoiceMatchesQueryVariables = Exact<{
   status?: CarrierInvoiceMatchStatus | null | undefined;
@@ -11715,7 +11715,7 @@ export type CarrierIntelEventTableQueryVariables = Exact<{
 }>;
 
 
-export type CarrierIntelEventTableQuery = { carrierIntelEvents: { totalCount: number | null, edges: Array<{ node: { ' $fragmentRefs'?: { 'CarrierIntelEventFieldsFragment': CarrierIntelEventFieldsFragment } } }>, pageInfo: { hasNextPage: boolean, endCursor: string | null } } };
+export type CarrierIntelEventTableQuery = { carrierIntelEvents: { totalCount: number | null, totalCountExact: boolean, edges: Array<{ node: { ' $fragmentRefs'?: { 'CarrierIntelEventFieldsFragment': CarrierIntelEventFieldsFragment } } }>, pageInfo: { hasNextPage: boolean, endCursor: string | null } } };
 
 export type CarrierIntelEventInboxQueryVariables = Exact<{
   input: DataTableConnectionInput;
@@ -11745,7 +11745,7 @@ export type CarrierMonitoringEnrollmentTableQueryVariables = Exact<{
 }>;
 
 
-export type CarrierMonitoringEnrollmentTableQuery = { carrierMonitoringEnrollments: { totalCount: number | null, edges: Array<{ node: { ' $fragmentRefs'?: { 'CarrierMonitoringEnrollmentFieldsFragment': CarrierMonitoringEnrollmentFieldsFragment } } }>, pageInfo: { hasNextPage: boolean, endCursor: string | null } } };
+export type CarrierMonitoringEnrollmentTableQuery = { carrierMonitoringEnrollments: { totalCount: number | null, totalCountExact: boolean, edges: Array<{ node: { ' $fragmentRefs'?: { 'CarrierMonitoringEnrollmentFieldsFragment': CarrierMonitoringEnrollmentFieldsFragment } } }>, pageInfo: { hasNextPage: boolean, endCursor: string | null } } };
 
 export type CarrierIntelReviewQueueQueryVariables = Exact<{
   limit?: number | null | undefined;
@@ -11954,7 +11954,7 @@ export type DeskCarrierIntelEventsQueryVariables = Exact<{
 }>;
 
 
-export type DeskCarrierIntelEventsQuery = { carrierIntelEvents: { totalCount?: number | null, edges: Array<{ node: { id: string, carrierId: string | null, subjectName: string | null, dotNumber: string, subjectType: CarrierIntelSubjectType, category: CarrierIntelSection, severity: CarrierIntelSeverity, action: CarrierIntelRuleAction | null, status: CarrierIntelEventStatus, summary: string, detectedAt: number, acknowledgedAt: number | null, resolvedAt: number | null, resolution: CarrierIntelEventResolution | null } }>, pageInfo: { hasNextPage: boolean, endCursor: string | null } } };
+export type DeskCarrierIntelEventsQuery = { carrierIntelEvents: { totalCount?: number | null, totalCountExact?: boolean, edges: Array<{ node: { id: string, carrierId: string | null, subjectName: string | null, dotNumber: string, subjectType: CarrierIntelSubjectType, category: CarrierIntelSection, severity: CarrierIntelSeverity, action: CarrierIntelRuleAction | null, status: CarrierIntelEventStatus, summary: string, detectedAt: number, acknowledgedAt: number | null, resolvedAt: number | null, resolution: CarrierIntelEventResolution | null } }>, pageInfo: { hasNextPage: boolean, endCursor: string | null } } };
 
 export type DeskCarrierSettlementCardQueryVariables = Exact<{
   id: string | number;
@@ -11969,7 +11969,7 @@ export type CarrierSettlementTableQueryVariables = Exact<{
 }>;
 
 
-export type CarrierSettlementTableQuery = { carrierSettlements: { totalCount?: number | null, edges: Array<{ node: { id: string, carrierId: string, batchId: string | null, settlementNumber: string, status: CarrierSettlementStatus, periodStart: number, periodEnd: number, payDate: number, grossCostMinor: number, adjustmentsMinor: number, netPayableMinor: number, shipmentCount: number, currencyCode: string, paymentMethod: string, paymentReference: string, version: number, createdAt: number, updatedAt: number, carrier: { id: string, code: string, name: string, scac: string | null } | null } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
+export type CarrierSettlementTableQuery = { carrierSettlements: { totalCount?: number | null, totalCountExact?: boolean, edges: Array<{ node: { id: string, carrierId: string, batchId: string | null, settlementNumber: string, status: CarrierSettlementStatus, periodStart: number, periodEnd: number, payDate: number, grossCostMinor: number, adjustmentsMinor: number, netPayableMinor: number, shipmentCount: number, currencyCode: string, paymentMethod: string, paymentReference: string, version: number, createdAt: number, updatedAt: number, carrier: { id: string, code: string, name: string, scac: string | null } | null } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
 
 export type CarrierSettlementDetailQueryVariables = Exact<{
   id: string | number;
@@ -11984,7 +11984,7 @@ export type CarrierSettlementBatchTableQueryVariables = Exact<{
 }>;
 
 
-export type CarrierSettlementBatchTableQuery = { carrierSettlementBatches: { totalCount?: number | null, edges: Array<{ node: { id: string, status: CarrierSettlementBatchStatus, name: string, periodStart: number, periodEnd: number, payDate: number, settlementCount: number, totalGrossMinor: number, totalNetMinor: number, currencyCode: string, notes: string, generatedById: string | null, generatedAt: number | null, completedAt: number | null, canceledAt: number | null, version: number, createdAt: number, updatedAt: number } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
+export type CarrierSettlementBatchTableQuery = { carrierSettlementBatches: { totalCount?: number | null, totalCountExact?: boolean, edges: Array<{ node: { id: string, status: CarrierSettlementBatchStatus, name: string, periodStart: number, periodEnd: number, payDate: number, settlementCount: number, totalGrossMinor: number, totalNetMinor: number, currencyCode: string, notes: string, generatedById: string | null, generatedAt: number | null, completedAt: number | null, canceledAt: number | null, version: number, createdAt: number, updatedAt: number } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
 
 export type CarrierSettlementBatchDetailQueryVariables = Exact<{
   id: string | number;
@@ -11999,7 +11999,7 @@ export type CarrierCostEventTableQueryVariables = Exact<{
 }>;
 
 
-export type CarrierCostEventTableQuery = { carrierCostEvents: { totalCount?: number | null, edges: Array<{ node: { id: string, carrierId: string, carrierAssignmentId: string | null, shipmentId: string | null, moveId: string | null, settlementId: string | null, eventType: CarrierCostEventType, status: CarrierCostEventStatus, eventDate: number, amountMinor: number, currencyCode: string, description: string, proNumber: string, assignmentVersion: number, voidedAt: number | null, voidReason: string, version: number, createdAt: number, updatedAt: number, carrier: { id: string, code: string, name: string, scac: string | null } | null } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
+export type CarrierCostEventTableQuery = { carrierCostEvents: { totalCount?: number | null, totalCountExact?: boolean, edges: Array<{ node: { id: string, carrierId: string, carrierAssignmentId: string | null, shipmentId: string | null, moveId: string | null, settlementId: string | null, eventType: CarrierCostEventType, status: CarrierCostEventStatus, eventDate: number, amountMinor: number, currencyCode: string, description: string, proNumber: string, assignmentVersion: number, voidedAt: number | null, voidReason: string, version: number, createdAt: number, updatedAt: number, carrier: { id: string, code: string, name: string, scac: string | null } | null } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
 
 export type CarrierSettlementControlQueryVariables = Exact<{ [key: string]: never; }>;
 
@@ -12035,7 +12035,7 @@ export type CarrierInvoiceMatchesQueryVariables = Exact<{
 }>;
 
 
-export type CarrierInvoiceMatchesQuery = { carrierInvoiceMatches: { totalCount: number, items: Array<{ id: string, ediCarrierInvoiceId: string | null, documentAiExtractionId: string | null, carrierId: string, carrierAssignmentId: string, carrierSettlementId: string | null, adjustmentCostEventId: string | null, duplicateOfMatchId: string | null, possibleDuplicateOfId: string | null, status: CarrierInvoiceMatchStatus, matchedVia: CarrierInvoiceMatchVia, invoiceNumber: string, invoiceTotalMinor: number, expectedTotalMinor: number, varianceMinor: number, currencyCode: string, resolutionNote: string, resolvedById: string | null, resolvedAt: number | null, version: number, createdAt: number, updatedAt: number, carrier: { id: string, code: string, name: string, scac: string | null } | null, carrierAssignment: { id: string, shipmentMoveId: string, status: CarrierAssignmentStatus, rateMethod: CarrierRateMethod, baseRate: string, baseAmount: string, fuelSurcharge: string, accessorialTotal: string, totalCost: string, currencyCode: string, proNumber: string | null, accessorials: Array<{ id: string, description: string, amount: string }> | null } | null }> } };
+export type CarrierInvoiceMatchesQuery = { carrierInvoiceMatches: { totalCount: number, totalCountExact: boolean, items: Array<{ id: string, ediCarrierInvoiceId: string | null, documentAiExtractionId: string | null, carrierId: string, carrierAssignmentId: string, carrierSettlementId: string | null, adjustmentCostEventId: string | null, duplicateOfMatchId: string | null, possibleDuplicateOfId: string | null, status: CarrierInvoiceMatchStatus, matchedVia: CarrierInvoiceMatchVia, invoiceNumber: string, invoiceTotalMinor: number, expectedTotalMinor: number, varianceMinor: number, currencyCode: string, resolutionNote: string, resolvedById: string | null, resolvedAt: number | null, version: number, createdAt: number, updatedAt: number, carrier: { id: string, code: string, name: string, scac: string | null } | null, carrierAssignment: { id: string, shipmentMoveId: string, status: CarrierAssignmentStatus, rateMethod: CarrierRateMethod, baseRate: string, baseAmount: string, fuelSurcharge: string, accessorialTotal: string, totalCost: string, currencyCode: string, proNumber: string | null, accessorials: Array<{ id: string, description: string, amount: string }> | null } | null }> } };
 
 export type EdiCarrierInvoicesQueryVariables = Exact<{
   reconciliationStatus?: string | null | undefined;
@@ -12044,7 +12044,7 @@ export type EdiCarrierInvoicesQueryVariables = Exact<{
 }>;
 
 
-export type EdiCarrierInvoicesQuery = { ediCarrierInvoices: { totalCount: number, items: Array<{ id: string, carrierId: string | null, shipmentId: string | null, invoiceNumber: string, invoiceDate: number | null, deliveryDate: number | null, shipmentReference: string, bol: string, proNumber: string, billToName: string, currencyCode: string, totalAmount: string | null, expectedAmount: string | null, varianceAmount: string | null, reconciliationStatus: string, reconciliationNotes: string, duplicateOfId: string | null, version: number, createdAt: number, updatedAt: number }> } };
+export type EdiCarrierInvoicesQuery = { ediCarrierInvoices: { totalCount: number, totalCountExact: boolean, items: Array<{ id: string, carrierId: string | null, shipmentId: string | null, invoiceNumber: string, invoiceDate: number | null, deliveryDate: number | null, shipmentReference: string, bol: string, proNumber: string, billToName: string, currencyCode: string, totalAmount: string | null, expectedAmount: string | null, varianceAmount: string | null, reconciliationStatus: string, reconciliationNotes: string, duplicateOfId: string | null, version: number, createdAt: number, updatedAt: number }> } };
 
 export type SuggestCarrierForEdiInvoiceQueryVariables = Exact<{
   invoiceId: string | number;
@@ -12185,7 +12185,7 @@ export type CarrierTableQueryVariables = Exact<{
 }>;
 
 
-export type CarrierTableQuery = { carriers: { totalCount?: number | null, edges: Array<{ node: { ' $fragmentRefs'?: { 'CarrierTableRowFieldsFragment': CarrierTableRowFieldsFragment } } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
+export type CarrierTableQuery = { carriers: { totalCount?: number | null, totalCountExact?: boolean, edges: Array<{ node: { ' $fragmentRefs'?: { 'CarrierTableRowFieldsFragment': CarrierTableRowFieldsFragment } } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
 
 export type CommandPaletteCustomerPreviewQueryVariables = Exact<{
   id: string | number;
@@ -12202,7 +12202,7 @@ export type CommodityTableQueryVariables = Exact<{
 }>;
 
 
-export type CommodityTableQuery = { commodities: { totalCount?: number | null, edges: Array<{ node: { ' $fragmentRefs'?: { 'CommodityTableRowFieldsFragment': CommodityTableRowFieldsFragment } } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
+export type CommodityTableQuery = { commodities: { totalCount?: number | null, totalCountExact?: boolean, edges: Array<{ node: { ' $fragmentRefs'?: { 'CommodityTableRowFieldsFragment': CommodityTableRowFieldsFragment } } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
 
 export type CostingControlPageQueryVariables = Exact<{ [key: string]: never; }>;
 
@@ -12238,7 +12238,7 @@ export type CustomFieldDefinitionTableQueryVariables = Exact<{
 }>;
 
 
-export type CustomFieldDefinitionTableQuery = { customFieldDefinitions: { totalCount?: number | null, edges: Array<{ node: { ' $fragmentRefs'?: { 'CustomFieldDefinitionTableRowFieldsFragment': CustomFieldDefinitionTableRowFieldsFragment } } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
+export type CustomFieldDefinitionTableQuery = { customFieldDefinitions: { totalCount?: number | null, totalCountExact?: boolean, edges: Array<{ node: { ' $fragmentRefs'?: { 'CustomFieldDefinitionTableRowFieldsFragment': CustomFieldDefinitionTableRowFieldsFragment } } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
 
 export type DeskCustomerPaymentsQueryVariables = Exact<{
   input: DataTableConnectionInput;
@@ -12246,7 +12246,7 @@ export type DeskCustomerPaymentsQueryVariables = Exact<{
 }>;
 
 
-export type DeskCustomerPaymentsQuery = { customerPayments: { totalCount?: number | null, edges: Array<{ node: { id: string, customerId: string, paymentDate: number, amountMinor: number, appliedAmountMinor: number, unappliedAmountMinor: number, currencyCode: string, status: CustomerPaymentStatus, paymentMethod: CustomerPaymentMethod, referenceNumber: string, memo: string, reversedAt: number | null, applications: Array<{ id: string, invoiceId: string, appliedAmountMinor: number, shortPayAmountMinor: number }> | null } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
+export type DeskCustomerPaymentsQuery = { customerPayments: { totalCount?: number | null, totalCountExact?: boolean, edges: Array<{ node: { id: string, customerId: string, paymentDate: number, amountMinor: number, appliedAmountMinor: number, unappliedAmountMinor: number, currencyCode: string, status: CustomerPaymentStatus, paymentMethod: CustomerPaymentMethod, referenceNumber: string, memo: string, reversedAt: number | null, applications: Array<{ id: string, invoiceId: string, appliedAmountMinor: number, shortPayAmountMinor: number }> | null } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
 
 export type CustomerPaymentTableQueryVariables = Exact<{
   input: DataTableConnectionInput;
@@ -12254,7 +12254,7 @@ export type CustomerPaymentTableQueryVariables = Exact<{
 }>;
 
 
-export type CustomerPaymentTableQuery = { customerPayments: { totalCount?: number | null, edges: Array<{ node: { id: string, organizationId: string, businessUnitId: string, customerId: string, paymentDate: number, accountingDate: number, amountMinor: number, appliedAmountMinor: number, unappliedAmountMinor: number, status: CustomerPaymentStatus, paymentMethod: CustomerPaymentMethod, referenceNumber: string, memo: string, currencyCode: string, postedBatchId: string | null, reversalBatchId: string | null, reversedById: string | null, reversedAt: number | null, reversalReason: string, createdById: string, updatedById: string | null, version: number, createdAt: number, updatedAt: number, customer: { id: string, code: string, name: string } | null, applications: Array<{ id: string, customerPaymentId: string, invoiceId: string, appliedAmountMinor: number, shortPayAmountMinor: number, lineNumber: number, createdAt: number, updatedAt: number }> | null } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
+export type CustomerPaymentTableQuery = { customerPayments: { totalCount?: number | null, totalCountExact?: boolean, edges: Array<{ node: { id: string, organizationId: string, businessUnitId: string, customerId: string, paymentDate: number, accountingDate: number, amountMinor: number, appliedAmountMinor: number, unappliedAmountMinor: number, status: CustomerPaymentStatus, paymentMethod: CustomerPaymentMethod, referenceNumber: string, memo: string, currencyCode: string, postedBatchId: string | null, reversalBatchId: string | null, reversedById: string | null, reversedAt: number | null, reversalReason: string, createdById: string, updatedById: string | null, version: number, createdAt: number, updatedAt: number, customer: { id: string, code: string, name: string } | null, applications: Array<{ id: string, customerPaymentId: string, invoiceId: string, appliedAmountMinor: number, shortPayAmountMinor: number, lineNumber: number, createdAt: number, updatedAt: number }> | null } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
 
 export type CustomerPaymentDetailQueryVariables = Exact<{
   id: string | number;
@@ -12312,7 +12312,7 @@ export type DeskCustomerRateAgreementsQueryVariables = Exact<{
 }>;
 
 
-export type DeskCustomerRateAgreementsQuery = { rateAgreements: { totalCount: number | null, edges: Array<{ node: { id: string, code: string, name: string, status: RateAgreementStatus, agreementType: RateAgreementType, effectiveFrom: number, effectiveTo: number | null, autoRenew: boolean, renewalNoticeDays: number } }> } };
+export type DeskCustomerRateAgreementsQuery = { rateAgreements: { totalCount: number | null, totalCountExact: boolean, edges: Array<{ node: { id: string, code: string, name: string, status: RateAgreementStatus, agreementType: RateAgreementType, effectiveFrom: number, effectiveTo: number | null, autoRenew: boolean, renewalNoticeDays: number } }> } };
 
 export type DeskCustomerUpdatePreferencesQueryVariables = Exact<{
   id: string | number;
@@ -12333,7 +12333,7 @@ export type CustomerTableQueryVariables = Exact<{
 }>;
 
 
-export type CustomerTableQuery = { customers: { totalCount?: number | null, edges: Array<{ node: { ' $fragmentRefs'?: { 'CustomerTableRowFieldsFragment': CustomerTableRowFieldsFragment } } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
+export type CustomerTableQuery = { customers: { totalCount?: number | null, totalCountExact?: boolean, edges: Array<{ node: { ' $fragmentRefs'?: { 'CustomerTableRowFieldsFragment': CustomerTableRowFieldsFragment } } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
 
 export type DataTableInsightFieldsQueryVariables = Exact<{
   resource: string;
@@ -12488,7 +12488,7 @@ export type DetentionPolicyTableQueryVariables = Exact<{
 }>;
 
 
-export type DetentionPolicyTableQuery = { detentionPolicies: { totalCount?: number | null, edges: Array<{ node: { ' $fragmentRefs'?: { 'DetentionPolicyRowFieldsFragment': DetentionPolicyRowFieldsFragment } } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
+export type DetentionPolicyTableQuery = { detentionPolicies: { totalCount?: number | null, totalCountExact?: boolean, edges: Array<{ node: { ' $fragmentRefs'?: { 'DetentionPolicyRowFieldsFragment': DetentionPolicyRowFieldsFragment } } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
 
 export type DetentionPolicyQueryVariables = Exact<{
   id: string | number;
@@ -12600,7 +12600,7 @@ export type DistanceOverrideTableQueryVariables = Exact<{
 }>;
 
 
-export type DistanceOverrideTableQuery = { distanceOverrides: { totalCount?: number | null, edges: Array<{ node: { ' $fragmentRefs'?: { 'DistanceOverrideTableRowFieldsFragment': DistanceOverrideTableRowFieldsFragment } } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
+export type DistanceOverrideTableQuery = { distanceOverrides: { totalCount?: number | null, totalCountExact?: boolean, edges: Array<{ node: { ' $fragmentRefs'?: { 'DistanceOverrideTableRowFieldsFragment': DistanceOverrideTableRowFieldsFragment } } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
 
 export type DistanceProfileTableRowFieldsFragment = { id: string, businessUnitId: string, organizationId: string, name: string, description: string, status: string, isDefault: boolean, provider: string, dataVersion: string, region: string, routingType: string, distanceUnits: string, locationGranularity: string, profileName: string, highwayOnly: boolean, tollRoads: boolean, bordersOpen: boolean, includeTollData: boolean, version: number, createdAt: number, updatedAt: number } & { ' $fragmentName'?: 'DistanceProfileTableRowFieldsFragment' };
 
@@ -12610,7 +12610,7 @@ export type DistanceProfileTableQueryVariables = Exact<{
 }>;
 
 
-export type DistanceProfileTableQuery = { distanceProfiles: { totalCount?: number | null, edges: Array<{ node: { ' $fragmentRefs'?: { 'DistanceProfileTableRowFieldsFragment': DistanceProfileTableRowFieldsFragment } } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
+export type DistanceProfileTableQuery = { distanceProfiles: { totalCount?: number | null, totalCountExact?: boolean, edges: Array<{ node: { ' $fragmentRefs'?: { 'DistanceProfileTableRowFieldsFragment': DistanceProfileTableRowFieldsFragment } } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
 
 export type DocumentPacketRuleTableRowFieldsFragment = { id: string, businessUnitId: string, organizationId: string, resourceType: string, documentTypeId: string, required: boolean, allowMultiple: boolean, displayOrder: number, expirationRequired: boolean, expirationWarningDays: number, version: number, createdAt: number, updatedAt: number } & { ' $fragmentName'?: 'DocumentPacketRuleTableRowFieldsFragment' };
 
@@ -12620,7 +12620,7 @@ export type DocumentPacketRuleTableQueryVariables = Exact<{
 }>;
 
 
-export type DocumentPacketRuleTableQuery = { documentPacketRules: { totalCount?: number | null, edges: Array<{ node: { ' $fragmentRefs'?: { 'DocumentPacketRuleTableRowFieldsFragment': DocumentPacketRuleTableRowFieldsFragment } } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
+export type DocumentPacketRuleTableQuery = { documentPacketRules: { totalCount?: number | null, totalCountExact?: boolean, edges: Array<{ node: { ' $fragmentRefs'?: { 'DocumentPacketRuleTableRowFieldsFragment': DocumentPacketRuleTableRowFieldsFragment } } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
 
 export type DocumentTypeTableRowFieldsFragment = { id: string, businessUnitId: string, organizationId: string, code: string, name: string, description: string, color: string, documentClassification: DocumentClassification, documentCategory: DocumentCategory, isSystem: boolean, version: number, createdAt: number, updatedAt: number } & { ' $fragmentName'?: 'DocumentTypeTableRowFieldsFragment' };
 
@@ -12630,7 +12630,7 @@ export type DocumentTypeTableQueryVariables = Exact<{
 }>;
 
 
-export type DocumentTypeTableQuery = { documentTypes: { totalCount?: number | null, edges: Array<{ node: { ' $fragmentRefs'?: { 'DocumentTypeTableRowFieldsFragment': DocumentTypeTableRowFieldsFragment } } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
+export type DocumentTypeTableQuery = { documentTypes: { totalCount?: number | null, totalCountExact?: boolean, edges: Array<{ node: { ' $fragmentRefs'?: { 'DocumentTypeTableRowFieldsFragment': DocumentTypeTableRowFieldsFragment } } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
 
 export type WorkerPortalStatusQueryVariables = Exact<{
   workerId: string | number;
@@ -12659,7 +12659,7 @@ export type SettlementDisputeTableQueryVariables = Exact<{
 }>;
 
 
-export type SettlementDisputeTableQuery = { settlementDisputes: { totalCount?: number | null, edges: Array<{ node: { id: string, settlementId: string, settlementLineId: string | null, workerId: string, status: SettlementDisputeStatus, category: SettlementDisputeCategory, description: string, resolutionNote: string, resolvedAt: number | null, createdAt: number, updatedAt: number, version: number, worker: { id: string, firstName: string, lastName: string } | null, settlement: { id: string, settlementNumber: string, netPayMinor: number | null, currencyCode: string | null, status: DriverSettlementStatus } | null, resolvedBy: { id: string, name: string } | null } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
+export type SettlementDisputeTableQuery = { settlementDisputes: { totalCount?: number | null, totalCountExact?: boolean, edges: Array<{ node: { id: string, settlementId: string, settlementLineId: string | null, workerId: string, status: SettlementDisputeStatus, category: SettlementDisputeCategory, description: string, resolutionNote: string, resolvedAt: number | null, createdAt: number, updatedAt: number, version: number, worker: { id: string, firstName: string, lastName: string } | null, settlement: { id: string, settlementNumber: string, netPayMinor: number | null, currencyCode: string | null, status: DriverSettlementStatus } | null, resolvedBy: { id: string, name: string } | null } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
 
 export type SettlementDisputeDetailQueryVariables = Exact<{
   id: string | number;
@@ -12739,7 +12739,7 @@ export type MySettlementsQueryVariables = Exact<{
 }>;
 
 
-export type MySettlementsQuery = { mySettlements: { total: number, items: Array<{ id: string, settlementNumber: string, status: DriverSettlementStatus, periodStart: number, periodEnd: number, payDate: number, grossEarningsMinor: number, reimbursementsMinor: number, deductionsMinor: number, netPayMinor: number | null, currencyCode: string | null, paidAt: number | null, paymentMethod: string, paymentReference: string }> } };
+export type MySettlementsQuery = { mySettlements: { total: number, totalExact: boolean, items: Array<{ id: string, settlementNumber: string, status: DriverSettlementStatus, periodStart: number, periodEnd: number, payDate: number, grossEarningsMinor: number, reimbursementsMinor: number, deductionsMinor: number, netPayMinor: number | null, currencyCode: string | null, paidAt: number | null, paymentMethod: string, paymentReference: string }> } };
 
 export type MySettlementQueryVariables = Exact<{
   id: string | number;
@@ -12855,7 +12855,7 @@ export type DriverExpenseTableQueryVariables = Exact<{
 }>;
 
 
-export type DriverExpenseTableQuery = { driverExpenses: { totalCount?: number | null, edges: Array<{ node: { id: string, workerId: string, shipmentId: string | null, status: DriverExpenseStatus, amountMinor: number, currencyCode: string, description: string, incurredDate: number, receiptDocumentId: string | null, reviewNote: string, reviewedAt: number | null, settlementLineId: string | null, createdAt: number, version: number, worker: { id: string, firstName: string, lastName: string } | null, payCode: { id: string, code: string, description: string } | null, reviewedBy: { id: string, name: string } | null } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
+export type DriverExpenseTableQuery = { driverExpenses: { totalCount?: number | null, totalCountExact?: boolean, edges: Array<{ node: { id: string, workerId: string, shipmentId: string | null, status: DriverExpenseStatus, amountMinor: number, currencyCode: string, description: string, incurredDate: number, receiptDocumentId: string | null, reviewNote: string, reviewedAt: number | null, settlementLineId: string | null, createdAt: number, version: number, worker: { id: string, firstName: string, lastName: string } | null, payCode: { id: string, code: string, description: string } | null, reviewedBy: { id: string, name: string } | null } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
 
 export type DriverExpenseDetailQueryVariables = Exact<{
   id: string | number;
@@ -13082,7 +13082,7 @@ export type PayProfileTableQueryVariables = Exact<{
 }>;
 
 
-export type PayProfileTableQuery = { payProfiles: { totalCount?: number | null, edges: Array<{ node: { id: string, organizationId: string, businessUnitId: string, status: EntityStatus, name: string, description: string, classification: PayeeClassification, currencyCode: string, guaranteedPeriodMinimumMinor: number, perDiemRatePerMile: string, perDiemDailyCapMinor: number, version: number, createdAt: number, updatedAt: number, activeAssignmentCount: number, components: Array<{ id: string, kind: PayComponentKind, method: PayCalcMethod, description: string, rate: string, revenueBasis: PayRevenueBasis | null, freeTimeMinutes: number, minAmountMinor: number | null, maxAmountMinor: number | null, sequence: number, isActive: boolean, bands: Array<{ minMiles: number, maxMiles: number, rate: string }> | null }> | null } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
+export type PayProfileTableQuery = { payProfiles: { totalCount?: number | null, totalCountExact?: boolean, edges: Array<{ node: { id: string, organizationId: string, businessUnitId: string, status: EntityStatus, name: string, description: string, classification: PayeeClassification, currencyCode: string, guaranteedPeriodMinimumMinor: number, perDiemRatePerMile: string, perDiemDailyCapMinor: number, version: number, createdAt: number, updatedAt: number, activeAssignmentCount: number, components: Array<{ id: string, kind: PayComponentKind, method: PayCalcMethod, description: string, rate: string, revenueBasis: PayRevenueBasis | null, freeTimeMinutes: number, minAmountMinor: number | null, maxAmountMinor: number | null, sequence: number, isActive: boolean, bands: Array<{ minMiles: number, maxMiles: number, rate: string }> | null }> | null } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
 
 export type WorkerPayAssignmentsQueryVariables = Exact<{
   workerId: string | number;
@@ -13118,7 +13118,7 @@ export type RecurringDeductionTableQueryVariables = Exact<{
 }>;
 
 
-export type RecurringDeductionTableQuery = { recurringDeductions: { totalCount?: number | null, edges: Array<{ node: { id: string, workerId: string, payCodeId: string, escrowAccountId: string | null, status: RecurringDeductionStatus, frequency: RecurringDeductionFrequency, description: string, amountMinor: number, totalCapMinor: number | null, deductedToDateMinor: number, startDate: number, endDate: number | null, currencyCode: string, version: number, createdAt: number, updatedAt: number, worker: { id: string, firstName: string, lastName: string } | null, payCode: { id: string, code: string, name: string } | null } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
+export type RecurringDeductionTableQuery = { recurringDeductions: { totalCount?: number | null, totalCountExact?: boolean, edges: Array<{ node: { id: string, workerId: string, payCodeId: string, escrowAccountId: string | null, status: RecurringDeductionStatus, frequency: RecurringDeductionFrequency, description: string, amountMinor: number, totalCapMinor: number | null, deductedToDateMinor: number, startDate: number, endDate: number | null, currencyCode: string, version: number, createdAt: number, updatedAt: number, worker: { id: string, firstName: string, lastName: string } | null, payCode: { id: string, code: string, name: string } | null } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
 
 export type RecurringEarningTableQueryVariables = Exact<{
   input: DataTableConnectionInput;
@@ -13126,7 +13126,7 @@ export type RecurringEarningTableQueryVariables = Exact<{
 }>;
 
 
-export type RecurringEarningTableQuery = { recurringEarnings: { totalCount?: number | null, edges: Array<{ node: { id: string, workerId: string, payCodeId: string, status: RecurringEarningStatus, frequency: RecurringEarningFrequency, description: string, amountMinor: number, totalCapMinor: number | null, paidToDateMinor: number, startDate: number, endDate: number | null, currencyCode: string, version: number, createdAt: number, updatedAt: number, worker: { id: string, firstName: string, lastName: string } | null, payCode: { id: string, code: string, name: string } | null } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
+export type RecurringEarningTableQuery = { recurringEarnings: { totalCount?: number | null, totalCountExact?: boolean, edges: Array<{ node: { id: string, workerId: string, payCodeId: string, status: RecurringEarningStatus, frequency: RecurringEarningFrequency, description: string, amountMinor: number, totalCapMinor: number | null, paidToDateMinor: number, startDate: number, endDate: number | null, currencyCode: string, version: number, createdAt: number, updatedAt: number, worker: { id: string, firstName: string, lastName: string } | null, payCode: { id: string, code: string, name: string } | null } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
 
 export type PayCodeTableQueryVariables = Exact<{
   input: DataTableConnectionInput;
@@ -13134,7 +13134,7 @@ export type PayCodeTableQueryVariables = Exact<{
 }>;
 
 
-export type PayCodeTableQuery = { payCodes: { totalCount?: number | null, edges: Array<{ node: { id: string, status: EntityStatus, direction: PayCodeDirection, code: string, name: string, description: string, taxable: boolean, countsTowardGuarantee: boolean, glAccountId: string | null, defaultAmountMinor: number | null, isSystem: boolean, version: number, createdAt: number, updatedAt: number, glAccount: { id: string, accountCode: string, name: string } | null } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
+export type PayCodeTableQuery = { payCodes: { totalCount?: number | null, totalCountExact?: boolean, edges: Array<{ node: { id: string, status: EntityStatus, direction: PayCodeDirection, code: string, name: string, description: string, taxable: boolean, countsTowardGuarantee: boolean, glAccountId: string | null, defaultAmountMinor: number | null, isSystem: boolean, version: number, createdAt: number, updatedAt: number, glAccount: { id: string, accountCode: string, name: string } | null } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
 
 export type PayAdvanceTableQueryVariables = Exact<{
   input: DataTableConnectionInput;
@@ -13142,7 +13142,7 @@ export type PayAdvanceTableQueryVariables = Exact<{
 }>;
 
 
-export type PayAdvanceTableQuery = { payAdvances: { totalCount?: number | null, edges: Array<{ node: { id: string, workerId: string, status: PayAdvanceStatus, source: PayAdvanceSource, reference: string, issuedDate: number, amountMinor: number | null, recoveredMinor: number, writtenOffMinor: number, outstandingMinor: number | null, writeOffReason: string, notes: string, currencyCode: string, version: number, createdAt: number, updatedAt: number, worker: { id: string, firstName: string, lastName: string } | null } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
+export type PayAdvanceTableQuery = { payAdvances: { totalCount?: number | null, totalCountExact?: boolean, edges: Array<{ node: { id: string, workerId: string, status: PayAdvanceStatus, source: PayAdvanceSource, reference: string, issuedDate: number, amountMinor: number | null, recoveredMinor: number, writtenOffMinor: number, outstandingMinor: number | null, writeOffReason: string, notes: string, currencyCode: string, version: number, createdAt: number, updatedAt: number, worker: { id: string, firstName: string, lastName: string } | null } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
 
 export type EscrowAccountTableQueryVariables = Exact<{
   input: DataTableConnectionInput;
@@ -13150,7 +13150,7 @@ export type EscrowAccountTableQueryVariables = Exact<{
 }>;
 
 
-export type EscrowAccountTableQuery = { escrowAccounts: { totalCount?: number | null, edges: Array<{ node: { id: string, workerId: string, status: EscrowAccountStatus, targetAmountMinor: number | null, balanceMinor: number | null, annualInterestRate: string, lastInterestAccrualDate: number | null, openedDate: number, closedDate: number | null, currencyCode: string, version: number, createdAt: number, updatedAt: number, worker: { id: string, firstName: string, lastName: string } | null } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
+export type EscrowAccountTableQuery = { escrowAccounts: { totalCount?: number | null, totalCountExact?: boolean, edges: Array<{ node: { id: string, workerId: string, status: EscrowAccountStatus, targetAmountMinor: number | null, balanceMinor: number | null, annualInterestRate: string, lastInterestAccrualDate: number | null, openedDate: number, closedDate: number | null, currencyCode: string, version: number, createdAt: number, updatedAt: number, worker: { id: string, firstName: string, lastName: string } | null } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
 
 export type EscrowAccountDetailQueryVariables = Exact<{
   id: string | number;
@@ -13165,7 +13165,7 @@ export type DriverSettlementTableQueryVariables = Exact<{
 }>;
 
 
-export type DriverSettlementTableQuery = { driverSettlements: { totalCount?: number | null, edges: Array<{ node: { id: string, workerId: string, batchId: string | null, settlementNumber: string, status: DriverSettlementStatus, classification: PayeeClassification, payProfileName: string, periodStart: number, periodEnd: number, payDate: number, grossEarningsMinor: number, reimbursementsMinor: number, deductionsMinor: number, carryForwardInMinor: number, carryForwardOutMinor: number, netPayMinor: number | null, totalMiles: string, shipmentCount: number, currencyCode: string | null, hasExceptions: boolean, version: number, createdAt: number, updatedAt: number, worker: { id: string, firstName: string, lastName: string } | null } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
+export type DriverSettlementTableQuery = { driverSettlements: { totalCount?: number | null, totalCountExact?: boolean, edges: Array<{ node: { id: string, workerId: string, batchId: string | null, settlementNumber: string, status: DriverSettlementStatus, classification: PayeeClassification, payProfileName: string, periodStart: number, periodEnd: number, payDate: number, grossEarningsMinor: number, reimbursementsMinor: number, deductionsMinor: number, carryForwardInMinor: number, carryForwardOutMinor: number, netPayMinor: number | null, totalMiles: string, shipmentCount: number, currencyCode: string | null, hasExceptions: boolean, version: number, createdAt: number, updatedAt: number, worker: { id: string, firstName: string, lastName: string } | null } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
 
 export type DriverSettlementDetailQueryVariables = Exact<{
   id: string | number;
@@ -13180,7 +13180,7 @@ export type SettlementBatchTableQueryVariables = Exact<{
 }>;
 
 
-export type SettlementBatchTableQuery = { settlementBatches: { totalCount?: number | null, edges: Array<{ node: { id: string, status: SettlementBatchStatus, name: string, periodStart: number, periodEnd: number, payDate: number, settlementCount: number, exceptionCount: number, totalGrossMinor: number, totalNetMinor: number, currencyCode: string, notes: string, generatedById: string | null, generatedAt: number | null, completedAt: number | null, canceledAt: number | null, version: number, createdAt: number, updatedAt: number } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
+export type SettlementBatchTableQuery = { settlementBatches: { totalCount?: number | null, totalCountExact?: boolean, edges: Array<{ node: { id: string, status: SettlementBatchStatus, name: string, periodStart: number, periodEnd: number, payDate: number, settlementCount: number, exceptionCount: number, totalGrossMinor: number, totalNetMinor: number, currencyCode: string, notes: string, generatedById: string | null, generatedAt: number | null, completedAt: number | null, canceledAt: number | null, version: number, createdAt: number, updatedAt: number } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
 
 export type DriverPayEventTableQueryVariables = Exact<{
   input: DataTableConnectionInput;
@@ -13188,7 +13188,7 @@ export type DriverPayEventTableQueryVariables = Exact<{
 }>;
 
 
-export type DriverPayEventTableQuery = { driverPayEvents: { totalCount?: number | null, edges: Array<{ node: { id: string, workerId: string, shipmentId: string, moveId: string | null, settlementId: string | null, status: DriverPayEventStatus, eventDate: number, grossAmountMinor: number, totalMiles: string, currencyCode: string, proNumber: string, onHold: boolean, holdReason: string, voidedAt: number | null, voidReason: string, version: number, createdAt: number, updatedAt: number, components: Array<{ kind: PayComponentKind, method: PayCalcMethod, description: string, quantity: string, rate: string, amountMinor: number }> | null, worker: { id: string, firstName: string, lastName: string } | null } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
+export type DriverPayEventTableQuery = { driverPayEvents: { totalCount?: number | null, totalCountExact?: boolean, edges: Array<{ node: { id: string, workerId: string, shipmentId: string, moveId: string | null, settlementId: string | null, status: DriverPayEventStatus, eventDate: number, grossAmountMinor: number, totalMiles: string, currencyCode: string, proNumber: string, onHold: boolean, holdReason: string, voidedAt: number | null, voidReason: string, version: number, createdAt: number, updatedAt: number, components: Array<{ kind: PayComponentKind, method: PayCalcMethod, description: string, quantity: string, rate: string, amountMinor: number }> | null, worker: { id: string, firstName: string, lastName: string } | null } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
 
 export type WorkerEarningsSummaryQueryVariables = Exact<{
   workerId: string | number;
@@ -13526,7 +13526,7 @@ export type EdiTemplateListQueryVariables = Exact<{
 }>;
 
 
-export type EdiTemplateListQuery = { ediTemplates: { totalCount?: number | null, edges: Array<{ node: { ' $fragmentRefs'?: { 'EdiTemplateListFieldsFragment': EdiTemplateListFieldsFragment } } }>, pageInfo: { hasNextPage: boolean, endCursor: string | null } } };
+export type EdiTemplateListQuery = { ediTemplates: { totalCount?: number | null, totalCountExact?: boolean, edges: Array<{ node: { ' $fragmentRefs'?: { 'EdiTemplateListFieldsFragment': EdiTemplateListFieldsFragment } } }>, pageInfo: { hasNextPage: boolean, endCursor: string | null } } };
 
 export type DeskEdiPartnersQueryVariables = Exact<{
   input: DataTableConnectionInput;
@@ -13534,7 +13534,7 @@ export type DeskEdiPartnersQueryVariables = Exact<{
 }>;
 
 
-export type DeskEdiPartnersQuery = { ediPartners: { totalCount?: number | null, edges: Array<{ node: { id: string, code: string, name: string, kind: EdiPartnerKind, status: EntityStatus, customerId: string | null, enabledForInbound: boolean, enabledForOutbound: boolean, internalOrganization: { id: string, name: string } | null } }>, pageInfo: { hasNextPage: boolean, endCursor: string | null } } };
+export type DeskEdiPartnersQuery = { ediPartners: { totalCount?: number | null, totalCountExact?: boolean, edges: Array<{ node: { id: string, code: string, name: string, kind: EdiPartnerKind, status: EntityStatus, customerId: string | null, enabledForInbound: boolean, enabledForOutbound: boolean, internalOrganization: { id: string, name: string } | null } }>, pageInfo: { hasNextPage: boolean, endCursor: string | null } } };
 
 export type DeskEdiInboundFilesQueryVariables = Exact<{
   input: DataTableConnectionInput;
@@ -13542,7 +13542,7 @@ export type DeskEdiInboundFilesQueryVariables = Exact<{
 }>;
 
 
-export type DeskEdiInboundFilesQuery = { ediInboundFiles: { totalCount?: number | null, edges: Array<{ node: { id: string, fileName: string, ediPartnerId: string | null, method: EdiConnectionMethod, status: EdiInboundFileStatus, failureReason: string | null, transactionCount: number, sizeBytes: number, interchangeControlNumber: string | null, isaSenderId: string | null, receivedAt: number, processedAt: number | null, rawPurgedAt: number | null, partner: { id: string, code: string, name: string } | null } }>, pageInfo: { hasNextPage: boolean, endCursor: string | null } } };
+export type DeskEdiInboundFilesQuery = { ediInboundFiles: { totalCount?: number | null, totalCountExact?: boolean, edges: Array<{ node: { id: string, fileName: string, ediPartnerId: string | null, method: EdiConnectionMethod, status: EdiInboundFileStatus, failureReason: string | null, transactionCount: number, sizeBytes: number, interchangeControlNumber: string | null, isaSenderId: string | null, receivedAt: number, processedAt: number | null, rawPurgedAt: number | null, partner: { id: string, code: string, name: string } | null } }>, pageInfo: { hasNextPage: boolean, endCursor: string | null } } };
 
 export type DeskEdiInboundFileQueryVariables = Exact<{
   id: string | number;
@@ -13560,7 +13560,7 @@ export type DeskEdiMessagesQueryVariables = Exact<{
 }>;
 
 
-export type DeskEdiMessagesQuery = { ediMessages: { totalCount?: number | null, edges: Array<{ node: { ' $fragmentRefs'?: { 'DeskEdiMessageRowFieldsFragment': DeskEdiMessageRowFieldsFragment } } }>, pageInfo: { hasNextPage: boolean, endCursor: string | null } } };
+export type DeskEdiMessagesQuery = { ediMessages: { totalCount?: number | null, totalCountExact?: boolean, edges: Array<{ node: { ' $fragmentRefs'?: { 'DeskEdiMessageRowFieldsFragment': DeskEdiMessageRowFieldsFragment } } }>, pageInfo: { hasNextPage: boolean, endCursor: string | null } } };
 
 export type DeskEdiMessageQueryVariables = Exact<{
   id: string | number;
@@ -13583,7 +13583,7 @@ export type DeskEdiTransfersQueryVariables = Exact<{
 }>;
 
 
-export type DeskEdiTransfersQuery = { ediTransfers: { totalCount?: number | null, edges: Array<{ node: { ' $fragmentRefs'?: { 'DeskEdiTransferRowFieldsFragment': DeskEdiTransferRowFieldsFragment } } }>, pageInfo: { hasNextPage: boolean, endCursor: string | null } } };
+export type DeskEdiTransfersQuery = { ediTransfers: { totalCount?: number | null, totalCountExact?: boolean, edges: Array<{ node: { ' $fragmentRefs'?: { 'DeskEdiTransferRowFieldsFragment': DeskEdiTransferRowFieldsFragment } } }>, pageInfo: { hasNextPage: boolean, endCursor: string | null } } };
 
 export type DeskEdiTransferQueryVariables = Exact<{
   id: string | number;
@@ -13630,7 +13630,7 @@ export type DeskEdiPartnerMessagesQueryVariables = Exact<{
 }>;
 
 
-export type DeskEdiPartnerMessagesQuery = { ediMessages: { totalCount?: number | null, edges: Array<{ node: { ' $fragmentRefs'?: { 'DeskEdiPartnerMessageFieldsFragment': DeskEdiPartnerMessageFieldsFragment } } }>, pageInfo: { hasNextPage: boolean, endCursor: string | null } } };
+export type DeskEdiPartnerMessagesQuery = { ediMessages: { totalCount?: number | null, totalCountExact?: boolean, edges: Array<{ node: { ' $fragmentRefs'?: { 'DeskEdiPartnerMessageFieldsFragment': DeskEdiPartnerMessageFieldsFragment } } }>, pageInfo: { hasNextPage: boolean, endCursor: string | null } } };
 
 export type EdiPartnerReadinessQueryVariables = Exact<{
   partnerIds: Array<string | number> | string | number;
@@ -13654,7 +13654,7 @@ export type EdiPartnerTableQueryVariables = Exact<{
 }>;
 
 
-export type EdiPartnerTableQuery = { ediPartners: { totalCount?: number | null, edges: Array<{ node: { ' $fragmentRefs'?: { 'EdiPartnerRowFieldsFragment': EdiPartnerRowFieldsFragment } } }>, pageInfo: { hasNextPage: boolean, endCursor: string | null } } };
+export type EdiPartnerTableQuery = { ediPartners: { totalCount?: number | null, totalCountExact?: boolean, edges: Array<{ node: { ' $fragmentRefs'?: { 'EdiPartnerRowFieldsFragment': EdiPartnerRowFieldsFragment } } }>, pageInfo: { hasNextPage: boolean, endCursor: string | null } } };
 
 export type EdiCommunicationProfileRowFieldsFragment = { id: string, businessUnitId: string, organizationId: string, ediPartnerId: string | null, ediConnectionId: string | null, method: EdiConnectionMethod, status: EntityStatus, name: string, description: string | null, config: unknown, version: number, createdAt: number, updatedAt: number, secretState: Array<{ key: string }> | null, partner: { id: string, code: string, name: string } | null } & { ' $fragmentName'?: 'EdiCommunicationProfileRowFieldsFragment' };
 
@@ -13664,7 +13664,7 @@ export type EdiCommunicationProfileTableQueryVariables = Exact<{
 }>;
 
 
-export type EdiCommunicationProfileTableQuery = { ediCommunicationProfiles: { totalCount?: number | null, edges: Array<{ node: { ' $fragmentRefs'?: { 'EdiCommunicationProfileRowFieldsFragment': EdiCommunicationProfileRowFieldsFragment } } }>, pageInfo: { hasNextPage: boolean, endCursor: string | null } } };
+export type EdiCommunicationProfileTableQuery = { ediCommunicationProfiles: { totalCount?: number | null, totalCountExact?: boolean, edges: Array<{ node: { ' $fragmentRefs'?: { 'EdiCommunicationProfileRowFieldsFragment': EdiCommunicationProfileRowFieldsFragment } } }>, pageInfo: { hasNextPage: boolean, endCursor: string | null } } };
 
 export type EdiTransferRowFieldsFragment = { id: string, sourceOrganizationId: string, sourceBusinessUnitId: string, targetOrganizationId: string, targetBusinessUnitId: string, sourcePartnerId: string, targetPartnerId: string, sourceShipmentId: string | null, targetShipmentId: string | null, inboundMessageId: string | null, status: EdiTransferStatus, tenderPayload: unknown, mappingSnapshot: unknown, rejectionReason: string | null, failureReason: string | null, submittedAt: number, processedAt: number | null, version: number, createdAt: number, updatedAt: number, sourcePartner: { id: string, code: string, name: string } | null, targetPartner: { id: string, code: string, name: string } | null } & { ' $fragmentName'?: 'EdiTransferRowFieldsFragment' };
 
@@ -13675,7 +13675,7 @@ export type EdiTransferTableQueryVariables = Exact<{
 }>;
 
 
-export type EdiTransferTableQuery = { ediTransfers: { totalCount?: number | null, edges: Array<{ node: { ' $fragmentRefs'?: { 'EdiTransferRowFieldsFragment': EdiTransferRowFieldsFragment } } }>, pageInfo: { hasNextPage: boolean, endCursor: string | null } } };
+export type EdiTransferTableQuery = { ediTransfers: { totalCount?: number | null, totalCountExact?: boolean, edges: Array<{ node: { ' $fragmentRefs'?: { 'EdiTransferRowFieldsFragment': EdiTransferRowFieldsFragment } } }>, pageInfo: { hasNextPage: boolean, endCursor: string | null } } };
 
 export type EdiMessageRowFieldsFragment = { id: string, businessUnitId: string, organizationId: string, ediPartnerId: string, documentTypeId: string, partnerDocumentProfileId: string | null, shipmentId: string | null, transferId: string | null, inboundFileId: string | null, direction: EdiDocumentDirection, transactionSet: string, x12Version: string, status: EdiMessageStatus, interchangeControlNumber: string, groupControlNumber: string, transactionControlNumber: string, segmentCount: number, deliveryStatus: EdiMessageDeliveryStatus | null, deliveryRemotePath: string | null, deliveryAttempts: number, deliveryLastAttemptAt: number | null, deliverySentAt: number | null, deliveryLastError: string | null, ackStatus: EdiMessageAckStatus | null, ackMessageId: string | null, ackReceivedAt: number | null, ackLastError: string | null, generatedAt: number, version: number, partner: { id: string, code: string, name: string } | null } & { ' $fragmentName'?: 'EdiMessageRowFieldsFragment' };
 
@@ -13685,7 +13685,7 @@ export type EdiMessageTableQueryVariables = Exact<{
 }>;
 
 
-export type EdiMessageTableQuery = { ediMessages: { totalCount?: number | null, edges: Array<{ node: { ' $fragmentRefs'?: { 'EdiMessageRowFieldsFragment': EdiMessageRowFieldsFragment } } }>, pageInfo: { hasNextPage: boolean, endCursor: string | null } } };
+export type EdiMessageTableQuery = { ediMessages: { totalCount?: number | null, totalCountExact?: boolean, edges: Array<{ node: { ' $fragmentRefs'?: { 'EdiMessageRowFieldsFragment': EdiMessageRowFieldsFragment } } }>, pageInfo: { hasNextPage: boolean, endCursor: string | null } } };
 
 export type EdiInboundFileRowFieldsFragment = { id: string, businessUnitId: string, organizationId: string, communicationProfileId: string, ediPartnerId: string | null, method: EdiConnectionMethod, remotePath: string, fileName: string, checksum: string, sizeBytes: number, interchangeControlNumber: string | null, isaSenderQualifier: string | null, isaSenderId: string | null, isaReceiverQualifier: string | null, isaReceiverId: string | null, status: EdiInboundFileStatus, failureReason: string | null, transactionCount: number, receivedAt: number, processedAt: number | null, version: number, partner: { id: string, code: string, name: string } | null } & { ' $fragmentName'?: 'EdiInboundFileRowFieldsFragment' };
 
@@ -13695,7 +13695,7 @@ export type EdiInboundFileTableQueryVariables = Exact<{
 }>;
 
 
-export type EdiInboundFileTableQuery = { ediInboundFiles: { totalCount?: number | null, edges: Array<{ node: { ' $fragmentRefs'?: { 'EdiInboundFileRowFieldsFragment': EdiInboundFileRowFieldsFragment } } }>, pageInfo: { hasNextPage: boolean, endCursor: string | null } } };
+export type EdiInboundFileTableQuery = { ediInboundFiles: { totalCount?: number | null, totalCountExact?: boolean, edges: Array<{ node: { ' $fragmentRefs'?: { 'EdiInboundFileRowFieldsFragment': EdiInboundFileRowFieldsFragment } } }>, pageInfo: { hasNextPage: boolean, endCursor: string | null } } };
 
 export type EdiMappingProfileRowFieldsFragment = { id: string, businessUnitId: string, organizationId: string, ediPartnerId: string, name: string, description: string | null, version: number, createdAt: number, updatedAt: number, partner: { id: string, code: string, name: string } | null, entries: Array<{ id: string, entityType: EdiMappingEntityType, sourceId: string, sourceLabel: string | null, targetId: string, targetLabel: string | null }> | null } & { ' $fragmentName'?: 'EdiMappingProfileRowFieldsFragment' };
 
@@ -13705,7 +13705,7 @@ export type EdiMappingProfileTableQueryVariables = Exact<{
 }>;
 
 
-export type EdiMappingProfileTableQuery = { ediMappingProfiles: { totalCount?: number | null, edges: Array<{ node: { ' $fragmentRefs'?: { 'EdiMappingProfileRowFieldsFragment': EdiMappingProfileRowFieldsFragment } } }>, pageInfo: { hasNextPage: boolean, endCursor: string | null } } };
+export type EdiMappingProfileTableQuery = { ediMappingProfiles: { totalCount?: number | null, totalCountExact?: boolean, edges: Array<{ node: { ' $fragmentRefs'?: { 'EdiMappingProfileRowFieldsFragment': EdiMappingProfileRowFieldsFragment } } }>, pageInfo: { hasNextPage: boolean, endCursor: string | null } } };
 
 export type EdiTestCaseRowFieldsFragment = { id: string, businessUnitId: string, organizationId: string, partnerDocumentProfileId: string, name: string, description: string | null, expectedWarnings: number, expectedErrors: number, version: number, createdAt: number, updatedAt: number, documentProfile: { id: string, name: string, direction: EdiDocumentDirection, transactionSet: string, partner: { id: string, code: string, name: string } | null } | null } & { ' $fragmentName'?: 'EdiTestCaseRowFieldsFragment' };
 
@@ -13716,7 +13716,7 @@ export type EdiTestCaseTableQueryVariables = Exact<{
 }>;
 
 
-export type EdiTestCaseTableQuery = { ediTestCases: { totalCount?: number | null, edges: Array<{ node: { ' $fragmentRefs'?: { 'EdiTestCaseRowFieldsFragment': EdiTestCaseRowFieldsFragment } } }>, pageInfo: { hasNextPage: boolean, endCursor: string | null } } };
+export type EdiTestCaseTableQuery = { ediTestCases: { totalCount?: number | null, totalCountExact?: boolean, edges: Array<{ node: { ' $fragmentRefs'?: { 'EdiTestCaseRowFieldsFragment': EdiTestCaseRowFieldsFragment } } }>, pageInfo: { hasNextPage: boolean, endCursor: string | null } } };
 
 export type DeskEmailProfilesQueryVariables = Exact<{
   input: DataTableConnectionInput;
@@ -13733,7 +13733,7 @@ export type EmailProfileTableQueryVariables = Exact<{
 }>;
 
 
-export type EmailProfileTableQuery = { emailProfiles: { totalCount?: number | null, edges: Array<{ node: { ' $fragmentRefs'?: { 'EmailProfileTableRowFieldsFragment': EmailProfileTableRowFieldsFragment } } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
+export type EmailProfileTableQuery = { emailProfiles: { totalCount?: number | null, totalCountExact?: boolean, edges: Array<{ node: { ' $fragmentRefs'?: { 'EmailProfileTableRowFieldsFragment': EmailProfileTableRowFieldsFragment } } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
 
 export type EquipmentManufacturerTableRowFieldsFragment = { id: string, businessUnitId: string, organizationId: string, status: EntityStatus, name: string, description: string, version: number, createdAt: number, updatedAt: number } & { ' $fragmentName'?: 'EquipmentManufacturerTableRowFieldsFragment' };
 
@@ -13743,7 +13743,7 @@ export type EquipmentManufacturerTableQueryVariables = Exact<{
 }>;
 
 
-export type EquipmentManufacturerTableQuery = { equipmentManufacturers: { totalCount?: number | null, edges: Array<{ node: { ' $fragmentRefs'?: { 'EquipmentManufacturerTableRowFieldsFragment': EquipmentManufacturerTableRowFieldsFragment } } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
+export type EquipmentManufacturerTableQuery = { equipmentManufacturers: { totalCount?: number | null, totalCountExact?: boolean, edges: Array<{ node: { ' $fragmentRefs'?: { 'EquipmentManufacturerTableRowFieldsFragment': EquipmentManufacturerTableRowFieldsFragment } } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
 
 export type EquipmentTypeTableFieldsFragment = { id: string, code: string, color: string } & { ' $fragmentName'?: 'EquipmentTypeTableFieldsFragment' };
 
@@ -13772,7 +13772,7 @@ export type TractorTableQueryVariables = Exact<{
 }>;
 
 
-export type TractorTableQuery = { tractors: { totalCount?: number | null, edges: Array<{ node: { ' $fragmentRefs'?: { 'TractorTableRowFieldsFragment': TractorTableRowFieldsFragment } } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
+export type TractorTableQuery = { tractors: { totalCount?: number | null, totalCountExact?: boolean, edges: Array<{ node: { ' $fragmentRefs'?: { 'TractorTableRowFieldsFragment': TractorTableRowFieldsFragment } } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
 
 export type TrailerTableQueryVariables = Exact<{
   input: DataTableConnectionInput;
@@ -13782,7 +13782,7 @@ export type TrailerTableQueryVariables = Exact<{
 }>;
 
 
-export type TrailerTableQuery = { trailers: { totalCount?: number | null, edges: Array<{ node: { ' $fragmentRefs'?: { 'TrailerTableRowFieldsFragment': TrailerTableRowFieldsFragment } } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
+export type TrailerTableQuery = { trailers: { totalCount?: number | null, totalCountExact?: boolean, edges: Array<{ node: { ' $fragmentRefs'?: { 'TrailerTableRowFieldsFragment': TrailerTableRowFieldsFragment } } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
 
 export type EquipmentTypeTableQueryVariables = Exact<{
   input: DataTableConnectionInput;
@@ -13791,7 +13791,7 @@ export type EquipmentTypeTableQueryVariables = Exact<{
 }>;
 
 
-export type EquipmentTypeTableQuery = { equipmentTypes: { totalCount?: number | null, edges: Array<{ node: { ' $fragmentRefs'?: { 'EquipmentTypeConfigurationRowFieldsFragment': EquipmentTypeConfigurationRowFieldsFragment } } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
+export type EquipmentTypeTableQuery = { equipmentTypes: { totalCount?: number | null, totalCountExact?: boolean, edges: Array<{ node: { ' $fragmentRefs'?: { 'EquipmentTypeConfigurationRowFieldsFragment': EquipmentTypeConfigurationRowFieldsFragment } } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
 
 export type EquipmentTypeQueryVariables = Exact<{
   id: string | number;
@@ -13867,7 +13867,7 @@ export type AiCorrectionTableQueryVariables = Exact<{
 }>;
 
 
-export type AiCorrectionTableQuery = { aiCorrections: { totalCount?: number | null, edges: Array<{ node: { ' $fragmentRefs'?: { 'AiCorrectionTableRowFieldsFragment': AiCorrectionTableRowFieldsFragment } } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
+export type AiCorrectionTableQuery = { aiCorrections: { totalCount?: number | null, totalCountExact?: boolean, edges: Array<{ node: { ' $fragmentRefs'?: { 'AiCorrectionTableRowFieldsFragment': AiCorrectionTableRowFieldsFragment } } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
 
 export type AiCorrectionDetailQueryVariables = Exact<{
   id: string | number;
@@ -13882,7 +13882,7 @@ export type ExtractionEvalCaseTableQueryVariables = Exact<{
 }>;
 
 
-export type ExtractionEvalCaseTableQuery = { extractionEvalCases: { totalCount?: number | null, edges: Array<{ node: { ' $fragmentRefs'?: { 'ExtractionEvalCaseTableRowFieldsFragment': ExtractionEvalCaseTableRowFieldsFragment } } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
+export type ExtractionEvalCaseTableQuery = { extractionEvalCases: { totalCount?: number | null, totalCountExact?: boolean, edges: Array<{ node: { ' $fragmentRefs'?: { 'ExtractionEvalCaseTableRowFieldsFragment': ExtractionEvalCaseTableRowFieldsFragment } } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
 
 export type ExtractionEvalCaseDetailQueryVariables = Exact<{
   id: string | number;
@@ -13900,7 +13900,7 @@ export type ExtractionEvalRunTableQueryVariables = Exact<{
 }>;
 
 
-export type ExtractionEvalRunTableQuery = { extractionEvalRuns: { totalCount?: number | null, edges: Array<{ node: { ' $fragmentRefs'?: { 'ExtractionEvalRunFieldsFragment': ExtractionEvalRunFieldsFragment } } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
+export type ExtractionEvalRunTableQuery = { extractionEvalRuns: { totalCount?: number | null, totalCountExact?: boolean, edges: Array<{ node: { ' $fragmentRefs'?: { 'ExtractionEvalRunFieldsFragment': ExtractionEvalRunFieldsFragment } } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
 
 export type ExtractionEvalRunDetailQueryVariables = Exact<{
   id: string | number;
@@ -13916,7 +13916,7 @@ export type ExtractionEvalResultTableQueryVariables = Exact<{
 }>;
 
 
-export type ExtractionEvalResultTableQuery = { extractionEvalResults: { totalCount?: number | null, edges: Array<{ node: { ' $fragmentRefs'?: { 'ExtractionEvalResultTableRowFieldsFragment': ExtractionEvalResultTableRowFieldsFragment } } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
+export type ExtractionEvalResultTableQuery = { extractionEvalResults: { totalCount?: number | null, totalCountExact?: boolean, edges: Array<{ node: { ' $fragmentRefs'?: { 'ExtractionEvalResultTableRowFieldsFragment': ExtractionEvalResultTableRowFieldsFragment } } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
 
 export type ExtractionEvalResultDetailQueryVariables = Exact<{
   id: string | number;
@@ -14036,7 +14036,7 @@ export type ExtractionShadowResultTableQueryVariables = Exact<{
 }>;
 
 
-export type ExtractionShadowResultTableQuery = { extractionShadowResults: { totalCount?: number | null, edges: Array<{ node: { ' $fragmentRefs'?: { 'ExtractionShadowResultTableRowFieldsFragment': ExtractionShadowResultTableRowFieldsFragment } } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
+export type ExtractionShadowResultTableQuery = { extractionShadowResults: { totalCount?: number | null, totalCountExact?: boolean, edges: Array<{ node: { ' $fragmentRefs'?: { 'ExtractionShadowResultTableRowFieldsFragment': ExtractionShadowResultTableRowFieldsFragment } } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
 
 export type ExtractionShadowResultDetailQueryVariables = Exact<{
   id: string | number;
@@ -14060,7 +14060,7 @@ export type FactoringCompanyTableQueryVariables = Exact<{
 }>;
 
 
-export type FactoringCompanyTableQuery = { factoringCompanies: { totalCount?: number | null, edges: Array<{ node: { ' $fragmentRefs'?: { 'FactoringCompanyTableRowFieldsFragment': FactoringCompanyTableRowFieldsFragment } } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
+export type FactoringCompanyTableQuery = { factoringCompanies: { totalCount?: number | null, totalCountExact?: boolean, edges: Array<{ node: { ' $fragmentRefs'?: { 'FactoringCompanyTableRowFieldsFragment': FactoringCompanyTableRowFieldsFragment } } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
 
 export type FactoringAgreementFieldsFragment = { id: string, factoringCompanyId: string, status: FactoringAgreementStatus, effectiveFrom: number, effectiveTo: number | null, advanceRateBp: number, reserveRateBp: number, minimumFeeMinor: number, chargebackWindowDays: number, recourse: FactoringRecourse, accountingTreatment: FactoringAccountingTreatment, fundingDays: number, submissionTime: number, dueFromFactorAccountId: string | null, feeExpenseAccountId: string | null, liabilityAccountId: string | null, cashAccountId: string | null, notes: string | null, activatedAt: number | null, endedAt: number | null, version: number, createdAt: number, updatedAt: number, feeTiers: Array<{ id: string, daysFrom: number, daysTo: number | null, rateBp: number, flatMinor: number }>, documentTypes: Array<{ id: string, code: string, name: string, color: string }> } & { ' $fragmentName'?: 'FactoringAgreementFieldsFragment' };
 
@@ -14128,7 +14128,7 @@ export type DeskFactoringInvoiceStatesQueryVariables = Exact<{
 }>;
 
 
-export type DeskFactoringInvoiceStatesQuery = { factoringInvoiceStates: { totalCount?: number | null, edges: Array<{ node: { ' $fragmentRefs'?: { 'DeskFactoringInvoiceStateFieldsFragment': DeskFactoringInvoiceStateFieldsFragment } } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
+export type DeskFactoringInvoiceStatesQuery = { factoringInvoiceStates: { totalCount?: number | null, totalCountExact?: boolean, edges: Array<{ node: { ' $fragmentRefs'?: { 'DeskFactoringInvoiceStateFieldsFragment': DeskFactoringInvoiceStateFieldsFragment } } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
 
 export type DeskFactoringAgreementsQueryVariables = Exact<{
   factoringCompanyId: string | number;
@@ -14143,7 +14143,7 @@ export type DeskFactoringNoasQueryVariables = Exact<{
 }>;
 
 
-export type DeskFactoringNoasQuery = { factoringNoas: { totalCount?: number | null, edges: Array<{ node: { id: string, customerId: string, factoringCompanyId: string, status: FactoringNoaStatus, sentAt: number | null, sentTo: string | null, acknowledgedAt: number | null, expiresAt: number | null, releasedAt: number | null, releaseReason: string | null, version: number, customer: { id: string, code: string, name: string } | null, factoringCompany: { id: string, code: string, name: string } | null } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
+export type DeskFactoringNoasQuery = { factoringNoas: { totalCount?: number | null, totalCountExact?: boolean, edges: Array<{ node: { id: string, customerId: string, factoringCompanyId: string, status: FactoringNoaStatus, sentAt: number | null, sentTo: string | null, acknowledgedAt: number | null, expiresAt: number | null, releasedAt: number | null, releaseReason: string | null, version: number, customer: { id: string, code: string, name: string } | null, factoringCompany: { id: string, code: string, name: string } | null } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
 
 export type DeskFactoringSubmissionFieldsFragment = { id: string, number: string, factoringCompanyId: string, status: FactoringSubmissionStatus, currencyCode: string, invoiceCount: number, faceMinor: number, expectedAdvanceMinor: number, expectedFeeMinor: number, expectedReserveMinor: number, transportMethod: FactoringTransportMethod, transportTarget: string, attempts: number, lastError: string | null, sentAt: number | null, failedAt: number | null, cancelReason: string | null, createdAt: number, version: number, factoringCompany: { id: string, code: string, name: string } | null } & { ' $fragmentName'?: 'DeskFactoringSubmissionFieldsFragment' };
 
@@ -14153,7 +14153,7 @@ export type DeskFactoringSubmissionsQueryVariables = Exact<{
 }>;
 
 
-export type DeskFactoringSubmissionsQuery = { factoringSubmissions: { totalCount?: number | null, edges: Array<{ node: { ' $fragmentRefs'?: { 'DeskFactoringSubmissionFieldsFragment': DeskFactoringSubmissionFieldsFragment } } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
+export type DeskFactoringSubmissionsQuery = { factoringSubmissions: { totalCount?: number | null, totalCountExact?: boolean, edges: Array<{ node: { ' $fragmentRefs'?: { 'DeskFactoringSubmissionFieldsFragment': DeskFactoringSubmissionFieldsFragment } } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
 
 export type DeskFactoringSubmissionQueryVariables = Exact<{
   id: string | number;
@@ -14173,7 +14173,7 @@ export type DeskFactoringRemittancesQueryVariables = Exact<{
 }>;
 
 
-export type DeskFactoringRemittancesQuery = { factoringRemittances: { totalCount?: number | null, edges: Array<{ node: { ' $fragmentRefs'?: { 'DeskFactoringRemittanceFieldsFragment': DeskFactoringRemittanceFieldsFragment } } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
+export type DeskFactoringRemittancesQuery = { factoringRemittances: { totalCount?: number | null, totalCountExact?: boolean, edges: Array<{ node: { ' $fragmentRefs'?: { 'DeskFactoringRemittanceFieldsFragment': DeskFactoringRemittanceFieldsFragment } } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
 
 export type DeskFactoringRemittanceQueryVariables = Exact<{
   id: string | number;
@@ -14197,7 +14197,7 @@ export type FactoringReserveEntriesQueryVariables = Exact<{
 }>;
 
 
-export type FactoringReserveEntriesQuery = { factoringReserveEntries: { totalCount: number | null, edges: Array<{ node: { ' $fragmentRefs'?: { 'FactoringReserveEntryFieldsFragment': FactoringReserveEntryFieldsFragment } } }> } };
+export type FactoringReserveEntriesQuery = { factoringReserveEntries: { totalCount: number | null, totalCountExact: boolean, edges: Array<{ node: { ' $fragmentRefs'?: { 'FactoringReserveEntryFieldsFragment': FactoringReserveEntryFieldsFragment } } }> } };
 
 export type FactoringReserveBalanceQueryVariables = Exact<{
   factoringCompanyId: string | number;
@@ -14317,7 +14317,7 @@ export type FactoringInvoiceStateTableQueryVariables = Exact<{
 }>;
 
 
-export type FactoringInvoiceStateTableQuery = { factoringInvoiceStates: { totalCount?: number | null, edges: Array<{ node: { invoiceId: string, factoringCompanyId: string | null, customerId: string, verdict: FactoringVerdict, failedChecks: number, openBalanceMinor: number, readySince: number | null, evaluatedAt: number, submission: { submissionId: string, submissionNumber: string, submissionStatus: FactoringSubmissionStatus, itemId: string, itemStatus: FactoringSubmissionItemStatus } | null, checks: Array<{ code: FactoringCheckCode, passed: boolean, message: string, fix: FactoringFixAction | null, documentTypeId: string | null, documentTypeName: string | null, shipmentId: string | null, shipmentPro: string | null, detail: string | null }>, invoice: { id: string, number: string, status: InvoiceStatus, currencyCode: string, billToName: string } | null, customer: { id: string, code: string, name: string } | null, factoringCompany: { id: string, code: string, name: string } | null } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
+export type FactoringInvoiceStateTableQuery = { factoringInvoiceStates: { totalCount?: number | null, totalCountExact?: boolean, edges: Array<{ node: { invoiceId: string, factoringCompanyId: string | null, customerId: string, verdict: FactoringVerdict, failedChecks: number, openBalanceMinor: number, readySince: number | null, evaluatedAt: number, submission: { submissionId: string, submissionNumber: string, submissionStatus: FactoringSubmissionStatus, itemId: string, itemStatus: FactoringSubmissionItemStatus } | null, checks: Array<{ code: FactoringCheckCode, passed: boolean, message: string, fix: FactoringFixAction | null, documentTypeId: string | null, documentTypeName: string | null, shipmentId: string | null, shipmentPro: string | null, detail: string | null }>, invoice: { id: string, number: string, status: InvoiceStatus, currencyCode: string, billToName: string } | null, customer: { id: string, code: string, name: string } | null, factoringCompany: { id: string, code: string, name: string } | null } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
 
 export type FactoringSummaryQueryVariables = Exact<{ [key: string]: never; }>;
 
@@ -14354,7 +14354,7 @@ export type FactoringRemittancesQueryVariables = Exact<{
 }>;
 
 
-export type FactoringRemittancesQuery = { factoringRemittances: { totalCount: number | null, edges: Array<{ node: { ' $fragmentRefs'?: { 'FactoringRemittanceFieldsFragment': FactoringRemittanceFieldsFragment } } }> } };
+export type FactoringRemittancesQuery = { factoringRemittances: { totalCount: number | null, totalCountExact: boolean, edges: Array<{ node: { ' $fragmentRefs'?: { 'FactoringRemittanceFieldsFragment': FactoringRemittanceFieldsFragment } } }> } };
 
 export type FactoringRemittanceDetailQueryVariables = Exact<{
   id: string | number;
@@ -14368,7 +14368,7 @@ export type FactoringRemittanceLinesQueryVariables = Exact<{
 }>;
 
 
-export type FactoringRemittanceLinesQuery = { factoringRemittanceLines: { totalCount: number | null, edges: Array<{ node: { ' $fragmentRefs'?: { 'FactoringRemittanceLineFieldsFragment': FactoringRemittanceLineFieldsFragment } } }> } };
+export type FactoringRemittanceLinesQuery = { factoringRemittanceLines: { totalCount: number | null, totalCountExact: boolean, edges: Array<{ node: { ' $fragmentRefs'?: { 'FactoringRemittanceLineFieldsFragment': FactoringRemittanceLineFieldsFragment } } }> } };
 
 export type FactoringRemittancePlanQueryVariables = Exact<{
   input: FactoringRemittanceVersionInput;
@@ -14427,7 +14427,7 @@ export type FactoringRemittanceTableQueryVariables = Exact<{
 }>;
 
 
-export type FactoringRemittanceTableQuery = { factoringRemittances: { totalCount?: number | null, edges: Array<{ node: { id: string, factoringCompanyId: string, fileName: string | null, source: FactoringRemittanceSource, sourceFormat: FactoringRemittanceFormat | null, status: FactoringRemittanceStatus, defaultKind: FactoringRemittanceLineKind, remittedOn: number | null, currencyCode: string, lineCount: number, matchedCount: number, exceptionCount: number, appliedCount: number, totalCashMinor: number, error: string | null, createdAt: number, factoringCompany: { id: string, code: string, name: string } | null } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
+export type FactoringRemittanceTableQuery = { factoringRemittances: { totalCount?: number | null, totalCountExact?: boolean, edges: Array<{ node: { id: string, factoringCompanyId: string, fileName: string | null, source: FactoringRemittanceSource, sourceFormat: FactoringRemittanceFormat | null, status: FactoringRemittanceStatus, defaultKind: FactoringRemittanceLineKind, remittedOn: number | null, currencyCode: string, lineCount: number, matchedCount: number, exceptionCount: number, appliedCount: number, totalCashMinor: number, error: string | null, createdAt: number, factoringCompany: { id: string, code: string, name: string } | null } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
 
 export type FactoringSubmissionItemFieldsFragment = { id: string, submissionId: string, invoiceId: string, invoiceNumber: string, customerId: string, position: number, faceMinor: number, expectedAdvanceMinor: number, expectedFeeMinor: number, expectedReserveMinor: number, expectedDays: number, packetDocumentId: string | null, status: FactoringSubmissionItemStatus, releasedAt: number | null, fundedOn: number | null, advanceMinor: number | null, feeMinor: number | null, reserveMinor: number | null, rejectionReason: string | null, settledOn: number | null, chargedBackOn: number | null, chargebackReason: string | null, chargebackWarnedAt: number | null, customer: { id: string, code: string, name: string } | null } & { ' $fragmentName'?: 'FactoringSubmissionItemFieldsFragment' };
 
@@ -14441,7 +14441,7 @@ export type FactoringSubmissionTableQueryVariables = Exact<{
 }>;
 
 
-export type FactoringSubmissionTableQuery = { factoringSubmissions: { totalCount?: number | null, edges: Array<{ node: { id: string, number: string, factoringCompanyId: string, status: FactoringSubmissionStatus, currencyCode: string, invoiceCount: number, faceMinor: number, expectedAdvanceMinor: number, transportMethod: FactoringTransportMethod, transportTarget: string, lastError: string | null, sentAt: number | null, failedAt: number | null, createdAt: number, factoringCompany: { id: string, code: string, name: string } | null } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
+export type FactoringSubmissionTableQuery = { factoringSubmissions: { totalCount?: number | null, totalCountExact?: boolean, edges: Array<{ node: { id: string, number: string, factoringCompanyId: string, status: FactoringSubmissionStatus, currencyCode: string, invoiceCount: number, faceMinor: number, expectedAdvanceMinor: number, transportMethod: FactoringTransportMethod, transportTarget: string, lastError: string | null, sentAt: number | null, failedAt: number | null, createdAt: number, factoringCompany: { id: string, code: string, name: string } | null } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
 
 export type FactoringSubmissionDetailQueryVariables = Exact<{
   id: string | number;
@@ -14521,7 +14521,7 @@ export type FiscalYearTableQueryVariables = Exact<{
 }>;
 
 
-export type FiscalYearTableQuery = { fiscalYears: { totalCount?: number | null, edges: Array<{ node: { ' $fragmentRefs'?: { 'FiscalYearTableRowFieldsFragment': FiscalYearTableRowFieldsFragment } } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
+export type FiscalYearTableQuery = { fiscalYears: { totalCount?: number | null, totalCountExact?: boolean, edges: Array<{ node: { ' $fragmentRefs'?: { 'FiscalYearTableRowFieldsFragment': FiscalYearTableRowFieldsFragment } } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
 
 export type FleetCodeTableRowFieldsFragment = { id: string, businessUnitId: string, organizationId: string, managerId: string, status: EntityStatus, code: string, description: string, revenueGoal: number | null, deadheadGoal: number | null, mileageGoal: number | null, color: string, version: number, createdAt: number, updatedAt: number, manager: { id: string, name: string } | null } & { ' $fragmentName'?: 'FleetCodeTableRowFieldsFragment' };
 
@@ -14531,7 +14531,7 @@ export type FleetCodeTableQueryVariables = Exact<{
 }>;
 
 
-export type FleetCodeTableQuery = { fleetCodes: { totalCount?: number | null, edges: Array<{ node: { ' $fragmentRefs'?: { 'FleetCodeTableRowFieldsFragment': FleetCodeTableRowFieldsFragment } } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
+export type FleetCodeTableQuery = { fleetCodes: { totalCount?: number | null, totalCountExact?: boolean, edges: Array<{ node: { ' $fragmentRefs'?: { 'FleetCodeTableRowFieldsFragment': FleetCodeTableRowFieldsFragment } } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
 
 export type FleetSafetyQueryVariables = Exact<{
   input?: FleetSafetyInput | null | undefined;
@@ -14575,7 +14575,7 @@ export type DeskFormulaLibrariesQueryVariables = Exact<{
 }>;
 
 
-export type DeskFormulaLibrariesQuery = { formulaLibraries: { totalCount?: number | null, edges: Array<{ node: { id: string, name: string, path: string, description: string, status: FormulaTemplateStatus, currentVersionNumber: number, testCount: number } }>, pageInfo: { endCursor: string | null, hasNextPage: boolean } } };
+export type DeskFormulaLibrariesQuery = { formulaLibraries: { totalCount?: number | null, totalCountExact?: boolean, edges: Array<{ node: { id: string, name: string, path: string, description: string, status: FormulaTemplateStatus, currentVersionNumber: number, testCount: number } }>, pageInfo: { endCursor: string | null, hasNextPage: boolean } } };
 
 export type DeskFormulaLibraryCardQueryVariables = Exact<{
   id: string | number;
@@ -14599,7 +14599,7 @@ export type FormulaLibraryTableQueryVariables = Exact<{
 }>;
 
 
-export type FormulaLibraryTableQuery = { formulaLibraries: { totalCount?: number | null, edges: Array<{ node: { ' $fragmentRefs'?: { 'FormulaLibraryTableRowFieldsFragment': FormulaLibraryTableRowFieldsFragment } } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
+export type FormulaLibraryTableQuery = { formulaLibraries: { totalCount?: number | null, totalCountExact?: boolean, edges: Array<{ node: { ' $fragmentRefs'?: { 'FormulaLibraryTableRowFieldsFragment': FormulaLibraryTableRowFieldsFragment } } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
 
 export type DeskFormulaTemplatesQueryVariables = Exact<{
   input: DataTableConnectionInput;
@@ -14607,7 +14607,7 @@ export type DeskFormulaTemplatesQueryVariables = Exact<{
 }>;
 
 
-export type DeskFormulaTemplatesQuery = { formulaTemplates: { totalCount?: number | null, edges: Array<{ node: { id: string, name: string, description: string, status: FormulaTemplateStatus, currentVersionNumber: number, testCount: number } }>, pageInfo: { endCursor: string | null, hasNextPage: boolean } } };
+export type DeskFormulaTemplatesQuery = { formulaTemplates: { totalCount?: number | null, totalCountExact?: boolean, edges: Array<{ node: { id: string, name: string, description: string, status: FormulaTemplateStatus, currentVersionNumber: number, testCount: number } }>, pageInfo: { endCursor: string | null, hasNextPage: boolean } } };
 
 export type DeskFormulaTemplateCardQueryVariables = Exact<{
   id: string | number;
@@ -14624,7 +14624,7 @@ export type FormulaTemplateTableQueryVariables = Exact<{
 }>;
 
 
-export type FormulaTemplateTableQuery = { formulaTemplates: { totalCount?: number | null, edges: Array<{ node: { ' $fragmentRefs'?: { 'FormulaTemplateTableRowFieldsFragment': FormulaTemplateTableRowFieldsFragment } } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
+export type FormulaTemplateTableQuery = { formulaTemplates: { totalCount?: number | null, totalCountExact?: boolean, edges: Array<{ node: { ' $fragmentRefs'?: { 'FormulaTemplateTableRowFieldsFragment': FormulaTemplateTableRowFieldsFragment } } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
 
 export type FormulaTemplateTablesQueryVariables = Exact<{
   id: string | number;
@@ -14651,7 +14651,7 @@ export type DeskFuelCardsQueryVariables = Exact<{
 }>;
 
 
-export type DeskFuelCardsQuery = { fuelCards: { totalCount?: number | null, edges: Array<{ node: { id: string, provider: FuelCardProvider, lastFour: string, label: string, status: FuelCardStatus, expiresAt: number | null, discoveredAt: number | null, cancelledAt: number | null, assignedTractorId: string | null, assignedWorkerId: string | null, assignedTractor: { id: string, code: string } | null, assignedWorker: { id: string, wholeName: string } | null } }>, pageInfo: { endCursor: string | null, hasNextPage: boolean } } };
+export type DeskFuelCardsQuery = { fuelCards: { totalCount?: number | null, totalCountExact?: boolean, edges: Array<{ node: { id: string, provider: FuelCardProvider, lastFour: string, label: string, status: FuelCardStatus, expiresAt: number | null, discoveredAt: number | null, cancelledAt: number | null, assignedTractorId: string | null, assignedWorkerId: string | null, assignedTractor: { id: string, code: string } | null, assignedWorker: { id: string, wholeName: string } | null } }>, pageInfo: { endCursor: string | null, hasNextPage: boolean } } };
 
 export type FuelCardFieldsFragment = { id: string, businessUnitId: string, organizationId: string, provider: FuelCardProvider, lastFour: string, label: string, externalCardId: string | null, assignedWorkerId: string | null, assignedTractorId: string | null, status: FuelCardStatus, expiresAt: number | null, cancelledAt: number | null, cancelReason: string | null, notes: string | null, discoveredAt: number | null, version: number, createdAt: number, updatedAt: number, assignedWorker: { id: string, wholeName: string, firstName: string, lastName: string } | null, assignedTractor: { id: string, code: string } | null } & { ' $fragmentName'?: 'FuelCardFieldsFragment' };
 
@@ -14661,7 +14661,7 @@ export type FuelCardTableQueryVariables = Exact<{
 }>;
 
 
-export type FuelCardTableQuery = { fuelCards: { totalCount?: number | null, edges: Array<{ node: { ' $fragmentRefs'?: { 'FuelCardFieldsFragment': FuelCardFieldsFragment } } }>, pageInfo: { hasNextPage: boolean, endCursor: string | null } } };
+export type FuelCardTableQuery = { fuelCards: { totalCount?: number | null, totalCountExact?: boolean, edges: Array<{ node: { ' $fragmentRefs'?: { 'FuelCardFieldsFragment': FuelCardFieldsFragment } } }>, pageInfo: { hasNextPage: boolean, endCursor: string | null } } };
 
 export type FuelCardQueryVariables = Exact<{
   id: string | number;
@@ -14713,7 +14713,7 @@ export type DeskFuelPurchaseImportsQueryVariables = Exact<{
 }>;
 
 
-export type DeskFuelPurchaseImportsQuery = { fuelPurchaseImports: { totalCount?: number | null, edges: Array<{ node: { id: string, provider: FuelCardProvider, origin: FuelPurchaseImportOrigin, status: FuelPurchaseImportStatus, fileName: string | null, rowCount: number, errorCount: number, committedCount: number, error: string | null, stagedAt: number | null, committedAt: number | null, summary: { newCount: number, alreadyImportedCount: number, duplicateInFileCount: number, totalGallons: string, totalAmount: string } | null } }>, pageInfo: { endCursor: string | null, hasNextPage: boolean } } };
+export type DeskFuelPurchaseImportsQuery = { fuelPurchaseImports: { totalCount?: number | null, totalCountExact?: boolean, edges: Array<{ node: { id: string, provider: FuelCardProvider, origin: FuelPurchaseImportOrigin, status: FuelPurchaseImportStatus, fileName: string | null, rowCount: number, errorCount: number, committedCount: number, error: string | null, stagedAt: number | null, committedAt: number | null, summary: { newCount: number, alreadyImportedCount: number, duplicateInFileCount: number, totalGallons: string, totalAmount: string } | null } }>, pageInfo: { endCursor: string | null, hasNextPage: boolean } } };
 
 export type FuelPurchaseImportBatchFieldsFragment = { id: string, businessUnitId: string, organizationId: string, provider: FuelCardProvider, origin: FuelPurchaseImportOrigin, feedReference: string | null, documentId: string | null, fileName: string | null, sourceFormat: FuelImportFormat | null, status: FuelPurchaseImportStatus, defaultFuelType: IftaFuelType | null, defaultFuelCardId: string | null, defaultCurrency: string, mapping: unknown, unmappedHeaders: Array<string>, rowCount: number, errorCount: number, committedCount: number, error: string | null, uploadedById: string | null, stagedAt: number | null, committedAt: number | null, committedById: string | null, version: number, createdAt: number, updatedAt: number, summary: { rowCount: number, newCount: number, duplicateInFileCount: number, alreadyImportedCount: number, errorCount: number, totalGallons: string, totalAmount: string, byFuelType: unknown, byJurisdiction: unknown, earliestPurchasedAt: number | null, latestPurchasedAt: number | null } | null, document: { id: string, fileName: string, originalName: string, fileType: string, fileSize: number, createdAt: number } | null, defaultFuelCard: { id: string, provider: FuelCardProvider, lastFour: string, label: string } | null } & { ' $fragmentName'?: 'FuelPurchaseImportBatchFieldsFragment' };
 
@@ -14732,7 +14732,7 @@ export type FuelPurchaseImportRowsQueryVariables = Exact<{
 }>;
 
 
-export type FuelPurchaseImportRowsQuery = { fuelPurchaseImport: { id: string, rows: { totalCount: number | null, edges: Array<{ cursor: string, node: { ' $fragmentRefs'?: { 'FuelPurchaseImportRowFieldsFragment': FuelPurchaseImportRowFieldsFragment } } }>, pageInfo: { hasNextPage: boolean, endCursor: string | null } } } };
+export type FuelPurchaseImportRowsQuery = { fuelPurchaseImport: { id: string, rows: { totalCount: number | null, totalCountExact: boolean, edges: Array<{ cursor: string, node: { ' $fragmentRefs'?: { 'FuelPurchaseImportRowFieldsFragment': FuelPurchaseImportRowFieldsFragment } } }>, pageInfo: { hasNextPage: boolean, endCursor: string | null } } } };
 
 export type FuelPurchaseImportTemplateQueryVariables = Exact<{
   provider: FuelCardProvider;
@@ -14786,7 +14786,7 @@ export type FuelPurchaseImportTableQueryVariables = Exact<{
 }>;
 
 
-export type FuelPurchaseImportTableQuery = { fuelPurchaseImports: { totalCount?: number | null, edges: Array<{ node: { ' $fragmentRefs'?: { 'FuelPurchaseImportBatchFieldsFragment': FuelPurchaseImportBatchFieldsFragment } } }>, pageInfo: { hasNextPage: boolean, endCursor: string | null } } };
+export type FuelPurchaseImportTableQuery = { fuelPurchaseImports: { totalCount?: number | null, totalCountExact?: boolean, edges: Array<{ node: { ' $fragmentRefs'?: { 'FuelPurchaseImportBatchFieldsFragment': FuelPurchaseImportBatchFieldsFragment } } }>, pageInfo: { hasNextPage: boolean, endCursor: string | null } } };
 
 export type DeskFuelPurchaseCardQueryVariables = Exact<{
   id: string | number;
@@ -14804,7 +14804,7 @@ export type DeskFuelPurchasesQueryVariables = Exact<{
 }>;
 
 
-export type DeskFuelPurchasesQuery = { fuelPurchases: { totalCount?: number | null, edges: Array<{ node: { id: string, tractorId: string, workerId: string | null, jurisdictionId: string, fuelCardId: string | null, importBatchId: string | null, purchasedAt: number, vendor: string | null, vendorCity: string | null, fuelType: IftaFuelType, quantity: string, quantityUnit: FuelQuantityUnit, gallons: string, totalAmount: string, currencyCode: string, taxPaid: boolean, cardLastFour: string | null, transactionReference: string | null, source: FuelPurchaseSource, tractor: { id: string, code: string } | null, worker: { id: string, wholeName: string } | null, jurisdiction: { id: string, code: string } } }>, pageInfo: { endCursor: string | null, hasNextPage: boolean } } };
+export type DeskFuelPurchasesQuery = { fuelPurchases: { totalCount?: number | null, totalCountExact?: boolean, edges: Array<{ node: { id: string, tractorId: string, workerId: string | null, jurisdictionId: string, fuelCardId: string | null, importBatchId: string | null, purchasedAt: number, vendor: string | null, vendorCity: string | null, fuelType: IftaFuelType, quantity: string, quantityUnit: FuelQuantityUnit, gallons: string, totalAmount: string, currencyCode: string, taxPaid: boolean, cardLastFour: string | null, transactionReference: string | null, source: FuelPurchaseSource, tractor: { id: string, code: string } | null, worker: { id: string, wholeName: string } | null, jurisdiction: { id: string, code: string } } }>, pageInfo: { endCursor: string | null, hasNextPage: boolean } } };
 
 export type FuelPurchaseFieldsFragment = { id: string, businessUnitId: string, organizationId: string, tractorId: string, workerId: string | null, jurisdictionId: string, fuelCardId: string | null, cardLastFour: string | null, purchasedAt: number, vendor: string | null, vendorCity: string | null, fuelType: IftaFuelType, quantity: string, quantityUnit: FuelQuantityUnit, gallons: string, unitPrice: string | null, totalAmount: string, currencyCode: string, odometer: number | null, transactionReference: string | null, source: FuelPurchaseSource, importBatchId: string | null, taxPaid: boolean, notes: string | null, createdById: string | null, version: number, createdAt: number, updatedAt: number, tractor: { id: string, code: string } | null, worker: { id: string, wholeName: string, firstName: string, lastName: string } | null, jurisdiction: { id: string, countryCode: string, code: string, name: string }, fuelCard: { id: string, provider: FuelCardProvider, lastFour: string, label: string } | null } & { ' $fragmentName'?: 'FuelPurchaseFieldsFragment' };
 
@@ -14814,7 +14814,7 @@ export type FuelPurchaseTableQueryVariables = Exact<{
 }>;
 
 
-export type FuelPurchaseTableQuery = { fuelPurchases: { totalCount?: number | null, edges: Array<{ node: { ' $fragmentRefs'?: { 'FuelPurchaseFieldsFragment': FuelPurchaseFieldsFragment } } }>, pageInfo: { hasNextPage: boolean, endCursor: string | null } } };
+export type FuelPurchaseTableQuery = { fuelPurchases: { totalCount?: number | null, totalCountExact?: boolean, edges: Array<{ node: { ' $fragmentRefs'?: { 'FuelPurchaseFieldsFragment': FuelPurchaseFieldsFragment } } }>, pageInfo: { hasNextPage: boolean, endCursor: string | null } } };
 
 export type FuelPurchaseQueryVariables = Exact<{
   id: string | number;
@@ -14872,7 +14872,7 @@ export type FuelIndexTableQueryVariables = Exact<{
 }>;
 
 
-export type FuelIndexTableQuery = { fuelIndexes: { totalCount?: number | null, edges: Array<{ node: { ' $fragmentRefs'?: { 'FuelIndexFieldsFragment': FuelIndexFieldsFragment } } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
+export type FuelIndexTableQuery = { fuelIndexes: { totalCount?: number | null, totalCountExact?: boolean, edges: Array<{ node: { ' $fragmentRefs'?: { 'FuelIndexFieldsFragment': FuelIndexFieldsFragment } } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
 
 export type FuelSurchargeProgramTableQueryVariables = Exact<{
   input: DataTableConnectionInput;
@@ -14880,7 +14880,7 @@ export type FuelSurchargeProgramTableQueryVariables = Exact<{
 }>;
 
 
-export type FuelSurchargeProgramTableQuery = { fuelSurchargePrograms: { totalCount?: number | null, edges: Array<{ node: { ' $fragmentRefs'?: { 'FuelSurchargeProgramFieldsFragment': FuelSurchargeProgramFieldsFragment } } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
+export type FuelSurchargeProgramTableQuery = { fuelSurchargePrograms: { totalCount?: number | null, totalCountExact?: boolean, edges: Array<{ node: { ' $fragmentRefs'?: { 'FuelSurchargeProgramFieldsFragment': FuelSurchargeProgramFieldsFragment } } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
 
 export type FuelSurchargeProgramDetailQueryVariables = Exact<{
   id: string | number;
@@ -14994,7 +14994,7 @@ export type HazardousMaterialTableQueryVariables = Exact<{
 }>;
 
 
-export type HazardousMaterialTableQuery = { hazardousMaterials: { totalCount?: number | null, edges: Array<{ node: { ' $fragmentRefs'?: { 'HazardousMaterialTableRowFieldsFragment': HazardousMaterialTableRowFieldsFragment } } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
+export type HazardousMaterialTableQuery = { hazardousMaterials: { totalCount?: number | null, totalCountExact?: boolean, edges: Array<{ node: { ' $fragmentRefs'?: { 'HazardousMaterialTableRowFieldsFragment': HazardousMaterialTableRowFieldsFragment } } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
 
 export type HazmatSegregationRuleTableRowFieldsFragment = { id: string, businessUnitId: string, organizationId: string, status: EntityStatus, name: string, description: string, exceptionNotes: string, referenceCode: string, regulationSource: string, distanceUnit: string, classA: HazardousClass, classB: HazardousClass, segregationType: SegregationType, hasExceptions: boolean, hazmatAId: string | null, hazmatBId: string | null, minimumDistance: number | null, version: number, createdAt: number, updatedAt: number } & { ' $fragmentName'?: 'HazmatSegregationRuleTableRowFieldsFragment' };
 
@@ -15004,7 +15004,7 @@ export type HazmatSegregationRuleTableQueryVariables = Exact<{
 }>;
 
 
-export type HazmatSegregationRuleTableQuery = { hazmatSegregationRules: { totalCount?: number | null, edges: Array<{ node: { ' $fragmentRefs'?: { 'HazmatSegregationRuleTableRowFieldsFragment': HazmatSegregationRuleTableRowFieldsFragment } } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
+export type HazmatSegregationRuleTableQuery = { hazmatSegregationRules: { totalCount?: number | null, totalCountExact?: boolean, edges: Array<{ node: { ' $fragmentRefs'?: { 'HazmatSegregationRuleTableRowFieldsFragment': HazmatSegregationRuleTableRowFieldsFragment } } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
 
 export type HoldReasonTableRowFieldsFragment = { id: string, businessUnitId: string, organizationId: string, type: HoldType, code: string, label: string, description: string, active: boolean, defaultSeverity: HoldSeverity, defaultBlocksDispatch: boolean, defaultBlocksDelivery: boolean, defaultBlocksBilling: boolean, defaultVisibleToCustomer: boolean, sortOrder: number, version: number, createdAt: number, updatedAt: number } & { ' $fragmentName'?: 'HoldReasonTableRowFieldsFragment' };
 
@@ -15014,7 +15014,7 @@ export type HoldReasonTableQueryVariables = Exact<{
 }>;
 
 
-export type HoldReasonTableQuery = { holdReasons: { totalCount?: number | null, edges: Array<{ node: { ' $fragmentRefs'?: { 'HoldReasonTableRowFieldsFragment': HoldReasonTableRowFieldsFragment } } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
+export type HoldReasonTableQuery = { holdReasons: { totalCount?: number | null, totalCountExact?: boolean, edges: Array<{ node: { ' $fragmentRefs'?: { 'HoldReasonTableRowFieldsFragment': HoldReasonTableRowFieldsFragment } } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
 
 export type HomeWidgetFieldsFragment = { id: string, key: string, title: string | null, w: number, h: number, config: { metric: string | null, metrics: Array<string> | null, definitionId: string | null, cannedKey: string | null, chartId: string | null, columnId: string | null, dashboardId: string | null, text: string | null, limit: number | null, windowDays: number | null } } & { ' $fragmentName'?: 'HomeWidgetFieldsFragment' };
 
@@ -15091,7 +15091,7 @@ export type DeskIftaMileageEntriesQueryVariables = Exact<{
 }>;
 
 
-export type DeskIftaMileageEntriesQuery = { iftaMileageEntries: { totalCount?: number | null, edges: Array<{ node: { id: string, tractorId: string, jurisdictionId: string, traveledAt: number, year: number, quarter: number, miles: string, loaded: boolean, source: IftaMileageSource, shipmentMoveId: string | null, notes: string | null, tractor: { id: string, code: string } | null, jurisdiction: { id: string, code: string } } }>, pageInfo: { endCursor: string | null, hasNextPage: boolean } } };
+export type DeskIftaMileageEntriesQuery = { iftaMileageEntries: { totalCount?: number | null, totalCountExact?: boolean, edges: Array<{ node: { id: string, tractorId: string, jurisdictionId: string, traveledAt: number, year: number, quarter: number, miles: string, loaded: boolean, source: IftaMileageSource, shipmentMoveId: string | null, notes: string | null, tractor: { id: string, code: string } | null, jurisdiction: { id: string, code: string } } }>, pageInfo: { endCursor: string | null, hasNextPage: boolean } } };
 
 export type IftaMileageEntryFieldsFragment = { id: string, businessUnitId: string, organizationId: string, tractorId: string, jurisdictionId: string, traveledAt: number, year: number, quarter: number, miles: string, loaded: boolean, source: IftaMileageSource, shipmentMoveId: string | null, notes: string | null, createdById: string | null, version: number, createdAt: number, updatedAt: number, tractor: { id: string, code: string } | null, jurisdiction: { id: string, countryCode: string, code: string, name: string } } & { ' $fragmentName'?: 'IftaMileageEntryFieldsFragment' };
 
@@ -15101,7 +15101,7 @@ export type IftaMileageEntryTableQueryVariables = Exact<{
 }>;
 
 
-export type IftaMileageEntryTableQuery = { iftaMileageEntries: { totalCount?: number | null, edges: Array<{ node: { ' $fragmentRefs'?: { 'IftaMileageEntryFieldsFragment': IftaMileageEntryFieldsFragment } } }>, pageInfo: { hasNextPage: boolean, endCursor: string | null } } };
+export type IftaMileageEntryTableQuery = { iftaMileageEntries: { totalCount?: number | null, totalCountExact?: boolean, edges: Array<{ node: { ' $fragmentRefs'?: { 'IftaMileageEntryFieldsFragment': IftaMileageEntryFieldsFragment } } }>, pageInfo: { hasNextPage: boolean, endCursor: string | null } } };
 
 export type IftaMileageEntryQueryVariables = Exact<{
   id: string | number;
@@ -15158,7 +15158,7 @@ export type DeskIftaReturnsQueryVariables = Exact<{
 }>;
 
 
-export type DeskIftaReturnsQuery = { iftaReturns: { totalCount?: number | null, edges: Array<{ node: { id: string, year: number, quarter: number, status: IftaReturnStatus, amendmentNumber: number, totalMiles: string, totalGallons: string, totalTaxPaidGallons: string, netDue: string, currencyCode: string, finalizedAt: number | null, filedAt: number | null, filingReference: string | null, problems: Array<{ code: IftaProblemCode, message: string, jurisdictionCode: string | null, fuelType: IftaFuelType | null }> } }>, pageInfo: { endCursor: string | null, hasNextPage: boolean } } };
+export type DeskIftaReturnsQuery = { iftaReturns: { totalCount?: number | null, totalCountExact?: boolean, edges: Array<{ node: { id: string, year: number, quarter: number, status: IftaReturnStatus, amendmentNumber: number, totalMiles: string, totalGallons: string, totalTaxPaidGallons: string, netDue: string, currencyCode: string, finalizedAt: number | null, filedAt: number | null, filingReference: string | null, problems: Array<{ code: IftaProblemCode, message: string, jurisdictionCode: string | null, fuelType: IftaFuelType | null }> } }>, pageInfo: { endCursor: string | null, hasNextPage: boolean } } };
 
 export type IftaPeriodFieldsFragment = { year: number, quarter: number, key: string, label: string, start: number, end: number, dueDate: number } & { ' $fragmentName'?: 'IftaPeriodFieldsFragment' };
 
@@ -15188,7 +15188,7 @@ export type IftaReturnTableQueryVariables = Exact<{
 }>;
 
 
-export type IftaReturnTableQuery = { iftaReturns: { totalCount?: number | null, edges: Array<{ node: { ' $fragmentRefs'?: { 'IftaReturnSummaryFieldsFragment': IftaReturnSummaryFieldsFragment } } }>, pageInfo: { hasNextPage: boolean, endCursor: string | null } } };
+export type IftaReturnTableQuery = { iftaReturns: { totalCount?: number | null, totalCountExact?: boolean, edges: Array<{ node: { ' $fragmentRefs'?: { 'IftaReturnSummaryFieldsFragment': IftaReturnSummaryFieldsFragment } } }>, pageInfo: { hasNextPage: boolean, endCursor: string | null } } };
 
 export type IftaCurrentPeriodQueryVariables = Exact<{ [key: string]: never; }>;
 
@@ -15273,7 +15273,7 @@ export type IftaTaxRateTableQueryVariables = Exact<{
 }>;
 
 
-export type IftaTaxRateTableQuery = { iftaTaxRates: { totalCount?: number | null, edges: Array<{ node: { ' $fragmentRefs'?: { 'IftaTaxRateFieldsFragment': IftaTaxRateFieldsFragment } } }>, pageInfo: { hasNextPage: boolean, endCursor: string | null } } };
+export type IftaTaxRateTableQuery = { iftaTaxRates: { totalCount?: number | null, totalCountExact?: boolean, edges: Array<{ node: { ' $fragmentRefs'?: { 'IftaTaxRateFieldsFragment': IftaTaxRateFieldsFragment } } }>, pageInfo: { hasNextPage: boolean, endCursor: string | null } } };
 
 export type UpsertIftaTaxRatesMutationVariables = Exact<{
   input: Array<IftaTaxRateInput> | IftaTaxRateInput;
@@ -15925,7 +15925,7 @@ export type DeskInvoicesQueryVariables = Exact<{
 }>;
 
 
-export type DeskInvoicesQuery = { invoices: { totalCount?: number | null, edges: Array<{ node: { id: string, number: string, status: InvoiceStatus, settlementStatus: InvoiceSettlementStatus, disputeStatus: InvoiceDisputeStatus, billType: BillType, customerId: string, billToName: string, shipmentProNumber: string, totalAmount: string | null, currencyCode: string, invoiceDate: number, dueDate: number | null } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
+export type DeskInvoicesQuery = { invoices: { totalCount?: number | null, totalCountExact?: boolean, edges: Array<{ node: { id: string, number: string, status: InvoiceStatus, settlementStatus: InvoiceSettlementStatus, disputeStatus: InvoiceDisputeStatus, billType: BillType, customerId: string, billToName: string, shipmentProNumber: string, totalAmount: string | null, currencyCode: string, invoiceDate: number, dueDate: number | null } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
 
 export type DeskInvoiceDetailQueryVariables = Exact<{
   id: string | number;
@@ -16046,7 +16046,7 @@ export type InvoiceRegisterQueryVariables = Exact<{
 }>;
 
 
-export type InvoiceRegisterQuery = { invoices: { totalCount?: number | null, edges: Array<{ node: { ' $fragmentRefs'?: { 'InvoiceRegisterRowFieldsFragment': InvoiceRegisterRowFieldsFragment } } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
+export type InvoiceRegisterQuery = { invoices: { totalCount?: number | null, totalCountExact?: boolean, edges: Array<{ node: { ' $fragmentRefs'?: { 'InvoiceRegisterRowFieldsFragment': InvoiceRegisterRowFieldsFragment } } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
 
 export type InvoiceTableRowFieldsFragment = { id: string, billingQueueItemId: string, shipmentId: string | null, orderId: string | null, customerId: string, shipperCustomerId: string | null, isSplitBill: boolean, number: string, billType: BillType, scope: InvoiceScope, periodStart: number | null, periodEnd: number | null, shipmentCount: number, status: InvoiceStatus, paymentTerm: InvoicePaymentTerm, currencyCode: string, invoiceDate: number, dueDate: number | null, billToName: string, subtotalAmount: string, otherAmount: string, totalAmount: string | null, appliedAmount: string, settlementStatus: InvoiceSettlementStatus, disputeStatus: InvoiceDisputeStatus, sendStatus: InvoiceSendStatus, isAdjustmentArtifact: boolean, version: number, createdAt: number, updatedAt: number, customer: { id: string, name: string, code: string } | null } & { ' $fragmentName'?: 'InvoiceTableRowFieldsFragment' };
 
@@ -16056,7 +16056,7 @@ export type InvoiceTableQueryVariables = Exact<{
 }>;
 
 
-export type InvoiceTableQuery = { invoices: { totalCount?: number | null, edges: Array<{ node: { ' $fragmentRefs'?: { 'InvoiceTableRowFieldsFragment': InvoiceTableRowFieldsFragment } } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
+export type InvoiceTableQuery = { invoices: { totalCount?: number | null, totalCountExact?: boolean, edges: Array<{ node: { ' $fragmentRefs'?: { 'InvoiceTableRowFieldsFragment': InvoiceTableRowFieldsFragment } } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
 
 export type DeskJournalCardLineFieldsFragment = { lineNumber: number, glAccountId: string, accountCode: string, accountName: string, category: AccountCategory | null, description: string, debitAmount: number, creditAmount: number, customerId: string | null, customerName: string, locationId: string | null, locationName: string } & { ' $fragmentName'?: 'DeskJournalCardLineFieldsFragment' };
 
@@ -16122,7 +16122,7 @@ export type JournalReviewTableQueryVariables = Exact<{
 }>;
 
 
-export type JournalReviewTableQuery = { journalReviewTable: { totalCount?: number | null, edges: Array<{ node: { id: string, entryNumber: string, entryType: string, status: string, accountingDate: number, description: string, referenceType: string, referenceNumber: string, referenceId: string, totalDebit: number, totalCredit: number, isAutoGenerated: boolean, requiresApproval: boolean, isApproved: boolean, approvedById: string | null, approvedAt: number | null, createdById: string | null, createdAt: number, version: number } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
+export type JournalReviewTableQuery = { journalReviewTable: { totalCount?: number | null, totalCountExact?: boolean, edges: Array<{ node: { id: string, entryNumber: string, entryType: string, status: string, accountingDate: number, description: string, referenceType: string, referenceNumber: string, referenceId: string, totalDebit: number, totalCredit: number, isAutoGenerated: boolean, requiresApproval: boolean, isApproved: boolean, approvedById: string | null, approvedAt: number | null, createdById: string | null, createdAt: number, version: number } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
 
 export type JournalReviewResultFieldsFragment = { changed: number, failed: number, outcomes: Array<{ entryId: string, entryNumber: string, status: string, changed: boolean, error: string }> } & { ' $fragmentName'?: 'JournalReviewResultFieldsFragment' };
 
@@ -16155,7 +16155,7 @@ export type JournalReversalTableQueryVariables = Exact<{
 }>;
 
 
-export type JournalReversalTableQuery = { journalReversals: { totalCount?: number | null, edges: Array<{ node: { ' $fragmentRefs'?: { 'JournalReversalTableRowFieldsFragment': JournalReversalTableRowFieldsFragment } } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
+export type JournalReversalTableQuery = { journalReversals: { totalCount?: number | null, totalCountExact?: boolean, edges: Array<{ node: { ' $fragmentRefs'?: { 'JournalReversalTableRowFieldsFragment': JournalReversalTableRowFieldsFragment } } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
 
 export type JurisdictionRuleOverrideTableRowFieldsFragment = { id: string, businessUnitId: string, organizationId: string, stateId: string, maxWidthFeet: number | null, maxHeightFeet: number | null, maxLengthFeet: number | null, maxWeightPounds: number | null, permitLeadTimeDays: number | null, daylightOnly: boolean | null, holidayRestricted: boolean | null, reason: string, version: number, createdAt: number, updatedAt: number, state: { id: string, name: string, abbreviation: string } | null } & { ' $fragmentName'?: 'JurisdictionRuleOverrideTableRowFieldsFragment' };
 
@@ -16165,7 +16165,7 @@ export type JurisdictionRuleOverrideTableQueryVariables = Exact<{
 }>;
 
 
-export type JurisdictionRuleOverrideTableQuery = { jurisdictionRuleOverrides: { totalCount?: number | null, edges: Array<{ node: { ' $fragmentRefs'?: { 'JurisdictionRuleOverrideTableRowFieldsFragment': JurisdictionRuleOverrideTableRowFieldsFragment } } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
+export type JurisdictionRuleOverrideTableQuery = { jurisdictionRuleOverrides: { totalCount?: number | null, totalCountExact?: boolean, edges: Array<{ node: { ' $fragmentRefs'?: { 'JurisdictionRuleOverrideTableRowFieldsFragment': JurisdictionRuleOverrideTableRowFieldsFragment } } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
 
 export type JurisdictionRuleTableRowFieldsFragment = { id: string, stateId: string, status: JurisdictionRuleStatus, maxWidthFeet: number, maxHeightFeet: number, maxLengthFeet: number, maxWeightPounds: number, superloadWidthFeet: number | null, superloadWeightPounds: number | null, daylightOnly: boolean, rushHourRestricted: boolean, weekendRestricted: boolean, holidayRestricted: boolean, permitLeadTimeDays: number, permitValidityDays: number, permitBaseFee: string | null, permitPerMileFee: string | null, sourceNote: string | null, sourceUrl: string | null, verificationState: JurisdictionVerificationState, verifiedAt: number | null, effectiveStartDate: number | null, effectiveEndDate: number | null, version: number, createdAt: number, updatedAt: number, state: { id: string, name: string, abbreviation: string } | null } & { ' $fragmentName'?: 'JurisdictionRuleTableRowFieldsFragment' };
 
@@ -16175,7 +16175,7 @@ export type JurisdictionRuleTableQueryVariables = Exact<{
 }>;
 
 
-export type JurisdictionRuleTableQuery = { jurisdictionRules: { totalCount?: number | null, edges: Array<{ node: { ' $fragmentRefs'?: { 'JurisdictionRuleTableRowFieldsFragment': JurisdictionRuleTableRowFieldsFragment } } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
+export type JurisdictionRuleTableQuery = { jurisdictionRules: { totalCount?: number | null, totalCountExact?: boolean, edges: Array<{ node: { ' $fragmentRefs'?: { 'JurisdictionRuleTableRowFieldsFragment': JurisdictionRuleTableRowFieldsFragment } } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
 
 export type LocationCategoryTableRowFieldsFragment = { id: string, businessUnitId: string, organizationId: string, name: string, description: string, type: LocationCategoryType, facilityType: FacilityType | null, color: string, hasSecureParking: boolean | null, requiresAppointment: boolean, allowsOvernight: boolean | null, hasRestroom: boolean | null, version: number, createdAt: number, updatedAt: number } & { ' $fragmentName'?: 'LocationCategoryTableRowFieldsFragment' };
 
@@ -16185,7 +16185,7 @@ export type LocationCategoryTableQueryVariables = Exact<{
 }>;
 
 
-export type LocationCategoryTableQuery = { locationCategories: { totalCount?: number | null, edges: Array<{ node: { ' $fragmentRefs'?: { 'LocationCategoryTableRowFieldsFragment': LocationCategoryTableRowFieldsFragment } } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
+export type LocationCategoryTableQuery = { locationCategories: { totalCount?: number | null, totalCountExact?: boolean, edges: Array<{ node: { ' $fragmentRefs'?: { 'LocationCategoryTableRowFieldsFragment': LocationCategoryTableRowFieldsFragment } } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
 
 export type DeskLocationCardQueryVariables = Exact<{
   id: string | number;
@@ -16208,7 +16208,7 @@ export type DeskLocationPoliciesQueryVariables = Exact<{
 }>;
 
 
-export type DeskLocationPoliciesQuery = { detentionPolicies: { totalCount: number | null, edges: Array<{ node: { id: string, name: string, code: string, status: DetentionPolicyStatus, priority: number, customerId: string | null, stopTypes: Array<StopType>, appointmentStopsOnly: boolean, billingFreeMinutes: number, pickupFreeMinutes: number | null, deliveryFreeMinutes: number | null, effectiveStartDate: number | null, effectiveEndDate: number | null } }> } };
+export type DeskLocationPoliciesQuery = { detentionPolicies: { totalCount: number | null, totalCountExact: boolean, edges: Array<{ node: { id: string, name: string, code: string, status: DetentionPolicyStatus, priority: number, customerId: string | null, stopTypes: Array<StopType>, appointmentStopsOnly: boolean, billingFreeMinutes: number, pickupFreeMinutes: number | null, deliveryFreeMinutes: number | null, effectiveStartDate: number | null, effectiveEndDate: number | null } }> } };
 
 export type LocationTableRowFieldsFragment = { id: string, businessUnitId: string, organizationId: string, locationCategoryId: string, stateId: string, status: EntityStatus, code: string, name: string, description: string, addressLine1: string, addressLine2: string, city: string, postalCode: string, isGeocoded: boolean, latitude: number | null, longitude: number | null, placeId: string, version: number, createdAt: number, updatedAt: number, state: { id: string, name: string, abbreviation: string } | null, locationCategory: { id: string, name: string, color: string } | null } & { ' $fragmentName'?: 'LocationTableRowFieldsFragment' };
 
@@ -16218,7 +16218,7 @@ export type LocationTableQueryVariables = Exact<{
 }>;
 
 
-export type LocationTableQuery = { locations: { totalCount?: number | null, edges: Array<{ node: { ' $fragmentRefs'?: { 'LocationTableRowFieldsFragment': LocationTableRowFieldsFragment } } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
+export type LocationTableQuery = { locations: { totalCount?: number | null, totalCountExact?: boolean, edges: Array<{ node: { ' $fragmentRefs'?: { 'LocationTableRowFieldsFragment': LocationTableRowFieldsFragment } } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
 
 export type DeskManualJournalCardQueryVariables = Exact<{
   id: string | number;
@@ -16242,7 +16242,7 @@ export type ManualJournalTableQueryVariables = Exact<{
 }>;
 
 
-export type ManualJournalTableQuery = { manualJournals: { totalCount?: number | null, edges: Array<{ node: { ' $fragmentRefs'?: { 'ManualJournalTableRowFieldsFragment': ManualJournalTableRowFieldsFragment } } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
+export type ManualJournalTableQuery = { manualJournals: { totalCount?: number | null, totalCountExact?: boolean, edges: Array<{ node: { ' $fragmentRefs'?: { 'ManualJournalTableRowFieldsFragment': ManualJournalTableRowFieldsFragment } } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
 
 export type NotificationFieldsFragment = { id: string, organizationId: string, businessUnitId: string | null, targetUserId: string | null, eventType: string, priority: NotificationPriority, channel: NotificationChannel, title: string, message: string, data: unknown, relatedEntities: unknown, source: string, readAt: number | null, dismissedAt: number | null, createdAt: number } & { ' $fragmentName'?: 'NotificationFieldsFragment' };
 
@@ -16253,7 +16253,7 @@ export type NotificationListQueryVariables = Exact<{
 }>;
 
 
-export type NotificationListQuery = { notifications: { totalCount?: number | null, edges: Array<{ node: { ' $fragmentRefs'?: { 'NotificationFieldsFragment': NotificationFieldsFragment } } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
+export type NotificationListQuery = { notifications: { totalCount?: number | null, totalCountExact?: boolean, edges: Array<{ node: { ' $fragmentRefs'?: { 'NotificationFieldsFragment': NotificationFieldsFragment } } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
 
 export type NotificationUnreadCountQueryVariables = Exact<{ [key: string]: never; }>;
 
@@ -16267,7 +16267,7 @@ export type MyNotificationListQueryVariables = Exact<{
 }>;
 
 
-export type MyNotificationListQuery = { myNotifications: { totalCount?: number | null, edges: Array<{ node: { ' $fragmentRefs'?: { 'NotificationFieldsFragment': NotificationFieldsFragment } } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
+export type MyNotificationListQuery = { myNotifications: { totalCount?: number | null, totalCountExact?: boolean, edges: Array<{ node: { ' $fragmentRefs'?: { 'NotificationFieldsFragment': NotificationFieldsFragment } } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
 
 export type MyNotificationUnreadCountQueryVariables = Exact<{ [key: string]: never; }>;
 
@@ -16448,7 +16448,7 @@ export type OrderTableQueryVariables = Exact<{
 }>;
 
 
-export type OrderTableQuery = { orders: { totalCount?: number | null, edges: Array<{ node: { ' $fragmentRefs'?: { 'OrderTableRowFieldsFragment': OrderTableRowFieldsFragment } } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
+export type OrderTableQuery = { orders: { totalCount?: number | null, totalCountExact?: boolean, edges: Array<{ node: { ' $fragmentRefs'?: { 'OrderTableRowFieldsFragment': OrderTableRowFieldsFragment } } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
 
 export type OrgHolidayFieldsFragment = { id: string, businessUnitId: string, organizationId: string, name: string, holidayDate: number, kind: OrgHolidayKind, recursAnnually: boolean, description: string | null, version: number, createdAt: number, updatedAt: number } & { ' $fragmentName'?: 'OrgHolidayFieldsFragment' };
 
@@ -16636,7 +16636,7 @@ export type PerformanceReviewTemplateTableQueryVariables = Exact<{
 }>;
 
 
-export type PerformanceReviewTemplateTableQuery = { performanceReviewTemplates: { totalCount?: number | null, edges: Array<{ cursor: string, node: { ' $fragmentRefs'?: { 'PerformanceReviewTemplateFieldsFragment': PerformanceReviewTemplateFieldsFragment } } }>, pageInfo: { hasNextPage: boolean, endCursor: string | null } } };
+export type PerformanceReviewTemplateTableQuery = { performanceReviewTemplates: { totalCount?: number | null, totalCountExact?: boolean, edges: Array<{ cursor: string, node: { ' $fragmentRefs'?: { 'PerformanceReviewTemplateFieldsFragment': PerformanceReviewTemplateFieldsFragment } } }>, pageInfo: { hasNextPage: boolean, endCursor: string | null } } };
 
 export type ActivePerformanceReviewTemplatesQueryVariables = Exact<{ [key: string]: never; }>;
 
@@ -16741,7 +16741,7 @@ export type PtoPolicyTableQueryVariables = Exact<{
 }>;
 
 
-export type PtoPolicyTableQuery = { ptoPolicies: { totalCount?: number | null, edges: Array<{ node: { ' $fragmentRefs'?: { 'PtoPolicyFieldsFragment': PtoPolicyFieldsFragment } } }>, pageInfo: { hasNextPage: boolean, endCursor: string | null } } };
+export type PtoPolicyTableQuery = { ptoPolicies: { totalCount?: number | null, totalCountExact?: boolean, edges: Array<{ node: { ' $fragmentRefs'?: { 'PtoPolicyFieldsFragment': PtoPolicyFieldsFragment } } }>, pageInfo: { hasNextPage: boolean, endCursor: string | null } } };
 
 export type PtoPolicyQueryVariables = Exact<{
   id: string | number;
@@ -16769,7 +16769,7 @@ export type WorkerPtoLedgerQueryVariables = Exact<{
 }>;
 
 
-export type WorkerPtoLedgerQuery = { workerPtoLedger: { totalCount: number | null, edges: Array<{ node: { ' $fragmentRefs'?: { 'WorkerPtoLedgerEntryFieldsFragment': WorkerPtoLedgerEntryFieldsFragment } } }>, pageInfo: { hasNextPage: boolean, endCursor: string | null } } };
+export type WorkerPtoLedgerQuery = { workerPtoLedger: { totalCount: number | null, totalCountExact: boolean, edges: Array<{ node: { ' $fragmentRefs'?: { 'WorkerPtoLedgerEntryFieldsFragment': WorkerPtoLedgerEntryFieldsFragment } } }>, pageInfo: { hasNextPage: boolean, endCursor: string | null } } };
 
 export type WorkerPtoAvailabilityQueryVariables = Exact<{
   input: PtoAvailabilityInput;
@@ -16862,7 +16862,7 @@ export type DeskRateAgreementPricingQueryVariables = Exact<{
 }>;
 
 
-export type DeskRateAgreementPricingQuery = { rateQuotes: { totalCount: number | null, edges: Array<{ node: { id: string, ratedAt: number } }> } };
+export type DeskRateAgreementPricingQuery = { rateQuotes: { totalCount: number | null, totalCountExact: boolean, edges: Array<{ node: { id: string, ratedAt: number } }> } };
 
 export type DeskRateAgreementsQueryVariables = Exact<{
   input: DataTableConnectionInput;
@@ -16870,14 +16870,14 @@ export type DeskRateAgreementsQueryVariables = Exact<{
 }>;
 
 
-export type DeskRateAgreementsQuery = { rateAgreements: { totalCount?: number | null, edges: Array<{ node: { id: string, code: string, name: string, partyType: RateAgreementPartyType, customerId: string | null, carrierId: string | null, agreementType: RateAgreementType, status: RateAgreementStatus, priority: number, contractRef: string, effectiveFrom: number, effectiveTo: number | null, autoRenew: boolean, currency: string, inputs: unknown } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
+export type DeskRateAgreementsQuery = { rateAgreements: { totalCount?: number | null, totalCountExact?: boolean, edges: Array<{ node: { id: string, code: string, name: string, partyType: RateAgreementPartyType, customerId: string | null, carrierId: string | null, agreementType: RateAgreementType, status: RateAgreementStatus, priority: number, contractRef: string, effectiveFrom: number, effectiveTo: number | null, autoRenew: boolean, currency: string, inputs: unknown } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
 
 export type DeskRateAgreementCardQueryVariables = Exact<{
   id: string | number;
 }>;
 
 
-export type DeskRateAgreementCardQuery = { rateAgreement: { id: string, code: string, name: string, description: string, partyType: RateAgreementPartyType, customerId: string | null, carrierId: string | null, billToCustomerId: string | null, agreementType: RateAgreementType, status: RateAgreementStatus, priority: number, contractRef: string, effectiveFrom: number, effectiveTo: number | null, autoRenew: boolean, renewalNoticeDays: number, currency: string, inputs: unknown, submittedAt: number | null, approvedAt: number | null, reviewComment: string, laneCount: number, currentVersion: { id: string, versionNumber: number, effectiveFrom: number, effectiveTo: number | null, changeMessage: string } | null, lanes: Array<{ id: string, label: string, originScopeType: string, originScopeValue: string, originCity: string, destinationScopeType: string, destinationScopeValue: string, destinationCity: string, direction: string, priority: number, effectiveFrom: number, effectiveTo: number | null, hazmatOnly: boolean, tempControlOnly: boolean, formulaTemplateId: string, currency: string, inputs: unknown }>, accessorials: Array<{ id: string, accessorialChargeId: string, method: string, rateUnit: string, waived: boolean, autoApply: boolean, freeUnits: number | null, effectiveFrom: number | null, effectiveTo: number | null, amount: string, maxAmount: string | null, condition: string }> | null, fuelBinding: { id: string, fuelSurchargeProgramId: string, waived: boolean } | null } | null };
+export type DeskRateAgreementCardQuery = { rateAgreement: { id: string, code: string, name: string, description: string, partyType: RateAgreementPartyType, customerId: string | null, carrierId: string | null, billToCustomerId: string | null, agreementType: RateAgreementType, status: RateAgreementStatus, priority: number, contractRef: string, effectiveFrom: number, effectiveTo: number | null, autoRenew: boolean, renewalNoticeDays: number, currency: string, inputs: unknown, submittedAt: number | null, approvedAt: number | null, reviewComment: string, laneCount: number, laneCountExact: boolean, currentVersion: { id: string, versionNumber: number, effectiveFrom: number, effectiveTo: number | null, changeMessage: string } | null, lanes: Array<{ id: string, label: string, originScopeType: string, originScopeValue: string, originCity: string, destinationScopeType: string, destinationScopeValue: string, destinationCity: string, direction: string, priority: number, effectiveFrom: number, effectiveTo: number | null, hazmatOnly: boolean, tempControlOnly: boolean, formulaTemplateId: string, currency: string, inputs: unknown }>, accessorials: Array<{ id: string, accessorialChargeId: string, method: string, rateUnit: string, waived: boolean, autoApply: boolean, freeUnits: number | null, effectiveFrom: number | null, effectiveTo: number | null, amount: string, maxAmount: string | null, condition: string }> | null, fuelBinding: { id: string, fuelSurchargeProgramId: string, waived: boolean } | null } | null };
 
 export type DeskRateMatrixCardQueryVariables = Exact<{
   id: string | number;
@@ -16916,7 +16916,7 @@ export type RateAgreementTableQueryVariables = Exact<{
 }>;
 
 
-export type RateAgreementTableQuery = { rateAgreements: { totalCount?: number | null, edges: Array<{ node: { ' $fragmentRefs'?: { 'RateAgreementRowFieldsFragment': RateAgreementRowFieldsFragment } } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
+export type RateAgreementTableQuery = { rateAgreements: { totalCount?: number | null, totalCountExact?: boolean, edges: Array<{ node: { ' $fragmentRefs'?: { 'RateAgreementRowFieldsFragment': RateAgreementRowFieldsFragment } } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
 
 export type RateZoneTableQueryVariables = Exact<{
   input: DataTableConnectionInput;
@@ -16924,7 +16924,7 @@ export type RateZoneTableQueryVariables = Exact<{
 }>;
 
 
-export type RateZoneTableQuery = { rateZones: { totalCount?: number | null, edges: Array<{ node: { ' $fragmentRefs'?: { 'RateZoneRowFieldsFragment': RateZoneRowFieldsFragment } } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
+export type RateZoneTableQuery = { rateZones: { totalCount?: number | null, totalCountExact?: boolean, edges: Array<{ node: { ' $fragmentRefs'?: { 'RateZoneRowFieldsFragment': RateZoneRowFieldsFragment } } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
 
 export type RateMatrixTableQueryVariables = Exact<{
   input: DataTableConnectionInput;
@@ -16932,7 +16932,7 @@ export type RateMatrixTableQueryVariables = Exact<{
 }>;
 
 
-export type RateMatrixTableQuery = { rateMatrices: { totalCount?: number | null, edges: Array<{ node: { ' $fragmentRefs'?: { 'RateMatrixRowFieldsFragment': RateMatrixRowFieldsFragment } } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
+export type RateMatrixTableQuery = { rateMatrices: { totalCount?: number | null, totalCountExact?: boolean, edges: Array<{ node: { ' $fragmentRefs'?: { 'RateMatrixRowFieldsFragment': RateMatrixRowFieldsFragment } } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
 
 export type RateQuoteTableQueryVariables = Exact<{
   input: DataTableConnectionInput;
@@ -16940,7 +16940,7 @@ export type RateQuoteTableQueryVariables = Exact<{
 }>;
 
 
-export type RateQuoteTableQuery = { rateQuotes: { totalCount?: number | null, edges: Array<{ node: { ' $fragmentRefs'?: { 'RateQuoteRowFieldsFragment': RateQuoteRowFieldsFragment } } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
+export type RateQuoteTableQuery = { rateQuotes: { totalCount?: number | null, totalCountExact?: boolean, edges: Array<{ node: { ' $fragmentRefs'?: { 'RateQuoteRowFieldsFragment': RateQuoteRowFieldsFragment } } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
 
 export type DeskRecordActivityQueryVariables = Exact<{
   resourceId: string | number;
@@ -16949,7 +16949,7 @@ export type DeskRecordActivityQueryVariables = Exact<{
 }>;
 
 
-export type DeskRecordActivityQuery = { auditEntriesByResourceId: { totalCount?: number | null, edges: Array<{ node: { id: string, operation: string, timestamp: number, changes: unknown, comment: string | null, principalType: string, user: { id: string, name: string } | null } }>, pageInfo: { hasNextPage: boolean, endCursor: string | null } } };
+export type DeskRecordActivityQuery = { auditEntriesByResourceId: { totalCount?: number | null, totalCountExact?: boolean, edges: Array<{ node: { id: string, operation: string, timestamp: number, changes: unknown, comment: string | null, principalType: string, user: { id: string, name: string } | null } }>, pageInfo: { hasNextPage: boolean, endCursor: string | null } } };
 
 export type DeskRecurringShipmentsQueryVariables = Exact<{
   input: DataTableConnectionInput;
@@ -16957,7 +16957,7 @@ export type DeskRecurringShipmentsQueryVariables = Exact<{
 }>;
 
 
-export type DeskRecurringShipmentsQuery = { recurringShipments: { totalCount?: number | null, edges: Array<{ node: { id: string, name: string, status: RecurringShipmentStatus, customerId: string | null, sourceShipmentId: string, lastGeneratedShipmentId: string | null, cronExpression: string, timezone: string, autoGenerate: boolean, nextOccurrenceAt: number | null, generationCount: number, customer: { ' $fragmentRefs'?: { 'CustomerReferenceFragment': CustomerReferenceFragment } } | null, originLocation: { ' $fragmentRefs'?: { 'LocationReferenceFragment': LocationReferenceFragment } } | null, destinationLocation: { ' $fragmentRefs'?: { 'LocationReferenceFragment': LocationReferenceFragment } } | null } }>, pageInfo: { hasNextPage: boolean, endCursor: string | null } } };
+export type DeskRecurringShipmentsQuery = { recurringShipments: { totalCount?: number | null, totalCountExact?: boolean, edges: Array<{ node: { id: string, name: string, status: RecurringShipmentStatus, customerId: string | null, sourceShipmentId: string, lastGeneratedShipmentId: string | null, cronExpression: string, timezone: string, autoGenerate: boolean, nextOccurrenceAt: number | null, generationCount: number, customer: { ' $fragmentRefs'?: { 'CustomerReferenceFragment': CustomerReferenceFragment } } | null, originLocation: { ' $fragmentRefs'?: { 'LocationReferenceFragment': LocationReferenceFragment } } | null, destinationLocation: { ' $fragmentRefs'?: { 'LocationReferenceFragment': LocationReferenceFragment } } | null } }>, pageInfo: { hasNextPage: boolean, endCursor: string | null } } };
 
 export type RecurringShipmentTableRowFieldsFragment = { id: string, businessUnitId: string, organizationId: string, sourceShipmentId: string, customerId: string | null, originLocationId: string | null, destinationLocationId: string | null, name: string, description: string, status: RecurringShipmentStatus, cronExpression: string, timezone: string, startDate: number | null, endDate: number | null, maxOccurrences: number | null, leadTimeDays: number, skipWeekends: boolean, exceptionPolicy: RecurringShipmentExceptionPolicy, blackoutDates: Array<string> | null, autoGenerate: boolean, nextOccurrenceAt: number | null, lastOccurrenceAt: number | null, lastRunAt: number | null, generationCount: number, consecutiveFailures: number, version: number, createdAt: number, updatedAt: number, customer: { id: string, name: string, code: string } | null, originLocation: { id: string, name: string, code: string } | null, destinationLocation: { id: string, name: string, code: string } | null } & { ' $fragmentName'?: 'RecurringShipmentTableRowFieldsFragment' };
 
@@ -16967,7 +16967,7 @@ export type RecurringShipmentTableQueryVariables = Exact<{
 }>;
 
 
-export type RecurringShipmentTableQuery = { recurringShipments: { totalCount?: number | null, edges: Array<{ node: { ' $fragmentRefs'?: { 'RecurringShipmentTableRowFieldsFragment': RecurringShipmentTableRowFieldsFragment } } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
+export type RecurringShipmentTableQuery = { recurringShipments: { totalCount?: number | null, totalCountExact?: boolean, edges: Array<{ node: { ' $fragmentRefs'?: { 'RecurringShipmentTableRowFieldsFragment': RecurringShipmentTableRowFieldsFragment } } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
 
 export type AccessorialChargeReferenceFragment = { id: string, status: EntityStatus, code: string, description: string, method: AccessorialMethod, rateUnit: RateUnit | null } & { ' $fragmentName'?: 'AccessorialChargeReferenceFragment' };
 
@@ -17186,7 +17186,7 @@ export type ReportDefinitionsTableQueryVariables = Exact<{
 }>;
 
 
-export type ReportDefinitionsTableQuery = { reportDefinitions: { totalCount?: number, edges: Array<{ cursor: string, node: { ' $fragmentRefs'?: { 'ReportDefinitionFieldsFragment': ReportDefinitionFieldsFragment } } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
+export type ReportDefinitionsTableQuery = { reportDefinitions: { totalCount?: number, totalCountExact?: boolean, edges: Array<{ cursor: string, node: { ' $fragmentRefs'?: { 'ReportDefinitionFieldsFragment': ReportDefinitionFieldsFragment } } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
 
 export type ReportDefinitionByIdQueryVariables = Exact<{
   id: string | number;
@@ -17253,7 +17253,7 @@ export type DeskReportRunsQueryVariables = Exact<{
 }>;
 
 
-export type DeskReportRunsQuery = { reportRuns: { totalCount?: number, edges: Array<{ node: { id: string, definitionId: string | null, cannedKey: string | null, status: string, format: string, rowCount: number, truncated: boolean, rowsStored: boolean, createdAt: number, completedAt: number | null } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
+export type DeskReportRunsQuery = { reportRuns: { totalCount?: number, totalCountExact?: boolean, edges: Array<{ node: { id: string, definitionId: string | null, cannedKey: string | null, status: string, format: string, rowCount: number, truncated: boolean, rowsStored: boolean, createdAt: number, completedAt: number | null } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
 
 export type DeskReportSchedulesQueryVariables = Exact<{
   definitionId?: string | number | null | undefined;
@@ -17264,7 +17264,7 @@ export type DeskReportSchedulesQueryVariables = Exact<{
 
 export type DeskReportSchedulesQuery = { reportSchedules: Array<{ id: string, definitionId: string, cronExpression: string, timezone: string, formats: Array<string>, emailRecipients: Array<string>, enabled: boolean, mine: boolean, nextRunAt: number | null, consecutiveFailures: number }> };
 
-export type ReportPreviewFieldsFragment = { rows: unknown, levels: Array<number>, totals: unknown, truncated: boolean, cursor: string | null, timezone: string, rollup: string | null, cached: boolean, columns: Array<{ id: string, label: string, type: string, sensitivity: string | null, display: { style: string, decimals: number, grouping: boolean, currency: string, negative: string, notation: string, prefix: string, suffix: string, dateStyle: string, boolStyle: string, durationUnit: string, durationStyle: string, nullText: string, labels: unknown, rules: Array<{ op: string, value: number, upper: number, tone: string }>, band: { width: number, edges: Array<number> } | null } }> } & { ' $fragmentName'?: 'ReportPreviewFieldsFragment' };
+export type ReportPreviewFieldsFragment = { rows: unknown, levels: Array<number>, totals: unknown, truncated: boolean, cursor: string | null, timezone: string, rollup: string | null, columns: Array<{ id: string, label: string, type: string, sensitivity: string | null, display: { style: string, decimals: number, grouping: boolean, currency: string, negative: string, notation: string, prefix: string, suffix: string, dateStyle: string, boolStyle: string, durationUnit: string, durationStyle: string, nullText: string, labels: unknown, rules: Array<{ op: string, value: number, upper: number, tone: string }>, band: { width: number, edges: Array<number> } | null } }> } & { ' $fragmentName'?: 'ReportPreviewFieldsFragment' };
 
 export type PreviewReportQueryVariables = Exact<{
   definition: unknown;
@@ -17293,7 +17293,7 @@ export type ReportRunsTableQueryVariables = Exact<{
 }>;
 
 
-export type ReportRunsTableQuery = { reportRuns: { totalCount?: number, edges: Array<{ cursor: string, node: { ' $fragmentRefs'?: { 'ReportRunFieldsFragment': ReportRunFieldsFragment } } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
+export type ReportRunsTableQuery = { reportRuns: { totalCount?: number, totalCountExact?: boolean, edges: Array<{ cursor: string, node: { ' $fragmentRefs'?: { 'ReportRunFieldsFragment': ReportRunFieldsFragment } } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
 
 export type ReportRunByIdQueryVariables = Exact<{
   id: string | number;
@@ -17398,7 +17398,7 @@ export type RoleTableQueryVariables = Exact<{
 }>;
 
 
-export type RoleTableQuery = { roles: { totalCount?: number | null, edges: Array<{ node: { ' $fragmentRefs'?: { 'RoleTableRowFieldsFragment': RoleTableRowFieldsFragment } } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
+export type RoleTableQuery = { roles: { totalCount?: number | null, totalCountExact?: boolean, edges: Array<{ node: { ' $fragmentRefs'?: { 'RoleTableRowFieldsFragment': RoleTableRowFieldsFragment } } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
 
 export type RoutingGuideEntryFieldsFragment = { id: string, routingGuideId: string, carrierId: string, rank: number, rateMethod: CarrierRateMethod, rate: string, useContractRate: boolean, offerTtlSeconds: number, channel: TenderChannel, version: number, createdAt: number, updatedAt: number, carrier: { id: string, name: string, scac: string | null } | null } & { ' $fragmentName'?: 'RoutingGuideEntryFieldsFragment' };
 
@@ -17410,7 +17410,7 @@ export type RoutingGuideTableQueryVariables = Exact<{
 }>;
 
 
-export type RoutingGuideTableQuery = { routingGuides: { totalCount?: number | null, edges: Array<{ node: { ' $fragmentRefs'?: { 'RoutingGuideRowFieldsFragment': RoutingGuideRowFieldsFragment } } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
+export type RoutingGuideTableQuery = { routingGuides: { totalCount?: number | null, totalCountExact?: boolean, edges: Array<{ node: { ' $fragmentRefs'?: { 'RoutingGuideRowFieldsFragment': RoutingGuideRowFieldsFragment } } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
 
 export type RoutingGuideOptionsQueryVariables = Exact<{
   input: DataTableConnectionInput;
@@ -17418,7 +17418,7 @@ export type RoutingGuideOptionsQueryVariables = Exact<{
 }>;
 
 
-export type RoutingGuideOptionsQuery = { routingGuides: { totalCount?: number | null, edges: Array<{ node: { id: string, name: string, status: EntityStatus, originLocationId: string | null, destinationLocationId: string | null, originCity: string, originState: string, destinationCity: string, destinationState: string, specificity: number, entries: Array<{ id: string, carrierId: string, rank: number, rateMethod: CarrierRateMethod, rate: string, offerTtlSeconds: number, channel: TenderChannel, carrier: { id: string, name: string, scac: string | null } | null }> | null } }>, pageInfo: { hasNextPage: boolean, endCursor: string | null } } };
+export type RoutingGuideOptionsQuery = { routingGuides: { totalCount?: number | null, totalCountExact?: boolean, edges: Array<{ node: { id: string, name: string, status: EntityStatus, originLocationId: string | null, destinationLocationId: string | null, originCity: string, originState: string, destinationCity: string, destinationState: string, specificity: number, entries: Array<{ id: string, carrierId: string, rank: number, rateMethod: CarrierRateMethod, rate: string, offerTtlSeconds: number, channel: TenderChannel, carrier: { id: string, name: string, scac: string | null } | null }> | null } }>, pageInfo: { hasNextPage: boolean, endCursor: string | null } } };
 
 export type MatchRoutingGuideQueryVariables = Exact<{
   input: MatchRoutingGuideInput;
@@ -17527,7 +17527,7 @@ export type ScimGroupRoleMappingsTableQueryVariables = Exact<{
 }>;
 
 
-export type ScimGroupRoleMappingsTableQuery = { scimGroupRoleMappings: { totalCount?: number | null, edges: Array<{ node: { ' $fragmentRefs'?: { 'ScimGroupRoleMappingTableRowFieldsFragment': ScimGroupRoleMappingTableRowFieldsFragment } } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
+export type ScimGroupRoleMappingsTableQuery = { scimGroupRoleMappings: { totalCount?: number | null, totalCountExact?: boolean, edges: Array<{ node: { ' $fragmentRefs'?: { 'ScimGroupRoleMappingTableRowFieldsFragment': ScimGroupRoleMappingTableRowFieldsFragment } } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
 
 export type ScimDirectoryFieldsFragment = { id: string, organizationId: string, businessUnitId: string, tenantSlug: string, enabled: boolean, createdAt: number, updatedAt: number } & { ' $fragmentName'?: 'ScimDirectoryFieldsFragment' };
 
@@ -17548,7 +17548,7 @@ export type AuthEventsTableQueryVariables = Exact<{
 }>;
 
 
-export type AuthEventsTableQuery = { authEvents: { totalCount?: number | null, edges: Array<{ node: { ' $fragmentRefs'?: { 'AuthEventTableRowFieldsFragment': AuthEventTableRowFieldsFragment } } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
+export type AuthEventsTableQuery = { authEvents: { totalCount?: number | null, totalCountExact?: boolean, edges: Array<{ node: { ' $fragmentRefs'?: { 'AuthEventTableRowFieldsFragment': AuthEventTableRowFieldsFragment } } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
 
 export type RiskDecisionTableRowFieldsFragment = { id: string, userId: string | null, outcome: string, signals: Array<string>, reason: string, createdAt: number, user: { ' $fragmentRefs'?: { 'SecurityActivityUserFieldsFragment': SecurityActivityUserFieldsFragment } } | null } & { ' $fragmentName'?: 'RiskDecisionTableRowFieldsFragment' };
 
@@ -17558,7 +17558,7 @@ export type RiskDecisionsTableQueryVariables = Exact<{
 }>;
 
 
-export type RiskDecisionsTableQuery = { riskDecisions: { totalCount?: number | null, edges: Array<{ node: { ' $fragmentRefs'?: { 'RiskDecisionTableRowFieldsFragment': RiskDecisionTableRowFieldsFragment } } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
+export type RiskDecisionsTableQuery = { riskDecisions: { totalCount?: number | null, totalCountExact?: boolean, edges: Array<{ node: { ' $fragmentRefs'?: { 'RiskDecisionTableRowFieldsFragment': RiskDecisionTableRowFieldsFragment } } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
 
 export type ExternalIdentityTableRowFieldsFragment = { id: string, userId: string, identityProviderId: string, externalSubject: string, externalUsername: string, externalEmail: string, lastLoginAt: number, createdAt: number, updatedAt: number, user: { ' $fragmentRefs'?: { 'SecurityActivityUserFieldsFragment': SecurityActivityUserFieldsFragment } } | null } & { ' $fragmentName'?: 'ExternalIdentityTableRowFieldsFragment' };
 
@@ -17568,7 +17568,7 @@ export type ExternalIdentitiesTableQueryVariables = Exact<{
 }>;
 
 
-export type ExternalIdentitiesTableQuery = { externalIdentities: { totalCount?: number | null, edges: Array<{ node: { ' $fragmentRefs'?: { 'ExternalIdentityTableRowFieldsFragment': ExternalIdentityTableRowFieldsFragment } } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
+export type ExternalIdentitiesTableQuery = { externalIdentities: { totalCount?: number | null, totalCountExact?: boolean, edges: Array<{ node: { ' $fragmentRefs'?: { 'ExternalIdentityTableRowFieldsFragment': ExternalIdentityTableRowFieldsFragment } } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
 
 export type MfaAuthenticatorTableRowFieldsFragment = { id: string, userId: string, type: string, name: string, enabled: boolean, verifiedAt: number, lastUsedAt: number, createdAt: number, updatedAt: number, user: { ' $fragmentRefs'?: { 'SecurityActivityUserFieldsFragment': SecurityActivityUserFieldsFragment } } | null } & { ' $fragmentName'?: 'MfaAuthenticatorTableRowFieldsFragment' };
 
@@ -17578,14 +17578,14 @@ export type MfaAuthenticatorsTableQueryVariables = Exact<{
 }>;
 
 
-export type MfaAuthenticatorsTableQuery = { mfaAuthenticators: { totalCount?: number | null, edges: Array<{ node: { ' $fragmentRefs'?: { 'MfaAuthenticatorTableRowFieldsFragment': MfaAuthenticatorTableRowFieldsFragment } } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
+export type MfaAuthenticatorsTableQuery = { mfaAuthenticators: { totalCount?: number | null, totalCountExact?: boolean, edges: Array<{ node: { ' $fragmentRefs'?: { 'MfaAuthenticatorTableRowFieldsFragment': MfaAuthenticatorTableRowFieldsFragment } } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
 
 export type SelectOptionsQueryVariables = Exact<{
   input: SelectOptionsInput;
 }>;
 
 
-export type SelectOptionsQuery = { selectOptions: { totalCount: number | null, edges: Array<{ cursor: string, node: { id: string, label: string, description: string | null, meta: unknown } }>, pageInfo: { hasNextPage: boolean, endCursor: string | null } } };
+export type SelectOptionsQuery = { selectOptions: { totalCount: number | null, totalCountExact: boolean, edges: Array<{ cursor: string, node: { id: string, label: string, description: string | null, meta: unknown } }>, pageInfo: { hasNextPage: boolean, endCursor: string | null } } };
 
 export type WorkerPoliciesQueryVariables = Exact<{
   activeOnly?: boolean | null | undefined;
@@ -17646,7 +17646,7 @@ export type ServiceFailureReasonCodeTableQueryVariables = Exact<{
 }>;
 
 
-export type ServiceFailureReasonCodeTableQuery = { serviceFailureReasonCodes: { totalCount?: number | null, edges: Array<{ node: { ' $fragmentRefs'?: { 'ServiceFailureReasonCodeTableRowFieldsFragment': ServiceFailureReasonCodeTableRowFieldsFragment } } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
+export type ServiceFailureReasonCodeTableQuery = { serviceFailureReasonCodes: { totalCount?: number | null, totalCountExact?: boolean, edges: Array<{ node: { ' $fragmentRefs'?: { 'ServiceFailureReasonCodeTableRowFieldsFragment': ServiceFailureReasonCodeTableRowFieldsFragment } } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
 
 export type DeskServiceFailureCardQueryVariables = Exact<{
   id: string | number;
@@ -17663,7 +17663,7 @@ export type DeskRecordFailuresQueryVariables = Exact<{
 }>;
 
 
-export type DeskRecordFailuresQuery = { serviceFailures: { totalCount?: number | null, edges: Array<{ node: { id: string, number: string, type: ServiceFailureType, status: ServiceFailureStatus, stopType: StopType, lateMinutes: number, actualArrival: number, shipment: { id: string, proNumber: string } | null, stop: { id: string, location: { id: string, name: string, city: string, state: { abbreviation: string } | null } | null } | null } }>, pageInfo: { hasNextPage: boolean, endCursor: string | null } } };
+export type DeskRecordFailuresQuery = { serviceFailures: { totalCount?: number | null, totalCountExact?: boolean, edges: Array<{ node: { id: string, number: string, type: ServiceFailureType, status: ServiceFailureStatus, stopType: StopType, lateMinutes: number, actualArrival: number, shipment: { id: string, proNumber: string } | null, stop: { id: string, location: { id: string, name: string, city: string, state: { abbreviation: string } | null } | null } | null } }>, pageInfo: { hasNextPage: boolean, endCursor: string | null } } };
 
 export type ServiceFailureTableRowFieldsFragment = { id: string, shipmentId: string, shipmentMoveId: string, number: string, type: ServiceFailureType, source: ServiceFailureSource, status: ServiceFailureStatus, stopType: StopType, stopId: string, scheduledCutoff: number, actualArrival: number, gracePeriodMinutes: number, lateMinutes: number, reasonCodeId: string | null, notes: string, internalNotes: string, x12StatusCodeOverride: string, x12ReasonCodeOverride: string, x12ExceptionCode: string, detectedAt: number, version: number, shipment: { id: string, proNumber: string, bol: string | null } | null, stop: { id: string, type: StopType, sequence: number, locationId: string, location: { id: string, name: string, code: string, city: string, state: { abbreviation: string } | null } | null } | null, reasonCode: { id: string, code: string, label: string } | null } & { ' $fragmentName'?: 'ServiceFailureTableRowFieldsFragment' };
 
@@ -17674,7 +17674,7 @@ export type ServiceFailureTableQueryVariables = Exact<{
 }>;
 
 
-export type ServiceFailureTableQuery = { serviceFailures: { totalCount?: number | null, edges: Array<{ node: { ' $fragmentRefs'?: { 'ServiceFailureTableRowFieldsFragment': ServiceFailureTableRowFieldsFragment } } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
+export type ServiceFailureTableQuery = { serviceFailures: { totalCount?: number | null, totalCountExact?: boolean, edges: Array<{ node: { ' $fragmentRefs'?: { 'ServiceFailureTableRowFieldsFragment': ServiceFailureTableRowFieldsFragment } } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
 
 export type ServiceTypeTableRowFieldsFragment = { id: string, businessUnitId: string, organizationId: string, status: EntityStatus, code: string, description: string | null, color: string | null, version: number, createdAt: number, updatedAt: number } & { ' $fragmentName'?: 'ServiceTypeTableRowFieldsFragment' };
 
@@ -17684,7 +17684,7 @@ export type ServiceTypeTableQueryVariables = Exact<{
 }>;
 
 
-export type ServiceTypeTableQuery = { serviceTypes: { totalCount?: number | null, edges: Array<{ node: { ' $fragmentRefs'?: { 'ServiceTypeTableRowFieldsFragment': ServiceTypeTableRowFieldsFragment } } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
+export type ServiceTypeTableQuery = { serviceTypes: { totalCount?: number | null, totalCountExact?: boolean, edges: Array<{ node: { ' $fragmentRefs'?: { 'ServiceTypeTableRowFieldsFragment': ServiceTypeTableRowFieldsFragment } } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
 
 export type ShipmentTypeTableRowFieldsFragment = { id: string, businessUnitId: string, organizationId: string, status: EntityStatus, code: string, description: string | null, color: string | null, version: number, createdAt: number, updatedAt: number } & { ' $fragmentName'?: 'ShipmentTypeTableRowFieldsFragment' };
 
@@ -17694,7 +17694,7 @@ export type ShipmentTypeTableQueryVariables = Exact<{
 }>;
 
 
-export type ShipmentTypeTableQuery = { shipmentTypes: { totalCount?: number | null, edges: Array<{ node: { ' $fragmentRefs'?: { 'ShipmentTypeTableRowFieldsFragment': ShipmentTypeTableRowFieldsFragment } } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
+export type ShipmentTypeTableQuery = { shipmentTypes: { totalCount?: number | null, totalCountExact?: boolean, edges: Array<{ node: { ' $fragmentRefs'?: { 'ShipmentTypeTableRowFieldsFragment': ShipmentTypeTableRowFieldsFragment } } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
 
 export type ShipmentBoardCapabilitiesQueryVariables = Exact<{ [key: string]: never; }>;
 
@@ -17873,7 +17873,7 @@ export type DeskRecordShipmentsQueryVariables = Exact<{
 }>;
 
 
-export type DeskRecordShipmentsQuery = { shipments: { totalCount?: number | null, edges: Array<{ node: { id: string, proNumber: string, status: ShipmentStatus, totalChargeAmount: string, moves: Array<{ sequence: number, stops: Array<{ sequence: number, type: StopType, scheduledWindowStart: number, location: { city: string, state: { abbreviation: string } | null } | null }> }> } }>, pageInfo: { hasNextPage: boolean, endCursor: string | null } } };
+export type DeskRecordShipmentsQuery = { shipments: { totalCount?: number | null, totalCountExact?: boolean, edges: Array<{ node: { id: string, proNumber: string, status: ShipmentStatus, totalChargeAmount: string, moves: Array<{ sequence: number, stops: Array<{ sequence: number, type: StopType, scheduledWindowStart: number, location: { city: string, state: { abbreviation: string } | null } | null }> }> } }>, pageInfo: { hasNextPage: boolean, endCursor: string | null } } };
 
 export type ShipmentUserFieldsFragment = { id: string, name: string, username: string, profilePicUrl: string, thumbnailUrl: string } & { ' $fragmentName'?: 'ShipmentUserFieldsFragment' };
 
@@ -17946,7 +17946,7 @@ export type ShipmentBoardTableQueryVariables = Exact<{
 }>;
 
 
-export type ShipmentBoardTableQuery = { shipments: { totalCount?: number | null, edges: Array<{ node: { ' $fragmentRefs'?: { 'ShipmentFieldsFragment': ShipmentFieldsFragment } } }>, pageInfo: { ' $fragmentRefs'?: { 'ShipmentPageInfoFieldsFragment': ShipmentPageInfoFieldsFragment } } } };
+export type ShipmentBoardTableQuery = { shipments: { totalCount?: number | null, totalCountExact?: boolean, edges: Array<{ node: { ' $fragmentRefs'?: { 'ShipmentFieldsFragment': ShipmentFieldsFragment } } }>, pageInfo: { ' $fragmentRefs'?: { 'ShipmentPageInfoFieldsFragment': ShipmentPageInfoFieldsFragment } } } };
 
 export type ShipmentDetailQueryVariables = Exact<{
   id: string | number;
@@ -17978,21 +17978,21 @@ export type UnassignedShipmentsQueryVariables = Exact<{
 }>;
 
 
-export type UnassignedShipmentsQuery = { unassignedShipments: { totalCount: number | null, edges: Array<{ node: { ' $fragmentRefs'?: { 'ShipmentFieldsFragment': ShipmentFieldsFragment } } }>, pageInfo: { ' $fragmentRefs'?: { 'ShipmentPageInfoFieldsFragment': ShipmentPageInfoFieldsFragment } } } };
+export type UnassignedShipmentsQuery = { unassignedShipments: { totalCount: number | null, totalCountExact: boolean, edges: Array<{ node: { ' $fragmentRefs'?: { 'ShipmentFieldsFragment': ShipmentFieldsFragment } } }>, pageInfo: { ' $fragmentRefs'?: { 'ShipmentPageInfoFieldsFragment': ShipmentPageInfoFieldsFragment } } } };
 
 export type ExceptionShipmentsQueryVariables = Exact<{
   input: ShipmentsInput;
 }>;
 
 
-export type ExceptionShipmentsQuery = { shipments: { totalCount: number | null, edges: Array<{ node: { ' $fragmentRefs'?: { 'ShipmentFieldsFragment': ShipmentFieldsFragment } } }>, pageInfo: { ' $fragmentRefs'?: { 'ShipmentPageInfoFieldsFragment': ShipmentPageInfoFieldsFragment } } } };
+export type ExceptionShipmentsQuery = { shipments: { totalCount: number | null, totalCountExact: boolean, edges: Array<{ node: { ' $fragmentRefs'?: { 'ShipmentFieldsFragment': ShipmentFieldsFragment } } }>, pageInfo: { ' $fragmentRefs'?: { 'ShipmentPageInfoFieldsFragment': ShipmentPageInfoFieldsFragment } } } };
 
 export type MapShipmentsQueryVariables = Exact<{
   input: ShipmentsInput;
 }>;
 
 
-export type MapShipmentsQuery = { shipments: { totalCount: number | null, edges: Array<{ node: { ' $fragmentRefs'?: { 'ShipmentFieldsFragment': ShipmentFieldsFragment } } }>, pageInfo: { ' $fragmentRefs'?: { 'ShipmentPageInfoFieldsFragment': ShipmentPageInfoFieldsFragment } } } };
+export type MapShipmentsQuery = { shipments: { totalCount: number | null, totalCountExact: boolean, edges: Array<{ node: { ' $fragmentRefs'?: { 'ShipmentFieldsFragment': ShipmentFieldsFragment } } }>, pageInfo: { ' $fragmentRefs'?: { 'ShipmentPageInfoFieldsFragment': ShipmentPageInfoFieldsFragment } } } };
 
 export type ShipmentCommentsQueryVariables = Exact<{
   shipmentId: string | number;
@@ -18002,7 +18002,7 @@ export type ShipmentCommentsQueryVariables = Exact<{
 }>;
 
 
-export type ShipmentCommentsQuery = { shipmentComments: { totalCount: number | null, edges: Array<{ node: { ' $fragmentRefs'?: { 'ShipmentCommentFieldsFragment': ShipmentCommentFieldsFragment } } }>, pageInfo: { ' $fragmentRefs'?: { 'ShipmentPageInfoFieldsFragment': ShipmentPageInfoFieldsFragment } } } };
+export type ShipmentCommentsQuery = { shipmentComments: { totalCount: number | null, totalCountExact: boolean, edges: Array<{ node: { ' $fragmentRefs'?: { 'ShipmentCommentFieldsFragment': ShipmentCommentFieldsFragment } } }>, pageInfo: { ' $fragmentRefs'?: { 'ShipmentPageInfoFieldsFragment': ShipmentPageInfoFieldsFragment } } } };
 
 export type ShipmentCommentRepliesQueryVariables = Exact<{
   shipmentId: string | number;
@@ -18012,7 +18012,7 @@ export type ShipmentCommentRepliesQueryVariables = Exact<{
 }>;
 
 
-export type ShipmentCommentRepliesQuery = { shipmentCommentReplies: { totalCount: number | null, edges: Array<{ node: { ' $fragmentRefs'?: { 'ShipmentCommentFieldsFragment': ShipmentCommentFieldsFragment } } }>, pageInfo: { ' $fragmentRefs'?: { 'ShipmentPageInfoFieldsFragment': ShipmentPageInfoFieldsFragment } } } };
+export type ShipmentCommentRepliesQuery = { shipmentCommentReplies: { totalCount: number | null, totalCountExact: boolean, edges: Array<{ node: { ' $fragmentRefs'?: { 'ShipmentCommentFieldsFragment': ShipmentCommentFieldsFragment } } }>, pageInfo: { ' $fragmentRefs'?: { 'ShipmentPageInfoFieldsFragment': ShipmentPageInfoFieldsFragment } } } };
 
 export type ShipmentCommentCountQueryVariables = Exact<{
   shipmentId: string | number;
@@ -18054,7 +18054,7 @@ export type ShipmentPreviousRatesQueryVariables = Exact<{
 }>;
 
 
-export type ShipmentPreviousRatesQuery = { shipmentPreviousRates: { total: number, items: Array<{ shipmentId: string, proNumber: string, customerId: string, serviceTypeId: string, shipmentTypeId: string, formulaTemplateId: string | null, freightChargeAmount: string, otherChargeAmount: string, totalChargeAmount: string, pieces: number | null, weight: number | null, createdAt: number }> } };
+export type ShipmentPreviousRatesQuery = { shipmentPreviousRates: { total: number, totalExact: boolean, items: Array<{ shipmentId: string, proNumber: string, customerId: string, serviceTypeId: string, shipmentTypeId: string, formulaTemplateId: string | null, freightChargeAmount: string, otherChargeAmount: string, totalChargeAmount: string, pieces: number | null, weight: number | null, createdAt: number }> } };
 
 export type CreateShipmentMutationVariables = Exact<{
   input: ShipmentInput;
@@ -18279,7 +18279,7 @@ export type StoredMileageTableQueryVariables = Exact<{
 }>;
 
 
-export type StoredMileageTableQuery = { storedMileages: { totalCount?: number | null, edges: Array<{ node: { ' $fragmentRefs'?: { 'StoredMileageTableRowFieldsFragment': StoredMileageTableRowFieldsFragment } } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
+export type StoredMileageTableQuery = { storedMileages: { totalCount?: number | null, totalCountExact?: boolean, edges: Array<{ node: { ' $fragmentRefs'?: { 'StoredMileageTableRowFieldsFragment': StoredMileageTableRowFieldsFragment } } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
 
 export type DeskTableChangeAlertsQueryVariables = Exact<{
   input: DataTableConnectionInput;
@@ -18287,7 +18287,7 @@ export type DeskTableChangeAlertsQueryVariables = Exact<{
 }>;
 
 
-export type DeskTableChangeAlertsQuery = { tcaSubscriptions: { totalCount?: number | null, edges: Array<{ node: { id: string, name: string, tableName: string, eventTypes: Array<string>, watchedColumns: Array<string>, conditions: Array<unknown>, conditionMatch: string, status: string } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
+export type DeskTableChangeAlertsQuery = { tcaSubscriptions: { totalCount?: number | null, totalCountExact?: boolean, edges: Array<{ node: { id: string, name: string, tableName: string, eventTypes: Array<string>, watchedColumns: Array<string>, conditions: Array<unknown>, conditionMatch: string, status: string } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
 
 export type TcaSubscriptionTableRowFieldsFragment = { id: string, organizationId: string, businessUnitId: string, userId: string, name: string, tableName: string, recordId: string | null, eventTypes: Array<string>, conditions: Array<unknown>, conditionMatch: string, watchedColumns: Array<string>, customTitle: string, customMessage: string, topic: string, priority: string, status: string, version: number, createdAt: number, updatedAt: number } & { ' $fragmentName'?: 'TcaSubscriptionTableRowFieldsFragment' };
 
@@ -18297,7 +18297,7 @@ export type TcaSubscriptionTableQueryVariables = Exact<{
 }>;
 
 
-export type TcaSubscriptionTableQuery = { tcaSubscriptions: { totalCount?: number | null, edges: Array<{ node: { ' $fragmentRefs'?: { 'TcaSubscriptionTableRowFieldsFragment': TcaSubscriptionTableRowFieldsFragment } } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
+export type TcaSubscriptionTableQuery = { tcaSubscriptions: { totalCount?: number | null, totalCountExact?: boolean, edges: Array<{ node: { ' $fragmentRefs'?: { 'TcaSubscriptionTableRowFieldsFragment': TcaSubscriptionTableRowFieldsFragment } } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
 
 export type TableConfigurationFieldsFragment = { id: string, organizationId: string, businessUnitId: string, userId: string, name: string, description: string, resource: string, tableConfig: unknown, visibility: ConfigurationVisibility, isDefault: boolean, isOrgDefault: boolean, version: number, createdAt: number, updatedAt: number, user: { id: string, name: string, profilePicUrl: string } | null } & { ' $fragmentName'?: 'TableConfigurationFieldsFragment' };
 
@@ -18309,7 +18309,7 @@ export type TableConfigurationTableQueryVariables = Exact<{
 }>;
 
 
-export type TableConfigurationTableQuery = { tableConfigurations: { totalCount?: number | null, edges: Array<{ node: { ' $fragmentRefs'?: { 'TableConfigurationFieldsFragment': TableConfigurationFieldsFragment } } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
+export type TableConfigurationTableQuery = { tableConfigurations: { totalCount?: number | null, totalCountExact?: boolean, edges: Array<{ node: { ' $fragmentRefs'?: { 'TableConfigurationFieldsFragment': TableConfigurationFieldsFragment } } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
 
 export type DefaultTableConfigurationQueryVariables = Exact<{
   resource: string;
@@ -18690,7 +18690,7 @@ export type UserTableQueryVariables = Exact<{
 }>;
 
 
-export type UserTableQuery = { users: { totalCount?: number | null, edges: Array<{ node: { ' $fragmentRefs'?: { 'UserTableRowFieldsFragment': UserTableRowFieldsFragment } } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
+export type UserTableQuery = { users: { totalCount?: number | null, totalCountExact?: boolean, edges: Array<{ node: { ' $fragmentRefs'?: { 'UserTableRowFieldsFragment': UserTableRowFieldsFragment } } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
 
 export type WatchtowerItemFieldsFragment = { id: string, sourceKind: WatchtowerSourceKind, sourceId: string, severity: WatchtowerSeverity, title: string, summary: string, subjectType: AgentSubjectType | null, subjectId: string | null, eventKind: string | null, path: string, occurredAt: number, resolvedAt: number | null, seen: boolean, kindLabel: string, version: number, status: WatchtowerItemStatus, assigneeId: string | null, dueAt: number | null, overdue: boolean, snoozedUntil: number | null, acknowledgedAt: number | null, resolutionCode: WatchtowerResolutionCode | null, resolutionNote: string | null, resolvedById: string | null, sourceClearedAt: number | null, escalationLevel: number, lastEscalatedAt: number | null, dueLabel: string | null, dueSource: WatchtowerDueSource | null, impact: Array<string>, suggestedAgentId: string | null, assignee: { id: string, name: string } | null, resolvedBy: { id: string, name: string } | null, record: { kind: string, noun: string, label: string } | null, facts: Array<{ label: string, value: string | null, at: number | null }>, trail: Array<{ at: number | null, text: string }>, suggestedAgent: { id: string, name: string, description: string | null, icon: string, accent: string, template: AgentTemplate | null } | null, agentWork: { agentId: string, runId: string, status: WatchtowerAgentStatus, step: number, steps: Array<WatchtowerAgentStep>, note: string, failed: boolean, handedAt: number, agent: { id: string, name: string, description: string | null, icon: string, accent: string, template: AgentTemplate | null } | null } | null } & { ' $fragmentName'?: 'WatchtowerItemFieldsFragment' };
 
@@ -18789,7 +18789,7 @@ export type WorkerChecklistTemplateTableQueryVariables = Exact<{
 }>;
 
 
-export type WorkerChecklistTemplateTableQuery = { workerChecklistTemplates: { totalCount?: number | null, edges: Array<{ cursor: string, node: { ' $fragmentRefs'?: { 'WorkerChecklistTemplateFieldsFragment': WorkerChecklistTemplateFieldsFragment } } }>, pageInfo: { hasNextPage: boolean, endCursor: string | null } } };
+export type WorkerChecklistTemplateTableQuery = { workerChecklistTemplates: { totalCount?: number | null, totalCountExact?: boolean, edges: Array<{ cursor: string, node: { ' $fragmentRefs'?: { 'WorkerChecklistTemplateFieldsFragment': WorkerChecklistTemplateFieldsFragment } } }>, pageInfo: { hasNextPage: boolean, endCursor: string | null } } };
 
 export type ActiveWorkerChecklistTemplatesQueryVariables = Exact<{ [key: string]: never; }>;
 
@@ -18916,7 +18916,7 @@ export type WorkerCredentialTypeTableQueryVariables = Exact<{
 }>;
 
 
-export type WorkerCredentialTypeTableQuery = { workerCredentialTypes: { totalCount?: number | null, edges: Array<{ cursor: string, node: { ' $fragmentRefs'?: { 'WorkerCredentialTypeFieldsFragment': WorkerCredentialTypeFieldsFragment } } }>, pageInfo: { hasNextPage: boolean, endCursor: string | null } } };
+export type WorkerCredentialTypeTableQuery = { workerCredentialTypes: { totalCount?: number | null, totalCountExact?: boolean, edges: Array<{ cursor: string, node: { ' $fragmentRefs'?: { 'WorkerCredentialTypeFieldsFragment': WorkerCredentialTypeFieldsFragment } } }>, pageInfo: { hasNextPage: boolean, endCursor: string | null } } };
 
 export type WorkerCredentialsQueryVariables = Exact<{
   workerId: string | number;
@@ -19138,7 +19138,7 @@ export type DotRandomPoolsQueryVariables = Exact<{
 }>;
 
 
-export type DotRandomPoolsQuery = { dotRandomPools: { totalCount: number | null, edges: Array<{ cursor: string, node: { ' $fragmentRefs'?: { 'DotRandomPoolFieldsFragment': DotRandomPoolFieldsFragment } } }>, pageInfo: { hasNextPage: boolean, endCursor: string | null } } };
+export type DotRandomPoolsQuery = { dotRandomPools: { totalCount: number | null, totalCountExact: boolean, edges: Array<{ cursor: string, node: { ' $fragmentRefs'?: { 'DotRandomPoolFieldsFragment': DotRandomPoolFieldsFragment } } }>, pageInfo: { hasNextPage: boolean, endCursor: string | null } } };
 
 export type DotRandomDrawsQueryVariables = Exact<{
   poolId?: string | number | null | undefined;
@@ -19600,7 +19600,7 @@ export type TrainingCourseTableQueryVariables = Exact<{
 }>;
 
 
-export type TrainingCourseTableQuery = { trainingCourses: { totalCount?: number | null, edges: Array<{ cursor: string, node: { ' $fragmentRefs'?: { 'TrainingCourseFieldsFragment': TrainingCourseFieldsFragment } } }>, pageInfo: { hasNextPage: boolean, endCursor: string | null } } };
+export type TrainingCourseTableQuery = { trainingCourses: { totalCount?: number | null, totalCountExact?: boolean, edges: Array<{ cursor: string, node: { ' $fragmentRefs'?: { 'TrainingCourseFieldsFragment': TrainingCourseFieldsFragment } } }>, pageInfo: { hasNextPage: boolean, endCursor: string | null } } };
 
 export type ActiveTrainingCoursesQueryVariables = Exact<{ [key: string]: never; }>;
 
@@ -19724,7 +19724,7 @@ export type WorkerTableQueryVariables = Exact<{
 }>;
 
 
-export type WorkerTableQuery = { workers: { totalCount?: number | null, edges: Array<{ node: { ' $fragmentRefs'?: { 'WorkerTableRowFieldsFragment': WorkerTableRowFieldsFragment } } }>, pageInfo: { ' $fragmentRefs'?: { 'WorkerDataTablePageInfoFieldsFragment': WorkerDataTablePageInfoFieldsFragment } } } };
+export type WorkerTableQuery = { workers: { totalCount?: number | null, totalCountExact?: boolean, edges: Array<{ node: { ' $fragmentRefs'?: { 'WorkerTableRowFieldsFragment': WorkerTableRowFieldsFragment } } }>, pageInfo: { ' $fragmentRefs'?: { 'WorkerDataTablePageInfoFieldsFragment': WorkerDataTablePageInfoFieldsFragment } } } };
 
 export type WorkerPtoTableQueryVariables = Exact<{
   input: WorkerPtoEntriesInput;
@@ -19732,14 +19732,14 @@ export type WorkerPtoTableQueryVariables = Exact<{
 }>;
 
 
-export type WorkerPtoTableQuery = { workerPTOEntries: { totalCount?: number | null, edges: Array<{ node: { ' $fragmentRefs'?: { 'WorkerPtoRowFieldsFragment': WorkerPtoRowFieldsFragment } } }>, pageInfo: { ' $fragmentRefs'?: { 'WorkerDataTablePageInfoFieldsFragment': WorkerDataTablePageInfoFieldsFragment } } } };
+export type WorkerPtoTableQuery = { workerPTOEntries: { totalCount?: number | null, totalCountExact?: boolean, edges: Array<{ node: { ' $fragmentRefs'?: { 'WorkerPtoRowFieldsFragment': WorkerPtoRowFieldsFragment } } }>, pageInfo: { ' $fragmentRefs'?: { 'WorkerDataTablePageInfoFieldsFragment': WorkerDataTablePageInfoFieldsFragment } } } };
 
 export type UpcomingWorkerPtoQueryVariables = Exact<{
   input: UpcomingWorkerPtoInput;
 }>;
 
 
-export type UpcomingWorkerPtoQuery = { upcomingWorkerPTO: { totalCount: number | null, edges: Array<{ node: { ' $fragmentRefs'?: { 'WorkerPtoRowFieldsFragment': WorkerPtoRowFieldsFragment } } }>, pageInfo: { ' $fragmentRefs'?: { 'WorkerDataTablePageInfoFieldsFragment': WorkerDataTablePageInfoFieldsFragment } } } };
+export type UpcomingWorkerPtoQuery = { upcomingWorkerPTO: { totalCount: number | null, totalCountExact: boolean, edges: Array<{ node: { ' $fragmentRefs'?: { 'WorkerPtoRowFieldsFragment': WorkerPtoRowFieldsFragment } } }>, pageInfo: { ' $fragmentRefs'?: { 'WorkerDataTablePageInfoFieldsFragment': WorkerDataTablePageInfoFieldsFragment } } } };
 
 export type WorkerPtoChartDataQueryVariables = Exact<{
   input: WorkerPtoChartInput;

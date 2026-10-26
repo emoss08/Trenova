@@ -325,6 +325,16 @@ var Shard = &gqlexec.Shard{
 				},
 				Marshal: gqlexec.Marshal(marshalOInt2ᚖint),
 			},
+			{
+				Name:     "totalCountExact",
+				NonNull:  true,
+				ChildErr: errNoChild4,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.JurisdictionRuleConnection)
+					return obj.TotalCountExact, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
+			},
 		}},
 		{Object: "JurisdictionRuleEdge", Fields: []*gqlexec.Field{
 			{
@@ -535,6 +545,16 @@ var Shard = &gqlexec.Shard{
 					return obj.TotalCount, nil
 				},
 				Marshal: gqlexec.Marshal(marshalOInt2ᚖint),
+			},
+			{
+				Name:     "totalCountExact",
+				NonNull:  true,
+				ChildErr: errNoChild4,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.JurisdictionRuleOverrideConnection)
+					return obj.TotalCountExact, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
 			},
 		}},
 		{Object: "JurisdictionRuleOverrideEdge", Fields: []*gqlexec.Field{

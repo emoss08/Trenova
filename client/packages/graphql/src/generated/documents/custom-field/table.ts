@@ -2,4 +2,4 @@
 import type { TypedDocumentString, CustomFieldDefinitionTableQuery, CustomFieldDefinitionTableQueryVariables, CustomFieldDefinitionTableRowFieldsFragment } from "../../graphql";
 
 export const CustomFieldDefinitionTableRowFieldsFragmentDoc = {"__meta__":{"fragmentName":"CustomFieldDefinitionTableRowFields"}} as unknown as TypedDocumentString<CustomFieldDefinitionTableRowFieldsFragment, unknown>;
-export const CustomFieldDefinitionTableDocument = {"__meta__":{"kind":"query","name":"CustomFieldDefinitionTable","hash":"sha256:8879bd728ec6963d8c91ff6a845341b39caa7a34b6a0e2422922a1c1cdfb52db"}} as unknown as TypedDocumentString<CustomFieldDefinitionTableQuery, CustomFieldDefinitionTableQueryVariables>;
+export const CustomFieldDefinitionTableDocument = {"__meta__":{"kind":"query","name":"CustomFieldDefinitionTable","hash":"sha256:58fe4f16990268dcdb8ee624831d17172a9fe014b7b9ee4f5a12485d49da3a0a"}} as unknown as TypedDocumentString<CustomFieldDefinitionTableQuery, CustomFieldDefinitionTableQueryVariables>;

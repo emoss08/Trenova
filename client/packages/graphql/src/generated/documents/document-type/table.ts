@@ -2,4 +2,4 @@
 import type { TypedDocumentString, DocumentTypeTableQuery, DocumentTypeTableQueryVariables, DocumentTypeTableRowFieldsFragment } from "../../graphql";
 
 export const DocumentTypeTableRowFieldsFragmentDoc = {"__meta__":{"fragmentName":"DocumentTypeTableRowFields"}} as unknown as TypedDocumentString<DocumentTypeTableRowFieldsFragment, unknown>;
-export const DocumentTypeTableDocument = {"__meta__":{"kind":"query","name":"DocumentTypeTable","hash":"sha256:407941510e99bf8b3133b28178542bd908f312b90789fa0c2de2b976f57aa482"}} as unknown as TypedDocumentString<DocumentTypeTableQuery, DocumentTypeTableQueryVariables>;
+export const DocumentTypeTableDocument = {"__meta__":{"kind":"query","name":"DocumentTypeTable","hash":"sha256:3764a593a9d705bbbb6b7c0dce6a72b4e7601c2a131107c98caa7fc13d048fb4"}} as unknown as TypedDocumentString<DocumentTypeTableQuery, DocumentTypeTableQueryVariables>;

@@ -2,4 +2,4 @@
 import type { TypedDocumentString, JurisdictionRuleOverrideTableQuery, JurisdictionRuleOverrideTableQueryVariables, JurisdictionRuleOverrideTableRowFieldsFragment } from "../../graphql";
 
 export const JurisdictionRuleOverrideTableRowFieldsFragmentDoc = {"__meta__":{"fragmentName":"JurisdictionRuleOverrideTableRowFields"}} as unknown as TypedDocumentString<JurisdictionRuleOverrideTableRowFieldsFragment, unknown>;
-export const JurisdictionRuleOverrideTableDocument = {"__meta__":{"kind":"query","name":"JurisdictionRuleOverrideTable","hash":"sha256:308688c1ff8677796acd9575f32c4ad0d890bbee12abccbf63e5c3ec5804c11e"}} as unknown as TypedDocumentString<JurisdictionRuleOverrideTableQuery, JurisdictionRuleOverrideTableQueryVariables>;
+export const JurisdictionRuleOverrideTableDocument = {"__meta__":{"kind":"query","name":"JurisdictionRuleOverrideTable","hash":"sha256:e5b8ca63c374031ee1d59d369b38fa595c3cf2b30a671f8f07cf093991e5e8ef"}} as unknown as TypedDocumentString<JurisdictionRuleOverrideTableQuery, JurisdictionRuleOverrideTableQueryVariables>;

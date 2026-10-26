@@ -2,4 +2,4 @@
 import type { TypedDocumentString, FormulaLibraryTableQuery, FormulaLibraryTableQueryVariables, FormulaLibraryTableRowFieldsFragment } from "../../graphql";
 
 export const FormulaLibraryTableRowFieldsFragmentDoc = {"__meta__":{"fragmentName":"FormulaLibraryTableRowFields"}} as unknown as TypedDocumentString<FormulaLibraryTableRowFieldsFragment, unknown>;
-export const FormulaLibraryTableDocument = {"__meta__":{"kind":"query","name":"FormulaLibraryTable","hash":"sha256:c0c90c900c47d7195f2c845f1e16f1a556b692ce1dcc4c9ad1cde3aa1a873db5"}} as unknown as TypedDocumentString<FormulaLibraryTableQuery, FormulaLibraryTableQueryVariables>;
+export const FormulaLibraryTableDocument = {"__meta__":{"kind":"query","name":"FormulaLibraryTable","hash":"sha256:4ac7a44d60468a1b97cb1f14154cc29c3ed459ff733165336caed0666a4f6c78"}} as unknown as TypedDocumentString<FormulaLibraryTableQuery, FormulaLibraryTableQueryVariables>;

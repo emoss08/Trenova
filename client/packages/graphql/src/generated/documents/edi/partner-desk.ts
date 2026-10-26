@@ -3,4 +3,4 @@ import type { TypedDocumentString, DeskEdiPartnerCardQuery, DeskEdiPartnerCardQu
 
 export const DeskEdiPartnerMessageFieldsFragmentDoc = {"__meta__":{"fragmentName":"DeskEdiPartnerMessageFields"}} as unknown as TypedDocumentString<DeskEdiPartnerMessageFieldsFragment, unknown>;
 export const DeskEdiPartnerCardDocument = {"__meta__":{"kind":"query","name":"DeskEdiPartnerCard","hash":"sha256:df78682c8a19f34ee150dffef975f96c446ae4d960a3d2715ad0d240ac303230"}} as unknown as TypedDocumentString<DeskEdiPartnerCardQuery, DeskEdiPartnerCardQueryVariables>;
-export const DeskEdiPartnerMessagesDocument = {"__meta__":{"kind":"query","name":"DeskEdiPartnerMessages","hash":"sha256:5c3b92c88bd2e7cf716b55627e930d210759785a35795f39c2158f8dfa958c53"}} as unknown as TypedDocumentString<DeskEdiPartnerMessagesQuery, DeskEdiPartnerMessagesQueryVariables>;
+export const DeskEdiPartnerMessagesDocument = {"__meta__":{"kind":"query","name":"DeskEdiPartnerMessages","hash":"sha256:2dbe6a97144c12a48473eed564ef3da0f2d411d82021e2f9ea8adffa8e9a744b"}} as unknown as TypedDocumentString<DeskEdiPartnerMessagesQuery, DeskEdiPartnerMessagesQueryVariables>;

@@ -2,7 +2,7 @@
 import type { TypedDocumentString, CancelReportRunMutation, CancelReportRunMutationVariables, ReportRunByIdQuery, ReportRunByIdQueryVariables, ReportRunFieldsFragment, ReportRunsTableQuery, ReportRunsTableQueryVariables, RunReportMutation, RunReportMutationVariables } from "../../graphql";
 
 export const ReportRunFieldsFragmentDoc = {"__meta__":{"fragmentName":"ReportRunFields"}} as unknown as TypedDocumentString<ReportRunFieldsFragment, unknown>;
-export const ReportRunsTableDocument = {"__meta__":{"kind":"query","name":"ReportRunsTable","hash":"sha256:a0c575b11f65353b9eb77c3940c12fd0bc82feb31b6159173ca8036c97262a70"}} as unknown as TypedDocumentString<ReportRunsTableQuery, ReportRunsTableQueryVariables>;
+export const ReportRunsTableDocument = {"__meta__":{"kind":"query","name":"ReportRunsTable","hash":"sha256:bbb0f2dbdccc9abea4ae385de29ecc83f0c441c796f20729f12b6ed92f57bc38"}} as unknown as TypedDocumentString<ReportRunsTableQuery, ReportRunsTableQueryVariables>;
 export const ReportRunByIdDocument = {"__meta__":{"kind":"query","name":"ReportRunById","hash":"sha256:c99441d285d5a070ea5e519af3f18c58675a28f05533ae71510bf225280ee6a9"}} as unknown as TypedDocumentString<ReportRunByIdQuery, ReportRunByIdQueryVariables>;
 export const RunReportDocument = {"__meta__":{"kind":"mutation","name":"RunReport","hash":"sha256:e4af42e2da79707541fc29f6455a42c80767116bdd1bee08dfc63146f32325fb"}} as unknown as TypedDocumentString<RunReportMutation, RunReportMutationVariables>;
 export const CancelReportRunDocument = {"__meta__":{"kind":"mutation","name":"CancelReportRun","hash":"sha256:37a51fbc29f91bea2054db71bd1221a29bc4c38c1a8c0d7dde22c4f97fd7e9e4"}} as unknown as TypedDocumentString<CancelReportRunMutation, CancelReportRunMutationVariables>;

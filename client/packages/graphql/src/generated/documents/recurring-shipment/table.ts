@@ -2,4 +2,4 @@
 import type { TypedDocumentString, RecurringShipmentTableQuery, RecurringShipmentTableQueryVariables, RecurringShipmentTableRowFieldsFragment } from "../../graphql";
 
 export const RecurringShipmentTableRowFieldsFragmentDoc = {"__meta__":{"fragmentName":"RecurringShipmentTableRowFields"}} as unknown as TypedDocumentString<RecurringShipmentTableRowFieldsFragment, unknown>;
-export const RecurringShipmentTableDocument = {"__meta__":{"kind":"query","name":"RecurringShipmentTable","hash":"sha256:39b9629192b6601cb0ad2d676939a2f409a667373cf616f7bc85fb478d36c6d7"}} as unknown as TypedDocumentString<RecurringShipmentTableQuery, RecurringShipmentTableQueryVariables>;
+export const RecurringShipmentTableDocument = {"__meta__":{"kind":"query","name":"RecurringShipmentTable","hash":"sha256:21b1aae179791df64c171161bc3c7c5fb3d27515f8b22b93ac55deb688b2b9ac"}} as unknown as TypedDocumentString<RecurringShipmentTableQuery, RecurringShipmentTableQueryVariables>;

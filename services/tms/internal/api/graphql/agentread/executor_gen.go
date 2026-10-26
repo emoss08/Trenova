@@ -497,8 +497,8 @@ var operations = []Operation{
 	},
 	{
 		Name:     "DeskAccountingDriftFindings",
-		Hash:     "sha256:6be177e40f0d4b2bffa54def286073430b54319cae5dda0fa52432c73549f117",
-		Document: "fragment DataTablePageInfoFields on PageInfo { endCursor hasNextPage } query DeskAccountingDriftFindings($includeTotalCount: Boolean = false, $input: DataTableConnectionInput!, $integrationType: AccountingSystem!) { accountingDriftFindingTable(integrationType: $integrationType, input: $input) { edges { node { currencyCode detail { objectId objectNumber objectType providerMinor trenovaMinor } detectedAt differenceMinor directions externalUrl id kind objectId objectNumber objectType partyName providerMinor providerModifiedAt providerModifiedBy providerState pushed resolution resolutionNote status trenovaMinor trenovaState } } pageInfo { ...DataTablePageInfoFields } totalCount @include(if: $includeTotalCount) } }",
+		Hash:     "sha256:a54b182dd54767c095e8b81d3cb98c7c2e937cbbb34a6203d6994cb256006d1c",
+		Document: "fragment DataTablePageInfoFields on PageInfo { endCursor hasNextPage } query DeskAccountingDriftFindings($includeTotalCount: Boolean = false, $input: DataTableConnectionInput!, $integrationType: AccountingSystem!) { accountingDriftFindingTable(integrationType: $integrationType, input: $input) { edges { node { currencyCode detail { objectId objectNumber objectType providerMinor trenovaMinor } detectedAt differenceMinor directions externalUrl id kind objectId objectNumber objectType partyName providerMinor providerModifiedAt providerModifiedBy providerState pushed resolution resolutionNote status trenovaMinor trenovaState } } pageInfo { ...DataTablePageInfoFields } totalCount @include(if: $includeTotalCount) totalCountExact @include(if: $includeTotalCount) } }",
 	},
 	{
 		Name:     "DeskAccountingDriftOverview",
@@ -507,8 +507,8 @@ var operations = []Operation{
 	},
 	{
 		Name:     "DeskAccountingInboundChanges",
-		Hash:     "sha256:d424983e47bbef0e01e5a2ed2dcdb3937b10e0097b6f543e996f8acdc88a1bbf",
-		Document: "fragment DataTablePageInfoFields on PageInfo { endCursor hasNextPage } query DeskAccountingInboundChanges($includeTotalCount: Boolean = false, $input: DataTableConnectionInput!, $integrationType: AccountingSystem!) { accountingInboundChangeTable(integrationType: $integrationType, input: $input) { edges { node { amountMinor currencyCode detectedAt externalNumber externalUrl id kind lines { amountMinor documentKind objectId objectNumber openMinor } methodName partyName partyObjectId providerModifiedBy reason referenceNumber resolution status txnDate } } pageInfo { ...DataTablePageInfoFields } totalCount @include(if: $includeTotalCount) } }",
+		Hash:     "sha256:aa0299012831680e57effe5d687df6b89bc00be98f6367d2da70d123909b5841",
+		Document: "fragment DataTablePageInfoFields on PageInfo { endCursor hasNextPage } query DeskAccountingInboundChanges($includeTotalCount: Boolean = false, $input: DataTableConnectionInput!, $integrationType: AccountingSystem!) { accountingInboundChangeTable(integrationType: $integrationType, input: $input) { edges { node { amountMinor currencyCode detectedAt externalNumber externalUrl id kind lines { amountMinor documentKind objectId objectNumber openMinor } methodName partyName partyObjectId providerModifiedBy reason referenceNumber resolution status txnDate } } pageInfo { ...DataTablePageInfoFields } totalCount @include(if: $includeTotalCount) totalCountExact @include(if: $includeTotalCount) } }",
 	},
 	{
 		Name:     "DeskAccountingMappings",
@@ -542,18 +542,18 @@ var operations = []Operation{
 	},
 	{
 		Name:     "CarrierTable",
-		Hash:     "sha256:24890c58a1d854d5479367fa1e4b5e19d0421b6863081f334b23aef9c9ab6f78",
-		Document: "fragment CarrierContactFields on CarrierContact { businessUnitId carrierId createdAt email id isPrimary name organizationId phone receivesRateConfirmations title updatedAt version } fragment CarrierInsurancePolicyFields on CarrierInsurancePolicy { businessUnitId carrierId coverageAmount createdAt effectiveDate expirationDate id isVerified organizationId policyNumber policyType providerName updatedAt version } fragment CarrierTableRowFields on Carrier { addressLine1 addressLine2 businessUnitId carrierType city code complianceStatus contacts { ...CarrierContactFields } createdAt dbaName disqualifiedReason dotNumber email externalId id insurancePolicies { ...CarrierInsurancePolicyFields } intelBlockingCount intelReviewRequired intelRiskLevel is1099Eligible mcNumber name notes organizationId paymentMethod paymentTermDays phone postalCode qualifiedAt remitAddressLine1 remitAddressLine2 remitCity remitPostalCode remitStateId remitToName safetyRating scac stateId status taxId taxIdType updatedAt version w9OnFile } fragment DataTablePageInfoFields on PageInfo { endCursor hasNextPage } query CarrierTable($includeTotalCount: Boolean = true, $input: DataTableConnectionInput!) { carriers(input: $input) { edges { node { ...CarrierTableRowFields } } pageInfo { ...DataTablePageInfoFields } totalCount @include(if: $includeTotalCount) } }",
+		Hash:     "sha256:e174f777c9e13d072c2d92fd20e2ae26f63ec024bdf73b1a2f59d4765d4d9aa5",
+		Document: "fragment CarrierContactFields on CarrierContact { businessUnitId carrierId createdAt email id isPrimary name organizationId phone receivesRateConfirmations title updatedAt version } fragment CarrierInsurancePolicyFields on CarrierInsurancePolicy { businessUnitId carrierId coverageAmount createdAt effectiveDate expirationDate id isVerified organizationId policyNumber policyType providerName updatedAt version } fragment CarrierTableRowFields on Carrier { addressLine1 addressLine2 businessUnitId carrierType city code complianceStatus contacts { ...CarrierContactFields } createdAt dbaName disqualifiedReason dotNumber email externalId id insurancePolicies { ...CarrierInsurancePolicyFields } intelBlockingCount intelReviewRequired intelRiskLevel is1099Eligible mcNumber name notes organizationId paymentMethod paymentTermDays phone postalCode qualifiedAt remitAddressLine1 remitAddressLine2 remitCity remitPostalCode remitStateId remitToName safetyRating scac stateId status taxId taxIdType updatedAt version w9OnFile } fragment DataTablePageInfoFields on PageInfo { endCursor hasNextPage } query CarrierTable($includeTotalCount: Boolean = true, $input: DataTableConnectionInput!) { carriers(input: $input) { edges { node { ...CarrierTableRowFields } } pageInfo { ...DataTablePageInfoFields } totalCount @include(if: $includeTotalCount) totalCountExact @include(if: $includeTotalCount) } }",
 	},
 	{
 		Name:     "DeskCarrierCapacityPostings",
-		Hash:     "sha256:4b95602f19cae3b750d83f31dac06d6450c50127d4e49ed4f37e3a7c47bc1fcd",
-		Document: "query DeskCarrierCapacityPostings($includeTotalCount: Boolean = false, $input: DataTableConnectionInput!, $openOnly: Boolean = false) { carrierCapacityPostings(input: $input, openOnly: $openOnly) { edges { node { availableFrom availableTo carrier { id name } carrierId destinationState { abbreviation id } destinationStateId equipmentType { code id } equipmentTypeId id originLocation { city id name } originLocationId originRadiusMiles originState { abbreviation id } originStateId rate rateMethod source truckCount version } } pageInfo { endCursor hasNextPage } totalCount @include(if: $includeTotalCount) } }",
+		Hash:     "sha256:e6f4ec2b0e5ff43af207b44beb03c61afff83b8ed1ab66f043eccb08ff3172bc",
+		Document: "query DeskCarrierCapacityPostings($includeTotalCount: Boolean = false, $input: DataTableConnectionInput!, $openOnly: Boolean = false) { carrierCapacityPostings(input: $input, openOnly: $openOnly) { edges { node { availableFrom availableTo carrier { id name } carrierId destinationState { abbreviation id } destinationStateId equipmentType { code id } equipmentTypeId id originLocation { city id name } originLocationId originRadiusMiles originState { abbreviation id } originStateId rate rateMethod source truckCount version } } pageInfo { endCursor hasNextPage } totalCount @include(if: $includeTotalCount) totalCountExact @include(if: $includeTotalCount) } }",
 	},
 	{
 		Name:     "DeskCarrierIntelEvents",
-		Hash:     "sha256:4f0a7418ebcbe9112ed874526d80ea0cfcca953d30bfd13657d8e625fd58a7d4",
-		Document: "query DeskCarrierIntelEvents($filter: CarrierIntelEventFilterInput, $includeTotalCount: Boolean = false, $input: DataTableConnectionInput!) { carrierIntelEvents(input: $input, filter: $filter) { edges { node { acknowledgedAt action carrierId category detectedAt dotNumber id resolution resolvedAt severity status subjectName subjectType summary } } pageInfo { endCursor hasNextPage } totalCount @include(if: $includeTotalCount) } }",
+		Hash:     "sha256:c91c587f0b0be85cf357b59ab377e09f7fd900aa49a6312e5a9fe986be9b1b15",
+		Document: "query DeskCarrierIntelEvents($filter: CarrierIntelEventFilterInput, $includeTotalCount: Boolean = false, $input: DataTableConnectionInput!) { carrierIntelEvents(input: $input, filter: $filter) { edges { node { acknowledgedAt action carrierId category detectedAt dotNumber id resolution resolvedAt severity status subjectName subjectType summary } } pageInfo { endCursor hasNextPage } totalCount @include(if: $includeTotalCount) totalCountExact @include(if: $includeTotalCount) } }",
 	},
 	{
 		Name:     "DeskCarrierInvoiceMatches",
@@ -572,8 +572,8 @@ var operations = []Operation{
 	},
 	{
 		Name:     "CustomerTable",
-		Hash:     "sha256:b03bdf83cbfd113e6933f80dbe8d2689721f4abd1057e18d8b5b0510ff57f510",
-		Document: "fragment CustomerBillingProfileFields on CustomerBillingProfile { applyLateCharges arAccountId autoApplyAccessorials autoApprove autoBill autoCreditHold autoMarkReadyToBill autoSendInvoiceOnGeneration autoTransfer billingCurrency billingCycle billingCycleAnchorDay billingCycleTimezone billingNotes businessUnitId countLateOnlyOnAppointmentStops createdAt creditBalance creditHoldAutomatic creditHoldReason creditLimit creditReviewedAt creditStatus customerId customerInvoicePrefix defaultBillerId documentTypes { code color documentCategory documentClassification id name } ediInvoiceEnabled emailInvoiceEnabled enforceCreditLimit enforceCustomerBillingReq factoringCompanyId fuelSurchargeMode fuelSurchargeProgramId gracePeriodDays hasBillingControlOverrides id invoiceCopies invoiceDelivery invoiceDetail invoiceNumberFormat lastBilledPeriodEnd lateChargeRate maxShipmentsPerInvoice minConsolidatedAmount organizationId paymentTerm requireBOLNumber requireDeliveryNumber requirePONumber revenueAccountId sectionBy sendPaymentReminders sendStatements splitBy taxExempt taxExemptNumber updatedAt validateCustomerRates version } fragment CustomerEmailProfileFields on CustomerEmailProfile { attachmentName bccRecipients businessUnitId ccRecipients comment createdAt customerId id includeShipmentDetail organizationId readReceipt subject toRecipients updatedAt version } fragment CustomerTableRowFields on Customer { addressLine1 addressLine2 allowConsolidation billingProfile { ...CustomerBillingProfileFields } businessUnitId city code consolidationPriority createdAt emailProfile { ...CustomerEmailProfileFields } exclusiveConsolidation externalId id isGeocoded latitude longitude name organizationId placeId postalCode stateId status updatedAt version } fragment DataTablePageInfoFields on PageInfo { endCursor hasNextPage } query CustomerTable($includeTotalCount: Boolean = true, $input: DataTableConnectionInput!) { customers(input: $input) { edges { node { ...CustomerTableRowFields } } pageInfo { ...DataTablePageInfoFields } totalCount @include(if: $includeTotalCount) } }",
+		Hash:     "sha256:de01ee3d2d72d6ed6fffa3cd29795e39588d66cd2e5152d0b6c15212259984c7",
+		Document: "fragment CustomerBillingProfileFields on CustomerBillingProfile { applyLateCharges arAccountId autoApplyAccessorials autoApprove autoBill autoCreditHold autoMarkReadyToBill autoSendInvoiceOnGeneration autoTransfer billingCurrency billingCycle billingCycleAnchorDay billingCycleTimezone billingNotes businessUnitId countLateOnlyOnAppointmentStops createdAt creditBalance creditHoldAutomatic creditHoldReason creditLimit creditReviewedAt creditStatus customerId customerInvoicePrefix defaultBillerId documentTypes { code color documentCategory documentClassification id name } ediInvoiceEnabled emailInvoiceEnabled enforceCreditLimit enforceCustomerBillingReq factoringCompanyId fuelSurchargeMode fuelSurchargeProgramId gracePeriodDays hasBillingControlOverrides id invoiceCopies invoiceDelivery invoiceDetail invoiceNumberFormat lastBilledPeriodEnd lateChargeRate maxShipmentsPerInvoice minConsolidatedAmount organizationId paymentTerm requireBOLNumber requireDeliveryNumber requirePONumber revenueAccountId sectionBy sendPaymentReminders sendStatements splitBy taxExempt taxExemptNumber updatedAt validateCustomerRates version } fragment CustomerEmailProfileFields on CustomerEmailProfile { attachmentName bccRecipients businessUnitId ccRecipients comment createdAt customerId id includeShipmentDetail organizationId readReceipt subject toRecipients updatedAt version } fragment CustomerTableRowFields on Customer { addressLine1 addressLine2 allowConsolidation billingProfile { ...CustomerBillingProfileFields } businessUnitId city code consolidationPriority createdAt emailProfile { ...CustomerEmailProfileFields } exclusiveConsolidation externalId id isGeocoded latitude longitude name organizationId placeId postalCode stateId status updatedAt version } fragment DataTablePageInfoFields on PageInfo { endCursor hasNextPage } query CustomerTable($includeTotalCount: Boolean = true, $input: DataTableConnectionInput!) { customers(input: $input) { edges { node { ...CustomerTableRowFields } } pageInfo { ...DataTablePageInfoFields } totalCount @include(if: $includeTotalCount) totalCountExact @include(if: $includeTotalCount) } }",
 	},
 	{
 		Name:     "DeskDetentionCard",
@@ -592,8 +592,8 @@ var operations = []Operation{
 	},
 	{
 		Name:     "DocumentTypeTable",
-		Hash:     "sha256:407941510e99bf8b3133b28178542bd908f312b90789fa0c2de2b976f57aa482",
-		Document: "fragment DataTablePageInfoFields on PageInfo { endCursor hasNextPage } fragment DocumentTypeTableRowFields on DocumentType { businessUnitId code color createdAt description documentCategory documentClassification id isSystem name organizationId updatedAt version } query DocumentTypeTable($includeTotalCount: Boolean = true, $input: DataTableConnectionInput!) { documentTypes(input: $input) { edges { node { ...DocumentTypeTableRowFields } } pageInfo { ...DataTablePageInfoFields } totalCount @include(if: $includeTotalCount) } }",
+		Hash:     "sha256:3764a593a9d705bbbb6b7c0dce6a72b4e7601c2a131107c98caa7fc13d048fb4",
+		Document: "fragment DataTablePageInfoFields on PageInfo { endCursor hasNextPage } fragment DocumentTypeTableRowFields on DocumentType { businessUnitId code color createdAt description documentCategory documentClassification id isSystem name organizationId updatedAt version } query DocumentTypeTable($includeTotalCount: Boolean = true, $input: DataTableConnectionInput!) { documentTypes(input: $input) { edges { node { ...DocumentTypeTableRowFields } } pageInfo { ...DataTablePageInfoFields } totalCount @include(if: $includeTotalCount) totalCountExact @include(if: $includeTotalCount) } }",
 	},
 	{
 		Name:     "DeskEdiAckHealth",
@@ -627,23 +627,23 @@ var operations = []Operation{
 	},
 	{
 		Name:     "DeskEdiInboundFiles",
-		Hash:     "sha256:721a71b768d0469b9eecfefe10f1e2914ee52e7f9301be0cadcbc8525f05e2c4",
-		Document: "query DeskEdiInboundFiles($includeTotalCount: Boolean = false, $input: DataTableConnectionInput!) { ediInboundFiles(input: $input) { edges { node { ediPartnerId failureReason fileName id interchangeControlNumber isaSenderId method partner { code id name } processedAt rawPurgedAt receivedAt sizeBytes status transactionCount } } pageInfo { endCursor hasNextPage } totalCount @include(if: $includeTotalCount) } }",
+		Hash:     "sha256:51a4791ac5e00ff8f0acf0a817da638c51717c83e3208f499809df6b2ab2df08",
+		Document: "query DeskEdiInboundFiles($includeTotalCount: Boolean = false, $input: DataTableConnectionInput!) { ediInboundFiles(input: $input) { edges { node { ediPartnerId failureReason fileName id interchangeControlNumber isaSenderId method partner { code id name } processedAt rawPurgedAt receivedAt sizeBytes status transactionCount } } pageInfo { endCursor hasNextPage } totalCount @include(if: $includeTotalCount) totalCountExact @include(if: $includeTotalCount) } }",
 	},
 	{
 		Name:     "DeskEdiMessages",
-		Hash:     "sha256:d4d7cbee09690ad4b32c7a10a285c7deb069fee7af1e1493ceddf914bb6ef889",
-		Document: "fragment DeskEdiMessageRowFields on EdiMessage { ackLastError ackStatus deliveryAttempts deliveryLastError deliverySentAt deliveryStatus direction ediPartnerId generatedAt groupControlNumber id inboundFileId interchangeControlNumber invoiceId partner { code id name } rawPurgedAt segmentCount shipmentId status transactionControlNumber transactionSet transferId x12Version } query DeskEdiMessages($includeTotalCount: Boolean = false, $input: DataTableConnectionInput!) { ediMessages(input: $input) { edges { node { ...DeskEdiMessageRowFields } } pageInfo { endCursor hasNextPage } totalCount @include(if: $includeTotalCount) } }",
+		Hash:     "sha256:c5e65daad0cb298bdbbe3dc00c1d30260270016bb0dcf8027d4d9646e6f33f1a",
+		Document: "fragment DeskEdiMessageRowFields on EdiMessage { ackLastError ackStatus deliveryAttempts deliveryLastError deliverySentAt deliveryStatus direction ediPartnerId generatedAt groupControlNumber id inboundFileId interchangeControlNumber invoiceId partner { code id name } rawPurgedAt segmentCount shipmentId status transactionControlNumber transactionSet transferId x12Version } query DeskEdiMessages($includeTotalCount: Boolean = false, $input: DataTableConnectionInput!) { ediMessages(input: $input) { edges { node { ...DeskEdiMessageRowFields } } pageInfo { endCursor hasNextPage } totalCount @include(if: $includeTotalCount) totalCountExact @include(if: $includeTotalCount) } }",
 	},
 	{
 		Name:     "DeskEdiPartners",
-		Hash:     "sha256:c4722993f5fe5eb4a35a6d6af80cbe77173091f1543acf5485df475c1f78fdc1",
-		Document: "query DeskEdiPartners($includeTotalCount: Boolean = false, $input: DataTableConnectionInput!) { ediPartners(input: $input) { edges { node { code customerId enabledForInbound enabledForOutbound id internalOrganization { id name } kind name status } } pageInfo { endCursor hasNextPage } totalCount @include(if: $includeTotalCount) } }",
+		Hash:     "sha256:f2de71dabf489d78d222255c244c3c1432ab919ce90dcda076027c014d459e48",
+		Document: "query DeskEdiPartners($includeTotalCount: Boolean = false, $input: DataTableConnectionInput!) { ediPartners(input: $input) { edges { node { code customerId enabledForInbound enabledForOutbound id internalOrganization { id name } kind name status } } pageInfo { endCursor hasNextPage } totalCount @include(if: $includeTotalCount) totalCountExact @include(if: $includeTotalCount) } }",
 	},
 	{
 		Name:     "DeskEdiTransfers",
-		Hash:     "sha256:7784367bfe8ea4ffffe44dfadf38a01d672f10f4ab6eb8c7fec39141a2805c84",
-		Document: "fragment DeskEdiTransferRowFields on EdiTransfer { bol counterparty { code id name } customerLabel direction failureReason id inboundMessageId processedAt rejectionReason serviceTypeLabel sourceShipmentId status stopCount submittedAt targetShipmentId } query DeskEdiTransfers($direction: EdiTransferDirection!, $inboundFileId: ID, $includeTotalCount: Boolean = false, $input: DataTableConnectionInput!) { ediTransfers( input: $input direction: $direction inboundFileId: $inboundFileId ) { edges { node { ...DeskEdiTransferRowFields } } pageInfo { endCursor hasNextPage } totalCount @include(if: $includeTotalCount) } }",
+		Hash:     "sha256:e64d2e2419ac810373726f449870b145904d6b152c788bd149e2db4e3501c18d",
+		Document: "fragment DeskEdiTransferRowFields on EdiTransfer { bol counterparty { code id name } customerLabel direction failureReason id inboundMessageId processedAt rejectionReason serviceTypeLabel sourceShipmentId status stopCount submittedAt targetShipmentId } query DeskEdiTransfers($direction: EdiTransferDirection!, $inboundFileId: ID, $includeTotalCount: Boolean = false, $input: DataTableConnectionInput!) { ediTransfers( input: $input direction: $direction inboundFileId: $inboundFileId ) { edges { node { ...DeskEdiTransferRowFields } } pageInfo { endCursor hasNextPage } totalCount @include(if: $includeTotalCount) totalCountExact @include(if: $includeTotalCount) } }",
 	},
 	{
 		Name:     "DeskTractorCard",
@@ -657,8 +657,8 @@ var operations = []Operation{
 	},
 	{
 		Name:     "EquipmentManufacturerTable",
-		Hash:     "sha256:1ad59b9754cf4b8c511c8cf3af0762a6da6adf252d5bb3fd05b50b349bcdaec7",
-		Document: "fragment DataTablePageInfoFields on PageInfo { endCursor hasNextPage } fragment EquipmentManufacturerTableRowFields on EquipmentManufacturer { businessUnitId createdAt description id name organizationId status updatedAt version } query EquipmentManufacturerTable($includeTotalCount: Boolean = true, $input: DataTableConnectionInput!) { equipmentManufacturers(input: $input) { edges { node { ...EquipmentManufacturerTableRowFields } } pageInfo { ...DataTablePageInfoFields } totalCount @include(if: $includeTotalCount) } }",
+		Hash:     "sha256:22cf7903ac1f555f7aba344af3e36c72abfa5ae920cbe4770359580bc3cec1fa",
+		Document: "fragment DataTablePageInfoFields on PageInfo { endCursor hasNextPage } fragment EquipmentManufacturerTableRowFields on EquipmentManufacturer { businessUnitId createdAt description id name organizationId status updatedAt version } query EquipmentManufacturerTable($includeTotalCount: Boolean = true, $input: DataTableConnectionInput!) { equipmentManufacturers(input: $input) { edges { node { ...EquipmentManufacturerTableRowFields } } pageInfo { ...DataTablePageInfoFields } totalCount @include(if: $includeTotalCount) totalCountExact @include(if: $includeTotalCount) } }",
 	},
 	{
 		Name:     "DeskVehiclePositions",
@@ -667,18 +667,18 @@ var operations = []Operation{
 	},
 	{
 		Name:     "TractorTable",
-		Hash:     "sha256:19329f9543d8714fd002b65bb9f04fcacc89b404bbb21d62cd6f42b21b4553e5",
-		Document: "fragment DataTablePageInfoFields on PageInfo { endCursor hasNextPage } fragment EquipmentManufacturerTableFields on EquipmentManufacturer { id name } fragment EquipmentTypeTableFields on EquipmentType { code color id } fragment FleetCodeTableFields on FleetCode { code color id } fragment TractorTableRowFields on Tractor { businessUnitId code createdAt customFields equipmentManufacturer { ...EquipmentManufacturerTableFields } equipmentManufacturerId equipmentType { ...EquipmentTypeTableFields } equipmentTypeId externalId fleetCode { ...FleetCodeTableFields } fleetCodeId fuelType id iftaQualified lastKnownLocationId lastKnownLocationName licensePlateNumber make model organizationId primaryWorker { ...WorkerTableReferenceFields } primaryWorkerId registrationExpiry registrationNumber secondaryWorker { ...WorkerTableReferenceFields } secondaryWorkerId state { ...UsStateTableFields } stateId status updatedAt version vin year } fragment UsStateTableFields on UsState { abbreviation id name } fragment WorkerTableReferenceFields on Worker { firstName id lastName wholeName } query TractorTable($includeEquipmentDetails: Boolean = true, $includeFleetDetails: Boolean = true, $includeTotalCount: Boolean = true, $includeWorkerDetails: Boolean = true, $input: DataTableConnectionInput!) { tractors( input: $input includeEquipmentDetails: $includeEquipmentDetails includeFleetDetails: $includeFleetDetails includeWorkerDetails: $includeWorkerDetails ) { edges { node { ...TractorTableRowFields } } pageInfo { ...DataTablePageInfoFields } totalCount @include(if: $includeTotalCount) } }",
+		Hash:     "sha256:00df50eb815d6b02070a6286bffb003189a33b83a81cc40f26b5253e78832a71",
+		Document: "fragment DataTablePageInfoFields on PageInfo { endCursor hasNextPage } fragment EquipmentManufacturerTableFields on EquipmentManufacturer { id name } fragment EquipmentTypeTableFields on EquipmentType { code color id } fragment FleetCodeTableFields on FleetCode { code color id } fragment TractorTableRowFields on Tractor { businessUnitId code createdAt customFields equipmentManufacturer { ...EquipmentManufacturerTableFields } equipmentManufacturerId equipmentType { ...EquipmentTypeTableFields } equipmentTypeId externalId fleetCode { ...FleetCodeTableFields } fleetCodeId fuelType id iftaQualified lastKnownLocationId lastKnownLocationName licensePlateNumber make model organizationId primaryWorker { ...WorkerTableReferenceFields } primaryWorkerId registrationExpiry registrationNumber secondaryWorker { ...WorkerTableReferenceFields } secondaryWorkerId state { ...UsStateTableFields } stateId status updatedAt version vin year } fragment UsStateTableFields on UsState { abbreviation id name } fragment WorkerTableReferenceFields on Worker { firstName id lastName wholeName } query TractorTable($includeEquipmentDetails: Boolean = true, $includeFleetDetails: Boolean = true, $includeTotalCount: Boolean = true, $includeWorkerDetails: Boolean = true, $input: DataTableConnectionInput!) { tractors( input: $input includeEquipmentDetails: $includeEquipmentDetails includeFleetDetails: $includeFleetDetails includeWorkerDetails: $includeWorkerDetails ) { edges { node { ...TractorTableRowFields } } pageInfo { ...DataTablePageInfoFields } totalCount @include(if: $includeTotalCount) totalCountExact @include(if: $includeTotalCount) } }",
 	},
 	{
 		Name:     "TrailerTable",
-		Hash:     "sha256:f5ca58d5c5853b2e6ac5dab10cf884d1c5ccce29cda55b95957215797da21f42",
-		Document: "fragment DataTablePageInfoFields on PageInfo { endCursor hasNextPage } fragment EquipmentManufacturerTableFields on EquipmentManufacturer { id name } fragment EquipmentTypeTableFields on EquipmentType { code color id } fragment FleetCodeTableFields on FleetCode { code color id } fragment TrailerTableRowFields on Trailer { businessUnitId code createdAt customFields equipmentManufacturer { ...EquipmentManufacturerTableFields } equipmentManufacturerId equipmentType { ...EquipmentTypeTableFields } equipmentTypeId externalId fleetCode { ...FleetCodeTableFields } fleetCodeId id lastInspectionDate lastKnownLocationId lastKnownLocationName licensePlateNumber make maxLoadWeight model organizationId registrationExpiry registrationNumber registrationState { ...UsStateTableFields } registrationStateId status updatedAt version vin year } fragment UsStateTableFields on UsState { abbreviation id name } query TrailerTable($includeEquipmentDetails: Boolean = true, $includeFleetDetails: Boolean = true, $includeTotalCount: Boolean = true, $input: DataTableConnectionInput!) { trailers( input: $input includeEquipmentDetails: $includeEquipmentDetails includeFleetDetails: $includeFleetDetails ) { edges { node { ...TrailerTableRowFields } } pageInfo { ...DataTablePageInfoFields } totalCount @include(if: $includeTotalCount) } }",
+		Hash:     "sha256:58bff7dc046d171e503b8c1dfd9fa27283c8092722d8c8728ec97a180ccee5f0",
+		Document: "fragment DataTablePageInfoFields on PageInfo { endCursor hasNextPage } fragment EquipmentManufacturerTableFields on EquipmentManufacturer { id name } fragment EquipmentTypeTableFields on EquipmentType { code color id } fragment FleetCodeTableFields on FleetCode { code color id } fragment TrailerTableRowFields on Trailer { businessUnitId code createdAt customFields equipmentManufacturer { ...EquipmentManufacturerTableFields } equipmentManufacturerId equipmentType { ...EquipmentTypeTableFields } equipmentTypeId externalId fleetCode { ...FleetCodeTableFields } fleetCodeId id lastInspectionDate lastKnownLocationId lastKnownLocationName licensePlateNumber make maxLoadWeight model organizationId registrationExpiry registrationNumber registrationState { ...UsStateTableFields } registrationStateId status updatedAt version vin year } fragment UsStateTableFields on UsState { abbreviation id name } query TrailerTable($includeEquipmentDetails: Boolean = true, $includeFleetDetails: Boolean = true, $includeTotalCount: Boolean = true, $input: DataTableConnectionInput!) { trailers( input: $input includeEquipmentDetails: $includeEquipmentDetails includeFleetDetails: $includeFleetDetails ) { edges { node { ...TrailerTableRowFields } } pageInfo { ...DataTablePageInfoFields } totalCount @include(if: $includeTotalCount) totalCountExact @include(if: $includeTotalCount) } }",
 	},
 	{
 		Name:     "EquipmentTypeTable",
-		Hash:     "sha256:434594d9f9c59a4377be5e555d4baa8f80e86e8a0eea9ec679c7cb7ba3b95f05",
-		Document: "fragment DataTablePageInfoFields on PageInfo { endCursor hasNextPage } fragment EquipmentTypeConfigurationRowFields on EquipmentType { businessUnitId class code color createdAt description id interiorLength organizationId status updatedAt version } query EquipmentTypeTable($classes: [EquipmentClass!], $includeTotalCount: Boolean = true, $input: DataTableConnectionInput!) { equipmentTypes(input: $input, classes: $classes) { edges { node { ...EquipmentTypeConfigurationRowFields } } pageInfo { ...DataTablePageInfoFields } totalCount @include(if: $includeTotalCount) } }",
+		Hash:     "sha256:688c2aa2757f0eafb2e33b1bcabb78f8722b669ea8adf8d000f441123b4dbda3",
+		Document: "fragment DataTablePageInfoFields on PageInfo { endCursor hasNextPage } fragment EquipmentTypeConfigurationRowFields on EquipmentType { businessUnitId class code color createdAt description id interiorLength organizationId status updatedAt version } query EquipmentTypeTable($classes: [EquipmentClass!], $includeTotalCount: Boolean = true, $input: DataTableConnectionInput!) { equipmentTypes(input: $input, classes: $classes) { edges { node { ...EquipmentTypeConfigurationRowFields } } pageInfo { ...DataTablePageInfoFields } totalCount @include(if: $includeTotalCount) totalCountExact @include(if: $includeTotalCount) } }",
 	},
 	{
 		Name:     "DeskServiceFailureCard",
@@ -687,13 +687,13 @@ var operations = []Operation{
 	},
 	{
 		Name:     "ServiceFailureReasonCodeTable",
-		Hash:     "sha256:041698d7f51840151afa5a8fb10ceb205540001dc66ed1969c2366060585b3aa",
-		Document: "fragment DataTablePageInfoFields on PageInfo { endCursor hasNextPage } fragment ServiceFailureReasonCodeTableRowFields on ServiceFailureReasonCode { active appliesTo businessUnitId category code createdAt defaultExceptionCode defaultNote defaultReasonCode defaultStatusCode description externalMap id label organizationId sortOrder updatedAt version } query ServiceFailureReasonCodeTable($includeTotalCount: Boolean = true, $input: DataTableConnectionInput!) { serviceFailureReasonCodes(input: $input) { edges { node { ...ServiceFailureReasonCodeTableRowFields } } pageInfo { ...DataTablePageInfoFields } totalCount @include(if: $includeTotalCount) } }",
+		Hash:     "sha256:e76cd043f89be55ce3659c8bd8a4cc485911bfdbec4bb06e07c6ace89e2bcbf1",
+		Document: "fragment DataTablePageInfoFields on PageInfo { endCursor hasNextPage } fragment ServiceFailureReasonCodeTableRowFields on ServiceFailureReasonCode { active appliesTo businessUnitId category code createdAt defaultExceptionCode defaultNote defaultReasonCode defaultStatusCode description externalMap id label organizationId sortOrder updatedAt version } query ServiceFailureReasonCodeTable($includeTotalCount: Boolean = true, $input: DataTableConnectionInput!) { serviceFailureReasonCodes(input: $input) { edges { node { ...ServiceFailureReasonCodeTableRowFields } } pageInfo { ...DataTablePageInfoFields } totalCount @include(if: $includeTotalCount) totalCountExact @include(if: $includeTotalCount) } }",
 	},
 	{
 		Name:     "ServiceFailureTable",
-		Hash:     "sha256:802d21c82ae8c40acf8a3e43537d88efc7781983e248ad672961a74b46c52bd0",
-		Document: "fragment DataTablePageInfoFields on PageInfo { endCursor hasNextPage } fragment ServiceFailureTableRowFields on ServiceFailure { actualArrival detectedAt gracePeriodMinutes id internalNotes lateMinutes notes number reasonCode { code id label } reasonCodeId scheduledCutoff shipment { bol id proNumber } shipmentId shipmentMoveId source status stop { id location { city code id name state { abbreviation } } locationId sequence type } stopId stopType type version x12ExceptionCode x12ReasonCodeOverride x12StatusCodeOverride } query ServiceFailureTable($includeTotalCount: Boolean = true, $input: DataTableConnectionInput!, $shipmentId: ID) { serviceFailures(input: $input, shipmentId: $shipmentId) { edges { node { ...ServiceFailureTableRowFields } } pageInfo { ...DataTablePageInfoFields } totalCount @include(if: $includeTotalCount) } }",
+		Hash:     "sha256:d2aab2fb2579a0936c1a944e42adc493d62291e38721b587f8641fb77521dfa8",
+		Document: "fragment DataTablePageInfoFields on PageInfo { endCursor hasNextPage } fragment ServiceFailureTableRowFields on ServiceFailure { actualArrival detectedAt gracePeriodMinutes id internalNotes lateMinutes notes number reasonCode { code id label } reasonCodeId scheduledCutoff shipment { bol id proNumber } shipmentId shipmentMoveId source status stop { id location { city code id name state { abbreviation } } locationId sequence type } stopId stopType type version x12ExceptionCode x12ReasonCodeOverride x12StatusCodeOverride } query ServiceFailureTable($includeTotalCount: Boolean = true, $input: DataTableConnectionInput!, $shipmentId: ID) { serviceFailures(input: $input, shipmentId: $shipmentId) { edges { node { ...ServiceFailureTableRowFields } } pageInfo { ...DataTablePageInfoFields } totalCount @include(if: $includeTotalCount) totalCountExact @include(if: $includeTotalCount) } }",
 	},
 	{
 		Name:     "DeskFactoringReadiness",
@@ -722,13 +722,13 @@ var operations = []Operation{
 	},
 	{
 		Name:     "DeskFactoringNoas",
-		Hash:     "sha256:047e51fb00b9650be00a58a5b0c0abbd548529991d4ef0db0f8e66a4f50c4df1",
-		Document: "fragment DataTablePageInfoFields on PageInfo { endCursor hasNextPage } query DeskFactoringNoas($includeTotalCount: Boolean = false, $input: DataTableConnectionInput!) { factoringNoas(input: { table: $input }) { edges { node { acknowledgedAt customer { code id name } customerId expiresAt factoringCompany { code id name } factoringCompanyId id releaseReason releasedAt sentAt sentTo status version } } pageInfo { ...DataTablePageInfoFields } totalCount @include(if: $includeTotalCount) } }",
+		Hash:     "sha256:c7ec705200813d787785923c72ea3d415f0f8ab466b28215380098c3d4eac9f5",
+		Document: "fragment DataTablePageInfoFields on PageInfo { endCursor hasNextPage } query DeskFactoringNoas($includeTotalCount: Boolean = false, $input: DataTableConnectionInput!) { factoringNoas(input: { table: $input }) { edges { node { acknowledgedAt customer { code id name } customerId expiresAt factoringCompany { code id name } factoringCompanyId id releaseReason releasedAt sentAt sentTo status version } } pageInfo { ...DataTablePageInfoFields } totalCount @include(if: $includeTotalCount) totalCountExact @include(if: $includeTotalCount) } }",
 	},
 	{
 		Name:     "DeskFactoringInvoiceStates",
-		Hash:     "sha256:95c10756b01cd87a2425659a35b3eef347869041ca0cdd5c2e66bd116ca90915",
-		Document: "fragment DataTablePageInfoFields on PageInfo { endCursor hasNextPage } fragment DeskFactoringInvoiceStateFields on FactoringInvoiceState { checks { code documentTypeId documentTypeName fix message passed shipmentId shipmentPro } customerId evaluatedAt factoringCompanyId failedChecks invoiceId openBalanceMinor readySince verdict } query DeskFactoringInvoiceStates($includeTotalCount: Boolean = false, $input: DataTableConnectionInput!) { factoringInvoiceStates(input: { table: $input }) { edges { node { ...DeskFactoringInvoiceStateFields } } pageInfo { ...DataTablePageInfoFields } totalCount @include(if: $includeTotalCount) } }",
+		Hash:     "sha256:92d03730aa78c029adcee2868556193c3bbe6b357f66e81de304984258d13cba",
+		Document: "fragment DataTablePageInfoFields on PageInfo { endCursor hasNextPage } fragment DeskFactoringInvoiceStateFields on FactoringInvoiceState { checks { code documentTypeId documentTypeName fix message passed shipmentId shipmentPro } customerId evaluatedAt factoringCompanyId failedChecks invoiceId openBalanceMinor readySince verdict } query DeskFactoringInvoiceStates($includeTotalCount: Boolean = false, $input: DataTableConnectionInput!) { factoringInvoiceStates(input: { table: $input }) { edges { node { ...DeskFactoringInvoiceStateFields } } pageInfo { ...DataTablePageInfoFields } totalCount @include(if: $includeTotalCount) totalCountExact @include(if: $includeTotalCount) } }",
 	},
 	{
 		Name:     "FactoringSummary",
@@ -737,13 +737,13 @@ var operations = []Operation{
 	},
 	{
 		Name:     "DeskFactoringRemittances",
-		Hash:     "sha256:87d279c9b8012e8fcca4995f44bc0bef38948bfcda2f710e6e17677e83437f6f",
-		Document: "fragment DataTablePageInfoFields on PageInfo { endCursor hasNextPage } fragment DeskFactoringRemittanceFields on FactoringRemittance { appliedAt appliedCount currencyCode defaultKind discardReason error exceptionCount factoringCompany { code id name } factoringCompanyId fileName id lineCount matchedCount remittedOn source sourceFormat stagedAt status totalCashMinor unmappedHeaders version } query DeskFactoringRemittances($includeTotalCount: Boolean = false, $input: DataTableConnectionInput!) { factoringRemittances(input: { table: $input }) { edges { node { ...DeskFactoringRemittanceFields } } pageInfo { ...DataTablePageInfoFields } totalCount @include(if: $includeTotalCount) } }",
+		Hash:     "sha256:e00967a04762587588d0ba73f2636f8f830ffb12670f7f0e608fbd5eb423fd2e",
+		Document: "fragment DataTablePageInfoFields on PageInfo { endCursor hasNextPage } fragment DeskFactoringRemittanceFields on FactoringRemittance { appliedAt appliedCount currencyCode defaultKind discardReason error exceptionCount factoringCompany { code id name } factoringCompanyId fileName id lineCount matchedCount remittedOn source sourceFormat stagedAt status totalCashMinor unmappedHeaders version } query DeskFactoringRemittances($includeTotalCount: Boolean = false, $input: DataTableConnectionInput!) { factoringRemittances(input: { table: $input }) { edges { node { ...DeskFactoringRemittanceFields } } pageInfo { ...DataTablePageInfoFields } totalCount @include(if: $includeTotalCount) totalCountExact @include(if: $includeTotalCount) } }",
 	},
 	{
 		Name:     "DeskFactoringSubmissions",
-		Hash:     "sha256:3f8ac4bc54493b3b82ba21946befe6d3f0b91bc19c6e9a952c9281ab9fba45cb",
-		Document: "fragment DataTablePageInfoFields on PageInfo { endCursor hasNextPage } fragment DeskFactoringSubmissionFields on FactoringSubmission { attempts cancelReason createdAt currencyCode expectedAdvanceMinor expectedFeeMinor expectedReserveMinor faceMinor factoringCompany { code id name } factoringCompanyId failedAt id invoiceCount lastError number sentAt status transportMethod transportTarget version } query DeskFactoringSubmissions($includeTotalCount: Boolean = false, $input: DataTableConnectionInput!) { factoringSubmissions(input: { table: $input }) { edges { node { ...DeskFactoringSubmissionFields } } pageInfo { ...DataTablePageInfoFields } totalCount @include(if: $includeTotalCount) } }",
+		Hash:     "sha256:54e69d35a3b9d125f240c763b46b78371b72e4b854af77b00fd9d507199ea76c",
+		Document: "fragment DataTablePageInfoFields on PageInfo { endCursor hasNextPage } fragment DeskFactoringSubmissionFields on FactoringSubmission { attempts cancelReason createdAt currencyCode expectedAdvanceMinor expectedFeeMinor expectedReserveMinor faceMinor factoringCompany { code id name } factoringCompanyId failedAt id invoiceCount lastError number sentAt status transportMethod transportTarget version } query DeskFactoringSubmissions($includeTotalCount: Boolean = false, $input: DataTableConnectionInput!) { factoringSubmissions(input: { table: $input }) { edges { node { ...DeskFactoringSubmissionFields } } pageInfo { ...DataTablePageInfoFields } totalCount @include(if: $includeTotalCount) totalCountExact @include(if: $includeTotalCount) } }",
 	},
 	{
 		Name:     "DeskFormulaLibraryCard",
@@ -757,18 +757,18 @@ var operations = []Operation{
 	},
 	{
 		Name:     "DeskFormulaLibraries",
-		Hash:     "sha256:99498c8bfa13e79aaf1e29d33fecbf8e47b0b2c4b492a2aeca135b6b53fb5407",
-		Document: "query DeskFormulaLibraries($includeTotalCount: Boolean = false, $input: DataTableConnectionInput!) { formulaLibraries(input: $input) { edges { node { currentVersionNumber description id name path status testCount } } pageInfo { endCursor hasNextPage } totalCount @include(if: $includeTotalCount) } }",
+		Hash:     "sha256:bf01586a3b00ef79c4e8e634dbbe7f9ff72bdacce21a367ad0835b9b75d06602",
+		Document: "query DeskFormulaLibraries($includeTotalCount: Boolean = false, $input: DataTableConnectionInput!) { formulaLibraries(input: $input) { edges { node { currentVersionNumber description id name path status testCount } } pageInfo { endCursor hasNextPage } totalCount @include(if: $includeTotalCount) totalCountExact @include(if: $includeTotalCount) } }",
 	},
 	{
 		Name:     "DeskFormulaTemplates",
-		Hash:     "sha256:3db4c3533f66404436ec9761cdaf0b0aa1b916a9ab7fc931bc73253e0a785498",
-		Document: "query DeskFormulaTemplates($includeTotalCount: Boolean = false, $input: DataTableConnectionInput!) { formulaTemplates(input: $input) { edges { node { currentVersionNumber description id name status testCount } } pageInfo { endCursor hasNextPage } totalCount @include(if: $includeTotalCount) } }",
+		Hash:     "sha256:f478de9c3ce2962b7fe1e2588b24594c4bcc05e433a8105109df87e6209b16eb",
+		Document: "query DeskFormulaTemplates($includeTotalCount: Boolean = false, $input: DataTableConnectionInput!) { formulaTemplates(input: $input) { edges { node { currentVersionNumber description id name status testCount } } pageInfo { endCursor hasNextPage } totalCount @include(if: $includeTotalCount) totalCountExact @include(if: $includeTotalCount) } }",
 	},
 	{
 		Name:     "DeskFuelCards",
-		Hash:     "sha256:0661b9d3f4e70e04b937f94c366a42733cd8e1fc3c5f823788653c03a5676fdc",
-		Document: "query DeskFuelCards($includeTotalCount: Boolean = false, $input: FuelCardsInput!) { fuelCards(input: $input) { edges { node { assignedTractor { code id } assignedTractorId assignedWorker { id wholeName } assignedWorkerId cancelledAt discoveredAt expiresAt id label lastFour provider status } } pageInfo { endCursor hasNextPage } totalCount @include(if: $includeTotalCount) } }",
+		Hash:     "sha256:ef5a5ccaaf8049f3b8ca73c93523ef6c1762b08767703922c50ca33d5505d146",
+		Document: "query DeskFuelCards($includeTotalCount: Boolean = false, $input: FuelCardsInput!) { fuelCards(input: $input) { edges { node { assignedTractor { code id } assignedTractorId assignedWorker { id wholeName } assignedWorkerId cancelledAt discoveredAt expiresAt id label lastFour provider status } } pageInfo { endCursor hasNextPage } totalCount @include(if: $includeTotalCount) totalCountExact @include(if: $includeTotalCount) } }",
 	},
 	{
 		Name:     "DeskIftaJurisdictions",
@@ -777,23 +777,23 @@ var operations = []Operation{
 	},
 	{
 		Name:     "DeskIftaMileageEntries",
-		Hash:     "sha256:e7e986449df213ca57da9b7d451bb23322f8bcb19da7dc91be5f4e08490aabd2",
-		Document: "query DeskIftaMileageEntries($includeTotalCount: Boolean = false, $input: IFTAMileageEntriesInput!) { iftaMileageEntries(input: $input) { edges { node { id jurisdiction { code id } jurisdictionId loaded miles notes quarter shipmentMoveId source tractor { code id } tractorId traveledAt year } } pageInfo { endCursor hasNextPage } totalCount @include(if: $includeTotalCount) } }",
+		Hash:     "sha256:d4c7d9a6daa4e52b093083079b58fb5ba700d50a38a347f6e42303ebe1d72de5",
+		Document: "query DeskIftaMileageEntries($includeTotalCount: Boolean = false, $input: IFTAMileageEntriesInput!) { iftaMileageEntries(input: $input) { edges { node { id jurisdiction { code id } jurisdictionId loaded miles notes quarter shipmentMoveId source tractor { code id } tractorId traveledAt year } } pageInfo { endCursor hasNextPage } totalCount @include(if: $includeTotalCount) totalCountExact @include(if: $includeTotalCount) } }",
 	},
 	{
 		Name:     "DeskIftaReturns",
-		Hash:     "sha256:9c28e3f7591425725845f95ae14d77e3c39eecdf469a8b044f36c0f02c75dbd0",
-		Document: "query DeskIftaReturns($includeTotalCount: Boolean = false, $input: IFTAReturnsInput!) { iftaReturns(input: $input) { edges { node { amendmentNumber currencyCode filedAt filingReference finalizedAt id netDue problems { code fuelType jurisdictionCode message } quarter status totalGallons totalMiles totalTaxPaidGallons year } } pageInfo { endCursor hasNextPage } totalCount @include(if: $includeTotalCount) } }",
+		Hash:     "sha256:978eefdb823fac0f18988a585b8b13b27f30c6b6e88660c6eed8748b5ba9d6bb",
+		Document: "query DeskIftaReturns($includeTotalCount: Boolean = false, $input: IFTAReturnsInput!) { iftaReturns(input: $input) { edges { node { amendmentNumber currencyCode filedAt filingReference finalizedAt id netDue problems { code fuelType jurisdictionCode message } quarter status totalGallons totalMiles totalTaxPaidGallons year } } pageInfo { endCursor hasNextPage } totalCount @include(if: $includeTotalCount) totalCountExact @include(if: $includeTotalCount) } }",
 	},
 	{
 		Name:     "DeskFuelPurchaseImports",
-		Hash:     "sha256:0d40cca356dae5f9b56d4fe32797325e664f3b2a8e6ccbae2712cf21a6c4fedb",
-		Document: "query DeskFuelPurchaseImports($includeTotalCount: Boolean = false, $input: FuelPurchaseImportsInput!) { fuelPurchaseImports(input: $input) { edges { node { committedAt committedCount error errorCount fileName id origin provider rowCount stagedAt status summary { alreadyImportedCount duplicateInFileCount newCount totalAmount totalGallons } } } pageInfo { endCursor hasNextPage } totalCount @include(if: $includeTotalCount) } }",
+		Hash:     "sha256:8bdb70f94dc8df2e84e909022615c82da5b96e1cf1ecf12bb24d73d425f8bf10",
+		Document: "query DeskFuelPurchaseImports($includeTotalCount: Boolean = false, $input: FuelPurchaseImportsInput!) { fuelPurchaseImports(input: $input) { edges { node { committedAt committedCount error errorCount fileName id origin provider rowCount stagedAt status summary { alreadyImportedCount duplicateInFileCount newCount totalAmount totalGallons } } } pageInfo { endCursor hasNextPage } totalCount @include(if: $includeTotalCount) totalCountExact @include(if: $includeTotalCount) } }",
 	},
 	{
 		Name:     "DeskFuelPurchases",
-		Hash:     "sha256:aa1b9b1aed82223c05fd9d7f4ab67141992cd681605e745c1c2b099d5661366b",
-		Document: "query DeskFuelPurchases($includeTotalCount: Boolean = false, $input: FuelPurchasesInput!) { fuelPurchases(input: $input) { edges { node { cardLastFour currencyCode fuelCardId fuelType gallons id importBatchId jurisdiction { code id } jurisdictionId purchasedAt quantity quantityUnit source taxPaid totalAmount tractor { code id } tractorId transactionReference vendor vendorCity worker { id wholeName } workerId } } pageInfo { endCursor hasNextPage } totalCount @include(if: $includeTotalCount) } }",
+		Hash:     "sha256:ae04af3f795b801602226248e18b5053e4a492fddb76489141e22f58f12144f2",
+		Document: "query DeskFuelPurchases($includeTotalCount: Boolean = false, $input: FuelPurchasesInput!) { fuelPurchases(input: $input) { edges { node { cardLastFour currencyCode fuelCardId fuelType gallons id importBatchId jurisdiction { code id } jurisdictionId purchasedAt quantity quantityUnit source taxPaid totalAmount tractor { code id } tractorId transactionReference vendor vendorCity worker { id wholeName } workerId } } pageInfo { endCursor hasNextPage } totalCount @include(if: $includeTotalCount) totalCountExact @include(if: $includeTotalCount) } }",
 	},
 	{
 		Name:     "HomeLayout",
@@ -852,8 +852,8 @@ var operations = []Operation{
 	},
 	{
 		Name:     "DeskInvoices",
-		Hash:     "sha256:10f3b783666ac38f07c91a82b1d378a6d6ad0a839d18e3bc936cf10a6064bdf2",
-		Document: "fragment DataTablePageInfoFields on PageInfo { endCursor hasNextPage } query DeskInvoices($includeTotalCount: Boolean = false, $input: DataTableConnectionInput!) { invoices(input: $input) { edges { node { billToName billType currencyCode customerId disputeStatus dueDate id invoiceDate number settlementStatus shipmentProNumber status totalAmount } } pageInfo { ...DataTablePageInfoFields } totalCount @include(if: $includeTotalCount) } }",
+		Hash:     "sha256:c9af45dcf534adb10da4b10a76f78b3b35d72e2121e892e0645cdcd240de6934",
+		Document: "fragment DataTablePageInfoFields on PageInfo { endCursor hasNextPage } query DeskInvoices($includeTotalCount: Boolean = false, $input: DataTableConnectionInput!) { invoices(input: $input) { edges { node { billToName billType currencyCode customerId disputeStatus dueDate id invoiceDate number settlementStatus shipmentProNumber status totalAmount } } pageInfo { ...DataTablePageInfoFields } totalCount @include(if: $includeTotalCount) totalCountExact @include(if: $includeTotalCount) } }",
 	},
 	{
 		Name:     "DeskInvoiceDisputes",
@@ -897,48 +897,48 @@ var operations = []Operation{
 	},
 	{
 		Name:     "LocationTable",
-		Hash:     "sha256:db0953dee7cb9ece4aa05feb18d26f2986a6636cc3ad0b168e41c7ece0e7bd43",
-		Document: "fragment DataTablePageInfoFields on PageInfo { endCursor hasNextPage } fragment LocationTableRowFields on Location { addressLine1 addressLine2 businessUnitId city code createdAt description id isGeocoded latitude locationCategory { color id name } locationCategoryId longitude name organizationId placeId postalCode state { abbreviation id name } stateId status updatedAt version } query LocationTable($includeTotalCount: Boolean = true, $input: DataTableConnectionInput!) { locations(input: $input) { edges { node { ...LocationTableRowFields } } pageInfo { ...DataTablePageInfoFields } totalCount @include(if: $includeTotalCount) } }",
+		Hash:     "sha256:2d5ae8c4d8279f1da1a6583bb2bd8b176ed02b1fd1a9f16536d01e7fee7bcdd0",
+		Document: "fragment DataTablePageInfoFields on PageInfo { endCursor hasNextPage } fragment LocationTableRowFields on Location { addressLine1 addressLine2 businessUnitId city code createdAt description id isGeocoded latitude locationCategory { color id name } locationCategoryId longitude name organizationId placeId postalCode state { abbreviation id name } stateId status updatedAt version } query LocationTable($includeTotalCount: Boolean = true, $input: DataTableConnectionInput!) { locations(input: $input) { edges { node { ...LocationTableRowFields } } pageInfo { ...DataTablePageInfoFields } totalCount @include(if: $includeTotalCount) totalCountExact @include(if: $includeTotalCount) } }",
 	},
 	{
 		Name:     "LocationCategoryTable",
-		Hash:     "sha256:5ca16e1292c673eceb32a9d1189fe4af156f3ffa10b7088854e40761fbf5e1bf",
-		Document: "fragment DataTablePageInfoFields on PageInfo { endCursor hasNextPage } fragment LocationCategoryTableRowFields on LocationCategory { allowsOvernight businessUnitId color createdAt description facilityType hasRestroom hasSecureParking id name organizationId requiresAppointment type updatedAt version } query LocationCategoryTable($includeTotalCount: Boolean = true, $input: DataTableConnectionInput!) { locationCategories(input: $input) { edges { node { ...LocationCategoryTableRowFields } } pageInfo { ...DataTablePageInfoFields } totalCount @include(if: $includeTotalCount) } }",
+		Hash:     "sha256:90c364f2f1f43cf3a0c8f1c6d662f6fb91c2364b66b97eae4b59056917383926",
+		Document: "fragment DataTablePageInfoFields on PageInfo { endCursor hasNextPage } fragment LocationCategoryTableRowFields on LocationCategory { allowsOvernight businessUnitId color createdAt description facilityType hasRestroom hasSecureParking id name organizationId requiresAppointment type updatedAt version } query LocationCategoryTable($includeTotalCount: Boolean = true, $input: DataTableConnectionInput!) { locationCategories(input: $input) { edges { node { ...LocationCategoryTableRowFields } } pageInfo { ...DataTablePageInfoFields } totalCount @include(if: $includeTotalCount) totalCountExact @include(if: $includeTotalCount) } }",
 	},
 	{
 		Name:     "AccessorialChargeTable",
-		Hash:     "sha256:428bf0351875289ecd242e7153b17c69f386b3edb5106b4bc369b85341769d91",
-		Document: "fragment AccessorialChargeTableRowFields on AccessorialCharge { amount businessUnitId code createdAt description id method organizationId rateUnit status updatedAt version } fragment DataTablePageInfoFields on PageInfo { endCursor hasNextPage } query AccessorialChargeTable($includeTotalCount: Boolean = true, $input: DataTableConnectionInput!) { accessorialCharges(input: $input) { edges { node { ...AccessorialChargeTableRowFields } } pageInfo { ...DataTablePageInfoFields } totalCount @include(if: $includeTotalCount) } }",
+		Hash:     "sha256:f026ac4d573c423e867a719ef5ba51b4e4fd9c8dfb3828ac65235186a6b27822",
+		Document: "fragment AccessorialChargeTableRowFields on AccessorialCharge { amount businessUnitId code createdAt description id method organizationId rateUnit status updatedAt version } fragment DataTablePageInfoFields on PageInfo { endCursor hasNextPage } query AccessorialChargeTable($includeTotalCount: Boolean = true, $input: DataTableConnectionInput!) { accessorialCharges(input: $input) { edges { node { ...AccessorialChargeTableRowFields } } pageInfo { ...DataTablePageInfoFields } totalCount @include(if: $includeTotalCount) totalCountExact @include(if: $includeTotalCount) } }",
 	},
 	{
 		Name:     "CommodityTable",
-		Hash:     "sha256:02239b2db6c74085ddc074c2c20f287e0c6b1e42c2eeb5efdc2a731076b2a042",
-		Document: "fragment CommodityTableRowFields on Commodity { businessUnitId createdAt description fragile freightClass hazardousMaterialId id linearFeetPerUnit loadingInstructions maxQuantityPerShipment maxTemperature minTemperature name organizationId stackable status updatedAt version weightPerUnit } fragment DataTablePageInfoFields on PageInfo { endCursor hasNextPage } query CommodityTable($includeTotalCount: Boolean = true, $input: DataTableConnectionInput!) { commodities(input: $input) { edges { node { ...CommodityTableRowFields } } pageInfo { ...DataTablePageInfoFields } totalCount @include(if: $includeTotalCount) } }",
+		Hash:     "sha256:efe2b17fa7712e1d9166f1e9d9674859516497799b0a96ba70edcd4571c748a3",
+		Document: "fragment CommodityTableRowFields on Commodity { businessUnitId createdAt description fragile freightClass hazardousMaterialId id linearFeetPerUnit loadingInstructions maxQuantityPerShipment maxTemperature minTemperature name organizationId stackable status updatedAt version weightPerUnit } fragment DataTablePageInfoFields on PageInfo { endCursor hasNextPage } query CommodityTable($includeTotalCount: Boolean = true, $input: DataTableConnectionInput!) { commodities(input: $input) { edges { node { ...CommodityTableRowFields } } pageInfo { ...DataTablePageInfoFields } totalCount @include(if: $includeTotalCount) totalCountExact @include(if: $includeTotalCount) } }",
 	},
 	{
 		Name:     "FleetCodeTable",
-		Hash:     "sha256:aa2917e7de6d4a5981909b298d418eeaa9d673b8eef470e6ed424667aa344b43",
-		Document: "fragment DataTablePageInfoFields on PageInfo { endCursor hasNextPage } fragment FleetCodeTableRowFields on FleetCode { businessUnitId code color createdAt deadheadGoal description id manager { id name } managerId mileageGoal organizationId revenueGoal status updatedAt version } query FleetCodeTable($includeTotalCount: Boolean = true, $input: DataTableConnectionInput!) { fleetCodes(input: $input) { edges { node { ...FleetCodeTableRowFields } } pageInfo { ...DataTablePageInfoFields } totalCount @include(if: $includeTotalCount) } }",
+		Hash:     "sha256:4625378765a75597fbfc1b6821d77b15edee201bb88c59a1fe86d90288f5f5e4",
+		Document: "fragment DataTablePageInfoFields on PageInfo { endCursor hasNextPage } fragment FleetCodeTableRowFields on FleetCode { businessUnitId code color createdAt deadheadGoal description id manager { id name } managerId mileageGoal organizationId revenueGoal status updatedAt version } query FleetCodeTable($includeTotalCount: Boolean = true, $input: DataTableConnectionInput!) { fleetCodes(input: $input) { edges { node { ...FleetCodeTableRowFields } } pageInfo { ...DataTablePageInfoFields } totalCount @include(if: $includeTotalCount) totalCountExact @include(if: $includeTotalCount) } }",
 	},
 	{
 		Name:     "HazardousMaterialTable",
-		Hash:     "sha256:9be076a80d56dbcc7fa1ee6f0cdb7c67de04d63c2bbda28e685f21bd190afa5c",
-		Document: "fragment DataTablePageInfoFields on PageInfo { endCursor hasNextPage } fragment HazardousMaterialTableRowFields on HazardousMaterial { businessUnitId class code createdAt description emergencyContact emergencyContactPhoneNumber ergGuideNumber handlingInstructions id inhalationHazard isReportableQuantity labelCodes marinePollutant name organizationId packingGroup placardRequired properShippingName quantityThreshold specialProvisions status subsidiaryHazardClass unNumber updatedAt version } query HazardousMaterialTable($includeTotalCount: Boolean = true, $input: DataTableConnectionInput!) { hazardousMaterials(input: $input) { edges { node { ...HazardousMaterialTableRowFields } } pageInfo { ...DataTablePageInfoFields } totalCount @include(if: $includeTotalCount) } }",
+		Hash:     "sha256:8a6c58c9d10e87fe7b895e91d59b4c5d67b881406844082505189a6cd200e0c2",
+		Document: "fragment DataTablePageInfoFields on PageInfo { endCursor hasNextPage } fragment HazardousMaterialTableRowFields on HazardousMaterial { businessUnitId class code createdAt description emergencyContact emergencyContactPhoneNumber ergGuideNumber handlingInstructions id inhalationHazard isReportableQuantity labelCodes marinePollutant name organizationId packingGroup placardRequired properShippingName quantityThreshold specialProvisions status subsidiaryHazardClass unNumber updatedAt version } query HazardousMaterialTable($includeTotalCount: Boolean = true, $input: DataTableConnectionInput!) { hazardousMaterials(input: $input) { edges { node { ...HazardousMaterialTableRowFields } } pageInfo { ...DataTablePageInfoFields } totalCount @include(if: $includeTotalCount) totalCountExact @include(if: $includeTotalCount) } }",
 	},
 	{
 		Name:     "HoldReasonTable",
-		Hash:     "sha256:b68375fa81667eca3b794d6327160d9216180ef9f0aec9bea33dd529ce119231",
-		Document: "fragment DataTablePageInfoFields on PageInfo { endCursor hasNextPage } fragment HoldReasonTableRowFields on HoldReason { active businessUnitId code createdAt defaultBlocksBilling defaultBlocksDelivery defaultBlocksDispatch defaultSeverity defaultVisibleToCustomer description id label organizationId sortOrder type updatedAt version } query HoldReasonTable($includeTotalCount: Boolean = true, $input: DataTableConnectionInput!) { holdReasons(input: $input) { edges { node { ...HoldReasonTableRowFields } } pageInfo { ...DataTablePageInfoFields } totalCount @include(if: $includeTotalCount) } }",
+		Hash:     "sha256:bb1f52d5592278dc3b16ea6c385a3eaed6985c36311a23f228d66079d1180d6a",
+		Document: "fragment DataTablePageInfoFields on PageInfo { endCursor hasNextPage } fragment HoldReasonTableRowFields on HoldReason { active businessUnitId code createdAt defaultBlocksBilling defaultBlocksDelivery defaultBlocksDispatch defaultSeverity defaultVisibleToCustomer description id label organizationId sortOrder type updatedAt version } query HoldReasonTable($includeTotalCount: Boolean = true, $input: DataTableConnectionInput!) { holdReasons(input: $input) { edges { node { ...HoldReasonTableRowFields } } pageInfo { ...DataTablePageInfoFields } totalCount @include(if: $includeTotalCount) totalCountExact @include(if: $includeTotalCount) } }",
 	},
 	{
 		Name:     "ServiceTypeTable",
-		Hash:     "sha256:ba2cc0fdc314c6c3e25d306f5ad63a4c09ac96b537a0bf60b874ea22eec70682",
-		Document: "fragment DataTablePageInfoFields on PageInfo { endCursor hasNextPage } fragment ServiceTypeTableRowFields on ServiceType { businessUnitId code color createdAt description id organizationId status updatedAt version } query ServiceTypeTable($includeTotalCount: Boolean = true, $input: DataTableConnectionInput!) { serviceTypes(input: $input) { edges { node { ...ServiceTypeTableRowFields } } pageInfo { ...DataTablePageInfoFields } totalCount @include(if: $includeTotalCount) } }",
+		Hash:     "sha256:8662454fa5d28db4f6914176896d4b3b714ca182462196b3875116289184ace5",
+		Document: "fragment DataTablePageInfoFields on PageInfo { endCursor hasNextPage } fragment ServiceTypeTableRowFields on ServiceType { businessUnitId code color createdAt description id organizationId status updatedAt version } query ServiceTypeTable($includeTotalCount: Boolean = true, $input: DataTableConnectionInput!) { serviceTypes(input: $input) { edges { node { ...ServiceTypeTableRowFields } } pageInfo { ...DataTablePageInfoFields } totalCount @include(if: $includeTotalCount) totalCountExact @include(if: $includeTotalCount) } }",
 	},
 	{
 		Name:     "ShipmentTypeTable",
-		Hash:     "sha256:2be2cf7c6760639a92a3977f36a489f31e14b4c27edae1049a9589cce837a534",
-		Document: "fragment DataTablePageInfoFields on PageInfo { endCursor hasNextPage } fragment ShipmentTypeTableRowFields on ShipmentType { businessUnitId code color createdAt description id organizationId status updatedAt version } query ShipmentTypeTable($includeTotalCount: Boolean = true, $input: DataTableConnectionInput!) { shipmentTypes(input: $input) { edges { node { ...ShipmentTypeTableRowFields } } pageInfo { ...DataTablePageInfoFields } totalCount @include(if: $includeTotalCount) } }",
+		Hash:     "sha256:317685c4da72dc0125a332a31479b7eb7c96a1cd770f1e9be9b9c336adeba0c0",
+		Document: "fragment DataTablePageInfoFields on PageInfo { endCursor hasNextPage } fragment ShipmentTypeTableRowFields on ShipmentType { businessUnitId code color createdAt description id organizationId status updatedAt version } query ShipmentTypeTable($includeTotalCount: Boolean = true, $input: DataTableConnectionInput!) { shipmentTypes(input: $input) { edges { node { ...ShipmentTypeTableRowFields } } pageInfo { ...DataTablePageInfoFields } totalCount @include(if: $includeTotalCount) totalCountExact @include(if: $includeTotalCount) } }",
 	},
 	{
 		Name:     "DeskOrder",
@@ -947,13 +947,13 @@ var operations = []Operation{
 	},
 	{
 		Name:     "OrderTable",
-		Hash:     "sha256:da5fb471366bc747111feec70ba55fc514d137062a3b58f107ab9ea8ec017c1a",
-		Document: "fragment DataTablePageInfoFields on PageInfo { endCursor hasNextPage } fragment OrderTableRowFields on Order { baseAmount bol businessUnitId createdAt currencyCode customer { code id name } customerId id orderNumber organizationId ownerId poNumber quotedAmount status totalAmount updatedAt version } query OrderTable($includeTotalCount: Boolean = true, $input: DataTableConnectionInput!) { orders(input: $input) { edges { node { ...OrderTableRowFields } } pageInfo { ...DataTablePageInfoFields } totalCount @include(if: $includeTotalCount) } }",
+		Hash:     "sha256:96ae44b28159963712f5492d618dcefbf5dde95a20b7ff795e3f47c7ade29aa5",
+		Document: "fragment DataTablePageInfoFields on PageInfo { endCursor hasNextPage } fragment OrderTableRowFields on Order { baseAmount bol businessUnitId createdAt currencyCode customer { code id name } customerId id orderNumber organizationId ownerId poNumber quotedAmount status totalAmount updatedAt version } query OrderTable($includeTotalCount: Boolean = true, $input: DataTableConnectionInput!) { orders(input: $input) { edges { node { ...OrderTableRowFields } } pageInfo { ...DataTablePageInfoFields } totalCount @include(if: $includeTotalCount) totalCountExact @include(if: $includeTotalCount) } }",
 	},
 	{
 		Name:     "DeskRateAgreementCard",
-		Hash:     "sha256:2336bee6177126db029e2df81fd20bdfdba279f16f9f13c476f62118bf25251d",
-		Document: "query DeskRateAgreementCard($id: ID!) { rateAgreement(id: $id) { accessorials { accessorialChargeId amount autoApply condition effectiveFrom effectiveTo freeUnits id maxAmount method rateUnit waived } agreementType approvedAt autoRenew billToCustomerId carrierId code contractRef currency currentVersion { changeMessage effectiveFrom effectiveTo id versionNumber } customerId description effectiveFrom effectiveTo fuelBinding { fuelSurchargeProgramId id waived } id inputs laneCount lanes(first: 50) { currency destinationCity destinationScopeType destinationScopeValue direction effectiveFrom effectiveTo formulaTemplateId hazmatOnly id inputs label originCity originScopeType originScopeValue priority tempControlOnly } name partyType priority renewalNoticeDays reviewComment status submittedAt } }",
+		Hash:     "sha256:4cc1d2804606dca0e9d916bbe7edb442265ec4d9ccde2b18b4669725468e8cb5",
+		Document: "query DeskRateAgreementCard($id: ID!) { rateAgreement(id: $id) { accessorials { accessorialChargeId amount autoApply condition effectiveFrom effectiveTo freeUnits id maxAmount method rateUnit waived } agreementType approvedAt autoRenew billToCustomerId carrierId code contractRef currency currentVersion { changeMessage effectiveFrom effectiveTo id versionNumber } customerId description effectiveFrom effectiveTo fuelBinding { fuelSurchargeProgramId id waived } id inputs laneCount laneCountExact lanes(first: 50) { currency destinationCity destinationScopeType destinationScopeValue direction effectiveFrom effectiveTo formulaTemplateId hazmatOnly id inputs label originCity originScopeType originScopeValue priority tempControlOnly } name partyType priority renewalNoticeDays reviewComment status submittedAt } }",
 	},
 	{
 		Name:     "DeskRateMatrixCard",
@@ -962,8 +962,8 @@ var operations = []Operation{
 	},
 	{
 		Name:     "DeskRateAgreements",
-		Hash:     "sha256:bbc3117927d5819d345a2f03e3f4e5e4e74665911cefa0d5e5fac465fa39e83a",
-		Document: "fragment DataTablePageInfoFields on PageInfo { endCursor hasNextPage } query DeskRateAgreements($includeTotalCount: Boolean = false, $input: DataTableConnectionInput!) { rateAgreements(input: $input) { edges { node { agreementType autoRenew carrierId code contractRef currency customerId effectiveFrom effectiveTo id inputs name partyType priority status } } pageInfo { ...DataTablePageInfoFields } totalCount @include(if: $includeTotalCount) } }",
+		Hash:     "sha256:02b23f3c7c374d02187dfb2fb3b380e8073d1ce7da4f0bf590a71fb842a4817b",
+		Document: "fragment DataTablePageInfoFields on PageInfo { endCursor hasNextPage } query DeskRateAgreements($includeTotalCount: Boolean = false, $input: DataTableConnectionInput!) { rateAgreements(input: $input) { edges { node { agreementType autoRenew carrierId code contractRef currency customerId effectiveFrom effectiveTo id inputs name partyType priority status } } pageInfo { ...DataTablePageInfoFields } totalCount @include(if: $includeTotalCount) totalCountExact @include(if: $includeTotalCount) } }",
 	},
 	{
 		Name:     "DeskFuelIndexPrices",
@@ -977,13 +977,13 @@ var operations = []Operation{
 	},
 	{
 		Name:     "DeskCustomerPayments",
-		Hash:     "sha256:efaa48e219e4d4d95847a3c95237a4a672a2bb80fba0bae8cd944fe131dfac59",
-		Document: "fragment DataTablePageInfoFields on PageInfo { endCursor hasNextPage } query DeskCustomerPayments($includeTotalCount: Boolean = false, $input: DataTableConnectionInput!) { customerPayments(input: $input) { edges { node { amountMinor applications { appliedAmountMinor id invoiceId shortPayAmountMinor } appliedAmountMinor currencyCode customerId id memo paymentDate paymentMethod referenceNumber reversedAt status unappliedAmountMinor } } pageInfo { ...DataTablePageInfoFields } totalCount @include(if: $includeTotalCount) } }",
+		Hash:     "sha256:54b5ee7f8dff7f8ed4ec370a1a158abc4ada79b096aab04a2a35015a618c1675",
+		Document: "fragment DataTablePageInfoFields on PageInfo { endCursor hasNextPage } query DeskCustomerPayments($includeTotalCount: Boolean = false, $input: DataTableConnectionInput!) { customerPayments(input: $input) { edges { node { amountMinor applications { appliedAmountMinor id invoiceId shortPayAmountMinor } appliedAmountMinor currencyCode customerId id memo paymentDate paymentMethod referenceNumber reversedAt status unappliedAmountMinor } } pageInfo { ...DataTablePageInfoFields } totalCount @include(if: $includeTotalCount) totalCountExact @include(if: $includeTotalCount) } }",
 	},
 	{
 		Name:     "DeskReportRuns",
-		Hash:     "sha256:4696ca6231c4a7570f356d5a6c4d4a6cde13d2810a16e2a62be675391c6d7aff",
-		Document: "fragment DataTablePageInfoFields on PageInfo { endCursor hasNextPage } query DeskReportRuns($includeTotalCount: Boolean = false, $input: DataTableConnectionInput!) { reportRuns(input: $input) { edges { node { cannedKey completedAt createdAt definitionId format id rowCount rowsStored status truncated } } pageInfo { ...DataTablePageInfoFields } totalCount @include(if: $includeTotalCount) } }",
+		Hash:     "sha256:de77e627dbbbd505fe24a05dfe984ee8be19f79a466513ea0e67c033176b5f83",
+		Document: "fragment DataTablePageInfoFields on PageInfo { endCursor hasNextPage } query DeskReportRuns($includeTotalCount: Boolean = false, $input: DataTableConnectionInput!) { reportRuns(input: $input) { edges { node { cannedKey completedAt createdAt definitionId format id rowCount rowsStored status truncated } } pageInfo { ...DataTablePageInfoFields } totalCount @include(if: $includeTotalCount) totalCountExact @include(if: $includeTotalCount) } }",
 	},
 	{
 		Name:     "DeskReportSchedules",
@@ -992,8 +992,8 @@ var operations = []Operation{
 	},
 	{
 		Name:     "DeskTableChangeAlerts",
-		Hash:     "sha256:8ea214e904499850748a3e1163a64d3150f223904af354c5adff19e7d294dbdf",
-		Document: "fragment DataTablePageInfoFields on PageInfo { endCursor hasNextPage } query DeskTableChangeAlerts($includeTotalCount: Boolean = false, $input: DataTableConnectionInput!) { tcaSubscriptions(input: $input) { edges { node { conditionMatch conditions eventTypes id name status tableName watchedColumns } } pageInfo { ...DataTablePageInfoFields } totalCount @include(if: $includeTotalCount) } }",
+		Hash:     "sha256:5579824f1b0e45d6c94228ecca9892395b7d3d63bfa4f884c36d23cdbd8fa106",
+		Document: "fragment DataTablePageInfoFields on PageInfo { endCursor hasNextPage } query DeskTableChangeAlerts($includeTotalCount: Boolean = false, $input: DataTableConnectionInput!) { tcaSubscriptions(input: $input) { edges { node { conditionMatch conditions eventTypes id name status tableName watchedColumns } } pageInfo { ...DataTablePageInfoFields } totalCount @include(if: $includeTotalCount) totalCountExact @include(if: $includeTotalCount) } }",
 	},
 	{
 		Name:     "CarrierSettlementDetail",
@@ -1017,28 +1017,28 @@ var operations = []Operation{
 	},
 	{
 		Name:     "PayAdvanceTable",
-		Hash:     "sha256:10c3df571b55032b71491b50a4a24ab051acf8b45a2915d43242a252092c642a",
-		Document: "fragment DataTablePageInfoFields on PageInfo { endCursor hasNextPage } query PayAdvanceTable($includeTotalCount: Boolean = true, $input: DataTableConnectionInput!) { payAdvances(input: $input) { edges { node { amountMinor createdAt currencyCode id issuedDate notes outstandingMinor recoveredMinor reference source status updatedAt version worker { firstName id lastName } workerId writeOffReason writtenOffMinor } } pageInfo { ...DataTablePageInfoFields } totalCount @include(if: $includeTotalCount) } }",
+		Hash:     "sha256:58bf10137365cf8c404af71680bcc4bf65543ff7d19c66c9c6fb5c81d3cda18c",
+		Document: "fragment DataTablePageInfoFields on PageInfo { endCursor hasNextPage } query PayAdvanceTable($includeTotalCount: Boolean = true, $input: DataTableConnectionInput!) { payAdvances(input: $input) { edges { node { amountMinor createdAt currencyCode id issuedDate notes outstandingMinor recoveredMinor reference source status updatedAt version worker { firstName id lastName } workerId writeOffReason writtenOffMinor } } pageInfo { ...DataTablePageInfoFields } totalCount @include(if: $includeTotalCount) totalCountExact @include(if: $includeTotalCount) } }",
 	},
 	{
 		Name:     "CarrierSettlementTable",
-		Hash:     "sha256:eadf21c42815fc3a90fbd8614c13a9e4960c83698f4cc6a50395a0232c35a5d1",
-		Document: "fragment DataTablePageInfoFields on PageInfo { endCursor hasNextPage } query CarrierSettlementTable($includeTotalCount: Boolean = true, $input: DataTableConnectionInput!) { carrierSettlements(input: $input) { edges { node { adjustmentsMinor batchId carrier { code id name scac } carrierId createdAt currencyCode grossCostMinor id netPayableMinor payDate paymentMethod paymentReference periodEnd periodStart settlementNumber shipmentCount status updatedAt version } } pageInfo { ...DataTablePageInfoFields } totalCount @include(if: $includeTotalCount) } }",
+		Hash:     "sha256:6ec5046f3e73ba43551cfbc22eb00fcff03807b9b87fb55b0e62319ee22db1df",
+		Document: "fragment DataTablePageInfoFields on PageInfo { endCursor hasNextPage } query CarrierSettlementTable($includeTotalCount: Boolean = true, $input: DataTableConnectionInput!) { carrierSettlements(input: $input) { edges { node { adjustmentsMinor batchId carrier { code id name scac } carrierId createdAt currencyCode grossCostMinor id netPayableMinor payDate paymentMethod paymentReference periodEnd periodStart settlementNumber shipmentCount status updatedAt version } } pageInfo { ...DataTablePageInfoFields } totalCount @include(if: $includeTotalCount) totalCountExact @include(if: $includeTotalCount) } }",
 	},
 	{
 		Name:     "DriverSettlementTable",
-		Hash:     "sha256:c6c4db00b320c409c60a7180e9cf218de3977bd5c3124a806e71f26a35f5a477",
-		Document: "fragment DataTablePageInfoFields on PageInfo { endCursor hasNextPage } query DriverSettlementTable($includeTotalCount: Boolean = true, $input: DataTableConnectionInput!) { driverSettlements(input: $input) { edges { node { batchId carryForwardInMinor carryForwardOutMinor classification createdAt currencyCode deductionsMinor grossEarningsMinor hasExceptions id netPayMinor payDate payProfileName periodEnd periodStart reimbursementsMinor settlementNumber shipmentCount status totalMiles updatedAt version worker { firstName id lastName } workerId } } pageInfo { ...DataTablePageInfoFields } totalCount @include(if: $includeTotalCount) } }",
+		Hash:     "sha256:25c27c49cedb900ff6a7aae7280d2b3dc454d86dba72a22c515758330e7b475e",
+		Document: "fragment DataTablePageInfoFields on PageInfo { endCursor hasNextPage } query DriverSettlementTable($includeTotalCount: Boolean = true, $input: DataTableConnectionInput!) { driverSettlements(input: $input) { edges { node { batchId carryForwardInMinor carryForwardOutMinor classification createdAt currencyCode deductionsMinor grossEarningsMinor hasExceptions id netPayMinor payDate payProfileName periodEnd periodStart reimbursementsMinor settlementNumber shipmentCount status totalMiles updatedAt version worker { firstName id lastName } workerId } } pageInfo { ...DataTablePageInfoFields } totalCount @include(if: $includeTotalCount) totalCountExact @include(if: $includeTotalCount) } }",
 	},
 	{
 		Name:     "DriverExpenseTable",
-		Hash:     "sha256:990a0defa6fbd08c471ed43984f9eb20bdc89a5da52087a4f9d86d24fe872c2f",
-		Document: "fragment DataTablePageInfoFields on PageInfo { endCursor hasNextPage } query DriverExpenseTable($includeTotalCount: Boolean = true, $input: DataTableConnectionInput!) { driverExpenses(input: $input) { edges { node { amountMinor createdAt currencyCode description id incurredDate payCode { code description id } receiptDocumentId reviewNote reviewedAt reviewedBy { id name } settlementLineId shipmentId status version worker { firstName id lastName } workerId } } pageInfo { ...DataTablePageInfoFields } totalCount @include(if: $includeTotalCount) } }",
+		Hash:     "sha256:8b6c5cb7072b2c05bdc5de311291417c83fddc9453f66bdb701bdc6d6bf63864",
+		Document: "fragment DataTablePageInfoFields on PageInfo { endCursor hasNextPage } query DriverExpenseTable($includeTotalCount: Boolean = true, $input: DataTableConnectionInput!) { driverExpenses(input: $input) { edges { node { amountMinor createdAt currencyCode description id incurredDate payCode { code description id } receiptDocumentId reviewNote reviewedAt reviewedBy { id name } settlementLineId shipmentId status version worker { firstName id lastName } workerId } } pageInfo { ...DataTablePageInfoFields } totalCount @include(if: $includeTotalCount) totalCountExact @include(if: $includeTotalCount) } }",
 	},
 	{
 		Name:     "EscrowAccountTable",
-		Hash:     "sha256:916f0bb7ac7aa5145b3d17132631582632435a983dc6071c949475b621237fdf",
-		Document: "fragment DataTablePageInfoFields on PageInfo { endCursor hasNextPage } query EscrowAccountTable($includeTotalCount: Boolean = true, $input: DataTableConnectionInput!) { escrowAccounts(input: $input) { edges { node { annualInterestRate balanceMinor closedDate createdAt currencyCode id lastInterestAccrualDate openedDate status targetAmountMinor updatedAt version worker { firstName id lastName } workerId } } pageInfo { ...DataTablePageInfoFields } totalCount @include(if: $includeTotalCount) } }",
+		Hash:     "sha256:7a11ab6ce46aac8cfb4a703fa29d2beb1c2fb6625d202aa54f13013a28b616a9",
+		Document: "fragment DataTablePageInfoFields on PageInfo { endCursor hasNextPage } query EscrowAccountTable($includeTotalCount: Boolean = true, $input: DataTableConnectionInput!) { escrowAccounts(input: $input) { edges { node { annualInterestRate balanceMinor closedDate createdAt currencyCode id lastInterestAccrualDate openedDate status targetAmountMinor updatedAt version worker { firstName id lastName } workerId } } pageInfo { ...DataTablePageInfoFields } totalCount @include(if: $includeTotalCount) totalCountExact @include(if: $includeTotalCount) } }",
 	},
 	{
 		Name:     "WorkerPayAssignments",
@@ -1052,28 +1052,28 @@ var operations = []Operation{
 	},
 	{
 		Name:     "DriverPayEventTable",
-		Hash:     "sha256:86f914da516d0e76e82f1f4f8b76dba9ecd3618902c43e88b06315e3b3b8d41a",
-		Document: "fragment DataTablePageInfoFields on PageInfo { endCursor hasNextPage } query DriverPayEventTable($includeTotalCount: Boolean = true, $input: DataTableConnectionInput!) { driverPayEvents(input: $input) { edges { node { components { amountMinor description kind method quantity rate } createdAt currencyCode eventDate grossAmountMinor holdReason id moveId onHold proNumber settlementId shipmentId status totalMiles updatedAt version voidReason voidedAt worker { firstName id lastName } workerId } } pageInfo { ...DataTablePageInfoFields } totalCount @include(if: $includeTotalCount) } }",
+		Hash:     "sha256:70ee109cba82e2399600721495d980dbc89a957c40ff4adc8e9484ffb3eec7f8",
+		Document: "fragment DataTablePageInfoFields on PageInfo { endCursor hasNextPage } query DriverPayEventTable($includeTotalCount: Boolean = true, $input: DataTableConnectionInput!) { driverPayEvents(input: $input) { edges { node { components { amountMinor description kind method quantity rate } createdAt currencyCode eventDate grossAmountMinor holdReason id moveId onHold proNumber settlementId shipmentId status totalMiles updatedAt version voidReason voidedAt worker { firstName id lastName } workerId } } pageInfo { ...DataTablePageInfoFields } totalCount @include(if: $includeTotalCount) totalCountExact @include(if: $includeTotalCount) } }",
 	},
 	{
 		Name:     "PayProfileTable",
-		Hash:     "sha256:3989e49328ac63b780194fec25e0906117a2e8e36b6a93cff9b3606f1e069c0a",
-		Document: "fragment DataTablePageInfoFields on PageInfo { endCursor hasNextPage } query PayProfileTable($includeTotalCount: Boolean = true, $input: DataTableConnectionInput!) { payProfiles(input: $input) { edges { node { activeAssignmentCount businessUnitId classification components { bands { maxMiles minMiles rate } description freeTimeMinutes id isActive kind maxAmountMinor method minAmountMinor rate revenueBasis sequence } createdAt currencyCode description guaranteedPeriodMinimumMinor id name organizationId perDiemDailyCapMinor perDiemRatePerMile status updatedAt version } } pageInfo { ...DataTablePageInfoFields } totalCount @include(if: $includeTotalCount) } }",
+		Hash:     "sha256:88bb1880edbe34cefca7e2fe532f86eebb1332dd82d58a6ebdc6e87cc58b0e59",
+		Document: "fragment DataTablePageInfoFields on PageInfo { endCursor hasNextPage } query PayProfileTable($includeTotalCount: Boolean = true, $input: DataTableConnectionInput!) { payProfiles(input: $input) { edges { node { activeAssignmentCount businessUnitId classification components { bands { maxMiles minMiles rate } description freeTimeMinutes id isActive kind maxAmountMinor method minAmountMinor rate revenueBasis sequence } createdAt currencyCode description guaranteedPeriodMinimumMinor id name organizationId perDiemDailyCapMinor perDiemRatePerMile status updatedAt version } } pageInfo { ...DataTablePageInfoFields } totalCount @include(if: $includeTotalCount) totalCountExact @include(if: $includeTotalCount) } }",
 	},
 	{
 		Name:     "RecurringDeductionTable",
-		Hash:     "sha256:2091e3bab8818f8f4a18a10e312c215085875fc70cbcd99bb82c1c2ea4365f31",
-		Document: "fragment DataTablePageInfoFields on PageInfo { endCursor hasNextPage } query RecurringDeductionTable($includeTotalCount: Boolean = true, $input: DataTableConnectionInput!) { recurringDeductions(input: $input) { edges { node { amountMinor createdAt currencyCode deductedToDateMinor description endDate escrowAccountId frequency id payCode { code id name } payCodeId startDate status totalCapMinor updatedAt version worker { firstName id lastName } workerId } } pageInfo { ...DataTablePageInfoFields } totalCount @include(if: $includeTotalCount) } }",
+		Hash:     "sha256:e965464150966bbd5875254cd397555476a9959a229cd5907657ad56ec6aed67",
+		Document: "fragment DataTablePageInfoFields on PageInfo { endCursor hasNextPage } query RecurringDeductionTable($includeTotalCount: Boolean = true, $input: DataTableConnectionInput!) { recurringDeductions(input: $input) { edges { node { amountMinor createdAt currencyCode deductedToDateMinor description endDate escrowAccountId frequency id payCode { code id name } payCodeId startDate status totalCapMinor updatedAt version worker { firstName id lastName } workerId } } pageInfo { ...DataTablePageInfoFields } totalCount @include(if: $includeTotalCount) totalCountExact @include(if: $includeTotalCount) } }",
 	},
 	{
 		Name:     "RecurringEarningTable",
-		Hash:     "sha256:bb6735298137ec6251ef3203a3d02ef9e86f4ec0fe7e6cb6c21de0921df49652",
-		Document: "fragment DataTablePageInfoFields on PageInfo { endCursor hasNextPage } query RecurringEarningTable($includeTotalCount: Boolean = true, $input: DataTableConnectionInput!) { recurringEarnings(input: $input) { edges { node { amountMinor createdAt currencyCode description endDate frequency id paidToDateMinor payCode { code id name } payCodeId startDate status totalCapMinor updatedAt version worker { firstName id lastName } workerId } } pageInfo { ...DataTablePageInfoFields } totalCount @include(if: $includeTotalCount) } }",
+		Hash:     "sha256:13b26c10465efd7cc79b6334437021132c540f3f9f1c3b12caff4a50be49b125",
+		Document: "fragment DataTablePageInfoFields on PageInfo { endCursor hasNextPage } query RecurringEarningTable($includeTotalCount: Boolean = true, $input: DataTableConnectionInput!) { recurringEarnings(input: $input) { edges { node { amountMinor createdAt currencyCode description endDate frequency id paidToDateMinor payCode { code id name } payCodeId startDate status totalCapMinor updatedAt version worker { firstName id lastName } workerId } } pageInfo { ...DataTablePageInfoFields } totalCount @include(if: $includeTotalCount) totalCountExact @include(if: $includeTotalCount) } }",
 	},
 	{
 		Name:     "DeskRecurringShipments",
-		Hash:     "sha256:59428e9a5d6cddae6c47cd39b5848d29a4563cc4d52e617553480201515a69bb",
-		Document: "fragment CustomerReference on Customer { addressLine1 addressLine2 allowConsolidation city code consolidationPriority exclusiveConsolidation externalId id isGeocoded latitude longitude name placeId postalCode state { abbreviation countryIso3 countryName createdAt id name updatedAt } stateId status } fragment LocationReference on Location { addressLine1 addressLine2 city code id latitude locationCategoryId longitude name postalCode state { abbreviation countryIso3 countryName createdAt id name updatedAt } stateId status timezone } query DeskRecurringShipments($includeTotalCount: Boolean!, $input: DataTableConnectionInput!) { recurringShipments(input: $input) { edges { node { autoGenerate cronExpression customer { ...CustomerReference } customerId destinationLocation { ...LocationReference } generationCount id lastGeneratedShipmentId name nextOccurrenceAt originLocation { ...LocationReference } sourceShipmentId status timezone } } pageInfo { endCursor hasNextPage } totalCount @include(if: $includeTotalCount) } }",
+		Hash:     "sha256:f4754ca890da0c8086046bd3e9e02c0ddbf2471065717b4b3c71a06532ce5b8a",
+		Document: "fragment CustomerReference on Customer { addressLine1 addressLine2 allowConsolidation city code consolidationPriority exclusiveConsolidation externalId id isGeocoded latitude longitude name placeId postalCode state { abbreviation countryIso3 countryName createdAt id name updatedAt } stateId status } fragment LocationReference on Location { addressLine1 addressLine2 city code id latitude locationCategoryId longitude name postalCode state { abbreviation countryIso3 countryName createdAt id name updatedAt } stateId status timezone } query DeskRecurringShipments($includeTotalCount: Boolean!, $input: DataTableConnectionInput!) { recurringShipments(input: $input) { edges { node { autoGenerate cronExpression customer { ...CustomerReference } customerId destinationLocation { ...LocationReference } generationCount id lastGeneratedShipmentId name nextOccurrenceAt originLocation { ...LocationReference } sourceShipmentId status timezone } } pageInfo { endCursor hasNextPage } totalCount @include(if: $includeTotalCount) totalCountExact @include(if: $includeTotalCount) } }",
 	},
 	{
 		Name:     "DeskWorkerCard",
@@ -1142,8 +1142,8 @@ var operations = []Operation{
 	},
 	{
 		Name:     "DotRandomPools",
-		Hash:     "sha256:d9cce52798e8b3e78e73078994d87c7d71fcfabb190a3d2ae1ab7e1f8dd94e7e",
-		Document: "fragment DotRandomPoolFields on DOTRandomPool { alcoholRatePercent code createdAt description drugRatePercent id includedDriverTypes isDefault meetsDotMinimums name period status updatedAt version } query DotRandomPools($input: DOTRandomPoolsInput!) { dotRandomPools(input: $input) { edges { cursor node { ...DotRandomPoolFields } } pageInfo { endCursor hasNextPage } totalCount } }",
+		Hash:     "sha256:d3d91f3a6c6916174f1291044ef51dbfc9ddd3630f33752682e5c5753b1ab441",
+		Document: "fragment DotRandomPoolFields on DOTRandomPool { alcoholRatePercent code createdAt description drugRatePercent id includedDriverTypes isDefault meetsDotMinimums name period status updatedAt version } query DotRandomPools($input: DOTRandomPoolsInput!) { dotRandomPools(input: $input) { edges { cursor node { ...DotRandomPoolFields } } pageInfo { endCursor hasNextPage } totalCount totalCountExact } }",
 	},
 	{
 		Name:     "DeskWorkerDotTests",
@@ -1192,8 +1192,8 @@ var operations = []Operation{
 	},
 	{
 		Name:     "WorkerPtoTable",
-		Hash:     "sha256:abf71b65ef60aa73f2ba26a10bd87f0746377d78969a808aec7b3bb07ff60f2f",
-		Document: "fragment WorkerDataTablePageInfoFields on PageInfo { endCursor hasNextPage } fragment WorkerPtoActorFields on User { id name } fragment WorkerPtoRowFields on WorkerPTO { approver { ...WorkerPtoActorFields } approverId autoApproved balanceAfterDays businessUnitId cancellationReason cancelledBy { ...WorkerPtoActorFields } cancelledById createdAt days endDate id organizationId reason rejectionReason rejector { ...WorkerPtoActorFields } rejectorId startDate status type updatedAt version worker { ...WorkerPtoWorkerFields } workerId } fragment WorkerPtoWorkerFields on Worker { firstName id lastName profilePicUrl wholeName } query WorkerPtoTable($includeTotalCount: Boolean = true, $input: WorkerPTOEntriesInput!) { workerPTOEntries(input: $input) { edges { node { ...WorkerPtoRowFields } } pageInfo { ...WorkerDataTablePageInfoFields } totalCount @include(if: $includeTotalCount) } }",
+		Hash:     "sha256:3344589fc74d3c77ba7cf92de0d82071cbda0c7ecc087df9963161fc6e4633e8",
+		Document: "fragment WorkerDataTablePageInfoFields on PageInfo { endCursor hasNextPage } fragment WorkerPtoActorFields on User { id name } fragment WorkerPtoRowFields on WorkerPTO { approver { ...WorkerPtoActorFields } approverId autoApproved balanceAfterDays businessUnitId cancellationReason cancelledBy { ...WorkerPtoActorFields } cancelledById createdAt days endDate id organizationId reason rejectionReason rejector { ...WorkerPtoActorFields } rejectorId startDate status type updatedAt version worker { ...WorkerPtoWorkerFields } workerId } fragment WorkerPtoWorkerFields on Worker { firstName id lastName profilePicUrl wholeName } query WorkerPtoTable($includeTotalCount: Boolean = true, $input: WorkerPTOEntriesInput!) { workerPTOEntries(input: $input) { edges { node { ...WorkerPtoRowFields } } pageInfo { ...WorkerDataTablePageInfoFields } totalCount @include(if: $includeTotalCount) totalCountExact @include(if: $includeTotalCount) } }",
 	},
 	{
 		Name:     "DeskWorkerTrainingRecords",
@@ -1202,8 +1202,8 @@ var operations = []Operation{
 	},
 	{
 		Name:     "TrainingCourseTable",
-		Hash:     "sha256:3950fe64badf5834025ac8f16b197ff3d30925f841658c84a7182d628bf5b23d",
-		Document: "fragment TrainingCourseFields on TrainingCourse { businessUnitId category code contentUrl createdAt delivery description dueDaysAfterAssignment durationMinutes id isRequired name openRecordCount organizationId passingScore renewalWindowDays requiredForDriverTypes requiresAcknowledgement sortOrder status updatedAt validityMonths version } query TrainingCourseTable($includeTotalCount: Boolean = true, $input: TrainingCoursesInput!) { trainingCourses(input: $input) { edges { cursor node { ...TrainingCourseFields } } pageInfo { endCursor hasNextPage } totalCount @include(if: $includeTotalCount) } }",
+		Hash:     "sha256:f49fe437f17370e0e6145abb7fbc948af4af4db8a6570b9e4ad62a68e33393a1",
+		Document: "fragment TrainingCourseFields on TrainingCourse { businessUnitId category code contentUrl createdAt delivery description dueDaysAfterAssignment durationMinutes id isRequired name openRecordCount organizationId passingScore renewalWindowDays requiredForDriverTypes requiresAcknowledgement sortOrder status updatedAt validityMonths version } query TrainingCourseTable($includeTotalCount: Boolean = true, $input: TrainingCoursesInput!) { trainingCourses(input: $input) { edges { cursor node { ...TrainingCourseFields } } pageInfo { endCursor hasNextPage } totalCount @include(if: $includeTotalCount) totalCountExact @include(if: $includeTotalCount) } }",
 	},
 }
 

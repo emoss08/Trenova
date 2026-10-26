@@ -2,4 +2,4 @@
 import type { TypedDocumentString, DocumentPacketRuleTableQuery, DocumentPacketRuleTableQueryVariables, DocumentPacketRuleTableRowFieldsFragment } from "../../graphql";
 
 export const DocumentPacketRuleTableRowFieldsFragmentDoc = {"__meta__":{"fragmentName":"DocumentPacketRuleTableRowFields"}} as unknown as TypedDocumentString<DocumentPacketRuleTableRowFieldsFragment, unknown>;
-export const DocumentPacketRuleTableDocument = {"__meta__":{"kind":"query","name":"DocumentPacketRuleTable","hash":"sha256:b48c9d5f6f128ccc24ef727cfc720c3f7fe470ac5bb808fabf9992aa1ff108d3"}} as unknown as TypedDocumentString<DocumentPacketRuleTableQuery, DocumentPacketRuleTableQueryVariables>;
+export const DocumentPacketRuleTableDocument = {"__meta__":{"kind":"query","name":"DocumentPacketRuleTable","hash":"sha256:c90986887dae4bf9acc0ade1096abb095da37dc37a9099a25f7b6209760dd3c5"}} as unknown as TypedDocumentString<DocumentPacketRuleTableQuery, DocumentPacketRuleTableQueryVariables>;
