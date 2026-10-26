@@ -2,7 +2,8 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { cleanup, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { clearCsrfToken, setCsrfToken } from "@trenova/shared/lib/api";
-import { useForm } from "react-hook-form";
+import { useEffect } from "react";
+import { useForm, useWatch } from "react-hook-form";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { ReversibleJournalEntryAutocompleteField } from "../autocomplete-fields";
 
@@ -52,7 +53,10 @@ let chosen: string | undefined;
 
 function Harness({ defaultValue }: { defaultValue: string }) {
   const form = useForm<Values>({ defaultValues: { originalJournalEntryId: defaultValue } });
-  chosen = form.watch("originalJournalEntryId");
+  const value = useWatch({ control: form.control, name: "originalJournalEntryId" });
+  useEffect(() => {
+    chosen = value;
+  }, [value]);
 
   return (
     <ReversibleJournalEntryAutocompleteField<Values>
