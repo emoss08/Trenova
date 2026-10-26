@@ -1,6 +1,7 @@
 import { recordPath } from "@/config/record-links";
 import { ShipmentStatusBadge } from "@trenova/shared/components/status-badge";
 import { useT } from "@trenova/shared/i18n/use-t";
+import { formatRowTotal } from "@trenova/shared/lib/row-total";
 import { CardPagedList } from "./card-paged-list";
 import { CardRecordRow, CardSection } from "./record-card";
 import { cardDay, cardTime, money } from "./record-card-values";
@@ -49,7 +50,11 @@ export function CardShipments({
       title={title}
       aside={
         shipments.total !== null && shipments.total > 0 ? (
-          <span>{t("{0, plural, one {# shipment} other {# shipments}}", shipments.total)}</span>
+          <span>
+            {shipments.totalExact
+              ? t("{0, plural, one {# shipment} other {# shipments}}", shipments.total)
+              : t("About {0} shipments", formatRowTotal(shipments.total, false))}
+          </span>
         ) : undefined
       }
     >

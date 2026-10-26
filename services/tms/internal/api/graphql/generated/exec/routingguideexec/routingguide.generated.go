@@ -270,6 +270,16 @@ var Shard = &gqlexec.Shard{
 				},
 				Marshal: gqlexec.Marshal(marshalOInt2ᚖint),
 			},
+			{
+				Name:     "totalCountExact",
+				NonNull:  true,
+				ChildErr: errNoChild5,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.RoutingGuideConnection)
+					return obj.TotalCountExact, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
+			},
 		}},
 		{Object: "RoutingGuideEdge", Fields: []*gqlexec.Field{
 			{
@@ -358,7 +368,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "rateMethod",
 				NonNull:  true,
-				ChildErr: errNoChild5,
+				ChildErr: errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*tender.RoutingGuideEntry)
 					return obj.RateMethod, nil
@@ -370,7 +380,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:    true,
 				IsResolver: true,
 				Concurrent: true,
-				ChildErr:   errNoChild6,
+				ChildErr:   errNoChild7,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*tender.RoutingGuideEntry)
 					return gqlexec.Resolver[resolverRoutingGuideEntry](ec, "RoutingGuideEntry").Rate(ctx, obj)
@@ -380,7 +390,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "useContractRate",
 				NonNull:  true,
-				ChildErr: errNoChild7,
+				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*tender.RoutingGuideEntry)
 					return obj.UseContractRate, nil
@@ -474,9 +484,9 @@ var (
 	errNoChild2 = errors.New("field of type EntityStatus does not have child fields")
 	errNoChild3 = errors.New("field of type Int does not have child fields")
 	errNoChild4 = errors.New("field of type Timestamp does not have child fields")
-	errNoChild5 = errors.New("field of type CarrierRateMethod does not have child fields")
-	errNoChild6 = errors.New("field of type Decimal does not have child fields")
-	errNoChild7 = errors.New("field of type Boolean does not have child fields")
+	errNoChild5 = errors.New("field of type Boolean does not have child fields")
+	errNoChild6 = errors.New("field of type CarrierRateMethod does not have child fields")
+	errNoChild7 = errors.New("field of type Decimal does not have child fields")
 	errNoChild8 = errors.New("field of type TenderChannel does not have child fields")
 )
 

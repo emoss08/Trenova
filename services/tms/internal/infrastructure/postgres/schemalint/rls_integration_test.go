@@ -110,6 +110,35 @@ func TestTenantPoliciesNeverAdmitEveryRow(t *testing.T) {
 		strings.Join(permissive, ", "))
 }
 
+func TestStandardTenantPoliciesVerifyTheScopeOnce(t *testing.T) {
+	ctx, db, cleanup := seedtest.SetupTestDB(t)
+	t.Cleanup(cleanup)
+
+	twice, err := keel.QueryAll(ctx, db, pgx.RowTo[string], `
+		SELECT tablename
+		FROM pg_policies
+		WHERE schemaname = 'public'
+			AND policyname = 'tenant_isolation'
+			AND regexp_replace(regexp_replace(qual, '\s+', '', 'g'), '::text', '', 'g') IN (
+				'(((organization_id)=(SELECTtrenova_rls.org_id()ASorg_id))AND((business_unit_id)=(SELECTtrenova_rls.bu_id()ASbu_id)))',
+				'((organization_id=(SELECTtrenova_rls.org_id()ASorg_id))AND(business_unit_id=(SELECTtrenova_rls.bu_id()ASbu_id)))'
+			)
+		ORDER BY 1`)
+	require.NoError(t, err)
+	assert.Empty(t, twice,
+		"tenant policies that verify the signed scope twice instead of once through "+
+			"trenova_rls.tenant(): %s", strings.Join(twice, ", "))
+
+	once, err := keel.QueryValue[int64](ctx, db, `
+		SELECT count(*)
+		FROM pg_policies
+		WHERE schemaname = 'public'
+			AND policyname = 'tenant_isolation'
+			AND qual LIKE '%trenova_rls.tenant()%'`)
+	require.NoError(t, err)
+	assert.Positive(t, once, "no tenant policy compares the row with trenova_rls.tenant()")
+}
+
 func TestGlobalTablesHoldNoTenantColumns(t *testing.T) {
 	ctx, db, cleanup := seedtest.SetupTestDB(t)
 	t.Cleanup(cleanup)

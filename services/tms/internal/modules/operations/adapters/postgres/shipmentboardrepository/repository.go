@@ -48,7 +48,7 @@ func scoped(scope *shipmentports.ShipmentBoardScope) (*keel.Query[*shipment.Ship
 }
 
 func revenueSum() keel.Expr {
-	return keel.DynOf(shipmentdb.Shipments.TotalChargeAmount).Sum().Coalesce(0)
+	return keel.NumericOf(shipmentdb.Shipments.TotalChargeAmount.Sum()).Coalesce(0)
 }
 
 func (r *Repository) StageSummary(
@@ -146,19 +146,24 @@ func quickFilterTotalsQuery(
 	basis *shipmentports.ShipmentQuickFilterBasis,
 	filters []shipment.QuickFilterSpec,
 ) (*keel.Query[*shipment.Shipment], error) {
-	counts := make([]any, 0, len(filters))
-	revenues := make([]any, 0, len(filters))
-	revenue := keel.DynOf(shipmentdb.Shipments.TotalChargeAmount)
+	counts := make([]keel.Int64Value, 0, len(filters))
+	revenues := make([]keel.StringValue, 0, len(filters))
 	for _, spec := range filters {
 		cond, err := shipmentrepository.QuickFilterCondition(basis, spec)
 		if err != nil {
 			return nil, err
 		}
-		counts = append(counts, keel.Count().Filter(cond))
-		revenues = append(revenues, revenue.Sum().Filter(cond).Coalesce(0).Cast(keel.TypeString))
+		counts = append(counts, keel.Int64Of(keel.Count().Filter(cond)))
+		revenues = append(
+			revenues,
+			keel.CastText(
+				keel.NumericOf(shipmentdb.Shipments.TotalChargeAmount.Sum().Filter(cond)).
+					Coalesce(0),
+			),
+		)
 	}
 
-	return q.Pick(keel.DynArray(counts...), keel.DynArray(revenues...)), nil
+	return q.Pick(keel.ArrayOfInt64(counts...), keel.ArrayOfString(revenues...)), nil
 }
 
 func pointers[T any](rows []T) []*T {

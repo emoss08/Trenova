@@ -219,6 +219,16 @@ var Shard = &gqlexec.Shard{
 				},
 				Marshal: gqlexec.Marshal(marshalOInt2ᚖint),
 			},
+			{
+				Name:     "totalCountExact",
+				NonNull:  true,
+				ChildErr: errNoChild4,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.DistanceOverrideConnection)
+					return obj.TotalCountExact, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
+			},
 		}},
 		{Object: "DistanceOverrideEdge", Fields: []*gqlexec.Field{
 			{
@@ -235,7 +245,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "cursor",
 				NonNull:  true,
-				ChildErr: errNoChild4,
+				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.DistanceOverrideEdge)
 					return obj.Cursor, nil
@@ -320,7 +330,8 @@ var (
 	errNoChild1 = errors.New("field of type Float does not have child fields")
 	errNoChild2 = errors.New("field of type Int does not have child fields")
 	errNoChild3 = errors.New("field of type Timestamp does not have child fields")
-	errNoChild4 = errors.New("field of type String does not have child fields")
+	errNoChild4 = errors.New("field of type Boolean does not have child fields")
+	errNoChild5 = errors.New("field of type String does not have child fields")
 )
 
 func field_Query_distanceOverrides_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
@@ -361,6 +372,14 @@ func unmarshalNDataTableConnectionInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinter
 func unmarshalNID2string(ctx context.Context, ec *gqlexec.Exec, v any) (string, error) {
 	res, err := graphql.UnmarshalID(v)
 	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func marshalNBoolean2bool(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v bool) graphql.Marshaler {
+	res := graphql.MarshalBoolean(v)
+	if res == graphql.Null {
+		gqlexec.NullViolation(ctx)
+	}
+	return res
 }
 
 func marshalNDistanceOverride2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋplacesᚋdomainᚋdistanceoverrideᚐDistanceOverride(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *distanceoverride.DistanceOverride) graphql.Marshaler {

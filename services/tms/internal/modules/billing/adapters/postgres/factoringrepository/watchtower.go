@@ -33,8 +33,8 @@ func NewWatchtowerReader(p Params) factoringports.WatchtowerReader {
 	}
 }
 
-func blank(e keel.Expr) keel.Expr {
-	return keel.DynOf(e).Coalesce("")
+func blank(e keel.Expr) keel.StringExpr {
+	return keel.StringOf(e).Coalesce("")
 }
 
 func intoPointers[R any](ctx context.Context, db *keel.DB, p keel.Projection) ([]*R, error) {
@@ -240,7 +240,7 @@ func unfundedSubmissions(
 	item := factoringdb.SubmissionItems
 	agr := factoringdb.Agreements
 	fac := sub.FactoringCompany()
-	dueAt := keel.DynOf(sub.SentAt).Add(keel.DynOf(agr.FundingDays).Mul(86400))
+	dueAt := sub.SentAt.Add(agr.FundingDays.Mul(keel.Int64(86400)))
 
 	return sub.Pick(
 		sub.ID,
@@ -262,10 +262,10 @@ func unfundedSubmissions(
 		Where(
 			sub.Status.In(factoring.AwaitingFundingStatuses()...),
 			sub.SentAt.IsNotNull(),
-			keel.DynOf(dueAt).Lt(req.At),
+			dueAt.Lt(req.At),
 		).
 		Group(sub.ID, sub.OrganizationID, sub.BusinessUnitID, fac.Name, agr.FundingDays).
-		Order(keel.Asc(dueAt), sub.ID.Asc()).
+		Order(dueAt.Asc(), sub.ID.Asc()).
 		Limit(boundedLimit(req.Limit, maxAttentionRows))
 }
 
@@ -292,7 +292,7 @@ func chargebacksDueSoon(
 	item := factoringdb.SubmissionItems
 	sub := item.Submission()
 	agr := sub.Agreement()
-	deadline := keel.DynOf(item.FundedOn).Add(keel.DynOf(agr.ChargebackWindowDays).Mul(86400))
+	deadline := item.FundedOn.Add(agr.ChargebackWindowDays.Mul(keel.Int64(86400)))
 
 	return item.Pick(
 		item.ID,
@@ -306,7 +306,7 @@ func chargebacksDueSoon(
 		blank(sub.FactoringCompany().Name),
 		sub.CurrencyCode,
 		item.FaceMinor,
-		keel.DynOf(item.AdvanceMinor).Coalesce(0).Add(keel.DynOf(item.FeeMinor).Coalesce(0)),
+		item.AdvanceMinor.Coalesce(0).Add(item.FeeMinor.Coalesce(0)),
 		item.FundedOn,
 		deadline,
 	).
@@ -315,9 +315,9 @@ func chargebacksDueSoon(
 			item.Status.Eq(factoring.SubmissionItemStatusFunded),
 			item.FundedOn.IsNotNull(),
 			agr.Recourse.Eq(factoring.RecourseFull),
-			keel.DynOf(deadline).Lte(req.Before),
+			deadline.Lte(req.Before),
 			keel.When(req.UnwarnedOnly, item.ChargebackWarnedAt.IsNull()),
 		).
-		Order(keel.Asc(deadline), item.ID.Asc()).
+		Order(deadline.Asc(), item.ID.Asc()).
 		Limit(boundedLimit(req.Limit, maxAttentionRows))
 }

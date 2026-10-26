@@ -85,9 +85,10 @@ func carrierSettlementConnectionToModel(
 		return nil, err
 	}
 	return &gqlmodel.CarrierSettlementConnection{
-		Edges:      page.Edges,
-		PageInfo:   page.PageInfo,
-		TotalCount: page.TotalCount,
+		Edges:           page.Edges,
+		PageInfo:        page.PageInfo,
+		TotalCount:      page.TotalCount,
+		TotalCountExact: page.TotalCountExact,
 	}, nil
 }
 
@@ -105,9 +106,10 @@ func carrierSettlementBatchConnectionToModel(
 		return nil, err
 	}
 	return &gqlmodel.CarrierSettlementBatchConnection{
-		Edges:      page.Edges,
-		PageInfo:   page.PageInfo,
-		TotalCount: page.TotalCount,
+		Edges:           page.Edges,
+		PageInfo:        page.PageInfo,
+		TotalCount:      page.TotalCount,
+		TotalCountExact: page.TotalCountExact,
 	}, nil
 }
 
@@ -125,9 +127,10 @@ func carrierCostEventConnectionToModel(
 		return nil, err
 	}
 	return &gqlmodel.CarrierCostEventConnection{
-		Edges:      page.Edges,
-		PageInfo:   page.PageInfo,
-		TotalCount: page.TotalCount,
+		Edges:           page.Edges,
+		PageInfo:        page.PageInfo,
+		TotalCount:      page.TotalCount,
+		TotalCountExact: page.TotalCountExact,
 	}, nil
 }
 

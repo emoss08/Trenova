@@ -22,11 +22,12 @@ type Params struct {
 	CostBudget        *CostBudgetExtension
 	ReadOnly          *ReadOnlyExtension
 	FieldGuard        *FieldGuardExtension
+	QueryBudget       *QueryBudgetExtension
 	EditionExtensions []graphql.HandlerExtension `group:"edition_graphql_extensions"`
 }
 
 func Extensions(p Params) []graphql.HandlerExtension {
-	out := make([]graphql.HandlerExtension, 0, 6+len(p.EditionExtensions))
+	out := make([]graphql.HandlerExtension, 0, 7+len(p.EditionExtensions))
 	out = append(out,
 		operationDepthLimit{max: querycost.MaxOperationDepth},
 		extension.FixedComplexityLimit(querycost.MaxOperationCost),
@@ -38,7 +39,12 @@ func Extensions(p Params) []graphql.HandlerExtension {
 		}
 	}
 
-	return append(out, p.ReadOnly, p.FieldGuard, p.Observability)
+	out = append(out, p.ReadOnly, p.FieldGuard, p.Observability)
+	if p.QueryBudget != nil {
+		out = append(out, p.QueryBudget)
+	}
+
+	return out
 }
 
 func NewCostLimitedSchema(es graphql.ExecutableSchema) graphql.ExecutableSchema {

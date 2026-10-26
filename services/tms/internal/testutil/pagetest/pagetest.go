@@ -35,6 +35,7 @@ func Page[T pagination.CursorEntity](
 	if cursor.IncludeTotalCount {
 		total := len(rows)
 		result.TotalCount = &total
+		result.TotalCountExact = true
 	}
 
 	return result
@@ -73,10 +74,11 @@ func OfTotal[T pagination.CursorEntity](
 	}
 
 	result := &pagination.CursorListResult[T]{
-		Items:       items,
-		HasNextPage: hasNextPage,
-		TotalCount:  total,
-		EdgeCursors: make([]string, len(items)),
+		Items:           items,
+		HasNextPage:     hasNextPage,
+		TotalCount:      total,
+		TotalCountExact: total != nil,
+		EdgeCursors:     make([]string, len(items)),
 	}
 	for i, item := range items {
 		result.EdgeCursors[i] = Cursor(item)

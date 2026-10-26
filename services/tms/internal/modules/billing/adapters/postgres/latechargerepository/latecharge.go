@@ -63,8 +63,9 @@ func candidatesQuery(asOf int64, customerIDs []pulid.ID) *keel.Query[*invoice.In
 	cus := customerdb.Customers
 	cbp := customerdb.CustomerBillingProfiles
 	dispute := invoicedb.InvoiceDisputes
-	graceEnds := keel.DynOf(inv.DueDate).
-		Add(keel.DynOf(cbp.GracePeriodDays).Cast(keel.TypeInt64).Mul(receivablesql.SecondsPerDay))
+	graceEnds := inv.DueDate.Add(
+		keel.CastInt64(cbp.GracePeriodDays).Mul(keel.Int64(receivablesql.SecondsPerDay)),
+	)
 
 	return inv.
 		Join(cus, cus.ID.EqCol(inv.CustomerID)).
@@ -75,7 +76,7 @@ func candidatesQuery(asOf int64, customerIDs []pulid.ID) *keel.Query[*invoice.In
 			graceEnds.Lte(asOf),
 			cbp.ApplyLateCharges.Eq(true),
 			cbp.LateChargeRate.IsNotNull(),
-			keel.DynOf(cbp.LateChargeRate).Gt(keel.DynConst(0)),
+			keel.NumericOf(cbp.LateChargeRate).GtExpr(keel.ConstNumeric("0")),
 			inv.DisputeStatus.Ne(invoice.DisputeStatusDisputed),
 			inv.MemoKind.Ne(invoice.MemoKindLateCharge),
 			keel.NotExists(dispute.Where(
@@ -136,7 +137,7 @@ func (r *repository) ListCandidates(
 					cbp.GracePeriodDays,
 					cbp.LateChargeRate,
 					receivablesql.OpenMinor(inv),
-					keel.DynOf(assessed).Coalesce([]int64{}),
+					keel.Int64ArrayOf(assessed).Coalesce(keel.Int64Array(nil)),
 				).
 				Order(cus.Name.Asc(), inv.DueDate.Asc(), inv.Number.Asc()))
 			if err != nil {

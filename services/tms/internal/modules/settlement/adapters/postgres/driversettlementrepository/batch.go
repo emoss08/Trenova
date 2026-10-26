@@ -159,8 +159,8 @@ func (r *batchRepository) RecalculateAggregates(
 				s.Pick(
 					keel.Count().Filter(live),
 					keel.Count().Filter(keel.And(s.HasExceptions.IsTrue(), live)),
-					keel.DynOf(s.GrossEarningsMinor.Sum().Filter(live)).Coalesce(0),
-					keel.DynOf(s.NetPayMinor.Sum().Filter(live)).Coalesce(0),
+					keel.Int64Of(s.GrossEarningsMinor.Sum().Filter(live)).Coalesce(0),
+					keel.Int64Of(s.NetPayMinor.Sum().Filter(live)).Coalesce(0),
 				).Where(s.BatchID.Eq(batchID)),
 			)
 

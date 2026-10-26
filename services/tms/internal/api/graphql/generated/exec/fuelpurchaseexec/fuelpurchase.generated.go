@@ -289,6 +289,16 @@ var Shard = &gqlexec.Shard{
 				},
 				Marshal: gqlexec.Marshal(marshalOInt2ᚖint),
 			},
+			{
+				Name:     "totalCountExact",
+				NonNull:  true,
+				ChildErr: errNoChild6,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.FuelCardConnection)
+					return obj.TotalCountExact, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
+			},
 		}},
 		{Object: "FuelCardDeskCard", Fields: []*gqlexec.Field{
 			{
@@ -606,7 +616,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:    true,
 				IsResolver: true,
 				Concurrent: true,
-				ChildErr:   errNoChild6,
+				ChildErr:   errNoChild7,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*fueldeskcardservice.HeldSpend)
 					return gqlexec.Resolver[resolverFuelHeldSpend](ec, "FuelHeldSpend").Gallons(ctx, obj)
@@ -618,7 +628,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:    true,
 				IsResolver: true,
 				Concurrent: true,
-				ChildErr:   errNoChild6,
+				ChildErr:   errNoChild7,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*fueldeskcardservice.HeldSpend)
 					return gqlexec.Resolver[resolverFuelHeldSpend](ec, "FuelHeldSpend").TotalAmount(ctx, obj)
@@ -677,7 +687,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:    true,
 				IsResolver: true,
 				Concurrent: true,
-				ChildErr:   errNoChild6,
+				ChildErr:   errNoChild7,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*fueldeskcardservice.JurisdictionGallons)
 					return gqlexec.Resolver[resolverFuelJurisdictionGallons](ec, "FuelJurisdictionGallons").Gallons(ctx, obj)
@@ -808,7 +818,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "fuelType",
 				NonNull:  true,
-				ChildErr: errNoChild7,
+				ChildErr: errNoChild8,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*fuelpurchase.FuelPurchase)
 					return obj.FuelType, nil
@@ -820,7 +830,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:    true,
 				IsResolver: true,
 				Concurrent: true,
-				ChildErr:   errNoChild6,
+				ChildErr:   errNoChild7,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*fuelpurchase.FuelPurchase)
 					return gqlexec.Resolver[resolverFuelPurchase](ec, "FuelPurchase").Quantity(ctx, obj)
@@ -830,7 +840,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "quantityUnit",
 				NonNull:  true,
-				ChildErr: errNoChild8,
+				ChildErr: errNoChild9,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*fuelpurchase.FuelPurchase)
 					return obj.QuantityUnit, nil
@@ -842,7 +852,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:    true,
 				IsResolver: true,
 				Concurrent: true,
-				ChildErr:   errNoChild6,
+				ChildErr:   errNoChild7,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*fuelpurchase.FuelPurchase)
 					return gqlexec.Resolver[resolverFuelPurchase](ec, "FuelPurchase").Gallons(ctx, obj)
@@ -853,7 +863,7 @@ var Shard = &gqlexec.Shard{
 				Name:       "unitPrice",
 				IsResolver: true,
 				Concurrent: true,
-				ChildErr:   errNoChild6,
+				ChildErr:   errNoChild7,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*fuelpurchase.FuelPurchase)
 					return gqlexec.Resolver[resolverFuelPurchase](ec, "FuelPurchase").UnitPrice(ctx, obj)
@@ -865,7 +875,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:    true,
 				IsResolver: true,
 				Concurrent: true,
-				ChildErr:   errNoChild6,
+				ChildErr:   errNoChild7,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*fuelpurchase.FuelPurchase)
 					return gqlexec.Resolver[resolverFuelPurchase](ec, "FuelPurchase").TotalAmount(ctx, obj)
@@ -905,7 +915,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "source",
 				NonNull:  true,
-				ChildErr: errNoChild9,
+				ChildErr: errNoChild10,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*fuelpurchase.FuelPurchase)
 					return obj.Source, nil
@@ -926,7 +936,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "taxPaid",
 				NonNull:  true,
-				ChildErr: errNoChild10,
+				ChildErr: errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*fuelpurchase.FuelPurchase)
 					return obj.TaxPaid, nil
@@ -1065,6 +1075,16 @@ var Shard = &gqlexec.Shard{
 				},
 				Marshal: gqlexec.Marshal(marshalOInt2ᚖint),
 			},
+			{
+				Name:     "totalCountExact",
+				NonNull:  true,
+				ChildErr: errNoChild6,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.FuelPurchaseConnection)
+					return obj.TotalCountExact, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
+			},
 		}},
 		{Object: "FuelPurchaseDeskCard", Fields: []*gqlexec.Field{
 			{
@@ -1167,7 +1187,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "countsForIfta",
 				NonNull:  true,
-				ChildErr: errNoChild10,
+				ChildErr: errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*fueldeskcardservice.PurchaseIFTA)
 					return obj.CountsForIFTA, nil
@@ -1179,7 +1199,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:    true,
 				IsResolver: true,
 				Concurrent: true,
-				ChildErr:   errNoChild6,
+				ChildErr:   errNoChild7,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*fueldeskcardservice.PurchaseIFTA)
 					return gqlexec.Resolver[resolverFuelPurchaseIFTA](ec, "FuelPurchaseIFTA").TaxPaidGallons(ctx, obj)
@@ -1190,7 +1210,7 @@ var Shard = &gqlexec.Shard{
 				Name:       "ratePerGallon",
 				IsResolver: true,
 				Concurrent: true,
-				ChildErr:   errNoChild6,
+				ChildErr:   errNoChild7,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*fueldeskcardservice.PurchaseIFTA)
 					return gqlexec.Resolver[resolverFuelPurchaseIFTA](ec, "FuelPurchaseIFTA").RatePerGallon(ctx, obj)
@@ -1201,7 +1221,7 @@ var Shard = &gqlexec.Shard{
 				Name:       "taxPaidCredit",
 				IsResolver: true,
 				Concurrent: true,
-				ChildErr:   errNoChild6,
+				ChildErr:   errNoChild7,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*fueldeskcardservice.PurchaseIFTA)
 					return gqlexec.Resolver[resolverFuelPurchaseIFTA](ec, "FuelPurchaseIFTA").TaxPaidCredit(ctx, obj)
@@ -1213,7 +1233,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:    true,
 				IsResolver: true,
 				Concurrent: true,
-				ChildErr:   errNoChild6,
+				ChildErr:   errNoChild7,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*fueldeskcardservice.PurchaseIFTA)
 					return gqlexec.Resolver[resolverFuelPurchaseIFTA](ec, "FuelPurchaseIFTA").TractorGallons(ctx, obj)
@@ -1336,7 +1356,7 @@ var Shard = &gqlexec.Shard{
 				Name:       "defaultFuelType",
 				IsResolver: true,
 				Concurrent: true,
-				ChildErr:   errNoChild7,
+				ChildErr:   errNoChild8,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*fuelpurchase.ImportBatch)
 					return gqlexec.Resolver[resolverFuelPurchaseImportBatch](ec, "FuelPurchaseImportBatch").DefaultFuelType(ctx, obj)
@@ -1582,6 +1602,16 @@ var Shard = &gqlexec.Shard{
 				},
 				Marshal: gqlexec.Marshal(marshalOInt2ᚖint),
 			},
+			{
+				Name:     "totalCountExact",
+				NonNull:  true,
+				ChildErr: errNoChild6,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.FuelPurchaseImportBatchConnection)
+					return obj.TotalCountExact, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
+			},
 		}},
 		{Object: "FuelPurchaseImportBatchEdge", Fields: []*gqlexec.Field{
 			{
@@ -1645,7 +1675,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "fuelType",
-				ChildErr: errNoChild7,
+				ChildErr: errNoChild8,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.FuelPurchaseImportParsed)
 					return obj.FuelType, nil
@@ -1654,7 +1684,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "quantity",
-				ChildErr: errNoChild6,
+				ChildErr: errNoChild7,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.FuelPurchaseImportParsed)
 					return obj.Quantity, nil
@@ -1663,7 +1693,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "quantityUnit",
-				ChildErr: errNoChild8,
+				ChildErr: errNoChild9,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.FuelPurchaseImportParsed)
 					return obj.QuantityUnit, nil
@@ -1672,7 +1702,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "gallons",
-				ChildErr: errNoChild6,
+				ChildErr: errNoChild7,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.FuelPurchaseImportParsed)
 					return obj.Gallons, nil
@@ -1681,7 +1711,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "unitPrice",
-				ChildErr: errNoChild6,
+				ChildErr: errNoChild7,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.FuelPurchaseImportParsed)
 					return obj.UnitPrice, nil
@@ -1690,7 +1720,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "totalAmount",
-				ChildErr: errNoChild6,
+				ChildErr: errNoChild7,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.FuelPurchaseImportParsed)
 					return obj.TotalAmount, nil
@@ -2006,6 +2036,16 @@ var Shard = &gqlexec.Shard{
 				},
 				Marshal: gqlexec.Marshal(marshalOInt2ᚖint),
 			},
+			{
+				Name:     "totalCountExact",
+				NonNull:  true,
+				ChildErr: errNoChild6,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.FuelPurchaseImportRowConnection)
+					return obj.TotalCountExact, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
+			},
 		}},
 		{Object: "FuelPurchaseImportRowEdge", Fields: []*gqlexec.Field{
 			{
@@ -2086,7 +2126,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:    true,
 				IsResolver: true,
 				Concurrent: true,
-				ChildErr:   errNoChild6,
+				ChildErr:   errNoChild7,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*fuelpurchase.ImportSummary)
 					return gqlexec.Resolver[resolverFuelPurchaseImportSummary](ec, "FuelPurchaseImportSummary").TotalGallons(ctx, obj)
@@ -2098,7 +2138,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:    true,
 				IsResolver: true,
 				Concurrent: true,
-				ChildErr:   errNoChild6,
+				ChildErr:   errNoChild7,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*fuelpurchase.ImportSummary)
 					return gqlexec.Resolver[resolverFuelPurchaseImportSummary](ec, "FuelPurchaseImportSummary").TotalAmount(ctx, obj)
@@ -2209,7 +2249,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:    true,
 				IsResolver: true,
 				Concurrent: true,
-				ChildErr:   errNoChild6,
+				ChildErr:   errNoChild7,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*fueldeskcardservice.Spend)
 					return gqlexec.Resolver[resolverFuelSpend](ec, "FuelSpend").Gallons(ctx, obj)
@@ -2221,7 +2261,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:    true,
 				IsResolver: true,
 				Concurrent: true,
-				ChildErr:   errNoChild6,
+				ChildErr:   errNoChild7,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*fueldeskcardservice.Spend)
 					return gqlexec.Resolver[resolverFuelSpend](ec, "FuelSpend").UntaxedGallons(ctx, obj)
@@ -2233,7 +2273,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:    true,
 				IsResolver: true,
 				Concurrent: true,
-				ChildErr:   errNoChild6,
+				ChildErr:   errNoChild7,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*fueldeskcardservice.Spend)
 					return gqlexec.Resolver[resolverFuelSpend](ec, "FuelSpend").TotalAmount(ctx, obj)
@@ -2337,7 +2377,7 @@ var Shard = &gqlexec.Shard{
 				Name:       "deleteFuelPurchase",
 				NonNull:    true,
 				IsResolver: true,
-				ChildErr:   errNoChild10,
+				ChildErr:   errNoChild6,
 				Args:       field_Mutation_deleteFuelPurchase_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
@@ -2696,11 +2736,11 @@ var (
 	errNoChild3  = errors.New("field of type FuelCardStatus does not have child fields")
 	errNoChild4  = errors.New("field of type Timestamp does not have child fields")
 	errNoChild5  = errors.New("field of type Int does not have child fields")
-	errNoChild6  = errors.New("field of type Decimal does not have child fields")
-	errNoChild7  = errors.New("field of type IFTAFuelType does not have child fields")
-	errNoChild8  = errors.New("field of type FuelQuantityUnit does not have child fields")
-	errNoChild9  = errors.New("field of type FuelPurchaseSource does not have child fields")
-	errNoChild10 = errors.New("field of type Boolean does not have child fields")
+	errNoChild6  = errors.New("field of type Boolean does not have child fields")
+	errNoChild7  = errors.New("field of type Decimal does not have child fields")
+	errNoChild8  = errors.New("field of type IFTAFuelType does not have child fields")
+	errNoChild9  = errors.New("field of type FuelQuantityUnit does not have child fields")
+	errNoChild10 = errors.New("field of type FuelPurchaseSource does not have child fields")
 	errNoChild11 = errors.New("field of type FuelPurchaseImportOrigin does not have child fields")
 	errNoChild12 = errors.New("field of type FuelImportFormat does not have child fields")
 	errNoChild13 = errors.New("field of type FuelPurchaseImportStatus does not have child fields")

@@ -316,7 +316,7 @@ func (r *repository) ListForSweep(
 				keel.Exists(awaiting(inFlight.ExpiresAt.Lte(req.ExpiredBy))),
 				keel.And(
 					keel.NotExists(awaiting()),
-					keel.DynFunc("greatest", t.CreatedAt, keel.DynOf(t.LastBouncedAt).Coalesce(0)).
+					t.CreatedAt.Greatest(t.LastBouncedAt.Coalesce(0)).
 						Lte(req.ExpiredBy),
 				),
 			),
@@ -522,7 +522,7 @@ func reopenTender(
 		ctx,
 		db,
 		t.Status.To(tender.StatusActive),
-		t.BounceCount.Add(1),
+		t.BounceCount.Increment(1),
 		t.LastBouncedAt.To(req.At),
 		t.AcceptedOfferID.ToNull(),
 		t.AcceptedAt.ToNull(),
@@ -790,7 +790,7 @@ func (r *repository) PurgeDeadOfferTokens(
 		n, err := tk.AllTenants().
 			Where(tk.ID.InQuery(dead.AllTenants().
 				Pick(dead.ID).
-				Where(keel.DynOf(dead.UsedAt).Coalesce(dead.RevokedAt, dead.ExpiresAt).Lt(req.DeadBefore)).
+				Where(dead.UsedAt.Coalesce(dead.RevokedAt, dead.ExpiresAt).Lt(req.DeadBefore)).
 				Limit(limit))).
 			Delete(ctx, r.db.Keel(ctx))
 		if err != nil {

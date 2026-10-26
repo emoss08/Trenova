@@ -3,7 +3,6 @@ package ediconnectiondraft
 import (
 	"os"
 	"path/filepath"
-	"runtime"
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
@@ -17,9 +16,9 @@ import (
 func simulatorGuide(t *testing.T) ediports.SpecDocument {
 	t.Helper()
 
-	_, file, _, ok := runtime.Caller(0)
-	require.True(t, ok)
-	path := filepath.Join(filepath.Dir(file), "..", "..", "..", "..", "..", "..", "..",
+	dir, err := os.Getwd()
+	require.NoError(t, err)
+	path := filepath.Join(dir, "..", "..", "..", "..", "..", "..", "..",
 		"dev", "edi-partner-sim", "specs", "simpartner-implementation-guide.txt")
 	text, err := os.ReadFile(filepath.Clean(path))
 	require.NoError(t, err, "the partner simulator's guide is the fixture for this test")

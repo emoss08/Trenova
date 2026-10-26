@@ -267,6 +267,16 @@ var Shard = &gqlexec.Shard{
 				},
 				Marshal: gqlexec.Marshal(marshalOInt2ᚖint),
 			},
+			{
+				Name:     "totalCountExact",
+				NonNull:  true,
+				ChildErr: errNoChild5,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.FormulaLibraryConnection)
+					return obj.TotalCountExact, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
+			},
 		}},
 		{Object: "FormulaLibraryEdge", Fields: []*gqlexec.Field{
 			{
@@ -325,7 +335,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "decision",
 				NonNull:  true,
-				ChildErr: errNoChild5,
+				ChildErr: errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*formulalibrary.FormulaLibraryReview)
 					return obj.Decision, nil
@@ -528,7 +538,7 @@ var Shard = &gqlexec.Shard{
 				Name:       "changeSummary",
 				IsResolver: true,
 				Concurrent: true,
-				ChildErr:   errNoChild6,
+				ChildErr:   errNoChild7,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*formulalibrary.FormulaLibraryVersion)
 					return gqlexec.Resolver[resolverFormulaLibraryVersion](ec, "FormulaLibraryVersion").ChangeSummary(ctx, obj)
@@ -647,8 +657,9 @@ var (
 	errNoChild2 = errors.New("field of type Int does not have child fields")
 	errNoChild3 = errors.New("field of type FormulaTemplateStatus does not have child fields")
 	errNoChild4 = errors.New("field of type Timestamp does not have child fields")
-	errNoChild5 = errors.New("field of type FormulaReviewDecision does not have child fields")
-	errNoChild6 = errors.New("field of type JSON does not have child fields")
+	errNoChild5 = errors.New("field of type Boolean does not have child fields")
+	errNoChild6 = errors.New("field of type FormulaReviewDecision does not have child fields")
+	errNoChild7 = errors.New("field of type JSON does not have child fields")
 )
 
 func field_Query_formulaLibraries_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
@@ -731,6 +742,14 @@ func unmarshalOInt2ᚖint(ctx context.Context, ec *gqlexec.Exec, v any) (*int, e
 	}
 	res, err := graphql.UnmarshalInt(v)
 	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func marshalNBoolean2bool(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v bool) graphql.Marshaler {
+	res := graphql.MarshalBoolean(v)
+	if res == graphql.Null {
+		gqlexec.NullViolation(ctx)
+	}
+	return res
 }
 
 func marshalNFormulaLibrary2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋratingᚋdomainᚋformulalibraryᚐFormulaLibrary(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *formulalibrary.FormulaLibrary) graphql.Marshaler {

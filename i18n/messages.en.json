@@ -9841,6 +9841,15 @@
       "apps/web/components"
     ]
   },
+  "A report needs attention": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "A report run is canceled": {
     "sites": 1,
     "scope": [
@@ -14274,12 +14283,22 @@
     ]
   },
   "About {0}": {
-    "sites": 4,
+    "sites": 5,
     "scope": [
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "apps/web/components",
+      "routes/home"
+    ]
+  },
+  "About {0} active": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "About {0} after the appointment": {
@@ -14300,6 +14319,25 @@
       "routes/agent-control"
     ]
   },
+  "About {0} awaiting decision": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
+  "About {0} changes": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/carrier",
+      "routes/desk"
+    ]
+  },
   "About {0} checks a week. Each one counts against its runs per day.": {
     "sites": 1,
     "scope": [
@@ -14307,6 +14345,42 @@
     ],
     "areas": [
       "routes/agent-control"
+    ]
+  },
+  "About {0} failures": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
+  "About {0} findings": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/insights"
+    ]
+  },
+  "About {0} in all": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
+  "About {0} others": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "About {0} per carrier per month at this depth. Pulling the same carrier again this month is not billed twice.": {
@@ -14325,6 +14399,87 @@
     ],
     "areas": [
       "routes/carrier"
+    ]
+  },
+  "About {0} previous rates found": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/shipment"
+    ]
+  },
+  "About {0} retired": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
+  "About {0} runs today": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
+  "About {0} settlements": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
+  "About {0} shipments": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
+  "About {0} shipments can transfer": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/billing-queue"
+    ]
+  },
+  "About {0} stacks": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/intake"
+    ]
+  },
+  "About {0} stacks are waiting to be filed": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/intake"
+    ]
+  },
+  "About {0} waiting": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "Above ceiling": {
@@ -90087,6 +90242,15 @@
       "routes/factoring-company"
     ]
   },
+  "Edit all about {0} matching": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "Edit all {0} matching": {
     "sites": 1,
     "scope": [
@@ -109794,6 +109958,15 @@
       "rules/tariff"
     ]
   },
+  "First is missing from the loader key": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "api/graphql"
+    ]
+  },
   "First labelled here": {
     "sites": 4,
     "scope": [
@@ -109812,6 +109985,15 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "First must be a positive number": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "api/graphql"
     ]
   },
   "First name": {
@@ -121564,6 +121746,24 @@
     ],
     "areas": [
       "routes/agent-control"
+    ]
+  },
+  "How many reports besides ReportName the notice is about.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "How many reports the notice is about, ReportName among them.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "How many rows the run returned.": {
@@ -147489,6 +147689,15 @@
       "apps/web/components",
       "routes/carrier",
       "routes/carrier-monitoring"
+    ]
+  },
+  "Mark saved reports that no longer validate against the report catalog": {
+    "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Mark settlement paid": {
@@ -181523,6 +181732,15 @@
       "apps/web/components"
     ]
   },
+  "Open the report builder to see what changed.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/notification.report_needs_attention"
+    ]
+  },
   "Open the run": {
     "sites": 3,
     "scope": [
@@ -187134,13 +187352,40 @@
     ]
   },
   "Page": {
-    "sites": 4,
+    "sites": 3,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/web/components",
       "packages/shared/components"
+    ]
+  },
+  "Page <b>{0}</b>": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
+  "Page <b>{0}</b> of <b>{1}</b>": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
+  "Page <b>{0}</b> of about <b>{1}</b>": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "Page URL cannot be longer than 500 characters": {
@@ -187325,7 +187570,7 @@
     ]
   },
   "Page {0}": {
-    "sites": 14,
+    "sites": 15,
     "scope": [
       "ts"
     ],
@@ -187334,6 +187579,7 @@
       "routes/admin",
       "routes/desk",
       "routes/inbox",
+      "routes/insights",
       "routes/intake"
     ]
   },
@@ -201108,6 +201354,15 @@
     ]
   },
   "Proposals start reaching Desk": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
+  "Proposals · about {0}": {
     "sites": 1,
     "scope": [
       "ts"
@@ -232280,6 +232535,15 @@
       "routes/intake"
     ]
   },
+  "Search about {0} rows": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "Search addresses": {
     "sites": 1,
     "scope": [
@@ -245216,7 +245480,25 @@
       "routes/desk"
     ]
   },
-  "Showing": {
+  "Showing <b>{0}</b> to <b>{1}</b> of <b>{2}</b> results": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
+  "Showing <b>{0}</b> to <b>{1}</b> of about <b>{2}</b> results": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
+  "Showing <b>{0}</b> to <b>{1}</b> results": {
     "sites": 1,
     "scope": [
       "ts"
@@ -245252,6 +245534,15 @@
       "go/other"
     ]
   },
+  "Showing the latest {0} of about {1} movements. A report on factoring reserve entries lists them all.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/factoring-company"
+    ]
+  },
   "Showing the latest {0} of {1} movements. A report on factoring reserve entries lists them all.": {
     "sites": 1,
     "scope": [
@@ -245262,6 +245553,24 @@
     ]
   },
   "Showing {0, plural, one {# row} other {# rows}}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/fuel-purchase"
+    ]
+  },
+  "Showing {0} of about {1}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/billing-queue"
+    ]
+  },
+  "Showing {0} of about {1} rows": {
     "sites": 1,
     "scope": [
       "ts"
@@ -248355,7 +248664,7 @@
     ]
   },
   "Source business unit is required": {
-    "sites": 3,
+    "sites": 1,
     "scope": [
       "go"
     ],
@@ -285189,15 +285498,6 @@
       "go/other"
     ]
   },
-  "This report definition is not valid: {0}. Did you mean {1}?": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
   "This report has changed since it ran, so its result cannot be served — run it again": {
     "sites": 1,
     "scope": [
@@ -292448,6 +292748,24 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "Transfer all of about {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/billing-queue"
+    ]
+  },
+  "Transfer all of about {0} shipments that match the current search and status?": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/billing-queue"
     ]
   },
   "Transfer all {0}": {
@@ -321991,6 +322309,17 @@
       "rules/tariff"
     ]
   },
+  "about {0}": {
+    "sites": 4,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components",
+      "routes/agent-control",
+      "routes/desk"
+    ]
+  },
   "above {0}": {
     "sites": 2,
     "scope": [
@@ -326972,15 +327301,6 @@
       "go/other"
     ]
   },
-  "ifta jurisdictions not cached": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
   "ignore it": {
     "sites": 1,
     "scope": [
@@ -327396,7 +327716,7 @@
     ]
   },
   "lanes priced": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
@@ -335668,6 +335988,15 @@
       "routes/factoring-submission"
     ]
   },
+  "{0, plural, one {# report needs attention} other {# reports need attention}}": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/notification.report_needs_attention"
+    ]
+  },
   "{0, plural, one {# report} other {# reports}}": {
     "sites": 1,
     "scope": [
@@ -339903,6 +340232,15 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "{0} and {1, plural, one {# other report} other {# other reports}} use fields that no longer exist and cannot run until they are repaired.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/notification.report_needs_attention"
     ]
   },
   "{0} and {1}": {
@@ -347034,6 +347372,24 @@
       "api/graphql"
     ]
   },
+  "{0} of about {1} policies": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
+  "{0} of about {1} shown": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "{0} of answers": {
     "sites": 1,
     "scope": [
@@ -350271,6 +350627,15 @@
       "apps/web/components"
     ]
   },
+  "{0} uses a field that no longer exists and cannot run until it is repaired.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/notification.report_needs_attention"
+    ]
+  },
   "{0} value is not valid for a {1} lane": {
     "sites": 1,
     "scope": [
@@ -353193,6 +353558,15 @@
     ]
   },
   "{0}–{1} mi": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
+  "{0}–{1} of about {2}": {
     "sites": 1,
     "scope": [
       "ts"

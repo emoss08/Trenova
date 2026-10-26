@@ -77,12 +77,16 @@ func (f *fakeDefinitions) List(
 	offset := req.Filter.Pagination.Offset
 	end := min(offset+req.Filter.Pagination.Limit, len(f.all))
 	if offset >= len(f.all) {
-		return &pagination.ListResult[*agentdefinition.Definition]{Total: len(f.all)}, nil
+		return &pagination.ListResult[*agentdefinition.Definition]{
+			Total:      len(f.all),
+			TotalExact: true,
+		}, nil
 	}
 
 	return &pagination.ListResult[*agentdefinition.Definition]{
-		Items: f.all[offset:end],
-		Total: len(f.all),
+		Items:      f.all[offset:end],
+		Total:      len(f.all),
+		TotalExact: true,
 	}, nil
 }
 

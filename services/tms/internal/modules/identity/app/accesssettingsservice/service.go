@@ -3,8 +3,6 @@ package accesssettingsservice
 import (
 	"context"
 	"fmt"
-	"sync"
-	"time"
 
 	"github.com/emoss08/trenova/internal/modules/identity/domain/iam"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
@@ -17,8 +15,6 @@ import (
 	"go.uber.org/zap"
 )
 
-const policyTTL = 30 * time.Second
-
 type Params struct {
 	fx.In
 
@@ -29,21 +25,12 @@ type Params struct {
 	Notifier permissionports.PermissionChangeNotifier `optional:"true"`
 }
 
-type cachedPolicy struct {
-	required  bool
-	expiresAt time.Time
-}
-
 type Service struct {
 	l        *zap.Logger
 	repo     iamports.AccessSettingsRepository
 	rbac     permissionports.RBACRepository
 	auditor  permissionports.SecurityAuditor
 	notifier permissionports.PermissionChangeNotifier
-	now      func() time.Time
-
-	mu       sync.RWMutex
-	policies map[pagination.TenantInfo]cachedPolicy
 }
 
 func New(p Params) *Service {
@@ -53,12 +40,13 @@ func New(p Params) *Service {
 		rbac:     p.RBAC,
 		auditor:  p.Auditor,
 		notifier: p.Notifier,
-		now:      time.Now,
-		policies: make(map[pagination.TenantInfo]cachedPolicy),
 	}
 }
 
-func (s *Service) Get(ctx context.Context, tenant pagination.TenantInfo) (*iam.AccessSettings, error) {
+func (s *Service) Get(
+	ctx context.Context,
+	tenant pagination.TenantInfo,
+) (*iam.AccessSettings, error) {
 	return s.repo.Get(ctx, tenantKey(tenant))
 }
 
@@ -102,7 +90,6 @@ func (s *Service) Update(
 		return nil, err
 	}
 
-	s.forget(tenant)
 	if before.RequireRoleActivation != saved.RequireRoleActivation {
 		if s.notifier != nil {
 			s.notifier.OrganizationChanged(ctx, req.TenantInfo)
@@ -128,15 +115,6 @@ func (s *Service) RoleActivationRequired(
 	tenant pagination.TenantInfo,
 ) (bool, error) {
 	key := tenantKey(tenant)
-	now := s.now()
-
-	s.mu.RLock()
-	cached, ok := s.policies[key]
-	s.mu.RUnlock()
-	if ok && now.Before(cached.expiresAt) {
-		return cached.required, nil
-	}
-
 	settings, err := s.repo.Get(dbscope.WithTenant(ctx, dbscope.Tenant{
 		OrganizationID: key.OrgID,
 		BusinessUnitID: key.BuID,
@@ -145,20 +123,7 @@ func (s *Service) RoleActivationRequired(
 		return false, err
 	}
 
-	s.mu.Lock()
-	s.policies[key] = cachedPolicy{
-		required:  settings.RequireRoleActivation,
-		expiresAt: now.Add(policyTTL),
-	}
-	s.mu.Unlock()
-
 	return settings.RequireRoleActivation, nil
-}
-
-func (s *Service) forget(tenant pagination.TenantInfo) {
-	s.mu.Lock()
-	delete(s.policies, tenant)
-	s.mu.Unlock()
 }
 
 func tenantKey(tenant pagination.TenantInfo) pagination.TenantInfo {

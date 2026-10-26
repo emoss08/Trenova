@@ -10,6 +10,7 @@ import {
 import { Spinner } from "@trenova/shared/components/ui/spinner";
 import { formatToUserTimezone } from "@trenova/shared/lib/date";
 import { formatCurrency } from "@trenova/shared/lib/utils";
+import { formatRowTotal } from "@trenova/shared/lib/row-total";
 import { apiService } from "@/services/api";
 import type { GetPreviousRatesRequest, PreviousRateSummary } from "@trenova/shared/types/shipment";
 import { useQuery } from "@tanstack/react-query";
@@ -58,10 +59,12 @@ export function PreviousRatesDialog({ open, onOpenChange, request }: PreviousRat
           ) : (
             <>
               <p className="text-muted-foreground mb-2 text-xs">
-                {t(
-                  "{0, plural, one {# previous rate} other {# previous rates}} found",
-                  rates.total,
-                )}
+                {rates.totalExact
+                  ? t(
+                      "{0, plural, one {# previous rate} other {# previous rates}} found",
+                      rates.total,
+                    )
+                  : t("About {0} previous rates found", formatRowTotal(rates.total, false))}
               </p>
               <div className="space-y-2">
                 {rates.items.map((rate) => (

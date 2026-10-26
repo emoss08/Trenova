@@ -47,7 +47,7 @@ func (s *Service) ApplyExternalTenderResponse(
 	recipient := req.Recipient
 	tenantInfo := pagination.TenantInfo{
 		OrgID:  recipient.SourceOrganizationID,
-		BuID:   recipient.SourceBusinessUnitID,
+		BuID:   recipient.BusinessUnitID,
 		UserID: req.ActorID,
 	}
 	tenderStatus := shipment.TenderStatusAccepted
@@ -114,7 +114,7 @@ func (s *Service) RecordExternalShipmentStatus(
 	}
 	tenantInfo := pagination.TenantInfo{
 		OrgID: req.Recipient.SourceOrganizationID,
-		BuID:  req.Recipient.SourceBusinessUnitID,
+		BuID:  req.Recipient.BusinessUnitID,
 	}
 	metadata := map[string]any{"recipientId": req.Recipient.ID}
 	comment := externalShipmentStatusComment(externalShipmentStatusCommentParams{

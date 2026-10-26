@@ -231,7 +231,7 @@ func (r *repository) IncrementDailyUsage(
 				UsageDate:      date.Truncate(24 * time.Hour),
 				RequestCount:   count,
 			}},
-			keel.OnConflict(u.APIKeyID, u.UsageDate).Set(u.RequestCount.Add(count)),
+			keel.OnConflict(u.APIKeyID, u.UsageDate).Set(u.RequestCount.Increment(count)),
 		)
 		return err
 	})

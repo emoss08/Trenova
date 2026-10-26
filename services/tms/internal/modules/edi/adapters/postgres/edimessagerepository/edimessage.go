@@ -251,10 +251,10 @@ func serviceFailure214Trigger(m *edidb.EDIMessagesTable) keel.StringExpr {
 	return m.PayloadSnapshot.Text("shipmentStatus", "references", "serviceFailure214Trigger")
 }
 
-func serviceFailure214LatestFor(alias, failureID, trigger string) keel.DynExpr {
+func serviceFailure214LatestFor(alias, failureID, trigger string) keel.StringExpr {
 	m := edidb.EDIMessages.As(alias)
 
-	return keel.DynOf(keel.Scalar(m.
+	return keel.StringOf(keel.Scalar(m.
 		Pick(m.ID).
 		Where(serviceFailure214Lifecycle(m, failureID)...).
 		Where(serviceFailure214Trigger(m).Eq(trigger)).
@@ -268,7 +268,7 @@ func serviceFailure214StatusQuery(failureID string) *keel.Query[*edi.EDIMessage]
 
 	return m.
 		Pick(
-			keel.DynLit(failureID),
+			keel.Text(failureID),
 			serviceFailure214LatestFor(
 				serviceFailure214ReviewedAlias,
 				failureID,
@@ -280,15 +280,15 @@ func serviceFailure214StatusQuery(failureID string) *keel.Query[*edi.EDIMessage]
 				serviceFailure214ResolvedTrigger,
 			),
 			m.ID,
-			keel.DynOf(m.Status).Cast(keel.TypeString).Coalesce(""),
-			keel.DynOf(m.DeliveryStatus).Cast(keel.TypeString).Coalesce(""),
-			keel.DynOf(m.AckStatus).Cast(keel.TypeString).Coalesce(""),
-			keel.DynOf(keel.Scalar(e.
+			keel.CastText(m.Status).Coalesce(""),
+			keel.CastText(m.DeliveryStatus).Coalesce(""),
+			keel.CastText(m.AckStatus).Coalesce(""),
+			keel.StringOf(keel.Scalar(e.
 				Pick(e.Message).
 				Where(e.MessageID.EqCol(m.ID), e.Severity.Eq(edi.ValidationSeverityError)).
 				Order(e.CreatedAt.Desc(), e.ID.Desc()).
 				Limit(1))).Coalesce(""),
-			keel.DynOf(m.GeneratedAt).Coalesce(0),
+			m.GeneratedAt.Coalesce(0),
 		).
 		Where(serviceFailure214Lifecycle(m, failureID)...).
 		Order(m.GeneratedAt.Desc(), m.ID.Desc()).
@@ -347,7 +347,7 @@ func (r *repository) UpdateMessageDelivery(
 			sets = append(sets, m.AS2MIC.To(req.AS2MIC))
 		}
 		if req.IncrementAttempts {
-			sets = append(sets, m.DeliveryAttempts.Add(1))
+			sets = append(sets, m.DeliveryAttempts.Increment(1))
 		}
 
 		return updateOne(ctx, r.db.Keel(ctx), req.ID, sets)
@@ -563,7 +563,7 @@ func scorecardQuery(req *ediports.GetEDIPartnerScorecardsRequest) *keel.Query[*e
 	}
 	pendingDelivery := keel.And(outbound, m.DeliveryStatus.In(pendingDeliveryStatuses...))
 	acknowledged := keel.And(m.AckReceivedAt.IsNotNull(), m.DeliverySentAt.IsNotNull())
-	latency := keel.DynOf(m.AckReceivedAt).Sub(m.DeliverySentAt)
+	latency := m.AckReceivedAt.Sub(m.DeliverySentAt)
 
 	return m.Where(
 		m.EDIPartnerID.IsNotNull(),
@@ -580,9 +580,10 @@ func scorecardQuery(req *ediports.GetEDIPartnerScorecardsRequest) *keel.Query[*e
 			keel.Count().Filter(delivered(edi.MessageDeliveryStatusFailed)),
 			keel.Count().Filter(delivered(edi.MessageDeliveryStatusDeadLettered)),
 			keel.Count().Filter(m.Direction.Eq(edi.DocumentDirectionInbound)),
-			latency.Avg().Filter(acknowledged).Cast(keel.TypeFloat64),
-			keel.DynOf(keel.PercentileCont(0.95, latency.Asc()).Filter(acknowledged)).
-				Cast(keel.TypeFloat64),
+			keel.CastFloat64(latency.Avg().Filter(acknowledged)),
+			keel.CastFloat64(
+				keel.Float64Of(keel.PercentileCont(0.95, latency.Asc()).Filter(acknowledged)),
+			),
 			keel.Count().Filter(keel.And(
 				m.AckStatus.Eq(edi.MessageAcknowledgmentStatusPending),
 				m.GeneratedAt.Lt(req.OverdueAckPendingSince),
@@ -620,7 +621,8 @@ func volumeQuery(req *ediports.GetEDIVolumeSeriesRequest) *keel.Query[*edi.EDIMe
 	if bucket <= 0 {
 		bucket = defaultBucketSeconds
 	}
-	bucketStart := keel.DynOf(m.GeneratedAt).Div(bucket).Mul(bucket)
+	bucketSeconds := keel.Int64(bucket)
+	bucketStart := m.GeneratedAt.Div(bucketSeconds).Mul(bucketSeconds)
 	outbound := m.Direction.Eq(edi.DocumentDirectionOutbound)
 
 	return m.Where(
@@ -639,7 +641,7 @@ func volumeQuery(req *ediports.GetEDIVolumeSeriesRequest) *keel.Query[*edi.EDIMe
 			))),
 			keel.Count().Filter(m.Direction.Eq(edi.DocumentDirectionInbound)),
 		).
-		Order(keel.Asc(bucketStart))
+		Order(bucketStart.Asc())
 }
 
 func (r *repository) GetPartnerSetActivity(
@@ -860,10 +862,10 @@ func (r *repository) GetOutboundMessageForAck(
 		entity, err := m.Where(
 			m.EDIPartnerID.Eq(req.PartnerID),
 			m.Direction.Eq(edi.DocumentDirectionOutbound),
-			keel.DynFunc("ltrim", m.GroupControlNumber, "0").
-				Eq(keel.DynFunc("ltrim", req.GroupControlNumber, "0")),
-			keel.DynFunc("ltrim", m.TransactionControlNumber, "0").
-				Eq(keel.DynFunc("ltrim", req.TransactionControlNumber, "0")),
+			m.GroupControlNumber.LTrimChars("0").
+				EqExpr(keel.Text(req.GroupControlNumber).LTrimChars("0")),
+			m.TransactionControlNumber.LTrimChars("0").
+				EqExpr(keel.Text(req.TransactionControlNumber).LTrimChars("0")),
 			keel.When(req.TransactionSet != "", m.TransactionSet.Eq(req.TransactionSet)),
 		).
 			Order(m.GeneratedAt.Desc()).

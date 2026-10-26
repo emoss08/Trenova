@@ -55,7 +55,7 @@ func TestPageQueryStartsAfterTheCursorInPaneOrder(t *testing.T) {
 	assert.Contains(t, sql, `ROW(l."pinned", l."last", l."root") < ROW(`)
 	assert.Contains(t, sql, "DESC")
 	assert.Contains(t, sql, "LIMIT 61", "one more than the page says whether another follows")
-	assert.Contains(t, sql, `GROUP BY coalesce(aa."lineage_id", aa."id")`)
+	assert.Contains(t, sql, `GROUP BY 1`)
 	assert.Contains(t, args, false)
 	assert.Contains(t, args, int64(42))
 	assert.Contains(t, args, "art_b")

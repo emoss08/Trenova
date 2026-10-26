@@ -66,6 +66,6 @@ func (r *repository) SetShipmentTenderStatus(
 			return shipmentErrors.Map(err, req.ShipmentID.String())
 		}
 
-		return dberror.CheckAffected(n, "Shipment", req.ShipmentID.String())
+		return dberror.CheckFoundCount(n, "Shipment")
 	})
 }

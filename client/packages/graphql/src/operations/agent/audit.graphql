@@ -155,6 +155,7 @@ query AIAuditEventTable($input: DataTableConnectionInput!, $includeTotalCount: B
       }
     }
     totalCount @include(if: $includeTotalCount)
+    totalCountExact @include(if: $includeTotalCount)
     pageInfo {
       ...DataTablePageInfoFields
     }
@@ -181,6 +182,7 @@ query AIAuditExportTable($input: DataTableConnectionInput!, $includeTotalCount: 
       }
     }
     totalCount @include(if: $includeTotalCount)
+    totalCountExact @include(if: $includeTotalCount)
     pageInfo {
       ...DataTablePageInfoFields
     }

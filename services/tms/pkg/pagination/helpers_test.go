@@ -567,7 +567,7 @@ func TestGetNextPageURL(t *testing.T) {
 	c, _ := gin.CreateTestContext(w)
 	c.Request = req
 
-	result := GetNextPageURL(c, 10, 0, 100)
+	result := GetNextPageURL(c, 10, 0, true)
 
 	assert.NotEmpty(t, result)
 	assert.Contains(t, result, "offset=10")
@@ -580,7 +580,7 @@ func TestGetNextPageURL_NoMorePages(t *testing.T) {
 	c, _ := gin.CreateTestContext(w)
 	c.Request = req
 
-	result := GetNextPageURL(c, 10, 90, 100)
+	result := GetNextPageURL(c, 10, 90, false)
 
 	assert.Empty(t, result)
 }

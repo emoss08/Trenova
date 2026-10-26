@@ -79,7 +79,7 @@ type listSpec struct {
 		opts *pagination.QueryOptions,
 		cursor pagination.CursorInfo,
 	) (listPage, error)
-	count func(ctx context.Context, opts *pagination.QueryOptions) (int, error)
+	count func(ctx context.Context, opts *pagination.QueryOptions) (int, bool, error)
 	// fetchIn is fetch with the caller's clock, for a row that renders a
 	// time of day and needs the organization's zone to do it. One of the
 	// two is set.
@@ -383,8 +383,9 @@ func (t *listTool) Query(
 
 	outcome, more := window.outcome(criteria, fetched)
 	if more && t.spec.count != nil {
-		if total, countErr := t.spec.count(ctx, opts); countErr == nil {
+		if total, exact, countErr := t.spec.count(ctx, opts); countErr == nil {
 			outcome.Total = &total
+			outcome.TotalEstimated = !exact
 		}
 	}
 	if outcome.Count == 0 && window.first() {

@@ -82,13 +82,14 @@ func (r *repository) Upsert(
 					).
 					Set(
 						d.AttachedShipmentID.ToExpr(
-							keel.DynOf(d.AttachedShipmentID.Excluded()).Coalesce(d.AttachedShipmentID),
+							keel.StringOf(d.AttachedShipmentID.Excluded()).
+								Coalesce(d.AttachedShipmentID),
 						),
 						d.AttachedAt.ToExpr(
-							keel.DynOf(d.AttachedAt.Excluded()).Coalesce(d.AttachedAt),
+							keel.Int64Of(d.AttachedAt.Excluded()).Coalesce(d.AttachedAt),
 						),
 						d.AttachedByID.ToExpr(
-							keel.DynOf(d.AttachedByID.Excluded()).Coalesce(d.AttachedByID),
+							keel.StringOf(d.AttachedByID.Excluded()).Coalesce(d.AttachedByID),
 						),
 					),
 			)

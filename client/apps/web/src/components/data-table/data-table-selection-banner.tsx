@@ -4,12 +4,16 @@ import { Spinner } from "@trenova/shared/components/ui/spinner";
 import { useRichT } from "@trenova/shared/i18n/rich";
 import { useTableAtom, type TableAtomSource } from "@trenova/shared/hooks/use-table-atom";
 import { countSelectedRows } from "@trenova/shared/lib/table-features";
+import { formatNumber } from "@trenova/shared/i18n/format";
+import { formatRowTotal } from "@trenova/shared/lib/row-total";
 import type { RowSelectionState } from "@tanstack/react-table";
 
 type DataTableSelectionBannerProps = {
   selection: TableAtomSource<RowSelectionState>;
   pageRowIds: readonly string[];
   totalCount: number;
+  /** False when totalCount is the server's estimate of a list too large to count. */
+  totalCountExact?: boolean;
   maxSelectable: number;
   isSelectingAll: boolean;
   onSelectAllMatching: () => void;
@@ -22,6 +26,7 @@ export function DataTableSelectionBanner({
   selection,
   pageRowIds,
   totalCount,
+  totalCountExact = true,
   maxSelectable,
   isSelectingAll,
   onSelectAllMatching,
@@ -64,7 +69,7 @@ export function DataTableSelectionBanner({
               {t("Selecting...")}
             </span>
           ) : (
-            <>{t("Select all {0} matching", target.toLocaleString())}</>
+            <>{t("Select all {0} matching", formatNumber(target))}</>
           )}
         </Button>
       )}
@@ -76,7 +81,9 @@ export function DataTableSelectionBanner({
           className="h-auto p-0 text-xs"
           onClick={onEditAllMatching}
         >
-          {t("Edit all {0} matching", totalCount.toLocaleString())}
+          {totalCountExact
+            ? t("Edit all {0} matching", formatRowTotal(totalCount, true))
+            : t("Edit all about {0} matching", formatRowTotal(totalCount, false))}
         </Button>
       ) : null}
       <Button

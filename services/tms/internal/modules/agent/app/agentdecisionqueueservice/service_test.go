@@ -6,6 +6,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
@@ -57,10 +58,10 @@ func (q *stubQueue) ListRecent(
 func (q *stubQueue) CountPending(
 	_ context.Context,
 	req agentports.ListPendingDecisionsQuery,
-) (int, error) {
+) (keel.RowCount, error) {
 	q.lastCount = req
 
-	return q.count, nil
+	return keel.RowCount{N: int64(q.count), Exact: q.count <= 10_000}, nil
 }
 
 type stubProposals struct {
@@ -437,6 +438,7 @@ func TestListPending_LoadsRecordsInQueueOrderAndDropsTheGone(t *testing.T) {
 	assert.True(t, page.HasNextPage)
 	require.NotNil(t, page.TotalCount)
 	assert.Equal(t, 7, *page.TotalCount)
+	assert.True(t, page.TotalCountExact)
 	assert.Equal(t, "dispatch_assign_move", queue.last.ToolName)
 
 	decoded, err := decodeCursor(page.Items[1].Cursor)

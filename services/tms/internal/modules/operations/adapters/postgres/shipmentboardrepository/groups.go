@@ -85,13 +85,13 @@ func endStopID(types []shipment.StopType, last bool) keel.Expr {
 	order := []keel.Order{
 		sm.Sequence.Asc(),
 		st.Sequence.Asc(),
-		keel.DynOf(st.ID).Collate("C").Asc(),
+		st.ID.Collate("C").Asc(),
 	}
 	if last {
 		order = []keel.Order{
 			sm.Sequence.Desc(),
 			st.Sequence.Desc(),
-			keel.DynOf(st.ID).Collate("C").Desc(),
+			st.ID.Collate("C").Desc(),
 		}
 	}
 
@@ -109,27 +109,22 @@ func dayGroups(
 	timezone string,
 ) *keel.Query[*shipment.Shipment] {
 	gs := shipmentdb.Stops.As(groupStopAlias)
-	key := keel.DynFunc(
-		"to_char",
-		keel.DynFunc(
-			"timezone",
-			keel.DynLit(timezone).Cast(keel.TypeString),
-			keel.DynFunc("to_timestamp", gs.ScheduledWindowStart),
-		),
-		dayKeyFormat,
-	).Coalesce("")
+	key := keel.ToTimestamp(gs.ScheduledWindowStart).
+		AtTimeZone(keel.Text(timezone)).
+		ToChar(dayKeyFormat).
+		Coalesce("")
 
 	return q.LeftJoin(gs, gs.ID.EqCol(endStopID(types, last))).
-		Pick(key, keel.DynLit(""), keel.Count(), revenueSum()).
+		Pick(key, keel.Text(""), keel.Count(), revenueSum()).
 		Group(key).
-		Order(keel.Asc(keel.DynOf(gs.ScheduledWindowStart).Min()).NullsLast())
+		Order(gs.ScheduledWindowStart.Min().Asc().NullsLast())
 }
 
 func customerGroups(q *keel.Query[*shipment.Shipment]) *keel.Query[*shipment.Shipment] {
 	sp := shipmentdb.Shipments
 	cus := sp.Customer()
 
-	return q.Pick(sp.CustomerID, keel.DynOf(cus.Name).Coalesce(""), keel.Count(), revenueSum()).
+	return q.Pick(sp.CustomerID, cus.Name.Coalesce(""), keel.Count(), revenueSum()).
 		Group(sp.CustomerID, cus.Name).
 		Order(cus.Name.Asc().NullsLast(), sp.CustomerID.Asc())
 }
@@ -139,8 +134,8 @@ func ownerGroups(q *keel.Query[*shipment.Shipment]) *keel.Query[*shipment.Shipme
 	owner := sp.Owner()
 
 	return q.Pick(
-		keel.DynOf(sp.OwnerID).Coalesce(""),
-		keel.DynOf(owner.Name).Coalesce(""),
+		sp.OwnerID.Coalesce(""),
+		owner.Name.Coalesce(""),
 		keel.Count(),
 		revenueSum(),
 	).

@@ -18,6 +18,7 @@ import (
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/listquery"
 	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/pkg/resultcache"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
@@ -164,7 +165,10 @@ func (r *repository) GetByID(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*hazardousmaterial.HazardousMaterial, error) {
-			entity, err := hazardousmaterialdb.HazardousMaterials.Get(ctx, r.db.Keel(ctx), req.ID)
+			hm := hazardousmaterialdb.HazardousMaterials
+			entity, err := hm.Where(hm.ID.Eq(req.ID)).
+				Cache(resultcache.Reference()...).
+				One(ctx, r.db.Keel(ctx))
 			if err != nil {
 				return nil, hazardousMaterialErrors.Map(err, req.ID.String())
 			}
@@ -189,6 +193,7 @@ func (r *repository) GetByIDs(
 			hm := hazardousmaterialdb.HazardousMaterials
 			entities, err := hm.Where(hm.ID.In(req.HazardousMaterialIDs...)).
 				Limit(len(req.HazardousMaterialIDs)).
+				Cache(resultcache.Reference()...).
 				List(ctx, r.db.Keel(ctx))
 			if err != nil {
 				r.l.Error("failed to get hazardous materials", zap.Error(err))

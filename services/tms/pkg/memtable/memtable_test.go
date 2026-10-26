@@ -111,6 +111,7 @@ func TestListOrdersPagesAndCounts(t *testing.T) {
 	assert.True(t, first.HasNextPage)
 	require.NotNil(t, first.TotalCount)
 	assert.Equal(t, 4, *first.TotalCount)
+	assert.True(t, first.TotalCountExact)
 
 	second := list(t, memtable.Request{First: 3, After: first.Cursors[2]})
 	assert.Equal(t, []string{"delta"}, names(second))

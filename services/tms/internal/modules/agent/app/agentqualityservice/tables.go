@@ -206,9 +206,10 @@ func (s *Service) ListAgentTable(
 	}
 
 	out := &agentqualityports.AgentQualityAgentPage{
-		Edges:       make([]*agentqualityports.AgentQualityAgentEdge, 0, len(page.Items)),
-		HasNextPage: page.HasNextPage,
-		TotalCount:  page.TotalCount,
+		Edges:           make([]*agentqualityports.AgentQualityAgentEdge, 0, len(page.Items)),
+		HasNextPage:     page.HasNextPage,
+		TotalCount:      page.TotalCount,
+		TotalCountExact: page.TotalCountExact,
 	}
 	for idx, node := range page.Items {
 		out.Edges = append(out.Edges, &agentqualityports.AgentQualityAgentEdge{
@@ -459,9 +460,10 @@ func (s *Service) ListWorstRatedTable(
 	}
 
 	out := &agentqualityports.AgentWorstRatedPage{
-		Edges:       make([]*agentqualityports.AgentWorstRatedEdge, 0, len(page.Items)),
-		HasNextPage: page.HasNextPage,
-		TotalCount:  page.TotalCount,
+		Edges:           make([]*agentqualityports.AgentWorstRatedEdge, 0, len(page.Items)),
+		HasNextPage:     page.HasNextPage,
+		TotalCount:      page.TotalCount,
+		TotalCountExact: page.TotalCountExact,
 	}
 	for idx, row := range page.Items {
 		out.Edges = append(out.Edges, &agentqualityports.AgentWorstRatedEdge{

@@ -2,10 +2,10 @@ package rlslint
 
 var allowed = map[string]string{
 	"internal/modules/documents/app/captureservice/pairing.go:Service.ExchangePairing":                                                                          "exchange an approved pairing, which belongs to no organization until now, for its device",
-	"internal/modules/edi/app/ediservice/approval.go:Service.ApproveTransfer":                                                                                   "approve an internal load tender, writing both organizations' shipments in one transaction",
 	"internal/modules/edi/app/ediservice/transfer_changes.go:Service.reviewTransferChange":                                                                      "apply a reviewed transfer change to the linked shipments of both organizations in one transaction",
 	"internal/modules/identity/app/instancebootstrapservice/service.go:Service.Bootstrap":                                                                       "create the first business unit, organization, administrator and system user of an instance in one transaction before any tenant exists",
 	"internal/modules/identity/app/organizationservice/validator.go:businessUnitWideScope":                                                                      "check organization names, SCAC and DOT numbers and login slugs across the business unit",
+	"internal/infrastructure/database/dbcli/migrated.go:markMigratedTables":                                                                                     "record every table a migration run changed for every tenant, so cached reads of the old schema are dropped",
 	"internal/infrastructure/postgres/capabilities.go:CapabilityProbe.probeLocked":                                                                              "probe the database server's installed extensions",
 	"internal/infrastructure/postgres/connection_rls.go:Connection.verifySystemRole":                                                                            "verify row-level security roles at startup",
 	"internal/modules/agent/adapters/postgres/accountingbriefrepository/repository.go:repository.DeleteBefore":                                                  "delete accounting briefs past retention across every organization",
@@ -131,6 +131,9 @@ var allowed = map[string]string{
 	"internal/modules/rating/adapters/postgres/rateconfirmationrepository/rateconfirmation.go:repository.GetTokenByHash":                                        "resolve a public rate confirmation link before its tenant is known",
 	"internal/modules/rating/adapters/postgres/rateconfirmationrepository/rateconfirmation.go:repository.PurgeDeadSignTokens":                                   "purge dead rate confirmation tokens across every organization",
 	"internal/modules/operations/adapters/postgres/recurringshipmentrepository/recurringshipment.go:repository.ListDue":                                         "list recurring shipments due across every organization",
+	"internal/modules/workspace/adapters/postgres/reportrepository/catalogversion.go:catalogVersionRepository.Heartbeat":                                        "record the report catalog version this worker runs",
+	"internal/modules/workspace/adapters/postgres/reportrepository/catalogversion.go:catalogVersionRepository.Newest":                                           "find the newest report catalog version a worker still runs",
+	"internal/modules/workspace/adapters/postgres/reportrepository/definition.go:definitionRepository.ListCatalogStale":                                         "check saved report definitions against the report catalog",
 	"internal/modules/workspace/adapters/postgres/reportrepository/run.go:runRepository.ListExpired":                                                            "list expired report artifacts across every organization",
 	"internal/modules/workspace/adapters/postgres/reportrepository/run.go:runRepository.ListStale":                                                              "list stalled report runs across every organization",
 	"internal/modules/workspace/adapters/postgres/reportrepository/schedule.go:scheduleRepository.ListDue":                                                      "list report schedules due across every organization",

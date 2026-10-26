@@ -47,7 +47,7 @@ func (r *Deps) resolveRateMatrixSelectOptions(
 
 	return selectOptionListConnection(
 		result,
-		req.SelectQuery.Pagination.SafeOffset(),
+		req.SelectQuery.Pagination,
 		rateMatrixSelectOptionItem,
 	)
 }
@@ -82,7 +82,7 @@ func (r *Deps) resolveRateAgreementSelectOptions(
 
 	return selectOptionListConnection(
 		result,
-		req.SelectQuery.Pagination.SafeOffset(),
+		req.SelectQuery.Pagination,
 		rateAgreementSelectOptionItem,
 	)
 }
@@ -120,7 +120,7 @@ func (r *Deps) resolveAccessorialChargeSelectOptions(
 
 	return selectOptionListConnection(
 		result,
-		req.SelectQuery.Pagination.SafeOffset(),
+		req.SelectQuery.Pagination,
 		accessorialChargeSelectOptionItem,
 	)
 }
@@ -160,7 +160,7 @@ func (r *Deps) resolveAccountTypeSelectOptions(
 
 	return selectOptionListConnection(
 		result,
-		req.SelectQuery.Pagination.SafeOffset(),
+		req.SelectQuery.Pagination,
 		accountTypeSelectOptionItem,
 	)
 }
@@ -200,7 +200,7 @@ func (r *Deps) resolveDetentionPolicySelectOptions(
 
 	return selectOptionListConnection(
 		result,
-		req.SelectQuery.Pagination.SafeOffset(),
+		req.SelectQuery.Pagination,
 		detentionPolicySelectOptionItem,
 	)
 }

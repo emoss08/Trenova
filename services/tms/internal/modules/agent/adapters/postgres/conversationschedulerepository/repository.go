@@ -111,10 +111,10 @@ func (r *repository) create(
 	th := conversationdb.Threads
 	if _, err = th.Where(th.ID.Eq(schedule.ThreadID)).Update(ctx, db,
 		th.LastMessageAt.To(now),
-		th.Title.ToExpr(keel.DynCase().
+		th.Title.ToExpr(keel.CaseString().
 			When(
-				keel.DynFunc("btrim", th.Title).NullIf("").IsNull(),
-				keel.DynLit(threadTitle).Cast(keel.TypeString).NullIf(""),
+				th.Title.Trim().NullIf("").IsNull(),
+				keel.Text(threadTitle).NullIf(""),
 			).
 			Else(th.Title)),
 		th.Version.ToExpr(th.Version),
@@ -164,12 +164,16 @@ func (r *repository) List(
 		page := listPageQuery(&req, limit)
 		var (
 			rows   []*conversationschedule.Schedule
-			total  int64
+			total  keel.RowCount
 			titles []threadTitle
 		)
 		err := keel.Batch(ctx, r.db.Keel(ctx),
 			keel.ListInto(page, &rows),
-			keel.CountInto(scoped(req.UserID, req.ThreadID), &total),
+			keel.CountEstimateInto(
+				scoped(req.UserID, req.ThreadID),
+				pagination.ExactTotalUpTo,
+				&total,
+			),
 			keel.IntoSlice(threadTitlesQuery(page), &titles),
 		)
 		if err != nil {
@@ -190,10 +194,7 @@ func (r *repository) List(
 			})
 		}
 
-		return &pagination.ListResult[*conversationscheduleports.ListedConversationSchedule]{
-			Items: items,
-			Total: int(total),
-		}, nil
+		return listquery.Result(items, total), nil
 	})
 }
 
@@ -219,7 +220,7 @@ func threadTitlesQuery(
 	s := conversationscheduledb.Schedules
 	th := conversationdb.Threads
 
-	return th.Pick(th.ID, keel.DynOf(th.Title).Coalesce("")).
+	return th.Pick(th.ID, th.Title.Coalesce("")).
 		Where(th.ID.InQuery(page.Clone().Pick(s.ThreadID)))
 }
 

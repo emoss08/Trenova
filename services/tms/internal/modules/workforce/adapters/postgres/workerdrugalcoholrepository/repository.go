@@ -459,7 +459,7 @@ func (r *repository) ClearDefaultPool(
 		_, err := p.Where(
 			p.IsDefault.IsTrue(),
 			keel.When(exceptID.IsNotNil(), p.ID.Ne(exceptID)),
-		).Update(ctx, r.db.Keel(ctx), p.IsDefault.To(false), p.Version.Add(0))
+		).Update(ctx, r.db.Keel(ctx), p.IsDefault.To(false), p.Version.Increment(0))
 		if err != nil {
 			r.l.Error("failed to clear default random pool", zap.Error(err))
 			return fmt.Errorf("clear default random pool: %w", err)
@@ -697,7 +697,7 @@ func (r *repository) UpdateProfileRollup(
 			wp.ReturnToDutyStatus.To(req.Rollup.ReturnToDuty),
 			toNullable(wp.LastClearinghouseQueryAt, req.Rollup.LastClearinghouseQueryAt),
 			toNullable(wp.NextClearinghouseQueryDue, req.Rollup.NextClearinghouseQueryDue),
-			wp.Version.Add(0),
+			wp.Version.Increment(0),
 		)
 		if err != nil {
 			r.l.Error("failed to update drug and alcohol rollup", zap.Error(err))

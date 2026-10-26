@@ -43,7 +43,8 @@ but `Core`.
 - **Lists are connections.** `base.DataTableConnectionFromGraphQL` → the service's
   `ListConnection` with `projection.Select(...)` columns → `base.EntityCursorConnection`
   (`commodityresolver/commodity.resolvers.go`). `IncludeTotalCount` is set only when `totalCount`
-  is selected.
+  or `totalCountExact` is selected (`base.ConnectionTotalRequested`), and every connection type
+  declares `totalCountExact: Boolean!` beside `totalCount`.
 - **Mutations** map input to the domain with the generated mappers, take the actor from
   `actorutil.FromAuthContext(authCtx)`, and call the same service method an agent tool calls
   (`trailerresolver/trailer.resolvers.go`).
@@ -53,7 +54,18 @@ but `Core`.
   `loaders/loaders.go` and `bootstrap/modules/api/graphql.go`, add its field to `set` and its
   accessor and `Attach` to `loaders/access.go`; resolvers read through the accessors
   (`loaders.Available(ctx)`, `loaders.CustomerByID(ctx, id)`). No exported type or function in
-  `loaders` mentions `dataloadgen.Loader`.
+  `loaders` mentions `dataloadgen.Loader`. A per-parent count goes through one too, and every field that shows it
+  (`laneCount`, `laneCountExact`) reads the same loader, so they share one read: the repository
+  counts every requested parent in one statement, a lateral `LIMIT` capping each at its share of
+  `pagination.ExactTotalUpTo` (`ExactTotalUpTo / parents`, at least 100), and estimates only the
+  parents past their cap (`rateagreementrepository.CountLiveLanes`). A stored count suits only a
+  figure that does not depend on the clock; lane liveness does, so lanes are counted at read. A
+  per-parent list with an argument (`lanes(first:)`) loads through `batchFirstFunc`: the key
+  carries the argument (`firstKey(id, first)`), each distinct `first` is one read for every parent
+  asking it, and the repository reads them in one statement, `id IN (SELECT child.id FROM parents
+  CROSS JOIN LATERAL (… ORDER BY … LIMIT first))`, bounded by parents times `first`
+  (`rateagreementrepository.ListFirstLanes`). It counts nothing; a total is its own field on the
+  count loader.
 - **Another kind's record** on a type shows its reference view; more needs
   `@requiresRead(kind:)` ([reference-views.md](../reference-views.md)).
 - Tests build `&QueryResolver{&Deps{Core: &base.Core{...}, ...}}`.
@@ -76,6 +88,12 @@ rather than raising the ceiling.
 - The caller from `authctx.GetAuthContext(c)`; bodies through `authctx.BindJSON(c, authCtx, &v)`,
   which also sets tenant info; large bodies through `helpers.ReadBoundedRequestBody`.
 - Every error through `h.eh.HandleError(c, err)`, which maps `errortypes` to status codes.
+- Lists go through `pagination.List` (cursor response: `count`, `totalCount`) or
+  `pagination.SelectOptions` (`count`, offset `next`); both carry `totalCountExact` from
+  `ListResult.TotalExact`, and a select-options `next` comes from `pagination.HasMore`, so an
+  estimated total never ends or extends the pages. A response built by hand from a `ListResult`
+  carries `totalExact` beside `total`, as does a GraphQL list type with a `total` or `totalCount`
+  (`totalExact`/`totalCountExact: Boolean!`).
 - Register the constructor in `bootstrap/modules/api/handlers.go` and call `RegisterRoutes` from
   `internal/api/router.go`. The protected group already applies auth, read scope, rate limiting
   by principal, CSRF, the read-only guard and idempotency; a public route (token links,

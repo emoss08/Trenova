@@ -74,21 +74,33 @@ describe("EDI transfer queries", () => {
         id: `edilt_batch_${String(index).padStart(3, "0")}`,
         inboundMessageId: `edimsg_batch_${String(index).padStart(3, "0")}`,
       });
+    const cursorAt = (offset: number) => `page-${offset}`;
     get.mockImplementation(async (url: string) => {
-      const offset = Number(new URL(url, "http://api").searchParams.get("offset") ?? 0);
+      const after = new URL(url, "http://api").searchParams.get("after");
+      const offset = after ? Number(after.replace("page-", "")) : 0;
       const results = Array.from(
         { length: Math.max(Math.min(100, total - offset), 0) },
         (_, index) => tender(offset + index),
       );
-      return { results, count: total, next: null, prev: null };
+      const hasNextPage = offset + results.length < total;
+      return {
+        results,
+        count: results.length,
+        totalCount: total,
+        totalCountExact: true,
+        next: "",
+        previous: "",
+        hasNextPage,
+        endCursor: hasNextPage ? cursorAt(offset + results.length) : "",
+      };
     });
 
     const transfers = await new QueryClient().fetchQuery(edi.inboundFileTransfers("ediinf_batch"));
 
     expect(get.mock.calls.map(([url]) => url)).toEqual([
       "/edi/transfers/?direction=inbound&inboundFileId=ediinf_batch&limit=100",
-      "/edi/transfers/?direction=inbound&inboundFileId=ediinf_batch&limit=100&offset=100",
-      "/edi/transfers/?direction=inbound&inboundFileId=ediinf_batch&limit=100&offset=200",
+      "/edi/transfers/?direction=inbound&inboundFileId=ediinf_batch&limit=100&after=page-100",
+      "/edi/transfers/?direction=inbound&inboundFileId=ediinf_batch&limit=100&after=page-200",
     ]);
     expect(transfers).toHaveLength(total);
     expect(transfers.map((row) => row.id)).toEqual(

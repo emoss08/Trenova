@@ -31,5 +31,6 @@ query DeskRecordShipments($input: ShipmentsInput!, $includeTotalCount: Boolean!)
       endCursor
     }
     totalCount @include(if: $includeTotalCount)
+    totalCountExact @include(if: $includeTotalCount)
   }
 }

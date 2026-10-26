@@ -60,6 +60,7 @@ query DeskLocationDwell($locationId: ID!, $from: Timestamp!, $to: Timestamp!) {
 query DeskLocationPolicies($input: DataTableConnectionInput!) {
   detentionPolicies(input: $input) {
     totalCount
+    totalCountExact
     edges {
       node {
         id

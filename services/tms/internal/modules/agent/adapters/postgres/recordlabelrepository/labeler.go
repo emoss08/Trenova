@@ -106,8 +106,8 @@ type ownedSource struct {
 	owner permission.Resource
 }
 
-func labelText(e keel.Expr) keel.Expr {
-	return keel.DynOf(e).Cast(keel.TypeString).Coalesce("")
+func labelText(e keel.Expr) keel.StringExpr {
+	return keel.CastText(e).Coalesce("")
 }
 
 //nolint:exhaustive // only the resources whose records a preview names by label are listed
@@ -126,7 +126,7 @@ var sources = map[permission.Resource]source{
 	},
 	permission.ResourceWorker: func(ids []pulid.ID) projection {
 		t := workerdb.Workers
-		return t.Pick(t.ID, labelText(keel.DynFunc("concat_ws", " ", t.FirstName, t.LastName))).
+		return t.Pick(t.ID, labelText(keel.ConcatWS(" ", t.FirstName, t.LastName))).
 			Where(t.ID.In(ids...))
 	},
 	permission.ResourceTractor: func(ids []pulid.ID) projection {
@@ -171,7 +171,7 @@ var sources = map[permission.Resource]source{
 	},
 	permission.ResourceDocument: func(ids []pulid.ID) projection {
 		t := documentdb.Documents
-		return t.Pick(t.ID, labelText(keel.DynOf(t.OriginalName).NullIf("").Coalesce(t.FileName))).
+		return t.Pick(t.ID, labelText(t.OriginalName.NullIf("").Coalesce(t.FileName))).
 			Where(t.ID.In(ids...))
 	},
 	permission.ResourceDashboard: func(ids []pulid.ID) projection {
@@ -216,18 +216,10 @@ var sources = map[permission.Resource]source{
 	},
 	permission.ResourceCustomerPayment: func(ids []pulid.ID) projection {
 		t := customerpaymentdb.Payments
-		paidOn := keel.DynFunc(
-			"to_char",
-			keel.DynFunc(
-				"timezone",
-				keel.DynLit("UTC").Cast(keel.TypeString),
-				keel.DynFunc("to_timestamp", t.PaymentDate),
-			),
-			keel.DynLit("YYYY-MM-DD").Cast(keel.TypeString),
-		)
-		label := keel.DynOf(t.ReferenceNumber).
+		paidOn := keel.ToTimestamp(t.PaymentDate).AtTimeZone(keel.Text("UTC")).ToChar("YYYY-MM-DD")
+		label := t.ReferenceNumber.
 			NullIf("").
-			Coalesce(keel.DynLit("Payment of ").Cast(keel.TypeString).Concat(paidOn))
+			Coalesce(keel.Text("Payment of ").Cat(paidOn))
 		return t.Pick(t.ID, labelText(label)).
 			Where(t.ID.In(ids...))
 	},
@@ -249,7 +241,7 @@ var sources = map[permission.Resource]source{
 	},
 	permission.ResourceGeneralLedgerAccount: func(ids []pulid.ID) projection {
 		t := glaccountdb.GLAccounts
-		return t.Pick(t.ID, labelText(keel.DynFunc("concat_ws", " ", t.AccountCode, t.Name))).
+		return t.Pick(t.ID, labelText(keel.ConcatWS(" ", t.AccountCode, t.Name))).
 			Where(t.ID.In(ids...))
 	},
 	permission.ResourceHazardousMaterial: func(ids []pulid.ID) projection {
@@ -307,7 +299,7 @@ var ownedSources = map[permission.Resource]ownedSource{
 	permission.ResourceTender: {
 		query: func(ids []pulid.ID) projection {
 			t := tenderdb.TenderOffers
-			return t.Pick(t.ID, t.CarrierID, keel.DynLit("")).Where(t.ID.In(ids...))
+			return t.Pick(t.ID, t.CarrierID, keel.Text("")).Where(t.ID.In(ids...))
 		},
 		owner: permission.ResourceCarrier,
 	},

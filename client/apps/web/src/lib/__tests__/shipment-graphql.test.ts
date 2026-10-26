@@ -26,6 +26,7 @@ describe("shipment GraphQL helpers", () => {
           endCursor: "cursor-1",
         },
         totalCount: 25,
+        totalCountExact: true,
       },
     });
 
@@ -62,6 +63,7 @@ describe("shipment GraphQL helpers", () => {
     expect(response).toEqual({
       results: [{ id: "shp_1", proNumber: "SHP-1" }],
       count: 25,
+      totalCountExact: true,
       next: "cursor-1",
       prev: null,
       pageInfo: {
@@ -69,8 +71,26 @@ describe("shipment GraphQL helpers", () => {
         hasNextPage: true,
         endCursor: "cursor-1",
         totalCount: 25,
+        totalCountExact: true,
       },
     });
+  });
+
+  it("keeps a shipment total the server estimated marked as an estimate", async () => {
+    requestGraphQLMock.mockResolvedValueOnce({
+      shipments: {
+        edges: [{ node: { id: "shp_1", proNumber: "SHP-1" } }],
+        pageInfo: { hasNextPage: true, endCursor: "cursor-1" },
+        totalCount: 1_250_000,
+        totalCountExact: false,
+      },
+    });
+
+    const response = await listShipmentsGraphQL({ limit: 20 });
+
+    expect(response.count).toBe(1_250_000);
+    expect(response.totalCountExact).toBe(false);
+    expect(response.pageInfo?.totalCountExact).toBe(false);
   });
 
   it("requests shipment events with cursor pagination variables", async () => {
@@ -139,6 +159,7 @@ describe("shipment GraphQL helpers", () => {
           endCursor: null,
         },
         totalCount: 1,
+        totalCountExact: true,
       },
     });
 
@@ -165,6 +186,7 @@ describe("shipment GraphQL helpers", () => {
         },
       ],
       count: 1,
+      totalCountExact: true,
       next: null,
       prev: null,
       pageInfo: {
@@ -172,6 +194,7 @@ describe("shipment GraphQL helpers", () => {
         hasNextPage: false,
         endCursor: null,
         totalCount: 1,
+        totalCountExact: true,
       },
     });
   });

@@ -1,4 +1,5 @@
 {
+  "About {0} shipments can transfer": "約 {0} 筆運單可移轉",
   "Add notes...": "新增備註...",
   "Adjust terms": "調整條款",
   "Adjustment-origin rebill": "源自調整的重新開單",
@@ -150,6 +151,7 @@
   "Shipments that can transfer": "可移轉的運單",
   "Show historical queue records that already produced a posted invoice.": "顯示已產生過帳發票的歷史佇列紀錄。",
   "Show outcome": "顯示結果",
+  "Showing {0} of about {1}": "顯示 {0} / 約 {1} 筆",
   "Showing {0} of {1}": "顯示 {0} / {1} 筆",
   "Something outside the billing policy stopped the transfer. Try it again.": "帳務政策以外的原因中止了移轉，請再試一次。",
   "Start transfer": "開始移轉",
@@ -178,6 +180,8 @@
   "This statement bills itself when the period closes. Billing it here is only for getting ahead of that.": "此對帳單會在期間結束時自動計費。在此計費僅是為了提前處理。",
   "This transfer keeps running if you close this window.": "即使關閉此視窗，此轉移作業仍會繼續執行。",
   "Total charge is $0.00": "費用總額為 $0.00",
+  "Transfer all of about {0}": "移轉全部約 {0} 筆",
+  "Transfer all of about {0} shipments that match the current search and status?": "要移轉符合目前搜尋與狀態的全部約 {0} 筆運單嗎？",
   "Transfer all {0}": "移轉全部 {0} 筆",
   "Transfer failed": "移轉失敗",
   "Transfer more": "繼續移轉",

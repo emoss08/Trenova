@@ -98,9 +98,10 @@ func myAgentConnectionToModel(
 	}
 
 	return &gqlmodel.MyAgentConnection{
-		Edges:      page.Edges,
-		PageInfo:   page.PageInfo,
-		TotalCount: page.TotalCount,
+		Edges:           page.Edges,
+		PageInfo:        page.PageInfo,
+		TotalCount:      page.TotalCount,
+		TotalCountExact: page.TotalCountExact,
 	}, nil
 }
 
@@ -109,9 +110,10 @@ func emptyMyAgentConnection(ctx context.Context) *gqlmodel.MyAgentConnection {
 		Edges:    []*gqlmodel.MyAgentEdge{},
 		PageInfo: &gqlmodel.PageInfo{},
 	}
-	if base.ConnectionFieldRequested(ctx, base.ConnectionTotalCountField) {
+	if base.ConnectionTotalRequested(ctx) {
 		zero := 0
 		connection.TotalCount = &zero
+		connection.TotalCountExact = true
 	}
 
 	return connection

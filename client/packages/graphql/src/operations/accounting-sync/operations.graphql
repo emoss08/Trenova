@@ -452,6 +452,7 @@ query AccountingSyncRecords(
       endCursor
     }
     totalCount
+    totalCountExact
   }
 }
 

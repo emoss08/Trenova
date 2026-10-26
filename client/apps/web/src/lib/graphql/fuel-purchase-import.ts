@@ -39,6 +39,7 @@ export type FuelPurchaseImportRow = FuelPurchaseImportRowFieldsFragment;
 export type FuelPurchaseImportRowsPage = {
   edges: Array<{ node: FuelPurchaseImportRow; cursor: string }>;
   totalCount: number | null;
+  totalCountExact?: boolean;
   pageInfo: { hasNextPage: boolean; endCursor: string | null };
 };
 export type FuelImportTemplate = FuelPurchaseImportTemplateQuery["fuelPurchaseImportTemplate"];

@@ -121,7 +121,7 @@ func (r *QueryResolver) PendingDecisions(ctx context.Context, input gqlmodel.Pen
 
 	req := agentports.ListPendingDecisionsRequest{
 		TenantInfo:        base.TenantInfo(authCtx),
-		IncludeTotalCount: base.ConnectionFieldRequested(ctx, base.ConnectionTotalCountField),
+		IncludeTotalCount: base.ConnectionTotalRequested(ctx),
 		Usable:            usable,
 	}
 	if input.First != nil {
@@ -168,9 +168,10 @@ func (r *QueryResolver) PendingDecisions(ctx context.Context, input gqlmodel.Pen
 	}
 
 	return &gqlmodel.PendingDecisionConnection{
-		Edges:      edges,
-		PageInfo:   pageInfo,
-		TotalCount: page.TotalCount,
+		Edges:           edges,
+		PageInfo:        pageInfo,
+		TotalCount:      page.TotalCount,
+		TotalCountExact: page.TotalCountExact,
 	}, nil
 }
 

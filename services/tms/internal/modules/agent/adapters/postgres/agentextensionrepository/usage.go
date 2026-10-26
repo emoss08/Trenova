@@ -33,15 +33,15 @@ func reserve(
 	src := keel.Rows(
 		"req",
 		[]string{"extension_type", "day", "requests", "failures", "cost_usd", "updated_at"},
-		keel.DynLit(string(params.Type)),
-		keel.DynLit(params.Day),
-		keel.DynLit(1),
-		keel.DynLit(0),
-		keel.DynLit(0),
-		keel.DynLit(params.Now),
+		keel.Text(string(params.Type)),
+		keel.Int64(int64(params.Day)),
+		keel.Int64(1),
+		keel.Int64(0),
+		keel.Int64(0),
+		keel.Int64(params.Now),
 	)
 	conflict := keel.OnConflict(u.OrganizationID, u.BusinessUnitID, u.ExtensionType, u.Day).
-		Set(u.Requests.Add(1), u.UpdatedAt.ToExpr(u.UpdatedAt.Excluded())).
+		Set(u.Requests.Increment(1), u.UpdatedAt.ToExpr(u.UpdatedAt.Excluded())).
 		UpdateWhere(u.Requests.Lt(int64(params.Limit)))
 
 	return src, conflict, []keel.Column{
@@ -86,8 +86,8 @@ func recordOutcome(
 
 	return u.Where(u.ExtensionType.Eq(params.Type), u.Day.Eq(int64(params.Day))),
 		[]keel.Assignment{
-			u.Failures.Add(failures),
-			u.CostUSD.Add(cost),
+			u.Failures.Increment(failures),
+			u.CostUSD.Increment(cost),
 			u.UpdatedAt.To(params.Now),
 		}
 }
@@ -123,10 +123,10 @@ func summarize(
 	return u.Group(u.ExtensionType).
 		Pick(
 			u.ExtensionType,
-			keel.DynOf(u.Requests.Sum().Filter(u.Day.Eq(int64(params.Today)))).Coalesce(0),
-			keel.DynOf(u.Requests.Sum()).Coalesce(0),
-			keel.DynOf(u.Failures.Sum()).Coalesce(0),
-			keel.DynOf(u.CostUSD.Sum()).Coalesce(0),
+			keel.NumericOf(u.Requests.Sum().Filter(u.Day.Eq(int64(params.Today)))).Coalesce(0),
+			keel.NumericOf(u.Requests.Sum()).Coalesce(0),
+			keel.NumericOf(u.Failures.Sum()).Coalesce(0),
+			keel.NumericOf(u.CostUSD.Sum()).Coalesce(0),
 		).
 		Where(u.Day.Gte(int64(params.FromDay)), u.Day.Lte(int64(params.Today)))
 }

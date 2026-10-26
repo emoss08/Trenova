@@ -327,7 +327,7 @@ func (s *Service) listDefinitions(
 		}
 
 		out = append(out, page.Items...)
-		if len(page.Items) < listPageSize || len(out) >= page.Total {
+		if len(page.Items) < listPageSize || (page.TotalExact && len(out) >= page.Total) {
 			break
 		}
 	}

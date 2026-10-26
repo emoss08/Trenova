@@ -122,7 +122,7 @@ func TestEngineError_MapsEveryEngineCode(t *testing.T) {
 			name: "invalid definitions name the part at fault and the closest names",
 			err: &analytics.Error{Code: analytics.CodeInvalid, Details: ir.Errors{{
 				Code:        ir.CodeUnknownField,
-				Message:     `unknown field "statsu"`,
+				Message:     `unknown field "statsu" on shipment; did you mean "status"?`,
 				Pointer:     "/columns/2/dimension/field",
 				Suggestions: []string{"status"},
 			}}},

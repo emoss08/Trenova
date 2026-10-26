@@ -247,9 +247,9 @@ func listMonitoredRows(ctx context.Context, db *keel.DB, limit int) ([]monitored
 			sm.ID,
 			sm.ShipmentID,
 			sp.ProNumber,
-			keel.DynOf(sp.OwnerID).Coalesce(""),
+			sp.OwnerID.Coalesce(""),
 			ca.CarrierID,
-			keel.DynOf(car.Name).Coalesce(""),
+			car.Name.Coalesce(""),
 			cus.CheckCallIntervalHours,
 			ca.ConfirmedAt,
 		).
@@ -287,11 +287,10 @@ func lastContacts(
 				Pick(te.ShipmentMoveID, te.ReceivedAt.Max()).
 				Where(te.ShipmentMoveID.In(batch...)), &events),
 			keel.IntoSlice(st.Group(st.ShipmentMoveID).
-				Pick(st.ShipmentMoveID, keel.DynFunc(
-					"greatest",
-					keel.DynOf(st.ActualArrival).Coalesce(0),
-					keel.DynOf(st.ActualDeparture).Coalesce(0),
-				).Max()).
+				Pick(
+					st.ShipmentMoveID,
+					st.ActualArrival.Coalesce(0).Greatest(st.ActualDeparture.Coalesce(0)).Max(),
+				).
 				Where(st.ShipmentMoveID.In(batch...)), &visits),
 		)
 		if err != nil {

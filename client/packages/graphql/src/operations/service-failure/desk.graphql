@@ -119,5 +119,6 @@ query DeskRecordFailures(
       endCursor
     }
     totalCount @include(if: $includeTotalCount)
+    totalCountExact @include(if: $includeTotalCount)
   }
 }

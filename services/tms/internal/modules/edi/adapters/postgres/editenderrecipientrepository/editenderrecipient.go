@@ -62,7 +62,6 @@ func (r *repository) ListActiveTenderRecipientsForSourceShipment(
 		tr := edidb.TenderRecipients
 		return tr.Where(
 			tr.SourceOrganizationID.Eq(req.TenantInfo.OrgID),
-			tr.SourceBusinessUnitID.Eq(req.TenantInfo.BuID),
 			tr.SourceShipmentID.Eq(req.SourceShipmentID),
 			tr.Status.Eq(edi.TenderRecipientStatusActive),
 		).
@@ -79,7 +78,6 @@ func (r *repository) GetActiveExternalRecipientByShipmentReference(
 		tr := edidb.TenderRecipients
 		entity, err := tr.Where(
 			tr.SourceOrganizationID.Eq(req.TenantInfo.OrgID),
-			tr.SourceBusinessUnitID.Eq(req.TenantInfo.BuID),
 			tr.EDIPartnerID.Eq(req.PartnerID),
 			tr.RecipientKind.Eq(edi.TenderRecipientKindExternal),
 			tr.Status.Eq(edi.TenderRecipientStatusActive),
@@ -109,13 +107,12 @@ func (r *repository) UpsertTenderRecipient(
 		entity := req.Recipient
 		_, err := tr.Upsert(ctx, db, []*edi.TenderRecipient{entity}, keel.OnConflict(
 			tr.SourceShipmentID,
-			tr.SourceBusinessUnitID,
+			tr.BusinessUnitID,
 			tr.SourceOrganizationID,
 			tr.RecipientKind,
-			keel.DynOf(tr.RecipientOrganizationID).Coalesce(keel.DynConst("")),
-			keel.DynOf(tr.RecipientBusinessUnitID).Coalesce(keel.DynConst("")),
-			keel.DynOf(tr.EDIPartnerID).Coalesce(keel.DynConst("")),
-			keel.DynOf(tr.PartnerDocumentProfileID).Coalesce(keel.DynConst("")),
+			tr.RecipientOrganizationID.Coalesce(keel.ConstText("")),
+			tr.EDIPartnerID.Coalesce(keel.ConstText("")),
+			tr.PartnerDocumentProfileID.Coalesce(keel.ConstText("")),
 		).
 			Update(
 				tr.LatestBaselinePayload,
@@ -141,11 +138,9 @@ func (r *repository) UpsertTenderRecipient(
 
 		stored, err := tr.Where(
 			tr.SourceShipmentID.Eq(entity.SourceShipmentID),
-			tr.SourceBusinessUnitID.Eq(entity.SourceBusinessUnitID),
 			tr.SourceOrganizationID.Eq(entity.SourceOrganizationID),
 			tr.RecipientKind.Eq(entity.RecipientKind),
 			tr.RecipientOrganizationID.Eq(entity.RecipientOrganizationID),
-			tr.RecipientBusinessUnitID.Eq(entity.RecipientBusinessUnitID),
 			tr.EDIPartnerID.Eq(entity.EDIPartnerID),
 			tr.PartnerDocumentProfileID.Eq(entity.PartnerDocumentProfileID),
 		).One(ctx, db)
@@ -170,23 +165,13 @@ func (r *repository) UpdateTenderRecipient(
 	})
 }
 
-func keepStored(col keel.Col) keel.Expr {
-	return keel.DynOf(col.Excluded()).NullIf("").Coalesce(col)
+func keepStored(col keel.Col) keel.StringExpr {
+	return keel.StringOf(col.Excluded()).NullIf("").Coalesce(col)
 }
 
 func visibleTo(tr *edidb.TenderRecipientsTable, tenant pagination.TenantInfo) keel.Pred {
 	return keel.Or(
-		keel.And(
-			tr.SourceOrganizationID.Eq(tenant.OrgID),
-			tr.SourceBusinessUnitID.Eq(tenant.BuID),
-		),
-		keel.And(
-			tr.RecipientOrganizationID.Eq(tenant.OrgID),
-			keel.Or(
-				tr.RecipientBusinessUnitID.Eq(tenant.BuID),
-				tr.RecipientBusinessUnitID.IsNull(),
-				tr.BusinessUnitID.Eq(tenant.BuID),
-			),
-		),
+		tr.SourceOrganizationID.Eq(tenant.OrgID),
+		tr.RecipientOrganizationID.Eq(tenant.OrgID),
 	)
 }

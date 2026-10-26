@@ -47,6 +47,8 @@ const PILL_TONE: Record<"danger" | "warning" | "muted", string> = {
 
 export type UnassignedQueueSummary = {
   totalCount: number | undefined;
+  /** False when totalCount is the server's estimate of a queue too large to count. */
+  totalCountExact: boolean;
   pendingRevenue: number;
 };
 
@@ -83,6 +85,7 @@ export function UnassignedQueueList({
     [data?.pages],
   );
   const totalCount = data?.pages[0]?.count;
+  const totalCountExact = data?.pages[0]?.totalCountExact !== false;
 
   const pendingRevenue = useMemo(
     () =>
@@ -94,8 +97,8 @@ export function UnassignedQueueList({
   );
 
   useEffect(() => {
-    onSummary?.({ totalCount, pendingRevenue });
-  }, [totalCount, pendingRevenue, onSummary]);
+    onSummary?.({ totalCount, totalCountExact, pendingRevenue });
+  }, [totalCount, totalCountExact, pendingRevenue, onSummary]);
 
   const visible = limit ? shipments.slice(0, limit) : shipments;
   const observerTarget = useRef<HTMLDivElement>(null);

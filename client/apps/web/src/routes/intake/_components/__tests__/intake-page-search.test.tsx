@@ -56,7 +56,7 @@ vi.mock("@/lib/queries/capture", () => ({
   capture: {
     batchCount: (filter: unknown) => ({
       queryKey: ["capture", "batchCount", filter],
-      queryFn: () => Promise.resolve(0),
+      queryFn: () => Promise.resolve({ count: 0, exact: true }),
     }),
   },
 }));

@@ -179,9 +179,9 @@ func (r *repository) resolveKeyedRules(
 // predicate against the partial GiST indexes instead. There are only ever a
 // handful per organization, which is why a second query is cheaper than trying
 // to force both shapes through one.
-func radiusMatch(scope, center, radius keel.Expr, lon, lat float64) keel.Pred {
+func radiusMatch(scope keel.StringValue, center, radius keel.Expr, lon, lat float64) keel.Pred {
 	return keel.Or(
-		keel.DynOf(scope).Ne(keel.DynConst(string(rategeo.ScopeTypeRadius))),
+		keel.StringOf(scope).NeExpr(keel.ConstText(string(rategeo.ScopeTypeRadius))),
 		postgis.DWithin(center, postgis.Pt(lon, lat), radius),
 	)
 }

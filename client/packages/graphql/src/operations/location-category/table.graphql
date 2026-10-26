@@ -24,6 +24,7 @@ query LocationCategoryTable($input: DataTableConnectionInput!, $includeTotalCoun
       }
     }
     totalCount @include(if: $includeTotalCount)
+    totalCountExact @include(if: $includeTotalCount)
     pageInfo {
       ...DataTablePageInfoFields
     }

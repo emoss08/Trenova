@@ -567,9 +567,10 @@ type RecentDecision struct {
 }
 
 type PendingDecisionsPage struct {
-	Items       []PendingDecision
-	HasNextPage bool
-	TotalCount  *int
+	Items           []PendingDecision
+	HasNextPage     bool
+	TotalCount      *int
+	TotalCountExact bool
 }
 
 // DecideAgentProposalsRequest decides several proposals of the same tool

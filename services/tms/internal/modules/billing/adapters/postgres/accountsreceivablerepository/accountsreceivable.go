@@ -110,25 +110,26 @@ func (r *repository) ListCustomerLedger(
 	)
 }
 
-func pastDueDays(inv *invoicedb.InvoicesTable, asOf int64) keel.DynExpr {
-	return keel.DynLit(asOf).Sub(inv.DueDate).Div(secondsPerDay)
+func pastDueDays(inv *invoicedb.InvoicesTable, asOf int64) keel.Int64Expr {
+	return keel.Int64(asOf).Sub(inv.DueDate).Div(keel.Int64(secondsPerDay))
 }
 
-func daysPastDue(inv *invoicedb.InvoicesTable, asOf int64) keel.DynExpr {
-	return keel.DynCase().
-		When(keel.Or(inv.DueDate.IsNull(), inv.DueDate.Gte(asOf)), 0).
-		Else(keel.DynFunc("greatest", pastDueDays(inv, asOf), 0))
+func daysPastDue(inv *invoicedb.InvoicesTable, asOf int64) keel.Int64Expr {
+	return keel.CaseInt64().
+		When(keel.Or(inv.DueDate.IsNull(), inv.DueDate.Gte(asOf)), keel.Int64(0)).
+		Else(pastDueDays(inv, asOf).Greatest(keel.Int64(0)))
 }
 
-func amountWhen(p keel.Pred, amount any) keel.DynExpr {
-	return keel.DynCase().When(p, amount).Else(0)
+func amountWhen(p keel.Pred, amount keel.Int64Value) keel.Int64Expr {
+	return keel.CaseInt64().When(p, amount).Else(keel.Int64(0))
 }
 
-func agingBuckets(due, asOf, open keel.DynExpr) []keel.DynExpr {
-	days := asOf.Sub(due).Div(secondsPerDay)
-	overdue := due.Lt(asOf)
-	return []keel.DynExpr{
-		amountWhen(keel.Or(due.IsNull(), due.Gte(asOf)), open).Sum(),
+func agingBuckets(dueDate, asOf, open keel.Int64Value) []keel.Agg {
+	due := keel.Int64Of(dueDate)
+	days := keel.Int64Of(asOf).Sub(due).Div(keel.Int64(secondsPerDay))
+	overdue := due.LtExpr(asOf)
+	return []keel.Agg{
+		amountWhen(keel.Or(due.IsNull(), due.GteExpr(asOf)), open).Sum(),
 		amountWhen(keel.And(overdue, days.Between(1, 30)), open).Sum(),
 		amountWhen(keel.And(overdue, days.Between(31, 60)), open).Sum(),
 		amountWhen(keel.And(overdue, days.Between(61, 90)), open).Sum(),
@@ -136,8 +137,8 @@ func agingBuckets(due, asOf, open keel.DynExpr) []keel.DynExpr {
 	}
 }
 
-func invoiceAgingBuckets(inv *invoicedb.InvoicesTable, asOf int64) []keel.DynExpr {
-	return agingBuckets(keel.DynOf(inv.DueDate), keel.DynLit(asOf), receivablesql.OpenMinor(inv))
+func invoiceAgingBuckets(inv *invoicedb.InvoicesTable, asOf int64) []keel.Agg {
+	return agingBuckets(inv.DueDate, keel.Int64(asOf), receivablesql.OpenMinor(inv))
 }
 
 func agingQuery(inv *invoicedb.InvoicesTable, asOf int64) *keel.Query[*invoice.Invoice] {

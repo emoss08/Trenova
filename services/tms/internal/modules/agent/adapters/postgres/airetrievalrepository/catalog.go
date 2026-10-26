@@ -43,7 +43,8 @@ func catalogRefsMatch(refs []airetrieval.CatalogItemRef) keel.Pred {
 		hashes = append(hashes, ref.ContentHash)
 	}
 
-	return keel.DynRow(c.ItemKey, c.ContentHash).InUnnest(keys, hashes)
+	return keel.Tuple(c.ItemKey, c.ContentHash).
+		InUnnest(keel.TextArray(keys), keel.TextArray(hashes))
 }
 
 func catalogScope(

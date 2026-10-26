@@ -13,6 +13,7 @@ import (
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/listquery"
 	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/pkg/resultcache"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
@@ -133,7 +134,10 @@ func (r *repository) GetByID(
 	req documenttypeports.GetDocumentTypeByIDRequest,
 ) (*documenttype.DocumentType, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*documenttype.DocumentType, error) {
-		entity, err := documenttypedb.DocumentTypes.Get(ctx, r.db.Keel(ctx), req.ID)
+		dt := documenttypedb.DocumentTypes
+		entity, err := dt.Where(dt.ID.Eq(req.ID)).
+			Cache(resultcache.Reference()...).
+			One(ctx, r.db.Keel(ctx))
 		if err != nil {
 			return nil, documentTypeErrors.Map(err, req.ID.String())
 		}
@@ -150,6 +154,7 @@ func (r *repository) GetByCode(
 		dt := documenttypedb.DocumentTypes
 		entity, err := dt.Where(dt.Code.Lower().Eq(strings.ToLower(req.Code))).
 			Order(dt.CreatedAt.Asc()).
+			Cache(resultcache.Reference()...).
 			First(ctx, r.db.Keel(ctx))
 		if err != nil {
 			return nil, documentTypeErrors.Map(err, req.Code)
@@ -165,12 +170,10 @@ func (r *repository) GetByName(
 ) (*documenttype.DocumentType, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*documenttype.DocumentType, error) {
 		dt := documenttypedb.DocumentTypes
-		name := keel.DynLit(strings.TrimSpace(req.Name)).Cast(keel.TypeString)
-		entity, err := dt.Where(
-			keel.DynFunc("lower", keel.DynFunc("btrim", dt.Name)).
-				Eq(keel.DynFunc("lower", keel.DynFunc("btrim", name))),
-		).
+		name := keel.Text(strings.TrimSpace(req.Name))
+		entity, err := dt.Where(dt.Name.Trim().Lower().EqExpr(name.Trim().Lower())).
 			Order(dt.CreatedAt.Asc()).
+			Cache(resultcache.Reference()...).
 			First(ctx, r.db.Keel(ctx))
 		if err != nil {
 			return nil, documentTypeErrors.Map(err, req.Name)
@@ -198,7 +201,9 @@ func (r *repository) SelectOptions(
 				dt.DocumentClassification,
 				dt.DocumentCategory,
 				dt.IsSystem,
-			).Where(dt.Code.NotIn(systemDocumentTypeCodes...))
+			).
+				Where(dt.Code.NotIn(systemDocumentTypeCodes...)).
+				Cache(resultcache.Reference()...)
 
 			return listquery.SelectOptions(
 				ctx,

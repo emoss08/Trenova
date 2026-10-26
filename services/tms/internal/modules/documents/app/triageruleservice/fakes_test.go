@@ -162,7 +162,11 @@ func (f *fakeMailboxes) List(
 		items = append(items, mailbox)
 	}
 
-	return &pagination.ListResult[*inboundmessage.Mailbox]{Items: items, Total: len(items)}, nil
+	return &pagination.ListResult[*inboundmessage.Mailbox]{
+		Items:      items,
+		Total:      len(items),
+		TotalExact: true,
+	}, nil
 }
 
 type fixedOrganizations struct {

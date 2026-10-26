@@ -23,6 +23,7 @@ query SCIMGroupRoleMappingsTable(
       }
     }
     totalCount @include(if: $includeTotalCount)
+    totalCountExact @include(if: $includeTotalCount)
     pageInfo {
       ...DataTablePageInfoFields
     }

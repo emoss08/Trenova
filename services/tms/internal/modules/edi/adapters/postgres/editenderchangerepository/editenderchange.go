@@ -194,18 +194,10 @@ func visibleTo(tenant pagination.TenantInfo) keel.Pred {
 	scope := edidb.TenderRecipients.As("etr_scope")
 
 	return keel.Or(
-		keel.And(
-			tc.SourceOrganizationID.Eq(tenant.OrgID),
-			tc.SourceBusinessUnitID.Eq(tenant.BuID),
-		),
+		tc.SourceOrganizationID.Eq(tenant.OrgID),
 		keel.Exists(scope.Where(
 			scope.ID.EqCol(tc.RecipientID),
 			scope.RecipientOrganizationID.Eq(tenant.OrgID),
-			keel.Or(
-				scope.RecipientBusinessUnitID.Eq(tenant.BuID),
-				scope.RecipientBusinessUnitID.IsNull(),
-				scope.BusinessUnitID.Eq(tenant.BuID),
-			),
 		)),
 	)
 }

@@ -79,6 +79,11 @@ func (f *fakeEngine) compile(
 
 func (f *fakeEngine) Catalog() *analytics.Catalog { return f.catalog }
 
+func (f *fakeEngine) Validate(def *ir.Definition) error {
+	_, err := ir.Resolve(def, f.catalog, ir.Limits{})
+	return err
+}
+
 func (f *fakeEngine) Compile(
 	ctx context.Context,
 	req *analytics.Request,
@@ -109,14 +114,6 @@ func (f *fakeEngine) Page(
 		return nil, err
 	}
 	return nil, errNotExecuted
-}
-
-func (f *fakeEngine) Count(ctx context.Context, req *analytics.Request) (int64, error) {
-	f.record(engineCall{Kind: "count", Request: *req})
-	if _, err := f.compile(ctx, req); err != nil {
-		return 0, err
-	}
-	return 0, errNotExecuted
 }
 
 func (f *fakeEngine) Drill(

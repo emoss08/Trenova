@@ -223,6 +223,16 @@ var Shard = &gqlexec.Shard{
 				},
 				Marshal: gqlexec.Marshal(marshalOInt2ᚖint),
 			},
+			{
+				Name:     "totalCountExact",
+				NonNull:  true,
+				ChildErr: errNoChild5,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.AIUsageFeatureConnection)
+					return obj.TotalCountExact, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
+			},
 		}},
 		{Object: "AIUsageFeatureEdge", Fields: []*gqlexec.Field{
 			{
@@ -250,7 +260,7 @@ var Shard = &gqlexec.Shard{
 		{Object: "AIUsageFeatureSlice", Fields: []*gqlexec.Field{
 			{
 				Name:     "feature",
-				ChildErr: errNoChild5,
+				ChildErr: errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*aiusageports.AIUsageFeatureSlice)
 					return obj.Feature, nil
@@ -667,7 +677,8 @@ var (
 	errNoChild2 = errors.New("field of type Decimal does not have child fields")
 	errNoChild3 = errors.New("field of type ID does not have child fields")
 	errNoChild4 = errors.New("field of type Timestamp does not have child fields")
-	errNoChild5 = errors.New("field of type AIUsageFeature does not have child fields")
+	errNoChild5 = errors.New("field of type Boolean does not have child fields")
+	errNoChild6 = errors.New("field of type AIUsageFeature does not have child fields")
 )
 
 func field_Query_aiUsageFeatures_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
@@ -864,6 +875,14 @@ func marshalNAIUsageSummary2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmod
 		return graphql.Null
 	}
 	return ec.MarshalType(ctx, sel, "AIUsageSummary", v)
+}
+
+func marshalNBoolean2bool(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v bool) graphql.Marshaler {
+	res := graphql.MarshalBoolean(v)
+	if res == graphql.Null {
+		gqlexec.NullViolation(ctx)
+	}
+	return res
 }
 
 func marshalNDecimal2string(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v string) graphql.Marshaler {

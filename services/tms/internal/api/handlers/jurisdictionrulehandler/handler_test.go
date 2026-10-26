@@ -8,9 +8,9 @@ import (
 	"github.com/emoss08/trenova/internal/api/handlers/jurisdictionrulehandler"
 	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/api/middleware"
-	"github.com/emoss08/trenova/internal/modules/places/domain/jurisdictionrule"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/places/domain/jurisdictionrule"
 	"github.com/emoss08/trenova/internal/modules/places/ports/jurisdictionruleports"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -37,8 +37,9 @@ func (s *serviceStub) List(
 ) (*pagination.ListResult[*jurisdictionrule.JurisdictionRule], error) {
 	s.listReq = req
 	return &pagination.ListResult[*jurisdictionrule.JurisdictionRule]{
-		Items: []*jurisdictionrule.JurisdictionRule{},
-		Total: 0,
+		Items:      []*jurisdictionrule.JurisdictionRule{},
+		Total:      0,
+		TotalExact: true,
 	}, nil
 }
 

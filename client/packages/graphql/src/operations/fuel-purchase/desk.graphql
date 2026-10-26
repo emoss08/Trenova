@@ -90,6 +90,7 @@ query DeskFuelPurchases($input: FuelPurchasesInput!, $includeTotalCount: Boolean
       }
     }
     totalCount @include(if: $includeTotalCount)
+    totalCountExact @include(if: $includeTotalCount)
     pageInfo {
       endCursor
       hasNextPage

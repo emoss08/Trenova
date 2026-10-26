@@ -42,7 +42,7 @@ func (r *Deps) resolveUSStateSelectOptions(
 
 	return selectOptionListConnection(
 		result,
-		req.SelectQuery.Pagination.SafeOffset(),
+		req.SelectQuery.Pagination,
 		usStateSelectOptionItem,
 	)
 }
@@ -79,7 +79,7 @@ func (r *Deps) resolveLocationSelectOptions(
 
 	return selectOptionListConnection(
 		result,
-		req.SelectQuery.Pagination.SafeOffset(),
+		req.SelectQuery.Pagination,
 		locationSelectOptionItem,
 	)
 }
@@ -114,7 +114,7 @@ func (r *Deps) resolveRateZoneSelectOptions(
 
 	return selectOptionListConnection(
 		result,
-		req.SelectQuery.Pagination.SafeOffset(),
+		req.SelectQuery.Pagination,
 		rateZoneSelectOptionItem,
 	)
 }
@@ -149,7 +149,7 @@ func (r *Deps) resolveLocationCategorySelectOptions(
 
 	return selectOptionListConnection(
 		result,
-		req.SelectQuery.Pagination.SafeOffset(),
+		req.SelectQuery.Pagination,
 		locationCategorySelectOptionItem,
 	)
 }

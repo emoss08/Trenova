@@ -12,6 +12,7 @@ import {
 } from "@trenova/shared/components/ui/description-list";
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { useT } from "@trenova/shared/i18n/use-t";
+import { formatRowTotal } from "@trenova/shared/lib/row-total";
 import { formatMinor } from "@trenova/shared/lib/benefits";
 import { formatUnixDateMedium } from "@trenova/shared/lib/date";
 import { Operation, Resource } from "@trenova/shared/types/permission";
@@ -112,11 +113,17 @@ export function FactoringReserveSection({ factoringCompanyId }: { factoringCompa
           <FactoringReserveEntryList entries={entries.data.entries} show="invoice" />
           {entries.data.totalCount > entries.data.entries.length ? (
             <p className="text-muted-foreground border-t px-3 py-2 text-xs">
-              {t(
-                "Showing the latest {0} of {1} movements. A report on factoring reserve entries lists them all.",
-                entries.data.entries.length,
-                entries.data.totalCount,
-              )}
+              {entries.data.totalCountExact === false
+                ? t(
+                    "Showing the latest {0} of about {1} movements. A report on factoring reserve entries lists them all.",
+                    entries.data.entries.length,
+                    formatRowTotal(entries.data.totalCount, false),
+                  )
+                : t(
+                    "Showing the latest {0} of {1} movements. A report on factoring reserve entries lists them all.",
+                    entries.data.entries.length,
+                    entries.data.totalCount,
+                  )}
             </p>
           ) : null}
         </div>

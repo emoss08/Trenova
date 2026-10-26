@@ -215,7 +215,7 @@ var graphQLReads = map[string]graphQLRead{
 		Resource:  "accounting_sync",
 		Entity:    func() domaintypes.PostgresSearchable { return new(accountingsync.AccountingDriftFinding) },
 		Variables: []graphQLVariable{
-			{Name: "includeTotalCount", Type: "Boolean", NonNull: false, List: false, Kind: "scalar"},
+			{Name: "includeTotalCount", Type: "Boolean", NonNull: false, List: false, Kind: "scalar", Description: "true also returns totalCountExact: Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."},
 			{Name: "input", Type: "DataTableConnectionInput", NonNull: true, List: false, Kind: "input"},
 			{Name: "integrationType", Type: "AccountingSystem", NonNull: true, List: false, Kind: "enum", Enum: []string{"QuickBooksOnline", "Xero", "BusinessCentral", "NetSuite"}, Description: "The accounting system, such as QuickBooksOnline or Xero."},
 		},
@@ -266,7 +266,7 @@ var graphQLReads = map[string]graphQLRead{
 		Resource:  "accounting_sync",
 		Entity:    func() domaintypes.PostgresSearchable { return new(accountingsync.AccountingInboundChange) },
 		Variables: []graphQLVariable{
-			{Name: "includeTotalCount", Type: "Boolean", NonNull: false, List: false, Kind: "scalar"},
+			{Name: "includeTotalCount", Type: "Boolean", NonNull: false, List: false, Kind: "scalar", Description: "true also returns totalCountExact: Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."},
 			{Name: "input", Type: "DataTableConnectionInput", NonNull: true, List: false, Kind: "input"},
 			{Name: "integrationType", Type: "AccountingSystem", NonNull: true, List: false, Kind: "enum", Enum: []string{"QuickBooksOnline", "Xero", "BusinessCentral", "NetSuite"}, Description: "The accounting system, such as QuickBooksOnline or Xero."},
 		},
@@ -566,7 +566,7 @@ var graphQLReads = map[string]graphQLRead{
 		Resource:  "carrier",
 		Entity:    func() domaintypes.PostgresSearchable { return new(carrier.Carrier) },
 		Variables: []graphQLVariable{
-			{Name: "includeTotalCount", Type: "Boolean", NonNull: false, List: false, Kind: "scalar"},
+			{Name: "includeTotalCount", Type: "Boolean", NonNull: false, List: false, Kind: "scalar", Description: "true also returns totalCountExact: Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."},
 			{Name: "input", Type: "DataTableConnectionInput", NonNull: true, List: false, Kind: "input"},
 		},
 		Fields: []graphQLField{
@@ -631,7 +631,7 @@ var graphQLReads = map[string]graphQLRead{
 		Resource:  "carrier_capacity_posting",
 		Entity:    func() domaintypes.PostgresSearchable { return new(carriercapacity.Posting) },
 		Variables: []graphQLVariable{
-			{Name: "includeTotalCount", Type: "Boolean", NonNull: false, List: false, Kind: "scalar"},
+			{Name: "includeTotalCount", Type: "Boolean", NonNull: false, List: false, Kind: "scalar", Description: "true also returns totalCountExact: Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."},
 			{Name: "input", Type: "DataTableConnectionInput", NonNull: true, List: false, Kind: "input"},
 			{Name: "openOnly", Type: "Boolean", NonNull: false, List: false, Kind: "scalar", Description: "Only postings whose window has not closed."},
 		},
@@ -784,7 +784,7 @@ var graphQLReads = map[string]graphQLRead{
 		Entity:    func() domaintypes.PostgresSearchable { return new(carrierintel.CarrierIntelEvent) },
 		Variables: []graphQLVariable{
 			{Name: "filter", Type: "CarrierIntelEventFilterInput", NonNull: false, List: false, Kind: "input"},
-			{Name: "includeTotalCount", Type: "Boolean", NonNull: false, List: false, Kind: "scalar"},
+			{Name: "includeTotalCount", Type: "Boolean", NonNull: false, List: false, Kind: "scalar", Description: "true also returns totalCountExact: Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."},
 			{Name: "input", Type: "DataTableConnectionInput", NonNull: true, List: false, Kind: "input"},
 		},
 		Fields: []graphQLField{
@@ -1104,7 +1104,7 @@ var graphQLReads = map[string]graphQLRead{
 		Resource:  "customer",
 		Entity:    func() domaintypes.PostgresSearchable { return new(customer.Customer) },
 		Variables: []graphQLVariable{
-			{Name: "includeTotalCount", Type: "Boolean", NonNull: false, List: false, Kind: "scalar"},
+			{Name: "includeTotalCount", Type: "Boolean", NonNull: false, List: false, Kind: "scalar", Description: "true also returns totalCountExact: Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."},
 			{Name: "input", Type: "DataTableConnectionInput", NonNull: true, List: false, Kind: "input"},
 		},
 		Fields: []graphQLField{
@@ -1452,7 +1452,7 @@ var graphQLReads = map[string]graphQLRead{
 		Resource:  "document_type",
 		Entity:    func() domaintypes.PostgresSearchable { return new(documenttype.DocumentType) },
 		Variables: []graphQLVariable{
-			{Name: "includeTotalCount", Type: "Boolean", NonNull: false, List: false, Kind: "scalar"},
+			{Name: "includeTotalCount", Type: "Boolean", NonNull: false, List: false, Kind: "scalar", Description: "true also returns totalCountExact: Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."},
 			{Name: "input", Type: "DataTableConnectionInput", NonNull: true, List: false, Kind: "input"},
 		},
 		Fields: []graphQLField{
@@ -1838,7 +1838,7 @@ var graphQLReads = map[string]graphQLRead{
 		Resource:  "edi",
 		Entity:    func() domaintypes.PostgresSearchable { return new(edi.EDIInboundFile) },
 		Variables: []graphQLVariable{
-			{Name: "includeTotalCount", Type: "Boolean", NonNull: false, List: false, Kind: "scalar"},
+			{Name: "includeTotalCount", Type: "Boolean", NonNull: false, List: false, Kind: "scalar", Description: "true also returns totalCountExact: Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."},
 			{Name: "input", Type: "DataTableConnectionInput", NonNull: true, List: false, Kind: "input"},
 		},
 		Fields: []graphQLField{
@@ -1904,7 +1904,7 @@ var graphQLReads = map[string]graphQLRead{
 		Resource:  "edi",
 		Entity:    func() domaintypes.PostgresSearchable { return new(edi.EDIMessage) },
 		Variables: []graphQLVariable{
-			{Name: "includeTotalCount", Type: "Boolean", NonNull: false, List: false, Kind: "scalar"},
+			{Name: "includeTotalCount", Type: "Boolean", NonNull: false, List: false, Kind: "scalar", Description: "true also returns totalCountExact: Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."},
 			{Name: "input", Type: "DataTableConnectionInput", NonNull: true, List: false, Kind: "input"},
 		},
 		Fields: []graphQLField{
@@ -1981,7 +1981,7 @@ var graphQLReads = map[string]graphQLRead{
 		Resource:  "edi",
 		Entity:    func() domaintypes.PostgresSearchable { return new(edi.EDIPartner) },
 		Variables: []graphQLVariable{
-			{Name: "includeTotalCount", Type: "Boolean", NonNull: false, List: false, Kind: "scalar"},
+			{Name: "includeTotalCount", Type: "Boolean", NonNull: false, List: false, Kind: "scalar", Description: "true also returns totalCountExact: Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."},
 			{Name: "input", Type: "DataTableConnectionInput", NonNull: true, List: false, Kind: "input"},
 		},
 		Fields: []graphQLField{
@@ -2046,7 +2046,7 @@ var graphQLReads = map[string]graphQLRead{
 		Variables: []graphQLVariable{
 			{Name: "direction", Type: "EdiTransferDirection", NonNull: true, List: false, Kind: "enum", Enum: []string{"Inbound", "Outbound"}, Description: "Inbound for the tenders partners sent in, Outbound for the ones this organization sent."},
 			{Name: "inboundFileId", Type: "ID", NonNull: false, List: false, Kind: "scalar", Description: "Only the tenders one inbound file carried."},
-			{Name: "includeTotalCount", Type: "Boolean", NonNull: false, List: false, Kind: "scalar"},
+			{Name: "includeTotalCount", Type: "Boolean", NonNull: false, List: false, Kind: "scalar", Description: "true also returns totalCountExact: Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."},
 			{Name: "input", Type: "DataTableConnectionInput", NonNull: true, List: false, Kind: "input"},
 		},
 		Fields: []graphQLField{
@@ -2505,7 +2505,7 @@ var graphQLReads = map[string]graphQLRead{
 		Resource:  "equipment_manufacturer",
 		Entity:    func() domaintypes.PostgresSearchable { return new(equipmentmanufacturer.EquipmentManufacturer) },
 		Variables: []graphQLVariable{
-			{Name: "includeTotalCount", Type: "Boolean", NonNull: false, List: false, Kind: "scalar"},
+			{Name: "includeTotalCount", Type: "Boolean", NonNull: false, List: false, Kind: "scalar", Description: "true also returns totalCountExact: Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."},
 			{Name: "input", Type: "DataTableConnectionInput", NonNull: true, List: false, Kind: "input"},
 		},
 		Fields: []graphQLField{
@@ -2563,7 +2563,7 @@ var graphQLReads = map[string]graphQLRead{
 		Variables: []graphQLVariable{
 			{Name: "includeEquipmentDetails", Type: "Boolean", NonNull: false, List: false, Kind: "scalar"},
 			{Name: "includeFleetDetails", Type: "Boolean", NonNull: false, List: false, Kind: "scalar"},
-			{Name: "includeTotalCount", Type: "Boolean", NonNull: false, List: false, Kind: "scalar"},
+			{Name: "includeTotalCount", Type: "Boolean", NonNull: false, List: false, Kind: "scalar", Description: "true also returns totalCountExact: Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."},
 			{Name: "includeWorkerDetails", Type: "Boolean", NonNull: false, List: false, Kind: "scalar"},
 			{Name: "input", Type: "DataTableConnectionInput", NonNull: true, List: false, Kind: "input"},
 		},
@@ -2756,7 +2756,7 @@ var graphQLReads = map[string]graphQLRead{
 		Variables: []graphQLVariable{
 			{Name: "includeEquipmentDetails", Type: "Boolean", NonNull: false, List: false, Kind: "scalar"},
 			{Name: "includeFleetDetails", Type: "Boolean", NonNull: false, List: false, Kind: "scalar"},
-			{Name: "includeTotalCount", Type: "Boolean", NonNull: false, List: false, Kind: "scalar"},
+			{Name: "includeTotalCount", Type: "Boolean", NonNull: false, List: false, Kind: "scalar", Description: "true also returns totalCountExact: Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."},
 			{Name: "input", Type: "DataTableConnectionInput", NonNull: true, List: false, Kind: "input"},
 		},
 		Fields: []graphQLField{
@@ -2863,7 +2863,7 @@ var graphQLReads = map[string]graphQLRead{
 		Entity:    func() domaintypes.PostgresSearchable { return new(equipmenttype.EquipmentType) },
 		Variables: []graphQLVariable{
 			{Name: "classes", Type: "EquipmentClass", NonNull: false, List: true, Kind: "enum", Enum: []string{"Tractor", "Trailer", "Container", "Other"}},
-			{Name: "includeTotalCount", Type: "Boolean", NonNull: false, List: false, Kind: "scalar"},
+			{Name: "includeTotalCount", Type: "Boolean", NonNull: false, List: false, Kind: "scalar", Description: "true also returns totalCountExact: Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."},
 			{Name: "input", Type: "DataTableConnectionInput", NonNull: true, List: false, Kind: "input"},
 		},
 		Fields: []graphQLField{
@@ -3075,7 +3075,7 @@ var graphQLReads = map[string]graphQLRead{
 		Resource:  "service_failure_reason_code",
 		Entity:    func() domaintypes.PostgresSearchable { return new(servicefailure.ReasonCode) },
 		Variables: []graphQLVariable{
-			{Name: "includeTotalCount", Type: "Boolean", NonNull: false, List: false, Kind: "scalar"},
+			{Name: "includeTotalCount", Type: "Boolean", NonNull: false, List: false, Kind: "scalar", Description: "true also returns totalCountExact: Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."},
 			{Name: "input", Type: "DataTableConnectionInput", NonNull: true, List: false, Kind: "input"},
 		},
 		Fields: []graphQLField{
@@ -3110,7 +3110,7 @@ var graphQLReads = map[string]graphQLRead{
 		Resource:  "service_failure",
 		Entity:    func() domaintypes.PostgresSearchable { return new(servicefailure.ServiceFailure) },
 		Variables: []graphQLVariable{
-			{Name: "includeTotalCount", Type: "Boolean", NonNull: false, List: false, Kind: "scalar"},
+			{Name: "includeTotalCount", Type: "Boolean", NonNull: false, List: false, Kind: "scalar", Description: "true also returns totalCountExact: Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."},
 			{Name: "input", Type: "DataTableConnectionInput", NonNull: true, List: false, Kind: "input"},
 			{Name: "shipmentId", Type: "ID", NonNull: false, List: false, Kind: "scalar"},
 		},
@@ -3419,7 +3419,7 @@ var graphQLReads = map[string]graphQLRead{
 		Resource:  "factoring_noa",
 		Entity:    func() domaintypes.PostgresSearchable { return new(factoring.Noa) },
 		Variables: []graphQLVariable{
-			{Name: "includeTotalCount", Type: "Boolean", NonNull: false, List: false, Kind: "scalar"},
+			{Name: "includeTotalCount", Type: "Boolean", NonNull: false, List: false, Kind: "scalar", Description: "true also returns totalCountExact: Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."},
 			{Name: "input", Type: "DataTableConnectionInput", NonNull: true, List: false, Kind: "input"},
 		},
 		Fields: []graphQLField{
@@ -3510,7 +3510,7 @@ var graphQLReads = map[string]graphQLRead{
 		Resource:  "invoice",
 		Entity:    func() domaintypes.PostgresSearchable { return new(factoring.InvoiceState) },
 		Variables: []graphQLVariable{
-			{Name: "includeTotalCount", Type: "Boolean", NonNull: false, List: false, Kind: "scalar"},
+			{Name: "includeTotalCount", Type: "Boolean", NonNull: false, List: false, Kind: "scalar", Description: "true also returns totalCountExact: Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."},
 			{Name: "input", Type: "DataTableConnectionInput", NonNull: true, List: false, Kind: "input"},
 		},
 		Alongside: []graphQLAlongside{
@@ -3540,7 +3540,7 @@ var graphQLReads = map[string]graphQLRead{
 		Resource:  "factoring_remittance",
 		Entity:    func() domaintypes.PostgresSearchable { return new(factoring.Remittance) },
 		Variables: []graphQLVariable{
-			{Name: "includeTotalCount", Type: "Boolean", NonNull: false, List: false, Kind: "scalar"},
+			{Name: "includeTotalCount", Type: "Boolean", NonNull: false, List: false, Kind: "scalar", Description: "true also returns totalCountExact: Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."},
 			{Name: "input", Type: "DataTableConnectionInput", NonNull: true, List: false, Kind: "input"},
 		},
 		Fields: []graphQLField{
@@ -3610,7 +3610,7 @@ var graphQLReads = map[string]graphQLRead{
 		Resource:  "factoring_submission",
 		Entity:    func() domaintypes.PostgresSearchable { return new(factoring.Submission) },
 		Variables: []graphQLVariable{
-			{Name: "includeTotalCount", Type: "Boolean", NonNull: false, List: false, Kind: "scalar"},
+			{Name: "includeTotalCount", Type: "Boolean", NonNull: false, List: false, Kind: "scalar", Description: "true also returns totalCountExact: Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."},
 			{Name: "input", Type: "DataTableConnectionInput", NonNull: true, List: false, Kind: "input"},
 		},
 		Fields: []graphQLField{
@@ -3750,7 +3750,7 @@ var graphQLReads = map[string]graphQLRead{
 		Resource:  "formula_library",
 		Entity:    func() domaintypes.PostgresSearchable { return new(formulalibrary.FormulaLibrary) },
 		Variables: []graphQLVariable{
-			{Name: "includeTotalCount", Type: "Boolean", NonNull: false, List: false, Kind: "scalar"},
+			{Name: "includeTotalCount", Type: "Boolean", NonNull: false, List: false, Kind: "scalar", Description: "true also returns totalCountExact: Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."},
 			{Name: "input", Type: "DataTableConnectionInput", NonNull: true, List: false, Kind: "input"},
 		},
 		Fields: []graphQLField{
@@ -3785,7 +3785,7 @@ var graphQLReads = map[string]graphQLRead{
 		Resource:  "formula_template",
 		Entity:    func() domaintypes.PostgresSearchable { return new(formulatemplate.FormulaTemplate) },
 		Variables: []graphQLVariable{
-			{Name: "includeTotalCount", Type: "Boolean", NonNull: false, List: false, Kind: "scalar"},
+			{Name: "includeTotalCount", Type: "Boolean", NonNull: false, List: false, Kind: "scalar", Description: "true also returns totalCountExact: Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."},
 			{Name: "input", Type: "DataTableConnectionInput", NonNull: true, List: false, Kind: "input"},
 		},
 		Fields: []graphQLField{
@@ -3825,7 +3825,7 @@ var graphQLReads = map[string]graphQLRead{
 		Resource:  "fuel_card",
 		Entity:    func() domaintypes.PostgresSearchable { return new(fuelpurchase.FuelCard) },
 		Variables: []graphQLVariable{
-			{Name: "includeTotalCount", Type: "Boolean", NonNull: false, List: false, Kind: "scalar"},
+			{Name: "includeTotalCount", Type: "Boolean", NonNull: false, List: false, Kind: "scalar", Description: "true also returns totalCountExact: Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."},
 			{Name: "input", Type: "FuelCardsInput", NonNull: true, List: false, Kind: "input"},
 		},
 		Fields: []graphQLField{
@@ -3972,7 +3972,7 @@ var graphQLReads = map[string]graphQLRead{
 		Resource:  "ifta_jurisdiction_mileage",
 		Entity:    func() domaintypes.PostgresSearchable { return new(ifta.JurisdictionMileageEntry) },
 		Variables: []graphQLVariable{
-			{Name: "includeTotalCount", Type: "Boolean", NonNull: false, List: false, Kind: "scalar"},
+			{Name: "includeTotalCount", Type: "Boolean", NonNull: false, List: false, Kind: "scalar", Description: "true also returns totalCountExact: Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."},
 			{Name: "input", Type: "IFTAMileageEntriesInput", NonNull: true, List: false, Kind: "input"},
 		},
 		Fields: []graphQLField{
@@ -4063,7 +4063,7 @@ var graphQLReads = map[string]graphQLRead{
 		Resource:  "ifta_return",
 		Entity:    func() domaintypes.PostgresSearchable { return new(ifta.Return) },
 		Variables: []graphQLVariable{
-			{Name: "includeTotalCount", Type: "Boolean", NonNull: false, List: false, Kind: "scalar"},
+			{Name: "includeTotalCount", Type: "Boolean", NonNull: false, List: false, Kind: "scalar", Description: "true also returns totalCountExact: Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."},
 			{Name: "input", Type: "IFTAReturnsInput", NonNull: true, List: false, Kind: "input"},
 		},
 		Fields: []graphQLField{
@@ -4121,7 +4121,7 @@ var graphQLReads = map[string]graphQLRead{
 		Resource:  "fuel_purchase_import",
 		Entity:    func() domaintypes.PostgresSearchable { return new(fuelpurchase.ImportBatch) },
 		Variables: []graphQLVariable{
-			{Name: "includeTotalCount", Type: "Boolean", NonNull: false, List: false, Kind: "scalar"},
+			{Name: "includeTotalCount", Type: "Boolean", NonNull: false, List: false, Kind: "scalar", Description: "true also returns totalCountExact: Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."},
 			{Name: "input", Type: "FuelPurchaseImportsInput", NonNull: true, List: false, Kind: "input"},
 		},
 		Fields: []graphQLField{
@@ -4177,7 +4177,7 @@ var graphQLReads = map[string]graphQLRead{
 		Resource:  "fuel_purchase",
 		Entity:    func() domaintypes.PostgresSearchable { return new(fuelpurchase.FuelPurchase) },
 		Variables: []graphQLVariable{
-			{Name: "includeTotalCount", Type: "Boolean", NonNull: false, List: false, Kind: "scalar"},
+			{Name: "includeTotalCount", Type: "Boolean", NonNull: false, List: false, Kind: "scalar", Description: "true also returns totalCountExact: Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."},
 			{Name: "input", Type: "FuelPurchasesInput", NonNull: true, List: false, Kind: "input"},
 		},
 		Fields: []graphQLField{
@@ -4859,7 +4859,7 @@ var graphQLReads = map[string]graphQLRead{
 		Resource:  "invoice",
 		Entity:    func() domaintypes.PostgresSearchable { return new(invoice.Invoice) },
 		Variables: []graphQLVariable{
-			{Name: "includeTotalCount", Type: "Boolean", NonNull: false, List: false, Kind: "scalar"},
+			{Name: "includeTotalCount", Type: "Boolean", NonNull: false, List: false, Kind: "scalar", Description: "true also returns totalCountExact: Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."},
 			{Name: "input", Type: "DataTableConnectionInput", NonNull: true, List: false, Kind: "input"},
 		},
 		Fields: []graphQLField{
@@ -5776,7 +5776,7 @@ var graphQLReads = map[string]graphQLRead{
 		Resource:  "location",
 		Entity:    func() domaintypes.PostgresSearchable { return new(location.Location) },
 		Variables: []graphQLVariable{
-			{Name: "includeTotalCount", Type: "Boolean", NonNull: false, List: false, Kind: "scalar"},
+			{Name: "includeTotalCount", Type: "Boolean", NonNull: false, List: false, Kind: "scalar", Description: "true also returns totalCountExact: Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."},
 			{Name: "input", Type: "DataTableConnectionInput", NonNull: true, List: false, Kind: "input"},
 		},
 		Fields: []graphQLField{
@@ -5844,7 +5844,7 @@ var graphQLReads = map[string]graphQLRead{
 		Resource:  "location_category",
 		Entity:    func() domaintypes.PostgresSearchable { return new(locationcategory.LocationCategory) },
 		Variables: []graphQLVariable{
-			{Name: "includeTotalCount", Type: "Boolean", NonNull: false, List: false, Kind: "scalar"},
+			{Name: "includeTotalCount", Type: "Boolean", NonNull: false, List: false, Kind: "scalar", Description: "true also returns totalCountExact: Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."},
 			{Name: "input", Type: "DataTableConnectionInput", NonNull: true, List: false, Kind: "input"},
 		},
 		Fields: []graphQLField{
@@ -5875,7 +5875,7 @@ var graphQLReads = map[string]graphQLRead{
 		Resource:  "accessorial_charge",
 		Entity:    func() domaintypes.PostgresSearchable { return new(accessorialcharge.AccessorialCharge) },
 		Variables: []graphQLVariable{
-			{Name: "includeTotalCount", Type: "Boolean", NonNull: false, List: false, Kind: "scalar"},
+			{Name: "includeTotalCount", Type: "Boolean", NonNull: false, List: false, Kind: "scalar", Description: "true also returns totalCountExact: Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."},
 			{Name: "input", Type: "DataTableConnectionInput", NonNull: true, List: false, Kind: "input"},
 		},
 		Fields: []graphQLField{
@@ -5903,7 +5903,7 @@ var graphQLReads = map[string]graphQLRead{
 		Resource:  "commodity",
 		Entity:    func() domaintypes.PostgresSearchable { return new(commodity.Commodity) },
 		Variables: []graphQLVariable{
-			{Name: "includeTotalCount", Type: "Boolean", NonNull: false, List: false, Kind: "scalar"},
+			{Name: "includeTotalCount", Type: "Boolean", NonNull: false, List: false, Kind: "scalar", Description: "true also returns totalCountExact: Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."},
 			{Name: "input", Type: "DataTableConnectionInput", NonNull: true, List: false, Kind: "input"},
 		},
 		Fields: []graphQLField{
@@ -5938,7 +5938,7 @@ var graphQLReads = map[string]graphQLRead{
 		Resource:  "fleet_code",
 		Entity:    func() domaintypes.PostgresSearchable { return new(fleetcode.FleetCode) },
 		Variables: []graphQLVariable{
-			{Name: "includeTotalCount", Type: "Boolean", NonNull: false, List: false, Kind: "scalar"},
+			{Name: "includeTotalCount", Type: "Boolean", NonNull: false, List: false, Kind: "scalar", Description: "true also returns totalCountExact: Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."},
 			{Name: "input", Type: "DataTableConnectionInput", NonNull: true, List: false, Kind: "input"},
 		},
 		Fields: []graphQLField{
@@ -5995,7 +5995,7 @@ var graphQLReads = map[string]graphQLRead{
 		Resource:  "hazardous_material",
 		Entity:    func() domaintypes.PostgresSearchable { return new(hazardousmaterial.HazardousMaterial) },
 		Variables: []graphQLVariable{
-			{Name: "includeTotalCount", Type: "Boolean", NonNull: false, List: false, Kind: "scalar"},
+			{Name: "includeTotalCount", Type: "Boolean", NonNull: false, List: false, Kind: "scalar", Description: "true also returns totalCountExact: Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."},
 			{Name: "input", Type: "DataTableConnectionInput", NonNull: true, List: false, Kind: "input"},
 		},
 		Fields: []graphQLField{
@@ -6037,7 +6037,7 @@ var graphQLReads = map[string]graphQLRead{
 		Resource:  "hold_reason",
 		Entity:    func() domaintypes.PostgresSearchable { return new(holdreason.HoldReason) },
 		Variables: []graphQLVariable{
-			{Name: "includeTotalCount", Type: "Boolean", NonNull: false, List: false, Kind: "scalar"},
+			{Name: "includeTotalCount", Type: "Boolean", NonNull: false, List: false, Kind: "scalar", Description: "true also returns totalCountExact: Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."},
 			{Name: "input", Type: "DataTableConnectionInput", NonNull: true, List: false, Kind: "input"},
 		},
 		Fields: []graphQLField{
@@ -6071,7 +6071,7 @@ var graphQLReads = map[string]graphQLRead{
 		Resource:  "service_type",
 		Entity:    func() domaintypes.PostgresSearchable { return new(servicetype.ServiceType) },
 		Variables: []graphQLVariable{
-			{Name: "includeTotalCount", Type: "Boolean", NonNull: false, List: false, Kind: "scalar"},
+			{Name: "includeTotalCount", Type: "Boolean", NonNull: false, List: false, Kind: "scalar", Description: "true also returns totalCountExact: Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."},
 			{Name: "input", Type: "DataTableConnectionInput", NonNull: true, List: false, Kind: "input"},
 		},
 		Fields: []graphQLField{
@@ -6097,7 +6097,7 @@ var graphQLReads = map[string]graphQLRead{
 		Resource:  "shipment_type",
 		Entity:    func() domaintypes.PostgresSearchable { return new(shipmenttype.ShipmentType) },
 		Variables: []graphQLVariable{
-			{Name: "includeTotalCount", Type: "Boolean", NonNull: false, List: false, Kind: "scalar"},
+			{Name: "includeTotalCount", Type: "Boolean", NonNull: false, List: false, Kind: "scalar", Description: "true also returns totalCountExact: Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."},
 			{Name: "input", Type: "DataTableConnectionInput", NonNull: true, List: false, Kind: "input"},
 		},
 		Fields: []graphQLField{
@@ -6192,7 +6192,7 @@ var graphQLReads = map[string]graphQLRead{
 		Resource:  "order",
 		Entity:    func() domaintypes.PostgresSearchable { return new(order.Order) },
 		Variables: []graphQLVariable{
-			{Name: "includeTotalCount", Type: "Boolean", NonNull: false, List: false, Kind: "scalar"},
+			{Name: "includeTotalCount", Type: "Boolean", NonNull: false, List: false, Kind: "scalar", Description: "true also returns totalCountExact: Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."},
 			{Name: "input", Type: "DataTableConnectionInput", NonNull: true, List: false, Kind: "input"},
 		},
 		Fields: []graphQLField{
@@ -6294,6 +6294,7 @@ var graphQLReads = map[string]graphQLRead{
 			{Name: "billToCustomerId", Type: "ID", Kind: "scalar", List: false, NonNull: false, Selected: true, Description: "The customer invoices for this agreement's freight go to, when not the party itself."},
 			{Name: "lanes", Type: "RateAgreementLane", Kind: "object", List: true, NonNull: true, Selected: true, Description: "The live lanes: active rules in force now or starting later, most specific\nfirst. first takes at most 100."},
 			{Name: "laneCount", Type: "Int", Kind: "scalar", List: false, NonNull: true, Selected: true, Description: "How many live lanes the agreement holds."},
+			{Name: "laneCountExact", Type: "Boolean", Kind: "scalar", List: false, NonNull: true, Selected: true, Description: "Whether laneCount was counted; false when it is the planner's estimate of more lanes than it counts."},
 			{Name: "accessorials", Type: "RateAgreementAccessorial", Kind: "object", List: true, NonNull: false, Selected: true, Description: "The accessorial schedule. Read by rateAgreement only."},
 			{Name: "fuelBinding", Type: "RateAgreementFuelBinding", Kind: "object", List: false, NonNull: false, Selected: true, Description: "The fuel surcharge program the agreement prices fuel with. Read by rateAgreement only.", Fields: []graphQLField{
 				{Name: "id", Type: "ID", Kind: "scalar", List: false, NonNull: true, Selected: true},
@@ -6355,7 +6356,7 @@ var graphQLReads = map[string]graphQLRead{
 		Resource:  "rate_agreement",
 		Entity:    func() domaintypes.PostgresSearchable { return new(rateagreement.RateAgreement) },
 		Variables: []graphQLVariable{
-			{Name: "includeTotalCount", Type: "Boolean", NonNull: false, List: false, Kind: "scalar"},
+			{Name: "includeTotalCount", Type: "Boolean", NonNull: false, List: false, Kind: "scalar", Description: "true also returns totalCountExact: Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."},
 			{Name: "input", Type: "DataTableConnectionInput", NonNull: true, List: false, Kind: "input"},
 		},
 		Fields: []graphQLField{
@@ -6389,6 +6390,7 @@ var graphQLReads = map[string]graphQLRead{
 			{Name: "billToCustomerId", Type: "ID", Kind: "scalar", List: false, NonNull: false, Description: "The customer invoices for this agreement's freight go to, when not the party itself."},
 			{Name: "lanes", Type: "RateAgreementLane", Kind: "object", List: true, NonNull: true, Description: "The live lanes: active rules in force now or starting later, most specific\nfirst. first takes at most 100."},
 			{Name: "laneCount", Type: "Int", Kind: "scalar", List: false, NonNull: true, Description: "How many live lanes the agreement holds."},
+			{Name: "laneCountExact", Type: "Boolean", Kind: "scalar", List: false, NonNull: true, Description: "Whether laneCount was counted; false when it is the planner's estimate of more lanes than it counts."},
 			{Name: "accessorials", Type: "RateAgreementAccessorial", Kind: "object", List: true, NonNull: false, Description: "The accessorial schedule. Read by rateAgreement only."},
 			{Name: "fuelBinding", Type: "RateAgreementFuelBinding", Kind: "object", List: false, NonNull: false, Description: "The fuel surcharge program the agreement prices fuel with. Read by rateAgreement only."},
 			{Name: "currentVersion", Type: "RateAgreementVersion", Kind: "object", List: false, NonNull: false, Description: "The version of the header terms in force now. Read by rateAgreement only."},
@@ -6501,7 +6503,7 @@ var graphQLReads = map[string]graphQLRead{
 		Resource:  "customer_payment",
 		Entity:    func() domaintypes.PostgresSearchable { return new(customerpayment.Payment) },
 		Variables: []graphQLVariable{
-			{Name: "includeTotalCount", Type: "Boolean", NonNull: false, List: false, Kind: "scalar"},
+			{Name: "includeTotalCount", Type: "Boolean", NonNull: false, List: false, Kind: "scalar", Description: "true also returns totalCountExact: Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."},
 			{Name: "input", Type: "DataTableConnectionInput", NonNull: true, List: false, Kind: "input"},
 		},
 		Fields: []graphQLField{
@@ -6544,7 +6546,7 @@ var graphQLReads = map[string]graphQLRead{
 		Resource:  "report",
 		Entity:    func() domaintypes.PostgresSearchable { return new(report.ReportRun) },
 		Variables: []graphQLVariable{
-			{Name: "includeTotalCount", Type: "Boolean", NonNull: false, List: false, Kind: "scalar"},
+			{Name: "includeTotalCount", Type: "Boolean", NonNull: false, List: false, Kind: "scalar", Description: "true also returns totalCountExact: Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."},
 			{Name: "input", Type: "DataTableConnectionInput", NonNull: true, List: false, Kind: "input"},
 		},
 		Fields: []graphQLField{
@@ -6565,7 +6567,7 @@ var graphQLReads = map[string]graphQLRead{
 			{Name: "rowsStored", Type: "Boolean", Kind: "scalar", List: false, NonNull: true, Selected: true, Description: "Whether the run's rows were stored, so it can be compared with another run."},
 			{Name: "error", Type: "ReportRunError", Kind: "object", List: false, NonNull: false},
 			{Name: "artifactExpiresAt", Type: "Timestamp", Kind: "scalar", List: false, NonNull: false},
-			{Name: "cacheHit", Type: "Boolean", Kind: "scalar", List: false, NonNull: true},
+			{Name: "cacheHit", Type: "Boolean", Kind: "scalar", List: false, NonNull: true, Description: "Whether the run's rows came from the report result cache rather than a statement."},
 			{Name: "queuedAt", Type: "Timestamp", Kind: "scalar", List: false, NonNull: false},
 			{Name: "startedAt", Type: "Timestamp", Kind: "scalar", List: false, NonNull: false},
 			{Name: "completedAt", Type: "Timestamp", Kind: "scalar", List: false, NonNull: false, Selected: true},
@@ -6618,7 +6620,7 @@ var graphQLReads = map[string]graphQLRead{
 		Resource:  "table_change_alert",
 		Entity:    func() domaintypes.PostgresSearchable { return new(tablechangealert.TCASubscription) },
 		Variables: []graphQLVariable{
-			{Name: "includeTotalCount", Type: "Boolean", NonNull: false, List: false, Kind: "scalar"},
+			{Name: "includeTotalCount", Type: "Boolean", NonNull: false, List: false, Kind: "scalar", Description: "true also returns totalCountExact: Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."},
 			{Name: "input", Type: "DataTableConnectionInput", NonNull: true, List: false, Kind: "input"},
 		},
 		Fields: []graphQLField{
@@ -7067,7 +7069,7 @@ var graphQLReads = map[string]graphQLRead{
 		Resource:  "pay_advance",
 		Entity:    func() domaintypes.PostgresSearchable { return new(driverpay.PayAdvance) },
 		Variables: []graphQLVariable{
-			{Name: "includeTotalCount", Type: "Boolean", NonNull: false, List: false, Kind: "scalar"},
+			{Name: "includeTotalCount", Type: "Boolean", NonNull: false, List: false, Kind: "scalar", Description: "true also returns totalCountExact: Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."},
 			{Name: "input", Type: "DataTableConnectionInput", NonNull: true, List: false, Kind: "input"},
 		},
 		Fields: []graphQLField{
@@ -7141,7 +7143,7 @@ var graphQLReads = map[string]graphQLRead{
 		Resource:  "carrier_settlement",
 		Entity:    func() domaintypes.PostgresSearchable { return new(carriersettlement.CarrierSettlement) },
 		Variables: []graphQLVariable{
-			{Name: "includeTotalCount", Type: "Boolean", NonNull: false, List: false, Kind: "scalar"},
+			{Name: "includeTotalCount", Type: "Boolean", NonNull: false, List: false, Kind: "scalar", Description: "true also returns totalCountExact: Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."},
 			{Name: "input", Type: "DataTableConnectionInput", NonNull: true, List: false, Kind: "input"},
 		},
 		Fields: []graphQLField{
@@ -7257,7 +7259,7 @@ var graphQLReads = map[string]graphQLRead{
 		Resource:  "driver_settlement",
 		Entity:    func() domaintypes.PostgresSearchable { return new(driversettlement.Settlement) },
 		Variables: []graphQLVariable{
-			{Name: "includeTotalCount", Type: "Boolean", NonNull: false, List: false, Kind: "scalar"},
+			{Name: "includeTotalCount", Type: "Boolean", NonNull: false, List: false, Kind: "scalar", Description: "true also returns totalCountExact: Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."},
 			{Name: "input", Type: "DataTableConnectionInput", NonNull: true, List: false, Kind: "input"},
 		},
 		Fields: []graphQLField{
@@ -7366,7 +7368,7 @@ var graphQLReads = map[string]graphQLRead{
 		Resource:  "driver_expense",
 		Entity:    func() domaintypes.PostgresSearchable { return new(driverpay.Expense) },
 		Variables: []graphQLVariable{
-			{Name: "includeTotalCount", Type: "Boolean", NonNull: false, List: false, Kind: "scalar"},
+			{Name: "includeTotalCount", Type: "Boolean", NonNull: false, List: false, Kind: "scalar", Description: "true also returns totalCountExact: Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."},
 			{Name: "input", Type: "DataTableConnectionInput", NonNull: true, List: false, Kind: "input"},
 		},
 		Fields: []graphQLField{
@@ -7487,7 +7489,7 @@ var graphQLReads = map[string]graphQLRead{
 		Resource:  "escrow_account",
 		Entity:    func() domaintypes.PostgresSearchable { return new(driverpay.EscrowAccount) },
 		Variables: []graphQLVariable{
-			{Name: "includeTotalCount", Type: "Boolean", NonNull: false, List: false, Kind: "scalar"},
+			{Name: "includeTotalCount", Type: "Boolean", NonNull: false, List: false, Kind: "scalar", Description: "true also returns totalCountExact: Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."},
 			{Name: "input", Type: "DataTableConnectionInput", NonNull: true, List: false, Kind: "input"},
 		},
 		Fields: []graphQLField{
@@ -7637,7 +7639,7 @@ var graphQLReads = map[string]graphQLRead{
 		Resource:  "driver_settlement",
 		Entity:    func() domaintypes.PostgresSearchable { return new(driversettlement.PayEvent) },
 		Variables: []graphQLVariable{
-			{Name: "includeTotalCount", Type: "Boolean", NonNull: false, List: false, Kind: "scalar"},
+			{Name: "includeTotalCount", Type: "Boolean", NonNull: false, List: false, Kind: "scalar", Description: "true also returns totalCountExact: Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."},
 			{Name: "input", Type: "DataTableConnectionInput", NonNull: true, List: false, Kind: "input"},
 		},
 		Fields: []graphQLField{
@@ -7715,7 +7717,7 @@ var graphQLReads = map[string]graphQLRead{
 		Resource:  "driver_pay_profile",
 		Entity:    func() domaintypes.PostgresSearchable { return new(driverpay.PayProfile) },
 		Variables: []graphQLVariable{
-			{Name: "includeTotalCount", Type: "Boolean", NonNull: false, List: false, Kind: "scalar"},
+			{Name: "includeTotalCount", Type: "Boolean", NonNull: false, List: false, Kind: "scalar", Description: "true also returns totalCountExact: Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."},
 			{Name: "input", Type: "DataTableConnectionInput", NonNull: true, List: false, Kind: "input"},
 		},
 		Fields: []graphQLField{
@@ -7746,7 +7748,7 @@ var graphQLReads = map[string]graphQLRead{
 		Resource:  "recurring_deduction",
 		Entity:    func() domaintypes.PostgresSearchable { return new(driverpay.RecurringDeduction) },
 		Variables: []graphQLVariable{
-			{Name: "includeTotalCount", Type: "Boolean", NonNull: false, List: false, Kind: "scalar"},
+			{Name: "includeTotalCount", Type: "Boolean", NonNull: false, List: false, Kind: "scalar", Description: "true also returns totalCountExact: Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."},
 			{Name: "input", Type: "DataTableConnectionInput", NonNull: true, List: false, Kind: "input"},
 		},
 		Fields: []graphQLField{
@@ -7839,7 +7841,7 @@ var graphQLReads = map[string]graphQLRead{
 		Resource:  "recurring_earning",
 		Entity:    func() domaintypes.PostgresSearchable { return new(driverpay.RecurringEarning) },
 		Variables: []graphQLVariable{
-			{Name: "includeTotalCount", Type: "Boolean", NonNull: false, List: false, Kind: "scalar"},
+			{Name: "includeTotalCount", Type: "Boolean", NonNull: false, List: false, Kind: "scalar", Description: "true also returns totalCountExact: Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."},
 			{Name: "input", Type: "DataTableConnectionInput", NonNull: true, List: false, Kind: "input"},
 		},
 		Fields: []graphQLField{
@@ -7931,7 +7933,7 @@ var graphQLReads = map[string]graphQLRead{
 		Resource:  "recurring_shipment",
 		Entity:    func() domaintypes.PostgresSearchable { return new(recurringshipment.RecurringShipment) },
 		Variables: []graphQLVariable{
-			{Name: "includeTotalCount", Type: "Boolean", NonNull: true, List: false, Kind: "scalar"},
+			{Name: "includeTotalCount", Type: "Boolean", NonNull: true, List: false, Kind: "scalar", Description: "true also returns totalCountExact: Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."},
 			{Name: "input", Type: "DataTableConnectionInput", NonNull: true, List: false, Kind: "input"},
 		},
 		Fields: []graphQLField{
@@ -9310,7 +9312,7 @@ var graphQLReads = map[string]graphQLRead{
 		Resource:  "worker_pto",
 		Entity:    func() domaintypes.PostgresSearchable { return new(worker.WorkerPTO) },
 		Variables: []graphQLVariable{
-			{Name: "includeTotalCount", Type: "Boolean", NonNull: false, List: false, Kind: "scalar"},
+			{Name: "includeTotalCount", Type: "Boolean", NonNull: false, List: false, Kind: "scalar", Description: "true also returns totalCountExact: Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."},
 			{Name: "input", Type: "WorkerPTOEntriesInput", NonNull: true, List: false, Kind: "input"},
 		},
 		Fields: []graphQLField{
@@ -9535,7 +9537,7 @@ var graphQLReads = map[string]graphQLRead{
 		Resource:  "training_course",
 		Entity:    func() domaintypes.PostgresSearchable { return new(worker.TrainingCourse) },
 		Variables: []graphQLVariable{
-			{Name: "includeTotalCount", Type: "Boolean", NonNull: false, List: false, Kind: "scalar"},
+			{Name: "includeTotalCount", Type: "Boolean", NonNull: false, List: false, Kind: "scalar", Description: "true also returns totalCountExact: Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."},
 			{Name: "input", Type: "TrainingCoursesInput", NonNull: true, List: false, Kind: "input"},
 		},
 		Fields: []graphQLField{

@@ -342,8 +342,8 @@ func (r *repository) DetectLanePattern(
 				r.db.Keel(ctx),
 				sp.Pick(
 					keel.Count(),
-					keel.DynOf(sp.CreatedAt).Min().Coalesce(0),
-					keel.DynOf(sp.CreatedAt).Max().Coalesce(0),
+					keel.Int64Of(sp.CreatedAt.Min()).Coalesce(0),
+					keel.Int64Of(sp.CreatedAt.Max()).Coalesce(0),
 				).Where(
 					sp.CustomerID.Eq(req.CustomerID),
 					sp.Status.Ne(shipment.StatusCanceled),
@@ -388,8 +388,8 @@ func (r *repository) ListDue(
 					rsh.Status.Eq(recurringshipment.StatusActive),
 					rsh.AutoGenerate.IsTrue(),
 					rsh.NextOccurrenceAt.IsNotNull(),
-					keel.DynOf(rsh.NextOccurrenceAt).
-						Sub(keel.DynOf(rsh.LeadTimeDays).Cast(keel.TypeInt64).Mul(86400)).
+					rsh.NextOccurrenceAt.
+						Sub(keel.CastInt64(rsh.LeadTimeDays).Mul(keel.Int64(86400))).
 						Lte(req.Now),
 				).
 				Order(rsh.NextOccurrenceAt.Asc())
@@ -424,14 +424,14 @@ func (r *repository) ListRuns(
 
 			runs := rsr.Where(rsr.RecurringShipmentID.Eq(req.RecurringShipmentID))
 			var items []*recurringshipment.RecurringShipmentRun
-			var total int64
+			var total keel.RowCount
 			err := keel.Batch(ctx, r.db.Keel(ctx),
 				keel.ListInto(runs.Clone().
 					Load(rsr.GeneratedShipment(), rsr.TriggeredBy()).
 					Order(rsr.OccurrenceAt.Desc()).
 					Limit(info.SafeLimit()).
 					Offset(info.SafeOffset()), &items),
-				keel.CountInto(runs, &total),
+				keel.CountEstimateInto(runs, pagination.ExactTotalUpTo, &total),
 			)
 			if err != nil {
 				r.l.Error(
@@ -442,10 +442,7 @@ func (r *repository) ListRuns(
 				return nil, err
 			}
 
-			return &pagination.ListResult[*recurringshipment.RecurringShipmentRun]{
-				Items: items,
-				Total: int(total),
-			}, nil
+			return listquery.Result(items, total), nil
 		},
 	)
 }

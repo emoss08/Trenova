@@ -2,4 +2,4 @@
 import type { TypedDocumentString, DeskFuelPurchaseCardQuery, DeskFuelPurchaseCardQueryVariables, DeskFuelPurchasesQuery, DeskFuelPurchasesQueryVariables } from "../../graphql";
 
 export const DeskFuelPurchaseCardDocument = {"__meta__":{"kind":"query","name":"DeskFuelPurchaseCard","hash":"sha256:99fc14af63a550af988181485cb707be384fbbaf082d975caeb29f982dfe5e7b"}} as unknown as TypedDocumentString<DeskFuelPurchaseCardQuery, DeskFuelPurchaseCardQueryVariables>;
-export const DeskFuelPurchasesDocument = {"__meta__":{"kind":"query","name":"DeskFuelPurchases","hash":"sha256:aa1b9b1aed82223c05fd9d7f4ab67141992cd681605e745c1c2b099d5661366b"}} as unknown as TypedDocumentString<DeskFuelPurchasesQuery, DeskFuelPurchasesQueryVariables>;
+export const DeskFuelPurchasesDocument = {"__meta__":{"kind":"query","name":"DeskFuelPurchases","hash":"sha256:ae04af3f795b801602226248e18b5053e4a492fddb76489141e22f58f12144f2"}} as unknown as TypedDocumentString<DeskFuelPurchasesQuery, DeskFuelPurchasesQueryVariables>;

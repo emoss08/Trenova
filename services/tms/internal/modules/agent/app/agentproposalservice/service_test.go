@@ -23,7 +23,11 @@ func (f *fakeProposalRepo) List(
 	context.Context,
 	*agentports.ListAgentProposalRequest,
 ) (*pagination.ListResult[*agent.AgentProposal], error) {
-	return &pagination.ListResult[*agent.AgentProposal]{Items: f.items, Total: len(f.items)}, nil
+	return &pagination.ListResult[*agent.AgentProposal]{
+		Items:      f.items,
+		Total:      len(f.items),
+		TotalExact: true,
+	}, nil
 }
 
 func (f *fakeProposalRepo) ListConnection(

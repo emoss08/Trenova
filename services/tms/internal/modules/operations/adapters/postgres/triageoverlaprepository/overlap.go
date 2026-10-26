@@ -139,9 +139,9 @@ func stopAt(
 			move.ShipmentID.EqCol(sp.ID),
 			stop.Type.In(req.types...),
 			stop.Status.Ne(shipment.StopStatusCanceled),
-			keel.DynFunc("lower", keel.DynFunc("btrim", loc.City)).
+			loc.City.Trim().Lower().
 				Eq(strings.ToLower(strings.TrimSpace(req.city))),
-			keel.DynFunc("upper", state.Abbreviation).Eq(strings.ToUpper(req.state)),
+			state.Abbreviation.Upper().Eq(strings.ToUpper(req.state)),
 			keel.When(req.from > 0 && req.to > req.from, stop.ScheduledWindowStart.Gte(req.from)),
 			keel.When(req.from > 0 && req.to > req.from, stop.ScheduledWindowStart.Lt(req.to)),
 		)

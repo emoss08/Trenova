@@ -7816,6 +7816,10 @@ func init() {
 				Name:   "totalCount",
 				Column: "total_count",
 			},
+			{
+				Name:    "totalCountExact",
+				Special: "totalCountExact",
+			},
 		},
 	}
 
@@ -12108,6 +12112,10 @@ func init() {
 			{
 				Name:   "totalCount",
 				Column: "total_count",
+			},
+			{
+				Name:    "totalCountExact",
+				Special: "totalCountExact",
 			},
 		},
 	}
@@ -21898,6 +21906,10 @@ func init() {
 			{
 				Name:    "laneCount",
 				Special: "laneCount",
+			},
+			{
+				Name:    "laneCountExact",
+				Special: "laneCountExact",
 			},
 			{
 				Name: "accessorials",

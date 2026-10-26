@@ -66,6 +66,7 @@ import {
   type MyCaptureAccessQuery,
 } from "@trenova/graphql/generated/graphql";
 import { requestGraphQL } from "@trenova/shared/lib/graphql";
+import { rowTotalOf, type RowTotal } from "@trenova/shared/lib/row-total";
 import type { UnmaskFragments } from "@trenova/shared/types/graphql-connection";
 
 /*
@@ -238,7 +239,7 @@ export async function fetchCaptureBatches(
 export async function fetchCaptureBatchCount(
   filter: Omit<CaptureBatchFilter, "after" | "first">,
   options?: RequestOptions,
-): Promise<number> {
+): Promise<RowTotal> {
   const data = await requestGraphQL({
     document: CaptureBatchCountDocument,
     operationName: "CaptureBatchCount",
@@ -246,7 +247,7 @@ export async function fetchCaptureBatchCount(
     signal: options?.signal,
   });
 
-  return data.captureBatches.totalCount ?? 0;
+  return rowTotalOf(data.captureBatches.totalCount, data.captureBatches.totalCountExact);
 }
 
 export async function fetchCaptureBatch(

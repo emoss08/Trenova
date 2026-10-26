@@ -28,9 +28,10 @@ func ediPartnerConnectionToModel(
 	}
 
 	return &gqlmodel.EDIPartnerConnection{
-		Edges:      page.Edges,
-		PageInfo:   page.PageInfo,
-		TotalCount: page.TotalCount,
+		Edges:           page.Edges,
+		PageInfo:        page.PageInfo,
+		TotalCount:      page.TotalCount,
+		TotalCountExact: page.TotalCountExact,
 	}, nil
 }
 
@@ -49,9 +50,10 @@ func ediCommunicationProfileConnectionToModel(
 	}
 
 	return &gqlmodel.EDICommunicationProfileConnection{
-		Edges:      page.Edges,
-		PageInfo:   page.PageInfo,
-		TotalCount: page.TotalCount,
+		Edges:           page.Edges,
+		PageInfo:        page.PageInfo,
+		TotalCount:      page.TotalCount,
+		TotalCountExact: page.TotalCountExact,
 	}, nil
 }
 
@@ -70,9 +72,10 @@ func ediTransferConnectionToModel(
 	}
 
 	return &gqlmodel.EDITransferConnection{
-		Edges:      page.Edges,
-		PageInfo:   page.PageInfo,
-		TotalCount: page.TotalCount,
+		Edges:           page.Edges,
+		PageInfo:        page.PageInfo,
+		TotalCount:      page.TotalCount,
+		TotalCountExact: page.TotalCountExact,
 	}, nil
 }
 
@@ -91,9 +94,10 @@ func ediMessageConnectionToModel(
 	}
 
 	return &gqlmodel.EDIMessageConnection{
-		Edges:      page.Edges,
-		PageInfo:   page.PageInfo,
-		TotalCount: page.TotalCount,
+		Edges:           page.Edges,
+		PageInfo:        page.PageInfo,
+		TotalCount:      page.TotalCount,
+		TotalCountExact: page.TotalCountExact,
 	}, nil
 }
 
@@ -233,9 +237,10 @@ func ediTestCaseConnectionToModel(
 	}
 
 	return &gqlmodel.EDITestCaseConnection{
-		Edges:      page.Edges,
-		PageInfo:   page.PageInfo,
-		TotalCount: page.TotalCount,
+		Edges:           page.Edges,
+		PageInfo:        page.PageInfo,
+		TotalCount:      page.TotalCount,
+		TotalCountExact: page.TotalCountExact,
 	}, nil
 }
 
@@ -254,9 +259,10 @@ func ediTemplateConnectionToModel(
 	}
 
 	return &gqlmodel.EDITemplateConnection{
-		Edges:      page.Edges,
-		PageInfo:   page.PageInfo,
-		TotalCount: page.TotalCount,
+		Edges:           page.Edges,
+		PageInfo:        page.PageInfo,
+		TotalCount:      page.TotalCount,
+		TotalCountExact: page.TotalCountExact,
 	}, nil
 }
 
@@ -275,9 +281,10 @@ func ediMappingProfileConnectionToModel(
 	}
 
 	return &gqlmodel.EDIMappingProfileConnection{
-		Edges:      page.Edges,
-		PageInfo:   page.PageInfo,
-		TotalCount: page.TotalCount,
+		Edges:           page.Edges,
+		PageInfo:        page.PageInfo,
+		TotalCount:      page.TotalCount,
+		TotalCountExact: page.TotalCountExact,
 	}, nil
 }
 
@@ -296,8 +303,9 @@ func ediInboundFileConnectionToModel(
 	}
 
 	return &gqlmodel.EDIInboundFileConnection{
-		Edges:      page.Edges,
-		PageInfo:   page.PageInfo,
-		TotalCount: page.TotalCount,
+		Edges:           page.Edges,
+		PageInfo:        page.PageInfo,
+		TotalCount:      page.TotalCount,
+		TotalCountExact: page.TotalCountExact,
 	}, nil
 }

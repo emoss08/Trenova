@@ -156,7 +156,8 @@ func ptoPolicyCursorConnectionToModel(
 				func(edge *gqlmodel.PTOPolicyEdge) string { return edge.Cursor },
 			),
 		),
-		TotalCount: result.TotalCount,
+		TotalCount:      result.TotalCount,
+		TotalCountExact: result.TotalCountExact,
 	}, nil
 }
 
@@ -183,7 +184,8 @@ func ptoLedgerCursorConnectionToModel(
 				func(edge *gqlmodel.WorkerPTOLedgerEdge) string { return edge.Cursor },
 			),
 		),
-		TotalCount: result.TotalCount,
+		TotalCount:      result.TotalCount,
+		TotalCountExact: result.TotalCountExact,
 	}, nil
 }
 

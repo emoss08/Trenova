@@ -8,8 +8,8 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -33,8 +33,9 @@ func (f *fakeAIProviderSelectService) SelectOptions(
 ) (*pagination.ListResult[*aiprovider.Provider], error) {
 	f.selectReq = req
 	return &pagination.ListResult[*aiprovider.Provider]{
-		Items: f.selectList,
-		Total: len(f.selectList),
+		Items:      f.selectList,
+		Total:      len(f.selectList),
+		TotalExact: true,
 	}, nil
 }
 

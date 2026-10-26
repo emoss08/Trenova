@@ -2,4 +2,4 @@
 import type { TypedDocumentString, HazmatSegregationRuleTableQuery, HazmatSegregationRuleTableQueryVariables, HazmatSegregationRuleTableRowFieldsFragment } from "../../graphql";
 
 export const HazmatSegregationRuleTableRowFieldsFragmentDoc = {"__meta__":{"fragmentName":"HazmatSegregationRuleTableRowFields"}} as unknown as TypedDocumentString<HazmatSegregationRuleTableRowFieldsFragment, unknown>;
-export const HazmatSegregationRuleTableDocument = {"__meta__":{"kind":"query","name":"HazmatSegregationRuleTable","hash":"sha256:8a556213d0fc4aa8da4e9bcfbed7b07f3fd1cc94c9d2e2231e806516c2b6f1b9"}} as unknown as TypedDocumentString<HazmatSegregationRuleTableQuery, HazmatSegregationRuleTableQueryVariables>;
+export const HazmatSegregationRuleTableDocument = {"__meta__":{"kind":"query","name":"HazmatSegregationRuleTable","hash":"sha256:a5667623f6524986951dc7a03348427ef883b5b597582cebaac9d9ed7a982e63"}} as unknown as TypedDocumentString<HazmatSegregationRuleTableQuery, HazmatSegregationRuleTableQueryVariables>;

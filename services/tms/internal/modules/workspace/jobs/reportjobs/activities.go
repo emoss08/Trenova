@@ -55,6 +55,7 @@ type ActivitiesParams struct {
 
 	RunRepo             reportports.ReportRunRepository
 	DefinitionRepo      reportports.ReportDefinitionRepository
+	CatalogVersions     reportports.ReportCatalogVersionRepository
 	ScheduleRepo        reportports.ReportScheduleRepository
 	WorkflowStarter     kernelports.WorkflowStarter
 	OrganizationRepo    tenantports.OrganizationRepository
@@ -77,6 +78,7 @@ type ActivitiesParams struct {
 type Activities struct {
 	runRepo      reportports.ReportRunRepository
 	defRepo      reportports.ReportDefinitionRepository
+	versions     reportports.ReportCatalogVersionRepository
 	scheduleRepo reportports.ReportScheduleRepository
 	workflows    kernelports.WorkflowStarter
 	orgRepo      tenantports.OrganizationRepository
@@ -102,6 +104,7 @@ func NewActivities(p ActivitiesParams) *Activities {
 	return &Activities{
 		runRepo:      p.RunRepo,
 		defRepo:      p.DefinitionRepo,
+		versions:     p.CatalogVersions,
 		scheduleRepo: p.ScheduleRepo,
 		workflows:    p.WorkflowStarter,
 		orgRepo:      p.OrganizationRepo,
@@ -427,6 +430,7 @@ func (a *Activities) ExecuteAndRenderActivity(
 	if err != nil {
 		return nil, classifyEngineError(reporting.EngineError(run.Context, run.Access, err))
 	}
+	result.CacheHit = stream.Cached()
 
 	if digest != nil {
 		captured, digestErr := digest.digest(run.Context, stream.Columns())

@@ -11,6 +11,7 @@ const table: RegisteredTableView = {
   selectionCount: 2,
   visibleColumns: ["proNumber", "status"],
   rowCount: 42,
+  rowCountExact: true,
 };
 
 /**
@@ -78,6 +79,13 @@ describe("composePageView", () => {
     });
     expect(view?.kpis).toHaveLength(12);
     expect(view?.visibleColumns).toHaveLength(40);
+  });
+
+  it("says a row count the server estimated is an estimate", () => {
+    const view = composePageView({ ...table, rowCount: 1_250_000, rowCountExact: false }, []);
+
+    expect(view?.rowCount).toBe(1_250_000);
+    expect(view?.rowCountEstimated).toBe(true);
   });
 
   it("leaves out an empty selection and an unknown row count", () => {

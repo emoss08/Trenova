@@ -32,6 +32,7 @@ query CarrierSettlementTable(
       }
     }
     totalCount @include(if: $includeTotalCount)
+    totalCountExact @include(if: $includeTotalCount)
     pageInfo {
       ...DataTablePageInfoFields
     }
@@ -137,6 +138,7 @@ query CarrierSettlementBatchTable(
       }
     }
     totalCount @include(if: $includeTotalCount)
+    totalCountExact @include(if: $includeTotalCount)
     pageInfo {
       ...DataTablePageInfoFields
     }
@@ -207,6 +209,7 @@ query CarrierCostEventTable($input: DataTableConnectionInput!, $includeTotalCoun
       }
     }
     totalCount @include(if: $includeTotalCount)
+    totalCountExact @include(if: $includeTotalCount)
     pageInfo {
       ...DataTablePageInfoFields
     }
@@ -335,6 +338,7 @@ query CarrierInvoiceMatches(
       }
     }
     totalCount
+    totalCountExact
   }
 }
 
@@ -363,6 +367,7 @@ query EdiCarrierInvoices($reconciliationStatus: String, $limit: Int, $offset: In
       updatedAt
     }
     totalCount
+    totalCountExact
   }
 }
 

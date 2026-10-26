@@ -2,7 +2,7 @@ SELECT s.status, s.actual_delivery_date, EXISTS (
   SELECT 1
   FROM documents d
   JOIN document_types dt ON dt.business_unit_id = $1 AND dt.organization_id = $2 AND dt.id = d.document_type_id
-  WHERE d.organization_id = $2 AND d.business_unit_id = $1 AND d.resource_type = $4 AND d.resource_id = s.id AND d.is_current_version IS TRUE AND d.status NOT IN ('Rejected', 'Archived') AND (upper(dt.code) = upper($5))
+  WHERE d.organization_id = $2 AND d.business_unit_id = $1 AND d.resource_type = $4 AND d.resource_id = s.id AND d.is_current_version IS TRUE AND d.status NOT IN ('Rejected', 'Archived') AND upper(dt.code) = upper($5::text)
 ), ARRAY(
   SELECT DISTINCT d2.document_type_id
   FROM documents d2

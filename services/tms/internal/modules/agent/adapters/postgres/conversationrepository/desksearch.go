@@ -45,16 +45,16 @@ func latestFirst(cte *keel.CTETable, limit int) keel.Projection {
 
 func deskChats(terms *deskTerms) keel.Projection {
 	t := conversationdb.Threads
-	at := keel.DynFunc("greatest", t.LastMessageAt, t.CreatedAt)
+	at := t.LastMessageAt.Greatest(t.CreatedAt)
 
 	return t.Pick(
-		keel.DynLit("chat"),
+		keel.Text("chat"),
 		t.ID,
 		t.ID,
 		t.AgentDefinitionID,
-		keel.DynOf(t.Title).Coalesce(""),
-		keel.DynLit(""),
-		keel.DynLit(""),
+		t.Title.Coalesce(""),
+		keel.Text(""),
+		keel.Text(""),
 		t.Status,
 		at,
 	).
@@ -69,19 +69,19 @@ func deskChats(terms *deskTerms) keel.Projection {
 func deskMessages(terms *deskTerms) keel.Projection {
 	m := conversationdb.Messages
 	t := conversationdb.Threads
-	digest := keel.DynFunc("md5", m.Content)
+	digest := m.Content.MD5()
 
 	return latestFirst(keel.CTE("distinct_messages", deskColumns, m.
 		Join(t, t.ID.EqCol(m.ThreadID)).
 		DistinctOn(m.ThreadID, digest).
 		Pick(
-			keel.DynLit("msg"),
+			keel.Text("msg"),
 			m.ID,
 			t.ID,
-			keel.DynOf(m.AgentDefinitionID).Coalesce(t.AgentDefinitionID),
-			keel.DynFunc("left", m.Content, 4000),
-			keel.DynOf(t.Title).Coalesce(""),
-			keel.DynLit(""),
+			m.AgentDefinitionID.Coalesce(t.AgentDefinitionID),
+			m.Content.Left(4000),
+			t.Title.Coalesce(""),
+			keel.Text(""),
 			m.Role,
 			m.CreatedAt,
 		).
@@ -97,18 +97,18 @@ func deskMessages(terms *deskTerms) keel.Projection {
 func deskArtifacts(terms *deskTerms) keel.Projection {
 	a := assistantartifactdb.Artifacts
 	t := conversationdb.Threads
-	lineage := keel.DynOf(a.LineageID).Coalesce(a.ID)
+	lineage := a.LineageID.Coalesce(a.ID)
 
 	return latestFirst(keel.CTE("latest", deskColumns, a.
 		Join(t, t.ID.EqCol(a.ThreadID)).
 		DistinctOn(lineage).
 		Pick(
-			keel.DynLit("art"),
+			keel.Text("art"),
 			a.ID,
 			t.ID,
 			t.AgentDefinitionID,
 			a.Title,
-			keel.DynOf(t.Title).Coalesce(""),
+			t.Title.Coalesce(""),
 			a.Kind,
 			a.Status,
 			a.CreatedAt,
@@ -129,14 +129,14 @@ func deskDecisions(terms *deskTerms) keel.Projection {
 	return a.Join(t, t.ID.EqCol(a.ThreadID)).
 		LeftJoin(p, p.ID.EqCol(a.ProposalID)).
 		Pick(
-			keel.DynLit("dec"),
+			keel.Text("dec"),
 			a.ID,
 			t.ID,
 			t.AgentDefinitionID,
 			a.Title,
-			keel.DynOf(t.Title).Coalesce(""),
+			t.Title.Coalesce(""),
 			a.Kind,
-			keel.DynOf(p.Status).Cast(keel.TypeString).Coalesce(a.Status),
+			keel.CastText(p.Status).Coalesce(a.Status),
 			a.CreatedAt,
 		).
 		Where(

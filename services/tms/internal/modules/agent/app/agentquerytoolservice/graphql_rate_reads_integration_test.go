@@ -17,6 +17,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/reference/domain/accessorialcharge/accessorialchargedb"
 
 	"github.com/emoss08/trenova/internal/api/graphql/agentread/agentreadtest"
+	"github.com/emoss08/trenova/internal/api/graphql/loaders"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentquerytoolservice"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
@@ -236,10 +237,20 @@ func TestConvertedLists_RateReadsReadWhatTheirServicesReadUnderRowLevelSecurity(
 	conn := dbtest.NewRLSConnection(t, admin, dsn)
 	logger := zap.NewNop()
 	_, resolvers := convertedListCases(conn, admin)
+	agreementRepo := rateagreementrepository.New(
+		rateagreementrepository.Params{DB: conn, Logger: logger})
 	agreements := rateagreementservice.New(rateagreementservice.Params{
 		Logger: logger,
-		Repo:   rateagreementrepository.New(rateagreementrepository.Params{DB: conn, Logger: logger}),
+		Repo:   agreementRepo,
 	})
+	laneCounts := loaders.NewRateAgreementLaneCountLoaderFactory(
+		loaders.RateAgreementLaneCountLoaderFactoryParams{AgreementRepo: agreementRepo})
+	laneRows := loaders.NewRateAgreementLanesLoaderFactory(
+		loaders.RateAgreementLanesLoaderFactoryParams{AgreementRepo: agreementRepo})
+	withLaneLoaders := func(tenant *rateTenant) *rateTenant {
+		tenant.ctx = laneRows.Attach(laneCounts.Attach(tenant.ctx, tenant.info), tenant.info)
+		return tenant
+	}
 	indexes := fuelsurchargerepository.NewIndexRepository(
 		fuelsurchargerepository.IndexParams{DB: conn, Logger: logger})
 	prices := fuelsurchargerepository.NewPriceRepository(
@@ -264,8 +275,8 @@ func TestConvertedLists_RateReadsReadWhatTheirServicesReadUnderRowLevelSecurity(
 	public := agentreadtest.NewReader(t, agentreadtest.Options{Engine: &publicRole{}, Resolvers: resolvers})
 	mineTenant := agentreadtest.SeedTenant(t, admin, "A")
 	theirsTenant := agentreadtest.SeedTenant(t, admin, "B")
-	mine := seedRateTenant(t, admin, mineTenant, "A")
-	theirs := seedRateTenant(t, admin, theirsTenant, "B")
+	mine := withLaneLoaders(seedRateTenant(t, admin, mineTenant, "A"))
+	theirs := withLaneLoaders(seedRateTenant(t, admin, theirsTenant, "B"))
 	actor := mineTenant.Actor
 
 	list := func(t *testing.T, name string, engineReader bool) agentports.AgentQueryTool {

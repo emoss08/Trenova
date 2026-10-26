@@ -74,21 +74,18 @@ func (r *repository) List(
 				Offset(req.Filter.Pagination.SafeOffset())
 
 			var entries []*journalentry.JournalEntry
-			var total int64
+			var total keel.RowCount
 			err := keel.Batch(
 				ctx,
 				r.db.Keel(ctx),
 				keel.ListInto(rows, &entries),
-				keel.CountInto(counted, &total),
+				keel.CountEstimateInto(counted, pagination.ExactTotalUpTo, &total),
 			)
 			if err != nil {
 				return nil, fmt.Errorf("list journal entries: %w", err)
 			}
 
-			return &pagination.ListResult[*journalentry.JournalEntry]{
-				Items: entries,
-				Total: int(total),
-			}, nil
+			return listquery.Result(entries, total), nil
 		},
 	)
 }

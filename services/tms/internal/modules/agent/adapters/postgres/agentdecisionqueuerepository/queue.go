@@ -14,6 +14,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant/tenantdb"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/pkg/pagination"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
@@ -67,19 +68,19 @@ func pendingQueue(req *agentports.ListPendingDecisionsQuery) *keel.CTETable {
 	pDef := agentdefinitiondb.Definitions.As("pdef")
 	proposals := p.
 		Pick(
-			keel.DynLit(string(agentports.PendingDecisionProposal)),
+			keel.Text(string(agentports.PendingDecisionProposal)),
 			p.ID,
 			p.CreatedAt,
 			pRun.AgentDefinitionID,
-			keel.DynOf(pDef.Name).Coalesce(""),
-			keel.DynOf(pDef.ShadowMode).Coalesce(false),
-			keel.DynOf(p.ToolName).Cast(keel.TypeString),
+			pDef.Name.Coalesce(""),
+			pDef.ShadowMode.Coalesce(false),
+			keel.CastText(p.ToolName),
 		).
 		Join(pRun, pRun.ID.EqCol(p.RunID)).
 		LeftJoin(pDef, pDef.ID.EqCol(pRun.AgentDefinitionID)).
 		Where(
 			p.Status.Eq(agent.ProposalStatusPending),
-			keel.Or(p.ExpiresAt.IsNull(), keel.DynOf(p.ExpiresAt).Eq(0), p.ExpiresAt.Gt(req.Now)),
+			keel.Or(p.ExpiresAt.IsNull(), p.ExpiresAt.Eq(0), p.ExpiresAt.Gt(req.Now)),
 			keel.When(!req.AgentDefinitionID.IsNil(), pRun.AgentDefinitionID.Eq(req.AgentDefinitionID)),
 			audience(pDef, req.Audience),
 			p.PlanID.IsNull(),
@@ -92,19 +93,19 @@ func pendingQueue(req *agentports.ListPendingDecisionsQuery) *keel.CTETable {
 	step := agentdb.AgentProposals.As("step")
 	plans := pl.
 		Pick(
-			keel.DynLit(string(agentports.PendingDecisionPlan)),
+			keel.Text(string(agentports.PendingDecisionPlan)),
 			pl.ID,
 			pl.CreatedAt,
 			plRun.AgentDefinitionID,
-			keel.DynOf(plDef.Name).Coalesce(""),
-			keel.DynOf(plDef.ShadowMode).Coalesce(false),
-			keel.DynLit(agent.PlanToolName).Cast(keel.TypeString),
+			plDef.Name.Coalesce(""),
+			plDef.ShadowMode.Coalesce(false),
+			keel.Text(agent.PlanToolName),
 		).
 		Join(plRun, plRun.ID.EqCol(pl.RunID)).
 		LeftJoin(plDef, plDef.ID.EqCol(plRun.AgentDefinitionID)).
 		Where(
 			pl.Status.Eq(agent.PlanStatusPending),
-			keel.Or(pl.ExpiresAt.IsNull(), keel.DynOf(pl.ExpiresAt).Eq(0), pl.ExpiresAt.Gt(req.Now)),
+			keel.Or(pl.ExpiresAt.IsNull(), pl.ExpiresAt.Eq(0), pl.ExpiresAt.Gt(req.Now)),
 			keel.When(!req.AgentDefinitionID.IsNil(), plRun.AgentDefinitionID.Eq(req.AgentDefinitionID)),
 			audience(plDef, req.Audience),
 			keel.When(req.ToolName != "", keel.Exists(step.Where(
@@ -195,19 +196,19 @@ func (r *repository) ListPending(
 func (r *repository) CountPending(
 	ctx context.Context,
 	req agentports.ListPendingDecisionsQuery,
-) (int, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) (int, error) {
+) (keel.RowCount, error) {
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) (keel.RowCount, error) {
 		q := pendingQueue(&req)
 		count, err := q.Query().With(q).
-			Where(keel.When(req.ActionableOnly, keel.DynOf(q.Col("shadow")).Not())).
-			Count(ctx, r.db.Keel(ctx))
+			Where(keel.When(req.ActionableOnly, keel.Not(keel.BoolOf(q.Col("shadow"))))).
+			CountEstimate(ctx, r.db.Keel(ctx), pagination.ExactTotalUpTo)
 		if err != nil {
 			r.l.Error("failed to count pending decisions", zap.Error(err))
 
-			return 0, fmt.Errorf("count pending decisions: %w", err)
+			return keel.RowCount{}, fmt.Errorf("count pending decisions: %w", err)
 		}
 
-		return int(count), nil
+		return count, nil
 	})
 }
 
@@ -300,11 +301,11 @@ func (r *repository) ListRecent(
 				Pick(
 					d.ID,
 					p.ID,
-					keel.DynOf(d.Decision).Cast(keel.TypeString),
+					keel.CastText(d.Decision),
 					d.ReasonCode,
-					keel.DynOf(d.Note).Coalesce(""),
+					d.Note.Coalesce(""),
 					d.DecidedByUserID,
-					keel.DynOf(u.Name).Coalesce(""),
+					u.Name.Coalesce(""),
 					d.CreatedAt,
 				).
 				Join(p, p.ID.EqCol(d.ProposalID)).

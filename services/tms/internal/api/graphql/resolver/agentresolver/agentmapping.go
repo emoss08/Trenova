@@ -112,9 +112,10 @@ func agentEvaluationConnectionToModel(
 	}
 
 	return &gqlmodel.AgentEvaluationConnection{
-		Edges:      page.Edges,
-		PageInfo:   page.PageInfo,
-		TotalCount: page.TotalCount,
+		Edges:           page.Edges,
+		PageInfo:        page.PageInfo,
+		TotalCount:      page.TotalCount,
+		TotalCountExact: page.TotalCountExact,
 	}, nil
 }
 
@@ -148,9 +149,10 @@ func agentMemoryConnectionToModel(
 	}
 
 	return &gqlmodel.AgentMemoryConnection{
-		Edges:      page.Edges,
-		PageInfo:   page.PageInfo,
-		TotalCount: page.TotalCount,
+		Edges:           page.Edges,
+		PageInfo:        page.PageInfo,
+		TotalCount:      page.TotalCount,
+		TotalCountExact: page.TotalCountExact,
 	}, nil
 }
 
@@ -181,9 +183,10 @@ func agentReflectionConnectionToModel(
 	}
 
 	return &gqlmodel.AgentReflectionConnection{
-		Edges:      page.Edges,
-		PageInfo:   page.PageInfo,
-		TotalCount: page.TotalCount,
+		Edges:           page.Edges,
+		PageInfo:        page.PageInfo,
+		TotalCount:      page.TotalCount,
+		TotalCountExact: page.TotalCountExact,
 	}, nil
 }
 
@@ -249,9 +252,10 @@ func agentPlanConnectionToModel(
 	}
 
 	return &gqlmodel.AgentPlanConnection{
-		Edges:      page.Edges,
-		PageInfo:   page.PageInfo,
-		TotalCount: page.TotalCount,
+		Edges:           page.Edges,
+		PageInfo:        page.PageInfo,
+		TotalCount:      page.TotalCount,
+		TotalCountExact: page.TotalCountExact,
 	}, nil
 }
 
@@ -282,9 +286,10 @@ func agentRunConnectionToModel(
 	}
 
 	return &gqlmodel.AgentRunConnection{
-		Edges:      page.Edges,
-		PageInfo:   page.PageInfo,
-		TotalCount: page.TotalCount,
+		Edges:           page.Edges,
+		PageInfo:        page.PageInfo,
+		TotalCount:      page.TotalCount,
+		TotalCountExact: page.TotalCountExact,
 	}, nil
 }
 
@@ -303,9 +308,10 @@ func agentProposalConnectionToModel(
 	}
 
 	return &gqlmodel.AgentProposalConnection{
-		Edges:      page.Edges,
-		PageInfo:   page.PageInfo,
-		TotalCount: page.TotalCount,
+		Edges:           page.Edges,
+		PageInfo:        page.PageInfo,
+		TotalCount:      page.TotalCount,
+		TotalCountExact: page.TotalCountExact,
 	}, nil
 }
 
@@ -324,9 +330,10 @@ func agentExceptionConnectionToModel(
 	}
 
 	return &gqlmodel.AgentExceptionConnection{
-		Edges:      page.Edges,
-		PageInfo:   page.PageInfo,
-		TotalCount: page.TotalCount,
+		Edges:           page.Edges,
+		PageInfo:        page.PageInfo,
+		TotalCount:      page.TotalCount,
+		TotalCountExact: page.TotalCountExact,
 	}, nil
 }
 

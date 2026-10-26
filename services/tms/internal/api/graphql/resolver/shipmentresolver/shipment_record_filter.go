@@ -154,8 +154,9 @@ func emptyShipmentConnection() *gqlmodel.ShipmentConnection {
 	total := 0
 
 	return &gqlmodel.ShipmentConnection{
-		Edges:      []*gqlmodel.ShipmentEdge{},
-		TotalCount: &total,
-		PageInfo:   base.PageInfo(false, nil),
+		Edges:           []*gqlmodel.ShipmentEdge{},
+		TotalCount:      &total,
+		TotalCountExact: true,
+		PageInfo:        base.PageInfo(false, nil),
 	}
 }

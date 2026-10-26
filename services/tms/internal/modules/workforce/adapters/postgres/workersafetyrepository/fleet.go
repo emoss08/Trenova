@@ -30,8 +30,8 @@ func outOfServiceCount() keel.Agg {
 	))
 }
 
-func sumOrZero(e keel.Expr) keel.Expr {
-	return keel.DynOf(e).Coalesce(0)
+func sumOrZero(e keel.Expr) keel.Int64Expr {
+	return keel.Int64Of(e).Coalesce(0)
 }
 
 // rosterScope is the roster half of every fleet query: active workers, their
@@ -172,15 +172,13 @@ func (r *repository) FleetKinds(
 // csaBucketExpr sorts an event into the FMCSA's recency buckets: 0 inside six
 // months, 1 inside a year, 2 out to the two-year look-back. The weights
 // themselves stay in the domain, where they can be tested without a database.
-func csaBucketExpr(now int64) keel.Expr {
+func csaBucketExpr(now int64) keel.Int64Expr {
 	e := workerdb.WorkerSafetyEvents
 
-	bucket := func(n int64) keel.DynExpr { return keel.DynLit(n).Cast(keel.TypeInt64) }
-
-	return keel.DynCase().
-		When(e.OccurredAt.Gte(timeutils.AddMonthsUTC(now, -6)), bucket(0)).
-		When(e.OccurredAt.Gte(timeutils.AddMonthsUTC(now, -12)), bucket(1)).
-		Else(bucket(2))
+	return keel.CaseInt64().
+		When(e.OccurredAt.Gte(timeutils.AddMonthsUTC(now, -6)), keel.Int64(0)).
+		When(e.OccurredAt.Gte(timeutils.AddMonthsUTC(now, -12)), keel.Int64(1)).
+		Else(keel.Int64(2))
 }
 
 func fleetBasicsQuery(req *workerports.FleetSafetyRequest) *keel.Query[*worker.WorkerSafetyEvent] {
@@ -246,7 +244,7 @@ func (r *repository) FleetEventBasics(
 					Group(e.Kind, e.InspectionResult, bucket).
 					Pick(
 						e.Kind,
-						keel.DynOf(e.InspectionResult).Cast(keel.TypeString).Coalesce(""),
+						keel.CastText(e.InspectionResult).Coalesce(""),
 						bucket,
 						keel.Count(),
 						sumOrZero(e.Points.Sum()),
@@ -265,19 +263,9 @@ func (r *repository) FleetEventBasics(
 func fleetTrendQuery(req *workerports.FleetSafetyRequest) *keel.Query[*worker.WorkerSafetyEvent] {
 	e := workerdb.WorkerSafetyEvents
 	since := timeutils.AddMonthsUTC(req.Now, -req.WindowMonths)
-	period := keel.DynFunc(
-		"date_part",
-		"epoch",
-		keel.DynFunc(
-			"date_trunc",
-			"month",
-			keel.DynFunc(
-				"timezone",
-				keel.DynLit("UTC").Cast(keel.TypeString),
-				keel.DynFunc("to_timestamp", e.OccurredAt),
-			),
-		),
-	).Cast(keel.TypeInt64)
+	period := keel.Epoch(
+		keel.DateTrunc("month", keel.ToTimestamp(e.OccurredAt).AtTimeZone(keel.Text("UTC"))),
+	)
 	accident := e.Kind.Eq(worker.SafetyEventAccident)
 
 	return eventScope(req, since).

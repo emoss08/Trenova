@@ -15,6 +15,7 @@ import { SegmentedControl } from "@trenova/shared/components/ui/segmented-contro
 import { BulkBillingTransferCandidateRowsSkeleton } from "./bulk-billing-transfer-dialog-skeleton";
 import { Spinner } from "@trenova/shared/components/ui/spinner";
 import { useT } from "@trenova/shared/i18n/use-t";
+import { formatRowTotal } from "@trenova/shared/lib/row-total";
 import { formatUnixInUserTimezone } from "@trenova/shared/lib/date";
 import { cn, formatCurrency } from "@trenova/shared/lib/utils";
 import { SearchLgIcon } from "@trenova/shared/components/icons";
@@ -32,6 +33,8 @@ type BulkBillingTransferCandidatesProps = {
   onFiltersChange: (filters: BillingTransferCandidateFilters) => void;
   candidates: BillingTransferCandidate[];
   totalCount: number | null;
+  /** False when totalCount is the server's estimate of a list too large to count. */
+  totalCountExact: boolean;
   isLoading: boolean;
   isError: boolean;
   onRetryLoad: () => void;
@@ -47,6 +50,7 @@ export function BulkBillingTransferCandidates({
   onFiltersChange,
   candidates,
   totalCount,
+  totalCountExact,
   isLoading,
   isError,
   onRetryLoad,
@@ -95,14 +99,18 @@ export function BulkBillingTransferCandidates({
         <span>
           {totalCount === null
             ? t("Counting shipments...")
-            : t(
-                "{0, plural, one {# shipment can transfer} other {# shipments can transfer}}",
-                totalCount,
-              )}
+            : totalCountExact
+              ? t(
+                  "{0, plural, one {# shipment can transfer} other {# shipments can transfer}}",
+                  totalCount,
+                )
+              : t("About {0} shipments can transfer", formatRowTotal(totalCount, false))}
         </span>
         {totalCount !== null && candidates.length > 0 && candidates.length < totalCount ? (
           <span className="tabular-nums">
-            {t("Showing {0} of {1}", candidates.length, totalCount)}
+            {totalCountExact
+              ? t("Showing {0} of {1}", candidates.length, totalCount)
+              : t("Showing {0} of about {1}", candidates.length, formatRowTotal(totalCount, false))}
           </span>
         ) : null}
       </div>

@@ -4,12 +4,12 @@ import (
 	"context"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/modules/agent/agenttest"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
-	"github.com/emoss08/trenova/internal/modules/agent/agenttest"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -47,7 +47,11 @@ func (s *listedDefinitions) List(
 		items = append(items, definition)
 	}
 
-	return &pagination.ListResult[*agentdefinition.Definition]{Items: items, Total: len(items)}, nil
+	return &pagination.ListResult[*agentdefinition.Definition]{
+		Items:      items,
+		Total:      len(items),
+		TotalExact: true,
+	}, nil
 }
 
 type toollessRuntime struct {

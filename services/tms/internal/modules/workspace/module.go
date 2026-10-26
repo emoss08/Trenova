@@ -53,6 +53,7 @@ func SharedOptions() fx.Option {
 			tableconfigurationrepository.New,
 			pagefavoriterepository.New,
 			reportrepository.NewDefinitionRepository,
+			reportrepository.NewCatalogVersionRepository,
 			reportrepository.NewDashboardRepository,
 			reportrepository.NewRunRepository,
 			reportrepository.NewScheduleRepository,

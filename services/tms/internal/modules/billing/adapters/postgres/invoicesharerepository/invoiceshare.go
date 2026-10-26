@@ -47,7 +47,7 @@ func (r *repository) Upsert(ctx context.Context, shares []*invoice.InvoiceShare)
 		_, err := s.Upsert(ctx, r.db.Keel(ctx), shares,
 			keel.OnConflict(s.InvoiceID, s.OrganizationID, s.BusinessUnitID, s.SharedWithID).
 				Update(s.SharedByID, s.Note, s.Tab, s.LastSharedAt).
-				Set(s.ShareCount.Add(1)),
+				Set(s.ShareCount.Increment(1)),
 		)
 		if err != nil {
 			r.l.Error("failed to upsert invoice shares", zap.Error(err))

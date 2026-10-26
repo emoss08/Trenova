@@ -111,7 +111,8 @@ func TestSelectOptions_InitialResourcesDoNotRequireResourcePermission(t *testing
 					Color:       "#ffffff",
 				},
 			},
-			Total: 1,
+			Total:      1,
+			TotalExact: true,
 		}, nil).
 		Once()
 
@@ -160,7 +161,8 @@ func TestSelectOptions_EquipmentManufacturerUsesAuthContextOnly(t *testing.T) {
 					Name:      "Great Dane",
 				},
 			},
-			Total: 1,
+			Total:      1,
+			TotalExact: true,
 		}, nil).
 		Once()
 
@@ -368,7 +370,8 @@ func TestSelectOptions_EDIConnectionSelectOptionsFiltersActive(t *testing.T) {
 					CreatedAt:            1780415883,
 				},
 			},
-			Total: 1,
+			Total:      1,
+			TotalExact: true,
 		}, nil).
 		Once()
 
@@ -426,8 +429,9 @@ func TestSelectOptions_EDIDocumentTypeCatalogIDs(t *testing.T) {
 				req.SelectQueryRequest.TenantInfo.BuID == buID
 		})).
 		Return(&pagination.ListResult[*edi.EDIDocumentType]{
-			Items: []*edi.EDIDocumentType{outbound, inbound},
-			Total: 2,
+			Items:      []*edi.EDIDocumentType{outbound, inbound},
+			Total:      2,
+			TotalExact: true,
 		}, nil).
 		Twice()
 
@@ -529,8 +533,9 @@ func TestSelectOptions_EDITransactionSetCatalogIDs(t *testing.T) {
 				req.Standard == ""
 		})).
 		Return(&pagination.ListResult[*edi.EDITransactionSet]{
-			Items: []*edi.EDITransactionSet{tender, response},
-			Total: 2,
+			Items:      []*edi.EDITransactionSet{tender, response},
+			Total:      2,
+			TotalExact: true,
 		}, nil).
 		Once()
 	repo.EXPECT().
@@ -541,8 +546,9 @@ func TestSelectOptions_EDITransactionSetCatalogIDs(t *testing.T) {
 				req.SelectQueryRequest.Pagination.Limit >= 2
 		})).
 		Return(&pagination.ListResult[*edi.EDITransactionSet]{
-			Items: []*edi.EDITransactionSet{tender, response},
-			Total: 2,
+			Items:      []*edi.EDITransactionSet{tender, response},
+			Total:      2,
+			TotalExact: true,
 		}, nil).
 		Once()
 

@@ -11,7 +11,7 @@ import { Link } from "react-router";
 import { irToInput } from "../../builder/_components/builder-state";
 import { ReportChart, type CategorySelect } from "../../_components/report-chart";
 import { ResultGrid } from "../../_components/result-grid";
-import { applyDashboardFilters, resolveTileParams } from "./dashboard-state";
+import { applyTileFilters } from "./dashboard-state";
 import { useTileReport } from "./use-tile-report";
 
 type DashboardTileBodyProps = {
@@ -91,21 +91,19 @@ export function DashboardTileBody({
   // saved dashboard, so a tile you just added previews immediately instead of
   // waiting to be persisted. Authorization is unchanged: the preview compiles
   // and authorizes the same IR the report itself would run.
-  const input = useMemo(() => {
+  const resolved = useMemo(() => {
     if (tile.kind === "text" || !report.ir) return null;
     const scoped = tile.limit ? { ...report.ir, limit: tile.limit } : report.ir;
-    // Shared filters first, then this tile's own — both override a matching
-    // condition rather than stacking a second one on the same field.
-    const shared = applyDashboardFilters(scoped, filters, filterValues);
-    return irToInput(applyDashboardFilters(shared, tileFilters, tileFilterValues));
-  }, [tile.kind, tile.limit, report.ir, filters, filterValues, tileFilters, tileFilterValues]);
+    return applyTileFilters(irToInput(scoped), tile, {
+      filters,
+      filterValues,
+      tileFilters,
+      tileFilterValues,
+      params,
+    });
+  }, [tile, report.ir, filters, filterValues, tileFilters, tileFilterValues, params]);
 
-  const tileParams = useMemo(
-    () => resolveTileParams(tile, params, report.ir?.parameters ?? []),
-    [tile, params, report.ir],
-  );
-
-  const data = useReportPreview(input, tileParams);
+  const data = useReportPreview(resolved?.definition ?? null, resolved?.params);
 
   if (tile.kind === "text") {
     return (

@@ -3,6 +3,7 @@ package integrationrepository
 import (
 	"context"
 
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/integration"
@@ -11,6 +12,7 @@ import (
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/pkg/resultcache"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
@@ -66,12 +68,18 @@ func (r *repository) GetByType(
 ) (*integration.Integration, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*integration.Integration, error) {
 		i := integrationdb.Integrations
-		entity, err := i.Where(i.Type.Eq(typ)).One(ctx, r.db.Keel(ctx))
+		rows, err := i.Where(i.Type.Eq(typ)).
+			Limit(1).
+			Cache(resultcache.Settings()...).
+			List(ctx, r.db.Keel(ctx))
 		if err != nil {
 			return nil, integrationErrors.Map(err, string(typ))
 		}
+		if len(rows) == 0 {
+			return nil, integrationErrors.Map(keel.ErrNotFound, string(typ))
+		}
 
-		return entity, nil
+		return rows[0], nil
 	})
 }
 

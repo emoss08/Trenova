@@ -498,7 +498,7 @@ func (s *Service) OfThread(
 			schedule := item.Schedule
 			schedules = append(schedules, &schedule)
 		}
-		if len(page.Items) == 0 || len(schedules) >= page.Total {
+		if len(page.Items) == 0 || (page.TotalExact && len(schedules) >= page.Total) {
 			return schedules, nil
 		}
 	}

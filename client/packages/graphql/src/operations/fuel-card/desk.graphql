@@ -123,6 +123,7 @@ query DeskFuelCards($input: FuelCardsInput!, $includeTotalCount: Boolean = false
       }
     }
     totalCount @include(if: $includeTotalCount)
+    totalCountExact @include(if: $includeTotalCount)
     pageInfo {
       endCursor
       hasNextPage

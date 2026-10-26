@@ -131,8 +131,9 @@ Labels and descriptions are translation keys with the derived English as fallbac
 to `analytics.messages.json`, which `task i18n` extracts into the catalogs like any other message
 ([i18n/README.md](../../i18n/README.md)).
 
-`Catalog.Version()` hashes everything a stored definition depends on. A definition and each of
-its revisions store the version they were saved against (`catalog_version`).
+`Catalog.Version()` hashes everything a stored definition depends on. A revision stores the
+version it was saved against; a definition stores the version it was last checked against
+(`catalog_version`), by a save or by the catalog check ([Catalog check](#catalog-check)).
 
 ## Access
 
@@ -188,18 +189,30 @@ per entity, field and edge the request touches.
 `reportengine.Engine` implements `reportports.ReportEngine` over two keel runners on the
 reporting pool, built when fx starts:
 
-- **interactive**, with no result cache: `Preview`, `Page`, `Count`, `Drill`, `Compile`, and
-  `Run` for a request whose read scope narrows (an `own` or `team` grant, so `readscope.Encode`
-  is not empty);
-- **cached**, with a Redis result cache (prefix `report:analytics:`, TTL `resultCacheTtl`):
-  `Run` for every other request. Without Redis, both are the interactive runner.
+- **interactive**, with no result cache: `Preview`, `Page`, `Drill`, `Compile`, and `Run` for a
+  request whose read scope narrows (an `own` or `team` grant, so `readscope.Encode` is not
+  empty);
+- **cached**, with the result cache (`reporting.resultCache`): `Run` for every other request.
+  With `resultCache.enabled` off, both are the interactive runner.
+
+The result cache follows the decision for keel's own ([backend/data-access.md](backend/data-access.md#result-cache)):
+an in-process tier per worker (`cache.NewMemory`, `localBytes`, 128 MiB, 8 shards) is on by
+default; the Redis tier (`resultCache.shared.enabled`, prefix `report:analytics:`) is off by
+default because it copies tenant report rows into Redis. With it on, `tieredStore` writes both
+tiers and keeps a Redis hit in the process too. A run of more than `MaxCachedRows` (50,000) rows,
+or larger than a local shard, is not kept locally; that is not logged.
+
+A run records whether its rows came from the cache (`Stream.Cached()`, stored as
+`ReportRun.cacheHit` and shown on the runs list); a preview never reads it, so `ReportPreview`
+has no such flag. `Validate` resolves a definition against the catalog under the configured
+definition limits, with no caller, parameters or database: the catalog check uses it.
 
 The cache key covers the statement and its arguments (the tenant and the policy's row rules
 among them), the output, and keel's data version of every table the statement reads, which keel
 bumps after a write through it commits
 ([backend/data-access.md](backend/data-access.md#pools-and-transactions)). The read scope is a
 session setting rather than an argument, which is why a narrowed run never reads the cache. The
-TTL is the backstop for writes keel does not see.
+TTL (`resultCache.ttl`, 15 min) is the backstop for writes keel does not see.
 
 No rollups are declared and the runners have no rollup router, so every report reads its base
 tables. `Primary: true`: reports run on the primary, not a replica.
@@ -223,12 +236,16 @@ Every entry point passes keel's guards. Trenova sets them from `reporting:`:
 | `maxToOneJoins`, `maxToManySubqueries` | 6, 3 | compiled complexity |
 | `explainCostLimit`, `explainRowLimit` | 5,000,000, 10,000,000 | `EXPLAIN` total cost and estimated rows |
 | `maxConcurrentStatementsPerOrg` | 4 | report statements one tenant runs at once on a server (advisory-lock slots, a 2 s wait, then `busy`) |
-| `previewStatementTimeout` | 10 s | Preview, Page, Count and Drill |
+| `previewStatementTimeout` | 10 s | Preview, Page and Drill |
 | `statementTimeout` | 5 min | Run, and the reporting pool's session `statement_timeout` |
 | `previewRowLimit` | 100 | preview rows; the most a page or a drill-through returns |
 | `maxRows` | 5,000,000 | rows a run streams |
 | `poolMaxOpenConns` | 4 | connections in the reporting pool |
-| `resultCacheTtl` | 15 min | cached results |
+| `resultCache.enabled`, `resultCache.localBytes`, `resultCache.ttl` | on, 128 MiB, 15 min | the in-process result cache of runs |
+| `resultCache.shared.enabled` | off | the Redis tier, which copies tenant report rows into Redis |
+
+`reportengine.DefinitionLimits` and `ComplexityLimits` turn this section into keel's limits; the
+runners, `Validate` and the canned report test all read them.
 
 `EngineError` maps keel's codes to what the caller sees: `denied` to the refusal above;
 `invalid_definition` to one validation error per JSON pointer
@@ -261,9 +278,10 @@ needs.
   (`canned.Default`); each file's name is its key. `forkCannedReport` copies one into a
   `canned_fork` definition and `resetCannedFork` puts the built-in definition back.
 - **Status** is `draft`, `active`, `archived` or `needs_attention`. A run refuses `archived` and
-  `needs_attention`; a schedule runs only an `active` definition. Nothing sets `needs_attention`
-  (`UpdateStatus` has no caller), and nothing sweeps definitions whose `catalog_version`
-  differs from the catalog's.
+  `needs_attention`; a schedule runs only an `active` definition, and a schedule skipped for
+  `needs_attention` tells its owner the report needs repairing. Only the catalog check sets
+  `needs_attention`: a save validates the definition, so it stores `active` instead (the agent's
+  `report_update` refuses the status outright).
 - `report_definitions` and `report_runs` are themselves reportable (category `Reporting`).
 
 ## Runs and exports
@@ -331,10 +349,52 @@ contract the browser formats with too
 
 ### Maintenance
 
-`reportjobs.ScheduleProvider` registers three Temporal schedules: dispatching due report
+`reportjobs.ScheduleProvider` registers four Temporal schedules: dispatching due report
 schedules every 5 minutes; deleting expired artifacts and sidecars hourly, which marks the run
-`expired`; and, hourly, failing runs left `queued` or `running` for more than `maxRunDuration`
-plus an hour (`ZOMBIE`). Their cross-tenant reads are `dbscope.WithSystem`.
+`expired`; hourly, failing runs left `queued` or `running` for more than `maxRunDuration` plus
+an hour (`ZOMBIE`); and the catalog check every 15 minutes. Their cross-tenant reads are
+`dbscope.WithSystem`.
+
+### Catalog check
+
+A deploy that renames or removes a reportable model, field or relation changes
+`Catalog.Version()` and can break saved reports. `CheckReportDefinitionsAgainstCatalogWorkflow`
+finds them, on the newest catalog version still running only (below), and `ListCatalogStale` reads definitions whose `catalog_version` is below or above the
+current version (two range scans on `idx_report_definitions_catalog_version`, empty once a
+deploy has been checked), 200 at a time and at most 20,000 a run, across every tenant. Each is
+resolved with `Engine.Validate`, and `RecordCatalogCheck` writes, in the definition's tenant:
+
+| Was | Resolves | Becomes |
+|---|---|---|
+| `active` | no | `needs_attention`, with one diagnostic per problem (`definition.columns[2].dimension.field: unknown field …`) |
+| `needs_attention` | yes | `active`, diagnostics cleared |
+| `draft`, `archived` | either | unchanged, diagnostics recorded or cleared |
+
+Every row is stamped with the current version, so the next pass skips it. The write is
+conditional on the definition's `version` and on its `catalog_version` still being stale, so a
+save that lands meanwhile wins and the check leaves that row alone; it bumps neither `version`
+nor `updated_at`, so a person editing the report never loses their save to it. A change of
+status is audited (`report`, `update`, the system principal, `event: catalog_check`). The
+builder shows the diagnostics and the library badges the status.
+
+**Owners are told once per pass.** Every report a pass marks `needs_attention` is grouped by
+owner, and each owner gets one `report_needs_attention` notification (the
+`notification.report_needs_attention` template: the first report's name, `ReportCount` and
+`OtherReports`; `definitionIds`, at most 20, in the data; the client opens the one report, or the
+library for several). The notices go out when the pass ends, also when it fails, and only for
+rows that pass changed, so a retried activity never repeats one; a repaired report is not
+announced, its badge just clears.
+
+**Rolling deploys and rollbacks.** Every report worker records its catalog version in
+`report_catalog_versions` (a global table: `version`, `first_seen_at`, `last_seen_at`) when it
+starts and every 5 minutes (`StartCatalogHeartbeat`), and the activity records it again before
+it looks. A pass runs, and checks again before every batch, only while its own version is the
+newest (latest `first_seen_at`) among those seen in the last 20 minutes; otherwise it stops with
+`superseded`. So while old and new workers run side by side only the new ones decide, and a
+rollback hands the check back to the old version once the new workers have been gone for 20
+minutes; their verdicts are then redone. A version not seen for 30 days is forgotten. A version
+registered in the middle of an older version's batch can lose at most that batch to it, and
+takes the rows back on its next pass.
 
 ## Schedules, alerts and delivery
 
@@ -378,8 +438,8 @@ is in `writecoverage.yml` ([agent-write-coverage.md](agent-write-coverage.md)).
   per field and edge, `access` (`ReportFieldAccess`), `inReferenceView`, `protection` and
   `needsReadOf`.
 - **`ReportPreview`** carries the columns with their resolved `display` and `sensitivity`, raw
-  `rows`, `levels`, `totals`, `truncated`, `cursor` (when paged with `pageSize`), `timezone`,
-  `rollup` and `cached`.
+  `rows`, `levels`, `totals`, `truncated`, `cursor` (when paged with `pageSize`), `timezone` and
+  `rollup`.
 - `runReport` with `viewId` takes the view's report, parameters and format on the server;
   explicit `params` or `format` still win.
 
@@ -396,10 +456,11 @@ is in `writecoverage.yml` ([agent-write-coverage.md](agent-write-coverage.md)).
   `pnpm --filter @trenova/graphql codegen` over the server schema.
 - Cells are formatted from each column's `display` by the rules module
   (`@trenova/shared/rules/report`).
-- A dashboard tile loads its report and calls `previewReport` itself. It folds the dashboard's
-  filters into the report with its own `applyDashboardFilters`
-  (`routes/reports/dashboards/_components/dashboard-state.ts`) on `ReportIR`; the server's
-  dashboard export folds them with keel's `ir.ApplyFilters` (`ResolveDashboardTiles`).
+- A dashboard tile loads its report and calls `previewReport` itself. `applyTileFilters`
+  (`routes/reports/dashboards/_components/dashboard-state.ts`) converts the report to a keel
+  `Definition` and folds the dashboard's filters, then the tile's own, and the parameters with
+  the generated `applyFilters`, the same function the dashboard export runs as `ir.ApplyFilters`
+  (`ResolveDashboardTiles`). There is no second implementation of the merge.
 
 ## Agent tools
 
@@ -468,6 +529,8 @@ job ([generated-artifacts.md](generated-artifacts.md)) fail when a generated fil
 
 | Test | Fails when |
 |---|---|
+| `TestEveryCannedReportCompilesAgainstTheCatalog` (`canned`) | a canned report does not compile against the catalog with its default parameters, or joins more than a run allows |
+| `TestCheckDefinitionsAgainstCatalog_*` (`reportjobs`) | the catalog check stops marking, restoring, stamping or auditing as above |
 | `TestEveryReportableEntityHasAKind` (`reportengine`) | a reportable model has no row in `kinds.go`, or names an unregistered resource or a missing ownership column |
 | `TestClientDefinitionModuleIsCurrent`, `TestMessageCatalogIsCurrent` (`reportengine`) | `keel-analytics.ts` or `analytics.messages.json` is stale |
 | `TestCatalogReadsInTheRequestersLanguage` (`reportengine`) | the Spanish catalog has no translation for the customer entity's plural |
@@ -489,15 +552,14 @@ job ([generated-artifacts.md](generated-artifacts.md)) fail when a generated fil
   and the message catalog stale, and CI fails.
 - **Catalog keys are Go names.** Renaming a reportable type, field or relation renames what
   stored definitions, canned reports and dashboards refer to, and they stop compiling until they
-  are updated. No test resolves the canned reports against the catalog.
+  are updated: the canned report test fails in the same change, and the catalog check marks
+  saved reports `needs_attention` after the deploy.
 - **Every way into the engine goes through `Service.Prepare`**, which attaches the policy, the
   tenant scope and the zone. A run on a worker also needs the requester's read scope
   (`readscope.With`), or own- and team-scoped grants would not narrow it.
 - **Use `ModeExport` for anything that leaves as a file** (runs, streams, dashboard exports,
   serving a stored run); `ModeRead` is for what is shown on a screen.
-- **Dashboard filter semantics live in two places**: `ir.ApplyFilters` on the server (dashboard
-  export) and `applyDashboardFilters` in the client (tiles on screen). Change both together.
+- **Dashboard filter semantics live in keel**: `ir.ApplyFilters` and its generated client twin
+  `applyFilters`. Change them in keel and regenerate; never fold filters by hand.
 - **A dashboard export is built in memory and holds at most the preview rows per tile.** Large
   data belongs in a run, which streams.
-- **`ReportRun.cacheHit` and `ReportPreview.cached` are always false**: previews use the
-  uncached runner, and a run does not record whether its stream came from the cache.

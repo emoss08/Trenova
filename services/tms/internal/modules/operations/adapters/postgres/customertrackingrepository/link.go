@@ -123,7 +123,7 @@ func (r *linkRepository) RecordView(
 			ctx,
 			r.db.Keel(ctx),
 			l.LastViewedAt.To(at),
-			l.ViewCount.Add(1),
+			l.ViewCount.Increment(1),
 			l.UpdatedAt.To(at),
 		)
 		if err != nil {
@@ -146,7 +146,7 @@ func (r *linkRepository) PurgeDead(ctx context.Context, before int64, limit int)
 			Where(l.ID.InQuery(
 				dead.AllTenants().
 					Pick(dead.ID).
-					Where(keel.DynOf(dead.RevokedAt).Coalesce(dead.ExpiresAt).Lt(before)).
+					Where(dead.RevokedAt.Coalesce(dead.ExpiresAt).Lt(before)).
 					Limit(limit),
 			)).
 			Delete(ctx, r.db.Keel(ctx))

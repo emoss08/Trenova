@@ -205,7 +205,7 @@ func syncEntries(ctx context.Context, db *keel.DB, entity *tender.RoutingGuide) 
 		if _, err := e.Where(e.RoutingGuideID.Eq(entity.ID), e.ID.In(kept...)).Update(
 			ctx,
 			db,
-			e.Rank.Add(rankShift),
+			e.Rank.Increment(rankShift),
 			e.Version.ToExpr(e.Version),
 			e.UpdatedAt.ToExpr(e.UpdatedAt),
 		); err != nil {
@@ -345,12 +345,12 @@ func (r *repository) matchTier(
 	})
 }
 
-func upperEq(col keel.Expr, value string) keel.Pred {
-	return keel.DynFunc("upper", col).Eq(strings.ToUpper(value))
+func upperEq(col keel.StringCol, value string) keel.Pred {
+	return col.Upper().Eq(strings.ToUpper(value))
 }
 
-func lowerEq(col keel.Expr, value string) keel.Pred {
-	return keel.DynFunc("lower", col).Eq(strings.ToLower(value))
+func lowerEq(col keel.StringCol, value string) keel.Pred {
+	return col.Lower().Eq(strings.ToLower(value))
 }
 
 func (r *repository) MatchLane(

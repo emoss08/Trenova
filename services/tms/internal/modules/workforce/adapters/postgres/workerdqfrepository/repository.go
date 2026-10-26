@@ -242,7 +242,7 @@ func retentionQuery(
 		Pick(w.ID, w.OrganizationID, w.BusinessUnitID, w.FirstName, w.LastName, wp.TerminationDate).
 		Where(
 			wp.TerminationDate.IsNotNull(),
-			keel.DynOf(wp.TerminationDate).Add(req.RetentionSeconds).Lte(req.AsOf),
+			wp.TerminationDate.Add(keel.Int64(req.RetentionSeconds)).Lte(req.AsOf),
 		).
 		Order(w.ID.Asc()).
 		Limit(limitOr(req.Limit, defaultRetentionPageSize))

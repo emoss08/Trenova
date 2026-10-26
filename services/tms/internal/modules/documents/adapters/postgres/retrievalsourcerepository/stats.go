@@ -87,8 +87,8 @@ var sourceTables = map[airetrieval.SourceType]sourceTable{
 	},
 }
 
-func charCount(e keel.Expr) keel.DynExpr {
-	return keel.DynFunc("length", keel.DynOf(e).Coalesce(""))
+func charCount(c keel.StringValue) keel.Int32Expr {
+	return keel.StringOf(c).Coalesce("").Length()
 }
 
 func charsSample[T any](q *keel.Query[*T]) *keel.CTETable {
@@ -159,7 +159,7 @@ func (r *repository) AverageSourceChars(
 			r.db.Keel(ctx),
 			newest.Query().
 				With(newest).
-				Pick(keel.Count(), keel.DynOf(newest.Col("chars")).Avg().Coalesce(0).Cast(keel.TypeFloat64)),
+				Pick(keel.Count(), keel.CastFloat64(keel.NumericOf(newest.Col("chars").Avg()).Coalesce(0))),
 		)
 		if err != nil {
 			return agentports.RetrievalSourceChars{}, fmt.Errorf(

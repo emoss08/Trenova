@@ -144,7 +144,7 @@ func (r *repository) RecordVerdicts(
 				ctx,
 				r.db.Keel(ctx),
 				te.Outcome.ToExpr(v.Col("outcome")),
-				te.OutcomeReason.ToExpr(keel.DynOf(v.Col("reason")).NullIf("")),
+				te.OutcomeReason.ToExpr(keel.StringOf(v.Col("reason")).NullIf("")),
 				te.UpdatedAt.To(at),
 			)
 		if err != nil {

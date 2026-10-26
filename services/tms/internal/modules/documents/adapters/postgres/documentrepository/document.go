@@ -272,7 +272,7 @@ func pendingPreview(d *documentdb.DocumentsTable) keel.Pred {
 	return keel.And(
 		d.IsCurrentVersion.IsTrue(),
 		d.PreviewStatus.Eq(document.PreviewStatusPending),
-		keel.Or(d.PreviewStoragePath.IsNull(), keel.DynOf(d.PreviewStoragePath).Eq("")),
+		keel.Or(d.PreviewStoragePath.IsNull(), d.PreviewStoragePath.Eq("")),
 	)
 }
 
@@ -394,8 +394,10 @@ func (r *repository) RecordDetectedSignature(
 		}
 
 		signed := d.SignedAt.ToNull()
+		sameSignedAt := d.SignedAt.IsNull()
 		if signedAt != nil {
 			signed = d.SignedAt.To(*signedAt)
+			sameSignedAt = keel.Not(d.SignedAt.IsDistinctFrom(*signedAt))
 		}
 
 		n, err := d.Where(
@@ -403,7 +405,7 @@ func (r *repository) RecordDetectedSignature(
 			d.SignatureSource.Ne(document.SignatureSourcePerson),
 			keel.Not(keel.And(
 				d.SignatureStatus.Eq(req.Status),
-				keel.DynOf(d.SignedAt).IsDistinctFrom(keel.DynLit(signedAt)).Not(),
+				sameSignedAt,
 				keel.Not(d.SignatureSource.IsDistinctFrom(document.SignatureSourceExtraction)),
 			)),
 		).Update(

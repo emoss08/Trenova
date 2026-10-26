@@ -102,9 +102,10 @@ type AIRetrievalFailedEntryEdge struct {
 }
 
 type AIRetrievalFailedEntryPage struct {
-	Edges       []*AIRetrievalFailedEntryEdge `json:"edges"`
-	HasNextPage bool                          `json:"hasNextPage"`
-	TotalCount  *int                          `json:"totalCount"`
+	Edges           []*AIRetrievalFailedEntryEdge `json:"edges"`
+	HasNextPage     bool                          `json:"hasNextPage"`
+	TotalCount      *int                          `json:"totalCount"`
+	TotalCountExact bool                          `json:"totalCountExact"`
 }
 
 type ListAIRetrievalFailedEntriesRequest struct {

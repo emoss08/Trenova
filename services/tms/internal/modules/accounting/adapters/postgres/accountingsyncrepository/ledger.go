@@ -190,13 +190,13 @@ func (s *ledgerSource) SumLines(
 				includeClosing: req.IncludeClosing,
 			})
 
-			customer := keel.DynLit("").Cast(keel.TypeString)
+			customer := keel.Text("")
 			sourceEntry := customer
 			if len(req.PartyAccountIDs) > 0 {
 				party := jel.GLAccountID.In(req.PartyAccountIDs...)
-				customer = keel.DynCase().When(party, jel.CustomerID).End().Coalesce("")
-				sourceEntry = keel.DynCase().
-					When(party, keel.DynOf(je.ReversalOfID).Coalesce(je.ID)).
+				customer = keel.CaseString().When(party, jel.CustomerID).End().Coalesce("")
+				sourceEntry = keel.CaseString().
+					When(party, je.ReversalOfID.Coalesce(je.ID)).
 					End().
 					Coalesce("")
 			}
@@ -743,7 +743,7 @@ func (s *ledgerSource) nameParties(
 					wrk := workerdb.Workers
 					return wrk.Pick(
 						wrk.ID,
-						keel.DynFunc("concat_ws", " ", wrk.FirstName, wrk.LastName),
+						keel.ConcatWS(" ", wrk.FirstName, wrk.LastName),
 					).Where(wrk.ID.In(ids...))
 				},
 			},

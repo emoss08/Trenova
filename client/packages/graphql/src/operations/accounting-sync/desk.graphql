@@ -263,6 +263,7 @@ query DeskAccountingDriftFindings(
       }
     }
     totalCount @include(if: $includeTotalCount)
+    totalCountExact @include(if: $includeTotalCount)
     pageInfo {
       ...DataTablePageInfoFields
     }
@@ -312,6 +313,7 @@ query DeskAccountingInboundChanges(
       }
     }
     totalCount @include(if: $includeTotalCount)
+    totalCountExact @include(if: $includeTotalCount)
     pageInfo {
       ...DataTablePageInfoFields
     }

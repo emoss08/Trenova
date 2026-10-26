@@ -13,6 +13,7 @@ import (
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/listquery"
 	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/pkg/resultcache"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
@@ -70,11 +71,10 @@ func (r *repository) GetByID(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*hazmatsegregationrule.HazmatSegregationRule, error) {
-			entity, err := hazmatsegregationruledb.HazmatSegregationRules.Get(
-				ctx,
-				r.db.Keel(ctx),
-				req.ID,
-			)
+			hsr := hazmatsegregationruledb.HazmatSegregationRules
+			entity, err := hsr.Where(hsr.ID.Eq(req.ID)).
+				Cache(resultcache.Reference()...).
+				One(ctx, r.db.Keel(ctx))
 			if err != nil {
 				return nil, hazmatSegregationRuleErrors.Map(err, req.ID.String())
 			}
@@ -92,7 +92,9 @@ func (r *repository) ListActiveByTenant(
 		ctx,
 		r.db,
 		func(ctx context.Context) ([]*hazmatsegregationrule.HazmatSegregationRule, error) {
-			entities, err := activeRules().All(ctx, r.db.Keel(ctx))
+			entities, err := activeRules().
+				Cache(resultcache.Reference()...).
+				All(ctx, r.db.Keel(ctx))
 			if err != nil {
 				r.l.Error("failed to list active hazmat segregation rules", zap.Error(err))
 				return nil, err

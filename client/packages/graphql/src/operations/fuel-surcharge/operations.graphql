@@ -59,6 +59,7 @@ query FuelIndexTable($input: DataTableConnectionInput!, $includeTotalCount: Bool
       }
     }
     totalCount @include(if: $includeTotalCount)
+    totalCountExact @include(if: $includeTotalCount)
     pageInfo {
       ...DataTablePageInfoFields
     }
@@ -76,6 +77,7 @@ query FuelSurchargeProgramTable(
       }
     }
     totalCount @include(if: $includeTotalCount)
+    totalCountExact @include(if: $includeTotalCount)
     pageInfo {
       ...DataTablePageInfoFields
     }

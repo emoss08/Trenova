@@ -29,7 +29,11 @@ func (f *fakeRunList) List(
 ) (*pagination.ListResult[*agent.AgentRun], error) {
 	f.requests = append(f.requests, req)
 
-	return &pagination.ListResult[*agent.AgentRun]{Items: f.runs, Total: len(f.runs)}, nil
+	return &pagination.ListResult[*agent.AgentRun]{
+		Items:      f.runs,
+		Total:      len(f.runs),
+		TotalExact: true,
+	}, nil
 }
 
 func backgroundRun(tainted bool) *agent.AgentRun {

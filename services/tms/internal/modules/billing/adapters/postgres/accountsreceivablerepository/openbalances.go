@@ -32,7 +32,9 @@ func (r *repository) ListCustomerOpenBalances(
 
 			inv := invoicedb.Invoices
 			open := receivablesql.OpenMinor(inv)
-			overdue := keel.DynCase().When(inv.DueDate.Lt(timeutils.NowUnix()), open).Else(0)
+			overdue := keel.CaseInt64().
+				When(inv.DueDate.Lt(timeutils.NowUnix()), open).
+				Else(keel.Int64(0))
 			balances, err := keel.Into[kernelports.CustomerOpenBalance](ctx, r.db.Keel(ctx), inv.
 				Pick(inv.CustomerID, open.Sum(), overdue.Sum(), inv.CurrencyCode.Min()).
 				Where(inv.CustomerID.In(req.CustomerIDs...), receivablesql.Open(inv)).

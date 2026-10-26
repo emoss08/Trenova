@@ -151,7 +151,7 @@ func pendingTenderChange(orgID, buID pulid.ID) *edi.TenderChange {
 		Recipient: &edi.TenderRecipient{
 			RecipientKind:           edi.TenderRecipientKindInternal,
 			RecipientOrganizationID: orgID,
-			RecipientBusinessUnitID: buID,
+			BusinessUnitID:          buID,
 		},
 		PreviousBaselinePayload: edi.LoadTenderPayload{BOL: "BOL-9", Weight: &weightBefore},
 		NewTenderPayload:        edi.LoadTenderPayload{BOL: "BOL-9", Weight: &weightAfter},

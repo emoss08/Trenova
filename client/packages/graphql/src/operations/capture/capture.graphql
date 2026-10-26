@@ -234,6 +234,7 @@ query CaptureBatches($input: CaptureBatchesInput!) {
 query CaptureBatchCount($input: CaptureBatchesInput!) {
   captureBatches(input: $input) {
     totalCount
+    totalCountExact
   }
 }
 

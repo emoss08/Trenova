@@ -14,6 +14,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/places/domain/location/locationdb"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/keelkinds"
+	"github.com/emoss08/trenova/pkg/listquery"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
@@ -86,22 +87,19 @@ func (r *repository) List(
 			live := liveAssignments()
 
 			var items []*shipment.Assignment
-			var total int64
+			var total keel.RowCount
 			err := keel.Batch(ctx, r.db.Keel(ctx),
 				keel.ListInto(withResources(live.Clone()).
 					Order(a.CreatedAt.Desc()).
 					Limit(req.Filter.Pagination.SafeLimit()).
 					Offset(req.Filter.Pagination.SafeOffset()), &items),
-				keel.CountInto(live, &total),
+				keel.CountEstimateInto(live, pagination.ExactTotalUpTo, &total),
 			)
 			if err != nil {
 				return nil, err
 			}
 
-			return &pagination.ListResult[*shipment.Assignment]{
-				Items: items,
-				Total: int(total),
-			}, nil
+			return listquery.Result(items, total), nil
 		},
 	)
 }
@@ -234,7 +232,7 @@ func (r *repository) findActiveAssignment(
 		entity, err := a.Join(sm, sm.ID.EqCol(a.ShipmentMoveID)).
 			Where(a.ArchivedAt.IsNull(), subject, sm.Status.In(activeMoveStatuses...)).
 			Order(
-				keel.DynOf(sm.Status).Eq(string(shipment.MoveStatusInTransit)).Desc(),
+				keel.Desc(sm.Status.Eq(shipment.MoveStatusInTransit)),
 				sm.CreatedAt.Desc(),
 			).
 			First(ctx, r.db.Keel(ctx))
@@ -399,11 +397,11 @@ func actualTimelineEvents(column keelkinds.PulidIDCol, resourceID pulid.ID) *kee
 			LeftJoin(loc, loc.ID.EqCol(st.LocationID)).
 			Pick(
 				at(st),
-				keel.DynLit(string(kind)),
+				keel.Text(string(kind)),
 				st.ID,
 				st.ShipmentMoveID,
 				sm.ShipmentID,
-				keel.DynOf(loc.Name).Coalesce(""),
+				loc.Name.Coalesce(""),
 			).
 			Where(
 				a.ArchivedAt.IsNull(),

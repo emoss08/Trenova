@@ -31,6 +31,7 @@ query DeskIftaMileageEntries(
       }
     }
     totalCount @include(if: $includeTotalCount)
+    totalCountExact @include(if: $includeTotalCount)
     pageInfo {
       endCursor
       hasNextPage

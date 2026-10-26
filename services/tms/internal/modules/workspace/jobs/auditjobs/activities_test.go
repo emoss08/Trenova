@@ -454,8 +454,9 @@ func TestDeleteAuditEntriesActivity_NoRetentionConfig(t *testing.T) {
 
 	mockDataRetentionRepo.On("List", mock.Anything).Return(
 		&pagination.ListResult[*tenant.DataRetention]{
-			Items: []*tenant.DataRetention{},
-			Total: 0,
+			Items:      []*tenant.DataRetention{},
+			Total:      0,
+			TotalExact: true,
 		}, nil)
 
 	env.RegisterActivity(activities.DeleteAuditEntriesActivity)
@@ -508,7 +509,8 @@ func TestDeleteAuditEntriesActivity_WithRetention(t *testing.T) {
 					AuditRetentionPeriod: 30,
 				},
 			},
-			Total: 1,
+			Total:      1,
+			TotalExact: true,
 		}, nil)
 
 	expectedTimestamp := time.Now().AddDate(0, 0, -30).Unix()

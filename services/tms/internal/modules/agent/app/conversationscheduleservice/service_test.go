@@ -7,10 +7,10 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/modules/agent/app/assistantturnservice"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversationschedule"
-	"github.com/emoss08/trenova/internal/modules/agent/app/assistantturnservice"
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/assistantjobs/assistantcontract"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
@@ -34,6 +34,7 @@ type fakeSchedules struct {
 	rows     map[pulid.ID]*conversationschedule.Schedule
 	titles   []string
 	pageCap  int
+	estimate int
 	messages []conversation.Message
 	runs     []conversationscheduleports.RecordConversationScheduleRunRequest
 }
@@ -113,9 +114,17 @@ func (f *fakeSchedules) List(
 		items = append(items, &conversationscheduleports.ListedConversationSchedule{Schedule: *row})
 	}
 
+	if f.estimate > 0 {
+		return &pagination.ListResult[*conversationscheduleports.ListedConversationSchedule]{
+			Items: items,
+			Total: f.estimate,
+		}, nil
+	}
+
 	return &pagination.ListResult[*conversationscheduleports.ListedConversationSchedule]{
-		Items: items,
-		Total: len(matched),
+		Items:      items,
+		Total:      len(matched),
+		TotalExact: true,
 	}, nil
 }
 
@@ -579,6 +588,35 @@ func TestOfThreadAndForget_SettleADeletedConversationsSchedules(t *testing.T) {
 		assert.Equal(t, f.thread.UserID, announced.AudienceUserID, "only the owner's tabs hear it")
 		assert.Contains(t, heldIDs, announced.RecordID)
 	}
+}
+
+/*
+An estimated total says nothing about where the list ends: a planner whose
+statistics are stale can put it below the rows that match, so reading a
+conversation's schedules pages on until a page comes back empty rather than
+stopping at the estimate.
+*/
+func TestOfThread_ReadsPastAnEstimatedTotal(t *testing.T) {
+	t.Parallel()
+
+	f := newFixture()
+	f.schedules.pageCap = 2
+	f.schedules.estimate = 2
+	first := f.create(t, "every monday at 8am, summarize detention").Schedule
+	second := f.create(t, "every weekday at 7:30am, list shipments not yet dispatched").Schedule
+	third := f.create(t, "every friday at 4pm, list unbilled shipments").Schedule
+
+	held, err := f.service.OfThread(t.Context(), conversationscheduleports.ThreadSchedulesRequest{
+		ThreadID:   f.thread.ID,
+		UserID:     f.thread.UserID,
+		TenantInfo: tenantOf(f.owner),
+	})
+	require.NoError(t, err)
+	heldIDs := make([]pulid.ID, 0, len(held))
+	for _, schedule := range held {
+		heldIDs = append(heldIDs, schedule.ID)
+	}
+	assert.ElementsMatch(t, []pulid.ID{first.ID, second.ID, third.ID}, heldIDs)
 }
 
 /*

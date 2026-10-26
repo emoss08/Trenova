@@ -11,6 +11,7 @@ import (
 	"github.com/emoss08/keel/analytics/ir"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
+	trenovaredis "github.com/emoss08/trenova/internal/infrastructure/redis"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/reportports"
 	"github.com/emoss08/trenova/pkg/readscope"
 	"github.com/redis/go-redis/v9"
@@ -19,8 +20,9 @@ import (
 )
 
 const (
-	cachePrefix = "report:analytics:"
-	slotWait    = 2 * time.Second
+	cachePrefix      = "report:analytics:"
+	slotWait         = 2 * time.Second
+	localCacheShards = 8
 )
 
 var (
@@ -75,35 +77,46 @@ func (e *Engine) start(ctx context.Context) error {
 		return err
 	}
 
-	runners := []*analytics.Runner{interactive, interactive}
-	if e.redis != nil {
-		store := cache.NewRedis(redisClient{e.redis}, cache.RedisOptions{Prefix: cachePrefix})
-		cached, cacheErr := analytics.NewRunner(db, e.catalog, e.options(store))
-		if cacheErr != nil {
-			return cacheErr
+	cached := interactive
+	if store := e.resultStore(); store != nil {
+		if cached, err = analytics.NewRunner(db, e.catalog, e.options(store)); err != nil {
+			return err
 		}
-		runners[1] = cached
 	}
 
 	e.mu.Lock()
-	e.interactive, e.cached = runners[0], runners[1]
+	e.interactive, e.cached = interactive, cached
 	e.mu.Unlock()
 	return nil
+}
+
+func (e *Engine) resultStore() analytics.Cache {
+	cfg := &e.cfg.ResultCache
+	if !cfg.Enabled {
+		return nil
+	}
+	local := cache.NewMemory(cache.MemoryOptions{
+		MaxBytes: cfg.GetLocalBytes(),
+		Shards:   localCacheShards,
+	})
+	if !cfg.SharedEnabled() || e.redis == nil {
+		return local
+	}
+	return &tieredStore{
+		local: local,
+		shared: cache.NewRedis(
+			trenovaredis.NewBytesClient(e.redis),
+			cache.RedisOptions{Prefix: cachePrefix},
+		),
+		ttl: cfg.GetTTL(),
+	}
 }
 
 func (e *Engine) options(store analytics.Cache) analytics.RunnerOptions {
 	cfg := e.cfg
 	opts := analytics.RunnerOptions{
-		Limits: ir.Limits{
-			MaxDimensions:   cfg.GetMaxDimensions(),
-			MaxLimit:        cfg.GetMaxDefinitionLimit(),
-			MaxPivotColumns: cfg.GetMaxPivotColumns(),
-			MaxPathDepth:    cfg.GetMaxPathDepth(),
-		},
-		Complexity: analytics.ComplexityLimits{
-			MaxJoins:  cfg.GetMaxToOneJoins(),
-			MaxToMany: cfg.GetMaxToManySubqueries(),
-		},
+		Limits:      DefinitionLimits(cfg),
+		Complexity:  ComplexityLimits(cfg),
 		MaxCost:     cfg.GetExplainCostLimit(),
 		MaxPlanRows: cfg.GetExplainRowLimit(),
 		PreviewRows: cfg.GetPreviewRowLimit(),
@@ -113,7 +126,6 @@ func (e *Engine) options(store analytics.Cache) analytics.RunnerOptions {
 		Timeouts: analytics.Timeouts{
 			Preview: cfg.GetPreviewStatementTimeout(),
 			Run:     cfg.GetStatementTimeout(),
-			Count:   cfg.GetPreviewStatementTimeout(),
 			Page:    cfg.GetPreviewStatementTimeout(),
 		},
 		Primary: true,
@@ -121,12 +133,31 @@ func (e *Engine) options(store analytics.Cache) analytics.RunnerOptions {
 	}
 	if store != nil {
 		opts.Cache = store
-		opts.CacheTTL = cfg.GetResultCacheTTL()
+		opts.CacheTTL = cfg.ResultCache.GetTTL()
 	}
 	return opts
 }
 
+func DefinitionLimits(cfg *config.ReportingConfig) ir.Limits {
+	return ir.Limits{
+		MaxDimensions:   cfg.GetMaxDimensions(),
+		MaxLimit:        cfg.GetMaxDefinitionLimit(),
+		MaxPivotColumns: cfg.GetMaxPivotColumns(),
+		MaxPathDepth:    cfg.GetMaxPathDepth(),
+	}
+}
+
+func ComplexityLimits(cfg *config.ReportingConfig) analytics.ComplexityLimits {
+	return analytics.ComplexityLimits{
+		MaxJoins:  cfg.GetMaxToOneJoins(),
+		MaxToMany: cfg.GetMaxToManySubqueries(),
+	}
+}
+
 func (e *Engine) report(err error) {
+	if errors.Is(err, cache.ErrTooLarge) {
+		return
+	}
 	e.l.Warn("report engine", zap.Error(err))
 }
 
@@ -140,6 +171,11 @@ func (e *Engine) runners() (interactive, cached *analytics.Runner, err error) {
 }
 
 func (e *Engine) Catalog() *analytics.Catalog { return e.catalog }
+
+func (e *Engine) Validate(def *ir.Definition) error {
+	_, err := ir.Resolve(def, e.catalog, DefinitionLimits(e.cfg))
+	return err
+}
 
 func (e *Engine) Preview(ctx context.Context, req *analytics.Request) (*analytics.Result, error) {
 	interactive, _, err := e.runners()
@@ -160,14 +196,6 @@ func (e *Engine) Page(
 		return nil, err
 	}
 	return interactive.Page(ctx, *req, cursor, size)
-}
-
-func (e *Engine) Count(ctx context.Context, req *analytics.Request) (int64, error) {
-	interactive, _, err := e.runners()
-	if err != nil {
-		return 0, err
-	}
-	return interactive.Count(ctx, *req)
 }
 
 func (e *Engine) Drill(
@@ -205,27 +233,4 @@ func (e *Engine) Run(ctx context.Context, req *analytics.Request) (*analytics.St
 		return interactive.Run(ctx, *req)
 	}
 	return cached.Run(ctx, *req)
-}
-
-type redisClient struct {
-	client *redis.Client
-}
-
-func (c redisClient) Get(ctx context.Context, key string) (value []byte, found bool, err error) {
-	value, err = c.client.Get(ctx, key).Bytes()
-	if errors.Is(err, redis.Nil) {
-		return nil, false, nil
-	}
-	if err != nil {
-		return nil, false, err
-	}
-	return value, true, nil
-}
-
-func (c redisClient) Set(ctx context.Context, key string, value []byte, ttl time.Duration) error {
-	return c.client.Set(ctx, key, value, ttl).Err()
-}
-
-func (c redisClient) Del(ctx context.Context, key string) error {
-	return c.client.Del(ctx, key).Err()
 }

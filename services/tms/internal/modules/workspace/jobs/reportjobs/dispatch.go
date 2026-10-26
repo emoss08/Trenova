@@ -101,10 +101,7 @@ func (a *Activities) dispatchSchedule(
 
 	if definition.Status != report.DefinitionStatusActive {
 		result.Skipped++
-		a.recordScheduleFailure(tenantCtx, schedule, fmt.Sprintf(
-			"The scheduled report %q is %s and was skipped.",
-			definition.Name, definition.Status,
-		))
+		a.recordScheduleFailure(tenantCtx, schedule, inactiveDefinitionReason(definition))
 		_, updateErr := a.scheduleRepo.Update(tenantCtx, schedule)
 		return updateErr
 	}
@@ -305,4 +302,18 @@ func (a *Activities) recordScheduleRunOutcome(ctx context.Context, run *report.R
 		a.l.Warn("failed to update schedule run outcome",
 			zap.String("scheduleId", schedule.ID.String()), zap.Error(err))
 	}
+}
+
+func inactiveDefinitionReason(definition *report.ReportDefinition) string {
+	if definition.Status == report.DefinitionStatusNeedsAttention {
+		return fmt.Sprintf(
+			"The scheduled report %q references fields that no longer exist and was skipped; "+
+				"open it in the report builder to repair it.",
+			definition.Name,
+		)
+	}
+	return fmt.Sprintf(
+		"The scheduled report %q is %s and was skipped.",
+		definition.Name, definition.Status,
+	)
 }

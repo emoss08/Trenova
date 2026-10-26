@@ -2,4 +2,4 @@
 import type { TypedDocumentString, TcaSubscriptionTableQuery, TcaSubscriptionTableQueryVariables, TcaSubscriptionTableRowFieldsFragment } from "../../graphql";
 
 export const TcaSubscriptionTableRowFieldsFragmentDoc = {"__meta__":{"fragmentName":"TCASubscriptionTableRowFields"}} as unknown as TypedDocumentString<TcaSubscriptionTableRowFieldsFragment, unknown>;
-export const TcaSubscriptionTableDocument = {"__meta__":{"kind":"query","name":"TCASubscriptionTable","hash":"sha256:95cbea4e2c46a39616eafb7d6768643c6dea54ff2d0206fc3002d31745721746"}} as unknown as TypedDocumentString<TcaSubscriptionTableQuery, TcaSubscriptionTableQueryVariables>;
+export const TcaSubscriptionTableDocument = {"__meta__":{"kind":"query","name":"TCASubscriptionTable","hash":"sha256:d2a097aec8d18aae3f58922b02e3cc4247a897df4bfc8520ebf316aff7d297de"}} as unknown as TypedDocumentString<TcaSubscriptionTableQuery, TcaSubscriptionTableQueryVariables>;

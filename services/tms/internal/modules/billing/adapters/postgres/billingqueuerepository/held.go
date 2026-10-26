@@ -40,7 +40,7 @@ func unbilledInvoiceFreight(
 		keel.NotExists(line.
 			Join(inv, inv.ID.EqCol(line.InvoiceID)).
 			Where(line.ShipmentID.EqCol(sp.ID), inv.CustomerID.EqCol(bqi.BillToCustomerID))),
-		keel.DynOf(sp.ActualDeliveryDate).Coalesce(bqi.CreatedAt).Lt(periodEnd),
+		sp.ActualDeliveryDate.Coalesce(bqi.CreatedAt).Lt(periodEnd),
 	)
 }
 
@@ -63,7 +63,7 @@ func (r *repository) CountHeldForPeriod(
 				Pick(
 					bqi.BillToCustomerID,
 					keel.Count(),
-					keel.DynOf(keel.Sum(bqi.AllocatedTotalAmount)).Coalesce(0),
+					keel.NumericOf(keel.Sum(bqi.AllocatedTotalAmount)).Coalesce(0),
 				).
 				Where(
 					bqi.Status.In(heldStatuses...),

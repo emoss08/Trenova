@@ -2,4 +2,4 @@
 import type { TypedDocumentString, AccountTypeTableQuery, AccountTypeTableQueryVariables, AccountTypeTableRowFieldsFragment } from "../../graphql";
 
 export const AccountTypeTableRowFieldsFragmentDoc = {"__meta__":{"fragmentName":"AccountTypeTableRowFields"}} as unknown as TypedDocumentString<AccountTypeTableRowFieldsFragment, unknown>;
-export const AccountTypeTableDocument = {"__meta__":{"kind":"query","name":"AccountTypeTable","hash":"sha256:bd52997a38905cd2b8343527e55ae1488b2e2f87bc1e50192a1909481e075956"}} as unknown as TypedDocumentString<AccountTypeTableQuery, AccountTypeTableQueryVariables>;
+export const AccountTypeTableDocument = {"__meta__":{"kind":"query","name":"AccountTypeTable","hash":"sha256:4c3e8f2e07ae4679aa8aa335a043e3c5bf85f8500875b53648c2c34143190557"}} as unknown as TypedDocumentString<AccountTypeTableQuery, AccountTypeTableQueryVariables>;

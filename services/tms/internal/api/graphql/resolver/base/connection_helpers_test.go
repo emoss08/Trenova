@@ -62,9 +62,10 @@ func TestEntityCursorConnection_EndsOnTheLastEdgesCursor(t *testing.T) {
 			{Node: "TRC-1", ID: pulid.MustNew("trac_")},
 			{Node: "TRC-2", ID: pulid.MustNew("trac_")},
 		},
-		HasNextPage: true,
-		TotalCount:  &total,
-		EdgeCursors: []string{"first", "second"},
+		HasNextPage:     true,
+		TotalCount:      &total,
+		TotalCountExact: true,
+		EdgeCursors:     []string{"first", "second"},
 	}
 
 	page, err := EntityCursorConnection(result, testEdge, func(edge resolvertest.TestConnectionEdge) string {
@@ -76,4 +77,5 @@ func TestEntityCursorConnection_EndsOnTheLastEdgesCursor(t *testing.T) {
 	assert.Equal(t, "second", *page.PageInfo.EndCursor)
 	assert.True(t, page.PageInfo.HasNextPage)
 	assert.Equal(t, &total, page.TotalCount)
+	assert.True(t, page.TotalCountExact)
 }

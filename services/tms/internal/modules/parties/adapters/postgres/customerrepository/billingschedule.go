@@ -52,11 +52,9 @@ func (r *repository) AdvanceBilledPeriod(
 		if _, err := cbp.Where(cbp.CustomerID.Eq(req.CustomerID)).Update(
 			ctx,
 			r.db.Keel(ctx),
-			cbp.LastBilledPeriodEnd.ToExpr(keel.DynFunc(
-				"greatest",
-				keel.DynOf(cbp.LastBilledPeriodEnd).Coalesce(0),
-				keel.DynLit(req.PeriodEnd).Cast(keel.TypeInt64),
-			)),
+			cbp.LastBilledPeriodEnd.ToExpr(
+				cbp.LastBilledPeriodEnd.Coalesce(0).Greatest(keel.Int64(req.PeriodEnd)),
+			),
 			cbp.Version.ToExpr(cbp.Version),
 			cbp.UpdatedAt.ToExpr(cbp.UpdatedAt),
 		); err != nil {
@@ -127,9 +125,9 @@ func dueBillingSchedulesQuery(allTenants bool) *keel.Query[*customer.CustomerBil
 			cbp.OrganizationID,
 			cbp.BusinessUnitID,
 			cbp.CustomerID,
-			keel.DynOf(cus.Name).Coalesce(""),
+			cus.Name.Coalesce(""),
 			cus.Code,
-			keel.DynOf(cus.Status).Cast(keel.TypeString),
+			keel.CastText(cus.Status),
 			cbp.BillingCycle,
 			cbp.BillingCycleAnchorDay,
 			cbp.BillingCycleTimezone,

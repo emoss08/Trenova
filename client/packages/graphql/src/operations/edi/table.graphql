@@ -45,6 +45,7 @@ query EdiPartnerTable($input: DataTableConnectionInput!, $includeTotalCount: Boo
       }
     }
     totalCount @include(if: $includeTotalCount)
+    totalCountExact @include(if: $includeTotalCount)
     pageInfo {
       hasNextPage
       endCursor
@@ -87,6 +88,7 @@ query EdiCommunicationProfileTable(
       }
     }
     totalCount @include(if: $includeTotalCount)
+    totalCountExact @include(if: $includeTotalCount)
     pageInfo {
       hasNextPage
       endCursor
@@ -139,6 +141,7 @@ query EdiTransferTable(
       }
     }
     totalCount @include(if: $includeTotalCount)
+    totalCountExact @include(if: $includeTotalCount)
     pageInfo {
       hasNextPage
       endCursor
@@ -191,6 +194,7 @@ query EdiMessageTable($input: DataTableConnectionInput!, $includeTotalCount: Boo
       }
     }
     totalCount @include(if: $includeTotalCount)
+    totalCountExact @include(if: $includeTotalCount)
     pageInfo {
       hasNextPage
       endCursor
@@ -235,6 +239,7 @@ query EdiInboundFileTable($input: DataTableConnectionInput!, $includeTotalCount:
       }
     }
     totalCount @include(if: $includeTotalCount)
+    totalCountExact @include(if: $includeTotalCount)
     pageInfo {
       hasNextPage
       endCursor
@@ -278,6 +283,7 @@ query EdiMappingProfileTable(
       }
     }
     totalCount @include(if: $includeTotalCount)
+    totalCountExact @include(if: $includeTotalCount)
     pageInfo {
       hasNextPage
       endCursor
@@ -322,6 +328,7 @@ query EdiTestCaseTable(
       }
     }
     totalCount @include(if: $includeTotalCount)
+    totalCountExact @include(if: $includeTotalCount)
     pageInfo {
       hasNextPage
       endCursor

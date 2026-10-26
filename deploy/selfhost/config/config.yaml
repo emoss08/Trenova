@@ -73,6 +73,20 @@ database:
   lockTimeout: 5s
   idleInTransactionSessionTimeout: 30s
   queryLog: "off"
+  # A quarter of maxOpenConns per organization at once when 0.
+  tenantConcurrency: 0
+  # The result cache keeps repository reads in memory until a table they read
+  # changes. The shared tier puts it in Redis for every process; it copies
+  # tenant rows into Redis, so it stays off unless you choose it.
+  cache:
+    enabled: true
+    localBytes: 268435456
+    shared:
+      enabled: false
+  # Logs a warning for a request that sends one statement in more than
+  # maxRepeats round trips (an N+1 read).
+  budget:
+    maxRepeats: 10
   # PostgreSQL row-level security is off in this stack: the application
   # connects as the database owner. Moving to enforced tenant isolation takes
   # separate application, system and migrator roles; see "Hardening" in
@@ -256,6 +270,11 @@ portal:
 
 reporting:
   deliveryLinkBaseUrl: https://localhost # from .env (https://DOMAIN)
+  resultCache:
+    enabled: true
+    localBytes: 134217728
+    shared:
+      enabled: false # copies tenant report rows into Redis
 
 system:
   systemUserPassword: change-me # from .env

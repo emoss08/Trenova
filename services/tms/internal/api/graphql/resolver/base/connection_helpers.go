@@ -15,9 +15,10 @@ func PageInfo(hasNextPage bool, endCursor *string) *gqlmodel.PageInfo {
 }
 
 type entityCursorConnectionPage[TEdge any] struct {
-	Edges      []TEdge
-	PageInfo   *gqlmodel.PageInfo
-	TotalCount *int
+	Edges           []TEdge
+	PageInfo        *gqlmodel.PageInfo
+	TotalCount      *int
+	TotalCountExact bool
 }
 
 func EntityCursorConnection[TNode pagination.CursorEntity, TEdge any](
@@ -39,9 +40,10 @@ func EntityCursorConnection[TNode pagination.CursorEntity, TEdge any](
 	}
 
 	return &entityCursorConnectionPage[TEdge]{
-		Edges:      edges,
-		PageInfo:   PageInfo(result.HasNextPage, LastEdgeCursor(edges, edgeCursor)),
-		TotalCount: result.TotalCount,
+		Edges:           edges,
+		PageInfo:        PageInfo(result.HasNextPage, LastEdgeCursor(edges, edgeCursor)),
+		TotalCount:      result.TotalCount,
+		TotalCountExact: result.TotalCountExact,
 	}, nil
 }
 

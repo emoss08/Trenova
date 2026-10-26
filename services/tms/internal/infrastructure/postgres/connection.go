@@ -16,6 +16,7 @@ import (
 	"github.com/emoss08/trenova/internal/keeltables"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/pkg/dbscope"
+	goredis "github.com/redis/go-redis/v9"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
@@ -33,6 +34,8 @@ type ConnectionParams struct {
 	Config    *config.Config
 	Logger    *zap.Logger
 	Metrics   *metrics.Registry `optional:"true"`
+	Redis     *goredis.Client   `optional:"true"`
+	Observers []keel.Observer   `optional:"true"`
 }
 
 type Connection struct {
@@ -41,17 +44,21 @@ type Connection struct {
 	cfg        *config.Config
 	logger     *observability.ContextLogger
 	metrics    *metrics.Registry
+	redis      *goredis.Client
+	observers  []keel.Observer
 	settings   connectionSettings
 	rls        *rlsRuntime
 }
 
 type connectionSettings struct {
-	component       string
-	maxOpenConns    int
-	connMaxLifetime time.Duration
-	connMaxIdleTime time.Duration
-	connParams      map[string]string
-	registerStats   bool
+	component         string
+	maxOpenConns      int
+	connMaxLifetime   time.Duration
+	connMaxIdleTime   time.Duration
+	connParams        map[string]string
+	tenantConcurrency int
+	resultCache       bool
+	registerStats     bool
 }
 
 type txContextKey struct{}
@@ -95,11 +102,13 @@ func newConnection(p ConnectionParams, settings connectionSettings) (*Connection
 	}
 
 	conn := &Connection{
-		cfg:      p.Config,
-		logger:   logger,
-		metrics:  p.Metrics,
-		settings: settings,
-		rls:      rls,
+		cfg:       p.Config,
+		logger:    logger,
+		metrics:   p.Metrics,
+		redis:     p.Redis,
+		observers: p.Observers,
+		settings:  settings,
+		rls:       rls,
 	}
 
 	p.Lifecycle.Append(fx.Hook{
@@ -125,7 +134,9 @@ func oltpSettings(cfg *config.Config) connectionSettings {
 			cfg.Database.GetLockTimeout(),
 			cfg.Database.GetIdleTxTimeout(),
 		),
-		registerStats: true,
+		tenantConcurrency: cfg.Database.GetTenantConcurrency(cfg.Database.MaxOpenConns),
+		resultCache:       cfg.Database.Cache.Enabled,
+		registerStats:     true,
 	}
 }
 
@@ -142,7 +153,9 @@ func reportingSettings(cfg *config.Config) connectionSettings {
 			cfg.Database.GetLockTimeout(),
 			cfg.Database.GetIdleTxTimeout(),
 		),
-		registerStats: false,
+		tenantConcurrency: cfg.Database.GetTenantConcurrency(reporting.GetPoolMaxOpenConns()),
+		resultCache:       false,
+		registerStats:     false,
 	}
 }
 
@@ -166,13 +179,25 @@ func (c *Connection) connect(ctx context.Context) error {
 		guard = c.rls.guard(scopePoolTenant, !c.cfg.Database.System.Configured())
 	}
 
+	var (
+		cache *keel.CacheConfig
+		err   error
+	)
+	if c.settings.resultCache {
+		if cache, err = c.resultCache(); err != nil {
+			return err
+		}
+	}
+
 	tenant, err := c.openPool(ctx, &dbpool.Options{
-		DSN:             c.cfg.GetDSN(c.cfg.Database.Password),
-		MaxConns:        c.settings.maxOpenConns,
-		MaxConnLifetime: c.settings.connMaxLifetime,
-		MaxConnIdleTime: c.settings.connMaxIdleTime,
-		RuntimeParams:   c.settings.connParams,
-		Guard:           guard,
+		DSN:               c.cfg.GetDSN(c.cfg.Database.Password),
+		MaxConns:          c.settings.maxOpenConns,
+		MaxConnLifetime:   c.settings.connMaxLifetime,
+		MaxConnIdleTime:   c.settings.connMaxIdleTime,
+		RuntimeParams:     c.settings.connParams,
+		Guard:             guard,
+		TenantConcurrency: c.settings.tenantConcurrency,
+		Cache:             cache,
 	})
 	if err != nil {
 		return err
@@ -192,6 +217,10 @@ func (c *Connection) connect(ctx context.Context) error {
 		return err
 	}
 
+	if c.settings.registerStats && c.metrics != nil && c.metrics.Database != nil {
+		c.metrics.Database.RegisterRuntimeStats(c.runtimeStats)
+	}
+
 	if err = c.verifyRLS(ctx); err != nil {
 		return err
 	}
@@ -200,6 +229,9 @@ func (c *Connection) connect(ctx context.Context) error {
 		ctx, "Database connection established",
 		zap.String("database", c.cfg.Database.Name),
 		zap.Int32("max_conns", tenant.Pool().Config().MaxConns),
+		zap.Int("tenant_concurrency", c.settings.tenantConcurrency),
+		zap.Bool("result_cache", cache != nil),
+		zap.Bool("result_cache_shared", cache != nil && cache.Shared != nil),
 		zap.String("row_level_security", c.rlsMode()),
 	)
 
@@ -216,7 +248,7 @@ func (c *Connection) connect(ctx context.Context) error {
 
 func (c *Connection) openPool(ctx context.Context, opts *dbpool.Options) (*keel.DB, error) {
 	slow := newSlowQueryLog(c.logger)
-	opts.Observers = c.observers(slow)
+	opts.Observers = c.poolObservers(slow)
 	opts.ObserveArgs = queryLog(c.cfg) != nil
 	opts.Tables = keeltables.All()
 	opts.VersionErrors = func(err error) {
@@ -233,16 +265,18 @@ func (c *Connection) openPool(ctx context.Context, opts *dbpool.Options) (*keel.
 	return db, nil
 }
 
-func (c *Connection) observers(slow *slowQueryLog) []keel.Observer {
-	observers := make([]keel.Observer, 0, 3)
+func (c *Connection) poolObservers(slow *slowQueryLog) []keel.Observer {
+	observers := make([]keel.Observer, 0, 3+len(c.observers))
 	if log := queryLog(c.cfg); log != nil {
 		observers = append(observers, log)
 	}
 
-	return append(observers,
+	observers = append(observers,
 		&slowQueryObserver{log: slow},
 		newTracingObserver(c.cfg.Database.Name),
 	)
+
+	return append(observers, c.observers...)
 }
 
 func (c *Connection) RunDetached(
@@ -367,11 +401,13 @@ func keelTxOptions(opts kernelports.TxOptions) ([]keel.TxOption, error) {
 	txOpts := []keel.TxOption{keel.Detached()}
 
 	switch opts.Isolation {
-	case sql.LevelDefault, sql.LevelReadCommitted:
+	case sql.LevelDefault:
+	case sql.LevelReadCommitted:
+		txOpts = append(txOpts, keel.ReadCommitted)
 	case sql.LevelRepeatableRead:
-		txOpts = append(txOpts, keel.RepeatableRead())
+		txOpts = append(txOpts, keel.RepeatableRead)
 	case sql.LevelSerializable:
-		txOpts = append(txOpts, keel.Serializable())
+		txOpts = append(txOpts, keel.Serializable)
 	case sql.LevelReadUncommitted,
 		sql.LevelWriteCommitted,
 		sql.LevelSnapshot,

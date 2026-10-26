@@ -12,6 +12,7 @@ import (
 
 type ReportEngine interface {
 	Catalog() *analytics.Catalog
+	Validate(def *ir.Definition) error
 	Preview(ctx context.Context, req *analytics.Request) (*analytics.Result, error)
 	Page(
 		ctx context.Context,
@@ -19,7 +20,6 @@ type ReportEngine interface {
 		cursor string,
 		size int,
 	) (*analytics.Result, error)
-	Count(ctx context.Context, req *analytics.Request) (int64, error)
 	Drill(
 		ctx context.Context,
 		req *analytics.Request,

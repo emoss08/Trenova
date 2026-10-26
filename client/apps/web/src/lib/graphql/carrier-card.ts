@@ -22,6 +22,8 @@ export type CarrierSettlementRow =
 export type CarrierSettlementsPage = {
   rows: CarrierSettlementRow[];
   total: number | null;
+  /** False when total is the server's estimate of a list too large to count. */
+  totalExact?: boolean;
   endCursor: string | null;
   hasNextPage: boolean;
 };
@@ -100,6 +102,9 @@ export async function fetchCarrierSettlements(
   return {
     rows,
     total: firstPage ? (data.carrierSettlements.totalCount ?? rows.length) : null,
+    totalExact:
+      data.carrierSettlements.totalCount == null ||
+      data.carrierSettlements.totalCountExact !== false,
     endCursor: data.carrierSettlements.pageInfo.endCursor ?? null,
     hasNextPage: data.carrierSettlements.pageInfo.hasNextPage,
   };

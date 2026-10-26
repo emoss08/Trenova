@@ -164,16 +164,6 @@ func definitionErrors(details ir.Errors, message string) error {
 		return multiErr
 	}
 	for _, detail := range details {
-		if len(detail.Suggestions) > 0 {
-			multiErr.Add(
-				pointerField(detail.Pointer),
-				errortypes.ErrInvalid,
-				"This report definition is not valid: {0}. Did you mean {1}?",
-				detail.Message,
-				strings.Join(detail.Suggestions, ", "),
-			)
-			continue
-		}
 		multiErr.Add(
 			pointerField(detail.Pointer),
 			errortypes.ErrInvalid,
@@ -182,6 +172,21 @@ func definitionErrors(details ir.Errors, message string) error {
 		)
 	}
 	return multiErr
+}
+
+func CatalogDiagnostics(err error) []string {
+	if err == nil {
+		return nil
+	}
+	var details ir.Errors
+	if !errors.As(err, &details) || len(details) == 0 {
+		return []string{err.Error()}
+	}
+	out := make([]string, 0, len(details))
+	for _, detail := range details {
+		out = append(out, pointerField(detail.Pointer)+": "+detail.Message)
+	}
+	return out
 }
 
 func pointerField(pointer string) string {

@@ -3404,6 +3404,7 @@ type QueryResolver interface {
 type RateAgreementResolver interface {
 	Lanes(ctx context.Context, obj *gqlmodel.RateAgreement, first *int) ([]*gqlmodel.RateAgreementLane, error)
 	LaneCount(ctx context.Context, obj *gqlmodel.RateAgreement) (int, error)
+	LaneCountExact(ctx context.Context, obj *gqlmodel.RateAgreement) (bool, error)
 }
 
 type RateMatrixResolver interface {

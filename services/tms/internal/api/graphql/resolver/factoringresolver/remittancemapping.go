@@ -89,9 +89,10 @@ func remittanceConnectionToModel(
 		return nil, err
 	}
 	return &gqlmodel.FactoringRemittanceConnection{
-		Edges:      page.Edges,
-		PageInfo:   page.PageInfo,
-		TotalCount: page.TotalCount,
+		Edges:           page.Edges,
+		PageInfo:        page.PageInfo,
+		TotalCount:      page.TotalCount,
+		TotalCountExact: page.TotalCountExact,
 	}, nil
 }
 
@@ -109,9 +110,10 @@ func remittanceLineConnectionToModel(
 		return nil, err
 	}
 	return &gqlmodel.FactoringRemittanceLineConnection{
-		Edges:      page.Edges,
-		PageInfo:   page.PageInfo,
-		TotalCount: page.TotalCount,
+		Edges:           page.Edges,
+		PageInfo:        page.PageInfo,
+		TotalCount:      page.TotalCount,
+		TotalCountExact: page.TotalCountExact,
 	}, nil
 }
 

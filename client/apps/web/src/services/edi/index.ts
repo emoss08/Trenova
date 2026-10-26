@@ -28,6 +28,7 @@ import {
   ediTemplateVersionSchema,
   ediTransferListSchema,
   ediTransferSchema,
+  type EDITransfer,
   internalPartnerPairSchema,
   type ApproveEDITransferRequest,
   type CreateEDIConnectionRequest,
@@ -411,34 +412,32 @@ export class EDIService {
 
   /**
    * Every tender one inbound file's 204s opened. A batch can carry more than a
-   * page, so the first page's count tells how many more to read, and those are
-   * read together.
+   * page, so each page's cursor reads the next until the list says it is done:
+   * its total can be an estimate, which says nothing about where the list ends.
    */
   public async listInboundFileTransfers(fileId: string, options?: { signal?: AbortSignal }) {
-    const page = async (offset: number) => {
+    const page = async (after: string | null) => {
       const query = new URLSearchParams({
         direction: "inbound",
         inboundFileId: fileId,
         limit: String(INBOUND_FILE_TRANSFER_LIMIT),
       });
-      if (offset > 0) query.set("offset", String(offset));
+      if (after) query.set("after", after);
       const response = await api.get(`/edi/transfers/?${query.toString()}`, {
         signal: options?.signal,
       });
       return safeParse(ediTransferListSchema, response, "EDITransferList");
     };
 
-    const first = await page(0);
-    const offsets: number[] = [];
-    for (
-      let offset = INBOUND_FILE_TRANSFER_LIMIT;
-      offset < first.count;
-      offset += INBOUND_FILE_TRANSFER_LIMIT
-    ) {
-      offsets.push(offset);
-    }
-    const rest = await Promise.all(offsets.map(page));
-    return [first, ...rest].flatMap((list) => list.results);
+    const transfers: EDITransfer[] = [];
+    let after: string | null = null;
+    do {
+      const list = await page(after);
+      transfers.push(...list.results);
+      after = list.hasNextPage && list.endCursor ? list.endCursor : null;
+    } while (after !== null);
+
+    return transfers;
   }
 
   public async getMappingPreview(transferId: string, options?: { signal?: AbortSignal }) {

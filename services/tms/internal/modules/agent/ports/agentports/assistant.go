@@ -1197,12 +1197,13 @@ type ArtifactRowsQuery struct {
 }
 
 type ArtifactRows struct {
-	Rows       []any    `json:"rows"`
-	HasMore    bool     `json:"hasMore"`
-	NextCursor string   `json:"nextCursor,omitempty"`
-	NextOffset *int     `json:"nextOffset,omitempty"`
-	Total      *int     `json:"total,omitempty"`
-	Withheld   []string `json:"withheld"`
-	Searchable bool     `json:"searchable"`
-	Sortable   []string `json:"sortable"`
+	Rows           []any    `json:"rows"`
+	HasMore        bool     `json:"hasMore"`
+	NextCursor     string   `json:"nextCursor,omitempty"`
+	NextOffset     *int     `json:"nextOffset,omitempty"`
+	Total          *int     `json:"total,omitempty"`
+	TotalEstimated bool     `json:"totalEstimated,omitempty"`
+	Withheld       []string `json:"withheld"`
+	Searchable     bool     `json:"searchable"`
+	Sortable       []string `json:"sortable"`
 }

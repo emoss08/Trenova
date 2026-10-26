@@ -1959,11 +1959,11 @@ func (g *generator) adjUpdateSources(ctx context.Context, tx *keel.DB, rows *adj
 		ctx,
 		tx,
 		inv.SupersededByInvoiceID.ToExpr(nullIfEmpty(d.Col("superseded"))),
-		inv.AppliedAmount.ToExpr(keel.DynOf(d.Col("applied")).Cast(keel.TypeNumeric)),
+		inv.AppliedAmount.ToExpr(keel.CastNumeric(d.Col("applied"))),
 		inv.AppliedAmountMinor.ToExpr(d.Col("applied_minor")),
 		inv.SettlementStatus.ToExpr(d.Col("settlement")),
 		inv.Status.ToExpr(d.Col("status")),
-		inv.VoidedAt.ToExpr(keel.DynOf(d.Col("voided_at")).NullIf(0)),
+		inv.VoidedAt.ToExpr(keel.Int64Of(d.Col("voided_at")).NullIf(0)),
 		inv.VoidedByID.ToExpr(nullIfEmpty(d.Col("voided_by"))),
 		inv.VoidReason.ToExpr(nullIfEmpty(d.Col("void_reason"))),
 		inv.VoidDisposition.ToExpr(nullIfEmpty(d.Col("disposition"))),
@@ -2052,7 +2052,7 @@ func (g *generator) adjSyncRebills(ctx context.Context, tx *keel.DB, rows *adjRo
 		tx,
 		sh.BillingTransferStatus.ToExpr(d.Col("status")),
 		sh.TransferredToBillingAt.ToExpr(d.Col("at")),
-		sh.UpdatedAt.ToExpr(keel.DynFunc("greatest", sh.UpdatedAt, d.Col("at"))),
+		sh.UpdatedAt.ToExpr(sh.UpdatedAt.Greatest(keel.Int64Of(d.Col("at")))),
 	); err != nil {
 		return fmt.Errorf("sync rebilled shipments: %w", err)
 	}

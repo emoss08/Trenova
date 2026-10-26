@@ -493,11 +493,7 @@ func markMailboxesReceived(
 		).Update(
 			ctx,
 			db,
-			mb.LastReceivedAt.ToExpr(keel.DynFunc(
-				"greatest",
-				keel.DynOf(mb.LastReceivedAt).Coalesce(0),
-				keel.DynLit(at).Cast(keel.TypeInt64),
-			)),
+			mb.LastReceivedAt.ToExpr(mb.LastReceivedAt.Coalesce(0).Greatest(keel.Int64(at))),
 		); err != nil {
 			return fmt.Errorf("mark mailbox %s received: %w", mailbox.Name, err)
 		}

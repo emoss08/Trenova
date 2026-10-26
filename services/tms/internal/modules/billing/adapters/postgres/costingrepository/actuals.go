@@ -41,8 +41,8 @@ type expenseRow struct {
 	NetExpense  decimal.Decimal
 }
 
-func floatSum(e keel.Expr) keel.Expr {
-	return keel.DynOf(e).Coalesce(0).Cast(keel.TypeFloat64)
+func floatSum(e keel.Expr) keel.Float64Expr {
+	return keel.CastFloat64(keel.NumericOf(e).Coalesce(0))
 }
 
 func (r *actualsRepository) SumExpenseByAccounts(
@@ -56,16 +56,12 @@ func (r *actualsRepository) SumExpenseByAccounts(
 
 		gb := glbalancedb.GLAccountPeriodBalances
 		fp := fiscalperioddb.FiscalPeriods
+		net := keel.NumericOf(gb.PeriodDebitMinor.Sub(gb.PeriodCreditMinor).Sum()).Coalesce(0)
 		rows, err := keel.Into[expenseRow](ctx, r.db.Keel(ctx), gb.
 			Join(fp, fp.ID.EqCol(gb.FiscalPeriodID)).
 			Pick(
 				gb.GLAccountID,
-				keel.DynOf(gb.PeriodDebitMinor).
-					Sub(gb.PeriodCreditMinor).
-					Sum().
-					Coalesce(0).
-					Div(100.0).
-					Cast(keel.TypeNumeric),
+				keel.CastNumeric(net.Div(keel.Numeric(int64(100)))),
 			).
 			Where(
 				gb.GLAccountID.In(req.GLAccountIDs...),
@@ -121,8 +117,8 @@ func (r *actualsRepository) ShipmentMilesByIDs(
 						sm.Distance.Sum().
 							Filter(keel.And(sm.Loaded.IsFalse(), sm.Distance.IsNotNull())),
 					),
-					keel.DynOf(sp.TotalChargeAmount).Coalesce(0),
-					keel.DynOf(keel.Count().Filter(keel.And(sm.ID.IsNotNull(), sm.Distance.IsNull()))).Gt(0),
+					keel.NumericOf(sp.TotalChargeAmount).Coalesce(0),
+					keel.Count().Filter(keel.And(sm.ID.IsNotNull(), sm.Distance.IsNull())).Gt(0),
 				).
 				Where(sp.ID.In(req.ShipmentIDs...)).
 				Group(sp.ID, sp.TotalChargeAmount))
@@ -236,12 +232,11 @@ func (r *actualsRepository) FleetCostAggregates(
 					keel.Count().Filter(moving),
 					keel.Count().Filter(keel.And(
 						moving,
-						keel.DynOf(totals.Col("revenue")).
-							Lt(keel.DynLit(req.CostPerMile).Cast(keel.TypeNumeric).Mul(costMiles)),
+						keel.NumericOf(totals.Col("revenue")).LtExpr(
+							keel.Numeric(req.CostPerMile).Mul(costMiles),
+						),
 					)),
-					keel.DynOf(keel.Sum(totals.Col("revenue")).Filter(moving)).
-						Coalesce(0).
-						Cast(keel.TypeNumeric),
+					keel.CastNumeric(keel.NumericOf(keel.Sum(totals.Col("revenue")).Filter(moving)).Coalesce(0)),
 					floatSum(keel.Sum(totals.Col("total_miles"))),
 					floatSum(keel.Sum(totals.Col("loaded_miles"))),
 					floatSum(keel.Sum(totals.Col("deadhead_miles"))),

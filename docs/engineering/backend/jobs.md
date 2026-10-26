@@ -54,3 +54,8 @@ in [module-architecture.md](../module-architecture.md). Agent work has its own r
   `temporaljobs.RunTenantFanOut` is the helper.
 - Prefer an event that starts the debounced workflow over a sweep that polls; keep the sweep only
   as the catch-up for what events miss, and bound it with an index on its predicate.
+- A sweep that re-checks rows against a value only the process knows (a catalog hash) stamps
+  each row with the value it checked and selects `col < v` then `col > v`: two range scans on an
+  index on the column, empty once the sweep has caught up. Its write is conditional on the
+  row's `version` and on the stamp still being stale, so a person's save that lands meanwhile
+  wins (`reportjobs/catalogcheck.go`).

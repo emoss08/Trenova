@@ -300,7 +300,7 @@ func shipmentListSpec(repo shipmentports.ShipmentRepository) listSpec {
 				return toShipmentRow(item)
 			})
 		},
-		count: func(ctx context.Context, opts *pagination.QueryOptions) (int, error) {
+		count: func(ctx context.Context, opts *pagination.QueryOptions) (int, bool, error) {
 			return countShipments(ctx, repo, opts, shipmentports.ShipmentOptions{})
 		},
 	}
@@ -313,7 +313,7 @@ func countShipments(
 	repo shipmentports.ShipmentRepository,
 	opts *pagination.QueryOptions,
 	options shipmentports.ShipmentOptions,
-) (int, error) {
+) (int, bool, error) {
 	probe := *opts
 	probe.Pagination = pagination.Info{Limit: 1}
 	probe.Sort = nil
@@ -324,13 +324,13 @@ func countShipments(
 		ShipmentOptions: options,
 	})
 	if err != nil {
-		return 0, err
+		return 0, false, err
 	}
 	if result.TotalCount == nil {
-		return 0, errNoTotal
+		return 0, false, errNoTotal
 	}
 
-	return *result.TotalCount, nil
+	return *result.TotalCount, result.TotalCountExact, nil
 }
 
 // toShipmentRow is the one shipment projection, for the same reasons.

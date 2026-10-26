@@ -60,10 +60,10 @@ func (r *Repository) ListDeliveriesToday(
 					sp.ProNumber,
 					sp.StageRank,
 					sp.Customer().Name,
-					keel.DynOf(loc.City).Coalesce(""),
+					loc.City.Coalesce(""),
 					deliveryAt,
 					ld.ActualArrival,
-					keel.DynOf(ld.ScheduledWindowEnd).Coalesce(ld.ScheduledWindowStart),
+					ld.ScheduledWindowEnd.Coalesce(ld.ScheduledWindowStart),
 				).
 				Where(today).
 				Order(keel.Asc(deliveryAt)))
@@ -108,8 +108,8 @@ func (r *Repository) NextUncoveredPickup(
 				Pick(
 					sp.ID,
 					fp.ScheduledWindowStart,
-					keel.DynOf(fpLoc.City).Coalesce(""),
-					keel.DynOf(ldLoc.City).Coalesce(""),
+					fpLoc.City.Coalesce(""),
+					ldLoc.City.Coalesce(""),
 				).
 				Where(
 					shipmentrepository.StageCondition(shipment.StageNeedsCoverage),
@@ -159,7 +159,7 @@ func (r *Repository) ListDwellingStops(
 					sp.ID,
 					dw.ShipmentMoveID,
 					dw.ID,
-					keel.DynOf(loc.Name).Coalesce(""),
+					loc.Name.Coalesce(""),
 					dw.ActualArrival,
 				).
 				Order(dw.ActualArrival.Asc(), dw.ID.Asc()).

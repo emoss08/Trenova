@@ -70,10 +70,11 @@ func NewCursorInfo(first int, after string) (CursorInfo, error) {
 }
 
 type CursorListResult[T any] struct {
-	Items       []T
-	HasNextPage bool
-	TotalCount  *int
-	EdgeCursors []string
+	Items           []T
+	HasNextPage     bool
+	TotalCount      *int
+	TotalCountExact bool
+	EdgeCursors     []string
 }
 
 func (r *CursorListResult[T]) EdgeCursorAt(index int) (string, bool) {

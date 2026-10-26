@@ -117,6 +117,7 @@ type ShipmentDescriptors struct {
 // delivery on file for a shipment.
 type FactRepository interface {
 	ListNotifyingTenants(ctx context.Context) ([]pagination.TenantInfo, error)
+	HasNotifyingCustomers(ctx context.Context, tenantInfo pagination.TenantInfo) (bool, error)
 	ListCandidateShipments(
 		ctx context.Context,
 		req *CandidateShipmentsRequest,

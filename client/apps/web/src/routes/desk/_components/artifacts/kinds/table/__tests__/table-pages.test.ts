@@ -18,6 +18,7 @@ function rows(page: Partial<ArtifactRows>): ArtifactRows {
     nextCursor: "",
     nextOffset: null,
     total: null,
+    totalEstimated: false,
     withheld: [],
     searchable: false,
     sortable: [],

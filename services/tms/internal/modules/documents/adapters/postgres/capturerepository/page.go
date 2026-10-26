@@ -82,7 +82,7 @@ func (r *pageRepository) RecordInspection(
 	entity *capture.CapturePage,
 ) (bool, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (bool, error) {
-		markers, err := sonic.MarshalString(entity.Markers)
+		markers, err := sonic.Marshal(entity.Markers)
 		if err != nil {
 			return false, err
 		}
@@ -101,7 +101,7 @@ func (r *pageRepository) RecordInspection(
 			p.HeightPx.To(int64(entity.HeightPx)),
 			p.ThumbnailPath.To(entity.ThumbnailPath),
 			blankScore,
-			p.Markers.ToExpr(keel.DynLit(markers).Cast(keel.TypeJSON)),
+			p.Markers.ToExpr(keel.JSONB(markers)),
 			p.FailureMessage.To(entity.FailureMessage),
 		)
 		if err != nil {

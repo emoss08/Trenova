@@ -13,6 +13,8 @@ export type FailureScope = { kind: "location" | "shipment"; id: string };
 export type RecordFailuresPage = {
   rows: RecordFailure[];
   total: number | null;
+  /** False when total is the server's estimate of a list too large to count. */
+  totalExact?: boolean;
   endCursor: string | null;
   hasNextPage: boolean;
 };
@@ -43,6 +45,8 @@ export async function fetchRecordFailures(
   return {
     rows,
     total: firstPage ? (data.serviceFailures.totalCount ?? rows.length) : null,
+    totalExact:
+      data.serviceFailures.totalCount == null || data.serviceFailures.totalCountExact !== false,
     endCursor: data.serviceFailures.pageInfo.endCursor ?? null,
     hasNextPage: data.serviceFailures.pageInfo.hasNextPage,
   };

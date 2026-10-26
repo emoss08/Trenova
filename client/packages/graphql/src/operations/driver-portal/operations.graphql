@@ -84,6 +84,7 @@ query SettlementDisputeTable(
       }
     }
     totalCount @include(if: $includeTotalCount)
+    totalCountExact @include(if: $includeTotalCount)
     pageInfo {
       ...DataTablePageInfoFields
     }
@@ -275,6 +276,7 @@ query MySettlements($limit: Int, $offset: Int) {
       paymentReference
     }
     total
+    totalExact
   }
 }
 
@@ -565,6 +567,7 @@ query DriverExpenseTable($input: DataTableConnectionInput!, $includeTotalCount: 
       }
     }
     totalCount @include(if: $includeTotalCount)
+    totalCountExact @include(if: $includeTotalCount)
     pageInfo {
       ...DataTablePageInfoFields
     }

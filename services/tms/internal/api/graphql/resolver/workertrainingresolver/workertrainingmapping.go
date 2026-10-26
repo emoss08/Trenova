@@ -142,7 +142,8 @@ func trainingCourseCursorConnectionToModel(
 				func(edge *gqlmodel.TrainingCourseEdge) string { return edge.Cursor },
 			),
 		),
-		TotalCount: result.TotalCount,
+		TotalCount:      result.TotalCount,
+		TotalCountExact: result.TotalCountExact,
 	}, nil
 }
 

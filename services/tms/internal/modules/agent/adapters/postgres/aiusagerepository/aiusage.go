@@ -87,12 +87,12 @@ func (row *totalsRow) totals() aiusageports.AIUsageTotals {
 func latencyPercentile(fraction float64) keel.Expr {
 	u := aiusagedb.AIUsageRecords
 
-	return keel.DynOf(
+	return keel.CastFloat64(keel.Float64Of(
 		keel.PercentileCont(fraction, u.LatencyMs.Asc()).Filter(keel.And(
-			keel.DynOf(u.Succeeded),
+			keel.BoolOf(u.Succeeded),
 			u.Surface.Ne(aiusage.SurfaceBackground),
 		)),
-	).Coalesce(0).Cast(keel.TypeFloat64)
+	).Coalesce(0))
 }
 
 func totalsPicks(keys ...keel.Expr) []keel.Expr {
@@ -100,17 +100,17 @@ func totalsPicks(keys ...keel.Expr) []keel.Expr {
 	picks := make([]keel.Expr, 0, 12)
 	picks = append(picks, keys...)
 	for len(picks) < 3 {
-		picks = append(picks, keel.DynLit(""))
+		picks = append(picks, keel.Text(""))
 	}
 
 	return append(picks,
 		keel.Count(),
 		keel.Count().Filter(u.Succeeded.IsFalse()),
-		keel.DynOf(u.InputTokens).Sum().Coalesce(0),
-		keel.DynOf(u.OutputTokens).Sum().Coalesce(0),
-		keel.DynOf(u.ReasoningTokens).Sum().Coalesce(0),
-		keel.DynOf(u.CostUSD).Sum().Coalesce(0).Cast(keel.TypeString),
-		keel.DynOf(u.CostUSD).Count(),
+		keel.NumericOf(u.InputTokens.Sum()).Coalesce(0),
+		keel.NumericOf(u.OutputTokens.Sum()).Coalesce(0),
+		keel.NumericOf(u.ReasoningTokens.Sum()).Coalesce(0),
+		keel.CastText(keel.NumericOf(u.CostUSD.Sum()).Coalesce(0)),
+		u.CostUSD.Count(),
 		latencyPercentile(0.5),
 		latencyPercentile(0.95),
 	)
@@ -137,15 +137,15 @@ func (r *repository) Summary(
 				Where(since).
 				Group(u.ProviderID, provider.Name, u.Model).
 				Pick(totalsPicks(
-					keel.DynOf(u.ProviderID).Coalesce(""),
-					keel.DynOf(provider.Name).Coalesce(""),
+					u.ProviderID.Coalesce(""),
+					provider.Name.Coalesce(""),
 					u.Model,
 				)...).
 				Order(keel.Count().Desc()), &byProvider),
 			keel.IntoSlice(u.
 				Where(since).
 				Group(u.Feature).
-				Pick(totalsPicks(keel.DynOf(u.Feature).Coalesce(""))...).
+				Pick(totalsPicks(u.Feature.Coalesce(""))...).
 				Order(keel.Count().Desc()), &byFeature),
 		)
 		if err != nil {
@@ -192,15 +192,9 @@ func (r *repository) Daily(
 			q.Where(u.ProviderID.Eq(req.ProviderID))
 		}
 
-		day := keel.DynFunc(
-			"to_char",
-			keel.DynFunc(
-				"timezone",
-				keel.DynLit(req.Timezone).Cast(keel.TypeString),
-				keel.DynFunc("to_timestamp", u.CreatedAt),
-			),
-			"YYYY-MM-DD",
-		)
+		day := keel.ToTimestamp(u.CreatedAt).
+			AtTimeZone(keel.Text(req.Timezone)).
+			ToChar("YYYY-MM-DD")
 		rows, err := keel.Into[totalsRow](ctx, r.db.Keel(ctx), q.
 			Group(day).
 			Pick(totalsPicks(day)...).
@@ -252,12 +246,12 @@ func (r *repository) RecentFailures(
 				LeftJoin(provider, provider.ID.EqCol(u.ProviderID)).
 				Where(u.CreatedAt.Gte(req.Since), u.Succeeded.IsFalse()).
 				Pick(
-					keel.DynOf(u.ProviderID).Coalesce(""),
-					keel.DynOf(provider.Name).Coalesce(""),
+					u.ProviderID.Coalesce(""),
+					provider.Name.Coalesce(""),
 					u.Model,
 					u.Task,
-					keel.DynOf(u.ErrorClass).Coalesce(""),
-					keel.DynOf(u.ErrorMessage).Coalesce(""),
+					u.ErrorClass.Coalesce(""),
+					u.ErrorMessage.Coalesce(""),
 					u.CreatedAt,
 				).
 				Order(u.CreatedAt.Desc()).
@@ -298,7 +292,7 @@ func costSums(q *keel.Query[*aiusage.AIUsageRecord]) *keel.Query[*aiusage.AIUsag
 	u := aiusagedb.AIUsageRecords
 
 	return q.Pick(
-		keel.DynOf(u.CostUSD).Sum().Coalesce(0).Cast(keel.TypeString),
+		keel.CastText(keel.NumericOf(u.CostUSD.Sum()).Coalesce(0)),
 		keel.Count(),
 		keel.Count().Filter(u.CostUSD.IsNull()),
 	)
@@ -447,7 +441,7 @@ func (r *repository) SpendByProvider(
 				u.CostUSD.IsNotNull(),
 			).
 			Group(u.ProviderID).
-			Pick(u.ProviderID, keel.DynOf(u.CostUSD).Sum().Coalesce(0).Cast(keel.TypeString)))
+			Pick(u.ProviderID, keel.CastText(keel.NumericOf(u.CostUSD.Sum()).Coalesce(0))))
 		if err != nil {
 			return nil, fmt.Errorf("sum ai provider spend: %w", err)
 		}

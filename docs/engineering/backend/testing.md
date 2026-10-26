@@ -45,10 +45,34 @@ yet (absent vs null vs empty, many where every fixture has one, a second tenant)
 - The imaging worker runs from its image through `internal/testutil/imagingtest`; unit tests use
   `imaging/imagingfake`.
 
+## Shapes and budgets
+
+- **Plan guard.** Every database an integration test opens through `seedtest`, `dbtest` or a test
+  `Connection` records its distinct statement texts to the file `KEEL_SHAPES` names
+  (`internal/testutil/shapetest`; one shared, append-only file per process, closed at exit, a
+  write error failing the test at cleanup). A database opened another way passes
+  `shapetest.Observers(t)` as its observers. `task db-plans` runs the suite with it and explains
+  every shape ([data-access.md](data-access.md#plan-guard)), so a new query path is checked as soon
+  as a test runs it.
+- **Budgets.** Pin a path that must not grow with its input with a hard budget, which fails the
+  terminal that crosses it with `keel.ErrBudgetExceeded`:
+
+  ```go
+  ctx = keel.Budget(ctx, keel.MaxRepeats(1), keel.MaxRoundTrips(3))
+  _, err := svc.Get(ctx, req)
+  require.NoError(t, err)
+  report, _ := keel.BudgetReportFrom(ctx)
+  assert.Empty(t, report.Repeats)
+  ```
+
+  `keel.MaxRoundTrips(0)` asserts that a cached path touches no database
+  (`postgres/runtime_integration_test.go`).
+
 ## Running them
 
 The Taskfile and CI set `GOFLAGS=-tags=nomsgpack`; a `-tags` on the command line replaces it, so
 pass both: `go test -tags=integration,nomsgpack -run TestName ./path/...`. Run only the packages you
-changed. `task test` also runs the repository's lint tests (`authzlint`, `rlslint`,
+changed; add `KEEL_SHAPES=$PWD/build/keel-shapes.jsonl` to record shapes, or `task db-plans` for
+the whole suite and its plans. `task test` also runs the repository's lint tests (`authzlint`, `rlslint`,
 `permissionlint`, `routelint`, `tenantbindlint`, `schemalint`), so name the ones your change
 touches in the handoff.

@@ -157,7 +157,6 @@ func (s *Service) Save(
 	if err != nil {
 		return nil, err
 	}
-	s.loader.Forget(req.TenantInfo)
 	s.record(ctx, &recordRequest{
 		tenantInfo: req.TenantInfo,
 		toolName:   req.ToolName,

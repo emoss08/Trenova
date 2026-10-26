@@ -82,7 +82,7 @@ func TestUpsert_RoutesANewItemToTheOwnerWithADueTimeBySeverity(t *testing.T) {
 		int64(1_700_000_000+dispatchcontrol.DefaultExceptionDueInfoMinutes*60),
 		*second.DueAt,
 	)
-	assert.Equal(t, 1, controls.reads)
+	assert.Equal(t, 2, controls.reads, "each routing reads the cached dispatch control")
 }
 
 func TestUpsert_SkipsAnOwnerWhoCannotSeeTheItem(t *testing.T) {

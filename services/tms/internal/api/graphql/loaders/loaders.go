@@ -40,8 +40,10 @@ import (
 	"github.com/emoss08/trenova/internal/modules/parties/domain/customer"
 	"github.com/emoss08/trenova/internal/modules/places/domain/location"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/formulalibrary"
+	"github.com/emoss08/trenova/internal/modules/rating/domain/rateagreement"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/ratematrix"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/formulatemplateports"
+	"github.com/emoss08/trenova/internal/modules/rating/ports/rateagreementports"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/carriersettlement"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/driverpay"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/driversettlement"
@@ -106,6 +108,8 @@ type FactoryParams struct {
 	TractorByID                               *TractorByIDLoaderFactory
 	FormulaLibraryByID                        *FormulaLibraryByIDLoaderFactory
 	RateMatrixByID                            *RateMatrixByIDLoaderFactory
+	RateAgreementLaneCount                    *RateAgreementLaneCountLoaderFactory
+	RateAgreementLanes                        *RateAgreementLanesLoaderFactory
 	ShipmentMoveJurisdictionMilesByMoveID     *ShipmentMoveJurisdictionMilesByMoveIDLoaderFactory
 	UserByID                                  *UserByIDLoaderFactory
 	DocumentByID                              *DocumentByIDLoaderFactory
@@ -198,6 +202,8 @@ type Factory struct {
 	tractorByID                               *TractorByIDLoaderFactory
 	formulaLibraryByID                        *FormulaLibraryByIDLoaderFactory
 	rateMatrixByID                            *RateMatrixByIDLoaderFactory
+	rateAgreementLaneCount                    *RateAgreementLaneCountLoaderFactory
+	rateAgreementLanes                        *RateAgreementLanesLoaderFactory
 	shipmentMoveJurisdictionMilesByMoveID     *ShipmentMoveJurisdictionMilesByMoveIDLoaderFactory
 	userByID                                  *UserByIDLoaderFactory
 	documentByID                              *DocumentByIDLoaderFactory
@@ -290,6 +296,8 @@ type set struct {
 	tractorByID                               *dataloadgen.Loader[string, *tractor.Tractor]
 	formulaLibraryByID                        *dataloadgen.Loader[string, *formulalibrary.FormulaLibrary]
 	rateMatrixByID                            *dataloadgen.Loader[string, *ratematrix.RateMatrix]
+	rateAgreementLaneCount                    *dataloadgen.Loader[string, rateagreementports.LaneCount]
+	rateAgreementLanes                        *dataloadgen.Loader[string, []*rateagreement.RateAgreementRule]
 	shipmentMoveJurisdictionMilesByMoveID     *dataloadgen.Loader[string, []*shipment.ShipmentMoveJurisdictionMile]
 	userByID                                  *dataloadgen.Loader[string, *tenant.User]
 	documentByID                              *dataloadgen.Loader[string, *document.Document]
@@ -389,6 +397,8 @@ func NewFactory(p FactoryParams) *Factory {
 		tractorByID:                               p.TractorByID,
 		formulaLibraryByID:                        p.FormulaLibraryByID,
 		rateMatrixByID:                            p.RateMatrixByID,
+		rateAgreementLaneCount:                    p.RateAgreementLaneCount,
+		rateAgreementLanes:                        p.RateAgreementLanes,
 		shipmentMoveJurisdictionMilesByMoveID:     p.ShipmentMoveJurisdictionMilesByMoveID,
 		userByID:                                  p.UserByID,
 		documentByID:                              p.DocumentByID,
@@ -543,6 +553,11 @@ func newSet(f *Factory, tenantInfo pagination.TenantInfo) *set {
 		tractorByID:          newTractorByIDLoader(f.tractorByID, tenantInfo),
 		formulaLibraryByID:   newFormulaLibraryByIDLoader(f.formulaLibraryByID, tenantInfo),
 		rateMatrixByID:       newRateMatrixByIDLoader(f.rateMatrixByID, tenantInfo),
+		rateAgreementLaneCount: newRateAgreementLaneCountLoader(
+			f.rateAgreementLaneCount,
+			tenantInfo,
+		),
+		rateAgreementLanes: newRateAgreementLanesLoader(f.rateAgreementLanes, tenantInfo),
 		shipmentMoveJurisdictionMilesByMoveID: newShipmentMoveJurisdictionMilesByMoveIDLoader(
 			f.shipmentMoveJurisdictionMilesByMoveID,
 			tenantInfo,

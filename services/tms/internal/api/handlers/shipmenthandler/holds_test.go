@@ -33,8 +33,11 @@ func TestShipmentHandler_ListHolds_Success(t *testing.T) {
 				req.Filter.TenantInfo.BuID == testutil.TestBuID
 		})).
 		Return(&pagination.ListResult[*shipment.ShipmentHold]{
-			Items: []*shipment.ShipmentHold{{ID: pulid.MustNew("shh_"), ShipmentID: shipmentID}},
-			Total: 1,
+			Items: []*shipment.ShipmentHold{
+				{ID: pulid.MustNew("shh_"), ShipmentID: shipmentID},
+			},
+			Total:      1,
+			TotalExact: true,
 		}, nil).
 		Once()
 

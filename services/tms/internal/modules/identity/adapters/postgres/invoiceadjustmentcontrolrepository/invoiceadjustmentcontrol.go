@@ -9,6 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant/tenantdb"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/pkg/dberror"
+	"github.com/emoss08/trenova/pkg/resultcache"
 	"github.com/emoss08/trenova/shared/pulid"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
@@ -44,7 +45,9 @@ func (r *repository) GetByOrgID(
 		r.db,
 		func(ctx context.Context) (*tenant.InvoiceAdjustmentControl, error) {
 			iac := tenantdb.InvoiceAdjustmentControls
-			entity, err := iac.Where(iac.OrganizationID.Eq(orgID)).One(ctx, r.db.Keel(ctx))
+			entity, err := iac.Where(iac.OrganizationID.Eq(orgID)).
+				Cache(resultcache.Settings()...).
+				One(ctx, r.db.Keel(ctx))
 			if err != nil {
 				r.l.Error(
 					"failed to get invoice adjustment control",

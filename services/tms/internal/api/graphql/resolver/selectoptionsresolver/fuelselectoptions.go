@@ -44,7 +44,7 @@ func (r *Deps) resolveFuelIndexSelectOptions(
 
 	return selectOptionListConnection(
 		result,
-		req.SelectQuery.Pagination.SafeOffset(),
+		req.SelectQuery.Pagination,
 		fuelIndexSelectOptionItem,
 	)
 }
@@ -84,7 +84,7 @@ func (r *Deps) resolveFuelSurchargeProgramSelectOptions(
 
 	return selectOptionListConnection(
 		result,
-		req.SelectQuery.Pagination.SafeOffset(),
+		req.SelectQuery.Pagination,
 		fuelSurchargeProgramSelectOptionItem,
 	)
 }

@@ -13,6 +13,7 @@ import { customer as customerQueries } from "@/lib/queries/customer";
 import { agreementTypeLabel, agreementWindow, orderedAgreements } from "@/lib/rate-agreement";
 import { useQuery } from "@tanstack/react-query";
 import { useT } from "@trenova/shared/i18n/use-t";
+import { formatRowTotal } from "@trenova/shared/lib/row-total";
 import { cn, formatPercent } from "@trenova/shared/lib/utils";
 import { useMemo, useState } from "react";
 import { Link } from "react-router";
@@ -297,7 +298,11 @@ function CustomerCard({
           title={t("Rate agreements")}
           aside={
             agreements.data && agreements.data.total > agreements.data.rows.length ? (
-              <span>{t("{0} in all", agreements.data.total)}</span>
+              <span>
+                {agreements.data.totalExact === false
+                  ? t("About {0} in all", formatRowTotal(agreements.data.total, false))
+                  : t("{0} in all", agreements.data.total)}
+              </span>
             ) : undefined
           }
         >

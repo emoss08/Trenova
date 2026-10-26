@@ -55,6 +55,17 @@ database:
   lockTimeout: 5s
   idleInTransactionSessionTimeout: 30s
   queryLog: "off"
+  tenantConcurrency: 0 # 0 takes a quarter of maxOpenConns
+  cache:
+    enabled: true
+    localBytes: 268435456
+    listenHost: "" # PostgreSQL itself when the pool goes through a transaction-mode PgBouncer
+    listenPort: 0
+    shared:
+      enabled: false # copies tenant rows into Redis
+      prefix: "trenova:keel:"
+  budget:
+    maxRepeats: 10
 
 cache:
   poolSize: 50

@@ -273,6 +273,17 @@ about half, then `docker compose restart postgres`. Redis is capped at 1 GB
 more CPUs (`TRENOVA_IMAGING_CPUS`, with about 1 GB of `TRENOVA_IMAGING_MEMORY` per CPU) and
 `docker compose up -d imaging`.
 
+The API and worker each keep a result cache of database reads in memory
+(`database.cache.localBytes`, 256 MiB by default per process), served until a table a read used
+changes. Lower it on a small host; `database.cache.enabled: false` turns it off.
+`database.cache.shared.enabled: true` adds a tier in Redis that every process shares; it copies
+organizations' rows into Redis, so leave it off unless Redis is as protected as PostgreSQL and
+has room beyond `REDIS_MAXMEMORY`'s other uses. If you put PgBouncer in transaction mode in
+front of PostgreSQL, set `database.cache.listenHost` (and `listenPort`) to PostgreSQL itself:
+the cache follows changes over `LISTEN`, which needs a session connection.
+`database.tenantConcurrency` (a quarter of `database.maxOpenConns` when 0) is how many
+transactions one organization may run at once.
+
 ## Upgrades
 
 A Trenova release is a set of images tagged with its version. To upgrade:

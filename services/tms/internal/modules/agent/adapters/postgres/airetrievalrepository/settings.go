@@ -2,7 +2,6 @@ package airetrievalrepository
 
 import (
 	"context"
-	"errors"
 	"fmt"
 
 	"github.com/emoss08/keel"
@@ -14,6 +13,7 @@ import (
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/pkg/resultcache"
 	"github.com/emoss08/trenova/shared/intutils"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
@@ -36,31 +36,33 @@ func findSettings(
 	db *keel.DB,
 	forUpdate bool,
 ) (*airetrieval.Settings, bool, error) {
-	q := airetrievaldb.Settingses.Query()
+	q := airetrievaldb.Settingses.Limit(1)
 	if forUpdate {
-		q.Lock(keel.ForUpdate)
+		q = q.Lock(keel.ForUpdate)
+	} else {
+		q = q.Cache(resultcache.Settings()...)
 	}
 
-	entity, err := q.First(ctx, db)
-	if errors.Is(err, keel.ErrNotFound) {
-		return nil, false, nil
-	}
+	rows, err := q.List(ctx, db)
 	if err != nil {
 		return nil, false, fmt.Errorf("read retrieval settings: %w", err)
 	}
+	if len(rows) == 0 {
+		return nil, false, nil
+	}
 
-	return entity, true, nil
+	return rows[0], true, nil
 }
 
 func (r *repository) GetSettings(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 ) (*airetrieval.Settings, error) {
-	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*airetrieval.Settings, error) {
-		if err := validateTenant(tenantInfo); err != nil {
-			return nil, err
-		}
+	if err := validateTenant(tenantInfo); err != nil {
+		return nil, err
+	}
 
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*airetrieval.Settings, error) {
 		entity, found, err := findSettings(ctx, r.db.Keel(ctx), false)
 		switch {
 		case err != nil:
@@ -461,7 +463,10 @@ func (r *repository) ListIndexedTenants(
 			Order(s.OrganizationID.Asc(), s.BusinessUnitID.Asc()).
 			Limit(limit)
 		if req.After != nil {
-			q.Where(keel.DynRow(s.OrganizationID, s.BusinessUnitID).Gt(keel.DynRow(req.After.OrgID, req.After.BuID)))
+			q.Where(
+				keel.Tuple(s.OrganizationID, s.BusinessUnitID).
+					Gt(keel.Tuple(req.After.OrgID, req.After.BuID)),
+			)
 		}
 
 		rows, err := keel.Into[indexedTenantRow](ctx, r.db.Keel(ctx), q)

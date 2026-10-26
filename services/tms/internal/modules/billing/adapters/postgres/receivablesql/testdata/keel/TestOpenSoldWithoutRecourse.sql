@@ -1,6 +1,6 @@
 SELECT i.id, (i.total_amount_minor - i.applied_amount_minor)
 FROM invoices i
-WHERE i.organization_id = $1 AND i.business_unit_id = $2 AND ((i.status = 'Posted' AND i.bill_type IN ('Invoice', 'DebitMemo')) AND (i.total_amount_minor > i.applied_amount_minor)) AND (EXISTS (
+WHERE i.organization_id = $1 AND i.business_unit_id = $2 AND ((i.status = 'Posted' AND i.bill_type IN ('Invoice', 'DebitMemo')) AND i.total_amount_minor > i.applied_amount_minor) AND (EXISTS (
   SELECT 1
   FROM factoring_companies fac
   LEFT JOIN factoring_agreements agr ON agr.organization_id = $1 AND agr.business_unit_id = $2 AND agr.id = i.factoring_agreement_id

@@ -2,4 +2,4 @@
 import type { TypedDocumentString, ManualJournalTableQuery, ManualJournalTableQueryVariables, ManualJournalTableRowFieldsFragment } from "../../graphql";
 
 export const ManualJournalTableRowFieldsFragmentDoc = {"__meta__":{"fragmentName":"ManualJournalTableRowFields"}} as unknown as TypedDocumentString<ManualJournalTableRowFieldsFragment, unknown>;
-export const ManualJournalTableDocument = {"__meta__":{"kind":"query","name":"ManualJournalTable","hash":"sha256:8cd46bc08994ea9aee268bf5b08a578d5a39f6d8628919ae255b58c350fabebf"}} as unknown as TypedDocumentString<ManualJournalTableQuery, ManualJournalTableQueryVariables>;
+export const ManualJournalTableDocument = {"__meta__":{"kind":"query","name":"ManualJournalTable","hash":"sha256:7778a6c0b3ea7240a2a2f09bb283b9013531fa7ecebb8ae5935a4d6cb2b0c6f8"}} as unknown as TypedDocumentString<ManualJournalTableQuery, ManualJournalTableQueryVariables>;

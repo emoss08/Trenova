@@ -38,7 +38,8 @@ func fuelCardCursorConnectionToModel(
 				func(edge *gqlmodel.FuelCardEdge) string { return edge.Cursor },
 			),
 		),
-		TotalCount: result.TotalCount,
+		TotalCount:      result.TotalCount,
+		TotalCountExact: result.TotalCountExact,
 	}, nil
 }
 
@@ -65,7 +66,8 @@ func fuelPurchaseCursorConnectionToModel(
 				func(edge *gqlmodel.FuelPurchaseEdge) string { return edge.Cursor },
 			),
 		),
-		TotalCount: result.TotalCount,
+		TotalCount:      result.TotalCount,
+		TotalCountExact: result.TotalCountExact,
 	}, nil
 }
 
@@ -92,7 +94,8 @@ func fuelImportRowCursorConnectionToModel(
 				func(edge *gqlmodel.FuelPurchaseImportRowEdge) string { return edge.Cursor },
 			),
 		),
-		TotalCount: result.TotalCount,
+		TotalCount:      result.TotalCount,
+		TotalCountExact: result.TotalCountExact,
 	}, nil
 }
 
@@ -568,6 +571,7 @@ func fuelImportCursorConnectionToModel(
 				func(edge *gqlmodel.FuelPurchaseImportBatchEdge) string { return edge.Cursor },
 			),
 		),
-		TotalCount: result.TotalCount,
+		TotalCount:      result.TotalCount,
+		TotalCountExact: result.TotalCountExact,
 	}, nil
 }

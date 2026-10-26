@@ -30,6 +30,8 @@ export type EdiPartnerMessage = DeskEdiPartnerMessageFieldsFragment;
 export type EdiPartnerMessagesPage = {
   rows: EdiPartnerMessage[];
   total: number | null;
+  /** False when total is the server's estimate of a list too large to count. */
+  totalExact?: boolean;
   endCursor: string | null;
   hasNextPage: boolean;
 };
@@ -94,6 +96,7 @@ export async function fetchEdiPartnerMessages(
   return {
     rows,
     total: firstPage ? (data.ediMessages.totalCount ?? rows.length) : null,
+    totalExact: data.ediMessages.totalCount == null || data.ediMessages.totalCountExact !== false,
     endCursor: data.ediMessages.pageInfo.endCursor ?? null,
     hasNextPage: data.ediMessages.pageInfo.hasNextPage,
   };

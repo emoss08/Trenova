@@ -161,6 +161,7 @@ type RouterParams struct {
 
 	AuthMiddleware                  *middleware.AuthMiddleware
 	ReadScopeMiddleware             *middleware.ReadScopeMiddleware
+	QueryBudgetMiddleware           *middleware.QueryBudgetMiddleware
 	ReadOnlyGuard                   *middleware.ReadOnlyGuard
 	RateLimiter                     *middleware.RateLimiter
 	IdempotencyMiddleware           *middleware.IdempotencyMiddleware
@@ -309,6 +310,7 @@ type Router struct {
 	observabilityMiddleware         *observability.Middleware
 	authMiddleware                  *middleware.AuthMiddleware
 	readScopeMiddleware             *middleware.ReadScopeMiddleware
+	queryBudgetMiddleware           *middleware.QueryBudgetMiddleware
 	readOnlyGuard                   *middleware.ReadOnlyGuard
 	rateLimiter                     *middleware.RateLimiter
 	idempotencyMiddleware           *middleware.IdempotencyMiddleware
@@ -461,6 +463,7 @@ func NewRouter(p RouterParams) *Router {
 		observabilityMiddleware:         p.ObservabilityMiddleware,
 		authMiddleware:                  p.AuthMiddleware,
 		readScopeMiddleware:             p.ReadScopeMiddleware,
+		queryBudgetMiddleware:           p.QueryBudgetMiddleware,
 		readOnlyGuard:                   p.ReadOnlyGuard,
 		rateLimiter:                     p.RateLimiter,
 		idempotencyMiddleware:           p.IdempotencyMiddleware,
@@ -655,6 +658,7 @@ func (r *Router) setupRoutes() {
 	r.setupGraphQLRoutes(r.s.router.Group(""))
 
 	v1 := r.s.router.Group("/api/v1")
+	v1.Use(r.queryBudgetMiddleware.Install())
 	r.setupProtectedRoutes(v1)
 	r.setupPublicRoutes(v1)
 }

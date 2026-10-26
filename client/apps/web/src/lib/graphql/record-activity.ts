@@ -11,6 +11,8 @@ export type ActivityEntry =
 export type RecordActivityPage = {
   rows: ActivityEntry[];
   total: number | null;
+  /** False when total is the server's estimate of a list too large to count. */
+  totalExact?: boolean;
   endCursor: string | null;
   hasNextPage: boolean;
 };
@@ -45,6 +47,7 @@ export async function fetchRecordActivity(
   return {
     rows,
     total: firstPage ? (connection.totalCount ?? rows.length) : null,
+    totalExact: connection.totalCount == null || connection.totalCountExact !== false,
     endCursor: connection.pageInfo.endCursor ?? null,
     hasNextPage: connection.pageInfo.hasNextPage,
   };

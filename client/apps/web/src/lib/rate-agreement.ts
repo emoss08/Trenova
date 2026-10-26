@@ -80,14 +80,28 @@ export function orderedAgreements<T extends Pick<AgreementTerm, "status" | "effe
 }
 
 /** What paging an agreement's lanes reads from each page. */
-export type LanePageCursor = { offset: number; count: number; results: readonly unknown[] };
+export type LanePageCursor = {
+  offset: number;
+  limit: number;
+  count: number;
+  /** False when count is the server's estimate of more lanes than it counts. */
+  countExact: boolean;
+  results: readonly unknown[];
+};
 
 /**
  * Where the next page of an agreement's lanes starts, or undefined once every
  * live lane is read. An empty page ends the reading too, so a count that moved
- * while paging never asks forever.
+ * while paging never asks forever. An estimated count says nothing about where
+ * the lanes end, so over one a full page is followed by the next.
  */
 export function nextLaneOffset(page: LanePageCursor): number | undefined {
   const next = page.offset + page.results.length;
-  return page.results.length > 0 && next < page.count ? next : undefined;
+  if (page.results.length === 0) {
+    return undefined;
+  }
+  if (!page.countExact) {
+    return page.results.length >= page.limit ? next : undefined;
+  }
+  return next < page.count ? next : undefined;
 }

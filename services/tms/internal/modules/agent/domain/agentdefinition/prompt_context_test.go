@@ -50,6 +50,22 @@ func TestBuildSystemPrompt_WritesTheTableViewAsAQueryToRerun(t *testing.T) {
 	assert.Contains(t, prompt, "<page_view>", "the preamble names the fence as data")
 }
 
+func TestBuildSystemPrompt_SaysAnEstimatedRowCountIsAnEstimate(t *testing.T) {
+	t.Parallel()
+
+	rows := 1_250_000
+	rc := fullContext()
+	rc.Page.View = &agent.PageView{
+		Resource:          "shipment",
+		RowCount:          &rows,
+		RowCountEstimated: true,
+	}
+
+	prompt := definitionWithInstructions("Be brief.").BuildSystemPrompt(rc)
+
+	assert.Contains(t, prompt, "rows matching: about 1250000")
+}
+
 func TestBuildSystemPrompt_OmitsAnEmptyView(t *testing.T) {
 	t.Parallel()
 

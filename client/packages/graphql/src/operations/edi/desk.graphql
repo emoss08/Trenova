@@ -23,6 +23,7 @@ query DeskEdiPartners($input: DataTableConnectionInput!, $includeTotalCount: Boo
       }
     }
     totalCount @include(if: $includeTotalCount)
+    totalCountExact @include(if: $includeTotalCount)
     pageInfo {
       hasNextPage
       endCursor
@@ -56,6 +57,7 @@ query DeskEdiInboundFiles($input: DataTableConnectionInput!, $includeTotalCount:
       }
     }
     totalCount @include(if: $includeTotalCount)
+    totalCountExact @include(if: $includeTotalCount)
     pageInfo {
       hasNextPage
       endCursor
@@ -153,6 +155,7 @@ query DeskEdiMessages($input: DataTableConnectionInput!, $includeTotalCount: Boo
       }
     }
     totalCount @include(if: $includeTotalCount)
+    totalCountExact @include(if: $includeTotalCount)
     pageInfo {
       hasNextPage
       endCursor
@@ -226,6 +229,7 @@ query DeskEdiTransfers(
       }
     }
     totalCount @include(if: $includeTotalCount)
+    totalCountExact @include(if: $includeTotalCount)
     pageInfo {
       hasNextPage
       endCursor

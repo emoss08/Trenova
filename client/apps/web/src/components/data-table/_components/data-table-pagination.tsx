@@ -1,4 +1,7 @@
 import { useT } from "@trenova/shared/i18n/use-t";
+import { useRichT } from "@trenova/shared/i18n/rich";
+import { formatNumber } from "@trenova/shared/i18n/format";
+import { formatRowTotal } from "@trenova/shared/lib/row-total";
 import type { RowData } from "@tanstack/react-table";
 import { Button } from "@trenova/shared/components/ui/button";
 import {
@@ -25,6 +28,8 @@ type DataTablePaginationProps<TData extends RowData> = {
   hasNextPage?: boolean;
   currentPageRowCount?: number;
   totalCount?: number | null;
+  /** False when totalCount is the server's estimate of a list too large to count. */
+  totalCountExact?: boolean;
   pageSizeOptions?: readonly number[];
   onPageChange?: (pageIndex: number) => void;
   onPageSizeChange?: (pageSize: number) => void;
@@ -38,21 +43,30 @@ export function DataTablePagination<TData extends RowData>({
   hasNextPage,
   currentPageRowCount,
   totalCount = null,
+  totalCountExact = true,
   pageSizeOptions = DEFAULT_PAGE_SIZE_OPTIONS,
   onPageChange,
   onPageSizeChange,
   leading,
 }: DataTablePaginationProps<TData>) {
   const t = useT();
+  const rt = useRichT();
 
   const { pageIndex, pageSize } = table.state.pagination;
   const pageCount = table.getPageCount();
   const rowCount = table.getRowCount();
   const cursorMode = mode === "cursor";
   const visibleRowCount = currentPageRowCount ?? table.getRowModel().rows.length;
+  // An estimated total says nothing about where the list ends, so offset paging over one
+  // follows full pages and never jumps to a last page computed from it.
+  const offsetEstimate = !cursorMode && !totalCountExact;
 
   const canPreviousPage = pageIndex > 0;
-  const canNextPage = cursorMode ? Boolean(hasNextPage) : pageIndex < pageCount - 1;
+  const canNextPage = cursorMode
+    ? Boolean(hasNextPage)
+    : offsetEstimate
+      ? visibleRowCount >= pageSize
+      : pageIndex < pageCount - 1;
 
   const handlePageChange = (newPageIndex: number) => {
     onPageChange?.(newPageIndex);
@@ -63,46 +77,47 @@ export function DataTablePagination<TData extends RowData>({
   };
 
   const startRow = visibleRowCount > 0 ? pageIndex * pageSize + 1 : 0;
-  const endRow = cursorMode
-    ? pageIndex * pageSize + visibleRowCount
-    : Math.min((pageIndex + 1) * pageSize, rowCount);
+  const endRow =
+    cursorMode || offsetEstimate
+      ? pageIndex * pageSize + visibleRowCount
+      : Math.min((pageIndex + 1) * pageSize, rowCount);
 
   if (visibleRowCount < 1 && pageIndex === 0) {
     return null;
   }
+
+  const figure = { b: (c: ReactNode) => <span className="text-foreground font-medium">{c}</span> };
+  const start = formatNumber(startRow);
+  const end = formatNumber(endRow);
+  const total = cursorMode ? totalCount : rowCount;
+  const exact = totalCountExact;
+  const shownTotal = total != null ? formatRowTotal(total, exact) : null;
+  const shownPages = formatRowTotal(pageCount || 1, exact);
 
   return (
     <div className="bleed:border-border bleed:min-h-10 bleed:shrink-0 bleed:border-t bleed:px-3 bleed:py-1.5 flex items-center justify-between gap-4 px-2 tabular-nums">
       <div className="text-muted-foreground flex items-center gap-2 text-sm">
         {leading}
         <span>
-          {visibleRowCount < 1 ? (
-            <>{t("No results on this page")}</>
-          ) : (
-            <>
-              {t("Showing")} <span className="text-foreground font-medium">{startRow}</span> to{" "}
-              <span className="text-foreground font-medium">{endRow}</span>
-              {cursorMode ? (
-                totalCount != null ? (
-                  <>
-                    {" "}
-                    of{" "}
-                    <span className="text-foreground font-medium">
-                      {totalCount.toLocaleString()}
-                    </span>{" "}
-                    results
-                  </>
-                ) : (
-                  <> results</>
-                )
-              ) : (
-                <>
-                  {" "}
-                  of <span className="text-foreground font-medium">{rowCount}</span> results
-                </>
-              )}
-            </>
-          )}
+          {visibleRowCount < 1
+            ? t("No results on this page")
+            : shownTotal === null
+              ? rt("Showing <b>{0}</b> to <b>{1}</b> results", figure, start, end)
+              : exact
+                ? rt(
+                    "Showing <b>{0}</b> to <b>{1}</b> of <b>{2}</b> results",
+                    figure,
+                    start,
+                    end,
+                    shownTotal,
+                  )
+                : rt(
+                    "Showing <b>{0}</b> to <b>{1}</b> of about <b>{2}</b> results",
+                    figure,
+                    start,
+                    end,
+                    shownTotal,
+                  )}
         </span>
       </div>
 
@@ -149,15 +164,22 @@ export function DataTablePagination<TData extends RowData>({
           >
             <ChevronLeftIcon className="size-4" />
           </Button>
-          <div className="flex items-center gap-1 px-2 text-sm">
-            <span className="text-muted-foreground">{t("Page")}</span>
-            <span className="font-medium">{pageIndex + 1}</span>
-            {(!cursorMode || totalCount != null) && (
-              <>
-                <span className="text-muted-foreground">of</span>
-                <span className="font-medium">{pageCount || 1}</span>
-              </>
-            )}
+          <div className="text-muted-foreground px-2 text-sm">
+            {shownTotal === null || offsetEstimate
+              ? rt("Page <b>{0}</b>", figure, formatNumber(pageIndex + 1))
+              : exact
+                ? rt(
+                    "Page <b>{0}</b> of <b>{1}</b>",
+                    figure,
+                    formatNumber(pageIndex + 1),
+                    shownPages,
+                  )
+                : rt(
+                    "Page <b>{0}</b> of about <b>{1}</b>",
+                    figure,
+                    formatNumber(pageIndex + 1),
+                    shownPages,
+                  )}
           </div>
           <Button
             variant="outline"
@@ -168,7 +190,7 @@ export function DataTablePagination<TData extends RowData>({
           >
             <ChevronRightIcon className="size-4" />
           </Button>
-          {!cursorMode && (
+          {!cursorMode && !offsetEstimate && (
             <Button
               variant="outline"
               size="icon-sm"

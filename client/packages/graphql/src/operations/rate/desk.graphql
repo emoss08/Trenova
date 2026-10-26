@@ -9,6 +9,7 @@ query DeskRateAgreementPricing($input: DataTableConnectionInput!) {
       }
     }
     totalCount
+    totalCountExact
   }
 }
 
@@ -35,6 +36,7 @@ query DeskRateAgreements($input: DataTableConnectionInput!, $includeTotalCount: 
       }
     }
     totalCount @include(if: $includeTotalCount)
+    totalCountExact @include(if: $includeTotalCount)
     pageInfo {
       ...DataTablePageInfoFields
     }
@@ -74,6 +76,7 @@ query DeskRateAgreementCard($id: ID!) {
       changeMessage
     }
     laneCount
+    laneCountExact
     lanes(first: 50) {
       id
       label

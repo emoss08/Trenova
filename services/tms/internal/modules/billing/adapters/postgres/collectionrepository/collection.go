@@ -186,7 +186,8 @@ func (r *repository) ListActivities(
 
 		var before keel.Pred
 		if req.Before != nil {
-			before = keel.DynRow(cact.CreatedAt, cact.ID).Lt(keel.DynRow(req.Before.CreatedAt, req.Before.ID))
+			before = keel.Tuple(cact.CreatedAt, cact.ID).
+				Lt(keel.Tuple(req.Before.CreatedAt, req.Before.ID))
 		}
 
 		records, err := keel.Into[activityRecord](ctx, r.db.Keel(ctx), cact.
@@ -267,7 +268,7 @@ func openInvoicesByCustomer(asOf int64) *keel.CTETable {
 	inv := invoicedb.Invoices
 	open := receivablesql.OpenMinor(inv)
 	overdue := keel.And(inv.DueDate.IsNotNull(), inv.DueDate.Lt(asOf))
-	daysPastDue := keel.DynLit(asOf).Sub(inv.DueDate).Div(receivablesql.SecondsPerDay)
+	daysPastDue := keel.Int64(asOf).Sub(inv.DueDate).Div(keel.Int64(receivablesql.SecondsPerDay))
 	return keel.CTE(
 		"open_invoices",
 		[]string{
@@ -282,8 +283,8 @@ func openInvoicesByCustomer(asOf int64) *keel.CTETable {
 			Pick(
 				inv.CustomerID,
 				open.Sum(),
-				keel.DynCase().When(overdue, open).Else(0).Sum(),
-				keel.DynCase().When(overdue, daysPastDue).Else(0).Max(),
+				keel.CaseInt64().When(overdue, open).Else(keel.Int64(0)).Sum(),
+				keel.CaseInt64().When(overdue, daysPastDue).Else(keel.Int64(0)).Max(),
 				keel.Count(),
 				keel.Count().Filter(inv.DisputeStatus.Eq(invoice.DisputeStatusDisputed)),
 			).
@@ -305,10 +306,10 @@ func worklistStatement(q *worklistQuery) *keel.Query[*customer.Customer] {
 	paidSincePromise := keel.Scalar(cp.Pick(cp.AmountMinor.Sum()).Where(
 		cp.CustomerID.EqCol(cus.ID),
 		cp.Status.Eq(customerpayment.StatusPosted),
-		keel.DynOf(cp.CreatedAt).Gte(prm.CreatedAt),
+		keel.Int64Of(cp.CreatedAt).GteExpr(prm.CreatedAt),
 	))
-	openMinor := keel.DynOf(oi.Col("open_minor")).Coalesce(0)
-	overdueMinor := keel.DynOf(oi.Col("overdue_minor")).Coalesce(0)
+	openMinor := keel.NumericOf(oi.Col("open_minor")).Coalesce(0)
+	overdueMinor := keel.NumericOf(oi.Col("overdue_minor")).Coalesce(0)
 
 	return cus.With(oi).
 		LeftJoin(oi, oi.Col("customer_id").EqCol(cus.ID)).
@@ -326,13 +327,13 @@ func worklistStatement(q *worklistQuery) *keel.Query[*customer.Customer] {
 			cus.ID,
 			cus.Name,
 			cus.Code,
-			keel.DynOf(cbp.CreditStatus).Cast(keel.TypeString).Coalesce("Active"),
+			keel.CastText(cbp.CreditStatus).Coalesce("Active"),
 			cbp.BillingCurrency.Coalesce("USD"),
 			openMinor,
 			overdueMinor,
-			keel.DynOf(oi.Col("oldest_days")).Coalesce(0),
-			keel.DynOf(oi.Col("open_count")).Coalesce(0),
-			keel.DynOf(oi.Col("disputed_count")).Coalesce(0),
+			keel.Int64Of(oi.Col("oldest_days")).Coalesce(0),
+			keel.Int64Of(oi.Col("open_count")).Coalesce(0),
+			keel.Int64Of(oi.Col("disputed_count")).Coalesce(0),
 			acc.CollectorID,
 			col.Name.Coalesce(""),
 			acc.NextFollowUpOn,
@@ -345,9 +346,9 @@ func worklistStatement(q *worklistQuery) *keel.Query[*customer.Customer] {
 			prm.PromisedOn,
 			prm.CreatedAt,
 			pby.Name.Coalesce(""),
-			keel.DynCase().
-				When(prm.ID.IsNull(), 0).
-				Else(keel.DynOf(paidSincePromise).Coalesce(0)),
+			keel.CaseNumeric().
+				When(prm.ID.IsNull(), keel.Numeric(0)).
+				Else(keel.NumericOf(paidSincePromise).Coalesce(0)),
 		).
 		Where(
 			keel.When(q.customerID.IsNotNil(), cus.ID.Eq(q.customerID)),
@@ -482,15 +483,15 @@ func (r *repository) ListAwaitingPromise(
 		paid := keel.Scalar(cp.Pick(cp.AmountMinor.Sum()).Where(
 			cp.CustomerID.EqCol(acc.CustomerID),
 			cp.Status.Eq(customerpayment.StatusPosted),
-			keel.DynOf(cp.CreatedAt).Gte(prm.CreatedAt),
+			keel.Int64Of(cp.CreatedAt).GteExpr(prm.CreatedAt),
 		))
 		ids, err := keel.Into[pulid.ID](ctx, r.db.Keel(ctx), acc.
 			Join(prm, prm.ID.EqCol(acc.PromiseActivityID)).
 			Pick(acc.CustomerID).
 			Where(
 				acc.CustomerID.In(req.CustomerIDs...),
-				keel.DynOf(prm.PromisedOn).Add(86400).Gt(req.AsOf),
-				keel.DynOf(prm.PromisedAmountMinor).Gt(keel.DynOf(paid).Coalesce(0)),
+				prm.PromisedOn.Add(keel.Int64(86400)).Gt(req.AsOf),
+				keel.NumericOf(prm.PromisedAmountMinor).GtExpr(keel.NumericOf(paid).Coalesce(0)),
 			))
 		if err != nil {
 			return nil, fmt.Errorf("list customers awaiting a promise: %w", err)

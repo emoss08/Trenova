@@ -12,18 +12,20 @@ import (
 )
 
 const (
-	payloadTruncated  = "truncated"
-	payloadHasMore    = "hasMore"
-	payloadNextCursor = "nextCursor"
-	payloadNextOffset = "nextOffset"
-	payloadTotal      = "total"
-	payloadPages      = "pages"
+	payloadTruncated      = "truncated"
+	payloadHasMore        = "hasMore"
+	payloadNextCursor     = "nextCursor"
+	payloadNextOffset     = "nextOffset"
+	payloadTotal          = "total"
+	payloadTotalEstimated = "totalEstimated"
+	payloadPages          = "pages"
 
-	resultHasMore    = "hasMore"
-	resultNextCursor = "nextCursor"
-	resultNextOffset = "nextOffset"
-	resultTotal      = "total"
-	resultItems      = "items"
+	resultHasMore        = "hasMore"
+	resultNextCursor     = "nextCursor"
+	resultNextOffset     = "nextOffset"
+	resultTotal          = "total"
+	resultTotalEstimated = "totalEstimated"
+	resultItems          = "items"
 
 	argAfter  = "after"
 	argOffset = "offset"
@@ -31,14 +33,25 @@ const (
 
 func notePaging(payload, result map[string]any) {
 	payload[payloadPages] = 1
-	if total, counted := typeutils.IntOf(result[resultTotal]); counted {
-		payload[payloadTotal] = total
-	}
+	noteTotal(payload, result)
 	if typeutils.BoolOf(payload[payloadTruncated]) {
 		payload[payloadHasMore] = true
 		return
 	}
 	notePosition(payload, result)
+}
+
+func noteTotal(payload, result map[string]any) {
+	total, counted := typeutils.IntOf(result[resultTotal])
+	if !counted {
+		return
+	}
+	payload[payloadTotal] = total
+	if typeutils.BoolOf(result[resultTotalEstimated]) {
+		payload[payloadTotalEstimated] = true
+	} else {
+		delete(payload, payloadTotalEstimated)
+	}
 }
 
 func notePosition(payload, result map[string]any) {
@@ -178,9 +191,7 @@ func withPage(
 	payload[payloadRows] = rows
 	payload[payloadRowCount] = read + len(records)
 	payload[payloadPages] = max(pages, 1) + 1
-	if total, counted := typeutils.IntOf(result[resultTotal]); counted {
-		payload[payloadTotal] = total
-	}
+	noteTotal(payload, result)
 	notePosition(payload, result)
 	if payloadSize(payload) > assistantartifact.MaxPayloadBytes {
 		return nil

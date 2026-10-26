@@ -550,6 +550,7 @@ export const pageViewSchema = z.object({
   kpis: z.array(pageViewKpiSchema).optional(),
   visibleColumns: z.array(z.string()).optional(),
   rowCount: z.number().nullish(),
+  rowCountEstimated: z.boolean().optional(),
 });
 
 /** What the person was looking at when they asked; mirrors the server's PageContext. */
@@ -1304,6 +1305,7 @@ export const artifactRowsSchema = z.object({
     .nullable()
     .optional()
     .transform((total) => total ?? null),
+  totalEstimated: z.boolean().optional().default(false),
   withheld: z
     .array(z.string())
     .nullable()

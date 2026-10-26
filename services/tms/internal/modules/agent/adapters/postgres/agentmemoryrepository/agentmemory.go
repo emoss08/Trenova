@@ -351,7 +351,7 @@ func (r *repository) FindActive(
 
 		entity, err := m.Where(
 			keptOnly(req.Now, req.IncludeSuggested),
-			foldedContent(m.Content).Eq(foldedContent(req.Content)),
+			foldedContent(m.Content).EqExpr(foldedContent(keel.Text(req.Content))),
 			sameReaders(&req),
 			keel.When(!req.Tainted, keel.Or(m.Tainted.IsFalse(), m.ReviewedAt.IsNotNull())),
 			subject,
@@ -464,7 +464,7 @@ func (r *repository) MarkUsed(
 		if _, err := m.Where(m.ID.In(req.IDs...)).Update(
 			ctx,
 			r.db.Keel(ctx),
-			m.UseCount.Add(1),
+			m.UseCount.Increment(1),
 			m.LastUsedAt.To(req.At),
 			m.UpdatedAt.ToExpr(m.UpdatedAt),
 			m.Version.ToExpr(m.Version),
@@ -608,7 +608,7 @@ func activation(req *agentports.ResolveAgentMemorySuggestionRequest) []keel.Assi
 	}
 	if req.ByUserID.IsNotNil() {
 		sets = append(sets, m.CreatedByUserID.ToExpr(
-			keel.DynOf(m.CreatedByUserID).Coalesce(req.ByUserID.String()),
+			m.CreatedByUserID.Coalesce(req.ByUserID.String()),
 		))
 	}
 
@@ -706,14 +706,14 @@ func replaceableStatuses() []agent.MemoryStatus {
 func taintsLast() keel.Order {
 	m := agentdb.Memories
 
-	return keel.DynCase().
-		When(keel.And(keel.DynOf(m.Tainted), m.ReviewedAt.IsNull()), orderRank(1)).
+	return keel.CaseInt64().
+		When(keel.And(keel.BoolOf(m.Tainted), m.ReviewedAt.IsNull()), orderRank(1)).
 		Else(orderRank(0)).
 		Asc()
 }
 
 func activeFirst() keel.Order {
-	return keel.DynCase().
+	return keel.CaseInt64().
 		When(agentdb.Memories.Status.Eq(agent.MemoryStatusActive), orderRank(0)).
 		Else(orderRank(1)).
 		Asc()
@@ -724,7 +724,7 @@ func activeFirst() keel.Order {
 func kindOrder() keel.Order {
 	kind := agentdb.Memories.Kind
 
-	return keel.DynCase().
+	return keel.CaseInt64().
 		When(kind.Eq(agent.MemoryKindInstruction), orderRank(0)).
 		When(kind.Eq(agent.MemoryKindCorrection), orderRank(1)).
 		When(kind.Eq(agent.MemoryKindProcedure), orderRank(2)).
@@ -735,7 +735,7 @@ func kindOrder() keel.Order {
 func candidateOrder() keel.Order {
 	m := agentdb.Memories
 
-	return keel.DynCase().
+	return keel.CaseInt64().
 		When(m.SubjectType.IsNotNull(), orderRank(0)).
 		When(keel.And(m.ToolName.IsNull(), m.Kind.Eq(agent.MemoryKindInstruction)), orderRank(1)).
 		When(m.ToolName.IsNotNull(), orderRank(2)).
@@ -743,8 +743,8 @@ func candidateOrder() keel.Order {
 		Asc()
 }
 
-func orderRank(n int64) keel.DynExpr {
-	return keel.DynLit(n).Cast(keel.TypeInt64)
+func orderRank(n int64) keel.Int64Expr {
+	return keel.Int64(n)
 }
 
 func boundedCandidateLimit(limit int) int {
@@ -771,12 +771,6 @@ func setID(col keelkinds.PulidIDCol, id pulid.ID) keel.Assignment {
 	return col.To(id)
 }
 
-func foldedContent(v any) keel.DynExpr {
-	return keel.DynFunc("btrim", keel.DynFunc(
-		"regexp_replace",
-		keel.DynFunc("lower", v),
-		keel.DynConst("[^[:alnum:]]+"),
-		keel.DynConst(" "),
-		keel.DynConst("g"),
-	))
+func foldedContent(v keel.StringValue) keel.StringExpr {
+	return keel.StringOf(v).Lower().RegexpReplace("[^[:alnum:]]+", " ", "g").Trim()
 }

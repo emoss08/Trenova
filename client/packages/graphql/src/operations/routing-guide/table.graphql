@@ -48,6 +48,7 @@ query RoutingGuideTable($input: DataTableConnectionInput!, $includeTotalCount: B
       }
     }
     totalCount @include(if: $includeTotalCount)
+    totalCountExact @include(if: $includeTotalCount)
     pageInfo {
       ...DataTablePageInfoFields
     }
@@ -85,6 +86,7 @@ query RoutingGuideOptions($input: DataTableConnectionInput!, $includeTotalCount:
       }
     }
     totalCount @include(if: $includeTotalCount)
+    totalCountExact @include(if: $includeTotalCount)
     pageInfo {
       hasNextPage
       endCursor

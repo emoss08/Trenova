@@ -17,6 +17,7 @@ import (
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/listquery"
 	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/pkg/resultcache"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
 	"go.uber.org/fx"
@@ -186,7 +187,10 @@ func rolesWithInheritance(ctx context.Context, roleIDs []pulid.ID) *keel.Query[*
 	closure.Recurse(forTenant(
 		ctx,
 		parent.Pick(parent.ID, parent.ParentRoleIDs).
-			Join(closure, keel.DynOf(parent.ID).In(closure.Col(roleClosureParentColumn))),
+			Join(
+				closure,
+				parent.ID.InArray(keel.StringArrayOf(closure.Col(roleClosureParentColumn))),
+			),
 	)).Distinct()
 
 	return forTenant(
@@ -205,7 +209,9 @@ func (r *repository) GetRolesWithInheritance(
 			return []*permission.Role{}, nil
 		}
 
-		roles, err := rolesWithInheritance(ctx, roleIDs).All(ctx, r.db.Keel(ctx))
+		roles, err := rolesWithInheritance(ctx, roleIDs).
+			Cache(resultcache.Access()...).
+			All(ctx, r.db.Keel(ctx))
 		if err != nil {
 			r.l.Error(
 				"failed to get roles with inheritance",
@@ -236,7 +242,7 @@ func (r *repository) GetUsersWithRole(
 			u.Name,
 			ura.OrganizationID,
 			o.Name,
-			keel.DynLit(directAssignment).Cast(keel.TypeString),
+			keel.Text(directAssignment),
 		))
 		if err != nil {
 			r.l.Error(
@@ -267,6 +273,7 @@ func (r *repository) GetUserRoleAssignments(
 				ura.OrganizationID.Eq(orgID),
 			).
 				Load(ura.Role()).
+				Cache(resultcache.Access()...).
 				All(ctx, r.db.Keel(ctx))
 			if err != nil {
 				r.l.Error(
@@ -779,7 +786,7 @@ func usersWithPermissionQuery(
 	)
 	held.Recurse(parent.
 		Pick(held.Col(heldUserColumn), parent.ID, parent.ParentRoleIDs).
-		Join(held, keel.DynOf(parent.ID).In(held.Col(heldParentColumn)))).
+		Join(held, parent.ID.InArray(keel.StringArrayOf(held.Col(heldParentColumn))))).
 		Distinct()
 
 	return u.With(held).

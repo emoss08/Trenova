@@ -23,6 +23,7 @@ type PageViewRegistrationInput = {
   columnVisibility: Readonly<Record<string, boolean>>;
   columnIds: readonly string[];
   rowCount: number | null;
+  rowCountExact: boolean;
 };
 
 /**
@@ -42,6 +43,7 @@ export function usePageViewRegistration({
   columnVisibility,
   columnIds,
   rowCount,
+  rowCountExact,
 }: PageViewRegistrationInput) {
   const setTable = usePageViewStore((state) => state.setTable);
   // Joined keys keep the effect keyed on content rather than on identity:
@@ -68,6 +70,7 @@ export function usePageViewRegistration({
       selectionCount: selectedIds.length,
       visibleColumns: columnsKey === "" ? [] : columnsKey.split(","),
       rowCount,
+      rowCountExact,
     };
     setTable(table);
   }, [
@@ -77,6 +80,7 @@ export function usePageViewRegistration({
     query,
     resource,
     rowCount,
+    rowCountExact,
     selectionKey,
     setTable,
     sortKey,

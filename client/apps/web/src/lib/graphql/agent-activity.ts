@@ -6,6 +6,7 @@ import {
   AgentRunCountDocument,
 } from "@trenova/graphql/generated/graphql";
 import { requestGraphQL } from "@trenova/shared/lib/graphql";
+import { rowTotalOf, type RowTotal } from "@trenova/shared/lib/row-total";
 import { fetchActiveAgentMemoryCount } from "./agent-memories";
 
 type RequestOptions = { signal?: AbortSignal };
@@ -13,9 +14,9 @@ type RequestOptions = { signal?: AbortSignal };
 export type AgentActivityCounts = {
   agentsTotal: number;
   agentsEnabled: number;
-  pendingProposals: number;
-  runsLast24h: number;
-  memoriesActive: number;
+  pendingProposals: RowTotal;
+  runsLast24h: RowTotal;
+  memoriesActive: RowTotal;
 };
 
 const DAY_SECONDS = 24 * 60 * 60;
@@ -56,7 +57,9 @@ export async function fetchAgentActivityCounts(
           },
         },
         signal,
-      }).then((data) => data.agentProposals.totalCount ?? 0),
+      }).then((data) =>
+        rowTotalOf(data.agentProposals.totalCount, data.agentProposals.totalCountExact),
+      ),
       requestGraphQL({
         document: AgentRunCountDocument,
         operationName: "AgentRunCount",
@@ -67,7 +70,7 @@ export async function fetchAgentActivityCounts(
           },
         },
         signal,
-      }).then((data) => data.agentRuns.totalCount ?? 0),
+      }).then((data) => rowTotalOf(data.agentRuns.totalCount, data.agentRuns.totalCountExact)),
       fetchActiveAgentMemoryCount({ signal }),
     ]);
 

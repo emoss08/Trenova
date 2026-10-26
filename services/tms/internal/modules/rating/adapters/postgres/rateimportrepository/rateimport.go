@@ -10,6 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/rating/domain/rateimport/rateimportdb"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/rateimportports"
 	"github.com/emoss08/trenova/pkg/dberror"
+	"github.com/emoss08/trenova/pkg/listquery"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
@@ -91,21 +92,18 @@ func (r *repository) List(
 				Offset(page.SafeOffset())
 
 			var items []*rateimport.RateImportBatch
-			var total int64
+			var total keel.RowCount
 			if err := keel.Batch(
 				ctx,
 				r.db.Keel(ctx),
 				keel.ListInto(rows, &items),
-				keel.CountInto(batchesQuery(req), &total),
+				keel.CountEstimateInto(batchesQuery(req), pagination.ExactTotalUpTo, &total),
 			); err != nil {
 				r.l.Error("failed to list rate import batches", zap.Error(err))
 				return nil, err
 			}
 
-			return &pagination.ListResult[*rateimport.RateImportBatch]{
-				Items: items,
-				Total: int(total),
-			}, nil
+			return listquery.Result(items, total), nil
 		},
 	)
 }
@@ -133,26 +131,32 @@ func (r *repository) ListRows(
 			rows := importRowsQuery(req).Order(row.RowNumber.Asc())
 
 			var items []*rateimport.RateImportRow
-			var total int64
-			read := keel.AllInto(rows, &items)
-			if req.Filter != nil {
-				page := req.Filter.Pagination
-				read = keel.ListInto(rows.Limit(page.SafeLimit()).Offset(page.SafeOffset()), &items)
+			if req.Filter == nil {
+				if err := keel.Batch(ctx, r.db.Keel(ctx), keel.AllInto(rows, &items)); err != nil {
+					r.l.Error("failed to list rate import rows", zap.Error(err))
+					return nil, err
+				}
+
+				return &pagination.ListResult[*rateimport.RateImportRow]{
+					Items:      items,
+					Total:      len(items),
+					TotalExact: true,
+				}, nil
 			}
+
+			page := req.Filter.Pagination
+			var total keel.RowCount
 			if err := keel.Batch(
 				ctx,
 				r.db.Keel(ctx),
-				read,
-				keel.CountInto(importRowsQuery(req), &total),
+				keel.ListInto(rows.Limit(page.SafeLimit()).Offset(page.SafeOffset()), &items),
+				keel.CountEstimateInto(importRowsQuery(req), pagination.ExactTotalUpTo, &total),
 			); err != nil {
 				r.l.Error("failed to list rate import rows", zap.Error(err))
 				return nil, err
 			}
 
-			return &pagination.ListResult[*rateimport.RateImportRow]{
-				Items: items,
-				Total: int(total),
-			}, nil
+			return listquery.Result(items, total), nil
 		},
 	)
 }

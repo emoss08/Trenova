@@ -12,6 +12,7 @@ import (
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/pkg/resultcache"
 	"github.com/emoss08/trenova/shared/pulid"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
@@ -82,7 +83,8 @@ func (r *repository) selectControl(ctx context.Context) (*tenant.CarrierSettleme
 		ctx,
 		r.db,
 		func(ctx context.Context) (*tenant.CarrierSettlementControl, error) {
-			return tenantdb.CarrierSettlementControls.Query().One(ctx, r.db.Keel(ctx))
+			return tenantdb.CarrierSettlementControls.Cache(resultcache.Settings()...).
+				One(ctx, r.db.Keel(ctx))
 		},
 	)
 }

@@ -46,8 +46,8 @@ func pointers[T any](rows []T) []*T {
 	return out
 }
 
-func sumOrZero(e keel.Expr) keel.Expr {
-	return keel.DynOf(e).Sum().Coalesce(0)
+func sumOrZero(e keel.Expr) keel.NumericExpr {
+	return keel.NumericOf(keel.Sum(e)).Coalesce(0)
 }
 
 // ListStopFacts pulls the raw dwell history a backtest replays against. Only
@@ -172,12 +172,12 @@ func (r *analyticsRepository) FacilityStats(
 
 			picks := append([]keel.Expr{
 				o.LocationID,
-				keel.DynOf(loc.Name).Coalesce(""),
+				loc.Name.Coalesce(""),
 				keel.Count(),
 				keel.Count().Filter(o.RoundedMinutes.Gt(0)),
-				keel.DynFunc("round", keel.DynOf(o.RawDwellMinutes).Avg()).Coalesce(0).Cast(keel.TypeInt64),
-				keel.DynOf(keel.PercentileCont(0.5, o.RawDwellMinutes.Asc())).Coalesce(0),
-				keel.DynOf(keel.PercentileCont(0.9, o.RawDwellMinutes.Asc())).Coalesce(0),
+				keel.CastInt64(keel.NumericOf(o.RawDwellMinutes.Avg()).Round().Coalesce(0)),
+				keel.Float64Of(keel.PercentileCont(0.5, o.RawDwellMinutes.Asc())).Coalesce(0),
+				keel.Float64Of(keel.PercentileCont(0.9, o.RawDwellMinutes.Asc())).Coalesce(0),
 			}, outcomeColumns()...)
 
 			q := o.LeftJoin(loc, loc.ID.EqCol(o.LocationID)).
@@ -215,7 +215,7 @@ func (r *analyticsRepository) CustomerStats(
 
 			picks := append([]keel.Expr{
 				o.CustomerID,
-				keel.DynOf(cus.Name).Coalesce(""),
+				cus.Name.Coalesce(""),
 				keel.Count(),
 				keel.Count().Filter(o.RoundedMinutes.Gt(0)),
 			}, outcomeColumns()...)
@@ -254,7 +254,7 @@ func (r *analyticsRepository) WaiverStats(
 			stats, err := keel.Into[detentionports.WaiverLeakageStat](ctx, r.db.Keel(ctx), o.
 				Group(o.WaiverReason).
 				Pick(
-					keel.DynOf(o.WaiverReason).Cast(keel.TypeString).Coalesce(""),
+					keel.CastText(o.WaiverReason).Coalesce(""),
 					keel.Count(),
 					o.WaivedByID.CountDistinct(),
 					sumOrZero(o.WaivedAmount),

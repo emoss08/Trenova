@@ -178,6 +178,7 @@ query DeskInvoices($input: DataTableConnectionInput!, $includeTotalCount: Boolea
       }
     }
     totalCount @include(if: $includeTotalCount)
+    totalCountExact @include(if: $includeTotalCount)
     pageInfo {
       ...DataTablePageInfoFields
     }

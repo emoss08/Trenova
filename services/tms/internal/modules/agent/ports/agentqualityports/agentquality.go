@@ -75,9 +75,10 @@ type AgentQualityAgentRow struct {
 }
 
 type AgentQualityAgentRows struct {
-	Items       []*AgentQualityAgentRow
-	HasNextPage bool
-	TotalCount  *int
+	Items           []*AgentQualityAgentRow
+	HasNextPage     bool
+	TotalCount      *int
+	TotalCountExact bool
 }
 
 type AgentSuiteRunRepository interface {

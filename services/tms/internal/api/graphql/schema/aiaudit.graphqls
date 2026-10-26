@@ -210,6 +210,8 @@ type AIAuditEventConnection {
   edges: [AIAuditEventEdge!]!
   pageInfo: PageInfo!
   totalCount: Int
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
 }
 
 """
@@ -275,6 +277,8 @@ type AIAuditExportConnection {
   edges: [AIAuditExportEdge!]!
   pageInfo: PageInfo!
   totalCount: Int
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
 }
 
 """

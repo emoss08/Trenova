@@ -29,6 +29,7 @@ import { useT } from "@trenova/shared/i18n/use-t";
 import { formatSecondsAgo } from "@trenova/shared/lib/date";
 import { describeError } from "@trenova/shared/lib/error-presentation";
 import { phaseTone } from "@trenova/shared/lib/status-phase";
+import { formatRowTotal, type RowTotal } from "@trenova/shared/lib/row-total";
 import { cn } from "@trenova/shared/lib/utils";
 import { PrinterIcon, ScanIcon, SearchLgIcon, XCloseIcon } from "@trenova/shared/components/icons";
 import { useEffect, useRef, type ReactNode } from "react";
@@ -42,7 +43,7 @@ import {
 
 export type BatchListState = {
   batches: CaptureBatchRow[];
-  total: number | undefined;
+  total: RowTotal | undefined;
   isLoading: boolean;
   isError: boolean;
   error: unknown;
@@ -200,7 +201,9 @@ export function BatchList({
           <h2 className="truncate text-sm font-semibold">{title}</h2>
           {list.total !== undefined && (
             <span className="text-foreground-subtle text-xs tabular-nums">
-              {t("{0, plural, one {# stack} other {# stacks}}", list.total)}
+              {list.total.exact
+                ? t("{0, plural, one {# stack} other {# stacks}}", list.total.count)
+                : t("About {0} stacks", formatRowTotal(list.total.count, false))}
             </span>
           )}
         </div>

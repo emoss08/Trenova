@@ -16,4 +16,5 @@ var Module = fx.Module("report-jobs",
 		),
 	),
 	fx.Provide(schedule.AsProvider(NewScheduleProvider)),
+	fx.Invoke(StartCatalogHeartbeat),
 )

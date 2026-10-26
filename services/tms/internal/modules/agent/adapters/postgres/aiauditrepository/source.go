@@ -53,7 +53,7 @@ func keyset[T any](
 ) *keel.Query[*T] {
 	return q.AllTenants().
 		Where(
-			keel.DynRow(ts, id).Gt(keel.DynRow(page.AfterTS, page.AfterID)),
+			keel.Tuple(ts, id).Gt(keel.Tuple(page.AfterTS, page.AfterID)),
 			ts.Lte(page.UntilTS),
 		).
 		Order(ts.Asc(), id.Asc()).

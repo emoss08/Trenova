@@ -1,4 +1,5 @@
 {
+  "About {0} shipments can transfer": "Unos {0} envíos se pueden transferir",
   "Add notes...": "Agregar notas...",
   "Adjust terms": "Ajustar condiciones",
   "Adjustment-origin rebill": "Refacturación originada en un ajuste",
@@ -150,6 +151,7 @@
   "Shipments that can transfer": "Envíos que se pueden transferir",
   "Show historical queue records that already produced a posted invoice.": "Mostrar los registros históricos de la cola que ya generaron una factura contabilizada.",
   "Show outcome": "Mostrar resultado",
+  "Showing {0} of about {1}": "Mostrando {0} de unos {1}",
   "Showing {0} of {1}": "Mostrando {0} de {1}",
   "Something outside the billing policy stopped the transfer. Try it again.": "Algo ajeno a la política de facturación detuvo la transferencia. Inténtalo de nuevo.",
   "Start transfer": "Iniciar transferencia",
@@ -178,6 +180,8 @@
   "This statement bills itself when the period closes. Billing it here is only for getting ahead of that.": "Este estado de cuenta se factura solo cuando cierra el periodo. Facturarlo aquí sirve únicamente para adelantarse.",
   "This transfer keeps running if you close this window.": "Esta transferencia sigue ejecutándose si cierra esta ventana.",
   "Total charge is $0.00": "El cargo total es $0.00",
+  "Transfer all of about {0}": "Transferir los aproximadamente {0}",
+  "Transfer all of about {0} shipments that match the current search and status?": "¿Transferir los aproximadamente {0} envíos que coinciden con la búsqueda y el estado actuales?",
   "Transfer all {0}": "Transferir los {0}",
   "Transfer failed": "La transferencia falló",
   "Transfer more": "Transferir más",

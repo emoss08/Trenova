@@ -429,16 +429,14 @@ func countWhere(ps ...keel.Pred) keel.Agg {
 	return keel.Count().Filter(keel.And(ps...))
 }
 
-func floatTotal(sum keel.Agg) keel.DynExpr {
-	return keel.DynOf(sum).Coalesce(0).Cast(keel.TypeFloat64)
+func floatTotal(sum keel.Agg) keel.Float64Expr {
+	return keel.CastFloat64(keel.NumericOf(sum).Coalesce(0))
 }
 
-func localHour(ts keel.Expr, tz string) keel.DynExpr {
-	return keel.DynFunc(
-		"date_part",
-		keel.DynConst(hourField),
-		keel.DynFunc("timezone", tz, keel.DynFunc("to_timestamp", ts)),
-	).Cast(keel.TypeInt64)
+func localHour(ts keel.NumberValue, tz string) keel.Int64Expr {
+	return keel.CastInt64(
+		keel.DatePart(hourField, keel.ToTimestamp(ts).AtTimeZone(keel.Text(tz))),
+	)
 }
 
 func activeShipmentsQuery(window analyticsWindow) *keel.Query[*shipment.Shipment] {
@@ -459,7 +457,7 @@ func hourlyShipmentsQuery(window analyticsWindow, tz string) *keel.Query[*shipme
 	sp := shipmentdb.Shipments
 	hour := localHour(sp.CreatedAt, tz)
 
-	return sp.Pick(hour, keel.DynOf(keel.Count()).Cast(keel.TypeFloat64)).
+	return sp.Pick(hour, keel.CastFloat64(keel.Int64Of(keel.Count()))).
 		Where(within(sp.CreatedAt, window.TodayStart, window.Now)).
 		Group(hour).
 		Order(hour.Asc())
@@ -502,8 +500,8 @@ func (p *Provider) getActiveShipments(
 
 func onTimeQuery(window analyticsWindow) *keel.Query[*shipment.Stop] {
 	stp := shipmentdb.Stops
-	onTime := keel.DynOf(stp.ActualArrival).
-		Lte(keel.DynOf(stp.ScheduledWindowEnd).Coalesce(stp.ScheduledWindowStart))
+	onTime := keel.Int64Of(stp.ActualArrival).
+		LteExpr(stp.ScheduledWindowEnd.Coalesce(stp.ScheduledWindowStart))
 	today := within(stp.ActualArrival, window.TodayStart, window.Now)
 	yesterday := within(stp.ActualArrival, window.YesterdayStart, window.YesterdayEnd)
 	sevenDay := keel.And(
@@ -870,7 +868,7 @@ func detentionWatchlistQuery(now int64) *keel.Query[*shipment.Stop] {
 	sm := shipmentdb.ShipmentMoves
 	sp := shipmentdb.Shipments
 	cus := customerdb.Customers
-	dwell := keel.DynLit(now).Sub(stp.ActualArrival).Cast(keel.TypeInt64)
+	dwell := keel.Int64(now).Sub(stp.ActualArrival)
 
 	return stp.
 		Join(sm, sm.ID.EqCol(stp.ShipmentMoveID)).
@@ -882,7 +880,7 @@ func detentionWatchlistQuery(now int64) *keel.Query[*shipment.Stop] {
 			stp.ActualArrival.IsNotNull(),
 			stp.ActualArrival.Gt(0),
 			keel.Or(stp.ActualDeparture.IsNull(), stp.ActualDeparture.Eq(0)),
-			keel.DynLit(now).Sub(stp.ActualArrival).Gt(detentionDwellFloorSeconds),
+			dwell.Gt(detentionDwellFloorSeconds),
 		).
 		Order(dwell.Desc(), sp.ProNumber.Asc()).
 		Limit(detentionWatchlistLimit)
@@ -923,14 +921,14 @@ func customerMixQuery(now, currentStart, previousStart int64) *keel.Query[*shipm
 		Join(cus, cus.ID.EqCol(sp.CustomerID)).
 		Pick(
 			sp.CustomerID,
-			keel.DynOf(cus.Name).Coalesce(""),
+			cus.Name.Coalesce(""),
 			revenue,
 			countWhere(sp.CreatedAt.Gte(currentStart)),
 			floatTotal(sp.TotalChargeAmount.Sum().Filter(keel.And(
 				sp.CreatedAt.Gte(previousStart),
 				sp.CreatedAt.Lt(currentStart),
 			))),
-			keel.DynOf(keel.Sum(revenue).OverWindow(keel.Window{})).Cast(keel.TypeFloat64),
+			keel.CastFloat64(keel.Float64Of(keel.Sum(revenue).OverWindow(keel.Window{}))),
 		).
 		Where(
 			within(sp.CreatedAt, previousStart, now),
@@ -961,14 +959,8 @@ func (p *Provider) getCustomerMix(ctx context.Context) (*CustomerMixCard, error)
 	})
 }
 
-func placeLabel(loc *locationdb.LocationsTable) keel.DynExpr {
-	return keel.DynFunc(
-		"coalesce",
-		keel.DynOf(loc.Code).NullIf(""),
-		keel.DynOf(loc.City).NullIf(""),
-		loc.Name,
-		"",
-	)
+func placeLabel(loc *locationdb.LocationsTable) keel.StringExpr {
+	return loc.Code.NullIf("").Coalesce(loc.City.NullIf(""), loc.Name, "")
 }
 
 func tomorrowsPickupsQuery(from, to int64, limit, offset int) *keel.Query[*shipment.Stop] {
@@ -994,12 +986,9 @@ func tomorrowsPickupsQuery(from, to int64, limit, offset int) *keel.Query[*shipm
 		).
 		Order(destMove.Sequence.Desc(), destStop.Sequence.Desc()).
 		Limit(1)
-	driver := keel.DynFunc(
-		"concat_ws",
-		" ",
-		keel.DynOf(wrk.FirstName).NullIf(""),
-		keel.DynOf(wrk.LastName).NullIf(""),
-	).NullIf("").Coalesce("")
+	driver := keel.ConcatWS(" ", wrk.FirstName.NullIf(""), wrk.LastName.NullIf("")).
+		NullIf("").
+		Coalesce("")
 
 	return stp.
 		Join(sm, sm.ID.EqCol(stp.ShipmentMoveID)).
@@ -1018,7 +1007,7 @@ func tomorrowsPickupsQuery(from, to int64, limit, offset int) *keel.Query[*shipm
 			sp.ID,
 			sp.ProNumber,
 			stp.ScheduledWindowStart,
-			keel.DynOf(cus.Name).Coalesce(""),
+			cus.Name.Coalesce(""),
 			placeLabel(pickupLoc),
 			placeLabel(destLoc),
 			driver,

@@ -188,6 +188,31 @@ tasks:
           | xargs -n1 dirname | sort -u | sed 's|^|./|')
         go test -p {{.GO_TEST_JOBS}} -tags={{.GO_TAGS_INTEGRATION}} $packages
 
+  db-plans:
+    desc: "Plan guard: record every statement the integration suite sends, then explain each against a database with volume data (shipments=20000)"
+    deps: [test-db-up]
+    vars:
+      SHAPES_FILE: "{{.TASKFILE_DIR}}/build/keel-shapes.jsonl"
+    env:
+      TRENOVA_TEST_POSTGRES_DSN: "{{.TEST_POSTGRES_DSN}}"
+      APP_ENV: test
+      KEEL_SHAPES: "{{.SHAPES_FILE}}"
+      PLANS_CONTAINER: "{{.TEST_DB_CONTAINER}}"
+      PLANS_SHIPMENTS: "{{.shipments | default 20000}}"
+    cmds:
+      - mkdir -p {{.TASKFILE_DIR}}/build
+      - rm -f {{.SHAPES_FILE}}
+      - |
+        set -euo pipefail
+        packages=$(git grep -l 'go:build integration' -- '*_test.go' \
+          | xargs -n1 dirname | sort -u | sed 's|^|./|')
+        go test -p {{.GO_TEST_JOBS}} -tags={{.GO_TAGS_INTEGRATION}} $packages
+      # The database settings reach trenova-db only, not the suite above.
+      - >-
+        TRENOVA_DATABASE_HOST=localhost TRENOVA_DATABASE_PORT={{.TEST_DB_PORT}}
+        TRENOVA_DATABASE_USER=postgres TRENOVA_DATABASE_PASSWORD=postgres
+        TRENOVA_DATABASE_SSLMODE=disable ./scripts/dbplans/dbplans.sh
+
   test-all:
     desc: Run all tests (unit + integration)
     deps: [test-db-up]

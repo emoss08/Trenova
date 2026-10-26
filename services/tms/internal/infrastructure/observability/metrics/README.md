@@ -23,6 +23,32 @@ Examples:
 - A `FOR UPDATE NOWAIT` conflict increments:
   - `trenova_db_concurrency_total{kind="retryable_transaction",entity="unknown",code="55p03"}`
 
+## Database Runtime Metrics
+
+Registered by the tenant pool (`postgres.Connection.runtimeStats`) beside the
+`trenova_db_pool_*` connection gauges:
+
+- `trenova_db_cache_hits_total`, `trenova_db_cache_misses_total`,
+  `trenova_db_cache_bypasses_total`, `trenova_db_cache_errors_total`: reads
+  that asked for keel's result cache, by outcome; errors are shared-store,
+  listener and decoder failures (each a miss or a bypass).
+- `trenova_db_cache_bytes`: what the in-process LRU holds
+  (`database.cache.localBytes` bounds it).
+- `trenova_db_cache_versions`: (tenant, table) data versions held.
+- `trenova_db_cache_listening`: 1 while the data version listener is
+  connected; at 0 every cached read goes to the database.
+- `trenova_db_pool_tenant_waits_total`: transactions and terminals that waited
+  for one of their organization's `database.tenantConcurrency` slots.
+- `trenova_db_pool_read_commit_failures_total`: connections closed because the
+  reply to a read transaction's unawaited `COMMIT` failed (tenant and system
+  pools).
+
+A hit ratio (`hits / (hits + misses)`) that falls after a deploy names a read
+that stopped matching its entries; `listening` at 0 for more than a few
+seconds names a listener that cannot reach PostgreSQL (behind a
+transaction-mode pooler, set `database.cache.listenHost`); a rising
+`tenant_waits_total` names a tenant at its bound.
+
 ## GraphQL Metrics
 
 Every GraphQL request arrives on a single `POST /graphql` route, so the HTTP

@@ -119,7 +119,8 @@ func (s *Service) ListPending(
 		if countErr != nil {
 			return nil, countErr
 		}
-		out.TotalCount = &total
+		out.TotalCount = new(int(total.N))
+		out.TotalCountExact = total.Exact
 	}
 
 	return out, nil
@@ -214,12 +215,17 @@ func (s *Service) Count(
 		return 0, err
 	}
 
-	return s.queue.CountPending(ctx, agentports.ListPendingDecisionsQuery{
+	count, err := s.queue.CountPending(ctx, agentports.ListPendingDecisionsQuery{
 		TenantInfo:     tenant,
 		Audience:       audienceOf(usable),
 		Now:            timeutils.NowUnix(),
 		ActionableOnly: true,
 	})
+	if err != nil {
+		return 0, err
+	}
+
+	return int(count.N), nil
 }
 
 // withheld reports a reader who may use no agent at all, so nothing any

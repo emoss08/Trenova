@@ -233,6 +233,112 @@ func beforeCreateDashboard(ctx context.Context, p unsafe.Pointer) error {
 	return (*report.Dashboard)(p).BeforeCreate(ctx)
 }
 
+// reportCatalogVersionsTable is the schema of report.ReportCatalogVersion.
+var reportCatalogVersionsTable = schema.Table{
+	Name:   "report_catalog_versions",
+	Quoted: `"report_catalog_versions"`,
+	Alias:  "rcv",
+	Model:  "report.ReportCatalogVersion",
+	Label:  `Report Catalog Version`,
+	Plural: `Report Catalog Versions`,
+	Columns: []schema.Column{
+		{Name: "version", Quoted: `"version"`, Field: "Version", Kind: schema.KindString, Flags: schema.FlagPK, Label: `Version`, JSON: `version`},
+		{Name: "first_seen_at", Quoted: `"first_seen_at"`, Field: "FirstSeenAt", Kind: schema.KindInt64, Flags: 0, Label: `First Seen At`, JSON: `firstSeenAt`},
+		{Name: "last_seen_at", Quoted: `"last_seen_at"`, Field: "LastSeenAt", Kind: schema.KindInt64, Flags: 0, Label: `Last Seen At`, JSON: `lastSeenAt`},
+	},
+	PK:         []int32{0},
+	Tenant:     nil,
+	Select:     []int32{0, 1, 2},
+	Insert:     []int32{0, 1, 2},
+	Update:     []int32{1, 2},
+	Returning:  nil,
+	Version:    -1,
+	AutoID:     -1,
+	AutoCreate: -1,
+	AutoUpdate: -1,
+	IDPrefix:   "",
+	New:        newReportCatalogVersion,
+	NewN:       newNReportCatalogVersion,
+	Size:       unsafe.Sizeof(report.ReportCatalogVersion{}),
+	Ptr:        ptrReportCatalogVersion,
+	Value:      valueReportCatalogVersion,
+}
+
+var reportCatalogVersionsRef = keel.Ref{Table: &reportCatalogVersionsTable}
+
+// ReportCatalogVersionsTable is the table of report.ReportCatalogVersion.
+type ReportCatalogVersionsTable struct {
+	keel.Handle[*report.ReportCatalogVersion]
+	Version     keel.StringCol
+	FirstSeenAt keel.Int64Col
+	LastSeenAt  keel.Int64Col
+}
+
+// ReportCatalogVersions references the report_catalog_versions table.
+var ReportCatalogVersions = &ReportCatalogVersionsTable{
+	Handle:      keel.Handle[*report.ReportCatalogVersion]{Ref: &reportCatalogVersionsRef},
+	Version:     keel.StringCol{Col: keel.Col{Ref: &reportCatalogVersionsRef, Index: 0}},
+	FirstSeenAt: keel.Int64Col{Col: keel.Col{Ref: &reportCatalogVersionsRef, Index: 1}},
+	LastSeenAt:  keel.Int64Col{Col: keel.Col{Ref: &reportCatalogVersionsRef, Index: 2}},
+}
+
+// BuildReportCatalogVersions builds the handle of report_catalog_versions for ref. Generated relation and alias methods call it.
+func BuildReportCatalogVersions(r *keel.Ref) *ReportCatalogVersionsTable {
+	return &ReportCatalogVersionsTable{
+		Handle:      keel.Handle[*report.ReportCatalogVersion]{Ref: r},
+		Version:     keel.StringCol{Col: keel.Col{Ref: r, Index: 0}},
+		FirstSeenAt: keel.Int64Col{Col: keel.Col{Ref: r, Index: 1}},
+		LastSeenAt:  keel.Int64Col{Col: keel.Col{Ref: r, Index: 2}},
+	}
+}
+
+// ReportCatalogVersionsSchema returns the schema of report_catalog_versions.
+func ReportCatalogVersionsSchema() *schema.Table { return &reportCatalogVersionsTable }
+
+// As returns a handle that references report_catalog_versions under its own alias.
+func (t *ReportCatalogVersionsTable) As(alias string) *ReportCatalogVersionsTable {
+	return keel.Alias(t.Ref, alias, BuildReportCatalogVersions)
+}
+
+// Get returns the report_catalog_versions row with the given key, or keel.ErrNotFound.
+func (t *ReportCatalogVersionsTable) Get(ctx context.Context, db *keel.DB, key string) (*report.ReportCatalogVersion, error) {
+	return t.Where(t.Version.Eq(key)).One(ctx, db)
+}
+
+func newReportCatalogVersion() unsafe.Pointer {
+	return unsafe.Pointer(new(report.ReportCatalogVersion))
+}
+
+func newNReportCatalogVersion(n int) unsafe.Pointer {
+	return unsafe.Pointer(unsafe.SliceData(make([]report.ReportCatalogVersion, n)))
+}
+
+func ptrReportCatalogVersion(p unsafe.Pointer, c int32) any {
+	r := (*report.ReportCatalogVersion)(p)
+	switch c {
+	case 0:
+		return &r.Version
+	case 1:
+		return &r.FirstSeenAt
+	case 2:
+		return &r.LastSeenAt
+	}
+	return nil
+}
+
+func valueReportCatalogVersion(p unsafe.Pointer, c int32) any {
+	r := (*report.ReportCatalogVersion)(p)
+	switch c {
+	case 0:
+		return r.Version
+	case 1:
+		return r.FirstSeenAt
+	case 2:
+		return r.LastSeenAt
+	}
+	return nil
+}
+
 // reportDefinitionsTable is the schema of report.ReportDefinition.
 var reportDefinitionsTable = schema.Table{
 	Name:   "report_definitions",

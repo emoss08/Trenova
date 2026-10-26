@@ -47,6 +47,8 @@ type AccessorialChargeConnection {
   edges: [AccessorialChargeEdge!]!
   pageInfo: PageInfo!
   totalCount: Int
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
 }
 
 extend type Query {
@@ -90,6 +92,8 @@ type AccountTypeConnection {
   edges: [AccountTypeEdge!]!
   pageInfo: PageInfo!
   totalCount: Int
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
 }
 
 extend type Query {
@@ -629,6 +633,8 @@ type AccountingSyncRecordConnection {
   edges: [AccountingSyncRecordEdge!]!
   pageInfo: PageInfo!
   totalCount: Int
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
 }
 
 "One try at sending a sync record."
@@ -891,6 +897,8 @@ type AccountingMappingConnection {
   edges: [AccountingMappingEdge!]!
   pageInfo: PageInfo!
   totalCount: Int
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
 }
 
 "How many mappings of one kind are in each state."
@@ -1125,6 +1133,8 @@ type AccountingInboundChangeConnection {
   edges: [AccountingInboundChangeEdge!]!
   pageInfo: PageInfo!
   totalCount: Int
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
 }
 
 type AccountingInboundSummary {
@@ -1286,6 +1296,8 @@ type AccountingDriftFindingConnection {
   edges: [AccountingDriftFindingEdge!]!
   pageInfo: PageInfo!
   totalCount: Int
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
 }
 
 type AccountingDriftSummary {
@@ -2298,6 +2310,8 @@ type AgentRunConnection {
   edges: [AgentRunEdge!]!
   pageInfo: PageInfo!
   totalCount: Int
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
 }
 
 type AgentProposalEdge {
@@ -2309,6 +2323,8 @@ type AgentProposalConnection {
   edges: [AgentProposalEdge!]!
   pageInfo: PageInfo!
   totalCount: Int
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
 }
 
 type AgentPlanEdge {
@@ -2320,6 +2336,8 @@ type AgentPlanConnection {
   edges: [AgentPlanEdge!]!
   pageInfo: PageInfo!
   totalCount: Int
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
 }
 
 enum AgentMemoryKind {
@@ -2562,6 +2580,8 @@ type AgentReflectionConnection {
   edges: [AgentReflectionEdge!]!
   pageInfo: PageInfo!
   totalCount: Int
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
 }
 
 type AgentMemoryEdge {
@@ -2573,6 +2593,8 @@ type AgentMemoryConnection {
   edges: [AgentMemoryEdge!]!
   pageInfo: PageInfo!
   totalCount: Int
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
 }
 
 input ApproveAgentMemorySuggestionInput {
@@ -2668,6 +2690,8 @@ type AgentEvaluationConnection {
   edges: [AgentEvaluationEdge!]!
   pageInfo: PageInfo!
   totalCount: Int
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
 }
 
 type AgentExceptionEdge {
@@ -2679,6 +2703,8 @@ type AgentExceptionConnection {
   edges: [AgentExceptionEdge!]!
   pageInfo: PageInfo!
   totalCount: Int
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
 }
 
 input AgentProposalDecisionInput {
@@ -3193,6 +3219,8 @@ type AgentDefinitionConnection {
   edges: [AgentDefinitionEdge!]!
   pageInfo: PageInfo!
   totalCount: Int
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
 }
 
 """
@@ -3232,6 +3260,8 @@ type MyAgentConnection {
   edges: [MyAgentEdge!]!
   pageInfo: PageInfo!
   totalCount: Int
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
 }
 
 "Where an agent came from."
@@ -4015,6 +4045,8 @@ type AgentEvalCaseConnection {
   edges: [AgentEvalCaseEdge!]!
   pageInfo: PageInfo!
   totalCount: Int
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
 }
 
 "A case as it was created, or the case that already asked the same thing."
@@ -4165,6 +4197,8 @@ type AgentSuiteRunConnection {
   edges: [AgentSuiteRunEdge!]!
   pageInfo: PageInfo!
   totalCount: Int
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
 }
 
 "One case of a suite run: its replay, with the checks, scores and judge's note."
@@ -4177,6 +4211,8 @@ type AgentSuiteRunCaseConnection {
   edges: [AgentSuiteRunCaseEdge!]!
   pageInfo: PageInfo!
   totalCount: Int
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
 }
 
 "When and how far the nightly agent quality sweep runs."
@@ -4292,6 +4328,8 @@ type AgentWorstRatedAnswerConnection {
   pageInfo: PageInfo!
   "Every answer matching the filters. Counted only when selected."
   totalCount: Int
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
 }
 
 "One agent's quality over a window."
@@ -4341,6 +4379,8 @@ type AgentQualityAgentConnection {
   edges: [AgentQualityAgentEdge!]!
   pageInfo: PageInfo!
   totalCount: Int
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
 }
 
 extend type Query {
@@ -4451,6 +4491,8 @@ type AgentRunEventConnection {
   edges: [AgentRunEventEdge!]!
   pageInfo: PageInfo!
   totalCount: Int
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
 }
 
 extend type Query {
@@ -4701,6 +4743,8 @@ type AgentToolPolicyConnection {
   pageInfo: PageInfo!
   "Every tool matching the filters. Counted only when selected."
   totalCount: Int
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
 }
 
 type AgentToolSafetyEdge {
@@ -4713,6 +4757,8 @@ type AgentToolSafetyConnection {
   pageInfo: PageInfo!
   "Every held tool matching the filters. Counted only when selected."
   totalCount: Int
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
 }
 
 "The figures that head the safety section, counted over every tool and agent."
@@ -5636,6 +5682,8 @@ type AIAuditEventConnection {
   edges: [AIAuditEventEdge!]!
   pageInfo: PageInfo!
   totalCount: Int
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
 }
 
 """
@@ -5701,6 +5749,8 @@ type AIAuditExportConnection {
   edges: [AIAuditExportEdge!]!
   pageInfo: PageInfo!
   totalCount: Int
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
 }
 
 """
@@ -6061,6 +6111,8 @@ type AIFeedbackConnection {
   edges: [AIFeedbackEdge!]!
   pageInfo: PageInfo!
   totalCount: Int
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
 }
 
 "One day of an agent's ratings, in the organization's timezone."
@@ -6418,6 +6470,8 @@ type AIProviderConnection {
   edges: [AIProviderEdge!]!
   pageInfo: PageInfo!
   totalCount: Int
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
 }
 
 "A provider as its editor holds it, reduced to what decides where tasks go."
@@ -6722,6 +6776,8 @@ type AIRetrievalFailedEntryConnection {
   edges: [AIRetrievalFailedEntryEdge!]!
   pageInfo: PageInfo!
   totalCount: Int
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
 }
 
 """
@@ -6900,6 +6956,8 @@ type AIUsageFeatureConnection {
   edges: [AIUsageFeatureEdge!]!
   pageInfo: PageInfo!
   totalCount: Int
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
 }
 
 extend type Query {
@@ -6945,6 +7003,8 @@ type ApiKeyConnection {
   edges: [ApiKeyEdge!]!
   pageInfo: PageInfo!
   totalCount: Int
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
 }
 
 extend type Query {
@@ -7007,6 +7067,8 @@ type AuditEntryConnection {
   edges: [AuditEntryEdge!]!
   pageInfo: PageInfo!
   totalCount: Int
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
 }
 
 extend type Query {
@@ -7388,6 +7450,8 @@ type BillingTransferRunItemConnection {
   edges: [BillingTransferRunItemEdge!]!
   pageInfo: PageInfo!
   totalCount: Int!
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
 }
 
 input StartBillingTransferRunInput {
@@ -8025,6 +8089,8 @@ type CaptureBatchConnection {
   edges: [CaptureBatchEdge!]!
   pageInfo: PageInfo!
   totalCount: Int
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
 }
 
 "How the intake queue is ordered."
@@ -8376,6 +8442,8 @@ type CarrierConnection {
   edges: [CarrierEdge!]!
   pageInfo: PageInfo!
   totalCount: Int
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
 }
 
 extend type Query {
@@ -8433,6 +8501,8 @@ type CarrierCapacityPostingConnection {
   edges: [CarrierCapacityPostingEdge!]!
   pageInfo: PageInfo!
   totalCount: Int
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
 }
 
 input CarrierCapacityPostingInput {
@@ -9010,6 +9080,8 @@ type CarrierIntelEventConnection {
   edges: [CarrierIntelEventEdge!]!
   pageInfo: PageInfo!
   totalCount: Int
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
 }
 
 type CarrierMonitoringEnrollment {
@@ -9048,6 +9120,8 @@ type CarrierMonitoringEnrollmentConnection {
   edges: [CarrierMonitoringEnrollmentEdge!]!
   pageInfo: PageInfo!
   totalCount: Int
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
 }
 
 type CarrierIntelOverride {
@@ -9600,6 +9674,8 @@ type CarrierCostEventConnection {
   edges: [CarrierCostEventEdge!]!
   pageInfo: PageInfo!
   totalCount: Int
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
 }
 
 """
@@ -9723,6 +9799,8 @@ type CarrierSettlementConnection {
   edges: [CarrierSettlementEdge!]!
   pageInfo: PageInfo!
   totalCount: Int
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
 }
 
 """
@@ -9765,6 +9843,8 @@ type CarrierSettlementBatchConnection {
   edges: [CarrierSettlementBatchEdge!]!
   pageInfo: PageInfo!
   totalCount: Int
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
 }
 
 """
@@ -9882,6 +9962,8 @@ type EdiCarrierInvoice @kind(resource: "carrier_invoice_match") {
 type EdiCarrierInvoiceList {
   items: [EdiCarrierInvoice!]!
   totalCount: Int!
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
 }
 
 """
@@ -9926,6 +10008,8 @@ type CarrierInvoiceMatch {
 type CarrierInvoiceMatchList {
   items: [CarrierInvoiceMatch!]!
   totalCount: Int!
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
 }
 
 input GenerateCarrierSettlementBatchInput {
@@ -10233,6 +10317,8 @@ type CommodityConnection {
   edges: [CommodityEdge!]!
   pageInfo: PageInfo!
   totalCount: Int
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
 }
 
 extend type Query {
@@ -10518,6 +10604,8 @@ type CustomFieldDefinitionConnection {
   edges: [CustomFieldDefinitionEdge!]!
   pageInfo: PageInfo!
   totalCount: Int
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
 }
 
 extend type Query {
@@ -10765,6 +10853,8 @@ type CustomerConnection {
   edges: [CustomerEdge!]!
   pageInfo: PageInfo!
   totalCount: Int
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
 }
 
 extend type Query {
@@ -10872,6 +10962,8 @@ type CustomerPaymentConnection {
   edges: [CustomerPaymentEdge!]!
   pageInfo: PageInfo!
   totalCount: Int
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
 }
 
 input CustomerPaymentApplicationInput {
@@ -11258,6 +11350,8 @@ type PendingDecisionConnection {
   edges: [PendingDecisionEdge!]!
   pageInfo: PageInfo!
   totalCount: Int
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
 }
 
 input PendingDecisionsInput {
@@ -11741,6 +11835,8 @@ type DetentionPolicyConnection {
   edges: [DetentionPolicyEdge!]!
   pageInfo: PageInfo!
   totalCount: Int
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
 }
 
 input DetentionTierInput {
@@ -12654,6 +12750,8 @@ type DistanceOverrideConnection {
   edges: [DistanceOverrideEdge!]!
   pageInfo: PageInfo!
   totalCount: Int
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
 }
 
 extend type Query {
@@ -12699,6 +12797,8 @@ type DistanceProfileConnection {
   edges: [DistanceProfileEdge!]!
   pageInfo: PageInfo!
   totalCount: Int
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
 }
 
 extend type Query {
@@ -12731,6 +12831,8 @@ type DocumentPacketRuleConnection {
   edges: [DocumentPacketRuleEdge!]!
   pageInfo: PageInfo!
   totalCount: Int
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
 }
 
 extend type Query {
@@ -12922,6 +13024,8 @@ type DocumentTemplateConnection {
   edges: [DocumentTemplateEdge!]!
   pageInfo: PageInfo!
   totalCount: Int
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
 }
 
 type DocumentTemplateAssignmentEdge {
@@ -12933,6 +13037,8 @@ type DocumentTemplateAssignmentConnection {
   edges: [DocumentTemplateAssignmentEdge!]!
   pageInfo: PageInfo!
   totalCount: Int
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
 }
 
 """
@@ -13127,6 +13233,8 @@ type DocumentTypeConnection {
   edges: [DocumentTypeEdge!]!
   pageInfo: PageInfo!
   totalCount: Int
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
 }
 
 extend type Query {
@@ -13245,6 +13353,8 @@ type SettlementDisputeConnection {
   edges: [SettlementDisputeEdge!]!
   pageInfo: PageInfo!
   totalCount: Int
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
 }
 
 """
@@ -13378,6 +13488,8 @@ type PortalEscrowSummary {
 type MySettlementList {
   items: [DriverSettlement!]!
   total: Int!
+  "Whether total was counted; false when it is the planner's estimate of a list too large to count."
+  totalExact: Boolean!
 }
 
 input InviteWorkerToPortalInput {
@@ -13512,6 +13624,8 @@ type DriverExpenseConnection {
   edges: [DriverExpenseEdge!]!
   pageInfo: PageInfo!
   totalCount: Int
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
 }
 
 input SubmitMyExpenseInput {
@@ -14265,6 +14379,8 @@ type PayProfileConnection {
   edges: [PayProfileEdge!]!
   pageInfo: PageInfo!
   totalCount: Int
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
 }
 
 """
@@ -14361,6 +14477,8 @@ type PayCodeConnection {
   edges: [PayCodeEdge!]!
   pageInfo: PageInfo!
   totalCount: Int
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
 }
 
 """
@@ -14402,6 +14520,8 @@ type RecurringDeductionConnection {
   edges: [RecurringDeductionEdge!]!
   pageInfo: PageInfo!
   totalCount: Int
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
 }
 
 """
@@ -14444,6 +14564,8 @@ type RecurringEarningConnection {
   edges: [RecurringEarningEdge!]!
   pageInfo: PageInfo!
   totalCount: Int
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
 }
 
 """
@@ -14483,6 +14605,8 @@ type PayAdvanceConnection {
   edges: [PayAdvanceEdge!]!
   pageInfo: PageInfo!
   totalCount: Int
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
 }
 
 """
@@ -14539,6 +14663,8 @@ type EscrowAccountConnection {
   edges: [EscrowAccountEdge!]!
   pageInfo: PageInfo!
   totalCount: Int
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
 }
 
 """
@@ -14704,6 +14830,8 @@ type DriverSettlementConnection {
   edges: [DriverSettlementEdge!]!
   pageInfo: PageInfo!
   totalCount: Int
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
 }
 
 """
@@ -14746,6 +14874,8 @@ type SettlementBatchConnection {
   edges: [SettlementBatchEdge!]!
   pageInfo: PageInfo!
   totalCount: Int
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
 }
 
 "A single earning component captured on a pay event, frozen at accrual time."
@@ -14801,6 +14931,8 @@ type DriverPayEventConnection {
   edges: [DriverPayEventEdge!]!
   pageInfo: PageInfo!
   totalCount: Int
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
 }
 
 """
@@ -15783,6 +15915,8 @@ type EdiPartnerConnection {
   edges: [EdiPartnerEdge!]!
   pageInfo: PageInfo!
   totalCount: Int
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
 }
 
 type EdiCommunicationProfileEdge {
@@ -15794,6 +15928,8 @@ type EdiCommunicationProfileConnection {
   edges: [EdiCommunicationProfileEdge!]!
   pageInfo: PageInfo!
   totalCount: Int
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
 }
 
 type EdiTransferEdge {
@@ -15805,6 +15941,8 @@ type EdiTransferConnection {
   edges: [EdiTransferEdge!]!
   pageInfo: PageInfo!
   totalCount: Int
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
 }
 
 type EdiMessageEdge {
@@ -15816,6 +15954,8 @@ type EdiMessageConnection {
   edges: [EdiMessageEdge!]!
   pageInfo: PageInfo!
   totalCount: Int
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
 }
 
 type EdiInboundFileEdge {
@@ -15827,6 +15967,8 @@ type EdiInboundFileConnection {
   edges: [EdiInboundFileEdge!]!
   pageInfo: PageInfo!
   totalCount: Int
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
 }
 
 type EdiTemplateEdge {
@@ -15838,6 +15980,8 @@ type EdiTemplateConnection {
   edges: [EdiTemplateEdge!]!
   pageInfo: PageInfo!
   totalCount: Int
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
 }
 
 type EdiMappingProfileEdge {
@@ -15849,6 +15993,8 @@ type EdiMappingProfileConnection {
   edges: [EdiMappingProfileEdge!]!
   pageInfo: PageInfo!
   totalCount: Int
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
 }
 
 """
@@ -16147,6 +16293,8 @@ type EdiTestCaseConnection {
   edges: [EdiTestCaseEdge!]!
   pageInfo: PageInfo!
   totalCount: Int
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
 }
 
 extend type Query {
@@ -16239,6 +16387,8 @@ type EmailProfileConnection {
   edges: [EmailProfileEdge!]!
   pageInfo: PageInfo!
   totalCount: Int
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
 }
 
 extend type Query {
@@ -16271,6 +16421,8 @@ type EquipmentManufacturerConnection {
   edges: [EquipmentManufacturerEdge!]!
   pageInfo: PageInfo!
   totalCount: Int
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
 }
 
 type EquipmentManufacturer {
@@ -16356,6 +16508,8 @@ type EquipmentTypeConnection {
   edges: [EquipmentTypeEdge!]!
   pageInfo: PageInfo!
   totalCount: Int
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
 }
 
 input EquipmentTypeInput {
@@ -16531,6 +16685,8 @@ type AICorrectionConnection {
   edges: [AICorrectionEdge!]!
   pageInfo: PageInfo!
   totalCount: Int
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
 }
 
 type ExtractionEvalPage {
@@ -16572,6 +16728,8 @@ type ExtractionEvalCaseConnection {
   edges: [ExtractionEvalCaseEdge!]!
   pageInfo: PageInfo!
   totalCount: Int
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
 }
 
 "One model, pinned to one AI provider, run over the active extraction cases."
@@ -16625,6 +16783,8 @@ type ExtractionEvalRunConnection {
   edges: [ExtractionEvalRunEdge!]!
   pageInfo: PageInfo!
   totalCount: Int
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
 }
 
 "One case evaluated within a run."
@@ -16669,6 +16829,8 @@ type ExtractionEvalResultConnection {
   edges: [ExtractionEvalResultEdge!]!
   pageInfo: PageInfo!
   totalCount: Int
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
 }
 
 type ExtractionAccuracyGroup {
@@ -17015,6 +17177,8 @@ type ExtractionShadowResultConnection {
   edges: [ExtractionShadowResultEdge!]!
   pageInfo: PageInfo!
   totalCount: Int
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
 }
 
 "One side of a shadow comparison, over the documents both sides were scored on."
@@ -17317,6 +17481,8 @@ type FactoringNoaConnection {
   edges: [FactoringNoaEdge!]!
   pageInfo: PageInfo!
   totalCount: Int
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
 }
 
 "One readiness check on an invoice."
@@ -17359,6 +17525,8 @@ type FactoringInvoiceStateConnection {
   edges: [FactoringInvoiceStateEdge!]!
   pageInfo: PageInfo!
   totalCount: Int
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
 }
 
 type FactoringVerdictTotals {
@@ -17486,6 +17654,8 @@ type FactoringSubmissionConnection {
   edges: [FactoringSubmissionEdge!]!
   pageInfo: PageInfo!
   totalCount: Int
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
 }
 
 type FactoringSubmissionPlanItem {
@@ -17572,6 +17742,8 @@ type FactoringReserveEntryConnection {
   edges: [FactoringReserveEntryEdge!]!
   pageInfo: PageInfo!
   totalCount: Int
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
 }
 
 "What a factor holds and has paid, from its reserve entries."
@@ -18007,6 +18179,8 @@ type FactoringRemittanceConnection {
   edges: [FactoringRemittanceEdge!]!
   pageInfo: PageInfo!
   totalCount: Int
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
 }
 
 "A schedule item a line could pay, ranked."
@@ -18060,6 +18234,8 @@ type FactoringRemittanceLineConnection {
   edges: [FactoringRemittanceLineEdge!]!
   pageInfo: PageInfo!
   totalCount: Int
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
 }
 
 "What applying one matched line would book."
@@ -18294,6 +18470,8 @@ type FactoringCompanyConnection {
   edges: [FactoringCompanyEdge!]!
   pageInfo: PageInfo!
   totalCount: Int
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
 }
 
 extend type Query {
@@ -18378,6 +18556,8 @@ type FiscalPeriodConnection {
   edges: [FiscalPeriodEdge!]!
   pageInfo: PageInfo!
   totalCount: Int
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
 }
 
 extend type Query {
@@ -18422,6 +18602,8 @@ type FiscalYearConnection {
   edges: [FiscalYearEdge!]!
   pageInfo: PageInfo!
   totalCount: Int
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
 }
 
 extend type Query {
@@ -18458,6 +18640,8 @@ type FleetCodeConnection {
   edges: [FleetCodeEdge!]!
   pageInfo: PageInfo!
   totalCount: Int
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
 }
 
 extend type Query {
@@ -18708,6 +18892,8 @@ type FormulaLibraryConnection {
   edges: [FormulaLibraryEdge!]!
   pageInfo: PageInfo!
   totalCount: Int
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
 }
 
 "A snapshot of a library. An Active version is approved, and is what templates pin."
@@ -18852,6 +19038,8 @@ type FormulaTemplateConnection {
   edges: [FormulaTemplateEdge!]!
   pageInfo: PageInfo!
   totalCount: Int
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
 }
 
 extend type Query {
@@ -19000,6 +19188,8 @@ type FuelCardConnection {
   edges: [FuelCardEdge!]!
   pageInfo: PageInfo!
   totalCount: Int
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
 }
 
 """
@@ -19068,6 +19258,8 @@ type FuelPurchaseConnection {
   edges: [FuelPurchaseEdge!]!
   pageInfo: PageInfo!
   totalCount: Int
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
 }
 
 """
@@ -19215,6 +19407,8 @@ type FuelPurchaseImportRowConnection {
   edges: [FuelPurchaseImportRowEdge!]!
   pageInfo: PageInfo!
   totalCount: Int
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
 }
 
 """
@@ -19345,6 +19539,8 @@ type FuelPurchaseImportBatchConnection {
   edges: [FuelPurchaseImportBatchEdge!]!
   pageInfo: PageInfo!
   totalCount: Int
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
 }
 
 input CancelFuelCardInput {
@@ -19647,6 +19843,8 @@ type FuelIndexConnection {
   edges: [FuelIndexEdge!]!
   pageInfo: PageInfo!
   totalCount: Int
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
 }
 
 type FuelIndexPrice @kind(resource: "fuel_surcharge_program") {
@@ -19723,6 +19921,8 @@ type FuelSurchargeProgramConnection {
   edges: [FuelSurchargeProgramEdge!]!
   pageInfo: PageInfo!
   totalCount: Int
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
 }
 
 type FuelIndexLatestPrice @kind(resource: "fuel_surcharge_program") {
@@ -19936,6 +20136,8 @@ type HazardousMaterialConnection {
   edges: [HazardousMaterialEdge!]!
   pageInfo: PageInfo!
   totalCount: Int
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
 }
 
 extend type Query {
@@ -19984,6 +20186,8 @@ type HazmatSegregationRuleConnection {
   edges: [HazmatSegregationRuleEdge!]!
   pageInfo: PageInfo!
   totalCount: Int
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
 }
 
 extend type Query {
@@ -20036,6 +20240,8 @@ type HoldReasonConnection {
   edges: [HoldReasonEdge!]!
   pageInfo: PageInfo!
   totalCount: Int
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
 }
 
 extend type Query {
@@ -20328,6 +20534,8 @@ type IFTATaxRateConnection {
   edges: [IFTATaxRateEdge!]!
   pageInfo: PageInfo!
   totalCount: Int
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
 }
 
 """
@@ -20369,6 +20577,8 @@ type IFTAJurisdictionMileageEntryConnection {
   edges: [IFTAJurisdictionMileageEntryEdge!]!
   pageInfo: PageInfo!
   totalCount: Int
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
 }
 
 """
@@ -20542,6 +20752,8 @@ type IFTAReturnConnection {
   edges: [IFTAReturnEdge!]!
   pageInfo: PageInfo!
   totalCount: Int
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
 }
 
 """
@@ -21019,6 +21231,8 @@ type InboundMessageConnection {
   edges: [InboundMessageEdge!]!
   pageInfo: PageInfo!
   totalCount: Int
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
 }
 
 "A folder of the queue: a question about state rather than a filter."
@@ -22089,6 +22303,8 @@ type InvoiceConnection {
   edges: [InvoiceEdge!]!
   pageInfo: PageInfo!
   totalCount: Int
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
 }
 
 extend type Query {
@@ -22282,6 +22498,8 @@ type InvoiceAdjustmentApprovalQueueConnection {
   edges: [InvoiceAdjustmentApprovalQueueEdge!]!
   pageInfo: PageInfo!
   totalCount: Int
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
 }
 
 """
@@ -22520,6 +22738,8 @@ type JournalEntryConnection {
   edges: [JournalEntryEdge!]!
   pageInfo: PageInfo!
   totalCount: Int
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
 }
 
 "How many journal entries wait for a person before they reach the general ledger."
@@ -22681,6 +22901,8 @@ type JournalReversalConnection {
   edges: [JournalReversalEdge!]!
   pageInfo: PageInfo!
   totalCount: Int
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
 }
 
 extend type Query {
@@ -22764,6 +22986,8 @@ type JurisdictionRuleConnection {
   edges: [JurisdictionRuleEdge!]!
   pageInfo: PageInfo!
   totalCount: Int
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
 }
 
 extend type Query {
@@ -22814,6 +23038,8 @@ type JurisdictionRuleOverrideConnection {
   edges: [JurisdictionRuleOverrideEdge!]!
   pageInfo: PageInfo!
   totalCount: Int
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
 }
 
 extend type Query {
@@ -22972,6 +23198,8 @@ type LocationConnection {
   edges: [LocationEdge!]!
   pageInfo: PageInfo!
   totalCount: Int
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
 }
 
 extend type Query {
@@ -23028,6 +23256,8 @@ type LocationCategoryConnection {
   edges: [LocationCategoryEdge!]!
   pageInfo: PageInfo!
   totalCount: Int
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
 }
 
 extend type Query {
@@ -23085,6 +23315,8 @@ type ManualJournalConnection {
   edges: [ManualJournalEdge!]!
   pageInfo: PageInfo!
   totalCount: Int
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
 }
 
 type ManualJournalCard @kind(resource: "manual_journal") {
@@ -23166,6 +23398,8 @@ type NotificationConnection {
   edges: [NotificationEdge!]!
   pageInfo: PageInfo!
   totalCount: Int
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
 }
 
 enum NotificationState {
@@ -23278,6 +23512,8 @@ type OrderConnection {
   edges: [OrderEdge!]!
   pageInfo: PageInfo!
   totalCount: Int
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
 }
 
 extend type Query {
@@ -23798,6 +24034,8 @@ type PerformanceReviewTemplateConnection {
   edges: [PerformanceReviewTemplateEdge!]!
   pageInfo: PageInfo!
   totalCount: Int
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
 }
 
 type ReviewRating {
@@ -24049,6 +24287,8 @@ type PTOPolicyConnection {
   edges: [PTOPolicyEdge!]!
   pageInfo: PageInfo!
   totalCount: Int
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
 }
 
 type WorkerPTOPolicyAssignment {
@@ -24118,6 +24358,8 @@ type WorkerPTOLedgerConnection {
   edges: [WorkerPTOLedgerEdge!]!
   pageInfo: PageInfo!
   totalCount: Int
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
 }
 
 type PTOAvailability {
@@ -24392,6 +24634,8 @@ type RateAgreement {
   lanes(first: Int = 50): [RateAgreementLane!]!
   "How many live lanes the agreement holds."
   laneCount: Int!
+  "Whether laneCount was counted; false when it is the planner's estimate of more lanes than it counts."
+  laneCountExact: Boolean!
   "The accessorial schedule. Read by rateAgreement only."
   accessorials: [RateAgreementAccessorial!]
   "The fuel surcharge program the agreement prices fuel with. Read by rateAgreement only."
@@ -24471,6 +24715,8 @@ type RateAgreementConnection {
   edges: [RateAgreementEdge!]!
   pageInfo: PageInfo!
   totalCount: Int
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
 }
 
 """
@@ -24500,6 +24746,8 @@ type RateZoneConnection {
   edges: [RateZoneEdge!]!
   pageInfo: PageInfo!
   totalCount: Int
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
 }
 
 """
@@ -24650,6 +24898,8 @@ type RateMatrixConnection {
   edges: [RateMatrixEdge!]!
   pageInfo: PageInfo!
   totalCount: Int
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
 }
 
 """
@@ -24693,6 +24943,8 @@ type RateQuoteConnection {
   edges: [RateQuoteEdge!]!
   pageInfo: PageInfo!
   totalCount: Int
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
 }
 
 extend type Query {
@@ -24776,6 +25028,8 @@ type RecurringShipmentConnection {
   edges: [RecurringShipmentEdge!]!
   pageInfo: PageInfo!
   totalCount: Int
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
 }
 
 extend type Query {
@@ -24957,6 +25211,8 @@ type ReportDefinitionConnection {
   edges: [ReportDefinitionEdge!]!
   pageInfo: PageInfo!
   totalCount: Int!
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
 }
 
 type ReportDefinitionRevision {
@@ -24996,6 +25252,7 @@ type ReportRun @kind(resource: "report") {
   rowsStored: Boolean!
   error: ReportRunError
   artifactExpiresAt: Timestamp
+  "Whether the run's rows came from the report result cache rather than a statement."
   cacheHit: Boolean!
   queuedAt: Timestamp
   startedAt: Timestamp
@@ -25013,6 +25270,8 @@ type ReportRunConnection {
   edges: [ReportRunEdge!]!
   pageInfo: PageInfo!
   totalCount: Int!
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
 }
 
 # --- Report schedules --------------------------------------------------------
@@ -25132,8 +25391,6 @@ type ReportPreview {
   timezone: String!
   "The rollup that answered the report instead of the base tables, when one did."
   rollup: String
-  "Whether the rows came from the result cache."
-  cached: Boolean!
 }
 
 input ReportDrillValueInput {
@@ -25472,6 +25729,8 @@ type RoleConnection {
   edges: [RoleEdge!]!
   pageInfo: PageInfo!
   totalCount: Int
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
 }
 
 extend type Query {
@@ -25529,6 +25788,8 @@ type RoutingGuideConnection {
   edges: [RoutingGuideEdge!]!
   pageInfo: PageInfo!
   totalCount: Int
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
 }
 
 input MatchRoutingGuideInput {
@@ -25837,6 +26098,8 @@ type SCIMGroupRoleMappingConnection {
   edges: [SCIMGroupRoleMappingEdge!]!
   pageInfo: PageInfo!
   totalCount: Int
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
 }
 
 extend type Query {
@@ -25880,6 +26143,8 @@ type AuthEventConnection {
   edges: [AuthEventEdge!]!
   pageInfo: PageInfo!
   totalCount: Int
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
 }
 
 "What the risk checks decided about a sign-in."
@@ -25904,6 +26169,8 @@ type RiskDecisionConnection {
   edges: [RiskDecisionEdge!]!
   pageInfo: PageInfo!
   totalCount: Int
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
 }
 
 "An account at an identity provider linked to a person here."
@@ -25930,6 +26197,8 @@ type ExternalIdentityConnection {
   edges: [ExternalIdentityEdge!]!
   pageInfo: PageInfo!
   totalCount: Int
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
 }
 
 "A second factor a person has enrolled. Its secret never leaves the server."
@@ -25957,6 +26226,8 @@ type MFAAuthenticatorConnection {
   edges: [MFAAuthenticatorEdge!]!
   pageInfo: PageInfo!
   totalCount: Int
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
 }
 
 type SCIMDirectory {
@@ -25978,6 +26249,8 @@ type SCIMDirectoryConnection {
   edges: [SCIMDirectoryEdge!]!
   pageInfo: PageInfo!
   totalCount: Int
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
 }
 
 extend type Query {
@@ -26079,6 +26352,8 @@ type SelectOptionConnection {
   edges: [SelectOptionEdge!]!
   pageInfo: PageInfo!
   totalCount: Int
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
 }
 
 extend type Query {
@@ -26336,6 +26611,8 @@ type ServiceFailureConnection {
   edges: [ServiceFailureEdge!]!
   pageInfo: PageInfo!
   totalCount: Int
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
 }
 
 extend type Query {
@@ -26401,6 +26678,8 @@ type ServiceFailureReasonCodeConnection {
   edges: [ServiceFailureReasonCodeEdge!]!
   pageInfo: PageInfo!
   totalCount: Int
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
 }
 
 extend type Query {
@@ -26434,6 +26713,8 @@ type ServiceTypeConnection {
   edges: [ServiceTypeEdge!]!
   pageInfo: PageInfo!
   totalCount: Int
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
 }
 
 extend type Query {
@@ -26686,6 +26967,8 @@ type ShipmentConnection {
   edges: [ShipmentEdge!]!
   pageInfo: PageInfo!
   totalCount: Int
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
 }
 
 "Who is expected to pay the carrier, as printed on the bill of lading."
@@ -27503,6 +27786,8 @@ type ShipmentPreviousRateSummary {
 type ShipmentPreviousRatesResponse {
   items: [ShipmentPreviousRateSummary!]!
   total: Int!
+  "Whether total was counted; false when it is the planner's estimate of a list too large to count."
+  totalExact: Boolean!
 }
 
 "Why a shipment in a bulk transfer did not reach the billing queue."
@@ -27610,6 +27895,8 @@ type ShipmentCommentConnection {
   edges: [ShipmentCommentEdge!]!
   pageInfo: PageInfo!
   totalCount: Int
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
 }
 
 type ShipmentCommentCountResponse {
@@ -29249,6 +29536,8 @@ type ShipmentTypeConnection {
   edges: [ShipmentTypeEdge!]!
   pageInfo: PageInfo!
   totalCount: Int
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
 }
 
 extend type Query {
@@ -29374,6 +29663,8 @@ type StoredMileageConnection {
   edges: [StoredMileageEdge!]!
   pageInfo: PageInfo!
   totalCount: Int
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
 }
 
 extend type Query {
@@ -29412,6 +29703,8 @@ type TCASubscriptionConnection {
   edges: [TCASubscriptionEdge!]!
   pageInfo: PageInfo!
   totalCount: Int
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
 }
 
 extend type Query {
@@ -29454,6 +29747,8 @@ type TableConfigurationConnection {
   edges: [TableConfigurationEdge!]!
   pageInfo: PageInfo!
   totalCount: Int
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
 }
 
 input TableConfigurationInput {
@@ -30227,6 +30522,8 @@ type TractorConnection {
   edges: [TractorEdge!]!
   pageInfo: PageInfo!
   totalCount: Int
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
 }
 
 type Tractor {
@@ -30398,6 +30695,8 @@ type TrailerConnection {
   edges: [TrailerEdge!]!
   pageInfo: PageInfo!
   totalCount: Int
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
 }
 
 type Trailer {
@@ -30934,6 +31233,8 @@ type UserConnection {
   edges: [UserEdge!]!
   pageInfo: PageInfo!
   totalCount: Int
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
 }
 
 extend type Query {
@@ -31582,6 +31883,8 @@ type WorkerConnection {
   edges: [WorkerEdge!]!
   pageInfo: PageInfo!
   totalCount: Int
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
 }
 
 type WorkerPTO {
@@ -31638,6 +31941,8 @@ type WorkerPTOConnection {
   edges: [WorkerPTOEdge!]!
   pageInfo: PageInfo!
   totalCount: Int
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
 }
 
 type PTOChartDataPoint {
@@ -31826,6 +32131,8 @@ type WorkerChecklistTemplateConnection {
   edges: [WorkerChecklistTemplateEdge!]!
   pageInfo: PageInfo!
   totalCount: Int
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
 }
 
 type WorkerChecklistProgress {
@@ -32032,6 +32339,8 @@ type WorkerCredentialTypeConnection {
   edges: [WorkerCredentialTypeEdge!]!
   pageInfo: PageInfo!
   totalCount: Int
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
 }
 
 type WorkerCredentialDocument {
@@ -32679,6 +32988,8 @@ type DOTRandomPoolConnection {
   edges: [DOTRandomPoolEdge!]!
   pageInfo: PageInfo!
   totalCount: Int
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
 }
 
 """
@@ -34127,6 +34438,8 @@ type TrainingCourseConnection {
   edges: [TrainingCourseEdge!]!
   pageInfo: PageInfo!
   totalCount: Int
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
 }
 
 type WorkerTrainingRecord {

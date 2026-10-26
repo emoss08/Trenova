@@ -124,6 +124,8 @@ export type TablePaging = {
   nextOffset: number | null;
   /** How many rows the list holds in all, when the agent's read counted them. */
   total: number | null;
+  /** True when total is the server's estimate of a list too large to count. */
+  totalEstimated: boolean;
   /** How many pages of the list the agent read into the table. */
   pages: number;
 };
@@ -179,6 +181,7 @@ function tablePagingOf(payload: Record<string, unknown>): TablePaging {
     nextCursor: stringOf(payload.nextCursor),
     nextOffset: typeof nextOffset === "number" && Number.isInteger(nextOffset) ? nextOffset : null,
     total: typeof total === "number" && Number.isInteger(total) ? total : null,
+    totalEstimated: payload.totalEstimated === true,
     pages: numberOf(payload.pages) || 1,
   };
 }

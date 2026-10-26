@@ -2,6 +2,7 @@ package shipmentcommentrepository
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	"github.com/emoss08/keel"
@@ -11,6 +12,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment/shipmentdb"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/pkg/dberror"
+	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/dbtype"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/listquery"
@@ -23,7 +25,10 @@ import (
 
 const commentEntity = "Shipment comment"
 
-var commentErrors = dberror.Mapping{Entity: commentEntity}
+var (
+	commentErrors     = dberror.Mapping{Entity: commentEntity}
+	errNoCommentScope = errors.New("a system-scoped shipment comment read needs its tenant")
+)
 
 type Params struct {
 	fx.In
@@ -83,7 +88,7 @@ func (r *repository) ListByShipmentID(
 						if replyMode {
 							return q
 						}
-						return withReplyCount(q)
+						return withReplyCount(ctx, q)
 					},
 				},
 			)
@@ -138,15 +143,41 @@ func listConditions(req *shipmentports.ListShipmentCommentsRequest) []keel.Pred 
 }
 
 func withReplyCount(
+	ctx context.Context,
 	q *keel.Query[*shipment.ShipmentComment],
 ) *keel.Query[*shipment.ShipmentComment] {
 	sc := shipmentdb.ShipmentComments
 	replies := sc.As("scr")
-
-	return q.Compute(sc.ReplyCount, keel.Scalar(replies.Pick(keel.Count()).Where(
+	count := replies.Pick(keel.Count()).Where(
 		replies.ParentCommentID.EqCol(sc.ID),
 		replies.ShipmentID.EqCol(sc.ShipmentID),
-	)))
+	)
+	if dbscope.IsSystem(ctx) {
+		count = count.AllTenants().Where(
+			replies.OrganizationID.EqCol(sc.OrganizationID),
+			replies.BusinessUnitID.EqCol(sc.BusinessUnitID),
+		)
+	}
+
+	return q.Compute(sc.ReplyCount, keel.Scalar(count))
+}
+
+func scopedComments(
+	ctx context.Context,
+	tenant pagination.TenantInfo,
+) (*keel.Query[*shipment.ShipmentComment], error) {
+	sc := shipmentdb.ShipmentComments
+	if !dbscope.IsSystem(ctx) {
+		return sc.Query(), nil
+	}
+	if tenant.OrgID.IsNil() || tenant.BuID.IsNil() {
+		return nil, errNoCommentScope
+	}
+
+	return sc.AllTenants().Where(
+		sc.OrganizationID.Eq(tenant.OrgID),
+		sc.BusinessUnitID.Eq(tenant.BuID),
+	), nil
 }
 
 func withCommentRelations(
@@ -183,8 +214,12 @@ func (r *repository) GetByID(
 ) (*shipment.ShipmentComment, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*shipment.ShipmentComment, error) {
 		sc := shipmentdb.ShipmentComments
-		q := sc.Where(sc.ID.Eq(req.CommentID), sc.ShipmentID.Eq(req.ShipmentID))
-		entity, err := withReplyCount(withCommentRelations(q)).One(ctx, r.db.Keel(ctx))
+		q, err := scopedComments(ctx, req.TenantInfo)
+		if err != nil {
+			return nil, err
+		}
+		q = q.Where(sc.ID.Eq(req.CommentID), sc.ShipmentID.Eq(req.ShipmentID))
+		entity, err := withReplyCount(ctx, withCommentRelations(q)).One(ctx, r.db.Keel(ctx))
 		if err != nil {
 			return nil, commentErrors.Map(err, req.CommentID.String())
 		}

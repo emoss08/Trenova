@@ -201,7 +201,11 @@ func (f *fakeDevices) List(_ context.Context, req *captureports.ListCaptureDevic
 		out = append(out, clone(d))
 	}
 
-	return &pagination.ListResult[*capture.CaptureDevice]{Items: out, Total: len(out)}, nil
+	return &pagination.ListResult[*capture.CaptureDevice]{
+		Items:      out,
+		Total:      len(out),
+		TotalExact: true,
+	}, nil
 }
 
 func (f *fakeDevices) byHash(match func(*capture.CaptureDevice) bool) (*capture.CaptureDevice, error) {
@@ -332,7 +336,11 @@ func (f *fakeProfiles) List(_ context.Context, req *captureports.ListCaptureProf
 		return strings.Compare(a.Name, b.Name)
 	})
 
-	return &pagination.ListResult[*capture.CaptureProfile]{Items: out, Total: len(out)}, nil
+	return &pagination.ListResult[*capture.CaptureProfile]{
+		Items:      out,
+		Total:      len(out),
+		TotalExact: true,
+	}, nil
 }
 
 func (f *fakeProfiles) GetByID(_ context.Context, req captureports.GetCaptureProfileByIDRequest) (*capture.CaptureProfile, error) {

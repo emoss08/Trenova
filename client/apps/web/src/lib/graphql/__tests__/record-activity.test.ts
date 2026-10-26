@@ -20,6 +20,7 @@ describe("fetchRecordActivity", () => {
         edges: [{ node: { id: "ae_1" } }],
         pageInfo: { hasNextPage: true, endCursor: "c1" },
         totalCount: 14,
+        totalCountExact: true,
       },
     } as never);
 
@@ -28,6 +29,7 @@ describe("fetchRecordActivity", () => {
     expect(first).toEqual({
       rows: [{ id: "ae_1" }],
       total: 14,
+      totalExact: true,
       endCursor: "c1",
       hasNextPage: true,
     });

@@ -25,7 +25,7 @@ func (r *repository) statsQuery(
 	rr := rateagreementdb.RateAgreementRules
 	rules := keel.Scalar(rr.Pick(keel.Count()).Where(rr.FormulaTemplateID.EqCol(ft.ID)))
 
-	return ft.Pick(ft.ID, keel.DynOf(r.shipmentUsage(ft)).Add(rules)).
+	return ft.Pick(ft.ID, keel.Int64Of(r.shipmentUsage(ft)).Add(keel.Int64Of(rules))).
 		Where(ft.ID.In(templateIDs...)).
 		Limit(len(templateIDs))
 }

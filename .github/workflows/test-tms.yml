@@ -188,6 +188,9 @@ jobs:
 
       - name: Run integration tests
         working-directory: ./services/tms
+        env:
+          # Every distinct statement the suite sends, for the plan guard below.
+          KEEL_SHAPES: ${{ runner.temp }}/keel-shapes.jsonl
         run: |
           set -euo pipefail
           # Only packages that actually carry integration-tagged files; the rest
@@ -201,6 +204,23 @@ jobs:
           # shared server, and the runner only has two cores anyway.
           go test -p 4 -tags=integration,nomsgpack -coverprofile=coverage-integration.out \
             -covermode=atomic "${packages[@]}"
+
+      - name: Plan guard
+        working-directory: ./services/tms
+        # Explains every statement the suite above sent against a database with
+        # volume data and fresh statistics (PostgreSQL 18 here; keel plans needs
+        # 16+), and fails on a sequential scan of a large table or a page sorted
+        # without an index. Locally: task db-plans.
+        env:
+          KEEL_SHAPES: ${{ runner.temp }}/keel-shapes.jsonl
+          PLANS_CONTAINER: trenova-test-postgres
+          PLANS_SHIPMENTS: "20000"
+          TRENOVA_DATABASE_HOST: localhost
+          TRENOVA_DATABASE_PORT: "5432"
+          TRENOVA_DATABASE_USER: postgres
+          TRENOVA_DATABASE_PASSWORD: postgres
+          TRENOVA_DATABASE_SSLMODE: disable
+        run: ./scripts/dbplans/dbplans.sh
 
       - name: Run shared test utility integration tests
         working-directory: ./shared

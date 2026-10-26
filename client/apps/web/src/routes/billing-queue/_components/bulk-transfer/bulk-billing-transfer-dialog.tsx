@@ -18,6 +18,7 @@ import {
 } from "@trenova/shared/components/ui/dialog";
 import { formatNumber } from "@trenova/shared/i18n/format";
 import { useT } from "@trenova/shared/i18n/use-t";
+import { formatRowTotal } from "@trenova/shared/lib/row-total";
 import { Download01Icon, RefreshCcw01Icon, Send01Icon } from "@trenova/shared/components/icons";
 import { useCallback, useDeferredValue, useMemo, useState } from "react";
 import { billingTransferCandidatesQuery } from "../../billing-queue-queries";
@@ -92,6 +93,7 @@ export function BulkBillingTransferDialog({
     [candidatesQuery.data],
   );
   const totalCount = candidatesQuery.data?.pages[0]?.totalCount ?? null;
+  const totalCountExact = candidatesQuery.data?.pages[0]?.totalCountExact !== false;
 
   const handleFiltersChange = useCallback((next: BillingTransferCandidateFilters) => {
     setFilters(next);
@@ -198,6 +200,7 @@ export function BulkBillingTransferDialog({
                 onFiltersChange={handleFiltersChange}
                 candidates={candidates}
                 totalCount={totalCount}
+                totalCountExact={totalCountExact}
                 isLoading={candidatesQuery.isPending || isReattaching}
                 isError={candidatesQuery.isError}
                 onRetryLoad={() => void candidatesQuery.refetch()}
@@ -220,10 +223,15 @@ export function BulkBillingTransferDialog({
             <>
               <div className="flex flex-col text-xs">
                 <span className="font-medium">
-                  {t(
-                    "{0, plural, one {Transfer all # shipment that matches the current search and status?} other {Transfer all # shipments that match the current search and status?}}",
-                    totalCount,
-                  )}
+                  {totalCountExact
+                    ? t(
+                        "{0, plural, one {Transfer all # shipment that matches the current search and status?} other {Transfer all # shipments that match the current search and status?}}",
+                        totalCount,
+                      )
+                    : t(
+                        "Transfer all of about {0} shipments that match the current search and status?",
+                        formatRowTotal(totalCount, false),
+                      )}
                 </span>
                 {totalCount > MAX_BILLING_TRANSFER_CANDIDATE_IDS ? (
                   <span className="text-muted-foreground">
@@ -260,7 +268,9 @@ export function BulkBillingTransferDialog({
                 </Button>
                 {totalCount ? (
                   <Button variant="outline" onClick={() => setConfirmingAll(true)}>
-                    {t("Transfer all {0}", totalCount)}
+                    {totalCountExact
+                      ? t("Transfer all {0}", totalCount)
+                      : t("Transfer all of about {0}", formatRowTotal(totalCount, false))}
                   </Button>
                 ) : null}
                 <Button onClick={transferSelected} disabled={selectedIds.size === 0 || isStarting}>

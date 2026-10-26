@@ -239,9 +239,7 @@ func routeInboundClassification(ctx context.Context, db *keel.DB, org *tenant.Or
 		p.BusinessUnitID.Eq(org.BusinessUnitID),
 		p.Name.Eq(SeedAIProviderLocalName),
 		keel.Not(p.Tasks.Has(task)),
-	).Update(ctx, db, p.Tasks.ToExpr(
-		keel.DynFunc("array_append", keel.DynOf(p.Tasks).Coalesce([]string{}), task),
-	)); err != nil {
+	).Update(ctx, db, p.Tasks.Append(task)); err != nil {
 		return fmt.Errorf("route inbound classification to the local model: %w", err)
 	}
 

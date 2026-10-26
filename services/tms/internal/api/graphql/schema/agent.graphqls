@@ -482,6 +482,8 @@ type AgentRunConnection {
   edges: [AgentRunEdge!]!
   pageInfo: PageInfo!
   totalCount: Int
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
 }
 
 type AgentProposalEdge {
@@ -493,6 +495,8 @@ type AgentProposalConnection {
   edges: [AgentProposalEdge!]!
   pageInfo: PageInfo!
   totalCount: Int
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
 }
 
 type AgentPlanEdge {
@@ -504,6 +508,8 @@ type AgentPlanConnection {
   edges: [AgentPlanEdge!]!
   pageInfo: PageInfo!
   totalCount: Int
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
 }
 
 enum AgentMemoryKind {
@@ -746,6 +752,8 @@ type AgentReflectionConnection {
   edges: [AgentReflectionEdge!]!
   pageInfo: PageInfo!
   totalCount: Int
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
 }
 
 type AgentMemoryEdge {
@@ -757,6 +765,8 @@ type AgentMemoryConnection {
   edges: [AgentMemoryEdge!]!
   pageInfo: PageInfo!
   totalCount: Int
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
 }
 
 input ApproveAgentMemorySuggestionInput {
@@ -852,6 +862,8 @@ type AgentEvaluationConnection {
   edges: [AgentEvaluationEdge!]!
   pageInfo: PageInfo!
   totalCount: Int
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
 }
 
 type AgentExceptionEdge {
@@ -863,6 +875,8 @@ type AgentExceptionConnection {
   edges: [AgentExceptionEdge!]!
   pageInfo: PageInfo!
   totalCount: Int
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
 }
 
 input AgentProposalDecisionInput {

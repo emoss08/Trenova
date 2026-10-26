@@ -13,6 +13,7 @@ import (
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/listquery"
 	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/pkg/resultcache"
 	"github.com/emoss08/trenova/shared/pulid"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
@@ -101,7 +102,10 @@ func (r *repository) GetByID(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*distanceprofile.DistanceProfile, error) {
-			entity, err := distanceprofiledb.DistanceProfiles.Get(ctx, r.db.Keel(ctx), req.ID)
+			dp := distanceprofiledb.DistanceProfiles
+			entity, err := dp.Where(dp.ID.Eq(req.ID)).
+				Cache(resultcache.Reference()...).
+				One(ctx, r.db.Keel(ctx))
 			if err != nil {
 				return nil, distanceProfileErrors.Map(err, req.ID.String())
 			}
@@ -119,7 +123,9 @@ func (r *repository) GetDefault(
 		r.db,
 		func(ctx context.Context) (*distanceprofile.DistanceProfile, error) {
 			dp := distanceprofiledb.DistanceProfiles
-			entity, err := dp.Where(dp.IsDefault.IsTrue()).One(ctx, r.db.Keel(ctx))
+			entity, err := dp.Where(dp.IsDefault.IsTrue()).
+				Cache(resultcache.Settings()...).
+				One(ctx, r.db.Keel(ctx))
 			if err != nil {
 				return nil, distanceProfileErrors.Map(err, "")
 			}
@@ -132,6 +138,14 @@ func (r *repository) EnsureDefault(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 ) (*distanceprofile.DistanceProfile, error) {
+	found, findErr := r.GetDefault(ctx, tenantInfo)
+	if findErr == nil {
+		return found, nil
+	}
+	if !errortypes.IsNotFoundError(findErr) {
+		return nil, findErr
+	}
+
 	return dbtx.Write(
 		ctx,
 		r.db,

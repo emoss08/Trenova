@@ -352,7 +352,7 @@ func (r *portalAccessRepository) ensureEmailAvailable(ctx context.Context, email
 	exists, err := dbtx.Read(ctx, r.db, func(ctx context.Context) (bool, error) {
 		u := tenantdb.Users
 		return u.AllTenants().
-			Where(keel.DynFunc("lower", u.EmailAddress).Eq(keel.DynFunc("lower", email))).
+			Where(u.EmailAddress.Lower().EqExpr(keel.Text(email).Lower())).
 			Exists(ctx, r.db.Keel(ctx))
 	})
 	if err != nil {

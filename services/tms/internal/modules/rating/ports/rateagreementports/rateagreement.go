@@ -111,6 +111,22 @@ type ListRateAgreementLanesRequest struct {
 	Offset          int                   `json:"offset"`
 }
 
+type CountLiveLanesRequest struct {
+	TenantInfo       pagination.TenantInfo
+	RateAgreementIDs []pulid.ID
+}
+
+type ListFirstLanesRequest struct {
+	TenantInfo       pagination.TenantInfo
+	RateAgreementIDs []pulid.ID
+	First            int
+}
+
+type LaneCount struct {
+	Count int
+	Exact bool
+}
+
 // Normalize falls back to the default page size for a missing or non-positive
 // limit, caps it at MaxLaneLimit, and floors the offset at zero.
 func (r *ListRateAgreementLanesRequest) Normalize() {
@@ -123,13 +139,17 @@ func (r *ListRateAgreementLanesRequest) Normalize() {
 }
 
 // RateAgreementLanePage is one page of live lanes. Count is every live lane
-// and Retired every other rule the agreement holds, inactive or closed out.
+// and Retired every other rule the agreement holds, inactive or closed out;
+// CountExact and RetiredExact are false when the figure is the planner's
+// estimate of more rules than pagination.ExactTotalUpTo.
 type RateAgreementLanePage struct {
-	Lanes   []*rateagreement.RateAgreementRule `json:"results"`
-	Count   int                                `json:"count"`
-	Retired int                                `json:"retired"`
-	Limit   int                                `json:"limit"`
-	Offset  int                                `json:"offset"`
+	Lanes        []*rateagreement.RateAgreementRule `json:"results"`
+	Count        int                                `json:"count"`
+	CountExact   bool                               `json:"countExact"`
+	Retired      int                                `json:"retired"`
+	RetiredExact bool                               `json:"retiredExact"`
+	Limit        int                                `json:"limit"`
+	Offset       int                                `json:"offset"`
 }
 
 type RateAgreementLaneSummary struct {
@@ -220,6 +240,14 @@ type RateAgreementRepository interface {
 		ctx context.Context,
 		req *ListRateAgreementLanesRequest,
 	) (*RateAgreementLaneSummary, error)
+	CountLiveLanes(
+		ctx context.Context,
+		req *CountLiveLanesRequest,
+	) (map[pulid.ID]LaneCount, error)
+	ListFirstLanes(
+		ctx context.Context,
+		req *ListFirstLanesRequest,
+	) (map[pulid.ID][]*rateagreement.RateAgreementRule, error)
 	GetRuleByID(
 		ctx context.Context,
 		req *GetRateAgreementRuleByIDRequest,

@@ -743,7 +743,11 @@ func (f *manualJournalRepositoryFake) List(
 		items = append(items, cloneRequest(f.current))
 	}
 
-	return &pagination.ListResult[*manualjournal.Request]{Items: items, Total: len(items)}, nil
+	return &pagination.ListResult[*manualjournal.Request]{
+		Items:      items,
+		Total:      len(items),
+		TotalExact: true,
+	}, nil
 }
 
 func (f *manualJournalRepositoryFake) ListConnection(

@@ -303,7 +303,7 @@ agent's runs does not grant it, and agents can never hold it.
 | `AIAuditEvent.auditEntries` | additionally `audit_log:read` (empty otherwise) |
 
 `aiAuditEvents` and `aiAuditExports` are cursor connections that take the data table's
-query, filters and sort. They run their `COUNT` only when `totalCount` is selected. The client
+query, filters and sort. They run their count only when `totalCount` or `totalCountExact` is selected. The client
 operations are in `client/packages/graphql/src/operations/agent/audit.graphql`:
 `AIAuditEventTable`, `AIAuditEventDetail`, `AIAuditChainStatus`, `AIAuditExportTable`,
 `AIAuditExportDetail`, `RequestAIAuditExport`, `AIAuditExportDownload` and
