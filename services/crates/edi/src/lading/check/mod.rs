@@ -202,6 +202,40 @@ pub struct Program {
 }
 
 impl Program {
+    /// The partner's interchange block.
+    #[must_use]
+    pub fn interchange(&self) -> Option<&super::syntax::ast::Interchange> {
+        let partner = self.partner.as_ref()?;
+        self.units[partner.unit]
+            .items()
+            .iter()
+            .find_map(|item| match item {
+                Item::Interchange(interchange) => Some(interchange),
+                _ => None,
+            })
+    }
+
+    /// The separators Trenova writes for the partner: element, segment, component and
+    /// repetition.
+    #[must_use]
+    pub fn partner_separators(&self) -> Vec<char> {
+        let written: Vec<char> = self
+            .interchange()
+            .map(|interchange| {
+                interchange
+                    .separators
+                    .iter()
+                    .filter_map(|separator| separator.value.chars().next())
+                    .collect()
+            })
+            .unwrap_or_default();
+        if written.len() == 4 {
+            written
+        } else {
+            vec!['*', '~', '>', '^']
+        }
+    }
+
     /// Whether any file has an error.
     #[must_use]
     pub fn has_errors(&self) -> bool {

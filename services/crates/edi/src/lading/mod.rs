@@ -6,6 +6,7 @@
 //! properties, coverage, lineage and replay; and the editor's operations.
 
 pub mod check;
+pub mod eval;
 pub mod facts;
 pub mod project;
 pub mod schema;
