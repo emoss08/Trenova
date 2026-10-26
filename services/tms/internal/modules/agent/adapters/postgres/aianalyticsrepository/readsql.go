@@ -383,7 +383,7 @@ func toolExamplesQuery(req *aianalyticsports.ToolFailureRequest) *keel.Query[*ke
 			s.ToolName,
 			outcome.Text("content").
 				NullIf("").
-				Coalesce(outcome.Text("reason").Coalesce("")).
+				Coalesce(outcome.Text("reason"), "").
 				Left(300),
 			w.AgentDefinitionID.Coalesce(""),
 			s.SettledAtMs.Div(keel.Int64(1000)).Coalesce(s.UpdatedAt),

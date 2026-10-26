@@ -11,7 +11,7 @@ FROM (
     WHERE aur.business_unit_id = $1 AND aur.organization_id = $2 AND aur.owner_kind = 'AssistantTurn' AND aur.owner_id IN (SELECT o2.id FROM owners o2)
     GROUP BY aur.owner_id
   ), steps (owner_id, tool_calls, tool_failures_model, tool_failures_tool, last_end_ms) AS (
-    SELECT ars.owner_id, count(*), count(*) FILTER (WHERE c2.cause = ANY($49)), count(*) FILTER (WHERE (c2.cause <> $50 AND c2.cause <> ALL($51))), max(coalesce(ars.settled_at_ms, coalesce(ars.started_at_ms, (ars.updated_at * $13::bigint))))
+    SELECT ars.owner_id, count(*), count(*) FILTER (WHERE c2.cause = ANY($49)), count(*) FILTER (WHERE (c2.cause <> $50 AND c2.cause <> ALL($51))), max(coalesce(ars.settled_at_ms, ars.started_at_ms, (ars.updated_at * $13::bigint)))
     FROM agent_run_steps ars
     CROSS JOIN LATERAL (
       SELECT CASE WHEN ars.status <> $52 THEN $4::text WHEN coalesce((ars.outcome #>> $53), $54) = ANY($55) THEN (ars.outcome #>> $53) WHEN ((ars.outcome #>> $56) = $57 AND (ars.outcome #>> $58) = $59) THEN $60::text WHEN (ars.outcome #>> $56) = $61 THEN $62::text WHEN (ars.outcome #>> $56) = $63 THEN $64::text WHEN ((ars.outcome #>> $56) = $65 AND (ars.outcome #>> $58) = $66) THEN $60::text WHEN (ars.outcome #>> $56) = ANY($67) THEN $68::text WHEN (lower(coalesce((ars.outcome #>> $69), $70)) LIKE $71 OR lower(coalesce((ars.outcome #>> $69), $70)) LIKE $72 OR lower(coalesce((ars.outcome #>> $69), $70)) LIKE $73) THEN $74::text ELSE $75::text END AS cause

@@ -1,4 +1,4 @@
-SELECT s2.id, s2.pro_number, s.scheduled_window_start, coalesce(c.name, $5), coalesce(nullif(pickup_loc.code, $6), coalesce(nullif(pickup_loc.city, $7), coalesce(pickup_loc.name, $8))), coalesce(nullif(dest_loc.code, $6), coalesce(nullif(dest_loc.city, $7), coalesce(dest_loc.name, $8))), coalesce(nullif(concat_ws($9::text, nullif(wrk.first_name, $10), nullif(wrk.last_name, $11)), $12), $13), s2.status, a.primary_worker_id IS NOT NULL
+SELECT s2.id, s2.pro_number, s.scheduled_window_start, coalesce(c.name, $5), coalesce(nullif(pickup_loc.code, $6), nullif(pickup_loc.city, $7), pickup_loc.name, $8), coalesce(nullif(dest_loc.code, $6), nullif(dest_loc.city, $7), dest_loc.name, $9), coalesce(nullif(concat_ws($10::text, nullif(wrk.first_name, $11), nullif(wrk.last_name, $12)), $13), $14), s2.status, a.primary_worker_id IS NOT NULL
 FROM stops s
 JOIN shipment_moves sm ON sm.business_unit_id = $1 AND sm.organization_id = $2 AND sm.id = s.shipment_move_id
 JOIN shipments s2 ON s2.business_unit_id = $1 AND s2.organization_id = $2 AND s2.id = sm.shipment_id
@@ -24,8 +24,9 @@ ORDER BY s.scheduled_window_start ASC, s2.pro_number ASC LIMIT 20
 -- $6 = ''
 -- $7 = ''
 -- $8 = ''
--- $9 = ' '
--- $10 = ''
+-- $9 = ''
+-- $10 = ' '
 -- $11 = ''
 -- $12 = ''
 -- $13 = ''
+-- $14 = ''

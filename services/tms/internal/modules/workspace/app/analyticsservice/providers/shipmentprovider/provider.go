@@ -960,7 +960,7 @@ func (p *Provider) getCustomerMix(ctx context.Context) (*CustomerMixCard, error)
 }
 
 func placeLabel(loc *locationdb.LocationsTable) keel.StringExpr {
-	return loc.Code.NullIf("").Coalesce(loc.City.NullIf("").Coalesce(loc.Name.Coalesce("")))
+	return loc.Code.NullIf("").Coalesce(loc.City.NullIf(""), loc.Name, "")
 }
 
 func tomorrowsPickupsQuery(from, to int64, limit, offset int) *keel.Query[*shipment.Stop] {

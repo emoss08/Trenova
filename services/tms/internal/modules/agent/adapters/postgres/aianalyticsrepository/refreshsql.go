@@ -386,7 +386,8 @@ func ownedUnitsSource(src *ownedSource, req *unitRefresh) *keel.Query[*keel.Row]
 			keel.Count().Filter(cause.In(modelCauses)),
 			keel.Count().Filter(keel.And(cause.Ne(""), cause.NotIn(modelCauses))),
 			keel.Max(s.SettledAtMs.Coalesce(
-				s.StartedAtMs.Coalesce(s.UpdatedAt.Mul(keel.Int64(msPerSecond))),
+				s.StartedAtMs,
+				s.UpdatedAt.Mul(keel.Int64(msPerSecond)),
 			)),
 		).
 		Where(
