@@ -83,12 +83,12 @@ func (b *typedBase[T]) facet(
 	}
 	limit = min(limit, MaxFacetLimit)
 
-	value := keel.DynOf(column.Col).Cast(keel.TypeString)
-	total := keel.DynOf(keel.Sum(keel.Count()).OverWindow(keel.Window{})).Cast(keel.TypeInt64)
+	value := keel.CastText(column.Col)
+	total := keel.CastInt64(keel.Sum(keel.Count()).OverWindow(keel.Window{}))
 	rows, err := keel.Into[facetRow](ctx, db, b.q.Clone().
 		Pick(value, keel.Count(), total).
 		Group(column.Col).
-		Order(keel.Count().Desc(), keel.Asc(value).NullsLast()).
+		Order(keel.Count().Desc(), value.Asc().NullsLast()).
 		Limit(limit))
 	if err != nil {
 		return nil, err
@@ -122,7 +122,7 @@ func (b *typedBase[T]) aggregate(
 		)
 	}
 
-	values := make([]any, 0, 1+aggregatesPerField*len(req.Fields))
+	values := make([]keel.Expr, 0, 1+aggregatesPerField*len(req.Fields))
 	values = append(values, keel.Count())
 	for idx, field := range req.Fields {
 		column, ok := columns[field]
@@ -180,13 +180,13 @@ func (b *typedBase[T]) aggregate(
 	return result, nil
 }
 
-func textArray(values []any) keel.DynExpr {
-	elements := make([]any, len(values))
+func textArray(values []keel.Expr) keel.StringArrayExpr {
+	elements := make([]keel.StringValue, len(values))
 	for i, v := range values {
-		elements[i] = keel.DynLit(v).Cast(keel.TypeString)
+		elements[i] = keel.CastText(v)
 	}
 
-	return keel.DynArray(elements...)
+	return keel.ArrayOfString(elements...)
 }
 
 type seriesRow struct {
@@ -234,7 +234,7 @@ func seriesColumns(
 			fmt.Sprintf("This table cannot total %q", req.ValueField),
 		)
 	}
-	exprs.value = keel.DynOf(keel.Sum(value.Col)).Coalesce(0)
+	exprs.value = keel.NumericOf(keel.Sum(value.Col)).Coalesce(0)
 
 	return exprs, nil
 }
@@ -277,14 +277,15 @@ func (b *typedBase[T]) series(
 		return nil, err
 	}
 
-	group := keel.DynOf(exprs.group).Cast(keel.TypeString)
-	bucket := keel.DynFunc("width_bucket", keel.DynOf(exprs.date).Cast(keel.TypeInt64), req.Bounds)
+	group := keel.CastText(exprs.group)
+	bucket := keel.WidthBucket(keel.CastInt64(exprs.date), req.Bounds)
+	date := keel.Int64Of(exprs.date)
 	rows, err := keel.Into[seriesRow](ctx, db, b.q.Clone().
-		Pick(group, bucket, keel.DynOf(exprs.value).Cast(keel.TypeString)).
+		Pick(group, bucket, keel.CastText(exprs.value)).
 		Where(
-			keel.DynOf(exprs.group).In(keel.DynLit(req.GroupValues)),
-			keel.DynOf(exprs.date).Gte(req.Bounds[0]),
-			keel.DynOf(exprs.date).Lt(req.Bounds[periods]),
+			keel.StringOf(exprs.group).InArray(keel.StringArrayOf(keel.Val(req.GroupValues))),
+			date.Gte(req.Bounds[0]),
+			date.Lt(req.Bounds[periods]),
 		).
 		Group(group, bucket))
 	if err != nil {
@@ -360,7 +361,7 @@ func (b *typedBase[T]) matchingIDs(
 	}
 
 	rows, err := keel.Into[matchRow](ctx, db, b.q.Clone().
-		Pick(keel.DynOf(id).Cast(keel.TypeString), keel.Count().OverWindow(keel.Window{})).
+		Pick(keel.CastText(id), keel.Count().OverWindow(keel.Window{})).
 		Order(id.Asc()).
 		Limit(limit))
 	if err != nil {
