@@ -70,7 +70,7 @@ func (r *repository) ListBoardDrivers(
 				text(wt.Code),
 				text(wt.EquipmentTypeID),
 				text(wt.FleetCodeID),
-				isAvailable.Coalesce(false),
+				keel.BoolOf(isAvailable).Coalesce(false),
 				zero(openAssignments(w)),
 			).
 			Where(preds...).

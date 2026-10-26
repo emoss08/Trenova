@@ -31,8 +31,6 @@ func rootExpr() keel.StringExpr {
 }
 
 func rootIs(root string) keel.Pred {
-	a := assistantartifactdb.Artifacts
-
 	return rootExpr().Eq(root)
 }
 
