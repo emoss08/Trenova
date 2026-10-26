@@ -3,6 +3,7 @@ import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vite
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { NuqsTestingAdapter } from "nuqs/adapters/testing";
 import React from "react";
+import { createPortal } from "react-dom";
 import { DataTable } from "../data-table";
 import { ControlsProvider, useControls } from "@/contexts/control-context";
 import { DataTableProvider, useDataTable } from "@/contexts/data-table-context";
@@ -167,6 +168,42 @@ describe("DataTable", () => {
 
     expect(presence.resources).toContain("ai_audit_trail");
     expect(presence.resources).not.toContain("AI Audit Event");
+  });
+
+  it("opens a row when its cell is clicked", () => {
+    const onRowClick = vi.fn();
+    renderDataTable({ onRowClick });
+
+    fireEvent.click(screen.getAllByText("Alice")[0]);
+
+    expect(onRowClick).toHaveBeenCalledTimes(1);
+    expect(onRowClick.mock.calls[0][0].original).toEqual({ id: "1", name: "Alice" });
+  });
+
+  /*
+   * A cell's popover is portaled out of the row, but React still bubbles its
+   * clicks to the row: changing a location's status opened its edit panel.
+   */
+  it("does not open a row for a click inside a portal a cell rendered", () => {
+    const onRowClick = vi.fn();
+    const columns: ColumnDef<TestRow>[] = [
+      {
+        accessorKey: "name",
+        header: "Name",
+        cell: ({ row }) =>
+          createPortal(
+            <div role="option" aria-selected={false}>
+              {`Choose ${row.original.name}`}
+            </div>,
+            document.body,
+          ),
+      },
+    ];
+    renderDataTable({ columns, onRowClick });
+
+    fireEvent.click(screen.getByRole("option", { name: "Choose Alice" }));
+
+    expect(onRowClick).not.toHaveBeenCalled();
   });
 
   it("renders row data from the query", () => {
