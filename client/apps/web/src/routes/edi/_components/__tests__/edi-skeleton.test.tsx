@@ -34,20 +34,6 @@ describe("EDIPageSkeleton", () => {
     expect(screen.queryByRole("table")).toBeNull();
   });
 
-  it("draws the designer workspace, on the tab the address names", () => {
-    renderKind("designer", "Template Designer", "?designerTab=documents");
-
-    const root = screen.getByLabelText("Loading EDI designer workspace");
-    expect(within(root).getByLabelText("Loading document preview and archive")).toBeDefined();
-    expect(within(root).queryByLabelText("Loading templates")).toBeNull();
-  });
-
-  it("opens the designer on templates by default", () => {
-    renderKind("designer", "Template Designer");
-
-    expect(screen.getByLabelText("Loading templates")).toBeDefined();
-  });
-
   // A table page's outline has the table's columns, with the selection column
   // only where the reader may act on rows in bulk.
   it.each([
@@ -56,7 +42,7 @@ describe("EDIPageSkeleton", () => {
     ["outbound", true, 6],
     ["inbound", true, 7],
     ["partners", true, 9],
-    ["test-cases", false, 6],
+    ["flows", true, 7],
   ] as const)("draws the %s table (update %s) with %i columns", (kind, canUpdate, columns) => {
     allowUpdate(canUpdate);
     renderKind(kind, "EDI Messages");

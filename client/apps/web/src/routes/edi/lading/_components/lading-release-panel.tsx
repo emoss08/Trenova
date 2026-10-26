@@ -84,7 +84,7 @@ function Replays({
   const replays = useQuery({
     ...lading.replays(version.id),
     refetchInterval: (query) =>
-      query.state.data?.some((replay) => replay.status === "Running")
+      query.state.data?.some((replay: LadingReplay) => replay.status === "Running")
         ? RUNNING_REPLAY_REFRESH_MS
         : false,
   });

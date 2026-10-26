@@ -51,7 +51,7 @@ export class LadingService {
     const response = await api.get(`/edi/lading/projects/${projectId}/versions/`, {
       signal: options?.signal,
     });
-    return safeParse(ladingVersionListSchema, response, "LadingVersionList").items;
+    return (await safeParse(ladingVersionListSchema, response, "LadingVersionList")).items;
   }
 
   public async newDraft(projectId: string, fromVersionId: string) {
@@ -139,7 +139,7 @@ export class LadingService {
     const response = await api.get(`/edi/lading/versions/${versionId}/replays/`, {
       signal: options?.signal,
     });
-    return safeParse(ladingReplayListSchema, response, "LadingReplayList").items;
+    return (await safeParse(ladingReplayListSchema, response, "LadingReplayList")).items;
   }
 
   public async getFlowInstance(instanceId: string, options?: Options) {
