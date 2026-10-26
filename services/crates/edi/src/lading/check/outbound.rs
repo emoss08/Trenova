@@ -175,7 +175,7 @@ impl Checker<'_> {
                     "assign-in-outbound",
                     *span,
                     Message::new(message!(
-                        "A map to X12 writes segments: SEG {{ 01 <- value }}, or LOOP <- each list as item {{ ... }}"
+                        "A map to X12 writes segments: SEG '{' 01 <- value '}', or LOOP <- each list as item '{' ... '}'"
                     )),
                 ),
             ),
@@ -274,7 +274,7 @@ impl Checker<'_> {
         } else {
             match nav::find_segment_anywhere(compiled, &id.name) {
                 Some(path) if !path.is_empty() => Message::with(
-                    message!("{0} belongs in loop {1}: write it inside {1} {{ ... }}"),
+                    message!("{0} belongs in loop {1}: write it inside {1} '{' ... '}'"),
                     [Arg::from(id.name.as_str()), Arg::from(path.join(" > "))],
                 ),
                 Some(_) => Message::with(

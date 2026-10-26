@@ -114,7 +114,7 @@ impl Checker<'_> {
                         span,
                         match subject {
                             Subject::Outbound(_) => Message::new(message!(
-                                "Give the test a document: given shipmentStatus {{ ... }}"
+                                "Give the test a document: given shipmentStatus '{' ... '}'"
                             )),
                             _ => Message::new(message!(
                                 "Give the test a message: given file \"samples/...\""

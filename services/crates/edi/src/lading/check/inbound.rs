@@ -177,7 +177,7 @@ impl Checker<'_> {
                     "each-statement",
                     *span,
                     Message::new(message!(
-                        "In a map to a document, each builds a field: stops <- each 0300 as stop {{ ... }}"
+                        "In a map to a document, each builds a field: stops <- each 0300 as stop '{' ... '}'"
                     )),
                 ),
             ),

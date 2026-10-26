@@ -1077,10 +1077,8 @@ pub fn named_type(name: &str) -> Option<Type> {
                 Type::Enum(item.name)
             } else if let Some(item) = lookup(name) {
                 Type::Ref(item.name)
-            } else if let Some(item) = RECORDS.iter().find(|record| record.name == name) {
-                Type::Record(item.name)
             } else {
-                return None;
+                Type::Record(RECORDS.iter().find(|record| record.name == name)?.name)
             }
         }
     })

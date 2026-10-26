@@ -6,12 +6,15 @@
 //! properties, coverage, lineage and replay; and the editor's operations.
 
 pub mod check;
+pub mod editor;
 pub mod eval;
 pub mod facts;
 pub mod flow;
+pub mod ops;
 pub mod project;
 pub mod replay;
 pub mod schema;
+pub mod starter;
 pub mod stdlib;
 pub mod syntax;
 pub mod testing;

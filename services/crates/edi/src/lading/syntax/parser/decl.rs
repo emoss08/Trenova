@@ -65,7 +65,7 @@ impl Parser<'_> {
         } else if self.at(Tok::LBrace) {
             self.fn_block()
         } else {
-            self.error_here(Message::new(message!("Expected = or {")));
+            self.error_here(Message::new(message!("Expected = or '{'")));
             Body {
                 lets: Vec::new(),
                 value: Expr::error(self.token().span),

@@ -62,7 +62,7 @@ impl Checker<'_> {
                         "stmt-outside-rule",
                         stmt.span(),
                         Message::new(message!(
-                            "A rules file holds rules: rule \"title\" {{ ... }}"
+                            "A rules file holds rules: rule \"title\" '{' ... '}'"
                         )),
                     ),
                 ),

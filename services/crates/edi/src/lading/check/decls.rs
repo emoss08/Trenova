@@ -252,7 +252,7 @@ impl Checker<'_> {
                     "interchange-missing",
                     header,
                     Message::new(message!(
-                        "Say who the partner is on the wire: interchange {{ them ZZ \"ID\" ... }}"
+                        "Say who the partner is on the wire: interchange '{' them ZZ \"ID\" ... '}'"
                     )),
                 ),
             );
