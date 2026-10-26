@@ -10,6 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/report/reportdb"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/reportports"
 	"github.com/emoss08/trenova/pkg/dberror"
+	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/shared/pulid"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
@@ -112,31 +113,67 @@ func newRevision(
 	}
 }
 
-func (r *definitionRepository) UpdateStatus(
+func (r *definitionRepository) ListCatalogStale(
 	ctx context.Context,
-	req *reportports.GetReportDefinitionRequest,
-	status report.DefinitionStatus,
-	diagnostics []string,
-) error {
-	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
+	req *reportports.ListCatalogStaleReportDefinitionsRequest,
+) ([]*report.ReportDefinition, error) {
+	ctx = dbscope.WithSystem(ctx, "check saved report definitions against the report catalog")
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*report.ReportDefinition, error) {
 		d := reportdb.ReportDefinitions
-		rows, err := d.Where(d.ID.Eq(req.DefinitionID)).Update(
+		older, err := d.AllTenants().
+			Where(d.CatalogVersion.Lt(req.CatalogVersion)).
+			Limit(req.Limit).
+			All(ctx, r.db.Keel(ctx))
+		if err != nil {
+			r.l.Error("failed to list report definitions behind the catalog", zap.Error(err))
+			return nil, err
+		}
+		if len(older) >= req.Limit {
+			return older, nil
+		}
+
+		newer, err := d.AllTenants().
+			Where(d.CatalogVersion.Gt(req.CatalogVersion)).
+			Limit(req.Limit-len(older)).
+			All(ctx, r.db.Keel(ctx))
+		if err != nil {
+			r.l.Error("failed to list report definitions behind the catalog", zap.Error(err))
+			return nil, err
+		}
+
+		return append(older, newer...), nil
+	})
+}
+
+func (r *definitionRepository) RecordCatalogCheck(
+	ctx context.Context,
+	req *reportports.RecordReportCatalogCheckRequest,
+) (bool, error) {
+	return dbtx.Write(ctx, r.db, func(ctx context.Context) (bool, error) {
+		d := reportdb.ReportDefinitions
+		rows, err := d.Where(
+			d.ID.Eq(req.DefinitionID),
+			d.Version.Eq(req.Version),
+			d.CatalogVersion.Ne(req.CatalogVersion),
+		).Update(
 			ctx,
 			r.db.Keel(ctx),
-			d.Status.To(status),
-			d.Diagnostics.To(diagnostics),
+			d.Status.To(req.Status),
+			d.Diagnostics.To(req.Diagnostics),
+			d.CatalogVersion.To(req.CatalogVersion),
+			d.Version.ToExpr(d.Version),
 			d.UpdatedAt.ToExpr(d.UpdatedAt),
 		)
 		if err != nil {
 			r.l.Error(
-				"failed to update report definition status",
+				"failed to record a report definition's catalog check",
 				zap.String("id", req.DefinitionID.String()),
 				zap.Error(err),
 			)
-			return err
+			return false, err
 		}
 
-		return dberror.CheckAffected(rows, definitionEntityName, req.DefinitionID.String())
+		return rows > 0, nil
 	})
 }
 

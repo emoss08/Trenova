@@ -12,6 +12,7 @@ import (
 
 type ReportEngine interface {
 	Catalog() *analytics.Catalog
+	Validate(def *ir.Definition) error
 	Preview(ctx context.Context, req *analytics.Request) (*analytics.Result, error)
 	Page(
 		ctx context.Context,

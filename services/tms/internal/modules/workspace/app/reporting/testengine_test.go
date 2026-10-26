@@ -79,6 +79,11 @@ func (f *fakeEngine) compile(
 
 func (f *fakeEngine) Catalog() *analytics.Catalog { return f.catalog }
 
+func (f *fakeEngine) Validate(def *ir.Definition) error {
+	_, err := ir.Resolve(def, f.catalog, ir.Limits{})
+	return err
+}
+
 func (f *fakeEngine) Compile(
 	ctx context.Context,
 	req *analytics.Request,

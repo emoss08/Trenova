@@ -130,6 +130,7 @@ var allowed = map[string]string{
 	"internal/modules/rating/adapters/postgres/rateconfirmationrepository/rateconfirmation.go:repository.GetTokenByHash":                                        "resolve a public rate confirmation link before its tenant is known",
 	"internal/modules/rating/adapters/postgres/rateconfirmationrepository/rateconfirmation.go:repository.PurgeDeadSignTokens":                                   "purge dead rate confirmation tokens across every organization",
 	"internal/modules/operations/adapters/postgres/recurringshipmentrepository/recurringshipment.go:repository.ListDue":                                         "list recurring shipments due across every organization",
+	"internal/modules/workspace/adapters/postgres/reportrepository/definition.go:definitionRepository.ListCatalogStale":                                         "check saved report definitions against the report catalog",
 	"internal/modules/workspace/adapters/postgres/reportrepository/run.go:runRepository.ListExpired":                                                            "list expired report artifacts across every organization",
 	"internal/modules/workspace/adapters/postgres/reportrepository/run.go:runRepository.ListStale":                                                              "list stalled report runs across every organization",
 	"internal/modules/workspace/adapters/postgres/reportrepository/schedule.go:scheduleRepository.ListDue":                                                      "list report schedules due across every organization",
