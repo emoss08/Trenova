@@ -17,7 +17,6 @@ import (
 	"github.com/emoss08/trenova/internal/modules/documents/domain/documentcontent"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/extractionrollout"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentaiextractionports"
-	"github.com/emoss08/trenova/internal/modules/documents/ports/documentparsingruleports"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentports"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/extractionshadowports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
@@ -790,9 +789,6 @@ func analysisFromMap(data map[string]any) *DocumentIntelligenceAnalysis {
 		Conflicts:            []*ReviewConflict{},
 	}
 
-	if metadata, ok := data["parsingRuleMetadata"].(map[string]any); ok {
-		analysis.ParsingRuleMetadata = parseParsingRuleMetadata(metadata)
-	}
 	if fields, ok := data["fields"].(map[string]any); ok {
 		for key, raw := range fields {
 			fieldMap, isFieldMap := raw.(map[string]any)
@@ -859,28 +855,6 @@ func analysisFromMap(data map[string]any) *DocumentIntelligenceAnalysis {
 	}
 
 	return analysis
-}
-
-func parseParsingRuleMetadata(
-	data map[string]any,
-) *documentparsingruleports.DocumentParsingRuleMetadata {
-	ruleSetID, err := pulid.Parse(sliceutils.StringValue(data["ruleSetId"]))
-	if err != nil {
-		return nil
-	}
-	ruleVersionID, err := pulid.Parse(sliceutils.StringValue(data["ruleVersionId"]))
-	if err != nil {
-		return nil
-	}
-	return &documentparsingruleports.DocumentParsingRuleMetadata{
-		RuleSetID:        ruleSetID,
-		RuleSetName:      sliceutils.StringValue(data["ruleSetName"]),
-		RuleVersionID:    ruleVersionID,
-		VersionNumber:    intutils.IntValue(data["versionNumber"]),
-		ParserMode:       sliceutils.StringValue(data["parserMode"]),
-		ProviderMatched:  sliceutils.StringValue(data["providerMatched"]),
-		MatchSpecificity: intutils.IntValue(data["matchSpecificity"]),
-	}
 }
 
 func (a *Activities) updateShipmentDraftFromIntelligence(

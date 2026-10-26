@@ -11,25 +11,26 @@ import { useQueries } from "@tanstack/react-query";
 import { Link } from "react-router";
 
 /**
- * The role editor's sentences for a category's resources, asked of the
- * server a bounded batch at a time while the category is open. Each says
+ * The role editor's sentences for the resources of each open category, asked
+ * of the server a bounded batch at a time. A category is batched on its own,
+ * so opening another one leaves the batches already cached alone. Each says
  * what granting and withholding the resource means for a role reaching
  * `maxSensitivity`, and which screens its grant changes.
  */
 export function useRoleResourceGuides(
-  resources: readonly string[],
+  categories: readonly (readonly string[])[],
   maxSensitivity: string,
-  enabled: boolean,
 ) {
   const batches: string[][] = [];
-  for (let start = 0; start < resources.length; start += MAX_GUIDE_RESOURCES) {
-    batches.push(resources.slice(start, start + MAX_GUIDE_RESOURCES));
+  for (const resources of categories) {
+    for (let start = 0; start < resources.length; start += MAX_GUIDE_RESOURCES) {
+      batches.push(resources.slice(start, start + MAX_GUIDE_RESOURCES));
+    }
   }
 
   return useQueries({
     queries: batches.map((batch) => ({
       ...pageAccess.guides(batch, maxSensitivity),
-      enabled,
       staleTime: 5 * 60_000,
     })),
     combine: (results) => {

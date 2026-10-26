@@ -3,8 +3,6 @@ package documentextractionjobs
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/modules/documents/ports/documentparsingruleports"
-
 	"github.com/emoss08/trenova/internal/modules/documents/domain/document"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentaiextractionports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
@@ -103,30 +101,4 @@ func (noopWorkflowStarter) SignalWorkflow(context.Context, string, string, strin
 
 func (noopWorkflowStarter) Enabled() bool {
 	return false
-}
-
-type noopDocumentParsingRuleRuntime struct{}
-
-func parsingRuleRuntimeOrNoop(
-	runtime documentparsingruleports.DocumentParsingRuleRuntime,
-) documentparsingruleports.DocumentParsingRuleRuntime {
-	if runtime == nil {
-		return noopDocumentParsingRuleRuntime{}
-	}
-	return runtime
-}
-
-func (noopDocumentParsingRuleRuntime) ApplyPublished(
-	context.Context,
-	*documentparsingruleports.DocumentParsingRuntimeInput,
-	*documentparsingruleports.DocumentParsingAnalysis,
-) (*documentparsingruleports.DocumentParsingAnalysis, error) {
-	return nil, nil //nolint:nilnil // intentional noop
-}
-
-func (noopDocumentParsingRuleRuntime) SimulateVersion(
-	context.Context,
-	*documentparsingruleports.DocumentParsingSimulationRequest,
-) (*documentparsingruleports.DocumentParsingSimulationResult, error) {
-	return nil, nil //nolint:nilnil // intentional noop
 }

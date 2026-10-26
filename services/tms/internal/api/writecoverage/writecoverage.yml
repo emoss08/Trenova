@@ -1034,17 +1034,6 @@ writes:
     exempt: configuration
     reason: "An organization-wide control an administrator sets once; every later write depends on it."
 
-  # documentoperations
-  "POST /api/v1/admin/document-operations/:documentID/reextract/":
-    exempt: infrastructure
-    reason: "A repair operation for when processing failed; the platform retries on its own."
-  "POST /api/v1/admin/document-operations/:documentID/regenerate-preview/":
-    exempt: infrastructure
-    reason: "A repair operation for when processing failed; the platform retries on its own."
-  "POST /api/v1/admin/document-operations/:documentID/resync-search/":
-    exempt: infrastructure
-    reason: "A repair operation for when processing failed; the platform retries on its own."
-
   # documentpacketrule
   "DELETE /api/v1/document-packet-rules/:ruleID/":
     exempt: configuration
@@ -1053,35 +1042,6 @@ writes:
     exempt: configuration
     reason: "Templates and rules an administrator authors, reviews and publishes; they decide how every later record is produced."
   "PUT /api/v1/document-packet-rules/:ruleID/":
-    exempt: configuration
-    reason: "Templates and rules an administrator authors, reviews and publishes; they decide how every later record is produced."
-
-  # documentparsingrule
-  "DELETE /api/v1/document-parsing-rules/:ruleSetID/":
-    exempt: configuration
-    reason: "Templates and rules an administrator authors, reviews and publishes; they decide how every later record is produced."
-  "DELETE /api/v1/document-parsing-rules/fixtures/:fixtureID/":
-    exempt: configuration
-    reason: "Templates and rules an administrator authors, reviews and publishes; they decide how every later record is produced."
-  "POST /api/v1/document-parsing-rules/":
-    exempt: configuration
-    reason: "Templates and rules an administrator authors, reviews and publishes; they decide how every later record is produced."
-  "POST /api/v1/document-parsing-rules/:ruleSetID/fixtures/":
-    exempt: configuration
-    reason: "Templates and rules an administrator authors, reviews and publishes; they decide how every later record is produced."
-  "POST /api/v1/document-parsing-rules/:ruleSetID/versions/":
-    exempt: configuration
-    reason: "Templates and rules an administrator authors, reviews and publishes; they decide how every later record is produced."
-  "POST /api/v1/document-parsing-rules/versions/:versionID/publish/":
-    exempt: configuration
-    reason: "Templates and rules an administrator authors, reviews and publishes; they decide how every later record is produced."
-  "POST /api/v1/document-parsing-rules/versions/:versionID/simulate/":
-    exempt: read-only
-    reason: "Runs a parsing rule version against a sample and saves nothing."
-  "PUT /api/v1/document-parsing-rules/:ruleSetID/":
-    exempt: configuration
-    reason: "Templates and rules an administrator authors, reviews and publishes; they decide how every later record is produced."
-  "PUT /api/v1/document-parsing-rules/versions/:versionID/":
     exempt: configuration
     reason: "Templates and rules an administrator authors, reviews and publishes; they decide how every later record is produced."
 

@@ -18,6 +18,7 @@
   "Period & product": "Período y producto",
   "Publish one jurisdiction's rate for a quarter and fuel type. Rates are global, so this is what every organization's return will owe.": "Publique la tasa de una jurisdicción para un trimestre y un tipo de combustible. Las tasas son globales, así que esto es lo que deberá la declaración de cada organización.",
   "Publishing would set {0, plural, one {# rate} other {# rates}} for Q{1} {2}, replacing any already published for the same jurisdiction and fuel.": "Al publicar, {0, plural, one {se establecería # tasa} other {se establecerían # tasas}} para el T{1} {2}, reemplazando las ya publicadas para la misma jurisdicción y combustible.",
+  "Publishing...": "Publicando...",
   "Q{0}": "T{0}",
   "Rate / gal": "Tarifa / gal",
   "Rate per gallon": "Tarifa por galón",

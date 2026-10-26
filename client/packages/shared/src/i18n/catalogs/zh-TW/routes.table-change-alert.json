@@ -22,6 +22,7 @@
   "No subscriptions yet": "尚無訂閱",
   "Notification": "通知",
   "Notification priority level.": "通知的優先層級。",
+  "Operator": "運算子",
   "Optional categorization tag.": "選填的分類標籤。",
   "Optional. Specify a record ID to only watch a single record.": "選填。指定紀錄 ID 即可僅監看單一紀錄。",
   "Record ID": "紀錄 ID",

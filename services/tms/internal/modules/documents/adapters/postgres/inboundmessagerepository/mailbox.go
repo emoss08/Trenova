@@ -178,6 +178,34 @@ func markReceivedAssignments(req inboundmessageports.MailboxReceivedRequest) []k
 	}
 }
 
+func (r *mailboxRepository) ClaimTestSend(
+	ctx context.Context,
+	req inboundmessageports.ClaimMailboxTestRequest,
+) (*inboundmessage.Mailbox, error) {
+	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*inboundmessage.Mailbox, error) {
+		mb := inboundmessagedb.Mailboxes
+		updated, err := mb.Where(
+			mb.ID.Eq(req.MailboxID),
+			keel.Or(mb.TestSentAt.IsNull(), mb.TestSentAt.Lte(req.LastSentBefore)),
+		).UpdateReturning(
+			ctx,
+			r.db.Keel(ctx),
+			mb.TestToken.To(req.Token),
+			mb.TestSentAt.To(req.At),
+			mb.Version.ToExpr(mb.Version),
+			mb.UpdatedAt.ToExpr(mb.UpdatedAt),
+		)
+		if err != nil {
+			return nil, err
+		}
+		if len(updated) == 0 {
+			return nil, inboundmessageports.ErrMailboxTestTooSoon
+		}
+
+		return updated[0], nil
+	})
+}
+
 func (r *mailboxRepository) MarkTestSent(
 	ctx context.Context,
 	req inboundmessageports.MailboxTestRequest,

@@ -45,7 +45,7 @@ var plannedDomainPackages = []string{
 	"customer", "carrier", "carriercapacity", "carrierintel",
 	"worker", "permit", "telematics",
 	"document", "documentaiextraction", "documentcontent", "documentpacketrule",
-	"documentparsingrule", "documentsearchprojection", "documenttemplate",
+	"documentsearchprojection", "documenttemplate",
 	"documentupload", "capture", "inboundmessage", "extractioneval",
 	"extractionrollout", "extractionshadow",
 	"rateagreement", "rateconfirmation", "rateimport", "ratematrix", "ratequote",

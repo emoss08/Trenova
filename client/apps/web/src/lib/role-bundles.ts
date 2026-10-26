@@ -48,24 +48,40 @@ export function applyBundle(
   return mergeGrants(permissions, bundle.grants);
 }
 
-export function removeBundle(
+/**
+ * Takes away every operation the removed bundles grant, all at once, then
+ * gives back what each other fully held bundle grants. Removing them together
+ * matters: one at a time, a bundle inside another would come back with it.
+ */
+export function removeBundles(
   permissions: readonly AddPermission[],
-  bundle: CapabilityBundle,
+  removed: readonly CapabilityBundle[],
   bundles: readonly CapabilityBundle[],
 ): AddPermission[] {
+  const removedIds = new Set(removed.map((bundle) => bundle.id));
   const kept = bundles.filter(
-    (other) => other.id !== bundle.id && bundleState(other, permissions) === "full",
+    (other) => !removedIds.has(other.id) && bundleState(other, permissions) === "full",
   );
 
+  const dropping = new Map<string, Set<Operation>>();
+  for (const bundle of removed) {
+    for (const grant of bundle.grants) {
+      const operations = dropping.get(grant.resource) ?? new Set<Operation>();
+      for (const operation of grant.operations) {
+        operations.add(operation);
+      }
+      dropping.set(grant.resource, operations);
+    }
+  }
+
   const remaining: AddPermission[] = [];
-  const removing = new Map(bundle.grants.map((grant) => [grant.resource, grant.operations]));
   for (const permission of permissions) {
-    const dropped = removing.get(permission.resource);
+    const dropped = dropping.get(permission.resource);
     if (!dropped) {
       remaining.push(permission);
       continue;
     }
-    const operations = permission.operations.filter((operation) => !dropped.includes(operation));
+    const operations = permission.operations.filter((operation) => !dropped.has(operation));
     if (operations.length > 0) {
       remaining.push({ ...permission, operations });
     }

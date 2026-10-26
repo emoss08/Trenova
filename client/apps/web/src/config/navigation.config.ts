@@ -1678,14 +1678,6 @@ export const adminLinks: SidebarLink[] = [
     planCapability: PlanCapability.DocumentIntelligence,
   },
   {
-    href: "/admin/document-parsing-rules",
-    title: "Parsing rules",
-    group: "Document Management",
-    resource: Resource.DocumentParsingRule,
-    requiredOperation: Operation.Read,
-    planCapability: PlanCapability.DocumentIntelligence,
-  },
-  {
     href: "/admin/sequence-configs",
     title: "Sequence configuration",
     group: "Organization",
@@ -1895,14 +1887,6 @@ export const adminLinks: SidebarLink[] = [
     group: "Data & Integrations",
     resource: Resource.TableChangeAlert,
     requiredOperation: Operation.Read,
-  },
-  {
-    href: "/admin/document-operations",
-    title: "Document operations",
-    group: "Document Management",
-    resource: Resource.DocumentOperation,
-    requiredOperation: Operation.Read,
-    planCapability: PlanCapability.DocumentIntelligence,
   },
   {
     href: "/organization/document-templates/",

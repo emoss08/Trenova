@@ -432,16 +432,6 @@ func (rr *RouteRegistry) registerAdministrationRoutes() {
 		DisplayName: "Platform Catalog",
 		Category:    "Administration",
 	})
-
-	_ = rr.Register(&RouteDefinition{
-		Path:      "/admin/document-operations",
-		MatchType: RouteMatchExact,
-		Requirements: []RouteRequirement{
-			{Resource: ResourceDocumentOperation, Operation: OpRead},
-		},
-		DisplayName: "Document Operations",
-		Category:    "Administration",
-	})
 }
 
 func (rr *RouteRegistry) registerEquipmentRoutes() {
@@ -1156,16 +1146,6 @@ func (rr *RouteRegistry) registerHoldReasonRoutes() {
 			{Resource: ResourceDocumentControl, Operation: OpRead},
 		},
 		DisplayName: "Document Controls",
-		Category:    "Organization",
-	})
-
-	_ = rr.Register(&RouteDefinition{
-		Path:      "/admin/document-parsing-rules",
-		MatchType: RouteMatchExact,
-		Requirements: []RouteRequirement{
-			{Resource: ResourceDocumentParsingRule, Operation: OpRead},
-		},
-		DisplayName: "Document Parsing Rules",
 		Category:    "Organization",
 	})
 

@@ -130,6 +130,7 @@
   "Replay historical shipments": "重播歷史運單",
   "Resume agreement": "恢復協議",
   "Run one to see what this contract would have charged for the freight you already moved — before it prices a single live shipment.": "執行一次，即可在此合約為任何實際運單計價之前，先看出它對您已承運的貨物原本會收取多少。",
+  "Run simulation": "執行模擬",
   "Save the agreement first. A simulation replays a contract against shipments that already moved, and there has to be a contract to replay.": "請先儲存協議。模擬會以已承運的運單重播合約，因此必須先有可重播的合約。",
   "Save the agreement first. Versions record the terms as they stood, and there are no terms until there is a contract.": "請先儲存協議。版本會記錄當時的條款，而在有合約之前並無條款可記。",
   "Say how far the rates move, as a percent that is not zero.": "請以非零的百分比說明費率的調整幅度。",

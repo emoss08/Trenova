@@ -286,8 +286,10 @@ type fakeMailboxState struct {
 	inboundmessageports.TriageMailboxStateRepository
 
 	received     []inboundmessageports.MailboxReceivedRequest
+	claims       []inboundmessageports.ClaimMailboxTestRequest
 	testsSent    []inboundmessageports.MailboxTestRequest
 	testReceived []inboundmessageports.MailboxTestRequest
+	lastTestAt   int64
 }
 
 func (f *fakeMailboxState) MarkReceived(
@@ -299,11 +301,29 @@ func (f *fakeMailboxState) MarkReceived(
 	return nil
 }
 
+func (f *fakeMailboxState) ClaimTestSend(
+	_ context.Context,
+	req inboundmessageports.ClaimMailboxTestRequest,
+) (*inboundmessage.Mailbox, error) {
+	if f.lastTestAt != 0 && f.lastTestAt > req.LastSentBefore {
+		return nil, inboundmessageports.ErrMailboxTestTooSoon
+	}
+	f.claims = append(f.claims, req)
+	f.lastTestAt = req.At
+
+	return &inboundmessage.Mailbox{
+		ID:         req.MailboxID,
+		TestToken:  req.Token,
+		TestSentAt: req.At,
+	}, nil
+}
+
 func (f *fakeMailboxState) MarkTestSent(
 	_ context.Context,
 	req inboundmessageports.MailboxTestRequest,
 ) (*inboundmessage.Mailbox, error) {
 	f.testsSent = append(f.testsSent, req)
+	f.lastTestAt = req.At
 
 	return &inboundmessage.Mailbox{
 		ID:         req.MailboxID,

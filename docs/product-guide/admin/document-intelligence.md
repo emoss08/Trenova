@@ -2,8 +2,6 @@
 path: /admin/document-intelligence
 aliases: [Document intelligence, OCR settings, document AI, document classification, document extraction, Docling, shipment drafts from documents, rate confirmation extraction]
 related:
-  - /admin/document-parsing-rules
-  - /admin/document-operations
   - /admin/agent-control
   - /billing/configuration-files/document-types
 ---
@@ -60,6 +58,4 @@ AI-assisted options, depend on an enabled AI provider assigned to the Document e
 which is set up on [AI control](/admin/agent-control); a provider assigned only to chat does not
 read documents. The server must also have document extraction turned on and its document
 converter configured. Without all three, documents are stored but not read, and this page, the
-upload screens and the document's failure message say which is missing. The provider-specific
-rules on [Parsing rules](/admin/document-parsing-rules) are applied to the text Docling reads from
-a rate confirmation, after it is classified and before AI extraction.
+upload screens and the document's failure message say which is missing.

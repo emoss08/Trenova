@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"strings"
+	"time"
 
 	"github.com/emoss08/trenova/internal/modules/documents/domain/inboundmessage"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/triage"
@@ -18,6 +19,7 @@ import (
 const (
 	testTokenPrefix = "trv-test-"
 	testTokenBytes  = 8
+	testCooldown    = int64(60)
 	testSubject     = "Trenova test message "
 	testBody        = "This is a test from Trenova to check that this address receives mail. " +
 		"It lands in Triage like any other message; you can ignore it once it arrives."
@@ -46,12 +48,17 @@ func (s *Service) SendMailboxTest(
 	}
 	token := testTokenPrefix + suffix
 
-	updated, err := s.mailboxState.MarkTestSent(ctx, inboundmessageports.MailboxTestRequest{
-		TenantInfo: tenantInfo,
-		MailboxID:  mailbox.ID,
-		Token:      token,
-		At:         s.now(),
+	now := s.now()
+	updated, err := s.mailboxState.ClaimTestSend(ctx, inboundmessageports.ClaimMailboxTestRequest{
+		TenantInfo:     tenantInfo,
+		MailboxID:      mailbox.ID,
+		Token:          token,
+		At:             now,
+		LastSentBefore: now - testCooldown,
 	})
+	if errors.Is(err, inboundmessageports.ErrMailboxTestTooSoon) {
+		return nil, testTooSoon(mailbox, now)
+	}
 	if err != nil {
 		return nil, err
 	}
@@ -85,6 +92,20 @@ func (s *Service) SendMailboxTest(
 	}
 
 	return updated, nil
+}
+
+func testTooSoon(mailbox *inboundmessage.Mailbox, now int64) error {
+	wait := mailbox.TestSentAt + testCooldown - now
+	if wait <= 0 || wait > testCooldown {
+		wait = testCooldown
+	}
+
+	return errortypes.NewRateLimitError(
+		"mailbox",
+		"A test email went to this address moments ago. Wait for it to arrive, "+
+			"or send another in {0, plural, one {# second} other {# seconds}}.",
+		wait,
+	).WithRetryAfter(time.Duration(wait) * time.Second)
 }
 
 func carriesTestToken(mailbox *inboundmessage.Mailbox, message *inboundmessage.InboundMessage) bool {

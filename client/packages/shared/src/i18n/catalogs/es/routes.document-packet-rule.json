@@ -1,5 +1,6 @@
 {
   "Allow more than one document of this type": "Permitir más de un documento de este tipo",
+  "Allow multiple": "Permitir varios",
   "Are you sure you want to delete this packet rule? This action cannot be undone.": "¿Seguro que desea eliminar esta regla de paquete? Esta acción no se puede deshacer.",
   "Configure how this document requirement is enforced": "Configure cómo se aplica este requisito documental",
   "Configure which document types are required for each resource type": "Configure qué tipos de documento son obligatorios para cada tipo de recurso",

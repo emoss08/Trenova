@@ -5,7 +5,6 @@ import (
 	"github.com/emoss08/trenova/internal/modules/documents/adapters/postgres/documentaiextractionrepository"
 	"github.com/emoss08/trenova/internal/modules/documents/adapters/postgres/documentcontentrepository"
 	"github.com/emoss08/trenova/internal/modules/documents/adapters/postgres/documentpacketrulerepository"
-	"github.com/emoss08/trenova/internal/modules/documents/adapters/postgres/documentparsingrulerepository"
 	"github.com/emoss08/trenova/internal/modules/documents/adapters/postgres/documentrepository"
 	"github.com/emoss08/trenova/internal/modules/documents/adapters/postgres/documentsearchprojectionrepository"
 	"github.com/emoss08/trenova/internal/modules/documents/adapters/postgres/documenttemplaterepository"
@@ -28,9 +27,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/documents/app/conversationfileservice"
 	"github.com/emoss08/trenova/internal/modules/documents/app/documentextractionservice"
 	"github.com/emoss08/trenova/internal/modules/documents/app/documentmailservice"
-	"github.com/emoss08/trenova/internal/modules/documents/app/documentoperationsservice"
 	"github.com/emoss08/trenova/internal/modules/documents/app/documentpacketruleservice"
-	"github.com/emoss08/trenova/internal/modules/documents/app/documentparsingruleservice"
 	"github.com/emoss08/trenova/internal/modules/documents/app/documentsearchprojectionservice"
 	"github.com/emoss08/trenova/internal/modules/documents/app/documentservice"
 	"github.com/emoss08/trenova/internal/modules/documents/app/documenttemplateservice"
@@ -51,7 +48,6 @@ import (
 	"github.com/emoss08/trenova/internal/modules/documents/app/triageworkservice"
 	"github.com/emoss08/trenova/internal/modules/documents/jobs/extractionevaljobs/extractionevalcontract"
 	"github.com/emoss08/trenova/internal/modules/documents/jobs/triagewakejobs/triagewakecontract"
-	"github.com/emoss08/trenova/internal/modules/documents/ports/documentparsingruleports"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentports"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documenttemplateports"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentuploadports"
@@ -71,7 +67,6 @@ func SharedOptions() fx.Option {
 			thumbnailservice.NewGenerator,
 			pagerender.New,
 			capturereleaseservice.New,
-			documentparsingrulerepository.New,
 			documentpacketrulerepository.New,
 			documenttemplaterepository.NewTemplateRepository,
 			documenttemplaterepository.NewVersionRepository,
@@ -122,13 +117,11 @@ func SharedOptions() fx.Option {
 			capturerepository.NewCoverSheetRepository,
 			capturerepository.NewRecordFinder,
 			documentservice.NewValidator,
-			documentparsingruleservice.NewValidator,
 			documentpacketruleservice.NewValidator,
 			documenttemplateservice.NewValidator,
 			documentextractionservice.New,
 			documentextractionservice.AsContentService,
 			documentextractionservice.AsExtractionStatusReader,
-			documentoperationsservice.New,
 			documentsearchprojectionservice.New,
 			documentservice.New,
 			func(s *documentservice.Service) documentports.InvoiceDocumentService { return s },
@@ -207,13 +200,6 @@ func SharedOptions() fx.Option {
 				return i
 			},
 			captureservice.New,
-			documentparsingruleservice.New,
-			func(s *documentparsingruleservice.Service) documentparsingruleports.DocumentParsingRuleRuntime {
-				return s
-			},
-			func(s *documentparsingruleservice.Service) documentparsingruleports.DocumentParsingRuleAdminService {
-				return s
-			},
 			documentpacketruleservice.New,
 			documenttemplateservice.New,
 			func(s *documenttemplateservice.Service) documenttemplateports.DocumentTemplateResolver { return s },

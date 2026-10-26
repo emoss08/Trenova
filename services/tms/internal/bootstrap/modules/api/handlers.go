@@ -46,9 +46,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/handlers/distanceprofilehandler"
 	"github.com/emoss08/trenova/internal/api/handlers/documentcontrolhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/documenthandler"
-	"github.com/emoss08/trenova/internal/api/handlers/documentoperationshandler"
 	"github.com/emoss08/trenova/internal/api/handlers/documentpacketrulehandler"
-	"github.com/emoss08/trenova/internal/api/handlers/documentparsingrulehandler"
 	"github.com/emoss08/trenova/internal/api/handlers/documenttemplatehandler"
 	"github.com/emoss08/trenova/internal/api/handlers/documenttypehandler"
 	"github.com/emoss08/trenova/internal/api/handlers/dothazmatreferencehandler"
@@ -170,7 +168,6 @@ var HandlersModule = fx.Module("api-handlers", fx.Provide(
 	customfieldhandler.New,
 	documenthandler.New,
 	reporthandler.New,
-	documentoperationshandler.New,
 	documentpacketrulehandler.New,
 	documenttemplatehandler.New,
 	accessorialchargehandler.New,
@@ -259,7 +256,6 @@ var HandlersModule = fx.Module("api-handlers", fx.Provide(
 	dataentrycontrolhandler.New,
 	dispatchcontrolhandler.New,
 	documentcontrolhandler.New,
-	documentparsingrulehandler.New,
 	distancecontrolhandler.New,
 	distanceoverridehandler.New,
 	distanceprofilehandler.New,

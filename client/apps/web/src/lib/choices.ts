@@ -42,7 +42,6 @@ import type {
 } from "@/types/dispatch-control";
 import type { DistanceProfile } from "@/types/distance-profile";
 import type { ResourceType } from "@/types/document-packet-rule";
-import type { DocumentKind } from "@/types/document-parsing-rule";
 import type { EquipmentClass } from "@/types/equipment-type";
 import type { FiscalPeriodStatus, PeriodType } from "@/types/fiscal-period";
 import type { FiscalYearStatus } from "@/types/fiscal-year";
@@ -1591,13 +1590,6 @@ export const resourceTypeChoices = [
   { value: "Tractor", label: "Tractor" },
   { value: "Worker", label: "Worker" },
 ] satisfies ReadonlyArray<GenericSelectOption<ResourceType>>;
-
-export const documentKindChoices = [
-  { value: "RateConfirmation", label: "Rate confirmation" },
-  { value: "BillOfLading", label: "Bill of lading" },
-  { value: "ProofOfDelivery", label: "Proof of delivery" },
-  { value: "Invoice", label: "Invoice" },
-] satisfies ReadonlyArray<GenericSelectOption<DocumentKind>>;
 
 export const invoiceStatusChoices = [
   { value: "Draft", label: "Draft" },

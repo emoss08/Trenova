@@ -367,15 +367,6 @@
       "apps/dash/_components"
     ]
   },
-  "+ stop: {0}": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
   "+ {0} more": {
     "sites": 1,
     "scope": [
@@ -568,15 +559,6 @@
     ],
     "areas": [
       "routes/dispatch-control"
-    ]
-  },
-  "0.0 to 1.0": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
     ]
   },
   "0.02 to 0.039 takes the driver off duty for 24 hours but is not a violation (49 CFR 382.505).": {
@@ -5632,15 +5614,6 @@
       "apps/web/components"
     ]
   },
-  "A descriptive name to identify this rule set.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
   "A destination location cannot be combined with city or state criteria": {
     "sites": 2,
     "scope": [
@@ -6884,15 +6857,6 @@
       "routes/admin"
     ]
   },
-  "A known provider identifier used by providerFingerprints match rules. Simulates what the document intelligence pipeline would detect.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
   "A label for this AP run; if left blank it is named after the period end date.": {
     "sites": 1,
     "scope": [
@@ -8091,24 +8055,6 @@
   },
   "A parsed import must reference the uploaded file": {
     "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
-  "A parsing rule set with this name already exists for this document kind": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
-  "A parsing rule version was created concurrently. Retry the request.": {
-    "sites": 2,
     "scope": [
       "go"
     ],
@@ -10448,15 +10394,6 @@
       "go/other"
     ]
   },
-  "A rule set defines how a specific type of document is parsed. Each rule set contains versions with match criteria, section definitions, and field extraction rules.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
   "A run must name a report definition or a canned report": {
     "sites": 1,
     "scope": [
@@ -11094,15 +11031,6 @@
     ],
     "areas": [
       "routes/journal-reversal"
-    ]
-  },
-  "A short description to identify this version.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
     ]
   },
   "A short identifier that must be unique across the organisation, whatever its case.": {
@@ -12067,6 +11995,24 @@
     "areas": [
       "apps/web/rules",
       "rules/tariff"
+    ]
+  },
+  "A test email was sent {0} and hasn't arrived yet.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
+  "A test email went to this address moments ago. Wait for it to arrive, or send another in {0, plural, one {# second} other {# seconds}}.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "A test is named by its text: edit the text between the quotes": {
@@ -13910,7 +13856,7 @@
     ]
   },
   "API key": {
-    "sites": 12,
+    "sites": 13,
     "scope": [
       "go",
       "ts"
@@ -14861,12 +14807,11 @@
     ]
   },
   "Accepted values": {
-    "sites": 2,
+    "sites": 1,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/admin",
       "routes/agent-control"
     ]
   },
@@ -15053,6 +14998,15 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "Access to {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
     ]
   },
   "Access to {0} was not granted, so nothing was connected.": {
@@ -17098,15 +17052,6 @@
       "go/other"
     ]
   },
-  "Activates this version for all incoming documents matching its criteria": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
   "Activates {0}": {
     "sites": 1,
     "scope": [
@@ -18454,15 +18399,6 @@
       "routes/driver-settlement"
     ]
   },
-  "Add alias...": {
-    "sites": 2,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
   "Add an AI provider": {
     "sites": 2,
     "scope": [
@@ -18521,24 +18457,6 @@
       "routes/reports"
     ]
   },
-  "Add anchor text...": {
-    "sites": 2,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
-  "Add anchor...": {
-    "sites": 3,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
   "Add any extra detail about this location": {
     "sites": 1,
     "scope": [
@@ -18564,15 +18482,6 @@
     ],
     "areas": [
       "routes/agent-control"
-    ]
-  },
-  "Add assertion": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
     ]
   },
   "Add at least one PTO type": {
@@ -18861,15 +18770,6 @@
       "routes/edi"
     ]
   },
-  "Add entry": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
   "Add equipment manufacturer...": {
     "sites": 1,
     "scope": [
@@ -18888,15 +18788,6 @@
       "routes/reports"
     ]
   },
-  "Add extractor": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
   "Add factoring companies": {
     "sites": 1,
     "scope": [
@@ -18907,15 +18798,6 @@
     ]
   },
   "Add field": {
-    "sites": 2,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
-  "Add field assertion": {
     "sites": 1,
     "scope": [
       "ts"
@@ -18940,15 +18822,6 @@
     ],
     "areas": [
       "routes/reports"
-    ]
-  },
-  "Add fields to extract specific values like PRO numbers, reference IDs, or dates from documents.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
     ]
   },
   "Add filter": {
@@ -18976,15 +18849,6 @@
     ],
     "areas": [
       "apps/web/components"
-    ]
-  },
-  "Add fingerprint...": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
     ]
   },
   "Add first charge": {
@@ -19351,24 +19215,6 @@
       "apps/web/config"
     ]
   },
-  "Add page": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
-  "Add pattern...": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
   "Add pay by hand and read every line on its page": {
     "sites": 1,
     "scope": [
@@ -19459,42 +19305,6 @@
       "routes/worker"
     ]
   },
-  "Add regex pattern...": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
-  "Add regex...": {
-    "sites": 2,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
-  "Add required term...": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
-  "Add role...": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
   "Add row": {
     "sites": 1,
     "scope": [
@@ -19520,24 +19330,6 @@
     ],
     "areas": [
       "routes/reports"
-    ]
-  },
-  "Add section": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
-  "Add section...": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
     ]
   },
   "Add service type...": {
@@ -19613,12 +19405,11 @@
     ]
   },
   "Add stop": {
-    "sites": 3,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/admin",
       "routes/distance-override",
       "routes/shipment"
     ]
@@ -19632,15 +19423,6 @@
       "go/other"
     ]
   },
-  "Add stops to extract pickup and delivery locations from the document.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
   "Add teammates by name, username, or email.": {
     "sites": 1,
     "scope": [
@@ -19648,15 +19430,6 @@
     ],
     "areas": [
       "routes/invoice"
-    ]
-  },
-  "Add term...": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
     ]
   },
   "Add the access key ID": {
@@ -20383,15 +20156,6 @@
       "routes/shipment"
     ]
   },
-  "Additional metadata that helps the rule engine match and parse more accurately.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
   "Additional notes about this profile.": {
     "sites": 1,
     "scope": [
@@ -20476,7 +20240,7 @@
     ]
   },
   "Address Line 1": {
-    "sites": 10,
+    "sites": 9,
     "scope": [
       "go",
       "ts"
@@ -20507,14 +20271,13 @@
     ]
   },
   "Address Line 2": {
-    "sites": 11,
+    "sites": 10,
     "scope": [
       "go",
       "ts"
     ],
     "areas": [
       "go/other",
-      "routes/admin",
       "routes/carrier",
       "routes/customer",
       "routes/location",
@@ -23029,17 +22792,8 @@
       "routes/shipment"
     ]
   },
-  "Aliases": {
-    "sites": 2,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
   "All": {
-    "sites": 25,
+    "sites": 24,
     "scope": [
       "ts"
     ],
@@ -23609,6 +23363,15 @@
       "routes/shipment"
     ]
   },
+  "All resources": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
   "All runs": {
     "sites": 1,
     "scope": [
@@ -24120,22 +23883,12 @@
     ]
   },
   "Allow multiple": {
-    "sites": 5,
+    "sites": 3,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/admin",
       "routes/document-packet-rule"
-    ]
-  },
-  "Allow multiple instances of this stop type": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
     ]
   },
   "Allow negative balance": {
@@ -24220,15 +23973,6 @@
     ]
   },
   "Allow this provider to appear in sign-in flows.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
-  "Allow this section to appear more than once in the document": {
     "sites": 1,
     "scope": [
       "ts"
@@ -24610,15 +24354,6 @@
     ]
   },
   "Also send journal entries already posted since the start date": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
-  "Alternative labels the parser will also recognize": {
     "sites": 1,
     "scope": [
       "ts"
@@ -27542,15 +27277,6 @@
       "routes/organization"
     ]
   },
-  "An unexpected error occurred.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
   "An unresolved service failure already exists for this stop": {
     "sites": 2,
     "scope": [
@@ -29109,7 +28835,7 @@
     ]
   },
   "Applied": {
-    "sites": 18,
+    "sites": 17,
     "scope": [
       "go",
       "ts"
@@ -29119,7 +28845,6 @@
       "apps/web/lib",
       "go/other",
       "routes/accounting-inbound",
-      "routes/admin",
       "routes/ar-open-items",
       "routes/customer-payments",
       "routes/desk",
@@ -29581,15 +29306,6 @@
       "routes/customer-payments"
     ]
   },
-  "Apply changes": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
   "Apply credit": {
     "sites": 1,
     "scope": [
@@ -29948,15 +29664,6 @@
     ],
     "areas": [
       "apps/web/lib"
-    ]
-  },
-  "Appointment patterns": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
     ]
   },
   "Appointment required": {
@@ -31739,15 +31446,6 @@
       "go/other"
     ]
   },
-  "Archived versions are frozen snapshots of previously published rules.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
   "Archived {0, plural, one {# policy} other {# policies}}": {
     "sites": 1,
     "scope": [
@@ -31792,15 +31490,6 @@
     ],
     "areas": [
       "routes/rate-matrix"
-    ]
-  },
-  "Archives the currently published version (if any)": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
     ]
   },
   "Archiving a formula template that is still in use needs approve permission": {
@@ -33314,15 +33003,6 @@
       "routes/worker"
     ]
   },
-  "Assertions": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
   "Assess late charges": {
     "sites": 1,
     "scope": [
@@ -34780,15 +34460,6 @@
       "api/handlers"
     ]
   },
-  "At least one fixture is required before publishing a parsing rule version": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
   "At least one format is required": {
     "sites": 1,
     "scope": [
@@ -34832,15 +34503,6 @@
     ],
     "areas": [
       "go/other"
-    ]
-  },
-  "At least one of these terms must appear in the document text. Use this for documents that vary in wording.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
     ]
   },
   "At least one offer is required": {
@@ -38482,15 +38144,6 @@
       "routes/carrier-monitoring"
     ]
   },
-  "Back to versions": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
   "Back to {0}": {
     "sites": 21,
     "scope": [
@@ -39531,15 +39184,6 @@
     ],
     "areas": [
       "apps/dash/routes"
-    ]
-  },
-  "Baseline analysis JSON": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
     ]
   },
   "Baseline hash cannot be longer than 128 characters": {
@@ -40705,7 +40349,7 @@
     ]
   },
   "Bill of lading": {
-    "sites": 5,
+    "sites": 4,
     "scope": [
       "ts"
     ],
@@ -42835,6 +42479,15 @@
       "routes/scheduling"
     ]
   },
+  "Bodies and attachments are read": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
   "Body": {
     "sites": 2,
     "scope": [
@@ -43820,6 +43473,15 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "Browse all resources": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
     ]
   },
   "Browse datasets": {
@@ -45609,7 +45271,7 @@
     ]
   },
   "Cancel": {
-    "sites": 328,
+    "sites": 323,
     "scope": [
       "go",
       "ts"
@@ -46587,15 +46249,6 @@
       "routes/agent-control"
     ]
   },
-  "Candidate analysis": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
   "Candidate error": {
     "sites": 1,
     "scope": [
@@ -47209,15 +46862,6 @@
     ],
     "areas": [
       "go/other"
-    ]
-  },
-  "Capture blank lines": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
     ]
   },
   "Capture decided proposals as candidate evaluation cases": {
@@ -51261,15 +50905,6 @@
       "routes/agent-control"
     ]
   },
-  "Changing this value can invalidate existing versions and fixtures. Re-run simulations before publishing.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
   "Changing who can use an agent needs permission to update roles as well as agents. Save it without changing who can use it, or ask someone who can update roles.": {
     "sites": 1,
     "scope": [
@@ -52217,15 +51852,6 @@
       "apps/web/components"
     ]
   },
-  "Check that the selected version has valid rule configuration and the document text is not empty. If the issue persists, verify the rule version status on the Versions tab.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
   "Check that the truck or trailer a carrier sent for a load is registered to that carrier, by VIN or plate, and record the answer on the assignment. Take the numbers from the driver or the carrier's dispatch, never from a guess.": {
     "sites": 1,
     "scope": [
@@ -52873,6 +52499,15 @@
       "routes/agent-control"
     ]
   },
+  "Choose a capability, or set access on a resource in any category.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
   "Choose a checklist": {
     "sites": 1,
     "scope": [
@@ -53513,15 +53148,6 @@
       "go/other"
     ]
   },
-  "Choose an existing rule set from the sidebar to view and edit its parsing configuration, or create a new one to define extraction rules for a document provider.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
   "Choose another file": {
     "sites": 1,
     "scope": [
@@ -53844,6 +53470,15 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "Choose operations…": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
     ]
   },
   "Choose or create a SCIM directory before managing tokens and group mappings.": {
@@ -55104,7 +54739,7 @@
     ]
   },
   "City": {
-    "sites": 37,
+    "sites": 36,
     "scope": [
       "go",
       "ts"
@@ -56105,15 +55740,6 @@
       "routes/service-failure"
     ]
   },
-  "Clear results": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
   "Clear rules": {
     "sites": 1,
     "scope": [
@@ -56133,7 +55759,7 @@
     ]
   },
   "Clear search": {
-    "sites": 9,
+    "sites": 11,
     "scope": [
       "ts"
     ],
@@ -58487,15 +58113,6 @@
       "routes/customer"
     ]
   },
-  "Comma-separated acceptable values": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
   "Comma-separated column names. Only trigger on UPDATE when these columns change. Leave empty to watch all.": {
     "sites": 1,
     "scope": [
@@ -59529,15 +59146,6 @@
       "routes/agent-control",
       "routes/edi",
       "routes/reports"
-    ]
-  },
-  "Comparison between baseline and candidate extraction results.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
     ]
   },
   "Comparisons can't be chained; write each one and join them with `and`": {
@@ -60601,24 +60209,6 @@
       "apps/web/types"
     ]
   },
-  "Confidence: {0}% {1}": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
-  "Confidence{0}": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
   "Confidential": {
     "sites": 1,
     "scope": [
@@ -60951,15 +60541,6 @@
       "routes/cost-control"
     ]
   },
-  "Configure the name, document kind, and priority for this rule set.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
   "Configure the transport profile and envelope values used for this organization.": {
     "sites": 1,
     "scope": [
@@ -60997,13 +60578,12 @@
     ]
   },
   "Confirm": {
-    "sites": 2,
+    "sites": 1,
     "scope": [
       "ts"
     ],
     "areas": [
-      "apps/web/components",
-      "routes/admin"
+      "apps/web/components"
     ]
   },
   "Confirm Cancellation": {
@@ -61462,15 +61042,6 @@
     ],
     "areas": [
       "routes/scheduling"
-    ]
-  },
-  "Conflicts ({0})": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
     ]
   },
   "Conflicts detected": {
@@ -62660,15 +62231,6 @@
       "routes/table-change-alert"
     ]
   },
-  "Content available": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
   "Content hash cannot be longer than 64 characters": {
     "sites": 2,
     "scope": [
@@ -62696,15 +62258,6 @@
       "go/other"
     ]
   },
-  "Content matching": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
   "Content must be at most {0} characters": {
     "sites": 1,
     "scope": [
@@ -62715,12 +62268,11 @@
     ]
   },
   "Content status": {
-    "sites": 2,
+    "sites": 1,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/admin",
       "routes/shipment"
     ]
   },
@@ -63928,7 +63480,7 @@
     ]
   },
   "Copied": {
-    "sites": 19,
+    "sites": 20,
     "scope": [
       "ts"
     ],
@@ -64155,11 +63707,12 @@
     ]
   },
   "Copy address": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
+      "routes/admin",
       "routes/inbox"
     ]
   },
@@ -67446,7 +66999,7 @@
     ]
   },
   "Create": {
-    "sites": 78,
+    "sites": 77,
     "scope": [
       "go",
       "ts"
@@ -67675,15 +67228,6 @@
     ],
     "areas": [
       "apps/web/components"
-    ]
-  },
-  "Create a rule set to define how documents are parsed.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
     ]
   },
   "Create a server token and webhook in": {
@@ -68289,15 +67833,6 @@
       "go/other"
     ]
   },
-  "Create rule set": {
-    "sites": 2,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
   "Create schedule": {
     "sites": 1,
     "scope": [
@@ -68499,7 +68034,7 @@
     ]
   },
   "Created": {
-    "sites": 26,
+    "sites": 24,
     "scope": [
       "ts"
     ],
@@ -68791,7 +68326,7 @@
     ]
   },
   "Creating...": {
-    "sites": 10,
+    "sites": 7,
     "scope": [
       "ts"
     ],
@@ -69890,7 +69425,7 @@
     ]
   },
   "Current": {
-    "sites": 36,
+    "sites": 34,
     "scope": [
       "go",
       "ts"
@@ -70576,6 +70111,15 @@
     ],
     "areas": [
       "routes/agent-control"
+    ]
+  },
+  "Custom · {0} of {1}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
     ]
   },
   "Customer": {
@@ -72630,7 +72174,7 @@
     ]
   },
   "Date": {
-    "sites": 34,
+    "sites": 33,
     "scope": [
       "go",
       "ts"
@@ -72640,7 +72184,6 @@
       "apps/web/lib",
       "apps/web/types",
       "go/other",
-      "routes/admin",
       "routes/agent-control",
       "routes/bank-receipt",
       "routes/bank-receipt-batch",
@@ -75826,15 +75369,6 @@
       "routes/accounting-control"
     ]
   },
-  "Define provider-specific parsing rules, test with fixtures, and simulate extraction results": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
   "Define the available options for this select field": {
     "sites": 1,
     "scope": [
@@ -75845,15 +75379,6 @@
     ]
   },
   "Define the bearer credential and grant only the resources the integration needs.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
-  "Define the expected extraction results for this fixture. Use field assertions for presence, shape, and format checks; keep exact-value matches only for legacy or intentionally strict fixtures.": {
     "sites": 1,
     "scope": [
       "ts"
@@ -76347,7 +75872,7 @@
     ]
   },
   "Delete": {
-    "sites": 62,
+    "sites": 59,
     "scope": [
       "go",
       "ts"
@@ -76652,15 +76177,6 @@
       "go/other"
     ]
   },
-  "Delete fixture": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
   "Delete form mapping?": {
     "sites": 1,
     "scope": [
@@ -76830,24 +76346,6 @@
     ],
     "areas": [
       "routes/inbox"
-    ]
-  },
-  "Delete rule set": {
-    "sites": 2,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
-  "Delete rule sets and fixtures": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
     ]
   },
   "Delete schedule": {
@@ -77101,7 +76599,7 @@
     ]
   },
   "Deleting...": {
-    "sites": 8,
+    "sites": 7,
     "scope": [
       "ts"
     ],
@@ -77245,6 +76743,15 @@
       "template/customertracking.status.email"
     ]
   },
+  "Deliveries are verified": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
   "Delivering today": {
     "sites": 1,
     "scope": [
@@ -77273,7 +76780,7 @@
     ]
   },
   "Delivery": {
-    "sites": 34,
+    "sites": 33,
     "scope": [
       "go",
       "ts"
@@ -77284,7 +76791,6 @@
       "apps/web/lib",
       "go/other",
       "packages/shared/lib",
-      "routes/admin",
       "routes/agent-control",
       "routes/desk",
       "routes/edi",
@@ -78342,15 +77848,6 @@
       "routes/admin"
     ]
   },
-  "Describe when this rule set should be used, what provider or format it targets, and any special considerations...": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
   "Describe {0, plural, one {# input} other {# inputs}}": {
     "sites": 1,
     "scope": [
@@ -78370,7 +77867,7 @@
     ]
   },
   "Description": {
-    "sites": 180,
+    "sites": 178,
     "scope": [
       "go",
       "ts"
@@ -79159,7 +78656,7 @@
     ]
   },
   "Details": {
-    "sites": 18,
+    "sites": 17,
     "scope": [
       "go",
       "ts"
@@ -79167,7 +78664,6 @@
     "areas": [
       "apps/web/components",
       "packages/shared/components",
-      "routes/admin",
       "routes/billing-queue",
       "routes/carrier-monitoring",
       "routes/desk",
@@ -79178,15 +78674,6 @@
       "template/detention.notice.email",
       "template/invoice.email",
       "template/tender.offer.email"
-    ]
-  },
-  "Details about which rule version matched and how.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
     ]
   },
   "Details and actions for this carrier change": {
@@ -79265,13 +78752,12 @@
     ]
   },
   "Detected kind": {
-    "sites": 2,
+    "sites": 1,
     "scope": [
       "ts"
     ],
     "areas": [
-      "apps/web/components",
-      "routes/admin"
+      "apps/web/components"
     ]
   },
   "Detected kind cannot be longer than 100 characters": {
@@ -80277,15 +79763,6 @@
       "routes/cost-control"
     ]
   },
-  "Diff": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
   "Difference": {
     "sites": 11,
     "scope": [
@@ -80873,15 +80350,6 @@
     "areas": [
       "apps/web/components",
       "routes/agent-control"
-    ]
-  },
-  "Discard any unapplied JSON edits and reload from the current Rule Builder state.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
     ]
   },
   "Discard captured pages without filing them": {
@@ -83001,7 +82469,7 @@
     ]
   },
   "Document": {
-    "sites": 46,
+    "sites": 45,
     "scope": [
       "go",
       "ts"
@@ -83014,7 +82482,6 @@
       "packages/shared/types",
       "routes/accounting-drift",
       "routes/accounting-sync",
-      "routes/admin",
       "routes/agent-control",
       "routes/billing-queue",
       "routes/customer-ledger",
@@ -83083,7 +82550,7 @@
     ]
   },
   "Document Management": {
-    "sites": 4,
+    "sites": 2,
     "scope": [
       "ts"
     ],
@@ -83093,42 +82560,6 @@
   },
   "Document Number": {
     "sites": 3,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
-  "Document Operation": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
-  "Document Operations": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
-  "Document Parsing Rule": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
-  "Document Parsing Rules": {
-    "sites": 1,
     "scope": [
       "go"
     ],
@@ -83245,15 +82676,6 @@
       "routes/accounting-sync"
     ]
   },
-  "Document diagnostics, extraction, preview, and search operations": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
   "Document does not belong to this worker": {
     "sites": 6,
     "scope": [
@@ -83368,15 +82790,6 @@
       "routes/agent-control"
     ]
   },
-  "Document input": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
   "Document intelligence finished extracting a document's contents.": {
     "sites": 1,
     "scope": [
@@ -83413,34 +82826,7 @@
       "go/other"
     ]
   },
-  "Document kind": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
   "Document kind cannot be longer than 100 characters": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
-  "Document kind is required": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
-  "Document kind must be valid": {
     "sites": 1,
     "scope": [
       "go"
@@ -83494,15 +82880,6 @@
       "go/other"
     ]
   },
-  "Document not found or an unexpected error occurred": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
   "Document on file": {
     "sites": 1,
     "scope": [
@@ -83510,16 +82887,6 @@
     ],
     "areas": [
       "routes/worker"
-    ]
-  },
-  "Document operations": {
-    "sites": 2,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "apps/web/config",
-      "routes/admin"
     ]
   },
   "Document packet rule": {
@@ -83538,15 +82905,6 @@
     ],
     "areas": [
       "routes/document-packet-rule"
-    ]
-  },
-  "Document parsing rules": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
     ]
   },
   "Document payload": {
@@ -83713,15 +83071,6 @@
     ],
     "areas": [
       "go/other"
-    ]
-  },
-  "Document text": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
     ]
   },
   "Document text, when the record it belongs to may be read by a model": {
@@ -84614,7 +83963,7 @@
     ]
   },
   "Draft": {
-    "sites": 56,
+    "sites": 55,
     "scope": [
       "go",
       "ts"
@@ -84626,7 +83975,6 @@
       "go/other",
       "packages/shared/components",
       "packages/shared/types",
-      "routes/admin",
       "routes/carrier-settlement-workspace",
       "routes/desk",
       "routes/formula-template",
@@ -84709,15 +84057,6 @@
     ],
     "areas": [
       "go/other"
-    ]
-  },
-  "Draft available": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
     ]
   },
   "Draft change": {
@@ -84867,12 +84206,11 @@
     ]
   },
   "Draft status": {
-    "sites": 2,
+    "sites": 1,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/admin",
       "routes/shipment"
     ]
   },
@@ -89287,15 +88625,6 @@
       "routes/agent-control"
     ]
   },
-  "Each extractor pulls a specific piece of data (name, address, date) from this stop.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
   "Each field is mapped to one column": {
     "sites": 1,
     "scope": [
@@ -93224,15 +92553,6 @@
       "routes/factoring-company"
     ]
   },
-  "End anchors": {
-    "sites": 2,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
   "End assignment": {
     "sites": 2,
     "scope": [
@@ -95655,13 +94975,12 @@
     ]
   },
   "Equals": {
-    "sites": 5,
+    "sites": 4,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/web/types",
-      "routes/admin",
       "routes/reports",
       "routes/table-change-alert"
     ]
@@ -97890,6 +97209,15 @@
       "go/other"
     ]
   },
+  "Every delivery is refused until it is set": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
   "Every document Trenova sends to {0}, what happened to it, and what to do when it did not go through.": {
     "sites": 1,
     "scope": [
@@ -98394,6 +97722,15 @@
     ],
     "areas": [
       "routes/org-structure"
+    ]
+  },
+  "Every operation the resource offers": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
     ]
   },
   "Every option refused": {
@@ -98914,15 +98251,6 @@
     ],
     "areas": [
       "routes/formula-template"
-    ]
-  },
-  "Every term listed here must appear somewhere in the document text for the rule to match.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
     ]
   },
   "Every terminal · choose one below to narrow the page": {
@@ -100341,15 +99669,6 @@
       "go/other"
     ]
   },
-  "Exists": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
   "Exit fullscreen": {
     "sites": 1,
     "scope": [
@@ -101043,15 +100362,6 @@
       "routes/edi"
     ]
   },
-  "Expected exact value": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
   "Expected fee": {
     "sites": 2,
     "scope": [
@@ -101479,7 +100789,7 @@
     ]
   },
   "Expected value": {
-    "sites": 3,
+    "sites": 2,
     "scope": [
       "ts"
     ],
@@ -103624,15 +102934,6 @@
       "routes/shipment"
     ]
   },
-  "Extracted content": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
   "Extracted fields": {
     "sites": 1,
     "scope": [
@@ -103689,13 +102990,12 @@
     ]
   },
   "Extraction": {
-    "sites": 4,
+    "sites": 3,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/web/components",
-      "routes/admin",
       "routes/desk"
     ]
   },
@@ -103816,24 +103116,6 @@
     ],
     "areas": [
       "apps/web/components"
-    ]
-  },
-  "Extractor {0}": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
-  "Extractors ({0})": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
     ]
   },
   "F12": {
@@ -105133,22 +104415,12 @@
     ]
   },
   "Failed to create draft version": {
-    "sites": 2,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin",
-      "routes/edi"
-    ]
-  },
-  "Failed to create fixture": {
     "sites": 1,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/admin"
+      "routes/edi"
     ]
   },
   "Failed to create invoice": {
@@ -105167,15 +104439,6 @@
     ],
     "areas": [
       "routes/carrier-invoice-matching"
-    ]
-  },
-  "Failed to create rule set": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
     ]
   },
   "Failed to create shipment: {0}": {
@@ -105303,15 +104566,6 @@
     ],
     "areas": [
       "routes/edi"
-    ]
-  },
-  "Failed to delete rule set": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
     ]
   },
   "Failed to delete the test case": {
@@ -105667,15 +104921,6 @@
       "routes/formula-template"
     ]
   },
-  "Failed to load diagnostics": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
   "Failed to load import batches. Try refreshing the page.": {
     "sites": 1,
     "scope": [
@@ -105891,15 +105136,6 @@
     ],
     "areas": [
       "go/other"
-    ]
-  },
-  "Failed to publish version": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
     ]
   },
   "Failed to queue delivery retry": {
@@ -107539,15 +106775,6 @@
       "routes/agent-control"
     ]
   },
-  "Field assertions": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
   "Field by field": {
     "sites": 1,
     "scope": [
@@ -107575,24 +106802,6 @@
       "routes/admin"
     ]
   },
-  "Field key": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
-  "Field key (e.g. referenceNumber)": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
   "Field key is invalid": {
     "sites": 1,
     "scope": [
@@ -107600,15 +106809,6 @@
     ],
     "areas": [
       "go/other"
-    ]
-  },
-  "Field key is present in the extraction result.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
     ]
   },
   "Field key is repeated": {
@@ -107665,44 +106865,8 @@
       "go/other"
     ]
   },
-  "Field value must be present and non-blank.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
-  "Field value must equal one of the provided candidates.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
-  "Field value must exactly match the provided string.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
-  "Field value must match the provided regex pattern.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
   "Field {0}": {
-    "sites": 2,
+    "sites": 1,
     "scope": [
       "ts"
     ],
@@ -107720,33 +106884,14 @@
     ]
   },
   "Fields": {
-    "sites": 4,
+    "sites": 3,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/web/components",
-      "routes/admin",
       "routes/agent-control",
       "routes/reports"
-    ]
-  },
-  "Fields ({0})": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
-  "Fields define individual data points to extract from the document.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
     ]
   },
   "Fields go back to how they opened. <b>This can't be undone.</b>": {
@@ -107991,13 +107136,12 @@
     ]
   },
   "File name": {
-    "sites": 3,
+    "sites": 1,
     "scope": [
       "ts"
     ],
     "areas": [
-      "apps/web/components",
-      "routes/admin"
+      "apps/web/components"
     ]
   },
   "File name cannot be longer than 255 characters": {
@@ -108016,15 +107160,6 @@
     ],
     "areas": [
       "go/other"
-    ]
-  },
-  "File name contains": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
     ]
   },
   "File name copied": {
@@ -109926,6 +109061,15 @@
       "rules/tariff"
     ]
   },
+  "First delivery": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
   "First draft": {
     "sites": 2,
     "scope": [
@@ -110584,42 +109728,6 @@
       "routes/accounting-drift"
     ]
   },
-  "Fixture details": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
-  "Fixture validation failed for the parsing rule version": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
-  "Fixtures": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
-  "Fixtures are sample documents with expected extraction results. They let you validate that rules produce the correct fields and stops before publishing.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
   "Flag cancellations effective within (days)": {
     "sites": 1,
     "scope": [
@@ -110645,24 +109753,6 @@
     ],
     "areas": [
       "apps/web/components"
-    ]
-  },
-  "Flag for review if this field is missing from the result": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
-  "Flag for review if this stop is missing": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
     ]
   },
   "Flag when net pay deviates from the trailing average by more than this percentage.": {
@@ -114165,7 +113255,7 @@
     ]
   },
   "Full access": {
-    "sites": 4,
+    "sites": 6,
     "scope": [
       "ts"
     ],
@@ -114181,15 +113271,6 @@
     ],
     "areas": [
       "go/other"
-    ]
-  },
-  "Full document text": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
     ]
   },
   "Full event data": {
@@ -116699,6 +115780,15 @@
       "routes/agent-control"
     ]
   },
+  "Gone quiet": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
   "Good": {
     "sites": 7,
     "scope": [
@@ -117034,15 +116124,6 @@
       "apps/web/lib"
     ]
   },
-  "Grant all": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
   "Grant and revoke overrides of blocking findings": {
     "sites": 1,
     "scope": [
@@ -117063,12 +116144,13 @@
     ]
   },
   "Granted": {
-    "sites": 1,
+    "sites": 4,
     "scope": [
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "apps/web/components",
+      "routes/admin"
     ]
   },
   "Granted {0}, expires {1}": {
@@ -118898,15 +117980,6 @@
       "routes/desk"
     ]
   },
-  "Headings or labels in the document that indicate this rule applies. The parser looks for these strings as section boundaries.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
   "Headline cannot be longer than 160 characters": {
     "sites": 1,
     "scope": [
@@ -119388,15 +118461,6 @@
       "routes/fuel-purchase"
     ]
   },
-  "Helps your team understand the purpose of this rule set.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
   "Here's what each statement of the tariff does.": {
     "sites": 1,
     "scope": [
@@ -119825,15 +118889,6 @@
     ],
     "areas": [
       "routes/agent-control"
-    ]
-  },
-  "Higher priority rules take precedence when multiple rules match the same document.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
     ]
   },
   "Highest": {
@@ -123463,15 +122518,6 @@
       "apps/web/components"
     ]
   },
-  "Identify documents by their source provider or file name. These criteria are checked before the document content is analyzed.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
   "Identify the source bank and a reference for this import": {
     "sites": 1,
     "scope": [
@@ -123479,15 +122525,6 @@
     ],
     "areas": [
       "routes/bank-receipt-batch"
-    ]
-  },
-  "Identify this fixture with a name and optional metadata used during provider matching.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
     ]
   },
   "Identity": {
@@ -125813,15 +124850,6 @@
       "routes/customer"
     ]
   },
-  "Include blank lines within the section boundaries": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
   "Include evaluations": {
     "sites": 1,
     "scope": [
@@ -125948,7 +124976,7 @@
       "packages/shared/components"
     ]
   },
-  "Included with {0}. Select it to grant it on its own.": {
+  "Included with {0}": {
     "sites": 1,
     "scope": [
       "ts"
@@ -126860,13 +125888,12 @@
     ]
   },
   "Inspect": {
-    "sites": 3,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/web/components",
-      "routes/admin",
       "routes/edi"
     ]
   },
@@ -126877,15 +125904,6 @@
     ],
     "areas": [
       "apps/web/components"
-    ]
-  },
-  "Inspect document lifecycle state and trigger recovery actions": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
     ]
   },
   "Inspected units": {
@@ -128075,24 +127093,6 @@
       "api/graphql"
     ]
   },
-  "Invalid JSON at line {0}: {1}": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
-  "Invalid JSON: {0}": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
   "Invalid US postal code (e.g., 12345 or 12345-6789)": {
     "sites": 1,
     "scope": [
@@ -129118,7 +128118,7 @@
     ]
   },
   "Invoice": {
-    "sites": 54,
+    "sites": 53,
     "scope": [
       "go",
       "ts"
@@ -134839,12 +133839,11 @@
     ]
   },
   "Key": {
-    "sites": 4,
+    "sites": 3,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/admin",
       "routes/agent-control",
       "routes/review-template"
     ]
@@ -134986,15 +133985,6 @@
     ],
     "areas": [
       "apps/web/components"
-    ]
-  },
-  "Key{0}": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
     ]
   },
   "Kilometers": {
@@ -135270,7 +134260,7 @@
     ]
   },
   "Label": {
-    "sites": 23,
+    "sites": 21,
     "scope": [
       "go",
       "ts"
@@ -135427,15 +134417,6 @@
     ],
     "areas": [
       "apps/web/types"
-    ]
-  },
-  "Label this version and choose how it interacts with the base parser.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
     ]
   },
   "Laboratory": {
@@ -136242,6 +135223,15 @@
     ],
     "areas": [
       "routes/agent-control"
+    ]
+  },
+  "Last mail {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
     ]
   },
   "Last message {0}": {
@@ -138362,15 +137352,6 @@
       "routes/dispatch-console"
     ]
   },
-  "Legacy exact matches": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
   "Legal after a 10-hour reset": {
     "sites": 1,
     "scope": [
@@ -139499,15 +138480,6 @@
       "routes/agent-control"
     ]
   },
-  "Limit to sections...": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
   "Limit which email domains can sign in with Entra ID.": {
     "sites": 1,
     "scope": [
@@ -139805,12 +138777,11 @@
     ]
   },
   "Lineage": {
-    "sites": 2,
+    "sites": 1,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/admin",
       "routes/invoice"
     ]
   },
@@ -140812,7 +139783,7 @@
     ]
   },
   "Listening": {
-    "sites": 2,
+    "sites": 1,
     "scope": [
       "ts"
     ],
@@ -141805,6 +140776,15 @@
       "routes/benefits"
     ]
   },
+  "Loading capabilities": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
   "Loading capacity": {
     "sites": 1,
     "scope": [
@@ -142147,6 +141127,15 @@
     ],
     "areas": [
       "routes/jurisdiction-rule"
+    ]
+  },
+  "Loading mailboxes": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
     ]
   },
   "Loading map component...": {
@@ -142493,6 +141482,15 @@
       "routes/factoring-remittance"
     ]
   },
+  "Loading resources": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
   "Loading retrieval": {
     "sites": 1,
     "scope": [
@@ -142512,15 +141510,6 @@
     ]
   },
   "Loading roles…": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
-  "Loading rule sets": {
     "sites": 1,
     "scope": [
       "ts"
@@ -145694,6 +144683,24 @@
       "packages/shared/lib"
     ]
   },
+  "Mail arrives without its body or attachments": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
+  "Mail has arrived": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
   "Mail has stopped arriving": {
     "sites": 1,
     "scope": [
@@ -145737,6 +144744,15 @@
     ],
     "areas": [
       "routes/edi"
+    ]
+  },
+  "Mailbox actions": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
     ]
   },
   "Mailbox does not exist": {
@@ -146133,15 +145149,6 @@
     ],
     "areas": [
       "routes/hold-reason"
-    ]
-  },
-  "Makes this version read-only — no further edits will be possible": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
     ]
   },
   "Making a change…": {
@@ -148340,15 +147347,6 @@
       "go/other"
     ]
   },
-  "Match config": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
   "Match created": {
     "sites": 1,
     "scope": [
@@ -148374,15 +147372,6 @@
     ],
     "areas": [
       "routes/detention-policy"
-    ]
-  },
-  "Match documents based on text found within the document body. These criteria help distinguish documents from the same provider that may have different formats.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
     ]
   },
   "Match either word": {
@@ -148466,15 +147455,6 @@
       "routes/dispatch-console"
     ]
   },
-  "Match specificity": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
   "Match suggestions": {
     "sites": 1,
     "scope": [
@@ -148548,7 +147528,7 @@
     ]
   },
   "Matched": {
-    "sites": 16,
+    "sites": 15,
     "scope": [
       "go",
       "ts"
@@ -148557,7 +147537,6 @@
       "apps/web/lib",
       "go/other",
       "packages/shared/components",
-      "routes/admin",
       "routes/bank-receipt",
       "routes/bank-receipt-batch",
       "routes/desk",
@@ -148748,15 +147727,6 @@
     ],
     "areas": [
       "routes/routing-guide"
-    ]
-  },
-  "Matches regex": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
     ]
   },
   "Matches the table layout": {
@@ -150430,33 +149400,6 @@
       "go/other"
     ]
   },
-  "Merge": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
-  "Merge extends the base parser results. Override replaces them entirely.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
-  "Merge with base parser": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
   "Message": {
     "sites": 13,
     "scope": [
@@ -150762,7 +149705,7 @@
     ]
   },
   "Metadata": {
-    "sites": 2,
+    "sites": 1,
     "scope": [
       "ts"
     ],
@@ -151392,15 +150335,6 @@
       "go/other"
     ]
   },
-  "Min confidence": {
-    "sites": 2,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
   "Min distance": {
     "sites": 1,
     "scope": [
@@ -151614,15 +150548,6 @@
       "routes/dispatch-control"
     ]
   },
-  "Minimum confidence threshold (0.0 to 1.0)": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
   "Minimum control number must be at least one": {
     "sites": 1,
     "scope": [
@@ -151778,15 +150703,6 @@
     ],
     "areas": [
       "go/other"
-    ]
-  },
-  "Minimum stop count": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
     ]
   },
   "Minimum temperature for storing or shipping.": {
@@ -152103,13 +151019,12 @@
     ]
   },
   "Missing fields": {
-    "sites": 2,
+    "sites": 1,
     "scope": [
       "ts"
     ],
     "areas": [
-      "apps/web/components",
-      "routes/admin"
+      "apps/web/components"
     ]
   },
   "Missing mapping": {
@@ -155143,7 +154058,7 @@
     ]
   },
   "N/A": {
-    "sites": 4,
+    "sites": 3,
     "scope": [
       "ts"
     ],
@@ -155217,7 +154132,7 @@
     ]
   },
   "Name": {
-    "sites": 167,
+    "sites": 162,
     "scope": [
       "go",
       "ts"
@@ -155589,7 +154504,7 @@
     ]
   },
   "Name is required": {
-    "sites": 145,
+    "sites": 143,
     "scope": [
       "go",
       "ts"
@@ -156683,14 +155598,13 @@
     ]
   },
   "Needs review": {
-    "sites": 8,
+    "sites": 7,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/web/components",
       "packages/shared/components",
-      "routes/admin",
       "routes/settlement-workspace"
     ]
   },
@@ -157388,6 +156302,15 @@
       "routes/desk"
     ]
   },
+  "Never received": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
   "Never require": {
     "sites": 1,
     "scope": [
@@ -157435,7 +156358,7 @@
     ]
   },
   "New": {
-    "sites": 26,
+    "sites": 25,
     "scope": [
       "go",
       "ts"
@@ -157447,7 +156370,6 @@
       "apps/web/lib",
       "go/other",
       "packages/shared/components",
-      "routes/admin",
       "routes/agent-control",
       "routes/desk",
       "routes/edi",
@@ -157766,12 +156688,11 @@
     ]
   },
   "New draft": {
-    "sites": 2,
+    "sites": 1,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/admin",
       "routes/edi"
     ]
   },
@@ -157863,15 +156784,6 @@
     ],
     "areas": [
       "apps/web/config"
-    ]
-  },
-  "New fixture": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
     ]
   },
   "New fleet code": {
@@ -159764,6 +158676,15 @@
       "rules/tariff"
     ]
   },
+  "No access": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
   "No access policies configured": {
     "sites": 1,
     "scope": [
@@ -160626,6 +159547,33 @@
       "routes/agent-control",
       "routes/detention-policy",
       "routes/fuel-management"
+    ]
+  },
+  "No capabilities are available.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
+  "No capabilities found": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
+  "No capabilities match “{0}”. Try a different search term.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
     ]
   },
   "No capabilities reported": {
@@ -161853,15 +160801,6 @@
       "routes/agent-control"
     ]
   },
-  "No document selected": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
   "No document type with that id exists": {
     "sites": 1,
     "scope": [
@@ -161923,15 +160862,6 @@
     ],
     "areas": [
       "routes/desk"
-    ]
-  },
-  "No draft generated": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
     ]
   },
   "No drift findings yet": {
@@ -162611,24 +161541,6 @@
       "routes/admin"
     ]
   },
-  "No field assertions yet. Add rules for things like “referenceNumber is not empty” or “rate matches a currency pattern.”": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
-  "No field rules defined": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
   "No field values.": {
     "sites": 1,
     "scope": [
@@ -162726,15 +161638,6 @@
     ],
     "areas": [
       "routes/fiscal-year"
-    ]
-  },
-  "No fixtures yet": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
     ]
   },
   "No fleet codes yet": {
@@ -163675,6 +162578,15 @@
       "routes/inbox"
     ]
   },
+  "No mail in {0, plural, one {# day} other {# days}}. Send a test email to check the address still works.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
   "No mailboxes yet": {
     "sites": 1,
     "scope": [
@@ -164513,15 +163425,6 @@
     ],
     "areas": [
       "apps/web/components"
-    ]
-  },
-  "No page snapshots defined. Add pages if the document has page-specific content.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
     ]
   },
   "No pages came through": {
@@ -165681,6 +164584,15 @@
       "routes/admin"
     ]
   },
+  "No resources granted yet": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
   "No resources match “{0}”. Try a different search term.": {
     "sites": 1,
     "scope": [
@@ -165708,15 +164620,6 @@
     ],
     "areas": [
       "routes/desk"
-    ]
-  },
-  "No results for \"{0}\"": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
     ]
   },
   "No results found.": {
@@ -165989,15 +164892,6 @@
       "routes/reports"
     ]
   },
-  "No rule sets yet": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
   "No runs match": {
     "sites": 1,
     "scope": [
@@ -166113,15 +165007,6 @@
     ],
     "areas": [
       "routes/edi"
-    ]
-  },
-  "No sections defined": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
     ]
   },
   "No secure parking": {
@@ -166601,15 +165486,6 @@
     ],
     "areas": [
       "routes/desk"
-    ]
-  },
-  "No stop rules defined": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
     ]
   },
   "No stops configured": {
@@ -167399,15 +166275,6 @@
       "routes/rate-matrix"
     ]
   },
-  "No version has been published yet. Create and publish a version from the Versions tab to start parsing documents with this rule set.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
   "No version history yet": {
     "sites": 1,
     "scope": [
@@ -167426,15 +166293,6 @@
       "apps/web/components"
     ]
   },
-  "No versions found.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
   "No versions recorded yet": {
     "sites": 1,
     "scope": [
@@ -167442,15 +166300,6 @@
     ],
     "areas": [
       "routes/rate-agreement"
-    ]
-  },
-  "No versions yet": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
     ]
   },
   "No versions yet.": {
@@ -168112,7 +166961,7 @@
     ]
   },
   "None": {
-    "sites": 50,
+    "sites": 49,
     "scope": [
       "go",
       "ts"
@@ -168527,15 +167376,6 @@
       "go/other"
     ]
   },
-  "Normalizer": {
-    "sites": 2,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
   "Normalizes partner contact phone with a shipment contact fallback.": {
     "sites": 1,
     "scope": [
@@ -168893,15 +167733,6 @@
       "apps/web/components"
     ]
   },
-  "Not classified": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
   "Not clear which is wrong": {
     "sites": 1,
     "scope": [
@@ -169041,15 +167872,6 @@
       "routes/desk"
     ]
   },
-  "Not empty": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
   "Not enforced": {
     "sites": 2,
     "scope": [
@@ -169135,15 +167957,6 @@
     "areas": [
       "apps/web/components",
       "routes/shipment"
-    ]
-  },
-  "Not extracted yet": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
     ]
   },
   "Not factored": {
@@ -169267,6 +168080,15 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "Not granted": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
     ]
   },
   "Not handled": {
@@ -169453,7 +168275,7 @@
     ]
   },
   "Not listening": {
-    "sites": 2,
+    "sites": 1,
     "scope": [
       "ts"
     ],
@@ -169471,12 +168293,11 @@
     ]
   },
   "Not matched": {
-    "sites": 2,
+    "sites": 1,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/admin",
       "routes/desk"
     ]
   },
@@ -170017,7 +168838,7 @@
     ]
   },
   "Not set": {
-    "sites": 6,
+    "sites": 5,
     "scope": [
       "ts"
     ],
@@ -171075,6 +169896,24 @@
     ],
     "areas": [
       "routes/billing-queue"
+    ]
+  },
+  "Nothing has arrived yet": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
+  "Nothing has arrived yet. Send a test email to check the address works.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
     ]
   },
   "Nothing has been assigned to you yet.": {
@@ -176461,15 +175300,6 @@
       "apps/dash/routes"
     ]
   },
-  "One Of": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
   "One active credential per worker": {
     "sites": 1,
     "scope": [
@@ -177153,15 +175983,6 @@
     ],
     "areas": [
       "routes/billing-queue"
-    ]
-  },
-  "Only Draft and Published versions are available for simulation.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
     ]
   },
   "Only Draft fiscal years can be deleted": {
@@ -178742,24 +177563,6 @@
     ]
   },
   "Only draft or pending settlements can be adjusted": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
-  "Only draft parsing rule versions can be published": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
-  "Only draft parsing rule versions can be updated": {
     "sites": 1,
     "scope": [
       "go"
@@ -182783,13 +181586,21 @@
       "routes/service-failure"
     ]
   },
-  "Operator": {
-    "sites": 2,
+  "Operations on {0}": {
+    "sites": 1,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/admin",
+      "routes/admin"
+    ]
+  },
+  "Operator": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
       "routes/table-change-alert"
     ]
   },
@@ -182908,15 +181719,6 @@
     ],
     "areas": [
       "routes/edi"
-    ]
-  },
-  "Optional context": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
     ]
   },
   "Optional context for the people working through the checklist.": {
@@ -183205,15 +182007,6 @@
     ],
     "areas": [
       "routes/hazmat-segregation-rule"
-    ]
-  },
-  "Optional strict assertions for fixtures that intentionally require an exact extracted value. Prefer field assertions above for general template validation.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
     ]
   },
   "Optional threshold for acceptable service failure rate.": {
@@ -185870,13 +184663,12 @@
     ]
   },
   "Override": {
-    "sites": 6,
+    "sites": 5,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/web/components",
-      "routes/admin",
       "routes/cost-control",
       "routes/shipment"
     ]
@@ -185900,15 +184692,6 @@
     ]
   },
   "Override auto-composition with a token template.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
-  "Override base parser": {
     "sites": 1,
     "scope": [
       "ts"
@@ -187517,15 +186300,6 @@
       "api/handlers"
     ]
   },
-  "Page number": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
   "Page number is required": {
     "sites": 1,
     "scope": [
@@ -187580,24 +186354,6 @@
       "go/other"
     ]
   },
-  "Page snapshots": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
-  "Page text": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
   "Page title cannot be longer than 255 characters": {
     "sites": 1,
     "scope": [
@@ -187617,13 +186373,12 @@
     ]
   },
   "Page {0}": {
-    "sites": 15,
+    "sites": 13,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/web/components",
-      "routes/admin",
       "routes/desk",
       "routes/inbox",
       "routes/insights",
@@ -188507,51 +187262,6 @@
       "packages/shared/types"
     ]
   },
-  "Parser mode": {
-    "sites": 3,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
-  "Parser mode is required": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
-  "Parser mode must be valid": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
-  "Parsing rule set does not exist": {
-    "sites": 2,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
-  "Parsing rules": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "apps/web/config"
-    ]
-  },
   "Part number cannot exceed the total parts": {
     "sites": 1,
     "scope": [
@@ -188865,7 +187575,7 @@
       "apps/web/lib"
     ]
   },
-  "Partly granted: {0}": {
+  "Partly granted": {
     "sites": 1,
     "scope": [
       "ts"
@@ -189689,24 +188399,6 @@
       "routes/edi"
     ]
   },
-  "Paste a document ID above to view its lifecycle state and available recovery actions": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
-  "Paste a document ID to inspect...": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
   "Paste a new client secret": {
     "sites": 2,
     "scope": [
@@ -189723,24 +188415,6 @@
     ],
     "areas": [
       "routes/agent-control"
-    ]
-  },
-  "Paste the full document text here...": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
-  "Paste the full extracted document text here...": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
     ]
   },
   "Paste the inbound webhook's signing secret from Resend. It starts with whsec_.": {
@@ -189929,15 +188603,6 @@
       "routes/edi"
     ]
   },
-  "Pattern": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
   "Pattern detection": {
     "sites": 1,
     "scope": [
@@ -189972,15 +188637,6 @@
     ],
     "areas": [
       "routes/scheduling"
-    ]
-  },
-  "Patterns": {
-    "sites": 2,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
     ]
   },
   "Pause": {
@@ -190122,7 +188778,7 @@
     ]
   },
   "Paused": {
-    "sites": 20,
+    "sites": 22,
     "scope": [
       "go",
       "ts"
@@ -192542,15 +191198,6 @@
       "go/other"
     ]
   },
-  "Per-page text used when rules target specific pages. If omitted, the parser uses the full text snapshot.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
   "Percent": {
     "sites": 4,
     "scope": [
@@ -194660,7 +193307,7 @@
     ]
   },
   "Pickup": {
-    "sites": 22,
+    "sites": 21,
     "scope": [
       "go",
       "ts"
@@ -194671,7 +193318,6 @@
       "apps/web/lib",
       "go/other",
       "packages/shared/lib",
-      "routes/admin",
       "routes/agent-control",
       "routes/desk",
       "routes/inbox",
@@ -197364,15 +196010,6 @@
       "routes/fiscal-year"
     ]
   },
-  "Post-extraction transformation (e.g. trim, uppercase)": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
   "Post-trip": {
     "sites": 1,
     "scope": [
@@ -197403,7 +196040,7 @@
     ]
   },
   "Postal code": {
-    "sites": 17,
+    "sites": 16,
     "scope": [
       "go",
       "ts"
@@ -197413,7 +196050,6 @@
       "apps/web/lib",
       "go/other",
       "packages/shared/lib",
-      "routes/admin",
       "routes/carrier",
       "routes/customer",
       "routes/edi",
@@ -198593,13 +197229,12 @@
     ]
   },
   "Preview": {
-    "sites": 19,
+    "sites": 18,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/web/components",
-      "routes/admin",
       "routes/edi",
       "routes/formula-template",
       "routes/fuel-management",
@@ -198672,15 +197307,6 @@
     ],
     "areas": [
       "apps/web/components"
-    ]
-  },
-  "Preview generation is not supported for this document type": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
     ]
   },
   "Preview is larger than a baseline keeps": {
@@ -198798,15 +197424,6 @@
     ],
     "areas": [
       "routes/detention-policy"
-    ]
-  },
-  "Preview status": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
     ]
   },
   "Preview storage path cannot be longer than 500 characters": {
@@ -200022,7 +198639,7 @@
     ]
   },
   "Priority": {
-    "sites": 20,
+    "sites": 19,
     "scope": [
       "go",
       "ts"
@@ -200070,15 +198687,6 @@
   },
   "Priority must be between 0 and 1000": {
     "sites": 2,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
-  "Priority must be zero or greater": {
-    "sites": 1,
     "scope": [
       "go"
     ],
@@ -201082,7 +199690,7 @@
     ]
   },
   "Proof of delivery": {
-    "sites": 10,
+    "sites": 9,
     "scope": [
       "go",
       "ts"
@@ -201893,15 +200501,6 @@
       "routes/journal-reversal"
     ]
   },
-  "Provide a previous analysis result as JSON to enable diff comparison. The simulation will show what changed between the baseline and the new candidate result — useful when iterating on rules to ensure changes produce the expected improvements.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
   "Provide a reason for cancellation": {
     "sites": 1,
     "scope": [
@@ -202150,22 +200749,12 @@
     ]
   },
   "Provider fingerprint": {
-    "sites": 3,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "apps/web/components",
-      "routes/admin"
-    ]
-  },
-  "Provider fingerprints": {
     "sites": 1,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/admin"
+      "apps/web/components"
     ]
   },
   "Provider health": {
@@ -202220,24 +200809,6 @@
     ],
     "areas": [
       "routes/invoice"
-    ]
-  },
-  "Provider matched": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
-  "Provider matching": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
     ]
   },
   "Provider message id cannot be longer than 160 characters": {
@@ -202568,14 +201139,13 @@
     ]
   },
   "Publish": {
-    "sites": 8,
+    "sites": 7,
     "scope": [
       "go",
       "ts"
     ],
     "areas": [
       "go/other",
-      "routes/admin",
       "routes/policies",
       "routes/rate-matrix"
     ]
@@ -202656,33 +201226,14 @@
       "routes/rate-matrix"
     ]
   },
-  "Publish version": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
-  "Publish version {0}": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
   "Published": {
-    "sites": 6,
+    "sites": 4,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/web/components",
       "apps/web/lib",
-      "routes/admin",
       "routes/rate-matrix"
     ]
   },
@@ -202704,24 +201255,6 @@
       "go/other"
     ]
   },
-  "Published version": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
-  "Published version does not exist": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
   "Published versions": {
     "sites": 2,
     "scope": [
@@ -202731,15 +201264,6 @@
       "routes/rate-matrix"
     ]
   },
-  "Published versions cannot be modified. Create a new version to make changes.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
   "Published {0}": {
     "sites": 3,
     "scope": [
@@ -202747,15 +201271,6 @@
     ],
     "areas": [
       "apps/web/components"
-    ]
-  },
-  "Publishing will make this version the active rule used for document parsing. This action:": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
     ]
   },
   "Publishing would set {0, plural, one {# rate} other {# rates}} for Q{1} {2}, replacing any already published for the same jurisdiction and fuel.": {
@@ -202768,12 +201283,11 @@
     ]
   },
   "Publishing...": {
-    "sites": 2,
+    "sites": 1,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/admin",
       "routes/ifta-tax-rate"
     ]
   },
@@ -203094,7 +201608,7 @@
     ]
   },
   "Purpose": {
-    "sites": 4,
+    "sites": 3,
     "scope": [
       "go",
       "ts"
@@ -205658,7 +204172,7 @@
     ]
   },
   "Rate confirmation": {
-    "sites": 8,
+    "sites": 7,
     "scope": [
       "go",
       "ts"
@@ -207114,15 +205628,6 @@
       "routes/detention-policy"
     ]
   },
-  "Re-process text and structured data": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
   "Re-rate": {
     "sites": 4,
     "scope": [
@@ -207257,24 +205762,6 @@
     ],
     "areas": [
       "routes/detention-policy"
-    ]
-  },
-  "Re-run content extraction for this document. This will re-process the document and update extracted text and structured data.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
-  "Re-sync this document's search index entry. This will update the search projection with the latest document data.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
     ]
   },
   "Re: your email": {
@@ -207864,6 +206351,15 @@
       "routes/invoice"
     ]
   },
+  "Read records, change nothing": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
   "Read report": {
     "sites": 1,
     "scope": [
@@ -208182,15 +206678,6 @@
     ],
     "areas": [
       "apps/web/components"
-    ]
-  },
-  "Read-only version": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
     ]
   },
   "Readable group name shown in provisioning reviews.": {
@@ -208631,7 +207118,7 @@
     ]
   },
   "Ready": {
-    "sites": 10,
+    "sites": 9,
     "scope": [
       "go",
       "ts"
@@ -208641,7 +207128,6 @@
       "apps/web/lib",
       "go/other",
       "packages/shared/components",
-      "routes/admin",
       "routes/agent-control",
       "routes/edi",
       "routes/factoring",
@@ -210116,12 +208602,13 @@
     ]
   },
   "Receiving": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
-      "apps/web/lib"
+      "apps/web/lib",
+      "routes/admin"
     ]
   },
   "Recent": {
@@ -210537,15 +209024,6 @@
     ],
     "areas": [
       "routes/shipment"
-    ]
-  },
-  "Recommended for production fixtures. Assert that fields exist, are non-empty, match regexes, or match one of several acceptable values.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
     ]
   },
   "Recommended: {0}": {
@@ -212590,15 +211068,6 @@
       "apps/web/lib"
     ]
   },
-  "Recovery actions": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
   "Recovery code": {
     "sites": 2,
     "scope": [
@@ -213055,15 +211524,6 @@
       "routes/admin"
     ]
   },
-  "Reextract content": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
   "Ref": {
     "sites": 1,
     "scope": [
@@ -213245,12 +211705,11 @@
     ]
   },
   "Reference number": {
-    "sites": 3,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/admin",
       "routes/agent-control",
       "routes/customer-payments"
     ]
@@ -213514,15 +211973,6 @@
       "routes/admin"
     ]
   },
-  "Refresh from builder": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
   "Refresh review queue": {
     "sites": 1,
     "scope": [
@@ -213710,6 +212160,15 @@
       "rules/tariff"
     ]
   },
+  "Refusing mail": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
   "Regenerate": {
     "sites": 1,
     "scope": [
@@ -213717,42 +212176,6 @@
     ],
     "areas": [
       "apps/web/components"
-    ]
-  },
-  "Regenerate preview": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
-  "Regenerate the document preview thumbnail. A new Temporal workflow will be started to generate the thumbnail.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
-  "Regex patterns for extraction. The first capture group is used as the value.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
-  "Regex patterns to extract appointment windows": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
     ]
   },
   "Region": {
@@ -215704,15 +214127,6 @@
       "routes/agent-control"
     ]
   },
-  "Remove all": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
   "Remove an AI provider": {
     "sites": 1,
     "scope": [
@@ -215738,15 +214152,6 @@
     ],
     "areas": [
       "go/other"
-    ]
-  },
-  "Remove assertion": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
     ]
   },
   "Remove assignments": {
@@ -215857,6 +214262,15 @@
     ],
     "areas": [
       "routes/worker"
+    ]
+  },
+  "Remove every operation": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
     ]
   },
   "Remove failed attachments before sending": {
@@ -216462,15 +214876,6 @@
       "routes/recurring-shipment",
       "routes/shipment",
       "routes/worker"
-    ]
-  },
-  "Remove {0} assertions": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
     ]
   },
   "Remove {0} from the comparison": {
@@ -219509,7 +217914,7 @@
     ]
   },
   "Required": {
-    "sites": 41,
+    "sites": 37,
     "scope": [
       "go",
       "ts"
@@ -219660,15 +218065,6 @@
     ],
     "areas": [
       "routes/worker"
-    ]
-  },
-  "Required stop roles": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
     ]
   },
   "Required to bill": {
@@ -219869,15 +218265,6 @@
       "routes/worker-credential-type"
     ]
   },
-  "Requires all": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
   "Requires an approval step before a manually closed period can be finalized.": {
     "sites": 1,
     "scope": [
@@ -219885,15 +218272,6 @@
     ],
     "areas": [
       "routes/accounting-control"
-    ]
-  },
-  "Requires any": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
     ]
   },
   "Requires appointment": {
@@ -221168,7 +219546,7 @@
     ]
   },
   "Resource": {
-    "sites": 4,
+    "sites": 3,
     "scope": [
       "ts"
     ],
@@ -221266,6 +219644,24 @@
       "go/other"
     ]
   },
+  "Resource categories": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
+  "Resource category": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
   "Resource editor": {
     "sites": 1,
     "scope": [
@@ -221360,6 +219756,24 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "Resources": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
+  "Resources could not be loaded.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
     ]
   },
   "Resources owned by the company": {
@@ -221801,25 +220215,7 @@
       "routes/formula-library"
     ]
   },
-  "Restrict extraction to these document sections": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
   "Restrict routing to highways where PC*Miler supports the option.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
-  "Restrict stop extraction to these document sections": {
     "sites": 1,
     "scope": [
       "ts"
@@ -222094,15 +220490,6 @@
       "routes/carrier-monitoring"
     ]
   },
-  "Resync search": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
   "Retention": {
     "sites": 2,
     "scope": [
@@ -222270,7 +220657,7 @@
     ]
   },
   "Retry": {
-    "sites": 39,
+    "sites": 38,
     "scope": [
       "ts"
     ],
@@ -223377,7 +221764,7 @@
     ]
   },
   "Review": {
-    "sites": 26,
+    "sites": 23,
     "scope": [
       "go",
       "ts"
@@ -223386,7 +221773,6 @@
       "apps/web/components",
       "apps/web/lib",
       "go/other",
-      "routes/admin",
       "routes/agent-control",
       "routes/carrier-monitoring",
       "routes/desk",
@@ -223908,13 +222294,12 @@
     ]
   },
   "Review status": {
-    "sites": 3,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
-      "apps/web/components",
-      "routes/admin"
+      "apps/web/components"
     ]
   },
   "Review structured fields extracted from supported shipment documents.": {
@@ -224850,7 +223235,7 @@
     ]
   },
   "Role": {
-    "sites": 8,
+    "sites": 7,
     "scope": [
       "go",
       "ts"
@@ -226315,15 +224700,6 @@
       "routes/document-packet-rule"
     ]
   },
-  "Rule builder": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
   "Rule changed": {
     "sites": 1,
     "scope": [
@@ -226405,15 +224781,6 @@
       "go/other"
     ]
   },
-  "Rule metadata": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
   "Rule on — Nova starts with the next match": {
     "sites": 1,
     "scope": [
@@ -226421,42 +224788,6 @@
     ],
     "areas": [
       "routes/inbox"
-    ]
-  },
-  "Rule set": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
-  "Rule set details": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
-  "Rule set is required": {
-    "sites": 2,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
-  "Rule simulation": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
     ]
   },
   "Rule target": {
@@ -226525,14 +224856,12 @@
     ]
   },
   "Run": {
-    "sites": 18,
+    "sites": 17,
     "scope": [
-      "go",
       "ts"
     ],
     "areas": [
       "apps/web/components",
-      "go/other",
       "routes/agent-control",
       "routes/desk",
       "routes/edi",
@@ -226592,15 +224921,6 @@
     ],
     "areas": [
       "apps/web/components"
-    ]
-  },
-  "Run a rule version against sample document text to verify parsing behavior before publishing. Useful for testing new rules, debugging extraction issues, or comparing results against a known baseline.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
     ]
   },
   "Run a saved report and show the results": {
@@ -226756,15 +225076,6 @@
     ],
     "areas": [
       "routes/desk"
-    ]
-  },
-  "Run document operations": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
     ]
   },
   "Run draw": {
@@ -226941,12 +225252,11 @@
     ]
   },
   "Run simulation": {
-    "sites": 2,
+    "sites": 1,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/admin",
       "routes/rate-agreement"
     ]
   },
@@ -227327,12 +225637,11 @@
     ]
   },
   "Running...": {
-    "sites": 3,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/admin",
       "routes/driver-settlement",
       "routes/formula-template"
     ]
@@ -229190,7 +227499,7 @@
     ]
   },
   "Save changes": {
-    "sites": 48,
+    "sites": 46,
     "scope": [
       "ts"
     ],
@@ -229322,15 +227631,6 @@
     "areas": [
       "routes/formula-library",
       "routes/formula-template"
-    ]
-  },
-  "Save fixture": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
     ]
   },
   "Save follow-up": {
@@ -232732,6 +231032,24 @@
       "go/other"
     ]
   },
+  "Search capabilities": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
+  "Search capabilities...": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
   "Search carrier intelligence providers for new capacity and import prospects": {
     "sites": 1,
     "scope": [
@@ -233339,6 +231657,15 @@
       "routes/bank-receipt"
     ]
   },
+  "Search resources": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
   "Search resources...": {
     "sites": 2,
     "scope": [
@@ -233349,15 +231676,6 @@
     ]
   },
   "Search roles...": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
-  "Search rule sets...": {
     "sites": 1,
     "scope": [
       "ts"
@@ -233582,15 +231900,6 @@
     ],
     "areas": [
       "routes/agent-control"
-    ]
-  },
-  "Search versions...": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
     ]
   },
   "Search widgets": {
@@ -233913,15 +232222,6 @@
       "go/other"
     ]
   },
-  "Section anchors": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
   "Section is not one this page has": {
     "sites": 1,
     "scope": [
@@ -233929,15 +232229,6 @@
     ],
     "areas": [
       "go/other"
-    ]
-  },
-  "Section names": {
-    "sites": 2,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
     ]
   },
   "Section title is required": {
@@ -233950,41 +232241,21 @@
     ]
   },
   "Section {0}": {
-    "sites": 2,
+    "sites": 1,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/admin",
       "routes/desk"
     ]
   },
   "Sections": {
-    "sites": 2,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "apps/web/components",
-      "routes/admin"
-    ]
-  },
-  "Sections are optional. Add them to scope field and stop extraction to specific document regions.": {
     "sites": 1,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/admin"
-    ]
-  },
-  "Sections divide the document into named regions. Fields and stops can optionally target specific sections.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
+      "apps/web/components"
     ]
   },
   "Secure parking": {
@@ -234889,15 +233160,6 @@
       "apps/web/components"
     ]
   },
-  "Select a rule set": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
   "Select a schedule": {
     "sites": 1,
     "scope": [
@@ -235022,15 +233284,6 @@
     ],
     "areas": [
       "apps/web/components"
-    ]
-  },
-  "Select a version...": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
     ]
   },
   "Select a worker type": {
@@ -236676,15 +234929,6 @@
       "routes/dispatch-control"
     ]
   },
-  "Select the rule version to test and provide the document text to parse.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
   "Select the service type for the shipment.": {
     "sites": 1,
     "scope": [
@@ -237343,11 +235587,12 @@
     ]
   },
   "Send a test email": {
-    "sites": 5,
+    "sites": 7,
     "scope": [
       "ts"
     ],
     "areas": [
+      "routes/admin",
       "routes/inbox"
     ]
   },
@@ -238531,12 +236776,13 @@
     ]
   },
   "Sending…": {
-    "sites": 5,
+    "sites": 6,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/dash/_components",
+      "routes/admin",
       "routes/inbox",
       "routes/shipment"
     ]
@@ -239224,15 +237470,6 @@
       "routes/agent-control"
     ]
   },
-  "Seq {0}": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
   "Sequence": {
     "sites": 3,
     "scope": [
@@ -239342,15 +237579,6 @@
     ],
     "areas": [
       "api/graphql"
-    ]
-  },
-  "Sequence start": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
     ]
   },
   "Sequence starts at one": {
@@ -240327,7 +238555,7 @@
     ]
   },
   "Set API key": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
@@ -240396,6 +238624,15 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "Set all": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
     ]
   },
   "Set an input by its name: `given input.rate = …`": {
@@ -240658,7 +238895,7 @@
     ]
   },
   "Set signing secret": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
@@ -240916,6 +239153,15 @@
     ],
     "areas": [
       "routes/agent-control"
+    ]
+  },
+  "Set {0, plural, one {# resource} other {# resources}} to": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
     ]
   },
   "Sets a field of the sample record or an input for this test, or for every case of a property.": {
@@ -241759,11 +240005,12 @@
     ]
   },
   "Setup": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
+      "routes/admin",
       "routes/onboarding"
     ]
   },
@@ -243339,13 +241586,12 @@
     ]
   },
   "Shipment draft": {
-    "sites": 2,
+    "sites": 1,
     "scope": [
       "ts"
     ],
     "areas": [
-      "apps/web/components",
-      "routes/admin"
+      "apps/web/components"
     ]
   },
   "Shipment draft extraction": {
@@ -246302,7 +244548,7 @@
     ]
   },
   "Signals": {
-    "sites": 3,
+    "sites": 2,
     "scope": [
       "ts"
     ],
@@ -246639,7 +244885,7 @@
     ]
   },
   "Signing secret": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
@@ -246729,7 +244975,7 @@
     ]
   },
   "Simulation": {
-    "sites": 10,
+    "sites": 9,
     "scope": [
       "go",
       "ts"
@@ -246737,18 +244983,8 @@
     "areas": [
       "apps/web/lib",
       "go/other",
-      "routes/admin",
       "routes/agent-control",
       "routes/rate-agreement"
-    ]
-  },
-  "Simulation failed": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
     ]
   },
   "Simulation is required": {
@@ -249288,15 +247524,6 @@
       "routes/inbox"
     ]
   },
-  "Source{0}": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
   "South carolina (SC)": {
     "sites": 1,
     "scope": [
@@ -250522,15 +248749,6 @@
       "rules/tariff"
     ]
   },
-  "Start a new thumbnail workflow": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
   "Start a recurring shipment: a series that copies one saved shipment on a schedule, for a customer's standing lane. Give the source shipment, a name, the cron schedule and its timezone, all from what the person or the customer asked for. It starts Active.": {
     "sites": 1,
     "scope": [
@@ -250565,15 +248783,6 @@
     ],
     "areas": [
       "go/other"
-    ]
-  },
-  "Start anchors": {
-    "sites": 2,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
     ]
   },
   "Start and monitor worker synchronization from TMS to Samsara.": {
@@ -251288,15 +249497,6 @@
       "routes/fuel-management"
     ]
   },
-  "Starting sequence number for this stop type": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
   "Starting soon": {
     "sites": 1,
     "scope": [
@@ -251530,7 +249730,7 @@
     ]
   },
   "State": {
-    "sites": 39,
+    "sites": 38,
     "scope": [
       "go",
       "ts"
@@ -251920,7 +250120,7 @@
     ]
   },
   "Status": {
-    "sites": 343,
+    "sites": 342,
     "scope": [
       "go",
       "ts"
@@ -252177,7 +250377,7 @@
     ]
   },
   "Status is required": {
-    "sites": 147,
+    "sites": 146,
     "scope": [
       "go",
       "ts"
@@ -252288,15 +250488,6 @@
   },
   "Status must be either Active or Inactive": {
     "sites": 14,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
-  "Status must be valid": {
-    "sites": 1,
     "scope": [
       "go"
     ],
@@ -252654,11 +250845,12 @@
     ]
   },
   "Steps": {
-    "sites": 5,
+    "sites": 6,
     "scope": [
       "ts"
     ],
     "areas": [
+      "routes/admin",
       "routes/agent-control",
       "routes/desk"
     ]
@@ -252791,7 +250983,7 @@
     ]
   },
   "Stop": {
-    "sites": 20,
+    "sites": 19,
     "scope": [
       "go",
       "ts"
@@ -253133,15 +251325,6 @@
       "go/other"
     ]
   },
-  "Stop roles that must appear in the extraction result (e.g. pickup, delivery).": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
   "Stop rollout": {
     "sites": 1,
     "scope": [
@@ -253315,12 +251498,11 @@
     ]
   },
   "Stop {0}": {
-    "sites": 6,
+    "sites": 5,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/admin",
       "routes/desk",
       "routes/distance-override",
       "routes/edi",
@@ -253495,7 +251677,7 @@
     ]
   },
   "Stops": {
-    "sites": 16,
+    "sites": 15,
     "scope": [
       "go",
       "ts"
@@ -253503,7 +251685,6 @@
     "areas": [
       "apps/web/components",
       "go/other",
-      "routes/admin",
       "routes/agent-control",
       "routes/desk",
       "routes/distance-override",
@@ -253513,12 +251694,11 @@
     ]
   },
   "Stops ({0})": {
-    "sites": 2,
+    "sites": 1,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/admin",
       "routes/shipment"
     ]
   },
@@ -253565,15 +251745,6 @@
     ],
     "areas": [
       "packages/shared/lib"
-    ]
-  },
-  "Stops represent physical locations in a shipment — pickup points, delivery destinations, or intermediate stops. Each stop defines how to extract address and scheduling details.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
     ]
   },
   "Stops when the candidate is more than {0} points below production": {
@@ -254651,15 +252822,6 @@
     ],
     "areas": [
       "routes/edi"
-    ]
-  },
-  "Substrings to look for in the uploaded file name. Useful for providers that use consistent naming conventions.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
     ]
   },
   "Subtle": {
@@ -258853,15 +257015,6 @@
       "go/other"
     ]
   },
-  "Tenant-managed parsing rules, versions, fixtures, and simulations": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
   "Tender": {
     "sites": 9,
     "scope": [
@@ -259758,6 +257911,15 @@
       "routes/settings"
     ]
   },
+  "Test sent {0}, not arrived yet": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
   "Test type is required": {
     "sites": 1,
     "scope": [
@@ -260022,60 +258184,6 @@
     ],
     "areas": [
       "routes/desk"
-    ]
-  },
-  "Text snapshot": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
-  "Text snapshot is required": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
-  "Text strings that mark the beginning of this section": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
-  "Text strings that mark the end of this section": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
-  "Text that marks the beginning of stop data": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
-  "Text that marks the end of stop data": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
     ]
   },
   "Text tiles need content": {
@@ -261240,15 +259348,6 @@
     ],
     "areas": [
       "go/other"
-    ]
-  },
-  "The JSON editor and the Rule Builder share the same underlying data. Edits made here must be applied to take effect in the builder, and vice versa. Use “Refresh from Builder” to pull the latest builder state into this editor.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
     ]
   },
   "The NMFC freight class for a density, on the 13-provision density scale in effect from 2025-07-19. Each band includes its lower bound: 1 lb/ft3 is Class300.": {
@@ -265113,15 +263212,6 @@
       "routes/agent-control"
     ]
   },
-  "The currently active version used for document parsing in production.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
   "The custom field key on the shipment to populate.": {
     "sites": 1,
     "scope": [
@@ -268460,15 +266550,6 @@
       "routes/pay-advance"
     ]
   },
-  "The full extracted text of the document. This is the primary input the parser operates on during simulation.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
   "The full postal code": {
     "sites": 1,
     "scope": [
@@ -270854,15 +268935,6 @@
     "areas": [
       "apps/web/edi",
       "edi/x12"
-    ]
-  },
-  "The minimum number of stops the parser must extract for this fixture to pass.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
     ]
   },
   "The minimum temperature for the shipment.": {
@@ -274302,15 +272374,6 @@
     ],
     "areas": [
       "routes/desk"
-    ]
-  },
-  "The raw text content extracted from the document. This is what the rule engine parses to extract fields, stops, and other structured data.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
     ]
   },
   "The readiness check could not run. The server will still enforce every rule when you confirm.": {
@@ -278789,15 +276852,6 @@
     ],
     "areas": [
       "routes/formula-library"
-    ]
-  },
-  "The type of document this rule set is designed to parse.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
     ]
   },
   "The type of equipment the tractor is categorized under.": {
@@ -287639,24 +285693,6 @@
       "routes/fiscal-year"
     ]
   },
-  "This will permanently delete \"{0}\" including all versions, fixtures, and simulation results. Any shipments currently using this rule set will fall back to default parsing. This action cannot be undone.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
-  "This will permanently delete \"{0}\".": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
   "This will restore the template to version {0}, creating a new version (v{1}).": {
     "sites": 1,
     "scope": [
@@ -288114,15 +286150,6 @@
       "routes/desk",
       "routes/reports",
       "routes/settings"
-    ]
-  },
-  "Thumbnail regeneration is unavailable": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
     ]
   },
   "Thumbs down": {
@@ -288873,15 +286900,6 @@
     ],
     "areas": [
       "routes/shipment"
-    ]
-  },
-  "Time window": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
     ]
   },
   "Time zone": {
@@ -291708,15 +289726,6 @@
       "apps/web/components"
     ]
   },
-  "Track whether this fixture's assertions have been verified as correct.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
   "Track your shipment": {
     "sites": 1,
     "scope": [
@@ -294505,15 +292514,6 @@
       "routes/admin"
     ]
   },
-  "Trusted to": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
   "Try a draft agent once against live data with every write simulated, writing nothing": {
     "sites": 1,
     "scope": [
@@ -294551,7 +292551,7 @@
     ]
   },
   "Try again": {
-    "sites": 70,
+    "sites": 71,
     "scope": [
       "ts"
     ],
@@ -294908,6 +292908,15 @@
       "routes/settings"
     ]
   },
+  "Turn off all": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
   "Turn off anything you don't need. A few are required by your organization.": {
     "sites": 1,
     "scope": [
@@ -295016,6 +293025,15 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "Turn on all": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
     ]
   },
   "Turn on if the employer reported any accidents; the count is asked next.": {
@@ -296302,14 +294320,13 @@
     ]
   },
   "Unavailable": {
-    "sites": 11,
+    "sites": 10,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/web/components",
       "packages/shared/lib",
-      "routes/admin",
       "routes/desk",
       "routes/factoring",
       "routes/reports"
@@ -296834,15 +294851,6 @@
     ],
     "areas": [
       "go/other"
-    ]
-  },
-  "Unique identifiers for document providers (e.g. carrier SCAC codes). A document matches if its provider fingerprint appears in this list.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
     ]
   },
   "Unique name for this profile.": {
@@ -299009,15 +297017,6 @@
       "routes/shipment"
     ]
   },
-  "Update the search index projection": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
   "Update the tractor, trailer, and worker assignments for this move.": {
     "sites": 1,
     "scope": [
@@ -299037,7 +297036,7 @@
     ]
   },
   "Updated": {
-    "sites": 26,
+    "sites": 25,
     "scope": [
       "ts"
     ],
@@ -299224,7 +297223,7 @@
     ]
   },
   "Upload": {
-    "sites": 12,
+    "sites": 11,
     "scope": [
       "go",
       "ts"
@@ -299233,7 +297232,6 @@
       "apps/dash/_components",
       "apps/web/components",
       "go/other",
-      "routes/admin",
       "routes/billing-queue",
       "routes/edi",
       "routes/settings",
@@ -299551,15 +297549,6 @@
     ],
     "areas": [
       "go/other"
-    ]
-  },
-  "Upload sessions": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
     ]
   },
   "Upload the factor's file to read it.": {
@@ -300151,15 +298140,6 @@
     ],
     "areas": [
       "routes/shipment"
-    ]
-  },
-  "Use a descriptive name that identifies the provider or document format.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
     ]
   },
   "Use a different address": {
@@ -300781,15 +298761,6 @@
     ],
     "areas": [
       "go/other"
-    ]
-  },
-  "Used by fileNameContains match rules. Provide the original document file name to test file-name-based matching.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
     ]
   },
   "Used by the server for Postmark API calls.": {
@@ -301504,15 +299475,6 @@
       "routes/customer"
     ]
   },
-  "Validate the JSON and push it into the form. This overwrites the Rule Builder state.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
   "Validation": {
     "sites": 2,
     "scope": [
@@ -301540,15 +299502,6 @@
       "routes/edi"
     ]
   },
-  "Validation errors": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
   "Validation errors:": {
     "sites": 1,
     "scope": [
@@ -301556,15 +299509,6 @@
     ],
     "areas": [
       "routes/shipment"
-    ]
-  },
-  "Validation failed": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
     ]
   },
   "Validation failures": {
@@ -301586,13 +299530,12 @@
     ]
   },
   "Validation issues": {
-    "sites": 2,
+    "sites": 1,
     "scope": [
       "ts"
     ],
     "areas": [
-      "apps/web/components",
-      "routes/admin"
+      "apps/web/components"
     ]
   },
   "Validation mode is invalid": {
@@ -301611,15 +299554,6 @@
     ],
     "areas": [
       "go/other"
-    ]
-  },
-  "Validation passed": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
     ]
   },
   "Validity": {
@@ -301660,7 +299594,7 @@
     ]
   },
   "Value": {
-    "sites": 15,
+    "sites": 14,
     "scope": [
       "ts"
     ],
@@ -302417,14 +300351,13 @@
     ]
   },
   "Version": {
-    "sites": 15,
+    "sites": 11,
     "scope": [
       "go",
       "ts"
     ],
     "areas": [
       "go/other",
-      "routes/admin",
       "routes/edi",
       "routes/factoring-company",
       "routes/formula-library",
@@ -302461,13 +300394,12 @@
     ]
   },
   "Version history": {
-    "sites": 4,
+    "sites": 3,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/web/components",
-      "routes/admin",
       "routes/formula-template"
     ]
   },
@@ -302579,15 +300511,6 @@
       "go/other"
     ]
   },
-  "Version number must be greater than zero": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
   "Version override": {
     "sites": 1,
     "scope": [
@@ -302597,23 +300520,13 @@
       "routes/edi"
     ]
   },
-  "Version settings": {
+  "Version {0}": {
     "sites": 1,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/admin"
-    ]
-  },
-  "Version {0}": {
-    "sites": 4,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "apps/web/components",
-      "routes/admin"
+      "apps/web/components"
     ]
   },
   "Version {0} / {1} / {2} / {3} segments": {
@@ -302671,17 +300584,16 @@
     ]
   },
   "Version {0}{1}": {
-    "sites": 3,
+    "sites": 1,
     "scope": [
       "ts"
     ],
     "areas": [
-      "apps/dash/_components",
-      "routes/admin"
+      "apps/dash/_components"
     ]
   },
   "Versions": {
-    "sites": 16,
+    "sites": 15,
     "scope": [
       "go",
       "ts"
@@ -302689,22 +300601,12 @@
     "areas": [
       "apps/web/components",
       "go/other",
-      "routes/admin",
       "routes/agent-control",
       "routes/desk",
       "routes/edi",
       "routes/formula-library",
       "routes/rate-agreement",
       "routes/rate-matrix"
-    ]
-  },
-  "Versions define how documents are parsed. Each version contains match criteria, field extraction rules, and stop definitions. Create a draft to get started.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
     ]
   },
   "Very high": {
@@ -302846,7 +300748,7 @@
     ]
   },
   "View": {
-    "sites": 128,
+    "sites": 127,
     "scope": [
       "go",
       "ts"
@@ -303212,15 +301114,6 @@
       "go/other"
     ]
   },
-  "View document diagnostics": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
   "View document history": {
     "sites": 1,
     "scope": [
@@ -303564,7 +301457,7 @@
     ]
   },
   "View only": {
-    "sites": 2,
+    "sites": 5,
     "scope": [
       "ts"
     ],
@@ -305230,6 +303123,15 @@
     ],
     "areas": [
       "routes/factoring"
+    ]
+  },
+  "Waiting for mail": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
     ]
   },
   "Waiting for rate table cells": {
@@ -310502,6 +308404,15 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "What {0} grants": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
     ]
   },
   "What {0} would bill": {
@@ -316571,15 +314482,6 @@
     ],
     "areas": [
       "go/other"
-    ]
-  },
-  "Workflow references": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
     ]
   },
   "Workflow run cannot be longer than 255 characters": {
@@ -324802,15 +322704,6 @@
       "routes/worker"
     ]
   },
-  "e.g. CH Robinson Rate Confirmation": {
-    "sites": 2,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
   "e.g. CHAINPAY": {
     "sites": 1,
     "scope": [
@@ -325270,15 +323163,6 @@
       "routes/ifta-tax-rate"
     ]
   },
-  "e.g. Initial draft, Added stops": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
   "e.g. Invoice date is Oct 3": {
     "sites": 1,
     "scope": [
@@ -325585,15 +323469,6 @@
       "routes/admin"
     ]
   },
-  "e.g. PRO Number": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
   "e.g. Receipt shows two products; reefer fuel entered separately": {
     "sites": 1,
     "scope": [
@@ -325837,24 +323712,6 @@
       "routes/worker"
     ]
   },
-  "e.g. ^\\\\$[0-9]+(?:\\\\.[0-9]{2})$": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
-  "e.g. ch_robinson": {
-    "sites": 2,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
   "e.g. driver@example.com": {
     "sites": 1,
     "scope": [
@@ -325862,42 +323719,6 @@
     ],
     "areas": [
       "routes/worker"
-    ]
-  },
-  "e.g. header, shipment_details": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
-  "e.g. pro_number": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
-  "e.g. rate_confirmation.pdf": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
-  "e.g. rate_confirmation_ch_robinson.pdf": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
     ]
   },
   "e.g. reeferSetpoint": {
@@ -325943,24 +323764,6 @@
     ],
     "areas": [
       "routes/table-change-alert"
-    ]
-  },
-  "e.g. trim": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
-  "e.g. trim, uppercase": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
     ]
   },
   "e.g. {{new.pro_number}} status changed": {
@@ -332476,13 +330279,12 @@
     ]
   },
   "v{0}": {
-    "sites": 37,
+    "sites": 35,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/web/components",
-      "routes/admin",
       "routes/agent-control",
       "routes/desk",
       "routes/edi",
@@ -332560,13 +330362,12 @@
     ]
   },
   "v{0}{1}": {
-    "sites": 2,
+    "sites": 1,
     "scope": [
       "ts"
     ],
     "areas": [
-      "apps/dash/_components",
-      "routes/admin"
+      "apps/dash/_components"
     ]
   },
   "waiting on you": {
@@ -333041,15 +330842,6 @@
       "routes/edi"
     ]
   },
-  "{\"fields\": {}, \"stops\": [], \"overallConfidence\": 0.95, ...}": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
   "{\"top_k\": 40}": {
     "sites": 1,
     "scope": [
@@ -333312,15 +331104,6 @@
       "routes/formula-template"
     ]
   },
-  "{0, plural, one {# anchor} other {# anchors}}": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
   "{0, plural, one {# application in period} other {# applications in period}}": {
     "sites": 1,
     "scope": [
@@ -333346,15 +331129,6 @@
     ],
     "areas": [
       "routes/desk"
-    ]
-  },
-  "{0, plural, one {# assertion} other {# assertions}}": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
     ]
   },
   "{0, plural, one {# attachment} other {# attachments}}": {
@@ -333648,13 +331422,12 @@
     ]
   },
   "{0, plural, one {# change} other {# changes}}": {
-    "sites": 9,
+    "sites": 8,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/web/components",
-      "routes/admin",
       "routes/carrier",
       "routes/desk"
     ]
@@ -334286,15 +332059,6 @@
       "routes/inbox"
     ]
   },
-  "{0, plural, one {# error detected} other {# errors detected}}": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
   "{0, plural, one {# error stops} other {# errors stop}} the file from running. Fix them and the tests run again.": {
     "sites": 1,
     "scope": [
@@ -334441,15 +332205,6 @@
       "routes/desk"
     ]
   },
-  "{0, plural, one {# field assertion} other {# field assertions}}": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
   "{0, plural, one {# field differs} other {# fields differ}}": {
     "sites": 1,
     "scope": [
@@ -334478,13 +332233,12 @@
     ]
   },
   "{0, plural, one {# field} other {# fields}}": {
-    "sites": 5,
+    "sites": 4,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/web/components",
-      "routes/admin",
       "routes/agent-control",
       "routes/worker"
     ]
@@ -334535,24 +332289,6 @@
     "areas": [
       "routes/agent-control",
       "routes/desk"
-    ]
-  },
-  "{0, plural, one {# fixture} other {# fixtures}}": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
-  "{0, plural, one {# fixture} other {# fixtures}} tested": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
     ]
   },
   "{0, plural, one {# flag to review} other {# flags to review}}": {
@@ -335027,15 +332763,6 @@
       "apps/web/components"
     ]
   },
-  "{0, plural, one {# legacy exact match} other {# legacy exact matches}}": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
   "{0, plural, one {# library was not archived} other {# libraries were not archived}}": {
     "sites": 1,
     "scope": [
@@ -335091,13 +332818,12 @@
     ]
   },
   "{0, plural, one {# line} other {# lines}}": {
-    "sites": 9,
+    "sites": 8,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/web/components",
-      "routes/admin",
       "routes/desk"
     ]
   },
@@ -335108,15 +332834,6 @@
     ],
     "areas": [
       "routes/fiscal-year"
-    ]
-  },
-  "{0, plural, one {# line} other {# lines}} · {1} chars": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
     ]
   },
   "{0, plural, one {# linked field shown} other {# linked fields shown}}": {
@@ -336313,15 +334030,6 @@
       "routes/billing-queue"
     ]
   },
-  "{0, plural, one {# required role} other {# required roles}}": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
   "{0, plural, one {# required} other {# required}}": {
     "sites": 1,
     "scope": [
@@ -336332,7 +334040,7 @@
     ]
   },
   "{0, plural, one {# resource} other {# resources}}": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
@@ -336954,14 +334662,13 @@
     ]
   },
   "{0, plural, one {# stop} other {# stops}}": {
-    "sites": 9,
+    "sites": 8,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/dash/routes",
       "packages/shared/lib",
-      "routes/admin",
       "routes/desk",
       "routes/shipment"
     ]
@@ -337352,15 +335059,6 @@
     ],
     "areas": [
       "apps/web/components"
-    ]
-  },
-  "{0, plural, one {# version} other {# versions}}": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
     ]
   },
   "{0, plural, one {# violation} other {# violations}}": {
@@ -339448,15 +337146,6 @@
       "routes/inbox"
     ]
   },
-  "{0, plural, one {min # stop} other {min # stops}}": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
   "{0, plural, one {of # row read} other {of # rows read}}": {
     "sites": 1,
     "scope": [
@@ -340141,14 +337830,13 @@
     ]
   },
   "{0} KB": {
-    "sites": 3,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/web/components",
-      "packages/shared/lib",
-      "routes/admin"
+      "packages/shared/lib"
     ]
   },
   "{0} L": {
@@ -342944,7 +340632,7 @@
     ]
   },
   "{0} failed": {
-    "sites": 10,
+    "sites": 9,
     "scope": [
       "ts"
     ],
@@ -344231,15 +341919,6 @@
     ],
     "areas": [
       "routes/agent-control"
-    ]
-  },
-  "{0} initiated": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
     ]
   },
   "{0} inspections · last on {1}": {
@@ -348201,7 +345880,7 @@
     ]
   },
   "{0} of {1}": {
-    "sites": 36,
+    "sites": 35,
     "scope": [
       "ts"
     ],
@@ -348335,11 +346014,12 @@
     ]
   },
   "{0} of {1} done": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
+      "routes/admin",
       "routes/agent-control"
     ]
   },
@@ -348359,6 +346039,15 @@
     ],
     "areas": [
       "routes/agent-control"
+    ]
+  },
+  "{0} of {1} granted": {
+    "sites": 4,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
     ]
   },
   "{0} of {1} held": {
@@ -350058,15 +347747,6 @@
       "routes/agent-control"
     ]
   },
-  "{0} rule set {1}": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
   "{0} run": {
     "sites": 1,
     "scope": [
@@ -350194,14 +347874,13 @@
     ]
   },
   "{0} selected": {
-    "sites": 9,
+    "sites": 8,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/web/components",
       "apps/web/lib",
-      "routes/admin",
       "routes/billing-queue",
       "routes/carrier-monitoring",
       "routes/carrier-settlement-workspace",
@@ -353099,15 +350778,6 @@
       "routes/agent-control"
     ]
   },
-  "{0}% overall confidence": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
   "{0}% read": {
     "sites": 1,
     "scope": [
@@ -354326,15 +351996,6 @@
       "routes/agent-control"
     ]
   },
-  "~ stop: {0}": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
   "~{0} changed": {
     "sites": 1,
     "scope": [
@@ -354497,15 +352158,6 @@
     ],
     "areas": [
       "apps/dash/_components"
-    ]
-  },
-  "· Status: {0}": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
     ]
   },
   "· a round fell short": {
