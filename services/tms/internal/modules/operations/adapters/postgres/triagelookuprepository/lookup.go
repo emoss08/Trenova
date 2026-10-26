@@ -71,7 +71,7 @@ func (r *repository) PeekDetails(
 					sp.ID,
 					sp.Status,
 					text(cus.Name),
-					et.Description.NullIf("").Coalesce(et.Code.Coalesce("")),
+					et.Description.NullIf("").Coalesce(et.Code, ""),
 					sp.ActualDeliveryDate,
 				).
 				Where(sp.ID.In(shipmentIDs...)))

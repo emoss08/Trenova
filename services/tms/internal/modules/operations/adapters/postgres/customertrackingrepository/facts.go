@@ -205,7 +205,7 @@ func (r *factRepository) CustomerVisibleHolds(
 				LeftJoin(hr, hr.ID.EqCol(hc.HoldReasonID)).
 				Pick(
 					hc.Type,
-					hr.Label.Coalesce(hc.ReasonCode.Coalesce("")),
+					hr.Label.Coalesce(hc.ReasonCode, ""),
 					hc.StartedAt,
 				).
 				Where(

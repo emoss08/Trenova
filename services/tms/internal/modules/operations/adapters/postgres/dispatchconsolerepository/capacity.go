@@ -145,7 +145,7 @@ func (r *repository) ListWorkerCommitments(
 						zero(windowStart).Lte(req.WindowEnd)),
 					keel.When(
 						req.WindowStart > 0,
-						keel.Int64Of(windowEnd).Coalesce(zero(windowStart)).Gte(req.WindowStart),
+						keel.Int64Of(windowEnd).Coalesce(windowStart, 0).Gte(req.WindowStart),
 					),
 				).
 				Order(keel.Asc(windowStart))

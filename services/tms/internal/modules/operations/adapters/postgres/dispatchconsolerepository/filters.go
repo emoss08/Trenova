@@ -143,11 +143,7 @@ func moveFilters(filter *shipmentports.DispatchBoardFilter) []keel.Pred {
 	if filter.WindowStart > 0 {
 		preds = append(preds, keel.Or(
 			destination.stop.ScheduledWindowEnd.
-				Coalesce(
-					destination.stop.ScheduledWindowStart.Coalesce(
-						origin.stop.ScheduledWindowStart,
-					),
-				).
+				Coalesce(destination.stop.ScheduledWindowStart, origin.stop.ScheduledWindowStart).
 				Gte(filter.WindowStart),
 			sm.Status.In(openBoardStatuses...),
 		))

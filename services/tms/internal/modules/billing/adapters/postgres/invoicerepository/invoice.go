@@ -438,7 +438,7 @@ func reconciliationDiscrepancies(
 	orderPart := keel.CaseNumeric().
 		When(inv.OrderID.IsNotNull(), keel.NumericOf(orderTotal).Coalesce(0)).
 		Else(keel.Numeric(int64(0)))
-	billed := keel.NumericOf(splitTotal).Coalesce(legTotal).Coalesce(shipmentTotal).Coalesce(0)
+	billed := keel.NumericOf(splitTotal).Coalesce(legTotal, shipmentTotal, 0)
 	expected := sign.Mul(billed).Add(orderPart)
 
 	return inv.Where(

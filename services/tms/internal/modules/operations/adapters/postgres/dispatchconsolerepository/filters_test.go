@@ -42,7 +42,7 @@ func TestMoveFiltersKeepPastDueOpenMoves(t *testing.T) {
 
 	require.Regexp(
 		t,
-		`\(coalesce\([a-z_]+\."scheduled_window_end", coalesce\([a-z_]+\."scheduled_window_start", [a-z_]+\."scheduled_window_start"\)\) >= \$\d+ OR [a-z_]+\."status" IN \('New', 'Assigned', 'InTransit'\)\)`,
+		`\(coalesce\([a-z_]+\."scheduled_window_end", [a-z_]+\."scheduled_window_start", [a-z_]+\."scheduled_window_start"\) >= \$\d+ OR [a-z_]+\."status" IN \('New', 'Assigned', 'InTransit'\)\)`,
 		sql,
 		"open moves must be exempt from the window lower bound",
 	)

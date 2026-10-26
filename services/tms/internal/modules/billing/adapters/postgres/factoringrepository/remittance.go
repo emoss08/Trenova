@@ -413,8 +413,8 @@ func candidateMatch(invoices []string, amounts []int64) (invoiceMatch, amountMat
 			text.Length().Gte(4),
 			normalized.Length().Gte(4),
 			keel.Or(
-				keel.DynOf(normalized).Like(contains(text)),
-				keel.DynOf(text).Like(contains(normalized)),
+				normalized.LikeExpr(contains(text)),
+				text.LikeExpr(contains(normalized)),
 			),
 		),
 	)))

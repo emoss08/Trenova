@@ -790,7 +790,7 @@ func (r *repository) PurgeDeadOfferTokens(
 		n, err := tk.AllTenants().
 			Where(tk.ID.InQuery(dead.AllTenants().
 				Pick(dead.ID).
-				Where(dead.UsedAt.Coalesce(dead.RevokedAt.Coalesce(dead.ExpiresAt)).Lt(req.DeadBefore)).
+				Where(dead.UsedAt.Coalesce(dead.RevokedAt, dead.ExpiresAt).Lt(req.DeadBefore)).
 				Limit(limit))).
 			Delete(ctx, r.db.Keel(ctx))
 		if err != nil {
