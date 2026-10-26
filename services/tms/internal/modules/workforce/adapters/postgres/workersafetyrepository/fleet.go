@@ -172,10 +172,10 @@ func (r *repository) FleetKinds(
 // csaBucketExpr sorts an event into the FMCSA's recency buckets: 0 inside six
 // months, 1 inside a year, 2 out to the two-year look-back. The weights
 // themselves stay in the domain, where they can be tested without a database.
-func csaBucketExpr(now int64) keel.Expr {
+func csaBucketExpr(now int64) keel.Int64Expr {
 	e := workerdb.WorkerSafetyEvents
 
-	return keel.DynCase().
+	return keel.CaseInt64().
 		When(e.OccurredAt.Gte(timeutils.AddMonthsUTC(now, -6)), keel.Int64(0)).
 		When(e.OccurredAt.Gte(timeutils.AddMonthsUTC(now, -12)), keel.Int64(1)).
 		Else(keel.Int64(2))

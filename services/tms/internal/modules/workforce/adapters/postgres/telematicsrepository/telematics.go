@@ -59,33 +59,39 @@ func New(p Params) telematicsports.TelematicsRepository {
 	}
 }
 
-func newerPosition(col keel.Col, excluded keel.Expr) keel.Expr {
+func positionIsNewer() keel.Pred {
 	vp := telematicsdb.VehiclePositions
 
-	return keel.DynCase().
-		When(keel.Int64Of(vp.RecordedAt).LteExpr(keel.Int64Of(vp.RecordedAt.Excluded())), excluded).
-		Else(col)
+	return keel.Int64Of(vp.RecordedAt).LteExpr(keel.Int64Of(vp.RecordedAt.Excluded()))
+}
+
+func newerText(col keel.StringCol) keel.StringExpr {
+	return keel.CaseString().When(positionIsNewer(), keel.StringOf(col.Excluded())).Else(col)
+}
+
+func newerFloat(col keel.Float64Col) keel.Float64Expr {
+	return keel.CaseFloat64().When(positionIsNewer(), keel.Float64Of(col.Excluded())).Else(col)
+}
+
+func newerInt64(col keel.Int64Col) keel.Int64Expr {
+	return keel.CaseInt64().When(positionIsNewer(), keel.Int64Of(col.Excluded())).Else(col)
 }
 
 func positionConflict() keel.Conflict {
 	vp := telematicsdb.VehiclePositions
 
 	return keel.OnConflict(vp.OrganizationID, vp.BusinessUnitID, vp.TractorID).Set(
-		vp.Provider.ToExpr(newerPosition(vp.Provider.Col, vp.Provider.Excluded())),
-		vp.ProviderVehicleID.ToExpr(
-			newerPosition(vp.ProviderVehicleID.Col, vp.ProviderVehicleID.Excluded()),
-		),
-		vp.Latitude.ToExpr(newerPosition(vp.Latitude.Col, vp.Latitude.Excluded())),
-		vp.Longitude.ToExpr(newerPosition(vp.Longitude.Col, vp.Longitude.Excluded())),
-		vp.HeadingDegrees.ToExpr(newerPosition(vp.HeadingDegrees.Col, vp.HeadingDegrees.Excluded())),
-		vp.SpeedMph.ToExpr(newerPosition(vp.SpeedMph.Col, vp.SpeedMph.Excluded())),
-		vp.EngineState.ToExpr(newerPosition(vp.EngineState.Col, vp.EngineState.Excluded())),
-		vp.FuelPercent.ToExpr(newerPosition(vp.FuelPercent.Col, vp.FuelPercent.Excluded())),
-		vp.OdometerMeters.ToExpr(newerPosition(vp.OdometerMeters.Col, vp.OdometerMeters.Excluded())),
-		vp.FormattedLocation.ToExpr(
-			newerPosition(vp.FormattedLocation.Col, vp.FormattedLocation.Excluded()),
-		),
-		vp.ReceivedAt.ToExpr(newerPosition(vp.ReceivedAt.Col, vp.ReceivedAt.Excluded())),
+		vp.Provider.ToExpr(newerText(vp.Provider)),
+		vp.ProviderVehicleID.ToExpr(newerText(vp.ProviderVehicleID)),
+		vp.Latitude.ToExpr(newerFloat(vp.Latitude)),
+		vp.Longitude.ToExpr(newerFloat(vp.Longitude)),
+		vp.HeadingDegrees.ToExpr(newerFloat(vp.HeadingDegrees)),
+		vp.SpeedMph.ToExpr(newerFloat(vp.SpeedMph)),
+		vp.EngineState.ToExpr(newerText(vp.EngineState.StringCol)),
+		vp.FuelPercent.ToExpr(newerFloat(vp.FuelPercent)),
+		vp.OdometerMeters.ToExpr(newerInt64(vp.OdometerMeters)),
+		vp.FormattedLocation.ToExpr(newerText(vp.FormattedLocation)),
+		vp.ReceivedAt.ToExpr(newerInt64(vp.ReceivedAt)),
 		vp.RecordedAt.ToExpr(vp.RecordedAt.Greatest(keel.Int64Of(vp.RecordedAt.Excluded()))),
 	)
 }
