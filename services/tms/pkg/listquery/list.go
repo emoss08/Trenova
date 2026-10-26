@@ -143,13 +143,20 @@ func listAndCount[T any](
 	rows, counted *keel.Query[*T],
 ) (*pagination.ListResult[*T], error) {
 	var items []*T
-	var total int64
-	err := keel.Batch(ctx, db, keel.ListInto(rows, &items), keel.CountInto(counted, &total))
+	var total keel.RowCount
+	err := keel.Batch(ctx, db,
+		keel.ListInto(rows, &items),
+		keel.CountEstimateInto(counted, pagination.ExactTotalUpTo, &total),
+	)
 	if err != nil {
 		return nil, err
 	}
 
-	return &pagination.ListResult[*T]{Items: items, Total: int(total)}, nil
+	return Result(items, total), nil
+}
+
+func Result[T any](items []T, total keel.RowCount) *pagination.ListResult[T] {
+	return &pagination.ListResult[T]{Items: items, Total: int(total.N), TotalExact: total.Exact}
 }
 
 func Pick[T any](q *keel.Query[*T], columns []string) (*keel.Query[*T], error) {

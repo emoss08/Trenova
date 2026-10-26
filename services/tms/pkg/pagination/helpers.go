@@ -98,7 +98,7 @@ func List[T any](
 	helpers.JSON(c, http.StatusOK, CursorResponse[[]T]{
 		Count:           total,
 		TotalCount:      &total,
-		TotalCountExact: true,
+		TotalCountExact: result.TotalExact,
 		Results:         items,
 		Next:            GetNextCursorPageURL(c, endCursor, limit, hasNextPage),
 		Previous:        "",
@@ -207,16 +207,14 @@ func SelectOptions[T any](
 		return
 	}
 
+	limit := req.Pagination.SafeLimit()
+	offset := req.Pagination.SafeOffset()
 	helpers.JSON(c, http.StatusOK, Response[[]T]{
-		Count:   result.Total,
-		Results: result.Items,
-		Next: GetNextPageURL(
-			c,
-			req.Pagination.SafeLimit(),
-			req.Pagination.SafeOffset(),
-			result.Total,
-		),
-		Prev: GetPreviousPageURL(c, req.Pagination.SafeLimit(), req.Pagination.SafeOffset()),
+		Count:           result.Total,
+		TotalCountExact: result.TotalExact,
+		Results:         result.Items,
+		Next:            GetNextPageURL(c, limit, offset, HasMore(result, req.Pagination)),
+		Prev:            GetPreviousPageURL(c, limit, offset),
 	})
 }
 

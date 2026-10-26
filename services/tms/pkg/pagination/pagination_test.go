@@ -515,8 +515,9 @@ func TestListResult_Fields(t *testing.T) {
 	t.Parallel()
 
 	result := ListResult[string]{
-		Items: []string{"a", "b", "c"},
-		Total: 3,
+		Items:      []string{"a", "b", "c"},
+		Total:      3,
+		TotalExact: true,
 	}
 
 	assert.Len(t, result.Items, 3)
@@ -527,8 +528,9 @@ func TestListResult_Empty(t *testing.T) {
 	t.Parallel()
 
 	result := ListResult[int]{
-		Items: []int{},
-		Total: 0,
+		Items:      []int{},
+		Total:      0,
+		TotalExact: true,
 	}
 
 	assert.Empty(t, result.Items)
@@ -776,4 +778,44 @@ func TestBuildPageURL_ZeroOffset(t *testing.T) {
 
 	assert.Contains(t, result, "offset=0")
 	assert.Contains(t, result, "limit=10")
+}
+
+func TestHasMore(t *testing.T) {
+	t.Parallel()
+
+	page := Info{Limit: 10, Offset: 20}
+	full := make([]int, 10)
+	short := make([]int, 4)
+
+	cases := []struct {
+		name   string
+		result ListResult[int]
+		want   bool
+	}{
+		{
+			"an exact total past the page",
+			ListResult[int]{Items: full, Total: 31, TotalExact: true},
+			true,
+		},
+		{
+			"an exact total the page reaches",
+			ListResult[int]{Items: full, Total: 30, TotalExact: true},
+			false,
+		},
+		{"an estimate below a full page", ListResult[int]{Items: full, Total: 25}, true},
+		{"an estimate above a short page", ListResult[int]{Items: short, Total: 1_250_000}, false},
+		{
+			"an estimate over an empty page",
+			ListResult[int]{Items: []int{}, Total: 1_250_000},
+			false,
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
+			assert.Equal(t, tc.want, HasMore(&tc.result, page))
+		})
+	}
 }

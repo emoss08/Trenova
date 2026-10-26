@@ -777,3 +777,29 @@ func TestComputedFilters_ResolveOnlyWithTheRepositorysExpression(t *testing.T) {
 		computed: p.computed}).resolve("lastSeenId")
 	assert.False(t, ok, "a computed field the entity does not list stays unfilterable")
 }
+
+func TestResult_CarriesWhetherTheTotalWasCounted(t *testing.T) {
+	t.Parallel()
+
+	cases := []struct {
+		name  string
+		total keel.RowCount
+		want  int
+	}{
+		{"a counted total", keel.RowCount{N: 42, Exact: true}, 42},
+		{"an estimated total", keel.RowCount{N: 1_250_000}, 1_250_000},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
+			items := []*testTruck{{}}
+			result := Result(items, tc.total)
+
+			assert.Equal(t, items, result.Items)
+			assert.Equal(t, tc.want, result.Total)
+			assert.Equal(t, tc.total.Exact, result.TotalExact)
+		})
+	}
+}
