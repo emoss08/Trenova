@@ -4,7 +4,7 @@ package schema
 
 const (
 	// Version is the newest migration version the schema has.
-	Version = "20261231021800"
+	Version = "20261231021900"
 	// Fingerprint changes whenever any migration does.
-	Fingerprint = "1fc68c7bf986c9205e9f69cc5b7fa53ac71308692226f9a31fa2c67c7b8591a2"
+	Fingerprint = "9a612e8b68cad2f8b3f51732a6d1b063e6c4467fbcd1f8c4d366958bdd78bbac"
 )
