@@ -180,6 +180,15 @@ describe("accounting dashboard empty state", () => {
     ).not.toBeInTheDocument();
   });
 
+  it("asks for KPIs that cannot be read no more than once again", async () => {
+    mocks.fetchArDashboardKpis.mockRejectedValue(new Error("down"));
+    renderAccountingPage(<AccountingDashboardPage />);
+
+    await waitFor(() => expect(mocks.fetchArDsoTrend).toHaveBeenCalled());
+    await new Promise((resolve) => setTimeout(resolve, 300));
+    expect(mocks.fetchArDashboardKpis.mock.calls.length).toBeLessThanOrEqual(2);
+  });
+
   it("keeps the dashboard while an invoice is open", async () => {
     mocks.fetchArDashboardKpis.mockResolvedValue(
       kpis({ hasInvoiced: true, openInvoiceCount: 2, totalOpenMinor: 40_000 }),
