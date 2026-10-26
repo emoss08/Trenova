@@ -25,7 +25,7 @@ func partnerCardFixture() *ediservice.EDIPartnerCard {
 			TotalCount:     2,
 			Items: []ediservice.EDIPartnerReadinessItem{
 				{Key: "details", Label: "Partner details", Complete: true},
-				{Key: "test-case", Label: "At least one passing test case"},
+				{Key: "lading-active", Label: "An active Lading version"},
 			},
 		},
 		Mappings: &ediports.EDIMappingSummary{},
@@ -105,7 +105,9 @@ func TestEDIPartnerCardToModel_KeepsCarriersNullWhenNotRead(t *testing.T) {
 	model := ediPartnerCardToModel(partnerCardFixture())
 	assert.Nil(t, model.Carriers, "null tells the card the carriers were not read")
 	assert.Nil(t, model.Customer, "a partner that names no customer has none")
-	assert.Equal(t, []*edi.EDIPartnerDocumentProfile{}, model.DocumentProfiles)
+	require.NotNil(t, model.Lading, "a partner with no project has an empty Lading block")
+	assert.Nil(t, model.Lading.Project)
+	assert.Nil(t, model.Lading.Active)
 	assert.Equal(t, []*edi.EDIMessage{}, model.Attention.OverdueAcks)
 	assert.Equal(t, []*edi.EDIInboundFile{}, model.Attention.QuarantinedFiles)
 
@@ -178,7 +180,25 @@ func TestEDIPartnerCardToModel_ReadsTheLinksAndFigures(t *testing.T) {
 		TotalCount:     2,
 		Items: []*gqlmodel.EDIPartnerReadinessItem{
 			{Key: "details", Label: "Partner details", Complete: true},
-			{Key: "test-case", Label: "At least one passing test case", Complete: false},
+			{Key: "lading-active", Label: "An active Lading version", Complete: false},
 		},
 	}, model.Readiness)
+}
+
+func TestEDIPartnerCardToModel_CarriesTheLadingVersionsRunning(t *testing.T) {
+	t.Parallel()
+
+	card := partnerCardFixture()
+	card.Lading = &ediservice.EDIPartnerLading{
+		Project: &edi.LadingProject{ID: pulid.MustNew("ldp_"), EDIPartnerID: card.Partner.ID},
+		Active:  &edi.LadingVersion{ID: pulid.MustNew("ldv_"), Number: 3},
+		Shadow:  &edi.LadingVersion{ID: pulid.MustNew("ldv_"), Number: 4},
+	}
+
+	model := ediPartnerCardToModel(card)
+
+	require.NotNil(t, model.Lading)
+	assert.Same(t, card.Lading.Project, model.Lading.Project)
+	assert.Same(t, card.Lading.Active, model.Lading.Active)
+	assert.Same(t, card.Lading.Shadow, model.Lading.Shadow)
 }

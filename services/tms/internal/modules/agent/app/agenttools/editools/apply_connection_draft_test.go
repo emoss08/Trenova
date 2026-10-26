@@ -12,6 +12,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/pkg/domaintypes"
+	"github.com/emoss08/trenova/pkg/lading"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -87,9 +88,11 @@ func readyPlan() *ediports.ConnectionDraftPlan {
 				{Label: "Partner signing certificate", Missing: true},
 				{Label: "AS2 private key for your signing certificate", Required: true, Missing: true},
 			}},
-			DocumentProfiles: []ediports.DraftDocumentProfile{{Template: ediports.DraftTemplateChoice{
-				Unmet: []ediports.DraftRequirementCheck{{SegmentID: "MS1"}},
-			}}},
+			Sets: []ediports.DraftSet{{
+				TransactionSet: edi.TransactionSet204,
+				Direction:      edi.DocumentDirectionInbound,
+				Unmet:          []ediports.DraftRequirementCheck{{SegmentID: "MS1"}},
+			}},
 			Gaps: []ediports.DraftGap{{Summary: "Appendix B is missing"}},
 		},
 		Partner: ediports.PlannedPartner{
@@ -99,13 +102,14 @@ func readyPlan() *ediports.ConnectionDraftPlan {
 			},
 			Change: ediports.ChangeKindChange,
 		},
-		DocumentProfiles: []ediports.PlannedDocumentProfile{{
-			After: &edi.EDIPartnerDocumentProfile{
-				Name: "Acme Retail Group 204 inbound", TransactionSet: edi.TransactionSet204,
-				Direction: edi.DocumentDirectionInbound, Status: edi.DocumentStatusInactive,
+		Project: &ediports.PlannedProject{
+			Files: []lading.File{
+				{Path: "partner.lading", Source: "partner acme \"Acme Retail Group\"\n"},
+				{Path: "guides/204.lading", Source: "guide acme204 from x12.004010.204 \"Acme 204\"\n"},
 			},
-			Change: ediports.ChangeKindAdd,
-		}},
+			Samples: []lading.Sample{{Path: "samples/spec-page-7.x12", Content: "ISA*00~"}},
+			Change:  ediports.ChangeKindAdd,
+		},
 		Transport: &ediports.PlannedTransport{
 			After:  &edi.EDICommunicationProfile{Name: "Acme AS2", Status: domaintypes.StatusInactive},
 			Change: ediports.ChangeKindSame,
@@ -171,7 +175,7 @@ func TestApplyConnectionDraft_PreviewsEveryRecordItWouldWrite(t *testing.T) {
 	assert.Contains(t, preview.Summary, draftDigest)
 	assert.Contains(t, preview.Summary, "enter: AS2 private key for your signing certificate.")
 	assert.NotContains(t, preview.Summary, "Partner signing certificate", "only what is required")
-	assert.Contains(t, preview.Summary, "leave 1 of the guide's segment rules unmet")
+	assert.Contains(t, preview.Summary, "leave 1 of the guide's mandatory elements unwritten")
 	assert.Empty(t, preview.Warnings)
 }
 

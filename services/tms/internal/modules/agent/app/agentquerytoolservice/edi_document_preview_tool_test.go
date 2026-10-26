@@ -47,20 +47,6 @@ func (f *fakeDocumentPreviewer) PreviewTenderResponse(
 	return f.response, nil
 }
 
-func partnerProfile(name string) *edi.EDIPartnerDocumentProfile {
-	envelope := edi.DefaultX12EnvelopeSettings()
-
-	return &edi.EDIPartnerDocumentProfile{
-		ID:             pulid.MustNew("edipdp_"),
-		Name:           "ACME 214 outbound",
-		TransactionSet: edi.TransactionSet214,
-		Direction:      edi.DocumentDirectionOutbound,
-		ValidationMode: edi.ValidationModeStrict,
-		Envelope:       envelope,
-		Partner:        &edi.EDIPartner{ID: pulid.MustNew("edip_"), Name: name},
-	}
-}
-
 func readers(resources ...permission.Resource) *fakePermissions {
 	readable := make(map[string]*permissionports.ResourcePermissionDetail, len(resources))
 	for _, resource := range resources {
@@ -77,7 +63,6 @@ func readers(resources ...permission.Resource) *fakePermissions {
 func TestPreviewEDIDocument_RendersA214ThroughTheSendPathWithItsFindings(t *testing.T) {
 	t.Parallel()
 
-	profile := partnerProfile("Acme Retail")
 	fake := &fakeDocumentPreviewer{outbound: &ediservice.OutboundDocumentPreview{
 		Document: &ediservice.EDIDocumentPreview{
 			RawX12:       rendered214,
@@ -91,7 +76,8 @@ func TestPreviewEDIDocument_RendersA214ThroughTheSendPathWithItsFindings(t *test
 				Message:         "Reference Identification is required",
 				SuggestedFix:    "Give the shipment a PRO or BOL",
 			}},
-			Profile: profile,
+			PartnerName: "Acme Retail",
+			Map:         "statusOut",
 		},
 		Blocking: true,
 	}}
@@ -118,8 +104,8 @@ func TestPreviewEDIDocument_RendersA214ThroughTheSendPathWithItsFindings(t *test
 
 	view := result.(*ediDocumentPreviewView)
 	assert.Equal(t, "EDI 214 to Acme Retail", view.Title)
-	assert.False(t, view.WouldSend, "a strict profile would refuse it as it stands")
-	assert.Equal(t, "Strict", view.ValidationMode)
+	assert.False(t, view.WouldSend, "an error finding would refuse it as it stands")
+	assert.Equal(t, "statusOut", view.Map)
 	assert.Equal(t, rendered214, view.Raw)
 	require.Len(t, view.Segments, 9, "ISA through IEA")
 	assert.Equal(t, "ST*214*0000", view.Segments[2])
@@ -139,14 +125,13 @@ func TestPreviewEDIDocument_RendersA214ThroughTheSendPathWithItsFindings(t *test
 func TestPreviewEDIDocument_AnswersATenderWithThe990ItWouldSend(t *testing.T) {
 	t.Parallel()
 
-	profile := partnerProfile("Bolt Freight")
 	profile.TransactionSet = edi.TransactionSet990
 	transfer := &edi.EDITransfer{ID: pulid.MustNew("edilt_"), Status: edi.TransferStatusPendingApproval}
 	fake := &fakeDocumentPreviewer{response: &ediservice.TenderResponsePreview{
 		OutboundDocumentPreview: ediservice.OutboundDocumentPreview{
 			Document: &ediservice.EDIDocumentPreview{
-				RawX12:  "ST*990*0000~B1*BOLT*BOL-5*20261014*D~SE*3*0000~",
-				Profile: profile,
+				RawX12:      "ST*990*0000~B1*BOLT*BOL-5*20261014*D~SE*3*0000~",
+				PartnerName: "Bolt Freight",
 			},
 		},
 		Transfer: transfer,
@@ -184,7 +169,7 @@ func TestPreviewEDIDocument_WithholdsTheX12BelowRestrictedButKeepsTheFindings(t 
 	fake := &fakeDocumentPreviewer{outbound: &ediservice.OutboundDocumentPreview{
 		Document: &ediservice.EDIDocumentPreview{
 			RawX12:      rendered214,
-			Profile:     partnerProfile("Acme Retail"),
+			PartnerName: "Acme Retail",
 			Diagnostics: []edi.Diagnostic{{Severity: edi.ValidationSeverityWarning, Message: "N1 missing"}},
 		},
 	}}
@@ -227,8 +212,8 @@ func TestPreviewEDIDocument_SaysWhoseAccessHeldTheX12Back(t *testing.T) {
 
 		fake := &fakeDocumentPreviewer{outbound: &ediservice.OutboundDocumentPreview{
 			Document: &ediservice.EDIDocumentPreview{
-				RawX12:  rendered214,
-				Profile: partnerProfile("Acme Retail"),
+				RawX12:      rendered214,
+				PartnerName: "Acme Retail",
 			},
 		}}
 		result, err := newPreviewEDIDocumentTool(fake, permissions).Query(t.Context(), chatParams(map[string]any{

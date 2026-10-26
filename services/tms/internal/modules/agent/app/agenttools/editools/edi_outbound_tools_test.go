@@ -185,7 +185,7 @@ func TestSendEDIStatusUpdate_PreviewsTheRenderedStatusAndNeverTakesAPayload(t *t
 		preview: &ediservice.EDIDocumentPreview{
 			RawX12:       "ISA*00*~ST*214*0001~B10*PRO-88*BOL-88~",
 			SegmentCount: 3,
-			Profile:      &edi.EDIPartnerDocumentProfile{Name: "Acme 214"},
+			PartnerName:  "Acme Trucking",
 			Diagnostics: []edi.Diagnostic{{
 				Severity: edi.ValidationSeverityWarning,
 				Message:  "AT7 reason code defaulted",
@@ -213,6 +213,7 @@ func TestSendEDIStatusUpdate_PreviewsTheRenderedStatusAndNeverTakesAPayload(t *t
 	sent := agenttoolstest.PreviewChange(t, preview, 0)
 	require.NotNil(t, sent.Message)
 	assert.Contains(t, sent.Message.Body, "B10*PRO-88")
+	assert.Equal(t, []string{"Acme Trucking"}, sent.Message.To)
 	assert.Contains(t, preview.Summary, "AT7 reason code defaulted")
 	require.NotNil(t, documents.planned)
 	assert.Nil(
