@@ -316,7 +316,7 @@ func (r *repository) versionsOf(
 		payloads  []summaryPayload
 	)
 	err := keel.Batch(ctx, db,
-		keel.ListInto(versionsQuery(&req).Omit(a.Payload), &artifacts),
+		keel.AllInto(versionsQuery(&req).Omit(a.Payload), &artifacts),
 		keel.IntoSlice(summaryQuery(&req), &payloads),
 	)
 	if err != nil {
