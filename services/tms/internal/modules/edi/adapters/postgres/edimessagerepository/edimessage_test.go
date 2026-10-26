@@ -55,7 +55,7 @@ func TestScorecardQuery_GroupsEveryCountByPartner(t *testing.T) {
 		`(ORDER BY (em."ack_received_at" - em."delivery_sent_at") ASC) FILTER (WHERE `)
 	assert.Equal(t, 0.95, args[3])
 	assert.Contains(t, sql, `em."edi_partner_id" IS NOT NULL AND em."generated_at" >= $3`)
-	assert.Contains(t, sql, `GROUP BY em."edi_partner_id" ORDER BY max(p."name") ASC`)
+	assert.Contains(t, sql, `GROUP BY em."edi_partner_id" ORDER BY 2 ASC`)
 	assert.Contains(t, sql, `count(*) FILTER (WHERE (em."ack_status" = 'Pending' AND em."generated_at" < $5))`)
 	assert.Contains(
 		t,
@@ -81,8 +81,7 @@ func TestVolumeQuery_GroupsByTheBucketItSelects(t *testing.T) {
 	assert.Contains(
 		t,
 		sql,
-		`GROUP BY ((em."generated_at" / $4::bigint) * $4::bigint) `+
-			`ORDER BY ((em."generated_at" / $4::bigint) * $4::bigint) ASC`,
+		`GROUP BY 1 ORDER BY 1 ASC`,
 	)
 	assert.Contains(t, sql, `em."delivery_status" IN ('Failed', 'DeadLettered')`)
 	assert.Contains(t, sql, `count(*) FILTER (WHERE em."direction" = 'Inbound')`)
